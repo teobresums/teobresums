@@ -272,7 +272,7 @@ void eob_wav_hlmNQC (double *NQCn,
  * \param[in]  E     energy
  * \param[in]  lmk   multipolar indexes  
  * \param[in]  r0    parameter
- * \param[out] Tlm   \f$T_{\ell m}\f$ of \c size = Nt x Nk \c
+ * \param[out] Tlm   \f$T_{\ell m}\f$ 
  *
  * \return void
  */
@@ -289,7 +289,7 @@ void eob_wav_Tlm_n (double Omega, double E,
  * \param[in]  lmk   multipolar indexes
  * \param[in]  Nt    timesteps (length of Omega)
  * \param[in]  r0    parameter
- * \param[out] Tlm   \f$T_{\ell m}\f$ of \c size Nt x Nk \c
+ * \param[out] Tlm   \f$T_{\ell m}\f$ 
  *
  * \return void
  */
@@ -307,7 +307,7 @@ void eob_wav_Tlm (double *Omega, double *E,
  * \param[in]  Heff  Effective Hamiltonian \f$\hat{H}_{\rm eff}\f$
  * \param[in]  jhat  \f$p_\phi/(r_\omega v_\phi)\f$
  * \param[in]  lmk   multipolar indexes
- * \param[out] Seff  \f$S^{\epsilon}_{\rm eff}\f$ of \c size Nt x Nk \c
+ * \param[out] Seff  \f$S^{\epsilon}_{\rm eff}\f$ 
  *
  * \return void
  */
@@ -322,7 +322,7 @@ void eob_wav_Seff_n (double Heff, double jhat,
  * \param[in]  jhat  \f$p_\phi/(r_\omega v_\phi)\f$
  * \param[in]  lmk   multipolar indexes
  * \param[in]  Nt    timesteps (length of Omega)
- * \param[out] Seff  \f$S^{\epsilon}_{\rm eff}\f$ of \c size Nt x Nk \c
+ * \param[out] Seff  \f$S^{\epsilon}_{\rm eff}\f$ 
  *
  * \return void
  */
