@@ -20,18 +20,34 @@ void eob_met_A_5PNP15_n (double u, void *coefs,
   double N,D, dN,dD, d2N,d2D, ooD;
 
   N = P->n[1]*u + P->n[0];
-  D = (((((((P->d[6]*u6)+(P->d[5]*u5))  + (P->d[4]*u4)) + (P->d[3]*u3)) + (P->d[2]*u2)) +  (P->d[1]*u)) + P->d[0]);
+  D = (P->d[0] +
+       ((P->d[1]*u) +
+	((P->d[2]*u2) +
+	 ((P->d[3]*u3) +
+	  ((P->d[4]*u4) +
+	   ((P->d[5]*u5) +
+	    ((P->d[6]*u6))))))));
   ooD = 1./D;
 
   dN = P->d1n[0];
-  dD = ((((((P->d1d[5]*u5) + (P->d1d[4]*u4)) + (P->d1d[3]*u3)) + (P->d1d[2]*u2)) +  (P->d1d[1]*u)) + P->d1d[0]);
+  dD = (P->d1d[0] +
+	((P->d1d[1]*u) +
+	 ((P->d1d[2]*u2) +
+	  ((P->d1d[3]*u3) +
+	   ((P->d1d[4]*u4) +
+	    ((P->d1d[5]*u5)))))));
   
   *A = N*ooD;
   *dA_u = (-N*dD + D*dN)*SQ(ooD);
   
   if (d2A_u!=NULL) {	  
     d2N = 0.;
-    d2D = (((((P->d2d[4]*u4) + (P->d2d[3]*u3)) + (P->d2d[2]*u2)) +  (P->d2d[1]*u)) + P->d2d[0]);
+    d2D = (P->d2d[0] +
+	   ((P->d2d[1]*u) +
+	    ((P->d2d[2]*u2) +
+	     ((P->d2d[3]*u3) +
+	      ((P->d2d[4]*u4))))));
+
     *d2A_u = (2*N*SQ(dD) - 2*D*dD*dN - D*N*d2D + SQ(D)*d2N)*SQ(ooD)*ooD;
   }  
 }
@@ -47,18 +63,29 @@ void eob_met_A_4PNP14_n (double u, void *coefs,
   double N,D, dN,dD, d2N,d2D, ooD;
 
   N = P->n[1]*u + P->n[0];
-  D = ((((((P->d[5]*u5)+(P->d[4]*u4)) + (P->d[3]*u3)) + (P->d[2]*u2)) +  (P->d[1]*u)) + P->d[0]);
+  D = (P->d[0] +
+       ((P->d[1]*u) +
+	((P->d[2]*u2) +
+	 ((P->d[3]*u3) +
+	  ((P->d[4]*u4) +
+	   ((P->d[5]*u5)))))));
   ooD = 1./D;
 
   dN = P->d1n[0];
-  dD = (((((P->d1d[4]*u4) + (P->d1d[3]*u3)) + (P->d1d[2]*u2)) +  (P->d1d[1]*u)) + P->d1d[0]);
-  
+  dD = (P->d1d[0] +
+	((P->d1d[1]*u) +
+	 ((P->d1d[2]*u2) +
+	  ((P->d1d[3]*u3) +
+	   ((P->d1d[4]*u4))))));
   *A = N*ooD;
   *dA_u = (-N*dD + D*dN)*SQ(ooD);
   
   if (d2A_u!=NULL) {	  
     d2N = 0.;
-    d2D = ((((P->d2d[3]*u3) + (P->d2d[2]*u2)) +  (P->d2d[1]*u)) + P->d2d[0]);
+    d2D = (P->d2d[0] +
+	   ((P->d2d[1]*u) +
+	    ((P->d2d[2]*u2) +
+	     ((P->d2d[3]*u3)))));
     *d2A_u = (2*N*SQ(dD) - 2*D*dD*dN - D*N*d2D + SQ(D)*d2N)*SQ(ooD)*ooD;
   }  
 }
@@ -73,18 +100,27 @@ void eob_met_A_3PNP13_n (double u, void *coefs,
   double N,D, dN,dD, d2N,d2D, ooD;
 
   N = P->n[1]*u + P->n[0];
-  D = (((((P->d[4]*u4) + (P->d[3]*u3)) + (P->d[2]*u2)) +  (P->d[1]*u)) + P->d[0]);
+  D = (P->d[0] +
+       ((P->d[1]*u) +
+	((P->d[2]*u2) + 
+	 ((P->d[3]*u3) +
+	  ((P->d[4]*u4))))));
   ooD = 1./D;
 
   dN = P->d1n[0];
-  dD = ((((P->d1d[3]*u3) + (P->d1d[2]*u2)) +  (P->d1d[1]*u)) + P->d1d[0]);
-  
+  dD = (P->d1d[0] + 
+	((P->d1d[1]*u) +
+	 ((P->d1d[2]*u2) +
+	  ((P->d1d[3]*u3)))));
+
   *A = N*ooD;
   *dA_u = (-N*dD + D*dN)*SQ(ooD);
   
   if (d2A_u!=NULL) {	  
     d2N = 0.;
-    d2D = (((P->d2d[2]*u2) +  (P->d2d[1]*u)) + P->d2d[0]);
+    d2D = (P->d2d[0] +
+	   ((P->d2d[1]*u) +
+	    ((P->d2d[2]*u2))));
     *d2A_u = (2*N*SQ(dD) - 2*D*dD*dN - D*N*d2D + SQ(D)*d2N)*SQ(ooD)*ooD;
   }
 }
