@@ -1,5 +1,6 @@
 /**
  * \file types.h
+ *
  * \brief Special types for EOB code.
  *
  * Defines the special types used in the EOB code. 

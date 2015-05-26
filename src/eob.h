@@ -1,5 +1,6 @@
 /**
  * \file eob.h
+ *
  * \brief Main header file for EOB code.
  *
  * \author S.Bernuzzi

@@ -1,6 +1,8 @@
 /**
  * \file waveform.h
+ *
  * \brief Function prototypes for EOB waveform.
+ *
  * \author S.Bernuzzi
  */
 

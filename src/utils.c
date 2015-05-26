@@ -1,6 +1,8 @@
 /**
  * \file utils.c
+ *
  * \brief Functions and macros for basic support 
+ *
  * \author S.Bernuzzi
  */
 

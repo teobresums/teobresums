@@ -1,9 +1,13 @@
-/** \brief parameters.c
- *         Parameters Manager
+/**
+ * \file parameters.c
+ *
+ * \brief Parameters manager.
  * 
  * Wrappers for libconfig routines
  * http://www.hyperrealm.com/libconfig/
  * http://www.hyperrealm.com/libconfig/libconfig_manual.html 
+ *
+ * \author S.Bernuzzi 
  */
 
 #include "eob.h"

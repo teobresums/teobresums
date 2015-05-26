@@ -1,5 +1,6 @@
 /**
  * \file utils.h
+ *
  * \brief Function prototypes and macros for basic support.
  *
  * \author S.Bernuzzi

@@ -1,5 +1,6 @@
 /**
  * \file wavtools.c
+ *
  * \brief Routines for multipolar waveform manipulations.
  *
  * Contains the basic routines to manipulate the multipolar

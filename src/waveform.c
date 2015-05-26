@@ -1,6 +1,8 @@
 /**
  * \file waveforms.c
+ *
  * \brief Routines to construct the EOB multipolar waveform.
+ *
  * \author S.Bernuzzi
  */
 
