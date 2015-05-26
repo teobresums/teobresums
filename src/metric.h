@@ -9,7 +9,7 @@
  * \fn void eob_met_A_5PNP15_n (double u, void *coefs, 
  *                              double *A, double *dA_u, double *d2A_u)
  *
- * \brief Metric function \f$A(u)\f$, 5PN expression resummed Pade(1,5).
+ * \brief Metric potential \f$A(u)\f$, 5PN expression resummed Pade(1,5).
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  ACoefs PN coefficients
@@ -25,7 +25,7 @@ void eob_met_A_5PNP15_n (double u, void *coefs,
  * void eob_met_A_4PNP14_n (double u, void *coefs, 
  *                          double *A, double *dA_u, double *d2A_u)
  *
- * \brief Metric function \f$A(u)\f$, 4PN expression resummed Pade(1,4).
+ * \brief Metric potential \f$A(u)\f$, 4PN expression resummed Pade(1,4).
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  ACoefs PN coefficients
@@ -41,7 +41,7 @@ void eob_met_A_4PNP14_n (double u, void *coefs,
  * void eob_met_A_3PNP13_n (double u, void *coefs,
  *   			    double *A, double *dA_u, double *d2A_u)
  *
- * \brief Metric function \f$A(u)\f$, 3PN expression resummed Pade(1,3).
+ * \brief Metric potential \f$A(u)\f$, 3PN expression resummed Pade(1,3).
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  ACoefs PN coefficients
@@ -57,7 +57,7 @@ void eob_met_A_3PNP13_n (double u, void *coefs,
  * \fn void eob_met_A_5PN_n (double u, void *coefs,
  *   		             double *A, double *dA_u, double *d2A_u)
  *
- * \brief Metric function \f$A(u)\f$, 5PN expression.
+ * \brief Metric potential \f$A(u)\f$, 5PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  ACoefs PN coefficients
@@ -73,7 +73,7 @@ void eob_met_A_5PN_n (double u, void *coefs,
  * \fn void eob_met_A_4PN_n (double u, void *coefs,
  *   		             double *A, double *dA_u, double *d2A_u)
  *
- * \brief Metric function \f$A(u)\f$, 4PN expression.
+ * \brief Metric potential \f$A(u)\f$, 4PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  ACoefs PN coefficients
@@ -89,7 +89,7 @@ void eob_met_A_4PN_n (double u, void *coefs,
  * \fn void eob_met_A_3PN_n (double u, void *coefs,
  * 		             double *A, double *dA_u, double *d2A_u)
  *
- * \brief Metric function \f$A(u)\f$, 3PN expression.
+ * \brief Metric potential \f$A(u)\f$, 3PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  ACoefs PN coefficients
@@ -105,7 +105,7 @@ void eob_met_A_3PN_n (double u, void *coefs,
  * \fn void eob_met_A_2PN_n (double u, void *coefs,
  *		      double *A, double *dA_u, double *d2A_u)
  *
- * \brief Metric function \f$A(u)\f$, 2PN expression.
+ * \brief Metric potential \f$A(u)\f$, 2PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  ACoefs PN coefficients
@@ -121,7 +121,7 @@ void eob_met_A_2PN_n (double u, void *coefs,
  * \fn void eob_met_A_1PN_n (double u, void *coefs,
  *		      double *A, double *dA_u, double *d2A_u)
  *
- * \brief Metric function \f$A(u)\f$, 1PN expression.
+ * \brief Metric potential \f$A(u)\f$, 1PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  ACoefs PN coefficients
@@ -170,7 +170,7 @@ double *eob_met_ACoefs (double nu);
  * \fn void eob_met_B_fromAD_n (double A, double dA, double D, double dD, 
  *			        double *B, double *dB)
  *
- * \brief  Metric function \f$B(u)\f$ from \f$A(u)\f$ and \f$D(u)\f$.
+ * \brief  Metric potential \f$B(u)\f$ from \f$A(u)\f$ and \f$D(u)\f$.
  *
  * \param[in]  A   \f$A(u)\f$
  * \param[in]  dA  \f$A'(u)\f$
@@ -186,7 +186,7 @@ void eob_met_B_fromAD_n (double A, double dA, double D, double dD,
  * \fn void eob_met_B_1PN_n (double u, double *BCoefs,
  *           		     double *D, double *dD)
  *
- * \brief Metric function \f$B(u)\f$, 1PN expression.
+ * \brief Metric potential \f$B(u)\f$, 1PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  DCoefs PN coefficients
@@ -200,7 +200,7 @@ void eob_met_B_1PN_n (double u, double *BCoefs,
 /**
  * \fn void eob_met_D_3PNP03_n (double u, double *DCoefs, double *D, double *dD)
  *
- * \brief Metric function \f$D(u)\f$, 3PN expression resummed Pade(0,3).
+ * \brief Metric potential \f$D(u)\f$, 3PN expression resummed Pade(0,3).
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  DCoefs PN coefficients
@@ -214,7 +214,7 @@ void eob_met_D_3PNP03_n (double u, double *DCoefs,
 /**
  * \fn void eob_met_D_3PN_n (double u, double *DCoefs, double *D, double *dD)
  *
- * \brief Metric function \f$D(r)\f$, 3PN expression.
+ * \brief Metric potential \f$D(r)\f$, 3PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  DCoefs PN coefficients
@@ -228,7 +228,7 @@ void eob_met_D_3PN_n (double u, double *DCoefs,
 /**
  * \fn void eob_met_D_2PN (double u, double *DCoefs, double *D, double *dD)
  *
- * \brief Metric function \f$D(u)\f$, 2PN expression.
+ * \brief Metric potential \f$D(u)\f$, 2PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  DCoefs PN coefficients
@@ -242,7 +242,7 @@ void eob_met_D_2PN_n (double u, double *DCoefs,
 /**
  * \fn void eob_met_D_1PN (double u, double *DCoefs, double *D, double *dD)
  *
- * \brief Metric function \f$D(u)\f$, 1PN expression.
+ * \brief Metric potential \f$D(u)\f$, 1PN expression.
  *
  * \param[in]  u      1/r coordinate
  * \param[in]  DCoefs PN coefficients
@@ -256,7 +256,7 @@ void eob_met_D_1PN_n (double u, double *DCoefs,
 /**
  * \fn double *eob_met_DCoefs (double nu)
  *
- * \brief Coefficients of the \f$D(r)\f$ metric function, up ot 3PN.
+ * \brief Coefficients of the \f$D(r)\f$ metric potential, up ot 3PN.
  *
  * \param[in]  nu symmetric mass ratio
  * \return     Allocated double array DCoefs of size = eobcode_met_D_PNcoefs
