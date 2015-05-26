@@ -12,17 +12,28 @@
 void array_sum_complex (domplex *x, domplex a, domplex *y, int size)
 {
   int i;
-  for (i = 0; i < size; i++) {
-    x[i] += a * y[i];
+  if (a==1.) {
+    for (i = 0; i < size; i++) {
+      x[i] += y[i];
+    }
+  } else {
+    for (i = 0; i < size; i++) {
+      x[i] += a * y[i];
+    }
   }
 }
 
 void array_sum_real (double *x, double a, double *y, int size)
 {
-  
   int i;
-  for (i = 0; i < size; i++) {
-    x[i] += a * y[i];
+  if (a==1.) { 
+    for (i = 0; i < size; i++) {
+      x[i] += y[i];
+    }
+  } else {
+    for (i = 0; i < size; i++) {
+      x[i] += a * y[i];
+    }
   }
 }
 
