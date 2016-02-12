@@ -56,7 +56,7 @@ void wav_phase (domplex *h, const int size, double *p);
 /**
  * \fn void wav_sumlm_complex (domplex *h, int Nt, int Nk, int *l, domplex *sum)
  * \brief Sum of complex multipolar waveform
- *        \f$\sum_{\ell=\ell_\text{min}}^{\ell=\ell_\text{max}}\sum_{m=0}^\ell
+ *        \f$\sum_{\ell=\ell_{min}}^{\ell=\ell_{max}}\sum_{m=0}^\ell
  *        h_{\ell m}\f$.  
  *
  * \param[in]  h   multipolar complex waveform
@@ -71,7 +71,7 @@ void wav_sumlm_complex (domplex *h, int Nt, int Nk, int *l, domplex *sum);
 /**
  * \fn void wav_sumlm_real (double *hlm, int Nt, int Nk, int *l, double *sum)
  * \brief Sum of real multipolar waveform
- *        \f$\sum_{\ell=\ell_\text{min}}^{\ell=\ell_\text{max}}\sum_{m=0}^\ell
+ *        \f$\sum_{\ell=\ell_{min}}^{\ell=\ell_{max}}\sum_{m=0}^\ell
  *        h_{\ell m}\f$ 
  *
  * \param[in]  h   multipolar real waveform
@@ -105,10 +105,10 @@ void lmk_free (tlmk *lmk);
  
 /**
  * \fn int lmindex_lmk (int lmin, int lmax, int *l, int *m, int *k) 
- * \brief Given \f$(\ell_\text{min},\ell_\text{max})\f$, return index
+ * \brief Given \f$(\ell_{min},\ell_{max})\f$, return index
  *        lists \f$\ell,m,k\f$.  
  *
- * \param[in]  lmin,lmax \f$(\ell_\text{min},\ell_\text{max})\f$
+ * \param[in]  lmin,lmax \f$(\ell_{min},\ell_{max})\f$
  * \param[out] l,m,k     \f$\ell,m,k\f$ int arrays
  * \return     int       size of \f$\ell,m,k\f$ arrays
  *

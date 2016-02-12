@@ -73,6 +73,8 @@ void eob_wav_hlmNewt_n (double r, double phi, double Omega,
 			domplex *hlmNewtCoefs,   
 			domplex *hlmNewt_n)
 {
+  eobcode_kmultipolar_index_lmkgive;
+
   double vphi  = r*Omega;
   double vphi2 = SQ(vphi);
   double vphi3 = vphi2*vphi;

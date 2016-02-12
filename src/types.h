@@ -11,25 +11,29 @@
  */
 
 /** 
- * \var typedef double complex domplex;
  * \brief Type definition for double complex.
  */
 typedef double complex domplex;
 
 /** 
- * \var typedef struct tPade
  * \brief Type definition for Pade coefficients.
- * \f$P^m_n(x) = \frac{n_0 + n_1 x + ... + n_{N-1} x^{N-1}}{d_0 + d_1 x + ... + d_{M-1} x^{M-1}}\f$
+ *
+ * \f$P^N_M(x) = \frac{n_0 + n_1 x + ... + n_{N-1} x^{N-1}}{d_0 + d_1 x + ... + d_{M-1} x^{M-1}}\f$
+ *
+ * Store Pade' coefficients \f$(n_i,d_i)\f$ and the coefficients of the derivatives of the numerator, denominator polynomials. 
  */
 typedef struct tPade {
-  int N,M;
-  double *n,*d;
-  double *d1n,*d1d;
-  double *d2n,*d2d;
+  int N; /** Pade numerator order */
+  int M; /** Pade denominator order */
+  double *n; /** coefficients numerator */
+  double *d; /** coefficients denominator */
+  double *d1n; /** coefficients numerator 1st derivative */
+  double *d1d; /** coefficients denominator 1st derivative */
+  double *d2n; /** coefficients numerator 2nd derivative */
+  double *d2d; /** coefficients denominator 2nd derivative */
 } tPade;
 
 /** 
- * \var typedef teobcode_PNorder
  * \brief Type definition for the formal post-Newtonian order of the model.
  */
 typedef teobcode_PNorder enum{
@@ -46,7 +50,6 @@ typedef teobcode_PNorder enum{
 };
 
 /** 
- * \var typedef struct tmet
  * \brief Type definition for EOB metric.
  *
  * Contains the storages for EOB metric variables. 
@@ -67,44 +70,44 @@ typedef struct tmet {
 } tmet;
 
 /** 
- * \var typedef struct tdyn
  * \brief Type definition for EOB dynamics.
  *
  * Contains the storages for EOB dynamical variables. 
  */
 typedef struct tdyn {
 
-  int Nt;
-  double *t;
+  int Nt; /** */
+  double *t; /** */
 
-  double *r;
-  double *phi;
-  double *Prs;
-  double *Pphi;
+  double *r; /** */
+  double *phi; /** */
+  double *Prs; /** */
+  double *Pphi; /** */
+  double *Pr; /** */
+  double *Omega; /** */
+  double *ddotr; /** */
 
-  double *Pr;  
-  double *Omega;
-  double *ddotr;
+  double *E; /** */
+  double *Heff; /** */
+  double *jhat; /** */
 
-  double *E;
-  double *Heff;
-  double *jhat;
-
-  double *NQCn;
+  double *NQCn; /** */
   
 } tdyn;
 
 /** 
- * \var typedef struct tlmk
  * \brief Type definition for multipolar indexes.
  *
  * Collection of multipolar indexes.
  *
- * The index k runs over all the mulipoles, the physical multipole  
- * index can be found as l[k] or m[k]. Typically, one has
- * k    = 0 1 2 3 4 5 6 7 8 ...
- * l[k] = 2 2 2 3 3 3 3 4 4 ...
- * m[k] = 0 1 2 0 1 2 3 0 1 ...
+ * The index \c k \c runs over all the mulipoles, the physical multipole  
+ * index can be found as \c l[k] \c or \c m[k]\c. Typically, one has
+ *
+ * \c k = 0 1 2 3 4 5 6 7 8 ... eobcode_kmax \c
+ *
+ * \c l[k] = 2 2 2 3 3 3 3 4 4 ... eobcode_lmax \c 
+ *
+ * \c m[k] = 0 1 2 0 1 2 3 0 1 ... eobcode_lmax \c
  */
 typedef struct tlmk {
   int *l, *m, *k;
@@ -120,54 +123,47 @@ typedef struct tlmk {
 } tlmk;
 
 /** 
- * \var typedef struct twav
  * \brief Type definition for multipolar waveform.
  *
  * The multipolar waveform is a complex or a real time series of
- * dimension size = Nt x Nk = (times) x (multipoles)   
+ * dimension \c size = Nt x Nk = (times) x (multipoles) \c   
  */
 typedef struct twav {
 
-  int Nt;
-  int Nk;
-  int size;
-  tlmk *lmk;
+  int Nt; /** */
+  int Nk; /** */
+  int size; /** */
+  tlmk *lmk; /** */
 
-  domplex *hlm;
-  double *amp; 
-  double *phi;
-  double *omg;
+  domplex *hlm; /** */
+  double *amp; /** */
+  double *phi; /** */
+  double *omg; /** */
 
-  domplex *hlmNewt;
-  double *Seff; 
-  double *Tlm; 
-  double *flm; 
-  double *rholm; 
-  double *expdlm; 
-  double *deltalm; 
+  domplex *hlmNewt; /** */
+  double *Seff; /** */
+  double *Tlm; /** */
+  double *flm; /** */
+  double *rholm; /** */
+  double *expdlm; /** */
+  double *deltalm; /** */ 
 
-  double *NQCab;
+  double *NQCab; /** */
  
 } twav;
 
 /** 
- * \var typedef struct teob
  * \brief Type definition for EOB variables.
  *
  * A container for storages and parameters.
  */
 typedef struct teob {
   
-  int Nt;
-  int Nk;
-  int size;
+  tlmk lmk; /** */
+  tmet *met; /** */
+  tdyn *dyn; /** */
+  twav *wav; /** */
 
-  tlmk lmk;
-
-  tmet *met;
-  tdyn *dyn;
-  twav *wav;
-
-  teobcode_PNorder PNorder;
+  teobcode_PNorder PNorder; /** */
 
 } teob;

@@ -1,5 +1,6 @@
 /**
  * \file numtools.c
+ *
  * \brief Numerical routines.
  *
  * \author S.Bernuzzi
@@ -192,7 +193,7 @@ void Pade_free (tPade *P)
 /* Euler log */
 double Eulerlog (double x, int m)
 {
-  static const double EG = EulerGamma;
+  static double EG = EulerGamma;
   return ( EG + log(2.*m*sqrt(x)) );
 }
 
