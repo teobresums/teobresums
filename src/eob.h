@@ -20,7 +20,7 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_odeiv.h>
 
-#define eobcode_info "EOB Code (c) S.Bernuzzi, A.Nagar"
+#define eobcode_info "EOB IHES Code"
 #define eobcode_usage {printf("usage: \t %s parfile\n", argv[0]);exit(1);} 
 
 #define eobcode_dyn_vars 4
