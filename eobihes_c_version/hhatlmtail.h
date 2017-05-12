@@ -1,0 +1,66 @@
+//
+//  hhatlmtail.h
+//
+//  Created by Philipp Fleig on 17/03/2016.
+//  Copyright © 2016 Philipp Fleig. All rights reserved.
+//
+
+#ifndef hhatlmtail_h
+#define hhatlmtail_h
+
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf.h>
+#include <gsl/gsl_complex.h>
+#include <gsl/gsl_complex_math.h>
+#include <gsl/gsl_sf_gamma.h>
+#include "cmath"
+
+vector<gsl_complex> hhatlmTail(const double Omega, const double Hreal, const double bphys, int L[], int M[]){
+
+/*EOBhhatlmTail Computes the tail contribution to the resummed wave.
+%
+%   tlm = EOBTail(L,M, Omega,E, bphys)
+%
+%   Reference(s)
+%   Damour, Iyer & Nagar, PRD 79, 064004 (2009)
+%
+*/
+ 
+    int kmax  = 35;
+    
+    const double pi = M_PI;
+    
+    double k;
+    double hhatk;
+    
+    gsl_sf_result num_rad;
+    gsl_sf_result num_phase;
+    gsl_sf_result denom_rad;
+    gsl_sf_result denom_phase;
+    double ratio_rad;
+    double ratio_ang;
+    
+    double tlm_rad;
+    double tlm_phase;
+    vector<gsl_complex> tlm(kmax);
+    
+    for (int i=kmax; i--;) {
+            k = M[i] * Omega;
+            hhatk = k * Hreal;
+        
+            gsl_sf_lngamma_complex_e(L[i] + 1., -2.*hhatk, &num_rad, &num_phase);
+            gsl_sf_lngamma_complex_e(L[i] + 1., 0., &denom_rad, &denom_phase);
+        
+            ratio_rad=num_rad.val-denom_rad.val;
+            ratio_ang=num_phase.val-0.;
+            
+            tlm_rad = ratio_rad + pi * hhatk;
+            tlm_phase = ratio_ang + 2.*hhatk*log(2.*k*bphys);
+            
+            tlm[i].dat[0]=exp(tlm_rad);
+            tlm[i].dat[1]=tlm_phase;
+        }
+        return tlm;
+    }
+
+#endif /* hhatlmtail_h */

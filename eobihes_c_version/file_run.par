@@ -1,0 +1,9 @@
+NQC 1
+tidal 0
+RWZ 0
+speedy 1
+dynamics 1
+waveform 1
+lm 1
+dt 0.5
+solver_scheme 0

@@ -1,0 +1,307 @@
+//
+//  main.cpp
+//
+//  Created by Philipp Fleig on 11/02/2016.
+//  Copyright © 2016 Philipp Fleig. All rights reserved.
+//
+
+#include <iostream>
+#include <list>
+#include <fstream>
+#include <stdio.h>
+#include <time.h>
+#include <cmath>
+#include <string>
+
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_odeiv2.h>
+#include "RHS.h"
+#include <vector>
+#include "initial.h"
+#include "s_initial.h"
+
+#include "s_RHS.h"
+#include "s_waveform.h"
+#include "QNMHybridFitCab.h"
+#include "HealyBBHFitRemnant.h"
+#include "ringdown.h"
+#include "input_struc.h"
+#include "multipole_index.h"
+#include "interpolator_wf.h"
+#include "AdiabLR.h"
+#include "read_config.h"
+#include "file_names.h"
+#include "find_a1a2a3.h"
+//#include "s_Hamiltonian.h"
+//#include "interp_grid.h"
+
+#include <sys/stat.h>
+
+using namespace::std;
+
+int main (int argc,char* argv[]) {
+    
+    int lm,solver_scheme;
+    double q,r0,dt,chi1,chi2,r_min,rLR,nu;
+    
+    q = atof(argv[1]);
+    chi1 = atof(argv[2]);
+    chi2 = atof(argv[3]);
+    r0 = atof(argv[4]);
+    
+    input params = read_config(q,chi1,chi2,r0);
+    
+    lm = params.lm;
+    q = params.q;
+    nu = params.nu;
+    r0 = params.r0;
+    dt = params.dt;
+    solver_scheme = params.solver_scheme;
+    
+    if (params.tidal==true) {
+        rLR = AdiabLR(&params);
+        params.rLR = rLR;
+        r_min = rLR;
+        printf("%s %.16e \n","rLR",params.rLR);
+    }
+    
+    double r,prstar,phi,pphi;
+    
+    mkdir("data",0777); // creating folder with permission to read, write and execute
+    
+    //Output file definitions
+    vector<string> fnames = file_names(&params);
+    ofstream data(fnames[0].c_str());
+    ofstream wave(fnames[1].c_str());
+    ofstream QOmg(fnames[2].c_str());
+    ofstream Afunc(fnames[3].c_str());
+    ofstream init(fnames[4].c_str());
+    ofstream time_step(fnames[5].c_str());
+    ofstream n1245(fnames[6].c_str());
+    init.precision(dbl::max_digits10);
+    
+    //Defining data vectors and variables
+    double MOmg;
+    
+    std::vector<gsl_complex> hlm_vec={};
+    std::vector<double> hlm_rad_vec={};
+    std::vector<double> hlm_phase_vec={};
+    std::vector<double> t_vec={};
+    std::vector<double> MOmg_vec={};
+    std::vector<double> r_vec={};
+    std::vector<double> pph_vec={};
+    std::vector<double> prstar_vec={};
+    std::vector<double> Omg_orb_vec={};
+    std::vector<double> ddotr_vec={};
+    
+    //Computing the initial conditions
+    vector<double> initial_data(7);
+    gsl_odeiv2_system sys = {rhs, NULL , 4, &params};
+    
+    if (params.spin==true) { //Spining case
+        
+        sys = {s_RHS, NULL , 4, &params};
+        initial_data = s_initial(&params);
+        
+    }else if (params.spin==false){ //Non spining case
+        
+        sys = {rhs, NULL , 4, &params};
+        initial_data = initial(&params);
+        
+    }
+    init << "r" << "\t" << "p_phi" << "\t" << "p_r*" << "\t" << "p_r" << "\t" << "j" << "\t" << "E0" << "\t" << "Omega_j" << endl;
+    init << initial_data[0] << "\t" << initial_data[1] << "\t" << initial_data[2] << "\t" << initial_data[3] << "\t" << initial_data[4] << "\t" << initial_data[5] << "\t" << initial_data[6] << endl;
+    printf ("%.20e %.20e %.20e %.20e %.20e %.20e %.20e \n", initial_data[0], initial_data[1], initial_data[2], initial_data[3], initial_data[4], initial_data[5], initial_data[6]);
+    
+    double t = 0.0;
+    double y[4];
+    
+    //initial conditions
+    y[0]=initial_data[0]; //r
+    y[1]=0.; //phi
+    y[2]=initial_data[2]; //prstar
+    y[3]=initial_data[1]; //pphi
+    
+    double final_mass = HealyBBHFitRemnant(chi1, chi2, q);
+    printf("%s %.8e \n","final mass", final_mass);
+    
+    clock_t start, end;
+    start = clock();
+    
+    //initialize ODE system solver
+    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
+    gsl_odeiv2_step * s =
+    gsl_odeiv2_step_alloc (T, 4);
+    gsl_odeiv2_control * c =
+    //gsl_odeiv2_control_standard_new(1e-16, .1, 0., 1.);
+    //gsl_odeiv2_control_yp_new (1.e-17, 1.e-16);
+    //gsl_odeiv2_control_yp_new (0, 1);
+    gsl_odeiv2_control_y_new (1.e-13, 1.e-11);
+    //gsl_odeiv2_control_yp_new (1.e-13, 1.e-11);
+    gsl_odeiv2_evolve * e =
+    gsl_odeiv2_evolve_alloc (4);
+    gsl_odeiv2_driver * d =
+    gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd,1e-2, 1000., 1000.);
+    //gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd,1e-16, 1.e-13, 1.e-9);
+    
+    t = 0.0;
+    double t1 = 1.e15;
+    double h = 0.0001;
+    double r_LSO=6.0;
+    
+    double MOmg_prev = 0.;
+    bool stop_flag = false;
+    bool MOmgpeak_flag = false;
+    double t_stop = 0.;
+    double Omg =0.;
+    double Omg_orb = 0.;
+    double A = 0.;
+    double ddotr = 0.;
+    while (stop_flag == false) {
+        //while (y[0]>r_min) {
+        
+        switch (solver_scheme) {
+            case 0:{
+                int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
+                time_step << t << "\t" << h << "\t" << y[3] << endl;
+                if (status != GSL_SUCCESS) {
+                    break;
+                }
+                break;
+            }
+            case 1:{
+                if (y[0]>r_LSO) {
+                    int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
+                    if (status != GSL_SUCCESS) {
+                        break;
+                    }
+                } else {
+                    double ti = t+dt;
+                    int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
+                    if (status != GSL_SUCCESS) {
+                        printf ("error, return value=%d\n", status);
+                        break;
+                    }
+                }
+                break;
+            }
+            case 2:{
+                double ti = t+dt;
+                int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
+                if (status != GSL_SUCCESS) {
+                    printf ("error, return value=%d\n", status);
+                    break;
+                }
+                break;
+            }
+            default:{
+                int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
+                if (status != GSL_SUCCESS) {
+                    break;
+                }
+                break;
+            }
+        }
+        
+        int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
+        if (status != GSL_SUCCESS) {
+            break;
+        }
+        
+        //Read out computation
+        r=y[0]; phi=y[1]; prstar=y[2]; pphi=y[3];
+        
+        if (r!=r) { //checking whether the dynamics produces NaN values; this can happen if radius r becomes too small
+            //printf("%s \n","dynamics is producing NaN values");
+        } else {
+            
+            /*Write and print dynamics*/
+            if (params.dynamics==true) {
+                data << t << "\t" << r << "\t" << phi << "\t" << prstar << "\t" << pphi << endl;
+            }
+            
+            //printf("%s %.20e %.20e %.20e %.20e %.20e \n","dynamics",t,Omg,Omg_orb,A,ddotr);
+            
+            /*Waveform computation*/
+            vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
+            
+            //printf("%s %.20e %.20e \n","dynamics",h_form[lm].dat[0],h_form[lm].dat[1]);
+            
+            //append dynamics and waveform to vectors
+            hlm_rad_vec.push_back(h_form[lm].dat[0]);
+            hlm_phase_vec.push_back(h_form[lm].dat[1]);
+            
+            t_vec.push_back(t);
+            MOmg_vec.push_back(Omg);
+            r_vec.push_back(r);
+            pph_vec.push_back(pphi);
+            prstar_vec.push_back(prstar);
+            Omg_orb_vec.push_back(Omg_orb);
+            ddotr_vec.push_back(ddotr);
+            
+        }
+        
+        /*Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards*/
+        MOmg = Omg;
+        if (MOmgpeak_flag==false) {
+            if (MOmg < MOmg_prev) {
+                MOmgpeak_flag = true;
+                t_stop = t + 10.;
+            } else {
+                MOmg_prev = MOmg;
+            }
+        } else {
+            if (t >= t_stop) {
+                stop_flag = true;
+            }
+        }
+    }
+    gsl_odeiv2_evolve_free (e); gsl_odeiv2_control_free (c); gsl_odeiv2_step_free (s);gsl_odeiv2_driver_free (d);
+    
+//  /*Interpolate quantities on a grid of width dt*/
+    int grid_length = (int)(t_vec.back()-t_vec[0])/dt + 2;
+    vector<double> t_vecg(grid_length);
+    int i=0;
+    double ti= 0.;
+    for (ti = t_vec[0]; ti < t_vec.back(); ti += dt)
+    {
+        t_vecg[i] = ti;
+        i++;
+    }
+//    vector<double> r_vecg = interp_grid(t_vec,r_vec,dt);
+//    vector<double> MOmg_vecg = interp_grid(t_vec,MOmg_vec,dt);
+//    vector<double> pph_vecg = interp_grid(t_vec,pph_vec,dt);
+//    vector<double> prstar_vecg = interp_grid(t_vec,prstar_vec,dt);
+//    vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
+//    vector<double> hlm_rad_vecg = interp_grid(t_vec,hlm_rad_vec,dt);
+//    vector<double> ddotr_vecg = interp_grid(t_vec,ddotr_vec,dt);
+//    vector<double> OmgOrb_vecg = interp_grid(t_vec,Omg_orb_vec,dt);
+//    //NQCs
+//    vector<gsl_complex> nqc = find_a1a2a3_hlm(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_vecg,n1245,OmgOrb_vecg,hlm_rad_vecg,ddotr_vecg,&params);
+    
+    //NQCs
+    vector<gsl_complex> nqc = find_a1a2a3_hlm(t_vec,r_vec,MOmg_vec,pph_vec,prstar_vec,hlm_phase_vec,n1245,Omg_orb_vec,hlm_rad_vec,ddotr_vec,&params);
+    for (int i=hlm_rad_vec.size(); i--; ) {
+        hlm_rad_vec[i] = hlm_rad_vec[i] * nqc[i].dat[0];
+        hlm_phase_vec[i] = hlm_phase_vec[i] + nqc[i].dat[1];
+    }
+    
+    /*ringdown attachment*/
+    if (params.tidal==false && params.spin==false) {
+        ringdown(nu,q,lm,dt,final_mass,t_vec,MOmg_vec,hlm_rad_vec,hlm_phase_vec);
+    }
+    
+    /*compute interpolation of waveform on grid and write to output file*/
+    interpolate_wf(dt, t_vec, hlm_rad_vec,hlm_phase_vec,MOmg_vec,params.waveform,wave,QOmg,final_mass);
+    
+    //cout << "interpolation done" << endl;
+    
+    end = clock();
+    
+    cout << "Time required for execution: "
+    << (double)(end-start)/CLOCKS_PER_SEC
+    << " seconds." << "\n\n";
+    
+    return 0;
+}
