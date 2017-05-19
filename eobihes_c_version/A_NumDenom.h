@@ -20,7 +20,6 @@
 #ifndef _A_NumDenom_h
 #define _A_NumDenom_h
 
-#include <math.h>
 #include <vector>
 
 using namespace::std;

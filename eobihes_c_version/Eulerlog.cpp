@@ -17,9 +17,15 @@
  *  MA  02111-1307  USA
  */
 
-#ifndef _HorizonFlux_h
-#define _HorizonFlux_h
+#include <math.h>
+#include <gsl/gsl_math.h>
+#include "Eulerlog.h"
 
-double HorizonFlux(const double x, const double Heff, const double jhat, const double nu);
+double Eulerlog(const double x,const double m)
+{
+    
+    const double EulerGamma = 0.5772156649015328606065121;
+    const double Log2       = 0.6931471805599453094172321;
 
-#endif /* HorizonFlux_h */
+    return EulerGamma + Log2 + log(m) + 0.5*log(x);
+}

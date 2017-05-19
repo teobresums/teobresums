@@ -1,14 +1,27 @@
-//
-//  input_struc.h
-//
-//  Created by Philipp Fleig on 16/10/2016.
-//  Copyright © 2016 Philipp Fleig. All rights reserved.
-//
+/**
+ * Copyright (C) 2017 Alessandro Nagar, Gregorio Carullo, Ka Wa Tsang, Philipp Fleig, Sebastiano Bernuzzi, Walter Del Pozzo
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with with program; see the file COPYING. If not, write to the
+ *  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ *  MA  02111-1307  USA
+ */
 
-#ifndef input_struc_h
-#define input_struc_h
+#ifndef _input_struc_h
+#define _input_struc_h
 
-struct input {         /* declaration of structure for input parameters */
+struct input /** Declaration of the structure for input parameters */
+{
     int   lm;
     double q;
     double nu;
@@ -34,11 +47,20 @@ struct input {         /* declaration of structure for input parameters */
     bool waveform;
     bool spin;
     double rLR;
-    int solver_scheme;
     double cN3LO;
-    
+    int solver_scheme;
+
 };
 
-struct input_flags {bool NQC;bool spin;bool tidal;bool RWZ;bool speedy;bool dynamics;bool waveform;};
+struct input_flags
+{
+    bool NQC;
+    bool spin;
+    bool tidal;
+    bool RWZ;
+    bool speedy;
+    bool dynamics;
+    bool waveform;
+};
 
 #endif /* input_struc_h */

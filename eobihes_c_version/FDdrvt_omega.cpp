@@ -17,9 +17,32 @@
  *  MA  02111-1307  USA
  */
 
-#ifndef _HorizonFlux_h
-#define _HorizonFlux_h
+#include <vector>
+#include "FDdrvt_omega.h"
 
-double HorizonFlux(const double x, const double Heff, const double jhat, const double nu);
-
-#endif /* HorizonFlux_h */
+vector<double> FDdrvt_omega(vector<double> f, double dt)
+{
+    
+    const double oodt  = 1./dt;
+    const double c = 1./12.;
+    vector<double> d1f(f.size()-2);
+    
+    for (long int i=0; i<f.size()-2; i++)
+    {
+        switch (i)
+        {
+            case 0:
+                d1f[i] = c*(-25.*f[i] + 48.*f[i+1] - 36.*f[i+2] + 16.*f[i+3] - 3.*f[i+4])*oodt;
+                break;
+            case 1:
+                d1f[i] = c*(-3.*f[i-1] - 10.*f[i] + 18.*f[i+1] - 6.*f[i+2] + f[i+3])*oodt;
+                break;
+            default:
+                d1f[i] = c*(8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oodt;
+                break;
+        }
+    }
+    
+    return d1f;
+    
+}
