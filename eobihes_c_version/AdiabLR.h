@@ -21,5 +21,6 @@
 #define _AdiabLR_h
 
 double fLR(double r, void *params);
+double AdiabLR(void *params);
 
 #endif /* _AdiabLR_h */

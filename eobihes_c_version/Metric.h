@@ -24,7 +24,7 @@ const double pi = M_PI;
 
 using namespace::std;
 
-vector<double> acoeffs(const double r, const double nu){
+inline vector<double> acoeffs(const double r, const double nu){
     
     vector<double> a(8);
     const double u=1./r;
@@ -53,7 +53,7 @@ vector<double> acoeffs(const double r, const double nu){
     return a;
 }
 
-vector<double> Metric(const double r,void *params, bool nnlo_flag){//const double nu,bool tidal_flag,bool nnlo_flag){
+inline vector<double> Metric(const double r,void *params, bool nnlo_flag){//const double nu,bool tidal_flag,bool nnlo_flag){
     
     double nu = (*(input *)params).nu;
     bool tidal_flag = (*(input *)params).tidal;
@@ -210,7 +210,7 @@ vector<double> Metric(const double r,void *params, bool nnlo_flag){//const doubl
     return data;
 }
 
-vector<double> A5pnP15_dd(const double r,void *params){
+inline vector<double> A5pnP15_dd(const double r,void *params){
     
     double nu = (*(input *)params).nu;
     bool tidal_flag = (*(input *)params).tidal;
