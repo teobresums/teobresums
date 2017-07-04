@@ -43,8 +43,8 @@ double s_ddotr(double t,double r,double pph,double prstar,void *params){
     bool tidal_flag = (*(input *)params).tidal;
     
     // Kerr parameter
-    double a1  = (*(input *)params).a1;
-    double a2  = (*(input *)params).a2;
+    double a1  = (*(input *)params).a1; //a1 = X1*chi1
+    double a2  = (*(input *)params).a2; //a2 = X2*chi2
     double aK2 = (*(input *)params).aK2;
 
     // shorthands
@@ -70,7 +70,8 @@ double s_ddotr(double t,double r,double pph,double prstar,void *params){
     }
     
     vector<double> rc_vec;
-    rc_vec = s_get_rc(r,aK2,params);//[rc, drc, d2rc]
+    //rc_vec = s_get_rc(r,aK2,params);//[rc, drc, d2rc]
+    rc_vec = s_get_rc(r,params);//[rc, drc, d2rc]
     double rc = rc_vec[0];
     double drc_dr = rc_vec[1];
     double uc = 1/rc;

@@ -20,27 +20,27 @@
 double HealyBBHFitRemnant(double chi1,double chi2, double q)
 {
 
-    /*
-    %
-    % Computes the mass and angular momentum of the final black hole
-    % implementing the fits of Healey, Lousto and Zochlower (HLZ),
-    % arXiv: 1406.7295, published as PRD 90, 104004 (2014)
-    %
-    % Usage: [a, Mbh] = EOB_HealyBBHFitRemnant(q, chi1, chi2)
-    %
-    % WARNING: the formula uses the convention that M2 > M1, so that
-    %          chi2 should refer to the black hole with the largest
-    %          mass. In the EOB code, this is given by chi1, since
-    %          in EOB code we use the convention that M1 > M2
-    %
-    %          Here it is q=M2/M1, with M2>M1
-    %
-    % Improved with (Eisco, Jisco) + iterative procedure 23/02/2016
-
-    % parameters (TABLE VI)
+    /**
+    
+    * Computes the mass and angular momentum of the final black hole
+    * implementing the fits of Healey, Lousto and Zochlower (HLZ),
+    * arXiv: 1406.7295, published as PRD 90, 104004 (2014)
+    *
+    * Usage: [a, Mbh] = EOB_HealyBBHFitRemnant(q, chi1, chi2)
+    *
+    * WARNING: the formula uses the convention that M2 > M1, so that
+    *          chi2 should refer to the black hole with the largest
+    *          mass. In the EOB code, this is given by chi1, since
+    *          in EOB code we use the convention that M1 > M2
+    *
+    *          Here it is q=M2/M1, with M2>M1
+    *
+    * Improved with (Eisco, Jisco) + iterative procedure 23/02/2016
+    * parameters (TABLE VI)
     */
 
-    // final mass               % angular momentum
+    /** Final mass:                    Angular momentum: */
+     
     double M0  =  0.951507;            double L0  =  0.686710;
     double K1  = -0.051379;            double L1  =  0.613247;
     double K2a = -0.004804;            double L2a = -0.145427;
@@ -63,15 +63,15 @@ double HealyBBHFitRemnant(double chi1,double chi2, double q)
 
 
 
-    // parameters
+    /** Parameters */
     double nu      = q/((1.+q)*(1.+q));
-    // masses: convention here is that m2>m1
+    /** Masses: convention here is that m2>m1 */
     double X2      = 0.5*(1.+sqrt(1.-4*nu));
     double X1      = 1.-X2;
-    // spin variables
+    /** Spin variables */
     double s1      = X1*X1*chi1;
     double s2      = X2*X2*chi2;
-    double S       = s1 + s2; // spins
+    double S       = s1 + s2;
     double S2      = S*S;
     double S3      = S*S2;
     double S4      = S2*S2;
@@ -79,14 +79,14 @@ double HealyBBHFitRemnant(double chi1,double chi2, double q)
     double Delta2  = Delta*Delta;
     double Delta3  = Delta*Delta2;
     double Delta4  = Delta2*Delta2;
-    // mass ratio variables
+    /** Mass ratio variables */
     double deltam  = -sqrt(1-4*nu); // X1 - X2
     double deltam2 =  deltam*deltam;
     double deltam3 =  deltam*deltam2;
     double deltam4 =  deltam*deltam3;
     double deltam6 =  deltam2*deltam4;
 
-    // initialize the angular momentum
+    /** Initialize the angular momentum */
     double a0 = s1 + s2;
     int a0_sign = 0.;
   
@@ -103,7 +103,7 @@ double HealyBBHFitRemnant(double chi1,double chi2, double q)
         a0_sign=-1;
     }
 
-// set-up an interative procedure to compute properly the "isco" quantities
+    /** Set-up an interative procedure to compute properly the "isco" quantities */
 
     double a2;
     double Z1;
@@ -126,8 +126,7 @@ double HealyBBHFitRemnant(double chi1,double chi2, double q)
         Eisco  = (1 - 2.*uisco + a0*pow(uisco,3./2.))/sqrt(1-3*uisco + 2*a0*pow(uisco,3./2.));
         Jisco  = 2./(sqrt(3.*risco))*(3.*sqrt(risco)-2.*a0);
         
-        // dimensionless spin
-        // J/Mbh^2
+        /** Dimensionless spin: J/Mbh^2 */
         abh = (4*nu)*(4*nu)*(L0 + L1*S + L2a*Delta*deltam + L2b*S2 + L2c*Delta2 + L2d*deltam2 + L3a*Delta*S*deltam + L3b*S*Delta2 + L3c*S3 + L3d*S*deltam2 + L4a*Delta*S2*deltam + L4b*Delta3*deltam + L4c*Delta4 + L4d*S4 + L4e*Delta2*S2 + L4f*deltam4 + L4g*Delta*deltam3 + L4h*Delta2*deltam2 + L4i*S2*deltam2) + S*(1+8*nu)*deltam4 + nu*Jisco*deltam6;
 
         Mbh = (4*nu)*(4*nu)*(M0 + K1*S + K2a*Delta*deltam + K2b*S2 + K2c*Delta2 + K2d*deltam2 + K3a*Delta*S*deltam + K3b*S*Delta2 + K3c*S3 + K3d*S*deltam2 + K4a*Delta*S2*deltam + K4b*Delta3*deltam + K4c*Delta4 + K4d*S4 + K4e*Delta2*S2 + K4f*deltam4 + K4g*Delta*deltam3 + K4h*Delta2*deltam2 + K4i*S2*deltam2) + (1 + nu*(Eisco + 11))*deltam6;

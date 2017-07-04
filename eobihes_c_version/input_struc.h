@@ -20,47 +20,7 @@
 #ifndef _input_struc_h
 #define _input_struc_h
 
-struct input /** Declaration of the structure for input parameters */
-{
-    int   lm;
-    double q;
-    double nu;
-    double r0;
-    double dt;
-    double chi1;
-    double chi2;
-    double S1;
-    double S2;
-    double S;
-    double Sstar;
-    double X1;
-    double X2;
-    double a1;
-    double a2;
-    double aK;
-    double aK2;
-    bool NQC;
-    bool tidal;
-    bool RWZ;
-    bool speedy;
-    bool dynamics;
-    bool waveform;
-    bool spin;
-    double rLR;
-    double cN3LO;
-    int solver_scheme;
+struct input;
+struct input_flags;
 
-};
-
-struct input_flags
-{
-    bool NQC;
-    bool spin;
-    bool tidal;
-    bool RWZ;
-    bool speedy;
-    bool dynamics;
-    bool waveform;
-};
-
-#endif /* input_struc_h */
+#endif /* _input_struc_h */

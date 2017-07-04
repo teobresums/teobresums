@@ -23,7 +23,8 @@
 
 using namespace::std;
 
-vector<double> deltalm(const double Hreal,const double Omega,const double nu){
+vector<double> deltalm(const double Hreal,const double Omega,const double nu)
+{
 
     /*
     EOBdeltalm Residual phase corrections delta_{lm} up to l=m=5.

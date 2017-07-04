@@ -8,6 +8,7 @@
 #ifndef Q_omega_h
 #define Q_omega_h
 
+//NOTE: routine not in use
 int Q_omega(vector<double> t,vector<double> f,std::ofstream& Qomg) {
     
     double dt    = t[1]-t[0];

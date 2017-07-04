@@ -17,17 +17,20 @@
  *  MA  02111-1307  USA
  */
 
-#ifndef _files_names_h
-#define _files_names_h
+#ifndef _file_names_h
+#define _file_names_h
 
+#include <iostream>
+#include <list>
+#include <fstream>
+#include <stdio.h>
 #include <string>
 #include <vector>
+#include <tuple>
 #include "input_struc.h"
-
 
 using namespace::std;
 
-vector<string> file_names (input *params);
+tuple< vector<string>, vector<string> > file_names (input *params);
 
-
-#endif /* files_names_h */
+#endif /* _file_names_h */

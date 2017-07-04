@@ -17,13 +17,23 @@
  *  MA  02111-1307  USA
  */
 
-#ifndef _interpolator_h
-#define _interpolator_h
+#ifndef interpolator_h
+#define interpolator_h
 
+#include <ios>
+#include <cmath.h>
+#include <math.h>
 #include <vector>
-#include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_complex.h>
+#include <limits>
+#include <stdio.h>
+#include <fstream>
+
+#include <gsl/gsl_sf.h>
+#include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_complex.h>
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_complex_math.h>
 
 using namespace::std;
 

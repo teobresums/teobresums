@@ -18,7 +18,27 @@
 #include "s_GS.h"
 #include "input_struc.h"
 
+#include <math.h>
+
 using namespace::std;
+
+double  logQ(double x){
+    
+    // implements the logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
+    // here x = log(lambda) and the output is the log of the coefficient
+    // that describes the quadrupole deformation due to spin.
+    double ai = 0.194;
+    double bi = 0.0936;
+    double ci = 0.0474;
+    double di = -4.21e-3;
+    double ei = 1.23e-4;
+    double x2 = x*x;
+    double x3 = x*x2;
+    double x4 = x*x3;
+    
+    return ai + bi*x + ci*x2 + di*x3 + ei*x4;
+    
+}
 
 input read_config (double q,double chi1,double chi2,double r0) {
     
@@ -90,6 +110,30 @@ input read_config (double q,double chi1,double chi2,double r0) {
             case 8:
                 params.solver_scheme = param_value;
                 break;
+            case 9:
+                params.kAl1 = param_value;
+                break;
+            case 10:
+                params.kAl2 = param_value;
+                break;
+            case 11:
+                params.kAl3 = param_value;
+                break;
+            case 12:
+                params.kBl1 = param_value;
+                break;
+            case 13:
+                params.kBl2 = param_value;
+                break;
+            case 14:
+                params.kBl3 = param_value;
+                break;
+            case 15:
+                params.CA = param_value;
+                break;
+            case 16:
+                params.CB = param_value;
+                break;
             default:
                 break;
         }
@@ -138,13 +182,20 @@ input read_config (double q,double chi1,double chi2,double r0) {
     params.aK2 = aK2;
     
     params.rLR = 0.;
-    
+
+    double cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
     if (params.tidal==true) {
         params.NQC = false;
-    }
+    }        
+    double lambda1 = 2/3.*params.kAl2/pow(params.CA,5);
+    double lambda2 = 2/3.*params.kBl2/pow(params.CB,5);
+    double logC_Q1 = logQ(log(lambda1));
+    double logC_Q2 = logQ(log(lambda2));
+    double C_Q1    = exp(logC_Q1);
+    double C_Q2    = exp(logC_Q2);
     
-    double cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
-    params.cN3LO = cN3LO;
+    params.C_Q1 = C_Q1;
+    params.C_Q2 = C_Q2;
     
     return params;
 }

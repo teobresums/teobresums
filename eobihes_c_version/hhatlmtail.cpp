@@ -31,14 +31,14 @@ using namespace::std;
 vector<gsl_complex> hhatlmTail(const double Omega, const double Hreal, const double bphys, int L[], int M[])
 {
 
-/*EOBhhatlmTail Computes the tail contribution to the resummed wave.
-%
-%   tlm = EOBTail(L,M, Omega,E, bphys)
-%
-%   Reference(s)
-%   Damour, Iyer & Nagar, PRD 79, 064004 (2009)
-%
-*/
+/** EOBhhatlmTail Computes the tail contribution to the resummed wave.
+  *
+  *   tlm = EOBTail(L,M, Omega,E, bphys)
+  *
+  *   Reference(s)
+  *   Damour, Iyer & Nagar, PRD 79, 064004 (2009)
+  *
+  */
  
     int kmax  = 35;
     const double pi = M_PI;

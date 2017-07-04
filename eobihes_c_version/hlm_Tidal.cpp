@@ -18,89 +18,99 @@
  */
 
 #include <gsl/gsl_math.h>
-#include <vector>
-#include "hlm_Tidal.h"
 
-using namespace::std;
-
-vector<double> hlm_Tidal(double x,double nu)
+vector<double> hlm_Tidal(double x,void *params)
 {
 
-/** Calculate tidal correction to multipolar waveform.
- *
- *   Reference(s)
- *   Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007
- */
+    //EOBhlmTidal Calculate tidal correction to multipolar waveform.
+    //   hTidallm = EOBhlmTidal( x, nu, Topt, EOBopt )
+    //
+    //   Reference(s)
+    //    Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007
+    //
 
-    int kmax  = 35;
-    int x5    = x*x*x*x*x
-    double CA = 0.1738106852;
-    double CB = 0.1738106852;
-    double XA = 0.5;
-    double XB = 0.5;
-    double khatA_2;
-    double khatB_2;
-    
+    int kmax   = 35;
+    double x5    = gsl_pow_int(x,5);
+
     vector<double> kAl(3);
     vector<double> kBl(3);
-    vector<double> hTidallm(kmax);
     vector<double> hA(kmax);
-    vector<double> hB(kmax);
-    vector<double> betaA1(kmax);
-    vector<double> betaB1(kmax);
 
-    kAl[0] = 0.093330885635;
-    kAl[1] = 0.025545679620;
-    kAl[2] = 0.009495642804;
-    kBl[0] = 0.093330885635;
-    kBl[1] = 0.025545679620;
-    kBl[2] = 0.009495642804;
+    kAl[0] = (*(input *)params).kAl1;
+    kAl[1] = (*(input *)params).kAl2;
+    kAl[2] = (*(input *)params).kAl3;
+    kBl[0] = (*(input *)params).kBl1;
+    kBl[1] = (*(input *)params).kBl2;
+    kBl[2] = (*(input *)params).kBl3;
     
-    khatA_2 = kAl[0] * XB/XA * gsl_pow_int(XA/CA,5);
-    khatB_2 = kBl[0] * XA/XB * gsl_pow_int(XB/CB,5);
+    double CA = (*(input *)params).CA;
+    double CB = (*(input *)params).CB;
+    double XA = (*(input *)params).X1;
+    double XB = (*(input *)params).X2;
     
-    for (int i=kmax; i--;)
+    double khatA_2 = kAl[0] * XB/XA *gsl_pow_int(XA/CA,5);
+    double khatB_2 = kBl[0] * XA/XB *gsl_pow_int(XB/CB,5);
+    
+    for (int i=kmax; i--; )
     {
         hA[i]=0.;
     }
+    vector<double> hB=hA;
+    vector<double> betaA1=hA;
+    //vector<double> betaA2(kmax)=hA;
+    vector<double> betaB1=hA;
+    //vector<double> betaB2(kmax)=hA;
+    vector<double> hTidallm(kmax);
+
     
-    hB=hA;
-    betaA1=hA;
-    betaB1=hA;
+    // l=2 ------------------------------------------------------------------
     
-    /** l=2 ------------------------------------------------------------------ */
+    hA[1] = 2 * khatA_2 *(XA/XB+3);
+    hB[1] = 2 * khatB_2 *(XB/XA+3);
     
-    hA[1]     = 2 * khatA_2 *(XA/XB+3);
-    hB[1]     = 2 * khatB_2 *(XB/XA+3);
     betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
     betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
-    hA[0]     = 3 * khatA_2 * XB * (3-4*XA)/XA;
-    hB[0]     = 3 * khatB_2 * XA * (3-4*XB)/XB;
+    
+    hA[0] = 3 * khatA_2 * XB * (3-4*XA)/XA;
+    hB[0] = 3 * khatB_2 * XA * (3-4*XB)/XB;
     
     
-    /** l=3 ------------------------------------------------------------------ */
-    
-    hA[4] = 12 * khatA_2 * XB*XB/XA;
-    hB[4] = 12 * khatB_2 * XA*XA/XB;
+    // l=3 ------------------------------------------------------------------
+  
     hA[2] = hA[4];
     hB[2] = hB[4];
     
-
+    hA[4] = 12 * khatA_2 * XB*XB/XA;
+    hB[4] = 12 * khatB_2 * XA*XA/XB;
+    
     /** l=2 ------------------------------------------------------------------
-     
-     *  (2,2) */
+     * (2,1) */
+    hTidallm[0] = ( -hA[0] + hB[0] )*x5;
+    /* (2,2) */
     hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
-    /** (2,1) */
-    hTidallm[0] = ( hA[0] - hB[0] )*x5;
-
 
     /** l=3 ------------------------------------------------------------------
-     
-     *  (3,3) */
-    hTidallm[4] = ( hA[4] - hB[4] )*x5;
-    /** (3,1) */
-    hTidallm[2] = ( hA[2] - hB[2] )*x5;
+     * (3,1) */
+    hTidallm[2] = ( -hA[2] + hB[2] )*x5;
+    /* (3,3) */
+    hTidallm[4] = ( -hA[4] + hB[4] )*x5;
 
     return hTidallm;
 
 }
+
+//double nu = (*(input *)params).nu;
+/*
+ kAl[0]      =     0.093330885635; //k.A.2
+ kAl[1]      =     0.025545679620; //k.A.3
+ kAl[2]      =     0.009495642804; //k.A.4
+ 
+ kBl[0]      =     0.093330885635; //k.B.2
+ kBl[1]      =     0.025545679620; //k.B.3
+ kBl[2]      =     0.009495642804; //k.B.4
+ 
+ double CA = 0.1738106852;
+ double CB = 0.1738106852;
+ double XA =0.5;//= MA/M;
+ double XB =0.5;// MB/M;
+ */

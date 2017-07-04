@@ -24,12 +24,10 @@ using namespace::std;
 
 vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
 {
-    
-    /** NOTE: BEFORE, THE Momg_vec HAD A Mbh multiplied onto it! */
-    
     int i=0;
-    int t_length    = t_vec.size();
+    int t_length = t_vec.size();
     int grid_length = (int)(t_vec.back()-t_vec[0])/dt + 2;
+
     double xi, yi;
     vector<double> data_g(grid_length);
     vector<double> omg_interp(grid_length);
@@ -39,6 +37,7 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
     double* t = &t_vec[0];
     double* data_arr = &data[0];
     double step = dt;
+
     
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
     gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, t_length);
@@ -46,8 +45,8 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
     
     for (xi = t_vec[0]; xi < t_vec.back(); xi += step)
     {
-        yi          = gsl_spline_eval (spline, xi, acc);
-        data_g[i]   = yi;
+        yi = gsl_spline_eval (spline, xi, acc);
+        data_g[i] = yi;
         t_interp[i] = xi;
         i++;
     }

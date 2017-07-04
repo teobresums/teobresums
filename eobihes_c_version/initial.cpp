@@ -46,8 +46,7 @@ vector<double> initial(input *params)
     double c1 = (-227./140.*nu + 1957./1680.);
     double c2 = (753./560.*nu*nu + 165703./70560.*nu - 25672541./5080320.);
     double Frhat, Frstar;
-    double Heff;
-    
+
     for (int i=2*N; i--;)
     {
         
@@ -81,15 +80,14 @@ vector<double> initial(input *params)
         x    = v_phi * v_phi;
         jhat = j[i]/(r_omega*v_phi); /** Newton-normalized angular momentum  */
         
-        Heff=H0eff;
         double prefact[] = {
-            jhat,Heff,
-            Heff,jhat,Heff,
-            jhat,Heff,jhat,Heff,
-            Heff,jhat,Heff,jhat,Heff,
-            jhat,Heff,jhat,Heff,jhat,Heff,
-            Heff,jhat,Heff,jhat,Heff,jhat,Heff,
-            jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
+            jhat,H0eff,
+            H0eff,jhat,H0eff,
+            jhat,H0eff,jhat,H0eff,
+            H0eff,jhat,H0eff,jhat,H0eff,
+            jhat,H0eff,jhat,H0eff,jhat,H0eff,
+            H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff,
+            jhat,H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff};
         
         Fphi[i] = flux(x, Omega_j[i], r_omega, E0[i], H0eff, jhat, r[i], 0., 0., prefact, params);
         

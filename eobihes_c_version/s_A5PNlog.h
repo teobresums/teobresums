@@ -9,8 +9,11 @@
 #define EOB_A5PNlog_h
 
 #include <gsl/gsl_math.h>
+#include <vector>
+#include "input_struc.h"
+#include <gsl/gsl_math.h>
 
-vector<double> s_A5PNlog(double r,double nu){
+vector<double> s_A5PNlog(double r,void *params, bool nnlo_flag){
 
 /*
 %EOB_A5PNlog function EOB_A5PNlog(r,nu,a5,a6)
@@ -39,7 +42,14 @@ vector<double> s_A5PNlog(double r,double nu){
 %               revised  March 13, 2013
 */
     
-// constants
+
+// parameters
+bool tidal_flag = (*(input *)params).tidal;
+double rLR = (*(input *)params).rLR;
+double nu = (*(input *)params).nu;
+vector<double> data(5);
+
+// constants 
 double nu2 = nu*nu;
 double pi2 = pi*pi;
 double pi4 = pi2*pi2;
@@ -55,6 +65,11 @@ double u2   = u*u;
 double u3   = u*u2;
 double u4   = u2*u2;
 double u5   = u4*u;
+double u6   = u5*u;
+double u7   = u6*u;
+double u10  = u5*u5;
+double u8   = u5*u3;
+double u9   = u8*u;
 double logu = log(u);
 
 // 4PN and 5PN coefficients including all known log terms
@@ -93,10 +108,105 @@ double dDen  = D1 + u*(dD1 + 2*D2) + u2*(dD2 + 3*D3) + u3*(dD3 + 4*D4) + u4*(dD4
 double prefactor = A/(Num*Den);
 double dA_u     = prefactor*(dNum*Den - dDen*Num);
 
+//
+ if (tidal_flag==true) {
+
+      double A0   = A;
+      double A0_du= dA_u;
+   
+        //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
+        
+        // Tidal PN coefs
+        double q   =  (1.+sqrt(1-4*nu)-2.*nu)/(2.*nu);
+        double XA  =  0.5*(1+sqrt(1-4*nu));
+        double XB  =  1-XA;
+			   
+        //dimensionless Love numbers (apsidal constants)
+        vector<double> kAl(3);
+        vector<double> kBl(3);
+
+        kAl[0] = (*(input *)params).kAl1;
+        kAl[1] = (*(input *)params).kAl2;
+        kAl[2] = (*(input *)params).kAl3;
+        
+        kBl[0] = (*(input *)params).kBl1;
+        kBl[1] = (*(input *)params).kBl2;
+        kBl[2] = (*(input *)params).kBl3;
+        
+        //Compactness of the star
+        double CA = (*(input *)params).CA;
+        double CB = (*(input *)params).CB;
+        
+        //Computing the tidal coupling constants
+        double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
+        double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
+        
+        double kapB2 = 2. * kBl[0] * pow(XB/CB, 2.*2 +1.) * q;
+        double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
+        double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
+        
+        double kapT2 = kapA2 + kapB2;
+        double kapT3 = kapA3 + kapB3;
+        double kapT4 = kapA4 + kapB4;
+
+        double bar_alph2_1 = (5/2.*XA*kapA2 + 5/2.*XB*kapB2)/kapT2;
+	double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+	double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+	double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+
+			       
+        //case 'nnlo'
+        if (nnlo_flag==true) { //Used for calculating the rLR
+            //case 'nnlo'
+            A     = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+            dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
+	         - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+        } else { //Used for calculting the dynamcis
+            //case 'nnlo_gsfLR'; Bini & Damour, 1409.6933 + free light-ring
+            // Tidal PN coefs
+            double p      =  4.;// % 4<p<6
+            double c1     =  8.53353;
+            double c2     =  3.04309;
+            double Acub   =  5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
+            double n1     =  0.840058;
+            double d2     =  17.73239;
+            double DenI   =  1./(1. + d2*u2);
+            double f23    =  (1. + n1*u)*DenI;
+            double A1SF   =  Acub*f23;
+            double A2SF   =  337./28.*u2;
+            double oom3u  =  1./(1.-rLR*u);
+            double f0     =  1. + 3.*u2*oom3u;
+            double f1     =  A1SF *pow(oom3u,7./2.);
+            double f2     =  A2SF *pow(oom3u,p);
+            double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
+	    double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+            double AT4    = - kapT4*u10;
+            
+            A = AT2 + AT3 + AT4;
+            
+            //Derivative of potential w.r.t. u
+            double dAcub  = 5./2.*   (1. -2.*(c1+c2)*u + 3.*c1*c2*u2);
+            double df23  = (n1 - 2.*d2*u - n1*d2*u2)*pow(DenI,2.);
+            double dA1SF  = dAcub*f23 + Acub*df23;
+            double dA2SF  = 674./28.*u;
+            double df0  = 3.*u*(2.-rLR*u)*pow(oom3u,2.);
+            double df1  = 0.5*(7.*rLR*A1SF + 2.*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
+            double df2  = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1.);
+            double dAT2 = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );
+	    double dAT3 = - kapT3*(8.*u7 + 9*bar_alph3_1*u8 + 10*bar_alph3_2*u9);
+            double dAT4 = - kapT4*10.*u9;
+            
+            dA_u =  dAT2 + dAT3 + dAT4;
+            
+        }
+        A    = A+A0;
+        dA_u = dA_u+A0_du;
+    }
+   
+
 // Derivative of A with respect to r
 double dA    = -u2*dA_u;
-
-
 
 // Second derivatives of Pade coefficients
 

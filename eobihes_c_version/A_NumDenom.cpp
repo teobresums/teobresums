@@ -23,7 +23,8 @@
 
 using namespace::std;
 
-vector<double> A_NumDenom(const double r, const vector<double> a, const double nu){
+vector<double> A_NumDenom(const double r, const vector<double> a, const double nu)
+{
     
     /** Shorthands */
     const double u  = 1./r;

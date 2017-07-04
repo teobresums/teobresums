@@ -15,7 +15,7 @@
 #include "s_get_rc.h"
 #include "s_A5PNlog.h"
 
-vector<double> s_Metric(double r, void *params){
+vector<double> s_Metric(double r, void *params,bool nnlo_flag){
 /*
 %                       This function computes the EOB metric potentials
 %                       A(r), B(r), and their derivatives, as functions
@@ -34,9 +34,9 @@ vector<double> s_Metric(double r, void *params){
 double nu = (*(input *)params).nu;
 double aK2 = (*(input *)params).aK2;
 
-vector<double> rc_vec = s_get_rc(r,aK2,params); //[rc, drc, d2rc]
-double rc = rc_vec[0];
-double drc = rc_vec[1];
+vector<double> rc_vec = s_get_rc(r,params); //[rc, drc, d2rc]
+double rc   = rc_vec[0];
+double drc  = rc_vec[1];
 double d2rc = rc_vec[2];
 
 double r2  = r*r;
@@ -49,11 +49,11 @@ double uc2 = uc*uc;
 double uc3 = uc2*uc;
     
 //vector<double> metric = A5pnP15(rc, nu);
-vector<double> metric = s_A5PNlog(rc,nu);
-double Aorb = metric[0];
-double dAorb = metric[1];
+ vector<double> metric = s_A5PNlog(rc,params,nnlo_flag);
+double Aorb   = metric[0];
+double dAorb  = metric[1];
 double d2Aorb = metric[2];
-double Dorb = metric[3];
+double Dorb   = metric[3];
 
 double AKerr_Multipole   = (1+2.*uc)/(1+2.*u);
 
@@ -72,7 +72,5 @@ double B  = r2*uc2*Dorb/A;
 
     return {A,B,dA,d2A};
 }
-
-
 
 #endif /* EOB_Metric_h */

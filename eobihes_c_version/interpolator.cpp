@@ -17,25 +17,24 @@
  *  MA  02111-1307  USA
  */
 
-#ifndef _interpolator_h
-#define _interpolator_h
-
 #include <ios>
-#include <fstream>
-#include <stdio.h>
-#include <vector>
+#include <cmath.h>
 #include <math.h>
-#include <cmath>
+#include <vector>
 #include <limits>
-#include <gsl/gsl_math.h>
+#include <stdio.h>
+#include <fstream>
+
 #include <gsl/gsl_sf.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
+#include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_complex.h>
 #include <gsl/gsl_spline.h>
-#include "Metric.h"
-#include "flux.h"
+#include <gsl/gsl_complex_math.h>
+
 #include "hlm.h"
+#include "flux.h"
+#include "Metric.h"
 
 using namespace::std;
 
@@ -44,16 +43,19 @@ double interpolate(double dt,vector<gsl_complex> grid)
     double xi, yi;
     double x[]      = {0.,0.,0.,0.,0.,0.,0.};
     double y[]      = {0.,0.,0.,0.,0.,0.,0.};
-    double step     = 0.01;
+    double step     = 0.01; //dt/5.;
     double omeg_max = 0.;
     double t_max    = 0.;
-    bool peak_flag=false;
+    bool peak_flag  = false;
     
     for (int i=0; i<=6; i++)
     {
-        x[i] = grid[i].dat[0];
-        y[i] = grid[i].dat[1];
+        x[i] = grid[i].dat[0]; //time
+        y[i] = grid[i].dat[1]; //omega
     }
+    
+
+    //printf("%.12e %.12e %.12e %.12e %.12e %.12e %.12e \n",x[0],x[1],x[2],x[3],x[4],x[5],x[6]);
     
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
     gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, 7);
@@ -70,15 +72,14 @@ double interpolate(double dt,vector<gsl_complex> grid)
             }
             else
             {
-                omeg_max = yi;
-                t_max    = xi;
+                omeg_max=yi;
+                t_max=xi;
             }
         }
     }
+    
     gsl_spline_free (spline);
     gsl_interp_accel_free (acc);
     
     return t_max;
 }
-
-#endif /* interpolator_h */

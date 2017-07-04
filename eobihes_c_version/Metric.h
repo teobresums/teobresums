@@ -24,7 +24,7 @@ const double pi = M_PI;
 
 using namespace::std;
 
-inline vector<double> acoeffs(const double r, const double nu){
+vector<double> acoeffs(const double r, const double nu){
     
     vector<double> a(8);
     const double u=1./r;
@@ -36,10 +36,10 @@ inline vector<double> acoeffs(const double r, const double nu){
     
     a[1]=(94./3. - 41./32.*pi*pi);
     
-    const double a5l=64./5.;
-    const double a5c0=-4237./60.+2275./512.*pi*pi+256./5.*Log2+128./5.*EulerGamma;
-    const double a5c1=-221./6.+41./32.*pi*pi;
-    const double a5c=a5c0+nu*a5c1;
+    const double a5l  =  64./5.;
+    const double a5c0 = -4237./60.+2275./512.*pi*pi+256./5.*Log2+128./5.*EulerGamma;
+    const double a5c1 = -221./6.+41./32.*pi*pi;
+    const double a5c  =  a5c0+nu*a5c1;
     a[2]=a5c;
     a[3]=a5l;
     a[4]=a5c+a5l*logu;
@@ -53,7 +53,7 @@ inline vector<double> acoeffs(const double r, const double nu){
     return a;
 }
 
-inline vector<double> Metric(const double r,void *params, bool nnlo_flag){//const double nu,bool tidal_flag,bool nnlo_flag){
+vector<double> Metric(const double r,void *params, bool nnlo_flag){//const double nu,bool tidal_flag,bool nnlo_flag){
     
     double nu = (*(input *)params).nu;
     bool tidal_flag = (*(input *)params).tidal;
@@ -91,41 +91,25 @@ inline vector<double> Metric(const double r,void *params, bool nnlo_flag){//cons
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
         
         // Tidal PN coefs
-        double q=(1.+sqrt(1-4*nu)-2.*nu)/(2.*nu);
-        double XA=nu*(1.+1./q);
-        double XB =XA;
-        double b21=5./2.*XA;
-        double b22=3.+XA/8.+ 337./28.*XA*XA;
-        double b31=-2.+15./2.*XA;
-        double b32=8./3.-311./24.*XA+110./3.*XA*XA;
-        
-        
-        // Tidal coupling constants
-        //k.A.2      =     0.093330885635
-        //k.A.3      =     0.025545679620
-        //k.A.4      =     0.009495642804
-        
-        /*
-         %   Reference(s)
-         %    S. Bernuzzi, A. Nagar, T. Dietrich, T. Damour, Phys. Rev. Lett. 114, 161103 (2015)
-         %    https://arxiv.org/abs/1412.4553
-         */
-
-        
-        //Bare love numbers
+        double q   =  (1.+sqrt(1-4*nu)-2.*nu)/(2.*nu);
+        double XA  =  0.5*(1+sqrt(1-4*nu));
+        double XB  =  1-XA;
+			   
+        //dimensionless Love numbers (apsidal constants)
         vector<double> kAl(3);
         vector<double> kBl(3);
-        kAl[0]      =     0.093330885635; //k.A.2
-        kAl[1]      =     0.025545679620; //k.A.3
-        kAl[2]      =     0.009495642804; //k.A.4
+
+        kAl[0] = (*(input *)params).kAl1;
+        kAl[1] = (*(input *)params).kAl2;
+        kAl[2] = (*(input *)params).kAl3;
         
-        kBl[0]      =     0.093330885635; //k.B.2
-        kBl[1]      =     0.025545679620; //k.B.3
-        kBl[2]      =     0.009495642804; //k.B.4
+        kBl[0] = (*(input *)params).kBl1;
+        kBl[1] = (*(input *)params).kBl2;
+        kBl[2] = (*(input *)params).kBl3;
         
         //Compactness of the star
-        double CA = 0.1738106852;
-        double CB = 0.1738106852;
+        double CA = (*(input *)params).CA;
+        double CB = (*(input *)params).CB;
         
         //Computing the tidal coupling constants
         double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
@@ -139,40 +123,41 @@ inline vector<double> Metric(const double r,void *params, bool nnlo_flag){//cons
         double kapT2 = kapA2 + kapB2;
         double kapT3 = kapA3 + kapB3;
         double kapT4 = kapA4 + kapB4;
-        
-        /*
-        double kA2 = kAl[0];
-        double kB2 = kBl[0];
-        double kT2     =    73.544981172267;
-        double kT3     =   166.583575913242;
-        double kT4     =   512.420096504168;
-        */
-    
+
+        double bar_alph2_1 = (5/2.*XA*kapA2 + 5/2.*XB*kapB2)/kapT2;
+	double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+	double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+	double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+
+			       
         //case 'nnlo'
         if (nnlo_flag==true) { //Used for calculating the rLR
             //case 'nnlo'
-            A = -(kapT4*u10) - kapT2*u6*(1. + b21*u + b22*u2) - kapT3*u8*(1. + b31*u + b32*u2);
-            A_du = -10.*kapT4*u9 - kapT2*u6*(b21 + 2.*b22*u) - kapT3*u8*(b31 + 2.*b32*u) - 6.*kapT2*u5*(1. + b21*u + b22*u2) - 8.*kapT3*u7*(1. + b31*u + b32*u2);
+            A = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+            A_du = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
+	         - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
         } else { //Used for calculting the dynamcis
             //case 'nnlo_gsfLR'; Bini & Damour, 1409.6933 + free light-ring
             // Tidal PN coefs
-            double p   = 4.;// % 4<p<6
-            double c1 = 8.53353;
-            double c2 = 3.04309;
-            double Acub   = 5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
-            double n1 = 0.840058;
-            double d2 = 17.73239;
-            double DenI   = 1./(1. + d2*u2);
-            double f23   = (1. + n1*u)*DenI;
-            double A1SF   = Acub*f23;
-            double A2SF   = 337./28.*u2;
-            double oom3u = 1./(1.-rLR*u);
-            double f0   = 1. + 3.*u2*oom3u;
-            double f1   = A1SF *pow(oom3u,7./2.);
-            double f2   = A2SF *pow(oom3u,p);
-            double AT2 = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
-            double AT3 = - kapT3*u8*(1. + b31*u + b32*u2);
-            double AT4 = - kapT4*u10;
+            double p      =  4.;// % 4<p<6
+            double c1     =  8.53353;
+            double c2     =  3.04309;
+            double Acub   =  5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
+            double n1     =  0.840058;
+            double d2     =  17.73239;
+            double DenI   =  1./(1. + d2*u2);
+            double f23    =  (1. + n1*u)*DenI;
+            double A1SF   =  Acub*f23;
+            double A2SF   =  337./28.*u2;
+            double oom3u  =  1./(1.-rLR*u);
+            double f0     =  1. + 3.*u2*oom3u;
+            double f1     =  A1SF *pow(oom3u,7./2.);
+            double f2     =  A2SF *pow(oom3u,p);
+            double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
+	    double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+            double AT4    = - kapT4*u10;
+            //double AT3 = - kapT3*u8*(1. + b31*u + b32*u2);//
+
             
             A = AT2 + AT3 + AT4;
             
@@ -185,7 +170,7 @@ inline vector<double> Metric(const double r,void *params, bool nnlo_flag){//cons
             double df1  = 0.5*(7.*rLR*A1SF + 2.*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
             double df2  = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1.);
             double dAT2 = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );
-            double dAT3 = - kapT3*(8. *u7 +  9.*b31*u8 + 10.*b32*u9);
+	    double dAT3 = - kapT3*(8.*u7 + 9*bar_alph3_1*u8 + 10*bar_alph3_2*u9);
             double dAT4 = - kapT4*10.*u9;
             
             A_du =  dAT2 + dAT3 + dAT4;
@@ -210,12 +195,14 @@ inline vector<double> Metric(const double r,void *params, bool nnlo_flag){//cons
     return data;
 }
 
-inline vector<double> A5pnP15_dd(const double r,void *params){
+vector<double> A5pnP15_dd(const double r,void *params){
     
     double nu = (*(input *)params).nu;
     bool tidal_flag = (*(input *)params).tidal;
     double rLR = (*(input *)params).rLR;
+
     
+        
     vector<double> A_dd(2);
     
     // Shorthands
@@ -226,10 +213,7 @@ inline vector<double> A5pnP15_dd(const double r,void *params){
     const double u5=u3*u2;
     const double u6=u5*u;
     const double u7=u6*u;
-    //const double u10=u5*u5;
-    const double u8=u5*u3;
-    //const double u9=u8*u;
-    
+    const double u8=u5*u3;        
     const double sm = nu;
     
     // Point-mass PN coefs
@@ -261,30 +245,23 @@ inline vector<double> A5pnP15_dd(const double r,void *params){
     if (tidal_flag==true) {
 
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
-        
+
+       //Compactness of the star
+       double CA = (*(input *)params).CA;
+       double CB = (*(input *)params).CB;
+      
         // Tidal PN coefs
-        double q=(1+sqrt(1-4*nu)-2*nu)/(2.*nu);
-        double XA=nu*(1.+1./q);
-        double XB =XA;
-        double b31=-2.+15./2.*XA;
-        double b32=8./3.-311./24.*XA+110./3.*XA*XA;
-        
-        //Bare love numbers
+        double q    = (1+sqrt(1-4*nu)-2*nu)/(2.*nu);
+        double XA   =  0.5*(1+sqrt(1-4*nu));
+        double XB   =  1-XA;
+						
+        //dimensionless Love numbers (apsidal constants)
         vector<double> kAl(3);
         vector<double> kBl(3);
-        kAl[0]      =     0.093330885635; //k.A.2
-        kAl[1]      =     0.025545679620; //k.A.3
-        kAl[2]      =     0.009495642804; //k.A.4
-        
-        kBl[0]      =     0.093330885635; //k.B.2
-        kBl[1]      =     0.025545679620; //k.B.3
-        kBl[2]      =     0.009495642804; //k.B.4
-        
-        //Compactness of the star
-        double CA = 0.1738106852;
-        double CB = 0.1738106852;
-        
-        //Computing the tidal coupling constants
+
+	//------------------------------------------------------------------------------
+        //Computing the tidal coupling constants: Eq. (31) of D&N, PRD 81, 084016 (2010)
+	//------------------------------------------------------------------------------
         double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; //Note: kap stands for kappa
         double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
         double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
@@ -293,41 +270,41 @@ inline vector<double> A5pnP15_dd(const double r,void *params){
         double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
         double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
         
-        //double kapT2 = kapA2 + kapB2;
+        double kapT2 = kapA2 + kapB2;
         double kapT3 = kapA3 + kapB3;
         double kapT4 = kapA4 + kapB4;
-        
-        /*
-        double kA2 = kAl[0];
-        double kB2 = kBl[0];
-        
-        double kT2     =    73.544981172267;
-        double kT3     =   166.583575913242;
-        double kT4     =   512.420096504168;
-        */
-        
-        double p   = 4.;// % 4<p<6
-        double c1 = 8.53353;
-        double c2 = 3.04309;
+
+	//-----------------------------------------------------------------------------------
+	// Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, Eq.(37)
+	// of Damour&Nagar, PRD 81, 084016 (2010)
+	//-----------------------------------------------------------------------------------
+	double bar_alph2_1 = (5/2.*XA*kapA2 + 5/2.*XB*kapB2)/kapT2;
+	double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+	double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+	double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+	                
+        double p      = 4.;// % 4<p<6
+        double c1     = 8.53353;
+        double c2     = 3.04309;
         double Acub   = 5./2.*u*(1. -  (c1+c2)*u +   c1*c2*u2);
         double dAcub  = 5./2.*   (1. -2*(c1+c2)*u + 3*c1*c2*u2);
         double d2Acub = 5   *   (  -  (c1+c2)   + 3*c1*c2*u);
-        double n1 = 0.840058;
-        double d2 = 17.73239;
-        double Den   = 1./(1. + d2*u2);
-        double f23   = (1. + n1*u)*Den;
-        double df23  = (n1 - 2*d2*u - n1*d2*u2)*pow(Den,2);
+        double n1     = 0.840058;
+        double d2     = 17.73239;
+        double Den    = 1./(1. + d2*u2);
+        double f23    = (1. + n1*u)*Den;
+        double df23   = (n1 - 2*d2*u - n1*d2*u2)*pow(Den,2);
         double A1SF   = Acub*f23;
         double dA1SF  = dAcub*f23 + Acub*df23;
         double A2SF   = 337./28.*u2;
         double dA2SF  = 674./28.*u;
-        double oom3u = 1./(1.-rLR*u);
-        double f0   = 1 + 3*u2*oom3u;
-        double f1   = A1SF *pow(oom3u,7./2.);
-        double f2   = A2SF *pow(oom3u,p);
-        double df0  = 3*u*(2.-rLR*u)*pow(oom3u,2);
-        double df1  = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
-        double df2  = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
+        double oom3u  = 1./(1.-rLR*u);
+        double f0     = 1 + 3*u2*oom3u;
+        double f1     = A1SF *pow(oom3u,7./2.);
+        double f2     = A2SF *pow(oom3u,p);
+        double df0    = 3*u*(2.-rLR*u)*pow(oom3u,2);
+        double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
+        double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
         
         double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*(-3+d2*u2))*pow(Den,3);
         double d2A1SF = d2Acub*f23 + 2*dAcub*df23 + Acub*d2f23;
@@ -339,9 +316,9 @@ inline vector<double> A5pnP15_dd(const double r,void *params){
         
         double d2AT2 = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
         
-        double d2AT3 = - kapT3*(56*u6 + 72*b31*u7 + 90*b32*u8);
+        double d2AT3 = - kapT3*(56*u6 + 72*bar_alph3_1*u7 + 90*bar_alph3_2*u8);
         double d2AT4 = - kapT4*90*u8;
-        double A_ddu = d2AT2 + d2AT3 + d2AT4;
+        double A_ddu =   d2AT2 + d2AT3 + d2AT4;
         
         A_ddu=A_ddu+d2A0_u;
         

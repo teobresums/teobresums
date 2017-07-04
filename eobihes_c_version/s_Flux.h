@@ -68,7 +68,7 @@ double s_Flux(double x,double Omega,double r_omega,double E,double Heff,double j
     double FNewt22 = FNewtlm[1];
 
     vector<double> MTlm = Tlm(E*Omega);
-    vector<double> hlmTidal = hlm_Tidal(x,nu);
+    vector<double> hlmTidal = hlm_Tidal(x,params);
 
     double SFlm=0.;
     for (int k=35; k--;) {

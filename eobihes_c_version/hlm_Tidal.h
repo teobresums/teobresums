@@ -20,10 +20,9 @@
 #ifndef _hlm_Tidal_h
 #define _hlm_Tidal_h
 
-#include <vector>
+#include <gsl/gsl_math.h>
 
-using namespace::std;
+vector<double> hlm_Tidal(double x,void *params);
 
-vector<double> hlm_Tidal(double x, double nu);
+#endif /* _hlm_Tidal_h */
 
-#endif /* EOBhlmTidal_h */

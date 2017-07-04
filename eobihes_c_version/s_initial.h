@@ -111,25 +111,32 @@ vector<double> s_initial(input *params){
         
         r[i]  = r0+(i-N+1)*dr;
 
-        if (tidal_flag==true) {
+	/*if (tidal_flag==true) {
             metric = Metric(r[i], params,false);
             A[i] = metric[0];
             B[i] = metric[3];
             dA[i] = metric[1];
             d2A[i] = A5pnP15_dd(r[i],params)[0];
         } else {
-            metric = s_Metric(r[i], params);
+            metric = s_Metric(r[i], params,false);
             A[i] = metric[0];
             B[i] = metric[1];
             dA[i] = metric[2];
             d2A[i] = metric[3];
-        }
+	    }*/
 
-        vector<double> rc_rad = s_get_rc(r[i],aK2,params);
+	// metric is here. The tidal parameters are within this routine 
+	metric = s_Metric(r[i], params,false);
+        A[i]   = metric[0];
+        B[i]   = metric[1];
+        dA[i]  = metric[2];
+        d2A[i] = metric[3];
+		
+        vector<double> rc_rad = s_get_rc(r[i],params);
         rc[i] = rc_rad[0];
         drc[i] = rc_rad[1];
         
-        //Comute minimum of Heff0 using bisection method
+        //Compute minimum of Heff0 using bisection method
         rorb   = r[i];
         pphorb = rorb/sqrt(rorb-3.);
         pph[i] = s_bisec(pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);

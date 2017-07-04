@@ -20,10 +20,11 @@
 #ifndef _interp_h
 #define _interp_h
 
+#include <gsl/gsl_errno.h>
 #include <vector>
 
 using namespace::std;
 
 vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt);
 
-#endif /* interp_h */
+#endif /* _interp_h */

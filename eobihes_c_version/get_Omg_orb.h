@@ -17,13 +17,9 @@
  *  MA  02111-1307  USA
  */
 
-#ifndef _Omg_orb_h
-#define _Omg_orb_h
-
-#include <vector>
-
-using namespace::std;
+#ifndef _get_Omg_orb_h
+#define _get_Omg_orb_h
 
 vector<double> get_Omg_orb(vector<double> r, vector<double> pph, vector<double> pr_star, vector<double> A, vector<double> B, void *params);
 
-#endif /* Omg_orb_h */
+#endif /* _get_Omg_orb_h */

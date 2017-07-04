@@ -82,14 +82,14 @@ int s_RHS(double t, const double y[], double f[],
         B = metric[3];
         dA = metric[1];
     } else {
-        metric = s_Metric(r, params); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
+      metric = s_Metric(r, params,false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
         A = metric[0];
         B = metric[1];
         dA = metric[2];
     }
     
     vector<double> rc_vec;
-    rc_vec = s_get_rc(r,aK2,params);//[rc, drc, d2rc]
+    rc_vec = s_get_rc(r,params);//[rc, drc, d2rc]
     double rc = rc_vec[0];
     double drc_dr = rc_vec[1];
     double uc = 1/rc;

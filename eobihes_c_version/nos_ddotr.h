@@ -28,7 +28,6 @@
 #include "input_struc.h"
 #include "multipole_index.h"
 
-
 #include <limits>
 
 typedef std::numeric_limits< double > dbl;

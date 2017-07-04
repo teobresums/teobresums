@@ -28,13 +28,14 @@
 #include "ringdown.h"
 #include "input_struc.h"
 #include "multipole_index.h"
-#include "interpolator_wf.h"
+#include "interpolate_wf.h"
 #include "AdiabLR.h"
 #include "read_config.h"
 #include "file_names.h"
 #include "find_a1a2a3.h"
 //#include "s_Hamiltonian.h"
-//#include "interp_grid.h"
+#include "interp_grid.h"
+#include <tuple>
 
 #include <sys/stat.h>
 
@@ -52,7 +53,7 @@ int main (int argc,char* argv[]) {
     
     input params = read_config(q,chi1,chi2,r0);
     
-    lm = params.lm;
+    //lm = params.lm;
     q = params.q;
     nu = params.nu;
     r0 = params.r0;
@@ -71,22 +72,22 @@ int main (int argc,char* argv[]) {
     mkdir("data",0777); // creating folder with permission to read, write and execute
     
     //Output file definitions
-    vector<string> fnames = file_names(&params);
+    //vector<string> fnames = file_names(&params);
+    vector<string> fnames;
+    vector<string> wavenames;
+    tie(fnames, wavenames) = file_names(&params);
     ofstream data(fnames[0].c_str());
-    ofstream wave(fnames[1].c_str());
-    ofstream QOmg(fnames[2].c_str());
-    ofstream Afunc(fnames[3].c_str());
-    ofstream init(fnames[4].c_str());
-    ofstream time_step(fnames[5].c_str());
-    ofstream n1245(fnames[6].c_str());
+    ofstream init(fnames[1].c_str());
     init.precision(dbl::max_digits10);
     
     //Defining data vectors and variables
     double MOmg;
     
-    std::vector<gsl_complex> hlm_vec={};
+    //std::vector<gsl_complex> hlm_vec={};
     std::vector<double> hlm_rad_vec={};
     std::vector<double> hlm_phase_vec={};
+    std::vector<vector<double> > hlm_ampl(35);
+    std::vector<vector<double> > hlm_phase(35);
     std::vector<double> t_vec={};
     std::vector<double> MOmg_vec={};
     std::vector<double> r_vec={};
@@ -99,12 +100,12 @@ int main (int argc,char* argv[]) {
     vector<double> initial_data(7);
     gsl_odeiv2_system sys = {rhs, NULL , 4, &params};
     
-    if (params.spin==true) { //Spining case
+    if (params.spin==true) { //Spinning case
         
         sys = {s_RHS, NULL , 4, &params};
         initial_data = s_initial(&params);
         
-    }else if (params.spin==false){ //Non spining case
+    }else if (params.spin==false){ //Non spinning case
         
         sys = {rhs, NULL , 4, &params};
         initial_data = initial(&params);
@@ -122,9 +123,10 @@ int main (int argc,char* argv[]) {
     y[1]=0.; //phi
     y[2]=initial_data[2]; //prstar
     y[3]=initial_data[1]; //pphi
-    
+
+
     double final_mass = HealyBBHFitRemnant(chi1, chi2, q);
-    printf("%s %.8e \n","final mass", final_mass);
+    printf("%s %.8e \n","final BBH mass", final_mass);
     
     clock_t start, end;
     start = clock();
@@ -164,7 +166,7 @@ int main (int argc,char* argv[]) {
         switch (solver_scheme) {
             case 0:{
                 int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-                time_step << t << "\t" << h << "\t" << y[3] << endl;
+                //time_step << t << "\t" << h << "\t" << y[3] << endl;
                 if (status != GSL_SUCCESS) {
                     break;
                 }
@@ -221,16 +223,18 @@ int main (int argc,char* argv[]) {
                 data << t << "\t" << r << "\t" << phi << "\t" << prstar << "\t" << pphi << endl;
             }
             
-            //printf("%s %.20e %.20e %.20e %.20e %.20e \n","dynamics",t,Omg,Omg_orb,A,ddotr);
-            
             /*Waveform computation*/
             vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
-            
-            //printf("%s %.20e %.20e \n","dynamics",h_form[lm].dat[0],h_form[lm].dat[1]);
             
             //append dynamics and waveform to vectors
             hlm_rad_vec.push_back(h_form[lm].dat[0]);
             hlm_phase_vec.push_back(h_form[lm].dat[1]);
+            
+            for (int k=35; k--; ) {
+                hlm_ampl[k].push_back(h_form[k].dat[0]);
+                hlm_phase[k].push_back(h_form[k].dat[1]);
+            }
+        
             
             t_vec.push_back(t);
             MOmg_vec.push_back(Omg);
@@ -243,7 +247,12 @@ int main (int argc,char* argv[]) {
         }
         
         /*Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards*/
-        MOmg = Omg;
+        //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
+        if (params.spin==true) {
+            MOmg = Omg_orb;
+        } else {
+            MOmg = Omg;
+        }
         if (MOmgpeak_flag==false) {
             if (MOmg < MOmg_prev) {
                 MOmgpeak_flag = true;
@@ -259,8 +268,8 @@ int main (int argc,char* argv[]) {
     }
     gsl_odeiv2_evolve_free (e); gsl_odeiv2_control_free (c); gsl_odeiv2_step_free (s);gsl_odeiv2_driver_free (d);
     
-//  /*Interpolate quantities on a grid of width dt*/
-    int grid_length = (int)(t_vec.back()-t_vec[0])/dt + 2;
+    /*Interpolate quantities on a grid of width dt*/
+    int grid_length = (int)(t_vec.back()-t_vec[0])/dt + 1;
     vector<double> t_vecg(grid_length);
     int i=0;
     double ti= 0.;
@@ -269,33 +278,52 @@ int main (int argc,char* argv[]) {
         t_vecg[i] = ti;
         i++;
     }
-//    vector<double> r_vecg = interp_grid(t_vec,r_vec,dt);
-//    vector<double> MOmg_vecg = interp_grid(t_vec,MOmg_vec,dt);
-//    vector<double> pph_vecg = interp_grid(t_vec,pph_vec,dt);
-//    vector<double> prstar_vecg = interp_grid(t_vec,prstar_vec,dt);
-//    vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
-//    vector<double> hlm_rad_vecg = interp_grid(t_vec,hlm_rad_vec,dt);
-//    vector<double> ddotr_vecg = interp_grid(t_vec,ddotr_vec,dt);
-//    vector<double> OmgOrb_vecg = interp_grid(t_vec,Omg_orb_vec,dt);
-//    //NQCs
-//    vector<gsl_complex> nqc = find_a1a2a3_hlm(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_vecg,n1245,OmgOrb_vecg,hlm_rad_vecg,ddotr_vecg,&params);
+  
+  
+    vector<double> r_vecg = interp_grid(t_vec,r_vec,dt);
+    vector<double> MOmg_vecg = interp_grid(t_vec,MOmg_vec,dt);
+    vector<double> pph_vecg = interp_grid(t_vec,pph_vec,dt);
+    vector<double> prstar_vecg = interp_grid(t_vec,prstar_vec,dt);
+    vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
+    vector<double> hlm_rad_vecg = interp_grid(t_vec,hlm_rad_vec,dt);
+    vector<double> ddotr_vecg = interp_grid(t_vec,ddotr_vec,dt);
+    vector<double> OmgOrb_vecg = interp_grid(t_vec,Omg_orb_vec,dt);
+    
+    std::vector<vector<double> > hlm_ampl_g(35);
+    std::vector<vector<double> > hlm_phase_g(35);
+    for (int k=35; k--; ) {
+        vector<double> amplitude = hlm_ampl[k];
+        vector<double> phase = hlm_phase[k];
+        hlm_ampl_g[k] = interp_grid(t_vec,amplitude,dt);
+        hlm_phase_g[k] = interp_grid(t_vec,phase,dt);
+    }
     
     //NQCs
-    vector<gsl_complex> nqc = find_a1a2a3_hlm(t_vec,r_vec,MOmg_vec,pph_vec,prstar_vec,hlm_phase_vec,n1245,Omg_orb_vec,hlm_rad_vec,ddotr_vec,&params);
-    for (int i=hlm_rad_vec.size(); i--; ) {
-        hlm_rad_vec[i] = hlm_rad_vec[i] * nqc[i].dat[0];
-        hlm_phase_vec[i] = hlm_phase_vec[i] + nqc[i].dat[1];
+    if (params.tidal==false && params.spin==true) {
+
+        vector<vector<gsl_complex> > nqc = find_a1a2a3_hlm(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
+        
+        for (int k=35; k--; ) {
+            for (int i=hlm_rad_vec.size(); i--; ) {
+                hlm_ampl_g[k][i] = hlm_ampl_g[k][i] * nqc[k][i].dat[0];
+                hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
+            }
+        }
+    }
+    
+    //define a time vector for each multipole
+    vector<vector<double> > t_g(35);
+    for (int k=35; k--; ) {
+        t_g[k] = t_vecg;
     }
     
     /*ringdown attachment*/
     if (params.tidal==false && params.spin==false) {
-        ringdown(nu,q,lm,dt,final_mass,t_vec,MOmg_vec,hlm_rad_vec,hlm_phase_vec);
+        ringdown(nu,q,dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
     /*compute interpolation of waveform on grid and write to output file*/
-    interpolate_wf(dt, t_vec, hlm_rad_vec,hlm_phase_vec,MOmg_vec,params.waveform,wave,QOmg,final_mass);
-    
-    //cout << "interpolation done" << endl;
+    interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,wavenames,final_mass);
     
     end = clock();
     

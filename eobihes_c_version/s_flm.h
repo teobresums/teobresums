@@ -86,10 +86,12 @@ vector<double> s_flm(double x,void *params){
     double a1      = (*(input *)params).a1;
     double a2      = (*(input *)params).a2;
     double a0      = a1+a2;
+    double C_Q1    = (*(input *)params).C_Q1;
+    double C_Q2    = (*(input *)params).C_Q2;
     
     double cSS_lo;
     if (tidal_flag==true) {
-        cSS_lo = 0.;
+        cSS_lo = 0.5*(C_Q1*a1*a1 + 2.*a1*a2 + C_Q2*a2*a2);
     } else {
         cSS_lo = 0.5*a0*a0; // spin-spin contribution to zero for BNS
     }

@@ -15,7 +15,9 @@
 #include "cmath"
 #include "FDdrvt_omega.h"
 
-int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_vec,vector<double> &Omega_vec,vector<double> &hlm_rad,vector<double> &hlm_phase){
+//int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_vec,vector<double> &Omega_vec,vector<double> &hlm_rad,vector<double> &hlm_phase){
+
+int ringdown(double nu,double q,double dt,double Mbh,vector<vector<double> > &t_vec,vector<double> Omega_vec,vector<vector<double> > &hlm_rad,vector<vector<double> > &hlm_phase){
     
     //EOBhlm Compute the multipolar resummed waveform.
     //
@@ -30,6 +32,10 @@ int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_ve
     
     //NOTE: before the Omega_vec had a Mbh multiplied onto it!!!!!!!!!!!!!!!!!!!!!!
     
+//    for (long j=Omega_vec.size(); j--; ) {
+//        Omega_vec[j] = Mbh*Omega_vec[j];
+//    }
+    
     long int pk_index = Omega_vec.size()-1;
     double Omega_pk = Omega_vec[pk_index];
     long int i=pk_index-1;
@@ -39,22 +45,20 @@ int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_ve
         i--;
     }
     vector<gsl_complex> Omega_pk_grid(7);
-    Omega_pk_grid[0].dat[0] = t_vec[pk_index-3];
+    Omega_pk_grid[0].dat[0] = t_vec[1][pk_index-3];
     Omega_pk_grid[0].dat[1] = Omega_vec[pk_index-3];
-    Omega_pk_grid[1].dat[0] = t_vec[pk_index-2];
+    Omega_pk_grid[1].dat[0] = t_vec[1][pk_index-2];
     Omega_pk_grid[1].dat[1] = Omega_vec[pk_index-2];
-    Omega_pk_grid[2].dat[0] = t_vec[pk_index-1];
+    Omega_pk_grid[2].dat[0] = t_vec[1][pk_index-1];
     Omega_pk_grid[2].dat[1] = Omega_vec[pk_index-1];
-    Omega_pk_grid[3].dat[0] = t_vec[pk_index];
+    Omega_pk_grid[3].dat[0] = t_vec[1][pk_index];
     Omega_pk_grid[3].dat[1] = Omega_vec[pk_index];
-    Omega_pk_grid[4].dat[0] = t_vec[pk_index+1];
+    Omega_pk_grid[4].dat[0] = t_vec[1][pk_index+1];
     Omega_pk_grid[4].dat[1] = Omega_vec[pk_index+1];
-    Omega_pk_grid[5].dat[0] = t_vec[pk_index+2];
+    Omega_pk_grid[5].dat[0] = t_vec[1][pk_index+2];
     Omega_pk_grid[5].dat[1] = Omega_vec[pk_index+2];
-    Omega_pk_grid[6].dat[0] = t_vec[pk_index+3];
+    Omega_pk_grid[6].dat[0] = t_vec[1][pk_index+3];
     Omega_pk_grid[6].dat[1] = Omega_vec[pk_index+3];
-    
-    printf("%.8e %.8e %.8e %.8e %.8e %.8e %.8e \n",Omega_pk_grid[0].dat[1],Omega_pk_grid[1].dat[1],Omega_pk_grid[2].dat[1],Omega_pk_grid[3].dat[1],Omega_pk_grid[4].dat[1],Omega_pk_grid[5].dat[1],Omega_pk_grid[6].dat[1]);
     
     double tOmg_pk = 0.;
     vector<double> tmrg(35);
@@ -88,6 +92,7 @@ int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_ve
         sigma[i].dat[1]=0.;
         tmatch[i] += 2./Mbh;
     }
+    
     /*
     switch ((int)q) {
         case 1:
@@ -150,30 +155,44 @@ int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_ve
                 break;
         }
     }
-    /* alpha is the real and omega the imaginary part
-    +\alpha_{22}^{1}  &= -0.364177\nu^{3} + 0.010951\nu^{2}-0.010591\nu + 0.08896\\
-    +\nonumber
-    +\alpha_{21}^{1} & = -0.208936\nu^{3}-0.028103\nu^{2}-0.005383\nu + 0.08896\\
-    +\nonumber
-    +\alpha_{33}^{1} & = -0.319703\nu^{3}-0.030076\nu^{2}-0.009034\nu + 0.09270\\
-    +\nonumber
-    +\omega_{22}^{1} &=  2.392808\nu^{3} + 0.051309\nu^{2} + 0.449425\nu + 0.37365\\
-    +\nonumber
-    +\omega_{21}^{1}& =  0.733477\nu^{3} + 0.188359\nu^{2} + 0.220659\nu + 0.37367\\
-    +\nonumber
-    +\omega_{33}^{1}& = 2.957425\nu^{3} + 0.178146\nu^{2} + 0.709560\nu + 0.59944
-    */
     
     /*deleting data points up to tmatch (starting from the back)*/
-    i = t_vec.size()-1;
-    while (t_vec[i]/Mbh>tmatch[lm]) {
-        t_vec.pop_back();
-        hlm_rad.pop_back();
-        hlm_phase.pop_back();
-        Omega_vec.pop_back();
-        i--;
+    vector<long> I(35);
+    for (int k = 35; k--; ) {
+        i = t_vec[k].size()-1;
+        switch (k) {
+            case 0:
+                while (t_vec[k][i]/Mbh>tmatch[k]) {
+                    t_vec[k].pop_back();
+                    hlm_rad[k].pop_back();
+                    hlm_phase[k].pop_back();
+                    i--;
+                }
+                i++;
+                break;
+            case 1:
+                while (t_vec[k][i]/Mbh>tmatch[k]) {
+                    t_vec[k].pop_back();
+                    hlm_rad[k].pop_back();
+                    hlm_phase[k].pop_back();
+                    i--;
+                }
+                i++;
+                break;
+            case 4:
+                while (t_vec[k][i]/Mbh>tmatch[k]) {
+                    t_vec[k].pop_back();
+                    hlm_rad[k].pop_back();
+                    hlm_phase[k].pop_back();
+                    i--;
+                }
+                i++;
+                break;
+            default:
+                break;
+        }
+        I[k] = i;
     }
-    i++;
     
     vector<double> a1(35);
     vector<double> a2(35);
@@ -185,35 +204,111 @@ int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_ve
     vector<double> b4(35);
     QNMHybridFitCab(nu,a1,a2,a3,a4,b1,b2,b3,b4);
     
-    /*calculate deltaphi*/
-    double x=t_vec[i]/Mbh-tmrg[lm];
-    gsl_complex psi = ringdown_match(x, lm, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
-    double Deltaphi  = psi.dat[1] - hlm_phase[i];
+    //Calculate deltaphi
+    vector<gsl_complex> psi(35);
+    vector<double> Deltaphi(35);
+    for (int k=35; k--; ) {
+        double x=t_vec[k][I[k]]/Mbh-tmrg[k];
+        psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+        Deltaphi[k]  = psi[k].dat[1] - hlm_phase[k][I[k]];
+    }
     
     /*add 200 points of ringdown attachment*/
-    double t = t_vec[i];
-    //vector<double> phase;
-    for (int j=0; j < 200; j++) {
-        x = t/Mbh-tmrg[lm];
-        psi = ringdown_match(x, lm, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
-        
-        psi.dat[1]  = psi.dat[1] - Deltaphi;
-        hlm_rad.push_back(psi.dat[0]);
-        hlm_phase.push_back(psi.dat[1]);
-        //phase.push_back(psi.dat[1]);
-        t_vec.push_back(t);
-        t += dt;
+    for (int k=35; k--; ) {
+        double t = t_vec[k][I[k]];
+        switch (k) {
+            case 0:
+                for (int j=0; j < 200; j++) {
+                    double x = t/Mbh-tmrg[k];
+                    psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+                    
+                    psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
+                    hlm_rad[k].push_back(psi[k].dat[0]);
+                    hlm_phase[k].push_back(psi[k].dat[1]);
+                    t_vec[k].push_back(t);
+                    t += dt;
+                }
+                break;
+            case 1:
+                for (int j=0; j < 200; j++) {
+                    double x = t/Mbh-tmrg[k];
+                    psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+                    
+                    psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
+                    hlm_rad[k].push_back(psi[k].dat[0]);
+                    hlm_phase[k].push_back(psi[k].dat[1]);
+                    t_vec[k].push_back(t);
+                    t += dt;
+                }
+                break;
+            case 4:
+                for (int j=0; j < 200; j++) {
+                    double x = t/Mbh-tmrg[k];
+                    psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+                    
+                    psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
+                    hlm_rad[k].push_back(psi[k].dat[0]);
+                    hlm_phase[k].push_back(psi[k].dat[1]);
+                    t_vec[k].push_back(t);
+                    t += dt;
+                }
+                break;
+            default:
+                break;
+        }
     }
-    
-    //calculating the MOmega
-    vector<double> dphase = FDdrvt_omega(hlm_phase, dt);
-    Omega_vec={};
-    for (long int j=0; j < hlm_phase.size()-2; j++) {
-        Omega_vec.push_back( - dphase[j] );
-    }
-
 
     return 0;
 }
 
 #endif /* ringdown_h */
+
+//    //calculate deltaphi
+//    double x=t_vec[i]/Mbh-tmrg[lm];
+//    gsl_complex psi = ringdown_match(x, lm, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+//    double Deltaphi  = psi.dat[1] - hlm_phase[i];
+
+//double t = t_vec[i];
+//vector<double> phase;
+//    for (int j=0; j < 200; j++) {
+//        x = t/Mbh-tmrg[lm];
+//        psi = ringdown_match(x, lm, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+//
+//        psi.dat[1]  = psi.dat[1] - Deltaphi;
+//        hlm_rad.push_back(psi.dat[0]);
+//        hlm_phase.push_back(psi.dat[1]);
+//        //phase.push_back(psi.dat[1]);
+//        t_vec.push_back(t);
+//        t += dt;
+//    }
+
+//calculating the MOmega
+//    vector<double> dphase = FDdrvt_omega(hlm_phase, dt);
+//    Omega_vec={};
+//    for (long int j=0; j < hlm_phase.size()-2; j++) {
+//        Omega_vec.push_back( - dphase[j] );
+//    }
+
+
+//    vector<vector<double> > dphase(35);
+//    //vector<vector<double> > Omega_vec(35);
+//    for (int k=35; k--; ) {
+//        dphase[k] = FDdrvt_omega(hlm_phase[k], dt);
+//        //Omega_vec={};
+//        for (long int j=0; j < hlm_phase[k].size()-2; j++) {
+//            Omega_vec.push_back( - dphase[k][j] );
+//        }    }
+
+/* alpha is the real and omega the imaginary part
+ +\alpha_{22}^{1}  &= -0.364177\nu^{3} + 0.010951\nu^{2}-0.010591\nu + 0.08896\\
+ +\nonumber
+ +\alpha_{21}^{1} & = -0.208936\nu^{3}-0.028103\nu^{2}-0.005383\nu + 0.08896\\
+ +\nonumber
+ +\alpha_{33}^{1} & = -0.319703\nu^{3}-0.030076\nu^{2}-0.009034\nu + 0.09270\\
+ +\nonumber
+ +\omega_{22}^{1} &=  2.392808\nu^{3} + 0.051309\nu^{2} + 0.449425\nu + 0.37365\\
+ +\nonumber
+ +\omega_{21}^{1}& =  0.733477\nu^{3} + 0.188359\nu^{2} + 0.220659\nu + 0.37367\\
+ +\nonumber
+ +\omega_{33}^{1}& = 2.957425\nu^{3} + 0.178146\nu^{2} + 0.709560\nu + 0.59944
+ */
