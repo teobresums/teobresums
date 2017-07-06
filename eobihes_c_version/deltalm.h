@@ -26,4 +26,4 @@ using namespace::std;
 
 vector<double> deltalm(const double Hreal, const double Omega, const double nu);
 
-#endif /* deltalm_h */
+#endif /* _deltalm_h */

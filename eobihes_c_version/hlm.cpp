@@ -22,7 +22,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#include "cmath"
+#include <cmath>
 
 #include "hlmNewt.h"
 #include "hhatlmtail.h"
@@ -34,9 +34,16 @@
 #include "hlm_Tidal.h"
 #include "multipole_index.h"
 
+#include "hlm.h"
+#include "input_struc.h"
+#include "f_lm.h"
+
+using namespace::std;
+
 vector<gsl_complex> hlm(double t, const double phi, const double r, const double pph, const double prstar, double Omega, const double ddotr, const double H, const double Heff,const double jhat, const double rw,void *params)
 {
-    
+    int kmax = 35; 
+
     vector<gsl_complex> hlm(kmax);
     double nu            = (*(input *)params).nu;
     bool tidal_flag      = (*(input *)params).tidal;
@@ -52,8 +59,6 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
         jhat,Heff,jhat,Heff,jhat,Heff,
         Heff,jhat,Heff,jhat,Heff,jhat,Heff,
         jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
-    
-    int kmax = 35;
     
     /** Newtonian waveform */
     vector<gsl_complex> hNewt = hlmNewt( rw,Omega,phi, nu,tidal_flag);
@@ -84,7 +89,7 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     }
     
     /** Residual phase corrections delta_{lm} */
-    const vector<double> deltalm = EOBdeltalm(Hreal,Omega, nu);
+    const vector<double> EOBdeltalm = deltalm(Hreal, Omega, nu);
 
     vector<gsl_complex> h_NQC(kmax);
     if (NQC_flag==true)
@@ -94,7 +99,7 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     
     for (int k=35; k--;)
     {
-        tlm[k].dat[1] += deltalm[k];
+        tlm[k].dat[1] += EOBdeltalm[k];
         
         /** Compute \hat{h}_lm */
         hlm[k].dat[0] =   hNewt[k].dat[0] * flm[k] * source[k] * tlm[k].dat[0] ;

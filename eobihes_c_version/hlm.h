@@ -20,22 +20,9 @@
 #ifndef _hlm_hybrid_h
 #define _hlm_hybrid_h
 
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
+#include <vector>
 
-#include "cmath"
-
-#include "hlmNewt.h"
-#include "hhatlmtail.h"
-#include "hlmNQC.h"
-#include "deltalm.h"
-#include "SpeedyTail.h"
-#include "s_flm.h"
-#include "ringdown_match.h"
-#include "hlm_Tidal.h"
-#include "multipole_index.h"
+using namespace::std;
 
 vector<gsl_complex> hlm(double t, const double phi, const double r, const double pph, const double prstar, double Omega, const double ddotr, const double H, const double Heff,const double jhat, const double rw,void *params);
 

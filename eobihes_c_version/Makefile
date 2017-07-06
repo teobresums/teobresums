@@ -1,8 +1,10 @@
 CC=g++ -O4
 CFLAGS=-c -std=c++11
-INC=-I/opt/local/include
-LIBS=-L/opt/local/lib
-LDLIBS=-lgsl -lgslcblas -lm
+#INC=-I/opt/local/include  # Gregorio path
+#LIBS=-L/opt/local/lib     # Gregorio path
+INC=`gsl-config --cflags`
+LIBS=`gsl-config --libs`
+#LDLIBS=-lgsl -lgslcblas -lm
 
 OBJS =               \
 A_NumDenom.o	     \
@@ -26,11 +28,29 @@ hlmNewt.o 	     \
 hlmNQC.o 	     \
 HorizonFlux.o	     \
 initial.o 	     \
-input_struc.o 	     \
 interp_grid.o 	     \
 interpolate_wf.o     \
 interpolator.o	     \
-main.o
+main.o		     \
+nos_ddotr.o	     \
+read_config.o	     \
+ringdown.o	     \
+ringdown_match.o     \
+s_A5PNlog.o	     \
+s_D1.o		     \
+s_Flux.o	     \
+s_GS.o		     \
+#s_Hamiltonian_nocurrentuse.o \
+s_HorizonFlux.o	     \
+s_Metric.o	     \
+s_RHS.o		     \
+s_bisec.o	     \
+s_ddotr.o	     \
+s_flm.o		     \
+s_get_rc.o	     \
+s_initial.o	     \
+s_waveform.o	     
+
 
 all:main
 
@@ -80,14 +100,53 @@ HorizonFlux.o: HorizonFlux.cpp
 	$(CC) $(CFLAGS) $(INC) HorizonFlux.cpp
 initial.o: initial.cpp
 	$(CC) $(CFLAGS) $(INC) initial.cpp
-input_struc.o: input_struc.cpp
-	$(CC) $(CFLAGS) $(INC) input_struc.cpp
+input_struc.o: input_struc.h
+	$(CC) $(CFLAGS) $(INC) input_struc.h
 interp_grid.o: interp_grid.cpp
 	$(CC) $(CFLAGS) $(INC) interp_grid.cpp
 interpolate_wf.o: interpolate_wf.cpp
 	$(CC) $(CFLAGS) $(INC) interpolate_wf.cpp
 interpolator.o: interpolator.cpp
 	$(CC) $(CFLAGS) $(INC) interpolator.cpp
+multipole_index.o: multipole_index.h
+	$(CC) $(CFLAGS) $(INC) multipole_index.h
+nos_ddotr.o: nos_ddotr.cpp
+	$(CC) $(CFLAGS) $(INC) nos_ddotr.cpp
+read_config.o: read_config.cpp
+	$(CC) $(CFLAGS) $(INC) read_config.cpp
+ringdown.o: ringdown.cpp
+	$(CC) $(CFLAGS) $(INC) ringdown.cpp
+ringdown_match.o: ringdown_match.cpp
+	$(CC) $(CFLAGS) $(INC) ringdown_match.cpp
+s_A5PNlog.o: s_A5PNlog.cpp
+	$(CC) $(CFLAGS) $(INC) s_A5PNlog.cpp
+s_D1.o: s_D1.cpp
+	$(CC) $(CFLAGS) $(INC) s_D1.cpp
+s_Flux.o: s_Flux.cpp
+	$(CC) $(CFLAGS) $(INC) s_Flux.cpp
+s_GS.o: s_GS.cpp
+	$(CC) $(CFLAGS) $(INC) s_GS.cpp
+#s_Hamiltonian_nocurrentuse.o: s_Hamiltonian_nocurrentuse.cpp
+#	$(CC) $(CFLAGS) $(INC) s_Hamiltonian_nocurrentuse.cpp
+s_HorizonFlux.o: s_HorizonFlux.cpp
+	$(CC) $(CFLAGS) $(INC) s_HorizonFlux.cpp
+s_Metric.o: s_Metric.cpp
+	$(CC) $(CFLAGS) $(INC) s_Metric.cpp
+s_RHS.h.o: s_RHS.h.cpp
+	$(CC) $(CFLAGS) $(INC) s_RHS.h.cpp
+s_bisec.o: s_bisec.cpp
+	$(CC) $(CFLAGS) $(INC) s_bisec.cpp
+s_ddotr.o: s_ddotr.cpp
+	$(CC) $(CFLAGS) $(INC) s_ddotr.cpp
+s_flm.o: s_flm.cpp
+	$(CC) $(CFLAGS) $(INC) s_flm.cpp
+s_get_rc.o: s_get_rc.cpp
+	$(CC) $(CFLAGS) $(INC) s_get_rc.cpp
+s_initial.o: s_initial.cpp
+	$(CC) $(CFLAGS) $(INC) s_initial.cpp
+s_waveform.o: s_waveform.cpp
+	$(CC) $(CFLAGS) $(INC) s_waveform.cpp
+
 
 clean:
 	rm -rf *.o EOB_ihes.out

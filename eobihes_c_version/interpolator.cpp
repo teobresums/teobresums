@@ -18,7 +18,7 @@
  */
 
 #include <ios>
-#include <cmath.h>
+#include <cmath>
 #include <math.h>
 #include <vector>
 #include <limits>

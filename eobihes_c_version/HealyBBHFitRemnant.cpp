@@ -17,6 +17,9 @@
  *  MA  02111-1307  USA
  */
 
+#include "HealyBBHFitRemnant.h"
+#include <cmath>
+
 double HealyBBHFitRemnant(double chi1,double chi2, double q)
 {
 

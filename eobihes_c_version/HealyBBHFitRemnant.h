@@ -20,8 +20,6 @@
 #ifndef _HealyBBHFitRemnant_h
 #define _HealyBBHFitRemnant_h
 
-#include "HealyBBHFitRemnant.h"
-
 double HealyBBHFitRemnant(double chi1, double chi2, double q);
 
-#endif /* EOB_HealyBBHFitRemnant_h */
+#endif /* _HealyBBHFitRemnant_h */

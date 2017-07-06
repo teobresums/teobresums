@@ -19,7 +19,11 @@
 
 #include <vector>
 #include "input_struc.h"
+#include <cmath>
+#include "s_get_rc.h"
+#include "s_GS.h"
 
+using namespace::std;
 
 vector<double> get_Omg_orb(vector<double> r,vector<double> pph,vector<double> pr_star,vector<double> A,vector<double> B,void *params)
 {

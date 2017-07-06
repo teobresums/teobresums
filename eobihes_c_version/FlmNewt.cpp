@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "FlmNewt.h"
+#include "input_struc.h"
 
 using namespace::std;
 

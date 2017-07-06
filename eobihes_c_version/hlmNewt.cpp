@@ -24,6 +24,7 @@
 #include <gsl/gsl_complex_math.h>
 #include <cmath>
 #include "hlmNewt.h"
+#include "constants.h"
 
 using namespace::std;
 

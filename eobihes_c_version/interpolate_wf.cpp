@@ -37,6 +37,7 @@
 #include "Metric.h"
 #include "Q_omega.h"
 
+typedef std::numeric_limits< double > dbl;
 
 using namespace::std;
 

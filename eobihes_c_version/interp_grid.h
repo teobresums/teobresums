@@ -20,7 +20,6 @@
 #ifndef _interp_h
 #define _interp_h
 
-#include <gsl/gsl_errno.h>
 #include <vector>
 
 using namespace::std;

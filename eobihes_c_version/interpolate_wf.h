@@ -20,26 +20,7 @@
 #ifndef _interpolator_waveform_h
 #define _interpolator_waveform_h
 
-#include <ios>
-#include "cmath"
-#include <math.h>
-#include <limits>
 #include <vector>
-#include <fstream>
-#include <stdio.h>
-
-#include <gsl/gsl_sf.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-
-#include "hlm.h"
-#include "flux.h"
-#include "Metric.h"
-#include "Q_omega.h"
-
 
 using namespace::std;
 

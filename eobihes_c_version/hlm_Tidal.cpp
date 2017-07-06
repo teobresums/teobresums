@@ -18,6 +18,10 @@
  */
 
 #include <gsl/gsl_math.h>
+#include <vector>
+#include "input_struc.h"
+
+using namespace::std;
 
 vector<double> hlm_Tidal(double x,void *params)
 {

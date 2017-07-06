@@ -20,6 +20,8 @@
 #include <vector>
 #include "FDdrvt_omega.h"
 
+using namespace::std;
+
 vector<double> FDdrvt_omega(vector<double> f, double dt)
 {
     vector<double> d1f(f.size()-2);

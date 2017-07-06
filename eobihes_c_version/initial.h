@@ -27,4 +27,4 @@ using namespace::std;
 
 vector<double> initial(input *params);
 
-#endif /* circ_initial_h */
+#endif /* _initial_h */

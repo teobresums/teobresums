@@ -30,6 +30,7 @@
 #include "hlmNQC.h"
 #include "hlm_Tidal.h"
 #include "multipole_index.h"
+#include "input_struc.h"
 
 double flux(const double x,const double Omega,const double r_omega,const double E, const double Heff,const double jhat,const double r,const double prstar, const double ddotr, double source[],void *params)
 {

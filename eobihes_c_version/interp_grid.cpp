@@ -18,6 +18,7 @@
  */
 
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_spline.h>
 #include <vector>
 
 using namespace::std;

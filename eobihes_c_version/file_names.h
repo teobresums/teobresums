@@ -29,6 +29,8 @@
 #include <tuple>
 #include "input_struc.h"
 
+#include "multipole_index.h"
+
 using namespace::std;
 
 tuple< vector<string>, vector<string> > file_names (input *params);

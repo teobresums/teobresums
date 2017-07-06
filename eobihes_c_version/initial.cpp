@@ -22,6 +22,8 @@
 #include "input_struc.h"
 #include "initial.h"
 #include "FDdrvt.h"
+#include "Metric.h"
+#include "flux.h"
 
 using namespace::std;
 

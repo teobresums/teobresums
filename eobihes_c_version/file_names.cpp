@@ -28,6 +28,8 @@
 #include <tuple>
 #include "input_struc.h"
 
+#include "multipole_index.h"
+
 using namespace::std;
 
 
