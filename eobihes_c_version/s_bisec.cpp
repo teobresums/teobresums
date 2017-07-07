@@ -22,6 +22,7 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
 #include "s_GS.h"
+#include "input_struc.h"
 #include "s_bisec.h"
 
 struct energy_params

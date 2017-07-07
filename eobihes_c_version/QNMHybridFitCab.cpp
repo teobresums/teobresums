@@ -17,7 +17,11 @@
  *  MA  02111-1307  USA
  */
 
+#include <vector>
+#include <cmath>
 #include "QNMHybridFitCab.h"
+
+using namespace::std;
 
 //function [a,b] =
 

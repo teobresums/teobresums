@@ -20,6 +20,10 @@
 #ifndef _get_Omg_orb_h
 #define _get_Omg_orb_h
 
+#include <vector>
+
+using namespace::std;
+
 vector<double> get_Omg_orb(vector<double> r, vector<double> pph, vector<double> pr_star, vector<double> A, vector<double> B, void *params);
 
 #endif /* _get_Omg_orb_h */

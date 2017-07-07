@@ -21,6 +21,7 @@
 #define _interpolator_waveform_h
 
 #include <vector>
+#include <fstream>
 
 using namespace::std;
 

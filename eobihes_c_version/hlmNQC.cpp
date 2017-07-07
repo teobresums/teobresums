@@ -22,8 +22,12 @@
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <vector>
 
 #include "NQC.h"
+#include "hlmNQC.h"
+
+using namespace::std;
 
 vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, double ddotr)
 {

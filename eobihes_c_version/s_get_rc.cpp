@@ -18,6 +18,7 @@
  */
 
 #include <math.h>
+#include "input_struc.h"
 #include "s_get_rc.h"
 
 vector <double> s_get_rc(double r, void *params){

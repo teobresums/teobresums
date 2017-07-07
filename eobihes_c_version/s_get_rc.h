@@ -20,6 +20,8 @@
 #ifndef _s_get_rc_h
 #define _s_get_rc_h
 
+#include <vector>
+
 using namespace::std;
 
 vector <double> s_get_rc(double r, void *params);

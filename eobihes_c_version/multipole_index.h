@@ -20,7 +20,7 @@
 #ifndef _multipole_index_h
 #define _multipole_index_h
 
-int L[] = {
+const int L[35] = {
     2,2,
     3,3,3,
     4,4,4,4,
@@ -29,7 +29,7 @@ int L[] = {
     7,7,7,7,7,7,7,
     8,8,8,8,8,8,8,8};
 
-int M[] ={
+const int M[35] = {
     1,2,
     1,2,3,
     1,2,3,4,

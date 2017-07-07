@@ -20,6 +20,10 @@
 #ifndef _Tlm_h
 #define _Tlm_h
 
+#include <vector>
+
+using namespace::std;
+
 vector<double> Tlm(const double w);
 
 #endif /* _Tlm_h */

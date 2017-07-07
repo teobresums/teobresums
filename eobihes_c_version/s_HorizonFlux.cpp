@@ -18,7 +18,10 @@
  */
 
 #include "math.h"
+#include <vector>
 #include "s_HorizonFlux.h"
+
+using namespace::std;
 
 double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2){
 

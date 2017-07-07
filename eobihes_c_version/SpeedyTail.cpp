@@ -27,7 +27,7 @@
 #include "deltalm.h"
 #include "SpeedyTail.h"
 
-vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, int L[], int M[]){
+vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]){
      
     int kmax = 35;
     

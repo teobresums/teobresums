@@ -21,8 +21,11 @@
 #include "math.h"
 #include <gsl/gsl_math.h>
 #include "multipole_index.h"
+#include <vector>
+#include "constants.h"
 #include "Tlm.h"
 
+using namespace::std;
 
 vector<double> Tlm(const double w){
 

@@ -21,6 +21,7 @@
 #define _hlm_hybrid_h
 
 #include <vector>
+#include <gsl/gsl_complex.h>
 
 using namespace::std;
 

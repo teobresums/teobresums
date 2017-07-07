@@ -23,6 +23,7 @@
 
 #include "s_get_rc.h"
 #include "s_A5PNlog.h"
+#include "input_struc.h"
 
 #include "s_Metric.h"
 

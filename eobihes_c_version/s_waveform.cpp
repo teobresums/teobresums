@@ -39,6 +39,8 @@
 #include "multipole_index.h"
 #include "input_struc.h"
 #include "s_GS.h"
+#include "s_Metric.h"
+#include "s_get_rc.h"
 
 
 #include <limits>

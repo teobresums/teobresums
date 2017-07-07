@@ -23,6 +23,7 @@
 #include "s_get_rc.h"
 #include "s_bisec.h"
 #include "s_D1.h"
+#include "s_GS.h"
 #include "input_struc.h"
 #include "multipole_index.h"
 #include "s_initial.h"

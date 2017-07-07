@@ -33,6 +33,8 @@
 #include "s_Flux.h"
 #include "multipole_index.h"
 #include <limits>
+#include "input_struc.h"
+#include "s_GS.h"
 #include "s_ddotr.h"
 
 typedef std::numeric_limits< double > dbl;
@@ -72,7 +74,7 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params){
         B  = metric[3];
         dA = metric[1];
     } else {
-        metric = s_Metric(r, params);
+        metric = s_Metric(r, params, false); // false is added to correct the number of arguments.
         A  = metric[0];
         B  = metric[1];
         dA = metric[2];

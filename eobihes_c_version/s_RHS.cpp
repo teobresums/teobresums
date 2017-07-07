@@ -33,6 +33,8 @@
 #include "s_Flux.h"
 #include "multipole_index.h"
 #include <limits>
+#include "input_struc.h"
+#include "s_GS.h"
 #include "s_RHS.h"
 
 typedef std::numeric_limits< double > dbl;

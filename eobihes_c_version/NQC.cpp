@@ -18,6 +18,10 @@
  */
 
 #include "NQC.h"
+#include <vector>
+#include <cmath>
+
+using namespace::std;
 
 vector<double> NQC(const double r, const double prstar, const double Omega, const double ddotr, int i){
 

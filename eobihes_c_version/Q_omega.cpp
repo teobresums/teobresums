@@ -17,7 +17,12 @@
  *  MA  02111-1307  USA
  */
 
+#include <vector>
+#include <iostream>
+#include <fstream>
 #include "Q_omega.h"
+
+using namespace::std;
 
 //NOTE: routine not in use
 int Q_omega(vector<double> t, vector<double> f, std::ofstream& Qomg){

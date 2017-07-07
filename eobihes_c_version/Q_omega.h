@@ -20,6 +20,10 @@
 #ifndef _Q_omega_h
 #define _Q_omega_h
 
+#include <vector>
+
+using namespace::std;
+
 //NOTE: routine not in use
 int Q_omega(vector<double> t, vector<double> f, std::ofstream& Qomg);
 
