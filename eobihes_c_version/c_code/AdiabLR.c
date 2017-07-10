@@ -18,7 +18,6 @@
  */
 
 #include <math.h>
-#include <vector>
 #include <stdio.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
@@ -27,12 +26,10 @@
 #include "input_struc.h"
 #include "AdiabLR.h"
 
-using namespace::std;
-
 double fLR(double r, void *params)
 {
-    
-    vector<double> metric=Metric(r, params,true);
+
+    double metric[5] = Metric(r, params, true);
     
     double A  = metric[0];
     double dA = metric[2]; /**derivative w.r.t. u*/
@@ -40,10 +37,11 @@ double fLR(double r, void *params)
     
     return f;
 }
+
 /** Takes nu as input */
 double AdiabLR(void *params)
 {
-    
+
     int status;
     int iter = 0, max_iter = 200;
     const gsl_root_fsolver_type *T;

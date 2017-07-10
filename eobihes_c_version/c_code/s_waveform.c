@@ -17,9 +17,7 @@
  *  MA  02111-1307  USA
  */
 
-
-#include <vector>
-#include <cmath>
+#include <math.h>
 
 #include <ios>
 #include <stdio.h>
@@ -45,9 +43,7 @@
 
 typedef std::numeric_limits< double > dbl;
 
-using namespace::std;
-
-vector<gsl_complex> s_waveform(double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr){
+gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
@@ -80,7 +76,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
     const double u3 = u2*u;
 
     
-    vector<double> metric(5);
+    double metric[5];
     double /*A,*/ dA, B, dB, one_A, one_B;
     double jhat, Omega, /*ddotr,*/ H, Heff, r_omega;
     
@@ -161,7 +157,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         double z3 = 2.*nu*(4.-3.*nu);
 
         double /*A,*/ B, dA;
-        vector<double> metric;
+        double metric[5];
         if (tidal_flag==true) {
             metric = Metric(r, params,false);
             A  = metric[0];
@@ -176,7 +172,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
             dA     = metric[2];
         }
 
-        vector<double> rc_vec;
+        double rc_vec[3];
         rc_vec        = s_get_rc(r,params);//nu,X1,X2,chi1,chi2); //[rc, drc, d2rc]
         double rc     = rc_vec[0];
         double drc_dr = rc_vec[1];
@@ -186,7 +182,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         
         double Heff_orb = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
         
-        vector<double> ggm = s_GS(r,rc,drc_dr,aK2,prstar,pphi,nu,chi1,chi2,X1,X2,c3);
+        double ggm[14] = s_GS(r,rc,drc_dr,aK2,prstar,pphi,nu,chi1,chi2,X1,X2,c3);
         
         double GS              = ggm[2];
         double GSs             = ggm[3];
@@ -250,7 +246,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         // Compute same quantities with prstar=0. This to obtain psi.
         // Procedure consistent with the nonspinning case
         //==========================================================
-        vector<double> ggm0 = s_GS(r,rc,drc_dr,aK2,0.,pphi,nu,chi1,chi2,X1,X2,c3);
+        double ggm0[14] = s_GS(r,rc,drc_dr,aK2,0.,pphi,nu,chi1,chi2,X1,X2,c3);
         
         double GS_0      = ggm0[2];
         double GSs_0     = ggm0[3];
@@ -275,7 +271,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         H *= 1./nu; /** Note the 1/nu */
     }
     
-    vector<gsl_complex> waveform = hlm(t, phi, r, pphi, prstar, Omega, ddotr, H, Heff, jhat, r_omega, params);
+    static gsl_complex* waveform = hlm(t, phi, r, pphi, prstar, Omega, ddotr, H, Heff, jhat, r_omega, params);
     
     return waveform;
 }

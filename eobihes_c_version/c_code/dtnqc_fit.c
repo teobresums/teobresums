@@ -17,15 +17,17 @@
  *  MA  02111-1307  USA
  */
 
-#include <math.h>
-#include <gsl/gsl_math.h>
-#include "Eulerlog.h"
+#include "dtnqc_fit.h"
 
-double Eulerlog(const double x,const double m)
+double dtnqc_fit(double chi, double chi0)
 {
+    /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
     
-    const double EulerGamma = 0.5772156649015328606065121;
-    const double Log2       = 0.6931471805599453094172321;
-
-    return EulerGamma + Log2 + log(m) + 0.5*log(x);
+    double n1    = -16.06288206;
+    double d1    = -4.04266459;
+    double x     = chi-chi0;
+    double dtnqc = (1.+n1*x)/(1.+d1*x);
+    
+    return dtnqc;
 }
+

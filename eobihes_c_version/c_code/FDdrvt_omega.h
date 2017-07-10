@@ -20,10 +20,6 @@
 #ifndef _FDdrvt_omega_h
 #define _FDdrvt_omega_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> FDdrvt_omega(vector<double> f, double dt);
+double* FDdrvt_omega(double* f, double dt);
 
 #endif /* _FDdrvt_omega_h */

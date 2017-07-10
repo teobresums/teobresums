@@ -20,11 +20,8 @@
 #ifndef _Metric_h
 #define _Metric_h
 
-#include <vector>
-using namespace::std;
-
-vector<double> acoeffs(const double r, const double nu);
-vector<double> Metric(const double r, void *params, bool nnlo_flag);
-vector<double> A5pnP15_dd(const double r, void *params);
+double* acoeffs(const double r, const double nu);
+double* Metric(const double r, void *params, bool nnlo_flag);
+double* A5pnP15_dd(const double r, void *params);
 
 #endif /* _Metric_h */

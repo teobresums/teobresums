@@ -17,7 +17,6 @@
  *  MA  02111-1307  USA
  */
 
-#include <vector>
 #include <gsl/gsl_math.h>
 #include "input_struc.h"
 #include "initial.h"
@@ -25,22 +24,20 @@
 #include "Metric.h"
 #include "flux.h"
 
-using namespace::std;
-
-vector<double> initial(input *params)
+double* initial(input *params)
 {
 
     double nu = (*params).nu;
     double r0 = (*params).r0;
 
-    vector<double> y_init(7);
-    int N  = 6;
+    static double y_init[7];
+    const int N = 6;
     const double dr = 1.e-8;
     
-    vector<double> r(2*N), dA(2*N), j(2*N), j2(2*N), djdr(2*N); /** j:angular momentum */
-    vector<double> E0(2*N), Omega_j(2*N);
-    vector<double> Fphi(2*N), Ctmp(2*N), prstar(2*N), pr(2*N), pph(2*N), dprstardt(2*N);
-    vector<double> metric(5);
+    double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
+    double E0[2*N], Omega_j[2*N];
+    double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
+    double metric[5];
 
     double r2, r3, u, A, B, d2A, j3;
     double z3 = 2.0*nu*(4.0-3.0*nu);
@@ -58,11 +55,11 @@ vector<double> initial(input *params)
         u  = 1./r[i];
         
         /** Compute metric  */
-        metric = Metric(r[i],params,false);
-        A    =  metric[0];
-        dA[i]=  metric[1];
-        B    =  metric[3];
-        d2A  =  A5pnP15_dd(r[i],params)[0];
+        metric = Metric(r[i], params, false);
+        A      = metric[0];
+        dA[i]  = metric[1];
+        B      = metric[3];
+        d2A    = A5pnP15_dd(r[i],params)[0];
         
         /** Angular momentum for circular orbit: circular ID  */
         j2[i]   =  r3*dA[i]/(2.*A-r[i]*dA[i]);
@@ -124,3 +121,4 @@ vector<double> initial(input *params)
     
     return y_init;
 }
+

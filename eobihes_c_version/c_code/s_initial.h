@@ -20,17 +20,8 @@
 #ifndef _s_initial_h
 #define _s_initial_h
 
-#include "s_Flux.h"
-#include <gsl/gsl_math.h>
-#include "s_Metric.h"
-#include "s_get_rc.h"
-#include "s_bisec.h"
-#include "s_D1.h"
 #include "input_struc.h"
-#include "multipole_index.h"
 
-using namespace std;
-
-vector<double> s_initial(input *params);
+double* s_initial(input *params);
 
 #endif /* _s_initial_h */

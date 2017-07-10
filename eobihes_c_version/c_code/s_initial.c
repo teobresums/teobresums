@@ -28,9 +28,7 @@
 #include "multipole_index.h"
 #include "s_initial.h"
 
-using namespace std;
-
-vector<double> s_initial(input *params){
+double* s_initial(input *params){
 
 /*
 % EOB_ModinSpin
@@ -71,29 +69,29 @@ vector<double> s_initial(input *params){
 // This is used later to compute a spatial derivative numerically
 //-----------------------------------------------------------------
     
-    vector<double> y_init(7);
+    static double y_init[7];
     
-    int N = 10;
+    const int N = 10;
     const double dr = 1.e-8;
-    vector<double> r(2*N);
+    double r[2*N];
     
     // Angular momentum for circular orbit: circular ID
-    vector<double> j2(2*N);
-    vector<double> j(2*N);
-    vector<double> djdr(2*N);
+    double j2[2*N];
+    double j[2*N];
+    double djdr[2*N];
     
     // For circular orbit at r0=r(N)
-    vector<double> E0(2*N);         // real Hamiltonian      H_0
-    vector<double> Omega_j(2*N);                  // Orbital frequency (from Hamilton's equation)
+    double E0[2*N];         // real Hamiltonian      H_0
+    double Omega_j[2*N];                  // Orbital frequency (from Hamilton's equation)
     
     
-    vector<double> Fphi(2*N);
+    double Fphi[2*N];
     
-    vector<double> prstar(2*N);
-    vector<double> pr(2*N);
-    vector<double> pph(2*N);
+    double prstar[2*N];
+    double pr[2*N];
+    double pph[2*N];
     
-    vector<double> dprstardt(2*N);  // NOTE: Fr* here
+    double dprstardt[2*N];  // NOTE: Fr* here
     
     double X1  = (*(input *)params).X1;
     double X2  = (*(input *)params).X2;
@@ -106,18 +104,18 @@ vector<double> s_initial(input *params){
     double S  = S1 + S2;        // => in the EMRL this becomes the spin of the BH
     double Ss = X2*a1 + X1*a2;  // => in the EMRL this becomes the spin of the particle
 
-    vector<double> rc(2*N);
-    vector<double> drc(2*N);
-    vector<double> d2rc(2*N);
+    double rc[2*N];
+    double drc[2*N];
+    double d2rc[2*N];
     
     double rorb;
     double pphorb;
     
-    vector<double> metric(5);
-    vector<double> A(2*N);
-    vector<double> dA(2*N);
-    vector<double> B(2*N);
-    vector<double> d2A(2*N);
+    double metric[5];
+    double A[2*N];
+    double dA[2*N];
+    double B[2*N];
+    double d2A[2*N];
     for (int i=2*N; i--;) {
         
         r[i] = r0+(i-N+1)*dr;
@@ -137,13 +135,13 @@ vector<double> s_initial(input *params){
 	    }*/
 
 	// metric is here. The tidal parameters are within this routine 
-	metric = s_Metric(r[i], params,false);
+      	metric = s_Metric(r[i], params, false);
         A[i]   = metric[0];
         B[i]   = metric[1];
         dA[i]  = metric[2];
         d2A[i] = metric[3];
 		
-        vector<double> rc_rad = s_get_rc(r[i],params);
+        double rc_rad[3] = s_get_rc(r[i], params);
         rc[i]  = rc_rad[0];
         drc[i] = rc_rad[1];
         
@@ -153,11 +151,11 @@ vector<double> s_initial(input *params){
         pph[i] = s_bisec(pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
     }
 
-    vector<double> dpph_dr = s_D1(pph,r,12-1); // derivative is computed on a grid with 12 points
+    double dpph_dr[12] = s_D1(pph,r,12-1); // derivative is computed on a grid with 12 points
     
     for (int i=2*N; i--;) {
         
-        double sqrtAbyB     = sqrt(A[i]/B[i]);
+        double sqrtAbyB = sqrt(A[i]/B[i]);
         
         double uc  = 1./rc[i];
         double uc2 = uc*uc;
@@ -169,7 +167,7 @@ vector<double> s_initial(input *params){
         double Horbeff0 = sqrt(A[i]*(1. + pph2*uc2));
         
         // Compute gyro-gravitomagnetic coupling functions
-        vector<double> ggm0 = s_GS(r[i], rc[i], drc[i], aK2, 0., pph[i], nu, chi1, chi2, X1, X2, c3);
+        double ggm0[14]               = s_GS(r[i], rc[i], drc[i], aK2, 0., pph[i], nu, chi1, chi2, X1, X2, c3);
         double GS_0                   = ggm0[2];
         double GSs_0                  = ggm0[3];
         double dGS_dr_0               = ggm0[6];

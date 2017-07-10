@@ -20,10 +20,6 @@
 #ifndef _s_Metric_h
 #define _s_Metric_h
 
-#include <vector>
-
-using namespace::std; 
-
-vector<double> s_Metric(double r, void *params, bool nnlo_flag);
+double* s_Metric(double r, void *params, bool nnlo_flag);
 
 #endif /* _s_Metric_h */

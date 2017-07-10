@@ -18,12 +18,9 @@
  */
 
 #include <math.h>
-#include <vector>
 #include "A_NumDenom.h"
 
-using namespace::std;
-
-vector<double> A_NumDenom(const double r, const vector<double> a, const double nu)
+double* A_NumDenom(const double r, const double* a, const double nu)
 {
     
     /** Shorthands */
@@ -49,14 +46,14 @@ vector<double> A_NumDenom(const double r, const vector<double> a, const double n
     const double C6  = (4.*a3 + a4);
     const double C5  = (16.*a6 + (2.*a4 + a5)*(8.*a3 + 2.*a4 + a5)*nu - C6*a6*nu + a3*a3*C6*nu*nu);
     const double C7  = (64. - (4.*C1 + a6)*nu + a3*a3*nu*nu);
-    const double C8  = a6*(8 - a3*nu) + nu*(8.*a3*a3 + 16.*a3*a4 + 4.*a4*a4 + a3*a3*a3*nu) + a5*(16. + a4*nu);
+    const double C8  = a6*(8. - a3*nu) + nu*(8.*a3*a3 + 16.*a3*a4 + 4.*a4*a4 + a3*a3*a3*nu) + a5*(16. + a4*nu);
     const double C9  = 4.*(4.*a4 + 2.*a5 + a6) + a3*(8.*a3 + 4.*a4 + a5)*nu;
     const double C10 = (-8 + a3*nu);
     const double C11 = (-32. + C3*nu);
     const double C12 = (-4.*a4 - 2.*a5 - a6 + a3*C10);
 
     /**  WIT */
-    vector<double> frac(4);
+    static double frac[4];
     frac[0] = 1. + (C7*u)/C11;
     frac[1] = (-32. + nu*(12.*a3 + 4.*a4 + a5 - C2*u - 2.*C2*u2 - (C9)*u3 - (C8)*u4 - C5*u5))/C11;
     frac[2] = (-((4.*a5l + a6l)*nu*C4) + C4*C7 + a5l*nu*(-64 + nu*(12.*a4 + 4.*a5 + a6 + a3*(32 - a3*nu))))/(C4*C4);

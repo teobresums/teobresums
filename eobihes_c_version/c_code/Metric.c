@@ -18,8 +18,6 @@
  */
 
 #include <math.h>
-#include <vector>
-
 #include "A_NumDenom.h"
 #include "input_struc.h"
 
@@ -28,12 +26,10 @@
 
 #include "constants.h"
 
-using namespace::std;
-
-vector<double> acoeffs(const double r, const double nu)
+double* acoeffs(const double r, const double nu)
 {
     
-    vector<double> a(8);
+    static double a[8];
     const double u    = 1./r;
     const double logu = log(u);
 
@@ -60,14 +56,14 @@ vector<double> acoeffs(const double r, const double nu)
     return a;
 }
 
-vector<double> Metric(const double r, void *params, bool nnlo_flag)
+double* Metric(const double r, void *params, bool nnlo_flag)
 {
     //const double nu,bool tidal_flag,bool nnlo_flag){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
     double rLR        = (*(input *)params).rLR;
-    vector<double> data(5);
+    static double data[5];
     
     const double u   = 1./r;
     const double u2  = u*u;
@@ -79,14 +75,14 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
     const double u9  = u8*u;
     const double u10 = u5*u5;
     //double N; double D; double dN; double dD; double ooD;
-    const vector<double> a = acoeffs(r,nu);
+    const double*  a = acoeffs(r,nu);
     
     /** Unpack numerator and denominator and compute A and its derivatives */
-    const vector<double> frac = A_NumDenom(r, a, nu);
-    const double Num  = frac[0];
-    const double Den  = frac[1];
-    const double dNum = frac[2];
-    const double dDen = frac[3];
+    const double* frac = A_NumDenom(r, a, nu);
+    const double  Num  = frac[0];
+    const double  Den  = frac[1];
+    const double  dNum = frac[2];
+    const double  dDen = frac[3];
     
     const double ooD = 1./Den;
     double A    = Num*ooD;
@@ -105,8 +101,8 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
         double XB  =  1.-XA;
 			   
         /** Dimensionless Love numbers (apsidal constants) */
-        vector<double> kAl(3);
-        vector<double> kBl(3);
+        double kAl[3];
+        double kBl[3];
 
         kAl[0] = (*(input *)params).kAl1;
         kAl[1] = (*(input *)params).kAl2;
@@ -207,16 +203,14 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
     return data;
 }
 
-vector<double> A5pnP15_dd(const double r, void *params)
+double* A5pnP15_dd(const double r, void *params)
 {
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
     double rLR        = (*(input *)params).rLR;
 
-    
-        
-    vector<double> A_dd(2);
+    static double A_dd[2];
     
     /** Shorthands */
     const double u  = 1./r;
@@ -230,7 +224,7 @@ vector<double> A5pnP15_dd(const double r, void *params)
     const double sm = nu;
     
     /** Point-mass PN coefs */
-    const vector<double> a = acoeffs(r, nu);
+    const double* a  = acoeffs(r, nu);
     const double a3  = a[0];
     const double a4  = a[1];
     const double a5l = a[3];
@@ -238,11 +232,11 @@ vector<double> A5pnP15_dd(const double r, void *params)
     const double a6l = a[6];
     const double a6  = a[7];
     
-    const vector<double> frac = A_NumDenom(r,a,nu);
-    const double N  = frac[0];
-    const double D  = frac[1];
-    const double dN = frac[2];
-    const double dD = frac[3];
+    const double* frac = A_NumDenom(r,a,nu);
+    const double  N    = frac[0];
+    const double  D    = frac[1];
+    const double  dN   = frac[2];
+    const double  dD   = frac[3];
     
     const double ooD = 1./D;
     
@@ -259,9 +253,9 @@ vector<double> A5pnP15_dd(const double r, void *params)
 
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
 
-       /** Compactness of the star */
-       double CA = (*(input *)params).CA;
-       double CB = (*(input *)params).CB;
+        /** Compactness of the star */
+        double CA = (*(input *)params).CA;
+        double CB = (*(input *)params).CB;
       
         /** Tidal PN coefs */
         double q    = (1.+sqrt(1.-4.*nu)-2.*nu)/(2.*nu);
@@ -269,8 +263,8 @@ vector<double> A5pnP15_dd(const double r, void *params)
         double XB   =  1.-XA;
 						
         /** Dimensionless Love numbers (apsidal constants) */
-        vector<double> kAl(3);
-        vector<double> kBl(3);
+        double kAl[3];
+        double kBl[3];
 
 	//------------------------------------------------------------------------------
     //   Computing the tidal coupling constants: Eq. (31) of D&N, PRD 81, 084016 (2010)
@@ -291,10 +285,10 @@ vector<double> A5pnP15_dd(const double r, void *params)
 	// Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, Eq.(37)
 	// of Damour&Nagar, PRD 81, 084016 (2010)
 	//-----------------------------------------------------------------------------------
-	double bar_alph2_1 = (5/2.*XA*kapA2 + 5/2.*XB*kapB2)/kapT2;
-	double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
-	double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
-	double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+        double bar_alph2_1 = (5/2.*XA*kapA2 + 5/2.*XB*kapB2)/kapT2;
+        double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+        double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+        double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
 	                
         double p      = 4.;// % 4<p<6
         double c1     = 8.53353;
@@ -359,8 +353,8 @@ return A_dd;
  //k.A.2      =     0.093330885635
  //k.A.3      =     0.025545679620
  //k.A.4      =     0.009495642804
- vector<double> kAl(3);
- vector<double> kBl(3);
+ double kAl[3];
+ double kBl[3];
  kAl[0]      =     0.093330885635; //k.A.2
  kAl[1]      =     0.025545679620; //k.A.3
  kAl[2]      =     0.009495642804; //k.A.4

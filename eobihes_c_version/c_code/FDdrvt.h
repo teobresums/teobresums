@@ -20,10 +20,6 @@
 #ifndef _FDdrvt_h
 #define _FDdrvt_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> FDdrvt(const vector<double> f, const vector<double> t, int varargin, const int grid_length);
+double* FDdrvt(const double* f, const double* t, int varargin, const int grid_length);
 
 #endif /* _FDdrvt_h */

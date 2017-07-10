@@ -20,11 +20,8 @@
 #ifndef _initial_h
 #define _initial_h
 
-#include <vector>
 #include "input_struc.h"
 
-using namespace::std;
-
-vector<double> initial(input *params);
+double* initial(input *params);
 
 #endif /* _initial_h */

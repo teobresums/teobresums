@@ -17,18 +17,25 @@
  *  MA  02111-1307  USA
  */
 
-#include "dtnqc_fit.h"
+#include "s_D1.h"
 
-double dtnqc_fit(double chi,double chi0)
-{
-    /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
+double* s_D1(double* f, double* x, const int Nmax){
+/* Computes the first derivative of the function. Centered but at the edges. USAGE: df = EOB_D1(f,x) */
+    int Nmin = 0;
+    //int Nmax = 11;
     
-    double n1    = -16.06288206;
-    double d1    = -4.04266459;
-    double x     = chi-chi0;
-    double dtnqc = (1.+n1*x)/(1.+d1*x);
-    
-    return dtnqc;
-    
+    static double df[Nmax+1];
+    for(int i=2;i<=Nmax-2;i++){
+        df[i] = 1./3.*(8.*f[1+i] - f[2+i] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
+    }
+
+    // 4th order boundaries
+    df[0] = (-24./17.*f[Nmin] + 59./34.*f[Nmin+1] - 4./17.*f[Nmin+2] - 3./34.*f[Nmin+3])/(x[Nmin+1]-x[Nmin]);
+    df[1] = (-1./2.*f[Nmin] + 1./2.*f[Nmin+2] )/(x[Nmin+1]-x[Nmin]);
+
+    df[Nmax]   = -(-24./17.*f[Nmax] + 59./34.*f[Nmax-1] - 4./17.*f[Nmax-2] - 3./34.*f[Nmax-3])/(x[Nmax]-x[Nmax-1]);
+    df[Nmax-1] = -(-1./2.*f[Nmax] + 1./2.*f[Nmax-2])/(x[Nmax]-x[Nmax-1]);
+
+    return df;
 }
 

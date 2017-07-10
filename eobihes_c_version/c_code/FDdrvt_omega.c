@@ -17,14 +17,12 @@
  *  MA  02111-1307  USA
  */
 
-#include <vector>
 #include "FDdrvt_omega.h"
 
-using namespace::std;
-
-vector<double> FDdrvt_omega(vector<double> f, double dt)
+double* FDdrvt_omega(double* f, double dt)
 {
-    vector<double> d1f(f.size()-2);
+    const int d1fsize = sizeof(f)/sizeof(f[0])-2;
+    static double d1f[d1fsize];
     const double oodt  = 1./dt;
     const double c     = 1./12.;
     
@@ -58,5 +56,5 @@ vector<double> FDdrvt_omega(vector<double> f, double dt)
     }
     
     return d1f;
-    
 }
+

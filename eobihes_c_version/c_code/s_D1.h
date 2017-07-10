@@ -20,10 +20,6 @@
 #ifndef _s_D1_h
 #define _s_D1_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> s_D1(vector<double> f, vector<double> x, int Nmax);
+double* s_D1(double* f, double* x, const int Nmax);
 
 #endif /* _s_D1_h */

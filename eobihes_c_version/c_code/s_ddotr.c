@@ -19,8 +19,7 @@
 
 #include <stdio.h>
 #include <gsl/gsl_errno.h>
-#include <vector>
-#include "cmath"
+#include <math.h>
 #include "s_A5PNlog.h"
 #include "s_Metric.h"
 #include "Metric.h"
@@ -38,10 +37,7 @@
 #include "s_ddotr.h"
 #include "s_get_rc.h"
 
-
 typedef std::numeric_limits< double > dbl;
-
-using namespace::std;
 
 double s_ddotr(double t, double r, double pph, double prstar, void *params){
     
@@ -69,12 +65,12 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params){
     double z3 = 2.*nu*(4.-3.*nu);
     
     double A, B, dA;
-    vector<double> metric;
+    double metric[5];
     if (tidal_flag==true) {
         metric = Metric(r, params, false);
-        A  = metric[0];
-        B  = metric[3];
-        dA = metric[1];
+        A      = metric[0];
+        B      = metric[3];
+        dA     = metric[1];
     } else {
         metric = s_Metric(r, params, false); // false is added to correct the number of arguments.
         A  = metric[0];
@@ -82,7 +78,7 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params){
         dA = metric[2];
     }
     
-    vector<double> rc_vec;
+    double* rc_vec;
     //rc_vec = s_get_rc(r,aK2,params);//[rc, drc, d2rc]
     rc_vec = s_get_rc(r,params);//[rc, drc, d2rc]
     double rc     = rc_vec[0];
@@ -98,7 +94,7 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params){
     double S     = S1 + S2;        // => in the EMRL this becomes the spin of the BH
     double Sstar = X2*a1 + X1*a2;  // => in the EMRL this becomes the spin of the particle
     
-    vector<double> ggm = s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    double* ggm = s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
     
     double GS              = ggm[2];
     double GSs             = ggm[3];
@@ -116,7 +112,7 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params){
     // Compute same quantities with prstar=0. This to obtain psi.
     // Procedure consistent with the nonspinning case
     //==========================================================
-    vector<double> ggm0 = s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    double* ggm0 = s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
     
     double sqrtAbyB  = sqrt(A/B);
     

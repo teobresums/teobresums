@@ -21,7 +21,6 @@
 #include <ios>
 #include <cmath>
 #include <limits>
-#include <vector>
 #include <fstream>
 #include <stdio.h>
 
@@ -40,9 +39,8 @@
 #include "s_Metric.h"
 #include "s_RHS.h"
 #include "s_get_rc.h"
-typedef std::numeric_limits< double > dbl;
 
-using namespace::std;
+typedef std::numeric_limits< double > dbl;
 
 int s_RHS(double t, const double y[], double f[], void *params)
 {
@@ -73,8 +71,7 @@ int s_RHS(double t, const double y[], double f[], void *params)
     double c3       = (*(input *)params).cN3LO;
     bool tidal_flag = (*(input *)params).tidal;
     double aK2      = (*(input *)params).aK2;
- 
-    
+
     double r      = y[0];
     //double phi = y[1];
     double prstar = y[2];
@@ -89,7 +86,7 @@ int s_RHS(double t, const double y[], double f[], void *params)
     double z3 = 2.*nu*(4.-3.*nu);
     
     double A, B, dA;
-    vector<double> metric;
+    double metric[5];
     if (tidal_flag==true)
     {
         metric = Metric(r, params, false);
@@ -105,7 +102,7 @@ int s_RHS(double t, const double y[], double f[], void *params)
         dA   = metric[2];
     }
     
-    vector<double> rc_vec;
+    double rc_vec[3];
     rc_vec = s_get_rc(r,params);//[rc, drc, d2rc]
     double rc     = rc_vec[0];
     double drc_dr = rc_vec[1];
@@ -115,7 +112,7 @@ int s_RHS(double t, const double y[], double f[], void *params)
     
     double Heff_orb = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
     
-    vector<double> ggm = s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    double ggm[14] = s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
 
     double GS              = ggm[2];
     double GSs             = ggm[3];
@@ -172,7 +169,7 @@ int s_RHS(double t, const double y[], double f[], void *params)
     // Compute same quantities with prstar=0. This to obtain psi.
     // Procedure consistent with the nonspinning case
     //==========================================================
-    vector<double> ggm0 = s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    double ggm0[14] = s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
     
     double GS_0      = ggm0[2];
     double GSs_0     = ggm0[3];

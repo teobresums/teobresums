@@ -20,10 +20,6 @@
 #ifndef _deltalm_h
 #define _deltalm_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> deltalm(const double Hreal, const double Omega, const double nu);
+double* deltalm(const double Hreal, const double Omega, const double nu);
 
 #endif /* _deltalm_h */

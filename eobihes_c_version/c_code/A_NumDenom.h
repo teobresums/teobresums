@@ -20,11 +20,7 @@
 #ifndef _A_NumDenom_h
 #define _A_NumDenom_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> A_NumDenom(const double r, const vector<double> a, const double nu);
+double* A_NumDenom(const double r, const double* a, const double nu);
 
 #endif /* _A_NumDenom_h */
 

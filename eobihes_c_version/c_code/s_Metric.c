@@ -19,7 +19,6 @@
 
 #include <gsl/gsl_math.h>
 #include <math.h>
-#include <vector>
 
 #include "s_get_rc.h"
 #include "s_A5PNlog.h"
@@ -27,7 +26,7 @@
 
 #include "s_Metric.h"
 
-vector<double> s_Metric(double r, void *params, bool nnlo_flag){
+double* s_Metric(double r, void *params, bool nnlo_flag){
 /*
 %                       This function computes the EOB metric potentials
 %                       A(r), B(r), and their derivatives, as functions
@@ -43,45 +42,46 @@ vector<double> s_Metric(double r, void *params, bool nnlo_flag){
 %                       radial derivative of A is needed.
 */
     
-double nu  = (*(input *)params).nu;
-double aK2 = (*(input *)params).aK2;
-
-vector<double> rc_vec = s_get_rc(r,params); //[rc, drc, d2rc]
-double rc   = rc_vec[0];
-double drc  = rc_vec[1];
-double d2rc = rc_vec[2];
-
-double r2  = r*r;
-double u   = 1./r;
-double u2  = u*u;
-double u3  = u2*u;
-double u4  = u2*u2;
-double uc  = 1./rc;
-double uc2 = uc*uc;
-double uc3 = uc2*uc;
+    double nu  = (*(input *)params).nu;
+    double aK2 = (*(input *)params).aK2;
     
-//vector<double> metric = A5pnP15(rc, nu);
- vector<double> metric = s_A5PNlog(rc,params,nnlo_flag);
-double Aorb   = metric[0];
-double dAorb  = metric[1];
-double d2Aorb = metric[2];
-double Dorb   = metric[3];
-
-double AKerr_Multipole = (1.+2.*uc)/(1.+2.*u);
-
-double fss = 1.;
-
-// Correction factor
-double A   = Aorb*AKerr_Multipole*fss;
-
-double dA  = dAorb*drc*(1.+2.*uc)/(1.+2.*u) - 2.*Aorb*drc*uc2/(1.+2.*u) + 2.*Aorb*(1.+2.*uc)*u2/((1.+2.*u)*(1.+2.*u));
-
-double d2A = d2Aorb*(1.+2.*uc)/(1.+2.*u) + 4.*dAorb*( u2*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) - uc2/(1.+2.*u)*drc) + Aorb*(-4.*u3*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) + 8.*u4*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)*(1.+2.*u))+4.*uc3*(1.+2.*u)*drc*drc - 2.*uc2/(1.+2.*u)*d2rc);
-
-
-// The B function
-double B  = r2*uc2*Dorb/A;
-
-    return {A,B,dA,d2A};
+    double rc_vec[3] = s_get_rc(r,params); //[rc, drc, d2rc]
+    double rc        = rc_vec[0];
+    double drc       = rc_vec[1];
+    double d2rc      = rc_vec[2];
+    
+    double r2  = r*r;
+    double u   = 1./r;
+    double u2  = u*u;
+    double u3  = u2*u;
+    double u4  = u2*u2;
+    double uc  = 1./rc;
+    double uc2 = uc*uc;
+    double uc3 = uc2*uc;
+        
+    //double* metric = A5pnP15(rc, nu);
+    double metric[5] = s_A5PNlog(rc,params,nnlo_flag);
+    double Aorb      = metric[0];
+    double dAorb     = metric[1];
+    double d2Aorb    = metric[2];
+    double Dorb      = metric[3];
+    
+    double AKerr_Multipole = (1.+2.*uc)/(1.+2.*u);
+    
+    double fss = 1.;
+    
+    // Correction factor
+    double A   = Aorb*AKerr_Multipole*fss;
+    
+    double dA  = dAorb*drc*(1.+2.*uc)/(1.+2.*u) - 2.*Aorb*drc*uc2/(1.+2.*u) + 2.*Aorb*(1.+2.*uc)*u2/((1.+2.*u)*(1.+2.*u));
+    
+    double d2A = d2Aorb*(1.+2.*uc)/(1.+2.*u) + 4.*dAorb*( u2*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) - uc2/(1.+2.*u)*drc) + Aorb*(-4.*u3*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) + 8.*u4*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)*(1.+2.*u))+4.*uc3*(1.+2.*u)*drc*drc - 2.*uc2/(1.+2.*u)*d2rc);
+    
+    
+    // The B function
+    double B  = r2*uc2*Dorb/A;
+ 
+    static double result[] = {A, B, dA, d2A};
+    return result;
 }
 

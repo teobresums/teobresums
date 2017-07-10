@@ -17,28 +17,14 @@
  *  MA  02111-1307  USA
  */
 
-#include <vector>
-#include "s_D1.h"
+#include <math.h>
+#include "Eulerlog.h"
 
-using namespace::std;
-
-vector<double> s_D1(vector<double> f, vector<double> x, int Nmax){
-/* Computes the first derivative of the function. Centered but at the edges. USAGE: df = EOB_D1(f,x) */
-int Nmin = 0;
-//int Nmax = 11;
+double Eulerlog(const double x, const double m)
+{
     
-    vector<double> df(Nmax+1);
-    for(int i=2;i<=Nmax-2;i++){
-        df[i] = 1./3.*(8.*f[1+i] - f[2+i] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
-    }
+    const double EulerGamma = 0.5772156649015328606065121;
+    const double Log2       = 0.6931471805599453094172321;
 
-    // 4th order boundaries
-    df[0] = (-24./17.*f[Nmin] + 59./34.*f[Nmin+1] - 4./17.*f[Nmin+2] - 3./34.*f[Nmin+3])/(x[Nmin+1]-x[Nmin]);
-    df[1] = (-1./2.*f[Nmin] + 1./2.*f[Nmin+2] )/(x[Nmin+1]-x[Nmin]);
-
-    df[Nmax]   = -(-24./17.*f[Nmax] + 59./34.*f[Nmax-1] - 4./17.*f[Nmax-2] - 3./34.*f[Nmax-3])/(x[Nmax]-x[Nmax-1]);
-    df[Nmax-1] = -(-1./2.*f[Nmax] + 1./2.*f[Nmax-2])/(x[Nmax]-x[Nmax-1]);
-
-    return df;
+    return EulerGamma + Log2 + log(m) + 0.5*log(x);
 }
-

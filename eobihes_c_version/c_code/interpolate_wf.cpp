@@ -34,7 +34,6 @@
 
 #include "hlm.h"
 #include "flux.h"
-#include "Metric.h"
 #include "Q_omega.h"
 #include "interpolate_wf.h"
 

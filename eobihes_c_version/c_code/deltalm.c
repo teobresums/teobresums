@@ -18,14 +18,11 @@
  */
 
 #include <gsl/gsl_math.h>
-#include <vector>
-//#include "deltalmvecvec.h"
+#include <math.h>
 #include "deltalm.h"
 #include "constants.h"
 
-using namespace::std;
-
-vector<double> deltalm(const double Hreal,const double Omega,const double nu)
+double* deltalm(const double Hreal, const double Omega, const double nu)
 {
 
     /*
@@ -64,8 +61,8 @@ vector<double> deltalm(const double Hreal,const double Omega,const double nu)
     double delta33LO = 13./10. * y32;
     double delta31LO = 13./30. * y32;
     
-    int kmax=35;
-    vector<double> deltalmvec(35);
+    int kmax = 35;
+    static double deltalmvec[35];
     for (int i=kmax; i--; ) {deltalmvec[i]=0.;}
     
     double num;
@@ -77,26 +74,26 @@ vector<double> deltalm(const double Hreal,const double Omega,const double nu)
     /** l=2 ------------------------------------------------------------------*/
     
     /** Pade(1,2) approximant */
-    num        = 69020.*nu + 5992.*pi*sqrt_y;
-    den        = 5992.*pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
+    num           = 69020.*nu + 5992.*pi*sqrt_y;
+    den           = 5992.*pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
     deltalmvec[0] = delta21LO*num/den;
     
     /** Pade(2,2) approximant */
-    num        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
-    den        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
+    num           = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
+    den           = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
     deltalmvec[1] = delta22LO*num/den;
 
     
     /** l=3 ------------------------------------------------------------------*/
 
     /** Pade(1,2) approximant */
-    num        = 4641.*nu + 1690.*pi*sqrt_y;
-    den        = num + 18207.*nu2*y;
+    num           = 4641.*nu + 1690.*pi*sqrt_y;
+    den           = num + 18207.*nu2*y;
     deltalmvec[2] = delta31LO*num/den;
     
     /** Taylor-expanded form */
-    num        = 1.  + 94770.*pi/(566279.*nu)*sqrt_y;
-    den        = num + 80897.* nu/3159.*y;
+    num           = 1.  + 94770.*pi/(566279.*nu)*sqrt_y;
+    den           = num + 80897.* nu/3159.*y;
     deltalmvec[3] = (10.+33.*nu)/(15.*(1.-3.*nu)) * y32 + 52./21.*pi*y3;
     
     /** Pade(1,2) approximant */
