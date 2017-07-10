@@ -30,14 +30,15 @@
 
 using namespace::std;
 
-vector<double> acoeffs(const double r, const double nu){
+vector<double> acoeffs(const double r, const double nu)
+{
     
     vector<double> a(8);
     const double u    = 1./r;
     const double logu = log(u);
 
     
-    // Point-mass PN coefs
+    /** Point-mass PN coefs */
     a[0] = 2.;
     
     a[1] = (94./3. - 41./32.*pi*pi);
@@ -59,7 +60,9 @@ vector<double> acoeffs(const double r, const double nu){
     return a;
 }
 
-vector<double> Metric(const double r, void *params, bool nnlo_flag){//const double nu,bool tidal_flag,bool nnlo_flag){
+vector<double> Metric(const double r, void *params, bool nnlo_flag)
+{
+    //const double nu,bool tidal_flag,bool nnlo_flag){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
@@ -78,7 +81,7 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag){//const doub
     //double N; double D; double dN; double dD; double ooD;
     const vector<double> a = acoeffs(r,nu);
     
-    //Unpack numerator and denominator and compute A and its derivatives
+    /** Unpack numerator and denominator and compute A and its derivatives */
     const vector<double> frac = A_NumDenom(r, a, nu);
     const double Num  = frac[0];
     const double Den  = frac[1];
@@ -101,7 +104,7 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag){//const doub
         double XA  =  0.5*(1+sqrt(1.-4.*nu));
         double XB  =  1.-XA;
 			   
-        //dimensionless Love numbers (apsidal constants)
+        /** Dimensionless Love numbers (apsidal constants) */
         vector<double> kAl(3);
         vector<double> kBl(3);
 
@@ -113,11 +116,11 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag){//const doub
         kBl[1] = (*(input *)params).kBl2;
         kBl[2] = (*(input *)params).kBl3;
         
-        //Compactness of the star
+        /** Compactness of the star */
         double CA = (*(input *)params).CA;
         double CB = (*(input *)params).CB;
         
-        //Computing the tidal coupling constants
+        /** Computing the tidal coupling constants */
         double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
         double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
         double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
@@ -136,13 +139,16 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag){//const doub
       	double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
 
 			       
-        //case 'nnlo'
-        if (nnlo_flag==true) { //Used for calculating the rLR
+        /** Case 'nnlo' */
+        if (nnlo_flag==true)
+        { //Used for calculating the rLR
             //case 'nnlo'
             A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
             A_du = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
 	         - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
-        } else { //Used for calculting the dynamcis
+        }
+        else
+        {   //Used for calculting the dynamcis
             //case 'nnlo_gsfLR'; Bini & Damour, 1409.6933 + free light-ring
             // Tidal PN coefs
             double p      =  4.;// % 4<p<6
@@ -167,7 +173,7 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag){//const doub
             
             A = AT2 + AT3 + AT4;
             
-            //Derivative of potential w.r.t. u
+            /** Derivative of potential w.r.t. u */
             double dAcub = 5./2.*   (1. -2.*(c1+c2)*u + 3.*c1*c2*u2);
             double df23  = (n1 - 2.*d2*u - n1*d2*u2)*pow(DenI,2.);
             double dA1SF = dAcub*f23 + Acub*df23;
@@ -188,7 +194,7 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag){//const doub
     
     double A_dr = - A_du/(r*r); //A_dr
     
-    // Compute D and B functions
+    /** Compute D and B functions */
     const double Dp   = 1. + 6.*nu*u2 - 2.*(3.*nu-26.)*nu*u3;
     const double D    = 1./Dp;
     const double D_dr = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
@@ -201,7 +207,8 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag){//const doub
     return data;
 }
 
-vector<double> A5pnP15_dd(const double r, void *params){
+vector<double> A5pnP15_dd(const double r, void *params)
+{
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
@@ -211,7 +218,7 @@ vector<double> A5pnP15_dd(const double r, void *params){
         
     vector<double> A_dd(2);
     
-    // Shorthands
+    /** Shorthands */
     const double u  = 1./r;
     const double u2 = u*u;
     const double u3 = u2*u;
@@ -222,7 +229,7 @@ vector<double> A5pnP15_dd(const double r, void *params){
     const double u8 = u5*u3;        
     const double sm = nu;
     
-    // Point-mass PN coefs
+    /** Point-mass PN coefs */
     const vector<double> a = acoeffs(r, nu);
     const double a3  = a[0];
     const double a4  = a[1];
@@ -252,21 +259,21 @@ vector<double> A5pnP15_dd(const double r, void *params){
 
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
 
-       //Compactness of the star
+       /** Compactness of the star */
        double CA = (*(input *)params).CA;
        double CB = (*(input *)params).CB;
       
-        // Tidal PN coefs
+        /** Tidal PN coefs */
         double q    = (1.+sqrt(1.-4.*nu)-2.*nu)/(2.*nu);
         double XA   =  0.5*(1.+sqrt(1.-4.*nu));
         double XB   =  1.-XA;
 						
-        //dimensionless Love numbers (apsidal constants)
+        /** Dimensionless Love numbers (apsidal constants) */
         vector<double> kAl(3);
         vector<double> kBl(3);
 
 	//------------------------------------------------------------------------------
-        //Computing the tidal coupling constants: Eq. (31) of D&N, PRD 81, 084016 (2010)
+    //   Computing the tidal coupling constants: Eq. (31) of D&N, PRD 81, 084016 (2010)
 	//------------------------------------------------------------------------------
         double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; //Note: kap stands for kappa
         double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
@@ -316,15 +323,15 @@ vector<double> A5pnP15_dd(const double r, void *params){
         double d2A1SF = d2Acub*f23 + 2*dAcub*df23 + Acub*d2f23;
         double d2A2SF = 674./28.;
         
-        double d2f0 = 6*pow(oom3u,3);
-        double d2f1 = 0.25*(63*pow(rLR,2)*A1SF + 4*(-1+rLR*u)*(-7*rLR*dA1SF + (-1+rLR*u)*d2A1SF))*pow(oom3u,11./2.);
-        double d2f2 = (rLR*p*((1+p)*rLR*A2SF - 2*(-1+rLR*u)*dA2SF +pow(-1+rLR*u,2) *d2A2SF))*pow(oom3u,p+2);
+        double d2f0   = 6*pow(oom3u,3);
+        double d2f1   = 0.25*(63*pow(rLR,2)*A1SF + 4*(-1+rLR*u)*(-7*rLR*dA1SF + (-1+rLR*u)*d2A1SF))*pow(oom3u,11./2.);
+        double d2f2   = (rLR*p*((1+p)*rLR*A2SF - 2*(-1+rLR*u)*dA2SF +pow(-1+rLR*u,2) *d2A2SF))*pow(oom3u,p+2);
         
-        double d2AT2 = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
+        double d2AT2  = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
         
-        double d2AT3 = - kapT3*(56*u6 + 72*bar_alph3_1*u7 + 90*bar_alph3_2*u8);
-        double d2AT4 = - kapT4*90*u8;
-        double A_ddu =   d2AT2 + d2AT3 + d2AT4;
+        double d2AT3  = - kapT3*(56*u6 + 72*bar_alph3_1*u7 + 90*bar_alph3_2*u8);
+        double d2AT4  = - kapT4*90*u8;
+        double A_ddu  =   d2AT2 + d2AT3 + d2AT4;
         
         A_ddu=A_ddu+d2A0_u;
         

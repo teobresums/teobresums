@@ -20,14 +20,14 @@
 #ifndef _SpeedyTail_h
 #define _SpeedyTail_h
 
+#include "cmath"
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include "cmath"
 
-#include "Tlm.h"
 #include "deltalm.h"
+#include "Tlm.h"
 
 vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
 

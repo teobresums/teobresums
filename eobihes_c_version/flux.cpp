@@ -22,6 +22,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
+#include "flux.h"
 #include "f_lm.h"
 #include "NQC.h"
 #include "FlmNewt.h"

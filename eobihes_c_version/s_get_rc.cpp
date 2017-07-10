@@ -18,10 +18,14 @@
  */
 
 #include <math.h>
+#include <vector>
 #include "input_struc.h"
 #include "s_get_rc.h"
 
-vector <double> s_get_rc(double r, void *params){
+using namespace::std;
+
+vector <double> s_get_rc(double r, void *params)
+{
     
     
     double nu         = (*(input *)params).nu;
@@ -41,7 +45,8 @@ vector <double> s_get_rc(double r, void *params){
     double r2  = r*r;
     
     
-    if (tidal_flag==true) {
+    if (tidal_flag==true)
+    {
         
          /* inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
          The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
@@ -74,7 +79,9 @@ vector <double> s_get_rc(double r, void *params){
 	  drc_dr = 1;
 	  d2rc_dr2 = 0;*/
 	
-    } else {
+    }
+    else
+    {
 
         double X12      = sqrt(1.-4.*nu);        
         double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));

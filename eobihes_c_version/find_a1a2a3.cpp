@@ -27,6 +27,7 @@
 #include <gsl/gsl_complex_math.h>
 #include <limits>
 
+#include "find_a1a2a3.h"
 #include "input_struc.h"
 #include "multipole_index.h"
 #include "s_D1.h"
@@ -36,7 +37,7 @@ typedef std::numeric_limits< double > dbl;
 
 using namespace::std;
 
-vector<vector<gsl_complex> > find_a1a2a3_hlm(vector<double> T, vector<double> r, vector<double> w, vector<double> pph, vector<double> pr_star, vector<vector<double> > hlm_phase,vector<double> Omg_orb, vector<vector<double> > A, vector<double> ddotr, void *params)
+vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vector<double> w, vector<double> pph, vector<double> pr_star, vector<vector<double> > hlm_phase,vector<double> Omg_orb, vector<vector<double> > A, vector<double> ddotr, void *params)
 {
 
 

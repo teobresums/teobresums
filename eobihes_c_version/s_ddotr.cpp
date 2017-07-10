@@ -36,6 +36,8 @@
 #include "input_struc.h"
 #include "s_GS.h"
 #include "s_ddotr.h"
+#include "s_get_rc.h"
+
 
 typedef std::numeric_limits< double > dbl;
 

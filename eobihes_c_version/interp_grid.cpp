@@ -21,6 +21,8 @@
 #include <gsl/gsl_spline.h>
 #include <vector>
 
+#include "interp_grid.h"
+
 using namespace::std;
 
 vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)

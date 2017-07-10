@@ -27,4 +27,4 @@ using namespace::std;
 
 vector<gsl_complex> hlmNewt(const double r, const double Omega, const double phi, const double nu, bool tidal_flag);
 
-#endif /* hlmNewt_h */
+#endif /* _hlmNewt_h */

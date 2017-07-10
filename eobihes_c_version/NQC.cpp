@@ -17,18 +17,17 @@
  *  MA  02111-1307  USA
  */
 
-#include "NQC.h"
-#include <vector>
 #include <cmath>
+#include "NQC.h"
 
-using namespace::std;
+vector<double> NQC(const double r, const double prstar, const double Omega, const double ddotr, int i)
+{
 
-vector<double> NQC(const double r, const double prstar, const double Omega, const double ddotr, int i){
 
-
-vector<double> n(6);
+    vector<double> n(6);
     
-    switch (i) {
+    switch (i)
+    {
             // l=2 -------------------------------------------------------------------
             // (2,1)
         case 0:
@@ -81,6 +80,6 @@ vector<double> n(6);
             break;
     }
     
-return n;
+    return n;
 }
 

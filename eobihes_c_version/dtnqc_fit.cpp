@@ -17,6 +17,7 @@
  *  MA  02111-1307  USA
  */
 
+#include "dtnqc_fit.h"
 
 double dtnqc_fit(double chi,double chi0)
 {

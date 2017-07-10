@@ -20,12 +20,9 @@
 #ifndef _s_Metric_h
 #define _s_Metric_h
 
-#include <gsl/gsl_math.h>
-#include <math.h>
 #include <vector>
 
-#include "s_get_rc.h"
-#include "s_A5PNlog.h"
+using namespace::std; 
 
 vector<double> s_Metric(double r, void *params, bool nnlo_flag);
 

@@ -26,4 +26,4 @@ using namespace::std;
 
 vector<double> f_lm(const double x,const double nu);
 
-#endif /* flm_h */
+#endif /* _flm_h */

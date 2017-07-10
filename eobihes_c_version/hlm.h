@@ -17,8 +17,8 @@
  *  MA  02111-1307  USA
  */
 
-#ifndef _hlm_hybrid_h
-#define _hlm_hybrid_h
+#ifndef _hlm_h
+#define _hlm_h
 
 #include <vector>
 #include <gsl/gsl_complex.h>
@@ -27,4 +27,4 @@ using namespace::std;
 
 vector<gsl_complex> hlm(double t, const double phi, const double r, const double pph, const double prstar, double Omega, const double ddotr, const double H, const double Heff,const double jhat, const double rw,void *params);
 
-#endif /* _hlm_hybrid_h */
+#endif /* _hlm_h */

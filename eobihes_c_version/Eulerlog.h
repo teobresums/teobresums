@@ -22,4 +22,4 @@
 
 double Eulerlog(const double x, const double m);
 
-#endif /* Eulerlog_h */
+#endif /* _Eulerlog_h */

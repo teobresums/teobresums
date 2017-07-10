@@ -26,4 +26,4 @@ using namespace::std;
 
 vector<double> FDdrvt(const vector<double> f, const vector<double> t, int varargin, const int grid_length);
 
-#endif /* FDdrvt_h */
+#endif /* _FDdrvt_h */

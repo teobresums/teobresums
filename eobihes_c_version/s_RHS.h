@@ -20,27 +20,6 @@
 #ifndef _s_RHS_h
 #define _s_RHS_h
 
-#include <stdio.h>
-#include <gsl/gsl_errno.h>
-#include <vector>
-#include "cmath"
-#include "s_A5PNlog.h"
-#include "s_Metric.h"
-#include "Metric.h"
-#include <ios>
-#include <fstream>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include "s_Flux.h"
-#include "multipole_index.h"
-#include <limits>
-
-typedef std::numeric_limits< double > dbl;
-
-using namespace::std;
-
 int s_RHS(double t, const double y[], double f[], void *params);
 
 #endif /* _s_RHS_h */

@@ -20,31 +20,26 @@
 #ifndef _s_waveform_h
 #define _s_waveform_h
 
-#include <stdio.h>
-#include <gsl/gsl_errno.h>
-#include "Metric.h"
-#include <vector>
-#include "cmath"
-#include "flux.h"
-
-#include "hlm.h"
-
-#include <ios>
+#include <cmath>
 #include <fstream>
+#include <ios>
+#include <limits>
+#include <stdio.h>
+#include <vector>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <gsl/gsl_errno.h>
 
+#include "flux.h"
 #include "hlm.h"
-#include "interpolator.h"
-#include "multipole_index.h"
 #include "input_struc.h"
+#include "interpolator.h"
+#include "Metric.h"
+#include "multipole_index.h"
 #include "s_GS.h"
-
-
-#include <limits>
 
 typedef std::numeric_limits< double > dbl;
 

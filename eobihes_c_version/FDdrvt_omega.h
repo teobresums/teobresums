@@ -26,4 +26,4 @@ using namespace::std;
 
 vector<double> FDdrvt_omega(vector<double> f, double dt);
 
-#endif /* FDdrvt_omega_h */
+#endif /* _FDdrvt_omega_h */

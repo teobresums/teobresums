@@ -1,4 +1,4 @@
-CC=g++ -O4
+CC=g++ -O3
 CFLAGS=-c -std=c++11
 INC=`gsl-config --cflags`
 LIBS=`gsl-config --libs`
@@ -105,8 +105,6 @@ HorizonFlux.o: HorizonFlux.cpp
 	$(CC) $(CFLAGS) $(INC) HorizonFlux.cpp
 initial.o: initial.cpp
 	$(CC) $(CFLAGS) $(INC) initial.cpp
-input_struc.o: input_struc.h
-	$(CC) $(CFLAGS) $(INC) input_struc.h
 interp_grid.o: interp_grid.cpp
 	$(CC) $(CFLAGS) $(INC) interp_grid.cpp
 interpolate_wf.o: interpolate_wf.cpp
@@ -153,8 +151,8 @@ s_initial.o: s_initial.cpp
 	$(CC) $(CFLAGS) $(INC) s_initial.cpp
 s_Metric.o: s_Metric.cpp
 	$(CC) $(CFLAGS) $(INC) s_Metric.cpp
-s_RHS.h.o: s_RHS.h.cpp
-	$(CC) $(CFLAGS) $(INC) s_RHS.h.cpp
+s_RHS.o: s_RHS.cpp
+	$(CC) $(CFLAGS) $(INC) s_RHS.cpp
 s_waveform.o: s_waveform.cpp
 	$(CC) $(CFLAGS) $(INC) s_waveform.cpp
 SpeedyTail.o: SpeedyTail.cpp

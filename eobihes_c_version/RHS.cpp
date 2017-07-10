@@ -21,9 +21,8 @@
 #include <gsl/gsl_errno.h>
 #include "Metric.h"
 #include <vector>
-#include "cmath"
+#include <cmath>
 #include "flux.h"
-
 #include "hlm.h"
 
 #include <ios>

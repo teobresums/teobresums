@@ -81,7 +81,7 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     vector<gsl_complex> tlm(kmax);
     if (speedytail_flag==false)
     {
-        tlm = hhatlmTail(Omega,Hreal, r0, L, M);
+        tlm = hhatlmtail(Omega,Hreal, r0, L, M);
     }
     else if (speedytail_flag==true)
     {

@@ -22,4 +22,4 @@
 
 double HorizonFlux(const double x, const double Heff, const double jhat, const double nu);
 
-#endif /* HorizonFlux_h */
+#endif /* _HorizonFlux_h */

@@ -17,35 +17,31 @@
  *  MA  02111-1307  USA
  */
 
-#include <stdio.h>
-#include <gsl/gsl_errno.h>
-#include "Metric.h"
-#include <vector>
-#include "cmath"
-#include "flux.h"
 
-#include "hlm.h"
+#include <vector>
+#include <cmath>
 
 #include <ios>
+#include <stdio.h>
 #include <fstream>
 
-#include <gsl/gsl_math.h>
+#include <limits>
 #include <gsl/gsl_sf.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_errno.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
+#include "Metric.h"
 #include "hlm.h"
+#include "flux.h"
 #include "interpolator.h"
 #include "multipole_index.h"
 #include "input_struc.h"
 #include "s_GS.h"
+#include "s_waveform.h"
 #include "s_Metric.h"
 #include "s_get_rc.h"
-
-
-#include <limits>
-
-#include "s_waveform.h"
 
 typedef std::numeric_limits< double > dbl;
 
@@ -103,7 +99,8 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
      */
     
     //const double j = pphi;
-    if (spin_flag==false) {
+    if (spin_flag==false)
+    {
         metric = Metric(r, params,false);
         A      = metric[0];
         dA     = metric[1];
@@ -157,7 +154,9 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
 
         ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
         
-    }else if (spin_flag==true){
+    }
+    else if (spin_flag==true)
+    {
         
         double z3 = 2.*nu*(4.-3.*nu);
 
@@ -168,7 +167,9 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
             A  = metric[0];
             B  = metric[3];
             dA = metric[1];
-        } else {
+        }
+        else
+        {
 	          metric = s_Metric(r, params,false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
             A      = metric[0];
             B      = metric[1];
@@ -209,35 +210,37 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         
         double dHeff_dprstar = pphi*(dGS_dprstar*S + dGSs_dprstar*Sstar) + (prstar/Heff_orb)*(1 + 2*A*uc2*z3*prstar2);
         
-        // second derivative of Heff wrt to pr_star neglecting all pr_star^2 terms
+        /** Second derivative of Heff wrt to pr_star neglecting all pr_star^2 terms */
         double d2Heff_dprstar20 = pphi*(d2GS_dprstar20*S + d2GSs_dprstar20*Sstar) +  (1./Heff_orb)*(1 + 2*A*uc2*z3*prstar2);
         
         
         double ddotr_dp_rstar = sqrtAbyB*one_H*d2Heff_dprstar20;
         
-        //-------------------------------------------
-        // 0.th -- approximate ddot(r)_0 without Fphi
-        //-------------------------------------------
+         /*
+          *-------------------------------------------
+          * 0.th -- approximate ddot(r)_0 without Fphi
+          *-------------------------------------------
+          */
         ddotr = dp_rstar_dt_0*ddotr_dp_rstar;  // + dr_dt.*ddotr_dr; //order pr_star^2 neglected
         
         
-        //------------------ dr/dt ------------------
+        /*------------------ dr/dt ------------------*/
         f[0] = sqrtAbyB*one_H*dHeff_dprstar;
         
-        //----------------- d\phi/dt ----------------
+        /*----------------- d\phi/dt ----------------*/
         Omg_orb = one_H*pphi*A*uc2/Heff_orb;
         double dHeff_dpph = GS*S + (GSs + pphi*dGSs_dpph)*Sstar + pphi*A*uc2/Heff_orb;
         f[1] = one_H*dHeff_dpph;
         
-        //----------------- dp_{r*}/dt --------------
+        /*----------------- dp_{r*}/dt --------------*/
         f[2] = -sqrtAbyB*one_H*dHeff_dr;
         
-        //------------------ dp_{\phi}/dt -----------
+        /*------------------ dp_{\phi}/dt -----------*/
         Omega = f[1];
         
         Omg   = Omega;
         
-        //MOmg = Omega;//Mbh*Omega; //passed back to main and then used to determine peak of MOmg curve
+        //MOmg = Omega;//Mbh*Omega; /** Passed back to main and then used to determine peak of MOmg curve */
         
         
         //----------------------------------
@@ -254,7 +257,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         double dGS_dr_0  = ggm0[6];
         double dGSs_dr_0 = ggm0[7];
         
-        double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));                     // effective Hamiltonian H_0^eff
+        double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));    /** Effective Hamiltonian H_0^eff*/
         double Heff_0     = Heff_orb_0 + (GS_0*S + GSs_0*Sstar)*pphi;
         double H0         = sqrt(1.0 + 2.0*nu*(Heff_0 - 1.0) );
         double one_H0     = 1./H0;
@@ -269,7 +272,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         
         jhat         = pphi/(r_omega*v_phi);
         
-        H *= 1./nu; //note the 1/nu
+        H *= 1./nu; /** Note the 1/nu */
     }
     
     vector<gsl_complex> waveform = hlm(t, phi, r, pphi, prstar, Omega, ddotr, H, Heff, jhat, r_omega, params);

@@ -26,4 +26,4 @@ using namespace::std;
 
 vector<double> FlmNewt(const double x, void *params);
 
-#endif /* FlmNewt_h */
+#endif /* _FlmNewt_h */

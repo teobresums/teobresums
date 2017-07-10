@@ -17,8 +17,8 @@
  *  MA  02111-1307  USA
  */
 
-#ifndef _Flux_h
-#define _Flux_h
+#ifndef _flux_h
+#define _flux_h
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
@@ -36,4 +36,4 @@
 
 double flux(const double x,const double Omega,const double r_omega,const double E, const double Heff,const double jhat,const double r,const double prstar, const double ddotr, double source[],void *params);
 
-#endif /* _Flux_h */
+#endif /* _flux_h */

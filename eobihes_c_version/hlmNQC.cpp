@@ -17,7 +17,7 @@
  *  MA  02111-1307  USA
  */
 
-#include "cmath"
+#include <cmath>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
@@ -66,6 +66,7 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
             /** l=2 -------------------------------------------------------------------
               *(2,1) */
             case 0:
+                
                 a1 = 0.0162387198*(7.32653082*xnu2 + 1.19616248*xnu + 0.73496656);
                 a2 = -1.80492460*xnu2 + 1.78172686*xnu + 0.30865284;
                 a3 = 0.0;
@@ -74,11 +75,13 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
                 b2 =  1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
                 b3 =  0.0;
                 
-                n=NQC(r,prstar, Omega,ddotr,0);
+                n  = NQC(r,prstar, Omega,ddotr,0);
+                
                 break;
                 
             /* (2,2) */
             case 1:
+                
                 a1 = -0.0805236959*( 1 - 2.00332326*xnu2)/( 1 + 3.08595088*xnu2);
                 a2 =  1.5299534255*( 1 + 1.16438929*xnu2)/( 1 + 1.92033923*xnu2);
                 a3 =  0.0;
@@ -87,12 +90,14 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
                 b2 = 0.896911234248*(-0.61072011*xnu + 0.94295129);
                 b3 = 0.0;
                 
-                n=NQC(r,prstar, Omega,ddotr,1);
+                n  = NQC(r,prstar, Omega,ddotr,1);
+                
                 break;
                 
             /** l=3 -------------------------------------------------------------------
               * (3,3) */
             case 4:
+                
                 a1 = -0.0377680000*(1 - 14.61548907*xnu2)/( 1 + 2.44559263*xnu2);
                 a2 =  1.9898000000*(1 + 2.09750346 *xnu2)/( 1 + 2.57489466*xnu2);
                 a3 =  0.0;
@@ -100,10 +105,13 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
                 b1 = 0.1418400000*(1.07430512 - 1.23906804*xnu + 4.44910652*xnu2);
                 b2 = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
                 b3 = 0.0;
-                n=NQC(r,prstar, Omega,ddotr,4);
+                
+                n  = NQC(r,prstar, Omega,ddotr,4);
+                
                 break;
                 
             default:
+                
                 a1 = 0.;
                 a2 = 0.;
                 a3 = 0.;
@@ -115,7 +123,7 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
         }
         
         psilmnqc[i].dat[0] = 1. + a1*n[0] + a2*n[1] + a3*n[2];
-        psilmnqc[i].dat[1] = b1*n[3] + b2*n[4] + b3*n[5];
+        psilmnqc[i].dat[1] = 0. + b1*n[3] + b2*n[4] + b3*n[5];
     }
         
     return psilmnqc;

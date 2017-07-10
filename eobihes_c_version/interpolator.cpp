@@ -35,6 +35,8 @@
 #include "hlm.h"
 #include "flux.h"
 #include "Metric.h"
+#include "interpolator.h"
+
 
 using namespace::std;
 

@@ -27,6 +27,6 @@
 
 using namespace::std;
 
-vector<gsl_complex> hhatlmTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
+vector<gsl_complex> hhatlmtail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
 
-#endif /* hhatlmtail_h */
+#endif /* _hhatlmtail_h */

@@ -17,19 +17,22 @@
  *  MA  02111-1307  USA
  */
 
-#include <stdlib.h>
 #include "math.h"
 #include <gsl/gsl_math.h>
-#include "multipole_index.h"
+#include <stdlib.h>
 #include <vector>
+
+
 #include "constants.h"
+#include "multipole_index.h"
 #include "Tlm.h"
 
 using namespace::std;
 
-vector<double> Tlm(const double w){
+vector<double> Tlm(const double w)
+{
 
-    /* factorials evaluated */
+    /* Factorials evaluated */
     double f14[] = {1.,         1.,          2.,
                     6.,         24.,         120.,
                     720.,       5040.,       40320.,
@@ -39,19 +42,21 @@ vector<double> Tlm(const double w){
     vector<double> MTlm(35);
     int kmax = 35;
     
-    for (int i=kmax; i--; ){
+    for (int i=kmax; i--; )
+    {
         hhatk = M[i] * w;   
         x2    = 4.*hhatk*hhatk;
         prod  = 1.;
 
-        for (int j=1; j <= L[i]; j++ ){
+        for (int j=1; j <= L[i]; j++ )
+        {
             prod *= ( j*j + x2 );
         }
         
         y  = 4.*pi*hhatk;
         y /= ( 1. - exp(-y) );
         
-        // put the three pieces together
+        /** Put the three pieces together */
         MTlm[i] = sqrt( 1./(f14[L[i]]*f14[L[i]]) * y * prod );
     }
 
