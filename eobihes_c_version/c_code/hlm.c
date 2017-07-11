@@ -22,7 +22,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#include <cmath>
+#include <math.h>
 
 #include "hlmNewt.h"
 #include "hhatlmtail.h"
@@ -38,13 +38,11 @@
 #include "input_struc.h"
 #include "f_lm.h"
 
-using namespace::std;
-
-vector<gsl_complex> hlm(double t, const double phi, const double r, const double pph, const double prstar, double Omega, const double ddotr, const double H, const double Heff,const double jhat, const double rw,void *params)
+gsl_complex* hlm(double t, const double phi, const double r, const double pph, const double prstar, double Omega, const double ddotr, const double H, const double Heff, const double jhat, const double rw, void *params)
 {
-    int kmax = 35; 
+    const int kmax = 35; 
 
-    vector<gsl_complex> hlm(kmax);
+    static gsl_complex hlm[kmax];
     double nu            = (*(input *)params).nu;
     bool tidal_flag      = (*(input *)params).tidal;
     bool spin_flag       = (*(input *)params).spin;
@@ -61,24 +59,24 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
         jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
     
     /** Newtonian waveform */
-    vector<gsl_complex> hNewt = hlmNewt( rw,Omega,phi, nu,tidal_flag);
+    gsl_complex* hNewt = hlmNewt(rw, Omega, phi, nu, tidal_flag);
     
     /** Compute corrections */
-    double x = gsl_pow_int(rw*Omega,2);
-    vector<double> flm(35);
+    double  x = gsl_pow_int(rw*Omega,2);
+    double* flm;
     if (spin_flag==true)
     {
-        flm = s_flm(x,params);
+        flm = s_flm(x, params);
     }
     else if (spin_flag==false)
     {
-        flm = f_lm(x,nu);
+        flm = f_lm(x, nu);
     }
     
     /** Computing the tail */
     const double r0    = 1.213061319425267e+00;   // 2/sqrt(e);
     const double Hreal = H * nu;
-    vector<gsl_complex> tlm(kmax);
+    gsl_complex* tlm;
     if (speedytail_flag==false)
     {
         tlm = hhatlmtail(Omega,Hreal, r0, L, M);
@@ -89,12 +87,12 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     }
     
     /** Residual phase corrections delta_{lm} */
-    const vector<double> EOBdeltalm = deltalm(Hreal, Omega, nu);
+    const double* EOBdeltalm = deltalm(Hreal, Omega, nu);
 
-    vector<gsl_complex> h_NQC(kmax);
+    gsl_complex* h_NQC;
     if (NQC_flag==true)
     {
-        h_NQC = hlmNQC(nu,r,prstar,Omega,ddotr);
+        h_NQC = hlmNQC(nu, r, prstar, Omega, ddotr);
     }
     
     for (int k=35; k--;)
@@ -118,10 +116,10 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     {
             
         /** Compute tidal contribution */
-        vector<double> hlmtidal = hlm_Tidal(x, params);
+        double* hlmtidal = hlm_Tidal(x, params);
 
         /** Update waveform */
-        double p2 = sqrt(1-4*nu);
+        double p2 = sqrt(1.-4.*nu);
         for (int k=35; k--;)
         {
             switch (k)
@@ -146,3 +144,4 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     
     return hlm;
 }
+

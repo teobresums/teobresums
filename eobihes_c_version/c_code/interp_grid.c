@@ -19,43 +19,36 @@
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
-#include <vector>
 
 #include "interp_grid.h"
 
-using namespace::std;
-
-vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
+double* interp_grid(double* t_vec, const int size_t_vec, double* data, double dt)
 {
-    int i=0;
-    int t_length = t_vec.size();
-    int grid_length = (int)(t_vec.back()-t_vec[0])/dt + 2;
+    int i = 0;
+    const int t_length = size_t_vec;
+    const int grid_length = (int)(t_vec[size_t_vec-1]-t_vec[0])/dt + 2;
 
     double xi, yi;
-    vector<double> data_g(grid_length);
-    vector<double> omg_interp(grid_length);
-    vector<double> t_interp(grid_length);
-    
-    /** Convert all vectors to an array */
-    double* t = &t_vec[0];
-    double* data_arr = &data[0];
+    static double data_g[grid_length];
+    double omg_interp[grid_length];
+    double t_interp[grid_length];
+
     double step = dt;
 
-    
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
     gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, t_length);
-    gsl_spline_init (spline, t, data_arr, t_length);
-    
-    for (xi = t_vec[0]; xi < t_vec.back(); xi += step)
+    gsl_spline_init (spline, t_vec, data, t_length);
+
+    for (xi = t_vec[0]; xi < t_vec[size_t_vec-1]; xi += step)
     {
         yi = gsl_spline_eval (spline, xi, acc);
         data_g[i] = yi;
         t_interp[i] = xi;
         i++;
     }
-    
+
     gsl_spline_free (spline);
     gsl_interp_accel_free (acc);
-    
+
     return data_g;
 }

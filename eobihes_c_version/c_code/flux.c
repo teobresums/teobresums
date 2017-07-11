@@ -33,7 +33,7 @@
 #include "multipole_index.h"
 #include "input_struc.h"
 
-double flux(const double x,const double Omega,const double r_omega,const double E, const double Heff,const double jhat,const double r,const double prstar, const double ddotr, double source[],void *params)
+double flux(const double x, const double Omega, const double r_omega, const double E, const double Heff, const double jhat, const double r, const double prstar, const double ddotr, double source[], void *params)
 {
 
     bool tidal_flag = (*(input *)params).tidal;
@@ -41,16 +41,16 @@ double flux(const double x,const double Omega,const double r_omega,const double 
     double nu       = (*(input *)params).nu;
     double Flm;
     double Modhhatlm;
-    double sqrt_one_4nu = sqrt(1.-4.*nu);
-    const vector<double> flm     = f_lm(x,nu);
-    const vector<double> FNewtlm = FlmNewt(x,params);
-    const double FNewt22         = FNewtlm[1];
-    vector<double> MTlm          = Tlm(E*Omega);
-    vector<double> hlmTidal      = hlm_Tidal(x,params);
+    double sqrt_one_4nu   = sqrt(1.-4.*nu);
+    const double* flm     = f_lm(x, nu);
+    const double* FNewtlm = FlmNewt(x, params);
+    const double  FNewt22 = FNewtlm[1];
+    double* MTlm     = Tlm(E*Omega);
+    double* hlmTidal = hlm_Tidal(x, params);
 
     /** Compute NQC correction to the modulus of the (l,m) waveform */
-    vector<gsl_complex> hlm_NQC = hlmNQC(nu,r,prstar,Omega,ddotr);
-    double SFlm=0.;
+    gsl_complex* hlm_NQC = hlmNQC(nu, r, prstar, Omega, ddotr);
+    double SFlm = 0.;
     for (int k=35; k--;)
     {
         /** Compute modulus of hhat_lm */
@@ -119,3 +119,4 @@ double flux(const double x,const double Omega,const double r_omega,const double 
 
     return Fphi;
 }
+

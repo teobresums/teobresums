@@ -17,15 +17,12 @@
  *  MA  02111-1307  USA
  */
 
-#include <vector>
 #include "FlmNewt.h"
 #include "input_struc.h"
 
-using namespace::std;
-
 //To do: pre-calculate the sp * x products
 
-vector<double> FlmNewt(const double x, void *params)
+double* FlmNewt(const double x, void *params)
 {
 
     double nu       = (*(input *)params).nu;
@@ -53,7 +50,7 @@ vector<double> FlmNewt(const double x, void *params)
     const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
     const double sp9 = (1 - 4*nu)*(1 - 4*nu + 3*nu2)*(1 - 4*nu + 3*nu2);
     
-    vector<double> Nlm(35);
+    static double Nlm[35];
 
     if (spin_flag==true)
     {

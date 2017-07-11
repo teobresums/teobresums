@@ -20,13 +20,8 @@
 #ifndef _hhatlmtail_h
 #define _hhatlmtail_h
 
-#include <vector>
 #include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
 
-
-using namespace::std;
-
-vector<gsl_complex> hhatlmtail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
+gsl_complex* hhatlmtail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
 
 #endif /* _hhatlmtail_h */

@@ -36,8 +36,9 @@ double* initial(input *params)
     
     double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
     double E0[2*N], Omega_j[2*N];
-    double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
-    double metric[5];
+    double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N]
+    double* dprstardt;
+    double* metric;
 
     double r2, r3, u, A, B, d2A, j3;
     double z3 = 2.0*nu*(4.0-3.0*nu);
@@ -103,7 +104,7 @@ double* initial(input *params)
         
     }
     
-    dprstardt = FDdrvt(prstar,r,4,2*N);
+    dprstardt = FDdrvt(prstar, r, 4, 2*N);
 
     for(int i=2*N; i--;)
     {

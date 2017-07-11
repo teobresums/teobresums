@@ -17,19 +17,16 @@
  *  MA  02111-1307  USA
  */
 
-#include <cmath>
+#include <math.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <vector>
 
 #include "NQC.h"
 #include "hlmNQC.h"
 
-using namespace::std;
-
-vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, double ddotr)
+gsl_complex* hlmNQC(double nu, double r, double prstar, double  Omega, double ddotr)
 {
 
     /** This file computes the NQC corrections to the RWZ multipolar waveform. */
@@ -43,7 +40,7 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
      http://arxiv.org/abs/1506.08457
      */
     
-    vector<double> n(6);
+    double* n;
     const int kmax = 35;
     double a1;
     double a2;
@@ -53,11 +50,11 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
     double b3;
     
     /** FITS: possibly to be improved further. Current fits: 9/02/2016 */
-    const double xnu  = 1-4*nu;
-    const double xnu2 = (1-4*nu)*(1-4*nu);
+    const double xnu  = 1.-4.*nu;
+    const double xnu2 = xnu*xnu;
 
     /** NQC multipolar correction factor */
-    vector<gsl_complex> psilmnqc(kmax);
+    static gsl_complex psilmnqc[kmax];
 
     for (int i=kmax;i--;)
     {
@@ -75,7 +72,7 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
                 b2 =  1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
                 b3 =  0.0;
                 
-                n  = NQC(r,prstar, Omega,ddotr,0);
+                n  = NQC(r, prstar, Omega, ddotr, 0);
                 
                 break;
                 
@@ -90,7 +87,7 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
                 b2 = 0.896911234248*(-0.61072011*xnu + 0.94295129);
                 b3 = 0.0;
                 
-                n  = NQC(r,prstar, Omega,ddotr,1);
+                n  = NQC(r, prstar, Omega, ddotr, 1);
                 
                 break;
                 
@@ -106,7 +103,7 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
                 b2 = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
                 b3 = 0.0;
                 
-                n  = NQC(r,prstar, Omega,ddotr,4);
+                n  = NQC(r, prstar, Omega, ddotr, 4);
                 
                 break;
                 
@@ -128,3 +125,4 @@ vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, do
         
     return psilmnqc;
 }
+

@@ -20,10 +20,6 @@
 #ifndef _interp_h
 #define _interp_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt);
+double* interp_grid(double* t_vec, const int size_t_vec, double* data, double dt);
 
 #endif /* _interp_h */

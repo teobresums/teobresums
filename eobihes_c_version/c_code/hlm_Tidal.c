@@ -18,13 +18,11 @@
  */
 
 #include <gsl/gsl_math.h>
-#include <vector>
 #include "input_struc.h"
 
 #include "hlm_Tidal.h"
-using namespace::std;
 
-vector<double> hlm_Tidal(double x,void *params)
+double* hlm_Tidal(double x, void *params)
 {
 
     //EOBhlmTidal Calculate tidal correction to multipolar waveform.
@@ -34,12 +32,17 @@ vector<double> hlm_Tidal(double x,void *params)
     //    Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007
     //
 
-    int kmax   = 35;
-    double x5    = gsl_pow_int(x,5);
+    const int kmax = 35;
+    double x5      = gsl_pow_int(x,5);
 
-    vector<double> kAl(3);
-    vector<double> kBl(3);
-    vector<double> hA(kmax);
+    double kAl[3];
+    double kBl[3];
+    double hA[kmax];
+    double hB[kmax];
+    double betaA1[kmax];
+    double betaB1[kmax];
+    double betaA2[kmax];
+    double betaB2[kmax];
 
     kAl[0] = (*(input *)params).kAl1;
     kAl[1] = (*(input *)params).kAl2;
@@ -58,26 +61,27 @@ vector<double> hlm_Tidal(double x,void *params)
     
     for (int i=kmax; i--; )
     {
-        hA[i]=0.;
+        hA[i]     = 0.;
+        hB[i]     = 0.;
+        betaA1[i] = 0.;
+        betaB1[i] = 0.;
+        //betaA2[i]  = 0.;
+        //betaB2[i]  = 0.;
     }
-    vector<double> hB=hA;
-    vector<double> betaA1=hA;
-    //vector<double> betaA2(kmax)=hA;
-    vector<double> betaB1=hA;
-    //vector<double> betaB2(kmax)=hA;
-    vector<double> hTidallm(kmax);
+
+    static double hTidallm[kmax];
 
     
     // l=2 ------------------------------------------------------------------
     
-    hA[1] = 2 * khatA_2 *(XA/XB+3);
-    hB[1] = 2 * khatB_2 *(XB/XA+3);
+    hA[1] = 2. * khatA_2 *(XA/XB+3.);
+    hB[1] = 2. * khatB_2 *(XB/XA+3.);
     
-    betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
-    betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
+    betaA1[1] = (-202. + 560.*XA - 340.*XA*XA + 45.*XA*XA*XA)/(42.*(3.-2.*XA));
+    betaB1[1] = (-202. + 560.*XB - 340.*XB*XB + 45.*XB*XB*XB)/(42.*(3.-2.*XB));
     
-    hA[0] = 3 * khatA_2 * XB * (3-4*XA)/XA;
-    hB[0] = 3 * khatB_2 * XA * (3-4*XB)/XB;
+    hA[0] = 3. * khatA_2 * XB * (3.-4.*XA)/XA;
+    hB[0] = 3. * khatB_2 * XA * (3.-4.*XB)/XB;
     
     
     // l=3 ------------------------------------------------------------------
@@ -85,8 +89,8 @@ vector<double> hlm_Tidal(double x,void *params)
     hA[2] = hA[4];
     hB[2] = hB[4];
     
-    hA[4] = 12 * khatA_2 * XB*XB/XA;
-    hB[4] = 12 * khatB_2 * XA*XA/XB;
+    hA[4] = 12. * khatA_2 * XB*XB/XA;
+    hB[4] = 12. * khatB_2 * XA*XA/XB;
     
     /** l=2 ------------------------------------------------------------------
      * (2,1) */

@@ -20,10 +20,6 @@
 #ifndef _FlmNewt_h
 #define _FlmNewt_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> FlmNewt(const double x, void *params);
+double* FlmNewt(const double x, void *params);
 
 #endif /* _FlmNewt_h */

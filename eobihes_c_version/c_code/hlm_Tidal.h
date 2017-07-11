@@ -20,11 +20,7 @@
 #ifndef _hlm_Tidal_h
 #define _hlm_Tidal_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> hlm_Tidal(double x,void *params);
+double* hlm_Tidal(double x, void *params);
 
 #endif /* _hlm_Tidal_h */
 

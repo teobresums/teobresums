@@ -17,18 +17,15 @@
  *  MA  02111-1307  USA
  */
 
-#include <vector>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <cmath>
+#include <math.h>
 #include "hlmNewt.h"
 #include "constants.h"
 
-using namespace::std;
-
-vector<gsl_complex> hlmNewt(const double r, const double Omega, const double phi, const double nu,bool tidal_flag)
+gsl_complex* hlmNewt(const double r, const double Omega, const double phi, const double nu, bool tidal_flag)
 {
 
     /**
@@ -70,7 +67,7 @@ vector<gsl_complex> hlmNewt(const double r, const double Omega, const double phi
         p2 = 1.;
     }
     
-    int kmax = 35;
+    const int    kmax  = 35;
     const double phix2 = 2. * phi;
     const double phix3 = 3. * phi;
     const double phix4 = 4. * phi;
@@ -87,7 +84,7 @@ vector<gsl_complex> hlmNewt(const double r, const double Omega, const double phi
         phi,phix2,phix3,phix4,phix5,phix6,phix7,
         phi,phix2,phix3,phix4,phix5,phix6,phix7,8.*phi};
 
-    vector<gsl_complex> hlmNewt(kmax);
+    static gsl_complex hlmNewt[kmax];
     
     const double pv23 = p2 * vphi3;
     const double pv34 = p3 * vphi4;
@@ -219,3 +216,4 @@ vector<gsl_complex> hlmNewt(const double r, const double Omega, const double phi
 
     return hlmNewt;
 }
+

@@ -20,6 +20,6 @@
 #ifndef _FDdrvt_omega_h
 #define _FDdrvt_omega_h
 
-double* FDdrvt_omega(double* f, double dt);
+double* FDdrvt_omega(double* f, const int size_f, double dt);
 
 #endif /* _FDdrvt_omega_h */

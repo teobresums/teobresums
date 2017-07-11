@@ -20,10 +20,6 @@
 #ifndef _flm_h
 #define _flm_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> f_lm(const double x,const double nu);
+double* f_lm(const double x, const double nu);
 
 #endif /* _flm_h */

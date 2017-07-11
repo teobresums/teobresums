@@ -29,7 +29,7 @@
 double fLR(double r, void *params)
 {
 
-    double metric[5] = Metric(r, params, true);
+    double *metric = Metric(r, params, true);
     
     double A  = metric[0];
     double dA = metric[2]; /**derivative w.r.t. u*/

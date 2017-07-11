@@ -18,12 +18,11 @@
  */
 
 #include <gsl/gsl_math.h>
-#include <cmath>
-#include <vector>
+#include <math.h>
 #include "Eulerlog.h"
 #include "f_lm.h"
 
-vector<double> f_lm(const double x,const double nu)
+double* f_lm(const double x, const double nu)
 {
 
     /**EOBflm Compute the resummed amplitudes in the general nu-dependent case.
@@ -62,9 +61,9 @@ vector<double> f_lm(const double x,const double nu)
     const double el6 = Eulerlog(x,6);
     const double el7 = Eulerlog(x,7);
         
-    const int kmax=35; /** Length of vector needed to store the 8 quadropoles, 35=8+7+6+5+4+3+2*/
-    vector<double> rholm(kmax);
-    vector<double> flm(kmax);
+    const int kmax = 35; /** Length of vector needed to store the 8 quadropoles, 35=8+7+6+5+4+3+2*/
+    double rholm[kmax];
+    static double flm[kmax];
 
 
     /** l=2 ------------------------------------------------------------------
