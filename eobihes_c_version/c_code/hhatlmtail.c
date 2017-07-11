@@ -22,13 +22,10 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_sf_gamma.h>
-#include <vector>
-#include <cmath>
+#include <math.h>
 #include "hhatlmtail.h"
 
-using namespace::std;
-
-vector<gsl_complex> hhatlmtail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
+gsl_complex* hhatlmtail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
 {
 
 /** EOBhhatlmTail Computes the tail contribution to the resummed wave.
@@ -40,7 +37,7 @@ vector<gsl_complex> hhatlmtail(const double Omega, const double Hreal, const dou
   *
   */
  
-    int kmax  = 35;
+    const int  kmax = 35;
     const double pi = M_PI;
     double k;
     double hhatk;
@@ -54,7 +51,7 @@ vector<gsl_complex> hhatlmtail(const double Omega, const double Hreal, const dou
     double ratio_ang;
     double tlm_rad;
     double tlm_phase;
-    vector<gsl_complex> tlm(kmax);
+    static gsl_complex tlm[kmax];
     
     for (int i=kmax; i--;)
     {
@@ -75,3 +72,4 @@ vector<gsl_complex> hhatlmtail(const double Omega, const double Hreal, const dou
     }
         return tlm;
 }
+

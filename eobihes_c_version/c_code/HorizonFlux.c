@@ -17,11 +17,8 @@
  *  MA  02111-1307  USA
  */
 
-#include <vector>
 #include <gsl/gsl_math.h>
 #include "HorizonFlux.h"
-
-using namespace::std;
 
 double HorizonFlux(const double x, const double Heff, const double jhat, const double nu)
 {
@@ -34,10 +31,10 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
      * Bernuzzi, Nagar & Zenginoglu, PRD 86, 104038 (2012)
      */
 
-    const int kmax   = 2;
-    vector<double> rhoHlm(kmax);
-    vector<double> FlmHLO(kmax);
-    vector<double> FlmH(kmax);
+    const int kmax = 2;
+    double rhoHlm[kmax];
+    double FlmHLO[kmax];
+    double FlmH[kmax];
 
     /** Shorthands */
     double nu2 = nu*nu;
@@ -60,10 +57,10 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
     FlmHLO[0] = 32./5.*(1-4*nu+2*nu2)*x10;
 
     /** Compute rho_lm */
-    vector<double> c1(kmax);
-    vector<double> c2(kmax);
-    vector<double> c3(kmax);
-    vector<double> c4(kmax);
+    double c1[kmax];
+    double c2[kmax];
+    double c3[kmax];
+    double c4[kmax];
 
     c1[0] = 0.58121;
     c2[0] = 1.01059;
@@ -86,7 +83,8 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
     FlmH[k21] = FlmHLO[k21] * jhat2 * gsl_pow_int(rhoHlm[k21],4);
 
     /** Sum over multipoles and normalize to the 22 Newtonian multipole */
-    double const hatFH = (FlmH[0]+FlmH[1])/FNewt22;
+    const double hatFH = (FlmH[0]+FlmH[1])/FNewt22;
 
     return hatFH;
 }
+

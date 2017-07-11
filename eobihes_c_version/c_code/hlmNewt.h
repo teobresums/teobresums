@@ -20,13 +20,9 @@
 #ifndef _hlmNewt_h
 #define _hlmNewt_h
 
-#include <vector>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
 #include <stdbool.h>
+#include <gsl/gsl_complex.h>
 
-using namespace::std;
-
-vector<gsl_complex> hlmNewt(const double r, const double Omega, const double phi, const double nu, bool tidal_flag);
+gsl_complex* hlmNewt(const double r, const double Omega, const double phi, const double nu, bool tidal_flag);
 
 #endif /* _hlmNewt_h */

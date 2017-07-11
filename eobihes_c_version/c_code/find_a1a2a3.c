@@ -18,7 +18,6 @@
  */
 
 #include <ios>
-#include <vector>
 #include <stdio.h>
 #include <fstream>
 #include <gsl/gsl_sf.h>
@@ -35,11 +34,8 @@
 
 typedef std::numeric_limits< double > dbl;
 
-using namespace::std;
-
-vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vector<double> w, vector<double> pph, vector<double> pr_star, vector<vector<double> > hlm_phase,vector<double> Omg_orb, vector<vector<double> > A, vector<double> ddotr, void *params)
+gsl_complex** find_a1a2a3(double* T, const int size_T, double* r, double* w, double* pph, double* pr_star, double** hlm_phase, double* Omg_orb, double** A, double* ddotr, void *params)
 {
-
 
     /* determine NQC parameters */
     double nu    = (*(input *)params).nu;
@@ -47,35 +43,36 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
     double aKerr = (*(input *)params).aK;
     double A_tmp, dA_tmp, omg_tmp, domg_tmp;
 
-    long int t_length = T.size();
+    const long int t_length = size_T;
     
-    vector<double> pA(5);
-    vector<double> pdA(5);
-    vector<double> pomg(5);
-    vector<double> pdomg(5);
-    vector<double> p1v(2),p2v(2),p3v(2);
-    vector<double> pdA1v(2),pdA2v(2),pdA3v(2);
-    vector<double> pn0(2),pd1(2);
-    vector<double> ppdomg1(2),ppdomg2(2);
-    vector<vector<double> >  omg(35, vector<double>(t_length));
-    vector<vector<double> > domg(35, vector<double>(t_length));
-    vector<double> n1(t_length), n2(t_length), n3(t_length), n4(t_length), n5(t_length), n6(t_length);
-    vector<double> max_A(35),max_dA(35),d2max(35),d3max(35),max_omg(35),max_domg(35),maxd2omg(35),DeltaT(35);
-    //vector<double> ai(3);
-    //vector<double> bi(3);
-    vector<vector<double> > ai(35, vector<double>(3));
-    vector<vector<double> > bi(35, vector<double>(3));
-    vector<double> P(2);
-    vector<double> M(4);
-    // vector<double> m11(t_length),m12(t_length),m13(t_length);
-    vector<vector<double> >   m11(35, vector<double>(t_length));
-    vector<vector<double> >   m12(35, vector<double>(t_length));
-    vector<vector<double> >   m13(35, vector<double>(t_length));
-    vector<vector<double> >   m21(35, vector<double>(t_length));
-    vector<vector<double> >   m22(35, vector<double>(t_length));
-    vector<vector<double> > p1tmp(35, vector<double>(t_length));
-    vector<vector<double> > p2tmp(35, vector<double>(t_length));
-    vector<vector<gsl_complex> > o(35, vector<gsl_complex>(t_length));
+    double pA[5];
+    double pdA[5];
+    double pomg[5];
+    double pdomg[5];
+    double p1v[2], p2v[2], p3v[2];
+    double pdA1v[2], pdA2v[2], pdA3v[2];
+    double pn0[2], pd1[2];
+    double ppdomg1[2], ppdomg2[2];
+    double * omg[35];
+    double *domg[35];
+    double n1[t_length], n2[t_length], n3[t_length], n4[t_length], n5[t_length], n6[t_length];
+    double max_A[35], max_dA[35], d2max[35], d3max[35], max_omg[35], max_domg[35], maxd2omg[35], DeltaT[35];
+    //double ai[3];
+    //double bi[3];
+    double ai[35][3];
+    double bi[35][3];
+    double P[2];
+    double M[4];
+    // double m11[t_length], m12[t_length], m13[t_length];
+    double *  m11[35];
+    double *  m12[35];
+    double *  m13[35];
+    double *  m21[35];
+    double *  m22[35];
+    double *p1tmp[35];
+    double *p2tmp[35];
+
+    static gsl_complex o[35][t_length];
 
     for (int k=35; k--;)
     {
@@ -215,10 +212,10 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
     }
                                   
     /** Take the needed derivatives for the phase */
-    vector<double>  d_n4 = s_D1(n4,T,t_length-1);
-    vector<double>  d_n5 = s_D1(n5,T,t_length-1);
-    vector<double> d2_n4 = s_D1(d_n4,T,t_length-1);
-    vector<double> d2_n5 = s_D1(d_n5,T,t_length-1);
+    double * d_n4 = s_D1(n4,T,t_length-1);
+    double * d_n5 = s_D1(n5,T,t_length-1);
+    double *d2_n4 = s_D1(d_n4,T,t_length-1);
+    double *d2_n5 = s_D1(d_n5,T,t_length-1);
 
     int Omgmax_index = 0;
     double Omg_max = Omg_orb[0];

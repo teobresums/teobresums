@@ -19,14 +19,13 @@
 
 #include "FDdrvt_omega.h"
 
-double* FDdrvt_omega(double* f, double dt)
+double* FDdrvt_omega(double* f, const int size_f, double dt)
 {
-    const int d1fsize = sizeof(f)/sizeof(f[0])-2;
-    static double d1f[d1fsize];
-    const double oodt  = 1./dt;
-    const double c     = 1./12.;
+    static double d1f[size_f-2];
+    const double oodt = 1./dt;
+    const double c    = 1./12.;
     
-    for (long int i=0; i<f.size()-2; i++)
+    for (long int i=0; i<size_f-2; i++)
     {
         switch (i)
         {
