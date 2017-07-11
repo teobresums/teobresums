@@ -17,18 +17,21 @@
  *  MA  02111-1307  USA
  */
 
-#include "s_Flux.h"
 #include <gsl/gsl_math.h>
-#include "s_Metric.h"
-#include "s_get_rc.h"
-#include "s_bisec.h"
-#include "s_D1.h"
-#include "s_GS.h"
+#include <stdbool.h>
+
 #include "input_struc.h"
 #include "multipole_index.h"
+#include "s_bisec.h"
+#include "s_D1.h"
+#include "s_Flux.h"
+#include "s_get_rc.h"
+#include "s_GS.h"
 #include "s_initial.h"
+#include "s_Metric.h"
 
-double* s_initial(input *params){
+double* s_initial(input *params)
+{
 
 /*
 % EOB_ModinSpin
@@ -116,7 +119,8 @@ double* s_initial(input *params){
     double dA[2*N];
     double B[2*N];
     double d2A[2*N];
-    for (int i=2*N; i--;) {
+    for (int i=2*N; i--;)
+    {
         
         r[i] = r0+(i-N+1)*dr;
 

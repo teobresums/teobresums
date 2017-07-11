@@ -21,6 +21,7 @@
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <stdbool.h>
 
 #include <cmath>
 

@@ -20,6 +20,7 @@
 #include <math.h>
 #include "A_NumDenom.h"
 #include "input_struc.h"
+#include <stdbool.h>
 
 #include <gsl/gsl_math.h>
 #include "Metric.h"

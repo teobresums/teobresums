@@ -20,9 +20,6 @@
 #ifndef _s_flm_h
 #define _s_flm_h
 
-#include <vector>
-using namespace::std;
-
-vector<double> s_flm(double x, void *params);
+double* s_flm(double x, void *params);
 
 #endif /* _s_flm_h */

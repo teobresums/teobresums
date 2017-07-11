@@ -20,11 +20,10 @@
 #ifndef _s_GS_h
 #define _s_GS_h
 
-#include <vector>
-using namespace::std;
+#include <stdbool.h>
 
 //double c3_fit_global(void *params){
 double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2, bool tidal_flag);
-vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO);
+double* s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO);
 
 #endif /* _s_GS_h */

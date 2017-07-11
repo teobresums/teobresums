@@ -17,7 +17,9 @@
  *  MA  02111-1307  USA
  */
 
-#include <cmath>
+#include <math.h>
+#include <stdbool.h>
+
 #include "s_GS.h"
 
 //double c3_fit_global(void *params){
@@ -65,7 +67,7 @@ double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, 
     return c3;
 }
 
-vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO)
+double* s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO)
 {
 
     /*
@@ -171,6 +173,7 @@ vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prsta
     double d2GS_dprstar20  =  GS0*(-2.*hGS*hGS *( c02 +  c12*uc +  2.*c04*prstar2));
     double d2GSs_dprstar20 =  GSs0*(-2.*hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2));
 
-        return {hGS,hGSs,GS,GSs,dGS_dprstar,dGSs_dprstar,dGS_dr,dGSs_dr,dGS_dpph,dGSs_dpph,dGS_dprstarbyprstar,dGSs_dprstarbyprstar,d2GS_dprstar20,d2GSs_dprstar20};
+    static double result[] = {hGS,hGSs,GS,GSs,dGS_dprstar,dGSs_dprstar,dGS_dr,dGSs_dr,dGS_dpph,dGSs_dpph,dGS_dprstarbyprstar,dGSs_dprstarbyprstar,d2GS_dprstar20,d2GSs_dprstar20};
+    return result;
 }
 

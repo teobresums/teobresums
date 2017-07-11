@@ -17,6 +17,7 @@
  *  MA  02111-1307  USA
  */
 
+#include <stdbool.h>
 #include <vector>
 #include "FlmNewt.h"
 #include "input_struc.h"

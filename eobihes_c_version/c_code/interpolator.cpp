@@ -17,6 +17,7 @@
  *  MA  02111-1307  USA
  */
 
+#include <stdbool.h>
 #include <ios>
 #include <cmath>
 #include <math.h>

@@ -18,13 +18,13 @@
  */
 
 #include <math.h>
-#include <vector>
+#include <stdbool.h>
+
 #include "input_struc.h"
 #include "s_get_rc.h"
 
-using namespace::std;
 
-vector <double> s_get_rc(double r, void *params)
+double* s_get_rc(double r, void *params)
 {
     
     
@@ -92,6 +92,8 @@ vector <double> s_get_rc(double r, void *params)
         d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
     }
     
-    return {rc, drc_dr, d2rc_dr2};
+    static double result[]= {rc, drc_dr, d2rc_dr2};
+    
+    return result;
 }
 

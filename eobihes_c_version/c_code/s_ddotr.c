@@ -17,29 +17,33 @@
  *  MA  02111-1307  USA
  */
 
-#include <stdio.h>
-#include <gsl/gsl_errno.h>
-#include <math.h>
-#include "s_A5PNlog.h"
-#include "s_Metric.h"
-#include "Metric.h"
 #include <ios>
 #include <fstream>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include "s_Flux.h"
-#include "multipole_index.h"
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf.h>
 #include <limits>
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
+
 #include "input_struc.h"
-#include "s_GS.h"
+#include "Metric.h"
+#include "multipole_index.h"
+#include "s_A5PNlog.h"
 #include "s_ddotr.h"
+#include "s_Flux.h"
 #include "s_get_rc.h"
+#include "s_GS.h"
+#include "s_Metric.h"
+
 
 typedef std::numeric_limits< double > dbl;
 
-double s_ddotr(double t, double r, double pph, double prstar, void *params){
+double s_ddotr(double t, double r, double pph, double prstar, void *params)
+{
     
     double nu         = (*(input *)params).nu;
     double S1         = (*(input *)params).S1;
@@ -66,12 +70,15 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params){
     
     double A, B, dA;
     double metric[5];
-    if (tidal_flag==true) {
+    if (tidal_flag==true)
+    {
         metric = Metric(r, params, false);
         A      = metric[0];
         B      = metric[3];
         dA     = metric[1];
-    } else {
+    }
+    else
+    {
         metric = s_Metric(r, params, false); // false is added to correct the number of arguments.
         A  = metric[0];
         B  = metric[1];

@@ -19,13 +19,15 @@
 
 #include "s_D1.h"
 
-double* s_D1(double* f, double* x, const int Nmax){
+double* s_D1(double* f, double* x, const int Nmax)
+{
 /* Computes the first derivative of the function. Centered but at the edges. USAGE: df = EOB_D1(f,x) */
-    int Nmin = 0;
+    const int Nmin = 0;
     //int Nmax = 11;
     
     static double df[Nmax+1];
-    for(int i=2;i<=Nmax-2;i++){
+    for(int i=2;i<=Nmax-2;i++)
+    {
         df[i] = 1./3.*(8.*f[1+i] - f[2+i] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
     }
 

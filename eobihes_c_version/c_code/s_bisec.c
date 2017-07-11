@@ -32,7 +32,8 @@ struct energy_params
 
 //double energy_params (double x, void *params);
 
-double DHeff0(double x, void *DHeff_params){
+double DHeff0(double x, void *DHeff_params)
+{
     
     struct energy_params *p
     = (struct energy_params *) DHeff_params;
@@ -52,7 +53,7 @@ double DHeff0(double x, void *DHeff_params){
     double X2     = p->X2;
     double c3     = p->c3;
     
-    vector<double> ggm0 = s_GS(rorb, rc, drc_dr, ak2, 0., x, nu, chi1, chi2, X1, X2, c3);
+    double* ggm0   = s_GS(rorb, rc, drc_dr, ak2, 0., x, nu, chi1, chi2, X1, X2, c3);
     double dGS_dr  = ggm0[6];
     double dGSs_dr = ggm0[7];
 
@@ -70,7 +71,8 @@ double DHeff0(double x, void *DHeff_params){
     return dHeff_dr;
 }
 
-double s_bisec(double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss, void *params){
+double s_bisec(double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss, void *params)
+{
     double nu   = (*(input *)params).nu;
     double chi1 = (*(input *)params).chi1;
     double chi2 = (*(input *)params).chi2;

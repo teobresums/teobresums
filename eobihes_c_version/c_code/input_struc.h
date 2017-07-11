@@ -20,6 +20,8 @@
 #ifndef _input_struc_h
 #define _input_struc_h
 
+#include <stdbool.h>
+
 struct input
 {         /* declaration of structure for input parameters */
     int   lm;

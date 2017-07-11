@@ -20,6 +20,7 @@
 #ifndef _interpolator_waveform_h
 #define _interpolator_waveform_h
 
+#include <stdbool.h>
 #include <vector>
 #include <fstream>
 

@@ -19,9 +19,11 @@
 
 #ifndef _hlmNewt_h
 #define _hlmNewt_h
+
 #include <vector>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <stdbool.h>
 
 using namespace::std;
 

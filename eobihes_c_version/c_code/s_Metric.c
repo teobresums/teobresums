@@ -19,14 +19,15 @@
 
 #include <gsl/gsl_math.h>
 #include <math.h>
+#include <stdbool.h>
 
-#include "s_get_rc.h"
-#include "s_A5PNlog.h"
 #include "input_struc.h"
-
+#include "s_A5PNlog.h"
+#include "s_get_rc.h"
 #include "s_Metric.h"
 
-double* s_Metric(double r, void *params, bool nnlo_flag){
+double* s_Metric(double r, void *params, bool nnlo_flag)
+{
 /*
 %                       This function computes the EOB metric potentials
 %                       A(r), B(r), and their derivatives, as functions

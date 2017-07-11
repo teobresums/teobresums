@@ -17,6 +17,7 @@
  *  MA  02111-1307  USA
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <gsl/gsl_errno.h>
 #include "Metric.h"

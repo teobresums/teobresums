@@ -23,6 +23,7 @@
 #include <math.h>
 #include "flux.h"
 #include "hlm.h"
+#include <stdbool.h>
 
 #include <ios>
 #include <fstream>

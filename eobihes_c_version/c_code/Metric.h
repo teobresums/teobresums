@@ -20,6 +20,8 @@
 #ifndef _Metric_h
 #define _Metric_h
 
+#include <stdbool.h>
+
 double* acoeffs(const double r, const double nu);
 double* Metric(const double r, void *params, bool nnlo_flag);
 double* A5pnP15_dd(const double r, void *params);

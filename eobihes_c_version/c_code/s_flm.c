@@ -18,14 +18,14 @@
  */
 
 #include <gsl/gsl_math.h>
-#include <vector>
-#include "input_struc.h"
+#include <stdbool.h>
+
 #include "Eulerlog.h"
+#include "input_struc.h"
 #include "s_flm.h"
 
-using namespace::std;
-
-vector<double> s_flm(double x, void *params){
+double* s_flm(double x, void *params)
+{
 
 /*
 % Function EOB_flm(x). This function explicitly computes
@@ -133,8 +133,8 @@ vector<double> s_flm(double x, void *params){
     double f41S =  f43S;
     
     const int kmax = 35; //length of vector needed to store all the multipoles, 35=8+7+...+2
-    vector<double> rholm(kmax);
-    vector<double> flm(kmax);
+    double rholm[kmax];
+    static double flm[kmax];
     
     
     // l=2 ------------------------------------------------------------------

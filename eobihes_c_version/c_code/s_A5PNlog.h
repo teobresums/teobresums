@@ -20,9 +20,8 @@
 #ifndef _s_A5PNlog_h
 #define _s_A5PNlog_h
 
-#include <vector>
-using namespace::std;
+#include <stdbool.h>
 
-vector<double> s_A5PNlog(double r, void *params, bool nnlo_flag);
+double* s_A5PNlog(double r, void *params, bool nnlo_flag);
 
 #endif /* _s_A5PNlog_h */

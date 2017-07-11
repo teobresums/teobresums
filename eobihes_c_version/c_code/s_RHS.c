@@ -17,28 +17,28 @@
  *  MA  02111-1307  USA
  */
 
-
-#include <ios>
-#include <cmath>
-#include <limits>
 #include <fstream>
-#include <stdio.h>
-
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf.h>
+#include <ios>
+#include <limits>
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 #include "input_struc.h"
 #include "Metric.h"
 #include "multipole_index.h"
 #include "s_A5PNlog.h"
 #include "s_Flux.h"
+#include "s_get_rc.h"
 #include "s_GS.h"
 #include "s_Metric.h"
 #include "s_RHS.h"
-#include "s_get_rc.h"
+
 
 typedef std::numeric_limits< double > dbl;
 

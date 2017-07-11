@@ -20,13 +20,8 @@
 #ifndef _ringdown_match_h
 #define _ringdown_match_h
 
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include <vector>
-using namespace::std;
 
-gsl_complex ringdown_match(double x, int k, vector<double> a1, vector<double> a2, vector<double> a3, vector<double> a4, vector<double> b1, vector<double> b2, vector<double> b3, vector<double> b4, vector<gsl_complex> sigma);
+gsl_complex ringdown_match(double x, int k, double* a1, double* a2, double* a3, double* a4, double* b1, double* b2, double* b3, double* b4, gsl_complex* sigma);
 
 #endif /* _ringdown_match_h */
