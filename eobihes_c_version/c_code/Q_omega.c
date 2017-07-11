@@ -17,15 +17,13 @@
  *  MA  02111-1307  USA
  */
 
-#include <vector>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include "Q_omega.h"
 
-using namespace::std;
-
 //NOTE: routine not in use
-int Q_omega(vector<double> t, vector<double> f, std::ofstream& Qomg){
+int Q_omega(double* t, double* f, std::ofstream& Qomg)
+{
     
     double dt   = t[1]-t[0];
     double oodt = 1./dt;
@@ -34,8 +32,10 @@ int Q_omega(vector<double> t, vector<double> f, std::ofstream& Qomg){
     
     const double c = 1./12.;
     
-    for (long int i=0; i<=t.size()-3; i++) {
-        switch (i) {
+    for (long int i=0; i<=t.size()-3; i++)
+    {
+        switch (i)
+        {
             case 0:
                 d1f = c*(-25.*f[i]+48.*f[i+1]-36.*f[i+2]+16.*f[i+3]-3.*f[i+4])*oodt;
                 break;
@@ -49,7 +49,6 @@ int Q_omega(vector<double> t, vector<double> f, std::ofstream& Qomg){
         double Qomega = (f[i]*f[i])/d1f;
         Qomg << t[i] << "\t"<< f[i] << "\t" << d1f << "\t" << Qomega << endl;
     }
-    
     
     return 0;
     

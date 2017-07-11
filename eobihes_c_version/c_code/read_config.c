@@ -17,21 +17,19 @@
  *  MA  02111-1307  USA
  */
 
+#include <fstream>
 #include <iostream>
 #include <list>
-#include <fstream>
+#include <math.h>
 #include <stdio.h>
 #include <string>
 
-#include "s_GS.h"
 #include "input_struc.h"
-
-#include <math.h>
 #include "read_config.h"
+#include "s_GS.h"
 
-using namespace::std;
-
-double logQ(double x){
+double logQ(double x)
+{
     
     // implements the logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
     // here x = log(lambda) and the output is the log of the coefficient
@@ -48,7 +46,8 @@ double logQ(double x){
     return ai + bi*x + ci*x2 + di*x3 + ei*x4;
 }
 
-input read_config(double q, double chi1, double chi2, double r0){
+input read_config(double q, double chi1, double chi2, double r0)
+{
     
     input params;            /* declaration of variable of struture type */
     
@@ -66,46 +65,63 @@ input read_config(double q, double chi1, double chi2, double r0){
     {
         //param_values.push_back(param_value);
         cout << param_name <<"\t"<< param_value << endl;
-        switch (i) {
+        switch (i)
+        {
             case 0:
-                if (param_value==0) {
+                if (param_value==0)
+                {
                     params.NQC = false;
-                } else {
+                }
+                else
+                {
                     params.NQC = true;
                 }
                 break;
             case 1:
-                if (param_value==0) {
+                if (param_value==0)
+                {
                     params.tidal = false;
                 } else {
                     params.tidal = true;
                 }
                 break;
             case 2:
-                if (param_value==0) {
+                if (param_value==0)
+                {
                     params.RWZ = false;
-                } else {
+                }
+                else
+                {
                     params.RWZ = true;
                 }
                 break;
             case 3:
-                if (param_value==0) {
+                if (param_value==0)
+                {
                     params.speedy = false;
-                } else {
+                }
+                else
+                {
                     params.speedy = true;
                 }
                 break;
             case 4:
-                if (param_value==0) {
+                if (param_value==0)
+                {
                     params.dynamics = false;
-                } else {
+                }
+                else
+                {
                     params.dynamics = true;
                 }
                 break;
             case 5:
-                if (param_value==0) {
+                if (param_value==0)
+                {
                     params.waveform = false;
-                } else {
+                }
+                else
+                {
                     params.waveform = true;
                 }
                 break;
@@ -151,10 +167,15 @@ input read_config(double q, double chi1, double chi2, double r0){
     fin.close();
 
     /*set spin flag*/
-    if (chi1 != .0 || chi2 != .0) {
+    if (chi1 != .0 || chi2 != .0)
+    {
         params.spin = true;
         params.NQC  = false;
-    } else {params.spin = false;}
+    }
+    else
+    {
+        params.spin = false;
+    }
     
     double nu = q/((q+1.)*(q+1.));
     
@@ -192,7 +213,8 @@ input read_config(double q, double chi1, double chi2, double r0){
     params.rLR = 0.;
 
     double cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
-    if (params.tidal==true) {
+    if (params.tidal==true)
+    {
         params.NQC = false;
     }        
     double lambda1 = 2./3.*params.kAl2/pow(params.CA,5);

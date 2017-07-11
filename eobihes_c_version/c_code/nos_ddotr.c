@@ -17,31 +17,29 @@
  *  MA  02111-1307  USA
  */
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <gsl/gsl_errno.h>
-#include "Metric.h"
-#include <math.h>
-#include "flux.h"
-
-#include "hlm.h"
-
-#include <ios>
 #include <fstream>
-
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include "input_struc.h"
-#include "multipole_index.h"
-
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf.h>
+#include <ios>
 #include <limits>
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
+
+#include "flux.h"
+#include "hlm.h"
+#include "input_struc.h"
+#include "Metric.h"
+#include "multipole_index.h"
 #include "nos_ddotr.h"
 
 typedef std::numeric_limits< double > dbl;
 
-double nos_ddotr(double t, double r, double pphi, double prstar, void *params) {
+double nos_ddotr(double t, double r, double pphi, double prstar, void *params)
+{
 
     double f[4];
     double nu = (*(input *)params).nu;
@@ -92,9 +90,12 @@ double nos_ddotr(double t, double r, double pphi, double prstar, void *params) {
     const double sqrW = sqrt(A*(1. + pphi2*u2));
     double psi = 0.;
     bool psi_flag = false; // flag for an alternative way of computing psi
-    if (psi_flag==false) {
+    if (psi_flag==false)
+    {
         psi = 2.*(1.0 + 2.0*nu*(sqrW - 1.0))/(r2*dA);
-    } if (psi_flag==true) {
+    }
+    if (psi_flag==true)
+    {
         psi = 2.*(1.0 + 2.0*nu*(Heff - 1.0))/(r2*dA);
     }
     

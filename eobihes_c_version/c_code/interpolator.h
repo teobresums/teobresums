@@ -20,13 +20,10 @@
 #ifndef _interpolator_h
 #define _interpolator_h
 
-#include <vector>
-
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-using namespace::std;
 
-double interpolate(double dt, vector<gsl_complex> grid);
+double interpolate(double dt, gsl_complex* grid);
 
 #endif /* _interpolator_h */

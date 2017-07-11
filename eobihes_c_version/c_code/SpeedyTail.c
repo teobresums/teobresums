@@ -17,19 +17,19 @@
  *  MA  02111-1307  USA
  */
 
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include "cmath"
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf.h>
+#include <math.h>
 
-#include "Tlm.h"
 #include "deltalm.h"
 #include "SpeedyTail.h"
+#include "Tlm.h"
 
-vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
+gsl_complex* speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
 {
-    int kmax = 35;
+    const int kmax = 35;
     
     double ratio_rad;
     double ratio_ang;
@@ -42,8 +42,8 @@ vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const dou
     double x4;
     double x5;
     
-    vector<double> num_ang(kmax);
-    vector<gsl_complex> tlm(kmax);
+    double num_ang[kmax];
+    static gsl_complex tlm[kmax];
 
     /** Fit coefficients*/
     /*
@@ -90,7 +90,7 @@ vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const dou
 
 
      
-    const vector<double> Tlm_real = Tlm(Omega*Hreal);
+    const double* Tlm_real = Tlm(Omega*Hreal);
     
     /** Pre-computed psi */
     double psi[] = {0.9227843350984671394, 0.9227843350984671394,

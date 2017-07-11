@@ -20,9 +20,6 @@
 #ifndef _ringdown_h
 #define _ringdown_h
 
-#include <vector>
-using namespace::std;
-
 //int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_vec,vector<double> &Omega_vec,vector<double> &hlm_rad,vector<double> &hlm_phase){
 
 int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase);

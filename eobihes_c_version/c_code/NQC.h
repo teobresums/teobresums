@@ -20,10 +20,6 @@
 #ifndef _NQC_h
 #define _NQC_h
 
-#include <vector>
-
-using namespace::std;
-
-vector<double> NQC(const double r, const double prstar, const double Omega, const double ddotr, int i);
+double* NQC(const double r, const double prstar, const double Omega, const double ddotr, int i);
 
 #endif /* _NQC_h */

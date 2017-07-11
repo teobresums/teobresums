@@ -17,14 +17,14 @@
  *  MA  02111-1307  USA
  */
 
-#include <cmath>
+#include <math.h>
+
 #include "NQC.h"
 
-vector<double> NQC(const double r, const double prstar, const double Omega, const double ddotr, int i)
+double* NQC(const double r, const double prstar, const double Omega, const double ddotr, int i)
 {
 
-
-    vector<double> n(6);
+    static double n[6];
     
     switch (i)
     {

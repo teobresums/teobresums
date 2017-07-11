@@ -17,30 +17,24 @@
  *  MA  02111-1307  USA
  */
 
-#include <stdbool.h>
-#include <ios>
-#include <cmath>
-#include <math.h>
-#include <vector>
-#include <limits>
-#include <stdio.h>
 #include <fstream>
-
-#include <gsl/gsl_sf.h>
-#include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_complex.h>
-#include <gsl/gsl_spline.h>
 #include <gsl/gsl_complex_math.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf.h>
+#include <gsl/gsl_spline.h>
+#include <ios>
+#include <limits>
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 #include "hlm.h"
 #include "flux.h"
 #include "interpolator.h"
 
-
-using namespace::std;
-
-double interpolate(double dt,vector<gsl_complex> grid)
+double interpolate(double dt, gsl_complex* grid)
 {
     double xi, yi;
     double x[]      = {0.,0.,0.,0.,0.,0.,0.};
@@ -55,7 +49,6 @@ double interpolate(double dt,vector<gsl_complex> grid)
         x[i] = grid[i].dat[0]; //time
         y[i] = grid[i].dat[1]; //omega
     }
-    
 
     //printf("%.12e %.12e %.12e %.12e %.12e %.12e %.12e \n",x[0],x[1],x[2],x[3],x[4],x[5],x[6]);
     
