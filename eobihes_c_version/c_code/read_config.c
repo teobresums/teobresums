@@ -22,7 +22,7 @@
 #include <list>
 #include <math.h>
 #include <stdio.h>
-#include <string>
+#include <string.h>
 
 #include "input_struc.h"
 #include "read_config.h"
@@ -217,8 +217,8 @@ input read_config(double q, double chi1, double chi2, double r0)
     {
         params.NQC = false;
     }        
-    double lambda1 = 2./3.*params.kAl2/pow(params.CA,5);
-    double lambda2 = 2./3.*params.kBl2/pow(params.CB,5);
+    double lambda1 = 2./3.*params.kAl2/(params.CA*params.CA*params.CA*params.CA*params.CA);
+    double lambda2 = 2./3.*params.kBl2/(params.CB*params.CB*params.CB*params.CB*params.CB);
     double logC_Q1 = logQ(log(lambda1));
     double logC_Q2 = logQ(log(lambda2));
     double C_Q1    = exp(logC_Q1);

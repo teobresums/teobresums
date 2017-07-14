@@ -22,7 +22,10 @@
 
 #include "hlm_Tidal.h"
 
-double* hlm_Tidal(double x, void *params)
+void hlm_Tidal(
+    double hTidallm[],              /** OUTPUT Dimension: 35*/
+    double x,
+    void *params)
 {
 
     //EOBhlmTidal Calculate tidal correction to multipolar waveform.
@@ -68,9 +71,6 @@ double* hlm_Tidal(double x, void *params)
         //betaA2[i]  = 0.;
         //betaB2[i]  = 0.;
     }
-
-    static double hTidallm[kmax];
-
     
     // l=2 ------------------------------------------------------------------
     
@@ -103,8 +103,6 @@ double* hlm_Tidal(double x, void *params)
     hTidallm[2] = ( -hA[2] + hB[2] )*x5;
     /* (3,3) */
     hTidallm[4] = ( -hA[4] + hB[4] )*x5;
-
-    return hTidallm;
 
 }
 

@@ -17,17 +17,23 @@
  *  MA  02111-1307  USA
  */
 
-#include <stdbool.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <math.h>
-#include "hlmNewt.h"
-#include "constants.h"
+#include <stdbool.h>
 
-gsl_complex* hlmNewt(const double r, const double Omega, const double phi, const double nu, bool tidal_flag)
-{
+#include "constants.h"
+#include "hlmNewt.h"
+
+void hlmNewt(
+    gsl_complex hlmNewt[], /** OUTPUT Dimension: 35*/
+    const double r,
+    const double Omega,
+    const double phi,
+    const double nu,
+    bool tidal_flag){
 
     /**
       * Computes the leading-order (Newtonian) prefactor  of the multipolar resummed waveform.
@@ -84,8 +90,6 @@ gsl_complex* hlmNewt(const double r, const double Omega, const double phi, const
         phi,phix2,phix3,phix4,phix5,phix6,
         phi,phix2,phix3,phix4,phix5,phix6,phix7,
         phi,phix2,phix3,phix4,phix5,phix6,phix7,8.*phi};
-
-    static gsl_complex hlmNewt[kmax];
     
     const double pv23 = p2 * vphi3;
     const double pv34 = p3 * vphi4;
@@ -215,6 +219,5 @@ gsl_complex* hlmNewt(const double r, const double Omega, const double phi, const
     hlmNewt[34].dat[1] = - M[34];
     hlmNewt[34].dat[0] = 0.;
 
-    return hlmNewt;
 }
 

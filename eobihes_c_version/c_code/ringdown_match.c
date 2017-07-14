@@ -25,7 +25,7 @@
 
 #include "ringdown_match.h"
 
-gsl_complex ringdown_match(double x, int k, double* a1, double* a2, double* a3, double* a4, double* b1, double* b2, double* b3, double* b4, gsl_complex* sigma)
+gsl_complex ringdown_match(double x, int k, double a1[], double a2[], double a3[], double a4[], double b1[], double b2[], double b3[], double b4[], gsl_complex sigma[])
 {
 
     gsl_complex psi;

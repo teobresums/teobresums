@@ -22,8 +22,11 @@
 #include "deltalm.h"
 #include "constants.h"
 
-double* deltalm(const double Hreal, const double Omega, const double nu)
-{
+void deltalm(
+    double deltalmvec[],         /** OUTPUT Dimension: 35; ... */
+    const double Hreal,
+    const double Omega,
+    const double nu){
 
     /*
     EOBdeltalm Residual phase corrections delta_{lm} up to l=m=5.
@@ -61,14 +64,11 @@ double* deltalm(const double Hreal, const double Omega, const double nu)
     double delta33LO = 13./10. * y32;
     double delta31LO = 13./30. * y32;
     
-    int kmax = 35;
-    static double deltalmvec[35];
-    for (int i=kmax; i--; ) {deltalmvec[i]=0.;}
-    
+    const int kmax = 35;
     double num;
     double den;
     
-    // Residual phases in Pade-resummed form when possible
+    /** Residual phases in Pade-resummed form when possible */
 
 
     /** l=2 ------------------------------------------------------------------*/
@@ -110,7 +110,5 @@ double* deltalm(const double Hreal, const double Omega, const double nu)
 
     deltalmvec[9] = (96875. + 857528.*nu)/(131250.*(1.-2.*nu))*y32;
         
-    return deltalmvec;
-
 }
 

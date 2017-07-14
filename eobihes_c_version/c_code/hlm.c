@@ -39,11 +39,23 @@
 #include "input_struc.h"
 #include "f_lm.h"
 
-gsl_complex* hlm(double t, const double phi, const double r, const double pph, const double prstar, double Omega, const double ddotr, const double H, const double Heff, const double jhat, const double rw, void *params)
+void hlm(
+    gsl_complex hlm[], /** OUTPUT Dimension: 35*/
+    double t,
+    const double phi,
+    const double r,
+    const double pph,
+    const double prstar,
+    double Omega,
+    const double ddotr,
+    const double H,
+    const double Heff,
+    const double jhat,
+    const double rw,
+    void *params)
 {
     const int kmax = 35; 
 
-    static gsl_complex hlm[kmax];
     double nu            = (*(input *)params).nu;
     bool tidal_flag      = (*(input *)params).tidal;
     bool spin_flag       = (*(input *)params).spin;
@@ -60,40 +72,42 @@ gsl_complex* hlm(double t, const double phi, const double r, const double pph, c
         jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
     
     /** Newtonian waveform */
-    gsl_complex* hNewt = hlmNewt(rw, Omega, phi, nu, tidal_flag);
+    gsl_complex hNewt[35];
+    hlmNewt(hNewt, rw, Omega, phi, nu, tidal_flag);
     
     /** Compute corrections */
     double  x = gsl_pow_int(rw*Omega,2);
-    double* flm;
+    double flm[35];
     if (spin_flag==true)
     {
-        flm = s_flm(x, params);
+        s_flm(flm, x, params);
     }
     else if (spin_flag==false)
     {
-        flm = f_lm(x, nu);
+        f_lm(flm, x, nu);
     }
     
     /** Computing the tail */
     const double r0    = 1.213061319425267e+00;   // 2/sqrt(e);
     const double Hreal = H * nu;
-    gsl_complex* tlm;
+    gsl_complex tlm[35];
     if (speedytail_flag==false)
     {
-        tlm = hhatlmtail(Omega,Hreal, r0, L, M);
+        hhatlmtail(tlm, Omega,Hreal, r0, L, M);
     }
     else if (speedytail_flag==true)
     {
-        tlm = speedyTail(Omega,Hreal, r0, L, M);
+        speedyTail(tlm, Omega,Hreal, r0, L, M);
     }
     
     /** Residual phase corrections delta_{lm} */
-    const double* EOBdeltalm = deltalm(Hreal, Omega, nu);
+    const double EOBdeltalm[35];
+    deltalm(EOBdeltalm, Hreal, Omega, nu);
 
-    gsl_complex* h_NQC;
+    gsl_complex h_NQC[35];
     if (NQC_flag==true)
     {
-        h_NQC = hlmNQC(nu, r, prstar, Omega, ddotr);
+        hlmNQC(h_NQC, nu, r, prstar, Omega, ddotr);
     }
     
     for (int k=35; k--;)
@@ -117,7 +131,8 @@ gsl_complex* hlm(double t, const double phi, const double r, const double pph, c
     {
             
         /** Compute tidal contribution */
-        double* hlmtidal = hlm_Tidal(x, params);
+        double hlmtidal[35];
+        hlm_Tidal(hlmtidal, x, params);
 
         /** Update waveform */
         double p2 = sqrt(1.-4.*nu);
@@ -143,6 +158,5 @@ gsl_complex* hlm(double t, const double phi, const double r, const double pph, c
         }
     }
     
-    return hlm;
 }
 

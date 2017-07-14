@@ -23,6 +23,6 @@
 #include <stdbool.h>
 #include <gsl/gsl_complex.h>
 
-gsl_complex* hlmNewt(const double r, const double Omega, const double phi, const double nu, bool tidal_flag);
+void hlmNewt(gsl_complex hlmNewt[], const double r, const double Omega, const double phi, const double nu, bool tidal_flag);
 
 #endif /* _hlmNewt_h */

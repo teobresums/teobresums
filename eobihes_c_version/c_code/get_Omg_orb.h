@@ -20,6 +20,6 @@
 #ifndef _get_Omg_orb_h
 #define _get_Omg_orb_h
 
-double* get_Omg_orb(double* r, const int size_r, double* pph, double* pr_star, double* A, double* B, void *params);
+void get_Omg_orb(double Omg_orb[], double r[], const int size_r, const double pph[], const double pr_star[],const double A[], const double B[], void *params);
 
 #endif /* _get_Omg_orb_h */

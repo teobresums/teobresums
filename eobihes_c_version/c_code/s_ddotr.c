@@ -17,13 +17,13 @@
  *  MA  02111-1307  USA
  */
 
-#include <ios>
 #include <fstream>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
+#include <ios>
 #include <limits>
 #include <math.h>
 #include <stdbool.h>
@@ -85,9 +85,9 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params)
         dA = metric[2];
     }
     
-    double* rc_vec;
+    double rc_vec[3];//[rc, drc, d2rc]
     //rc_vec = s_get_rc(r,aK2,params);//[rc, drc, d2rc]
-    rc_vec = s_get_rc(r,params);//[rc, drc, d2rc]
+    s_get_rc(rc_vec, r, params);
     double rc     = rc_vec[0];
     double drc_dr = rc_vec[1];
     double uc     = 1./rc;
@@ -101,7 +101,8 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params)
     double S     = S1 + S2;        // => in the EMRL this becomes the spin of the BH
     double Sstar = X2*a1 + X1*a2;  // => in the EMRL this becomes the spin of the particle
     
-    double* ggm = s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    double ggm[14];
+    s_GS(ggm, r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
     
     double GS              = ggm[2];
     double GSs             = ggm[3];
@@ -119,7 +120,8 @@ double s_ddotr(double t, double r, double pph, double prstar, void *params)
     // Compute same quantities with prstar=0. This to obtain psi.
     // Procedure consistent with the nonspinning case
     //==========================================================
-    double* ggm0 = s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    double ggm0[14];
+    s_GS(ggm0, r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
     
     double sqrtAbyB  = sqrt(A/B);
     

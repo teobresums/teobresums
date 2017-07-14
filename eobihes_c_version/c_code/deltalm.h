@@ -20,6 +20,6 @@
 #ifndef _deltalm_h
 #define _deltalm_h
 
-double* deltalm(const double Hreal, const double Omega, const double nu);
+void deltalm(double deltalmvec[], const double Hreal, const double Omega, const double nu);
 
 #endif /* _deltalm_h */

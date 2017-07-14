@@ -34,7 +34,7 @@
 #include "flux.h"
 #include "interpolator.h"
 
-double interpolate(double dt, gsl_complex* grid)
+double interpolate(double dt, gsl_complex grid[])
 {
     double xi, yi;
     double x[]      = {0.,0.,0.,0.,0.,0.,0.};

@@ -30,8 +30,9 @@
 #include "s_initial.h"
 #include "s_Metric.h"
 
-double* s_initial(input *params)
-{
+void s_initial(
+    double y_init[],             /** OUTPUT Dimension: 7*/
+    input *params){
 
 /*
 % EOB_ModinSpin
@@ -72,7 +73,6 @@ double* s_initial(input *params)
 // This is used later to compute a spatial derivative numerically
 //-----------------------------------------------------------------
     
-    static double y_init[7];
     
     const int N = 10;
     const double dr = 1.e-8;
@@ -139,25 +139,28 @@ double* s_initial(input *params)
 	    }*/
 
 	// metric is here. The tidal parameters are within this routine 
-      	metric = s_Metric(r[i], params, false);
+      	s_Metric(metric, r[i], params, false);
         A[i]   = metric[0];
         B[i]   = metric[1];
         dA[i]  = metric[2];
         d2A[i] = metric[3];
 		
-        double rc_rad[3] = s_get_rc(r[i], params);
+        double rc_rad[3];
+        s_get_rc(rc_rad, r[i], params);
         rc[i]  = rc_rad[0];
         drc[i] = rc_rad[1];
         
         //Compute minimum of Heff0 using bisection method
         rorb   = r[i];
         pphorb = rorb/sqrt(rorb-3.);
-        pph[i] = s_bisec(pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
+        s_bisec(pph, pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
     }
 
-    double dpph_dr[12] = s_D1(pph,r,12-1); // derivative is computed on a grid with 12 points
+    double dpph_dr[12];
+     s_D1(pph,r,12-1); // derivative is computed on a grid with 12 points
     
-    for (int i=2*N; i--;) {
+    for (int i=2*N; i--;)
+    {
         
         double sqrtAbyB = sqrt(A[i]/B[i]);
         
@@ -171,6 +174,8 @@ double* s_initial(input *params)
         double Horbeff0 = sqrt(A[i]*(1. + pph2*uc2));
         
         // Compute gyro-gravitomagnetic coupling functions
+        
+        // IS THIS CORRECT?????
         double ggm0[14]               = s_GS(r[i], rc[i], drc[i], aK2, 0., pph[i], nu, chi1, chi2, X1, X2, c3);
         double GS_0                   = ggm0[2];
         double GSs_0                  = ggm0[3];
@@ -233,6 +238,5 @@ double* s_initial(input *params)
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
     
-    return y_init;
 }
 

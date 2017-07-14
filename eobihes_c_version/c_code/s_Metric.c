@@ -26,8 +26,11 @@
 #include "s_get_rc.h"
 #include "s_Metric.h"
 
-double* s_Metric(double r, void *params, bool nnlo_flag)
-{
+void s_Metric(
+    double result[],              /** OUTPUT Dimension: 4*/
+    double r,
+    void *params,
+    bool nnlo_flag){
 /*
 %                       This function computes the EOB metric potentials
 %                       A(r), B(r), and their derivatives, as functions
@@ -46,7 +49,8 @@ double* s_Metric(double r, void *params, bool nnlo_flag)
     double nu  = (*(input *)params).nu;
     double aK2 = (*(input *)params).aK2;
     
-    double rc_vec[3] = s_get_rc(r,params); //[rc, drc, d2rc]
+    double rc_vec[3];
+    s_get_rc(rc_vec, r,params); //[rc, drc, d2rc]
     double rc        = rc_vec[0];
     double drc       = rc_vec[1];
     double d2rc      = rc_vec[2];
@@ -61,7 +65,8 @@ double* s_Metric(double r, void *params, bool nnlo_flag)
     double uc3 = uc2*uc;
         
     //double* metric = A5pnP15(rc, nu);
-    double metric[5] = s_A5PNlog(rc,params,nnlo_flag);
+    double metric[5];
+    s_A5PNlog(metric, rc,params,nnlo_flag);
     double Aorb      = metric[0];
     double dAorb     = metric[1];
     double d2Aorb    = metric[2];
@@ -82,7 +87,9 @@ double* s_Metric(double r, void *params, bool nnlo_flag)
     // The B function
     double B  = r2*uc2*Dorb/A;
  
-    static double result[] = {A, B, dA, d2A};
-    return result;
+    result[0] = A;
+    result[1] = B;
+    result[2] = dA;
+    result[3] = d2A;
 }
 

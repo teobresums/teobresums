@@ -22,6 +22,6 @@
 
 #include <stdbool.h>
 
-double* s_Metric(double r, void *params, bool nnlo_flag);
+void s_Metric(double result[], double r, void *params, bool nnlo_flag);
 
 #endif /* _s_Metric_h */

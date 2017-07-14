@@ -89,21 +89,21 @@ int s_RHS(double t, const double y[], double f[], void *params)
     double metric[5];
     if (tidal_flag==true)
     {
-        metric = Metric(r, params, false);
+        Metric(metric, r, params, false);
         A      = metric[0];
         B      = metric[3];
         dA     = metric[1];
     }
     else
     {
-      metric = s_Metric(r, params, false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
+      s_Metric(metric, r, params, false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
         A    = metric[0];
         B    = metric[1];
         dA   = metric[2];
     }
     
     double rc_vec[3];
-    rc_vec = s_get_rc(r,params);//[rc, drc, d2rc]
+    s_get_rc(rc_vec, r, params);//[rc, drc, d2rc]
     double rc     = rc_vec[0];
     double drc_dr = rc_vec[1];
     double uc     = 1./rc;
@@ -112,7 +112,8 @@ int s_RHS(double t, const double y[], double f[], void *params)
     
     double Heff_orb = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
     
-    double ggm[14] = s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    double ggm[14];
+    s_GS(ggm, r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
 
     double GS              = ggm[2];
     double GSs             = ggm[3];
@@ -169,7 +170,8 @@ int s_RHS(double t, const double y[], double f[], void *params)
     // Compute same quantities with prstar=0. This to obtain psi.
     // Procedure consistent with the nonspinning case
     //==========================================================
-    double ggm0[14] = s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    double ggm0[14];
+    s_GS(ggm0, r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
     
     double GS_0      = ggm0[2];
     double GSs_0     = ggm0[3];

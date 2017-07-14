@@ -22,7 +22,7 @@
 #include "Q_omega.h"
 
 //NOTE: routine not in use
-int Q_omega(double* t, double* f, std::ofstream& Qomg)
+void Q_omega(double t[], double f[], std::ofstream& Qomg)
 {
     
     double dt   = t[1]-t[0];
@@ -49,8 +49,6 @@ int Q_omega(double* t, double* f, std::ofstream& Qomg)
         double Qomega = (f[i]*f[i])/d1f;
         Qomg << t[i] << "\t"<< f[i] << "\t" << d1f << "\t" << Qomega << endl;
     }
-    
-    return 0;
-    
+        
 }
 

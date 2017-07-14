@@ -21,6 +21,6 @@
 #define _Q_omega_h
 
 //NOTE: routine not in use
-int Q_omega(double* t, double* f, std::ofstream& Qomg);
+void Q_omega(double* t, double* f, std::ofstream& Qomg);
 
 #endif /* _Q_omega_h */

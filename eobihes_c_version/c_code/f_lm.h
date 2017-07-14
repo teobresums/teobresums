@@ -20,6 +20,6 @@
 #ifndef _flm_h
 #define _flm_h
 
-double* f_lm(const double x, const double nu);
+void f_lm(double flm[], const double x, const double nu);
 
 #endif /* _flm_h */

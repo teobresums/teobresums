@@ -18,13 +18,16 @@
  */
 
 #include <stdbool.h>
-#include "FlmNewt.h"
+
 #include "input_struc.h"
+#include "FlmNewt.h"
 
 //To do: pre-calculate the sp * x products
 
-double* FlmNewt(const double x, void *params)
-{
+void FlmNewt(
+    double Nlm[],                    /** OUTPUT Dimension: 35*/
+    const double x,
+    void *params){
 
     double nu       = (*(input *)params).nu;
     bool tidal_flag = (*(input *)params).tidal;
@@ -51,8 +54,6 @@ double* FlmNewt(const double x, void *params)
     const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
     const double sp9 = (1 - 4*nu)*(1 - 4*nu + 3*nu2)*(1 - 4*nu + 3*nu2);
     
-    static double Nlm[35];
-
     if (spin_flag==true)
     {
         sp2 = 1.;
@@ -116,6 +117,5 @@ double* FlmNewt(const double x, void *params)
     Nlm[33] = 4747561509943./4.083146496e11         * sp8 * x12;
     Nlm[34] = (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1)*274877906944./1688511825.*x11;
 
-    return Nlm;
 }
 

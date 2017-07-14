@@ -17,20 +17,21 @@
  *  MA  02111-1307  USA
  */
 
-#include <math.h>
 #include "A_NumDenom.h"
+#include "constants.h"
 #include "input_struc.h"
-#include <stdbool.h>
-
-#include <gsl/gsl_math.h>
 #include "Metric.h"
 
-#include "constants.h"
+#include <gsl/gsl_math.h>
+#include <math.h>
+#include <stdbool.h>
 
-double* acoeffs(const double r, const double nu)
-{
+void acoeffs(
+    double a[],            /** OUTPUT Dimension: 8;  ... */
+    const double r,        /** Radius ... */
+    const double nu
+    ){
     
-    static double a[8];
     const double u    = 1./r;
     const double logu = log(u);
 
@@ -54,17 +55,19 @@ double* acoeffs(const double r, const double nu)
     a[6] = a6l;
     a[7] = a6c+a6l*logu;
     
-    return a;
 }
 
-double* Metric(const double r, void *params, bool nnlo_flag)
+void Metric(
+    double data[],            /** OUTPUT Dimension: 5;  ... */
+    const double r,
+    void *params,
+    bool nnlo_flag)
 {
     //const double nu,bool tidal_flag,bool nnlo_flag){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
     double rLR        = (*(input *)params).rLR;
-    static double data[5];
     
     const double u   = 1./r;
     const double u2  = u*u;
@@ -76,23 +79,30 @@ double* Metric(const double r, void *params, bool nnlo_flag)
     const double u9  = u8*u;
     const double u10 = u5*u5;
     //double N; double D; double dN; double dD; double ooD;
-    const double*  a = acoeffs(r,nu);
+    const double  a[8];
+    acoeffs(a, r,nu);
+    
+    /** Get numerator and denumerator */
+    
+    double frac[4];
+    A_NumDenom(frac, r, a, nu);
     
     /** Unpack numerator and denominator and compute A and its derivatives */
-    const double* frac = A_NumDenom(r, a, nu);
+
     const double  Num  = frac[0];
     const double  Den  = frac[1];
     const double  dNum = frac[2];
     const double  dDen = frac[3];
     
     const double ooD = 1./Den;
-    double A    = Num*ooD;
-    double A_du = (-Num*dDen+Den*dNum)*ooD*ooD; //A_du
+    double A         = Num*ooD;
+    double A_du      = (-Num*dDen+Den*dNum)*ooD*ooD; //A_du
     
     double A0    = A;
     double A0_du = A_du;
     
-    if (tidal_flag==true) {
+    if (tidal_flag==true)
+    {
         
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
         
@@ -199,19 +209,24 @@ double* Metric(const double r, void *params, bool nnlo_flag)
     const double B    = D/A; // B
     const double B_dr = (D_dr*A - D*A_dr)/(A*A); // dB
 
-    data[0] = A; data[1] = A_dr; data[2] = A_du; data[3] = B; data[4] = B_dr;
+    data[0] = A;
+    data[1] = A_dr;
+    data[2] = A_du;
+    data[3] = B;
+    data[4] = B_dr;
     
-    return data;
 }
 
-double* A5pnP15_dd(const double r, void *params)
-{
+
+
+void A5pnP15_dd(
+    double* A_dd,            /** OUTPUT Dimension: 2;  ... */
+    const double r,
+    void *params){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
     double rLR        = (*(input *)params).rLR;
-
-    static double A_dd[2];
     
     /** Shorthands */
     const double u  = 1./r;
@@ -233,7 +248,8 @@ double* A5pnP15_dd(const double r, void *params)
     const double a6l = a[6];
     const double a6  = a[7];
     
-    const double* frac = A_NumDenom(r,a,nu);
+    const double frac[4];
+    A_NumDenom(frac, r, a, nu);
     const double  N    = frac[0];
     const double  D    = frac[1];
     const double  dN   = frac[2];
@@ -331,13 +347,13 @@ double* A5pnP15_dd(const double r, void *params)
         A_ddu=A_ddu+d2A0_u;
         
     }
-    double A_ddr = -2.*Metric(r,params,false)[1]/r+A_ddu/(r*r*r*r);
+    double metric[2];
+    Metric(metric, r,params,false)
+    double A_ddr = -2.0*metric[1]/r+A_ddu/(r*r*r*r);
 
     A_dd[1] = A_ddu;
     A_dd[0] = A_ddr;
     
-return A_dd;
-
 }
 
 

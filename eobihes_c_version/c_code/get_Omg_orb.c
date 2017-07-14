@@ -17,14 +17,22 @@
  *  MA  02111-1307  USA
  */
 
-#include "input_struc.h"
 #include <math.h>
+
+#include "get_Omg_orb.h"
+#include "input_struc.h"
 #include "s_get_rc.h"
 #include "s_GS.h"
-#include "get_Omg_orb.h"
 
-double* get_Omg_orb(double* r, const int size_r, double* pph, double* pr_star, double* A, double* B, void *params)
-{
+void get_Omg_orb(
+    double Omg_orb[],
+    double r[],
+    const int size_r,
+    const double pph[],
+    const double pr_star[],
+    const double A[],
+    const double B[], /** UNUSED*/
+    void *params){
 
     double nu   = (*(input *)params).nu;
     double aK2  = (*(input *)params).aK2;
@@ -43,7 +51,6 @@ double* get_Omg_orb(double* r, const int size_r, double* pph, double* pr_star, d
     double z3    = 2.*nu*(4.-3.*nu);
 
     const long int r_length = size_r;
-    static double Omg_orb[r_length];
     
     for (int i=r_length; i--;)
     {
@@ -69,8 +76,6 @@ double* get_Omg_orb(double* r, const int size_r, double* pph, double* pr_star, d
 
         Omg_orb[i]     = one_H*pph[i]*A[i]*uc2/Horbeff;
     }
-
-    return Omg_orb;
     
 }
 

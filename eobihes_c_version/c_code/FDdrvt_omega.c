@@ -19,9 +19,12 @@
 
 #include "FDdrvt_omega.h"
 
-double* FDdrvt_omega(double* f, const int size_f, double dt)
-{
-    static double d1f[size_f-2];
+void FDdrvt_omega(
+    double d1f[],          /** OUTPUT Dimension: size_f-2 */
+    double f[],
+    const int size_f,
+    double dt){
+    
     const double oodt = 1./dt;
     const double c    = 1./12.;
     

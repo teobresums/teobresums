@@ -24,8 +24,10 @@
 #include "input_struc.h"
 #include "s_flm.h"
 
-double* s_flm(double x, void *params)
-{
+void s_flm(
+    double flm[],             /** OUTPUT Dimension: 35*/
+    double x,
+    void *params){
 
 /*
 % Function EOB_flm(x). This function explicitly computes
@@ -134,19 +136,18 @@ double* s_flm(double x, void *params)
     
     const int kmax = 35; //length of vector needed to store all the multipoles, 35=8+7+...+2
     double rholm[kmax];
-    static double flm[kmax];
     
     
     // l=2 ------------------------------------------------------------------
     //(2,2)
     rholm[1] = 1. + (-1.0238095238095237 + 0.6547619047619048*nu)*x + (-1.94208238851096 - 1.5601379440665155*nu + 0.4625614134542706*nu2)*x2 + x3*(12.736034731834051 - 2.902228713904598*nu - 1.9301558466099282*nu2 + 0.2715020968103451*nu3 - 4.076190476190476*el2) + x4*(-2.4172313935587004 + 4.173242630385488*el2) + x5*(-30.14143102836864 + 7.916297736025627*el2);
     
-    flm[1] = gsl_pow_int(rholm[1]+ rho22S, 2);
+    flm[1] = (rholm[1]+ rho22S)*(rholm[1]+ rho22S);
     
     //(2,1)
     rholm[0] = 1. + (-1.0535714285714286 + 0.27380952380952384*nu)*x + (-0.8327841553287982 - 0.7789824263038548*nu + 0.13116496598639457*nu2)*x2 + x3*(2.9192806270460925 - 1.019047619047619*el1) + x4*(-1.28235780892213 + 1.073639455782313*el1) + eps*x5*(-3.8466571723355227 + 0.8486467106683944*el1);
     
-    flm[0] = gsl_pow_int(rholm[0], 2);
+    flm[0] = rholm[0]*rholm[0];
     flm[0] = (sqrt_one_4nu*flm[0] + f21S);
     
     
@@ -154,41 +155,41 @@ double* s_flm(double x, void *params)
     //(3,3)
     rholm[4] = 1. + (-1.1666666666666667 + 0.6666666666666666*nu)*x + (-1.6967171717171716 - 1.8797979797979798*nu + 0.45151515151515154*nu2)*x2 + x3*(14.10891386831863 - 3.7142857142857144*el3) + x4*(-6.723375314944128 + 4.333333333333333*el3) + eps*x5*(-29.568699895427518 + 6.302092352092352*el3);
     
-    flm[4] = gsl_pow_int(rholm[4], 3);
+    flm[4] = rholm[4]*rholm[4]*rholm[4];
     flm[4] = (sqrt_one_4nu*flm[4] + f33S);
     
     //(3,2)
     rholm[3] = 1. + (0.003703703703703704*(328. - 1115.*nu + 320.*nu2)*x)/(-1. + 3.*nu) + (6.235191420376606e-7*(-1.444528e6 + 8.050045e6*nu - 4.725605e6*nu2 - 2.033896e7*nu3 + 3.08564e6*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + x3*(6.220997955214429 - 1.6507936507936507*el2) + eps*x4*(-3.4527288879001268 + 2.005408583186361*el2);
     
-    flm[3]=gsl_pow_int(rholm[3]+ rho32S, 3);
+    flm[3] = (rholm[3]+ rho32S)*(rholm[3]+ rho32S)*(rholm[3]+ rho32S);
     
     //(3,1)
     rholm[2] = 1. + (-0.7222222222222222 - 0.2222222222222222*nu)*x + (0.014169472502805836 - 0.9455667789001122*nu - 0.46520763187429853*nu2)*x2 + x3*(1.9098284139598072 - 0.4126984126984127*el1) + x4*(0.5368150316615179 + 0.2980599647266314*el1) + eps*x5*(1.4497991763035063 - 0.0058477188106817735*el1);
     
-    flm[2] = gsl_pow_int(rholm[2], 3);
+    flm[2] = rholm[2]*rholm[2]*rholm[2];
     flm[2] = (sqrt_one_4nu*flm[2] + f31S);
     
     // l=4 ------------------------------------------------------------------
     //(4,4)
     rholm[8] = 1. + (0.0007575757575757576*(1614. - 5870.*nu + 2625.*nu2)*x)/(-1. + 3.*nu) + (3.1534122443213353e-9*(-5.11573572e8 + 2.338945704e9*nu - 3.13857376e8*nu2 - 6.733146e9*nu3 + 1.252563795e9*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + x3*(15.108111214795123 - 3.627128427128427*el4) + eps*x4*(-8.857121657199649 + 4.434988849534304*el4);
     
-    flm[8] = gsl_pow_int(rholm[8] + rho44S, 4);
+    flm[8] = (rholm[8] + rho44S)*(rholm[8] + rho44S)*(rholm[8] + rho44S)*(rholm[8] + rho44S);
     
     //(4,3)
     rholm[7] = 1. + (0.005681818181818182*(222. - 547.*nu + 160.*nu2)*x)/(-1. + 2.*nu) - 0.9783218202252293*x2 + eps*(x3*(8.519456157072423 - 2.0402597402597404*el3) +      x4*(-5.353216984886716 + 2.5735094451003544*el3));
     
-    flm[7] = gsl_pow_int(rholm[7], 4);
+    flm[7] = rholm[7]*rholm[7]*rholm[7]*rholm[7];
     flm[7] = (sqrt_one_4nu*flm[7] + f43S);
     
     //(4,2)
     rholm[6] = 1. + (0.0007575757575757576*(1146. - 3530.*nu + 285.*nu2)*x)/(-1. + 3.*nu) - (3.1534122443213353e-9*(1.14859044e8 - 2.95834536e8*nu - 1.204388696e9*nu2 + 3.04798116e9*nu3 + 3.79526805e8*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + 4.550378418934105e-12*x3*(8.48238724511e11 - 1.9927619712e11*el2) + eps*x4*(-0.6621921297263365 + 0.787251738160829*el2);
     
-    flm[6]=gsl_pow_int(rholm[6] + rho42S, 4);
+    flm[6] = (rholm[6] + rho42S)*(rholm[6] + rho42S)*(rholm[6] + rho42S)*(rholm[6] + rho42S);
     
     //(4,1)
     rholm[5] = 1. + (0.001893939393939394*(602. - 1385.*nu + 288.*nu2)*x)/(-1. + 2.*nu) - 0.36778992787515513*x2 + x3*(0.6981550175535535 - 0.2266955266955267*el1) + eps*x4*(-0.7931524512893319 + 0.2584672482399755*el1);
 
-    flm[5] = gsl_pow_int(rholm[5], 4);
+    flm[5] = rholm[5]*rholm[5]*rholm[5]*rholm[5];
     flm[5] = (sqrt_one_4nu*flm[5] + f41S);
     
     // l=5 ------------------------------------------------------------------
@@ -203,11 +204,11 @@ double* s_flm(double x, void *params)
     //(5,1)
     rholm[9] = 1. + (0.002564102564102564*(319. - 626.*nu + 8.*nu2)*x)/(-1. + 2.*nu) - 0.1047896120973044*x2 + eps*(x3*(0.642701885362399 - 0.14414918414918415*el1) +      x4*(-0.07651588046467575 + 0.11790664036817883*el1));
     
-    flm[13] = gsl_pow_int(rholm[13], 5);
-    flm[12] = gsl_pow_int(rholm[12], 5);
-    flm[11] = gsl_pow_int(rholm[11], 5);
-    flm[10] = gsl_pow_int(rholm[10], 5);
-    flm[9]  = gsl_pow_int(rholm[9], 5);
+    flm[13] = rholm[13]*rholm[13]*rholm[13]*rholm[13]*rholm[13];
+    flm[12] = rholm[12]*rholm[12]*rholm[12]*rholm[12]*rholm[12];
+    flm[11] = rholm[11]*rholm[11]*rholm[11]*rholm[11]*rholm[11];
+    flm[10] = rholm[10]*rholm[10]*rholm[10]*rholm[10]*rholm[10];
+    flm[9]  = rholm[9]*rholm[9]*rholm[9]*rholm[9]*rholm[9];
     
     // l=6 ------------------------------------------------------------------
     //(6,6)
@@ -223,12 +224,12 @@ double* s_flm(double x, void *params)
     //(6,1)
     rholm[14] = 1. + (0.006944444444444444*(-161. + 694.*nu - 670.*nu2 + 124.*nu3)*x)/(1. - 4.*nu + 3.*nu2) + eps*(- 0.29175486850885135*x2 + x3*(0.21653486654395454 - 0.10001110001110002*el1));
     
-    flm[19] = gsl_pow_int(rholm[19], 6);
-    flm[18] = gsl_pow_int(rholm[18], 6);
-    flm[17] = gsl_pow_int(rholm[17], 6);
-    flm[16] = gsl_pow_int(rholm[16], 6);
-    flm[15] = gsl_pow_int(rholm[15], 6);
-    flm[14] = gsl_pow_int(rholm[14], 6);
+    flm[19] = rholm[19]*rholm[19]*rholm[19]*rholm[19]*rholm[19]*rholm[19];
+    flm[18] = rholm[18]*rholm[18]*rholm[18]*rholm[18]*rholm[18]*rholm[18];
+    flm[17] = rholm[17]*rholm[17]*rholm[17]*rholm[17]*rholm[17]*rholm[17];
+    flm[16] = rholm[16]*rholm[16]*rholm[16]*rholm[16]*rholm[16]*rholm[16];
+    flm[15] = rholm[15]*rholm[15]*rholm[15]*rholm[15]*rholm[15]*rholm[15];
+    flm[14] = rholm[14]*rholm[14]*rholm[14]*rholm[14]*rholm[14]*rholm[14];
     
     // l=7 ------------------------------------------------------------------
     //(7,7)
@@ -246,13 +247,13 @@ double* s_flm(double x, void *params)
     //(7,1)
     rholm[20] = 1. + (0.0014005602240896359*(-618. + 2518.*nu - 2083.*nu2 + 228.*nu3)*x)/(1. - 4.*nu + 3.*nu2) + eps*( - 0.1508235111143767*x2 + x3*(0.2581280702019663 - 0.07355557607658449*el1));
     
-    flm[26] = gsl_pow_int(rholm[26], 7);
-    flm[25] = gsl_pow_int(rholm[25], 7);
-    flm[24] = gsl_pow_int(rholm[24], 7);
-    flm[23] = gsl_pow_int(rholm[23], 7);
-    flm[22] = gsl_pow_int(rholm[22], 7);
-    flm[21] = gsl_pow_int(rholm[21], 7);
-    flm[20] = gsl_pow_int(rholm[20], 7);
+    flm[26] = rholm[26]*rholm[26]*rholm[26]*rholm[26]*rholm[26]*rholm[26]*rholm[26];
+    flm[25] = rholm[25]*rholm[25]*rholm[25]*rholm[25]*rholm[25]*rholm[25]*rholm[25];
+    flm[24] = rholm[24]*rholm[24]*rholm[24]*rholm[24]*rholm[24]*rholm[24]*rholm[24];
+    flm[23] = rholm[23]*rholm[23]*rholm[23]*rholm[23]*rholm[23]*rholm[23]*rholm[23];
+    flm[22] = rholm[22]*rholm[22]*rholm[22]*rholm[22]*rholm[22]*rholm[22]*rholm[22];
+    flm[21] = rholm[21]*rholm[21]*rholm[21]*rholm[21]*rholm[21]*rholm[21]*rholm[21];
+    flm[20] = rholm[20]*rholm[20]*rholm[20]*rholm[20]*rholm[20]*rholm[20]*rholm[20];
     
     
     // l=8 ------------------------------------------------------------------
@@ -273,16 +274,14 @@ double* s_flm(double x, void *params)
     //(8,1)
     rholm[27] = 1. + (0.00005482456140350877*(20022. - 126451.*nu + 236922.*nu2 - 138430.*nu3 + 21640.*nu4)*x)/(-1. + 6.*nu - 10.*nu2 + 4.*nu3) - 0.26842133517043704*eps*x2;
     
-    flm[34] = gsl_pow_int(rholm[34], 8);
-    flm[33] = gsl_pow_int(rholm[33], 8);
-    flm[32] = gsl_pow_int(rholm[32], 8);
-    flm[31] = gsl_pow_int(rholm[31], 8);
-    flm[30] = gsl_pow_int(rholm[30], 8);
-    flm[29] = gsl_pow_int(rholm[29], 8);
-    flm[28] = gsl_pow_int(rholm[28], 8);
-    flm[27] = gsl_pow_int(rholm[27], 8);
-    
-    return flm;
+    flm[34] = rholm[34]*rholm[34]*rholm[34]*rholm[34]*rholm[34]*rholm[34]*rholm[34]*rholm[34];
+    flm[33] = rholm[33]*rholm[33]*rholm[33]*rholm[33]*rholm[33]*rholm[33]*rholm[33]*rholm[33];
+    flm[32] = rholm[32]*rholm[32]*rholm[32]*rholm[32]*rholm[32]*rholm[32]*rholm[32]*rholm[32];
+    flm[31] = rholm[31]*rholm[31]*rholm[31]*rholm[31]*rholm[31]*rholm[31]*rholm[31]*rholm[31];
+    flm[30] = rholm[30]*rholm[30]*rholm[30]*rholm[30]*rholm[30]*rholm[30]*rholm[30]*rholm[30];
+    flm[29] = rholm[29]*rholm[29]*rholm[29]*rholm[29]*rholm[29]*rholm[29]*rholm[29]*rholm[29];
+    flm[28] = rholm[28]*rholm[28]*rholm[28]*rholm[28]*rholm[28]*rholm[28]*rholm[28]*rholm[28];
+    flm[27] = rholm[27]*rholm[27]*rholm[27]*rholm[27]*rholm[27]*rholm[27]*rholm[27]*rholm[27];
     
 }
 

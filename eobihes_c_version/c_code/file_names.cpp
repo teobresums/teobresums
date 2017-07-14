@@ -17,18 +17,18 @@
  *  MA  02111-1307  USA
  */
 
+#include <fstream>
 #include <iostream>
 #include <list>
-#include <fstream>
+#include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
-#include <cmath>
-#include <string>
-#include <vector>
 #include <tuple>
-#include "input_struc.h"
+#include <vector>
 
 #include "file_names.h"
+#include "input_struc.h"
 #include "multipole_index.h"
 
 using namespace::std;

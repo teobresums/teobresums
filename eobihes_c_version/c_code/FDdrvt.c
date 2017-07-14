@@ -19,13 +19,16 @@
 
 #include "FDdrvt.h"
 
-double* FDdrvt(const double* f, const double* t, int varargin, const int grid_length)
-{
+void FDdrvt(
+    double* d1f,                    /** OUTPUT Dimension: grid_length */
+    const double* f,
+    const double* t,
+    int varargin,
+    const int grid_length){
 
     const double dt    = t[1]-t[0];
     const double oodt  = 1./dt;
     const double c     = 1./12.;
-    static double d1f[grid_length];
 
     for (int i=grid_length; i--;)
     {
@@ -53,6 +56,5 @@ double* FDdrvt(const double* f, const double* t, int varargin, const int grid_le
         }
     }
 
-    return d1f;
 }
 

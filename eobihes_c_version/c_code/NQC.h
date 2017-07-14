@@ -20,6 +20,6 @@
 #ifndef _NQC_h
 #define _NQC_h
 
-double* NQC(const double r, const double prstar, const double Omega, const double ddotr, int i);
+void NQC(double n[], const double r, const double prstar, const double Omega, const double ddotr, int i);
 
 #endif /* _NQC_h */

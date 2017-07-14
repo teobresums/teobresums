@@ -21,15 +21,18 @@
 
 #include "NQC.h"
 
-double* NQC(const double r, const double prstar, const double Omega, const double ddotr, int i)
-{
-
-    static double n[6];
+void NQC(
+    double n[],             /** OUTPUT Dimension: 6*/
+    const double r,
+    const double prstar,
+    const double Omega,
+    const double ddotr,
+    int i){
     
     switch (i)
     {
-            // l=2 -------------------------------------------------------------------
-            // (2,1)
+            /** l=2 -------------------------------------------------------------------
+             * (2,1) */
         case 0:
             // NQC corrections to the modulus
             n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
@@ -80,6 +83,5 @@ double* NQC(const double r, const double prstar, const double Omega, const doubl
             break;
     }
     
-    return n;
 }
 

@@ -20,7 +20,7 @@
 #ifndef _A_NumDenom_h
 #define _A_NumDenom_h
 
-double* A_NumDenom(const double r, const double* a, const double nu);
+void A_NumDenom(double frac[], const double r, const double a[], const double nu);
 
 #endif /* _A_NumDenom_h */
 

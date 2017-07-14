@@ -20,6 +20,6 @@
 #ifndef _s_flm_h
 #define _s_flm_h
 
-double* s_flm(double x, void *params);
+void s_flm(double flm[], double x, void *params);
 
 #endif /* _s_flm_h */

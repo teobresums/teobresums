@@ -22,6 +22,6 @@
 
 #include <stdbool.h>
 
-double* s_A5PNlog(double r, void *params, bool nnlo_flag);
+void s_A5PNlog(double result[], double r, void *params, bool nnlo_flag);
 
 #endif /* _s_A5PNlog_h */

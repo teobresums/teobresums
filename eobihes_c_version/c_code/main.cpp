@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <cmath>
-#include <string>
+#include <string.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>

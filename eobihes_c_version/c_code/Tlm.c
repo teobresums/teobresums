@@ -29,8 +29,9 @@
 
 using namespace::std;
 
-vector<double> Tlm(const double w)
-{
+void double Tlm(
+    double MTlm[], /** OUTPUT Dimension: 35 */
+    const double w){
 
     /* Factorials evaluated */
     double f14[] = {1.,         1.,          2.,
@@ -39,8 +40,7 @@ vector<double> Tlm(const double w)
                     362880.,    3628800.,    39916800.,
                     479001600., 6227020800., 87178291200.};
     double hhatk, x2, y, prod;
-    vector<double> MTlm(35);
-    int kmax = 35;
+    const int kmax = 35;
     
     for (int i=kmax; i--; )
     {
@@ -59,7 +59,5 @@ vector<double> Tlm(const double w)
         /** Put the three pieces together */
         MTlm[i] = sqrt( 1./(f14[L[i]]*f14[L[i]]) * y * prod );
     }
-
-    return MTlm;
 }
 

@@ -18,10 +18,15 @@
  */
 
 #include <math.h>
+
 #include "A_NumDenom.h"
 
-double* A_NumDenom(const double r, const double* a, const double nu)
-{
+void A_NumDenom(
+    double        frac[],            /** OUTPUT Dimension: 4;  Fraction ... */
+    const double  r,                 /** Radius ... */
+    const double  a[],               /** ... */
+    const double  nu                 /** Mass ratio */
+    ){
     
     /** Shorthands */
     const double u  = 1./r;
@@ -53,11 +58,8 @@ double* A_NumDenom(const double r, const double* a, const double nu)
     const double C12 = (-4.*a4 - 2.*a5 - a6 + a3*C10);
 
     /**  WIT */
-    static double frac[4];
     frac[0] = 1. + (C7*u)/C11;
     frac[1] = (-32. + nu*(12.*a3 + 4.*a4 + a5 - C2*u - 2.*C2*u2 - (C9)*u3 - (C8)*u4 - C5*u5))/C11;
     frac[2] = (-((4.*a5l + a6l)*nu*C4) + C4*C7 + a5l*nu*(-64 + nu*(12.*a4 + 4.*a5 + a6 + a3*(32 - a3*nu))))/(C4*C4);
     frac[3] = (nu*(-((2.*a5l + a6l)*C4) + a5l*nu*C2 + C4*C12 - 2.*(2.*a5l + a6l)*C4*u + 2.*a5l*nu*C2*u + 4.*C4*C12*u + a5l*nu*(C9)*u2 - 3.*(C9)*C4*u2 - C4*(4.*a6l + a5l*(8 + a3*nu))*u2 + a5l*nu*(C8)*u3 - 4.*C4*(C8)*u3 + C4*(a6l*C10 - a5l*(16 + a4*nu))*u3 + a5l*nu*C5*u4 - 5.*C4*C5*u4 + C4*(-2.*(4.*a3 + 2.*a4 + a5)*a5l*nu + a6l*(-16 + 4.*a3*nu + a4*nu))*u4))/(C11*C11);
-
-    return frac;
 }

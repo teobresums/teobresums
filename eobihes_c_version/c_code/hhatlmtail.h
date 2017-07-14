@@ -22,6 +22,6 @@
 
 #include <gsl/gsl_complex.h>
 
-gsl_complex* hhatlmtail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
+void hhatlmtail(gsl_complex tlm[], const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
 
 #endif /* _hhatlmtail_h */

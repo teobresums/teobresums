@@ -20,6 +20,6 @@
 #ifndef _s_D1_h
 #define _s_D1_h
 
-double* s_D1(double* f, double* x, const int Nmax);
+void s_D1(double df[], double f[], double x[], const int Nmax);
 
 #endif /* _s_D1_h */

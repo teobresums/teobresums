@@ -24,8 +24,11 @@
 #include "input_struc.h"
 #include "s_A5PNlog.h"
 
-double* s_A5PNlog(double r, void *params, bool nnlo_flag)
-{
+void s_A5PNlog(
+    double result[],             /** OUTPUT Dimension: 5*/
+    double r,
+    void *params,
+    bool nnlo_flag){
 
     /*
     %EOB_A5PNlog function EOB_A5PNlog(r,nu,a5,a6)
@@ -59,7 +62,7 @@ double* s_A5PNlog(double r, void *params, bool nnlo_flag)
     bool tidal_flag = (*(input *)params).tidal;
     double rLR      = (*(input *)params).rLR;
     double nu       = (*(input *)params).nu;
-    vector<double> data(5);
+    double data[5];
 
     // constants 
     double nu2 = nu*nu;
@@ -120,7 +123,6 @@ double* s_A5PNlog(double r, void *params, bool nnlo_flag)
     double prefactor = A/(Num*Den);
     double dA_u      = prefactor*(dNum*Den - dDen*Num);
 
-    //
     if (tidal_flag==true)
     {
 
@@ -135,8 +137,8 @@ double* s_A5PNlog(double r, void *params, bool nnlo_flag)
         double XB  =  1.-XA;
 			   
         //dimensionless Love numbers (apsidal constants)
-        vector<double> kAl(3);
-        vector<double> kBl(3);
+        double kAl[3];
+        double kBl[3];
 
         kAl[0] = (*(input *)params).kAl1;
         kAl[1] = (*(input *)params).kAl2;
@@ -250,7 +252,11 @@ double* s_A5PNlog(double r, void *params, bool nnlo_flag)
     double D   = 1./Dp;
     double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
 
-    static double result[5] = {A, dA, d2A, D, dD};
-    return result;
+    result[0] = A;
+    result[1] = dA;
+    result[2] = d2A;
+    result[3] = D;
+    result[4] = dD;
+
 }
 

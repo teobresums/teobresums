@@ -23,10 +23,16 @@
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <math.h>
+
 #include "hhatlmtail.h"
 
-gsl_complex* hhatlmtail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
-{
+void hhatlmtail(
+    gsl_complex tlm[],                  /** OUTPUT Dimension: 35*/
+    const double Omega,
+    const double Hreal,
+    const double bphys,
+    const int L[],
+    const int M[]){
 
 /** EOBhhatlmTail Computes the tail contribution to the resummed wave.
   *
@@ -51,7 +57,6 @@ gsl_complex* hhatlmtail(const double Omega, const double Hreal, const double bph
     double ratio_ang;
     double tlm_rad;
     double tlm_phase;
-    static gsl_complex tlm[kmax];
     
     for (int i=kmax; i--;)
     {
@@ -70,6 +75,6 @@ gsl_complex* hhatlmtail(const double Omega, const double Hreal, const double bph
             tlm[i].dat[0] = exp(tlm_rad);
             tlm[i].dat[1] = tlm_phase;
     }
-        return tlm;
+
 }
 

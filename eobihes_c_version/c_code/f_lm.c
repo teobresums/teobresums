@@ -19,11 +19,14 @@
 
 #include <gsl/gsl_math.h>
 #include <math.h>
+
 #include "Eulerlog.h"
 #include "f_lm.h"
 
-double* f_lm(const double x, const double nu)
-{
+void f_lm(
+    double flm[],                /** OUTPUT Dimension: 35; ... */
+    const double x,
+    const double nu){
 
     /**EOBflm Compute the resummed amplitudes in the general nu-dependent case.
      *
@@ -63,7 +66,6 @@ double* f_lm(const double x, const double nu)
         
     const int kmax = 35; /** Length of vector needed to store the 8 quadropoles, 35=8+7+6+5+4+3+2*/
     double rholm[kmax];
-    static double flm[kmax];
 
 
     /** l=2 ------------------------------------------------------------------
@@ -72,8 +74,8 @@ double* f_lm(const double x, const double nu)
     /** (2,2) */
     rholm[1] = 1. + (-1.0238095238095237 + 0.6547619047619048*nu)*x + (-1.94208238851096 - 1.5601379440665155*nu + 0.4625614134542706*nu2)*x2 + x3*(12.736034731834051 - 2.902228713904598*nu - 1.9301558466099282*nu2 + 0.2715020968103451*nu3 - 4.076190476190476*el2) + x4*(-2.4172313935587004 + 4.173242630385488*el2) + x5*(-30.14143102836864 + 7.916297736025627*el2);
 
-    flm[0] = gsl_pow_int(rholm[0], 2);
-    flm[1] = gsl_pow_int(rholm[1], 2);
+    flm[0] = rholm[0]*rholm[0];
+    flm[1] = rholm[1]*rholm[1];
     
         
     /** l=3 ------------------------------------------------------------------
@@ -84,9 +86,9 @@ double* f_lm(const double x, const double nu)
     /** (3,3) */
     rholm[4] = 1. + (-1.1666666666666667 + 0.6666666666666666*nu)*x + (-1.6967171717171716 - 1.8797979797979798*nu + 0.45151515151515154*nu2)*x2 + x3*(14.10891386831863 - 3.7142857142857144*el3) + x4*(-6.723375314944128 + 4.333333333333333*el3) + eps*x5*(-29.568699895427518 + 6.302092352092352*el3);
 
-    flm[2] = gsl_pow_int(rholm[2], 3);
-    flm[4] = gsl_pow_int(rholm[4], 3);
-    flm[3] = gsl_pow_int(rholm[3], 3);
+    flm[2] = rholm[2]*rholm[2]*rholm[2];
+    flm[3] = rholm[3]*rholm[3]*rholm[3];
+    flm[4] = rholm[4]*rholm[4]*rholm[4];
 
     /** l=4 ------------------------------------------------------------------
      *  (4,1) */
@@ -98,10 +100,10 @@ double* f_lm(const double x, const double nu)
     /** (4,4) */
     rholm[8] = 1. + (0.0007575757575757576*(1614. - 5870.*nu + 2625.*nu2)*x)/(-1. + 3.*nu) + (3.1534122443213353e-9*(-5.11573572e8 + 2.338945704e9*nu - 3.13857376e8*nu2 - 6.733146e9*nu3 + 1.252563795e9*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + x3*(15.108111214795123 - 3.627128427128427*el4) + eps*x4*(-8.857121657199649 + 4.434988849534304*el4);
 
-    flm[5] = gsl_pow_int(rholm[5], 4);
-    flm[6] = gsl_pow_int(rholm[6], 4);
-    flm[7] = gsl_pow_int(rholm[7], 4);
-    flm[8] = gsl_pow_int(rholm[8], 4);
+    flm[5] = rholm[5]*rholm[5]*rholm[5]*rholm[5];
+    flm[6] = rholm[6]*rholm[6]*rholm[5]*rholm[6];
+    flm[7] = rholm[7]*rholm[7]*rholm[5]*rholm[7];
+    flm[8] = rholm[8]*rholm[8]*rholm[5]*rholm[8];
 
     /** l=5 ------------------------------------------------------------------
      *  (5,1) */
@@ -115,11 +117,11 @@ double* f_lm(const double x, const double nu)
     /**  (5,5) */
     rholm[13] = 1. + (0.002564102564102564*(487. - 1298.*nu + 512.*nu2)*x)/(-1. + 2.*nu) - 1.5749727622804546*x2 + eps*(x3*(15.939827047208668 - 3.6037296037296036*el5) +      x4*(-10.272578060123237 + 4.500041838503377*el5));
 
-    flm[9]  = gsl_pow_int(rholm[9], 5);
-    flm[10] = gsl_pow_int(rholm[10], 5);
-    flm[11] = gsl_pow_int(rholm[11], 5);
-    flm[12] = gsl_pow_int(rholm[12], 5);
-    flm[13] = gsl_pow_int(rholm[13], 5);
+    flm[9]  = rholm[9]*rholm[9]*rholm[9]*rholm[9]*rholm[9];
+    flm[10] = rholm[10]*rholm[10]*rholm[10]*rholm[10]*rholm[10];
+    flm[11] = rholm[11]*rholm[11]*rholm[11]*rholm[11]*rholm[11];
+    flm[12] = rholm[12]*rholm[12]*rholm[12]*rholm[12]*rholm[12];
+    flm[13] = rholm[13]*rholm[13]*rholm[13]*rholm[13]*rholm[13];
 
 
     /** l=6 ------------------------------------------------------------------
@@ -136,12 +138,12 @@ double* f_lm(const double x, const double nu)
     /** (6,6) */
     rholm[19] = 1. + (0.011904761904761904*(-106. + 602.*nu - 861.*nu2 + 273.*nu3)*x)/(1. - 5.*nu + 5.*nu2) + eps*(- 1.5543111183867486*x2 + x3*(16.645950799433503 - 3.6003996003996006*el6));
 
-    flm[14] = gsl_pow_int(rholm[14], 6);
-    flm[15] = gsl_pow_int(rholm[15], 6);
-    flm[16] = gsl_pow_int(rholm[16], 6);
-    flm[17] = gsl_pow_int(rholm[17], 6);
-    flm[18] = gsl_pow_int(rholm[18], 6);
-    flm[19] = gsl_pow_int(rholm[19], 6);
+    flm[14] = rholm[14]*rholm[14]*rholm[14]*rholm[14]*rholm[14]*rholm[14];
+    flm[15] = rholm[15]*rholm[15]*rholm[15]*rholm[15]*rholm[15]*rholm[15];
+    flm[16] = rholm[16]*rholm[16]*rholm[16]*rholm[16]*rholm[16]*rholm[16];
+    flm[17] = rholm[17]*rholm[17]*rholm[17]*rholm[17]*rholm[17]*rholm[17];
+    flm[18] = rholm[18]*rholm[18]*rholm[18]*rholm[18]*rholm[18]*rholm[18];
+    flm[19] = rholm[19]*rholm[19]*rholm[19]*rholm[19]*rholm[19]*rholm[19];
 
     /** l=7 ------------------------------------------------------------------
      *  (7,1) */
@@ -159,13 +161,13 @@ double* f_lm(const double x, const double nu)
     /** (7,7) */
     rholm[26] = 1. + (0.0014005602240896359*(-906. + 4246.*nu - 4963.*nu2 + 1380.*nu3)*x)/(1. - 4.*nu + 3.*nu2) + eps*(- 1.5418467934923434*x2 + x3*(17.255875091408523 - 3.6042232277526396*el7));
     
-    flm[20] = gsl_pow_int(rholm[20], 7);
-    flm[21] = gsl_pow_int(rholm[21], 7);
-    flm[22] = gsl_pow_int(rholm[22], 7);
-    flm[23] = gsl_pow_int(rholm[23], 7);
-    flm[24] = gsl_pow_int(rholm[24], 7);
-    flm[25] = gsl_pow_int(rholm[25], 7);
-    flm[26] = gsl_pow_int(rholm[26], 7);
+    flm[20] = rholm[20]*rholm[20]*rholm[20]*rholm[20]*rholm[20]*rholm[20]*rholm[20];
+    flm[21] = rholm[21]*rholm[21]*rholm[21]*rholm[21]*rholm[21]*rholm[21]*rholm[21];
+    flm[22] = rholm[22]*rholm[22]*rholm[22]*rholm[22]*rholm[22]*rholm[22]*rholm[22];
+    flm[23] = rholm[23]*rholm[23]*rholm[23]*rholm[23]*rholm[23]*rholm[23]*rholm[23];
+    flm[24] = rholm[24]*rholm[24]*rholm[24]*rholm[24]*rholm[24]*rholm[24]*rholm[24];
+    flm[25] = rholm[25]*rholm[25]*rholm[25]*rholm[25]*rholm[25]*rholm[25]*rholm[25];
+    flm[26] = rholm[26]*rholm[26]*rholm[26]*rholm[26]*rholm[26]*rholm[26]*rholm[26];
 
     /** l=8 ------------------------------------------------------------------
      *  (8,1) */
@@ -185,16 +187,15 @@ double* f_lm(const double x, const double nu)
     /** (8,8) */
     rholm[34] = 1. + (0.0003654970760233918*(3482. - 26778.*nu + 64659.*nu2 - 53445.*nu3 + 12243.*nu4)*x)/(-1. + 7.*nu - 14.*nu2 + 7.*nu3)- 1.5337092502821381*eps*x2;
 
-    flm[27] = gsl_pow_int(rholm[27], 8);
-    flm[28] = gsl_pow_int(rholm[28], 8);
-    flm[29] = gsl_pow_int(rholm[29], 8);
-    flm[30] = gsl_pow_int(rholm[30], 8);
-    flm[31] = gsl_pow_int(rholm[31], 8);
-    flm[32] = gsl_pow_int(rholm[32], 8);
-    flm[33] = gsl_pow_int(rholm[33], 8);
-    flm[34] = gsl_pow_int(rholm[34], 8);
+    flm[27] = rholm[27]*rholm[27]*rholm[27]*rholm[27]*rholm[27]*rholm[27]*rholm[27]*rholm[27];
+    flm[28] = rholm[28]*rholm[28]*rholm[28]*rholm[28]*rholm[28]*rholm[28]*rholm[28]*rholm[28];
+    flm[29] = rholm[29]*rholm[29]*rholm[29]*rholm[29]*rholm[29]*rholm[29]*rholm[29]*rholm[29];
+    flm[30] = rholm[30]*rholm[30]*rholm[30]*rholm[30]*rholm[30]*rholm[30]*rholm[30]*rholm[30];
+    flm[31] = rholm[31]*rholm[31]*rholm[31]*rholm[31]*rholm[31]*rholm[31]*rholm[31]*rholm[31];
+    flm[32] = rholm[32]*rholm[32]*rholm[32]*rholm[32]*rholm[32]*rholm[32]*rholm[32]*rholm[32];
+    flm[33] = rholm[33]*rholm[33]*rholm[33]*rholm[33]*rholm[33]*rholm[33]*rholm[33]*rholm[33];
+    flm[34] = rholm[34]*rholm[34]*rholm[34]*rholm[34]*rholm[34]*rholm[34]*rholm[34]*rholm[34];
     
-    return flm;
 }
 
 

@@ -22,6 +22,6 @@
 
 #include <gsl/gsl_complex.h>
 
-gsl_complex* hlmNQC(double nu, double r, double prstar, double  Omega, double ddotr);
+void hlmNQC(gsl_complex psilmnqc[], double nu, double r, double prstar, double  Omega, double ddotr);
 
 #endif /* _hlm_NQC_h */

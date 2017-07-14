@@ -26,7 +26,13 @@
 #include "NQC.h"
 #include "hlmNQC.h"
 
-gsl_complex* hlmNQC(double nu, double r, double prstar, double  Omega, double ddotr)
+void hlmNQC(
+    gsl_complex psilmnqc[],             /** OUTPUT Dimension: 35*/
+    double nu,
+    double r,
+    double prstar,
+    double Omega,
+    double ddotr)
 {
 
     /** This file computes the NQC corrections to the RWZ multipolar waveform. */
@@ -54,7 +60,6 @@ gsl_complex* hlmNQC(double nu, double r, double prstar, double  Omega, double dd
     const double xnu2 = xnu*xnu;
 
     /** NQC multipolar correction factor */
-    static gsl_complex psilmnqc[kmax];
 
     for (int i=kmax;i--;)
     {
@@ -122,7 +127,6 @@ gsl_complex* hlmNQC(double nu, double r, double prstar, double  Omega, double dd
         psilmnqc[i].dat[0] = 1. + a1*n[0] + a2*n[1] + a3*n[2];
         psilmnqc[i].dat[1] = 0. + b1*n[3] + b2*n[4] + b3*n[5];
     }
-        
-    return psilmnqc;
+    
 }
 

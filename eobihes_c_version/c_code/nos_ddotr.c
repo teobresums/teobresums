@@ -57,7 +57,8 @@ double nos_ddotr(double t, double r, double pphi, double prstar, void *params)
     const double u2 = u*u;
     const double u3 = u2*u;
     
-    const double* metric = Metric(r, params, false);
+    const double metric[5];
+    Metric(metric, r, params, false);
     const double  A      = metric[0];
     const double  dA     = metric[1];
     const double  B      = metric[3];

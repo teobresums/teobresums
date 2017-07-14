@@ -20,6 +20,6 @@
 #ifndef _FlmNewt_h
 #define _FlmNewt_h
 
-double* FlmNewt(const double x, void *params);
+void FlmNewt(double Nlm[], const double x, void *params);
 
 #endif /* _FlmNewt_h */

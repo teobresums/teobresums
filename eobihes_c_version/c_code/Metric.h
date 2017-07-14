@@ -22,8 +22,8 @@
 
 #include <stdbool.h>
 
-double* acoeffs(const double r, const double nu);
-double* Metric(const double r, void *params, bool nnlo_flag);
-double* A5pnP15_dd(const double r, void *params);
+void acoeffs(double a[], const double r, const double nu);
+void Metric(double data[], const double r, void *params, bool nnlo_flag);
+void A5pnP15_dd(double A_dd[], const double r, void *params);
 
 #endif /* _Metric_h */

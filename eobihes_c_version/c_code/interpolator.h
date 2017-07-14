@@ -21,9 +21,7 @@
 #define _interpolator_h
 
 #include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
 
-
-double interpolate(double dt, gsl_complex* grid);
+double interpolate(double dt, gsl_complex grid[]);
 
 #endif /* _interpolator_h */

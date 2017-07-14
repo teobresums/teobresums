@@ -17,19 +17,21 @@
  *  MA  02111-1307  USA
  */
 
-#include <math.h>
-#include <stdio.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
-#include "Metric.h"
-#include "input_struc.h"
+#include <math.h>
+#include <stdio.h>
+
 #include "AdiabLR.h"
+#include "input_struc.h"
+#include "Metric.h"
 
 double fLR(double r, void *params)
 {
 
-    double *metric = Metric(r, params, true);
+    double metric[5];
+    Metric(metric, r, params, true);
     
     double A  = metric[0];
     double dA = metric[2]; /**derivative w.r.t. u*/

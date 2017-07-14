@@ -17,30 +17,24 @@
  *  MA  02111-1307  USA
  */
 
-#include <stdbool.h>
-#include <ios>
-#include "cmath"
-#include <math.h>
-#include <limits>
-#include <vector>
 #include <fstream>
-#include <stdio.h>
-
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <ios>
+#include <limits>
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 
-#include "hlm.h"
 #include "flux.h"
-#include "Q_omega.h"
+#include "hlm.h"
 #include "interpolate_wf.h"
+#include "Q_omega.h"
 
-typedef std::numeric_limits< double > dbl;
-
-using namespace::std;
 
 //int interpolate_wf(double dt,vector<double> t_vec,vector<double> hlm_rad, vector<double> hlm_phase,bool waveform_flag,std::ofstream& wave,double Mbh)
 int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag,/*std::ofstream&*/ vector<string> wavenames,double Mbh)

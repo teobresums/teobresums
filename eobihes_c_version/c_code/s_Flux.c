@@ -78,14 +78,18 @@ double s_Flux(double x, double Omega, double r_omega, double E, double Heff, dou
     double Modhhatlm;
     double sqrt_one_4nu = sqrt(1.-4.*nu);
     
-    double* flm     = s_flm(x,params);
-    double* FNewtlm = FlmNewt(x,params);
+    double flm[35];
+    s_flm(flm, x, params);
+    double FNewtlm[35];
+    FlmNewt(FNewtlm, x, params);
     double FNewt22  = FNewtlm[1];
 
-    double* MTlm     = Tlm(E*Omega);
-    double* hlmTidal = hlm_Tidal(x,params);
+    double MTlm[35];
+    Tlm(MTlm, E*Omega);
+    double hlmTidal[35];
+    hlm_Tidal(hlmTidal, x, params);
 
-    double SFlm = 0.;
+    double SFlm = 0.0;
     for (int k=35; k--;)
     {
         // Compute modulus of hhat_lm

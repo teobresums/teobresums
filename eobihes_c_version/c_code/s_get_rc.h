@@ -20,6 +20,6 @@
 #ifndef _s_get_rc_h
 #define _s_get_rc_h
 
-double* s_get_rc(double r, void *params);
+void s_get_rc(double result[], double r, void *params);
 
 #endif /* _s_get_rc_h */

@@ -23,9 +23,9 @@
 #include "input_struc.h"
 #include "s_get_rc.h"
 
-
-double* s_get_rc(double r, void *params)
-{
+void s_get_rc(
+    double result[],             /** OUTPUT Dimension: 3*/
+    double r, void *params){
     
     
     double nu         = (*(input *)params).nu;
@@ -39,10 +39,10 @@ double* s_get_rc(double r, void *params)
     
     double rc, drc_dr, d2rc_dr2;
     
-    double u   = 1./r;
-    double u2  = u*u;
-    double u3  = u*u2;
-    double r2  = r*r;
+    double u  = 1./r;
+    double u2 = u*u;
+    double u3 = u*u2;
+    double r2 = r*r;
     
     
     if (tidal_flag==true)
@@ -92,8 +92,8 @@ double* s_get_rc(double r, void *params)
         d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
     }
     
-    static double result[]= {rc, drc_dr, d2rc_dr2};
-    
-    return result;
-}
+    result[0] = rc;
+    result[1] = drc_dr;
+    result[2] = d2rc_dr2;
 
+}

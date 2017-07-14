@@ -20,6 +20,6 @@
 #ifndef _FDdrvt_h
 #define _FDdrvt_h
 
-double* FDdrvt(const double* f, const double* t, int varargin, const int grid_length);
+void FDdrvt(double* d1f, const double* f, const double* t, int varargin, const int grid_length);
 
 #endif /* _FDdrvt_h */

@@ -20,7 +20,7 @@
 #ifndef _hlm_Tidal_h
 #define _hlm_Tidal_h
 
-double* hlm_Tidal(double x, void *params);
+void hlm_Tidal(double hlmTidal[], double x, void *params);
 
 #endif /* _hlm_Tidal_h */
 

@@ -18,6 +18,7 @@
  */
 
 #include <math.h>
+
 #include "HealyBBHFitRemnant.h"
 
 double HealyBBHFitRemnant(double chi1, double chi2, double q)

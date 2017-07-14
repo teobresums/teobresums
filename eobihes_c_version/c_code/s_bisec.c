@@ -53,7 +53,8 @@ double DHeff0(double x, void *DHeff_params)
     double X2     = p->X2;
     double c3     = p->c3;
     
-    double* ggm0   = s_GS(rorb, rc, drc_dr, ak2, 0., x, nu, chi1, chi2, X1, X2, c3);
+    double ggm0[14];
+    s_GS(ggm0, rorb, rc, drc_dr, ak2, 0., x, nu, chi1, chi2, X1, X2, c3);
     double dGS_dr  = ggm0[6];
     double dGSs_dr = ggm0[7];
 
