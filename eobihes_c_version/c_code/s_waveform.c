@@ -43,7 +43,16 @@
 
 typedef std::numeric_limits< double > dbl;
 
-gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr){
+void s_waveform(
+        gsl_complex waveform[],             /** OUTPUT Dimension: 35*/
+        double t,
+        const double y[],
+        void *params,
+        double &Omg,
+        double &Omg_orb,
+        double &A,
+        double &ddotr
+    ){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
@@ -97,7 +106,7 @@ gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, d
     //const double j = pphi;
     if (spin_flag==false)
     {
-        metric = Metric(r, params,false);
+        Metric(metric, r, params, false);
         A      = metric[0];
         dA     = metric[1];
         B      = metric[3];
@@ -132,7 +141,7 @@ gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, d
         double sqrW = sqrt( A*(1. + pphi2*u2) );
         double psi  = 2.*(1.0 + 2.0*nu*(sqrW - 1.0))/(r2*dA);
         
-        r_omega      = r*pow(psi,1.0/3.0);
+        r_omega      = r*cbrt(psi);
         double v_phi = r_omega*Omega;
         jhat         = pphi/(r_omega*v_phi);
         
@@ -157,23 +166,23 @@ gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, d
         double z3 = 2.*nu*(4.-3.*nu);
 
         double /*A,*/ B, dA;
-        double metric[5];
-        if (tidal_flag==true) {
-            metric = Metric(r, params,false);
+        if (tidal_flag==true)
+        {
+            Metric(metric, r, params, false);
             A  = metric[0];
             B  = metric[3];
             dA = metric[1];
         }
         else
         {
-	          metric = s_Metric(r, params,false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
+	        s_Metric(metric, r, params, false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
             A      = metric[0];
             B      = metric[1];
             dA     = metric[2];
         }
 
         double rc_vec[3];
-        rc_vec        = s_get_rc(r,params);//nu,X1,X2,chi1,chi2); //[rc, drc, d2rc]
+        s_get_rc(rc_vec, r, params);//nu,X1,X2,chi1,chi2); //[rc, drc, d2rc]
         double rc     = rc_vec[0];
         double drc_dr = rc_vec[1];
         double uc     = 1./rc;
@@ -182,8 +191,9 @@ gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, d
         
         double Heff_orb = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
         
-        double ggm[14] = s_GS(r,rc,drc_dr,aK2,prstar,pphi,nu,chi1,chi2,X1,X2,c3);
-        
+        double ggm[14];
+        s_GS(ggm, r, rc, drc_dr, aK2, prstar, pphi, nu, chi1, chi2, X1, X2, c3);
+
         double GS              = ggm[2];
         double GSs             = ggm[3];
         double dGS_dprstar     = ggm[4];
@@ -246,7 +256,8 @@ gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, d
         // Compute same quantities with prstar=0. This to obtain psi.
         // Procedure consistent with the nonspinning case
         //==========================================================
-        double ggm0[14] = s_GS(r,rc,drc_dr,aK2,0.,pphi,nu,chi1,chi2,X1,X2,c3);
+        double ggm0[14];
+        s_GS(ggm0, r, rc, drc_dr, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3);
         
         double GS_0      = ggm0[2];
         double GSs_0     = ggm0[3];
@@ -262,7 +273,11 @@ gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, d
         double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
         double duc_dr     = -uc2*drc_dr;
         double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
-        r_omega           = pow( (pow( gsl_pow_int(rc,3)*psic,-1./2.)+Gtilde )*one_H0 ,-2./3.);
+        
+        // TO BE CHECKED
+        r_omega           = cbrt(1.0/(((sqrt(1.0/((rc*rc*rc)*psic))+Gtilde)*one_H0)*((sqrt(1.0/((rc*rc*rc)*psic))+Gtilde)*one_H0)));
+        r_omega_old       = pow( (pow( gsl_pow_int(rc,3)*psic,-1./2.)+Gtilde )*one_H0 ,-2./3.);
+        printf("Check that I didn't mess it up:\nCurrent result: %f\nPrevious result:", r_omega, r_omega_old)
         
         double v_phi = r_omega*Omega;
         
@@ -271,8 +286,7 @@ gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, d
         H *= 1./nu; /** Note the 1/nu */
     }
     
-    static gsl_complex* waveform = hlm(t, phi, r, pphi, prstar, Omega, ddotr, H, Heff, jhat, r_omega, params);
+    hlm(waveform, t, phi, r, pphi, prstar, Omega, ddotr, H, Heff, jhat, r_omega, params);
     
-    return waveform;
 }
 

@@ -26,6 +26,6 @@
 
 typedef std::numeric_limits< double > dbl;
 
-gsl_complex* s_waveform(double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr);
+void s_waveform(gsl_complex waveform[], double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr);
 
 #endif /* _s_waveform_h */

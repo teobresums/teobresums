@@ -101,12 +101,12 @@ void s_A5PNlog(
     double D5 = (nu*(-24*a6tot*(1536 + nu*(-3776 + 123*pi2)) + nu*(-2304*a5tot2 + 96*a5tot*(-3392 + 123*pi2) - (-3776 + 123*pi2)*(-3008 - 96*nu + 123*pi2))))/(96.*(-768 + nu*(3584 + 24*a5tot - 123*pi2)));
 
     // First derivatives
-
-    double dN1 = (160*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),2)*u);
-    double dD1 = (160*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),2)*u);
-    double dD2 = (320*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),2)*u);
-    double dD3 = (640*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),2)*u);
-    double dD4 = (-320*(-4 + nu)*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),2)*u);
+    double dN1_den = (7.*((1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)))*(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2))))*u);
+    double dN1 = (160*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/den_pow;
+    double dD1 = (160*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/den_pow;
+    double dD2 = (320*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/den_pow;
+    double dD3 = (640*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/den_pow;
+    double dD4 = (-320*(-4 + nu)*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/den_pow;
     double dD5 = (nu*(-8400*nu*(-24*(a6 - (4*logu*(1751 + 756*nu))/105.)*(1536 + nu*(-3776 + 123*pi2)) + nu*(-2304*gsl_pow_int(a5 + (64*logu)/5.,2) + 96*(a5 + (64*logu)/5.)*(-3392 + 123*pi2) - (-3776 + 123*pi2)*(-32*(94 + 3*nu) + 123*pi2))) - (1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)))*(4128768*logu*nu + 5*(-2689536 + nu*(11170624 + 64512*a5 - 380685*pi2) - 756*nu*(1536 + nu*(-3776 + 123*pi2))))))/(2625.*gsl_pow_int(-768 + nu*(3584 + 24*(a5 + (64*logu)/5.) - 123*pi2),2)*u);
 
     // Numerator and denominato of the Pade
@@ -153,13 +153,15 @@ void s_A5PNlog(
         double CB = (*(input *)params).CB;
         
         //Computing the tidal coupling constants
-        double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
-        double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
-        double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
+        double XA_CA2 = (XA/CA)*XA/CA;
+        double kapA2 = 2. * kAl[0] * (XA_CA2*XA_CA2+XA/CA) * q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA3 = 2. * kAl[1] * (XA_CA2*XA_CA2*XA_CA2+XA/CA) * q;
+        double kapA4 = 2. * kAl[2] * (XA_CA2*XA_CA2*XA_CA2*XA_CA2+XA/CA) * q;
         
-        double kapB2 = 2. * kBl[0] * pow(XB/CB, 2.*2 +1.) * q;
-        double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
-        double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
+        double XB_CB2 = (XB/CB)*XB/CB;
+        double kapB2 = 2. * kBl[0] * (XB_CB2*XB_CB2+XB/CB) * q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapB3 = 2. * kBl[1] * (XB_CB2*XB_CB2*XB_CB2+XB/CB) * q;
+        double kapB4 = 2. * kBl[2] * (XB_CB2*XB_CB2*XB_CB2*XB_CB2+XB/CB) * q;
         
         double kapT2 = kapA2 + kapB2;
         double kapT3 = kapA3 + kapB3;

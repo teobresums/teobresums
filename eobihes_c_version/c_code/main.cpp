@@ -17,41 +17,39 @@
  *  MA  02111-1307  USA
  */
 
-#include <stdbool.h>
-#include <iostream>
-#include <list>
 #include <fstream>
-#include <stdio.h>
-#include <time.h>
-#include <cmath>
-#include <string.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
-#include <tuple>
-#include <vector>
+#include <iostream>
+#include <list>
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <time.h>
+#include <tuple>
 
-#include "initial.h"
-#include "s_initial.h"
-#include "RHS.h"
-#include "s_RHS.h"
-#include "s_waveform.h"
-#include "QNMHybridFitCab.h"
-#include "HealyBBHFitRemnant.h"
-#include "ringdown.h"
-#include "input_struc.h"
-#include "multipole_index.h"
-#include "interpolate_wf.h"
 #include "AdiabLR.h"
-#include "read_config.h"
+#include "HealyBBHFitRemnant.h"
 #include "file_names.h"
 #include "find_a1a2a3.h"
-//#include "s_Hamiltonian.h"
+#include "initial.h"
+#include "input_struc.h"
 #include "interp_grid.h"
+#include "interpolate_wf.h"
+#include "multipole_index.h"
+#include "QNMHybridFitCab.h"
+#include "read_config.h"
+#include "ringdown.h"
+#include "RHS.h"
+#include "s_initial.h"
+#include "s_RHS.h"
+#include "s_waveform.h"
 
+//#include "s_Hamiltonian.h"
 
-using namespace::std;
 
 int main (int argc,char* argv[])
 {

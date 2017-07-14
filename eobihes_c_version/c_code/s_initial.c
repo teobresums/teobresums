@@ -31,8 +31,9 @@
 #include "s_Metric.h"
 
 void s_initial(
-    double y_init[],             /** OUTPUT Dimension: 7*/
-    input *params){
+        double y_init[],             /** OUTPUT Dimension: 7*/
+        input *params
+    ){
 
 /*
 % EOB_ModinSpin
@@ -74,7 +75,7 @@ void s_initial(
 //-----------------------------------------------------------------
     
     
-    const int N = 10;
+    const int N     = 10;
     const double dr = 1.e-8;
     double r[2*N];
     
@@ -157,8 +158,9 @@ void s_initial(
     }
 
     double dpph_dr[12];
-     s_D1(pph,r,12-1); // derivative is computed on a grid with 12 points
+    s_D1(dpph_dr, pph,r, 12-1); // derivative is computed on a grid with 12 points
     
+    double ggm0[14];
     for (int i=2*N; i--;)
     {
         
@@ -175,8 +177,7 @@ void s_initial(
         
         // Compute gyro-gravitomagnetic coupling functions
         
-        // IS THIS CORRECT?????
-        double ggm0[14]               = s_GS(r[i], rc[i], drc[i], aK2, 0., pph[i], nu, chi1, chi2, X1, X2, c3);
+        s_GS(ggm0, r[i], rc[i], drc[i], aK2, 0., pph[i], nu, chi1, chi2, X1, X2, c3);
         double GS_0                   = ggm0[2];
         double GSs_0                  = ggm0[3];
         double dGS_dr_0               = ggm0[6];

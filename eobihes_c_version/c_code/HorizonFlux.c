@@ -79,8 +79,8 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
     const double Heff2 = Heff*Heff;
     const double jhat2 = jhat*jhat;
 
-    FlmH[k22] = FlmHLO[k22] * Heff2 * gsl_pow_int(rhoHlm[k22],4);
-    FlmH[k21] = FlmHLO[k21] * jhat2 * gsl_pow_int(rhoHlm[k21],4);
+    FlmH[k22] = FlmHLO[k22] * Heff2 *rhoHlm[k22]*rhoHlm[k22]*rhoHlm[k22]*rhoHlm[k22];
+    FlmH[k21] = FlmHLO[k21] * jhat2 *rhoHlm[k21]*rhoHlm[k21]*rhoHlm[k21]*rhoHlm[k21];
 
     /** Sum over multipoles and normalize to the 22 Newtonian multipole */
     const double hatFH = (FlmH[0]+FlmH[1])/FNewt22;

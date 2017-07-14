@@ -42,7 +42,7 @@ void NQC(
             
             //% NQC corrections to the phase
             n[3] = prstar/(r*Omega);
-            n[4] = n[3]*pow(Omega, 2./3.);
+            n[4] = n[3]*cbrt(Omega*Omega);
             n[5] = n[4]*prstar*prstar;
             break;
             // (2,2)
@@ -69,7 +69,7 @@ void NQC(
             
             //% NQC corrections to the phase
             n[3] = prstar/(r*Omega);
-            n[4] = n[3]*pow(Omega, 2./3.);
+            n[4] = n[3]*cbrt(Omega*Omega);
             n[5] = n[4]*prstar*prstar;
             break;
         default:

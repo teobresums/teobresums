@@ -36,7 +36,7 @@ void hlm_Tidal(
     //
 
     const int kmax = 35;
-    double x5      = gsl_pow_int(x,5);
+    double x5      = x*x*x*x*x;
 
     double kAl[3];
     double kBl[3];
@@ -59,8 +59,8 @@ void hlm_Tidal(
     double XA = (*(input *)params).X1;
     double XB = (*(input *)params).X2;
     
-    double khatA_2 = kAl[0] * XB/XA *gsl_pow_int(XA/CA,5);
-    double khatB_2 = kBl[0] * XA/XB *gsl_pow_int(XB/CB,5);
+    double khatA_2 = kAl[0] * XB/XA *(XA/CA)*(XA/CA)*(XA/CA)*(XA/CA)*(XA/CA);
+    double khatB_2 = kBl[0] * XA/XB *(XB/CB)*(XB/CB)*(XB/CB)*(XB/CB)*(XB/CB);
     
     for (int i=kmax; i--; )
     {

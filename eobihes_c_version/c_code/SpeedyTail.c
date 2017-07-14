@@ -27,8 +27,15 @@
 #include "SpeedyTail.h"
 #include "Tlm.h"
 
-gsl_complex* speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
-{
+void speedyTail(
+        gsl_complex tlm[],             /** OUTPUT Dimension: 35*/
+        const double Omega,
+        const double Hreal,
+        const double bphys,
+        const int L[],
+        const int M[]
+    ){
+    
     const int kmax = 35;
     
     double ratio_rad;
@@ -43,7 +50,6 @@ gsl_complex* speedyTail(const double Omega, const double Hreal, const double bph
     double x5;
     
     double num_ang[kmax];
-    static gsl_complex tlm[kmax];
 
     /** Fit coefficients*/
     /*
@@ -90,7 +96,8 @@ gsl_complex* speedyTail(const double Omega, const double Hreal, const double bph
 
 
      
-    const double* Tlm_real = Tlm(Omega*Hreal);
+    double Tlm_real[35];
+    Tlm(Tlm_real, Omega*Hreal);
     
     /** Pre-computed psi */
     double psi[] = {0.9227843350984671394, 0.9227843350984671394,
@@ -123,6 +130,5 @@ gsl_complex* speedyTail(const double Omega, const double Hreal, const double bph
          tlm[i].dat[1] = tlm_ang;
      }
     
-    return tlm;
 }
 

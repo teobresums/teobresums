@@ -22,6 +22,6 @@
 
 #include "input_struc.h"
 
-double* s_initial(input *params);
+void s_initial(double y_init[], input *params);
 
 #endif /* _s_initial_h */
