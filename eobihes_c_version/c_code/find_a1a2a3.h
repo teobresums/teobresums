@@ -21,10 +21,7 @@
 #define _find_a1a2a3_h
 
 #include <gsl/gsl_complex.h>
-#include <limits>
 
-typedef std::numeric_limits< double > dbl;
-
-gsl_complex** find_a1a2a3(double* T, const int size_T, double* r, double* w, double* pph, double* pr_star, double** hlm_phase, double* Omg_orb, double** A, double* ddotr, void *params);
+void find_a1a2a3(gsl_complex ,double* T, const int size_T, double* r, double* w, double* pph, double* pr_star, double** hlm_phase, double* Omg_orb, double** A, double* ddotr, void *params);
 
 #endif /* _find_a1a2a3_h */

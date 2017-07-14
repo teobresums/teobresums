@@ -20,10 +20,6 @@
 #ifndef _nos_ddotr_h
 #define _nos_ddotr_h
 
-#include <limits>
-
-typedef std::numeric_limits< double > dbl;
-
 double nos_ddotr(double t, double r, double pphi, double prstar, void *params);
 
 #endif /* _nos_ddotr_h */

@@ -24,7 +24,6 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <ios>
-#include <limits>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -36,7 +35,6 @@
 #include "multipole_index.h"
 #include "nos_ddotr.h"
 
-typedef std::numeric_limits< double > dbl;
 
 double nos_ddotr(double t, double r, double pphi, double prstar, void *params)
 {

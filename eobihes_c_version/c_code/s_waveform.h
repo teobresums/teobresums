@@ -20,11 +20,7 @@
 #ifndef _s_waveform_h
 #define _s_waveform_h
 
-#include <limits>
-
 #include <gsl/gsl_complex.h>
-
-typedef std::numeric_limits< double > dbl;
 
 void s_waveform(gsl_complex waveform[], double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr);
 

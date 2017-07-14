@@ -24,7 +24,6 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <ios>
-#include <limits>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -36,7 +35,6 @@
 #include "multipole_index.h"
 #include "RHS.h"
 
-typedef std::numeric_limits< double > dbl;
 
 int rhs(double t, const double y[], double f[], void *params)
 {

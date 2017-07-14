@@ -67,8 +67,21 @@ double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, 
     return c3;
 }
 
-double* s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO)
-{
+void s_GS(
+        double result[],             /** OUTPUT Dimension: 14*/
+        double r,
+        double rc,
+        double drc_dr,
+        double aK2,
+        double prstar,
+        double pph,
+        double nu,
+        double chi1,
+        double chi2,
+        double X1,
+        double X2,
+        double cN3LO
+    ){
 
     /*
     % EOB_GetGSs(r,aK2,prstar,nu). This function computes the
@@ -96,20 +109,20 @@ double* s_GS(double r, double rc, double drc_dr, double aK2, double prstar, doub
     double u   = 1./r;
     double u2  = u*u;
 
-    double uc      = 1./rc;
-    double uc2     = uc*uc;
-    double uc3     = uc2*uc;
-    double uc4     = uc3*uc;
-    double prstar2 = prstar*prstar;
-    double prstar4 = prstar2*prstar2;
+    double uc            = 1./rc;
+    double uc2           = uc*uc;
+    double uc3           = uc2*uc;
+    double uc4           = uc3*uc;
+    double prstar2       = prstar*prstar;
+    double prstar4       = prstar2*prstar2;
 
-    double GS0       = 2.*u*uc2;
-    double dGS0_duc  = 2.*u2/drc_dr + 4.*u*uc;
+    double GS0           = 2.*u*uc2;
+    double dGS0_duc      = 2.*u2/drc_dr + 4.*u*uc;
 
-    double GSs0          =  3./2.*uc3;
-    double dGSs0_duc     =  9./2.*uc2;
-    double dGSs0_dprstar =  0.0;
-    double dGSs0_dpph    =  0.0;
+    double GSs0          = 3./2.*uc3;
+    double dGSs0_duc     = 9./2.*uc2;
+    double dGSs0_dprstar = 0.0;
+    double dGSs0_dpph    = 0.0;
 
     // coefficients of hat{GS}
     double c10 =  5./16.*nu;
@@ -173,7 +186,20 @@ double* s_GS(double r, double rc, double drc_dr, double aK2, double prstar, doub
     double d2GS_dprstar20  =  GS0*(-2.*hGS*hGS *( c02 +  c12*uc +  2.*c04*prstar2));
     double d2GSs_dprstar20 =  GSs0*(-2.*hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2));
 
-    static double result[] = {hGS,hGSs,GS,GSs,dGS_dprstar,dGSs_dprstar,dGS_dr,dGSs_dr,dGS_dpph,dGSs_dpph,dGS_dprstarbyprstar,dGSs_dprstarbyprstar,d2GS_dprstar20,d2GSs_dprstar20};
-    return result;
+    result[0]  = hGS;
+    result[1]  = hGSs;
+    result[2]  = GS;
+    result[3]  = GSs;
+    result[4]  = dGS_dprstar;
+    result[5]  = dGSs_dprstar;
+    result[6]  = dGS_dr;
+    result[7]  = dGSs_dr;
+    result[8]  = dGS_dpph;
+    result[9]  = dGSs_dpph;
+    result[10] = dGS_dprstarbyprstar;
+    result[11] = dGSs_dprstarbyprstar;
+    result[12] = d2GS_dprstar20;
+    result[13] = d2GSs_dprstar20;
+    
 }
 

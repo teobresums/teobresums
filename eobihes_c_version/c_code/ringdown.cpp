@@ -21,32 +21,32 @@
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include "cmath"
+#include <math.h>
+
 #include "FDdrvt_omega.h"
-#include "ringdown.h"
-#include <vector>
 #include "interpolator.h"
 #include "QNMHybridFitCab.h"
+#include "ringdown.h"
 #include "ringdown_match.h"
-using namespace::std;
 
 //int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_vec,vector<double> &Omega_vec,vector<double> &hlm_rad,vector<double> &hlm_phase){
 
 int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
     
-    //EOBhlm Compute the multipolar resummed waveform.
-    //
-    //   [hlm,phi,omglm,domglm,d2omglm, psilm,Alm,dpsilm] = ...
-    //   EOBhlm(nu,t,phi,r,pph,prstar, Omega,E,Heff, EOBopt, EOBmet)
-    //   return (complex) multipolar wave, phase, frequency, and derivatives,
-    //   and the RWZ normalized (complex) wave, its amplitude and (complex)
-    //   derivative.
-    //
-    //   WAVE = EOBhlm( .... ) return a structure with the wave
-    //
-    
-    //NOTE: before the Omega_vec had a Mbh multiplied onto it!!!!!!!!!!!!!!!!!!!!!!
-    
+    /*  =====================================================================
+     	 EOBhlm Compute the multipolar resummed waveform.
+      
+        [hlm,phi,omglm,domglm,d2omglm, psilm,Alm,dpsilm] = ...
+        EOBhlm(nu,t,phi,r,pph,prstar, Omega,E,Heff, EOBopt, EOBmet)
+        return (complex) multipolar wave, phase, frequency, and derivatives,
+        and the RWZ normalized (complex) wave, its amplitude and (complex)
+        derivative.
+     
+        WAVE = EOBhlm( .... ) return a structure with the wave
+     
+     
+         NOTE: before the Omega_vec had a Mbh multiplied onto it!
+        ===================================================================== */
 //    for (long j=Omega_vec.size(); j--; ) {
 //        Omega_vec[j] = Mbh*Omega_vec[j];
 //    }
@@ -55,7 +55,8 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
     long int pk_index = Omega_vec.size()-1;
     double Omega_pk   = Omega_vec[pk_index];
     long int i        = pk_index-1;
-    while (Omega_vec[i] > Omega_pk) {
+    while (Omega_vec[i] > Omega_pk)
+    {
         pk_index = i;
         Omega_pk = Omega_vec[i];
         i--;
@@ -298,7 +299,7 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
 //    }
 
 //calculating the MOmega
-//    vector<double> dphase = FDdrvt_omega(hlm_phase, dt);
+//    vector<double> dphase = FDdrvt_omega(hlm_phase, len(hlm_phase), dt);
 //    Omega_vec={};
 //    for (long int j=0; j < hlm_phase.size()-2; j++) {
 //        Omega_vec.push_back( - dphase[j] );
@@ -308,7 +309,7 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
 //    vector<vector<double> > dphase(35);
 //    //vector<vector<double> > Omega_vec(35);
 //    for (int k=35; k--; ) {
-//        dphase[k] = FDdrvt_omega(hlm_phase[k], dt);
+//        dphase[k] = FDdrvt_omega(hlm_phase[k], len(hlm_phase[k]), dt);
 //        //Omega_vec={};
 //        for (long int j=0; j < hlm_phase[k].size()-2; j++) {
 //            Omega_vec.push_back( - dphase[k][j] );

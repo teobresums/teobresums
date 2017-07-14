@@ -24,17 +24,16 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <limits>
 
 #include "find_a1a2a3.h"
 #include "input_struc.h"
 #include "multipole_index.h"
 #include "s_D1.h"
 #include "dtnqc_fit.h"
+/* FIXME: NOT SURE THAT I CAN PASS ONE OF THE INPUTS AS DIMENSION*/
+void find_a1a2a3(gsl_complex o[][size_T],             /** OUTPUT Dimension: 35, size_T*/
 
-typedef std::numeric_limits< double > dbl;
-
-gsl_complex** find_a1a2a3(double* T, const int size_T, double* r, double* w, double* pph, double* pr_star, double** hlm_phase, double* Omg_orb, double** A, double* ddotr, void *params)
+                 double* T, const int size_T, double* r, double* w, double* pph, double* pr_star, double** hlm_phase, double* Omg_orb, double** A, double* ddotr, void *params)
 {
 
     /* determine NQC parameters */
@@ -71,8 +70,6 @@ gsl_complex** find_a1a2a3(double* T, const int size_T, double* r, double* w, dou
     double *  m22[35];
     double *p1tmp[35];
     double *p2tmp[35];
-
-    static gsl_complex o[35][t_length];
 
     for (int k=35; k--;)
     {

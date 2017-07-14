@@ -35,9 +35,10 @@
 #include "interpolate_wf.h"
 #include "Q_omega.h"
 
+typedef std::numeric_limits< double > dbl;
 
 //int interpolate_wf(double dt,vector<double> t_vec,vector<double> hlm_rad, vector<double> hlm_phase,bool waveform_flag,std::ofstream& wave,double Mbh)
-int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag,/*std::ofstream&*/ vector<string> wavenames,double Mbh)
+int interpolate_wf(double dt, double t_vec[][], double hlm_rad[][], double hlm_phase[][], bool waveform_flag,/*std::ofstream&*/ vector<string> wavenames,double Mbh)
 {
 
     /** Note: before the Momg_vec had a Mbh multiplied onto it! */
@@ -49,8 +50,8 @@ int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double>
         double xi, yi;
         int i=0;
         int grid_length = (int)(t_vec[k].back()-t_vec[k][0])/dt + 2;
-        vector<gsl_complex> hlm_interp(grid_length);
-        vector<double> t_interp(grid_length);
+        gsl_complex hlm_interp[grid_length];
+        double t_interp[grid_length];
 
         /** Convert all vectors to an array */
         if (k==1 || k==0 || k==4)
@@ -61,20 +62,22 @@ int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double>
             double step    = dt;
 
             gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-            gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, t_length);
+            gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, t_length);
             gsl_spline_init (spline, t, radial, t_length);
+            
             for (xi = t_vec[k][0]; xi < t_vec[k].back(); xi += step)
             {
-                yi = gsl_spline_eval (spline, xi, acc);
+                yi                   = gsl_spline_eval (spline, xi, acc);
                 hlm_interp[i].dat[0] = yi;
-                t_interp[i] = xi;
+                t_interp[i]          = xi;
                 i++;
             }
             gsl_spline_init (spline, t, phase, t_length);
             i=0;
+            
             for (xi = t_vec[k][0]; xi < t_vec[k].back(); xi += step)
             {
-                yi = gsl_spline_eval (spline, xi, acc);
+                yi                   = gsl_spline_eval (spline, xi, acc);
                 hlm_interp[i].dat[1] = yi;
                 i++;
             }

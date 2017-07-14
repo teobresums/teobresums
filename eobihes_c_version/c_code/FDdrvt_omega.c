@@ -20,10 +20,11 @@
 #include "FDdrvt_omega.h"
 
 void FDdrvt_omega(
-    double d1f[],          /** OUTPUT Dimension: size_f-2 */
-    double f[],
-    const int size_f,
-    double dt){
+        double d1f[],          /** OUTPUT Dimension: size_f-2 */
+        double f[],
+        const int size_f,
+        double dt
+    ){
     
     const double oodt = 1./dt;
     const double c    = 1./12.;
@@ -56,7 +57,4 @@ void FDdrvt_omega(
                 break;
         }
     }
-    
-    return d1f;
 }
-

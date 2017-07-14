@@ -22,6 +22,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
 #include <iostream>
+#include <limits>
 #include <list>
 #include <math.h>
 #include <stdbool.h>
@@ -29,7 +30,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <tuple>
 
 #include "AdiabLR.h"
 #include "HealyBBHFitRemnant.h"
@@ -50,8 +50,7 @@
 
 //#include "s_Hamiltonian.h"
 
-
-int main (int argc,char* argv[])
+int main (int argc, char* argv[])
 {
     
     int lm, solver_scheme, grid_length, i;
@@ -80,10 +79,11 @@ int main (int argc,char* argv[])
         r_min      = rLR;
         printf("%s %.16e \n","rLR",params.rLR);
     }
-    /** Creating folder with permission to read, write and execute*/
+    
+    /* Creating folder with permission to read, write and execute*/
     mkdir("data",0777);
     
-    /** Output file definitions */
+    /* Output file definitions */
     //vector<string> fnames = file_names(&params);
     vector<string> fnames;
     vector<string> wavenames;
@@ -92,23 +92,30 @@ int main (int argc,char* argv[])
     ofstream init(fnames[1].c_str());
     init.precision(dbl::max_digits10);
     
-    /** Defining data vectors and variables */
+    /* Defining data vectors and variables */
     
     //std::vector<gsl_complex> hlm_vec={};
-    std::vector<double> t_vec={};
-    std::vector<double> r_vec={};
-    std::vector<double> pph_vec={};
-    std::vector<double> MOmg_vec={};
-    std::vector<double> ddotr_vec={};
-    std::vector<double> prstar_vec={};
-    std::vector<double> hlm_rad_vec={};
-    std::vector<double> Omg_orb_vec={};
-    std::vector<double> hlm_phase_vec={};
-    std::vector<vector<double> > hlm_ampl(35);
-    std::vector<vector<double> > hlm_phase(35);
+    
+// FIXME
+//    I was about to use arrays, but             t_vec.push_back(t);  is used, which adds an element to the end of the vector.
+//    This is possible in C++ using dynamic allocation of memory through vectors.
+//    Do we want to use a list instead?
+    double t_vec[];
+    double r_vec[];
+    
+    double MOmg_vec[];
+    double Omg_orb_vec[];
+    double ddotr_vec[];
+    double prstar_vec[];
+    double pph_vec[];
+    
+    double hlm_rad_vec[];
+    double hlm_phase_vec[];
+    double hlm_ampl[35][];
+    double hlm_phase[35][];
     
     /** Computing the initial conditions */
-    vector<double> initial_data(7);
+    double initial_data[7);
     gsl_odeiv2_system sys = {rhs, NULL , 4, &params};
     
     if (params.spin==true)
@@ -310,9 +317,11 @@ int main (int argc,char* argv[])
     
     /** Interpolate quantities on a grid of width dt */
     grid_length = (int)(t_vec.back()-t_vec[0])/dt + 1;
-    vector<double> t_vecg(grid_length);
+    
+    double t_vecg[grid_length];
     i  = 0;
     ti = 0.;
+                        
     for (ti = t_vec[0]; ti < t_vec.back(); ti += dt)
     {
         t_vecg[i] = ti;
@@ -320,30 +329,45 @@ int main (int argc,char* argv[])
     }
   
   
-    vector<double> r_vecg         = interp_grid(t_vec,r_vec,dt);
-    vector<double> MOmg_vecg      = interp_grid(t_vec,MOmg_vec,dt);
-    vector<double> pph_vecg       = interp_grid(t_vec,pph_vec,dt);
-    vector<double> prstar_vecg    = interp_grid(t_vec,prstar_vec,dt);
-    vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
-    vector<double> hlm_rad_vecg   = interp_grid(t_vec,hlm_rad_vec,dt);
-    vector<double> ddotr_vecg     = interp_grid(t_vec,ddotr_vec,dt);
-    vector<double> OmgOrb_vecg    = interp_grid(t_vec,Omg_orb_vec,dt);
+    /* Allocate needed arrays*/
+    double         r_vecg[35];
+    double      MOmg_vecg[35];
+    double       pph_vecg[35];
+    double    prstar_vecg[35];
+    double hlm_phase_vecg[35];
+    double   hlm_rad_vecg[35];
+    double     ddotr_vecg[35];
+    double    OmgOrb_vecg[35];
+                        
     
-    std::vector<vector<double> > hlm_ampl_g(35);
-    std::vector<vector<double> > hlm_phase_g(35);
+    const int t_lenght = /*We have to implement lists or something else in order to fill in t_vec and then compute the lenght*/
+                        
+    /* Fill in the arrays passing them as input */
+    interp_grid(r_vecg,         t_vec, t_lenght, r_vec,         dt);
+    interp_grid(MOmg_vecg,      t_vec, t_lenght, MOmg_vec,      dt);
+    interp_grid(pph_vecg,       t_vec, t_lenght, pph_vec,       dt);
+    interp_grid(prstar_vecg,    t_vec, t_lenght, prstar_vec,    dt);
+    interp_grid(hlm_phase_vecg, t_vec, t_lenght, hlm_phase_vec, dt);
+    interp_grid(hlm_rad_vecg,   t_vec, t_lenght, hlm_rad_vec,   dt);
+    interp_grid(ddotr_vecg,     t_vec, t_lenght, ddotr_vec,     dt);
+    interp_grid(OmgOrb_vecg,    t_vec, t_lenght, Omg_orb_vec,   dt);
+    
+    double  hlm_ampl_g[35][t_lenght];
+    double hlm_phase_g[35][t_lenght];
+
+                        
     for (int k=35; k--; )
     {
-        vector<double> amplitude = hlm_ampl[k];
-        vector<double> phase     = hlm_phase[k];
-        hlm_ampl_g[k]            = interp_grid(t_vec,amplitude,dt);
-        hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
+        interp_grid( hlm_ampl_g[k], t_vec, hlm_ampl[k],  dt);
+        interp_grid(hlm_phase_g[k], t_vec, hlm_phase[k], dt);
     }
     
     /** NQCs */
     if (params.tidal==false && params.spin==true)
     {
 
-        vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
+        gsl_complex nqc[35][t_lenght];
+        find_a1a2a3(nqc, t_vecg, t_lenght, r_vecg, MOmg_vecg, pph_vecg, prstar_vecg, hlm_phase_g, OmgOrb_vecg, hlm_ampl_g, ddotr_vecg, &params);
         
         for (int k=35; k--; )
         {
@@ -356,7 +380,7 @@ int main (int argc,char* argv[])
     }
     
     /** Define a time vector for each multipole */
-    vector<vector<double> > t_g(35);
+    double t_g[35][t_lenght];
     for (int k=35; k--; )
     {
         t_g[k] = t_vecg;

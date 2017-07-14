@@ -24,7 +24,6 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <ios>
-#include <limits>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -40,8 +39,6 @@
 #include "s_Metric.h"
 #include "s_waveform.h"
 
-
-typedef std::numeric_limits< double > dbl;
 
 void s_waveform(
         gsl_complex waveform[],             /** OUTPUT Dimension: 35*/
@@ -249,13 +246,14 @@ void s_waveform(
         //MOmg = Omega;//Mbh*Omega; /** Passed back to main and then used to determine peak of MOmg curve */
         
         
-        //----------------------------------
-        // Compute here the new r_omg radius
-        //----------------------------------
-        //==========================================================
-        // Compute same quantities with prstar=0. This to obtain psi.
-        // Procedure consistent with the nonspinning case
-        //==========================================================
+        /*----------------------------------------------------------
+         * Compute here the new r_omg radius
+         *----------------------------------------------------------
+         *==========================================================
+         * Compute same quantities with prstar=0. This to obtain psi.
+         * Procedure consistent with the nonspinning case
+         *==========================================================
+         */
         double ggm0[14];
         s_GS(ggm0, r, rc, drc_dr, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3);
         

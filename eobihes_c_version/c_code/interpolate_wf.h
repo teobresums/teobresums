@@ -26,7 +26,7 @@
 
 using namespace::std;
 
-int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag,/*std::ofstream&*/ vector<string> wavenames,double Mbh);
+int interpolate_wf(double dt, double t_vec[][], double hlm_rad[][], double hlm_phase[][], bool waveform_flag,/*std::ofstream&*/ vector<string> wavenames,double Mbh);
 
 
 #endif /* _interpolator_waveform_h */

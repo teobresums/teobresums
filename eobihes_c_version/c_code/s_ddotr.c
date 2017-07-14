@@ -24,7 +24,6 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <ios>
-#include <limits>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -39,8 +38,6 @@
 #include "s_GS.h"
 #include "s_Metric.h"
 
-
-typedef std::numeric_limits< double > dbl;
 
 double s_ddotr(double t, double r, double pph, double prstar, void *params)
 {

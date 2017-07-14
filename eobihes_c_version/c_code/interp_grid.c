@@ -23,14 +23,14 @@
 #include "interp_grid.h"
 
 void interp_grid(
-    double data_g[],             /** OUTPUT Dimension: 35*/
-    double t_vec[],
-    const int size_t_vec,
-    double data[],
-    double dt){
+        double data_g[],             /** OUTPUT Dimension: 35*/
+        double t_vec[],
+        const int size_t_vec,
+        double data[],
+        double dt
+    ){
     
     int i = 0;
-    const int t_length = size_t_vec;
     const int grid_length = (int)(t_vec[size_t_vec-1]-t_vec[0])/dt + 2;
 
     double xi, yi;
@@ -40,8 +40,8 @@ void interp_grid(
     double step = dt;
 
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-    gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, t_length);
-    gsl_spline_init (spline, t_vec, data, t_length);
+    gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, size_t_vec);
+    gsl_spline_init (spline, t_vec, data, size_t_vec);
 
     for (xi = t_vec[0]; xi < t_vec[size_t_vec-1]; xi += step)
     {
