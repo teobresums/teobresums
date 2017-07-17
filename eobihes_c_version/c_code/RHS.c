@@ -43,7 +43,6 @@ int rhs(double t, const double y[], double f[], void *params)
     double nu = (*(input *)params).nu;
     
     const double z3 = 2.0*nu*(4.0-3.0*nu);
-    //const double phi=y[1];
     const double prstar  = y[2];
     const double prstar2 = prstar*prstar;
     const double prstar3 = prstar2*prstar;

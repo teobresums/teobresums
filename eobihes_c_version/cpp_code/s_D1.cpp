@@ -25,7 +25,6 @@ using namespace::std;
 vector<double> s_D1(vector<double> f, vector<double> x, int Nmax){
 /* Computes the first derivative of the function. Centered but at the edges. USAGE: df = EOB_D1(f,x) */
 int Nmin = 0;
-//int Nmax = 11;
     
     vector<double> df(Nmax+1);
     for(int i=2;i<=Nmax-2;i++){

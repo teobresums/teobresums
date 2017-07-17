@@ -46,7 +46,6 @@
 #include "read_config.h"
 #include "file_names.h"
 #include "find_a1a2a3.h"
-//#include "s_Hamiltonian.h"
 #include "interp_grid.h"
 
 
@@ -67,7 +66,6 @@ int main (int argc,char* argv[])
     
     input params  = read_config(q,chi1,chi2,r0);
     
-    //lm = params.lm;
     q             = params.q;
     nu            = params.nu;
     r0            = params.r0;
@@ -145,13 +143,8 @@ int main (int argc,char* argv[])
     const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
     gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, 4);
     gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (1.e-13, 1.e-11);
-    //gsl_odeiv2_control_standard_new(1e-16, .1, 0., 1.);
-    //gsl_odeiv2_control_yp_new (1.e-17, 1.e-16);
-    //gsl_odeiv2_control_yp_new (0, 1);
-    //gsl_odeiv2_control_yp_new (1.e-13, 1.e-11);
     gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (4);
     gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd,1e-2, 1000., 1000.);
-    //gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd,1e-16, 1.e-13, 1.e-9);
     
     t     = 0.0;
     r_LSO = 6.0;

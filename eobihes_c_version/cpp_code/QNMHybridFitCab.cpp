@@ -17,13 +17,13 @@
  *  MA  02111-1307  USA
  */
 
+
+// Ringdown fit in the nonspinning case
 #include <vector>
 #include <cmath>
 #include "QNMHybridFitCab.h"
 
 using namespace::std;
-
-//function [a,b] =
 
 void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4){
 
@@ -36,8 +36,8 @@ int k33 = 4;
 
 double nu2 = nu*nu;
 
-//vector<double> a1(35);
-for (int i=35; i--; ) {
+for (int i=35; i--; )
+{
     a1[i]=0.;
 }
 a2 = a1;
@@ -87,7 +87,8 @@ Domg[k33]    =  2.5797331166178403*nu2  -  0.5337830158170729*nu +  0.1930766531
 Amrg[k33]    = -10.4024985230145610*nu2 +  1.3517710770250695*nu +  0.4307642913724235;
 
 // Pack everything into coefs a and b
-    for (int i=35; i--; ) {
+    for (int i=35; i--; )
+    {
         c2A[i] = 0.5*alpha21[i];
     }
 

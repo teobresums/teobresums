@@ -133,6 +133,7 @@ void s_GS(
     double c04 = -5./16.*nu + 169./256.*nu2;
 
     // coefficients of hat{GS*}
+    // Could be precomputed and put in a matrix
     double cs10 = 3./4.   + nu/2.;
     double cs20 = 27./16. + 29./4.*nu + 3./8.*nu2;
     double cs02 = 5./4.   + 3./2.*nu;

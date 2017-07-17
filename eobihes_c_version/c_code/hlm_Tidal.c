@@ -44,8 +44,6 @@ void hlm_Tidal(
     double hB[kmax];
     double betaA1[kmax];
     double betaB1[kmax];
-    double betaA2[kmax];
-    double betaB2[kmax];
 
     kAl[0] = (*(input *)params).kAl1;
     kAl[1] = (*(input *)params).kAl2;
@@ -68,8 +66,6 @@ void hlm_Tidal(
         hB[i]     = 0.;
         betaA1[i] = 0.;
         betaB1[i] = 0.;
-        //betaA2[i]  = 0.;
-        //betaB2[i]  = 0.;
     }
     
     // l=2 ------------------------------------------------------------------
@@ -105,19 +101,3 @@ void hlm_Tidal(
     hTidallm[4] = ( -hA[4] + hB[4] )*x5;
 
 }
-
-//double nu = (*(input *)params).nu;
-/*
- kAl[0]      =     0.093330885635; //k.A.2
- kAl[1]      =     0.025545679620; //k.A.3
- kAl[2]      =     0.009495642804; //k.A.4
- 
- kBl[0]      =     0.093330885635; //k.B.2
- kBl[1]      =     0.025545679620; //k.B.3
- kBl[2]      =     0.009495642804; //k.B.4
- 
- double CA = 0.1738106852;
- double CB = 0.1738106852;
- double XA =0.5;//= MA/M;
- double XB =0.5;// MB/M;
- */

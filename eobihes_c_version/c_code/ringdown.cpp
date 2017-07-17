@@ -29,7 +29,6 @@
 #include "ringdown.h"
 #include "ringdown_match.h"
 
-//int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_vec,vector<double> &Omega_vec,vector<double> &hlm_rad,vector<double> &hlm_phase){
 
 int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
     
@@ -47,9 +46,7 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
      
          NOTE: before the Omega_vec had a Mbh multiplied onto it!
         ===================================================================== */
-//    for (long j=Omega_vec.size(); j--; ) {
-//        Omega_vec[j] = Mbh*Omega_vec[j];
-//    }
+
     double nu2 = nu*nu;
     double nu3 = nu2*nu;
     long int pk_index = Omega_vec.size()-1;
@@ -104,56 +101,17 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
     int kmax = 35;
     vector<gsl_complex> sigma(kmax); //move this to another place
     
-    for (int i=35; i--; ) {
+    for (int i=35; i--; )
+    {
         sigma[i].dat[0]=0.;
         sigma[i].dat[1]=0.;
         tmatch[i] += 2./Mbh;
     }
     
-    /*
-    switch ((int)q) {
-        case 1:
-            sigma[1].dat[0] = 0.081279587;
-            sigma[1].dat[1] = 0.52680957;
-            break;
-        case 2:
-            sigma[1].dat[0] = 0.083200939;
-            sigma[1].dat[1] = 0.5020357;
-            break;
-        case 3:
-            sigma[1].dat[0] = 0.084967983;
-            sigma[1].dat[1] = 0.47554712;
-            break;
-        case 4:
-            sigma[1].dat[0] = 0.086036548;
-            sigma[1].dat[1] = 0.45686417;
-            break;
-        case 6:
-            sigma[1].dat[0] = 0.087149214;
-            sigma[1].dat[1] = 0.43387484;
-            break;
-        case 7://7.1429
-            sigma[1].dat[0] = 0.087496124;
-            sigma[1].dat[1] = 0.42556176;
-        case 8:
-            sigma[1].dat[0] = 0.087685918;
-            sigma[1].dat[1] = 0.42068061;
-            break;
-        case 9://9.9891:
-            sigma[1].dat[0] = 0.087989127;
-            sigma[1].dat[1] = 0.41225268;
-            break;
-        case 20:
-            sigma[1].dat[0] = 0.088536933;
-            sigma[1].dat[1] = 0.39399845;
-            break;
-        default:
-            break;
-    }
-    */
-
-    for (i=35; i--; ) {
-        switch (i) {
+    for (i=35; i--; )
+    {
+        switch (i)
+        {
             case 0:
                 sigma[0].dat[0] = -0.208936*nu3-0.028103*nu2-0.005383*nu + 0.08896;
                 sigma[0].dat[1] = 0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
@@ -277,54 +235,3 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
 
     return 0;
 }
-
-
-//    //calculate deltaphi
-//    double x=t_vec[i]/Mbh-tmrg[lm];
-//    gsl_complex psi = ringdown_match(x, lm, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
-//    double Deltaphi  = psi.dat[1] - hlm_phase[i];
-
-//double t = t_vec[i];
-//vector<double> phase;
-//    for (int j=0; j < 200; j++) {
-//        x = t/Mbh-tmrg[lm];
-//        psi = ringdown_match(x, lm, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
-//
-//        psi.dat[1]  = psi.dat[1] - Deltaphi;
-//        hlm_rad.push_back(psi.dat[0]);
-//        hlm_phase.push_back(psi.dat[1]);
-//        //phase.push_back(psi.dat[1]);
-//        t_vec.push_back(t);
-//        t += dt;
-//    }
-
-//calculating the MOmega
-//    vector<double> dphase = FDdrvt_omega(hlm_phase, len(hlm_phase), dt);
-//    Omega_vec={};
-//    for (long int j=0; j < hlm_phase.size()-2; j++) {
-//        Omega_vec.push_back( - dphase[j] );
-//    }
-
-
-//    vector<vector<double> > dphase(35);
-//    //vector<vector<double> > Omega_vec(35);
-//    for (int k=35; k--; ) {
-//        dphase[k] = FDdrvt_omega(hlm_phase[k], len(hlm_phase[k]), dt);
-//        //Omega_vec={};
-//        for (long int j=0; j < hlm_phase[k].size()-2; j++) {
-//            Omega_vec.push_back( - dphase[k][j] );
-//        }    }
-
-/* alpha is the real and omega the imaginary part
- +\alpha_{22}^{1}  &= -0.364177\nu^{3} + 0.010951\nu^{2}-0.010591\nu + 0.08896\\
- +\nonumber
- +\alpha_{21}^{1} & = -0.208936\nu^{3}-0.028103\nu^{2}-0.005383\nu + 0.08896\\
- +\nonumber
- +\alpha_{33}^{1} & = -0.319703\nu^{3}-0.030076\nu^{2}-0.009034\nu + 0.09270\\
- +\nonumber
- +\omega_{22}^{1} &=  2.392808\nu^{3} + 0.051309\nu^{2} + 0.449425\nu + 0.37365\\
- +\nonumber
- +\omega_{21}^{1}& =  0.733477\nu^{3} + 0.188359\nu^{2} + 0.220659\nu + 0.37367\\
- +\nonumber
- +\omega_{33}^{1}& = 2.957425\nu^{3} + 0.178146\nu^{2} + 0.709560\nu + 0.59944
- */

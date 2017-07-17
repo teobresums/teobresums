@@ -83,7 +83,7 @@ vector <double> s_get_rc(double r, void *params)
     else
     {
 
-        double X12      = sqrt(1.-4.*nu);        
+        double X12      = sqrt(1.-4.*nu);   //(X1-X2) will be defined at the beginning and not redefined several times
         double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
         
         double rc2 = r2 + aK2*(1. + 2.*alphanu2/r);

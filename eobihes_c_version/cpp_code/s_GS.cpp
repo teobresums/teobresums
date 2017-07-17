@@ -118,6 +118,7 @@ vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prsta
     double c04 = -5./16.*nu + 169./256.*nu2;
 
     // coefficients of hat{GS*}
+    // Could be precomputed and put in a matrix
     double cs10 = 3./4.   + nu/2.;
     double cs20 = 27./16. + 29./4.*nu + 3./8.*nu2;
     double cs02 = 5./4.   + 3./2.*nu;
@@ -126,7 +127,7 @@ vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prsta
     double cs30 = nu*cN3LO + 135./32.;
     double cs40 = 2835./256.;
 
-    double hGS  =  1./(1.  + c10*uc + c20*uc2 + c30*uc3 + c02*prstar2      + c12*uc*prstar2 + c04*prstar4); //write
+    double hGS  =  1./(1.  + c10*uc + c20*uc2 + c30*uc3 + c02*prstar2 + c12*uc*prstar2 + c04*prstar4); //write
 
     double hGSs = 1./(1.  + cs10*uc + cs20*uc2  + cs30*uc3 + cs40*uc4 + cs02*prstar2 + cs12*uc*prstar2 + cs04*prstar4); //write
 

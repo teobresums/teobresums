@@ -98,7 +98,6 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
      //r_omega = energy_variables[8];
      */
     
-    //const double j = pphi;
     if (spin_flag==false)
     {
         metric = Metric(r, params,false);
@@ -126,7 +125,6 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         
         Omg    = Omega;
         
-        //MOmg = Mbh*Omega; //passed back to main and then used to determine peak of MOmg curve
         
         //prstar evol eqn rhs
         f[2]  = (dA + ( pphi2 + z3*prstar4 )*( dA*u2 - 2.0*A*u3 ))/Heff;
@@ -177,7 +175,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         }
 
         vector<double> rc_vec;
-        rc_vec        = s_get_rc(r,params);//nu,X1,X2,chi1,chi2); //[rc, drc, d2rc]
+        rc_vec        = s_get_rc(r,params); //[rc, drc, d2rc]
         double rc     = rc_vec[0];
         double drc_dr = rc_vec[1];
         double uc     = 1./rc;
@@ -239,8 +237,6 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         Omega = f[1];
         
         Omg   = Omega;
-        
-        //MOmg = Omega;//Mbh*Omega; /** Passed back to main and then used to determine peak of MOmg curve */
         
         
         //----------------------------------

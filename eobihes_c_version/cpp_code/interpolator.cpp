@@ -57,7 +57,6 @@ double interpolate(double dt,vector<gsl_complex> grid)
     }
     
 
-    //printf("%.12e %.12e %.12e %.12e %.12e %.12e %.12e \n",x[0],x[1],x[2],x[3],x[4],x[5],x[6]);
     
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
     gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, 7);

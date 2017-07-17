@@ -20,7 +20,7 @@
 #include <math.h>
 #include "QNMHybridFitCab.h"
 
-//function [a,b] =
+/* Ringdown fit in the nonspinning case */
 
 void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4)
 {
@@ -33,7 +33,6 @@ void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<d
 
     double nu2 = nu*nu;
 
-    //vector<double> a1(35);
     for (int i=35; i--; )
     {
         a1[i]=0.;

@@ -63,7 +63,6 @@ void Metric(
     void *params,
     bool nnlo_flag)
 {
-    //const double nu,bool tidal_flag,bool nnlo_flag){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
@@ -78,7 +77,6 @@ void Metric(
     const double u8  = u5*u3;
     const double u9  = u8*u;
     const double u10 = u5*u5;
-    //double N; double D; double dN; double dD; double ooD;
     const double  a[8];
     acoeffs(a, r,nu);
     
@@ -175,7 +173,6 @@ void Metric(
             double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
 	          double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
             double AT4    = - kapT4*u10;
-            //double AT3 = - kapT3*u8*(1. + b31*u + b32*u2);//
 
             
             A = AT2 + AT3 + AT4;
@@ -357,28 +354,3 @@ void A5pnP15_dd(
 }
 
 
-/*
- double q=(1.+sqrt(1-4*nu)-2*nu)/(2.*nu);
- double XA=nu*(1.+1./q);
- double XB =XA;
- double b21=5./2.*XA;
- double b22=3.+XA/8.+ 337./28.*XA*XA;
- double b31=-2.+15./2.*XA;
- double b32=8./3.-311./24.*XA+110./3.*XA*XA;
- 
- // Tidal coupling constants
- //k.A.2      =     0.093330885635
- //k.A.3      =     0.025545679620
- //k.A.4      =     0.009495642804
- double kAl[3];
- double kBl[3];
- kAl[0]      =     0.093330885635; //k.A.2
- kAl[1]      =     0.025545679620; //k.A.3
- kAl[2]      =     0.009495642804; //k.A.4
- 
- kBl[0]      =     0.093330885635; //k.B.2
- kBl[1]      =     0.025545679620; //k.B.3
- kBl[2]      =     0.009495642804; //k.B.4
- double kA2 = kAl[0];
- double kB2 = kBl[0];
- */

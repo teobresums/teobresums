@@ -110,8 +110,9 @@ vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const dou
          x3 = x2 * x;
          x4 = x3 * x;
          x5 = x4 * x;
+// Why no linear term in the current implementation?
          
-            //num_ang[i] = (1. + a1[i]*x2 + a2[i]*x3)/(1. + a3[i]*x2 + a4[i]*x3 + a5[i]*x4); //A.N. fit
+         //num_ang[i] = (1. + a1[i]*x2 + a2[i]*x3)/(1. + a3[i]*x2 + a4[i]*x3 + a5[i]*x4); //A.N. fit
          num_ang[i]    = 1. + b1[i]*x2 + b2[i]*x3 + b3[i]*x4 + b4[i]*x5; //P.F. fit
          
          ratio_rad     = Tlm_real[i];

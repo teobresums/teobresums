@@ -30,7 +30,6 @@ struct energy_params
     double rorb, A, dA, rc, drc_dr, ak2, S, Ss, nu, chi1, chi2, X1, X2, c3;
 };
 
-//double energy_params (double x, void *params);
 
 double DHeff0(double x, void *DHeff_params){
     
@@ -83,7 +82,6 @@ double s_bisec(double pph, double rorb, double A, double dA, double rc, double d
     const gsl_root_fsolver_type *T;
     gsl_root_fsolver *s;
     
-    //double r = rorb;
     double r;
     double x_lo = 0.5*pph, x_hi = 1.5*pph;
     gsl_function F;

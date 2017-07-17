@@ -122,22 +122,9 @@ vector<double> s_initial(input *params){
         
         r[i] = r0+(i-N+1)*dr;
 
-	/*if (tidal_flag==true) {
-            metric = Metric(r[i], params,false);
-            A[i] = metric[0];
-            B[i] = metric[3];
-            dA[i] = metric[1];
-            d2A[i] = A5pnP15_dd(r[i],params)[0];
-        } else {
-            metric = s_Metric(r[i], params,false);
-            A[i] = metric[0];
-            B[i] = metric[1];
-            dA[i] = metric[2];
-            d2A[i] = metric[3];
-	    }*/
 
 	// metric is here. The tidal parameters are within this routine 
-	metric = s_Metric(r[i], params,false);
+        metric = s_Metric(r[i], params,false);
         A[i]   = metric[0];
         B[i]   = metric[1];
         dA[i]  = metric[2];

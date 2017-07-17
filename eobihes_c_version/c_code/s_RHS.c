@@ -70,7 +70,6 @@ int s_RHS(double t, const double y[], double f[], void *params)
     double aK2      = (*(input *)params).aK2;
 
     double r      = y[0];
-    //double phi = y[1];
     double prstar = y[2];
     double pph    = y[3];
     double pphi2  = pph*pph;
@@ -110,7 +109,7 @@ int s_RHS(double t, const double y[], double f[], void *params)
     double Heff_orb = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
     
     double ggm[14];
-    s_GS(ggm, r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    s_GS(ggm, r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3);
 
     double GS              = ggm[2];
     double GSs             = ggm[3];

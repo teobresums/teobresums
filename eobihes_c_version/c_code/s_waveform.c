@@ -83,8 +83,8 @@ void s_waveform(
 
     
     double metric[5];
-    double /*A,*/ dA, B, dB, one_A, one_B;
-    double jhat, Omega, /*ddotr,*/ H, Heff, r_omega;
+    double dA, B, dB, one_A, one_B;
+    double jhat, Omega, H, Heff, r_omega;
     
     /*
      //{H,Heff,dHeff_dr,dHeff_dprstar,dHeff_dpph,Omega,ddotr,jhat,r_omega,Omg_orb}
@@ -100,7 +100,6 @@ void s_waveform(
      //r_omega = energy_variables[8];
      */
     
-    //const double j = pphi;
     if (spin_flag==false)
     {
         Metric(metric, r, params, false);
@@ -127,8 +126,6 @@ void s_waveform(
         f[1]   = Omega;
         
         Omg    = Omega;
-        
-        //MOmg = Mbh*Omega; //passed back to main and then used to determine peak of MOmg curve
         
         //prstar evol eqn rhs
         f[2]  = (dA + ( pphi2 + z3*prstar4 )*( dA*u2 - 2.0*A*u3 ))/Heff;
@@ -179,7 +176,7 @@ void s_waveform(
         }
 
         double rc_vec[3];
-        s_get_rc(rc_vec, r, params);//nu,X1,X2,chi1,chi2); //[rc, drc, d2rc]
+        s_get_rc(rc_vec, r, params); //[rc, drc, d2rc]
         double rc     = rc_vec[0];
         double drc_dr = rc_vec[1];
         double uc     = 1./rc;
@@ -242,9 +239,6 @@ void s_waveform(
         Omega = f[1];
         
         Omg   = Omega;
-        
-        //MOmg = Omega;//Mbh*Omega; /** Passed back to main and then used to determine peak of MOmg curve */
-        
         
         /*----------------------------------------------------------
          * Compute here the new r_omg radius

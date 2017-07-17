@@ -62,9 +62,7 @@ vector<double> hlm_Tidal(double x,void *params)
     }
     vector<double> hB=hA;
     vector<double> betaA1=hA;
-    //vector<double> betaA2(kmax)=hA;
     vector<double> betaB1=hA;
-    //vector<double> betaB2(kmax)=hA;
     vector<double> hTidallm(kmax);
 
     
@@ -104,18 +102,3 @@ vector<double> hlm_Tidal(double x,void *params)
 
 }
 
-//double nu = (*(input *)params).nu;
-/*
- kAl[0]      =     0.093330885635; //k.A.2
- kAl[1]      =     0.025545679620; //k.A.3
- kAl[2]      =     0.009495642804; //k.A.4
- 
- kBl[0]      =     0.093330885635; //k.B.2
- kBl[1]      =     0.025545679620; //k.B.3
- kBl[2]      =     0.009495642804; //k.B.4
- 
- double CA = 0.1738106852;
- double CB = 0.1738106852;
- double XA =0.5;//= MA/M;
- double XB =0.5;// MB/M;
- */

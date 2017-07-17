@@ -47,9 +47,9 @@ tuple<vector<string>, vector<string> > file_names (input *params)
     vector<string> wave(35);
     std::string conf;
     std::string scheme;
-    std::string q_str = std::to_string (q);
-    std::string r0_str = std::to_string (r0);
-    std::string dt_str = std::to_string (dt);
+    std::string q_str    = std::to_string (q);
+    std::string r0_str   = std::to_string (r0);
+    std::string dt_str   = std::to_string (dt);
     std::string chi1_str = std::to_string (chi1);
     std::string chi2_str = std::to_string (chi2);
 

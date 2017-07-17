@@ -86,21 +86,12 @@ int interpolate_wf(double dt, double t_vec[][], double hlm_rad[][], double hlm_p
             gsl_interp_accel_free (acc);
             ofstream wave(wavenames[k].c_str());
             wave.precision(dbl::max_digits10);
-            //gsl_complex z; gsl_complex hlm_rect;
             for (int j=0; j < grid_length-2; j++)
             {
-                //for (int i=0; i < hlm_rad.size(); i++) {
-            
-            
-                //             //convert to rectangular complex form
-                //             z = gsl_complex_polar(hlm_interp[i].dat[0],hlm_interp[i].dat[1]);
-                //             hlm_rect.dat[0]=GSL_REAL(z);
-                //             hlm_rect.dat[1]=GSL_IMAG(z);
-            
             
                 if (waveform_flag==true)
                 {
-                    wave << t_interp[j] << "\t" << hlm_interp[j].dat[0] << "\t" << hlm_interp[j].dat[1] /* << "\t" << hlm_rect.dat[0] << "\t" << hlm_rect.dat[1] */ << endl;
+                    wave << t_interp[j] << "\t" << hlm_interp[j].dat[0] << "\t" << hlm_interp[j].dat[1] << endl;
                 }
             }
         
@@ -111,21 +102,4 @@ int interpolate_wf(double dt, double t_vec[][], double hlm_rad[][], double hlm_p
     return 0;
 }
 
-
-/*
- //(gsl spline * spline, const double xa[], const double ya[], size t size)
- gsl_spline_init (spline, t, &Momg, t_length);
- i=0;
- for (xi = t_vec[0]; xi < t_vec.back(); xi += step)
- {
- yi = gsl_spline_eval (spline, xi, acc);
- omg_interp[i] = yi;
- i++;
- }
- */
-
-//    bool Qomega_flag = true;
-//    if (Qomega_flag==true) {
-//        Q_omega(t_interp,omg_interp,Qomg);
-//    }
 

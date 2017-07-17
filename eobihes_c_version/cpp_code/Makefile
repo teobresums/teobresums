@@ -31,7 +31,6 @@ interpolate_wf.o     \
 interpolator.o	     \
 main.o		     \
 Metric.o       \
-nos_ddotr.o	     \
 NQC.o         \
 Q_omega.o     \
 QNMHybridFitCab.o  \
@@ -42,7 +41,6 @@ ringdown_match.o     \
 s_A5PNlog.o	     \
 s_bisec.o        \
 s_D1.o		     \
-s_ddotr.o      \
 s_flm.o		     \
 s_Flux.o	     \
 s_get_rc.o	     \
@@ -113,8 +111,6 @@ interpolator.o: interpolator.cpp
 	$(CC) $(CFLAGS) $(INC) interpolator.cpp
 Metric.o: Metric.cpp
 	$(CC) $(CFLAGS) $(INC) Metric.cpp
-nos_ddotr.o: nos_ddotr.cpp
-	$(CC) $(CFLAGS) $(INC) nos_ddotr.cpp
 NQC.o: NQC.cpp
 	$(CC) $(CFLAGS) $(INC) NQC.cpp
 Q_omega.o: Q_omega.cpp
@@ -135,8 +131,6 @@ s_bisec.o: s_bisec.cpp
 	$(CC) $(CFLAGS) $(INC) s_bisec.cpp
 s_D1.o: s_D1.cpp
 	$(CC) $(CFLAGS) $(INC) s_D1.cpp
-s_ddotr.o: s_ddotr.cpp
-	$(CC) $(CFLAGS) $(INC) s_ddotr.cpp
 s_flm.o: s_flm.cpp
 	$(CC) $(CFLAGS) $(INC) s_flm.cpp
 s_Flux.o: s_Flux.cpp

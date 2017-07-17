@@ -27,7 +27,6 @@ void s_D1(
     
 /* Computes the first derivative of the function. Centered but at the edges. USAGE: df = EOB_D1(f,x) */
     const int Nmin = 0;
-    //int Nmax = 11;
     
     for(int i=2;i<=Nmax-2;i++)
     {

@@ -41,7 +41,7 @@ vector<double> A_NumDenom(const double r, const vector<double> a, const double n
     const double a5l = a[3];
     const double a6l = a[6];
 
-    /**  WIT */
+    /**  Coefficients of the denominator and numerator of the Pade' A function */
     const double C1  = (8.*a3 + 3.*a4 + a5);
     const double C2  = (4.*a4 + 2.*a5 + a6 + a3*(8. - a3*nu));
     const double C3  = (12.*a3 + 4.*a4 + a5);
