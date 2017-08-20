@@ -17,13 +17,9 @@
  *  MA  02111-1307  USA
  */
 
-#include <fstream>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
-#include <iostream>
-#include <limits>
-#include <list>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -31,6 +27,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#include "Array.h"
 #include "AdiabLR.h"
 #include "HealyBBHFitRemnant.h"
 #include "file_names.h"
@@ -38,11 +35,11 @@
 #include "initial.h"
 #include "input_struc.h"
 #include "interp_grid.h"
-#include "interpolate_wf.h"
+//#include "interpolate_wf.h"
 #include "multipole_index.h"
 #include "QNMHybridFitCab.h"
 #include "read_config.h"
-#include "ringdown.h"
+//#include "ringdown.h"
 #include "RHS.h"
 #include "s_initial.h"
 #include "s_RHS.h"
@@ -52,7 +49,7 @@
 int main (int argc, char* argv[])
 {
     
-    int lm, solver_scheme, grid_length, i;
+    int lm, solver_scheme, i;
     double q, r0, dt, chi1, chi2, r_min, rLR, nu, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
@@ -63,15 +60,15 @@ int main (int argc, char* argv[])
     r0   = atof(argv[4]);
     
     input params  = read_config(q,chi1,chi2,r0);
-    
+
+    // lm = params.lm;
     q             = params.q;
     nu            = params.nu;
     r0            = params.r0;
     dt            = params.dt;
     solver_scheme = params.solver_scheme;
     
-    if (params.tidal==true)
-    {
+    if (params.tidal==true) {
         rLR        = AdiabLR(&params);
         params.rLR = rLR;
         r_min      = rLR;
@@ -83,61 +80,74 @@ int main (int argc, char* argv[])
     
     /* Output file definitions */
     //vector<string> fnames = file_names(&params);
-    vector<string> fnames;
-    vector<string> wavenames;
-    tie(fnames, wavenames) = file_names(&params);
-    ofstream data(fnames[0].c_str());
-    ofstream init(fnames[1].c_str());
-    init.precision(dbl::max_digits10);
     
+    char fnames_data[512];
+    char fnames_init[512];
+    char wavenames[35][512];
+    file_names(fnames_data, fnames_init, wavenames, &params);
+
+    FILE *data = fopen(fnames_data, "w");
+    FILE *init = fopen(fnames_init, "w");
+
     /* Defining data vectors and variables */
     
     //std::vector<gsl_complex> hlm_vec={};
     
-// FIXME
-//    I was about to use arrays, but             t_vec.push_back(t);  is used, which adds an element to the end of the vector.
-//    This is possible in C++ using dynamic allocation of memory through vectors.
-//    Do we want to use a list instead?
-    double t_vec[];
-    double r_vec[];
-    
-    double MOmg_vec[];
-    double Omg_orb_vec[];
-    double ddotr_vec[];
-    double prstar_vec[];
-    double pph_vec[];
-    
-    double hlm_rad_vec[];
-    double hlm_phase_vec[];
-    double hlm_ampl[35][];
-    double hlm_phase[35][];
-    
+    Double_Array t_vec;
+    Double_Array r_vec;
+
+    Double_Array MOmg_vec;
+    Double_Array Omg_orb_vec;
+    Double_Array ddotr_vec;
+    Double_Array prstar_vec;
+    Double_Array pph_vec;
+
+    Double_Array hlm_rad_vec;
+    Double_Array hlm_phase_vec;
+    Double_Array hlm_ampl[35];
+    Double_Array hlm_phase[35];
+
+    // Memory has to be free at the end.
+    initArray(&t_vec, 5);
+    initArray(&r_vec, 5);
+
+    initArray(&MOmg_vec, 5);
+    initArray(&Omg_orb_vec, 5);
+    initArray(&ddotr_vec, 5);
+    initArray(&prstar_vec, 5);
+    initArray(&pph_vec, 5);
+
+    initArray(&hlm_rad_vec, 5);
+    initArray(&hlm_phase_vec, 5);
+    for (int k=35; k--; ){
+      initArray(&hlm_ampl[k], 5);
+      initArray(&hlm_phase[k], 5);
+    }
+
     /** Computing the initial conditions */
-    double initial_data[7);
-    gsl_odeiv2_system sys = {rhs, NULL , 4, &params};
+    double initial_data[7];
+    // FIXME sys cannot be modified once it is initialized. Maybe we need to put rhs and s_RHS in one function.
+//    gsl_odeiv2_system sys = {rhs, NULL, 4, &params};
+    gsl_odeiv2_system sys = {s_RHS, NULL, 4, &params};
     
-    if (params.spin==true)
-    {
-        sys = {s_RHS, NULL , 4, &params};
-        initial_data = s_initial(&params);
+    if (params.spin==true) {
+//        sys = {s_RHS, NULL, 4, &params};
+        s_initial(initial_data, &params);
+    } else if (params.spin==false) {
+//        sys = {rhs, NULL, 4, &params};
+        initial(initial_data, &params);
     }
-    else if (params.spin==false)
-    {
-        sys          = {rhs, NULL , 4, &params};
-        initial_data = initial(&params);
-    }
-    
-    init << "r" << "\t" << "p_phi" << "\t" << "p_r*" << "\t" << "p_r" << "\t" << "j" << "\t" << "E0" << "\t" << "Omega_j" << endl;
-    init << initial_data[0] << "\t" << initial_data[1] << "\t" << initial_data[2] << "\t" << initial_data[3] << "\t" << initial_data[4] << "\t" << initial_data[5] << "\t" << initial_data[6] << endl;
+
+    fprintf( init, "r p_phi p_r* p_r j E0 Omega_j\n" );
+    fprintf( init, "%.17f %.17f %.17f %.17f %.17f %.17f %.17f\n", initial_data[0], initial_data[1], initial_data[2], initial_data[3], initial_data[4], initial_data[5], initial_data[6]);
     printf ("%.20e %.20e %.20e %.20e %.20e %.20e %.20e \n", initial_data[0], initial_data[1], initial_data[2], initial_data[3], initial_data[4], initial_data[5], initial_data[6]);
     
     /** Initial conditions: t, r, phi, prstar, pphi */
-    t    = 0.0;
+    t = 0.0;
     y[0] = initial_data[0];
     y[1] = 0.;
     y[2] = initial_data[2];
     y[3] = initial_data[1];
-
 
     double final_mass = HealyBBHFitRemnant(chi1, chi2, q);
     printf("%s %.8e \n","final BBH mass", final_mass);
@@ -166,6 +176,7 @@ int main (int argc, char* argv[])
     stop_flag     = false;
     MOmgpeak_flag = false;
     
+    gsl_complex h_form[35];
     while (stop_flag == false)
     {
         //while (y[0]>r_min) {
@@ -227,8 +238,7 @@ int main (int argc, char* argv[])
         }
         
         int status  = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-        if (status != GSL_SUCCESS)
-        {
+        if (status != GSL_SUCCESS) {
             break;
         }
         
@@ -239,132 +249,113 @@ int main (int argc, char* argv[])
         pphi   = y[3];
         
         /** Checking whether the dynamics produces NaN values; this can happen if radius r becomes too small */
-        if (r!=r)
-        {
+        if (r!=r) {
             printf("%s \n","dynamics is producing NaN values");
-        }
-        else
-        {
+        } else {
             
             /** Write and print dynamics*/
-            if (params.dynamics==true)
-            {
-                data << t << "\t" << r << "\t" << phi << "\t" << prstar << "\t" << pphi << endl;
+            if (params.dynamics==true) {
+              fprintf( data, "%.17f %.17f %.17f %.17f %.17f\n", t, r, phi, prstar, pphi );
             }
             
             /** Waveform computation*/
-            vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
+//            printf( "%.17f %.17f %.17f %.17f %.17f\n", t, r, phi, prstar, pphi );
+            s_waveform(h_form, &Omg, &Omg_orb, &A, &ddotr, t, y, &params);
             
             /** Append dynamics and waveform to vectors */
-            hlm_rad_vec.push_back(h_form[lm].dat[0]);
-            hlm_phase_vec.push_back(h_form[lm].dat[1]);
+            // FIXME: lm doesnt have any value, get it from input params? (KaWa)
+            insertArray( &hlm_rad_vec, h_form[lm].dat[0]);
+            insertArray( &hlm_phase_vec, h_form[lm].dat[1]);
             
-            for (int k=35; k--; )
-            {
-                hlm_ampl[k].push_back(h_form[k].dat[0]);
-                hlm_phase[k].push_back(h_form[k].dat[1]);
+            for (int k=35; k--; ) {
+              insertArray( &hlm_ampl[k], h_form[k].dat[0] );
+              insertArray( &hlm_phase[k], h_form[k].dat[1] );
             }
         
-            
-            t_vec.push_back(t);
-            MOmg_vec.push_back(Omg);
-            r_vec.push_back(r);
-            pph_vec.push_back(pphi);
-            prstar_vec.push_back(prstar);
-            Omg_orb_vec.push_back(Omg_orb);
-            ddotr_vec.push_back(ddotr);
-            
+            insertArray( &t_vec, t);
+            insertArray( &MOmg_vec, Omg);
+            insertArray( &r_vec, r);
+            insertArray( &pph_vec, pphi);
+            insertArray( &prstar_vec, prstar);
+            insertArray( &Omg_orb_vec, Omg_orb);
+            insertArray( &ddotr_vec, ddotr);
         }
         
         /** Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards */
         //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
-        if (params.spin==true)
-        {
+        if (params.spin==true) {
             MOmg = Omg_orb;
-        }
-        else
-        {
+        } else {
             MOmg = Omg;
         }
-        if (MOmgpeak_flag==false)
-        {
-            if (MOmg < MOmg_prev)
-            {
-                MOmgpeak_flag = true;
-                t_stop        = t + 10.;
-            }
-            else
-            {
-                MOmg_prev = MOmg;
-            }
-        }
-        else
-        {
-            if (t >= t_stop)
-            {
-                stop_flag = true;
-            }
+
+        if (MOmgpeak_flag==false) {
+          if (MOmg < MOmg_prev) {
+              MOmgpeak_flag = true;
+              t_stop        = t + 10.;
+          } else {
+              MOmg_prev = MOmg;
+          }
+        } else {
+          if (t >= t_stop) {
+            stop_flag = true;
+          }
         }
     }
     gsl_odeiv2_evolve_free (e); gsl_odeiv2_control_free (c); gsl_odeiv2_step_free (s);gsl_odeiv2_driver_free (d);
     
     /** Interpolate quantities on a grid of width dt */
-    grid_length = (int)(t_vec.back()-t_vec[0])/dt + 1;
+    const int grid_length = (int)(t_vec.array[t_vec.used-1]-t_vec.array[0])/dt + 1;
     
     double t_vecg[grid_length];
     i  = 0;
     ti = 0.;
                         
-    for (ti = t_vec[0]; ti < t_vec.back(); ti += dt)
-    {
-        t_vecg[i] = ti;
-        i++;
+    for (ti = t_vec.array[0]; ti < t_vec.array[t_vec.used-1]; ti += dt) {
+      t_vecg[i] = ti;
+      i++;
     }
-  
-  
-    /* Allocate needed arrays*/
-    double         r_vecg[35];
-    double      MOmg_vecg[35];
-    double       pph_vecg[35];
-    double    prstar_vecg[35];
-    double hlm_phase_vecg[35];
-    double   hlm_rad_vecg[35];
-    double     ddotr_vecg[35];
-    double    OmgOrb_vecg[35];
-                        
-    
-    const int t_lenght = /*We have to implement lists or something else in order to fill in t_vec and then compute the lenght*/
-                        
-    /* Fill in the arrays passing them as input */
-    interp_grid(r_vecg,         t_vec, t_lenght, r_vec,         dt);
-    interp_grid(MOmg_vecg,      t_vec, t_lenght, MOmg_vec,      dt);
-    interp_grid(pph_vecg,       t_vec, t_lenght, pph_vec,       dt);
-    interp_grid(prstar_vecg,    t_vec, t_lenght, prstar_vec,    dt);
-    interp_grid(hlm_phase_vecg, t_vec, t_lenght, hlm_phase_vec, dt);
-    interp_grid(hlm_rad_vecg,   t_vec, t_lenght, hlm_rad_vec,   dt);
-    interp_grid(ddotr_vecg,     t_vec, t_lenght, ddotr_vec,     dt);
-    interp_grid(OmgOrb_vecg,    t_vec, t_lenght, Omg_orb_vec,   dt);
-    
-    double  hlm_ampl_g[35][t_lenght];
-    double hlm_phase_g[35][t_lenght];
 
-                        
+    /* Allocate needed arrays*/
+    // FIXME why t_length != grid_length? In find_a1a2a3, They are assummed to be the same.
+    const int t_length = (int)(t_vec.array[t_vec.used-1]-t_vec.array[0])/dt + 2;
+    double          r_vecg[t_length];
+    double       MOmg_vecg[t_length];
+    double        pph_vecg[t_length];
+    double     prstar_vecg[t_length];
+    double  hlm_phase_vecg[t_length];
+    double    hlm_rad_vecg[t_length];
+    double      ddotr_vecg[t_length];
+    double     OmgOrb_vecg[t_length];
+    double  hlm_ampl_g[35][t_length];
+    double hlm_phase_g[35][t_length];
+    
+    /* Fill in the arrays passing them as input */
+    interp_grid(r_vecg,         t_vec, r_vec.array,         dt);
+    interp_grid(MOmg_vecg,      t_vec, MOmg_vec.array,      dt);
+    interp_grid(pph_vecg,       t_vec, pph_vec.array,       dt);
+    interp_grid(prstar_vecg,    t_vec, prstar_vec.array,    dt);
+    interp_grid(hlm_phase_vecg, t_vec, hlm_phase_vec.array, dt);
+    interp_grid(hlm_rad_vecg,   t_vec, hlm_rad_vec.array,   dt);
+    interp_grid(ddotr_vecg,     t_vec, ddotr_vec.array,     dt);
+    interp_grid(OmgOrb_vecg,    t_vec, Omg_orb_vec.array,   dt);
+    
+ 
     for (int k=35; k--; )
     {
-        interp_grid( hlm_ampl_g[k], t_vec, hlm_ampl[k],  dt);
-        interp_grid(hlm_phase_g[k], t_vec, hlm_phase[k], dt);
+        interp_grid( hlm_ampl_g[k], t_vec, hlm_ampl[k].array,  dt);
+        interp_grid(hlm_phase_g[k], t_vec, hlm_phase[k].array, dt);
     }
-    
+
     /** NQCs */
     if (params.tidal==false && params.spin==true)
-    {
-
-        gsl_complex nqc[35][t_lenght];
-        find_a1a2a3(nqc, t_vecg, t_lenght, r_vecg, MOmg_vecg, pph_vecg, prstar_vecg, hlm_phase_g, OmgOrb_vecg, hlm_ampl_g, ddotr_vecg, &params);
-        
+    { 
+        gsl_complex nqc[35][grid_length];
+        find_a1a2a3(grid_length, nqc, t_vecg, r_vecg, MOmg_vecg, pph_vecg, prstar_vecg, hlm_phase_g, OmgOrb_vecg, hlm_ampl_g, ddotr_vecg, &params);
+      
         for (int k=35; k--; )
         {
-            for (int i=hlm_rad_vec.size(); i--; )
+            for (int i=grid_length; i--; )
             {
                 hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
                 hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
@@ -373,26 +364,27 @@ int main (int argc, char* argv[])
     }
     
     /** Define a time vector for each multipole */
-    double t_g[35][t_lenght];
+    double t_g[35][grid_length];
     for (int k=35; k--; )
     {
-        t_g[k] = t_vecg;
+        for (int j=0; j<grid_length;j++)
+        {
+            t_g[k][j] = t_vecg[j];
+        }
     }
     
     /** Ringdown attachment */
     if (params.tidal==false && params.spin==false)
     {
-        ringdown(nu,q,dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
+//        ringdown(nu,q,dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
     /** Compute interpolation of waveform on grid and write to output file */
-    interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,wavenames,final_mass);
+//    interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,wavenames,final_mass);
     
     end = clock();
-    
-    cout << "Time required for execution: "
-    << (double)(end-start)/CLOCKS_PER_SEC
-    << " seconds." << "\n\n";
+ 
+    printf("Time required for execution: %e seconds.\n\n", (double)(end-start)/CLOCKS_PER_SEC);
     
     return 0;
 }

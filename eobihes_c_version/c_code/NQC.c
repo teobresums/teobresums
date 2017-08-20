@@ -27,7 +27,8 @@ void NQC(
     const double prstar,
     const double Omega,
     const double ddotr,
-    int i){
+    int i
+){
     
     switch (i)
     {

@@ -22,8 +22,8 @@
 
 #include <stdbool.h>
 
-struct input
-{         /* declaration of structure for input parameters */
+typedef struct{
+/* declaration of structure for input parameters */
     int   lm;
     int solver_scheme;
     double q;
@@ -61,11 +61,9 @@ struct input
     bool dynamics;
     bool waveform;
     bool spin;
+} input;
 
-};
-
-struct input_flags
-{
+typedef struct{
     bool NQC;
     bool spin;
     bool tidal;
@@ -73,6 +71,6 @@ struct input_flags
     bool speedy;
     bool dynamics;
     bool waveform;
-};
+} input_flags;
 
 #endif /* _input_struc_h */

@@ -50,7 +50,7 @@ void s_Metric(
     double aK2 = (*(input *)params).aK2;
     
     double rc_vec[3];
-    s_get_rc(rc_vec, r,params); //[rc, drc, d2rc]
+    s_get_rc(rc_vec, r, params); //[rc, drc, d2rc]
     double rc        = rc_vec[0];
     double drc       = rc_vec[1];
     double d2rc      = rc_vec[2];
@@ -66,7 +66,7 @@ void s_Metric(
         
     //double* metric = A5pnP15(rc, nu);
     double metric[5];
-    s_A5PNlog(metric, rc,params,nnlo_flag);
+    s_A5PNlog(metric, rc, params, nnlo_flag);
     double Aorb      = metric[0];
     double dAorb     = metric[1];
     double d2Aorb    = metric[2];

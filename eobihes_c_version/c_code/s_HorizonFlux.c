@@ -21,8 +21,16 @@
 
 #include "s_HorizonFlux.h"
 
-double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
-{
+double s_HorizonFlux(
+                     double x,
+                     double Heff,
+                     double jhat,
+                     double nu,
+                     double X1,
+                     double X2,
+                     double chi1,
+                     double chi2
+){
 
     double x2 = x*x;
     double x3 = x2*x;
@@ -30,8 +38,8 @@ double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, d
     double x5 = x4*x;
     double v5 = sqrt(x5);
 
-    double* cv5[2];
-    double* cv8[2];
+    double cv5[2];
+    double cv8[2];
 
     /** Coefficients of the v^5 term (Alvi leading order) */
     cv5[0] = -1./4.*chi1*(1.+3.*chi1*chi1)*X1*X1*X1;

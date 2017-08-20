@@ -17,13 +17,11 @@
  *  MA  02111-1307  USA
  */
 
-#include <fstream>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <ios>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -57,7 +55,7 @@ int rhs(double t, const double y[], double f[], void *params)
     const double u2 = u*u;
     const double u3 = u2*u;
     
-    const double metric[5];
+    double metric[5];
     Metric(metric, r, params, false);
     const double  A      = metric[0];
     const double  dA     = metric[1];

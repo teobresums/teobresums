@@ -17,12 +17,11 @@
  *  MA  02111-1307  USA
  */
 
-#include <fstream>
-#include <iostream>
-#include <list>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "input_struc.h"
 #include "read_config.h"
@@ -51,120 +50,77 @@ input read_config(double q, double chi1, double chi2, double r0)
     
     input params;            /* declaration of variable of struture type */
     
-    string param_name;
-    double param_value;
-    ifstream fin ("file_run.par");
-    if (!fin) //checks to see if file opens properly
+    char param_name[512];
+    char param_value[512];
+    FILE *fin = fopen("file_run.par","r");
+    if (fin == NULL) //checks to see if file opens properly
     {
-        cerr << "error: Could not find the parameters file.";
+      fprintf(stderr, "Could not find the parameters file.");
     }
 
     int i = 0;
     
-    while ( fin >> param_name >> param_value )
+    while ( fscanf(fin, "%s", param_name) == 1 )
     {
-        //param_values.push_back(param_value);
-        cout << param_name <<"\t"<< param_value << endl;
-        switch (i)
-        {
-            case 0:
-                if (param_value==0)
-                {
-                    params.NQC = false;
-                }
-                else
-                {
-                    params.NQC = true;
-                }
-                break;
-            case 1:
-                if (param_value==0)
-                {
-                    params.tidal = false;
-                } else {
-                    params.tidal = true;
-                }
-                break;
-            case 2:
-                if (param_value==0)
-                {
-                    params.RWZ = false;
-                }
-                else
-                {
-                    params.RWZ = true;
-                }
-                break;
-            case 3:
-                if (param_value==0)
-                {
-                    params.speedy = false;
-                }
-                else
-                {
-                    params.speedy = true;
-                }
-                break;
-            case 4:
-                if (param_value==0)
-                {
-                    params.dynamics = false;
-                }
-                else
-                {
-                    params.dynamics = true;
-                }
-                break;
-            case 5:
-                if (param_value==0)
-                {
-                    params.waveform = false;
-                }
-                else
-                {
-                    params.waveform = true;
-                }
-                break;
-            case 6:
-                params.lm = param_value;
-                break;
-            case 7:
-                params.dt = param_value;
-                break;
-            case 8:
-                params.solver_scheme = param_value;
-                break;
-            case 9:
-                params.kAl1 = param_value;
-                break;
-            case 10:
-                params.kAl2 = param_value;
-                break;
-            case 11:
-                params.kAl3 = param_value;
-                break;
-            case 12:
-                params.kBl1 = param_value;
-                break;
-            case 13:
-                params.kBl2 = param_value;
-                break;
-            case 14:
-                params.kBl3 = param_value;
-                break;
-            case 15:
-                params.CA = param_value;
-                break;
-            case 16:
-                params.CB = param_value;
-                break;
-            default:
-                break;
+      fscanf(fin, "%s", param_value);
+      printf("%s %s\n", param_name, param_value);
+      if ( !strcmp(param_name, "NQC") ){
+        if (atoi(param_value) == 0){
+          params.NQC = false;
+        } else {
+          params.NQC = true;
+        } 
+      }
+      else if ( !strcmp(param_name, "tidal") ){
+        if (atoi(param_value) == 0){
+          params.tidal = false;
+        } else {
+          params.tidal = true;
         }
-        
-        i++;
+      }
+      else if ( !strcmp(param_name, "RWZ") ){
+        if (atoi(param_value) == 0){
+          params.RWZ = false;
+        } else {
+          params.RWZ = true;
+        }
+      }
+      else if ( !strcmp(param_name, "speedy") ){
+        if (atoi(param_value) == 0){
+          params.speedy = false;
+        } else {
+          params.speedy = true;
+        }
+      }
+      else if ( !strcmp(param_name, "dynamics") ){
+        if (atoi(param_value) == 0){
+          params.dynamics = false;
+        } else {
+          params.dynamics = true;
+        }
+      }
+      else if ( !strcmp(param_name, "waveform") ){
+        if (atoi(param_value) == 0){
+          params.waveform = false;
+        } else {
+          params.waveform = true;
+        }
+      }
+      else if ( !strcmp(param_name, "lm") ){ params.lm = atoi(param_value);}
+      else if ( !strcmp(param_name, "dt") ){ params.dt = atof(param_value);}
+      else if ( !strcmp(param_name, "solver_scheme") ){ params.solver_scheme = atoi(param_value);}
+      else if ( !strcmp(param_name, "kAl1") ){ params.kAl1 = atof(param_value);}
+      else if ( !strcmp(param_name, "kAl2") ){ params.kAl2 = atof(param_value);}
+      else if ( !strcmp(param_name, "kAl3") ){ params.kAl3 = atof(param_value);}
+      else if ( !strcmp(param_name, "kBl1") ){ params.kBl1 = atof(param_value);}
+      else if ( !strcmp(param_name, "kBl2") ){ params.kBl2 = atof(param_value);}
+      else if ( !strcmp(param_name, "kBl3") ){ params.kBl3 = atof(param_value);}
+      else if ( !strcmp(param_name, "CA") ){ params.CA = atof(param_value);}
+      else if ( !strcmp(param_name, "CB") ){ params.CB = atof(param_value);}
+      else{ fprintf(stderr, "Unknown parameters input: %s %s\n", param_name, param_value);}
     }
-    fin.close();
+
+    fclose(fin);
 
     /*set spin flag*/
     if (chi1 != .0 || chi2 != .0)

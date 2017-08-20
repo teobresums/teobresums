@@ -17,32 +17,41 @@
  *  MA  02111-1307  USA
  */
 
-#include <ios>
 #include <stdio.h>
-#include <fstream>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <stdio.h>
 
-#include "find_a1a2a3.h"
 #include "input_struc.h"
 #include "multipole_index.h"
 #include "s_D1.h"
 #include "dtnqc_fit.h"
-/* FIXME: NOT SURE THAT I CAN PASS ONE OF THE INPUTS AS DIMENSION*/
-void find_a1a2a3(gsl_complex o[][size_T],             /** OUTPUT Dimension: 35, size_T*/
 
-                 double* T, const int size_T, double* r, double* w, double* pph, double* pr_star, double** hlm_phase, double* Omg_orb, double** A, double* ddotr, void *params)
-{
+#include "find_a1a2a3.h"
+
+void find_a1a2a3(
+                 const int t_length,
+                 gsl_complex o[35][t_length],             /** OUTPUT Dimension: 35, t_length */
+                 double* T,
+                 double* r,
+                 double* w,
+                 double* pph,
+                 double* pr_star,
+                 double  hlm_phase[35][t_length],
+                 double* Omg_orb,
+                 double  A[35][t_length],
+                 double* ddotr,
+                 void *params
+){
 
     /* determine NQC parameters */
     double nu    = (*(input *)params).nu;
     double chi1  = (*(input *)params).chi1;
     double aKerr = (*(input *)params).aK;
     double A_tmp, dA_tmp, omg_tmp, domg_tmp;
-
-    const long int t_length = size_T;
+    double A_use[35][t_length+1];
     
     double pA[5];
     double pdA[5];
@@ -52,8 +61,8 @@ void find_a1a2a3(gsl_complex o[][size_T],             /** OUTPUT Dimension: 35, 
     double pdA1v[2], pdA2v[2], pdA3v[2];
     double pn0[2], pd1[2];
     double ppdomg1[2], ppdomg2[2];
-    double * omg[35];
-    double *domg[35];
+    double  omg[35][t_length];
+    double domg[35][t_length];
     double n1[t_length], n2[t_length], n3[t_length], n4[t_length], n5[t_length], n6[t_length];
     double max_A[35], max_dA[35], d2max[35], d3max[35], max_omg[35], max_domg[35], maxd2omg[35], DeltaT[35];
     //double ai[3];
@@ -63,28 +72,28 @@ void find_a1a2a3(gsl_complex o[][size_T],             /** OUTPUT Dimension: 35, 
     double P[2];
     double M[4];
     // double m11[t_length], m12[t_length], m13[t_length];
-    double *  m11[35];
-    double *  m12[35];
-    double *  m13[35];
-    double *  m21[35];
-    double *  m22[35];
-    double *p1tmp[35];
-    double *p2tmp[35];
+    double   m11[35][t_length];
+    double   m12[35][t_length];
+    double   m13[35][t_length];
+    double   m21[35][t_length];
+    double   m22[35][t_length];
+    double p1tmp[35][t_length];
+    double p2tmp[35][t_length];
 
     for (int k=35; k--;)
     {
         for (int j=t_length;j--;)
         {
             /** In general divide by sqrt( (l+2) (l+1) l (l-1) ). Use the multipole structure to get the correct L. */
-            A[k][j] = A[k][j]/sqrt(24.);
+            A_use[k][j] = A[k][j]/sqrt(24.);
         }
     }
 
 
     for (int k=35; k--;)
     {
-         omg[k] = s_D1(hlm_phase[k], T, t_length-1);
-        domg[k] = s_D1(omg[k], T, t_length-1);
+        s_D1(omg[k],  hlm_phase[k], T, t_length-1);
+        s_D1(domg[k], omg[k]      , T, t_length-1);
     }
 
     /**  Case 'NQC_fit_hybrid' */
@@ -209,10 +218,15 @@ void find_a1a2a3(gsl_complex o[][size_T],             /** OUTPUT Dimension: 35, 
     }
                                   
     /** Take the needed derivatives for the phase */
-    double * d_n4 = s_D1(n4,T,t_length-1);
-    double * d_n5 = s_D1(n5,T,t_length-1);
-    double *d2_n4 = s_D1(d_n4,T,t_length-1);
-    double *d2_n5 = s_D1(d_n5,T,t_length-1);
+    double d_n4[t_length];
+    double d_n5[t_length];
+    double d2_n4[t_length];
+    double d2_n5[t_length];
+
+    s_D1(d_n4,  n4,   T, t_length-1);
+    s_D1(d_n5,  n5,   T, t_length-1);
+    s_D1(d2_n4, d_n4, T, t_length-1);
+    s_D1(d2_n5, d_n5, T, t_length-1);
 
     int Omgmax_index = 0;
     double Omg_max = Omg_orb[0];
@@ -255,15 +269,15 @@ void find_a1a2a3(gsl_complex o[][size_T],             /** OUTPUT Dimension: 35, 
         for (int j=t_length; j--;)
         {
             /** Matrix elements: waveform amplitude at all points */
-            m11[k][j] = n1[j]*A[k][j];
-            m12[k][j] = n2[j]*A[k][j];
-            
+            m11[k][j] = n1[j]*A_use[k][j];
+            m12[k][j] = n2[j]*A_use[k][j];
+ 
+            p1tmp[k][j] = A_use[k][j];
         }
-        m21[k] = s_D1(m11[k],T,t_length-1);
-        m22[k] = s_D1(m12[k],T,t_length-1);
+        s_D1(m21[k], m11[k], T, t_length-1);
+        s_D1(m22[k], m12[k], T, t_length-1);
         
-        p1tmp[k] = A[k];
-        p2tmp[k] = s_D1(p1tmp[k],T,t_length-1);
+        s_D1(p2tmp[k], p1tmp[k], T, t_length-1);
     }
 
 
@@ -312,6 +326,6 @@ void find_a1a2a3(gsl_complex o[][size_T],             /** OUTPUT Dimension: 35, 
     }
 
     //printf("%s %.16e %.16e %.16e %.16e \n","ai and bi for k=1",ai[1][0],ai[1][1],bi[1][0],bi[1][1]);
-    return o;
-
+ 
 }
+

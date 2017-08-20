@@ -71,8 +71,18 @@ double DHeff0(double x, void *DHeff_params)
     return dHeff_dr;
 }
 
-double s_bisec(double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss, void *params)
-{
+double s_bisec(
+               double pph,
+               double rorb,
+               double A,
+               double dA,
+               double rc,
+               double drc_dr,
+               double ak2,
+               double S,
+               double Ss,
+               void *params
+){
     double nu   = (*(input *)params).nu;
     double chi1 = (*(input *)params).chi1;
     double chi2 = (*(input *)params).chi2;

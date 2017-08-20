@@ -22,13 +22,31 @@
 
 /* Ringdown fit in the nonspinning case */
 
-void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4)
-{
+void QNMHybridFitCab(
+                    double nu,
+                    double* a1,
+                    double* a2,
+                    double* a3,
+                    double* a4,
+                    double* b1,
+                    double* b2,
+                    double* b3,
+                    double* b4
+){
+
+    double alpha21[35];
+    double alpha1[35];
+    double c3A[35];
+    double c3phi[35];
+    double c4phi[35];
+    double Domg[35];
+    double Amrg[35];
+    double c2A[35];
 
     // Shorthands
-    int k22 = 1;
-    int k21 = 0;
-    int k33 = 4;
+    const int k22 = 1;
+    const int k21 = 0;
+    const int k33 = 4;
     //int k32 = 3;
 
     double nu2 = nu*nu;
@@ -36,23 +54,23 @@ void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<d
     for (int i=35; i--; )
     {
         a1[i]=0.;
-    }
-    a2 = a1;
-    a3 = a1;
-    a4 = a1;
-    b1 = a1;
-    b2 = a1;
-    b3 = a1;
-    b4 = a1;
+        a2[i]=0.;
+        a3[i]=0.;
+        a4[i]=0.;
+        b1[i]=0.;
+        b2[i]=0.;
+        b3[i]=0.;
+        b4[i]=0.;
 
-    vector<double> alpha21 = a1;
-    vector<double> alpha1  = a1;
-    vector<double> c3A     = a1;
-    vector<double> c3phi   = a1;
-    vector<double> c4phi   = a1;
-    vector<double> Domg    = a1;
-    vector<double> Amrg    = a1;
-    vector<double> c2A     = a1;
+        alpha21[i] = 0.;
+        alpha1[i]  = 0.;
+        c3A[i]     = 0.;
+        c3phi[i]   = 0.;
+        c4phi[i]   = 0.;
+        Domg[i]    = 0.;
+        Amrg[i]    = 0.;
+        c2A[i]     = 0.;
+    }
 
 
     // l=2 -------------------------------------------------------------------
@@ -101,11 +119,8 @@ void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<d
         b2[i] = alpha21[i];
         b3[i] = c3phi[i];
         b4[i] = c4phi[i];
-        b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
+        b1[i] = Domg[i] * (1.+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
     }
 
-
-    //return 0;
-    
 }
 

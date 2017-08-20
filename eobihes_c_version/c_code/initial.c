@@ -19,14 +19,16 @@
 
 #include <gsl/gsl_math.h>
 #include "input_struc.h"
-#include "initial.h"
 #include "FDdrvt.h"
 #include "Metric.h"
 #include "flux.h"
 
+#include "initial.h"
+
 void initial(
-    double y_init[],             /** OUTPUT Dimension: 35*/
-    input *params){
+    double y_init[],             /** OUTPUT Dimension: 7*/
+    input *params
+){
 
     double nu = (*params).nu;
     double r0 = (*params).r0;
@@ -36,7 +38,7 @@ void initial(
     
     double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
     double E0[2*N], Omega_j[2*N];
-    double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N]
+    double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N];
     double dprstardt[2*N];
     double metric[5];
     double A5pnP15dd[2];
@@ -61,7 +63,7 @@ void initial(
         A      = metric[0];
         dA[i]  = metric[1];
         B      = metric[3];
-        A5pnP15_dd(A5pnP15dd, r[i], params)
+        A5pnP15_dd(A5pnP15dd, r[i], params);
         d2A    = A5pnP15dd[0];
         
         /** Angular momentum for circular orbit: circular ID  */

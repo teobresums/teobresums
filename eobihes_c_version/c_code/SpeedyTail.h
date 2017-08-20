@@ -22,6 +22,13 @@
 
 #include <gsl/gsl_complex.h>
 
-gsl_complex* speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
+void speedyTail(
+        gsl_complex tlm[],             /** OUTPUT Dimension: 35*/
+        const double Omega,
+        const double Hreal,
+        const double bphys,
+        const int L[],
+        const int M[]
+);
 
 #endif /* _SpeedyTail_h */

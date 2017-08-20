@@ -62,7 +62,7 @@ void s_A5PNlog(
     bool tidal_flag = (*(input *)params).tidal;
     double rLR      = (*(input *)params).rLR;
     double nu       = (*(input *)params).nu;
-    double data[5];
+//    double data[5];
 
     // constants 
     double nu2 = nu*nu;
@@ -101,7 +101,7 @@ void s_A5PNlog(
     double D5 = (nu*(-24*a6tot*(1536 + nu*(-3776 + 123*pi2)) + nu*(-2304*a5tot2 + 96*a5tot*(-3392 + 123*pi2) - (-3776 + 123*pi2)*(-3008 - 96*nu + 123*pi2))))/(96.*(-768 + nu*(3584 + 24*a5tot - 123*pi2)));
 
     // First derivatives
-    double dN1_den = (7.*((1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)))*(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2))))*u);
+    double den_pow = (7.*((1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)))*(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2))))*u);
     double dN1 = (160*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/den_pow;
     double dD1 = (160*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/den_pow;
     double dD2 = (320*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/den_pow;
@@ -110,8 +110,8 @@ void s_A5PNlog(
     double dD5 = (nu*(-8400*nu*(-24*(a6 - (4*logu*(1751 + 756*nu))/105.)*(1536 + nu*(-3776 + 123*pi2)) + nu*(-2304*gsl_pow_int(a5 + (64*logu)/5.,2) + 96*(a5 + (64*logu)/5.)*(-3392 + 123*pi2) - (-3776 + 123*pi2)*(-32*(94 + 3*nu) + 123*pi2))) - (1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)))*(4128768*logu*nu + 5*(-2689536 + nu*(11170624 + 64512*a5 - 380685*pi2) - 756*nu*(1536 + nu*(-3776 + 123*pi2))))))/(2625.*gsl_pow_int(-768 + nu*(3584 + 24*(a5 + (64*logu)/5.) - 123*pi2),2)*u);
 
     // Numerator and denominato of the Pade
-    double Num = 1 + N1*u;
-    double Den = 1 + D1*u + D2*u2 + D3*u3 + D4*u4 + D5*u5;
+    double Num = 1. + N1*u;
+    double Den = 1. + D1*u + D2*u2 + D3*u3 + D4*u4 + D5*u5;
     double A   = Num/Den;
 
     // First derivative

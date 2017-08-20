@@ -30,7 +30,7 @@ void acoeffs(
     double a[],            /** OUTPUT Dimension: 8;  ... */
     const double r,        /** Radius ... */
     const double nu
-    ){
+){
     
     const double u    = 1./r;
     const double logu = log(u);
@@ -61,9 +61,9 @@ void Metric(
     double data[],            /** OUTPUT Dimension: 5;  ... */
     const double r,
     void *params,
-    bool nnlo_flag)
-{
-    
+    bool nnlo_flag
+){
+
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
     double rLR        = (*(input *)params).rLR;
@@ -77,8 +77,8 @@ void Metric(
     const double u8  = u5*u3;
     const double u9  = u8*u;
     const double u10 = u5*u5;
-    const double  a[8];
-    acoeffs(a, r,nu);
+    double a[8];
+    acoeffs(a, r, nu);
     
     /** Get numerator and denumerator */
     
@@ -219,7 +219,8 @@ void Metric(
 void A5pnP15_dd(
     double* A_dd,            /** OUTPUT Dimension: 2;  ... */
     const double r,
-    void *params){
+    void *params
+){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
@@ -237,7 +238,8 @@ void A5pnP15_dd(
     const double sm = nu;
     
     /** Point-mass PN coefs */
-    const double* a  = acoeffs(r, nu);
+    double a[8];
+    acoeffs(a, r, nu);
     const double a3  = a[0];
     const double a4  = a[1];
     const double a5l = a[3];
@@ -245,7 +247,7 @@ void A5pnP15_dd(
     const double a6l = a[6];
     const double a6  = a[7];
     
-    const double frac[4];
+    double frac[4];
     A_NumDenom(frac, r, a, nu);
     const double  N    = frac[0];
     const double  D    = frac[1];
@@ -345,7 +347,7 @@ void A5pnP15_dd(
         
     }
     double metric[2];
-    Metric(metric, r,params,false)
+    Metric(metric, r, params, false);
     double A_ddr = -2.0*metric[1]/r+A_ddu/(r*r*r*r);
 
     A_dd[1] = A_ddu;

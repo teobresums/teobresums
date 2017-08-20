@@ -17,13 +17,11 @@
  *  MA  02111-1307  USA
  */
 
-#include <fstream>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <ios>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -37,19 +35,19 @@
 #include "s_get_rc.h"
 #include "s_GS.h"
 #include "s_Metric.h"
-#include "s_waveform.h"
 
+#include "s_waveform.h"
 
 void s_waveform(
         gsl_complex waveform[],             /** OUTPUT Dimension: 35*/
+        double *Omg,                        /** OUTPUT */
+        double *Omg_orb,                    /** OUTPUT */
+        double *A,                          /** OUTPUT */
+        double *ddotr,                      /** OUTPUT */
         double t,
         const double y[],
-        void *params,
-        double &Omg,
-        double &Omg_orb,
-        double &A,
-        double &ddotr
-    ){
+        void *params
+){
     
     double nu         = (*(input *)params).nu;
     bool   tidal_flag = (*(input *)params).tidal;
@@ -103,36 +101,36 @@ void s_waveform(
     if (spin_flag==false)
     {
         Metric(metric, r, params, false);
-        A      = metric[0];
+        *A     = metric[0];
         dA     = metric[1];
         B      = metric[3];
         dB     = metric[4];
-        one_A  = 1./A;
+        one_A  = 1./(*A);
         one_B  = 1./B;
         
-        Heff     = sqrt( prstar2 + A*(1. + pphi2*u2 + z3*prstar4*u2) );
+        Heff     = sqrt( prstar2 + (*A)*(1. + pphi2*u2 + z3*prstar4*u2) );
         H        = sqrt( 1. + 2.*nu*(Heff - 1.) )/nu; //note the 1/nu here
         double E = H*nu;
         
-        double sqrAB = sqrt(A/B);
+        double sqrAB = sqrt((*A)/B);
         
         //r evol eqn rhs
-        f[0]  = (prstar + 2.0*z3*A*prstar3*u2)/Heff;
+        f[0]  = (prstar + 2.0*z3*(*A)*prstar3*u2)/Heff;
         f[0] *= (sqrAB / E);
         
         //phi evol eqn rhs
-        Omega  = A*pphi*u2/Heff;
+        Omega  = (*A)*pphi*u2/Heff;
         Omega *= 1./E;
         f[1]   = Omega;
         
-        Omg    = Omega;
+        *Omg    = Omega;
         
         //prstar evol eqn rhs
-        f[2]  = (dA + ( pphi2 + z3*prstar4 )*( dA*u2 - 2.0*A*u3 ))/Heff;
+        f[2]  = (dA + ( pphi2 + z3*prstar4 )*( dA*u2 - 2.0*(*A)*u3 ))/Heff;
         f[2] *= -0.5 * sqrAB / E;
         
         //pphi evol eqn rhs
-        double sqrW = sqrt( A*(1. + pphi2*u2) );
+        double sqrW = sqrt( (*A)*(1. + pphi2*u2) );
         double psi  = 2.*(1.0 + 2.0*nu*(sqrW - 1.0))/(r2*dA);
         
         r_omega      = r*cbrt(psi);
@@ -144,14 +142,14 @@ void s_waveform(
         double denE     = E*Heff;
         double one_denE = 1./denE;
         
-        double dHeff_dr      = 0.5*(dA + (pphi2 + z3*prstar4)*(dA*u2 - 2*A*u3))/Heff;
-        double dHeff_dprstar = (prstar + z3*2.0*A*u2*prstar3)/Heff;
+        double dHeff_dr      = 0.5*(dA + (pphi2 + z3*prstar4)*(dA*u2 - 2.*(*A)*u3))/Heff;
+        double dHeff_dprstar = (prstar + z3*2.0*(*A)*u2*prstar3)/Heff;
         double dprstar_dt    = f[2];
         double dr_dt         = f[0];
-        double ddotr_dr      = sqrAB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA*one_A-dB*one_B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2*A*u3)*prstar3)*one_denE;
-        double ddotr_dprstar = sqrAB*( 1+z3*6.*A*u2*prstar2-(prstar + z3*2*A*u2*prstar3)*dHeff_dprstar*tmpE)*one_denE;
+        double ddotr_dr      = sqrAB*( (prstar + z3*2.*(*A)*u2*prstar3)*(0.5*(dA*one_A-dB*one_B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2.*(*A)*u3)*prstar3)*one_denE;
+        double ddotr_dprstar = sqrAB*( 1. +z3*6.*(*A)*u2*prstar2-(prstar + z3*2.*(*A)*u2*prstar3)*dHeff_dprstar*tmpE)*one_denE;
 
-        ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
+        *ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
         
     }
     else if (spin_flag==true)
@@ -163,14 +161,14 @@ void s_waveform(
         if (tidal_flag==true)
         {
             Metric(metric, r, params, false);
-            A  = metric[0];
+            *A = metric[0];
             B  = metric[3];
             dA = metric[1];
         }
         else
         {
 	        s_Metric(metric, r, params, false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
-            A      = metric[0];
+            *A     = metric[0];
             B      = metric[1];
             dA     = metric[2];
         }
@@ -183,7 +181,7 @@ void s_waveform(
         double uc2    = uc*uc;
         double uc3    = uc2*uc;
         
-        double Heff_orb = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
+        double Heff_orb = sqrt( prstar2+(*A)*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
         
         double ggm[14];
         s_GS(ggm, r, rc, drc_dr, aK2, prstar, pphi, nu, chi1, chi2, X1, X2, c3);
@@ -202,16 +200,16 @@ void s_waveform(
         H    = sqrt( 1. + 2.*nu*(Heff - 1.) );// /nu;
         double one_H = 1./H;
         
-        double sqrtAbyB = sqrt(A/B);
+        double sqrtAbyB = sqrt((*A)/B);
         
-        double dHeff_dr = pphi*(dGS_dr*S + dGSs_dr*Sstar) + 1./(2*Heff_orb)*( dA*(1 + pphi2*uc2 + z3*prstar4*uc2) - 2*A*uc3*drc_dr*(pphi2 + z3*prstar4) );
+        double dHeff_dr = pphi*(dGS_dr*S + dGSs_dr*Sstar) + 1./(2*Heff_orb)*( dA*(1. + pphi2*uc2 + z3*prstar4*uc2) - 2.*(*A)*uc3*drc_dr*(pphi2 + z3*prstar4) );
         
         double dp_rstar_dt_0 = - sqrtAbyB*one_H*dHeff_dr;
         
-        double dHeff_dprstar = pphi*(dGS_dprstar*S + dGSs_dprstar*Sstar) + (prstar/Heff_orb)*(1 + 2*A*uc2*z3*prstar2);
+        double dHeff_dprstar = pphi*(dGS_dprstar*S + dGSs_dprstar*Sstar) + (prstar/Heff_orb)*(1. + 2.*(*A)*uc2*z3*prstar2);
         
         /** Second derivative of Heff wrt to pr_star neglecting all pr_star^2 terms */
-        double d2Heff_dprstar20 = pphi*(d2GS_dprstar20*S + d2GSs_dprstar20*Sstar) +  (1./Heff_orb)*(1 + 2*A*uc2*z3*prstar2);
+        double d2Heff_dprstar20 = pphi*(d2GS_dprstar20*S + d2GSs_dprstar20*Sstar) +  (1./Heff_orb)*(1. + 2.*(*A)*uc2*z3*prstar2);
         
         
         double ddotr_dp_rstar = sqrtAbyB*one_H*d2Heff_dprstar20;
@@ -221,15 +219,15 @@ void s_waveform(
           * 0.th -- approximate ddot(r)_0 without Fphi
           *-------------------------------------------
           */
-        ddotr = dp_rstar_dt_0*ddotr_dp_rstar;  // + dr_dt.*ddotr_dr; //order pr_star^2 neglected
+        *ddotr = dp_rstar_dt_0*ddotr_dp_rstar;  // + dr_dt.*ddotr_dr; //order pr_star^2 neglected
         
         
         /*------------------ dr/dt ------------------*/
         f[0] = sqrtAbyB*one_H*dHeff_dprstar;
         
         /*----------------- d\phi/dt ----------------*/
-        Omg_orb = one_H*pphi*A*uc2/Heff_orb;
-        double dHeff_dpph = GS*S + (GSs + pphi*dGSs_dpph)*Sstar + pphi*A*uc2/Heff_orb;
+        *Omg_orb = one_H*pphi*(*A)*uc2/Heff_orb;
+        double dHeff_dpph = GS*S + (GSs + pphi*dGSs_dpph)*Sstar + pphi*(*A)*uc2/Heff_orb;
         f[1] = one_H*dHeff_dpph;
         
         /*----------------- dp_{r*}/dt --------------*/
@@ -238,7 +236,7 @@ void s_waveform(
         /*------------------ dp_{\phi}/dt -----------*/
         Omega = f[1];
         
-        Omg   = Omega;
+        *Omg   = Omega;
         
         /*----------------------------------------------------------
          * Compute here the new r_omg radius
@@ -256,7 +254,7 @@ void s_waveform(
         double dGS_dr_0  = ggm0[6];
         double dGSs_dr_0 = ggm0[7];
         
-        double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));    /** Effective Hamiltonian H_0^eff*/
+        double Heff_orb_0 = sqrt((*A)*(1.0 + pphi2*uc2));    /** Effective Hamiltonian H_0^eff*/
         double Heff_0     = Heff_orb_0 + (GS_0*S + GSs_0*Sstar)*pphi;
         double H0         = sqrt(1.0 + 2.0*nu*(Heff_0 - 1.0) );
         double one_H0     = 1./H0;
@@ -264,12 +262,9 @@ void s_waveform(
         double Gtilde     = GS_0*S     + GSs_0*Sstar;
         double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
         double duc_dr     = -uc2*drc_dr;
-        double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
+        double psic       = (duc_dr + dGtilde_dr*rc*sqrt((*A)/pphi2 + (*A)*uc2)/(*A))/(-0.5*dA);
         
-        // TO BE CHECKED
         r_omega           = cbrt(1.0/(((sqrt(1.0/((rc*rc*rc)*psic))+Gtilde)*one_H0)*((sqrt(1.0/((rc*rc*rc)*psic))+Gtilde)*one_H0)));
-        r_omega_old       = pow( (pow( gsl_pow_int(rc,3)*psic,-1./2.)+Gtilde )*one_H0 ,-2./3.);
-        printf("Check that I didn't mess it up:\nCurrent result: %f\nPrevious result:", r_omega, r_omega_old)
         
         double v_phi = r_omega*Omega;
         
@@ -278,7 +273,7 @@ void s_waveform(
         H *= 1./nu; /** Note the 1/nu */
     }
     
-    hlm(waveform, t, phi, r, pphi, prstar, Omega, ddotr, H, Heff, jhat, r_omega, params);
+    hlm(waveform, t, phi, r, pphi, prstar, Omega, *ddotr, H, Heff, jhat, r_omega, params);
     
 }
 

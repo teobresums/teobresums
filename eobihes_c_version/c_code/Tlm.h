@@ -20,6 +20,9 @@
 #ifndef _Tlm_h
 #define _Tlm_h
 
-void Tlm(double MTlm[], const double w);
+void Tlm(
+                double MTlm[],    /** OUTPUT Dimension: 35 */
+                const double w
+);
 
 #endif /* _Tlm_h */

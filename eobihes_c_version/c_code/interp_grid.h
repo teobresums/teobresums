@@ -20,6 +20,13 @@
 #ifndef _interp_h
 #define _interp_h
 
-void interp_grid(double data_g[], double t_vec[], const int size_t_vec, double data[], double dt);
+#include "Array.h"
+
+void interp_grid(
+        double data_g[],
+        Double_Array t_vec,
+        double data[],
+        double dt
+);
 
 #endif /* _interp_h */

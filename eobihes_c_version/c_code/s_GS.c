@@ -20,6 +20,7 @@
 #include <math.h>
 #include <stdbool.h>
 
+#include "input_struc.h"
 #include "s_GS.h"
 
 //double c3_fit_global(void *params){

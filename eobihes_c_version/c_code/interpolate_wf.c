@@ -17,15 +17,12 @@
  *  MA  02111-1307  USA
  */
 
-#include <fstream>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <ios>
-#include <limits>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -35,11 +32,15 @@
 #include "interpolate_wf.h"
 #include "Q_omega.h"
 
-typedef std::numeric_limits< double > dbl;
-
-//int interpolate_wf(double dt,vector<double> t_vec,vector<double> hlm_rad, vector<double> hlm_phase,bool waveform_flag,std::ofstream& wave,double Mbh)
-int interpolate_wf(double dt, double t_vec[][], double hlm_rad[][], double hlm_phase[][], bool waveform_flag,/*std::ofstream&*/ vector<string> wavenames,double Mbh)
-{
+int interpolate_wf(
+                   double dt,
+                   double t_vec[][],
+                   double hlm_rad[][],
+                   double hlm_phase[][],
+                   bool waveform_flag,
+                   vector<string> wavenames,
+                   double Mbh
+){
 
     /** Note: before the Momg_vec had a Mbh multiplied onto it! */
 

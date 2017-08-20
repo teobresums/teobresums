@@ -32,8 +32,8 @@ void hlmNQC(
     double r,
     double prstar,
     double Omega,
-    double ddotr)
-{
+    double ddotr
+){
 
     /** This file computes the NQC corrections to the RWZ multipolar waveform. */
     /*
@@ -46,7 +46,7 @@ void hlmNQC(
      http://arxiv.org/abs/1506.08457
      */
     
-    double* n;
+    double n[6];
     const int kmax = 35;
     double a1;
     double a2;
@@ -77,7 +77,7 @@ void hlmNQC(
                 b2 =  1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
                 b3 =  0.0;
                 
-                n  = NQC(r, prstar, Omega, ddotr, 0);
+                NQC(n, r, prstar, Omega, ddotr, 0);
                 
                 break;
                 
@@ -92,7 +92,7 @@ void hlmNQC(
                 b2 = 0.896911234248*(-0.61072011*xnu + 0.94295129);
                 b3 = 0.0;
                 
-                n  = NQC(r, prstar, Omega, ddotr, 1);
+                NQC(n, r, prstar, Omega, ddotr, 1);
                 
                 break;
                 
@@ -108,7 +108,7 @@ void hlmNQC(
                 b2 = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
                 b3 = 0.0;
                 
-                n  = NQC(r, prstar, Omega, ddotr, 4);
+                NQC(n, r, prstar, Omega, ddotr, 4);
                 
                 break;
                 

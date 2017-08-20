@@ -20,10 +20,8 @@
 #ifndef _constants_h
 #define _constants_h
 
-#include <math.h>
-
-const double EulerGamma = M_EULER;
-const double Log2       = M_LN2;
-const double pi         = M_PI;
+extern const double EulerGamma;// = 0.5772156649015328606065120900824024310421;
+extern const double Log2      ;// = M_LN2;
+extern const double pi        ;// = M_PI;
 
 #endif /* _constants_h */

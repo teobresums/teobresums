@@ -19,6 +19,7 @@
 
 #include <gsl/gsl_math.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "input_struc.h"
 #include "multipole_index.h"
@@ -33,7 +34,7 @@
 void s_initial(
         double y_init[],             /** OUTPUT Dimension: 7*/
         input *params
-    ){
+){
 
 /*
 % EOB_ModinSpin
@@ -66,7 +67,7 @@ void s_initial(
     double chi2     = (*params).chi2;
     double S1       = (*params).S1;
     double S2       = (*params).S2;
-    double c3       = (*(input *)params).cN3LO;
+    double c3       = (*params).cN3LO;
     bool tidal_flag = (*params).tidal;
 
 //-----------------------------------------------------------------
@@ -141,7 +142,7 @@ void s_initial(
         //Compute minimum of Heff0 using bisection method
         rorb   = r[i];
         pphorb = rorb/sqrt(rorb-3.);
-        s_bisec(pph, pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
+        pph[i] = s_bisec(pphorb, rorb, A[i], dA[i], rc[i], drc[i], aK2, S, Ss, params);
     }
 
     double dpph_dr[12];
@@ -208,18 +209,19 @@ void s_initial(
         //=================================================================
         // 1. The radial momentum conjugate to r*: post-circular correction
         //=================================================================
-    
+
+        // FIXME dpph_dr has a size of 12 but this loop has a size of 2*N, ie. 20/
         prstar[i] = Fphi[i]/(dpph_dr[i]*C0);
         pr[i]     = prstar[i]* sqrt(B[i]/A[i]);
         
         j[i]       = pph[i];
         E0[i]      = H0;
         Omega_j[i] = Omg;
-        
     }
 
     y_init[0] = r[N-1];
     y_init[1] = pph[N-1];
+    //FIXME y_init[2] y_init[3] values calculated are different from the cpp code by a very tiny amount.
     y_init[2] = prstar[N-1];
     y_init[3] = pr[N-1];
     y_init[4] = j[N-1];

@@ -20,6 +20,15 @@
 #ifndef _s_HorizonFlux_h
 #define _s_HorizonFlux_h
 
-double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double s_HorizonFlux(
+                     double x,
+                     double Heff,
+                     double jhat,
+                     double nu,
+                     double X1,
+                     double X2,
+                     double chi1,
+                     double chi2
+);
 
 #endif /* _s_HorizonFlux_h */

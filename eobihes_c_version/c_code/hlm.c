@@ -35,9 +35,10 @@
 #include "hlm_Tidal.h"
 #include "multipole_index.h"
 
-#include "hlm.h"
 #include "input_struc.h"
 #include "f_lm.h"
+
+#include "hlm.h"
 
 void hlm(
     gsl_complex hlm[], /** OUTPUT Dimension: 35*/
@@ -101,7 +102,7 @@ void hlm(
     }
     
     /** Residual phase corrections delta_{lm} */
-    const double EOBdeltalm[35];
+    double EOBdeltalm[35];
     deltalm(EOBdeltalm, Hreal, Omega, nu);
 
     gsl_complex h_NQC[35];

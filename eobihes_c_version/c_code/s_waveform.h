@@ -22,6 +22,15 @@
 
 #include <gsl/gsl_complex.h>
 
-void s_waveform(gsl_complex waveform[], double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr);
+void s_waveform(
+        gsl_complex waveform[],             /** OUTPUT Dimension: 35*/
+        double *Omg,                        /** OUTPUT */
+        double *Omg_orb,                    /** OUTPUT */
+        double *A,                          /** OUTPUT */
+        double *ddotr,                      /** OUTPUT */
+        double t,
+        const double y[],
+        void *params
+);
 
 #endif /* _s_waveform_h */

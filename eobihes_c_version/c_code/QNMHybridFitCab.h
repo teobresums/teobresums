@@ -20,10 +20,16 @@
 #ifndef _QNMHybridFitCab_h
 #define _QNMHybridFitCab_h
 
-#include <vector>
-
-using namespace::std;
-
-void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4);
+void QNMHybridFitCab(
+                    double nu,
+                    double* a1,
+                    double* a2,
+                    double* a3,
+                    double* a4,
+                    double* b1,
+                    double* b2,
+                    double* b3,
+                    double* b4
+);
 
 #endif /* _QNMHybridFitCab_h */

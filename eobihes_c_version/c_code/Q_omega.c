@@ -17,12 +17,12 @@
  *  MA  02111-1307  USA
  */
 
-#include <fstream>
-#include <iostream>
+#include <stdio.h>
+
 #include "Q_omega.h"
 
 //NOTE: routine not in use
-void Q_omega(double t[], double f[], std::ofstream& Qomg)
+void Q_omega(double t[], double f[], FILE* Qomg)
 {
     
     double dt   = t[1]-t[0];
@@ -31,7 +31,7 @@ void Q_omega(double t[], double f[], std::ofstream& Qomg)
     double d1f;
     
     const double c = 1./12.;
-    
+//FIXME : .size() should not be used.    
     for (long int i=0; i<=t.size()-3; i++)
     {
         switch (i)
@@ -47,7 +47,7 @@ void Q_omega(double t[], double f[], std::ofstream& Qomg)
                 break;
         }
         double Qomega = (f[i]*f[i])/d1f;
-        Qomg << t[i] << "\t"<< f[i] << "\t" << d1f << "\t" << Qomega << endl;
+        fprintf(Qomg, "%.17f %.17f %.17f %.17f\n", t[i], f[i], d1f, Qomega);
     }
         
 }

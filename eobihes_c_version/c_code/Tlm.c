@@ -20,18 +20,15 @@
 #include "math.h"
 #include <gsl/gsl_math.h>
 #include <stdlib.h>
-#include <vector>
-
 
 #include "constants.h"
 #include "multipole_index.h"
 #include "Tlm.h"
 
-using namespace::std;
-
-void double Tlm(
-    double MTlm[], /** OUTPUT Dimension: 35 */
-    const double w){
+void Tlm(
+                double MTlm[],    /** OUTPUT Dimension: 35 */
+                const double w
+){
 
     /* Factorials evaluated */
     double f14[] = {1.,         1.,          2.,

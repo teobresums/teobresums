@@ -20,19 +20,12 @@
 #ifndef _file_names_h
 #define _file_names_h
 
-#include <iostream>
-#include <list>
-#include <fstream>
-#include <stdio.h>
-#include <string>
-#include <vector>
-#include <tuple>
 #include "input_struc.h"
 
-#include "multipole_index.h"
-
-using namespace::std;
-
-tuple< vector<string>, vector<string> > file_names (input *params);
+void file_names (char data[512],        /** OUTPUT */
+                 char init[512],        /** OUTPUT */
+                 char waveNames[35][512],  /** OUTPUT */
+                 input *params
+);
 
 #endif /* _file_names_h */

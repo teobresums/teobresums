@@ -22,6 +22,19 @@
 
 #include <gsl/gsl_complex.h>
 
-void find_a1a2a3(gsl_complex ,double* T, const int size_T, double* r, double* w, double* pph, double* pr_star, double** hlm_phase, double* Omg_orb, double** A, double* ddotr, void *params);
+void find_a1a2a3(
+                 const int t_length,
+                 gsl_complex o[35][t_length],             /** OUTPUT Dimension: 35, t_length*/
+                 double* T,
+                 double* r,
+                 double* w,
+                 double* pph,
+                 double* pr_star,
+                 double  hlm_phase[35][t_length],
+                 double* Omg_orb,
+                 double  A[35][t_length],
+                 double* ddotr,
+                 void *params
+);
 
 #endif /* _find_a1a2a3_h */

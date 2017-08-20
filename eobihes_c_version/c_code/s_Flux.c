@@ -127,12 +127,16 @@ double s_Flux(double x, double Omega, double r_omega, double E, double Heff, dou
 	
         // Total flux multipoles
         Flm = (Modhhatlm * Modhhatlm) * FNewtlm[k];
+//        printf("Modhhatlm FNewtlm[k]\n");
+//        printf("%i %f %f\n", k, Modhhatlm, FNewtlm[k]);
         
         SFlm += Flm;
     }
     
     // Sum over multipoles and normalize to the 22 Newtonian multipole
     double hatf = SFlm/(FNewt22);
+ //   printf("SFlm FNewt22\n");
+//    printf("%f %f\n", SFlm, FNewt22);
     
     if (tidal_flag==false)
     {
@@ -141,6 +145,8 @@ double s_Flux(double x, double Omega, double r_omega, double E, double Heff, dou
     }
     
     double Fphi = -32.0/5.0* nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+//    printf("nu r_omega Omega hatf\n");
+//    printf("%f %f %f %f\n", nu ,r_omega, Omega, hatf);
 
     return Fphi;
 }

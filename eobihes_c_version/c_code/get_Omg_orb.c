@@ -19,20 +19,22 @@
 
 #include <math.h>
 
-#include "get_Omg_orb.h"
 #include "input_struc.h"
 #include "s_get_rc.h"
 #include "s_GS.h"
 
+#include "get_Omg_orb.h"
+
 void get_Omg_orb(
-    double Omg_orb[],
-    double r[],
-    const int size_r,
+    double Omg_orb[],          /** OUTPUT */
+    const double r[],
+    const int    size_r,
     const double pph[],
     const double pr_star[],
     const double A[],
-    const double B[], /** UNUSED*/
-    void *params){
+    const double B[],          /** UNUSED*/
+    void *params
+){
 
     double nu   = (*(input *)params).nu;
     double aK2  = (*(input *)params).aK2;
@@ -52,16 +54,17 @@ void get_Omg_orb(
 
     const long int r_length = size_r;
     
+    double rc_vec[3];
+    double ggm[14];
     for (int i=r_length; i--;)
     {
-
-        double* rc_vec = s_get_rc(r[i], params);
+        s_get_rc(rc_vec, r[i], params);
         double  rc     = rc_vec[0];
         double  drc_dr = rc_vec[1];
         double  uc     = 1./rc;
         double  uc2    = uc*uc;
 
-        double* ggm    = s_GS(r[i], rc, drc_dr, aK2, pr_star[i], pph[i], nu, chi1, chi2, X1, X2, c3);
+        s_GS(ggm, r[i], rc, drc_dr, aK2, pr_star[i], pph[i], nu, chi1, chi2, X1, X2, c3);
         double  GS     = ggm[2];
         double  GSs    = ggm[3];
         

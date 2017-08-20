@@ -20,7 +20,9 @@
 #ifndef _Q_omega_h
 #define _Q_omega_h
 
+#include <stdio.h>
+
 //NOTE: routine not in use
-void Q_omega(double* t, double* f, std::ofstream& Qomg);
+void Q_omega(double t[], double f[], FILE* Qomg)
 
 #endif /* _Q_omega_h */

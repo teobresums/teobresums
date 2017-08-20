@@ -23,7 +23,6 @@
 #include <gsl/gsl_complex_math.h>
 #include <stdbool.h>
 
-#include "flux.h"
 #include "f_lm.h"
 #include "FlmNewt.h"
 #include "hlmNQC.h"
@@ -33,6 +32,8 @@
 #include "multipole_index.h"
 #include "NQC.h"
 #include "Tlm.h"
+
+#include "flux.h"
 
 double flux(
     const double x,
@@ -54,8 +55,10 @@ double flux(
     double Flm;
     double Modhhatlm;
     double sqrt_one_4nu   = sqrt(1.-4.*nu);
-    const double* flm     = f_lm(x, nu);
-    const double* FNewtlm = FlmNewt(x, params);
+    double flm[35];
+    double FNewtlm[35];
+    f_lm(flm, x, nu);
+    FlmNewt(FNewtlm, x, params);
     const double  FNewt22 = FNewtlm[1];
     double MTlm[35];
     Tlm(MTlm, E*Omega);

@@ -17,13 +17,11 @@
  *  MA  02111-1307  USA
  */
 
-#include <fstream>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
-#include <ios>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
