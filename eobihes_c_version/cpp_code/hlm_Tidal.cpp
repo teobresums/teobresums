@@ -37,24 +37,29 @@ vector<double> hlm_Tidal(double x,void *params)
     int kmax   = 35;
     double x5    = gsl_pow_int(x,5);
 
-    vector<double> kAl(3);
-    vector<double> kBl(3);
+    //vector<double> kAl(3);
+    //vector<double> kBl(3);
+    // kAl[0] = (*(input *)params).kAl1;
+    // kAl[1] = (*(input *)params).kAl2;
+    // kAl[2] = (*(input *)params).kAl3;
+    // kBl[0] = (*(input *)params).kBl1;
+    // kBl[1] = (*(input *)params).kBl2;
+    // kBl[2] = (*(input *)params).kBl3;
+
     vector<double> hA(kmax);
 
-    kAl[0] = (*(input *)params).kAl1;
-    kAl[1] = (*(input *)params).kAl2;
-    kAl[2] = (*(input *)params).kAl3;
-    kBl[0] = (*(input *)params).kBl1;
-    kBl[1] = (*(input *)params).kBl2;
-    kBl[2] = (*(input *)params).kBl3;
+    double lambdaA2 = (*(input *)params).LambdaAl2;
+    double lambdaB2 = (*(input *)params).LambdaBl2;
     
-    double CA = (*(input *)params).CA;
-    double CB = (*(input *)params).CB;
+    //double CA = (*(input *)params).CA;
+    //double CB = (*(input *)params).CB;
     double XA = (*(input *)params).X1;
     double XB = (*(input *)params).X2;
     
-    double khatA_2 = kAl[0] * XB/XA *gsl_pow_int(XA/CA,5);
-    double khatB_2 = kBl[0] * XA/XB *gsl_pow_int(XB/CB,5);
+    //double khatA_2 = kAl[0] * XB/XA *gsl_pow_int(XA/CA,5);
+    //double khatB_2 = kBl[0] * XA/XB *gsl_pow_int(XB/CB,5);
+    double khatA_2 = 0.5 * lambdaA2 * XB/XA * gsl_pow_int(XA,5);
+    double khatB_2 = 0.5 * lambdaB2 * XA/XB * gsl_pow_int(XB,5);
     
     for (int i=kmax; i--; )
     {
