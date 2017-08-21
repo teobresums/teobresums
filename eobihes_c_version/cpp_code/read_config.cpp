@@ -119,28 +119,22 @@ input read_config(double q, double chi1, double chi2, double r0){
                 params.solver_scheme = param_value;
                 break;
             case 9:
-                params.kAl1 = param_value;
+                params.LambdaAl2 = param_value;
                 break;
             case 10:
-                params.kAl2 = param_value;
+                params.LambdaAl3 = param_value;
                 break;
             case 11:
-                params.kAl3 = param_value;
+                params.LambdaAl4 = param_value;
                 break;
             case 12:
-                params.kBl1 = param_value;
+                params.LambdaBl2 = param_value;
                 break;
             case 13:
-                params.kBl2 = param_value;
+                params.LambdaBl3 = param_value;
                 break;
             case 14:
-                params.kBl3 = param_value;
-                break;
-            case 15:
-                params.CA = param_value;
-                break;
-            case 16:
-                params.CB = param_value;
+                params.LambdaBl4 = param_value;
                 break;
             default:
                 break;
@@ -195,8 +189,8 @@ input read_config(double q, double chi1, double chi2, double r0){
     if (params.tidal==true) {
         params.NQC = false;
     }        
-    double lambda1 = 2./3.*params.kAl2/pow(params.CA,5);
-    double lambda2 = 2./3.*params.kBl2/pow(params.CB,5);
+    double lambda1 = LambdaAl2 
+    double lambda2 = LambdaBl2
     double logC_Q1 = logQ(log(lambda1));
     double logC_Q2 = logQ(log(lambda2));
     double C_Q1    = exp(logC_Q1);
