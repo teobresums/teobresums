@@ -24,6 +24,7 @@
 #include <time.h>
 #include <cmath>
 #include <string>
+#include <cstring>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
@@ -71,7 +72,10 @@ int main (int argc,char* argv[])
     r0            = params.r0;
     dt            = params.dt;
     solver_scheme = params.solver_scheme;
-    
+
+    params.outputdir.assign(argv[5]);   
+    cout << "OUTPUTDIR\t" << params.outputdir << '\n'; 
+      
     if (params.tidal==true)
     {
         rLR        = AdiabLR(&params);
@@ -80,8 +84,13 @@ int main (int argc,char* argv[])
         printf("%s %.16e \n","rLR",params.rLR);
     }
     /** Creating folder with permission to read, write and execute*/
-    mkdir("data",0777);
-    
+    //mkdir("data",0777);
+    //if (mkdir(params.outputdir.c_str(),0777)==-1) {
+    if (system(("mkdir -p "+params.outputdir).c_str())==-1) {
+      cout << "\nproblem making output dir\nexiting.";
+      return 0;
+    }
+
     /** Output file definitions */
     //vector<string> fnames = file_names(&params);
     vector<string> fnames;

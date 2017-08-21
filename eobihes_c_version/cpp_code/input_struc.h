@@ -20,6 +20,8 @@
 #ifndef _input_struc_h
 #define _input_struc_h
 
+#include <string> //  std::string outputdir; requires this, not sure why
+
 struct input
 {         /* declaration of structure for input parameters */
     int   lm;
@@ -57,9 +59,10 @@ struct input
     bool RWZ;
     bool speedy;
     bool dynamics;
-    bool waveform;
-    bool spin;
-
+  bool waveform;
+  bool spin;
+  //char outputdir[256];
+  std::string outputdir; // = "data";
 };
 
 struct input_flags

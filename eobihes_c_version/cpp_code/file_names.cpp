@@ -86,17 +86,18 @@ tuple<vector<string>, vector<string> > file_names (input *params)
              break;
      }
 
-    string data = "data/dynamics_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat";
+     string data = (*params).outputdir+"/dynamics_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat";
+
     for (int k=35; k--; )
     {
-        wave[k] = "data/h_"+conf+"_"+std::to_string(L[k])+std::to_string(M[k])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat";
+        wave[k] = (*params).outputdir+"/h_"+conf+"_"+std::to_string(L[k])+std::to_string(M[k])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat";
     }
     //string wave("data/h_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
-    string QOmg("data/Qomg_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
-    string Afunc("data/Afunc_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
-    string init("data/initialData_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+".dat");
-    string time_step("data/Tstep_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
-    string runReport("data/runReport_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
+    string QOmg((*params).outputdir+"/Qomg_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
+    string Afunc((*params).outputdir+"/Afunc_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
+    string init((*params).outputdir+"/initialData_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+".dat");
+    string time_step((*params).outputdir+"/Tstep_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
+    string runReport((*params).outputdir+"/runReport_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
 
     //return {data,wave,QOmg,Afunc,init,time_step,runReport};
     vector<string> files = {data,init,QOmg,Afunc,time_step,runReport,"0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0"};
