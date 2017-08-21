@@ -130,9 +130,14 @@ double dA_u      = prefactor*(dNum*Den - dDen*Num);
         
         // Tidal PN coefs
         double q   =  (1.+sqrt(1-4*nu)-2.*nu)/(2.*nu); // q>=1 
-        double XA  =  0.5*(1.+sqrt(1.-4.*nu));
-        double XB  =  1.-XA;
-			   
+        //double XA  =  0.5*(1.+sqrt(1.-4.*nu));
+        //double XB  =  1.-XA;
+	// CHECK IF THE SAME (BE AWARE ANOTHE DEF BELOW IN OTHER ROUTINE):
+	double XA = (*(input *)params).X1;
+	double XB = (*(input *)params).X2;
+		
+
+	   
         //dimensionless Love numbers (apsidal constants)
         //vector<double> kAl(3);
         //vector<double> kBl(3);

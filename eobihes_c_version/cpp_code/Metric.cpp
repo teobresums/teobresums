@@ -99,9 +99,13 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
         
         // Tidal PN coefs
         double q   =  (1.+sqrt(1.-4.*nu)-2.*nu)/(2.*nu);
-        double XA  =  0.5*(1+sqrt(1.-4.*nu));
-        double XB  =  1.-XA;
+        //double XA  =  0.5*(1+sqrt(1.-4.*nu));
+        //double XB  =  1.-XA;
+	// CHECK IF THE SAME (BE AWARE ANOTHE DEF BELOW IN OTHER ROUTINE):
+	double XA = (*(input *)params).X1;
+	double XB = (*(input *)params).X2;
 			   
+
         /** \bar{lambda} from Yagi et al. REF: */
         double lambdaAl2, lambdaAl3, lambdaAl4;
         double lambdaBl2, lambdaBl3, lambdaBl4;
@@ -256,8 +260,11 @@ vector<double> A5pnP15_dd(const double r, void *params)
       
         /** Tidal PN coefs */
         double q    = (1.+sqrt(1.-4.*nu)-2.*nu)/(2.*nu);
-        double XA   =  0.5*(1.+sqrt(1.-4.*nu));
-        double XB   =  1.-XA;
+        //double XA   =  0.5*(1.+sqrt(1.-4.*nu));
+        //double XB   =  1.-XA;
+	// CHECK IF THE SAME (BE AWARE ANOTHE DEF ABOVE IN OTHER ROUTINE):
+	double XA = (*(input *)params).X1;
+	double XB = (*(input *)params).X2;
 
         /** \bar{lambda} from Yagi et al. REF: */
         double lambdaAl2;
