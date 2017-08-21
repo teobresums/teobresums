@@ -60,12 +60,13 @@ int main (int argc,char* argv[])
     bool stop_flag, MOmgpeak_flag;
     
     
-    q    = atof(argv[1]);
-    chi1 = atof(argv[2]);
-    chi2 = atof(argv[3]);
-    r0   = atof(argv[4]);
-    
-    input params  = read_config(q,chi1,chi2,r0);
+    // q    = atof(argv[1]);
+    // chi1 = atof(argv[2]);
+    // chi2 = atof(argv[3]);
+    // r0   = atof(argv[4]);    
+    //input params  = read_config(q,chi1,chi2,r0);
+    printf("parfile: %s\n",argv[1]);
+    input params  = read_config(argv[1]);
     
     q             = params.q;
     nu            = params.nu;
@@ -73,7 +74,11 @@ int main (int argc,char* argv[])
     dt            = params.dt;
     solver_scheme = params.solver_scheme;
 
-    params.outputdir.assign(argv[5]);   
+    if (argc>2) {
+      params.outputdir.assign(argv[2]);   
+    } else {
+      params.outputdir.assign("data");
+    }
     cout << "OUTPUTDIR\t" << params.outputdir << '\n'; 
       
     if (params.tidal==true)

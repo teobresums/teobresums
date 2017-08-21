@@ -23,6 +23,7 @@
 #include "input_struc.h"
 
 double logQ(double x);
-input read_config(double q, double chi1, double chi2, double r0);
+//input read_config(double q, double chi1, double chi2, double r0);
+input read_config(char *fname);
 
 #endif /* _read_config_h */
