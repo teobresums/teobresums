@@ -125,7 +125,7 @@ input read_config(double q, double chi1, double chi2, double r0){
                 params.LambdaAl3 = param_value;
                 break;
             case 11:
-                params.LambdaAl4 = param_value;
+	      params.LambdaAl4 = param_value;
                 break;
             case 12:
                 params.LambdaBl2 = param_value;
@@ -189,8 +189,8 @@ input read_config(double q, double chi1, double chi2, double r0){
     if (params.tidal==true) {
         params.NQC = false;
     }        
-    double lambda1 = LambdaAl2 
-    double lambda2 = LambdaBl2
+    double lambda1 = params.LambdaAl2;
+    double lambda2 = params.LambdaBl2;
     double logC_Q1 = logQ(log(lambda1));
     double logC_Q2 = logQ(log(lambda2));
     double C_Q1    = exp(logC_Q1);
