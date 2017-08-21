@@ -58,8 +58,8 @@ vector<double> hlm_Tidal(double x,void *params)
     
     //double khatA_2 = kAl[0] * XB/XA *gsl_pow_int(XA/CA,5);
     //double khatB_2 = kBl[0] * XA/XB *gsl_pow_int(XB/CB,5);
-    double khatA_2 = 0.5 * lambdaA2 * XB/XA * gsl_pow_int(XA,5);
-    double khatB_2 = 0.5 * lambdaB2 * XA/XB * gsl_pow_int(XB,5);
+    double khatA_2 = 3./2. * lambdaA2 * XB/XA * gsl_pow_int(XA,5);
+    double khatB_2 = 3./2. * lambdaB2 * XA/XB * gsl_pow_int(XB,5);
     
     for (int i=kmax; i--; )
     {
