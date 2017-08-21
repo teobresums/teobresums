@@ -102,30 +102,31 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
         double XA  =  0.5*(1+sqrt(1.-4.*nu));
         double XB  =  1.-XA;
 			   
-        /** Dimensionless Love numbers (apsidal constants) */
-        vector<double> kAl(3);
-        vector<double> kBl(3);
+        /** \bar{lambda} from Yagi et al. REF: */
+        double LambdaAl2;
+        double LambdaAl3;
+        double LambdaAl4;
 
-        kAl[0] = (*(input *)params).kAl1;
-        kAl[1] = (*(input *)params).kAl2;
-        kAl[2] = (*(input *)params).kAl3;
+        double LambdaBl2;
+        double LambdaBl3;
+        double LambdaBl4;
+
+        LambdaAl2 = (*(input *)params).LambdaAl2;
+        LambdaAl3 = (*(input *)params).LambdaAl3;
+        LambdaAl4 = (*(input *)params).LambdaAl4;
         
-        kBl[0] = (*(input *)params).kBl1;
-        kBl[1] = (*(input *)params).kBl2;
-        kBl[2] = (*(input *)params).kBl3;
-        
-        /** Compactness of the star */
-        double CA = (*(input *)params).CA;
-        double CB = (*(input *)params).CB;
-        
+        LambdaBl2 = (*(input *)params).LambdaBl2;
+        LambdaBl3 = (*(input *)params).LambdaBl3;
+        LambdaBl4 = (*(input *)params).LambdaBl4; 
+       
         /** Computing the tidal coupling constants */
-        double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
-        double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
-        double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
-        
-        double kapB2 = 2. * kBl[0] * pow(XB/CB, 2.*2 +1.) * q;
-        double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
-        double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
+        double kapA2 = 3   * LambdaAl2 * pow(XA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA3 = 15  * LambdaAl3 * pow(XA, 2.*3 +1.) * q;
+        double kapA4 = 105 * LambdaAl4 * pow(XA, 2.*4 +1.) * q;
+ 
+        double kapB2 = 3   * LambdaBl2 * pow(XB, 2.*2 +1.) * 1./q;
+        double kapB3 = 15  * LambdaBl3 * pow(XB, 2.*3 +1.) * 1./q;
+        double kapB4 = 105 * LambdaBl4 * pow(XB, 2.*4 +1.) * 1./q;
         
         double kapT2 = kapA2 + kapB2;
         double kapT3 = kapA3 + kapB3;
@@ -257,29 +258,39 @@ vector<double> A5pnP15_dd(const double r, void *params)
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
 
        /** Compactness of the star */
-       double CA = (*(input *)params).CA;
-       double CB = (*(input *)params).CB;
       
         /** Tidal PN coefs */
         double q    = (1.+sqrt(1.-4.*nu)-2.*nu)/(2.*nu);
         double XA   =  0.5*(1.+sqrt(1.-4.*nu));
         double XB   =  1.-XA;
-						
-        /** Dimensionless Love numbers (apsidal constants) */
-        vector<double> kAl(3);
-        vector<double> kBl(3);
 
-	//------------------------------------------------------------------------------
-    //   Computing the tidal coupling constants: Eq. (31) of D&N, PRD 81, 084016 (2010)
-	//------------------------------------------------------------------------------
-        double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; //Note: kap stands for kappa
-        double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
-        double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
-        
-        double kapB2 = 2. * kBl[0] * pow(XB/CB, 2.*2 +1.) * q;
-        double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
-        double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
-        
+        /** \bar{lambda} from Yagi et al. REF: */
+        double LambdaAl2;
+        double LambdaAl3;
+        double LambdaAl4;
+
+        double LambdaBl2;
+        double LambdaBl3;
+        double LambdaBl4;
+
+        LambdaAl2 = (*(input *)params).LambdaAl2;
+        LambdaAl3 = (*(input *)params).LambdaAl3;
+        LambdaAl4 = (*(input *)params).LambdaAl4;
+
+        LambdaBl2 = (*(input *)params).LambdaBl2;
+        LambdaBl3 = (*(input *)params).LambdaBl3;
+        LambdaBl4 = (*(input *)params).LambdaBl4;
+
+        /** Computing the tidal coupling constants: Eq. (31) of D&N, PRD 81, 084016 (2010) */
+        double kapA2 = 3   * LambdaAl2 * pow(XA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA3 = 15  * LambdaAl3 * pow(XA, 2.*3 +1.) * q;
+        double kapA4 = 105 * LambdaAl4 * pow(XA, 2.*4 +1.) * q;
+
+        double kapB2 = 3   * LambdaBl2 * pow(XB, 2.*2 +1.) * 1./q;
+        double kapB3 = 15  * LambdaBl3 * pow(XB, 2.*3 +1.) * 1./q;
+        double kapB4 = 105 * LambdaBl4 * pow(XB, 2.*4 +1.) * 1./q;						
+       
+ 
         double kapT2 = kapA2 + kapB2;
         double kapT3 = kapA3 + kapB3;
         double kapT4 = kapA4 + kapB4;
