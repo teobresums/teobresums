@@ -166,13 +166,13 @@ double dA_u      = prefactor*(dNum*Den - dDen*Num);
         double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
         double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
         */
-	double kapA2 = 3.   * lambdaA2 * pow(XA, 2.*2 +1.) * q; // check those MULT/DIV by q, and convention XA,B
-        double kapA3 = 15.  * lambdaA3 * pow(XA, 2.*3 +1.) * q;
-        double kapA4 = 105. * lambdaA4 * pow(XA, 2.*4 +1.) * q;
+	double kapA2 = 3.   * lambdaA2 * pow(XA, 2.*2 +1.) / q; // check those MULT/DIV by q, and convention XA,B
+        double kapA3 = 15.  * lambdaA3 * pow(XA, 2.*3 +1.) / q;
+        double kapA4 = 105. * lambdaA4 * pow(XA, 2.*4 +1.) / q;
         
-        double kapB2 = 3.   * lambdaB2 * pow(XB, 2.*2 +1.) / q;
-        double kapB3 = 15.  * lambdaB3 * pow(XB, 2.*3 +1.) / q;
-        double kapB4 = 105. * lambdaB4 * pow(XB, 2.*4 +1.) / q;
+        double kapB2 = 3.   * lambdaB2 * pow(XB, 2.*2 +1.) * q;
+        double kapB3 = 15.  * lambdaB3 * pow(XB, 2.*3 +1.) * q;
+        double kapB4 = 105. * lambdaB4 * pow(XB, 2.*4 +1.) * q;
 
         double kapT2 = kapA2 + kapB2;
         double kapT3 = kapA3 + kapB3;

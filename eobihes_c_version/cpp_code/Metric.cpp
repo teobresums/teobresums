@@ -119,13 +119,13 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
         lambdaBl4 = (*(input *)params).LambdaBl4; 
        
         /** Computing the tidal coupling constants */
-        double kapA2 = 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
-        double kapA3 = 15.  * lambdaAl3 * pow(XA, 2.*3 +1.) * q;
-        double kapA4 = 105. * lambdaAl4 * pow(XA, 2.*4 +1.) * q;
+        double kapA2 = 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA3 = 15.  * lambdaAl3 * pow(XA, 2.*3 +1.) / q;
+        double kapA4 = 105. * lambdaAl4 * pow(XA, 2.*4 +1.) / q;
  
-        double kapB2 = 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) / q;
-        double kapB3 = 15.  * lambdaBl3 * pow(XB, 2.*3 +1.) / q;
-        double kapB4 = 105. * lambdaBl4 * pow(XB, 2.*4 +1.) / q;
+        double kapB2 = 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
+        double kapB3 = 15.  * lambdaBl3 * pow(XB, 2.*3 +1.) * q;
+        double kapB4 = 105. * lambdaBl4 * pow(XB, 2.*4 +1.) * q;
         
         double kapT2 = kapA2 + kapB2;
         double kapT3 = kapA3 + kapB3;
@@ -285,13 +285,13 @@ vector<double> A5pnP15_dd(const double r, void *params)
 
         /** Computing the tidal coupling constants: Eq. (31) of D&N, PRD 81, 084016 (2010) */
        
-        double kapA2 = 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) * q; //Note: kap stands for kappa; see eqn(1) of REF
-        double kapA3 = 15.  * lambdaAl3 * pow(XA, 2.*3 +1.) * q;
-        double kapA4 = 105. * lambdaAl4 * pow(XA, 2.*4 +1.) * q;
+        double kapA2 = 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA3 = 15.  * lambdaAl3 * pow(XA, 2.*3 +1.) / q;
+        double kapA4 = 105. * lambdaAl4 * pow(XA, 2.*4 +1.) / q;
 
-        double kapB2 = 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) / q;
-        double kapB3 = 15.  * lambdaBl3 * pow(XB, 2.*3 +1.) / q;
-        double kapB4 = 105. * lambdaBl4 * pow(XB, 2.*4 +1.) / q;
+        double kapB2 = 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
+        double kapB3 = 15.  * lambdaBl3 * pow(XB, 2.*3 +1.) * q;
+        double kapB4 = 105. * lambdaBl4 * pow(XB, 2.*4 +1.) * q;
  
         double kapT2 = kapA2 + kapB2;
         double kapT3 = kapA3 + kapB3;
