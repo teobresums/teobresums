@@ -56,6 +56,9 @@ struct input
     double kappaBl2; 
     double kappaBl3; 
     double kappaBl4;
+    double kappaTl2; 
+    double kappaTl3; 
+    double kappaTl4;
     double C_Q1;
     double C_Q2;
     bool NQC;
