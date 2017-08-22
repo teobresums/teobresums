@@ -137,7 +137,7 @@ int main (int argc,char* argv[])
     
     init << "r" << "\t" << "p_phi" << "\t" << "p_r*" << "\t" << "p_r" << "\t" << "j" << "\t" << "E0" << "\t" << "Omega_j" << endl;
     init << initial_data[0] << "\t" << initial_data[1] << "\t" << initial_data[2] << "\t" << initial_data[3] << "\t" << initial_data[4] << "\t" << initial_data[5] << "\t" << initial_data[6] << endl;
-    printf ("%.20e %.20e %.20e %.20e %.20e %.20e %.20e \n", initial_data[0], initial_data[1], initial_data[2], initial_data[3], initial_data[4], initial_data[5], initial_data[6]);
+    printf ("r0:  %.20e \npph:  %.20e \nprstar: %.20e \npr: %.20e \nj: %.20e \nE0: %.20e \nOmega_j: %.20e\n", initial_data[0], initial_data[1], initial_data[2], initial_data[3], initial_data[4], initial_data[5], initial_data[6]);
     
     /** Initial conditions: t, r, phi, prstar, pphi */
     t    = 0.0;
