@@ -59,7 +59,8 @@ struct input
     double kappaTl2; 
     double kappaTl3; 
     double kappaTl4;
-    double C_Q1;
+  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2;
+   double C_Q1;
     double C_Q2;
     bool NQC;
     bool tidal;
