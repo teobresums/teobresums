@@ -59,7 +59,7 @@ int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double>
         vector<double> t_interp(grid_length);
 
         /** Convert all vectors to an array */
-        if (k==1 || k==0 || k==4)
+        if (k==1)
         {
             double* t      = &t_vec[k][0];
             double* radial = &hlm_rad[k][0];

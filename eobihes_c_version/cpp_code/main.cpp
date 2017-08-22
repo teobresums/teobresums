@@ -299,7 +299,7 @@ int main (int argc,char* argv[])
             if (MOmg < MOmg_prev)
             {
                 MOmgpeak_flag = true;
-                t_stop        = t + 10.;
+                t_stop        = t + 4.*dt;
             }
             else
             {
