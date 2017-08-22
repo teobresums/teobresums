@@ -158,16 +158,18 @@ input read_config(char *fname){
     }
     fin.close();
 
-    // tmp
-    double chi1 = params.chi1;
-    double chi2 = params.chi2;
-    double q = params.q;
-
     /*set spin flag*/
     if (chi1 != .0 || chi2 != .0) {
         params.spin = true;
         params.NQC  = false;
     } else {params.spin = false;}
+
+    // calculate parameters
+
+    // tmp
+    double chi1 = params.chi1;
+    double chi2 = params.chi2;
+    double q = params.q;
     
     double nu = q/((q+1.)*(q+1.));
     params.nu = nu;
@@ -176,13 +178,13 @@ input read_config(char *fname){
     
     double X1 = 0.5*(1.+sqrt(1.-4.*nu));
     double X2 = 1. - X1;
-    
+    double XA = X1; // a different notation used in tidal part, keep here for simplicity
+    double XB = X2;
     params.X1   = X1;
     params.X2   = X2;
     
     double S1 = pow(params.X1, 2.) * params.chi1;
     double S2 = pow(params.X2, 2.) * params.chi2;
-    
     params.S1 = S1;
     params.S2 = S2;
     
@@ -205,13 +207,53 @@ input read_config(char *fname){
     if (params.tidal==true) {
         params.NQC = false;
     }        
-    double lambda1 = params.LambdaAl2;
-    double lambda2 = params.LambdaBl2;
-    double logC_Q1 = logQ(log(lambda1));
-    double logC_Q2 = logQ(log(lambda2));
-    double C_Q1    = exp(logC_Q1);
-    double C_Q2    = exp(logC_Q2);
+
+    // tidal params
+    double lambdaAl2 = params.LambdaAl2;
+    double lambdaAl3 = params.LambdaAl3;
+    double lambdaAl4 = params.LambdaAl4;
     
+    double lambdaBl2 = params.LambdaBl2;
+    double lambdaBl3 = params.LambdaBl3;
+    double lambdaBl4 = params.LambdaBl4; 
+    
+    /** Computing the tidal coupling constants */
+    double kapA2 = 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+    double kapA3 = 15.  * lambdaAl3 * pow(XA, 2.*3 +1.) / q;
+    double kapA4 = 105. * lambdaAl4 * pow(XA, 2.*4 +1.) / q;
+    
+    double kapB2 = 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
+    double kapB3 = 15.  * lambdaBl3 * pow(XB, 2.*3 +1.) * q;
+    double kapB4 = 105. * lambdaBl4 * pow(XB, 2.*4 +1.) * q;
+    
+    double kapT2 = kapA2 + kapB2;
+    double kapT3 = kapA3 + kapB3;
+    double kapT4 = kapA4 + kapB4;
+
+    params.kappaAl2 = kapA2;
+    params.kappaAl3 = kapA3;
+    params.kappaAl4 = kapA4;
+
+    params.kappaBl2 = kapB2;
+    params.kappaBl3 = kapB3;
+    params.kappaBl4 = kapB4;
+
+    params.kappaT2 = kapT2;
+    params.kappaT3 = kapT3;
+    params.kappaT4 = kapT4;
+
+    params.bar_alph2_1 = (5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
+    params.bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+    params.bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+    params.bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+    
+
+    //double lambda1 = params.LambdaAl2;
+    //double lambda2 = params.LambdaBl2;
+    double logC_Q1 = logQ(log(lambdaA2));
+    double logC_Q2 = logQ(log(lambdaB2));
+    double C_Q1    = exp(logC_Q1);
+    double C_Q2    = exp(logC_Q2);    
     params.C_Q1 = C_Q1;
     params.C_Q2 = C_Q2;
     
