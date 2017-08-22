@@ -158,18 +158,19 @@ input read_config(char *fname){
     }
     fin.close();
 
-    /*set spin flag*/
-    if (chi1 != .0 || chi2 != .0) {
-        params.spin = true;
-        params.NQC  = false;
-    } else {params.spin = false;}
-
     // calculate parameters
 
     // tmp
     double chi1 = params.chi1;
     double chi2 = params.chi2;
     double q = params.q;
+
+    /*set spin flag*/
+    if (chi1 != .0 || chi2 != .0) {
+        params.spin = true;
+        params.NQC  = false;
+    } else {params.spin = false;}
+
     
     double nu = q/((q+1.)*(q+1.));
     params.nu = nu;
@@ -238,10 +239,14 @@ input read_config(char *fname){
     params.kappaBl3 = kapB3;
     params.kappaBl4 = kapB4;
 
-    params.kappaT2 = kapT2;
-    params.kappaT3 = kapT3;
-    params.kappaT4 = kapT4;
+    params.kappaTl2 = kapT2;
+    params.kappaTl3 = kapT3;
+    params.kappaTl4 = kapT4;
 
+    //-----------------------------------------------------------------------------------
+    // Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, Eq.(37)
+    // of Damour&Nagar, PRD 81, 084016 (2010)
+    //-----------------------------------------------------------------------------------
     params.bar_alph2_1 = (5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
     params.bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
     params.bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
@@ -250,8 +255,8 @@ input read_config(char *fname){
 
     //double lambda1 = params.LambdaAl2;
     //double lambda2 = params.LambdaBl2;
-    double logC_Q1 = logQ(log(lambdaA2));
-    double logC_Q2 = logQ(log(lambdaB2));
+    double logC_Q1 = logQ(log(lambdaAl2));
+    double logC_Q2 = logQ(log(lambdaBl2));
     double C_Q1    = exp(logC_Q1);
     double C_Q2    = exp(logC_Q2);    
     params.C_Q1 = C_Q1;

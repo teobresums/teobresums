@@ -141,47 +141,64 @@ double dA_u      = prefactor*(dNum*Den - dDen*Num);
         //dimensionless Love numbers (apsidal constants)
         //vector<double> kAl(3);
         //vector<double> kBl(3);
-	double lambdaA2, lambdaA3, lambdaA4;
-	double lambdaB2, lambdaB3, lambdaB4;
+	// double lambdaA2, lambdaA3, lambdaA4;
+	// double lambdaB2, lambdaB3, lambdaB4;
 
-        lambdaA2 = (*(input *)params).LambdaAl2;
-        lambdaA3 = (*(input *)params).LambdaAl3;
-        lambdaA4 = (*(input *)params).LambdaAl4;
+        // lambdaA2 = (*(input *)params).LambdaAl2;
+        // lambdaA3 = (*(input *)params).LambdaAl3;
+        // lambdaA4 = (*(input *)params).LambdaAl4;
 
-        lambdaB2 = (*(input *)params).LambdaBl2;
-        lambdaB3 = (*(input *)params).LambdaBl3;
-        lambdaB4 = (*(input *)params).LambdaBl4;
+        // lambdaB2 = (*(input *)params).LambdaBl2;
+        // lambdaB3 = (*(input *)params).LambdaBl3;
+        // lambdaB4 = (*(input *)params).LambdaBl4;
         
-        //Compactness of the star
-        //double CA = (*(input *)params).CA;
-        //double CB = (*(input *)params).CB;
+        // //Compactness of the star
+        // //double CA = (*(input *)params).CA;
+        // //double CB = (*(input *)params).CB;
         
-        //Computing the tidal coupling constants
-        /*
-	double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; // one of the two is wrong, one of them must be DIVIDED by q 
-        double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
-        double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
+        // //Computing the tidal coupling constants
+	// double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; // one of the two is wrong, one of them must be DIVIDED by q 
+        // double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
+        // double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
 
-        double kapB2 = 2. * kBl[0] * pow(XB/CB, 2.*2 +1.) * q;
-        double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
-        double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
-        */
-	double kapA2 = 3.   * lambdaA2 * pow(XA, 2.*2 +1.) / q; // check those MULT/DIV by q, and convention XA,B
-        double kapA3 = 15.  * lambdaA3 * pow(XA, 2.*3 +1.) / q;
-        double kapA4 = 105. * lambdaA4 * pow(XA, 2.*4 +1.) / q;
+        // double kapB2 = 2. * kBl[0] * pow(XB/CB, 2.*2 +1.) * q;
+        // double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
+        // double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
+	// double kapA2 = 3.   * lambdaA2 * pow(XA, 2.*2 +1.) / q; // check those MULT/DIV by q, and convention XA,B
+        // double kapA3 = 15.  * lambdaA3 * pow(XA, 2.*3 +1.) / q;
+        // double kapA4 = 105. * lambdaA4 * pow(XA, 2.*4 +1.) / q;
         
-        double kapB2 = 3.   * lambdaB2 * pow(XB, 2.*2 +1.) * q;
-        double kapB3 = 15.  * lambdaB3 * pow(XB, 2.*3 +1.) * q;
-        double kapB4 = 105. * lambdaB4 * pow(XB, 2.*4 +1.) * q;
+        // double kapB2 = 3.   * lambdaB2 * pow(XB, 2.*2 +1.) * q;
+        // double kapB3 = 15.  * lambdaB3 * pow(XB, 2.*3 +1.) * q;
+        // double kapB4 = 105. * lambdaB4 * pow(XB, 2.*4 +1.) * q;
 
-        double kapT2 = kapA2 + kapB2;
-        double kapT3 = kapA3 + kapB3;
-        double kapT4 = kapA4 + kapB4;
+        // double kapT2 = kapA2 + kapB2;
+        // double kapT3 = kapA3 + kapB3;
+        // double kapT4 = kapA4 + kapB4;
 
-        double bar_alph2_1 = (5/2.*XA*kapA2 + 5/2.*XB*kapB2)/kapT2;
-	double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
-	double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
-	double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+        // double bar_alph2_1 = (5/2.*XA*kapA2 + 5/2.*XB*kapB2)/kapT2;
+	// double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+	// double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+	// double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+
+        double kapA2 = (*(input *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA3 = (*(input *)params).kappaAl3; //15.  * lambdaAl3 * pow(XA, 2.*3 +1.) / q;
+        double kapA4 = (*(input *)params).kappaAl4; //105. * lambdaAl4 * pow(XA, 2.*4 +1.) / q;
+ 
+        double kapB2 = (*(input *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
+        double kapB3 = (*(input *)params).kappaBl3; //15.  * lambdaBl3 * pow(XB, 2.*3 +1.) * q;
+        double kapB4 = (*(input *)params).kappaBl4; //;105. * lambdaBl4 * pow(XB, 2.*4 +1.) * q;
+        
+        double kapT2 = (*(input *)params).kappaTl2; // kapA2 + kapB2;
+        double kapT3 = (*(input *)params).kappaTl3;//kapA3 + kapB3;
+        double kapT4 = (*(input *)params).kappaTl4;//kapA4 + kapB4;
+
+        double bar_alph2_1 = (*(input *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
+      	double bar_alph2_2 = (*(input *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+      	double bar_alph3_1 = (*(input *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+      	double bar_alph3_2 = (*(input *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+
+
 
 			       
         //case 'nnlo'
