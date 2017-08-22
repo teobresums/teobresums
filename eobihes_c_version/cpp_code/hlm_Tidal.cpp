@@ -55,6 +55,9 @@ vector<double> hlm_Tidal(double x,void *params)
     //double CB = (*(input *)params).CB;
     double XA = (*(input *)params).X1;
     double XB = (*(input *)params).X2;
+
+
+    // parameters from here *
     
     //double khatA_2 = kAl[0] * XB/XA *gsl_pow_int(XA/CA,5);
     //double khatB_2 = kBl[0] * XA/XB *gsl_pow_int(XB/CB,5);
@@ -90,6 +93,10 @@ vector<double> hlm_Tidal(double x,void *params)
     
     hA[4] = 12 * khatA_2 * XB*XB/XA;
     hB[4] = 12 * khatB_2 * XA*XA/XB;
+
+
+    // to here * should be all pre-computed at the beginning and passed via params ...
+
     
     /** l=2 ------------------------------------------------------------------
      * (2,1) */
