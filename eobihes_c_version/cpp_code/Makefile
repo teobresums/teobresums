@@ -1,4 +1,4 @@
-CC=g++ -O3
+CC=g++ -Ofast
 CFLAGS=-c -std=c++11
 INC=`gsl-config --cflags`
 LIBS=`gsl-config --libs`
