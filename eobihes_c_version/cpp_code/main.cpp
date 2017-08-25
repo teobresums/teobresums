@@ -148,8 +148,9 @@ int main (int argc,char* argv[])
 
 
     double final_mass = HealyBBHFitRemnant(chi1, chi2, q);
-    printf("%s %.8e \n","final BBH mass", final_mass);
-    
+    if(params.tidal==false){
+	printf("%s %.8e \n","final BBH mass", final_mass);
+    }
     clock_t start, end;
     start = clock();
     
