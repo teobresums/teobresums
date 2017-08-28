@@ -66,15 +66,14 @@ int LALEOB(double m1,
            bool   speedy,
            bool   RWZ,
            int    lm,
-           int    solver_scheme
-            );
+           int    solver_scheme);
 {
     
     int lm, solver_scheme, grid_length, i;
     double q, r0, dt, chi1, chi2, r_min, rLR, nu, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
-    input params  = input process_input_parameters( m1,
+    input params = input process_input_parameters( m1,
                                                     m2,
                                                     q,
                                                     chi1,
@@ -83,12 +82,12 @@ int LALEOB(double m1,
                                                     sampling_rate,
                                                     LambdaAl2,
                                                     LambdaBl2,
-                                                      NQC,
-                                                      tidal,
-                                                      speedy,
-                                                      RWZ,
-                                                       lm,
-                                                       solver_scheme);
+                                                    NQC,
+                                                    tidal,
+                                                    speedy,
+                                                    RWZ,
+                                                    lm,
+                                                    solver_scheme);
     
     q             = params.q;
     nu            = params.nu;
