@@ -54,22 +54,23 @@ using namespace::std;
 
 int main (int argc,char* argv[])
 {
-    double m1 = 1.4;
+    double m1 = 10.4;
     double m2 = 1.1;
     double q = m1/m2;
-    double chi1 = 0.7;
-    double chi2 = -0.7;
+    double chi1 = 0.99;
+    double chi2 = -0.81;
     double f_min = 20.;
     double sampling_rate = 4096.;
-    double LambdaAl2 = 400.0;
-    double LambdaBl2 = 300.0;
+    double LambdaAl2 = 0.0;
+    double LambdaBl2 = 0.0;
     double distance = 40*3.086e22;
-    bool NQC = false;
-    bool tidal = true;
+    bool NQC = true;
+    bool tidal = false;
     bool speedy = true;
-    bool RWZ = false;
+    bool RWZ = true;
     int lm = 1;
     int solver_scheme = 0;
+    
     vector<double> waveform = LALEOB( m1,
                            m2,
                            q,
