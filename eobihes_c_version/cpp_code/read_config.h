@@ -23,7 +23,25 @@
 #include "input_struc.h"
 
 double logQ(double x);
-//input read_config(double q, double chi1, double chi2, double r0);
+input process_input_parameters(double m1,
+                               double m2,
+                               double q,
+                               double chi1,
+                               double chi2,
+                               double r0,
+                               double LambdaAl2,
+                               double LambdaBl2,
+                               bool   NQC,
+                               bool   tidal,
+                               bool   speedy,
+                               bool   RWZ,
+                               int    lm,
+                               double dt,
+                               int    solver_scheme
+                               );
 input read_config(char *fname);
 
+double Yagi13_fit_barlamdel(double barlam2, int ell);
+double time_units_conversion(double M, double Srate);
+double radius0(double M, double f_start);
 #endif /* _read_config_h */
