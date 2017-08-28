@@ -43,20 +43,22 @@ typedef std::numeric_limits< double > dbl;
 using namespace::std;
 
 //int interpolate_wf(double dt,vector<double> t_vec,vector<double> hlm_rad, vector<double> hlm_phase,bool waveform_flag,std::ofstream& wave,double Mbh)
-int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag,/*std::ofstream&*/ vector<string> wavenames,double Mbh)
+vector<double> interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag, double distance)
 {
 
     /** Note: before the Momg_vec had a Mbh multiplied onto it! */
 
-    
+    vector<double> waveform(t_vec[0].size());
+    int t_length = t_vec[0].size();
+    int grid_length = (int)(t_vec[0].back()-t_vec[0][0])/dt + 2;
+    vector<gsl_complex> hlm_interp(grid_length);
+    vector<double> t_interp(grid_length);
+    for (int l=0; l<t_vec[0].size(); l++) waveform[l] = 0.0;
     for (int k=35; k--; )
     {
-        int t_length = t_vec[k].size();
+        
         double xi, yi;
         int i=0;
-        int grid_length = (int)(t_vec[k].back()-t_vec[k][0])/dt + 2;
-        vector<gsl_complex> hlm_interp(grid_length);
-        vector<double> t_interp(grid_length);
 
         /** Convert all vectors to an array */
         if (k==1)
@@ -69,6 +71,7 @@ int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double>
             gsl_interp_accel *acc = gsl_interp_accel_alloc ();
             gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, t_length);
             gsl_spline_init (spline, t, radial, t_length);
+
             for (xi = t_vec[k][0]; xi < t_vec[k].back(); xi += step)
             {
                 yi = gsl_spline_eval (spline, xi, acc);
@@ -87,22 +90,14 @@ int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double>
     
             gsl_spline_free (spline);
             gsl_interp_accel_free (acc);
-            ofstream wave(wavenames[k].c_str());
-            wave.precision(dbl::max_digits10);
             for (int j=0; j < grid_length-2; j++)
             {
-            
-                if (waveform_flag==true)
-                {
-                    wave << t_interp[j] << "\t" << hlm_interp[j].dat[0] << "\t" << hlm_interp[j].dat[1] << endl;
-                }
+                waveform[j] += hlm_interp[j].dat[0]*cos(hlm_interp[j].dat[1])/distance;
+//                for (i=0;i<hlm_interp.size();i++) fprintf(stderr,"%d %e\n",i,hlm_interp[j].dat[0]);
             }
-        
         }
 
     }
 
-    return 0;
+    return waveform;
 }
-
-

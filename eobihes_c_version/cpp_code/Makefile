@@ -1,9 +1,9 @@
-CC=g++ -Ofast
+CC=g++ -g
 CFLAGS=-c -std=c++11
 INC=`gsl-config --cflags`
 LIBS=`gsl-config --libs`
 LDLIBS=-lgsl -lgslcblas -lm
-
+#-Ofast
 OBJS =               \
 A_NumDenom.o	     \
 AdiabLR.o    	     \
@@ -29,7 +29,8 @@ initial.o 	     \
 interp_grid.o 	     \
 interpolate_wf.o     \
 interpolator.o	     \
-main.o		     \
+LALEOB.o		     \
+main.o		\
 Metric.o       \
 NQC.o         \
 Q_omega.o     \
@@ -53,14 +54,14 @@ s_waveform.o	    \
 SpeedyTail.o      \
 Tlm.o \
 
-
-
 all:main
 
 main:$(OBJS)
 	$(CC) $(LIBS)  $(OBJS) -o EOB_ihes.out $(LDLIBS)
 main.o: main.cpp
 	$(CC) $(CFLAGS) $(INC) main.cpp
+LALEOB.o: LALEOB.cpp
+	$(CC) $(CFLAGS) $(INC) LALEOB.cpp
 A_NumDenom.o: A_NumDenom.cpp
 	$(CC) $(CFLAGS) $(INC) A_NumDenom.cpp
 AdiabLR.o: AdiabLR.cpp

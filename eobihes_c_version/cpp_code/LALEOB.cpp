@@ -49,10 +49,9 @@
 #include "find_a1a2a3.h"
 #include "interp_grid.h"
 
-
 using namespace::std;
 
-int LALEOB(double m1,
+vector<double> LALEOB(double m1,
            double m2,
            double q,
            double chi1,
@@ -61,39 +60,36 @@ int LALEOB(double m1,
            double sampling_rate,
            double LambdaAl2,
            double LambdaBl2,
+           double distance,
            bool   NQC,
            bool   tidal,
            bool   speedy,
            bool   RWZ,
            int    lm,
-           int    solver_scheme);
+           int    solver_scheme)
 {
     
-    int lm, solver_scheme, grid_length, i;
-    double q, r0, dt, chi1, chi2, r_min, rLR, nu, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
+    int grid_length, i;
+    double r0, r_min, rLR, nu, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
-    input params = input process_input_parameters( m1,
-                                                    m2,
-                                                    q,
-                                                    chi1,
-                                                    chi2,
-                                                    f_min,
-                                                    sampling_rate,
-                                                    LambdaAl2,
-                                                    LambdaBl2,
-                                                    NQC,
-                                                    tidal,
-                                                    speedy,
-                                                    RWZ,
-                                                    lm,
-                                                    solver_scheme);
-    
-    q             = params.q;
-    nu            = params.nu;
-    r0            = params.r0;
-    dt            = params.dt;
-    solver_scheme = params.solver_scheme;
+    input params = process_input_parameters(m1,
+                                            m2,
+                                            q,
+                                            chi1,
+                                            chi2,
+                                            f_min,
+                                            sampling_rate,
+                                            LambdaAl2,
+                                            LambdaBl2,
+                                            NQC,
+                                            tidal,
+                                            speedy,
+                                            RWZ,
+                                            lm,
+                                            solver_scheme);
+
+    double dt            = params.dt;
       
     if (params.tidal==true)
     {
@@ -103,7 +99,7 @@ int LALEOB(double m1,
     }
     
     /** Defining data vectors and variables */
-    
+
     //std::vector<gsl_complex> hlm_vec={};
     std::vector<double> t_vec={};
     std::vector<double> r_vec={};
@@ -233,28 +229,30 @@ int LALEOB(double m1,
         prstar = y[2];
         pphi   = y[3];
         
-        /** Waveform computation*/
-        vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
-        
-        /** Append dynamics and waveform to vectors */
-        hlm_rad_vec.push_back(h_form[lm].dat[0]);
-        hlm_phase_vec.push_back(h_form[lm].dat[1]);
-        
-        for (int k=35; k--; )
+        /** Checking whether the dynamics produces NaN values; this can happen if radius r becomes too small */
+        if (r==r)
         {
-            hlm_ampl[k].push_back(h_form[k].dat[0]);
-            hlm_phase[k].push_back(h_form[k].dat[1]);
+            /** Waveform computation*/
+            vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
+
+            /** Append dynamics and waveform to vectors */
+            hlm_rad_vec.push_back(h_form[lm].dat[0]);
+            hlm_phase_vec.push_back(h_form[lm].dat[1]);
+            
+            for (int k=35; k--; )
+            {
+                hlm_ampl[k].push_back(h_form[k].dat[0]);
+                hlm_phase[k].push_back(h_form[k].dat[1]);
+            }
+        
+            t_vec.push_back(t);
+            MOmg_vec.push_back(Omg);
+            r_vec.push_back(r);
+            pph_vec.push_back(pphi);
+            prstar_vec.push_back(prstar);
+            Omg_orb_vec.push_back(Omg_orb);
+            ddotr_vec.push_back(ddotr);
         }
-    
-        
-        t_vec.push_back(t);
-        MOmg_vec.push_back(Omg);
-        r_vec.push_back(r);
-        pph_vec.push_back(pphi);
-        prstar_vec.push_back(prstar);
-        Omg_orb_vec.push_back(Omg_orb);
-        ddotr_vec.push_back(ddotr);
-        
         
         /** Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards */
         //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
@@ -287,7 +285,7 @@ int LALEOB(double m1,
         }
     }
     gsl_odeiv2_evolve_free (e); gsl_odeiv2_control_free (c); gsl_odeiv2_step_free (s);gsl_odeiv2_driver_free (d);
-    
+
     /** Interpolate quantities on a grid of width dt */
     grid_length = (int)(t_vec.back()-t_vec[0])/dt + 1;
     vector<double> t_vecg(grid_length);
@@ -308,7 +306,9 @@ int LALEOB(double m1,
     vector<double> hlm_rad_vecg   = interp_grid(t_vec,hlm_rad_vec,dt);
     vector<double> ddotr_vecg     = interp_grid(t_vec,ddotr_vec,dt);
     vector<double> OmgOrb_vecg    = interp_grid(t_vec,Omg_orb_vec,dt);
-    
+//    for (i=0;i<t_vec.size();i++) fprintf(stderr,"%d t:%e r:%e MO:%e pph:%e pr:%e ph:%e amp:%e dd:%e OM_O:%e\n",i,t_vec[i],r_vec[i],MOmg_vec[i],pph_vec[i],prstar_vec[i],hlm_phase_vec[i],hlm_rad_vec[i],ddotr_vec[i],Omg_orb_vec[i]);
+//
+//    exit(0);
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
     for (int k=35; k--; )
@@ -318,7 +318,6 @@ int LALEOB(double m1,
         hlm_ampl_g[k]            = interp_grid(t_vec,amplitude,dt);
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
-    
     /** NQCs */
     if (params.tidal==false && params.spin==true)
     {
@@ -349,7 +348,7 @@ int LALEOB(double m1,
     }
     
     /** Compute interpolation of waveform on grid and write to output file */
-    interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,wavenames,final_mass);
-    
-    return 0;
+    vector<double> h_td = interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,distance);
+
+    return h_td;
 }

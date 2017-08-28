@@ -275,23 +275,24 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
     int i;
     double lnx = log(barlam2);
     double coeffs[5] = {0.0};
-    switch (ell)
+    if (ell == 3)
     {
-        case 3:
-            coeffs[0] = 2.52e-5;
-            coeffs[1] = -1.31e-3;
-            coeffs[2] = 2.51e-2;
-            coeffs[3] = 1.18;
-            coeffs[4] = -1.15;
-        case 4:
+        coeffs[0] = 2.52e-5;
+        coeffs[1] = -1.31e-3;
+        coeffs[2] = 2.51e-2;
+        coeffs[3] = 1.18;
+        coeffs[4] = -1.15;
+    }
+    else if (ell == 4)
+    {
             coeffs[0] = 2.8e-5;
             coeffs[1] =-1.81e-3;
             coeffs[2] =3.95e-2;
             coeffs[3] =1.43;
             coeffs[4] =-2.45;
-        default:
-            return 0.0;
     }
+    else return 0.0;
+    
     double lny = coeffs[0]*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx+coeffs[2]*lnx*lnx+coeffs[3]*lnx+coeffs[4];
     return exp(lny);
 }
