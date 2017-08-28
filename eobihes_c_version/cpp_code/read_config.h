@@ -23,12 +23,14 @@
 #include "input_struc.h"
 
 double logQ(double x);
+
 input process_input_parameters(double m1,
                                double m2,
                                double q,
                                double chi1,
                                double chi2,
-                               double r0,
+                               double f_min,
+                               double sampling_rate,
                                double LambdaAl2,
                                double LambdaBl2,
                                bool   NQC,
@@ -36,7 +38,6 @@ input process_input_parameters(double m1,
                                bool   speedy,
                                bool   RWZ,
                                int    lm,
-                               double dt,
                                int    solver_scheme
                                );
 input read_config(char *fname);

@@ -54,67 +54,54 @@ using namespace::std;
 
 int LALEOB(double m1,
            double m2,
-           double s1x,
-           double s1y,
-           double s1z,
-           double s2x,
-           double s2y,
-           double s2z,
-           double lambda1,
-           double lambda2,
-           double fmin,
-           double fmax,
-           double dt,
-           int    solver_scheme,
-           int    NQC,
-           int    RWZ,
-           int    speedy,
-           int    lm)
+           double q,
+           double chi1,
+           double chi2,
+           double f_min,
+           double sampling_rate,
+           double LambdaAl2,
+           double LambdaBl2,
+           bool   NQC,
+           bool   tidal,
+           bool   speedy,
+           bool   RWZ,
+           int    lm,
+           int    solver_scheme
+            );
 {
     
     int lm, solver_scheme, grid_length, i;
     double q, r0, dt, chi1, chi2, r_min, rLR, nu, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
-    printf("parfile: %s\n",argv[1]);
-    input params  = read_config(argv[1]);
+    input params  = input process_input_parameters( m1,
+                                                    m2,
+                                                    q,
+                                                    chi1,
+                                                    chi2,
+                                                    f_min,
+                                                    sampling_rate,
+                                                    LambdaAl2,
+                                                    LambdaBl2,
+                                                      NQC,
+                                                      tidal,
+                                                      speedy,
+                                                      RWZ,
+                                                       lm,
+                                                       solver_scheme);
     
     q             = params.q;
     nu            = params.nu;
     r0            = params.r0;
     dt            = params.dt;
     solver_scheme = params.solver_scheme;
-
-    if (argc>2) {
-      params.outputdir.assign(argv[2]);   
-    } else {
-      params.outputdir.assign("data");
-    }
-    cout << "OUTPUTDIR\t" << params.outputdir << '\n'; 
       
     if (params.tidal==true)
     {
         rLR        = AdiabLR(&params);
         params.rLR = rLR;
         r_min      = rLR;
-        printf("%s %.16e \n","rLR",params.rLR);
     }
-    /** Creating folder with permission to read, write and execute*/
-    //mkdir("data",0777);
-    //if (mkdir(params.outputdir.c_str(),0777)==-1) {
-    if (system(("mkdir -p "+params.outputdir).c_str())==-1) {
-      cout << "\nproblem making output dir\nexiting.";
-      return 0;
-    }
-
-    /** Output file definitions */
-    //vector<string> fnames = file_names(&params);
-    vector<string> fnames;
-    vector<string> wavenames;
-    tie(fnames, wavenames) = file_names(&params);
-    ofstream data(fnames[0].c_str());
-    ofstream init(fnames[1].c_str());
-    init.precision(dbl::max_digits10);
     
     /** Defining data vectors and variables */
     
@@ -146,10 +133,6 @@ int LALEOB(double m1,
         initial_data = initial(&params);
     }
     
-    init << "r" << "\t" << "p_phi" << "\t" << "p_r*" << "\t" << "p_r" << "\t" << "j" << "\t" << "E0" << "\t" << "Omega_j" << endl;
-    init << initial_data[0] << "\t" << initial_data[1] << "\t" << initial_data[2] << "\t" << initial_data[3] << "\t" << initial_data[4] << "\t" << initial_data[5] << "\t" << initial_data[6] << endl;
-    printf ("r0:  %.20e \npph:  %.20e \nprstar: %.20e \npr: %.20e \nj: %.20e \nE0: %.20e \nOmega_j: %.20e\n", initial_data[0], initial_data[1], initial_data[2], initial_data[3], initial_data[4], initial_data[5], initial_data[6]);
-    
     /** Initial conditions: t, r, phi, prstar, pphi */
     t    = 0.0;
     y[0] = initial_data[0];
@@ -159,11 +142,6 @@ int LALEOB(double m1,
 
 
     double final_mass = HealyBBHFitRemnant(chi1, chi2, q);
-    if(params.tidal==false){
-	printf("%s %.8e \n","final BBH mass", final_mass);
-    }
-    clock_t start, end;
-    start = clock();
     
     /** Initialize ODE system solver */
     const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
@@ -188,14 +166,12 @@ int LALEOB(double m1,
     
     while (stop_flag == false)
     {
-        //while (y[0]>r_min) {
-        
         switch (solver_scheme)
         {
             case 0:
             {
                 int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-                //time_step << t << "\t" << h << "\t" << y[3] << endl;
+
                 if (status != GSL_SUCCESS)
                 {
                     break;
@@ -258,43 +234,28 @@ int LALEOB(double m1,
         prstar = y[2];
         pphi   = y[3];
         
-        /** Checking whether the dynamics produces NaN values; this can happen if radius r becomes too small */
-        if (r!=r)
-        {
-            printf("%s \n","dynamics is producing NaN values");
-        }
-        else
-        {
-            
-            /** Write and print dynamics*/
-            if (params.dynamics==true)
-            {
-                data << t << "\t" << r << "\t" << phi << "\t" << prstar << "\t" << pphi << endl;
-            }
-            
-            /** Waveform computation*/
-            vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
-            
-            /** Append dynamics and waveform to vectors */
-            hlm_rad_vec.push_back(h_form[lm].dat[0]);
-            hlm_phase_vec.push_back(h_form[lm].dat[1]);
-            
-            for (int k=35; k--; )
-            {
-                hlm_ampl[k].push_back(h_form[k].dat[0]);
-                hlm_phase[k].push_back(h_form[k].dat[1]);
-            }
+        /** Waveform computation*/
+        vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
         
-            
-            t_vec.push_back(t);
-            MOmg_vec.push_back(Omg);
-            r_vec.push_back(r);
-            pph_vec.push_back(pphi);
-            prstar_vec.push_back(prstar);
-            Omg_orb_vec.push_back(Omg_orb);
-            ddotr_vec.push_back(ddotr);
-            
+        /** Append dynamics and waveform to vectors */
+        hlm_rad_vec.push_back(h_form[lm].dat[0]);
+        hlm_phase_vec.push_back(h_form[lm].dat[1]);
+        
+        for (int k=35; k--; )
+        {
+            hlm_ampl[k].push_back(h_form[k].dat[0]);
+            hlm_phase[k].push_back(h_form[k].dat[1]);
         }
+    
+        
+        t_vec.push_back(t);
+        MOmg_vec.push_back(Omg);
+        r_vec.push_back(r);
+        pph_vec.push_back(pphi);
+        prstar_vec.push_back(prstar);
+        Omg_orb_vec.push_back(Omg_orb);
+        ddotr_vec.push_back(ddotr);
+        
         
         /** Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards */
         //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
@@ -390,12 +351,6 @@ int LALEOB(double m1,
     
     /** Compute interpolation of waveform on grid and write to output file */
     interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,wavenames,final_mass);
-    
-    end = clock();
-    
-    cout << "Time required for execution: "
-    << (double)(end-start)/CLOCKS_PER_SEC
-    << " seconds." << "\n\n";
     
     return 0;
 }
