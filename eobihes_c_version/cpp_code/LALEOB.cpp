@@ -306,9 +306,7 @@ vector<double> LALEOB(double m1,
     vector<double> hlm_rad_vecg   = interp_grid(t_vec,hlm_rad_vec,dt);
     vector<double> ddotr_vecg     = interp_grid(t_vec,ddotr_vec,dt);
     vector<double> OmgOrb_vecg    = interp_grid(t_vec,Omg_orb_vec,dt);
-//    for (i=0;i<t_vec.size();i++) fprintf(stderr,"%d t:%e r:%e MO:%e pph:%e pr:%e ph:%e amp:%e dd:%e OM_O:%e\n",i,t_vec[i],r_vec[i],MOmg_vec[i],pph_vec[i],prstar_vec[i],hlm_phase_vec[i],hlm_rad_vec[i],ddotr_vec[i],Omg_orb_vec[i]);
-//
-//    exit(0);
+
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
     for (int k=35; k--; )

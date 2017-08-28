@@ -93,7 +93,6 @@ vector<double> interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vec
             for (int j=0; j < grid_length-2; j++)
             {
                 waveform[j] += hlm_interp[j].dat[0]*cos(hlm_interp[j].dat[1])/distance;
-//                for (i=0;i<hlm_interp.size();i++) fprintf(stderr,"%d %e\n",i,hlm_interp[j].dat[0]);
             }
         }
 

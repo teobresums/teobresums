@@ -54,16 +54,16 @@ using namespace::std;
 
 int main (int argc,char* argv[])
 {
-    double m1 = 1.5;
-    double m2 = 1.5;
+    double m1 = 1.4;
+    double m2 = 1.1;
     double q = m1/m2;
-    double chi1 = 0.6;
-    double chi2 = 0.6;
-    double f_min = 100.;
-    double sampling_rate = 2048.;
-    double LambdaAl2 = 100.0;
-    double LambdaBl2 = 1000.0;
-    double distance = 1.0;
+    double chi1 = 0.7;
+    double chi2 = 0.7;
+    double f_min = 20.;
+    double sampling_rate = 4096.;
+    double LambdaAl2 = 400.0;
+    double LambdaBl2 = 300.0;
+    double distance = 40*3.086e22;
     bool NQC = false;
     bool tidal = true;
     bool speedy = true;

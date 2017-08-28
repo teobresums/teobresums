@@ -1,9 +1,9 @@
-CC=g++ -g
-CFLAGS=-c -std=c++11
+CC=g++ -Ofast
+CFLAGS=-c -std=c++11 -ffast-math
 INC=`gsl-config --cflags`
 LIBS=`gsl-config --libs`
 LDLIBS=-lgsl -lgslcblas -lm
-#-Ofast
+
 OBJS =               \
 A_NumDenom.o	     \
 AdiabLR.o    	     \
