@@ -58,7 +58,7 @@ int main (int argc,char* argv[])
     double m2 = 1.1;
     double q = m1/m2;
     double chi1 = 0.7;
-    double chi2 = 0.7;
+    double chi2 = -0.7;
     double f_min = 20.;
     double sampling_rate = 4096.;
     double LambdaAl2 = 400.0;
