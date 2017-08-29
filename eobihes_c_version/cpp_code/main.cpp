@@ -73,11 +73,37 @@ int main (int argc, char* argv[])
     int    lm            = 1;
     int    solver_scheme = 0;
     char   output[256]   = "waveform.dat";
+    char   parfile[256]   = "";
+    
     
     if (argc < 2) printf("using default values\n");
    
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i],"-m1")==0)
+        if (strcmp(argv[i],"-p")==0)
+        {
+            sprintf(parfile,"%s",argv[i+1]);
+            printf("found parfile: %s\n",parfile);
+            printf("Warning! Will use default values:\n");
+            printf("m1 = %f\n",m1);
+            printf("m2 = %f\n",m2);
+            printf("f_min = %f\n",f_min);
+            printf("iota = %f\n",inclination);
+            printf("psi = %f\n",polarisation);
+            input params = read_config(parfile);
+            q = params.q;
+            chi1 = params.chi1;
+            chi2 = params.chi2;
+            NQC  = params.NQC;
+            RWZ  = params.RWZ;
+            solver_scheme = params.solver_scheme;
+            tidal = params.tidal;
+            speedy = params.speedy;
+            lm = params.lm;
+            LambdaAl2 = params.LambdaAl2;
+            LambdaBl2 = params.LambdaBl2;
+            break;
+        }
+        else if (strcmp(argv[i],"-m1")==0)
         {
             m1 = atof(argv[i+1]);
             printf("m1: %f\n",m1);
