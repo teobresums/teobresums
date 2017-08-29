@@ -29,7 +29,7 @@ initial.o 	     \
 interp_grid.o 	     \
 interpolate_wf.o     \
 interpolator.o	     \
-LALEOB.o		     \
+LALSimIMRTEOBIHES.o  \
 main.o		\
 Metric.o       \
 NQC.o         \
@@ -60,8 +60,8 @@ main:$(OBJS)
 	$(CC) $(LIBS)  $(OBJS) -o EOB_ihes.out $(LDLIBS)
 main.o: main.cpp
 	$(CC) $(CFLAGS) $(INC) main.cpp
-LALEOB.o: LALEOB.cpp
-	$(CC) $(CFLAGS) $(INC) LALEOB.cpp
+LALSimIMRTEOBIHES.o: LALSimIMRTEOBIHES.cpp
+	$(CC) $(CFLAGS) $(INC) LALSimIMRTEOBIHES.cpp
 A_NumDenom.o: A_NumDenom.cpp
 	$(CC) $(CFLAGS) $(INC) A_NumDenom.cpp
 AdiabLR.o: AdiabLR.cpp

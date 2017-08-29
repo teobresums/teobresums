@@ -372,11 +372,15 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
     
     for (int k=35; k--; )
     {
-        /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
-        for (i=0; i<N; i++)
+        if (k==1)
         {
-            hplus[i] += amplitude_constant*hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
-            hcross[i] += -amplitude_constant*hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
+            /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
+            for (i=0; i<N; i++)
+            {
+                hplus[i] += amplitude_constant*hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
+                hcross[i] += -amplitude_constant*hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
+                printf("i:%d hp:%e hc:%e\n",i,hplus[i],hcross[i]);
+            }
         }
 
     }
