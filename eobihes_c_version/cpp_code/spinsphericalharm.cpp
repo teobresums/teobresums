@@ -38,14 +38,14 @@ double wigner_d_function(int l, int m, int s, double i){
 }
 
 /* spin-weighted spherical harmonic */
-void spinsphericalharmY(double *rY, double *iY, int s, int l, int m, double phi, double i){
+void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i){
   /* Following the Ref.: https://arxiv.org/pdf/0709.0093.pdf */
   if ((l<0) || (m<-l) || (m>l)) {
     fprintf(stderr, " wrong l (%d) or m (%d) inside spinspharmY\n", l, m);
     exit(1);
   }
 
-  double c = pow(-1.,s) * sqrt( (2.*l+1.)/(4.*M_PI) );
+  double c = pow(-1.,-s) * sqrt( (2.*l+1.)/(4.*M_PI) );
   double dWigner = c * wigner_d_function(l,m,-s,i); 
 
   *rY = cos((double)(m)*phi) * dWigner;

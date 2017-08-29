@@ -52,27 +52,27 @@
 
 using namespace::std;
 
-int main (int argc,char* argv[])
+int main (int argc, char* argv[])
 {
-    double m1 = 5.0;
-    double m2 = 5.0;
-    double q = m1/m2;
-    double chi1 = 0.1;
-    double chi2 = 0.1;
-    double f_min = 20.;
+    double m1            = 5.0;
+    double m2            = 5.0;
+    double q             = m1/m2;
+    double chi1          = 0.1;
+    double chi2          = 0.1;
+    double f_min         = 20.;
     double sampling_rate = 4096.;
-    double LambdaAl2 = 0.0;
-    double LambdaBl2 = 0.0;
-    double distance = 40*3.086e22;
-    double inclination = 0.0;
-    double polarisation=0.0;
-    bool NQC = true;
-    bool tidal = false;
-    bool speedy = true;
-    bool RWZ = true;
-    int lm = 1;
-    int solver_scheme = 0;
-    char output[256]="waveform.dat";
+    double LambdaAl2     = 0.0;
+    double LambdaBl2     = 0.0;
+    double distance      = 40*3.086e22;
+    double inclination   = 0.0;
+    double polarisation  = 0.0;
+    bool   NQC           = true;
+    bool   tidal         = false;
+    bool   speedy        = true;
+    bool   RWZ           = true;
+    int    lm            = 1;
+    int    solver_scheme = 0;
+    char   output[256]   = "waveform.dat";
     
     if (argc < 2) printf("using default values\n");
    

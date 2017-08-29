@@ -30,6 +30,7 @@
 #include <gsl/gsl_odeiv2.h>
 #include <tuple>
 #include <vector>
+#include <complex.h>
 #include <sys/stat.h>
 
 #include "initial.h"
@@ -48,6 +49,7 @@
 #include "file_names.h"
 #include "find_a1a2a3.h"
 #include "interp_grid.h"
+#include "spinsphericalharm.h"
 #include "LALSimIMRTEOBIHES.h"
 
 using namespace::std;
@@ -404,12 +406,14 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
     {
         if (k==1)
         {
+            double Y_real, Y_imag;
+            spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], polarisation, inclination);
             /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
             for (i=0; i<N; i++)
             {
-                tmp = amplitude_constant*hlm_ampl_g[k][i]*cexp(-hlm_phase_g[k][i])*spherical_harmonic(L[k],M[k],inclination,polarisation);
-                hplus_out->data[i] += creal(tmp);
-                hcross_out->data[i] += -cimag(tmp);
+
+                hplus_out->data[i] += amplitude_constant*hlm_ampl_g[k][i]*(cos(-hlm_phase_g[k][i])*Y_real - sin(-hlm_phase_g[k][i])*Y_imag);
+                hcross_out->data[i] -= amplitude_constant*hlm_phase_g[k][i]*(cos(-hlm_phase_g[k][i])*Y_imag + sin(-hlm_phase_g[k][i])*Y_real);
             }
         }
     }

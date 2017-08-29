@@ -22,6 +22,6 @@
 
 double fact(int n);
 double wigner_d_function(int l, int m, int s, double x);
-void spinsphericalharmY(double *rY, double *iY, int s, int l, int m, double phi, double x);
+void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double x);
 
 #endif /* _spinsphericalharm_h */

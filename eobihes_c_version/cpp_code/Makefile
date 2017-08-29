@@ -51,6 +51,7 @@ s_initial.o	     \
 s_Metric.o	     \
 s_RHS.o		     \
 s_waveform.o	    \
+spinsphericalharm.o   \
 SpeedyTail.o      \
 Tlm.o \
 
@@ -150,6 +151,8 @@ s_RHS.o: s_RHS.cpp
 	$(CC) $(CFLAGS) $(INC) s_RHS.cpp
 s_waveform.o: s_waveform.cpp
 	$(CC) $(CFLAGS) $(INC) s_waveform.cpp
+spinsphericalharm.o: spinsphericalharm.cpp
+	$(CC) $(CFLAGS) $(INC) spinsphericalharm.cpp
 SpeedyTail.o: SpeedyTail.cpp
 	$(CC) $(CFLAGS) $(INC) SpeedyTail.cpp
 Tlm.o: Tlm.cpp
