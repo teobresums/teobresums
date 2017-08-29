@@ -183,7 +183,6 @@ int main (int argc,char* argv[])
     std::FILE* f = std::fopen(output, "w");
     int i = 0;
     int N = hplus->length;
-    printf("N:%d\n",hplus->length);
     double dt = 1./sampling_rate;
     for (i=0;i<N;i++)
     {
