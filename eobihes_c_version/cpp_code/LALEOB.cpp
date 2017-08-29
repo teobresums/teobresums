@@ -61,6 +61,8 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
                         double spin2x,          /** dimensionless s2x **/
                         double spin2y,          /** dimensionless s2y **/
                         double spin2z,          /** dimensionless s2z **/
+                        double inclination,     /** inclination angle (rad) **/
+                        double polarisation,    /** polarisation angle (rad) **/
                         double f_min,           /** starting frequency(Hz) **/
                         double sampling_rate,   /** sampling rate(Hz) **/
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
