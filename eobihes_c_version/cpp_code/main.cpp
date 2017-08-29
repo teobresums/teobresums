@@ -85,12 +85,12 @@ int main (int argc, char* argv[])
             printf("found parfile: %s\n",parfile);
             printf("Warning! Will use default values:\n");
             printf("m1 = %f\n",m1);
-            printf("m2 = %f\n",m2);
             printf("f_min = %f\n",f_min);
             printf("iota = %f\n",inclination);
             printf("psi = %f\n",polarisation);
             input params = read_config(parfile);
             q = params.q;
+            m2 = m1/q;
             chi1 = params.chi1;
             chi2 = params.chi2;
             NQC  = params.NQC;
