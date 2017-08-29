@@ -356,22 +356,26 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
         ringdown(nu,q,dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
+    int N = hlm_ampl_g[0].size();
     /** Allocate hplus and hcross */
-    hplus = (double *)malloc(hlm_ampl_g.size()*sizeof(double));
-    hcross = (double *)malloc(hlm_ampl_g.size()*sizeof(double));
+    hplus = (double *)malloc(N*sizeof(double));
+    hcross = (double *)malloc(N*sizeof(double));
+    /** Set them to zero initially */
     
+    memset(hplus, 0, n*sizeof(double));
+    memset(hcross, 0, n*sizeof(double));
     /** Spherical harmonics projection **/
     /** construct hplus and hcross **/
     
-    //    for (int k=35; k--; )
-    //    {
-    //
-    //    }
-    
-    
-    /** Compute interpolation of waveform on grid **/
-    /** h_td contains amplitude and phase USELESS - REMOVE **/
-    /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
-   
+    for (int k=35; k--; )
+    {
+        /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
+        for (i=0; i<N; i++)
+        {
+            hplus[i] += hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
+            hcross[i] += -hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
+        }
+
+    }
     return;
 }

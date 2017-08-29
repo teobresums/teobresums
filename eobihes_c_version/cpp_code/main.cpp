@@ -52,6 +52,8 @@
 
 using namespace::std;
 
+#define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
+
 int main (int argc,char* argv[])
 {
     double m1 = 5.0;
@@ -64,6 +66,8 @@ int main (int argc,char* argv[])
     double LambdaAl2 = 0.0;
     double LambdaBl2 = 0.0;
     double distance = 40*3.086e22;
+    double inclination = 0.0;
+    double polarisation=0.0;
     bool NQC = true;
     bool tidal = false;
     bool speedy = true;
@@ -140,34 +144,51 @@ int main (int argc,char* argv[])
             distance = atof(argv[i+1]);
             printf("distance: %f",distance);
         }
+        else if (strcmp(argv[i],"-inclination")==0)
+        {
+            distance = atof(argv[i+1]);
+            printf("inclination: %f",inclination);
+        }
         else if (strcmp(argv[i],"-o")==0)
         {
             sprintf(output,"%s",argv[i+1]);
         }
     }
     
+    double *hplus, *hcross;
     
-    vector<double> waveform = LALEOB( m1,
-                                    m2,
-                                    chi1,
-                                    chi2,
-                                    f_min,
-                                    sampling_rate,
-                                    LambdaAl2,
-                                    LambdaBl2,
-                                    distance,
-                                    NQC,
-                                    tidal,
-                                    speedy,
-                                    RWZ,
-                                    lm,
-                                    solver_scheme);
+    XLALSimIMRTEOBIHES(hplus,
+                       hcross,
+                       m1,
+                       m2,
+                       0.0,
+                       0.0,
+                       chi1,
+                       0.0,
+                       0.0,
+                       chi2,
+                       inclination,
+                       polarisation,
+                       f_min,
+                       sampling_rate,
+                       LambdaAl2,
+                       LambdaBl2,
+                       distance,
+                       NQC,
+                       tidal,
+                       speedy,
+                       RWZ,
+                       lm,
+                       solver_scheme);
+    
     std::FILE* f = std::fopen(output, "w");
-    int i=0;
+    int i = 0;
+    int N = NELEMS(hplus);
+    
     double dt = 1./sampling_rate;
-    for (i=0;i<waveform.size();i++)
+    for (i=0;i<N;i++)
     {
-        std::fprintf(f, "%f\t%e\n",i*dt,waveform[i]);
+        std::fprintf(f,"%f\t%e\t%e\n",i*dt,hplus[i],hcross[i]);
     }
     std::fclose(f);
     return 0;
