@@ -365,10 +365,11 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
     
     memset(hplus, 0, N*sizeof(double));
     memset(hcross, 0, N*sizeof(double));
+    
     /** Spherical harmonics projection **/
     /** construct hplus and hcross **/
     
-    double amplitude_constant = 1./(distance*nu);
+    double amplitude_constant = 1./(distance*params.nu);
     
     for (int k=35; k--; )
     {
@@ -379,7 +380,6 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
             {
                 hplus[i] += amplitude_constant*hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
                 hcross[i] += -amplitude_constant*hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
-                printf("i:%d hp:%e hc:%e\n",i,hplus[i],hcross[i]);
             }
         }
 
