@@ -84,7 +84,7 @@ int main (int argc,char* argv[])
         }
         else if (strcmp(argv[i],"-m2")==0)
         {
-            chi1 = atof(argv[i+1]);
+            m2 = atof(argv[i+1]);
             printf("m2: %f",m2);
         }
         else if (strcmp(argv[i],"-chi1")==0)
@@ -144,8 +144,13 @@ int main (int argc,char* argv[])
         }
         else if (strcmp(argv[i],"-inclination")==0)
         {
-            distance = atof(argv[i+1]);
+            inclination = atof(argv[i+1]);
             printf("inclination: %f",inclination);
+        }
+        else if (strcmp(argv[i],"-polarisation")==0)
+        {
+            polarisation = atof(argv[i+1]);
+            printf("inclination: %f",polarisation);
         }
         else if (strcmp(argv[i],"-o")==0)
         {
