@@ -73,7 +73,7 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
                         bool   speedy,          /** accelerated tails flag **/
                         bool   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    lm,              /** TO BE REMOVED **/
-                        int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
+                        int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/)
 {
     
     int grid_length, i;
@@ -153,7 +153,7 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
     y[3] = initial_data[1];
 
 
-    double final_mass = HealyBBHFitRemnant(chi1, chi2, q);
+    double final_mass = HealyBBHFitRemnant(spin1z, spin2z, q);
     
     /** Initialize ODE system solver */
     const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
@@ -362,8 +362,8 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
     hcross = (double *)malloc(N*sizeof(double));
     /** Set them to zero initially */
     
-    memset(hplus, 0, n*sizeof(double));
-    memset(hcross, 0, n*sizeof(double));
+    memset(hplus, 0, N*sizeof(double));
+    memset(hcross, 0, N*sizeof(double));
     /** Spherical harmonics projection **/
     /** construct hplus and hcross **/
     
