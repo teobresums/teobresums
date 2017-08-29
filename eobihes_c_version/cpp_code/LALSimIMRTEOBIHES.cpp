@@ -408,12 +408,15 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
         {
             double Y_real, Y_imag;
             spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], polarisation, inclination);
+            
             /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
             for (i=0; i<N; i++)
             {
-
-                hplus_out->data[i] += amplitude_constant*hlm_ampl_g[k][i]*(cos(-hlm_phase_g[k][i])*Y_real - sin(-hlm_phase_g[k][i])*Y_imag);
-                hcross_out->data[i] -= amplitude_constant*hlm_phase_g[k][i]*(cos(-hlm_phase_g[k][i])*Y_imag + sin(-hlm_phase_g[k][i])*Y_real);
+                double Aki = hlm_ampl_g[k][i]*amplitude_constant;
+                double cosPhi = cos(-hlm_phase_g[k][i]);
+                double sinPhi = sin(-hlm_phase_g[k][i]);
+                hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+                hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
             }
         }
     }

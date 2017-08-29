@@ -50,5 +50,4 @@ void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, 
 
   *rY = cos((double)(m)*phi) * dWigner;
   *iY = sin((double)(m)*phi) * dWigner;
-
 }
