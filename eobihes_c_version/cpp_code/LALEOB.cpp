@@ -51,31 +51,48 @@
 
 using namespace::std;
 
-vector<double> LALEOB(double m1,
-           double m2,
-           double chi1,
-           double chi2,
-           double f_min,
-           double sampling_rate,
-           double LambdaAl2,
-           double LambdaBl2,
-           double distance,
-           bool   NQC,
-           bool   tidal,
-           bool   speedy,
-           bool   RWZ,
-           int    lm,
-           int    solver_scheme)
+void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
+                        double *hcross,         /** hx return array **/
+                        double m1,              /** m1(Msun) **/
+                        double m2,              /** m2(Msun) **/
+                        double spin1x,          /** dimensionless s1x **/
+                        double spin1y,          /** dimensionless s1y **/
+                        double spin1z,          /** dimensionless s1z **/
+                        double spin2x,          /** dimensionless s2x **/
+                        double spin2y,          /** dimensionless s2y **/
+                        double spin2z,          /** dimensionless s2z **/
+                        double f_min,           /** starting frequency(Hz) **/
+                        double sampling_rate,   /** sampling rate(Hz) **/
+                        double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double distance,        /** distance(m) **/
+                        bool   NQC,             /** NQC corrections flag (BBH only) **/
+                        bool   tidal,           /** tidal corrections flag (BNS only) **/
+                        bool   speedy,          /** accelerated tails flag **/
+                        bool   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int    lm,              /** TO BE REMOVED **/
+                        int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
 {
     
     int grid_length, i;
     double r0, r_min, rLR, nu, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
+    if ((spin1x!=0)||(spin1y!=0)||(spin2x!=0)||(spin2y!=0))
+    {
+        printf("ERROR! Non-aligned spins not supported! Aborting.\n");
+        exit(-1);
+    }
+    if ((tidal==true)&&(NQC==true))
+    {
+        printf("ERROR! NQC corrections for tidally deformed systems not supported! Aborting.\n");
+        exit(-1);
+    }
+    
     input params = process_input_parameters(m1,
                                             m2,
-                                            chi1,
-                                            chi2,
+                                            spin1z,
+                                            spin2z,
                                             f_min,
                                             sampling_rate,
                                             LambdaAl2,
@@ -215,12 +232,6 @@ vector<double> LALEOB(double m1,
             }
         }
         
-        int status  = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-        if (status != GSL_SUCCESS)
-        {
-            break;
-        }
-        
         /** Read out computation */
         r      = y[0];
         phi    = y[1];
@@ -295,7 +306,6 @@ vector<double> LALEOB(double m1,
         i++;
     }
   
-  
     vector<double> r_vecg         = interp_grid(t_vec,r_vec,dt);
     vector<double> MOmg_vecg      = interp_grid(t_vec,MOmg_vec,dt);
     vector<double> pph_vecg       = interp_grid(t_vec,pph_vec,dt);
@@ -314,12 +324,6 @@ vector<double> LALEOB(double m1,
         hlm_ampl_g[k]            = interp_grid(t_vec,amplitude,dt);
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
-    /** Spherical harmonics projection **/
-    
-//    for (int k=35; k--; )
-//    {
-//        
-//    }
     
     /** NQCs */
     if (params.tidal==false && params.spin==true)
@@ -337,7 +341,7 @@ vector<double> LALEOB(double m1,
         }
     }
     
-    /** Define a time vector for each multipole */
+    /** Define a time vector for each multipole USELESS - remove*/
     vector<vector<double> > t_g(35);
     for (int k=35; k--; )
     {
@@ -350,13 +354,22 @@ vector<double> LALEOB(double m1,
         ringdown(nu,q,dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
+    /** Allocate hplus and hcross */
+    hplus = (double *)malloc(hlm_ampl_g.size()*sizeof(double));
+    hcross = (double *)malloc(hlm_ampl_g.size()*sizeof(double));
+    
+    /** Spherical harmonics projection **/
+    /** construct hplus and hcross **/
+    
+    //    for (int k=35; k--; )
+    //    {
+    //
+    //    }
+    
+    
     /** Compute interpolation of waveform on grid **/
-    /** h_td contains amplitude and phase **/
-    vector<gsl_complex> h_td = interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,distance);
-
-    /** construct h+ and hx **/
-    
-    double **hp, **hc;
-    
-    return h_td;
+    /** h_td contains amplitude and phase USELESS - REMOVE **/
+    /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
+   
+    return;
 }
