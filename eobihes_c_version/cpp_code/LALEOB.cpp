@@ -327,7 +327,7 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
     
-    /** NQCs */
+    /** NQCs corrections */
     if (params.tidal==false && params.spin==true)
     {
 

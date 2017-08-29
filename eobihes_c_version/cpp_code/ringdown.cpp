@@ -104,19 +104,21 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
         tmatch[i] += 2./Mbh;
     }
     
+    double nu_squared = nu*nu;
+    double nu_cube = nu_squared*nu;
     for (i=35; i--; ) {
         switch (i) {
             case 0:
-                sigma[0].dat[0] = -0.208936*pow(nu,3)-0.028103*pow(nu,2)-0.005383*nu + 0.08896;
-                sigma[0].dat[1] = 0.733477*pow(nu,3) + 0.188359*pow(nu,2) + 0.220659*nu + 0.37367;
+                sigma[0].dat[0] = -0.208936*nu_cube-0.028103*nu_squared-0.005383*nu + 0.08896;
+                sigma[0].dat[1] = 0.733477*nu_cube + 0.188359*nu_squared + 0.220659*nu + 0.37367;
                 break;
             case 1:
-                sigma[1].dat[0] = -0.364177*pow(nu,3) + 0.010951*pow(nu,2)-0.010591*nu + 0.08896;
-                sigma[1].dat[1] = 2.392808*pow(nu,3) + 0.051309*pow(nu,2) + 0.449425*nu + 0.37365;
+                sigma[1].dat[0] = -0.364177*nu_cube + 0.010951*nu_squared-0.010591*nu + 0.08896;
+                sigma[1].dat[1] = 2.392808*nu_cube + 0.051309*nu_squared + 0.449425*nu + 0.37365;
                 break;
             case 4:
-                sigma[4].dat[0] = -0.319703*pow(nu,3)-0.030076*pow(nu,2)-0.009034*nu + 0.09270;
-                sigma[4].dat[1] = 2.957425*pow(nu,3) + 0.178146*pow(nu,2) + 0.709560*nu + 0.59944;
+                sigma[4].dat[0] = -0.319703*nu_cube-0.030076*nu_squared-0.009034*nu + 0.09270;
+                sigma[4].dat[1] = 2.957425*nu_cube + 0.178146*nu_squared + 0.709560*nu + 0.59944;
                 break;
             default:
                 sigma[i].dat[0] = 0.;
