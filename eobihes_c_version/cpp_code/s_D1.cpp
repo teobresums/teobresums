@@ -27,7 +27,8 @@ vector<double> s_D1(vector<double> f, vector<double> x, int Nmax){
 int Nmin = 0;
     
     vector<double> df(Nmax+1);
-    for(int i=2;i<=Nmax-2;i++){
+    for(int i=2;i<=Nmax-2;i++)
+    {
         df[i] = 1./3.*(8.*f[1+i] - f[2+i] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
     }
 

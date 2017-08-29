@@ -336,10 +336,13 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
         
         for (int k=35; k--; )
         {
-            for (int i=hlm_rad_vec.size(); i--; )
+            if (k==1) // IMPORTANT! temporary hack to get the 22 mode only
             {
-                hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
-                hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
+                for (int i=hlm_rad_vec.size(); i--; )
+                {
+                    hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
+                    hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
+                }
             }
         }
     }
