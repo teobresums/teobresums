@@ -367,13 +367,15 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
     /** Spherical harmonics projection **/
     /** construct hplus and hcross **/
     
+    double amplitude_constant = 1./(distance*nu);
+    
     for (int k=35; k--; )
     {
         /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
         for (i=0; i<N; i++)
         {
-            hplus[i] += hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
-            hcross[i] += -hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
+            hplus[i] += amplitude_constant*hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
+            hcross[i] += -amplitude_constant*hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
         }
 
     }
