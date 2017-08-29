@@ -16,7 +16,7 @@
  *  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  *  MA  02111-1307  USA
  */
-
+#include <cstdio>
 #include <iostream>
 #include <list>
 #include <fstream>
@@ -54,11 +54,11 @@ using namespace::std;
 
 int main (int argc,char* argv[])
 {
-    double m1 = 10.4;
-    double m2 = 1.1;
+    double m1 = 5.0;
+    double m2 = 5.0;
     double q = m1/m2;
-    double chi1 = 0.99;
-    double chi2 = -0.81;
+    double chi1 = 0.1;
+    double chi2 = 0.1;
     double f_min = 20.;
     double sampling_rate = 4096.;
     double LambdaAl2 = 0.0;
@@ -70,6 +70,82 @@ int main (int argc,char* argv[])
     bool RWZ = true;
     int lm = 1;
     int solver_scheme = 0;
+    char output[256]="waveform.dat";
+    
+    if (argc < 2) printf("using default values\n");
+   
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i],"-m1")==0)
+        {
+            m1 = atof(argv[i+1]);
+            printf("m1: %f",m1);
+        }
+        else if (strcmp(argv[i],"-m2")==0)
+        {
+            chi1 = atof(argv[i+1]);
+            printf("m2: %f",m2);
+        }
+        else if (strcmp(argv[i],"-chi1")==0)
+        {
+            chi1 = atof(argv[i+1]);
+            printf("chi1: %f",chi1);
+        }
+        else if (strcmp(argv[i],"-chi2")==0)
+        {
+            chi2 = atof(argv[i+1]);
+            printf("chi2: %f",chi2);
+        }
+        else if (strcmp(argv[i],"-f_min")==0)
+        {
+            f_min = atof(argv[i+1]);
+            printf("f_min: %f",f_min);
+        }
+        else if (strcmp(argv[i],"-srate")==0)
+        {
+            sampling_rate = atof(argv[i+1]);
+            printf("srate: %f",sampling_rate);
+        }
+        else if (strcmp(argv[i],"-tidal")==0)
+        {
+            tidal = true;
+            printf("tidal = true");
+        }
+        else if (strcmp(argv[i],"-NQC")==0)
+        {
+            NQC = true;
+            printf("NQC = true");
+        }
+        else if (strcmp(argv[i],"-speedy")==0)
+        {
+            speedy = true;
+            printf("speedy = true");
+        }
+        else if (strcmp(argv[i],"-RWZ")==0)
+        {
+            RWZ = true;
+            printf("RWZ = true");
+        }
+        else if (strcmp(argv[i],"-lambda1")==0)
+        {
+            LambdaAl2 = atof(argv[i+1]);
+            printf("lambda1: %f",LambdaAl2);
+        }
+        else if (strcmp(argv[i],"-lambda2")==0)
+        {
+            LambdaBl2 = atof(argv[i+1]);
+            printf("lambda2: %f",LambdaBl2);
+        }
+        else if (strcmp(argv[i],"-distance")==0)
+        {
+            distance = atof(argv[i+1]);
+            printf("distance: %f",distance);
+        }
+        else if (strcmp(argv[i],"-o")==0)
+        {
+            sprintf(output,"%s",argv[i+1]);
+        }
+    }
+    
     
     vector<double> waveform = LALEOB( m1,
                                     m2,
@@ -86,8 +162,13 @@ int main (int argc,char* argv[])
                                     RWZ,
                                     lm,
                                     solver_scheme);
+    std::FILE* f = std::fopen(output, "w");
     int i=0;
-    for (i=0;i<waveform.size();i++) fprintf(stderr,"%d %e\n",i,waveform[i]);
-    
+    double dt = 1./sampling_rate;
+    for (i=0;i<waveform.size();i++)
+    {
+        std::fprintf(f, "%f\t%e\n",i*dt,waveform[i]);
+    }
+    std::fclose(f);
     return 0;
 }
