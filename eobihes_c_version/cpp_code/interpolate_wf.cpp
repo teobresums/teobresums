@@ -53,7 +53,7 @@ vector<gsl_complex> interpolate_wf(double dt,vector<vector<double> > t_vec,vecto
     int grid_length = (int)(t_vec[0].back()-t_vec[0][0])/dt + 2;
     vector<gsl_complex> hlm_interp(grid_length);
     vector<double> t_interp(grid_length);
-    for (int l=0; l<t_vec[0].size(); l++) waveform[l] = 0.0;
+
     for (int k=35; k--; )
     {
         
