@@ -299,7 +299,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
     gsl_odeiv2_evolve_free (e); gsl_odeiv2_control_free (c); gsl_odeiv2_step_free (s);gsl_odeiv2_driver_free (d);
 
     /** Interpolate quantities on a grid of width dt */
-    grid_length = (int)(t_vec.back()-t_vec[0])/dt + 1;
+    grid_length = (int)(t_vec.back()-t_vec[0])/dt + 2;
     vector<double> t_vecg(grid_length);
     i  = 0;
     ti = 0.;
