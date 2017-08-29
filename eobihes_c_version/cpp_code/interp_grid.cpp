@@ -29,7 +29,7 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
 {
     int i=0;
     int t_length = t_vec.size();
-    int grid_length = (int)(t_vec.back()-t_vec[0])/dt + 2;
+    int grid_length = (int)(t_vec.back()-t_vec[0])/dt + 1;
 
     double xi, yi;
     vector<double> data_g(grid_length);
