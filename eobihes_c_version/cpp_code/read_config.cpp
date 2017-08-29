@@ -313,7 +313,6 @@ double time_units_conversion(double M, double Srate)
 input process_input_parameters(
                      double m1,
                      double m2,
-                     double q,
                      double chi1,
                      double chi2,
                      double f_min,
@@ -330,7 +329,7 @@ input process_input_parameters(
 {
     input params;            /* declaration of variable of struture type */
     double mtot = m1+m2;
-    
+    double q = m1/m2;
     params.q = q;
     params.chi1 = chi1;
     params.chi2 = chi2;

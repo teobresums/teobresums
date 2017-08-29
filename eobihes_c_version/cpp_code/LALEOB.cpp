@@ -53,7 +53,6 @@ using namespace::std;
 
 vector<double> LALEOB(double m1,
            double m2,
-           double q,
            double chi1,
            double chi2,
            double f_min,
@@ -75,7 +74,6 @@ vector<double> LALEOB(double m1,
     
     input params = process_input_parameters(m1,
                                             m2,
-                                            q,
                                             chi1,
                                             chi2,
                                             f_min,
@@ -88,7 +86,7 @@ vector<double> LALEOB(double m1,
                                             RWZ,
                                             lm,
                                             solver_scheme);
-
+    double q             = m1/m2;
     double dt            = params.dt;
       
     if (params.tidal==true)

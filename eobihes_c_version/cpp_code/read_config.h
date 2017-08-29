@@ -26,7 +26,6 @@ double logQ(double x);
 
 input process_input_parameters(double m1,
                                double m2,
-                               double q,
                                double chi1,
                                double chi2,
                                double f_min,

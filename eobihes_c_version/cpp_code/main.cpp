@@ -72,21 +72,20 @@ int main (int argc,char* argv[])
     int solver_scheme = 0;
     
     vector<double> waveform = LALEOB( m1,
-                           m2,
-                           q,
-                           chi1,
-                           chi2,
-                           f_min,
-                           sampling_rate,
-                           LambdaAl2,
-                           LambdaBl2,
-                           distance,
-                             NQC,
-                             tidal,
-                             speedy,
-                             RWZ,
-                              lm,
-                             solver_scheme);
+                                    m2,
+                                    chi1,
+                                    chi2,
+                                    f_min,
+                                    sampling_rate,
+                                    LambdaAl2,
+                                    LambdaBl2,
+                                    distance,
+                                    NQC,
+                                    tidal,
+                                    speedy,
+                                    RWZ,
+                                    lm,
+                                    solver_scheme);
     int i=0;
     for (i=0;i<waveform.size();i++) fprintf(stderr,"%d %e\n",i,waveform[i]);
     
