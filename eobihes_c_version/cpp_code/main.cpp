@@ -52,8 +52,6 @@
 
 using namespace::std;
 
-#define NELEMS(x)  (sizeof(x) / sizeof((*x)))
-
 int main (int argc,char* argv[])
 {
     double m1 = 5.0;
@@ -155,10 +153,11 @@ int main (int argc,char* argv[])
         }
     }
     
-    double *hplus, *hcross;
+    Waveform *hplus;
+    Waveform *hcross;
     
-    XLALSimIMRTEOBIHES(hplus,
-                       hcross,
+    XLALSimIMRTEOBIHES(&hplus,
+                       &hcross,
                        m1,
                        m2,
                        0.0,
@@ -183,15 +182,18 @@ int main (int argc,char* argv[])
     
     std::FILE* f = std::fopen(output, "w");
     int i = 0;
-    int N = NELEMS(hplus);
-    printf("N:%d\n",N);
+    int N = hplus->length;
+    printf("N:%d\n",hplus->length);
     double dt = 1./sampling_rate;
-    for (i=0;i<10000;i++)
+    for (i=0;i<N;i++)
     {
-        std::fprintf(f,"%f\t%e\t%e\n",i*dt,hplus[i],hcross[i]);
+//        printf("%e\n",hplus->data[i]);
+        std::fprintf(f,"%f\t%e\t%e\n",i*dt,hplus->data[i],hcross->data[i]);
     }
     std::fclose(f);
-    free(hplus);
-    free(hcross);
+//    free(hplus->data);
+//    free(hcross->data);
+//    free(hplus);
+//    free(hcross);
     return 0;
 }

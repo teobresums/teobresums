@@ -3,9 +3,14 @@
 
 #include <vector>
 using namespace::std;
+typedef struct tagWaveform
+{
+    double *data;
+    unsigned int length;
+}Waveform;
 
-void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
-                        double *hcross,         /** hx return array **/
+void XLALSimIMRTEOBIHES(Waveform **hplus,          /** h+ return array **/
+                        Waveform **hcross,         /** hx return array **/
                         double m1,              /** m1(Msun) **/
                         double m2,              /** m2(Msun) **/
                         double spin1x,          /** dimensionless s1x **/

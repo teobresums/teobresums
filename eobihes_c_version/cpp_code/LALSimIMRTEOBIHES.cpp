@@ -48,11 +48,12 @@
 #include "file_names.h"
 #include "find_a1a2a3.h"
 #include "interp_grid.h"
+#include "LALSimIMRTEOBIHES.h"
 
 using namespace::std;
 
-void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
-                        double *hcross,         /** hx return array **/
+void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
+                        Waveform **hcross,       /** hx return array **/
                         double m1,              /** m1(Msun) **/
                         double m2,              /** m2(Msun) **/
                         double spin1x,          /** dimensionless s1x **/
@@ -359,16 +360,41 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
     int N = hlm_ampl_g[0].size();
     
     /** Allocate hplus and hcross */
-    hplus = (double *)malloc(N*sizeof(double));
-    hcross = (double *)malloc(N*sizeof(double));
+    Waveform *hplus_out = (Waveform *)malloc(sizeof(Waveform));
+    if (hplus_out == NULL)
+    {
+        printf("ERROR allocating hplus.\n");
+        exit(-1);
+    }
+    hplus_out->data = (double *)malloc(N*sizeof(double));
+    if (hplus_out->data == NULL)
+    {
+        printf("ERROR allocating hplus->data.\n");
+        exit(-1);
+    }
+    hplus_out->length = N;
+    Waveform *hcross_out = (Waveform *)malloc(sizeof(Waveform));
+    if (hcross_out == NULL)
+    {
+        printf("ERROR allocating hcross.\n");
+        exit(-1);
+    }
+    hcross_out->data = (double *)malloc(N*sizeof(double));
+    if (hcross_out->data == NULL)
+    {
+        printf("ERROR allocating hcross->data.\n");
+        exit(-1);
+    }
+    hcross_out->length = N;
+    
     /** Set them to zero initially */
     
-    memset(hplus, 0, N*sizeof(double));
-    memset(hcross, 0, N*sizeof(double));
+    memset(hplus_out->data, 0, N*sizeof(double));
+    memset(hcross_out->data, 0, N*sizeof(double));
     
     /** Spherical harmonics projection **/
     /** construct hplus and hcross **/
-    
+
     double amplitude_constant = 1./(distance*params.nu);
     
     for (int k=35; k--; )
@@ -378,11 +404,11 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
             /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
             for (i=0; i<N; i++)
             {
-                hplus[i] += amplitude_constant*hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
-                hcross[i] += -amplitude_constant*hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
+                hplus_out->data[i] += amplitude_constant*hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
+                hcross_out->data[i] += -amplitude_constant*hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
             }
         }
-
     }
-    return;
+    *hplus = hplus_out;
+    *hcross= hcross_out;
 }
