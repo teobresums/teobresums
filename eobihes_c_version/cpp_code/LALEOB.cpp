@@ -314,6 +314,13 @@ vector<double> LALEOB(double m1,
         hlm_ampl_g[k]            = interp_grid(t_vec,amplitude,dt);
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
+    /** Spherical harmonics projection **/
+    
+//    for (int k=35; k--; )
+//    {
+//        
+//    }
+    
     /** NQCs */
     if (params.tidal==false && params.spin==true)
     {
@@ -343,8 +350,13 @@ vector<double> LALEOB(double m1,
         ringdown(nu,q,dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
-    /** Compute interpolation of waveform on grid and write to output file */
-    vector<double> h_td = interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,distance);
+    /** Compute interpolation of waveform on grid **/
+    /** h_td contains amplitude and phase **/
+    vector<gsl_complex> h_td = interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,distance);
 
+    /** construct h+ and hx **/
+    
+    double **hp, **hc;
+    
     return h_td;
 }

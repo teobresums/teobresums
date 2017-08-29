@@ -25,7 +25,7 @@
 
 using namespace::std;
 
-vector<double> interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag,double distance);
+vector<gsl_complex> interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag,double distance);
 
 
 #endif /* _interpolator_waveform_h */

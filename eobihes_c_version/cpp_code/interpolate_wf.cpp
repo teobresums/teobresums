@@ -43,12 +43,12 @@ typedef std::numeric_limits< double > dbl;
 using namespace::std;
 
 //int interpolate_wf(double dt,vector<double> t_vec,vector<double> hlm_rad, vector<double> hlm_phase,bool waveform_flag,std::ofstream& wave,double Mbh)
-vector<double> interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag, double distance)
+vector<gsl_complex> interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag, double distance)
 {
 
     /** Note: before the Momg_vec had a Mbh multiplied onto it! */
 
-    vector<double> waveform(t_vec[0].size());
+//    vector<double> waveform(t_vec[0].size());
     int t_length = t_vec[0].size();
     int grid_length = (int)(t_vec[0].back()-t_vec[0][0])/dt + 2;
     vector<gsl_complex> hlm_interp(grid_length);
@@ -90,14 +90,14 @@ vector<double> interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vec
     
             gsl_spline_free (spline);
             gsl_interp_accel_free (acc);
-            for (int j=0; j < grid_length-2; j++)
-            {
-                waveform[j] += hlm_interp[j].dat[0]*cos(hlm_interp[j].dat[1])/distance;
-            }
+//            for (int j=0; j < grid_length-2; j++)
+//            {
+//                waveform[j] += hlm_interp[j].dat[0]*cos(hlm_interp[j].dat[1])/distance;
+//            }
         }
         else continue;
 
     }
 
-    return waveform;
+    return hlm_interp;
 }
