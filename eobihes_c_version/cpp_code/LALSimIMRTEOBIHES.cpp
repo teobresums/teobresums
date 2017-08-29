@@ -413,8 +413,8 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
             for (i=0; i<N; i++)
             {
                 double Aki = hlm_ampl_g[k][i]*amplitude_constant;
-                double cosPhi = cos(-hlm_phase_g[k][i]);
-                double sinPhi = sin(-hlm_phase_g[k][i]);
+                double cosPhi = cos(hlm_phase_g[k][i]);
+                double sinPhi = -sin(hlm_phase_g[k][i]);
                 hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
                 hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
             }
