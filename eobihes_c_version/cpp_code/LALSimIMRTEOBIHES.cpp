@@ -399,7 +399,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
     /** construct hplus and hcross **/
 
     double amplitude_constant = 1./(distance*params.nu);
-    
+
     for (int k=35; k--; )
     {
         if (k==1)
@@ -407,8 +407,9 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
             /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
             for (i=0; i<N; i++)
             {
-                hplus_out->data[i] += amplitude_constant*hlm_ampl_g[k][i]*cos(hlm_phase_g[k][i]);
-                hcross_out->data[i] += -amplitude_constant*hlm_ampl_g[k][i]*sin(hlm_phase_g[k][i]);
+                tmp = amplitude_constant*hlm_ampl_g[k][i]*cexp(-hlm_phase_g[k][i])*spherical_harmonic(L[k],M[k],inclination,polarisation);
+                hplus_out->data[i] += creal(tmp);
+                hcross_out->data[i] += -cimag(tmp);
             }
         }
     }
