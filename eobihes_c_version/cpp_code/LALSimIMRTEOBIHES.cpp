@@ -357,6 +357,7 @@ void XLALSimIMRTEOBIHES(double *hplus,          /** h+ return array **/
     }
     
     int N = hlm_ampl_g[0].size();
+    
     /** Allocate hplus and hcross */
     hplus = (double *)malloc(N*sizeof(double));
     hcross = (double *)malloc(N*sizeof(double));

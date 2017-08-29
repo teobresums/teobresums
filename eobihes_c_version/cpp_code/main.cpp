@@ -48,11 +48,11 @@
 #include "file_names.h"
 #include "find_a1a2a3.h"
 #include "interp_grid.h"
-#include "LALEOB.h"
+#include "LALSimIMRTEOBIHES.h"
 
 using namespace::std;
 
-#define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
+#define NELEMS(x)  (sizeof(x) / sizeof((*x)))
 
 int main (int argc,char* argv[])
 {
@@ -184,12 +184,14 @@ int main (int argc,char* argv[])
     std::FILE* f = std::fopen(output, "w");
     int i = 0;
     int N = NELEMS(hplus);
-    
+    printf("N:%d\n",N);
     double dt = 1./sampling_rate;
-    for (i=0;i<N;i++)
+    for (i=0;i<10000;i++)
     {
         std::fprintf(f,"%f\t%e\t%e\n",i*dt,hplus[i],hcross[i]);
     }
     std::fclose(f);
+    free(hplus);
+    free(hcross);
     return 0;
 }
