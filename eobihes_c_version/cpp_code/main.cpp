@@ -187,13 +187,12 @@ int main (int argc,char* argv[])
     double dt = 1./sampling_rate;
     for (i=0;i<N;i++)
     {
-//        printf("%e\n",hplus->data[i]);
         std::fprintf(f,"%f\t%e\t%e\n",i*dt,hplus->data[i],hcross->data[i]);
     }
     std::fclose(f);
-//    free(hplus->data);
-//    free(hcross->data);
-//    free(hplus);
-//    free(hcross);
+    free(hplus->data);
+    free(hcross->data);
+    free(hplus);
+    free(hcross);
     return 0;
 }
