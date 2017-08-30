@@ -25,6 +25,8 @@
 
 using namespace::std;
 
+int select_longest_array(vector<vector<double> > vectors);
+
 int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase);
 
 

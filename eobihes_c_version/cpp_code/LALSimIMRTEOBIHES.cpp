@@ -354,7 +354,9 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         }
     }
     
-    /** Define a time vector for each multipole USELESS - remove*/
+    /** Define a time vector for each multipole */
+    /** These will be cut by the ringdown, where each multipole has its own starting time */
+    
     vector<vector<double> > t_g(35);
     for (int k=35; k--; )
     {
@@ -367,7 +369,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         ringdown(params.nu,params.q,params.dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
-    //interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g);
+//    interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g);
     
     int N = hlm_ampl_g[1].size();
     

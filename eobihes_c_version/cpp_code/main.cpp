@@ -54,11 +54,11 @@ using namespace::std;
 
 int main (int argc, char* argv[])
 {
-    double m1            = 5.0;
-    double m2            = 5.0;
+    double m1            = 40.0;
+    double m2            = 40.0;
     double q             = m1/m2;
-    double chi1          = 0.1;
-    double chi2          = 0.1;
+    double chi1          = 0.0;
+    double chi2          = 0.0;
     double f_min         = 20.;
     double sampling_rate = 4096.;
     double LambdaAl2     = 0.0;
@@ -66,7 +66,7 @@ int main (int argc, char* argv[])
     double distance      = 40*3.086e22;
     double inclination   = 0.0;
     double polarisation  = 0.0;
-    bool   NQC           = false;
+    bool   NQC           = true;
     bool   tidal         = false;
     bool   speedy        = true;
     bool   RWZ           = false;

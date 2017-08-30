@@ -184,7 +184,9 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
         Deltaphi[k] = psi[k].dat[1] - hlm_phase[k][I[k]];
     }
     
-    /*add 200 points of ringdown attachment*/
+    /** add 200 points of ringdown attachment */
+    /** if we select the number of points in each mode to be such that the number of output points
+        is the same, we do not need any interpolation, since the vectors are defined on the same time grid. */
     for (int k=35; k--; ) {
         double t = t_vec[k][I[k]];
         switch (k) {
