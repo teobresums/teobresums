@@ -80,7 +80,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
 {
     
     int grid_length, i;
-    double r0, r_min, rLR, nu, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
+    double r0, r_min, rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
     if ((spin1x!=0)||(spin1y!=0)||(spin2x!=0)||(spin2y!=0))
@@ -359,7 +359,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     /** Ringdown attachment */
     if (params.tidal==false && params.spin==false)
     {
-        ringdown(nu,q,dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
+        ringdown(params.nu,params.q,params.dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
     interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,final_mass);
@@ -739,10 +739,10 @@ void XLALSimIMRTEOBIHES_single_mode(
     /** Ringdown attachment */
     if (params.tidal==false && params.spin==false)
     {
-        ringdown(nu, q, dt, final_mass, t_g, MOmg_vecg, hlm_ampl_g, hlm_phase_g);
+        ringdown(params.nu, params.q, params.dt, final_mass, t_g, MOmg_vecg, hlm_ampl_g, hlm_phase_g);
     }
     
-    interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g, params.waveform, final_mass);
+    //interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g, params.waveform, final_mass);
     
     int N = hlm_ampl_g[0].size();
     

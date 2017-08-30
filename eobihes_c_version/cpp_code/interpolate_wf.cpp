@@ -43,20 +43,16 @@ typedef std::numeric_limits< double > dbl;
 using namespace::std;
 
 //int interpolate_wf(double dt,vector<double> t_vec,vector<double> hlm_rad, vector<double> hlm_phase,bool waveform_flag,std::ofstream& wave,double Mbh)
-vector<gsl_complex> interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag, double distance)
+int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag, double distance)
 {
 
     /** Note: before the Momg_vec had a Mbh multiplied onto it! */
 
-//    vector<double> waveform(t_vec[0].size());
-    int t_length = t_vec[0].size();
-    int grid_length = (int)(t_vec[0].back()-t_vec[0][0])/dt + 2;
-    vector<gsl_complex> hlm_interp(grid_length);
-    vector<double> t_interp(grid_length);
-
     for (int k=35; k--; )
     {
-        
+        int t_length = t_vec[k].size();
+        int grid_length = (int)(t_vec[k].back()-t_vec[k][0])/dt + 2;
+        vector<double> t_interp(grid_length);
         double xi, yi;
         int i=0;
 
@@ -75,7 +71,7 @@ vector<gsl_complex> interpolate_wf(double dt,vector<vector<double> > t_vec,vecto
             for (xi = t_vec[k][0]; xi < t_vec[k].back(); xi += step)
             {
                 yi = gsl_spline_eval (spline, xi, acc);
-                hlm_interp[i].dat[0] = yi;
+                //hlm_interp[i].dat[0] = yi;
                 t_interp[i] = xi;
                 i++;
             }
@@ -84,7 +80,7 @@ vector<gsl_complex> interpolate_wf(double dt,vector<vector<double> > t_vec,vecto
             for (xi = t_vec[k][0]; xi < t_vec[k].back(); xi += step)
             {
                 yi = gsl_spline_eval (spline, xi, acc);
-                hlm_interp[i].dat[1] = yi;
+                //hlm_interp[i].dat[1] = yi;
                 i++;
             }
     
@@ -99,5 +95,5 @@ vector<gsl_complex> interpolate_wf(double dt,vector<vector<double> > t_vec,vecto
 
     }
 
-    return hlm_interp;
+    return 0;
 }
