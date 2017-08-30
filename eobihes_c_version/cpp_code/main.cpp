@@ -70,6 +70,8 @@ int main (int argc, char* argv[])
     bool   tidal         = false;
     bool   speedy        = true;
     bool   RWZ           = true;
+    bool   multipoles    = false;
+    int    mult_index    = -1;
     int    lm            = 1;
     int    solver_scheme = 0;
     char   output[256]   = "waveform.dat";
@@ -182,42 +184,85 @@ int main (int argc, char* argv[])
         {
             sprintf(output,"%s",argv[i+1]);
         }
+        else if (strcmp(argv[i],"-multipoles")==0)
+        {
+            multipoles = true;
+            printf("multipoles = true\n");
+        }
+        else if (strcmp(argv[i],"-mult_index")==0)
+        {
+            mult_index = atoi(argv[i+1]);
+            printf("mult_index: %d\n",mult_index);
+        }
     }
     
     Waveform *hplus;
     Waveform *hcross;
     
-    XLALSimIMRTEOBIHES(&hplus,
-                       &hcross,
-                       m1,
-                       m2,
-                       0.0,
-                       0.0,
-                       chi1,
-                       0.0,
-                       0.0,
-                       chi2,
-                       inclination,
-                       polarisation,
-                       f_min,
-                       sampling_rate,
-                       LambdaAl2,
-                       LambdaBl2,
-                       distance,
-                       NQC,
-                       tidal,
-                       speedy,
-                       RWZ,
-                       lm,
-                       solver_scheme);
+    if (multipoles == true && mult_index!=-1)
+    {
+        XLALSimIMRTEOBIHES_single_mode(&hplus,
+                           &hcross,
+                           m1,
+                           m2,
+                           0.0,
+                           0.0,
+                           chi1,
+                           0.0,
+                           0.0,
+                           chi2,
+                           inclination,
+                           polarisation,
+                           f_min,
+                           sampling_rate,
+                           LambdaAl2,
+                           LambdaBl2,
+                           distance,
+                           NQC,
+                           tidal,
+                           speedy,
+                           RWZ,
+                           lm,
+                           solver_scheme,
+                           mult_index);
+    }
+    else if (multipoles == true && mult_index==-1){cout << "Need to input also the index of the multipole" << endl;}
+    else
+    { /** Hack to print out a multipole. h_plus -> ampl, h_cross - > phase. h= A* e^(-i*phase)**/
+        XLALSimIMRTEOBIHES(&hplus,
+                           &hcross,
+                           m1,
+                           m2,
+                           0.0,
+                           0.0,
+                           chi1,
+                           0.0,
+                           0.0,
+                           chi2,
+                           inclination,
+                           polarisation,
+                           f_min,
+                           sampling_rate,
+                           LambdaAl2,
+                           LambdaBl2,
+                           distance,
+                           NQC,
+                           tidal,
+                           speedy,
+                           RWZ,
+                           lm,
+                           solver_scheme);
+    }
+    
+
     
     std::FILE* f = std::fopen(output, "w");
-    int i = 0;
-    int N = hplus->length;
-    double dt = 1./sampling_rate;
+    int i        = 0;
+    int N        = hplus->length;
+    double dt    = 1./sampling_rate;
     for (i=0;i<N;i++)
     {
-        std::fprintf(f,"%f\t%e\t%e\n",i*dt,hplus->data[i],hcross->data[i]);
+        std::fprintf(f, "%f\t%e\t%e\n", i*dt, hplus->data[i], hcross->data[i]);
     }
     std::fclose(f);
     free(hplus->data);
