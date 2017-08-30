@@ -340,7 +340,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         {
             if (k==1) // IMPORTANT! temporary hack to get the 22 mode only
             {
-                for (int i=hlm_rad_vec.size(); i--; )
+                for (int i=grid_length; i--; )
                 {
                     hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
                     hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
@@ -419,6 +419,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
                 double sinPhi = -sin(hlm_phase_g[k][i]);
                 hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
                 hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+//                printf("i:%d hp:%e\n",i,hplus_out->data[i]);
             }
         }
     }

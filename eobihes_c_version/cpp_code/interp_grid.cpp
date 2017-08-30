@@ -35,7 +35,6 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
     double xi, yi;
     vector<double> data_g(grid_length);
     vector<double> omg_interp(grid_length);
-    vector<double> t_interp(grid_length);
     
     /** Convert all vectors to an array */
     double* t = &t_vec[0];
@@ -51,7 +50,6 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
     {
         yi = gsl_spline_eval (spline, xi, acc);
         data_g[i] = yi;
-        t_interp[i] = xi;
         i++;
     }
     
