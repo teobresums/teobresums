@@ -362,6 +362,9 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         ringdown(nu,q,dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
+    interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,wavenames,final_mass);
+
+    
     int N = hlm_ampl_g[0].size();
     
     /** Allocate hplus and hcross */
