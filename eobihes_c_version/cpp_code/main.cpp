@@ -196,39 +196,63 @@ int main (int argc, char* argv[])
         }
     }
     
-    Waveform *hplus;
-    Waveform *hcross;
+
     
     if (multipoles == true && mult_index!=-1)
     {
-        XLALSimIMRTEOBIHES_single_mode(&hplus,
-                           &hcross,
-                           m1,
-                           m2,
-                           0.0,
-                           0.0,
-                           chi1,
-                           0.0,
-                           0.0,
-                           chi2,
-                           inclination,
-                           polarisation,
-                           f_min,
-                           sampling_rate,
-                           LambdaAl2,
-                           LambdaBl2,
-                           distance,
-                           NQC,
-                           tidal,
-                           speedy,
-                           RWZ,
-                           lm,
-                           solver_scheme,
-                           mult_index);
+        Waveform *ampl;
+        Waveform *phase;
+        
+        XLALSimIMRTEOBIHES_single_mode(&ampl,
+                                       &phase,
+                                       m1,
+                                       m2,
+                                       0.0,
+                                       0.0,
+                                       chi1,
+                                       0.0,
+                                       0.0,
+                                       chi2,
+                                       inclination,
+                                       polarisation,
+                                       f_min,
+                                       sampling_rate,
+                                       LambdaAl2,
+                                       LambdaBl2,
+                                       distance,
+                                       NQC,
+                                       tidal,
+                                       speedy,
+                                       RWZ,
+                                       lm,
+                                       solver_scheme,
+                                       mult_index);
+        
+        std::FILE* f = std::fopen(output, "w");
+        int i        = 0;
+        int N        = ampl->length;
+        double dt    = 1./sampling_rate;
+        for (i=0;i<N;i++)
+        {
+            std::fprintf(f, "%f\t%e\t%e\n", i*dt, ampl->data[i], phase->data[i]);
+        }
+        std::fclose(f);
+        free(ampl->data);
+        free(phase->data);
+        free(ampl);
+        free(phase);
     }
-    else if (multipoles == true && mult_index==-1){cout << "Need to input also the index of the multipole" << endl;}
+    else if (multipoles == true && mult_index==-1)
+    {
+        cout << "Need to input also the index of the multipole" << endl;
+        exit(-1);
+    }
     else
     { /** Hack to print out a multipole. h_plus -> ampl, h_cross - > phase. h= A* e^(-i*phase)**/
+        
+        Waveform *hplus;
+        Waveform *hcross;
+        
         XLALSimIMRTEOBIHES(&hplus,
                            &hcross,
                            m1,
@@ -252,22 +276,24 @@ int main (int argc, char* argv[])
                            RWZ,
                            lm,
                            solver_scheme);
+        
+        std::FILE* f = std::fopen(output, "w");
+        int i        = 0;
+        int N        = hplus->length;
+        double dt    = 1./sampling_rate;
+        for (i=0;i<N;i++)
+        {
+            std::fprintf(f, "%f\t%e\t%e\n", i*dt, hplus->data[i], hcross->data[i]);
+        }
+        std::fclose(f);
+        free(hplus->data);
+        free(hcross->data);
+        free(hplus);
+        free(hcross);
+        
     }
     
 
-    
-    std::FILE* f = std::fopen(output, "w");
-    int i        = 0;
-    int N        = hplus->length;
-    double dt    = 1./sampling_rate;
-    for (i=0;i<N;i++)
-    {
-        std::fprintf(f, "%f\t%e\t%e\n", i*dt, hplus->data[i], hcross->data[i]);
-    }
-    std::fclose(f);
-    free(hplus->data);
-    free(hcross->data);
-    free(hplus);
-    free(hcross);
+
     return 0;
 }
