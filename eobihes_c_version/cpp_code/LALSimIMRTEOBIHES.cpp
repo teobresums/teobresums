@@ -79,8 +79,9 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/)
 {
     
-    int grid_length, i;
-    double r0, r_min, rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
+    int i = 0;
+    int grid_length = 0;
+    double r_min, rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
     if ((spin1x!=0)||(spin1y!=0)||(spin2x!=0)||(spin2y!=0))
@@ -244,7 +245,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         pphi   = y[3];
         
         /** Checking whether the dynamics produces NaN values; this can happen if radius r becomes too small */
-        if (r==r)
+        if (std::isfinite(r))
         {
             /** Waveform computation*/
             vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
@@ -298,7 +299,10 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
             }
         }
     }
-    gsl_odeiv2_evolve_free (e); gsl_odeiv2_control_free (c); gsl_odeiv2_step_free (s);gsl_odeiv2_driver_free (d);
+    gsl_odeiv2_evolve_free (e);
+    gsl_odeiv2_control_free (c);
+    gsl_odeiv2_step_free (s);
+    gsl_odeiv2_driver_free (d);
 
     /** Interpolate quantities on a grid of width dt */
     grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
@@ -322,6 +326,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
 
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
+    
     for (int k=35; k--; )
     {
         vector<double> amplitude = hlm_ampl[k];
@@ -338,13 +343,13 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         
         for (int k=35; k--; )
         {
-            if (k==1) // IMPORTANT! temporary hack to get the 22 mode only
-            {
+//            if (k==1) // IMPORTANT! temporary hack to get the 22 mode only
+//            {
                 for (int i=grid_length; i--; )
                 {
                     hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
                     hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
-                }
+//                }
             }
         }
     }
@@ -362,9 +367,9 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         ringdown(params.nu,params.q,params.dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
     
-    interpolate_wf(dt, t_g, hlm_ampl_g,hlm_phase_g,params.waveform,final_mass);
+    //interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g);
     
-    int N = hlm_ampl_g[0].size();
+    int N = hlm_ampl_g[1].size();
     
     /** Allocate hplus and hcross */
     Waveform *hplus_out = (Waveform *)malloc(sizeof(Waveform));
@@ -742,7 +747,7 @@ void XLALSimIMRTEOBIHES_single_mode(
         ringdown(params.nu, params.q, params.dt, final_mass, t_g, MOmg_vecg, hlm_ampl_g, hlm_phase_g);
     }
     
-    //interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g, params.waveform, final_mass);
+    interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g);
     
     int N = hlm_ampl_g[0].size();
     

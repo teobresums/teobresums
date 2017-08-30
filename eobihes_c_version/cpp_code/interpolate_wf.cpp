@@ -43,7 +43,7 @@ typedef std::numeric_limits< double > dbl;
 using namespace::std;
 
 //int interpolate_wf(double dt,vector<double> t_vec,vector<double> hlm_rad, vector<double> hlm_phase,bool waveform_flag,std::ofstream& wave,double Mbh)
-int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase,bool waveform_flag, double distance)
+int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double> > hlm_rad, vector<vector<double> > hlm_phase)
 {
 
     /** Note: before the Momg_vec had a Mbh multiplied onto it! */
@@ -51,11 +51,11 @@ int interpolate_wf(double dt,vector<vector<double> > t_vec,vector<vector<double>
     for (int k=35; k--; )
     {
         int t_length = t_vec[k].size();
-        int grid_length = (int)(t_vec[k].back()-t_vec[k][0])/dt + 2;
+        int grid_length = (int)(t_vec[k].back()-t_vec[k][0])/dt + 1;
         vector<double> t_interp(grid_length);
         double xi, yi;
         int i=0;
-
+//        printf("k = %d grid = %d\n",k,grid_length);
         /** Convert all vectors to an array */
         if (k==1)
         {
