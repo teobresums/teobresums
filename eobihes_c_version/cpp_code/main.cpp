@@ -69,7 +69,7 @@ int main (int argc, char* argv[])
     bool   NQC           = true;
     bool   tidal         = false;
     bool   speedy        = true;
-    bool   RWZ           = true;
+    bool   RWZ           = false;
     bool   multipoles    = false;
     int    mult_index    = -1;
     int    lm            = 1;
