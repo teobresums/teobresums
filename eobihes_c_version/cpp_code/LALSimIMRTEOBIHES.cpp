@@ -54,8 +54,8 @@
 
 using namespace::std;
 
-void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
-                        Waveform **hcross,       /** hx return array **/
+void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
+                        Waveform **hcross,      /** hx return array **/
                         double m1,              /** m1(Msun) **/
                         double m2,              /** m2(Msun) **/
                         double spin1x,          /** dimensionless s1x **/
@@ -399,8 +399,10 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
     
     /** Spherical harmonics projection **/
     /** construct hplus and hcross **/
-
-    double amplitude_constant = 1./(distance*params.nu);
+    /** h22 = 1/R * (nu*M)*G/c^2 h_code_output */
+    double MSUN_M = 1.47662504e3; /** G/c^3 */
+    double mtot_m = (m1+m2)*MSUN_M;
+    double amplitude_prefactor = params.nu*mtot_m/(distance);
 
     for (int k=35; k--; )
     {
@@ -412,7 +414,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,        /** h+ return array **/
             /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
             for (i=0; i<N; i++)
             {
-                double Aki = hlm_ampl_g[k][i]*amplitude_constant;
+                double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
                 double cosPhi = cos(hlm_phase_g[k][i]);
                 double sinPhi = -sin(hlm_phase_g[k][i]);
                 hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
