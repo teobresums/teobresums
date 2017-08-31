@@ -39,7 +39,7 @@ vector<double> NQC(const double r, const double prstar, const double Omega, cons
             
             //% NQC corrections to the phase
             n[3] = prstar/(r*Omega);
-            n[4] = n[3]*pow(Omega, 2./3.);
+            n[4] = n[3]*cbrt(Omega*Omega);
             n[5] = n[4]*prstar*prstar;
             break;
             // (2,2)
@@ -66,7 +66,7 @@ vector<double> NQC(const double r, const double prstar, const double Omega, cons
             
             //% NQC corrections to the phase
             n[3] = prstar/(r*Omega);
-            n[4] = n[3]*pow(Omega, 2./3.);
+            n[4] = n[3]*cbrt(Omega*Omega);
             n[5] = n[4]*prstar*prstar;
             break;
         default:

@@ -94,7 +94,8 @@ Amrg[k33]    = -10.4024985230145610*nu2 +  1.3517710770250695*nu +  0.4307642913
 
     for (int i=35; i--; ) {
         // a  = [c1A c2A c3A c4A]
-        a1[i] = Amrg[i] * alpha1[i] * (cosh(c3A[i]))*(cosh(c3A[i])) / c2A[i];
+        double cosh_c3A = cosh(c3A[i]);
+        a1[i] = Amrg[i] * alpha1[i] * cosh_c3A * cosh_c3A / c2A[i];
         a2[i] = c2A[i];
         a3[i] = c3A[i];
         a4[i] = Amrg[i] - a1[i] * tanh(c3A[i]);
