@@ -69,89 +69,89 @@ input read_config(char *fname){
         //param_values.push_back(param_value);
         cout << param_name <<"\t"<< param_value << endl;
         switch (i) {
-	case 0:
-	  params.q = param_value;
-	  break;
+        case 0:
+          params.q    = param_value;
+          break;
         case 1:
-	  params.chi1 = param_value;
-	  break;
+          params.chi1 = param_value;
+          break;
         case 2:
-	  params.chi2 = param_value;
-	  break;
-	case 3:
-	  params.r0 = param_value;
-	  break;
-	case 4:
-                if (param_value==0) {
-                    params.NQC = false;
-                } else {
-                    params.NQC = true;
-                }
-                break;
-	case 5:
-                if (param_value==0) {
-                    params.tidal = false;
-                } else {
-                    params.tidal = true;
-                }
-                break;
-            case 6:
-                if (param_value==0) {
-                    params.RWZ = false;
-                } else {
-                    params.RWZ = true;
-                }
-                break;
-            case 7:
-                if (param_value==0) {
-                    params.speedy = false;
-                } else {
-                    params.speedy = true;
-                }
-                break;
-            case 8:
-                if (param_value==0) {
-                    params.dynamics = false;
-                } else {
-                    params.dynamics = true;
-                }
-                break;
-            case 9:
-                if (param_value==0) {
-                    params.waveform = false;
-                } else {
-                    params.waveform = true;
-                }
-                break;
-            case 10:
-                params.lm = param_value;
-                break;
-            case 11:
-                params.dt = param_value;
-                break;
-            case 12:
-                params.solver_scheme = param_value;
-                break;
-            case 13:
-                params.LambdaAl2 = param_value;
-                break;
-            case 14:
-                params.LambdaAl3 = param_value;
-                break;
-            case 15:
-	      params.LambdaAl4 = param_value;
-                break;
-            case 16:
-                params.LambdaBl2 = param_value;
-                break;
-            case 17:
-                params.LambdaBl3 = param_value;
-                break;
-            case 18:
-                params.LambdaBl4 = param_value;
-                break;
-            default:
-                break;
+          params.chi2 = param_value;
+          break;
+        case 3:
+          params.r0   = param_value;
+          break;
+        case 4:
+            if (param_value==0) {
+                params.NQC = false;
+            } else {
+                params.NQC = true;
+            }
+            break;
+        case 5:
+            if (param_value==0) {
+                params.tidal = false;
+            } else {
+                params.tidal = true;
+            }
+            break;
+        case 6:
+            if (param_value==0) {
+                params.RWZ = false;
+            } else {
+                params.RWZ = true;
+            }
+            break;
+        case 7:
+            if (param_value==0) {
+                params.speedy = false;
+            } else {
+                params.speedy = true;
+            }
+            break;
+        case 8:
+            if (param_value==0) {
+                params.dynamics = false;
+            } else {
+                params.dynamics = true;
+            }
+            break;
+        case 9:
+            if (param_value==0) {
+                params.waveform = false;
+            } else {
+                params.waveform = true;
+            }
+            break;
+        case 10:
+            params.lm = param_value;
+            break;
+        case 11:
+            params.dt = param_value;
+            break;
+        case 12:
+            params.solver_scheme = param_value;
+            break;
+        case 13:
+            params.LambdaAl2 = param_value;
+            break;
+        case 14:
+            params.LambdaAl3 = param_value;
+            break;
+        case 15:
+      params.LambdaAl4 = param_value;
+            break;
+        case 16:
+            params.LambdaBl2 = param_value;
+            break;
+        case 17:
+            params.LambdaBl3 = param_value;
+            break;
+        case 18:
+            params.LambdaBl4 = param_value;
+            break;
+        default:
+            break;
         }
         
         i++;

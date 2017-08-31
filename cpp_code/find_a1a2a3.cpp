@@ -37,45 +37,55 @@ typedef std::numeric_limits< double > dbl;
 
 using namespace::std;
 
-vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vector<double> w, vector<double> pph, vector<double> pr_star, vector<vector<double> > hlm_phase,vector<double> Omg_orb, vector<vector<double> > A, vector<double> ddotr, void *params)
-{
+vector<vector<gsl_complex> > find_a1a2a3(
+                                         vector<double>          T,
+                                         vector<double>          r,
+                                         vector<double>          w,
+                                         vector<double>          pph,
+                                         vector<double>          pr_star,
+                                         vector<vector<double>>  hlm_phase,
+                                         vector<double>          Omg_orb,
+                                         vector<vector<double>>  A,
+                                         vector<double>          ddotr,
+                                         void                    *params
+                                         ){
 
-
-    /* determine NQC parameters */
-    double nu    = (*(input *)params).nu;
-    double chi1  = (*(input *)params).chi1;
-    double aKerr = (*(input *)params).aK;
     double A_tmp, dA_tmp, omg_tmp, domg_tmp;
-
+    
+    double nu         = (*(input *)params).nu;
+    double chi1       = (*(input *)params).chi1;
+    double aK         = (*(input *)params).aK;
+    double aK2        = aK*aK;
+    double aK3        = aK*aK*aK;
+    double aK4        = aK*aK*aK*aK;
     long int t_length = T.size();
     
+    vector<double> P(2);
+    vector<double> M(4);
     vector<double> pA(5);
     vector<double> pdA(5);
     vector<double> pomg(5);
     vector<double> pdomg(5);
-    vector<double> p1v(2),p2v(2),p3v(2);
-    vector<double> pdA1v(2),pdA2v(2),pdA3v(2);
-    vector<double> pn0(2),pd1(2);
-    vector<double> ppdomg1(2),ppdomg2(2);
-    vector<vector<double> >  omg(35, vector<double>(t_length));
-    vector<vector<double> > domg(35, vector<double>(t_length));
+    vector<double> pn0(2),       pd1(2);
+    vector<double> ppdomg1(2),   ppdomg2(2);
+    vector<double> p1v(2),       p2v(2),       p3v(2);
+    vector<double> pdA1v(2),     pdA2v(2),     pdA3v(2);
     vector<double> n1(t_length), n2(t_length), n3(t_length), n4(t_length), n5(t_length), n6(t_length);
-    vector<double> max_A(35),max_dA(35),d2max(35),d3max(35),max_omg(35),max_domg(35),maxd2omg(35),DeltaT(35);
-    //vector<double> ai(3);
-    //vector<double> bi(3);
-    vector<vector<double> > ai(35, vector<double>(3));
-    vector<vector<double> > bi(35, vector<double>(3));
-    vector<double> P(2);
-    vector<double> M(4);
-    // vector<double> m11(t_length),m12(t_length),m13(t_length);
-    vector<vector<double> >   m11(35, vector<double>(t_length));
-    vector<vector<double> >   m12(35, vector<double>(t_length));
-    vector<vector<double> >   m13(35, vector<double>(t_length));
-    vector<vector<double> >   m21(35, vector<double>(t_length));
-    vector<vector<double> >   m22(35, vector<double>(t_length));
+    vector<double> max_A(35),    max_dA(35),   d2max(35),    d3max(35),    max_omg(35),  max_domg(35), maxd2omg(35), DeltaT(35);
+    
+    vector<vector<double> > ai(   35, vector<double>(3));
+    vector<vector<double> > bi(   35, vector<double>(3));
+    vector<vector<double> > omg(  35, vector<double>(t_length));
+    vector<vector<double> > domg( 35, vector<double>(t_length));
+    vector<vector<double> > m11(  35, vector<double>(t_length));
+    vector<vector<double> > m12(  35, vector<double>(t_length));
+    vector<vector<double> > m13(  35, vector<double>(t_length));
+    vector<vector<double> > m21(  35, vector<double>(t_length));
+    vector<vector<double> > m22(  35, vector<double>(t_length));
     vector<vector<double> > p1tmp(35, vector<double>(t_length));
     vector<vector<double> > p2tmp(35, vector<double>(t_length));
-    vector<vector<gsl_complex> > o(35, vector<gsl_complex>(t_length));
+    
+    vector<vector<gsl_complex>> o(35, vector<gsl_complex>(t_length));
 
     for (int k=35; k--;)
     {
@@ -90,100 +100,126 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
     for (int k=35; k--;)
     {
          omg[k] = s_D1(hlm_phase[k], T, t_length-1);
-        domg[k] = s_D1(omg[k], T, t_length-1);
+        domg[k] = s_D1(omg[k],       T, t_length-1);
     }
 
     /**  Case 'NQC_fit_hybrid' */
-    if (nu==0.25)
+    if (nu == 0.25)
     {
-        
-        /** Amplitude */
-        
-        pA[0] =  0.00178195;
-        pA[1] =  0.00435589;
-        pA[2] =  0.00344489;
-        pA[3] = -0.00076165;
-        pA[4] =  0.31973334;
-        A_tmp = pA[0]*pow(aKerr,4) + pA[1]*pow(aKerr,3) + pA[2]*pow(aKerr,2) + pA[3]*aKerr + pA[4];
-        
-        /** Derivative of amplitude */
-        
-        pdA[0] =  0.00000927;
-        pdA[1] = -0.00024550;
-        pdA[2] =  0.00012469;
-        pdA[3] =  0.00123845;
-        pdA[4] = -0.00195014;
-        dA_tmp = pdA[0]*pow(aKerr,4) + pdA[1]*pow(aKerr,3) + pdA[2]*pow(aKerr,2) + pdA[3]*aKerr + pdA[4];
-        
-        /** Frequency */
-        
-        pomg[0] = 0.00603482;
-        pomg[1] = 0.01604555;
-        pomg[2] = 0.02290799;
-        pomg[3] = 0.07084587;
-        pomg[4] = 0.38321834;
-        omg_tmp = pomg[0]*pow(aKerr,4) + pomg[1]*pow(aKerr,3) + pomg[2]*pow(aKerr,2) + pomg[3]*aKerr + pomg[4];
-        
-        /** Derivative of the frequency */
-        
-        pdomg[0] = 0.00024066;
-        pdomg[1] = 0.00038123;
+        pA[0]    =  0.00178195;
+        pA[1]    =  0.00435589;
+        pA[2]    =  0.00344489;
+        pA[4]    = -0.00076165;
+        pA[4]    =  0.31973334;
+        A_tmp    =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[4]*aK     + pA[4];
+
+        pdA[0]   =  0.00000927;
+        pdA[1]   = -0.00024550;
+        pdA[2]   =  0.00012469;
+        pdA[4]   =  0.00123845;
+        pdA[4]   = -0.00195014;
+        dA_tmp   =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[4]*aK   + pdA[4];
+        c
+        pomg[0]  =  0.00603482;
+        pomg[1]  =  0.01604555;
+        pomg[2]  =  0.02290799;
+        pomg[4]  =  0.07084587;
+        pomg[4]  =  0.38321834;
+        omg_tmp  =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[4]*aK  + pomg[4];
+
+        pdomg[0] =  0.00024066;
+        pdomg[1] =  0.00038123;
         pdomg[2] = -0.00049714;
-        pdomg[3] = 0.00041219;
-        pdomg[4] = 0.01190548;
-        domg_tmp = pdomg[0]*pow(aKerr,4) + pdomg[1]*pow(aKerr,3) + pdomg[2]*pow(aKerr,2) + pdomg[3]*aKerr + pdomg[4];
-        
+        pdomg[4] =  0.00041219;
+        pdomg[4] =  0.01190548;
+        domg_tmp =  pdomg[0]*aK4 + pdomg[1]*aK3 + pdomg[2]*aK2 + pdomg[4]*aK + pdomg[4];
     }
+    
+    else if( nu > 0.16)
+    {
+        p1[0]      =  0.04680896;
+        p1[1]      = -0.00632114;
+        p2[0]      =  0.06586192;
+        p2[1]      = -0.01180039;
+        p3[0]      = -0.11617413;
+        p3[1]      =  0.02704959;
+        p4[0]      =  0.15597465;
+        p4[1]      =  0.28034978;
+        p1         =  p1[0]*nu + p1[1];
+        p2         =  p2[0]*nu + p2[1];
+        p3         =  p3[0]*nu + p3[1];
+        p4         =  p4[0]*nu + p4[1];
+        A_tmp      =  p1*aK3   + p2*aK**2 + p3*aK+ p4;
+        
+        pdA1[0]    = -0.00130824;
+        pdA1[1]    =  0.00006202;
+        pdA2[0]    =  0.00199855;
+        pdA2[1]    = -0.00027474;
+        pdA3[0]    =  0.00218838;
+        pdA3[1]    =  0.00071540;
+        pdA4[0]    = -0.00362779;
+        pdA4[1]    = -0.00105397;
+        pdA1       =  pdA1[0]*nu + pdA1[1];
+        pdA2       =  pdA2[0]*nu + pdA2[1];
+        pdA3       =  pdA3[0]*nu + pdA3[1];
+        pdA4       =  pdA4[0]*nu + pdA4[1];
+        dA_tmp     =  pdA1*aK3   + pdA2*aK**2 + pdA3*aK+ pdA4;
+        
+        pn0[0]     =  0.46908067;
+        pn0[1]     =  0.27022141;
+        pd1[0]     =  0.64131115;
+        pd1[1]     = -0.37878384;
+        n0         =  pn0[0]*nu + pn0[1];
+        d1         =  pd1[0]*nu + pd1[1];
+        omg_tmp    =  n0/(1 + d1*aK);
+
+        ppdomg1[0] =  0.00061175;
+        ppdomg1[1] =  0.00074001;
+        ppdomg2[0] =  0.02504442;
+        ppdomg2[1] =  0.00548217;
+        pdomg1     =  ppdomg1[0]*nu + ppdomg1[1];
+        pdomg2     =  ppdomg2[0]*nu + ppdomg2[1];
+        domg_tmp   =  pdomg1*aK     + pdomg2;
+
+    }
+    
     else
     {
-        /** Amplitude */
+        a2_omg_tmp         = -0.282734;
+        a1_omg_tmp         =  0.205958;
+        b2_omg_tmp         = -0.217723;
+        b1_omg_tmp         =  0.186073;
+        omg_tmp_nu         =  0.6383186929*nu**2 + 0.2198527359*nu+ 0.2886403943;
+        omg_tmp_equal      = ((a2_omg_tmp*X12**2 + a1_omg_tmp*X12 - 0.1401748476)*aeff_omg + 1)/((b2_omg_tmp*X12**2 + b1_omg_tmp*X12 - 0.3375083723)*aeff_omg + 1);
+        omg_tmp            = omg_tmp_nu*omg_tmp_equal;
         
-        p1v[0]    =  0.05385059;
-        p1v[1]    = -0.00890942;
-        p2v[0]    = -0.07942102;
-        p2v[1]    =  0.02152423;
-        p3v[0]    =  0.14805262;
-        p3v[1]    =  0.28210487;
-        double p1 =  p1v[0]*nu + p1v[1];
-        double p2 =  p2v[0]*nu + p2v[1];
-        double p3 =  p3v[0]*nu + p3v[1];
-        A_tmp     =  p1*pow(aKerr,2) + p2*aKerr + p3;
+        a2_domg_tmp        = -0.0505505;
+        a1_domg_tmp        =  0.0709177;
+        b2_domg_tmp        = -0.00755181;
+        b1_domg_tmp        =  0.033916;
+        domg_tmp_nu        =  0.0449367831*nu**2 + 0.0097045815*nu + 0.0066911252;
+        domg_tmp_equal     = (a2_domg_tmp*X12**2 + a1_domg_tmp*X12 - 0.0277484292)*aeff_omg**2 + (b2_domg_tmp*X12**2 + b1_domg_tmp*X12 + 0.0603634961)*aeff_omg + 1;
+        domg_tmp           = domg_tmp_nu*domg_tmp_equal;
         
-        /** Derivative of amplitude */
+        a2_A_tmp           =  0.0381341;
+        a1_A_tmp           =  0.0905463;
+        b2_A_tmp           = -0.00790612;
+        b1_A_tmp           =  0.111952;
+        A_tmp_scale_nu     = -1.4938817908*nu^3 +1.0576568105*nu2 - 0.0779048897*nu+0.2964517117;
+        A_tmp_scale_equal  = ((a2_A_tmp*X12**2 + a1_A_tmp*X12 - 0.2764889288)*aeff+1)/((b2_A_tmp*X12**2 + b1_A_tmp*X12 -0.4706843028)*aeff+1);
+        A_tmp              = A_tmp_scale_nu*A_tmp_scale_equal*(1-0.5*omg_tmp*aeff);
         
-        pdA1v[0]    =  0.00248472;
-        pdA1v[1]    = -0.00033422;
-        pdA2v[0]    =  0.00105298;
-        pdA2v[1]    =  0.00085160;
-        pdA3v[0]    = -0.00339257;
-        pdA3v[1]    = -0.00110932;
-        double pdA1 =  pdA1v[0]*nu + pdA1v[1];
-        double pdA2 =  pdA2v[0]*nu + pdA2v[1];
-        double pdA3 =  pdA3v[0]*nu + pdA3v[1];
-        dA_tmp      =  pdA1*pow(aKerr,2) + pdA2*aKerr + pdA3;
-        
-        /** Frequency */
-        pn0[0]    =  0.45584139;
-        pn0[1]    =  0.27315247;
-        pd1[0]    =  0.75276414;
-        pd1[1]    = -0.40081625;
-        double n0 =  pn0[0]*nu + pn0[1];
-        double d1 =  pd1[0]*nu + pd1[1];
-        omg_tmp   =  n0/(1. + d1*aKerr);
-
-        /** Derivative of the frequency */
-        
-        ppdomg1[0]    = -0.00177362;
-        ppdomg1[1]    =  0.00123900;
-        ppdomg2[0]    =  0.02424739;
-        ppdomg2[1]    =  0.00566504;
-        double pdomg1 =  ppdomg1[0]*nu + ppdomg1[1];
-        double pdomg2 =  ppdomg2[0]*nu + ppdomg2[1];
-        domg_tmp      =  pdomg1*aKerr + pdomg2;
+        a2_dA_tmp          = -0.00162301;
+        a1_dA_tmp          =  0.00143545;
+        b2_dA_tmp          = -0.00490688;
+        b1_dA_tmp          =  0.00271927;
+        dA_tmp_scale_nu    = -0.0017246790*nu-0.0046671920;
+        dA_tmp_scale_equal = (a2_dA_tmp*X12**2 + a1_dA_tmp*X12-0.0001583384)*aeff**2 + (b2_dA_tmp*X12**2 + b1_dA_tmp*X12+0.0037503520)*aeff;
+        dA_tmp             = (dA_tmp_scale_nu  + dA_tmp_scale_equal)*omg_tmp;
         
     }
 
-    for (int k=35;k--;)
+    for (int k=35; k--;)
     {
         max_A[k]    = 0.;
         max_dA[k]   = 0.;
@@ -221,12 +257,12 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
     vector<double> d2_n5 = s_D1(d_n5,T,t_length-1);
 
     int Omgmax_index = 0;
-    double Omg_max = Omg_orb[0];
-    int i = 1;
+    double Omg_max   = Omg_orb[0];
+    int i            = 1;
     
     while (Omg_orb[i] > Omg_max)
     {
-        Omg_max = Omg_orb[i];
+        Omg_max      = Omg_orb[i];
         Omgmax_index = i;
         i++;
     }
@@ -246,7 +282,7 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
 
     double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
-    i = 0;
+    i        = 0;
     int jmax = 0;
     while (T[i] < tNQC)
     {
@@ -265,8 +301,8 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
             m12[k][j] = n2[j]*A[k][j];
             
         }
-        m21[k] = s_D1(m11[k],T,t_length-1);
-        m22[k] = s_D1(m12[k],T,t_length-1);
+        m21[k]   = s_D1(m11[k],T,t_length-1);
+        m22[k]   = s_D1(m12[k],T,t_length-1);
         
         p1tmp[k] = A[k];
         p2tmp[k] = s_D1(p1tmp[k],T,t_length-1);
@@ -277,16 +313,14 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
     double detM = 1.;
     for (int k=35;k--;)
     {
-        //int k=1;
-        
         /** Computation of ai coefficients */
-        P[0] = max_A[k]  - p1tmp[k][jmax];
-        P[1] = max_dA[k] - p2tmp[k][jmax];
+        P[0]     = max_A[k]  - p1tmp[k][jmax];
+        P[1]     = max_dA[k] - p2tmp[k][jmax];
         
-        M[0] = m11[k][jmax];
-        M[1] = m12[k][jmax];
-        M[2] = m21[k][jmax];
-        M[3] = m22[k][jmax];
+        M[0]     = m11[k][jmax];
+        M[1]     = m12[k][jmax];
+        M[2]     = m21[k][jmax];
+        M[3]     = m22[k][jmax];
         
         detM     = M[0]*M[3]-M[1]*M[2];
         ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
@@ -294,18 +328,18 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
         ai[k][2] = 0.;
 
         /** Computation of bi coefficients */
-        P[0] = omg[k][jmax]   - max_omg[k];
-        P[1] = domg[k][jmax]  - max_domg[k];
+        P[0]     = omg[k][jmax]   - max_omg[k];
+        P[1]     = domg[k][jmax]  - max_domg[k];
         
-        M[0] = d_n4[jmax];
-        M[1] = d_n5[jmax];
-        M[2] = d2_n4[jmax];
-        M[3] = d2_n5[jmax];
+        M[0]     = d_n4[jmax];
+        M[1]     = d_n5[jmax];
+        M[2]     = d2_n4[jmax];
+        M[3]     = d2_n5[jmax];
 
-        detM = M[0]*M[3]-M[1]*M[2];
+        detM     =  M[0]*M[3] - M[1]*M[2];
         bi[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
-        bi[k][2] = 0.;
+        bi[k][2] =  0.;
     }
 
     for (int k=35;k--;)
@@ -313,11 +347,10 @@ vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vec
         for (int j=0; j<t_length-1;j++)
         {
             o[k][j].dat[0] = 1. + ai[k][0]*n1[j] + ai[k][1]*n2[j] + ai[k][2]*n3[j];
-            o[k][j].dat[1] = bi[k][0]*n4[j] + bi[k][1]*n5[j] + bi[k][2]*n6[j];
+            o[k][j].dat[1] = 0. + bi[k][0]*n4[j] + bi[k][1]*n5[j] + bi[k][2]*n6[j];
         }
     }
 
-    //printf("%s %.16e %.16e %.16e %.16e \n","ai and bi for k=1",ai[1][0],ai[1][1],bi[1][0],bi[1][1]);
     return o;
 
 }
