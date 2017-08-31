@@ -28,7 +28,7 @@ vector<double> FDdrvt_omega(vector<double> f, double dt)
     const double oodt  = 1./dt;
     const double c     = 1./12.;
     
-    for (long int i=0; i<f.size()-2; i++)
+    for (unsigned long int i=0; i<f.size()-2; i++)
     {
         switch (i)
         {

@@ -44,8 +44,8 @@ vector<double> FlmNewt(const double x, void *params)
     const double x11 = x*x10;
     const double x12 = x*x11;
 
-    double sp2;
-    double sp4;
+    double sp2 = 0.0;
+    double sp4 = 0.0;
     const double sp3 = (1.-3.*nu)*(1.-3.*nu);
     const double sp5 = (1.-5.*nu+5.*nu2)*(1.-5.*nu+5.*nu2);
     const double sp6 = (1-4*nu)*(3*nu2-4*nu +1)*(3*nu2-4*nu +1);
@@ -67,7 +67,7 @@ vector<double> FlmNewt(const double x, void *params)
             sp2 = 1.-4.*nu;
             sp4 = (1.-4.*nu)*(1.-2.*nu)*(1.-2.*nu);
         }
-        else if (tidal_flag==true)
+        else
         {
             sp2 = 1.;
             sp4 = (1.-4.*nu)*(1.-2.*nu)*(1.-2.*nu);
