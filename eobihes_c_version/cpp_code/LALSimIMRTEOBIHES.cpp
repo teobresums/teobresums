@@ -54,6 +54,14 @@
 
 using namespace::std;
 
+static void swap_variables(double *v1, double *v2)
+{
+    double tmp;
+    tmp = *v1;
+    *v1 = *v2;
+    *v2 = tmp;
+}
+
 void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
                         Waveform **hcross,      /** hx return array **/
                         double m1,              /** m1(Msun) **/
@@ -93,6 +101,16 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     {
         printf("ERROR! NQC corrections for tidally deformed systems not supported! Aborting.\n");
         exit(-1);
+    }
+
+    if (m2 > m1)
+    {
+        printf("Warning! m1 > m2, swapping component masses, spins and tidal coefficients\n");
+        swap_variables(&m1, &m2);
+        swap_variables(&spin1x, &spin2x);
+        swap_variables(&spin1y, &spin2y);
+        swap_variables(&spin1z, &spin2z);
+        swap_variables(&LambdaAl2, &LambdaBl2);
     }
     
     input params = process_input_parameters(m1,
