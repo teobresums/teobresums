@@ -381,7 +381,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     }
     
     /** Ringdown attachment */
-    if (params.tidal==false && params.spin==false)
+    if (params.tidal==false)
     {
         ringdown(params.nu,params.q,params.dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
