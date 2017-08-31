@@ -42,7 +42,7 @@ vector<double> initial(input *params)
     vector<double> Fphi(2*N), Ctmp(2*N), prstar(2*N), pr(2*N), pph(2*N), dprstardt(2*N);
     vector<double> metric(5);
 
-    double r2, r3, u, A, B, d2A, j3;
+    double r2, r3, A, B, d2A, j3;
     double z3 = 2.0*nu*(4.0-3.0*nu);
     double H0eff, H0, psi, r_omega, v_phi, jhat, x;
 
@@ -52,7 +52,6 @@ vector<double> initial(input *params)
         r[i]  = r0+(i-N+1)*dr;
         r2 = r[i]*r[i];
         r3 = r[i]*r[i]*r[i];
-        u  = 1./r[i];
         
         /** Compute metric  */
         metric = Metric(r[i],params,false);
