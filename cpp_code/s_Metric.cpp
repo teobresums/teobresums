@@ -42,9 +42,6 @@ vector<double> s_Metric(double r, void *params, bool nnlo_flag){
 %                       it up to 'yes' if the computation of the second
 %                       radial derivative of A is needed.
 */
-    
-double nu  = (*(input *)params).nu;
-double aK2 = (*(input *)params).aK2;
 
 vector<double> rc_vec = s_get_rc(r,params); //[rc, drc, d2rc]
 double rc   = rc_vec[0];
@@ -60,8 +57,8 @@ double uc  = 1./rc;
 double uc2 = uc*uc;
 double uc3 = uc2*uc;
     
-//vector<double> metric = A5pnP15(rc, nu);
- vector<double> metric = s_A5PNlog(rc,params,nnlo_flag);
+
+vector<double> metric = s_A5PNlog(rc,params,nnlo_flag);
 double Aorb   = metric[0];
 double dAorb  = metric[1];
 double d2Aorb = metric[2];

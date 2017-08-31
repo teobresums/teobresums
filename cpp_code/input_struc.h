@@ -59,18 +59,18 @@ struct input
     double kappaTl2; 
     double kappaTl3; 
     double kappaTl4;
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2;
-   double C_Q1;
+    double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2;
+    double C_Q1;
     double C_Q2;
     bool NQC;
     bool tidal;
     bool RWZ;
     bool speedy;
     bool dynamics;
-  bool waveform;
-  bool spin;
-  //char outputdir[256];
-  std::string outputdir; // = "data";
+    bool waveform;
+    bool spin;
+    //char outputdir[256];
+    std::string outputdir; // = "data";
 };
 
 struct input_flags
