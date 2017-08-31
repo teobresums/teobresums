@@ -121,7 +121,6 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     
     /** Defining data vectors and variables */
 
-    //std::vector<gsl_complex> hlm_vec={};
     std::vector<double> t_vec={};
     std::vector<double> r_vec={};
     std::vector<double> pph_vec={};
@@ -244,7 +243,8 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         prstar = y[2];
         pphi   = y[3];
         
-        /** Checking whether the dynamics produces NaN values; this can happen if radius r becomes too small */
+        /** Checking whether the dynamics produces NaN values
+            this can happen if radius r becomes too small */
         if (std::isfinite(r))
         {
             /** Waveform computation*/
@@ -343,19 +343,17 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         
         for (int k=35; k--; )
         {
-//            if (k==1) // IMPORTANT! temporary hack to get the 22 mode only
-//            {
-                for (int i=grid_length; i--; )
-                {
-                    hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
-                    hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
-//                }
+            for (int i=grid_length; i--; )
+            {
+                hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
+                hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
             }
         }
     }
     
-    /** Define a time vector for each multipole */
-    /** These will be cut by the ringdown, where each multipole has its own starting time */
+    /** Define a time vector for each multipole
+        These will be cut by the ringdown, where
+        each multipole has its own starting time */
     
     vector<vector<double> > t_g(35);
     for (int k=35; k--; )
@@ -368,8 +366,8 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     {
         ringdown(params.nu,params.q,params.dt,final_mass,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
     }
-    
-//    interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g);
+    /** All multipoles will now have size N+Nringdown */
+    /** Multipole for which no ringdown model is available will be filled with 0s */
     
     int N = hlm_ampl_g[1].size();
     
@@ -415,21 +413,17 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
 
     for (int k=35; k--; )
     {
-        if (k==1)
+        double Y_real, Y_imag;
+        spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], polarisation, inclination);
+        
+        /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
+        for (i=0; i<N; i++)
         {
-            double Y_real, Y_imag;
-            spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], polarisation, inclination);
-            
-            /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
-            for (i=0; i<N; i++)
-            {
-                double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
-                double cosPhi = cos(hlm_phase_g[k][i]);
-                double sinPhi = -sin(hlm_phase_g[k][i]);
-                hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-                hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
-//                printf("i:%d hp:%e\n",i,hplus_out->data[i]);
-            }
+            double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
+            double cosPhi = cos(hlm_phase_g[k][i]);
+            double sinPhi = -sin(hlm_phase_g[k][i]);
+            hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+            hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
         }
     }
     *hplus = hplus_out;

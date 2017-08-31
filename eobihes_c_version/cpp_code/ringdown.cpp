@@ -129,8 +129,10 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
     
     /*deleting data points up to tmatch (starting from the back)*/
     vector<long> I(35);
+    vector<long> Size(35);
     for (int k = 35; k--; ) {
         i = t_vec[k].size()-1;
+        Size[k] = t_vec[k].size();
         switch (k) {
             case 0:
                 while (t_vec[k][i]/Mbh>tmatch[k]) {
@@ -187,11 +189,13 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
     /** add 200 points of ringdown attachment */
     /** if we select the number of points in each mode to be such that the number of output points
         is the same, we do not need any interpolation, since the vectors are defined on the same time grid. */
+    int Nringdown = 500;
     for (int k=35; k--; ) {
         double t = t_vec[k][I[k]];
+        int n_removed = Size[k]-I[k];
         switch (k) {
             case 0:
-                for (int j=0; j < 200; j++) {
+                for (int j=0; j < Nringdown+n_removed; j++) {
                     double x = t/Mbh-tmrg[k];
                     psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
@@ -203,7 +207,7 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
                 }
                 break;
             case 1:
-                for (int j=0; j < 200; j++) {
+                for (int j=0; j < Nringdown+n_removed; j++) {
                     double x = t/Mbh-tmrg[k];
                     psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
@@ -215,7 +219,7 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
                 }
                 break;
             case 4:
-                for (int j=0; j < 200; j++) {
+                for (int j=0; j < Nringdown+n_removed; j++) {
                     double x = t/Mbh-tmrg[k];
                     psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
@@ -227,6 +231,12 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
                 }
                 break;
             default:
+                for (int j=0; j < Nringdown+n_removed-1; j++) {
+                    hlm_rad[k].push_back(0.0);
+                    hlm_phase[k].push_back(0.0);
+                    t_vec[k].push_back(t);
+                    t += dt;
+                }
                 break;
         }
     }

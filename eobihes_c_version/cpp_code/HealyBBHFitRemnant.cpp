@@ -122,11 +122,11 @@ double HealyBBHFitRemnant(double chi1,double chi2, double q)
     {
     
         a2     = a0*a0;
-        Z1     = 1 + pow(1-a2,1./3.)*(pow(1+a0,1./3.) + pow(1-a0,1./3.));
+        Z1     = 1 + cbrt(1-a2)*(cbrt(1+a0) + cbrt(1-a0));
         Z2     = sqrt(3*a2 + Z1*Z1);
         risco  = 3 + Z2 - a0_sign*sqrt((3-Z1)*(3+Z1+2.*Z2));
         uisco  = 1./risco;
-        Eisco  = (1 - 2.*uisco + a0*pow(uisco,3./2.))/sqrt(1-3*uisco + 2*a0*pow(uisco,3./2.));
+        Eisco  = (1 - 2.*uisco + a0*sqrt(uisco*uisco*uisco))/sqrt(1-3*uisco + 2*a0*sqrt(uisco*uisco*uisco));
         Jisco  = 2./(sqrt(3.*risco))*(3.*sqrt(risco)-2.*a0);
         
         /** Dimensionless spin: J/Mbh^2 */
