@@ -88,7 +88,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     
     int i = 0;
     int grid_length = 0;
-    double r_min, rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
+    double rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
     if ((spin1x!=0)||(spin1y!=0)||(spin2x!=0)||(spin2y!=0))
@@ -133,7 +133,6 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     {
         rLR        = AdiabLR(&params);
         params.rLR = rLR;
-        r_min      = rLR;
     }
     
     /** Defining data vectors and variables */
@@ -453,9 +452,6 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     *hcross= hcross_out;
 }
 
-
-
-
 void XLALSimIMRTEOBIHES_single_mode(
                         Waveform **ampl,        /** h+ return array **/
                         Waveform **phase,      /** hx return array **/
@@ -485,7 +481,7 @@ void XLALSimIMRTEOBIHES_single_mode(
 {
     
     int grid_length, i;
-    double r_min, rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
+    double rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
     if ((spin1x!=0)||(spin1y!=0)||(spin2x!=0)||(spin2y!=0))
@@ -520,19 +516,17 @@ void XLALSimIMRTEOBIHES_single_mode(
     {
         rLR        = AdiabLR(&params);
         params.rLR = rLR;
-        r_min      = rLR;
     }
     
     /** Defining data vectors and variables */
     
-    //std::vector<gsl_complex> hlm_vec={};
     std::vector<double> t_vec         ={};
     std::vector<double> r_vec         ={};
     std::vector<double> pph_vec       ={};
     std::vector<double> MOmg_vec      ={};
     std::vector<double> ddotr_vec     ={};
     std::vector<double> prstar_vec    ={};
-    std::vector<double> hlm_rad_vec    ={};
+    std::vector<double> hlm_rad_vec   ={};
     std::vector<double> Omg_orb_vec   ={};
     std::vector<double> hlm_phase_vec ={};
     std::vector<vector<double> > hlm_ampl(35);
