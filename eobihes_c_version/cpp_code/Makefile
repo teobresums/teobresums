@@ -27,7 +27,6 @@ hlmNQC.o 	     \
 HorizonFlux.o	     \
 initial.o 	     \
 interp_grid.o 	     \
-interpolate_wf.o     \
 interpolator.o	     \
 LALSimIMRTEOBIHES.o  \
 main.o		\
@@ -107,8 +106,6 @@ initial.o: initial.cpp
 	$(CC) $(CFLAGS) $(INC) initial.cpp
 interp_grid.o: interp_grid.cpp
 	$(CC) $(CFLAGS) $(INC) interp_grid.cpp
-interpolate_wf.o: interpolate_wf.cpp
-	$(CC) $(CFLAGS) $(INC) interpolate_wf.cpp
 interpolator.o: interpolator.cpp
 	$(CC) $(CFLAGS) $(INC) interpolator.cpp
 Metric.o: Metric.cpp

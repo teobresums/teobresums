@@ -43,7 +43,6 @@
 #include "ringdown.h"
 #include "input_struc.h"
 #include "multipole_index.h"
-#include "interpolate_wf.h"
 #include "AdiabLR.h"
 #include "read_config.h"
 #include "file_names.h"
@@ -767,7 +766,7 @@ void XLALSimIMRTEOBIHES_single_mode(
         ringdown(params.nu, params.q, params.dt, final_mass, t_g, MOmg_vecg, hlm_ampl_g, hlm_phase_g);
     }
     
-    interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g);
+//    interpolate_wf(dt, t_g, hlm_ampl_g, hlm_phase_g);
     
     int N = hlm_ampl_g[0].size();
     
