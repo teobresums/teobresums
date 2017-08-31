@@ -1,6 +1,9 @@
 #ifndef _LALSimIMRTEOBIHES_h
 #define _LALSimIMRTEOBIHES_h
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 #include <vector>
 using namespace::std;
 typedef struct tagWaveform
@@ -61,5 +64,7 @@ void XLALSimIMRTEOBIHES_single_mode(Waveform **ampl,        /** h+ return array 
                                     int    index                /** Index of the multipole, conventions of multiple_index **/
 );
 
-
+#ifdef __cplusplus
+}
+#endif
 #endif /* _LALSimIMRTEOBIHES_h */
