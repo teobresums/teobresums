@@ -134,7 +134,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         double sqrW = sqrt( A*(1. + pphi2*u2) );
         double psi  = 2.*(1.0 + 2.0*nu*(sqrW - 1.0))/(r2*dA);
         
-        r_omega      = r*pow(psi,1.0/3.0);
+        r_omega      = r*cbrt(psi);
         double v_phi = r_omega*Omega;
         jhat         = pphi/(r_omega*v_phi);
         
@@ -262,7 +262,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
         double duc_dr     = -uc2*drc_dr;
         double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
-        r_omega           = pow( (pow( gsl_pow_int(rc,3)*psic,-1./2.)+Gtilde )*one_H0 ,-2./3.);
+        r_omega           = pow( (1.0/sqrt( rc*rc*rc*psic)+Gtilde )*one_H0 ,-2./3.);
         
         double v_phi = r_omega*Omega;
         
