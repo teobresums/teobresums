@@ -368,7 +368,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
             o[k][j].dat[1] = 0. + bi[k][0]*n4[j] + bi[k][1]*n5[j] + bi[k][2]*n6[j];
         }
     }
-
+//    printf("k = 1 a[1][1] = %f a[1][0] = %f\n",ai[1][1],ai[1][0]);
     return o;
 
 }
