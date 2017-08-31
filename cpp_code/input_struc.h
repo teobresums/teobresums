@@ -62,6 +62,7 @@ struct input
     double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2;
     double C_Q1;
     double C_Q2;
+    double Mbh;
     bool NQC;
     bool tidal;
     bool RWZ;

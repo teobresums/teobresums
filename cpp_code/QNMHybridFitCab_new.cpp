@@ -234,11 +234,11 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         a1_A_scaled = 0.176126;
         b2_A_scaled = -0.150239;
         b1_A_scaled = 0.20491;
-        A_scaled_eq = ((a2_A_scaled.*X12.^2 + a1_A_scaled.*X12 -0.2935238329).*aeff + 1)./((b2_A_scaled.*X12.^2 + b1_A_scaled.*X12 -0.4728707630).*aeff + 1);
-        A_scaled    = (+1.826573640739664.*nu.^2 +0.100709438291872.*nu +1.438424467327531).*A_scaled_eq;
+        A_scaled_eq = ((a2_A_scaled*X12*X12 + a1_A_scaled*X12 -0.2935238329)*aeff + 1)./((b2_A_scaled*X12*X12 + b1_A_scaled*X12 -0.4728707630)*aeff + 1);
+        A_scaled    = (+1.826573640739664*nu2 +0.100709438291872*nu +1.438424467327531)*A_scaled_eq;
         
-        A22mrg      = A_scaled.*(1-0.5.*omgmx.*aeff);
-        Domg        = omega1 - Mbh.*omgmx;
+        A22mrg      = A_scaled*(1-0.5*omgmx*aeff);
+        Domg        = omega1 - Mbh*omgmx;
     }
 }
 

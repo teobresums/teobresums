@@ -557,6 +557,7 @@ void XLALSimIMRTEOBIHES_single_mode(
     
     
     double final_mass = HealyBBHFitRemnant(spin1z, spin2z, q);
+    params.Mbh = final_mass;
     
     /** Initialize ODE system solver */
     const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
