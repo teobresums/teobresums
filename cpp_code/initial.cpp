@@ -45,9 +45,6 @@ vector<double> initial(input *params)
     double r2, r3, u, A, B, d2A, j3;
     double z3 = 2.0*nu*(4.0-3.0*nu);
     double H0eff, H0, psi, r_omega, v_phi, jhat, x;
-    double c1 = (-227./140.*nu + 1957./1680.);
-    double c2 = (753./560.*nu*nu + 165703./70560.*nu - 25672541./5080320.);
-    double Frhat, Frstar;
 
     for (int i=2*N; i--;)
     {
@@ -96,10 +93,6 @@ vector<double> initial(input *params)
         /** Radial momentum conjugate to r*: post-circular ID  */
         Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
         prstar[i] = Ctmp[i]*Fphi[i]/djdr[i];
-        
-        /** Angular momentum again: post-post-circular ID  */
-        Frhat  = 1. + c1*u + c2*u*u;
-        Frstar = -5./3.*Fphi[i]*prstar[i]/j[i] * Frhat;
         
         /** Radial momentum conjugate to r  */
         pr[i] = prstar[i]*sqrt(B/A);

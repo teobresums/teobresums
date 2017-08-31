@@ -64,7 +64,6 @@ vector<double> s_initial(input *params){
     double S1       = (*params).S1;
     double S2       = (*params).S2;
     double c3       = (*(input *)params).cN3LO;
-    bool tidal_flag = (*params).tidal;
 
 //-----------------------------------------------------------------
 // Build  a small  grid (2*N points) around the initial position r0
