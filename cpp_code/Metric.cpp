@@ -93,38 +93,18 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
     double A0    = A;
     double A0_du = A_du;
     
-    if (tidal_flag==true) {
+    if (tidal_flag==true)
+    {
         
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
         
-        // Tidal PN coefs
-        double q   =  (1.+sqrt(1.-4.*nu)-2.*nu)/(2.*nu);
-        //double XA  =  0.5*(1+sqrt(1.-4.*nu));
-        //double XB  =  1.-XA;
-	double XA = (*(input *)params).X1;
-	double XB = (*(input *)params).X2;
-			   
-
-        /** \bar{lambda} from Yagi et al. REF: */
-        // double lambdaAl2, lambdaAl3, lambdaAl4;
-        // double lambdaBl2, lambdaBl3, lambdaBl4;
-
-        // lambdaAl2 = (*(input *)params).LambdaAl2;
-        // lambdaAl3 = (*(input *)params).LambdaAl3;
-        // lambdaAl4 = (*(input *)params).LambdaAl4;
-        
-        // lambdaBl2 = (*(input *)params).LambdaBl2;
-        // lambdaBl3 = (*(input *)params).LambdaBl3;
-        // lambdaBl4 = (*(input *)params).LambdaBl4; 
+        double XA = (*(input *)params).X1;
+        double XB = (*(input *)params).X2;
        
         /** Computing the tidal coupling constants */
         double kapA2 = (*(input *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
-        double kapA3 = (*(input *)params).kappaAl3; //15.  * lambdaAl3 * pow(XA, 2.*3 +1.) / q;
-        double kapA4 = (*(input *)params).kappaAl4; //105. * lambdaAl4 * pow(XA, 2.*4 +1.) / q;
  
         double kapB2 = (*(input *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
-        double kapB3 = (*(input *)params).kappaBl3; //15.  * lambdaBl3 * pow(XB, 2.*3 +1.) * q;
-        double kapB4 = (*(input *)params).kappaBl4; //;105. * lambdaBl4 * pow(XB, 2.*4 +1.) * q;
         
         double kapT2 = (*(input *)params).kappaTl2; // kapA2 + kapB2;
         double kapT3 = (*(input *)params).kappaTl3;//kapA3 + kapB3;
@@ -256,63 +236,20 @@ vector<double> A5pnP15_dd(const double r, void *params)
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
 
        /** Compactness of the star */
-      
-        /** Tidal PN coefs */
-        double q    = (1.+sqrt(1.-4.*nu)-2.*nu)/(2.*nu);
-        //double XA   =  0.5*(1.+sqrt(1.-4.*nu));
-        //double XB   =  1.-XA;
-	double XA = (*(input *)params).X1;
-	double XB = (*(input *)params).X2;
-
-        /** \bar{lambda} from Yagi et al. REF: */
-        // double lambdaAl2;
-        // double lambdaAl3;
-        // double lambdaAl4;
-
-        // double lambdaBl2;
-        // double lambdaBl3;
-        // double lambdaBl4;
-
-        // lambdaAl2 = (*(input *)params).LambdaAl2;
-        // lambdaAl3 = (*(input *)params).LambdaAl3;
-        // lambdaAl4 = (*(input *)params).LambdaAl4;
-
-        // lambdaBl2 = (*(input *)params).LambdaBl2;
-        // lambdaBl3 = (*(input *)params).LambdaBl3;
-        // lambdaBl4 = (*(input *)params).LambdaBl4;
-
-        // /** Computing the tidal coupling constants: Eq. (31) of D&N, PRD 81, 084016 (2010) */
-       
-        // double kapA2 = 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
-        // double kapA3 = 15.  * lambdaAl3 * pow(XA, 2.*3 +1.) / q;
-        // double kapA4 = 105. * lambdaAl4 * pow(XA, 2.*4 +1.) / q;
-
-        // double kapB2 = 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
-        // double kapB3 = 15.  * lambdaBl3 * pow(XB, 2.*3 +1.) * q;
-        // double kapB4 = 105. * lambdaBl4 * pow(XB, 2.*4 +1.) * q;
- 
-        // double kapT2 = kapA2 + kapB2;
-        // double kapT3 = kapA3 + kapB3;
-        // double kapT4 = kapA4 + kapB4;
+        double XA = (*(input *)params).X1;
+        double XB = (*(input *)params).X2;
 
 	//-----------------------------------------------------------------------------------
 	// Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, Eq.(37)
 	// of Damour&Nagar, PRD 81, 084016 (2010)
 	//-----------------------------------------------------------------------------------
         double kapA2 = (*(input *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
-        double kapA3 = (*(input *)params).kappaAl3; //15.  * lambdaAl3 * pow(XA, 2.*3 +1.) / q;
-        double kapA4 = (*(input *)params).kappaAl4; //105. * lambdaAl4 * pow(XA, 2.*4 +1.) / q;
  
         double kapB2 = (*(input *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
-        double kapB3 = (*(input *)params).kappaBl3; //15.  * lambdaBl3 * pow(XB, 2.*3 +1.) * q;
-        double kapB4 = (*(input *)params).kappaBl4; //;105. * lambdaBl4 * pow(XB, 2.*4 +1.) * q;
-        
-        double kapT2 = (*(input *)params).kappaTl2; // kapA2 + kapB2;
+
         double kapT3 = (*(input *)params).kappaTl3;//kapA3 + kapB3;
         double kapT4 = (*(input *)params).kappaTl4;//kapA4 + kapB4;
 
-        double bar_alph2_1 = (*(input *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
-      	double bar_alph2_2 = (*(input *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
       	double bar_alph3_1 = (*(input *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
       	double bar_alph3_2 = (*(input *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
 
