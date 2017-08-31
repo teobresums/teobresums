@@ -12,8 +12,8 @@ typedef struct tagWaveform
     unsigned int length;
 }Waveform;
 
-void XLALSimIMRTEOBIHES(Waveform **hplus,          /** h+ return array **/
-                        Waveform **hcross,         /** hx return array **/
+void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
+                        Waveform **hcross,      /** hx return array **/
                         double m1,              /** m1(Msun) **/
                         double m2,              /** m2(Msun) **/
                         double spin1x,          /** dimensionless s1x **/

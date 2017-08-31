@@ -60,7 +60,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
     double Sstar      = (*(input *)params).Sstar;
     double c3         = (*(input *)params).cN3LO;
     double aK2        = (*(input *)params).aK2;
-    
+
     double f[] = {0.,0.,0.};
     
     const double z3      = 2.0*nu*(4.0-3.0*nu);

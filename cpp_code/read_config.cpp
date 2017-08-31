@@ -201,10 +201,9 @@ input read_config(char *fname){
     params.a2  = X2*chi2;
     params.aK  = a1 + a2;
     params.aK2 = aK2;
-    
     params.rLR = 0.;
-
-    double cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
+    params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
+    
     if (params.tidal==true) {
         params.NQC = false;
     }        
@@ -272,7 +271,6 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
     $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
     Eq.(10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.0872
     */
-    int i;
     double lnx = log(barlam2);
     double coeffs[5] = {0.0};
     if (ell == 3)
@@ -391,7 +389,7 @@ input process_input_parameters(
     
     params.rLR = 0.;
 
-    double cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
+    params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
     if (params.tidal==true) {
         params.NQC = false;
     }        

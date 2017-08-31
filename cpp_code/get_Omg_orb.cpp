@@ -40,7 +40,7 @@ vector<double> get_Omg_orb(vector<double> r,vector<double> pph,vector<double> pr
     double chi1 = (*(input *)params).chi1;
     double chi2 = (*(input *)params).chi2;
     double c3   = (*(input *)params).cN3LO;
-    
+
     double S     = S1 + S2;
     double Sstar = X2*a1 + X1*a2;
     double z3    = 2.*nu*(4.-3.*nu);

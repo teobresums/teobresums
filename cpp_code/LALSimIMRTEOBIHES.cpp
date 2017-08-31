@@ -485,7 +485,7 @@ void XLALSimIMRTEOBIHES_single_mode(
 {
     
     int grid_length, i;
-    double r0, r_min, rLR, nu, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
+    double r_min, rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
     if ((spin1x!=0)||(spin1y!=0)||(spin2x!=0)||(spin2y!=0))
@@ -803,14 +803,6 @@ void XLALSimIMRTEOBIHES_single_mode(
     memset(h_ampl_out->data,  0, N*sizeof(double));
     memset(h_phase_out->data, 0, N*sizeof(double));
     
-    /** Spherical harmonics projection **/
-    /** construct hplus and hcross **/
-    /** h22 = 1/R * (nu*M)*G/c^2 h_code_output */
-    double MSUN_M = 1.47662504e3; /** G/c^3 */
-    double mtot_m = (m1+m2)*MSUN_M;
-    double amplitude_prefactor = params.nu*mtot_m/(distance);
-    
-
     /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
     for (i=0; i<N; i++)
     {
