@@ -112,7 +112,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         for (int j=t_length;j--;)
         {
             /** In general divide by sqrt( (l+2) (l+1) l (l-1) ). Use the multipole structure to get the correct L. */
-            A[k][j] = A[k][j]/sqrt(24.);
+            A[k][j] = A[k][j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
         }
     }
 
@@ -269,7 +269,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         n5[j]  = n4[j]*pow(r[j]*w[j],2);           // (pr*)*(r Omg)
         n6[j]  = n5[j]*pow(pr_star[j],2);          // (pr*^3)*(r Omg)
     }
-                                  
+
     /** Take the needed derivatives for the phase */
     vector<double>  d_n4 = s_D1(n4,T,t_length-1);
     vector<double>  d_n5 = s_D1(n5,T,t_length-1);
@@ -328,8 +328,6 @@ vector<vector<gsl_complex> > find_a1a2a3(
         p2tmp[k] = s_D1(p1tmp[k],T,t_length-1);
     }
 
-
-        
     double detM = 1.;
     for (int k=35;k--;)
     {
