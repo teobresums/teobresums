@@ -352,7 +352,8 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     }
     
     /** NQCs corrections */
-    if (params.tidal==false)
+    /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
+    if (params.tidal==false && params.spin==true)
     {
         
         vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
