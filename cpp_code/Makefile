@@ -32,7 +32,6 @@ LALSimIMRTEOBIHES.o  \
 main.o		\
 Metric.o       \
 NQC.o         \
-Q_omega.o     \
 QNMHybridFitCab.o  \
 read_config.o	     \
 RHS.o           \
@@ -112,8 +111,6 @@ Metric.o: Metric.cpp
 	$(CC) $(CFLAGS) $(INC) Metric.cpp
 NQC.o: NQC.cpp
 	$(CC) $(CFLAGS) $(INC) NQC.cpp
-Q_omega.o: Q_omega.cpp
-	$(CC) $(CFLAGS) $(INC) Q_omega.cpp
 QNMHybridFitCab.o: QNMHybridFitCab.cpp
 	$(CC) $(CFLAGS) $(INC) QNMHybridFitCab.cpp
 read_config.o: read_config.cpp
