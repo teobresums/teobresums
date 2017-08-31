@@ -815,7 +815,7 @@ void XLALSimIMRTEOBIHES_single_mode(
     /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
     for (i=0; i<N; i++)
     {
-        h_ampl_out->data[i]   = hlm_ampl_g[index][i]*amplitude_prefactor;
+        h_ampl_out->data[i]   = hlm_ampl_g[index][i];
         h_phase_out->data[i]  = hlm_phase_g[index][i];
     }
 
