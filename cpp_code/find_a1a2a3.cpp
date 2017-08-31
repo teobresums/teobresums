@@ -53,17 +53,30 @@ vector<vector<gsl_complex> > find_a1a2a3(
     double A_tmp, dA_tmp, omg_tmp, domg_tmp;
     
     double nu         = (*(input *)params).nu;
+    double nu2 = nu*nu;
+    double nu3 = nu*nu*nu;
+
     double chi1       = (*(input *)params).chi1;
     double aK         = (*(input *)params).aK;
     double aK2        = aK*aK;
     double aK3        = aK*aK*aK;
     double aK4        = aK*aK*aK*aK;
     long int t_length = T.size();
-    
+    double c_p1,     c_p2,     c_p3;
+    double c_pdA1,   c_pdA2,   c_pdA3;
+    double c_pdomg1, c_pdomg2, c_pdomg3;
     vector<double> P(2);
     vector<double> M(4);
+
+    vector<double> p1(2);
+    vector<double> p2(2);
+    vector<double> p3(2);
+    vector<double> p4(2);
     vector<double> pA(5);
     vector<double> pdA(5);
+    
+    vector<double> pdA1(2);
+    
     vector<double> pomg(5);
     vector<double> pdomg(5);
     vector<double> pn0(2),       pd1(2);
@@ -119,7 +132,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         pdA[4]   =  0.00123845;
         pdA[4]   = -0.00195014;
         dA_tmp   =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[4]*aK   + pdA[4];
-        c
+        
         pomg[0]  =  0.00603482;
         pomg[1]  =  0.01604555;
         pomg[2]  =  0.02290799;
@@ -145,11 +158,11 @@ vector<vector<gsl_complex> > find_a1a2a3(
         p3[1]      =  0.02704959;
         p4[0]      =  0.15597465;
         p4[1]      =  0.28034978;
-        p1         =  p1[0]*nu + p1[1];
-        p2         =  p2[0]*nu + p2[1];
-        p3         =  p3[0]*nu + p3[1];
-        p4         =  p4[0]*nu + p4[1];
-        A_tmp      =  p1*aK3   + p2*aK**2 + p3*aK+ p4;
+        c_p1       =  p1[0]*nu + p1[1];
+        c_p2       =  p2[0]*nu + p2[1];
+        c_p3       =  p3[0]*nu + p3[1];
+        c_p4       =  p4[0]*nu + p4[1];
+        A_tmp      =  c_p1*aK3 + c_p2*aK2 + c_p3*aK+ p4;
         
         pdA1[0]    = -0.00130824;
         pdA1[1]    =  0.00006202;
@@ -159,11 +172,11 @@ vector<vector<gsl_complex> > find_a1a2a3(
         pdA3[1]    =  0.00071540;
         pdA4[0]    = -0.00362779;
         pdA4[1]    = -0.00105397;
-        pdA1       =  pdA1[0]*nu + pdA1[1];
-        pdA2       =  pdA2[0]*nu + pdA2[1];
-        pdA3       =  pdA3[0]*nu + pdA3[1];
-        pdA4       =  pdA4[0]*nu + pdA4[1];
-        dA_tmp     =  pdA1*aK3   + pdA2*aK**2 + pdA3*aK+ pdA4;
+        c_pdA1     =  pdA1[0]*nu + pdA1[1];
+        c_pdA2     =  pdA2[0]*nu + pdA2[1];
+        c_pdA3     =  pdA3[0]*nu + pdA3[1];
+        c_pdA4     =  pdA4[0]*nu + pdA4[1];
+        dA_tmp     =  c_pdA1*aK3   + c_pdA2*aK2 + c_pdA3*aK+ c_pdA4;
         
         pn0[0]     =  0.46908067;
         pn0[1]     =  0.27022141;
@@ -177,10 +190,9 @@ vector<vector<gsl_complex> > find_a1a2a3(
         ppdomg1[1] =  0.00074001;
         ppdomg2[0] =  0.02504442;
         ppdomg2[1] =  0.00548217;
-        pdomg1     =  ppdomg1[0]*nu + ppdomg1[1];
-        pdomg2     =  ppdomg2[0]*nu + ppdomg2[1];
-        domg_tmp   =  pdomg1*aK     + pdomg2;
-
+        c_pdomg1   =  ppdomg1[0]*nu + ppdomg1[1];
+        c_pdomg2   =  ppdomg2[0]*nu + ppdomg2[1];
+        domg_tmp   =  c_pdomg1*aK   + c_pdomg2;
     }
     
     else
@@ -205,7 +217,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         a1_A_tmp           =  0.0905463;
         b2_A_tmp           = -0.00790612;
         b1_A_tmp           =  0.111952;
-        A_tmp_scale_nu     = -1.4938817908*nu^3 +1.0576568105*nu2 - 0.0779048897*nu+0.2964517117;
+        A_tmp_scale_nu     = -1.4938817908*nu3 +1.0576568105*nu2 - 0.0779048897*nu+0.2964517117;
         A_tmp_scale_equal  = ((a2_A_tmp*X12**2 + a1_A_tmp*X12 - 0.2764889288)*aeff+1)/((b2_A_tmp*X12**2 + b1_A_tmp*X12 -0.4706843028)*aeff+1);
         A_tmp              = A_tmp_scale_nu*A_tmp_scale_equal*(1-0.5*omg_tmp*aeff);
         
