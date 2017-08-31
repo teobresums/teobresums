@@ -23,7 +23,76 @@
 
 using namespace::std;
 
-void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4)
+/** from https://arxiv.org/abs/1611.00332 */
+static double JimenezFortezaRemnantSpin(input params)
+{
+    double nu      = params.nu;
+    double xnu     = sqrt(1.0-4.0*nu);
+    double X1      = params.X1;
+    double X2      = params.X2;
+    double chi1    = params.chi1;
+    double chi2    = params.chi2;
+    double Dchi    = chi1-chi2;
+    double S       = (X1*X1*chi1+X2*X2*chi2)/(X1*X1+X2*X2);
+    double a2      = 3.833;
+    double a3      = -9.49;
+    double a5      = 2.513;
+    
+    /** The functional form is taken from eq. (7), page 5. */
+    double Lorb_spin_zero  = (1.3*a3*nu*nu*nu + 5.24*a2*nu*nu + 2.*sqrt(3)*nu)/(2.88.*a5*nu + 1);
+    
+    /** Coeffcients taken from Table II, page 6: */
+    double b1      = 1.00096;
+    double b2      = 0.788;
+    double b3      = 0.654;
+    double b5      = 0.840;
+    
+    /** These values are taken from Table III, page 7: */
+    double f21     = 8.774;
+    double f31     = 22.83;
+    double f50     = 1.8805;
+    double f11     = 0.345225*f21 + 0.0321306*f31 - 3.66556*f50 + 7.5397;
+    
+    /** These values are taken from Table IV, page 10 */
+    double f12     = 0.512;
+    double f22     = -32.1;
+    double f32     = -154;
+    double f51     = -4.77;
+    
+    /** The following quantities were taken from the relation given in eq. (11), */
+    /** page 7: fi3 = 64 - 64.*fi0 - 16.*fi1 - 4.*fi2; */
+    double f13     = 64 - 16.*f11 - 4.*f12;
+    double f23     = 64 - 16.*f21 - 4.*f22;
+    double f33     = 64 - 16.*f31 - 4.*f32;
+    double f53     = 64 - 64.*f50 - 16.*f51;
+    
+    /** this transformation is given in eq. (9), page (7) */
+    double b1t     = b1*(f11*nu + f12*nu*nu + f13*nu*nu*nu);
+    double b2t     = b2*(f21*nu + f22*nu*nu + f23*nu*nu*nu);
+    double b3t     = b3*(f31*nu + f32*nu*nu + f33*nu*nu*nu);
+    double b5t     = b5*(f50 + f51*nu + f53*nu*nu*nu);
+    
+    /** The functional form is taken from eq. (8), page 6. */
+    double Lorb_eq_spin  = (0.00954*b3t*S*S*S + 0.0851*b2t*S*S - 0.194*b1t*S)/(1 - 0.579*b5*S);
+    
+    /** These values are taken from Table IV, page 10: */
+    double d10     = 0.322;
+    double d11     = 9.33;
+    double d20     = -0.0598;
+    double d30     = 2.32;
+    double d31     = -3.26;
+    /** The functional form is taken from eq. (19a-c), page 10.*/
+    double A1      = d10*xnu*nu*nu*(d11*nu+1);
+    double A2      = d20*nu*nu*nu;
+    double A3      = d30*xnu*nu*nu*nu*(d31*nu+1);
+    
+    /** The functional form is taken from eq. (15), page 9. */
+    double Lorb_uneq_mass  = A1*Dchi + A2*Dchi*Dchi + A3*S*Dchi;
+    
+    return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
+}
+
+void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4)
 {
 
     // Shorthands
@@ -31,6 +100,7 @@ void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<d
     int k21 = 0;
     int k33 = 4;
 
+    double nu  = params.nu;
     double nu2 = nu*nu;
 
     for (int i=35; i--; )
@@ -55,12 +125,16 @@ void QNMHybridFitCab(double nu, vector<double> &a1, vector<double> &a2, vector<d
     vector<double> c2A     = a1;
 
     
-    double af, aeff_omg;
-    double af2       = af*af;
-    double af3       = af2*af;
-    double aeff_omg2 = aeff_omg  * aeff_omg;
-    double aeff_omg3 = aeff_omg2 * aeff_omg;
-    double X12_2     = X12*X12;
+    double af           = JimenezFortezaRemnantSpin(params);
+    double a12          = params.X1*params.chi1 - params.X2*params.chi2;
+    double X12          = params.X1 - params.X2;
+    double aeff         = params.aK + 1./3.*a12*X12;
+    double aeff_omg     = params.aK + a12*X12;
+    double af2          = af*af;
+    double af3          = af2*af;
+    double aeff_omg2    = aeff_omg  * aeff_omg;
+    double aeff_omg3    = aeff_omg2 * aeff_omg;
+    double X12_2        = X12*X12;
     
     if (spin_flag == false)
     {
