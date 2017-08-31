@@ -361,10 +361,13 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         
         for (int k=35; k--; )
         {
-            for (int i=grid_length; i--; )
+            if (k==1)
             {
-                hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
-                hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
+                for (int i=grid_length; i--; )
+                {
+                    hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
+                    hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
+                }
             }
         }
     }
@@ -431,17 +434,20 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
 
     for (int k=35; k--; )
     {
-        double Y_real, Y_imag;
-        spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], polarisation, inclination);
-        
-        /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
-        for (i=0; i<N; i++)
+        if (k==1)
         {
-            double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
-            double cosPhi = cos(hlm_phase_g[k][i]);
-            double sinPhi = -sin(hlm_phase_g[k][i]);
-            hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-            hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+            double Y_real, Y_imag;
+            spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], polarisation, inclination);
+            
+            /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
+            for (i=0; i<N; i++)
+            {
+                double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
+                double cosPhi = cos(hlm_phase_g[k][i]);
+                double sinPhi = -sin(hlm_phase_g[k][i]);
+                hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+                hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+            }
         }
     }
     *hplus = hplus_out;
