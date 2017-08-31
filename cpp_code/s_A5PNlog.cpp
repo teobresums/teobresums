@@ -121,132 +121,72 @@ double prefactor = A/(Num*Den);
 double dA_u      = prefactor*(dNum*Den - dDen*Num);
 
 //
- if (tidal_flag==true) {
-
-        double A0    = A;
-        double A0_du = dA_u;
-   
-        //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
-        
-        // Tidal PN coefs
-        double q   =  (1.+sqrt(1-4*nu)-2.*nu)/(2.*nu); // q>=1 
-        //double XA  =  0.5*(1.+sqrt(1.-4.*nu));
-        //double XB  =  1.-XA;
+ if (tidal_flag==true)
+ {
+    double A0    = A;
+    double A0_du = dA_u;
 	// CHECK IF THE SAME (BE AWARE ANOTHE DEF BELOW IN OTHER ROUTINE):
 	double XA = (*(input *)params).X1;
 	double XB = (*(input *)params).X2;
-		
 
-	   
-        //dimensionless Love numbers (apsidal constants)
-        //vector<double> kAl(3);
-        //vector<double> kBl(3);
-	// double lambdaA2, lambdaA3, lambdaA4;
-	// double lambdaB2, lambdaB3, lambdaB4;
+    double kapA2 = (*(input *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+    double kapB2 = (*(input *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
+    
+    double kapT2 = (*(input *)params).kappaTl2; // kapA2 + kapB2;
+    double kapT3 = (*(input *)params).kappaTl3;//kapA3 + kapB3;
+    double kapT4 = (*(input *)params).kappaTl4;//kapA4 + kapB4;
 
-        // lambdaA2 = (*(input *)params).LambdaAl2;
-        // lambdaA3 = (*(input *)params).LambdaAl3;
-        // lambdaA4 = (*(input *)params).LambdaAl4;
-
-        // lambdaB2 = (*(input *)params).LambdaBl2;
-        // lambdaB3 = (*(input *)params).LambdaBl3;
-        // lambdaB4 = (*(input *)params).LambdaBl4;
-        
-        // //Compactness of the star
-        // //double CA = (*(input *)params).CA;
-        // //double CB = (*(input *)params).CB;
-        
-        // //Computing the tidal coupling constants
-	// double kapA2 = 2. * kAl[0] * pow(XA/CA, 2.*2 +1.) * q; // one of the two is wrong, one of them must be DIVIDED by q 
-        // double kapA3 = 2. * kAl[1] * pow(XA/CA, 2.*3 +1.) * q;
-        // double kapA4 = 2. * kAl[2] * pow(XA/CA, 2.*4 +1.) * q;
-
-        // double kapB2 = 2. * kBl[0] * pow(XB/CB, 2.*2 +1.) * q;
-        // double kapB3 = 2. * kBl[1] * pow(XB/CB, 2.*3 +1.) * q;
-        // double kapB4 = 2. * kBl[2] * pow(XB/CB, 2.*4 +1.) * q;
-	// double kapA2 = 3.   * lambdaA2 * pow(XA, 2.*2 +1.) / q; // check those MULT/DIV by q, and convention XA,B
-        // double kapA3 = 15.  * lambdaA3 * pow(XA, 2.*3 +1.) / q;
-        // double kapA4 = 105. * lambdaA4 * pow(XA, 2.*4 +1.) / q;
-        
-        // double kapB2 = 3.   * lambdaB2 * pow(XB, 2.*2 +1.) * q;
-        // double kapB3 = 15.  * lambdaB3 * pow(XB, 2.*3 +1.) * q;
-        // double kapB4 = 105. * lambdaB4 * pow(XB, 2.*4 +1.) * q;
-
-        // double kapT2 = kapA2 + kapB2;
-        // double kapT3 = kapA3 + kapB3;
-        // double kapT4 = kapA4 + kapB4;
-
-        // double bar_alph2_1 = (5/2.*XA*kapA2 + 5/2.*XB*kapB2)/kapT2;
-	// double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
-	// double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
-	// double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
-
-        double kapA2 = (*(input *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
-        double kapA3 = (*(input *)params).kappaAl3; //15.  * lambdaAl3 * pow(XA, 2.*3 +1.) / q;
-        double kapA4 = (*(input *)params).kappaAl4; //105. * lambdaAl4 * pow(XA, 2.*4 +1.) / q;
- 
-        double kapB2 = (*(input *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
-        double kapB3 = (*(input *)params).kappaBl3; //15.  * lambdaBl3 * pow(XB, 2.*3 +1.) * q;
-        double kapB4 = (*(input *)params).kappaBl4; //;105. * lambdaBl4 * pow(XB, 2.*4 +1.) * q;
-        
-        double kapT2 = (*(input *)params).kappaTl2; // kapA2 + kapB2;
-        double kapT3 = (*(input *)params).kappaTl3;//kapA3 + kapB3;
-        double kapT4 = (*(input *)params).kappaTl4;//kapA4 + kapB4;
-
-        double bar_alph2_1 = (*(input *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
-      	double bar_alph2_2 = (*(input *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
-      	double bar_alph3_1 = (*(input *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
-      	double bar_alph3_2 = (*(input *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
-
-
-
-			       
+    double bar_alph2_1 = (*(input *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
+    double bar_alph2_2 = (*(input *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+    double bar_alph3_1 = (*(input *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+    double bar_alph3_2 = (*(input *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+     
+    //case 'nnlo'
+    if (nnlo_flag==true) { //Used for calculating the rLR
         //case 'nnlo'
-        if (nnlo_flag==true) { //Used for calculating the rLR
-            //case 'nnlo'
-            A     = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
-            dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
-	         - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
-        } else { //Used for calculting the dynamcis
-            //case 'nnlo_gsfLR'; Bini & Damour, 1409.6933 + free light-ring
-            // Tidal PN coefs
-            double p      =  4.;// % 4<p<6
-            double c1     =  8.53353;
-            double c2     =  3.04309;
-            double Acub   =  5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
-            double n1     =  0.840058;
-            double d2     =  17.73239;
-            double DenI   =  1./(1. + d2*u2);
-            double f23    =  (1. + n1*u)*DenI;
-            double A1SF   =  Acub*f23;
-            double A2SF   =  337./28.*u2;
-            double oom3u  =  1./(1.-rLR*u);
-            double f0     =  1. + 3.*u2*oom3u;
-            double f1     =  A1SF *pow(oom3u,7./2.);
-            double f2     =  A2SF *pow(oom3u,p);
-            double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
-	          double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
-            double AT4    = - kapT4*u10;
-            
-            A = AT2 + AT3 + AT4;
-            
-            //Derivative of potential w.r.t. u
-            double dAcub = 5./2.*   (1. -2.*(c1+c2)*u + 3.*c1*c2*u2);
-            double df23  = (n1 - 2.*d2*u - n1*d2*u2)*pow(DenI,2.);
-            double dA1SF = dAcub*f23 + Acub*df23;
-            double dA2SF = 674./28.*u;
-            double df0   = 3.*u*(2.-rLR*u)*pow(oom3u,2.);
-            double df1   = 0.5*(7.*rLR*A1SF + 2.*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
-            double df2   = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1.);
-            double dAT2  = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );
-	          double dAT3  = - kapT3*(8.*u7 + 9*bar_alph3_1*u8 + 10*bar_alph3_2*u9);
-            double dAT4  = - kapT4*10.*u9;
-            
-            dA_u =  dAT2 + dAT3 + dAT4;
-            
-        }
-        A    = A+A0;
-        dA_u = dA_u+A0_du;
+        A     = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+        dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
+         - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+    } else { //Used for calculting the dynamcis
+        //case 'nnlo_gsfLR'; Bini & Damour, 1409.6933 + free light-ring
+        // Tidal PN coefs
+        double p      =  4.;// % 4<p<6
+        double c1     =  8.53353;
+        double c2     =  3.04309;
+        double Acub   =  5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
+        double n1     =  0.840058;
+        double d2     =  17.73239;
+        double DenI   =  1./(1. + d2*u2);
+        double f23    =  (1. + n1*u)*DenI;
+        double A1SF   =  Acub*f23;
+        double A2SF   =  337./28.*u2;
+        double oom3u  =  1./(1.-rLR*u);
+        double f0     =  1. + 3.*u2*oom3u;
+        double f1     =  A1SF *pow(oom3u,7./2.);
+        double f2     =  A2SF *pow(oom3u,p);
+        double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
+          double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+        double AT4    = - kapT4*u10;
+        
+        A = AT2 + AT3 + AT4;
+        
+        //Derivative of potential w.r.t. u
+        double dAcub = 5./2.*   (1. -2.*(c1+c2)*u + 3.*c1*c2*u2);
+        double df23  = (n1 - 2.*d2*u - n1*d2*u2)*pow(DenI,2.);
+        double dA1SF = dAcub*f23 + Acub*df23;
+        double dA2SF = 674./28.*u;
+        double df0   = 3.*u*(2.-rLR*u)*pow(oom3u,2.);
+        double df1   = 0.5*(7.*rLR*A1SF + 2.*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
+        double df2   = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1.);
+        double dAT2  = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );
+          double dAT3  = - kapT3*(8.*u7 + 9*bar_alph3_1*u8 + 10*bar_alph3_2*u9);
+        double dAT4  = - kapT4*10.*u9;
+        
+        dA_u =  dAT2 + dAT3 + dAT4;
+        
+    }
+    A    = A+A0;
+    dA_u = dA_u+A0_du;
     }
    
 
