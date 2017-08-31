@@ -81,8 +81,8 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
 
     
     vector<double> metric(5);
-    double /*A,*/ dA, B, dB, one_A, one_B;
-    double jhat, Omega, /*ddotr,*/ H, Heff, r_omega;
+    double dA, B, dB, one_A, one_B;
+    double jhat = 0.0, Omega = 0.0, H = 0.0, Heff = 0.0, r_omega = 0.0;
     
     /*
      //{H,Heff,dHeff_dr,dHeff_dprstar,dHeff_dpph,Omega,ddotr,jhat,r_omega,Omg_orb}
@@ -153,7 +153,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
         
     }
-    else if (spin_flag==true)
+    else
     {
         
         double z3 = 2.*nu*(4.-3.*nu);
