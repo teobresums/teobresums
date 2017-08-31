@@ -119,7 +119,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         pdA[4]   =  0.00123845;
         pdA[4]   = -0.00195014;
         dA_tmp   =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[4]*aK   + pdA[4];
-        c
+        
         pomg[0]  =  0.00603482;
         pomg[1]  =  0.01604555;
         pomg[2]  =  0.02290799;
@@ -149,7 +149,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         p2         =  p2[0]*nu + p2[1];
         p3         =  p3[0]*nu + p3[1];
         p4         =  p4[0]*nu + p4[1];
-        A_tmp      =  p1*aK3   + p2*aK**2 + p3*aK+ p4;
+        A_tmp      =  p1*aK3   + p2*aK2 + p3*aK+ p4;
         
         pdA1[0]    = -0.00130824;
         pdA1[1]    =  0.00006202;
@@ -163,7 +163,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         pdA2       =  pdA2[0]*nu + pdA2[1];
         pdA3       =  pdA3[0]*nu + pdA3[1];
         pdA4       =  pdA4[0]*nu + pdA4[1];
-        dA_tmp     =  pdA1*aK3   + pdA2*aK**2 + pdA3*aK+ pdA4;
+        dA_tmp     =  pdA1*aK3   + pdA2*aK2 + pdA3*aK+ pdA4;
         
         pn0[0]     =  0.46908067;
         pn0[1]     =  0.27022141;
@@ -189,16 +189,16 @@ vector<vector<gsl_complex> > find_a1a2a3(
         a1_omg_tmp         =  0.205958;
         b2_omg_tmp         = -0.217723;
         b1_omg_tmp         =  0.186073;
-        omg_tmp_nu         =  0.6383186929*nu**2 + 0.2198527359*nu+ 0.2886403943;
-        omg_tmp_equal      = ((a2_omg_tmp*X12**2 + a1_omg_tmp*X12 - 0.1401748476)*aeff_omg + 1)/((b2_omg_tmp*X12**2 + b1_omg_tmp*X12 - 0.3375083723)*aeff_omg + 1);
+        omg_tmp_nu         =  0.6383186929*nu*nu + 0.2198527359*nu+ 0.2886403943;
+        omg_tmp_equal      = ((a2_omg_tmp*X12*X12 + a1_omg_tmp*X12 - 0.1401748476)*aeff_omg + 1)/((b2_omg_tmp*X12*X12 + b1_omg_tmp*X12 - 0.3375083723)*aeff_omg + 1);
         omg_tmp            = omg_tmp_nu*omg_tmp_equal;
         
         a2_domg_tmp        = -0.0505505;
         a1_domg_tmp        =  0.0709177;
         b2_domg_tmp        = -0.00755181;
         b1_domg_tmp        =  0.033916;
-        domg_tmp_nu        =  0.0449367831*nu**2 + 0.0097045815*nu + 0.0066911252;
-        domg_tmp_equal     = (a2_domg_tmp*X12**2 + a1_domg_tmp*X12 - 0.0277484292)*aeff_omg**2 + (b2_domg_tmp*X12**2 + b1_domg_tmp*X12 + 0.0603634961)*aeff_omg + 1;
+        domg_tmp_nu        =  0.0449367831*nu*nu + 0.0097045815*nu + 0.0066911252;
+        domg_tmp_equal     = (a2_domg_tmp*X12*X12 + a1_domg_tmp*X12 - 0.0277484292)*aeff_omg*aeff_omg + (b2_domg_tmp*X12*X12 + b1_domg_tmp*X12 + 0.0603634961)*aeff_omg + 1;
         domg_tmp           = domg_tmp_nu*domg_tmp_equal;
         
         a2_A_tmp           =  0.0381341;
@@ -206,7 +206,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         b2_A_tmp           = -0.00790612;
         b1_A_tmp           =  0.111952;
         A_tmp_scale_nu     = -1.4938817908*nu^3 +1.0576568105*nu2 - 0.0779048897*nu+0.2964517117;
-        A_tmp_scale_equal  = ((a2_A_tmp*X12**2 + a1_A_tmp*X12 - 0.2764889288)*aeff+1)/((b2_A_tmp*X12**2 + b1_A_tmp*X12 -0.4706843028)*aeff+1);
+        A_tmp_scale_equal  = ((a2_A_tmp*X12*X12 + a1_A_tmp*X12 - 0.2764889288)*aeff+1)/((b2_A_tmp*X12*X12 + b1_A_tmp*X12 -0.4706843028)*aeff+1);
         A_tmp              = A_tmp_scale_nu*A_tmp_scale_equal*(1-0.5*omg_tmp*aeff);
         
         a2_dA_tmp          = -0.00162301;
@@ -214,7 +214,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         b2_dA_tmp          = -0.00490688;
         b1_dA_tmp          =  0.00271927;
         dA_tmp_scale_nu    = -0.0017246790*nu-0.0046671920;
-        dA_tmp_scale_equal = (a2_dA_tmp*X12**2 + a1_dA_tmp*X12-0.0001583384)*aeff**2 + (b2_dA_tmp*X12**2 + b1_dA_tmp*X12+0.0037503520)*aeff;
+        dA_tmp_scale_equal = (a2_dA_tmp*X12*X12 + a1_dA_tmp*X12-0.0001583384)*aeff*aeff + (b2_dA_tmp*X12*X12 + b1_dA_tmp*X12+0.0037503520)*aeff;
         dA_tmp             = (dA_tmp_scale_nu  + dA_tmp_scale_equal)*omg_tmp;
         
     }
