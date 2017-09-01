@@ -180,25 +180,25 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         /** alpha1 is alpha1[k22] */
         double alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
         double alpha1_d    =  0.0811633377 * af3 + 0.7201166020 * af2 - 1.8002031358 * af + 1;
-        alpha1[k22]      =  0.0889623157 * (alpha1_c/alpha1_d);
+        alpha1[k22]        =  0.0889623157 * (alpha1_c/alpha1_d);
         
         double alpha21_c   =  0.4764196512 * af3 - 0.0593165805 * af2 - 1.4168096833 * af + 1;
         double alpha21_d   =  0.4385578151 * af3 - 0.0763529088 * af2 - 1.3595491146 * af + 1;
-        alpha21[k22]     =  0.1849525596 * (alpha21_c/alpha21_d);
+        alpha21[k22]       =  0.1849525596 * (alpha21_c/alpha21_d);
         
         double a_c3A 	    =  0.0169543;
         double b_c3A 	    = -0.0799343;
         double c_c3A 	    = -0.115928;
-        double c3A_nu      =  0.8298678603 * nu - 0.5615838975;
-        double c3A_eq      =  (c_c3A * X12 + 0.0907476903) * aeff3 + (b_c3A * X12 + 0.0227344099) * aeff2 + (a_c3A * X12 - 0.1994944332)*aeff;
-        c3A[k22]         =  c3A_nu + c3A_eq;
+        double c3A_nu       =  0.8298678603 * nu - 0.5615838975;
+        double c3A_eq       =  (c_c3A * X12 + 0.0907476903) * aeff3 + (b_c3A * X12 + 0.0227344099) * aeff2 + (a_c3A * X12 - 0.1994944332)*aeff;
+        c3A[k22]            =  c3A_nu + c3A_eq;
         
         double a_c3phi  	= -0.462321;
         double b_c3phi  	= -0.904512;
         double c_c3phi  	=  0.437747;
         double d_c3phi  	=  1.8275;
-        double c3phi_nu    =  0.4558467286 * nu + 3.8883812141;
-        double c3phi_equal =  (d_c3phi*X12-2.0575868122) * aeff_omg4 +(c_c3phi*X12-0.5051534498)*aeff_omg3 +(b_c3phi*X12+2.5742292762)*aeff_omg2 +(a_c3phi*X12+2.5599640181)*aeff_omg;
+        double c3phi_nu     =  0.4558467286 * nu + 3.8883812141;
+        double c3phi_equal  =  (d_c3phi*X12-2.0575868122) * aeff_omg4 +(c_c3phi*X12-0.5051534498)*aeff_omg3 +(b_c3phi*X12+2.5742292762)*aeff_omg2 +(a_c3phi*X12+2.5599640181)*aeff_omg;
         c3phi[k22]       = c3phi_nu + c3phi_equal;
         
         double a_c4phi 	= -0.449976;
@@ -239,10 +239,10 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         a3[i] = c3A[i];
         a4[i] = Amrg[i] - a1[i] * tanh(c3A[i]);
         
-        b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
         b2[i] = alpha21[i];
         b3[i] = c3phi[i];
         b4[i] = c4phi[i];
+        b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
     }
 }
 
