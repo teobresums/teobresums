@@ -165,25 +165,6 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         c4phi[k33]   = -7.9494744361321930  * nu  + 2.8106916948840492                          ;
         Domg[k33]    =  2.5797331166178403  * nu2 - 0.5337830158170729 * nu + 0.1930766531716946;
         Amrg[k33]    = -10.4024985230145610 * nu2 + 1.3517710770250695 * nu + 0.4307642913724235;
-        
-        for (int i=35; i--; )
-        {
-            c2A[i] = 0.5*alpha21[i];
-        }
-        
-        for (int i=35; i--;)
-        {
-            double cosh_c3A = cosh(c3A[i]);
-            a1[i] = Amrg[i] * alpha1[i] * cosh_c3A * cosh_c3A / c2A[i];
-            a2[i] = c2A[i];
-            a3[i] = c3A[i];
-            a4[i] = Amrg[i] - a1[i] * tanh(c3A[i]);
-            
-            b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
-            b2[i] = alpha21[i];
-            b3[i] = c3phi[i];
-            b4[i] = c4phi[i];
-        }
 
     }
     else
@@ -191,54 +172,73 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         omega1_c    = -0.0598837831 * af3 + 0.8082136788 * af2 - 1.7408467418 * af + 1;
         omega1_d    = -0.2358960279 * af3 + 1.3152369374 * af2 - 2.0764065380 * af + 1;
         omega1      =  0.3736716844 * (omega1_c/omega1_d);
-        
-        alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
-        alpha1_d    =  0.0811633377 * af3 + 0.7201166020 * af2 - 1.8002031358 * af + 1;
-        alpha1      =  0.0889623157 * (alpha1_c/alpha1_d);
+    
+        /** alpha1 is alpha1[k22] */
+        double alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
+        double alpha1_d    =  0.0811633377 * af3 + 0.7201166020 * af2 - 1.8002031358 * af + 1;
+        alpha1[k22]      =  0.0889623157 * (alpha1_c/alpha1_d);
         
         alpha21_c   =  0.4764196512 * af3 - 0.0593165805 * af2 - 1.4168096833 * af + 1;
         alpha21_d   =  0.4385578151 * af3 - 0.0763529088 * af2 - 1.3595491146 * af + 1;
         alpha21     =  0.1849525596 * (alpha21_c/alpha21_d);
         
-        a_c3A 	    =  0.0169543;
-        b_c3A 	    = -0.0799343;
-        c_c3A 	    = -0.115928;
-        c3A_nu      =  0.8298678603 * nu - 0.5615838975;
-        c3A_eq      =  (c_c3A * X12 + 0.0907476903) * aeff3 + (b_c3A * X12 + 0.0227344099) * aeff2 + (a_c3A * X12 - 0.1994944332)*aeff;
-        c3A         =  c3A_nu + c3A_eq;
+        double a_c3A 	    =  0.0169543;
+        double b_c3A 	    = -0.0799343;
+        double c_c3A 	    = -0.115928;
+        double c3A_nu      =  0.8298678603 * nu - 0.5615838975;
+        double c3A_eq      =  (c_c3A * X12 + 0.0907476903) * aeff3 + (b_c3A * X12 + 0.0227344099) * aeff2 + (a_c3A * X12 - 0.1994944332)*aeff;
+        c3A[k22]         =  c3A_nu + c3A_eq;
         
-        a_c3phi  	= -0.462321;
-        b_c3phi  	= -0.904512;
-        c_c3phi  	=  0.437747;
-        d_c3phi  	=  1.8275;
-        c3phi_nu    =  0.4558467286 * nu + 3.8883812141;
-        c3phi_equal =  (d_c3phi.*X12-2.0575868122) * aeff_omg4 +(c_c3phi.*X12-0.5051534498).*aeff_omg.^3 +(b_c3phi.*X12+2.5742292762).*aeff_omg.^2 +(a_c3phi.*X12+2.5599640181).*aeff_omg;
-        c3phi       = c3phi_nu + c3phi_equal;
+        double a_c3phi  	= -0.462321;
+        double b_c3phi  	= -0.904512;
+        double c_c3phi  	=  0.437747;
+        double d_c3phi  	=  1.8275;
+        double c3phi_nu    =  0.4558467286 * nu + 3.8883812141;
+        double c3phi_equal =  (d_c3phi*X12-2.0575868122) * aeff_omg4 +(c_c3phi*X12-0.5051534498)*aeff_omg3 +(b_c3phi.*X12+2.5742292762)*aeff_omg2 +(a_c3phi*X12+2.5599640181)*aeff_omg;
+        c3phi[k22]       = c3phi_nu + c3phi_equal;
         
-        a_c4phi 	= -0.449976;
-        b_c4phi 	= -0.980913;
-        c4phi_nu    =  2.0822327682 * nu + 1.4996868401;
-        c4phi_equal =  (b_c4phi.*X12+3.5695199109) * aeff_omg2 + (a_c4phi * X12 + 4.1312404030) * aeff_omg;
-        c4phi       =  c4phi_nu + c4phi_equal;
+        double a_c4phi 	= -0.449976;
+        double b_c4phi 	= -0.980913;
+        double c4phi_nu    =  2.0822327682 * nu + 1.4996868401;
+        double c4phi_equal =  (b_c4phi*X12+3.5695199109) * aeff_omg2 + (a_c4phi * X12 + 4.1312404030) * aeff_omg;
+        c4phi[k22]       =  c4phi_nu + c4phi_equal;
         
-        a2_omgmx 	= -0.122735;
-        a1_omgmx 	=  0.0857478;
-        b2_omgmx 	= -0.0760023;
-        b1_omgmx 	=  0.0826514;
-        omgmx_eq_c  =  (a2_omgmx*X12_2 +a1_omgmx*X12 -0.1416002395) * aeff_omg + 1;
-        omgmx_eq_d  =  (b2_omgmx*X12_2 +b1_omgmx*X12 -0.3484804901) * aeff_omg + 1;
-        omgmx_eq    =  omgmx_eq_c./omgmx_eq_d;
-        omgmx       =  (0.481958619443355 * nu2 + 0.223976694441952 * nu + 0.273813064427363) * omgmx_eq;
+        double a2_omgmx 	= -0.122735;
+        double a1_omgmx 	=  0.0857478;
+        double b2_omgmx 	= -0.0760023;
+        double b1_omgmx 	=  0.0826514;
+        double omgmx_eq_c  =  (a2_omgmx*X12_2 +a1_omgmx*X12 -0.1416002395) * aeff_omg + 1;
+        double omgmx_eq_d  =  (b2_omgmx*X12_2 +b1_omgmx*X12 -0.3484804901) * aeff_omg + 1;
+        double omgmx_eq    =  omgmx_eq_c/omgmx_eq_d;
+        double omgmx       =  (0.481958619443355 * nu2 + 0.223976694441952 * nu + 0.273813064427363) * omgmx_eq;
         
-        a2_A_scaled = -0.0820894;
-        a1_A_scaled = 0.176126;
-        b2_A_scaled = -0.150239;
-        b1_A_scaled = 0.20491;
-        A_scaled_eq = ((a2_A_scaled*X12*X12 + a1_A_scaled*X12 -0.2935238329)*aeff + 1)./((b2_A_scaled*X12*X12 + b1_A_scaled*X12 -0.4728707630)*aeff + 1);
-        A_scaled    = (+1.826573640739664*nu2 +0.100709438291872*nu +1.438424467327531)*A_scaled_eq;
+        double a2_A_scaled = -0.0820894;
+        double a1_A_scaled = 0.176126;
+        double b2_A_scaled = -0.150239;
+        double b1_A_scaled = 0.20491;
+        double A_scaled_eq = ((a2_A_scaled*X12*X12 + a1_A_scaled*X12 -0.2935238329)*aeff + 1)/((b2_A_scaled*X12*X12 + b1_A_scaled*X12 -0.4728707630)*aeff + 1);
+        double A_scaled    = (+1.826573640739664*nu2 +0.100709438291872*nu +1.438424467327531)*A_scaled_eq;
         
-        A22mrg      = A_scaled*(1-0.5*omgmx*aeff);
-        Domg        = omega1 - Mbh*omgmx;
+        Amrg[k22]      = A_scaled*(1-0.5*omgmx*aeff);
+        Domg[k22]      = omega1 - Mbh*omgmx;
+    }
+    for (int i=35; i--; )
+    {
+        c2A[i] = 0.5*alpha21[i];
+    }
+    
+    for (int i=35; i--;)
+    {
+        double cosh_c3A = cosh(c3A[i]);
+        a1[i] = Amrg[i] * alpha1[i] * cosh_c3A * cosh_c3A / c2A[i];
+        a2[i] = c2A[i];
+        a3[i] = c3A[i];
+        a4[i] = Amrg[i] - a1[i] * tanh(c3A[i]);
+        
+        b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
+        b2[i] = alpha21[i];
+        b3[i] = c3phi[i];
+        b4[i] = c4phi[i];
     }
 }
 
