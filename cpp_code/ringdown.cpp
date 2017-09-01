@@ -28,10 +28,12 @@
 #include "interpolator.h"
 #include "QNMHybridFitCab.h"
 #include "ringdown_match.h"
+#include "input_struc.h"
+
 using namespace::std;
 
 
-int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
+int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
     
     //EOBhlm Compute the multipolar resummed waveform.
     //
@@ -46,6 +48,10 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
     
     //NOTE: before the Omega_vec had a Mbh multiplied onto it!!!!!!!!!!!!!!!!!!!!!!
     
+    
+    double dt = params.dt;
+    double nu = params.nu;
+    double Mbh= params.Mbh;
     
     long int pk_index = Omega_vec.size()-1;
     double Omega_pk   = Omega_vec[pk_index];
@@ -175,7 +181,7 @@ int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> >
     vector<double> b2(35);
     vector<double> b3(35);
     vector<double> b4(35);
-    QNMHybridFitCab(nu,a1,a2,a3,a4,b1,b2,b3,b4);
+    QNMHybridFitCab(params,a1,a2,a3,a4,b1,b2,b3,b4);
     
     //Calculate deltaphi
     vector<gsl_complex> psi(35);

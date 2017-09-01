@@ -22,9 +22,8 @@
 
 #include <vector>
 using namespace::std;
+#include "input_struc.h"
 
-//int ringdown(double nu,double q,int lm,double dt,double Mbh,vector<double> &t_vec,vector<double> &Omega_vec,vector<double> &hlm_rad,vector<double> &hlm_phase){
-
-int ringdown(double nu, double q, double dt, double Mbh, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase);
+int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase);
 
 #endif /* _ringdown_h */
