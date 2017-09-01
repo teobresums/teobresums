@@ -29,6 +29,7 @@
 #include "QNMHybridFitCab.h"
 #include "ringdown_match.h"
 #include "input_struc.h"
+#include "dtnqc_fit.h"
 
 using namespace::std;
 
@@ -49,9 +50,11 @@ int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_
     //NOTE: before the Omega_vec had a Mbh multiplied onto it!!!!!!!!!!!!!!!!!!!!!!
     
     
-    double dt = params.dt;
-    double nu = params.nu;
-    double Mbh= params.Mbh;
+    double dt   = params.dt;
+    double nu   = params.nu;
+    double Mbh  = params.Mbh;
+    double chi1 = params.chi1;
+
     
     long int pk_index = Omega_vec.size()-1;
     double Omega_pk   = Omega_vec[pk_index];
@@ -78,6 +81,7 @@ int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_
     Omega_pk_grid[6].dat[1] = Omega_vec[pk_index+3];
     
     double tOmg_pk = 0.;
+    double DeltaT_nqc = 0.;
     vector<double> tmrg(35);
     vector<double> tmatch(35);
     
@@ -92,13 +96,33 @@ int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_
     int k21 = 0;
     int k22 = 1;
     int k33 = 4;
-    dtmrg[0] = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
-    dtmrg[1] = 4.29550934 - 0.85938*xnu; //k33
-        
-    tmrg[k22]  = tOmg_pk-3./Mbh;               // t_max(A22) => MERGER
+    
+
+    /** time-shift needed when the largest object is highly spinning*/
+    if (chi1 >= 0.8498)
+    {
+        /* Interpolating fit for Deltat_NQC. See Eq.(21) of arXiv:1506.08457 */
+        DeltaT_nqc = dtnqc_fit(chi1,0.8498);
+    }
+    else
+    {
+        DeltaT_nqc = 1.;
+    }
+
+    tmrg[k22] = tOmg_pk-(DeltaT_nqc + 2)/Mbh;     //t_max(A22) => MERGER
+
+    /** nonspinning case - old */
+    /*tmrg[k22]  = tOmg_pk-3./Mbh; */             // t_max(A22) => MERGER
+
+
+    /** only nonspinning case */
+    dtmrg[0]   = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
+    dtmrg[1]   = 4.29550934 - 0.85938*xnu;                         //k33
     tmrg[k21]  = tmrg[k22] + dtmrg[0]/Mbh;     // t_max(A21) => peak of 21 mode
     tmrg[k33]  = tmrg[k22] + dtmrg[1]/Mbh;     // t_max(A33) => peak of 33 mode
-        
+
+
+    /* postmerger-ringdown matching time */    
     tmatch = tmrg;
     
     int kmax = 35;
