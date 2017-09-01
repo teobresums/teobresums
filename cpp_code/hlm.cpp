@@ -70,7 +70,7 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     {
         flm = s_flm(x,params);
     }
-    else if (spin_flag==false)
+    else
     {
         flm = f_lm(x,nu);
     }

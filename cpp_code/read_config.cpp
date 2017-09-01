@@ -166,9 +166,10 @@ input read_config(char *fname){
     double q = params.q;
 
     /*set spin flag*/
-    if (chi1 != .0 || chi2 != .0) {
+    if (chi1 != .0 || chi2 != .0)
+    {
         params.spin = true;
-        params.NQC  = false;
+
     } else {params.spin = false;}
 
     

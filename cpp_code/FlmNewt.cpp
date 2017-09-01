@@ -60,7 +60,7 @@ vector<double> FlmNewt(const double x, void *params)
         sp2 = 1.;
         sp4 = (2*nu-1)*(2*nu-1);
     }
-    else if (spin_flag==false)
+    else
     {   /** Nonspinning case*/
         if (tidal_flag==false)
         {

@@ -66,7 +66,7 @@ int main (int argc, char* argv[])
     double distance      = 40*3.086e22;
     double inclination   = 0.0;
     double polarisation  = 0.0;
-    bool   NQC           = true;
+    bool   NQC           = false;
     bool   tidal         = false;
     bool   speedy        = true;
     bool   RWZ           = false;

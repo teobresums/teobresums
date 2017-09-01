@@ -158,7 +158,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         sys = {s_RHS, NULL , 4, &params};
         initial_data = s_initial(&params);
     }
-    else if (params.spin==false)
+    else
     {
         sys          = {rhs, NULL , 4, &params};
         initial_data = initial(&params);
