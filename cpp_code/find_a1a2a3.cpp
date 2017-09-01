@@ -131,28 +131,28 @@ vector<vector<gsl_complex> > find_a1a2a3(
         pA[2]    =  0.00344489;
         pA[3]    = -0.00076165;
         pA[4]    =  0.31973334;
-        A_tmp    =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[4]*aK     + pA[4];
+        A_tmp    =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[3]*aK     + pA[4];
 
         pdA[0]   =  0.00000927;
         pdA[1]   = -0.00024550;
         pdA[2]   =  0.00012469;
         pdA[3]   =  0.00123845;
         pdA[4]   = -0.00195014;
-        dA_tmp   =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[4]*aK   + pdA[4];
+        dA_tmp   =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[3]*aK   + pdA[4];
         
         pomg[0]  =  0.00603482;
         pomg[1]  =  0.01604555;
         pomg[2]  =  0.02290799;
         pomg[3]  =  0.07084587;
         pomg[4]  =  0.38321834;
-        omg_tmp  =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[4]*aK  + pomg[4];
+        omg_tmp  =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[3]*aK  + pomg[4];
 
         pdomg[0] =  0.00024066;
         pdomg[1] =  0.00038123;
         pdomg[2] = -0.00049714;
         pdomg[3] =  0.00041219;
         pdomg[4] =  0.01190548;
-        domg_tmp =  pdomg[0]*aK4 + pdomg[1]*aK3 + pdomg[2]*aK2 + pdomg[4]*aK + pdomg[4];
+        domg_tmp =  pdomg[0]*aK4 + pdomg[1]*aK3 + pdomg[2]*aK2 + pdomg[3]*aK + pdomg[4];
     }
     
     else if( nu > 0.16)

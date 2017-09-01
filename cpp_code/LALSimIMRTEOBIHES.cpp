@@ -128,7 +128,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
                                             solver_scheme);
     double q             = m1/m2;
     double dt            = params.dt;
-      
+
     if (params.tidal==true)
     {
         rLR        = AdiabLR(&params);

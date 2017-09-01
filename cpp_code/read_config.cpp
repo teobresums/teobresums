@@ -377,7 +377,7 @@ input process_input_parameters(
     double a2  = X2*chi2;
     double aK  = a1 + a2;
     double aK2 = aK*aK;
-    
+
     params.S     = S1 + S2;        // => in the EMRL this becomes the spin of the BH
     params.Sstar = X2*a1 + X1*a2;  // => in the EMRL this becomes the spin of the particle
     
