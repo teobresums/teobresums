@@ -85,7 +85,7 @@ int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_
     tOmg_pk  = interpolate(dt, Omega_pk_grid);
     tOmg_pk *= 1./Mbh;
     
-    //claculate tmatch
+    //calculate tmatch
     double xnu =(1.-4.*nu);
         
     vector<double> dtmrg(2);
@@ -110,28 +110,16 @@ int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_
         tmatch[i] += 2./Mbh;
     }
     
-    double nu_squared = nu*nu;
-    double nu_cube = nu_squared*nu;
-    for (i=35; i--; ) {
-        switch (i) {
-            case 0:
-                sigma[0].dat[0] = -0.208936*nu_cube-0.028103*nu_squared-0.005383*nu + 0.08896;
-                sigma[0].dat[1] = 0.733477*nu_cube + 0.188359*nu_squared + 0.220659*nu + 0.37367;
-                break;
-            case 1:
-                sigma[1].dat[0] = -0.364177*nu_cube + 0.010951*nu_squared-0.010591*nu + 0.08896;
-                sigma[1].dat[1] = 2.392808*nu_cube + 0.051309*nu_squared + 0.449425*nu + 0.37365;
-                break;
-            case 4:
-                sigma[4].dat[0] = -0.319703*nu_cube-0.030076*nu_squared-0.009034*nu + 0.09270;
-                sigma[4].dat[1] = 2.957425*nu_cube + 0.178146*nu_squared + 0.709560*nu + 0.59944;
-                break;
-            default:
-                sigma[i].dat[0] = 0.;
-                sigma[i].dat[1] = 0.;
-                break;
-        }
-    }
+    vector<double> a1(35);
+    vector<double> a2(35);
+    vector<double> a3(35);
+    vector<double> a4(35);
+    vector<double> b1(35);
+    vector<double> b2(35);
+    vector<double> b3(35);
+    vector<double> b4(35);
+    
+    QNMHybridFitCab(params,a1,a2,a3,a4,b1,b2,b3,b4,sigma);
     
     /*deleting data points up to tmatch (starting from the back)*/
     vector<long> I(35);
@@ -172,16 +160,6 @@ int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_
         }
         I[k] = i;
     }
-    
-    vector<double> a1(35);
-    vector<double> a2(35);
-    vector<double> a3(35);
-    vector<double> a4(35);
-    vector<double> b1(35);
-    vector<double> b2(35);
-    vector<double> b3(35);
-    vector<double> b4(35);
-    QNMHybridFitCab(params,a1,a2,a3,a4,b1,b2,b3,b4);
     
     //Calculate deltaphi
     vector<gsl_complex> psi(35);

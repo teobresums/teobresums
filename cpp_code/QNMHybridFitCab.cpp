@@ -19,6 +19,8 @@
 
 #include <vector>
 #include <cmath>
+#include <gsl/gsl_complex.h>
+#include <gsl/gsl_complex_math.h>
 #include "QNMHybridFitCab.h"
 
 using namespace::std;
@@ -92,7 +94,7 @@ static double JimenezFortezaRemnantSpin(input params)
     return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
 }
 
-void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4)
+void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4, vector<gsl_complex> &sigma)
 {
 
     // Shorthands
@@ -102,6 +104,7 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
 
     double nu  = params.nu;
     double nu2 = nu*nu;
+    double nu3 = nu2*nu;
 
     for (int i=35; i--; )
     {
@@ -117,13 +120,14 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
 
     vector<double> alpha21 = a1;
     vector<double> alpha1  = a1;
+    vector<double> omega1  = a1;
     vector<double> c3A     = a1;
     vector<double> c3phi   = a1;
     vector<double> c4phi   = a1;
     vector<double> Domg    = a1;
     vector<double> Amrg    = a1;
     vector<double> c2A     = a1;
-
+    
     bool   spin_flag    = params.spin;
     double af           = JimenezFortezaRemnantSpin(params);
     double a12          = params.X1*params.chi1 - params.X2*params.chi2;
@@ -170,12 +174,32 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         Domg[k33]    =  2.5797331166178403  * nu2 - 0.5337830158170729 * nu + 0.1930766531716946;
         Amrg[k33]    = -10.4024985230145610 * nu2 + 1.3517710770250695 * nu + 0.4307642913724235;
 
+        for (int i=35; i--; ) {
+            switch (i) {
+                case 0:
+                    sigma[0].dat[0] = -0.208936*nu3-0.028103*nu2-0.005383*nu + 0.08896;
+                    sigma[0].dat[1] = 0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
+                    break;
+                case 1:
+                    sigma[1].dat[0] = -0.364177*nu3 + 0.010951*nu2-0.010591*nu + 0.08896;
+                    sigma[1].dat[1] = 2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
+                    break;
+                case 4:
+                    sigma[4].dat[0] = -0.319703*nu3-0.030076*nu2-0.009034*nu + 0.09270;
+                    sigma[4].dat[1] = 2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
+                    break;
+                default:
+                    sigma[i].dat[0] = 0.;
+                    sigma[i].dat[1] = 0.;
+                    break;
+            }
+        }
     }
     else
     {
         double omega1_c    = -0.0598837831 * af3 + 0.8082136788 * af2 - 1.7408467418 * af + 1;
         double omega1_d    = -0.2358960279 * af3 + 1.3152369374 * af2 - 2.0764065380 * af + 1;
-        double omega1      =  0.3736716844 * (omega1_c/omega1_d);
+        omega1[k22] =  0.3736716844 * (omega1_c/omega1_d);
     
         /** alpha1 is alpha1[k22] */
         double alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
@@ -224,7 +248,7 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         double A_scaled    = (+1.826573640739664*nu2 +0.100709438291872*nu +1.438424467327531)*A_scaled_eq;
         
         Amrg[k22]      = A_scaled*(1-0.5*omgmx*aeff);
-        Domg[k22]      = omega1 - Mbh*omgmx;
+        Domg[k22]      = omega1[k22] - Mbh*omgmx;
     }
     for (int i=35; i--; )
     {
@@ -243,6 +267,8 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         b3[i] = c3phi[i];
         b4[i] = c4phi[i];
         b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
+        sigma[i].dat[0] = alpha1[i];
+        sigma[i].dat[1] = omega1[i];
     }
 }
 

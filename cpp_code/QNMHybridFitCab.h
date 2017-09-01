@@ -25,6 +25,6 @@
 
 using namespace::std;
 
-void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4);
+void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4, vector<gsl_complex> &sigma);
 
 #endif /* _QNMHybridFitCab_h */
