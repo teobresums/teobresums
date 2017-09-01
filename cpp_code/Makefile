@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -std=c++11 -Ofast -Wall -fPIC
+CFLAGS=-c -std=c++11 -g -Wall -fPIC
 INC=`gsl-config --cflags`
 LIBS=`gsl-config --libs`
 LDLIBS=-lgsl -lgslcblas -lm

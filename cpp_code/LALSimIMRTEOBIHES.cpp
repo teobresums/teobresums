@@ -385,7 +385,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     /** Ringdown attachment */
     if (params.tidal==false)
     {
-        ringdown(params,t_g,MOmg_vecg,hlm_ampl_g,hlm_phase_g);
+        ringdown(params,t_g,OmgOrb_vecg,hlm_ampl_g,hlm_phase_g);
     }
     /** All multipoles will now have size N+Nringdown */
     /** Multipole for which no ringdown model is available will be filled with 0s */
