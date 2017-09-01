@@ -783,7 +783,7 @@ void XLALSimIMRTEOBIHES_single_mode(
     /** Ringdown attachment */
     if (params.tidal==false)
     {
-        ringdown(params, t_g, MOmg_vecg, hlm_ampl_g, hlm_phase_g);
+        ringdown(params, t_g, OmgOrb_vecg, hlm_ampl_g, hlm_phase_g);
     }
     
     N = hlm_ampl_g[0].size();
