@@ -75,7 +75,7 @@ int main (int argc, char* argv[])
     int    lm            = 1;
     int    solver_scheme = 0;
     char   output[256]   = "waveform.dat";
-    char   parfile[256]   = "";
+    char   parfile[256]  = "";
     
     
     if (argc < 2) printf("using default values\n");
@@ -249,7 +249,7 @@ int main (int argc, char* argv[])
         exit(-1);
     }
     else
-    { /** Hack to print out a multipole. h_plus -> ampl, h_cross - > phase. h= A* e^(-i*phase)**/
+    { 
         
         Waveform *hplus;
         Waveform *hcross;

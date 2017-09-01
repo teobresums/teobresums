@@ -733,7 +733,20 @@ void XLALSimIMRTEOBIHES_single_mode(
         hlm_ampl_g[k]            = interp_grid(t_vec,amplitude,dt);
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
-    
+   
+
+
+    char   output1[256]   = "waveform_noNQC_noRing.dat";
+    std::FILE* jk = std::fopen(output1, "w");
+    i = 0;
+    int N = hlm_ampl_g[0].size();
+    for (i=0;i<N;i++)
+    {
+        std::fprintf(jk, "%f\t%e\t%e\n", i*dt, hlm_ampl_g[1][i],  hlm_phase_g[1][i]);
+    }
+    std::fclose(jk);
+
+ 
     /** NQCs corrections */
     if (params.tidal==false && params.spin==true)
     {
@@ -748,7 +761,16 @@ void XLALSimIMRTEOBIHES_single_mode(
             }
         }
     }
-    
+   
+    char   output2[256]   = "waveform_noRing.dat";
+    std::FILE* man = std::fopen(output2, "w");
+    i = 0;
+    for (i=0;i<N;i++)
+    {
+        std::fprintf(man, "%f\t%e\t%e\n", i*dt, hlm_ampl_g[1][i],  hlm_phase_g[1][i]);
+    }
+    std::fclose(man); 
+ 
     /** Define a time vector for each multipole USELESS - remove*/
     vector<vector<double> > t_g(35);
     for (int k=35; k--; )
@@ -762,7 +784,7 @@ void XLALSimIMRTEOBIHES_single_mode(
         ringdown(params.nu, params.q, params.dt, final_mass, t_g, MOmg_vecg, hlm_ampl_g, hlm_phase_g);
     }
     
-    int N = hlm_ampl_g[0].size();
+    N = hlm_ampl_g[0].size();
     
     /** Allocate hplus and hcross */
     Waveform *h_ampl_out = (Waveform *)malloc(sizeof(Waveform));
