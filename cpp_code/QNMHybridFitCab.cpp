@@ -223,22 +223,22 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
         double d_c3phi  	=  1.8275;
         double c3phi_nu     =  0.4558467286 * nu + 3.8883812141;
         double c3phi_equal  =  (d_c3phi*X12-2.0575868122) * aeff_omg4 +(c_c3phi*X12-0.5051534498)*aeff_omg3 +(b_c3phi*X12+2.5742292762)*aeff_omg2 +(a_c3phi*X12+2.5599640181)*aeff_omg;
-        c3phi[k22]       = c3phi_nu + c3phi_equal;
+        c3phi[k22]          = c3phi_nu + c3phi_equal;
         
-        double a_c4phi 	= -0.449976;
-        double b_c4phi 	= -0.980913;
-        double c4phi_nu    =  2.0822327682 * nu + 1.4996868401;
-        double c4phi_equal =  (b_c4phi*X12+3.5695199109) * aeff_omg2 + (a_c4phi * X12 + 4.1312404030) * aeff_omg;
-        c4phi[k22]       =  c4phi_nu + c4phi_equal;
+        double a_c4phi      = -0.449976;
+        double b_c4phi      = -0.980913;
+        double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
+        double c4phi_equal  =  (b_c4phi*X12+3.5695199109) * aeff_omg2 + (a_c4phi * X12 + 4.1312404030) * aeff_omg;
+        c4phi[k22]          =  c4phi_nu + c4phi_equal;
         
         double a2_omgmx 	= -0.122735;
         double a1_omgmx 	=  0.0857478;
         double b2_omgmx 	= -0.0760023;
         double b1_omgmx 	=  0.0826514;
-        double omgmx_eq_c  =  (a2_omgmx*X12_2 +a1_omgmx*X12 -0.1416002395) * aeff_omg + 1;
-        double omgmx_eq_d  =  (b2_omgmx*X12_2 +b1_omgmx*X12 -0.3484804901) * aeff_omg + 1;
-        double omgmx_eq    =  omgmx_eq_c/omgmx_eq_d;
-        double omgmx       =  (0.481958619443355 * nu2 + 0.223976694441952 * nu + 0.273813064427363) * omgmx_eq;
+        double omgmx_eq_c   =  (a2_omgmx*X12_2 +a1_omgmx*X12 -0.1416002395) * aeff_omg + 1;
+        double omgmx_eq_d   =  (b2_omgmx*X12_2 +b1_omgmx*X12 -0.3484804901) * aeff_omg + 1;
+        double omgmx_eq     =  omgmx_eq_c/omgmx_eq_d;
+        double omgmx        =  (0.481958619443355 * nu2 + 0.223976694441952 * nu + 0.273813064427363) * omgmx_eq;
         
         double a2_A_scaled = -0.0820894;
         double a1_A_scaled = 0.176126;

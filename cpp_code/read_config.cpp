@@ -389,6 +389,7 @@ input process_input_parameters(
     params.rLR = 0.;
 
     params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
+
     if (params.tidal==true) {
         params.NQC = false;
     }        
