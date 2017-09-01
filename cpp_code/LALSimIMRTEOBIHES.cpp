@@ -173,6 +173,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
 
 
     double final_mass = HealyBBHFitRemnant(spin1z, spin2z, q);
+    params.Mbh = final_mass;
     
     /** Initialize ODE system solver */
     const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
@@ -388,6 +389,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     }
     /** All multipoles will now have size N+Nringdown */
     /** Multipole for which no ringdown model is available will be filled with 0s */
+    /** We pick the index 1 since it is the 22 mode */
     
     int N = hlm_ampl_g[1].size();
     
