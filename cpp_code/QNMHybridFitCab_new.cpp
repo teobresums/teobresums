@@ -169,18 +169,18 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
     }
     else
     {
-        omega1_c    = -0.0598837831 * af3 + 0.8082136788 * af2 - 1.7408467418 * af + 1;
-        omega1_d    = -0.2358960279 * af3 + 1.3152369374 * af2 - 2.0764065380 * af + 1;
-        omega1      =  0.3736716844 * (omega1_c/omega1_d);
+        double omega1_c    = -0.0598837831 * af3 + 0.8082136788 * af2 - 1.7408467418 * af + 1;
+        double omega1_d    = -0.2358960279 * af3 + 1.3152369374 * af2 - 2.0764065380 * af + 1;
+        double omega1      =  0.3736716844 * (omega1_c/omega1_d);
     
         /** alpha1 is alpha1[k22] */
         double alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
         double alpha1_d    =  0.0811633377 * af3 + 0.7201166020 * af2 - 1.8002031358 * af + 1;
         alpha1[k22]      =  0.0889623157 * (alpha1_c/alpha1_d);
         
-        alpha21_c   =  0.4764196512 * af3 - 0.0593165805 * af2 - 1.4168096833 * af + 1;
-        alpha21_d   =  0.4385578151 * af3 - 0.0763529088 * af2 - 1.3595491146 * af + 1;
-        alpha21     =  0.1849525596 * (alpha21_c/alpha21_d);
+        double alpha21_c   =  0.4764196512 * af3 - 0.0593165805 * af2 - 1.4168096833 * af + 1;
+        double alpha21_d   =  0.4385578151 * af3 - 0.0763529088 * af2 - 1.3595491146 * af + 1;
+        alpha21[k22]     =  0.1849525596 * (alpha21_c/alpha21_d);
         
         double a_c3A 	    =  0.0169543;
         double b_c3A 	    = -0.0799343;
