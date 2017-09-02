@@ -166,7 +166,7 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
 
 /* _LALSimIMRTEOBIHES_h */
 
-void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
+void TEOBResum(Waveform **hplus,       /** h+ return array **/
                         Waveform **hcross,      /** hx return array **/
                         double m1,              /** m1(Msun) **/
                         double m2,              /** m2(Msun) **/
@@ -194,7 +194,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
 );
 
 
-void XLALSimIMRTEOBIHES_single_mode(Waveform **ampl,        /** h+ return array **/
+void TEOBResum_single_mode(Waveform **ampl,        /** h+ return array **/
                                     Waveform **hphase,      /** hx return array **/
                                     double m1,              /** m1(Msun) **/
                                     double m2,              /** m2(Msun) **/

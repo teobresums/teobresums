@@ -190,7 +190,7 @@ int main (int argc, char* argv[])
         Waveform *ampl;
         Waveform *phase;
         
-        XLALSimIMRTEOBIHES_single_mode(&ampl,
+        TEOBResum_single_mode(&ampl,
                                        &phase,
                                        m1,
                                        m2,
@@ -242,31 +242,31 @@ int main (int argc, char* argv[])
         Waveform *hplus;
         Waveform *hcross;
         
-        XLALSimIMRTEOBIHES(&hplus,
-                           &hcross,
-                           m1,
-                           m2,
-                           0.0,
-                           0.0,
-                           chi1,
-                           0.0,
-                           0.0,
-                           chi2,
-                           inclination,
-                           polarisation,
-                           f_min,
-                           sampling_rate,
-                           LambdaAl2,
-                           LambdaBl2,
-                           distance,
-                           NQC,
-                           tidal,
-                           speedy,
-                           RWZ,
-                           dynamics,
-                           waveform,
-                           lm,
-                           solver_scheme);
+        TEOBResum(&hplus,
+                &hcross,
+                m1,
+                m2,
+                0.0,
+                0.0,
+                chi1,
+                0.0,
+                0.0,
+                chi2,
+                inclination,
+                polarisation,
+                f_min,
+                sampling_rate,
+                LambdaAl2,
+                LambdaBl2,
+                distance,
+                NQC,
+                tidal,
+                speedy,
+                RWZ,
+                dynamics,
+                waveform,
+                lm,
+                solver_scheme);
         
         std::FILE* f = std::fopen(output, "w");
         int i        = 0;
