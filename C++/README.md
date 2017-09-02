@@ -14,7 +14,7 @@ There are 2 options
 
 ### Makefile
 
-A simple Makefile is provided in the main directory. Just run 
+A simple `Makefile` is provided in the main directory. Just run 
 
 ```
 $ make -f Makefile.TEOBResumS
@@ -45,7 +45,9 @@ $ python setup.py build_ext --inplace
 ```
 
 Once the installation is finished, add 
-/abs/path/to/your/build/
+
+`/abs/path/to/your/build/`
+
 to the path
 
 ## How to run 
