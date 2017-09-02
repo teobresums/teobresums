@@ -51,7 +51,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
     double Sstar      = (*(TEOBResumParams *)params).Sstar;
     double c3         = (*(TEOBResumParams *)params).cN3LO;
     double aK2        = (*(TEOBResumParams *)params).aK2;
-
+    
     double f[] = {0.,0.,0.};
     
     const double z3      = 2.0*nu*(4.0-3.0*nu);
@@ -69,7 +69,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
     const double u  = 1./r;
     const double u2 = u*u;
     const double u3 = u2*u;
-
+    
     
     vector<double> metric(5);
     double dA, B, dB, one_A, one_B;
@@ -140,7 +140,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         double dr_dt         = f[0];
         double ddotr_dr      = sqrAB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA*one_A-dB*one_B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2*A*u3)*prstar3)*one_denE;
         double ddotr_dprstar = sqrAB*( 1+z3*6.*A*u2*prstar2-(prstar + z3*2*A*u2*prstar3)*dHeff_dprstar*tmpE)*one_denE;
-
+        
         ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
         
     }
@@ -148,7 +148,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
     {
         
         double z3 = 2.*nu*(4.-3.*nu);
-
+        
         double /*A,*/ B, dA;
         vector<double> metric;
         if (tidal_flag==true) {
@@ -159,12 +159,12 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         }
         else
         {
-	          metric = s_Metric(r, params,false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
+            metric = s_Metric(r, params,false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
             A      = metric[0];
             B      = metric[1];
             dA     = metric[2];
         }
-
+        
         vector<double> rc_vec;
         rc_vec        = s_get_rc(r,params); //[rc, drc, d2rc]
         double rc     = rc_vec[0];
@@ -205,11 +205,11 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         
         double ddotr_dp_rstar = sqrtAbyB*one_H*d2Heff_dprstar20;
         
-         /*
-          *-------------------------------------------
-          * 0.th -- approximate ddot(r)_0 without Fphi
-          *-------------------------------------------
-          */
+        /*
+         *-------------------------------------------
+         * 0.th -- approximate ddot(r)_0 without Fphi
+         *-------------------------------------------
+         */
         ddotr = dp_rstar_dt_0*ddotr_dp_rstar;  // + dr_dt.*ddotr_dr; //order pr_star^2 neglected
         
         
@@ -265,5 +265,97 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
     vector<gsl_complex> waveform = hlm(t, phi, r, pphi, prstar, Omega, ddotr, H, Heff, jhat, r_omega, params);
     
     return waveform;
+}
+
+vector<double> deltalm(const double Hreal,const double Omega,const double nu)
+{
+    
+    /*
+     EOBdeltalm Residual phase corrections delta_{lm} up to l=m=5.
+     If nu=0, the delta_lmm are written in Taylor-expanded form and all terms up to 4.5PN accuracy are included.
+     nu~=0,
+     (i) the 4.5PN, test-mass terms are excluded because of the too
+     large PN-gap with the nu-dependent terms
+     (ii) the deltalm are replaced by suitable Pade' approximants for
+     multipoles (2,2), (2,1), (3,3), (3,1)
+     The l=m=2 residual phase includes the 3.5PN (nu-dependent) correction
+     obtained in Faye et al.
+     
+     Reference(s)
+     Damour, Iyer & Nagar, PRD 79, 064004 (2008)
+     Fujita & Iyer, PRD 82 044051 (2010)
+     Faye et al., Class. Q. Grav. 29 175004 (2012)
+     Damour, Nagar & Bernuzzi, PRD 87, 084035 (2013)
+     
+     TODO: this routine requires optimization
+     - precompute coefficients c(nu)
+     - evaluate efficiently polynomials
+     */
+    
+    /** Useful shorthands*/
+    double pi2    = pi*pi;
+    double nu2    = nu*nu;
+    double y      = gsl_pow_int(Hreal*Omega,2./3.);
+    double sqrt_y = sqrt(y);
+    double y3     = y*y*y;
+    double y32    = Hreal*Omega;
+    
+    /** Leading order contributions*/
+    double delta22LO = 7./3.   * y32;
+    double delta21LO = 2./3.   * y32;
+    double delta33LO = 13./10. * y32;
+    double delta31LO = 13./30. * y32;
+    
+    int kmax=35;
+    vector<double> deltalmvec(35);
+    for (int i=kmax; i--; ) {deltalmvec[i]=0.;}
+    
+    double num;
+    double den;
+    
+    // Residual phases in Pade-resummed form when possible
+    
+    
+    /** l=2 ------------------------------------------------------------------*/
+    
+    /** Pade(1,2) approximant */
+    num        = 69020.*nu + 5992.*pi*sqrt_y;
+    den        = 5992.*pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
+    deltalmvec[0] = delta21LO*num/den;
+    
+    /** Pade(2,2) approximant */
+    num        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
+    den        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
+    deltalmvec[1] = delta22LO*num/den;
+    
+    
+    /** l=3 ------------------------------------------------------------------*/
+    
+    /** Pade(1,2) approximant */
+    num        = 4641.*nu + 1690.*pi*sqrt_y;
+    den        = num + 18207.*nu2*y;
+    deltalmvec[2] = delta31LO*num/den;
+    
+    /** Taylor-expanded form */
+    num        = 1.  + 94770.*pi/(566279.*nu)*sqrt_y;
+    den        = num + 80897.* nu/3159.*y;
+    deltalmvec[3] = (10.+33.*nu)/(15.*(1.-3.*nu)) * y32 + 52./21.*pi*y3;
+    
+    /** Pade(1,2) approximant */
+    deltalmvec[4] = delta33LO*num/den;
+    
+    
+    /** l=4 ------------------------------------------------------------------*/
+    deltalmvec[5] =   (2.+507.*nu)/(10.*(1.-2.*nu))*y32   + 1571./3465.*pi*y3;
+    deltalmvec[6] =  7.*(1.+6.*nu)/(15.*(1.-3.*nu))*y32   + 6284./3465.*pi*y3;
+    deltalmvec[7] = (486.+4961.*nu)/(810.*(1.-2.*nu))*y32 + 1571./385.*pi*y3;
+    deltalmvec[8] =  (112.+219.*nu)/(120.*(1.-3.*nu))*y32 + 25136./3465.*pi*y3;
+    
+    /** l=5 ------------------------------------------------------------------*/
+    
+    deltalmvec[9] = (96875. + 857528.*nu)/(131250.*(1.-2.*nu))*y32;
+    
+    return deltalmvec;
+    
 }
 

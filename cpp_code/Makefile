@@ -6,8 +6,6 @@ LDLIBS=-lgsl -lgslcblas -lm
 
 OBJS =               \
 A_NumDenom.o	     \
-AdiabLR.o    	     \
-deltalm.o    	     \
 get_Omg_orb.o 	     \
 LALSimIMRTEOBIHES.o  \
 main.o		\
@@ -21,13 +19,13 @@ s_get_rc.o	     \
 s_GS.o		     \
 s_Metric.o	     \
 s_RHS.o		     \
-s_waveform.o	    \
 TEOBResumFlux.o \
 TEOBResumHlm.o \
 TEOBResumInitialConditions.o \
 TEOBResumNQC.o	\
 TEOBResumRingdown.o \
 TEOBResumUtils.o \
+TEOBResumWaveform.o \
 
 all:main
 
@@ -39,10 +37,6 @@ LALSimIMRTEOBIHES.o: LALSimIMRTEOBIHES.cpp
 	$(CC) $(CFLAGS) $(INC) LALSimIMRTEOBIHES.cpp
 A_NumDenom.o: A_NumDenom.cpp
 	$(CC) $(CFLAGS) $(INC) A_NumDenom.cpp
-AdiabLR.o: AdiabLR.cpp
-	$(CC) $(CFLAGS) $(INC) AdiabLR.cpp
-deltalm.o: deltalm.cpp
-	$(CC) $(CFLAGS) $(INC) deltalm.cpp
 get_Omg_orb.o: get_Omg_orb.cpp
 	$(CC) $(CFLAGS) $(INC) get_Omg_orb.cpp
 TEOBResumHlm.o: TEOBResumHlm.cpp
@@ -67,8 +61,6 @@ s_Metric.o: s_Metric.cpp
 	$(CC) $(CFLAGS) $(INC) s_Metric.cpp
 s_RHS.o: s_RHS.cpp
 	$(CC) $(CFLAGS) $(INC) s_RHS.cpp
-s_waveform.o: s_waveform.cpp
-	$(CC) $(CFLAGS) $(INC) s_waveform.cpp
 spinsphericalharm.o: spinsphericalharm.cpp
 	$(CC) $(CFLAGS) $(INC) spinsphericalharm.cpp
 TEOBResumFlux.o: TEOBResumFlux.cpp
@@ -81,6 +73,8 @@ TEOBResumRingdown.o: TEOBResumRingdown.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumRingdown.cpp
 TEOBResumUtils.o: TEOBResumUtils.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumUtils.cpp
+TEOBResumWaveform.o: TEOBResumWaveform.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumWaveform.cpp
 
 clean:
 	rm -rf *.o *.h.gch EOB_ihes.out
