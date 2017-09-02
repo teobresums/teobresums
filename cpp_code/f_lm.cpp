@@ -20,8 +20,8 @@
 #include <gsl/gsl_math.h>
 #include <cmath>
 #include <vector>
-#include "Eulerlog.h"
-#include "f_lm.h"
+
+#include "TEOBResum.h"
 
 vector<double> f_lm(const double x,const double nu)
 {

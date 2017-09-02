@@ -23,7 +23,8 @@
 #include <gsl/gsl_complex_math.h>
 #include <cmath>
 #include <vector>
-#include "ringdown_match.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

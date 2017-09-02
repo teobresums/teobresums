@@ -19,7 +19,7 @@
 
 #include <math.h>
 #include <vector>
-#include "A_NumDenom.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

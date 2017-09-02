@@ -19,11 +19,8 @@
 
 #include <vector>
 #include <gsl/gsl_math.h>
-#include "input_struc.h"
-#include "initial.h"
-#include "FDdrvt.h"
-#include "Metric.h"
-#include "flux.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

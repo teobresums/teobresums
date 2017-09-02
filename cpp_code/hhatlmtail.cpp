@@ -24,7 +24,8 @@
 #include <gsl/gsl_sf_gamma.h>
 #include <vector>
 #include <cmath>
-#include "hhatlmtail.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

@@ -18,7 +18,8 @@
  */
 
 #include <vector>
-#include "s_D1.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <gsl/gsl_math.h>
-#include "HorizonFlux.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

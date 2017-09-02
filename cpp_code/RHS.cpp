@@ -19,25 +19,17 @@
 
 #include <stdio.h>
 #include <gsl/gsl_errno.h>
-#include "Metric.h"
 #include <vector>
 #include <cmath>
-#include "flux.h"
-#include "hlm.h"
-
 #include <ios>
 #include <fstream>
-
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include "input_struc.h"
-#include "multipole_index.h"
-
-
 #include <limits>
-#include "RHS.h"
+
+#include "TEOBResum.h"
 
 typedef std::numeric_limits< double > dbl;
 

@@ -18,8 +18,7 @@
  */
 
 #include <vector>
-#include "FlmNewt.h"
-#include "input_struc.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 
@@ -28,9 +27,9 @@ using namespace::std;
 vector<double> FlmNewt(const double x, void *params)
 {
 
-    double nu       = (*(input *)params).nu;
-    bool tidal_flag = (*(input *)params).tidal;
-    bool spin_flag  = (*(input *)params).spin;
+    double nu       = (*(TEOBResumParams *)params).nu;
+    bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    bool spin_flag  = (*(TEOBResumParams *)params).flags.spin;
     
     /** Shorthands*/
     const double nu2 = nu*nu;

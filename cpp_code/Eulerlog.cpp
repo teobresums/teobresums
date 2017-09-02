@@ -19,7 +19,7 @@
 
 #include <math.h>
 #include <gsl/gsl_math.h>
-#include "Eulerlog.h"
+#include "TEOBResum.h"
 
 double Eulerlog(const double x,const double m)
 {

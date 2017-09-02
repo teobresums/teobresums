@@ -22,7 +22,7 @@
 #include <vector>
 #include <iostream>
 
-#include "interp_grid.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

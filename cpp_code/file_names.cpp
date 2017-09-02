@@ -26,10 +26,8 @@
 #include <string>
 #include <vector>
 #include <tuple>
-#include "input_struc.h"
 
-#include "file_names.h"
-#include "multipole_index.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

@@ -18,7 +18,7 @@
  */
 
 #include <vector>
-#include "FDdrvt_omega.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

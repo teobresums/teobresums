@@ -32,16 +32,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#include "Metric.h"
-#include "hlm.h"
-#include "flux.h"
-#include "interpolator.h"
-#include "multipole_index.h"
-#include "input_struc.h"
-#include "s_GS.h"
-#include "s_waveform.h"
-#include "s_Metric.h"
-#include "s_get_rc.h"
+#include "TEOBResum.h"
 
 typedef std::numeric_limits< double > dbl;
 

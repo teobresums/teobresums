@@ -33,23 +33,7 @@
 #include <complex.h>
 #include <sys/stat.h>
 
-#include "initial.h"
-#include "s_initial.h"
-#include "RHS.h"
-#include "s_RHS.h"
-#include "s_waveform.h"
-#include "QNMHybridFitCab.h"
-#include "HealyBBHFitRemnant.h"
-#include "ringdown.h"
-#include "input_struc.h"
-#include "multipole_index.h"
-#include "AdiabLR.h"
-#include "read_config.h"
-#include "file_names.h"
-#include "find_a1a2a3.h"
-#include "interp_grid.h"
-#include "spinsphericalharm.h"
-#include "LALSimIMRTEOBIHES.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 
@@ -78,10 +62,10 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(m) **/
-                        bool   NQC,             /** NQC corrections flag (BBH only) **/
-                        bool   tidal,           /** tidal corrections flag (BNS only) **/
-                        bool   speedy,          /** accelerated tails flag **/
-                        bool   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int   NQC,             /** NQC corrections flag (BBH only) **/
+                        int   tidal,           /** tidal corrections flag (BNS only) **/
+                        int   speedy,          /** accelerated tails flag **/
+                        int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/)
 {
@@ -112,7 +96,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         swap_variables(&LambdaAl2, &LambdaBl2);
     }
     
-    input params = process_input_parameters(m1,
+    TEOBResumParams params = process_input_parameters(m1,
                                             m2,
                                             spin1z,
                                             spin2z,
@@ -129,7 +113,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     double q             = m1/m2;
     double dt            = params.dt;
 
-    if (params.tidal==true)
+    if (params.flags.tidal==1)
     {
         rLR        = AdiabLR(&params);
         params.rLR = rLR;
@@ -153,7 +137,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     vector<double> initial_data(7);
     gsl_odeiv2_system sys = {rhs, NULL , 4, &params};
     
-    if (params.spin==true)
+    if (params.flags.spin==1)
     {
         sys = {s_RHS, NULL , 4, &params};
         initial_data = s_initial(&params);
@@ -288,7 +272,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
         
         /** Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards */
         //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
-        if (params.spin==true)
+        if (params.flags.spin==1)
         {
             MOmg = Omg_orb;
         }
@@ -354,7 +338,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     
     /** NQCs corrections */
     /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
-    if (params.tidal==false && params.spin==true)
+    if (params.flags.tidal==0 && params.flags.spin==1)
     {
         
         vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
@@ -383,7 +367,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     }
     
     /** Ringdown attachment */
-    if (params.tidal==false)
+    if (params.flags.tidal==0)
     {
         ringdown(params,t_g,OmgOrb_vecg,hlm_ampl_g,hlm_phase_g);
     }
@@ -429,7 +413,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     /** Spherical harmonics projection **/
     /** construct hplus and hcross **/
     /** h22 = 1/R * (nu*M)*G/c^2 h_code_output */
-    double MSUN_M = 1.47662504e3; /** G/c^3 */
+    
     double mtot_m = (m1+m2)*MSUN_M;
     double amplitude_prefactor = params.nu*mtot_m/(distance);
 
@@ -473,10 +457,10 @@ void XLALSimIMRTEOBIHES_single_mode(
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(m) **/
-                        bool   NQC,             /** NQC corrections flag (BBH only) **/
-                        bool   tidal,           /** tidal corrections flag (BNS only) **/
-                        bool   speedy,          /** accelerated tails flag **/
-                        bool   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int   NQC,             /** NQC corrections flag (BBH only) **/
+                        int   tidal,           /** tidal corrections flag (BNS only) **/
+                        int   speedy,          /** accelerated tails flag **/
+                        int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
                         int    index                /** Index of the multipole, conventions of multiple_index **/
@@ -498,7 +482,7 @@ void XLALSimIMRTEOBIHES_single_mode(
         exit(-1);
     }
     
-    input params = process_input_parameters(m1,
+    TEOBResumParams params = process_input_parameters(m1,
                                             m2,
                                             spin1z,
                                             spin2z,
@@ -515,7 +499,7 @@ void XLALSimIMRTEOBIHES_single_mode(
     double q             = m1/m2;
     double dt            = params.dt;
     
-    if (params.tidal==true)
+    if (params.flags.tidal==1)
     {
         rLR        = AdiabLR(&params);
         params.rLR = rLR;
@@ -539,12 +523,12 @@ void XLALSimIMRTEOBIHES_single_mode(
     vector<double> initial_data(7);
     gsl_odeiv2_system sys = {rhs, NULL , 4, &params};
     
-    if (params.spin==true)
+    if (params.flags.spin==1)
     {
         sys = {s_RHS, NULL , 4, &params};
         initial_data = s_initial(&params);
     }
-    else if (params.spin==false)
+    else if (params.flags.spin==1)
     {
         sys          = {rhs, NULL , 4, &params};
         initial_data = initial(&params);
@@ -750,7 +734,7 @@ void XLALSimIMRTEOBIHES_single_mode(
 
  
     /** NQCs corrections */
-    if (params.tidal==false && params.spin==true)
+    if (params.flags.tidal==0 && params.flags.spin==1)
     {
         vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
         
@@ -781,7 +765,7 @@ void XLALSimIMRTEOBIHES_single_mode(
     }
     
     /** Ringdown attachment */
-    if (params.tidal==false)
+    if (params.flags.tidal==0)
     {
         ringdown(params, t_g, OmgOrb_vecg, hlm_ampl_g, hlm_phase_g);
     }

@@ -19,7 +19,8 @@
 
 #include <math.h>
 #include <vector>
-#include "s_HorizonFlux.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

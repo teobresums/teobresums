@@ -18,7 +18,8 @@
  */
 
 #include <cmath>
-#include "s_GS.h"
+
+#include "TEOBResum.h"
 
 //double c3_fit_global(void *params){
 double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2, bool tidal_flag)

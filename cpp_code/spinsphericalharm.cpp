@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm>
-#include "spinsphericalharm.h"
+
+#include "TEOBResum.h"
 
 /* factorial */
 double fact(int n){

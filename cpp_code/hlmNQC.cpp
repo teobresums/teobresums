@@ -24,8 +24,7 @@
 #include <gsl/gsl_complex_math.h>
 #include <vector>
 
-#include "NQC.h"
-#include "hlmNQC.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

@@ -19,9 +19,8 @@
 
 #include <gsl/gsl_math.h>
 #include <vector>
-#include "input_struc.h"
-#include "constants.h"
-#include "s_A5PNlog.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

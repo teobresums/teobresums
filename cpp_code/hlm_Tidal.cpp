@@ -19,9 +19,9 @@
 
 #include <gsl/gsl_math.h>
 #include <vector>
-#include "input_struc.h"
 
-#include "hlm_Tidal.h"
+#include "TEOBResum.h"
+
 using namespace::std;
 
 vector<double> hlm_Tidal(double x,void *params)

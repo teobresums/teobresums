@@ -19,9 +19,8 @@
 
 #include <gsl/gsl_math.h>
 #include <vector>
-#include "input_struc.h"
-#include "Eulerlog.h"
-#include "s_flm.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

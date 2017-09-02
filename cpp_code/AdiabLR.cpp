@@ -23,9 +23,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
-#include "Metric.h"
-#include "input_struc.h"
-#include "AdiabLR.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

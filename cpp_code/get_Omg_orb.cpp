@@ -20,9 +20,8 @@
 #include <vector>
 #include "input_struc.h"
 #include <cmath>
-#include "s_get_rc.h"
-#include "s_GS.h"
-#include "get_Omg_orb.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

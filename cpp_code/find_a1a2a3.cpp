@@ -27,11 +27,7 @@
 #include <gsl/gsl_complex_math.h>
 #include <limits>
 
-#include "find_a1a2a3.h"
-#include "input_struc.h"
-#include "multipole_index.h"
-#include "s_D1.h"
-#include "dtnqc_fit.h"
+#include "TEOBResum.h"
 
 typedef std::numeric_limits< double > dbl;
 

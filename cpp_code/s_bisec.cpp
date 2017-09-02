@@ -21,15 +21,8 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
-#include "s_GS.h"
-#include "input_struc.h"
-#include "s_bisec.h"
 
-struct energy_params
-{
-    double rorb, A, dA, rc, drc_dr, ak2, S, Ss, nu, chi1, chi2, X1, X2, c3;
-};
-
+#include "TEOBResum.h"
 
 double DHeff0(double x, void *DHeff_params){
     

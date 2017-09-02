@@ -19,9 +19,8 @@
 
 #include <gsl/gsl_math.h>
 #include <vector>
-//#include "deltalmvecvec.h"
-#include "deltalm.h"
-#include "constants.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

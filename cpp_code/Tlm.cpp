@@ -23,9 +23,7 @@
 #include <vector>
 
 
-#include "constants.h"
-#include "multipole_index.h"
-#include "Tlm.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

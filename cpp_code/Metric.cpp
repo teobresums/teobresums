@@ -19,14 +19,9 @@
 
 #include <math.h>
 #include <vector>
-
-#include "A_NumDenom.h"
-#include "input_struc.h"
-
 #include <gsl/gsl_math.h>
-#include "Metric.h"
 
-#include "constants.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 
@@ -63,9 +58,9 @@ vector<double> acoeffs(const double r, const double nu)
 vector<double> Metric(const double r, void *params, bool nnlo_flag)
 {
 
-    double nu         = (*(input *)params).nu;
-    bool   tidal_flag = (*(input *)params).tidal;
-    double rLR        = (*(input *)params).rLR;
+    double nu         = (*(TEOBResumParams *)params).nu;
+    bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    double rLR        = (*(TEOBResumParams *)params).rLR;
     vector<double> data(5);
     
     const double u   = 1./r;
@@ -98,22 +93,22 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
         
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
         
-        double XA = (*(input *)params).X1;
-        double XB = (*(input *)params).X2;
+        double XA = (*(TEOBResumParams *)params).X1;
+        double XB = (*(TEOBResumParams *)params).X2;
        
         /** Computing the tidal coupling constants */
-        double kapA2 = (*(input *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA2 = (*(TEOBResumParams *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
  
-        double kapB2 = (*(input *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
+        double kapB2 = (*(TEOBResumParams *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
         
-        double kapT2 = (*(input *)params).kappaTl2; // kapA2 + kapB2;
-        double kapT3 = (*(input *)params).kappaTl3;//kapA3 + kapB3;
-        double kapT4 = (*(input *)params).kappaTl4;//kapA4 + kapB4;
+        double kapT2 = (*(TEOBResumParams *)params).kappaTl2; // kapA2 + kapB2;
+        double kapT3 = (*(TEOBResumParams *)params).kappaTl3;//kapA3 + kapB3;
+        double kapT4 = (*(TEOBResumParams *)params).kappaTl4;//kapA4 + kapB4;
 
-        double bar_alph2_1 = (*(input *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
-      	double bar_alph2_2 = (*(input *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
-      	double bar_alph3_1 = (*(input *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
-      	double bar_alph3_2 = (*(input *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+        double bar_alph2_1 = (*(TEOBResumParams *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
+      	double bar_alph2_2 = (*(TEOBResumParams *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+      	double bar_alph3_1 = (*(TEOBResumParams *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+      	double bar_alph3_2 = (*(TEOBResumParams *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
 
 	       
         /** Case 'nnlo' */
@@ -186,9 +181,9 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
 vector<double> A5pnP15_dd(const double r, void *params)
 {
     
-    double nu         = (*(input *)params).nu;
-    bool   tidal_flag = (*(input *)params).tidal;
-    double rLR        = (*(input *)params).rLR;
+    double nu         = (*(TEOBResumParams *)params).nu;
+    bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    double rLR        = (*(TEOBResumParams *)params).rLR;
 
     
         
@@ -236,22 +231,22 @@ vector<double> A5pnP15_dd(const double r, void *params)
         //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
 
        /** Compactness of the star */
-        double XA = (*(input *)params).X1;
-        double XB = (*(input *)params).X2;
+        double XA = (*(TEOBResumParams *)params).X1;
+        double XB = (*(TEOBResumParams *)params).X2;
 
 	//-----------------------------------------------------------------------------------
 	// Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, Eq.(37)
 	// of Damour&Nagar, PRD 81, 084016 (2010)
 	//-----------------------------------------------------------------------------------
-        double kapA2 = (*(input *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA2 = (*(TEOBResumParams *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
  
-        double kapB2 = (*(input *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
+        double kapB2 = (*(TEOBResumParams *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
 
-        double kapT3 = (*(input *)params).kappaTl3;//kapA3 + kapB3;
-        double kapT4 = (*(input *)params).kappaTl4;//kapA4 + kapB4;
+        double kapT3 = (*(TEOBResumParams *)params).kappaTl3;//kapA3 + kapB3;
+        double kapT4 = (*(TEOBResumParams *)params).kappaTl4;//kapA4 + kapB4;
 
-      	double bar_alph3_1 = (*(input *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
-      	double bar_alph3_2 = (*(input *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+      	double bar_alph3_1 = (*(TEOBResumParams *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+      	double bar_alph3_2 = (*(TEOBResumParams *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
 
 
 

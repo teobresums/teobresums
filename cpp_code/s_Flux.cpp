@@ -18,15 +18,9 @@
  */
 
 #include <gsl/gsl_math.h>
-#include "s_flm.h"
-#include "FlmNewt.h"
-#include "s_HorizonFlux.h"
-#include "hlm_Tidal.h"
-#include "Tlm.h"
-#include "input_struc.h"
-#include "multipole_index.h"
 #include <cmath>
-#include "s_Flux.h"
+
+#include "TEOBResum.h"
 
 double s_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, void *params){
 /*

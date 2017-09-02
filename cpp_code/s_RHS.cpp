@@ -31,15 +31,8 @@
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
 
-#include "input_struc.h"
-#include "Metric.h"
-#include "multipole_index.h"
-#include "s_A5PNlog.h"
-#include "s_Flux.h"
-#include "s_GS.h"
-#include "s_Metric.h"
-#include "s_RHS.h"
-#include "s_get_rc.h"
+#include "TEOBResum.h"
+
 typedef std::numeric_limits< double > dbl;
 
 using namespace::std;

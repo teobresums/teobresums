@@ -32,10 +32,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_complex_math.h>
 
-#include "hlm.h"
-#include "flux.h"
-#include "Metric.h"
-#include "interpolator.h"
+#include "TEOBResum.h"
 
 
 using namespace::std;

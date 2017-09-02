@@ -23,8 +23,8 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <cmath>
-#include "hlmNewt.h"
-#include "constants.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

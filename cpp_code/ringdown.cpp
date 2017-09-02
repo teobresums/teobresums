@@ -22,14 +22,9 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include "cmath"
-#include "FDdrvt_omega.h"
-#include "ringdown.h"
 #include <vector>
-#include "interpolator.h"
-#include "QNMHybridFitCab.h"
-#include "ringdown_match.h"
-#include "input_struc.h"
-#include "dtnqc_fit.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 

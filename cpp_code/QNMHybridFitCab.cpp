@@ -21,12 +21,12 @@
 #include <cmath>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include "QNMHybridFitCab.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 
 /** from https://arxiv.org/abs/1611.00332 */
-static double JimenezFortezaRemnantSpin(input params)
+static double JimenezFortezaRemnantSpin(TEOBResumParams params)
 {
     double nu      = params.nu;
     double xnu     = sqrt(1.0-4.0*nu);

@@ -32,23 +32,7 @@
 #include <vector>
 #include <sys/stat.h>
 
-#include "initial.h"
-#include "s_initial.h"
-#include "RHS.h"
-#include "s_RHS.h"
-#include "s_waveform.h"
-#include "QNMHybridFitCab.h"
-#include "HealyBBHFitRemnant.h"
-#include "ringdown.h"
-#include "input_struc.h"
-#include "multipole_index.h"
-#include "interpolate_wf.h"
-#include "AdiabLR.h"
-#include "read_config.h"
-#include "file_names.h"
-#include "find_a1a2a3.h"
-#include "interp_grid.h"
-#include "LALSimIMRTEOBIHES.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 
@@ -63,7 +47,7 @@ int main (int argc, char* argv[])
     double sampling_rate = 4096.;
     double LambdaAl2     = 0.0;
     double LambdaBl2     = 0.0;
-    double distance      = 40*3.086e22;
+    double distance      = 40;
     double inclination   = 0.0;
     double polarisation  = 0.0;
     bool   NQC           = false;

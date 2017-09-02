@@ -24,19 +24,7 @@
 
 #include <cmath>
 
-#include "hlmNewt.h"
-#include "hhatlmtail.h"
-#include "hlmNQC.h"
-#include "deltalm.h"
-#include "SpeedyTail.h"
-#include "s_flm.h"
-#include "ringdown_match.h"
-#include "hlm_Tidal.h"
-#include "multipole_index.h"
-
-#include "hlm.h"
-#include "input_struc.h"
-#include "f_lm.h"
+#include "TEOBResum.h"
 
 using namespace::std;
 

@@ -19,8 +19,8 @@
 
 #include <math.h>
 #include <vector>
-#include "input_struc.h"
-#include "s_get_rc.h"
+
+#include "TEOBResum.h"
 
 using namespace::std;
 
