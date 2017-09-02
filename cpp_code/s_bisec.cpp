@@ -63,12 +63,12 @@ double DHeff0(double x, void *DHeff_params){
 }
 
 double s_bisec(double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss, void *params){
-    double nu   = (*(input *)params).nu;
-    double chi1 = (*(input *)params).chi1;
-    double chi2 = (*(input *)params).chi2;
-    double X1   = (*(input *)params).X1;
-    double X2   = (*(input *)params).X2;
-    double c3   = (*(input *)params).cN3LO;
+    double nu   = (*(TEOBResumParams *)params).nu;
+    double chi1 = (*(TEOBResumParams *)params).chi1;
+    double chi2 = (*(TEOBResumParams *)params).chi2;
+    double X1   = (*(TEOBResumParams *)params).X1;
+    double X2   = (*(TEOBResumParams *)params).X2;
+    double c3   = (*(TEOBResumParams *)params).cN3LO;
 
     int status;
     int iter = 0, max_iter = 200;

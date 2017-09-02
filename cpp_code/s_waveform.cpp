@@ -40,17 +40,17 @@ using namespace::std;
 
 vector<gsl_complex> s_waveform(double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr){
     
-    double nu         = (*(input *)params).nu;
-    bool   tidal_flag = (*(input *)params).tidal;
-    bool   spin_flag  = (*(input *)params).spin;
-    double chi1       = (*(input *)params).chi1;
-    double chi2       = (*(input *)params).chi2;
-    double X1         = (*(input *)params).X1;
-    double X2         = (*(input *)params).X2;
-    double S          = (*(input *)params).S;
-    double Sstar      = (*(input *)params).Sstar;
-    double c3         = (*(input *)params).cN3LO;
-    double aK2        = (*(input *)params).aK2;
+    double nu         = (*(TEOBResumParams *)params).nu;
+    bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    bool   spin_flag  = (*(TEOBResumParams *)params).flags.spin;
+    double chi1       = (*(TEOBResumParams *)params).chi1;
+    double chi2       = (*(TEOBResumParams *)params).chi2;
+    double X1         = (*(TEOBResumParams *)params).X1;
+    double X2         = (*(TEOBResumParams *)params).X2;
+    double S          = (*(TEOBResumParams *)params).S;
+    double Sstar      = (*(TEOBResumParams *)params).Sstar;
+    double c3         = (*(TEOBResumParams *)params).cN3LO;
+    double aK2        = (*(TEOBResumParams *)params).aK2;
 
     double f[] = {0.,0.,0.};
     

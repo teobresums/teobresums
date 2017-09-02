@@ -56,16 +56,16 @@ int s_RHS(double t, const double y[], double f[], void *params)
     
     (void)(t); /* avoid unused parameter warning */
 
-    double nu       = (*(input *)params).nu;
-    double S        = (*(input *)params).S;
-    double Sstar    = (*(input *)params).Sstar;
-    double chi1     = (*(input *)params).chi1;
-    double chi2     = (*(input *)params).chi2;
-    double X1       = (*(input *)params).X1;
-    double X2       = (*(input *)params).X2;
-    double c3       = (*(input *)params).cN3LO;
-    bool tidal_flag = (*(input *)params).tidal;
-    double aK2      = (*(input *)params).aK2;
+    double nu       = (*(TEOBResumParams *)params).nu;
+    double S        = (*(TEOBResumParams *)params).S;
+    double Sstar    = (*(TEOBResumParams *)params).Sstar;
+    double chi1     = (*(TEOBResumParams *)params).chi1;
+    double chi2     = (*(TEOBResumParams *)params).chi2;
+    double X1       = (*(TEOBResumParams *)params).X1;
+    double X2       = (*(TEOBResumParams *)params).X2;
+    double c3       = (*(TEOBResumParams *)params).cN3LO;
+    bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    double aK2      = (*(TEOBResumParams *)params).aK2;
  
     
     double r      = y[0];

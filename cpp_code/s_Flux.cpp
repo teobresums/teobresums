@@ -46,13 +46,13 @@ double s_Flux(double x, double Omega, double r_omega, double E, double Heff, dou
 %         ddotr   :: \ddot{r}
 */
     
-    double nu       = (*(input *)params).nu;
-    double chi1     = (*(input *)params).chi1;
-    double chi2     = (*(input *)params).chi2;
-    double X1       = (*(input *)params).X1;
-    double X2       = (*(input *)params).X2;
-    bool tidal_flag = (*(input *)params).tidal;
-    bool NQC_flag   = (*(input *)params).NQC;
+    double nu       = (*(TEOBResumParams *)params).nu;
+    double chi1     = (*(TEOBResumParams *)params).chi1;
+    double chi2     = (*(TEOBResumParams *)params).chi2;
+    double X1       = (*(TEOBResumParams *)params).X1;
+    double X2       = (*(TEOBResumParams *)params).X2;
+    bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    bool NQC_flag   = (*(TEOBResumParams *)params).flags.NQC;
     
     double prefact[] = {
         jhat,Heff,

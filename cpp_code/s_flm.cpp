@@ -42,12 +42,12 @@ vector<double> s_flm(double x, void *params){
 */
 
     //vector<double> flm = EOBflm(x,nu);
-    double nu         = (*(input *)params).nu;
-    double X1         = (*(input *)params).X1;
-    double X2         = (*(input *)params).X2;
-    double chi1       = (*(input *)params).chi1;
-    double chi2       = (*(input *)params).chi2;
-    bool   tidal_flag = (*(input *)params).tidal;
+    double nu         = (*(TEOBResumParams *)params).nu;
+    double X1         = (*(TEOBResumParams *)params).X1;
+    double X2         = (*(TEOBResumParams *)params).X2;
+    double chi1       = (*(TEOBResumParams *)params).chi1;
+    double chi2       = (*(TEOBResumParams *)params).chi2;
+    bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
     
     double rho22S;
 
@@ -97,11 +97,11 @@ vector<double> s_flm(double x, void *params){
     // SPIN-SPIN contribution (even-parity):
     // put it to zero when tides are present
     //========================================
-    double a1      = (*(input *)params).a1;
-    double a2      = (*(input *)params).a2;
+    double a1      = (*(TEOBResumParams *)params).a1;
+    double a2      = (*(TEOBResumParams *)params).a2;
     double a0      = a1+a2;
-    double C_Q1    = (*(input *)params).C_Q1;
-    double C_Q2    = (*(input *)params).C_Q2;
+    double C_Q1    = (*(TEOBResumParams *)params).C_Q1;
+    double C_Q2    = (*(TEOBResumParams *)params).C_Q2;
     
     double cSS_lo;
     if (tidal_flag==true) {

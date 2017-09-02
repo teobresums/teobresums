@@ -28,14 +28,14 @@ vector <double> s_get_rc(double r, void *params)
 {
     
     
-    double nu         = (*(input *)params).nu;
-    double at1        = (*(input *)params).a1;
-    double at2        = (*(input *)params).a2;
-    bool   tidal_flag = (*(input *)params).tidal;
-    double aK2        = (*(input *)params).aK2;
+    double nu         = (*(TEOBResumParams *)params).nu;
+    double at1        = (*(TEOBResumParams *)params).a1;
+    double at2        = (*(TEOBResumParams *)params).a2;
+    bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    double aK2        = (*(TEOBResumParams *)params).aK2;
     
-    double C_Q1       = (*(input *)params).C_Q1;
-    double C_Q2       = (*(input *)params).C_Q2;
+    double C_Q1       = (*(TEOBResumParams *)params).C_Q1;
+    double C_Q2       = (*(TEOBResumParams *)params).C_Q2;
     
     double rc, drc_dr, d2rc_dr2;
     

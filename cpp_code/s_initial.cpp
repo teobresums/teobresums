@@ -23,7 +23,7 @@
 
 using namespace std;
 
-vector<double> s_initial(input *params){
+vector<double> s_initial(TEOBResumParams *params){
 
 /*
 % EOB_ModinSpin
@@ -50,13 +50,13 @@ vector<double> s_initial(input *params){
 %
 */
     
-    double nu       = (*params).nu;
-    double r0       = (*params).r0;
-    double chi1     = (*params).chi1;
-    double chi2     = (*params).chi2;
-    double S1       = (*params).S1;
-    double S2       = (*params).S2;
-    double c3       = (*(input *)params).cN3LO;
+    double nu       = (*(TEOBResumParams *)params).nu;
+    double r0       = (*(TEOBResumParams *)params).r0;
+    double chi1     = (*(TEOBResumParams *)params).chi1;
+    double chi2     = (*(TEOBResumParams *)params).chi2;
+    double S1       = (*(TEOBResumParams *)params).S1;
+    double S2       = (*(TEOBResumParams *)params).S2;
+    double c3       = (*(TEOBResumParams *)params).cN3LO;
 
 //-----------------------------------------------------------------
 // Build  a small  grid (2*N points) around the initial position r0
@@ -87,12 +87,12 @@ vector<double> s_initial(input *params){
     
     vector<double> dprstardt(2*N);  // NOTE: Fr* here
     
-    double X1  = (*(input *)params).X1;
-    double X2  = (*(input *)params).X2;
+    double X1  = (*(TEOBResumParams *)params).X1;
+    double X2  = (*(TEOBResumParams *)params).X2;
     // Kerr parameter
-    double a1  = (*(input *)params).a1;
-    double a2  = (*(input *)params).a2;
-    double aK2 = (*(input *)params).aK2;
+    double a1  = (*(TEOBResumParams *)params).a1;
+    double a2  = (*(TEOBResumParams *)params).a2;
+    double aK2 = (*(TEOBResumParams *)params).aK2;
 
     // spin variable (with dimensions)
     double S  = S1 + S2;        // => in the EMRL this becomes the spin of the BH
