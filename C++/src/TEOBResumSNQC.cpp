@@ -24,7 +24,7 @@
 #include <gsl/gsl_complex_math.h>
 #include <vector>
 
-#include "TEOBResum.h"
+#include "TEOBResumS.h"
 
 vector<double> NQC(const double r, const double prstar, const double Omega, const double ddotr, int i)
 {

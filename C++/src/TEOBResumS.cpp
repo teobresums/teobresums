@@ -33,7 +33,7 @@
 #include <complex.h>
 #include <sys/stat.h>
 
-#include "TEOBResum.h"
+#include "TEOBResumS.h"
 
 using namespace::std;
 

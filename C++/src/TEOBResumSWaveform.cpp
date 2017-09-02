@@ -32,7 +32,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#include "TEOBResum.h"
+#include "TEOBResumS.h"
 
 typedef std::numeric_limits< double > dbl;
 

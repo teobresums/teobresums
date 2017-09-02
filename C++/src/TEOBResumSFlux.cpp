@@ -22,7 +22,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 
-#include "TEOBResum.h"
+#include "TEOBResumS.h"
 
 /** Flux calculation for non-spinning systems */
 double flux(const double x,const double Omega,const double r_omega,const double E, const double Heff,const double jhat,const double r,const double prstar, const double ddotr, double source[],void *params)

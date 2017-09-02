@@ -24,7 +24,7 @@
 #include <gsl/gsl_complex_math.h>
 #include <cmath>
 
-#include "TEOBResum.h"
+#include "TEOBResumS.h"
 
 using namespace::std;
 

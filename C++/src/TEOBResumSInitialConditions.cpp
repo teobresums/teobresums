@@ -19,7 +19,7 @@
 
 #include <gsl/gsl_math.h>
 
-#include "TEOBResum.h"
+#include "TEOBResumS.h"
 
 using namespace std;
 

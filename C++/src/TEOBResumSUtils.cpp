@@ -34,7 +34,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_complex_math.h>
 
-#include "TEOBResum.h"
+#include "TEOBResumS.h"
 
 
 using namespace::std;
