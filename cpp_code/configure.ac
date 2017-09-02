@@ -75,9 +75,11 @@ AC_SUBST([LDADD], ["libTEOBResum.la"])
 AC_OUTPUT
 AC_MSG_NOTICE([
 ==================================================
-TEOBResum has now been successfully configured:
+TEOBResum has now been successfully configured and will be installed under the directory:
 
-run 'make' to build TEOBResum,
+${prefix}
+
+Now run 'make' to build TEOBResum,
 and run 'make install' to install TEOBResum.
 
 ==================================================
