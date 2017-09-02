@@ -166,7 +166,7 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
 
 /* _LALSimIMRTEOBIHES_h */
 
-void TEOBResum(Waveform **hplus,       /** h+ return array **/
+void TEOBResumS(Waveform **hplus,       /** h+ return array **/
                         Waveform **hcross,      /** hx return array **/
                         double m1,              /** m1(Msun) **/
                         double m2,              /** m2(Msun) **/
