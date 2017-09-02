@@ -13,4 +13,4 @@ libTEOBResum_la_SOURCES =           \
     TEOBResumNQC.cpp                \
     TEOBResumWaveform.cpp           \
     TEOBResumInitialConditions.cpp  \
-    TEOBResumRingdown.cpp           
+    TEOBResumRingdown.cpp

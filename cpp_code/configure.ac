@@ -30,7 +30,7 @@ AC_CHECK_LIB([gslcblas],[cblas_dgemm])
 AC_CHECK_LIB([gsl],[gsl_blas_dgemm])
 # link any executables against TEOBResum library
 AC_SUBST([LDADD], ["libTEOBResum.la"])
-AM_CPPFLAGS="-Isrc ${AM_CPPFLAGS}"
+AM_CPPFLAGS="-Isrc `gsl-config --cflags` ${AM_CPPFLAGS}"
 AC_OUTPUT
 AC_MSG_NOTICE([
 ==================================================
