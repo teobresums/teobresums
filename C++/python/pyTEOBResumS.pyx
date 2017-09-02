@@ -3,7 +3,7 @@ cimport numpy as np
 from libc.stdlib cimport malloc, free
 cimport cython
 
-cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResum(double m1,
+cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
                                                          double m2,
                                                          double spin1x,
                                                          double spin1y,
@@ -29,7 +29,7 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResum(double m1,
     cdef Waveform *hp;
     cdef Waveform *hc;
     
-    TEOBResum(&hp,
+    TEOBResumS(&hp,
               &hc,
               m1,
               m2,

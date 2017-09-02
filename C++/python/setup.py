@@ -13,9 +13,9 @@ for l in f:
 gsl_include = subprocess.check_output(['gsl-config', '--cflags'])[2:]
 
 ext_modules=[
-             Extension("pyTEOBResum",
-                       sources=["pyTEOBResum.pyx"],
-                       libraries=["m","TEOBResum","gsl", "gslcblas"], # Unix-like specific
+             Extension("pyTEOBResumS",
+                       sources=["pyTEOBResumS.pyx"],
+                       libraries=["m","TEOBResumS","gsl", "gslcblas"], # Unix-like specific
                        include_dirs=[numpy.get_include(),"../src",gsl_include],
                        language='c++',
                        extra_compile_args=["-O3"],
@@ -24,7 +24,7 @@ ext_modules=[
              ]
 
 setup(
-      name = "pyTEOBResum",
+      name = "pyTEOBResumS",
       ext_modules = cythonize(ext_modules),
       include_dirs=[numpy.get_include(),"../src",gsl_include]
       )

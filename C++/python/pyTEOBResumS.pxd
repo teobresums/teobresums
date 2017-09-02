@@ -1,11 +1,11 @@
 from libcpp cimport bool
 
-cdef extern from "TEOBResum.h":
+cdef extern from "TEOBResumS.h":
     ctypedef struct Waveform:
         double *data
         unsigned int length
 
-    void TEOBResum(Waveform **hplus,
+    void TEOBResumS(Waveform **hplus,
                     Waveform **hcross,
                     double m1,
                     double m2,
