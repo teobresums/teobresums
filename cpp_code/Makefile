@@ -15,7 +15,6 @@ FDdrvt_omega.o 	     \
 FDdrvt.o 	     \
 find_a1a2a3.o 	     \
 FlmNewt.o 	     \
-flux.o 		     \
 get_Omg_orb.o 	     \
 HealyBBHFitRemnant.o \
 hhatlmtail.o 	     \
@@ -39,7 +38,6 @@ s_A5PNlog.o	     \
 s_bisec.o        \
 s_D1.o		     \
 s_flm.o		     \
-s_Flux.o	     \
 s_get_rc.o	     \
 s_GS.o		     \
 s_HorizonFlux.o	     \
@@ -48,6 +46,7 @@ s_RHS.o		     \
 s_waveform.o	    \
 spinsphericalharm.o   \
 SpeedyTail.o      \
+TEOBResumFlux.o \
 TEOBResumInitialConditions.o \
 Tlm.o \
 
@@ -79,8 +78,6 @@ find_a1a2a3.o: find_a1a2a3.cpp
 	$(CC) $(CFLAGS) $(INC) find_a1a2a3.cpp
 FlmNewt.o: FlmNewt.cpp
 	$(CC) $(CFLAGS) $(INC) FlmNewt.cpp
-flux.o: flux.cpp
-	$(CC) $(CFLAGS) $(INC) flux.cpp
 get_Omg_orb.o: get_Omg_orb.cpp
 	$(CC) $(CFLAGS) $(INC) get_Omg_orb.cpp
 HealyBBHFitRemnant.o: HealyBBHFitRemnant.cpp
@@ -123,8 +120,6 @@ s_D1.o: s_D1.cpp
 	$(CC) $(CFLAGS) $(INC) s_D1.cpp
 s_flm.o: s_flm.cpp
 	$(CC) $(CFLAGS) $(INC) s_flm.cpp
-s_Flux.o: s_Flux.cpp
-	$(CC) $(CFLAGS) $(INC) s_Flux.cpp
 s_get_rc.o: s_get_rc.cpp
 	$(CC) $(CFLAGS) $(INC) s_get_rc.cpp
 s_GS.o: s_GS.cpp
@@ -141,6 +136,8 @@ spinsphericalharm.o: spinsphericalharm.cpp
 	$(CC) $(CFLAGS) $(INC) spinsphericalharm.cpp
 SpeedyTail.o: SpeedyTail.cpp
 	$(CC) $(CFLAGS) $(INC) SpeedyTail.cpp
+TEOBResumFlux.o: TEOBResumFlux.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumFlux.cpp
 TEOBResumInitialConditions.o: TEOBResumInitialConditions.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumInitialConditions.cpp
 Tlm.o: Tlm.cpp

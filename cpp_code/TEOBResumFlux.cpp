@@ -24,9 +24,10 @@
 
 #include "TEOBResum.h"
 
+/** Flux calculation for non-spinning systems */
 double flux(const double x,const double Omega,const double r_omega,const double E, const double Heff,const double jhat,const double r,const double prstar, const double ddotr, double source[],void *params)
 {
-
+    
     bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
     bool NQC_flag   = (*(TEOBResumParams *)params).flags.NQC;
     double nu       = (*(TEOBResumParams *)params).nu;
@@ -38,7 +39,7 @@ double flux(const double x,const double Omega,const double r_omega,const double 
     const double FNewt22         = FNewtlm[1];
     vector<double> MTlm          = Tlm(E*Omega);
     vector<double> hlmTidal      = hlm_Tidal(x,params);
-
+    
     /** Compute NQC correction to the modulus of the (l,m) waveform */
     vector<gsl_complex> hlm_NQC = hlmNQC(nu,r,prstar,Omega,ddotr);
     double SFlm=0.;
@@ -46,7 +47,7 @@ double flux(const double x,const double Omega,const double r_omega,const double 
     {
         /** Compute modulus of hhat_lm */
         Modhhatlm = source[k] * MTlm[k] * flm[k];
-    
+        
         /** NQCs */
         if (NQC_flag==true)
         {
@@ -66,7 +67,7 @@ double flux(const double x,const double Omega,const double r_omega,const double 
                     break;
             }
         }
-    
+        
         //Make tidal corrections
         if (tidal_flag==true)
         {
@@ -99,7 +100,7 @@ double flux(const double x,const double Omega,const double r_omega,const double 
     
     /** Sum over multipoles and normalize to the 22 Newtonian multipole */
     double hatf = SFlm/(FNewt22);
-
+    
     if (tidal_flag==false)
     {
         double hatFH = HorizonFlux(x,Heff,jhat,nu);
@@ -107,6 +108,113 @@ double flux(const double x,const double Omega,const double r_omega,const double 
     }
     
     double Fphi = -32.0/5.0* nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
-
+    
     return Fphi;
 }
+
+/** Flux calculation for spinning systems */
+double s_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, void *params){
+    /*
+     % DINFLUX This function computes the Newton.Normalized energy flux according to
+     %         the DIN resummation procedure. It is also designed so to add non-QC
+     %         and non-K corrections to  (2,2) partial flux.
+     %
+     %         USAGE:
+     %
+     %         [Flm F hatF hatF_resum]=DINFlux(x,Omega,E,Heff,jhat,nu,lmax,r,pr_star,ddotr)
+     %
+     %         where:
+     %
+     %         x       :: PN argument
+     %         Omega   :: Orbital frequency
+     %         E       :: Energy
+     %         Heff    :: Effective energy
+     %         jhat    :: Newton-Normalized angular momentum
+     %         nu      :: symmetric mass ratio
+     %         lmax    :: maximum l
+     %         r       :: EOB radius
+     %         pr_star :: radial momentum
+     %         ddotr   :: \ddot{r}
+     */
+    
+    double nu       = (*(TEOBResumParams *)params).nu;
+    double chi1     = (*(TEOBResumParams *)params).chi1;
+    double chi2     = (*(TEOBResumParams *)params).chi2;
+    double X1       = (*(TEOBResumParams *)params).X1;
+    double X2       = (*(TEOBResumParams *)params).X2;
+    bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    bool NQC_flag   = (*(TEOBResumParams *)params).flags.NQC;
+    
+    double prefact[] = {
+        jhat,Heff,
+        Heff,jhat,Heff,
+        jhat,Heff,jhat,Heff,
+        Heff,jhat,Heff,jhat,Heff,
+        jhat,Heff,jhat,Heff,jhat,Heff,
+        Heff,jhat,Heff,jhat,Heff,jhat,Heff,
+        jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
+    
+    
+    double hnqclm = 1.;
+    double Flm;
+    double Modhhatlm;
+    double sqrt_one_4nu = sqrt(1.-4.*nu);
+    
+    vector<double> flm     = s_flm(x,params);
+    vector<double> FNewtlm = FlmNewt(x,params);
+    double FNewt22         = FNewtlm[1];
+    
+    vector<double> MTlm     = Tlm(E*Omega);
+    vector<double> hlmTidal = hlm_Tidal(x,params);
+    
+    double SFlm = 0.;
+    for (int k=35; k--;) {
+        // Compute modulus of hhat_lm
+        Modhhatlm = prefact[k] * MTlm[k] * flm[k];
+        
+        //Include NQC with flag
+        if (NQC_flag==true) {
+            Modhhatlm *= hnqclm;
+        }
+        
+        //Make tidal corrections
+        if (tidal_flag==true) {
+            switch (k) {
+                case 0: // (2,1)
+                    Modhhatlm *= sqrt_one_4nu;
+                    break;
+                case 2: // (3,1)
+                    Modhhatlm *= sqrt_one_4nu;
+                    break;
+                case 4: // (3,3)
+                    Modhhatlm *= sqrt_one_4nu;
+                    break;
+                    
+                default: Modhhatlm *= 1.;
+                    break;
+            }
+            
+            Modhhatlm += MTlm[k]*hlmTidal[k];
+            
+        }
+        
+        
+        // Total flux multipoles
+        Flm = (Modhhatlm * Modhhatlm) * FNewtlm[k];
+        
+        SFlm += Flm;
+    }
+    
+    // Sum over multipoles and normalize to the 22 Newtonian multipole
+    double hatf = SFlm/(FNewt22);
+    
+    if (tidal_flag==false) {
+        double hatFH = s_HorizonFlux(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+        hatf += hatFH;
+    }
+    
+    double Fphi = -32.0/5.0* nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+    
+    return Fphi;
+}
+
