@@ -443,7 +443,7 @@ void TEOBResum(Waveform **hplus,       /** h+ return array **/
     *hcross= hcross_out;
 }
 
-void TEOBResum_single_mode(
+void TEOBResumS_single_mode(
                         Waveform **ampl,        /** h+ return array **/
                         Waveform **phase,      /** hx return array **/
                         double m1,              /** m1(Msun) **/

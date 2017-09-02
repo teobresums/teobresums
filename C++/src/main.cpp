@@ -190,7 +190,7 @@ int main (int argc, char* argv[])
         Waveform *ampl;
         Waveform *phase;
         
-        TEOBResum_single_mode(&ampl,
+        TEOBResumS_single_mode(&ampl,
                                        &phase,
                                        m1,
                                        m2,
