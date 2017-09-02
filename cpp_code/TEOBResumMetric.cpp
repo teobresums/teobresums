@@ -30,6 +30,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_roots.h>
 
 #include "TEOBResum.h"
 
@@ -809,4 +810,397 @@ vector<double> s_Metric(double r, void *params, bool nnlo_flag){
     return {A,B,dA,d2A};
 }
 
+double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2, bool tidal_flag)
+{
+    
+    double c3 = 0.;
+    if (tidal_flag==true)
+    {
+        c3 = 0.;
+    }
+    else
+    {
+        double nu2 = nu*nu;
+        double nu3 = nu2*nu;
+        
+        // equal-mass, equal-spin coefficients
+        //----------------------------------------------------
+        // NEW values used in the paper Nagar et al. The value
+        // in Eq. (12) was kept, by mistake, to c0 = 44.786477
+        // that is an old value obtained with Fitting_c3.m
+        //----------------------------------------------------
+        double c0 =  44.822889;
+        double n1 =  -1.879350;
+        double n2 =   0.894242;
+        double d1 =  -0.797702;
+        
+        
+        // the two pieces
+        double c3_eq = c0*(1. + n1*(a1+a2) + n2*(a1+a2)*(a1+a2))/(1.+d1*(a1+a2));
+        
+        //-----------------------------------
+        // New fit: different functional form
+        //-----------------------------------
+        double cnu    = 1222.36;
+        double cnu2   = -12764.4;
+        double cnu3   =  36689.6;
+        double ca1_a2 = -358.086;
+        
+        double c3_uneq = cnu*(a1+a2)*nu*sqrt(1.-4.*nu) + cnu2*(a1+a2)*nu2*sqrt(1.-4.*nu) + cnu3*(a1+a2)*nu3*sqrt(1.-4.*nu) + ca1_a2*(a1-a2)*nu2;
+        
+        c3 = c3_eq + c3_uneq;
+    }
+    
+    return c3;
+}
 
+vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO)
+{
+    
+    /*
+     % EOB_GetGSs(r,aK2,prstar,nu). This function computes the
+     % gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.
+     %
+     % Usage: ggm=EOB_GetGSs(r,aK2,prstar,nu)
+     %
+     % where ggm is the output structure. Then we have:
+     %
+     % r      => BL radius
+     % aK2    => squared Kerr parameter
+     % prstar => r* conjugate momentum
+     % nu     => symmetric mass ratio
+     %
+     % the CN3LO parameter is hard-coded in this routine and can be modified
+     % here
+     %
+     % (c) nagar@ihes.fr, January 2013
+     */
+    
+    
+    double nu2   = nu*nu;
+    
+    // Boyer-Lindquist radius
+    double u   = 1./r;
+    double u2  = u*u;
+    
+    double uc      = 1./rc;
+    double uc2     = uc*uc;
+    double uc3     = uc2*uc;
+    double uc4     = uc3*uc;
+    double prstar2 = prstar*prstar;
+    double prstar4 = prstar2*prstar2;
+    
+    double GS0       = 2.*u*uc2;
+    double dGS0_duc  = 2.*u2/drc_dr + 4.*u*uc;
+    
+    double GSs0          =  3./2.*uc3;
+    double dGSs0_duc     =  9./2.*uc2;
+    double dGSs0_dprstar =  0.0;
+    double dGSs0_dpph    =  0.0;
+    
+    // coefficients of hat{GS}
+    double c10 =  5./16.*nu;
+    double c20 =  51./8.*nu + 41./256.*nu2;
+    double c30 =  nu*cN3LO;
+    double c02 =  27./16.*nu;
+    double c12 =  12.*nu - 49./128.*nu2;
+    double c04 = -5./16.*nu + 169./256.*nu2;
+    
+    // coefficients of hat{GS*}
+    // Could be precomputed and put in a matrix
+    double cs10 = 3./4.   + nu/2.;
+    double cs20 = 27./16. + 29./4.*nu + 3./8.*nu2;
+    double cs02 = 5./4.   + 3./2.*nu;
+    double cs12 = 4.   + 11.*nu     - 7./8.*nu2;
+    double cs04 = 5./48.  + 25./12.*nu + 3./8.*nu2;
+    double cs30 = nu*cN3LO + 135./32.;
+    double cs40 = 2835./256.;
+    
+    double hGS  =  1./(1.  + c10*uc + c20*uc2 + c30*uc3 + c02*prstar2 + c12*uc*prstar2 + c04*prstar4); //write
+    
+    double hGSs = 1./(1.  + cs10*uc + cs20*uc2  + cs30*uc3 + cs40*uc4 + cs02*prstar2 + cs12*uc*prstar2 + cs04*prstar4); //write
+    
+    // complete gyro-gravitomagnetic functions
+    double GS  =  GS0*hGS; //write
+    double GSs = GSs0*hGSs; //write
+    
+    //--------------------------------------------------
+    // Get derivatives of gyro-gravitomagnetic functions
+    //--------------------------------------------------
+    double dhGS_dprstar  = -2.*prstar*hGS*hGS *( c02 +  c12*uc +  2.*c04*prstar2);
+    double dhGSs_dprstar = -2.*prstar*hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2);
+    
+    
+    double dGS_dprstar  = GS0 *dhGS_dprstar; //write
+    double dGSs_dprstar = GSs0*dhGSs_dprstar + dGSs0_dprstar*hGSs; //write
+    
+    // derivatives of hat{G} with respect to uc
+    double dhGS_duc  = -hGS*hGS*(  c10 + 2.*c20*uc  + 3.*c30*uc2);
+    double dhGSs_duc = -hGSs*hGSs*(cs10 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3);
+    
+    // derivatives of G with respect to uc
+    double dGS_duc  =  dGS0_duc*hGS  +  GS0*dhGS_duc;
+    double dGSs_duc = dGSs0_duc*hGSs + GSs0*dhGSs_duc;
+    
+    // derivatives of (G,G*) with respect to r
+    double dGS_dr  = -drc_dr*uc2*dGS_duc; //write
+    double dGSs_dr = -drc_dr*uc2*dGSs_duc; //write
+    
+    // derivatives of (G,G*) with respect to pph
+    double dGS_dpph  = 0.; //write
+    double dGSs_dpph = dGSs0_dpph*hGSs; //write
+    
+    
+    // For initial data: compute the two ratios of ggm.dG_dprstar/prstar for GS
+    // and GSs
+    double dGS_dprstarbyprstar  = -2.*GS0*hGS*hGS *( c02  +  c12*uc +  2.*c04*prstar2);
+    double dGSs_dprstarbyprstar = -2.*GSs0*hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2);
+    
+    // --- for NQC --
+    // Second derivatives neglecting all pr_star^2 terms
+    double d2GS_dprstar20  =  GS0*(-2.*hGS*hGS *( c02 +  c12*uc +  2.*c04*prstar2));
+    double d2GSs_dprstar20 =  GSs0*(-2.*hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2));
+    
+    return {hGS,hGSs,GS,GSs,dGS_dprstar,dGSs_dprstar,dGS_dr,dGSs_dr,dGS_dpph,dGSs_dpph,dGS_dprstarbyprstar,dGSs_dprstarbyprstar,d2GS_dprstar20,d2GSs_dprstar20};
+}
+
+vector <double> s_get_rc(double r, void *params)
+{
+    
+    
+    double nu         = (*(TEOBResumParams *)params).nu;
+    double at1        = (*(TEOBResumParams *)params).a1;
+    double at2        = (*(TEOBResumParams *)params).a2;
+    bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    double aK2        = (*(TEOBResumParams *)params).aK2;
+    
+    double C_Q1       = (*(TEOBResumParams *)params).C_Q1;
+    double C_Q2       = (*(TEOBResumParams *)params).C_Q2;
+    
+    double rc, drc_dr, d2rc_dr2;
+    
+    double u   = 1./r;
+    double u2  = u*u;
+    double u3  = u*u2;
+    double r2  = r*r;
+    
+    
+    if (tidal_flag==true)
+    {
+        
+        /* inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
+         The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
+         deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
+         the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
+         
+         NS quadrupoles due to rotation
+         These are parameters that should be specified in the parameter file
+         
+         Inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
+         The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
+         deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
+         the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
+         
+         The implementation uses the I-Love-Q fits of Table I of Yunes-Yagi
+         paper, PRD 88, 023009, the bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. The dimensionless bar{\lambda} love number is related to our apsidal constant as lambda = 2/3 k2/(C^5) so that both quantities have to appear here.*/
+        
+        //BNS effective spin parameter
+        double a02      = C_Q1*at1*at1 + 2.*at1*at2 + C_Q2*at2*at2;
+        
+        //tidally-modified centrifugal radius
+        double rc2 = r2 + a02*(1.+2.*u);
+        rc         = sqrt(rc2);
+        drc_dr     = r/rc*(1.-a02*u3);
+        d2rc_dr2   = 1./rc*( 1.-drc_dr*r/rc*(1.-a02*u3)+2.*a02*u3);
+        
+        //NO spin-spin-tidal couplings
+        /*double rc2 = r2;
+         rc = r;
+         drc_dr = 1;
+         d2rc_dr2 = 0;*/
+        
+    }
+    else
+    {
+        
+        double X12      = sqrt(1.-4.*nu);   //(X1-X2) will be defined at the beginning and not redefined several times
+        double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
+        
+        double rc2 = r2 + aK2*(1. + 2.*alphanu2/r);
+        rc         = sqrt(rc2);
+        drc_dr     = r/rc*(1.+aK2*(-alphanu2*u3 ));
+        d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
+    }
+    
+    return {rc, drc_dr, d2rc_dr2};
+}
+
+double DHeff0(double x, void *DHeff_params){
+    
+    struct energy_params *p
+    = (struct energy_params *) DHeff_params;
+    
+    double rorb   = p->rorb;
+    double A      = p->A;
+    double dA     = p->dA;
+    double rc     = p->rc;
+    double drc_dr = p->drc_dr;
+    double ak2    = p->ak2;
+    double S      = p->S;
+    double Ss     = p->Ss;
+    double nu     = p->nu;
+    double chi1   = p->chi1;
+    double chi2   = p->chi2;
+    double X1     = p->X1;
+    double X2     = p->X2;
+    double c3     = p->c3;
+    
+    vector<double> ggm0 = s_GS(rorb, rc, drc_dr, ak2, 0., x, nu, chi1, chi2, X1, X2, c3);
+    double dGS_dr  = ggm0[6];
+    double dGSs_dr = ggm0[7];
+    
+    double x2 = x*x;
+    
+    double uc  = 1./rc;
+    double uc2 = uc*uc;
+    double uc3 = uc2*uc;
+    
+    // Orbital circular effective Hamiltonian
+    double Horbeff0 = sqrt(A*(1. + x2*uc2));
+    
+    double dHeff_dr = x*(dGS_dr*S + dGSs_dr*Ss) + 1./(2.*Horbeff0)*( dA*(1. + x2*uc2) - 2.*A*uc3*drc_dr*x2);
+    
+    return dHeff_dr;
+}
+
+double s_bisec(double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss, void *params){
+    double nu   = (*(TEOBResumParams *)params).nu;
+    double chi1 = (*(TEOBResumParams *)params).chi1;
+    double chi2 = (*(TEOBResumParams *)params).chi2;
+    double X1   = (*(TEOBResumParams *)params).X1;
+    double X2   = (*(TEOBResumParams *)params).X2;
+    double c3   = (*(TEOBResumParams *)params).cN3LO;
+    
+    int status;
+    int iter = 0, max_iter = 200;
+    const gsl_root_fsolver_type *T;
+    gsl_root_fsolver *s;
+    
+    double r;
+    double x_lo = 0.5*pph, x_hi = 1.5*pph;
+    gsl_function F;
+    struct energy_params DHeff_params = {rorb,A,dA,rc,drc_dr,ak2,S,Ss,nu,chi1,chi2,X1,X2,c3};
+    F.function = &DHeff0;
+    
+    F.params = &DHeff_params;
+    T = gsl_root_fsolver_bisection;
+    s = gsl_root_fsolver_alloc (T);
+    gsl_root_fsolver_set (s, &F, x_lo, x_hi);
+    do
+    {
+        iter++;
+        status = gsl_root_fsolver_iterate (s);
+        r      = gsl_root_fsolver_root (s);
+        x_lo   = gsl_root_fsolver_x_lower (s);
+        x_hi   = gsl_root_fsolver_x_upper (s);
+        status = gsl_root_test_interval (x_lo, x_hi,
+                                         0, 0.000000000000001);
+    }
+    while (status == GSL_CONTINUE && iter < max_iter);
+    gsl_root_fsolver_free (s);
+    
+    return r;
+}
+
+vector<double> get_Omg_orb(vector<double> r,vector<double> pph,vector<double> pr_star,vector<double> A,vector<double> B,void *params)
+{
+    
+    double nu   = (*(TEOBResumParams *)params).nu;
+    double aK2  = (*(TEOBResumParams *)params).aK2;
+    double S1   = (*(TEOBResumParams *)params).S1;
+    double S2   = (*(TEOBResumParams *)params).S2;
+    double a1   = (*(TEOBResumParams *)params).a1;
+    double a2   = (*(TEOBResumParams *)params).a2;
+    double X1   = (*(TEOBResumParams *)params).X1;
+    double X2   = (*(TEOBResumParams *)params).X2;
+    double chi1 = (*(TEOBResumParams *)params).chi1;
+    double chi2 = (*(TEOBResumParams *)params).chi2;
+    double c3   = (*(TEOBResumParams *)params).cN3LO;
+    
+    double S     = S1 + S2;
+    double Sstar = X2*a1 + X1*a2;
+    double z3    = 2.*nu*(4.-3.*nu);
+    
+    long int r_length = r.size();
+    vector<double> Omg_orb(r_length);
+    
+    for (int i=r_length; i--;)
+    {
+        
+        vector<double> rc_vec = s_get_rc(r[i],params);
+        double rc             = rc_vec[0];
+        double drc_dr         = rc_vec[1];
+        double uc             = 1./rc;
+        double uc2            = uc*uc;
+        
+        vector<double> ggm    = s_GS(r[i],rc,drc_dr,aK2,pr_star[i],pph[i],nu,chi1,chi2,X1,X2,c3);
+        double GS             = ggm[2];
+        double GSs            = ggm[3];
+        
+        double prstar2        = pr_star[i]*pr_star[i];
+        double prstar4        = prstar2*prstar2;
+        double pphi2          = pph[i]*pph[i];
+        double Horbeff        = sqrt(prstar2+A[i]*(1. + pphi2*uc2 +  z3*prstar4*uc2));
+        
+        double Heff           = Horbeff + (GS*S + GSs*Sstar)*pph[i];
+        double H              = sqrt( 1. + 2.*nu*(Heff - 1.) );
+        double one_H          = 1./H;
+        
+        Omg_orb[i]            = one_H*pph[i]*A[i]*uc2/Horbeff;
+    }
+    
+    return Omg_orb;
+    
+}
+
+vector<double> A_NumDenom(const double r, const vector<double> a, const double nu)
+{
+    
+    /** Shorthands */
+    const double u  = 1./r;
+    const double u2 = u*u;
+    const double u3 = u2*u;
+    const double u4 = u3*u;
+    const double u5 = u4*u;
+    
+    /**  Point-mass PN coefs */
+    const double a3  = a[0];
+    const double a4  = a[1];
+    const double a5  = a[4];
+    const double a6  = a[7];
+    const double a5l = a[3];
+    const double a6l = a[6];
+    
+    /**  Coefficients of the denominator and numerator of the Pade' A function */
+    const double C1  = (8.*a3 + 3.*a4 + a5);
+    const double C2  = (4.*a4 + 2.*a5 + a6 + a3*(8. - a3*nu));
+    const double C3  = (12.*a3 + 4.*a4 + a5);
+    const double C4  = (-32. + C3*nu);
+    const double C6  = (4.*a3 + a4);
+    const double C5  = (16.*a6 + (2.*a4 + a5)*(8.*a3 + 2.*a4 + a5)*nu - C6*a6*nu + a3*a3*C6*nu*nu);
+    const double C7  = (64. - (4.*C1 + a6)*nu + a3*a3*nu*nu);
+    const double C8  = a6*(8 - a3*nu) + nu*(8.*a3*a3 + 16.*a3*a4 + 4.*a4*a4 + a3*a3*a3*nu) + a5*(16. + a4*nu);
+    const double C9  = 4.*(4.*a4 + 2.*a5 + a6) + a3*(8.*a3 + 4.*a4 + a5)*nu;
+    const double C10 = (-8 + a3*nu);
+    const double C11 = (-32. + C3*nu);
+    const double C12 = (-4.*a4 - 2.*a5 - a6 + a3*C10);
+    
+    /**  WIT */
+    vector<double> frac(4);
+    frac[0] = 1. + (C7*u)/C11;
+    frac[1] = (-32. + nu*(12.*a3 + 4.*a4 + a5 - C2*u - 2.*C2*u2 - (C9)*u3 - (C8)*u4 - C5*u5))/C11;
+    frac[2] = (-((4.*a5l + a6l)*nu*C4) + C4*C7 + a5l*nu*(-64 + nu*(12.*a4 + 4.*a5 + a6 + a3*(32 - a3*nu))))/(C4*C4);
+    frac[3] = (nu*(-((2.*a5l + a6l)*C4) + a5l*nu*C2 + C4*C12 - 2.*(2.*a5l + a6l)*C4*u + 2.*a5l*nu*C2*u + 4.*C4*C12*u + a5l*nu*(C9)*u2 - 3.*(C9)*C4*u2 - C4*(4.*a6l + a5l*(8 + a3*nu))*u2 + a5l*nu*(C8)*u3 - 4.*C4*(C8)*u3 + C4*(a6l*C10 - a5l*(16 + a4*nu))*u3 + a5l*nu*C5*u4 - 5.*C4*C5*u4 + C4*(-2.*(4.*a3 + 2.*a4 + a5)*a5l*nu + a6l*(-16 + 4.*a3*nu + a4*nu))*u4))/(C11*C11);
+    
+    return frac;
+}

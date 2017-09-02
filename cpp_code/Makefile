@@ -5,15 +5,8 @@ LIBS=`gsl-config --libs`
 LDLIBS=-lgsl -lgslcblas -lm
 
 OBJS =               \
-A_NumDenom.o	     \
-get_Omg_orb.o 	     \
-LALSimIMRTEOBIHES.o  \
 main.o		\
-read_config.o	     \
-s_bisec.o        \
-s_D1.o		     \
-s_get_rc.o	     \
-s_GS.o		     \
+TEOBResum.o  \
 TEOBResumFlux.o \
 TEOBResumHlm.o \
 TEOBResumInitialConditions.o \
@@ -29,26 +22,12 @@ main:$(OBJS)
 	$(CC) $(LIBS)  $(OBJS) -o EOB_ihes.out $(LDLIBS)
 main.o: main.cpp
 	$(CC) $(CFLAGS) $(INC) main.cpp
-LALSimIMRTEOBIHES.o: LALSimIMRTEOBIHES.cpp
-	$(CC) $(CFLAGS) $(INC) LALSimIMRTEOBIHES.cpp
-A_NumDenom.o: A_NumDenom.cpp
-	$(CC) $(CFLAGS) $(INC) A_NumDenom.cpp
-get_Omg_orb.o: get_Omg_orb.cpp
-	$(CC) $(CFLAGS) $(INC) get_Omg_orb.cpp
-TEOBResumHlm.o: TEOBResumHlm.cpp
-	$(CC) $(CFLAGS) $(INC) TEOBResumHlm.cpp
-read_config.o: read_config.cpp
-	$(CC) $(CFLAGS) $(INC) read_config.cpp
-s_bisec.o: s_bisec.cpp
-	$(CC) $(CFLAGS) $(INC) s_bisec.cpp
-s_D1.o: s_D1.cpp
-	$(CC) $(CFLAGS) $(INC) s_D1.cpp
-s_get_rc.o: s_get_rc.cpp
-	$(CC) $(CFLAGS) $(INC) s_get_rc.cpp
-s_GS.o: s_GS.cpp
-	$(CC) $(CFLAGS) $(INC) s_GS.cpp
+TEOBResum.o: TEOBResum.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResum.cpp
 TEOBResumFlux.o: TEOBResumFlux.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumFlux.cpp
+TEOBResumHlm.o: TEOBResumHlm.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumHlm.cpp
 TEOBResumInitialConditions.o: TEOBResumInitialConditions.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumInitialConditions.cpp
 TEOBResumMetric.o: TEOBResumMetric.cpp
