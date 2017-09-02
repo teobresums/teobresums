@@ -9,20 +9,7 @@ exit 1
 ## remove M4 cache files
 rm -rf autom4te.cache/
 rm -f aclocal.m4
-
-# FIXME: autoreconf from Ubuntu 9.10 (and probably also from recent
-# Debian versions) automatically run libtoolize with the --copy option
-# therefore over writing the supplied libtool scripts with system
-# version. This can lead to unexpected build failures therefore to work
-# round this "feature" we set the LIBTOOLIZE enviroment variable to
-# point to the the true executable which bypasses the running of
-# libtoolize, this will not effect the vast majority of users and those
-# it will effect will know how to run libtoolize, if required.
-
-## run autoreconf
-AUTORECONF=${AUTORECONF:-"autoreconf"}
-echo "bootstrap: running ${AUTORECONF}"
-LIBTOOLIZE=true ${AUTORECONF} || fail "${AUTORECONF} failed"
+autoreconf --install --force
 
 echo "
 ==================================================
