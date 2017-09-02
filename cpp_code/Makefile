@@ -8,10 +8,7 @@ OBJS =               \
 A_NumDenom.o	     \
 AdiabLR.o    	     \
 deltalm.o    	     \
-Eulerlog.o  	     \
 f_lm.o	     	     \
-FDdrvt_omega.o 	     \
-FDdrvt.o 	     \
 FlmNewt.o 	     \
 get_Omg_orb.o 	     \
 HealyBBHFitRemnant.o \
@@ -20,8 +17,6 @@ hlm_Tidal.o 	     \
 hlm.o 		     \
 hlmNewt.o 	     \
 HorizonFlux.o	     \
-interp_grid.o 	     \
-interpolator.o	     \
 LALSimIMRTEOBIHES.o  \
 main.o		\
 Metric.o       \
@@ -37,12 +32,11 @@ s_HorizonFlux.o	     \
 s_Metric.o	     \
 s_RHS.o		     \
 s_waveform.o	    \
-spinsphericalharm.o   \
-SpeedyTail.o      \
 TEOBResumFlux.o \
 TEOBResumInitialConditions.o \
 TEOBResumNQC.o	\
 TEOBResumRingdown.o \
+TEOBResumUtils.o \
 Tlm.o \
 
 all:main
@@ -59,16 +53,8 @@ AdiabLR.o: AdiabLR.cpp
 	$(CC) $(CFLAGS) $(INC) AdiabLR.cpp
 deltalm.o: deltalm.cpp
 	$(CC) $(CFLAGS) $(INC) deltalm.cpp
-Eulerlog.o: Eulerlog.cpp
-	$(CC) $(CFLAGS) $(INC) Eulerlog.cpp
 f_lm.o: f_lm.cpp
 	$(CC) $(CFLAGS) $(INC) f_lm.cpp
-FDdrvt_omega.o: FDdrvt_omega.cpp
-	$(CC) $(CFLAGS) $(INC) FDdrvt_omega.cpp
-FDdrvt.o: FDdrvt.cpp
-	$(CC) $(CFLAGS) $(INC) FDdrvt.cpp
-find_a1a2a3.o: find_a1a2a3.cpp
-	$(CC) $(CFLAGS) $(INC) find_a1a2a3.cpp
 FlmNewt.o: FlmNewt.cpp
 	$(CC) $(CFLAGS) $(INC) FlmNewt.cpp
 get_Omg_orb.o: get_Omg_orb.cpp
@@ -83,14 +69,8 @@ hlm.o: hlm.cpp
 	$(CC) $(CFLAGS) $(INC) hlm.cpp
 hlmNewt.o: hlmNewt.cpp
 	$(CC) $(CFLAGS) $(INC) hlmNewt.cpp
-hlmNQC.o: hlmNQC.cpp
-	$(CC) $(CFLAGS) $(INC) hlmNQC.cpp
 HorizonFlux.o: HorizonFlux.cpp
 	$(CC) $(CFLAGS) $(INC) HorizonFlux.cpp
-interp_grid.o: interp_grid.cpp
-	$(CC) $(CFLAGS) $(INC) interp_grid.cpp
-interpolator.o: interpolator.cpp
-	$(CC) $(CFLAGS) $(INC) interpolator.cpp
 Metric.o: Metric.cpp
 	$(CC) $(CFLAGS) $(INC) Metric.cpp
 read_config.o: read_config.cpp
@@ -119,8 +99,6 @@ s_waveform.o: s_waveform.cpp
 	$(CC) $(CFLAGS) $(INC) s_waveform.cpp
 spinsphericalharm.o: spinsphericalharm.cpp
 	$(CC) $(CFLAGS) $(INC) spinsphericalharm.cpp
-SpeedyTail.o: SpeedyTail.cpp
-	$(CC) $(CFLAGS) $(INC) SpeedyTail.cpp
 TEOBResumFlux.o: TEOBResumFlux.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumFlux.cpp
 TEOBResumInitialConditions.o: TEOBResumInitialConditions.cpp
@@ -129,6 +107,8 @@ TEOBResumNQC.o: TEOBResumNQC.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumNQC.cpp
 TEOBResumRingdown.o: TEOBResumRingdown.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumRingdown.cpp
+TEOBResumUtils.o: TEOBResumUtils.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumUtils.cpp
 Tlm.o: Tlm.cpp
 	$(CC) $(CFLAGS) $(INC) Tlm.cpp
 
