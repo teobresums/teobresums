@@ -1,0 +1,71 @@
+# Makefile for TEOBResumS
+
+# make sure to use bash on Debian/Ubuntu, not dash
+SHELL=/bin/bash
+
+#
+# names and dirs 
+#
+
+BASE=$(shell /bin/pwd)
+SRCD=$(BASE)/src
+OBJD=$(BASE)/obj
+LIBD=$(BASE)/lib
+
+NAME=TEOBResumS
+EXE=$(NAME).x
+SRC=$(wildcard $(SRCD)/*.cpp) 
+OBJ=$(patsubst $(SRCD)/%.cpp,$(OBJD)/%.o,$(SRC)) 
+LIB=$(LIBD)/lib$(NAME).a
+
+#
+# compilation options
+#
+
+CC=g++
+CFLAGS=-O3 -std=c++11
+LFLAGS=`gsl-config --libs`
+LDLFLAGS=-lgsl -lgslcblas -lm
+
+#
+# rules
+#
+
+all: $(EXE) # $(LIB)
+	@echo "All done"
+
+$(EXE): $(OBJ)
+	@echo "Building $@ ..."
+	@$(CC) $(CFLAGS) $(LFLAGS) $(OBJ) -o $@ $(LDLFLAGS)
+
+$(OBJD)/%.o: $(SRCD)/%.cpp
+	@mkdir -p $(dir $@)
+	@echo "Compiling $< ... -> $@"
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+## $(LIBD)/%.a: $(OBJD)/%.o ## one for each object ? Possibly not, unless our .c files are really few and weel organized.
+# $(LIB): $(OBJS) ## only one
+# 	@mkdir -p $(dir $@)
+#         @echo "Compiling $<"
+# 	@ar rucs $@ $(OBJS)	
+#         @echo " done"
+
+clean: 
+	@echo "Cleaning ..."
+	@rm -vf $(OBJ) 
+	@rm -vf $(LIB) 
+	@echo "... done"
+
+new: clean $(EXE)
+	@echo "All done"
+
+clearup: clean 
+	@echo "Removing dirs and exe ..."
+	@rm -rvf $(OBJ) 
+	@rm -rvf $(LIB) 
+	@rm -rvf $(EXE) 
+	@echo "All done"
+
+.PHONY: all clean new #help
+
+# DO NOT DELETE
