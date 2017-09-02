@@ -1,5 +1,33 @@
 # Add any directories, files, or patterns you don't want to be tracked by version control
 
+Makefile
+aclocal.m4
+ar-lib
+autom4te.cache/
+compile
+config.guess
+config.log
+config.status
+config.sub
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+m4/
+missing
+opt/
+python/build/
+python/pyTEOBResumS.cpp
+python/pyTEOBResumS.so
+src/.deps/
+src/.libs/
+src/Makefile
+src/TEOBResumS
+src/config.h
+src/config.h.in~
+src/libTEOBResumS.la
+src/stamp-h1
 *.dat
 *.lo
 *.in

@@ -35,8 +35,8 @@ vector<gsl_complex> hlmNewt(const double r,
                             const double Omega,
                             const double phi,
                             const double nu,
-                            bool         tidal_flag)
-{
+                            bool         tidal_flag
+                            ){
     
     /******************************************************************************************
      * Computes the leading-order (Newtonian) prefactor  of the multipolar resummed waveform. *
@@ -103,100 +103,100 @@ vector<gsl_complex> hlmNewt(const double r,
      * l=2 ------------------------------------------------------------------ */
     
     hlmNewt[0].dat[1] = 3.*pi/2. - M[0];
-    hlmNewt[0].dat[0] = 8./3.*sqrt(pi/5.) * pv23;
+    hlmNewt[0].dat[0] = 8./3.*sqrt(pi/5.)                * pv23;
     
     hlmNewt[1].dat[1] = pi - M[1];
-    hlmNewt[1].dat[0] = 8.*sqrt(pi/5.) * p1 * vphi2;
+    hlmNewt[1].dat[0] = 8.*sqrt(pi/5.)                   * p1 * vphi2;
     
     /** l=3 ------------------------------------------------------------------ */
     
     hlmNewt[2].dat[1] = 3.*pi/2. - M[2];
-    hlmNewt[2].dat[0] = 1./3.*sqrt(2.*pi/35.) * pv23;
+    hlmNewt[2].dat[0] = 1./3.*sqrt(2.*pi/35.)            * pv23;
     
     hlmNewt[3].dat[1] = - M[3];
-    hlmNewt[3].dat[0] = 8./3.*sqrt(pi/7.) * pv34;
+    hlmNewt[3].dat[0] = 8./3.*sqrt(pi/7.)                * pv34;
     
     hlmNewt[4].dat[1] = pi/2. - M[4];
-    hlmNewt[4].dat[0] = 3.*sqrt(6.*pi/7.) * pv23;
+    hlmNewt[4].dat[0] = 3.*sqrt(6.*pi/7.)                * pv23;
     
     /** l=4 ------------------------------------------------------------------ */
     
     hlmNewt[5].dat[1] = pi/2. - M[5];
-    hlmNewt[5].dat[0] = 1./105.*sqrt(2.*pi) * pv45;
+    hlmNewt[5].dat[0] = 1./105.*sqrt(2.*pi)              * pv45;
     
     hlmNewt[6].dat[1] = - M[6];
-    hlmNewt[6].dat[0] = 8./63.*sqrt(pi) * pv34;
+    hlmNewt[6].dat[0] = 8./63.*sqrt(pi)                  * pv34;
     
     hlmNewt[7].dat[1] = 3.*pi/2. - M[7];
-    hlmNewt[7].dat[0] = 9./5*sqrt(2*pi/7.) * pv45;
+    hlmNewt[7].dat[0] = 9./5*sqrt(2*pi/7.)               * pv45;
     
     hlmNewt[8].dat[1] = pi - M[8];
-    hlmNewt[8].dat[0] = 64./9.*sqrt(pi/7.) * pv34;
+    hlmNewt[8].dat[0] = 64./9.*sqrt(pi/7.)               * pv34;
     
     /** l=5 ------------------------------------------------------------------ */
     
     hlmNewt[9].dat[1] = pi/2. - M[9];
-    hlmNewt[9].dat[0] = 1./180.*sqrt(pi/77.) *pv45;
+    hlmNewt[9].dat[0] = 1./180.*sqrt(pi/77.)             * pv45;
     
     hlmNewt[10].dat[1] = pi - M[10];
-    hlmNewt[10].dat[0] = 16./135.*sqrt(pi/11.) *pv56;
+    hlmNewt[10].dat[0] = 16./135.*sqrt(pi/11.)           * pv56;
     
     hlmNewt[11].dat[1] = 3.*pi/2. - M[11];
-    hlmNewt[11].dat[0] = 9./20.*sqrt(3*pi/22.) *pv45;
+    hlmNewt[11].dat[0] = 9./20.*sqrt(3*pi/22.)           * pv45;
     
     hlmNewt[12].dat[1] = - M[12];
-    hlmNewt[12].dat[0] = 256./45.*sqrt(pi/33.) *pv56;
+    hlmNewt[12].dat[0] = 256./45.*sqrt(pi/33.)           * pv56;
     
     hlmNewt[13].dat[1] = pi/2. - M[13];
-    hlmNewt[13].dat[0] = 125./12.*sqrt(5.*pi/66.) * pv45;
+    hlmNewt[13].dat[0] = 125./12.*sqrt(5.*pi/66.)        * pv45;
     
     /** l=6 ------------------------------------------------------------------ */
     
     hlmNewt[14].dat[1] = 3.*pi/2. - M[14];
-    hlmNewt[14].dat[0] = 1./2079.*sqrt(2.*pi/65.) *pv67;
+    hlmNewt[14].dat[0] = 1./2079.*sqrt(2.*pi/65.)        * pv67;
     
     hlmNewt[15].dat[1] = pi - M[15];
-    hlmNewt[15].dat[0] = 16./1485.*sqrt(pi/13.) *pv56;
+    hlmNewt[15].dat[0] = 16./1485.*sqrt(pi/13.)          * pv56;
     
     hlmNewt[16].dat[1] = pi/2. - M[16];
-    hlmNewt[16].dat[0] = 81./385.*sqrt(pi/13.)  *pv67;
+    hlmNewt[16].dat[0] = 81./385.*sqrt(pi/13.)           * pv67;
     
     hlmNewt[17].dat[1] = - M[17];
-    hlmNewt[17].dat[0] = 1024./495.*sqrt(2.*pi/195.) *pv56;
+    hlmNewt[17].dat[0] = 1024./495.*sqrt(2.*pi/195.)     * pv56;
     
     hlmNewt[18].dat[1] = 3.*pi/2. - M[18];
-    hlmNewt[18].dat[0] = 625./63*sqrt(5.*pi/429.) * pv67;
+    hlmNewt[18].dat[0] = 625./63*sqrt(5.*pi/429.)        * pv67;
     
     hlmNewt[19].dat[1] = pi - M[19];
-    hlmNewt[19].dat[0] = 432./5*sqrt(pi/715.)  *pv56;
+    hlmNewt[19].dat[0] = 432./5*sqrt(pi/715.)            * pv56;
     
     /** l=7 ------------------------------------------------------------------ */
     
     hlmNewt[20].dat[1] = 3.*pi/2. - M[20];
-    hlmNewt[20].dat[0] = 1./108108.*sqrt(pi/10.)  *pv67;
+    hlmNewt[20].dat[0] = 1./108108.*sqrt(pi/10.)         * pv67;
     
     hlmNewt[21].dat[1] = - M[21];
-    hlmNewt[21].dat[0] = 8./3003.*sqrt(pi/15.)    *pv78;
+    hlmNewt[21].dat[0] = 8./3003.*sqrt(pi/15.)           * pv78;
     
     hlmNewt[22].dat[1] = pi/2. - M[22];
-    hlmNewt[22].dat[0] = 243./20020.*sqrt(3.*pi/10.) *pv67;
+    hlmNewt[22].dat[0] = 243./20020.*sqrt(3.*pi/10.)     * pv67;
     
     hlmNewt[23].dat[1] = pi - M[23];
-    hlmNewt[23].dat[0] = 1024./1365.*sqrt(2.*pi/165.)  *pv78;
+    hlmNewt[23].dat[0] = 1024./1365.*sqrt(2.*pi/165.)    * pv78;
     
     hlmNewt[24].dat[1] = 3.*pi/2. - M[24];
-    hlmNewt[24].dat[0] = 3125./3276.*sqrt(5.*pi/66.) *pv67;
+    hlmNewt[24].dat[0] = 3125./3276.*sqrt(5.*pi/66.)     * pv67;
     
     hlmNewt[25].dat[1] = - M[25];
-    hlmNewt[25].dat[0] = 648./35.*sqrt(3.*pi/715.)  *pv78;
+    hlmNewt[25].dat[0] = 648./35.*sqrt(3.*pi/715.)       * pv78;
     
     hlmNewt[26].dat[1] = pi/2. - M[26];
-    hlmNewt[26].dat[0] = 16807./180.*sqrt(7.*pi/4290.) *pv67;
+    hlmNewt[26].dat[0] = 16807./180.*sqrt(7.*pi/4290.)   * pv67;
     
     /** l=8 ------------------------------------------------------------------ */
     
     hlmNewt[27].dat[1] = pi - M[27];
-    hlmNewt[27].dat[0] = 131072./315.*sqrt(2.*pi/17017.) *pv78;
+    hlmNewt[27].dat[0] = 131072./315.*sqrt(2.*pi/17017.) * pv78;
     
     hlmNewt[28].dat[1] = - M[28];
     hlmNewt[28].dat[0] = 0.;
@@ -229,10 +229,10 @@ vector<gsl_complex> hhatlmtail(const double Omega,
                                const int    M[])
 {
     
-    /***********************************************************
-     *   Computes the tail contribution to the resummed wave.  *
-     *   Reference: Damour, Iyer & Nagar, PRD 79, 064004 (2009)*
-     ***********************************************************/
+    /**********************************************************
+     * Computes the tail contribution to the resummed wave.   *
+     * Reference: Damour, Iyer & Nagar, PRD 79, 064004 (2009) *
+     **********************************************************/
     
     int kmax        = 35;
     const double pi = M_PI;
@@ -258,11 +258,11 @@ vector<gsl_complex> hhatlmtail(const double Omega,
         gsl_sf_lngamma_complex_e(L[i] + 1., -2.*hhatk, &num_rad, &num_phase);
         gsl_sf_lngamma_complex_e(L[i] + 1., 0., &denom_rad, &denom_phase);
         
-        ratio_rad = num_rad.val-denom_rad.val;
-        ratio_ang = num_phase.val-0.;
+        ratio_rad     = num_rad.val-denom_rad.val;
+        ratio_ang     = num_phase.val-0.;
         
-        tlm_rad   = ratio_rad + pi * hhatk;
-        tlm_phase = ratio_ang + 2.*hhatk*log(2.*k*bphys);
+        tlm_rad       = ratio_rad + pi * hhatk;
+        tlm_phase     = ratio_ang + 2.*hhatk*log(2.*k*bphys);
         
         tlm[i].dat[0] = exp(tlm_rad);
         tlm[i].dat[1] = tlm_phase;
@@ -270,7 +270,77 @@ vector<gsl_complex> hhatlmtail(const double Omega,
     return tlm;
 }
 
-
+vector<double> hlm_Tidal(double x,
+                         void *params
+                         ){
+    
+    /********************************************************
+     * Calculate tidal correction to multipolar waveform.   *
+     * Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 *
+     ********************************************************/
+    
+    int kmax  = 35;
+    double x5 = gsl_pow_int(x,5);
+    
+    vector<double> hA(kmax);
+    
+    double lambdaA2 = (*(TEOBResumParams *)params).LambdaAl2;
+    double lambdaB2 = (*(TEOBResumParams *)params).LambdaBl2;
+    double XA       = (*(TEOBResumParams *)params).X1;
+    double XB       = (*(TEOBResumParams *)params).X2;
+    double khatA_2  = 3./2. * lambdaA2 * XB/XA * gsl_pow_int(XA,5);
+    double khatB_2  = 3./2. * lambdaB2 * XA/XB * gsl_pow_int(XB,5);
+    
+    for (int i=kmax; i--; )
+    {
+        hA[i]=0.;
+    }
+    
+    vector<double> hB     = hA;
+    vector<double> betaA1 = hA;
+    vector<double> betaB1 = hA;
+    vector<double> hTidallm(kmax);
+    
+    
+    // l=2 -------------------------------------------------------------------*/
+    
+    hA[1]     = 2 * khatA_2 *(XA/XB+3);
+    hB[1]     = 2 * khatB_2 *(XB/XA+3);
+    
+    betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
+    betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
+    
+    hA[0]     = 3 * khatA_2 * XB * (3-4*XA)/XA;
+    hB[0]     = 3 * khatB_2 * XA * (3-4*XB)/XB;
+    
+    
+    /** l=3 ------------------------------------------------------------------*/
+    
+    hA[2] = hA[4];
+    hB[2] = hB[4];
+    
+    hA[4] = 12 * khatA_2 * XB*XB/XA;
+    hB[4] = 12 * khatB_2 * XA*XA/XB;
+    
+    
+    
+    /** l=2 ------------------------------------------------------------------
+     * (2,1) */
+    hTidallm[0] = ( -hA[0] + hB[0] )*x5;
+    
+    /* (2,2) */
+    hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
+    
+    /** l=3 ------------------------------------------------------------------
+     * (3,1) */
+    hTidallm[2] = ( -hA[2] + hB[2] )*x5;
+    
+    /* (3,3) */
+    hTidallm[4] = ( -hA[4] + hB[4] )*x5;
+    
+    return hTidallm;
+    
+}
 
 vector<gsl_complex> hlm(double       t,
                         const double phi,
@@ -391,75 +461,5 @@ vector<gsl_complex> hlm(double       t,
     return hlm;
 }
 
-vector<double> hlm_Tidal(double x,
-                         void *params
-                         ){
-    
-    /********************************************************
-     * Calculate tidal correction to multipolar waveform.   *
-     * Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 *
-     ********************************************************/
-    
-    int kmax  = 35;
-    double x5 = gsl_pow_int(x,5);
-    
-    vector<double> hA(kmax);
-    
-    double lambdaA2 = (*(TEOBResumParams *)params).LambdaAl2;
-    double lambdaB2 = (*(TEOBResumParams *)params).LambdaBl2;
-    double XA       = (*(TEOBResumParams *)params).X1;
-    double XB       = (*(TEOBResumParams *)params).X2;
-    double khatA_2  = 3./2. * lambdaA2 * XB/XA * gsl_pow_int(XA,5);
-    double khatB_2  = 3./2. * lambdaB2 * XA/XB * gsl_pow_int(XB,5);
-    
-    for (int i=kmax; i--; )
-    {
-        hA[i]=0.;
-    }
-    
-    vector<double> hB     = hA;
-    vector<double> betaA1 = hA;
-    vector<double> betaB1 = hA;
-    vector<double> hTidallm(kmax);
-    
-    
-    // l=2 -------------------------------------------------------------------*/
-    
-    hA[1]     = 2 * khatA_2 *(XA/XB+3);
-    hB[1]     = 2 * khatB_2 *(XB/XA+3);
-    
-    betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
-    betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
-    
-    hA[0]     = 3 * khatA_2 * XB * (3-4*XA)/XA;
-    hB[0]     = 3 * khatB_2 * XA * (3-4*XB)/XB;
-    
-    
-    /** l=3 ------------------------------------------------------------------*/
-    
-    hA[2] = hA[4];
-    hB[2] = hB[4];
-    
-    hA[4] = 12 * khatA_2 * XB*XB/XA;
-    hB[4] = 12 * khatB_2 * XA*XA/XB;
-    
-    
-    
-    /** l=2 ------------------------------------------------------------------
-     * (2,1) */
-    hTidallm[0] = ( -hA[0] + hB[0] )*x5;
-    
-    /* (2,2) */
-    hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
-    
-    /** l=3 ------------------------------------------------------------------
-     * (3,1) */
-    hTidallm[2] = ( -hA[2] + hB[2] )*x5;
-    
-    /* (3,3) */
-    hTidallm[4] = ( -hA[4] + hB[4] )*x5;
-    
-    return hTidallm;
-    
-}
+
 
