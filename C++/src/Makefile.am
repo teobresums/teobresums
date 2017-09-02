@@ -1,16 +1,16 @@
 AM_LDFLAGS=`gsl-config --libs` -lgsl -lgslcblas -lm
 ACLOCAL_AMFLAGS='-I m4 `gsl-config --cflags`'
-bin_PROGRAMS = TEOBResum
-TEOBResum_SOURCES = main.cpp
+bin_PROGRAMS = TEOBResumS
+TEOBResumS_SOURCES = main.cpp
 
-lib_LTLIBRARIES = libTEOBResum.la
-libTEOBResum_la_SOURCES =           \
-    TEOBResumFlux.cpp               \
-    TEOBResumMetric.cpp             \
-    TEOBResumUtils.cpp              \
-    TEOBResum.cpp                   \
-    TEOBResumHlm.cpp                \
-    TEOBResumNQC.cpp                \
-    TEOBResumWaveform.cpp           \
-    TEOBResumInitialConditions.cpp  \
-    TEOBResumRingdown.cpp
+lib_LTLIBRARIES = libTEOBResumS.la
+libTEOBResumS_la_SOURCES =           \
+    TEOBResumSFlux.cpp               \
+    TEOBResumSMetric.cpp             \
+    TEOBResumSUtils.cpp              \
+    TEOBResumS.cpp                   \
+    TEOBResumSHlm.cpp                \
+    TEOBResumSNQC.cpp                \
+    TEOBResumSWaveform.cpp           \
+    TEOBResumSInitialConditions.cpp  \
+    TEOBResumSRingdown.cpp
