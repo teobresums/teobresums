@@ -1,5 +1,5 @@
 AM_LDFLAGS=`gsl-config --libs` -lgsl -lgslcblas -lm
-ACLOCAL_AMFLAGS='-I m4'
+ACLOCAL_AMFLAGS='-I m4 `gsl-config --cflags`'
 bin_PROGRAMS = TEOBResum
 TEOBResum_SOURCES = main.cpp
 
