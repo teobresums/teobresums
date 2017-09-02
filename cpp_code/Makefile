@@ -24,7 +24,6 @@ hlm.o 		     \
 hlmNewt.o 	     \
 hlmNQC.o 	     \
 HorizonFlux.o	     \
-initial.o 	     \
 interp_grid.o 	     \
 interpolator.o	     \
 LALSimIMRTEOBIHES.o  \
@@ -44,12 +43,12 @@ s_Flux.o	     \
 s_get_rc.o	     \
 s_GS.o		     \
 s_HorizonFlux.o	     \
-s_initial.o	     \
 s_Metric.o	     \
 s_RHS.o		     \
 s_waveform.o	    \
 spinsphericalharm.o   \
 SpeedyTail.o      \
+TEOBResumInitialConditions.o \
 Tlm.o \
 
 all:main
@@ -98,8 +97,6 @@ hlmNQC.o: hlmNQC.cpp
 	$(CC) $(CFLAGS) $(INC) hlmNQC.cpp
 HorizonFlux.o: HorizonFlux.cpp
 	$(CC) $(CFLAGS) $(INC) HorizonFlux.cpp
-initial.o: initial.cpp
-	$(CC) $(CFLAGS) $(INC) initial.cpp
 interp_grid.o: interp_grid.cpp
 	$(CC) $(CFLAGS) $(INC) interp_grid.cpp
 interpolator.o: interpolator.cpp
@@ -134,8 +131,6 @@ s_GS.o: s_GS.cpp
 	$(CC) $(CFLAGS) $(INC) s_GS.cpp
 s_HorizonFlux.o: s_HorizonFlux.cpp
 	$(CC) $(CFLAGS) $(INC) s_HorizonFlux.cpp
-s_initial.o: s_initial.cpp
-	$(CC) $(CFLAGS) $(INC) s_initial.cpp
 s_Metric.o: s_Metric.cpp
 	$(CC) $(CFLAGS) $(INC) s_Metric.cpp
 s_RHS.o: s_RHS.cpp
@@ -146,6 +141,8 @@ spinsphericalharm.o: spinsphericalharm.cpp
 	$(CC) $(CFLAGS) $(INC) spinsphericalharm.cpp
 SpeedyTail.o: SpeedyTail.cpp
 	$(CC) $(CFLAGS) $(INC) SpeedyTail.cpp
+TEOBResumInitialConditions.o: TEOBResumInitialConditions.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumInitialConditions.cpp
 Tlm.o: Tlm.cpp
 	$(CC) $(CFLAGS) $(INC) Tlm.cpp
 
