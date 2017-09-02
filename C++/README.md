@@ -7,6 +7,11 @@
 
 ## How to compile
 
+Two options
+
+- simple Makefile
+- build that includes Python wrapper
+
 ### Makefile
 
 A simple Makefile is provided in the main directory. Just run 
