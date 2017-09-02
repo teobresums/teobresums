@@ -8,11 +8,7 @@ OBJS =               \
 A_NumDenom.o	     \
 AdiabLR.o    	     \
 deltalm.o    	     \
-f_lm.o	     	     \
-FlmNewt.o 	     \
 get_Omg_orb.o 	     \
-HealyBBHFitRemnant.o \
-HorizonFlux.o	     \
 LALSimIMRTEOBIHES.o  \
 main.o		\
 Metric.o       \
@@ -21,10 +17,8 @@ RHS.o           \
 s_A5PNlog.o	     \
 s_bisec.o        \
 s_D1.o		     \
-s_flm.o		     \
 s_get_rc.o	     \
 s_GS.o		     \
-s_HorizonFlux.o	     \
 s_Metric.o	     \
 s_RHS.o		     \
 s_waveform.o	    \
@@ -34,7 +28,6 @@ TEOBResumInitialConditions.o \
 TEOBResumNQC.o	\
 TEOBResumRingdown.o \
 TEOBResumUtils.o \
-Tlm.o \
 
 all:main
 
@@ -50,18 +43,10 @@ AdiabLR.o: AdiabLR.cpp
 	$(CC) $(CFLAGS) $(INC) AdiabLR.cpp
 deltalm.o: deltalm.cpp
 	$(CC) $(CFLAGS) $(INC) deltalm.cpp
-f_lm.o: f_lm.cpp
-	$(CC) $(CFLAGS) $(INC) f_lm.cpp
-FlmNewt.o: FlmNewt.cpp
-	$(CC) $(CFLAGS) $(INC) FlmNewt.cpp
 get_Omg_orb.o: get_Omg_orb.cpp
 	$(CC) $(CFLAGS) $(INC) get_Omg_orb.cpp
-HealyBBHFitRemnant.o: HealyBBHFitRemnant.cpp
-	$(CC) $(CFLAGS) $(INC) HealyBBHFitRemnant.cpp
 TEOBResumHlm.o: TEOBResumHlm.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumHlm.cpp
-HorizonFlux.o: HorizonFlux.cpp
-	$(CC) $(CFLAGS) $(INC) HorizonFlux.cpp
 Metric.o: Metric.cpp
 	$(CC) $(CFLAGS) $(INC) Metric.cpp
 read_config.o: read_config.cpp
@@ -74,14 +59,10 @@ s_bisec.o: s_bisec.cpp
 	$(CC) $(CFLAGS) $(INC) s_bisec.cpp
 s_D1.o: s_D1.cpp
 	$(CC) $(CFLAGS) $(INC) s_D1.cpp
-s_flm.o: s_flm.cpp
-	$(CC) $(CFLAGS) $(INC) s_flm.cpp
 s_get_rc.o: s_get_rc.cpp
 	$(CC) $(CFLAGS) $(INC) s_get_rc.cpp
 s_GS.o: s_GS.cpp
 	$(CC) $(CFLAGS) $(INC) s_GS.cpp
-s_HorizonFlux.o: s_HorizonFlux.cpp
-	$(CC) $(CFLAGS) $(INC) s_HorizonFlux.cpp
 s_Metric.o: s_Metric.cpp
 	$(CC) $(CFLAGS) $(INC) s_Metric.cpp
 s_RHS.o: s_RHS.cpp
@@ -100,8 +81,6 @@ TEOBResumRingdown.o: TEOBResumRingdown.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumRingdown.cpp
 TEOBResumUtils.o: TEOBResumUtils.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumUtils.cpp
-Tlm.o: Tlm.cpp
-	$(CC) $(CFLAGS) $(INC) Tlm.cpp
 
 clean:
 	rm -rf *.o *.h.gch EOB_ihes.out

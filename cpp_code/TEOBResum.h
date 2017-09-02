@@ -158,6 +158,8 @@ vector<double> FlmNewt(const double x, void *params);
 
 double HealyBBHFitRemnant(double chi1, double chi2, double q);
 
+double JimenezFortezaRemnantSpin(TEOBResumParams params);
+
 /* _HorizonFlux_h */
 
 double HorizonFlux(const double x, const double Heff, const double jhat, const double nu);
