@@ -1,6 +1,6 @@
 To compile this code:
 
-autoreconf --install
+./bootstrap
 ./configure --prefix=<your destination> CXXFLAGS="-std=c++11 -Ofast -Wall -fPIC"
 make
 make install
