@@ -9,6 +9,8 @@ exit 1
 ## remove M4 cache files
 rm -rf autom4te.cache/
 rm -f aclocal.m4
+mkdir -p m4
+
 autoreconf --install --force
 
 echo "

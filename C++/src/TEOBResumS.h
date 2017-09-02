@@ -194,7 +194,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
 );
 
 
-void TEOBResum_single_mode(Waveform **ampl,        /** h+ return array **/
+void TEOBResumS_single_mode(Waveform **ampl,        /** h+ return array **/
                                     Waveform **hphase,      /** hx return array **/
                                     double m1,              /** m1(Msun) **/
                                     double m2,              /** m2(Msun) **/
