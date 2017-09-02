@@ -378,7 +378,7 @@ vector<gsl_complex> hlm(double       t,
     vector<gsl_complex> hNewt = hlmNewt( rw,Omega,phi, nu,tidal_flag);
     
     /** Compute corrections */
-    double x = gsl_pow_int(rw*Omega,2);
+    double x = rw*Omega*rw*Omega;
     vector<double> flm(35);
     if (spin_flag==1)
     {

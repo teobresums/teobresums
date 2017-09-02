@@ -157,10 +157,10 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
             
             /** Derivative of potential w.r.t. u */
             double dAcub = 5./2.*   (1. -2.*(c1+c2)*u + 3.*c1*c2*u2);
-            double df23  = (n1 - 2.*d2*u - n1*d2*u2)*pow(DenI,2.);
+            double df23  = (n1 - 2.*d2*u - n1*d2*u2)*(DenI*DenI);
             double dA1SF = dAcub*f23 + Acub*df23;
             double dA2SF = 674./28.*u;
-            double df0   = 3.*u*(2.-rLR*u)*pow(oom3u,2.);
+            double df0   = 3.*u*(2.-rLR*u)*(oom3u*oom3u);
             double df1   = 0.5*(7.*rLR*A1SF + 2.*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
             double df2   = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1.);
             double dAT2  = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );
@@ -272,7 +272,7 @@ vector<double> A5pnP15_dd(const double r, void *params)
         double d2     = 17.73239;
         double Den    = 1./(1. + d2*u2);
         double f23    = (1. + n1*u)*Den;
-        double df23   = (n1 - 2*d2*u - n1*d2*u2)*pow(Den,2);
+        double df23   = (n1 - 2*d2*u - n1*d2*u2)*(Den*Den);
         double A1SF   = Acub*f23;
         double dA1SF  = dAcub*f23 + Acub*df23;
         double A2SF   = 337./28.*u2;
@@ -281,17 +281,17 @@ vector<double> A5pnP15_dd(const double r, void *params)
         double f0     = 1 + 3*u2*oom3u;
         double f1     = A1SF *pow(oom3u,7./2.);
         double f2     = A2SF *pow(oom3u,p);
-        double df0    = 3*u*(2.-rLR*u)*pow(oom3u,2);
+        double df0    = 3*u*(2.-rLR*u)*(oom3u*oom3u);
         double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
         double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
         
-        double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*(-3+d2*u2))*pow(Den,3);
+        double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*(-3+d2*u2))*(Den*Den*Den);
         double d2A1SF = d2Acub*f23 + 2*dAcub*df23 + Acub*d2f23;
         double d2A2SF = 674./28.;
         
-        double d2f0   = 6*pow(oom3u,3);
-        double d2f1   = 0.25*(63*pow(rLR,2)*A1SF + 4*(-1+rLR*u)*(-7*rLR*dA1SF + (-1+rLR*u)*d2A1SF))*pow(oom3u,11./2.);
-        double d2f2   = (rLR*p*((1+p)*rLR*A2SF - 2*(-1+rLR*u)*dA2SF +pow(-1+rLR*u,2) *d2A2SF))*pow(oom3u,p+2);
+        double d2f0   = 6*(oom3u*oom3u*oom3u);
+        double d2f1   = 0.25*(63*(rLR*rLR)*A1SF + 4*(-1+rLR*u)*(-7*rLR*dA1SF + (-1+rLR*u)*d2A1SF))*pow(oom3u,11./2.);
+        double d2f2   = (rLR*p*((1+p)*rLR*A2SF - 2*(-1+rLR*u)*dA2SF +(-1.+rLR*u)*(-1.+rLR*u) *d2A2SF))*pow(oom3u,p+2);
         
         double d2AT2  = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
         
@@ -371,7 +371,7 @@ int rhs(double t, const double y[], double f[], void *params){
     }
     
     
-    const double r_omega = r*pow(psi,1.0/3.0);
+    const double r_omega = r*cbrt(psi);
     const double v_phi   = r_omega*Omega;
     const double x       = v_phi * v_phi;
     const double jhat    = pphi/(r_omega*v_phi);
@@ -548,7 +548,7 @@ int s_RHS(double t, const double y[], double f[], void *params)
     double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
     double duc_dr     = -uc2*drc_dr;
     double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
-    double r_omg      = pow( (pow( gsl_pow_int(rc,3)*psic,-1./2.)+Gtilde )*one_H0 ,-2./3.);
+    double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*one_H0, -2./3. );
     double v_phi = r_omg*Omg;
     double x     = v_phi*v_phi;
     double jhat  = pph/(r_omg*v_phi);
@@ -705,10 +705,10 @@ vector<double> s_A5PNlog(double r, void *params, bool nnlo_flag){
             
             //Derivative of potential w.r.t. u
             double dAcub = 5./2.*   (1. -2.*(c1+c2)*u + 3.*c1*c2*u2);
-            double df23  = (n1 - 2.*d2*u - n1*d2*u2)*pow(DenI,2.);
+            double df23  = (n1 - 2.*d2*u - n1*d2*u2)*(DenI*DenI);
             double dA1SF = dAcub*f23 + Acub*df23;
             double dA2SF = 674./28.*u;
-            double df0   = 3.*u*(2.-rLR*u)*pow(oom3u,2.);
+            double df0   = 3.*u*(2.-rLR*u)*(oom3u*oom3u);
             double df1   = 0.5*(7.*rLR*A1SF + 2.*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
             double df2   = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1.);
             double dAT2  = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );

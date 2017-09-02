@@ -69,7 +69,7 @@ vector<double> initial(TEOBResumParams *params)
         H0         = E0[i]/nu;                                     /** H_0/nu  */
         Omega_j[i] = A*j[i]/(nu*r2*H0*H0eff);                      /** Orbital frequency (from Hamilton's equation)  */
         psi        = 2.*(1.0 + 2.0*nu*(H0eff - 1.0))/(r2*dA[i]);   /** correction factor to the radius  */
-        r_omega    = r[i]*pow(psi,1.0/3.0);                        /** EOB-corrected radius  */
+        r_omega    = r[i]*cbrt(psi);                               /** EOB-corrected radius  */
         v_phi      = Omega_j[i]*r_omega;                           /** "corrected" azimuthal velocity such that Kepler's law is satisfied, r_omg^3 Omg_i^2 = 1  */
         
         x    = v_phi * v_phi;

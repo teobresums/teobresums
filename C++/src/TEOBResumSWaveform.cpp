@@ -295,7 +295,7 @@ vector<double> deltalm(const double Hreal,const double Omega,const double nu)
     /** Useful shorthands*/
     double pi2    = pi*pi;
     double nu2    = nu*nu;
-    double y      = gsl_pow_int(Hreal*Omega,2./3.);
+    double y      = cbrt(Hreal*Omega*Hreal*Omega);
     double sqrt_y = sqrt(y);
     double y3     = y*y*y;
     double y32    = Hreal*Omega;

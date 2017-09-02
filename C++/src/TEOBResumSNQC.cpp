@@ -311,15 +311,19 @@ vector<vector<gsl_complex> > find_a1a2a3(
     
     for (int j=t_length;j--;)
     {
-        n1[j]  = pow(pr_star[j]/(r[j]*w[j]),2);  // [pr*/(r Omg)]^2
-        n2[j]  = ddotr[j]/(r[j]*w[j]*w[j]);      // [ddot{r}/(r Omg^2)]
-        n3[j]  = n1[j]*pr_star[j]*pr_star[j];    // [pr*/(r Omg)]^2 *(pr*)^2
+        double pr_star2 = pr_star[j] * pr_star[j];
+        double r2       = r[j] * r[j];
+        double w2       = w[j] * w[j];
+
+        n1[j]  = pr_star2/(r2*w2);        // [pr*/(r Omg)]^2
+        n2[j]  = ddotr[j]/(r[j]*w2);      // [ddot{r}/(r Omg^2)]
+        n3[j]  = n1[j]*pr_star2;          // [pr*/(r Omg)]^2 *(pr*)^2
         
         // NQC basis for (2,2) waveform: PHASE
         
         n4[j]  = pr_star[j]/(r[j]*w[j]);           //  pr*/(r Omg)
-        n5[j]  = n4[j]*pow(r[j]*w[j],2);           // (pr*)*(r Omg)
-        n6[j]  = n5[j]*pow(pr_star[j],2);          // (pr*^3)*(r Omg)
+        n5[j]  = n4[j]*r2*w2;                      // (pr*)*(r Omg)
+        n6[j]  = n5[j]*pr_star2;                   // (pr*^3)*(r Omg)
     }
     
     /** Take the needed derivatives for the phase */

@@ -610,8 +610,8 @@ TEOBResumParams read_config(char *fname)
     params.X1 = X1;
     params.X2 = X2;
     
-    double S1 = pow(params.X1, 2.) * params.chi1;
-    double S2 = pow(params.X2, 2.) * params.chi2;
+    double S1 = params.X1 * params.X1 * params.chi1;
+    double S2 = params.X2 * params.X2 * params.chi2;
     params.S1 = S1;
     params.S2 = S2;
     
