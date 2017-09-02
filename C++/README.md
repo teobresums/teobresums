@@ -1,6 +1,6 @@
 To compile this code:
 
-autoreconf --install
+./bootstrap
 ./configure --prefix=<your destination> CXXFLAGS="-std=c++11 -Ofast -Wall -fPIC"
 make
 make install
@@ -8,7 +8,9 @@ make install
 to build and install the python wrapper
 
 cd python 
-python setup.py build_ext —inplace 
+python setup.py build_ext --inplace 
 
+Once the installation is finished, add 
+<your destination> to the path
 To run
-$ ./EOB_ihes.out par_file.par output_dir
+TEOBResum <options>

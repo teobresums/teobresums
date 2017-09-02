@@ -3,6 +3,7 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_LANG_CPLUSPLUS
 AC_CONFIG_SRCDIR([src])
 AM_INIT_AUTOMAKE
+mkdir -p m4
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_PROG_AR
@@ -12,7 +13,6 @@ AC_PROG_INSTALL
 LT_INIT
 LT_LANG([C++])
 
-mkdir -p m4
 AM_CXXFLAGS="-std=c++11 -Ofast -Wall -fPIC"
 
 AC_ARG_ENABLE(debug,
