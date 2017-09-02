@@ -17,21 +17,77 @@
  *  MA  02111-1307  USA
  */
 
-#include <ios>
-#include <vector>
-#include <stdio.h>
-#include <fstream>
-#include <gsl/gsl_sf.h>
+#include <cmath>
 #include <gsl/gsl_math.h>
+#include <gsl/gsl_sf.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
-#include <limits>
+#include <vector>
 
 #include "TEOBResum.h"
 
-typedef std::numeric_limits< double > dbl;
-
-using namespace::std;
+vector<double> NQC(const double r, const double prstar, const double Omega, const double ddotr, int i)
+{
+    
+    
+    vector<double> n(6);
+    
+    switch (i)
+    {
+            // l=2 -------------------------------------------------------------------
+            // (2,1)
+        case 0:
+            // NQC corrections to the modulus
+            n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+            n[1] = ddotr/(r*Omega*Omega);
+            n[2] = n[0]*prstar*prstar;
+            
+            
+            //% NQC corrections to the phase
+            n[3] = prstar/(r*Omega);
+            n[4] = n[3]*cbrt(Omega*Omega);
+            n[5] = n[4]*prstar*prstar;
+            break;
+            // (2,2)
+        case 1:
+            // NQC corrections to the modulus
+            n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+            n[1] = ddotr/(r*Omega*Omega);
+            n[2] = n[0]*prstar*prstar;
+            
+            
+            //% NQC corrections to the phase
+            n[3] = prstar/(r*Omega);
+            n[4] = n[3]*(r*Omega)*(r*Omega);
+            n[5] = n[4]*prstar*prstar;
+            break;
+            // l=3 -------------------------------------------------------------------
+            // (3,3)
+        case 4:
+            // NQC corrections to the modulus
+            n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+            n[1] = ddotr/(r*Omega*Omega);
+            n[2] = n[0]*prstar*prstar;
+            
+            
+            //% NQC corrections to the phase
+            n[3] = prstar/(r*Omega);
+            n[4] = n[3]*cbrt(Omega*Omega);
+            n[5] = n[4]*prstar*prstar;
+            break;
+        default:
+            n[0] = 0.;
+            n[1] = 0.;
+            n[2] = 0.;
+            
+            n[3] = 0.;
+            n[4] = 0.;
+            n[5] = 0.;
+            break;
+    }
+    
+    return n;
+}
 
 vector<vector<gsl_complex> > find_a1a2a3(
                                          vector<double>          T,
@@ -45,7 +101,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
                                          vector<double>          ddotr,
                                          void                    *params
                                          ){
-
+    
     double A_tmp, dA_tmp, omg_tmp, domg_tmp;
     
     double nu         = (*(TEOBResumParams *)params).nu;
@@ -56,13 +112,13 @@ vector<vector<gsl_complex> > find_a1a2a3(
     double X12      = X1 - X2;
     double chi1       = (*(TEOBResumParams *)params).chi1;
     double chi2       = (*(TEOBResumParams *)params).chi2;
-
+    
     double aK         = (*(TEOBResumParams *)params).aK;
     double aK2        = aK*aK;
     double aK3        = aK*aK*aK;
     double aK4        = aK*aK*aK*aK;
     double a12        = X1*chi1 - X2*chi2;
-
+    
     long int t_length = T.size();
     double c_p1,     c_p2,     c_p3,   c_p4;
     double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
@@ -73,7 +129,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
     double aeff_omg    = aK + a12*X12;
     vector<double> P(2);
     vector<double> M(4);
-
+    
     vector<double> p1(2);
     vector<double> p2(2);
     vector<double> p3(2);
@@ -102,7 +158,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
     vector<vector<double> > p2tmp(35, vector<double>(t_length));
     
     vector<vector<gsl_complex>> o(35, vector<gsl_complex>(t_length));
-
+    
     for (int k=35; k--;)
     {
         for (int j=t_length;j--;)
@@ -111,14 +167,14 @@ vector<vector<gsl_complex> > find_a1a2a3(
             A[k][j] = A[k][j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
         }
     }
-
-
+    
+    
     for (int k=35; k--;)
     {
-         omg[k] = s_D1(hlm_phase[k], T, t_length-1);
+        omg[k] = s_D1(hlm_phase[k], T, t_length-1);
         domg[k] = s_D1(omg[k],       T, t_length-1);
     }
-
+    
     /**  Case 'NQC_fit_hybrid' */
     if (nu == 0.25)
     {
@@ -128,7 +184,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         pA[3]    = -0.00076165;
         pA[4]    =  0.31973334;
         A_tmp    =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[3]*aK     + pA[4];
-
+        
         pdA[0]   =  0.00000927;
         pdA[1]   = -0.00024550;
         pdA[2]   =  0.00012469;
@@ -142,7 +198,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         pomg[3]  =  0.07084587;
         pomg[4]  =  0.38321834;
         omg_tmp  =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[3]*aK  + pomg[4];
-
+        
         pdomg[0] =  0.00024066;
         pdomg[1] =  0.00038123;
         pdomg[2] = -0.00049714;
@@ -188,7 +244,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         n0         =  pn0[0]*nu + pn0[1];
         d1         =  pd1[0]*nu + pd1[1];
         omg_tmp    =  n0/(1 + d1*aK);
-
+        
         ppdomg1[0] =  0.00061175;
         ppdomg1[1] =  0.00074001;
         ppdomg2[0] =  0.02504442;
@@ -197,7 +253,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         c_pdomg2   =  ppdomg2[0]*nu + ppdomg2[1];
         domg_tmp   =  c_pdomg1*aK   + c_pdomg2;
     }
-
+    
     else
     {
         a1_omg_tmp         =  0.205958;
@@ -222,7 +278,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         b2_A_tmp           = -0.00790612;
         A_tmp_scale_nu     = -1.4938817908*nu3 +1.0576568105*nu2 - 0.0779048897*nu+0.2964517117;
         A_tmp_scale_equal  = ((a2_A_tmp*X12*X12 + a1_A_tmp*X12 - 0.2764889288)*aeff+1)/((b2_A_tmp*X12*X12 + b1_A_tmp*X12 -0.4706843028)*aeff+1);
-
+        
         A_tmp              = A_tmp_scale_nu*A_tmp_scale_equal*(1-0.5*omg_tmp*aeff);
         
         a1_dA_tmp          =  0.00143545;
@@ -258,20 +314,20 @@ vector<vector<gsl_complex> > find_a1a2a3(
         n1[j]  = pow(pr_star[j]/(r[j]*w[j]),2);  // [pr*/(r Omg)]^2
         n2[j]  = ddotr[j]/(r[j]*w[j]*w[j]);      // [ddot{r}/(r Omg^2)]
         n3[j]  = n1[j]*pr_star[j]*pr_star[j];    // [pr*/(r Omg)]^2 *(pr*)^2
-
+        
         // NQC basis for (2,2) waveform: PHASE
-
+        
         n4[j]  = pr_star[j]/(r[j]*w[j]);           //  pr*/(r Omg)
         n5[j]  = n4[j]*pow(r[j]*w[j],2);           // (pr*)*(r Omg)
         n6[j]  = n5[j]*pow(pr_star[j],2);          // (pr*^3)*(r Omg)
     }
-
+    
     /** Take the needed derivatives for the phase */
     vector<double>  d_n4 = s_D1(n4,T,t_length-1);
     vector<double>  d_n5 = s_D1(n5,T,t_length-1);
     vector<double> d2_n4 = s_D1(d_n4,T,t_length-1);
     vector<double> d2_n5 = s_D1(d_n5,T,t_length-1);
-
+    
     int Omgmax_index = 0;
     double Omg_max   = Omg_orb[0];
     int i            = 1;
@@ -282,7 +338,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         Omgmax_index = i;
         i++;
     }
-
+    
     double tOmgOrb_pk = T[Omgmax_index];
     double DeltaT_nqc = 0.;
     
@@ -295,9 +351,9 @@ vector<vector<gsl_complex> > find_a1a2a3(
     {
         DeltaT_nqc = 1.;
     }
-
+    
     double tNQC = tOmgOrb_pk - DeltaT_nqc;
-
+    
     i        = 0;
     int jmax = 0;
     while (T[i] < tNQC)
@@ -305,9 +361,9 @@ vector<vector<gsl_complex> > find_a1a2a3(
         jmax = i;
         i++;
     }
-
+    
     /** Determination of NQC correction: solving a linear systems */
-
+    
     for (int k=35; k--; )
     {
         for (int j=t_length; j--;)
@@ -323,7 +379,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         p1tmp[k] = A[k];
         p2tmp[k] = s_D1(p1tmp[k],T,t_length-1);
     }
-
+    
     double detM = 1.;
     for (int k=35;k--;)
     {
@@ -340,7 +396,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
         ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
         ai[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
         ai[k][2] = 0.;
-
+        
         /** Computation of bi coefficients */
         P[0]     = omg[k][jmax]   - max_omg[k];
         P[1]     = domg[k][jmax]  - max_domg[k];
@@ -349,13 +405,13 @@ vector<vector<gsl_complex> > find_a1a2a3(
         M[1]     = d_n5[jmax];
         M[2]     = d2_n4[jmax];
         M[3]     = d2_n5[jmax];
-
+        
         detM     =  M[0]*M[3] - M[1]*M[2];
         bi[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
         bi[k][2] =  0.;
     }
-
+    
     for (int k=35;k--;)
     {
         for (int j=0; j<t_length-1;j++)
@@ -365,5 +421,118 @@ vector<vector<gsl_complex> > find_a1a2a3(
         }
     }
     return o;
+    
+}
 
+vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, double ddotr)
+{
+    
+    /** This file computes the NQC corrections to the RWZ multipolar waveform. */
+    /*
+     EOBNQCabFit Coefficients for NQC as fitted function of nu.
+     
+     [a,b] = EOBInitNQCFit(nu, EOBopt )
+     
+     Reference(s)
+     Nagar, Damour, Reisswig, Pollney
+     http://arxiv.org/abs/1506.08457
+     */
+    
+    vector<double> n(6);
+    const int kmax = 35;
+    double a1;
+    double a2;
+    double a3;
+    double b1;
+    double b2;
+    double b3;
+    
+    /** FITS: possibly to be improved further. Current fits: 9/02/2016 */
+    const double xnu  = 1-4*nu;
+    const double xnu2 = (1-4*nu)*(1-4*nu);
+    
+    /** NQC multipolar correction factor */
+    vector<gsl_complex> psilmnqc(kmax);
+    
+    for (int i=kmax;i--;)
+    {
+        switch (i)
+        {
+                /** l=2 -------------------------------------------------------------------
+                 *(2,1) */
+            case 0:
+                
+                a1 = 0.0162387198*(7.32653082*xnu2 + 1.19616248*xnu + 0.73496656);
+                a2 = -1.80492460*xnu2 + 1.78172686*xnu + 0.30865284;
+                a3 = 0.0;
+                
+                b1 =  -0.0647955017*(3.59934444*xnu2 - 4.08628784*xnu + 1.37890907);
+                b2 =  1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
+                b3 =  0.0;
+                
+                n  = NQC(r,prstar, Omega,ddotr,0);
+                
+                break;
+                
+                /* (2,2) */
+            case 1:
+                
+                a1 = -0.0805236959*( 1 - 2.00332326*xnu2)/( 1 + 3.08595088*xnu2);
+                a2 =  1.5299534255*( 1 + 1.16438929*xnu2)/( 1 + 1.92033923*xnu2);
+                a3 =  0.0;
+                
+                b1 = 0.146768094955*( 0.07417121*xnu + 1.01691256);
+                b2 = 0.896911234248*(-0.61072011*xnu + 0.94295129);
+                b3 = 0.0;
+                
+                n  = NQC(r,prstar, Omega,ddotr,1);
+                
+                break;
+                
+                /** l=3 -------------------------------------------------------------------
+                 * (3,3) */
+            case 4:
+                
+                a1 = -0.0377680000*(1 - 14.61548907*xnu2)/( 1 + 2.44559263*xnu2);
+                a2 =  1.9898000000*(1 + 2.09750346 *xnu2)/( 1 + 2.57489466*xnu2);
+                a3 =  0.0;
+                
+                b1 = 0.1418400000*(1.07430512 - 1.23906804*xnu + 4.44910652*xnu2);
+                b2 = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
+                b3 = 0.0;
+                
+                n  = NQC(r,prstar, Omega,ddotr,4);
+                
+                break;
+                
+            default:
+                
+                a1 = 0.;
+                a2 = 0.;
+                a3 = 0.;
+                
+                b1 = 0.;
+                b2 = 0.;
+                b3 = 0.;
+                break;
+        }
+        
+        psilmnqc[i].dat[0] = 1. + a1*n[0] + a2*n[1] + a3*n[2];
+        psilmnqc[i].dat[1] = 0. + b1*n[3] + b2*n[4] + b3*n[5];
+    }
+    
+    return psilmnqc;
+}
+
+double dtnqc_fit(double chi,double chi0)
+{
+    /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
+    
+    double n1    = -16.06288206;
+    double d1    = -4.04266459;
+    double x     = chi-chi0;
+    double dtnqc = (1.+n1*x)/(1.+d1*x);
+    
+    return dtnqc;
+    
 }

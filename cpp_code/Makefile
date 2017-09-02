@@ -8,12 +8,10 @@ OBJS =               \
 A_NumDenom.o	     \
 AdiabLR.o    	     \
 deltalm.o    	     \
-dtnqc_fit.o 	     \
 Eulerlog.o  	     \
 f_lm.o	     	     \
 FDdrvt_omega.o 	     \
 FDdrvt.o 	     \
-find_a1a2a3.o 	     \
 FlmNewt.o 	     \
 get_Omg_orb.o 	     \
 HealyBBHFitRemnant.o \
@@ -21,14 +19,12 @@ hhatlmtail.o 	     \
 hlm_Tidal.o 	     \
 hlm.o 		     \
 hlmNewt.o 	     \
-hlmNQC.o 	     \
 HorizonFlux.o	     \
 interp_grid.o 	     \
 interpolator.o	     \
 LALSimIMRTEOBIHES.o  \
 main.o		\
 Metric.o       \
-NQC.o         \
 read_config.o	     \
 RHS.o           \
 s_A5PNlog.o	     \
@@ -45,6 +41,7 @@ spinsphericalharm.o   \
 SpeedyTail.o      \
 TEOBResumFlux.o \
 TEOBResumInitialConditions.o \
+TEOBResumNQC.o	\
 TEOBResumRingdown.o \
 Tlm.o \
 
@@ -62,8 +59,6 @@ AdiabLR.o: AdiabLR.cpp
 	$(CC) $(CFLAGS) $(INC) AdiabLR.cpp
 deltalm.o: deltalm.cpp
 	$(CC) $(CFLAGS) $(INC) deltalm.cpp
-dtnqc_fit.o: dtnqc_fit.cpp
-	$(CC) $(CFLAGS) $(INC) dtnqc_fit.cpp
 Eulerlog.o: Eulerlog.cpp
 	$(CC) $(CFLAGS) $(INC) Eulerlog.cpp
 f_lm.o: f_lm.cpp
@@ -98,8 +93,6 @@ interpolator.o: interpolator.cpp
 	$(CC) $(CFLAGS) $(INC) interpolator.cpp
 Metric.o: Metric.cpp
 	$(CC) $(CFLAGS) $(INC) Metric.cpp
-NQC.o: NQC.cpp
-	$(CC) $(CFLAGS) $(INC) NQC.cpp
 read_config.o: read_config.cpp
 	$(CC) $(CFLAGS) $(INC) read_config.cpp
 RHS.o: RHS.cpp
@@ -132,6 +125,8 @@ TEOBResumFlux.o: TEOBResumFlux.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumFlux.cpp
 TEOBResumInitialConditions.o: TEOBResumInitialConditions.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumInitialConditions.cpp
+TEOBResumNQC.o: TEOBResumNQC.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumNQC.cpp
 TEOBResumRingdown.o: TEOBResumRingdown.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumRingdown.cpp
 Tlm.o: Tlm.cpp
