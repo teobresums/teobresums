@@ -18,7 +18,7 @@ AM_CXXFLAGS="-std=c++11 -Ofast -Wall -fPIC"
 AC_ARG_ENABLE(debug,
     AC_HELP_STRING([--enable-debug],
     [Add -g to CXXFLAGS]),
-    [ CXXFLAGS="-g -O0 $CXXFLAGS"], [ CXXFLAGS="-O3 $CXXFLAGS"])
+    [ CXXFLAGS="-g -O0 $CXXFLAGS"], [ CXXFLAGS="$CXXFLAGS"])
 
 AC_ARG_ENABLE(profile,
               [  --enable-profile        Add gprof-friendly stuff to CXXFLAGS],
