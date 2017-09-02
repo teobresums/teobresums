@@ -9,19 +9,15 @@ A_NumDenom.o	     \
 get_Omg_orb.o 	     \
 LALSimIMRTEOBIHES.o  \
 main.o		\
-Metric.o       \
 read_config.o	     \
-RHS.o           \
-s_A5PNlog.o	     \
 s_bisec.o        \
 s_D1.o		     \
 s_get_rc.o	     \
 s_GS.o		     \
-s_Metric.o	     \
-s_RHS.o		     \
 TEOBResumFlux.o \
 TEOBResumHlm.o \
 TEOBResumInitialConditions.o \
+TEOBResumMetric.o \
 TEOBResumNQC.o	\
 TEOBResumRingdown.o \
 TEOBResumUtils.o \
@@ -41,14 +37,8 @@ get_Omg_orb.o: get_Omg_orb.cpp
 	$(CC) $(CFLAGS) $(INC) get_Omg_orb.cpp
 TEOBResumHlm.o: TEOBResumHlm.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumHlm.cpp
-Metric.o: Metric.cpp
-	$(CC) $(CFLAGS) $(INC) Metric.cpp
 read_config.o: read_config.cpp
 	$(CC) $(CFLAGS) $(INC) read_config.cpp
-RHS.o: RHS.cpp
-	$(CC) $(CFLAGS) $(INC) RHS.cpp
-s_A5PNlog.o: s_A5PNlog.cpp
-	$(CC) $(CFLAGS) $(INC) s_A5PNlog.cpp
 s_bisec.o: s_bisec.cpp
 	$(CC) $(CFLAGS) $(INC) s_bisec.cpp
 s_D1.o: s_D1.cpp
@@ -57,16 +47,12 @@ s_get_rc.o: s_get_rc.cpp
 	$(CC) $(CFLAGS) $(INC) s_get_rc.cpp
 s_GS.o: s_GS.cpp
 	$(CC) $(CFLAGS) $(INC) s_GS.cpp
-s_Metric.o: s_Metric.cpp
-	$(CC) $(CFLAGS) $(INC) s_Metric.cpp
-s_RHS.o: s_RHS.cpp
-	$(CC) $(CFLAGS) $(INC) s_RHS.cpp
-spinsphericalharm.o: spinsphericalharm.cpp
-	$(CC) $(CFLAGS) $(INC) spinsphericalharm.cpp
 TEOBResumFlux.o: TEOBResumFlux.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumFlux.cpp
 TEOBResumInitialConditions.o: TEOBResumInitialConditions.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumInitialConditions.cpp
+TEOBResumMetric.o: TEOBResumMetric.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumMetric.cpp
 TEOBResumNQC.o: TEOBResumNQC.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumNQC.cpp
 TEOBResumRingdown.o: TEOBResumRingdown.cpp
