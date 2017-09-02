@@ -7,7 +7,7 @@
 
 ## How to compile
 
-Two options
+There are 2 options
 
 - simple Makefile
 - build that includes Python wrapper
