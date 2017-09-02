@@ -1,4 +1,4 @@
-AC_INIT([TEOBResum], [1.0], [walter.delpozzo@unipi.it])
+AC_INIT([TEOBResumS], [1.0], [walter.delpozzo@unipi.it])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_LANG_CPLUSPLUS
 AC_CONFIG_SRCDIR([src])
@@ -69,18 +69,18 @@ Makefile
 src/Makefile
 ])
 
-# link any executables against TEOBResum library
-AC_SUBST([LDADD], ["libTEOBResum.la"])
+# link any executables against TEOBResumS library
+AC_SUBST([LDADD], ["libTEOBResumS.la"])
 #AM_CPPFLAGS="-Isrc `gsl-config --cflags` ${AM_CPPFLAGS}"
 AC_OUTPUT
 AC_MSG_NOTICE([
 ==================================================
-TEOBResum has now been successfully configured and will be installed under the directory:
+TEOBResumS has now been successfully configured and will be installed under the directory:
 
 ${prefix}
 
-Now run 'make' to build TEOBResum,
-and run 'make install' to install TEOBResum.
+Now run 'make' to build TEOBResumS,
+and run 'make install' to install TEOBResumS.
 
 ==================================================
 ])
