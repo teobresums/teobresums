@@ -12,10 +12,6 @@ f_lm.o	     	     \
 FlmNewt.o 	     \
 get_Omg_orb.o 	     \
 HealyBBHFitRemnant.o \
-hhatlmtail.o 	     \
-hlm_Tidal.o 	     \
-hlm.o 		     \
-hlmNewt.o 	     \
 HorizonFlux.o	     \
 LALSimIMRTEOBIHES.o  \
 main.o		\
@@ -33,6 +29,7 @@ s_Metric.o	     \
 s_RHS.o		     \
 s_waveform.o	    \
 TEOBResumFlux.o \
+TEOBResumHlm.o \
 TEOBResumInitialConditions.o \
 TEOBResumNQC.o	\
 TEOBResumRingdown.o \
@@ -61,14 +58,8 @@ get_Omg_orb.o: get_Omg_orb.cpp
 	$(CC) $(CFLAGS) $(INC) get_Omg_orb.cpp
 HealyBBHFitRemnant.o: HealyBBHFitRemnant.cpp
 	$(CC) $(CFLAGS) $(INC) HealyBBHFitRemnant.cpp
-hhatlmtail.o: hhatlmtail.cpp
-	$(CC) $(CFLAGS) $(INC) hhatlmtail.cpp
-hlm_Tidal.o: hlm_Tidal.cpp
-	$(CC) $(CFLAGS) $(INC) hlm_Tidal.cpp
-hlm.o: hlm.cpp
-	$(CC) $(CFLAGS) $(INC) hlm.cpp
-hlmNewt.o: hlmNewt.cpp
-	$(CC) $(CFLAGS) $(INC) hlmNewt.cpp
+TEOBResumHlm.o: TEOBResumHlm.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumHlm.cpp
 HorizonFlux.o: HorizonFlux.cpp
 	$(CC) $(CFLAGS) $(INC) HorizonFlux.cpp
 Metric.o: Metric.cpp
