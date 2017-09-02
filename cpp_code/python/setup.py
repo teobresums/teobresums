@@ -14,7 +14,7 @@ ext_modules=[
              Extension("pyTEOBResum",
                        sources=["pyTEOBResum.pyx"],
                        libraries=["m","TEOBResum"], # Unix-like specific
-                       include_dirs=[numpy.get_include(),"../src"],
+                       include_dirs=[numpy.get_include(),"../src","`gsl-config --cflags`"],
                        language='c++',
                        extra_compile_args=["-O3"],
                        extra_link_args=["-L"+library+"/lib/"]
@@ -24,5 +24,5 @@ ext_modules=[
 setup(
       name = "pyTEOBResum",
       ext_modules = cythonize(ext_modules),
-      include_dirs=[numpy.get_include(),"../src"]
+      include_dirs=[numpy.get_include(),"../src","`gsl-config --cflags`"]
       )
