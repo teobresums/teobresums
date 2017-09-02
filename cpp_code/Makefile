@@ -29,11 +29,8 @@ LALSimIMRTEOBIHES.o  \
 main.o		\
 Metric.o       \
 NQC.o         \
-QNMHybridFitCab.o  \
 read_config.o	     \
 RHS.o           \
-ringdown.o	     \
-ringdown_match.o     \
 s_A5PNlog.o	     \
 s_bisec.o        \
 s_D1.o		     \
@@ -48,6 +45,7 @@ spinsphericalharm.o   \
 SpeedyTail.o      \
 TEOBResumFlux.o \
 TEOBResumInitialConditions.o \
+TEOBResumRingdown.o \
 Tlm.o \
 
 all:main
@@ -102,16 +100,10 @@ Metric.o: Metric.cpp
 	$(CC) $(CFLAGS) $(INC) Metric.cpp
 NQC.o: NQC.cpp
 	$(CC) $(CFLAGS) $(INC) NQC.cpp
-QNMHybridFitCab.o: QNMHybridFitCab.cpp
-	$(CC) $(CFLAGS) $(INC) QNMHybridFitCab.cpp
 read_config.o: read_config.cpp
 	$(CC) $(CFLAGS) $(INC) read_config.cpp
 RHS.o: RHS.cpp
 	$(CC) $(CFLAGS) $(INC) RHS.cpp
-ringdown.o: ringdown.cpp
-	$(CC) $(CFLAGS) $(INC) ringdown.cpp
-ringdown_match.o: ringdown_match.cpp
-	$(CC) $(CFLAGS) $(INC) ringdown_match.cpp
 s_A5PNlog.o: s_A5PNlog.cpp
 	$(CC) $(CFLAGS) $(INC) s_A5PNlog.cpp
 s_bisec.o: s_bisec.cpp
@@ -140,6 +132,8 @@ TEOBResumFlux.o: TEOBResumFlux.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumFlux.cpp
 TEOBResumInitialConditions.o: TEOBResumInitialConditions.cpp
 	$(CC) $(CFLAGS) $(INC) TEOBResumInitialConditions.cpp
+TEOBResumRingdown.o: TEOBResumRingdown.cpp
+	$(CC) $(CFLAGS) $(INC) TEOBResumRingdown.cpp
 Tlm.o: Tlm.cpp
 	$(CC) $(CFLAGS) $(INC) Tlm.cpp
 
