@@ -242,7 +242,7 @@ int main (int argc, char* argv[])
         Waveform *hplus;
         Waveform *hcross;
         
-        TEOBResum(&hplus,
+        TEOBResumS(&hplus,
                 &hcross,
                 m1,
                 m2,
