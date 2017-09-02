@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- C++
+- C++ compiler (GNU, Intel)
 - GSL/BLAS 
 
 ## How to compile
