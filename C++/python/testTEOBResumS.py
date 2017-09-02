@@ -1,4 +1,4 @@
-from pyTEOBResum import pyTEOBResum
+from pyTEOBResumS import pyTEOBResumS
 import numpy as np
 
 m1=40.0
@@ -25,7 +25,7 @@ waveform = 0
 lm = 1
 solver_scheme = 0
 
-h = pyTEOBResum(m1,
+h = pyTEOBResumS(m1,
                 m2,
                 spin1x,
                 spin1y,
