@@ -32,15 +32,15 @@
 using namespace::std;
 
 
-tuple<vector<string>, vector<string> > file_names (input *params)
+tuple<vector<string>, vector<string> > file_names (TEOBResumParams *params)
 {
-    int solver_scheme = (*params).solver_scheme;
-    int lm            = (*params).lm;
-    double q          = (*params).q;
-    double r0         = (*params).r0;
-    double dt         = (*params).dt;
-    double chi1       = (*params).chi1;
-    double chi2       = (*params).chi2;
+    int solver_scheme = (*(TEOBResumParams *)params).solver_scheme;
+    int lm            = (*(TEOBResumParams *)params).lm;
+    double q          = (*(TEOBResumParams *)params).q;
+    double r0         = (*(TEOBResumParams *)params).r0;
+    double dt         = (*(TEOBResumParams *)params).dt;
+    double chi1       = (*(TEOBResumParams *)params).chi1;
+    double chi2       = (*(TEOBResumParams *)params).chi2;
 
     vector<string> wave(35);
     std::string conf;
@@ -54,7 +54,7 @@ tuple<vector<string>, vector<string> > file_names (input *params)
     /**Output file definitions*/
     //ofstream Omeg("data/Omega.dat");
     
-     if ((*params).tidal==true){conf = "BNS";}
+     if ((*(TEOBResumParams *)params).flags.tidal==1){conf = "BNS";}
      else {conf = "BBH";}
     
      q_str.erase ( q_str.find_last_not_of('0') + 1, std::string::npos );
@@ -84,18 +84,18 @@ tuple<vector<string>, vector<string> > file_names (input *params)
              break;
      }
 
-     string data = (*params).outputdir+"/dynamics_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat";
+     string data = (*(TEOBResumParams *)params).outputdir+"/dynamics_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat";
 
     for (int k=35; k--; )
     {
-        wave[k] = (*params).outputdir+"/h_"+conf+"_"+std::to_string(L[k])+std::to_string(M[k])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat";
+        wave[k] = (*(TEOBResumParams *)params).outputdir+"/h_"+conf+"_"+std::to_string(L[k])+std::to_string(M[k])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat";
     }
     //string wave("data/h_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
-    string QOmg((*params).outputdir+"/Qomg_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
-    string Afunc((*params).outputdir+"/Afunc_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
-    string init((*params).outputdir+"/initialData_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+".dat");
-    string time_step((*params).outputdir+"/Tstep_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
-    string runReport((*params).outputdir+"/runReport_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
+    string QOmg((*(TEOBResumParams *)params).outputdir+"/Qomg_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
+    string Afunc((*(TEOBResumParams *)params).outputdir+"/Afunc_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
+    string init((*(TEOBResumParams *)params).outputdir+"/initialData_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+".dat");
+    string time_step((*(TEOBResumParams *)params).outputdir+"/Tstep_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
+    string runReport((*(TEOBResumParams *)params).outputdir+"/runReport_"+conf+"_"+std::to_string(L[lm])+std::to_string(M[lm])+"_q"+q_str+"_r0_"+r0_str+"_dt"+dt_str+"_chi1_"+chi1_str+"_chi2_"+chi2_str+"_"+scheme+".dat");
 
     //return {data,wave,QOmg,Afunc,init,time_step,runReport};
     vector<string> files = {data,init,QOmg,Afunc,time_step,runReport,"0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0"};

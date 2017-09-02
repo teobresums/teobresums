@@ -66,6 +66,8 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
                         int   tidal,           /** tidal corrections flag (BNS only) **/
                         int   speedy,          /** accelerated tails flag **/
                         int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int    dynamics,        /** output dynamics to file */
+                        int    waveform,        /** output phjysical waveform to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/)
 {
@@ -108,6 +110,8 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
                                             tidal,
                                             speedy,
                                             RWZ,
+                                            dynamics,
+                                            waveform,
                                             lm,
                                             solver_scheme);
     double q             = m1/m2;
@@ -415,7 +419,7 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
     /** h22 = 1/R * (nu*M)*G/c^2 h_code_output */
     
     double mtot_m = (m1+m2)*MSUN_M;
-    double amplitude_prefactor = params.nu*mtot_m/(distance);
+    double amplitude_prefactor = params.nu*mtot_m/(distance*MPC_M);
 
     for (int k=35; k--; )
     {
@@ -461,6 +465,8 @@ void XLALSimIMRTEOBIHES_single_mode(
                         int   tidal,           /** tidal corrections flag (BNS only) **/
                         int   speedy,          /** accelerated tails flag **/
                         int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int    dynamics,        /** output dynamics to file */
+                        int    waveform,        /** output phjysical waveform to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
                         int    index                /** Index of the multipole, conventions of multiple_index **/
@@ -494,8 +500,11 @@ void XLALSimIMRTEOBIHES_single_mode(
                                             tidal,
                                             speedy,
                                             RWZ,
+                                            dynamics,
+                                            waveform,
                                             lm,
                                             solver_scheme);
+    
     double q             = m1/m2;
     double dt            = params.dt;
     
@@ -657,7 +666,7 @@ void XLALSimIMRTEOBIHES_single_mode(
         
         /** Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards */
         //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
-        if (params.spin==true)
+        if (params.flags.spin==1)
         {
             MOmg = Omg_orb;
         }

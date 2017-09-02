@@ -50,10 +50,12 @@ int main (int argc, char* argv[])
     double distance      = 40;
     double inclination   = 0.0;
     double polarisation  = 0.0;
-    bool   NQC           = false;
-    bool   tidal         = false;
-    bool   speedy        = true;
-    bool   RWZ           = false;
+    int   NQC            = 0;
+    int   tidal          = 0;
+    int   speedy         = 1;
+    int   RWZ            = 0;
+    int    dynamics      = 0;
+    int    waveform      = 0;
     bool   multipoles    = false;
     int    mult_index    = -1;
     int    lm            = 1;
@@ -74,16 +76,16 @@ int main (int argc, char* argv[])
             printf("f_min = %f\n",f_min);
             printf("iota = %f\n",inclination);
             printf("psi = %f\n",polarisation);
-            input params = read_config(parfile);
+            TEOBResumParams params = read_config(parfile);
             q = params.q;
             m2 = m1/q;
             chi1 = params.chi1;
             chi2 = params.chi2;
-            NQC  = params.NQC;
-            RWZ  = params.RWZ;
+            NQC  = params.flags.NQC;
+            RWZ  = params.flags.RWZ;
             solver_scheme = params.solver_scheme;
-            tidal = params.tidal;
-            speedy = params.speedy;
+            tidal = params.flags.tidal;
+            speedy = params.flags.speedy;
             lm = params.lm;
             LambdaAl2 = params.LambdaAl2;
             LambdaBl2 = params.LambdaBl2;
@@ -209,6 +211,8 @@ int main (int argc, char* argv[])
                                        tidal,
                                        speedy,
                                        RWZ,
+                                       dynamics,
+                                       waveform,
                                        lm,
                                        solver_scheme,
                                        mult_index);
@@ -259,6 +263,8 @@ int main (int argc, char* argv[])
                            tidal,
                            speedy,
                            RWZ,
+                           dynamics,
+                           waveform,
                            lm,
                            solver_scheme);
         

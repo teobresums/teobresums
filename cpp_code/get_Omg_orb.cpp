@@ -18,7 +18,6 @@
  */
 
 #include <vector>
-#include "input_struc.h"
 #include <cmath>
 
 #include "TEOBResum.h"
@@ -28,17 +27,17 @@ using namespace::std;
 vector<double> get_Omg_orb(vector<double> r,vector<double> pph,vector<double> pr_star,vector<double> A,vector<double> B,void *params)
 {
 
-    double nu   = (*(input *)params).nu;
-    double aK2  = (*(input *)params).aK2;
-    double S1   = (*(input *)params).S1;
-    double S2   = (*(input *)params).S2;
-    double a1   = (*(input *)params).a1;
-    double a2   = (*(input *)params).a2;
-    double X1   = (*(input *)params).X1;
-    double X2   = (*(input *)params).X2;
-    double chi1 = (*(input *)params).chi1;
-    double chi2 = (*(input *)params).chi2;
-    double c3   = (*(input *)params).cN3LO;
+    double nu   = (*(TEOBResumParams *)params).nu;
+    double aK2  = (*(TEOBResumParams *)params).aK2;
+    double S1   = (*(TEOBResumParams *)params).S1;
+    double S2   = (*(TEOBResumParams *)params).S2;
+    double a1   = (*(TEOBResumParams *)params).a1;
+    double a2   = (*(TEOBResumParams *)params).a2;
+    double X1   = (*(TEOBResumParams *)params).X1;
+    double X2   = (*(TEOBResumParams *)params).X2;
+    double chi1 = (*(TEOBResumParams *)params).chi1;
+    double chi2 = (*(TEOBResumParams *)params).chi2;
+    double c3   = (*(TEOBResumParams *)params).cN3LO;
 
     double S     = S1 + S2;
     double Sstar = X2*a1 + X1*a2;

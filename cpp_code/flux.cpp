@@ -27,9 +27,9 @@
 double flux(const double x,const double Omega,const double r_omega,const double E, const double Heff,const double jhat,const double r,const double prstar, const double ddotr, double source[],void *params)
 {
 
-    bool tidal_flag = (*(input *)params).tidal;
-    bool NQC_flag   = (*(input *)params).NQC;
-    double nu       = (*(input *)params).nu;
+    bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+    bool NQC_flag   = (*(TEOBResumParams *)params).flags.NQC;
+    double nu       = (*(TEOBResumParams *)params).nu;
     double Flm;
     double Modhhatlm;
     double sqrt_one_4nu = sqrt(1.-4.*nu);

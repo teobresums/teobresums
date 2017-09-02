@@ -242,19 +242,19 @@ TEOBResumParams read_config(char *fname)
     params.aK  = a1 + a2;
     params.aK2 = aK2;
     params.rLR = 0.;
-    params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
+    params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.flags.tidal);
     
     /** if tidal corrections are requested, unset the NQC corrections */
     if (params.flags.tidal==1) params.flags.NQC = 0;
 
     // tidal params
-    double lambdaAl2 = params.LambdaAl2;
-    double lambdaAl3 = params.LambdaAl3;
-    double lambdaAl4 = params.LambdaAl4;
+    double LambdaAl2 = params.LambdaAl2;
+    double LambdaAl3 = params.LambdaAl3;
+    double LambdaAl4 = params.LambdaAl4;
     
-    double lambdaBl2 = params.LambdaBl2;
-    double lambdaBl3 = params.LambdaBl3;
-    double lambdaBl4 = params.LambdaBl4; 
+    double LambdaBl2 = params.LambdaBl2;
+    double LambdaBl3 = params.LambdaBl3;
+    double LambdaBl4 = params.LambdaBl4;
     
     /** Computing the tidal coupling constants */
     
@@ -294,8 +294,8 @@ TEOBResumParams read_config(char *fname)
 
     //double lambda1 = params.LambdaAl2;
     //double lambda2 = params.LambdaBl2;
-    double logC_Q1 = logQ(log(lambdaAl2));
-    double logC_Q2 = logQ(log(lambdaBl2));
+    double logC_Q1 = logQ(log(LambdaAl2));
+    double logC_Q2 = logQ(log(LambdaBl2));
     double C_Q1    = exp(logC_Q1);
     double C_Q2    = exp(logC_Q2);    
     params.C_Q1 = C_Q1;
@@ -387,7 +387,7 @@ TEOBResumParams process_input_parameters(
     
     params.rLR = 0.;
 
-    params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.tidal);
+    params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.flags.tidal);
 
     /** if tidal corrections are requested, unset the NQC corrections */
     if (params.flags.tidal==1) params.flags.NQC = 0;

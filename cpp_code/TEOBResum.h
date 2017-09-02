@@ -185,6 +185,8 @@ void XLALSimIMRTEOBIHES(Waveform **hplus,       /** h+ return array **/
                         int   tidal,           /** tidal corrections flag (BNS only) **/
                         int   speedy,          /** accelerated tails flag **/
                         int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int    dynamics,        /** output dynamics to file */
+                        int    waveform,        /** output phjysical waveform to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
 );
@@ -211,6 +213,8 @@ void XLALSimIMRTEOBIHES_single_mode(Waveform **ampl,        /** h+ return array 
                                     int   tidal,           /** tidal corrections flag (BNS only) **/
                                     int   speedy,          /** accelerated tails flag **/
                                     int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                                    int    dynamics,        /** output dynamics to file */
+                                    int    waveform,        /** output phjysical waveform to file */
                                     int    lm,              /** TO BE REMOVED **/
                                     int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
                                     int    index                /** Index of the multipole, conventions of multiple_index **/
@@ -309,19 +313,21 @@ double interpolate(double dt, vector<gsl_complex> grid);
 double logQ(double x);
 
 TEOBResumParams process_input_parameters(double m1,
-                               double m2,
-                               double chi1,
-                               double chi2,
-                               double f_min,
-                               double sampling_rate,
-                               double LambdaAl2,
-                               double LambdaBl2,
-                               int   NQC,
-                               int   tidal,
-                               int   speedy,
-                               int   RWZ,
-                               int    lm,
-                               int    solver_scheme
+                                double m2,
+                                double chi1,
+                                double chi2,
+                                double f_min,
+                                double sampling_rate,
+                                double LambdaAl2,
+                                double LambdaBl2,
+                                int    NQC,
+                                int    tidal,
+                                int    speedy,
+                                int    RWZ,
+                                int    dynamics,
+                                int    waveform,
+                                int    lm,
+                                int    solver_scheme
                                );
 TEOBResumParams read_config(char *fname);
 

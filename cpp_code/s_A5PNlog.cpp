@@ -55,9 +55,9 @@ vector<double> s_A5PNlog(double r, void *params, bool nnlo_flag){
     
 
 // parameters
-bool tidal_flag = (*(input *)params).tidal;
-double rLR      = (*(input *)params).rLR;
-double nu       = (*(input *)params).nu;
+bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+double rLR      = (*(TEOBResumParams *)params).rLR;
+double nu       = (*(TEOBResumParams *)params).nu;
 vector<double> data(5);
 
 // constants 
@@ -125,20 +125,20 @@ double dA_u      = prefactor*(dNum*Den - dDen*Num);
     double A0    = A;
     double A0_du = dA_u;
 	// CHECK IF THE SAME (BE AWARE ANOTHE DEF BELOW IN OTHER ROUTINE):
-	double XA = (*(input *)params).X1;
-	double XB = (*(input *)params).X2;
+	double XA = (*(TEOBResumParams *)params).X1;
+	double XB = (*(TEOBResumParams *)params).X2;
 
-    double kapA2 = (*(input *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
-    double kapB2 = (*(input *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
+    double kapA2 = (*(TEOBResumParams *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+    double kapB2 = (*(TEOBResumParams *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
     
-    double kapT2 = (*(input *)params).kappaTl2; // kapA2 + kapB2;
-    double kapT3 = (*(input *)params).kappaTl3;//kapA3 + kapB3;
-    double kapT4 = (*(input *)params).kappaTl4;//kapA4 + kapB4;
+    double kapT2 = (*(TEOBResumParams *)params).kappaTl2; // kapA2 + kapB2;
+    double kapT3 = (*(TEOBResumParams *)params).kappaTl3;//kapA3 + kapB3;
+    double kapT4 = (*(TEOBResumParams *)params).kappaTl4;//kapA4 + kapB4;
 
-    double bar_alph2_1 = (*(input *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
-    double bar_alph2_2 = (*(input *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
-    double bar_alph3_1 = (*(input *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
-    double bar_alph3_2 = (*(input *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+    double bar_alph2_1 = (*(TEOBResumParams *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
+    double bar_alph2_2 = (*(TEOBResumParams *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2; 
+    double bar_alph3_1 = (*(TEOBResumParams *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
+    double bar_alph3_2 = (*(TEOBResumParams *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
      
     //case 'nnlo'
     if (nnlo_flag==true) { //Used for calculating the rLR

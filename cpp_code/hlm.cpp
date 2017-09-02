@@ -33,11 +33,11 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     int kmax = 35; 
 
     vector<gsl_complex> hlm(kmax);
-    double nu            = (*(input *)params).nu;
-    bool tidal_flag      = (*(input *)params).tidal;
-    bool spin_flag       = (*(input *)params).spin;
-    bool NQC_flag        = (*(input *)params).NQC;
-    bool speedytail_flag = (*(input *)params).speedy;
+    double nu            = (*(TEOBResumParams *)params).nu;
+    int tidal_flag      = (*(TEOBResumParams *)params).flags.tidal;
+    int spin_flag       = (*(TEOBResumParams *)params).flags.spin;
+    int NQC_flag        = (*(TEOBResumParams *)params).flags.NQC;
+    int speedytail_flag = (*(TEOBResumParams *)params).flags.speedy;
     
     double source[] = {
         jhat,Heff,
@@ -54,7 +54,7 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     /** Compute corrections */
     double x = gsl_pow_int(rw*Omega,2);
     vector<double> flm(35);
-    if (spin_flag==true)
+    if (spin_flag==1)
     {
         flm = s_flm(x,params);
     }
@@ -67,11 +67,11 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     const double r0    = 1.213061319425267e+00;   // 2/sqrt(e);
     const double Hreal = H * nu;
     vector<gsl_complex> tlm(kmax);
-    if (speedytail_flag==false)
+    if (speedytail_flag==0)
     {
         tlm = hhatlmtail(Omega,Hreal, r0, L, M);
     }
-    else if (speedytail_flag==true)
+    else
     {
         tlm = speedyTail(Omega,Hreal, r0, L, M);
     }
@@ -80,7 +80,7 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
     const vector<double> EOBdeltalm = deltalm(Hreal, Omega, nu);
 
     vector<gsl_complex> h_NQC(kmax);
-    if (NQC_flag==true)
+    if (NQC_flag==1)
     {
         h_NQC = hlmNQC(nu,r,prstar,Omega,ddotr);
     }
@@ -95,14 +95,14 @@ vector<gsl_complex> hlm(double t, const double phi, const double r, const double
         hlm[k].dat[1] = - hlm[k].dat[1]; /** Minus sign by convention */
     
         /** NQC correction */
-        if (NQC_flag==true)
+        if (NQC_flag==1)
         {
             hlm[k].dat[0] *= h_NQC[k].dat[0];
             hlm[k].dat[1] -= h_NQC[k].dat[1];
         }
     }
     
-    if (tidal_flag==true)
+    if (tidal_flag==1)
     {
             
         /** Compute tidal contribution */

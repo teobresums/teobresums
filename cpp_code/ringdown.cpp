@@ -29,7 +29,7 @@
 using namespace::std;
 
 
-int ringdown(input params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
+int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
     
     //EOBhlm Compute the multipolar resummed waveform.
     //

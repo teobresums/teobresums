@@ -24,7 +24,7 @@
 
 using namespace::std;
 
-vector<double> initial(input *params)
+vector<double> initial(TEOBResumParams *params)
 {
 
     double nu = (*params).nu;

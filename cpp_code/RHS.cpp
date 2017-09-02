@@ -38,7 +38,7 @@ using namespace::std;
 int rhs(double t, const double y[], double f[], void *params){
     (void)(t); /* avoid unused parameter warning */
 
-    double nu = (*(input *)params).nu;
+    double nu = (*(TEOBResumParams *)params).nu;
     
     const double z3 = 2.0*nu*(4.0-3.0*nu);
     const double prstar  = y[2];

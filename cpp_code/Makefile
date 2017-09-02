@@ -13,7 +13,6 @@ Eulerlog.o  	     \
 f_lm.o	     	     \
 FDdrvt_omega.o 	     \
 FDdrvt.o 	     \
-file_names.o	     \
 find_a1a2a3.o 	     \
 FlmNewt.o 	     \
 flux.o 		     \
@@ -77,8 +76,6 @@ FDdrvt_omega.o: FDdrvt_omega.cpp
 	$(CC) $(CFLAGS) $(INC) FDdrvt_omega.cpp
 FDdrvt.o: FDdrvt.cpp
 	$(CC) $(CFLAGS) $(INC) FDdrvt.cpp
-file_names.o: file_names.cpp
-	$(CC) $(CFLAGS) $(INC) file_names.cpp
 find_a1a2a3.o: find_a1a2a3.cpp
 	$(CC) $(CFLAGS) $(INC) find_a1a2a3.cpp
 FlmNewt.o: FlmNewt.cpp

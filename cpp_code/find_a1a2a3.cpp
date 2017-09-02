@@ -48,16 +48,16 @@ vector<vector<gsl_complex> > find_a1a2a3(
 
     double A_tmp, dA_tmp, omg_tmp, domg_tmp;
     
-    double nu         = (*(input *)params).nu;
+    double nu         = (*(TEOBResumParams *)params).nu;
     double nu2 = nu*nu;
     double nu3 = nu*nu*nu;
-    double X1       = (*(input *)params).X1;
-    double X2       = (*(input *)params).X2;
+    double X1       = (*(TEOBResumParams *)params).X1;
+    double X2       = (*(TEOBResumParams *)params).X2;
     double X12      = X1 - X2;
-    double chi1       = (*(input *)params).chi1;
-    double chi2       = (*(input *)params).chi2;
+    double chi1       = (*(TEOBResumParams *)params).chi1;
+    double chi2       = (*(TEOBResumParams *)params).chi2;
 
-    double aK         = (*(input *)params).aK;
+    double aK         = (*(TEOBResumParams *)params).aK;
     double aK2        = aK*aK;
     double aK3        = aK*aK*aK;
     double aK4        = aK*aK*aK*aK;

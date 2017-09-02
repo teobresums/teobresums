@@ -94,7 +94,7 @@ static double JimenezFortezaRemnantSpin(TEOBResumParams params)
     return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
 }
 
-void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4, vector<gsl_complex> &sigma)
+void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4, vector<gsl_complex> &sigma)
 {
 
     // Shorthands
@@ -128,7 +128,7 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
     vector<double> Amrg    = a1;
     vector<double> c2A     = a1;
     
-    bool   spin_flag    = params.spin;
+    int   spin_flag     = params.flags.spin;
     double af           = JimenezFortezaRemnantSpin(params);
     double a12          = params.X1*params.chi1 - params.X2*params.chi2;
     double X12          = params.X1 - params.X2;
@@ -144,7 +144,7 @@ void QNMHybridFitCab(input params, vector<double> &a1, vector<double> &a2, vecto
     double X12_2        = X12*X12;
     double Mbh          = params.Mbh;
     
-    if (spin_flag == false)
+    if (spin_flag == 0)
     {
         // l=2 -------------------------------------------------------------------
         
