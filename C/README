@@ -1,0 +1,90 @@
+SB 2017/09
+
+Few notes for the C version of the code
+
+* maintain file division started in 
+  C++/src/TEOBResumS*.cpp
+  
+  Files TEOBResumSHlm.cpp and TEOBResumSWaveform.cpp can be merger in 
+  TEOBResumSWavelm.cpp	  
+
+  check also against the division in src_Sebastiano
+
+* compute and store all the possible parameters at the very beginning
+
+*  avoid things like 
+
+   for (int i=grid_length; i--;)
+    {
+        switch (i)
+        {
+            case 0:
+	    ...
+            default:
+	    ...
+
+   where possible: loop on the default deal with the few cases separately.
+
+* try to take adavatnge of auto-vectorization in e.g. multipolar loop.
+
+  Simple rules
+  - allocate aligned memory
+  - avoid conditional inside loops
+
+
+  Loops should look like:
+
+   for (int k=kmin; k<kmax; ++k)
+    {
+    hlm[k] = hNetwlm[k] * fact[k] * Tlm[k];
+    }
+
+   and not
+
+   for (int k=kmin; kmax; ++k)
+    {
+       if(a=1)
+            hlm = hNetwlm[k] * fact[k] * Tlm[k];
+    	else
+            hlm = hNetwlm[k] * fact[k] * Tlm[k];
+
+	... other operations on hlm other conditionals ...
+    
+     }
+
+* use structure of arrays and not array of structures !
+
+* use pointers to functions (set at the begining) to minimize
+  conditional statements
+
+* Ideally all the main functions should have similar syntax, e.g.
+
+  instead of
+
+  void hlmNewt(
+    gsl_complex hlmNewt[], /** OUTPUT Dimension: 35*/
+    const double r,
+    const double Omega,
+    const double phi,
+    const double nu,
+    bool tidal_flag){
+
+  we might want something like
+
+  int hlmNewt(
+    params, // this could be even a global ...
+    const double r, // input
+    const double Omega,
+    const double phi,
+    const double nu,
+    gsl_complex hlmNewt[] // output 
+    ){
+
+  with the functions returning errors
+
+* Q: how about complex types? 
+  It is only for the waveform, is it really faster? or needed?
+  
+  In matlab it turned out that using the Matlab's standard complex was
+  really good. Is it the same also here?
+
