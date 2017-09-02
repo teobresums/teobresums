@@ -10,7 +10,7 @@ for l in f:
     if 'S["prefix"]' in l:
         library = l.split("=")[1][1:-2]
 
-gsl_include = subprocess.check_output(['gsl-config', '--cflags'])
+gsl_include = subprocess.check_output(['gsl-config', '--cflags'])[2:]
 
 ext_modules=[
              Extension("pyTEOBResum",
