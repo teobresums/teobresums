@@ -36,6 +36,11 @@
 
 using namespace::std;
 
+#define USAGE "\n\
+USAGE:\n\
+\t./TEOBResumS.x -p <parfile>\n\
+\t./TEOBResumS.x [OPTIONS]\n\
+"
 const char *optstr[] = { // option type description default
   "-p" , "<parfile>", "reads input parameters from parfile. Overrides all other arguments.", "",
   "-m1" , "<double>", "mass of the primary [Msun].", "40",
@@ -60,32 +65,6 @@ const char *optstr[] = { // option type description default
 };
 
 
-#define USAGE "\n\
-USAGE:\n\
-\t./TEOBResumS.x -p <parfile>\n\
-\t./TEOBResumS.x [OPTIONS]\n\
-"
-// \t-p <parfile>\t reads input parameters from parfile. Overrides all other arguments.\n\
-// \t-m1 <double>\t mass of the primary [Msun]. Default: 40\n\
-// \t-m2 <double>\t mass of the secondary [Msun]. Default: 40\n\
-// \t-chi1 <double>\t dimensionless spin component along the orbital angular momentum of the primary. Default: 0 \n\
-// \t-chi2 <double>\t dimensionless spin component along the orbital angular momentum of the secondary. Default: 0 \n\
-// \t-distance <double>\t source distance [Mpc]. Default: 100\n\
-// \t-inclination (IOTA) <double>\t inclination angle [rad]. Default: 0\n\
-// \t-polarisation (PSI) <double>\t polarisation angle [rad]. Default: 0\n\
-// \t-f_min <double>\t starting frequency [Hz]. Default: 20\n\
-// \t-srate <double>\t sampling rate [Hz]. Default: 4096\n\
-// \t-lambda1 <double>\t tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled. Default: 0\n\
-// \t-lambda2 <double>\t tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled. Default: 0\n\
-// \t-tidal <int>\t enable tidal corrections. Default: 0 (false)\n\
-// \t-NQC <int>\t enable NQC corrections. Default: true\n\
-// \t-speedy <int>\t faster tails calculations. Default: true\n\
-// \t-dynamics <int>\t output dynamics evolution.  Default: 0 (false)\n\
-// \t-RW <int>\t Regge-Wheeler-Zerilli potential. Default: 0 (false)\n\
-// \t-multipoles <int>\t enable single multipole output, in geometrical units. Default: 0 (false) \n\
-// \t-mult_index <int>\t index for the output multipole. Requires multipoles output format. \n\
-// \t-output <filename>\t output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx. Default: 'waveform.dat'\n\
-// \n"
 
 
 int main (int argc, char* argv[])
