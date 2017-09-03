@@ -36,33 +36,56 @@
 
 using namespace::std;
 
+const char *optstr[] = { // option type description default
+  "-p" , "<parfile>", "reads input parameters from parfile. Overrides all other arguments.", "",
+  "-m1" , "<double>", "mass of the primary [Msun].", "40",
+  "-m2" , "<double>", "mass of the secondary [Msun]. ", "40",
+  "-chi1" , "<double>", "dimensionless spin component along the orbital angular momentum of the primary.", "0",
+  "-chi2" , "<double>", "dimensionless spin component along the orbital angular momentum of the secondary.", "0",
+  "-distance" , "<double>", "source distance [Mpc].", "100",
+  "-inclination" , "<double>", "(IOTA) inclination angle [rad].", "0",
+  "-polarisation", "<double>", "(PSI) polarisation angle [rad].", "0",
+  "-f_min" , "<double>", "starting frequency [Hz].", "20",
+  "-srate" , "<double>", "sampling rate [Hz].", "4096",
+  "-lambda1" , "<double>", "tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-lambda2" , "<double>", "tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-tidal" , "<int>", "enable tidal corrections.", "0 (false)",
+  "-NQC" , "<int>", "enable NQC corrections.", "1 (true)",
+  "-speedy" , "<int>", "faster tails calculations.", "1 (true)",
+  "-dynamics" , "<int>", "output dynamics evolution.", "0 (false)",
+  "-RW" , "<int>", "Regge-Wheeler-Zerilli potential.", "0 (false)",
+  "-multipoles" , "<int>", "enable single multipole output, in geometrical units.", "0 (false)",
+  "-mult_index" , "<int>", "index for the output multipole. Requires multipoles output format.", "-1",
+  "-output" , "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'"
+};
+
+
 #define USAGE "\n\
-TEOBResumS: a spinning EOB gravitational wave waveform model \n\
-for coalescing binaries \n\
-----------------------------------------------\n\
---------- Arguments --------------------------\n\
-----------------------------------------------\n\
-(-p parfile) \t reads input parameters from parfile. Overrides all other arguments.\n\
-(-m1 M1) \t  mass of the primary (Msun). default: 40 \n\
-(-m2 M2) \t  mass of the secondary (Msun). default: 40 \n\
-(-chi1 CHI1) \t  value of the spin along the orbital angular momentum of the primary. default: 0 \n\
-(-chi2 CHI2) \t  value of the spin along the orbital angular momentum of the secondary. default: 0 \n\
-(-distance D) \t  distance (Mpc). default: 100 \n\
-(-inclination IOTA) \t  inclination angle (rad). default: 0 \n\
-(-polarisation PSI) \t  polarisation angle (rad). default: 0 \n\
-(-f_min FMIN) \t starting frequency (Hz). default: 20Hz \n\
-(-srate SRATE) \t sampling rate (Hz). default: 4096Hz \n\
-(-lambda1 LAMBDA1) \t tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled. default: 0  \n\
-(-lambda2 LAMBDA2) \t tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled. default: 0  \n\
-(-tidal) \t enable tidal corrections. default: false \n\
-(-NQC) \t enable NQC corrections. default: true \n\
-(-speedy) \t faster tails calculations. default: true \n\
-(-dynamics) \t output dynamics evolution.  default: false\n\
-(-RWZ) \t Regge-Wheeler-Zerilli potential. default: false \n\
-(-multipoles) \t enable single multipole output, in geometrical units. default: false \n\
-(-mult_index) \t index for the output multipole. Requires multipoles output format. \n\
-(-output) \t output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx. default: waveform.dat \n\
-\n"
+USAGE:\n\
+\t./TEOBResumS.x -p <parfile>\n\
+\t./TEOBResumS.x [OPTIONS]\n\
+"
+// \t-p <parfile>\t reads input parameters from parfile. Overrides all other arguments.\n\
+// \t-m1 <double>\t mass of the primary [Msun]. Default: 40\n\
+// \t-m2 <double>\t mass of the secondary [Msun]. Default: 40\n\
+// \t-chi1 <double>\t dimensionless spin component along the orbital angular momentum of the primary. Default: 0 \n\
+// \t-chi2 <double>\t dimensionless spin component along the orbital angular momentum of the secondary. Default: 0 \n\
+// \t-distance <double>\t source distance [Mpc]. Default: 100\n\
+// \t-inclination (IOTA) <double>\t inclination angle [rad]. Default: 0\n\
+// \t-polarisation (PSI) <double>\t polarisation angle [rad]. Default: 0\n\
+// \t-f_min <double>\t starting frequency [Hz]. Default: 20\n\
+// \t-srate <double>\t sampling rate [Hz]. Default: 4096\n\
+// \t-lambda1 <double>\t tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled. Default: 0\n\
+// \t-lambda2 <double>\t tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled. Default: 0\n\
+// \t-tidal <int>\t enable tidal corrections. Default: 0 (false)\n\
+// \t-NQC <int>\t enable NQC corrections. Default: true\n\
+// \t-speedy <int>\t faster tails calculations. Default: true\n\
+// \t-dynamics <int>\t output dynamics evolution.  Default: 0 (false)\n\
+// \t-RW <int>\t Regge-Wheeler-Zerilli potential. Default: 0 (false)\n\
+// \t-multipoles <int>\t enable single multipole output, in geometrical units. Default: 0 (false) \n\
+// \t-mult_index <int>\t index for the output multipole. Requires multipoles output format. \n\
+// \t-output <filename>\t output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx. Default: 'waveform.dat'\n\
+// \n"
 
 
 int main (int argc, char* argv[])
@@ -95,6 +118,9 @@ int main (int argc, char* argv[])
     if (argc < 2)
     {
         fprintf(stderr,USAGE);
+	fprintf(stderr,"\nOPTIONS:\n");
+	for (int i = 0; i < (20*4); i=i+4) 
+	  fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
         exit(0);
     }
    
