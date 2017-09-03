@@ -40,7 +40,7 @@ const double MSUN_M     = 1.47662504e3; /** G/c^3 */
 const double MSUN_S     = 4.925491025543575903411922162094833998e-6; /** G/c^2 */
 const double MPC_M      = 3.086e22;
 
-/** Maps between 1D index and the corresponding L and Ms */
+/** Maps between 1D index and the corresponding l and m multipole indices */
 const int L[35] = {
     2,2,
     3,3,3,
@@ -73,56 +73,56 @@ typedef struct tagTEOBResumFlags
 /** Algorithm control structure */
 typedef struct tagTEOBResumParams
 {
-    int   lm;
-    int solver_scheme;
-    double mtot;
-    double q;
-    double nu;
-    double r0;
-    double dt;
-    double rLR;
-    double chi1;
-    double chi2;
-    double S1;
-    double S2;
-    double S;
-    double Sstar;
-    double X1;
-    double X2;
-    double a1;
-    double a2;
-    double aK;
-    double aK2;
-    double cN3LO;
-    double LambdaAl2;
-    double LambdaAl3;
-    double LambdaAl4;
-    double LambdaBl2;
-    double LambdaBl3;
-    double LambdaBl4;
-    double kappaAl2;
-    double kappaAl3;
-    double kappaAl4;
-    double kappaBl2;
-    double kappaBl3;
-    double kappaBl4;
-    double kappaTl2;
-    double kappaTl3;
-    double kappaTl4;
-    double bar_alph2_1;
-    double bar_alph2_2;
-    double bar_alph3_1;
-    double bar_alph3_2;
-    double C_Q1;
-    double C_Q2;
-    double Mbh;
-    TEOBResumFlags flags;
+    int    lm;                  /**                                                          */
+    int    solver_scheme;       /** Scheme to solve the differential equation                */
+    double mtot;                /** Total mass of the binary                                 */
+    double q;                   /** Mass ratio of the binary                                 */
+    double nu;                  /** Symmetric mass ratio of the binary, nu = m1*m2/(m1+m2)^2 */
+    double r0;                  /** Initial radial separation of the objects                 */
+    double dt;                  /** Time step of the differential equation evolution         */
+    double rLR;                 /** Light ring radius                                        */
+    double chi1;                /** Dimensionless spin of the first object                   */
+    double chi2;                /** Dimensionless spin of the second object                  */
+    double S1;                  /**                                                          */
+    double S2;                  /**                                                          */
+    double S;                   /**                                                          */
+    double Sstar;               /**                                                          */
+    double X1;                  /**                                                          */
+    double X2;                  /**                                                          */
+    double a1;                  /**                                                          */
+    double a2;                  /**                                                          */
+    double aK;                  /**                                                          */
+    double aK2;                 /**                                                          */
+    double cN3LO;               /**                                                          */
+    double LambdaAl2;           /** Tidal coupling constant of the first object  for l=2     */
+    double LambdaAl3;           /** Tidal coupling constant of the first object  for l=3     */
+    double LambdaAl4;           /** Tidal coupling constant of the first object  for l=4     */
+    double LambdaBl2;           /** Tidal coupling constant of the second object for l=2     */
+    double LambdaBl3;           /** Tidal coupling constant of the second object for l=3     */
+    double LambdaBl4;           /** Tidal coupling constant of the second object for l=4     */
+    double kappaAl2;            /**                                                          */
+    double kappaAl3;            /**                                                          */
+    double kappaAl4;            /**                                                          */
+    double kappaBl2;            /**                                                          */
+    double kappaBl3;            /**                                                          */
+    double kappaBl4;            /**                                                          */
+    double kappaTl2;            /**                                                          */
+    double kappaTl3;            /**                                                          */
+    double kappaTl4;            /**                                                          */
+    double bar_alph2_1;         /**                                                          */
+    double bar_alph2_2;         /**                                                          */
+    double bar_alph3_1;         /**                                                          */
+    double bar_alph3_2;         /**                                                          */
+    double C_Q1;                /**                                                          */
+    double C_Q2;                /**                                                          */
+    double Mbh;                 /** Mass of the final BH                                     */
+    TEOBResumFlags flags;       /** Flag structure                                           */
 }   TEOBResumParams;
 
 /** Waveform structure, container for an array of doubles containing h and its length */
 typedef struct tagWaveform
 {
-    double *data;
+    double       *data;
     unsigned int length;
 }   Waveform;
 
@@ -166,7 +166,7 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
 
 /* _LALSimIMRTEOBIHES_h */
 
-void TEOBResumS(Waveform **hplus,       /** h+ return array **/
+void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                         Waveform **hcross,      /** hx return array **/
                         double m1,              /** m1(Msun) **/
                         double m2,              /** m2(Msun) **/
@@ -183,17 +183,17 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(Mpc) **/
-                        int   NQC,             /** NQC corrections flag (BBH only) **/
-                        int   tidal,           /** tidal corrections flag (BNS only) **/
-                        int   speedy,          /** accelerated tails flag **/
-                        int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int    NQC,             /** NQC corrections flag (BBH only) **/
+                        int    tidal,           /** tidal corrections flag (BNS only) **/
+                        int    speedy,          /** accelerated tails flag **/
+                        int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
 );
 
 
-void TEOBResumS_single_mode(Waveform **ampl,        /** h+ return array **/
+void TEOBResumS_single_mode(Waveform **ampl,                /** h+ return array **/
                                     Waveform **hphase,      /** hx return array **/
                                     double m1,              /** m1(Msun) **/
                                     double m2,              /** m2(Msun) **/
@@ -210,14 +210,14 @@ void TEOBResumS_single_mode(Waveform **ampl,        /** h+ return array **/
                                     double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                                     double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                                     double distance,        /** distance(Mpc) **/
-                                    int   NQC,             /** NQC corrections flag (BBH only) **/
-                                    int   tidal,           /** tidal corrections flag (BNS only) **/
-                                    int   speedy,          /** accelerated tails flag **/
-                                    int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                                    int    NQC,             /** NQC corrections flag (BBH only) **/
+                                    int    tidal,           /** tidal corrections flag (BNS only) **/
+                                    int    speedy,          /** accelerated tails flag **/
+                                    int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                                     int    dynamics,        /** output dynamics to file */
                                     int    lm,              /** TO BE REMOVED **/
                                     int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
-                                    int    index                /** Index of the multipole, conventions of multiple_index **/
+                                    int    index            /** Index of the multipole, conventions of multiple_index **/
 );
 
 /* _Metric_h */

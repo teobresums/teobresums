@@ -25,20 +25,29 @@
 #include "TEOBResumS.h"
 
 /** Flux calculation for non-spinning systems */
-double flux(const double x,const double Omega,const double r_omega,const double E, const double Heff,const double jhat,const double r,const double prstar, const double ddotr, double source[],void *params)
-{
+double flux(const double x,
+            const double Omega,
+            const double r_omega,
+            const double E,
+            const double Heff,
+            const double jhat,
+            const double r,
+            const double prstar,
+            const double ddotr,
+            double source[],
+            void *params){
     
-    bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
-    bool NQC_flag   = (*(TEOBResumParams *)params).flags.NQC;
-    double nu       = (*(TEOBResumParams *)params).nu;
-    double Flm;
-    double Modhhatlm;
-    double sqrt_one_4nu = sqrt(1.-4.*nu);
-    const vector<double> flm     = f_lm(x,nu);
-    const vector<double> FNewtlm = FlmNewt(x,params);
-    const double FNewt22         = FNewtlm[1];
-    vector<double> MTlm          = Tlm(E*Omega);
-    vector<double> hlmTidal      = hlm_Tidal(x,params);
+    bool                 tidal_flag   = (*(TEOBResumParams *)params).flags.tidal;
+    bool                 NQC_flag     = (*(TEOBResumParams *)params).flags.NQC;
+    double               nu           = (*(TEOBResumParams *)params).nu;
+    double               Flm;
+    double               Modhhatlm;
+    double               sqrt_one_4nu = sqrt(1.-4.*nu);
+    const vector<double> flm          = f_lm(x,nu);
+    const vector<double> FNewtlm      = FlmNewt(x,params);
+    const double         FNewt22      = FNewtlm[1];
+    vector<double>       MTlm         = Tlm(E*Omega);
+    vector<double>       hlmTidal     = hlm_Tidal(x,params);
     
     /** Compute NQC correction to the modulus of the (l,m) waveform */
     vector<gsl_complex> hlm_NQC = hlmNQC(nu,r,prstar,Omega,ddotr);
@@ -113,7 +122,16 @@ double flux(const double x,const double Omega,const double r_omega,const double 
 }
 
 /** Flux calculation for spinning systems */
-double s_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, void *params){
+double s_Flux(double x,
+              double Omega,
+              double r_omega,
+              double E,
+              double Heff,
+              double jhat,
+              double r,
+              double pr_star,
+              double ddotr,
+              void *params){
     /*
      % DINFLUX This function computes the Newton.Normalized energy flux according to
      %         the DIN resummation procedure. It is also designed so to add non-QC
@@ -146,13 +164,13 @@ double s_Flux(double x, double Omega, double r_omega, double E, double Heff, dou
     bool NQC_flag   = (*(TEOBResumParams *)params).flags.NQC;
     
     double prefact[] = {
-        jhat,Heff,
-        Heff,jhat,Heff,
-        jhat,Heff,jhat,Heff,
-        Heff,jhat,Heff,jhat,Heff,
-        jhat,Heff,jhat,Heff,jhat,Heff,
-        Heff,jhat,Heff,jhat,Heff,jhat,Heff,
-        jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
+        jhat, Heff,
+        Heff, jhat, Heff,
+        jhat, Heff, jhat, Heff,
+        Heff, jhat, Heff, jhat, Heff,
+        jhat, Heff, jhat, Heff, jhat, Heff,
+        Heff, jhat, Heff, jhat, Heff, jhat, Heff,
+        jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
     
     
     double hnqclm = 1.;
@@ -173,13 +191,16 @@ double s_Flux(double x, double Omega, double r_omega, double E, double Heff, dou
         Modhhatlm = prefact[k] * MTlm[k] * flm[k];
         
         //Include NQC with flag
-        if (NQC_flag==true) {
+        if (NQC_flag==true)
+        {
             Modhhatlm *= hnqclm;
         }
         
         //Make tidal corrections
-        if (tidal_flag==true) {
-            switch (k) {
+        if (tidal_flag==true)
+        {
+            switch (k)
+            {
                 case 0: // (2,1)
                     Modhhatlm *= sqrt_one_4nu;
                     break;
@@ -195,7 +216,6 @@ double s_Flux(double x, double Omega, double r_omega, double E, double Heff, dou
             }
             
             Modhhatlm += MTlm[k]*hlmTidal[k];
-            
         }
         
         
@@ -208,7 +228,8 @@ double s_Flux(double x, double Omega, double r_omega, double E, double Heff, dou
     // Sum over multipoles and normalize to the 22 Newtonian multipole
     double hatf = SFlm/(FNewt22);
     
-    if (tidal_flag==false) {
+    if (tidal_flag==false)
+    {
         double hatFH = s_HorizonFlux(x, Heff, jhat, nu, X1, X2, chi1, chi2);
         hatf += hatFH;
     }
@@ -333,7 +354,8 @@ vector<double> f_lm(const double x,const double nu)
      *   - evaluate efficiently polynomials
      */
     
-    const double eps = 1.0;
+    const int    kmax =35; /** Length of vector needed to store the 8 quadropoles, 35=8+7+6+5+4+3+2*/
+    const double eps  = 1.0;
     
     /** Shorthands */
     const double x2  = x*x;
@@ -353,19 +375,29 @@ vector<double> f_lm(const double x,const double nu)
     const double el6 = Eulerlog(x,6);
     const double el7 = Eulerlog(x,7);
     
-    const int kmax=35; /** Length of vector needed to store the 8 quadropoles, 35=8+7+6+5+4+3+2*/
     vector<double> rholm(kmax);
     vector<double> flm(kmax);
     
     
     /** l=2 ------------------------------------------------------------------
      *  (2,1) */
-    rholm[0] = 1. + (-1.0535714285714286 + 0.27380952380952384*nu)*x + (-0.8327841553287982 - 0.7789824263038548*nu + 0.13116496598639457*nu2)*x2 + x3*(2.9192806270460925 - 1.019047619047619*el1) + x4*(-1.28235780892213 + 1.073639455782313*el1) + eps*x5*(-3.8466571723355227 + 0.8486467106683944*el1);
-    /** (2,2) */
-    rholm[1] = 1. + (-1.0238095238095237 + 0.6547619047619048*nu)*x + (-1.94208238851096 - 1.5601379440665155*nu + 0.4625614134542706*nu2)*x2 + x3*(12.736034731834051 - 2.902228713904598*nu - 1.9301558466099282*nu2 + 0.2715020968103451*nu3 - 4.076190476190476*el2) + x4*(-2.4172313935587004 + 4.173242630385488*el2) + x5*(-30.14143102836864 + 7.916297736025627*el2);
+    rholm[0] = 1.                                                                           +
+               (-1.0535714285714286 + 0.27380952380952384 *nu                          )*x  +
+               (-0.8327841553287982 - 0.7789824263038548  *nu + 0.13116496598639457*nu2)*x2 +
+               (2.9192806270460925  - 1.019047619047619   *el1                         )*x3 +
+               (-1.28235780892213   + 1.073639455782313   *el1                         )*x4 +
+               (-3.8466571723355227 + 0.8486467106683944  *el1                     )*eps*x5 ;
     
-    flm[0] = gsl_pow_int(rholm[0], 2);
-    flm[1] = gsl_pow_int(rholm[1], 2);
+    /** (2,2) */
+    rholm[1] = 1.                                                                                                                         +
+               (-1.0238095238095237 + 0.6547619047619048*nu                                                                          )*x  +
+               (-1.94208238851096   - 1.5601379440665155*nu + 0.4625614134542706*nu2                                                 )*x2 +
+               (12.736034731834051  - 2.902228713904598 *nu - 1.9301558466099282*nu2 + 0.2715020968103451*nu3 - 4.076190476190476*el2)*x3 +
+               (-2.4172313935587004 + 4.173242630385488 *el2                                                                         )*x4 +
+               (-30.14143102836864  + 7.916297736025627 *el2                                                                         )*x5 ;
+    
+    flm[0]   = gsl_pow_int(rholm[0], 2);
+    flm[1]   = gsl_pow_int(rholm[1], 2);
     
     
     /** l=3 ------------------------------------------------------------------
@@ -637,9 +669,12 @@ vector<double> s_flm(double x, void *params){
     double C_Q2    = (*(TEOBResumParams *)params).C_Q2;
     
     double cSS_lo;
-    if (tidal_flag==true) {
+    if (tidal_flag==true)
+    {
         cSS_lo = 0.5*(C_Q1*a1*a1 + 2.*a1*a2 + C_Q2*a2*a2);
-    } else {
+    }
+    else
+    {
         cSS_lo = 0.5*a0*a0; // spin-spin contribution to zero for BNS
     }
     

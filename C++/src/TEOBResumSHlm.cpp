@@ -382,11 +382,11 @@ vector<gsl_complex> hlm(double       t,
     vector<double> flm(35);
     if (spin_flag==1)
     {
-        flm = s_flm(x,params);
+        flm = s_flm(x, params);
     }
     else
     {
-        flm = f_lm(x,nu);
+        flm = f_lm(x, nu);
     }
     
     /** Computing the tail */
