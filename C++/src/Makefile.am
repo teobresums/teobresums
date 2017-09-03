@@ -10,7 +10,6 @@ libTEOBResumS_la_SOURCES =           \
     TEOBResumSUtils.cpp              \
     TEOBResumS.cpp                   \
     TEOBResumSHlm.cpp                \
-    TEOBResumSNQC.cpp                \
     TEOBResumSWaveform.cpp           \
     TEOBResumSInitialConditions.cpp  \
     TEOBResumSRingdown.cpp
