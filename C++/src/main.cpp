@@ -83,7 +83,6 @@ int main (int argc, char* argv[])
     int   speedy         = 1;
     int   RWZ            = 0;
     int    dynamics      = 0;
-    int    waveform      = 0;
     bool   multipoles    = false;
     int    mult_index    = -1;
     int    lm            = 1;
@@ -240,7 +239,6 @@ int main (int argc, char* argv[])
                                        speedy,
                                        RWZ,
                                        dynamics,
-                                       waveform,
                                        lm,
                                        solver_scheme,
                                        mult_index);
@@ -292,7 +290,6 @@ int main (int argc, char* argv[])
                 speedy,
                 RWZ,
                 dynamics,
-                waveform,
                 lm,
                 solver_scheme);
         

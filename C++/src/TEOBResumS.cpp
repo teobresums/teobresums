@@ -67,7 +67,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
                         int   speedy,          /** accelerated tails flag **/
                         int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
-                        int    waveform,        /** output phjysical waveform to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/)
 {
@@ -111,7 +110,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
                                             speedy,
                                             RWZ,
                                             dynamics,
-                                            waveform,
                                             lm,
                                             solver_scheme);
     double q             = m1/m2;
@@ -466,7 +464,6 @@ void TEOBResumS_single_mode(
                         int   speedy,          /** accelerated tails flag **/
                         int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
-                        int    waveform,        /** output phjysical waveform to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
                         int    index                /** Index of the multipole, conventions of multiple_index **/
@@ -501,7 +498,6 @@ void TEOBResumS_single_mode(
                                             speedy,
                                             RWZ,
                                             dynamics,
-                                            waveform,
                                             lm,
                                             solver_scheme);
     

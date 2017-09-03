@@ -67,7 +67,6 @@ typedef struct tagTEOBResumFlags
     int RWZ;        /** Regge-Wheeler-Zerilli potential */
     int speedy;     /** Faster tails calculation */
     int dynamics;   /** Output dynamics to file */
-    int waveform;   /** Output waveform to file */
 }   TEOBResumFlags;
 
 /** Algorithm control structure */
@@ -188,7 +187,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
                         int   speedy,          /** accelerated tails flag **/
                         int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
-                        int    waveform,        /** output phjysical waveform to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
 );
@@ -216,7 +214,6 @@ void TEOBResumS_single_mode(Waveform **ampl,        /** h+ return array **/
                                     int   speedy,          /** accelerated tails flag **/
                                     int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                                     int    dynamics,        /** output dynamics to file */
-                                    int    waveform,        /** output phjysical waveform to file */
                                     int    lm,              /** TO BE REMOVED **/
                                     int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
                                     int    index                /** Index of the multipole, conventions of multiple_index **/
@@ -327,7 +324,6 @@ TEOBResumParams process_input_parameters(double m1,
                                 int    speedy,
                                 int    RWZ,
                                 int    dynamics,
-                                int    waveform,
                                 int    lm,
                                 int    solver_scheme
                                );

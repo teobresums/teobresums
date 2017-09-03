@@ -423,7 +423,6 @@ void SetDefaultFlagsValues(TEOBResumParams *p)
     p->flags.RWZ        = 0;
     p->flags.speedy     = 1;
     p->flags.dynamics   = 0;
-    p->flags.waveform   = 0;
 }
 
 double logQ(double x)
@@ -557,25 +556,18 @@ TEOBResumParams read_config(char *fname)
                 }
                 break;
             case 9:
-                if (param_value==0) {
-                    params.flags.waveform = 0;
-                } else {
-                    params.flags.waveform = 1;
-                }
-                break;
-            case 10:
                 params.lm = param_value;
                 break;
-            case 11:
+            case 10:
                 params.dt = param_value;
                 break;
-            case 12:
+            case 11:
                 params.solver_scheme = param_value;
                 break;
-            case 13:
+            case 12:
                 params.LambdaAl2 = param_value;
                 break;
-            case 14:
+            case 13:
                 params.LambdaBl2 = param_value;
                 break;
             default:
@@ -704,7 +696,6 @@ TEOBResumParams process_input_parameters(
                                          int    speedy,
                                          int    RWZ,
                                          int    dynamics,
-                                         int    waveform,
                                          int    lm,
                                          int    solver_scheme
                                          )
@@ -725,7 +716,6 @@ TEOBResumParams process_input_parameters(
     params.flags.RWZ = RWZ;
     params.flags.speedy = speedy;
     params.flags.dynamics = dynamics;
-    params.flags.waveform = waveform;
     params.lm = lm;
     params.dt = time_units_conversion(mtot, sampling_rate);
     params.solver_scheme = solver_scheme;
