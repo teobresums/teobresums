@@ -36,6 +36,34 @@
 
 using namespace::std;
 
+#define USAGE "\n\
+TEOBResumS: a spinning EOB gravitational wave waveform model \n\
+for coalescing binaries \n\
+----------------------------------------------\n\
+--------- Arguments --------------------------\n\
+----------------------------------------------\n\
+(-p parfile)\t reads input parameters from parfile\n\
+(-m1 M1) \t  mass of the primary (Msun) \n\
+(-m2 M2) \t  mass of the secondary (Msun) \n\
+(-chi1 CHI1) \t  component along the orbital angular momentum of the primary \n\
+(-chi2 CHI2) \t  component along the orbital angular momentum of the secondary \n\
+(-distance D) \t  distance (Mpc) \n\
+(-inclination IOTA) \t  inclination angle (rad) \n\
+(-polarisation PSI) \t  polarisation angle (rad) \n\
+(-f_min FMIN) \t starting frequency (Hz) default: 20Hz \n\
+(-srate SRATE) \t sampling rate (Hz) default: 4096Hz \n\
+(-lambda1 LAMBDA1) \t tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled  \n\
+(-lambda2 LAMBDA2) \t tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled  \n\
+(-tidal) \t enable tidal corrections \n\
+(-NQC) \t enable NQC corrections \n\
+(-speedy) \t faster tails calculations \n\
+(-dynamics) \t output dynamics evolution \n\
+(-RWZ) \t Regge-Wheeler-Zerilli potential \n\
+(-multipoles) \t enable single multipole output, in geometrical units \n\
+(-mult_index) \t index for the output multipole. Requires multipoles output format \n\
+\n"
+
+
 int main (int argc, char* argv[])
 {
     double m1            = 40.0;
@@ -64,7 +92,7 @@ int main (int argc, char* argv[])
     char   parfile[256]  = "";
     
     
-    if (argc < 2) printf("using default values\n");
+    if (argc < 2) fprintf(stderr,USAGE);
    
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i],"-p")==0)
