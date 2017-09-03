@@ -42,18 +42,18 @@ for coalescing binaries \n\
 ----------------------------------------------\n\
 --------- Arguments --------------------------\n\
 ----------------------------------------------\n\
-(-p parfile) \t reads input parameters from parfile\n\
-(-m1 M1) \t  mass of the primary (Msun) \n\
-(-m2 M2) \t  mass of the secondary (Msun) \n\
-(-chi1 CHI1) \t  component along the orbital angular momentum of the primary \n\
-(-chi2 CHI2) \t  component along the orbital angular momentum of the secondary \n\
-(-distance D) \t  distance (Mpc) \n\
-(-inclination IOTA) \t  inclination angle (rad) \n\
-(-polarisation PSI) \t  polarisation angle (rad) \n\
-(-f_min FMIN) \t starting frequency (Hz) default: 20Hz \n\
-(-srate SRATE) \t sampling rate (Hz) default: 4096Hz \n\
-(-lambda1 LAMBDA1) \t tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled  \n\
-(-lambda2 LAMBDA2) \t tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled  \n\
+(-p parfile) \t reads input parameters from parfile. Overrides all other arguments.\n\
+(-m1 M1) \t  mass of the primary (Msun). default: 40 \n\
+(-m2 M2) \t  mass of the secondary (Msun). default: 40 \n\
+(-chi1 CHI1) \t  value of the spin along the orbital angular momentum of the primary. default: 0 \n\
+(-chi2 CHI2) \t  value of the spin along the orbital angular momentum of the secondary. default: 0 \n\
+(-distance D) \t  distance (Mpc). default: 100 \n\
+(-inclination IOTA) \t  inclination angle (rad). default: 0 \n\
+(-polarisation PSI) \t  polarisation angle (rad). default: 0 \n\
+(-f_min FMIN) \t starting frequency (Hz). default: 20Hz \n\
+(-srate SRATE) \t sampling rate (Hz). default: 4096Hz \n\
+(-lambda1 LAMBDA1) \t tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled. default: 0  \n\
+(-lambda2 LAMBDA2) \t tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled. default: 0  \n\
 (-tidal) \t enable tidal corrections. default: false \n\
 (-NQC) \t enable NQC corrections. default: true \n\
 (-speedy) \t faster tails calculations. default: true \n\
@@ -70,13 +70,13 @@ int main (int argc, char* argv[])
     double m1            = 40.0;
     double m2            = 40.0;
     double q             = m1/m2;
-    double chi1          = 0.95;
-    double chi2          = 0.2;
+    double chi1          = 0.0;
+    double chi2          = 0.0;
     double f_min         = 20.;
     double sampling_rate = 4096.;
     double LambdaAl2     = 0.0;
     double LambdaBl2     = 0.0;
-    double distance      = 40;
+    double distance      = 100;
     double inclination   = 0.0;
     double polarisation  = 0.0;
     int   NQC            = 0;
@@ -92,10 +92,19 @@ int main (int argc, char* argv[])
     char   parfile[256]  = "";
     
     
-    if (argc < 2) fprintf(stderr,USAGE);
+    if (argc < 2)
+    {
+        fprintf(stderr,USAGE);
+        exit(0);
+    }
    
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i],"-p")==0)
+        if ((strcmp(argv[i],"-h")==0)||(strcmp(argv[i],"-help")==0))
+        {
+            fprintf(stderr,USAGE);
+            exit(0);
+        }
+        else if (strcmp(argv[i],"-p")==0)
         {
             sprintf(parfile,"%s",argv[i+1]);
             printf("found parfile: %s\n",parfile);
