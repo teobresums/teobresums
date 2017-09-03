@@ -62,10 +62,10 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(m) **/
-                        int   NQC,             /** NQC corrections flag (BBH only) **/
-                        int   tidal,           /** tidal corrections flag (BNS only) **/
-                        int   speedy,          /** accelerated tails flag **/
-                        int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int    NQC,             /** NQC corrections flag (BBH only) **/
+                        int    tidal,           /** tidal corrections flag (BNS only) **/
+                        int    speedy,          /** accelerated tails flag **/
+                        int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/)
@@ -318,15 +318,23 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         i++;
     }
   
-    vector<double> r_vecg         = interp_grid(t_vec,r_vec,dt);
-    vector<double> MOmg_vecg      = interp_grid(t_vec,MOmg_vec,dt);
-    vector<double> pph_vecg       = interp_grid(t_vec,pph_vec,dt);
-    vector<double> prstar_vecg    = interp_grid(t_vec,prstar_vec,dt);
     vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
     vector<double> hlm_rad_vecg   = interp_grid(t_vec,hlm_rad_vec,dt);
-    vector<double> ddotr_vecg     = interp_grid(t_vec,ddotr_vec,dt);
-    vector<double> OmgOrb_vecg    = interp_grid(t_vec,Omg_orb_vec,dt);
-
+    vector<double> r_vecg         = r_vec;
+    vector<double> MOmg_vecg      = MOmg_vec;
+    vector<double> pph_vecg       = pph_vec;
+    vector<double> prstar_vecg    = prstar_vec;
+    vector<double> ddotr_vecg     = ddotr_vec;
+    vector<double> OmgOrb_vecg    = Omg_orb_vec;
+    if (params.flags.tidal == 0)
+    {
+        r_vecg         = interp_grid(t_vec,r_vec,dt);
+        MOmg_vecg      = interp_grid(t_vec,MOmg_vec,dt);
+        pph_vecg       = interp_grid(t_vec,pph_vec,dt);
+        prstar_vecg    = interp_grid(t_vec,prstar_vec,dt);
+        ddotr_vecg     = interp_grid(t_vec,ddotr_vec,dt);
+        OmgOrb_vecg    = interp_grid(t_vec,Omg_orb_vec,dt);
+    }
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
     
@@ -459,10 +467,10 @@ void TEOBResumS_single_mode(
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(m) **/
-                        int   NQC,             /** NQC corrections flag (BBH only) **/
-                        int   tidal,           /** tidal corrections flag (BNS only) **/
-                        int   speedy,          /** accelerated tails flag **/
-                        int   RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
+                        int    NQC,             /** NQC corrections flag (BBH only) **/
+                        int    tidal,           /** tidal corrections flag (BNS only) **/
+                        int    speedy,          /** accelerated tails flag **/
+                        int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
                         int    lm,              /** TO BE REMOVED **/
                         int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
