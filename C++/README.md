@@ -94,7 +94,7 @@ please see
 
 `examples/example.par`
 
-for an example.
+for an example for a BBH q=1 chi1=chi2=0.7.
 
 
 
