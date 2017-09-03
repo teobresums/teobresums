@@ -28,7 +28,7 @@ gsl_include = subprocess.check_output(['gsl-config', '--cflags'])[2:]
 
 ext_modules=[
              Extension("pyTEOBResumS",
-                       sources=["pyTEOBResumS/pyTEOBResumS.pyx"],
+                       sources=["pyTEOBResumS.pyx"],
                        libraries=["m","TEOBResumS","gsl", "gslcblas"], # Unix-like specific
                        include_dirs=[numpy.get_include(),"../src",gsl_include],
                        language='c++',
