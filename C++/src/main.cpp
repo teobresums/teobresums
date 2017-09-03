@@ -42,7 +42,7 @@ for coalescing binaries \n\
 ----------------------------------------------\n\
 --------- Arguments --------------------------\n\
 ----------------------------------------------\n\
-(-p parfile)\t reads input parameters from parfile\n\
+(-p parfile) \t reads input parameters from parfile\n\
 (-m1 M1) \t  mass of the primary (Msun) \n\
 (-m2 M2) \t  mass of the secondary (Msun) \n\
 (-chi1 CHI1) \t  component along the orbital angular momentum of the primary \n\
@@ -54,14 +54,14 @@ for coalescing binaries \n\
 (-srate SRATE) \t sampling rate (Hz) default: 4096Hz \n\
 (-lambda1 LAMBDA1) \t tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled  \n\
 (-lambda2 LAMBDA2) \t tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled  \n\
-(-tidal) \t enable tidal corrections \n\
-(-NQC) \t enable NQC corrections \n\
-(-speedy) \t faster tails calculations \n\
-(-dynamics) \t output dynamics evolution \n\
-(-RWZ) \t Regge-Wheeler-Zerilli potential \n\
-(-multipoles) \t enable single multipole output, in geometrical units \n\
-(-mult_index) \t index for the output multipole. Requires multipoles output format \n\
-(-output) \t output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx. default:waveform.dat \n\
+(-tidal) \t enable tidal corrections. default: false \n\
+(-NQC) \t enable NQC corrections. default: true \n\
+(-speedy) \t faster tails calculations. default: true \n\
+(-dynamics) \t output dynamics evolution.  default: false\n\
+(-RWZ) \t Regge-Wheeler-Zerilli potential. default: false \n\
+(-multipoles) \t enable single multipole output, in geometrical units. default: false \n\
+(-mult_index) \t index for the output multipole. Requires multipoles output format. \n\
+(-output) \t output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx. default: waveform.dat \n\
 \n"
 
 
