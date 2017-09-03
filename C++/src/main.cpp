@@ -61,6 +61,7 @@ for coalescing binaries \n\
 (-RWZ) \t Regge-Wheeler-Zerilli potential \n\
 (-multipoles) \t enable single multipole output, in geometrical units \n\
 (-mult_index) \t index for the output multipole. Requires multipoles output format \n\
+(-output) \t output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx. default:waveform.dat \n\
 \n"
 
 
@@ -194,7 +195,7 @@ int main (int argc, char* argv[])
             polarisation = atof(argv[i+1]);
             printf("polarisation: %f\n",polarisation);
         }
-        else if (strcmp(argv[i],"-o")==0)
+        else if (strcmp(argv[i],"-output")==0)
         {
             sprintf(output,"%s",argv[i+1]);
         }
