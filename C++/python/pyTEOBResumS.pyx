@@ -23,7 +23,6 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
                                                          int    speedy,
                                                          int    RWZ,
                                                          int    dynamics,
-                                                         int    waveform,
                                                          int    lm,
                                                          int    solver_scheme):
     cdef Waveform *hp;
@@ -51,7 +50,6 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
               speedy,
               RWZ,
               dynamics,
-              waveform,
               lm,
               solver_scheme)
 

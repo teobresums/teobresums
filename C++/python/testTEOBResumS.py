@@ -21,7 +21,6 @@ tidal = 0
 speedy = 1
 RWZ = 0
 dynamics = 0
-waveform = 0
 lm = 1
 solver_scheme = 0
 
@@ -45,7 +44,6 @@ h = pyTEOBResumS(m1,
                 speedy,
                 RWZ,
                 dynamics,
-                waveform,
                 lm,
                 solver_scheme)
 

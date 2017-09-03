@@ -27,6 +27,5 @@ cdef extern from "TEOBResumS.h":
                     int    speedy,
                     int    RWZ,
                     int    dynamics,
-                    int    waveform,
                     int    lm,
                     int    solver_scheme);
