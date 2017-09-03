@@ -383,7 +383,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
     }
     /** All multipoles will now have size N+Nringdown */
     /** Multipole for which no ringdown model is available will be filled with 0s */
-    /** We pick the index 1 since it is the 22 mode */
+    /** We pick the index 1 since it is the 22 mode and it is always computed */
     
     int N = hlm_ampl_g[1].size();
     

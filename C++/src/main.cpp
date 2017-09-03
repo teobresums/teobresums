@@ -259,7 +259,7 @@ int main (int argc, char* argv[])
         double dt    = 1./sampling_rate;
         for (i=0;i<N;i++)
         {
-            std::fprintf(f, "%f\t%e\t%e\n", i*dt, ampl->data[i], phase->data[i]);
+            std::fprintf(f, "%f\t%e\t%e\n", i*dt/((m1+m2)*MSUN_S), ampl->data[i], phase->data[i]);
         }
         std::fclose(f);
         free(ampl->data);

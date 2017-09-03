@@ -37,6 +37,7 @@ const double EulerGamma = M_EULER;
 const double Log2       = M_LN2;
 const double pi         = M_PI;
 const double MSUN_M     = 1.47662504e3; /** G/c^3 */
+const double MSUN_S     = 4.925491025543575903411922162094833998e-6; /** G/c^2 */
 const double MPC_M      = 3.086e22;
 
 /** Maps between 1D index and the corresponding L and Ms */
