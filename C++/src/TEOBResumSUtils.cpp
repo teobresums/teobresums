@@ -418,7 +418,7 @@ vector<double> s_D1(vector<double> f, vector<double> x, int Nmax){
 void SetDefaultFlagsValues(TEOBResumParams *p)
 {
     p->flags.NQC        = 1;
-    p->flags.spin       = 1;
+    p->flags.spin       = 0;
     p->flags.tidal      = 0;
     p->flags.RWZ        = 0;
     p->flags.speedy     = 1;

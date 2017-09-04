@@ -141,11 +141,13 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
     
     if (params.flags.spin==1)
     {
-        sys = {s_RHS, NULL , 4, &params};
+        cout << "Spinning:" << params.flags.spin << endl;
+        sys          = {s_RHS, NULL , 4, &params};
         initial_data = s_initial(&params);
     }
     else
     {
+        cout << "Nonspinning:" << params.flags.spin << endl;
         sys          = {rhs, NULL , 4, &params};
         initial_data = initial(&params);
     }
