@@ -598,7 +598,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
 
     }
     
-    /** add 200 points of ringdown attachment */
+    /** add 500 points of ringdown attachment */
     /** if we select the number of points in each mode to be such that the number of output points
      is the same, we do not need any interpolation, since the vectors are defined on the same time grid. */
     int Nringdown = 500;
@@ -632,6 +632,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                     hlm_phase[k].push_back(psi[k].dat[1]);
                     t_vec[k].push_back(t);
                     t += dt;
+
                 }
                 break;
             case 4:
@@ -658,6 +659,14 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 break;
         }
     }
-    
+    int N = hlm_phase[1].size();
+    char   output2[256]   = "Ringdown.dat";
+    std::FILE* man = std::fopen(output2, "w");
+    i = 0;
+    for (i=0;i<N;i++)
+    {
+        std::fprintf(man, "%f\t%e\t%e\n", t_vec[1][i], hlm_rad[1][i], hlm_phase[1][i]);
+    }
+    std::fclose(man);
     return 0;
 }
