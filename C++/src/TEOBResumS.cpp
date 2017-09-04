@@ -377,6 +377,25 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         }
     }
     
+    if (params.flags.tidal==0 && params.flags.spin==0)
+    {
+        vector<gsl_complex> h_NQC(35);
+        h_NQC = hlmNQC(params.nu,r,prstar,Omg,ddotr);
+        
+        for (int k=35; k--; )
+        {
+            if (k==1)
+            {
+                for (int i=grid_length; i--; )
+                {
+                    hlm_ampl_g[k][i]  *= h_NQC[k].dat[0];
+                    hlm_phase_g[k][i] -= h_NQC[k].dat[1];
+                }
+            }
+        }
+    }
+    
+    
     /** Define a time vector for each multipole
         These will be cut by the ringdown, where
         each multipole has its own starting time */
