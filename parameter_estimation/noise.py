@@ -19,11 +19,15 @@ def chunks(times,strain,chunksize,avoid=None):
                    for j in range(1,len(strain)//chunksize)
                        if not times[chunksize*j] < avoid < times[chunksize*(j+1)] )
 
-def fd_from_td(t_arr, strain_t, srate = 4096):
-    # zero-pad to the required length 
-    N = int(2**np.ceil(np.log2(len(t_arr)))) # round it up to the next power of two
-    strain_t = np.resize(strain_t, N)
-    strain_t[len(t_arr):] = 0
+def resize_time_series(inarr, N):
+    # zero-pad to the required length
+    outarr = np.pad(inarr, (0,N-len(inarr)), mode='constant', constant_values=0)
+    return outarr
+
+def fd_from_td(t_arr, strain_t, srate = 4096, N = 4096):
+    #    N = int(2**np.ceil(np.log2(len(t_arr)))) # round it up to the next power of two
+    strain_t = resize_time_series(strain_t, N)
+    strain_t[len(t_arr):] = 0.0
     strain_f = np.fft.rfft(strain_t)/srate #rfft means real fft, i.e. it's optimized when the input is real. It's divided by the srate to respect LAL conventions
     ff = np.fft.rfftfreq(len(strain_t), np.mean(np.diff(t_arr)))
     return (ff, strain_f)
@@ -90,13 +94,14 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
         print('No trigtime given')
 
     # Compute the times for convenience
+    i = int((trigtime-starttime)*srate)
     times = np.linspace(starttime,starttime+T-dt,len(strain))[i-signal_chunksize//2:i+signal_chunksize//2+1]
 
     # Compute the PSD
     psd, freqs = mlab.psd(strain, Fs = srate, NFFT = np.int(srate))
 
     # Compute the frequency domain strain
-    frequency, on_source_fd = fd_from_td(times, on_source, srate = srate)
+    frequency, on_source_fd = fd_from_td(times, on_source, srate = srate, N = signal_chunksize+1)
     psd_int = np.interp(frequency, freqs, psd)
     return times, on_source, frequency, on_source_fd, psd_int
 
