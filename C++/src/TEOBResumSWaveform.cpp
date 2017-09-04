@@ -38,7 +38,13 @@ typedef std::numeric_limits< double > dbl;
 
 using namespace::std;
 
-vector<gsl_complex> s_waveform(double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr){
+vector<gsl_complex> s_waveform(double t,
+                               const double y[],
+                               void *params,
+                               double &Omg,
+                               double &Omg_orb,
+                               double &A,
+                               double &ddotr){
     
     double nu         = (*(TEOBResumParams *)params).nu;
     bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
@@ -142,7 +148,7 @@ vector<gsl_complex> s_waveform(double t, const double y[], void *params, double 
         double ddotr_dprstar = sqrAB*( 1+z3*6.*A*u2*prstar2-(prstar + z3*2*A*u2*prstar3)*dHeff_dprstar*tmpE)*one_denE;
         
         ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
-        
+        Omg_orb = Omg;
     }
     else
     {
