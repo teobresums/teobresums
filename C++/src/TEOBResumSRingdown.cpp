@@ -437,7 +437,8 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     long int pk_index = Omega_vec.size()-1;
     double Omega_pk   = Omega_vec[pk_index];
     long int i        = pk_index-1;
-    while (Omega_vec[i] > Omega_pk) {
+    while (Omega_vec[i] > Omega_pk)
+    {
         pk_index = i;
         Omega_pk = Omega_vec[i];
         i--;
@@ -462,11 +463,11 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     double DeltaT_nqc = 0.;
     vector<double> tmrg(35);
     vector<double> tmatch(35);
-    
+
     //compute true peak by interpolation from the grid
     tOmg_pk  = interpolate(dt, Omega_pk_grid);
     tOmg_pk *= 1./Mbh;
-    
+
     //calculate tmatch
     double xnu =(1.-4.*nu);
     
