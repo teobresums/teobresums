@@ -34,14 +34,10 @@ class GravitationalWaveDetector(object):
         timeShift = self.Epoch-tc + TimeDelayFromEarthCenter(self.location, ra, dec, tc)
         return np.exp(-1j*2.0*np.pi*timeShift)*(fp*hptilde+fc*hctilde)
 
-    def logLikelihood(self, hp, hc, ra, dec, psi, tc, domain = 'time'):
-
-        if domain == 'time':
-            f, hp = noise.fd_from_td(t, hp, srate = self.sampling_rate, N = self.segment_length)
-            f, hc = noise.fd_from_td(t, hc, srate = self.sampling_rate, N = self.segment_length)
+    def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
         TwoDeltaTOverN = 2.0*self.dt/self.segment_length
-        residuals = self.FrequencySeries - self.Project(hp, hc, ra, dec, psi, tc)
+        residuals = self.FrequencySeries - self.Project(hptilde, hctilde, ra, dec, psi, tc)
         numerator = residuals[self.kmin:self.kmax]*np.conj(residuals[self.kmin:self.kmax])
         return -TwoDeltaTOverN*np.sum(np.real(numerator)*(self.InversePowerSpectralDensity[self.kmin:self.kmax]/(self.dt*self.dt)))
 
