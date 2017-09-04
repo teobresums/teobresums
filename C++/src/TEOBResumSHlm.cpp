@@ -1413,7 +1413,7 @@ vector<gsl_complex> hlm(double       t,
         hlm[k].dat[1] = - hlm[k].dat[1]; /** Minus sign by convention */
         
         /** NQC correction */
-        if (NQC_flag==1)
+        if (NQC_flag==1 && spin_flag==0)
         {
             hlm[k].dat[0] *= h_NQC[k].dat[0];
             hlm[k].dat[1] -= h_NQC[k].dat[1];

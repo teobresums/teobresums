@@ -272,6 +272,7 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
     
     if (spin_flag == 0)
     {
+
         // l=2 -------------------------------------------------------------------
         
         alpha21[k22] = -0.339603474900442   * nu2 + 0.016503807342446  * nu + 0.181732224707156 ;
@@ -305,16 +306,16 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
             switch (i)
             {
                 case 0:
-                    sigma[0].dat[0] = -0.208936*nu3-0.028103*nu2-0.005383*nu + 0.08896;
-                    sigma[0].dat[1] = 0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
+                    sigma[0].dat[0] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
+                    sigma[0].dat[1] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
                     break;
                 case 1:
-                    sigma[1].dat[0] = -0.364177*nu3 + 0.010951*nu2-0.010591*nu + 0.08896;
-                    sigma[1].dat[1] = 2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
+                    sigma[1].dat[0] = -0.364177*nu3 + 0.010951*nu2 - 0.010591*nu + 0.08896;
+                    sigma[1].dat[1] =  2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
                     break;
                 case 4:
-                    sigma[4].dat[0] = -0.319703*nu3-0.030076*nu2-0.009034*nu + 0.09270;
-                    sigma[4].dat[1] = 2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
+                    sigma[4].dat[0] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
+                    sigma[4].dat[1] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
                     break;
                 default:
                     sigma[i].dat[0] = 0.;
@@ -322,12 +323,13 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
                     break;
             }
         }
+
     }
     else
     {
         double omega1_c    = -0.0598837831 * af3 + 0.8082136788 * af2 - 1.7408467418 * af + 1;
         double omega1_d    = -0.2358960279 * af3 + 1.3152369374 * af2 - 2.0764065380 * af + 1;
-        omega1[k22] =  0.3736716844 * (omega1_c/omega1_d);
+        omega1[k22]        =  0.3736716844 * (omega1_c/omega1_d);
         
         /** alpha1 is alpha1[k22] */
         double alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
@@ -397,6 +399,18 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
         b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
         sigma[i].dat[0] = alpha1[i];
         sigma[i].dat[1] = omega1[i];
+        if  (i==1)
+        {
+            cout << "a1:\t" << a1[i] << endl;
+            cout << "a2:\t" << a2[i] << endl;
+            cout << "a3\t"  << a3[i] << endl;
+            cout << "a4\t"  << a4[i] << endl;
+            cout << "b1:\t" << b1[i] << endl;
+            cout << "b2:\t" << b2[i] << endl;
+            cout << "b3\t"  << b3[i] << endl;
+            cout << "b4\t"  << b4[i] << endl;
+
+        }
     }
 }
 
@@ -503,9 +517,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     dtmrg[1]   = 4.29550934 - 0.85938*xnu;                         //k33
     tmrg[k21]  = tmrg[k22] + dtmrg[0]/Mbh;     // t_max(A21) => peak of 21 mode
     tmrg[k33]  = tmrg[k22] + dtmrg[1]/Mbh;     // t_max(A33) => peak of 33 mode
-//    cout << "tmrg k21:\t" << tmrg[k21] << endl;
-//    cout << "tmrg k22:\t" << tmrg[k22] << endl;
-//    cout << "tmrg k33:\t" << tmrg[k33] << endl;
+
 
     /* postmerger-ringdown matching time */
     tmatch = tmrg;
@@ -582,6 +594,8 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
         double x    = t_vec[k][I[k]]/Mbh-tmrg[k];
         psi[k]      = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
         Deltaphi[k] = psi[k].dat[1] - hlm_phase[k][I[k]];
+        cout << "Delta_phi:\t" << Deltaphi[k] <<  "\tIndex:\t" << k << endl;
+
     }
     
     /** add 200 points of ringdown attachment */
@@ -616,8 +630,6 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                     psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
                     hlm_rad[k].push_back(psi[k].dat[0]);
                     hlm_phase[k].push_back(psi[k].dat[1]);
-                    cout << "Phase:\t" << psi[k].dat[1] << endl;
-
                     t_vec[k].push_back(t);
                     t += dt;
                 }
