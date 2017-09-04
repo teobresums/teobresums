@@ -21,6 +21,8 @@
 #include <cmath>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <iostream>
+
 
 #include "TEOBResumS.h"
 
@@ -298,8 +300,10 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
         Domg[k33]    =  2.5797331166178403  * nu2 - 0.5337830158170729 * nu + 0.1930766531716946;
         Amrg[k33]    = -10.4024985230145610 * nu2 + 1.3517710770250695 * nu + 0.4307642913724235;
         
-        for (int i=35; i--; ) {
-            switch (i) {
+        for (int i=35; i--; )
+        {
+            switch (i)
+            {
                 case 0:
                     sigma[0].dat[0] = -0.208936*nu3-0.028103*nu2-0.005383*nu + 0.08896;
                     sigma[0].dat[1] = 0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
@@ -499,8 +503,10 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     dtmrg[1]   = 4.29550934 - 0.85938*xnu;                         //k33
     tmrg[k21]  = tmrg[k22] + dtmrg[0]/Mbh;     // t_max(A21) => peak of 21 mode
     tmrg[k33]  = tmrg[k22] + dtmrg[1]/Mbh;     // t_max(A33) => peak of 33 mode
-    
-    
+//    cout << "tmrg k21:\t" << tmrg[k21] << endl;
+//    cout << "tmrg k22:\t" << tmrg[k22] << endl;
+//    cout << "tmrg k33:\t" << tmrg[k33] << endl;
+
     /* postmerger-ringdown matching time */
     tmatch = tmrg;
     
@@ -527,12 +533,15 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     /*deleting data points up to tmatch (starting from the back)*/
     vector<long> I(35);
     vector<long> Size(35);
-    for (int k = 35; k--; ) {
+    for (int k = 35; k--; )
+    {
         i = t_vec[k].size()-1;
         Size[k] = t_vec[k].size();
-        switch (k) {
+        switch (k)
+        {
             case 0:
-                while (t_vec[k][i]/Mbh>tmatch[k]) {
+                while (t_vec[k][i]/Mbh>tmatch[k])
+                {
                     t_vec[k].pop_back();
                     hlm_rad[k].pop_back();
                     hlm_phase[k].pop_back();
@@ -541,7 +550,8 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 i++;
                 break;
             case 1:
-                while (t_vec[k][i]/Mbh>tmatch[k]) {
+                while (t_vec[k][i]/Mbh>tmatch[k])
+                {
                     t_vec[k].pop_back();
                     hlm_rad[k].pop_back();
                     hlm_phase[k].pop_back();
@@ -567,7 +577,8 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     //Calculate deltaphi
     vector<gsl_complex> psi(35);
     vector<double> Deltaphi(35);
-    for (int k=35; k--; ) {
+    for (int k=35; k--; )
+    {
         double x    = t_vec[k][I[k]]/Mbh-tmrg[k];
         psi[k]      = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
         Deltaphi[k] = psi[k].dat[1] - hlm_phase[k][I[k]];
@@ -577,12 +588,15 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     /** if we select the number of points in each mode to be such that the number of output points
      is the same, we do not need any interpolation, since the vectors are defined on the same time grid. */
     int Nringdown = 500;
-    for (int k=35; k--; ) {
+    for (int k=35; k--; )
+    {
         double t = t_vec[k][I[k]];
         int n_removed = Size[k]-I[k];
-        switch (k) {
+        switch (k)
+        {
             case 0:
-                for (int j=0; j < Nringdown+n_removed; j++) {
+                for (int j=0; j < Nringdown+n_removed; j++)
+                {
                     double x = t/Mbh-tmrg[k];
                     psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
@@ -594,19 +608,23 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 }
                 break;
             case 1:
-                for (int j=0; j < Nringdown+n_removed; j++) {
+                for (int j=0; j < Nringdown+n_removed; j++)
+                {
                     double x = t/Mbh-tmrg[k];
                     psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
                     psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
                     hlm_rad[k].push_back(psi[k].dat[0]);
                     hlm_phase[k].push_back(psi[k].dat[1]);
+                    cout << "Phase:\t" << psi[k].dat[1] << endl;
+
                     t_vec[k].push_back(t);
                     t += dt;
                 }
                 break;
             case 4:
-                for (int j=0; j < Nringdown+n_removed; j++) {
+                for (int j=0; j < Nringdown+n_removed; j++)
+                {
                     double x = t/Mbh-tmrg[k];
                     psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
@@ -618,7 +636,8 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 }
                 break;
             default:
-                for (int j=0; j < Nringdown+n_removed-1; j++) {
+                for (int j=0; j < Nringdown+n_removed-1; j++)
+                {
                     hlm_rad[k].push_back(0.0);
                     hlm_phase[k].push_back(0.0);
                     t_vec[k].push_back(t);
