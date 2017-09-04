@@ -22,6 +22,8 @@ def chunks(times,strain,chunksize,avoid=None):
 def resize_time_series(inarr, N):
     # zero-pad to the required length
     outarr = np.pad(inarr, (0,N-len(inarr)), mode='constant', constant_values=0)
+    # roll the array so that the peak of the time series is in the center of the frame
+    outarr = np.roll(outarr,N//2-np.argmax(outarr))
     return outarr
 
 def fd_from_td(t_arr, strain_t, srate = 4096, N = 4096):

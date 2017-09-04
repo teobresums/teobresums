@@ -49,7 +49,7 @@ class GravitationalWaveModel(cpnest.model.Model):
 
         self.bounds=[[0,2.0*np.pi],
                 [-np.pi/2.0,np.pi/2.0],
-                [self.tevent-0.01,self.tevent+0.01],
+                [self.tevent-0.005,self.tevent+0.005],
                 [30,40],
                 [20,30],
                 [-0.9,0.9],
@@ -105,7 +105,7 @@ class NoiseModel(cpnest.model.Model):
         
         super(NoiseModel,self).__init__(**kwargs)
         # this is the merger time in H1
-        self.tevent = 1126259462.423
+        self.tevent = 1126259462.9#1126259462.423
 
         self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt'),
                           GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt')]

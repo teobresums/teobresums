@@ -31,8 +31,8 @@ class GravitationalWaveDetector(object):
         """
         gmst = GreenwichMeanSiderealTime(tc)
         fp,fc = ComputeDetAMResponse(self.lal_detector.response, ra, dec, psi, gmst)
-        timeShift = self.Epoch-tc + TimeDelayFromEarthCenter(self.location, ra, dec, tc)
-        return np.exp(-1j*2.0*np.pi*timeShift)*(fp*hptilde+fc*hctilde)
+        timeShift = self.Epoch-2-tc + TimeDelayFromEarthCenter(self.location, ra, dec, tc)
+        return np.exp(-1j*2.0*np.pi*timeShift*self.Frequency)*(fp*hptilde+fc*hctilde)
 
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
@@ -42,8 +42,8 @@ class GravitationalWaveDetector(object):
         return -TwoDeltaTOverN*np.sum(np.real(numerator)*(self.InversePowerSpectralDensity[self.kmin:self.kmax]/(self.dt*self.dt)))
 
 if __name__ == "__main__":
-    H = GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt')
-    L = GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt')
+    H = GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', trigtime = 1126259462.423)
+    L = GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', trigtime = 1126259462.423)
     
     for attr, value in H.__dict__.iteritems():
         print attr, value
@@ -83,15 +83,18 @@ if __name__ == "__main__":
                      0,
                      0,
                      0)
-                     
-    from pylab import *
-    ra = np.linspace(0.0,2.0*np.pi,32)
-    dec = np.linspace(-np.pi/2.0,np.pi/2.0,32)
     
+    
+    f, hptilde = noise.fd_from_td(H.Times, h[:,0], srate = H.sampling_rate, N = H.segment_length)
+    f, hctilde = noise.fd_from_td(H.Times, h[:,1], srate = H.sampling_rate, N = H.segment_length)
+    from pylab import *
+    tc = 1126259462.423+np.linspace(-0.005,0.005,1001)
+
     fig = figure()
-    ax = fig.add_subplot(111,projection='aitoff')
-    C = ax.contourf([[H.logLikelihood(h[:,0], h[:,1], r, d, psi, tc)+L.logLikelihood(h[:,0], h[:,1], r, d, psi, tc) for r in ra] for d in dec],10)
-    colorbar(C)
+    ax = fig.add_subplot(111)
+    logL = np.array([H.logLikelihood(hptilde, hctilde, ra, dec, psi, t)+L.logLikelihood(hptilde, hctilde, ra, dec, psi, t) for t in tc])
+    C = ax.plot(tc,logL)
+    print "%.15f",tc[logL.argmax()]
     show()
                                 
 
