@@ -281,6 +281,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         else
         {
             MOmg = Omg;
+            
         }
         if (MOmgpeak_flag==false)
         {
@@ -346,6 +347,16 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
     
+    int N = hlm_ampl_g[1].size();
+    char   output2[256]   = "MOmg_vecg.dat";
+    std::FILE* man = std::fopen(output2, "w");
+    i = 0;
+    for (i=0;i<N;i++)
+    {
+        std::fprintf(man, "%f\t%e\n", i*dt, MOmg_vecg[i]);
+    }
+    std::fclose(man);
+    
     /** NQCs corrections */
     /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
     if (params.flags.tidal==0 && params.flags.spin==1)
@@ -366,6 +377,25 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         }
     }
     
+    if (params.flags.tidal==0 && params.flags.spin==0)
+    {
+        vector<gsl_complex> h_NQC(35);
+        h_NQC = hlmNQC(params.nu,r,prstar,Omg,ddotr);
+        
+        for (int k=35; k--; )
+        {
+            if (k==1)
+            {
+                for (int i=grid_length; i--; )
+                {
+                    hlm_ampl_g[k][i]  *= h_NQC[k].dat[0];
+                    hlm_phase_g[k][i] -= h_NQC[k].dat[1];
+                }
+            }
+        }
+    }
+    
+    
     /** Define a time vector for each multipole
         These will be cut by the ringdown, where
         each multipole has its own starting time */
@@ -384,8 +414,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
     /** All multipoles will now have size N+Nringdown */
     /** Multipole for which no ringdown model is available will be filled with 0s */
     /** We pick the index 1 since it is the 22 mode and it is always computed */
-    
-    int N = hlm_ampl_g[1].size();
     
     /** Allocate hplus and hcross */
     Waveform *hplus_out = (Waveform *)malloc(sizeof(Waveform));
