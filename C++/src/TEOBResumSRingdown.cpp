@@ -227,6 +227,7 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
     int k22 = 1;
     int k21 = 0;
     int k33 = 4;
+    int k44 = 8;
     
     double nu  = params.nu;
     double nu2 = nu*nu;
@@ -272,35 +273,51 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
     
     if (spin_flag == 0)
     {
-
+        /*=========================================================*/
+        /* Updated fits: 05/09/2017 from CoM extrapolated SXS data */
+        /*=========================================================*/
+      
         // l=2 -------------------------------------------------------------------
         
-        alpha21[k22] = -0.339603474900442   * nu2 + 0.016503807342446  * nu + 0.181732224707156 ;
-        alpha1[k22]  = -0.180901799858457   * nu2 + 0.021618562848427  * nu + 0.087248294522483 ;
-        c3A[k22]     =  0.921101179605961   * nu  - 0.584774362431865                           ;
-        c3phi[k22]   = -2.225295573520468   * nu  + 4.612106599603013                           ;
-        c4phi[k22]   = -7.295803229089186   * nu  + 3.970238231730844                           ;
-        Domg[k22]    =  1.133871014007213   * nu2 - 0.006827404737053  * nu + 0.114279202150220 ;
-        Amrg[k22]    =  1.232248048103415   * nu2 + 0.311304775361839  * nu + 1.420821306854634 ;
-        
-        alpha21[k21] = -0.2820300392081096  * nu2 + 0.0102479949004937 * nu + 0.1834031745850074;
-        alpha1[k21]  = -0.1315990000203947  * nu2 + 0.0104928325168123 * nu + 0.0882125138092582;
-        c3A[k21]     = -0.5287168076930696  * nu  + 0.1849855679575291                          ;
-        c3phi[k21]   = -4.5223371288433771  * nu  + 2.6118602299368048                          ;
-        c4phi[k21]   = -3.4863108298513281  * nu  + 1.0786026182494697                          ;
-        Domg[k21]    =  0.3841167347154108  * nu2 + 0.1795259779761766 * nu + 0.0916127596380461;
-        Amrg[k21]    = -5.7730289498820806  * nu2 + 0.0313143958615908 * nu + 0.4315195950116911;
-        
-        
+        /* (l=2, m=2)*/
+	alpha21[k22] = -0.3025985041156393 *nu2 +  0.0032794155172817 *nu +  0.1828276903682022;
+	alpha1[k22]  = -0.1615300454109702 *nu2 +  0.0147030662812516 *nu +  0.0878204175700328;
+	c3A[k22]     =  0.8118901739129283 *nu  -  0.5584875090785957;
+	c3phi[k22]   =  0.7156419884962878 *nu  +  3.8436474282409803;
+	c4phi[k22]   =  2.2336960710670901 *nu  +  1.4736119175780844;
+	Domg[k22]    =  0.8846304360111242 *nu2 +  0.0872792137250448 *nu +  0.1058414813686749;
+	Amrg[k22]     = 1.4935750287318139 *nu2 +  0.2157497669089671 *nu +  1.4292027468283439;
+
+	/* (l=2, m=1)*/
+	alpha21[k21] = -0.2741607253846813 *nu2 +  0.0079342900879431 *nu +  0.1835522430667348;
+	alpha1[k21]  = -0.1277546304610336 *nu2 +  0.0093615534859368 *nu +  0.0882855170502398;
+	c3A[k21]     = -0.9431151070942140 *nu  +  0.2569989171628133;
+	c3phi[k21]   = -3.4479482376671666 *nu  +  2.4755856452648359;
+	c4phi[k21]   = -3.4024504071619841 *nu  +  1.0650118588151427;
+	Domg[k21]    =  0.2660644668923829 *nu2 +  0.2276854484140649 *nu +  0.0884880283627388;
+	Amrg[k21]    = -5.7236432632743952 *nu2 +  0.0390010969627653 *nu +  0.4291847351869338;
+	        
         // l=3 ------------------------------------------------------------------
-        alpha21[k33] = -0.3729868089698167  * nu2 + 0.0204125338148693 * nu + 0.1863293206607959;
-        alpha1[k33]  = -0.1877130001846801  * nu2 + 0.0150701243580132 * nu + 0.0915671940372841;
-        c3A[k33]     =  1.0651201096037879  * nu  - 0.3603063407108281                          ;
-        c3phi[k33]   = -2.5337475643757652  * nu  + 2.6347286453107643                          ;
-        c4phi[k33]   = -7.9494744361321930  * nu  + 2.8106916948840492                          ;
-        Domg[k33]    =  2.5797331166178403  * nu2 - 0.5337830158170729 * nu + 0.1930766531716946;
-        Amrg[k33]    = -10.4024985230145610 * nu2 + 1.3517710770250695 * nu + 0.4307642913724235;
-        
+	/* (l=3,m=3)*/
+        alpha21[k33] = -0.3620553934265325 *nu2 +  0.0171973908686402 *nu +  0.1865364041200878;
+	alpha1[k33]  = -0.1821867653548689 *nu2 +  0.0134440240947561 *nu +  0.0916720214797975;
+	c3A[k33]     =  2.7565431398030675 *nu  -  0.5506682334306747;
+	c3phi[k33]   = -0.2497526471104979 *nu  +  2.3737675006958683;
+	c4phi[k33]   = -2.9538823110315420 *nu  +  1.4483501341373066;
+	Domg[k33]    =  1.3341439550896721 *nu2 -  0.1717105341058959 *nu +  0.1694617455660599;
+	Amrg[k33]    = -9.3034388918614841 *nu2 +  1.0189351143222705 *nu +  0.4533252110436300;
+
+	// l=4 ------------------------------------------------------------------
+	/* (l=4,m=4)*/
+	alpha21[k44] = -0.3991680748908423 *nu2 +   0.0287698202159666 *nu +  0.1880112530796091;
+	alpha1[k44]  = -0.2003781755488581 *nu2 +   0.0171888841352427 *nu +  0.0930836242032652;
+	c3A[k44]     =  3.1899853343683140 *nu  +  -0.4131730594856833;
+	c3phi[k44]   = 31.5753575286023747 *nu  +  -1.0375600524681363;
+	c4phi[k44]   = 25.4170586178559716 *nu  +  -0.4151371540505313;
+	Domg[k44]    = -1.5342842283421341 *nu2 +   1.5224173843877831 *nu +  0.0897013049238634;
+	Amrg[k44]    =  0.9438333992719329 *nu2 +  -1.0464153920266663 *nu +  0.2897769169572948;
+
+	        
         for (int i=35; i--; )
         {
             switch (i)
@@ -327,49 +344,64 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
     }
     else
     {
+
+      /* Setting up coefficients from the phenomenological description of the ringdown.
+         For notation: Damour&Nagar, PRD 90 (2015), 024054 and Del Pozzo & Nagar, PRD 95 (2017), 124034
+         Current global fits are new. See Nagar+ 2017 (in preparation) for a global performance
+         and Riemenschneider& Nagar (2017) in preparation for the description of the fits */
+       
+        /* omg1 - imaginary part of the fundamental mode */
         double omega1_c    = -0.0598837831 * af3 + 0.8082136788 * af2 - 1.7408467418 * af + 1;
         double omega1_d    = -0.2358960279 * af3 + 1.3152369374 * af2 - 2.0764065380 * af + 1;
         omega1[k22]        =  0.3736716844 * (omega1_c/omega1_d);
         
-        /** alpha1 is alpha1[k22] */
+        /* alpha1 - real part (damping time) of the fundamental mode */
         double alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
         double alpha1_d    =  0.0811633377 * af3 + 0.7201166020 * af2 - 1.8002031358 * af + 1;
         alpha1[k22]        =  0.0889623157 * (alpha1_c/alpha1_d);
-        
+
+	/* alpha2 - alpha1 */
         double alpha21_c   =  0.4764196512 * af3 - 0.0593165805 * af2 - 1.4168096833 * af + 1;
         double alpha21_d   =  0.4385578151 * af3 - 0.0763529088 * af2 - 1.3595491146 * af + 1;
         alpha21[k22]       =  0.1849525596 * (alpha21_c/alpha21_d);
-        
+
+	/* c3A */
         double a_c3A 	    =  0.0169543;
         double b_c3A 	    = -0.0799343;
         double c_c3A 	    = -0.115928;
         double c3A_nu       =  0.8298678603 * nu - 0.5615838975;
         double c3A_eq       =  (c_c3A * X12 + 0.0907476903) * aeff3 + (b_c3A * X12 + 0.0227344099) * aeff2 + (a_c3A * X12 - 0.1994944332)*aeff;
         c3A[k22]            =  c3A_nu + c3A_eq;
-        
-        double a_c3phi  	= -0.462321;
-        double b_c3phi  	= -0.904512;
-        double c_c3phi  	=  0.437747;
-        double d_c3phi  	=  1.8275;
+
+	/* c3_phi */
+        double a_c3phi      = -0.462321;
+        double b_c3phi      = -0.904512;
+        double c_c3phi      =  0.437747;
+        double d_c3phi      =  1.8275;
         double c3phi_nu     =  0.4558467286 * nu + 3.8883812141;
         double c3phi_equal  =  (d_c3phi*X12-2.0575868122) * aeff_omg4 +(c_c3phi*X12-0.5051534498)*aeff_omg3 +(b_c3phi*X12+2.5742292762)*aeff_omg2 +(a_c3phi*X12+2.5599640181)*aeff_omg;
         c3phi[k22]          = c3phi_nu + c3phi_equal;
-        
+
+	/* c4_phi */
         double a_c4phi      = -0.449976;
         double b_c4phi      = -0.980913;
         double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
         double c4phi_equal  =  (b_c4phi*X12+3.5695199109) * aeff_omg2 + (a_c4phi * X12 + 4.1312404030) * aeff_omg;
         c4phi[k22]          =  c4phi_nu + c4phi_equal;
-        
-        double a2_omgmx 	= -0.122735;
-        double a1_omgmx 	=  0.0857478;
-        double b2_omgmx 	= -0.0760023;
-        double b1_omgmx 	=  0.0826514;
+
+	/* omg_mrg: the "merger frequency", i.e. the frequency at the peak of |h22| */
+	/* Special scaling and independent variables used for the fit. AN&GR 2017 */
+        double a2_omgmx     = -0.122735;
+        double a1_omgmx     =  0.0857478;
+        double b2_omgmx     = -0.0760023;
+        double b1_omgmx     =  0.0826514;
         double omgmx_eq_c   =  (a2_omgmx*X12_2 +a1_omgmx*X12 -0.1416002395) * aeff_omg + 1;
         double omgmx_eq_d   =  (b2_omgmx*X12_2 +b1_omgmx*X12 -0.3484804901) * aeff_omg + 1;
         double omgmx_eq     =  omgmx_eq_c/omgmx_eq_d;
         double omgmx        =  (0.481958619443355 * nu2 + 0.223976694441952 * nu + 0.273813064427363) * omgmx_eq;
-        
+
+	/* the peak of the h22 metric (strain) waveform.*/
+	/* Special scaling and independent variables used for the fit. AN& GR 2017*/	
         double a2_A_scaled = -0.0820894;
         double a1_A_scaled = 0.176126;
         double b2_A_scaled = -0.150239;
@@ -379,7 +411,8 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
         
         Amrg[k22]      = A_scaled*(1-0.5*omgmx*aeff);
         Domg[k22]      = omega1[k22] - Mbh*omgmx;
-        
+
+	/* renaming real & imaginary part of the QNM complex frequency sigma */
         sigma[k22].dat[0] = alpha1[k22];
         sigma[k22].dat[1] = omega1[k22];
     }
