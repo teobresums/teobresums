@@ -247,11 +247,11 @@ int main (int argc,char* argv[])
         prstar = y[2];
         pphi   = y[3];
         
-        //Option to stop the wf production at 100 Hz, Greg&Alessandro
-        if (r < 38.55)
-        {
-            stop_flag = true;
-        }
+//        //Option to stop the wf production at 100 Hz, Greg&Alessandro
+//        if (r < 38.55)
+//        {
+//            stop_flag = true;
+//        }
         
         /** Checking whether the dynamics produces NaN values; this can happen if radius r becomes too small */
         if (r!=r)

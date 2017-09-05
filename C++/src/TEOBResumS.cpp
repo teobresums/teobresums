@@ -341,15 +341,7 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
     
-    int N = hlm_ampl_g[1].size();
-    char   output2[256]   = "MOmg_vecg.dat";
-    std::FILE* man = std::fopen(output2, "w");
-    i = 0;
-    for (i=0;i<N;i++)
-    {
-        std::fprintf(man, "%f\t%e\n", i*dt, MOmg_vecg[i]);
-    }
-    std::fclose(man);
+
     
     /** NQCs corrections */
     /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
@@ -391,6 +383,9 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
     /** All multipoles will now have size N+Nringdown */
     /** Multipole for which no ringdown model is available will be filled with 0s */
     /** We pick the index 1 since it is the 22 mode and it is always computed */
+    
+    int N = hlm_ampl_g[1].size();
+
     
     /** Allocate hplus and hcross */
     Waveform *hplus_out = (Waveform *)malloc(sizeof(Waveform));
@@ -732,17 +727,6 @@ void TEOBResumS_single_mode(
     }
    
 
-
-    char   output1[256]   = "waveform_noNQC_noRing.dat";
-    std::FILE* jk = std::fopen(output1, "w");
-    i = 0;
-    int N = hlm_ampl_g[0].size();
-    for (i=0;i<N;i++)
-    {
-        std::fprintf(jk, "%f\t%e\t%e\n", i*dt, hlm_ampl_g[1][i],  hlm_phase_g[1][i]);
-    }
-    std::fclose(jk);
-
  
     /** NQCs corrections */
     if (params.flags.tidal==0 && params.flags.spin==1)
@@ -758,15 +742,7 @@ void TEOBResumS_single_mode(
             }
         }
     }
-   
-    char   output2[256]   = "waveform_noRing.dat";
-    std::FILE* man = std::fopen(output2, "w");
-    i = 0;
-    for (i=0;i<N;i++)
-    {
-        std::fprintf(man, "%f\t%e\t%e\n", i*dt, hlm_ampl_g[1][i],  hlm_phase_g[1][i]);
-    }
-    std::fclose(man); 
+
  
     /** Define a time vector for each multipole USELESS - remove*/
     vector<vector<double> > t_g(35);
@@ -781,7 +757,7 @@ void TEOBResumS_single_mode(
         ringdown(params, t_g, OmgOrb_vecg, hlm_ampl_g, hlm_phase_g);
     }
     
-    N = hlm_ampl_g[0].size();
+    int N = hlm_ampl_g[0].size();
     
     /** Allocate hplus and hcross */
     Waveform *h_ampl_out = (Waveform *)malloc(sizeof(Waveform));
