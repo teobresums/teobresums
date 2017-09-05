@@ -67,6 +67,7 @@ typedef struct tagTEOBResumFlags
     int RWZ;        /** Regge-Wheeler-Zerilli potential */
     int speedy;     /** Faster tails calculation */
     int dynamics;   /** Output dynamics to file */
+    int Yagi_fits;   /** Output dynamics to file */
 }   TEOBResumFlags;
 
 /** Algorithm control structure */
@@ -179,14 +180,19 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                         double polarisation,    /** polarisation angle (rad) **/
                         double f_min,           /** starting frequency(Hz) **/
                         double sampling_rate,   /** sampling rate(Hz) **/
-                        double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(Mpc) **/
                         int    tidal,           /** tidal corrections flag (BNS only) **/
                         int    speedy,          /** accelerated tails flag **/
                         int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
                         int    lm,              /** TO BE REMOVED **/
+                        int    Yagi_fits,           /** tidal corrections flag (BNS only) **/
                         int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
 );
 
@@ -205,14 +211,19 @@ void TEOBResumS_single_mode(Waveform **ampl,                /** h+ return array 
                                     double polarisation,    /** polarisation angle (rad) **/
                                     double f_min,           /** starting frequency(Hz) **/
                                     double sampling_rate,   /** sampling rate(Hz) **/
-                                    double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
-                                    double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
+                                    double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                                    double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                                    double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                                    double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                                    double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                                    double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
                                     double distance,        /** distance(Mpc) **/
                                     int    tidal,           /** tidal corrections flag (BNS only) **/
                                     int    speedy,          /** accelerated tails flag **/
                                     int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                                     int    dynamics,        /** output dynamics to file */
                                     int    lm,              /** TO BE REMOVED **/
+                                    int    Yagi_fits,           /** tidal corrections flag (BNS only) **/
                                     int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
                                     int    index            /** Index of the multipole, conventions of multiple_index **/
 );
@@ -314,13 +325,18 @@ TEOBResumParams process_input_parameters(double m1,
                                 double sampling_rate,
                                 double LambdaAl2,
                                 double LambdaBl2,
+                                double LambdaAl3,
+                                double LambdaBl3,
+                                double LambdaAl4,
+                                double LambdaBl4,
                                 int    tidal,
                                 int    speedy,
                                 int    RWZ,
                                 int    dynamics,
                                 int    lm,
+                                int    Yagi_fits,
                                 int    solver_scheme
-                               );
+                                );
 TEOBResumParams read_config(char *fname);
 
 double Yagi13_fit_barlamdel(double barlam2, int ell);

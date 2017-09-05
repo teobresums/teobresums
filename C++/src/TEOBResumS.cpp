@@ -59,16 +59,21 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                         double polarisation,    /** polarisation angle (rad) **/
                         double f_min,           /** starting frequency(Hz) **/
                         double sampling_rate,   /** sampling rate(Hz) **/
-                        double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(m) **/
                         int    tidal,           /** tidal corrections flag (BNS only) **/
                         int    speedy,          /** accelerated tails flag **/
                         int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
                         int    lm,              /** TO BE REMOVED **/
-                        int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/)
-{
+                        int    Yagi_fits,
+                        int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
+){
     
     int i = 0;
     int grid_length = 0;
@@ -89,6 +94,9 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
         swap_variables(&spin1y, &spin2y);
         swap_variables(&spin1z, &spin2z);
         swap_variables(&LambdaAl2, &LambdaBl2);
+        swap_variables(&LambdaAl3, &LambdaBl3);
+        swap_variables(&LambdaAl4, &LambdaBl4);
+
     }
     
     TEOBResumParams params = process_input_parameters(
@@ -100,11 +108,16 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                                             sampling_rate,
                                             LambdaAl2,
                                             LambdaBl2,
+                                            LambdaAl3,
+                                            LambdaBl3,
+                                            LambdaAl4,
+                                            LambdaBl4,
                                             tidal,
                                             speedy,
                                             RWZ,
                                             dynamics,
                                             lm,
+                                            Yagi_fits,
                                             solver_scheme);
     double q             = m1/m2;
     double dt            = params.dt;
@@ -462,14 +475,19 @@ void TEOBResumS_single_mode(
                         double polarisation,    /** polarisation angle (rad) **/
                         double f_min,           /** starting frequency(Hz) **/
                         double sampling_rate,   /** sampling rate(Hz) **/
-                        double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                        double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                        double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(m) **/
                         int    tidal,           /** tidal corrections flag (BNS only) **/
                         int    speedy,          /** accelerated tails flag **/
                         int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
                         int    lm,              /** TO BE REMOVED **/
+                        int    Yagi_fits,
                         int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
                         int    index                /** Index of the multipole, conventions of multiple_index **/
 )
@@ -493,11 +511,16 @@ void TEOBResumS_single_mode(
                                             sampling_rate,
                                             LambdaAl2,
                                             LambdaBl2,
+                                            LambdaAl3,
+                                            LambdaBl3,
+                                            LambdaAl4,
+                                            LambdaBl4,
                                             tidal,
                                             speedy,
                                             RWZ,
                                             dynamics,
                                             lm,
+                                            Yagi_fits,
                                             solver_scheme);
     
     double q             = m1/m2;

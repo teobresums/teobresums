@@ -41,26 +41,32 @@ USAGE:\n\
 \t./TEOBResumS.x -p <parfile>\n\
 \t./TEOBResumS.x [OPTIONS]\n\
 "
-const char *optstr[] = {
-  "-p" ,           "<parfile>",  "reads input parameters from parfile. Overrides all other arguments.", "",
-  "-m1" ,          "<double>",   "mass of the primary [Msun].", "40",
-  "-m2" ,          "<double>",   "mass of the secondary [Msun]. ", "40",
-  "-chi1" ,        "<double>",   "dimensionless spin component along the orbital angular momentum of the primary.", "0",
-  "-chi2" ,        "<double>",   "dimensionless spin component along the orbital angular momentum of the secondary.", "0",
-  "-distance" ,    "<double>",   "source distance [Mpc].", "100",
+const char *optstr[] =
+{
+  "-p"           , "<parfile>",  "reads input parameters from parfile. Overrides all other arguments.", "",
+  "-m1"          , "<double>",   "mass of the primary [Msun].", "40",
+  "-m2"          , "<double>",   "mass of the secondary [Msun]. ", "40",
+  "-chi1"        , "<double>",   "dimensionless spin component along the orbital angular momentum of the primary.", "0",
+  "-chi2"        , "<double>",   "dimensionless spin component along the orbital angular momentum of the secondary.", "0",
+  "-distance"    , "<double>",   "source distance [Mpc].", "100",
   "-inclination" , "<double>",   "(IOTA) inclination angle [rad].", "0",
   "-polarisation", "<double>",   "(PSI) polarisation angle [rad].", "0",
-  "-f_min" ,       "<double>",   "starting frequency [Hz].", "20",
-  "-srate" ,       "<double>",   "sampling rate [Hz].", "4096",
-  "-lambda1" ,     "<double>",   "tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-lambda2" ,     "<double>",   "tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-tidal" ,       "<int>",      "enable tidal corrections.", "0 (false)",
-  "-speedy" ,      "<int>",      "faster tails calculations.", "1 (true)",
-  "-dynamics" ,    "<int>",      "output dynamics evolution.", "0 (false)",
-  "-RW" ,          "<int>",      "Regge-Wheeler-Zerilli potential.", "0 (false)",
-  "-multipoles" ,  "<int>",      "enable single multipole output, in geometrical units.", "0 (false)",
-  "-mult_index" ,  "<int>",      "index for the output multipole. Requires multipoles output format.", "-1",
-  "-output" ,      "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'"
+  "-f_min"       , "<double>",   "starting frequency [Hz].", "20",
+  "-srate"       , "<double>",   "sampling rate [Hz].", "4096",
+  "-lambda1_l2"  , "<double>",   "l=2 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-lambda2_l2"  , "<double>",   "l=2 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-lambda1_l3"  , "<double>",   "l=3 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-lambda2_l3"  , "<double>",   "l=3 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-lambda1_l4"  , "<double>",   "l=4 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-lambda2_l4"  , "<double>",   "l=4 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-tidal"       , "<int>",      "enable tidal corrections.", "0 (false)",
+  "-speedy"      , "<int>",      "faster tails calculations.", "1 (true)",
+  "-dynamics"    , "<int>",      "output dynamics evolution.", "0 (false)",
+  "-RW"          , "<int>",      "Regge-Wheeler-Zerilli potential.", "0 (false)",
+  "-multipoles"  , "<int>",      "enable single multipole output, in geometrical units.", "0 (false)",
+  "-mult_index"  , "<int>",      "index for the output multipole. Requires multipoles output format.", "-1",
+  "-Yagi_fits"   , "<int>",      "enable Yagi fits for Lambda_l=3,4.", "0 (false)",
+  "-output"      , "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'"
 };
 
 
@@ -77,6 +83,10 @@ int main (int argc, char* argv[])
     double sampling_rate = 4096.;
     double LambdaAl2     = 0.0;
     double LambdaBl2     = 0.0;
+    double LambdaAl3     = 0.0;
+    double LambdaBl3     = 0.0;
+    double LambdaAl4     = 0.0;
+    double LambdaBl4     = 0.0;
     double distance      = 100;
     double inclination   = 0.0;
     double polarisation  = 0.0;
@@ -86,6 +96,7 @@ int main (int argc, char* argv[])
     int    dynamics      = 0;
     bool   multipoles    = false;
     int    mult_index    = -1;
+    int    Yagi_fits     = 0;
     int    lm            = 1;
     int    solver_scheme = 0;
     char   output[256]   = "waveform.dat";
@@ -127,8 +138,17 @@ int main (int argc, char* argv[])
             tidal = params.flags.tidal;
             speedy = params.flags.speedy;
             lm = params.lm;
+            Yagi_fits = params.flags.Yagi_fits;
             LambdaAl2 = params.LambdaAl2;
             LambdaBl2 = params.LambdaBl2;
+            if (Yagi_fits==0)
+            {
+                LambdaAl3 = params.LambdaAl3;
+                LambdaBl3 = params.LambdaBl3;
+                LambdaAl4 = params.LambdaAl4;
+                LambdaBl4 = params.LambdaBl4;
+            }
+
             break;
         }
         else if (strcmp(argv[i],"-m1")==0)
@@ -176,15 +196,40 @@ int main (int argc, char* argv[])
             RWZ = true;
             printf("RWZ = true\n");
         }
-        else if (strcmp(argv[i],"-lambda1")==0)
+        else if (strcmp(argv[i],"-Yagi_fits")==0)
+        {
+            Yagi_fits = 1;
+            printf("Yagi_fits = true\n");
+        }
+        else if (strcmp(argv[i],"-lambda1_l2")==0)
         {
             LambdaAl2 = atof(argv[i+1]);
-            printf("lambda1: %f\n",LambdaAl2);
+            printf("lambda1_l2: %f\n",LambdaAl2);
         }
-        else if (strcmp(argv[i],"-lambda2")==0)
+        else if (strcmp(argv[i],"-lambda2_l2")==0)
         {
             LambdaBl2 = atof(argv[i+1]);
-            printf("lambda2: %f\n",LambdaBl2);
+            printf("lambda2_l2: %f\n",LambdaBl2);
+        }
+        else if (strcmp(argv[i],"-lambda1_l3")==0)
+        {
+            LambdaAl3 = atof(argv[i+1]);
+            printf("lambda1_l3: %f\n",LambdaAl3);
+        }
+        else if (strcmp(argv[i],"-lambda2_l3")==0)
+        {
+            LambdaBl3 = atof(argv[i+1]);
+            printf("lambda2_l3: %f\n",LambdaBl3);
+        }
+        else if (strcmp(argv[i],"-lambda1_l4")==0)
+        {
+            LambdaAl4 = atof(argv[i+1]);
+            printf("lambda1_l4: %f\n",LambdaAl4);
+        }
+        else if (strcmp(argv[i],"-lambda2_l4")==0)
+        {
+            LambdaBl4 = atof(argv[i+1]);
+            printf("lambda2_l4: %f\n",LambdaBl4);
         }
         else if (strcmp(argv[i],"-distance")==0)
         {
@@ -240,12 +285,17 @@ int main (int argc, char* argv[])
                                        sampling_rate,
                                        LambdaAl2,
                                        LambdaBl2,
+                                       LambdaAl3,
+                                       LambdaBl3,
+                                       LambdaAl4,
+                                       LambdaBl4,
                                        distance,
                                        tidal,
                                        speedy,
                                        RWZ,
                                        dynamics,
                                        lm,
+                                       Yagi_fits,
                                        solver_scheme,
                                        mult_index);
         
@@ -290,12 +340,17 @@ int main (int argc, char* argv[])
                 sampling_rate,
                 LambdaAl2,
                 LambdaBl2,
+                LambdaAl3,
+                LambdaBl3,
+                LambdaAl4,
+                LambdaBl4,
                 distance,
                 tidal,
                 speedy,
                 RWZ,
                 dynamics,
                 lm,
+                Yagi_fits,
                 solver_scheme);
         
         std::FILE* f = std::fopen(output, "w");

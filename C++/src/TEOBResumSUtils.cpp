@@ -303,7 +303,8 @@ vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const dou
 }
 
 /* factorial */
-double fact(int n){
+double fact(int n)
+{
     double f[] = {1., 1., 2., 6., 24., 120., 720., 5040., 40320., 362880.,
         3628800., 39916800., 479001600., 6227020800., 87178291200.};
     if (n < 0){
@@ -317,7 +318,8 @@ double fact(int n){
 }
 
 /* Wigner d-function */
-double wigner_d_function(int l, int m, int s, double i){
+double wigner_d_function(int l, int m, int s, double i)
+{
     double dWig = 0.;
     
     double costheta = cos(i*0.5);
@@ -336,7 +338,8 @@ double wigner_d_function(int l, int m, int s, double i){
 }
 
 /* spin-weighted spherical harmonic */
-void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i){
+void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
+{
     /* Following the Ref.: https://arxiv.org/pdf/0709.0093.pdf */
     if ((l<0) || (m<-l) || (m>l)) {
         fprintf(stderr, " wrong l (%d) or m (%d) inside spinspharmY\n", l, m);
@@ -394,7 +397,8 @@ double AdiabLR(void *params)
     return rLR;
 }
 
-vector<double> s_D1(vector<double> f, vector<double> x, int Nmax){
+vector<double> s_D1(vector<double> f, vector<double> x, int Nmax)
+{
     /* Computes the first derivative of the function. Centered but at the edges. USAGE: df = EOB_D1(f,x) */
     int Nmin = 0;
     
@@ -422,6 +426,8 @@ void SetDefaultFlagsValues(TEOBResumParams *p)
     p->flags.RWZ        = 0;
     p->flags.speedy     = 1;
     p->flags.dynamics   = 0;
+    p->flags.Yagi_fits  = 0;
+
 }
 
 double logQ(double x)
@@ -562,6 +568,18 @@ TEOBResumParams read_config(char *fname)
             case 12:
                 params.LambdaBl2 = param_value;
                 break;
+            case 13:
+                params.LambdaAl3 = param_value;
+                break;
+            case 14:
+                params.LambdaBl3 = param_value;
+                break;
+            case 15:
+                params.LambdaAl4 = param_value;
+                break;
+            case 16:
+                params.LambdaBl4 = param_value;
+                break;
             default:
                 break;
         }
@@ -575,11 +593,14 @@ TEOBResumParams read_config(char *fname)
     double chi1 = params.chi1;
     double chi2 = params.chi2;
     double q = params.q;
-    
-    params.LambdaAl3 = Yagi13_fit_barlamdel(params.LambdaAl2, 3);
-    params.LambdaBl3 = Yagi13_fit_barlamdel(params.LambdaBl2, 3);
-    params.LambdaAl4 = Yagi13_fit_barlamdel(params.LambdaAl2, 4);
-    params.LambdaBl4 = Yagi13_fit_barlamdel(params.LambdaBl2, 4);
+    if (params.flags.Yagi_fits == 1)
+    {
+        params.LambdaAl3 = Yagi13_fit_barlamdel(params.LambdaAl2, 3);
+        params.LambdaBl3 = Yagi13_fit_barlamdel(params.LambdaBl2, 3);
+        params.LambdaAl4 = Yagi13_fit_barlamdel(params.LambdaAl2, 4);
+        params.LambdaBl4 = Yagi13_fit_barlamdel(params.LambdaBl2, 4);
+    }
+
     
     /** Override spin settings if spins are given in input */
     if (chi1 != .0 || chi2 != .0) params.flags.spin = 1;
@@ -681,11 +702,16 @@ TEOBResumParams process_input_parameters(
                                          double sampling_rate,
                                          double LambdaAl2,
                                          double LambdaBl2,
+                                         double LambdaAl3,
+                                         double LambdaBl3,
+                                         double LambdaAl4,
+                                         double LambdaBl4,
                                          int    tidal,
                                          int    speedy,
                                          int    RWZ,
                                          int    dynamics,
                                          int    lm,
+                                         int    Yagi_fits,
                                          int    solver_scheme
                                          )
 {
@@ -704,18 +730,17 @@ TEOBResumParams process_input_parameters(
     params.flags.RWZ = RWZ;
     params.flags.speedy = speedy;
     params.flags.dynamics = dynamics;
+    params.flags.Yagi_fits = Yagi_fits;
     params.lm = lm;
     params.dt = time_units_conversion(mtot, sampling_rate);
     params.solver_scheme = solver_scheme;
     
-    if (params.flags.tidal == 1)
+    if (params.flags.tidal == 1 && params.flags.Yagi_fits==1)
     {
-        params.LambdaAl2 = LambdaAl2;
-        params.LambdaBl2 = LambdaBl2;
-        params.LambdaAl3 = Yagi13_fit_barlamdel(LambdaAl2, 3);
-        params.LambdaBl3 = Yagi13_fit_barlamdel(LambdaBl2, 3);
-        params.LambdaAl4 = Yagi13_fit_barlamdel(LambdaAl2, 4);
-        params.LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
+        LambdaAl3 = Yagi13_fit_barlamdel(LambdaAl2, 3);
+        LambdaBl3 = Yagi13_fit_barlamdel(LambdaBl2, 3);
+        LambdaAl4 = Yagi13_fit_barlamdel(LambdaAl2, 4);
+        LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
     }
     
     /** Override spin settings if spins are given in input */
@@ -752,13 +777,6 @@ TEOBResumParams process_input_parameters(
     params.rLR = 0.;
     
     params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.flags.tidal);
-    
-    // tidal params
-    double LambdaAl3 = params.LambdaAl3;
-    double LambdaAl4 = params.LambdaAl4;
-    
-    double LambdaBl3 = params.LambdaBl3;
-    double LambdaBl4 = params.LambdaBl4;
     
     /** Computing the tidal coupling constants */
     
