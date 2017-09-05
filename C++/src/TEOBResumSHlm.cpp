@@ -1131,13 +1131,16 @@ vector<vector<gsl_complex> > find_a1a2a3(
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
         bi[k][2] =  0.;
     }
+
+    printf("%f\n",ai[1][0]);
+    printf("%f\n",ai[1][1]);
     
     for (int k=35;k--;)
     {
         for (int j=0; j<t_length-1;j++)
         {
-            o[k][j].dat[0] = 1. + ai[k][0]*n1[j] + ai[k][1]*n2[j] + ai[k][2]*n3[j];
-            o[k][j].dat[1] = 0. + bi[k][0]*n4[j] + bi[k][1]*n5[j] + bi[k][2]*n6[j];
+	  o[k][j].dat[0] = 1. + ai[k][0]*n1[j] + ai[k][1]*n2[j];
+	  o[k][j].dat[1] = 0. + bi[k][0]*n4[j] + bi[k][1]*n5[j];
         }
     }
     return o;
@@ -1377,7 +1380,7 @@ vector<gsl_complex> hlm(double       t,
         /** NQC correction */
         if (tidal_flag==0 && spin_flag==0)
         {
-            hlm[k].dat[0] *= h_NQC[k].dat[0];
+	    hlm[k].dat[0] *= h_NQC[k].dat[0];
             hlm[k].dat[1] -= h_NQC[k].dat[1];
         }
     }
