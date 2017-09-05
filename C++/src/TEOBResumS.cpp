@@ -347,16 +347,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
     
-    int N = hlm_ampl_g[1].size();
-    char   output2[256]   = "MOmg_vecg.dat";
-    std::FILE* man = std::fopen(output2, "w");
-    i = 0;
-    for (i=0;i<N;i++)
-    {
-        std::fprintf(man, "%f\t%e\n", i*dt, MOmg_vecg[i]);
-    }
-    std::fclose(man);
-    
     /** NQCs corrections */
     /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
     if (params.flags.tidal==0 && params.flags.spin==1)
@@ -416,6 +406,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
     /** We pick the index 1 since it is the 22 mode and it is always computed */
     
     /** Allocate hplus and hcross */
+    int N = hlm_ampl_g[1].size();
     Waveform *hplus_out = (Waveform *)malloc(sizeof(Waveform));
     if (hplus_out == NULL)
     {
