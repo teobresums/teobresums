@@ -41,27 +41,26 @@ USAGE:\n\
 \t./TEOBResumS.x -p <parfile>\n\
 \t./TEOBResumS.x [OPTIONS]\n\
 "
-const char *optstr[] = { // option type description default
-  "-p" , "<parfile>", "reads input parameters from parfile. Overrides all other arguments.", "",
-  "-m1" , "<double>", "mass of the primary [Msun].", "40",
-  "-m2" , "<double>", "mass of the secondary [Msun]. ", "40",
-  "-chi1" , "<double>", "dimensionless spin component along the orbital angular momentum of the primary.", "0",
-  "-chi2" , "<double>", "dimensionless spin component along the orbital angular momentum of the secondary.", "0",
-  "-distance" , "<double>", "source distance [Mpc].", "100",
-  "-inclination" , "<double>", "(IOTA) inclination angle [rad].", "0",
-  "-polarisation", "<double>", "(PSI) polarisation angle [rad].", "0",
-  "-f_min" , "<double>", "starting frequency [Hz].", "20",
-  "-srate" , "<double>", "sampling rate [Hz].", "4096",
-  "-lambda1" , "<double>", "tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-lambda2" , "<double>", "tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-tidal" , "<int>", "enable tidal corrections.", "0 (false)",
-  "-NQC" , "<int>", "enable NQC corrections.", "1 (true)",
-  "-speedy" , "<int>", "faster tails calculations.", "1 (true)",
-  "-dynamics" , "<int>", "output dynamics evolution.", "0 (false)",
-  "-RW" , "<int>", "Regge-Wheeler-Zerilli potential.", "0 (false)",
-  "-multipoles" , "<int>", "enable single multipole output, in geometrical units.", "0 (false)",
-  "-mult_index" , "<int>", "index for the output multipole. Requires multipoles output format.", "-1",
-  "-output" , "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'"
+const char *optstr[] = {
+  "-p" ,           "<parfile>",  "reads input parameters from parfile. Overrides all other arguments.", "",
+  "-m1" ,          "<double>",   "mass of the primary [Msun].", "40",
+  "-m2" ,          "<double>",   "mass of the secondary [Msun]. ", "40",
+  "-chi1" ,        "<double>",   "dimensionless spin component along the orbital angular momentum of the primary.", "0",
+  "-chi2" ,        "<double>",   "dimensionless spin component along the orbital angular momentum of the secondary.", "0",
+  "-distance" ,    "<double>",   "source distance [Mpc].", "100",
+  "-inclination" , "<double>",   "(IOTA) inclination angle [rad].", "0",
+  "-polarisation", "<double>",   "(PSI) polarisation angle [rad].", "0",
+  "-f_min" ,       "<double>",   "starting frequency [Hz].", "20",
+  "-srate" ,       "<double>",   "sampling rate [Hz].", "4096",
+  "-lambda1" ,     "<double>",   "tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-lambda2" ,     "<double>",   "tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
+  "-tidal" ,       "<int>",      "enable tidal corrections.", "0 (false)",
+  "-speedy" ,      "<int>",      "faster tails calculations.", "1 (true)",
+  "-dynamics" ,    "<int>",      "output dynamics evolution.", "0 (false)",
+  "-RW" ,          "<int>",      "Regge-Wheeler-Zerilli potential.", "0 (false)",
+  "-multipoles" ,  "<int>",      "enable single multipole output, in geometrical units.", "0 (false)",
+  "-mult_index" ,  "<int>",      "index for the output multipole. Requires multipoles output format.", "-1",
+  "-output" ,      "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'"
 };
 
 
@@ -81,10 +80,9 @@ int main (int argc, char* argv[])
     double distance      = 100;
     double inclination   = 0.0;
     double polarisation  = 0.0;
-    int   NQC            = 0;
-    int   tidal          = 0;
-    int   speedy         = 1;
-    int   RWZ            = 0;
+    int    tidal         = 0;
+    int    speedy        = 1;
+    int    RWZ           = 0;
     int    dynamics      = 0;
     bool   multipoles    = false;
     int    mult_index    = -1;
@@ -97,13 +95,14 @@ int main (int argc, char* argv[])
     if (argc < 2)
     {
         fprintf(stderr,USAGE);
-	fprintf(stderr,"\nOPTIONS:\n");
-	for (int i = 0; i < (20*4); i=i+4) 
-	  fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
+        fprintf(stderr,"\nOPTIONS:\n");
+        for (int i = 0; i < (20*4); i=i+4)
+            fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
         exit(0);
     }
    
-    for (int i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++)
+    {
         if ((strcmp(argv[i],"-h")==0)||(strcmp(argv[i],"-help")==0))
         {
             fprintf(stderr,USAGE);
@@ -123,7 +122,6 @@ int main (int argc, char* argv[])
             m2 = m1/q;
             chi1 = params.chi1;
             chi2 = params.chi2;
-            NQC  = params.flags.NQC;
             RWZ  = params.flags.RWZ;
             solver_scheme = params.solver_scheme;
             tidal = params.flags.tidal;
@@ -166,13 +164,7 @@ int main (int argc, char* argv[])
         else if (strcmp(argv[i],"-tidal")==0)
         {
             tidal = true;
-            NQC = false;
             printf("tidal = true\n");
-        }
-        else if (strcmp(argv[i],"-NQC")==0)
-        {
-            NQC = true;
-            printf("NQC = true\n");
         }
         else if (strcmp(argv[i],"-speedy")==0)
         {
@@ -249,7 +241,6 @@ int main (int argc, char* argv[])
                                        LambdaAl2,
                                        LambdaBl2,
                                        distance,
-                                       NQC,
                                        tidal,
                                        speedy,
                                        RWZ,
@@ -300,7 +291,6 @@ int main (int argc, char* argv[])
                 LambdaAl2,
                 LambdaBl2,
                 distance,
-                NQC,
                 tidal,
                 speedy,
                 RWZ,

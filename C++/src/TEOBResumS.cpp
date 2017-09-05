@@ -45,7 +45,7 @@ static void swap_variables(double *v1, double *v2)
     *v2 = tmp;
 }
 
-void TEOBResumS(Waveform **hplus,       /** h+ return array **/
+void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                         Waveform **hcross,      /** hx return array **/
                         double m1,              /** m1(Msun) **/
                         double m2,              /** m2(Msun) **/
@@ -62,7 +62,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(m) **/
-                        int    NQC,             /** NQC corrections flag (BBH only) **/
                         int    tidal,           /** tidal corrections flag (BNS only) **/
                         int    speedy,          /** accelerated tails flag **/
                         int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
@@ -81,11 +80,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         printf("ERROR! Non-aligned spins not supported! Aborting.\n");
         exit(-1);
     }
-    if ((tidal==true)&&(NQC==true))
-    {
-        printf("ERROR! NQC corrections for tidally deformed systems not supported! Aborting.\n");
-        exit(-1);
-    }
 
     if (m2 > m1)
     {
@@ -97,7 +91,8 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         swap_variables(&LambdaAl2, &LambdaBl2);
     }
     
-    TEOBResumParams params = process_input_parameters(m1,
+    TEOBResumParams params = process_input_parameters(
+                                            m1,
                                             m2,
                                             spin1z,
                                             spin2z,
@@ -105,7 +100,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
                                             sampling_rate,
                                             LambdaAl2,
                                             LambdaBl2,
-                                            NQC,
                                             tidal,
                                             speedy,
                                             RWZ,
@@ -377,23 +371,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array **/
         }
     }
     
-    if (params.flags.tidal==0 && params.flags.spin==0)
-    {
-        vector<gsl_complex> h_NQC(35);
-        h_NQC = hlmNQC(params.nu,r,prstar,Omg,ddotr);
-        
-        for (int k=35; k--; )
-        {
-            if (k==1)
-            {
-                for (int i=grid_length; i--; )
-                {
-                    hlm_ampl_g[k][i]  *= h_NQC[k].dat[0];
-                    hlm_phase_g[k][i] -= h_NQC[k].dat[1];
-                }
-            }
-        }
-    }
     
     
     /** Define a time vector for each multipole
@@ -495,7 +472,6 @@ void TEOBResumS_single_mode(
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(m) **/
-                        int    NQC,             /** NQC corrections flag (BBH only) **/
                         int    tidal,           /** tidal corrections flag (BNS only) **/
                         int    speedy,          /** accelerated tails flag **/
                         int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
@@ -515,11 +491,6 @@ void TEOBResumS_single_mode(
         printf("ERROR! Non-aligned spins not supported! Aborting.\n");
         exit(-1);
     }
-    if ((tidal==true)&&(NQC==true))
-    {
-        printf("ERROR! NQC corrections for tidally deformed systems not supported! Aborting.\n");
-        exit(-1);
-    }
     
     TEOBResumParams params = process_input_parameters(m1,
                                             m2,
@@ -529,7 +500,6 @@ void TEOBResumS_single_mode(
                                             sampling_rate,
                                             LambdaAl2,
                                             LambdaBl2,
-                                            NQC,
                                             tidal,
                                             speedy,
                                             RWZ,
