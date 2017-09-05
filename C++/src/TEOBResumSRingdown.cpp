@@ -379,6 +379,9 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
         
         Amrg[k22]      = A_scaled*(1-0.5*omgmx*aeff);
         Domg[k22]      = omega1[k22] - Mbh*omgmx;
+        
+        sigma[k22].dat[0] = alpha1[k22];
+        sigma[k22].dat[1] = omega1[k22];
     }
     for (int i=35; i--; )
     {
@@ -397,8 +400,6 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
         b3[i] = c3phi[i];
         b4[i] = c4phi[i];
         b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
-        sigma[i].dat[0] = alpha1[i];
-        sigma[i].dat[1] = omega1[i];
         if  (i==1)
         {
             cout << "a1:\t" << a1[i] << endl;
@@ -409,7 +410,8 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
             cout << "b2:\t" << b2[i] << endl;
             cout << "b3\t"  << b3[i] << endl;
             cout << "b4\t"  << b4[i] << endl;
-
+            cout << "alpha\t"  << sigma[i].dat[0] << endl;
+            cout << "omega\t"  << sigma[i].dat[1] << endl;
         }
     }
 }
