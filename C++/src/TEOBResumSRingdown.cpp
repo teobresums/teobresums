@@ -433,10 +433,6 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
         b3[i] = c3phi[i];
         b4[i] = c4phi[i];
         b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
-
-        sigma[i].dat[0] = alpha1[i];
-        sigma[i].dat[1] = omega1[i];
-
     }
 }
 
