@@ -22,15 +22,15 @@ class GravitationalWaveModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, inject=False, **kwargs):
+    def __init__(self, inject=False, chunk_size=4.0, trigtime=1126259462.423, **kwargs):
         
         super(GravitationalWaveModel,self).__init__(**kwargs)
         # this is the merger time in H1
-        self.tevent = 1126259462.423
+        self.tevent = trigtime
 
         self.inject=inject
 
-        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt'),GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt')]
+        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, **kwargs),GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, **kwargs)]
 
         self.sampling_rate = self.detectors[0].sampling_rate
         self.segment_length = self.detectors[0].segment_length
@@ -49,7 +49,7 @@ class GravitationalWaveModel(cpnest.model.Model):
 
         self.bounds=[[0,2.0*np.pi],
                 [-np.pi/2.0,np.pi/2.0],
-                [self.tevent-0.005,self.tevent+0.005],
+                [self.tevent-0.05,self.tevent+0.05],
                 [30,40],
                 [20,30],
                 [-0.9,0.9],
@@ -83,8 +83,18 @@ class GravitationalWaveModel(cpnest.model.Model):
                          0,
                          0)
         
-        f, hptilde = noise.fd_from_td(self.detectors[0].Times, h[:,0], srate = self.sampling_rate, N = self.detectors[0].segment_length)
-        f, hctilde = noise.fd_from_td(self.detectors[0].Times, h[:,1], srate = self.sampling_rate, N = self.detectors[0].segment_length)
+        hp = noise.resize_time_series(h[:,0],self.detectors[0].segment_length)
+        hc = noise.resize_time_series(h[:,1],self.detectors[0].segment_length)
+        index_trigtime = int((x['tc']-self.detectors[0].Epoch)*self.sampling_rate)
+        index_chunk_start = index_trigtime - int(self.sampling_rate*(self.detectors[0].T-1))
+        
+        hp = np.roll(hp,index_chunk_start)
+        hc = np.roll(hp,index_chunk_start)
+
+        hptilde = np.fft.rfft(hp)
+        hctilde = np.fft.rfft(hc)
+        
+        f, hctilde = noise.fd_from_td(self.detectors[0].Times, hc, srate = self.sampling_rate, N = self.detectors[0].segment_length)
         return np.sum([d.logLikelihood(hptilde, hctilde, x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
     
     def log_prior(self, x):
@@ -101,14 +111,14 @@ class NoiseModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, **kwargs):
+    def __init__(self, chunk_size=4.0, trigtime=1126259462.423, **kwargs):
         
         super(NoiseModel,self).__init__(**kwargs)
         # this is the merger time in H1
-        self.tevent = 1126259462.9#1126259462.423
+        self.tevent = 1126259462.423
 
-        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt'),
-                          GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt')]
+        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime,**kwargs),
+                          GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime,**kwargs)]
 
     def log_likelihood(self,x):
         
@@ -136,7 +146,7 @@ if __name__=='__main__':
         signal_model = GravitationalWaveModel()
         work=cpnest.CPNest(signal_model,
                        verbose=2,
-                       Poolsize=100,
+                       Poolsize=1000,
                        Nthreads=opts.threads,
                        Nlive=opts.nlive,
                        maxmcmc=opts.maxmcmc,
