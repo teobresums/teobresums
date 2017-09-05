@@ -417,7 +417,6 @@ vector<double> s_D1(vector<double> f, vector<double> x, int Nmax){
 /** Sets the dynamics controlling flags to their default value */
 void SetDefaultFlagsValues(TEOBResumParams *p)
 {
-    p->flags.NQC        = 1;
     p->flags.spin       = 0;
     p->flags.tidal      = 0;
     p->flags.RWZ        = 0;
@@ -522,52 +521,45 @@ TEOBResumParams read_config(char *fname)
                 break;
             case 4:
                 if (param_value==0) {
-                    params.flags.NQC = 0;
-                } else {
-                    params.flags.NQC = 1;
-                }
-                break;
-            case 5:
-                if (param_value==0) {
                     params.flags.tidal = 0;
                 } else {
                     params.flags.tidal = 1;
                 }
                 break;
-            case 6:
+            case 5:
                 if (param_value==0) {
                     params.flags.RWZ = 0;
                 } else {
                     params.flags.RWZ = 1;
                 }
                 break;
-            case 7:
+            case 6:
                 if (param_value==0) {
                     params.flags.speedy = 0;
                 } else {
                     params.flags.speedy = 1;
                 }
                 break;
-            case 8:
+            case 7:
                 if (param_value==0) {
                     params.flags.dynamics = 0;
                 } else {
                     params.flags.dynamics = 1;
                 }
                 break;
-            case 9:
+            case 8:
                 params.lm = param_value;
                 break;
-            case 10:
+            case 9:
                 params.dt = param_value;
                 break;
-            case 11:
+            case 10:
                 params.solver_scheme = param_value;
                 break;
-            case 12:
+            case 11:
                 params.LambdaAl2 = param_value;
                 break;
-            case 13:
+            case 12:
                 params.LambdaBl2 = param_value;
                 break;
             default:
@@ -622,8 +614,6 @@ TEOBResumParams read_config(char *fname)
     params.rLR = 0.;
     params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.flags.tidal);
     
-    /** if tidal corrections are requested, unset the NQC corrections */
-    if (params.flags.tidal==1) params.flags.NQC = 0;
     
     // tidal params
     double LambdaAl2 = params.LambdaAl2;
@@ -691,7 +681,6 @@ TEOBResumParams process_input_parameters(
                                          double sampling_rate,
                                          double LambdaAl2,
                                          double LambdaBl2,
-                                         int    NQC,
                                          int    tidal,
                                          int    speedy,
                                          int    RWZ,
@@ -711,7 +700,6 @@ TEOBResumParams process_input_parameters(
     params.chi1 = chi1;
     params.chi2 = chi2;
     params.r0 = radius0(mtot, f_min);
-    params.flags.NQC = NQC;
     params.flags.tidal = tidal;
     params.flags.RWZ = RWZ;
     params.flags.speedy = speedy;
@@ -764,9 +752,6 @@ TEOBResumParams process_input_parameters(
     params.rLR = 0.;
     
     params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.flags.tidal);
-    
-    /** if tidal corrections are requested, unset the NQC corrections */
-    if (params.flags.tidal==1) params.flags.NQC = 0;
     
     // tidal params
     double LambdaAl3 = params.LambdaAl3;

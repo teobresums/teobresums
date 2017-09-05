@@ -35,10 +35,10 @@ double flux(const double x,
             const double prstar,
             const double ddotr,
             double source[],
-            void *params){
+            void *params)
+{
     
     bool                 tidal_flag   = (*(TEOBResumParams *)params).flags.tidal;
-    bool                 NQC_flag     = (*(TEOBResumParams *)params).flags.NQC;
     double               nu           = (*(TEOBResumParams *)params).nu;
     double               Flm;
     double               Modhhatlm;
@@ -58,19 +58,19 @@ double flux(const double x,
         Modhhatlm = source[k] * MTlm[k] * flm[k];
         
         /** NQCs */
-        if (NQC_flag==true)
+        if (tidal_flag==false)
         {
             switch (k)
             {
-                case 0:
-                    Modhhatlm *= hlm_NQC[k].dat[0];
-                    break;
+//                case 0:
+//                    Modhhatlm *= hlm_NQC[k].dat[0];
+//                    break;
                 case 1:
                     Modhhatlm *= hlm_NQC[k].dat[0];
                     break;
-                case 4:
-                    Modhhatlm *= hlm_NQC[k].dat[0];
-                    break;
+//                case 4:
+//                    Modhhatlm *= hlm_NQC[k].dat[0];
+//                    break;
                 default:
                     Modhhatlm *= 1.;
                     break;
@@ -161,7 +161,6 @@ double s_Flux(double x,
     double X1       = (*(TEOBResumParams *)params).X1;
     double X2       = (*(TEOBResumParams *)params).X2;
     bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
-    bool NQC_flag   = (*(TEOBResumParams *)params).flags.NQC;
     
     double prefact[] = {
         jhat, Heff,
@@ -191,7 +190,7 @@ double s_Flux(double x,
         Modhhatlm = prefact[k] * MTlm[k] * flm[k];
         
         //Include NQC with flag
-        if (NQC_flag==true)
+        if (tidal_flag==false)
         {
             Modhhatlm *= hnqclm;
         }

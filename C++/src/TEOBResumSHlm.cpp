@@ -798,79 +798,6 @@ vector<double> s_flm(double x, void *params){
                              *******************************************************/
 
 
-vector<double> NQC(const double r,
-                   const double prstar,
-                   const double Omega,
-                   const double ddotr,
-                   int i){
-    
-    
-    /******************************************************************
-     * Computes the factors (without the coefficients) that build the *
-     * NQC corrections to the waveform for the different modes.       *
-     ******************************************************************/
-    
-    vector<double> n(6);
-    
-    switch (i)
-    {
-            /* l=2 -------------------------------------------------------------------
-             * (2,1)                                                                    */
-        case 0:
-            // NQC corrections to the modulus
-            n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-            n[1] = ddotr/(r*Omega*Omega);
-            n[2] = n[0]*prstar*prstar;
-            
-            
-            //% NQC corrections to the phase
-            n[3] = prstar/(r*Omega);
-            n[4] = n[3]*cbrt(Omega*Omega);
-            n[5] = n[4]*prstar*prstar;
-            break;
-            // (2,2)
-            
-        case 1:
-            // NQC corrections to the modulus
-            n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-            n[1] = ddotr/(r*Omega*Omega);
-            n[2] = n[0]*prstar*prstar;
-            
-            
-            //% NQC corrections to the phase
-            n[3] = prstar/(r*Omega);
-            n[4] = n[3]*(r*Omega)*(r*Omega);
-            n[5] = n[4]*prstar*prstar;
-            break;
-            // l=3 -------------------------------------------------------------------
-            // (3,3)
-            
-        case 4:
-            // NQC corrections to the modulus
-            n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-            n[1] = ddotr/(r*Omega*Omega);
-            n[2] = n[0]*prstar*prstar;
-            
-            
-            //% NQC corrections to the phase
-            n[3] = prstar/(r*Omega);
-            n[4] = n[3]*cbrt(Omega*Omega);
-            n[5] = n[4]*prstar*prstar;
-            break;
-            
-        default:
-            n[0] = 0.;
-            n[1] = 0.;
-            n[2] = 0.;
-            
-            n[3] = 0.;
-            n[4] = 0.;
-            n[5] = 0.;
-            break;
-    }
-    
-    return n;
-}
 
 vector<vector<gsl_complex> > find_a1a2a3(
                                          vector<double>          T,
@@ -1261,22 +1188,40 @@ vector<gsl_complex> hlmNQC(double  nu,
                 b2 =   1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
                 b3 =                                                            0.0;
                 
-                n  = NQC(r,prstar, Omega,ddotr,0);
+                // NQC corrections to the modulus
+                n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+                n[1] = ddotr/(r*Omega*Omega);
+                n[2] = n[0]*prstar*prstar;
                 
+                
+                //% NQC corrections to the phase
+                n[3] = prstar/(r*Omega);
+                n[4] = n[3]*cbrt(Omega*Omega);
+                n[5] = n[4]*prstar*prstar;
+                    
                 break;
                 
                 /* (2,2) */
             case 1:
                 
-                a1 = -0.0805236959*( 1 - 2.00332326*xnu2)/( 1 + 3.08595088*xnu2);
-                a2 =  1.5299534255*( 1 + 1.16438929*xnu2)/( 1 + 1.92033923*xnu2);
-                a3 =  0.0;
+                a1   = -0.0805236959*( 1 - 2.00332326*xnu2)/( 1 + 3.08595088*xnu2);
+                a2   =  1.5299534255*( 1 + 1.16438929*xnu2)/( 1 + 1.92033923*xnu2);
+                a3   =  0.0;
                 
-                b1 = 0.146768094955*( 0.07417121*xnu + 1.01691256);
-                b2 = 0.896911234248*(-0.61072011*xnu + 0.94295129);
-                b3 = 0.0;
+                b1   = 0.146768094955*( 0.07417121*xnu + 1.01691256);
+                b2   = 0.896911234248*(-0.61072011*xnu + 0.94295129);
+                b3   = 0.0;
                 
-                n  = NQC(r,prstar, Omega,ddotr,1);
+                // NQC corrections to the modulus
+                n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+                n[1] = ddotr/(r*Omega*Omega);
+                n[2] = n[0]*prstar*prstar;
+                
+                
+                //% NQC corrections to the phase
+                n[3] = prstar/(r*Omega);
+                n[4] = n[3]*(r*Omega)*(r*Omega);
+                n[5] = n[4]*prstar*prstar;
                 
                 break;
                 
@@ -1284,27 +1229,45 @@ vector<gsl_complex> hlmNQC(double  nu,
                  * (3,3) */
             case 4:
                 
-                a1 = -0.0377680000*(1 - 14.61548907*xnu2)/( 1 + 2.44559263*xnu2);
-                a2 =  1.9898000000*(1 + 2.09750346 *xnu2)/( 1 + 2.57489466*xnu2);
-                a3 =  0.0;
+                a1   = -0.0377680000*(1 - 14.61548907*xnu2)/( 1 + 2.44559263*xnu2);
+                a2   =  1.9898000000*(1 + 2.09750346 *xnu2)/( 1 + 2.57489466*xnu2);
+                a3   =  0.0;
                 
-                b1 = 0.1418400000*(1.07430512 - 1.23906804*xnu + 4.44910652*xnu2);
-                b2 = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
-                b3 = 0.0;
+                b1   = 0.1418400000*(1.07430512 - 1.23906804*xnu + 4.44910652*xnu2);
+                b2   = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
+                b3   = 0.0;
                 
-                n  = NQC(r,prstar, Omega,ddotr,4);
+                // NQC corrections to the modulus
+                n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+                n[1] = ddotr/(r*Omega*Omega);
+                n[2] = n[0]*prstar*prstar;
+                
+                
+                //% NQC corrections to the phase
+                n[3] = prstar/(r*Omega);
+                n[4] = n[3]*cbrt(Omega*Omega);
+                n[5] = n[4]*prstar*prstar;
                 
                 break;
                 
             default:
                 
-                a1 = 0.;
-                a2 = 0.;
-                a3 = 0.;
+                a1   = 0.;
+                a2   = 0.;
+                a3   = 0.;
                 
-                b1 = 0.;
-                b2 = 0.;
-                b3 = 0.;
+                b1   = 0.;
+                b2   = 0.;
+                b3   = 0.;
+                
+                n[0] = 0.;
+                n[1] = 0.;
+                n[2] = 0.;
+                
+                n[3] = 0.;
+                n[4] = 0.;
+                n[5] = 0.;
+                
                 break;
         }
         
@@ -1315,14 +1278,14 @@ vector<gsl_complex> hlmNQC(double  nu,
     return psilmnqc;
 }
 
-double dtnqc_fit(double chi,
-                 double chi0
+double dtnqc_fit(const double chi,
+                 const double chi0
                  ){
     
     /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
     
-    double n1    = -16.06288206;
-    double d1    = -4.04266459;
+    const double n1    = -16.06288206;
+    const double d1    = -4.04266459;
     double x     = chi-chi0;
     double dtnqc = (1.+n1*x)/(1.+d1*x);
     
@@ -1354,7 +1317,6 @@ vector<gsl_complex> hlm(double       t,
     double nu           = (*(TEOBResumParams *)params).nu;
     int tidal_flag      = (*(TEOBResumParams *)params).flags.tidal;
     int spin_flag       = (*(TEOBResumParams *)params).flags.spin;
-    int NQC_flag        = (*(TEOBResumParams *)params).flags.NQC;
     int speedytail_flag = (*(TEOBResumParams *)params).flags.speedy;
     
     double source[]     = {
@@ -1398,7 +1360,7 @@ vector<gsl_complex> hlm(double       t,
     const vector<double> EOBdeltalm = deltalm(Hreal, Omega, nu);
     
     vector<gsl_complex> h_NQC(kmax);
-    if (NQC_flag==1)
+    if (tidal_flag==0)
     {
         h_NQC = hlmNQC(nu,r,prstar,Omega,ddotr);
     }
@@ -1413,7 +1375,7 @@ vector<gsl_complex> hlm(double       t,
         hlm[k].dat[1] = - hlm[k].dat[1]; /** Minus sign by convention */
         
         /** NQC correction */
-        if (NQC_flag==1 && spin_flag==0)
+        if (tidal_flag==0 && spin_flag==0)
         {
             hlm[k].dat[0] *= h_NQC[k].dat[0];
             hlm[k].dat[1] -= h_NQC[k].dat[1];
@@ -1424,7 +1386,7 @@ vector<gsl_complex> hlm(double       t,
     {
         
         /** Compute tidal contribution */
-        vector<double> hlmtidal = hlm_Tidal(x, params);
+        vector<double> hlmtidal   = hlm_Tidal(x, params);
         
         /** Update waveform */
         double p2 = sqrt(1-4*nu);

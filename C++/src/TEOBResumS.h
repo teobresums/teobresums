@@ -62,7 +62,6 @@ const int M[35] = {
 /** Structure of flags to control various physics ingredients */
 typedef struct tagTEOBResumFlags
 {
-    int NQC;        /** Apply NQC  corrections */
     int spin;       /** Spinning dynamics */
     int tidal;      /** Tidal deformability dynamics */
     int RWZ;        /** Regge-Wheeler-Zerilli potential */
@@ -183,7 +182,6 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                         double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(Mpc) **/
-                        int    NQC,             /** NQC corrections flag (BBH only) **/
                         int    tidal,           /** tidal corrections flag (BNS only) **/
                         int    speedy,          /** accelerated tails flag **/
                         int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
@@ -210,7 +208,6 @@ void TEOBResumS_single_mode(Waveform **ampl,                /** h+ return array 
                                     double LambdaAl2,       /** (tidal deformation of body 1)/(mass of body 1)^5 **/
                                     double LambdaBl2,       /** (tidal deformation of body 2)/(mass of body 2)^5 **/
                                     double distance,        /** distance(Mpc) **/
-                                    int    NQC,             /** NQC corrections flag (BBH only) **/
                                     int    tidal,           /** tidal corrections flag (BNS only) **/
                                     int    speedy,          /** accelerated tails flag **/
                                     int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
@@ -226,9 +223,6 @@ vector<double> acoeffs(const double r, const double nu);
 vector<double> Metric(const double r, void *params, bool nnlo_flag);
 vector<double> A5pnP15_dd(const double r, void *params);
 
-/* _NQC_h */
-
-vector<double> NQC(const double r, const double prstar, const double Omega, const double ddotr, int i);
     
 /* _QNMHybridFitCab_h */
     
@@ -320,7 +314,6 @@ TEOBResumParams process_input_parameters(double m1,
                                 double sampling_rate,
                                 double LambdaAl2,
                                 double LambdaBl2,
-                                int    NQC,
                                 int    tidal,
                                 int    speedy,
                                 int    RWZ,
