@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 from scipy.interpolate import interp1d
-from scipy.signal import butter, filtfilt, welch
+from scipy.signal import butter, filtfilt, tukey
 
 def chunks(times,strain,chunksize,avoid=None):
     # Skip the 0th chunk which has filter ringing
@@ -72,13 +72,16 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     starttime=float(starttime)
     T=float(T)
     print('Loading {0} starting at {1} length {2}s'.format(fname,starttime,T))
-    strain = np.loadtxt(fname)
-    N=len(strain)
+    rawstrain = np.loadtxt(fname)
+    N=len(rawstrain)
     # sampling timestep (s)
-    dt = T/len(strain)
+    dt = T/N
     # Sampling rate (Hz)
     srate=1/dt
+#    bb, ab = butter(4, [20/(0.5*srate), 2028 / (0.5*srate) ], btype='band')
+#    strain = filtfilt(bb, ab, rawstrain)
 
+    strain = rawstrain
     # find the index corresponding to the trigger time
     index_trigtime = int((trigtime-starttime)*srate)
 
@@ -94,6 +97,10 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     signal_chunk=np.zeros(chunksize,dtype=np.float64)
     for i in range(chunksize): signal_chunk[i] = strain[index_chunk_start+i]
     
+    # window the data
+    padding = 0.4
+    window=tukey(chunksize,2.0*srate*padding/chunk_size)
+    signal_chunk*=window
     # zero-pad to the required length
     N = int(2**np.ceil(np.log2(len(signal_chunk))))
     signal_chunk = resize_time_series(signal_chunk,N)
@@ -109,6 +116,7 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     
     times = chunk_start+np.linspace(0,chunk_size,chunksize)
     frequencies = np.linspace(0,srate/2.,N/2 +1)
+
     return times, signal_chunk, frequencies, sf, psd_int(frequencies)
 
 # function to writen data

@@ -341,8 +341,6 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
     
-
-    
     /** NQCs corrections */
     /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
     if (params.flags.tidal==0 && params.flags.spin==1)
@@ -388,6 +386,7 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
 
     
     /** Allocate hplus and hcross */
+    int N = hlm_ampl_g[1].size();
     Waveform *hplus_out = (Waveform *)malloc(sizeof(Waveform));
     if (hplus_out == NULL)
     {
