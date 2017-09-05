@@ -1131,9 +1131,6 @@ vector<vector<gsl_complex> > find_a1a2a3(
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
         bi[k][2] =  0.;
     }
-
-    printf("%f\n",ai[1][0]);
-    printf("%f\n",ai[1][1]);
     
     for (int k=35;k--;)
     {
