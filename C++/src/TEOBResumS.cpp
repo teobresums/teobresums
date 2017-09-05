@@ -386,7 +386,6 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
 
     
     /** Allocate hplus and hcross */
-    int N = hlm_ampl_g[1].size();
     Waveform *hplus_out = (Waveform *)malloc(sizeof(Waveform));
     if (hplus_out == NULL)
     {
