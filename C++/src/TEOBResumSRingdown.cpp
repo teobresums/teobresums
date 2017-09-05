@@ -433,19 +433,10 @@ void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> 
         b3[i] = c3phi[i];
         b4[i] = c4phi[i];
         b1[i] = Domg[i] * (1+c3phi[i]+c4phi[i]) / (b2[i]*(c3phi[i] + 2.*c4phi[i]));
-        if  (i==1)
-        {
-            cout << "a1:\t" << a1[i] << endl;
-            cout << "a2:\t" << a2[i] << endl;
-            cout << "a3\t"  << a3[i] << endl;
-            cout << "a4\t"  << a4[i] << endl;
-            cout << "b1:\t" << b1[i] << endl;
-            cout << "b2:\t" << b2[i] << endl;
-            cout << "b3\t"  << b3[i] << endl;
-            cout << "b4\t"  << b4[i] << endl;
-            cout << "alpha\t"  << sigma[i].dat[0] << endl;
-            cout << "omega\t"  << sigma[i].dat[1] << endl;
-        }
+
+        sigma[i].dat[0] = alpha1[i];
+        sigma[i].dat[1] = omega1[i];
+
     }
 }
 
@@ -629,8 +620,6 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
         double x    = t_vec[k][I[k]]/Mbh-tmrg[k];
         psi[k]      = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
         Deltaphi[k] = psi[k].dat[1] - hlm_phase[k][I[k]];
-        cout << "Delta_phi:\t" << Deltaphi[k] <<  "\tIndex:\t" << k << endl;
-
     }
     
     /** add 500 points of ringdown attachment */
@@ -641,6 +630,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     {
         double t = t_vec[k][I[k]];
         int n_removed = Size[k]-I[k];
+
         switch (k)
         {
             case 0:
@@ -694,14 +684,6 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 break;
         }
     }
-    int N = hlm_phase[1].size();
-    char   output2[256]   = "Ringdown.dat";
-    std::FILE* man = std::fopen(output2, "w");
-    i = 0;
-    for (i=0;i<N;i++)
-    {
-        std::fprintf(man, "%f\t%e\t%e\n", t_vec[1][i], hlm_rad[1][i], hlm_phase[1][i]);
-    }
-    std::fclose(man);
+
     return 0;
 }

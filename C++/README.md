@@ -32,7 +32,7 @@ To compile
 
 ```
 $ ./bootstrap
-$ ./configure --prefix=</abs/path/to/your/build/> CXXFLAGS="-std=c++11 -Ofast -Wall -fPIC"
+$ ./configure --prefix=</abs/path/to/your/build/> CXXFLAGS="-std=c++11 -O3 -Wall -fPIC"
 $ make
 $ make install
 ```

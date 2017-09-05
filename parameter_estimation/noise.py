@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 from scipy.interpolate import interp1d
-from scipy.signal import butter, filtfilt, welch
+from scipy.signal import butter, filtfilt, tukey
 
 def chunks(times,strain,chunksize,avoid=None):
     # Skip the 0th chunk which has filter ringing
@@ -19,11 +19,15 @@ def chunks(times,strain,chunksize,avoid=None):
                    for j in range(1,len(strain)//chunksize)
                        if not times[chunksize*j] < avoid < times[chunksize*(j+1)] )
 
+def downsample(strain, old_sampling_rate, new_sampling_rate):
+    factor = int(old_sampling_rate/new_sampling_rate)
+    return strain.reshape(-1, factor).mean(axis=1)
+
 def resize_time_series(inarr, N):
     # zero-pad to the required length
     outarr = np.pad(inarr, (0,N-len(inarr)), mode='constant', constant_values=0)
     # roll the array so that the peak of the time series is in the center of the frame
-    outarr = np.roll(outarr,N//2-np.argmax(outarr))
+#    outarr = np.roll(outarr,N//2-np.argmax(np.abs(outarr)))
     return outarr
 
 def fd_from_td(t_arr, strain_t, srate = 4096, N = 4096):
@@ -69,43 +73,51 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     T=float(T)
     print('Loading {0} starting at {1} length {2}s'.format(fname,starttime,T))
     rawstrain = np.loadtxt(fname)
+    N=len(rawstrain)
     # sampling timestep (s)
-    dt = T/len(rawstrain)
+    dt = T/N
     # Sampling rate (Hz)
     srate=1/dt
-    
-    # bandpass between 20 hz and 10 hz below nyquist
-    bb, ab = butter(4, [20/(0.5*srate), (0.5*srate-10) / (0.5*srate) ], btype='band')
-    strain = filtfilt(bb, ab, rawstrain)
-    # Round to integer number of chunks
-    Nchunks = np.int(T//chunk_size)
+#    bb, ab = butter(4, [20/(0.5*srate), 2028 / (0.5*srate) ], btype='band')
+#    strain = filtfilt(bb, ab, rawstrain)
 
-    seglen = np.float(T)/Nchunks
-    # Number of samples in each chunk
-    chunksize=int(seglen*srate)
+    strain = rawstrain
+    # find the index corresponding to the trigger time
+    index_trigtime = int((trigtime-starttime)*srate)
+
+    # Number of samples in the chunk
+    chunksize=int(chunk_size*srate)
+    
+    # Starting time for the signal chunk
+    # We want the trigger time 1s before the end of the segment
+    index_chunk_start = index_trigtime - int(srate*(chunk_size-1))
+    chunk_start = starttime+dt*index_chunk_start
 
     # signal chunk
-    signal_chunksize=np.int(srate*chunk_size)
-
-    # Find the on-source chunk, centred on trigtime
-    if trigtime is not None:
-          i = int((trigtime-starttime)*srate)
-          on_source = strain[i-signal_chunksize//2:i+signal_chunksize//2+1]
-    else:
-        on_source = None
-        print('No trigtime given')
-
-    # Compute the times for convenience
-    i = int((trigtime-starttime)*srate)
-    times = np.linspace(starttime,starttime+T-dt,len(strain))[i-signal_chunksize//2:i+signal_chunksize//2+1]
-
-    # Compute the PSD
-    psd, freqs = mlab.psd(strain, Fs = srate, NFFT = np.int(srate))
+    signal_chunk=np.zeros(chunksize,dtype=np.float64)
+    for i in range(chunksize): signal_chunk[i] = strain[index_chunk_start+i]
+    
+    # window the data
+    padding = 0.4
+    window=tukey(chunksize,2.0*srate*padding/chunk_size)
+    signal_chunk*=window
+    # zero-pad to the required length
+    N = int(2**np.ceil(np.log2(len(signal_chunk))))
+    signal_chunk = resize_time_series(signal_chunk,N)
 
     # Compute the frequency domain strain
-    frequency, on_source_fd = fd_from_td(times, on_source, srate = srate, N = signal_chunksize+1)
-    psd_int = np.interp(frequency, freqs, psd)
-    return times, on_source, frequency, on_source_fd, psd_int
+    df = srate/N
+    sf = np.fft.rfft(signal_chunk)
+    # Compute the PSD
+    psd, freqs = mlab.psd(strain, Fs = srate, NFFT = np.int(srate))
+    psd_int = interp1d(freqs, psd)
+    
+    # compute times and frequencies for convenience
+    
+    times = chunk_start+np.linspace(0,chunk_size,chunksize)
+    frequencies = np.linspace(0,srate/2.,N/2 +1)
+
+    return times, signal_chunk, frequencies, sf, psd_int(frequencies)
 
 # function to writen data
 def whiten(strain, interp_psd, dt):
@@ -119,7 +131,17 @@ def whiten(strain, interp_psd, dt):
     return white_ht
 
 if __name__ == "__main__":
-    times, on_source, frequency, on_source_fd, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt')
+    strainT, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt')
     from matplotlib import pyplot as plt
-    plt.loglog(frequency, psd)
+    fmin = 20
+    fmax = 2048
+    imin = int(fmin*4)
+    imax = int(fmax*4)
+    print imin, imax
+    plt.figure()
+    plt.plot(1126259459.42+np.linspace(0,4,int(4*4096)),strainT)
+    plt.axvline(tevent)
+    plt.figure()
+    plt.plot(1126259459.42+np.linspace(0,4,int(4*4096)),whiten(strainT,psd,1./4096.))
+    plt.axvline(tevent)
     plt.show()
