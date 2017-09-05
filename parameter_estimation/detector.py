@@ -32,16 +32,22 @@ class GravitationalWaveDetector(object):
         """
         gmst = GreenwichMeanSiderealTime(tc)
         fp,fc = ComputeDetAMResponse(self.lal_detector.response, ra, dec, psi, gmst)
-        timeShift = self.Epoch-2-tc + TimeDelayFromEarthCenter(self.location, ra, dec, tc)
-        return np.exp(-1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])*(fp*hptilde+fc*hctilde)
+        
+        timeShift = self.Epoch-tc + TimeDelayFromEarthCenter(self.location, ra, dec, tc)
+        
+        return np.exp(-1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])*(fp*hptilde[self.kmin:self.kmax]+fc*hctilde[self.kmin:self.kmax])
 
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
         TwoDeltaTOverN = 2.0*self.dt/self.segment_length
         
-        residuals = self.FrequencySeries - self.Project(hptilde, hctilde, ra, dec, psi, tc)
+        residuals = self.FrequencySeries[self.kmin:self.kmax] - self.Project(hptilde, hctilde, ra, dec, psi, tc)
+        
         numerator = residuals*np.conj(residuals)
-        return -TwoDeltaTOverN*np.sum(np.real(numerator)*(self.InversePowerSpectralDensity/(self.dt*self.dt)))
+
+        logLseries = -TwoDeltaTOverN*np.real(numerator*(self.InversePowerSpectralDensity[self.kmin:self.kmax]/(self.dt*self.dt)))
+        print [l for l in logLseries]
+        return np.sum(logLseries)
 
 if __name__ == "__main__":
     H = GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', trigtime = 1126259462.423)
@@ -85,8 +91,8 @@ if __name__ == "__main__":
                      0)
 
     from pylab import *
-#    fig = figure()
-#    ax = fig.add_subplot(111)
+    fig = figure()
+    ax = fig.add_subplot(111)
 #    ax.plot(h[:,0])
     hp = noise.resize_time_series(h[:,0],H.segment_length)
     hc = noise.resize_time_series(h[:,1],H.segment_length)
@@ -101,9 +107,10 @@ if __name__ == "__main__":
 
     hp = np.roll(hp,index_wf_start)
     hc = np.roll(hp,index_wf_start)
-#    ax.plot(H.Times,hp)
-#    plt.show()
-#    exit()
+    ax.plot(H.Times,hp)
+    ax.axvline(H.trigtime,color='r')
+    plt.show()
+    exit()
     hptilde = np.fft.rfft(hp)
     hctilde = np.fft.rfft(hc)
     

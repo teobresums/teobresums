@@ -109,6 +109,7 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     
     times = chunk_start+np.linspace(0,chunk_size,chunksize)
     frequencies = np.linspace(0,srate/2.,N/2 +1)
+
     return times, signal_chunk, frequencies, sf, psd_int(frequencies)
 
 # function to writen data
