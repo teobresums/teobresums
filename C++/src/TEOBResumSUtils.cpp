@@ -426,6 +426,7 @@ void SetDefaultFlagsValues(TEOBResumParams *p)
     p->flags.RWZ        = 0;
     p->flags.speedy     = 1;
     p->flags.dynamics   = 0;
+    p->flags.multipole  = 0;
     p->flags.Yagi_fits  = 0;
 
 }
@@ -544,30 +545,33 @@ TEOBResumParams read_config(char *fname)
                 params.flags.Yagi_fit = param_value;
                 break;
             case 9:
-                params.lm = param_value;
+                params.flags.multipole = param_value;
                 break;
             case 10:
-                params.dt = param_value;
+                params.lm = param_value;
                 break;
             case 11:
-                params.solver_scheme = param_value;
+                params.dt = param_value;
                 break;
             case 12:
-                params.LambdaAl2 = param_value;
+                params.solver_scheme = param_value;
                 break;
             case 13:
-                params.LambdaBl2 = param_value;
+                params.LambdaAl2 = param_value;
                 break;
             case 14:
-                params.LambdaAl3 = param_value;
+                params.LambdaBl2 = param_value;
                 break;
             case 15:
-                params.LambdaBl3 = param_value;
+                params.LambdaAl3 = param_value;
                 break;
             case 16:
-                params.LambdaAl4 = param_value;
+                params.LambdaBl3 = param_value;
                 break;
             case 17:
+                params.LambdaAl4 = param_value;
+                break;
+            case 18:
                 params.LambdaBl4 = param_value;
                 break;
             default:

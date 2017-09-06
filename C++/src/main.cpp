@@ -94,7 +94,7 @@ int main (int argc, char* argv[])
     int    speedy        = 1;
     int    RWZ           = 0;
     int    dynamics      = 0;
-    bool   multipoles    = false;
+    int    multipoles    = 1;
     int    mult_index    = -1;
     int    Yagi_fits     = 0;
     int    lm            = 1;
@@ -252,7 +252,7 @@ int main (int argc, char* argv[])
         }
         else if (strcmp(argv[i],"-multipoles")==0)
         {
-            multipoles = true;
+            multipoles = 1;
             printf("multipoles = true\n");
         }
         else if (strcmp(argv[i],"-mult_index")==0)
@@ -264,7 +264,7 @@ int main (int argc, char* argv[])
     
 
     
-    if (multipoles == true && mult_index!=-1)
+    if (multipoles == 1 && mult_index!=-1)
     {
         Waveform *ampl;
         Waveform *phase;

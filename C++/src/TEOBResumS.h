@@ -67,7 +67,8 @@ typedef struct tagTEOBResumFlags
     int RWZ;        /** Regge-Wheeler-Zerilli potential */
     int speedy;     /** Faster tails calculation */
     int dynamics;   /** Output dynamics to file */
-    int Yagi_fits;   /** Output dynamics to file */
+    int Yagi_fits;  /** Use 'universal relations' for higher l lambdas */
+    int multipole;  /** Output single multipole waveforms */
 }   TEOBResumFlags;
 
 /** Algorithm control structure */
