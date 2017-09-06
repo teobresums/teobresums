@@ -290,7 +290,7 @@ int main (int argc, char* argv[])
         else
         {
             double dt_phys = time_units_conversion(m1+m2, dt);
-            if (dt_phys > 10.0)
+            if (dt_phys > 1.0)
             {
                 printf("ERROR! dt = %f is too big and will cause the interpolator to crash when attaching the ringdown.\n",dt_phys);
                 printf("Decrease dt in input and retry.\n");
