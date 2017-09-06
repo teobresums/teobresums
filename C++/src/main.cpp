@@ -88,14 +88,7 @@ int main (int argc, char* argv[])
     double distance      = 100;
     double inclination   = 0.0;
     double polarisation  = 0.0;
-    int    tidal         = 0;
-    int    speedy        = 0;
-    int    RWZ           = 0;
-    int    dynamics      = 0;
-    int    multipoles    = 0;
-    int    Yagi_fits     = 0;
     int    lm            = -1;
-    int    solver_scheme = 0;
     char   output[256]   = "waveform.dat";
     char   parfile[256]  = "";
     TEOBResumFlags flags;
@@ -145,7 +138,7 @@ int main (int argc, char* argv[])
             lm = params.lm;
             LambdaAl2 = params.LambdaAl2;
             LambdaBl2 = params.LambdaBl2;
-            if (Yagi_fits==0)
+            if (flags.Yagi_fits==0)
             {
                 LambdaAl3 = params.LambdaAl3;
                 LambdaBl3 = params.LambdaBl3;
@@ -272,7 +265,7 @@ int main (int argc, char* argv[])
         }
     }
     
-    if (multipoles == 1 && lm==-1)
+    if (flags.multipoles == 1 && lm==-1)
     {
         cout << "Need to input also the index of the multipole via the option -lm" << endl;
         exit(-1);
