@@ -493,6 +493,9 @@ double time_units_conversion(double M, double Srate)
 
 TEOBResumParams read_config(char *fname)
 {
+    // NOTE: this method assumes pars are passed in right order in parfile
+    // it is dangerous and not flexible. should be imprvoed in later versions
+
     TEOBResumParams params;
     
     SetDefaultFlagsValues(&params);
