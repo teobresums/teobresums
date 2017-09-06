@@ -23,6 +23,8 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <cmath>
+#include <iostream>
+
 
 #include "TEOBResumS.h"
 
@@ -1025,6 +1027,9 @@ vector<vector<gsl_complex> > find_a1a2a3(
      * note: n3 and n6 are not used
      */
     
+    char   outputNQC[256]   = "NQC_func.dat";
+    std::FILE* NQCfile   = std::fopen(outputNQC, "w");
+    
     for (int j=t_length;j--;)
     {
         double pr_star2 = pr_star[j] * pr_star[j];
@@ -1040,7 +1045,12 @@ vector<vector<gsl_complex> > find_a1a2a3(
         n4[j]  = pr_star[j]/(r[j]*w[j]);           //  pr*/(r Omg)
         n5[j]  = n4[j]*r2*w2;                      // (pr*)*(r Omg)
         n6[j]  = n5[j]*pr_star2;                   // (pr*^3)*(r Omg)
+        
+        std::fprintf(NQCfile, "%d\t%f\t%f\t%f\t%f\n", j, n1[j], n2[j], n4[j], n5[j]);
     }
+    
+    std::fclose(NQCfile);
+
     
     /** Take the needed derivatives for the phase */
     vector<double>  d_n4 = s_D1(n4,T,t_length-1);
