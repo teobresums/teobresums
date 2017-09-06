@@ -65,7 +65,7 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                         double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                        double distance,        /** distance(m) **/
+                        double distance,        /** distance(Mpc) **/
                         int    tidal,           /** tidal corrections flag (BNS only) **/
                         int    speedy,          /** accelerated tails flag **/
                         int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/

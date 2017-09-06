@@ -21,11 +21,16 @@ cdef extern from "TEOBResumS.h":
                     double sampling_rate,
                     double LambdaAl2,
                     double LambdaBl2,
+                    double LambdaAl3,
+                    double LambdaBl3,
+                    double LambdaAl4,
+                    double LambdaBl4,
                     double distance,
-                    int    NQC,
                     int    tidal,
                     int    speedy,
                     int    RWZ,
                     int    dynamics,
                     int    lm,
-                    int    solver_scheme);
+                    int    Yagi_fits,
+                    int    solver_scheme
+);

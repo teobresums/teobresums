@@ -680,14 +680,14 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 break;
         }
     }
-    char   outputr[256]   = "Ringdown.dat";
-    std::FILE* ringfile   = std::fopen(outputr, "w");
-    int j                 = 0;
-    int N                 = hlm_rad[1].size();
-    for (j=0;j<N;j++)
-    {
-        std::fprintf(ringfile, "%f\t%e\t%e\n", j*dt, hlm_rad[1][j], hlm_phase[1][j]);
-    }
-    std::fclose(ringfile);
+//    char   outputr[256]   = "Ringdown.dat";
+//    std::FILE* ringfile   = std::fopen(outputr, "w");
+//    int j                 = 0;
+//    int N                 = hlm_rad[1].size();
+//    for (j=0;j<N;j++)
+//    {
+//        std::fprintf(ringfile, "%f\t%e\t%e\n", j*dt, hlm_rad[1][j], hlm_phase[1][j]);
+//    }
+//    std::fclose(ringfile);
     return 0;
 }

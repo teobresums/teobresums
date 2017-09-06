@@ -529,58 +529,45 @@ TEOBResumParams read_config(char *fname)
                 params.r0   = param_value;
                 break;
             case 4:
-                if (param_value==0) {
-                    params.flags.tidal = 0;
-                } else {
-                    params.flags.tidal = 1;
-                }
+                params.flags.tidal = param_value;
                 break;
             case 5:
-                if (param_value==0) {
-                    params.flags.RWZ = 0;
-                } else {
-                    params.flags.RWZ = 1;
-                }
+                params.flags.RWZ = param_value;
                 break;
             case 6:
-                if (param_value==0) {
-                    params.flags.speedy = 0;
-                } else {
-                    params.flags.speedy = 1;
-                }
+                params.flags.speedy = param_value;
                 break;
             case 7:
-                if (param_value==0) {
-                    params.flags.dynamics = 0;
-                } else {
-                    params.flags.dynamics = 1;
-                }
+                params.flags.dynamics = param_value;
                 break;
             case 8:
-                params.lm = param_value;
+                params.flags.Yagi_fit = param_value;
                 break;
             case 9:
-                params.dt = param_value;
+                params.lm = param_value;
                 break;
             case 10:
-                params.solver_scheme = param_value;
+                params.dt = param_value;
                 break;
             case 11:
-                params.LambdaAl2 = param_value;
+                params.solver_scheme = param_value;
                 break;
             case 12:
-                params.LambdaBl2 = param_value;
+                params.LambdaAl2 = param_value;
                 break;
             case 13:
-                params.LambdaAl3 = param_value;
+                params.LambdaBl2 = param_value;
                 break;
             case 14:
-                params.LambdaBl3 = param_value;
+                params.LambdaAl3 = param_value;
                 break;
             case 15:
-                params.LambdaAl4 = param_value;
+                params.LambdaBl3 = param_value;
                 break;
             case 16:
+                params.LambdaAl4 = param_value;
+                break;
+            case 17:
                 params.LambdaBl4 = param_value;
                 break;
             default:
