@@ -1,21 +1,12 @@
-# Effective-one-body waveform models with spin and tidal interaction
+# Effective-one-body model with spin and tidal interactions
 
 ## Contents 
 
-`backups/`
-:	Reference codes used during development
-
-`C`
-:	Development C code
-
-`C++`
-:	Stable C++ code
-
-`parameter_estimation`  
-:	???		
-
-`tests`
-:	
+- `backups/`  Reference codes used during development
+- `C/`	    Development C code
+- `C++/`	    Stable C++ code
+- `parameter_estimation/`  ???		
+- `tests/` ???	
 
 ## Authors
 
