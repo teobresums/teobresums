@@ -13,3 +13,7 @@ dt 0.5
 solver_scheme 0
 LambdaAl2 0.0
 LambdaBl2 0.0
+LambdaAl3 0.0
+LambdaBl3 0.0
+LambdaAl4 0.0
+LambdaBl4 0.0
