@@ -13,16 +13,28 @@ inclination = 0.0
 polarisation = 0.0
 f_min = 20.0
 sampling_rate = 4096.
+dt = 1./sampling_rate
 LambdaAl2 = 0.0
 LambdaBl2 = 0.0
+LambdaAl3 = 0.0
+LambdaBl3 = 0.0
+LambdaAl4 = 0.0
+LambdaBl4 = 0.0
 distance = 40.0
-NQC = 0
-tidal = 0
-speedy = 1
-RWZ = 0
-dynamics = 0
-lm = 1
-solver_scheme = 0
+flags ={'NQC':'1',
+        'tidal':0,
+        'speedy':1,
+        'dynamics':0,
+        'solver_scheme':0,
+        'RWZ':0,
+        'Yagi_fits':1,
+        'spin':1,
+        'multipoles':0,
+        'geometric_units':0,
+        'set':0
+        }
+
+lm = -1
 
 h = pyTEOBResumS(m1,
                 m2,
@@ -35,17 +47,16 @@ h = pyTEOBResumS(m1,
                 inclination,
                 polarisation,
                 f_min,
-                sampling_rate,
+                dt,
                 LambdaAl2,
-                LambdaBl2,
-                distance,
-                NQC,
-                tidal,
-                speedy,
-                RWZ,
-                dynamics,
+                LambdaAl3,
+                 LambdaAl4,
+                 LambdaBl2,
+                 LambdaBl3,
+                 LambdaBl4,
+                 distance,
                 lm,
-                solver_scheme)
+                flags)
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
