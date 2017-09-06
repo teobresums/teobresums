@@ -426,7 +426,7 @@ void SetDefaultFlagsValues(TEOBResumParams *p)
     p->flags.RWZ        = 0;
     p->flags.speedy     = 1;
     p->flags.dynamics   = 0;
-    p->flags.multipole  = 0;
+    p->flags.multipoles = 0;
     p->flags.Yagi_fits  = 0;
 
 }
