@@ -31,7 +31,7 @@ Requirements
 To compile 
 
 ```
-$ ./bootstrap
+$ ./bootstrap.sh
 $ ./configure --prefix=</abs/path/to/your/build/> CXXFLAGS="-std=c++11 -O3 -Wall -fPIC"
 $ make
 $ make install
