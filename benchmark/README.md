@@ -13,6 +13,11 @@
 | BNS02 | 1 | 0.4 | 0.4 | 1531 | 1531 | r0=45, Geom.Units, 22 mode, parfile |
 | BNS03 | 1.5 | 0.4 | 0.4 | 864 | 7021 | r0=45, Geom.Units, 22 mode, parfile |
 
+To add tests simply add parfiles (and update the table above) in the directory
+```
+$ ./parfiles/
+```
+
 ## How to run
 
 Type
