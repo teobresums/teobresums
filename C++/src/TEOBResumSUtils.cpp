@@ -542,10 +542,10 @@ TEOBResumParams read_config(char *fname)
                 params.flags.dynamics = param_value;
                 break;
             case 8:
-                params.flags.Yagi_fit = param_value;
+                params.flags.Yagi_fits = param_value;
                 break;
             case 9:
-                params.flags.multipole = param_value;
+                params.flags.multipoles = param_value;
                 break;
             case 10:
                 params.lm = param_value;
