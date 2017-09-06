@@ -62,13 +62,14 @@ const int M[35] = {
 /** Structure of flags to control various physics ingredients */
 typedef struct tagTEOBResumFlags
 {
-    int spin;       /** Spinning dynamics */
-    int tidal;      /** Tidal deformability dynamics */
-    int RWZ;        /** Regge-Wheeler-Zerilli potential */
-    int speedy;     /** Faster tails calculation */
-    int dynamics;   /** Output dynamics to file */
-    int Yagi_fits;  /** Use 'universal relations' for higher l lambdas */
-    int multipoles;  /** Output single multipole waveforms */
+    int spin;           /** Spinning dynamics */
+    int tidal;          /** Tidal deformability dynamics */
+    int RWZ;            /** Regge-Wheeler-Zerilli potential */
+    int speedy;         /** Faster tails calculation */
+    int dynamics;       /** Output dynamics to file */
+    int Yagi_fits;      /** Use 'universal relations' for higher l lambdas */
+    int multipoles;     /** Output single multipole waveforms */
+    int geometric_units /** use geometric units */
 }   TEOBResumFlags;
 
 /** Algorithm control structure */
@@ -78,8 +79,11 @@ typedef struct tagTEOBResumParams
     int    solver_scheme;       /** Scheme to solve the differential equation                */
     double mtot;                /** Total mass of the binary                                 */
     double q;                   /** Mass ratio of the binary                                 */
+    double iota;                /** inclination angle                                        */
+    double psi;                 /** polarisation angle                                       */
     double nu;                  /** Symmetric mass ratio of the binary, nu = m1*m2/(m1+m2)^2 */
     double r0;                  /** Initial radial separation of the objects                 */
+    double f_min                /** Initial frequency                                        */
     double dt;                  /** Time step of the differential equation evolution         */
     double rLR;                 /** Light ring radius                                        */
     double chi1;                /** Dimensionless spin of the first object                   */
@@ -117,6 +121,7 @@ typedef struct tagTEOBResumParams
     double C_Q1;                /**                                                          */
     double C_Q2;                /**                                                          */
     double Mbh;                 /** Mass of the final BH                                     */
+    double Abh;                 /** Spin of the final BH                                     */
     TEOBResumFlags flags;       /** Flag structure                                           */
 }   TEOBResumParams;
 
