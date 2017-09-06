@@ -436,8 +436,13 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
     /** construct hplus and hcross **/
     /** h22 = 1/R * (nu*M)*G/c^2 h_code_output */
     
-    double mtot_m = (m1+m2)*MSUN_M;
-    double amplitude_prefactor = params.nu*mtot_m/(distance*MPC_M);
+    if (params.flags.geometric_units) {
+      double mtot_m = 1.;
+      double amplitude_prefactor = 1.;
+    } else {
+      double mtot_m = (m1+m2)*MSUN_M;
+      double amplitude_prefactor = params.nu*mtot_m/(distance*MPC_M);
+    } 
 
     for (int k=35; k--; )
     {

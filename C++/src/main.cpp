@@ -126,16 +126,11 @@ int main (int argc, char* argv[])
             sprintf(parfile,"%s",argv[i+1]);
             printf("found parfile: %s\n",parfile);
             printf("Warning! Will use geometric units and mass rescaled quantities\n");
-            /*
-	      printf("m1 = %f\n",m1);
-	      printf("f_min = %f\n",f_min);
-	      printf("iota = %f\n",inclination);
-	      printf("psi = %f\n",polarisation);
-	    */
 
             TEOBResumParams params = read_config(parfile);
             q = params.q;
-            m2 = m1/q;
+            m2 = params.mtot * q/(1.+q); 
+            m1 = params.mtot - m2; 
             chi1 = params.chi1;
             chi2 = params.chi2;
             RWZ  = params.flags.RWZ;

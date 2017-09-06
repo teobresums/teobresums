@@ -430,7 +430,7 @@ void SetDefaultFlagsValues(TEOBResumParams *p)
     p->flags.dynamics   = 0;
     p->flags.multipoles = 0;
     p->flags.Yagi_fits  = 0;
-
+    p->flags.geometric_units = 0;
 }
 
 double logQ(double x)
@@ -517,6 +517,18 @@ TEOBResumParams read_config(char *fname)
         //param_values.push_back(param_value);
         cout << param_name <<"\t"<< param_value << endl;
 
+	if(param_name=="Mtot") {
+	  params.mtot = param_value;
+	}
+	if(param_name=="iota") {
+	  params.iota = param_value;
+	}
+	if(param_name=="psi") {
+	  params.psi = param_value;
+	}
+	if(param_name=="distance") {
+	  params.psi = param_value;
+	}
 	if(param_name=="q") {
 	  params.q = param_value;
 	}
@@ -528,6 +540,9 @@ TEOBResumParams read_config(char *fname)
 	}
 	if(param_name=="r0") {
 	  params.r0 = param_value;
+	}
+	if(param_name=="f_min") {
+	  params.f_min = param_value;
 	}
 	if(param_name=="tidal") {
 	  params.flags.tidal = param_value;
@@ -573,6 +588,9 @@ TEOBResumParams read_config(char *fname)
 	}
 	if(param_name=="LambdaBl4") {
 	  params.LambdaBl4 = param_value;
+	}
+	if(param_name=="geometric_units") {
+	  params.flags.geometric_units = param_value;
 	}
 
         i++;
@@ -709,20 +727,41 @@ TEOBResumParams process_input_parameters(
     
     SetDefaultFlagsValues(&params);
     
-    double mtot = m1+m2;
-    double q = m1/m2;
-    params.mtot = mtot;
-    params.q = q;
+    int geometric_units = params.flags.geometric_units;
+
+
+    if (geometric_units) {
+
+      double q = params.q;
+      double mtot = 1.0; 
+
+      // reset phys. quantities
+      params.mtot = 1.0; 
+      params.distance = 1.0; 
+      params.iota = 0.0; 
+      params.psi = 0.0;
+      params.f_min = pow(params.r0, 2./3.);  
+
+    } else {
+
+      double mtot = m1+m2;
+      double q = m1/m2;    
+
+      params.mtot = mtot;
+      params.q = q;
+      params.dt = time_units_conversion(mtot, sampling_rate);
+      params.r0 = radius0(mtot, f_min);
+   
+    }
+
     params.chi1 = chi1;
     params.chi2 = chi2;
-    params.r0 = radius0(mtot, f_min);
     params.flags.tidal = tidal;
     params.flags.RWZ = RWZ;
     params.flags.speedy = speedy;
     params.flags.dynamics = dynamics;
     params.flags.Yagi_fits = Yagi_fits;
     params.lm = lm;
-    params.dt = time_units_conversion(mtot, sampling_rate);
     params.solver_scheme = solver_scheme;
     
     if (params.flags.tidal == 1 && params.flags.Yagi_fits==1)
