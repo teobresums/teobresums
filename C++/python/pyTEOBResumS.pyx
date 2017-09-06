@@ -14,7 +14,7 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
                                                          double inclination,
                                                          double polarisation,
                                                          double f_min,
-                                                         double sampling_rate,
+                                                         double dt,
                                                          double LambdaAl2,
                                                          double LambdaAl3,
                                                          double LambdaAl4,
@@ -22,16 +22,23 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
                                                          double LambdaBl3,
                                                          double LambdaBl4,
                                                          double distance,
-                                                         int    tidal,
-                                                         int    speedy,
-                                                         int    RWZ,
-                                                         int    dynamics,
                                                          int    lm,
-                                                         int    yagi,
-                                                         int    solver_scheme):
+                                                         dict   waveflags):
     cdef Waveform *hp;
     cdef Waveform *hc;
-    
+    cdef TEOBResumFlags flags;
+
+    flags.solver_scheme = waveflags['solver_scheme']
+    flags.spin = waveflags['spin']
+    flags.tidal = waveflags['tidal']
+    flags.RWZ = waveflags['RWZ']
+    flags.speedy = waveflags['speedy']
+    flags.dynamics = waveflags['dynamics']
+    flags.Yagi_fits = waveflags['Yagi_fits']
+    flags.multipoles = waveflags['multipoles']
+    flags.geometric_units = waveflags['geometric_units']
+    flags.set = waveflags['set']
+
     TEOBResumS(&hp,
               &hc,
               m1,
@@ -45,7 +52,7 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
               inclination,
               polarisation,
               f_min,
-              sampling_rate,
+              dt,
               LambdaAl2,
               LambdaAl3,
               LambdaAl4,
@@ -53,13 +60,8 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
               LambdaBl3,
               LambdaBl4,
               distance,
-              tidal,
-              speedy,
-              RWZ,
-              dynamics,
               lm,
-              yagi,
-              solver_scheme)
+              &flags)
 
     cdef int i = 0
     cdef unsigned int N = hp.length
