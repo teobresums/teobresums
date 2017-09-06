@@ -82,6 +82,9 @@ Few notes for the C version of the code
 
   with the functions returning errors
 
+* parameter input as coded in the C++ is very bad and dangerous, it should be improved. either we use a standard library (I had idenfied one already and there's already most of the code for that in src_Sebastiano) or we make it more robust and flexible (use enum for indexing, associate index, string, description and value to each parameter etc)
+  
+
 * Q: how about complex types? 
   It is only for the waveform, is it really faster? or needed?
   
