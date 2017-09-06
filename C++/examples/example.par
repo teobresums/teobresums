@@ -7,7 +7,7 @@ RWZ 0
 speedy 1
 dynamics 1
 Yagi_fit 1
-multipoles 0
+multipoles 1
 lm 1
 dt 0.5
 solver_scheme 0

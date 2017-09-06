@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
+//#include <string.h> 
+#include <cstring> 
 
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_math.h>
@@ -494,8 +496,6 @@ double time_units_conversion(double M, double Srate)
 
 TEOBResumParams read_config(char *fname)
 {
-    // NOTE: this method assumes pars are passed in right order in parfile
-    // it is dangerous and not flexible. should be imprvoed in later versions
 
     TEOBResumParams params;
     
@@ -516,68 +516,65 @@ TEOBResumParams read_config(char *fname)
     {
         //param_values.push_back(param_value);
         cout << param_name <<"\t"<< param_value << endl;
-        switch (i) {
-            case 0:
-                params.q    = param_value;
-                break;
-            case 1:
-                params.chi1 = param_value;
-                break;
-            case 2:
-                params.chi2 = param_value;
-                break;
-            case 3:
-                params.r0   = param_value;
-                break;
-            case 4:
-                params.flags.tidal = param_value;
-                break;
-            case 5:
-                params.flags.RWZ = param_value;
-                break;
-            case 6:
-                params.flags.speedy = param_value;
-                break;
-            case 7:
-                params.flags.dynamics = param_value;
-                break;
-            case 8:
-                params.flags.Yagi_fits = param_value;
-                break;
-            case 9:
-                params.flags.multipoles = param_value;
-                break;
-            case 10:
-                params.lm = param_value;
-                break;
-            case 11:
-                params.dt = param_value;
-                break;
-            case 12:
-                params.solver_scheme = param_value;
-                break;
-            case 13:
-                params.LambdaAl2 = param_value;
-                break;
-            case 14:
-                params.LambdaBl2 = param_value;
-                break;
-            case 15:
-                params.LambdaAl3 = param_value;
-                break;
-            case 16:
-                params.LambdaBl3 = param_value;
-                break;
-            case 17:
-                params.LambdaAl4 = param_value;
-                break;
-            case 18:
-                params.LambdaBl4 = param_value;
-                break;
-            default:
-                break;
-        }
-        
+
+	if(param_name=="q") {
+	  params.q = param_value;
+	}
+	if(param_name=="chi1") {
+	  params.chi1 = param_value;
+	}
+	if(param_name=="chi2") {
+	  params.chi2 = param_value;
+	}
+	if(param_name=="r0") {
+	  params.r0 = param_value;
+	}
+	if(param_name=="tidal") {
+	  params.flags.tidal = param_value;
+	}
+	if(param_name=="RWZ") {
+	  params.flags.RWZ = param_value;
+	}
+	if(param_name=="speedy") {
+	  params.flags.speedy = param_value;
+	}
+	if(param_name=="dynamics") {
+	  params.flags.dynamics = param_value;
+	}
+	if(param_name=="Yagi_fit") {
+	  params.flags.Yagi_fits = param_value;
+	}
+	if(param_name=="multipoles") {
+	  params.flags.multipoles = param_value;
+	}
+	if(param_name=="lm") {
+	  params.lm = param_value;
+	}
+	if(param_name=="dt") {
+	  params.dt = param_value;
+	}
+	if(param_name=="solver_scheme") {
+	  params.solver_scheme = param_value;
+	}
+	if(param_name=="LambdaAl2") {
+	  params.LambdaAl2 = param_value;
+	}
+	if(param_name=="LambdaBl2") {
+	  params.LambdaBl2 = param_value;
+	}
+	if(param_name=="LambdaAl3") {
+	  params.LambdaAl3 = param_value;
+	}
+	if(param_name=="LambdaBl3") {
+	  params.LambdaBl3 = param_value;
+	}
+	if(param_name=="LambdaAl4") {
+	  params.LambdaAl4 = param_value;
+	}
+	if(param_name=="LambdaBl4") {
+	  params.LambdaBl4 = param_value;
+	}
+
         i++;
     }
     fin.close();
@@ -594,7 +591,6 @@ TEOBResumParams read_config(char *fname)
         params.LambdaAl4 = Yagi13_fit_barlamdel(params.LambdaAl2, 4);
         params.LambdaBl4 = Yagi13_fit_barlamdel(params.LambdaBl2, 4);
     }
-
     
     /** Override spin settings if spins are given in input */
     if (chi1 != .0 || chi2 != .0) params.flags.spin = 1;
