@@ -729,23 +729,22 @@ TEOBResumParams process_input_parameters(
     
     int geometric_units = params.flags.geometric_units;
 
+    double q = params.q;
+    double mtot = 1.0; 
 
     if (geometric_units) {
 
-      double q = params.q;
-      double mtot = 1.0; 
-
-      // reset phys. quantities
+      // reset quantities with dimensions
       params.mtot = 1.0; 
       params.distance = 1.0; 
       params.iota = 0.0; 
       params.psi = 0.0;
-      params.f_min = pow(params.r0, 2./3.);  
+      params.f_min = pow(params.r0, 2./3.);  // fixme
 
     } else {
 
-      double mtot = m1+m2;
-      double q = m1/m2;    
+      mtot = m1+m2;
+      q = m1/m2;    
 
       params.mtot = mtot;
       params.q = q;

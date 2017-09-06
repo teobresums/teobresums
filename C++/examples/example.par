@@ -1,13 +1,18 @@
+Mtot 1.0
+iota 0.
+psi 0.
+distance 1.
 q 1.0
 chi1 0.7
 chi2 0.7
 r0 47.
+f_min 10.
 tidal 0
 RWZ 0
 speedy 1
 dynamics 1
-Yagi_fit 1
-multipoles 1
+Yagi_fit 0
+multipoles 0
 lm 1
 dt 0.5
 solver_scheme 0
@@ -17,3 +22,4 @@ LambdaAl3 0.0
 LambdaBl3 0.0
 LambdaAl4 0.0
 LambdaBl4 0.0
+geometric_units 1

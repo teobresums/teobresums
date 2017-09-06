@@ -69,7 +69,7 @@ typedef struct tagTEOBResumFlags
     int dynamics;       /** Output dynamics to file */
     int Yagi_fits;      /** Use 'universal relations' for higher l lambdas */
     int multipoles;     /** Output single multipole waveforms */
-    int geometric_units /** use geometric units */
+  int geometric_units; /** use geometric units */
 }   TEOBResumFlags;
 
 /** Algorithm control structure */
@@ -81,9 +81,10 @@ typedef struct tagTEOBResumParams
     double q;                   /** Mass ratio of the binary                                 */
     double iota;                /** inclination angle                                        */
     double psi;                 /** polarisation angle                                       */
+    double distance;            /** sources distance [Mpc]                                   */
     double nu;                  /** Symmetric mass ratio of the binary, nu = m1*m2/(m1+m2)^2 */
     double r0;                  /** Initial radial separation of the objects                 */
-    double f_min                /** Initial frequency                                        */
+  double f_min;                /** Initial frequency                                        */
     double dt;                  /** Time step of the differential equation evolution         */
     double rLR;                 /** Light ring radius                                        */
     double chi1;                /** Dimensionless spin of the first object                   */

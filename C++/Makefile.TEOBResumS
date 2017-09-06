@@ -23,7 +23,8 @@ LIB=$(LIBD)/lib$(NAME).a
 #
 
 CC=g++
-CFLAGS=-Ofast -std=c++11 `gsl-config --cflags`
+CFLAGS=-g -std=c++11
+#CFLAGS=-O3 -std=c++11 
 LFLAGS=`gsl-config --libs`
 LDLFLAGS=-lgsl -lgslcblas -lm
 
@@ -42,13 +43,6 @@ $(OBJD)/%.o: $(SRCD)/%.cpp
 	@mkdir -p $(dir $@)
 	@echo "Compiling $< ... -> $@"
 	@$(CC) $(CFLAGS) -c $< -o $@
-
-## $(LIBD)/%.a: $(OBJD)/%.o ## one for each object ? Possibly not, unless our .c files are really few and weel organized.
-# $(LIB): $(OBJS) ## only one
-# 	@mkdir -p $(dir $@)
-#         @echo "Compiling $<"
-# 	@ar rucs $@ $(OBJS)	
-#         @echo " done"
 
 clean: 
 	@echo "Cleaning ..."
