@@ -82,6 +82,12 @@ OPTIONS:
         -speedy              <int>      faster tails calculations. [1 (true)]
         -dynamics            <int>      output dynamics evolution. [0 (false)]
         -RW                  <int>      Regge-Wheeler-Zerilli potential. [0 (false)]
+        -multipoles          <int>      enable single multipole output, in geometrical units. [0 (false)]
+        -lm                  <int>      index for the output multipole. Requires multipoles output format. [-1]
+        -Yagi_fits           <int>      enable Yagi fits for Lambda_l=3,4. [0 (false)]
+        -output              <filename> output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx. ['waveform.dat']
+        -geometric           <int>      use geometric units and mass rescaled quantities. [0 (false)]
+
 ```
 
 If you want to specify a parfile
