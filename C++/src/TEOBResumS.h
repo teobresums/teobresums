@@ -68,7 +68,7 @@ typedef struct tagTEOBResumFlags
     int speedy;     /** Faster tails calculation */
     int dynamics;   /** Output dynamics to file */
     int Yagi_fits;  /** Use 'universal relations' for higher l lambdas */
-    int multipole;  /** Output single multipole waveforms */
+    int multipoles;  /** Output single multipole waveforms */
 }   TEOBResumFlags;
 
 /** Algorithm control structure */
