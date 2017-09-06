@@ -116,17 +116,23 @@ int main (int argc, char* argv[])
         if ((strcmp(argv[i],"-h")==0)||(strcmp(argv[i],"-help")==0))
         {
             fprintf(stderr,USAGE);
+	    fprintf(stderr,"\nOPTIONS:\n");
+	    for (int i = 0; i < (20*4); i=i+4)
+	      fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
             exit(0);
         }
         else if (strcmp(argv[i],"-p")==0)
         {
             sprintf(parfile,"%s",argv[i+1]);
             printf("found parfile: %s\n",parfile);
-            printf("Warning! Will use default values:\n");
-            printf("m1 = %f\n",m1);
-            printf("f_min = %f\n",f_min);
-            printf("iota = %f\n",inclination);
-            printf("psi = %f\n",polarisation);
+            printf("Warning! Will use geometric units and mass rescaled quantities\n");
+            /*
+	      printf("m1 = %f\n",m1);
+	      printf("f_min = %f\n",f_min);
+	      printf("iota = %f\n",inclination);
+	      printf("psi = %f\n",polarisation);
+	    */
+
             TEOBResumParams params = read_config(parfile);
             q = params.q;
             m2 = m1/q;
