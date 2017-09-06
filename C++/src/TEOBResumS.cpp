@@ -119,7 +119,8 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                                             lm,
                                             Yagi_fits,
                                             solver_scheme);
-    double q             = m1/m2;
+
+    double q             = params.q;
     double dt            = params.dt;
 
     if (params.flags.tidal==1)
@@ -522,7 +523,7 @@ void TEOBResumS_single_mode(
                                             Yagi_fits,
                                             solver_scheme);
     
-    double q             = m1/m2;
+    double q             =  params.q;
     double dt            = params.dt;
     
     if (params.flags.tidal==1)
