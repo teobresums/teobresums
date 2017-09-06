@@ -323,7 +323,6 @@ int main (int argc, char* argv[])
         std::FILE* f = std::fopen(output, "w");
         int i        = 0;
         int N        = hplus->length;
-        double dt    = 1./sampling_rate;
         for (i=0;i<N;i++)
         {
             std::fprintf(f, "%f\t%e\t%e\n", i*dt, hplus->data[i], hcross->data[i]);

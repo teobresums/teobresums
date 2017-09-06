@@ -49,10 +49,10 @@ class GravitationalWaveDetector(object):
 #        exit()
         logLseries = -TwoDeltaToverN*np.real(numerator/self.SigmaSq[self.kmin:self.kmax])
         
-        for i,l in enumerate(logLseries):
-            print self.Frequency[i],logLseries[i],hptilde[i],numerator[i],self.SigmaSq[i]
-        print np.sum(logLseries)
-        exit()
+#        for i,l in enumerate(logLseries):
+#            print self.Frequency[i],logLseries[i],hptilde[i],numerator[i],self.SigmaSq[i]
+#        print np.sum(logLseries)
+#        exit()
         return np.sum(logLseries)
 
 if __name__ == "__main__":
@@ -63,43 +63,76 @@ if __name__ == "__main__":
         print attr, value
 
     from pyTEOBResumS import pyTEOBResumS
-    
+
+
+
+    ra = 0.0
+    dec = 0.0
+    tc = 1126259462.43
+    m1=40.0
+    m2=40.0
+    spin1x = 0.0
+    spin1y = 0.0
+    spin1z = 0.2
+    spin2x = 0.0
+    spin2y = 0.0
+    spin2z = 0.2
+    inclination = 0.0
+    polarisation = 0.0
     f_min = 20.0
     sampling_rate = 4096.
-    
-    tc = 1126259462.43
-    ra = 1.82161142311
-    dec = -1.27626704919
-    inc = 2.92033171962
-    psi = 0.0
-    
-    h = pyTEOBResumS(40.0,
-                     40.0,
-                     0.0,
-                     0.0,
-                     0.01,
-                     0.0,
-                     0.0,
-                     0.01,
-                     inc,
-                     psi,
-                     H.Flow,
-                     H.sampling_rate,
-                     0.0,
-                     0.0,
-                     400,
-                     1,
-                     0,
-                     1,
-                     0,
-                     0,
-                     0,
-                     0)
+    dt = 1./sampling_rate
+    LambdaAl2 = 0.0
+    LambdaBl2 = 0.0
+    LambdaAl3 = 0.0
+    LambdaBl3 = 0.0
+    LambdaAl4 = 0.0
+    LambdaBl4 = 0.0
+    distance = 400.0
+
+    flags ={'NQC':'1',
+        'tidal':0,
+            'speedy':1,
+            'dynamics':0,
+            'solver_scheme':0,
+            'RWZ':0,
+            'Yagi_fits':1,
+            'spin':1,
+            'multipoles':0,
+            'geometric_units':0,
+            'set':0
+        }
+
+    lm = -1
+
+    h = pyTEOBResumS(m1,
+                     m2,
+                     spin1x,
+                     spin1y,
+                     spin1z,
+                     spin2x,
+                     spin2y,
+                     spin2z,
+                     inclination,
+                     polarisation,
+                     f_min,
+                     dt,
+                     LambdaAl2,
+                     LambdaAl3,
+                     LambdaAl4,
+                     LambdaBl2,
+                     LambdaBl3,
+                     LambdaBl4,
+                     distance,
+                     lm,
+                     flags)
 
     from pylab import *
     fig = figure()
     ax = fig.add_subplot(111)
 #    ax.plot(h[:,0])
+#    show()
+#    exit()
     hp = noise.resize_time_series(h[:,0],H.segment_length)
     hc = noise.resize_time_series(h[:,1],H.segment_length)
 #    ax.plot(H.Times,hp)
@@ -111,15 +144,16 @@ if __name__ == "__main__":
 #    # We want the trigger time 1s before the end of the segment
     index_wf_start = -(index_trigtime - int(H.sampling_rate*(H.T-1)))
 
-    hp = np.roll(hp,index_wf_start)
-    hc = np.roll(hp,index_wf_start)
+#    hp = np.roll(hp,index_wf_start)
+#    hc = np.roll(hp,index_wf_start)
     # window the data
     padding = 0.4
     window=tukey(H.segment_length,2.0*H.sampling_rate*padding/H.T)
     hp*=window
     hc*=window
-    hptilde = np.fft.rfft(hp)
-    hctilde = np.fft.rfft(hc)
+    windowNorm = np.sum(window**2/H.segment_length)
+    hptilde = np.fft.rfft(hp)*windowNorm
+    hctilde = np.fft.rfft(hc)*windowNorm
     
     tc = H.trigtime+np.linspace(-0.05,0.05,1001)
 
@@ -131,7 +165,7 @@ if __name__ == "__main__":
 
 #    fig = figure()
 #    ax = fig.add_subplot(111)
-    logL = np.array([H.logLikelihood(hptilde, hctilde, ra, dec, psi, t)+L.logLikelihood(hptilde, hctilde, ra, dec, psi, t) for t in tc])
+    logL = np.array([H.logLikelihood(hptilde, hctilde, ra, dec, polarisation, t)+L.logLikelihood(hptilde, hctilde, ra, dec, polarisation, t) for t in tc])
     C = ax.plot(tc,logL)
     print "%.15f"%tc[logL.argmax()]
     show()

@@ -607,7 +607,13 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
         }
         I[k] = i;
     }
-    
+    if (DEBUG)
+    {
+        char   outputr[256]   = "tmatch.dat";
+        std::FILE* match_file   = std::fopen(outputr, "w");
+        std::fprintf(match_file,"%e\t%e\n",tmatch[1]*Mbh,tmrg[1]*Mbh);
+        std::fclose(match_file);
+    }
     //Calculate deltaphi
     vector<gsl_complex> psi(35);
     vector<double> Deltaphi(35);
@@ -680,14 +686,18 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 break;
         }
     }
-//    char   outputr[256]   = "Ringdown.dat";
-//    std::FILE* ringfile   = std::fopen(outputr, "w");
-//    int j                 = 0;
-//    int N                 = hlm_rad[1].size();
-//    for (j=0;j<N;j++)
-//    {
-//        std::fprintf(ringfile, "%f\t%e\t%e\n", j*dt, hlm_rad[1][j], hlm_phase[1][j]);
-//    }
-//    std::fclose(ringfile);
+    if (DEBUG)
+    {
+        char   outputr[256]   = "ringdown.dat";
+        std::FILE* ringfile   = std::fopen(outputr, "w");
+        int j                 = 0;
+        int N                 = hlm_rad[1].size();
+
+        for (j= N - Nringdown+(Size[1]-I[1]);j<N;j++)
+        {
+            std::fprintf(ringfile, "%f\t%e\t%e\n", (double)j*dt, hlm_rad[1][j], hlm_phase[1][j]);
+        }
+        std::fclose(ringfile);
+    }
     return 0;
 }

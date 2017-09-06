@@ -336,6 +336,21 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
     
+    if (DEBUG)
+    {
+        char   outputr[256]   = "waveform_preIntepolation.dat";
+        std::FILE* waveform_preint   = std::fopen(outputr, "w");
+        int j                 = 0;
+        int N                 = hlm_ampl[1].size();
+        
+        for (j=0;j<N;j++)
+        {
+            std::fprintf(waveform_preint, "%f\t%e\t%e\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
+        }
+        std::fclose(waveform_preint);
+    }
+    
+    
     for (int k=35; k--; )
     {
         vector<double> amplitude = hlm_ampl[k];
@@ -346,6 +361,26 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     
     /** NQCs corrections */
     /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
+    if (DEBUG)
+    {
+        char   outputr[256]   = "waveform_preNQC.dat";
+        std::FILE* waveform_preNQC   = std::fopen(outputr, "w");
+        int j                 = 0;
+        int N                 = hlm_ampl_g[1].size();
+        
+        for (j=0;j<N;j++)
+        {
+            std::fprintf(waveform_preNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+        }
+        std::fclose(waveform_preNQC);
+    }
+    
+//    if (DEBUG)
+//    {
+        char   outputr[256]   = "waveform_nqc.dat";
+        std::FILE* nqcs       = std::fopen(outputr, "w");
+//    }
+    
     if (params.flags.tidal==0 && params.flags.spin==1)
     {
         
@@ -355,15 +390,32 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         {
             if (k==1)
             {
-                for (int i=grid_length; i--; )
+                for (int i=0; i<grid_length; i++ )
                 {
                     hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
                     hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
+                    std::fprintf(nqcs, "%f\t%e\t%e\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
                 }
             }
         }
     }
-    
+//    if (DEBUG)
+//    {
+        std::fclose(nqcs);
+//    }
+    if (DEBUG)
+    {
+        char   outputr[256]   = "waveform_postNQC.dat";
+        std::FILE* waveform_postNQC   = std::fopen(outputr, "w");
+        int j                 = 0;
+        int N                 = hlm_ampl_g[1].size();
+        
+        for (j=0;j<N;j++)
+        {
+            std::fprintf(waveform_postNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+        }
+        std::fclose(waveform_postNQC);
+    }
     /** Define a time vector for each multipole
         These will be cut by the ringdown, where
         each multipole has its own starting time */

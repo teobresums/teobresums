@@ -23,6 +23,8 @@
 //extern "C" {
 //#endif
 
+#define DEBUG 1
+
 #include <vector>
 #include "cmath"
 #include <gsl/gsl_math.h>

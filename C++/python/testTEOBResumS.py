@@ -20,13 +20,14 @@ LambdaAl3 = 0.0
 LambdaBl3 = 0.0
 LambdaAl4 = 0.0
 LambdaBl4 = 0.0
-distance = 40.0
+distance = 400.0
+
 flags ={'NQC':'1',
         'tidal':0,
         'speedy':1,
         'dynamics':0,
         'solver_scheme':0,
-        'RWZ':0,
+        'RWZ':1,
         'Yagi_fits':1,
         'spin':1,
         'multipoles':0,

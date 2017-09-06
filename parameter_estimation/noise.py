@@ -104,10 +104,10 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     # zero-pad to the required length
     N = int(2**np.ceil(np.log2(len(signal_chunk))))
     signal_chunk = resize_time_series(signal_chunk,N)
-
+    windowNorm = np.sum(window**2/chunksize)
     # Compute the frequency domain strain
     df = srate/N
-    sf = np.fft.rfft(signal_chunk)
+    sf = np.fft.rfft(signal_chunk)*windowNorm
     # Compute the PSD
     psd, freqs = mlab.psd(strain, Fs = srate, NFFT = np.int(srate))
     psd_int = interp1d(freqs, psd)
