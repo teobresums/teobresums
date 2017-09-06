@@ -45,34 +45,34 @@ static void swap_variables(double *v1, double *v2)
     *v2 = tmp;
 }
 
-void TEOBResumS(Waveform **hplus,               /** h+ return array **/
-                        Waveform **hcross,      /** hx return array **/
-                        double m1,              /** m1(Msun) **/
-                        double m2,              /** m2(Msun) **/
-                        double spin1x,          /** dimensionless s1x **/
-                        double spin1y,          /** dimensionless s1y **/
-                        double spin1z,          /** dimensionless s1z **/
-                        double spin2x,          /** dimensionless s2x **/
-                        double spin2y,          /** dimensionless s2y **/
-                        double spin2z,          /** dimensionless s2z **/
-                        double inclination,     /** inclination angle (rad) **/
-                        double polarisation,    /** polarisation angle (rad) **/
-                        double f_min,           /** starting frequency(Hz) **/
-                        double sampling_rate,   /** sampling rate(Hz) **/
-                        double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                        double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                        double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                        double distance,        /** distance(Mpc) **/
-                        int    tidal,           /** tidal corrections flag (BNS only) **/
-                        int    speedy,          /** accelerated tails flag **/
-                        int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
-                        int    dynamics,        /** output dynamics to file */
-                        int    lm,              /** TO BE REMOVED **/
-                        int    Yagi_fits,
-                        int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
+void TEOBResumS(Waveform **hplus,       /** h+ return array                                      **/
+                Waveform **hcross,      /** hx return array                                      **/
+                double m1,              /** m1 (Msun)                                            **/
+                double m2,              /** m2 (Msun)                                            **/
+                double spin1x,          /** dimensionless s1x                                    **/
+                double spin1y,          /** dimensionless s1y                                    **/
+                double spin1z,          /** dimensionless s1z                                    **/
+                double spin2x,          /** dimensionless s2x                                    **/
+                double spin2y,          /** dimensionless s2y                                    **/
+                double spin2z,          /** dimensionless s2z                                    **/
+                double inclination,     /** inclination angle (rad)                              **/
+                double polarisation,    /** polarisation angle (rad)                             **/
+                double f_min,           /** starting frequency (Hz)                              **/
+                double sampling_rate,   /** sampling rate (Hz)                                   **/
+                double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
+                double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
+                double distance,        /** distance(Mpc)                                        **/
+                int    tidal,           /** tidal corrections flag (BNS only)                    **/
+                int    speedy,          /** accelerated tails flag                               **/
+                int    RWZ,             /** Regge-Wheeler-Zerilli potential (?)                  **/
+                int    dynamics,        /** output dynamics to file                              **/
+                int    lm,              /** index of the output multipole                        **/
+                int    Yagi_fits,       /** use 'universal relations' fits                       **/
+                int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step)         **/
 ){
     
     int i = 0;
