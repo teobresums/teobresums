@@ -307,8 +307,8 @@ TEOBResumParams process_input_parameters(double m1,
 TEOBResumParams read_config(char *fname);
 
 double Yagi13_fit_barlamdel(double barlam2, int ell);
-inline double time_units_conversion(double M, double dt);
-inline double radius0(double M, double f_start);
+double time_units_conversion(double M, double dt);
+double radius0(double M, double f_start);
 
 /* _ringdown_h */
 

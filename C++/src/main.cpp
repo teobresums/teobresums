@@ -287,7 +287,18 @@ int main (int argc, char* argv[])
         {
             printf("Will use geometric units and mass rescaled quantities\n");
         }
-
+        else
+        {
+            double dt_phys = time_units_conversion(m1+m2, dt);
+            if (dt_phys > 10.0)
+            {
+                printf("ERROR! dt = %f is too big and will cause the interpolator to crash when attaching the ringdown.\n",dt_phys);
+                printf("Decrease dt in input and retry.\n");
+                exit(-1);
+            }
+            
+        }
+        
         if (flags.multipoles==1)
         {
             printf("Will output l = %d m = %d waveform\n",L[lm],M[lm]);

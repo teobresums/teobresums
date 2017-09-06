@@ -483,13 +483,13 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
     return exp(lny);
 }
 
-inline double radius0(double M, double f_start)
+double radius0(double M, double f_start)
 {
     double x = (M*f_start*MSUN_S*2.*M_PI)/2.;
     return cbrt(1/(x*x));
 }
 
-inline double time_units_conversion(double M, double dt)
+double time_units_conversion(double M, double dt)
 {
     return dt/(M*MSUN_S);
 }
