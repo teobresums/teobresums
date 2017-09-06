@@ -69,18 +69,16 @@ const char *optstr[] =
   "-output"      , "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'"
 };
 
-
-
-
 int main (int argc, char* argv[])
 {
+    double sampling_rate = 4096.;
     double m1            = 40.0;
     double m2            = 40.0;
     double q             = m1/m2;
     double chi1          = 0.0;
     double chi2          = 0.0;
     double f_min         = 20.;
-    double sampling_rate = 4096.;
+    double dt            = 1./sampling_rate;
     double LambdaAl2     = 0.0;
     double LambdaBl2     = 0.0;
     double LambdaAl3     = 0.0;
@@ -100,7 +98,9 @@ int main (int argc, char* argv[])
     int    solver_scheme = 0;
     char   output[256]   = "waveform.dat";
     char   parfile[256]  = "";
-    
+    TEOBResumFlags flags;
+    SetDefaultFlagsValues(&flags);
+    flags.set = 1;
     
     if (argc < 2)
     {
@@ -124,22 +124,25 @@ int main (int argc, char* argv[])
         else if (strcmp(argv[i],"-p")==0)
         {
             sprintf(parfile,"%s",argv[i+1]);
-            printf("found parfile: %s\n",parfile);
-            printf("Warning! Will use geometric units and mass rescaled quantities\n");
+            printf("Reading parfile: %s\n",parfile);
 
             TEOBResumParams params = read_config(parfile);
             q = params.q;
-            m2 = params.mtot * q/(1.+q); 
-            m1 = params.mtot - m2; 
+            m1 = params.mtot * q/(1.+q);
+            m2 = params.mtot - m1;
             chi1 = params.chi1;
             chi2 = params.chi2;
-            RWZ  = params.flags.RWZ;
-            solver_scheme = params.solver_scheme;
-            tidal = params.flags.tidal;
-            speedy = params.flags.speedy;
+            dt = params.dt;
+            flags.RWZ  = params.flags.RWZ;
+            flags.solver_scheme = params.flags.solver_scheme;
+            flags.tidal = params.flags.tidal;
+            flags.speedy = params.flags.speedy;
+            flags.Yagi_fits = params.flags.Yagi_fits;
+            flags.multipoles = params.flags.multipoles;
+            flags.geometric_units = params.flags.geometric_units;
+
+//            flags->spin = params.flags.spin; FIX ME, NOW IT WORKS A CDC
             lm = params.lm;
-            Yagi_fits = params.flags.Yagi_fits;
-            multipoles = params.flags.multipoles;
             LambdaAl2 = params.LambdaAl2;
             LambdaBl2 = params.LambdaBl2;
             if (Yagi_fits==0)
@@ -181,25 +184,26 @@ int main (int argc, char* argv[])
         {
             sampling_rate = atof(argv[i+1]);
             printf("srate: %f\n",sampling_rate);
+            dt = 1./sampling_rate;
         }
         else if (strcmp(argv[i],"-tidal")==0)
         {
-            tidal = true;
+            flags.tidal = 1;
             printf("tidal = true\n");
         }
         else if (strcmp(argv[i],"-speedy")==0)
         {
-            speedy = true;
+            flags.speedy = 1;
             printf("speedy = true\n");
         }
         else if (strcmp(argv[i],"-RWZ")==0)
         {
-            RWZ = true;
+            flags.RWZ = 1;
             printf("RWZ = true\n");
         }
         else if (strcmp(argv[i],"-Yagi_fits")==0)
         {
-            Yagi_fits = 1;
+            flags.Yagi_fits = 1;
             printf("Yagi_fits = true\n");
         }
         else if (strcmp(argv[i],"-lambda1_l2")==0)
@@ -253,7 +257,7 @@ int main (int argc, char* argv[])
         }
         else if (strcmp(argv[i],"-multipoles")==0)
         {
-            multipoles = 1;
+            flags.multipoles = 1;
             printf("multipoles = true\n");
         }
         else if (strcmp(argv[i],"-lm")==0)
@@ -261,59 +265,14 @@ int main (int argc, char* argv[])
             lm = atoi(argv[i+1]);
             printf("lm: %d\n",lm);
         }
-    }
-    
-
-    
-    if (multipoles == 1 && lm!=-1)
-    {
-        Waveform *ampl;
-        Waveform *phase;
-        
-        TEOBResumS_single_mode(&ampl,
-                                       &phase,
-                                       m1,
-                                       m2,
-                                       0.0,
-                                       0.0,
-                                       chi1,
-                                       0.0,
-                                       0.0,
-                                       chi2,
-                                       inclination,
-                                       polarisation,
-                                       f_min,
-                                       sampling_rate,
-                                       LambdaAl2,
-                                       LambdaBl2,
-                                       LambdaAl3,
-                                       LambdaBl3,
-                                       LambdaAl4,
-                                       LambdaBl4,
-                                       distance,
-                                       tidal,
-                                       speedy,
-                                       RWZ,
-                                       dynamics,
-                                       lm,
-                                       Yagi_fits,
-                                       solver_scheme);
-        
-        std::FILE* f = std::fopen(output, "w");
-        int i        = 0;
-        int N        = ampl->length;
-        double dt    = 1./sampling_rate;
-        for (i=0;i<N;i++)
+        else if (strcmp(argv[i],"-geometric")==0)
         {
-            std::fprintf(f, "%f\t%e\t%e\n", i*dt/((m1+m2)*MSUN_S), ampl->data[i], phase->data[i]);
+            flags.geometric_units = 1;
+            printf("geometric = true");
         }
-        std::fclose(f);
-        free(ampl->data);
-        free(phase->data);
-        free(ampl);
-        free(phase);
     }
-    else if (multipoles == true && lm==-1)
+    
+    if (multipoles == 1 && lm==-1)
     {
         cout << "Need to input also the index of the multipole via the option -lm" << endl;
         exit(-1);
@@ -324,34 +283,38 @@ int main (int argc, char* argv[])
         Waveform *hplus;
         Waveform *hcross;
         
+        if (flags.geometric_units==1)
+        {
+            printf("Will use geometric units and mass rescaled quantities\n");
+        }
+
+        if (flags.multipoles==1)
+        {
+            printf("Will output l = %d m = %d waveform\n",L[lm],M[lm]);
+        }
         TEOBResumS(&hplus,
-                &hcross,
-                m1,
-                m2,
-                0.0,
-                0.0,
-                chi1,
-                0.0,
-                0.0,
-                chi2,
-                inclination,
-                polarisation,
-                f_min,
-                sampling_rate,
-                LambdaAl2,
-                LambdaBl2,
-                LambdaAl3,
-                LambdaBl3,
-                LambdaAl4,
-                LambdaBl4,
-                distance,
-                tidal,
-                speedy,
-                RWZ,
-                dynamics,
-                lm,
-                Yagi_fits,
-                solver_scheme);
+                    &hcross,
+                    m1,
+                    m2,
+                    0.0,
+                    0.0,
+                    chi1,
+                    0.0,
+                    0.0,
+                    chi2,
+                    inclination,
+                    polarisation,
+                    f_min,
+                    dt,
+                    LambdaAl2,
+                    LambdaBl2,
+                    LambdaAl3,
+                    LambdaBl3,
+                    LambdaAl4,
+                    LambdaBl4,
+                    distance,
+                    lm,
+                    &flags);
         
         std::FILE* f = std::fopen(output, "w");
         int i        = 0;

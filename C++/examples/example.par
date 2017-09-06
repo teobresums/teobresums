@@ -1,8 +1,8 @@
-Mtot 1.0
+Mtot 70.0
 iota 0.
 psi 0.
 distance 1.
-q 1.0
+q 1.2
 chi1 0.7
 chi2 0.7
 r0 47.
@@ -12,7 +12,7 @@ RWZ 0
 speedy 1
 dynamics 1
 Yagi_fit 0
-multipoles 0
+multipoles 1
 lm 1
 dt 0.5
 solver_scheme 0

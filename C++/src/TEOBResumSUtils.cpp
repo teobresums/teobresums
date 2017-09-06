@@ -421,16 +421,18 @@ vector<double> s_D1(vector<double> f, vector<double> x, int Nmax)
 }
 
 /** Sets the dynamics controlling flags to their default value */
-void SetDefaultFlagsValues(TEOBResumParams *p)
+void SetDefaultFlagsValues(TEOBResumFlags *flags)
 {
-    p->flags.spin       = 0;
-    p->flags.tidal      = 0;
-    p->flags.RWZ        = 0;
-    p->flags.speedy     = 1;
-    p->flags.dynamics   = 0;
-    p->flags.multipoles = 0;
-    p->flags.Yagi_fits  = 0;
-    p->flags.geometric_units = 0;
+    flags->spin             = 0;
+    flags->tidal            = 0;
+    flags->RWZ              = 0;
+    flags->speedy           = 1;
+    flags->dynamics         = 0;
+    flags->multipoles       = 0;
+    flags->Yagi_fits        = 0;
+    flags->geometric_units  = 0;
+    flags->solver_scheme    = 0;
+    flags->set              = 0;
 }
 
 double logQ(double x)
@@ -481,17 +483,15 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
     return exp(lny);
 }
 
-double radius0(double M, double f_start)
+inline double radius0(double M, double f_start)
 {
-    double MSUN_SEC = 4.925490949141889e-06;
-    double x = (M*f_start*MSUN_SEC*2.*M_PI)/2.;
+    double x = (M*f_start*MSUN_S*2.*M_PI)/2.;
     return cbrt(1/(x*x));
 }
 
-double time_units_conversion(double M, double Srate)
+inline double time_units_conversion(double M, double dt)
 {
-    double MSUN_SEC = 4.925490949141889e-06;
-    return (1./Srate)/(M*MSUN_SEC);
+    return dt/(M*MSUN_S);
 }
 
 TEOBResumParams read_config(char *fname)
@@ -499,7 +499,7 @@ TEOBResumParams read_config(char *fname)
 
     TEOBResumParams params;
     
-    SetDefaultFlagsValues(&params);
+    SetDefaultFlagsValues(&params.flags);
     
     string param_name;
     double param_value;
@@ -569,7 +569,7 @@ TEOBResumParams read_config(char *fname)
 	  params.dt = param_value;
 	}
 	if(param_name=="solver_scheme") {
-	  params.solver_scheme = param_value;
+	  params.flags.solver_scheme = param_value;
 	}
 	if(param_name=="LambdaAl2") {
 	  params.LambdaAl2 = param_value;
@@ -701,67 +701,60 @@ TEOBResumParams read_config(char *fname)
     return params;
 }
 
+void CopyTEOBResumSFlags(TEOBResumFlags *out, TEOBResumFlags *in)
+{
+    out->spin  = in->spin;
+    out->tidal = in->tidal;
+    out->RWZ   = in->RWZ;
+    out->speedy = in->speedy;
+    out->dynamics = in->dynamics;
+    out->multipoles = in->multipoles;
+    out->Yagi_fits  = in->Yagi_fits;
+    out->geometric_units = in->geometric_units;
+    out->solver_scheme = in->solver_scheme;
+    out->set = in->set;
+}
+
 TEOBResumParams process_input_parameters(
                                          double m1,
                                          double m2,
                                          double chi1,
                                          double chi2,
                                          double f_min,
-                                         double sampling_rate,
+                                         double dt,
                                          double LambdaAl2,
                                          double LambdaBl2,
                                          double LambdaAl3,
                                          double LambdaBl3,
                                          double LambdaAl4,
                                          double LambdaBl4,
-                                         int    tidal,
-                                         int    speedy,
-                                         int    RWZ,
-                                         int    dynamics,
-                                         int    lm,
-                                         int    Yagi_fits,
-                                         int    solver_scheme
+                                         TEOBResumFlags *flags   /** flags **/
                                          )
 {
     TEOBResumParams params;
     
-    SetDefaultFlagsValues(&params);
+    CopyTEOBResumSFlags(&params.flags,flags);
+
+    double mtot = m1+m2;
+    double q = m1/m2;
+
+    params.mtot = mtot;
+    params.q = q;
     
-    int geometric_units = params.flags.geometric_units;
-
-    double q = params.q;
-    double mtot = 1.0; 
-
-    if (geometric_units) {
-
-      // reset quantities with dimensions
-      params.mtot = 1.0; 
-      params.distance = 1.0; 
-      params.iota = 0.0; 
-      params.psi = 0.0;
-      params.f_min = pow(params.r0, 2./3.);  // fixme
-
-    } else {
-
-      mtot = m1+m2;
-      q = m1/m2;    
-
-      params.mtot = mtot;
-      params.q = q;
-      params.dt = time_units_conversion(mtot, sampling_rate);
-      params.r0 = radius0(mtot, f_min);
-   
+    if (params.flags.geometric_units==0)
+    {
+        params.dt = time_units_conversion(mtot, dt);
+        params.r0 = radius0(mtot, f_min);
     }
-
+    else
+    {
+        params.dt = dt;
+        params.r0 = f_min;
+    }
+    
+    
     params.chi1 = chi1;
     params.chi2 = chi2;
-    params.flags.tidal = tidal;
-    params.flags.RWZ = RWZ;
-    params.flags.speedy = speedy;
-    params.flags.dynamics = dynamics;
-    params.flags.Yagi_fits = Yagi_fits;
-    params.lm = lm;
-    params.solver_scheme = solver_scheme;
     
     if (params.flags.tidal == 1 && params.flags.Yagi_fits==1)
     {

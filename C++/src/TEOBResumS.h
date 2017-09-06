@@ -62,6 +62,7 @@ const int M[35] = {
 /** Structure of flags to control various physics ingredients */
 typedef struct tagTEOBResumFlags
 {
+    int solver_scheme;  /** Solver scheme to utilise */
     int spin;           /** Spinning dynamics */
     int tidal;          /** Tidal deformability dynamics */
     int RWZ;            /** Regge-Wheeler-Zerilli potential */
@@ -69,14 +70,14 @@ typedef struct tagTEOBResumFlags
     int dynamics;       /** Output dynamics to file */
     int Yagi_fits;      /** Use 'universal relations' for higher l lambdas */
     int multipoles;     /** Output single multipole waveforms */
-  int geometric_units; /** use geometric units */
+    int geometric_units; /** use geometric units */
+    int set;            /** flags set bby default or not? */
 }   TEOBResumFlags;
 
 /** Algorithm control structure */
 typedef struct tagTEOBResumParams
 {
     int    lm;                  /**                                                          */
-    int    solver_scheme;       /** Scheme to solve the differential equation                */
     double mtot;                /** Total mass of the binary                                 */
     double q;                   /** Mass ratio of the binary                                 */
     double iota;                /** inclination angle                                        */
@@ -84,7 +85,7 @@ typedef struct tagTEOBResumParams
     double distance;            /** sources distance [Mpc]                                   */
     double nu;                  /** Symmetric mass ratio of the binary, nu = m1*m2/(m1+m2)^2 */
     double r0;                  /** Initial radial separation of the objects                 */
-  double f_min;                /** Initial frequency                                        */
+    double f_min;               /** Initial frequency                                        */
     double dt;                  /** Time step of the differential equation evolution         */
     double rLR;                 /** Light ring radius                                        */
     double chi1;                /** Dimensionless spin of the first object                   */
@@ -134,7 +135,9 @@ typedef struct tagWaveform
 }   Waveform;
 
 /** Sets the dynamics controlling flags to their default value */
-void SetDefaultFlagsValues(TEOBResumParams *p);
+void SetDefaultFlagsValues(TEOBResumFlags *flags);
+
+void CopyTEOBResumSFlags(TEOBResumFlags *out, TEOBResumFlags *in);
 
 /* _A_NumDenom_h */
 
@@ -186,7 +189,7 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                         double inclination,     /** inclination angle (rad) **/
                         double polarisation,    /** polarisation angle (rad) **/
                         double f_min,           /** starting frequency(Hz) **/
-                        double sampling_rate,   /** sampling rate(Hz) **/
+                        double dt,              /** sampling interval (s) **/
                         double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
@@ -194,44 +197,8 @@ void TEOBResumS(Waveform **hplus,               /** h+ return array **/
                         double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
                         double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
                         double distance,        /** distance(Mpc) **/
-                        int    tidal,           /** tidal corrections flag (BNS only) **/
-                        int    speedy,          /** accelerated tails flag **/
-                        int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
-                        int    dynamics,        /** output dynamics to file */
-                        int    lm,              /** TO BE REMOVED **/
-                        int    Yagi_fits,           /** tidal corrections flag (BNS only) **/
-                        int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
-);
-
-
-void TEOBResumS_single_mode(Waveform **ampl,                /** h+ return array **/
-                                    Waveform **hphase,      /** hx return array **/
-                                    double m1,              /** m1(Msun) **/
-                                    double m2,              /** m2(Msun) **/
-                                    double spin1x,          /** dimensionless s1x **/
-                                    double spin1y,          /** dimensionless s1y **/
-                                    double spin1z,          /** dimensionless s1z **/
-                                    double spin2x,          /** dimensionless s2x **/
-                                    double spin2y,          /** dimensionless s2y **/
-                                    double spin2z,          /** dimensionless s2z **/
-                                    double inclination,     /** inclination angle (rad) **/
-                                    double polarisation,    /** polarisation angle (rad) **/
-                                    double f_min,           /** starting frequency(Hz) **/
-                                    double sampling_rate,   /** sampling rate(Hz) **/
-                                    double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                                    double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                                    double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                                    double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                                    double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                                    double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                                    double distance,        /** distance(Mpc) **/
-                                    int    tidal,           /** tidal corrections flag (BNS only) **/
-                                    int    speedy,          /** accelerated tails flag **/
-                                    int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
-                                    int    dynamics,        /** output dynamics to file */
-                                    int    lm,              /** Index of the multipole, conventions of multiple_index **/
-                                    int    Yagi_fits,           /** tidal corrections flag (BNS only) **/
-                                    int    solver_scheme   /** integration scheme (0:adaptive,1:fixed step) **/
+                        int    lm,              /** multipole index for output **/
+                        TEOBResumFlags *flags   /** flags **/
 );
 
 /* _Metric_h */
@@ -335,19 +302,13 @@ TEOBResumParams process_input_parameters(double m1,
                                 double LambdaBl3,
                                 double LambdaAl4,
                                 double LambdaBl4,
-                                int    tidal,
-                                int    speedy,
-                                int    RWZ,
-                                int    dynamics,
-                                int    lm,
-                                int    Yagi_fits,
-                                int    solver_scheme
+                                TEOBResumFlags *flags
                                 );
 TEOBResumParams read_config(char *fname);
 
 double Yagi13_fit_barlamdel(double barlam2, int ell);
-double time_units_conversion(double M, double Srate);
-double radius0(double M, double f_start);
+inline double time_units_conversion(double M, double dt);
+inline double radius0(double M, double f_start);
 
 /* _ringdown_h */
 
