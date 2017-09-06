@@ -64,7 +64,7 @@ const char *optstr[] =
   "-dynamics"    , "<int>",      "output dynamics evolution.", "0 (false)",
   "-RW"          , "<int>",      "Regge-Wheeler-Zerilli potential.", "0 (false)",
   "-multipoles"  , "<int>",      "enable single multipole output, in geometrical units.", "0 (false)",
-  "-mult_index"  , "<int>",      "index for the output multipole. Requires multipoles output format.", "-1",
+  "-lm"          , "<int>",      "index for the output multipole. Requires multipoles output format.", "-1",
   "-Yagi_fits"   , "<int>",      "enable Yagi fits for Lambda_l=3,4.", "0 (false)",
   "-output"      , "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'"
 };
@@ -91,13 +91,12 @@ int main (int argc, char* argv[])
     double inclination   = 0.0;
     double polarisation  = 0.0;
     int    tidal         = 0;
-    int    speedy        = 1;
+    int    speedy        = 0;
     int    RWZ           = 0;
     int    dynamics      = 0;
-    int    multipoles    = 1;
-    int    mult_index    = -1;
+    int    multipoles    = 0;
     int    Yagi_fits     = 0;
-    int    lm            = 1;
+    int    lm            = -1;
     int    solver_scheme = 0;
     char   output[256]   = "waveform.dat";
     char   parfile[256]  = "";
@@ -139,6 +138,7 @@ int main (int argc, char* argv[])
             speedy = params.flags.speedy;
             lm = params.lm;
             Yagi_fits = params.flags.Yagi_fits;
+            multipoles = params.flags.multipoles;
             LambdaAl2 = params.LambdaAl2;
             LambdaBl2 = params.LambdaBl2;
             if (Yagi_fits==0)
@@ -255,16 +255,16 @@ int main (int argc, char* argv[])
             multipoles = 1;
             printf("multipoles = true\n");
         }
-        else if (strcmp(argv[i],"-mult_index")==0)
+        else if (strcmp(argv[i],"-lm")==0)
         {
-            mult_index = atoi(argv[i+1]);
-            printf("mult_index: %d\n",mult_index);
+            lm = atoi(argv[i+1]);
+            printf("lm: %d\n",lm);
         }
     }
     
 
     
-    if (multipoles == 1 && mult_index!=-1)
+    if (multipoles == 1 && lm!=-1)
     {
         Waveform *ampl;
         Waveform *phase;
@@ -296,8 +296,7 @@ int main (int argc, char* argv[])
                                        dynamics,
                                        lm,
                                        Yagi_fits,
-                                       solver_scheme,
-                                       mult_index);
+                                       solver_scheme);
         
         std::FILE* f = std::fopen(output, "w");
         int i        = 0;
@@ -313,9 +312,9 @@ int main (int argc, char* argv[])
         free(ampl);
         free(phase);
     }
-    else if (multipoles == true && mult_index==-1)
+    else if (multipoles == true && lm==-1)
     {
-        cout << "Need to input also the index of the multipole" << endl;
+        cout << "Need to input also the index of the multipole via the option -lm" << endl;
         exit(-1);
     }
     else

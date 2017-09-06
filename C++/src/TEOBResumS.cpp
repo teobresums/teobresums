@@ -486,10 +486,9 @@ void TEOBResumS_single_mode(
                         int    speedy,          /** accelerated tails flag **/
                         int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                         int    dynamics,        /** output dynamics to file */
-                        int    lm,              /** TO BE REMOVED **/
+                        int    lm,              /** Index of the multipole, conventions of multiple_index **/
                         int    Yagi_fits,
-                        int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
-                        int    index                /** Index of the multipole, conventions of multiple_index **/
+                        int    solver_scheme    /** integration scheme (0:adaptive,1:fixed step) **/
 )
 {
     
@@ -816,8 +815,8 @@ void TEOBResumS_single_mode(
     /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
     for (i=0; i<N; i++)
     {
-        h_ampl_out->data[i]   = hlm_ampl_g[index][i];
-        h_phase_out->data[i]  = hlm_phase_g[index][i];
+        h_ampl_out->data[i]   = hlm_ampl_g[lm][i];
+        h_phase_out->data[i]  = hlm_phase_g[lm][i];
     }
 
     *ampl = h_ampl_out;

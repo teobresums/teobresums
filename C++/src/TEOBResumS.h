@@ -223,10 +223,9 @@ void TEOBResumS_single_mode(Waveform **ampl,                /** h+ return array 
                                     int    speedy,          /** accelerated tails flag **/
                                     int    RWZ,             /** Regge-Wheeler-Zerilli potential (?) **/
                                     int    dynamics,        /** output dynamics to file */
-                                    int    lm,              /** TO BE REMOVED **/
+                                    int    lm,              /** Index of the multipole, conventions of multiple_index **/
                                     int    Yagi_fits,           /** tidal corrections flag (BNS only) **/
-                                    int    solver_scheme,   /** integration scheme (0:adaptive,1:fixed step) **/
-                                    int    index            /** Index of the multipole, conventions of multiple_index **/
+                                    int    solver_scheme   /** integration scheme (0:adaptive,1:fixed step) **/
 );
 
 /* _Metric_h */
