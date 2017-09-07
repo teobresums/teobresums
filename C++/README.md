@@ -70,7 +70,7 @@ OPTIONS:
         -distance            <double>   source distance [Mpc]. [100]
         -inclination         <double>   (IOTA) inclination angle [rad]. [0]
         -polarisation        <double>   (PSI) polarisation angle [rad]. [0]
-        -f_min               <double>   starting frequency [Hz]. [20]
+        -f_min               <double>   starting frequency [Hz / geom.units mass rescaled]. [20]
         -srate               <double>   sampling rate [Hz]. [4096]
         -lambda1_l2          <double>   l=2 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled. [0]
         -lambda2_l2          <double>   l=2 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled. [0]

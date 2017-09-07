@@ -538,9 +538,9 @@ TEOBResumParams read_config(char *fname)
 	if(param_name=="chi2") {
 	  params.chi2 = param_value;
 	}
-	if(param_name=="r0") {
-	  params.r0 = param_value;
-	}
+	// if(param_name=="r0") {
+	//   params.r0 = param_value;
+	// }
 	if(param_name=="f_min") {
 	  params.f_min = param_value;
 	}
@@ -743,15 +743,22 @@ TEOBResumParams process_input_parameters(
     
     if (params.flags.geometric_units==0)
     {
+      // input given in physical units, 
+      // rescale to geometric units and mass rescaled quantities
+      // compute r0 from the initial GW frequency in Hz
         params.dt = time_units_conversion(mtot, dt);
         params.r0 = radius0(mtot, f_min);
     }
     else
     {
+      // input given in geometric units, 
+      // rescale to geometric units and mass rescaled quantities
+      // compute r0 from the initial GW frequency in geometric units and mass rescaled
         params.dt = dt;
-        params.r0 = f_min;
+        params.r0 = pow(f_min*M_PI, -2./3.);
     }
-    
+
+    printf(" dt = %e r0 = %e\n",params.dt, params.r0);
     
     params.chi1 = chi1;
     params.chi2 = chi2;

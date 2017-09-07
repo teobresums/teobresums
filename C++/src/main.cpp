@@ -52,7 +52,7 @@ const char *optstr[Nopt*4] =
   "-distance"    , "<double>",   "source distance [Mpc].", "100",
   "-inclination" , "<double>",   "(IOTA) inclination angle [rad].", "0",
   "-polarisation", "<double>",   "(PSI) polarisation angle [rad].", "0",
-  "-f_min"       , "<double>",   "starting frequency [Hz].", "20",
+  "-f_min"       , "<double>",   "starting frequency [Hz / geom.units mass rescaled].", "20",
   "-srate"       , "<double>",   "sampling rate [Hz].", "4096",
   "-lambda1_l2"  , "<double>",   "l=2 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
   "-lambda2_l2"  , "<double>",   "l=2 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
@@ -128,18 +128,11 @@ int main (int argc, char* argv[])
             chi1 = params.chi1;
             chi2 = params.chi2;
             dt = params.dt;
-            flags.RWZ  = params.flags.RWZ;
-            flags.solver_scheme = params.flags.solver_scheme;
-            flags.tidal = params.flags.tidal;
-            flags.speedy = params.flags.speedy;
-            flags.Yagi_fits = params.flags.Yagi_fits;
-            flags.multipoles = params.flags.multipoles;
-            flags.geometric_units = params.flags.geometric_units;
-
-//            flags->spin = params.flags.spin; FIX ME, NOW IT WORKS A CDC
+	    f_min = params.f_min;
             lm = params.lm;
             LambdaAl2 = params.LambdaAl2;
             LambdaBl2 = params.LambdaBl2;
+            flags.Yagi_fits = params.flags.Yagi_fits;
             if (flags.Yagi_fits==0)
             {
                 LambdaAl3 = params.LambdaAl3;
@@ -147,6 +140,17 @@ int main (int argc, char* argv[])
                 LambdaAl4 = params.LambdaAl4;
                 LambdaBl4 = params.LambdaBl4;
             }
+	    distance = params.distance;
+	    inclination = params.iota;
+	    polarisation = params.psi;
+            flags.RWZ  = params.flags.RWZ;
+            flags.solver_scheme = params.flags.solver_scheme;
+            flags.tidal = params.flags.tidal;
+            flags.speedy = params.flags.speedy;
+            flags.multipoles = params.flags.multipoles;
+            flags.geometric_units = params.flags.geometric_units;
+
+	    // flags->spin = params.flags.spin; FIX ME, NOW IT WORKS A CDC
 
             break;
         }
@@ -302,6 +306,7 @@ int main (int argc, char* argv[])
         {
             printf("Will output l = %d m = %d waveform\n",L[lm],M[lm]);
         }
+
         TEOBResumS(&hplus,
                     &hcross,
                     m1,
