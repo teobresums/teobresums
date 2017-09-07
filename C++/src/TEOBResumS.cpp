@@ -377,8 +377,8 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     
 //    if (DEBUG)
 //    {
-        char   outputr[256]   = "waveform_nqc.dat";
-        std::FILE* nqcs       = std::fopen(outputr, "w");
+//        char   outputr[256]   = "waveform_nqc.dat";
+//        std::FILE* nqcs       = std::fopen(outputr, "w");
 //    }
     
     if (params.flags.tidal==0 && params.flags.spin==1)
@@ -394,14 +394,14 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 {
                     hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
                     hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
-                    std::fprintf(nqcs, "%f\t%e\t%e\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
+//                    std::fprintf(nqcs, "%f\t%e\t%e\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
                 }
             }
         }
     }
 //    if (DEBUG)
 //    {
-        std::fclose(nqcs);
+//        std::fclose(nqcs);
 //    }
     if (DEBUG)
     {

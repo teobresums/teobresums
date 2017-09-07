@@ -69,6 +69,8 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
     for i in range(N):
         x[i,0] = hp.data[i]
         x[i,1] = hc.data[i]
+    free(hp.data)
+    free(hc.data)
     free(hp)
     free(hc)
     return x

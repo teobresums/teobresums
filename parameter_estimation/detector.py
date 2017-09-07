@@ -43,17 +43,8 @@ class GravitationalWaveDetector(object):
         residuals = self.FrequencySeries[self.kmin:self.kmax] - self.Project(hptilde, hctilde, ra, dec, psi, tc)
         
         numerator = residuals*np.conj(residuals)
-#        for i,l in enumerate(self.Frequency):
-#            print self.Frequency[i],hptilde[i],hctilde[i],numerator[i],self.InversePowerSpectralDensity[i]
-#            if i==200: break
-#        exit()
-        logLseries = -np.real(numerator)*self.InversePowerSpectralDensity[self.kmin:self.kmax]*self.dt
-        
-#        for i,l in enumerate(logLseries):
-#            print self.Frequency[i],logLseries[i],hptilde[i],numerator[i],self.InversePowerSpectralDensity[i]
-#        print np.sum(logLseries)
-#        exit()
-        return np.sum(logLseries)
+
+        return -np.sum(np.real(numerator)*self.InversePowerSpectralDensity[self.kmin:self.kmax]*self.dt)
 
 if __name__ == "__main__":
     H = GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', trigtime = 1126259462.43)
@@ -63,8 +54,6 @@ if __name__ == "__main__":
         print attr, value
 
     from pyTEOBResumS import pyTEOBResumS
-
-
 
     ra = 1.82161142311
     dec = -1.27626704919

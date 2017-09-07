@@ -58,15 +58,15 @@ class GravitationalWaveModel(cpnest.model.Model):
                 [-0.9,0.9],
                 [-0.9,0.9],
                 [0.0,np.pi],
-                [0.0,np.pi/2.0],
-                [1,2000]]
+                [0.0,np.pi],
+                [100,1000]]
         self.flags ={'NQC':'1',
             'tidal':0,
             'speedy':1,
             'dynamics':0,
             'solver_scheme':0,
             'RWZ':0,
-            'Yagi_fits':1,
+            'Yagi_fits':0,
             'spin':1,
             'multipoles':0,
             'geometric_units':0,
@@ -124,7 +124,7 @@ class NoiseModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, chunk_size=4.0, trigtime=1126259462.423, **kwargs):
+    def __init__(self, chunk_size=4.0, trigtime=1126259462.43, **kwargs):
         
         super(NoiseModel,self).__init__(**kwargs)
         # this is the merger time in H1
