@@ -499,8 +499,22 @@ TEOBResumParams read_config(char *fname)
 
     TEOBResumParams params;
     
+    // set defaults (flags & pars)
     SetDefaultFlagsValues(&params.flags);
     
+    params.q = 1.;
+    params.mtot  = 80.; // Msun
+    params.chi1 = 0.;
+    params.chi2 = 0.;
+    params.dt = 1./4096.; // s
+    params.f_min = 10; // Hz
+    params.lm = -1;
+    params.LambdaAl2 = 0.;
+    params.LambdaBl2 = 0.;
+    params.distance = 100; // Mpc
+    params.iota = 0.0;
+    params.psi = 0.0;
+
     string param_name;
     double param_value;
     
@@ -517,6 +531,7 @@ TEOBResumParams read_config(char *fname)
         //param_values.push_back(param_value);
         cout << param_name <<"\t"<< param_value << endl;
 
+	// pars
 	if(param_name=="Mtot") {
 	  params.mtot = param_value;
 	}
@@ -538,38 +553,14 @@ TEOBResumParams read_config(char *fname)
 	if(param_name=="chi2") {
 	  params.chi2 = param_value;
 	}
-	// if(param_name=="r0") {
-	//   params.r0 = param_value;
-	// }
 	if(param_name=="f_min") {
 	  params.f_min = param_value;
-	}
-	if(param_name=="tidal") {
-	  params.flags.tidal = param_value;
-	}
-	if(param_name=="RWZ") {
-	  params.flags.RWZ = param_value;
-	}
-	if(param_name=="speedy") {
-	  params.flags.speedy = param_value;
-	}
-	if(param_name=="dynamics") {
-	  params.flags.dynamics = param_value;
-	}
-	if(param_name=="Yagi_fit") {
-	  params.flags.Yagi_fits = param_value;
-	}
-	if(param_name=="multipoles") {
-	  params.flags.multipoles = param_value;
 	}
 	if(param_name=="lm") {
 	  params.lm = param_value;
 	}
 	if(param_name=="dt") {
 	  params.dt = param_value;
-	}
-	if(param_name=="solver_scheme") {
-	  params.flags.solver_scheme = param_value;
 	}
 	if(param_name=="LambdaAl2") {
 	  params.LambdaAl2 = param_value;
@@ -588,6 +579,29 @@ TEOBResumParams read_config(char *fname)
 	}
 	if(param_name=="LambdaBl4") {
 	  params.LambdaBl4 = param_value;
+	}
+
+	// flags
+	if(param_name=="tidal") {
+	  params.flags.tidal = param_value;
+	}
+	if(param_name=="RWZ") {
+	  params.flags.RWZ = param_value;
+	}
+	if(param_name=="speedy") {
+	  params.flags.speedy = param_value;
+	}
+	if(param_name=="dynamics") {
+	  params.flags.dynamics = param_value;
+	}
+	if(param_name=="Yagi_fit") {
+	  params.flags.Yagi_fits = param_value;
+	}
+	if(param_name=="multipoles") {
+	  params.flags.multipoles = param_value;
+	}
+	if(param_name=="solver_scheme") {
+	  params.flags.solver_scheme = param_value;
 	}
 	if(param_name=="geometric_units") {
 	  params.flags.geometric_units = param_value;
