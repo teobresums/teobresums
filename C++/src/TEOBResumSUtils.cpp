@@ -128,6 +128,123 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
     return data_g;
 }
 
+
+
+/* Find nearest point index in 1d array */
+int find_point_bisection(double x, int n, double *xp, int o)
+{
+  int i0 = o-1, i1 = n-o;
+  int i;
+
+  if (n < 2*o) {
+    printf(" not enough point to interpolate");
+    exit(1);
+  }
+  
+  if (x <= xp[i0]) return 0;
+  if (x >  xp[i1]) return n-2*o;
+
+  while (i0 != i1-1) {
+    i = (i0+i1)/2;
+    if (x < xp[i]) i1 = i; else i0 = i;
+  }
+
+  return i0-o+1;
+}
+
+/* Barycentric Lagrange interpolation at xx with n points of f(x), 
+   equivalent to standard Lagrangian interpolation */   
+#define tiny 1e-12
+double baryc_f(double xx, int n, double *f, double *x)
+{
+  
+  double omega[n];
+  double o, num, den, div, ci;
+
+  int i, j;
+
+  for (i = 0; i < n; i++) {
+    
+    if (fabs(xx - x[i]) <= tiny) return f[i];
+
+    o = 1.;
+    for (j = 0; j < n; j++) {
+      if (j != i) {
+	o /= (x[i] - x[j]);
+      }
+    }
+    omega[i] = o;
+  
+  }
+
+  num = den = 0.;
+  for (i = 0; i < n; i++) {
+
+    div  = xx - x[i];
+    ci   = omega[i]/div;
+    den += ci;
+    num += ci * f[i];
+
+  }
+
+  return( num/den );
+}
+
+/* Barycentric Lagrange interpolation at xx with n points of f(x), 
+   compute weights */
+void baryc_weights(int n, double *x, double *omega)
+{  
+  double o;
+  int i, j;
+
+  for (i = 0; i < n; i++) {
+    
+    o = 1.;
+    for (j = 0; j < n; j++) {
+      if (j != i) { 
+	o /= (x[i] - x[j]);
+      }
+    }
+    omega[i] = o;
+  
+  }
+
+}
+
+/* Barycentric Lagrange interpolation at xx with n points of f(x), 
+   use precomputed weights */
+double baryc_f_weights(double xx, int n, double *f, double *x, double *omega)
+{
+
+  int i;
+  double num, den, div, ci;
+  
+  num = den = 0.;
+  for (i = 0; i < n; i++) {
+
+    div  = xx - x[i];
+    if (fabs(div) <= tiny) return f[i];
+
+    ci   = omega[i]/div;
+    den += ci;
+    num += ci * f[i];
+
+  }  
+
+  return( num/den );
+}
+
+/* 1d Lagrangian barycentric interpolation */
+double interp1d (const int order, double xx, int nx, double *f, double *x)
+{
+  double ff;
+  int ix;
+  int ox = order > nx ? nx : order;
+  ix = find_point_bisection(xx, nx, x, ox/2);
+  ff = baryc_f(xx, ox, &f[ix], &x[ix]);  
+  return( ff );
+}
+
 vector<double> FDdrvt(const vector<double> f,const vector<double> t, int varargin, const int grid_length)
 {
     
