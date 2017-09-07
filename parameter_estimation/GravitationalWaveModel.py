@@ -6,6 +6,7 @@ import os
 from optparse import OptionParser
 import itertools as it
 import noise
+from scipy.signal import tukey
 
 from detector import GravitationalWaveDetector
 from pyTEOBResumS import pyTEOBResumS
@@ -34,6 +35,8 @@ class GravitationalWaveModel(cpnest.model.Model):
 
         self.sampling_rate = self.detectors[0].sampling_rate
         self.segment_length = self.detectors[0].segment_length
+        self.dt = 1./self.sampling_rate
+        self.Flow = self.detectors[0].Flow
         
         #parameters
         self.names=['ra',
@@ -57,7 +60,21 @@ class GravitationalWaveModel(cpnest.model.Model):
                 [0.0,np.pi],
                 [0.0,np.pi/2.0],
                 [1,2000]]
-    
+        self.flags ={'NQC':'1',
+            'tidal':0,
+            'speedy':1,
+            'dynamics':0,
+            'solver_scheme':0,
+            'RWZ':0,
+            'Yagi_fits':1,
+            'spin':1,
+            'multipoles':0,
+            'geometric_units':0,
+            'set':0
+        }
+        self.window=tukey(self.segment_length,0.5)
+        self.windowNorm = self.segment_length/np.sum(self.window**2)
+            
     def log_likelihood(self,x):
         
         h = pyTEOBResumS(x['m1'],
@@ -70,31 +87,27 @@ class GravitationalWaveModel(cpnest.model.Model):
                          x['spin2z'],
                          x['iota'],
                          x['psi'],
-                         self.detectors[0].Flow,
-                         self.detectors[0].sampling_rate,
+                         self.Flow,
+                         self.dt,
+                         0.0,
+                         0.0,
+                         0.0,
+                         0.0,
                          0.0,
                          0.0,
                          x['distance'],
-                         1,
-                         0,
-                         1,
-                         0,
-                         0,
-                         0,
-                         0)
+                         -1,
+                         self.flags)
         
-        hp = noise.resize_time_series(h[:,0],self.detectors[0].segment_length)
-        hc = noise.resize_time_series(h[:,1],self.detectors[0].segment_length)
-        index_trigtime = int((x['tc']-self.detectors[0].Epoch)*self.sampling_rate)
-        index_chunk_start = index_trigtime - int(self.sampling_rate*(self.detectors[0].T-1))
-        
-        hp = np.roll(hp,index_chunk_start)
-        hc = np.roll(hp,index_chunk_start)
+        hp = noise.resize_time_series(h[:,0],self.segment_length)
+        hc = noise.resize_time_series(h[:,1],self.segment_length)
 
-        hptilde = np.fft.rfft(hp)
-        hctilde = np.fft.rfft(hc)
+        hp*=self.window
+        hc*=self.window
         
-        f, hctilde = noise.fd_from_td(self.detectors[0].Times, hc, srate = self.sampling_rate, N = self.detectors[0].segment_length)
+        hptilde = np.fft.rfft(hp)*self.windowNorm
+        hctilde = np.fft.rfft(hc)*self.windowNorm
+
         return np.sum([d.logLikelihood(hptilde, hctilde, x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
     
     def log_prior(self, x):
@@ -145,8 +158,8 @@ if __name__=='__main__':
     if opts.full_run:
         signal_model = GravitationalWaveModel()
         work=cpnest.CPNest(signal_model,
-                       verbose=2,
-                       Poolsize=1000,
+                       verbose=3,
+                       Poolsize=100,
                        Nthreads=opts.threads,
                        Nlive=opts.nlive,
                        maxmcmc=opts.maxmcmc,

@@ -21,7 +21,7 @@ class GravitationalWaveDetector(object):
         self.df = np.diff(self.Frequency)[0]
         self.sampling_rate = 1./self.dt
         self.segment_length = int(self.T*self.sampling_rate)
-        self.SigmaSq = self.PowerSpectralDensity*self.dt**2
+        self.InversePowerSpectralDensity = 1./(self.PowerSpectralDensity*0.5/self.dt)
         self.Flow = 20.0
         self.Fhigh = self.sampling_rate/2.
         self.kmin = int(self.Flow/self.df)
@@ -34,23 +34,23 @@ class GravitationalWaveDetector(object):
         gmst = GreenwichMeanSiderealTime(tc)
         fp,fc = ComputeDetAMResponse(self.lal_detector.response, ra, dec, psi, gmst)
         
-        timeShift = self.Epoch-tc + TimeDelayFromEarthCenter(self.location, ra, dec, tc)
+        timeShift = (self.Epoch-1)-tc + TimeDelayFromEarthCenter(self.location, ra, dec, tc)
 
         return np.exp(-1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])*(fp*hptilde[self.kmin:self.kmax]+fc*hctilde[self.kmin:self.kmax])
 
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
-        TwoDeltaToverN = 2.0 * self.dt / self.segment_length;
         residuals = self.FrequencySeries[self.kmin:self.kmax] - self.Project(hptilde, hctilde, ra, dec, psi, tc)
         
         numerator = residuals*np.conj(residuals)
 #        for i,l in enumerate(self.Frequency):
-#            print hptilde[i],hctilde[i],numerator[i],self.InversePowerSpectralDensity[i]
+#            print self.Frequency[i],hptilde[i],hctilde[i],numerator[i],self.InversePowerSpectralDensity[i]
+#            if i==200: break
 #        exit()
-        logLseries = -TwoDeltaToverN*np.real(numerator/self.SigmaSq[self.kmin:self.kmax])
+        logLseries = -np.real(numerator)*self.InversePowerSpectralDensity[self.kmin:self.kmax]*self.dt
         
 #        for i,l in enumerate(logLseries):
-#            print self.Frequency[i],logLseries[i],hptilde[i],numerator[i],self.SigmaSq[i]
+#            print self.Frequency[i],logLseries[i],hptilde[i],numerator[i],self.InversePowerSpectralDensity[i]
 #        print np.sum(logLseries)
 #        exit()
         return np.sum(logLseries)
@@ -66,19 +66,19 @@ if __name__ == "__main__":
 
 
 
-    ra = 0.0
-    dec = 0.0
+    ra = 1.82161142311
+    dec = -1.27626704919
     tc = 1126259462.43
     m1=40.0
     m2=40.0
     spin1x = 0.0
     spin1y = 0.0
-    spin1z = 0.2
+    spin1z = 0.001
     spin2x = 0.0
     spin2y = 0.0
-    spin2z = 0.2
-    inclination = 0.0
-    polarisation = 0.0
+    spin2z = 0.001
+    inclination = 2.92033171962
+    polarisation = 2.31550047039
     f_min = 20.0
     sampling_rate = 4096.
     dt = 1./sampling_rate
@@ -88,10 +88,10 @@ if __name__ == "__main__":
     LambdaBl3 = 0.0
     LambdaAl4 = 0.0
     LambdaBl4 = 0.0
-    distance = 400.0
+    distance = 1000.0
 
     flags ={'NQC':'1',
-        'tidal':0,
+            'tidal':0,
             'speedy':1,
             'dynamics':0,
             'solver_scheme':0,
@@ -130,36 +130,48 @@ if __name__ == "__main__":
     from pylab import *
     fig = figure()
     ax = fig.add_subplot(111)
+#    ax.loglog(H.Frequency,np.sqrt(H.PowerSpectralDensity))
+#    show()
+
+    # window the waveform
+    padding = 0.5
+    window=tukey(H.segment_length,padding)
+    windowNorm = H.segment_length/np.sum(window**2)
+#    h[:,0]*=window
 #    ax.plot(h[:,0])
 #    show()
 #    exit()
+#    h[:,1]*=window
     hp = noise.resize_time_series(h[:,0],H.segment_length)
     hc = noise.resize_time_series(h[:,1],H.segment_length)
-#    ax.plot(H.Times,hp)
-    # roll the array so that the peak of the waveform is 1s from the end of the frame
-#    # find the index corresponding to the trigger time
-    index_trigtime = np.argmax(np.abs(hp))
-#    
-#    # Starting time for the signal chunk
-#    # We want the trigger time 1s before the end of the segment
-    index_wf_start = -(index_trigtime - int(H.sampling_rate*(H.T-1)))
-
+    #    # Starting time for the signal chunk
+    #    # We want the trigger time 1s before the end of the segment
+    # find the index corresponding to the trigger time
+#    index_trigtime = np.argmax(np.abs(hp-1j*hc))
+#    index_wf_start = -(index_trigtime - int(H.sampling_rate*(H.T-1)))
 #    hp = np.roll(hp,index_wf_start)
 #    hc = np.roll(hp,index_wf_start)
-    # window the data
-    padding = 0.4
-    window=tukey(H.segment_length,2.0*H.sampling_rate*padding/H.T)
     hp*=window
     hc*=window
-    windowNorm = np.sum(window**2/H.segment_length)
+    
+#    ax.plot(hp)
+#    ax.plot(H.Times,H.TimeSeries,alpha=0.5)
+#    ax.plot(H.Times,hp)
+#    ax.axvline(H.trigtime)
+    # roll the array so that the peak of the waveform is 1s from the end of the frame
+#
     hptilde = np.fft.rfft(hp)*windowNorm
     hctilde = np.fft.rfft(hc)*windowNorm
-    
+#    show()
+#    exit()
     tc = H.trigtime+np.linspace(-0.05,0.05,1001)
-
-#    ax.plot(H.Frequency[H.kmin:H.kmax],hptilde[H.kmin:H.kmax])
-#    ax.plot(H.Frequency[H.kmin:H.kmax],H.FrequencySeries[H.kmin:H.kmax])
-#
+#*
+#    print len(np.exp(-1j*2.0*np.pi*((H.Epoch-1)-tc+0.007)*H.Frequency[H.kmin:H.kmax]))
+#    print H.Epoch
+#    ax.plot(H.Frequency[H.kmin:H.kmax],H.FrequencySeries[H.kmin:H.kmax],alpha=0.5)
+#    ax.plot(H.Frequency[H.kmin:H.kmax],hptilde[H.kmin:H.kmax]*np.exp(-1j*2.0*np.pi*((H.Epoch-1)-H.trigtime-0.003)*H.Frequency[H.kmin:H.kmax]))
+#    plt.xlim(20,300)
+#    plt.ylim(-1e-19,1e-19)
 #    plt.show()
 #    exit()
 

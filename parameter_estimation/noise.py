@@ -59,14 +59,7 @@ def get_bandpassed_strain(fname,low=20,high=2028):
 
 
 def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
-    """
-    Read the strain data and divide it into 
-    Nsegments.
-    Find the on-source chunk X of length chunk_size.
-    Estimate the covariance matrix Sigma
-    Returns (X,Sigma)
-    If trigtime is not given X is None    
-    """
+
     # Extract some metadata from the file name
     ifo,fr_type,starttime,T=fname.strip('.txt').split('-')
     starttime=float(starttime)
@@ -98,15 +91,13 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     for i in range(chunksize): signal_chunk[i] = strain[index_chunk_start+i]
     
     # window the data
-    padding = 0.4
-    window=tukey(chunksize,2.0*srate*padding/chunk_size)
+    padding = 0.5
+    window=tukey(chunksize,padding)
     signal_chunk*=window
     # zero-pad to the required length
-    N = int(2**np.ceil(np.log2(len(signal_chunk))))
-    signal_chunk = resize_time_series(signal_chunk,N)
-    windowNorm = np.sum(window**2/chunksize)
+
+    windowNorm = chunksize/np.sum(window**2)
     # Compute the frequency domain strain
-    df = srate/N
     sf = np.fft.rfft(signal_chunk)*windowNorm
     # Compute the PSD
     psd, freqs = mlab.psd(strain, Fs = srate, NFFT = np.int(srate))
@@ -115,7 +106,7 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     # compute times and frequencies for convenience
     
     times = chunk_start+np.linspace(0,chunk_size,chunksize)
-    frequencies = np.linspace(0,srate/2.,N/2 +1)
+    frequencies = np.linspace(0,srate/2.,chunksize/2 +1)
 
     return times, signal_chunk, frequencies, sf, psd_int(frequencies)
 
@@ -131,7 +122,7 @@ def whiten(strain, interp_psd, dt):
     return white_ht
 
 if __name__ == "__main__":
-    strainT, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt')
+    T, strainT, F, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt')
     from matplotlib import pyplot as plt
     fmin = 20
     fmax = 2048
