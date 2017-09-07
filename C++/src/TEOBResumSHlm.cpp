@@ -881,8 +881,8 @@ vector<vector<gsl_complex> > find_a1a2a3(
     {
         for (int j=t_length;j--;)
         {
-            /** In general divide by sqrt( (l+2) (l+1) l (l-1) ). Use the multipole structure to get the correct L. */
-            A[k][j] = A[k][j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
+            /** In general divide by sqrt( (l+2) (l+1) l (l-1) ). Use the multipole structure to get the correct L. */           
+	  A[k][j] = A[k][j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
         }
     }
     
@@ -1021,6 +1021,11 @@ vector<vector<gsl_complex> > find_a1a2a3(
     max_dA[1]   = dA_tmp;
     max_omg[1]  = omg_tmp;
     max_domg[1] = domg_tmp;
+
+    printf("Amrg    =%10.6f\n",max_A[1]);
+    printf("dAmrg   =%10.6f\n",max_dA[1]);
+    printf("omg_mrg =%10.6f\n",max_omg[1]);
+    printf("domg_mrg=%10.6f\n",max_domg[1]);
     
     /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
      * NQC basis for (2,2) waveform : AMPLITUDE
@@ -1038,15 +1043,15 @@ vector<vector<gsl_complex> > find_a1a2a3(
         
         n1[j]  = pr_star2/(r2*w2);        // [pr*/(r Omg)]^2
         n2[j]  = ddotr[j]/(r[j]*w2);      // [ddot{r}/(r Omg^2)]
-        n3[j]  = n1[j]*pr_star2;          // [pr*/(r Omg)]^2 *(pr*)^2
+        //n3[j]  = n1[j]*pr_star2;          // [pr*/(r Omg)]^2 *(pr*)^2
         
         // NQC basis for (2,2) waveform: PHASE
         
         n4[j]  = pr_star[j]/(r[j]*w[j]);           //  pr*/(r Omg)
         n5[j]  = n4[j]*r2*w2;                      // (pr*)*(r Omg)
-        n6[j]  = n5[j]*pr_star2;                   // (pr*^3)*(r Omg)
+        //n6[j]  = n5[j]*pr_star2;                   // (pr*^3)*(r Omg)
         
-        std::fprintf(NQCfile, "%d\t%f\t%f\t%f\t%f\n", j, n1[j], n2[j], n4[j], n5[j]);
+        std::fprintf(NQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
     }
     
     std::fclose(NQCfile);
@@ -1057,6 +1062,17 @@ vector<vector<gsl_complex> > find_a1a2a3(
     vector<double>  d_n5 = s_D1(n5,T,t_length-1);
     vector<double> d2_n4 = s_D1(d_n4,T,t_length-1);
     vector<double> d2_n5 = s_D1(d_n5,T,t_length-1);
+
+    
+    /* A check: output derivatives*/
+    char   outputdNQC[256]   = "dNQC_func.dat";
+    std::FILE* dNQCfile   = std::fopen(outputdNQC, "w");
+    for (int j=t_length;j--;)
+    {                
+        std::fprintf(dNQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
+    }
+    
+    std::fclose(dNQCfile);
     
     int Omgmax_index = 0;
     double Omg_max   = Omg_orb[0];
@@ -1083,6 +1099,8 @@ vector<vector<gsl_complex> > find_a1a2a3(
     }
     
     double tNQC = tOmgOrb_pk - DeltaT_nqc;
+
+    printf("tNQC [bare] = %f\n",tNQC);
     
     i        = 0;
     int jmax = 0;
@@ -1103,12 +1121,36 @@ vector<vector<gsl_complex> > find_a1a2a3(
             m12[k][j] = n2[j]*A[k][j];
             
         }
+	/* Attention here: one is taking FD derivatives */
         m21[k]   = s_D1(m11[k],T,t_length-1);
         m22[k]   = s_D1(m12[k],T,t_length-1);
         
-        p1tmp[k] = A[k];
-        p2tmp[k] = s_D1(p1tmp[k],T,t_length-1);
+        p1tmp[k] = A[k];                          // amplitude
+        p2tmp[k] = s_D1(p1tmp[k],T,t_length-1);   // derivative of amplitude
     }
+
+    /* A check: output derivatives*/
+    char   outputA[256]   = "Amp_func.dat";
+    std::FILE* Afile   = std::fopen(outputA, "w");
+    for (int j=t_length;j--;)
+    {                
+        std::fprintf(Afile, "%f\t%f\t%f\n", T[j], p1tmp[1][j], p2tmp[1][j]);
+    }
+    
+    std::fclose(Afile);
+    
+    printf("A22-eob[C++]  = %f\n",p1tmp[1][jmax]);
+    printf("dA22-eob[C++] = %f\n",p2tmp[1][jmax]);
+    
+    // testing: putting exact values of amplitude and its derivative from Matlab code
+    //p1tmp[1][jmax] =  0.33611115;
+    //p2tmp[1][jmax] = -0.00007885;
+      
+    printf("A22-eob[matlb]  = %f\n",p1tmp[1][jmax]);
+    printf("dA22-eob[matlb] = %f\n",p2tmp[1][jmax]);
+
+    // similar test for the frequencies
+
     
     double detM = 1.;
     for (int k=35;k--;)
@@ -1125,7 +1167,6 @@ vector<vector<gsl_complex> > find_a1a2a3(
         detM     = M[0]*M[3]-M[1]*M[2];
         ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
         ai[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
-        ai[k][2] = 0.;
         
         /** Computation of bi coefficients */
         P[0]     = omg[k][jmax]   - max_omg[k];
@@ -1139,8 +1180,20 @@ vector<vector<gsl_complex> > find_a1a2a3(
         detM     =  M[0]*M[3] - M[1]*M[2];
         bi[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
-        bi[k][2] =  0.;
     }
+
+    printf("m11 = %f\n",m11[1][jmax]);
+    printf("m12 = %f\n",m12[1][jmax]);
+    printf("m21 = %f\n",m21[1][jmax]);
+    printf("m22 = %f\n",m22[1][jmax]);
+    printf("P[0] = %f\n", max_A[1]  - p1tmp[1][jmax]);
+    printf("P[1] = %f\n", max_dA[1] - p2tmp[1][jmax]);
+    
+    printf("a1 = %f\n",ai[1][0]);
+    printf("a2 = %f\n",ai[1][1]);
+    printf("b1 = %f\n",bi[1][0]);
+    printf("b2 = %f\n",bi[1][1]);
+    
     
     for (int k=35;k--;)
     {
