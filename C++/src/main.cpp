@@ -41,7 +41,8 @@ USAGE:\n\
 \t./TEOBResumS.x -p <parfile>\n\
 \t./TEOBResumS.x [OPTIONS]\n\
 "
-const char *optstr[] =
+#define Nopt 25
+const char *optstr[Nopt*4] =
 {
   "-p"           , "<parfile>",  "reads input parameters from parfile. Overrides all other arguments.", "",
   "-m1"          , "<double>",   "mass of the primary [Msun].", "40",
@@ -66,7 +67,8 @@ const char *optstr[] =
   "-multipoles"  , "<int>",      "enable single multipole output, in geometrical units.", "0 (false)",
   "-lm"          , "<int>",      "index for the output multipole. Requires multipoles output format.", "-1",
   "-Yagi_fits"   , "<int>",      "enable Yagi fits for Lambda_l=3,4.", "0 (false)",
-  "-output"      , "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'"
+  "-output"      , "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'",
+  "-geometric"   , "<int>",      "use geometric units and mass rescaled quantities.", "0 (false)",
 };
 
 int main (int argc, char* argv[])
@@ -99,7 +101,7 @@ int main (int argc, char* argv[])
     {
         fprintf(stderr,USAGE);
         fprintf(stderr,"\nOPTIONS:\n");
-        for (int i = 0; i < (20*4); i=i+4)
+        for (int i = 0; i < (Nopt*4); i=i+4)
             fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
         exit(0);
     }
@@ -110,7 +112,7 @@ int main (int argc, char* argv[])
         {
             fprintf(stderr,USAGE);
 	    fprintf(stderr,"\nOPTIONS:\n");
-	    for (int i = 0; i < (20*4); i=i+4)
+	    for (int i = 0; i < (Nopt*4); i=i+4)
 	      fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
             exit(0);
         }

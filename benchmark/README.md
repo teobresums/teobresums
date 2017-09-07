@@ -13,8 +13,25 @@
 | BNS02 | 1 | 0.4 | 0.4 | 1531 | 1531 | r0=45, Geom.Units, 22 mode, parfile |
 | BNS03 | 1.5 | 0.4 | 0.4 | 864 | 7021 | r0=45, Geom.Units, 22 mode, parfile |
 
-add a couple of long tests ...
+To add tests simply add parfiles (and update the table above) in the directory
+```
+$ ./parfiles/
+```
 
 ## How to run
 
-... todo ...
+Type
+
+```
+$ make build # prepare directory and compile exe
+$ make run # run the test
+
+```
+
+or simply
+
+```
+$ make # build and run
+```
+
+The benchmark directory is named after the last git revision, a subdirectory with the date is created. Information about the git revision are stored in a text file; the whole source code is backupped.
