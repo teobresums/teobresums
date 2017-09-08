@@ -99,21 +99,21 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
 {
     int i = 0;
     int t_length = t_vec.size();
-    int grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
+    int grid_length = (int)((t_vec.back() - t_vec[0])/dt + 1);
     
     double xi, yi;
-    vector<double> data_g(grid_length);
+    vector<double>     data_g(grid_length);
     vector<double> omg_interp(grid_length);
     
     /** Convert all vectors to an array */
-    double* t = &t_vec[0];
+    double* t        = &t_vec[0];
     double* data_arr = &data[0];
-    double step = dt;
+    double step      = dt;
     
     
-    gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-    gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, t_length);
-    gsl_spline_init (spline, t, data_arr, t_length);
+    gsl_interp_accel *acc = gsl_interp_accel_alloc();
+    gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, t_length);
+    gsl_spline_init(spline, t, data_arr, t_length);
     
     for (xi = t_vec[0]; xi < t_vec.back(); xi += step)
     {

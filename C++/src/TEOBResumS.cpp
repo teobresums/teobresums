@@ -248,7 +248,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         if (std::isfinite(r))
         {
             /** Waveform computation*/
-            vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
+            vector<gsl_complex> h_form = s_waveform(t, y, &params, Omg, Omg_orb, A, ddotr);
 
             /** Append dynamics and waveform to vectors */
             hlm_rad_vec.push_back(h_form[lm].dat[0]);
@@ -300,22 +300,95 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             }
         }
     }
+    
     gsl_odeiv2_evolve_free (e);
     gsl_odeiv2_control_free (c);
     gsl_odeiv2_step_free (s);
     gsl_odeiv2_driver_free (d);
+    
+
+    /** To compute the NQC corrections, a precise determination of the time at which Omega_orb peaks is required,
+        in order to construct a grid which passes from that t_peak.
+        The first step is to find the t_peak on the grid. */
+
+    double t_max_grid, omg_max_grid;
+    int index_max;
+
+    for (int index=1; index<Omg_orb_vec.size(); index++)
+    {
+        if(Omg_orb_vec[index] < Omg_orb_vec[index-1])
+        {
+            index_max    = index-1;
+            omg_max_grid = Omg_orb_vec[index_max];
+            t_max_grid   = t_vec[index_max];
+            index        = Omg_orb_vec.size();
+        }
+
+    }
+
+    cout << "t_max_grid:\t" <<  t_max_grid << "\nomg_max_grid:\t" <<  omg_max_grid << endl;
+
+    /* Then take a few points around the peak and analytically interpolate these points
+        to find a better approximation for t_peak. */
+    double x1 = t_vec[index_max - 1];
+    double x2 = t_vec[index_max    ];
+    double x3 = t_vec[index_max + 1];
+    double y1 = Omg_orb_vec[index_max - 1];
+    double y2 = Omg_orb_vec[index_max    ];
+    double y3 = Omg_orb_vec[index_max + 1];
+
+    double c1 = (pow(x3,2)*(y1 - y2) + pow(x1,2)*(y2 - y3) +
+                 pow(x2,2)*(-y1 + y3))/((x1 - x2)*(x1 - x3)*(x2 - x3));
+    double c2 = (x3*(-y1 + y2) + x2*(y1 - y3) + x1*(-y2 + y3))/
+    ((x1 - x2)*(x1 - x3)*(x2 - x3));
+
+    double t_max = (-c1)/(2.*c2);
+
+    /** This is just a temporary check to compare the omega computed on the grid
+        and the one coming from the interpolation.*/
+    const int omg_size = Omg_orb_vec.size();
+    double Omg_array[omg_size];
+    const int t_size = t_vec.size();
+    double t_array[t_size];
+
+    for (int k=0; k < omg_size; k++)
+    {
+        Omg_array[k] = Omg_orb_vec[k];
+    }
+
+    for (int k=0; k <t_size; k++)
+    {
+        t_array[k] = t_vec[k];
+    }
+    
+    double omega_max = interp1d (3, t_max, omg_size, Omg_array, t_array);
+    cout << "t_max_interp:\t" << t_max << "\nomg_max_interp:\t" <<  omega_max << endl;
+
+    int N_before = int((t_max - t_vec[0])/dt);
 
     /** Interpolate quantities on a grid of width dt */
     grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
+
     vector<double> t_vecg(grid_length);
     i  = 0;
-    ti = 0.;
-    for (ti = t_vec[0]; ti < t_vec.back(); ti += dt)
+    ti = 0;
+    
+    for (int k = N_before; k >= 0 ; k--)
     {
-        t_vecg[i] = ti;
-        i++;
+        t_vecg[k] = t_max - (N_before-k)*dt;
     }
-  
+
+    for (int k = N_before+1; k < grid_length; k++)
+    {
+        t_vecg[k] = t_max + (k-N_before)*dt;
+    }
+
+    for(int k = 0; k < grid_length; k++)
+    {
+        cout << "i:\t" << k << "\tt_vec[i]:\t" << t_vecg[k] << endl;
+    }
+
+    
     vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
     vector<double> hlm_rad_vecg   = interp_grid(t_vec,hlm_rad_vec,dt);
     vector<double> r_vecg         = r_vec;
