@@ -196,7 +196,7 @@ vector<gsl_complex> hlmNewt(const double r,
     hlmNewt[26].dat[0] = 16807./180.*sqrt(7.*pi/4290.)   * pv67;
     
     /** l=8 ------------------------------------------------------------------ */
-    
+    /** FIXME: higher l=8 terms to be implemented soon...*/
     hlmNewt[27].dat[1] = pi - M[27];
     hlmNewt[27].dat[0] = 131072./315.*sqrt(2.*pi/17017.) * pv78;
     
@@ -592,18 +592,21 @@ vector<double> s_flm(double x, void *params){
     const double el6 = Eulerlog(x,6);
     const double el7 = Eulerlog(x,7);
     
-    //================
-    // l=m=2 multipole
-    //================
+    /*********************
+     l=m=2 multipole
+    *********************/
+
+    /***********************
+     spin-orbit coefficients
+    ***********************/
     
-    // spin-orbit terms (even-parity)
     double cSO_lo    = -2./3.*(chiS*(1-nu)+chiA*deltam);
     double cSO_nlo   = (  (-34./21. + 49./18.*nu + 209./126.*nu2)*chiS + (-34./21. - 19./42.*nu)*deltam*chiA );
     
-    //========================================
-    // SPIN-SPIN contribution (even-parity):
-    // put it to zero when tides are present
-    //========================================
+    /*******************************************
+       SPIN-SPIN contribution (even-parity):
+       LO is included both for BBH and BNS
+    ********************************************/
     double a1      = (*(TEOBResumParams *)params).a1;
     double a2      = (*(TEOBResumParams *)params).a2;
     double a0      = a1+a2;
@@ -617,24 +620,29 @@ vector<double> s_flm(double x, void *params){
     }
     else
     {
-        cSS_lo = 0.5*a0*a0; // spin-spin contribution to zero for BNS
+        cSS_lo = 0.5*a0*a0; 
     }
     
-    //the spin-dependent part in taylor-expanded form (bad towards merger)
-    rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 ;//+ cSS_nlo*v6 + cSO_nnlo*v7;
+    /*Final result for the spin-dependent part @NLO 
+      cf. Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
+    
+    rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 ;
     
     
-    //===============
-    // l>2 multipoles
-    //===============
+    /*****************************
+       l>2 m=even multipoles
+     ******************************/
     double rho32S  = -4.*nu/(3.*(3.*nu-1.))*chiS*v;
     double rho44S  = -1./(15.*(1.-3.*nu))*((42.*nu2-41.*nu+10.)*chiS + (10.-39.*nu)*deltam*chiA)*v3;
     double rho42S  = -1./(15.*(1.-3.*nu))*((78.*nu2-59.*nu+10.)*chiS + (10.-21.*nu)*deltam*chiA)*v3;
     
     double sqrt_one_4nu = sqrt(1.-4.*nu);
-    
-    // Note that these are deltam*flm of Eq. (A15a)-(A15d) of Taracchini et al.
-    // Typo in f31 corrected
+
+    /***********************
+      m = odd multipoles 
+     **********************/
+    /*Note that these are deltam*flm of Eq. (A15a)-(A15d) of Taracchini et al.*/
+
     double f21S = -1.5*(deltam*chiS + chiA)*v+ v3*(  (61./12. + 79./84.*nu)*deltam*chiS + (61./12. + 131./84.*nu)*chiA );
     double f33S = -( deltam*chiS*(2. -  5./2.*nu) + chiA*(2. - 19./2.*nu) )*v3;
     double f31S = -( deltam*chiS*(2. - 13./2.*nu) + chiA*(2. - 11./2.*nu) )*v3;

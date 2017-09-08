@@ -25,6 +25,8 @@
 #include "TEOBResumS.h"
 
 /** Flux calculation for non-spinning systems */
+/** The structure of the flux is detailed in Damour, Nagar & Bernuzzi, PRD 87 (2013) */
+
 double flux(const double x,
             const double Omega,
             const double r_omega,
@@ -133,26 +135,20 @@ double s_Flux(double x,
               double ddotr,
               void *params){
     /*
-     % DINFLUX This function computes the Newton.Normalized energy flux according to
-     %         the DIN resummation procedure. It is also designed so to add non-QC
-     %         and non-K corrections to  (2,2) partial flux.
-     %
-     %         USAGE:
-     %
-     %         [Flm F hatF hatF_resum]=DINFlux(x,Omega,E,Heff,jhat,nu,lmax,r,pr_star,ddotr)
-     %
-     %         where:
-     %
-     %         x       :: PN argument
-     %         Omega   :: Orbital frequency
-     %         E       :: Energy
-     %         Heff    :: Effective energy
-     %         jhat    :: Newton-Normalized angular momentum
-     %         nu      :: symmetric mass ratio
-     %         lmax    :: maximum l
-     %         r       :: EOB radius
-     %         pr_star :: radial momentum
-     %         ddotr   :: \ddot{r}
+       This function computes the Newton.Normalized energy flux according to
+       the DIN resummation procedure. 
+
+
+              x       :: PN argument
+              Omega   :: Orbital frequency
+              E       :: Energy
+              Heff    :: Effective energy
+              jhat    :: Newton-Normalized angular momentum
+              nu      :: symmetric mass ratio
+              lmax    :: maximum l
+              r       :: EOB radius
+              pr_star :: radial momentum
+              ddotr   :: \ddot{r}
      */
     
     double nu       = (*(TEOBResumParams *)params).nu;
@@ -240,7 +236,9 @@ double s_Flux(double x,
 
 vector<double> FlmNewt(const double x, void *params)
 {
-    
+  /** This function computes the Newtonian prefactors in the flux.
+      The multipolar Newtonian prefactors can be obtained from 
+      Eq.(4) of Damour-Iyer-Nagar, PRD 79, 064004 (2009) [DIN]*/
     double nu       = (*(TEOBResumParams *)params).nu;
     bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
     bool spin_flag  = (*(TEOBResumParams *)params).flags.spin;
@@ -256,7 +254,8 @@ vector<double> FlmNewt(const double x, void *params)
     const double x10 = x*x9;
     const double x11 = x*x10;
     const double x12 = x*x11;
-    
+
+    /* setting up numerical constants, the c_ell+epsilon, Eq.(7) of DIN */
     double sp2 = 0.0;
     double sp4 = 0.0;
     const double sp3 = (1.-3.*nu)*(1.-3.*nu);
