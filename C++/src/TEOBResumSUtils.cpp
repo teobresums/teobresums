@@ -41,6 +41,7 @@
 
 using namespace::std;
 
+/** Eulerlog function */
 double Eulerlog(const double x,const double m)
 {
     
@@ -50,6 +51,7 @@ double Eulerlog(const double x,const double m)
     return EulerGamma + Log2 + log(m) + 0.5*log(x);
 }
 
+/** */
 double interpolate(double dt,vector<gsl_complex> grid)
 {
     double xi, yi;
@@ -65,8 +67,6 @@ double interpolate(double dt,vector<gsl_complex> grid)
         x[i] = grid[i].dat[0]; //time
         y[i] = grid[i].dat[1]; //omega
     }
-    
-    
     
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
     gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, 7);
@@ -95,6 +95,7 @@ double interpolate(double dt,vector<gsl_complex> grid)
     return t_max;
 }
 
+/** */
 vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
 {
     int i = 0;
@@ -128,9 +129,7 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
     return data_g;
 }
 
-
-
-/* Find nearest point index in 1d array */
+/** Find nearest point index in 1d array */
 int find_point_bisection(double x, int n, double *xp, int o)
 {
   int i0 = o-1, i1 = n-o;
@@ -152,7 +151,7 @@ int find_point_bisection(double x, int n, double *xp, int o)
   return i0-o+1;
 }
 
-/* Barycentric Lagrange interpolation at xx with n points of f(x), 
+/** Barycentric Lagrange interpolation at xx with n points of f(x), 
    equivalent to standard Lagrangian interpolation */   
 #define tiny 1e-12
 double baryc_f(double xx, int n, double *f, double *x)
@@ -190,8 +189,8 @@ double baryc_f(double xx, int n, double *f, double *x)
   return( num/den );
 }
 
-/* Barycentric Lagrange interpolation at xx with n points of f(x), 
-   compute weights */
+/** Barycentric Lagrange interpolation at xx with n points of f(x), 
+    compute weights */
 void baryc_weights(int n, double *x, double *omega)
 {  
   double o;
@@ -211,8 +210,8 @@ void baryc_weights(int n, double *x, double *omega)
 
 }
 
-/* Barycentric Lagrange interpolation at xx with n points of f(x), 
-   use precomputed weights */
+/** Barycentric Lagrange interpolation at xx with n points of f(x), 
+    use precomputed weights */
 double baryc_f_weights(double xx, int n, double *f, double *x, double *omega)
 {
 
@@ -234,7 +233,7 @@ double baryc_f_weights(double xx, int n, double *f, double *x, double *omega)
   return( num/den );
 }
 
-/* 1d Lagrangian barycentric interpolation */
+/** 1d Lagrangian barycentric interpolation */
 double interp1d (const int order, double xx, int nx, double *f, double *x)
 {
   double ff;
@@ -245,7 +244,7 @@ double interp1d (const int order, double xx, int nx, double *f, double *x)
   return( ff );
 }
 
-
+/** Alternative implementation of the phase of the tail factor */
 vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
 {
     int kmax = 35;
@@ -306,9 +305,7 @@ vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const dou
     {
         0.0058366730167965, 0.0070452306758401, 0.0006914295465364, 0.0010322294603561, 0.0010057563135650, 0.0001394203795507, 0.0002309706405978, 0.0002596611624417, 0.0002409588083156, 0.0000386949167221, 0.0000679154947896, 0.0000830199015202, 0.0000850120755064, 0.0000780125513602, 0.0000133034384660, 0.0000241813441339, 0.0000311573885555, 0.0000340233089866, 0.0000335167900637, 0.0000307571022927, 0.0000053305073331, 0.0000099143129290, 0.0000132296989826, 0.0000150959309402, 0.0000156304390748, 0.0000151274875147, 0.0000139320508803, 0.0000023959090314, 0.0000045285807761, 0.0000061918979830, 0.0000072894226381, 0.0000078251853305, 0.0000078772667984, 0.0000075606242809, 0.0000069956215270
     };
-    
-    
-    
+        
     const vector<double> Tlm_real = Tlm(Omega*Hreal);
     
     /** Pre-computed psi */
@@ -346,7 +343,7 @@ vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const dou
     return tlm;
 }
 
-/* factorial */
+/** Factorial */
 double fact(int n)
 {
     double f[] = {1., 1., 2., 6., 24., 120., 720., 5040., 40320., 362880.,
@@ -361,7 +358,7 @@ double fact(int n)
     }
 }
 
-/* Wigner d-function */
+/** Wigner d-function */
 double wigner_d_function(int l, int m, int s, double i)
 {
     double dWig = 0.;
@@ -381,7 +378,7 @@ double wigner_d_function(int l, int m, int s, double i)
     return (sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s)) * dWig);
 }
 
-/* spin-weighted spherical harmonic */
+/** Spin-weighted spherical harmonic */
 void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
 {
     /* Following the Ref.: https://arxiv.org/pdf/0709.0093.pdf */
@@ -397,6 +394,7 @@ void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, 
     *iY = sin((double)(m)*phi) * dWigner;
 }
 
+/** The root of this function defines the light ring */
 double fLR(double r, void *params)
 {
     
@@ -408,7 +406,9 @@ double fLR(double r, void *params)
     
     return f;
 }
-/** Takes nu as input */
+
+/** Find adiabatic light-ring, 
+    takes nu as input */
 double AdiabLR(void *params)
 {
     
@@ -441,14 +441,13 @@ double AdiabLR(void *params)
     return rLR;
 }
 
+/** 4th order centered stencil first derivative, nonuniform grids */
 vector<double> s_D1(vector<double> f, vector<double> x, int Nmax)
 {
 
   // fixme in C version: this 1st drvt operator is called D0
   //                     we could call it here s_D0
 
-
-    /* 4th order centered stencil first derivative, nonuniform grids */
     int Nmin = 0; 
 
     vector<double> df(Nmax+1);
@@ -467,6 +466,7 @@ vector<double> s_D1(vector<double> f, vector<double> x, int Nmax)
     return df;
 }
 
+/** 4th order centered stencil first derivative, uniform grids */
 vector<double> u_D1(vector<double> f, vector<double> x, int Nmax)
 {
 
@@ -475,7 +475,6 @@ vector<double> u_D1(vector<double> f, vector<double> x, int Nmax)
   // fixme in C version: this 1st drvt operator is called D0
   //                     the 2nd derivate operator is called D2
 
-  /* 4th order centered stencil first derivative, uniform grids */
   const double dx    = x[1]-x[0];
   const double oodx  = 1./dx;
   //const double oodx2  = oodx*oodx;
@@ -509,7 +508,6 @@ vector<double> u_D1(vector<double> f, vector<double> x, int Nmax)
     return d1f;
 }
 
-
 /** Sets the dynamics controlling flags to their default value */
 void SetDefaultFlagsValues(TEOBResumFlags *flags)
 {
@@ -525,11 +523,11 @@ void SetDefaultFlagsValues(TEOBResumFlags *flags)
     flags->set              = 0;
 }
 
+/** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
+    here x = log(lambda) and the output is the log of the coefficient
+    that describes the quadrupole deformation due to spin. */
 double logQ(double x)
 {
-    /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
-     here x = log(lambda) and the output is the log of the coefficient
-     that describes the quadrupole deformation due to spin. */
     double ai = 0.194;
     double bi = 0.0936;
     double ci = 0.0474;
@@ -538,40 +536,38 @@ double logQ(double x)
     double x2 = x*x;
     double x3 = x*x2;
     double x4 = x*x3;
-    
     return ai + bi*x + ci*x2 + di*x3 + ei*x4;
 }
 
+/** Yagi 2013 fits for multipolar
+    $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
+    Eq.(10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.0872 */
 double Yagi13_fit_barlamdel(double barlam2, int ell)
 {
-    /*
-     Yagi 2013 fits for multipolar
-     $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
-     Eq.(10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.0872
-     */
-    double lnx = log(barlam2);
-    double coeffs[5] = {0.0};
-    if (ell == 3)
+  double lnx = log(barlam2);
+  double coeffs[5] = {0.0};
+  if (ell == 3)
     {
-        coeffs[0] = 2.52e-5;
-        coeffs[1] = -1.31e-3;
-        coeffs[2] = 2.51e-2;
-        coeffs[3] = 1.18;
-        coeffs[4] = -1.15;
+      coeffs[0] = 2.52e-5;
+      coeffs[1] = -1.31e-3;
+      coeffs[2] = 2.51e-2;
+      coeffs[3] = 1.18;
+      coeffs[4] = -1.15;
     }
-    else if (ell == 4)
+  else if (ell == 4)
     {
-        coeffs[0] = 2.8e-5;
-        coeffs[1] =-1.81e-3;
-        coeffs[2] =3.95e-2;
-        coeffs[3] =1.43;
-        coeffs[4] =-2.45;
+      coeffs[0] = 2.8e-5;
+      coeffs[1] =-1.81e-3;
+      coeffs[2] =3.95e-2;
+      coeffs[3] =1.43;
+      coeffs[4] =-2.45;
     }
-    else return 0.0;
-    
-    double lny = coeffs[0]*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx+coeffs[2]*lnx*lnx+coeffs[3]*lnx+coeffs[4];
-    return exp(lny);
+  else return 0.0;
+  
+  double lny = coeffs[0]*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx+coeffs[2]*lnx*lnx+coeffs[3]*lnx+coeffs[4];
+  return exp(lny);
 }
+
 
 double radius0(double M, double f_start)
 {
