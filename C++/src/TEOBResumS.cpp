@@ -71,7 +71,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 ){
     
     int i = 0;
-    int grid_length = 0;
+    //int grid_length = 0;
     double rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
     bool stop_flag, MOmgpeak_flag;
     
@@ -308,191 +308,151 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     
 
     /** To compute the NQC corrections, a precise determination of the time at which Omega_orb peaks is required,
-        in order to construct a grid which passes from that t_peak.
-        The first step is to find the t_peak on the grid. */
-
+	in order to construct a grid which passes from that t_peak.
+	The first step is to find the t_peak on the grid. */
+    
     double t_max_grid = t_vec[0];
     double omg_max_grid = 0.;
     int index_max = 0.;
-
+    
     /* Find max and index */
     for (int index=0; index<Omg_orb_vec.size(); index++)
-    {
-        if(Omg_orb_vec[index] > omg_max_grid)
-        {
-            index_max    = index;
-            omg_max_grid = Omg_orb_vec[index_max];
-            t_max_grid   = t_vec[index_max];
-        }
-    }
+      {
+	if(Omg_orb_vec[index] > omg_max_grid)
+	  {
+	    index_max    = index;
+	    omg_max_grid = Omg_orb_vec[index_max];
+	    t_max_grid   = t_vec[index_max];
+	      }
+      }
     cout << "t_max_grid:\t" <<  t_max_grid << "\nomg_max_grid:\t" <<  omg_max_grid << endl;
-
+    
     /* Then take a few points around the peak and analytically interpolate these points
-        to find a better approximation for t_peak. */
+       to find a better approximation for t_peak. */
     double x1 = t_vec[index_max - 1];
     double x2 = t_vec[index_max    ];
     double x3 = t_vec[index_max + 1];
     double y1 = Omg_orb_vec[index_max - 1];
     double y2 = Omg_orb_vec[index_max    ];
     double y3 = Omg_orb_vec[index_max + 1];
-
+    
     double c1 = (pow(x3,2)*(y1 - y2) + pow(x1,2)*(y2 - y3) +
-                 pow(x2,2)*(-y1 + y3))/((x1 - x2)*(x1 - x3)*(x2 - x3));
+		 pow(x2,2)*(-y1 + y3))/((x1 - x2)*(x1 - x3)*(x2 - x3));
     double c2 = (x3*(-y1 + y2) + x2*(y1 - y3) + x1*(-y2 + y3))/
-    ((x1 - x2)*(x1 - x3)*(x2 - x3));
-
+      ((x1 - x2)*(x1 - x3)*(x2 - x3));
+    
     double t_max = (-c1)/(2.*c2);
     double omega_max = interp1d (3, t_max, 3, &Omg_orb_vec[index_max - 1], &t_vec[index_max - 1]);
     cout << "t_max_interp:\t" << t_max << "\nomg_max_interp:\t" <<  omega_max << endl;
-
-    /** This is just a temporary check to compare the omega computed on the grid
-        and the one coming from the interpolation.*/
-    /*
-    const int omg_size = Omg_orb_vec.size();
-    double Omg_array[omg_size];
-    const int t_size = t_vec.size();
-    double t_array[t_size];
-
-    for (int k=0; k < omg_size; k++)
-    {
-        Omg_array[k] = Omg_orb_vec[k];
-    }
-
-    for (int k=0; k <t_size; k++)
-    {
-        t_array[k] = t_vec[k];
-    }
     
-    double omega_max = interp1d (3, t_max, omg_size, Omg_array, t_array);
-    cout << "t_max_interp:\t" << t_max << "\nomg_max_interp:\t" <<  omega_max << endl;
-    */
-
-    int N_before = int((t_max - t_vec[0])/dt);
-
     /** Interpolate quantities on a grid of width dt */
-    grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
-
+    int grid_length = t_vec.size(); 
     vector<double> t_vecg(grid_length);
-    i  = 0;
-    ti = 0;
+    for (int k = grid_length-1; k >=0; k--)
+      {
+	t_vecg[k] = t_max - k*dt + (grid_length-index_max)*dt;
+      }
     
-    for (int k = N_before; k >= 0 ; k--)
-    {
-        t_vecg[k] = t_max - (N_before-k)*dt;
-    }
-
-    for (int k = N_before+1; k < grid_length; k++)
-    {
-        t_vecg[k] = t_max + (k-N_before)*dt;
-    }
-
-    for(int k = 0; k < grid_length; k++)
-    {
-        cout << "i:\t" << k << "\tt_vec[i]:\t" << t_vecg[k] << endl;
-    }
-
-    
-    vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
-    vector<double> hlm_rad_vecg   = interp_grid(t_vec,hlm_rad_vec,dt);
+    // alloc memory
     vector<double> r_vecg         = r_vec;
     vector<double> MOmg_vecg      = MOmg_vec;
     vector<double> pph_vecg       = pph_vec;
     vector<double> prstar_vecg    = prstar_vec;
     vector<double> ddotr_vecg     = ddotr_vec;
     vector<double> OmgOrb_vecg    = Omg_orb_vec;
-    if (params.flags.tidal == 0)
-    {
-        r_vecg         = interp_grid(t_vec,r_vec,dt);
-        MOmg_vecg      = interp_grid(t_vec,MOmg_vec,dt);
-        pph_vecg       = interp_grid(t_vec,pph_vec,dt);
-        prstar_vecg    = interp_grid(t_vec,prstar_vec,dt);
-        ddotr_vecg     = interp_grid(t_vec,ddotr_vec,dt);
-        OmgOrb_vecg    = interp_grid(t_vec,Omg_orb_vec,dt);
-    }
+    
+    vector<double> hlm_phase_vecg = hlm_phase_vec;
+    vector<double> hlm_rad_vecg   = hlm_rad_vec;
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
+    for (int m=35; m--; )
+      {
+	hlm_ampl_g[m] = hlm_phase_vec;
+	hlm_phase_g[m] = hlm_phase_vec;
+      }
+
+    // compute weights
+    vector<double> w_vecg = t_vecg;
+    double* tt  = &t_vec[0];
+    double* tg = &t_vecg[0];
+    double* wg = &w_vecg[0];
+    baryc_weights(grid_length, tg, wg);
+    double* datap; // this is because some idiots should live in one of the other 11D
     
-    if (DEBUG)
-    {
-        char   outputr[256]   = "waveform_preIntepolation.dat";
-        std::FILE* waveform_preint   = std::fopen(outputr, "w");
-        int j                 = 0;
-        int N                 = hlm_ampl[1].size();
-        
-        for (j=0;j<N;j++)
-        {
-            std::fprintf(waveform_preint, "%f\t%e\t%e\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
-        }
-        std::fclose(waveform_preint);
-    }
-    
-    
-    for (int k=35; k--; )
-    {
-        vector<double> amplitude = hlm_ampl[k];
-        vector<double> phase     = hlm_phase[k];
-        hlm_ampl_g[k]            = interp_grid(t_vec,amplitude,dt);
-        hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
-    }
+    // 4th order interp all fields on tg
+    const int order = 4;
+    for(int k = 0; k < grid_length; k++)
+      {
+	int ix = find_point_bisection(tg[k], grid_length, tt, order/2);	
+
+	// dynamics
+	if (params.flags.tidal == 0)
+	  {
+	    datap = &r_vec[ix];       r_vecg[k]      = baryc_f_weights(tg[k], order, datap, &tt[ix], wg); 
+	    datap = &MOmg_vec[ix];    MOmg_vecg[k]   = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
+	    datap = &pph_vec[ix];     pph_vecg[k]    = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
+	    datap = &prstar_vec[ix];  prstar_vecg[k] = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
+	    datap = &ddotr_vec[ix];   ddotr_vecg[k]  = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
+	    datap = &Omg_orb_vec[ix]; OmgOrb_vecg[k] = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
+	  }
+	
+	// wave 
+	datap = &hlm_phase_vec[ix]; hlm_phase_vecg[k] = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);
+	datap = &hlm_rad_vec[ix];   hlm_rad_vecg[k]   = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);
+	for (int m=35; m--; )
+	  {
+	    double *amplitude = &hlm_ampl[m][0];
+	    double *phase     = &hlm_phase[m][0];
+	    hlm_ampl_g[m][k]   = baryc_f_weights(tg[k], order, &amplitude[ix], &tt[ix], wg);
+	    hlm_phase_g[m][k]  = baryc_f_weights(tg[k], order, &phase[ix]    , &tt[ix], wg);
+	  }
+      }
     
     /** NQCs corrections */
     /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
-    if (DEBUG)
-    {
-        char   outputr[256]   = "waveform_preNQC.dat";
-        std::FILE* waveform_preNQC   = std::fopen(outputr, "w");
-        int j                 = 0;
-        int N                 = hlm_ampl_g[1].size();
-        
-        for (j=0;j<N;j++)
-        {
-            std::fprintf(waveform_preNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
-        }
+    
+#if (DEBUG)
+        std::FILE* waveform_preNQC = std::fopen("waveform_preNQC.dat", "w");
+        for (int j=0;j<hlm_ampl_g[1].size();j++)
+	  std::fprintf(waveform_preNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
         std::fclose(waveform_preNQC);
-    }
-    
-//    if (DEBUG)
-//    {
-        char   outputr[256]   = "waveform_nqc.dat";
-        std::FILE* nqcs       = std::fopen(outputr, "w");
-//    }
-    
+
+	std::FILE* waveform_NQC = std::fopen("waveform_nqc.dat", "w");
+#endif
+
     if (params.flags.tidal==0 && params.flags.spin==1)
-    {
-        
-        vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
-        
+      {
+
+	vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
+
         for (int k=35; k--; )
         {
-            if (k==1)
-            {
-                for (int i=0; i<grid_length; i++ )
-                {
-                    hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
-                    hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
-                    std::fprintf(nqcs, "%f\t%e\t%e\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
-                }
-            }
-        }
-    }
-//    if (DEBUG)
-//    {
-        std::fclose(nqcs);
-//    }
-    if (DEBUG)
-    {
-        char   outputr[256]   = "waveform_postNQC.dat";
-        std::FILE* waveform_postNQC   = std::fopen(outputr, "w");
-        int j                 = 0;
-        int N                 = hlm_ampl_g[1].size();
-        
-        for (j=0;j<N;j++)
-        {
-            std::fprintf(waveform_postNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
-        }
-        std::fclose(waveform_postNQC);
-    }
-    /** Define a time vector for each multipole
+	  if (k==1)
+	    {
+	      for (int i=0; i<grid_length; i++ )
+		{
+		  hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
+		  hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
+#if (DEBUG)
+		  std::fprintf(waveform_NQC, "%f\t%e\t%e\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
+#endif	
+		}
+	    }
+	}
+
+      }
+
+#if (DEBUG)
+		    std::fclose(waveform_NQC);
+		    std::FILE* waveform_postNQC   = std::fopen("waveform_postNQC.dat", "w");
+		    for (int j=0;j<hlm_ampl_g[1].size();j++)
+		      {
+			std::fprintf(waveform_postNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+		      }
+		    std::fclose(waveform_postNQC);
+#endif
+ 
+   /** Define a time vector for each multipole
         These will be cut by the ringdown, where
         each multipole has its own starting time */
     
