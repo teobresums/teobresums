@@ -311,21 +311,20 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         in order to construct a grid which passes from that t_peak.
         The first step is to find the t_peak on the grid. */
 
-    double t_max_grid, omg_max_grid;
-    int index_max;
+    double t_max_grid = t_vec[0];
+    double omg_max_grid = 0.;
+    int index_max = 0.;
 
-    for (int index=1; index<Omg_orb_vec.size(); index++)
+    /* Find max and index */
+    for (int index=0; index<Omg_orb_vec.size(); index++)
     {
-        if(Omg_orb_vec[index] < Omg_orb_vec[index-1])
+        if(Omg_orb_vec[index] > omg_max_grid)
         {
-            index_max    = index-1;
+            index_max    = index;
             omg_max_grid = Omg_orb_vec[index_max];
             t_max_grid   = t_vec[index_max];
-            index        = Omg_orb_vec.size();
         }
-
     }
-
     cout << "t_max_grid:\t" <<  t_max_grid << "\nomg_max_grid:\t" <<  omg_max_grid << endl;
 
     /* Then take a few points around the peak and analytically interpolate these points
