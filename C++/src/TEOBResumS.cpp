@@ -372,18 +372,18 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
       }
 
     // compute weights
-    vector<double> w_vecg = t_vecg;
+    const int order = 4;
+    //vector<double> w_vecg = t_vecg;
     double* tt  = &t_vec[0];
     double* tg = &t_vecg[0];
-    double* wg = &w_vecg[0];
-    baryc_weights(grid_length, tg, wg);
+    double wg[4];// = &w_vecg[0];
     double* datap; // this is because some idiots should live in one of the other 11D
     
     // 4th order interp all fields on tg
-    const int order = 4;
     for(int k = 0; k < grid_length; k++)
       {
 	int ix = find_point_bisection(tg[k], grid_length, tt, order/2);	
+	baryc_weights(4, &tt[ix], wg);
 
 	// dynamics
 	if (params.flags.tidal == 0)
