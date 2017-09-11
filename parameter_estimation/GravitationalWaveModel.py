@@ -53,13 +53,14 @@ class GravitationalWaveModel(cpnest.model.Model):
         self.bounds=[[0,2.0*np.pi],
                 [-np.pi/2.0,np.pi/2.0],
                 [self.tevent-0.05,self.tevent+0.05],
-                [30,40],
-                [20,30],
-                [-0.9,0.9],
-                [-0.9,0.9],
+                [30,41],
+                [23,30],
+                [-0.09,0.09],
+                [-0.09,0.09],
                 [0.0,np.pi],
                 [0.0,np.pi],
-                [100,1000]]
+                [200,600]]
+                
         self.flags ={'NQC':'1',
             'tidal':0,
             'speedy':1,
@@ -158,12 +159,12 @@ if __name__=='__main__':
     if opts.full_run:
         signal_model = GravitationalWaveModel()
         work=cpnest.CPNest(signal_model,
-                       verbose=3,
-                       Poolsize=32,
-                       Nthreads=opts.threads,
-                       Nlive=opts.nlive,
-                       maxmcmc=opts.maxmcmc,
-                       output=opts.out_dir)
+                           verbose=3,
+                           Poolsize=32,
+                           Nthreads=opts.threads,
+                           Nlive=opts.nlive,
+                           maxmcmc=opts.maxmcmc,
+                           output=opts.out_dir)
         work.run()
         print('Signal evidence {0}'.format(work.NS.logZ))
         logB = work.NS.logZ-logZnoise

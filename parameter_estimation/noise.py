@@ -21,7 +21,7 @@ def chunks(times,strain,chunksize,avoid=None):
 
 def downsample(strain, old_sampling_rate, new_sampling_rate):
     factor = int(old_sampling_rate/new_sampling_rate)
-    return strain.reshape(-1, factor).mean(axis=1)
+    return strain[::factor]
 
 def resize_time_series(inarr, N):
     # zero-pad to the required length
@@ -58,7 +58,7 @@ def get_bandpassed_strain(fname,low=20,high=2028):
     return times,strain,srate
 
 
-def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
+def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False, sampling_rate = 2048):
 
     # Extract some metadata from the file name
     ifo,fr_type,starttime,T=fname.strip('.txt').split('-')
@@ -71,11 +71,15 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
     dt = T/N
     # Sampling rate (Hz)
     srate=1/dt
-#    bb, ab = butter(4, [20/(0.5*srate), 2028 / (0.5*srate) ], btype='band')
-#    strain = filtfilt(bb, ab, rawstrain)
+    
+    if sampling_rate is not None:
+        srate = sampling_rate
+        # remove all power above the new Nyquist
+        Nyq = sampling_rate/2.0
+        bb, ab = butter(4, [20/(0.5*sampling_rate), (Nyq-10)/(0.5*sampling_rate) ], btype='band')
+        strain = filtfilt(bb, ab, rawstrain)
+        strain = downsample(strain, 4096., sampling_rate)
 
-    strain = downsample(rawstrain, 4096., 2048.)
-    srate = 2048.
 #    strain = rawstrain
     # find the index corresponding to the trigger time
     index_trigtime = int((trigtime-starttime)*srate)

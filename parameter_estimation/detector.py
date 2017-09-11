@@ -17,7 +17,6 @@ class GravitationalWaveDetector(object):
         self.Times, self.TimeSeries, self.Frequency, self.FrequencySeries, self.PowerSpectralDensity = noise.load_data(datafile, chunk_size=chunk_size, trigtime=trigtime, **kwargs)
         self.Epoch = self.Times[0]
         self.dt = np.diff(self.Times)[0]
-        print self.dt
         self.T = self.Times[-1]-self.Times[0]
         self.df = np.diff(self.Frequency)[0]
         self.sampling_rate = 1./self.dt
