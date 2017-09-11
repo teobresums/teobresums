@@ -1105,6 +1105,8 @@ vector<vector<gsl_complex> > find_a1a2a3(
     
     double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
+    printf("tOmgOrb_pk  = %f\n",tOmgOrb_pk);
+    printf("DtNQC[bare] = %f\n",DeltaT_nqc);
     printf("tNQC [bare] = %f\n",tNQC);
     
     i        = 0;
