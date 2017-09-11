@@ -245,81 +245,6 @@ double interp1d (const int order, double xx, int nx, double *f, double *x)
   return( ff );
 }
 
-vector<double> FDdrvt(const vector<double> f,const vector<double> t, int varargin, const int grid_length)
-{
-    
-    const double dt    = t[1]-t[0];
-    const double oodt  = 1./dt;
-    const double c = 1./12.;
-    vector<double> d1f(grid_length);
-    
-    for (int i=grid_length; i--;)
-    {
-        switch (i)
-        {
-            case 0:
-                d1f[i] = c*(-25.*f[i] + 48.*f[i+1] - 36.*f[i+2] + 16.*f[i+3] - 3.*f[i+4])*oodt;
-                //d2f[i] = c*(45*f[i]-154*f[i+1]+214*f[i+2]-156*f[i+3]+61*f[i+4]-10*f[i+5])*oodt2;
-                break;
-            case 1:
-                d1f[i] = c*(-3.*f[i-1] - 10.*f[i] + 18.*f[i+1] - 6.*f[i+2] + f[i+3])*oodt;
-                //d2f[i] = c*(10*f[i-1]-15*f[i]-4*f[i+1]+14*f[i+2]-6*f[i+3]+f[i+4])*oodt2;
-                break;
-            case 10:
-                d1f[i] = - c*(-3.*f[i+1] - 10.*f[i] + 18.*f[i-1] - 6.*f[i-2] + f[i-3])*oodt;
-                //d2f[i] = c*(10*f[i+1]-15*f[i]-4*f[i-1]+14*f[i-2]-6*f[i-3]+f[i-4])*oodt2;
-                break;
-            case 11:
-                d1f[i] = - c*(-25.*f[i] + 48.*f[i-1] - 36.*f[i-2] + 16.*f[i-3] - 3.*f[i-4])*oodt;
-                //d2f[i] = c*(45*f[i]-154*f[i-1]+214*f[i-2]-156*f[i-3]+61*f[i-4]-10*f[i-5])*oodt2;
-                break;
-            default: d1f[i] = c*(8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oodt;
-                //d2f[i] = c*(-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]))*oodt2;
-                break;
-        }
-    }
-    
-    return d1f;
-}
-
-vector<double> FDdrvt_omega(vector<double> f, double dt)
-{
-    vector<double> d1f(f.size()-2);
-    const double oodt  = 1./dt;
-    const double c     = 1./12.;
-    
-    for (unsigned long int i=0; i<f.size()-2; i++)
-    {
-        switch (i)
-        {
-            case 0:
-                d1f[i] = c*(-25.*f[i]+48.*f[i+1]-36.*f[i+2]+16.*f[i+3]-3.*f[i+4])*oodt;
-                //d2f[i] = c*(45*f[i]-154*f[i+1]+214*f[i+2]-156*f[i+3]+61*f[i+4]-10*f[i+5])*oodt2;
-                break;
-            case 1:
-                d1f[i] = c*(-3.*f[i-1]-10.*f[i]+18.*f[i+1]-6.*f[i+2]+f[i+3])*oodt;
-                //d2f[i] = c*(10*f[i-1]-15*f[i]-4*f[i+1]+14*f[i+2]-6*f[i+3]+f[i+4])*oodt2;
-                break;
-                /*
-                 case 198:
-                 d1f[i] = - c*(-3.*f[i+1]-10.*f[i]+18.*f[i-1]-6.*f[i-2]+f[i-3])*oodt;
-                 //d2f[i] = c*(10*f[i+1]-15*f[i]-4*f[i-1]+14*f[i-2]-6*f[i-3]+f[i-4])*oodt2;
-                 break;
-                 case 199:
-                 d1f[i] = - c*(-25.*f[i]+48.*f[i-1]-36.*f[i-2]+16.*f[i-3]-3.*f[i-4])*oodt;
-                 //d2f[i] = c*(45*f[i]-154*f[i-1]+214*f[i-2]-156*f[i-3]+61*f[i-4]-10*f[i-5])*oodt2;
-                 break;
-                 */
-            default:
-                d1f[i] = c*(8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oodt;
-                //d2f[i] = c*(-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]))*oodt2;
-                break;
-        }
-    }
-    
-    return d1f;
-    
-}
 
 vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
 {
@@ -518,9 +443,14 @@ double AdiabLR(void *params)
 
 vector<double> s_D1(vector<double> f, vector<double> x, int Nmax)
 {
-    /* Computes the first derivative of the function. Centered but at the edges. USAGE: df = EOB_D1(f,x) */
-    int Nmin = 0;
-    
+
+  // fixme in C version: this 1st drvt operator is called D0
+  //                     we could call it here s_D0
+
+
+    /* 4th order centered stencil first derivative, nonuniform grids */
+    int Nmin = 0; 
+
     vector<double> df(Nmax+1);
     for(int i=2;i<=Nmax-2;i++)
     {
@@ -536,6 +466,49 @@ vector<double> s_D1(vector<double> f, vector<double> x, int Nmax)
     
     return df;
 }
+
+vector<double> u_D1(vector<double> f, vector<double> x, int Nmax)
+{
+
+  // fixme in C version: add routine for 2nd drvts, 
+  //                     relevant lines commented out here
+  // fixme in C version: this 1st drvt operator is called D0
+  //                     the 2nd derivate operator is called D2
+
+  /* 4th order centered stencil first derivative, uniform grids */
+  const double dx    = x[1]-x[0];
+  const double oodx  = 1./dx;
+  //const double oodx2  = oodx*oodx;
+  const double c = 1./12.;
+  vector<double> d1f(Nmax);
+  //vector<double> d2f(Nmax);
+  int i;
+
+  for (i=2; i<Nmax-2; i++)
+    {
+      d1f[i] = c*(8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oodx;
+      //d2f[i] = c*(-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]))*oodx2;
+    }
+
+  i= 0;
+    d1f[i] = c*(-25.*f[i] + 48.*f[i+1] - 36.*f[i+2] + 16.*f[i+3] - 3.*f[i+4])*oodx;
+    //d2f[i] = c*(45*f[i]-154*f[i+1]+214*f[i+2]-156*f[i+3]+61*f[i+4]-10*f[i+5])*oodx2;
+    
+    i= 1;
+    d1f[i] = c*(-3.*f[i-1] - 10.*f[i] + 18.*f[i+1] - 6.*f[i+2] + f[i+3])*oodx;
+    //d2f[i] = c*(10*f[i-1]-15*f[i]-4*f[i+1]+14*f[i+2]-6*f[i+3]+f[i+4])*oodx2;
+    
+    i = Nmax-2;
+    d1f[i] = - c*(-3.*f[i+1] - 10.*f[i] + 18.*f[i-1] - 6.*f[i-2] + f[i-3])*oodx;
+    //d2f[i] = c*(10*f[i+1]-15*f[i]-4*f[i-1]+14*f[i-2]-6*f[i-3]+f[i-4])*oodx2;
+     
+    i = Nmax-1;
+    d1f[i] = - c*(-25.*f[i] + 48.*f[i-1] - 36.*f[i-2] + 16.*f[i-3] - 3.*f[i-4])*oodx;
+    //d2f[i] = c*(45*f[i]-154*f[i-1]+214*f[i-2]-156*f[i-3]+61*f[i-4]-10*f[i-5])*oodx2;
+    
+    return d1f;
+}
+
 
 /** Sets the dynamics controlling flags to their default value */
 void SetDefaultFlagsValues(TEOBResumFlags *flags)

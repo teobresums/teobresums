@@ -95,7 +95,8 @@ vector<double> initial(TEOBResumParams *params)
         
     }
     
-    dprstardt = FDdrvt(prstar,r,4,2*N);
+    //dprstardt = FDdrvt(prstar,r,4,2*N);
+    dprstardt = s_D1(prstar, r, 2*N);
     
     for(int i=2*N; i--;)
     {
@@ -111,6 +112,8 @@ vector<double> initial(TEOBResumParams *params)
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
     
+    //printf(" prstar0=%e\n",y_init[2]);
+
     return y_init;
 }
 
@@ -224,7 +227,8 @@ vector<double> s_initial(TEOBResumParams *params){
         pph[i] = s_bisec(pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
     }
     
-    vector<double> dpph_dr = s_D1(pph,r,12-1); // derivative is computed on a grid with 12 points
+    //vector<double> dpph_dr = s_D1(pph,r,12-1); // derivative is computed on a grid with 12 points
+    vector<double> dpph_dr = s_D1(pph,r,2*N); 
     
     for (int i=2*N; i--;) {
         
@@ -301,6 +305,9 @@ vector<double> s_initial(TEOBResumParams *params){
     y_init[4] = j[N-1];
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
+
+    //printf(" r0=%e\n",y_init[0]);
+    //printf(" prstar0=%e\n",y_init[2]);
     
     return y_init;
 }

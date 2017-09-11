@@ -23,7 +23,7 @@
 //extern "C" {
 //#endif
 
-#define DEBUG 0
+#define DEBUG 1
 
 #include <vector>
 #include "cmath"
@@ -154,13 +154,6 @@ double AdiabLR(void *params);
 
 double Eulerlog(const double x, const double m);
 
-/* _FDdrvt_h */
-
-vector<double> FDdrvt(const vector<double> f, const vector<double> t, int varargin, const int grid_length);
-
-/* _FDdrvt_omega_h */
-
-vector<double> FDdrvt_omega(vector<double> f, double dt);
 
 /* _FlmNewt_h */
 
@@ -331,6 +324,7 @@ vector<double> s_A5PNlog(double r, void *params, bool nnlo_flag);
 /* _s_D1_h */
 
 vector<double> s_D1(vector<double> f, vector<double> x, int Nmax);
+vector<double> u_D1(vector<double> f, vector<double> x, int Nmax);
 
 /* _s_Flux_h */
 
