@@ -112,7 +112,7 @@ class GravitationalWaveModel(cpnest.model.Model):
     
     def log_prior(self, x):
         if np.isfinite(super(GravitationalWaveModel,self).log_prior(x)):
-            logP = -2.0*np.log(x['distance'])
+            logP = 2.0*np.log(x['distance'])
             logP += np.log(np.abs(np.cos(x['dec'])))
             logP += np.log(np.abs(np.cos(x['iota'])))
             return logP
@@ -159,7 +159,7 @@ if __name__=='__main__':
         signal_model = GravitationalWaveModel()
         work=cpnest.CPNest(signal_model,
                        verbose=3,
-                       Poolsize=100,
+                       Poolsize=32,
                        Nthreads=opts.threads,
                        Nlive=opts.nlive,
                        maxmcmc=opts.maxmcmc,

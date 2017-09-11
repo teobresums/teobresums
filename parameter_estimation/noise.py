@@ -74,7 +74,9 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False):
 #    bb, ab = butter(4, [20/(0.5*srate), 2028 / (0.5*srate) ], btype='band')
 #    strain = filtfilt(bb, ab, rawstrain)
 
-    strain = rawstrain
+    strain = downsample(rawstrain, 4096., 2048.)
+    srate = 2048.
+#    strain = rawstrain
     # find the index corresponding to the trigger time
     index_trigtime = int((trigtime-starttime)*srate)
 

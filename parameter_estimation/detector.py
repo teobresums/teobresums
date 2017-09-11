@@ -17,6 +17,7 @@ class GravitationalWaveDetector(object):
         self.Times, self.TimeSeries, self.Frequency, self.FrequencySeries, self.PowerSpectralDensity = noise.load_data(datafile, chunk_size=chunk_size, trigtime=trigtime, **kwargs)
         self.Epoch = self.Times[0]
         self.dt = np.diff(self.Times)[0]
+        print self.dt
         self.T = self.Times[-1]-self.Times[0]
         self.df = np.diff(self.Frequency)[0]
         self.sampling_rate = 1./self.dt
@@ -34,9 +35,9 @@ class GravitationalWaveDetector(object):
         gmst = GreenwichMeanSiderealTime(tc)
         fp,fc = ComputeDetAMResponse(self.lal_detector.response, ra, dec, psi, gmst)
         
-        timeShift = (self.Epoch-1)-tc + TimeDelayFromEarthCenter(self.location, ra, dec, tc)
+        timeShift = -(self.Epoch-1)-tc - TimeDelayFromEarthCenter(self.location, ra, dec, tc)
 
-        return np.exp(-1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])*(fp*hptilde[self.kmin:self.kmax]+fc*hctilde[self.kmin:self.kmax])
+        return np.exp(1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])*(fp*hptilde[self.kmin:self.kmax]+fc*hctilde[self.kmin:self.kmax])
 
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
@@ -119,53 +120,24 @@ if __name__ == "__main__":
     from pylab import *
     fig = figure()
     ax = fig.add_subplot(111)
-#    ax.loglog(H.Frequency,np.sqrt(H.PowerSpectralDensity))
-#    show()
-
     # window the waveform
     padding = 0.5
     window=tukey(H.segment_length,padding)
     windowNorm = H.segment_length/np.sum(window**2)
-#    h[:,0]*=window
-#    ax.plot(h[:,0])
-#    show()
-#    exit()
-#    h[:,1]*=window
+
     hp = noise.resize_time_series(h[:,0],H.segment_length)
     hc = noise.resize_time_series(h[:,1],H.segment_length)
-    #    # Starting time for the signal chunk
-    #    # We want the trigger time 1s before the end of the segment
-    # find the index corresponding to the trigger time
-#    index_trigtime = np.argmax(np.abs(hp-1j*hc))
-#    index_wf_start = -(index_trigtime - int(H.sampling_rate*(H.T-1)))
-#    hp = np.roll(hp,index_wf_start)
-#    hc = np.roll(hp,index_wf_start)
+
     hp*=window
     hc*=window
     
-#    ax.plot(hp)
-#    ax.plot(H.Times,H.TimeSeries,alpha=0.5)
-#    ax.plot(H.Times,hp)
-#    ax.axvline(H.trigtime)
-    # roll the array so that the peak of the waveform is 1s from the end of the frame
-#
     hptilde = np.fft.rfft(hp)*windowNorm
     hctilde = np.fft.rfft(hc)*windowNorm
-#    show()
-#    exit()
-    tc = H.trigtime+np.linspace(-0.05,0.05,1001)
-#*
-#    print len(np.exp(-1j*2.0*np.pi*((H.Epoch-1)-tc+0.007)*H.Frequency[H.kmin:H.kmax]))
-#    print H.Epoch
-#    ax.plot(H.Frequency[H.kmin:H.kmax],H.FrequencySeries[H.kmin:H.kmax],alpha=0.5)
-#    ax.plot(H.Frequency[H.kmin:H.kmax],hptilde[H.kmin:H.kmax]*np.exp(-1j*2.0*np.pi*((H.Epoch-1)-H.trigtime-0.003)*H.Frequency[H.kmin:H.kmax]))
-#    plt.xlim(20,300)
-#    plt.ylim(-1e-19,1e-19)
-#    plt.show()
-#    exit()
 
-#    fig = figure()
-#    ax = fig.add_subplot(111)
+    tc = H.trigtime+np.linspace(-0.05,0.05,1001)
+
+    fig = figure()
+    ax = fig.add_subplot(111)
     logL = np.array([H.logLikelihood(hptilde, hctilde, ra, dec, polarisation, t)+L.logLikelihood(hptilde, hctilde, ra, dec, polarisation, t) for t in tc])
     C = ax.plot(tc,logL)
     print "%.15f"%tc[logL.argmax()]
