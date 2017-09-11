@@ -1031,9 +1031,10 @@ vector<vector<gsl_complex> > find_a1a2a3(
      * NQC basis for (2,2) waveform : AMPLITUDE
      * note: n3 and n6 are not used
      */
-    
-    char   outputNQC[256]   = "NQC_func.dat";
-    std::FILE* NQCfile   = std::fopen(outputNQC, "w");
+
+#if (DEBUG)
+    std::FILE* NQCfile   = std::fopen("NQC_func.dat", "w");
+#endif
     
     for (int j=t_length;j--;)
     {
@@ -1050,12 +1051,16 @@ vector<vector<gsl_complex> > find_a1a2a3(
         n4[j]  = pr_star[j]/(r[j]*w[j]);           //  pr*/(r Omg)
         n5[j]  = n4[j]*r2*w2;                      // (pr*)*(r Omg)
         //n6[j]  = n5[j]*pr_star2;                   // (pr*^3)*(r Omg)
-        
+
+#if (DEBUG)  
         std::fprintf(NQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
+#endif
+
     }
     
+#if (DEBUG)
     std::fclose(NQCfile);
-
+#endif
     
     /** Take the needed derivatives for the phase */
     vector<double>  d_n4 = s_D1(n4,T,t_length-1);
@@ -1065,15 +1070,15 @@ vector<vector<gsl_complex> > find_a1a2a3(
 
     
     /* A check: output derivatives*/
-    char   outputdNQC[256]   = "dNQC_func.dat";
-    std::FILE* dNQCfile   = std::fopen(outputdNQC, "w");
+#if (DEBUG)
+    std::FILE* dNQCfile   = std::fopen("dNQC_func.dat", "w");
     for (int j=t_length;j--;)
     {                
         std::fprintf(dNQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
-    }
-    
+    }    
     std::fclose(dNQCfile);
-    
+#endif
+
     int Omgmax_index = 0;
     double Omg_max   = Omg_orb[0];
     int i            = 1;
@@ -1130,15 +1135,15 @@ vector<vector<gsl_complex> > find_a1a2a3(
     }
 
     /* A check: output derivatives*/
-    char   outputA[256]   = "Amp_func.dat";
-    std::FILE* Afile   = std::fopen(outputA, "w");
+#if (DEBUG)
+    std::FILE* Afile   = std::fopen("Amp_func.dat", "w");
     for (int j=t_length;j--;)
     {                
         std::fprintf(Afile, "%f\t%f\t%f\n", T[j], p1tmp[1][j], p2tmp[1][j]);
-    }
-    
+    }    
     std::fclose(Afile);
-    
+#endif
+
     printf("A22-eob[C++]  = %f\n",p1tmp[1][jmax]);
     printf("dA22-eob[C++] = %f\n",p2tmp[1][jmax]);
     
