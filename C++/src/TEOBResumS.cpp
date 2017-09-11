@@ -343,9 +343,12 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     ((x1 - x2)*(x1 - x3)*(x2 - x3));
 
     double t_max = (-c1)/(2.*c2);
+    double omega_max = interp1d (3, t_max, 3, &Omg_orb_vec[index_max - 1], &t_vec[index_max - 1]);
+    cout << "t_max_interp:\t" << t_max << "\nomg_max_interp:\t" <<  omega_max << endl;
 
     /** This is just a temporary check to compare the omega computed on the grid
         and the one coming from the interpolation.*/
+    /*
     const int omg_size = Omg_orb_vec.size();
     double Omg_array[omg_size];
     const int t_size = t_vec.size();
@@ -363,6 +366,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     
     double omega_max = interp1d (3, t_max, omg_size, Omg_array, t_array);
     cout << "t_max_interp:\t" << t_max << "\nomg_max_interp:\t" <<  omega_max << endl;
+    */
 
     int N_before = int((t_max - t_vec[0])/dt);
 
