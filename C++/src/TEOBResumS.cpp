@@ -160,15 +160,17 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     
     /** Initialize ODE system solver */
     const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
+    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dt, 1e-13, 1e-11);    
+    //const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
+    //gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dt, 1e-13, 1e-11);
     gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, 4);
     gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (1.e-13, 1.e-11);
     gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (4);
-    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd,1e-2, 1000., 1000.);
     
     t     = 0.0;
     r_LSO = 6.0;
-    t1    = 1.e15;
-    h     = 0.0001;
+    t1    = 1e9;
+    h     = dt; //0.0001;
     
     MOmg_prev     = 0.;
     t_stop        = 0.;
@@ -323,7 +325,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 	    index_max    = index;
 	    omg_max_grid = Omg_orb_vec[index_max];
 	    t_max_grid   = t_vec[index_max];
-	      }
+	  }
       }
     cout << "t_max_grid:\t" <<  t_max_grid << "\nomg_max_grid:\t" <<  omg_max_grid << endl;
     
@@ -345,14 +347,37 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     double omega_max = interp1d (3, t_max, 3, &Omg_orb_vec[index_max - 1], &t_vec[index_max - 1]);
     cout << "t_max_interp:\t" << t_max << "\nomg_max_interp:\t" <<  omega_max << endl;
     
-    /** Interpolate quantities on a grid of width dt */
-    int grid_length = t_vec.size(); 
-    vector<double> t_vecg(grid_length);
-    for (int k = grid_length-1; k >=0; k--)
-      {
-	t_vecg[k] = t_max - k*dt + (grid_length-index_max)*dt;
-      }
+    /** Interpolate quantities on a new grid of spacing dt and passing by t_max */
+
+    // HERE THERE ARE PROBLEMS:
+
+    int grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);        
+    int grid_length2 = t_vec.size(); // why using this gives SEG FAULT !?!? CHECKME
+    printf(" %d %d\n",grid_length2,grid_length ); // they are different ?
     
+    int N_before = int((t_max - t_vec[0])/dt +1);
+    vector<double> t_vecg(grid_length);
+    for (int k = N_before; k >= 0 ; k--)
+     {
+         t_vecg[k] = t_max - (N_before-k)*dt;
+     }
+     for (int k = N_before+1; k < grid_length; k++)
+    {
+         t_vecg[k] = t_max + (k-N_before)*dt;
+    }
+
+
+     // print out
+     cout << "t_max_interp:\t" << t_max << "\tt_max_grid:\t" << t_vecg[N_before] << endl;
+     for(int k = 0; k < grid_length; k++)
+     {
+     cout << "i:\t" << k << "\tt_vecg[i]:\t" << t_vecg[k] << endl;
+     }
+
+     // seg fault right after here
+     //exit(1);
+    printf("***********************************");
+
     // alloc memory
     vector<double> r_vecg         = r_vec;
     vector<double> MOmg_vecg      = MOmg_vec;
@@ -371,17 +396,18 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 	hlm_phase_g[m] = hlm_phase_vec;
       }
 
-    // compute weights
+    // 4th order interp all fields on tg
     const int order = 4;
-    //vector<double> w_vecg = t_vecg;
     double* tt  = &t_vec[0];
     double* tg = &t_vecg[0];
-    double wg[4];// = &w_vecg[0];
+    double wg[4];
     double* datap; // this is because some idiots should live in one of the other 11D
     
-    // 4th order interp all fields on tg
+    printf("***********************************");
+
     for(int k = 0; k < grid_length; k++)
       {
+	// NN & weights
 	int ix = find_point_bisection(tg[k], grid_length, tt, order/2);	
 	baryc_weights(4, &tt[ix], wg);
 
@@ -412,22 +438,22 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
     
 #if (DEBUG)
-        std::FILE* waveform_preNQC = std::fopen("waveform_preNQC.dat", "w");
-        for (int j=0;j<hlm_ampl_g[1].size();j++)
-	  std::fprintf(waveform_preNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
-        std::fclose(waveform_preNQC);
-
-	std::FILE* waveform_NQC = std::fopen("waveform_nqc.dat", "w");
+    std::FILE* waveform_preNQC = std::fopen("waveform_preNQC.dat", "w");
+    for (int j=0;j<hlm_ampl_g[1].size();j++)
+      std::fprintf(waveform_preNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+    std::fclose(waveform_preNQC);
+    
+    std::FILE* waveform_NQC = std::fopen("waveform_nqc.dat", "w");
 #endif
-
+    
     if (params.flags.tidal==0 && params.flags.spin==1)
       {
-
+	
 	vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
-
+	
         for (int k=35; k--; )
-        {
-	  if (k==1)
+	  {
+	    if (k==1)
 	    {
 	      for (int i=0; i<grid_length; i++ )
 		{
@@ -438,36 +464,36 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 #endif	
 		}
 	    }
-	}
-
+	  }
+	
       }
 
 #if (DEBUG)
-		    std::fclose(waveform_NQC);
-		    std::FILE* waveform_postNQC   = std::fopen("waveform_postNQC.dat", "w");
-		    for (int j=0;j<hlm_ampl_g[1].size();j++)
-		      {
-			std::fprintf(waveform_postNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
-		      }
-		    std::fclose(waveform_postNQC);
+      std::fclose(waveform_NQC);
+      std::FILE* waveform_postNQC   = std::fopen("waveform_postNQC.dat", "w");
+      for (int j=0;j<hlm_ampl_g[1].size();j++)
+	  std::fprintf(waveform_postNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+      std::fclose(waveform_postNQC);
 #endif
- 
-   /** Define a time vector for each multipole
-        These will be cut by the ringdown, where
-        each multipole has its own starting time */
-    
-    vector<vector<double> > t_g(35);
-    for (int k=35; k--; )
-    {
-        t_g[k] = t_vecg;
-    }
-    
+
+      /** Define a time vector for each multipole
+	  These will be cut by the ringdown, where
+	  each multipole has its own starting time */
+      
     /** Ringdown attachment */
     if (params.flags.tidal==0)
     {
-        ringdown(params,t_g,OmgOrb_vecg,hlm_ampl_g,hlm_phase_g);
+
+      vector<vector<double> > t_g(35);
+      for (int k=35; k--; )
+	{
+	  t_g[k] = t_vecg;
+	}
+      
+      ringdown(params,t_g,OmgOrb_vecg,hlm_ampl_g,hlm_phase_g);
     }
-    /** All multipoles will now have size N+Nringdown */
+
+/** All multipoles will now have size N+Nringdown */
     /** Multipole for which no ringdown model is available will be filled with 0s */
     /** We pick the index 1 since it is the 22 mode and it is always computed */
     
