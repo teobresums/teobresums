@@ -589,10 +589,10 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
     else if (ell == 4)
     {
         coeffs[0] = 2.8e-5;
-        coeffs[1] =-1.81e-3;
-        coeffs[2] =3.95e-2;
-        coeffs[3] =1.43;
-        coeffs[4] =-2.45;
+        coeffs[1] = -1.81e-3;
+        coeffs[2] = 3.95e-2;
+        coeffs[3] = 1.43;
+        coeffs[4] = -2.45;
     }
     else return 0.0;
     
@@ -619,18 +619,18 @@ TEOBResumParams read_config(char *fname)
     // set defaults (flags & pars)
     SetDefaultFlagsValues(&params.flags);
     
-    params.q = 1.;
-    params.mtot  = 80.; // Msun
-    params.chi1 = 0.;
-    params.chi2 = 0.;
-    params.dt = 1./4096.; // s
-    params.f_min = 10; // Hz
-    params.lm = -1;
+    params.q         = 1.;
+    params.mtot      = 80.;      // Msun
+    params.chi1      = 0.;
+    params.chi2      = 0.;
+    params.dt        = 1./4096.; // s
+    params.f_min     = 10;       // Hz
+    params.lm        = -1;
     params.LambdaAl2 = 0.;
     params.LambdaBl2 = 0.;
-    params.distance = 100; // Mpc
-    params.iota = 0.0;
-    params.psi = 0.0;
+    params.distance  = 100;      // Mpc
+    params.iota      = 0.0;
+    params.psi       = 0.0;
 
     string param_name;
     double param_value;

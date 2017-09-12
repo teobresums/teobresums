@@ -61,7 +61,7 @@ const char *optstr[Nopt*4] =
   "-lambda1_l4"  , "<double>",   "l=4 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
   "-lambda2_l4"  , "<double>",   "l=4 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
   "-tidal"       , "<int>",      "enable tidal corrections.", "0 (false)",
-  "-speedy"      , "<int>",      "faster tails calculations.", "1 (true)",
+  "-nospeedy"    , "<int>",      "disable faster tails calculations.", "0 (false)",
   "-dynamics"    , "<int>",      "output dynamics evolution.", "0 (false)",
   "-RW"          , "<int>",      "Regge-Wheeler-Zerilli potential.", "0 (false)",
   "-multipoles"  , "<int>",      "enable single multipole output, in geometrical units.", "0 (false)",
@@ -194,10 +194,10 @@ int main (int argc, char* argv[])
             flags.tidal = 1;
             printf("tidal = true\n");
         }
-        else if (strcmp(argv[i],"-speedy")==0)
+        else if (strcmp(argv[i],"-nospeedy")==0)
         {
-            flags.speedy = 1;
-            printf("speedy = true\n");
+            flags.speedy = 0;
+            printf("speedy = false\n");
         }
         else if (strcmp(argv[i],"-RWZ")==0)
         {
