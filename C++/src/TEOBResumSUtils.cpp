@@ -628,7 +628,7 @@ TEOBResumParams read_config(char *fname)
 	  params.psi = param_value;
 	}
 	if(param_name=="distance") {
-	  params.psi = param_value;
+	  params.distance = param_value;
 	}
 	if(param_name=="q") {
 	  params.q = param_value;
