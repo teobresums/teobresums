@@ -237,13 +237,26 @@ int D0_nux(double *f, double *x, int n, double *df)
   return OK;
 }
 
-/** Alloc/Free data type routines */
+/** This routine sets a 0/1 mask for the multipolar linear index */
+void set_multipolar_idx_mask(int *kmask, int n)
+{
+  int m, k,j;
+  for (k = 0; k<n; k++)
+    kmask = 0; /* all off */
+  int *idx = par_get_arrayi("lm", &m);
+  for (j = 0; j<m; j++)
+    for (k = 0; k<n; k++)
+      if (idx[j] == kmask[k]) kmask[k] = 1; 
+}
 
+/* Alloc/Free data type routines */
+
+/** Waveform (complex) */
 void Waveform_alloc (Waveform **wav, int size, char *name)
 {
   *wav = (Waveform *) calloc(1, sizeof(Waveform)); 
   if (*wav == NULL)
-    errorexit("out of memory");
+    errorexit("Out of memory");
   *wav->real = (double*) malloc ( size * sizeof(double) );
   *wav->imag = (double*) malloc ( size * sizeof(double) );
   //*wav->data = // for complex data
@@ -278,11 +291,12 @@ void Waveform_free (Waveform *wav)
   free(wav);
 }
 
+/** Multipolar waveform (complex) */
 void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name)
 {
   *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
   if (*wav == NULL)
-    errorexit("out of memory");
+    errorexit("Out of memory");
   *wav->size = size; 
   set_multipolar_idx_mask(*wav->kmask, KMAX); 
   int k;
@@ -340,16 +354,48 @@ void Waveform_lm_free (Waveform_lm *wav)
   free(wav);
 }
 
-/** This routine sets a 0/1 mask for the multipolar linear index */
-void set_multipolar_idx_mask(int *kmask, int n)
+/** Dynamics */
+void Dynamics_alloc (Dynamics **dyn, int size)
 {
-  int m, k,j;
-  for (k = 0; k<n; k++)
-    kmask = 0; /* all off */
-  int *idx = par_get_arrayi("lm", &m);
-  for (j = 0; j<m; j++)
-    for (k = 0; k<n; k++)
-      if (idx[j] == kmask[k]) kmask[k] = 1; 
+  *dyn = (Dynamics *) calloc(1, sizeof(Dynamics)); 
+  if (*dyn == NULL)
+    errorexit("Out of memory");
+  *dyn->size = size; 
+  *dyn->time = (double*) malloc ( size * sizeof(double) );
+  int v;
+  for (v = 0; v < EOB_DYNAMICS_VARS; v++)
+    *dyn->data[v] = (double*) malloc ( size * sizeof(double) );
+}
+
+void Dynamics_push (Dynamics **dyn, int size)
+{
+  *dyn->time = (double*) realloc ( size * sizeof(double) );
+  int v;
+  for (v = 0; v < EOB_DYNAMICS_VARS; v++)
+    *dyn->data[v] = (double*) realloc ( size * sizeof(double) );
+  *dyn->size = size; 
+}
+
+void Dynamics_output (Dynamics *dyn)
+{
+  int v, i;
+  FILE* fp = fopen("dynamics.txt", "w"); 
+  for (i = 0; i < dyn->size; i++) {
+    fprintf(fp, "%.9e", dyn->time[i]);
+    for (v = 0; v < EOB_DYNAMICS_VARS; v++)
+      fprintf(fp, " %.12e", dyn->data[v][i]);
+    fprintf(fp, "\n"); 
+  }
+  fclose(fp);
+}
+
+void Dynamics_free (Dynamics *dyn)
+{
+  if (dyn->time) free(dyn->time);
+  int v;
+  for (v = 0; v < EOB_DYNAMICS_VARS; v++)
+    if (dyn->data[v]) free(dyn->data[v]);
+  free(dyn);
 }
 
 /** Errorexit routines */
@@ -399,6 +445,16 @@ void errorexits(char *file, int line, char *s, char *t)
 // ********************************************
 // ********************************************
 // ********************************************
+
+
+static void swap_variables(double *v1, double *v2)
+{
+    double tmp;
+    tmp = *v1;
+    *v1 = *v2;
+    *v2 = tmp;
+}
+
 
 
 /** */
