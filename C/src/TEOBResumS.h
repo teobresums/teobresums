@@ -70,9 +70,12 @@
 #define ooSqrt2 0.707106781186547524400844362104849039284836
 #define Log2  0.6931471805599453094172321
 #define MSUN_M 1.47662504e3; /** G/c^3 */
-#define MSUN_S 4.925491025543575903411922162094833998e-6; /** G/c^2 */
+#define MSUN_S 4.925491025543575903411922162094833998e-6 /** G/c^2 */
 #define MPC_M  3.086e22
 #define EulerGamma 0.5772156649015328606065121
+  
+/* Global vars (give proper names and keep them few) */
+int multipolar_index_mask[KMAX];
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 const int L[KMAX] = {
@@ -103,33 +106,28 @@ enum{
 /** Waveform data type */
 typedef struct tagWaveform
 {
+  int size;
+  double *time;
   double *real;
   double *imag;
   //complex *data; // what's best to use?
   char name[STRLEN];
-  int size;
 }  Waveform;
 
 /** Multipolar waveform data type */
 typedef struct tagWaveform_lm
 {
+  int size;
+  double *time;
   double *real[KMAX];
   double *imag[KMAX];
   //complex *data[KMAX]; // what's best to use?
   char name[KMAX][STRLEN];
-  int size;
+  int *kmask[KMAX]; /* mask for multipoles */
 }  Waveform_lm;
 
 /** Dynamics data type */
 // todo...
-
-/** EOB data type */
-typedef struct tagEOBData
-{
-  Waveform *hpp; /* h+, hx */
-  Waveform_lm *hlm; /* hlm */
-  //Dynamics *dyn;
-}  EOBData;
 
 
 /* Function protoypes grouped based on file */
@@ -171,9 +169,10 @@ int D0_nux(double *f, double *x, int n, double *df);
 void Waveform_alloc (Waveform **wav, int size, char *name);
 void Waveform_push (Waveform **wav, int size);
 void Waveform_free (Waveform *wav);
-void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name, int *kmask);
-void Waveform_lm_push (Waveform **wav, int size, int *kmask);
+void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name);
+void Waveform_lm_push (Waveform **wav, int size);
 void Waveform_lm_free (Waveform_lm *wav);
+void set_multipolar_idx_mask(int *kmask, int n);
 void errorexit(char *file, int line, char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
 void errorexits(char *file, int line, char *s, char *t);

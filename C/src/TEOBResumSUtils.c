@@ -259,6 +259,17 @@ void Waveform_push (Waveform **wav, int size)
   *wav->size = size; 
 }
 
+void Waveform_output (Waveform *wav)
+{
+  int i;
+  FILE* fp = fopen(wav->name, "w"); 
+  for (i = 0; i < wav->size; i++) {
+    fprintf(fp, "%.9e %.12e %.12e\n", wav->time, wav->real[i], wave->imag[i]);
+    //fprintf(fp, "%.9e ??? ???\n", wav->time, wav->data[i]);
+  }
+  fclose(fp);
+}
+
 void Waveform_free (Waveform *wav)
 {
   if (wav->real) free(wav->real);
@@ -267,12 +278,13 @@ void Waveform_free (Waveform *wav)
   free(wav);
 }
 
-void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name, int *kmask)
+void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name)
 {
   *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
   if (*wav == NULL)
     errorexit("out of memory");
   *wav->size = size; 
+  set_multipolar_idx_mask(*wav->kmask, KMAX); 
   int k;
   for (k=0; k<KMAX; k++) {
     if (kmask[k]) {
@@ -291,7 +303,7 @@ void Waveform_lm_push (Waveform **wav, int size, int *kmask)
 {
   int k;
   for (k=0; k<KMAX; k++) {
-    if (kmask[k]) {
+    if (wav->kmask[k]) {
       *wav->real[k] = (double*) realloc ( size * sizeof(double) );
       *wav->imag[k] = (double*) realloc ( size * sizeof(double) );
       //*wav->data[k] = // for complex data
@@ -299,15 +311,45 @@ void Waveform_lm_push (Waveform **wav, int size, int *kmask)
   }
 }
 
+void Waveform_lm_output (Waveform *wav, int *kmask)
+{
+  int k,i;
+  const int n = wav->size;
+  for (k=0; k<KMAX; k++) {
+    if (wav->kmask[k]) {
+      FILE* fp = fopen(wav->name[k], "w"); 
+      for (i = 0; i < n; i++) {
+	fprintf(fp, "%.9e %.12e %.12e\n", wav->time, wav->real[k][i], wave->imag[k][i]);
+	//fprintf(fp, "%.9e ??? ???\n", wav->time, wav->data[k][i]);
+      }
+      fclose(fp);
+    }
+  }
+}
+
 void Waveform_lm_free (Waveform_lm *wav)
 {
   for (k=0; k<KMAX; k++) {
-    if (wav->real[k]) free(wav->real[k]);
-    if (wav->imag[k]) free(wav->imag[k]);
-    //if(wav->data[k]) free = wav->data[k];
-    strcpy(name[k],wav->name[k]);
+    if (wav->kmask[k]) {
+      if (wav->real[k]) free(wav->real[k]);
+      if (wav->imag[k]) free(wav->imag[k]);
+      //if(wav->data[k]) free = wav->data[k];
+      strcpy(name[k],wav->name[k]);
+    }
   }
   free(wav);
+}
+
+/** This routine sets a 0/1 mask for the multipolar linear index */
+void set_multipolar_idx_mask(int *kmask, int n)
+{
+  int m, k,j;
+  for (k = 0; k<n; k++)
+    kmask = 0; /* all off */
+  int *idx = par_get_arrayi("lm", &m);
+  for (j = 0; j<m; j++)
+    for (k = 0; k<n; k++)
+      if (idx[j] == kmask[k]) kmask[k] = 1; 
 }
 
 /** Errorexit routines */

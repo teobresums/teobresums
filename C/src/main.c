@@ -22,7 +22,7 @@
 
 int main (int argc, char* argv[])
 {
-  /* Input parameters */
+  /** Input parameters */
   if (argc < 1) {
     par_commandline_parse("--help", 1);
     exit(OK);
@@ -33,62 +33,28 @@ int main (int argc, char* argv[])
   if (argc > 1) {
     TEOBResumSSetParameters(argv, argc, COMMAND_LINE, PR);
   }
-   
-  /* Alloc data structures */
-  // todo: use a single structure with several Waveforms (h+,hx) and multipoles
-  Waveform *hplus; 
-  Waveform *hcross;
-        
-  /* Call main routine */
-  int err = TEOBResumS(&hplus,
-		       &hcross,
-		       m1,
-		       m2,
-		       0.0,
-		       0.0,
-		       chi1,
-		       0.0,
-		       0.0,
-		       chi2,
-		       inclination,
-		       polarisation,
-		       f_min,
-		       dt,
-		       LambdaAl2,
-		       LambdaBl2,
-		       LambdaAl3,
-		       LambdaBl3,
-		       LambdaAl4,
-		       LambdaBl4,
-		       distance,
-		       lm,
-		       &flags);
-  /* Handle errors */
+
+  /** Alloc data structures */
+  int size = par_get_i("size"); /* note: size can vary */
+  Waveform *hpp; /* (h+,hx) */
+  Waveform *hlm; /* h_lm */
+  Waveform_alloc (&hpp, size, "hpp");
+  Waveform_lm_alloc (&hlm, size, "hlm");
+
+  /** Call main routine */
+  int err = TEOBResumS(&hpp, &hlm);
+  
+  /** Handle errors */
   // todo: list of errors...
   if (err!=OK) errorexit("Main function returned error");
 
-  /* Output */
-  // todo: proper output routines:
-  // - get the data structure
-  // - output each waveform that has been flagged
-  /*
-  std::FILE* f = std::fopen(output, "w");
-  int i        = 0;
-  int N        = hplus->length;
-  for (i=0;i<N;i++)
-    {
-      std::fprintf(f, "%f\t%e\t%e\n", i*dt, hplus->data[i], hcross->data[i]);
-    }
-  std::fclose(f);
-  free(hplus->data);
-  free(hcross->data);
-  free(hplus);
-  free(hcross);
-  */
+  /** Output */
+  Waveform_lm_output (hpp);
+  Waveform_lm_output (hlm);
 
-}
-    
-
-
-    return OK;
+  /** Free memory */
+  Waveform_free (hpp);
+  Waveform_lm_free (hlm);
+  
+  return OK;
 }

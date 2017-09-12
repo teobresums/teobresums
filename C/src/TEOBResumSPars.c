@@ -214,7 +214,7 @@ void par_commandline_parse(char *s, int n)
   int i;
   for (i = 1; i < n; i=i+2) {
 
-    if ((STREQUAL(s[i],"-h"))||(STREQUAL(s[i],"-help"))) {
+    if ((STREQUAL(s[i],"-h"))||(STREQUAL(s[i],"--help"))) {
       printf(TEOBResumS_Info);
       printf(TEOBResumS_Usage);
       for (int i = 0; i < (Nopt*4); i=i+4)
@@ -247,7 +247,8 @@ void par_commandline_parse(char *s, int n)
       par_set_d("fmin", atof(s[i+1]));
     }
     if((STREQUAL(s[i],"-lm"))) {
-      par_set_i("lm", atoi(s[i+1])); // here we want an array of int
+      //par_set_i("lm", atoi(s[i+1])); // here we want an array of int
+      par_set_i("lm", s[i+1]); // simply leave the string, to be converted with par_get_arrayi()
     }
     if((STREQUAL(s[i],"-dt"))) {
       par_set_d("dt", atof(s[i+1])); 
@@ -308,13 +309,6 @@ void par_commandline_parse(char *s, int n)
 }
 
 /** Set parameters */
-
-enum{
-  INPUT_FILE,
-  COMMAND_LINE,
-  NONE
-}
-
 void TEOBResumSSetParameters(char *s, int n, int mode, int pr)
 {
 
@@ -361,6 +355,12 @@ void TEOBResumSSetParameters(char *s, int n, int mode, int pr)
   // lets not do the following. flag_spin should rule!
   // Override spin settings if spins are given in input 
   //if (chi1 != .0 || chi2 != .0) params.flags.spin = 1;
+
+  // TODO some checks like:
+  //if (flags.multipoles == 1 && lm==-1) {
+  //  cout << "Need to input also the index of the multipole via the option -lm" << endl;
+  //  exit(ERROR);
+  //}
 
   int flag_tidal = par_get_i("use_tidal");
   
