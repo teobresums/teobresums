@@ -77,7 +77,7 @@ enum{
     EOB_EVOLVE_RAD, 
     EOB_EVOLVE_PHI,
     EOB_EVOLVE_PRSTAR,
-    EOB_PPH,
+    EOB_EVOLVE_PPHI,
     EOB_EVOLVE_VARS
   };
 
@@ -96,7 +96,7 @@ enum{
 /** List of EOB dynamical variables (to be stored in arrays) */ 
 enum{
   EOB_RAD, 
-  EOB_PPH,
+  EOB_PHI,
   EOB_PPH,
   EOB_MOMG,
   EOB_DDOTR,
@@ -163,7 +163,7 @@ typedef struct tagDynamics
   double y[EOB_EVOLVE_VARS]; /* rhs storage */
   double y0[EOB_ID_VARS]; /* ID storage */
   double t1, dt, t_stop, ti;
-  double rLR, r_LSO, MOmg, MOmg_prev;
+  double rLR, rLSO, MOmg, MOmg_prev;
   bool stop_flag, MOmgpeak_flag;
   int size;
   double *time;

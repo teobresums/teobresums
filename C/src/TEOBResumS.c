@@ -26,19 +26,32 @@ int TEOBResumS(
 {
 
   int size = par_get_i("size");
+
   double q = par_get_d("q");
+  double chi1 = par_get_d("chi1");
+  double chi2 = par_get_d("chi2");
 
   /** Alloc memory for dynamical vars */
   Dynamics *dyn;
   Dynamics_alloc(&dyn, size);
       
   /** Set parameters */
-  double dyn->dt = par_get_d("dt");
+  dyn->dt            = par_get_d("dt");
+  dyn->t1            = par_get_d("ode_tmax");
+  dyn->MOmg_prev     = 0.;
+  dyn->t_stop        = 0.;
+  dyn->Omg           = 0.;
+  dyn->Omg_orb       = 0.;
+  dyn->A             = 0.;
+  dyn->ddotr         = 0.;
+  dyn->stop_flag     = false;
+  dyn->MOmgpeak_flag = false;
   // ...
 
   /* Compute light-ring (if needed) */
   if (par_get_i("use_tidal")) {
     dyn->rLR = AdiabLR(&params);
+    dyn->rLSO = 6.0; 
     par_set_d("rLR", dyn->rLR);
   }
     
@@ -61,163 +74,152 @@ int TEOBResumS(
 
   /** Final BH */
   if (!(par_get_i("use_tidal"))) {
-    double BH_final_mass = HealyBBHFitRemnant(spin1z, spin2z, q);
+    double BH_final_mass = HealyBBHFitRemnant(chi1, chi2, q);
     par_set_d("BH_final_mass", BH_final_mass);
   }
     
   /** Initialize ODE system solver */
+  const double ode_abstol = par_get_d("ode_abstol");
+  const double ode_reltol = par_get_d("ode_relstol");
+
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
-  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dt, 1e-13, 1e-11);    
-  gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, 4);
-  gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (1.e-13, 1.e-11);
-  gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (4);
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
+  gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
+  gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
+  gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
     
-    t     = 0.0;
-    r_LSO = 6.0;
-    t1    = 1e9;
-    h     = dt; //0.0001;
+  /** Sove ODE */
+  const int solver_scheme = par_get_i("solver_scheme");
+  int STATUS = OK;
+  int iter = 0;
+  int k;
+  while (dyn->stop_flag == false) {
     
-    MOmg_prev     = 0.;
-    t_stop        = 0.;
-    Omg           = 0.;
-    Omg_orb       = 0.;
-    A             = 0.;
-    ddotr         = 0.;
-    stop_flag     = false;
-    MOmgpeak_flag = false;
-    
-    while (stop_flag == false)
-    {
-        switch (params.flags.solver_scheme)
-        {
-            case 0:
-            {
-                int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-
-                if (status != GSL_SUCCESS)
-                {
-                    break;
-                }
-                break;
-            }
-            case 1:
-            {
-                if (y[EOB_EVOLVE_RAD]>r_LSO)
-                {
-                    int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-                    if (status != GSL_SUCCESS)
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    double ti = t+dt;
-                    int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
-                    if (status != GSL_SUCCESS)
-                    {
-                        printf ("error, return value=%d\n", status);
-                        break;
-                    }
-                }
-                break;
-            }
-            case 2:
-            {
-                double ti = t+dt;
-                int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
-                if (status != GSL_SUCCESS)
-                {
-                    printf ("error, return value=%d\n", status);
-                    break;
-                }
-                break;
-            }
-            default:
-            {
-                int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-                if (status != GSL_SUCCESS)
-                {
-                    break;
-                }
-                break;
-            }
-        }
-        
-        /** Read out computation */
-        r      = y[0];
-        phi    = y[1];
-        prstar = y[2];
-        pphi   = y[3];
-        
-        /** Checking whether the dynamics produces NaN values
-            this can happen if radius r becomes too small */
-        if (std::isfinite(r))
-        {
-            /** Waveform computation*/
-            vector<gsl_complex> h_form = s_waveform(t, y, &params, Omg, Omg_orb, A, ddotr);
-
-            /** Append dynamics and waveform to vectors */
-            hlm_rad_vec.push_back(h_form[lm].dat[0]);
-            hlm_phase_vec.push_back(h_form[lm].dat[1]);
-            
-            for (int k=35; k--; )
-            {
-                hlm_ampl[k].push_back(h_form[k].dat[0]);
-                hlm_phase[k].push_back(h_form[k].dat[1]);
-            }
-        
-            t_vec.push_back(t);
-            MOmg_vec.push_back(Omg);
-            r_vec.push_back(r);
-            pph_vec.push_back(pphi);
-            prstar_vec.push_back(prstar);
-            Omg_orb_vec.push_back(Omg_orb);
-            ddotr_vec.push_back(ddotr);
-        }
-        
-        /** Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards */
-        //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
-        if (params.flags.spin==1)
-        {
-            MOmg = Omg_orb;
-        }
-        else
-        {
-            MOmg = Omg;
-            
-        }
-        if (MOmgpeak_flag==false)
-        {
-            if (MOmg < MOmg_prev)
-            {
-                MOmgpeak_flag = true;
-                t_stop        = t + 4.*dt;
-            }
-            else
-            {
-                MOmg_prev = MOmg;
-            }
-        }
-        else
-        {
-            if (t >= t_stop)
-            {
-                stop_flag = true;
-            }
-        }
+    if (solver_scheme == 0) {
+      /* Uniform timestepping */
+      dyn->ti = dyn->t + dyn->dy;
+      STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
+      if (STATUS != GSL_SUCCESS) {
+	printf ("ODE solver failed. Error = %d\n", STATUS);
+	return STATUS;
+      }
+    } else if (solver_scheme == 1) {
+      /* Adaptive timestepping until LSO ... */
+      if (y[EOB_EVOLVE_RAD]>dyn->rLSO) {
+	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t1, &dyn->dt, dyn->y);
+	if (STATUS != GSL_SUCCESS) {
+	  printf ("ODE solver failed. Error = %d\n", STATUS);
+	  return STATUS;
+	}
+      } else {
+	/* ... uniform afterwards */
+	dyn->ti = dyn->t + dyn->dt;
+	STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
+	if (STATUS != GSL_SUCCESS) {
+	  printf ("ODE solver failed. Error = %d\n", STATUS);
+	  return STATUS;
+	}
+      }
+    } else {
+      /* Adaptive timestepping */
+      STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t1, &dyn->dt, dyn->y);
+      if (STATUS != GSL_SUCCESS) {
+	printf ("ODE solver failed. Error = %d\n", STATUS);
+	return STATUS;	
+      }
     }
     
-    gsl_odeiv2_evolve_free (e);
-    gsl_odeiv2_control_free (c);
-    gsl_odeiv2_step_free (s);
-    gsl_odeiv2_driver_free (d);
+    /** Unpack data */
+    dyn->r      = y[EOB_EVOLVE_RAD];
+    dyn->phi    = y[EOB_EVOLVE_PHI];
+    dyn->prstar = y[EOB_EVOLVE_PRSTAR];
+    dyn->pphi   = y[EOB_EVOLVE_PPHI];
+        
+    /** Checking whether the dynamics produces NaN values
+	this can happen if radius r becomes too small */
+    if (!(isfinite(dyn->r))) {
+	printf ("ODE solver return NaN radius.\n");
+	return ERROR;      
+    }
+
+    /** Waveform computation*/
+    // fixme: call and routine:
+    s_waveform(dyn->t, dyn->y, &params, dyn->Omg, dyn->Omg_orb, dyn->A, dyn->ddotr,
+	       h_form);
+
+    /** Update size and push arrays (if needed) */
+    iter++;
+    if (iter>size) {
+
+      size = iter;
+      par_set_i("size", size);
+      
+      Waveform_push (&hpp, size);
+      Waveform_lm_push (&hlm, size);
+      Dynamics_push (&dyn, size);
+
+    }
     
+    /** Append dynamics and waveform to vectors */
+    dyn->time[iter] = t;
+    dyn->data[EOB_RAD][iter]  = dyn->r;
+    dyn->data[EOB_MOMG][iter] = dyn->Omg;
+    dyn->data[EOB_PPHI][iter] = dyn->pphi;
+    dyn->data[EOB_PRSTAR] = dyn->prstar;
+    dyn->data[EOB_OMGORB] = dyn->Omg_orb;
+    dyn->data[EOB_DDOTR] = dyn->ddotr;
 
-    /* end of evolution */
+    //hlm_rad_vec.push_back(h_form[lm].dat[0]);
+    //hlm_phase_vec.push_back(h_form[lm].dat[1]);
+    for (k = 0; k < KMAX; k++) {
+      hlm->real[k][iter] =0,; // amplitude
+      hlm->imag[k][iter] = 0.; //phase
+    }
+    
+    /** Check when to break the computation
+	find peak of omega curve and continue for delta_t=10. afterwards */
+    //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
+    if (params.flags.spin==1) {
+      dyn->MOmg = dyn->Omg_orb;
+    } else {
+      dyn->MOmg = dyn->Omg;
+    }
+    
+    if (dyn->MOmgpeak_flag==false) {
+      if (dyn->MOmg < dyn->MOmg_prev) {	  
+	dyn->MOmgpeak_flag = true;
+	dyn->t_stop     = dyn->t + 4.*dt;
+      } else {
+	dyn->MOmg_prev = dyn->MOmg;
+      }
+    } else {
+      if (t >= t_stop) {
+	stop_flag = true;
+      }
+    }
+  
+  } /* end time iteration */
+  
+  /** Free ODE system solver */
+  gsl_odeiv2_evolve_free (e);
+  gsl_odeiv2_control_free (c);
+  gsl_odeiv2_step_free (s);
+  gsl_odeiv2_driver_free (d);
+  
 
 
-    // ------------------------------
+  // SB stops here waiting for improved NQC & Ringdown ...............
+  //
+  // ------------------------------
+
+
+
+
+
+
+
+
+
 
 
 
@@ -405,7 +407,25 @@ int TEOBResumS(
       ringdown(params,t_g,OmgOrb_vecg,hlm_ampl_g,hlm_phase_g);
     }
 
-/** All multipoles will now have size N+Nringdown */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // h+ hx computation
+
+
+    /** All multipoles will now have size N+Nringdown */
     /** Multipole for which no ringdown model is available will be filled with 0s */
     /** We pick the index 1 since it is the 22 mode and it is always computed */
     
@@ -488,6 +508,12 @@ int TEOBResumS(
     }
     *hplus = hplus_out;
     *hcross= hcross_out;
+
+
+
+
+
+
 
 
 
