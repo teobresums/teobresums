@@ -237,6 +237,79 @@ int D0_nux(double *f, double *x, int n, double *df)
   return OK;
 }
 
+/** Alloc/Free data type routines */
+
+void Waveform_alloc (Waveform **wav, int size, char *name)
+{
+  *wav = (Waveform *) calloc(1, sizeof(Waveform)); 
+  if (*wav == NULL)
+    errorexit("out of memory");
+  *wav->real = (double*) malloc ( size * sizeof(double) );
+  *wav->imag = (double*) malloc ( size * sizeof(double) );
+  //*wav->data = // for complex data
+  *wav->size = size; 
+  strcpy(name,*wav->name);
+}
+
+void Waveform_push (Waveform **wav, int size)
+{
+  if (*wav->real) *wav->real = (double*) realloc ( size * sizeof(double) );
+  if (*wav->imag) *wav->imag = (double*) realloc ( size * sizeof(double) );
+  //if (*wav->data) *wav->data = // for complex data
+  *wav->size = size; 
+}
+
+void Waveform_free (Waveform *wav)
+{
+  if (wav->real) free(wav->real);
+  if (wav->imag) free(wav->imag);
+  //if (wav->data) free(wav->data);
+  free(wav);
+}
+
+void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name, int *kmask)
+{
+  *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
+  if (*wav == NULL)
+    errorexit("out of memory");
+  *wav->size = size; 
+  int k;
+  for (k=0; k<KMAX; k++) {
+    if (kmask[k]) {
+      *wav->real[k] = (double*) malloc ( size * sizeof(double) );
+      *wav->imag[k] = (double*) malloc ( size * sizeof(double) );
+      //*wav->data[k] = // for complex data
+      strcpy(name[k],*wav->name[k]);
+    } else {
+      *wav->real[k] = NULL;
+      *wav->imag[k] = NULL;
+    }
+  }
+}
+
+void Waveform_lm_push (Waveform **wav, int size, int *kmask)
+{
+  int k;
+  for (k=0; k<KMAX; k++) {
+    if (kmask[k]) {
+      *wav->real[k] = (double*) realloc ( size * sizeof(double) );
+      *wav->imag[k] = (double*) realloc ( size * sizeof(double) );
+      //*wav->data[k] = // for complex data
+    }
+  }
+}
+
+void Waveform_lm_free (Waveform_lm *wav)
+{
+  for (k=0; k<KMAX; k++) {
+    if (wav->real[k]) free(wav->real[k]);
+    if (wav->imag[k]) free(wav->imag[k]);
+    //if(wav->data[k]) free = wav->data[k];
+    strcpy(name[k],wav->name[k]);
+  }
+  free(wav);
+}
+
 /** Errorexit routines */
 #undef errorexit
 #undef errorexits

@@ -37,11 +37,15 @@
 /** Macros */
 #define ERROR 1 /** generic error int */
 #define OK 0 /** generic go int */
-#define DEBUG 1 /** Flag for debug mode */
 #define KMAX 35 /** Multipolar linear index, max value */
 #define STRLEN 128 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
 #define TEOBResumS_Usage {printf("USAGE:\n\t%s parfile\n\t%s -KEY <VALUE>\n", argv[0],argv[0]);exit(OK);} 
+
+#define DEBUG 1 /** Flag for debug mode */
+#ifndef PR /** Flag for print option (control at compiling time) */
+#define PR 0 
+#endif
 
 #define SIGN(x,y) ((y) >= 0.0 ? fabs(x) : -fabs(x)) 
 #define MAX(a,b)                \ 
@@ -89,18 +93,47 @@ const int M[KMAX] = {
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
 
+/** Options for inputing parameters */
+enum{
+  INPUT_FILE,
+  COMMAND_LINE,
+  NONE
+}
+
 /** Waveform data type */
 typedef struct tagWaveform
 {
-  double       *real;
-  double       *imag;
-  //complex      *data; // what's best to use?
+  double *real;
+  double *imag;
+  //complex *data; // what's best to use?
   char name[STRLEN];
-  int length;
+  int size;
 }  Waveform;
+
+/** Multipolar waveform data type */
+typedef struct tagWaveform_lm
+{
+  double *real[KMAX];
+  double *imag[KMAX];
+  //complex *data[KMAX]; // what's best to use?
+  char name[KMAX][STRLEN];
+  int size;
+}  Waveform_lm;
+
+/** Dynamics data type */
+// todo...
+
+/** EOB data type */
+typedef struct tagEOBData
+{
+  Waveform *hpp; /* h+, hx */
+  Waveform_lm *hlm; /* hlm */
+  //Dynamics *dyn;
+}  EOBData;
 
 
 /* Function protoypes grouped based on file */
+
 
 /* TEOBResumSPars.c */
 void par_db_init ();
@@ -135,6 +168,12 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_nux(double *f, double *x, int n, double *df);
+void Waveform_alloc (Waveform **wav, int size, char *name);
+void Waveform_push (Waveform **wav, int size);
+void Waveform_free (Waveform *wav);
+void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name, int *kmask);
+void Waveform_lm_push (Waveform **wav, int size, int *kmask);
+void Waveform_lm_free (Waveform_lm *wav);
 void errorexit(char *file, int line, char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
 void errorexits(char *file, int line, char *s, char *t);
