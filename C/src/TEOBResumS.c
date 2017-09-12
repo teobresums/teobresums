@@ -66,11 +66,11 @@ int TEOBResumS(
   }
     
   /** Initialize ODE system solver */
-    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
-    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dt, 1e-13, 1e-11);    
-    gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, 4);
-    gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (1.e-13, 1.e-11);
-    gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (4);
+  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dt, 1e-13, 1e-11);    
+  gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, 4);
+  gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (1.e-13, 1.e-11);
+  gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (4);
     
     t     = 0.0;
     r_LSO = 6.0;
@@ -102,7 +102,7 @@ int TEOBResumS(
             }
             case 1:
             {
-                if (y[0]>r_LSO)
+                if (y[EOB_EVOLVE_RAD]>r_LSO)
                 {
                     int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
                     if (status != GSL_SUCCESS)

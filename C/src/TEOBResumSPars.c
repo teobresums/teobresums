@@ -60,7 +60,7 @@ void par_db_default ()
 void par_file_parse (char *fname)
 {
   if (!(config_read_file(cf, fname))) {
-    fprintf(stderr, "%s:%d - %s\n",
+    fprintf(stderr, "%s = %d [%s]\n",
             config_error_file(cf),
             config_error_line(cf),
             config_error_text(cf));
@@ -179,6 +179,9 @@ void par_set_s (const char *key, const char **val)
 
 
 /* command line parser */
+// fixme: ideally we would include this info in the 
+// cfg/defaultpars.cfg
+// and just print lines of that file.
 #define Nopt 25
 const char *optstr[Nopt*4] =
 {
