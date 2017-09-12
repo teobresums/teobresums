@@ -154,13 +154,6 @@ double AdiabLR(void *params);
 
 double Eulerlog(const double x, const double m);
 
-/* _FDdrvt_h */
-
-vector<double> FDdrvt(const vector<double> f, const vector<double> t, int varargin, const int grid_length);
-
-/* _FDdrvt_omega_h */
-
-vector<double> FDdrvt_omega(vector<double> f, double dt);
 
 /* _FlmNewt_h */
 
