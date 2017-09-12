@@ -65,7 +65,7 @@ int main (int argc, char* argv[])
 		       &flags);
   /* Handle errors */
   // todo: list of errors...
-  if (err!=OK) errorexit("Main function returned");
+  if (err!=OK) errorexit("Main function returned error");
 
   /* Output */
   // todo: proper output routines:
