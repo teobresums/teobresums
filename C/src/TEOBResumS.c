@@ -26,6 +26,7 @@ int TEOBResumS(
 {
 
   int size = par_get_i("size");
+  double q = par_get_d("q");
 
   /** Alloc memory for dynamical vars */
   Dynamics *dyn;
@@ -60,8 +61,8 @@ int TEOBResumS(
 
   /** Final BH */
   if (!(par_get_i("use_tidal"))) {
-    double final_mass = HealyBBHFitRemnant(spin1z, spin2z, q);
-    params.Mbh = final_mass;
+    double BH_final_mass = HealyBBHFitRemnant(spin1z, spin2z, q);
+    par_set_d("BH_final_mass", BH_final_mass);
   }
     
   /** Initialize ODE system solver */
