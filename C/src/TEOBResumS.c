@@ -420,104 +420,40 @@ int TEOBResumS(
 
 
 
+    // assume size is updated
+    // Multipole for which no ringdown model is available will be filled with 0s */
 
-
-    // h+ hx computation
-
-
-    /** All multipoles will now have size N+Nringdown */
-    /** Multipole for which no ringdown model is available will be filled with 0s */
-    /** We pick the index 1 since it is the 22 mode and it is always computed */
+    /** Computation of (h+,hx) */
     
-    int N = hlm_ampl_g[1].size();
+    /* Init to zero */
+    memset(hpp->real, 0, size*sizeof(double));
+    memset(hpp->imag, 0, size*sizeof(double));
 
-    /** Allocate hplus and hcross */
-    Waveform *hplus_out = (Waveform *)malloc(sizeof(Waveform));
-    if (hplus_out == NULL)
-    {
-        printf("ERROR allocating hplus.\n");
-        exit(-1);
-    }
-    hplus_out->data = (double *)malloc(N*sizeof(double));
-    if (hplus_out->data == NULL)
-    {
-        printf("ERROR allocating hplus->data.\n");
-        exit(-1);
-    }
-    hplus_out->length = N;
-    Waveform *hcross_out = (Waveform *)malloc(sizeof(Waveform));
-    if (hcross_out == NULL)
-    {
-        printf("ERROR allocating hcross.\n");
-        exit(-1);
-    }
-    hcross_out->data = (double *)malloc(N*sizeof(double));
-    if (hcross_out->data == NULL)
-    {
-        printf("ERROR allocating hcross->data.\n");
-        exit(-1);
-    }
-    hcross_out->length = N;
-    
-    /** Set them to zero initially */
-    
-    memset(hplus_out->data, 0, N*sizeof(double));
-    memset(hcross_out->data, 0, N*sizeof(double));
-    
-    /** Spherical harmonics projection **/
-    /** construct hplus and hcross **/
-    /** h22 = 1/R * (nu*M)*G/c^2 h_code_output */
-
-    double mtot_m = 1.;
+    /* Scale to physical units (if necessary) */
+    double M = par_get_d("M");
+    double nu = par_get_d("nu");
+    double distance = par_get_d("distance");
     double amplitude_prefactor = 1.;    
-    if (!(params.flags.geometric_units))
-    {
-      mtot_m = (m1+m2)*MSUN_M;
-      amplitude_prefactor = params.nu*mtot_m/(distance*MPC_M);
+    if (!(par_get_i("use_geometric_units"))) {
+      M *= MSUN_M;
+      amplitude_prefactor = nu*M/(distance*MPC_M);
     } 
 
-    if (params.flags.multipoles == 1)
-    {
-        for (i=0; i<N; i++)
-        {
-            hplus_out->data[i]   = hlm_ampl_g[lm][i];
-            hcross_out->data[i]  = hlm_phase_g[lm][i];
-        }
-
+    /* Spherical harmonics projection */
+    double Y_real, Y_imag;
+    double psi = par_get_d("polarization"); 
+    double iota = par_get_d("inclination");
+    double Aki, cosPhi, sinPhi;
+    for (k = 0; k < KMAX; k++ ) {
+      spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], psi,iota);
+      for (iter = 0; iter < size; i++) {
+	Aki    = 0.;//hlm_ampl_g[k][i]*amplitude_prefactor;
+	cosPhi = 0;//cos(hlm_phase_g[k][i]);
+	sinPhi = 0;//-sin(hlm_phase_g[k][i]);
+	hpp->real[iter] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+	hpp->imag[iter] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+      }
     }
-    else
-    {
-        for (int k=35; k--; )
-        {
-            if (k==1)
-            {
-                double Y_real, Y_imag;
-                spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], polarisation, inclination);
-                
-                /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
-                for (i=0; i<N; i++)
-                {
-                    double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
-                    double cosPhi = cos(hlm_phase_g[k][i]);
-                    double sinPhi = -sin(hlm_phase_g[k][i]);
-                    hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-                    hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
-                }
-            }
-        }
-    }
-    *hplus = hplus_out;
-    *hcross= hcross_out;
-
-
-
-
-
-
-
-
-
-
 
     /** Free memory for dynamical vars */
     Dynamics_free(dyn);
