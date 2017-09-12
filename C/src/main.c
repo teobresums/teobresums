@@ -17,7 +17,6 @@
  *  MA  02111-1307  USA
  */
 
-
 #include "TEOBResumS.h"
 
 int main (int argc, char* argv[])

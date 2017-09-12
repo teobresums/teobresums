@@ -37,11 +37,9 @@
 /** Macros */
 #define ERROR 1 /** generic error int */
 #define OK 0 /** generic go int */
-#define KMAX 35 /** Multipolar linear index, max value */
 #define STRLEN 128 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
 #define TEOBResumS_Usage {printf("USAGE:\n\t%s parfile\n\t%s -KEY <VALUE>\n", argv[0],argv[0]);exit(OK);} 
-
 #define DEBUG 1 /** Flag for debug mode */
 #ifndef PR /** Flag for print option (control at compiling time) */
 #define PR 0 
@@ -74,8 +72,40 @@
 #define MPC_M  3.086e22
 #define EulerGamma 0.5772156649015328606065121
   
-/* Global vars (give proper names and keep them few) */
-int multipolar_index_mask[KMAX];
+/** List of EOB evolved variables */
+enum{
+    EOB_EVOLVE_RAD, 
+    EOB_EVOLVE_PHI,
+    EOB_EVOLVE_PRSTAR,
+    EOB_PPH,
+    EOB_EVOLVE_VARS
+  };
+
+/** List of EOB variables for initial data */
+enum{
+    EOB_ID_RAD, 
+    EOB_ID_PPH,
+    EOB_ID_PRSTAR,
+    EOB_ID_PR,
+    EOB_ID_J,
+    EOB_ID_E0,
+    EOB_ID_OMGJ,
+    EOB_ID_VARS
+};
+
+/** List of EOB dynamical variables (to be stored in arrays) */ 
+enum{
+  EOB_RAD, 
+  EOB_PPH,
+  EOB_PPH,
+  EOB_MOMG,
+  EOB_DDOTR,
+  EOB_PRSTAR,
+  EOB_OMGORB,
+  EOB_DYNAMICS_VARS
+};
+
+#define KMAX 35 /** Multipolar linear index, max value */
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 const int L[KMAX] = {
@@ -127,7 +157,18 @@ typedef struct tagWaveform_lm
 }  Waveform_lm;
 
 /** Dynamics data type */
-// todo...
+typedef struct tagDynamics
+{
+  double t, r, prstar, phi, pphi, ddotr, Omg, Omg_orb, A;
+  double y[EOB_EVOLVE_VARS]; /* rhs storage */
+  double y0[EOB_ID_VARS]; /* ID storage */
+  double t1, dt, t_stop, ti;
+  double rLR, r_LSO, MOmg, MOmg_prev;
+  bool stop_flag, MOmgpeak_flag;
+  int size;
+  double *time;
+  double *data[EOB_DYNAMICS_VARS]; 
+} Dynamics;
 
 
 /* Function protoypes grouped based on file */
@@ -150,6 +191,8 @@ double par_get_d(const char *key);
 const char * par_get_s(const char *key);
 int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
+void par_commandline_parse(char *s, int n);
+void TEOBResumSSetParameters(char *s, int n, int mode, int pr);
 
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);
@@ -166,13 +209,17 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_nux(double *f, double *x, int n, double *df);
+void set_multipolar_idx_mask(int *kmask, int n);
 void Waveform_alloc (Waveform **wav, int size, char *name);
 void Waveform_push (Waveform **wav, int size);
 void Waveform_free (Waveform *wav);
 void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name);
 void Waveform_lm_push (Waveform **wav, int size);
 void Waveform_lm_free (Waveform_lm *wav);
-void set_multipolar_idx_mask(int *kmask, int n);
+void Dynamics_alloc (Dynamics **dyn, int size);
+void Dynamics_push (Dynamics **dyn, int size);
+void Dynamics_output (Dynamics *dyn);
+void Dynamics_free (Dynamics *dyn);
 void errorexit(char *file, int line, char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
 void errorexits(char *file, int line, char *s, char *t);
