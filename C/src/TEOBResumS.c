@@ -450,8 +450,8 @@ int TEOBResumS(
 	Aki    = 0.;//hlm_ampl_g[k][i]*amplitude_prefactor;
 	cosPhi = 0;//cos(hlm_phase_g[k][i]);
 	sinPhi = 0;//-sin(hlm_phase_g[k][i]);
-	hpp->real[iter] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-	hpp->imag[iter] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+	*hpp->real[iter] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+	*hpp->imag[iter] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
       }
     }
 
