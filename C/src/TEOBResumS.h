@@ -233,6 +233,11 @@ void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q
 void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);
 
 /* TEOBResumSMetric.c */
+void acoeffs(double r, double nu, double *a);
+void A_NumDenom(double r, double *acoefs, double nu, 
+		double *N, double *D, double *dN, dounle *dD);
+
+
 
 /* TEOBResumSFlux.c */
 

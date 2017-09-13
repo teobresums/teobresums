@@ -45,10 +45,6 @@ double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, 
   return c3;
 }
 
-
-
-
-
 /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
     here x = log(lambda) and the output is the log of the coefficient
     that describes the quadrupole deformation due to spin. */
