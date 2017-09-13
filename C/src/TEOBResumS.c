@@ -206,257 +206,57 @@ int TEOBResumS(
   gsl_odeiv2_step_free (s);
   gsl_odeiv2_driver_free (d);
   
-
-
   // SB stops here waiting for improved NQC & Ringdown ...............
-  //
-  // ------------------------------
 
+  /** Interpolate on uniform grid (if needed) */
+  // ...
 
+  /** Compute NQC corrections */
+  // ...
 
+  /** Ringdown attachment */
+  // ...  
 
-
-
-
-
-
-
-
-
-    /** To compute the NQC corrections, a precise determination of the time at which Omega_orb peaks is required,
-	in order to construct a grid which passes from that t_peak.
-	The first step is to find the t_peak on the grid. */
-    
-    double t_max_grid = t_vec[0];
-    double omg_max_grid = 0.;
-    int index_max = 0.;
-    
-    /* Find max and index */
-    for (int index=0; index<Omg_orb_vec.size(); index++)
-      {
-	if(Omg_orb_vec[index] > omg_max_grid)
-	  {
-	    index_max    = index;
-	    omg_max_grid = Omg_orb_vec[index_max];
-	    t_max_grid   = t_vec[index_max];
-	  }
-      }
-    cout << "t_max_grid:\t" <<  t_max_grid << "\nomg_max_grid:\t" <<  omg_max_grid << endl;
-    
-    /* Then take a few points around the peak and analytically interpolate these points
-       to find a better approximation for t_peak. */
-    double x1 = t_vec[index_max - 1];
-    double x2 = t_vec[index_max    ];
-    double x3 = t_vec[index_max + 1];
-    double y1 = Omg_orb_vec[index_max - 1];
-    double y2 = Omg_orb_vec[index_max    ];
-    double y3 = Omg_orb_vec[index_max + 1];
-    
-    double c1 = (pow(x3,2)*(y1 - y2) + pow(x1,2)*(y2 - y3) +
-		 pow(x2,2)*(-y1 + y3))/((x1 - x2)*(x1 - x3)*(x2 - x3));
-    double c2 = (x3*(-y1 + y2) + x2*(y1 - y3) + x1*(-y2 + y3))/
-      ((x1 - x2)*(x1 - x3)*(x2 - x3));
-    
-    double t_max = (-c1)/(2.*c2);
-    double omega_max = interp1d (3, t_max, 3, &Omg_orb_vec[index_max - 1], &t_vec[index_max - 1]);
-    cout << "t_max_interp:\t" << t_max << "\nomg_max_interp:\t" <<  omega_max << endl;
-    
-    /** Interpolate quantities on a new grid of spacing dt and passing by t_max */
-
-    // HERE THERE ARE PROBLEMS:
-
-    int grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);        
-    int grid_length2 = t_vec.size(); // why using this gives SEG FAULT !?!? CHECKME
-    printf(" %d %d\n",grid_length2,grid_length ); // they are different ?
-    
-    int N_before = int((t_max - t_vec[0])/dt +1);
-    vector<double> t_vecg(grid_length);
-    for (int k = N_before; k >= 0 ; k--)
-     {
-         t_vecg[k] = t_max - (N_before-k)*dt;
-     }
-     for (int k = N_before+1; k < grid_length; k++)
-    {
-         t_vecg[k] = t_max + (k-N_before)*dt;
-    }
-
-
-     // print out
-     cout << "t_max_interp:\t" << t_max << "\tt_max_grid:\t" << t_vecg[N_before] << endl;
-     for(int k = 0; k < grid_length; k++)
-     {
-     cout << "i:\t" << k << "\tt_vecg[i]:\t" << t_vecg[k] << endl;
-     }
-
-     // seg fault right after here
-     //exit(1);
-    printf("***********************************");
-
-    // alloc memory
-    vector<double> r_vecg         = r_vec;
-    vector<double> MOmg_vecg      = MOmg_vec;
-    vector<double> pph_vecg       = pph_vec;
-    vector<double> prstar_vecg    = prstar_vec;
-    vector<double> ddotr_vecg     = ddotr_vec;
-    vector<double> OmgOrb_vecg    = Omg_orb_vec;
-    
-    vector<double> hlm_phase_vecg = hlm_phase_vec;
-    vector<double> hlm_rad_vecg   = hlm_rad_vec;
-    std::vector<vector<double> > hlm_ampl_g(35);
-    std::vector<vector<double> > hlm_phase_g(35);
-    for (int m=35; m--; )
-      {
-	hlm_ampl_g[m] = hlm_phase_vec;
-	hlm_phase_g[m] = hlm_phase_vec;
-      }
-
-    // 4th order interp all fields on tg
-    const int order = 4;
-    double* tt  = &t_vec[0];
-    double* tg = &t_vecg[0];
-    double wg[4];
-    double* datap; // this is because some idiots should live in one of the other 11D
-    
-    printf("***********************************");
-
-    for(int k = 0; k < grid_length; k++)
-      {
-	// NN & weights
-	int ix = find_point_bisection(tg[k], grid_length, tt, order/2);	
-	baryc_weights(4, &tt[ix], wg);
-
-	// dynamics
-	if (params.flags.tidal == 0)
-	  {
-	    datap = &r_vec[ix];       r_vecg[k]      = baryc_f_weights(tg[k], order, datap, &tt[ix], wg); 
-	    datap = &MOmg_vec[ix];    MOmg_vecg[k]   = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
-	    datap = &pph_vec[ix];     pph_vecg[k]    = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
-	    datap = &prstar_vec[ix];  prstar_vecg[k] = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
-	    datap = &ddotr_vec[ix];   ddotr_vecg[k]  = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
-	    datap = &Omg_orb_vec[ix]; OmgOrb_vecg[k] = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);  
-	  }
-	
-	// wave 
-	datap = &hlm_phase_vec[ix]; hlm_phase_vecg[k] = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);
-	datap = &hlm_rad_vec[ix];   hlm_rad_vecg[k]   = baryc_f_weights(tg[k], order, datap, &tt[ix], wg);
-	for (int m=35; m--; )
-	  {
-	    double *amplitude = &hlm_ampl[m][0];
-	    double *phase     = &hlm_phase[m][0];
-	    hlm_ampl_g[m][k]   = baryc_f_weights(tg[k], order, &amplitude[ix], &tt[ix], wg);
-	    hlm_phase_g[m][k]  = baryc_f_weights(tg[k], order, &phase[ix]    , &tt[ix], wg);
-	  }
-      }
-    
-    /** NQCs corrections */
-    /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
-    
-#if (DEBUG)
-    std::FILE* waveform_preNQC = std::fopen("waveform_preNQC.dat", "w");
-    for (int j=0;j<hlm_ampl_g[1].size();j++)
-      std::fprintf(waveform_preNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
-    std::fclose(waveform_preNQC);
-    
-    std::FILE* waveform_NQC = std::fopen("waveform_nqc.dat", "w");
-#endif
-    
-    if (params.flags.tidal==0 && params.flags.spin==1)
-      {
-	
-	vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
-	
-        for (int k=35; k--; )
-	  {
-	    if (k==1)
-	    {
-	      for (int i=0; i<grid_length; i++ )
-		{
-		  hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
-		  hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
-#if (DEBUG)
-		  std::fprintf(waveform_NQC, "%f\t%e\t%e\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
-#endif	
-		}
-	    }
-	  }
-	
-      }
-
-#if (DEBUG)
-      std::fclose(waveform_NQC);
-      std::FILE* waveform_postNQC   = std::fopen("waveform_postNQC.dat", "w");
-      for (int j=0;j<hlm_ampl_g[1].size();j++)
-	  std::fprintf(waveform_postNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
-      std::fclose(waveform_postNQC);
-#endif
-
-      /** Define a time vector for each multipole
-	  These will be cut by the ringdown, where
-	  each multipole has its own starting time */
-      
-    /** Ringdown attachment */
-    if (params.flags.tidal==0)
-    {
-
-      vector<vector<double> > t_g(35);
-      for (int k=35; k--; )
-	{
-	  t_g[k] = t_vecg;
-	}
-      
-      ringdown(params,t_g,OmgOrb_vecg,hlm_ampl_g,hlm_phase_g);
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // assume size is updated
-    // Multipole for which no ringdown model is available will be filled with 0s */
-
-    /** Computation of (h+,hx) */
-    
-    /* Init to zero */
-    memset(hpp->real, 0, size*sizeof(double));
-    memset(hpp->imag, 0, size*sizeof(double));
-
-    /* Scale to physical units (if necessary) */
-    double M = par_get_d("M");
-    double nu = par_get_d("nu");
-    double distance = par_get_d("distance");
-    double amplitude_prefactor = 1.;    
-    if (!(par_get_i("use_geometric_units"))) {
-      M *= MSUN_M;
-      amplitude_prefactor = nu*M/(distance*MPC_M);
+  // HERE 
+  // - assume size is updated
+  
+  /** Computation of (h+,hx) */
+  
+  /* Init to zero */
+  memset(hpp->real, 0, size*sizeof(double));
+  memset(hpp->imag, 0, size*sizeof(double));
+  
+  /* Scale to physical units (if necessary) */
+  double M = par_get_d("M");
+  double nu = par_get_d("nu");
+  double distance = par_get_d("distance");
+  double amplitude_prefactor = 1.;    
+  if (!(par_get_i("use_geometric_units"))) {
+    M *= MSUN_M;
+    amplitude_prefactor = nu*M/(distance*MPC_M);
     } 
-
-    /* Spherical harmonics projection */
-    double Y_real, Y_imag;
-    double psi = par_get_d("polarization"); 
-    double iota = par_get_d("inclination");
-    double Aki, cosPhi, sinPhi;
-    for (k = 0; k < KMAX; k++ ) {
-      spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], psi,iota);
-      for (iter = 0; iter < size; i++) {
-	Aki    = 0.;//hlm_ampl_g[k][i]*amplitude_prefactor;
-	cosPhi = 0;//cos(hlm_phase_g[k][i]);
-	sinPhi = 0;//-sin(hlm_phase_g[k][i]);
-	*hpp->real[iter] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-	*hpp->imag[iter] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
-      }
+  
+  /* Spherical harmonics projection */
+  double Y_real, Y_imag;
+  double psi = par_get_d("polarization"); 
+  double iota = par_get_d("inclination");
+  double Aki, cosPhi, sinPhi;
+  for (k = 0; k < KMAX; k++ ) {
+    spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], psi,iota);
+    for (iter = 0; iter < size; i++) {
+      Aki    = 0.;//hlm_ampl_g[k][i]*amplitude_prefactor;
+      cosPhi = 0;//cos(hlm_phase_g[k][i]);
+      sinPhi = 0;//-sin(hlm_phase_g[k][i]);
+      *hpp->real[iter] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+      *hpp->imag[iter] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
     }
+  }
 
-    /** Free memory for dynamical vars */
-    Dynamics_free(dyn);
+  /** Output dynamics */
+  // ...
 
-    return OK;
+  /** Free memory for dynamical vars */
+  Dynamics_free(dyn);
+  
+  return OK;
 }

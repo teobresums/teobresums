@@ -22,18 +22,15 @@
 int main (int argc, char* argv[])
 {
   /** Input parameters */
-  if (argc < 1) {
-    par_commandline_parse("--help", 1);
+  if (argc == 1) {
+    TEOBResumSSetParameters(argv, argc);
+  } else {
+    printf(TEOBResumS_Info);
+    printf(TEOBResumS_Usage);
     exit(OK);
   }
-  if (argc == 1) {
-    TEOBResumSSetParameters(argv, argc, INPUT_FILE, PR);
-  }
-  if (argc > 1) {
-    TEOBResumSSetParameters(argv, argc, COMMAND_LINE, PR);
-  }
 
-  /** Alloc data structures */
+  /** Alloc waveform data structures */
   int size = par_get_i("size"); /* note: size can vary */
   Waveform *hpp; /* (h+,hx) */
   Waveform *hlm; /* h_lm */
@@ -49,7 +46,8 @@ int main (int argc, char* argv[])
 
   /** Output */
   Waveform_lm_output (hpp);
-  Waveform_lm_output (hlm);
+  if (par_get_i("output_multipoles"))
+    Waveform_lm_output (hlm);
 
   /** Free memory */
   Waveform_free (hpp);

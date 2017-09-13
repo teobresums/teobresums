@@ -39,7 +39,7 @@
 #define OK 0 /** generic go int */
 #define STRLEN 128 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
-#define TEOBResumS_Usage {printf("USAGE:\n\t%s parfile\n\t%s -KEY <VALUE>\n", argv[0],argv[0]);exit(OK);} 
+#define TEOBResumS_Usage {printf("USAGE:\n\t%s parfile\n", argv[0]);exit(OK);} 
 #define DEBUG 1 /** Flag for debug mode */
 #ifndef PR /** Flag for print option (control at compiling time) */
 #define PR 0 
@@ -126,13 +126,6 @@ const int M[KMAX] = {
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
 
-/** Options for inputing parameters */
-enum{
-  INPUT_FILE,
-  COMMAND_LINE,
-  NONE
-}
-
 /** Waveform data type */
 typedef struct tagWaveform
 {
@@ -191,8 +184,9 @@ double par_get_d(const char *key);
 const char * par_get_s(const char *key);
 int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
-void par_commandline_parse(char *s, int n);
-void TEOBResumSSetParameters(char *s, int n, int mode, int pr);
+//void par_commandline_parse(char *s, int n);
+//void TEOBResumSSetParameters(char *s, int n, int mode, int pr);
+void TEOBResumSSetParameters(char *s, int pr);
 
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);

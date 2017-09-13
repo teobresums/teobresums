@@ -53,7 +53,7 @@ void par_db_default ()
     return;
   }
   else {
-    par_cfgfile_parse (strcat(eobcodepath,"cfg/defaultpars.cfg"));
+    par_cfgfile_parse (strcat(eobcodepath,"par/default.par"));
   }
 }
 
@@ -177,158 +177,25 @@ void par_set_s (const char *key, const char **val)
     errorexits("unknown parameter/wrong type for",key);
 }
 
-
-/* command line parser */
-// fixme: ideally we would include this info in the 
-// cfg/defaultpars.cfg
-// and just print lines of that file.
-#define Nopt 25
-const char *optstr[Nopt*4] =
-{
-  "-M"           , "<double>",   "total mass of the binary [Msun].", "80",
-  "-q"           , "<double>",   "mass ratio (q>=1).", "1.",
-  "-chi1"        , "<double>",   "dimensionless spin component along the orbital angular momentum of the primary.", "0",
-  "-chi2"        , "<double>",   "dimensionless spin component along the orbital angular momentum of the secondary.", "0",
-  "-distance"    , "<double>",   "source distance [Mpc].", "100",
-  "-inclination" , "<double>",   "(IOTA) inclination angle [rad].", "0",
-  "-polarisation", "<double>",   "(PSI) polarisation angle [rad].", "0",
-  "-fmin"        , "<double>",   "starting frequency [Hz / geom.units mass rescaled].", "20",
-  "-dt"          , "<double>",   "timestep.", "0.5",
-  "-srate"       , "<double>",   "sampling rate [Hz].", "4096",
-  "-lambda1_l2"  , "<double>",   "l=2 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-lambda2_l2"  , "<double>",   "l=2 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-lambda1_l3"  , "<double>",   "l=3 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-lambda2_l3"  , "<double>",   "l=3 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-lambda1_l4"  , "<double>",   "l=4 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-lambda2_l4"  , "<double>",   "l=4 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
-  "-tidal"       , "<int>",      "enable tidal corrections.", "0 (false)",
-  "-speedytail"  , "<int>",      "faster tails calculations.", "1 (true)",
-  "-dynamics"    , "<int>",      "output dynamics evolution.", "0 (false)",
-  "-RW"          , "<int>",      "Regge-Wheeler-Zerilli potential.", "0 (false)",
-  "-multipoles"  , "<int>",      "enable single multipole output, in geometrical units.", "0 (false)",
-  "-lm"          , "<int>",      "index for the output multipole. Requires multipoles output format.", "-1",
-  "-Yagi_fits"   , "<int>",      "enable Yagi fits for Lambda_l=3,4.", "0 (false)",
-  "-geometric_units", "<int>",      "use geometric units and mass rescaled quantities.", "0 (false)",
-  "-output"      , "<filename>", "output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx.", "'waveform.dat'",
-};
-
-void par_commandline_parse(char *s, int n) 
-{
-  int i;
-  for (i = 1; i < n; i=i+2) {
-
-    if ((STREQUAL(s[i],"-h"))||(STREQUAL(s[i],"--help"))) {
-      printf(TEOBResumS_Info);
-      printf(TEOBResumS_Usage);
-      for (int i = 0; i < (Nopt*4); i=i+4)
-	printf("OPTIONS\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
-      exit(OK);
-    }
-
-    if((STREQUAL(s[i],"-M"))) {
-      par_set_d("M", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-iota"))) {
-      par_set_d("iota", atof(s[i+1]));;
-    }
-    if((STREQUAL(s[i],"-psi"))) {
-      par_set_d("psi", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-distance"))) {
-      par_set_d("psi", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-q"))) {
-      par_set_d("q", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-chi1"))) {
-      par_set_d("chi1",atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-chi2"))) {
-      par_set_D("chi2", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-fmin"))) {
-      par_set_d("fmin", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-lm"))) {
-      //par_set_i("lm", atoi(s[i+1])); // here we want an array of int
-      par_set_i("lm", s[i+1]); // simply leave the string, to be converted with par_get_arrayi()
-    }
-    if((STREQUAL(s[i],"-dt"))) {
-      par_set_d("dt", atof(s[i+1])); 
-    }
-    if((STREQUAL(s[i],"-srate"))) {
-      par_set_d("srate", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-lambdaAl2"))) {
-      par_set_d("LambdaAl2", atof(s[i+1])); // here we want an array for all the lambdas...?
-    }
-    if((STREQUAL(s[i],"-lambdaBl2"))) {
-      par_set_d("LambdaBl2", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-lambdaAl3"))) {
-      par_set_d("LambdaAl3", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-lambdaBl3"))) {
-      par_set_d("LambdaBl3", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-lambdaAl4"))) {
-      par_set_d("LambdaAl4", atof(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-lambdaBl4"))) {
-      par_set_d("LambdaBl4", atof(s[i+1]));
-    }
-
-    if((STREQUAL(s[i],"-tidal"))) {
-      par_set_i("use_tidal", atoi(s[i+1])); 
-    }
-    if((STREQUAL(s[i],"-RWZ"))) {
-      par_set_i("use_RWZ_norm", atoi(s[i+1])); 
-    }
-    if((STREQUAL(s[i],"-speedytail"))) {
-      par_set_i("use_speedy_tail", atoi(s[i+1]));
-    }
-    if((STREQUAL(s[i],"-dynamics"))) {
-      par_set_i("dynamics", atoi(s[i+1])); // fix better parname
-    }
-    if((STREQUAL(s[i],"-Yagi_fit"))) {
-      par_set_i("use_Yagi_fit", atoi(s[i+1])); // fix better parname
-    }
-    if((STREQUAL(s[i],"-multipoles"))) {
-      par_set_i("output_multipoles", atoi(s[i+1])); 
-    }
-    if((STREQUAL(s[i],"-solver_scheme"))) {
-      par_set_i("solver_scheme", atoi(s[i+1])); 
-    }
-    if((STREQUAL(s[i],"-geometric_units"))) {
-      par_set_i("use_geometric_units", atoi(s[i+1])); 
-    }
-
-    if((STREQUAL(s[i],"-output_file"))) {
-      par_set_s("output_file", s[i+1]); 
-    }
-    
-  }
- 
-}
-
 /** Set parameters */
-void TEOBResumSSetParameters(char *s, int n, int mode, int pr)
+//void TEOBResumSSetParameters(char *s, int n, int mode, int pr)
+void TEOBResumSSetParameters(char *s, int pr)
 {
 
   /* Set default values */
   par_db_default ();
 
-  if (mode==INPUT_FILE) {
-    /* Parse input parfile */
-    par_file_parse (s);
-  } 
-  if (mode==COMMAND_LINE) {
-    /* Parse command line */
-    par_file_parse (s, n);    
-  }
-  if (mode==NONE) {
-    errorexit("unknown mode for input parameters mode ");
-  }
+  //if (mode==INPUT_FILE) {
+  /* Parse input parfile */
+  par_file_parse (s);
+  //} 
+  //if (mode==COMMAND_LINE) {
+  /* Parse command line */
+  //par_file_parse (s, n);    
+  //}
+  //if (mode==NONE) {
+  //errorexit("unknown mode for input parameters mode ");
+  //}
   
   /* Set auxiliary parameters */
 
@@ -457,6 +324,8 @@ void TEOBResumSSetParameters(char *s, int n, int mode, int pr)
     */
     par_set_d("r0", pow(fmin*Pi, -2./3.) );
     par_set_d("srate", 1./dt );
+    par_set_d("distance", 1. );
+    par_set_d("M", 1. );
   } else {
     /* input given in physical units, 
        rescale to geometric units and mass rescaled quantities

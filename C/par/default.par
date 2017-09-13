@@ -8,8 +8,8 @@
 # phys pars
 M = 80 [total binary mass]
 q = 1. [mass ratio]
-chi1 = 0. [dimensioneless spin z-component]
-chi2 = 0. [dimensioneless spin z-component]
+chi1 = 0. [dimensioneless spin 1 z-component]
+chi2 = 0. [dimensioneless spin 2 z-component]
 distance = 100
 inclination = 0
 polarisation = 0
@@ -25,6 +25,7 @@ LambdaBl4 = 0
 BH_final_mass = 0
 BH_final_spin = 0
 rLR = 0
+rLSO = 0
 # ----------------------
 # options
 use_tidal = 0
