@@ -226,12 +226,10 @@ double Yagi13_fit_barlamdel(double barlam2, int ell);
 
 /* TEOBResumSDynamics.c */
 int rhs(double t, const double y[], double dy], void *params);
-int s_RHS(double t, const double y[], double dy[], void *params);
-void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
-	  double *ggm);
-void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, 
-	      double *rc, double *drc_dr, double *d2rc_dr2)
-void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);
+int s_rhs(double t, const double y[], double dy[], void *params);
+void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
+void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); //fixme: pas params !
+//void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);
 
 /* TEOBResumSMetric.c */
 void A5PNlog(double r, void *params, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
@@ -240,7 +238,11 @@ void Metric(double r, void *params, double *A, double *B, double *dA, double *d2
 void s_Metric(double r, void *params, double *A, double *B, double *dA, double *d2A);
 
 /* TEOBResumSFlux.c */
+void FlmNewt(const double x, void *params, double *Nlm);
+void Tlm(const double w, double *MTlm);
 
+double HorizonFlux(double x, double Heff, double jhat, double nu);
+double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 /* TEOBResumSWaveform.c */
 
 
