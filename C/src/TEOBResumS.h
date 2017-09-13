@@ -219,8 +219,24 @@ void errorexit(char *file, int line, char *s);
 void errorexits(char *file, int line, char *s, char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
+/* TEOBResumSFits.c */
+double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2);
+double logQ(double x);
+double Yagi13_fit_barlamdel(double barlam2, int ell);
 
+/* TEOBResumSDynamics.c */
+int rhs(double t, const double y[], double dy], void *params);
+int s_RHS(double t, const double y[], double dy[], void *params);
+void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
+	  double *ggm);
+void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rcout);
+void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);
 
+/* TEOBResumSMetric.c */
+
+/* TEOBResumSFlux.c */
+
+/* TEOBResumSWaveform.c */
 
 
 
