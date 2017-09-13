@@ -229,15 +229,15 @@ int rhs(double t, const double y[], double dy], void *params);
 int s_RHS(double t, const double y[], double dy[], void *params);
 void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
 	  double *ggm);
-void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rcout);
+void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, 
+	      double *rc, double *drc_dr, double *d2rc_dr2)
 void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);
 
 /* TEOBResumSMetric.c */
-void acoeffs(double r, double nu, double *a);
-void A_NumDenom(double r, double *acoefs, double nu, 
-		double *N, double *D, double *dN, dounle *dD);
-
-
+void A5PNlog(double r, void *params, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
+void Atidal(double r, void *params, double *AT, double *dAT, double *d2AT);
+void Metric(double r, void *params, double *A, double *B, double *dA, double *d2A);
+void s_Metric(double r, void *params, double *A, double *B, double *dA, double *d2A);
 
 /* TEOBResumSFlux.c */
 

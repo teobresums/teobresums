@@ -165,10 +165,8 @@ int s_RHS(double t, const double y[], double dy[], void *params)
   const double prstar3 = prstar2*prstar;
   const double prstar4 = prstar3*prstar;
   
-  double rc_vec[3]; /* [rc, drc, d2rc] */
-  s_get_rc(r, nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, rc_vec);
-  const double rc     = rc_vec[0];
-  const double drc_dr = rc_vec[1];
+  double rc, drc_dr, d2rc_dr;
+  s_get_rc(r, nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
   const double uc     = 1./rc;
   const double uc2    = uc*uc;
   const double uc3    = uc2*uc;
@@ -367,9 +365,10 @@ void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double 
    paper, PRD 88, 023009, the bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. 
    The dimensionless bar{\lambda} love number is related to our apsidal constant as lambda = 2/3 k2/(C^5) so that both quantities have to appear here.  
 */
-void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rcout)
+void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, 
+	      double *rc, double *drc_dr, double *d2rc_dr2)
 {
-  double rc, drc_dr, d2rc_dr2;  
+
   double u   = 1./r;
   double u2  = u*u;
   double u3  = u*u2;
@@ -380,9 +379,9 @@ void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q
     double a02      = C_Q1*at1*at1 + 2.*at1*at2 + C_Q2*at2*at2;
     /* tidally-modified centrifugal radius */
     double rc2 = r2 + a02*(1.+2.*u);
-    rc         = sqrt(rc2);
-    drc_dr     = r/rc*(1.-a02*u3);
-    d2rc_dr2   = 1./rc*( 1.-drc_dr*r/rc*(1.-a02*u3)+2.*a02*u3);
+    *rc         = sqrt(rc2);
+    *drc_dr     = r/rc*(1.-a02*u3);
+    *d2rc_dr2   = 1./rc*( 1.-drc_dr*r/rc*(1.-a02*u3)+2.*a02*u3);
     /* NO spin-spin-tidal couplings */
     /*
       double rc2 = r2;
@@ -394,14 +393,11 @@ void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q
     double X12      = sqrt(1.-4.*nu);   
     double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
     double rc2 = r2 + aK2*(1. + 2.*alphanu2/r);
-    rc         = sqrt(rc2);
-    drc_dr     = r/rc*(1.+aK2*(-alphanu2*u3 ));
-    d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
+    *rc         = sqrt(rc2);
+    *drc_dr     = r/rc*(1.+aK2*(-alphanu2*u3 ));
+    *d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
   }
   
-  rcout[0] = rc;
-  rcout[1] = drc_dr;
-  rcout[2] = d2rc_dr2;
 }
 
 
@@ -434,8 +430,8 @@ void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, 
   int i;
   for ( i=0; i<size; i++) {
         
-    s_get_rc(r, nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, rc_vec);
-    double rc             = rc_vec[0];
+    double rc, drc_dr, d2rc_dr;
+    s_get_rc(r, nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
     double drc_dr         = rc_vec[1];
     double uc             = 1./rc;
     double uc2            = uc*uc;
