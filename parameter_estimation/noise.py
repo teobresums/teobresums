@@ -58,7 +58,7 @@ def get_bandpassed_strain(fname,low=20,high=2028):
     return times,strain,srate
 
 
-def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False, sampling_rate = 2048):
+def load_data(fname, chunk_size=2.0, trigtime=tevent, injection=False, sampling_rate = 2048):
 
     # Extract some metadata from the file name
     ifo,fr_type,starttime,T=fname.strip('.txt').split('-')
@@ -106,7 +106,7 @@ def load_data(fname, chunk_size=4.0, trigtime=tevent, injection=False, sampling_
     # Compute the frequency domain strain
     sf = np.fft.rfft(signal_chunk)*windowNorm
     # Compute the PSD
-    psd, freqs = mlab.psd(strain, Fs = srate, NFFT = np.int(srate))
+    psd, freqs = mlab.psd(strain, Fs = srate, NFFT = np.int(srate), window=tukey(np.int(srate),padding))
     psd_int = interp1d(freqs, psd)
     
     # compute times and frequencies for convenience

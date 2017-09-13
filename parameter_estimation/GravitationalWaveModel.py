@@ -18,6 +18,12 @@ detMap = {'H1': 'LHO_4k',
           'V1': 'VIRGO',
           'T1': 'TAMA_300'}
 
+def McQ2Masses(mc, q):
+    factor = mc * np.power(1. + q, 1.0/5.0);
+    m1 = factor * np.power(q, -3.0/5.0);
+    m2 = factor * np.power(q, +2.0/5.0);
+    return m1, m2
+
 class GravitationalWaveModel(cpnest.model.Model):
     
     names = []
@@ -42,24 +48,24 @@ class GravitationalWaveModel(cpnest.model.Model):
         self.names=['ra',
            'dec',
            'tc',
-           'm1',
-           'm2',
+           'mc',
+           'q',
            'spin1z',
            'spin2z',
            'iota',
            'psi',
-           'distance']
+           'logdistance']
 
         self.bounds=[[0,2.0*np.pi],
                 [-np.pi/2.0,np.pi/2.0],
                 [self.tevent-0.05,self.tevent+0.05],
-                [30,41],
-                [23,30],
-                [-0.09,0.09],
-                [-0.09,0.09],
+                [20,40],
+                [0.3,1.0],
+                [-0.3,0.3],
+                [-0.3,0.3],
                 [0.0,np.pi],
                 [0.0,np.pi],
-                [200,600]]
+                [np.log(1),np.log(2000)]]
                 
         self.flags ={'NQC':'1',
             'tidal':0,
@@ -78,8 +84,13 @@ class GravitationalWaveModel(cpnest.model.Model):
             
     def log_likelihood(self,x):
         
-        h = pyTEOBResumS(x['m1'],
-                         x['m2'],
+        mc = x['mc']
+        q = x['q']
+        d = np.exp(x['logdistance'])
+        m1, m2 = McQ2Masses(mc, q)
+
+        h = pyTEOBResumS(m1,
+                         m2,
                          0.0,
                          0.0,
                          x['spin1z'],
@@ -96,10 +107,10 @@ class GravitationalWaveModel(cpnest.model.Model):
                          0.0,
                          0.0,
                          0.0,
-                         x['distance'],
+                         d,
                          -1,
                          self.flags)
-        
+
         hp = noise.resize_time_series(h[:,0],self.segment_length)
         hc = noise.resize_time_series(h[:,1],self.segment_length)
 
@@ -113,9 +124,14 @@ class GravitationalWaveModel(cpnest.model.Model):
     
     def log_prior(self, x):
         if np.isfinite(super(GravitationalWaveModel,self).log_prior(x)):
-            logP = 2.0*np.log(x['distance'])
+            logP = 2.0*x['logdistance']
             logP += np.log(np.abs(np.cos(x['dec'])))
             logP += np.log(np.abs(np.cos(x['iota'])))
+            mc = x['mc']
+            q = x['q']
+            m1, m2 = McQ2Masses(mc, q)
+
+            logP += np.log(m1*m1/mc)
             return logP
         else:
             return -np.inf
