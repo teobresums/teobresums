@@ -301,7 +301,16 @@ vector<double> s_initial(TEOBResumParams *params){
     y_init[4] = j[N-1];
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
-    
+
+    /*
+    printf("r[0]      = %18.16f\n",y_init[0]);
+    printf("pphi[0]   = %18.16f\n",y_init[1]);
+    printf("j[0]      = %18.16f\n",y_init[4]);
+    printf("pr[0]     = %18.16f\n",y_init[3]);
+    printf("prstar[0] = %18.16f\n",y_init[2]);
+    printf("E[0]      = %18.16f\n",y_init[5]);
+    printf("Omega[0]  = %18.16f\n",y_init[6]);
+    */
     return y_init;
 }
 

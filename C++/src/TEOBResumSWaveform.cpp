@@ -45,7 +45,22 @@ vector<gsl_complex> s_waveform(double t,
                                double &Omg_orb,
                                double &A,
                                double &ddotr){
-    
+  /* This function computes the EOB-resummed waveform. It is made by
+     two blocks, one that deals with the nonspinning waveform and 
+     another with the spinning waveform.
+     The aim of this function is to compute all the arguments that
+     are needed for the call to the hlm(...) function that one 
+     finds in TEOBResumSHlm.cpp and that actually computes the
+     waveform. To this aim, the function deals separately with the
+     nonspinning and spinning case and in both cases it computes:
+     - the orbital frequency Omega
+     - the (approximated) second time-derivative of r
+     - the real energy along the dynamics (H) [ADM energy of the system]
+     - the effective energy along the dynamics (divided by mu, Heff)
+     - the Newton-normalized angular momentum  (jhat)
+     - the Kepler-law modified radial variable rw (called r_\omega in papers)
+ */
+  
     double nu         = (*(TEOBResumParams *)params).nu;
     bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
     bool   spin_flag  = (*(TEOBResumParams *)params).flags.spin;
@@ -79,7 +94,7 @@ vector<gsl_complex> s_waveform(double t,
     
     vector<double> metric(5);
     double dA, B, dB, one_A, one_B;
-    double jhat = 0.0, Omega = 0.0, H = 0.0, Heff = 0.0, r_omega = 0.0;
+    double jhat = 0.0,Omega = 0.0, H = 0.0, Heff = 0.0, r_omega = 0.0;
     
     /*
      //{H,Heff,dHeff_dr,dHeff_dprstar,dHeff_dpph,Omega,ddotr,jhat,r_omega,Omg_orb}
@@ -96,33 +111,37 @@ vector<gsl_complex> s_waveform(double t,
      */
     
     if (spin_flag==false)
+      /****************************
+       NONSPINNING PART STARTS HERE
+      *****************************/	   
+      
     {
-        metric = Metric(r, params,false);
-        A      = metric[0];
-        dA     = metric[1];
-        B      = metric[3];
-        dB     = metric[4];
-        one_A  = 1./A;
-        one_B  = 1./B;
-        
+      // calling EOB potentials
+        metric       = Metric(r, params,false);
+        A            = metric[0];
+        dA           = metric[1];
+        B            = metric[3];
+        dB           = metric[4];
+        one_A        = 1./A;
+        one_B        = 1./B;
+	double sqrAB = sqrt(A/B);
+	
+	// Effective EOB Hamiltonian divided by nu (corresponds to \hat{H}_eff)
         Heff     = sqrt( prstar2 + A*(1. + pphi2*u2 + z3*prstar4*u2) );
         H        = sqrt( 1. + 2.*nu*(Heff - 1.) )/nu; //note the 1/nu here
-        double E = H*nu;
-        
-        double sqrAB = sqrt(A/B);
+        double E = H*nu;                
         
         //r evol eqn rhs
         f[0]  = (prstar + 2.0*z3*A*prstar3*u2)/Heff;
         f[0] *= (sqrAB / E);
         
-        //phi evol eqn rhs
-        Omega  = A*pphi*u2/Heff;
-        Omega *= 1./E;
-        f[1]   = Omega;
-        
-        Omg    = Omega;
-        
-        
+        //phi evol eqn rhs: orbital frequency
+        Omega   = A*pphi*u2/Heff;
+        Omega  *= 1./E;
+        f[1]    = Omega;        
+        Omg     = Omega;
+        Omg_orb = Omg;
+	                
         //prstar evol eqn rhs
         f[2]  = (dA + ( pphi2 + z3*prstar4 )*( dA*u2 - 2.0*A*u3 ))/Heff;
         f[2] *= -0.5 * sqrAB / E;
@@ -130,11 +149,15 @@ vector<gsl_complex> s_waveform(double t,
         //pphi evol eqn rhs
         double sqrW = sqrt( A*(1. + pphi2*u2) );
         double psi  = 2.*(1.0 + 2.0*nu*(sqrW - 1.0))/(r2*dA);
-        
+
+	// definition of r_omega and of the velocity
         r_omega      = r*cbrt(psi);
         double v_phi = r_omega*Omega;
+
+	// Newton-normalized angular momentum
         jhat         = pphi/(r_omega*v_phi);
-        
+
+	/* pieces needed for the computation of d^2 r/dt^2*/
         double E2       = E*E;
         double tmpE     = 1./Heff+nu/E2;
         double denE     = E*Heff;
@@ -146,17 +169,29 @@ vector<gsl_complex> s_waveform(double t,
         double dr_dt         = f[0];
         double ddotr_dr      = sqrAB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA*one_A-dB*one_B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2*A*u3)*prstar3)*one_denE;
         double ddotr_dprstar = sqrAB*( 1+z3*6.*A*u2*prstar2-(prstar + z3*2*A*u2*prstar3)*dHeff_dprstar*tmpE)*one_denE;
-        
-        ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
-        Omg_orb = Omg;
+
+	/* second time-derivative of the radial separation obtained neglecting
+	   the term depending on the flux. Details are given in Appendix A of
+           Damour, Nagar & Bernuzzi, PRD87, 084035. This second time derivative
+           is needed for the computation of one of the NQC functions and it is
+           done at the same time of the integration, so one needs an analytic
+           expression for it. We are using here Eq.(A3), where the (subdominant)
+           contributions coming from the fluxes are set to zero to increase the
+           efficiency of its computation. See Fig.(20) of the reference above. */
+	
+        ddotr   = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
+
     }
     else
     {
-        
-        double z3 = 2.*nu*(4.-3.*nu);
-        
-        double /*A,*/ B, dA;
-        vector<double> metric;
+
+      /*************************
+       SPINNING PART STARTS HERE
+      *************************/
+      
+      double B, dA;
+      double z3 = 2.*nu*(4.-3.*nu);        
+      vector<double> metric;
         if (tidal_flag==true) {
             metric = Metric(r, params,false);
             A  = metric[0];
@@ -170,7 +205,8 @@ vector<gsl_complex> s_waveform(double t,
             B      = metric[1];
             dA     = metric[2];
         }
-        
+
+	// Definition of the centrifugal radius
         vector<double> rc_vec;
         rc_vec        = s_get_rc(r,params); //[rc, drc, d2rc]
         double rc     = rc_vec[0];
@@ -211,38 +247,46 @@ vector<gsl_complex> s_waveform(double t,
         
         double ddotr_dp_rstar = sqrtAbyB*one_H*d2Heff_dprstar20;
         
-        /*
-         *-------------------------------------------
-         * 0.th -- approximate ddot(r)_0 without Fphi
-         *-------------------------------------------
-         */
-        ddotr = dp_rstar_dt_0*ddotr_dp_rstar;  // + dr_dt.*ddotr_dr; //order pr_star^2 neglected
+        /************************************************************************
+         Approximation to the second time-derivative of r. It is obtained from 
+         Eq.(A3) of  Damour, Nagar & Bernuzzi, PRD87, 084035 by dropping the term
+         d\dot{r}/dr*dot{r}. This term eventually gives a function that is 
+         problematic in the strong-field regime and does not help in determining 
+         the NQC corrections 
+	**************************************************************************/
+        ddotr = dp_rstar_dt_0*ddotr_dp_rstar;  // + dr_dt.*ddotr_dr; 
         
         
         /*------------------ dr/dt ------------------*/
         f[0] = sqrtAbyB*one_H*dHeff_dprstar;
-        
+
+	/*----------------- dp_{r*}/dt --------------*/
+        f[2] = -sqrtAbyB*one_H*dHeff_dr;
+	
         /*----------------- d\phi/dt ----------------*/
-        Omg_orb = one_H*pphi*A*uc2/Heff_orb;
+        //Omg_orb = one_H*pphi*A*uc2/Heff_orb;
+	
         double dHeff_dpph = GS*S + (GSs + pphi*dGSs_dpph)*Sstar + pphi*A*uc2/Heff_orb;
         f[1] = one_H*dHeff_dpph;
         
-        /*----------------- dp_{r*}/dt --------------*/
-        f[2] = -sqrtAbyB*one_H*dHeff_dr;
         
-        /*------------------ dp_{\phi}/dt -----------*/
+        
+	/* orbital frequency */
         Omega = f[1];
-        
-        Omg   = Omega;
-        
-        
-        //----------------------------------
-        // Compute here the new r_omg radius
-        //----------------------------------
-        //==========================================================
-        // Compute same quantities with prstar=0. This to obtain psi.
-        // Procedure consistent with the nonspinning case
-        //==========================================================
+	Omg   = Omega;
+	/*************************************************
+         pure orbital frequency (no spin-orbit part): this
+         serves for the identification of the NQC point
+	*************************************************/
+	Omg_orb = one_H*pphi*A*uc2/Heff_orb;
+
+	/*********************************************
+         Compute the r_omg radius. This is obtained 
+         evaluating the gyro-gravitomagnetic ratios for
+         prstar = 0.
+         This procedure mimics what is done in the 
+         nonspinning case
+	*********************************************/
         vector<double> ggm0 = s_GS(r,rc,drc_dr,aK2,0.,pphi,nu,chi1,chi2,X1,X2,c3);
         
         double GS_0      = ggm0[2];
@@ -260,13 +304,18 @@ vector<gsl_complex> s_waveform(double t,
         double duc_dr     = -uc2*drc_dr;
         double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
         r_omega           = pow( (1.0/sqrt( rc*rc*rc*psic)+Gtilde )*one_H0 ,-2./3.);
-        
+
+	// the velocity 
         double v_phi = r_omega*Omega;
-        
+
+	// the Newton normalized angular momentum
         jhat         = pphi/(r_omega*v_phi);
         
         H *= 1./nu; /** Note the 1/nu */
     }
+    /* Calling the function hlm that is found in TEOBResumSHlm.cpp. The waveform is finally computed here.
+       The arguments, Omega, ddotr, H, Heff, jhat and r_omega were computed above separately for the spinning
+       or nonspinning case */
     
     vector<gsl_complex> waveform = hlm(t, phi, r, pphi, prstar, Omega, ddotr, H, Heff, jhat, r_omega, params);
     
