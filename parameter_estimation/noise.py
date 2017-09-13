@@ -75,12 +75,12 @@ def load_data(fname, chunk_size=2.0, trigtime=tevent, injection=False, sampling_
     if sampling_rate is not None:
         srate = sampling_rate
         # remove all power above the new Nyquist
-        Nyq = sampling_rate/2.0
-        bb, ab = butter(4, [20/(0.5*sampling_rate), (Nyq-10)/(0.5*sampling_rate) ], btype='band')
-        strain = filtfilt(bb, ab, rawstrain)
-        strain = downsample(strain, 4096., sampling_rate)
-
-#    strain = rawstrain
+#        Nyq = sampling_rate/2.0
+#        bb, ab = butter(4, [20/(0.5*sampling_rate), (Nyq-10)/(0.5*sampling_rate) ], btype='band')
+#        strain = filtfilt(bb, ab, rawstrain)
+        strain = downsample(rawstrain, 4096., sampling_rate)
+        srate = sampling_rate
+#    strain = rawstrain 
     # find the index corresponding to the trigger time
     index_trigtime = int((trigtime-starttime)*srate)
 
@@ -130,6 +130,11 @@ def whiten(strain, interp_psd, dt):
 if __name__ == "__main__":
     T, strainT, F, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt')
     from matplotlib import pyplot as plt
+    plt.figure()
+    plt.loglog(F, psd)
+    plt.show()
+    exit()
+
     fmin = 20
     fmax = 2048
     imin = int(fmin*4)

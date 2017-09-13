@@ -176,7 +176,7 @@ if __name__=='__main__':
         signal_model = GravitationalWaveModel()
         work=cpnest.CPNest(signal_model,
                            verbose=3,
-                           Poolsize=32,
+                           Poolsize=128,
                            Nthreads=opts.threads,
                            Nlive=opts.nlive,
                            maxmcmc=opts.maxmcmc,
