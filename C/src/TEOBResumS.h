@@ -243,6 +243,7 @@ void Tlm(const double w, double *MTlm);
 
 double HorizonFlux(double x, double Heff, double jhat, double nu);
 double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+
 /* TEOBResumSWaveform.c */
 
 
