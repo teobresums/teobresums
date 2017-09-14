@@ -54,7 +54,6 @@ void FlmNewt(const double x, void *params, double *Nlm)
   const double sp6 = (1-4*nu)*(3*nu2-4*nu +1)*(3*nu2-4*nu +1);
   const double sp7 = (1 - 7*nu + 14*nu2 - 7*nu3)*(1 - 7*nu + 14*nu2 - 7*nu3);
   const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
-  const double sp9 = (1 - 4*nu)*(1 - 4*nu + 3*nu2)*(1 - 4*nu + 3*nu2);
   
   if (spin_flag==true) {
     sp2 = 1.;
@@ -100,9 +99,9 @@ void FlmNewt(const double x, void *params, double *Nlm)
   Nlm[18] *= sp6 * x10;
   Nlm[19] *= sp5 * x9 ;
   
-  Nlm[20] *= sp9 * x10;
+  Nlm[20] *= sp6 * x10;
   Nlm[21] *= sp7 * x11;
-  Nlm[22] *= sp9 * x10;
+  Nlm[22] *= sp6 * x10;
   Nlm[23] *= sp7 * x11;
   Nlm[24] *= sp6 * x10;
   Nlm[25] *= sp7 * x11;
@@ -193,8 +192,7 @@ double flux(const double x,
     } else {
       if (k==0) Modhhatlm *=sqrt_one_4nu;
       if (k==2) Modhhatlm *=sqrt_one_4nu;
-      if (k==4) Modhhatlm *=sqrt_one_4nu;
-      
+      if (k==4) Modhhatlm *=sqrt_one_4nu; 
     }
             
     Modhhatlm += MTlm[k]*hlmTidal[k];
