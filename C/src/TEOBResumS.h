@@ -152,15 +152,26 @@ typedef struct tagWaveform_lm
 /** Dynamics data type */
 typedef struct tagDynamics
 {
-  double t, r, prstar, phi, pphi, ddotr, Omg, Omg_orb, A;
+  /* various pointwise variables */
+  double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
+  double H, Heff, E, jhat, r_omega, psi, v_phi;
+  double A,dA,d2A, B,dB;
+  double rLR, rLSO, MOmg, MOmg_prev;
+  /* stuff for ODE solver */
   double y[EOB_EVOLVE_VARS]; /* rhs storage */
   double y0[EOB_ID_VARS]; /* ID storage */
   double t1, dt, t_stop, ti;
-  double rLR, rLSO, MOmg, MOmg_prev;
   bool stop_flag, MOmgpeak_flag;
+  /* arrays */
   int size;
   double *time;
   double *data[EOB_DYNAMICS_VARS]; 
+  /* parameters for quick access */
+  double nu, q, X1, X2;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2;
+  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
+  double c3NLO;
+  int use_tidal, use_spin;
 } Dynamics;
 
 

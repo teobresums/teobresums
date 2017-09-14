@@ -110,6 +110,29 @@ int rhs(double t, const double y[], double dy[], void *params)
     jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
   
   dy[EOB_EVOLVE_PPHI] = flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,source,params);
+
+  /* Store values */
+  dyn->t = t;
+  dyn->r = r;
+  dyn->phi = y[EOB_EVOLVE_PHI];
+  dyn->pphi = pphi;
+  dyn->prstar = prstar;
+  dyn->Omg = Omega;
+  dyn->Omg_orb = Omega;
+  dyn->H = H;
+  dyn->E = E;
+  dyn->Heff = Heff;
+  dyn->A = A;
+  dyn->dA = dA;
+  dyn->d2A = d2A;
+  dyn->B = B;
+  dyn->dB = dB;
+  dyn->psi = psi;
+  dyn->r_omega = r_omega;
+  dyn->v_phi = v_phi;
+  dyn->jhat = jhat;
+  dyn->ddotr = ddotr;
+
   
   return GSL_SUCCESS;
 							     

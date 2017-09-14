@@ -40,29 +40,40 @@ int TEOBResumS(
   dyn->t1            = par_get_d("ode_tmax");
   dyn->MOmg_prev     = 0.;
   dyn->t_stop        = 0.;
-  dyn->Omg           = 0.;
-  dyn->Omg_orb       = 0.;
-  dyn->A             = 0.;
-  dyn->ddotr         = 0.;
   dyn->stop_flag     = false;
   dyn->MOmgpeak_flag = false;
+
+  dyn->t             = 0.;
+  dyn->phi           = 0.;
+  dyn->r             = 0.;
+  dyn->pph           = 0.;
+  dyn->prstar        = 0.;
+  dyn->Omg           = 0.;
+  dyn->Omg_orb       = 0.;
+  dyn->ddotr         = 0.;
+  dyn->A             = 0.;
+  dyn->H             = 0.;
+  dyn->Heff          = 0.;
+  dyn->jhat          = 0.;
+  dyn->r_omega       = 0.;
+
   // ...
 
   /* Compute light-ring (if needed) */
   if (par_get_i("use_tidal")) {
-    dyn->rLR = AdiabLR(&params);
+    dyn->rLR = AdiabLR(dyn);
     dyn->rLSO = 6.0; 
     par_set_d("rLR", dyn->rLR);
   }
     
   /** Computing the initial conditions */
-  gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_VARS, &params};
+  gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_VARS, dyn};
   if (par_get_i("use_spins")) {
-    sys = {s_RHS, NULL, EOB_EVOLVE_VARS, &params};
-    s_initial(dyn->y0, &params);
+    sys = {s_RHS, NULL, EOB_EVOLVE_VARS, dyn};
+    s_initial(dyn->y0, dyn);
   } else {
-    sys     = {rhs, NULL, EOB_EVOLVE_VARS, &params};
-    initial(dyn->y0, &params);
+    sys     = {rhs, NULL, EOB_EVOLVE_VARS, dyn};
+    initial(dyn->y0, dyn);
   }
     
   /** Initial conditions: t, r, phi, prstar, pphi */
@@ -144,7 +155,7 @@ int TEOBResumS(
 
     /** Waveform computation*/
     // fixme: call and routine:
-    s_waveform(dyn->t, dyn->y, &params, dyn->Omg, dyn->Omg_orb, dyn->A, dyn->ddotr,
+    s_waveform(dyn->t, dyn->y, &dyn, dyn->Omg, dyn->Omg_orb, dyn->A, dyn->ddotr,
 	       h_form);
 
     /** Update size and push arrays (if needed) */
@@ -179,7 +190,7 @@ int TEOBResumS(
     /** Check when to break the computation
 	find peak of omega curve and continue for delta_t=10. afterwards */
     //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
-    if (params.flags.spin==1) {
+    if (dyn.flags.spin==1) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
       dyn->MOmg = dyn->Omg;
