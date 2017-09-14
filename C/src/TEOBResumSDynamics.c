@@ -27,7 +27,7 @@
 
 
 /** r.h.s. of EOB Hamiltonian dynamics, no spins version */ 
-int rhs(double t, const double y[], double dy], void *params)
+int rhs(double t, const double y[], double dy[], void *params)
 {
   
   (void)(t); /* avoid unused parameter warning */
@@ -116,7 +116,7 @@ int rhs(double t, const double y[], double dy], void *params)
 }
 
 /** r.h.s. of EOB Hamiltonian dynamics, spins version */ 
-int s_RHS(double t, const double y[], double dy[], void *params)
+int s_rhs(double t, const double y[], double dy[], void *params)
 {
     
   (void)(t); /* avoid unused parameter warning */
