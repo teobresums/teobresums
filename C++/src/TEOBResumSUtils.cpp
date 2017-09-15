@@ -550,9 +550,13 @@ TEOBResumParams read_config(char *fname)
     params.chi2      = 0.;
     params.dt        = 1./4096.; // s
     params.f_min     = 10;       // Hz
-    params.lm        = -1;
+    params.lm        = 1;
     params.LambdaAl2 = 0.;
+    params.LambdaAl3 = 0.;
+    params.LambdaAl4 = 0.;
     params.LambdaBl2 = 0.;
+    params.LambdaBl3 = 0.;
+    params.LambdaBl4 = 0.;
     params.distance  = 100;      // Mpc
     params.iota      = 0.0;
     params.psi       = 0.0;
@@ -901,8 +905,18 @@ TEOBResumParams process_input_parameters(
     double logC_Q2 = logQ(log(LambdaBl2));
     double C_Q1    = exp(logC_Q1);
     double C_Q2    = exp(logC_Q2);    
+
     params.C_Q1 = C_Q1;
     params.C_Q2 = C_Q2;
+
+    params.LambdaAl2 = LambdaAl2;
+    params.LambdaAl3 = LambdaAl3;
+    params.LambdaAl4 = LambdaAl4;
+    params.LambdaBl2 = LambdaBl2;
+    params.LambdaBl3 = LambdaBl3;
+    params.LambdaBl4 = LambdaBl4;
+    
+    
     
     return params;
 }

@@ -96,6 +96,9 @@ int main (int argc, char* argv[])
     TEOBResumFlags flags;
     SetDefaultFlagsValues(&flags);
     flags.set = 1;
+
+    /* fast fix here */
+    flags.solver_scheme = 2;
     
     if (argc < 2)
     {
@@ -212,7 +215,7 @@ int main (int argc, char* argv[])
         else if (strcmp(argv[i],"-lambda1_l2")==0)
         {
             LambdaAl2 = atof(argv[i+1]);
-            printf("lambda1_l2: %f\n",LambdaAl2);
+            printf("lambda1_l2: %f\n",LambdaAl2);	    
         }
         else if (strcmp(argv[i],"-lambda2_l2")==0)
         {
@@ -340,7 +343,7 @@ int main (int argc, char* argv[])
         int N        = hplus->length;
         for (i=0;i<N;i++)
         {
-            std::fprintf(f, "%f\t%e\t%e\n", i*dt, hplus->data[i], hcross->data[i]);
+            std::fprintf(f, "%f\t%20.16f\t%20.16f\n", i*dt, hplus->data[i], hcross->data[i]);
         }
         std::fclose(f);
         free(hplus->data);

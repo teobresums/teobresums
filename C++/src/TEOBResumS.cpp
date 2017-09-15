@@ -109,8 +109,18 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                                                     LambdaBl4,
                                                     flags);
 
+    printf("lambdaAl2=%f\n",LambdaAl2);
+    printf("lambdaAl3=%f\n",LambdaAl3);
+    printf("lambdaAl4=%f\n",LambdaAl4);
+
+    double lambda2 = params.LambdaAl2;
+
+    printf("lambdaAl2=%f\n",lambda2);
+    
     double q      = params.q;
     dt            = params.dt;
+
+    printf("q=%f\n",q);
 
     if (params.flags.tidal==1)
     {
@@ -160,15 +170,15 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     
     /** Initialize ODE system solver */
     const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
-    gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, 4);
-    gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (1.e-13, 1.e-11);
-    gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (4);
-    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd,1e-2, 1000., 1000.);
+    gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc(T, 4);
+    gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new(1.e-13, 1.e-11);
+    gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc(4);
+    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rk8pd,dt, 1.e-10, 1.e-10);
     
     t     = 0.0;
     r_LSO = 6.0;
     t1    = 1.e15;
-    h     = 0.0001;
+    h     = dt;
     
     MOmg_prev     = 0.;
     t_stop        = 0.;
@@ -294,17 +304,46 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         }
         else
         {
-            if (t >= t_stop)
+	  if (t >= t_stop)	    
             {
                 stop_flag = true;
             }
         }
+
+	/***************************************************/
+	/** Quick hack: stop the waveform during inspiral **/
+	if (r<=10)
+	 {
+                stop_flag = true;
+            }
     }
     gsl_odeiv2_evolve_free (e);
     gsl_odeiv2_control_free (c);
     gsl_odeiv2_step_free (s);
     gsl_odeiv2_driver_free (d);
 
+
+    //if (DEBUG)
+    /*********************************************************
+     IMPORTANT STEP HERE: with solver 2, this waveform is OK!!
+    **********************************************************/
+    
+    {
+        char   outputr[256]   = "h22_q1_sly_005.dat";
+        std::FILE* waveform_preint   = std::fopen(outputr, "w");
+        int j                 = 0;
+        int N                 = hlm_ampl[1].size();
+        
+        for (j=0;j<N;j++)
+        {
+            std::fprintf(waveform_preint, "%20.12f\t%20.12f\t%20.12f\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
+        }
+        std::fclose(waveform_preint);
+	}
+
+
+
+    
     /** Interpolate quantities on a grid of width dt */
     grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
     vector<double> t_vecg(grid_length);
@@ -336,19 +375,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
     
-    if (DEBUG)
-    {
-        char   outputr[256]   = "waveform_preIntepolation.dat";
-        std::FILE* waveform_preint   = std::fopen(outputr, "w");
-        int j                 = 0;
-        int N                 = hlm_ampl[1].size();
-        
-        for (j=0;j<N;j++)
-        {
-            std::fprintf(waveform_preint, "%f\t%e\t%e\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
-        }
-        std::fclose(waveform_preint);
-    }
+    
     
     
     for (int k=35; k--; )

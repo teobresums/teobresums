@@ -29,7 +29,19 @@ vector<double> initial(TEOBResumParams *params)
     
     double nu = (*params).nu;
     double r0 = (*params).r0;
-    
+    /**************************************/
+    /* FIXME: looking at tidal parameters */
+    /**************************************/   
+    double CQ1       = (*(TEOBResumParams *)params).C_Q1;
+    double CQ2       = (*(TEOBResumParams *)params).C_Q2;
+    double lambdaAl2 = (*(TEOBResumParams *)params).LambdaAl2;
+    double lambdaAl3 = (*(TEOBResumParams *)params).LambdaAl3;
+    double lambdaAl4 = (*(TEOBResumParams *)params).LambdaAl4;
+    double lambdaBl2 = (*(TEOBResumParams *)params).LambdaBl2;
+    double lambdaBl3 = (*(TEOBResumParams *)params).LambdaBl3;
+    double lambdaBl4 = (*(TEOBResumParams *)params).LambdaBl4;
+    double kappa2T   = (*(TEOBResumParams *)params).kappaTl2;
+
     vector<double> y_init(7);
     int N  = 6;
     const double dr = 1.e-8;
@@ -110,6 +122,25 @@ vector<double> initial(TEOBResumParams *params)
     y_init[4] = j[N-1];
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
+
+    printf("r[0]         = %18.16f\n",y_init[0]);
+    printf("pphi[0]      = %18.16f\n",y_init[1]);
+    printf("j[0]         = %18.16f\n",y_init[4]);
+    printf("pr[0]        = %18.16f\n",y_init[3]);
+    printf("prstar[0]    = %18.16f\n",y_init[2]);
+    printf("E[0]         = %18.16f\n",y_init[5]);
+    printf("Omega[0]     = %18.16f\n",y_init[6]);
+    printf("CQ1          = %18.16f\n",CQ1);
+    printf("CQ2          = %18.16f\n",CQ2);
+    printf("lambda_l2[A] = %18.16f\n",lambdaAl2);
+    printf("lambda_l3[A] = %18.16f\n",lambdaAl3);
+    printf("lambda_l4[A] = %18.16f\n",lambdaAl4);
+    printf("lambda_l2[B] = %18.16f\n",lambdaBl2);
+    printf("lambda_l3[B] = %18.16f\n",lambdaBl3);
+    printf("lambda_l4[B] = %18.16f\n",lambdaBl4);
+    printf("kappa2T      = %18.16f\n",kappa2T);
+
+
     
     return y_init;
 }
@@ -185,6 +216,21 @@ vector<double> s_initial(TEOBResumParams *params){
     double a1  = (*(TEOBResumParams *)params).a1;
     double a2  = (*(TEOBResumParams *)params).a2;
     double aK2 = (*(TEOBResumParams *)params).aK2;
+    /**************************************/
+    /* FIXME: looking at tidal parameters */
+    /**************************************/   
+    double CQ1       = (*(TEOBResumParams *)params).C_Q1;
+    double CQ2       = (*(TEOBResumParams *)params).C_Q2;
+    double lambdaAl2 = (*(TEOBResumParams *)params).LambdaAl2;
+    double lambdaAl3 = (*(TEOBResumParams *)params).LambdaAl3;
+    double lambdaAl4 = (*(TEOBResumParams *)params).LambdaAl4;
+    double lambdaBl2 = (*(TEOBResumParams *)params).LambdaBl2;
+    double lambdaBl3 = (*(TEOBResumParams *)params).LambdaBl3;
+    double lambdaBl4 = (*(TEOBResumParams *)params).LambdaBl4;
+    double kappa2T   = (*(TEOBResumParams *)params).kappaTl2;
+
+
+
     
     // spin variable (with dimensions)
     double S  = S1 + S2;        // => in the EMRL this becomes the spin of the BH
@@ -302,15 +348,24 @@ vector<double> s_initial(TEOBResumParams *params){
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
 
-    /*
-    printf("r[0]      = %18.16f\n",y_init[0]);
-    printf("pphi[0]   = %18.16f\n",y_init[1]);
-    printf("j[0]      = %18.16f\n",y_init[4]);
-    printf("pr[0]     = %18.16f\n",y_init[3]);
-    printf("prstar[0] = %18.16f\n",y_init[2]);
-    printf("E[0]      = %18.16f\n",y_init[5]);
-    printf("Omega[0]  = %18.16f\n",y_init[6]);
-    */
+    
+    printf("r[0]         = %18.16f\n",y_init[0]);
+    printf("pphi[0]      = %18.16f\n",y_init[1]);
+    printf("j[0]         = %18.16f\n",y_init[4]);
+    printf("pr[0]        = %18.16f\n",y_init[3]);
+    printf("prstar[0]    = %18.16f\n",y_init[2]);
+    printf("E[0]         = %18.16f\n",y_init[5]);
+    printf("Omega[0]     = %18.16f\n",y_init[6]);
+    printf("CQ1          = %18.16f\n",CQ1);
+    printf("CQ2          = %18.16f\n",CQ2);
+    printf("lambda_l2[A] = %18.16f\n",lambdaAl2);
+    printf("lambda_l3[A] = %18.16f\n",lambdaAl3);
+    printf("lambda_l4[A] = %18.16f\n",lambdaAl4);
+    printf("lambda_l2[B] = %18.16f\n",lambdaBl2);
+    printf("lambda_l3[B] = %18.16f\n",lambdaBl3);
+    printf("lambda_l4[B] = %18.16f\n",lambdaBl4);
+    printf("kappa2T      = %18.16f\n",kappa2T);
+    
     return y_init;
 }
 
