@@ -52,7 +52,7 @@ const char *optstr[Nopt*4] =
   "-distance"    , "<double>",   "source distance [Mpc].", "100",
   "-inclination" , "<double>",   "(IOTA) inclination angle [rad].", "0",
   "-polarisation", "<double>",   "(PSI) polarisation angle [rad].", "0",
-  "-f_min"       , "<double>",   "starting frequency [Hz].", "20",
+  "-f_min"       , "<double>",   "starting frequency [Hz / geom.units mass rescaled].", "20",
   "-srate"       , "<double>",   "sampling rate [Hz].", "4096",
   "-lambda1_l2"  , "<double>",   "l=2 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
   "-lambda2_l2"  , "<double>",   "l=2 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
@@ -61,7 +61,7 @@ const char *optstr[Nopt*4] =
   "-lambda1_l4"  , "<double>",   "l=4 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
   "-lambda2_l4"  , "<double>",   "l=4 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
   "-tidal"       , "<int>",      "enable tidal corrections.", "0 (false)",
-  "-speedy"      , "<int>",      "faster tails calculations.", "1 (true)",
+  "-nospeedy"    , "<int>",      "disable faster tails calculations.", "0 (false)",
   "-dynamics"    , "<int>",      "output dynamics evolution.", "0 (false)",
   "-RW"          , "<int>",      "Regge-Wheeler-Zerilli potential.", "0 (false)",
   "-multipoles"  , "<int>",      "enable single multipole output, in geometrical units.", "0 (false)",
@@ -102,7 +102,9 @@ int main (int argc, char* argv[])
         fprintf(stderr,USAGE);
         fprintf(stderr,"\nOPTIONS:\n");
         for (int i = 0; i < (Nopt*4); i=i+4)
+        {
             fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
+        }
         exit(0);
     }
    
@@ -111,9 +113,11 @@ int main (int argc, char* argv[])
         if ((strcmp(argv[i],"-h")==0)||(strcmp(argv[i],"-help")==0))
         {
             fprintf(stderr,USAGE);
-	    fprintf(stderr,"\nOPTIONS:\n");
-	    for (int i = 0; i < (Nopt*4); i=i+4)
-	      fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
+            fprintf(stderr,"\nOPTIONS:\n");
+            for (int i = 0; i < (Nopt*4); i=i+4)
+            {
+              fprintf(stderr,"\t%-20s %-10s %s [%s]\n",optstr[i],optstr[i+1],optstr[i+2],optstr[i+3]);
+            }
             exit(0);
         }
         else if (strcmp(argv[i],"-p")==0)
@@ -122,24 +126,17 @@ int main (int argc, char* argv[])
             printf("Reading parfile: %s\n",parfile);
 
             TEOBResumParams params = read_config(parfile);
-            q = params.q;
-            m1 = params.mtot * q/(1.+q);
-            m2 = params.mtot - m1;
-            chi1 = params.chi1;
-            chi2 = params.chi2;
-            dt = params.dt;
-            flags.RWZ  = params.flags.RWZ;
-            flags.solver_scheme = params.flags.solver_scheme;
-            flags.tidal = params.flags.tidal;
-            flags.speedy = params.flags.speedy;
+            q               = params.q;
+            m1              = params.mtot * q/(1.+q);
+            m2              = params.mtot - m1;
+            chi1            = params.chi1;
+            chi2            = params.chi2;
+            dt              = params.dt;
+            f_min           = params.f_min;
+            lm              = params.lm;
+            LambdaAl2       = params.LambdaAl2;
+            LambdaBl2       = params.LambdaBl2;
             flags.Yagi_fits = params.flags.Yagi_fits;
-            flags.multipoles = params.flags.multipoles;
-            flags.geometric_units = params.flags.geometric_units;
-
-//            flags->spin = params.flags.spin; FIX ME, NOW IT WORKS A CDC
-            lm = params.lm;
-            LambdaAl2 = params.LambdaAl2;
-            LambdaBl2 = params.LambdaBl2;
             if (flags.Yagi_fits==0)
             {
                 LambdaAl3 = params.LambdaAl3;
@@ -147,6 +144,17 @@ int main (int argc, char* argv[])
                 LambdaAl4 = params.LambdaAl4;
                 LambdaBl4 = params.LambdaBl4;
             }
+            distance              = params.distance;
+            inclination           = params.iota;
+            polarisation          = params.psi;
+            flags.RWZ             = params.flags.RWZ;
+            flags.solver_scheme   = params.flags.solver_scheme;
+            flags.tidal           = params.flags.tidal;
+            flags.speedy          = params.flags.speedy;
+            flags.multipoles      = params.flags.multipoles;
+            flags.geometric_units = params.flags.geometric_units;
+
+     // flags->spin = params.flags.spin; FIX ME, NOW IT WORKS A CDC
 
             break;
         }
@@ -186,10 +194,10 @@ int main (int argc, char* argv[])
             flags.tidal = 1;
             printf("tidal = true\n");
         }
-        else if (strcmp(argv[i],"-speedy")==0)
+        else if (strcmp(argv[i],"-nospeedy")==0)
         {
-            flags.speedy = 1;
-            printf("speedy = true\n");
+            flags.speedy = 0;
+            printf("speedy = false\n");
         }
         else if (strcmp(argv[i],"-RWZ")==0)
         {
@@ -284,13 +292,17 @@ int main (int argc, char* argv[])
         }
         else
         {
-            double dt_phys = time_units_conversion(m1+m2, dt);
-            if (dt_phys > 10.0)
+            if (flags.tidal == 0)
             {
-                printf("ERROR! dt = %f is too big and will cause the interpolator to crash when attaching the ringdown.\n",dt_phys);
-                printf("Decrease dt in input and retry.\n");
-                exit(-1);
+                double dt_phys = time_units_conversion(m1+m2, dt);
+                if (dt_phys > 10.0)
+                {
+                    printf("ERROR! dt = %f is too big and will cause the interpolator to crash when attaching the ringdown.\n", dt_phys);
+                    printf("Decrease dt in input and retry.\n");
+                    exit(-1);
+                }
             }
+
             
         }
         
@@ -298,29 +310,30 @@ int main (int argc, char* argv[])
         {
             printf("Will output l = %d m = %d waveform\n",L[lm],M[lm]);
         }
+
         TEOBResumS(&hplus,
-                    &hcross,
-                    m1,
-                    m2,
-                    0.0,
-                    0.0,
-                    chi1,
-                    0.0,
-                    0.0,
-                    chi2,
-                    inclination,
-                    polarisation,
-                    f_min,
-                    dt,
-                    LambdaAl2,
-                    LambdaBl2,
-                    LambdaAl3,
-                    LambdaBl3,
-                    LambdaAl4,
-                    LambdaBl4,
-                    distance,
-                    lm,
-                    &flags);
+                   &hcross,
+                   m1,
+                   m2,
+                   0.0,
+                   0.0,
+                   chi1,
+                   0.0,
+                   0.0,
+                   chi2,
+                   inclination,
+                   polarisation,
+                   f_min,
+                   dt,
+                   LambdaAl2,
+                   LambdaBl2,
+                   LambdaAl3,
+                   LambdaBl3,
+                   LambdaAl4,
+                   LambdaBl4,
+                   distance,
+                   lm,
+                   &flags);
         
         std::FILE* f = std::fopen(output, "w");
         int i        = 0;

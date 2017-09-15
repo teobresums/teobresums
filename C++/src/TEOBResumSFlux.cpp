@@ -24,7 +24,6 @@
 
 #include "TEOBResumS.h"
 
-/** Flux calculation for non-spinning systems */
 double flux(const double x,
             const double Omega,
             const double r_omega,
@@ -36,13 +35,32 @@ double flux(const double x,
             const double ddotr,
             double source[],
             void *params)
-{
+ /*    This function computes the Newton-normalized energy flux according
+       to the usual Damour-Iyer-Nagar resummation procedure, see also
+       Damour, Nagar & Bernuzzi, PRD 87 (2013). This function is used
+       only for NONSPINNING systems.
+       Arguments of the function are:
+       x       => PN variable
+       Omega   => Orbital frequency
+       r_omega => Kepler-modified radial separation
+       E       => Energy
+       Heff    => Effective energy
+       jhat    => Newton-Normalized angular momentum       
+       r       => radial separation
+       pr_star => radial momentum (conjugate to r*)
+       ddotr   => second time-derivative of the radial separation
+       source[]=> effective energy (l+m=even) or angular momentum (l+m=odd)
+     */
+  
+  {
     
-    bool                 tidal_flag   = (*(TEOBResumParams *)params).flags.tidal;
-    double               nu           = (*(TEOBResumParams *)params).nu;
+    bool   tidal_flag   = (*(TEOBResumParams *)params).flags.tidal;
+    double nu           = (*(TEOBResumParams *)params).nu;
+    double X1           = (*(TEOBResumParams *)params).X1;
+    double X2           = (*(TEOBResumParams *)params).X2;
+    double X12          = X1-X2;
     double               Flm;
     double               Modhhatlm;
-    double               sqrt_one_4nu = sqrt(1.-4.*nu);
     const vector<double> flm          = f_lm(x,nu);
     const vector<double> FNewtlm      = FlmNewt(x,params);
     const double         FNewt22      = FNewtlm[1];
@@ -51,13 +69,14 @@ double flux(const double x,
     
     /** Compute NQC correction to the modulus of the (l,m) waveform */
     vector<gsl_complex> hlm_NQC = hlmNQC(nu,r,prstar,Omega,ddotr);
-    double SFlm=0.;
+    double SFlm=0.; 
+
     for (int k=35; k--;)
     {
         /** Compute modulus of hhat_lm */
         Modhhatlm = source[k] * MTlm[k] * flm[k];
         
-        /** NQCs */
+        /** NQCs for the non tidal case*/
         if (tidal_flag==false)
         {
             switch (k)
@@ -77,19 +96,19 @@ double flux(const double x,
             }
         }
         
-        //Make tidal corrections
+        /* Re-introduce the nu-dependent prefactor in the tidal case */
         if (tidal_flag==true)
         {
             switch (k)
             {
                 case 0: // (2,1)
-                    Modhhatlm *=sqrt_one_4nu;
+		    Modhhatlm *=X12;
                     break;
                 case 2: // (3,1)
-                    Modhhatlm *=sqrt_one_4nu;
+		    Modhhatlm *=X12;
                     break;
                 case 4: // (3,3)
-                    Modhhatlm *=sqrt_one_4nu;
+		    Modhhatlm *=X12;
                     break;
                 default: Modhhatlm *= 1.;
                     break;
@@ -98,10 +117,7 @@ double flux(const double x,
             Modhhatlm += MTlm[k]*hlmTidal[k];
             
         }
-        //if (k==1)
-        //{
-        //    printf(" %s %.8e \n","hlmTidal",hlmTidal[k]);
-        //}
+
         /** Total flux multipoles */
         Flm = (Modhhatlm * Modhhatlm) * FNewtlm[k];
         SFlm += Flm;
@@ -109,9 +125,10 @@ double flux(const double x,
     
     /** Sum over multipoles and normalize to the 22 Newtonian multipole */
     double hatf = SFlm/(FNewt22);
-    
+
     if (tidal_flag==false)
     {
+      /* Add horizon flux in the BBH case */
         double hatFH = HorizonFlux(x,Heff,jhat,nu);
         hatf += hatFH;
     }
@@ -132,27 +149,18 @@ double s_Flux(double x,
               double pr_star,
               double ddotr,
               void *params){
-    /*
-     % DINFLUX This function computes the Newton.Normalized energy flux according to
-     %         the DIN resummation procedure. It is also designed so to add non-QC
-     %         and non-K corrections to  (2,2) partial flux.
-     %
-     %         USAGE:
-     %
-     %         [Flm F hatF hatF_resum]=DINFlux(x,Omega,E,Heff,jhat,nu,lmax,r,pr_star,ddotr)
-     %
-     %         where:
-     %
-     %         x       :: PN argument
-     %         Omega   :: Orbital frequency
-     %         E       :: Energy
-     %         Heff    :: Effective energy
-     %         jhat    :: Newton-Normalized angular momentum
-     %         nu      :: symmetric mass ratio
-     %         lmax    :: maximum l
-     %         r       :: EOB radius
-     %         pr_star :: radial momentum
-     %         ddotr   :: \ddot{r}
+    /* This function computes the Newton-normalized energy flux according
+       to the usual Damour-Iyer-Nagar resummation procedure.
+       Arguments of the function are:
+       x       => PN variable
+       r_omega => Kepler-modified radial separation
+       Omega   => Orbital frequency
+       E       => Energy
+       Heff    => Effective energy
+       jhat    => Newton-Normalized angular momentum       
+       r       => radial separation
+       pr_star => radial momentum (conjugate to r*)
+       ddotr   => second time-derivative of the radial separation
      */
     
     double nu       = (*(TEOBResumParams *)params).nu;
@@ -161,7 +169,8 @@ double s_Flux(double x,
     double X1       = (*(TEOBResumParams *)params).X1;
     double X2       = (*(TEOBResumParams *)params).X2;
     bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
-    
+
+    /* effective source: jhat for l+m=odd and Heff when l+m=even */
     double prefact[] = {
         jhat, Heff,
         Heff, jhat, Heff,
@@ -171,11 +180,11 @@ double s_Flux(double x,
         Heff, jhat, Heff, jhat, Heff, jhat, Heff,
         jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
     
-    
+    /* Temporary fix: NQC function put to 1. This will change with iterations */
     double hnqclm = 1.;
     double Flm;
     double Modhhatlm;
-    double sqrt_one_4nu = sqrt(1.-4.*nu);
+    double X12 = X1-X2;
     
     vector<double> flm     = s_flm(x,params);
     vector<double> FNewtlm = FlmNewt(x,params);
@@ -186,28 +195,28 @@ double s_Flux(double x,
     
     double SFlm = 0.;
     for (int k=35; k--;) {
-        // Compute modulus of hhat_lm
+      /** Compute modulus of hhat_lm */
         Modhhatlm = prefact[k] * MTlm[k] * flm[k];
         
-        //Include NQC with flag
+        /** NQCs for the non tidal case */
         if (tidal_flag==false)
         {
             Modhhatlm *= hnqclm;
         }
         
-        //Make tidal corrections
+        /* Re-introduce the nu-dependent prefactor in the tidal case */
         if (tidal_flag==true)
         {
             switch (k)
             {
                 case 0: // (2,1)
-                    Modhhatlm *= sqrt_one_4nu;
+		  Modhhatlm *= X12;
                     break;
                 case 2: // (3,1)
-                    Modhhatlm *= sqrt_one_4nu;
+		  Modhhatlm *= X12;
                     break;
                 case 4: // (3,3)
-                    Modhhatlm *= sqrt_one_4nu;
+		  Modhhatlm *= X12;
                     break;
                     
                 default: Modhhatlm *= 1.;
@@ -218,7 +227,7 @@ double s_Flux(double x,
         }
         
         
-        // Total flux multipoles
+        /** Total flux multipoles */
         Flm = (Modhhatlm * Modhhatlm) * FNewtlm[k];
         
         SFlm += Flm;
@@ -229,6 +238,7 @@ double s_Flux(double x,
     
     if (tidal_flag==false)
     {
+        /* Add horizon flux in the BBH case */
         double hatFH = s_HorizonFlux(x, Heff, jhat, nu, X1, X2, chi1, chi2);
         hatf += hatFH;
     }
@@ -240,7 +250,9 @@ double s_Flux(double x,
 
 vector<double> FlmNewt(const double x, void *params)
 {
-    
+  /** This function computes the Newtonian prefactors in the flux.
+      The multipolar Newtonian prefactors can be obtained from 
+      Eq.(4) of Damour-Iyer-Nagar, PRD 79, 064004 (2009) [DIN]*/
     double nu       = (*(TEOBResumParams *)params).nu;
     bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
     bool spin_flag  = (*(TEOBResumParams *)params).flags.spin;
@@ -256,15 +268,15 @@ vector<double> FlmNewt(const double x, void *params)
     const double x10 = x*x9;
     const double x11 = x*x10;
     const double x12 = x*x11;
-    
+
+    /* setting up numerical constants, the c_ell+epsilon, Eq.(7) of DIN */
     double sp2 = 0.0;
     double sp4 = 0.0;
     const double sp3 = (1.-3.*nu)*(1.-3.*nu);
     const double sp5 = (1.-5.*nu+5.*nu2)*(1.-5.*nu+5.*nu2);
-    const double sp6 = (1-4*nu)*(3*nu2-4*nu +1)*(3*nu2-4*nu +1);
+    const double sp6 = (1-4*nu)*(3*nu2-4*nu +1)*(3*nu2-4*nu +1);    
     const double sp7 = (1 - 7*nu + 14*nu2 - 7*nu3)*(1 - 7*nu + 14*nu2 - 7*nu3);
     const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
-    const double sp9 = (1 - 4*nu)*(1 - 4*nu + 3*nu2)*(1 - 4*nu + 3*nu2);
     
     vector<double> Nlm(35);
     
@@ -288,48 +300,55 @@ vector<double> FlmNewt(const double x, void *params)
     }
     
     /** Newtonian partial fluxes*/
-    
-    Nlm[0]  = 8./45                                 * sp2 * x6 ;
-    Nlm[1]  = 32./5.                                *       x5 ;
-    
-    Nlm[2]  = 1./1260                               * sp2 * x6 ;
-    Nlm[3]  = 32./63                                * sp3 * x7 ;
-    Nlm[4]  = 243./28                               * sp2 * x6 ;
-    
-    Nlm[5]  = 1./44100                              * sp4 * x8 ;
-    Nlm[6]  = 32./3969                              * sp3 * x7 ;
-    Nlm[7]  = 729./700                              * sp4 * x8 ;
-    Nlm[8]  = 8192./567                             * sp3 * x7 ;
-    
-    Nlm[9]  = 1./19958400                           * sp4 * x8 ;
-    Nlm[10] = 256./400950                           * sp5 * x9 ;
-    Nlm[11] = 2187./70400                           * sp4 * x8 ;
-    Nlm[12] = 131072./66825                         * sp5 * x9 ;
-    Nlm[13] = 1953125./76032                        * sp4 * x8 ;
-    
-    Nlm[14] = 1./1123782660                         * sp6 * x10;
-    Nlm[15] = 128./28667925                         * sp5 * x9 ;
-    Nlm[16] = 59049./15415400                       * sp6 * x10;
-    Nlm[17] = 4194304./47779875                     * sp5 * x9 ;
-    Nlm[18] = 48828125./13621608                    * sp6 * x10;
-    Nlm[19] = 839808./17875                         * sp5 * x9 ;
-    
-    Nlm[20] = 1./9.3498717312e11                    * sp9 * x10;
-    Nlm[21] = 32./1.35270135e8                      * sp7 * x11;
-    Nlm[22] = 1594323./3.2064032e10                 * sp9 * x10;
-    Nlm[23] = 4194304./3.07432125e8                 * sp7 * x11;
-    Nlm[24] = 1220703125./5.666588928e9             * sp6 * x10;
-    Nlm[25] = 5668704./875875                       * sp7 * x11;
-    Nlm[26] = 96889010407./1111968000               * sp6 * x10;
-    
-    Nlm[27] = 1./8.174459284992e13                  * sp8 * x12;
-    Nlm[28] = 32./3.4493884425e10                   * sp7 * x11;
-    Nlm[29] = 177147./3.96428032e10                 * sp8 * x12;
-    Nlm[30] = 4194304./1.5679038375e10              * sp7 * x11;
-    Nlm[31] = 30517578125./8.00296713216e11         * sp8 * x12;
-    Nlm[32] = 51018336./1.04229125e8                * sp7 * x11;
-    Nlm[33] = 4747561509943./4.083146496e11         * sp8 * x12;
-    Nlm[34] = (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1)*274877906944./1688511825.*x11;
+
+    /* l=2 */
+    Nlm[0]  = 8./45                                 * sp2 * x6 ; /*(2,1)*/
+    Nlm[1]  = 32./5.                                *       x5 ; /*(2,1)*/
+
+    /* l=3 */
+    Nlm[2]  = 1./1260                               * sp2 * x6 ; /*(3,1)*/
+    Nlm[3]  = 32./63                                * sp3 * x7 ; /*(3,2)*/
+    Nlm[4]  = 243./28                               * sp2 * x6 ; /*(3,3)*/
+
+    /* l=4 */
+    Nlm[5]  = 1./44100                              * sp4 * x8 ; /*(4,1)*/
+    Nlm[6]  = 32./3969                              * sp3 * x7 ; /*(4,2)*/
+    Nlm[7]  = 729./700                              * sp4 * x8 ; /*(4,3)*/
+    Nlm[8]  = 8192./567                             * sp3 * x7 ; /*(4,4)*/
+
+    /* l=5 */
+    Nlm[9]  = 1./19958400                           * sp4 * x8 ; /*(5,1)*/
+    Nlm[10] = 256./400950                           * sp5 * x9 ; /*(5,2)*/
+    Nlm[11] = 2187./70400                           * sp4 * x8 ; /*(5,3)*/
+    Nlm[12] = 131072./66825                         * sp5 * x9 ; /*(5,4)*/
+    Nlm[13] = 1953125./76032                        * sp4 * x8 ; /*(5,5)*/
+
+    /* l=6 */
+    Nlm[14] = 1./1123782660                         * sp6 * x10; /*(6,1)*/
+    Nlm[15] = 128./28667925                         * sp5 * x9 ; /*(6,2)*/
+    Nlm[16] = 59049./15415400                       * sp6 * x10; /*(6,3)*/
+    Nlm[17] = 4194304./47779875                     * sp5 * x9 ; /*(6,4)*/
+    Nlm[18] = 48828125./13621608                    * sp6 * x10; /*(6,5)*/
+    Nlm[19] = 839808./17875                         * sp5 * x9 ; /*(6,6)*/
+
+    /* l=7 */
+    Nlm[20] = 1./9.3498717312e11                    * sp6 * x10; /*(7,1)*/
+    Nlm[21] = 32./1.35270135e8                      * sp7 * x11; /*(7,2)*/
+    Nlm[22] = 1594323./3.2064032e10                 * sp6 * x10; /*(7,3)*/
+    Nlm[23] = 4194304./3.07432125e8                 * sp7 * x11; /*(7,4)*/
+    Nlm[24] = 1220703125./5.666588928e9             * sp6 * x10; /*(7,5)*/
+    Nlm[25] = 5668704./875875                       * sp7 * x11; /*(7,6)*/
+    Nlm[26] = 96889010407./1111968000               * sp6 * x10; /*(7,7)*/
+
+    /* l=8 */
+    Nlm[27] = 1./8.174459284992e13                  * sp8 * x12; /*(8,1)*/
+    Nlm[28] = 32./3.4493884425e10                   * sp7 * x11; /*(8,2)*/
+    Nlm[29] = 177147./3.96428032e10                 * sp8 * x12; /*(8,3)*/
+    Nlm[30] = 4194304./1.5679038375e10              * sp7 * x11; /*(8,4)*/
+    Nlm[31] = 30517578125./8.00296713216e11         * sp8 * x12; /*(8,5)*/
+    Nlm[32] = 51018336./1.04229125e8                * sp7 * x11; /*(8,6)*/
+    Nlm[33] = 4747561509943./4.083146496e11         * sp8 * x12; /*(8,7)*/
+    Nlm[34] = 274877906944./1688511825.             * sp7 * x11; /*(8,8)*/
     
     return Nlm;
 }
@@ -361,8 +380,8 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
     double x9  = x4*x5;
     double x10 = x*x9;
     
-    const int k22 = 1;//LM2K(2,2);
-    const int k21 = 0;//LM2K(2,1);
+    const int k22 = 1;
+    const int k21 = 0;
     
     /** The Newtonian asymptotic contribution */
     const double FNewt22 = 32./5.*x5;

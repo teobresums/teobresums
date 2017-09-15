@@ -38,6 +38,11 @@ using namespace::std;
 
 vector<double> acoeffs(const double r, const double nu)
 {
+  /** This function precomputes the  coefficients of the PN-expanded EOB interaction potential,
+       A(u;nu). See Eq. (1) of Nagar, Damour, Reisswig, Pollney, PRD 93 (2016), 044046 [NDRP]
+       We give here the analyticall known 2PN, 3PN and 4PN coefficients plus the effective
+       5PN coefficient informed by nonspinning NR simulations in NDRP */
+  
     
     vector<double> a(8);
     const double u    = 1./r;
@@ -45,10 +50,12 @@ vector<double> acoeffs(const double r, const double nu)
     
     
     /** Point-mass PN coefs */
+    /** 2PN coefficient */
     a[0] = 2.;
-    
+    /** 3PN coefficient*/
     a[1] = (94./3. - 41./32.*pi*pi);
-    
+
+    /** 4PN coefficient */
     const double a5l  =  64./5.;
     const double a5c0 = -4237./60.+2275./512.*pi*pi+256./5.*Log2+128./5.*EulerGamma;
     const double a5c1 = -221./6.+41./32.*pi*pi;
@@ -56,7 +63,8 @@ vector<double> acoeffs(const double r, const double nu)
     a[2] = a5c;
     a[3] = a5l;
     a[4] = a5c+a5l*logu;
-    
+
+    /** effective 5PN coefficient. The fit comes from Eq.(5) of NDRP */
     const double a6c = 3097.3*nu*nu-1330.6*nu+81.38;
     const double a6l = (-7004./105.-144./5.*nu);
     a[5] = a6c;
@@ -68,22 +76,29 @@ vector<double> acoeffs(const double r, const double nu)
 
 vector<double> Metric(const double r, void *params, bool nnlo_flag)
 {
+
+  /** Computation of the effective metric, aka as EOB potentials.
+     This functions gives the A function as a (1,5) Pade' approximant
+     as well as the D function as a (0,3) Pade' approximant.
+     Derivatives of A are also analytically computed here. 
+     These derivatives are used in the EoM */
+
+  double nu         = (*(TEOBResumParams *)params).nu;
+  bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+  double rLR        = (*(TEOBResumParams *)params).rLR;
+  vector<double> data(5);\
+
     
-    double nu         = (*(TEOBResumParams *)params).nu;
-    bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
-    double rLR        = (*(TEOBResumParams *)params).rLR;
-    vector<double> data(5);
-    
-    const double u   = 1./r;
-    const double u2  = u*u;
-    const double u3  = u2*u;
-    const double u5  = u3*u2;
-    const double u6  = u5*u;
-    const double u7  = u6*u;
-    const double u8  = u5*u3;
-    const double u9  = u8*u;
-    const double u10 = u5*u5;
-    const vector<double> a = acoeffs(r,nu);
+  const double u   = 1./r;
+  const double u2  = u*u;
+  const double u3  = u2*u;
+  const double u5  = u3*u2;
+  const double u6  = u5*u;
+  const double u7  = u6*u;
+  const double u8  = u5*u3;
+  const double u9  = u8*u;
+  const double u10 = u5*u5;
+  const vector<double> a = acoeffs(r,nu);
     
     /** Unpack numerator and denominator and compute A and its derivatives */
     const vector<double> frac = A_NumDenom(r, a, nu);
@@ -98,23 +113,23 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
     
     double A0    = A;
     double A0_du = A_du;
+
     
     if (tidal_flag==true)
+      /*The tidal part of the potential stars here */
     {
-        
-        //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
-        
+
+      /* kapA2 stands for the \kappa^A_\ell of Eq.(26) in Damour & Nagar, PRD 81, 084016*/
         double XA = (*(TEOBResumParams *)params).X1;
         double XB = (*(TEOBResumParams *)params).X2;
         
         /** Computing the tidal coupling constants */
-        double kapA2 = (*(TEOBResumParams *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
+        double kapA2 = (*(TEOBResumParams *)params).kappaAl2; // 3.*lambdaAl2 * pow(XA, 2.*2 +1.) / q; 
+        double kapB2 = (*(TEOBResumParams *)params).kappaBl2; // 3.*lambdaBl2 * pow(XB, 2.*2 +1.) * q;
         
-        double kapB2 = (*(TEOBResumParams *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
-        
-        double kapT2 = (*(TEOBResumParams *)params).kappaTl2; // kapA2 + kapB2;
-        double kapT3 = (*(TEOBResumParams *)params).kappaTl3;//kapA3 + kapB3;
-        double kapT4 = (*(TEOBResumParams *)params).kappaTl4;//kapA4 + kapB4;
+        double kapT2 = (*(TEOBResumParams *)params).kappaTl2; //kapA2 + kapB2;
+        double kapT3 = (*(TEOBResumParams *)params).kappaTl3; //kapA3 + kapB3;
+        double kapT4 = (*(TEOBResumParams *)params).kappaTl4; //kapA4 + kapB4;
         
         double bar_alph2_1 = (*(TEOBResumParams *)params).bar_alph2_1;//(5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
         double bar_alph2_2 = (*(TEOBResumParams *)params).bar_alph2_2;//((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;
@@ -131,9 +146,10 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
             - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
         }
         else
-        {   //Used for calculting the dynamcis
-            //case 'nnlo_gsfLR'; Bini & Damour, 1409.6933 + free light-ring
-            // Tidal PN coefs
+        {   //Used for calculating the dynamics
+            // The l=2 part of the potential  Bini & Damour, Eq.(7.33) of  PRD 90, 124037 (2014),
+	    // with the free coefficent p fixed to p=4
+            // The l=3 and l=4 corrections are given in the simple (nonresummed) nnlo form.
             double p      =  4.;// % 4<p<6
             double c1     =  8.53353;
             double c2     =  3.04309;
@@ -152,7 +168,7 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
             double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
             double AT4    = - kapT4*u10;
             
-            
+            /** the tidal part of the potential */
             A = AT2 + AT3 + AT4;
             
             /** Derivative of potential w.r.t. u */
@@ -191,13 +207,13 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
 
 vector<double> A5pnP15_dd(const double r, void *params)
 {
-    
+  /** The A potential. This routine computes explcitly the (1,5) 
+      Pade' approximant of the A function */
+
     double nu         = (*(TEOBResumParams *)params).nu;
     bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
     double rLR        = (*(TEOBResumParams *)params).rLR;
-    
-    
-    
+        
     vector<double> A_dd(2);
     
     /** Shorthands */
@@ -239,9 +255,7 @@ vector<double> A5pnP15_dd(const double r, void *params)
     
     if (tidal_flag==true) {
         
-        //Missing: b3NR (not needed), rlR (is calculated), kTl (yes, this has to be passed).
-        
-        /** Compactness of the star */
+                
         double XA = (*(TEOBResumParams *)params).X1;
         double XB = (*(TEOBResumParams *)params).X2;
         
@@ -249,8 +263,7 @@ vector<double> A5pnP15_dd(const double r, void *params)
         // Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, Eq.(37)
         // of Damour&Nagar, PRD 81, 084016 (2010)
         //-----------------------------------------------------------------------------------
-        double kapA2 = (*(TEOBResumParams *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; //Note: kap stands for kappa; see eqn(1) of REF
-        
+        double kapA2 = (*(TEOBResumParams *)params).kappaAl2; // 3.   * lambdaAl2 * pow(XA, 2.*2 +1.) / q; 
         double kapB2 = (*(TEOBResumParams *)params).kappaBl2; // 3.   * lambdaBl2 * pow(XB, 2.*2 +1.) * q;
         
         double kapT3 = (*(TEOBResumParams *)params).kappaTl3;//kapA3 + kapB3;
@@ -258,10 +271,7 @@ vector<double> A5pnP15_dd(const double r, void *params)
         
         double bar_alph3_1 = (*(TEOBResumParams *)params).bar_alph3_1;//((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;
         double bar_alph3_2 = (*(TEOBResumParams *)params).bar_alph3_2;//((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
-        
-        
-        
-        
+                                
         double p      = 4.;// % 4<p<6
         double c1     = 8.53353;
         double c2     = 3.04309;
@@ -313,6 +323,10 @@ vector<double> A5pnP15_dd(const double r, void *params)
 
 int rhs(double t, const double y[], double f[], void *params){
     (void)(t); /* avoid unused parameter warning */
+
+    /** This routine gives the RHS of the EOB equation of motion for the nonspinning case. 
+	These RHS are written explicitly in Eq.(6a)-(6d) of Damour, Nagar and Bernuzzi, 
+	PRD 87, 084035 (2013) [DNB]. Note however that the radial flux F_r*=0 here */
     
     double nu = (*(TEOBResumParams *)params).nu;
     
@@ -391,7 +405,8 @@ int rhs(double t, const double y[], double f[], void *params){
     
     // Approximate ddot(r) without Flux <= ???
     const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
-    
+
+    /* Vector of souces for the multipolar flux, Eq.(16) of DNB */
     double source[] = {
         jhat,Heff,
         Heff,jhat,Heff,
@@ -410,9 +425,19 @@ int rhs(double t, const double y[], double f[], void *params){
 int s_RHS(double t, const double y[], double f[], void *params)
 {
     /*
-     % This function provides the rhs of the full EOB equations
-     % written using p*, i.e. the conjugate momentum to  the r*
-     % generalized tortoise coordinate.
+      This function provides the rhs of the full EOB equations for
+      spinning binaries. The reference Hamiltonian is given in 
+      Eq. (24) and following in Damour&Nagar, PRD 90, 044018.
+      Due to the simple stracture of the effective Hamiltonian, that
+      is written as
+
+      H_eff = H_SO + H_orb
+
+      writing this r.h.s. essentially amounts to adding to the orbital
+      pieces written in rhs above the derivatives of the spin-orbit term.
+      Spin-spin terms do not appear explictly here because they are
+      incorporated in special resummed form within H_SO and H_orb.
+
      */
     
     /* y content
@@ -466,7 +491,9 @@ int s_RHS(double t, const double y[], double f[], void *params)
         B    = metric[1];
         dA   = metric[2];
     }
-    
+
+    /** Introduce here the "centrifugal radius", Eq.(58) of Damour&Nagar, PRD 90, 044018 (2014)
+        Spin-spin terms are all incorporated within this particular variable */
     vector<double> rc_vec;
     rc_vec = s_get_rc(r,params); //[rc, drc, d2rc]
     double rc     = rc_vec[0];
@@ -560,33 +587,8 @@ int s_RHS(double t, const double y[], double f[], void *params)
 
 vector<double> s_A5PNlog(double r, void *params, bool nnlo_flag){
     
-    /*
-     %EOB_A5PNlog function EOB_A5PNlog(r,nu,a5,a6)
-     %   This function computes the Pade' (1,5) resummed A function (with its
-     %   derivatives) starting from the 5PN-expanded version of the A function
-     %   including 4PN and 5PN log terms.
-     %
-     %   This represents the current, stable, most accurate implementation of
-     %   the EOB effective potential
-     %
-     %   Usage:
-     %
-     %   [A dA d2A] = EOB_A5PNlog(r,a5,a6)
-     %
-     %   where a5 and a6 are the nonlog contributions to the 4PN and 5PN terms.
-     %   In practice, a5 is fixed to its GSF value computed in Akcay et al,
-     %
-     %   a5 \equiv a5_GSF = +23.50190(5) \approx +23.5
-     %
-     %   and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu)).*(1-1.5e-5/((0.26-nu)^2)
-     %   as obtained from comparison with the Caltech-Cornell-CITA numerical data.
-     %   [ the effective case]
-     %   These values are used as default.
-     %
-     %   (c) anagar, IHES, November 12, 2012
-     %               revised  March 13, 2013
-     */
-    
+    /*  This function computes the Pade' (1,5) resummed A function 
+        with the 5PN NR-informed coefficient.*/
     
     // parameters
     bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
@@ -765,10 +767,7 @@ vector<double> s_Metric(double r, void *params, bool nnlo_flag){
      %                       [A dA d2A B dB] = EOB_Metric(r,d2A_flag)
      %
      %                       where r is the EOB radius; dA,dB and d2A are the
-     %                       first and second derivatives of A and B. The
-     %                       default value for d2A_flag is 'no'. One must set
-     %                       it up to 'yes' if the computation of the second
-     %                       radial derivative of A is needed.
+     %                       first and second derivatives of A and B.
      */
     
     vector<double> rc_vec = s_get_rc(r,params); //[rc, drc, d2rc]
@@ -811,10 +810,19 @@ vector<double> s_Metric(double r, void *params, bool nnlo_flag){
 }
 
 double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2, bool tidal_flag)
+
+/** This function computed the next-to-next-to-next-to-leading order effective spin-orbit parameter informed by
+   SXS NR simulations. This is the only dynamical free parameter of the model. The current fit is given in Eq.(15)-(23)
+   of Nagar, Riemenschneider & Pratten, arXiv: 1703.06814 
+   Here, the spin variables are a1 = X1 chi1 and a2 = X2 chi2 */
 {
     
     double c3 = 0.;
     if (tidal_flag==true)
+      /* NO effective spin-orbit calibration in the BNS case. This is doen on purpose because the BBH calibration
+         of c3 effectively incorporates effects, like the "missing" spin-spin information, that is different,
+         and EOS dependent, in the BNS case. So the NR-calibrated parameter is set to zero to avoid
+         systematics */
     {
         c3 = 0.;
     }
@@ -822,25 +830,20 @@ double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, 
     {
         double nu2 = nu*nu;
         double nu3 = nu2*nu;
-        
+
+	//------------------------------------
         // equal-mass, equal-spin coefficients
-        //----------------------------------------------------
-        // NEW values used in the paper Nagar et al. The value
-        // in Eq. (12) was kept, by mistake, to c0 = 44.786477
-        // that is an old value obtained with Fitting_c3.m
-        //----------------------------------------------------
+	//------------------------------------
         double c0 =  44.822889;
         double n1 =  -1.879350;
         double n2 =   0.894242;
         double d1 =  -0.797702;
-        
-        
-        // the two pieces
+
+	//----------------------------------------
+        // unequal-mass, unequal-spin coefficients
+	//----------------------------------------
         double c3_eq = c0*(1. + n1*(a1+a2) + n2*(a1+a2)*(a1+a2))/(1.+d1*(a1+a2));
         
-        //-----------------------------------
-        // New fit: different functional form
-        //-----------------------------------
         double cnu    = 1222.36;
         double cnu2   = -12764.4;
         double cnu3   =  36689.6;
@@ -858,22 +861,11 @@ vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prsta
 {
     
     /*
-     % EOB_GetGSs(r,aK2,prstar,nu). This function computes the
-     % gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.
-     %
-     % Usage: ggm=EOB_GetGSs(r,aK2,prstar,nu)
-     %
-     % where ggm is the output structure. Then we have:
-     %
-     % r      => BL radius
-     % aK2    => squared Kerr parameter
-     % prstar => r* conjugate momentum
-     % nu     => symmetric mass ratio
-     %
-     % the CN3LO parameter is hard-coded in this routine and can be modified
-     % here
-     %
-     % (c) nagar@ihes.fr, January 2013
+      EOB_GetGSs(r,aK2,prstar,nu). This function computes the
+      gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.
+      The functions (and coefficients) are written explicitly in Sec.IIIB of
+      Damour & Nagar, PRD 90, 044018 (2014)
+          
      */
     
     
@@ -1002,7 +994,9 @@ vector <double> s_get_rc(double r, void *params)
          the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
          
          The implementation uses the I-Love-Q fits of Table I of Yunes-Yagi
-         paper, PRD 88, 023009, the bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. The dimensionless bar{\lambda} love number is related to our apsidal constant as lambda = 2/3 k2/(C^5) so that both quantities have to appear here.*/
+         paper, PRD 88, 023009, the bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. 
+         The dimensionless bar{\lambda} love number is related to our apsidal constant as 
+         lambda = 2/3 k2/(C^5) so that both quantities have to appear here.*/
         
         //BNS effective spin parameter
         double a02      = C_Q1*at1*at1 + 2.*at1*at2 + C_Q2*at2*at2;

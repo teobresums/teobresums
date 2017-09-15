@@ -37,7 +37,8 @@ vector<gsl_complex> hlmNewt(const double r,
                             const double Omega,
                             const double phi,
                             const double nu,
-                            bool         tidal_flag
+                            bool         tidal_flag,
+			    bool         spin_flag
                             ){
     
     /******************************************************************************************
@@ -58,20 +59,33 @@ vector<gsl_complex> hlmNewt(const double r,
     double vphi6 = vphi*vphi5;
     double vphi7 = vphi*vphi6;
     double vphi8 = vphi*vphi7;
+    double vphi9 = vphi*vphi8;
     
     
     /** Polynomials in nu */
     const double p1 = 1.;
-    double       p2 = sqrt(1.-4.*nu);
+    const double p2 = sqrt(1.-4.*nu);                   /*(2,1), (3,3) & (3,1)*/
     const double p3 = (3.*nu-1.);
-    const double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);
+    const double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);        /*(4,3) & (4,1)*/
     const double p5 = 1.-5.*nu+5.*nu2;
     const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
     const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
-    
+    const double p8 = (4*nu3-10*nu2+6*nu-1)*sqrt(1-4*nu);
+
+    /* Special treatment when spin is on because of the singularity in the sqrt(1-4*nu) factor whn m=odd when nu=1/4.
+       The nu-dependence is not factored out in the spin part, while in the nonspinning part it is re-introduced
+       when the full waveform is computed. See discussion in Damour & Nagar, PRD 90, 044018, Sec. 4, Eq.(89).
+       This is not done for multipole with l>4 because no spinning information is included in the waveform. */
+    if (spin_flag==true)
+      {
+	const double p2 = 1;
+	const double p4 = 2.*nu-1;
+      }
+    	
     if (tidal_flag==true)
     {
-        p2 = 1.;
+        const double p2 = 1.;
+	const double p4 = 2*nu-1;
     }
     
     int kmax = 35;
@@ -81,6 +95,7 @@ vector<gsl_complex> hlmNewt(const double r,
     const double phix5 = 5. * phi;
     const double phix6 = 6. * phi;
     const double phix7 = 7. * phi;
+    const double phix8 = 8. * phi;
     
     double M[] = {
         phi,phix2,
@@ -89,7 +104,7 @@ vector<gsl_complex> hlmNewt(const double r,
         phi,phix2,phix3,phix4,phix5,
         phi,phix2,phix3,phix4,phix5,phix6,
         phi,phix2,phix3,phix4,phix5,phix6,phix7,
-        phi,phix2,phix3,phix4,phix5,phix6,phix7,8.*phi};
+        phi,phix2,phix3,phix4,phix5,phix6,phix7,phix8};
     
     vector<gsl_complex> hlmNewt(kmax);
     
@@ -99,6 +114,7 @@ vector<gsl_complex> hlmNewt(const double r,
     const double pv56 = p5 * vphi6;
     const double pv67 = p6 * vphi7;
     const double pv78 = p7 * vphi8;
+    const double pv89 = p8 * vphi9;
     
     
     /** Compute hlmNewt (without phase factor) in complex Polar coords
@@ -196,7 +212,7 @@ vector<gsl_complex> hlmNewt(const double r,
     hlmNewt[26].dat[0] = 16807./180.*sqrt(7.*pi/4290.)   * pv67;
     
     /** l=8 ------------------------------------------------------------------ */
-    
+    /** FIXME: higher l=8 terms to be implemented soon...*/
     hlmNewt[27].dat[1] = pi - M[27];
     hlmNewt[27].dat[0] = 131072./315.*sqrt(2.*pi/17017.) * pv78;
     
@@ -231,10 +247,10 @@ vector<gsl_complex> hhatlmtail(const double Omega,
                                const int    M[])
 {
     
-    /**********************************************************
-     * Computes the tail contribution to the resummed wave.   *
-     * Reference: Damour, Iyer & Nagar, PRD 79, 064004 (2009) *
-     **********************************************************/
+  /******************************************************************
+     * Computes the tail contribution to the resummed wave.         *
+     * Reference: Damour, Iyer & Nagar, PRD 79, 064004 (2009) [DNV] *
+     ****************************************************************/
     
     int kmax        = 35;
     const double pi = M_PI;
@@ -303,43 +319,49 @@ vector<double> hlm_Tidal(double x,
     vector<double> betaB1 = hA;
     vector<double> hTidallm(kmax);
     
-    
-    // l=2 -------------------------------------------------------------------*/
-    
-    hA[1]     = 2 * khatA_2 *(XA/XB+3);
-    hB[1]     = 2 * khatB_2 *(XB/XA+3);
+    /* Individual tidal multipoles. The l=2 also brings the NLO (relative 1PN)
+       tidal correction, \beta_1^{22}, as given in Eq.(A15) of DNV.
+       The other modes only have the LO contribution and the beta's don't exist. */
+
+    /*(2,2) mode */
+    hA[1]     = 2. * khatA_2 *(XA/XB+3.);
+    hB[1]     = 2. * khatB_2 *(XB/XA+3.);
     
     betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
     betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
+
+    /*(2,1) mode */
+    hA[0]     = 3. * khatA_2 * XB * (3.-4.*XA)/XA;
+    hB[0]     = 3. * khatB_2 * XA * (3.-4.*XB)/XB;
     
-    hA[0]     = 3 * khatA_2 * XB * (3-4*XA)/XA;
-    hB[0]     = 3 * khatB_2 * XA * (3-4*XB)/XB;
+    /* (3,1) mode */
+    hA[2] = 12. * khatA_2 * XB*XB/XA;
+    hB[2] = 12. * khatB_2 * XA*XA/XB;
+
+    /* (3,3) mode */
+    hA[4] = hA[2];
+    hB[4] = hB[2];
     
-    
-    /** l=3 ------------------------------------------------------------------*/
-    
-    hA[2] = hA[4];
-    hB[2] = hB[4];
-    
-    hA[4] = 12 * khatA_2 * XB*XB/XA;
-    hB[4] = 12 * khatB_2 * XA*XA/XB;
-    
-    
-    
-    /** l=2 ------------------------------------------------------------------
-     * (2,1) */
-    hTidallm[0] = ( -hA[0] + hB[0] )*x5;
+    /**********************************************************************
+     Combining the pieces together to construct the tidal waveform. Note 
+     that the signs are correct and consistent with Eqs.(A14) and (A16) and
+     (A17) of DNV, PRD 85, 123007 (2012). The - sign in front of hA for 
+     subdominant multipoles matches Eqs.(A16)-(A17) of DNV.
+    **********************************************************************/
     
     /* (2,2) */
     hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
     
-    /** l=3 ------------------------------------------------------------------
-     * (3,1) */
-    hTidallm[2] = ( -hA[2] + hB[2] )*x5;
-    
+    /* (2,1) */
+    hTidallm[0] = ( -hA[0] + hB[0] )*x5;
+        
     /* (3,3) */
     hTidallm[4] = ( -hA[4] + hB[4] )*x5;
+
+    /* (3,1) */
+    hTidallm[2] = ( -hA[2] + hB[2] )*x5;
     
+        
     return hTidallm;
     
 }
@@ -533,55 +555,68 @@ vector<double> f_lm(const double x,const double nu)
 
 vector<double> s_flm(double x, void *params){
     
-    /*
-     % Function EOB_flm(x). This function explicitly computes
-     % the resummed flm in the general nu-dependent case
-     %
-     % Generated with EOB_rholm_complete.nb mathematica notebook
-     %
-     % USAGE: s=EOB_flm(x,nu,eps)
-     %
-     %        x   :: PN parameter
-     %        nu  :: symmetric mass ratio. EMRL case is nu=0
-     %        eps :: eps=1 switches on Iyer-Fujita terms; eps=0 switches them off.
-     %
-     %        s is the output structure of the form:
+    /* This function computes the residual amplitude corrections flm's as 
+       introduced in Damour, Iyer & Nagar, PRD 79, 064004 (2008).
+       The orbital part is taken at the usual 3^{+2} PN order, i.e. 3PN terms
+       are integrated by the 4PN and 5PN test-particle terms, with the higher
+       modes obtained by Fujita & Iyer.
+
      */
-    
-    //vector<double> flm = EOBflm(x,nu);
+
+    /* declaring the spin-dependent terms */
+    double rho22S;
+    double rho32S;
+    double rho44S;
+    double rho42S;
+    double f21S;
+    double f33S;
+    double f31S;
+    double f43S;
+    double f41S;
+
+    /* defining parameters */
     double nu         = (*(TEOBResumParams *)params).nu;
     double X1         = (*(TEOBResumParams *)params).X1;
     double X2         = (*(TEOBResumParams *)params).X2;
     double chi1       = (*(TEOBResumParams *)params).chi1;
     double chi2       = (*(TEOBResumParams *)params).chi2;
+    double a1         = (*(TEOBResumParams *)params).a1;
+    double a2         = (*(TEOBResumParams *)params).a2;
+    double C_Q1       = (*(TEOBResumParams *)params).C_Q1;
+    double C_Q2       = (*(TEOBResumParams *)params).C_Q2;
     bool   tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
+
+    /* Switching on Fujita-Iyer terms. This is hard-coded here */
+    const double eps = 1.0;
     
-    double rho22S;
-    
-    
-    double deltam  = X1 - X2;
-    double chiS    = 0.5*(chi1 + chi2);
-    double chiA    = 0.5*(chi1 - chi2);
-    
-    // velocity variables
+    /* Defining useful shorthands. Note that the variables called here (a1,a2)
+       are what we usually cal tilde{a}_1 and tilde{a}_2 and are defined as
+       a1 = X1*chi1, a2=X2*chi2 and are passed here as parameters. Special 
+       combinations of these quantities are used here to write the spin-dependent
+       part of the waveform in particularly compact form, so that the (spinning)
+       test-particle limit is recovered just by visual inspection of the equations */
+      
+    double a0      = a1+a2;
+    double a12     = a1-a2;
+    double X12     = X1-X2;
+    double a0X12   = a0*X12;
+    double a12X12  = a12*X12;
+          
+    /* velocity variables */
+    double x2 = x*x;
+    double x3 = x*x2;
+    double x4 = x*x3;
+    double x5 = x*x4;
     double v  = sqrt(x);
     double v2 = x;
     double v3 = v*v2;
     double v4 = v3*v;
     double v5 = v4*v;
-    
-    double nu2 = nu*nu;
-    
-    const double eps = 1.0;
-    
+        
     // Shorthands
-    const double x2  = x*x;
-    const double x3  = x*x2;
-    const double x4  = x*x3;
-    const double x5  = x*x4;
+    const double nu2 = nu*nu;
     const double nu3 = nu*nu2;
     const double nu4 = nu*nu3;
-    
     
     // Compute EulerLogs
     const double el1 = Eulerlog(x,1);
@@ -592,23 +627,25 @@ vector<double> s_flm(double x, void *params){
     const double el6 = Eulerlog(x,6);
     const double el7 = Eulerlog(x,7);
     
-    //================
-    // l=m=2 multipole
-    //================
-    
-    // spin-orbit terms (even-parity)
-    double cSO_lo    = -2./3.*(chiS*(1-nu)+chiA*deltam);
-    double cSO_nlo   = (  (-34./21. + 49./18.*nu + 209./126.*nu2)*chiS + (-34./21. - 19./42.*nu)*deltam*chiA );
-    
-    //========================================
-    // SPIN-SPIN contribution (even-parity):
-    // put it to zero when tides are present
-    //========================================
-    double a1      = (*(TEOBResumParams *)params).a1;
-    double a2      = (*(TEOBResumParams *)params).a2;
-    double a0      = a1+a2;
-    double C_Q1    = (*(TEOBResumParams *)params).C_Q1;
-    double C_Q2    = (*(TEOBResumParams *)params).C_Q2;
+    /*********************
+     l=m=2 multipole
+    *********************/
+
+    /***********************************************************************************************************
+     spin-orbit coefficients: the Damour & Nagar pieces
+     are rewritten in compact form
+     double deltam  = X12;
+     double chiS    = 0.5*(chi1 + chi2);
+     double chiA    = 0.5*(chi1 - chi2);
+     double cSO_lo    = -2./3.*(chiS*(1-nu)+chiA*deltam);
+     double cSO_nlo   = (  (-34./21. + 49./18.*nu + 209./126.*nu2)*chiS + (-34./21. - 19./42.*nu)*deltam*chiA );
+    ************************************************************************************************************/
+    double cSO_lo    = (-0.5*a0 - a12X12/6.);
+    double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12;
+
+    /*---------------------------------------
+       SPIN-SPIN contribution (both BBH & BNS
+    -----------------------------------------*/
     
     double cSS_lo;
     if (tidal_flag==true)
@@ -617,30 +654,45 @@ vector<double> s_flm(double x, void *params){
     }
     else
     {
-        cSS_lo = 0.5*a0*a0; // spin-spin contribution to zero for BNS
+        cSS_lo = 0.5*a0*a0; 
     }
+
+    /***************************************************************/
+    /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
+    /***************************************************************/
+    rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 ;
     
-    //the spin-dependent part in taylor-expanded form (bad towards merger)
-    rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 ;//+ cSS_nlo*v6 + cSO_nnlo*v7;
+    /************************************************************************
+     l>=3, m=even: multipoles rewritten in compact and self-explanatory form
+    *************************************************************************/
+    rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
+    rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
+    rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
     
+    /************************************************************************
+     l>=2, m=odd: multipoles rewritten in compact and self-explanatory form
+    *************************************************************************/
+    f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3;
+    f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3;
+    f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3;
+    f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v;
+    f41S = f43S;
     
-    //===============
-    // l>2 multipoles
-    //===============
-    double rho32S  = -4.*nu/(3.*(3.*nu-1.))*chiS*v;
-    double rho44S  = -1./(15.*(1.-3.*nu))*((42.*nu2-41.*nu+10.)*chiS + (10.-39.*nu)*deltam*chiA)*v3;
-    double rho42S  = -1./(15.*(1.-3.*nu))*((78.*nu2-59.*nu+10.)*chiS + (10.-21.*nu)*deltam*chiA)*v3;
-    
-    double sqrt_one_4nu = sqrt(1.-4.*nu);
-    
-    // Note that these are deltam*flm of Eq. (A15a)-(A15d) of Taracchini et al.
-    // Typo in f31 corrected
-    double f21S = -1.5*(deltam*chiS + chiA)*v+ v3*(  (61./12. + 79./84.*nu)*deltam*chiS + (61./12. + 131./84.*nu)*chiA );
-    double f33S = -( deltam*chiS*(2. -  5./2.*nu) + chiA*(2. - 19./2.*nu) )*v3;
-    double f31S = -( deltam*chiS*(2. - 13./2.*nu) + chiA*(2. - 11./2.*nu) )*v3;
-    double f43S = -5.*nu/(2.*(2.*nu-1.))*(deltam*chiS - chiA)*v;
-    double f41S =  f43S;
-    
+    /**********************************************************************************************
+     Old writing using precisely the expressions in the DN paper using the variables chiA and chiS
+     These expressions are fully equivalent to the ones above, but are less compact and less self
+     explanatory, since the spinning test-mass limit is not recognizable at sight
+  
+     rho32S  = -4.*nu/(3.*(3.*nu-1.))*chiS*v;
+     rho44S  = -1./(15.*(1.-3.*nu))*((42.*nu2-41.*nu+10.)*chiS + (10.-39.*nu)*deltam*chiA)*v3;
+     rho42S  = -1./(15.*(1.-3.*nu))*((78.*nu2-59.*nu+10.)*chiS + (10.-21.*nu)*deltam*chiA)*v3;
+     f21S = -1.5*(deltam*chiS + chiA)*v+ v3*(  (61./12. + 79./84.*nu)*deltam*chiS + (61./12. + 131./84.*nu)*chiA );
+     f33S = -( deltam*chiS*(2. -  5./2.*nu) + chiA*(2. - 19./2.*nu) )*v3;
+     f31S = -( deltam*chiS*(2. - 13./2.*nu) + chiA*(2. - 11./2.*nu) )*v3;
+     f43S = -5.*nu/(2.*(2.*nu-1.))*(deltam*chiS - chiA)*v;
+     f41S =  f43S;
+    *********************************************************************************************/
+        
     const int kmax = 35; //length of vector needed to store all the multipoles, 35=8+7+...+2
     vector<double> rholm(kmax);
     vector<double> flm(kmax);
@@ -656,7 +708,7 @@ vector<double> s_flm(double x, void *params){
     rholm[0] = 1. + (-1.0535714285714286 + 0.27380952380952384*nu)*x + (-0.8327841553287982 - 0.7789824263038548*nu + 0.13116496598639457*nu2)*x2 + x3*(2.9192806270460925 - 1.019047619047619*el1) + x4*(-1.28235780892213 + 1.073639455782313*el1) + eps*x5*(-3.8466571723355227 + 0.8486467106683944*el1);
     
     flm[0] = gsl_pow_int(rholm[0], 2);
-    flm[0] = (sqrt_one_4nu*flm[0] + f21S);
+    flm[0] = (X12*flm[0] + f21S);
     
     
     // l=3 ------------------------------------------------------------------
@@ -664,7 +716,7 @@ vector<double> s_flm(double x, void *params){
     rholm[4] = 1. + (-1.1666666666666667 + 0.6666666666666666*nu)*x + (-1.6967171717171716 - 1.8797979797979798*nu + 0.45151515151515154*nu2)*x2 + x3*(14.10891386831863 - 3.7142857142857144*el3) + x4*(-6.723375314944128 + 4.333333333333333*el3) + eps*x5*(-29.568699895427518 + 6.302092352092352*el3);
     
     flm[4] = gsl_pow_int(rholm[4], 3);
-    flm[4] = (sqrt_one_4nu*flm[4] + f33S);
+    flm[4] = (X12*flm[4] + f33S);
     
     //(3,2)
     rholm[3] = 1. + (0.003703703703703704*(328. - 1115.*nu + 320.*nu2)*x)/(-1. + 3.*nu) + (6.235191420376606e-7*(-1.444528e6 + 8.050045e6*nu - 4.725605e6*nu2 - 2.033896e7*nu3 + 3.08564e6*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + x3*(6.220997955214429 - 1.6507936507936507*el2) + eps*x4*(-3.4527288879001268 + 2.005408583186361*el2);
@@ -675,7 +727,7 @@ vector<double> s_flm(double x, void *params){
     rholm[2] = 1. + (-0.7222222222222222 - 0.2222222222222222*nu)*x + (0.014169472502805836 - 0.9455667789001122*nu - 0.46520763187429853*nu2)*x2 + x3*(1.9098284139598072 - 0.4126984126984127*el1) + x4*(0.5368150316615179 + 0.2980599647266314*el1) + eps*x5*(1.4497991763035063 - 0.0058477188106817735*el1);
     
     flm[2] = gsl_pow_int(rholm[2], 3);
-    flm[2] = (sqrt_one_4nu*flm[2] + f31S);
+    flm[2] = (X12*flm[2] + f31S);
     
     // l=4 ------------------------------------------------------------------
     //(4,4)
@@ -687,7 +739,7 @@ vector<double> s_flm(double x, void *params){
     rholm[7] = 1. + (0.005681818181818182*(222. - 547.*nu + 160.*nu2)*x)/(-1. + 2.*nu) - 0.9783218202252293*x2 + eps*(x3*(8.519456157072423 - 2.0402597402597404*el3) +      x4*(-5.353216984886716 + 2.5735094451003544*el3));
     
     flm[7] = gsl_pow_int(rholm[7], 4);
-    flm[7] = (sqrt_one_4nu*flm[7] + f43S);
+    flm[7] = (X12*flm[7] + f43S);
     
     //(4,2)
     rholm[6] = 1. + (0.0007575757575757576*(1146. - 3530.*nu + 285.*nu2)*x)/(-1. + 3.*nu) - (3.1534122443213353e-9*(1.14859044e8 - 2.95834536e8*nu - 1.204388696e9*nu2 + 3.04798116e9*nu3 + 3.79526805e8*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + 4.550378418934105e-12*x3*(8.48238724511e11 - 1.9927619712e11*el2) + eps*x4*(-0.6621921297263365 + 0.787251738160829*el2);
@@ -698,7 +750,7 @@ vector<double> s_flm(double x, void *params){
     rholm[5] = 1. + (0.001893939393939394*(602. - 1385.*nu + 288.*nu2)*x)/(-1. + 2.*nu) - 0.36778992787515513*x2 + x3*(0.6981550175535535 - 0.2266955266955267*el1) + eps*x4*(-0.7931524512893319 + 0.2584672482399755*el1);
     
     flm[5] = gsl_pow_int(rholm[5], 4);
-    flm[5] = (sqrt_one_4nu*flm[5] + f41S);
+    flm[5] = (X12*flm[5] + f41S);
     
     // l=5 ------------------------------------------------------------------
     //(5,5)
@@ -881,8 +933,8 @@ vector<vector<gsl_complex> > find_a1a2a3(
     {
         for (int j=t_length;j--;)
         {
-            /** In general divide by sqrt( (l+2) (l+1) l (l-1) ). Use the multipole structure to get the correct L. */
-            A[k][j] = A[k][j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
+            /** In general divide by sqrt( (l+2) (l+1) l (l-1) ). Use the multipole structure to get the correct L. */           
+	  A[k][j] = A[k][j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
         }
     }
     
@@ -1021,6 +1073,11 @@ vector<vector<gsl_complex> > find_a1a2a3(
     max_dA[1]   = dA_tmp;
     max_omg[1]  = omg_tmp;
     max_domg[1] = domg_tmp;
+
+    printf("Amrg    =%10.6f\n",max_A[1]);
+    printf("dAmrg   =%10.6f\n",max_dA[1]);
+    printf("omg_mrg =%10.6f\n",max_omg[1]);
+    printf("domg_mrg=%10.6f\n",max_domg[1]);
     
     /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
      * NQC basis for (2,2) waveform : AMPLITUDE
@@ -1038,15 +1095,15 @@ vector<vector<gsl_complex> > find_a1a2a3(
         
         n1[j]  = pr_star2/(r2*w2);        // [pr*/(r Omg)]^2
         n2[j]  = ddotr[j]/(r[j]*w2);      // [ddot{r}/(r Omg^2)]
-        n3[j]  = n1[j]*pr_star2;          // [pr*/(r Omg)]^2 *(pr*)^2
         
         // NQC basis for (2,2) waveform: PHASE
         
         n4[j]  = pr_star[j]/(r[j]*w[j]);           //  pr*/(r Omg)
         n5[j]  = n4[j]*r2*w2;                      // (pr*)*(r Omg)
-        n6[j]  = n5[j]*pr_star2;                   // (pr*^3)*(r Omg)
         
 //        std::fprintf(NQCfile, "%d\t%f\t%f\t%f\t%f\n", j, n1[j], n2[j], n4[j], n5[j]);
+//=======
+//        std::fprintf(NQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
     }
     
 //    std::fclose(NQCfile);
@@ -1057,6 +1114,17 @@ vector<vector<gsl_complex> > find_a1a2a3(
     vector<double>  d_n5 = s_D1(n5,T,t_length-1);
     vector<double> d2_n4 = s_D1(d_n4,T,t_length-1);
     vector<double> d2_n5 = s_D1(d_n5,T,t_length-1);
+
+    
+    /* A check: output derivatives*/
+    char   outputdNQC[256]   = "dNQC_func.dat";
+    std::FILE* dNQCfile   = std::fopen(outputdNQC, "w");
+    for (int j=t_length;j--;)
+    {                
+        std::fprintf(dNQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
+    }
+    
+    std::fclose(dNQCfile);
     
     int Omgmax_index = 0;
     double Omg_max   = Omg_orb[0];
@@ -1083,6 +1151,8 @@ vector<vector<gsl_complex> > find_a1a2a3(
     }
     
     double tNQC = tOmgOrb_pk - DeltaT_nqc;
+
+    printf("tNQC [bare] = %f\n",tNQC);
     
     i        = 0;
     int jmax = 0;
@@ -1103,12 +1173,36 @@ vector<vector<gsl_complex> > find_a1a2a3(
             m12[k][j] = n2[j]*A[k][j];
             
         }
+	/* Attention here: one is taking FD derivatives */
         m21[k]   = s_D1(m11[k],T,t_length-1);
         m22[k]   = s_D1(m12[k],T,t_length-1);
         
-        p1tmp[k] = A[k];
-        p2tmp[k] = s_D1(p1tmp[k],T,t_length-1);
+        p1tmp[k] = A[k];                          // amplitude
+        p2tmp[k] = s_D1(p1tmp[k],T,t_length-1);   // derivative of amplitude
     }
+
+    /* A check: output derivatives*/
+    char   outputA[256]   = "Amp_func.dat";
+    std::FILE* Afile   = std::fopen(outputA, "w");
+    for (int j=t_length;j--;)
+    {                
+        std::fprintf(Afile, "%f\t%f\t%f\n", T[j], p1tmp[1][j], p2tmp[1][j]);
+    }
+    
+    std::fclose(Afile);
+    
+    printf("A22-eob[C++]  = %f\n",p1tmp[1][jmax]);
+    printf("dA22-eob[C++] = %f\n",p2tmp[1][jmax]);
+    
+    // testing: putting exact values of amplitude and its derivative from Matlab code
+    //p1tmp[1][jmax] =  0.33611115;
+    //p2tmp[1][jmax] = -0.00007885;
+      
+    printf("A22-eob[matlb]  = %f\n",p1tmp[1][jmax]);
+    printf("dA22-eob[matlb] = %f\n",p2tmp[1][jmax]);
+
+    // similar test for the frequencies
+
     
     double detM = 1.;
     for (int k=35;k--;)
@@ -1125,7 +1219,6 @@ vector<vector<gsl_complex> > find_a1a2a3(
         detM     = M[0]*M[3]-M[1]*M[2];
         ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
         ai[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
-        ai[k][2] = 0.;
         
         /** Computation of bi coefficients */
         P[0]     = omg[k][jmax]   - max_omg[k];
@@ -1139,8 +1232,20 @@ vector<vector<gsl_complex> > find_a1a2a3(
         detM     =  M[0]*M[3] - M[1]*M[2];
         bi[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
-        bi[k][2] =  0.;
     }
+
+    printf("m11 = %f\n",m11[1][jmax]);
+    printf("m12 = %f\n",m12[1][jmax]);
+    printf("m21 = %f\n",m21[1][jmax]);
+    printf("m22 = %f\n",m22[1][jmax]);
+    printf("P[0] = %f\n", max_A[1]  - p1tmp[1][jmax]);
+    printf("P[1] = %f\n", max_dA[1] - p2tmp[1][jmax]);
+    
+    printf("a1 = %f\n",ai[1][0]);
+    printf("a2 = %f\n",ai[1][1]);
+    printf("b1 = %f\n",bi[1][0]);
+    printf("b2 = %f\n",bi[1][1]);
+    
     
     for (int k=35;k--;)
     {
@@ -1325,9 +1430,9 @@ vector<gsl_complex> hlm(double       t,
     vector<gsl_complex> hlm(kmax);
     
     double nu           = (*(TEOBResumParams *)params).nu;
-    int tidal_flag      = (*(TEOBResumParams *)params).flags.tidal;
-    int spin_flag       = (*(TEOBResumParams *)params).flags.spin;
-    int speedytail_flag = (*(TEOBResumParams *)params).flags.speedy;
+    bool tidal_flag      = (*(TEOBResumParams *)params).flags.tidal;
+    bool spin_flag       = (*(TEOBResumParams *)params).flags.spin;
+    bool speedytail_flag = (*(TEOBResumParams *)params).flags.speedy;
     
     double source[]     = {
         jhat,Heff,
@@ -1339,7 +1444,7 @@ vector<gsl_complex> hlm(double       t,
         jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
     
     /** Newtonian waveform */
-    vector<gsl_complex> hNewt = hlmNewt( rw,Omega,phi, nu,tidal_flag);
+    vector<gsl_complex> hNewt = hlmNewt( rw,Omega,phi, nu,tidal_flag,spin_flag);
     
     /** Compute corrections */
     double x = rw*Omega*rw*Omega;

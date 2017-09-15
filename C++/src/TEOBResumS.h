@@ -154,13 +154,6 @@ double AdiabLR(void *params);
 
 double Eulerlog(const double x, const double m);
 
-/* _FDdrvt_h */
-
-vector<double> FDdrvt(const vector<double> f, const vector<double> t, int varargin, const int grid_length);
-
-/* _FDdrvt_omega_h */
-
-vector<double> FDdrvt_omega(vector<double> f, double dt);
 
 /* _FlmNewt_h */
 
@@ -286,7 +279,11 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
 
 double interpolate(double dt, vector<gsl_complex> grid);
 
-
+double interp1d (const int order, double xx, int nx, double *f, double *x);
+double baryc_f_weights(double xx, int n, double *f, double *x, double *omega);
+void baryc_weights(int n, double *x, double *omega);
+double baryc_f(double xx, int n, double *f, double *x);
+int find_point_bisection(double x, int n, double *xp, int o);
 
 /* _read_config_h */
 

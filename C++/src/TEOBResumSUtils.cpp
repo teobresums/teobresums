@@ -128,81 +128,123 @@ vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt)
     return data_g;
 }
 
-vector<double> FDdrvt(const vector<double> f,const vector<double> t, int varargin, const int grid_length)
+
+
+/* Find nearest point index in 1d array */
+int find_point_bisection(double x, int n, double *xp, int o)
 {
-    
-    const double dt    = t[1]-t[0];
-    const double oodt  = 1./dt;
-    const double c = 1./12.;
-    vector<double> d1f(grid_length);
-    
-    for (int i=grid_length; i--;)
-    {
-        switch (i)
-        {
-            case 0:
-                d1f[i] = c*(-25.*f[i] + 48.*f[i+1] - 36.*f[i+2] + 16.*f[i+3] - 3.*f[i+4])*oodt;
-                //d2f[i] = c*(45*f[i]-154*f[i+1]+214*f[i+2]-156*f[i+3]+61*f[i+4]-10*f[i+5])*oodt2;
-                break;
-            case 1:
-                d1f[i] = c*(-3.*f[i-1] - 10.*f[i] + 18.*f[i+1] - 6.*f[i+2] + f[i+3])*oodt;
-                //d2f[i] = c*(10*f[i-1]-15*f[i]-4*f[i+1]+14*f[i+2]-6*f[i+3]+f[i+4])*oodt2;
-                break;
-            case 10:
-                d1f[i] = - c*(-3.*f[i+1] - 10.*f[i] + 18.*f[i-1] - 6.*f[i-2] + f[i-3])*oodt;
-                //d2f[i] = c*(10*f[i+1]-15*f[i]-4*f[i-1]+14*f[i-2]-6*f[i-3]+f[i-4])*oodt2;
-                break;
-            case 11:
-                d1f[i] = - c*(-25.*f[i] + 48.*f[i-1] - 36.*f[i-2] + 16.*f[i-3] - 3.*f[i-4])*oodt;
-                //d2f[i] = c*(45*f[i]-154*f[i-1]+214*f[i-2]-156*f[i-3]+61*f[i-4]-10*f[i-5])*oodt2;
-                break;
-            default: d1f[i] = c*(8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oodt;
-                //d2f[i] = c*(-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]))*oodt2;
-                break;
-        }
-    }
-    
-    return d1f;
+  int i0 = o-1, i1 = n-o;
+  int i;
+
+  if (n < 2*o) {
+    printf(" not enough point to interpolate");
+    exit(1);
+  }
+  
+  if (x <= xp[i0]) return 0;
+  if (x >  xp[i1]) return n-2*o;
+
+  while (i0 != i1-1) {
+    i = (i0+i1)/2;
+    if (x < xp[i]) i1 = i; else i0 = i;
+  }
+
+  return i0-o+1;
 }
 
-vector<double> FDdrvt_omega(vector<double> f, double dt)
+/* Barycentric Lagrange interpolation at xx with n points of f(x), 
+   equivalent to standard Lagrangian interpolation */   
+#define tiny 1e-12
+double baryc_f(double xx, int n, double *f, double *x)
 {
-    vector<double> d1f(f.size()-2);
-    const double oodt  = 1./dt;
-    const double c     = 1./12.;
+  
+  double omega[n];
+  double o, num, den, div, ci;
+
+  int i, j;
+
+  for (i = 0; i < n; i++) {
     
-    for (unsigned long int i=0; i<f.size()-2; i++)
-    {
-        switch (i)
-        {
-            case 0:
-                d1f[i] = c*(-25.*f[i]+48.*f[i+1]-36.*f[i+2]+16.*f[i+3]-3.*f[i+4])*oodt;
-                //d2f[i] = c*(45*f[i]-154*f[i+1]+214*f[i+2]-156*f[i+3]+61*f[i+4]-10*f[i+5])*oodt2;
-                break;
-            case 1:
-                d1f[i] = c*(-3.*f[i-1]-10.*f[i]+18.*f[i+1]-6.*f[i+2]+f[i+3])*oodt;
-                //d2f[i] = c*(10*f[i-1]-15*f[i]-4*f[i+1]+14*f[i+2]-6*f[i+3]+f[i+4])*oodt2;
-                break;
-                /*
-                 case 198:
-                 d1f[i] = - c*(-3.*f[i+1]-10.*f[i]+18.*f[i-1]-6.*f[i-2]+f[i-3])*oodt;
-                 //d2f[i] = c*(10*f[i+1]-15*f[i]-4*f[i-1]+14*f[i-2]-6*f[i-3]+f[i-4])*oodt2;
-                 break;
-                 case 199:
-                 d1f[i] = - c*(-25.*f[i]+48.*f[i-1]-36.*f[i-2]+16.*f[i-3]-3.*f[i-4])*oodt;
-                 //d2f[i] = c*(45*f[i]-154*f[i-1]+214*f[i-2]-156*f[i-3]+61*f[i-4]-10*f[i-5])*oodt2;
-                 break;
-                 */
-            default:
-                d1f[i] = c*(8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oodt;
-                //d2f[i] = c*(-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]))*oodt2;
-                break;
-        }
+    if (fabs(xx - x[i]) <= tiny) return f[i];
+
+    o = 1.;
+    for (j = 0; j < n; j++) {
+      if (j != i) {
+	o /= (x[i] - x[j]);
+      }
     }
-    
-    return d1f;
-    
+    omega[i] = o;
+  
+  }
+
+  num = den = 0.;
+  for (i = 0; i < n; i++) {
+
+    div  = xx - x[i];
+    ci   = omega[i]/div;
+    den += ci;
+    num += ci * f[i];
+
+  }
+
+  return( num/den );
 }
+
+/* Barycentric Lagrange interpolation at xx with n points of f(x), 
+   compute weights */
+void baryc_weights(int n, double *x, double *omega)
+{  
+  double o;
+  int i, j;
+
+  for (i = 0; i < n; i++) {
+    
+    o = 1.;
+    for (j = 0; j < n; j++) {
+      if (j != i) { 
+	o /= (x[i] - x[j]);
+      }
+    }
+    omega[i] = o;
+  
+  }
+
+}
+
+/* Barycentric Lagrange interpolation at xx with n points of f(x), 
+   use precomputed weights */
+double baryc_f_weights(double xx, int n, double *f, double *x, double *omega)
+{
+
+  int i;
+  double num, den, div, ci;
+  
+  num = den = 0.;
+  for (i = 0; i < n; i++) {
+
+    div  = xx - x[i];
+    if (fabs(div) <= tiny) return f[i];
+
+    ci   = omega[i]/div;
+    den += ci;
+    num += ci * f[i];
+
+  }  
+
+  return( num/den );
+}
+
+/* 1d Lagrangian barycentric interpolation */
+double interp1d (const int order, double xx, int nx, double *f, double *x)
+{
+  double ff;
+  int ix;
+  int ox = order > nx ? nx : order;
+  ix = find_point_bisection(xx, nx, x, ox/2);
+  ff = baryc_f(xx, ox, &f[ix], &x[ix]);  
+  return( ff );
+}
+
 
 vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
 {
@@ -472,10 +514,10 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
     else if (ell == 4)
     {
         coeffs[0] = 2.8e-5;
-        coeffs[1] =-1.81e-3;
-        coeffs[2] =3.95e-2;
-        coeffs[3] =1.43;
-        coeffs[4] =-2.45;
+        coeffs[1] = -1.81e-3;
+        coeffs[2] = 3.95e-2;
+        coeffs[3] = 1.43;
+        coeffs[4] = -2.45;
     }
     else return 0.0;
     
@@ -499,8 +541,22 @@ TEOBResumParams read_config(char *fname)
 
     TEOBResumParams params;
     
+    // set defaults (flags & pars)
     SetDefaultFlagsValues(&params.flags);
     
+    params.q         = 1.;
+    params.mtot      = 80.;      // Msun
+    params.chi1      = 0.;
+    params.chi2      = 0.;
+    params.dt        = 1./4096.; // s
+    params.f_min     = 10;       // Hz
+    params.lm        = -1;
+    params.LambdaAl2 = 0.;
+    params.LambdaBl2 = 0.;
+    params.distance  = 100;      // Mpc
+    params.iota      = 0.0;
+    params.psi       = 0.0;
+
     string param_name;
     double param_value;
     
@@ -517,6 +573,7 @@ TEOBResumParams read_config(char *fname)
         //param_values.push_back(param_value);
         cout << param_name <<"\t"<< param_value << endl;
 
+	// pars
 	if(param_name=="Mtot") {
 	  params.mtot = param_value;
 	}
@@ -527,7 +584,7 @@ TEOBResumParams read_config(char *fname)
 	  params.psi = param_value;
 	}
 	if(param_name=="distance") {
-	  params.psi = param_value;
+	  params.distance = param_value;
 	}
 	if(param_name=="q") {
 	  params.q = param_value;
@@ -538,38 +595,14 @@ TEOBResumParams read_config(char *fname)
 	if(param_name=="chi2") {
 	  params.chi2 = param_value;
 	}
-	if(param_name=="r0") {
-	  params.r0 = param_value;
-	}
 	if(param_name=="f_min") {
 	  params.f_min = param_value;
-	}
-	if(param_name=="tidal") {
-	  params.flags.tidal = param_value;
-	}
-	if(param_name=="RWZ") {
-	  params.flags.RWZ = param_value;
-	}
-	if(param_name=="speedy") {
-	  params.flags.speedy = param_value;
-	}
-	if(param_name=="dynamics") {
-	  params.flags.dynamics = param_value;
-	}
-	if(param_name=="Yagi_fit") {
-	  params.flags.Yagi_fits = param_value;
-	}
-	if(param_name=="multipoles") {
-	  params.flags.multipoles = param_value;
 	}
 	if(param_name=="lm") {
 	  params.lm = param_value;
 	}
 	if(param_name=="dt") {
 	  params.dt = param_value;
-	}
-	if(param_name=="solver_scheme") {
-	  params.flags.solver_scheme = param_value;
 	}
 	if(param_name=="LambdaAl2") {
 	  params.LambdaAl2 = param_value;
@@ -588,6 +621,29 @@ TEOBResumParams read_config(char *fname)
 	}
 	if(param_name=="LambdaBl4") {
 	  params.LambdaBl4 = param_value;
+	}
+
+	// flags
+	if(param_name=="tidal") {
+	  params.flags.tidal = param_value;
+	}
+	if(param_name=="RWZ") {
+	  params.flags.RWZ = param_value;
+	}
+	if(param_name=="speedy") {
+	  params.flags.speedy = param_value;
+	}
+	if(param_name=="dynamics") {
+	  params.flags.dynamics = param_value;
+	}
+	if(param_name=="Yagi_fit") {
+	  params.flags.Yagi_fits = param_value;
+	}
+	if(param_name=="multipoles") {
+	  params.flags.multipoles = param_value;
+	}
+	if(param_name=="solver_scheme") {
+	  params.flags.solver_scheme = param_value;
 	}
 	if(param_name=="geometric_units") {
 	  params.flags.geometric_units = param_value;
@@ -743,15 +799,22 @@ TEOBResumParams process_input_parameters(
     
     if (params.flags.geometric_units==0)
     {
+      // input given in physical units, 
+      // rescale to geometric units and mass rescaled quantities
+      // compute r0 from the initial GW frequency in Hz
         params.dt = time_units_conversion(mtot, dt);
         params.r0 = radius0(mtot, f_min);
     }
     else
     {
+      // input given in geometric units, 
+      // rescale to geometric units and mass rescaled quantities
+      // compute r0 from the initial GW frequency in geometric units and mass rescaled
         params.dt = dt;
-        params.r0 = f_min;
+        params.r0 = pow(f_min*M_PI, -2./3.);
     }
-    
+
+    printf(" dt = %e r0 = %e\n",params.dt, params.r0);
     
     params.chi1 = chi1;
     params.chi2 = chi2;

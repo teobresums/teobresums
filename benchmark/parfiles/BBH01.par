@@ -5,8 +5,7 @@ distance 1.
 q 20.
 chi1 0.0
 chi2 0.0
-r0 45.
-f_min 0.
+f_min 0.001
 tidal 0
 RWZ 0
 speedy 1
