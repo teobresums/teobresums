@@ -312,12 +312,12 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 
 	/***************************************************/
 	/** Quick hack: stop the waveform during inspiral **/
-	/*
-	if (r<=10)
+	
+	/*if (r<=10)
 	 {
                 stop_flag = true;
-            }
-	*/
+	  }*/
+	
     }
     gsl_odeiv2_evolve_free (e);
     gsl_odeiv2_control_free (c);
@@ -356,10 +356,11 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     {
         t_vecg[i] = ti;
         i++;
+	
     }
   
-    vector<double> hlm_phase_vecg = interp_grid(t_vecg,hlm_phase_vec,dt);
-    vector<double> hlm_rad_vecg   = interp_grid(t_vecg,hlm_rad_vec,dt);
+    vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
+    vector<double> hlm_rad_vecg   = interp_grid(t_vec,hlm_rad_vec,dt);
     vector<double> r_vecg         = r_vec;
     vector<double> MOmg_vecg      = MOmg_vec;
     vector<double> pph_vecg       = pph_vec;
@@ -368,12 +369,12 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     vector<double> OmgOrb_vecg    = Omg_orb_vec;
     if (params.flags.tidal == 0)
     {
-        r_vecg         = interp_grid(t_vecg, r_vec,dt);
-        MOmg_vecg      = interp_grid(t_vecg, MOmg_vec,dt);
-        pph_vecg       = interp_grid(t_vecg, pph_vec,dt);
-        prstar_vecg    = interp_grid(t_vecg, prstar_vec,dt);
-        ddotr_vecg     = interp_grid(t_vecg, ddotr_vec,dt);
-        OmgOrb_vecg    = interp_grid(t_vecg, Omg_orb_vec,dt);
+        r_vecg         = interp_grid(t_vec, r_vec,dt);
+        MOmg_vecg      = interp_grid(t_vec, MOmg_vec,dt);
+        pph_vecg       = interp_grid(t_vec, pph_vec,dt);
+        prstar_vecg    = interp_grid(t_vec, prstar_vec,dt);
+        ddotr_vecg     = interp_grid(t_vec, ddotr_vec,dt);
+        OmgOrb_vecg    = interp_grid(t_vec, Omg_orb_vec,dt);
     }
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
@@ -382,8 +383,8 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     {
         vector<double> amplitude = hlm_ampl[k];
         vector<double> phase     = hlm_phase[k];
-        hlm_ampl_g[k]            = interp_grid(t_vecg,amplitude,dt);
-        hlm_phase_g[k]           = interp_grid(t_vecg,phase,dt);
+        hlm_ampl_g[k]            = interp_grid(t_vec,amplitude,dt);
+        hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
     
     /** NQCs corrections */
