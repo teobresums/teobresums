@@ -107,6 +107,22 @@ enum{
 
 #define KMAX 35 /** Multipolar linear index, max value */
 
+/** List of options for tidal potential */
+enum{
+  TIDES_OFF, // = 0 , keep first to allow syntax: if(use_tidal) { ...
+  TIDES_NNLO, 
+  TIDES_TEOBRESUM,
+};
+
+/** List of options for ODE timestepping */
+const char ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO"};
+enum{
+  ODE_TSTEP_UNIFORM, 
+  ODE_TSTEP_ADAPTIVE,
+  ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO,
+  ODE_TSTEP_NOPT
+};
+
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 const int L[KMAX] = {
     2,2,
@@ -153,15 +169,18 @@ typedef struct tagWaveform_lm
 typedef struct tagDynamics
 {
   /* various pointwise variables */
+  int store; /* store following values? */
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
-  double H, Heff, E, jhat, r_omega, psi, v_phi;
+  double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
   double A,dA,d2A, B,dB;
-  double rLR, rLSO, MOmg, MOmg_prev;
+  double rLR, rLSO;
+  double MOmg, MOmg_prev;
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_VARS]; /* rhs storage */
   double y0[EOB_ID_VARS]; /* ID storage */
   double t1, dt, t_stop, ti;
-  bool stop_flag, MOmgpeak_flag;
+  int ode_timestep;
+  bool ode_stop, ode_stop_MOmgpeak;
   /* arrays */
   int size;
   double *time;
@@ -170,7 +189,7 @@ typedef struct tagDynamics
   double nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
-  double c3NLO;
+  double c3NLO, ptidalpow=4.;
   int use_tidal, use_spin;
 } Dynamics;
 
@@ -239,14 +258,14 @@ double Yagi13_fit_barlamdel(double barlam2, int ell);
 int rhs(double t, const double y[], double dy], void *params);
 int s_rhs(double t, const double y[], double dy[], void *params);
 void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
-void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); //fixme: pas params !
-//void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);
+void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); 
+//void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);//used at all???
 
 /* TEOBResumSMetric.c */
-void A5PNlog(double r, void *params, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
-void Atidal(double r, void *params, double *AT, double *dAT, double *d2AT);
-void Metric(double r, void *params, double *A, double *B, double *dA, double *d2A);
-void s_Metric(double r, void *params, double *A, double *B, double *dA, double *d2A);
+void A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
+void Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
+void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
+void s_Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 
 /* TEOBResumSFlux.c */
 void FlmNewt(const double x, void *params, double *Nlm);

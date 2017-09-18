@@ -33,16 +33,11 @@
     
     and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu)).*(1-1.5e-5/((0.26-nu)^2)
     as obtained from comparison with the Caltech-Cornell-CITA numerical data.
-    These values are used as default. */
-void A5PNlog(double r, void *params, 
+   These values are used as default. */
+void A5PNlog(double r, double nu, 
 	     double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB)
 {
-  
-  // parameters
-  // fixme::
-  bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
-  double nu       = (*(TEOBResumParams *)params).nu;
-  
+
   /* shortcuts */
   double nu2 = nu*nu;
   double pi2 = pi*pi;
@@ -128,48 +123,35 @@ void A5PNlog(double r, void *params,
   double B  = D/A; 
   double dB = (dD*A - D*dA)/(A*A); 
 
-  /* Add here tides if needed */
-  if (usetidal) {
-
-    double AT, dAT, d2AT;
-    Atidal(r, params, &AT, &dAT, &d2AT);
-    
-    A += AT;
-    dA += dAT;
-    d2A += dA2T;
-    
-  }
-
 }
 
 /** Tidal potential, two version implemented: 
     1. TEOB NNLO , Bernuzzi+ 1205.3403
     2. TEOBResum: Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 */
-void Atidal(double r, void *params, 
+void Atidal(double r, Dynamics *dyn, 
 	    double *AT, double *dAT, double *d2AT)
 {
   
   double A, dA_u,d2A_u, dA,d2A;
 
-  // fixme:
-  double nu       = (*(TEOBResumParams *)params).nu;
-  double rLR      = (*(TEOBResumParams *)params).rLR;
-  double XA = (*(TEOBResumParams *)params).X1;
-  double XB = (*(TEOBResumParams *)params).X2;
-  double kapA2 = (*(TEOBResumParams *)params).kappaAl2; 
-  double kapB2 = (*(TEOBResumParams *)params).kappaBl2; 
-  double kapT2 = (*(TEOBResumParams *)params).kappaTl2; 
-  double kapT3 = (*(TEOBResumParams *)params).kappaTl3;
-  double kapT4 = (*(TEOBResumParams *)params).kappaTl4;
+  const double nu    = dyn->nu;
+  const double rLR   = dyn->rLR;
+  const double XA    = dyn->X1;
+  const double XB    = dyn->X2;
+  const double kapA2 = dyn->kappaAl2; 
+  const double kapB2 = dyn->kappaBl2; 
+  const double kapT2 = dyn->kappaTl2; 
+  const double kapT3 = dyn->kappaTl3;
+  const double kapT4 = dyn->kappaTl4;
 
   /* Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, 
      Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
-  double bar_alph2_1 = (*(TEOBResumParams *)params).bar_alph2_1;
-  double bar_alph2_2 = (*(TEOBResumParams *)params).bar_alph2_2;
-  double bar_alph3_1 = (*(TEOBResumParams *)params).bar_alph3_1;
-  double bar_alph3_2 = (*(TEOBResumParams *)params).bar_alph3_2;
+  const double bar_alph2_1 = dyn->bar_alph2_1;
+  const double bar_alph2_2 = dyn->bar_alph2_2;
+  const double bar_alph3_1 = dyn->bar_alph3_1;
+  const double bar_alph3_2 = dyn->bar_alph3_2;
 
-  const double p      = 4.;// % 4<p<6
+  const double p = 4; //dyn->ptidalpow; 
   
   /* shortcuts */
   double nu2 = nu*nu;
@@ -187,7 +169,7 @@ void Atidal(double r, void *params,
   double u9   = u8*u;
   double logu = log(u);
 
-  if (nnlo_flag==true) {
+  if (dyn->usetidal==TIDES_NNLO) {
 
     A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
     dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
@@ -256,26 +238,59 @@ void Atidal(double r, void *params,
 }
 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
-void Metric(double r, void *params, double *A, double *B, double *dA, double *d2A)
+void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
   double Atmp, dAtmp, d2Atmp, Dtmp, dDtmp, Btmp, dBtmp;
-  A5PNlog(rr,params, &Atmp, &dAtmp, &d2Atmp, &Dtmp, &dDtmp, &Btmp, &dBtmp);   
+  A5PNlog(rr,dyn->nu, &Atmp, &dAtmp, &d2Atmp, &Dtmp, &dDtmp, &Btmp, &dBtmp);   
+  
+  if (dyn->usetidal) {
+    /* Add here tides if needed */
+    double AT, dAT, d2AT;
+    Atidal(r, dyn, &AT, &dAT, &d2AT);
+    A += AT;
+    dA += dAT;
+    d2A += dA2T;    
+  }
+  
   *A   = Atmp;
   *dA  = dAtmp;
   *d2A = d2Atmp;
-  *B  = Btmp;
+  *B   = Btmp;
+  *dB  = dBtmp;
 }
-
+ 
 /** EOB Metric potentials A(r), B(r), and their derivatives, spin version */
-void s_Metric(double r, void *params, double *A, double *B, double *dA, double *d2A)
+void s_Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
 
-  double Aorb, dAorb, d2Aorb, Dorb, dDtmp, Btmp, dBtmp;
+  const double nu    = dyn->nu;
+  const double aK2   = dyn->aK2;
+  const double a1    = dyn->a1;
+  const double a2    = dyn->a2;
+  const double aK2   = dyn->aK2;
+  const double C_Q1  = dyn->C_Q1;
+  const double C_Q2  = dyn->C_Q2;
+  const int usetidal = dyn->use_tidal;
+
   double rc, drc, d2rc;
+  s_get_rc(r,nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
+
+  double Aorb, dAorb, d2Aorb, Dorb, dDtmp, Btmp, dBtmp;  
+  A5PNlog(rc,nu, &Aorb, &dAorb, &d2Aorb, &Dorb, &dDtmp, &Btmp, &dBtmp);
     
-  s_get_rc(r,params, &rc, &drc, &d2rc); 
-  A5PNlog(rc,params, &Aorb, &dAorb, &d2Aorb, &Dorb, &dDtmp, &Btmp, &dBtmp);
+  /* Add here tides if needed */
+  if (usetidal) {
+
+    double AT, dAT, d2AT;
+    Atidal(r,dyn, &AT, &dAT, &d2AT);
     
+    Aorb += AT;
+    dAorb += dAT;
+    d2Aorb += dA2T;
+    
+  }
+
+  /* Correct A for spin */
   double u   = 1./r;
   double u2  = u*u;
   double u3  = u2*u;
@@ -286,14 +301,12 @@ void s_Metric(double r, void *params, double *A, double *B, double *dA, double *
   double AKerr_Multipole = (1.+2.*uc)/(1.+2.*u);
   double fss = 1.;
     
-  /* Correction factor */
   *A   = Aorb*AKerr_Multipole*fss;    
   *dA  = dAorb*drc*(1.+2.*uc)/(1.+2.*u) - 2.*Aorb*drc*uc2/(1.+2.*u) + 2.*Aorb*(1.+2.*uc)*u2/((1.+2.*u)*(1.+2.*u));
   *d2A = d2Aorb*(1.+2.*uc)/(1.+2.*u) + 4.*dAorb*( u2*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) - uc2/(1.+2.*u)*drc) + Aorb*(-4.*u3*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) + 8.*u4*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)*(1.+2.*u))+4.*uc3*(1.+2.*u)*drc*drc - 2.*uc2/(1.+2.*u)*d2rc);
   
   /* The B function */
-  *B  = r*r*uc2*Dorb/A;
-    
+  *B  = r*r*uc2*Dorb/A;    
 }
 
 

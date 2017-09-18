@@ -19,34 +19,24 @@
 
 #include "TEOBResumS.h"
 
-
-
-// TODO/FIXME: 
-// - how to pass pars: use params (extra layer) or take them from the par db (slower?) ?
-
-
-
 /** r.h.s. of EOB Hamiltonian dynamics, no spins version */ 
-int rhs(double t, const double y[], double dy[], void *params)
+int rhs(double t, const double y[], double dy[], void *dyn)
 {
   
   (void)(t); /* avoid unused parameter warning */
+  Dynamics *d = dyn;  
 
-  double nu = (*(TEOBResumParams *)params).nu;  //fixme
+  const double nu = d->nu;  
   const double z3 = 2.0*nu*(4.0-3.0*nu);
-
-  const double r  = y[EOB_EVOLVE_RAD];
-  const double pphi  = y[EOB_EVOLVE_PPHI];
-  const double prstar  = y[EOB_EVOLVE_PRSTAR];
+  
+  const double r      = y[EOB_EVOLVE_RAD];
+  const double pphi   = y[EOB_EVOLVE_PPHI];
+  const double prstar = y[EOB_EVOLVE_PRSTAR];
   
   /** Compute EOB Metric */
-  //fixme:
-  const vector<double> metric = Metric(r, params, false);
-  
-  const double A     = metric[0];
-  const double dA    = metric[1];
-  const double B     = metric[3];
-  const double dB    = metric[4];
+  double A, B, dA, d2A, dB;
+  Metric(r, d, &A, &B, &dA, &d2A, &dB);
+
   const double ooA = 1./A;
   const double ooB = 1./B;
   const double sqrAB = sqrt(A/B);  
@@ -55,7 +45,7 @@ int rhs(double t, const double y[], double dy[], void *params)
   const double prstar2 = prstar*prstar;
   const double prstar3 = prstar2*prstar;
   const double prstar4 = prstar3*prstar;
-  const double pphi2 = pphi*pphi;
+  const double pphi2   = pphi*pphi;
   
   const double r2 = r*r;
   const double u  = 1./r;
@@ -111,76 +101,68 @@ int rhs(double t, const double y[], double dy[], void *params)
   
   dy[EOB_EVOLVE_PPHI] = flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,source,params);
 
-  /* Store values */
-  dyn->t = t;
-  dyn->r = r;
-  dyn->phi = y[EOB_EVOLVE_PHI];
-  dyn->pphi = pphi;
-  dyn->prstar = prstar;
-  dyn->Omg = Omega;
-  dyn->Omg_orb = Omega;
-  dyn->H = H;
-  dyn->E = E;
-  dyn->Heff = Heff;
-  dyn->A = A;
-  dyn->dA = dA;
-  dyn->d2A = d2A;
-  dyn->B = B;
-  dyn->dB = dB;
-  dyn->psi = psi;
-  dyn->r_omega = r_omega;
-  dyn->v_phi = v_phi;
-  dyn->jhat = jhat;
-  dyn->ddotr = ddotr;
+  if(d->store) {
+    /* Store values */
+    dyn->t = t;
+    dyn->r = r;
+    dyn->phi = y[EOB_EVOLVE_PHI];
+    dyn->pphi = pphi;
+    dyn->prstar = prstar;
+    dyn->Omg = Omega;
+    dyn->Omg_orb = Omega;
+    dyn->H = H;
+    dyn->E = E;
+    dyn->Heff = Heff;
+    dyn->A = A;
+    dyn->dA = dA;
+    dyn->d2A = d2A;
+    dyn->B = B;
+    dyn->dB = dB;
+    dyn->psi = psi;
+    dyn->r_omega = r_omega;
+    dyn->v_phi = v_phi;
+    dyn->jhat = jhat;
+    dyn->ddotr = ddotr;
+  }
 
-  
   return GSL_SUCCESS;
 							     
 }
 
 /** r.h.s. of EOB Hamiltonian dynamics, spins version */ 
-int s_rhs(double t, const double y[], double dy[], void *params)
+int s_rhs(double t, const double y[], double dy[], void *dyn)
 {
     
   (void)(t); /* avoid unused parameter warning */
-  
-  // fixme:
-  const double nu       = (*(TEOBResumParams *)params).nu;
-  const double S        = (*(TEOBResumParams *)params).S;
-  const double Sstar    = (*(TEOBResumParams *)params).Sstar;
-  const double chi1     = (*(TEOBResumParams *)params).chi1;
-  const double chi2     = (*(TEOBResumParams *)params).chi2;
-  const double X1       = (*(TEOBResumParams *)params).X1;
-  const double X2       = (*(TEOBResumParams *)params).X2;
-  const double c3       = (*(TEOBResumParams *)params).cN3LO;
-  in usetidal           = (*(TEOBResumParams *)params).flags.tidal;
-  const double aK2      = (*(TEOBResumParams *)params).aK2;
-  double a1        = (*(TEOBResumParams *)params).a1;
-  double a2        = (*(TEOBResumParams *)params).a2;
-  double C_Q1       = (*(TEOBResumParams *)params).C_Q1;
-  double C_Q2       = (*(TEOBResumParams *)params).C_Q2;
+  Dynamics *d = dyn;
 
-  const double z3 = 2.*nu*(4.-3.*nu);  
-  
+  const double nu    = d->nu;
+  const double S     = d->S;
+  const double Sstar = d->Sstar;
+  const double chi1  = d->chi1;
+  const double chi2  = d->chi2;
+  const double X1    = d->X1;
+  const double X2    = d->X2;
+  const double c3    = d->cN3LO;
+  const double aK2   = d->aK2;
+  const double a1    = d->a1;
+  const double a2    = d->a2;
+  const double C_Q1  = d->C_Q1;
+  const double C_Q2  = d->C_Q2;
+  const int usetidal = d->use_tidal;
+
+  const double z3     = 2.*nu*(4.-3.*nu);    
   const double r      = y[EOB_EVOLVE_RAD];
   const double prstar = y[EOB_EVOLVE_PRSTAR];
   const double pph    = y[EOB_EVOLVE_PPHI];
   const double pphi2  = pph*pph;
   
   /** Compute Metric */
-  double A, B, dA;
-  // fixme:
-  vector<double> metric;
-  if (tidal_flag==true) {
-    metric = Metric(r, params, false); //
-    A      = metric[0];
-    B      = metric[3];
-    dA     = metric[1];
+  double A, B, dA, d2A;
+  if (usetidal) {
+    Metric(r, d, &A, &B, &dA, &d2A);
   } else {
-    metric = s_Metric(r, params, false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
-    A    = metric[0];
-    B    = metric[1];
-    dA   = metric[2];
+    s_Metric(r, d, &A, &B, &dA, &d2A);
   }
  
   /* shorthands */
@@ -190,6 +172,7 @@ int s_rhs(double t, const double y[], double dy[], void *params)
   
   double rc, drc_dr, d2rc_dr;
   s_get_rc(r, nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
+  
   const double uc     = 1./rc;
   const double uc2    = uc*uc;
   const double uc3    = uc2*uc;
@@ -244,26 +227,50 @@ int s_rhs(double t, const double y[], double dy[], void *params)
   double gmm0[14];
   s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3, gmm0);
   
-  const double GS_0      = ggm0[2];
-  const double GSs_0     = ggm0[3];
-  const double dGS_dr_0  = ggm0[6];
-  const double dGSs_dr_0 = ggm0[7];
+  const double GS_0       = ggm0[2];
+  const double GSs_0      = ggm0[3];
+  const double dGS_dr_0   = ggm0[6];
+  const double dGSs_dr_0  = ggm0[7];
   const double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));    /* effective Hamiltonian H_0^eff */
   const double Heff_0     = Heff_orb_0 + (GS_0*S + GSs_0*Sstar)*pph;
   const double H0         = sqrt(1.0 + 2.0*nu*(Heff_0 - 1.0) );
-  const double ooH0     = 1./H0;
+  const double ooH0       = 1./H0;
   const double Gtilde     = GS_0*S     + GSs_0*Sstar;
   const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
   const double duc_dr     = -uc2*drc_dr;
   const double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
   const double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
-  const double v_phi = r_omg*Omg;
-  const double x     = v_phi*v_phi;
-  const double jhat  = pph/(r_omg*v_phi);
+  const double v_phi      = r_omg*Omg;
+  const double x          = v_phi*v_phi;
+  const double jhat       = pph/(r_omg*v_phi);
   
   const double Fphi  = s_Flux(x,Omg,r_omg,H,Heff,jhat,r,prstar,ddotr,params);
   
   dy[EOB_EVOLVE_PPHI] = Fphi;
+
+  if (d->store) {
+    /* Store values */
+    d->t = t;
+    d->r = r;
+    d->phi = y[EOB_EVOLVE_PHI];
+    d->pphi = pphi;
+    d->prstar = prstar;
+    d->Omg = Omg;
+    d->Omg_orb = Omg;
+    d->H = H;
+    d->E = E;
+    d->Heff = Heff;
+    d->A = A;
+    d->dA = dA;
+    d->d2A = d2A;
+    d->B = B;
+    d->dB = dB;
+    d->psi = psi;
+    d->r_omega = r_omg;
+    d->v_phi = v_phi;
+    d->jhat = jhat;
+    d->ddotr = ddotr;
+  }
   
   return GSL_SUCCESS;
 }
@@ -281,6 +288,7 @@ void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double 
 {
   static double c10,c20,c30,c02,c12,c04;
   static double cs10,cs20,cs30,cs02,cs12,cs04;
+
   /* Compute the nu-dep. coefficient at first call only */
   static int firstcall = 1;  
   if (firstcall) {
@@ -320,7 +328,6 @@ void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double 
   double dGSs0_duc     =  9./2.*uc2;
   double dGSs0_dprstar =  0.0;
   double dGSs0_dpph    =  0.0;
-  
   
   double hGS  =  1./(1.  + c10*uc + c20*uc2 + c30*uc3 + c02*prstar2 + c12*uc*prstar2 + c04*prstar4);   
   double hGSs = 1./(1.  + cs10*uc + cs20*uc2  + cs30*uc3 + cs40*uc4 + cs02*prstar2 + cs12*uc*prstar2 + cs04*prstar4); 
@@ -405,13 +412,13 @@ void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q
     *rc         = sqrt(rc2);
     *drc_dr     = r/rc*(1.-a02*u3);
     *d2rc_dr2   = 1./rc*( 1.-drc_dr*r/rc*(1.-a02*u3)+2.*a02*u3);
+#if (0)
     /* NO spin-spin-tidal couplings */
-    /*
-      double rc2 = r2;
-      rc = r;
-      drc_dr = 1;
-      d2rc_dr2 = 0;
-    */
+    double rc2 = r2;
+    rc = r;
+    drc_dr = 1;
+    d2rc_dr2 = 0;
+#endif
   } else {
     double X12      = sqrt(1.-4.*nu);   
     double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
@@ -425,31 +432,32 @@ void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q
 
 
 /** Compute orbital frequency from arrays */
+// used anywhere?
 void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb)
 {
 
   // fixme:
-  double nu   = (*(TEOBResumParams *)params).nu;
-  double aK2  = (*(TEOBResumParams *)params).aK2;
-  double S1   = (*(TEOBResumParams *)params).S1;
-  double S2   = (*(TEOBResumParams *)params).S2;
-  double a1   = (*(TEOBResumParams *)params).a1;
-  double a2   = (*(TEOBResumParams *)params).a2;
-  double X1   = (*(TEOBResumParams *)params).X1;
-  double X2   = (*(TEOBResumParams *)params).X2;
-  double chi1 = (*(TEOBResumParams *)params).chi1;
-  double chi2 = (*(TEOBResumParams *)params).chi2;
-  double c3   = (*(TEOBResumParams *)params).cN3LO;
-  double C_Q1       = (*(TEOBResumParams *)params).C_Q1;
-  double C_Q2       = (*(TEOBResumParams *)params).C_Q2;
-  double aK2      = (*(TEOBResumParams *)params).aK2;
- in usetidal           = (*(TEOBResumParams *)params).flags.tidal;
-
-  double S     = S1 + S2;
-  double Sstar = X2*a1 + X1*a2;
-  double z3    = 2.*nu*(4.-3.*nu);
+  const double nu   = d->nu;
+  const double aK2  = d->aK2;
+  const double S1   = d->S1;
+  const double S2   = d->S2;
+  const double a1   = d->a1;
+  const double a2   = d->a2;
+  const double X1   = d->X1;
+  const double X2   = d->X2;
+  const double chi1 = d->chi1;
+  const double chi2 = d->chi2;
+  const double c3   = d->cN3LO;
+  const double C_Q1 = d->C_Q1;
+  const double C_Q2 = d->C_Q2;
+  const double aK2  = d->aK2;
   
-  double rc_vec[3], ggm[14];
+  const double z3    = 2.*nu*(4.-3.*nu);
+  const double S     = S1 + S2;
+  const double Sstar = X2*a1 + X1*a2;
+  const int usetidal  = d->use_tidal;
+
+  double rc, drc_dr,d2rc_dr, ggm[14];
   int i;
   for ( i=0; i<size; i++) {
         
@@ -535,12 +543,12 @@ double DHeff0(double x, void *DHeff_params){
 }
 
 double s_bisec(double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss, void *params){
-    double nu   = (*(TEOBResumParams *)params).nu;
-    double chi1 = (*(TEOBResumParams *)params).chi1;
-    double chi2 = (*(TEOBResumParams *)params).chi2;
-    double X1   = (*(TEOBResumParams *)params).X1;
-    double X2   = (*(TEOBResumParams *)params).X2;
-    double c3   = (*(TEOBResumParams *)params).cN3LO;
+    double nu   = d->nu;
+    double chi1 = d->chi1;
+    double chi2 = d->chi2;
+    double X1   = d->X1;
+    double X2   = d->X2;
+    double c3   = d->cN3LO;
     
     int status;
     int iter = 0, max_iter = 200;
