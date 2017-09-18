@@ -98,7 +98,7 @@ int main (int argc, char* argv[])
     flags.set = 1;
 
     /* fast fix here */
-    flags.solver_scheme = 2;
+    /*flags.solver_scheme = 2;*/
     
     if (argc < 2)
     {
@@ -343,7 +343,7 @@ int main (int argc, char* argv[])
         int N        = hplus->length;
         for (i=0;i<N;i++)
         {
-            std::fprintf(f, "%f\t%20.16f\t%20.16f\n", i*dt, hplus->data[i], hcross->data[i]);
+            std::fprintf(f, "%20.16f\t%20.16f\t%20.16f\n", i*dt, hplus->data[i], hcross->data[i]);
         }
         std::fclose(f);
         free(hplus->data);

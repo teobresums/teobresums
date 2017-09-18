@@ -1079,7 +1079,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
     printf("omg_mrg =%10.6f\n",max_omg[1]);
     printf("domg_mrg=%10.6f\n",max_domg[1]);
     
-    /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
+    /** NQC corrections to AMPLITUDE (n1,n2) and PHASE (n4,n5)
      * NQC basis for (2,2) waveform : AMPLITUDE
      * note: n3 and n6 are not used
      */
@@ -1087,7 +1087,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
     char   outputNQC[256]   = "NQC_func.dat";
     std::FILE* NQCfile   = std::fopen(outputNQC, "w");
     
-    for (int j=t_length;j--;)
+    for (int j=t_length-1;j--;) //THIS WAS BAD  (int j=t_length;j--;)
     {
         double pr_star2 = pr_star[j] * pr_star[j];
         double r2       = r[j] * r[j];
@@ -1101,13 +1101,14 @@ vector<vector<gsl_complex> > find_a1a2a3(
         n4[j]  = pr_star[j]/(r[j]*w[j]);           //  pr*/(r Omg)
         n5[j]  = n4[j]*r2*w2;                      // (pr*)*(r Omg)
         
-        std::fprintf(NQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
+        std::fprintf(NQCfile, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
     }
     
     std::fclose(NQCfile);
 
     
     /** Take the needed derivatives for the phase */
+    
     vector<double>  d_n4 = s_D1(n4,T,t_length-1);
     vector<double>  d_n5 = s_D1(n5,T,t_length-1);
     vector<double> d2_n4 = s_D1(d_n4,T,t_length-1);
@@ -1117,9 +1118,9 @@ vector<vector<gsl_complex> > find_a1a2a3(
     /* A check: output derivatives*/
     char   outputdNQC[256]   = "dNQC_func.dat";
     std::FILE* dNQCfile   = std::fopen(outputdNQC, "w");
-    for (int j=t_length;j--;)
+    for (int j=t_length-1;j--;)
     {                
-        std::fprintf(dNQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
+        std::fprintf(dNQCfile, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
     }
     
     std::fclose(dNQCfile);
@@ -1243,8 +1244,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
     printf("a2 = %f\n",ai[1][1]);
     printf("b1 = %f\n",bi[1][0]);
     printf("b2 = %f\n",bi[1][1]);
-    
-    
+        
     for (int k=35;k--;)
     {
         for (int j=0; j<t_length-1;j++)
@@ -1253,6 +1253,8 @@ vector<vector<gsl_complex> > find_a1a2a3(
 	  o[k][j].dat[1] = 0. + bi[k][0]*n4[j] + bi[k][1]*n5[j];
         }
     }
+
+    printf("I'm here in Hlm???\n");
     return o;
     
 }
