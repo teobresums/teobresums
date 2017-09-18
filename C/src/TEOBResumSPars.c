@@ -268,6 +268,10 @@ void TEOBResumSSetParameters(char *s, int pr)
   double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;
   double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
 
+  /* Tidal coefficients for the amplitude */
+  double khatA_2  = 3./2. * LambdaA2 * XB/XA * gsl_pow_int(XA,5);
+  double khatB_2  = 3./2. * LambdaB2 * XA/XB * gsl_pow_int(XB,5);
+
   /* self-spin coefficients */
   double logC_Q1 = logQ(log(LambdaAl2));
   double logC_Q2 = logQ(log(LambdaBl2));
@@ -308,6 +312,9 @@ void TEOBResumSSetParameters(char *s, int pr)
   par_set_d("bar_alph2_2",bar_alph2_2);
   par_set_d("bar_alph3_1",bar_alph3_1);
   par_set_d("bar_alph3_2",bar_alph3_2);
+
+  par_set_d("khatAl2", khatA_2 );
+  par_set_d("khatBl2", khatB_2 );
 
   par_set_d("C_Q1",C_Q1);
   par_set_d("C_Q2",C_Q2);

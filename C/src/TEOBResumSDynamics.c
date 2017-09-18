@@ -90,16 +90,7 @@ int rhs(double t, const double y[], double dy[], void *dyn)
   /* Approximate ddot(r) without Flux */
   const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
   
-  double source[] = {
-    jhat,Heff,
-    Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,
-    Heff,jhat,Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,jhat,Heff,
-    Heff,jhat,Heff,jhat,Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
-  
-  dy[EOB_EVOLVE_PPHI] = flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,source,params);
+  dy[EOB_EVOLVE_PPHI] = flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
 
   if(d->store) {
     /* Store values */

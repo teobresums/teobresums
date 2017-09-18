@@ -17,13 +17,10 @@
  *  MA  02111-1307  USA
  */
 
-#include <cmath>
-#include <math.h>
-#include <vector>
-#include <limits>
+#include <stlib.h>
 #include <stdio.h>
-#include <cstring> 
 #include <libconfig.h> /* library to manage parameters */
+#include <math.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
@@ -115,13 +112,13 @@ enum{
 };
 
 /** List of options for ODE timestepping */
-const char ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO"};
 enum{
   ODE_TSTEP_UNIFORM, 
   ODE_TSTEP_ADAPTIVE,
   ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO,
   ODE_TSTEP_NOPT
 };
+const char ode_tstep_opt[ODE_TSTEP_NOPT] = {"uniform","adaptive","adaptive+uniform_after_LSO"};
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 const int L[KMAX] = {
@@ -142,6 +139,9 @@ const int M[KMAX] = {
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
 
+/** Type for complex waveform */
+typedef double complex cdouble;
+
 /** Waveform data type */
 typedef struct tagWaveform
 {
@@ -149,7 +149,6 @@ typedef struct tagWaveform
   double *time;
   double *real;
   double *imag;
-  //complex *data; // what's best to use?
   char name[STRLEN];
 }  Waveform;
 
@@ -158,12 +157,21 @@ typedef struct tagWaveform_lm
 {
   int size;
   double *time;
-  double *real[KMAX];
-  double *imag[KMAX];
-  //complex *data[KMAX]; // what's best to use?
+  //double *real[KMAX];
+  //double *imag[KMAX];
+  double *ampli[KMAX]; /* amplitude */
+  double *phase[KMAX]; /* phase */
   char name[KMAX][STRLEN];
   int *kmask[KMAX]; /* mask for multipoles */
 }  Waveform_lm;
+
+/** Multipolar waveform pointwise, comes at handy */
+typedef struct tagWaveform_lm_pt
+{
+  double ampli[KMAX]; /* amplitude */
+  double phase[KMAX]; /* phase */
+}  Waveform_lm_pt;
+
 
 /** Dynamics data type */
 typedef struct tagDynamics
@@ -188,7 +196,7 @@ typedef struct tagDynamics
   /* parameters for quick access */
   double nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2;
-  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
+  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4, khatA2,khatB2;
   double c3NLO, ptidalpow=4.;
   int use_tidal, use_spin;
 } Dynamics;
@@ -268,361 +276,41 @@ void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d
 void s_Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 
 /* TEOBResumSFlux.c */
-void FlmNewt(const double x, void *params, double *Nlm);
-void Tlm(const double w, double *MTlm);
-
+double flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
+double s_flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
+void Tlm(double w, double *MTlm);
+void FlmNewt(double x, double nu, int usetidal, int usespins, double *Nlm);
 double HorizonFlux(double x, double Heff, double jhat, double nu);
 double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
+void hlm(double t, 
+	 double phi,
+	 double r,
+	 double pph,
+	 double prstar,
+	 double       Omega,
+	 double ddotr,
+	 double H,
+	 double Heff,
+	 double jhat,
+	 double rw,
+	 Dynamics *dyn, 
+	 Waveform_lm *hlm);
+void deltalm(double Hreal,double Omega,double nu, double *dlm);
+void hhatlmtail(double Omega,double Hreal,double bphys, Waveform_lm_pt *tlm);
+void hlmNewt(double r, double Omega, double phi, double nu, int usetidal, Waveform_lm *hNewt)
+void hlm_Tidal(double x, Dynamics *dyn, double *hTidallm);
 
 
 
 
 
-// ********************************************
-// ********************************************
-// ********************************************
-// ********************************************
-// ********************************************
-// ********************************************
-// ********************************************
 
-// ARRIVED HERE 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-/** Structure of flags to control various physics ingredients */
-typedef struct tagTEOBResumFlags
-{
-    int solver_scheme;  /** Solver scheme to utilise */
-    int spin;           /** Spinning dynamics */
-    int tidal;          /** Tidal deformability dynamics */
-    int RWZ;            /** Regge-Wheeler-Zerilli potential */
-    int speedy;         /** Faster tails calculation */
-    int dynamics;       /** Output dynamics to file */
-    int Yagi_fits;      /** Use 'universal relations' for higher l lambdas */
-    int multipoles;     /** Output single multipole waveforms */
-    int geometric_units; /** use geometric units */
-    int set;            /** flags set bby default or not? */
-}   TEOBResumFlags;
-
-/** Structure of parameters */
-typedef struct tagTEOBResumParams
-{
-    int    lm;                  /**                                                          */
-    double mtot;                /** Total mass of the binary                                 */
-    double q;                   /** Mass ratio of the binary                                 */
-    double iota;                /** inclination angle                                        */
-    double psi;                 /** polarisation angle                                       */
-    double distance;            /** sources distance [Mpc]                                   */
-    double nu;                  /** Symmetric mass ratio of the binary, nu = m1*m2/(m1+m2)^2 */
-    double r0;                  /** Initial radial separation of the objects                 */
-    double f_min;               /** Initial frequency                                        */
-    double dt;                  /** Time step of the differential equation evolution         */
-    double rLR;                 /** Light ring radius                                        */
-    double chi1;                /** Dimensionless spin of the first object                   */
-    double chi2;                /** Dimensionless spin of the second object                  */
-    double S1;                  /**                                                          */
-    double S2;                  /**                                                          */
-    double S;                   /**                                                          */
-    double Sstar;               /**                                                          */
-    double X1;                  /**                                                          */
-    double X2;                  /**                                                          */
-    double a1;                  /**                                                          */
-    double a2;                  /**                                                          */
-    double aK;                  /**                                                          */
-    double aK2;                 /**                                                          */
-    double cN3LO;               /**                                                          */
-    double LambdaAl2;           /** Tidal coupling constant of the first object  for l=2     */
-    double LambdaAl3;           /** Tidal coupling constant of the first object  for l=3     */
-    double LambdaAl4;           /** Tidal coupling constant of the first object  for l=4     */
-    double LambdaBl2;           /** Tidal coupling constant of the second object for l=2     */
-    double LambdaBl3;           /** Tidal coupling constant of the second object for l=3     */
-    double LambdaBl4;           /** Tidal coupling constant of the second object for l=4     */
-    double kappaAl2;            /**                                                          */
-    double kappaAl3;            /**                                                          */
-    double kappaAl4;            /**                                                          */
-    double kappaBl2;            /**                                                          */
-    double kappaBl3;            /**                                                          */
-    double kappaBl4;            /**                                                          */
-    double kappaTl2;            /**                                                          */
-    double kappaTl3;            /**                                                          */
-    double kappaTl4;            /**                                                          */
-    double bar_alph2_1;         /**                                                          */
-    double bar_alph2_2;         /**                                                          */
-    double bar_alph3_1;         /**                                                          */
-    double bar_alph3_2;         /**                                                          */
-    double C_Q1;                /**                                                          */
-    double C_Q2;                /**                                                          */
-    double Mbh;                 /** Mass of the final BH                                     */
-    double Abh;                 /** Spin of the final BH                                     */
-    TEOBResumFlags flags;       /** Flag structure                                           */
-}   TEOBResumParams;
-
-
-
-
-
-/** Sets params flags to their default value */
-void SetDefaultFlagsValues(TEOBResumFlags *flags);
-
-/** Copy params flags */
-void CopyTEOBResumSFlags(TEOBResumFlags *out, TEOBResumFlags *in);
-
-/** _A_NumDenom_h */
-
-int A_NumDenom(const double r, const vector<double> a, const double nu);
-
-/* _AdiabLR_h */
-
-double fLR(double r, void *params);
-double AdiabLR(void *params);
-
-/** Eulerlog */
-
-double Eulerlog(const double x, const double m);
-
-
-/* _FlmNewt_h */
-
-vector<double> FlmNewt(const double x, void *params);
-
-/* _HealyBBHFitRemnant_h */
-
-double HealyBBHFitRemnant(double chi1, double chi2, double q);
-
-double JimenezFortezaRemnantSpin(TEOBResumParams params);
-
-/* _HorizonFlux_h */
-
-double HorizonFlux(const double x, const double Heff, const double jhat, const double nu);
-
-/* _LALSimIMRTEOBIHES_h */
-
-void TEOBResumS(Waveform **hplus,               /** h+ return array **/
-                        Waveform **hcross,      /** hx return array **/
-                        double m1,              /** m1(Msun) **/
-                        double m2,              /** m2(Msun) **/
-                        double spin1x,          /** dimensionless s1x **/
-                        double spin1y,          /** dimensionless s1y **/
-                        double spin1z,          /** dimensionless s1z **/
-                        double spin2x,          /** dimensionless s2x **/
-                        double spin2y,          /** dimensionless s2y **/
-                        double spin2z,          /** dimensionless s2z **/
-                        double inclination,     /** inclination angle (rad) **/
-                        double polarisation,    /** polarisation angle (rad) **/
-                        double f_min,           /** starting frequency(Hz) **/
-                        double dt,              /** sampling interval (s) **/
-                        double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl2,       /** l=2 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                        double LambdaAl3,       /** l=3 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl3,       /** l=3 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                        double LambdaAl4,       /** l=4 (tidal deformation of body 1)/(mass of body 1)^5 **/
-                        double LambdaBl4,       /** l=4 (tidal deformation of body 2)/(mass of body 2)^5 **/
-                        double distance,        /** distance(Mpc) **/
-                        int    lm,              /** multipole index for output **/
-                        TEOBResumFlags *flags   /** flags **/
-);
-
-/* _Metric_h */
-    
-vector<double> acoeffs(const double r, const double nu);
-vector<double> Metric(const double r, void *params, bool nnlo_flag);
-vector<double> A5pnP15_dd(const double r, void *params);
-
-    
-/* _QNMHybridFitCab_h */
-    
-void QNMHybridFitCab(TEOBResumParams params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4, vector<gsl_complex> &sigma);
-    
-/* _RHS_h */
-
-int rhs(double t, const double y[], double f[], void *params);
-
-/* _SpeedyTail_h */
-
-vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
-
-/* _Tlm_h */
-
-vector<double> Tlm(const double w);
-
-/* _deltalm_h */
-
-vector<double> deltalm(const double Hreal, const double Omega, const double nu);
-
-/* _dtnqc_fit_h */
-
-double dtnqc_fit(double chi, double chi0);
-
-/* _flm_h */
-
-vector<double> f_lm(const double x,const double nu);
-
-/* _find_a1a2a3_h */
-
-vector<vector<gsl_complex> > find_a1a2a3(vector<double> T, vector<double> r, vector<double> w, vector<double> pph, vector<double> pr_star, vector<vector<double> > hlm_phase,vector<double> Omg_orb, vector<vector<double> > A, vector<double> ddotr, void *params);
-
-/* _flux_h */
-
-double flux(const double x,const double Omega,const double r_omega,const double E, const double Heff,const double jhat,const double r,const double prstar, const double ddotr, double source[],void *params);
-
-/* _get_Omg_orb_h */
-
-vector<double> get_Omg_orb(vector<double> r, vector<double> pph, vector<double> pr_star, vector<double> A, vector<double> B, void *params);
-
-/* _hhatlmtail_h */
-
-vector<gsl_complex> hhatlmtail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[]);
-
-/* _hlm_h */
-
-vector<gsl_complex> hlm(double t, const double phi, const double r, const double pph, const double prstar, double Omega, const double ddotr, const double H, const double Heff,const double jhat, const double rw,void *params);
-
-/* _hlm_NQC_h */
-
-vector<gsl_complex> hlmNQC(double nu, double r, double prstar, double  Omega, double ddotr);
-
-/* _hlmNewt_h */
-
-vector<gsl_complex> hlmNewt(const double r, const double Omega, const double phi, const double nu, bool tidal_flag);
-
-/* _hlm_Tidal_h */
-
-vector<double> hlm_Tidal(double x,void *params);
-
-/* _initial_h */
-
-vector<double> initial(TEOBResumParams *params);
-
-/* _input_struc_h */
-
-
-
-/* _interp_h */
-
-vector<double> interp_grid(vector<double> t_vec, vector<double> data, double dt);
-
-/* _interpolator_h */
-
-double interpolate(double dt, vector<gsl_complex> grid);
-
-double interp1d (const int order, double xx, int nx, double *f, double *x);
-double baryc_f_weights(double xx, int n, double *f, double *x, double *omega);
-void baryc_weights(int n, double *x, double *omega);
-double baryc_f(double xx, int n, double *f, double *x);
-int find_point_bisection(double x, int n, double *xp, int o);
-
-/* _read_config_h */
-
-double logQ(double x);
-
-TEOBResumParams process_input_parameters(double m1,
-                                double m2,
-                                double chi1,
-                                double chi2,
-                                double f_min,
-                                double sampling_rate,
-                                double LambdaAl2,
-                                double LambdaBl2,
-                                double LambdaAl3,
-                                double LambdaBl3,
-                                double LambdaAl4,
-                                double LambdaBl4,
-                                TEOBResumFlags *flags
-                                );
-TEOBResumParams read_config(char *fname);
-
-double Yagi13_fit_barlamdel(double barlam2, int ell);
-double time_units_conversion(double M, double dt);
-double radius0(double M, double f_start);
-
-/* _ringdown_h */
-
-int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase);
-
-/* _ringdown_match_h */
-
-gsl_complex ringdown_match(double x, int k, vector<double> a1, vector<double> a2, vector<double> a3, vector<double> a4, vector<double> b1, vector<double> b2, vector<double> b3, vector<double> b4, vector<gsl_complex> sigma);
-
-/* _s_A5PNlog_h */
-
-vector<double> s_A5PNlog(double r, void *params, bool nnlo_flag);
-
-/* _s_D1_h */
-
-vector<double> s_D1(vector<double> f, vector<double> x, int Nmax);
-vector<double> u_D1(vector<double> f, vector<double> x, int Nmax);
-
-/* _s_Flux_h */
-
-double s_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, void *params);
-
-/* _s_GS_h */
-
-double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2, bool tidal_flag);
-vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO);
-
-/* _s_HorizonFlux_h */
-
-double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
-
-/* _s_Metric_h */
-
-vector<double> s_Metric(double r, void *params, bool nnlo_flag);
-
-/* _s_RHS_h */
-
-int s_RHS(double t, const double y[], double f[], void *params);
-
-/* _s_bisec_h */
-
-struct energy_params
-{
-    double rorb, A, dA, rc, drc_dr, ak2, S, Ss, nu, chi1, chi2, X1, X2, c3;
-};
-
-
-double energy_params (double x, void *params);
-double DHeff0(double x, void *DHeff_params);
-double s_bisec(double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss, void *params);
-
-/* _s_flm_h */
-
-vector<double> s_flm(double x, void *params);
-
-/* _s_get_rc_h */
-
-vector <double> s_get_rc(double r, void *params);
-
-/* _s_initial_h */
-
-vector<double> s_initial(TEOBResumParams *params);
-
-/* _s_waveform_h */
-
-vector<gsl_complex> s_waveform(double t, const double y[], void *params, double &Omg, double &Omg_orb, double &A, double &ddotr);
-
-/* _spinsphericalharm_h */
-
-double fact(int n);
-double wigner_d_function(int l, int m, int s, double x);
-void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double x);
 
 
 

@@ -302,13 +302,16 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name)
   int k;
   for (k=0; k<KMAX; k++) {
     if (kmask[k]) {
-      *wav->real[k] = (double*) malloc ( size * sizeof(double) );
-      *wav->imag[k] = (double*) malloc ( size * sizeof(double) );
-      //*wav->data[k] = // for complex data
+      //*wav->real[k] = (double*) malloc ( size * sizeof(double) );
+      //*wav->imag[k] = (double*) malloc ( size * sizeof(double) );
+      *wav->ampil[k] = (double*) malloc ( size * sizeof(double) );
+      *wav->phase[k] = (double*) malloc ( size * sizeof(double) );
       strcpy(name[k],*wav->name[k]);
     } else {
-      *wav->real[k] = NULL;
-      *wav->imag[k] = NULL;
+      //*wav->real[k] = NULL;
+      //*wav->imag[k] = NULL;
+      *wav->ampli[k] = NULL;
+      *wav->phase[k] = NULL;
     }
   }
 }
@@ -318,9 +321,10 @@ void Waveform_lm_push (Waveform **wav, int size, int *kmask)
   int k;
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
-      *wav->real[k] = (double*) realloc ( size * sizeof(double) );
-      *wav->imag[k] = (double*) realloc ( size * sizeof(double) );
-      //*wav->data[k] = // for complex data
+      //*wav->real[k] = (double*) realloc ( size * sizeof(double) );
+      //*wav->imag[k] = (double*) realloc ( size * sizeof(double) );
+      *wav->ampli[k] = (double*) realloc ( size * sizeof(double) );
+      *wav->phase[k] = (double*) realloc ( size * sizeof(double) );
     }
   }
 }
@@ -347,7 +351,8 @@ void Waveform_lm_free (Waveform_lm *wav)
     if (wav->kmask[k]) {
       if (wav->real[k]) free(wav->real[k]);
       if (wav->imag[k]) free(wav->imag[k]);
-      //if(wav->data[k]) free = wav->data[k];
+      if (wav->ampli[k]) free(wav->ampli[k]);
+      if (wav->phase[k]) free(wav->phase[k]);
       strcpy(name[k],wav->name[k]);
     }
   }
