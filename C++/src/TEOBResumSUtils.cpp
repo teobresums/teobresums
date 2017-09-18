@@ -473,7 +473,7 @@ void SetDefaultFlagsValues(TEOBResumFlags *flags)
     flags->multipoles       = 0;
     flags->Yagi_fits        = 0;
     flags->geometric_units  = 0;
-    flags->solver_scheme    = 0;
+    flags->solver_scheme    = 2;
     flags->set              = 0;
 }
 

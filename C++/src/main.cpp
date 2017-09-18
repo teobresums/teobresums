@@ -41,7 +41,7 @@ USAGE:\n\
 \t./TEOBResumS.x -p <parfile>\n\
 \t./TEOBResumS.x [OPTIONS]\n\
 "
-#define Nopt 25
+#define Nopt 26
 const char *optstr[Nopt*4] =
 {
   "-p"           , "<parfile>",  "reads input parameters from parfile. Overrides all other arguments.", "",
@@ -61,6 +61,7 @@ const char *optstr[Nopt*4] =
   "-lambda1_l4"  , "<double>",   "l=4 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
   "-lambda2_l4"  , "<double>",   "l=4 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
   "-tidal"       , "<int>",      "enable tidal corrections.", "0 (false)",
+  "-solver"      , "<int>",      "Choose the solver scheme. 0 is completely adaptive, 1 is adaptive up to LSO, 2 is constant time step", "2",
   "-nospeedy"    , "<int>",      "disable faster tails calculations.", "0 (false)",
   "-dynamics"    , "<int>",      "output dynamics evolution.", "0 (false)",
   "-RW"          , "<int>",      "Regge-Wheeler-Zerilli potential.", "0 (false)",
@@ -96,9 +97,6 @@ int main (int argc, char* argv[])
     TEOBResumFlags flags;
     SetDefaultFlagsValues(&flags);
     flags.set = 1;
-
-    /* fast fix here */
-    /*flags.solver_scheme = 2;*/
     
     if (argc < 2)
     {
@@ -265,6 +263,11 @@ int main (int argc, char* argv[])
         {
             flags.multipoles = 1;
             printf("multipoles = true\n");
+        }
+        else if (strcmp(argv[i],"-solver")==0)
+        {
+            flags.solver_scheme = atoi(argv[i+1]);
+            printf("Solver: %d\n", flags.solver_scheme);
         }
         else if (strcmp(argv[i],"-lm")==0)
         {

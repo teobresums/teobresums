@@ -109,9 +109,9 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                                                     LambdaBl4,
                                                     flags);
 
-    printf("lambdaAl2=%f\n",LambdaAl2);
-    printf("lambdaAl3=%f\n",LambdaAl3);
-    printf("lambdaAl4=%f\n",LambdaAl4);
+    printf("lambdaAl2=%f\n", LambdaAl2);
+    printf("lambdaAl3=%f\n", LambdaAl3);
+    printf("lambdaAl4=%f\n", LambdaAl4);
 
     double lambda2 = params.LambdaAl2;
 
@@ -368,18 +368,15 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     vector<double> OmgOrb_vecg    = Omg_orb_vec;
     if (params.flags.tidal == 0)
     {
-        r_vecg         = interp_grid(t_vecg,r_vec,dt);
-        MOmg_vecg      = interp_grid(t_vecg,MOmg_vec,dt);
-        pph_vecg       = interp_grid(t_vecg,pph_vec,dt);
-        prstar_vecg    = interp_grid(t_vecg,prstar_vec,dt);
-        ddotr_vecg     = interp_grid(t_vecg,ddotr_vec,dt);
-        OmgOrb_vecg    = interp_grid(t_vecg,Omg_orb_vec,dt);
+        r_vecg         = interp_grid(t_vecg, r_vec,dt);
+        MOmg_vecg      = interp_grid(t_vecg, MOmg_vec,dt);
+        pph_vecg       = interp_grid(t_vecg, pph_vec,dt);
+        prstar_vecg    = interp_grid(t_vecg, prstar_vec,dt);
+        ddotr_vecg     = interp_grid(t_vecg, ddotr_vec,dt);
+        OmgOrb_vecg    = interp_grid(t_vecg, Omg_orb_vec,dt);
     }
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
-    
-    
-    
     
     for (int k=35; k--; )
     {

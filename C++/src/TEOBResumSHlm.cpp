@@ -38,7 +38,7 @@ vector<gsl_complex> hlmNewt(const double r,
                             const double phi,
                             const double nu,
                             bool         tidal_flag,
-			    bool         spin_flag
+                            bool         spin_flag
                             ){
     
     /******************************************************************************************
@@ -77,15 +77,15 @@ vector<gsl_complex> hlmNewt(const double r,
        when the full waveform is computed. See discussion in Damour & Nagar, PRD 90, 044018, Sec. 4, Eq.(89).
        This is not done for multipole with l>4 because no spinning information is included in the waveform. */
     if (spin_flag==true)
-      {
-	const double p2 = 1;
-	const double p4 = 2.*nu-1;
-      }
+    {
+        const double p2 = 1;
+        const double p4 = 2.*nu-1;
+    }
     	
     if (tidal_flag==true)
     {
         const double p2 = 1.;
-	const double p4 = 2*nu-1;
+        const double p4 = 2*nu-1;
     }
     
     int kmax = 35;
@@ -1429,12 +1429,12 @@ vector<gsl_complex> hlm(double       t,
     
     vector<gsl_complex> hlm(kmax);
     
-    double nu           = (*(TEOBResumParams *)params).nu;
+    double nu            = (*(TEOBResumParams *)params).nu;
     bool tidal_flag      = (*(TEOBResumParams *)params).flags.tidal;
     bool spin_flag       = (*(TEOBResumParams *)params).flags.spin;
     bool speedytail_flag = (*(TEOBResumParams *)params).flags.speedy;
     
-    double source[]     = {
+    double source[]      = {
         jhat,Heff,
         Heff,jhat,Heff,
         jhat,Heff,jhat,Heff,
@@ -1444,7 +1444,7 @@ vector<gsl_complex> hlm(double       t,
         jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
     
     /** Newtonian waveform */
-    vector<gsl_complex> hNewt = hlmNewt( rw,Omega,phi, nu,tidal_flag,spin_flag);
+    vector<gsl_complex> hNewt = hlmNewt(rw,Omega,phi, nu, tidal_flag, spin_flag);
     
     /** Compute corrections */
     double x = rw*Omega*rw*Omega;
