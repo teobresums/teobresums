@@ -17,6 +17,15 @@
  *  MA  02111-1307  USA
  */
 
+/**
+ * @file TEOBResumS..h
+ * @brief Header file of the TEOBResumS C code
+ *
+ * This file contains all the macros, typdef, and routine prototype.
+ * Doxygen documentation should go here.
+ *
+ */
+
 #include <stlib.h>
 #include <stdio.h>
 #include <libconfig.h> /* library to manage parameters */
@@ -172,7 +181,6 @@ typedef struct tagWaveform_lm_pt
   double phase[KMAX]; /* phase */
 }  Waveform_lm_pt;
 
-
 /** Dynamics data type */
 typedef struct tagDynamics
 {
@@ -201,9 +209,7 @@ typedef struct tagDynamics
   int use_tidal, use_spin;
 } Dynamics;
 
-
 /* Function protoypes grouped based on file */
-
 
 /* TEOBResumSPars.c */
 void par_db_init ();
@@ -252,6 +258,8 @@ void Dynamics_alloc (Dynamics **dyn, int size);
 void Dynamics_push (Dynamics **dyn, int size);
 void Dynamics_output (Dynamics *dyn);
 void Dynamics_free (Dynamics *dyn);
+double time_units_conversion(double M, double t);
+double radius0(double M, double fHz);
 void errorexit(char *file, int line, char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
 void errorexits(char *file, int line, char *s, char *t);
@@ -269,11 +277,15 @@ void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double 
 void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); 
 //void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);//used at all???
 
+/* TEOBResumSInitialData.c */
+
+
 /* TEOBResumSMetric.c */
 void A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
 void Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 void s_Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
+double AdiabLR(void *params);
 
 /* TEOBResumSFlux.c */
 double flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
@@ -299,21 +311,10 @@ void hlm(double t,
 	 Waveform_lm *hlm);
 void deltalm(double Hreal,double Omega,double nu, double *dlm);
 void hhatlmtail(double Omega,double Hreal,double bphys, Waveform_lm_pt *tlm);
+void speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_pt *tlm);
 void hlmNewt(double r, double Omega, double phi, double nu, int usetidal, Waveform_lm *hNewt)
 void hlm_Tidal(double x, Dynamics *dyn, double *hTidallm);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void flm_amplitudes(double x,double nu, double *rholm, double *flm);
+void s_flm_amplitudes(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
+		      double *rholm, double *flm);
 

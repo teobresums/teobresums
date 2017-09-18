@@ -57,7 +57,7 @@ int TEOBResumS(
   /* Compute light-ring (if needed) */
   if (par_get_i("use_tidal")) {
     dyn->rLR = AdiabLR(dyn);
-    dyn->rLSO = 6.0; 
+    dyn->rLSO = 6.0; //FIXME
     par_set_d("rLR", dyn->rLR);
   }
     
