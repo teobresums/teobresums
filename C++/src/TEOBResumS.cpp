@@ -413,10 +413,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     {
         
         vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
-
-
-	printf("I'm here???\n");
-	
+		
         for (int k=35; k--; )
         {
             if (k==1)
@@ -424,17 +421,17 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 for (int i=0; i<grid_length; i++ )
                 {
                     hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
-                    hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
+                    hlm_phase_g[k][i] = hlm_phase_g[k][i] - nqc[k][i].dat[1];
                     std::fprintf(nqcs, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
                 }
             }
         }
     }
-//    if (DEBUG)
-//    {
+    if (DEBUG)
+    {
         std::fclose(nqcs);
-//    }
-	//if (DEBUG)
+    }
+    if (DEBUG)
     {
         char   outputr[256]   = "waveform_postNQC.dat";
         std::FILE* waveform_postNQC   = std::fopen(outputr, "w");

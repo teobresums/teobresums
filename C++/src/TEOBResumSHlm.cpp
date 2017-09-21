@@ -1254,7 +1254,6 @@ vector<vector<gsl_complex> > find_a1a2a3(
         }
     }
 
-    printf("I'm here in Hlm???\n");
     return o;
     
 }
