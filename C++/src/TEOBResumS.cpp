@@ -279,8 +279,10 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             ddotr_vec.push_back(ddotr);
         }
         
-        /** Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards */
-        //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
+        /**Breaking the computation. Find the peak of the Omg_orb curve (the "pure" orbital frequency
+           without the spin-orbit contribution) and continue the evolution for another 5M. 
+           For nonspinning case Omg_orb is precisely the orbital frequency */
+	
         if (params.flags.spin==1)
         {
             MOmg = Omg_orb;
@@ -289,13 +291,13 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         {
             MOmg = Omg;
             
-        }
+        }	
         if (MOmgpeak_flag==false)
         {
             if (MOmg < MOmg_prev)
             {
                 MOmgpeak_flag = true;
-                t_stop        = t + 4.*dt;
+                t_stop        = t + 5; 
             }
             else
             {
@@ -309,14 +311,16 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 stop_flag = true;
             }
         }
-
+	
 	/***************************************************/
-	/** Quick hack: stop the waveform during inspiral **/
+	/** Quick hack: stop the waveform during inspiral and
+            compute Qomg. Solver 2 is better in this case, to
+            avoid uncertainty coming from interpolation*/
 	
 	/*if (r<=10)
 	 {
                 stop_flag = true;
-	  }*/
+		}*/
 	
     }
     gsl_odeiv2_evolve_free (e);
@@ -327,12 +331,12 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 
     //if (DEBUG)
     /*********************************************************
-     IMPORTANT STEP HERE: with solver 2, this waveform is OK!!
+     IMPORTANT STEP HERE: with solver 2, this waveform is OK
+     for Qomg computation. Output of the pure RK evolution.
     **********************************************************/
     
     {
-      //char   outputr[256]   = "h22_q1_sly_s_m05.dat";
-	char   outputr[256]   = "h22_bbh_q1_085.dat";
+        char   outputr[256]   = "h22_inspl.dat";	
         std::FILE* waveform_preint   = std::fopen(outputr, "w");
         int j                 = 0;
         int N                 = hlm_ampl[1].size();
@@ -343,8 +347,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         }
         std::fclose(waveform_preint);
 	}
-
-
 
     
     /** Interpolate quantities on a grid of width dt */
@@ -388,8 +390,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     }
     
     /** NQCs corrections */
-    /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
-    //if (DEBUG)
+    if (DEBUG)
     {
         char   outputr[256]   = "waveform_preNQC.dat";
         std::FILE* waveform_preNQC   = std::fopen(outputr, "w");
@@ -402,12 +403,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         }
         std::fclose(waveform_preNQC);
     }
-    
-//    if (DEBUG)
-//    {
-        char   outputr[256]   = "waveform_nqc.dat";
-        std::FILE* nqcs       = std::fopen(outputr, "w");
-//    }
+
     
     if (params.flags.tidal==0 && params.flags.spin==1)
     {
@@ -421,16 +417,12 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 for (int i=0; i<grid_length; i++ )
                 {
                     hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
-                    hlm_phase_g[k][i] = hlm_phase_g[k][i] - nqc[k][i].dat[1];
-                    std::fprintf(nqcs, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
+                    hlm_phase_g[k][i] = hlm_phase_g[k][i] - nqc[k][i].dat[1];                    
                 }
             }
         }
     }
-    if (DEBUG)
-    {
-        std::fclose(nqcs);
-    }
+
     if (DEBUG)
     {
         char   outputr[256]   = "waveform_postNQC.dat";
