@@ -346,7 +346,7 @@ int main (int argc, char* argv[])
         int N        = hplus->length;
         for (i=0;i<N;i++)
         {
-            std::fprintf(f, "%20.16f\t%20.16f\t%20.16f\n", i*dt, hplus->data[i], hcross->data[i]);
+	    std::fprintf(f, "%20.16e\t%20.16e\t%20.16e\n", i*dt, hplus->data[i], hcross->data[i]);
         }
         std::fclose(f);
         free(hplus->data);
