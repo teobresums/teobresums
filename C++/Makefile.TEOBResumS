@@ -23,8 +23,8 @@ LIB=$(LIBD)/lib$(NAME).a
 #
 
 CC=g++
-CFLAGS=-g -std=c++11
-#CFLAGS=-O3 -std=c++11 
+#CFLAGS=-g -std=c++11
+CFLAGS=-O3 -std=c++11 
 LFLAGS=`gsl-config --libs`
 LDLFLAGS=-lgsl -lgslcblas -lm
 

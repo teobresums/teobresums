@@ -751,13 +751,14 @@ TEOBResumParams read_config(char *fname)
     
     //double lambda1 = params.LambdaAl2;
     //double lambda2 = params.LambdaBl2;
+            
     double logC_Q1 = logQ(log(LambdaAl2));
     double logC_Q2 = logQ(log(LambdaBl2));
     double C_Q1    = exp(logC_Q1);
     double C_Q2    = exp(logC_Q2);
-    params.C_Q1 = C_Q1;
-    params.C_Q2 = C_Q2;
-    
+    params.C_Q1    = C_Q1;
+    params.C_Q2    = C_Q2;
+        
     return params;
 }
 

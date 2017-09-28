@@ -38,7 +38,7 @@ vector<gsl_complex> hlmNewt(const double r,
                             const double phi,
                             const double nu,
                             bool         tidal_flag,
-			    bool         spin_flag
+                            bool         spin_flag
                             ){
     
     /******************************************************************************************
@@ -77,15 +77,15 @@ vector<gsl_complex> hlmNewt(const double r,
        when the full waveform is computed. See discussion in Damour & Nagar, PRD 90, 044018, Sec. 4, Eq.(89).
        This is not done for multipole with l>4 because no spinning information is included in the waveform. */
     if (spin_flag==true)
-      {
-	const double p2 = 1;
-	const double p4 = 2.*nu-1;
-      }
+    {
+        const double p2 = 1;
+        const double p4 = 2.*nu-1;
+    }
     	
     if (tidal_flag==true)
     {
         const double p2 = 1.;
-	const double p4 = 2*nu-1;
+        const double p4 = 2*nu-1;
     }
     
     int kmax = 35;
@@ -1074,20 +1074,20 @@ vector<vector<gsl_complex> > find_a1a2a3(
     max_omg[1]  = omg_tmp;
     max_domg[1] = domg_tmp;
 
+    printf("--------------------------------\n");
+    printf("NR values for NQC determination:\n");
+    printf("--------------------------------\n");
     printf("Amrg    =%10.6f\n",max_A[1]);
     printf("dAmrg   =%10.6f\n",max_dA[1]);
     printf("omg_mrg =%10.6f\n",max_omg[1]);
     printf("domg_mrg=%10.6f\n",max_domg[1]);
     
-    /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
+    /** NQC corrections to AMPLITUDE (n1,n2) and PHASE (n4,n5)
      * NQC basis for (2,2) waveform : AMPLITUDE
      * note: n3 and n6 are not used
      */
     
-//    char   outputNQC[256]   = "NQC_func.dat";
-//    std::FILE* NQCfile   = std::fopen(outputNQC, "w");
-//    
-    for (int j=t_length;j--;)
+    for (int j=t_length-1;j--;) //THIS WAS BAD  (int j=t_length;j--;)
     {
         double pr_star2 = pr_star[j] * pr_star[j];
         double r2       = r[j] * r[j];
@@ -1100,16 +1100,17 @@ vector<vector<gsl_complex> > find_a1a2a3(
         
         n4[j]  = pr_star[j]/(r[j]*w[j]);           //  pr*/(r Omg)
         n5[j]  = n4[j]*r2*w2;                      // (pr*)*(r Omg)
-        
-//        std::fprintf(NQCfile, "%d\t%f\t%f\t%f\t%f\n", j, n1[j], n2[j], n4[j], n5[j]);
-//=======
-//        std::fprintf(NQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
     }
-    
-//    std::fclose(NQCfile);
 
+    /*
+    char   outputNQC[256]   = "NQC_func.dat";
+    std::FILE* NQCfile   = std::fopen(outputNQC, "w");
+    std::fprintf(NQCfile, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
+    std::fclose(NQCfile);
+    */
     
     /** Take the needed derivatives for the phase */
+    
     vector<double>  d_n4 = s_D1(n4,T,t_length-1);
     vector<double>  d_n5 = s_D1(n5,T,t_length-1);
     vector<double> d2_n4 = s_D1(d_n4,T,t_length-1);
@@ -1117,14 +1118,16 @@ vector<vector<gsl_complex> > find_a1a2a3(
 
     
     /* A check: output derivatives*/
+    /*
     char   outputdNQC[256]   = "dNQC_func.dat";
     std::FILE* dNQCfile   = std::fopen(outputdNQC, "w");
-    for (int j=t_length;j--;)
+    for (int j=t_length-1;j--;)
     {                
-        std::fprintf(dNQCfile, "%f\t%f\t%f\t%f\t%f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
+        std::fprintf(dNQCfile, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
     }
     
     std::fclose(dNQCfile);
+    */
     
     int Omgmax_index = 0;
     double Omg_max   = Omg_orb[0];
@@ -1182,6 +1185,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
     }
 
     /* A check: output derivatives*/
+    /*
     char   outputA[256]   = "Amp_func.dat";
     std::FILE* Afile   = std::fopen(outputA, "w");
     for (int j=t_length;j--;)
@@ -1190,17 +1194,8 @@ vector<vector<gsl_complex> > find_a1a2a3(
     }
     
     std::fclose(Afile);
-    
-    printf("A22-eob[C++]  = %f\n",p1tmp[1][jmax]);
-    printf("dA22-eob[C++] = %f\n",p2tmp[1][jmax]);
-    
-    // testing: putting exact values of amplitude and its derivative from Matlab code
-    //p1tmp[1][jmax] =  0.33611115;
-    //p2tmp[1][jmax] = -0.00007885;
-      
-    printf("A22-eob[matlb]  = %f\n",p1tmp[1][jmax]);
-    printf("dA22-eob[matlb] = %f\n",p2tmp[1][jmax]);
-
+    */
+  
     // similar test for the frequencies
 
     
@@ -1234,19 +1229,22 @@ vector<vector<gsl_complex> > find_a1a2a3(
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
     }
 
+    /*
     printf("m11 = %f\n",m11[1][jmax]);
     printf("m12 = %f\n",m12[1][jmax]);
     printf("m21 = %f\n",m21[1][jmax]);
     printf("m22 = %f\n",m22[1][jmax]);
     printf("P[0] = %f\n", max_A[1]  - p1tmp[1][jmax]);
     printf("P[1] = %f\n", max_dA[1] - p2tmp[1][jmax]);
-    
+    */
+    printf("-------------------\n");
+    printf("NQC coefficients:  \n");
+    printf("-------------------\n");
     printf("a1 = %f\n",ai[1][0]);
     printf("a2 = %f\n",ai[1][1]);
     printf("b1 = %f\n",bi[1][0]);
     printf("b2 = %f\n",bi[1][1]);
-    
-    
+        
     for (int k=35;k--;)
     {
         for (int j=0; j<t_length-1;j++)
@@ -1255,6 +1253,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
 	  o[k][j].dat[1] = 0. + bi[k][0]*n4[j] + bi[k][1]*n5[j];
         }
     }
+
     return o;
     
 }
@@ -1429,12 +1428,12 @@ vector<gsl_complex> hlm(double       t,
     
     vector<gsl_complex> hlm(kmax);
     
-    double nu           = (*(TEOBResumParams *)params).nu;
+    double nu            = (*(TEOBResumParams *)params).nu;
     bool tidal_flag      = (*(TEOBResumParams *)params).flags.tidal;
     bool spin_flag       = (*(TEOBResumParams *)params).flags.spin;
     bool speedytail_flag = (*(TEOBResumParams *)params).flags.speedy;
     
-    double source[]     = {
+    double source[]      = {
         jhat,Heff,
         Heff,jhat,Heff,
         jhat,Heff,jhat,Heff,
@@ -1444,7 +1443,7 @@ vector<gsl_complex> hlm(double       t,
         jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff};
     
     /** Newtonian waveform */
-    vector<gsl_complex> hNewt = hlmNewt( rw,Omega,phi, nu,tidal_flag,spin_flag);
+    vector<gsl_complex> hNewt = hlmNewt(rw,Omega,phi, nu, tidal_flag, spin_flag);
     
     /** Compute corrections */
     double x = rw*Omega*rw*Omega;

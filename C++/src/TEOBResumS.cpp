@@ -109,9 +109,9 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                                                     LambdaBl4,
                                                     flags);
 
-    printf("lambdaAl2=%f\n",LambdaAl2);
-    printf("lambdaAl3=%f\n",LambdaAl3);
-    printf("lambdaAl4=%f\n",LambdaAl4);
+    printf("lambdaAl2=%f\n", LambdaAl2);
+    printf("lambdaAl3=%f\n", LambdaAl3);
+    printf("lambdaAl4=%f\n", LambdaAl4);
 
     double lambda2 = params.LambdaAl2;
 
@@ -279,8 +279,10 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             ddotr_vec.push_back(ddotr);
         }
         
-        /** Check when to break the computation;find peak of omega curve and continue for delta_t=10. afterwards */
-        //MOmg = Omg; //NOTE: was MOmg = Omg_orb; before!!! (only for the spinning case)
+        /**Breaking the computation. Find the peak of the Omg_orb curve (the "pure" orbital frequency
+           without the spin-orbit contribution) and continue the evolution for another 5M. 
+           For nonspinning case Omg_orb is precisely the orbital frequency */
+	
         if (params.flags.spin==1)
         {
             MOmg = Omg_orb;
@@ -289,13 +291,13 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         {
             MOmg = Omg;
             
-        }
+        }	
         if (MOmgpeak_flag==false)
         {
             if (MOmg < MOmg_prev)
             {
                 MOmgpeak_flag = true;
-                t_stop        = t + 4.*dt;
+                t_stop        = t + 5; 
             }
             else
             {
@@ -309,13 +311,17 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 stop_flag = true;
             }
         }
-
+	
 	/***************************************************/
-	/** Quick hack: stop the waveform during inspiral **/
-	if (r<=10)
+	/** Quick hack: stop the waveform during inspiral and
+            compute Qomg. Solver 2 is better in this case, to
+            avoid uncertainty coming from interpolation*/
+	
+	/*if (r<=10)
 	 {
                 stop_flag = true;
-            }
+		}*/
+	
     }
     gsl_odeiv2_evolve_free (e);
     gsl_odeiv2_control_free (c);
@@ -325,11 +331,12 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 
     //if (DEBUG)
     /*********************************************************
-     IMPORTANT STEP HERE: with solver 2, this waveform is OK!!
+     IMPORTANT STEP HERE: with solver 2, this waveform is OK
+     for Qomg computation. Output of the pure RK evolution.
     **********************************************************/
     
     {
-        char   outputr[256]   = "h22_q1_sly_005.dat";
+        char   outputr[256]   = "h22_inspl.dat";	
         std::FILE* waveform_preint   = std::fopen(outputr, "w");
         int j                 = 0;
         int N                 = hlm_ampl[1].size();
@@ -341,8 +348,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         std::fclose(waveform_preint);
 	}
 
-
-
     
     /** Interpolate quantities on a grid of width dt */
     grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
@@ -353,6 +358,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     {
         t_vecg[i] = ti;
         i++;
+	
     }
   
     vector<double> hlm_phase_vecg = interp_grid(t_vec,hlm_phase_vec,dt);
@@ -365,18 +371,15 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     vector<double> OmgOrb_vecg    = Omg_orb_vec;
     if (params.flags.tidal == 0)
     {
-        r_vecg         = interp_grid(t_vec,r_vec,dt);
-        MOmg_vecg      = interp_grid(t_vec,MOmg_vec,dt);
-        pph_vecg       = interp_grid(t_vec,pph_vec,dt);
-        prstar_vecg    = interp_grid(t_vec,prstar_vec,dt);
-        ddotr_vecg     = interp_grid(t_vec,ddotr_vec,dt);
-        OmgOrb_vecg    = interp_grid(t_vec,Omg_orb_vec,dt);
+        r_vecg         = interp_grid(t_vec, r_vec,dt);
+        MOmg_vecg      = interp_grid(t_vec, MOmg_vec,dt);
+        pph_vecg       = interp_grid(t_vec, pph_vec,dt);
+        prstar_vecg    = interp_grid(t_vec, prstar_vec,dt);
+        ddotr_vecg     = interp_grid(t_vec, ddotr_vec,dt);
+        OmgOrb_vecg    = interp_grid(t_vec, Omg_orb_vec,dt);
     }
     std::vector<vector<double> > hlm_ampl_g(35);
     std::vector<vector<double> > hlm_phase_g(35);
-    
-    
-    
     
     for (int k=35; k--; )
     {
@@ -387,7 +390,6 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     }
     
     /** NQCs corrections */
-    /** NOTE THAT IF YOU REMOVE PARAMS.SPIN==TRUE EVERYTHING IS FUCKED UP FOR SOME REASON */
     if (DEBUG)
     {
         char   outputr[256]   = "waveform_preNQC.dat";
@@ -397,22 +399,16 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         
         for (j=0;j<N;j++)
         {
-            std::fprintf(waveform_preNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+            std::fprintf(waveform_preNQC, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[j], hlm_ampl_g[1][j], hlm_phase_g[1][j]);
         }
         std::fclose(waveform_preNQC);
     }
-    
-//    if (DEBUG)
-//    {
-//        char   outputr[256]   = "waveform_nqc.dat";
-//        std::FILE* nqcs       = std::fopen(outputr, "w");
-//    }
     
     if (params.flags.tidal==0 && params.flags.spin==1)
     {
         
         vector<vector<gsl_complex> > nqc = find_a1a2a3(t_vecg,r_vecg,MOmg_vecg,pph_vecg,prstar_vecg,hlm_phase_g,OmgOrb_vecg,hlm_ampl_g,ddotr_vecg,&params);
-        
+		
         for (int k=35; k--; )
         {
             if (k==1)
@@ -420,16 +416,12 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 for (int i=0; i<grid_length; i++ )
                 {
                     hlm_ampl_g[k][i]  = hlm_ampl_g[k][i]  * nqc[k][i].dat[0];
-                    hlm_phase_g[k][i] = hlm_phase_g[k][i] + nqc[k][i].dat[1];
-//                    std::fprintf(nqcs, "%f\t%e\t%e\n", t_vecg[i], nqc[k][i].dat[0], nqc[k][i].dat[1]);
+                    hlm_phase_g[k][i] = hlm_phase_g[k][i] - nqc[k][i].dat[1];
                 }
             }
         }
     }
-//    if (DEBUG)
-//    {
-//        std::fclose(nqcs);
-//    }
+
     if (DEBUG)
     {
         char   outputr[256]   = "waveform_postNQC.dat";
@@ -439,7 +431,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         
         for (j=0;j<N;j++)
         {
-            std::fprintf(waveform_postNQC, "%f\t%e\t%e\n", (double)j*dt, hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+	    std::fprintf(waveform_postNQC, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[j], hlm_ampl_g[1][j], hlm_phase_g[1][j]);
         }
         std::fclose(waveform_postNQC);
     }
