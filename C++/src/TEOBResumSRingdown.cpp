@@ -517,13 +517,32 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     int k33 = 4;
     
     
-    /** time-shift needed when the largest object is highly spinning*/
+    /* Additional time-shift needed when the largest object  is  highly spinning
+       and/or for high, anti-aligned spins. Quick hack that will be removed once
+       the iResum waveform will be available */
     if (chi1 >= 0.8498)
     {
-        /* Interpolating fit for Deltat_NQC. See Eq.(21) of arXiv:1506.08457 */
+       
+      /* Interpolating fit for Deltat_NQC. See Eq.(21) of arXiv:1506.08457 
+	 This is a formula that was obtained in the equal-mass, equal-spin
+	 case and promoted also to any other case where the spin on the larger
+	 BH is larger than 0.8498. This is a guess to extrapolate the model
+	 outside the domain of calibration */
+      
         DeltaT_nqc = dtnqc_fit(chi1,0.8498);
     }
+    else if ((chi1 <=-0.80) && (nu <= 8./81.))
+      /* This condition was a simple hack to avoid unphysical features in the
+         modulus amplitude when one (or both) the spins are large and negative
+         and the mass ratio is large. This little modification in the location
+         of the NQC point guarantees that the determination of the NQC parameters
+         guarantees just a small perturbation of the non-NQC EOB waveform. The
+         iResum waveform will be robust enough that this hack will not be needed*/  
+      {
+	DeltaT_nqc = 3.0;
+      }    
     else
+    /* standard choice inspired by test-particle results */  
     {
         DeltaT_nqc = 1.;
     }
@@ -564,7 +583,11 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     
     QNMHybridFitCab(params,a1,a2,a3,a4,b1,b2,b3,b4,sigma);
     
-    /*deleting data points up to tmatch (starting from the back)*/
+    /*deleting data points up to tmatch (starting from the back)
+      Attention: tmatch defined above is pushed back by two grid-points.
+      This makes the waveform correctly consistent with the Matlab code
+      and HAS to be like this. Uniform grids in the Matlab and here are
+      different, this fixes things */
     vector<long> I(35);
     vector<long> Size(35);
     for (int k = 35; k--; )
@@ -574,7 +597,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
         switch (k)
         {
             case 0:
-                while (t_vec[k][i]/Mbh>tmatch[k])
+                while (t_vec[k][i]/Mbh>tmatch[k]-2*dt/Mbh)
                 {
                     t_vec[k].pop_back();
                     hlm_rad[k].pop_back();
@@ -584,7 +607,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 i++;
                 break;
             case 1:
-                while (t_vec[k][i]/Mbh>tmatch[k])
+                while (t_vec[k][i]/Mbh>tmatch[k]-2*dt/Mbh)
                 {
                     t_vec[k].pop_back();
                     hlm_rad[k].pop_back();
@@ -594,7 +617,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
                 i++;
                 break;
             case 4:
-                while (t_vec[k][i]/Mbh>tmatch[k]) {
+                while (t_vec[k][i]/Mbh>tmatch[k]-2*dt/Mbh) {
                     t_vec[k].pop_back();
                     hlm_rad[k].pop_back();
                     hlm_phase[k].pop_back();
