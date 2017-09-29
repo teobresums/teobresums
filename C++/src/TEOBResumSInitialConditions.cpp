@@ -45,7 +45,9 @@ vector<double> initial(TEOBResumParams *params)
     double lambdaBl4 = (*(TEOBResumParams *)params).LambdaBl4;
     double kappa2T   = (*(TEOBResumParams *)params).kappaTl2;
     double tidal_flag= (*(TEOBResumParams *)params).flags.tidal;
-
+    /* Keplerian orbital frequency */
+    double OmgKepler = 1./(sqrt(r0)*sqrt(r0)*sqrt(r0));
+    
     vector<double> y_init(7);
     int N  = 6;
     const double dr = 1.e-8;
@@ -136,6 +138,7 @@ vector<double> initial(TEOBResumParams *params)
     printf("prstar[0]    = %18.16f\n",y_init[2]);
     printf("E[0]         = %18.16f\n",y_init[5]);
     printf("Omega[0]     = %18.16f\n",y_init[6]);
+    printf("Omega-Kepler = %18.16f\n",OmgKepler);
     if (tidal_flag==1)
       {
 	printf("lambda_l2[A] = %18.16f\n",lambdaAl2);
