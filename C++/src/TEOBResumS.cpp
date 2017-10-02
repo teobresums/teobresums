@@ -109,18 +109,20 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                                                     LambdaBl4,
                                                     flags);
 
-    printf("lambdaAl2=%f\n", LambdaAl2);
-    printf("lambdaAl3=%f\n", LambdaAl3);
-    printf("lambdaAl4=%f\n", LambdaAl4);
-
-    double lambda2 = params.LambdaAl2;
-
-    printf("lambdaAl2=%f\n",lambda2);
     
+    double lambda2 = params.LambdaAl2;
     double q      = params.q;
     dt            = params.dt;
+    
+    if (DEBUG)
+    {
+        printf("lambdaAl2=%f\n", LambdaAl2);
+        printf("lambdaAl3=%f\n", LambdaAl3);
+        printf("lambdaAl4=%f\n", LambdaAl4);
+        printf("lambdaAl2=%f\n", lambda2);
+        printf("q=%f\n",q);
 
-    printf("q=%f\n",q);
+    }
 
     if (params.flags.tidal==1)
     {
@@ -329,12 +331,11 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     gsl_odeiv2_driver_free (d);
 
 
-    //if (DEBUG)
     /*********************************************************
      IMPORTANT STEP HERE: with solver 2, this waveform is OK
      for Qomg computation. Output of the pure RK evolution.
     **********************************************************/
-    
+    if (DEBUG) 
     {
         char   outputr[256]   = "h22_inspl.dat";	
         std::FILE* waveform_preint   = std::fopen(outputr, "w");

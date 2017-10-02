@@ -1099,15 +1099,16 @@ vector<vector<gsl_complex> > find_a1a2a3(
     max_dA[1]   = dA_tmp;
     max_omg[1]  = omg_tmp;
     max_domg[1] = domg_tmp;
-
-    printf("--------------------------------\n");
-    printf("NR values for NQC determination:\n");
-    printf("--------------------------------\n");
-    printf("Amrg    =%10.6f\n",max_A[1]);
-    printf("dAmrg   =%10.6f\n",max_dA[1]);
-    printf("omg_mrg =%10.6f\n",max_omg[1]);
-    printf("domg_mrg=%10.6f\n",max_domg[1]);
-    
+    if (DEBUG)
+    {
+        printf("--------------------------------\n");
+        printf("NR values for NQC determination:\n");
+        printf("--------------------------------\n");
+        printf("Amrg    =%10.6f\n",max_A[1]);
+        printf("dAmrg   =%10.6f\n",max_dA[1]);
+        printf("omg_mrg =%10.6f\n",max_omg[1]);
+        printf("domg_mrg=%10.6f\n",max_domg[1]);
+    }
     /** NQC corrections to AMPLITUDE (n1,n2) and PHASE (n4,n5)
      * NQC basis for (2,2) waveform : AMPLITUDE
      * note: n3 and n6 are not used
@@ -1130,12 +1131,16 @@ vector<vector<gsl_complex> > find_a1a2a3(
         
     }
 
-    /*
-    char   outputNQC[256]   = "NQC_func.dat";
-    std::FILE* NQCfile   = std::fopen(outputNQC, "w");
-    std::fprintf(NQCfile, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
-    std::fclose(NQCfile);
-    */
+    if (DEBUG)
+    {
+        for (int j=t_length-1;j--;)
+        {
+            char   outputNQC[256]   = "NQC_func.dat";
+            std::FILE* NQCfile   = std::fopen(outputNQC, "w");
+            std::fprintf(NQCfile, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
+            std::fclose(NQCfile);
+        }
+    }
     
     /** Take the needed derivatives for the phase */
     
@@ -1146,17 +1151,18 @@ vector<vector<gsl_complex> > find_a1a2a3(
 
     
     /* A check: output derivatives*/
-    /*
-    char   outputdNQC[256]   = "dNQC_func.dat";
-    std::FILE* dNQCfile   = std::fopen(outputdNQC, "w");
-    for (int j=t_length-1;j--;)
-    {                
-        std::fprintf(dNQCfile, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
+    if (DEBUG)
+    {
+        char   outputdNQC[256]   = "dNQC_func.dat";
+        std::FILE* dNQCfile   = std::fopen(outputdNQC, "w");
+        for (int j=t_length-1;j--;)
+        {                
+            std::fprintf(dNQCfile, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);
+        }
+        
+        std::fclose(dNQCfile);
     }
-    
-    std::fclose(dNQCfile);
-    */
-    
+     
     int Omgmax_index = 0;
     double Omg_max   = Omg_orb[0];
     int i            = 1;
@@ -1202,11 +1208,15 @@ vector<vector<gsl_complex> > find_a1a2a3(
       }
      
     double tNQC = tOmgOrb_pk - DeltaT_nqc;
-    printf("-------------------------------\n");
-    printf("Check: NQC related information:\n");
-    printf("-------------------------------\n");
-    printf("DeltaT_tNQC = %f\n",DeltaT_nqc);
-    printf("tNQC [bare] = %f\n",tNQC);
+    
+    if (DEBUG)
+    {
+        printf("-------------------------------\n");
+        printf("Check: NQC related information:\n");
+        printf("-------------------------------\n");
+        printf("DeltaT_tNQC = %f\n",DeltaT_nqc);
+        printf("tNQC [bare] = %f\n",tNQC);
+    }
     
     i        = 0;
     int jmax = 0;
@@ -1236,16 +1246,17 @@ vector<vector<gsl_complex> > find_a1a2a3(
     }
 
     /* A check: output derivatives*/
-    /*
-    char   outputA[256]   = "Amp_func.dat";
-    std::FILE* Afile   = std::fopen(outputA, "w");
-    for (int j=t_length;j--;)
-    {                
-        std::fprintf(Afile, "%f\t%f\t%f\n", T[j], p1tmp[1][j], p2tmp[1][j]);
+    if (DEBUG)
+    {
+        char   outputA[256]   = "Amp_func.dat";
+        std::FILE* Afile      = std::fopen(outputA, "w");
+        for (int j=t_length;j--;)
+        {                
+            std::fprintf(Afile, "%f\t%f\t%f\n", T[j], p1tmp[1][j], p2tmp[1][j]);
+        }
+        
+        std::fclose(Afile);
     }
-    
-    std::fclose(Afile);
-    */
   
     // similar test for the frequencies
 
@@ -1280,22 +1291,25 @@ vector<vector<gsl_complex> > find_a1a2a3(
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
     }
 
-    /*
-    printf("m11 = %f\n",m11[1][jmax]);
-    printf("m12 = %f\n",m12[1][jmax]);
-    printf("m21 = %f\n",m21[1][jmax]);
-    printf("m22 = %f\n",m22[1][jmax]);
-    printf("P[0] = %f\n", max_A[1]  - p1tmp[1][jmax]);
-    printf("P[1] = %f\n", max_dA[1] - p2tmp[1][jmax]);
-    */
-    printf("-------------------\n");
-    printf("NQC coefficients:  \n");
-    printf("-------------------\n");
-    printf("a1 = %f\n",ai[1][0]);
-    printf("a2 = %f\n",ai[1][1]);
-    printf("b1 = %f\n",bi[1][0]);
-    printf("b2 = %f\n",bi[1][1]);
-        
+    if (DEBUG)
+    {
+        /*
+        printf("m11 = %f\n",m11[1][jmax]);
+        printf("m12 = %f\n",m12[1][jmax]);
+        printf("m21 = %f\n",m21[1][jmax]);
+        printf("m22 = %f\n",m22[1][jmax]);
+        printf("P[0] = %f\n", max_A[1]  - p1tmp[1][jmax]);
+        printf("P[1] = %f\n", max_dA[1] - p2tmp[1][jmax]);
+        */
+        printf("-------------------\n");
+        printf("NQC coefficients:  \n");
+        printf("-------------------\n");
+        printf("a1 = %f\n",ai[1][0]);
+        printf("a2 = %f\n",ai[1][1]);
+        printf("b1 = %f\n",bi[1][0]);
+        printf("b2 = %f\n",bi[1][1]);
+    }
+    
     for (int k=35;k--;)
     {
         for (int j=0; j<t_length-1;j++)
