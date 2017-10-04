@@ -819,7 +819,7 @@ TEOBResumParams process_input_parameters(
         params.r0 = pow(f_min*M_PI, -2./3.);
     }
 
-    printf(" dt = %e r0 = %e\n",params.dt, params.r0);
+//    printf(" dt = %e r0 = %e\n",params.dt, params.r0);
     
     params.chi1 = chi1;
     params.chi2 = chi2;

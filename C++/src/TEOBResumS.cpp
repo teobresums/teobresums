@@ -83,7 +83,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 
     if (m2 > m1)
     {
-        printf("Warning! m1 > m2, swapping component masses, spins and tidal coefficients\n");
+        //printf("Warning! m1 > m2, swapping component masses, spins and tidal coefficients\n");
         swap_variables(&m1, &m2);
         swap_variables(&spin1x, &spin2x);
         swap_variables(&spin1y, &spin2y);
@@ -109,18 +109,18 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                                                     LambdaBl4,
                                                     flags);
 
-    printf("lambdaAl2=%f\n", LambdaAl2);
-    printf("lambdaAl3=%f\n", LambdaAl3);
-    printf("lambdaAl4=%f\n", LambdaAl4);
+//    printf("lambdaAl2=%f\n", LambdaAl2);
+//    printf("lambdaAl3=%f\n", LambdaAl3);
+//    printf("lambdaAl4=%f\n", LambdaAl4);
 
     double lambda2 = params.LambdaAl2;
 
-    printf("lambdaAl2=%f\n",lambda2);
+//    printf("lambdaAl2=%f\n",lambda2);
     
     double q      = params.q;
     dt            = params.dt;
 
-    printf("q=%f\n",q);
+//    printf("q=%f\n",q);
 
     if (params.flags.tidal==1)
     {
@@ -169,7 +169,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     params.Mbh = final_mass;
     
     /** Initialize ODE system solver */
-    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
+    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;//rk8pd;
     gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc(T, 4);
     gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new(1.e-13, 1.e-11);
     gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc(4);
@@ -334,19 +334,19 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
      IMPORTANT STEP HERE: with solver 2, this waveform is OK
      for Qomg computation. Output of the pure RK evolution.
     **********************************************************/
-    
-    {
-        char   outputr[256]   = "h22_inspl.dat";	
-        std::FILE* waveform_preint   = std::fopen(outputr, "w");
-        int j                 = 0;
-        int N                 = hlm_ampl[1].size();
-        
-        for (j=0;j<N;j++)
-        {
-            std::fprintf(waveform_preint, "%20.12f\t%20.12f\t%20.12f\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
-        }
-        std::fclose(waveform_preint);
-	}
+//
+//    {
+//        char   outputr[256]   = "h22_inspl.dat";
+//        std::FILE* waveform_preint   = std::fopen(outputr, "w");
+//        int j                 = 0;
+//        int N                 = hlm_ampl[1].size();
+//
+//        for (j=0;j<N;j++)
+//        {
+//            std::fprintf(waveform_preint, "%20.12f\t%20.12f\t%20.12f\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
+//        }
+//        std::fclose(waveform_preint);
+//    }
 
     
     /** Interpolate quantities on a grid of width dt */
@@ -389,20 +389,20 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         hlm_phase_g[k]           = interp_grid(t_vec,phase,dt);
     }
     
-    /** NQCs corrections */
-    if (DEBUG)
-    {
-        char   outputr[256]   = "waveform_preNQC.dat";
-        std::FILE* waveform_preNQC   = std::fopen(outputr, "w");
-        int j                 = 0;
-        int N                 = hlm_ampl_g[1].size();
-        
-        for (j=0;j<N;j++)
-        {
-            std::fprintf(waveform_preNQC, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[j], hlm_ampl_g[1][j], hlm_phase_g[1][j]);
-        }
-        std::fclose(waveform_preNQC);
-    }
+//    /** NQCs corrections */
+//    if (DEBUG)
+//    {
+//        char   outputr[256]   = "waveform_preNQC.dat";
+//        std::FILE* waveform_preNQC   = std::fopen(outputr, "w");
+//        int j                 = 0;
+//        int N                 = hlm_ampl_g[1].size();
+//
+//        for (j=0;j<N;j++)
+//        {
+//            std::fprintf(waveform_preNQC, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[j], hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+//        }
+//        std::fclose(waveform_preNQC);
+//    }
     
     if (params.flags.tidal==0 && params.flags.spin==1)
     {
@@ -422,19 +422,19 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         }
     }
 
-    if (DEBUG)
-    {
-        char   outputr[256]   = "waveform_postNQC.dat";
-        std::FILE* waveform_postNQC   = std::fopen(outputr, "w");
-        int j                 = 0;
-        int N                 = hlm_ampl_g[1].size();
-        
-        for (j=0;j<N;j++)
-        {
-	    std::fprintf(waveform_postNQC, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[j], hlm_ampl_g[1][j], hlm_phase_g[1][j]);
-        }
-        std::fclose(waveform_postNQC);
-    }
+//    if (DEBUG)
+//    {
+//        char   outputr[256]   = "waveform_postNQC.dat";
+//        std::FILE* waveform_postNQC   = std::fopen(outputr, "w");
+//        int j                 = 0;
+//        int N                 = hlm_ampl_g[1].size();
+//        
+//        for (j=0;j<N;j++)
+//        {
+//        std::fprintf(waveform_postNQC, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[j], hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+//        }
+//        std::fclose(waveform_postNQC);
+//    }
     /** Define a time vector for each multipole
         These will be cut by the ringdown, where
         each multipole has its own starting time */

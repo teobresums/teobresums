@@ -1074,13 +1074,13 @@ vector<vector<gsl_complex> > find_a1a2a3(
     max_omg[1]  = omg_tmp;
     max_domg[1] = domg_tmp;
 
-    printf("--------------------------------\n");
-    printf("NR values for NQC determination:\n");
-    printf("--------------------------------\n");
-    printf("Amrg    =%10.6f\n",max_A[1]);
-    printf("dAmrg   =%10.6f\n",max_dA[1]);
-    printf("omg_mrg =%10.6f\n",max_omg[1]);
-    printf("domg_mrg=%10.6f\n",max_domg[1]);
+//    printf("--------------------------------\n");
+//    printf("NR values for NQC determination:\n");
+//    printf("--------------------------------\n");
+//    printf("Amrg    =%10.6f\n",max_A[1]);
+//    printf("dAmrg   =%10.6f\n",max_dA[1]);
+//    printf("omg_mrg =%10.6f\n",max_omg[1]);
+//    printf("domg_mrg=%10.6f\n",max_domg[1]);
     
     /** NQC corrections to AMPLITUDE (n1,n2) and PHASE (n4,n5)
      * NQC basis for (2,2) waveform : AMPLITUDE
@@ -1155,7 +1155,7 @@ vector<vector<gsl_complex> > find_a1a2a3(
     
     double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
-    printf("tNQC [bare] = %f\n",tNQC);
+//    printf("tNQC [bare] = %f\n",tNQC);
     
     i        = 0;
     int jmax = 0;
@@ -1237,14 +1237,14 @@ vector<vector<gsl_complex> > find_a1a2a3(
     printf("P[0] = %f\n", max_A[1]  - p1tmp[1][jmax]);
     printf("P[1] = %f\n", max_dA[1] - p2tmp[1][jmax]);
     */
-    printf("-------------------\n");
-    printf("NQC coefficients:  \n");
-    printf("-------------------\n");
-    printf("a1 = %f\n",ai[1][0]);
-    printf("a2 = %f\n",ai[1][1]);
-    printf("b1 = %f\n",bi[1][0]);
-    printf("b2 = %f\n",bi[1][1]);
-        
+//    printf("-------------------\n");
+//    printf("NQC coefficients:  \n");
+//    printf("-------------------\n");
+//    printf("a1 = %f\n",ai[1][0]);
+//    printf("a2 = %f\n",ai[1][1]);
+//    printf("b1 = %f\n",bi[1][0]);
+//    printf("b2 = %f\n",bi[1][1]);
+    
     for (int k=35;k--;)
     {
         for (int j=0; j<t_length-1;j++)

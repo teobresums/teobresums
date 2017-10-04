@@ -58,7 +58,11 @@ def get_bandpassed_strain(fname,low=20,high=2028):
     return times,strain,srate
 
 
-def load_data(fname, chunk_size=2.0, trigtime=tevent, injection=False, sampling_rate = 2048):
+def load_data(fname,
+              chunk_size=4.0,
+              trigtime=tevent,
+              injection=False,
+              sampling_rate=None):
 
     # Extract some metadata from the file name
     ifo,fr_type,starttime,T=fname.strip('.txt').split('-')
@@ -70,32 +74,31 @@ def load_data(fname, chunk_size=2.0, trigtime=tevent, injection=False, sampling_
     # sampling timestep (s)
     dt = T/N
     # Sampling rate (Hz)
-    srate=1/dt
+    srate=1./dt
     
     if sampling_rate is not None:
+        strain = downsample(rawstrain, srate, sampling_rate)
         srate = sampling_rate
-        # remove all power above the new Nyquist
-#        Nyq = sampling_rate/2.0
-#        bb, ab = butter(4, [20/(0.5*sampling_rate), (Nyq-10)/(0.5*sampling_rate) ], btype='band')
-#        strain = filtfilt(bb, ab, rawstrain)
-        strain = downsample(rawstrain, 4096., sampling_rate)
-        srate = sampling_rate
-#    strain = rawstrain 
+        dt = 1./srate
+    else:
+        strain = rawstrain
+
+    time = np.linspace(starttime,starttime+T,len(strain))
     # find the index corresponding to the trigger time
     index_trigtime = int((trigtime-starttime)*srate)
-
     # Number of samples in the chunk
     chunksize=int(chunk_size*srate)
-    
     # Starting time for the signal chunk
     # We want the trigger time 1s before the end of the segment
     index_chunk_start = index_trigtime - int(srate*(chunk_size-1))
     chunk_start = starttime+dt*index_chunk_start
-
     # signal chunk
     signal_chunk=np.zeros(chunksize,dtype=np.float64)
-    for i in range(chunksize): signal_chunk[i] = strain[index_chunk_start+i]
-    
+    for i in range(chunksize):
+        signal_chunk[i] = strain[index_chunk_start+i]
+
+    mask = np.ones(len(strain), dtype=bool)
+    mask[range(index_chunk_start,index_chunk_start+chunksize,chunksize)] = False
     # window the data
     padding = 0.5
     window=tukey(chunksize,padding)
@@ -105,8 +108,9 @@ def load_data(fname, chunk_size=2.0, trigtime=tevent, injection=False, sampling_
     windowNorm = chunksize/np.sum(window**2)
     # Compute the frequency domain strain
     sf = np.fft.rfft(signal_chunk)*windowNorm
+    
     # Compute the PSD
-    psd, freqs = mlab.psd(strain, Fs = srate, NFFT = np.int(srate), window=tukey(np.int(srate),padding))
+    psd, freqs = mlab.psd(strain[mask], Fs = srate, NFFT = np.int(srate), window=tukey(np.int(srate),padding))
     psd_int = interp1d(freqs, psd)
     
     # compute times and frequencies for convenience
@@ -120,6 +124,8 @@ def load_data(fname, chunk_size=2.0, trigtime=tevent, injection=False, sampling_
 def whiten(strain, interp_psd, dt):
     Nt = len(strain)
     freqs = np.fft.rfftfreq(Nt, dt)
+    bb, ab = butter(4, [20/(0.5*srate), 300 / (0.5*srate) ], btype='band')
+    strain = filtfilt(bb, ab, strain)
     # whitening: transform to freq domain, divide by asd, then transform back,
     # taking care to get normalization right.
     hf = np.fft.rfft(strain)
@@ -128,9 +134,11 @@ def whiten(strain, interp_psd, dt):
     return white_ht
 
 if __name__ == "__main__":
-    T, strainT, F, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt')
+    T, strainT, F, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt', sampling_rate = 2048)
     from matplotlib import pyplot as plt
     plt.figure()
+    plt.loglog(F, psd)
+    T, strainT, F, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt')
     plt.loglog(F, psd)
     plt.show()
     exit()
@@ -141,9 +149,6 @@ if __name__ == "__main__":
     imax = int(fmax*4)
     print imin, imax
     plt.figure()
-    plt.plot(1126259459.42+np.linspace(0,4,int(4*4096)),strainT)
-    plt.axvline(tevent)
-    plt.figure()
     plt.plot(1126259459.42+np.linspace(0,4,int(4*4096)),whiten(strainT,psd,1./4096.))
-    plt.axvline(tevent)
+    plt.axvline(tevent,color = 'r')
     plt.show()

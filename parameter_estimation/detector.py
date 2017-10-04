@@ -2,18 +2,17 @@ from __future__ import division
 import numpy as np
 import noise
 from pylal import inject
-from lal import ComputeDetAMResponse, GreenwichMeanSiderealTime, TimeDelayFromEarthCenter
+from lal import ComputeDetAMResponse, GreenwichMeanSiderealTime, TimeDelayFromEarthCenter, LIGOTimeGPS
 from scipy.signal import tukey
 
 detMap = {'H1': 'LHO_4k', 'H2': 'LHO_2k', 'L1': 'LLO_4k', 'G1': 'GEO_600', 'V1': 'VIRGO', 'T1': 'TAMA_300'}
 
 class GravitationalWaveDetector(object):
     
-    def __init__(self, name, datafile, chunk_size=4.0, trigtime=1126259462.423, **kwargs):
+    def __init__(self, name, datafile, chunk_size=4.0, trigtime=1126259462.423, flow = 20, fhigh = 1024, **kwargs):
         self.name = name
         self.trigtime = trigtime
         self.lal_detector = inject.cached_detector[detMap[self.name]]
-        self.location = self.lal_detector.location
         self.Times, self.TimeSeries, self.Frequency, self.FrequencySeries, self.PowerSpectralDensity = noise.load_data(datafile, chunk_size=chunk_size, trigtime=trigtime, **kwargs)
         self.Epoch = self.Times[0]
         self.dt = np.diff(self.Times)[0]
@@ -21,30 +20,32 @@ class GravitationalWaveDetector(object):
         self.df = np.diff(self.Frequency)[0]
         self.sampling_rate = 1./self.dt
         self.segment_length = int(self.T*self.sampling_rate)
-        self.InversePowerSpectralDensity = 1./(self.PowerSpectralDensity*0.5/self.dt)
-        self.Flow = 20.0
-        self.Fhigh = self.sampling_rate/2.
+        self.Flow = flow
+        self.Fhigh = fhigh
         self.kmin = int(self.Flow/self.df)
         self.kmax = int(self.Fhigh/self.df)
-    
+        self.sigmasq = self.PowerSpectralDensity[self.kmin:self.kmax]*float(self.segment_length)/(2.0*self.dt)
+
     def Project(self, hptilde, hctilde, ra, dec, psi, tc):
         """
         projects and timeshifts the GW signal onto the detector
         """
-        gmst = GreenwichMeanSiderealTime(tc)
-        fp,fc = ComputeDetAMResponse(self.lal_detector.response, ra, dec, psi, gmst)
         
-        timeShift = -(self.Epoch-1)-tc - TimeDelayFromEarthCenter(self.location, ra, dec, tc)
+        tgps  = LIGOTimeGPS(tc)
+        gmst  = GreenwichMeanSiderealTime(tgps)
+        fp,fc = ComputeDetAMResponse(self.lal_detector.response, ra, dec, psi, gmst)
+        timeShift = (tc - self.Epoch) + TimeDelayFromEarthCenter(self.lal_detector.location, ra, dec, tgps)
 
-        return np.exp(1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])*(fp*hptilde[self.kmin:self.kmax]+fc*hctilde[self.kmin:self.kmax])
+        return np.exp(-1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])*(fp*hptilde[self.kmin:self.kmax]+fc*hctilde[self.kmin:self.kmax])
 
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
-        residuals = self.FrequencySeries[self.kmin:self.kmax] - self.Project(hptilde, hctilde, ra, dec, psi, tc)
-        
-        numerator = residuals*np.conj(residuals)
+        template = self.Project(hptilde, hctilde, ra, dec, psi, tc)*float(self.segment_length)
+        data = self.FrequencySeries[self.kmin:self.kmax]
+        residuals = (data - template)
+        overlap = 4*self.df*np.conj(residuals)*residuals/self.sigmasq
 
-        return -np.sum(np.real(numerator)*self.InversePowerSpectralDensity[self.kmin:self.kmax]*self.dt)
+        return -np.sum(overlap).real
 
 if __name__ == "__main__":
     H = GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', trigtime = 1126259462.43)

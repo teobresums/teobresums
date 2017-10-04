@@ -49,7 +49,6 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
 
     cdef int i = 0
     cdef unsigned int N
-    cdef np.ndarray[double, ndim=2] x
 
     TEOBResumS(&hp,
               &hc,
@@ -76,11 +75,12 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
               &flags)
 
     N = hp.length
-    cdef np.ndarray[double, ndim=1, mode = 'c'] hplus  = tonumpyarray(hp.data,N)
-    cdef np.ndarray[double, ndim=1, mode = 'c'] hcross = tonumpyarray(hc.data,N)
+    cdef np.ndarray[double, ndim=2, mode = 'c'] h = np.zeros((N,2),dtype=np.double)
+    h[:,0] = tonumpyarray(hp.data,N)
+    h[:,1] = tonumpyarray(hc.data,N)
     if hp.data: free(hp.data)
     if hp : free(hp)
     if hc.data: free(hc.data)
     if hc: free(hc)
-    return np.column_stack((hplus, hcross))
+    return h
 
