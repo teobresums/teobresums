@@ -41,7 +41,7 @@ class GravitationalWaveDetector(object):
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
         template = self.Project(hptilde, hctilde, ra, dec, psi, tc)
-        data = self.FrequencySeries[self.kmin:self.kmax]*self.dt
+        data = self.FrequencySeries[self.kmin:self.kmax]*self.dt # the dt comes from the dimensionfull FFT
         residuals = (data - template)
         overlap = 2.0*np.conj(residuals)*residuals/self.PowerSpectralDensity[self.kmin:self.kmax]
 

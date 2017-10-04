@@ -31,76 +31,110 @@ class GravitationalWaveModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, inject=False, chunk_size=8.0, trigtime=1126259462.423, **kwargs):
+    def __init__(self,
+                 inject=False,
+                 chunk_size=8.0,
+                 trigtime=1126259462.423,
+                 template='LAL',
+                 flow = 20,
+                 fhigh = 500,
+                 **kwargs):
         
         super(GravitationalWaveModel,self).__init__(**kwargs)
         # this is the merger time in H1
         self.tevent = trigtime
-
+        self.template = template
         self.inject=inject
-
-        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = 20, fhigh = 500, **kwargs),GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = 20, fhigh = 500, **kwargs)]
+        self.flow = flow
+        self.fhigh = fhigh
+        
+        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = self.flow, fhigh = self.fhigh, **kwargs),
+                          GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = self.flow, fhigh = self.fhigh, **kwargs)]
 
         self.sampling_rate = self.detectors[0].sampling_rate
         self.segment_length = self.detectors[0].segment_length
         self.dt = 1./self.sampling_rate
-        self.Flow = self.detectors[0].Flow
-        self.Fhigh = self.detectors[0].Fhigh
         self.df = self.detectors[0].df
         
         #parameters
-        self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
-                    'iota', 'psi', 'distance',
-                    'spin1x','spin1y','spin1z',
-                    'spin2x','spin2y','spin2z']
+        if self.template == 'LAL':
+            self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
+                        'iota', 'psi', 'distance',
+                        'spin1x','spin1y','spin1z',
+                        'spin2x','spin2y','spin2z']
 
-        self.bounds=[[0,2.0*np.pi],
-                     [0,2.0*np.pi],
-                     [-np.pi/2.0,np.pi/2.0],
-                     [self.tevent-0.05,self.tevent+0.05],
-                     [10.0,50.0],
-                     [0.5,1.0],
-                     [0.0,np.pi],
-                     [0.0,np.pi],
-                     [1.0,2000.0],
-                     [-0.5,0.5],[-0.5,0.5],[-0.5,0.5],
-                     [-0.5,0.5],[-0.5,0.5],[-0.5,0.5]]
+            self.bounds=[[0,2.0*np.pi],
+                         [0,2.0*np.pi],
+                         [-np.pi/2.0,np.pi/2.0],
+                         [self.tevent-0.05,self.tevent+0.05],
+                         [25.0,35.0],
+                         [0.5,1.0],
+                         [0.0,np.pi],
+                         [0.0,np.pi],
+                         [1.0,2000.0],
+                         [-0.5,0.5],[-0.5,0.5],[-0.5,0.5],
+                         [-0.5,0.5],[-0.5,0.5],[-0.5,0.5]]
+        else:
+            self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
+                'iota', 'psi', 'distance','spin1z','spin2z']
 
-        self.flags ={'NQC':'1',
-            'tidal':0,
-            'speedy':1,
-            'dynamics':0,
-            'solver_scheme':2,
-            'RWZ':0,
-            'Yagi_fits':0,
-            'spin':0,
-            'multipoles':0,
-            'geometric_units':0,
-            'set':0
-        }
+            self.bounds=[[0,2.0*np.pi],
+                         [0,2.0*np.pi],
+                         [-np.pi/2.0,np.pi/2.0],
+                         [self.tevent-0.05,self.tevent+0.05],
+                         [25.0,35.0],
+                         [0.5,1.0],
+                         [0.0,np.pi],
+                         [0.0,np.pi],
+                         [1.0,2000.0],
+                         [-0.5,0.5],[-0.5,0.5]]
+                         
+            self.flags ={'NQC':'1',
+                'tidal':0,
+                'speedy':1,
+                'dynamics':0,
+                'solver_scheme':2,
+                'RWZ':0,
+                'Yagi_fits':0,
+                'spin':0,
+                'multipoles':0,
+                'geometric_units':0,
+                'set':0
+            }
         self.window=tukey(self.segment_length,0.5)
         self.windowNorm = self.segment_length/np.sum(self.window**2)
             
-    def log_likelihood(self,x, template = 'LAL'):
+    def log_likelihood(self,x, template = 'TEOB'):
         
         mc = x['mc']
         q = x['q']
         d = x['distance']
         m1, m2 = McQ2Masses(mc, q)
-        if template == 'LAL':
+        if self.template == 'LAL':
             amp_order = 0
             phase_order = -1
             wave_flags = None
             non_GR_params = None
             approx = lalsim.IMRPhenomPv2
             
+#            hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(x['phi0'],
+#                                           self.df,
+#                                           m1*lalsim.lal.MSUN_SI,
+#                                           m2*lalsim.lal.MSUN_SI,
+#                                           0.0, 0.0, x['spin1z'],
+#                                           0.0, 0.0, x['spin2z'],
+#                                           self.flow, self.fhigh, 100.0,
+#                                           d*1e6*lalsim.lal.PC_SI,
+#                                           x['iota'],
+#                                           0.0, 0.0,
+#                                           wave_flags, non_GR_params, amp_order, phase_order, approx)
             hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(x['phi0'],
                                            self.df,
                                            m1*lalsim.lal.MSUN_SI,
                                            m2*lalsim.lal.MSUN_SI,
                                            x['spin1x'], x['spin1y'], x['spin1z'],
                                            x['spin2x'], x['spin2y'], x['spin2z'],
-                                           self.Flow, self.Fhigh, 100.0,
+                                           self.flow, self.fhigh, 100.0,
                                            d*1e6*lalsim.lal.PC_SI,
                                            x['iota'],
                                            0.0, 0.0,
@@ -119,7 +153,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                              x['spin2z'],
                              x['iota'],
                              x['psi'],
-                             self.Flow,
+                             self.flow,
                              self.dt,
                              0.0,
                              0.0,
@@ -137,8 +171,8 @@ class GravitationalWaveModel(cpnest.model.Model):
             hp*=self.window
             hc*=self.window
 
-            hp = np.fft.rfft(hp)*self.windowNorm
-            hc = np.fft.rfft(hc)*self.windowNorm
+            hp = np.fft.rfft(hp)*self.windowNorm*self.dt# we multiply by dt to get the dimensionfull FFT
+            hc = np.fft.rfft(hc)*self.windowNorm*self.dt
 
         return np.sum([d.logLikelihood(hp, hc, x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
     
@@ -160,14 +194,14 @@ class NoiseModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, chunk_size=8.0, trigtime=1126259462.43, **kwargs):
+    def __init__(self, chunk_size=8.0, trigtime=1126259462.43, flow = 20, fhigh = 500, **kwargs):
         
         super(NoiseModel,self).__init__(**kwargs)
         # this is the merger time in H1
         self.tevent = 1126259462.423
-
-        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = 20, fhigh = 500, **kwargs),
-                          GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = 20, fhigh = 500, **kwargs)]
+        
+        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = flow, fhigh = fhigh, **kwargs),
+                          GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = flow, fhigh = fhigh, **kwargs)]
 
     def log_likelihood(self,x):
         
@@ -182,20 +216,29 @@ if __name__=='__main__':
     parser.add_option('-t','--threads',default=None,type='int',metavar='N',help='Number of threads (default = 1/core)')
     parser.add_option('-f','--full-run',default=0,type='int',metavar='full_run',help='perform a full PE run')
     parser.add_option('--inject',default=False,action='store_true',help='Inject NR Signal')
+    parser.add_option('--template',default='LAL',type='str',metavar='template',help='template to use for the run')
+    parser.add_option('--seglen',default=4,type='float',metavar='seglen',help='length of the data stretch to analyse')
+    parser.add_option('--flow',default=20,type='float',metavar='flow',help='low frequency cutoff')
+    parser.add_option('--fhigh',default=500,type='float',metavar='fhigh',help='high frequency cutoff')
     parser.add_option('--nlive',default=1024,type='int',metavar='n',help='Live points')
     parser.add_option('--maxmcmc',default=1024,type='int',metavar='m',help='max MCMC points')
     (opts,args)=parser.parse_args()
 
     if opts.out_dir is None:
         opts.out_dir='./gw150914/'
-    noise_model  = NoiseModel(chunk_size=8)
+    noise_model  = NoiseModel(chunk_size=opts.seglen,
+                              flow=opts.flow,
+                              fhigh=opts.fhigh)
     logZnoise=noise_model.log_likelihood(noise_model.new_point())
     print('Noise evidence {0}'.format(logZnoise))
     if opts.full_run:
-        signal_model = GravitationalWaveModel(chunk_size=8)
+        signal_model = GravitationalWaveModel(chunk_size=opts.seglen,
+                                              template = opts.template,
+                                              flow=opts.flow,
+                                              fhigh=opts.fhigh)
         work=cpnest.CPNest(signal_model,
                            verbose=3,
-                           Poolsize=256,
+                           Poolsize=1024,
                            Nthreads=opts.threads,
                            Nlive=opts.nlive,
                            maxmcmc=opts.maxmcmc,
