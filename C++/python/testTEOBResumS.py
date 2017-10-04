@@ -5,7 +5,7 @@ m1=40.0
 m2=40.0
 spin1x = 0.0
 spin1y = 0.0
-spin1z = 0.2
+spin1z = 0.1
 spin2x = 0.0
 spin2y = 0.0
 spin2z = 0.2
@@ -22,12 +22,12 @@ LambdaAl4 = 0.0
 LambdaBl4 = 0.0
 distance = 400.0
 
-flags ={'NQC':'1',
+flags ={'NQC':'0',
         'tidal':0,
         'speedy':1,
         'dynamics':0,
-        'solver_scheme':0,
-        'RWZ':1,
+        'solver_scheme':2,
+        'RWZ':0,
         'Yagi_fits':1,
         'spin':1,
         'multipoles':0,

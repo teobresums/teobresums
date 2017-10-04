@@ -31,7 +31,7 @@ class GravitationalWaveModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, inject=False, chunk_size=4.0, trigtime=1126259462.423, **kwargs):
+    def __init__(self, inject=False, chunk_size=2.0, trigtime=1126259462.423, **kwargs):
         
         super(GravitationalWaveModel,self).__init__(**kwargs)
         # this is the merger time in H1
@@ -58,15 +58,15 @@ class GravitationalWaveModel(cpnest.model.Model):
                      [0,2.0*np.pi],
                      [-np.pi/2.0,np.pi/2.0],
                      [self.tevent-0.05,self.tevent+0.05],
-                     [10,50],
-                     [0.1,1.0],
+                     [25,35],
+                     [0.5,1.0],
                      [0.0,np.pi],
                      [0.0,np.pi],
                      [1.0,2000.0],
                      [-0.5,0.5],[-0.5,0.5],[-0.5,0.5],
                      [-0.5,0.5],[-0.5,0.5],[-0.5,0.5]]
 
-        self.flags ={'NQC':'0',
+        self.flags ={'NQC':'1',
             'tidal':0,
             'speedy':1,
             'dynamics':0,
@@ -160,7 +160,7 @@ class NoiseModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, chunk_size=4.0, trigtime=1126259462.43, **kwargs):
+    def __init__(self, chunk_size=2.0, trigtime=1126259462.43, **kwargs):
         
         super(NoiseModel,self).__init__(**kwargs)
         # this is the merger time in H1

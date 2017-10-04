@@ -297,7 +297,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             if (MOmg < MOmg_prev)
             {
                 MOmgpeak_flag = true;
-                t_stop        = t + 2.*dt; 
+                t_stop        = t + 10.*dt; 
             }
             else
             {
