@@ -45,7 +45,9 @@ vector<double> initial(TEOBResumParams *params)
     double lambdaBl4 = (*(TEOBResumParams *)params).LambdaBl4;
     double kappa2T   = (*(TEOBResumParams *)params).kappaTl2;
     double tidal_flag= (*(TEOBResumParams *)params).flags.tidal;
-
+    /* Keplerian orbital frequency */
+    double OmgKepler = 1./(sqrt(r0)*sqrt(r0)*sqrt(r0));
+    
     vector<double> y_init(7);
     int N  = 6;
     const double dr = 1.e-8;
@@ -126,27 +128,33 @@ vector<double> initial(TEOBResumParams *params)
     y_init[4] = j[N-1];
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
-//    printf("-----------------------------------\n");
-//    printf("Initial configuration:\n");
-//    printf("-----------------------------------\n");
-//    printf("r[0]         = %18.16f\n",y_init[0]);
-//    printf("pphi[0]      = %18.16f\n",y_init[1]);
-//    printf("j[0]         = %18.16f\n",y_init[4]);
-//    printf("pr[0]        = %18.16f\n",y_init[3]);
-//    printf("prstar[0]    = %18.16f\n",y_init[2]);
-//    printf("E[0]         = %18.16f\n",y_init[5]);
-//    printf("Omega[0]     = %18.16f\n",y_init[6]);
-//    if (tidal_flag==1)
-//      {
-//    printf("lambda_l2[A] = %18.16f\n",lambdaAl2);
-//    printf("lambda_l3[A] = %18.16f\n",lambdaAl3);
-//    printf("lambda_l4[A] = %18.16f\n",lambdaAl4);
-//    printf("lambda_l2[B] = %18.16f\n",lambdaBl2);
-//    printf("lambda_l3[B] = %18.16f\n",lambdaBl3);
-//    printf("lambda_l4[B] = %18.16f\n",lambdaBl4);
-//    printf("kappa2T      = %18.16f\n",kappa2T);
-//      }
-
+    if (DEBUG)
+    {
+        printf("-----------------------------------\n");
+        printf("Initial configuration:\n");
+        printf("-----------------------------------\n");
+        printf("r[0]         = %18.16f\n",y_init[0]);
+        printf("pphi[0]      = %18.16f\n",y_init[1]);
+        printf("j[0]         = %18.16f\n",y_init[4]);
+        printf("pr[0]        = %18.16f\n",y_init[3]);
+        printf("prstar[0]    = %18.16f\n",y_init[2]);
+        printf("E[0]         = %18.16f\n",y_init[5]);
+        printf("Omega[0]     = %18.16f\n",y_init[6]);
+        printf("Omega-Kepler = %18.16f\n",OmgKepler);
+    }
+    if (tidal_flag==1)
+    {
+        if (DEBUG)
+        {
+            printf("lambda_l2[A] = %18.16f\n",lambdaAl2);
+            printf("lambda_l3[A] = %18.16f\n",lambdaAl3);
+            printf("lambda_l4[A] = %18.16f\n",lambdaAl4);
+            printf("lambda_l2[B] = %18.16f\n",lambdaBl2);
+            printf("lambda_l3[B] = %18.16f\n",lambdaBl3);
+            printf("lambda_l4[B] = %18.16f\n",lambdaBl4);
+            printf("kappa2T      = %18.16f\n",kappa2T);
+        }
+    }
     
     return y_init;
 }
@@ -345,28 +353,35 @@ vector<double> s_initial(TEOBResumParams *params){
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
 
-//    printf("-----------------------------------\n");
-//    printf("Initial configuration:\n");
-//    printf("-----------------------------------\n");
-//    printf("r[0]         = %18.16f\n",y_init[0]);
-//    printf("pphi[0]      = %18.16f\n",y_init[1]);
-//    printf("j[0]         = %18.16f\n",y_init[4]);
-//    printf("pr[0]        = %18.16f\n",y_init[3]);
-//    printf("prstar[0]    = %18.16f\n",y_init[2]);
-//    printf("E[0]         = %18.16f\n",y_init[5]);
-//    printf("Omega[0]     = %18.16f\n",y_init[6]);
-//    if (tidal_flag==1)
-//      {
-//    printf("CQ1          = %18.16f\n",CQ1);
-//    printf("CQ2          = %18.16f\n",CQ2);
-//    printf("lambda_l2[A] = %18.16f\n",lambdaAl2);
-//    printf("lambda_l3[A] = %18.16f\n",lambdaAl3);
-//    printf("lambda_l4[A] = %18.16f\n",lambdaAl4);
-//    printf("lambda_l2[B] = %18.16f\n",lambdaBl2);
-//    printf("lambda_l3[B] = %18.16f\n",lambdaBl3);
-//    printf("lambda_l4[B] = %18.16f\n",lambdaBl4);
-//    printf("kappa2T      = %18.16f\n",kappa2T);
-//      }
+    if (DEBUG)
+    {
+        printf("-----------------------------------\n");
+        printf("Initial configuration:\n");
+        printf("-----------------------------------\n");
+        printf("r[0]         = %18.16f\n",y_init[0]);
+        printf("pphi[0]      = %18.16f\n",y_init[1]);
+        printf("j[0]         = %18.16f\n",y_init[4]);
+        printf("pr[0]        = %18.16f\n",y_init[3]);
+        printf("prstar[0]    = %18.16f\n",y_init[2]);
+        printf("E[0]         = %18.16f\n",y_init[5]);
+        printf("Omega[0]     = %18.16f\n",y_init[6]);
+    }
+
+    if (tidal_flag==1)
+      {
+          if (DEBUG)
+          {
+            printf("CQ1          = %18.16f\n",CQ1);
+            printf("CQ2          = %18.16f\n",CQ2);
+            printf("lambda_l2[A] = %18.16f\n",lambdaAl2);
+            printf("lambda_l3[A] = %18.16f\n",lambdaAl3);
+            printf("lambda_l4[A] = %18.16f\n",lambdaAl4);
+            printf("lambda_l2[B] = %18.16f\n",lambdaBl2);
+            printf("lambda_l3[B] = %18.16f\n",lambdaBl3);
+            printf("lambda_l4[B] = %18.16f\n",lambdaBl4);
+            printf("kappa2T      = %18.16f\n",kappa2T);
+          }
+      }
     
     return y_init;
 }

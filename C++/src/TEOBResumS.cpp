@@ -109,18 +109,18 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                                                     LambdaBl4,
                                                     flags);
 
-//    printf("lambdaAl2=%f\n", LambdaAl2);
-//    printf("lambdaAl3=%f\n", LambdaAl3);
-//    printf("lambdaAl4=%f\n", LambdaAl4);
-
     double lambda2 = params.LambdaAl2;
-
-//    printf("lambdaAl2=%f\n",lambda2);
-    
     double q      = params.q;
     dt            = params.dt;
-
-//    printf("q=%f\n",q);
+    
+    if (DEBUG)
+    {
+        printf("lambdaAl2=%f\n", LambdaAl2);
+        printf("lambdaAl3=%f\n", LambdaAl3);
+        printf("lambdaAl4=%f\n", LambdaAl4);
+        printf("lambdaAl2=%f\n", lambda2);
+        printf("q=%f\n",q);
+    }
 
     if (params.flags.tidal==1)
     {
@@ -297,7 +297,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             if (MOmg < MOmg_prev)
             {
                 MOmgpeak_flag = true;
-                t_stop        = t + 5; 
+                t_stop        = t + 2.*dt; 
             }
             else
             {
@@ -329,25 +329,24 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     gsl_odeiv2_driver_free (d);
 
 
-    //if (DEBUG)
     /*********************************************************
      IMPORTANT STEP HERE: with solver 2, this waveform is OK
      for Qomg computation. Output of the pure RK evolution.
     **********************************************************/
-//
-//    {
-//        char   outputr[256]   = "h22_inspl.dat";
-//        std::FILE* waveform_preint   = std::fopen(outputr, "w");
-//        int j                 = 0;
-//        int N                 = hlm_ampl[1].size();
-//
-//        for (j=0;j<N;j++)
-//        {
-//            std::fprintf(waveform_preint, "%20.12f\t%20.12f\t%20.12f\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
-//        }
-//        std::fclose(waveform_preint);
-//    }
 
+    if (DEBUG) 
+    {
+        char   outputr[256]   = "h22_inspl.dat";	
+        std::FILE* waveform_preint   = std::fopen(outputr, "w");
+        int j                 = 0;
+        int N                 = hlm_ampl[1].size();
+        
+        for (j=0;j<N;j++)
+        {
+            std::fprintf(waveform_preint, "%20.12f\t%20.12f\t%20.12f\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
+        }
+        std::fclose(waveform_preint);
+	}
     
     /** Interpolate quantities on a grid of width dt */
     grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);

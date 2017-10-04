@@ -31,7 +31,7 @@ class GravitationalWaveModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, inject=False, chunk_size=8.0, trigtime=1126259462.423, **kwargs):
+    def __init__(self, inject=False, chunk_size=4.0, trigtime=1126259462.423, **kwargs):
         
         super(GravitationalWaveModel,self).__init__(**kwargs)
         # this is the merger time in H1
@@ -81,60 +81,64 @@ class GravitationalWaveModel(cpnest.model.Model):
         self.window=tukey(self.segment_length,0.5)
         self.windowNorm = self.segment_length/np.sum(self.window**2)
             
-    def log_likelihood(self,x):
+    def log_likelihood(self,x, template = 'TEOBResumS'):
         
         mc = x['mc']
         q = x['q']
         d = x['distance']
         m1, m2 = McQ2Masses(mc, q)
-        amp_order = 0
-        phase_order = -1
-        wave_flags = None
-        non_GR_params = None
-        approx = lalsim.IMRPhenomPv2
-        
-        hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(x['phi0'],
-                                       self.df,
-                                       m1*lalsim.lal.MSUN_SI,
-                                       m2*lalsim.lal.MSUN_SI,
-                                       x['spin1x'], x['spin1y'], x['spin1z'],
-                                       x['spin2x'], x['spin2y'], x['spin2z'],
-                                       self.Flow, self.Fhigh, 100.0,
-                                       d*1e6*lalsim.lal.PC_SI,
-                                       x['iota'],
-                                       0.0, 0.0,
-                                       wave_flags, non_GR_params, amp_order, phase_order, approx)
+        if template == 'LAL':
+            amp_order = 0
+            phase_order = -1
+            wave_flags = None
+            non_GR_params = None
+            approx = lalsim.IMRPhenomPv2
+            
+            hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(x['phi0'],
+                                           self.df,
+                                           m1*lalsim.lal.MSUN_SI,
+                                           m2*lalsim.lal.MSUN_SI,
+                                           x['spin1x'], x['spin1y'], x['spin1z'],
+                                           x['spin2x'], x['spin2y'], x['spin2z'],
+                                           self.Flow, self.Fhigh, 100.0,
+                                           d*1e6*lalsim.lal.PC_SI,
+                                           x['iota'],
+                                           0.0, 0.0,
+                                           wave_flags, non_GR_params, amp_order, phase_order, approx)
+            hp = noise.resize_time_series(hptilde.data.data,self.segment_length/2+1)
+            hc = noise.resize_time_series(hctilde.data.data,self.segment_length/2+1)
+                
+        else:
+            h = pyTEOBResumS(m1,
+                             m2,
+                             0.0,
+                             0.0,
+                             x['spin1z'],
+                             0.0,
+                             0.0,
+                             x['spin2z'],
+                             x['iota'],
+                             x['psi'],
+                             self.Flow,
+                             self.dt,
+                             0.0,
+                             0.0,
+                             0.0,
+                             0.0,
+                             0.0,
+                             0.0,
+                             d,
+                             -1,
+                             self.flags)
 
-#        h = pyTEOBResumS(m1,
-#                         m2,
-#                         0.0,
-#                         0.0,
-#                         0.0,
-#                         0.0,
-#                         0.0,
-#                         0.0,
-#                         x['iota'],
-#                         x['psi'],
-#                         self.Flow,
-#                         self.dt,
-#                         0.0,
-#                         0.0,
-#                         0.0,
-#                         0.0,
-#                         0.0,
-#                         0.0,
-#                         d,
-#                         -1,
-#                         self.flags)
-#        hc = noise.resize_time_series(h[:,1],self.segment_length)
-        hp = noise.resize_time_series(hptilde.data.data,self.segment_length/2+1)
-        hc = noise.resize_time_series(hctilde.data.data,self.segment_length/2+1)
-#
-#        hp*=self.window
-#        hc*=self.window
-#
-#        hptilde = np.fft.rfft(hp)*self.windowNorm
-#        hctilde = np.fft.rfft(hc)*self.windowNorm
+            hp = noise.resize_time_series(h[:,0],self.segment_length)
+            hc = noise.resize_time_series(h[:,1],self.segment_length)
+
+            hp*=self.window
+            hc*=self.window
+
+            hp = np.fft.rfft(hp)*self.windowNorm
+            hc = np.fft.rfft(hc)*self.windowNorm
 
         return np.sum([d.logLikelihood(hp, hc, x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
     

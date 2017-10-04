@@ -23,7 +23,7 @@
 //extern "C" {
 //#endif
 
-#define DEBUG 0
+#define DEBUG 1
 
 #include <vector>
 #include "cmath"

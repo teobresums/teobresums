@@ -136,7 +136,8 @@ int find_point_bisection(double x, int n, double *xp, int o)
   int i0 = o-1, i1 = n-o;
   int i;
 
-  if (n < 2*o) {
+  if (n < 2*o)
+  {
     printf(" not enough point to interpolate");
     exit(1);
   }
@@ -818,8 +819,10 @@ TEOBResumParams process_input_parameters(
         params.dt = dt;
         params.r0 = pow(f_min*M_PI, -2./3.);
     }
-
-//    printf(" dt = %e r0 = %e\n",params.dt, params.r0);
+    if (DEBUG)
+    {
+        printf(" dt = %e r0 = %e\n",params.dt, params.r0);
+    }
     
     params.chi1 = chi1;
     params.chi2 = chi2;
