@@ -24,7 +24,7 @@ class GravitationalWaveDetector(object):
         self.Fhigh = fhigh
         self.kmin = int(self.Flow/self.df)
         self.kmax = int(self.Fhigh/self.df)
-        self.sigmasq = self.PowerSpectralDensity[self.kmin:self.kmax]*float(self.segment_length)/(2.0*self.dt)
+        self.sigmasq = self.PowerSpectralDensity[self.kmin:self.kmax]*float(self.segment_length)/(2*self.dt)
 
     def Project(self, hptilde, hctilde, ra, dec, psi, tc):
         """
@@ -40,12 +40,12 @@ class GravitationalWaveDetector(object):
 
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
-        template = self.Project(hptilde, hctilde, ra, dec, psi, tc)*float(self.segment_length)
-        data = self.FrequencySeries[self.kmin:self.kmax]
+        template = self.Project(hptilde, hctilde, ra, dec, psi, tc)
+        data = self.FrequencySeries[self.kmin:self.kmax]*self.dt
         residuals = (data - template)
-        overlap = 4*self.df*np.conj(residuals)*residuals/self.sigmasq
+        overlap = 2.0*np.conj(residuals)*residuals/self.PowerSpectralDensity[self.kmin:self.kmax]
 
-        return -np.sum(overlap).real
+        return -(2.0/self.T)*np.sum(overlap).real
 
 if __name__ == "__main__":
     H = GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', trigtime = 1126259462.43)

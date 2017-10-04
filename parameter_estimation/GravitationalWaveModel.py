@@ -31,7 +31,7 @@ class GravitationalWaveModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, inject=False, chunk_size=2.0, trigtime=1126259462.423, **kwargs):
+    def __init__(self, inject=False, chunk_size=8.0, trigtime=1126259462.423, **kwargs):
         
         super(GravitationalWaveModel,self).__init__(**kwargs)
         # this is the merger time in H1
@@ -58,7 +58,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                      [0,2.0*np.pi],
                      [-np.pi/2.0,np.pi/2.0],
                      [self.tevent-0.05,self.tevent+0.05],
-                     [25,35],
+                     [10.0,50.0],
                      [0.5,1.0],
                      [0.0,np.pi],
                      [0.0,np.pi],
@@ -81,7 +81,7 @@ class GravitationalWaveModel(cpnest.model.Model):
         self.window=tukey(self.segment_length,0.5)
         self.windowNorm = self.segment_length/np.sum(self.window**2)
             
-    def log_likelihood(self,x, template = 'TEOBResumS'):
+    def log_likelihood(self,x, template = 'LAL'):
         
         mc = x['mc']
         q = x['q']
@@ -160,7 +160,7 @@ class NoiseModel(cpnest.model.Model):
     names = []
     bounds = []
 
-    def __init__(self, chunk_size=2.0, trigtime=1126259462.43, **kwargs):
+    def __init__(self, chunk_size=8.0, trigtime=1126259462.43, **kwargs):
         
         super(NoiseModel,self).__init__(**kwargs)
         # this is the merger time in H1
@@ -188,11 +188,11 @@ if __name__=='__main__':
 
     if opts.out_dir is None:
         opts.out_dir='./gw150914/'
-    noise_model  = NoiseModel(chunk_size=4)
+    noise_model  = NoiseModel(chunk_size=8)
     logZnoise=noise_model.log_likelihood(noise_model.new_point())
     print('Noise evidence {0}'.format(logZnoise))
     if opts.full_run:
-        signal_model = GravitationalWaveModel(chunk_size=4)
+        signal_model = GravitationalWaveModel(chunk_size=8)
         work=cpnest.CPNest(signal_model,
                            verbose=3,
                            Poolsize=256,
