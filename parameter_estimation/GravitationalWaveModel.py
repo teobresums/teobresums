@@ -32,29 +32,77 @@ class GravitationalWaveModel(cpnest.model.Model):
     bounds = []
 
     def __init__(self,
-                 inject=False,
-                 chunk_size=8.0,
+                 detector_names,
+                 datafiles = None,
+                 psd_files = None,
+                 injection = False,
+                 zero_noise=False,
+                 sampling_rate=4096.,
+                 T=4.0,
+                 starttime = 1126259446.,
                  trigtime=1126259462.423,
                  template='LAL',
                  flow = 20,
                  fhigh = 500,
                  **kwargs):
-        
+
         super(GravitationalWaveModel,self).__init__(**kwargs)
-        # this is the merger time in H1
-        self.tevent = trigtime
+        
+        self.detectors = detector_names
+        self.T = T
+        self.epoch = starttime
+        self.zero_noise = zero_noise
+        if datafiles is None: self.datafiles = len(self.detectors)*[None]
+        else: self.datafiles = datafiles
+        if psd_files is None: self.psd_files = len(self.detectors)*[None]
+        else: self.psd_files = psd_files
+        self.trigtime = trigtime
         self.template = template
-        self.inject=inject
+        self.injection=injection
+        self.sampling_rate = sampling_rate
+        self.dt = 1./self.sampling_rate
         self.flow = flow
         self.fhigh = fhigh
+        self.segment_length = int(self.sampling_rate*self.T)
         
-        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = self.flow, fhigh = self.fhigh, **kwargs),
-                          GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = self.flow, fhigh = self.fhigh, **kwargs)]
+        self.detectors = [GravitationalWaveDetector(name,
+                                                    datafile = datum,
+                                                    psd_file = psd_file,
+                                                    T=self.T,
+                                                    starttime = self.epoch,
+                                                    trigtime = self.trigtime,
+                                                    flow = self.flow,
+                                                    fhigh = self.fhigh,
+                                                    zero_noise = self.zero_noise,
+                                                    **kwargs) for name,datum,psd_file in zip(self.detectors,self.datafiles,self.psd_files)]
 
-        self.sampling_rate = self.detectors[0].sampling_rate
-        self.segment_length = self.detectors[0].segment_length
-        self.dt = 1./self.sampling_rate
         self.df = self.detectors[0].df
+#        import matplotlib.pyplot as plt
+        if self.injection:
+            amp_order = 0
+            phase_order = -1
+            wave_flags = None
+            non_GR_params = None
+            approx = lalsim.IMRPhenomPv2
+            hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(0.0,
+                               self.df,
+                               40*lalsim.lal.MSUN_SI,
+                               35*lalsim.lal.MSUN_SI,
+                               0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0,
+                               self.flow, self.fhigh, 100.0,
+                               500.0*1e6*lalsim.lal.PC_SI,
+                               0.0,
+                               0.0, 0.0,
+                               wave_flags, non_GR_params, amp_order, phase_order, approx)
+
+
+            for d in self.detectors:
+                d.inject( hptilde.data.data*self.dt, hctilde.data.data*self.dt, 0.0, 0.0, 0.0, self.trigtime)
+#                plt.plot(d.Frequency,d.FrequencySeries)
+#            plt.show()
+#            exit()
+        self.logZnoise = self.log_nulllikelihood()
         
         #parameters
         if self.template == 'LAL':
@@ -66,7 +114,7 @@ class GravitationalWaveModel(cpnest.model.Model):
             self.bounds=[[0,2.0*np.pi],
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
-                         [self.tevent-0.05,self.tevent+0.05],
+                         [self.trigtime-0.05,self.trigtime+0.05],
                          [25.0,35.0],
                          [0.5,1.0],
                          [0.0,np.pi],
@@ -81,7 +129,7 @@ class GravitationalWaveModel(cpnest.model.Model):
             self.bounds=[[0,2.0*np.pi],
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
-                         [self.tevent-0.05,self.tevent+0.05],
+                         [self.trigtime-0.05,self.trigtime+0.05],
                          [25.0,35.0],
                          [0.5,1.0],
                          [0.0,np.pi],
@@ -103,8 +151,15 @@ class GravitationalWaveModel(cpnest.model.Model):
             }
         self.window=tukey(self.segment_length,0.5)
         self.windowNorm = self.segment_length/np.sum(self.window**2)
-            
-    def log_likelihood(self,x, template = 'TEOB'):
+
+    def log_nulllikelihood(self):
+        
+        Nfd = len(self.detectors[0].FrequencySeries)
+        h = np.zeros(Nfd)
+        
+        return np.sum([d.logLikelihood(h, h, 0.0, 0.0, 0.0, 0.0) for d in self.detectors])
+    
+    def log_likelihood(self,x, template = 'LAL'):
         
         mc = x['mc']
         q = x['q']
@@ -117,17 +172,6 @@ class GravitationalWaveModel(cpnest.model.Model):
             non_GR_params = None
             approx = lalsim.IMRPhenomPv2
             
-#            hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(x['phi0'],
-#                                           self.df,
-#                                           m1*lalsim.lal.MSUN_SI,
-#                                           m2*lalsim.lal.MSUN_SI,
-#                                           0.0, 0.0, x['spin1z'],
-#                                           0.0, 0.0, x['spin2z'],
-#                                           self.flow, self.fhigh, 100.0,
-#                                           d*1e6*lalsim.lal.PC_SI,
-#                                           x['iota'],
-#                                           0.0, 0.0,
-#                                           wave_flags, non_GR_params, amp_order, phase_order, approx)
             hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(x['phi0'],
                                            self.df,
                                            m1*lalsim.lal.MSUN_SI,
@@ -139,8 +183,9 @@ class GravitationalWaveModel(cpnest.model.Model):
                                            x['iota'],
                                            0.0, 0.0,
                                            wave_flags, non_GR_params, amp_order, phase_order, approx)
-            hp = noise.resize_time_series(hptilde.data.data,self.segment_length/2+1)
-            hc = noise.resize_time_series(hctilde.data.data,self.segment_length/2+1)
+
+            hp = hptilde.data.data
+            hc = hctilde.data.data
                 
         else:
             h = pyTEOBResumS(m1,
@@ -189,33 +234,13 @@ class GravitationalWaveModel(cpnest.model.Model):
         else:
             return -np.inf
 
-class NoiseModel(cpnest.model.Model):
-    
-    names = []
-    bounds = []
-
-    def __init__(self, chunk_size=8.0, trigtime=1126259462.43, flow = 20, fhigh = 500, **kwargs):
-        
-        super(NoiseModel,self).__init__(**kwargs)
-        # this is the merger time in H1
-        self.tevent = 1126259462.423
-        
-        self.detectors = [GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = flow, fhigh = fhigh, **kwargs),
-                          GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', chunk_size=chunk_size, trigtime=trigtime, flow = flow, fhigh = fhigh, **kwargs)]
-
-    def log_likelihood(self,x):
-        
-        Nfd = self.detectors[0].segment_length/2+1
-        h = np.zeros(Nfd)
-        
-        return np.sum([d.logLikelihood(h, h, 0.0, 0.0, 0.0, 0.0) for d in self.detectors])
-
 if __name__=='__main__':
     parser=OptionParser()
     parser.add_option('-o','--out-dir',default=None,type='string',metavar='DIR',help='Directory for output: defaults to gw150914/')
     parser.add_option('-t','--threads',default=None,type='int',metavar='N',help='Number of threads (default = 1/core)')
     parser.add_option('-f','--full-run',default=0,type='int',metavar='full_run',help='perform a full PE run')
-    parser.add_option('--inject',default=False,action='store_true',help='Inject NR Signal')
+    parser.add_option('--inject',default=False,action='store_true',help='Inject signal')
+    parser.add_option('--zero-noise',default=False,action='store_true',help='Generate a 0 noise realisation')
     parser.add_option('--template',default='LAL',type='str',metavar='template',help='template to use for the run')
     parser.add_option('--seglen',default=4,type='float',metavar='seglen',help='length of the data stretch to analyse')
     parser.add_option('--flow',default=20,type='float',metavar='flow',help='low frequency cutoff')
@@ -226,16 +251,22 @@ if __name__=='__main__':
 
     if opts.out_dir is None:
         opts.out_dir='./gw150914/'
-    noise_model  = NoiseModel(chunk_size=opts.seglen,
-                              flow=opts.flow,
-                              fhigh=opts.fhigh)
-    logZnoise=noise_model.log_likelihood(noise_model.new_point())
-    print('Noise evidence {0}'.format(logZnoise))
+
     if opts.full_run:
-        signal_model = GravitationalWaveModel(chunk_size=opts.seglen,
+        signal_model = GravitationalWaveModel(['H1','L1'],
+                                              T=opts.seglen,
                                               template = opts.template,
+                                              sampling_rate = 2048.,
+                                              injection = opts.inject,
+                                              zero_noise = opts.zero_noise,
+                                              starttime = 1126259459.423,
+                                              trigtime = 1126259462.423,
+                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
+        print('Noise evidence {0}'.format(signal_model.logZnoise))
+
         work=cpnest.CPNest(signal_model,
                            verbose=3,
                            Poolsize=1024,

@@ -11,14 +11,6 @@ import matplotlib.mlab as mlab
 from scipy.interpolate import interp1d
 from scipy.signal import butter, filtfilt, tukey
 
-def chunks(times,strain,chunksize,avoid=None):
-    # Skip the 0th chunk which has filter ringing
-    if avoid is None:
-        avoid = times[0]-1e6 # dummy value
-    return (strain[chunksize*j:chunksize*(j+1)]
-                   for j in range(1,len(strain)//chunksize)
-                       if not times[chunksize*j] < avoid < times[chunksize*(j+1)] )
-
 def downsample(strain, old_sampling_rate, new_sampling_rate):
     factor = int(old_sampling_rate/new_sampling_rate)
     return strain[::factor]
@@ -26,43 +18,17 @@ def downsample(strain, old_sampling_rate, new_sampling_rate):
 def resize_time_series(inarr, N):
     # zero-pad to the required length
     outarr = np.pad(inarr, (0,N-len(inarr)), mode='constant', constant_values=0)
-    # roll the array so that the peak of the time series is in the center of the frame
-#    outarr = np.roll(outarr,N//2-np.argmax(np.abs(outarr)))
     return outarr
-
-def fd_from_td(t_arr, strain_t, srate = 4096, N = 4096):
-    #    N = int(2**np.ceil(np.log2(len(t_arr)))) # round it up to the next power of two
-    strain_t = resize_time_series(strain_t, N)
-    strain_t[len(t_arr):] = 0.0
-    strain_f = np.fft.rfft(strain_t)/srate #rfft means real fft, i.e. it's optimized when the input is real. It's divided by the srate to respect LAL conventions
-    ff = np.fft.rfftfreq(len(strain_t), np.mean(np.diff(t_arr)))
-    return (ff, strain_f)
 
 fname='H-H1_LOSC_4_V1-1126259446-32.txt'
 tevent = 1126259462.423
-
 srate=4096
-
-def get_bandpassed_strain(fname,low=20,high=2028):
-    ifo,fr_type,starttime,T=fname.strip('.txt').split('-')
-    starttime=float(starttime)
-    T=float(T)
-    print('Loading {0} starting at {1} length {2}s'.format(fname,starttime,T))
-    rawstrain = np.loadtxt(fname)
-    dt = T/len(rawstrain)
-    # Sampling rate (Hz)
-    srate=1/dt
-    bb, ab = butter(4, [low/(0.5*srate), high / (0.5*srate) ], btype='band')
-    strain = filtfilt(bb, ab, rawstrain)
-    times = np.linspace(starttime,starttime+T,len(strain))
-    return times,strain,srate
-
 
 def load_data(fname,
               chunk_size=4.0,
               trigtime=tevent,
-              injection=False,
-              sampling_rate=None):
+              sampling_rate=4096,
+              psd_file=None):
 
     # Extract some metadata from the file name
     ifo,fr_type,starttime,T=fname.strip('.txt').split('-')
@@ -108,17 +74,43 @@ def load_data(fname,
     windowNorm = chunksize/np.sum(window**2)
     # Compute the frequency domain strain
     sf = np.fft.rfft(signal_chunk)*windowNorm
-    
-    # Compute the PSD
-    psd, freqs = mlab.psd(strain[mask], Fs = srate, NFFT = np.int(srate), window=tukey(np.int(srate),padding))
-    psd_int = interp1d(freqs, psd)
-    
+    frequencies = rfftfreq(sf, dt)
+#    sf = sf[np.where(np.logical_and(freqs>=flow,freqs<fhigh))]
+
+    if psd_file is None:
+        # Compute the PSD
+        psd, freqs = mlab.psd(strain[mask], Fs = srate, NFFT = np.int(srate), window=tukey(np.int(srate),padding))
+        psd_int = interp1d(freqs, psd, bounds_error=False, fill_value=np.inf)
+    else:
+        f, psd = np.loadtxt(psd_file,unpack=True)
+        # generate an interpolant for the PSD
+        psd_int = interp1d(f, psd, bounds_error=False, fill_value=np.inf)
+
     # compute times and frequencies for convenience
     
     times = chunk_start+np.linspace(0,chunk_size,chunksize)
-    frequencies = np.linspace(0,srate/2.,chunksize/2 +1)
 
     return times, signal_chunk, frequencies, sf, psd_int(frequencies)
+
+def generate_data(psd_file,
+                  T=4.0,
+                  starttime=1126259446.,
+                  sampling_rate=4096.,
+                  zero_noise = False):
+
+    f, psd = np.loadtxt(psd_file,unpack=True)
+    psd *= psd
+    # generate an interpolant for the PSD
+    psd_int = interp1d(f, psd, bounds_error=False, fill_value=np.inf)
+    df = 1./T
+    N = int(sampling_rate*T)
+    times = np.linspace(starttime,starttime+T,N)
+    # generate the FD noise
+    frequencies = np.arange(0,sampling_rate/2.,df)
+    if zero_noise is False:
+        frequency_series = np.array([np.random.normal(0.0,np.sqrt(psd_int(f)/df/2.))+1j*np.random.normal(0.0,np.sqrt(psd_int(f)/df/2.)) for f in frequencies])
+    else: frequency_series = np.zeros(len(frequencies),dtype=np.complex64)
+    return times, frequencies, frequency_series, psd_int(frequencies)
 
 # function to writen data
 def whiten(strain, interp_psd, dt):
@@ -134,21 +126,11 @@ def whiten(strain, interp_psd, dt):
     return white_ht
 
 if __name__ == "__main__":
-    T, strainT, F, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt', sampling_rate = 2048)
+    T, F, strainF, psd = generate_data('/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt', sampling_rate = 4096, starttime=1126259446., T=4, zero_noise = False)
     from matplotlib import pyplot as plt
     plt.figure()
     plt.loglog(F, psd)
-    T, strainT, F, strainF, psd = load_data('data/H-H1_LOSC_4_V1-1126259446-32.txt')
-    plt.loglog(F, psd)
-    plt.show()
-    exit()
 
-    fmin = 20
-    fmax = 2048
-    imin = int(fmin*4)
-    imax = int(fmax*4)
-    print imin, imax
     plt.figure()
-    plt.plot(1126259459.42+np.linspace(0,4,int(4*4096)),whiten(strainT,psd,1./4096.))
-    plt.axvline(tevent,color = 'r')
+    plt.plot(F,strainF)
     plt.show()

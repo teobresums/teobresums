@@ -8,29 +8,50 @@ from scipy.signal import tukey
 detMap = {'H1': 'LHO_4k', 'H2': 'LHO_2k', 'L1': 'LLO_4k', 'G1': 'GEO_600', 'V1': 'VIRGO', 'T1': 'TAMA_300'}
 
 class GravitationalWaveDetector(object):
-    
-    def __init__(self, name, datafile, chunk_size=4.0, trigtime=1126259462.423, flow = 20, fhigh = 1024, **kwargs):
+
+    def __init__(self, name,
+                 datafile = None,
+                 psd_file = None,
+                 T=4.0,
+                 starttime=1126259446.,
+                 trigtime=1126259462.423,
+                 sampling_rate=4096.,
+                 flow = 20,
+                 fhigh = 1024,
+                 zero_noise = False,
+                 **kwargs):
+        
         self.name = name
+        self.datafile = datafile
+        self.psd_file = psd_file
+        self.Epoch = starttime
+        self.sampling_rate = sampling_rate
+        self.flow = flow
+        self.fhigh = fhigh
         self.trigtime = trigtime
+        self.zero_noise = zero_noise
+        self.T = T
+        
         self.lal_detector = inject.cached_detector[detMap[self.name]]
-        self.Times, self.TimeSeries, self.Frequency, self.FrequencySeries, self.PowerSpectralDensity = noise.load_data(datafile, chunk_size=chunk_size, trigtime=trigtime, **kwargs)
-        self.Epoch = self.Times[0]
-        self.dt = np.diff(self.Times)[0]
-        self.T = self.Times[-1]-self.Times[0]
+        
+        if datafile is not None:
+            self.Times, self.TimeSeries, self.Frequency, self.FrequencySeries, self.PowerSpectralDensity = noise.load_data(self.datafile, chunk_size=self.T, trigtime=self.trigtime, psd_file=self.psd_file, **kwargs)
+        elif psd_file is not None:
+            self.Times, self.Frequency, self.FrequencySeries, self.PowerSpectralDensity = noise.generate_data(self.psd_file, T=self.T, starttime=self.Epoch, zero_noise = self.zero_noise, **kwargs)
+        else:
+            print("User must specify either a datafile or a PSD file")
+            exit(-1)
+        
         self.df = np.diff(self.Frequency)[0]
-        self.sampling_rate = 1./self.dt
+        self.dt = 1.0/self.sampling_rate
         self.segment_length = int(self.T*self.sampling_rate)
-        self.Flow = flow
-        self.Fhigh = fhigh
-        self.kmin = int(self.Flow/self.df)
-        self.kmax = int(self.Fhigh/self.df)
-        self.sigmasq = self.PowerSpectralDensity[self.kmin:self.kmax]*float(self.segment_length)/(2*self.dt)
+        self.kmin = int(self.flow/self.df)
+        self.kmax = int(self.fhigh/self.df)
 
     def Project(self, hptilde, hctilde, ra, dec, psi, tc):
         """
         projects and timeshifts the GW signal onto the detector
         """
-        
         tgps  = LIGOTimeGPS(tc)
         gmst  = GreenwichMeanSiderealTime(tgps)
         fp,fc = ComputeDetAMResponse(self.lal_detector.response, ra, dec, psi, gmst)
@@ -47,12 +68,28 @@ class GravitationalWaveDetector(object):
 
         return -(2.0/self.T)*np.sum(overlap).real
 
+    def inject(self, hptilde, hctilde, ra, dec, psi, tc):
+        template = self.Project(hptilde, hctilde, ra, dec, psi, tc)/self.dt
+        self.FrequencySeries[self.kmin:self.kmax] += template
+        self.SNR = np.sqrt(4.0*np.sum(np.conj(template)*template/self.PowerSpectralDensity[self.kmin:self.kmax]).real)
+        print("Injected SNR in %s = %.2f\n"%(self.name,self.SNR))
+
 if __name__ == "__main__":
-    H = GravitationalWaveDetector('H1','data/H-H1_LOSC_4_V1-1126259446-32.txt', trigtime = 1126259462.43)
-    L = GravitationalWaveDetector('L1','data/L-L1_LOSC_4_V1-1126259446-32.txt', trigtime = 1126259462.43)
-    
-    for attr, value in H.__dict__.iteritems():
-        print attr, value
+    H = GravitationalWaveDetector('H1',
+                                  psd_file = '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
+                                  trigtime = 1126259462.43,
+                                  starttime= 1126259459.43,
+                                  T = 4.,
+                                  flow = 20.,
+                                  fhigh = 1024.,
+                                  sampling_rate = 2048.,
+                                  zero_noise= True)
+
+    from pylab import *
+
+    fig = figure()
+    ax = fig.add_subplot(111)
+    C = ax.plot(H.Frequency,H.FrequencySeries,alpha=0.5)
 
     from pyTEOBResumS import pyTEOBResumS
 
@@ -63,14 +100,14 @@ if __name__ == "__main__":
     m2=40.0
     spin1x = 0.0
     spin1y = 0.0
-    spin1z = 0.001
+    spin1z = 0.1
     spin2x = 0.0
     spin2y = 0.0
     spin2z = 0.001
     inclination = 2.92033171962
     polarisation = 2.31550047039
     f_min = 20.0
-    sampling_rate = 4096.
+    sampling_rate = 2048.
     dt = 1./sampling_rate
     LambdaAl2 = 0.0
     LambdaBl2 = 0.0
@@ -78,7 +115,7 @@ if __name__ == "__main__":
     LambdaBl3 = 0.0
     LambdaAl4 = 0.0
     LambdaBl4 = 0.0
-    distance = 1000.0
+    distance = 400.0
 
     flags ={'NQC':'1',
             'tidal':0,
@@ -117,9 +154,6 @@ if __name__ == "__main__":
                      lm,
                      flags)
 
-    from pylab import *
-    fig = figure()
-    ax = fig.add_subplot(111)
     # window the waveform
     padding = 0.5
     window=tukey(H.segment_length,padding)
@@ -130,17 +164,12 @@ if __name__ == "__main__":
 
     hp*=window
     hc*=window
-    
-    hptilde = np.fft.rfft(hp)*windowNorm
-    hctilde = np.fft.rfft(hc)*windowNorm
 
-    tc = H.trigtime+np.linspace(-0.05,0.05,1001)
+    hptilde = np.fft.rfft(hp)*windowNorm*H.dt
+    hctilde = np.fft.rfft(hc)*windowNorm*H.dt
 
-    fig = figure()
-    ax = fig.add_subplot(111)
-    logL = np.array([H.logLikelihood(hptilde, hctilde, ra, dec, polarisation, t)+L.logLikelihood(hptilde, hctilde, ra, dec, polarisation, t) for t in tc])
-    C = ax.plot(tc,logL)
-    print "%.15f"%tc[logL.argmax()]
+    H.inject( hptilde, hctilde, ra, dec, polarisation, tc)
+    C = ax.plot(H.Frequency[H.kmin:H.kmax],H.FrequencySeries[H.kmin:H.kmax],alpha=0.5)
     show()
                                 
 
