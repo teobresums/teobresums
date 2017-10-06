@@ -56,7 +56,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 double spin2y,          /** dimensionless s2y                                    **/
                 double spin2z,          /** dimensionless s2z                                    **/
                 double inclination,     /** inclination angle (rad)                              **/
-                double polarisation,    /** polarisation angle (rad)                             **/
+                double coa_phase,       /** coalescence angle (rad)                              **/
                 double f_min,           /** starting frequency (Hz)                              **/
                 double dt,              /** sampling interval (s)                                **/
                 double LambdaAl2,       /** l=2 (tidal deformation of body 1)/(mass of body 1)^5 **/
@@ -516,7 +516,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             if (k==1)
             {
                 double Y_real, Y_imag;
-                spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], polarisation, inclination);
+                spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], coa_phase, inclination);
                 
                 /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
                 for (i=0; i<N; i++)

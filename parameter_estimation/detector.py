@@ -62,14 +62,14 @@ class GravitationalWaveDetector(object):
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc):
         
         template = self.Project(hptilde, hctilde, ra, dec, psi, tc)
-        data = self.FrequencySeries[self.kmin:self.kmax]*self.dt # the dt comes from the dimensionfull FFT
+        data = self.FrequencySeries[self.kmin:self.kmax]
         residuals = (data - template)
         overlap = 2.0*np.conj(residuals)*residuals/self.PowerSpectralDensity[self.kmin:self.kmax]
 
         return -(2.0/self.T)*np.sum(overlap).real
 
     def inject(self, hptilde, hctilde, ra, dec, psi, tc):
-        template = self.Project(hptilde, hctilde, ra, dec, psi, tc)/self.dt
+        template = self.Project(hptilde, hctilde, ra, dec, psi, tc)
         self.FrequencySeries[self.kmin:self.kmax] += template
         self.SNR = np.sqrt(4.0*np.sum(np.conj(template)*template/self.PowerSpectralDensity[self.kmin:self.kmax]).real)
         print("Injected SNR in %s = %.2f\n"%(self.name,self.SNR))
@@ -103,10 +103,10 @@ if __name__ == "__main__":
     spin1z = 0.1
     spin2x = 0.0
     spin2y = 0.0
-    spin2z = 0.001
-    inclination = 2.92033171962
-    polarisation = 2.31550047039
-    f_min = 20.0
+    spin2z = 0.7
+    inclination = 0.0
+    polarisation = 0.0
+    f_min = 10.0
     sampling_rate = 2048.
     dt = 1./sampling_rate
     LambdaAl2 = 0.0
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             'set':0
         }
 
-    lm = -1
+    lm = 1
 
     h = pyTEOBResumS(m1,
                      m2,
@@ -159,17 +159,49 @@ if __name__ == "__main__":
     window=tukey(H.segment_length,padding)
     windowNorm = H.segment_length/np.sum(window**2)
 
-    hp = noise.resize_time_series(h[:,0],H.segment_length)
-    hc = noise.resize_time_series(h[:,1],H.segment_length)
+#    hp = noise.resize_time_series(h[:,0],H.segment_length)
+#    hc = noise.resize_time_series(h[:,1],H.segment_length)
+#
+#    hp*=window
+#    hc*=window
+#
+#    hptilde = np.fft.rfft(hp)*windowNorm*H.dt
+#    hctilde = np.fft.rfft(hc)*windowNorm*H.dt
 
-    hp*=window
-    hc*=window
+    import lalsimulation as lalsim
+    amp_order = 0
+    phase_order = -1
+    wave_flags = None
+    non_GR_params = None
+    approx = lalsim.SEOBNRv4
 
-    hptilde = np.fft.rfft(hp)*windowNorm*H.dt
-    hctilde = np.fft.rfft(hc)*windowNorm*H.dt
+    hptilde1, hctilde1 = lalsim.SimInspiralChooseTDWaveform(3.14/2.,
+                       dt,
+                       m1*lalsim.lal.MSUN_SI,
+                       m2*lalsim.lal.MSUN_SI,
+                       spin1x, spin1y, spin1z,
+                       spin2x, spin2y, spin2z,
+                       f_min, 100.0,
+                       distance*1e6*lalsim.lal.PC_SI,
+                       0.0,
+                       0.0, 0.0,
+                       wave_flags, non_GR_params, amp_order, phase_order, approx)
 
-    H.inject( hptilde, hctilde, ra, dec, polarisation, tc)
-    C = ax.plot(H.Frequency[H.kmin:H.kmax],H.FrequencySeries[H.kmin:H.kmax],alpha=0.5)
+
+#    H.inject( hptilde, hctilde, ra, dec, polarisation, tc)
+    ht = h[:,0]*np.cos(h[:,1])
+    teob = ht#/np.max(ht)
+    seob = hptilde1.data.data#/np.max(hptilde1.data.data)
+    
+    i_t = np.argmax(teob)
+    i_s = np.argmax(seob)
+    t_t = range(len(teob))
+    t_s = range(len(seob))
+    
+    C = ax.plot(t_t-i_t,teob,alpha=0.5,color='k')
+    C = ax.plot(t_s-i_s,seob,alpha=0.5,color='r')
+    print h[:,0]
+    print hptilde1.data.data
     show()
                                 
 

@@ -83,6 +83,7 @@ def load_data(fname,
         psd_int = interp1d(freqs, psd, bounds_error=False, fill_value=np.inf)
     else:
         f, psd = np.loadtxt(psd_file,unpack=True)
+        psd *= psd
         # generate an interpolant for the PSD
         psd_int = interp1d(f, psd, bounds_error=False, fill_value=np.inf)
 

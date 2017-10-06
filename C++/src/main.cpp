@@ -51,7 +51,7 @@ const char *optstr[Nopt*4] =
   "-chi2"        , "<double>",   "dimensionless spin component along the orbital angular momentum of the secondary.", "0",
   "-distance"    , "<double>",   "source distance [Mpc].", "100",
   "-inclination" , "<double>",   "(IOTA) inclination angle [rad].", "0",
-  "-polarisation", "<double>",   "(PSI) polarisation angle [rad].", "0",
+  "-coa_phase"   , "<double>",   "(PHI) coalescence angle [rad].", "0",
   "-f_min"       , "<double>",   "starting frequency [Hz / geom.units mass rescaled].", "20",
   "-srate"       , "<double>",   "sampling rate [Hz].", "4096",
   "-lambda1_l2"  , "<double>",   "l=2 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled.", "0",
@@ -90,6 +90,7 @@ int main (int argc, char* argv[])
     double LambdaBl4     = 0.0;
     double distance      = 100;
     double inclination   = 0.0;
+    double coa_phase     = 0.0;
     double polarisation  = 0.0;
     int    lm            = -1;
     char   output[256]   = "waveform.dat";
@@ -253,7 +254,7 @@ int main (int argc, char* argv[])
         else if (strcmp(argv[i],"-polarisation")==0)
         {
             polarisation = atof(argv[i+1]);
-            printf("polarisation: %f\n",polarisation);
+            printf("coa_phase: %f\n",coa_phase);
         }
         else if (strcmp(argv[i],"-output")==0)
         {
@@ -328,7 +329,7 @@ int main (int argc, char* argv[])
                    0.0,
                    chi2,
                    inclination,
-                   polarisation,
+                   coa_phase,
                    f_min,
                    dt,
                    LambdaAl2,

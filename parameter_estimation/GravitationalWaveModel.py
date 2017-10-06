@@ -77,7 +77,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                                                     **kwargs) for name,datum,psd_file in zip(self.detectors,self.datafiles,self.psd_files)]
 
         self.df = self.detectors[0].df
-#        import matplotlib.pyplot as plt
+        
         if self.injection:
             amp_order = 0
             phase_order = -1
@@ -91,17 +91,15 @@ class GravitationalWaveModel(cpnest.model.Model):
                                0.0, 0.0, 0.0,
                                0.0, 0.0, 0.0,
                                self.flow, self.fhigh, 100.0,
-                               500.0*1e6*lalsim.lal.PC_SI,
+                               2000.0*1e6*lalsim.lal.PC_SI,
                                0.0,
                                0.0, 0.0,
                                wave_flags, non_GR_params, amp_order, phase_order, approx)
 
 
             for d in self.detectors:
-                d.inject( hptilde.data.data*self.dt, hctilde.data.data*self.dt, 0.0, 0.0, 0.0, self.trigtime)
-#                plt.plot(d.Frequency,d.FrequencySeries)
-#            plt.show()
-#            exit()
+                d.inject( hptilde.data.data, hctilde.data.data, 2.0, -1.0, 0.5, self.trigtime)
+
         self.logZnoise = self.log_nulllikelihood()
         
         #parameters
@@ -115,11 +113,11 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [25.0,35.0],
-                         [0.5,1.0],
+                         [10.0,50.0],
+                         [0.1,1.0],
                          [0.0,np.pi],
                          [0.0,np.pi],
-                         [1.0,2000.0],
+                         [1.0,5000.0],
                          [-0.5,0.5],[-0.5,0.5],[-0.5,0.5],
                          [-0.5,0.5],[-0.5,0.5],[-0.5,0.5]]
         else:
@@ -197,7 +195,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                              0.0,
                              x['spin2z'],
                              x['iota'],
-                             x['psi'],
+                             x['phi0'],
                              self.flow,
                              self.dt,
                              0.0,
@@ -256,7 +254,7 @@ if __name__=='__main__':
         signal_model = GravitationalWaveModel(['H1','L1'],
                                               T=opts.seglen,
                                               template = opts.template,
-                                              sampling_rate = 2048.,
+                                              sampling_rate = 1024.,
                                               injection = opts.inject,
                                               zero_noise = opts.zero_noise,
                                               starttime = 1126259459.423,
@@ -276,7 +274,7 @@ if __name__=='__main__':
                            output=opts.out_dir)
         work.run()
         print('Signal evidence {0}'.format(work.NS.logZ))
-        logB = work.NS.logZ-logZnoise
+        logB = work.NS.logZ-signal_model.logZnoise
         print('log B {0}'.format(logB))
         x = work.posterior_samples.ravel()
     else:
