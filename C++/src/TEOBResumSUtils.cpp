@@ -560,7 +560,7 @@ TEOBResumParams read_config(char *fname)
     params.LambdaBl4 = 0.;
     params.distance  = 100;      // Mpc
     params.iota      = 0.0;
-    params.psi       = 0.0;
+    params.coa_phase = 0.0;
 
     string param_name;
     double param_value;
@@ -585,8 +585,8 @@ TEOBResumParams read_config(char *fname)
 	if(param_name=="iota") {
 	  params.iota = param_value;
 	}
-	if(param_name=="psi") {
-	  params.psi = param_value;
+	if(param_name=="coa_phase") {
+	  params.coa_phase = param_value;
 	}
 	if(param_name=="distance") {
 	  params.distance = param_value;
