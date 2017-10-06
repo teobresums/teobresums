@@ -91,7 +91,6 @@ int main (int argc, char* argv[])
     double distance      = 100;
     double inclination   = 0.0;
     double coa_phase     = 0.0;
-    double polarisation  = 0.0;
     int    lm            = -1;
     char   output[256]   = "waveform.dat";
     char   parfile[256]  = "";
@@ -148,7 +147,7 @@ int main (int argc, char* argv[])
             }
             distance              = params.distance;
             inclination           = params.iota;
-            polarisation          = params.psi;
+            coa_phase             = params.coa_phase;
             flags.RWZ             = params.flags.RWZ;
             flags.solver_scheme   = params.flags.solver_scheme;
             flags.tidal           = params.flags.tidal;
@@ -251,9 +250,9 @@ int main (int argc, char* argv[])
             inclination = atof(argv[i+1]);
             printf("inclination: %f\n",inclination);
         }
-        else if (strcmp(argv[i],"-polarisation")==0)
+        else if (strcmp(argv[i],"-coa-phase")==0)
         {
-            polarisation = atof(argv[i+1]);
+            coa_phase = atof(argv[i+1]);
             printf("coa_phase: %f\n",coa_phase);
         }
         else if (strcmp(argv[i],"-output")==0)

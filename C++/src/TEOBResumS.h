@@ -83,7 +83,7 @@ typedef struct tagTEOBResumParams
     double mtot;                /** Total mass of the binary                                 */
     double q;                   /** Mass ratio of the binary                                 */
     double iota;                /** inclination angle                                        */
-    double psi;                 /** polarisation angle                                       */
+    double coa_phase;           /** phase angle                                       */
     double distance;            /** sources distance [Mpc]                                   */
     double nu;                  /** Symmetric mass ratio of the binary, nu = m1*m2/(m1+m2)^2 */
     double r0;                  /** Initial radial separation of the objects                 */
