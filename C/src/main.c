@@ -41,9 +41,9 @@ int main (int argc, char* argv[])
   int err = TEOBResumS(&hpp, &hlm);
   
   /** Handle errors */
-  // todo: list of errors...
   if (err!=OK) errorexit("Main function returned error");
-
+  //TODO: list of errors...
+  
   /** Output */
   Waveform_lm_output (hpp);
   if (par_get_i("output_multipoles"))

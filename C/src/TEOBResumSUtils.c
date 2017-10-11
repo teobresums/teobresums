@@ -262,7 +262,7 @@ void set_multipolar_idx_mask(int *kmask, int n)
 {
   int m, k,j;
   for (k = 0; k<n; k++)
-    kmask = 0; /* all off */
+    kmask[k] = 0; /* all off */
   int *idx = par_get_arrayi("lm", &m);
   for (j = 0; j<m; j++)
     for (k = 0; k<n; k++)

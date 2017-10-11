@@ -20,7 +20,7 @@
 #include "TEOBResumS.h"
 
 int TEOBResumS(
-	       Waveform **hpp,       /** (h+,hx) return array  **/
+	       Waveform **hpp,        /** (h+,hx) return array  **/
 	       Waveform_lm **hlm      /** hlm return array    **/
 	       )
 {
@@ -51,10 +51,11 @@ int TEOBResumS(
   dyn->r_omega       = 0.;
   dyn->MOmg_prev     = 0.;
 
-  // ...
+  /** Local vars */
+  Waveform_lm_pt hlm_t;
   const int usespins = par_get_i("use_spins");
-
-  /* Compute light-ring (if needed) */
+  
+  /** Compute light-ring (if needed) */
   if (par_get_i("use_tidal")) {
     dyn->rLR = AdiabLR(dyn);
     dyn->rLSO = 6.0; //FIXME
@@ -108,8 +109,8 @@ int TEOBResumS(
     j = 0;
   }
   dyn->ode_timestep  = j;
-
   const int ode_tstep = dyn->ode_timestep;
+
   const double ode_abstol = par_get_d("ode_abstol");
   const double ode_reltol = par_get_d("ode_relstol");
 
@@ -178,7 +179,7 @@ int TEOBResumS(
     }
 
     /** Waveform computation 
-	Need a r.h.s. evaluation */
+	It needs a r.h.s. evaluation */
     dyn->store = 1;
     if (usespins) {
       s_rhs(dyn->t, y, dy, dyn);
@@ -186,7 +187,8 @@ int TEOBResumS(
       rhs(dyn->t, y, dy, dyn);
     }
     dyn->store = 0;
-    hlm(dyn, hlm); 
+
+    hlm(dyn, hlm_t); 
    
     /** Update size and push arrays (if needed) */
     iter++;
@@ -196,7 +198,6 @@ int TEOBResumS(
       Waveform_push (&hpp, size);
       Waveform_lm_push (&hlm, size);
       Dynamics_push (&dyn, size);
-
     }
     
     /** Append dynamics and waveform to vectors */
@@ -208,11 +209,9 @@ int TEOBResumS(
     dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
     dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
 
-    //hlm_rad_vec.push_back(h_form[lm].dat[0]);
-    //hlm_phase_vec.push_back(h_form[lm].dat[1]);
     for (k = 0; k < KMAX; k++) {
-      hlm->real[k][iter] = 0.; // amplitude
-      hlm->imag[k][iter] = 0.; //phase
+      *hlm->ampli[k][iter] = hlm_t->ampli[k]; 
+      *hlm->phase[k][iter] = hlm_t->phase[k]; 
     }
 
     /** Stop integration at given radius (if rstop >= 0) */    
@@ -254,18 +253,18 @@ int TEOBResumS(
   /** Build uniform grid of width dt and alloc memory */
   double *vecg[EOB_DYNAMICS_VARS + 1]; /* All dynamical vars + time */
   Waveform *hlm_vecg; 
-
+  int i;
+  
   //CHECK Is 'iter=size' the last point?
   //WARNING: is this roundind under control ?!
-  int N_vecg = (int)((dyn->time[size] - dyn->time[0])/dyn->dt + 1);
+  const int size_vecg = (int)((dyn->time[size] - dyn->time[0])/dyn->dt + 1);
 
-  int i;
   for (i = 0; i < (EOB_DYNAMICS_VARS + 1); i++) {
-    vecg[i] = (double*) malloc(N_vecg);
+    vecg[i] = (double*) malloc(size_vecg);
   }
 
   double * t_vecg = &vecg[EOB_DYNAMICS_VARS];
-  for (i = 0; i < N_vecg; i++) {
+  for (i = 0; i < size_vecg; i++) {
     t_vecg[i] = i*dt;
   }
 
@@ -273,15 +272,15 @@ int TEOBResumS(
 
   /** Interpolate dynamics on uniform grid */
   for (k = 0; k < EOB_DYNAMICS_VARS; k++) {
-    interp_grid(dyn->time, dyn->data, size, t_vecg, N_vecg, vecg[k]);
+    interp_grid(dyn->time, dyn->data, size, t_vecg, size_vecg, vecg[k]);
   }
 
   /** Interpolate wave on uniform grid */
   for (k = 0; k < KMAX; k++) {
-    interp_grid(hlm->time, hlm[k]->ampli, hlm->size, t_vecg, N_vecg, hlm_vecg[k]->ampli);
+    interp_grid(hlm->time, hlm[k]->ampli, hlm->size, t_vecg, size_vecg, hlm_vecg[k]->ampli);
   }
   for (k = 0; k < KMAX; k++) {
-    interp_grid(hlm->time, hlm[k]->phase, hlm->size, t_vecg, N_vecg, hlm_vecg[k]->phase);
+    interp_grid(hlm->time, hlm[k]->phase, hlm->size, t_vecg, size_vecg, hlm_vecg[k]->phase);
   }
 
   /** Compute NQC corrections */
@@ -324,7 +323,9 @@ int TEOBResumS(
   }
 
   /** Output dynamics */
-  // ...
+  if (par_get_i("output_dynamics")) {
+    Dynamics_output(dyn);
+  }
 
   /** Free memory for dynamical vars */
   Dynamics_free(dyn);
@@ -332,8 +333,9 @@ int TEOBResumS(
 
   //TODO WHAT hlm DO WE WANT IN OUTPUT? Unif or nonunif.? 
   // -> swap output if needed/be careful with memory...
-  Waveform_lm_free (hlm_vecg); 
-
+  //TODO ... SWAP...
+  Waveform_lm_free (hlm_vecg);
+  //Waveform_lm_free (hlm); 
 
   return OK;
 }

@@ -25,14 +25,14 @@ void hlm(double t,
 	 double r,
 	 double pph,
 	 double prstar,
-	 double       Omega,
+	 double Omega,
 	 double ddotr,
 	 double H,
 	 double Heff,
 	 double jhat,
 	 double rw,
 	 Dynamics *dyn, 
-	 Waveform_lm *hlm)
+	 Waveform_lm_pt *hlm)
 {
   
   const double nu = d->nu;  
@@ -68,9 +68,9 @@ void hlm(double t,
   double rholm[KMAX], flm[KMAX];
   double x = SQ(rw*Omega);
   if (usespins){
-    flm = s_flm_amplitudes(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
+    s_flm_amplitudes(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
   } else {
-    flm = flm_amplitudes(x, nu, rholm,flm);
+    flm_amplitudes(x, nu, rholm,flm);
   }
   
   /** Computing the tail */
@@ -90,6 +90,7 @@ void hlm(double t,
   /** NQC */
   Waveform_lm_pt hNewt;
   //double hNQC[KMAX];
+  // Waveform_lm_pt hNQC; 
   if (!(usetidal)) {
     hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); // FIXME call
   }
