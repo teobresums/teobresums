@@ -45,6 +45,26 @@ double Eulerlog(const double x,const double m)
   return EulerGamma + Log2 + log(m) + 0.5*log(x);
 }
 
+
+/** Spline interpolation with GSL routines */
+void interp_grid(double *t, double *y, int n, double *ti, int ni, double *yi)
+{
+  int k;
+  double yi_pt;
+ 
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+  gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
+  gsl_spline_init (spline, t, y, n);
+    
+  for (k = 0; k < ni; k++) {
+    yi[k] = gsl_spline_eval (spline, ti[k], acc);
+  }
+  
+  gsl_spline_free (spline);
+  gsl_interp_accel_free (acc);
+  
+}
+
 /** Find nearest point index in 1d array */
 int find_point_bisection(double x, int n, double *xp, int o)
 {

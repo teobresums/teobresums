@@ -236,6 +236,7 @@ void TEOBResumSSetParameters(char *s, int pr);
 double q_to_nu(const double q);
 double nu_to_X1(const double nu);
 double Eulerlog(const double x,const double m);
+void interp_grid(double *t, double *y, int n, double *ti, int ni, double *yi);
 int find_point_bisection(double x, int n, double *xp, int o);
 double baryc_f(double xx, int n, double *f, double *x);
 void baryc_weights(int n, double *x, double *omega);
