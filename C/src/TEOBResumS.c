@@ -205,7 +205,7 @@ int TEOBResumS(
     //hlm_rad_vec.push_back(h_form[lm].dat[0]);
     //hlm_phase_vec.push_back(h_form[lm].dat[1]);
     for (k = 0; k < KMAX; k++) {
-      hlm->real[k][iter] =0,; // amplitude
+      hlm->real[k][iter] = 0.; // amplitude
       hlm->imag[k][iter] = 0.; //phase
     }
     
@@ -270,7 +270,8 @@ int TEOBResumS(
   
   /* Spherical harmonics projection */
   double Y_real, Y_imag;
-  double psi = par_get_d("polarization"); 
+  //double psi = par_get_d("polarization");
+  double psi = par_get_d("coalescence angle"); 
   double iota = par_get_d("inclination");
   double Aki, cosPhi, sinPhi;
   for (k = 0; k < KMAX; k++ ) {

@@ -89,14 +89,14 @@ enum{
 
 /** List of EOB variables for initial data */
 enum{
-    EOB_ID_RAD, 
-    EOB_ID_PPH,
-    EOB_ID_PRSTAR,
-    EOB_ID_PR,
-    EOB_ID_J,
-    EOB_ID_E0,
-    EOB_ID_OMGJ,
-    EOB_ID_VARS
+  EOB_ID_RAD, 
+  EOB_ID_PPH,
+  EOB_ID_PRSTAR,
+  EOB_ID_PR,
+  EOB_ID_J,
+  EOB_ID_E0,
+  EOB_ID_OMGJ,
+  EOB_ID_VARS
 };
 
 /** List of EOB dynamical variables (to be stored in arrays) */ 
@@ -278,7 +278,11 @@ void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q
 //void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);//used at all???
 
 /* TEOBResumSInitialData.c */
-
+void init(double r0, Dynamics *dyn, double y_init[]);
+void s_initial(double r0, Dynamics *dyn, double y_init[]);
+double s_bisec(double nu, double chi1, double chi2, double X1, double X2, double c3,
+	       double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
+double DHeff0(double x, void *params);
 
 /* TEOBResumSMetric.c */
 void A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
