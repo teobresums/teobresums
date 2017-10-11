@@ -72,18 +72,30 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     
     int i = 0;
     int grid_length = 0;
-    double rLR, r, prstar, phi, pphi, MOmg, t, y[4], t1, h, r_LSO, MOmg_prev, t_stop, Omg, Omg_orb, A, ddotr, ti;
+    double rLR;
+    double r;
+    double prstar;
+    double phi;
+    double pphi;
+    double MOmg;
+    double y[4];
+    double MOmg_prev;
+    double t_stop;
+    double Omg;
+    double Omg_orb;
+    double A;
+    double ddotr;
+
     bool stop_flag, MOmgpeak_flag;
     
     if ((spin1x!=0)||(spin1y!=0)||(spin2x!=0)||(spin2y!=0))
     {
-        printf("ERROR! Non-aligned spins not supported! Aborting.\n");
+        printf("ERROR! Non-aligned spins not supported (yet)! Aborting.\n");
         exit(-1);
     }
 
     if (m2 > m1)
     {
-        //printf("Warning! m1 > m2, swapping component masses, spins and tidal coefficients\n");
         swap_variables(&m1, &m2);
         swap_variables(&spin1x, &spin2x);
         swap_variables(&spin1y, &spin2y);
@@ -109,16 +121,14 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                                                     LambdaBl4,
                                                     flags);
 
-    double lambda2 = params.LambdaAl2;
     double q      = params.q;
     dt            = params.dt;
     
     if (DEBUG)
     {
-        printf("lambdaAl2=%f\n", LambdaAl2);
-        printf("lambdaAl3=%f\n", LambdaAl3);
-        printf("lambdaAl4=%f\n", LambdaAl4);
-        printf("lambdaAl2=%f\n", lambda2);
+        printf("lambdaAl2=%f\n", params.LambdaAl2);
+        printf("lambdaAl3=%f\n", params.LambdaAl3);
+        printf("lambdaAl4=%f\n", params.LambdaAl4);
         printf("q=%f\n",q);
     }
 
@@ -158,7 +168,11 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     }
     
     /** Initial conditions: t, r, phi, prstar, pphi */
-    t    = 0.0;
+    double t     = 0.0;
+    double r_LSO = 6.0;
+    double t1    = 1.e15;
+    double h     = dt;
+    
     y[0] = initial_data[0];
     y[1] = 0.;
     y[2] = initial_data[2];
@@ -169,16 +183,11 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     params.Mbh = final_mass;
     
     /** Initialize ODE system solver */
-    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;//rk8pd;
+    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
     gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc(T, 4);
     gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new(1.e-13, 1.e-11);
     gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc(4);
     gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rk8pd,dt, 1.e-10, 1.e-10);
-    
-    t     = 0.0;
-    r_LSO = 6.0;
-    t1    = 1.e15;
-    h     = dt;
     
     MOmg_prev     = 0.;
     t_stop        = 0.;
@@ -258,7 +267,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         if (std::isfinite(r))
         {
             /** Waveform computation*/
-            vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg,Omg_orb,A,ddotr);
+            vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg, Omg_orb, A, ddotr);
 
             /** Append dynamics and waveform to vectors */
             hlm_rad_vec.push_back(h_form[lm].dat[0]);
@@ -279,9 +288,10 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             ddotr_vec.push_back(ddotr);
         }
         
-        /**Breaking the computation. Find the peak of the Omg_orb curve (the "pure" orbital frequency
-           without the spin-orbit contribution) and continue the evolution for another 5M. 
-           For nonspinning case Omg_orb is precisely the orbital frequency */
+        /** Breaking the computation. Find the peak of the Omg_orb curve (the "pure" orbital frequency
+            without the spin-orbit contribution) and continue the evolution for another 10M to
+            avoid interpolation problems later.
+            For the non-spinning case Omg_orb is precisely the orbital frequency */
 	
         if (params.flags.spin==1)
         {
@@ -306,7 +316,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         }
         else
         {
-	  if (t >= t_stop)	    
+            if (t >= t_stop)
             {
                 stop_flag = true;
             }
@@ -352,7 +362,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
     vector<double> t_vecg(grid_length);
     i  = 0;
-    ti = 0.;
+    double ti = 0.;
     for (ti = t_vec[0]; ti < t_vec.back(); ti += dt)
     {
         t_vecg[i] = ti;

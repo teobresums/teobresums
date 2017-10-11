@@ -26,7 +26,7 @@ using namespace std;
 /** Initial conditions calculation for non-spinning systems */
 vector<double> initial(TEOBResumParams *params)
 {
-  /* This routine compuets the initial configuration for EOB
+  /* This routine computes the initial configuration for EOB
      evolution in the nonspinning case. It determines 
      post-post-circular initial data as described in Sec.IIE
      of DNB, PRD 87, 084035 */
@@ -35,8 +35,8 @@ vector<double> initial(TEOBResumParams *params)
     /**************************************/
     /* FIXME: looking at tidal parameters */
     /**************************************/   
-    double CQ1       = (*(TEOBResumParams *)params).C_Q1;
-    double CQ2       = (*(TEOBResumParams *)params).C_Q2;
+//    double CQ1       = (*(TEOBResumParams *)params).C_Q1;
+//    double CQ2       = (*(TEOBResumParams *)params).C_Q2;
     double lambdaAl2 = (*(TEOBResumParams *)params).LambdaAl2;
     double lambdaAl3 = (*(TEOBResumParams *)params).LambdaAl3;
     double lambdaAl4 = (*(TEOBResumParams *)params).LambdaAl4;

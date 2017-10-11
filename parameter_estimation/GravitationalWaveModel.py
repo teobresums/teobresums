@@ -86,12 +86,12 @@ class GravitationalWaveModel(cpnest.model.Model):
             approx = lalsim.IMRPhenomPv2
             hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(0.0,
                                self.df,
-                               20*lalsim.lal.MSUN_SI,
-                               15*lalsim.lal.MSUN_SI,
+                               40*lalsim.lal.MSUN_SI,
+                               35*lalsim.lal.MSUN_SI,
                                0.4, 0.0, -0.2,
                                -0.2, 0.2, 0.3,
                                self.flow, self.fhigh, 100.0,
-                               1500.0*1e6*lalsim.lal.PC_SI,
+                               4500.0*1e6*lalsim.lal.PC_SI,
                                0.0,
                                0.0, 0.0,
                                wave_flags, non_GR_params, amp_order, phase_order, approx)
