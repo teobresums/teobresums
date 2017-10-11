@@ -90,6 +90,12 @@ int TEOBResumS(
   dyn->t_stop        = par_get_d("ode_tmax");
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
+  dyn->ode_stop_radius   = false;
+  const double rstop = par_get_d("stop_at_radius");
+  if (rstop>=0.) {
+    dyn->ode_stop_radius   = true;
+  }
+
   in j;
   for (j=0; j<ODE_TSTEP_NOPT; j++) {
     if (STREQUAL(par_get_s("ode_timestep"),ode_tstep_opt[j])) {
@@ -208,10 +214,15 @@ int TEOBResumS(
       hlm->real[k][iter] = 0.; // amplitude
       hlm->imag[k][iter] = 0.; //phase
     }
-    
+
+    /** Stop integration at given radius (if rstop >= 0) */    
+    if ((dyn->ode_stop_radius) && (dyn->r < rstop) ) {
+      dyn->ode_stop = true;
+    }
+
     /** Check when to break the computation
 	find peak of omega curve and continue for 4 * dt afterwards */
-     if (usespins) {
+    if (usespins) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
       dyn->MOmg = dyn->Omg;
@@ -240,17 +251,44 @@ int TEOBResumS(
 
   // SB stops here waiting for improved NQC & Ringdown ...............
 
-  /** Interpolate on uniform grid (if needed) */
-  // ...
+  /** Build uniform grid of width dt and alloc memory */
+  double *vecg[EOB_DYNAMICS_VARS + 1]; /* All dynamical vars + time */
+  Waveform *hlm_vecg; 
+
+  //CHECK Is 'iter=size' the last point?
+  //WARNING: is this roundind under control ?!
+  int N_vecg = (int)((dyn->time[size] - dyn->time[0])/dyn->dt + 1);
+
+  int i;
+  for (i = 0; i < (EOB_DYNAMICS_VARS + 1); i++) {
+    vecg[i] = (double*) malloc(N_vecg);
+  }
+
+  double * t_vecg = &vecg[EOB_DYNAMICS_VARS];
+  for (i = 0; i < N_vecg; i++) {
+    t_vecg[i] = i*dt;
+  }
+
+  Waveform_lm_alloc (&hlm_vecg, size, "hlm_uniform");
+
+  /** Interpolate dynamics on uniform grid */
+  for (k = 0; k < EOB_DYNAMICS_VARS; k++) {
+    interp_grid(dyn->time, dyn->data, size, t_vecg, N_vecg, vecg[k]);
+  }
+
+  /** Interpolate wave on uniform grid */
+  for (k = 0; k < KMAX; k++) {
+    interp_grid(hlm->time, hlm[k]->ampli, hlm->size, t_vecg, N_vecg, hlm_vecg[k]->ampli);
+  }
+  for (k = 0; k < KMAX; k++) {
+    interp_grid(hlm->time, hlm[k]->phase, hlm->size, t_vecg, N_vecg, hlm_vecg[k]->phase);
+  }
 
   /** Compute NQC corrections */
   // ...
 
   /** Ringdown attachment */
   // ...  
-
-  // HERE 
-  // - assume size is updated
   
   /** Computation of (h+,hx) */
   
@@ -290,6 +328,12 @@ int TEOBResumS(
 
   /** Free memory for dynamical vars */
   Dynamics_free(dyn);
-  
+  free(vecg);
+
+  //TODO WHAT hlm DO WE WANT IN OUTPUT? Unif or nonunif.? 
+  // -> swap output if needed/be careful with memory...
+  Waveform_lm_free (hlm_vecg); 
+
+
   return OK;
 }
