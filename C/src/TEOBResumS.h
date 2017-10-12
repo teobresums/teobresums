@@ -130,6 +130,17 @@ enum{
 };
 const char ode_tstep_opt[ODE_TSTEP_NOPT] = {"uniform","adaptive","adaptive+uniform_after_LSO"};
 
+/** Error handler for root finders */
+enum{ 
+  ROOT_ERRORS_NO,
+  ROOT_ERRORS_BRACKET,
+  ROOT_ERRORS_MAXITS,
+  ROOT_ERRORS_NOSUCC,
+  ROOT_ERRORS
+}
+const char root_errors[ROOT_ERRORS] = {"none","root is not bracketed.","root finder did not converged.", "root finder failed."};
+#define TRYROOT(i, x) if ( ((i) = (x))) && ((i)>ROOT_ERRORS_NO) ) { errorexits(root_errors[(i)]); } //FIXME: not sure if this work, seems clever...
+
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 const int L[KMAX] = {
     2,2,
@@ -279,10 +290,12 @@ int eob_dyn_rhs(double t, const double y[], double dy], void *params);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); 
+
+
 double eob_dyn_fLR(double r, Dynamics *dyn);
-double eob_dyn_adiabLR(Dynamics *dyn);
+int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, Dynamics *dyn);
-double eob_dyn_adiabLSO(Dynamics *dyn);
+int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
 
 //void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);//used at all???
 

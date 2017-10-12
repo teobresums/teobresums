@@ -432,12 +432,12 @@ double eob_dyn_fLR(double r, Dynamics *dyn)
 }
 
 /** Root finder for adiabatic light-ring */
-double eob_dyn_adiabLR(Dynamics *dyn)
+int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
 {
   int status;
   int iter = 0, max_iter = 200;
   const gsl_root_fsolver_type *T;
-  double rLR;
+  double x;
   double x_lo = 0.1, x_hi = 15.;
   
   gsl_root_fsolver *s;
@@ -452,15 +452,31 @@ double eob_dyn_adiabLR(Dynamics *dyn)
     {
       iter++;
       status = gsl_root_fsolver_iterate (s);
-      rLR    = gsl_root_fsolver_root (s);
+      x      = gsl_root_fsolver_root (s);
       x_lo   = gsl_root_fsolver_x_lower (s);
       x_hi   = gsl_root_fsolver_x_upper (s);
       status = gsl_root_test_interval (x_lo, x_hi, 0, 1e-10);
     }
   while (status == GSL_CONTINUE && iter < max_iter);
   gsl_root_fsolver_free (s);
-  
-  return rLR;
+
+  *rLR = 0.;
+  if (isfinite(x)) *rLR = x;
+
+  //if (status == ???) {
+  //  return ROOT_ERRORS_BRACKET;
+  //}
+  if (status == GSL_SUCCESS) {
+    return ROOT_ERRORS_NO;
+  } 
+  if (iter >= max_iter) {
+    return ROOT_ERRORS_MAXITS;
+  }
+  if (status != GSL_SUCCESS) {
+    return ROOT_ERRORS_NOSUCC;
+  }
+    
+  return status;
 }
 
 /** Root function to compute LSO */
@@ -476,12 +492,12 @@ double eob_dyn_fLSO(double r, Dynamics *dyn)
 }
 
 /** Root finder for adiabatic LSO */
-double eob_dyn_adiabLSO(Dynamics *dyn)
+int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
 {
   int status;
   int iter = 0, max_iter = 200;
   const gsl_root_fsolver_type *T;
-  double rLR;
+  double x;
   double x_lo = 0.1, x_hi = 15.;
   
   gsl_root_fsolver *s;
@@ -503,8 +519,24 @@ double eob_dyn_adiabLSO(Dynamics *dyn)
     }
   while (status == GSL_CONTINUE && iter < max_iter);
   gsl_root_fsolver_free (s);
+
+  *rLSO = 0.;
+  if (isfinite(x)) *rLSO = x;
+
+  //if (status == ???) {
+  //  return ROOT_ERRORS_BRACKET;
+  //}
+  if (status == GSL_SUCCESS) {
+    return ROOT_ERRORS_NO;
+  } 
+  if (iter >= max_iter) {
+    return ROOT_ERRORS_MAXITS;
+  }
+  if (status != GSL_SUCCESS) {
+    return ROOT_ERRORS_NOSUCC;
+  }
   
-  return rLSO;
+  return status;
 }
 
 

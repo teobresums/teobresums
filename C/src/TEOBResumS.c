@@ -54,14 +54,22 @@ int TEOBResumS(
   /** Local vars */
   Waveform_lm_pt hlm_t;
   const int usespins = par_get_i("use_spins");
+  int status;
   
-  /** Compute light-ring (if needed) */
+  /** Compute light-ring and LSO (if needed) */
   if (par_get_i("use_tidal")) {
-    dyn->rLR = AdiabLR(dyn);
-    dyn->rLSO = 6.0; //FIXME
+    TRYROOT(status, eob_dyn_AdiabLR(dyn, dyn->rLR));
     par_set_d("rLR", dyn->rLR);
   }
-    
+  if (par_get_i("compute_LR")) {
+   TRYROOT(status, eob_dyn_AdiabLR(dyn, dyn->rLR));
+   par_set_d("rLR", dyn->rLR);
+  }
+  if (par_get_i("compute_LSO")) {
+    TRYROOT(status, eob_dyn_AdiabLSO(dyn, dyn->rLSO));
+    par_set_d("rLSO", dyn->rLSO);
+  }
+  
   /** Computing the initial conditions */
   gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_VARS, dyn};
   if (usespins) {
