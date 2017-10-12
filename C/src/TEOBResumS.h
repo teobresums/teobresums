@@ -279,9 +279,13 @@ int eob_dyn_rhs(double t, const double y[], double dy], void *params);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); 
-//void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);//used at all???
 double eob_dyn_fLR(double r, Dynamics *dyn);
-double eob_dyn_adiabLR(void *params);
+double eob_dyn_adiabLR(Dynamics *dyn);
+double eob_dyn_fLSO(double r, Dynamics *dyn);
+double eob_dyn_adiabLSO(Dynamics *dyn);
+
+//void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);//used at all???
+
 
 /* TEOBResumSInitialCondition.c */
 void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);

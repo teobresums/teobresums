@@ -421,17 +421,18 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
   
 }
 
-/** Root function to compute light ring */
+/** Root function to compute light-ring */
 double eob_dyn_fLR(double r, Dynamics *dyn)
 {    
   double A,B,dA,d2A,dB;
-  Metric(r, dyn, &A,&B,&dA,&d2A,&dB);
+  if (dyn->use_spin) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
+  else               eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
   double dA_u = (-dA*)*SQ(r); 
   return (A +(0.5*dA_u)/r);
 }
 
-/** Root finder for adiabtic light-ring */
-double eob_dyn_adiabLR(void *params)
+/** Root finder for adiabatic light-ring */
+double eob_dyn_adiabLR(Dynamics *dyn)
 {
   int status;
   int iter = 0, max_iter = 200;
@@ -442,7 +443,7 @@ double eob_dyn_adiabLR(void *params)
   gsl_root_fsolver *s;
   gsl_function F;
   F.function = &eob_dyn_fLR;
-  F.params = params; // Dynamics dyn
+  F.params = dyn
   T = gsl_root_fsolver_bisection;
   s = gsl_root_fsolver_alloc (T);
   gsl_root_fsolver_set (s, &F, x_lo, x_hi);
@@ -462,7 +463,49 @@ double eob_dyn_adiabLR(void *params)
   return rLR;
 }
 
+/** Root function to compute LSO */
+double eob_dyn_fLSO(double r, Dynamics *dyn)
+{    
+  double A,B,dA,d2A,dB;
+  if (dyn->use_spin) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
+  else               eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
+  double u = 1./r;
+  double u2  = SQ(u);
+  double d2B = d2A*u2 + 4.*u*dA+2*A;
+  return ( dA*d2B - d2A*dB );
+}
 
+/** Root finder for adiabatic LSO */
+double eob_dyn_adiabLSO(Dynamics *dyn)
+{
+  int status;
+  int iter = 0, max_iter = 200;
+  const gsl_root_fsolver_type *T;
+  double rLR;
+  double x_lo = 0.1, x_hi = 15.;
+  
+  gsl_root_fsolver *s;
+  gsl_function F;
+  F.function = &eob_dyn_fLSO;
+  F.params = dyn;
+  T = gsl_root_fsolver_bisection;
+  s = gsl_root_fsolver_alloc (T);
+  gsl_root_fsolver_set (s, &F, x_lo, x_hi);
+  
+  do
+    {
+      iter++;
+      status = gsl_root_fsolver_iterate (s);
+      rLR    = gsl_root_fsolver_root (s);
+      x_lo   = gsl_root_fsolver_x_lower (s);
+      x_hi   = gsl_root_fsolver_x_upper (s);
+      status = gsl_root_test_interval (x_lo, x_hi, 0, 1e-10);
+    }
+  while (status == GSL_CONTINUE && iter < max_iter);
+  gsl_root_fsolver_free (s);
+  
+  return rLSO;
+}
 
 
 
