@@ -20,7 +20,7 @@
 #include "TEOBResumS.h"
 
 /** r.h.s. of EOB Hamiltonian dynamics, no spins version */ 
-int rhs(double t, const double y[], double dy[], void *dyn)
+int eob_dyn_rhs(double t, const double y[], double dy[], void *dyn)
 {
   
   (void)(t); /* avoid unused parameter warning */
@@ -90,7 +90,7 @@ int rhs(double t, const double y[], double dy[], void *dyn)
   /* Approximate ddot(r) without Flux */
   const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
   
-  dy[EOB_EVOLVE_PPHI] = flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
+  dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
 
   if(d->store) {
     /* Store values */
@@ -121,7 +121,7 @@ int rhs(double t, const double y[], double dy[], void *dyn)
 }
 
 /** r.h.s. of EOB Hamiltonian dynamics, spins version */ 
-int s_rhs(double t, const double y[], double dy[], void *dyn)
+int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
 {
     
   (void)(t); /* avoid unused parameter warning */
@@ -151,9 +151,9 @@ int s_rhs(double t, const double y[], double dy[], void *dyn)
   /** Compute Metric */
   double A, B, dA, d2A;
   if (usetidal) {
-    Metric(r, d, &A, &B, &dA, &d2A);
+    eob_metric(r, d, &A, &B, &dA, &d2A);
   } else {
-    s_Metric(r, d, &A, &B, &dA, &d2A);
+    eob_metric_s(r, d, &A, &B, &dA, &d2A);
   }
  
   /* shorthands */
@@ -162,14 +162,14 @@ int s_rhs(double t, const double y[], double dy[], void *dyn)
   const double prstar4 = prstar3*prstar;
   
   double rc, drc_dr, d2rc_dr;
-  s_get_rc(r, nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
+  eob_dyn_s_get_rc(r, nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
   
   const double uc     = 1./rc;
   const double uc2    = uc*uc;
   const double uc3    = uc2*uc;
   
   double ggm[14];
-  s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3, ggm);
+  eob_dyn_s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3, ggm);
   
   const double GS              = ggm[2];
   const double GSs             = ggm[3];
@@ -216,7 +216,7 @@ int s_rhs(double t, const double y[], double dy[], void *dyn)
      Procedure consistent with the nonspinning case
   */
   double gmm0[14];
-  s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3, gmm0);
+  eob_dyn_s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3, gmm0);
   
   const double GS_0       = ggm0[2];
   const double GSs_0      = ggm0[3];
@@ -235,7 +235,7 @@ int s_rhs(double t, const double y[], double dy[], void *dyn)
   const double x          = v_phi*v_phi;
   const double jhat       = pph/(r_omg*v_phi);
   
-  const double Fphi = s_Flux(x,Omg,r_omg,H,Heff,jhat,r,prstar,ddotr,dyn);
+  const double Fphi = eob_flx_Flux_s(x,Omg,r_omg,H,Heff,jhat,r,prstar,ddotr,dyn);
   
   dy[EOB_EVOLVE_PPHI] = Fphi;
 
@@ -274,7 +274,7 @@ int s_rhs(double t, const double y[], double dy[], void *dyn)
     the CN3LO parameter is hard-coded in this routine 
     ggm is the output structure. */
 
-void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
+void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
 	  double *ggm)
 {
   static double c10,c20,c30,c02,c12,c04;
@@ -386,8 +386,8 @@ void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double 
    paper, PRD 88, 023009, the bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. 
    The dimensionless bar{\lambda} love number is related to our apsidal constant as lambda = 2/3 k2/(C^5) so that both quantities have to appear here.  
 */
-void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, 
-	      double *rc, double *drc_dr, double *d2rc_dr2)
+void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, 
+		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
 
   double u   = 1./r;
@@ -422,7 +422,7 @@ void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q
 }
 
 /** Root function to compute light ring */
-double fLR(double r, Dynamics *dyn)
+double eob_dyn_fLR(double r, Dynamics *dyn)
 {    
   double A,B,dA,d2A,dB;
   Metric(r, dyn, &A,&B,&dA,&d2A,&dB);
@@ -431,7 +431,7 @@ double fLR(double r, Dynamics *dyn)
 }
 
 /** Root finder for adiabtic light-ring */
-double adiabLR(void *params)
+double eob_dyn_adiabLR(void *params)
 {
   int status;
   int iter = 0, max_iter = 200;
@@ -441,7 +441,7 @@ double adiabLR(void *params)
   
   gsl_root_fsolver *s;
   gsl_function F;
-  F.function = &fLR;
+  F.function = &eob_dyn_fLR;
   F.params = params; // Dynamics dyn
   T = gsl_root_fsolver_bisection;
   s = gsl_root_fsolver_alloc (T);

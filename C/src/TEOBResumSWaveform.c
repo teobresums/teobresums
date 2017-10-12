@@ -20,21 +20,9 @@
 #include "TEOBResumS.h"
 
 /** Main routine for factorize EOB waveform */
-void hlm(double t,
-	 double phi,
-	 double r,
-	 double pph,
-	 double prstar,
-	 double Omega,
-	 double ddotr,
-	 double H,
-	 double Heff,
-	 double jhat,
-	 double rw,
-	 Dynamics *dyn, 
-	 Waveform_lm_t *hlm)
+void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, double Omega, double ddotr, double H, double Heff, double jhat, double rw, Dynamics *dyn, Waveform_lm_t *hlm)
 {
-  
+
   const double nu = d->nu;  
   const double chi1 = d->chi1;  
   const double chi2 = d->chi2;  
@@ -62,15 +50,15 @@ void hlm(double t,
   
   /** Newtonian waveform */
   Waveform_lm_t hNewt;
-  hlmNewt(rw,Omega,phi,nu,usetidal,usespins, &hNewt);
+  eob_wav_hlmNewt(rw,Omega,phi,nu,usetidal,usespins, &hNewt);
   
   /** Compute corrections */
   double rholm[KMAX], flm[KMAX];
   double x = SQ(rw*Omega);
   if (usespins){
-    s_flm_amplitudes(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
+    eob_wav_flm_s(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
   } else {
-    flm_amplitudes(x, nu, rholm,flm);
+    eob_wav_flm(x, nu, rholm,flm);
   }
   
   /** Computing the tail */
@@ -78,19 +66,19 @@ void hlm(double t,
   const double Hreal = H * nu;
   Waveform_lm_t tlm;
   if (usespeedytail) {
-    speedyTail(Omega,Hreal, r0, L, M, &tlm); 
+    eob_wav_speedyTail(Omega,Hreal, r0, L, M, &tlm); 
   } else {
-    hhatlmtail(Omega,Hreal, r0, L, M, &tlm); 
+    eob_wav_hhatlmTail(Omega,Hreal, r0, L, M, &tlm); 
   }
   
   /** Residual phase corrections delta_{lm} */
   double dlm[KMAX];
-  deltalm(Hreal, Omega, nu, dlm); 
+  eob_wav_deltalm(Hreal, Omega, nu, dlm); 
   
   /** NQC */
   Waveform_lm_t hNQC; 
   if (!(usetidal)) {
-    hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); // FIXME call
+    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); // FIXME call
   }
 
   /** Put together the different contributions */
@@ -113,7 +101,7 @@ void hlm(double t,
         
     /** Compute tidal contribution */
     double hlmtidal[KMAX];
-    hlm_Tidal(x, dyn, hTidallm);
+    eob_wav_hlmTidal(x, dyn, hTidallm);
     
     /** Update waveform */
     const double p2 = sqrt(1-4*nu);
@@ -138,12 +126,12 @@ void hlm(double t,
 //  TODO: this routine requires optimization
 //  - precompute coefficients c(nu)
 
-void deltalm(double Hreal,double Omega,double nu, double *dlm)
+void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
 {
     
   /** Useful shorthands*/
-  double pi2    = pi*pi;
-  double nu2    = nu*nu;
+  double pi2    = SQ(pi);
+  double nu2    = SQ(nu);
   double y      = cbrt(Hreal*Omega*Hreal*Omega);
   double sqrt_y = sqrt(y);
   double y3     = y*y*y;
@@ -210,7 +198,7 @@ void deltalm(double Hreal,double Omega,double nu, double *dlm)
 
 /** Tail contribution to the resummed wave.   
     Ref. Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
-void hhatlmtail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
+void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
 {
   double k;
   double hhatk;
@@ -246,7 +234,7 @@ void hhatlmtail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
 }
 
 /** Alternative implementation of the phase of the tail factor */
-void speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
+void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
 {
     double x;
     double x2;
@@ -271,7 +259,7 @@ void speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
     };
         
     double Tlm_real[KMAX];
-    Tlm(Omega*Hreal, Tlm_real);
+    eob_flx_Tlm(Omega*Hreal, Tlm_real);
     
     /** Pre-computed psi */
     const double psi[] = {0.9227843350984671394, 0.9227843350984671394,
@@ -323,12 +311,12 @@ const double ChlmNewt_phase[35] = {
 
 /** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform. 
     Reference: Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
-void hlmNewt(double r,
-	     double Omega,
-	     double phi,
-	     double nu,
-	     int usetidal,
-	     Waveform_lm *hNewt)
+void eob_wav_hlmNewt(double r,
+		     double Omega,
+		     double phi,
+		     double nu,
+		     int usetidal,
+		     Waveform_lm *hNewt)
 {
   /** Shorthands */
   double nu2   = nu*nu;
@@ -400,7 +388,7 @@ void hlmNewt(double r,
 
 /** Calculate tidal correction to multipolar waveform amplitude
     Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 */
-void hlm_Tidal(double x, Dynamics *dyn, double *hTidallm)
+void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 {
   const double XA       = dyn->X1;
   const double XB       = dyn->X2;
@@ -459,7 +447,7 @@ void hlm_Tidal(double x, Dynamics *dyn, double *hTidallm)
 //   TODO: this routine requires optimization!
 //   - precompute coefficients c(nu) e.g. at first call
 
-void flm_amplitudes(double x,double nu, double *rholm, double *flm)
+void eob_wav_flm(double x,double nu, double *rholm, double *flm)
 {
   
   /** Shorthands */
@@ -680,8 +668,8 @@ void flm_amplitudes(double x,double nu, double *rholm, double *flm)
     combinations of these quantities are used here to write the spin-dependent
     part of the waveform in particularly compact form, so that the (spinning)
     test-particle limit is recovered just by visual inspection of the equations */
-void s_flm_amplitudes(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
-		      double *rholm, double *flm)
+void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
+		   double *rholm, double *flm)
 {
 
   /* declaring the spin-dependent terms */
@@ -883,7 +871,7 @@ void s_flm_amplitudes(double x, double nu, double X1, double X2, double chi1, do
 }
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
-double dtnqc_fit(const double chi, const double chi0)
+double eob_wav_dtnqc_fit(const double chi, const double chi0)
 {
   const double n1 = -16.06288206;
   const double d1 = -4.04266459;
@@ -893,7 +881,7 @@ double dtnqc_fit(const double chi, const double chi0)
 }
 
 /** Time-shift for NQC */
-double timeshift_nqc(double nu, double chi1)
+double eob_wav_timeshift_nqc(double nu, double chi1)
 {
 
   double DeltaT_nqc = 1.; /* standard choice inspired by test-particle results */  
@@ -906,7 +894,7 @@ double timeshift_nqc(double nu, double chi1)
        BH is larger than 0.8498. This is a guess to extrapolate the model
        outside the domain of calibration */
     
-    DeltaT_nqc = dtnqc_fit(chi1,0.8498);
+    DeltaT_nqc = eob_wav_dtnqc_fit(chi1,0.8498);
 
   } 
 
@@ -929,7 +917,7 @@ double timeshift_nqc(double nu, double chi1)
 
 /** Computes the factors and the coefficients) that build the  
     NQC corrections to the waveform in the spinning case */
-void hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, double *pr_star, double *Omg_orb, double *ddotr, 
+void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, double *pr_star, double *Omg_orb, double *ddotr, 
 			Waveform_lm *h, Dynamics *dyn, Waveform_lm *hnqc)
 {
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
@@ -1201,7 +1189,7 @@ void hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, 
 
   /** Time */
   double tOmgOrb_pk = T[Omgmax_index];
-  double DeltaT_nqc = timeshift_nqc(nu, chi1);
+  double DeltaT_nqc = eob_wav_timeshift_nqc(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
 #if (DEBUG)
@@ -1296,8 +1284,8 @@ void hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, 
 
 /** NQC corrections to the RWZ multipolar waveform
     References: Nagar, Damour, Reisswig, Pollney http://arxiv.org/abs/1506.08457 */
-void hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
-	    Waveform_lm_t *psilmnqc)
+void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
+		    Waveform_lm_t *psilmnqc)
 {
       
   double n[6];
@@ -1442,7 +1430,7 @@ void hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
 
 
 /** QNM fits for the 22 mode for spinning systems */
-void QNMHybridFitCab(double nu, double **ab, double ***sigma)
+void eob_wav_QNMHybridFitCab(double nu, double **ab, double ***sigma)
 
 (TEOBResumParams params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4, vector<gsl_complex> &sigma)
 {
@@ -1671,7 +1659,7 @@ void QNMHybridFitCab(double nu, double **ab, double ***sigma)
 
 
 /** Ringdown waveform template */
-gsl_complex ringdown_match(double x, int k, vector<double> a1, vector<double> a2, vector<double> a3, vector<double> a4, vector<double> b1, vector<double> b2, vector<double> b3, vector<double> b4, vector<gsl_complex> sigma){
+gsl_complex eob_wav_ringdown_match(double x, int k, vector<double> a1, vector<double> a2, vector<double> a3, vector<double> a4, vector<double> b1, vector<double> b2, vector<double> b3, vector<double> b4, vector<gsl_complex> sigma){
     
     gsl_complex psi;
     
@@ -1686,7 +1674,7 @@ gsl_complex ringdown_match(double x, int k, vector<double> a1, vector<double> a2
 }
 
 /* ringdown calculation and match to the dynamics */ 
-int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
+int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
     
 
     
@@ -1738,7 +1726,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     int k22 = 1;
     int k33 = 4;
     
-    DeltaT_nqc = timeshift_nqc(nu, chi1);
+    DeltaT_nqc = eob_wav_timeshift_nqc(nu, chi1);
     
     tmrg[k22] = tOmg_pk-(DeltaT_nqc + 2)/Mbh;     //t_max(A22) => MERGER
     

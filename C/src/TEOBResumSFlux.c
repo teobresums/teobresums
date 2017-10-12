@@ -22,22 +22,13 @@
 /** Flux calculation for Newton-Normalized energy flux 
     Use the DIN resummation procedure. 
     Add non-QC and non-K corrections to (2,2) partial flux. */
-double flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
+double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
-  return s_Flux(x, Omega, r_omega, E, Heff, jhat, r, pr_star, ddotr,dyn);
+  return eob_flx_Flux_s(x, Omega, r_omega, E, Heff, jhat, r, pr_star, ddotr,dyn);
 }
 
 /** Flux calculation for spinning systems */
-double s_Flux(double x,
-              double Omega,
-              double r_omega,
-              double E,
-              double Heff,
-              double jhat,
-              double r,
-              double pr_star,
-              double ddotr,
-              Dynamics *dyn)
+double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
     
   const double nu = dyn->nu;
@@ -65,19 +56,19 @@ double s_Flux(double x,
   double sum_k=0.; /* sum */
 
   if (usespins) {
-    s_flm(x,params, flm); // FIXME routine call
+    eob_wav_flm_s(x,params, flm); // FIXME routine call
   } else {
-    flm(x,params, flm);
+    eob_wav_flm(x,params, flm);
   }
 
-  FlmNewt(x, nu, usetidal, usespins, FNewtlm);
-  Tlm(E*Omega, MTlm);
+  eob_flx_FlmNewt(x, nu, usetidal, usespins, FNewtlm);
+  eob_flx_Tlm(E*Omega, MTlm);
   
   FNewt22 = FNewtlm[1];
 
   /** Tidal amplitude */
   if (usetidal) {
-    hlm_Tidal(x,params, hlmTidal);
+    eob_wav_hlmTidal(x,params, hlmTidal);
   }
   
   /** NQC correction to the modulus of the (l,m) waveform */  
@@ -88,7 +79,7 @@ double s_Flux(double x,
 
   Waveform_lm_t NQC;  
   if ( (!(usetidal)) && (!(usespins)) ) {
-    hlmNQC(nu,r,prstar,Omega,ddotr, &NQC);
+    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &NQC);
     for (k = 0; k < KMAX; k++) {
       hlmNQC[k] = NQC[k]->ampli;
     }
@@ -108,9 +99,9 @@ double s_Flux(double x,
     //       if (k==1)  Modhhatlm *= hlm_NQC[k].dat[0];
 
     if (usetidal) {
-      if (k==0)Modhhatlm *= sqrt_one_4nu;
-      if (k==2)Modhhatlm *= sqrt_one_4nu;
-      if (k==4)Modhhatlm *= sqrt_one_4nu;       
+      if (k==0) Modhhatlm *= sqrt_one_4nu;
+      if (k==2) Modhhatlm *= sqrt_one_4nu;
+      if (k==4) Modhhatlm *= sqrt_one_4nu;       
       Modhhatlm += MTlm[k] * hlmTidal[k];
     }  	
     /* Total flux multipoles */
@@ -124,9 +115,9 @@ double s_Flux(double x,
   if (!(usetidal)) {
     double hatFH;
     if (nospins) {
-      hatFH = HorizonFlux(x,Heff,jhat,nu);
+      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
     } else {
-      hatFH = s_HorizonFlux(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+      hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
     }
     hatf += hatFH;
   }
@@ -147,7 +138,7 @@ const double CNlm[35] = {
 };
 
 /** Newtonian partial fluxes */
-void FlmNewt(double x, double nu, int usetidal, int usespins, double *Nlm)
+void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nlm)
 {
   
   /** Shorthands*/
@@ -258,7 +249,7 @@ const double f14[] = {1.,         1.,          2.,
 		      479001600., 6227020800., 87178291200.};
 
 /** Tail term (modulus) */
-void Tlm(const double w, double *MTlm)
+void eob_flx_Tlm(const double w, double *MTlm)
 {
   double hhatk, x2, y, prod;
   int k, j;    
@@ -279,7 +270,7 @@ void Tlm(const double w, double *MTlm)
  * Nagar & Akcay, PRD 85, 044025 (2012)
  * Bernuzzi, Nagar & Zenginoglu, PRD 86, 104038 (2012)
  */
-double HorizonFlux(double x, double Heff, double jhat, double nu)
+double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
 {
   double rhoHlm[2]; /* only 21,22 multipoles -> k=0,1 */
   double FlmHLO[2];
@@ -335,7 +326,7 @@ double HorizonFlux(double x, double Heff, double jhat, double nu)
 }
 
 /** Compute horizon-absorbed fluxes. spin case. */
-double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
 {
     
   double x2 = x*x;

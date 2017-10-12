@@ -65,11 +65,11 @@ int TEOBResumS(
   /** Computing the initial conditions */
   gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_VARS, dyn};
   if (usespins) {
-    sys = {s_RHS, NULL, EOB_EVOLVE_VARS, dyn};
-    s_initial(dyn->y0, dyn);
+    sys = {eob_dyn_rhs_s, NULL, EOB_EVOLVE_VARS, dyn};
+    eob_dyn_ic_s(dyn->y0, dyn);
   } else {
-    sys     = {rhs, NULL, EOB_EVOLVE_VARS, dyn};
-    initial(dyn->y0, dyn);
+    sys     = {eob_dyn_rhs, NULL, EOB_EVOLVE_VARS, dyn};
+    eob_dyn_ic(dyn->y0, dyn);
   }
     
   /** Initial conditions: t, r, phi, prstar, pphi */
@@ -182,13 +182,13 @@ int TEOBResumS(
 	It needs a r.h.s. evaluation */
     dyn->store = 1;
     if (usespins) {
-      s_rhs(dyn->t, y, dy, dyn);
+      eob_dyn_rhs_s(dyn->t, y, dy, dyn);
     } else {
-      rhs(dyn->t, y, dy, dyn);
+      eob_dyn_rhs(dyn->t, y, dy, dyn);
     }
     dyn->store = 0;
 
-    hlm(dyn, hlm_t); 
+    eob_wav_hlm(dyn, hlm_t); 
    
     /** Update size and push arrays (if needed) */
     iter++;
@@ -287,9 +287,9 @@ int TEOBResumS(
   Waveform_lm *hlm_nqc; 
   Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc");
   if (!(usetidal)) {
-    hlmNQC_find_a1a2a3(size, t_vecg, 
-		       vecg[EOB_RAD],vecg[EOB_MOMG],vecg[EOB_PPH],vecg[EOB_PRSTAR],vecg[EOB_PRSTAR],vecg[EOB_OMGORB],vecg[EOB_DDOTR],
-		       hlm_vecg, dyn, hlm_nqc);
+    eob_wav_hlmNQC_find_a1a2a3(size, t_vecg, 
+			       vecg[EOB_RAD],vecg[EOB_MOMG],vecg[EOB_PPH],vecg[EOB_PRSTAR],vecg[EOB_PRSTAR],vecg[EOB_OMGORB],vecg[EOB_DDOTR],
+			       hlm_vecg, dyn, hlm_nqc);
   }
 
   // ...

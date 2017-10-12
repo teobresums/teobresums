@@ -273,58 +273,43 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
 double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSDynamics.c */
-int rhs(double t, const double y[], double dy], void *params);
-int s_rhs(double t, const double y[], double dy[], void *params);
-void s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
-void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); 
+int eob_dyn_rhs(double t, const double y[], double dy], void *params);
+int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
+void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
+void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); 
 //void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);//used at all???
+double eob_dyn_fLR(double r, Dynamics *dyn);
+double eob_dyn_adiabLR(void *params);
 
-/* TEOBResumSInitialData.c */
-void init(double r0, Dynamics *dyn, double y_init[]);
-void s_initial(double r0, Dynamics *dyn, double y_init[]);
-double s_bisec(double nu, double chi1, double chi2, double X1, double X2, double c3,
-	       double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
-double DHeff0(double x, void *params);
+/* TEOBResumSInitialCondition.c */
+void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);
+void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[]);
+double eob_dyn_s_bisec(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
+double eob_dyn_DHeff0(double x, void *params);
 
 /* TEOBResumSMetric.c */
-void A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
-void Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
-void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
-void s_Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
-double adiabLR(void *params);
+void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
+void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
+void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
+void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 
 /* TEOBResumSFlux.c */
-double flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
-double s_flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
-void Tlm(double w, double *MTlm);
-void FlmNewt(double x, double nu, int usetidal, int usespins, double *Nlm);
-double HorizonFlux(double x, double Heff, double jhat, double nu);
-double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
+double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
+void eob_flx_Tlm(double w, double *MTlm);
+void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nlm);
+double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
+double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
-void hlm(double t, 
-	 double phi,
-	 double r,
-	 double pph,
-	 double prstar,
-	 double       Omega,
-	 double ddotr,
-	 double H,
-	 double Heff,
-	 double jhat,
-	 double rw,
-	 Dynamics *dyn, 
-	 Waveform_lm *hlm);
-void deltalm(double Hreal,double Omega,double nu, double *dlm);
-void hhatlmtail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
-void speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
-void hlmNewt(double r, double Omega, double phi, double nu, int usetidal, Waveform_lm *hNewt)
-void hlm_Tidal(double x, Dynamics *dyn, double *hTidallm);
-void flm_amplitudes(double x,double nu, double *rholm, double *flm);
-void s_flm_amplitudes(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
-		      double *rholm, double *flm);
-void hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, double *pr_star, double *Omg_orb, double *ddotr, 
-			Waveform_lm *h, Dynamics *dyn, Waveform_lm *hnqc);
-void hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
-	    Waveform_lm_t *psilmnqc);
+void eob_wav_hlm(double t, double phi, double r, double pph, double prstar, double Omega, double ddotr, double H, double Heff, double jhat, double rw, Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm);
+void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
+void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
+void eob_wav_hlmNewt(double r, double Omega, double phi, double nu, int usetidal, Waveform_lm *hNewt)
+void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
+void eob_wav_flm(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
+void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, double *pr_star, double *Omg_orb, double *ddotr, Waveform_lm *h, Dynamics *dyn, Waveform_lm *hnqc);
+void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *psilmnqc);
 

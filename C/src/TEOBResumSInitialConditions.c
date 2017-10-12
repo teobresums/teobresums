@@ -32,7 +32,7 @@
    2. From j0, compute pr*               =>      post circular ID, j!=0, pr !=0
    3. From pr* and j0, re-compute pph0   => post-post-circular ID, pph0!=j!=0, pr !=0
 */
-void init(double r0, Dynamics *dyn, double y_init[])
+void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
 {
   const double nu = dyn->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);    
@@ -57,8 +57,8 @@ void init(double r0, Dynamics *dyn, double y_init[])
     r3   = r2*r[i];
     
     /** Compute metric  */
-    Metric(r[i], dyn, &A,&B,&dA,&d2A,&dB);
-        
+    eob_metric(r[i], dyn, &A,&B,&dA,&d2A,&dB);
+    
     /** Angular momentum for circular orbit: circular ID  */
     j2[i]   =  r3*dA[i]/(2.*A-r[i]*dA[i]);
     j[i]    =  sqrt(j2[i]);
@@ -85,7 +85,7 @@ void init(double r0, Dynamics *dyn, double y_init[])
       H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff,
       jhat,H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff};
     
-    Fphi[i] = flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn);    
+    Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn);    
         
     /** Radial momentum conjugate to r*: post-circular ID  */
     Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
@@ -121,7 +121,7 @@ void init(double r0, Dynamics *dyn, double y_init[])
 }
 
 /** Initial conditions calculation for spinning systems */
-void s_initial(double r0, Dynamics *dyn, double y_init[])
+void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 {
   const double nu   = dyn->nu;
   const double chi1 = dyn->chi1;
@@ -160,15 +160,14 @@ void s_initial(double r0, Dynamics *dyn, double y_init[])
     r[i] = r0+(i-N+1)*dr;
         
     /** Compute metric  */
-    Metric(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB);
+    eob_metric(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB);
     
-    s_get_rc(r[i],nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc[i],&drc_dr[i],&d2rc_dr);  
+    eob_dyn_s_get_rc(r[i],nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc[i],&drc_dr[i],&d2rc_dr);  
     
     /* Compute minimum of Heff0 using bisection method */
     rorb   = r[i];
     pphorb = rorb/sqrt(rorb-3.);
-    pph[i] = s_bisec(nu,chi1,chi2,X1,X2,c3,
-		     pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
+    pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
   }
 
   /** pph by finite diff. */
@@ -223,7 +222,7 @@ void s_initial(double r0, Dynamics *dyn, double y_init[])
     double x          =  v_phi*v_phi;
     double jhat       =  pph[i]/(r_omg*v_phi); // Newton-normalized angular momentum
     
-    Fphi[i] = s_Flux(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0., dyn);
+    Fphi[i] = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0., dyn);
     
     prstar[i] = Fphi[i]/(dpph_dr[i]*C0);
     pr[i]     = prstar[i]* sqrt(B[i]/A[i]);
@@ -257,7 +256,7 @@ struct DHeff0_tmp_params
   double rorb, A, dA, rc, drc_dr, ak2, S, Ss, nu, chi1, chi2, X1, X2, c3;
 };
 
-double DHeff0(double x, void *params)
+double eob_dyn_DHeff0(double x, void *params)
 {
   
   struct DHeff0_tmp_params *p
@@ -278,7 +277,7 @@ double DHeff0(double x, void *params)
   double X2     = p->X2;
   double c3     = p->c3;
 
-  s_GS(rorb, rc, drc_dr, ak2, 0., x, nu, chi1, chi2, X1, X2, c3, ggm0);
+  eob_dyn_s_GS(rorb, rc, drc_dr, ak2, 0., x, nu, chi1, chi2, X1, X2, c3, ggm0);
   double dGS_dr  = ggm0[6];
   double dGSs_dr = ggm0[7];
   
@@ -293,9 +292,9 @@ double DHeff0(double x, void *params)
   return dHeff_dr;
 }
 
-/** Root finder:  Compute minimum of Heff0 */
-double s_bisec(double nu, double chi1, double chi2, double X1, double X2, double c3,
-	       double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss)
+/** Root finder: Compute minimum of Heff0 */
+double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3,
+		       double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss)
 {
   
 #define max_iter (200)

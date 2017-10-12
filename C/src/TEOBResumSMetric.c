@@ -34,8 +34,7 @@
     and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu)).*(1-1.5e-5/((0.26-nu)^2)
     as obtained from comparison with the Caltech-Cornell-CITA numerical data.
    These values are used as default. */
-void A5PNlog(double r, double nu, 
-	     double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB)
+void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB)
 {
 
   /* shortcuts */
@@ -128,8 +127,7 @@ void A5PNlog(double r, double nu,
 /** Tidal potential, two version implemented: 
     1. TEOB NNLO , Bernuzzi+ 1205.3403
     2. TEOBResum: Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 */
-void Atidal(double r, Dynamics *dyn, 
-	    double *AT, double *dAT, double *d2AT)
+void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
 {
   
   double A, dA_u,d2A_u, dA,d2A;
@@ -238,7 +236,7 @@ void Atidal(double r, Dynamics *dyn,
 }
 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
-void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
+void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
   double Atmp, dAtmp, d2Atmp, Dtmp, dDtmp, Btmp, dBtmp;
   A5PNlog(rr,dyn->nu, &Atmp, &dAtmp, &d2Atmp, &Dtmp, &dDtmp, &Btmp, &dBtmp);   
@@ -246,7 +244,7 @@ void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d
   if (dyn->usetidal) {
     /* Add here tides if needed */
     double AT, dAT, d2AT;
-    Atidal(r, dyn, &AT, &dAT, &d2AT);
+    eob_metric_Atidal(r, dyn, &AT, &dAT, &d2AT);
     A += AT;
     dA += dAT;
     d2A += dA2T;    
@@ -260,7 +258,7 @@ void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d
 }
  
 /** EOB Metric potentials A(r), B(r), and their derivatives, spin version */
-void s_Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
+void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
 
   const double nu    = dyn->nu;
@@ -273,16 +271,16 @@ void s_Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double 
   const int usetidal = dyn->use_tidal;
 
   double rc, drc, d2rc;
-  s_get_rc(r,nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
+  eob_dyn_s_get_rc(r,nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
 
   double Aorb, dAorb, d2Aorb, Dorb, dDtmp, Btmp, dBtmp;  
-  A5PNlog(rc,nu, &Aorb, &dAorb, &d2Aorb, &Dorb, &dDtmp, &Btmp, &dBtmp);
+  eob_metric_A5PNlog(rc,nu, &Aorb, &dAorb, &d2Aorb, &Dorb, &dDtmp, &Btmp, &dBtmp);
     
   /* Add here tides if needed */
   if (usetidal) {
 
     double AT, dAT, d2AT;
-    Atidal(r,dyn, &AT, &dAT, &d2AT);
+    eob_metric_Atidal(r,dyn, &AT, &dAT, &d2AT);
     
     Aorb += AT;
     dAorb += dAT;
