@@ -78,7 +78,7 @@
 #define MPC_M  3.086e22
 #define EulerGamma 0.5772156649015328606065121
   
-/** List of EOB evolved variables */
+/** Index list of EOB evolved variables */
 enum{
     EOB_EVOLVE_RAD, 
     EOB_EVOLVE_PHI,
@@ -87,7 +87,7 @@ enum{
     EOB_EVOLVE_VARS
   };
 
-/** List of EOB variables for initial data */
+/** Index list of EOB variables for initial data */
 enum{
   EOB_ID_RAD, 
   EOB_ID_PPH,
@@ -99,7 +99,7 @@ enum{
   EOB_ID_VARS
 };
 
-/** List of EOB dynamical variables (to be stored in arrays) */ 
+/** Index list of EOB dynamical variables (to be stored in arrays) */ 
 enum{
   EOB_RAD, 
   EOB_PHI,
@@ -111,11 +111,12 @@ enum{
   EOB_DYNAMICS_VARS
 };
 
-#define KMAX 35 /** Multipolar linear index, max value */
+#define KMAX (35) /** Multipolar linear index, max value */
+#define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
 /** List of options for tidal potential */
 enum{
-  TIDES_OFF, // = 0 , keep first to allow syntax: if(use_tidal) { ...
+  TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
   TIDES_NNLO, 
   TIDES_TEOBRESUM,
 };
@@ -148,7 +149,7 @@ const int M[KMAX] = {
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
 
-/** Type for complex waveform */
+/** Type for complex double */
 typedef double complex cdouble;
 
 /** Waveform data type */
@@ -166,20 +167,18 @@ typedef struct tagWaveform_lm
 {
   int size;
   double *time;
-  //double *real[KMAX];
-  //double *imag[KMAX];
   double *ampli[KMAX]; /* amplitude */
   double *phase[KMAX]; /* phase */
   char name[KMAX][STRLEN];
   int *kmask[KMAX]; /* mask for multipoles */
 }  Waveform_lm;
 
-/** Multipolar waveform pointwise, comes at handy */
-typedef struct tagWaveform_lm_pt
+/** Multipolar waveform at given time, comes at handy */
+typedef struct tagWaveform_lm_t
 {
   double ampli[KMAX]; /* amplitude */
   double phase[KMAX]; /* phase */
-}  Waveform_lm_pt;
+}  Waveform_lm_t;
 
 /** Dynamics data type */
 typedef struct tagDynamics
@@ -201,7 +200,7 @@ typedef struct tagDynamics
   int size;
   double *time;
   double *data[EOB_DYNAMICS_VARS]; 
-  /* parameters for quick access */
+  /* key parameters for quick access */
   double nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4, khatA2,khatB2;
@@ -315,8 +314,8 @@ void hlm(double t,
 	 Dynamics *dyn, 
 	 Waveform_lm *hlm);
 void deltalm(double Hreal,double Omega,double nu, double *dlm);
-void hhatlmtail(double Omega,double Hreal,double bphys, Waveform_lm_pt *tlm);
-void speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_pt *tlm);
+void hhatlmtail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
+void speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
 void hlmNewt(double r, double Omega, double phi, double nu, int usetidal, Waveform_lm *hNewt)
 void hlm_Tidal(double x, Dynamics *dyn, double *hTidallm);
 void flm_amplitudes(double x,double nu, double *rholm, double *flm);
