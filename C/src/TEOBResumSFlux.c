@@ -85,9 +85,13 @@ double s_Flux(double x,
   //
   // NOTE/FIXME NQC are not applied in spin case!
   //
-  
+
+  Waveform_lm_t NQC;  
   if ( (!(usetidal)) && (!(usespins)) ) {
-    hlmNQC(nu,r,prstar,Omega,ddotr, hlm_NQC);
+    hlmNQC(nu,r,prstar,Omega,ddotr, &NQC);
+    for (k = 0; k < KMAX; k++) {
+      hlmNQC[k] = NQC[k]->ampli;
+    }
   } else {
     for (k = 0; k < KMAX; k++) {
       hlmNQC[k] = 1;

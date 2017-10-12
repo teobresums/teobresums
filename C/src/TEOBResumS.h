@@ -321,4 +321,8 @@ void hlm_Tidal(double x, Dynamics *dyn, double *hTidallm);
 void flm_amplitudes(double x,double nu, double *rholm, double *flm);
 void s_flm_amplitudes(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
 		      double *rholm, double *flm);
+void hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, double *pr_star, double *Omg_orb, double *ddotr, 
+			Waveform_lm *h, Dynamics *dyn, Waveform_lm *hnqc);
+void hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
+	    Waveform_lm_t *psilmnqc);
 

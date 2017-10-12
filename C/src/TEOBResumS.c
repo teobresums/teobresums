@@ -284,6 +284,14 @@ int TEOBResumS(
   }
 
   /** Compute NQC corrections */
+  Waveform_lm *hlm_nqc; 
+  Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc");
+  if (!(usetidal)) {
+    hlmNQC_find_a1a2a3(size, t_vecg, 
+		       vecg[EOB_RAD],vecg[EOB_MOMG],vecg[EOB_PPH],vecg[EOB_PRSTAR],vecg[EOB_PRSTAR],vecg[EOB_OMGORB],vecg[EOB_DDOTR],
+		       hlm_vecg, dyn, hlm_nqc);
+  }
+
   // ...
 
   /** Ringdown attachment */
@@ -335,6 +343,7 @@ int TEOBResumS(
   // -> swap output if needed/be careful with memory...
   //TODO ... SWAP...
   Waveform_lm_free (hlm_vecg);
+  Waveform_lm_free (hlm_nqc);
   //Waveform_lm_free (hlm); 
 
   return OK;
