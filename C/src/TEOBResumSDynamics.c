@@ -235,7 +235,7 @@ int s_rhs(double t, const double y[], double dy[], void *dyn)
   const double x          = v_phi*v_phi;
   const double jhat       = pph/(r_omg*v_phi);
   
-  const double Fphi  = s_Flux(x,Omg,r_omg,H,Heff,jhat,r,prstar,ddotr,dyn);
+  const double Fphi = s_Flux(x,Omg,r_omg,H,Heff,jhat,r,prstar,ddotr,dyn);
   
   dy[EOB_EVOLVE_PPHI] = Fphi;
 
@@ -421,7 +421,7 @@ void s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q
   
 }
 
-/** The root-function to compute light ring */
+/** Root function to compute light ring */
 double fLR(double r, Dynamics *dyn)
 {    
   double A,B,dA,d2A,dB;
@@ -430,8 +430,8 @@ double fLR(double r, Dynamics *dyn)
   return (A +(0.5*dA_u)/r);
 }
 
-/** Root-finder for adiabtic light-ring */
-double AdiabLR(void *params)
+/** Root finder for adiabtic light-ring */
+double adiabLR(void *params)
 {
   int status;
   int iter = 0, max_iter = 200;

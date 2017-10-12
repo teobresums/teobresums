@@ -290,7 +290,7 @@ void A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, d
 void Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 void s_Metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
-double AdiabLR(void *params);
+double adiabLR(void *params);
 
 /* TEOBResumSFlux.c */
 double flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
