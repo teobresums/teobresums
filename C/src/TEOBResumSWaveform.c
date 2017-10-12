@@ -33,7 +33,6 @@ void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, doub
   const double chi1 = d->C_Q1;  
   const double chi2 = d->C_Q2;  
   const int usetidal = dyn->use_tidal;
-
   const int usespins = dyn->use_spins;
   const int usespeedytail = dyn->use_speedytail;
   
@@ -153,45 +152,35 @@ void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
   double num;
   double den;
 
-  
   /* l=2 */
-    
   /* Pade(1,2) approximant */
   num        = 69020.*nu + 5992.*pi*sqrt_y;
   den        = 5992.*pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
   dlm[0] = delta21LO*num/den;
-  
   /* Pade(2,2) approximant */
   num        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
   den        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
   dlm[1] = delta22LO*num/den;
   
-  
   /* l=3 */
-  
   /* Pade(1,2) approximant */
   num        = 4641.*nu + 1690.*pi*sqrt_y;
   den        = num + 18207.*nu2*y;
   dlm[2] = delta31LO*num/den;
-  
   /* Taylor-expanded form */
   num        = 1.  + 94770.*pi/(566279.*nu)*sqrt_y;
   den        = num + 80897.* nu/3159.*y;
   dlm[3] = (10.+33.*nu)/(15.*(1.-3.*nu)) * y32 + 52./21.*pi*y3;
-  
   /* Pade(1,2) approximant */
   dlm[4] = delta33LO*num/den;
   
-  
   /* l=4 */
-
   dlm[5] =   (2.+507.*nu)/(10.*(1.-2.*nu))*y32   + 1571./3465.*pi*y3;
   dlm[6] =  7.*(1.+6.*nu)/(15.*(1.-3.*nu))*y32   + 6284./3465.*pi*y3;
   dlm[7] = (486.+4961.*nu)/(810.*(1.-2.*nu))*y32 + 1571./385.*pi*y3;
   dlm[8] =  (112.+219.*nu)/(120.*(1.-3.*nu))*y32 + 25136./3465.*pi*y3;
   
   /* l=5 */
-  
   dlm[9] = (96875. + 857528.*nu)/(131250.*(1.-2.*nu))*y32;
   
 }
@@ -236,55 +225,55 @@ void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
 /** Alternative implementation of the phase of the tail factor */
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
 {
-    double x;
-    double x2;
-    double x3;
-    double x4;
-    double x5;
-    double tlm_ang;
-    double num_ang;
-    
-    /** Fit coefficients*/
-    const double b1[] = {
-      0.1113090643348557, 0.1112593821157397, 0.0424759238428813, 0.0424489015884926, 0.0424717446800903, 0.0215953972500844, 0.0215873812155663, 0.0215776183122621, 0.0216017621863542, 0.0128123696874894, 0.0128097056242375, 0.0128038943888768, 0.0128025242617949, 0.0128202485907368, 0.0083762045692408, 0.0083751913886140, 0.0083724067460769, 0.0083694435961860, 0.0083710364141552, 0.0083834483913443, 0.0058540393221396, 0.0058536069384738, 0.0058522594457692, 0.0058502436535615, 0.0058491157293566, 0.0058514875071582, 0.0058602498033381, 0.0042956812356573, 0.0042954784390887, 0.0042947951664056, 0.0042935886137697, 0.0042923691461384, 0.0042922256848799, 0.0042945927126022, 0.0043009106861259};
-    
-    const double b2[] = {
-      0.0004643273300862, 0.0009375605440004, 0.0000597134489198, 0.0002551406918111, 0.0001741036904709, 0.0000124649041611, 0.0000685496215625, 0.0001131160409390, 0.0000419907542591, 0.0000035218982282, 0.0000219211271097, 0.0000473186962874, 0.0000524142634057, 0.0000106823372552, 0.0000012237574387, 0.0000081742188269, 0.0000201940563214, 0.0000295722761753, 0.0000260539631956, 0.0000018994753518, 0.0000004932942990, 0.0000034477210351, 0.0000092294406360, 0.0000155143073237, 0.0000183386499818, 0.0000137922469695, -0.0000007075155453, 0.0000002223410995, 0.0000016045317657, 0.0000045260028113, 0.0000082655700107, 0.0000112393599417, 0.0000115758243113, 0.0000076838709956, -0.0000014020591745};
-    
-    const double b3[] = {
-      -0.0221835462237291, -0.0235386333304348, -0.0042911639711832, -0.0047431560217121, -0.0046577314472149, -0.0013089557502947, -0.0014343968205390, -0.0014978542575474, -0.0014329302934532, -0.0005167994164556, -0.0005573939123058, -0.0005921030407223, -0.0005978284714483, -0.0005673965369076, -0.0002409269302708, -0.0002561516055118, -0.0002723768586352, -0.0002815958312453, -0.0002792078156272, -0.0002646630240693, -0.0001261183503407, -0.0001325622938779, -0.0001403198638518, -0.0001464084186977, -0.0001485971591029, -0.0001459023931717, -0.0001384829633836, -0.0000719062974278, -0.0000749128468013, -0.0000788187384314, -0.0000824202283094, -0.0000846673495936, -0.0000849054394951, -0.0000829269749240, -0.0000788883333858};
-    
-    const double b4[] = {
-      0.0058366730167965, 0.0070452306758401, 0.0006914295465364, 0.0010322294603561, 0.0010057563135650, 0.0001394203795507, 0.0002309706405978, 0.0002596611624417, 0.0002409588083156, 0.0000386949167221, 0.0000679154947896, 0.0000830199015202, 0.0000850120755064, 0.0000780125513602, 0.0000133034384660, 0.0000241813441339, 0.0000311573885555, 0.0000340233089866, 0.0000335167900637, 0.0000307571022927, 0.0000053305073331, 0.0000099143129290, 0.0000132296989826, 0.0000150959309402, 0.0000156304390748, 0.0000151274875147, 0.0000139320508803, 0.0000023959090314, 0.0000045285807761, 0.0000061918979830, 0.0000072894226381, 0.0000078251853305, 0.0000078772667984, 0.0000075606242809, 0.0000069956215270
-    };
-        
-    double Tlm_real[KMAX];
-    eob_flx_Tlm(Omega*Hreal, Tlm_real);
-    
-    /** Pre-computed psi */
-    const double psi[] = {0.9227843350984671394, 0.9227843350984671394,
-			  1.256117668431800473, 1.256117668431800473, 1.256117668431800473,
-			  1.506117668431800473, 1.506117668431800473, 1.506117668431800473, 1.506117668431800473,
-			  1.706117668431800473, 1.706117668431800473, 1.706117668431800473, 1.706117668431800473, 1.706117668431800473,
-			  1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139,
-			  2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997,
-			  2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997};
-    
-    double k;
-    int i;
-    for (i=0; i<KMAX; i++) {
-      k  = M[i] * Omega;
-      x  = k * Hreal; //hathatk
-      x2 = x * x;
-      x3 = x2 * x;
-      x4 = x3 * x;
-      x5 = x4 * x;      
-      num_ang   = 1. + b1[i]*x2 + b2[i]*x3 + b3[i]*x4 + b4[i]*x5; 
-      tlm_ang   = (- 2. * psi[i] * x * num_ang) + 2.*x* log(2. * k * bphys);
-      tlm->ampli[i] = Tlm_real[i];
-      tlm->phase[i].dat[1] = tlm_ang;
-    }
-    
+  double x;
+  double x2;
+  double x3;
+  double x4;
+  double x5;
+  double tlm_ang;
+  double num_ang;
+  
+  /** Fit coefficients*/
+  const double b1[] = {
+    0.1113090643348557, 0.1112593821157397, 0.0424759238428813, 0.0424489015884926, 0.0424717446800903, 0.0215953972500844, 0.0215873812155663, 0.0215776183122621, 0.0216017621863542, 0.0128123696874894, 0.0128097056242375, 0.0128038943888768, 0.0128025242617949, 0.0128202485907368, 0.0083762045692408, 0.0083751913886140, 0.0083724067460769, 0.0083694435961860, 0.0083710364141552, 0.0083834483913443, 0.0058540393221396, 0.0058536069384738, 0.0058522594457692, 0.0058502436535615, 0.0058491157293566, 0.0058514875071582, 0.0058602498033381, 0.0042956812356573, 0.0042954784390887, 0.0042947951664056, 0.0042935886137697, 0.0042923691461384, 0.0042922256848799, 0.0042945927126022, 0.0043009106861259};
+  
+  const double b2[] = {
+    0.0004643273300862, 0.0009375605440004, 0.0000597134489198, 0.0002551406918111, 0.0001741036904709, 0.0000124649041611, 0.0000685496215625, 0.0001131160409390, 0.0000419907542591, 0.0000035218982282, 0.0000219211271097, 0.0000473186962874, 0.0000524142634057, 0.0000106823372552, 0.0000012237574387, 0.0000081742188269, 0.0000201940563214, 0.0000295722761753, 0.0000260539631956, 0.0000018994753518, 0.0000004932942990, 0.0000034477210351, 0.0000092294406360, 0.0000155143073237, 0.0000183386499818, 0.0000137922469695, -0.0000007075155453, 0.0000002223410995, 0.0000016045317657, 0.0000045260028113, 0.0000082655700107, 0.0000112393599417, 0.0000115758243113, 0.0000076838709956, -0.0000014020591745};
+  
+  const double b3[] = {
+    -0.0221835462237291, -0.0235386333304348, -0.0042911639711832, -0.0047431560217121, -0.0046577314472149, -0.0013089557502947, -0.0014343968205390, -0.0014978542575474, -0.0014329302934532, -0.0005167994164556, -0.0005573939123058, -0.0005921030407223, -0.0005978284714483, -0.0005673965369076, -0.0002409269302708, -0.0002561516055118, -0.0002723768586352, -0.0002815958312453, -0.0002792078156272, -0.0002646630240693, -0.0001261183503407, -0.0001325622938779, -0.0001403198638518, -0.0001464084186977, -0.0001485971591029, -0.0001459023931717, -0.0001384829633836, -0.0000719062974278, -0.0000749128468013, -0.0000788187384314, -0.0000824202283094, -0.0000846673495936, -0.0000849054394951, -0.0000829269749240, -0.0000788883333858};
+  
+  const double b4[] = {
+    0.0058366730167965, 0.0070452306758401, 0.0006914295465364, 0.0010322294603561, 0.0010057563135650, 0.0001394203795507, 0.0002309706405978, 0.0002596611624417, 0.0002409588083156, 0.0000386949167221, 0.0000679154947896, 0.0000830199015202, 0.0000850120755064, 0.0000780125513602, 0.0000133034384660, 0.0000241813441339, 0.0000311573885555, 0.0000340233089866, 0.0000335167900637, 0.0000307571022927, 0.0000053305073331, 0.0000099143129290, 0.0000132296989826, 0.0000150959309402, 0.0000156304390748, 0.0000151274875147, 0.0000139320508803, 0.0000023959090314, 0.0000045285807761, 0.0000061918979830, 0.0000072894226381, 0.0000078251853305, 0.0000078772667984, 0.0000075606242809, 0.0000069956215270
+  };
+  
+  double Tlm_real[KMAX];
+  eob_flx_Tlm(Omega*Hreal, Tlm_real);
+  
+  /** Pre-computed psi */
+  const double psi[] = {0.9227843350984671394, 0.9227843350984671394,
+			1.256117668431800473, 1.256117668431800473, 1.256117668431800473,
+			1.506117668431800473, 1.506117668431800473, 1.506117668431800473, 1.506117668431800473,
+			1.706117668431800473, 1.706117668431800473, 1.706117668431800473, 1.706117668431800473, 1.706117668431800473,
+			1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139,
+			2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997,
+			2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997};
+  
+  double k;
+  int i;
+  for (i=0; i<KMAX; i++) {
+    k  = M[i] * Omega;
+    x  = k * Hreal; /* hathatk */
+    x2 = x * x;
+    x3 = x2 * x;
+    x4 = x3 * x;
+    x5 = x4 * x;      
+    num_ang   = 1. + b1[i]*x2 + b2[i]*x3 + b3[i]*x4 + b4[i]*x5; 
+    tlm_ang   = (- 2. * psi[i] * x * num_ang) + 2.*x* log(2. * k * bphys);
+    tlm->ampli[i] = Tlm_real[i];
+    tlm->phase[i].dat[1] = tlm_ang;
+  }
+  
 }
 
 /** hlmNewt coefficients for amplitude */
@@ -343,14 +332,14 @@ void eob_wav_hlmNewt(double r,
   if (usetidal) {
     p2 = 1.;
   }
-    
+  
   const double phix2 = 2. * phi;
   const double phix3 = 3. * phi;
   const double phix4 = 4. * phi;
   const double phix5 = 5. * phi;
   const double phix6 = 6. * phi;
   const double phix7 = 7. * phi;
-
+  
   const double pv23 = p2 * vphi3;
   const double pv34 = p3 * vphi4;
   const double pv45 = p4 * vphi5;
@@ -396,7 +385,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   const double khatB_2  = dyn->khatB2;
   
   const double x5 = gsl_pow_int(x,5);
-    
+  
   double hA[KMAX], hB[KMAX], betaA1[KMAX],betaB1[KMAX];
   int k;
   for (k=0; k<KMAX; k++) {
@@ -472,80 +461,74 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
   /** l=2 
    *  (2,1) */
   rholm[0] = 1.                                                                           +
-    (-1.0535714285714286 + 0.27380952380952384 *nu                          )*x  +
-    (-0.8327841553287982 - 0.7789824263038548  *nu + 0.13116496598639457*nu2)*x2 +
-    (2.9192806270460925  - 1.019047619047619   *el1                         )*x3 +
-    (-1.28235780892213   + 1.073639455782313   *el1                         )*x4 +
-    (-3.8466571723355227 + 0.8486467106683944  *el1                     )*PMTERMS_eps*x5 ;
-    
-    /** (2,2) */
-    rholm[1] = 1.                                                                                                                         +
-    (-1.0238095238095237 + 0.6547619047619048*nu                                                                          )*x  +
-    (-1.94208238851096   - 1.5601379440665155*nu + 0.4625614134542706*nu2                                                 )*x2 +
-    (12.736034731834051  - 2.902228713904598 *nu - 1.9301558466099282*nu2 + 0.2715020968103451*nu3 - 4.076190476190476*el2)*x3 +
-    (-2.4172313935587004 + 4.173242630385488 *el2                                                                         )*x4 +
-    (-30.14143102836864  + 7.916297736025627 *el2                                                                         )*x5 ;
-        
-    
-    /** l=3 
-     *  (3,1) */
-    rholm[2] = 1.  
-      + (-0.7222222222222222 - 0.2222222222222222*nu)*x 
-      + (0.014169472502805836 - 0.9455667789001122*nu - 0.46520763187429853*nu2)*x2 
-      + x3*(1.9098284139598072 - 0.4126984126984127*el1) 
-      + x4*(0.5368150316615179 + 0.2980599647266314*el1) 
-      + PMTERMS_eps*x5*(1.4497991763035063 - 0.0058477188106817735*el1);
-    /** (3,2) */
-    rholm[3] = 1. 
-      + (0.003703703703703704*(328. - 1115.*nu + 320.*nu2)*x)/(-1. + 3.*nu) 
-      + (6.235191420376606e-7*(-1.444528e6 + 8.050045e6*nu - 4.725605e6*nu2 - 2.033896e7*nu3 + 3.08564e6*nu4)*x2)
-      /((-1. + 3.*nu)*(-1. + 3.*nu)) + x3*(6.220997955214429 - 1.6507936507936507*el2) 
-      + PMTERMS_eps*x4*(-3.4527288879001268 + 2.005408583186361*el2);
-    /** (3,3) */
-    rholm[4] = 1. 
-      + (-1.1666666666666667 + 0.6666666666666666*nu)*x 
-      + (-1.6967171717171716 - 1.8797979797979798*nu + 0.45151515151515154*nu2)*x2 
-      + x3*(14.10891386831863 - 3.7142857142857144*el3) 
-      + x4*(-6.723375314944128 + 4.333333333333333*el3) 
-      + PMTERMS_eps*x5*(-29.568699895427518 + 6.302092352092352*el3);
+    + (-1.0535714285714286 + 0.27380952380952384 *nu                          )*x  
+    + (-0.8327841553287982 - 0.7789824263038548  *nu + 0.13116496598639457*nu2)*x2 
+    + (2.9192806270460925  - 1.019047619047619   *el1                         )*x3 
+    + (-1.28235780892213   + 1.073639455782313   *el1                         )*x4 
+    + (-3.8466571723355227 + 0.8486467106683944  *el1                     )*PMTERMS_eps*x5 ;
+  
+  /** (2,2) */
+  rholm[1] = 1. 
+    + (-1.0238095238095237 + 0.6547619047619048*nu                                                                          )*x  
+    + (-1.94208238851096   - 1.5601379440665155*nu + 0.4625614134542706*nu2                                                 )*x2 
+    + (12.736034731834051  - 2.902228713904598 *nu - 1.9301558466099282*nu2 + 0.2715020968103451*nu3 - 4.076190476190476*el2)*x3 
+    + (-2.4172313935587004 + 4.173242630385488 *el2                                                                         )*x4 
+    + (-30.14143102836864  + 7.916297736025627 *el2                                                                         )*x5 ;
+  
+  /** l=3 
+   *  (3,1) */
+  rholm[2] = 1.  
+    + (-0.7222222222222222 - 0.2222222222222222*nu)*x 
+    + (0.014169472502805836 - 0.9455667789001122*nu - 0.46520763187429853*nu2)*x2 
+    + (1.9098284139598072 - 0.4126984126984127*el1)*x3 
+    + (0.5368150316615179 + 0.2980599647266314*el1)*x4
+    + PMTERMS_eps*(1.4497991763035063 - 0.0058477188106817735*el1)*x5;
+  /** (3,2) */
+  rholm[3] = 1. 
+    + (0.003703703703703704*(328. - 1115.*nu + 320.*nu2)*x)/(-1. + 3.*nu) 
+    + (6.235191420376606e-7*(-1.444528e6 + 8.050045e6*nu - 4.725605e6*nu2 - 2.033896e7*nu3 + 3.08564e6*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + x3*(6.220997955214429 - 1.6507936507936507*el2) 
+    + PMTERMS_eps*(-3.4527288879001268 + 2.005408583186361*el2)*x4;
+  /** (3,3) */
+  rholm[4] = 1. 
+    + (-1.1666666666666667 + 0.6666666666666666*nu)*x 
+    + (-1.6967171717171716 - 1.8797979797979798*nu + 0.45151515151515154*nu2)*x2 
+    + (14.10891386831863 - 3.7142857142857144*el3)*x3
+    + (-6.723375314944128 + 4.333333333333333*el3)*x4
+    + PMTERMS_eps*(-29.568699895427518 + 6.302092352092352*el3)*x5;
 
     
     /** l=4 
      *  (4,1) */
     rholm[5] = 1. 
       + (0.001893939393939394*(602. - 1385.*nu + 288.*nu2)*x)/(-1. + 2.*nu) - 0.36778992787515513*x2 
-      + x3*(0.6981550175535535 - 0.2266955266955267*el1) 
-      + PMTERMS_eps*x4*(-0.7931524512893319 + 0.2584672482399755*el1);
+      + (0.6981550175535535 - 0.2266955266955267*el1)*x3 
+      + PMTERMS_eps*(-0.7931524512893319 + 0.2584672482399755*el1)*x4;
     /** (4,2) */
     rholm[6] = 1. 
-      + (0.0007575757575757576*(1146. - 3530.*nu + 285.*nu2)*x)/(-1. + 3.*nu) - (3.1534122443213353e-9*(1.14859044e8 - 2.95834536e8*nu - 1.204388696e9*nu2 + 3.04798116e9*nu3 + 3.79526805e8*nu4)*x2)
-      /((-1. + 3.*nu)*(-1. + 3.*nu)) + 4.550378418934105e
-      - 12*x3*(8.48238724511e11 - 1.9927619712e11*el2) 
-      + PMTERMS_eps*x4*(-0.6621921297263365 + 0.787251738160829*el2);
+      + (0.0007575757575757576*(1146. - 3530.*nu + 285.*nu2)*x)/(-1. + 3.*nu) - (3.1534122443213353e-9*(1.14859044e8 - 2.95834536e8*nu - 1.204388696e9*nu2 + 3.04798116e9*nu3 + 3.79526805e8*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + 4.550378418934105e
+      - 12.*(8.48238724511e11 - 1.9927619712e11*el2)*x3 
+      + PMTERMS_eps*(-0.6621921297263365 + 0.787251738160829*el2)*x4;
     /** (4,3) */
     rholm[7] = 1. 
       + (0.005681818181818182*(222. - 547.*nu + 160.*nu2)*x)/(-1. + 2.*nu) 
       - 0.9783218202252293*x2 
-      + PMTERMS_eps*(x3*(8.519456157072423 - 2.0402597402597404*el3) 
-	     + x4*(-5.353216984886716 + 2.5735094451003544*el3));
+      + PMTERMS_eps*((8.519456157072423 - 2.0402597402597404*el3)*x3 + (-5.353216984886716 + 2.5735094451003544*el3)*x4);
     /** (4,4) */
     rholm[8] = 1. 
       + (0.0007575757575757576*(1614. - 5870.*nu + 2625.*nu2)*x)/(-1. + 3.*nu) 
-      + (3.1534122443213353e-9*(-5.11573572e8 + 2.338945704e9*nu - 3.13857376e8*nu2 - 6.733146e9*nu3 + 1.252563795e9*nu4)*x2)
-      /((-1. + 3.*nu)*(-1. + 3.*nu)) 
-      + x3*(15.108111214795123 - 3.627128427128427*el4) + PMTERMS_eps*x4*(-8.857121657199649 + 4.434988849534304*el4);
+      + (3.1534122443213353e-9*(-5.11573572e8 + 2.338945704e9*nu - 3.13857376e8*nu2 - 6.733146e9*nu3 + 1.252563795e9*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) 
+      + (15.108111214795123 - 3.627128427128427*el4)*x3
+      + PMTERMS_eps*(-8.857121657199649 + 4.434988849534304*el4)*x4;
     
     /** l=5 
      *  (5,1) */
     rholm[9] = 1. 
       + (0.002564102564102564*(319. - 626.*nu + 8.*nu2)*x)/(-1. + 2.*nu) - 0.1047896120973044*x2 
-      + PMTERMS_eps*(x3*(0.642701885362399 - 0.14414918414918415*el1) 
-	     + x4*(-0.07651588046467575 + 0.11790664036817883*el1));
+      + PMTERMS_eps*((0.642701885362399 - 0.14414918414918415*el1)*x3 + (-0.07651588046467575 + 0.11790664036817883*el1)*x4);
     /** (5,2) */
     rholm[10] = 1. 
       + (0.00007326007326007326*(-15828. + 84679.*nu - 104930.*nu2 + 21980.*nu3)*x)
-      /(1. - 5.*nu + 5.*nu2) + PMTERMS_eps*(- 0.4629337197600934*x2 
-				    + x3*(2.354458371550237 - 0.5765967365967366*el2));
+      /(1. - 5.*nu + 5.*nu2) + PMTERMS_eps*(- 0.4629337197600934*x2 + (2.354458371550237 - 0.5765967365967366*el2)*x3);
     /** (5,3) */
     rholm[11] = 1. 
       + (0.002564102564102564*(375. - 850.*nu + 176.*nu2)*x)/(-1. + 2.*nu) - 0.5788010707241477*x2 
@@ -558,7 +541,6 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
     rholm[13] = 1. 
       + (0.002564102564102564*(487. - 1298.*nu + 512.*nu2)*x)/(-1. + 2.*nu) - 1.5749727622804546*x2 
       + PMTERMS_eps*(x3*(15.939827047208668 - 3.6037296037296036*el5) +      x4*(-10.272578060123237 + 4.500041838503377*el5));
-    
     
     /** l=6 
      *  (6,1) */
@@ -586,7 +568,6 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
       + (0.011904761904761904*(-106. + 602.*nu - 861.*nu2 + 273.*nu3)*x)/(1. - 5.*nu + 5.*nu2) 
       + PMTERMS_eps*(- 1.5543111183867486*x2 + x3*(16.645950799433503 - 3.6003996003996006*el6));
     
-    
     /** l=7 
      *  (7,1) */
     rholm[20] = 1. 
@@ -613,7 +594,6 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
     rholm[26] = 1. 
       + (0.0014005602240896359*(-906. + 4246.*nu - 4963.*nu2 + 1380.*nu3)*x)/(1. - 4.*nu + 3.*nu2) 
       + PMTERMS_eps*(- 1.5418467934923434*x2 + x3*(17.255875091408523 - 3.6042232277526396*el7));
-    
     
     /** l=8 
      *  (8,1) */
@@ -1228,7 +1208,6 @@ void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, doubl
     fprintf(fp, "%f\t%f\t%f\n", T[j], p1tmp[1][j], p2tmp[1][j]);
   }
   fclose(fp);  
-
 #endif
 
   double detM = 1.;
@@ -1398,378 +1377,169 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   
 }
 
-
-
-
-
-
-
-
-
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-
-
-
-
-
-
-
-
-
-
-/** QNM fits for the 22 mode for spinning systems */
-void eob_wav_QNMHybridFitCab(double nu, double **ab, double ***sigma)
-
-(TEOBResumParams params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4, vector<gsl_complex> &sigma)
-{
-    
-  // Shorthands
-  const int k22 = 1;
-  const int k21 = 0;
-  const int k33 = 4;
-  const int k44 = 8;
-    
-  int k, n;
-
-  const double nu2 = SQ(nu);
-  const double nu3 = nu2*nu;
-
-  /** Init coefs to zero */
-  for (n=0; n<8; n++) {
-    for (k=0; k<KMAX; k++) {
-      ab[n][k]=0.;
-    }
-  }
-
-  double *a = ab[0]; /* a1,a2,a3,a4 index = 0,1,2,3 */
-  double *b = ab[4]; /* b1,b2,b3,b4 index = 4,5,6,7 */
-
-  double alpha21[KMAX], alpha1[KMAX], omega1[KMX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
-    
-
-  // FIX PARS:
-  int   spin_flag     = params.flags.spin;
-  
-  double a12          = params.X1*params.chi1 - params.X2*params.chi2;
-  double X12          = params.X1 - params.X2;
-  double aeff         = params.aK + 1./3.*a12*X12;
-  double aeff_omg     = params.aK + a12*X12;
-
-  const double af         = JimenezFortezaRemnantSpin(params);
-
-
-  const double aeff2      = SQ(aeff);
-  const double aeff3      = SQ(aeff2);
-  const double af2        = SQ(af);
-  const double af3        = SQ(af2);
-  const double aeff_omg2  = SQ(aeff_omg); 
-  const double aeff_omg3  = SQ(aeff_omg2);
-  const double aeff_omg4  = SQ(aeff_omg2);
-  const double X12_2      = SQ(X12);
-  
-  double Mbh          = params.Mbh;
-    
-  const int usespins = par_get_i("use_spins");
-  
-
-
-
-
-
-
-
-  
-  if (!(usespins)) {
-    
-    /** Last updates: 05/09/2017 from CoM extrapolated SXS data */
-    
-    // l=2 -------------------------------------------------------------------
-    
-    /* (l=2, m=2)*/
-    alpha21[k22] = -0.3025985041156393 *nu2 +  0.0032794155172817 *nu +  0.1828276903682022;
-    alpha1[k22]  = -0.1615300454109702 *nu2 +  0.0147030662812516 *nu +  0.0878204175700328;
-    c3A[k22]     =  0.8118901739129283 *nu  -  0.5584875090785957;
-    c3phi[k22]   =  0.7156419884962878 *nu  +  3.8436474282409803;
-    c4phi[k22]   =  2.2336960710670901 *nu  +  1.4736119175780844;
-    Domg[k22]    =  0.8846304360111242 *nu2 +  0.0872792137250448 *nu +  0.1058414813686749;
-    Amrg[k22]     = 1.4935750287318139 *nu2 +  0.2157497669089671 *nu +  1.4292027468283439;
-    
-    /* (l=2, m=1)*/
-    alpha21[k21] = -0.2741607253846813 *nu2 +  0.0079342900879431 *nu +  0.1835522430667348;
-    alpha1[k21]  = -0.1277546304610336 *nu2 +  0.0093615534859368 *nu +  0.0882855170502398;
-    c3A[k21]     = -0.9431151070942140 *nu  +  0.2569989171628133;
-    c3phi[k21]   = -3.4479482376671666 *nu  +  2.4755856452648359;
-    c4phi[k21]   = -3.4024504071619841 *nu  +  1.0650118588151427;
-    Domg[k21]    =  0.2660644668923829 *nu2 +  0.2276854484140649 *nu +  0.0884880283627388;
-    Amrg[k21]    = -5.7236432632743952 *nu2 +  0.0390010969627653 *nu +  0.4291847351869338;
-    
-    // l=3 ------------------------------------------------------------------
-    /* (l=3,m=3)*/
-    alpha21[k33] = -0.3620553934265325 *nu2 +  0.0171973908686402 *nu +  0.1865364041200878;
-    alpha1[k33]  = -0.1821867653548689 *nu2 +  0.0134440240947561 *nu +  0.0916720214797975;
-    c3A[k33]     =  2.7565431398030675 *nu  -  0.5506682334306747;
-    c3phi[k33]   = -0.2497526471104979 *nu  +  2.3737675006958683;
-    c4phi[k33]   = -2.9538823110315420 *nu  +  1.4483501341373066;
-    Domg[k33]    =  1.3341439550896721 *nu2 -  0.1717105341058959 *nu +  0.1694617455660599;
-    Amrg[k33]    = -9.3034388918614841 *nu2 +  1.0189351143222705 *nu +  0.4533252110436300;
-    
-    // l=4 ------------------------------------------------------------------
-    /* (l=4,m=4)*/
-    alpha21[k44] = -0.3991680748908423 *nu2 +   0.0287698202159666 *nu +  0.1880112530796091;
-    alpha1[k44]  = -0.2003781755488581 *nu2 +   0.0171888841352427 *nu +  0.0930836242032652;
-    c3A[k44]     =  3.1899853343683140 *nu  +  -0.4131730594856833;
-    c3phi[k44]   = 31.5753575286023747 *nu  +  -1.0375600524681363;
-    c4phi[k44]   = 25.4170586178559716 *nu  +  -0.4151371540505313;
-    Domg[k44]    = -1.5342842283421341 *nu2 +   1.5224173843877831 *nu +  0.0897013049238634;
-    Amrg[k44]    =  0.9438333992719329 *nu2 +  -1.0464153920266663 *nu +  0.2897769169572948;
-    
-    for (k=0; k<KMAX; k++) {
-      sigma[k][0] = 0.;
-      sigma[k][1] = 0.;
-    }
-
-    k=k21;
-    sigma[k][0] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
-    sigma[k][1] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
-
-    k=k22;
-    sigma[k][0] = -0.364177*nu3 + 0.010951*nu2 - 0.010591*nu + 0.08896;
-    sigma[k][1] =  2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
-
-    k=k33;
-    sigma[k][0] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
-    sigma[k][1] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
-    
-  } else {
-    
-    /** Setting up coefficients from the phenomenological description of the ringdown.
-	For notation: Damour&Nagar, PRD 90 (2015), 024054 and Del Pozzo & Nagar, PRD 95 (2017), 124034
-	Current global fits are new. See Nagar+ 2017 (in preparation) for a global performance
-	and Riemenschneider& Nagar (2017) in preparation for the description of the fits */
-    
-    /* omg1 - imaginary part of the fundamental mode */
-    double omega1_c    = -0.0598837831 * af3 + 0.8082136788 * af2 - 1.7408467418 * af + 1;
-    double omega1_d    = -0.2358960279 * af3 + 1.3152369374 * af2 - 2.0764065380 * af + 1;
-    omega1[k22]        =  0.3736716844 * (omega1_c/omega1_d);
-    
-        /* alpha1 - real part (damping time) of the fundamental mode */
-    double alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
-    double alpha1_d    =  0.0811633377 * af3 + 0.7201166020 * af2 - 1.8002031358 * af + 1;
-    alpha1[k22]        =  0.0889623157 * (alpha1_c/alpha1_d);
-    
-    /* alpha2 - alpha1 */
-    double alpha21_c   =  0.4764196512 * af3 - 0.0593165805 * af2 - 1.4168096833 * af + 1;
-    double alpha21_d   =  0.4385578151 * af3 - 0.0763529088 * af2 - 1.3595491146 * af + 1;
-    alpha21[k22]       =  0.1849525596 * (alpha21_c/alpha21_d);
-    
-    /* c3A */
-    double a_c3A 	=  0.0169543;
-    double b_c3A 	= -0.0799343;
-    double c_c3A 	= -0.115928;
-    double c3A_nu       =  0.8298678603 * nu - 0.5615838975;
-    double c3A_eq       =  (c_c3A * X12 + 0.0907476903) * aeff3 + (b_c3A * X12 + 0.0227344099) * aeff2 + (a_c3A * X12 - 0.1994944332)*aeff;
-    c3A[k22]            =  c3A_nu + c3A_eq;
-    
-    /* c3_phi */
-    double a_c3phi      = -0.462321;
-    double b_c3phi      = -0.904512;
-    double c_c3phi      =  0.437747;
-    double d_c3phi      =  1.8275;
-    double c3phi_nu     =  0.4558467286 * nu + 3.8883812141;
-    double c3phi_equal  =  (d_c3phi*X12-2.0575868122) * aeff_omg4 +(c_c3phi*X12-0.5051534498)*aeff_omg3 +(b_c3phi*X12+2.5742292762)*aeff_omg2 +(a_c3phi*X12+2.5599640181)*aeff_omg;
-    c3phi[k22]          = c3phi_nu + c3phi_equal;
-    
-    /* c4_phi */
-    double a_c4phi      = -0.449976;
-    double b_c4phi      = -0.980913;
-    double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
-    double c4phi_equal  =  (b_c4phi*X12+3.5695199109) * aeff_omg2 + (a_c4phi * X12 + 4.1312404030) * aeff_omg;
-    c4phi[k22]          =  c4phi_nu + c4phi_equal;
-    
-    /* omg_mrg: the "merger frequency", i.e. the frequency at the peak of |h22| */
-    /* Special scaling and independent variables used for the fit. AN&GR 2017 */
-    double a2_omgmx     = -0.122735;
-    double a1_omgmx     =  0.0857478;
-    double b2_omgmx     = -0.0760023;
-    double b1_omgmx     =  0.0826514;
-    double omgmx_eq_c   =  (a2_omgmx*X12_2 +a1_omgmx*X12 -0.1416002395) * aeff_omg + 1;
-    double omgmx_eq_d   =  (b2_omgmx*X12_2 +b1_omgmx*X12 -0.3484804901) * aeff_omg + 1;
-    double omgmx_eq     =  omgmx_eq_c/omgmx_eq_d;
-    double omgmx        =  (0.481958619443355 * nu2 + 0.223976694441952 * nu + 0.273813064427363) * omgmx_eq;
-    
-    /* the peak of the h22 metric (strain) waveform.*/
-    /* Special scaling and independent variables used for the fit. AN& GR 2017*/	
-    double a2_A_scaled = -0.0820894;
-    double a1_A_scaled = 0.176126;
-    double b2_A_scaled = -0.150239;
-    double b1_A_scaled = 0.20491;
-    double A_scaled_eq = ((a2_A_scaled*X12*X12 + a1_A_scaled*X12 -0.2935238329)*aeff + 1)/((b2_A_scaled*X12*X12 + b1_A_scaled*X12 -0.4728707630)*aeff + 1);
-    double A_scaled    = (+1.826573640739664*nu2 +0.100709438291872*nu +1.438424467327531)*A_scaled_eq;
-    
-    Amrg[k22]      = A_scaled*(1-0.5*omgmx*aeff);
-    Domg[k22]      = omega1[k22] - Mbh*omgmx;
-    
-    /* renaming real & imaginary part of the QNM complex frequency sigma */
-    sigma[k22][0] = alpha1[k22];
-    sigma[k22][1] = omega1[k22];
-  
-  }
-
-  double cosh_c3A;
-  for (k=0; k<KMAX; k++) {
-    c2A[K] = 0.5*alpha21[K];
-    cosh_c3A = cosh(c3A[k]);
-    a1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
-    a2[k] = c2A[k];
-    a3[k] = c3A[k];
-    a4[k] = Amrg[k] - a1[k] * tanh(c3A[k]);
-    b2[k] = alpha21[k];
-    b3[k] = c3phi[k];
-    b4[k] = c4phi[k];
-    b1[k] = Domg[k] * (1+c3phi[k]+c4phi[k]) / (b2[k]*(c3phi[k] + 2.*c4phi[k]));
-  }
-  
-
-}
-
-
-
-
-
-
-
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-
-
-
-
 /** Ringdown waveform template */
-gsl_complex eob_wav_ringdown_match(double x, int k, vector<double> a1, vector<double> a2, vector<double> a3, vector<double> a4, vector<double> b1, vector<double> b2, vector<double> b3, vector<double> b4, vector<gsl_complex> sigma){
-    
-    gsl_complex psi;
-    
-    double amp   =  ( a1[k] * tanh(a2[k]*x +a3[k]) + a4[k] ) ;
-    double phase = -b1[k]*log((1. + b3[k]*exp(-b2[k]*x) + b4[k]*exp(-2.*b2[k]*x))/(1.+b3[k]+b4[k]));
-    
-    psi.dat[0] = amp * exp(-sigma[k].dat[0]*x);
-    psi.dat[1] = - (phase - sigma[k].dat[1]*x); //NOTE: minus sign in front by convention
-    
-    return psi;
-    
+void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double *sigma, double *psi)
+{  
+  double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
+  double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));   
+  psi[0] = amp * exp(-sigma[0]*x); /* amplitude */
+  psi[1] = - (phase - sigma[1]*x); /* phase, minus sign in front by convention */
 }
+
+
+
+
+
+
+
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+/////////////////////////////////////// 
+
+
+
+
 
 /* ringdown calculation and match to the dynamics */ 
-int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase){
+int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase)
+{
     
+  /////////
+    
+  double dt   = params.dt;
+  double nu   = params.nu;
+  double Mbh  = params.Mbh;
 
+
+  
+  double chi1 = params.chi1;
+  const double xnu =(1.-4.*nu);
+  const double ooMbh = 1./Mbh;
+  
+  const int k21 = 0;
+  const int k22 = 1;
+  const int k33 = 4;
+  int k,j;
+  
+  
     
-    double dt   = params.dt;
-    double nu   = params.nu;
-    double Mbh  = params.Mbh;
-    double chi1 = params.chi1;
-    
-    
-    long int pk_index = Omega_vec.size()-1;
-    double Omega_pk   = Omega_vec[pk_index];
-    long int i        = pk_index-1;
-    while (Omega_vec[i] > Omega_pk)
-    {
-        pk_index = i;
-        Omega_pk = Omega_vec[i];
-        i--;
+  /** Find peak of Omega */
+  int index_pk = 0;
+  double Omega_pk = Omega_vec[index_pk];
+  for (j = 0; j < size ; j++ ) {  
+    if (Omega_vec[j] > Omega_pk) {
+      index_pk = j;
+      Omega_pk = Omega_vec[j];
     }
-    vector<gsl_complex> Omega_pk_grid(7);
-    Omega_pk_grid[0].dat[0] = t_vec[1][pk_index-3];
-    Omega_pk_grid[0].dat[1] = Omega_vec[pk_index-3];
-    Omega_pk_grid[1].dat[0] = t_vec[1][pk_index-2];
-    Omega_pk_grid[1].dat[1] = Omega_vec[pk_index-2];
-    Omega_pk_grid[2].dat[0] = t_vec[1][pk_index-1];
-    Omega_pk_grid[2].dat[1] = Omega_vec[pk_index-1];
-    Omega_pk_grid[3].dat[0] = t_vec[1][pk_index];
-    Omega_pk_grid[3].dat[1] = Omega_vec[pk_index];
-    Omega_pk_grid[4].dat[0] = t_vec[1][pk_index+1];
-    Omega_pk_grid[4].dat[1] = Omega_vec[pk_index+1];
-    Omega_pk_grid[5].dat[0] = t_vec[1][pk_index+2];
-    Omega_pk_grid[5].dat[1] = Omega_vec[pk_index+2];
-    Omega_pk_grid[6].dat[0] = t_vec[1][pk_index+3];
-    Omega_pk_grid[6].dat[1] = Omega_vec[pk_index+3];
-    
-    double tOmg_pk = 0.;
-    double DeltaT_nqc = 0.;
-    vector<double> tmrg(35);
-    vector<double> tmatch(35);
-//    for (int k=0; k<7; k++) printf("%f %f\n",Omega_pk_grid[k].dat[0],Omega_pk_grid[k].dat[1] );
-    //compute true peak by interpolation from the grid
-    tOmg_pk  = interpolate(dt, Omega_pk_grid);
-    tOmg_pk *= 1./Mbh;
+  }
 
-    //calculate tmatch
-    double xnu =(1.-4.*nu);
-    
-    vector<double> dtmrg(2);
-    int k21 = 0;
-    int k22 = 1;
-    int k33 = 4;
-    
-    DeltaT_nqc = eob_wav_timeshift_nqc(nu, chi1);
-    
-    tmrg[k22] = tOmg_pk-(DeltaT_nqc + 2)/Mbh;     //t_max(A22) => MERGER
-    
-    /** nonspinning case - old */
-    /*tmrg[k22]  = tOmg_pk-3./Mbh; */             // t_max(A22) => MERGER
-    
-    
-    /** only nonspinning case */
-    dtmrg[0]   = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
-    dtmrg[1]   = 4.29550934 - 0.85938*xnu;                         //k33
-    tmrg[k21]  = tmrg[k22] + dtmrg[0]/Mbh;     // t_max(A21) => peak of 21 mode
-    tmrg[k33]  = tmrg[k22] + dtmrg[1]/Mbh;     // t_max(A33) => peak of 33 mode
+  // NOTE: following is slightly different from C++ thing (that I do not understand).
+  // here we just refine the grid, populate by spline, and look for a maximum on that
+  
+#define n_grid (7)
+  double *Omega_pk_grid, *t_Omega_pk_grid;
+  Omega_pk_grid = &Omega_vec[pk_index-3];
+  t_Omega_pk_grid = &t_vec[pk_index-3];
 
-
-    /* postmerger-ringdown matching time */
-    tmatch = tmrg;
-    
-    int kmax = 35;
-    vector<gsl_complex> sigma(kmax); //move this to another place
-    
-    for (int i=35; i--; ) {
-        sigma[i].dat[0]=0.;
-        sigma[i].dat[1]=0.;
-        tmatch[i] += 2./Mbh;
+#define n_refine (21)
+  double dt = (t_Omega_pk_grid[n_grid-1] - t_Omega_pk_grid[0])/(n_refine-1);
+  double ti[n_refine],oi[n_refine];
+  
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+  gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, 7);
+  gsl_spline_init (spline, t_Omega_pk_grid, Omega_pk_grid, n_grid);  
+  for (j = 0; j < n_refine; j++) {
+    ti[j] = t_Omega_pk_grid[0] + j*dt;
+    oi[j] = gsl_spline_eval (spline, ti[j], acc);
+  }
+  gsl_spline_free (spline);
+  gsl_interp_accel_free (acc);
+  index_pk = 0;
+  Omega_pk = oi[0];
+  for (j = 0; j < n_refine; j++) {
+    if (oi[j] > Omega_pk) {
+      index_pk = j;
+      Omega_pk = oi[j];
     }
+  }
+  
+  double tOmg_pk = ti[index_pk];
+  tOmg_pk *= ooMbh;
+
+  /** Merger time t_max(A22) */
+  double DeltaT_nqc = eob_wav_timeshift_nqc(nu, chi1);
+  double tmrg[KMAX], tmatch[35], dtmrg[2];
+            
+  /** nonspinning case */ // OLD
+  /* tmrg[k22]  = tOmg_pk-3./Mbh; */          
+     
+  /** nonspinning case */
+  tmrg[k22] = tOmg_pk-(DeltaT_nqc + 2)/Mbh;     
+  dtmrg[0]   = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
+  dtmrg[1]   = 4.29550934 - 0.85938*xnu;                         //k33
+  tmrg[k21]  = tmrg[k22] + dtmrg[0]/Mbh;     // t_max(A21) => peak of 21 mode
+  tmrg[k33]  = tmrg[k22] + dtmrg[1]/Mbh;     // t_max(A33) => peak of 33 mode
+
+  /** postmerger-ringdown matching time */
+  for (k=0; k<KMAX; k++) {
+    tmatch[k] = 2.*ooMbh + tmrg[k];
+  }
+
+  /** */
+  double sigma[KMAX][2]; // real, imag
+  double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
+  double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
+  
+  QNMHybridFitCab(params,a1,a2,a3,a4,b1,b2,b3,b4,sigma); // fixme call
+
+
+
+  /** Define a time vector for each multipole
+      These will be cut by the ringdown, where
+      each multipole has its own starting time */
     
-    vector<double> a1(35);
-    vector<double> a2(35);
-    vector<double> a3(35);
-    vector<double> a4(35);
-    vector<double> b1(35);
-    vector<double> b2(35);
-    vector<double> b3(35);
-    vector<double> b4(35);
-    
-    QNMHybridFitCab(params,a1,a2,a3,a4,b1,b2,b3,b4,sigma);
-    
-    /*deleting data points up to tmatch (starting from the back)
-      Attention: tmatch defined above is pushed back by two grid-points.
-      This makes the waveform correctly consistent with the Matlab code
+  double t_g[KMAX][size];
+  for (k=0; k<KMAX; k++) {
+    for (j = 0; j < size ; j++ ) {  
+      t_g[k][j] = t_vecg[j];
+    }
+  }
+
+  
+  /*deleting data points up to tmatch (starting from the back)
+    Attention: tmatch defined above is pushed back by two grid-points.
+    This makes the waveform correctly consistent with the Matlab code
       and HAS to be like this. Uniform grids in the Matlab and here are
       different, this fixes things */
-    vector<long> I(35);
+  vector<long> I(35);
     vector<long> Size(35);
     for (int k = 35; k--; )
     {
@@ -1811,20 +1581,22 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
         }
         I[k] = i;
     }
-//    if (DEBUG)
+
+    //    if (DEBUG)
 //    {
 //        char   outputr[256]   = "tmatch.dat";
 //        std::FILE* match_file   = std::fopen(outputr, "w");
 //        std::fprintf(match_file,"%e\t%e\n",tmatch[1]*Mbh,tmrg[1]*Mbh);
 //        std::fclose(match_file);
 //    }
+
     //Calculate deltaphi
     vector<gsl_complex> psi(35);
     vector<double> Deltaphi(35);
     for (int k=35; k--; )
     {
         double x    = t_vec[k][I[k]]/Mbh-tmrg[k];
-        psi[k]      = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+        psi[k]      = eob_wav_ringdown_template(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
         Deltaphi[k] = psi[k].dat[1] - hlm_phase[k][I[k]];
     }
     
@@ -1843,7 +1615,7 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
                 for (int j=0; j < Nringdown+n_removed; j++)
                 {
                     double x = t/Mbh-tmrg[k];
-                    psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+                    psi[k] = eob_wav_ringdown_template(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
                     psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
                     hlm_rad[k].push_back(psi[k].dat[0]);
@@ -1856,7 +1628,7 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
                 for (int j=0; j < Nringdown+n_removed; j++)
                 {
                     double x = t/Mbh-tmrg[k];
-                    psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+                    psi[k] = eob_wav_ringdown_template(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
                     psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
                     hlm_rad[k].push_back(psi[k].dat[0]);
@@ -1870,7 +1642,7 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
                 for (int j=0; j < Nringdown+n_removed; j++)
                 {
                     double x = t/Mbh-tmrg[k];
-                    psi[k] = ringdown_match(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
+                    psi[k] = eob_wav_ringdown_template(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
                     
                     psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
                     hlm_rad[k].push_back(psi[k].dat[0]);
@@ -1890,6 +1662,8 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
                 break;
         }
     }
+
+    
 //    if (DEBUG)
 //    {
 //        char   outputr[256]   = "ringdown.dat";
@@ -1903,5 +1677,6 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
 //        }
 //        std::fclose(ringfile);
 //    }
-    return 0;
+
+    
 }
