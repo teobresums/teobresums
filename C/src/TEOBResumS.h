@@ -269,6 +269,8 @@ void errorexits(char *file, int line, char *s, char *t);
 double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2);
 double logQ(double x);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
+void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);
+double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSDynamics.c */
 int rhs(double t, const double y[], double dy], void *params);

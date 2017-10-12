@@ -89,3 +89,179 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
   return exp(lny);
 }
 
+/** Mass and angular momentum of the final black hole
+  Healey, Lousto and Zochlower (HLZ),
+  arXiv: 1406.7295, published as PRD 90, 104004 (2014)
+  WARNING: the formula uses the convention that M2 > M1, so that
+  chi2 should refer to the black hole with the largest
+  mass. In the EOB code, this is given by chi1, since
+  in EOB code we use the convention that M1 > M2
+  
+  Here it is q=M2/M1, with M2>M1
+  
+  Improved with (Eisco, Jisco) + iterative procedure 23/02/2016
+  parameters (TABLE VI)
+*/
+void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin)
+{
+       
+  /** Final mass:                    Angular momentum: */
+  
+  double M0  =  0.951507;            double L0  =  0.686710;
+  double K1  = -0.051379;            double L1  =  0.613247;
+  double K2a = -0.004804;            double L2a = -0.145427;
+  double K2b = -0.054522;            double L2b = -0.115689;
+  double K2c = -0.000022;            double L2c = -0.005254;
+  double K2d =  1.995246;            double L2d =  0.801838;
+  double K3a =  0.007064;            double L3a = -0.073839;
+  double K3b = -0.017599;            double L3b =  0.004759;
+  double K3c = -0.119175;            double L3c = -0.078377;
+  double K3d =  0.025000;            double L3d =  1.585809;
+  double K4a = -0.068981;            double L4a = -0.003050;
+  double K4b = -0.011383;            double L4b = -0.002968;
+  double K4c = -0.002284;            double L4c =  0.004364;
+  double K4d = -0.165658;            double L4d = -0.047204;
+  double K4e =  0.019403;            double L4e = -0.053099;
+  double K4f =  2.980990;            double L4f =  0.953458;
+  double K4g =  0.020250;            double L4g = -0.067998;
+  double K4h = -0.004091;            double L4h =  0.001629;
+  double K4i =  0.078441;            double L4i = -0.066693;
+      
+  /** Parameters */
+  double nu      = q/((1.+q)*(1.+q));
+  
+  /** Masses: convention here is that m2>m1 */
+  double X2      = 0.5*(1.+sqrt(1.-4*nu));
+  double X1      = 1.-X2;
+  
+  /** Spin variables */
+  double s1      = X1*X1*chi1;
+  double s2      = X2*X2*chi2;
+  double S       = s1 + s2;
+  double S2      = S*S;
+  double S3      = S*S2;
+  double S4      = S2*S2;
+  double Delta   = X1/X2*s2 - X2/X1*s1 + s2 - s1;
+  double Delta2  = Delta*Delta;
+  double Delta3  = Delta*Delta2;
+  double Delta4  = Delta2*Delta2;
+  
+  /** Mass ratio variables */
+  double deltam  = -sqrt(1-4*nu); // X1 - X2
+  double deltam2 =  deltam*deltam;
+  double deltam3 =  deltam*deltam2;
+  double deltam4 =  deltam*deltam3;
+  double deltam6 =  deltam2*deltam4;
+  
+  /** Initialize the angular momentum */
+  double a0 = s1 + s2;
+  int a0_sign = 0.;
+  
+  if (a0==0) {
+    a0_sign=0;
+  } else if (a0>0) {
+    a0_sign=1;
+  }
+  else if (a0<0) {
+    a0_sign=-1;
+  }
+  
+  /** Set-up an interative procedure to compute properly the "isco" quantities */
+  double a2;
+  double Z1;
+  double Z2;
+  double risco;
+  double uisco;
+  double Eisco;
+  double Jisco;
+  double abh;
+  double Mbh=0.;
+  
+  int i;
+  for(i=0; i<20; i++) {
+    a2     = a0*a0;
+    Z1     = 1 + cbrt(1-a2)*(cbrt(1+a0) + cbrt(1-a0));
+    Z2     = sqrt(3*a2 + Z1*Z1);
+    risco  = 3 + Z2 - a0_sign*sqrt((3-Z1)*(3+Z1+2.*Z2));
+    uisco  = 1./risco;
+    Eisco  = (1 - 2.*uisco + a0*sqrt(uisco*uisco*uisco))/sqrt(1-3*uisco + 2*a0*sqrt(uisco*uisco*uisco));
+    Jisco  = 2./(sqrt(3.*risco))*(3.*sqrt(risco)-2.*a0);
+    
+    /** Dimensionless spin: J/Mbh^2 */
+    abh = (4*nu)*(4*nu)*(L0 + L1*S + L2a*Delta*deltam + L2b*S2 + L2c*Delta2 + L2d*deltam2 + L3a*Delta*S*deltam + L3b*S*Delta2 + L3c*S3 + L3d*S*deltam2 + L4a*Delta*S2*deltam + L4b*Delta3*deltam + L4c*Delta4 + L4d*S4 + L4e*Delta2*S2 + L4f*deltam4 + L4g*Delta*deltam3 + L4h*Delta2*deltam2 + L4i*S2*deltam2) + S*(1+8*nu)*deltam4 + nu*Jisco*deltam6;
+    
+    Mbh = (4*nu)*(4*nu)*(M0 + K1*S + K2a*Delta*deltam + K2b*S2 + K2c*Delta2 + K2d*deltam2 + K3a*Delta*S*deltam + K3b*S*Delta2 + K3c*S3 + K3d*S*deltam2 + K4a*Delta*S2*deltam + K4b*Delta3*deltam + K4c*Delta4 + K4d*S4 + K4e*Delta2*S2 + K4f*deltam4 + K4g*Delta*deltam3 + K4h*Delta2*deltam2 + K4i*S2*deltam2) + (1 + nu*(Eisco + 11))*deltam6;
+    
+    a0 = abh;
+    
+  }
+
+  *mass = Mbh;
+  *spin = abh;
+}
+
+/** Final spin fit of */
+double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2)
+{
+
+  const double xnu     = sqrt(1.0-4.0*nu);
+  const double Dchi    = chi1-chi2;
+  const double S       = (X1*X1*chi1+X2*X2*chi2)/(X1*X1+X2*X2);
+  const double a2      = 3.833;
+  const double a3      = -9.49;
+  const double a5      = 2.513;
+  
+  /** The functional form is taken from eq. (7), page 5. */
+  double Lorb_spin_zero  = (1.3*a3*nu*nu*nu + 5.24*a2*nu*nu + 2.*sqrt(3)*nu)/(2.88*a5*nu + 1);
+  
+  /** Coeffcients taken from Table II, page 6: */
+  double b1      = 1.00096;
+  double b2      = 0.788;
+  double b3      = 0.654;
+  double b5      = 0.840;
+  
+  /** These values are taken from Table III, page 7: */
+  double f21     = 8.774;
+  double f31     = 22.83;
+  double f50     = 1.8805;
+  double f11     = 0.345225*f21 + 0.0321306*f31 - 3.66556*f50 + 7.5397;
+  
+  /** These values are taken from Table IV, page 10 */
+  double f12     = 0.512;
+  double f22     = -32.1;
+  double f32     = -154;
+  double f51     = -4.77;
+  
+  /** The following quantities were taken from the relation given in eq. (11), */
+  /** page 7: fi3 = 64 - 64.*fi0 - 16.*fi1 - 4.*fi2; */
+  double f13     = 64 - 16.*f11 - 4.*f12;
+  double f23     = 64 - 16.*f21 - 4.*f22;
+  double f33     = 64 - 16.*f31 - 4.*f32;
+  double f53     = 64 - 64.*f50 - 16.*f51;
+  
+  /** this transformation is given in eq. (9), page (7) */
+  double b1t     = b1*(f11*nu + f12*nu*nu + f13*nu*nu*nu);
+  double b2t     = b2*(f21*nu + f22*nu*nu + f23*nu*nu*nu);
+  double b3t     = b3*(f31*nu + f32*nu*nu + f33*nu*nu*nu);
+  double b5t     = b5*(f50 + f51*nu + f53*nu*nu*nu);
+  
+  /** The functional form is taken from eq. (8), page 6. */
+  double Lorb_eq_spin  = (0.00954*b3t*S*S*S + 0.0851*b2t*S*S - 0.194*b1t*S)/(1 - 0.579*b5t*S);
+  
+  /** These values are taken from Table IV, page 10: */
+  double d10     = 0.322;
+  double d11     = 9.33;
+  double d20     = -0.0598;
+  double d30     = 2.32;
+  double d31     = -3.26;
+  
+  /** The functional form is taken from eq. (19a-c), page 10.*/
+  double A1      = d10*xnu*nu*nu*(d11*nu+1);
+  double A2      = d20*nu*nu*nu;
+  double A3      = d30*xnu*nu*nu*nu*(d31*nu+1);
+  
+  /** The functional form is taken from eq. (15), page 9. */
+  double Lorb_uneq_mass  = A1*Dchi + A2*Dchi*Dchi + A3*S*Dchi;
+  
+  return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
+}
