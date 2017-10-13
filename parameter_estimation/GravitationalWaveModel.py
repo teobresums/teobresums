@@ -26,6 +26,9 @@ def McQ2Masses(mc, q):
     m2 = factor * np.power(q, +2.0/5.0);
     return m1, m2
 
+def PolarToCartesian(a, th, ph):
+    return a*np.sin(th)*np.cos(ph), a*np.sin(th)*np.sin(ph), a*np.cos(th)
+
 class GravitationalWaveModel(cpnest.model.Model):
     
     names = []
@@ -86,12 +89,12 @@ class GravitationalWaveModel(cpnest.model.Model):
             approx = lalsim.IMRPhenomPv2
             hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(0.0,
                                self.df,
-                               40*lalsim.lal.MSUN_SI,
-                               35*lalsim.lal.MSUN_SI,
-                               0.4, 0.0, -0.2,
-                               -0.2, 0.2, 0.3,
+                               20*lalsim.lal.MSUN_SI,
+                               17*lalsim.lal.MSUN_SI,
+                               0.0, 0.0, 0.75,
+                               0.0, 0.0, 0.55,
                                self.flow, self.fhigh, 100.0,
-                               4500.0*1e6*lalsim.lal.PC_SI,
+                               2500.0*1e6*lalsim.lal.PC_SI,
                                0.0,
                                0.0, 0.0,
                                wave_flags, non_GR_params, amp_order, phase_order, approx)
@@ -106,8 +109,8 @@ class GravitationalWaveModel(cpnest.model.Model):
         if self.template == 'LAL':
             self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
                         'iota', 'psi', 'distance',
-                        'spin1x','spin1y','spin1z',
-                        'spin2x','spin2y','spin2z']
+                        'spin1','theta_1l','phi_1l',
+                        'spin2','theta_22','phi_2l']
 
             self.bounds=[[0,2.0*np.pi],
                          [0,2.0*np.pi],
@@ -118,8 +121,8 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0.0,np.pi],
                          [0.0,np.pi],
                          [1.0,5000.0],
-                         [-0.5,0.5],[-0.5,0.5],[-0.5,0.5],
-                         [-0.5,0.5],[-0.5,0.5],[-0.5,0.5]]
+                         [0.0,0.98],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
+                         [0.0,0.98],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
         else:
             self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
                 'iota', 'psi', 'distance','spin1z','spin2z']
@@ -169,13 +172,14 @@ class GravitationalWaveModel(cpnest.model.Model):
             wave_flags = None
             non_GR_params = None
             approx = lalsim.IMRPhenomPv2
-            
+            spin1x, spin1y, spin1z = PolarToCartesian(x['spin1'], x['theta_1l'], x['phi_1l'])
+            spin2x, spin2y, spin2z = PolarToCartesian(x['spin2'], x['theta_2l'], x['phi_2l'])
             hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(x['phi0'],
                                            self.df,
                                            m1*lalsim.lal.MSUN_SI,
                                            m2*lalsim.lal.MSUN_SI,
-                                           x['spin1x'], x['spin1y'], x['spin1z'],
-                                           x['spin2x'], x['spin2y'], x['spin2z'],
+                                           spin1x, spin1y, spin1z,
+                                           spin2x, spin2y, spin2z,
                                            self.flow, self.fhigh, 100.0,
                                            d*1e6*lalsim.lal.PC_SI,
                                            x['iota'],
@@ -254,7 +258,7 @@ if __name__=='__main__':
         signal_model = GravitationalWaveModel(['H1','L1'],
                                               T=opts.seglen,
                                               template = opts.template,
-                                              sampling_rate = 1024.,
+                                              sampling_rate = 2048.,
                                               injection = opts.inject,
                                               zero_noise = opts.zero_noise,
                                               starttime = 1126259459.423,
@@ -267,7 +271,7 @@ if __name__=='__main__':
 
         work=cpnest.CPNest(signal_model,
                            verbose=3,
-                           Poolsize=1024,
+                           Poolsize=32,
                            Nthreads=opts.threads,
                            Nlive=opts.nlive,
                            maxmcmc=opts.maxmcmc,
