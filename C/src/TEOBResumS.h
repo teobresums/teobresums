@@ -216,6 +216,7 @@ typedef struct tagDynamics
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4, khatA2,khatB2;
   double c3NLO, ptidalpow=4.;
+  double Mbhf, abhf; /* final BH */
   int use_tidal, use_spin;
 } Dynamics;
 
@@ -282,8 +283,10 @@ double logQ(double x);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);
 double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2);
-
-void QNMHybridFitCab(double nu, double **ab, double **sigma);
+void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK; 
+		     double Mbh, double abh,  
+		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+		     double ***sigma);
 
 /* TEOBResumSDynamics.c */
 int eob_dyn_rhs(double t, const double y[], double dy], void *params);
@@ -331,5 +334,5 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, double *pr_star, double *Omg_orb, double *ddotr, Waveform_lm *h, Dynamics *dyn, Waveform_lm *hnqc);
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *psilmnqc);
-
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double *sigma, double *psi);
+void eob_wav_ringdown(doulble *t, double *Omega, Dynamics *dyn, Waveform_lm *hlm);

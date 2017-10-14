@@ -28,6 +28,7 @@ int TEOBResumS(
   int size = par_get_i("size"); /* can change runtime! */ 
 
   double q    = par_get_d("q");
+  doulbe nu   = par_get_d("nu");
   double chi1 = par_get_d("chi1");
   double chi2 = par_get_d("chi2");
 
@@ -89,8 +90,12 @@ int TEOBResumS(
 
   /** Final BH */
   if (!(par_get_i("use_tidal"))) {
-    double BH_final_mass = HealyBBHFitRemnant(chi1, chi2, q);
-    par_set_d("BH_final_mass", BH_final_mass);
+    HealyBBHFitRemnant(chi1, chi2, q, dyn->Mbhf, dyn->abhf);
+    if (PR) printf("BH_final_mass[Healy] = %e\nBH_final_spin[Healy] = %e",dyn->Mbhf,dyn->abhf);
+    dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+    if (PR) printf("BH_final_spin[JimenezForteza] = %e",dyn->abhf);
+    par_set_d("BH_final_mass", dyn->Mbhf);
+    par_set_d("BH_final_spin", dyn->abhf);
   }
     
   /** Initialize ODE system solver */
@@ -203,7 +208,7 @@ int TEOBResumS(
     if (iter>size) {
       size = iter;
       par_set_i("size", size);
-      Waveform_push (&hpp, size);
+      //Waveform_push (&hpp, size);// not needed yet
       Waveform_lm_push (&hlm, size);
       Dynamics_push (&dyn, size);
     }
@@ -300,12 +305,22 @@ int TEOBResumS(
 			       hlm_vecg, dyn, hlm_nqc);
   }
 
-  // ...
+  //TODO: At this point we might want to swap pointers to rename the'vecg' stuff and delete the prev (nonuniform) grid arrays 
+  // hlm_vecg ==> hlm
+  // vecg     ==> dyn->data
+  // delete old/nonuniform hlm/dynamics arrays
+
+  /** Extend arrays */
+  size += par_get_i("ringdown_extend_array");
+  Waveform_lm_push (&hlm, size);
+  Dynamics_push (&dyn, size );
 
   /** Ringdown attachment */
-  // ...  
+  eob_wav_ringdown(t_vecg, vecg[EOB_MOMG], dyn, hlm_vecg);
   
   /** Computation of (h+,hx) */
+
+  Waveform_push (&hpp, size);  
   
   /* Init to zero */
   memset(hpp->real, 0, size*sizeof(double));

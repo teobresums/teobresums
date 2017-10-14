@@ -952,7 +952,7 @@ void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, doubl
       Check Nagar & Rezzolla, CQG 22 (2005) R167 */           
   for (k=0; k<KMAX; k++) {
     for (j=0; j<size; j++) {
-      A[k][j] = h[k]->ampli[j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
+      A[k][j]     = h[k]->ampli[j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
       phase[k][j] = h[k]->phase[j];
     }
   }
@@ -1259,6 +1259,17 @@ void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, doubl
     }
   }
 
+  /** Multiply waveform to NQC */
+ 
+  // FIXME: RWZ normalization? Don't we need to re-introduce it here ???
+
+  for (k=0; k<KMAX; k++) {
+    for (j=0; j<size; j++) {
+      h[k]->ampli[j] *= *hnqc[k]->ampli[j];
+      h[k]->phase[j] *= *hnqc[k]->phase[j];
+    }
+  }
+
 }
 
 /** NQC corrections to the RWZ multipolar waveform
@@ -1386,62 +1397,20 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
   psi[1] = - (phase - sigma[1]*x); /* phase, minus sign in front by convention */
 }
 
-
-
-
-
-
-
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-/////////////////////////////////////// 
-
-
-
-
-
-/* ringdown calculation and match to the dynamics */ 
-int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<double> Omega_vec, vector<vector<double> > &hlm_rad, vector<vector<double> > &hlm_phase)
+/** Ringdown calculation and match to the dynamics */ 
+void eob_wav_ringdown(doulble *t, double *Omega, Dynamics *dyn, Waveform_lm *hlm)
 {
-    
-  /////////
-    
-  double dt   = params.dt;
-  double nu   = params.nu;
-  double Mbh  = params.Mbh;
+  const double Mbh   = dyn->Mbhf;
+  const double abh   = dyn->abhf;
 
+  const double nu    = dyn->nu;
+  const double chi1  = dyn->chi1;
+  const double chi2  = dyn->chi2;
+  const double X1    = dyn->X1;
+  const double X2    = dyn->X2;
+  const double aK    = dyn->aK;
 
-  
-  double chi1 = params.chi1;
-  const double xnu =(1.-4.*nu);
+  const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
   
   const int k21 = 0;
@@ -1449,15 +1418,13 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
   const int k33 = 4;
   int k,j;
   
-  
-    
   /** Find peak of Omega */
   int index_pk = 0;
-  double Omega_pk = Omega_vec[index_pk];
+  double Omega_pk = Omega[index_pk];
   for (j = 0; j < size ; j++ ) {  
-    if (Omega_vec[j] > Omega_pk) {
+    if (Omega[j] > Omega_pk) {
       index_pk = j;
-      Omega_pk = Omega_vec[j];
+      Omega_pk = Omega[j];
     }
   }
 
@@ -1466,13 +1433,12 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
   
 #define n_grid (7)
   double *Omega_pk_grid, *t_Omega_pk_grid;
-  Omega_pk_grid = &Omega_vec[pk_index-3];
-  t_Omega_pk_grid = &t_vec[pk_index-3];
+  Omega_pk_grid = &Omega[pk_index-3];
+  t_Omega_pk_grid = &t[pk_index-3];
 
 #define n_refine (21)
-  double dt = (t_Omega_pk_grid[n_grid-1] - t_Omega_pk_grid[0])/(n_refine-1);
+  double dt = (t_Omega_pk_grid[n_grid-1] - t_Omega_pk_grid[0])/(n_refine-1); 
   double ti[n_refine],oi[n_refine];
-  
   gsl_interp_accel *acc = gsl_interp_accel_alloc ();
   gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, 7);
   gsl_spline_init (spline, t_Omega_pk_grid, Omega_pk_grid, n_grid);  
@@ -1502,181 +1468,61 @@ int eob_wav_ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vec
   /* tmrg[k22]  = tOmg_pk-3./Mbh; */          
      
   /** nonspinning case */
-  tmrg[k22] = tOmg_pk-(DeltaT_nqc + 2)/Mbh;     
-  dtmrg[0]   = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
-  dtmrg[1]   = 4.29550934 - 0.85938*xnu;                         //k33
-  tmrg[k21]  = tmrg[k22] + dtmrg[0]/Mbh;     // t_max(A21) => peak of 21 mode
-  tmrg[k33]  = tmrg[k22] + dtmrg[1]/Mbh;     // t_max(A33) => peak of 33 mode
+  tmrg[k22]  = tOmg_pk-(DeltaT_nqc + 2)/Mbh;     
+  dtmrg[k21] = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
+  dtmrg[k33] = 4.29550934 - 0.85938*xnu;                         //k33
+  tmrg[k21]  = tmrg[k22] + dtmrg[k21]/Mbh;     // t_max(A21) => peak of 21 mode
+  tmrg[k33]  = tmrg[k22] + dtmrg[k33]/Mbh;     // t_max(A33) => peak of 33 mode
 
   /** postmerger-ringdown matching time */
   for (k=0; k<KMAX; k++) {
     tmatch[k] = 2.*ooMbh + tmrg[k];
   }
 
-  /** */
+  /** Compute QNM */
   double sigma[KMAX][2]; // real, imag
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
-  double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
-  
-  QNMHybridFitCab(params,a1,a2,a3,a4,b1,b2,b3,b4,sigma); // fixme call
+  double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX]; 
+  QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+		  a1, a2, a3, a4, b1, b2, b3, b4, 
+		  sigma);
 
-
-
-  /** Define a time vector for each multipole
-      These will be cut by the ringdown, where
-      each multipole has its own starting time */
-    
-  double t_g[KMAX][size];
+  /** Define a time vector for each multipole, scale by mass
+      Ringdown of each multipole has its own starting time */
+  double t_lm[KMAX][size];
   for (k=0; k<KMAX; k++) {
     for (j = 0; j < size ; j++ ) {  
-      t_g[k][j] = t_vecg[j];
+      t_lm[k][j] = t[j] * ooMbh;
     }
   }
 
-  
-  /*deleting data points up to tmatch (starting from the back)
-    Attention: tmatch defined above is pushed back by two grid-points.
-    This makes the waveform correctly consistent with the Matlab code
-      and HAS to be like this. Uniform grids in the Matlab and here are
-      different, this fixes things */
-  vector<long> I(35);
-    vector<long> Size(35);
-    for (int k = 35; k--; )
-    {
-        i = t_vec[k].size()-1;
-        Size[k] = t_vec[k].size();
-        switch (k)
-        {
-            case 0:
-                while (t_vec[k][i]/Mbh>tmatch[k]-2*dt/Mbh)
-                {
-                    t_vec[k].pop_back();
-                    hlm_rad[k].pop_back();
-                    hlm_phase[k].pop_back();
-                    i--;
-                }
-                i++;
-                break;
-            case 1:
-                while (t_vec[k][i]/Mbh>tmatch[k]-2*dt/Mbh)
-                {
-                    t_vec[k].pop_back();
-                    hlm_rad[k].pop_back();
-                    hlm_phase[k].pop_back();
-                    i--;
-                }
-                i++;
-                break;
-            case 4:
-                while (t_vec[k][i]/Mbh>tmatch[k]-2*dt/Mbh) {
-                    t_vec[k].pop_back();
-                    hlm_rad[k].pop_back();
-                    hlm_phase[k].pop_back();
-                    i--;
-                }
-                i++;
-                break;
-            default:
-                break;
-        }
-        I[k] = i;
+  /** Find attachment index */
+  int idx[KMAX];
+  for (k = 0; k < KMAX; k++) {
+    for (j = 0; j < size ; j++ ) {  
+      if (t_lm[k][i] >= tmatch[k]) break;
     }
+    idx[k] = j;
+  }
 
-    //    if (DEBUG)
-//    {
-//        char   outputr[256]   = "tmatch.dat";
-//        std::FILE* match_file   = std::fopen(outputr, "w");
-//        std::fprintf(match_file,"%e\t%e\n",tmatch[1]*Mbh,tmrg[1]*Mbh);
-//        std::fclose(match_file);
-//    }
-
-    //Calculate deltaphi
-    vector<gsl_complex> psi(35);
-    vector<double> Deltaphi(35);
-    for (int k=35; k--; )
-    {
-        double x    = t_vec[k][I[k]]/Mbh-tmrg[k];
-        psi[k]      = eob_wav_ringdown_template(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
-        Deltaphi[k] = psi[k].dat[1] - hlm_phase[k][I[k]];
-    }
+  /** Calculate deltaphi */
+  double t0, psi[2];
+  double Deltaphi[KMAX];
+  for (k = 0; k < KMAX; k++) {
+    t0 = t_lm[k][idx[k]] - tmrg[k]; // I or I-1 or I-2 ?
+    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma, psi);
+    Deltaphi[k] = psi[1] - hlm[k]->phase[idx[k]];
+  }
     
-    /** add 500 points of ringdown attachment */
-    /** if we select the number of points in each mode to be such that the number of output points
-     is the same, we do not need any interpolation, since the vectors are defined on the same time grid. */
-    int Nringdown = 500;
-    for (int k=35; k--; )
-    {
-        double t = t_vec[k][I[k]];
-        int n_removed = Size[k]-I[k];
-
-        switch (k)
-        {
-            case 0:
-                for (int j=0; j < Nringdown+n_removed; j++)
-                {
-                    double x = t/Mbh-tmrg[k];
-                    psi[k] = eob_wav_ringdown_template(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
-                    
-                    psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
-                    hlm_rad[k].push_back(psi[k].dat[0]);
-                    hlm_phase[k].push_back(psi[k].dat[1]);
-                    t_vec[k].push_back(t);
-                    t += dt;
-                }
-                break;
-            case 1:
-                for (int j=0; j < Nringdown+n_removed; j++)
-                {
-                    double x = t/Mbh-tmrg[k];
-                    psi[k] = eob_wav_ringdown_template(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
-                    
-                    psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
-                    hlm_rad[k].push_back(psi[k].dat[0]);
-                    hlm_phase[k].push_back(psi[k].dat[1]);
-                    t_vec[k].push_back(t);
-                    t += dt;
-
-                }
-                break;
-            case 4:
-                for (int j=0; j < Nringdown+n_removed; j++)
-                {
-                    double x = t/Mbh-tmrg[k];
-                    psi[k] = eob_wav_ringdown_template(x, k, a1, a2, a3, a4, b1, b2, b3, b4, sigma);
-                    
-                    psi[k].dat[1]  = psi[k].dat[1] - Deltaphi[k];
-                    hlm_rad[k].push_back(psi[k].dat[0]);
-                    hlm_phase[k].push_back(psi[k].dat[1]);
-                    t_vec[k].push_back(t);
-                    t += dt;
-                }
-                break;
-            default:
-                for (int j=0; j < Nringdown+n_removed-1; j++)
-                {
-                    hlm_rad[k].push_back(0.0);
-                    hlm_phase[k].push_back(0.0);
-                    t_vec[k].push_back(t);
-                    t += dt;
-                }
-                break;
-        }
+  /** Compute Ringdown waveform for t>tmatch */
+  for (k = 0; k < KMAX; k++) {
+    for (j = idx[k]; j < size ; j++ ) {  
+      //t0 = t_lm[k][j];
+      t0 = t_lm[k][j] - tmrg[k];   
+      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma, psi);
+      hlm[k]->phase[j] = psi[1];
+      hlm[k]->ampli[j] = psi[0];
     }
-
-    
-//    if (DEBUG)
-//    {
-//        char   outputr[256]   = "ringdown.dat";
-//        std::FILE* ringfile   = std::fopen(outputr, "w");
-//        int j                 = 0;
-//        int N                 = hlm_rad[1].size();
-//
-//        for (j= N - Nringdown+(Size[1]-I[1]);j<N;j++)
-//        {
-//            std::fprintf(ringfile, "%f\t%e\t%e\n", (double)j*dt, hlm_rad[1][j], hlm_phase[1][j]);
-//        }
-//        std::fclose(ringfile);
-//    }
-
+  }
     
 }

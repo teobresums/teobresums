@@ -270,46 +270,19 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
 
 
 /** QNM fits for the 22 mode for spinning systems */
-void QNMHybridFitCab(double nu, double **ab, double ***sigma)
-
-(TEOBResumParams params, vector<double> &a1, vector<double> &a2, vector<double> &a3, vector<double> &a4, vector<double> &b1, vector<double> &b2, vector<double> &b3, vector<double> &b4, vector<gsl_complex> &sigma)
+void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK; 
+		     double Mbh, double abh,  
+		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+		     double ***sigma)
 {
-    
-  // Shorthands
-  const int k22 = 1;
-  const int k21 = 0;
-  const int k33 = 4;
-  const int k44 = 8;
-    
-  int k, n;
 
-  const double nu2 = SQ(nu);
-  const double nu3 = nu2*nu;
-
-  /** Init coefs to zero */
-  for (n=0; n<8; n++) {
-    for (k=0; k<KMAX; k++) {
-      ab[n][k]=0.;
-    }
-  }
-
-  double *a = ab[0]; /* a1,a2,a3,a4 index = 0,1,2,3 */
-  double *b = ab[4]; /* b1,b2,b3,b4 index = 4,5,6,7 */
-
-  double alpha21[KMAX], alpha1[KMAX], omega1[KMX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
-    
-
-  // FIX PARS:
-  int   spin_flag     = params.flags.spin;
-  
-  double a12          = params.X1*params.chi1 - params.X2*params.chi2;
-  double X12          = params.X1 - params.X2;
-  double aeff         = params.aK + 1./3.*a12*X12;
-  double aeff_omg     = params.aK + a12*X12;
-
-  const double af         = JimenezFortezaRemnantSpin(params);
-
-
+  const double a12        = X1*chi1 - X2*chi2;
+  const double X12        = X1 - X2;
+  const double aeff       = aK + 1./3.*a12*X12;
+  const double aeff_omg   = aK + a12*X12;
+  const double af         = abh; //JimenezFortezaRemnantSpin(nu, X1, X2, chi1, chi2);
+  const double nu2        = SQ(nu);
+  const double nu3        = nu2*nu;
   const double aeff2      = SQ(aeff);
   const double aeff3      = SQ(aeff2);
   const double af2        = SQ(af);
@@ -318,19 +291,18 @@ void QNMHybridFitCab(double nu, double **ab, double ***sigma)
   const double aeff_omg3  = SQ(aeff_omg2);
   const double aeff_omg4  = SQ(aeff_omg2);
   const double X12_2      = SQ(X12);
+
+  double alpha21[KMAX], alpha1[KMAX], omega1[KMX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
+      
+  const int usespins = par_get_i("use_spins");  
   
-  double Mbh          = params.Mbh;
+  int k;
+  const int k22 = 1;
+  const int k21 = 0;
+  const int k33 = 4;
+  const int k44 = 8;
     
-  const int usespins = par_get_i("use_spins");
-  
 
-
-
-
-
-
-
-  
   if (!(usespins)) {
     
     /** Last updates: 05/09/2017 from CoM extrapolated SXS data */
@@ -481,7 +453,6 @@ void QNMHybridFitCab(double nu, double **ab, double ***sigma)
     b1[k] = Domg[k] * (1+c3phi[k]+c4phi[k]) / (b2[k]*(c3phi[k] + 2.*c4phi[k]));
   }
   
-
 }
 
 
