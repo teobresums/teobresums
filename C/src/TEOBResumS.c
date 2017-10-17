@@ -28,7 +28,7 @@ int TEOBResumS(
   int size = par_get_i("size"); /* can change runtime! */ 
 
   double q    = par_get_d("q");
-  doulbe nu   = par_get_d("nu");
+  double nu   = par_get_d("nu");
   double chi1 = par_get_d("chi1");
   double chi2 = par_get_d("chi2");
 
