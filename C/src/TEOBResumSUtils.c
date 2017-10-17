@@ -199,6 +199,24 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
     return OK;
 }
 
+/** (h+, hx) polarizations from the multipolar waveform */
+void compute_hpp(Waveform_lm **hlm, double nu, double M, double distance, double psi, double iota, Waveform **hpp)
+{
+  double Y_real, Y_imag;
+  double Aki, cosPhi, sinPhi;
+  int k,i;
+  for (k = 0; k < KMAX; k++ ) {
+    spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], psi,iota);
+    for (i = 0; i < (*hlm)->size; i++) {
+      Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
+      cosPhi =   cos( (*hlm)->ampli[k][i] );
+      sinPhi = - sin( (*hlm)->ampli[k][i] );
+      *hpp->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+      *hpp->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+    }
+  }
+}
+
 /** 4th order centered stencil first derivative, uniform grids */
 int D0(double *f, double dx, int n, double *df)
 {
@@ -279,7 +297,8 @@ void Waveform_alloc (Waveform **wav, int size, char *name)
     errorexit("Out of memory");
   *wav->real = (double*) malloc ( size * sizeof(double) );
   *wav->imag = (double*) malloc ( size * sizeof(double) );
-  //*wav->data = // for complex data
+  memset(*wav->real, 0, size*sizeof(double));
+  memset(*wav->imag, 0, size*sizeof(double));
   *wav->size = size; 
   strcpy(name,*wav->name);
 }
@@ -288,7 +307,9 @@ void Waveform_push (Waveform **wav, int size)
 {
   if (*wav->real) *wav->real = (double*) realloc ( size * sizeof(double) );
   if (*wav->imag) *wav->imag = (double*) realloc ( size * sizeof(double) );
-  //if (*wav->data) *wav->data = // for complex data
+
+  //TODO: set to zero the new segment ? (check realloc)
+
   *wav->size = size; 
 }
 
@@ -298,7 +319,6 @@ void Waveform_output (Waveform *wav)
   FILE* fp = fopen(wav->name, "w"); 
   for (i = 0; i < wav->size; i++) {
     fprintf(fp, "%.9e %.12e %.12e\n", wav->time, wav->real[i], wave->imag[i]);
-    //fprintf(fp, "%.9e ??? ???\n", wav->time, wav->data[i]);
   }
   fclose(fp);
 }
@@ -307,7 +327,6 @@ void Waveform_free (Waveform *wav)
 {
   if (wav->real) free(wav->real);
   if (wav->imag) free(wav->imag);
-  //if (wav->data) free(wav->data);
   free(wav);
 }
 
@@ -322,14 +341,12 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name)
   int k;
   for (k=0; k<KMAX; k++) {
     if (kmask[k]) {
-      //*wav->real[k] = (double*) malloc ( size * sizeof(double) );
-      //*wav->imag[k] = (double*) malloc ( size * sizeof(double) );
-      *wav->ampil[k] = (double*) malloc ( size * sizeof(double) );
+      *wav->ampli[k] = (double*) malloc ( size * sizeof(double) );
       *wav->phase[k] = (double*) malloc ( size * sizeof(double) );
+      memset(*wav->ampli[k], 0, size*sizeof(double));
+      memset(*wav->phase[k], 0, size*sizeof(double));
       strcpy(name[k],*wav->name[k]);
     } else {
-      //*wav->real[k] = NULL;
-      //*wav->imag[k] = NULL;
       *wav->ampli[k] = NULL;
       *wav->phase[k] = NULL;
     }
@@ -341,10 +358,11 @@ void Waveform_lm_push (Waveform **wav, int size, int *kmask)
   int k;
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
-      //*wav->real[k] = (double*) realloc ( size * sizeof(double) );
-      //*wav->imag[k] = (double*) realloc ( size * sizeof(double) );
       *wav->ampli[k] = (double*) realloc ( size * sizeof(double) );
       *wav->phase[k] = (double*) realloc ( size * sizeof(double) );
+
+      //TODO: set to zero the new segment ? (check realloc)
+
     }
   }
 }
@@ -357,8 +375,7 @@ void Waveform_lm_output (Waveform *wav, int *kmask)
     if (wav->kmask[k]) {
       FILE* fp = fopen(wav->name[k], "w"); 
       for (i = 0; i < n; i++) {
-	fprintf(fp, "%.9e %.12e %.12e\n", wav->time, wav->real[k][i], wave->imag[k][i]);
-	//fprintf(fp, "%.9e ??? ???\n", wav->time, wav->data[k][i]);
+	fprintf(fp, "%.9e %.12e %.12e\n", wav->time, wav->ampli[k][i], wave->phase[k][i]);
       }
       fclose(fp);
     }
@@ -369,8 +386,6 @@ void Waveform_lm_free (Waveform_lm *wav)
 {
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
-      if (wav->real[k]) free(wav->real[k]);
-      if (wav->imag[k]) free(wav->imag[k]);
       if (wav->ampli[k]) free(wav->ampli[k]);
       if (wav->phase[k]) free(wav->phase[k]);
       strcpy(name[k],wav->name[k]);
@@ -380,31 +395,39 @@ void Waveform_lm_free (Waveform_lm *wav)
 }
 
 /** Dynamics */
-void Dynamics_alloc (Dynamics **dyn, int size)
+void Dynamics_alloc (Dynamics **dyn, int size, char **name)
 {
   *dyn = (Dynamics *) calloc(1, sizeof(Dynamics)); 
   if (*dyn == NULL)
     errorexit("Out of memory");
+  strcpy(name,*dyn->name);
   *dyn->size = size; 
   *dyn->time = (double*) malloc ( size * sizeof(double) );
+  memset(*dyn->time, 0, size*sizeof(double));
   int v;
-  for (v = 0; v < EOB_DYNAMICS_VARS; v++)
+  for (v = 0; v < EOB_DYNAMICS_VARS; v++) {
     *dyn->data[v] = (double*) malloc ( size * sizeof(double) );
+    memset(*dyn->data[k], 0, size*sizeof(double));
+  }
 }
 
 void Dynamics_push (Dynamics **dyn, int size)
 {
   *dyn->time = (double*) realloc ( size * sizeof(double) );
   int v;
-  for (v = 0; v < EOB_DYNAMICS_VARS; v++)
+  for (v = 0; v < EOB_DYNAMICS_VARS; v++) {
     *dyn->data[v] = (double*) realloc ( size * sizeof(double) );
+
+    //TODO: set to zero the new segment ? (check realloc)
+
+  }
   *dyn->size = size; 
 }
 
 void Dynamics_output (Dynamics *dyn)
 {
   int v, i;
-  FILE* fp = fopen("dynamics.txt", "w"); 
+  FILE* fp = fopen(dyn->name, "w"); 
   for (i = 0; i < dyn->size; i++) {
     fprintf(fp, "%.9e", dyn->time[i]);
     for (v = 0; v < EOB_DYNAMICS_VARS; v++)

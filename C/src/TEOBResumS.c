@@ -19,55 +19,50 @@
 
 #include "TEOBResumS.h"
 
-int TEOBResumS(
-	       Waveform **hpp,        /** (h+,hx) return array  **/
-	       Waveform_lm **hlm      /** hlm return array    **/
-	       )
+int main (int argc, char* argv[])
 {
+  /** Input parameters */
+  if (argc == 1) {
+    eob_set_params(argv, argc);
+  } else {
+    printf(TEOBResumS_Info);
+    printf(TEOBResumS_Usage);
+    exit(OK);
+  }
 
-  int size = par_get_i("size"); /* can change runtime! */ 
+  int size = par_get_i("size"); /* note: size can vary */
 
-  double q    = par_get_d("q");
-  doulbe nu   = par_get_d("nu");
-  double chi1 = par_get_d("chi1");
-  double chi2 = par_get_d("chi2");
-
-  /** Alloc memory for dynamical vars */
+  /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
-  Dynamics_alloc(&dyn, size);
-      
-  /** Set parameters */
-  dyn->t             = 0.;
-  dyn->phi           = 0.;
-  dyn->r             = 0.;
-  dyn->pph           = 0.;
-  dyn->prstar        = 0.;
-  dyn->Omg           = 0.;
-  dyn->Omg_orb       = 0.;
-  dyn->ddotr         = 0.;
-  dyn->A             = 0.;
-  dyn->H             = 0.;
-  dyn->Heff          = 0.;
-  dyn->jhat          = 0.;
-  dyn->r_omega       = 0.;
-  dyn->MOmg_prev     = 0.;
+  Waveform *hlm; /* h_lm */ 
+  Waveform_lm_t hlm_t;
+  Waveform_lm *hlm_nqc; /* NQC */
 
-  /** Local vars */
-  Waveform_lm_pt hlm_t;
+  Dynamics_alloc(&dyn, size, "dyn");
+  Waveform_lm_alloc (&hlm, size, "hlm"); 
+
+  /** Useful vars */
+  const double q    = par_get_d("q");
+  const doulbe nu   = par_get_d("nu");
+  const double chi1 = par_get_d("chi1");
+  const double chi2 = par_get_d("chi2");
   const int usespins = par_get_i("use_spins");
-  int status;
-  
+  const int use_tidal = par_get_i("use_tidal");
+  int check_status;
+  int store_dynamics = par_get_i("output_dynamics");
+  if (!(use_tidal)) store_dynamics = 1; 
+
   /** Compute light-ring and LSO (if needed) */
-  if (par_get_i("use_tidal")) {
-    TRYROOT(status, eob_dyn_AdiabLR(dyn, dyn->rLR));
+  if (use_tidal) {
+    ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
     par_set_d("rLR", dyn->rLR);
   }
   if (par_get_i("compute_LR")) {
-   TRYROOT(status, eob_dyn_AdiabLR(dyn, dyn->rLR));
+   ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
    par_set_d("rLR", dyn->rLR);
   }
   if (par_get_i("compute_LSO")) {
-    TRYROOT(status, eob_dyn_AdiabLSO(dyn, dyn->rLSO));
+    ROOTFINDER(check_status, eob_dyn_AdiabLSO(dyn, dyn->rLSO));
     par_set_d("rLSO", dyn->rLSO);
   }
   
@@ -80,7 +75,7 @@ int TEOBResumS(
     sys     = {eob_dyn_rhs, NULL, EOB_EVOLVE_VARS, dyn};
     eob_dyn_ic(dyn->y0, dyn);
   }
-    
+  
   /** Initial conditions: t, r, phi, prstar, pphi */
   dyn->t = 0.0;
   dyn->y[EOB_EVOLVE_RAD]    = dyn->y0[EOB_ID_RAD];
@@ -89,7 +84,7 @@ int TEOBResumS(
   dyn->y[EOB_EVOLVE_PPH]    = dyn->y0[EOB_ID_PPH];
 
   /** Final BH */
-  if (!(par_get_i("use_tidal"))) {
+  if (!(use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, dyn->Mbhf, dyn->abhf);
     if (PR) printf("BH_final_mass[Healy] = %e\nBH_final_spin[Healy] = %e",dyn->Mbhf,dyn->abhf);
     dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
@@ -99,13 +94,13 @@ int TEOBResumS(
   }
     
   /** Initialize ODE system solver */
-  dyn->dt            = par_get_d("dt");
+  dyn->dt            = par_get_d("ode_dt");
   dyn->t1            = par_get_d("ode_tmax");
   dyn->t_stop        = par_get_d("ode_tmax");
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
-  const double rstop = par_get_d("stop_at_radius");
+  const double rstop = par_get_d("ode_stop_at_radius");
   if (rstop>=0.) {
     dyn->ode_stop_radius   = true;
   }
@@ -192,7 +187,7 @@ int TEOBResumS(
     }
 
     /** Waveform computation 
-	It needs a r.h.s. evaluation */
+	Needs a r.h.s. evaluation */
     dyn->store = 1;
     if (usespins) {
       eob_dyn_rhs_s(dyn->t, y, dy, dyn);
@@ -200,7 +195,7 @@ int TEOBResumS(
       eob_dyn_rhs(dyn->t, y, dy, dyn);
     }
     dyn->store = 0;
-
+    
     eob_wav_hlm(dyn, hlm_t); 
    
     /** Update size and push arrays (if needed) */
@@ -208,23 +203,23 @@ int TEOBResumS(
     if (iter>size) {
       size = iter;
       par_set_i("size", size);
-      //Waveform_push (&hpp, size);// not needed yet
       Waveform_lm_push (&hlm, size);
       Dynamics_push (&dyn, size);
     }
     
     /** Append dynamics and waveform to vectors */
-    dyn->time[iter] = t;
-    dyn->data[EOB_RAD][iter]    = dyn->r;
-    dyn->data[EOB_MOMG][iter]   = dyn->Omg;
-    dyn->data[EOB_PPHI][iter]   = dyn->pphi;
-    dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
-    dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
-    dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
-
     for (k = 0; k < KMAX; k++) {
-      *hlm->ampli[k][iter] = hlm_t->ampli[k]; 
-      *hlm->phase[k][iter] = hlm_t->phase[k]; 
+      hlm->ampli[k][iter] = hlm_t->ampli[k]; 
+      hlm->phase[k][iter] = hlm_t->phase[k]; 
+    }
+    if (store_dynamics) {
+      dyn->time[iter] = t;
+      dyn->data[EOB_RAD][iter]    = dyn->r;
+      dyn->data[EOB_MOMG][iter]   = dyn->Omg;
+      dyn->data[EOB_PPHI][iter]   = dyn->pphi;
+      dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
+      dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
+      dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
     }
 
     /** Stop integration at given radius (if rstop >= 0) */    
@@ -261,113 +256,130 @@ int TEOBResumS(
   gsl_odeiv2_step_free (s);
   gsl_odeiv2_driver_free (d);
 
-  // SB stops here waiting for improved NQC & Ringdown ...............
+  /** Update waveform size */
+  par_set_i("size", size); 
 
-  /** Build uniform grid of width dt and alloc memory */
-  double *vecg[EOB_DYNAMICS_VARS + 1]; /* All dynamical vars + time */
-  Waveform *hlm_vecg; 
-  int i;
+  /** Uniform grid */
+  if ((use_tidal) || (interp_uniform_grid)) {
+
+    Waveform *hlm_vecg; 
+    Dynamics *dyn_vecg; 
   
-  //CHECK Is 'iter=size' the last point?
-  //WARNING: is this roundind under control ?!
-  const int size_vecg = (int)((dyn->time[size] - dyn->time[0])/dyn->dt + 1);
+    /* Build uniform grid of width dt and alloc tmp memory */
+    
+    //CHECK Is 'iter=size' the last point?
+    //WARNING: is this rounding under control ?!
+    const int size_vecg = (int)((dyn->time[size] - dyn->time[0])/dyn->dt + 1);
 
-  for (i = 0; i < (EOB_DYNAMICS_VARS + 1); i++) {
-    vecg[i] = (double*) malloc(size_vecg);
+    Waveform_lm_alloc (&hlm_vecg, size_vecg, "hlm_tmp");
+    
+    int i;    
+    for (i = 0; i < size_vecg; i++) {
+      hlm_vecg->time[i] = i*dt;
+    }
+
+    /* Interpolate on uniform grid */
+    for (k = 0; k < KMAX; k++) {
+      interp_grid(hlm->time, hlm->ampli[k], hlm->size, hlm_vecg->time, size_vecg, hlm_vecg->ampli[k]);
+    }
+    for (k = 0; k < KMAX; k++) {
+      interp_grid(hlm->time, hlm->phase[k], hlm->size, hlm_vecg->time, size_vecg, hlm_vecg->phase[k]);
+    }
+
+    /* Swap pointers and free old memory */
+    SWAP(hlm_vecg, hlm);
+
+    Waveform_lm_free (hlm_vecg);
+    strcpy("hlm",hlm->name);
+
+    if (store_dynamics) {
+
+      /* Same for dynamics */
+
+      Dynamics_alloc(&dyn_vecg, size_vecg, "dyn_vecg");
+
+      for (i = 0; i < size_vecg; i++) {
+	dyn_vecg->time[i] = i*dt;
+      }
+      
+      for (k = 0; k < EOB_DYNAMICS_VARS; k++) {
+	interp_grid(dyn->time, dyn->data[k], size, dyn_vecg->time, size_vecg, dyn_vecg->data[k]);
+      }
+
+      /* Swap array data pointers and structure pointers
+	 maintains old scalar data and parameters */
+      SWAP(dyn_vecg->data, dyn->data);
+      SWAP(dyn_vecg, dyn);
+
+      Dynamics_free (dyn_vecg);
+      strcpy("dyn",dyn->name);
+
+    }
+    
   }
-
-  double * t_vecg = &vecg[EOB_DYNAMICS_VARS];
-  for (i = 0; i < size_vecg; i++) {
-    t_vecg[i] = i*dt;
-  }
-
-  Waveform_lm_alloc (&hlm_vecg, size, "hlm_uniform");
-
-  /** Interpolate dynamics on uniform grid */
-  for (k = 0; k < EOB_DYNAMICS_VARS; k++) {
-    interp_grid(dyn->time, dyn->data, size, t_vecg, size_vecg, vecg[k]);
-  }
-
-  /** Interpolate wave on uniform grid */
-  for (k = 0; k < KMAX; k++) {
-    interp_grid(hlm->time, hlm[k]->ampli, hlm->size, t_vecg, size_vecg, hlm_vecg[k]->ampli);
-  }
-  for (k = 0; k < KMAX; k++) {
-    interp_grid(hlm->time, hlm[k]->phase, hlm->size, t_vecg, size_vecg, hlm_vecg[k]->phase);
-  }
-
-  /** Compute NQC corrections */
-  Waveform_lm *hlm_nqc; 
-  Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc");
-  if (!(usetidal)) {
-    eob_wav_hlmNQC_find_a1a2a3(size, t_vecg, 
-			       vecg[EOB_RAD],vecg[EOB_MOMG],vecg[EOB_PPH],vecg[EOB_PRSTAR],vecg[EOB_PRSTAR],vecg[EOB_OMGORB],vecg[EOB_DDOTR],
-			       hlm_vecg, dyn, hlm_nqc);
-  }
-
-  //TODO: At this point we might want to swap pointers to rename the'vecg' stuff and delete the prev (nonuniform) grid arrays 
-  // hlm_vecg ==> hlm
-  // vecg     ==> dyn->data
-  // delete old/nonuniform hlm/dynamics arrays
-
-  /** Extend arrays */
-  size += par_get_i("ringdown_extend_array");
-  Waveform_lm_push (&hlm, size);
-  Dynamics_push (&dyn, size );
-
-  /** Ringdown attachment */
-  eob_wav_ringdown(t_vecg, vecg[EOB_MOMG], dyn, hlm_vecg);
   
-  /** Computation of (h+,hx) */
+  /** NQC and ringdown for BBH */
+  if (!(use_tidal)) {
 
-  Waveform_push (&hpp, size);  
+    Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc");
+    //Waveform_lm_alloc (&hlm_nqc, size, "hlm_ringdown");
+
+    /** Compute NQC corrections */
+    eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, dyn, hlm_nqc);
+
+    /** Extend arrays */
+    size += par_get_i("ringdown_extend_array");
+    Waveform_lm_push (&hlm, size);
+    Dynamics_push (&dyn, size );
+    
+    /** Ringdown attachment */
+    eob_wav_ringdown(dyn, hlm);
+
+    if (par_get_i("output_nqc")) 
+      Waveform_lm_output (hlm_nqc);
+    //if (par_get_i("output_ringdwon")) 
+    //Waveform_lm_output (hlm_ringdown);
+
+    Waveform_lm_free (hlm_nqc);
+    //Waveform_lm_free (hlm_ringdown);
+
+  }
+    
+  /** Update waveform size */
+  size = hlm->size;
+  par_set_i("size", size); 
+
+  /** Alloc memory for (h+,hx) */
+  Waveform *hpp; 
+  Waveform_alloc (&hpp, size, "hpp");
   
-  /* Init to zero */
-  memset(hpp->real, 0, size*sizeof(double));
-  memset(hpp->imag, 0, size*sizeof(double));
-  
-  /* Scale to physical units (if necessary) */
-  double M = par_get_d("M");
-  double nu = par_get_d("nu");
-  double distance = par_get_d("distance");
+  /** Scale to physical units (if necessary) */
+  const double M = par_get_d("M");
+  const double nu = par_get_d("nu");
+  const double distance = par_get_d("distance");
   double amplitude_prefactor = 1.;    
   if (!(par_get_i("use_geometric_units"))) {
     M *= MSUN_M;
     amplitude_prefactor = nu*M/(distance*MPC_M);
-    } 
+  } 
+  //const double psi = par_get_d("polarization");
+  const double psi = par_get_d("coalescence angle"); 
+  const double iota = par_get_d("inclination");
   
-  /* Spherical harmonics projection */
-  double Y_real, Y_imag;
-  //double psi = par_get_d("polarization");
-  double psi = par_get_d("coalescence angle"); 
-  double iota = par_get_d("inclination");
-  double Aki, cosPhi, sinPhi;
-  for (k = 0; k < KMAX; k++ ) {
-    spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], psi,iota);
-    for (iter = 0; iter < size; i++) {
-      Aki    = 0.;//hlm_ampl_g[k][i]*amplitude_prefactor;
-      cosPhi = 0;//cos(hlm_phase_g[k][i]);
-      sinPhi = 0;//-sin(hlm_phase_g[k][i]);
-      *hpp->real[iter] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-      *hpp->imag[iter] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
-    }
-  }
-
-  /** Output dynamics */
-  if (par_get_i("output_dynamics")) {
+  /** Computation of (h+,hx) */
+  eob_compute_hpp(&hlm, nu, M, distance, psi, iota, &hpp);
+    
+  /** Output */
+  Waveform_lm_output (hpp);
+  if (par_get_i("output_multipoles"))
+    Waveform_lm_output (hlm);
+  if (par_get_i("output_dynamics")) 
     Dynamics_output(dyn);
-  }
-
-  /** Free memory for dynamical vars */
-  Dynamics_free(dyn);
-  free(vecg);
-
-  //TODO WHAT hlm DO WE WANT IN OUTPUT? Unif or nonunif.? 
-  // -> swap output if needed/be careful with memory...
-  //TODO ... SWAP...
-  Waveform_lm_free (hlm_vecg);
-  Waveform_lm_free (hlm_nqc);
-  //Waveform_lm_free (hlm); 
-
+  
+  /** Free memory */
+  Dynamics_free (dyn);
+  Waveform_lm_free (hlm);
+  Waveform_free (hpp);
+  
   return OK;
 }

@@ -46,9 +46,11 @@
 #define STRLEN 128 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
 #define TEOBResumS_Usage {printf("USAGE:\n\t%s parfile\n", argv[0]);exit(OK);} 
-#define DEBUG 1 /** Flag for debug mode */
 #ifndef PR /** Flag for print option (control at compiling time) */
 #define PR 0 
+#endif
+#ifndef DEBUG /** Flag for debug option(control at compiling time) */
+#define DEBUG 0 
 #endif
 
 #define SIGN(x,y) ((y) >= 0.0 ? fabs(x) : -fabs(x)) 
@@ -66,6 +68,15 @@
 #define DEQUAL(a,b,eps) (fabs((a)-(b))<(eps)) /** double compare */
 #define DUNEQUAL(a,b,eps) (fabs((a)-(b))>(eps))
 #define STREQUAL(s,t) ((strcmp((s),(t))==0)) /** string compare */
+  
+  //TODO: checkme
+#define SWAP(a,b)   \
+  ( do {	    \
+    typeof(a) temp; \
+    temp = a;	    \
+    a = b;	    \
+    b = temp;	    \
+  } while (0) )
 
 /* Useful constants */
 #define Pi 3.1415926535897932384626433832795028
@@ -139,7 +150,7 @@ enum{
   ROOT_ERRORS
 }
 const char root_errors[ROOT_ERRORS] = {"none","root is not bracketed.","root finder did not converged.", "root finder failed."};
-#define TRYROOT(i, x) if ( ((i) = (x))) && ((i)>ROOT_ERRORS_NO) ) { errorexits(root_errors[(i)]); } //FIXME: not sure if this work, seems clever...
+#define ROOTFINDER(i, x) if ( ((i) = (x))) && ((i)>ROOT_ERRORS_NO) ) { errorexits(root_errors[(i)]); } //FIXME: not sure if this work, seems clever...
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 const int L[KMAX] = {
@@ -194,6 +205,7 @@ typedef struct tagWaveform_lm_t
 /** Dynamics data type */
 typedef struct tagDynamics
 {
+  char name[STRLEN];
   /* various pointwise variables */
   int store; /* store following values? */
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
@@ -239,9 +251,7 @@ double par_get_d(const char *key);
 const char * par_get_s(const char *key);
 int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
-//void par_commandline_parse(char *s, int n);
-//void TEOBResumSSetParameters(char *s, int n, int mode, int pr);
-void TEOBResumSSetParameters(char *s, int pr);
+void eos_set_params(char *s, int pr);
 
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);
@@ -256,6 +266,7 @@ double interp1d (const int order, double xx, int nx, double *f, double *x);
 double fact(int n);
 double wigner_d_function(int l, int m, int s, double i);
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
+void compute_hpp(Waveform_lm **hlm, double nu, double M, double distance, double psi, double iota, Waveform **hpp);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_nux(double *f, double *x, int n, double *df);
@@ -293,15 +304,10 @@ int eob_dyn_rhs(double t, const double y[], double dy], void *params);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); 
-
-
 double eob_dyn_fLR(double r, Dynamics *dyn);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, Dynamics *dyn);
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
-
-//void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb);//used at all???
-
 
 /* TEOBResumSInitialCondition.c */
 void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);
@@ -332,7 +338,9 @@ void eob_wav_hlmNewt(double r, double Omega, double phi, double nu, int usetidal
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
 void eob_wav_flm(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
-void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, double *pr_star, double *Omg_orb, double *ddotr, Waveform_lm *h, Dynamics *dyn, Waveform_lm *hnqc);
+void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *psilmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double *sigma, double *psi);
 void eob_wav_ringdown(doulble *t, double *Omega, Dynamics *dyn, Waveform_lm *hlm);
+
+

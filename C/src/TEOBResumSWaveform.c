@@ -893,12 +893,9 @@ double eob_wav_timeshift_nqc(double nu, double chi1)
   return DeltaT_nqc;  
 }
 
-
-
 /** Computes the factors and the coefficients) that build the  
     NQC corrections to the waveform in the spinning case */
-void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, double *pph, double *pr_star, double *Omg_orb, double *ddotr, 
-			Waveform_lm *h, Dynamics *dyn, Waveform_lm *hnqc)
+void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
     
@@ -919,6 +916,14 @@ void eob_wav_hlmNQC_find_a1a2a3(int size, double *T, double *r, double *w, doubl
   const double aeff     = aK + 1/3*a12*X12;
   const double aeff_omg = aK + a12*X12;
     
+  double *T       = dyn->time;
+  double *r       = dyn->data[EOB_RAD];
+  double *w       = dyn->data[EOB_MOMG];
+  double *pph     = dyn->data[EOB_PPH];
+  double *pr_star = dyn->data[EOB_PRSTAR];
+  double *Omg_orb = dyn->data[EOB_OMGORB];
+  double *ddotr   = dyn->data[EOB_DDOTR] 
+
   double c_p1,     c_p2,     c_p3,   c_p4;
   double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
   double c_pdomg1, c_pdomg2;
@@ -1398,7 +1403,7 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 }
 
 /** Ringdown calculation and match to the dynamics */ 
-void eob_wav_ringdown(doulble *t, double *Omega, Dynamics *dyn, Waveform_lm *hlm)
+void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 {
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
@@ -1409,6 +1414,9 @@ void eob_wav_ringdown(doulble *t, double *Omega, Dynamics *dyn, Waveform_lm *hlm
   const double X1    = dyn->X1;
   const double X2    = dyn->X2;
   const double aK    = dyn->aK;
+
+  double *t     = dyn->time;
+  double *Omega = dyn->data[EOB_MOMG];
 
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
