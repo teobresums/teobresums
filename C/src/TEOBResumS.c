@@ -30,6 +30,24 @@ int main (int argc, char* argv[])
     exit(OK);
   }
 
+  /** Switch to mass-rescaled geometric units (if needed)*/
+  const double M = par_get_d("M"); /* Msun */ 
+  const double f0 = par_get_d("initial_frequency");
+  double time_unit_fact = 1;
+  double r0;
+  if (!(par_get_i("use_geometric_units"))) {
+    /* Input given in physical units, 
+       rescale to geometric units and mass rescaled quantities
+       compute r0 from the initial GW frequency in Hz */
+    time_unit_fact = time_units_factor(M);
+    r0 = radius0(M, f0);
+  } else {
+    /* Input given in geometric units, 
+       rescale to geometric units and mass rescaled quantities
+       compute r0 from the initial GW frequency in geometric units and mass rescaled */
+    r0 = pow(f0*Pi, -2./3.);
+  }
+
   int size = par_get_i("size"); /* note: size can vary */
 
   /** Alloc memory for dynamics and multipolar waveform */
@@ -70,10 +88,10 @@ int main (int argc, char* argv[])
   gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_VARS, dyn};
   if (usespins) {
     sys = {eob_dyn_rhs_s, NULL, EOB_EVOLVE_VARS, dyn};
-    eob_dyn_ic_s(dyn->y0, dyn);
+    eob_dyn_ic_s(r0, dyn, dyn->y0);
   } else {
     sys     = {eob_dyn_rhs, NULL, EOB_EVOLVE_VARS, dyn};
-    eob_dyn_ic(dyn->y0, dyn);
+    eob_dyn_ic(r0, dyn, dyn->y0);
   }
   
   /** Initial conditions: t, r, phi, prstar, pphi */
@@ -94,9 +112,9 @@ int main (int argc, char* argv[])
   }
     
   /** Initialize ODE system solver */
-  dyn->dt            = par_get_d("ode_dt");
-  dyn->t1            = par_get_d("ode_tmax");
-  dyn->t_stop        = par_get_d("ode_tmax");
+  dyn->dt            = par_get_d("ode_dt")   * time_unit_fact;
+  dyn->t1            = par_get_d("ode_t1")   * time_unit_fact;
+  dyn->t_stop        = par_get_d("ode_tmax") * time_unit_fact;
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
@@ -322,7 +340,6 @@ int main (int argc, char* argv[])
   if (!(use_tidal)) {
 
     Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc");
-    //Waveform_lm_alloc (&hlm_nqc, size, "hlm_ringdown");
 
     /** Compute NQC corrections */
     eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, dyn, hlm_nqc);
@@ -331,9 +348,12 @@ int main (int argc, char* argv[])
     size += par_get_i("ringdown_extend_array");
     Waveform_lm_push (&hlm, size);
     Dynamics_push (&dyn, size );
+
+    //Waveform_lm_alloc (&hlm_ringdown, par_get_i("ringdown_extend_array"), "hlm_ringdown");
     
     /** Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
+    //eob_wav_ringdown(dyn, hlm, hlm_ringdown);
 
     if (par_get_i("output_nqc")) 
       Waveform_lm_output (hlm_nqc);

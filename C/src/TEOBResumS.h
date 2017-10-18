@@ -69,7 +69,6 @@
 #define DUNEQUAL(a,b,eps) (fabs((a)-(b))>(eps))
 #define STREQUAL(s,t) ((strcmp((s),(t))==0)) /** string compare */
   
-  //TODO: checkme
 #define SWAP(a,b)   \
   ( do {	    \
     typeof(a) temp; \
@@ -281,6 +280,7 @@ void Dynamics_alloc (Dynamics **dyn, int size);
 void Dynamics_push (Dynamics **dyn, int size);
 void Dynamics_output (Dynamics *dyn);
 void Dynamics_free (Dynamics *dyn);
+double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
 void errorexit(char *file, int line, char *s);

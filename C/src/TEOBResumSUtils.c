@@ -447,6 +447,11 @@ void Dynamics_free (Dynamics *dyn)
 }
 
 /** Convert time in sec to dimensionless and mass-rescaled units */
+double time_units_factor(double M)
+{
+  return 1./(M*MSUN_S);
+}
+
 double time_units_conversion(double M, double t)
 {
   return t/(M*MSUN_S);
