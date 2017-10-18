@@ -70,13 +70,13 @@
 #define DUNEQUAL(a,b,eps) (fabs((a)-(b))>(eps))
 #define STREQUAL(s,t) ((strcmp((s),(t))==0)) /** string compare */
   
-#define SWAP(a,b)   \
-  ( do {	    \
+#define SWAPTRS(a,b)   \
+  ({		    \
     typeof(a) temp; \
     temp = a;	    \
     a = b;	    \
     b = temp;	    \
-  } while (0) )
+  })
 
 /* Useful constants */
 #define Pi 3.1415926535897932384626433832795028

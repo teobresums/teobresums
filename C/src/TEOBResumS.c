@@ -305,7 +305,7 @@ int main (int argc, char* argv[])
     }
 
     /* Swap pointers and free old memory */
-    SWAP(hlm_vecg, hlm);
+    SWAPTRS(hlm_vecg, hlm);
 
     Waveform_lm_free (hlm_vecg);
     strcpy("hlm",hlm->name);
@@ -326,8 +326,8 @@ int main (int argc, char* argv[])
 
       /* Swap array data pointers and structure pointers
 	 maintains old scalar data and parameters */
-      SWAP(dyn_vecg->data, dyn->data);
-      SWAP(dyn_vecg, dyn);
+      SWAPTRS(dyn_vecg->data, dyn->data);
+      SWAPTRS(dyn_vecg, dyn);
 
       Dynamics_free (dyn_vecg);
       strcpy("dyn",dyn->name);
