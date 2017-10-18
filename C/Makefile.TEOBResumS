@@ -14,16 +14,16 @@ LIBD=$(BASE)/lib
 
 NAME=TEOBResumS
 EXE=$(NAME).x
-SRC=$(wildcard $(SRCD)/*.cpp) 
-OBJ=$(patsubst $(SRCD)/%.cpp,$(OBJD)/%.o,$(SRC)) 
+SRC=$(wildcard $(SRCD)/*.c)
+OBJ=$(patsubst $(SRCD)/%.c,$(OBJD)/%.o,$(SRC))
 LIB=$(LIBD)/lib$(NAME).a
 
 #
 # compilation options
 #
 
-CC=g++
-CFLAGS=-g -std=c++11
+CC=gcc
+CFLAGS=-g -std=c99 `gsl-config --cflags`
 #CFLAGS=-O3 -std=c++11 
 LFLAGS=`gsl-config --libs`
 LDLFLAGS=-lgsl -lgslcblas -lm
@@ -39,7 +39,7 @@ $(EXE): $(OBJ)
 	@echo "Building $@ ..."
 	@$(CC) $(CFLAGS) $(LFLAGS) $(OBJ) -o $@ $(LDLFLAGS)
 
-$(OBJD)/%.o: $(SRCD)/%.cpp
+$(OBJD)/%.o: $(SRCD)/%.c
 	@mkdir -p $(dir $@)
 	@echo "Compiling $< ... -> $@"
 	@$(CC) $(CFLAGS) -c $< -o $@
