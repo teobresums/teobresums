@@ -129,7 +129,8 @@ void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
 {
     
   /** Useful shorthands*/
-  double pi2    = SQ(pi);
+  double pi     = Pi;
+  double pi2    = SQ(Pi);
   double nu2    = SQ(nu);
   double y      = cbrt(Hreal*Omega*Hreal*Omega);
   double sqrt_y = sqrt(y);
@@ -145,7 +146,7 @@ void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
   /** Init phase */
   int k;
   for (k = 0; k < KMAX; k++) {
-    dlm[i] = 0.;
+    dlm[k] = 0.;
   }
   
   /** Residual phases in Pade-resummed form when possible */
@@ -368,7 +369,7 @@ void eob_wav_hlmNewt(double r,
   };
     
   /** Compute hlmNewt (without phase factor) in complex Polar coords */
-  for (k = 0; k < KMAX; k++) {
+  for (int k = 0; k < KMAX; k++) {
     hlmNewt->phase[k] = - phim[k] + ChlmNewt_phase[k];
     hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
   }
@@ -630,7 +631,7 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
       - 1.5337092502821381*PMTERMS_eps*x2;
     
     /** Amplitudes */
-    for (k = 0; k < KMAX; k++) {
+    for (int k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], L[k]);
     }
 
@@ -844,7 +845,7 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
 
 
     /** Amplitudes */
-    for (k = 9; k < KMAX; k++) {
+    for (int k = 9; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], L[k]);
     }
     
@@ -922,7 +923,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   double *pph     = dyn->data[EOB_PPH];
   double *pr_star = dyn->data[EOB_PRSTAR];
   double *Omg_orb = dyn->data[EOB_OMGORB];
-  double *ddotr   = dyn->data[EOB_DDOTR] 
+  double *ddotr   = dyn->data[EOB_DDOTR];
 
   double c_p1,     c_p2,     c_p3,   c_p4;
   double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
