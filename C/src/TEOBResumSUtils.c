@@ -307,9 +307,10 @@ void Waveform_push (Waveform **wav, int size)
 {
   if (*wav->real) *wav->real = (double*) realloc ( size * sizeof(double) );
   if (*wav->imag) *wav->imag = (double*) realloc ( size * sizeof(double) );
-
-  //TODO: set to zero the new segment ? (check realloc)
-
+  for (int i = *wav->size-1; i < size; i++) {
+    *wav->real[i] = 0.;
+    *wav->imag[i] = 0.;
+  }
   *wav->size = size; 
 }
 
@@ -355,14 +356,15 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name)
 
 void Waveform_lm_push (Waveform **wav, int size, int *kmask)
 {
-  int k;
+  int k, i;
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
       *wav->ampli[k] = (double*) realloc ( size * sizeof(double) );
       *wav->phase[k] = (double*) realloc ( size * sizeof(double) );
-
-      //TODO: set to zero the new segment ? (check realloc)
-
+      for (i = *wav->size-1; i < size; i++) {
+	*wav->ampli[k][i] = 0.;
+	*wav->phase[k][i] = 0.;
+      }
     }
   }
 }
@@ -414,12 +416,12 @@ void Dynamics_alloc (Dynamics **dyn, int size, char **name)
 void Dynamics_push (Dynamics **dyn, int size)
 {
   *dyn->time = (double*) realloc ( size * sizeof(double) );
-  int v;
+  int v,i;
   for (v = 0; v < EOB_DYNAMICS_VARS; v++) {
     *dyn->data[v] = (double*) realloc ( size * sizeof(double) );
-
-    //TODO: set to zero the new segment ? (check realloc)
-
+      for (i = *dyn->size-1; i < size; i++) {
+	*dyn->data[v][i] = 0.;
+      }
   }
   *dyn->size = size; 
 }
