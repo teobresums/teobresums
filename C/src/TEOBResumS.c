@@ -370,8 +370,8 @@ int main (int argc, char* argv[])
   par_set_i("size", size); 
 
   /** Alloc memory for (h+,hx) */
-  Waveform *hpp; 
-  Waveform_alloc (&hpp, size, "hpp");
+  Waveform *hpc; 
+  Waveform_alloc (&hpc, size, "hpc");
   
   /** Scale to physical units (if necessary) */
   const double M = par_get_d("M");
@@ -387,10 +387,10 @@ int main (int argc, char* argv[])
   const double iota = par_get_d("inclination");
   
   /** Computation of (h+,hx) */
-  eob_compute_hpp(&hlm, nu, M, distance, psi, iota, &hpp);
+  eob_compute_hpc(&hlm, nu, M, distance, psi, iota, &hpc);
     
   /** Output */
-  Waveform_lm_output (hpp);
+  Waveform_lm_output (hpc);
   if (par_get_i("output_multipoles"))
     Waveform_lm_output (hlm);
   if (par_get_i("output_dynamics")) 
@@ -399,7 +399,7 @@ int main (int argc, char* argv[])
   /** Free memory */
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);
-  Waveform_free (hpp);
+  Waveform_free (hpc);
   
   return OK;
 }

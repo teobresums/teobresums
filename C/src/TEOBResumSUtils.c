@@ -200,7 +200,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 }
 
 /** (h+, hx) polarizations from the multipolar waveform */
-void compute_hpp(Waveform_lm **hlm, double nu, double M, double distance, double psi, double iota, Waveform **hpp)
+void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double psi, double iota, Waveform **hpc)
 {
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
@@ -211,8 +211,8 @@ void compute_hpp(Waveform_lm **hlm, double nu, double M, double distance, double
       Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
       cosPhi =   cos( (*hlm)->ampli[k][i] );
       sinPhi = - sin( (*hlm)->ampli[k][i] );
-      *hpp->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-      *hpp->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+      *hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+      *hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
     }
   }
 }

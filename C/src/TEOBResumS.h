@@ -267,7 +267,7 @@ double interp1d (const int order, double xx, int nx, double *f, double *x);
 double fact(int n);
 double wigner_d_function(int l, int m, int s, double i);
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
-void compute_hpp(Waveform_lm **hlm, double nu, double M, double distance, double psi, double iota, Waveform **hpp);
+void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double psi, double iota, Waveform **hpc);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_nux(double *f, double *x, int n, double *df);
