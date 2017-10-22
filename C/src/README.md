@@ -1,21 +1,22 @@
+TEOBResumS.c : main -> SB
 
-TEOBResumSUtils.c : utilities
+TEOBResumSUtils.c : utilities -> SB
 
-TEOBResumSFits.c  : routines returning external fits (final BH, ringdown, NQC, tidal pars, etc)
+TEOBResumSPars.c  : parameters and pars i/o -> SB
 
-TEOBResumSPars.c  : routines to manage parameters and pars i/o
+TEOBResumSFits.c  : external fits (final BH, ringdown, NQC, tidal pars, etc) -> SB
 
-TEOBResumSFlux.c : routine for the flux
+TEOBResumSDynamics : r.h.s. and other stuff for EOB dynamics
 
-TEOBResumSInitialConditions.c : initial cond for dyn
+TEOBResumSInitialConditions.c : initial conditions for dynamics
 
-TEOBResumS.c : main
+TEOBResumSMetric.c : EOB metric
 
-TEOBResumSRingdown.c : 
+TEOBResumSFlux.c : flux used in dynamics
 
-TEOBResumSWaveform.c : 
+TEOBResumSWaveform.c : waveform
 
-TEOBResumSMetric.c :
+
 
 
 
