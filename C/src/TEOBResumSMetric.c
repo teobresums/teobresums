@@ -39,7 +39,7 @@ void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, d
 
   /* shortcuts */
   double nu2 = nu*nu;
-  double pi2 = pi*pi;
+  double pi2 = Pi*Pi;
   double pi4 = pi2*pi2;
   double u    = 1./r;
   double u2   = u*u;
@@ -82,18 +82,18 @@ void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, d
   /* Numerator and denominato of the Pade */
   double Num = 1 + N1*u;
   double Den = 1 + D1*u + D2*u2 + D3*u3 + D4*u4 + D5*u5;
-  double A   = Num/Den;
+  *A = Num/Den;
     
   /* First derivative */
   double dNum  = dN1*u + N1;
   double dDen  = D1 + u*(dD1 + 2*D2) + u2*(dD2 + 3*D3) + u3*(dD3 + 4*D4) + u4*(dD4 + 5*D5) + dD5*u5;
   
   /* Derivative of A function with respect to u */
-  double prefactor = A/(Num*Den);
+  double prefactor = (*A)/(Num*Den);
   double dA_u      = prefactor*(dNum*Den - dDen*Num);
   
   /* Derivative of A with respect to r */
-  double dA    = -u2*dA_u;
+  *dA = -u2*dA_u;
     
   /* Second derivatives of Pade coefficients */
   double d2N1 = (160*nu*(-3840 + 1536*logu*nu + nu*(20992 + 120*a5 - 615*pi2))*(828672 + nu*(-42024*a5 - 8064*a6 + 3584*(-1397 + 9*nu) + 174045*pi2) + 756*nu*(768 + nu*(-3584 - 24*a5 + 123*pi2))))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),3)*u2);
@@ -108,19 +108,19 @@ void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, d
   double d2Den = 2.*(D2 + dD1) + u*(6.*D3 + 4.*dD2 + d2D1) + u2*(12.*D4 + 6.*dD3 + d2D2) + u3*(20.*D5 + 8.*dD4 + d2D3) + u4*(10.*dD5 + d2D4) + u5*d2D5;
   
   /* Second derivative with respect of u */
-  double d2A_u = prefactor*(2.*dDen*dDen*A - 2.*dNum*dDen + Den*d2Num - d2Den*Num);
+  double d2A_u = prefactor*(2.*dDen*dDen*(*A) - 2.*dNum*dDen + Den*d2Num - d2Den*Num);
   
   /* Second derivative with respect of r */
-  double d2A = u4*d2A_u + 2.*u3*dA_u;
+  *d2A = u4*d2A_u + 2.*u3*dA_u;
   
   /* D potential and derivative with respect to r */
   double Dp  = 1.0 + 6.*nu*u2 - 2.*(3.0*nu-26.0)*nu*u3; // Pade' resummation of D
-  double D   = 1./Dp;
-  double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
+  *D   = 1./Dp;
+  *dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*(*D)*(*D);
 
   /* B potential and derivative with respect to r */
-  double B  = D/A; 
-  double dB = (dD*A - D*dA)/(A*A); 
+  *B  = (*D)/(*A);
+  *dB = ((*dD)*(*A) - (*D)*(*dA))/((*A)*(*A));
 
 }
 
@@ -153,7 +153,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   
   /* shortcuts */
   double nu2 = nu*nu;
-  double pi2 = pi*pi;
+  double pi2 = Pi*Pi;
   double pi4 = pi2*pi2;
   double u    = 1./r;
   double u2   = u*u;
@@ -172,20 +172,21 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
     dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
       - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
-    d2A_u = -90.*kapT4*u8 
-      - kT2*(2*bar_alph2_2*u6 + 12.*u5.*(bar_alph2_1 + 2*bar_alph2_2*u) 
-	     + 30.*u4.*(1 + bar_alph2_1*u + bar_alph2_2*u2)) 
-      - kT3*(2.*bar_alph3_2*u8 + 16.*u7.*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6.*(1 + bar_alph3_1*u + bar_alph3_2*u2));
+    d2A_u = -90.*kapT4*u8
+      - kT2*(2*bar_alph2_2*u6 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u)
+	     + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2))
+      - kT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
   
   } else { 
 
     const double c1  =  8.53353;
     const double c2  =  3.04309;
-    const double n1     = 0.840058;
-    const double d2     = 17.73239;
+    const double n1  =  0.840058;
+    const double d2  =  17.73239;
 
-    double dAcub  = 5./2.*   (1. -2*(c1+c2)*u + 3*c1*c2*u2);
-    double d2Acub = 5   *   (  -  (c1+c2)   + 3*c1*c2*u);
+    double Acub   = 5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
+    double dAcub  = 5./2.*     (1. -2*(c1+c2)*u + 3*c1*c2*u2);
+    double d2Acub = 5    *     (   -  (c1+c2)   + 3*c1*c2*u);
     double Den    = 1./(1. + d2*u2);
     double f23    = (1. + n1*u)*Den;
     double df23   = (n1 - 2*d2*u - n1*d2*u2)*(Den*Den);
@@ -225,13 +226,13 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
     A = AT2 + AT3 + AT4;    
     dA_u = dAT2 + dAT3 + dAT4;
-    d2A_dd =  d2AT2 + d2AT3 + d2AT4;
+    double d2A_dd =  d2AT2 + d2AT3 + d2AT4; // Unused ??
 
-    dA = -A_du/(r*r);
-    d2A = -2.*dA/r+A_ddu/(r*r*r*r);    
+    dA  = -dA_u/(r*r);
+    d2A = -2.*dA/r+A_ddu/(r*r*r*r);
 
-    *AT = A;
-    *dAT = dA;
+    *AT   = A;
+    *dAT  = dA;
     *d2AT = d2A;
 }
 
@@ -245,8 +246,8 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
     /* Add here tides if needed */
     double AT, dAT, d2AT;
     eob_metric_Atidal(r, dyn, &AT, &dAT, &d2AT);
-    A += AT;
-    dA += dAT;
+    A   += AT;
+    dA  += dAT;
     d2A += dA2T;    
   }
   

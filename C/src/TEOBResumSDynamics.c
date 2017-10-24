@@ -278,7 +278,7 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar,
 	  double *ggm)
 {
   static double c10,c20,c30,c02,c12,c04;
-  static double cs10,cs20,cs30,cs02,cs12,cs04;
+  static double cs10,cs20,cs30,cs40,cs02,cs12,cs04;
 
   /* Compute the nu-dep. coefficient at first call only */
   static int firstcall = 1;  
@@ -401,8 +401,8 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
     /* tidally-modified centrifugal radius */
     double rc2 = r2 + a02*(1.+2.*u);
     *rc         = sqrt(rc2);
-    *drc_dr     = r/rc*(1.-a02*u3);
-    *d2rc_dr2   = 1./rc*( 1.-drc_dr*r/rc*(1.-a02*u3)+2.*a02*u3);
+    *drc_dr     = r/(*rc)*(1.-a02*u3);
+    *d2rc_dr2   = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1.-a02*u3)+2.*a02*u3);
 #if (0)
     /* NO spin-spin-tidal couplings */
     double rc2 = r2;
@@ -415,8 +415,8 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
     double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
     double rc2 = r2 + aK2*(1. + 2.*alphanu2/r);
     *rc         = sqrt(rc2);
-    *drc_dr     = r/rc*(1.+aK2*(-alphanu2*u3 ));
-    *d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
+    *drc_dr     = r/(*rc)*(1.+aK2*(-alphanu2*u3 ));
+    *d2rc_dr2   = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
   }
   
 }
