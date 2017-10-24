@@ -196,10 +196,10 @@ int main (int argc, char* argv[])
     }
 
     /** Unpack data */
-    dyn->r      = y[EOB_EVOLVE_RAD];
-    dyn->phi    = y[EOB_EVOLVE_PHI];
-    dyn->prstar = y[EOB_EVOLVE_PRSTAR];
-    dyn->pphi   = y[EOB_EVOLVE_PPHI];
+    dyn->r      = dyn->y[EOB_EVOLVE_RAD];
+    dyn->phi    = dyn->y[EOB_EVOLVE_PHI];
+    dyn->prstar = dyn->y[EOB_EVOLVE_PRSTAR];
+    dyn->pphi   = dyn->y[EOB_EVOLVE_PPHI];
         
     /** Checking whether the dynamics produces NaN values
 	this can happen if radius r becomes too small */
@@ -212,9 +212,9 @@ int main (int argc, char* argv[])
 	Needs a r.h.s. evaluation */
     dyn->store = 1;
     if (usespins) {
-      eob_dyn_rhs_s(dyn->t, y, dy, dyn);
+      eob_dyn_rhs_s(dyn->t, dyn->y, dyn->dy, dyn);
     } else {
-      eob_dyn_rhs(dyn->t, y, dy, dyn);
+      eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     }
     dyn->store = 0;
     
