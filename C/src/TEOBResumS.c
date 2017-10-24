@@ -59,17 +59,21 @@ int main (int argc, char* argv[])
   Dynamics_alloc(&dyn, size, "dyn");
   Waveform_lm_alloc (&hlm, size, "hlm"); 
 
-  /** Useful vars */
+  /** Set useful vars */
   const double q    = par_get_d("q");
   const doulbe nu   = par_get_d("nu");
   const double chi1 = par_get_d("chi1");
   const double chi2 = par_get_d("chi2");
   const int usespins = par_get_i("use_spins");
-  const int use_tidal = par_get_i("use_tidal");
+  const int usetidal = par_get_i("use_tidal");
   int check_status;
   int store_dynamics = par_get_i("output_dynamics");
   if (!(use_tidal)) store_dynamics = 1; 
 
+
+  dyn->usetidal = usetidal;
+  if (PR) printf("use_tides = %s\n",tides_opt[usetidal]);
+  
   /** Compute light-ring and LSO (if needed) */
   if (use_tidal) {
     ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
@@ -126,12 +130,12 @@ int main (int argc, char* argv[])
   in j;
   for (j=0; j<ODE_TSTEP_NOPT; j++) {
     if (STREQUAL(par_get_s("ode_timestep"),ode_tstep_opt[j])) {
-      if (DEBUG) printf("ode_timestep = %s\n",ode_tstep_opt[j]);
+      if (PR) printf("ode_timestep = %s\n",ode_tstep_opt[j]);
       break;
     }
   }
   if (j==ODE_TSTEP_NOPT) {
-    if (DEBUG) printf("ode_timestep '%s' undefined, set to default\n",par_get_s("ode_timestep"));
+    if (PR) printf("ode_timestep '%s' undefined, set to default\n",par_get_s("ode_timestep"));
     j = 0;
   }
   dyn->ode_timestep  = j;

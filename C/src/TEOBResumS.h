@@ -131,7 +131,9 @@ enum{
   TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
   TIDES_NNLO, 
   TIDES_TEOBRESUM,
+  TIDES_NOPT
 };
+const char tides_opt[TIDES_NOPT] = {"off","NNLO","TEOBRESUM","undefined"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -140,7 +142,7 @@ enum{
   ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO,
   ODE_TSTEP_NOPT
 };
-const char ode_tstep_opt[ODE_TSTEP_NOPT] = {"uniform","adaptive","adaptive+uniform_after_LSO"};
+const char ode_tstep_opt[ODE_TSTEP_NOPT] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
 
 /** Error handler for root finders */
 enum{ 
