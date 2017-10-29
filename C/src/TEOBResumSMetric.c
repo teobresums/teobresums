@@ -221,7 +221,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   }
 
     dA  = -dA_u*u2;
-    d2A = 2.*dA*u3 + d2A_u*u4;
+    d2A = 2.*dA_u*u3 + d2A_u*u4;
 
     *AT   = A;
     *dAT  = dA;
