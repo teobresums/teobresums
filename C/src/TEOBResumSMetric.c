@@ -34,7 +34,7 @@
     and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu)).*(1-1.5e-5/((0.26-nu)^2)
     as obtained from comparison with the Caltech-Cornell-CITA numerical data.
    These values are used as default. */
-void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB)
+void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A)
 {
 
   /* shortcuts */
@@ -113,15 +113,6 @@ void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, d
   /* Second derivative with respect of r */
   *d2A = u4*d2A_u + 2.*u3*dA_u;
   
-  /* D potential and derivative with respect to r */
-  double Dp  = 1.0 + 6.*nu*u2 - 2.*(3.0*nu-26.0)*nu*u3; // Pade' resummation of D
-  *D   = 1./Dp;
-  *dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*(*D)*(*D);
-
-  /* B potential and derivative with respect to r */
-  *B  = (*D)/(*A);
-  *dB = ((*dD)*(*A) - (*D)*(*dA))/((*A)*(*A));
-
 }
 
 /** Tidal potential, two version implemented: 
@@ -130,7 +121,7 @@ void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, d
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
 {
   
-  double A, dA_u,d2A_u, dA,d2A;
+  double A, dA_u, d2A_u, dA, d2A;
 
   const double nu    = dyn->nu;
   const double rLR   = dyn->rLR;
@@ -152,9 +143,9 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double p = 4; //dyn->ptidalpow; 
   
   /* shortcuts */
-  double nu2 = nu*nu;
-  double pi2 = Pi*Pi;
-  double pi4 = pi2*pi2;
+  double nu2  = nu*nu;
+  double pi2  = Pi*Pi;
+  double pi4  = pi2*pi2;
   double u    = 1./r;
   double u2   = u*u;
   double u3   = u*u2;
@@ -173,9 +164,9 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
       - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
     d2A_u = -90.*kapT4*u8
-      - kT2*(2*bar_alph2_2*u6 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u)
+      - kapT2*(2*bar_alph2_2*u6 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u)
 	     + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2))
-      - kT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
+      - kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
   
   } else { 
 
@@ -204,7 +195,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
     double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
     
-    double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*(-3+d2*u2))*(Den*Den*Den);
+    double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
     double d2A1SF = d2Acub*f23 + 2*dAcub*df23 + Acub*d2f23;
     double d2A2SF = 674./28.;
     double d2f0   = 6*(oom3u*oom3u*oom3u);
@@ -224,12 +215,13 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double d2AT3  = - kapT3*(56*u6 + 72*bar_alph3_1*u7 + 90*bar_alph3_2*u8);
     double d2AT4  = - kapT4*90*u8;
 
-    A = AT2 + AT3 + AT4;    
-    dA_u = dAT2 + dAT3 + dAT4;
-    double d2A_dd =  d2AT2 + d2AT3 + d2AT4; // Unused ??
+    A     = AT2   + AT3   + AT4;
+    dA_u  = dAT2  + dAT3  + dAT4;
+    d2A_u = d2AT2 + d2AT3 + d2AT4;
+  }
 
-    dA  = -dA_u/(r*r);
-    d2A = -2.*dA/r+A_ddu/(r*r*r*r);
+    dA  = -dA_u*u2;
+    d2A = 2.*dA*u3 + d2A_u*u4;
 
     *AT   = A;
     *dAT  = dA;
@@ -239,23 +231,35 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
 void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
-  double Atmp, dAtmp, d2Atmp, Dtmp, dDtmp, Btmp, dBtmp;
-  A5PNlog(rr,dyn->nu, &Atmp, &dAtmp, &d2Atmp, &Dtmp, &dDtmp, &Btmp, &dBtmp);   
-  
+  double Atmp, dAtmp, d2Atmp;
+  eob_metric_A5PNlog(rr, dyn->nu, &Atmp, &dAtmp, &d2Atmp);
+
+  /* Add here tides if needed */
   if (dyn->usetidal) {
-    /* Add here tides if needed */
     double AT, dAT, d2AT;
     eob_metric_Atidal(r, dyn, &AT, &dAT, &d2AT);
-    A   += AT;
-    dA  += dAT;
-    d2A += dA2T;    
+    Atmp   += AT;
+    dAtmp  += dAT;
+    d2Atmp += dA2T;
   }
-  
+
   *A   = Atmp;
   *dA  = dAtmp;
   *d2A = d2Atmp;
-  *B   = Btmp;
-  *dB  = dBtmp;
+
+  /* D potential and derivative with respect to r */
+  const double nu  = dyn->nu;
+  const double u   = 1./r;
+  const double u2  = u*u;
+  const double u3  = u2*u;
+  const double Dp  = 1.0 + 6.*nu*u2 - 2.*(3.0*nu-26.0)*nu*u3; // Pade' resummation of D
+  const double D   = 1./Dp;
+  const double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
+
+  /* B potential and derivative with respect to r */
+  *B   = D/(*A);
+  *dB  = (dD*(*A) - D*(*dA))/((*A)*(*A));
+
 }
  
 /** EOB Metric potentials A(r), B(r), and their derivatives, spin version */
@@ -272,21 +276,18 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   const int usetidal = dyn->use_tidal;
 
   double rc, drc, d2rc;
-  eob_dyn_s_get_rc(r,nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc, &drc, &d2rc);
 
-  double Aorb, dAorb, d2Aorb, Dorb, dDtmp, Btmp, dBtmp;  
-  eob_metric_A5PNlog(rc,nu, &Aorb, &dAorb, &d2Aorb, &Dorb, &dDtmp, &Btmp, &dBtmp);
-    
+  double Aorb, dAorb, d2Aorb;
+  eob_metric_A5PNlog(rc, nu, &Aorb, &dAorb, &d2Aorb);
+
   /* Add here tides if needed */
   if (usetidal) {
-
     double AT, dAT, d2AT;
-    eob_metric_Atidal(r,dyn, &AT, &dAT, &d2AT);
-    
-    Aorb += AT;
-    dAorb += dAT;
-    d2Aorb += dA2T;
-    
+    eob_metric_Atidal(rc, dyn, &AT, &dAT, &d2AT);
+    Aorb   += AT;
+    dAorb  += dAT;
+    d2Aorb += d2AT;
   }
 
   /* Correct A for spin */
@@ -299,13 +300,20 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   double uc3 = uc2*uc;
   double AKerr_Multipole = (1.+2.*uc)/(1.+2.*u);
   double fss = 1.;
-    
+
   *A   = Aorb*AKerr_Multipole*fss;    
   *dA  = dAorb*drc*(1.+2.*uc)/(1.+2.*u) - 2.*Aorb*drc*uc2/(1.+2.*u) + 2.*Aorb*(1.+2.*uc)*u2/((1.+2.*u)*(1.+2.*u));
   *d2A = d2Aorb*(1.+2.*uc)/(1.+2.*u) + 4.*dAorb*( u2*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) - uc2/(1.+2.*u)*drc) + Aorb*(-4.*u3*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) + 8.*u4*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)*(1.+2.*u))+4.*uc3*(1.+2.*u)*drc*drc - 2.*uc2/(1.+2.*u)*d2rc);
-  
-  /* The B function */
-  *B  = r*r*uc2*Dorb/A;    
+
+  /* D potential and derivative with respect to r */
+  double Dp = 1.0 + 6.*nu*uc2 - 2.*(3.0*nu-26.0)*nu*uc3; // Pade' resummation of D
+  double D  = 1./Dp;
+  double dD = 6.*uc2*(2.*nu*uc-(3.*nu-26.)*nu*uc2)*D*D;
+
+  /* B potential and derivative with respect to r */
+  *B   = r*r*uc2*D/(*A);
+  *dB  = (dD*(*A) - D*(*dA))/((*A)*(*A));
+
 }
 
 
