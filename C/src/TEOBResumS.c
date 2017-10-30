@@ -76,12 +76,18 @@ int main (int argc, char* argv[])
   
   /** Compute light-ring and LSO (if needed) */
   if (use_tidal) {
+    /* Compute rLR_tidal for NNLO potential and without spin part */
+    dyn->use_tidal = TIDES_NNLO;
+    dyn->use_spin = 0;
     ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
-    par_set_d("rLR", dyn->rLR);
+    par_set_d("rLR_tidal", dyn->rLR_tidal);
+    /* Reset options */
+    dyn->use_tidal = par_get_i("use_tidal");
+    dyn->use_spin = par_get_i("use_spins");
   }
   if (par_get_i("compute_LR")) {
-   ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
-   par_set_d("rLR", dyn->rLR);
+    ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
+    par_set_d("rLR", dyn->rLR);
   }
   if (par_get_i("compute_LSO")) {
     ROOTFINDER(check_status, eob_dyn_AdiabLSO(dyn, dyn->rLSO));

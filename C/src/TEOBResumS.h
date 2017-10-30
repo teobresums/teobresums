@@ -214,7 +214,6 @@ typedef struct tagDynamics
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
   double A,dA,d2A, B,dB;
-  double rLR, rLSO;
   double MOmg, MOmg_prev;
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_VARS]; /* rhs storage */
@@ -228,9 +227,10 @@ typedef struct tagDynamics
   double *data[EOB_DYNAMICS_VARS]; 
   /* key parameters for quick access */
   double nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2, c3NLO;
+  double rLR, rLSO;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4, khatA2,khatB2;
-  double c3NLO, ptidalpow=4.;
+  double rLR_tidal, ptidalpow=4.;
   double Mbhf, abhf; /* final BH */
   int use_tidal, use_spin;
 } Dynamics;
