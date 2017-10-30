@@ -321,6 +321,8 @@ void TEOBResumSSetParameters(char *s, int pr)
 
   // Set more as needed ...
   par_set_d("rLR",0.);
+  par_set_d("rLSO",0.);
+  par_set_d("rLR_tidal",0.);
   par_set_d("cN3LO", c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2, flag_tidal) );
   
   if (par_get_i("use_geometric_units")) {
