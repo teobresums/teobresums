@@ -35,7 +35,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *dyn)
   
   /** Compute EOB Metric */
   double A, B, dA, d2A, dB;
-  Metric(r, d, &A, &B, &dA, &d2A, &dB);
+  eob_metric(r, d, &A, &B, &dA, &d2A, &dB);
 
   const double ooA = 1./A;
   const double ooB = 1./B;
@@ -141,6 +141,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
   const double C_Q1  = d->C_Q1;
   const double C_Q2  = d->C_Q2;
   const int usetidal = d->use_tidal;
+  const int usespins = d->use_spin;
 
   const double z3     = 2.*nu*(4.-3.*nu);    
   const double r      = y[EOB_EVOLVE_RAD];
@@ -149,12 +150,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
   const double pphi2  = pph*pph;
   
   /** Compute Metric */
-  double A, B, dA, d2A;
-  if (usetidal) {
-    eob_metric(r, d, &A, &B, &dA, &d2A);
-  } else {
-    eob_metric_s(r, d, &A, &B, &dA, &d2A);
-  }
+  double A, B, dA, d2A, dB;
+  eob_metric_s(r, d, &A, &B, &dA, &d2A, &dB);
  
   /* shorthands */
   const double prstar2 = prstar*prstar;

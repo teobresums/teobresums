@@ -320,7 +320,7 @@ double eob_dyn_s_bisec(double nu, double chi1, double chi2, double X1, double X2
 double eob_dyn_DHeff0(double x, void *params);
 
 /* TEOBResumSMetric.c */
-void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A, double *D, double *dD, double *B, double *dB);
+void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
