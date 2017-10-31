@@ -26,3 +26,7 @@ time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -fmin 10 -lambda1_l2 1
 ### MS1b 1.00+1.50 @40 Mpc from 10Hz
 time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -fmin 10 -lambda1_l2 863 -lambda2_l2 7022 -tidal 1 -Yagi_fits 1 -distance 40 
 
+## Ms1b run with hlm in output instead of h+,hx
+
+time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -fmin 10 -lambda1_l2 1531 -lambda2_l2 1531 -tidal 1 -Yagi_fits 1 -multipoles -lm 1
+
