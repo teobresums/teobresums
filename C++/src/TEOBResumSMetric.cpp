@@ -295,7 +295,7 @@ vector<double> A5pnP15_dd(const double r, void *params)
         double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
         double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
         
-        double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*(-3+d2*u2))*(Den*Den*Den);
+        double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
         double d2A1SF = d2Acub*f23 + 2*dAcub*df23 + Acub*d2f23;
         double d2A2SF = 674./28.;
         

@@ -453,12 +453,11 @@ vector<double> s_D1(vector<double> f, vector<double> x, int Nmax)
         df[i] = 1./3.*(8.*f[1+i] - f[2+i] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
     }
     
-    // 4th order boundaries
-    df[0] = (-24./17.*f[Nmin] + 59./34.*f[Nmin+1] - 4./17.*f[Nmin+2] - 3./34.*f[Nmin+3])/(x[Nmin+1]-x[Nmin]);
-    df[1] = (-1./2.*f[Nmin] + 1./2.*f[Nmin+2] )/(x[Nmin+1]-x[Nmin]);
-    
-    df[Nmax]   = -(-24./17.*f[Nmax] + 59./34.*f[Nmax-1] - 4./17.*f[Nmax-2] - 3./34.*f[Nmax-3])/(x[Nmax]-x[Nmax-1]);
-    df[Nmax-1] = -(-1./2.*f[Nmax] + 1./2.*f[Nmax-2])/(x[Nmax]-x[Nmax-1]);
+    // 4th order boundaries - from Wolfram http://reference.wolfram.com/language/tutorial/NDSolveMethodOfLines.html
+    df[0]      = (-25*f[Nmin] + 48*f[Nmin+1] - 36*f[Nmin+2] +16*f[Nmin+3]-3*f[Nmin+4])/(3*(x[Nmin+4]-x[Nmin]));
+    df[1]      = (-3*f[Nmin]-10*f[Nmin+1]+18*f[Nmin+2]-6*f[Nmin+3]+f[Nmin+4])/(3*(x[Nmin+4]-x[Nmin]));
+    df[Nmax]   = (25*f[Nmax] - 48*f[Nmax-1] + 36*f[Nmax-2] - 16*f[Nmax-3]+3*f[Nmax-4])/(3*(x[Nmax]-x[Nmax-4]));
+    df[Nmax-1] = (-f[Nmax-4]+6*f[Nmax-3]-18*f[Nmax-2]+10*f[Nmax-1]+3*f[Nmax])/(3*(x[Nmax]-x[Nmax-4])); 
     
     return df;
 }
