@@ -21,16 +21,26 @@ detMap = {'H1': 'LHO_4k',
           'T1': 'TAMA_300'}
 
 def McQ2Masses(mc, q):
+    """
+    Simple utility to convert between mc an d q to component masses
+    """
     factor = mc * np.power(1. + q, 1.0/5.0);
     m1 = factor * np.power(q, -3.0/5.0);
     m2 = factor * np.power(q, +2.0/5.0);
     return m1, m2
 
 def PolarToCartesian(a, th, ph):
+    """
+    Simple utility function to convert between polar and cartesian representations
+    for the spin quantities
+    """
     return a*np.sin(th)*np.cos(ph), a*np.sin(th)*np.sin(ph), a*np.cos(th)
 
 class GravitationalWaveModel(cpnest.model.Model):
-    
+    """
+    Gravitational Wave signal model
+    """
+
     names = []
     bounds = []
 
@@ -81,27 +91,54 @@ class GravitationalWaveModel(cpnest.model.Model):
 
         self.df = self.detectors[0].df
         
+        self.plain_template = None
+        self.injected_template = None
+        
         if self.injection:
+            
+            self.injection_parameters = {'m1':40.0,
+                                        'm2':10,
+                                        'spin1':0.93,
+                                        'theta_1l':0.4,
+                                        'phi_1l':1.0,
+                                        'spin2':0.67,
+                                        'theta_2l':-0.4,
+                                        'phi_2l':2.4,
+                                        'distance':500.0,
+                                        'inclination':1.5,
+                                        'ra':1.5,
+                                        'dec':-1.2,
+                                        'psi':1.5}
+
+            sys.stderr.write("Injection parameters:\n")
+            for key, value in self.injection_parameters.iteritems():
+                sys.stderr.write("%s --> %.3f\n"%(key,value))
             amp_order = 0
             phase_order = -1
             wave_flags = None
             non_GR_params = None
             approx = lalsim.IMRPhenomPv2
+            
+            spin1x, spin1y, spin1z = PolarToCartesian(self.injection_parameters['spin1'],self.injection_parameters['theta_1l'],self.injection_parameters['phi_1l'])
+            spin2x, spin2y, spin2z = PolarToCartesian(self.injection_parameters['spin2'],self.injection_parameters['theta_2l'],self.injection_parameters['phi_2l'])
+
             hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(0.0,
                                self.df,
-                               20*lalsim.lal.MSUN_SI,
-                               17*lalsim.lal.MSUN_SI,
-                               0.0, 0.0, 0.75,
-                               0.0, 0.0, 0.55,
+                               self.injection_parameters['m1']*lalsim.lal.MSUN_SI,
+                               self.injection_parameters['m2']*lalsim.lal.MSUN_SI,
+                               spin1x, spin1y, spin1z,
+                               spin2x, spin2y, spin2z,
                                self.flow, self.fhigh, 100.0,
-                               2500.0*1e6*lalsim.lal.PC_SI,
-                               0.0,
+                               self.injection_parameters['distance']*1e6*lalsim.lal.PC_SI,
+                               self.injection_parameters['inclination'],
                                0.0, 0.0,
                                wave_flags, non_GR_params, amp_order, phase_order, approx)
 
 
             for d in self.detectors:
-                d.inject( hptilde.data.data, hctilde.data.data, 2.0, -1.0, 0.5, self.trigtime)
+                d.inject( hptilde.data.data, hctilde.data.data, self.injection_parameters['ra'], self.injection_parameters['dec'], self.injection_parameters['psi'], self.trigtime)
+            
+            self.injected_template = (hptilde.data.data, hctilde.data.data)
 
         self.logZnoise = self.log_nulllikelihood()
         
@@ -110,7 +147,7 @@ class GravitationalWaveModel(cpnest.model.Model):
             self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
                         'iota', 'psi', 'distance',
                         'spin1','theta_1l','phi_1l',
-                        'spin2','theta_22','phi_2l']
+                        'spin2','theta_2l','phi_2l']
 
             self.bounds=[[0,2.0*np.pi],
                          [0,2.0*np.pi],
@@ -153,15 +190,8 @@ class GravitationalWaveModel(cpnest.model.Model):
         self.window=tukey(self.segment_length,0.5)
         self.windowNorm = self.segment_length/np.sum(self.window**2)
 
-    def log_nulllikelihood(self):
-        
-        Nfd = len(self.detectors[0].FrequencySeries)
-        h = np.zeros(Nfd)
-        
-        return np.sum([d.logLikelihood(h, h, 0.0, 0.0, 0.0, 0.0) for d in self.detectors])
-    
-    def log_likelihood(self,x, template = 'LAL'):
-        
+
+    def calculate_plain_template(self,x):
         mc = x['mc']
         q = x['q']
         d = x['distance']
@@ -188,7 +218,7 @@ class GravitationalWaveModel(cpnest.model.Model):
 
             hp = hptilde.data.data
             hc = hctilde.data.data
-                
+        
         else:
             h = pyTEOBResumS(m1,
                              m2,
@@ -220,8 +250,23 @@ class GravitationalWaveModel(cpnest.model.Model):
 
             hp = np.fft.rfft(hp)*self.windowNorm*self.dt# we multiply by dt to get the dimensionfull FFT
             hc = np.fft.rfft(hc)*self.windowNorm*self.dt
+        
+        self.plain_template = (hp,hc)
+    
+    def log_nulllikelihood(self):
+        
+        Nfd = len(self.detectors[0].FrequencySeries)
+        h = np.zeros(Nfd)
+        
+        return np.sum([d.logLikelihood(h, h, 0.0, 0.0, 0.0, 0.0) for d in self.detectors])
+    
+    
+    
+    def log_likelihood(self,x):
+        
+        self.calculate_plain_template(x)
 
-        return np.sum([d.logLikelihood(hp, hc, x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
+        return np.sum([d.logLikelihood(self.plain_template[0], self.plain_template[1], x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
     
     def log_prior(self, x):
         if np.isfinite(super(GravitationalWaveModel,self).log_prior(x)):
@@ -232,6 +277,7 @@ class GravitationalWaveModel(cpnest.model.Model):
             q = x['q']
             m1, m2 = McQ2Masses(mc, q)
             logP += np.log(m1*m1/mc)
+            if self.template == 'LAL': logP += np.log(np.abs(np.cos(x['theta_1l'])))+np.log(np.abs(np.cos(x['theta_2l'])))
             return logP
         else:
             return -np.inf
@@ -280,11 +326,21 @@ if __name__=='__main__':
         print('Signal evidence {0}'.format(work.NS.logZ))
         logB = work.NS.logZ-signal_model.logZnoise
         print('log B {0}'.format(logB))
-        x = work.posterior_samples.ravel()
     else:
+        signal_model = GravitationalWaveModel(['H1','L1'],
+                                              T=opts.seglen,
+                                              template = opts.template,
+                                              sampling_rate = 2048.,
+                                              injection = opts.inject,
+                                              zero_noise = opts.zero_noise,
+                                              starttime = 1126259459.423,
+                                              trigtime = 1126259462.423,
+                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt'],
+                                              flow=opts.flow,
+                                              fhigh=opts.fhigh)
         x = np.genfromtxt(os.path.join(opts.out_dir,'posterior.dat'),names=True)
-
         logZ = np.loadtxt(os.path.join(opts.out_dir,'chain_{0}_1234.txt_evidence.txt'.format(opts.nlive)))[0]
         print('Signal evidence {0}'.format(logZ))
-        logB = logZ-logZnoise
+        logB = logZ-signal_model.logZnoise
         print('log B {0}'.format(logB))

@@ -29,7 +29,7 @@ cdef extern from "TEOBResumS.h":
                     double spin2y,
                     double spin2z,
                     double inclination,
-                    double polarisation,
+                    double coa_phase,
                     double f_min,
                     double dt,
                     double LambdaAl2,
