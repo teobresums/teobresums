@@ -66,10 +66,10 @@ int main (int argc, char* argv[])
   const double chi2 = par_get_d("chi2");
   const int usespins = par_get_i("use_spins");
   const int usetidal = par_get_i("use_tidal");
+  const int interp_uniform_grid = par_get_i("interp_uniform_grid");
   int check_status;
   int store_dynamics = par_get_i("output_dynamics");
   if (!(use_tidal)) store_dynamics = 1; 
-
 
   dyn->usetidal = usetidal;
   if (PR) printf("use_tides = %s\n",tides_opt[usetidal]);
@@ -122,7 +122,7 @@ int main (int argc, char* argv[])
   }
     
   /** Initialize ODE system solver */
-  dyn->dt            = par_get_d("ode_dt")   * time_unit_fact;
+  dyn->dt            = par_get_d("dt")       * time_unit_fact;
   dyn->t1            = par_get_d("ode_t1")   * time_unit_fact;
   dyn->t_stop        = par_get_d("ode_tmax") * time_unit_fact;
   dyn->ode_stop          = false;
@@ -157,7 +157,6 @@ int main (int argc, char* argv[])
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
     
   /** Sove ODE */
-  const int solver_scheme = par_get_i("solver_scheme");
   int STATUS = OK;
   int iter = 0;
   int k;

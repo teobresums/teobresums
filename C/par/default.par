@@ -1,49 +1,108 @@
 # default parameters
-# note: there'r many more than just physical pars !
-# TODO: put in proper format, now just a reference 
-#
-# key : val : description
-#
+# key = val : description
+
 # ----------------------
-# phys pars
-M = 80 [total binary mass]
-q = 1. [mass ratio]
-chi1 = 0. [dimensioneless spin 1 z-component]
-chi2 = 0. [dimensioneless spin 2 z-component]
-distance = 100
+# physical input pars
+# ----------------------
+
+M = 80 : total binary mass
+q = 1. : mass ratio
+chi1 = 0. : dimensioneless spin 1 z-component 
+chi2 = 0. : dimensioneless spin 2 z-component 
+distance = 100 
 inclination = 0
+coalescence_angle = 0
 polarisation = 0
-fmin = 10
-dt = 0.5
-srate = 4096
+initial_frequency = 10
 LambdaAl2 = 0
 LambdaAl3 = 0
 LambdaAl4 = 0
 LambdaBl2 = 0
 LambdaBl3 = 0
 LambdaBl4 = 0
-BH_final_mass = 0
-BH_final_spin = 0
-rLR = 0
-rLSO = 0
+
+# ----------------------
+# following pars are set by the code
+# ----------------------
+
+nu = 0 : symmetric mass ratio
+X1 = 0 : mass ratio M1/M
+X2 = 0 : mass ratio M2/M
+
+S1 = 0 : 
+S2 = 0 : 
+S = 0 : 
+Sstar = 0 : 
+a1 = 0 : 
+a2 = 0 : 
+aK = 0 :
+aK2 = 0 : 
+C_Q1 = 0 :
+C_Q2 = 0 :
+cN3LO = 0 :
+
+LambdaAl = 0 : 
+LambdaAl4 = 0 :
+LambdaBl3 = 0 :
+LambdaBl4 = 0 :
+kappaAl2 = 0 :
+kappaAl3 = 0 :
+kappaAl4 = 0 :
+kappaBl2 = 0 :
+kappaBl3 = 0 :
+kappaBl4 = 0 :
+kappaTl2 = 0 :
+kappaTl3 = 0 :
+kappaTl4 = 0 :
+bar_alph2_1 = 0 :
+bar_alph2_2 = 0 :
+bar_alph3_1 = 0 :
+bar_alph3_2 = 0 :
+khatAl2 = 0 :
+khatBl2 = 0 :
+
+BH_final_mass = 0 : final BH mass
+BH_final_spin = 0 : final BH spin
+
+rLR = 0 : radius of light-ring
+rLR_tides = 0 : radius of light-ring for NNLO tidal model
+rLSO = 0 : radius of last stable orbit 
+
 # ----------------------
 # options
-use_tidal = 0
-use_spins = 0
-speedytail = 1 
-use_RWZ_norm = 0
-output_multipoles = 0
-lm = -1
-use_Yagi_fits = 0
-use_geometric_units = 0
-output_dir = "./" [output dir]
-output_file = "waveform.txt" [waveform output]
-dynamics = 0 [output dynamics]
 # ----------------------
-# settings
-solver_scheme = 0
-stop_flag = 
-ode_abstol = 1e-13
-ode_reltol = 1e-11
-ode_tmax = 1e9 [max integration time]
-size = 1 [size of the arrays (chunks, dynamically extended)]
+
+use_tidal = 0 : use tides ?
+use_spins = 0 : use spins ?
+use_speedytail = 1  : use special routine to speed up tail computation ?
+use_Yagi_fits = 0 : use Yagu fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+use_geometric_units = 0 : use geometric units for I/O ?
+
+interp_uniform_grid = 0 : interpolate on uniform grid ?
+
+compute_LR = 1 : calculate LR ?
+compute_LS0 = 1 : calculate LSO ?
+
+output_dir = ./eobdata : output dir
+output_multipoles = 1 : output multipoles
+output_lm = -1 : index of multipoles to ouput
+output_dynamics = 0 : output dynamics
+output_nqc = 0 : output NQC waveform
+output_ringdown = 0 : output ringdown waveform
+
+# ----------------------
+# Evolution settings
+# ----------------------
+
+srate = 4096 : sampling rate, used if input is given in physical unit, reset based on tstep otherwise
+dt = 0.5 : timestep, used if input is given in geometric unit, reset based on srate otherwise
+
+size = 1 : size of the arrays (chunks, dynamically extended)
+ringdown_extend_array = 500 : grid points to extend arrays for ringdown attachment
+
+ode_tstep = 0 : specify ODE solver timestep 0,1,2 -> ODE_TSTEP_UNIFORM,ODE_TSTEP_ADAPTIVE,ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO
+ode_abstol = 1e-13 : ODE solver absolute accuracy
+ode_reltol = 1e-11 : ODE solver relative accuracy
+ode_t1 = 0.5 : ODE solver final time (max timestep) for ODE_TSTEP_ADAPTIVE
+ode_tmax = 1e9 : max integration time
+ode_stop_at_radius = 2 : stop ODE integration at this radius (if > 0)

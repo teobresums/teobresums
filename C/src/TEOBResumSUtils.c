@@ -1,3 +1,4 @@
+
 /**
  * Copyright (C) 2017 Alessandro Nagar, Gregorio Carullo, Ka Wa Tsang, Philipp Fleig, Sebastiano Bernuzzi, Walter Del Pozzo
  *
@@ -281,7 +282,7 @@ void set_multipolar_idx_mask(int *kmask, int n)
   int m, k,j;
   for (k = 0; k<n; k++)
     kmask[k] = 0; /* all off */
-  int *idx = par_get_arrayi("lm", &m);
+  int *idx = par_get_arrayi("output_lm", &m);
   for (j = 0; j<m; j++)
     for (k = 0; k<n; k++)
       if (idx[j] == kmask[k]) kmask[k] = 1; 
@@ -341,33 +342,26 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name)
   set_multipolar_idx_mask(*wav->kmask, KMAX); 
   int k;
   for (k=0; k<KMAX; k++) {
-    if (kmask[k]) {
-      *wav->ampli[k] = (double*) malloc ( size * sizeof(double) );
-      *wav->phase[k] = (double*) malloc ( size * sizeof(double) );
-      memset(*wav->ampli[k], 0, size*sizeof(double));
-      memset(*wav->phase[k], 0, size*sizeof(double));
-      strcpy(name[k],*wav->name[k]);
-    } else {
-      *wav->ampli[k] = NULL;
-      *wav->phase[k] = NULL;
-    }
+    *wav->ampli[k] = (double*) malloc ( size * sizeof(double) );
+    *wav->phase[k] = (double*) malloc ( size * sizeof(double) );
+    memset(*wav->ampli[k], 0, size*sizeof(double));
+    memset(*wav->phase[k], 0, size*sizeof(double));
+    strcpy(name[k],*wav->name[k]);
   }
 }
 
-void Waveform_lm_push (Waveform **wav, int size, int *kmask)
+void Waveform_lm_push (Waveform **wav, int size)
 {
   int k, i;
   const int n  = *wav->size;
   const int dn = size - *wav->size;
   for (k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
-      *wav->ampli[k] = (double*) realloc ( size * sizeof(double) );
-      if (*wav->ampli[k] == NULL) errorexit("out of memory.");
-      memset( *wav->ampli[k] + n, 0, dn * sizeof(double) );
-      *wav->phase[k] = (double*) realloc ( size * sizeof(double) );
-      if (*wav->phase[k] == NULL) errorexit("out of memory.");
-      memset( *wav->phase[k] + n, 0, dn * sizeof(double) );
-    }
+    *wav->ampli[k] = (double*) realloc ( size * sizeof(double) );
+    if (*wav->ampli[k] == NULL) errorexit("out of memory.");
+    memset( *wav->ampli[k] + n, 0, dn * sizeof(double) );
+    *wav->phase[k] = (double*) realloc ( size * sizeof(double) );
+    if (*wav->phase[k] == NULL) errorexit("out of memory.");
+    memset( *wav->phase[k] + n, 0, dn * sizeof(double) );
   }
   *wav->size = size;
 }

@@ -202,7 +202,7 @@ void TEOBResumSSetParameters(char *s, int pr)
   double dt = par_get_d("dt");
 
   double M = par_get_d("M");
-  double fmin = par_get_d("fmin");
+  double fmin = par_get_d("initial_frequency");
   
   double q =  par_get_d("q");  
   double nu = q_to_nu(q);
