@@ -17,7 +17,6 @@
  *  MA  02111-1307  USA
  */
 
-
 /**
  * Use libconfig
  * Parameters are managed using a database with key:value
@@ -41,10 +40,10 @@ void par_db_free ()
 }
 
 /** default values for parameters are expected in file
-    $TEOBResumS/cfg/defaultpars.cfg */
+    $TEOBRESUMS/par/default.par */
 void par_db_default ()
 {
-  static const char *eobcodeenvv = "TEOBResumS";
+  static const char *eobcodeenvv = "TEOBRESUMS";
   char *eobcodepath = NULL;
   eobcodepath = getenv (eobcodeenvv);
   if (! eobcodepath) {
@@ -60,7 +59,7 @@ void par_db_default ()
 void par_file_parse (char *fname)
 {
   if (!(config_read_file(cf, fname))) {
-    fprintf(stderr, "%s = %d [%s]\n",
+    fprintf(stderr, "%s = %d : %s\n",
             config_error_file(cf),
             config_error_line(cf),
             config_error_text(cf));
@@ -123,7 +122,7 @@ int * par_get_arrayi (const char *key, int *n)
 {
   const config_setting_t *a;
   a = config_lookup(cf, key);
-  // unsafe. todo: check
+  /* this is unsafe. todo: check */
   int l = config_setting_length(a);
   int *array = NULL;
   array = (int *) malloc (l * sizeof(int));
@@ -198,9 +197,7 @@ void TEOBResumSSetParameters(char *s, int pr)
   //}
   
   /* Set auxiliary parameters */
-
   double dt = par_get_d("dt");
-
   double M = par_get_d("M");
   double fmin = par_get_d("initial_frequency");
   
@@ -219,18 +216,12 @@ void TEOBResumSSetParameters(char *s, int pr)
   double a2  = X2*chi2;
   double aK  = a1 + a2;
   double aK2 = aK*aK;   
-  double S = S1 + S2;         /* in the EMRL this becomes the spin of the BH */
+  double S = S1 + S2;            /* in the EMRL this becomes the spin of the BH */
   double Sstar = X2*a1 + X1*a2;  /* in the EMRL this becomes the spin of the particle */
 
   // lets not do the following. flag_spin should rule!
   // Override spin settings if spins are given in input 
   //if (chi1 != .0 || chi2 != .0) params.flags.spin = 1;
-
-  // TODO some checks like:
-  //if (flags.multipoles == 1 && lm==-1) {
-  //  cout << "Need to input also the index of the multipole via the option -lm" << endl;
-  //  exit(ERROR);
-  //}
 
   int flag_tidal = par_get_i("use_tidal");
   

@@ -195,7 +195,7 @@ typedef struct tagWaveform_lm
   double *ampli[KMAX]; /* amplitude */
   double *phase[KMAX]; /* phase */
   char name[KMAX][STRLEN];
-  int *kmask[KMAX]; /* mask for multipoles */
+  int kmask[KMAX]; /* mask for multipoles */
 }  Waveform_lm;
 
 /** Multipolar waveform at given time, comes at handy */
@@ -276,9 +276,11 @@ int D0_nux(double *f, double *x, int n, double *df);
 void set_multipolar_idx_mask(int *kmask, int n);
 void Waveform_alloc (Waveform **wav, int size, char *name);
 void Waveform_push (Waveform **wav, int size);
+void Waveform_output (Waveform *wav);
 void Waveform_free (Waveform *wav);
 void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name);
 void Waveform_lm_push (Waveform **wav, int size);
+void Waveform_lm_output (Waveform *wav);
 void Waveform_lm_free (Waveform_lm *wav);
 void Dynamics_alloc (Dynamics **dyn, int size);
 void Dynamics_push (Dynamics **dyn, int size);

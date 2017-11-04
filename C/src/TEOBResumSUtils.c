@@ -280,12 +280,12 @@ int D0_nux(double *f, double *x, int n, double *df)
 void set_multipolar_idx_mask(int *kmask, int n)
 {
   int m, k,j;
-  for (k = 0; k<n; k++)
-    kmask[k] = 0; /* all off */
+  for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
   int *idx = par_get_arrayi("output_lm", &m);
-  for (j = 0; j<m; j++)
-    for (k = 0; k<n; k++)
-      if (idx[j] == kmask[k]) kmask[k] = 1; 
+  if (m==1 && idx[0]==-1) return;
+  for (k = 0; k<n; k++)
+    for (j = 0; j<m; j++)
+      if (idx[j] == k) kmask[k] = 1; 
 }
 
 /* Alloc/Free data type routines */
@@ -366,7 +366,7 @@ void Waveform_lm_push (Waveform **wav, int size)
   *wav->size = size;
 }
 
-void Waveform_lm_output (Waveform *wav, int *kmask)
+void Waveform_lm_output (Waveform *wav)
 {
   int k,i;
   const int n = wav->size;
