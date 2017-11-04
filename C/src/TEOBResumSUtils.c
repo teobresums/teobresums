@@ -42,7 +42,7 @@ double Eulerlog(const double x,const double m)
 {
   /* const double EulerGamma = 0.5772156649015328606065121; */
   /* const double Log2       = 0.6931471805599453094172321; */
-  /* above constants are deinfed in header */
+  /* above constants are defined in header */
   return EulerGamma + Log2 + log(m) + 0.5*log(x);
 }
 
@@ -269,10 +269,14 @@ int D0_nux(double *f, double *x, int n, double *df)
     {
       df[i] = 1./3.*(8.*f[1+i] - f[2+i] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
     }
-  df[n0] = (-24./17.*f[n0] + 59./34.*f[n0+1] - 4./17.*f[n0+2] - 3./34.*f[n0+3])/(x[n0+1]-x[n0]);
-  df[n0+1] = (-1./2.*f[n0] + 1./2.*f[n0+2] )/(x[n0+1]-x[n0]);
-  df[n]   = -(-24./17.*f[n] + 59./34.*f[n-1] - 4./17.*f[n-2] - 3./34.*f[n-3])/(x[n]-x[n-1]);
-  df[n-1] = -(-1./2.*f[n] + 1./2.*f[n-2])/(x[n]-x[n-1]);
+  /* df[n0]   = (-24./17.*f[n0] + 59./34.*f[n0+1] - 4./17.*f[n0+2] - 3./34.*f[n0+3])/(x[n0+1]-x[n0]); */
+  /* df[n0+1] = (-1./2.*f[n0] + 1./2.*f[n0+2] )/(x[n0+1]-x[n0]); */
+  /* df[n]    = -(-24./17.*f[n] + 59./34.*f[n-1] - 4./17.*f[n-2] - 3./34.*f[n-3])/(x[n]-x[n-1]); */
+  /* df[n-1]  = -(-1./2.*f[n] + 1./2.*f[n-2])/(x[n]-x[n-1]); */
+  df[n0]   = (-25*f[n0] + 48*f[n0+1] - 36*f[n0+2] +16*f[n0+3]-3*f[n0+4])/(3*(x[n0+4]-x[n0]));
+  df[n0+1] = (-3*f[n0]-10*f[n0+1]+18*f[n0+2]-6*f[n0+3]+f[n0+4])/(3*(x[n0+4]-x[n0]));
+  df[n]    = (25*f[n] - 48*f[n-1] + 36*f[n-2] - 16*f[n-3]+3*f[n-4])/(3*(x[n]-x[n-4]));
+  df[n-1]  = (-f[n-4]+6*f[n-3]-18*f[n-2]+10*f[n-1]+3*f[n])/(3*(x[n]-x[n-4]));  
   return OK;
 }
 
