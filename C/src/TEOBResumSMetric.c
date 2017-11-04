@@ -93,8 +93,10 @@ void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A)
   double dA_u      = prefactor*(dNum*Den - dDen*Num);
   
   /* Derivative of A with respect to r */
-  *dA = -u2*dA_u;
-    
+  /* *dA = -u2*dA_u; */
+
+  dA* = dA_u
+  
   /* Second derivatives of Pade coefficients */
   double d2N1 = (160*nu*(-3840 + 1536*logu*nu + nu*(20992 + 120*a5 - 615*pi2))*(828672 + nu*(-42024*a5 - 8064*a6 + 3584*(-1397 + 9*nu) + 174045*pi2) + 756*nu*(768 + nu*(-3584 - 24*a5 + 123*pi2))))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),3)*u2);
   double d2D1 = (160*nu*(-3840 + 1536*logu*nu + nu*(20992 + 120*a5 - 615*pi2))*(828672 + nu*(-42024*a5 - 8064*a6 + 3584*(-1397 + 9*nu) + 174045*pi2) + 756*nu*(768 + nu*(-3584 - 24*a5 + 123*pi2))))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),3)*u2);
@@ -111,13 +113,15 @@ void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A)
   double d2A_u = prefactor*(2.*dDen*dDen*(*A) - 2.*dNum*dDen + Den*d2Num - d2Den*Num);
   
   /* Second derivative with respect of r */
-  *d2A = u4*d2A_u + 2.*u3*dA_u;
+  /* *d2A = u4*d2A_u + 2.*u3*dA_u; */
+
+  *d2A = d2A_u;
   
 }
 
 /** Tidal potential, two version implemented: 
-    1. TEOB NNLO , Bernuzzi+ 1205.3403
-    2. TEOBResum: Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 */
+    1. TEOB NNLO, Bernuzzi+ 1205.3403
+    2. TEOBResum, Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 */
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
 {
   
@@ -218,47 +222,49 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     A     = AT2   + AT3   + AT4;
     dA_u  = dAT2  + dAT3  + dAT4;
     d2A_u = d2AT2 + d2AT3 + d2AT4;
+    
   }
-
-    dA  = -dA_u*u2;
-    d2A = 2.*dA_u*u3 + d2A_u*u4;
-
-    *AT   = A;
-    *dAT  = dA;
-    *d2AT = d2A;
+    
+  *AT   = A;
+  *dAT  = dA_u;
+  *d2AT = d2A_u;
 }
 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
 void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
-  double Atmp, dAtmp, d2Atmp;
-  eob_metric_A5PNlog(rr, dyn->nu, &Atmp, &dAtmp, &d2Atmp);
-
-  /* Add here tides if needed */
-  if (dyn->usetidal) {
-    double AT, dAT, d2AT;
-    eob_metric_Atidal(r, dyn, &AT, &dAT, &d2AT);
-    Atmp   += AT;
-    dAtmp  += dAT;
-    d2Atmp += dA2T;
-  }
-
-  *A   = Atmp;
-  *dA  = dAtmp;
-  *d2A = d2Atmp;
-
-  /* D potential and derivative with respect to r */
   const double nu  = dyn->nu;
   const double u   = 1./r;
   const double u2  = u*u;
   const double u3  = u2*u;
+  const double u4  = u2*u2;
+
+  /* A potential and derivative with respect to u */  
+  double Atmp, dAtmp_u, d2Atmp_u;
+  eob_metric_A5PNlog(rr, dyn->nu, &Atmp, &dAtmp_u, &d2Atmp_u);
+
+  /* Add here tides if needed */
+  if (dyn->usetidal) {
+    double AT, dAT, d2AT;
+    eob_metric_Atidal(r, dyn, &AT, &dAT_u, &d2AT_u);
+    Atmp     += AT;
+    dAtmp_u  += dAT_u;
+    d2Atmp_u += dA2T_u;
+  }
+
+  /* A potential and derivative with respect to r */  
+  *A   = Atmp;
+  *dA  = -dAtmp_u*u2;
+  *d2A = 2.*dAtmp_u*u3 + d2Atmp_u*u4;
+
+  /* D potential and derivative with respect to r */
   const double Dp  = 1.0 + 6.*nu*u2 - 2.*(3.0*nu-26.0)*nu*u3; // Pade' resummation of D
   const double D   = 1./Dp;
   const double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
 
   /* B potential and derivative with respect to r */
-  *B   = D/(*A);
-  *dB  = (dD*(*A) - D*(*dA))/((*A)*(*A));
+  *B   = D/(Atmp);
+  *dB  = (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
 
 }
  
@@ -275,26 +281,36 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   const double C_Q2  = dyn->C_Q2;
   const int usetidal = dyn->use_tidal;
 
+  const double u   = 1./r;
+  const double u2  = u*u;
+  const double u3  = u2*u;
+  const double u4  = u2*u2;
+  
   double rc, drc, d2rc;
   eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc, &drc, &d2rc);
 
-  double Aorb, dAorb, d2Aorb;
-  eob_metric_A5PNlog(rc, nu, &Aorb, &dAorb, &d2Aorb);
+  /* A potential and derivative with respect to u */  
+  double Aorb, dAorb_u, d2Aorb_u;
+  eob_metric_A5PNlog(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u);
 
   /* Add here tides if needed */
   if (usetidal) {
-    double AT, dAT, d2AT;
-    eob_metric_Atidal(rc, dyn, &AT, &dAT, &d2AT);
-    Aorb   += AT;
-    dAorb  += dAT;
-    d2Aorb += d2AT;
+    double AT, dAT_u, d2AT_u;
+    eob_metric_Atidal(rc, dyn, &AT, &dAT_u, &d2AT_u);
+    Aorb     += AT;
+    dAorb_u  += dAT_u;
+    d2Aorb_u += d2AT_u;
   }
 
+  /* A potential and derivative with respect to r */  
+  double dAorb = -dAorb_u*u2;
+  double d2Aorb = 2.*dAorb_u*u3 + d2Aorb_u*u4;
+  
+  *A   = Aorb;
+  *dA  = dAorb; 
+  *d2A = d2Aorb;
+  
   /* Correct A for spin */
-  double u   = 1./r;
-  double u2  = u*u;
-  double u3  = u2*u;
-  double u4  = u2*u2;
   double uc  = 1./rc;
   double uc2 = uc*uc;
   double uc3 = uc2*uc;
