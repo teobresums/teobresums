@@ -128,7 +128,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   double A, dA_u, d2A_u, dA, d2A;
 
   const double nu    = dyn->nu;
-  const double rLR   = dyn->rLR;
+  const double rLR   = dyn->rLR_tidal;
   const double XA    = dyn->X1;
   const double XB    = dyn->X2;
   const double kapA2 = dyn->kappaAl2; 
