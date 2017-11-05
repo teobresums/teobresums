@@ -133,7 +133,7 @@ enum{
   TIDES_TEOBRESUM,
   TIDES_NOPT
 };
-const char tides_opt[TIDES_NOPT] = {"off","NNLO","TEOBRESUM","undefined"};
+static const char* const tides_opt[] = {"off","NNLO","TEOBRESUM","undefined"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -142,7 +142,7 @@ enum{
   ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO,
   ODE_TSTEP_NOPT
 };
-const char ode_tstep_opt[ODE_TSTEP_NOPT] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
+static const char* const ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
 
 /** Error handler for root finders */
 enum{ 
@@ -152,8 +152,8 @@ enum{
   ROOT_ERRORS_NOSUCC,
   ROOT_ERRORS
 };
-const char root_errors[ROOT_ERRORS] = {"none","root is not bracketed.","root finder did not converged.", "root finder failed."};
-#define ROOTFINDER(i, x) if ( ((i) = (x))) && ((i)>ROOT_ERRORS_NO) ) { errorexits(root_errors[(i)]); } //FIXME: not sure if this work, seems clever...
+static const char* const root_errors[] = {"none","root is not bracketed.","root finder did not converged.","root finder failed."};
+#define ROOTFINDER(i, x) if ( ((i) = (x))) && ((i)>ROOT_ERRORS_NO) ) { errorexits(root_errors[(i)]); } //FIXME: not sure if this work, but seems clever...
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 const int L[KMAX] = {
@@ -226,13 +226,13 @@ typedef struct tagDynamics
   double *time;
   double *data[EOB_DYNAMICS_VARS]; 
   /* key parameters for quick access */
-  double nu, q, X1, X2;
+  double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2, c3NLO;
   double rLR, rLSO;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4, khatA2,khatB2;
-  double rLR_tidal, ptidalpow=4.;
+  double rLR_tidal, pGSF_tidal;
   double Mbhf, abhf; /* final BH */
-  int use_tidal, use_spin;
+  int use_tidal, use_spins;
 } Dynamics;
 
 /* Function protoypes grouped based on file */
@@ -286,6 +286,7 @@ void Dynamics_alloc (Dynamics **dyn, int size);
 void Dynamics_push (Dynamics **dyn, int size);
 void Dynamics_output (Dynamics *dyn);
 void Dynamics_free (Dynamics *dyn);
+void Dynamics_set_params (Dynamics *dyn);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);

@@ -214,6 +214,7 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
       sinPhi = - sin( (*hlm)->ampli[k][i] );
       *hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
       *hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+      *hpc->time    *= M; 
     }
   }
 }
@@ -448,6 +449,54 @@ void Dynamics_free (Dynamics *dyn)
   for (v = 0; v < EOB_DYNAMICS_VARS; v++)
     if (dyn->data[v]) free(dyn->data[v]);
   free(dyn);
+}
+
+/** Sync some quick access parameters in dyn with parameter database 
+    to be used carefully */
+void Dynamics_set_params (Dynamics *dyn)
+{
+  dyn->store = 0;
+  dyn->size  = par_get_i("size");
+  dyn->M     = par_get_d("M");
+  dyn->nu    = par_get_d("nu");
+  dyn->q     = par_get_d("q");
+  dyn->X1    = par_get_d("X1");  
+  dyn->X2    = par_get_d("X2");
+  dyn->chi1  = par_get_d("chi1");
+  dyn->chi2  = par_get_d("chi2");
+  dyn->S1    = par_get_d("S1");
+  dyn->S2    = par_get_d("S2");
+  dyn->S     = par_get_d("S");
+  dyn->Sstar = par_get_d("Sstar");
+  dyn->a1    = par_get_d("a1");
+  dyn->a2    = par_get_d("a2"); 
+  dyn->aK2   = par_get_d("aK2"); 
+  dyn->C_Q1  = par_get_d("C_Q1");
+  dyn->C_Q2  = par_get_d("C_Q2"); 
+  dyn->c3NLO = par_get_d("c3NLO");
+  dyn->rLR   = par_get_d("rLR");
+  dyn->rLR_tidal = par_get_d("rLR_tidal");
+  dyn->rLSO  = par_get_d("rLSO");
+  dyn->kapA2 = par_get_d("kappaAl2");
+  dyn->kapA3 = par_get_d("kappaAl3");
+  dyn->kapA4 = par_get_d("kappaAl4");
+  dyn->kapB2 = par_get_d("kappaBl2");
+  dyn->kapB3 = par_get_d("kappaBl3");
+  dyn->kapB4 = par_get_d("kappaBl4");
+  dyn->kapT2 = par_get_d("kappaTl2");
+  dyn->kapT3 = par_get_d("kappaTl3");
+  dyn->kapT4 = par_get_d("kappaTl4");
+  dyn->khatA2 = par_get_d("khatAl2");
+  dyn->khatB2 = par_get_d("khatBl2");
+  dyn->rLR_tidal= par_get_d("rLR_tides");
+  dyn->pGSF_tidal = par_get_d("pGSF_tides");
+  dyn->Mbhf = part_get_d("BH_final_mass");
+  dyn->abhf = part_get_d("BH_final_spin");
+  dyn->use_tidal = par_get_i("use_tidal");
+  dyn->use_spins = par_get_i("use_spins");
+  dyn->dt     = par_get_d("dt");
+  dyn->t1     = par_get_d("ode_t1");
+  dyn->t_stop = par_get_d("ode_tmax");
 }
 
 /** Convert time in sec to dimensionless and mass-rescaled units */

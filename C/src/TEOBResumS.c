@@ -19,6 +19,12 @@
 
 #include "TEOBResumS.h"
 
+/**
+ * GSL routines for ODE integration
+ * https://www.gnu.org/software/gsl/doc/html/ode-initval.html
+ * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
+ */
+
 int main (int argc, char* argv[])
 {
   /** Input parameters */
@@ -45,6 +51,7 @@ int main (int argc, char* argv[])
     /* Input given in geometric units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in geometric units and mass rescaled */
+    par_set_d("M", 1.);
     r0 = pow(f0*Pi, -2./3.);
   }
 
@@ -59,31 +66,28 @@ int main (int argc, char* argv[])
   Dynamics_alloc(&dyn, size, "dyn");
   Waveform_lm_alloc (&hlm, size, "hlm"); 
 
-  /** Set useful vars */
+  /** Set useful pars/vars */
   const double q    = par_get_d("q");
   const doulbe nu   = par_get_d("nu");
   const double chi1 = par_get_d("chi1");
   const double chi2 = par_get_d("chi2");
-  const int usespins = par_get_i("use_spins");
-  const int usetidal = par_get_i("use_tidal");
   const int interp_uniform_grid = par_get_i("interp_uniform_grid");
   int check_status;
   int store_dynamics = par_get_i("output_dynamics");
   if (!(use_tidal)) store_dynamics = 1; 
 
-  dyn->usetidal = usetidal;
-  if (PR) printf("use_tides = %s\n",tides_opt[usetidal]);
+  Dynamics_set_params(dyn);
   
   /** Compute light-ring and LSO (if needed) */
   if (use_tidal) {
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO;
-    dyn->use_spin = 0;
+    dyn->use_spins = 0;
     ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
     par_set_d("rLR_tidal", dyn->rLR_tidal);
     /* Reset options */
     dyn->use_tidal = par_get_i("use_tidal");
-    dyn->use_spin = par_get_i("use_spins");
+    dyn->use_spins = par_get_i("use_spins");
   }
   if (par_get_i("compute_LR")) {
     ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
@@ -96,7 +100,7 @@ int main (int argc, char* argv[])
   
   /** Computing the initial conditions */
   gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_VARS, dyn};
-  if (usespins) {
+  if (dyn->use_spins) {
     sys = {eob_dyn_rhs_s, NULL, EOB_EVOLVE_VARS, dyn};
     eob_dyn_ic_s(r0, dyn, dyn->y0);
   } else {
@@ -112,7 +116,7 @@ int main (int argc, char* argv[])
   dyn->y[EOB_EVOLVE_PPH]    = dyn->y0[EOB_ID_PPH];
 
   /** Final BH */
-  if (!(use_tidal)) {
+  if (!(dyn->use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, dyn->Mbhf, dyn->abhf);
     if (PR) printf("BH_final_mass[Healy] = %e\nBH_final_spin[Healy] = %e",dyn->Mbhf,dyn->abhf);
     dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
@@ -125,6 +129,9 @@ int main (int argc, char* argv[])
   dyn->dt            = par_get_d("dt")       * time_unit_fact;
   dyn->t1            = par_get_d("ode_t1")   * time_unit_fact;
   dyn->t_stop        = par_get_d("ode_tmax") * time_unit_fact;
+  par_set_d("dt",       dyn->dt);
+  par_set_d("ode_t1",   dyn->t1);
+  par_set_d("ode_tmax", dyn->t_stop);
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
@@ -294,7 +301,7 @@ int main (int argc, char* argv[])
   
     /* Build uniform grid of width dt and alloc tmp memory */
     
-    //CHECK Is 'iter=size' the last point?
+    if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));    
     //WARNING: is this rounding under control ?!
     const int size_vecg = (int)((dyn->time[size] - dyn->time[0])/dyn->dt + 1);
 

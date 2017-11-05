@@ -344,3 +344,20 @@ void TEOBResumSSetParameters(char *s, int pr)
   if (pr) par_db_screen ();
 
 }
+
+
+/* test */
+#if (1)
+int main (int argc, char* argv[])
+{
+  /** Input parameters */
+  if (argc == 1) {
+    eob_set_params(argv, argc);
+  } else {
+    printf(TEOBResumS_Info);
+    printf(TEOBResumS_Usage);
+    exit(OK);
+  }
+  return OK;
+}
+#endif

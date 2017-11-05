@@ -144,7 +144,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double bar_alph3_1 = dyn->bar_alph3_1;
   const double bar_alph3_2 = dyn->bar_alph3_2;
 
-  const double p = 4; //dyn->ptidalpow; 
+  const double p = dyn->pGSF_tidal; 
   
   /* shortcuts */
   double nu2  = nu*nu;

@@ -7,13 +7,17 @@
 
 M = 80 : total binary mass
 q = 1. : mass ratio
+
 chi1 = 0. : dimensioneless spin 1 z-component 
 chi2 = 0. : dimensioneless spin 2 z-component 
+
 distance = 100 
 inclination = 0
 coalescence_angle = 0
 polarisation = 0
+
 initial_frequency = 10
+
 LambdaAl2 = 0
 LambdaAl3 = 0
 LambdaAl4 = 0
@@ -61,11 +65,13 @@ bar_alph3_2 = 0 :
 khatAl2 = 0 :
 khatBl2 = 0 :
 
+rLR_tides = 0 : radius of light-ring for NNLO tidal model
+pGSF_tides = 0 : p-power in GSF tidal potential model
+
 BH_final_mass = 0 : final BH mass
 BH_final_spin = 0 : final BH spin
 
 rLR = 0 : radius of light-ring
-rLR_tides = 0 : radius of light-ring for NNLO tidal model
 rLSO = 0 : radius of last stable orbit 
 
 # ----------------------
