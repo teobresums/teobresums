@@ -30,11 +30,16 @@ int main (int argc, char* argv[])
   /** Input parameters */
   if (argc == 1) {
     printf(TEOBResumS_Info);
+    print_date_time();
     eob_set_params(argv, argc);
   } else {
     TEOBResumS_Usage(argv[0]);
     exit(OK);
   }
+
+  /** Make output dir */
+  system_mkdir(par_get_s("output_dir"));
+  par_db_write_file(strcat(par_get_s("output_dir"),"/params.txt"));
 
   /** Switch to mass-rescaled geometric units (if needed)*/
   const double M = par_get_d("M"); /* Msun */ 
@@ -416,6 +421,7 @@ int main (int argc, char* argv[])
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);
   Waveform_free (hpc);
-  
+  eob_free_params();
+
   return OK;
 }

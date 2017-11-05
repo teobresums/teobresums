@@ -30,7 +30,7 @@
 
 #include "TEOBResumS.h"
 
-#define DEBUG_THIS_FILE 1 /* to compile and debug this files */
+#define DEBUG_THIS_FILE 0 /* to compile and debug this files */
 #if (DEBUG_THIS_FILE)
 #undef errorexit
 #undef errorexits
@@ -323,11 +323,7 @@ void TEOBResumSSetParameters(char *s, int pr)
   double S = S1 + S2;            /* in the EMRL this becomes the spin of the BH */
   double Sstar = X2*a1 + X1*a2;  /* in the EMRL this becomes the spin of the particle */
 
-  // lets not do the following. flag_spin should rule!
-  // Override spin settings if spins are given in input 
-  //if (chi1 != .0 || chi2 != .0) params.flags.spin = 1;
-
-  int flag_tidal = par_get_i("use_tidal");
+  int usetidal = par_get_i("use_tidal");
   
   double LambdaAl2 = par_get_d("LambdaAl2");
   double LambdaBl2 = par_get_d("LambdaBl2");
@@ -445,6 +441,11 @@ void TEOBResumSSetParameters(char *s, int pr)
   /* Print the parameters used for the run */
   if (pr) par_db_screen ();
 
+}
+
+void eob_free_params()
+{
+  par_db_free ();
 }
 
 #else

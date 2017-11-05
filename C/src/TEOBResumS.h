@@ -33,6 +33,7 @@
 #include <complex.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
@@ -259,6 +260,7 @@ const char * par_get_s(const char *key);
 int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
 void eos_set_params(char *s, int pr);
+void eob_free_params();
 
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);
@@ -294,6 +296,8 @@ void Dynamics_set_params (Dynamics *dyn);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
+void system_mkdir(char *name);
+void print_date_time();
 void errorexit(char *file, int line, const char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
 void errorexits(char *file, int line, const char *s, const char *t);

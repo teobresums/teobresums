@@ -517,6 +517,24 @@ double radius0(double M, double fHz)
   return cbrt(1/(x*x));
 }
 
+/** Make dir */
+void system_mkdir(char *name)
+{
+  char s[STRLEN];
+  sprintf(s,"mkdir -p %s",name);
+  system(s); 
+}
+
+/** Date and time */
+void print_date_time() 
+{
+  time_t rawtime;
+  struct tm * timeinfo;  
+  time( &rawtime );
+  timeinfo = localtime( &rawtime );
+  printf("%s", asctime(timeinfo));
+}
+
 /** Errorexit routines */
 #undef errorexit
 #undef errorexits
