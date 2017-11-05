@@ -25,11 +25,12 @@
  * The db is initialized by the file $TEOBRESUMS/par/default.par
  * Use libconfig API but in a simplified way (http://hyperrealm.com/libconfig/libconfig_manual.html)
  * The db entries can be set/accessed in other parts of the code with simple wrapper functions
+ * Note autoconversion int/float is disabled, type must be specified in the *.par
  */
 
 #include "TEOBResumS.h"
 
-#define DEBUG_THIS_FILE 1 /* to compile and debug this files */
+#define DEBUG_THIS_FILE 0 /* to compile and debug this files */
 #if (DEBUG_THIS_FILE)
 #undef errorexit
 #undef errorexits
@@ -53,15 +54,45 @@ void par_db_free ()
   config_destroy(cf);
 }
 
-void par_file_parse (char *fname)
+void par_file_parse (char *fname, int merge)
 {
-  if (!(config_read_file(cf, fname))) {
-    fprintf(stderr, "%s = %d ; %s\n",
-            config_error_file(cf),
-            config_error_line(cf),
-            config_error_text(cf));
-    config_destroy(cf);
-    errorexit("Problem reading file.");
+  if (merge) {
+    
+    /*
+    config_t cfg1, *cf1;
+    cf1 = &cfg1;
+    config_init(cf1);
+    config_setting_t * csroot1 = config_root_setting(cf1);
+    config_setting_t * cs1;
+    int np = config_setting_length(csroot1);
+    printf("%d\n",np);
+    int i, type;
+    char key[STRLEN];
+    for (i = 0; i < np; i++) {
+      cs1  = config_setting_get_elem(csroot1, i);
+      strcpy(key, config_setting_name(cs1));
+      type = config_setting_type(cs1);
+      printf("%d %s\n",type,key);
+      if      (type==CONFIG_TYPE_INT)   par_set_i(key, config_setting_get_int(cs1));
+      else if (type==CONFIG_TYPE_BOOL)  par_set_b(key, config_setting_get_bool(cs1));
+      else if (type==CONFIG_TYPE_FLOAT) par_set_d(key, config_setting_get_float(cs1));
+      else if (type==CONFIG_TYPE_ARRAY) {
+      } else errorexit("unkown parameter type");
+      }  
+    config_destroy(cf1);
+    */
+
+  } else {
+    
+    if (!(config_read_file(cf, fname))) {
+      fprintf(stderr, "%s = %d - %s\n",
+	      config_error_file(cf),
+	      config_error_line(cf),
+	      config_error_text(cf));
+      config_destroy(cf);
+      errorexit("Problem reading file.");
+    }
+    
   }
 }
 
@@ -78,7 +109,7 @@ void par_db_default ()
     return;
   }
   else {
-    par_file_parse (strcat(eobcodepath,"/par/default.par"));
+    par_file_parse (strcat(eobcodepath,"/par/default.par"),0);
   }
 }
 
@@ -197,6 +228,28 @@ void par_set_s (const char *key, const char *val)
   if (!(config_setting_set_string(cs, val)))
     errorexits("unknown parameter/wrong type for",key);
 }
+
+/*
+void par_set_arrayi (const char *key, int *array, int n)
+{
+  const config_setting_t *cs = config_lookup(cf, key);
+  if (cs != NULL) {
+    int l = config_setting_length(cs);
+    array = (int *) realloc(array, n);
+
+(int *) malloc (l * sizeof(int));
+    if (!array) errorexit("out of memory");
+    int i;
+    for (i = 0; i < l; i++) {
+      array[i] = config_setting_get_int_elem(cs, i);
+    }
+    *n = l;
+    return array;
+  } else
+    errorexits("unknown parameter",key);
+}
+*/
+
 
 #if (!DEBUG_THIS_FILE)
 
@@ -391,11 +444,11 @@ int main (int argc, char* argv[])
   printf("set-test: size = %d (=10)\n",par_get_i("size"));
   printf("set-test: M = %e (=100)\n",par_get_d("M"));
   /* parse other params */
-  par_file_parse ("../par/test.par");
+  //par_file_parse ("../par/test.par", 1);
   /* more operations */
-  printf("get-test: size = %d\n",par_get_i("size"));
-  par_set_i("size",20);
-  printf("set-test: size = %d (=20)\n",par_get_i("size"));
+  //printf("get-test: size = %d\n",par_get_i("size"));
+  //par_set_i("size",20);
+  //printf("set-test: size = %d (=20)\n",par_get_i("size"));
   /* display new db */
   //par_db_screen ();  
   /* write out db */
