@@ -18,25 +18,51 @@
  */
 
 /**
- * Use libconfig
- * Parameters are managed using a database with key:value
- * They can be set/accessed in other parts of the code with simple wrapper functions
+ * @file TEOBResumPars.h
+ * @brief Parameter manager
+ *
+ * Parameters are managed using a database (db) ' key = value '
+ * The db is initialized by the file $TEOBRESUMS/par/default.par
+ * Use libconfig API but in a simplified way (http://hyperrealm.com/libconfig/libconfig_manual.html)
+ * The db entries can be set/accessed in other parts of the code with simple wrapper functions
  */
 
 #include "TEOBResumS.h"
 
+#define DEBUG_THIS_FILE 1 /* to compile and debug this files */
+#if (DEBUG_THIS_FILE)
+#undef errorexit
+#undef errorexits
+#define errorexit(s) {printf("%s\n",s); exit(ERROR);}
+#define errorexits(s,t) {printf("%s %s\n",s,t); exit(ERROR);}
+#endif
+
 /** database for parameters */
 config_t cfg, *cf;
+config_setting_t * csroot;
 
 void par_db_init ()
 {
   cf = &cfg;
   config_init(cf);
+  /* csroot = config_root_setting(cf); */
 }
 
 void par_db_free ()
 {
   config_destroy(cf);
+}
+
+void par_file_parse (char *fname)
+{
+  if (!(config_read_file(cf, fname))) {
+    fprintf(stderr, "%s = %d ; %s\n",
+            config_error_file(cf),
+            config_error_line(cf),
+            config_error_text(cf));
+    config_destroy(cf);
+    errorexit("Problem reading file.");
+  }
 }
 
 /** default values for parameters are expected in file
@@ -52,35 +78,25 @@ void par_db_default ()
     return;
   }
   else {
-    par_cfgfile_parse (strcat(eobcodepath,"par/default.par"));
-  }
-}
-
-void par_file_parse (char *fname)
-{
-  if (!(config_read_file(cf, fname))) {
-    fprintf(stderr, "%s = %d : %s\n",
-            config_error_file(cf),
-            config_error_line(cf),
-            config_error_text(cf));
-    config_destroy(cf);
-    errorexit("Problem reading file.");
+    par_file_parse (strcat(eobcodepath,"/par/default.par"));
   }
 }
 
 void par_db_write_file (char *fname)
 {
-  if (!(config_write_file(&cfg, fname))) {
+  if (!(config_write_file(cf, fname))) {
     fprintf(stderr, "Error writing file %s\n", fname);
-    config_destroy(&cfg);
+    config_destroy(cf);
     errorexit("Problem writing file");
   }
 }
 
 void par_db_screen ()
 {
-  config_write(&cfg, stderr);
+  config_write(cf, stderr);
 }
+
+/* 'get' routines, assume all settings are root */
 
 int par_get_i (const char *key)
 {
@@ -111,7 +127,7 @@ double par_get_d (const char *key)
 
 const char * par_get_s (const char *key)
 {
-  char *val;
+  const char *val;
   if (config_lookup_string(cf, key, &val))
     return val;
   else 
@@ -120,61 +136,69 @@ const char * par_get_s (const char *key)
 
 int * par_get_arrayi (const char *key, int *n)
 {
-  const config_setting_t *a;
-  a = config_lookup(cf, key);
-  /* this is unsafe. todo: check */
-  int l = config_setting_length(a);
-  int *array = NULL;
-  array = (int *) malloc (l * sizeof(int));
-  if (!array) errorexit("out of memory");
-  int i;
-  for (i = 0; i < l; l++) {
-    array[i] = config_setting_get_int_elem(a, i);
-  }
-  *n = l;
-  return array;
+  const config_setting_t *cs = config_lookup(cf, key);
+  if (cs != NULL) {
+    int l = config_setting_length(cs);
+    int * array = (int *) malloc (l * sizeof(int));
+    if (!array) errorexit("out of memory");
+    int i;
+    for (i = 0; i < l; i++) {
+      array[i] = config_setting_get_int_elem(cs, i);
+    }
+    *n = l;
+    return array;
+  } else
+    errorexits("unknown parameter",key);
 }
 
 double * par_get_arrayd (const char *key, int *n)
 {
-  const config_setting_t *a;
-  a = config_lookup(cf, key);
-  /* this is unsafe. todo: check */
-  int l = config_setting_length(a);
-  double *array = NULL;
-  array = (double *) malloc (l * sizeof(double));
-  if (!array) errorexit("out of memory");
-  int i;
-  for (i = 0; i < l; l++) {
-    array[i] = config_setting_get_float_elem(a, i);
-  }
-  *n = l;
-  return array;
+  const config_setting_t *cs = config_lookup(cf, key);
+  if (cs != NULL) {
+    int l = config_setting_length(cs);
+    double * array = (double *) malloc (l * sizeof(int));
+    if (!array) errorexit("out of memory");
+    int i;
+    for (i = 0; i < l; i++) {
+      array[i] = config_setting_get_int_elem(cs, i);
+    }
+    *n = l;
+    return array;
+  } else
+    errorexits("unknown parameter",key);
 }
 
-void par_set_i (const char *key, int *val)
+/* 'set' routines, assume all settings are root */
+
+void par_set_i (const char *key, int val)
 {
-  if (!(config_setting_lookup_int(cf, key, val)))
+  config_setting_t * cs = config_lookup(cf, key);
+  if (!(config_setting_set_int(cs, val)))
     errorexits("unknown parameter/wrong type for",key);
 }
 
-void par_set_b (const char *key, int *val)
+void par_set_b (const char *key, int val)
 {
-  if (!(config_setting_lookup_bool(cf, key, val)))
+  config_setting_t * cs = config_lookup(cf, key);
+  if (!(config_setting_set_bool(cs, val)))
     errorexits("unknown parameter/wrong type for",key);
 } 
 
-void par_set_d (const char *key, double *val)
+void par_set_d (const char *key, double val)
 {
-  if (!(config_setting_lookup_float(cf, key, val)))
+  config_setting_t * cs = config_lookup(cf, key);
+  if (!(config_setting_set_float(cs, val)))
     errorexits("unknown parameter/wrong type for",key);
 }
 
-void par_set_s (const char *key, const char **val)
+void par_set_s (const char *key, const char *val)
 {
-  if (!(config_setting_lookup_string(cf, key, val)))
+  config_setting_t * cs = config_lookup(cf, key);
+  if (!(config_setting_set_string(cs, val)))
     errorexits("unknown parameter/wrong type for",key);
 }
+
+#if (!DEBUG_THIS_FILE)
 
 /** Set parameters */
 //void TEOBResumSSetParameters(char *s, int n, int mode, int pr)
@@ -225,12 +249,12 @@ void TEOBResumSSetParameters(char *s, int pr)
 
   int flag_tidal = par_get_i("use_tidal");
   
-  double LambdaAl2 = par_set_d("LambdaAl2");
-  double LambdaBl2 = par_set_d("LambdaBl2");
-  double LambdaAl3 = par_set_d("LambdaAl3");
-  double LambdaBl3 = par_set_d("LambdaBl3");
-  double LambdaAl4 = par_set_d("LambdaAl4");
-  double LambdaBl4 = par_set_d("LambdaBl5");
+  double LambdaAl2 = par_get_d("LambdaAl2");
+  double LambdaBl2 = par_get_d("LambdaBl2");
+  double LambdaAl3 = par_get_d("LambdaAl3");
+  double LambdaBl3 = par_get_d("LambdaBl3");
+  double LambdaAl4 = par_get_d("LambdaAl4");
+  double LambdaBl4 = par_get_d("LambdaBl4");
   
   if (par_get_i("use_Yagi_fits")) {
     LambdaAl3 = Yagi13_fit_barlamdel(LambdaAl2, 3);
@@ -260,8 +284,8 @@ void TEOBResumSSetParameters(char *s, int pr)
   double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
 
   /* Tidal coefficients for the amplitude */
-  double khatA_2  = 3./2. * LambdaA2 * XB/XA * gsl_pow_int(XA,5);
-  double khatB_2  = 3./2. * LambdaB2 * XA/XB * gsl_pow_int(XB,5);
+  double khatA_2  = 3./2. * LambdaAl2 * XB/XA * gsl_pow_int(XA,5);
+  double khatB_2  = 3./2. * LambdaBl2 * XA/XB * gsl_pow_int(XB,5);
 
   /* self-spin coefficients */
   double logC_Q1 = logQ(log(LambdaAl2));
@@ -284,10 +308,10 @@ void TEOBResumSSetParameters(char *s, int pr)
   par_set_d("aK",aK);
   par_set_d("aK2",aK2);
 
-  par_set_d("LambdaAl3", LambdaAl3 );
-  par_set_d("LambdaAl4", LambdaAl4 );
-  par_set_d("LambdaBl3", LambdaBl3 );
-  par_set_d("LambdaBl4", LambdaBl4 );
+  par_set_d("LambdaAl3",LambdaAl3);
+  par_set_d("LambdaAl4",LambdaAl4);
+  par_set_d("LambdaBl3",LambdaBl3);
+  par_set_d("LambdaBl4",LambdaBl4);
 
   par_set_d("kappaAl2", kapA2 );
   par_set_d("kappaAl3", kapA3 );
@@ -304,17 +328,15 @@ void TEOBResumSSetParameters(char *s, int pr)
   par_set_d("bar_alph3_1",bar_alph3_1);
   par_set_d("bar_alph3_2",bar_alph3_2);
 
-  par_set_d("khatAl2", khatA_2 );
-  par_set_d("khatBl2", khatB_2 );
+  par_set_d("khatAl2",khatA_2);
+  par_set_d("khatBl2",khatB_2);
 
   par_set_d("C_Q1",C_Q1);
   par_set_d("C_Q2",C_Q2);
 
   // Set more as needed ...
-  par_set_d("rLR",0.);
-  par_set_d("rLSO",0.);
-  par_set_d("rLR_tidal",0.);
-  par_set_d("cN3LO", c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2, flag_tidal) );
+  double c3  = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2);
+  par_set_d("cN3LO", c3 );
   
   if (par_get_i("use_geometric_units")) {
     /* input given in geometric units, 
@@ -337,7 +359,7 @@ void TEOBResumSSetParameters(char *s, int pr)
       par_set_d("dt", dt);
       printf("warning: input values for dt inconsistent with sample rate, use sample rate.\n");
     } 
-    par_set_d("r0", radius0(M, fmin) );
+    par_set_d("r0",  radius0(M, fmin) );
   }
 
   /* Print the parameters used for the run */
@@ -345,19 +367,42 @@ void TEOBResumSSetParameters(char *s, int pr)
 
 }
 
+#else
 
 /* test */
-#if (0)
 int main (int argc, char* argv[])
 {
-  /** Input parameters */
-  if (argc == 1) {
-    eob_set_params(argv, argc);
-  } else {
-    printf(TEOBResumS_Info);
-    printf(TEOBResumS_Usage);
-    exit(OK);
-  }
+  /* init db */
+  par_db_init ();
+  /* parse default params from file */
+  par_db_default ();
+  /* display default params */
+  par_db_screen ();
+  /* test 'get' */
+  printf("get-test: size = %d\n",par_get_i("size"));
+  printf("get-test: M = %e\n",par_get_d("M"));
+  int idx,n;
+  int *i = par_get_arrayi ("output_lm", &n);
+  printf("get-test: array_length n=%d\n",n);
+  for (idx=0; idx<n; idx++) printf("get-test: array[%d]=%d\n",idx,i[idx]);
+  /* test 'set' */
+  par_set_i("size",10);
+  par_set_d("M",100);
+  printf("set-test: size = %d (=10)\n",par_get_i("size"));
+  printf("set-test: M = %e (=100)\n",par_get_d("M"));
+  /* parse other params */
+  par_file_parse ("../par/test.par");
+  /* more operations */
+  printf("get-test: size = %d\n",par_get_i("size"));
+  par_set_i("size",20);
+  printf("set-test: size = %d (=20)\n",par_get_i("size"));
+  /* display new db */
+  //par_db_screen ();  
+  /* write out db */
+  //par_db_write_file("../par/test1.par");
+  /* free db */
+  par_db_free ();
   return OK;
 }
+
 #endif

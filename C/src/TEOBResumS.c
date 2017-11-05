@@ -29,10 +29,10 @@ int main (int argc, char* argv[])
 {
   /** Input parameters */
   if (argc == 1) {
+    printf(TEOBResumS_Info);
     eob_set_params(argv, argc);
   } else {
-    printf(TEOBResumS_Info);
-    printf(TEOBResumS_Usage);
+    TEOBResumS_Usage(argv[0]);
     exit(OK);
   }
 

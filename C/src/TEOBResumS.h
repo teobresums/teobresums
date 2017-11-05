@@ -32,6 +32,7 @@
 #include <libconfig.h> /* library to manage parameters */
 #include <complex.h>
 #include <math.h>
+#include <string.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
@@ -47,7 +48,7 @@
 #define OK 0 /** generic go int */
 #define STRLEN 128 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
-#define TEOBResumS_Usage {printf("USAGE:\n\t%s parfile\n", argv[0]);exit(OK);} 
+#define TEOBResumS_Usage(x) {printf("%s\nUSAGE:\n\t%s parfile\n", TEOBResumS_Info, x);} 
 #ifndef PR /** Flag for print option (control at compiling time) */
 #define PR 0 
 #endif
@@ -244,10 +245,10 @@ void par_db_default ();
 void par_file_parse (char *fname);
 void par_db_write_file (char *fname);
 void par_db_screen ();
-void par_set_i(const char *key, int *val);
-void par_set_b(const char *key, int *val);
-void par_set_d(const char *key, double *val);
-void par_set_s(const char *key, const char **val);
+void par_set_i(const char *key, int val);
+void par_set_b(const char *key, int val);
+void par_set_d(const char *key, double val);
+void par_set_s(const char *key, const char *val);
 int par_get_i(const char *key);
 int par_get_b(const char *key);
 double par_get_d(const char *key);
@@ -290,9 +291,9 @@ void Dynamics_set_params (Dynamics *dyn);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
-void errorexit(char *file, int line, char *s);
+void errorexit(char *file, int line, const char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
-void errorexits(char *file, int line, char *s, char *t);
+void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */

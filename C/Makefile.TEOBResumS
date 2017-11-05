@@ -26,7 +26,7 @@ CC=gcc
 CFLAGS=-g -std=c99 `gsl-config --cflags`
 #CFLAGS=-O3 -std=c++11 
 LFLAGS=`gsl-config --libs`
-LDLFLAGS=-lgsl -lgslcblas -lm
+LDLFLAGS=-lgsl -lgslcblas -lm -lconfig
 
 #
 # rules
