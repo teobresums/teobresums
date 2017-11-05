@@ -347,7 +347,7 @@ void TEOBResumSSetParameters(char *s, int pr)
 
 
 /* test */
-#if (1)
+#if (0)
 int main (int argc, char* argv[])
 {
   /** Input parameters */
