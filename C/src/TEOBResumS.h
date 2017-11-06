@@ -158,7 +158,7 @@ static const char* const root_errors[] = {"none","root is not bracketed.","root 
 #define ROOTFINDER(i, x) if ( ((i) = (x))) && ((i)>ROOT_ERRORS_NO) ) { errorexits(root_errors[(i)]); } //FIXME: not sure if this work, but seems clever...
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
-const int L[KMAX] = {
+const int LINDEX[KMAX] = {
     2,2,
     3,3,3,
     4,4,4,4,
@@ -167,7 +167,7 @@ const int L[KMAX] = {
     7,7,7,7,7,7,7,
     8,8,8,8,8,8,8,8};
 
-const int M[KMAX] = {
+const int MINDEX[KMAX] = {
     1,2,
     1,2,3,
     1,2,3,4,
@@ -275,7 +275,7 @@ double interp1d (const int order, double xx, int nx, double *f, double *x);
 double fact(int n);
 double wigner_d_function(int l, int m, int s, double i);
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
-void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double psi, double iota, Waveform **hpc);
+void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_nux(double *f, double *x, int n, double *df);

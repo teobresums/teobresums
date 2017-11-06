@@ -1,4 +1,3 @@
-
 /**
  * Copyright (C) 2017 Alessandro Nagar, Gregorio Carullo, Ka Wa Tsang, Philipp Fleig, Sebastiano Bernuzzi, Walter Del Pozzo
  *
@@ -26,7 +25,7 @@ double q_to_nu(const double q)
   double nu = 0;
   if (q>0.)
     nu = q/((q+1.)*(q+1.));
-  return nu
+  return nu;
 }
 
 /** Return mass ratio M1/M from nu */
@@ -45,7 +44,6 @@ double Eulerlog(const double x,const double m)
   /* above constants are defined in header */
   return EulerGamma + Log2 + log(m) + 0.5*log(x);
 }
-
 
 /** Spline interpolation with GSL routines */
 void interp_grid(double *t, double *y, int n, double *ti, int ni, double *yi)
@@ -178,7 +176,8 @@ double wigner_d_function(int l, int m, int s, double i)
   double sintheta = sin(i*0.5);
   int ki = MAX( 0  , m-s );
   int kf = MIN( l+m, l-s );
-  for( int k = ki; k <= kf; k++ ){
+  int k;
+  for( k = ki; k <= kf; k++ ){
     dWig +=
       ( pow(-1.,k) * pow(costheta,2*l+m-s-2*k) * pow(sintheta,2*k+s-m) )/
       ( fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) );
@@ -191,7 +190,7 @@ double wigner_d_function(int l, int m, int s, double i)
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
 {
     if ((l<0) || (m<-l) || (m>l)) {
-        errorexits(" wrong l (%d) or m (%d) inside spinspharmY\n", l, m);
+        errorexit(" wrong (l,m) inside spinspharmY\n");
     }
     double c = pow(-1.,-s) * sqrt( (2.*l+1.)/(4.*M_PI) );
     double dWigner = c * wigner_d_function(l,m,-s,i);
@@ -201,20 +200,20 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 }
 
 /** (h+, hx) polarizations from the multipolar waveform */
-void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double psi, double iota, Waveform **hpc)
+void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc)
 {
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
   int k,i;
   for (k = 0; k < KMAX; k++ ) {
-    spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], psi,iota);
+    spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
     for (i = 0; i < (*hlm)->size; i++) {
       Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
       cosPhi =   cos( (*hlm)->ampli[k][i] );
       sinPhi = - sin( (*hlm)->ampli[k][i] );
-      *hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-      *hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
-      *hpc->time    *= M; 
+      hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+      hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+      hpc->time[i] *= M; 
     }
   }
 }
@@ -222,43 +221,38 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
 /** 4th order centered stencil first derivative, uniform grids */
 int D0(double *f, double dx, int n, double *df)
 {
-  const double oodx  = 1./dx;
-  const double c = 1./12.;
+  const double oo12dx  = 1./(12*dx);
   int i;
-  for (i=2; i<n-2; i++)
-    {
-      d1f[i] = c*(8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oodx;
-    }
+  for (i=2; i<n-2; i++) {
+    df[i] = (8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oo12dx;
+  }
   i = 0;
-  d1f[i] = c*(-25.*f[i] + 48.*f[i+1] - 36.*f[i+2] + 16.*f[i+3] - 3.*f[i+4])*oodx;
+  df[i] = (-25.*f[i] + 48.*f[i+1] - 36.*f[i+2] + 16.*f[i+3] - 3.*f[i+4])*oo12dx;
   i = 1;
-  d1f[i] = c*(-3.*f[i-1] - 10.*f[i] + 18.*f[i+1] - 6.*f[i+2] + f[i+3])*oodx;
+  df[i] = (-3.*f[i-1] - 10.*f[i] + 18.*f[i+1] - 6.*f[i+2] + f[i+3])*oo12dx;
   i = n-2;
-  d1f[i] = - c*(-3.*f[i+1] - 10.*f[i] + 18.*f[i-1] - 6.*f[i-2] + f[i-3])*oodx;
+  df[i] = - (-3.*f[i+1] - 10.*f[i] + 18.*f[i-1] - 6.*f[i-2] + f[i-3])*oo12dx;
   i = n-1;
-  d1f[i] = - c*(-25.*f[i] + 48.*f[i-1] - 36.*f[i-2] + 16.*f[i-3] - 3.*f[i-4])*oodx;
+  df[i] = - (-25.*f[i] + 48.*f[i-1] - 36.*f[i-2] + 16.*f[i-3] - 3.*f[i-4])*oo12dx;
   return OK;
 }
 
 /** 4th order centered stencil second derivative, uniform grids */
 int D2(double *f, double dx, int n, double *d2f)
 {
-  const double oodx  = 1./dx;
-  const double oodx2  = oodx*oodx;
-  const double c = 1./12.;
+  const double oo12dx2  = 1./(dx*dx*12);
   int i;
-  for (i=2; i<n-2; i++)
-    {
-      d2f[i] = c*(-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]))*oodx2;
-    }
+  for (i=2; i<n-2; i++) {
+    d2f[i] = (-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]))*oo12dx2;
+  }
   i= 0;
-  d2f[i] = c*(45*f[i]-154*f[i+1]+214*f[i+2]-156*f[i+3]+61*f[i+4]-10*f[i+5])*oodx2;
+  d2f[i] = (45*f[i]-154*f[i+1]+214*f[i+2]-156*f[i+3]+61*f[i+4]-10*f[i+5])*oo12dx2;
   i= 1;
-  d2f[i] = c*(10*f[i-1]-15*f[i]-4*f[i+1]+14*f[i+2]-6*f[i+3]+f[i+4])*oodx2;
+  d2f[i] = (10*f[i-1]-15*f[i]-4*f[i+1]+14*f[i+2]-6*f[i+3]+f[i+4])*oo12dx2;
   i = n-2;
-  d2f[i] = c*(10*f[i+1]-15*f[i]-4*f[i-1]+14*f[i-2]-6*f[i-3]+f[i-4])*oodx2;
+  d2f[i] = (10*f[i+1]-15*f[i]-4*f[i-1]+14*f[i-2]-6*f[i-3]+f[i-4])*oo12dx2;
   i = n-1;
-  d2f[i] = c*(45*f[i]-154*f[i-1]+214*f[i-2]-156*f[i-3]+61*f[i-4]-10*f[i-5])*oodx2;
+  d2f[i] = (45*f[i]-154*f[i-1]+214*f[i-2]-156*f[i-3]+61*f[i-4]-10*f[i-5])*oo12dx2;
   return OK;
 }
 
@@ -287,6 +281,7 @@ void set_multipolar_idx_mask(int *kmask, int n)
   int m, k,j;
   for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
   int *idx = par_get_arrayi("output_lm", &m);
+  if (m==0) return;
   if (m==1 && idx[0]==-1) return;
   for (k = 0; k<n; k++)
     for (j = 0; j<m; j++)
@@ -307,6 +302,7 @@ void Waveform_alloc (Waveform **wav, int size, char *name)
   memset( *wav->imag, 0, size * sizeof(double) );
   *wav->size = size; 
   strcpy(name,*wav->name);
+
 }
 
 void Waveform_push (Waveform **wav, int size)
@@ -488,7 +484,7 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->kapT4 = par_get_d("kappaTl4");
   dyn->khatA2 = par_get_d("khatAl2");
   dyn->khatB2 = par_get_d("khatBl2");
-  dyn->rLR_tidal= par_get_d("rLR_tides");
+  dyn->rLR_tidal  = par_get_d("rLR_tides");
   dyn->pGSF_tidal = par_get_d("pGSF_tides");
   dyn->Mbhf = part_get_d("BH_final_mass");
   dyn->abhf = part_get_d("BH_final_spin");

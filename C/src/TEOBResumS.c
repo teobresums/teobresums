@@ -408,7 +408,7 @@ int main (int argc, char* argv[])
   const double iota = par_get_d("inclination");
   
   /** Computation of (h+,hx) */
-  eob_compute_hpc(&hlm, nu, M, distance, psi, iota, &hpc);
+  eob_compute_hpc(&hlm, nu, M, distance, amplitude_prefactor, psi, iota, &hpc);
     
   /** Output */
   Waveform_lm_output (hpc);
