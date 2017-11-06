@@ -294,26 +294,29 @@ void set_multipolar_idx_mask(int *kmask, int n)
 void Waveform_alloc (Waveform **wav, int size, char *name)
 {
   *wav = (Waveform *) calloc(1, sizeof(Waveform)); 
-  if (*wav == NULL)
+  if (wav == NULL)
     errorexit("Out of memory");
-  *wav->real = (double*) malloc ( size * sizeof(double) );
-  *wav->imag = (double*) malloc ( size * sizeof(double) );
-  memset( *wav->real, 0, size * sizeof(double) );
-  memset( *wav->imag, 0, size * sizeof(double) );
-  *wav->size = size; 
-  strcpy(name,*wav->name);
-
+  (*wav)->real = malloc ( size * sizeof(double) );
+  (*wav)->imag = malloc ( size * sizeof(double) );
+  (*wav)->time = malloc ( size * sizeof(double) );
+  memset( (*wav)->real, 0, size * sizeof(double) );
+  memset( (*wav)->imag, 0, size * sizeof(double) );
+  memset( (*wav)->time, 0, size * sizeof(double) );
+  (*wav)->size = size; 
+  strcpy((*wav)->name,name);
 }
 
 void Waveform_push (Waveform **wav, int size)
 {
-  if (*wav->real) *wav->real = (double*) realloc ( size * sizeof(double) );
-  if (*wav->imag) *wav->imag = (double*) realloc ( size * sizeof(double) );
-  const int n  = *wav->size;
-  const int dn = size - *wav->size;
-  memset( *wav->real + n, 0, dn * sizeof(double) );
-  memset( *wav->imag + n, 0, dn * sizeof(double) );
-  *wav->size = size; 
+  if ((*wav)->real) (*wav)->real = realloc ( (*wav)->real, size * sizeof(double) );
+  if ((*wav)->imag) (*wav)->imag = realloc ( (*wav)->imag, size * sizeof(double) );
+  if ((*wav)->time) (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
+  const int n  = (*wav)->size;
+  const int dn = size - (*wav)->size;
+  memset( (*wav)->real + n, 0, dn * sizeof(double) );
+  memset( (*wav)->imag + n, 0, dn * sizeof(double) );
+  memset( (*wav)->time + n, 0, dn * sizeof(double) );
+  (*wav)->size = size; 
 }
 
 void Waveform_output (Waveform *wav)
@@ -321,7 +324,7 @@ void Waveform_output (Waveform *wav)
   int i;
   FILE* fp = fopen(wav->name, "w"); 
   for (i = 0; i < wav->size; i++) {
-    fprintf(fp, "%.9e %.12e %.12e\n", wav->time, wav->real[i], wave->imag[i]);
+    fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->real[i], wav->imag[i]);
   }
   fclose(fp);
 }
