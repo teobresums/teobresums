@@ -337,40 +337,45 @@ void Waveform_free (Waveform *wav)
 }
 
 /** Multipolar waveform (complex) */
-void Waveform_lm_alloc (Waveform_lm **wav, int size, char **name)
+void Waveform_lm_alloc (Waveform_lm **wav, int size, char *name)
 {
   *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
-  if (*wav == NULL)
+  if (wav == NULL)
     errorexit("Out of memory");
-  *wav->size = size; 
-  set_multipolar_idx_mask(*wav->kmask, KMAX); 
+  (*wav)->size = size; 
+  set_multipolar_idx_mask((*wav)->kmask, KMAX); 
+  (*wav)->time = malloc ( size * sizeof(double) );
+  memset((*wav)->time, 0, size*sizeof(double));
   int k;
   for (k=0; k<KMAX; k++) {
-    *wav->ampli[k] = (double*) malloc ( size * sizeof(double) );
-    *wav->phase[k] = (double*) malloc ( size * sizeof(double) );
-    memset(*wav->ampli[k], 0, size*sizeof(double));
-    memset(*wav->phase[k], 0, size*sizeof(double));
-    strcpy(name[k],*wav->name[k]);
+    (*wav)->ampli[k] = malloc ( size * sizeof(double) );
+    (*wav)->phase[k] = malloc ( size * sizeof(double) );
+    memset((*wav)->ampli[k], 0, size*sizeof(double));
+    memset((*wav)->phase[k], 0, size*sizeof(double));
+    strcpy((*wav)->name[k],&name[k]);
   }
 }
 
-void Waveform_lm_push (Waveform **wav, int size)
+void Waveform_lm_push (Waveform_lm **wav, int size)
 {
   int k, i;
-  const int n  = *wav->size;
-  const int dn = size - *wav->size;
+  const int n  = (*wav)->size;
+  const int dn = size - (*wav)->size;
+  (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
+  if ((*wav)->time == NULL) errorexit("Out of memory.");
+  memset( (*wav)->time + n, 0, dn * sizeof(double) );
   for (k=0; k<KMAX; k++) {
-    *wav->ampli[k] = (double*) realloc ( size * sizeof(double) );
-    if (*wav->ampli[k] == NULL) errorexit("out of memory.");
-    memset( *wav->ampli[k] + n, 0, dn * sizeof(double) );
-    *wav->phase[k] = (double*) realloc ( size * sizeof(double) );
-    if (*wav->phase[k] == NULL) errorexit("out of memory.");
-    memset( *wav->phase[k] + n, 0, dn * sizeof(double) );
+    (*wav)->ampli[k] = realloc ( (*wav)->ampli[k], size * sizeof(double) );
+    if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
+    memset( (*wav)->ampli[k] + n, 0, dn * sizeof(double) );
+    (*wav)->phase[k] = realloc ( (*wav)->phase[k], size * sizeof(double) );
+    if ((*wav)->phase[k] == NULL) errorexit("Out of memory.");
+    memset( (*wav)->phase[k] + n, 0, dn * sizeof(double) );
   }
-  *wav->size = size;
+  (*wav)->size = size;
 }
 
-void Waveform_lm_output (Waveform *wav)
+void Waveform_lm_output (Waveform_lm *wav)
 {
   int k,i;
   const int n = wav->size;
@@ -378,7 +383,7 @@ void Waveform_lm_output (Waveform *wav)
     if (wav->kmask[k]) {
       FILE* fp = fopen(wav->name[k], "w"); 
       for (i = 0; i < n; i++) {
-	fprintf(fp, "%.9e %.12e %.12e\n", wav->time, wav->ampli[k][i], wave->phase[k][i]);
+	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
       }
       fclose(fp);
     }
@@ -387,45 +392,45 @@ void Waveform_lm_output (Waveform *wav)
 
 void Waveform_lm_free (Waveform_lm *wav)
 {
+  int k;
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
       if (wav->ampli[k]) free(wav->ampli[k]);
       if (wav->phase[k]) free(wav->phase[k]);
-      strcpy(name[k],wav->name[k]);
     }
   }
   free(wav);
 }
 
 /** Dynamics */
-void Dynamics_alloc (Dynamics **dyn, int size, char **name)
+void Dynamics_alloc (Dynamics **dyn, int size, char *name)
 {
-  *dyn = (Dynamics *) calloc(1, sizeof(Dynamics)); 
-  if (*dyn == NULL)
+  (*dyn) = (Dynamics *) calloc(1, sizeof(Dynamics)); 
+  if (dyn == NULL)
     errorexit("Out of memory");
-  strcpy(name,*dyn->name);
-  *dyn->size = size; 
-  *dyn->time = (double*) malloc ( size * sizeof(double) );
-  memset(*dyn->time, 0, size*sizeof(double));
+  strcpy((*dyn)->name,name);
+  (*dyn)->size = size; 
+  (*dyn)->time = malloc ( size * sizeof(double) );
+  memset((*dyn)->time, 0, size*sizeof(double));
   int v;
   for (v = 0; v < EOB_DYNAMICS_VARS; v++) {
-    *dyn->data[v] = (double*) malloc ( size * sizeof(double) );
-    memset(*dyn->data[k], 0, size*sizeof(double));
+    (*dyn)->data[v] = malloc ( size * sizeof(double) );
+    memset((*dyn)->data[v], 0, size*sizeof(double));
   }
 }
 
 void Dynamics_push (Dynamics **dyn, int size)
 {
   int v,i;
-  const int n  = *dyn->size;
-  const int dn = size - *dyn->size;
-  *dyn->time = (double*) realloc ( size * sizeof(double) );
+  const int n  = (*dyn)->size;
+  const int dn = size - (*dyn)->size;
+  (*dyn)->time = realloc ( (*dyn)->time, size * sizeof(double) );
   for (v = 0; v < EOB_DYNAMICS_VARS; v++) {
-    *dyn->data[v] = (double*) realloc ( size * sizeof(double) );
-    if (*dyn->data[v] == NULL) errorexit("out of memory.");
-    memset( *dyn->data[v] + n, 0, dn * sizeof(double) );
+    (*dyn)->data[v] = realloc ( (*dyn)->data[v], size * sizeof(double) );
+    if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
+    memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) );
   }
-  *dyn->size = size; 
+  (*dyn)->size = size; 
 }
 
 void Dynamics_output (Dynamics *dyn)
