@@ -132,7 +132,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 }
 
 /** Coefficients for Newtonian flux */
-const double CNlm[35] = {
+static const double CNlm[35] = {
   8./45, 32./5.,
   1./1260, 32./63, 243./28, 
   1./44100, 32./3969, 729./700, 8192./567, 
@@ -248,11 +248,11 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
 }
 
 /* Factorials evaluated for the tail term */
-const double f14[] = {1.,         1.,          2.,
-		      6.,         24.,         120.,
-		      720.,       5040.,       40320.,
-		      362880.,    3628800.,    39916800.,
-		      479001600., 6227020800., 87178291200.};
+static const double f14[] = {1.,         1.,          2.,
+			     6.,         24.,         120.,
+			     720.,       5040.,       40320.,
+			     362880.,    3628800.,    39916800.,
+			     479001600., 6227020800., 87178291200.};
 
 /** Tail term (modulus) */
 void eob_flx_Tlm(const double w, double *MTlm)
