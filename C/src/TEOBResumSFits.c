@@ -270,10 +270,10 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
 
 
 /** QNM fits for the 22 mode for spinning systems */
-void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK; 
+void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 		     double Mbh, double abh,  
 		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
-		     double ***sigma)
+		     double **sigma)
 {
 
   const double a12        = X1*chi1 - X2*chi2;
@@ -292,7 +292,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   const double aeff_omg4  = SQ(aeff_omg2);
   const double X12_2      = SQ(X12);
 
-  double alpha21[KMAX], alpha1[KMAX], omega1[KMX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
+  double alpha21[KMAX], alpha1[KMAX], omega1[KMAX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
       
   const int usespins = par_get_i("use_spins");  
   
@@ -441,7 +441,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
 
   double cosh_c3A;
   for (k=0; k<KMAX; k++) {
-    c2A[K] = 0.5*alpha21[K];
+    c2A[k] = 0.5*alpha21[k];
     cosh_c3A = cosh(c3A[k]);
     a1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
     a2[k] = c2A[k];
