@@ -23,18 +23,18 @@
 void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, double Omega, double ddotr, double H, double Heff, double jhat, double rw, Dynamics *dyn, Waveform_lm_t *hlm)
 {
 
-  const double nu = d->nu;  
-  const double chi1 = d->chi1;  
-  const double chi2 = d->chi2;  
-  const double a1 = d->a1;  
-  const double a2 = d->a2;  
-  const double X1 = d->X1;  
-  const double X2 = d->X2;  
-  const double chi1 = d->C_Q1;  
-  const double chi2 = d->C_Q2;  
+  const double nu = dyn->nu;  
+  const double chi1 = dyn->chi1;  
+  const double chi2 = dyn->chi2;  
+  const double a1 = dyn->a1;  
+  const double a2 = dyn->a2;  
+  const double X1 = dyn->X1;  
+  const double X2 = dyn->X2;  
+  const double C_Q1 = dyn->C_Q1;  
+  const double C_Q2 = dyn->C_Q2;  
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
-  const int usespeedytail = dyn->use_speedytail;
+  const int usespeedytail = par_get_i("use_speedytail");
   
   /** Source term */
   double source[] = {
@@ -49,7 +49,7 @@ void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, doub
   
   /** Newtonian waveform */
   Waveform_lm_t hNewt;
-  eob_wav_hlmNewt(rw,Omega,phi,nu,usetidal,usespins, &hNewt);
+  eob_wav_hlmNewt(rw,Omega,phi,nu,usetidal, &hNewt);
   
   /** Compute corrections */
   double rholm[KMAX], flm[KMAX];
@@ -65,9 +65,9 @@ void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, doub
   const double Hreal = H * nu;
   Waveform_lm_t tlm;
   if (usespeedytail) {
-    eob_wav_speedyTail(Omega,Hreal, r0, L, M, &tlm); 
+    eob_wav_speedyTail(Omega,Hreal, r0, &tlm); 
   } else {
-    eob_wav_hhatlmTail(Omega,Hreal, r0, L, M, &tlm); 
+    eob_wav_hhatlmTail(Omega,Hreal, r0, &tlm); 
   }
   
   /** Residual phase corrections delta_{lm} */
@@ -77,7 +77,7 @@ void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, doub
   /** NQC */
   Waveform_lm_t hNQC; 
   if (!(usetidal)) {
-    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); // FIXME call
+    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); 
   }
 
   /** Put together the different contributions */
@@ -90,8 +90,8 @@ void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, doub
     
     /* NQC correction */
     if ( (!(usetidal)) && (!(usespins)) ) {
-      hlm->ampli[k] *= hNQC->ampli[k];
-      hlm->phase[k] -= hNQC->phase[k];
+      hlm->ampli[k] *= hNQC.ampli[k];
+      hlm->phase[k] -= hNQC.phase[k];
     }
 
   }
@@ -205,11 +205,11 @@ void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
   
   int i;
   for (i = 0; i < KMAX; i++) {
-    k     = M[i] * Omega;
+    k     = MINDEX[i] * Omega;
     hhatk = k * Hreal;
     
-    gsl_sf_lngamma_complex_e(L[i] + 1., -2.*hhatk, &num_rad, &num_phase);
-    gsl_sf_lngamma_complex_e(L[i] + 1., 0., &denom_rad, &denom_phase);
+    gsl_sf_lngamma_complex_e(LINDEX[i] + 1., -2.*hhatk, &num_rad, &num_phase);
+    gsl_sf_lngamma_complex_e(LINDEX[i] + 1., 0., &denom_rad, &denom_phase);
     
     ratio_rad     = num_rad.val-denom_rad.val;
     ratio_ang     = num_phase.val-0.;
@@ -263,7 +263,7 @@ void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
   double k;
   int i;
   for (i=0; i<KMAX; i++) {
-    k  = M[i] * Omega;
+    k  = MINDEX[i] * Omega;
     x  = k * Hreal; /* hathatk */
     x2 = x * x;
     x3 = x2 * x;
@@ -278,7 +278,7 @@ void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
 }
 
 /** hlmNewt coefficients for amplitude */
-const double ChlmNewt_ampli[35] = {
+static const double ChlmNewt_ampli[35] = {
   8./3.*sqrt(Pi/5.), 8.*sqrt(Pi/5.),
   1./3.*sqrt(2.*Pi/35.), 8./3.*sqrt(Pi/7.), 3.*sqrt(6.*Pi/7.), 
   1./105.*sqrt(2.*Pi), 8./63.*sqrt(Pi), 9./5*sqrt(2*Pi/7.), 64./9.*sqrt(Pi/7.),
@@ -289,7 +289,7 @@ const double ChlmNewt_ampli[35] = {
 };
 
 /** hlmNewt additive coefficients for phase */
-const double ChlmNewt_phase[35] = {
+static const double ChlmNewt_phase[35] = {
   3.*Pi/2., Pi, 
   3.*Pi/2., 0., Pi/2., 
   Pi/2., 0., 3.*Pi/2., Pi, 
@@ -306,7 +306,7 @@ void eob_wav_hlmNewt(double r,
 		     double phi,
 		     double nu,
 		     int usetidal,
-		     Waveform_lm *hNewt)
+		     Waveform_lm_t *hNewt)
 {
   /** Shorthands */
   double nu2   = nu*nu;
@@ -632,7 +632,7 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
     
     /** Amplitudes */
     for (int k = 0; k < KMAX; k++) {
-      flm[k] = gsl_pow_int(rholm[k], L[k]);
+      flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
     }
 
 }
@@ -846,7 +846,7 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
 
     /** Amplitudes */
     for (int k = 9; k < KMAX; k++) {
-      flm[k] = gsl_pow_int(rholm[k], L[k]);
+      flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
     }
     
 }
@@ -958,7 +958,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
       Check Nagar & Rezzolla, CQG 22 (2005) R167 */           
   for (k=0; k<KMAX; k++) {
     for (j=0; j<size; j++) {
-      A[k][j]     = h[k]->ampli[j]/sqrt( (L[k]+2)*(L[k]+1)*L[k]*(L[k]-1) );
+      A[k][j]     = h[k]->ampli[j]/sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) );
       phase[k][j] = h[k]->phase[j];
     }
   }
