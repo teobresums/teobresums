@@ -68,8 +68,8 @@ int main (int argc, char* argv[])
   Waveform_lm_t hlm_t;
   Waveform_lm *hlm_nqc; /* NQC */
 
-  Dynamics_alloc(&dyn, size, "dyn");
-  Waveform_lm_alloc (&hlm, size, "hlm"); 
+  Dynamics_alloc(&dyn, size, strcat(par_get_s("output_dir"),"/dyn.txt"));
+  Waveform_lm_alloc (&hlm, size, strcat(par_get_s("output_dir"),"/hlm.txt")); 
 
   /** Set useful pars/vars */
   const double q    = par_get_d("q");
@@ -154,7 +154,7 @@ int main (int argc, char* argv[])
   }
   if (j==ODE_TSTEP_NOPT) {
     if (PR) printf("ode_timestep '%s' undefined, set to default\n",par_get_s("ode_timestep"));
-    j = 0;
+    j = ODE_TSTEP_ADAPTIVE;
   }
   dyn->ode_timestep  = j;
   const int ode_tstep = dyn->ode_timestep;
@@ -168,7 +168,7 @@ int main (int argc, char* argv[])
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
     
-  /** Sove ODE */
+  /** Solve ODE */
   int STATUS = OK;
   int iter = 0;
   int k;
@@ -273,7 +273,6 @@ int main (int argc, char* argv[])
     } else {
       dyn->MOmg = dyn->Omg;
     }
-    
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
@@ -299,7 +298,7 @@ int main (int argc, char* argv[])
   par_set_i("size", size); 
 
   /** Uniform grid */
-  if ((use_tidal) || (interp_uniform_grid)) {
+  if ((!use_tidal) || (interp_uniform_grid)) {
 
     Waveform *hlm_vecg; 
     Dynamics *dyn_vecg; 
@@ -329,7 +328,7 @@ int main (int argc, char* argv[])
     SWAPTRS(hlm_vecg, hlm);
 
     Waveform_lm_free (hlm_vecg);
-    strcpy("hlm",hlm->name);
+    strcpy(hlm->name, strcat(par_get_s("output_dir"),"/hlm.txt"));
 
     if (store_dynamics) {
 
@@ -351,7 +350,7 @@ int main (int argc, char* argv[])
       SWAPTRS(dyn_vecg, dyn);
 
       Dynamics_free (dyn_vecg);
-      strcpy("dyn",dyn->name);
+      strcpy(dyn->name, strcat(par_get_s("output_dir"),"/hlm.txt"));
 
     }
     
@@ -360,7 +359,7 @@ int main (int argc, char* argv[])
   /** NQC and ringdown for BBH */
   if (!(use_tidal)) {
 
-    Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc");
+    Waveform_lm_alloc (&hlm_nqc, size, strcat(par_get_s("output_dir"),"/hlm_nqc.txt"));
 
     /** Compute NQC corrections */
     eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, dyn, hlm_nqc);
@@ -370,6 +369,7 @@ int main (int argc, char* argv[])
     Waveform_lm_push (&hlm, size);
     Dynamics_push (&dyn, size );
 
+    //TODO: store/output also ringdown wf
     //Waveform_lm_alloc (&hlm_ringdown, par_get_i("ringdown_extend_array"), "hlm_ringdown");
     
     /** Ringdown attachment */
