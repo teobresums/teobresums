@@ -209,8 +209,8 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
     spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
     for (i = 0; i < (*hlm)->size; i++) {
       Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
-      cosPhi =   cos( (*hlm)->ampli[k][i] );
-      sinPhi = - sin( (*hlm)->ampli[k][i] );
+      cosPhi =   cos( (*hlm)->phase[k][i] );
+      sinPhi = - sin( (*hlm)->phase[k][i] );
       hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
       hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
       hpc->time[i] *= M; 
