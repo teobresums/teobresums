@@ -543,7 +543,7 @@ void print_date_time()
 #undef errorexit
 #undef errorexits
 
-void errorexit(char *file, int line, char *s) 
+void errorexit(char *file, int line, const char *s) 
 {
   fprintf(stderr, "Error: %s  ", s);
   fprintf(stderr, "(%s, line %d)\n", file, line);
@@ -552,7 +552,7 @@ void errorexit(char *file, int line, char *s)
   exit(ERROR);
 }
 
-void errorexits(char *file, int line, char *s, char *t)
+void errorexits(char *file, int line, const char *s, const char *t)
 {
   fprintf(stderr, "Error: ");
   fprintf(stderr, s, t);
