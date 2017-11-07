@@ -36,6 +36,10 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   const double chi2 = dyn->chi2;
   const double X1 = dyn->X1;
   const double X2 = dyn->X2;
+  const double a1 = dyn->a1;
+  const double a2 = dyn->a2;
+  const double C_Q1 = dyn->C_Q1;
+  const double C_Q2 = dyn->C_Q2;
 
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
@@ -52,13 +56,13 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
         jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
   
   double Flm, FNewt22, Modhhatlm;  
-  double flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
+  double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double sum_k=0.; /* sum */
 
   if (usespins) {
-    eob_wav_flm_s(x,params, flm); // FIXME routine call
+    eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
   } else {
-    eob_wav_flm(x,params, flm);
+    eob_wav_flm(x,nu, rholm, flm);
   }
 
   eob_flx_FlmNewt(x, nu, usetidal, usespins, FNewtlm);
@@ -68,7 +72,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   /** Tidal amplitude */
   if (usetidal) {
-    eob_wav_hlmTidal(x,params, hlmTidal);
+    eob_wav_hlmTidal(x,dyn, hlmTidal);
   }
   
   /** NQC correction to the modulus of the (l,m) waveform */  
@@ -77,11 +81,13 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   // NOTE/FIXME NQC are not applied in spin case!
   //
 
+  int k;
+
   Waveform_lm_t NQC;  
   if ( (!(usetidal)) && (!(usespins)) ) {
-    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &NQC);
+    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, &NQC);
     for (k = 0; k < KMAX; k++) {
-      hlmNQC[k] = NQC[k]->ampli;
+      hlmNQC[k] = NQC.ampli[k];
     }
   } else {
     for (k = 0; k < KMAX; k++) {
@@ -90,10 +96,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
 
   /** Sum up */
-  int k;
   for (k = 0; k < KMAX; k++) {
     /* Compute modulus of hhat_lm (with NQC) */
-    Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hnqclm[k]; 
+    Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]; 
 
     // FIXME: apply NQC only to k==1 ?
     //       if (k==1)  Modhhatlm *= hlm_NQC[k].dat[0];
@@ -114,10 +119,10 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   /** Horizon flux */ 
   if (!(usetidal)) {
     double hatFH;
-    if (nospins) {
-      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
-    } else {
+    if (usespins) {
       hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+    } else {
+      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
     }
     hatf += hatFH;
   }
@@ -187,6 +192,7 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
 
 
   /** Newtonian partial fluxes*/
+  int k;
   for (k = 0; k < KMAX; k++) {
     Nlm[k] = CNlm[k] * spx[k];
   }
@@ -254,15 +260,15 @@ void eob_flx_Tlm(const double w, double *MTlm)
   double hhatk, x2, y, prod;
   int k, j;    
   for (k = 0; k < KMAX; k++ ) {
-    hhatk = M[k] * w;
+    hhatk = MINDEX[k] * w;
     x2    = 4.*hhatk*hhatk;
     prod  = 1.;
-    for (j=1; j <= L[k]; j++ ) {
+    for (j=1; j <= LINDEX[k]; j++ ) {
       prod *= ( j*j + x2 );
     }
-    y  = 4.*pi*hhatk;
+    y  = 4.*Pi*hhatk;
     y /= ( 1. - exp(-y) ); 
-    MTlm[k] = sqrt( 1./(f14[L[k]]*f14[L[k]]) * y * prod );
+    MTlm[k] = sqrt( 1./(f14[LINDEX[k]]*f14[LINDEX[k]]) * y * prod );
   }
 }
 
