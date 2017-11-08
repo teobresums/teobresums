@@ -380,6 +380,16 @@ double fact(int n);
 double wigner_d_function(int l, int m, int s, double x);
 void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double x);
 
+void LALSpinWeightedSphericalHarmonic(double *rY,   /**< real part of the harmonic */
+                                      double *iY,   /**< imaginary part of the harmonic */
+                                      int s,        /**< spin weight */
+                                      int l,        /**< mode number l */
+                                      int m,         /**< mode number m */
+                                      double theta,  /**< polar angle (rad) */
+                                      double phi    /**< azimuthal angle (rad) */
+);
+
+
 //#ifdef __cplusplus
 //}
 //#endif

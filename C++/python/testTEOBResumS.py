@@ -1,5 +1,6 @@
 from pyTEOBResumS import pyTEOBResumS
 import numpy as np
+import lalsimulation as lalsim
 
 m1=40.0
 m2=40.0
@@ -9,8 +10,8 @@ spin1z = 0.1
 spin2x = 0.0
 spin2y = 0.0
 spin2z = 0.2
-inclination = 0.0
-polarisation = 0.0
+inclination = np.pi/2.0
+phase = 0.0
 f_min = 20.0
 sampling_rate = 2048.
 dt = 1./sampling_rate
@@ -37,39 +38,57 @@ flags ={'NQC':'0',
 
 lm = -1
 
-h = pyTEOBResumS(m1,
-                m2,
-                spin1x,
-                spin1y,
-                spin1z,
-                spin2x,
-                spin2y,
-                spin2z,
-                inclination,
-                polarisation,
-                f_min,
-                dt,
-                LambdaAl2,
-                LambdaBl2,
-                 LambdaAl3,
-                 LambdaBl3,
-                 LambdaAl4,
-                 LambdaBl4,
-                 distance,
-                lm,
-                flags)
+wave_flags = None
+non_GR_params = None
+amp_order=0
+phase_order=7
+approx = lalsim.SEOBNRv4
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.plot(h[:,0])
-ax.plot(h[:,1])
+ax1 = fig.add_subplot(211)
+ax2 = fig.add_subplot(212)
 
-hf = np.fft.rfft(h[:,0])
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.plot(hf.real)
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.plot(h[:,0]**2+h[:,1]**2)
+for inclination in [np.pi/2.]:
+    h = pyTEOBResumS(m1,
+                    m2,
+                    spin1x,
+                    spin1y,
+                    spin1z,
+                    spin2x,
+                    spin2y,
+                    spin2z,
+                    inclination,
+                    phase,
+                    f_min,
+                    dt,
+                    LambdaAl2,
+                    LambdaBl2,
+                     LambdaAl3,
+                     LambdaBl3,
+                     LambdaAl4,
+                     LambdaBl4,
+                     distance,
+                    lm,
+                    flags)
+                    
+    hp,hc = lalsim.SimInspiralChooseTDWaveform(phase,
+                                 dt,
+                                 m1*lalsim.lal.MSUN_SI, m2*lalsim.lal.MSUN_SI,
+                                 spin1x, spin1y, spin1z,
+                                 spin2x, spin2y, spin2z,
+                                 f_min, f_min,
+                                 distance*lalsim.lal.PC_SI*1e6,
+                                 inclination,
+                                 LambdaAl2, LambdaBl2,
+                                 wave_flags, non_GR_params,
+                                 amp_order, phase_order,
+                                 approx)
+
+
+    ax1.plot(h[:,0])
+    ax1.plot(hp.data.data,linestyle='dashed')
+    ax2.plot(h[:,1])
+    ax2.plot(hc.data.data,linestyle='dashed')
+
 plt.show()

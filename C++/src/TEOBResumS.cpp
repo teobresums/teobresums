@@ -1,4 +1,4 @@
-/**
+/** salve
  * Copyright (C) 2017 Alessandro Nagar, Gregorio Carullo, Ka Wa Tsang, Philipp Fleig, Sebastiano Bernuzzi, Walter Del Pozzo
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -527,15 +527,21 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             {
                 double Y_real, Y_imag;
                 spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], coa_phase, inclination);
-                
+                printf("standard: %f %f\n",Y_real,Y_imag);
+                LALSpinWeightedSphericalHarmonic(&Y_real, &Y_imag, -2, L[k], M[k], inclination, coa_phase);
+                printf("LAL: %f %f\n",Y_real,Y_imag);
                 /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
+                
                 for (i=0; i<N; i++)
                 {
                     double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
                     double cosPhi = cos(hlm_phase_g[k][i]);
                     double sinPhi = -sin(hlm_phase_g[k][i]);
-                    hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-                    hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+                    double fac = sqrt(15./(32.*M_PI))*(3.0+cos(2.*inclination))+sqrt(15./(8.*M_PI))*2.0*cos(inclination);
+                    hplus_out->data[i] += Aki*cos(coa_phase)*fac*cosPhi;
+                    hcross_out->data[i]-= Aki*sin(coa_phase)*fac*sinPhi;
+//                    hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag); // *(1+cos^2i)/2
+//                    hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);// *cosi
                 }
             }
         }
