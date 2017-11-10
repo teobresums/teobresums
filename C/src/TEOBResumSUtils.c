@@ -216,7 +216,7 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
       hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
       hpc->time[i] *= M; 
     }
-    if ( sym ) { 
+    if ( (sym) && (MINDEX[k]!=0) ) { 
       /* add m<0 modes */
       spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota);
       if ( LINDEX[k] % 2 ) { /* l is odd */
