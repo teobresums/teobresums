@@ -202,6 +202,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 /** (h+, hx) polarizations from the multipolar waveform */
 void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc)
 {
+  static const int sym = 1; /* m>0 modes only, add m<0 modes */
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
   int k,i;
@@ -215,6 +216,21 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
       hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
       hpc->time[i] *= M; 
     }
+    if ( sym ) { 
+      /* add m<0 modes */
+      spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota);
+      if ( LINDEX[k] % 2 ) { /* l is odd */
+	Y_real = -Y_real;
+	Y_imag = -Y_imag;
+      }
+      for (i = 0; i < (*hlm)->size; i++) {
+	Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
+	cosPhi = - cos( (*hlm)->phase[k][i] ); /* complex conj */
+	sinPhi =   sin( (*hlm)->phase[k][i] ); /* complex conj */
+	hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+	hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+      }     
+    } /* sym */
   }
 }
 
