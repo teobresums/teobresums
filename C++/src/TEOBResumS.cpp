@@ -537,11 +537,8 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                     double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
                     double cosPhi = cos(hlm_phase_g[k][i]);
                     double sinPhi = -sin(hlm_phase_g[k][i]);
-                    double fac = sqrt(15./(32.*M_PI))*(3.0+cos(2.*inclination))+sqrt(15./(8.*M_PI))*2.0*cos(inclination);
-                    hplus_out->data[i] += Aki*cos(coa_phase)*fac*cosPhi;
-                    hcross_out->data[i]-= Aki*sin(coa_phase)*fac*sinPhi;
-//                    hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag); // *(1+cos^2i)/2
-//                    hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);// *cosi
+                    hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag); 
+                    hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
                 }
             }
         }
