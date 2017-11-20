@@ -250,7 +250,7 @@ int main (int argc, char* argv[])
             inclination = atof(argv[i+1]);
             printf("inclination: %f\n",inclination);
         }
-        else if (strcmp(argv[i],"-coa-phase")==0)
+        else if (strcmp(argv[i],"-coa_phase")==0)
         {
             coa_phase = atof(argv[i+1]);
             printf("coa_phase: %f\n",coa_phase);

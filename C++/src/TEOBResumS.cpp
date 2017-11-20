@@ -526,10 +526,19 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             if (k==1)
             {
                 double Y_real, Y_imag;
+		double Y_real_minus, Y_imag_minus;
+		double Y_real_plus, Y_imag_plus;  
                 spinsphericalharm(&Y_real, &Y_imag, -2, L[k], M[k], coa_phase, inclination);
-                printf("standard: %f %f\n",Y_real,Y_imag);
-                LALSpinWeightedSphericalHarmonic(&Y_real, &Y_imag, -2, L[k], M[k], inclination, coa_phase);
-                printf("LAL: %f %f\n",Y_real,Y_imag);
+                // for debugging
+		//printf("standard: %f %f\n",Y_real,Y_imag);
+                //LALSpinWeightedSphericalHarmonic(&Y_real, &Y_imag, -2, L[k], M[k], inclination, coa_phase);
+                //printf("LAL: %f %f\n",Y_real,Y_imag);
+                /* Computing spherical harmonics with +m an -m */
+		spinsphericalharm(&Y_real_plus,  &Y_imag_plus,  -2, L[k],  M[k], coa_phase, inclination);
+		spinsphericalharm(&Y_real_minus, &Y_imag_minus, -2, L[k], -M[k], coa_phase, inclination);
+                printf("+m harmonics: %f %f\n",Y_real_plus,Y_imag_plus);
+		printf("-m harmonics: %f %f\n",Y_real_minus,Y_imag_minus);
+		
                 /** there is a MINUS SIGN in the phase h = A exp(-i phase) **/
                 
                 for (i=0; i<N; i++)
@@ -537,8 +546,19 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                     double Aki = hlm_ampl_g[k][i]*amplitude_prefactor;
                     double cosPhi = cos(hlm_phase_g[k][i]);
                     double sinPhi = -sin(hlm_phase_g[k][i]);
-                    hplus_out->data[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag); 
-                    hcross_out->data[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+		    /* h+ and hx
+		       This stems from
+
+                       h+ - i h_x = A_lm(exp(-iPhi) -2Y_lm + exp(iPhi) -2Yl-m
+
+                       where here Phi is the GW phase and is positive.
+                       Once separated in real and imaginary part, one obtains
+                       the following expressions for h+ and hx */
+		    
+		    hplus_out->data[i]  += Aki*(cosPhi*(Y_real_plus + Y_real_minus) + sinPhi*( -Y_imag_plus + Y_imag_minus)); 
+		    hcross_out->data[i] -= Aki*(cosPhi*(Y_imag_plus + Y_imag_minus) + sinPhi*(  Y_real_plus - Y_real_minus));
+
+		    
                 }
             }
         }
