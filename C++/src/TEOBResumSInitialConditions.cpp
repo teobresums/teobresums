@@ -33,10 +33,8 @@ vector<double> initial(TEOBResumParams *params)
     double nu = (*params).nu;
     double r0 = (*params).r0;
     /**************************************/
-    /* FIXME: looking at tidal parameters */
+    /* Tidal parameters */
     /**************************************/   
-//    double CQ1       = (*(TEOBResumParams *)params).C_Q1;
-//    double CQ2       = (*(TEOBResumParams *)params).C_Q2;
     double lambdaAl2 = (*(TEOBResumParams *)params).LambdaAl2;
     double lambdaAl3 = (*(TEOBResumParams *)params).LambdaAl3;
     double lambdaAl4 = (*(TEOBResumParams *)params).LambdaAl4;
@@ -82,10 +80,10 @@ vector<double> initial(TEOBResumParams *params)
         djdr[i] = -j3/r3*( 2.0 - 3.0*A/(r[i]*dA[i]) - A*d2A/(dA[i]*dA[i]) );
         
         /** For circular orbit at r0=r(N)  */
-        H0eff      = sqrt(A*(1.0 + j2[i]/r2));                     /** ffective Hamiltonian H_0^eff  */
-        E0[i]      = sqrt(1.0 + 2.0*nu*(H0eff - 1.0) );            /** real Hamiltonian      H_0  */
-        H0         = E0[i]/nu;                                     /** H_0/nu  */
-        Omega_j[i] = A*j[i]/(nu*r2*H0*H0eff);                      /** Orbital frequency (from Hamilton's equation)  */
+        H0eff      = sqrt(A*(1.0 + j2[i]/r2));                     /** effective circular energy per unit mass E_0^eff  */
+        E0[i]      = sqrt(1.0 + 2.0*nu*(H0eff - 1.0) );            /** real energy for circular orbit E_0               */
+        H0         = E0[i]/nu;                                     /** H_0/nu: this is the usual hatH_EOB               */
+        Omega_j[i] = A*j[i]/(nu*r2*H0*H0eff);                      /** Orbital frequency (from Hamilton's equation)     */
         psi        = 2.*(1.0 + 2.0*nu*(H0eff - 1.0))/(r2*dA[i]);   /** correction factor to the radius  */
         r_omega    = r[i]*cbrt(psi);                               /** EOB-corrected radius  */
         v_phi      = Omega_j[i]*r_omega;                           /** "corrected" azimuthal velocity such that Kepler's law is satisfied, r_omg^3 Omg_i^2 = 1  */
@@ -163,28 +161,27 @@ vector<double> initial(TEOBResumParams *params)
 vector<double> s_initial(TEOBResumParams *params){
     
     /*
-     % EOB_ModinSpin
-     % This function computes post-post-circular (ppc) initial
-     % data at relative separation r0.
-     %
-     % USAGE:
-     %
-     % [pph0, pr0, prstar0, j0] = EOB_ModinSpin(r0)
-     %
-     % where
-     %
-     % r0       => relative separation
-     % pph0     => post-post-circular angular momentum
-     % pr       => post-circular radial momentum
-     % pprstar0 => post-circular r*-conjugate radial momentum
-     % j0       => circular angular momentum
-     %
-     % It consists of three step:
-     %
-     % 0. Compute j0                         =>           circular ID, j!=0, pr =0
-     % 1. From j0, compute pr*               =>      post circular ID, j!=0, pr !=0
-     % 2. From pr* and j0, re-compute pph0   => post-post-circular ID, pph0!=j!=0, pr !=0
-     %
+     s_initial.
+     This function computes the post-circular initial data
+     in the presence of spin for initial relative separation
+     r0. NOTE: this is just post-circular and not post-post
+     circular as in the nonspinning case.
+     Reference: TD, AN & SB, PRD87 (2013) 084035, 
+     Eq. (51) and (52)
+     Notation is as follows:
+     r0       => relative separation
+     pph0     => circular angular momentum
+     pr       => post-circular radial momentum
+     pprstar0 => post-circular r*-conjugate radial momentum
+     
+     Here the post-circular conditions are extended to the 
+     spinning case and one follows TD & AN, PRD 90, 044018 (2014)
+
+     It consists of two step:
+     
+     0. Compute j0            =>   circular ID, j!=0, pr =0
+     1. From j0, compute pr*  =>   post circular ID, j!=0, pr !=0
+     
      */
     
     double nu   = (*(TEOBResumParams *)params).nu;
@@ -251,8 +248,8 @@ vector<double> s_initial(TEOBResumParams *params){
     
     /* Dimensionful spin variables entering the EOB spin-orbit sector.
        Weighted averages of the dimensionful spins */
-    double S  = S1 + S2;        // => in the EMRL this becomes the spin of the BH
-    double Ss = X2*a1 + X1*a2;  // => in the EMRL this becomes the spin of the particle
+    double S  = S1 + S2;        // => in the extreme-mass-ratio-limit this becomes the spin of the BH
+    double Ss = X2*a1 + X1*a2;  // => in the extreme-mass-ratio-limit this becomes the spin of the particle
     
     for (int i=2*N; i--;) {
         
@@ -266,6 +263,7 @@ vector<double> s_initial(TEOBResumParams *params){
         d2A[i] = metric[3];
         
         vector<double> rc_rad = s_get_rc(r[i],params);
+	/** centrifugal radius (i.e., what is at the denominator of pphi^2 **/
         rc[i]  = rc_rad[0];
         drc[i] = rc_rad[1];
         
@@ -275,7 +273,7 @@ vector<double> s_initial(TEOBResumParams *params){
         pph[i] = s_bisec(pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
     }
     
-    vector<double> dpph_dr = s_D1(pph,r,2*N); // derivative is computed on a grid with 12 points
+    vector<double> dpph_dr = s_D1(pph,r,2*N); 
     
     for (int i=2*N; i--;) {
         

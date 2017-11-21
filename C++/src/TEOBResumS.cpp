@@ -72,17 +72,19 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     
     int i = 0;
     int grid_length = 0;
-    double rLR;
-    double r;
-    double prstar;
-    double phi;
-    double pphi;
-    double MOmg;
-    double y[4];
-    double MOmg_prev;
-    double t_stop;
-    double Omg;
-    double Omg_orb;
+    double rLR;           /** location of the light ring **/
+    double r;             /** relative separation: EOB coordinates **/ 
+    double prstar;        /** radial momentum conjugate to the r*-EOB Regge-Wheele tortoise coordinate**/
+    double phi;           /** orbital phase **/
+    double pphi;          /** orbital angular momentum **/
+    double MOmg;          /** total orbital frequency **/
+    double Omg;           /** total orbital frequency: same of MOmg. Redundacy for historical reasons **/
+    double y[4];          /** vector for dynamical variables **/
+    double Omg_orb;       /** "pure" orbital frequency (without the spin-orbit part) **/ 
+    double MOmg_prev;     /** Orbital frequency at previous step: kept for the stop condition**/
+    double t_stop;        /** stopping time **/
+
+
     double A;
     double ddotr;
 
@@ -167,17 +169,25 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         initial_data = initial(&params);
     }
     
-    /** Initial conditions: t, r, phi, prstar, pphi */
+
     double t     = 0.0;
     double r_LSO = 6.0;
     double t1    = 1.e15;
     double h     = dt;
-    
+
+    /************************************************/
+    /** Setting up initial data for EOB evolution   */
+    /** - initialization of the vector y[4]         */ 
+    /**  y[0] = r                                   */
+    /**  y[1] = phi                                 */
+    /**  y[2] = pphi                                */
+    /**  y[3] = prtar                               */
+    /************************************************/
+
     y[0] = initial_data[0];
     y[1] = 0.;
     y[2] = initial_data[2];
     y[3] = initial_data[1];
-
 
     double final_mass = HealyBBHFitRemnant(spin1z, spin2z, q);
     params.Mbh = final_mass;
@@ -188,6 +198,12 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new(1.e-13, 1.e-11);
     gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc(4);
     gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rk8pd,dt, 1.e-10, 1.e-10);
+
+    /************************************************/
+    /*                                              */
+    /* Time evolution: solution of ODEs starts here */
+    /*                                              */
+    /************************************************/
     
     MOmg_prev     = 0.;
     t_stop        = 0.;
@@ -358,7 +374,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         std::fclose(waveform_preint);
 	}
     
-    /** Interpolate quantities on a grid of width dt */
+    /** Interpolate quantities on a grid of fixed spacing dt */
     grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
     vector<double> t_vecg(grid_length);
     i  = 0;
