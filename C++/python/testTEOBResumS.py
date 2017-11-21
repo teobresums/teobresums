@@ -49,7 +49,7 @@ fig = plt.figure()
 ax1 = fig.add_subplot(211)
 ax2 = fig.add_subplot(212)
 
-for inclination in [np.pi/2.]:
+for inclination in [0.0,np.pi/3.,np.pi/2.]:
     h = pyTEOBResumS(m1,
                     m2,
                     spin1x,
