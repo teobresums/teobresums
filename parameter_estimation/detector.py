@@ -47,7 +47,9 @@ class GravitationalWaveDetector(object):
         self.segment_length = int(self.T*self.sampling_rate)
         self.kmin = int(self.flow/self.df)
         self.kmax = int(self.fhigh/self.df)
-
+        self.sigmasq =  self.PowerSpectralDensity * self.dt * self.dt
+        self.TwoDeltaTOverN = 2.0*self.dt/float(self.segment_length)
+    
     def Project(self, hptilde, hctilde, ra, dec, psi, tc):
         """
         projects and timeshifts the GW signal onto the detector
@@ -64,9 +66,9 @@ class GravitationalWaveDetector(object):
         template = self.Project(hptilde, hctilde, ra, dec, psi, tc)
         data = self.FrequencySeries[self.kmin:self.kmax]
         residuals = (data - template)
-        overlap = 2.0*np.conj(residuals)*residuals/self.PowerSpectralDensity[self.kmin:self.kmax]
+        overlap = np.conj(residuals)*residuals/self.sigmasq[self.kmin:self.kmax]
 
-        return -(2.0/self.T)*np.sum(overlap).real
+        return -self.TwoDeltaTOverN*np.sum(overlap).real
 
     def inject(self, hptilde, hctilde, ra, dec, psi, tc):
         template = self.Project(hptilde, hctilde, ra, dec, psi, tc)

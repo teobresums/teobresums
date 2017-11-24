@@ -96,19 +96,19 @@ class GravitationalWaveModel(cpnest.model.Model):
         
         if self.injection:
             
-            self.injection_parameters = {'m1':40.0,
-                                        'm2':10,
-                                        'spin1':0.93,
-                                        'theta_1l':0.4,
-                                        'phi_1l':1.0,
-                                        'spin2':0.67,
-                                        'theta_2l':-0.4,
-                                        'phi_2l':2.4,
-                                        'distance':500.0,
+            self.injection_parameters = {'m1':30.0,
+                                        'm2':30.0,
+                                        'spin1':0.0,
+                                        'theta_1l':0.0,
+                                        'phi_1l':0.0,
+                                        'spin2':0.0,
+                                        'theta_2l':0.0,
+                                        'phi_2l':0.0,
+                                        'distance':2500.0,
                                         'inclination':1.5,
-                                        'ra':1.5,
-                                        'dec':-1.2,
-                                        'psi':1.5}
+                                        'ra':1.0,
+                                        'dec':1.0,
+                                        'psi':0.0}
 
             sys.stderr.write("Injection parameters:\n")
             for key, value in self.injection_parameters.iteritems():
@@ -153,13 +153,13 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [1.0,50.0],
+                         [10.0,50.0],
                          [0.1,1.0],
                          [0.0,np.pi],
                          [0.0,np.pi],
                          [1.0,5000.0],
-                         [0.0,0.98],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
-                         [0.0,0.98],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
+                         [0.0,0.01],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
+                         [0.0,0.01],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
         else:
             self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
                 'iota', 'psi', 'distance','spin1z','spin2z']
@@ -170,7 +170,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [self.trigtime-0.05,self.trigtime+0.05],
                          [25.0,35.0],
                          [0.5,1.0],
-                         [0.0,np.pi],
+                         [-np.pi/2.,np.pi/2.],
                          [0.0,np.pi],
                          [1.0,2000.0],
                          [-0.5,0.5],[-0.5,0.5]]
@@ -187,7 +187,8 @@ class GravitationalWaveModel(cpnest.model.Model):
                 'geometric_units':0,
                 'set':0
             }
-        self.window=tukey(self.segment_length,0.5)
+        self.padding = 0.1
+        self.window=tukey(self.segment_length,self.padding)
         self.windowNorm = self.segment_length/np.sum(self.window**2)
 
 
@@ -196,6 +197,7 @@ class GravitationalWaveModel(cpnest.model.Model):
         q = x['q']
         d = x['distance']
         m1, m2 = McQ2Masses(mc, q)
+        
         if self.template == 'LAL':
             amp_order = 0
             phase_order = -1
@@ -295,13 +297,14 @@ if __name__=='__main__':
     parser.add_option('--fhigh',default=500,type='float',metavar='fhigh',help='high frequency cutoff')
     parser.add_option('--nlive',default=1024,type='int',metavar='n',help='Live points')
     parser.add_option('--maxmcmc',default=1024,type='int',metavar='m',help='max MCMC points')
+    parser.add_option('--poolsize',default=1000,type='int',metavar='k',help='numer of points in the ensemble sampler pool')
     (opts,args)=parser.parse_args()
 
     if opts.out_dir is None:
         opts.out_dir='./gw150914/'
 
     if opts.full_run:
-        signal_model = GravitationalWaveModel(['H1','L1'],
+        signal_model = GravitationalWaveModel(['H1','L1','V1'],
                                               T=opts.seglen,
                                               template = opts.template,
                                               sampling_rate = 2048.,
@@ -310,14 +313,16 @@ if __name__=='__main__':
                                               starttime = 1126259459.423,
                                               trigtime = 1126259462.423,
                                               psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
                                                            '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt'],
+#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         print('Noise evidence {0}'.format(signal_model.logZnoise))
 
         work=cpnest.CPNest(signal_model,
                            verbose=3,
-                           Poolsize=32,
+                           Poolsize=opts.poolsize,
                            Nthreads=opts.threads,
                            Nlive=opts.nlive,
                            maxmcmc=opts.maxmcmc,

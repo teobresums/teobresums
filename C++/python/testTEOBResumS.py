@@ -86,9 +86,9 @@ for inclination in [0.0,np.pi/3.,np.pi/2.]:
                                  approx)
 
 
-    ax1.plot(h[:,0])
+    ax1.plot(h[:,0],label=str(inclination))
     ax1.plot(hp.data.data,linestyle='dashed')
     ax2.plot(h[:,1])
     ax2.plot(hc.data.data,linestyle='dashed')
-
+ax1.legend()
 plt.show()

@@ -66,15 +66,15 @@ def load_data(fname,
     mask = np.ones(len(strain), dtype=bool)
     mask[range(index_chunk_start,index_chunk_start+chunksize,chunksize)] = False
     # window the data
-    padding = 0.5
+    padding = 0.1
     window=tukey(chunksize,padding)
     signal_chunk*=window
     # zero-pad to the required length
 
     windowNorm = chunksize/np.sum(window**2)
     # Compute the frequency domain strain
-    sf = np.fft.rfft(signal_chunk)*windowNorm
-    frequencies = rfftfreq(sf, dt)
+    sf = np.fft.rfft(signal_chunk)*windowNorm*dt
+    frequencies = np.fft.rfftfreq(chunksize, dt)
 #    sf = sf[np.where(np.logical_and(freqs>=flow,freqs<fhigh))]
 
     if psd_file is None:
