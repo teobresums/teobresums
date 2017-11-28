@@ -73,8 +73,9 @@ class GravitationalWaveDetector(object):
     def inject(self, hptilde, hctilde, ra, dec, psi, tc):
         template = self.Project(hptilde, hctilde, ra, dec, psi, tc)
         self.FrequencySeries[self.kmin:self.kmax] += template
-        self.SNR = np.sqrt(4.0*np.sum(np.conj(template)*template/self.PowerSpectralDensity[self.kmin:self.kmax]).real)
+        self.SNR = np.sqrt(4.0*self.df*np.sum(np.conj(template)*template/self.PowerSpectralDensity[self.kmin:self.kmax]).real)
         print("Injected SNR in %s = %.2f\n"%(self.name,self.SNR))
+        return template
 
 if __name__ == "__main__":
     H = GravitationalWaveDetector('H1',

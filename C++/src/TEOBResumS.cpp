@@ -473,7 +473,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     /** Ringdown attachment */
     if (params.flags.tidal==0)
     {
-        ringdown(params,t_g,OmgOrb_vecg,hlm_ampl_g,hlm_phase_g);
+        ringdown(params, t_g, OmgOrb_vecg, hlm_ampl_g, hlm_phase_g);
     }
     /** All multipoles will now have size N+Nringdown */
     /** Multipole for which no ringdown model is available will be filled with 0s */

@@ -503,7 +503,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     double DeltaT_nqc = 0.;
     vector<double> tmrg(35);
     vector<double> tmatch(35);
-//    for (int k=0; k<7; k++) printf("%f %f\n",Omega_pk_grid[k].dat[0],Omega_pk_grid[k].dat[1] );
+    for (int k=0; k<7; k++) printf("%f %f\n",Omega_pk_grid[k].dat[0],Omega_pk_grid[k].dat[1] );
     //compute true peak by interpolation from the grid
     tOmg_pk  = interpolate(dt, Omega_pk_grid);
     tOmg_pk *= 1./Mbh;

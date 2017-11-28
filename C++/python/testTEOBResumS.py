@@ -2,17 +2,17 @@ from pyTEOBResumS import pyTEOBResumS
 import numpy as np
 import lalsimulation as lalsim
 
-m1=40.0
-m2=40.0
+m1=100.0
+m2=80.0
 spin1x = 0.0
 spin1y = 0.0
-spin1z = 0.1
+spin1z = -0.01
 spin2x = 0.0
 spin2y = 0.0
-spin2z = 0.2
-inclination = np.pi/2.0
+spin2z = 0.01
+inclination = 0.0
 phase = 0.0
-f_min = 20.0
+f_min = 40.0
 sampling_rate = 2048.
 dt = 1./sampling_rate
 LambdaAl2 = 0.0
@@ -21,15 +21,15 @@ LambdaAl3 = 0.0
 LambdaBl3 = 0.0
 LambdaAl4 = 0.0
 LambdaBl4 = 0.0
-distance = 400.0
+distance = 500.0
 
-flags ={'NQC':'0',
+flags ={'NQC':'1',
         'tidal':0,
         'speedy':1,
         'dynamics':0,
         'solver_scheme':0,
         'RWZ':0,
-        'Yagi_fits':1,
+        'Yagi_fits':0,
         'spin':1,
         'multipoles':0,
         'geometric_units':0,

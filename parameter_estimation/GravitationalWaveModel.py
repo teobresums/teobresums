@@ -29,6 +29,15 @@ def McQ2Masses(mc, q):
     m2 = factor * np.power(q, +2.0/5.0);
     return m1, m2
 
+def Masses2McQ(m1, m2):
+    """
+    Simple utility to convert between component masses to mc q
+    """
+    q = m2/m1
+    eta = m1*m2/(m1+m2)
+    mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
+    return mc, q
+
 def PolarToCartesian(a, th, ph):
     """
     Simple utility function to convert between polar and cartesian representations
@@ -96,23 +105,24 @@ class GravitationalWaveModel(cpnest.model.Model):
         
         if self.injection:
             
-            self.injection_parameters = {'m1':30.0,
-                                        'm2':30.0,
+            self.injection_parameters = {'m1':100.0,
+                                        'm2':80.0,
                                         'spin1':0.0,
                                         'theta_1l':0.0,
                                         'phi_1l':0.0,
                                         'spin2':0.0,
                                         'theta_2l':0.0,
                                         'phi_2l':0.0,
-                                        'distance':2500.0,
-                                        'inclination':1.5,
-                                        'ra':1.0,
-                                        'dec':1.0,
-                                        'psi':0.0}
-
+                                        'distance':500.0,
+                                        'inclination':0.0,
+                                        'ra':4.2,
+                                        'dec':1.1,
+                                        'psi':1.0}
+            
             sys.stderr.write("Injection parameters:\n")
             for key, value in self.injection_parameters.iteritems():
                 sys.stderr.write("%s --> %.3f\n"%(key,value))
+            print "chirp mass and q are :", Masses2McQ(self.injection_parameters['m1'], self.injection_parameters['m2'])
             amp_order = 0
             phase_order = -1
             wave_flags = None
@@ -133,12 +143,19 @@ class GravitationalWaveModel(cpnest.model.Model):
                                self.injection_parameters['inclination'],
                                0.0, 0.0,
                                wave_flags, non_GR_params, amp_order, phase_order, approx)
-
-
-            for d in self.detectors:
-                d.inject( hptilde.data.data, hctilde.data.data, self.injection_parameters['ra'], self.injection_parameters['dec'], self.injection_parameters['psi'], self.trigtime)
             
-            self.injected_template = (hptilde.data.data, hctilde.data.data)
+            self.injected_template = []
+            
+            for d in self.detectors:
+                self.injected_template.append(d.inject( hptilde.data.data, hctilde.data.data, self.injection_parameters['ra'], self.injection_parameters['dec'], self.injection_parameters['psi'], self.trigtime))
+
+#            from pylab import *
+#            for t,d in zip(self.injected_template,self.detectors):
+#                plot(d.Frequency[d.kmin:d.kmax], d.FrequencySeries[d.kmin:d.kmax], alpha=0.5, lw=0.3)
+#                plot(d.Frequency[d.kmin:d.kmax], t, alpha=0.75, label = d.name, lw=0.8)
+#            legend()
+#            show()
+#            exit()
 
         self.logZnoise = self.log_nulllikelihood()
         
@@ -153,7 +170,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [10.0,50.0],
+                         [50.0,150.0],
                          [0.1,1.0],
                          [0.0,np.pi],
                          [0.0,np.pi],
@@ -168,7 +185,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [25.0,35.0],
+                         [5.0,15.0],
                          [0.5,1.0],
                          [-np.pi/2.,np.pi/2.],
                          [0.0,np.pi],
@@ -179,7 +196,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                 'tidal':0,
                 'speedy':1,
                 'dynamics':0,
-                'solver_scheme':2,
+                'solver_scheme':0,
                 'RWZ':0,
                 'Yagi_fits':0,
                 'spin':0,
@@ -262,8 +279,6 @@ class GravitationalWaveModel(cpnest.model.Model):
         
         return np.sum([d.logLikelihood(h, h, 0.0, 0.0, 0.0, 0.0) for d in self.detectors])
     
-    
-    
     def log_likelihood(self,x):
         
         self.calculate_plain_template(x)
@@ -283,6 +298,25 @@ class GravitationalWaveModel(cpnest.model.Model):
             return logP
         else:
             return -np.inf
+
+    def potential_energy(self, x):
+        return -self.log_prior(x)
+
+    def force(self, x):
+        self.gradient = {}
+        self.gradient['distance'] = 2.0/x['distance']
+        self.gradient['dec'] = -np.tan(x['dec'])
+        self.gradient['iota'] = -np.tan(x['iota'])
+        mc = x['mc']
+        q = x['q']
+        m1, m2 = McQ2Masses(mc, q)
+        m1_derivative = np.power(1. + q, 1.0/5.0)*np.power(q, -3.0/5.0)
+        self.gradient['mc'] = -m1_derivative/mc
+        self.gradient['q'] = -mc * (2.0*q+3)/(5.0*np.power(q,8.0/5.0)*np.power(1. + q, 5.0/5.0))
+        if self.template == 'LAL':
+            self.gradient['theta_1l'] = -np.tan(x['theta_1l'])
+            self.gradient['theta_2l'] = -np.tan(x['theta_2l'])
+        return self.gradient
 
 if __name__=='__main__':
     parser=OptionParser()
