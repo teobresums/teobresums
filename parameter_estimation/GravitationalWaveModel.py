@@ -105,15 +105,15 @@ class GravitationalWaveModel(cpnest.model.Model):
         
         if self.injection:
             
-            self.injection_parameters = {'m1':100.0,
-                                        'm2':80.0,
+            self.injection_parameters = {'m1':70.0,
+                                        'm2':30.0,
                                         'spin1':0.0,
                                         'theta_1l':0.0,
                                         'phi_1l':0.0,
                                         'spin2':0.0,
                                         'theta_2l':0.0,
                                         'phi_2l':0.0,
-                                        'distance':500.0,
+                                        'distance':2500.0,
                                         'inclination':0.0,
                                         'ra':4.2,
                                         'dec':1.1,
@@ -170,13 +170,13 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [50.0,150.0],
+                         [10.0,50.0],
                          [0.1,1.0],
                          [0.0,np.pi],
                          [0.0,np.pi],
-                         [1.0,5000.0],
-                         [0.0,0.01],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
-                         [0.0,0.01],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
+                         [1.0,2000.0],
+                         [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
+                         [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
         else:
             self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
                 'iota', 'psi', 'distance','spin1z','spin2z']
@@ -185,7 +185,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [5.0,15.0],
+                         [10.0,50.0],
                          [0.5,1.0],
                          [-np.pi/2.,np.pi/2.],
                          [0.0,np.pi],
@@ -338,7 +338,7 @@ if __name__=='__main__':
         opts.out_dir='./gw150914/'
 
     if opts.full_run:
-        signal_model = GravitationalWaveModel(['H1','L1','V1'],
+        signal_model = GravitationalWaveModel(['H1','L1'],#'V1'],
                                               T=opts.seglen,
                                               template = opts.template,
                                               sampling_rate = 2048.,
@@ -346,10 +346,10 @@ if __name__=='__main__':
                                               zero_noise = opts.zero_noise,
                                               starttime = 1126259459.423,
                                               trigtime = 1126259462.423,
-                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
-                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
-                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt'],
-#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
+#                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
+                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         print('Noise evidence {0}'.format(signal_model.logZnoise))

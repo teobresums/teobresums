@@ -2,14 +2,14 @@ from pyTEOBResumS import pyTEOBResumS
 import numpy as np
 import lalsimulation as lalsim
 
-m1=100.0
-m2=80.0
+m1=40.0
+m2=40.0
 spin1x = 0.0
 spin1y = 0.0
-spin1z = -0.01
+spin1z = 0.0
 spin2x = 0.0
 spin2y = 0.0
-spin2z = 0.01
+spin2z = 0.0
 inclination = 0.0
 phase = 0.0
 f_min = 40.0
@@ -23,14 +23,14 @@ LambdaAl4 = 0.0
 LambdaBl4 = 0.0
 distance = 500.0
 
-flags ={'NQC':'1',
+flags ={'NQC':0,
         'tidal':0,
         'speedy':1,
         'dynamics':0,
         'solver_scheme':0,
         'RWZ':0,
         'Yagi_fits':0,
-        'spin':1,
+        'spin':0,
         'multipoles':0,
         'geometric_units':0,
         'set':0
@@ -49,7 +49,7 @@ fig = plt.figure()
 ax1 = fig.add_subplot(211)
 ax2 = fig.add_subplot(212)
 
-for inclination in [0.0,np.pi/3.,np.pi/2.]:
+for inclination in [0.0]:#,np.pi/3.,np.pi/2.]:
     h = pyTEOBResumS(m1,
                     m2,
                     spin1x,

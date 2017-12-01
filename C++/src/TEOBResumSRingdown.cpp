@@ -474,7 +474,8 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     double chi1 = params.chi1;
     
     
-    long int pk_index = Omega_vec.size()-1;
+    long int length   = Omega_vec.size();
+    long int pk_index = length-1;
     double Omega_pk   = Omega_vec[pk_index];
     long int i        = pk_index-1;
     while (Omega_vec[i] > Omega_pk)
@@ -483,6 +484,12 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
         Omega_pk = Omega_vec[i];
         i--;
     }
+    if (pk_index == -1)
+    {
+        printf("Warning! No maximum found. exiting\n");
+        pk_index = length - 1;
+    }
+//    printf("pk index %ld -- length %ld \n",pk_index,length);
     vector<gsl_complex> Omega_pk_grid(7);
     Omega_pk_grid[0].dat[0] = t_vec[1][pk_index-3];
     Omega_pk_grid[0].dat[1] = Omega_vec[pk_index-3];
@@ -492,18 +499,49 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     Omega_pk_grid[2].dat[1] = Omega_vec[pk_index-1];
     Omega_pk_grid[3].dat[0] = t_vec[1][pk_index];
     Omega_pk_grid[3].dat[1] = Omega_vec[pk_index];
-    Omega_pk_grid[4].dat[0] = t_vec[1][pk_index+1];
-    Omega_pk_grid[4].dat[1] = Omega_vec[pk_index+1];
-    Omega_pk_grid[5].dat[0] = t_vec[1][pk_index+2];
-    Omega_pk_grid[5].dat[1] = Omega_vec[pk_index+2];
-    Omega_pk_grid[6].dat[0] = t_vec[1][pk_index+3];
-    Omega_pk_grid[6].dat[1] = Omega_vec[pk_index+3];
     
+    if (pk_index< length-3)
+    {
+        Omega_pk_grid[4].dat[0] = t_vec[1][pk_index+1];
+        Omega_pk_grid[4].dat[1] = Omega_vec[pk_index+1];
+        Omega_pk_grid[5].dat[0] = t_vec[1][pk_index+2];
+        Omega_pk_grid[5].dat[1] = Omega_vec[pk_index+2];
+        Omega_pk_grid[6].dat[0] = t_vec[1][pk_index+3];
+        Omega_pk_grid[6].dat[1] = Omega_vec[pk_index+3];
+    }
+    else if (pk_index == length-3)
+    {
+        Omega_pk_grid[4].dat[0] = t_vec[1][pk_index+1];
+        Omega_pk_grid[4].dat[1] = Omega_vec[pk_index+1];
+        Omega_pk_grid[5].dat[0] = t_vec[1][pk_index+2];
+        Omega_pk_grid[5].dat[1] = Omega_vec[pk_index+2];
+        Omega_pk_grid[6].dat[0] = t_vec[1][pk_index+2]+dt;
+        Omega_pk_grid[6].dat[1] = 2.0*Omega_vec[pk_index+2]-Omega_vec[pk_index+1];
+    }
+    else if (pk_index == length-2)
+    {
+        Omega_pk_grid[4].dat[0] = t_vec[1][pk_index+1];
+        Omega_pk_grid[4].dat[1] = Omega_vec[pk_index+1];
+        Omega_pk_grid[5].dat[0] = t_vec[1][pk_index+1]+dt;
+        Omega_pk_grid[5].dat[1] = 2.0*Omega_vec[pk_index+1]-Omega_vec[pk_index];
+        Omega_pk_grid[6].dat[0] = t_vec[1][pk_index+1]+2.0*dt;
+        Omega_pk_grid[6].dat[1] = 2.0*Omega_pk_grid[5].dat[1]-Omega_vec[pk_index+1];
+    }
+    else if (pk_index == length-1)
+    {
+        Omega_pk_grid[4].dat[0] = t_vec[1][pk_index]+dt;
+        Omega_pk_grid[4].dat[1] = 2.0*Omega_vec[pk_index]-Omega_vec[pk_index-1];
+        Omega_pk_grid[5].dat[0] = t_vec[1][pk_index]+2.0*dt;
+        Omega_pk_grid[5].dat[1] = 2.0*Omega_pk_grid[4].dat[1]-Omega_vec[pk_index];
+        Omega_pk_grid[6].dat[0] = t_vec[1][pk_index]+3.0*dt;
+        Omega_pk_grid[6].dat[1] = 2.0*Omega_pk_grid[5].dat[1]-Omega_pk_grid[4].dat[1];
+    }
+    else {printf("fuck you!\n");}// exit(-1);}
     double tOmg_pk = 0.;
     double DeltaT_nqc = 0.;
     vector<double> tmrg(35);
     vector<double> tmatch(35);
-    for (int k=0; k<7; k++) printf("%f %f\n",Omega_pk_grid[k].dat[0],Omega_pk_grid[k].dat[1] );
+//    for (int k=0; k<7; k++) printf("%f %f\n",Omega_pk_grid[k].dat[0],Omega_pk_grid[k].dat[1] );
     //compute true peak by interpolation from the grid
     tOmg_pk  = interpolate(dt, Omega_pk_grid);
     tOmg_pk *= 1./Mbh;
