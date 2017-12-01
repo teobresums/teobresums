@@ -1425,20 +1425,37 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const int k21 = 0;
   const int k22 = 1;
   const int k33 = 4;
-  int k,j;
+  int k;
   
   /** Find peak of Omega */
+  /*
   int index_pk = 0;
   double Omega_pk = Omega[index_pk];
-  for (j = 0; j < size ; j++ ) {  
-    if (Omega[j] > Omega_pk) {
-      index_pk = j;
-      Omega_pk = Omega[j];
-    }
+  for (j = 0; j < size ; j++ ) {
+  if (Omega[j] > Omega_pk) {
+  index_pk = j;
+  Omega_pk = Omega[j];
+  }
+  }
+  */
+  int size = dyn->size;
+  int j = size;
+  double Omega_pk = Omega[j-1];
+  while (Omega[j] > Omega_pk) {
+    index_pk = j;
+    Omega_pk = Omega[j];
+    j--;
+  }
+  if (index_pk == -1) {
+    if (PR) printf("No omega-maximum found.\n");
+    index_pk = size - 4;
+  }
+  if (index_pk > size-4) {
+    errorexit("Not enough points to interpolate.\n");
   }
 
   // NOTE: following is slightly different from C++ thing (that I do not understand).
-  // here we just refine the grid, populate by spline, and look for a maximum on that
+  // here we just refine the 7 pts grid, populate by spline, and look for a maximum on that
   
 #define n_grid (7)
   double *Omega_pk_grid, *t_Omega_pk_grid;
