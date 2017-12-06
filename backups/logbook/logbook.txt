@@ -1,6 +1,0 @@
-12/05
-
-1. Edited an example file A_NumDenom.h to define our coding style and doxygen conventions.
-Created a A_NumDenom.h and A_NumDenom.c
-
-2. It’s compiling only if we link the files of course. We’ll create a makefile which will take care of that. 
