@@ -1404,7 +1404,7 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 }
 
 /** Ringdown calculation and match to the dynamics */ 
-void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
+void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm, Waveform_lm *hlm_ringdown)
 {
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
@@ -1422,23 +1422,32 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
   
+  const int size = dyn->size;
+
   const int k21 = 0;
   const int k22 = 1;
   const int k33 = 4;
   int k;
   
   /** Find peak of Omega */
-  /*
+  /* Assume it is a monotonically increasing function */
   int index_pk = 0;
   double Omega_pk = Omega[index_pk];
-  for (j = 0; j < size ; j++ ) {
-  if (Omega[j] > Omega_pk) {
-  index_pk = j;
-  Omega_pk = Omega[j];
+  for (j = 1; j < size ; j++ ) {
+      if (Omega[j] < Omega_pk) 
+	break;
+      index_pk = j;
+      Omega_pk = Omega[j];
   }
+  if (index_pk == size-1) {
+    if (PR) printf("No omega-maximum found.\n");
+    //index_pk = size - 4;
   }
-  */
-  int size = dyn->size;
+  if (index_pk > size-4) {
+    errorexit("Not enough points to interpolate.\n");
+  }
+
+  /*
   int j = size;
   double Omega_pk = Omega[j-1];
   while (Omega[j] > Omega_pk) {
@@ -1453,6 +1462,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   if (index_pk > size-4) {
     errorexit("Not enough points to interpolate.\n");
   }
+  */
 
   // NOTE: following is slightly different from C++ thing (that I do not understand).
   // here we just refine the 7 pts grid, populate by spline, and look for a maximum on that
@@ -1515,9 +1525,10 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
-  double t_lm[KMAX][size];
+  double *t_lm[KMAX];
   for (k=0; k<KMAX; k++) {
-    for (j = 0; j < size ; j++ ) {  
+    t_lm[k] =  malloc ( size * sizeof(double) );
+    for (j = 0; j < size; j++ ) {  
       t_lm[k][j] = t[j] * ooMbh;
     }
   }
@@ -1534,21 +1545,31 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   /** Calculate deltaphi */
   double t0, psi[2];
   double Deltaphi[KMAX];
+  /*
   for (k = 0; k < KMAX; k++) {
     t0 = t_lm[k][idx[k]] - tmrg[k]; // I or I-1 or I-2 ?
     eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma, psi);
     Deltaphi[k] = psi[1] - hlm[k]->phase[idx[k]];
   }
-    
+  */
+
   /** Compute Ringdown waveform for t>tmatch */
   for (k = 0; k < KMAX; k++) {
     for (j = idx[k]; j < size ; j++ ) {  
       //t0 = t_lm[k][j];
       t0 = t_lm[k][j] - tmrg[k];   
       eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma, psi);
-      hlm[k]->phase[j] = psi[1];
+      if (j==idx[k]) {
+	Deltaphi[k] = psi[1] - hlm[k]->phase[idx[k]];
+      }
+      hlm[k]->phase[j] = psi[1] - Deltaphi[k];
       hlm[k]->ampli[j] = psi[0];
     }
   }
-    
+ 
+  /** Free mem. */
+  for (k=0; k<KMAX; k++) {
+    free(t_lm[k]);
+  }
+   
 }
