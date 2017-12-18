@@ -4,13 +4,13 @@
 ## nonspinning
 
 ### MS1b 1.35+1.35 @40 Mpc from 10Hz
-time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.0 -chi2 0.0 -fmin 10 -lambda1_l2 1531 -lambda2_l2 1531 -tidal 1 -Yagi_fits 1 -distance 40 
+time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.0 -chi2 0.0 -f_min 10 -lambda1_l2 1531 -lambda2_l2 1531 -tidal 1 -Yagi_fits 1 -distance 40 
 
 ### MS1b 1.00+1.50 @40 Mpc from 10Hz
-time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.0 -chi2 0.0 -fmin 10 -lambda1_l2 863 -lambda2_l2 7022 -tidal 1 -Yagi_fits 1 -distance 40 
+time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.0 -chi2 0.0 -f_min 10 -lambda1_l2 863 -lambda2_l2 7022 -tidal 1 -Yagi_fits 1 -distance 40 
 
 ### SlY 1.40+1.40 @40 Mpc from 10Hz
-time ./TEOBResumS.x -m1 1.40 -m2 1.40 -chi1 0.0 -chi2 0.0 -fmin 10 -lambda1_l2 307 -lambda2_l2 307 -tidal 1 -Yagi_fits 1 -distance 40 
+time ./TEOBResumS.x -m1 1.40 -m2 1.40 -chi1 0.0 -chi2 0.0 -f_min 10 -lambda1_l2 307 -lambda2_l2 307 -tidal 1 -Yagi_fits 1 -distance 40 
 
 ##Sly 1.35+1.35 from 180Hz for straight Matlab comparison
 time ./TEOBResumS.x -m1 1.34999999961 -m2 1.34999999961 -chi1 0.0 -chi2 0.0 -f_min 180 -lambda1_l2 389.962705820636 -lambda1_l3 706.632091237209 -lambda1_l4 1241.672392344051 -lambda2_l2 389.962705820636 -lambda2_l3 706.632091237209 -lambda2_l4 1241.672392344051 -tidal 1 -multipoles -lm 1 -srate 80000
@@ -21,12 +21,12 @@ time ./TEOBResumS.x -m1 1.34999999961 -m2 1.34999999961 -chi1 0.0 -chi2 0.0 -f_m
 ## spinning
 
 ### MS1b 1.35+1.35 @40 Mpc from 10Hz
-time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -fmin 10 -lambda1_l2 1531 -lambda2_l2 1531 -tidal 1 -Yagi_fits 1 -distance 40 
+time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -f_min 10 -lambda1_l2 1531 -lambda2_l2 1531 -tidal 1 -Yagi_fits 1 -distance 40 
 
 ### MS1b 1.00+1.50 @40 Mpc from 10Hz
-time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -fmin 10 -lambda1_l2 863 -lambda2_l2 7022 -tidal 1 -Yagi_fits 1 -distance 40 
+time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -f_min 10 -lambda1_l2 863 -lambda2_l2 7022 -tidal 1 -Yagi_fits 1 -distance 40 
 
 ## Ms1b run with hlm in output instead of h+,hx
 
-time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -fmin 10 -lambda1_l2 1531 -lambda2_l2 1531 -tidal 1 -Yagi_fits 1 -multipoles -lm 1
+time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -f_min 10 -lambda1_l2 1531 -lambda2_l2 1531 -tidal 1 -Yagi_fits 1 -multipoles -lm 1
 
