@@ -1404,7 +1404,7 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 }
 
 /** Ringdown calculation and match to the dynamics */ 
-void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm, Waveform_lm *hlm_ringdown)
+void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 {
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
@@ -1553,7 +1553,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm, Waveform_lm *hlm_ringdown
   }
   */
 
-  /** Compute Ringdown waveform for t>tmatch */
+  /** Compute Ringdown waveform for t>=tmatch */
   for (k = 0; k < KMAX; k++) {
     for (j = idx[k]; j < size ; j++ ) {  
       //t0 = t_lm[k][j];
