@@ -202,7 +202,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 /** (h+, hx) polarizations from the multipolar waveform */
 void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc)
 {
-  static const int sym = 1; /* m>0 modes only, add m<0 modes */
+  static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
   int k,i;
@@ -210,27 +210,23 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
     spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
     for (i = 0; i < (*hlm)->size; i++) {
       Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
-      cosPhi =   cos( (*hlm)->phase[k][i] );
-      sinPhi = - sin( (*hlm)->phase[k][i] );
-      hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-      hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+      cosPhi = cos( (*hlm)->phase[k][i] );
+      sinPhi = sin( (*hlm)->phase[k][i] );
+      hpc->real[i] += Aki*(cosPhi*Y_real + sinPhi*Y_imag);
+      hpc->imag[i] -= Aki*(sinPhi*Y_real - cosPhi*Y_imag);
       hpc->time[i] *= M; 
     }
-    if ( (sym) && (MINDEX[k]!=0) ) { 
+    if ( (mneg) && (MINDEX[k]!=0) ) { 
       /* add m<0 modes */
       spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota);
-      if ( LINDEX[k] % 2 ) { /* l is odd */
-	Y_real = -Y_real;
-	Y_imag = -Y_imag;
-      }
       for (i = 0; i < (*hlm)->size; i++) {
 	Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
-	cosPhi = - cos( (*hlm)->phase[k][i] ); /* complex conj */
-	sinPhi =   sin( (*hlm)->phase[k][i] ); /* complex conj */
+	cosPhi = cos( (*hlm)->phase[k][i] ); 
+	sinPhi = sin( (*hlm)->phase[k][i] ); 
 	hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-	hpc->imag[i] -= Aki*(cosPhi*Y_imag + sinPhi*Y_real);
+	hpc->imag[i] += Aki*(sinPhi*Y_real + cosPhi*Y_imag);
       }     
-    } /* sym */
+    } /* mneg */
   }
 }
 
@@ -329,9 +325,11 @@ void Waveform_push (Waveform **wav, int size)
   if ((*wav)->time) (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
   const int n  = (*wav)->size;
   const int dn = size - (*wav)->size;
-  memset( (*wav)->real + n, 0, dn * sizeof(double) );
-  memset( (*wav)->imag + n, 0, dn * sizeof(double) );
-  memset( (*wav)->time + n, 0, dn * sizeof(double) );
+  if (dn>0) {
+    memset( (*wav)->real + n, 0, dn * sizeof(double) );
+    memset( (*wav)->imag + n, 0, dn * sizeof(double) );
+    memset( (*wav)->time + n, 0, dn * sizeof(double) );
+  }
   (*wav)->size = size; 
 }
 
@@ -379,14 +377,16 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
   const int dn = size - (*wav)->size;
   (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
   if ((*wav)->time == NULL) errorexit("Out of memory.");
-  memset( (*wav)->time + n, 0, dn * sizeof(double) );
+  if (dn>0) memset( (*wav)->time + n, 0, dn * sizeof(double) );
   for (k=0; k<KMAX; k++) {
     (*wav)->ampli[k] = realloc ( (*wav)->ampli[k], size * sizeof(double) );
     if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
-    memset( (*wav)->ampli[k] + n, 0, dn * sizeof(double) );
     (*wav)->phase[k] = realloc ( (*wav)->phase[k], size * sizeof(double) );
     if ((*wav)->phase[k] == NULL) errorexit("Out of memory.");
-    memset( (*wav)->phase[k] + n, 0, dn * sizeof(double) );
+    if (dn>0) {
+      memset( (*wav)->ampli[k] + n, 0, dn * sizeof(double) );
+      memset( (*wav)->phase[k] + n, 0, dn * sizeof(double) );
+    } 
   }
   (*wav)->size = size;
 }
@@ -444,7 +444,7 @@ void Dynamics_push (Dynamics **dyn, int size)
   for (v = 0; v < EOB_DYNAMICS_VARS; v++) {
     (*dyn)->data[v] = realloc ( (*dyn)->data[v], size * sizeof(double) );
     if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
-    memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) );
+    if (dn>0) memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) );
   }
   (*dyn)->size = size; 
 }

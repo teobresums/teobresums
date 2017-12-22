@@ -312,7 +312,7 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK,
 		     double Mbh, double abh,  
 		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
-		     double ***sigma);
+		     double **sigma);
 
 /* TEOBResumSDynamics.c */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *params);
@@ -349,7 +349,7 @@ void eob_wav_hlm(double t, double phi, double r, double pph, double prstar, doub
 void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
-void eob_wav_hlmNewt(double r, double Omega, double phi, double nu, int usetidal, Waveform_lm *hNewt);
+void eob_wav_hlmNewt(double r, double Omega, double phi, double nu, int usetidal, Waveform_lm_t *hNewt);
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
 void eob_wav_flm(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
