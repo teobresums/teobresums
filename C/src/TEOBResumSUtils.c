@@ -213,7 +213,7 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
       cosPhi = cos( (*hlm)->phase[k][i] );
       sinPhi = sin( (*hlm)->phase[k][i] );
       hpc->real[i] += Aki*(cosPhi*Y_real + sinPhi*Y_imag);
-      hpc->imag[i] -= Aki*(sinPhi*Y_real - cosPhi*Y_imag); // overall check sign
+      hpc->imag[i] -= Aki*(sinPhi*Y_real + cosPhi*Y_imag); // overall check sign
       hpc->time[i] *= M; 
     }
     if ( (mneg) && (MINDEX[k]!=0) ) { 
@@ -224,7 +224,7 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
 	cosPhi = cos( (*hlm)->phase[k][i] ); 
 	sinPhi = sin( (*hlm)->phase[k][i] ); 
 	hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-	hpc->imag[i] += Aki*(sinPhi*Y_real + cosPhi*Y_imag); // overall check sign
+	hpc->imag[i] += Aki*(sinPhi*Y_real - cosPhi*Y_imag); // overall check sign
       }     
     } /* mneg */
   }
