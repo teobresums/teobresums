@@ -408,12 +408,23 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
     d2rc_dr2 = 0;
 #endif
   } else {
+    /*
     double X12      = sqrt(1.-4.*nu);   
     double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
     double rc2 = r2 + aK2*(1. + 2.*alphanu2/r);
     *rc         = sqrt(rc2);
     *drc_dr     = r/(*rc)*(1.+aK2*(-alphanu2*u3 ));
     *d2rc_dr2   = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
+    */
+    /* optimized implementation, avoid 1/aK2 */
+    double ff  = 1.25; // 5/4
+    double tmp = (ff + ff*X12 + 0.5*nu);
+    double X12 = sqrt(1.-4.*nu);   
+    double aK2_alphanu2 = aK2 + 0.5*( - tmp*(at2*at2* + at1*at1) + at1*at2*(-2.+nu));
+    double rc2 = r2 + aK2 + 2.*aK2_alphanu2*u;
+    *rc        = sqrt(rc2);
+    *drc_dr    = r/(*rc)*(1. - aK2_alphanu2*u3 );
+    *d2rc_dr2  = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1. - aK2_alphanu2*u3) + 2.*aK2_alphanu2*u3);
   }
   
 }
