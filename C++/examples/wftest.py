@@ -43,8 +43,8 @@ if __name__ == '__main__':
 
     """ Build parameters space """
 
-    nm = 20
-    ns = 20
+    nm = 70
+    ns = 60
     mass_range = np.linspace(10., 100., num=nm)
     spin_range = np.linspace(-0.8, .8, num=ns)
 
@@ -55,8 +55,9 @@ if __name__ == '__main__':
 
     for m1 in mass_range:
         for s1 in spin_range:
-            for m2 in mass_range[:nm//2]:
-                for s2 in spin_range[:ns//2]:
+            for m2 in mass_range[mass_range<=m1]:
+                for s2 in spin_range[spin_range<=s1]:
+                    ##print(m1,m2,s1,s2)
                     # fix/exclude cases
                     # equal spins up/down
                     #if math.isclose(s1,-s2, rel_tol=1e-12):
@@ -65,6 +66,8 @@ if __name__ == '__main__':
                     mass2.append(m2)
                     spin1.append(s1)
                     spin2.append(s2)
+                    
+    print("#wfs = ",len(mass1))
 
     """ Run on available CPUs """
 
