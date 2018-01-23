@@ -113,7 +113,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                                         'spin2':0.0,
                                         'theta_2l':0.0,
                                         'phi_2l':0.0,
-                                        'distance':2500.0,
+                                        'distance':2000.0,
                                         'inclination':0.0,
                                         'ra':4.2,
                                         'dec':1.1,
@@ -174,7 +174,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0.1,1.0],
                          [0.0,np.pi],
                          [0.0,np.pi],
-                         [1.0,2000.0],
+                         [1.0,5000.0],
                          [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
                          [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
         else:
@@ -185,12 +185,12 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [10.0,50.0],
+                         [30.0,60.0],
                          [0.5,1.0],
                          [-np.pi/2.,np.pi/2.],
                          [0.0,np.pi],
                          [1.0,2000.0],
-                         [-0.5,0.5],[-0.5,0.5]]
+                         [-0.99,0.99],[-0.99,0.99]]
                          
             self.flags ={'NQC':'1',
                 'tidal':0,
@@ -260,7 +260,12 @@ class GravitationalWaveModel(cpnest.model.Model):
                              d,
                              -1,
                              self.flags)
-
+            if np.any(np.isnan(h)):
+                h[:,:] = 0.0
+                print McQ2Masses(x['mc'],x['q'])
+                print x
+                
+                exit()
             hp = noise.resize_time_series(h[:,0],self.segment_length)
             hc = noise.resize_time_series(h[:,1],self.segment_length)
 
@@ -282,8 +287,9 @@ class GravitationalWaveModel(cpnest.model.Model):
     def log_likelihood(self,x):
         
         self.calculate_plain_template(x)
+        logL = np.sum([d.logLikelihood(self.plain_template[0], self.plain_template[1], x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
 
-        return np.sum([d.logLikelihood(self.plain_template[0], self.plain_template[1], x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
+        return logL
     
     def log_prior(self, x):
         if np.isfinite(super(GravitationalWaveModel,self).log_prior(x)):
@@ -338,7 +344,7 @@ if __name__=='__main__':
         opts.out_dir='./gw150914/'
 
     if opts.full_run:
-        signal_model = GravitationalWaveModel(['H1','L1'],#'V1'],
+        signal_model = GravitationalWaveModel(['H1','L1','V1'],
                                               T=opts.seglen,
                                               template = opts.template,
                                               sampling_rate = 2048.,
@@ -346,10 +352,10 @@ if __name__=='__main__':
                                               zero_noise = opts.zero_noise,
                                               starttime = 1126259459.423,
                                               trigtime = 1126259462.423,
-#                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
-                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
+                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
+#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         print('Noise evidence {0}'.format(signal_model.logZnoise))
@@ -375,6 +381,7 @@ if __name__=='__main__':
                                               starttime = 1126259459.423,
                                               trigtime = 1126259462.423,
                                               psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
                                                            '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
