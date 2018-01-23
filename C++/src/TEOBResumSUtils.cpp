@@ -42,6 +42,10 @@
 using namespace::std;
 
 double Eulerlog(const double x,const double m)
+
+/* Eulerlog function introduced in Eq.(36) of 
+   Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
+  
 {
     
     const double EulerGamma = 0.5772156649015328606065121;
@@ -248,6 +252,11 @@ double interp1d (const int order, double xx, int nx, double *f, double *x)
 
 
 vector<gsl_complex> speedyTail(const double Omega, const double Hreal, const double bphys, const int L[], const int M[])
+/* This function provides an effective fit of the phase of the Gamma function that enters the EOB resummed
+   waveform. The details of this implementation, as well as the definitions used, are given in the Appendix
+   of the TEOBResumS, Nagar et al. 2018, in preparation. 
+   This functions outputs a vector of 35 components, each component being the residual phase belonging to the
+   (l,m) multipole from l=2,...,8 to m=1,...,l*/
 {
     int kmax = 35;
     
@@ -363,6 +372,7 @@ double fact(int n)
 }
 
 /* Wigner d-function */
+/* This corresponds to Eq. (II.8) of arXiv:0709.0093 */
 double wigner_d_function(int l, int m, int s, double i)
 {
     double dWig = 0.;
@@ -411,6 +421,9 @@ double fLR(double r, void *params)
 }
 /** Takes nu as input */
 double AdiabLR(void *params)
+/* This function computes the adiabatic light-ring. This is used
+   as input in the GSF-modified tidal potential, see PRL 114 (2015) 161103
+   and references therein as reference */
 {
     
     int status;
@@ -444,7 +457,8 @@ double AdiabLR(void *params)
 
 vector<double> s_D1(vector<double> f, vector<double> x, int Nmax)
 {
-    /* Computes the first derivative of the function. Centered but at the edges. USAGE: df = EOB_D1(f,x) */
+    /* Computes the numerical derivative with a 4th-order stancil.
+       Boundaries are correctly implemented at 4th order. */
     int Nmin = 0;
     
     vector<double> df(Nmax+1);
@@ -544,19 +558,19 @@ TEOBResumParams read_config(char *fname)
     // set defaults (flags & pars)
     SetDefaultFlagsValues(&params.flags);
     
-    params.q         = 1.;
-    params.mtot      = 80.;      // Msun
-    params.chi1      = 0.;
-    params.chi2      = 0.;
-    params.dt        = 1./4096.; // s
-    params.f_min     = 10;       // Hz
-    params.lm        = 1;
-    params.LambdaAl2 = 0.;
-    params.LambdaAl3 = 0.;
-    params.LambdaAl4 = 0.;
-    params.LambdaBl2 = 0.;
-    params.LambdaBl3 = 0.;
-    params.LambdaBl4 = 0.;
+    params.q         = 1.;       // mass ratio m1/m2
+    params.mtot      = 80.;      // total mass [Msun]
+    params.chi1      = 0.;       // dimensionless spin body 1
+    params.chi2      = 0.;       // dimensionless spin body 2
+    params.dt        = 1./4096.; // temporal spacing [s]
+    params.f_min     = 10;       // initial frequency [Hz]
+    params.lm        = 1;        // multipolar index
+    params.LambdaAl2 = 0.;       // l=2 tidal polarizability (A=1)
+    params.LambdaAl3 = 0.;       // l=3 tidal polarizability (A=1)
+    params.LambdaAl4 = 0.;       // l=4 tidal polarizability (A=1)
+    params.LambdaBl2 = 0.;       // l=2 tidal polarizability (B=2)
+    params.LambdaBl3 = 0.;       // l=3 tidal polarizability (B=2)
+    params.LambdaBl4 = 0.;       // l=4 tidal polarizability (B=2)
     params.distance  = 100;      // Mpc
     params.iota      = 0.0;
     params.coa_phase = 0.0;
@@ -675,7 +689,8 @@ TEOBResumParams read_config(char *fname)
     
     double nu = q/((q+1.)*(q+1.));
     params.nu = nu;
-    
+
+    /* X_i = m_i/M; X1>X2 */
     double X1 = 0.5*(1.+sqrt(1.-4.*nu));
     double X2 = 1. - X1;
     double XA = X1; // a different notation used in tidal part, keep here for simplicity
@@ -688,8 +703,8 @@ TEOBResumParams read_config(char *fname)
     params.S1 = S1;
     params.S2 = S2;
     
-    double a1  = X1*chi1;
-    double a2  = X2*chi2;
+    double a1  = X1*chi1;  //tilde{a}_1 = S_1/(m_1 M)
+    double a2  = X2*chi2;  //tilde{a}_1 = S_2/(m_2 M)
     double aK  = a1 + a2;
     double aK2 = aK*aK;
     
@@ -701,6 +716,9 @@ TEOBResumParams read_config(char *fname)
     params.aK  = a1 + a2;
     params.aK2 = aK2;
     params.rLR = 0.;
+    /* NNNLO NR-informed effective spin-orbit parameter.
+       See Eq. (26) and (27)-(34) of Nagar, Riemenschneider and Pratten,
+       PRD 96, 084045 (2017) */
     params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.flags.tidal);
     
     
