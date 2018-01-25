@@ -975,7 +975,7 @@ vector <double> s_get_rc(double r, void *params)
     double u2  = u*u;
     double u3  = u*u2;
     double r2  = r*r;
-    
+    double X12 = sqrt(1.-4.*nu);   //(X1-X2) will be defined at the beginning and not redefined several times
     
     if (tidal_flag==true)
     {
@@ -1016,14 +1016,32 @@ vector <double> s_get_rc(double r, void *params)
     }
     else
     {
-        
-        double X12      = sqrt(1.-4.*nu);   //(X1-X2) will be defined at the beginning and not redefined several times
-        double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
-        
-        double rc2 = r2 + aK2*(1. + 2.*alphanu2/r);
-        rc         = sqrt(rc2);
-        drc_dr     = r/rc*(1.+aK2*(-alphanu2*u3 ));
-        d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
+      /* NLO spin-spin coupling introduced via the centrifugal radius, see Damour & Nagar, PRD 90, 044018 (2014).
+         The quantity here addressed as u*c_ss_nlo corresponds to the \delta a^2 defined in Eq.(59) of this paper
+         and then detailed in Eqs.(60) to (65). One actually finds that these complicates equations simplify when
+         they are expressed in terms of the total-mass scaled Kerr parameters of the two black holes, 
+         at1 = X1 chi1 and at2 = X2 chi2. This calculation is also mentioned in the Conclusions section
+         of arXiv:1801.02366.
+          
+        In the first version of the code, the NLO spin-orbit correction was written with the following 
+        piece of code:
+     
+        double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));	
+	double rc2      = r2 + aK2*(1. + 2.*alphanu2/r);
+	rc         = sqrt(rc2);
+	drc_dr     = r/rc*(1.+aK2*(-alphanu2*u3 ));
+	d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
+
+        This was actually formally singular and creating nans because of the 0.5/aK2, that actually simplifies
+        with the aK2 at numerator giving a regular expression. This was corrected on 25/01/2018 explicitly 
+        writing the expression above */
+	  
+      double c_ss_nlo = (- at2*at2*(1.25 + 1.25*X12 + 0.5*nu) - at1*at1*(1.25 - 1.25*X12 + 0.5*nu) + at1*at2*(-2.+nu));
+      double rc2      = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo;
+	  	
+      rc         = sqrt(rc2);
+      drc_dr     = r/rc*(1-(aK2 + 0.5*c_ss_nlo)*u3);	
+      d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-(aK2+0.5*c_ss_nlo)*u3)+ (2.*aK2 + c_ss_nlo)*u3);
     }
     
     return {rc, drc_dr, d2rc_dr2};
