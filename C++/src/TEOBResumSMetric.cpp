@@ -411,7 +411,8 @@ int rhs(double t, const double y[], double f[], void *params){
     const double ddotr_dprstar = sqrAB*( 1.+z3*6.*A*u2*prstar2-(prstar + z3*2.*A*u2*prstar3)*dHeff_dprstar*tmpE)*one_denE;
     
     
-    // Approximate ddot(r) without Flux <= ???
+    /* Approximate ddot(r) without the flux. See Appendix of Damour, Nagar and Bernuzzi (DNB), 
+       arXiv:1212.4357 where this approximation is explicitly introduced and discussed */
     const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
 
     /* Vector of souces for the multipolar flux, Eq.(16) of DNB */
@@ -562,20 +563,20 @@ int s_RHS(double t, const double y[], double f[], void *params)
     double Omg = f[1];
     
     
-    //----------------------------------
-    // Compute here the new r_omg radius
-    //----------------------------------
-    //==========================================================
-    // Compute same quantities with prstar=0. This to obtain psi.
-    // Procedure consistent with the nonspinning case
-    //==========================================================
-    vector<double> ggm0 = s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);//nu,chi1,chi2,X1,X2);
+    /*----------------------------------------------------
+      Compute here the new r_omg radius as in Eq. (70)
+      of Damour&Nagar, arXiv:1406.6913. One starts by
+      computing some quantities with prstar=0, consitently
+      with the nonspinning case. See Eq.(71) of the above
+      reference.
+      ----------------------------------------------------*/
+    vector<double> ggm0 = s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3);
     
     double GS_0      = ggm0[2];
     double GSs_0     = ggm0[3];
     double dGS_dr_0  = ggm0[6];
     double dGSs_dr_0 = ggm0[7];
-    double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));   // effective Hamiltonian H_0^eff
+    double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));   // circularized effective Hamiltonian H_0^eff
     double Heff_0     = Heff_orb_0 + (GS_0*S + GSs_0*Sstar)*pph;
     double H0         = sqrt(1.0 + 2.0*nu*(Heff_0 - 1.0) );
     double one_H0     = 1./H0;
@@ -995,20 +996,14 @@ vector <double> s_get_rc(double r, void *params)
     if (tidal_flag==true)
     {
         
-        /* inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
+        /* Inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
          The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
          deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
          the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
-         
-         Inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
-         The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
-         deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
-         the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
-         
-         The implementation uses the I-Love-Q fits of Table I of Yunes-Yagi
-         paper, PRD 88, 023009, the bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. 
-         The dimensionless bar{\lambda} love number is related to our apsidal constant as 
-         lambda = 2/3 k2/(C^5) so that both quantities have to appear here.*/
+                           
+         The implementation uses the I-Love-Q fits of Table I of Yunes-Yagi paper, PRD 88, 023009, the 
+         bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. The dimensionless bar{\lambda} Love number 
+         is related to our apsidal constant as lambda = 2/3 k2/(C^5) so that both quantities have to appear here.*/
         
         //BNS effective spin parameter
         double a02      = C_Q1*at1*at1 + 2.*at1*at2 + C_Q2*at2*at2;
@@ -1060,7 +1055,11 @@ vector <double> s_get_rc(double r, void *params)
 }
 
 double DHeff0(double x, void *DHeff_params){
-    
+
+  /* This function computed the radial derivative of the circularized effective 
+     Hamiltonian (pr*=0). This is used in the computation of the derivatives of
+     the gyro-gravitomagnetic ratios */
+  
     struct energy_params *p
     = (struct energy_params *) DHeff_params;
     
@@ -1098,6 +1097,10 @@ double DHeff0(double x, void *DHeff_params){
 }
 
 double s_bisec(double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss, void *params){
+      /* This function solves the equation dHeff0=/dr=0 for the angular momentum.
+         That is it computed the angular momentum of an EOB circular orbit.
+         Spin is included. */
+
     double nu   = (*(TEOBResumParams *)params).nu;
     double chi1 = (*(TEOBResumParams *)params).chi1;
     double chi2 = (*(TEOBResumParams *)params).chi2;
@@ -1137,6 +1140,11 @@ double s_bisec(double pph, double rorb, double A, double dA, double rc, double d
 }
 
 vector<double> get_Omg_orb(vector<double> r,vector<double> pph,vector<double> pr_star,vector<double> A,vector<double> B,void *params)
+
+/* This function computed the orbital frequency of the relative dynamics, 
+   that is the derivative of the effective Hamiltonian with respect to
+   the angular momentum. This is done here with the full spin dependence */ 
+
 {
     
     double nu   = (*(TEOBResumParams *)params).nu;
@@ -1188,6 +1196,11 @@ vector<double> get_Omg_orb(vector<double> r,vector<double> pph,vector<double> pr
 }
 
 vector<double> A_NumDenom(const double r, const vector<double> a, const double nu)
+/* This function computed the A function as Pade(1,5). The numerator and denominator
+   are computed separately. This is a duplication of another function and the derivatives
+   are not included. It will have to be eventually removed, as this comes directly from
+   the original version of the public Matlab code */
+
 {
     
     /** Shorthands */
