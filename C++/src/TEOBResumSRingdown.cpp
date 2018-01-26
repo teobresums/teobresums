@@ -569,7 +569,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
       
         DeltaT_nqc = dtnqc_fit(chi1,0.8498);
     }
-    else if ((chi1 <=-0.80) && (nu <= 8./81.))
+    else if ((chi1 <=-0.70) && (nu <= 8./81.))
       /* This condition was a simple hack to avoid unphysical features in the
          modulus amplitude when one (or both) the spins are large and negative
          and the mass ratio is large. This little modification in the location
@@ -577,7 +577,7 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
          guarantees just a small perturbation of the non-NQC EOB waveform. The
          iResum waveform will be robust enough that this hack will not be needed*/  
       {
-	DeltaT_nqc = 3.0;
+	DeltaT_nqc = 4.0;
       }    
     else
     /* standard choice inspired by test-particle results */  
@@ -591,7 +591,11 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     /*tmrg[k22]  = tOmg_pk-3./Mbh; */             // t_max(A22) => MERGER
     
     
-    /** only nonspinning case */
+    /** The following values are the difference between the time of the peak of
+        the 22 waveform and the 21 and 33. These specific values refer to the
+        special nonspinning case. They are different in the spinning case, which
+        is however not implemented. These are here only as placeholder **/
+    
     dtmrg[0]   = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
     dtmrg[1]   = 4.29550934 - 0.85938*xnu;                         //k33
     tmrg[k21]  = tmrg[k22] + dtmrg[0]/Mbh;     // t_max(A21) => peak of 21 mode

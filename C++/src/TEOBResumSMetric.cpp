@@ -146,10 +146,10 @@ vector<double> Metric(const double r, void *params, bool nnlo_flag)
             - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
         }
         else
-        {   //Used for calculating the dynamics
-            // The l=2 part of the potential  Bini & Damour, Eq.(7.33) of  PRD 90, 124037 (2014),
-	    // with the free coefficent p fixed to p=4
-            // The l=3 and l=4 corrections are given in the simple (nonresummed) nnlo form.
+        {   /*Used for calculating the dynamics
+              The l=2 part of the potential  Bini & Damour, Eq.(7.33) of  PRD 90, 124037 (2014),
+	      with the free coefficent p fixed to p=4
+	      The l=3 and l=4 corrections are given in the simple (nonresummed) nnlo form.*/
             double p      =  4.;// % 4<p<6
             double c1     =  8.53353;
             double c2     =  3.04309;
@@ -326,7 +326,8 @@ int rhs(double t, const double y[], double f[], void *params){
 
     /** This routine gives the RHS of the EOB equation of motion for the nonspinning case. 
 	These RHS are written explicitly in Eq.(6a)-(6d) of Damour, Nagar and Bernuzzi, 
-	PRD 87, 084035 (2013) [DNB]. Note however that the radial flux F_r*=0 here */
+	PRD 87, 084035 (2013) [DNB]. Note however that the radial flux F_r*=0 here.
+	Here we work with rescaled variables, see e.g. Sec IIIA in https://arxiv.org/pdf/1406.6913.pdf”*/
     
     double nu = (*(TEOBResumParams *)params).nu;
     
@@ -376,15 +377,22 @@ int rhs(double t, const double y[], double f[], void *params){
     
     //pphi evol eqn rhs
     const double sqrW = sqrt(A*(1. + pphi2*u2));
+
+    /* computation of psi in the nonspinning limit, See Eq.(69) of
+       PRD 90, 044018 (2014) and references therein, notably
+       Damour & Gopakumar, Phys. Rev. D73 (2006) 124006 */
     double psi = 0.;
-    bool psi_flag = false; // flag for an alternative way of computing psi
+    psi = 2.*(1.0 + 2.0*nu*(sqrW - 1.0))/(r2*dA);
+    
+    /* The code below is not used. The standard choice of psi
+       is the one above*/
+    /*bool psi_flag = false; // flag for an alternative way of computing psi
     if (psi_flag==false) {
         psi = 2.*(1.0 + 2.0*nu*(sqrW - 1.0))/(r2*dA);
     } if (psi_flag==true) {
         psi = 2.*(1.0 + 2.0*nu*(Heff - 1.0))/(r2*dA);
-    }
-    
-    
+    }*/
+
     const double r_omega = r*cbrt(psi);
     const double v_phi   = r_omega*Omega;
     const double x       = v_phi * v_phi;
@@ -682,9 +690,9 @@ vector<double> s_A5PNlog(double r, void *params, bool nnlo_flag){
             A     = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
             dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
             - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
-        } else { //Used for calculting the dynamcis
-            //case 'nnlo_gsfLR'; Bini & Damour, 1409.6933 + free light-ring
-            // Tidal PN coefs
+        } else { /*Used for calculting the dynamics
+                   case 'nnlo_gsfLR'; Bini & Damour, 1409.6933 + free light-ring
+                   Tidal PN coefs*/
             double p      =  4.;// % 4<p<6
             double c1     =  8.53353;
             double c2     =  3.04309;
@@ -812,9 +820,10 @@ vector<double> s_Metric(double r, void *params, bool nnlo_flag){
 double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2, bool tidal_flag)
 
 /** This function computed the next-to-next-to-next-to-leading order effective spin-orbit parameter informed by
-   SXS NR simulations. This is the only dynamical free parameter of the model. The current fit is given in Eq.(15)-(23)
-   of Nagar, Riemenschneider & Pratten, arXiv: 1703.06814 
-   Here, the spin variables are a1 = X1 chi1 and a2 = X2 chi2 */
+   SXS NR simulations. Reference is Nagar, Riemenschneider and Pratten, PRD 96, 084045 (2017) mentioned below.
+   Here, the spin variables are a1 = X1 chi1 and a2 = X2 chi2 that are addressed as tilde{a}_1 and tilde{a}_2
+   in the reference paper and are called at1 and at2 in other parts of the code. This will need cleaning and
+   uniformity when porting the code to LAL.*/
 {
     
     double c3 = 0.;
@@ -828,20 +837,26 @@ double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, 
     }
     else
     {
+      /* Effective NNNLO spin-orbit parameter informed by NR simulations.
+         The functional form is given in Eq.(26) of Nagar, Riemenschneider
+         and Pratten, PRD 96, 084045 (2017), while the numerical values are
+         found in Eqs.(27)-(34) of the same reference */
+
+      
         double nu2 = nu*nu;
         double nu3 = nu2*nu;
 
-	//------------------------------------
-        // equal-mass, equal-spin coefficients
-	//------------------------------------
+	/*------------------------------------
+          equal-mass, equal-spin coefficients
+	  ------------------------------------*/
         double c0 =  44.822889;
         double n1 =  -1.879350;
         double n2 =   0.894242;
         double d1 =  -0.797702;
 
-	//----------------------------------------
-        // unequal-mass, unequal-spin coefficients
-	//----------------------------------------
+	/*----------------------------------------
+          unequal-mass, unequal-spin coefficients
+	  ----------------------------------------*/
         double c3_eq = c0*(1. + n1*(a1+a2) + n2*(a1+a2)*(a1+a2))/(1.+d1*(a1+a2));
         
         double cnu    = 1222.36;
@@ -975,7 +990,7 @@ vector <double> s_get_rc(double r, void *params)
     double u2  = u*u;
     double u3  = u*u2;
     double r2  = r*r;
-    
+    double X12 = sqrt(1.-4.*nu);   //(X1-X2) will be defined at the beginning and not redefined several times
     
     if (tidal_flag==true)
     {
@@ -984,9 +999,6 @@ vector <double> s_get_rc(double r, void *params)
          The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
          deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
          the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
-         
-         NS quadrupoles due to rotation
-         These are parameters that should be specified in the parameter file
          
          Inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
          The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
@@ -1016,14 +1028,32 @@ vector <double> s_get_rc(double r, void *params)
     }
     else
     {
-        
-        double X12      = sqrt(1.-4.*nu);   //(X1-X2) will be defined at the beginning and not redefined several times
-        double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
-        
-        double rc2 = r2 + aK2*(1. + 2.*alphanu2/r);
-        rc         = sqrt(rc2);
-        drc_dr     = r/rc*(1.+aK2*(-alphanu2*u3 ));
-        d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
+      /* NLO spin-spin coupling introduced via the centrifugal radius, see Damour & Nagar, PRD 90, 044018 (2014).
+         The quantity here addressed as u*c_ss_nlo corresponds to the \delta a^2 defined in Eq.(59) of this paper
+         and then detailed in Eqs.(60) to (65). One actually finds that these complicates equations simplify when
+         they are expressed in terms of the total-mass scaled Kerr parameters of the two black holes, 
+         at1 = X1 chi1 and at2 = X2 chi2. This calculation is also mentioned in the Conclusions section
+         of arXiv:1801.02366.
+          
+        In the first version of the code, the NLO spin-orbit correction was written with the following 
+        piece of code:
+     
+        double alphanu2 = 1. + 0.5/aK2*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));	
+	double rc2      = r2 + aK2*(1. + 2.*alphanu2/r);
+	rc         = sqrt(rc2);
+	drc_dr     = r/rc*(1.+aK2*(-alphanu2*u3 ));
+	d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
+
+        This was actually formally singular and creating nans because of the 0.5/aK2, that actually simplifies
+        with the aK2 at numerator giving a regular expression. This was corrected on 25/01/2018 explicitly 
+        writing the expression above */
+	  
+      double c_ss_nlo = (- at2*at2*(1.25 + 1.25*X12 + 0.5*nu) - at1*at1*(1.25 - 1.25*X12 + 0.5*nu) + at1*at2*(-2.+nu));
+      double rc2      = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo;
+	  	
+      rc         = sqrt(rc2);
+      drc_dr     = r/rc*(1-(aK2 + 0.5*c_ss_nlo)*u3);	
+      d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-(aK2+0.5*c_ss_nlo)*u3)+ (2.*aK2 + c_ss_nlo)*u3);
     }
     
     return {rc, drc_dr, d2rc_dr2};

@@ -74,7 +74,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     int grid_length = 0;
     double rLR;           /** location of the light ring **/
     double r;             /** relative separation: EOB coordinates **/ 
-    double prstar;        /** radial momentum conjugate to the r*-EOB Regge-Wheele tortoise coordinate**/
+    double prstar;        /** radial momentum conjugate to the r*-EOB Regge-Wheeler tortoise coordinate**/
     double phi;           /** orbital phase **/
     double pphi;          /** orbital angular momentum **/
     double MOmg;          /** total orbital frequency **/
@@ -305,7 +305,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         }
         
         /** Breaking the computation. Find the peak of the Omg_orb curve (the "pure" orbital frequency
-            without the spin-orbit contribution) and continue the evolution for another 10M to
+            without the spin-orbit contribution) and continue the evolution for another 5M to
             avoid interpolation problems later.
             For the non-spinning case Omg_orb is precisely the orbital frequency */
 	
@@ -323,7 +323,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             if (MOmg < MOmg_prev)
             {
                 MOmgpeak_flag = true;
-                t_stop        = t + 10.*dt; 
+                t_stop        = t + 5.*dt; 
             }
             else
             {
