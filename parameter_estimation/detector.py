@@ -65,6 +65,8 @@ class GravitationalWaveDetector(object):
         
         template = self.Project(hptilde, hctilde, ra, dec, psi, tc)
         data = self.FrequencySeries[self.kmin:self.kmax]
+#        np.savetxt("waveforms.txt",np.c_[template.real,template.imag,data.real,data.imag])
+#        exit()
         residuals = (data - template)
         overlap = np.conj(residuals)*residuals/self.sigmasq[self.kmin:self.kmax]
 
