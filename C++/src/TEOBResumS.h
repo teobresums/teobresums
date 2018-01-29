@@ -38,8 +38,9 @@ using namespace::std;
 const double EulerGamma = M_EULER;
 const double Log2       = M_LN2;
 const double pi         = M_PI;
-const double MSUN_M     = 1.47662504e3; /** G/c^3 */
-const double MSUN_S     = 4.925491025543575903411922162094833998e-6; /** G/c^2 */
+const double MSUN_M     = 1.476625038e3;  /** GMsun/c^2 [m] */
+const double MSUN_S     = 4.925490947e-6; /** GMsun/c^3 [sec] */
+
 const double MPC_M      = 3.086e22;
 
 /** Maps between 1D index and the corresponding l and m multipole indices */
