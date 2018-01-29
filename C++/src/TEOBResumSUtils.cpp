@@ -539,8 +539,51 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
     return exp(lny);
 }
 
-double radius0(double M, double f_start)
+double radius0(double M, double f_start,double chi1,double chi2)
+/* This function computed the initial radius r0 to feed the
+   EOB dynamics from a given value f_start in Hz. This is 
+   done using the Newtonian Kepler's law */
+  
 {
+  if (chi1<0 || chi2<0)
+    /* Quick fix to avoid f_min (by default 20 or 10Hz) to be too 
+       high when the total mass is large, e.g. for binaries 
+       of 100 + 100. If the default f_min is kept the dynamics
+       in this case starts in the plunge already and the code gives
+       and error that just comes from the choice of the initial radius.
+       Here we arbitrarily decide to increase the initial frequency
+       to be sure to have enough cycles of inspiral using starting
+       from the Schwarzschild frequency corresponding to r=8.
+       This is a simple way to avoid the problem. In the future one
+       will have to do this by monitoring the EOB LSO frequency, 
+       that always exists when the spins are anti-aligned with the
+       orbital angular momentum.
+
+       Note also that the intial radius r_0 is computed from the frequency
+       using the Newtonian Kepler's law, that is just an approximation in
+       the EOB case. This means that, even if one inputs a value f_start,
+       the intial starting frequency of the waveform is actually different.
+
+       This is of no importance here: one should just make sure that there
+       are enough inspiral cycles in the waveform so to capture the full
+       transition from inspiral to plunge and avoid evident inaccuracies.*/ 
+    {
+      double fcirc_Schw = pow(1./8.,3./2.)/(M*MSUN_S*M_PI);
+      if (f_start >=fcirc_Schw)
+	{
+	  printf("f_min [input] = %18.16f\n",f_start);      
+	  f_start = 0.5*fcirc_Schw;
+	  printf("f_min'[lower] = %18.16f\n",f_start);
+	}
+      else
+	{
+	}
+    }
+      else
+	{
+	}
+
+  
     double x = (M*f_start*MSUN_S*2.*M_PI)/2.;
     return cbrt(1/(x*x));
 }
@@ -815,10 +858,15 @@ TEOBResumParams process_input_parameters(
     CopyTEOBResumSFlags(&params.flags,flags);
 
     double mtot = m1+m2;
-    double q = m1/m2;
-
+    double q    = m1/m2;
+    double nu   = q/((q+1.)*(q+1.));
     params.mtot = mtot;
-    params.q = q;
+    params.q    = q;
+    params.chi1 = chi1;
+    params.chi2 = chi2;
+    params.nu   = nu;
+    double X1   = 0.5*(1.+sqrt(1.-4.*nu));
+    double X2   = 1. - X1;
     
     if (params.flags.geometric_units==0)
     {
@@ -826,7 +874,7 @@ TEOBResumParams process_input_parameters(
       // rescale to geometric units and mass rescaled quantities
       // compute r0 from the initial GW frequency in Hz
         params.dt = time_units_conversion(mtot, dt);
-        params.r0 = radius0(mtot, f_min);
+        params.r0 = radius0(mtot, f_min,params.chi1,params.chi2);
     }
     else
     {
@@ -840,10 +888,7 @@ TEOBResumParams process_input_parameters(
     {
         printf(" dt = %e r0 = %e\n",params.dt, params.r0);
     }
-    
-    params.chi1 = chi1;
-    params.chi2 = chi2;
-    
+        
     if (params.flags.tidal == 1 && params.flags.Yagi_fits==1)
     {
         LambdaAl3 = Yagi13_fit_barlamdel(LambdaAl2, 3);
@@ -855,15 +900,10 @@ TEOBResumParams process_input_parameters(
     /** Override spin settings if spins are given in input */
     if (chi1 != .0 || chi2 != .0) params.flags.spin = 1;
     
-    double nu = q/((q+1.)*(q+1.));
-    params.nu = nu;
-    
-    double X1 = 0.5*(1.+sqrt(1.-4.*nu));
-    double X2 = 1. - X1;
     double XA = X1; // a different notation used in tidal part, keep here for simplicity
     double XB = X2;
-    params.X1   = X1;
-    params.X2   = X2;
+    params.X1 = X1;
+    params.X2 = X2;
     
     double S1 = params.X1*params.X1 * params.chi1;
     double S2 = params.X2*params.X2 * params.chi2;
