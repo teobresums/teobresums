@@ -8,7 +8,7 @@ TEOBResumSFits.c  : external fits (final BH, ringdown, NQC, tidal pars, etc) -> 
 
 TEOBResumSInitialConditions.c : initial conditions for dynamics -> KaWa
 
-TEOBResumSMetric.c : EOB metric -> KaWa
+TEOBResumSMetric.c : EOB metric -> KaWa, 09.02.2018 compiles, verified correctness (with master)
 
 TEOBResumSDynamics : r.h.s. and other stuff for EOB dynamics -> KaWa
 

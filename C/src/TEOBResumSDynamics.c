@@ -141,7 +141,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
   const double C_Q1  = d->C_Q1;
   const double C_Q2  = d->C_Q2;
   const int usetidal = d->use_tidal;
-  const int usespins = d->use_spin;
+  const int usespins = d->use_spins;
 
   const double z3     = 2.*nu*(4.-3.*nu);    
   const double r      = y[EOB_EVOLVE_RAD];
@@ -212,8 +212,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
      Compute same quantities with prstar=0. This to obtain psi.
      Procedure consistent with the nonspinning case
   */
-  double gmm0[14];
-  eob_dyn_s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3, gmm0);
+  double ggm0[14];
+  eob_dyn_s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3, ggm0);
   
   const double GS_0       = ggm0[2];
   const double GSs_0      = ggm0[3];
@@ -433,9 +433,9 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
 double eob_dyn_fLR(double r, Dynamics *dyn)
 {    
   double A,B,dA,d2A,dB;
-  if (dyn->use_spin) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
-  else               eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
-  double dA_u = (-dA*)*SQ(r); 
+  if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
+  else                eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
+  double dA_u = (-dA)*SQ(r);
   return (A +(0.5*dA_u)/r);
 }
 
@@ -451,7 +451,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   gsl_root_fsolver *s;
   gsl_function F;
   F.function = &eob_dyn_fLR;
-  F.params = dyn
+  F.params = dyn;
   T = gsl_root_fsolver_bisection;
   s = gsl_root_fsolver_alloc (T);
   gsl_root_fsolver_set (s, &F, x_lo, x_hi);
@@ -491,8 +491,8 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
 double eob_dyn_fLSO(double r, Dynamics *dyn)
 {    
   double A,B,dA,d2A,dB;
-  if (dyn->use_spin) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
-  else               eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
+  if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
+  else                eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
   double u = 1./r;
   double u2  = SQ(u);
   double d2B = d2A*u2 + 4.*u*dA+2*A;
@@ -520,7 +520,7 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
     {
       iter++;
       status = gsl_root_fsolver_iterate (s);
-      rLR    = gsl_root_fsolver_root (s);
+      x      = gsl_root_fsolver_root (s);
       x_lo   = gsl_root_fsolver_x_lower (s);
       x_hi   = gsl_root_fsolver_x_upper (s);
       status = gsl_root_test_interval (x_lo, x_hi, 0, 1e-10);
@@ -556,9 +556,9 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
 
 
 
-
 /** Compute orbital frequency from arrays */
 // used anywhere?
+/*
 void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, int size, void *params, double *Omg_orb)
 {
 
@@ -576,7 +576,6 @@ void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, 
   const double c3   = d->cN3LO;
   const double C_Q1 = d->C_Q1;
   const double C_Q2 = d->C_Q2;
-  const double aK2  = d->aK2;
   
   const double z3    = 2.*nu*(4.-3.*nu);
   const double S     = S1 + S2;
@@ -610,5 +609,5 @@ void get_Omg_orb(double *r, double *pph, double *pr_star, double *A, double *B, 
   }
   
 }
-
+*/
 

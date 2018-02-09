@@ -232,6 +232,7 @@ typedef struct tagDynamics
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2, c3NLO;
   double rLR, rLSO;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4, khatA2,khatB2;
+  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2;
   double rLR_tidal, pGSF_tidal;
   double Mbhf, abhf; /* final BH */
   int use_tidal, use_spins;
@@ -331,7 +332,7 @@ double eob_dyn_s_bisec(double nu, double chi1, double chi2, double X1, double X2
 double eob_dyn_DHeff0(double x, void *params);
 
 /* TEOBResumSMetric.c */
-void eob_metric_A5PNlog(double r, double nu, double *A,double *dA,double *d2A);
+void eob_metric_A5PNlog(double r, Dynamics *dyn, double *A, double *dA, double *d2A);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
