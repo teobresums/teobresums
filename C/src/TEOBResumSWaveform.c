@@ -100,7 +100,7 @@ void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, doub
         
     /** Compute tidal contribution */
     double hlmtidal[KMAX];
-    eob_wav_hlmTidal(x, dyn, hTidallm);
+    eob_wav_hlmTidal(x, dyn, hlmtidal);
     
     /** Update waveform */
     const double p2 = sqrt(1-4*nu);
@@ -272,24 +272,29 @@ void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
     num_ang   = 1. + b1[i]*x2 + b2[i]*x3 + b3[i]*x4 + b4[i]*x5; 
     tlm_ang   = (- 2. * psi[i] * x * num_ang) + 2.*x* log(2. * k * bphys);
     tlm->ampli[i] = Tlm_real[i];
-    tlm->phase[i].dat[1] = tlm_ang;
+    tlm->phase[i] = tlm_ang;
   }
   
 }
 
 /** hlmNewt coefficients for amplitude */
-static const double ChlmNewt_ampli[35] = {
-  8./3.*sqrt(Pi/5.), 8.*sqrt(Pi/5.),
-  1./3.*sqrt(2.*Pi/35.), 8./3.*sqrt(Pi/7.), 3.*sqrt(6.*Pi/7.), 
-  1./105.*sqrt(2.*Pi), 8./63.*sqrt(Pi), 9./5*sqrt(2*Pi/7.), 64./9.*sqrt(Pi/7.),
-  1./180.*sqrt(Pi/77.), 16./135.*sqrt(Pi/11.), 9./20.*sqrt(3*Pi/22.), 256./45.*sqrt(Pi/33.), 125./12.*sqrt(5.*Pi/66.), 
-  1./2079.*sqrt(2.*Pi/65.), 16./1485.*sqrt(Pi/13.), 81./385.*sqrt(Pi/13.), 1024./495.*sqrt(2.*Pi/195.), 625./63*sqrt(5.*Pi/429.), 432./5*sqrt(Pi/715.), 
-  1./108108.*sqrt(Pi/10.), 8./3003.*sqrt(Pi/15.), 243./20020.*sqrt(3.*Pi/10.), 1024./1365.*sqrt(2.*Pi/165.), 3125./3276.*sqrt(5.*Pi/66.), 648./35.*sqrt(3.*Pi/715.), 16807./180.*sqrt(7.*Pi/4290.), 
-  131072./315.*sqrt(2.*Pi/17017.), 0., 0., 0., 0., 0., 0., 0.
-};
+static const double ChlmNewt_ampli[35] = {2.1137745587232057, 6.341323676169617, 0.1412325034218127, 1.7864655618418102, 4.9229202032627635, 0.023872650234580958, 0.2250735048768909, 1.7053495827316825, 4.763908164911493, 0.001122165903318321, 0.06333806741197714, 0.2945348827200268, 1.755276012972272, 5.0817902739730565, 0.00014954736544380072, 0.005296595280255638, 0.10342548105284892, 0.3713362832603404, 1.8983258440274462, 5.727111757630886, 5.184622059790144e-06, 0.0012191691413436815, 0.011783593824950922, 0.14639129995388936, 0.4653654097044924, 2.125638973894669, 6.685178460621457, 7.9955401278763745, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+/* 
+   {8./3.*sqrt(Pi/5.), 8.*sqrt(Pi/5.),
+   1./3.*sqrt(2.*Pi/35.), 8./3.*sqrt(Pi/7.), 3.*sqrt(6.*Pi/7.), 
+   1./105.*sqrt(2.*Pi), 8./63.*sqrt(Pi), 9./5*sqrt(2*Pi/7.), 64./9.*sqrt(Pi/7.),
+   1./180.*sqrt(Pi/77.), 16./135.*sqrt(Pi/11.), 9./20.*sqrt(3*Pi/22.), 256./45.*sqrt(Pi/33.), 125./12.*sqrt(5.*Pi/66.), 
+   1./2079.*sqrt(2.*Pi/65.), 16./1485.*sqrt(Pi/13.), 81./385.*sqrt(Pi/13.), 1024./495.*sqrt(2.*Pi/195.), 625./63*sqrt(5.*Pi/429.), 432./5*sqrt(Pi/715.), 
+   1./108108.*sqrt(Pi/10.), 8./3003.*sqrt(Pi/15.), 243./20020.*sqrt(3.*Pi/10.), 1024./1365.*sqrt(2.*Pi/165.), 3125./3276.*sqrt(5.*Pi/66.), 648./35.*sqrt(3.*Pi/715.), 16807./180.*sqrt(7.*Pi/4290.), 
+   131072./315.*sqrt(2.*Pi/17017.), 0., 0., 0., 0., 0., 0., 0.
+   };
+*/
 
 /** hlmNewt additive coefficients for phase */
-static const double ChlmNewt_phase[35] = {
+static const double ChlmNewt_phase[35] = {4.71238898038469, 3.141592653589793, 4.71238898038469, 0.0, 1.5707963267948966, 1.5707963267948966, 0.0, 4.71238898038469, 3.141592653589793, 1.5707963267948966, 3.141592653589793, 4.71238898038469, 0.0, 1.5707963267948966, 4.71238898038469, 3.141592653589793, 1.5707963267948966, 0.0, 4.71238898038469, 3.141592653589793, 4.71238898038469, 0.0, 1.5707963267948966, 3.141592653589793, 4.71238898038469, 0.0, 1.5707963267948966, 3.141592653589793, 0, 0, 0, 0, 0, 0, 0};
+
+/*{
   3.*Pi/2., Pi, 
   3.*Pi/2., 0., Pi/2., 
   Pi/2., 0., 3.*Pi/2., Pi, 
@@ -297,7 +302,8 @@ static const double ChlmNewt_phase[35] = {
   3.*Pi/2.,  Pi, Pi/2., 0., 3.*Pi/2., Pi, 
   3.*Pi/2., 0., Pi/2., Pi, 3.*Pi/2., 0., Pi/2., 
   Pi, 0, 0, 0, 0, 0, 0, 0
-};
+  };
+*/
 
 /** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform. 
     Reference: Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
@@ -306,7 +312,7 @@ void eob_wav_hlmNewt(double r,
 		     double phi,
 		     double nu,
 		     int usetidal,
-		     Waveform_lm_t *hNewt)
+		     Waveform_lm_t *hlmNewt)
 {
   /** Shorthands */
   double nu2   = nu*nu;
@@ -369,7 +375,8 @@ void eob_wav_hlmNewt(double r,
   };
     
   /** Compute hlmNewt (without phase factor) in complex Polar coords */
-  for (int k = 0; k < KMAX; k++) {
+  int k;
+  for (k = 0; k < KMAX; k++) {
     hlmNewt->phase[k] = - phim[k] + ChlmNewt_phase[k];
     hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
   }
@@ -505,10 +512,7 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
       + (0.6981550175535535 - 0.2266955266955267*el1)*x3 
       + PMTERMS_eps*(-0.7931524512893319 + 0.2584672482399755*el1)*x4;
     /** (4,2) */
-    rholm[6] = 1. 
-      + (0.0007575757575757576*(1146. - 3530.*nu + 285.*nu2)*x)/(-1. + 3.*nu) - (3.1534122443213353e-9*(1.14859044e8 - 2.95834536e8*nu - 1.204388696e9*nu2 + 3.04798116e9*nu3 + 3.79526805e8*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + 4.550378418934105e
-      - 12.*(8.48238724511e11 - 1.9927619712e11*el2)*x3 
-      + PMTERMS_eps*(-0.6621921297263365 + 0.787251738160829*el2)*x4;
+    rholm[6] = 1. + (0.0007575757575757576*(1146. - 3530.*nu + 285.*nu2)*x)/(-1. + 3.*nu) - (3.1534122443213353e-9*(1.14859044e8 - 2.95834536e8*nu - 1.204388696e9*nu2 + 3.04798116e9*nu3 + 3.79526805e8*nu4)*x2)/((-1. + 3.*nu)*(-1. + 3.*nu)) + 4.550378418934105e-12*x3*(8.48238724511e11 - 1.9927619712e11*el2) + PMTERMS_eps*x4*(-0.6621921297263365 + 0.787251738160829*el2);
     /** (4,3) */
     rholm[7] = 1. 
       + (0.005681818181818182*(222. - 547.*nu + 160.*nu2)*x)/(-1. + 2.*nu) 
@@ -631,7 +635,8 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
       - 1.5337092502821381*PMTERMS_eps*x2;
     
     /** Amplitudes */
-    for (int k = 0; k < KMAX; k++) {
+    int k;
+    for (k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
     }
 
@@ -845,7 +850,8 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
 
 
     /** Amplitudes */
-    for (int k = 9; k < KMAX; k++) {
+    int k;
+    for (k = 9; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
     }
     
@@ -905,7 +911,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   const double X2   = dyn->X2;
   const double chi1 = dyn->chi1;
   const double chi2 = dyn->chi2;
-  const double aK   = dyn->aK;
+  const double aK   = dyn->a1 + dyn->a2;
 
   const double nu2  = SQ(nu);
   const double nu3  = nu2*nu;
@@ -929,11 +935,11 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
   double c_pdomg1, c_pdomg2;
   double n0, d1;
-  double a1_omg_tmp, a2_omg_tmp, b1_omg_tmp, b2_omg_tmp, a1_domg_tmp, a2_domg_tmp, b1_domg_tmp, b2_domg_tmp, a1_A_tmp , a2_A_tmp, b1_A_tmp, b2_A_tmp, a1_dA_tmp, a2_dA_tmp, b1_dA_tmp, b2_dA_tmp, omg_tmp_nu, omg_tmp_equal, domg_tmp_nu, domg_tmp_equal,  A_tmp_scale_nu, A_tmp_scale_equal, dA_tmp_scale_nu, dA_tmp_scale_equal ;
+  double a0_omg_tmp, a1_omg_tmp, a2_omg_tmp, b0_omg_tmp, b1_omg_tmp, b2_omg_tmp, a0_domg_tmp, a1_domg_tmp, a2_domg_tmp, b0_domg_tmp, b1_domg_tmp, b2_domg_tmp, a0_A_tmp, a1_A_tmp , a2_A_tmp, b0_A_tmp, b1_A_tmp, b2_A_tmp, a0_dA_tmp, a1_dA_tmp, a2_dA_tmp, b0_dA_tmp, b1_dA_tmp, b2_dA_tmp, omg_tmp_nu, omg_tmp_equal, domg_tmp_nu, domg_tmp_equal,  A_tmp_scale_nu, A_tmp_scale_equal, dA_tmp_scale_nu, dA_tmp_scale_equal ;
   
   double P[2], M[4], p1[2], p2[2], p3[2], p4[2], pA[5], pdA[5];    
   double pomg[5], pdomg[5], pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
-  double n1[size], n2[size], n3[size], n4[size], n5[size], n6[size];
+  double n1[size], n2[size], n3[size], n4[size], n5[size], n6[size], d_n4[size], d_n5[size], d2_n4[size], d2_n5[size];
   double max_A[35],max_dA[35],d2max[35],d3max[35],max_omg[35],max_domg[35],maxd2omg[35], DeltaT[35];
     
   double A[KMAX][size];
@@ -958,8 +964,8 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
       Check Nagar & Rezzolla, CQG 22 (2005) R167 */           
   for (k=0; k<KMAX; k++) {
     for (j=0; j<size; j++) {
-      A[k][j]     = h[k]->ampli[j]/sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) );
-      phase[k][j] = h[k]->phase[j];
+      A[k][j]     = h->ampli[k][j]/sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) );
+      phase[k][j] = h->phase[k][j];
     }
   }
 
@@ -1260,8 +1266,8 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   /** Set amplitude and phase */
   for (k=0; k<KMAX; k++) {
     for (j=0; j<size; j++) {
-      *hnqc[k]->ampli[j] = 1. + ai[k][0]*n1[j] + ai[k][1]*n2[j];
-      *hnqc[k]->phase[j] =      bi[k][0]*n4[j] + bi[k][1]*n5[j];
+      hnqc->ampli[k][j] = 1. + ai[k][0]*n1[j] + ai[k][1]*n2[j];
+      hnqc->phase[k][j] =      bi[k][0]*n4[j] + bi[k][1]*n5[j];
     }
   }
 
@@ -1271,8 +1277,8 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
 
   for (k=0; k<KMAX; k++) {
     for (j=0; j<size; j++) {
-      h[k]->ampli[j] *= *hnqc[k]->ampli[j];
-      h[k]->phase[j] *= *hnqc[k]->phase[j];
+      h->ampli[k][j] *= hnqc->ampli[k][j];
+      h->phase[k][j] *= hnqc->phase[k][j];
     }
   }
 
@@ -1387,8 +1393,8 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
       
     }
                 
-    psilmnqc[k]->ampli = 1. + a1*n[0] + a2*n[1] + a3*n[2];
-    psilmnqc[k]->phase =      b1*n[3] + b2*n[4] + b3*n[5];
+    psilmnqc->ampli[k] = 1. + a1*n[0] + a2*n[1] + a3*n[2];
+    psilmnqc->phase[k] =      b1*n[3] + b2*n[4] + b3*n[5];
   
   }
   
@@ -1414,7 +1420,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const double chi2  = dyn->chi2;
   const double X1    = dyn->X1;
   const double X2    = dyn->X2;
-  const double aK    = dyn->aK;
+  const double aK    = dyn->a1+dyn->a2;
 
   double *t     = dyn->time;
   double *Omega = dyn->data[EOB_MOMG];
@@ -1427,7 +1433,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const int k21 = 0;
   const int k22 = 1;
   const int k33 = 4;
-  int k;
+  int k, j;
   
   /** Find peak of Omega */
   /* Assume it is a monotonically increasing function */
@@ -1469,8 +1475,8 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   
 #define n_grid (7)
   double *Omega_pk_grid, *t_Omega_pk_grid;
-  Omega_pk_grid = &Omega[pk_index-3];
-  t_Omega_pk_grid = &t[pk_index-3];
+  Omega_pk_grid = &Omega[index_pk-3];
+  t_Omega_pk_grid = &t[index_pk-3];
 
 #define n_refine (21)
   double dt = (t_Omega_pk_grid[n_grid-1] - t_Omega_pk_grid[0])/(n_refine-1); 
@@ -1537,7 +1543,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   int idx[KMAX];
   for (k = 0; k < KMAX; k++) {
     for (j = 0; j < size ; j++ ) {  
-      if (t_lm[k][i] >= tmatch[k]) break;
+      if (t_lm[k][j] >= tmatch[k]) break;
     }
     idx[k] = j;
   }
@@ -1560,10 +1566,10 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
       t0 = t_lm[k][j] - tmrg[k];   
       eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma, psi);
       if (j==idx[k]) {
-	Deltaphi[k] = psi[1] - hlm[k]->phase[idx[k]];
+	Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
       }
-      hlm[k]->phase[j] = psi[1] - Deltaphi[k];
-      hlm[k]->ampli[j] = psi[0];
+      hlm->phase[k][j] = psi[1] - Deltaphi[k];
+      hlm->ampli[k][j] = psi[0];
     }
   }
  

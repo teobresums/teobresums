@@ -357,5 +357,5 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
 void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *psilmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double *sigma, double *psi);
-void eob_wav_ringdown(double *t, double *Omega, Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm);
 
