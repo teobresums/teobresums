@@ -229,7 +229,7 @@ typedef struct tagDynamics
   double *data[EOB_DYNAMICS_VARS]; 
   /* key parameters for quick access */
   double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2, c3NLO;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2, cN3LO;
   double rLR, rLSO;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4, khatA2,khatB2;
   double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2;

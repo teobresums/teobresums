@@ -94,26 +94,26 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *dyn)
 
   if(d->store) {
     /* Store values */
-    dyn->t = t;
-    dyn->r = r;
-    dyn->phi = y[EOB_EVOLVE_PHI];
-    dyn->pphi = pphi;
-    dyn->prstar = prstar;
-    dyn->Omg = Omega;
-    dyn->Omg_orb = Omega;
-    dyn->H = H;
-    dyn->E = E;
-    dyn->Heff = Heff;
-    dyn->A = A;
-    dyn->dA = dA;
-    dyn->d2A = d2A;
-    dyn->B = B;
-    dyn->dB = dB;
-    dyn->psi = psi;
-    dyn->r_omega = r_omega;
-    dyn->v_phi = v_phi;
-    dyn->jhat = jhat;
-    dyn->ddotr = ddotr;
+    d->t = t;
+    d->r = r;
+    d->phi = y[EOB_EVOLVE_PHI];
+    d->pphi = pphi;
+    d->prstar = prstar;
+    d->Omg = Omega;
+    d->Omg_orb = Omega;
+    d->H = H;
+    d->E = E;
+    d->Heff = Heff;
+    d->A = A;
+    d->dA = dA;
+    d->d2A = d2A;
+    d->B = B;
+    d->dB = dB;
+    d->psi = psi;
+    d->r_omega = r_omega;
+    d->v_phi = v_phi;
+    d->jhat = jhat;
+    d->ddotr = ddotr;
   }
 
   return GSL_SUCCESS;
@@ -241,19 +241,19 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
     d->t = t;
     d->r = r;
     d->phi = y[EOB_EVOLVE_PHI];
-    d->pphi = pphi;
+    d->pphi = pph;
     d->prstar = prstar;
     d->Omg = Omg;
     d->Omg_orb = Omg;
     d->H = H;
-    d->E = E;
+//    d->E = E;
     d->Heff = Heff;
     d->A = A;
     d->dA = dA;
     d->d2A = d2A;
     d->B = B;
     d->dB = dB;
-    d->psi = psi;
+//    d->psi = psi;
     d->r_omega = r_omg;
     d->v_phi = v_phi;
     d->jhat = jhat;
