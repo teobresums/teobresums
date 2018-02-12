@@ -14,7 +14,7 @@ TEOBResumSDynamics : r.h.s. and other stuff for EOB dynamics -> KaWa
 
 TEOBResumSFlux.c : flux used in dynamics -> SB, 07.11.2017 compiles
 
-TEOBResumSWaveform.c : waveform -> ?
+TEOBResumSWaveform.c : waveform -> SB, 12.02.2017 compiles (except GSL, and ringdown call argument sigma)
 
 TEOBResumS.c : main -> SB
 
