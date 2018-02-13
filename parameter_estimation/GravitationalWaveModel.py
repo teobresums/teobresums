@@ -99,63 +99,82 @@ class GravitationalWaveModel(cpnest.model.Model):
                                                     **kwargs) for name,datum,psd_file in zip(self.detectors,self.datafiles,self.psd_files)]
 
         self.df = self.detectors[0].df
-        
+        self.padding = 0.1
+        self.window=tukey(self.segment_length,self.padding)
+        self.windowNorm = self.segment_length/np.sum(self.window**2)
+
         self.plain_template = None
         self.injected_template = None
         
         if self.injection:
             
-            self.injection_parameters = {'m1':70.0,
-                                        'm2':30.0,
+            self.injection_parameters = {'mc':27.0,
+                                        'q':0.9,
                                         'spin1':0.0,
                                         'theta_1l':0.0,
                                         'phi_1l':0.0,
                                         'spin2':0.0,
                                         'theta_2l':0.0,
                                         'phi_2l':0.0,
-                                        'distance':2500.0,
+                                        'distance':1500.0,
                                         'inclination':0.0,
                                         'ra':4.2,
                                         'dec':1.1,
-                                        'psi':1.0}
+                                        'psi':1.0,
+                                        'phi0':0.0}
             
             sys.stderr.write("Injection parameters:\n")
             for key, value in self.injection_parameters.iteritems():
                 sys.stderr.write("%s --> %.3f\n"%(key,value))
-            print "chirp mass and q are :", Masses2McQ(self.injection_parameters['m1'], self.injection_parameters['m2'])
-            amp_order = 0
-            phase_order = -1
-            wave_flags = None
-            non_GR_params = None
-            approx = lalsim.IMRPhenomPv2
-            
-            spin1x, spin1y, spin1z = PolarToCartesian(self.injection_parameters['spin1'],self.injection_parameters['theta_1l'],self.injection_parameters['phi_1l'])
-            spin2x, spin2y, spin2z = PolarToCartesian(self.injection_parameters['spin2'],self.injection_parameters['theta_2l'],self.injection_parameters['phi_2l'])
+            print "component masses are :", McQ2Masses(self.injection_parameters['mc'], self.injection_parameters['q'])
+            if self.template == 'LAL':
+                amp_order = 0
+                phase_order = -1
+                wave_flags = None
+                non_GR_params = None
+                approx = lalsim.IMRPhenomPv2
+                
+                spin1x, spin1y, spin1z = PolarToCartesian(self.injection_parameters['spin1'],self.injection_parameters['theta_1l'],self.injection_parameters['phi_1l'])
+                spin2x, spin2y, spin2z = PolarToCartesian(self.injection_parameters['spin2'],self.injection_parameters['theta_2l'],self.injection_parameters['phi_2l'])
 
-            hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(0.0,
-                               self.df,
-                               self.injection_parameters['m1']*lalsim.lal.MSUN_SI,
-                               self.injection_parameters['m2']*lalsim.lal.MSUN_SI,
-                               spin1x, spin1y, spin1z,
-                               spin2x, spin2y, spin2z,
-                               self.flow, self.fhigh, 100.0,
-                               self.injection_parameters['distance']*1e6*lalsim.lal.PC_SI,
-                               self.injection_parameters['inclination'],
-                               0.0, 0.0,
-                               wave_flags, non_GR_params, amp_order, phase_order, approx)
-            
+                hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(self.injection_parameters['phi0'],
+                                   self.df,
+                                   self.injection_parameters['m1']*lalsim.lal.MSUN_SI,
+                                   self.injection_parameters['m2']*lalsim.lal.MSUN_SI,
+                                   spin1x, spin1y, spin1z,
+                                   spin2x, spin2y, spin2z,
+                                   self.flow, self.fhigh, 100.0,
+                                   self.injection_parameters['distance']*1e6*lalsim.lal.PC_SI,
+                                   self.injection_parameters['inclination'],
+                                   0.0, 0.0,
+                                   wave_flags, non_GR_params, amp_order, phase_order, approx)
+                hptilde = hptilde.data.data
+                hctilde = hctilde.data.data
+
+            else:
+                self.flags ={'NQC':'1',
+                'tidal':0,
+                'speedy':1,
+                'dynamics':0,
+                'solver_scheme':0,
+                'RWZ':0,
+                'Yagi_fits':0,
+                'spin':0,
+                'multipoles':0,
+                'geometric_units':0,
+                'set':0
+                }
+                self.injection_parameters['spin1z'] = self.injection_parameters['spin1']
+                self.injection_parameters['spin2z'] = self.injection_parameters['spin2']
+                self.injection_parameters['iota'] = self.injection_parameters['inclination']
+                
+                self.calculate_plain_template(self.injection_parameters)
+                hptilde, hctilde = self.plain_template[0], self.plain_template[1]
+
             self.injected_template = []
             
             for d in self.detectors:
-                self.injected_template.append(d.inject( hptilde.data.data, hctilde.data.data, self.injection_parameters['ra'], self.injection_parameters['dec'], self.injection_parameters['psi'], self.trigtime))
-
-#            from pylab import *
-#            for t,d in zip(self.injected_template,self.detectors):
-#                plot(d.Frequency[d.kmin:d.kmax], d.FrequencySeries[d.kmin:d.kmax], alpha=0.5, lw=0.3)
-#                plot(d.Frequency[d.kmin:d.kmax], t, alpha=0.75, label = d.name, lw=0.8)
-#            legend()
-#            show()
-#            exit()
+                self.injected_template.append(d.inject( hptilde, hctilde, self.injection_parameters['ra'], self.injection_parameters['dec'], self.injection_parameters['psi'], self.trigtime))
 
         self.logZnoise = self.log_nulllikelihood()
         
@@ -174,7 +193,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0.1,1.0],
                          [0.0,np.pi],
                          [0.0,np.pi],
-                         [1.0,2000.0],
+                         [1.0,5000.0],
                          [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
                          [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
         else:
@@ -185,13 +204,22 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [10.0,50.0],
+                         [25.0,35.0],
                          [0.5,1.0],
                          [-np.pi/2.,np.pi/2.],
                          [0.0,np.pi],
                          [1.0,2000.0],
-                         [-0.5,0.5],[-0.5,0.5]]
-                         
+                         [-0.8,0.8],[-0.8,0.8]]
+#            self.bounds=[[0,2.0*np.pi],
+#                         [4.1,4.3],
+#                         [1.0,1.2],
+#                         [self.trigtime-0.0005,self.trigtime+0.0005],
+#                         [27.0,28.0],
+#                         [0.89,0.91],
+#                         [-0.0001,0.0001],
+#                         [0.0,0.001],
+#                         [999.0,1001.0],
+#                         [-0.0001,0.0001],[-0.0001,0.0001]]
             self.flags ={'NQC':'1',
                 'tidal':0,
                 'speedy':1,
@@ -204,9 +232,9 @@ class GravitationalWaveModel(cpnest.model.Model):
                 'geometric_units':0,
                 'set':0
             }
-        self.padding = 0.1
-        self.window=tukey(self.segment_length,self.padding)
-        self.windowNorm = self.segment_length/np.sum(self.window**2)
+#        self.padding = 0.1
+#        self.window=tukey(self.segment_length,self.padding)
+#        self.windowNorm = self.segment_length/np.sum(self.window**2)
 
 
     def calculate_plain_template(self,x):
@@ -282,8 +310,11 @@ class GravitationalWaveModel(cpnest.model.Model):
     def log_likelihood(self,x):
         
         self.calculate_plain_template(x)
+        if np.any(np.isnan(self.plain_template)):
+            return -np.inf
+        logL = np.sum([d.logLikelihood(self.plain_template[0], self.plain_template[1], x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
 
-        return np.sum([d.logLikelihood(self.plain_template[0], self.plain_template[1], x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
+        return logL
     
     def log_prior(self, x):
         if np.isfinite(super(GravitationalWaveModel,self).log_prior(x)):
@@ -338,7 +369,7 @@ if __name__=='__main__':
         opts.out_dir='./gw150914/'
 
     if opts.full_run:
-        signal_model = GravitationalWaveModel(['H1','L1'],#'V1'],
+        signal_model = GravitationalWaveModel(['H1','L1','V1'],
                                               T=opts.seglen,
                                               template = opts.template,
                                               sampling_rate = 2048.,
@@ -346,10 +377,10 @@ if __name__=='__main__':
                                               zero_noise = opts.zero_noise,
                                               starttime = 1126259459.423,
                                               trigtime = 1126259462.423,
-#                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
-                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
+                                                  psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+                                                               '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+                                                               '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
+#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         print('Noise evidence {0}'.format(signal_model.logZnoise))
@@ -360,7 +391,8 @@ if __name__=='__main__':
                            Nthreads=opts.threads,
                            Nlive=opts.nlive,
                            maxmcmc=opts.maxmcmc,
-                           output=opts.out_dir)
+                           output=opts.out_dir,
+                           balance_samplers=False)
         work.run()
         print('Signal evidence {0}'.format(work.NS.logZ))
         logB = work.NS.logZ-signal_model.logZnoise
@@ -369,12 +401,13 @@ if __name__=='__main__':
         signal_model = GravitationalWaveModel(['H1','L1'],
                                               T=opts.seglen,
                                               template = opts.template,
-                                              sampling_rate = 2048.,
+                                              sampling_rate = 4096.,
                                               injection = opts.inject,
                                               zero_noise = opts.zero_noise,
                                               starttime = 1126259459.423,
                                               trigtime = 1126259462.423,
                                               psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
                                                            '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)

@@ -89,10 +89,16 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     double ddotr;
 
     bool stop_flag, MOmgpeak_flag;
-    
+    /** check for the presence of in-plane spins **/
     if ((spin1x!=0)||(spin1y!=0)||(spin2x!=0)||(spin2y!=0))
     {
         printf("ERROR! Non-aligned spins not supported (yet)! Aborting.\n");
+        exit(-1);
+    }
+    /** check for the multipole index **/
+    if (lm > 35)
+    {
+        printf("Requested multipole is not available, maximum index available is 35. Aborting.\n");
         exit(-1);
     }
 
@@ -303,7 +309,10 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             Omg_orb_vec.push_back(Omg_orb);
             ddotr_vec.push_back(ddotr);
         }
-        
+        else
+        {
+            if (DEBUG) printf("Warning! Dynamics not well behaved (nan)\n!");
+        }
         /** Breaking the computation. Find the peak of the Omg_orb curve (the "pure" orbital frequency
             without the spin-orbit contribution) and continue the evolution for another 5M to
             avoid interpolation problems later.
