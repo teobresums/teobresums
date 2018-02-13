@@ -245,11 +245,11 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
 
   /* Add here tides if needed */
   if (dyn->use_tidal) {
-    double AT, dAT, d2AT;
+    double AT, dAT_u, d2AT_u;
     eob_metric_Atidal(r, dyn, &AT, &dAT_u, &d2AT_u);
     Atmp     += AT;
     dAtmp_u  += dAT_u;
-    d2Atmp_u += dA2T_u;
+    d2Atmp_u += d2AT_u;
   }
 
   /* A potential and derivative with respect to r */  

@@ -510,8 +510,8 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->khatB2 = par_get_d("khatBl2");
   dyn->rLR_tidal  = par_get_d("rLR_tides");
   dyn->pGSF_tidal = par_get_d("pGSF_tides");
-  dyn->Mbhf = part_get_d("BH_final_mass");
-  dyn->abhf = part_get_d("BH_final_spin");
+  dyn->Mbhf = par_get_d("BH_final_mass");
+  dyn->abhf = par_get_d("BH_final_spin");
   dyn->use_tidal = par_get_i("use_tidal");
   dyn->use_spins = par_get_i("use_spins");
   dyn->dt     = par_get_d("dt");

@@ -73,7 +73,7 @@ int main (int argc, char* argv[])
 
   /** Set useful pars/vars */
   const double q    = par_get_d("q");
-  const doulbe nu   = par_get_d("nu");
+  const double nu   = par_get_d("nu");
   const double chi1 = par_get_d("chi1");
   const double chi2 = par_get_d("chi2");
   const int interp_uniform_grid = par_get_i("interp_uniform_grid");

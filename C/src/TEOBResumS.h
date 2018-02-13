@@ -58,6 +58,7 @@
 #endif
 
 #define SIGN(x,y) ((y) >= 0.0 ? fabs(x) : -fabs(x)) 
+#define typeof __typeof__
 #define MAX(a,b)                \
   ({ typeof (a) _a = (a);       \
     typeof (b) _b = (b);        \
