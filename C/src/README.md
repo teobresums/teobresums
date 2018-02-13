@@ -6,7 +6,7 @@ TEOBResumSPars.c  : parameters and pars i/o -> SB, 07.11.2017 compiles, verified
 
 TEOBResumSFits.c  : external fits (final BH, ringdown, NQC, tidal pars, etc) -> SB, 07.11.2017 compiles, 
 
-TEOBResumSInitialConditions.c : initial conditions for dynamics -> KaWa
+TEOBResumSInitialConditions.c : initial conditions for dynamics -> KaWa, 13.02.2018 complies
 
 TEOBResumSMetric.c : EOB metric -> KaWa, 09.02.2018 compiles, verified correctness (with master)
 

@@ -45,19 +45,18 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
 
-  double A,B,dA,d2A,dB;    
+  double A, B, d2A, dB;
   double r2, r3, j3;
   double H0eff, H0, psi, r_omega, v_phi, jhat, x;
   
-  int i;
-  for (i = 0; i < N; i++) {
+  for (int i = 0; i < N; i++) {
     
     r[i] = r0+(i-N+1)*dr;
     r2   = SQ(r[i]);
     r3   = r2*r[i];
     
     /** Compute metric  */
-    eob_metric(r[i], dyn, &A,&B,&dA,&d2A,&dB);
+    eob_metric(r[i], dyn, &A, &B, &dA[i], &d2A, &dB);
     
     /** Angular momentum for circular orbit: circular ID  */
     j2[i]   =  r3*dA[i]/(2.*A-r[i]*dA[i]);
@@ -99,7 +98,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   /** prstar by finite diff. */
   D0(prstar, dr, 2*N, dprstardt);
 
-  for (i = 0; i < N; i++) {    
+  for (int i = 0; i < N; i++) {
     dprstardt[i] *= Fphi[i]/djdr[i];
     pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt[i] - z3*gsl_pow_int(prstar[i],4)/j2[i]);
   }
@@ -113,9 +112,9 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
     
   if (PR) {
-    const char y_init_var = {"r","pphi","prstar","pr","j","E0","Omega"};
-    for (i = 0; i < EOB_ID_VARS; i++)
-      print("%-20s = %e\n",y_init_var,y_init[i]);
+    const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
+    for (int i = 0; i < EOB_ID_VARS; i++)
+      printf("%-20s = %e\n", y_init_var[i], y_init[i]);
   }
 
 }
@@ -147,47 +146,48 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
-  double rc[2*N], drc[2*N], d2rc[2*N];
-  double A[2*N],B[2*N],dA[2*N],d2A[2*N],dB;    
+  double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N];
+  double A[2*N],B[2*N],d2A[2*N],dB;
   double rorb;
   double pphorb;
   double r2, r3, j3;
   double H0eff, H0, psi, r_omega, v_phi, jhat, x;
   double ggm[14];
   
-  int i;
-  for (i = 0; i < N; i++) {
+  for (int i = 0; i < N; i++) {
     r[i] = r0+(i-N+1)*dr;
         
     /** Compute metric  */
     eob_metric(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB);
     
-    eob_dyn_s_get_rc(r[i],nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc[i],&drc_dr[i],&d2rc_dr);  
+    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
     
     /* Compute minimum of Heff0 using bisection method */
     rorb   = r[i];
     pphorb = rorb/sqrt(rorb-3.);
-    pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,rorb,A[i],dA[i],rc[i],drc[i],aK2,S,Ss,params);
+    pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,rorb,A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
   }
 
   /** pph by finite diff. */
+  double dpph_dr[2*N];
   D0(pph, dr, 2*N, dpph_dr);
     
-  for (i = 0; i < N; i++) {    
-    
+  for (int i = 0; i < N; i++) {
+
     double sqrtAbyB     = sqrt(A[i]/B[i]);
-        
+
     double uc  = 1./rc[i];
     double uc2 = uc*uc;
-    
+
     // circular angular momentum
     double pph2 = pph[i]*pph[i];
-        
+
     // Orbital effective Hamiltonian
     double Horbeff0 = sqrt(A[i]*(1. + pph2*uc2));
-    
+
     // Compute gyro-gravitomagnetic coupling functions
-    s_GS(r[i], rc[i], drc_dr[i], aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
+    double ggm0[14];
+    eob_dyn_s_GS(r[i], rc[i], drc_dr[i], aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
     double GS_0                   = ggm0[2];
     double GSs_0                  = ggm0[3];
     double dGS_dr_0               = ggm0[6];
@@ -195,44 +195,44 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     double dGSs_dpph_0            = ggm0[9];
     double dGS_dprstarbyprstar_0  = ggm0[10];
     double dGSs_dprstarbyprstar_0 = ggm0[11];
-    
+
     // Final effective Hamiltonian
     double Heff0 = (GS_0*S + GSs_0*Ss)*pph[i] + Horbeff0;
-    
+
     // Real Hamiltonian: beware that this is NOT divided by nu
     double H0     = sqrt( 1. + 2.*nu*(Heff0 - 1.));
     double one_H0 = 1./H0;
-    
+
     // get gyro-gravitomagnetic (derivative) functions
     double dHeff_dprstarbyprstar = pph[i]*(dGS_dprstarbyprstar_0*S + dGSs_dprstarbyprstar_0*Ss) + 1./Horbeff0;
-    
+
     double C0 = sqrtAbyB*one_H0*dHeff_dprstarbyprstar;
-    
+
     // orbital frequency for circular orbit
     double dHeff_dpph = GS_0*S + (GSs_0 + pph[i]*dGSs_dpph_0)*Ss + pph[i]*A[i]*uc2/Horbeff0;
     double Omg        = one_H0*dHeff_dpph;
-    
+
     // Flux 
     double Gtilde     =  GS_0*S     + GSs_0*Ss;
     double dGtilde_dr =  dGS_dr_0*S + dGSs_dr_0*Ss;
-    double duc_dr     = -uc2*drc[i];
+    double duc_dr     = -uc2*drc_dr[i];
     double psic       = (duc_dr + dGtilde_dr*rc[i]*sqrt(A[i]/pph2 + A[i]*uc2)/A[i])/(-0.5*dA[i]);
     double r_omg      =  pow((pow(rc[i]*rc[i]*rc[i]*psic,-1./2)+Gtilde)*one_H0,-2./3.);
     double v_phi      =  r_omg*Omg;
     double x          =  v_phi*v_phi;
     double jhat       =  pph[i]/(r_omg*v_phi); // Newton-normalized angular momentum
-    
+
     Fphi[i] = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0., dyn);
-    
+
     prstar[i] = Fphi[i]/(dpph_dr[i]*C0);
     pr[i]     = prstar[i]* sqrt(B[i]/A[i]);
-    
+
     j[i]       = pph[i];
     E0[i]      = H0;
     Omega_j[i] = Omg;
-        
+
   }
-  
+
   y_init[EOB_ID_RAD]    = r[N-1];
   y_init[EOB_ID_PPH]    = pph[N-1];
   y_init[EOB_ID_PRSTAR] = prstar[N-1];
@@ -240,11 +240,11 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j[N-1];
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
-    
+
   if (PR) {
-    const char y_init_var = {"r","pphi","prstar","pr","j","E0","Omega"};
-    for (i = 0; i < EOB_ID_VARS; i++)
-      print("%-20s = %e\n",y_init_var,y_init[i]);
+    const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
+    for (int i = 0; i < EOB_ID_VARS; i++)
+      printf("%-20s = %e\n", y_init_var[i], y_init[i]);
   }
 
 
@@ -277,6 +277,7 @@ double eob_dyn_DHeff0(double x, void *params)
   double X2     = p->X2;
   double c3     = p->c3;
 
+  double ggm0[14];
   eob_dyn_s_GS(rorb, rc, drc_dr, ak2, 0., x, nu, chi1, chi2, X1, X2, c3, ggm0);
   double dGS_dr  = ggm0[6];
   double dGSs_dr = ggm0[7];
@@ -310,7 +311,7 @@ double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, doub
 
   gsl_function F;
   struct DHeff0_tmp_params p = {rorb,A,dA,rc,drc_dr,ak2,S,Ss,nu,chi1,chi2,X1,X2,c3};
-  F.function = &DHeff0;
+  F.function = &eob_dyn_DHeff0;
   
   F.params = &p;
   T = gsl_root_fsolver_bisection;

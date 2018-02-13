@@ -328,7 +328,7 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
 /* TEOBResumSInitialCondition.c */
 void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[]);
-double eob_dyn_s_bisec(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
+double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
 double eob_dyn_DHeff0(double x, void *params);
 
 /* TEOBResumSMetric.c */
