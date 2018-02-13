@@ -3,10 +3,9 @@
 ## Contents 
 
 - `backups/`  Reference codes used during development
-- `C/`	    Development C code
 - `C++/`	    Stable C++ code
-- `parameter_estimation/`  ???		
-- `tests/` ???	
+- `parameter_estimation/`  		
+- `tests/` 	
 
 ## Authors
 
