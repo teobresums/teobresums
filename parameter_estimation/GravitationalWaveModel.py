@@ -121,7 +121,8 @@ class GravitationalWaveModel(cpnest.model.Model):
                                         'ra':4.2,
                                         'dec':1.1,
                                         'psi':1.0,
-                                        'phi0':0.0}
+                                        'phi0':0.0,
+                                        'tc':1126259462.423}
             
             sys.stderr.write("Injection parameters:\n")
             for key, value in self.injection_parameters.iteritems():
@@ -136,11 +137,11 @@ class GravitationalWaveModel(cpnest.model.Model):
                 
                 spin1x, spin1y, spin1z = PolarToCartesian(self.injection_parameters['spin1'],self.injection_parameters['theta_1l'],self.injection_parameters['phi_1l'])
                 spin2x, spin2y, spin2z = PolarToCartesian(self.injection_parameters['spin2'],self.injection_parameters['theta_2l'],self.injection_parameters['phi_2l'])
-
+                m1,m2 = McQ2Masses(self.injection_parameters['mc'], self.injection_parameters['q'])
                 hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform(self.injection_parameters['phi0'],
                                    self.df,
-                                   self.injection_parameters['m1']*lalsim.lal.MSUN_SI,
-                                   self.injection_parameters['m2']*lalsim.lal.MSUN_SI,
+                                   m1*lalsim.lal.MSUN_SI,
+                                   m2*lalsim.lal.MSUN_SI,
                                    spin1x, spin1y, spin1z,
                                    spin2x, spin2y, spin2z,
                                    self.flow, self.fhigh, 100.0,
@@ -204,11 +205,11 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [25.0,35.0],
+                         [20.0,40.0],
                          [0.5,1.0],
                          [-np.pi/2.,np.pi/2.],
                          [0.0,np.pi],
-                         [1.0,2000.0],
+                         [1.0,1000.0],
                          [-0.8,0.8],[-0.8,0.8]]
 #            self.bounds=[[0,2.0*np.pi],
 #                         [4.1,4.3],
@@ -401,17 +402,18 @@ if __name__=='__main__':
         logB = work.NS.logZ-signal_model.logZnoise
         print('log B {0}'.format(logB))
     else:
-        signal_model = GravitationalWaveModel(['H1','L1'],
+        signal_model = GravitationalWaveModel(['H1','L1','V1'],
                                               T=opts.seglen,
                                               template = opts.template,
-                                              sampling_rate = 4096.,
+                                              sampling_rate = 2048.,
                                               injection = opts.inject,
                                               zero_noise = opts.zero_noise,
                                               starttime = 1126259459.423,
                                               trigtime = 1126259462.423,
-                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
-                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
-                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt'],
+                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
+#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         x = np.genfromtxt(os.path.join(opts.out_dir,'posterior.dat'),names=True)
@@ -419,3 +421,17 @@ if __name__=='__main__':
         print('Signal evidence {0}'.format(logZ))
         logB = logZ-signal_model.logZnoise
         print('log B {0}'.format(logB))
+    import corner
+    import matplotlib.pyplot as plt
+    intrinsic = ['mc','q','spin1z','spin2z']
+
+    figure = corner.corner(np.array([x[n] for n in intrinsic]).T, labels=[r"$\mathcal{M}$", r"$q$", r"$s_{1z}$", r"$s_{2z}$"],
+                       quantiles=[0.16, 0.5, 0.84], truths = [signal_model.injection_parameters[n] for n in intrinsic],
+                       show_titles=True, title_kwargs={"fontsize": 12}, smooth1d=0.5)
+    plt.savefig(os.path.join(opts.out_dir,'intrinsic.pdf'),bbbox_inches='tight')
+    extrinsic = ['ra','dec','distance','tc']
+
+    figure = corner.corner(np.array([x[n] for n in extrinsic]).T, labels=[r"$\mathrm{RA}$", r"$\mathrm{dec}$", r"$D_L/Mpc$", r"$t_c/s$"],
+               quantiles=[0.16, 0.5, 0.84], truths = [signal_model.injection_parameters[n] for n in extrinsic],
+               show_titles=True, title_kwargs={"fontsize": 12}, smooth1d=0.5)
+    plt.savefig(os.path.join(opts.out_dir,'extrinsic.pdf'),bbbox_inches='tight')
