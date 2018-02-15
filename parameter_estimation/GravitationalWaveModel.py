@@ -362,25 +362,28 @@ if __name__=='__main__':
     parser.add_option('--fhigh',default=500,type='float',metavar='fhigh',help='high frequency cutoff')
     parser.add_option('--nlive',default=1024,type='int',metavar='n',help='Live points')
     parser.add_option('--maxmcmc',default=1024,type='int',metavar='m',help='max MCMC points')
-    parser.add_option('--poolsize',default=1000,type='int',metavar='k',help='numer of points in the ensemble sampler pool')
+    parser.add_option('--poolsize',default=1000,type='int',metavar='k',help='number of points in the ensemble sampler pool')
     (opts,args)=parser.parse_args()
 
+    trigtime = 1126259462.423
+    starttime = trigtime - opts.seglen + 2
+    
     if opts.out_dir is None:
         opts.out_dir='./gw150914/'
 
     if opts.full_run:
-        signal_model = GravitationalWaveModel(['H1','L1','V1'],
-                                              T=opts.seglen,
-                                              template = opts.template,
-                                              sampling_rate = 2048.,
+        signal_model = GravitationalWaveModel(['H1','L1'],#'V1'],
+                                              T         = opts.seglen,
+                                              template  = opts.template,
+                                              sampling_rate = 4096.,
                                               injection = opts.inject,
-                                              zero_noise = opts.zero_noise,
-                                              starttime = 1126259459.423,
-                                              trigtime = 1126259462.423,
-                                                  psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-                                                               '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-                                                               '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
-#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
+                                              zero_noise    = opts.zero_noise,
+                                              starttime = starttime,
+                                              trigtime  = trigtime,
+                                              psd_files = ['H-GW15-asd.txt',
+                                                           'L-GW15-asd.txt'],
+#                                                               '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
+                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         print('Noise evidence {0}'.format(signal_model.logZnoise))

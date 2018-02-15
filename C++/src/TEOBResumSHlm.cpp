@@ -398,13 +398,23 @@ vector<double> f_lm(const double x,const double nu)
     const double nu4 = nu*nu3;
     
     /** Compute EulerLogs */
-    const double el1 = Eulerlog(x,1);
-    const double el2 = Eulerlog(x,2);
-    const double el3 = Eulerlog(x,3);
-    const double el4 = Eulerlog(x,4);
-    const double el5 = Eulerlog(x,5);
-    const double el6 = Eulerlog(x,6);
-    const double el7 = Eulerlog(x,7);
+    const double EulerGamma = 0.5772156649015328606065121;
+    const double Log1       = 0.0;
+    const double Log2       = 0.6931471805599453094172321;
+    const double Log3       = 1.0986122886681098;
+    const double Log4       = 1.3862943611198906;
+    const double Log5       = 1.6094379124341003;
+    const double Log6       = 1.791759469228055;
+    const double Log7       = 1.9459101490553132;
+
+    const double half_logx = 0.5*log(x)+EulerGamma+Log2;
+    const double el1 = half_logx+Log1;//Eulerlog(x,1);
+    const double el2 = half_logx+Log2;//Eulerlog(x,2);
+    const double el3 = half_logx+Log3;//Eulerlog(x,3);
+    const double el4 = half_logx+Log4;//Eulerlog(x,4);
+    const double el5 = half_logx+Log5;//Eulerlog(x,5);
+    const double el6 = half_logx+Log6;//Eulerlog(x,6);
+    const double el7 = half_logx+Log7;//Eulerlog(x,7);
     
     vector<double> rholm(kmax);
     vector<double> flm(kmax);
