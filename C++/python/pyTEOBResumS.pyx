@@ -1,17 +1,17 @@
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 from libc.stdlib cimport malloc, free
 cimport cython
 
 cdef public api tonumpyarray(double* data, long long size) with gil:
     if not (data and size >= 0): raise ValueError
-    cdef np.npy_intp dims = size
+    cdef cnp.npy_intp dims = size
     #NOTE: it doesn't take ownership of `data`. You must free `data` yourself
-    return np.PyArray_SimpleNewFromData(1, &dims, np.NPY_DOUBLE, <void*>data)
+    return cnp.PyArray_SimpleNewFromData(1, &dims, cnp.NPY_DOUBLE, <void*>data)
 
 
-cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
+cpdef cnp.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
                                                          double m2,
                                                          double spin1x,
                                                          double spin1y,
@@ -75,8 +75,9 @@ cpdef np.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
               &flags)
 
     N = hp.length
-    cdef np.ndarray[double, ndim=2, mode = 'c'] h = np.zeros((N,2),dtype=np.double)
+    cdef cnp.ndarray[double, ndim=2, mode = 'c'] h = np.zeros((N,2),dtype=np.double)
     h[:,0] = tonumpyarray(hp.data,N)
+    hview = hc.data
     h[:,1] = tonumpyarray(hc.data,N)
     if hp.data: free(hp.data)
     if hp : free(hp)
