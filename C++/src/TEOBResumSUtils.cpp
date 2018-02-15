@@ -568,12 +568,10 @@ double radius0(double M, double f_start,double chi1,double chi2)
        are enough inspiral cycles in the waveform so to capture the full
        transition from inspiral to plunge and avoid evident inaccuracies.*/ 
     {
-      double fcirc_Schw = pow(1./8.,3./2.)/(M*MSUN_S*M_PI);
+      double fcirc_Schw = 0.04419417382415922/(M*MSUN_S*M_PI);
       if (f_start >=fcirc_Schw)
 	{
-	  printf("f_min [input] = %18.16f\n",f_start);      
 	  f_start = 0.5*fcirc_Schw;
-	  printf("f_min'[lower] = %18.16f\n",f_start);
 	}
       else
 	{
