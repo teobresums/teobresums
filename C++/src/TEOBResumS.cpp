@@ -220,7 +220,8 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     stop_flag     = false;
     MOmgpeak_flag = false;
     
-    while (stop_flag == false)
+    /** start the do - while loop to integrate the PDEs **/
+    do
     {
         switch (params.flags.solver_scheme)
         {
@@ -291,27 +292,33 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             /** Waveform computation*/
             vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg, Omg_orb, A, ddotr);
 
-            /** Append dynamics and waveform to vectors */
-            hlm_rad_vec.push_back(h_form[lm].dat[0]);
-            hlm_phase_vec.push_back(h_form[lm].dat[1]);
-            
-            for (int k=35; k--; )
+            if (std::isfinite(h_form[1].dat[1]))
             {
-                hlm_ampl[k].push_back(h_form[k].dat[0]);
-                hlm_phase[k].push_back(h_form[k].dat[1]);
+                /** Append dynamics and waveform to vectors */
+                hlm_rad_vec.push_back(h_form[lm].dat[0]);
+                hlm_phase_vec.push_back(h_form[lm].dat[1]);
+                
+                for (int k=35; k--; )
+                {
+                    hlm_ampl[k].push_back(h_form[k].dat[0]);
+                    hlm_phase[k].push_back(h_form[k].dat[1]);
+                }
+            
+                t_vec.push_back(t);
+                MOmg_vec.push_back(Omg);
+                r_vec.push_back(r);
+                pph_vec.push_back(pphi);
+                prstar_vec.push_back(prstar);
+                Omg_orb_vec.push_back(Omg_orb);
+                ddotr_vec.push_back(ddotr);
             }
-        
-            t_vec.push_back(t);
-            MOmg_vec.push_back(Omg);
-            r_vec.push_back(r);
-            pph_vec.push_back(pphi);
-            prstar_vec.push_back(prstar);
-            Omg_orb_vec.push_back(Omg_orb);
-            ddotr_vec.push_back(ddotr);
+            else stop_flag = true;
         }
         else
         {
             if (DEBUG) printf("Warning! Dynamics not well behaved (nan)\n!");
+            stop_flag = true;
+            break;
         }
         /** Breaking the computation. Find the peak of the Omg_orb curve (the "pure" orbital frequency
             without the spin-orbit contribution) and continue the evolution for another 5M to
@@ -357,7 +364,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 stop_flag = true;
 		}*/
 	
-    }
+    }while (stop_flag == false);
     gsl_odeiv2_evolve_free (e);
     gsl_odeiv2_control_free (c);
     gsl_odeiv2_step_free (s);
