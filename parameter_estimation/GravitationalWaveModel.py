@@ -108,20 +108,22 @@ class GravitationalWaveModel(cpnest.model.Model):
         
         if self.injection:
             
-            self.injection_parameters = {'mc':27.0,
-                                        'q':0.9,
+            self.injection_parameters = {'mc':1.2,
+                                        'q':1.0,
                                         'spin1':0.0,
                                         'theta_1l':0.0,
                                         'phi_1l':0.0,
                                         'spin2':0.0,
                                         'theta_2l':0.0,
                                         'phi_2l':0.0,
-                                        'distance':1500.0,
+                                        'distance':100.0,
                                         'inclination':0.0,
                                         'ra':4.2,
                                         'dec':1.1,
                                         'psi':1.0,
                                         'phi0':0.0,
+                                        'lambdaAl2':500.0,
+                                        'lambdaBl2':500.0,
                                         'tc':1126259462.423}
             
             sys.stderr.write("Injection parameters:\n")
@@ -147,19 +149,19 @@ class GravitationalWaveModel(cpnest.model.Model):
                                    self.flow, self.fhigh, 100.0,
                                    self.injection_parameters['distance']*1e6*lalsim.lal.PC_SI,
                                    self.injection_parameters['inclination'],
-                                   0.0, 0.0,
+                                   self.injection_parameters['lambdaAl2'], self.injection_parameters['lambdaBl2'],
                                    wave_flags, non_GR_params, amp_order, phase_order, approx)
                 hptilde = hptilde.data.data
                 hctilde = hctilde.data.data
 
             else:
-                self.flags ={'NQC':'1',
-                'tidal':0,
+                self.flags ={'NQC':'0',
+                'tidal':1,
                 'speedy':1,
                 'dynamics':0,
                 'solver_scheme':0,
                 'RWZ':0,
-                'Yagi_fits':0,
+                'Yagi_fits':1,
                 'spin':0,
                 'multipoles':0,
                 'geometric_units':0,
@@ -194,23 +196,24 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0.1,1.0],
                          [0.0,np.pi],
                          [0.0,np.pi],
-                         [1.0,5000.0],
+                         [1.0,1000.0],
                          [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
                          [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
         else:
             self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
-                'iota', 'psi', 'distance','spin1z','spin2z']
+                'iota', 'psi', 'distance','spin1z','spin2z','lambdaAl2','lambdaBl2']
 
             self.bounds=[[0,2.0*np.pi],
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [20.0,40.0],
+                         [1.0,2.0],
                          [0.5,1.0],
                          [-np.pi/2.,np.pi/2.],
                          [0.0,np.pi],
-                         [1.0,1000.0],
-                         [-0.8,0.8],[-0.8,0.8]]
+                         [1.0,500.0],
+                         [-0.8,0.8],[-0.8,0.8],
+                         [0.0,1000.0],[0.0,1000.0]]
 #            self.bounds=[[0,2.0*np.pi],
 #                         [4.1,4.3],
 #                         [1.0,1.2],
@@ -222,12 +225,12 @@ class GravitationalWaveModel(cpnest.model.Model):
 #                         [999.0,1001.0],
 #                         [-0.0001,0.0001],[-0.0001,0.0001]]
             self.flags ={'NQC':'1',
-                'tidal':0,
+                'tidal':1,
                 'speedy':1,
                 'dynamics':0,
                 'solver_scheme':0,
                 'RWZ':0,
-                'Yagi_fits':0,
+                'Yagi_fits':1,
                 'spin':0,
                 'multipoles':0,
                 'geometric_units':0,
@@ -280,8 +283,8 @@ class GravitationalWaveModel(cpnest.model.Model):
                              x['phi0'],
                              self.flow,
                              self.dt,
-                             0.0,
-                             0.0,
+                             x['lambdaAl2'],
+                             x['lambdaBl2'],
                              0.0,
                              0.0,
                              0.0,
@@ -373,7 +376,7 @@ if __name__=='__main__':
         opts.out_dir='./gw150914/'
 
     if opts.full_run:
-        signal_model = GravitationalWaveModel(['H1','L1'],#'V1'],
+        signal_model = GravitationalWaveModel(['H1','L1','V1'],
                                               T         = opts.seglen,
                                               template  = opts.template,
                                               sampling_rate = 4096.,
@@ -381,10 +384,13 @@ if __name__=='__main__':
                                               zero_noise    = opts.zero_noise,
                                               starttime = starttime,
                                               trigtime  = trigtime,
-                                              psd_files = ['H-GW15-asd.txt',
-                                                           'L-GW15-asd.txt'],
+#                                              psd_files = ['H-GW15-asd.txt',
+#                                                           'L-GW15-asd.txt'],
+                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
 #                                                               '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
-                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
+#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         print('Noise evidence {0}'.format(signal_model.logZnoise))
@@ -423,9 +429,9 @@ if __name__=='__main__':
         print('log B {0}'.format(logB))
     import corner
     import matplotlib.pyplot as plt
-    intrinsic = ['mc','q','spin1z','spin2z']
+    intrinsic = ['mc','q','spin1','spin2']
 
-    figure = corner.corner(np.array([x[n] for n in intrinsic]).T, labels=[r"$\mathcal{M}$", r"$q$", r"$s_{1z}$", r"$s_{2z}$"],
+    figure = corner.corner(np.array([x[n] for n in intrinsic]).T, labels=[r"$\mathcal{M}$", r"$q$", r"$s_{1}$", r"$s_{2}$"],
                        quantiles=[0.16, 0.5, 0.84], truths = [signal_model.injection_parameters[n] for n in intrinsic],
                        show_titles=True, title_kwargs={"fontsize": 12}, smooth1d=0.5)
     plt.savefig(os.path.join(opts.out_dir,'intrinsic.pdf'),bbbox_inches='tight')
