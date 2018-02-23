@@ -1,12 +1,13 @@
 /**
- * Copyright (C) 2017 Alessandro Nagar, Gregorio Carullo, Ka Wa Tsang, Philipp Fleig, Sebastiano Bernuzzi, Walter Del Pozzo
+ *  Copyright (C) 2017 Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
+ *  This file is part of TEOBResumS
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  TEOBResumS is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  TEOBResumS is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -43,13 +44,15 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_spline.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_odeiv2.h>
 
 /** Macros */
 #define ERROR 1 /** generic error int */
 #define OK 0 /** generic go int */
 #define STRLEN 128 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
-#define TEOBResumS_Usage(x) {printf("%s\nUSAGE:\n\t%s parfile\n", TEOBResumS_Info, x);} 
+#define TEOBResumS_Usage(x) {printf("%s\nUSAGE:\n\t%s <parfile>\n", TEOBResumS_Info, x);} 
 #ifndef PR /** Flag for print option (control at compiling time) */
 #define PR 0 
 #endif
@@ -99,7 +102,7 @@ enum{
     EOB_EVOLVE_PHI,
     EOB_EVOLVE_PRSTAR,
     EOB_EVOLVE_PPHI,
-    EOB_EVOLVE_VARS
+    EOB_EVOLVE_NVARS
   };
 
 /** Index list of EOB variables for initial data */
@@ -111,7 +114,7 @@ enum{
   EOB_ID_J,
   EOB_ID_E0,
   EOB_ID_OMGJ,
-  EOB_ID_VARS
+  EOB_ID_NVARS
 };
 
 /** Index list of EOB dynamical variables (to be stored in arrays) */ 
@@ -123,7 +126,7 @@ enum{
   EOB_DDOTR,
   EOB_PRSTAR,
   EOB_OMGORB,
-  EOB_DYNAMICS_VARS
+  EOB_DYNAMICS_NVARS
 };
 
 #define KMAX (35) /** Multipolar linear index, max value */
@@ -156,7 +159,7 @@ enum{
   ROOT_ERRORS
 };
 static const char* const root_errors[] = {"none","root is not bracketed.","root finder did not converged.","root finder failed."};
-#define ROOTFINDER(i, x) if ( ((i) = (x))) && ((i)>ROOT_ERRORS_NO) ) { errorexits(root_errors[(i)]); } //FIXME: not sure if this work, but seems clever...
+#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} //TODO: CHECKME!
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 const int LINDEX[KMAX] = {
@@ -219,15 +222,16 @@ typedef struct tagDynamics
   double A,dA,d2A, B,dB;
   double MOmg, MOmg_prev;
   /* stuff for ODE solver */
-  double y[EOB_EVOLVE_VARS]; /* rhs storage */
-  double y0[EOB_ID_VARS]; /* ID storage */
+  double y[EOB_EVOLVE_NVARS]; /* rhs storage */
+  double dy[EOB_EVOLVE_NVARS];
+  double y0[EOB_ID_NVARS]; /* ID storage */
   double t1, dt, t_stop, ti;
   int ode_timestep;
-  bool ode_stop, ode_stop_MOmgpeak;
+  bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
   /* arrays */
   int size;
   double *time;
-  double *data[EOB_DYNAMICS_VARS]; 
+  double *data[EOB_DYNAMICS_NVARS]; 
   /* key parameters for quick access */
   double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2, cN3LO;
@@ -247,7 +251,7 @@ void par_db_free ();
 void par_db_default ();
 void par_file_parse (char *fname);
 void par_file_parse_merge (char *fname);
-void par_db_write_file (char *fname);
+void par_db_write_file (const char *fname);
 void par_db_screen ();
 void par_set_i(const char *key, int val);
 void par_set_b(const char *key, int val);
@@ -261,7 +265,7 @@ double par_get_d(const char *key);
 const char * par_get_s(const char *key);
 int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
-void eos_set_params(char *s, int pr);
+void eob_set_params(char *s, int n, int pr);
 void eob_free_params();
 
 /* TEOBResumSUtil.c */
@@ -282,15 +286,15 @@ int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_nux(double *f, double *x, int n, double *df);
 void set_multipolar_idx_mask(int *kmask, int n);
-void Waveform_alloc (Waveform **wav, int size, char *name);
+void Waveform_alloc (Waveform **wav, int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
 void Waveform_output (Waveform *wav);
 void Waveform_free (Waveform *wav);
-void Waveform_lm_alloc (Waveform_lm **wav, int size, char *name);
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
 void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_free (Waveform_lm *wav);
-void Dynamics_alloc (Dynamics **dyn, int size, char *name);
+void Dynamics_alloc (Dynamics **dyn, int size, const char *name);
 void Dynamics_push (Dynamics **dyn, int size);
 void Dynamics_output (Dynamics *dyn);
 void Dynamics_free (Dynamics *dyn);
@@ -298,7 +302,7 @@ void Dynamics_set_params (Dynamics *dyn);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
-void system_mkdir(char *name);
+void system_mkdir(const char *name);
 void print_date_time();
 void errorexit(char *file, int line, const char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))

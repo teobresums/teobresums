@@ -1,20 +1,21 @@
 /**
- * Copyright (C) 2017 Alessandro Nagar, Gregorio Carullo, Ka Wa Tsang, Philipp Fleig, Sebastiano Bernuzzi, Walter Del Pozzo
+ * Copyright (C) 2017 Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
+ * This file is part of TEOBResumS
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * TEOBResumS is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * TEOBResumS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with with program; see the file COPYING. If not, write to the
- *  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- *  MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License
+ * along with with program; see the file COPYING. If not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA  02111-1307  USA
  */
 
 #include "TEOBResumS.h"
@@ -25,21 +26,28 @@
  * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
  */
 
-int main (int argc, char* argv[])
+#ifndef VERBOSE
+#define VERBOSE 0 /* verbose mode is off by default */
+#endif
+
+int main (int argc, char* argv) 
 {
+  char soutdir[STRLEN];
+
   /** Input parameters */
   if (argc == 1) {
     printf(TEOBResumS_Info);
     print_date_time();
-    eob_set_params(argv, argc);
+    eob_set_params(argv, argc, VERBOSE);
   } else {
-    TEOBResumS_Usage(argv[0]);
+    TEOBResumS_Usage(&argv[0]);
     exit(OK);
   }
 
   /** Make output dir */
-  system_mkdir(par_get_s("output_dir"));
-  par_db_write_file(strcat(par_get_s("output_dir"),"/params.txt"));
+  strcpy(soutdir,par_get_s("output_dir"));
+  system_mkdir(soutdir);
+  par_db_write_file(strcat(soutdir,"/params.txt"));
 
   /** Switch to mass-rescaled geometric units (if needed)*/
   const double M = par_get_d("M"); /* Msun */ 
@@ -60,16 +68,18 @@ int main (int argc, char* argv[])
     r0 = pow(f0*Pi, -2./3.);
   }
 
+  //TODO: CHECK PAR RANGES AND FIX PARAMETERS
+
   int size = par_get_i("size"); /* note: size can vary */
 
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
-  Waveform *hlm; /* h_lm */ 
+  Waveform_lm *hlm; /* h_lm */ 
   Waveform_lm_t hlm_t;
   Waveform_lm *hlm_nqc; /* NQC */
 
-  Dynamics_alloc(&dyn, size, strcat(par_get_s("output_dir"),"/dyn.txt"));
-  Waveform_lm_alloc (&hlm, size, strcat(par_get_s("output_dir"),"/hlm.txt")); 
+  Dynamics_alloc (&dyn, size, strcat(soutdir,"/dyn.txt"));
+  Waveform_lm_alloc (&hlm, size, strcat(soutdir,"/hlm.txt")); 
 
   /** Set useful pars/vars */
   const double q    = par_get_d("q");
@@ -79,6 +89,8 @@ int main (int argc, char* argv[])
   const int interp_uniform_grid = par_get_i("interp_uniform_grid");
   int check_status;
   int store_dynamics = par_get_i("output_dynamics");
+  const int use_tidal = par_get_i("use_tidal");
+  const int use_spins = par_get_i("use_spins");
   if (!(use_tidal)) store_dynamics = 1; 
 
   Dynamics_set_params(dyn);
@@ -88,41 +100,43 @@ int main (int argc, char* argv[])
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO;
     dyn->use_spins = 0;
-    ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
+    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
     par_set_d("rLR_tidal", dyn->rLR_tidal);
     /* Reset options */
     dyn->use_tidal = par_get_i("use_tidal");
     dyn->use_spins = par_get_i("use_spins");
   }
   if (par_get_i("compute_LR")) {
-    ROOTFINDER(check_status, eob_dyn_AdiabLR(dyn, dyn->rLR));
+    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
     par_set_d("rLR", dyn->rLR);
   }
   if (par_get_i("compute_LSO")) {
-    ROOTFINDER(check_status, eob_dyn_AdiabLSO(dyn, dyn->rLSO));
+    //TODO: LSO COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
+    ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
     par_set_d("rLSO", dyn->rLSO);
   }
   
   /** Computing the initial conditions */
-  gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_VARS, dyn};
-  if (dyn->use_spins) {
-    sys = {eob_dyn_rhs_s, NULL, EOB_EVOLVE_VARS, dyn};
+  int (*p_eob_dyn_rhs)();
+  if (use_spins) {
+    p_eob_dyn_rhs = &eob_dyn_rhs_s;
     eob_dyn_ic_s(r0, dyn, dyn->y0);
   } else {
-    sys     = {eob_dyn_rhs, NULL, EOB_EVOLVE_VARS, dyn};
+    p_eob_dyn_rhs = &eob_dyn_rhs;
     eob_dyn_ic(r0, dyn, dyn->y0);
   }
+  gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_NVARS, dyn};
   
   /** Initial conditions: t, r, phi, prstar, pphi */
   dyn->t = 0.0;
   dyn->y[EOB_EVOLVE_RAD]    = dyn->y0[EOB_ID_RAD];
   dyn->y[EOB_EVOLVE_PHI]    = 0.;
   dyn->y[EOB_EVOLVE_PRSTAR] = dyn->y0[EOB_ID_PRSTAR];
-  dyn->y[EOB_EVOLVE_PPH]    = dyn->y0[EOB_ID_PPH];
+  dyn->y[EOB_EVOLVE_PPHI]    = dyn->y0[EOB_ID_PPH];
 
   /** Final BH */
   if (!(dyn->use_tidal)) {
-    HealyBBHFitRemnant(chi1, chi2, q, dyn->Mbhf, dyn->abhf);
+    HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
     if (PR) printf("BH_final_mass[Healy] = %e\nBH_final_spin[Healy] = %e",dyn->Mbhf,dyn->abhf);
     dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
     if (PR) printf("BH_final_spin[JimenezForteza] = %e",dyn->abhf);
@@ -145,7 +159,7 @@ int main (int argc, char* argv[])
     dyn->ode_stop_radius   = true;
   }
 
-  in j;
+  int j;
   for (j=0; j<ODE_TSTEP_NOPT; j++) {
     if (STREQUAL(par_get_s("ode_timestep"),ode_tstep_opt[j])) {
       if (PR) printf("ode_timestep = %s\n",ode_tstep_opt[j]);
@@ -195,7 +209,7 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
-      if (y[EOB_EVOLVE_RAD]>dyn->rLSO) {
+      if (dyn->y[EOB_EVOLVE_RAD]>dyn->rLSO) {
 	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t1, &dyn->dt, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
@@ -228,13 +242,10 @@ int main (int argc, char* argv[])
     /** Waveform computation 
 	Needs a r.h.s. evaluation */
     dyn->store = 1;
-    if (usespins) {
-      eob_dyn_rhs_s(dyn->t, dyn->y, dyn->dy, dyn);
-    } else {
-      eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
-    }
+    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = 0;
     
+    //23.02.2018 - SB arrived here. Need to decide the arguments of this routine.
     eob_wav_hlm(dyn, hlm_t); 
    
     /** Update size and push arrays (if needed) */
@@ -268,7 +279,7 @@ int main (int argc, char* argv[])
 
     /** Check when to break the computation
 	find peak of omega curve and continue for 4 * dt afterwards */
-    if (usespins) {
+    if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
       dyn->MOmg = dyn->Omg;
@@ -328,7 +339,7 @@ int main (int argc, char* argv[])
     SWAPTRS(hlm_vecg, hlm);
 
     Waveform_lm_free (hlm_vecg);
-    strcpy(hlm->name, strcat(par_get_s("output_dir"),"/hlm.txt"));
+    strcpy(hlm->name, strcat(soutdir,"/hlm.txt"));
 
     if (store_dynamics) {
 
@@ -340,7 +351,7 @@ int main (int argc, char* argv[])
 	dyn_vecg->time[i] = i*dt;
       }
       
-      for (k = 0; k < EOB_DYNAMICS_VARS; k++) {
+      for (k = 0; k < EOB_DYNAMICS_NVARS; k++) {
 	interp_grid(dyn->time, dyn->data[k], size, dyn_vecg->time, size_vecg, dyn_vecg->data[k]);
       }
 
@@ -350,7 +361,7 @@ int main (int argc, char* argv[])
       SWAPTRS(dyn_vecg, dyn);
 
       Dynamics_free (dyn_vecg);
-      strcpy(dyn->name, strcat(par_get_s("output_dir"),"/hlm.txt"));
+      strcpy(dyn->name, strcat(soutdir,"/hlm.txt"));
 
     }
     
@@ -359,7 +370,7 @@ int main (int argc, char* argv[])
   /** NQC and ringdown for BBH */
   if (!(use_tidal)) {
 
-    Waveform_lm_alloc (&hlm_nqc, size, strcat(par_get_s("output_dir"),"/hlm_nqc.txt"));
+    Waveform_lm_alloc (&hlm_nqc, size, strcat(soutdir,"/hlm_nqc.txt"));
 
     /** Compute NQC corrections */
     eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, dyn, hlm_nqc);

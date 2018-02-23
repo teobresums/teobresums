@@ -19,7 +19,7 @@
 
 #include "TEOBResumS.h"
 
-/** Main routine for factorize EOB waveform */
+/** Main routine for factorized EOB waveform */
 void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, double Omega, double ddotr, double H, double Heff, double jhat, double rw, Dynamics *dyn, Waveform_lm_t *hlm)
 {
 

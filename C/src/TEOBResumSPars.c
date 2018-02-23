@@ -1,20 +1,21 @@
 /**
- * Copyright (C) 2017 Alessandro Nagar, Gregorio Carullo, Ka Wa Tsang, Philipp Fleig, Sebastiano Bernuzzi, Walter Del Pozzo
+ * Copyright (C) 2017 Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
+ * This file is part of TEOBResumS
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * TEOBResumS is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * TEOBResumS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with with program; see the file COPYING. If not, write to the
- *  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- *  MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License
+ * along with with program; see the file COPYING. If not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA  02111-1307  USA
  */
 
 /**
@@ -30,7 +31,7 @@
 
 #include "TEOBResumS.h"
 
-#define DEBUG_THIS_FILE 0 /* to compile and debug this files */
+#define DEBUG_THIS_FILE 0 /* = 1 to compile and debug this files */
 #if (DEBUG_THIS_FILE)
 #undef errorexit
 #undef errorexits
@@ -54,7 +55,7 @@ void par_db_free ()
   config_destroy(cf);
 }
 
-void par_file_parse (char *fname)
+void par_file_parse (const char *fname)
 {    
   if (!(config_read_file(cf, fname))) {
     fprintf(stderr, "%s = %d - %s\n",
@@ -66,7 +67,7 @@ void par_file_parse (char *fname)
   }
 }
 
-void par_file_parse_merge (char *fname)
+void par_file_parse_merge (const char *fname)
 {
   /* parse the file in a new cfg */
   config_t cfg1, *cf1;
@@ -128,7 +129,7 @@ void par_db_default ()
   }
 }
 
-void par_db_write_file (char *fname)
+void par_db_write_file (const char *fname)
 {
   if (!(config_write_file(cf, fname))) {
     fprintf(stderr, "Error writing file %s\n", fname);
@@ -281,8 +282,7 @@ void par_set_arrayd (const char *key, double *array, int n)
 #if (!DEBUG_THIS_FILE)
 
 /** Set parameters */
-//void TEOBResumSSetParameters(char *s, int n, int mode, int pr)
-void TEOBResumSSetParameters(char *s, int pr)
+void eob_set_params(char *s, int n, int pr)
 {
 
   /* Set default values */
