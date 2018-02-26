@@ -20,6 +20,10 @@
 
 #include "TEOBResumS.h"
 
+#ifndef STOPPOSTCIRCULAR
+#define STOPPOSTCIRCULAR 0 /* use post-post-circular by default */
+#endif
+
 /** Initial conditions calculation for non-spinning systems */
 /* Post-post-circular initial data at separation r0
    r0       => relative separation
@@ -139,6 +143,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
   const double S  = S1 + S2;        
   const double Ss = X2*a1 + X1*a2;  
+  const double z3 = 2.0*nu*(4.0-3.0*nu);
     
   /** Build a small grid */
 #define N (6)
@@ -154,8 +159,9 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   double r2, r3, j3;
   double H0eff, H0, psi, r_omega, v_phi, jhat, x;
   double ggm[14];
-  
-  for (int i = 0; i < N; i++) {
+  int i;
+
+  for (i = 0; i < N; i++) {
     r[i] = r0+(i-N+1)*dr;
         
     /** Compute metric  */
@@ -172,59 +178,64 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   /** pph by finite diff. */
   double dpph_dr[2*N];
   D0(pph, dr, 2*N, dpph_dr);
+  
+  double sqrtAbyB, uc, uc2;
+  double pph2, Horbeff0, Heff0, H0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph;
+  double ggm0[14];
+  double GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0 =;
+  double C0;
+  double Omg;
+  double Gtilde, dGtilde_dr, duc_dr, psic, r_omg, v_phi, x, jhat;
+
+  for (i = 0; i < N; i++) {
     
-  for (int i = 0; i < N; i++) {
+    sqrtAbyB = sqrt(A[i]/B[i]);
+    uc  = 1./rc[i];
+    uc2 = uc*uc;
+    
+    /* circular angular momentum */
+    pph2 = pph[i]*pph[i];
 
-    double sqrtAbyB     = sqrt(A[i]/B[i]);
-
-    double uc  = 1./rc[i];
-    double uc2 = uc*uc;
-
-    // circular angular momentum
-    double pph2 = pph[i]*pph[i];
-
-    // Orbital effective Hamiltonian
-    double Horbeff0 = sqrt(A[i]*(1. + pph2*uc2));
-
-    // Compute gyro-gravitomagnetic coupling functions
-    double ggm0[14];
+    /* Orbital effective Hamiltonian */
+    Horbeff0 = sqrt(A[i]*(1. + pph2*uc2));
+    
+    /* Compute gyro-gravitomagnetic coupling functions */
     eob_dyn_s_GS(r[i], rc[i], drc_dr[i], aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
-    double GS_0                   = ggm0[2];
-    double GSs_0                  = ggm0[3];
-    double dGS_dr_0               = ggm0[6];
-    double dGSs_dr_0              = ggm0[7];
-    double dGSs_dpph_0            = ggm0[9];
-    double dGS_dprstarbyprstar_0  = ggm0[10];
-    double dGSs_dprstarbyprstar_0 = ggm0[11];
+    GS_0                   = ggm0[2];
+    GSs_0                  = ggm0[3];
+    dGS_dr_0               = ggm0[6];
+    dGSs_dr_0              = ggm0[7];
+    dGSs_dpph_0            = ggm0[9];
+    dGS_dprstarbyprstar_0  = ggm0[10];
+    dGSs_dprstarbyprstar_0 = ggm0[11];
 
-    // Final effective Hamiltonian
-    double Heff0 = (GS_0*S + GSs_0*Ss)*pph[i] + Horbeff0;
+    /* Final effective Hamiltonian */
+    Heff0 = (GS_0*S + GSs_0*Ss)*pph[i] + Horbeff0;
 
-    // Real Hamiltonian: beware that this is NOT divided by nu
-    double H0     = sqrt( 1. + 2.*nu*(Heff0 - 1.));
-    double one_H0 = 1./H0;
+    /* Real Hamiltonian: beware that this is NOT divided by nu */
+    H0     = sqrt( 1. + 2.*nu*(Heff0 - 1.));
+    one_H0 = 1./H0;
 
-    // get gyro-gravitomagnetic (derivative) functions
-    double dHeff_dprstarbyprstar = pph[i]*(dGS_dprstarbyprstar_0*S + dGSs_dprstarbyprstar_0*Ss) + 1./Horbeff0;
+    /* Get gyro-gravitomagnetic (derivative) functions */
+    dHeff_dprstarbyprstar = pph[i]*(dGS_dprstarbyprstar_0*S + dGSs_dprstarbyprstar_0*Ss) + 1./Horbeff0;
 
-    double C0 = sqrtAbyB*one_H0*dHeff_dprstarbyprstar;
+    C0 = sqrtAbyB*one_H0*dHeff_dprstarbyprstar;
 
-    // orbital frequency for circular orbit
-    double dHeff_dpph = GS_0*S + (GSs_0 + pph[i]*dGSs_dpph_0)*Ss + pph[i]*A[i]*uc2/Horbeff0;
-    double Omg        = one_H0*dHeff_dpph;
+    /* Orbital frequency for circular orbit */
+    dHeff_dpph = GS_0*S + (GSs_0 + pph[i]*dGSs_dpph_0)*Ss + pph[i]*A[i]*uc2/Horbeff0;
+    Omg        = one_H0*dHeff_dpph;
 
-    // Flux 
-    double Gtilde     =  GS_0*S     + GSs_0*Ss;
-    double dGtilde_dr =  dGS_dr_0*S + dGSs_dr_0*Ss;
-    double duc_dr     = -uc2*drc_dr[i];
-    double psic       = (duc_dr + dGtilde_dr*rc[i]*sqrt(A[i]/pph2 + A[i]*uc2)/A[i])/(-0.5*dA[i]);
-    double r_omg      =  pow((pow(rc[i]*rc[i]*rc[i]*psic,-1./2)+Gtilde)*one_H0,-2./3.);
-    double v_phi      =  r_omg*Omg;
-    double x          =  v_phi*v_phi;
-    double jhat       =  pph[i]/(r_omg*v_phi); // Newton-normalized angular momentum
+    /* Flux */ 
+    Gtilde     =  GS_0*S     + GSs_0*Ss;
+    dGtilde_dr =  dGS_dr_0*S + dGSs_dr_0*Ss;
+    duc_dr     = -uc2*drc_dr[i];
+    psic       = (duc_dr + dGtilde_dr*rc[i]*sqrt(A[i]/pph2 + A[i]*uc2)/A[i])/(-0.5*dA[i]);
+    r_omg      =  pow((pow(rc[i]*rc[i]*rc[i]*psic,-1./2)+Gtilde)*one_H0,-2./3.);
+    v_phi      =  r_omg*Omg;
+    x          =  v_phi*v_phi;
+    jhat       =  pph[i]/(r_omg*v_phi);  /* Newton-normalized angular momentum */
 
     Fphi[i] = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0., dyn);
-
     prstar[i] = Fphi[i]/(dpph_dr[i]*C0);
     pr[i]     = prstar[i]* sqrt(B[i]/A[i]);
 
@@ -233,7 +244,9 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     Omega_j[i] = Omg;
 
   }
-
+  
+  /* Post-circular initial conditions */
+#if (STOPPOSTCIRCULAR)  
   y_init[EOB_ID_RAD]    = r[N-1];
   y_init[EOB_ID_PPH]    = pph[N-1];
   y_init[EOB_ID_PRSTAR] = prstar[N-1];
@@ -241,14 +254,67 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j[N-1];
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
-
   if (PR) {
     const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
     for (int i = 0; i < EOB_ID_VARS; i++)
       printf("%-20s = %e\n", y_init_var[i], y_init[i]);
   }
+#endif
 
 
+  double dpi1bydj[2*N];
+  D0(prstar, dr, 2*N, dpi1bydj);
+
+  double dpi1dt, prstar4, a,b,c;
+
+  for (i = 0; i < N; i++) {
+    
+    dpi1dt   = dpi1bydj[i]*Fphi[i];
+    prstar4  = prstar[i]*prstar[i]*prstar[i]*prstar[i];
+    
+    /* Circular angular momentum */
+    pph2     = pph[i]*pph[i];              
+
+    /* Still circular, no pr* dependence here */
+    Horbeff  = sqrt(A[i]*(1. + pph2*uc2)); 
+    
+    eob_dyn_s_GS(r[i], rc[i], drc_dr[i], aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
+    GS      = ggm0[2];
+    GSs     = ggm0[3];
+    dGS_dr  = ggm0[6];
+    dGSs_dr = ggm0[7];
+
+    /* Effective EOB energy */
+    Heff     = (GS*S + GSs*Ss)*pph[i] + Horbeff;  
+
+    /* Total EOB energy */
+    H        = sqrt( 1. + 2.*nu*(Heff - 1.));     
+    
+    /* Setting up second order equation for the orbital angular momentum */       
+    a = -sqrtAbyB*uc2/(2.*H*Horbeff)*(dA[i]  - 2.*A[i]*uc*drc[i]);                       
+    b = -sqrtAbyB/H*(dGS_dr*S + dGSs_dr*Ss); 
+    c = -dpi1dt - sqrtAbyB/(2.*H*Horbeff)*(dA[i] + z3*prstar4*uc2*(dA[i] - 2.*A[i]*uc*drc[i]));
+    
+    /* Fill out the array of the post-circular angular momentum */ 
+    pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
+  
+  }
+  
+  /* Post-post-circular initial data */
+  y_init[0] = r[N-1];
+  y_init[1] = pph[N-1];
+  y_init[2] = prstar[N-1];
+  y_init[3] = pr[N-1];
+  y_init[4] = j[N-1];
+  y_init[5] = E0[N-1];
+  y_init[6] = Omega_j[N-1];
+  
+  if (PR) {
+    const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
+    for (int i = 0; i < EOB_ID_VARS; i++)
+      printf("%-20s = %e\n", y_init_var[i], y_init[i]);
+  }
+  
 }
 
 /** Function for root finder: Derivative of the effective Hamiltonian */
