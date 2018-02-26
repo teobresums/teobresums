@@ -20,8 +20,8 @@
 
 #include "TEOBResumS.h"
 
-#ifndef STOPPOSTCIRCULAR
-#define STOPPOSTCIRCULAR 0 /* use post-post-circular by default */
+#ifndef POSTPOSTCIRCULAR
+#define POSTPOSTCIRCULAR 1 /* use post-post-circular by default */
 #endif
 
 /** Initial conditions calculation for non-spinning systems */
@@ -175,7 +175,9 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,rorb,A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
   }
 
-  /** pph by finite diff. */
+  /** Post-circular initial conditions */
+  
+  /* pph by finite diff. */
   double dpph_dr[2*N];
   D0(pph, dr, 2*N, dpph_dr);
   
@@ -245,23 +247,10 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
   }
   
-  /* Post-circular initial conditions */
-#if (STOPPOSTCIRCULAR)  
-  y_init[EOB_ID_RAD]    = r[N-1];
-  y_init[EOB_ID_PPH]    = pph[N-1];
-  y_init[EOB_ID_PRSTAR] = prstar[N-1];
-  y_init[EOB_ID_PR]     = pr[N-1];
-  y_init[EOB_ID_J]      = j[N-1];
-  y_init[EOB_ID_E0]     = E0[N-1];
-  y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
-  if (PR) {
-    const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
-    for (int i = 0; i < EOB_ID_VARS; i++)
-      printf("%-20s = %e\n", y_init_var[i], y_init[i]);
-  }
-#endif
-
-
+#if (POSTPOSTCIRCULAR)  
+  
+  /** Post-post-circular initial data */
+  
   double dpi1bydj[2*N];
   D0(prstar, dr, 2*N, dpi1bydj);
 
@@ -299,21 +288,23 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
   
   }
-  
-  /* Post-post-circular initial data */
-  y_init[0] = r[N-1];
-  y_init[1] = pph[N-1];
-  y_init[2] = prstar[N-1];
-  y_init[3] = pr[N-1];
-  y_init[4] = j[N-1];
-  y_init[5] = E0[N-1];
-  y_init[6] = Omega_j[N-1];
+
+#endif
+
+  y_init[EOB_ID_RAD]    = r[N-1];
+  y_init[EOB_ID_PPH]    = pph[N-1];
+  y_init[EOB_ID_PRSTAR] = prstar[N-1];
+  y_init[EOB_ID_PR]     = pr[N-1];
+  y_init[EOB_ID_J]      = j[N-1];
+  y_init[EOB_ID_E0]     = E0[N-1];
+  y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
   
   if (PR) {
     const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
     for (int i = 0; i < EOB_ID_VARS; i++)
       printf("%-20s = %e\n", y_init_var[i], y_init[i]);
   }
+
   
 }
 
