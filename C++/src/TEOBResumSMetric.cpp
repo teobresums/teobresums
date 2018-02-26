@@ -486,21 +486,14 @@ int s_RHS(double t, const double y[], double f[], void *params)
     
     double A, B, dA;
     vector<double> metric;
-    if (tidal_flag==true)
-    {
-        metric = Metric(r, params, false);
-        A      = metric[0];
-        B      = metric[3];
-        dA     = metric[1];
-    }
-    else
-    {
-        metric = s_Metric(r, params, false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
-        A    = metric[0];
-        B    = metric[1];
-        dA   = metric[2];
-    }
 
+    /** Call to metric functions. The centrifugal radius, redefined below, is also called inside.
+        The tidal parameters are also defined within this routine */
+    metric = s_Metric(r, params, false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
+    A      = metric[0];
+    B      = metric[1];
+    dA     = metric[2];
+    
     /** Introduce here the "centrifugal radius", Eq.(58) of Damour&Nagar, PRD 90, 044018 (2014)
         Spin-spin terms are all incorporated within this particular variable */
     vector<double> rc_vec;
