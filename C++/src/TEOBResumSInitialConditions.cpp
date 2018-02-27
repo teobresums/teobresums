@@ -47,8 +47,8 @@ vector<double> initial(TEOBResumParams *params)
     double OmgKepler = 1./(sqrt(r0)*sqrt(r0)*sqrt(r0));
     
     vector<double> y_init(7);
-    int N  = 6;
-    const double dr = 1.e-8;
+    int N  = 10;
+    const double dr = 1.e-10;
     
     vector<double> r(2*N), dA(2*N), j(2*N), j2(2*N), djdr(2*N); /** j:angular momentum */
     vector<double> E0(2*N), Omega_j(2*N);
@@ -217,8 +217,8 @@ vector<double> s_initial(TEOBResumParams *params){
     
     vector<double> y_init(7);
     
-    int N = 10;
-    const double dr = 1.e-8;
+    int N = 100;
+    const double dr = 1.e-4;
     vector<double> r(2*N);
     
     // Angular momentum for circular orbit: circular ID
@@ -276,7 +276,7 @@ vector<double> s_initial(TEOBResumParams *params){
     vector<double> dpph_dr = s_D1(pph,r,2*N); 
     
     for (int i=2*N; i--;) {
-        
+      
         double sqrtAbyB     = sqrt(A[i]/B[i]);
         
         double uc  = 1./rc[i];
@@ -340,9 +340,42 @@ vector<double> s_initial(TEOBResumParams *params){
         j[i]       = pph[i];
         E0[i]      = H0;
         Omega_j[i] = Omg;
-        
+	
     }
+
+    //====================================================================================
+    //2. The angular momentum beyond circular approximation: post-post-circular correction
+    //====================================================================================
+    vector<double> dpi1bydj = s_D1(prstar,j,2*N);
     
+    for (int i=2*N; i--;) {
+      double dpi1dt   = dpi1bydj[i]*Fphi[i];
+      
+     
+      double sqrtAbyB = sqrt(A[i]/B[i]);
+      double uc       = 1./rc[i];
+      double uc2      = uc*uc;
+      double z3       = 2.0*nu*(4.0-3.0*nu);
+      double prstar4  = prstar[i]*prstar[i]*prstar[i]*prstar[i];
+      double pph2     = pph[i]*pph[i];              // circular angular momentum
+      double Horbeff  = sqrt(A[i]*(1. + pph2*uc2)); // still circular, no pr* dependence here
+      vector <double> ggm0     = s_GS(r[i], rc[i], drc[i], aK2, 0., pph[i], nu, chi1, chi2, X1, X2, c3);
+      double GS      = ggm0[2];
+      double GSs     = ggm0[3];
+      double dGS_dr  = ggm0[6];
+      double dGSs_dr = ggm0[7];
+      double Heff     = (GS*S + GSs*Ss)*pph[i] + Horbeff;  // effective EOB energy
+      double H        = sqrt( 1. + 2.*nu*(Heff - 1.));     // total EOB energy
+
+      // setting up second order equation for the orbital angular momentum       
+      double a = -sqrtAbyB*uc2/(2.*H*Horbeff)*(dA[i]  - 2.*A[i]*uc*drc[i]);                       
+      double b = -sqrtAbyB/H*(dGS_dr*S + dGSs_dr*Ss); 
+      double c = -dpi1dt - sqrtAbyB/(2.*H*Horbeff)*(dA[i] + z3*prstar4*uc2*(dA[i] - 2.*A[i]*uc*drc[i]));
+
+      //  fill out the array of the post-circular angular momentum 
+      pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
+    }
+        
     y_init[0] = r[N-1];
     y_init[1] = pph[N-1];
     y_init[2] = prstar[N-1];
@@ -350,7 +383,7 @@ vector<double> s_initial(TEOBResumParams *params){
     y_init[4] = j[N-1];
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
-
+    
     if (DEBUG)
     {
         printf("-----------------------------------\n");
@@ -367,8 +400,15 @@ vector<double> s_initial(TEOBResumParams *params){
 
     if (tidal_flag==1)
       {
-          if (DEBUG)
+	// if (DEBUG)
           {
+	    printf("r[0]         = %18.16f\n",y_init[0]);
+	    printf("j[0]         = %18.16f\n",y_init[4]);
+	    printf("pphi[0]      = %18.16f\n",y_init[1]);
+	    printf("pr[0]        = %18.16f\n",y_init[3]);
+	    printf("prstar[0]    = %18.16f\n",y_init[2]);
+	    printf("E[0]         = %18.16f\n",y_init[5]);
+	    printf("Omega[0]     = %18.16f\n",y_init[6]);
             printf("CQ1          = %18.16f\n",CQ1);
             printf("CQ2          = %18.16f\n",CQ2);
             printf("lambda_l2[A] = %18.16f\n",lambdaAl2);
