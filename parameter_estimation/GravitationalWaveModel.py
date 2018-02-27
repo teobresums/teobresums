@@ -99,7 +99,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                                                     **kwargs) for name,datum,psd_file in zip(self.detectors,self.datafiles,self.psd_files)]
 
         self.df = self.detectors[0].df
-        self.padding = 0.1
+        self.padding = 0.4/self.T
         self.window=tukey(self.segment_length,self.padding)
         self.windowNorm = self.segment_length/np.sum(self.window**2)
 
@@ -108,22 +108,22 @@ class GravitationalWaveModel(cpnest.model.Model):
         
         if self.injection:
             
-            self.injection_parameters = {'mc':1.2,
-                                        'q':1.0,
+            self.injection_parameters = {'mc':30.0,
+                                        'q':0.9,
                                         'spin1':0.0,
                                         'theta_1l':0.0,
                                         'phi_1l':0.0,
                                         'spin2':0.0,
                                         'theta_2l':0.0,
                                         'phi_2l':0.0,
-                                        'distance':100.0,
+                                        'distance':1500.0,
                                         'inclination':0.0,
                                         'ra':4.2,
                                         'dec':1.1,
                                         'psi':1.0,
                                         'phi0':0.0,
-                                        'lambdaAl2':500.0,
-                                        'lambdaBl2':500.0,
+                                        'lambdaAl2':0.0,
+                                        'lambdaBl2':0.0,
                                         'tc':1126259462.423}
             
             sys.stderr.write("Injection parameters:\n")
@@ -149,19 +149,19 @@ class GravitationalWaveModel(cpnest.model.Model):
                                    self.flow, self.fhigh, 100.0,
                                    self.injection_parameters['distance']*1e6*lalsim.lal.PC_SI,
                                    self.injection_parameters['inclination'],
-                                   self.injection_parameters['lambdaAl2'], self.injection_parameters['lambdaBl2'],
+                                   0.0,0.0,
                                    wave_flags, non_GR_params, amp_order, phase_order, approx)
                 hptilde = hptilde.data.data
                 hctilde = hctilde.data.data
 
             else:
                 self.flags ={'NQC':'0',
-                'tidal':1,
+                'tidal':0,
                 'speedy':1,
                 'dynamics':0,
                 'solver_scheme':0,
                 'RWZ':0,
-                'Yagi_fits':1,
+                'Yagi_fits':0,
                 'spin':0,
                 'multipoles':0,
                 'geometric_units':0,
@@ -196,50 +196,36 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [0.1,1.0],
                          [0.0,np.pi],
                          [0.0,np.pi],
-                         [1.0,1000.0],
+                         [1.0,2000.0],
                          [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi],
                          [0.0,1.0],[-np.pi/2.0,np.pi/2.0],[0.0,2.0*np.pi]]
         else:
             self.names=['phi0', 'ra', 'dec', 'tc', 'mc', 'q',
-                'iota', 'psi', 'distance','spin1z','spin2z','lambdaAl2','lambdaBl2']
+                'iota', 'psi', 'distance','spin1z','spin2z']
 
             self.bounds=[[0,2.0*np.pi],
                          [0,2.0*np.pi],
                          [-np.pi/2.0,np.pi/2.0],
                          [self.trigtime-0.05,self.trigtime+0.05],
-                         [1.0,2.0],
+                         [25.0,35.0],
                          [0.5,1.0],
                          [-np.pi/2.,np.pi/2.],
                          [0.0,np.pi],
-                         [1.0,500.0],
-                         [-0.8,0.8],[-0.8,0.8],
-                         [0.0,1000.0],[0.0,1000.0]]
-#            self.bounds=[[0,2.0*np.pi],
-#                         [4.1,4.3],
-#                         [1.0,1.2],
-#                         [self.trigtime-0.0005,self.trigtime+0.0005],
-#                         [27.0,28.0],
-#                         [0.89,0.91],
-#                         [-0.0001,0.0001],
-#                         [0.0,0.001],
-#                         [999.0,1001.0],
-#                         [-0.0001,0.0001],[-0.0001,0.0001]]
+                         [1.0,1000.0],
+                         [-0.8,0.8],[-0.8,0.8]]
+
             self.flags ={'NQC':'1',
-                'tidal':1,
+                'tidal':0,
                 'speedy':1,
                 'dynamics':0,
                 'solver_scheme':0,
                 'RWZ':0,
-                'Yagi_fits':1,
+                'Yagi_fits':0,
                 'spin':0,
                 'multipoles':0,
                 'geometric_units':0,
                 'set':0
             }
-#        self.padding = 0.1
-#        self.window=tukey(self.segment_length,self.padding)
-#        self.windowNorm = self.segment_length/np.sum(self.window**2)
-
 
     def calculate_plain_template(self,x):
         mc = x['mc']
@@ -283,8 +269,8 @@ class GravitationalWaveModel(cpnest.model.Model):
                              x['phi0'],
                              self.flow,
                              self.dt,
-                             x['lambdaAl2'],
-                             x['lambdaBl2'],
+                             0.0,
+                             0.0,
                              0.0,
                              0.0,
                              0.0,
@@ -293,8 +279,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                              -1,
                              self.flags)
 
-            hp = noise.resize_time_series(h[:,0],self.segment_length)
-            hc = noise.resize_time_series(h[:,1],self.segment_length)
+            hp, hc = noise.resize_time_series(h, self.segment_length, self.dt, self.epoch, x['tc'])
 
             hp*=self.window
             hc*=self.window
@@ -361,16 +346,19 @@ if __name__=='__main__':
     parser.add_option('--inject',default=False,action='store_true',help='Inject signal')
     parser.add_option('--zero-noise',default=False,action='store_true',help='Generate a 0 noise realisation')
     parser.add_option('--template',default='LAL',type='str',metavar='template',help='template to use for the run')
-    parser.add_option('--seglen',default=4,type='float',metavar='seglen',help='length of the data stretch to analyse')
+    parser.add_option('--starttime',type='float',metavar='starttime',help='start of the analysis segments')
+    parser.add_option('--trigtime',type='float',metavar='trigtime',help='trigger time')
+    parser.add_option('--seglen',default=4,type='float',metavar='seglen',help='length of the data stretch to analyse (4)')
     parser.add_option('--flow',default=20,type='float',metavar='flow',help='low frequency cutoff')
     parser.add_option('--fhigh',default=500,type='float',metavar='fhigh',help='high frequency cutoff')
+    parser.add_option('--sampling-rate',default=4096.,type='float',metavar='sampling_rate',help='sampling rate (4096)')
     parser.add_option('--nlive',default=1024,type='int',metavar='n',help='Live points')
-    parser.add_option('--maxmcmc',default=1024,type='int',metavar='m',help='max MCMC points')
+    parser.add_option('--maxmcmc',default=1024,type='int',metavar='m',help='max number of MCMC steps')
     parser.add_option('--poolsize',default=1000,type='int',metavar='k',help='number of points in the ensemble sampler pool')
     (opts,args)=parser.parse_args()
-
-    trigtime = 1126259462.423
-    starttime = trigtime - opts.seglen + 2
+    # GW150914: 1126259462.423
+    trigtime = opts.trigtime
+    starttime = opts.starttime
     
     if opts.out_dir is None:
         opts.out_dir='./gw150914/'
@@ -379,11 +367,11 @@ if __name__=='__main__':
         signal_model = GravitationalWaveModel(['H1','L1','V1'],
                                               T         = opts.seglen,
                                               template  = opts.template,
-                                              sampling_rate = 4096.,
-                                              injection = opts.inject,
+                                              sampling_rate = opts.sampling_rate,
+                                              injection     = opts.inject,
                                               zero_noise    = opts.zero_noise,
-                                              starttime = starttime,
-                                              trigtime  = trigtime,
+                                              starttime     = starttime,
+                                              trigtime      = trigtime,
 #                                              psd_files = ['H-GW15-asd.txt',
 #                                                           'L-GW15-asd.txt'],
                                               psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
@@ -407,8 +395,9 @@ if __name__=='__main__':
         print('Signal evidence {0}'.format(work.NS.logZ))
         logB = work.NS.logZ-signal_model.logZnoise
         print('log B {0}'.format(logB))
+        x = work.posterior_samples
     else:
-        signal_model = GravitationalWaveModel(['H1','L1','V1'],
+        signal_model = GravitationalWaveModel(['H1','L1'],#,'V1'],
                                               T=opts.seglen,
                                               template = opts.template,
                                               sampling_rate = 2048.,
@@ -416,10 +405,10 @@ if __name__=='__main__':
                                               zero_noise = opts.zero_noise,
                                               starttime = 1126259459.423,
                                               trigtime = 1126259462.423,
-                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
-#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
+#                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
+                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         x = np.genfromtxt(os.path.join(opts.out_dir,'posterior.dat'),names=True)

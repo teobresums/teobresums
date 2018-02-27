@@ -15,10 +15,49 @@ def downsample(strain, old_sampling_rate, new_sampling_rate):
     factor = int(old_sampling_rate/new_sampling_rate)
     return strain[::factor]
 
-def resize_time_series(inarr, N):
-    # zero-pad to the required length
-    outarr = np.pad(inarr, (0,N-len(inarr)), mode='constant', constant_values=0)
-    return outarr
+def resize_time_series(inarr, N, dt, starttime, desiredtc):
+    """
+    Zero pad inarr and align its peak to the desired tc in
+    the segment
+    """
+    
+    waveLength = inarr.shape[0]
+
+    # find the sample at which we wish tc to be
+    tcSample = int(np.floor((desiredtc-starttime)/dt))
+    # and the actual tc
+    injTc = starttime + tcSample*dt
+
+    # find the sample in waveform space at which tc happens, using the square amplitude as reference
+    waveTcSample = np.argmax(inarr[:,0]**2+inarr[:,1]**2)
+
+    wavePostTc = waveLength - waveTcSample
+
+    if tcSample >= waveTcSample:
+        bufstartindex =  tcSample - waveTcSample
+    else:
+        bufstartindex = 0
+    if (wavePostTc + tcSample <= N):
+        bufendindex = wavePostTc + tcSample
+    else:
+        bufendindex = N
+
+    bufWaveLength = bufendindex - bufstartindex;
+    if (tcSample >= waveTcSample):
+        waveStartIndex = 0
+    else:
+        waveStartIndex = waveTcSample - tcSample
+
+    # allocate the arrays of zeros which work as a buffer
+    hp = np.zeros(N,dtype = np.complex64)
+    hc = np.zeros(N,dtype = np.complex64)
+    # copy the waveform over
+
+#    hp[:bufWaveLength] = inarr[waveStartIndex:,0]
+#    hc[:bufWaveLength] = inarr[waveStartIndex:,1]
+    hp[bufstartindex:bufstartindex+bufWaveLength] = inarr[waveStartIndex:,0]
+    hc[bufstartindex:bufstartindex+bufWaveLength] = inarr[waveStartIndex:,1]
+    return hp,hc
 
 fname='H-H1_LOSC_4_V1-1126259446-32.txt'
 tevent = 1126259462.423
@@ -66,7 +105,7 @@ def load_data(fname,
     mask = np.ones(len(strain), dtype=bool)
     mask[range(index_chunk_start,index_chunk_start+chunksize,chunksize)] = False
     # window the data
-    padding = 0.1
+    padding = 0.4/chunk_size
     window=tukey(chunksize,padding)
     signal_chunk*=window
     # zero-pad to the required length
@@ -107,7 +146,8 @@ def generate_data(psd_file,
     N = int(sampling_rate*T)
     times = np.linspace(starttime,starttime+T,N)
     # generate the FD noise
-    frequencies = np.arange(0,sampling_rate/2.,df)
+    frequencies = df*np.arange(0,N/2.+1)
+
     if zero_noise is False:
         frequency_series = np.array([np.random.normal(0.0,np.sqrt(psd_int(f)/df/2.))+1j*np.random.normal(0.0,np.sqrt(psd_int(f)/df/2.)) for f in frequencies])
     else: frequency_series = np.zeros(len(frequencies),dtype=np.complex64)
