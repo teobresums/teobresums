@@ -162,23 +162,8 @@ static const char* const root_errors[] = {"none","root is not bracketed.","root 
 #define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} //TODO: CHECKME!
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
-const int LINDEX[KMAX] = {
-    2,2,
-    3,3,3,
-    4,4,4,4,
-    5,5,5,5,5,
-    6,6,6,6,6,6,
-    7,7,7,7,7,7,7,
-    8,8,8,8,8,8,8,8};
-
-const int MINDEX[KMAX] = {
-    1,2,
-    1,2,3,
-    1,2,3,4,
-    1,2,3,4,5,
-    1,2,3,4,5,6,
-    1,2,3,4,5,6,7,
-    1,2,3,4,5,6,7,8};
+extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */
+extern const int MINDEX[KMAX]; /* defined in TEOBResumS.c */
 
 /** Type for complex double */
 typedef double complex cdouble;

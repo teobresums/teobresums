@@ -30,6 +30,25 @@
 #define VERBOSE 0 /* verbose mode is off by default */
 #endif
 
+/** Global vars, defined as external in header */
+const int LINDEX[KMAX] = {
+    2,2,
+    3,3,3,
+    4,4,4,4,
+    5,5,5,5,5,
+    6,6,6,6,6,6,
+    7,7,7,7,7,7,7,
+    8,8,8,8,8,8,8,8};
+const int MINDEX[KMAX] = {
+    1,2,
+    1,2,3,
+    1,2,3,4,
+    1,2,3,4,5,
+    1,2,3,4,5,6,
+    1,2,3,4,5,6,7,
+    1,2,3,4,5,6,7,8};
+
+/** TEOBResumS main */
 int main (int argc, char* argv) 
 {
   char soutdir[STRLEN];
