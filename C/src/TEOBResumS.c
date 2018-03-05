@@ -79,7 +79,7 @@ int main (int argc, char* argv)
   Waveform_lm *hlm_nqc; /* NQC */
 
   Dynamics_alloc (&dyn, size, strcat(soutdir,"/dyn.txt"));
-  Waveform_lm_alloc (&hlm, size, strcat(soutdir,"/hlm.txt")); 
+  Waveform_lm_alloc (&hlm, size, strcat(soutdir,"/hlm")); 
   Waveform_lm_t_alloc (&hlm_t);
 
   /** Set useful pars/vars */

@@ -399,8 +399,7 @@ void Waveform_lm_output (Waveform_lm *wav)
   const int n = wav->size;
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
-      strcpy(fname,wav->name);
-      strcat(fname,sprintf("_%02d_%02d.txt",LINDEX[k],MINDEX[k]));
+      sprintf(fname,"%s_%01d_%01d.txt",wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp = fopen(fname, "w"); 
       for (i = 0; i < n; i++) {
 	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
