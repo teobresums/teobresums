@@ -343,20 +343,19 @@ int main (int argc, char* argv)
     if (store_dynamics) {
 
       /* Same for dynamics */
-
       Dynamics_alloc(&dyn_vecg, size_vecg, "dyn_vecg");
-
       for (i = 0; i < size_vecg; i++) {
 	dyn_vecg->time[i] = i*dyn->dt;
-      }
-      
+      }      
       for (k = 0; k < EOB_DYNAMICS_NVARS; k++) {
 	interp_grid(dyn->time, dyn->data[k], size, dyn_vecg->time, size_vecg, dyn_vecg->data[k]);
       }
 
       /* Swap array data pointers and structure pointers
 	 maintains old scalar data and parameters */
-      SWAPTRS(dyn_vecg->data, dyn->data);
+      for (k = 0; k < EOB_DYNAMICS_NVARS; k++) {
+	SWAPTRS(dyn_vecg->data[k], dyn->data[k]); //CHECKME!
+      }
       SWAPTRS(dyn_vecg, dyn);
 
       Dynamics_free (dyn_vecg);

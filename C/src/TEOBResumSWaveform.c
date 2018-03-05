@@ -39,9 +39,9 @@ void eos_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const double t   = dyn->t;
   const double phi = dyn->phi; 
   const double r   = dyn->r;
-  const double pph = dyn->pph;
+  const double pph = dyn->pphi;
   const double prstar = dyn->prstar;
-  const double Omega  = dyn->Omega;
+  const double Omega  = dyn->Omg;
   const double ddotr  = dyn-> ddotr;
   const double H      = dyn->H;
   const double Heff   = dyn->Heff;
@@ -939,7 +939,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   double *T       = dyn->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG];
-  double *pph     = dyn->data[EOB_PPH];
+  double *pph     = dyn->data[EOB_PPHI];
   double *pr_star = dyn->data[EOB_PRSTAR];
   double *Omg_orb = dyn->data[EOB_OMGORB];
   double *ddotr   = dyn->data[EOB_DDOTR];

@@ -251,8 +251,8 @@ typedef struct tagDynamics
 void par_db_init ();
 void par_db_free ();
 void par_db_default ();
-void par_file_parse (char *fname);
-void par_file_parse_merge (char *fname);
+void par_file_parse (const char *fname);
+void par_file_parse_merge (const char *fname);
 void par_db_write_file (const char *fname);
 void par_db_screen ();
 void par_set_i(const char *key, int val);

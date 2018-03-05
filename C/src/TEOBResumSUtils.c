@@ -304,7 +304,7 @@ void set_multipolar_idx_mask(int *kmask, int n)
 /* Alloc/Free data type routines */
 
 /** Waveform (complex) */
-void Waveform_alloc (Waveform **wav, int size, char *name)
+void Waveform_alloc (Waveform **wav, int size, const char *name)
 {
   *wav = (Waveform *) calloc(1, sizeof(Waveform)); 
   if (wav == NULL)
@@ -352,7 +352,7 @@ void Waveform_free (Waveform *wav)
 }
 
 /** Multipolar waveform (complex) */
-void Waveform_lm_alloc (Waveform_lm **wav, int size, char *name)
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
 {
   *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
   if (wav == NULL)
@@ -425,7 +425,7 @@ void Waveform_lm_free (Waveform_lm *wav)
 /** Multipolar waveform (complex) */
 void Waveform_lm_t_alloc (Waveform_lm_t **wav)
 {
-  *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
+  *wav = (Waveform_lm_t *) calloc(1, sizeof(Waveform_lm_t)); 
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->time = 0.;
@@ -438,7 +438,7 @@ void Waveform_lm_t_free (Waveform_lm_t *wav)
 }
 
 /** Dynamics */
-void Dynamics_alloc (Dynamics **dyn, int size, char *name)
+void Dynamics_alloc (Dynamics **dyn, int size, const char *name)
 {
   (*dyn) = (Dynamics *) calloc(1, sizeof(Dynamics)); 
   if (dyn == NULL)
@@ -448,7 +448,7 @@ void Dynamics_alloc (Dynamics **dyn, int size, char *name)
   (*dyn)->time = malloc ( size * sizeof(double) );
   memset((*dyn)->time, 0, size*sizeof(double));
   int v;
-  for (v = 0; v < EOB_DYNAMICS_VARS; v++) {
+  for (v = 0; v < EOB_DYNAMICS_NVARS; v++) {
     (*dyn)->data[v] = malloc ( size * sizeof(double) );
     memset((*dyn)->data[v], 0, size*sizeof(double));
   }
@@ -460,7 +460,7 @@ void Dynamics_push (Dynamics **dyn, int size)
   const int n  = (*dyn)->size;
   const int dn = size - (*dyn)->size;
   (*dyn)->time = realloc ( (*dyn)->time, size * sizeof(double) );
-  for (v = 0; v < EOB_DYNAMICS_VARS; v++) {
+  for (v = 0; v < EOB_DYNAMICS_NVARS; v++) {
     (*dyn)->data[v] = realloc ( (*dyn)->data[v], size * sizeof(double) );
     if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
     if (dn>0) memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) );
@@ -474,7 +474,7 @@ void Dynamics_output (Dynamics *dyn)
   FILE* fp = fopen(dyn->name, "w"); 
   for (i = 0; i < dyn->size; i++) {
     fprintf(fp, "%.9e", dyn->time[i]);
-    for (v = 0; v < EOB_DYNAMICS_VARS; v++)
+    for (v = 0; v < EOB_DYNAMICS_NVARS; v++)
       fprintf(fp, " %.12e", dyn->data[v][i]);
     fprintf(fp, "\n"); 
   }
@@ -485,7 +485,7 @@ void Dynamics_free (Dynamics *dyn)
 {
   if (dyn->time) free(dyn->time);
   int v;
-  for (v = 0; v < EOB_DYNAMICS_VARS; v++)
+  for (v = 0; v < EOB_DYNAMICS_NVARS; v++)
     if (dyn->data[v]) free(dyn->data[v]);
   free(dyn);
 }

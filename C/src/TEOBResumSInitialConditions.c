@@ -118,7 +118,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     
   if (PR) {
     const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
-    for (int i = 0; i < EOB_ID_VARS; i++)
+    for (int i = 0; i < EOB_ID_NVARS; i++)
       printf("%-20s = %e\n", y_init_var[i], y_init[i]);
   }
 
@@ -152,13 +152,23 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
-  double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N];
+  double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N], drc[2*N];
   double A[2*N],B[2*N],d2A[2*N],dB;
   double rorb;
   double pphorb;
   double r2, r3, j3;
   double H0eff, H0, psi, r_omega, v_phi, jhat, x;
   double ggm[14];
+
+  //FIXME: redudant variables (ssame meaning, different name)
+  double sqrtAbyB, uc, uc2;
+  double pph2, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
+  double ggm0[14];
+  double GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
+  double C0;
+  double Omg;
+  double Gtilde, dGtilde_dr, duc_dr, psic, r_omg;
+
   int i;
 
   for (i = 0; i < N; i++) {
@@ -181,14 +191,6 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   double dpph_dr[2*N];
   D0(pph, dr, 2*N, dpph_dr);
   
-  double sqrtAbyB, uc, uc2;
-  double pph2, Horbeff0, Heff0, H0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph;
-  double ggm0[14];
-  double GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0 =;
-  double C0;
-  double Omg;
-  double Gtilde, dGtilde_dr, duc_dr, psic, r_omg, v_phi, x, jhat;
-
   for (i = 0; i < N; i++) {
     
     sqrtAbyB = sqrt(A[i]/B[i]);
@@ -301,7 +303,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   
   if (PR) {
     const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
-    for (int i = 0; i < EOB_ID_VARS; i++)
+    for (int i = 0; i < EOB_ID_NVARS; i++)
       printf("%-20s = %e\n", y_init_var[i], y_init[i]);
   }
 
