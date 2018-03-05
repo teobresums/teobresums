@@ -360,7 +360,7 @@ int main (int argc, char* argv)
       SWAPTRS(dyn_vecg, dyn);
 
       Dynamics_free (dyn_vecg);
-      strcpy(dyn->name, strcat(soutdir,"/hlm.txt"));
+      strcpy(dyn->name, strcat(soutdir,"/dyn.txt"));
 
     }
     

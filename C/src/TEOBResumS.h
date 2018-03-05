@@ -200,7 +200,7 @@ typedef struct tagWaveform_lm
   double *time;
   double *ampli[KMAX]; /* amplitude */
   double *phase[KMAX]; /* phase */
-  char name[KMAX][STRLEN];
+  char name[STRLEN];
   int kmask[KMAX]; /* mask for multipoles */
 }  Waveform_lm;
 

@@ -367,7 +367,7 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, char *name)
     (*wav)->phase[k] = malloc ( size * sizeof(double) );
     memset((*wav)->ampli[k], 0, size*sizeof(double));
     memset((*wav)->phase[k], 0, size*sizeof(double));
-    strcpy((*wav)->name[k],&name[k]);
+    strcpy((*wav)->name,name);
   }
 }
 
@@ -394,11 +394,14 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
 
 void Waveform_lm_output (Waveform_lm *wav)
 {
+  char fname[STRLEN];
   int k,i;
   const int n = wav->size;
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
-      FILE* fp = fopen(wav->name[k], "w"); 
+      strcpy(fname,wav->name);
+      strcat(fname,sprintf("_%02d_%02d.txt",LINDEX[k],MINDEX[k]));
+      FILE* fp = fopen(fname, "w"); 
       for (i = 0; i < n; i++) {
 	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
       }
