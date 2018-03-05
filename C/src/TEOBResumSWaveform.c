@@ -1161,7 +1161,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   }
     
 #if (DEBUG)
-  FILE* fp = fopen("NQC_func.dat", "w");
+  FILE* fp = fopen("NQC_func.txt", "w");
   for (j=0; j<size; j++) {
     fprintf(fp, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
   }
@@ -1175,7 +1175,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   D0_nux(d_n5,T,size, d2_n5);
 
 #if (DEBUG)
-  fp = fopen("dNQC_func.dat", "w");
+  fp = fopen("dNQC_func.txt", "w");
   for (j=0; j<size; j++) {
     fprintf(fp, "%f\t%f\t%f\t%f\t%f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);  
   }
@@ -1228,7 +1228,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
 
 
 #if (DEBUG)
-  fp = fopen("Amp_func.dat", "w");
+  fp = fopen("Amp_func.txt", "w");
   for (j=0; j<size; j++) {
     fprintf(fp, "%f\t%f\t%f\n", T[j], p1tmp[1][j], p2tmp[1][j]);
   }
@@ -1571,7 +1571,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   /*
   for (k = 0; k < KMAX; k++) {
     t0 = t_lm[k][idx[k]] - tmrg[k]; // I or I-1 or I-2 ?
-    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma, psi);
+    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[k], psi);
     Deltaphi[k] = psi[1] - hlm[k]->phase[idx[k]];
   }
   */
