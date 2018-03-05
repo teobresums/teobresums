@@ -266,9 +266,6 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
   return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
 }
 
-
-
-
 /** QNM fits for the 22 mode for spinning systems */
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 		     double Mbh, double abh,  

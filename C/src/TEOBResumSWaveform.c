@@ -1535,7 +1535,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   }
 
   /** Compute QNM */
-  double sigma[KMAX][2]; // real, imag
+  double **sigma;//[KMAX][2]; // real, imag
+  *sigma = malloc ( KMAX * sizeof(double*) );
+  for (k=0; k<KMAX; k++) 
+    sigma[k] = malloc ( 2 * sizeof(double) );
+
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
   double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX]; 
   QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
@@ -1577,7 +1581,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     for (j = idx[k]; j < size ; j++ ) {  
       //t0 = t_lm[k][j];
       t0 = t_lm[k][j] - tmrg[k];   
-      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma, psi);
+      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[k], psi);
       if (j==idx[k]) {
 	Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
       }
@@ -1588,7 +1592,9 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
  
   /** Free mem. */
   for (k=0; k<KMAX; k++) {
+    free(sigma[k]);
     free(t_lm[k]);
   }
-   
+  free(sigma);
+
 }
