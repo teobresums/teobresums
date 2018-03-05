@@ -26,8 +26,17 @@
  * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
  */
 
+/** Following macros can be set during compilation for special feats*/
 #ifndef VERBOSE
 #define VERBOSE 0 /* verbose mode is off by default */
+#endif
+
+#ifndef POSTPOSTCIRCULAR
+#define POSTPOSTCIRCULAR 1 /* use post-post-circular initial conditions by default */
+#endif
+
+#ifndef EXCLUDESPINSPINTIDES
+#define EXCLUDESPINSPINTIDES 0 /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
 /** Global vars, defined as external in header */

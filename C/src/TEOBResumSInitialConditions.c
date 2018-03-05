@@ -20,10 +20,6 @@
 
 #include "TEOBResumS.h"
 
-#ifndef POSTPOSTCIRCULAR
-#define POSTPOSTCIRCULAR 1 /* use post-post-circular by default */
-#endif
-
 /** Initial conditions calculation for non-spinning systems */
 /* Post-post-circular initial data at separation r0
    r0       => relative separation

@@ -394,19 +394,25 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
   double r2  = r*r;
     
   if (usetidal) {    
+#if (EXCLUDESPINSPINTIDES)
+    /* NO spin-spin-tidal couplings */
+    double rc2 = r2;
+    *rc = r;
+    *drc_dr = 1;
+    *d2rc_dr2 = 0;
+    /* /\* alt. keep C_Q1=C_Q2=0, but keep centrifugal radius *\/ */
+    /* double a02  = 2.*at1*at2; */
+    /* double rc2  = r2 + a02*(1.+2.*u); /\* tidally-modified centrifugal radius *\/ */
+    /* *rc         = sqrt(rc2); */
+    /* *drc_dr     = r/(*rc)*(1.-a02*u3); */
+    /* *d2rc_dr2   = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1.-a02*u3)+2.*a02*u3); */
+#else
     /* BNS effective spin parameter */
-    double a02      = C_Q1*at1*at1 + 2.*at1*at2 + C_Q2*at2*at2;
-    /* tidally-modified centrifugal radius */
-    double rc2 = r2 + a02*(1.+2.*u);
+    double a02  = C_Q1*at1*at1 + 2.*at1*at2 + C_Q2*at2*at2;
+    double rc2  = r2 + a02*(1.+2.*u); /* tidally-modified centrifugal radius */
     *rc         = sqrt(rc2);
     *drc_dr     = r/(*rc)*(1.-a02*u3);
     *d2rc_dr2   = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1.-a02*u3)+2.*a02*u3);
-#if (0)
-    /* NO spin-spin-tidal couplings */
-    double rc2 = r2;
-    rc = r;
-    drc_dr = 1;
-    d2rc_dr2 = 0;
 #endif
   } else {
     /*
@@ -417,9 +423,9 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
     *drc_dr     = r/(*rc)*(1.+aK2*(-alphanu2*u3 ));
     *d2rc_dr2   = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1.-alphanu2*aK2*u3)+ 2.*alphanu2*aK2*u3);
     */
-    /* optimized implementation, avoid 1/aK2 */
+    /* Following implementation is regular (avoids 1/aK2) */
     double X12 = sqrt(1.-4.*nu);   
-    double ff  = 1.25; // 5/4
+    double ff  = 1.25; // = 5/4
     double tmp = (ff + ff*X12 + 0.5*nu);
     double aK2_alphanu2 = aK2 + 0.5*( - tmp*(at2*at2* + at1*at1) + at1*at2*(-2.+nu));
     double rc2 = r2 + aK2 + 2.*aK2_alphanu2*u;
