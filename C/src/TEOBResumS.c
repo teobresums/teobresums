@@ -50,7 +50,7 @@ int main (int argc, char* argv)
   par_db_write_file(strcat(soutdir,"/params.txt"));
 
   /** Switch to mass-rescaled geometric units (if needed)*/
-  const double M = par_get_d("M"); /* Msun */ 
+  double M = par_get_d("M"); /* Msun */ 
   const double f0 = par_get_d("initial_frequency");
   double time_unit_fact = 1;
   double r0;
@@ -75,11 +75,12 @@ int main (int argc, char* argv)
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
   Waveform_lm *hlm; /* h_lm */ 
-  Waveform_lm_t hlm_t;
+  Waveform_lm_t *hlm_t;
   Waveform_lm *hlm_nqc; /* NQC */
 
   Dynamics_alloc (&dyn, size, strcat(soutdir,"/dyn.txt"));
   Waveform_lm_alloc (&hlm, size, strcat(soutdir,"/hlm.txt")); 
+  Waveform_lm_t_alloc (&hlm_t);
 
   /** Set useful pars/vars */
   const double q    = par_get_d("q");
@@ -125,14 +126,14 @@ int main (int argc, char* argv)
     p_eob_dyn_rhs = &eob_dyn_rhs;
     eob_dyn_ic(r0, dyn, dyn->y0);
   }
-  gsl_odeiv2_system sys = {rhs, NULL , EOB_EVOLVE_NVARS, dyn};
+  gsl_odeiv2_system sys = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
   
   /** Initial conditions: t, r, phi, prstar, pphi */
-  dyn->t = 0.0;
+  dyn->t                    = 0.;
   dyn->y[EOB_EVOLVE_RAD]    = dyn->y0[EOB_ID_RAD];
   dyn->y[EOB_EVOLVE_PHI]    = 0.;
   dyn->y[EOB_EVOLVE_PRSTAR] = dyn->y0[EOB_ID_PRSTAR];
-  dyn->y[EOB_EVOLVE_PPHI]    = dyn->y0[EOB_ID_PPH];
+  dyn->y[EOB_EVOLVE_PPHI]   = dyn->y0[EOB_ID_PPHI];
 
   /** Final BH */
   if (!(dyn->use_tidal)) {
@@ -190,7 +191,7 @@ int main (int argc, char* argv)
     
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
       /* Uniform timestepping */
-      dyn->ti = dyn->t + dyn->dy;
+      dyn->ti = dyn->t + dyn->dt;
       STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
       if (STATUS != GSL_SUCCESS) {
 	printf ("ODE solver failed. Error = %d\n", STATUS);
@@ -244,8 +245,6 @@ int main (int argc, char* argv)
     dyn->store = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = 0;
-    
-    //23.02.2018 - SB arrived here. Need to decide the arguments of this routine.
     eob_wav_hlm(dyn, hlm_t); 
    
     /** Update size and push arrays (if needed) */
@@ -263,7 +262,7 @@ int main (int argc, char* argv)
       hlm->phase[k][iter] = hlm_t->phase[k]; 
     }
     if (store_dynamics) {
-      dyn->time[iter] = t;
+      dyn->time[iter]             = dyn->t; //FIXME: Is this current time?
       dyn->data[EOB_RAD][iter]    = dyn->r;
       dyn->data[EOB_MOMG][iter]   = dyn->Omg;
       dyn->data[EOB_PPHI][iter]   = dyn->pphi;
@@ -287,12 +286,12 @@ int main (int argc, char* argv)
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-	dyn->t_stop            = dyn->t + 4.*dt;
+	dyn->t_stop            = dyn->t + 4.*dyn->dt;
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }
     } else {
-      if (t >= t_stop) {
+      if (dyn->t >= dyn->t_stop) {
 	dyn->ode_stop = true;
       }
     }
@@ -311,7 +310,7 @@ int main (int argc, char* argv)
   /** Uniform grid */
   if ((!use_tidal) || (interp_uniform_grid)) {
 
-    Waveform *hlm_vecg; 
+    Waveform_lm *hlm_vecg; 
     Dynamics *dyn_vecg; 
   
     /* Build uniform grid of width dt and alloc tmp memory */
@@ -324,7 +323,7 @@ int main (int argc, char* argv)
     
     int i;    
     for (i = 0; i < size_vecg; i++) {
-      hlm_vecg->time[i] = i*dt;
+      hlm_vecg->time[i] = i*dyn->dt;
     }
 
     /* Interpolate on uniform grid */
@@ -348,7 +347,7 @@ int main (int argc, char* argv)
       Dynamics_alloc(&dyn_vecg, size_vecg, "dyn_vecg");
 
       for (i = 0; i < size_vecg; i++) {
-	dyn_vecg->time[i] = i*dt;
+	dyn_vecg->time[i] = i*dyn->dt;
       }
       
       for (k = 0; k < EOB_DYNAMICS_NVARS; k++) {
@@ -373,7 +372,7 @@ int main (int argc, char* argv)
     Waveform_lm_alloc (&hlm_nqc, size, strcat(soutdir,"/hlm_nqc.txt"));
 
     /** Compute NQC corrections */
-    eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, dyn, hlm_nqc);
+    eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, hlm_nqc);
 
     /** Extend arrays */
     size += par_get_i("ringdown_extend_array");
@@ -406,8 +405,6 @@ int main (int argc, char* argv)
   Waveform_alloc (&hpc, size, "hpc");
   
   /** Scale to physical units (if necessary) */
-  const double M = par_get_d("M");
-  const double nu = par_get_d("nu");
   const double distance = par_get_d("distance");
   double amplitude_prefactor = 1.;    
   if (!(par_get_i("use_geometric_units"))) {
@@ -419,10 +416,10 @@ int main (int argc, char* argv)
   const double iota = par_get_d("inclination");
   
   /** Computation of (h+,hx) */
-  eob_compute_hpc(&hlm, nu, M, distance, amplitude_prefactor, psi, iota, &hpc);
+  compute_hpc(&hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
     
   /** Output */
-  Waveform_lm_output (hpc);
+  Waveform_output (hpc);
   if (par_get_i("output_multipoles"))
     Waveform_lm_output (hlm);
   if (par_get_i("output_dynamics")) 
@@ -431,6 +428,7 @@ int main (int argc, char* argv)
   /** Free memory */
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);
+  Waveform_lm_t_free (hlm_t);
   Waveform_free (hpc);
   eob_free_params();
 

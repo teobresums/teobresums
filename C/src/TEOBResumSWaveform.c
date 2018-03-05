@@ -20,7 +20,7 @@
 #include "TEOBResumS.h"
 
 /** Main routine for factorized EOB waveform */
-void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, double Omega, double ddotr, double H, double Heff, double jhat, double rw, Dynamics *dyn, Waveform_lm_t *hlm)
+void eos_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 {
 
   const double nu = dyn->nu;  
@@ -36,6 +36,19 @@ void eos_wav_hlm(double t, double phi, double r, double pph, double prstar, doub
   const int usespins = dyn->use_spins;
   const int usespeedytail = par_get_i("use_speedytail");
   
+  const double t   = dyn->t;
+  const double phi = dyn->phi; 
+  const double r   = dyn->r;
+  const double pph = dyn->pph;
+  const double prstar = dyn->prstar;
+  const double Omega  = dyn->Omega;
+  const double ddotr  = dyn-> ddotr;
+  const double H      = dyn->H;
+  const double Heff   = dyn->Heff;
+  const double jhat   = dyn->jhat;
+  const double rw     = dyn->r_omega;
+
+
   /** Source term */
   double source[] = {
     jhat,Heff,

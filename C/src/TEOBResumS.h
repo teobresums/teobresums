@@ -108,7 +108,7 @@ enum{
 /** Index list of EOB variables for initial data */
 enum{
   EOB_ID_RAD, 
-  EOB_ID_PPH,
+  EOB_ID_PPHI,
   EOB_ID_PRSTAR,
   EOB_ID_PR,
   EOB_ID_J,
@@ -121,7 +121,7 @@ enum{
 enum{
   EOB_RAD, 
   EOB_PHI,
-  EOB_PPH,
+  EOB_PPHI,
   EOB_MOMG,
   EOB_DDOTR,
   EOB_PRSTAR,
@@ -207,8 +207,10 @@ typedef struct tagWaveform_lm
 /** Multipolar waveform at given time, comes at handy */
 typedef struct tagWaveform_lm_t
 {
+  double time;
   double ampli[KMAX]; /* amplitude */
   double phase[KMAX]; /* phase */
+  int kmask[KMAX]; /* mask for multipoles */
 }  Waveform_lm_t;
 
 /** Dynamics data type */
@@ -294,6 +296,8 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
 void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_free (Waveform_lm *wav);
+void Waveform_lm_t_alloc (Waveform_lm_t **wav);
+void Waveform_lm_t_free (Waveform_lm_t *wav);
 void Dynamics_alloc (Dynamics **dyn, int size, const char *name);
 void Dynamics_push (Dynamics **dyn, int size);
 void Dynamics_output (Dynamics *dyn);
@@ -351,7 +355,7 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
 double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
-void eob_wav_hlm(double t, double phi, double r, double pph, double prstar, double Omega, double ddotr, double H, double Heff, double jhat, double rw, Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm);
 void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);

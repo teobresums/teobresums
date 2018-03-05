@@ -419,6 +419,21 @@ void Waveform_lm_free (Waveform_lm *wav)
   free(wav);
 }
 
+/** Multipolar waveform (complex) */
+void Waveform_lm_t_alloc (Waveform_lm_t **wav)
+{
+  *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
+  if (wav == NULL)
+    errorexit("Out of memory");
+  (*wav)->time = 0.;
+  set_multipolar_idx_mask((*wav)->kmask, KMAX); 
+}
+
+void Waveform_lm_t_free (Waveform_lm_t *wav)
+{
+  free(wav);
+}
+
 /** Dynamics */
 void Dynamics_alloc (Dynamics **dyn, int size, char *name)
 {

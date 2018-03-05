@@ -109,7 +109,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   }
     
   y_init[EOB_ID_RAD]    = r[N-1];
-  y_init[EOB_ID_PPH]    = pph[N-1];
+  y_init[EOB_ID_PPHI]   = pph[N-1];
   y_init[EOB_ID_PRSTAR] = prstar[N-1];
   y_init[EOB_ID_PR]     = pr[N-1];
   y_init[EOB_ID_J]      = j[N-1];
@@ -292,7 +292,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 #endif
 
   y_init[EOB_ID_RAD]    = r[N-1];
-  y_init[EOB_ID_PPH]    = pph[N-1];
+  y_init[EOB_ID_PPHI]   = pph[N-1];
   y_init[EOB_ID_PRSTAR] = prstar[N-1];
   y_init[EOB_ID_PR]     = pr[N-1];
   y_init[EOB_ID_J]      = j[N-1];
