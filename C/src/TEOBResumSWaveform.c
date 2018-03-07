@@ -21,7 +21,7 @@
 #include "TEOBResumS.h"
 
 /** Main routine for factorized EOB waveform */
-void eos_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
+void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 {
 
   const double nu = dyn->nu;  

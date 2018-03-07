@@ -437,8 +437,9 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
 }
 
 /** Root function to compute light-ring */
-double eob_dyn_fLR(double r, Dynamics *dyn)
-{    
+double eob_dyn_fLR(double r, void  *params)
+{
+  Dynamics *dyn = params;     
   double A,B,dA,d2A,dB;
   if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
   else                eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
@@ -496,8 +497,9 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
 
 /** Root function to compute LSO */
 //FIXME: THIS IS FOR NOSPIN
-double eob_dyn_fLSO(double r, Dynamics *dyn)
-{    
+double eob_dyn_fLSO(double r, void  *params)
+{
+  Dynamics *dyn = params;    
   double A,B,dA,d2A,dB;
   //if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
   //else                

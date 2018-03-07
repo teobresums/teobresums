@@ -26,7 +26,7 @@
  * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
  */
 
-/** Following macros can be set during compilation for special feats*/
+/** Following macros can be set during compilation for special feats */
 #ifndef VERBOSE
 #define VERBOSE 0 /* verbose mode is off by default */
 #endif
