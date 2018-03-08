@@ -30,19 +30,19 @@ Special and minimal data structures are defined together with routines to alloca
 
 ## Development timeline
 
-|File                           | Description               | Notes                                                         |
-|-------------------------------|---------------------------|---------------------------------------------------------------|
-| TEOBResumSUtils.c             | Utilities                 | 2017.11.07 Compiles                                           |
-| TEOBResumSPars.c              | parameters and pars I/O   | 2017.11.07 Verified correctness (with standalone test)        |
-| TEOBResumSFits.c              | Fits (final BH, NQC, etc) | 2017.11.07 Compiles                                           |
-| TEOBResumSInitialConditions.c | Initial conditions        | 2018.02.13 Compiles                                           |
-|                                                          || 2018.02.26 Implemented post-post-circular conditions          | 
-| TEOBResumSMetric.c            | Metric functions          | 2018.02.09 Compiles, verified correctness (with C++ master)   |     
-| TEOBResumSDynamics            | r.h.s. for dynamics       | 2018.02.12 Compiles                                           | 
-| TEOBResumSFlux.c              | Flux                      | 2017.11.07 Compiles                                           | 
-| TEOBResumSWaveform.c          | Waveform                  | 2017.12.02 Compiles                                           |
-| TEOBResumS.c                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
-[Debug LOG. Please keep update with main development milestones]
+|File                             | Description               | Notes                                                         |
+|---------------------------------|---------------------------|---------------------------------------------------------------|
+| `TEOBResumSUtils.c`             | Utilities                 | 2017.11.07 Compiles                                           |
+| `TEOBResumSPars.c`              | parameters and pars I/O   | 2017.11.07 Verified correctness (with standalone test)        |
+| `TEOBResumSFits.c`              | Fits (final BH, NQC, etc) | 2017.11.07 Compiles                                           |
+| `TEOBResumSInitialConditions.c` | Initial conditions        | 2018.02.13 Compiles                                           |
+|                                                            || 2018.02.26 Implemented post-post-circular conditions          | 
+| `TEOBResumSMetric.c`            | Metric functions          | 2018.02.09 Compiles, verified correctness (with C++ master)   |     
+| `TEOBResumSDynamics.c`          | r.h.s. for dynamics       | 2018.02.12 Compiles                                           | 
+| `TEOBResumSFlux.c`              | Flux                      | 2017.11.07 Compiles                                           | 
+| `TEOBResumSWaveform.c`          | Waveform                  | 2017.12.02 Compiles                                           |
+| `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
+[Debug LOG. Please keep update with development milestones]
 
 ## TODOLIST
 
