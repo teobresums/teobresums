@@ -35,8 +35,8 @@ Special and minimal data structures are defined together with routines to alloca
 | TEOBResumSUtils.c             | Utilities                 | 2017.11.07 Compiles                                           |
 | TEOBResumSPars.c              | parameters and pars I/O   | 2017.11.07 Verified correctness (with standalone test)        |
 | TEOBResumSFits.c              | Fits (final BH, NQC, etc) | 2017.11.07 Compiles                                           |
-| TEOBResumSInitialConditions.c | Initial conditions        | 2018.02.13 Compiles<br>
-                                                              2018.02.26 Implemented post-post-circular conditions          | 
+| TEOBResumSInitialConditions.c | Initial conditions        | 2018.02.13 Compiles                                           |
+|                                                          || 2018.02.26 Implemented post-post-circular conditions          | 
 | TEOBResumSMetric.c            | Metric functions          | 2018.02.09 Compiles, verified correctness (with C++ master)   |     
 | TEOBResumSDynamics            | r.h.s. for dynamics       | 2018.02.12 Compiles                                           | 
 | TEOBResumSFlux.c              | Flux                      | 2017.11.07 Compiles                                           | 
