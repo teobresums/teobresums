@@ -85,7 +85,7 @@ void par_file_parse_merge (const char *fname)
   config_setting_t * csroot1 = config_root_setting(cf1);
   config_setting_t * cs1, * array;
   int np = config_setting_length(csroot1);
-int i, type, n;
+  int i, type, n;
   char key[STRLEN];
   for (i = 0; i < np; i++) {
     cs1  = config_setting_get_elem(csroot1, i);
@@ -106,7 +106,7 @@ int i, type, n;
 	par_set_arrayi (key, array, n);
 	free(array);
       } 
-    } else errorexit("unkown parameter type");
+    } else errorexit("unkown parameter type.");
   }
   /* free extra cfg */
   config_destroy(cf1);
@@ -284,11 +284,12 @@ void par_set_arrayd (const char *key, double *array, int n)
 /** Set parameters */
 void eob_set_params(char *s, int n, int pr)
 {
-
   /* init db */
+  if (pr) printf("init pars db...\n");
   par_db_init ();
 
   /* Set default values */
+  if (pr) printf("set default pars...\n");
   par_db_default ();
 
   //if (mode==INPUT_FILE) {

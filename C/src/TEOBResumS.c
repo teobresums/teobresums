@@ -66,7 +66,7 @@ int main (int argc, char* argv[])
   if (argc == 2) {
     printf(TEOBResumS_Info);
     print_date_time();
-    eob_set_params(argv[0], argc, VERBOSE);
+    eob_set_params(argv[1], argc, VERBOSE);
   } else {
     TEOBResumS_Usage(argv[0]);
     exit(OK);
