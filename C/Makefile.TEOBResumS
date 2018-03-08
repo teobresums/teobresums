@@ -25,7 +25,9 @@ LIB=$(LIBD)/lib$(NAME).a
 CC=gcc
 CFLAGS=-g -std=c99 `gsl-config --cflags`
 #CFLAGS=-O3 -std=c++11 
-#CFLAGS += -DVERBOSE=1 # turn on verbose mode
+CFLAGS += -DVERBOSE=1 # turn on verbose mode
+#CFLAGS += -DPOSTPOSTCIRCULAR=0 # use post-circular initial conditions
+#CFLAGS += -DEXCLUDESPINSPINTIDES=1 # exclude spin^2-tidal couplings
 LFLAGS=`gsl-config --libs`
 LDLFLAGS=-lgsl -lgslcblas -lm -lconfig
 

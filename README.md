@@ -25,10 +25,18 @@ GNU General Public License for more details.
 ### Compilation
 
 ```
+$ export TEOBRESUMS=/PATH/TO/teobresums/C/
+$ cd $TEOBRESUMS
 $ make -f Makefile.TEOBResumS
 ```
 
 ## Usage
+
+```
+$ export TEOBRESUMS=/PATH/TO/teobresums/C/
+$ cd $TEOBRESUMS
+$ ./TEOBResumS.x
+```
 
 examples ...
 

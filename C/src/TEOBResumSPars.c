@@ -285,6 +285,8 @@ void par_set_arrayd (const char *key, double *array, int n)
 void eob_set_params(char *s, int n, int pr)
 {
 
+  //printf("%s\n",s);
+
   /* Set default values */
   par_db_default ();
 

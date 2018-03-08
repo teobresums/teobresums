@@ -52,7 +52,7 @@
 #define OK 0 /** generic go int */
 #define STRLEN 128 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
-#define TEOBResumS_Usage(x) {printf("%s\nUSAGE:\n\t%s <parfile>\n", TEOBResumS_Info, x);} 
+#define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);} 
 #ifndef PR /** Flag for print option (control at compiling time) */
 #define PR 0 
 #endif

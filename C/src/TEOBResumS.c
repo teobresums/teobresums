@@ -58,17 +58,17 @@ const int MINDEX[KMAX] = {
     1,2,3,4,5,6,7,8};
 
 /** TEOBResumS main */
-int main (int argc, char* argv) 
+int main (int argc, char* argv[]) 
 {
   char soutdir[STRLEN];
 
   /** Input parameters */
-  if (argc == 1) {
+  if (argc == 2) {
     printf(TEOBResumS_Info);
     print_date_time();
-    eob_set_params(argv, argc, VERBOSE);
+    eob_set_params(argv[0], argc, VERBOSE);
   } else {
-    TEOBResumS_Usage(&argv[0]);
+    TEOBResumS_Usage(argv[0]);
     exit(OK);
   }
 
