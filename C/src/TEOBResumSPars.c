@@ -285,13 +285,15 @@ void par_set_arrayd (const char *key, double *array, int n)
 void eob_set_params(char *s, int n, int pr)
 {
 
-  //printf("%s\n",s);
+  /* init db */
+  par_db_init ();
 
   /* Set default values */
   par_db_default ();
 
   //if (mode==INPUT_FILE) {
   /* Parse input parfile */
+  if (pr) printf("parfile: %s\n",s);
   par_file_parse_merge (s);
   //} 
   //if (mode==COMMAND_LINE) {
