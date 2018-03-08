@@ -8,11 +8,11 @@ Last updated: 2018.03.07
 
 ### Parameters
 
- * Parameters are amnaged with specific and minimal routine based on libconfig.
- * Pars are stored in a data structure and can be read/written in all the place of the code.
+ * Parameters are managed with specific and minimal routines based on libconfig.
+ * Pars are stored in a data structure and can be read/written in all the places of the code using the proper routines.
  * For safety, change and write pars only in the main. Do otherwise only if strictly necessary.
  * Some pars are stored in some specific data structure (see below) for quick access. Be careful and do not abuse of this.  
- * The code is initialized with a parameter file only.
+ * The code is initialized with a parameter file. Should be kept the only option.
  * Default pars are listed in `par/default.par`. Do not remove or overwrite this file; other example files can be found in the same dir.
 
 ### Data structures
@@ -23,7 +23,7 @@ Special and minimal data structures are defined together with routines to alloca
  * `Waveform` Waveform data type for h+, hx.
  * `Waveform_lm` Multipolar waveform data type.
  * `Waveform_lm_t` Multipolar waveform data type at given time, comes at handy for given applications.
- * If you need to start to understand what is in the code, the reference files should be `TEOBResumS.h`
+ * If you need to start to understand what is in the code, the reference file is `TEOBResumS.h`
 
 ### 
 
