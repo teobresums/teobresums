@@ -292,7 +292,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             /** Waveform computation*/
             vector<gsl_complex> h_form = s_waveform(t,y,&params, Omg, Omg_orb, A, ddotr);
 
-            if (std::isfinite(h_form[1].dat[1]))
+            if (std::isfinite(h_form[1].dat[0]) && std::isfinite(h_form[1].dat[1]))
             {
                 /** Append dynamics and waveform to vectors */
                 hlm_rad_vec.push_back(h_form[lm].dat[0]);
