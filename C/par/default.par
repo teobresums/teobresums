@@ -89,6 +89,8 @@ interp_uniform_grid = 0 # interpolate on uniform grid ?
 
 compute_LR = 1 # calculate LR ?
 compute_LS0 = 1 # calculate LSO ?
+compute_LR_guess = 3.
+compute_LSO_guess = 6. 
 
 output_dir = "./data/" # output dir
 output_multipoles = 1 # output multipoles
