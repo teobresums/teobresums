@@ -75,8 +75,7 @@
 #define SQ(a) ((a)*(a))
 #define DEQUAL(a,b,eps) (fabs((a)-(b))<(eps)) /** double compare */
 #define DUNEQUAL(a,b,eps) (fabs((a)-(b))>(eps))
-#define STREQUAL(s,t) ((strcmp((s),(t))==0)) /** string compare */
-  
+#define STREQUAL(s,t) ((strcmp((s),(t))==0)) /** string compare */  
 #define SWAPTRS(a,b)   \
   ({		    \
     typeof(a) temp; \
@@ -84,6 +83,10 @@
     a = b;	    \
     b = temp;	    \
   })
+
+#define DBGPR(s) printf("DEBUG: %s\n",s);
+#define DBGSTOP errorexit("DEBUG: STOP");
+
 
 /* Useful constants */
 #define Pi 3.1415926535897932384626433832795028

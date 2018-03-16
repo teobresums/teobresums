@@ -285,16 +285,16 @@ void par_set_arrayd (const char *key, double *array, int n)
 void eob_set_params(char *s, int n, int pr)
 {
   /* init db */
-  if (pr) printf("init pars db...\n");
+  if (pr) printf("Init pars db...\n");
   par_db_init ();
 
   /* Set default values */
-  if (pr) printf("set default pars...\n");
+  if (pr) printf("Set default pars...\n");
   par_db_default ();
 
   //if (mode==INPUT_FILE) {
   /* Parse input parfile */
-  if (pr) printf("parfile: %s\n",s);
+  if (pr) printf("Set pars from parfile: %s\n",s);
   par_file_parse_merge (s);
   //} 
   //if (mode==COMMAND_LINE) {
@@ -305,11 +305,12 @@ void eob_set_params(char *s, int n, int pr)
   //errorexit("unknown mode for input parameters mode ");
   //}
   
+  //par_db_screen ();  
+
   /* Set auxiliary parameters */
   double dt = par_get_d("dt");
   double M = par_get_d("M");
   double fmin = par_get_d("initial_frequency");
-  
   double q =  par_get_d("q");  
   double nu = q_to_nu(q);
   double X1 = nu_to_X1(nu);
@@ -425,6 +426,7 @@ void eob_set_params(char *s, int n, int pr)
        compute r0 from the initial GW frequency in geometric units and mass rescaled 
        reset sample rate using dt
     */
+    if (pr) printf("Assume geometric units for pars values\n");
     par_set_d("r0", pow(fmin*Pi, -2./3.) );
     par_set_d("srate", 1./dt );
     par_set_d("distance", 1. );
@@ -434,6 +436,7 @@ void eob_set_params(char *s, int n, int pr)
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz 
     */
+    if (pr) printf("Assume physical units for pars values\n");
     dt = time_units_conversion(M, dt);
     if (DUNEQUAL(dt,1./par_get_d("srate"),1e-12)) {
       dt  = 1./par_get_d("srate");
@@ -486,6 +489,7 @@ int main (int argc, char* argv[])
   /* parse other params */
   par_file_parse_merge ("../par/test.par");
   /* more operations */
+  printf("get-test: dt = %e\n",par_get_d("dt"));
   printf("get-test: size = %d\n",par_get_i("size"));
   par_set_i("size",20);
   printf("set-test: size = %d (=20)\n",par_get_i("size"));
