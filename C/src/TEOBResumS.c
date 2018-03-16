@@ -227,7 +227,6 @@ int main (int argc, char* argv[])
   while (dyn->ode_stop) {
     if (VERBOSE) printf("iter %09d\n",iter);
 
-
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
       /* Uniform timestepping */
       dyn->ti = dyn->t + dyn->dt;
