@@ -5,7 +5,7 @@ use_geometric_units = 1 # use geometric units for I/O ?
 q = 1. # mass ratio
 chi1 = 0. # dimensioneless spin 1 z-component 
 chi2 = 0. # dimensioneless spin 2 z-component 
-initial_frequency = 0.001
+initial_frequency = 0.004 # initial GW freq
 size = 4 # size of the arrays (chunks, dynamically extended)
 output_lm = [1,2,3,4]
 

@@ -40,7 +40,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
 
   /** Build a small grid */
 #define N (6)
-  const double dr = 1.e-8;
+  const double dr = 1e-8;
     
   double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
@@ -85,7 +85,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
       H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff,
       jhat,H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff};
     
-    Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn);    
+    Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn); //THIS ROUTINE NEEDS CHECKING   
         
     /** Radial momentum conjugate to r*: post-circular ID  */
     Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
