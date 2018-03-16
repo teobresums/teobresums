@@ -437,14 +437,17 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
 }
 
 /** Root function to compute light-ring */
+//TODO: THIS IS FOR NOSPIN
 double eob_dyn_fLR(double r, void  *params)
 {
   Dynamics *dyn = params;     
   double A,B,dA,d2A,dB;
-  if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
-  else                eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
+  //if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
+  //else
+  eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
+  double u = 1./r;
   double dA_u = (-dA)*SQ(r);
-  return (A +(0.5*dA_u)/r);
+  return A + 0.5 * u * dA_u;
 }
 
 /** Root finder for adiabatic light-ring */
@@ -456,7 +459,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   const double epsrel = 1e-10; 
   const gsl_root_fsolver_type *T;
   double x;
-  double x_lo = 0.1, x_hi = 15.;
+  double x_lo = 0.1, x_hi = 6.;
   
   gsl_root_fsolver *s;
   gsl_function F;
@@ -498,7 +501,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
 }
 
 /** Root function to compute LSO */
-//FIXME: THIS IS FOR NOSPIN
+//TODO: THIS IS FOR NOSPIN
 double eob_dyn_fLSO(double r, void  *params)
 {
   Dynamics *dyn = params;    
@@ -508,8 +511,11 @@ double eob_dyn_fLSO(double r, void  *params)
   eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
   double u = 1./r;
   double u2  = SQ(u);
-  double d2B = d2A*u2 + 4.*u*dA+2*A;
-  return ( dA*d2B - d2A*dB );
+  double dA_u = (-dA)*SQ(r);
+  double d2A_u = d2A*SQ(r)*SQ(r) + 2*dA*SQ(r)*r;
+  dB = u2*dA_u + 2.*A*u;
+  double d2B = d2A_u*u2 + 4.*u*dA_u + 2*A;
+  return ( dA_u*d2B - d2A_u*(dB) );
 }
 
 /** Root finder for adiabatic LSO */
