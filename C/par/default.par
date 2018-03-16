@@ -5,7 +5,7 @@
 # physical input pars
 # ----------------------
 
-M = 80. # total binary mass
+M = 1. # total binary mass
 q = 1. # mass ratio
 
 chi1 = 0. # dimensioneless spin 1 z-component 
@@ -16,6 +16,7 @@ inclination = 0.
 coalescence_angle = 0.
 polarisation = 0.
 
+r0 = 0.	
 initial_frequency = 10.
 
 LambdaAl2 = 0. # Tidal parameter Lambda for star A ell=2
@@ -75,14 +76,14 @@ rLSO = 0. # radius of last stable orbit
 # options
 # ----------------------
 
-
+use_geometric_units = 1 # use geometric units for I/O ?
 
 use_tidal = 0 # use tides ?
 use_spins = 0 # use spins ?
-use_speedytail = 1  # use special routine to speed up tail computation ?
-use_Yagi_fits = 0 # use Yagu fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
 
-use_geometric_units = 1 # use geometric units for I/O ?
+use_speedytail = 1  # use special routine to speed up tail computation ?
+
+use_Yagi_fits = 0 # use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
 
 interp_uniform_grid = 0 # interpolate on uniform grid ?
 
