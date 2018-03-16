@@ -63,8 +63,8 @@ bar_alph3_2 = 0. #
 khatAl2 = 0. #
 khatBl2 = 0. #
 
-rLR_tides = 0. # radius of light-ring for NNLO tidal model
-pGSF_tides = 0. # p-power in GSF tidal potential model
+rLR_tidal = 0. # radius of light-ring for NNLO tidal model
+pGSF_tidal = 0. # p-power in GSF tidal potential model
 
 BH_final_mass = 0. # final BH mass
 BH_final_spin = 0. # final BH spin
