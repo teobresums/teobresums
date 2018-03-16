@@ -2,7 +2,7 @@
 
 LOG file for TEOBResumS `development` branch
 
-Last updated: 2018.03.07
+Last updated: 2018.03.16
 
 ## Brief introduction for developers
 
@@ -42,6 +42,8 @@ Special and minimal data structures are defined together with routines to alloca
 | `TEOBResumSFlux.c`              | Flux                      | 2017.11.07 Compiles                                           | 
 | `TEOBResumSWaveform.c`          | Waveform                  | 2017.12.02 Compiles                                           |
 | `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
+|                                                            || 2017.03.17 Error at LR/LSO computation for BBH q=1 nospin run |
+
 [Debug LOG. Please keep update with development milestones]
 
 ## TODOLIST
