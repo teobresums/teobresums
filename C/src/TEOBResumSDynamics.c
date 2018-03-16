@@ -467,7 +467,8 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   gsl_function F;
   F.function = &eob_dyn_fLR;
   F.params = dyn;
-  T = gsl_root_fsolver_bisection;
+  //T = gsl_root_fsolver_bisection;
+  T = gsl_root_fsolver_brent;
   s = gsl_root_fsolver_alloc (T);
   gsl_root_fsolver_set (s, &F, x_lo, x_hi);
   
@@ -537,7 +538,8 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
   gsl_function F;
   F.function = &eob_dyn_fLSO;
   F.params = dyn;
-  T = gsl_root_fsolver_bisection;
+  //T = gsl_root_fsolver_bisection;
+  T = gsl_root_fsolver_brent;
   s = gsl_root_fsolver_alloc (T);
   gsl_root_fsolver_set (s, &F, x_lo, x_hi);
   
