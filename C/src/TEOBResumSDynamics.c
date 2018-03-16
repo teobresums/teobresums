@@ -459,8 +459,10 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   const double epsrel = 1e-10; 
   const gsl_root_fsolver_type *T;
   double x;
-  double x_lo = 0.1, x_hi = 6.;
-  
+  double x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
+  double x_hi = 3.1; // 3 nu = 0
+  if (dyn->use_tidal) x_hi = 18.; 
+
   gsl_root_fsolver *s;
   gsl_function F;
   F.function = &eob_dyn_fLR;
@@ -527,7 +529,9 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
   const double epsrel = 1e-10; 
   const gsl_root_fsolver_type *T;
   double x;
-  double x_lo = 3., x_hi = 6.;
+  double x_lo = 4.5; // 4.532648e+00 nu= 1/4
+  double x_hi = 6.2; // 6 nu=0 
+  if (dyn->use_tidal) x_hi = 36.; 
   
   gsl_root_fsolver *s;
   gsl_function F;
