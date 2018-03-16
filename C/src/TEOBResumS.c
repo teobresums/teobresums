@@ -144,7 +144,7 @@ int main (int argc, char* argv[])
     ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
     par_set_d("rLSO", dyn->rLSO);
   }
-  
+
   /** Computing the initial conditions */
   int (*p_eob_dyn_rhs)();
   if (use_spins) {
