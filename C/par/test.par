@@ -1,0 +1,7 @@
+# parfile to test overwriting of default values 
+# key = val # description
+
+M = 1. # total binary mass
+q = 1. # mass ratio
+size = 4 # size of the arrays (chunks, dynamically extended)
+output_lm = [1,2,3,4]

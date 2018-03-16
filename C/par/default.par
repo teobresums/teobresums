@@ -17,7 +17,7 @@ coalescence_angle = 0.
 polarisation = 0.
 
 r0 = 0.	
-initial_frequency = 10.
+initial_frequency = 0.001
 
 LambdaAl2 = 0. # Tidal parameter Lambda for star A ell=2
 LambdaBl2 = 0.
