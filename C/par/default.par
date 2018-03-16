@@ -81,7 +81,7 @@ use_geometric_units = 1 # use geometric units for I/O ?
 use_tidal = 0 # use tides ?
 use_spins = 0 # use spins ?
 
-use_speedytail = 1  # use special routine to speed up tail computation ?
+use_speedytail = 1 # use special routine to speed up tail computation ?
 
 use_Yagi_fits = 0 # use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
 
