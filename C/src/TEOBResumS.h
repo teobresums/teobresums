@@ -53,13 +53,6 @@
 #define STRLEN 128 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
 #define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);} 
-#ifndef PR /** Flag for print option (control at compiling time) */
-#define PR 0 
-#endif
-#ifndef DEBUG /** Flag for debug option(control at compiling time) */
-#define DEBUG 0 
-#endif
-
 #define SIGN(x,y) ((y) >= 0.0 ? fabs(x) : -fabs(x)) 
 #define typeof __typeof__
 #define MAX(a,b)                \
@@ -83,7 +76,8 @@
     a = b;	    \
     b = temp;	    \
   })
-
+#define PRFORM(s,x) {printf("%-40s = %e\n", s,x);}//TODO: handle also int
+/* helpers for debug */
 #define DBGPR(s) printf("DEBUG: %s\n",s);
 #define DBGSTOP errorexit("DEBUG: STOP");
 

@@ -109,9 +109,9 @@ dt = 0.5 # timestep, used if input is given in geometric unit, reset based on sr
 size = 1 # size of the arrays (chunks, dynamically extended)
 ringdown_extend_array = 500 # grid points to extend arrays for ringdown attachment
 
-ode_tstep = 0. # specify ODE solver timestep 0,1,2 -> ODE_TSTEP_UNIFORM,ODE_TSTEP_ADAPTIVE,ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO
+ode_timestep = "uniform" # specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
 ode_abstol = 1e-13 # ODE solver absolute accuracy
 ode_reltol = 1e-11 # ODE solver relative accuracy
 ode_t1 = 0.5 # ODE solver final time (max timestep) for ODE_TSTEP_ADAPTIVE
-ode_tmax = 1e9 # max integration time
+ode_tmax = 1e8 # max integration time
 ode_stop_at_radius = 2. # stop ODE integration at this radius (if > 0)

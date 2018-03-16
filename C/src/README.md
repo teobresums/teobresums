@@ -25,9 +25,6 @@ Special and minimal data structures are defined together with routines to alloca
  * `Waveform_lm_t` Multipolar waveform data type at given time, comes at handy for given applications.
  * If you need to start to understand what is in the code, the reference file is `TEOBResumS.h`
 
-### 
-
-
 ## Development timeline
 
 |File                             | Description               | Notes                                                         |
@@ -42,7 +39,9 @@ Special and minimal data structures are defined together with routines to alloca
 | `TEOBResumSFlux.c`              | Flux                      | 2017.11.07 Compiles                                           | 
 | `TEOBResumSWaveform.c`          | Waveform                  | 2017.12.02 Compiles                                           |
 | `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
-|                                                            || 2017.03.17 Error at LR/LSO computation for BBH q=1 nospin run |
+|                                                            || 2017.03.17 Error at LSO computation for BBH q=1 nospin run    |
+|                                                            || 2017.03.17 LR computation for BBH q=1 nospin run not correct  |
+|                                                            || 2017.03.17 Initial data not correct for BBH q=1 nospin run    |
 
 [Debug LOG. Please keep update with development milestones]
 
@@ -70,7 +69,10 @@ Special and minimal data structures are defined together with routines to alloca
  * Improve code documentation, especially in `TEOBResumS.h`
 
 
+## Frequent errors
 
+ * Error: unknown parameter  (/home/bernuzzi/Codes/teobresums/C/src/TEOBResumSPars.c, line
+ A parameter is probably undefined in the par/default.par or has wrong name/type. 
 
 
 

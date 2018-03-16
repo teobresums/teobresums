@@ -1460,7 +1460,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
       Omega_pk = Omega[j];
   }
   if (index_pk == size-1) {
-    if (PR) printf("No omega-maximum found.\n");
+    if (VERBOSE) printf("No omega-maximum found.\n");
     //index_pk = size - 4;
   }
   if (index_pk > size-4) {
@@ -1476,7 +1476,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     j--;
   }
   if (index_pk == -1) {
-    if (PR) printf("No omega-maximum found.\n");
+    if (VERBOSE) printf("No omega-maximum found.\n");
     index_pk = size - 4;
   }
   if (index_pk > size-4) {

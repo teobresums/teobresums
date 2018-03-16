@@ -452,6 +452,8 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
 {
   int status;
   int iter = 0, max_iter = 200;
+  const double epsabs = 0.; /* if converges, precision is |r-r*| = epsabs + epsrel r*  */
+  const double epsrel = 1e-10; 
   const gsl_root_fsolver_type *T;
   double x;
   double x_lo = 0.1, x_hi = 15.;
@@ -471,7 +473,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
       x      = gsl_root_fsolver_root (s);
       x_lo   = gsl_root_fsolver_x_lower (s);
       x_hi   = gsl_root_fsolver_x_upper (s);
-      status = gsl_root_test_interval (x_lo, x_hi, 0, 1e-10);
+      status = gsl_root_test_interval (x_lo, x_hi, epsabs, epsrel);
     }
   while (status == GSL_CONTINUE && iter < max_iter);
   gsl_root_fsolver_free (s);
@@ -515,9 +517,11 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
 {
   int status;
   int iter = 0, max_iter = 200;
+  const double epsabs = 0.; /* if converges, precision is |r-r*| = epsabs + epsrel r*  */
+  const double epsrel = 1e-10; 
   const gsl_root_fsolver_type *T;
   double x;
-  double x_lo = 0.1, x_hi = 15.;
+  double x_lo = 3., x_hi = 6.;
   
   gsl_root_fsolver *s;
   gsl_function F;
@@ -534,7 +538,7 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
       x      = gsl_root_fsolver_root (s);
       x_lo   = gsl_root_fsolver_x_lower (s);
       x_hi   = gsl_root_fsolver_x_upper (s);
-      status = gsl_root_test_interval (x_lo, x_hi, 0, 1e-10);
+      status = gsl_root_test_interval (x_lo, x_hi, epsabs, epsrel);
     }
   while (status == GSL_CONTINUE && iter < max_iter);
   gsl_root_fsolver_free (s);

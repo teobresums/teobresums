@@ -112,10 +112,10 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
     
-  if (PR) {
+  if (VERBOSE) {
     const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
     for (int i = 0; i < EOB_ID_NVARS; i++)
-      printf("%-20s = %e\n", y_init_var[i], y_init[i]);
+      PRFORM(y_init_var[i], y_init[i]);
   }
 
 }
@@ -297,7 +297,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
   
-  if (PR) {
+  if (VERBOSE) {
     const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
     for (int i = 0; i < EOB_ID_NVARS; i++)
       printf("%-20s = %e\n", y_init_var[i], y_init[i]);

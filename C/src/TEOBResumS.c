@@ -39,6 +39,10 @@
 #define EXCLUDESPINSPINTIDES 0 /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
+#ifndef DEBUG /** Global debug option */
+#define DEBUG 0 
+#endif
+
 /** Global vars, defined as external in header */
 const int LINDEX[KMAX] = {
     2,2,
@@ -138,13 +142,15 @@ int main (int argc, char* argv[])
   if (par_get_i("compute_LR")) {
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
     par_set_d("rLR", dyn->rLR);
+    if (VERBOSE) PRFORM("rLR",dyn->rLR);
   }
   if (par_get_i("compute_LSO")) {
     //TODO: LSO COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
     par_set_d("rLSO", dyn->rLSO);
+    if (VERBOSE) PRFORM("rLSO",dyn->rLSO);
   }
-
+  
   /** Computing the initial conditions */
   int (*p_eob_dyn_rhs)();
   if (use_spins) {
@@ -155,7 +161,7 @@ int main (int argc, char* argv[])
     eob_dyn_ic(r0, dyn, dyn->y0);
   }
   gsl_odeiv2_system sys = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
-  
+
   /** Initial conditions: t, r, phi, prstar, pphi */
   dyn->t                    = 0.;
   dyn->y[EOB_EVOLVE_RAD]    = dyn->y0[EOB_ID_RAD];
@@ -166,9 +172,12 @@ int main (int argc, char* argv[])
   /** Final BH */
   if (!(dyn->use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
-    if (PR) printf("BH_final_mass[Healy] = %e\nBH_final_spin[Healy] = %e",dyn->Mbhf,dyn->abhf);
     dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
-    if (PR) printf("BH_final_spin[JimenezForteza] = %e",dyn->abhf);
+    if (VERBOSE) {
+      PRFORM("BH_final_mass[Healy]",dyn->Mbhf); 
+      PRFORM("BH_final_spin[Healy]",dyn->abhf);
+      PRFORM("BH_final_spin[JimenezForteza]",dyn->abhf);
+    }
     par_set_d("BH_final_mass", dyn->Mbhf);
     par_set_d("BH_final_spin", dyn->abhf);
   }
@@ -191,19 +200,19 @@ int main (int argc, char* argv[])
   int j;
   for (j=0; j<ODE_TSTEP_NOPT; j++) {
     if (STREQUAL(par_get_s("ode_timestep"),ode_tstep_opt[j])) {
-      if (PR) printf("ode_timestep = %s\n",ode_tstep_opt[j]);
+      if (VERBOSE) printf("%-40s = %s\n","ode_timestep",ode_tstep_opt[j]);
       break;
     }
   }
   if (j==ODE_TSTEP_NOPT) {
-    if (PR) printf("ode_timestep '%s' undefined, set to default\n",par_get_s("ode_timestep"));
+    if (VERBOSE) printf("ode_timestep '%s' undefined, set to default\n",par_get_s("ode_timestep"));
     j = ODE_TSTEP_ADAPTIVE;
   }
   dyn->ode_timestep  = j;
   const int ode_tstep = dyn->ode_timestep;
 
   const double ode_abstol = par_get_d("ode_abstol");
-  const double ode_reltol = par_get_d("ode_relstol");
+  const double ode_reltol = par_get_d("ode_reltol");
 
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
   gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
@@ -216,7 +225,9 @@ int main (int argc, char* argv[])
   int iter = 0;
   int k;
   while (dyn->ode_stop) {
-    
+    if (VERBOSE) printf("iter %09d\n",iter);
+
+
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
       /* Uniform timestepping */
       dyn->ti = dyn->t + dyn->dt;

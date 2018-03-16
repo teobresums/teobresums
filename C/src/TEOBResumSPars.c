@@ -85,7 +85,7 @@ void par_file_parse_merge (const char *fname)
   config_setting_t * csroot1 = config_root_setting(cf1);
   config_setting_t * cs1, * array;
   int np = config_setting_length(csroot1);
-  int i, type, n;
+  int i, type, n, j;
   char key[STRLEN];
   for (i = 0; i < np; i++) {
     cs1  = config_setting_get_elem(csroot1, i);
@@ -100,8 +100,8 @@ void par_file_parse_merge (const char *fname)
 	n = config_setting_length(cs1);
 	int * array = (int *) malloc (n * sizeof(int));
 	if (!array) errorexit("out of memory");
-	for (i = 0; i < n; i++) {
-	  array[i] = config_setting_get_int_elem(cs1, i);
+	for (j = 0; j < n; j++) {
+	  array[j] = config_setting_get_int_elem(cs1, j);
 	}
 	par_set_arrayi (key, array, n);
 	free(array);
