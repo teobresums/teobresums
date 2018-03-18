@@ -102,7 +102,8 @@ int main (int argc, char* argv[])
 
   //TODO: CHECK PAR RANGES AND FIX PARAMETERS
 
-  int size = par_get_i("size"); /* note: size can vary */
+  const int chunk = par_get_i("size");
+  int size = chunk; /* note: size can vary */
 
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
@@ -296,7 +297,8 @@ int main (int argc, char* argv[])
     /** Update size and push arrays (if needed) */
     iter++;
     if (iter>size) {
-      size = iter;
+      //if (VERBOSE) printf("Push memory\n");
+      size += chunk;
       par_set_i("size", size);
       Waveform_lm_push (&hlm, size);
       Dynamics_push (&dyn, size);
