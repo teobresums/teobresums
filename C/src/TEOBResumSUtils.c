@@ -337,7 +337,9 @@ void Waveform_push (Waveform **wav, int size)
 void Waveform_output (Waveform *wav)
 {
   int i;
-  FILE* fp = fopen(wav->name, "w"); 
+  FILE* fp;
+  if ((fp = fopen(wav->name, "w")) == NULL)
+    errorexits("error opening file",wav->name);
   for (i = 0; i < wav->size; i++) {
     fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->real[i], wav->imag[i]);
   }
@@ -400,7 +402,9 @@ void Waveform_lm_output (Waveform_lm *wav)
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
       sprintf(fname,"%s_%01d_%01d.txt",wav->name,LINDEX[k],MINDEX[k]);
-      FILE* fp = fopen(fname, "w"); 
+      FILE* fp;
+      if ((fp = fopen(fname, "w")) == NULL)
+	errorexits("error opening file",fname);
       for (i = 0; i < n; i++) {
 	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
       }
@@ -470,7 +474,9 @@ void Dynamics_push (Dynamics **dyn, int size)
 void Dynamics_output (Dynamics *dyn)
 {
   int v, i;
-  FILE* fp = fopen(dyn->name, "w"); 
+  FILE* fp; 
+  if ((fp = fopen(dyn->name, "w")) == NULL)
+    errorexits("error opening file",dyn->name);
   for (i = 0; i < dyn->size; i++) {
     fprintf(fp, "%.9e", dyn->time[i]);
     for (v = 0; v < EOB_DYNAMICS_NVARS; v++)
