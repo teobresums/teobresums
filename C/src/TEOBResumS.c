@@ -225,16 +225,18 @@ int main (int argc, char* argv[])
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
+
+
     
   /** Solve ODE */
   int STATUS = OK;
   int iter = 0;
   int k;
-  while (dyn->ode_stop) {
+  while (!(dyn->ode_stop)) {
     if (VERBOSE) printf("iter %09d\n",iter);
-
+    
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
-      /* Uniform timestepping */
+      /*  Uniform timestepping  */
       dyn->ti = dyn->t + dyn->dt;
       STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
       if (STATUS != GSL_SUCCESS) {
