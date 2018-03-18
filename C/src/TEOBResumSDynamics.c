@@ -20,16 +20,50 @@
 
 #include "TEOBResumS.h"
 
+/* EOB nonspinning Hamiltonian */
+void eob_ham(double nu, double r, double pph, double prstar, double A, double dA,
+	     double *H, /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+	     double *Heff, /* effective EOB Hamiltonian (divided by mu) */
+	     double *dHeff_dr, /* drvt Heff,r */
+	     double *dHeff_dprstar, /* drvt Heff,prstar */
+	     double *dHeff_dpphi /* drvt Heff,pphi */
+	     )
+{
+  const double z3 = 2.0*nu*(4.0-3.0*nu);
+  const double pph2 = SQ(pph);
+  const double u = 1./r;
+  const double u2 = SQ(u);
+  const double u3 = u2*u;
+  const double prstar2 = SQ(prstar);
+  const double prstar3 = prstar2*prstar;
+  const double prstar4 = prstar2*prstar2;
+
+  *Heff          = sqrt(A*(1.0 + pph2*u2) + prstar2 + z3*A*u2*prstar4);
+  *H             = sqrt( 1.0 + 2.0*nu*(*Heff - 1) )/nu;  
+   
+  if (dHeff_dr != NULL)      *dHeff_dr      = 0.5*(dA + (pph2 + z3*prstar4)*(dA*u2 - 2*A*u3))/(*Heff);
+  if (dHeff_dprstar != NULL) *dHeff_dprstar = (prstar + z3*2.0*A*u2*prstar3)/(*Heff);
+  if (dHeff_dpphi != NULL)   *dHeff_dpphi   = A*pph*u2/(*Heff);
+}
+
+/* EOB spinning Hamiltonian */
+//TODO: 
+void eob_ham_s()
+{
+}
+
 /** r.h.s. of EOB Hamiltonian dynamics, no spins version */ 
-int eob_dyn_rhs(double t, const double y[], double dy[], void *dyn)
+int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 {
   
   (void)(t); /* avoid unused parameter warning */
-  Dynamics *d = dyn;  
+  Dynamics *dyn = d;  
 
-  const double nu = d->nu;  
+  const double nu = dyn->nu;  
   const double z3 = 2.0*nu*(4.0-3.0*nu);
-  
+
+  /** Unpack y */ 
+  const double phi    = y[EOB_EVOLVE_PHI];
   const double r      = y[EOB_EVOLVE_RAD];
   const double pphi   = y[EOB_EVOLVE_PPHI];
   const double prstar = y[EOB_EVOLVE_PRSTAR];
@@ -38,87 +72,78 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *dyn)
   double A, B, dA, d2A, dB;
   eob_metric(r, d, &A, &B, &dA, &d2A, &dB);
 
-  const double ooA = 1./A;
-  const double ooB = 1./B;
-  const double sqrAB = sqrt(A/B);  
-  
-  /** r.h.s eqns */  
-  const double prstar2 = prstar*prstar;
-  const double prstar3 = prstar2*prstar;
-  const double prstar4 = prstar3*prstar;
-  const double pphi2   = pphi*pphi;
-  
-  const double r2 = r*r;
+  /** Compute Hamiltonian */
+  double H, Heff, dHeff_dr,dHeff_dprstar;
+  eob_ham(nu, r,pphi,prstar,A,dA, &H,&Heff,&dHeff_dr,&dHeff_dprstar,NULL);
+  double E = nu*H;
+
+  /** Shorthands */
   const double u  = 1./r;
   const double u2 = u*u;
   const double u3 = u2*u;
-  
-  const double Heff  = sqrt(prstar2+A*(1. + pphi2*u2 +  z3*prstar4*u2));
-  const double H     = sqrt( 1. + 2.*nu*(Heff - 1.) )/nu;
-  const double E     = H*nu;
-  const double ooHE  = 1./(Heff*E);
-  const double Omega = A*pphi*u2*ooHE;
+  const double pphi2    = SQ(pphi);
+  const double prstar2  = prstar*prstar;
+  const double prstar3  = prstar2*prstar;
+  const double prstar4  = prstar3*prstar;
+  const double sqrtAbyB = sqrt(A/B);
+  const double divHE    = 1./(Heff*E);
+  const double Omega    = A*pphi*u2*divHE;
 
-  const double sqrW = sqrt(A*(1. + pphi2*u2));  
-
-  /* r evol eqn rhs */
-  dy[EOB_EVOLVE_RAD]  = (sqrAB)*(prstar+2.0*z3*A*prstar3*u2)*ooHE;
-  
-  /* phi evol eqn rhs */
+  /** d\phi/dt */
   dy[EOB_EVOLVE_PHI] = Omega;
   
-  /* prstar evol eqn rhs */
-  dy[EOB_EVOLVE_PRSTAR]  = (-0.5*sqrAB)*(dA + ( pphi2 + z3*prstar4 )*(dA*u2-2.0*A*u3))*ooHE;
+  /** dr/dt (conservative part of) */
+  dy[EOB_EVOLVE_RAD] = sqrtAbyB*(prstar+4.0*nu*(4.0-3.0*nu)*A*u2*prstar3)*divHE;
   
-  /* pphi evol eqn rhs */
-  const double psi = 2.*(1.0 + 2.0*nu*(sqrW - 1.0))/(r2*dA);
-  /* psi = 2.*(1.0 + 2.0*nu*(Heff - 1.0))/(r2*dA); */
-   
+  /** dp_{r*}/dt (conservative part of) */
+  dy[EOB_EVOLVE_PRSTAR] = - 0.5*sqrtAbyB*( pphi2*u2*(dA-2.0*A*u) + dA + 2.0*nu*(4.0-3.0*nu)*(dA*u2 - 2.0*A*u3)*prstar4 )*divHE;        
+  
   /** Compute flux */
+  const double sqrtW = sqrt(A*(1. + pphi2*u2));
+  const double psi   = 2.*(1.0 + 2.0*nu*(sqrtW - 1.0))/(SQ(r)*dA);
+  /*const double psi = 2.*(1.0 + 2.0*nu*(Heff - 1.0))/(r2*dA); */
   const double r_omega = r*cbrt(psi);
   const double v_phi   = r_omega*Omega;
   const double x       = v_phi * v_phi;
   const double jhat    = pphi/(r_omega*v_phi);  
   const double tmpE    = 1./Heff+nu/(E*E);
-  
-  const double dHeff_dr      = 0.5*(dA + (pphi2 + z3*prstar4)*(dA*u2 - 2.*A*u3))/Heff;
-  const double dHeff_dprstar = (prstar + z3*2.0*A*u2*prstar3)/Heff;
   const double dprstar_dt    = dy[EOB_EVOLVE_PRSTAR];
   const double dr_dt         = dy[EOB_EVOLVE_RAD];
-  const double ddotr_dr      = sqrAB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA*ooA-dB*ooB)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2.*A*u3)*prstar3)/E;
-  const double ddotr_dprstar = sqrAB*( 1.+z3*6.*A*u2*prstar2-(prstar + z3*2.*A*u2*prstar3)*dHeff_dprstar*tmpE)*ooHE;
+  const double ddotr_dr      = sqrtAbyB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA/A-dB/B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2.*A*u3)*prstar3)/E;
+  const double ddotr_dprstar = sqrtAbyB*( 1.+z3*6.*A*u2*prstar2-(prstar + z3*2.*A*u2*prstar3)*dHeff_dprstar*tmpE)*divHE;
   
   /* Approximate ddot(r) without Flux */
   const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
   
+  /** dp_{\phi}/dt */
   dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
 
-  if(d->store) {
+  if(dyn->store) {
     /* Store values */
-    d->t = t;
-    d->r = r;
-    d->phi = y[EOB_EVOLVE_PHI];
-    d->pphi = pphi;
-    d->prstar = prstar;
-    d->Omg = Omega;
-    d->Omg_orb = Omega;
-    d->H = H;
-    d->E = E;
-    d->Heff = Heff;
-    d->A = A;
-    d->dA = dA;
-    d->d2A = d2A;
-    d->B = B;
-    d->dB = dB;
-    d->psi = psi;
-    d->r_omega = r_omega;
-    d->v_phi = v_phi;
-    d->jhat = jhat;
-    d->ddotr = ddotr;
+    dyn->t = t;
+    dyn->r = r;
+    dyn->phi = y[EOB_EVOLVE_PHI];
+    dyn->pphi = pphi;
+    dyn->prstar = prstar;
+    dyn->Omg = Omega;
+    dyn->Omg_orb = Omega;
+    dyn->H = H;
+    dyn->E = E;
+    dyn->Heff = Heff;
+    dyn->A = A;
+    dyn->dA = dA;
+    dyn->d2A = d2A;
+    dyn->B = B;
+    dyn->dB = dB;
+    dyn->psi = psi;
+    dyn->r_omega = r_omega;
+    dyn->v_phi = v_phi;
+    dyn->jhat = jhat;
+    dyn->ddotr = ddotr;
   }
 
   return GSL_SUCCESS;
-							     
+
 }
 
 /** r.h.s. of EOB Hamiltonian dynamics, spins version */ 
