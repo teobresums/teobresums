@@ -125,7 +125,7 @@ int main (int argc, char* argv[])
   int store_dynamics = par_get_i("output_dynamics");
   const int use_tidal = par_get_i("use_tidal");
   const int use_spins = par_get_i("use_spins");
-  if (!(use_tidal)) store_dynamics = 1; 
+  //if (!(use_tidal)) store_dynamics = 1; 
 
   Dynamics_set_params(dyn);
   
@@ -226,15 +226,13 @@ int main (int argc, char* argv[])
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
-
-
     
   /** Solve ODE */
   int STATUS = OK;
   int iter = 0;
   int k;
   while (!(dyn->ode_stop)) {
-    if (VERBOSE) printf("iter %09d\n",iter);
+    if (VERBOSE) printf("iter %09d | r = %.9e\n",iter, dyn->r);
     
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
       /*  Uniform timestepping  */
@@ -297,7 +295,7 @@ int main (int argc, char* argv[])
     /** Update size and push arrays (if needed) */
     iter++;
     if (iter>size) {
-      //if (VERBOSE) printf("Push memory\n");
+      if (DEBUG) printf("Push memory\n");
       size += chunk;
       par_set_i("size", size);
       Waveform_lm_push (&hlm, size);
@@ -351,6 +349,12 @@ int main (int argc, char* argv[])
   gsl_odeiv2_control_free (c);
   gsl_odeiv2_step_free (s);
   gsl_odeiv2_driver_free (d);
+
+  //if (par_get_i("output_dynamics")) 
+  //Dynamics_output(dyn);
+
+  DBGSTOP
+
 
   /** Update waveform size */
   par_set_i("size", size); 

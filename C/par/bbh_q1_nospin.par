@@ -8,6 +8,6 @@ chi2 = 0. # dimensioneless spin 2 z-component
 initial_frequency = 0.004 # initial GW freq
 size = 4 # size of the arrays (chunks, dynamically extended)
 output_lm = [1,2,3,4]
-
+output_dynamics = 1
 compute_LR = 1 # calculate LR ?
 compute_LSO = 1 # calculate LSO ?
