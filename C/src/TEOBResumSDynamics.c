@@ -20,38 +20,6 @@
 
 #include "TEOBResumS.h"
 
-/* EOB nonspinning Hamiltonian */
-void eob_ham(double nu, double r, double pph, double prstar, double A, double dA,
-	     double *H, /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-	     double *Heff, /* effective EOB Hamiltonian (divided by mu) */
-	     double *dHeff_dr, /* drvt Heff,r */
-	     double *dHeff_dprstar, /* drvt Heff,prstar */
-	     double *dHeff_dpphi /* drvt Heff,pphi */
-	     )
-{
-  const double z3 = 2.0*nu*(4.0-3.0*nu);
-  const double pph2 = SQ(pph);
-  const double u = 1./r;
-  const double u2 = SQ(u);
-  const double u3 = u2*u;
-  const double prstar2 = SQ(prstar);
-  const double prstar3 = prstar2*prstar;
-  const double prstar4 = prstar2*prstar2;
-
-  *Heff          = sqrt(A*(1.0 + pph2*u2) + prstar2 + z3*A*u2*prstar4);
-  *H             = sqrt( 1.0 + 2.0*nu*(*Heff - 1) )/nu;  
-   
-  if (dHeff_dr != NULL)      *dHeff_dr      = 0.5*(dA + (pph2 + z3*prstar4)*(dA*u2 - 2*A*u3))/(*Heff);
-  if (dHeff_dprstar != NULL) *dHeff_dprstar = (prstar + z3*2.0*A*u2*prstar3)/(*Heff);
-  if (dHeff_dpphi != NULL)   *dHeff_dpphi   = A*pph*u2/(*Heff);
-}
-
-/* EOB spinning Hamiltonian */
-//TODO: 
-void eob_ham_s()
-{
-}
-
 /** r.h.s. of EOB Hamiltonian dynamics, no spins version */ 
 int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 {
@@ -144,6 +112,32 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 
   return GSL_SUCCESS;
 
+}
+
+/* EOB nonspinning Hamiltonian */
+void eob_ham(double nu, double r, double pph, double prstar, double A, double dA,
+	     double *H, /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+	     double *Heff, /* effective EOB Hamiltonian (divided by mu) */
+	     double *dHeff_dr, /* drvt Heff,r */
+	     double *dHeff_dprstar, /* drvt Heff,prstar */
+	     double *dHeff_dpphi /* drvt Heff,pphi */
+	     )
+{
+  const double z3 = 2.0*nu*(4.0-3.0*nu);
+  const double pph2 = SQ(pph);
+  const double u = 1./r;
+  const double u2 = SQ(u);
+  const double u3 = u2*u;
+  const double prstar2 = SQ(prstar);
+  const double prstar3 = prstar2*prstar;
+  const double prstar4 = prstar2*prstar2;
+
+  *Heff          = sqrt(A*(1.0 + pph2*u2) + prstar2 + z3*A*u2*prstar4);
+  *H             = sqrt( 1.0 + 2.0*nu*(*Heff - 1) )/nu;  
+   
+  if (dHeff_dr != NULL)      *dHeff_dr      = 0.5*(dA + (pph2 + z3*prstar4)*(dA*u2 - 2*A*u3))/(*Heff);
+  if (dHeff_dprstar != NULL) *dHeff_dprstar = (prstar + z3*2.0*A*u2*prstar3)/(*Heff);
+  if (dHeff_dpphi != NULL)   *dHeff_dpphi   = A*pph*u2/(*Heff);
 }
 
 /** r.h.s. of EOB Hamiltonian dynamics, spins version */ 
@@ -287,6 +281,13 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
   }
   
   return GSL_SUCCESS;
+}
+
+/* EOB spinning Hamiltonian */
+//TODO: 
+void eob_ham_s()
+{
+
 }
 
 /** Computes the gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.

@@ -50,7 +50,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   double r2, r3, j3;
   double H0eff, H0, psi, r_omega, v_phi, jhat, x;
   
-  for (int i = 0; i < N; i++) {
+  for (int i = 0; i < 2*N; i++) {
     
     r[i] = r0+(i-N+1)*dr;
     r2   = SQ(r[i]);
@@ -74,11 +74,9 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     r_omega    = r[i]*cbrt(psi);                               /** EOB-corrected radius  */
     v_phi      = Omega_j[i]*r_omega;                           /** "corrected" azimuthal velocity such that Kepler's law is satisfied, r_omg^3 Omg_i^2 = 1  */
     x          = v_phi * v_phi;
-    jhat       = j[i]/(r_omega*v_phi); /** Newton-normalized angular momentum  */
+    jhat       = j[i]/(r_omega*v_phi);                         /** Newton-normalized angular momentum  */
         
-    //printf("%e %e %e %e %e %e %e %e %e\n",x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0.,0.);    
     Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn); 
-    //printf("%.9e\n",Fphi[i]);
 
     /** Radial momentum conjugate to r*: post-circular ID  */
     Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
@@ -91,11 +89,10 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     
   /** prstar by finite diff. */
   D0(prstar, dr, 2*N, dprstardt);
-  for (int i = 0; i < N; i++) {
-    dprstardt[i] *= Fphi[i]/djdr[i];
-    pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt[i] - z3*gsl_pow_int(prstar[i],4)/j2[i]);
-  }
-    
+  int i = N-1;
+  dprstardt[i] *= Fphi[i]/djdr[i];
+  pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt[i] - z3*gsl_pow_int(prstar[i],4)/j2[i]);
+  
   y_init[EOB_ID_RAD]    = r[N-1];
   y_init[EOB_ID_PPHI]   = pph[N-1];
   y_init[EOB_ID_PRSTAR] = prstar[N-1];
@@ -153,7 +150,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
   int i;
 
-  for (i = 0; i < N; i++) {
+  for (i = 0; i < 2*N; i++) {
     r[i] = r0+(i-N+1)*dr;
         
     /** Compute metric  */
@@ -173,7 +170,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   double dpph_dr[2*N];
   D0(pph, dr, 2*N, dpph_dr);
   
-  for (i = 0; i < N; i++) {
+  for (i = 0; i < 2*N; i++) {
     
     sqrtAbyB = sqrt(A[i]/B[i]);
     uc  = 1./rc[i];
@@ -240,7 +237,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
   double dpi1dt, prstar4, a,b,c;
 
-  for (i = 0; i < N; i++) {
+  for (i = 0; i < 2*N; i++) {
     
     dpi1dt   = dpi1bydj[i]*Fphi[i];
     prstar4  = prstar[i]*prstar[i]*prstar[i]*prstar[i];

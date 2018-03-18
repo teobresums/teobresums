@@ -48,15 +48,15 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   const int usespins = dyn->use_spins;
   
   double prefact[] = {
-        jhat, Heff,
-        Heff, jhat, Heff,
-        jhat, Heff, jhat, Heff,
-        Heff, jhat, Heff, jhat, Heff,
-        jhat, Heff, jhat, Heff, jhat, Heff,
-        Heff, jhat, Heff, jhat, Heff, jhat, Heff,
-        jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
+    jhat, Heff,
+    Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff,
+    Heff, jhat, Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff, jhat, Heff,
+    Heff, jhat, Heff, jhat, Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
   
-  double Flm, FNewt22, Modhhatlm;  
+  double FNewt22, Modhhatlm;  
   double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double sum_k=0.; /* sum */
 
@@ -69,6 +69,14 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
   
   FNewt22 = FNewtlm[1];
+  
+  /*
+  printf("x %.12e\n",x);
+  printf("FNewt22 %.12e\n",FNewt22);
+  printf("f22 %.12e\n",flm[1]);
+  printf("T22 %.12e\n",MTlm[1]);
+  DBGSTOP
+  */
 
   /** Tidal amplitude */
   if (usetidal) {
@@ -106,6 +114,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
       Modhhatlm += MTlm[k] * hlmTidal[k];
     }  	
     /* Total flux multipoles */
+    //printf("%.12e %.12e\n",Modhhatlm, FNewtlm[k]);
     sum_k += SQ(Modhhatlm) * FNewtlm[k];     
   }
     
@@ -129,7 +138,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
 /** Coefficients for Newtonian flux */
 static const double CNlm[35] = {
-  8./45, 32./5.,
+  8./45, 32./5,
   1./1260, 32./63, 243./28, 
   1./44100, 32./3969, 729./700, 8192./567, 
   1./19958400, 256./400950, 2187./70400, 131072./66825, 1953125./76032, 
@@ -154,8 +163,8 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
   const double x11 = x*x10;
   const double x12 = x*x11;
   
-  double sp2 = 1.0;
-  double sp4 = 0.0;
+  double sp2 = 1.-4.*nu;
+  double sp4 = (1-4*nu)*SQ((1-2*nu));
   const double sp3 = (1.-3.*nu)*(1.-3.*nu);
   const double sp5 = (1.-5.*nu+5.*nu2)*(1.-5.*nu+5.*nu2);
   const double sp6 = (1-4*nu)*(3*nu2-4*nu +1)*(3*nu2-4*nu +1);
@@ -163,13 +172,13 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
   const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
   
   if (usespins) {
-    sp4 = (2*nu-1)*(2*nu-1);
+    sp2 = 1.;
+    sp4 = SQ((2*nu-1));
   } else {
-    /* Nonspinning case*/
+    //TODO: check case with tides and spins 
     if (usetidal) {
-      sp2 = 1.-4.*nu;
+      sp2 = 1.;
     } 
-    sp4 = (1.-4.*nu)*(1.-2.*nu)*(1.-2.*nu);
   }
 
   double spx[] = {

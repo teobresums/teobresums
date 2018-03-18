@@ -309,9 +309,9 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
 		     double **sigma);
 
 /* TEOBResumSDynamics.c */
-void eob_dyn_ham(double nu, double r, double pph, double prstar, double A, double dA,
-		 double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
 int eob_dyn_rhs(double t, const double y[], double dy[], void *params);
+void eob_ham(double nu, double r, double pph, double prstar, double A, double dA,
+	     double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2); 
