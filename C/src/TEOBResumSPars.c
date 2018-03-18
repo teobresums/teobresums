@@ -282,19 +282,16 @@ void par_set_arrayd (const char *key, double *array, int n)
 #if (!DEBUG_THIS_FILE)
 
 /** Set parameters */
-void eob_set_params(char *s, int n, int pr)
+void eob_set_params(char *s, int n)
 {
   /* init db */
-  if (pr) printf("Init pars db...\n");
   par_db_init ();
 
   /* Set default values */
-  if (pr) printf("Set default pars...\n");
   par_db_default ();
 
   //if (mode==INPUT_FILE) {
   /* Parse input parfile */
-  if (pr) printf("Set pars from parfile: %s\n",s);
   par_file_parse_merge (s);
   //} 
   //if (mode==COMMAND_LINE) {
@@ -304,8 +301,6 @@ void eob_set_params(char *s, int n, int pr)
   //if (mode==NONE) {
   //errorexit("unknown mode for input parameters mode ");
   //}
-  
-  //par_db_screen ();  
 
   /* Set auxiliary parameters */
   double dt = par_get_d("dt");
@@ -426,7 +421,7 @@ void eob_set_params(char *s, int n, int pr)
        compute r0 from the initial GW frequency in geometric units and mass rescaled 
        reset sample rate using dt
     */
-    if (pr) printf("Assume geometric units for pars values\n");
+    if (0) printf("Assume geometric units for pars values\n");
     par_set_d("r0", pow(fmin*Pi, -2./3.) );
     par_set_d("srate", 1./dt );
     par_set_d("distance", 1. );
@@ -436,7 +431,7 @@ void eob_set_params(char *s, int n, int pr)
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz 
     */
-    if (pr) printf("Assume physical units for pars values\n");
+    if (0) printf("Assume physical units for pars values\n");
     dt = time_units_conversion(M, dt);
     if (DUNEQUAL(dt,1./par_get_d("srate"),1e-12)) {
       dt  = 1./par_get_d("srate");
@@ -445,9 +440,6 @@ void eob_set_params(char *s, int n, int pr)
     } 
     par_set_d("r0",  radius0(M, fmin) );
   }
-
-  /* Print the parameters used for the run */
-  if (pr) par_db_screen ();
 
 }
 

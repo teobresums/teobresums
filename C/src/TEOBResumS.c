@@ -39,8 +39,8 @@
 #define EXCLUDESPINSPINTIDES 0 /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
-#ifndef DEBUG /** Global debug option */
-#define DEBUG 0 
+#ifndef DEBUG 
+#define DEBUG 0 /* global debug option */ 
 #endif
 
 /** Global vars, defined as external in header */
@@ -64,22 +64,23 @@ const int MINDEX[KMAX] = {
 /** TEOBResumS main */
 int main (int argc, char* argv[]) 
 {
-  char soutdir[STRLEN];
+  char stmp[STRLEN];
 
   /** Input parameters */
   if (argc == 2) {
     printf(TEOBResumS_Info);
     print_date_time();
-    eob_set_params(argv[1], argc, VERBOSE);
+    eob_set_params(argv[1], argc);
+    if (VERBOSE) par_db_screen ();
   } else {
     TEOBResumS_Usage(argv[0]);
     exit(OK);
   }
 
   /** Make output dir */
-  strcpy(soutdir,par_get_s("output_dir"));
-  system_mkdir(soutdir);
-  par_db_write_file(strcat(soutdir,"/params.txt"));
+  system_mkdir(par_get_s("output_dir"));
+  strcpy(stmp,par_get_s("output_dir"));
+  par_db_write_file(strcat(stmp,"/params.txt"));
 
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = par_get_d("M"); /* Msun */ 
@@ -111,8 +112,8 @@ int main (int argc, char* argv[])
   Waveform_lm_t *hlm_t;
   Waveform_lm *hlm_nqc; /* NQC */
 
-  Dynamics_alloc (&dyn, size, strcat(soutdir,"/dyn.txt"));
-  Waveform_lm_alloc (&hlm, size, strcat(soutdir,"/hlm")); 
+  Dynamics_alloc (&dyn, size, par_get_s("output_dir")); strcat(dyn->name,"/dyn.txt"); 
+  Waveform_lm_alloc (&hlm, size, par_get_s("output_dir")); strcat(hlm->name,"/hlm"); 
   Waveform_lm_t_alloc (&hlm_t);
 
   /** Set useful pars/vars */
@@ -125,7 +126,6 @@ int main (int argc, char* argv[])
   int store_dynamics = par_get_i("output_dynamics");
   const int use_tidal = par_get_i("use_tidal");
   const int use_spins = par_get_i("use_spins");
-  //if (!(use_tidal)) store_dynamics = 1; 
 
   Dynamics_set_params(dyn);
   
@@ -141,6 +141,7 @@ int main (int argc, char* argv[])
     dyn->use_spins = par_get_i("use_spins");
   }
   if (par_get_i("compute_LR")) {
+    //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
     par_set_d("rLR", dyn->rLR);
     if (VERBOSE) PRFORM("rLR",dyn->rLR);
@@ -232,7 +233,8 @@ int main (int argc, char* argv[])
   int iter = 0;
   int k;
   while (!(dyn->ode_stop)) {
-    if (VERBOSE) printf("iter %09d | r = %.9e\n",iter, dyn->r);
+    if (VERBOSE) printf("iter %09d | t = %.9e r = %.9e\n",iter, dyn->t, dyn->r);
+    iter++;
     
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
       /*  Uniform timestepping  */
@@ -293,7 +295,6 @@ int main (int argc, char* argv[])
     eob_wav_hlm(dyn, hlm_t); 
    
     /** Update size and push arrays (if needed) */
-    iter++;
     if (iter>size) {
       if (DEBUG) printf("Push memory\n");
       size += chunk;
@@ -350,8 +351,8 @@ int main (int argc, char* argv[])
   gsl_odeiv2_step_free (s);
   gsl_odeiv2_driver_free (d);
 
-  //if (par_get_i("output_dynamics")) 
-  //Dynamics_output(dyn);
+  if (par_get_i("output_dynamics")) 
+    Dynamics_output(dyn);
 
   DBGSTOP
 
@@ -390,7 +391,7 @@ int main (int argc, char* argv[])
     SWAPTRS(hlm_vecg, hlm);
 
     Waveform_lm_free (hlm_vecg);
-    strcpy(hlm->name, strcat(soutdir,"/hlm.txt"));
+    strcpy(hlm->name, par_get_s("output_dir")); strcat(hlm->name,"/hlm");
 
     if (store_dynamics) {
 
@@ -411,7 +412,7 @@ int main (int argc, char* argv[])
       SWAPTRS(dyn_vecg, dyn);
 
       Dynamics_free (dyn_vecg);
-      strcpy(dyn->name, strcat(soutdir,"/dyn.txt"));
+      strcpy(dyn->name, par_get_s("output_dir")); strcat(dyn->name,"/dyn.txt");
 
     }
     
@@ -420,7 +421,7 @@ int main (int argc, char* argv[])
   /** NQC and ringdown for BBH */
   if (!(use_tidal)) {
 
-    Waveform_lm_alloc (&hlm_nqc, size, strcat(soutdir,"/hlm_nqc.txt"));
+    Waveform_lm_alloc (&hlm_nqc, size, par_get_s("output_dir")); strcat(hlm_nqc->name,"/dyn.txt"); 
 
     /** Compute NQC corrections */
     eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, hlm_nqc);

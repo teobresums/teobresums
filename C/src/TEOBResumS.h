@@ -81,7 +81,6 @@
 #define DBGPR(s) printf("DEBUG: %s\n",s);
 #define DBGSTOP errorexit("DEBUG: STOP");
 
-
 /* Useful constants */
 #define Pi 3.1415926535897932384626433832795028
 #define Sqrt2 1.41421356237309504880168872420969808
@@ -252,7 +251,7 @@ double par_get_d(const char *key);
 const char * par_get_s(const char *key);
 int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
-void eob_set_params(char *s, int n, int pr);
+void eob_set_params(char *s, int n);
 void eob_free_params();
 
 /* TEOBResumSUtil.c */

@@ -326,11 +326,11 @@ void Waveform_push (Waveform **wav, int size)
   if ((*wav)->time) (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
   const int n  = (*wav)->size;
   const int dn = size - (*wav)->size;
-  if (dn>0) {
-    memset( (*wav)->real + n, 0, dn * sizeof(double) );
-    memset( (*wav)->imag + n, 0, dn * sizeof(double) );
-    memset( (*wav)->time + n, 0, dn * sizeof(double) );
-  }
+  /* if (dn>0) { */
+  /*   memset( (*wav)->real + n, 0, dn * sizeof(double) ); */
+  /*   memset( (*wav)->imag + n, 0, dn * sizeof(double) ); */
+  /*   memset( (*wav)->time + n, 0, dn * sizeof(double) ); */
+  /* } */
   (*wav)->size = size; 
 }
 
@@ -386,10 +386,10 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
     if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
     (*wav)->phase[k] = realloc ( (*wav)->phase[k], size * sizeof(double) );
     if ((*wav)->phase[k] == NULL) errorexit("Out of memory.");
-    if (dn>0) {
-      memset( (*wav)->ampli[k] + n, 0, dn * sizeof(double) );
-      memset( (*wav)->phase[k] + n, 0, dn * sizeof(double) );
-    } 
+    /* if (dn>0) { */
+    /*   memset( (*wav)->ampli[k] + n, 0, dn * sizeof(double) ); */
+    /*   memset( (*wav)->phase[k] + n, 0, dn * sizeof(double) ); */
+    /* }  */
   }
   (*wav)->size = size;
 }
@@ -401,7 +401,7 @@ void Waveform_lm_output (Waveform_lm *wav)
   const int n = wav->size;
   for (k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
-      sprintf(fname,"%s_%01d_%01d.txt",wav->name,LINDEX[k],MINDEX[k]);
+      sprintf(fname,"%s_l%01d_m%01d.txt",wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w")) == NULL)
 	errorexits("error opening file",fname);
@@ -466,7 +466,7 @@ void Dynamics_push (Dynamics **dyn, int size)
   for (v = 0; v < EOB_DYNAMICS_NVARS; v++) {
     (*dyn)->data[v] = realloc ( (*dyn)->data[v], size * sizeof(double) );
     if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
-    if (dn>0) memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) );
+    /* if (dn>0) memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) ); */
   }
   (*dyn)->size = size; 
 }
