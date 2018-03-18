@@ -459,7 +459,7 @@ void eob_free_params()
 #else
 
 /* test 
-   gcc TEOBResumSPars.c -lconfig -o test.x */
+   gcc TEOBResumSPars.c -lconfig -o testpars.x */
 int main (int argc, char* argv[])
 {
   int idx,n;

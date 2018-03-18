@@ -395,17 +395,21 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
     
   if (usetidal) {    
 #if (EXCLUDESPINSPINTIDES)
-    /* NO spin-spin-tidal couplings */
+    /* Switch off spin-spin-tidal couplings */
+    /* See also: eob_wav_flm_s() */
     double rc2 = r2;
     *rc = r;
     *drc_dr = 1;
     *d2rc_dr2 = 0;
-    /* /\* alt. keep C_Q1=C_Q2=0, but keep centrifugal radius *\/ */
-    /* double a02  = 2.*at1*at2; */
-    /* double rc2  = r2 + a02*(1.+2.*u); /\* tidally-modified centrifugal radius *\/ */
-    /* *rc         = sqrt(rc2); */
-    /* *drc_dr     = r/(*rc)*(1.-a02*u3); */
-    /* *d2rc_dr2   = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1.-a02*u3)+2.*a02*u3); */
+    /* Above code switch off everything, 
+       Alt. one can set C_Q1=C_Q2=0, but keep centrifugal radius */
+    /* 
+       double a02  = 2.*at1*at2; 
+       double rc2  = r2 + a02*(1.+2.*u); 
+       *rc         = sqrt(rc2); 
+       *drc_dr     = r/(*rc)*(1.-a02*u3); 
+       *d2rc_dr2   = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1.-a02*u3)+2.*a02*u3); 
+       */
 #else
     /* BNS effective spin parameter */
     double a02  = C_Q1*at1*at1 + 2.*at1*at2 + C_Q2*at2*at2;

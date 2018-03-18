@@ -76,17 +76,9 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     x          = v_phi * v_phi;
     jhat       = j[i]/(r_omega*v_phi); /** Newton-normalized angular momentum  */
         
-    double prefact[] = {
-      jhat,H0eff,
-      H0eff,jhat,H0eff,
-      jhat,H0eff,jhat,H0eff,
-      H0eff,jhat,H0eff,jhat,H0eff,
-      jhat,H0eff,jhat,H0eff,jhat,H0eff,
-      H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff,
-      jhat,H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff};
-
     //printf("%e %e %e %e %e %e %e %e %e\n",x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0.,0.);    
     Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn); 
+    //printf("%.9e\n",Fphi[i]);
 
     /** Radial momentum conjugate to r*: post-circular ID  */
     Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
@@ -99,7 +91,6 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     
   /** prstar by finite diff. */
   D0(prstar, dr, 2*N, dprstardt);
-
   for (int i = 0; i < N; i++) {
     dprstardt[i] *= Fphi[i]/djdr[i];
     pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt[i] - z3*gsl_pow_int(prstar[i],4)/j2[i]);
