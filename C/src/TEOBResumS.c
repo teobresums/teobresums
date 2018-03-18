@@ -160,9 +160,14 @@ int main (int argc, char* argv[])
     p_eob_dyn_rhs = &eob_dyn_rhs;
     eob_dyn_ic(r0, dyn, dyn->y0);
   }
-  gsl_odeiv2_system sys = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
-
+  if (VERBOSE) {
+    printf("Initial conditions\n");
+    for (int i = 0; i < EOB_ID_NVARS; i++)
+      PRFORM(eob_id_var[i], dyn->y0[i]);
+  }
+  
   /** Initial conditions: t, r, phi, prstar, pphi */
+  gsl_odeiv2_system sys = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
   dyn->t                    = 0.;
   dyn->y[EOB_EVOLVE_RAD]    = dyn->y0[EOB_ID_RAD];
   dyn->y[EOB_EVOLVE_PHI]    = 0.;
@@ -174,6 +179,7 @@ int main (int argc, char* argv[])
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
     dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
     if (VERBOSE) {
+      printf("Final black hole\n");
       PRFORM("BH_final_mass[Healy]",dyn->Mbhf); 
       PRFORM("BH_final_spin[Healy]",dyn->abhf);
       PRFORM("BH_final_spin[JimenezForteza]",dyn->abhf);

@@ -100,7 +100,8 @@ enum{
     EOB_EVOLVE_PRSTAR,
     EOB_EVOLVE_PPHI,
     EOB_EVOLVE_NVARS
-  };
+};
+static const char* eob_evolve_var[] = {"r","phi","prstar","pphi"};
 
 /** Index list of EOB variables for initial data */
 enum{
@@ -113,6 +114,7 @@ enum{
   EOB_ID_OMGJ,
   EOB_ID_NVARS
 };
+static const char* eob_id_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
 
 /** Index list of EOB dynamical variables (to be stored in arrays) */ 
 enum{
@@ -125,6 +127,7 @@ enum{
   EOB_OMGORB,
   EOB_DYNAMICS_NVARS
 };
+static const char* eob_var[] = {"r","phi","pphi","momega","ddor","prstar","Omgorb"};
 
 #define KMAX (35) /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */

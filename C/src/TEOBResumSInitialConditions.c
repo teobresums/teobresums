@@ -84,9 +84,10 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
       jhat,H0eff,jhat,H0eff,jhat,H0eff,
       H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff,
       jhat,H0eff,jhat,H0eff,jhat,H0eff,jhat,H0eff};
-    
-    Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn); //THIS ROUTINE NEEDS CHECKING   
-        
+
+    //printf("%e %e %e %e %e %e %e %e %e\n",x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0.,0.);    
+    Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn); 
+
     /** Radial momentum conjugate to r*: post-circular ID  */
     Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
     prstar[i] = Ctmp[i]*Fphi[i]/djdr[i];
@@ -112,12 +113,6 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
     
-  if (VERBOSE) {
-    const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
-    for (int i = 0; i < EOB_ID_NVARS; i++)
-      PRFORM(y_init_var[i], y_init[i]);
-  }
-
 }
 
 /** Initial conditions calculation for spinning systems */
@@ -296,13 +291,6 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j[N-1];
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
-  
-  if (VERBOSE) {
-    const char* y_init_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
-    for (int i = 0; i < EOB_ID_NVARS; i++)
-      printf("%-20s = %e\n", y_init_var[i], y_init[i]);
-  }
-
   
 }
 

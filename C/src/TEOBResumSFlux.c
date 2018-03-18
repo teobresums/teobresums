@@ -29,9 +29,9 @@ double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Hef
 }
 
 /** Flux calculation for spinning systems */
+//FIXME: NQC are not applied in spin case!
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
-    
   const double nu = dyn->nu;
   const double chi1 = dyn->chi1;
   const double chi2 = dyn->chi2;
@@ -41,11 +41,11 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   const double a2 = dyn->a2;
   const double C_Q1 = dyn->C_Q1;
   const double C_Q2 = dyn->C_Q2;
+  const double X12 = X1-X2;
+  //const double sqrt_one_4nu = sqrt(1.-4.*nu);
 
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
-
-  const double sqrt_one_4nu = sqrt(1.-4.*nu);
   
   double prefact[] = {
         jhat, Heff,
@@ -60,14 +60,13 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double sum_k=0.; /* sum */
 
+  eob_flx_FlmNewt(x, nu, usetidal, usespins, FNewtlm);
+  eob_flx_Tlm(E*Omega, MTlm);
   if (usespins) {
     eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
   } else {
     eob_wav_flm(x,nu, rholm, flm);
   }
-
-  eob_flx_FlmNewt(x, nu, usetidal, usespins, FNewtlm);
-  eob_flx_Tlm(E*Omega, MTlm);
   
   FNewt22 = FNewtlm[1];
 
@@ -77,19 +76,17 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
   
   /** NQC correction to the modulus of the (l,m) waveform */  
-  
-  //
-  // NOTE/FIXME NQC are not applied in spin case!
-  //
-
   int k;
-
   Waveform_lm_t NQC;  
   if ( (!(usetidal)) && (!(usespins)) ) {
     eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, &NQC);
     for (k = 0; k < KMAX; k++) {
-      hlmNQC[k] = NQC.ampli[k];
+      //hlmNQC[k] = NQC.ampli[k];
+      hlmNQC[k] = 1;
     }
+    // Set NQC only in 22:
+    k=1;
+    hlmNQC[k] = NQC.ampli[k];
   } else {
     for (k = 0; k < KMAX; k++) {
       hlmNQC[k] = 1;
@@ -97,17 +94,15 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
 
   /** Sum up */
-  for (k = 0; k < KMAX; k++) {
+  /* for (k = 0; k < KMAX; k++) { */
+  for (k = KMAX; k--;) { 
     /* Compute modulus of hhat_lm (with NQC) */
     Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]; 
-
-    // FIXME: apply NQC only to k==1 ?
-    //       if (k==1)  Modhhatlm *= hlm_NQC[k].dat[0];
-
     if (usetidal) {
-      if (k==0) Modhhatlm *= sqrt_one_4nu;
-      if (k==2) Modhhatlm *= sqrt_one_4nu;
-      if (k==4) Modhhatlm *= sqrt_one_4nu;       
+      /* Re-introduce the nu-dependent prefactor in the tidal case */
+      if (k==0) Modhhatlm *= X12;
+      if (k==2) Modhhatlm *= X12;
+      if (k==4) Modhhatlm *= X12;
       Modhhatlm += MTlm[k] * hlmTidal[k];
     }  	
     /* Total flux multipoles */
@@ -127,9 +122,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     }
     hatf += hatFH;
   }
-  
-  double Fphi = -32.0/5.0* nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;  
-  return Fphi;
+
+  /* return Fphi */  
+  return (-32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf);  
 }
 
 /** Coefficients for Newtonian flux */
@@ -159,7 +154,7 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
   const double x11 = x*x10;
   const double x12 = x*x11;
   
-  double sp2 = 0.0;
+  double sp2 = 1.0;
   double sp4 = 0.0;
   const double sp3 = (1.-3.*nu)*(1.-3.*nu);
   const double sp5 = (1.-5.*nu+5.*nu2)*(1.-5.*nu+5.*nu2);
@@ -168,17 +163,13 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
   const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
   
   if (usespins) {
-    sp2 = 1.;
     sp4 = (2*nu-1)*(2*nu-1);
   } else {
     /* Nonspinning case*/
     if (usetidal) {
       sp2 = 1.-4.*nu;
-      sp4 = (1.-4.*nu)*(1.-2.*nu)*(1.-2.*nu);
-    } else {
-      sp2 = 1.;
-      sp4 = (1.-4.*nu)*(1.-2.*nu)*(1.-2.*nu);
-    }
+    } 
+    sp4 = (1.-4.*nu)*(1.-2.*nu)*(1.-2.*nu);
   }
 
   double spx[] = {
@@ -191,60 +182,11 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
     sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1) * x11
   };
 
-
   /** Newtonian partial fluxes*/
   int k;
   for (k = 0; k < KMAX; k++) {
     Nlm[k] = CNlm[k] * spx[k];
   }
-
-
-  // LEFT FOLLOWING TO CHECK -- TODEL
-
-  /*  
-  Nlm[0]  *= sp2 * x6 ;
-  Nlm[1]  *= x5 ;
-  
-  Nlm[2]  *= sp2 * x6 ;
-  Nlm[3]  *= sp3 * x7 ;
-  Nlm[4]  *= sp2 * x6 ;
-  
-  Nlm[5]  *= sp4 * x8 ;
-  Nlm[6]  *= sp3 * x7 ;
-  Nlm[7]  *= sp4 * x8 ;
-  Nlm[8]  *= sp3 * x7 ;
-  
-  Nlm[9]  *= sp4 * x8 ;
-  Nlm[10] *= sp5 * x9 ;
-  Nlm[11] *= sp4 * x8 ;
-  Nlm[12] *= sp5 * x9 ;
-  Nlm[13] *= sp4 * x8 ;
-  
-  Nlm[14] *= sp6 * x10;
-  Nlm[15] *= sp5 * x9 ;
-  Nlm[16] *= sp6 * x10;
-  Nlm[17] *= sp5 * x9 ;
-  Nlm[18] *= sp6 * x10;
-  Nlm[19] *= sp5 * x9 ;
-  
-  Nlm[20] *= sp6 * x10;
-  Nlm[21] *= sp7 * x11;
-  Nlm[22] *= sp6 * x10;
-  Nlm[23] *= sp7 * x11;
-  Nlm[24] *= sp6 * x10;
-  Nlm[25] *= sp7 * x11;
-  Nlm[26] *= sp6 * x10;
-  
-  Nlm[27] *= sp8 * x12;
-  Nlm[28] *= sp7 * x11;
-  Nlm[29] *= sp8 * x12;
-  Nlm[30] *= sp7 * x11;
-  Nlm[31] *= sp8 * x12;
-  Nlm[32] *= sp7 * x11;
-  Nlm[33] *= sp8 * x12;
-  Nlm[34] *= (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1) * x11;
-
-  */
   
 }
 

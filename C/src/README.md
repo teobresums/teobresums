@@ -56,13 +56,14 @@ Special and minimal data structures are defined together with routines to alloca
  fgrep "//TODO" *
  ```
 
- * LR computation
-
- * LSO computation only for nonspining BBH
+ * LR/LSO computation for spining BBH
+   Precompute guesses for all the cases, use Netwon-Rapshon.
 
  * Stopping conditions need to be improved
 
- * Ringdown attachment needs to be improved
+ * Ringdown attachment needs to be improved from the C++
+
+ * Include iteration  for NQC for spinning case (not there in C++)
 
  * Improve code documentation, especially in `TEOBResumS.h`
 
