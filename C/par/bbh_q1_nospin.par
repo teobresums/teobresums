@@ -11,5 +11,5 @@ output_lm = [1,2,3,4]
 output_dynamics = 1
 compute_LR = 1 # calculate LR ?
 compute_LSO = 1 # calculate LSO ?
-ode_timestep = "uniform"
+ode_timestep = "adaptive"
 

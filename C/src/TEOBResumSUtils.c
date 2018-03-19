@@ -51,18 +51,14 @@ void interp_grid(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
   int k;
   double yi_pt;
- 
   gsl_interp_accel *acc = gsl_interp_accel_alloc ();
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
   gsl_spline_init (spline, t, y, n);
-    
   for (k = 0; k < ni; k++) {
     yi[k] = gsl_spline_eval (spline, ti[k], acc);
   }
-  
   gsl_spline_free (spline);
   gsl_interp_accel_free (acc);
-  
 }
 
 /** Find nearest point index in 1d array */
@@ -538,7 +534,7 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->use_tidal = par_get_i("use_tidal");
   dyn->use_spins = par_get_i("use_spins");
   dyn->dt     = par_get_d("dt");
-  dyn->t1     = par_get_d("ode_t1");
+  //dyn->t1     = par_get_d("ode_t1");
   dyn->t_stop = par_get_d("ode_tmax");
 }
 
