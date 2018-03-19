@@ -318,11 +318,13 @@ int main (int argc, char* argv[])
 
     /** Stop integration if reached max time */    
     if (dyn->t > dyn->t_stop) {
+      printf("Max integration time reached.");
       dyn->ode_stop = true;
     }
 
     /** Stop integration at given radius (if rstop >= 0) */    
     if ((dyn->ode_stop_radius) && (dyn->r < rstop) ) {
+      printf("Stopping radius reached.");
       dyn->ode_stop = true;
     }
 
@@ -342,6 +344,7 @@ int main (int argc, char* argv[])
       }
     } else {
       if (dyn->t >= dyn->t_stop) {
+	printf("Peak of Omega reached.");
 	dyn->ode_stop = true;
       }
     }
