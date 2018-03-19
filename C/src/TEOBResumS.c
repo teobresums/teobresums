@@ -192,7 +192,6 @@ int main (int argc, char* argv[])
     
   /** Initialize ODE system solver */
   dyn->dt            = par_get_d("dt")       * time_unit_fact;
-  dyn->t1            = par_get_d("ode_t1")   * time_unit_fact;
   dyn->t_stop        = par_get_d("ode_tmax") * time_unit_fact;
   par_set_d("dt",       dyn->dt);
   par_set_d("ode_t1",   dyn->t1);
@@ -233,12 +232,12 @@ int main (int argc, char* argv[])
   int iter = 0;
   int k;
   while (!(dyn->ode_stop)) {
-    if (VERBOSE) printf("iter %09d | t = %.9e r = %.9e\n",iter, dyn->t, dyn->r);
+    if (VERBOSE) printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n",iter, dyn->t, dyn->dt, dyn->r);
     iter++;
-    
+    dyn->ti = dyn->t + dyn->dt;
+
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
       /*  Uniform timestepping  */
-      dyn->ti = dyn->t + dyn->dt;
       STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
       if (STATUS != GSL_SUCCESS) {
 	printf ("ODE solver failed. Error = %d\n", STATUS);
@@ -248,7 +247,7 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE) {
       /* Adaptive timestepping */
-      STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t1, &dyn->dt, dyn->y);
+      STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->ti, &dyn->dt, dyn->y);
       if (STATUS != GSL_SUCCESS) {
 	printf ("ODE solver failed. Error = %d\n", STATUS);
 	return STATUS;	
@@ -258,14 +257,13 @@ int main (int argc, char* argv[])
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
       if (dyn->y[EOB_EVOLVE_RAD]>dyn->rLSO) {
-	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t1, &dyn->dt, dyn->y);
+	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->ti, &dyn->dt, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
 	  return STATUS;
 	}
       } else {
 	/* ... uniform afterwards */
-	dyn->ti = dyn->t + dyn->dt;
 	STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
@@ -316,6 +314,11 @@ int main (int argc, char* argv[])
       dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
       dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
+    }
+
+    /** Stop integration if reached max time */    
+    if (dyn->t > dyn->t_stop) {
+      dyn->ode_stop = true;
     }
 
     /** Stop integration at given radius (if rstop >= 0) */    

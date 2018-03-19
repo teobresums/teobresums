@@ -211,7 +211,7 @@ typedef struct tagDynamics
   double y[EOB_EVOLVE_NVARS]; /* rhs storage */
   double dy[EOB_EVOLVE_NVARS];
   double y0[EOB_ID_NVARS]; /* ID storage */
-  double t1, dt, t_stop, ti;
+  double dt, t_stop, ti;
   int ode_timestep;
   bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
   /* arrays */

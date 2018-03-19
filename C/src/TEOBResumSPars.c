@@ -91,9 +91,10 @@ void par_file_parse_merge (const char *fname)
     cs1  = config_setting_get_elem(csroot1, i);
     strcpy(key, config_setting_name(cs1));
     type = config_setting_type(cs1);
-    if      (type==CONFIG_TYPE_INT)   par_set_i(key, config_setting_get_int(cs1));
-    else if (type==CONFIG_TYPE_BOOL)  par_set_b(key, config_setting_get_bool(cs1));
-    else if (type==CONFIG_TYPE_FLOAT) par_set_d(key, config_setting_get_float(cs1));
+    if      (type==CONFIG_TYPE_INT)    par_set_i(key, config_setting_get_int(cs1));
+    else if (type==CONFIG_TYPE_BOOL)   par_set_b(key, config_setting_get_bool(cs1));
+    else if (type==CONFIG_TYPE_FLOAT)  par_set_d(key, config_setting_get_float(cs1));
+    else if (type==CONFIG_TYPE_STRING) par_set_s(key, config_setting_get_string(cs1));
     else if (type==CONFIG_TYPE_ARRAY) {
       /* this is a hack, only for int type */
       if (cs1 != NULL) {
