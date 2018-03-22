@@ -378,7 +378,7 @@ void eob_set_params(char *s, int n)
   par_set_d("X2",X2);
 
   par_set_d("S1",S1);
-  par_set_d("S1",S2);
+  par_set_d("S2",S2);
   par_set_d("S",S);
   par_set_d("Sstar",Sstar);
   par_set_d("a1",a1);
