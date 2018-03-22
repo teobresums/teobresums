@@ -124,10 +124,10 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   const double S  = S1 + S2;        
   const double Ss = X2*a1 + X1*a2;  
   const double z3 = 2.0*nu*(4.0-3.0*nu);
-    
+
   /** Build a small grid */
 #define N (6)
-  const double dr = 1.e-8;
+  const double dr = 1e-8;
 
   double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
@@ -150,22 +150,18 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   double Gtilde, dGtilde_dr, duc_dr, psic, r_omg;
 
   int i;
-
   for (i = 0; i < 2*N; i++) {
     r[i] = r0+(i-N+1)*dr;
-
-    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
 
     /** Compute metric  */
     eob_metric_s(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB);
     
-    
-    /* Compute minimum of Heff0 using bisection method */
+    /** Compute minimum of Heff0 using bisection method */
     rorb   = r[i];
     pphorb = rorb/sqrt(rorb-3.);
+    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
     pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,rorb,A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
 
-    //printf("rc = %.12e drc = %.12e A = %.12e dA = %.12e pph = %.12e\n",rc[i],drc_dr[i],A[i],dA[i],pph[i]);
   }
 
   /** Post-circular initial conditions */
@@ -222,9 +218,9 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     x          =  v_phi*v_phi;
     jhat       =  pph[i]/(r_omg*v_phi);  /* Newton-normalized angular momentum */
 
-    Fphi[i] = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0., dyn);
-    prstar[i] = Fphi[i]/(dpph_dr[i]*C0);
-    pr[i]     = prstar[i]* sqrt(B[i]/A[i]);
+    Fphi[i]    = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0., dyn);
+    prstar[i]  = Fphi[i]/(dpph_dr[i]*C0);
+    pr[i]      = prstar[i]* sqrt(B[i]/A[i]);
 
     j[i]       = pph[i];
     E0[i]      = H0;
@@ -248,33 +244,33 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   prstar4  = prstar[i]*prstar[i]*prstar[i]*prstar[i];
     
   /* Circular angular momentum */
-    pph2     = pph[i]*pph[i];              
-
-    /* Still circular, no pr* dependence here */
-    Horbeff  = sqrt(A[i]*(1. + pph2*uc2)); 
-    
-    eob_dyn_s_GS(r[i], rc[i], drc_dr[i], aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
-    GS      = ggm0[2];
-    GSs     = ggm0[3];
-    dGS_dr  = ggm0[6];
-    dGSs_dr = ggm0[7];
-
-    /* Effective EOB energy */
-    Heff     = (GS*S + GSs*Ss)*pph[i] + Horbeff;  
-
-    /* Total EOB energy */
-    H        = sqrt( 1. + 2.*nu*(Heff - 1.));     
-    
-    /* Setting up second order equation for the orbital angular momentum */       
-    a = -sqrtAbyB*uc2/(2.*H*Horbeff)*(dA[i]  - 2.*A[i]*uc*drc[i]);                       
-    b = -sqrtAbyB/H*(dGS_dr*S + dGSs_dr*Ss); 
-    c = -dpi1dt - sqrtAbyB/(2.*H*Horbeff)*(dA[i] + z3*prstar4*uc2*(dA[i] - 2.*A[i]*uc*drc[i]));
-    
-    /* Fill out the array of the post-circular angular momentum */ 
-    pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
+  pph2     = pph[i]*pph[i];              
   
-    //}
-
+  /* Still circular, no pr* dependence here */
+  Horbeff  = sqrt(A[i]*(1. + pph2*uc2)); 
+  
+  eob_dyn_s_GS(r[i], rc[i], drc_dr[i], aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
+  GS      = ggm0[2];
+  GSs     = ggm0[3];
+  dGS_dr  = ggm0[6];
+  dGSs_dr = ggm0[7];
+  
+  /* Effective EOB energy */
+  Heff     = (GS*S + GSs*Ss)*pph[i] + Horbeff;  
+  
+  /* Total EOB energy */
+  H        = sqrt( 1. + 2.*nu*(Heff - 1.));     
+  
+  /* Setting up second order equation for the orbital angular momentum */       
+  a = -sqrtAbyB*uc2/(2.*H*Horbeff)*(dA[i]  - 2.*A[i]*uc*drc[i]);                       
+  b = -sqrtAbyB/H*(dGS_dr*S + dGSs_dr*Ss); 
+  c = -dpi1dt - sqrtAbyB/(2.*H*Horbeff)*(dA[i] + z3*prstar4*uc2*(dA[i] - 2.*A[i]*uc*drc[i]));
+  
+  /* Fill out the array of the post-circular angular momentum */ 
+  pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
+  
+  //}
+  
 #endif
 
   y_init[EOB_ID_RAD]    = r[N-1];
