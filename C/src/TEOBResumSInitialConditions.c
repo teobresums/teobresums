@@ -89,6 +89,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     
   /** prstar by finite diff. */
   D0(prstar, dr, 2*N, dprstardt);
+
   int i = N-1;
   dprstardt[i] *= Fphi[i]/djdr[i];
   pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt[i] - z3*gsl_pow_int(prstar[i],4)/j2[i]);
@@ -139,7 +140,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   double H0eff, H0, psi, r_omega, v_phi, jhat, x;
   double ggm[14];
 
-  //FIXME: redudant variables (ssame meaning, different name)
+  //FIXME: redudant variables (same meaning, different name)
   double sqrtAbyB, uc, uc2;
   double pph2, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
   double ggm0[14];
@@ -152,16 +153,19 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
   for (i = 0; i < 2*N; i++) {
     r[i] = r0+(i-N+1)*dr;
-        
-    /** Compute metric  */
-    eob_metric(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB);
-    
+
     eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
+
+    /** Compute metric  */
+    eob_metric_s(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB);
+    
     
     /* Compute minimum of Heff0 using bisection method */
     rorb   = r[i];
     pphorb = rorb/sqrt(rorb-3.);
     pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,rorb,A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
+
+    //printf("rc = %.12e drc = %.12e A = %.12e dA = %.12e pph = %.12e\n",rc[i],drc_dr[i],A[i],dA[i],pph[i]);
   }
 
   /** Post-circular initial conditions */
@@ -237,12 +241,13 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
   double dpi1dt, prstar4, a,b,c;
 
-  for (i = 0; i < 2*N; i++) {
+  //for (i = 0; i < 2*N; i++) {
+  i = N-1;
+  
+  dpi1dt   = dpi1bydj[i]*Fphi[i];
+  prstar4  = prstar[i]*prstar[i]*prstar[i]*prstar[i];
     
-    dpi1dt   = dpi1bydj[i]*Fphi[i];
-    prstar4  = prstar[i]*prstar[i]*prstar[i]*prstar[i];
-    
-    /* Circular angular momentum */
+  /* Circular angular momentum */
     pph2     = pph[i]*pph[i];              
 
     /* Still circular, no pr* dependence here */
@@ -268,7 +273,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     /* Fill out the array of the post-circular angular momentum */ 
     pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
   
-  }
+    //}
 
 #endif
 

@@ -455,13 +455,13 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
     */
     /* Following implementation is regular (avoids 1/aK2) */
     double X12 = sqrt(1.-4.*nu);   
-    double ff  = 1.25; // = 5/4
-    double tmp = (ff + ff*X12 + 0.5*nu);
-    double aK2_alphanu2 = aK2 + 0.5*( - tmp*(at2*at2* + at1*at1) + at1*at2*(-2.+nu));
-    double rc2 = r2 + aK2 + 2.*aK2_alphanu2*u;
-    *rc        = sqrt(rc2);
-    *drc_dr    = r/(*rc)*(1. - aK2_alphanu2*u3 );
-    *d2rc_dr2  = 1./(*rc)*(1.-(*drc_dr)*r/(*rc)*(1. - aK2_alphanu2*u3) + 2.*aK2_alphanu2*u3);
+    double c_ss_nlo = (- at2*at2*(1.25 + 1.25*X12 + 0.5*nu) - at1*at1*(1.25 - 1.25*X12 + 0.5*nu) + at1*at2*(-2.+nu));
+    double rc2   = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo;
+    *rc          = sqrt(rc2);
+    double divrc = 1.0/(*rc);
+    *drc_dr      = r*divrc*(1-(aK2 + 0.5*c_ss_nlo)*u3);	
+    *d2rc_dr2    = divrc*(1.-(*drc_dr)*r*divrc*(1.-(aK2+0.5*c_ss_nlo)*u3)+ (2.*aK2 + c_ss_nlo)*u3);
+    
   }
   
 }
