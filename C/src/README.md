@@ -2,7 +2,7 @@
 
 LOG file for TEOBResumS `development` branch
 
-Last updated: 2018.03.16
+Last updated: 2018.03.22
 
 ## Brief introduction for developers
 
@@ -38,6 +38,7 @@ Special and minimal data structures are defined together with routines to alloca
 | `TEOBResumSDynamics.c`          | r.h.s. for dynamics       | 2018.02.12 Compiles                                           | 
 | `TEOBResumSFlux.c`              | Flux                      | 2017.11.07 Compiles                                           | 
 | `TEOBResumSWaveform.c`          | Waveform                  | 2017.12.02 Compiles                                           |
+|                                                            || 2017.03.22 Optimized eob_wav_flm()                            |
 | `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
 |                                                            || 2017.03.18 Dynamics nospin BBH is correct                     |
 
