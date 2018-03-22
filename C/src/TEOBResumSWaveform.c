@@ -698,8 +698,8 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
 {
 
   /** Orbital part */
-  double rholm_orb[KMAX], flm_orb[KMAX];
-  eob_wav_flm(x,nu, rholm_orb, flm_orb);
+  //double rholm_orb[KMAX], flm_orb[KMAX];
+  eob_wav_flm(x,nu, rholm, flm);
 
   /** Spin corrections */
   double rho22S;
@@ -1518,25 +1518,6 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /** Resummed amplitudes in the general nu-dependent case.
  *  Refs:
  *  . Damour, Iyer & Nagar, PRD 79, 064004 (2009)     [theory]
@@ -1668,7 +1649,6 @@ void eob_wav_flm_old(double x,double nu, double *rholm, double *flm)
   
 }
 
-
 /** Resummed amplitudes for the spin case. 
     This function computes the residual amplitude corrections flm's as 
     introduced in Damour, Iyer & Nagar, PRD 79, 064004 (2008).
@@ -1680,7 +1660,9 @@ void eob_wav_flm_old(double x,double nu, double *rholm, double *flm)
     a1 = X1*chi1, a2=X2*chi2 and are passed here as parameters. Special 
     combinations of these quantities are used here to write the spin-dependent
     part of the waveform in particularly compact form, so that the (spinning)
-    test-particle limit is recovered just by visual inspection of the equations */
+    test-particle limit is recovered just by visual inspection of the equations 
+    Old version, repeats the rholm computation for the orbital part.
+*/
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
 		       double *rholm, double *flm)
 {
