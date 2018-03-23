@@ -50,7 +50,7 @@ Special and minimal data structures are defined together with routines to alloca
 
  * Check runtime errors
 
- * Verify corretness, compatre with Matlab and C++ on master
+ * Verify corretness, compare with Matlab and C++ on master
 
  * Several parts needs checking; to see what please do
  ```
