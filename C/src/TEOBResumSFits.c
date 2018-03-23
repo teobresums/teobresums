@@ -160,8 +160,7 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
     a0_sign=0;
   } else if (a0>0) {
     a0_sign=1;
-  }
-  else if (a0<0) {
+  } else { // if (a0<0) {
     a0_sign=-1;
   }
   
