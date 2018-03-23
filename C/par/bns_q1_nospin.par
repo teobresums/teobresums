@@ -1,0 +1,19 @@
+# parfile for BBH q=1 nospin run 
+# builds on default options
+
+use_geometric_units = 1 # use geometric units for I/O ?
+q = 1. # mass ratio
+chi1 = 0. # dimensioneless spin 1 z-component 
+chi2 = 0. # dimensioneless spin 2 z-component 
+initial_frequency = 0.004 # initial GW freq
+size = 4 # size of the arrays (chunks, dynamically extended)
+output_lm = [1,2,3,4]
+output_dynamics = 1
+compute_LR = 1 # calculate LR ?
+compute_LSO = 0 # calculate LSO ?
+ode_timestep = "uniform"
+use_tidal = 1
+LambdaAl2 = 1531. # MS1b 1.35
+LambdaBl2 = 1531.
+use_Yagi_fits = 1
+ode_stop_at_radius = 4.
