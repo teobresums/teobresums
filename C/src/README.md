@@ -2,7 +2,7 @@
 
 LOG file for TEOBResumS `development` branch
 
-Last updated: 2018.03.22
+Last updated: 2018.03.23
 
 ## Brief introduction for developers
 
@@ -34,13 +34,15 @@ Special and minimal data structures are defined together with routines to alloca
 | `TEOBResumSFits.c`              | Fits (final BH, NQC, etc) | 2017.11.07 Compiles                                           |
 | `TEOBResumSInitialConditions.c` | Initial conditions        | 2018.02.13 Compiles                                           |
 |                                                            || 2018.02.26 Implemented post-post-circular conditions          | 
+|                                                            || 2018.02.23 Main debug to post-post-circular conditions        | 
 | `TEOBResumSMetric.c`            | Metric functions          | 2018.02.09 Compiles, verified correctness (with C++ master)   |     
 | `TEOBResumSDynamics.c`          | r.h.s. for dynamics       | 2018.02.12 Compiles                                           | 
 | `TEOBResumSFlux.c`              | Flux                      | 2017.11.07 Compiles                                           | 
 | `TEOBResumSWaveform.c`          | Waveform                  | 2017.12.02 Compiles                                           |
-|                                                            || 2017.03.22 Optimized eob_wav_flm()                            |
+|                                                            || 2017.03.22 Optimized eob_wav_flm() and eob_wav_flm_s()        |
 | `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
 |                                                            || 2017.03.18 Dynamics nospin BBH is correct                     |
+|                                                            || 2017.03.23 Dynamics spin BBH is correct                       |
 
 [Debug LOG. Please keep update with development milestones]
 
