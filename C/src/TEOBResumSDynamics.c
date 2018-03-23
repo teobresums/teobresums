@@ -132,8 +132,8 @@ void eob_ham(double nu, double r, double pph, double prstar, double A, double dA
   const double prstar3 = prstar2*prstar;
   const double prstar4 = prstar2*prstar2;
 
-  *Heff          = sqrt(A*(1.0 + pph2*u2) + prstar2 + z3*A*u2*prstar4);
-  *H             = sqrt( 1.0 + 2.0*nu*(*Heff - 1) )/nu;  
+  *Heff = sqrt(A*(1.0 + pph2*u2) + prstar2 + z3*A*u2*prstar4);
+  *H    = sqrt( 1.0 + 2.0*nu*(*Heff - 1) )/nu;  
    
   if (dHeff_dr != NULL)      *dHeff_dr      = 0.5*(dA + (pph2 + z3*prstar4)*(dA*u2 - 2*A*u3))/(*Heff);
   if (dHeff_dprstar != NULL) *dHeff_dprstar = (prstar + z3*2.0*A*u2*prstar3)/(*Heff);
@@ -210,17 +210,18 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
   /* second derivative of Heff wrt to pr_star neglecting all pr_star^2 terms */
   const double d2Heff_dprstar20 = pph*(d2GS_dprstar20*S + d2GSs_dprstar20*Sstar) +  (1./Heff_orb)*(1. + 2.*A*uc2*z3*prstar2);
   const double ddotr_dp_rstar = sqrtAbyB*ooH*d2Heff_dprstar20;
-  
   const double dHeff_dpph = GS*S + (GSs + pph*dGSs_dpph)*Sstar + pph*A*uc2/Heff_orb;
+
+
   const double Omg = ooH*dHeff_dpph; 
   
   /* approximate ddot(r)_0 without Fphi, order pr_star^2 neglected */
   const double ddotr = dp_rstar_dt_0*ddotr_dp_rstar; 
   
-  /* r evol eqn rhs */
+  /* dr/dt */
   dy[EOB_EVOLVE_RAD] = sqrtAbyB*ooH*dHeff_dprstar;
   
-  /* phi evol eqn rhs */
+  /* dphi/dt */
   dy[EOB_EVOLVE_PHI] = Omg;
   
   /* dp_{r*}/dt */ 
@@ -344,7 +345,7 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar,
   double dGSs0_dprstar =  0.0;
   double dGSs0_dpph    =  0.0;
   
-  double hGS  =  1./(1.  + c10*uc + c20*uc2 + c30*uc3 + c02*prstar2 + c12*uc*prstar2 + c04*prstar4);   
+  double hGS  = 1./(1.  + c10*uc + c20*uc2 + c30*uc3 + c02*prstar2 + c12*uc*prstar2 + c04*prstar4);   
   double hGSs = 1./(1.  + cs10*uc + cs20*uc2  + cs30*uc3 + cs40*uc4 + cs02*prstar2 + cs12*uc*prstar2 + cs04*prstar4); 
   
   /* complete gyro-gravitomagnetic functions */
@@ -461,7 +462,6 @@ void eob_dyn_s_get_rc(double r, double nu, double at1,double at2, double aK2, do
     double divrc = 1.0/(*rc);
     *drc_dr      = r*divrc*(1-(aK2 + 0.5*c_ss_nlo)*u3);	
     *d2rc_dr2    = divrc*(1.-(*drc_dr)*r*divrc*(1.-(aK2+0.5*c_ss_nlo)*u3)+ (2.*aK2 + c_ss_nlo)*u3);
-    
   }
   
 }
