@@ -266,21 +266,20 @@ int D2(double *f, double dx, int n, double *d2f)
 }
 
 /** 4th order centered stencil first derivative, nonuniform grids */
-int D0_nux(double *f, double *x, int n, double *df)
+int D0_x(double *f, double *x, int n, double *df)
 {
-  int i, n0 = 0;
-  for(i=2; i<=n-2; i++)
-    {
-      df[i] = 1./3.*(8.*f[1+i] - f[2+i] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
-    }
-  /* df[n0]   = (-24./17.*f[n0] + 59./34.*f[n0+1] - 4./17.*f[n0+2] - 3./34.*f[n0+3])/(x[n0+1]-x[n0]); */
-  /* df[n0+1] = (-1./2.*f[n0] + 1./2.*f[n0+2] )/(x[n0+1]-x[n0]); */
-  /* df[n]    = -(-24./17.*f[n] + 59./34.*f[n-1] - 4./17.*f[n-2] - 3./34.*f[n-3])/(x[n]-x[n-1]); */
-  /* df[n-1]  = -(-1./2.*f[n] + 1./2.*f[n-2])/(x[n]-x[n-1]); */
-  df[n0]   = (-25*f[n0] + 48*f[n0+1] - 36*f[n0+2] +16*f[n0+3]-3*f[n0+4])/(3*(x[n0+4]-x[n0]));
-  df[n0+1] = (-3*f[n0]-10*f[n0+1]+18*f[n0+2]-6*f[n0+3]+f[n0+4])/(3*(x[n0+4]-x[n0]));
-  df[n]    = (25*f[n] - 48*f[n-1] + 36*f[n-2] - 16*f[n-3]+3*f[n-4])/(3*(x[n]-x[n-4]));
-  df[n-1]  = (-f[n-4]+6*f[n-3]-18*f[n-2]+10*f[n-1]+3*f[n])/(3*(x[n]-x[n-4]));  
+  int i;
+  for(i=2; i<n-2; i++) {
+    df[i] = 1./3.*(8.*f[1+i] - f[i+2] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
+  }
+  i = 0;
+  df[i] = (-25*f[i] + 48*f[i+1] - 36*f[i+2] +16*f[i+3]-3*f[i+4])/(3.*(x[i+4]-x[i]));
+  i = 1;
+  df[i] = (-3*f[i-1]-10*f[i]+18*f[i+1]-6*f[i+2]+f[i+3])/(3*(x[i+3]-x[i-1]));
+  i = n-2;
+  df[i] = (-f[i-3]+6*f[i-2]-18*f[i-1]+10*f[i]+3*f[i+1])/(3*(x[i+1]-x[i-3]));  
+  i = n-1;
+  df[i] = (25*f[i] - 48*f[i-1] + 36*f[i-2] - 16*f[i-3]+3*f[i-4])/(3*(x[i]-x[i-4]));
   return OK;
 }
 
@@ -533,9 +532,9 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->abhf = par_get_d("BH_final_spin");
   dyn->use_tidal = par_get_i("use_tidal");
   dyn->use_spins = par_get_i("use_spins");
-  dyn->dt     = par_get_d("dt");
-  //dyn->t1     = par_get_d("ode_t1");
-  dyn->t_stop = par_get_d("ode_tmax");
+  dyn->dt        = par_get_d("dt");
+  //dyn->t1       = par_get_d("ode_t1");
+  dyn->t_stop   = par_get_d("ode_tmax");
 }
 
 /** Convert time in sec to dimensionless and mass-rescaled units */
