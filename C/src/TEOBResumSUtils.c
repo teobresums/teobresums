@@ -265,12 +265,27 @@ int D2(double *f, double dx, int n, double *d2f)
   return OK;
 }
 
+/** 2nd order centered stencil first derivative, nonuniform grids */
+int D0_x_2(double *f, double *x, int n, double *df)
+{
+  int i;
+  for(i=1; i<n-1; i++) {
+    df[i] = (f[i+1]-f[i-1])/(x[i+1]-x[i-1]);
+  }
+  i = 0;
+  df[i] = (f[i]-f[i+1])/(x[i]-x[i+1]);
+  i = n-1;
+  df[i] = (f[i-1]-f[i])/(x[i-1]-x[i]);
+  return OK;
+}
+
 /** 4th order centered stencil first derivative, nonuniform grids */
+//FIXME: This is wrong.
 int D0_x(double *f, double *x, int n, double *df)
 {
   int i;
   for(i=2; i<n-2; i++) {
-    df[i] = 1./3.*(8.*f[1+i] - f[i+2] - 8.*f[i-1] + f[i-2])/(x[2+i]-x[i-2]);
+    df[i] = (8.*f[1+i] - f[i+2] - 8.*f[i-1] + f[i-2])/(3.*(x[2+i]-x[i-2]));
   }
   i = 0;
   df[i] = (-25*f[i] + 48*f[i+1] - 36*f[i+2] +16*f[i+3]-3*f[i+4])/(3.*(x[i+4]-x[i]));
