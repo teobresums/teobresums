@@ -127,9 +127,9 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
   /** Build a small grid */
 #define N (6)
-  const double dr = 1e-8;
+  const double dr = 1e-4; /* do not change this */
 
-  double r[2*N], dA[2*N], j[2*N], djdr[2*N]; /** j:angular momentum */
+  double r[2*N], dA[2*N], j[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
   double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N]; //, drc[2*N];
@@ -139,8 +139,6 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   double ggm0[14], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
   double C0;
   double Gtilde, dGtilde_dr, duc_dr;
-
-  //printf("r0 = %.12e\n",r0);
 
   int i;
   for (i = 0; i < 2*N; i++) {
@@ -154,16 +152,13 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
     pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
 
-    //printf("r = %.12e rc = %.12e drc = %.12e d2rc = %.12e A = %.12e dA = %.12e aK2 = %.12e S = %.12e Ss = %.12e pph = %.12e\n",r[i],rc[i],drc_dr[i],d2rc_dr2[i],A[i],dA[i],aK2,S,Ss,pph[i]);
-
   }
 
   /** Post-circular initial conditions */
   
   /* pph by finite diff. */
   double dpph_dr[2*N]; 
-  D0(pph, dr, 2*N, dpph_dr); //CHECK: This drvt differs from C++ ... but C++ is wrong
-  //double dpph_dr_ttt[2*N]; D0_x(pph, r, 2*N, dpph_dr_ttt);
+  D0(pph, dr, 2*N, dpph_dr); 
 
   for (i = 0; i < 2*N; i++) {
     
@@ -218,37 +213,27 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     E0[i]      = H0;
     Omega_j[i] = Omg;
 
-    //printf("%d Omg = %.12e Fphi = %.12e pph = %.12e dpph_dr = %.12e C0 = %.12e prstar = %.12e \n",i,Omg,Fphi[i],pph[i],dpph_dr[i],C0,prstar[i]);
-    //printf("Omg = %.12e Fphi = %.12e dpph_dr = %.12e C0 = %.12e prstar = %.12e \n",Omg,Fphi[i],dpph_dr[i],C0,prstar[i]);
-    //printf("dpph_dr = %.12e ( %.12e )\n",dpph_dr[i],dpph_dr_ttt[i]);
-
   }
-
-  //printf("%d Omg = %.12e Fphi = %.12e pph = %.12e dpph_dr = %.12e C0 = %.12e prstar = %.12e \n",N-1,Omg,Fphi[N-1],pph[N-1],dpph_dr[N-1],C0,prstar[N-1]);
-
-  //SB: UP TO HERE MATCH THE C++, except small diffs in dpph_dr
-
+  
 #if (POSTPOSTCIRCULAR)  
   
   /** Post-post-circular initial data */
   
-  double dpi1bydj[2*N];
-  D0_x(prstar, j, 2*N, dpi1bydj); // ................
+  double dpi1bydj, dprstardr[2*N],djdr[2*N];
+  D0(prstar, dr, 2*N, dprstardr); 
+  D0(j, dr, 2*N, djdr); 
 
   double dpi1dt, prstar4, a,b,c;
 
-    for (i = 0; i < 2*N; i++) {
-  //i = N-1;
-
-  //  if (i>0)
-  //  printf("prstar = %.12e j = %.12e dprstardj =  %.12e (%.12e) \n",prstar[i],j[i],dpi1bydj[i],(prstar[i]-prstar[i-1])/(j[i]-j[i-1]));
-  //printf("prstar = %.12e j = %.12e dprstardj = %.12e \n",prstar[i],j[i],dpi1bydj[i]);
+  //for (i = 0; i < 2*N; i++) { //No need of the loop here
+  i = N-1;
   
   sqrtAbyB = sqrt(A[i]/B[i]);
   uc  = 1./rc[i];
   uc2 = uc*uc;
   
-  dpi1dt   = dpi1bydj[i]*Fphi[i];
+  dpi1bydj = dprstardr[i]/djdr[i];
+  dpi1dt   = dpi1bydj*Fphi[i];
   prstar4  = prstar[i]*prstar[i]*prstar[i]*prstar[i];
   
   /* Still circular, no pr* dependence here */
@@ -266,8 +251,6 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   /* Total EOB energy */
   H        = sqrt( 1. + 2.*nu*(Heff - 1.));     
   
-  //printf("%e %e %e %e %e %e %e %e\n",sqrtAbyB,SQ(pph[i]),uc2,Horbeff,Heff,dA[i],A[i],drc_dr[i]);
-  
   /* Setting up second order equation for the orbital angular momentum */       
   a = -sqrtAbyB*uc2/(2.*H*Horbeff)*(dA[i]  - 2.*A[i]*uc*drc_dr[i]);                       
   b = -sqrtAbyB/H*(dGS_dr*S + dGSs_dr*Ss); 
@@ -276,9 +259,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   /* Fill out the array of the post-circular angular momentum */ 
   pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
   
-  //printf("%e %e %e %e %e\n",a,b,c,b*b-4*a*c,pph[i]);
-
-    }
+  //  }
   
 #endif
 
