@@ -16,4 +16,4 @@ use_tidal = 1
 LambdaAl2 = 1531. # MS1b 1.35
 LambdaBl2 = 1531.
 use_Yagi_fits = 1
-ode_stop_at_radius = 4.
+ode_stop_at_radius = 3.9
