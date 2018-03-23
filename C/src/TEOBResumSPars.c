@@ -422,7 +422,7 @@ void eob_set_params(char *s, int n)
        compute r0 from the initial GW frequency in geometric units and mass rescaled 
        reset sample rate using dt
     */
-    if (0) printf("Assume geometric units for pars values\n");
+    if (DEBUG) printf("Assume geometric units for pars values\n");
     par_set_d("r0", pow(fmin*Pi, -2./3.) );
     par_set_d("srate", 1./dt );
     par_set_d("distance", 1. );
@@ -432,7 +432,7 @@ void eob_set_params(char *s, int n)
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz 
     */
-    if (0) printf("Assume physical units for pars values\n");
+    if (DEBUG) printf("Assume physical units for pars values\n");
     dt = time_units_conversion(M, dt);
     if (DUNEQUAL(dt,1./par_get_d("srate"),1e-12)) {
       dt  = 1./par_get_d("srate");
