@@ -115,7 +115,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 }
 
 /* EOB nonspinning Hamiltonian */
-void eob_ham(double nu, double r, double pph, double prstar, double A, double dA,
+void eob_ham(double nu, double r, double pphi, double prstar, double A, double dA,
 	     double *H, /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
 	     double *Heff, /* effective EOB Hamiltonian (divided by mu) */
 	     double *dHeff_dr, /* drvt Heff,r */
@@ -124,7 +124,7 @@ void eob_ham(double nu, double r, double pph, double prstar, double A, double dA
 	     )
 {
   const double z3 = 2.0*nu*(4.0-3.0*nu);
-  const double pph2 = SQ(pph);
+  const double pphi2 = SQ(pphi);
   const double u = 1./r;
   const double u2 = SQ(u);
   const double u3 = u2*u;
@@ -132,163 +132,196 @@ void eob_ham(double nu, double r, double pph, double prstar, double A, double dA
   const double prstar3 = prstar2*prstar;
   const double prstar4 = prstar2*prstar2;
 
-  *Heff          = sqrt(A*(1.0 + pph2*u2) + prstar2 + z3*A*u2*prstar4);
-  *H             = sqrt( 1.0 + 2.0*nu*(*Heff - 1) )/nu;  
+  *Heff          = sqrt(A*(1.0 + pphi2*u2) + prstar2 + z3*A*u2*prstar4);
+  *H             = sqrt( 1.0 + 2.0*nu*(*Heff - 1) )/nu;
    
-  if (dHeff_dr != NULL)      *dHeff_dr      = 0.5*(dA + (pph2 + z3*prstar4)*(dA*u2 - 2*A*u3))/(*Heff);
+  if (dHeff_dr != NULL)      *dHeff_dr      = 0.5*(dA + (pphi2 + z3*prstar4)*(dA*u2 - 2*A*u3))/(*Heff);
   if (dHeff_dprstar != NULL) *dHeff_dprstar = (prstar + z3*2.0*A*u2*prstar3)/(*Heff);
-  if (dHeff_dpphi != NULL)   *dHeff_dpphi   = A*pph*u2/(*Heff);
+  if (dHeff_dpphi != NULL)   *dHeff_dpphi   = A*pphi*u2/(*Heff);
 }
 
-/** r.h.s. of EOB Hamiltonian dynamics, spins version */ 
+/** r.h.s. of EOB Hamiltonian dynamics, spins version */
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *dyn)
 {
     
-  (void)(t); /* avoid unused parameter warning */
-  Dynamics *d = dyn;
-
-  const double nu    = d->nu;
-  const double S     = d->S;
-  const double Sstar = d->Sstar;
-  const double chi1  = d->chi1;
-  const double chi2  = d->chi2;
-  const double X1    = d->X1;
-  const double X2    = d->X2;
-  const double c3    = d->cN3LO;
-  const double aK2   = d->aK2;
-  const double a1    = d->a1;
-  const double a2    = d->a2;
-  const double C_Q1  = d->C_Q1;
-  const double C_Q2  = d->C_Q2;
-  const int usetidal = d->use_tidal;
-  const int usespins = d->use_spins;
-
-  const double z3     = 2.*nu*(4.-3.*nu);    
-  const double r      = y[EOB_EVOLVE_RAD];
-  const double prstar = y[EOB_EVOLVE_PRSTAR];
-  const double pph    = y[EOB_EVOLVE_PPHI];
-  const double pphi2  = pph*pph;
-  
-  /** Compute Metric */
-  double A, B, dA, d2A, dB;
-  eob_metric_s(r, d, &A, &B, &dA, &d2A, &dB);
- 
-  /* shorthands */
-  const double prstar2 = prstar*prstar;
-  const double prstar3 = prstar2*prstar;
-  const double prstar4 = prstar3*prstar;
-  
-  double rc, drc_dr, d2rc_dr;
-  eob_dyn_s_get_rc(r, nu, a1,a2,aK2, C_Q1,C_Q2, usetidal, &rc,&drc_dr,&d2rc_dr);  
-  
-  const double uc     = 1./rc;
-  const double uc2    = uc*uc;
-  const double uc3    = uc2*uc;
-  
-  double ggm[14];
-  eob_dyn_s_GS(r, rc, drc_dr, aK2, prstar, pph, nu, chi1, chi2, X1, X2, c3, ggm);
-  
-  const double GS              = ggm[2];
-  const double GSs             = ggm[3];
-  const double dGS_dprstar     = ggm[4];
-  const double dGSs_dprstar    = ggm[5];
-  const double dGS_dr          = ggm[6];
-  const double dGSs_dr         = ggm[7];
-  const double dGSs_dpph       = ggm[9];
-  const double d2GS_dprstar20  = ggm[12];
-  const double d2GSs_dprstar20 = ggm[13];
-
-  const double Heff_orb = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );  
-  const double Heff = Heff_orb + (GS*S + GSs*Sstar)*pph;
-  const double H = sqrt( 1. + 2.*nu*(Heff - 1.) );
-  const double ooH = 1./H;
-  const double sqrtAbyB = sqrt(A/B);
-  const double dHeff_dr = pph*(dGS_dr*S + dGSs_dr*Sstar) + 1./(2.*Heff_orb)*( dA*(1. + pphi2*uc2 + z3*prstar4*uc2) - 2.*A*uc3*drc_dr*(pphi2 + z3*prstar4) );
-  const double dp_rstar_dt_0 = - sqrtAbyB*ooH*dHeff_dr;
-  const double dHeff_dprstar = pph*(dGS_dprstar*S + dGSs_dprstar*Sstar) + (prstar/Heff_orb)*(1. + 2.*A*uc2*z3*prstar2);
-  
-  /* second derivative of Heff wrt to pr_star neglecting all pr_star^2 terms */
-  const double d2Heff_dprstar20 = pph*(d2GS_dprstar20*S + d2GSs_dprstar20*Sstar) +  (1./Heff_orb)*(1. + 2.*A*uc2*z3*prstar2);
-  const double ddotr_dp_rstar = sqrtAbyB*ooH*d2Heff_dprstar20;
-  
-  const double dHeff_dpph = GS*S + (GSs + pph*dGSs_dpph)*Sstar + pph*A*uc2/Heff_orb;
-  const double Omg = ooH*dHeff_dpph; 
-  
-  /* approximate ddot(r)_0 without Fphi, order pr_star^2 neglected */
-  const double ddotr = dp_rstar_dt_0*ddotr_dp_rstar; 
-  
-  /* r evol eqn rhs */
-  dy[EOB_EVOLVE_RAD] = sqrtAbyB*ooH*dHeff_dprstar;
-  
-  /* phi evol eqn rhs */
-  dy[EOB_EVOLVE_PHI] = Omg;
-  
-  /* dp_{r*}/dt */ 
-  dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*ooH*dHeff_dr;
-  
-  /** Compute flux */
-  
-  /* Compute here the new r_omg radius 
+    (void)(t); /* avoid unused parameter warning */
+    Dynamics *d = dyn;
+    
+    /* Unpack values */
+    const double nu    = d->nu;
+    const double S     = d->S;
+    const double Sstar = d->Sstar;
+    const double chi1  = d->chi1;
+    const double chi2  = d->chi2;
+    const double X1    = d->X1;
+    const double X2    = d->X2;
+    const double c3    = d->cN3LO;
+    const double aK2   = d->aK2;
+    const double a1    = d->a1;
+    const double a2    = d->a2;
+    const double C_Q1  = d->C_Q1;
+    const double C_Q2  = d->C_Q2;
+    const int usetidal = d->use_tidal;
+    const int usespins = d->use_spins;
+    
+    /* Shorthands */
+    const double z3      = 2.*nu*(4.-3.*nu);
+    const double r       = y[EOB_EVOLVE_RAD];
+    const double prstar  = y[EOB_EVOLVE_PRSTAR];
+    const double prstar2 = prstar*prstar;
+    const double prstar3 = prstar2*prstar;
+    const double prstar4 = prstar3*prstar;
+    const double pphi     = y[EOB_EVOLVE_PPHI];
+    const double pphi2   = pphi*pphi;
+    
+    /** Compute Metric */
+    double A, B, dA, d2A, dB;
+    eob_metric_s(r, d, &A, &B, &dA, &d2A, &dB);
+    
+    /* Compute centrifugal radius */
+    double rc, drc_dr, d2rc_dr;
+    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc, &drc_dr, &d2rc_dr);
+    const double uc     = 1./rc;
+    const double uc2    = uc*uc;
+    const double uc3    = uc2*uc;
+    
+    /* Compute Hamiltonian */
+    double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi;
+    eob_ham_s(nu, r, rc, drc_dr, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20);
+    
+    const double ooH  = 1./H;
+    const double sqrtAbyB       = sqrt(A/B);
+    const double dp_rstar_dt_0  = - sqrtAbyB*ooH*dHeff_dr;
+    const double ddotr_dp_rstar = sqrtAbyB*ooH*d2Heff_dprstar20;
+    const double Omg            = ooH*dHeff_dpphi;
+    const double ddotr          = dp_rstar_dt_0*ddotr_dp_rstar; /* approximate ddot(r)_0 without Fphi, order pr_star^2 neglected */
+    
+    /* r evol eqn rhs */
+    dy[EOB_EVOLVE_RAD] = sqrtAbyB*ooH*dHeff_dprstar;
+    
+    /* phi evol eqn rhs */
+    dy[EOB_EVOLVE_PHI] = Omg;
+    
+    /* dp_{r*}/dt */
+    dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*ooH*dHeff_dr;
+    
+    /** Compute flux */
+    
+    /* Compute here the new r_omg radius
      Compute same quantities with prstar=0. This to obtain psi.
-     Procedure consistent with the nonspinning case
-  */
-  double ggm0[14];
-  eob_dyn_s_GS(r, rc, drc_dr, aK2, 0., pph, nu, chi1, chi2, X1, X2, c3, ggm0);
-  
-  const double GS_0       = ggm0[2];
-  const double GSs_0      = ggm0[3];
-  const double dGS_dr_0   = ggm0[6];
-  const double dGSs_dr_0  = ggm0[7];
-  const double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));    /* effective Hamiltonian H_0^eff */
-  const double Heff_0     = Heff_orb_0 + (GS_0*S + GSs_0*Sstar)*pph;
-  const double H0         = sqrt(1.0 + 2.0*nu*(Heff_0 - 1.0) );
-  const double ooH0       = 1./H0;
-  const double Gtilde     = GS_0*S     + GSs_0*Sstar;
-  const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
-  const double duc_dr     = -uc2*drc_dr;
-  const double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
-  const double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
-  const double v_phi      = r_omg*Omg;
-  const double x          = v_phi*v_phi;
-  const double jhat       = pph/(r_omg*v_phi);
-  
-  const double Fphi = eob_flx_Flux_s(x,Omg,r_omg,H,Heff,jhat,r,prstar,ddotr,dyn);
-  
-  dy[EOB_EVOLVE_PPHI] = Fphi;
-
-  if (d->store) {
-    /* Store values */
-    d->t = t;
-    d->r = r;
-    d->phi = y[EOB_EVOLVE_PHI];
-    d->pphi = pph;
-    d->prstar = prstar;
-    d->Omg = Omg;
-    d->Omg_orb = Omg;
-    d->H = H;
-//    d->E = E;
-    d->Heff = Heff;
-    d->A = A;
-    d->dA = dA;
-    d->d2A = d2A;
-    d->B = B;
-    d->dB = dB;
-//    d->psi = psi;
-    d->r_omega = r_omg;
-    d->v_phi = v_phi;
-    d->jhat = jhat;
-    d->ddotr = ddotr;
-  }
-  
-  return GSL_SUCCESS;
+     Procedure consistent with the nonspinning case.
+     */
+    double ggm0[14];
+    eob_dyn_s_GS(r, rc, drc_dr, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
+    
+    const double GS_0       = ggm0[2];
+    const double GSs_0      = ggm0[3];
+    const double dGS_dr_0   = ggm0[6];
+    const double dGSs_dr_0  = ggm0[7];
+    const double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));    /* effective Hamiltonian H_0^eff */
+    const double Heff_0     = Heff_orb_0 + (GS_0*S + GSs_0*Sstar)*pphi;
+    const double H0         = sqrt(1.0 + 2.0*nu*(Heff_0 - 1.0) );
+    const double ooH0       = 1./H0;
+    const double Gtilde     = GS_0*S     + GSs_0*Sstar;
+    const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
+    const double duc_dr     = -uc2*drc_dr;
+    const double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
+    const double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
+    const double v_phi      = r_omg*Omg;
+    const double x          = v_phi*v_phi;
+    const double jhat       = pphi/(r_omg*v_phi);
+    
+    const double Fphi = eob_flx_Flux_s(x,Omg,r_omg,H,Heff,jhat,r,prstar,ddotr,dyn);
+    
+    dy[EOB_EVOLVE_PPHI] = Fphi;
+    
+    if (d->store) {
+        /* Store values */
+        d->t = t;
+        d->r = r;
+        d->phi = y[EOB_EVOLVE_PHI];
+        d->pphi = pphi;
+        d->prstar = prstar;
+        d->Omg = Omg;
+        d->Omg_orb = Omg;
+        d->H = H;
+        //    d->E = E;
+        d->Heff = Heff;
+        d->A = A;
+        d->dA = dA;
+        d->d2A = d2A;
+        d->B = B;
+        d->dB = dB;
+        //    d->psi = psi;
+        d->r_omega = r_omg;
+        d->v_phi = v_phi;
+        d->jhat = jhat;
+        d->ddotr = ddotr;
+    }
+    
+    return GSL_SUCCESS;
 }
 
 /* EOB spinning Hamiltonian */
-//TODO: 
-void eob_ham_s()
+void eob_ham_s(
+               double nu,
+               double r,
+               double rc,
+               double drc_dr,
+               double pphi,
+               double prstar,
+               double S,
+               double Sstar,
+               double chi1,
+               double chi2,
+               double X1,
+               double X2,
+               double aK2,
+               double c3,
+               double A,
+               double dA,
+               double *H,             /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+               double *Heff,          /* effective EOB Hamiltonian (divided by mu) */
+               double *Heff_orb,
+               double *dHeff_dr,      /* drvt Heff,r */
+               double *dHeff_dprstar, /* drvt Heff,prstar */
+               double *dHeff_dpphi,    /* drvt Heff,pphi */
+               double *d2Heff_dprstar20
+               )
 {
-
+    /* Shorthands */
+    const double z3      = 2.0*nu*(4.0-3.0*nu);
+    const double pphi2    = SQ(pphi);
+    const double prstar2 = SQ(prstar);
+    const double prstar3 = prstar2*prstar;
+    const double prstar4 = prstar2*prstar2;
+    const double uc  = 1./rc;
+    const double uc2 = uc*uc;
+    const double uc3 = uc2*uc;
+    
+    /* Compute spin-related functions*/
+    double ggm[14];
+    eob_dyn_s_GS(r, rc, drc_dr, aK2, prstar, pphi, nu, chi1, chi2, X1, X2, c3, ggm);
+    const double GS              = ggm[2];
+    const double GSs             = ggm[3];
+    const double dGS_dprstar     = ggm[4];
+    const double dGSs_dprstar    = ggm[5];
+    const double dGS_dr          = ggm[6];
+    const double dGSs_dr         = ggm[7];
+    const double dGSs_dpphi       = ggm[9];
+    const double d2GS_dprstar20  = ggm[12];
+    const double d2GSs_dprstar20 = ggm[13];
+    
+    /* Compute Hamiltonian and its derivatives */
+    *Heff_orb         = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
+    *Heff             = *Heff_orb + (GS*S + GSs*Sstar)*pphi;
+    *H                = sqrt( 1. + 2.*nu*(*Heff - 1.) );
+    *dHeff_dr         = pphi*(dGS_dr*S + dGSs_dr*Sstar) + 1./(2.*(*Heff_orb))*( dA*(1. + pphi2*uc2 + z3*prstar4*uc2) - 2.*A*uc3*drc_dr*(pphi2 + z3*prstar4) );
+    *dHeff_dprstar    = pphi*(dGS_dprstar*S + dGSs_dprstar*Sstar) + (prstar/(*Heff_orb))*(1. + 2.*A*uc2*z3*prstar2);
+    *d2Heff_dprstar20 = pphi*(d2GS_dprstar20*S + d2GSs_dprstar20*Sstar) +  (1./(*Heff_orb))*(1. + 2.*A*uc2*z3*prstar2); /* second derivative of Heff wrt to pr_star neglecting all pr_star^2 terms */
+    *dHeff_dpphi       = GS*S + (GSs + pphi*dGSs_dpphi)*Sstar + pphi*A*uc2/(*Heff_orb);
 }
+
 
 /** Computes the gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.
     r      => BL radius
