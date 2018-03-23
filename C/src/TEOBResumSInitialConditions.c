@@ -129,25 +129,18 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 #define N (6)
   const double dr = 1e-8;
 
-  double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
+  double r[2*N], dA[2*N], j[2*N], djdr[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
-  double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N], drc[2*N];
-  double A[2*N],B[2*N],d2A[2*N],dB;
-  double rorb;
-  double pphorb;
-  double r2, r3, j3;
-  double H0eff, H0, psi, r_omega, v_phi, jhat, x;
-  double ggm[14];
-
-  //FIXME: redudant variables (same meaning, different name)
-  double sqrtAbyB, uc, uc2;
-  double pph2, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
-  double ggm0[14];
-  double GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
+  double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N]; //, drc[2*N];
+  double A[2*N],B[2*N],d2A[2*N],dB, sqrtAbyB;
+  double pphorb, uc, uc2, psic, r_omg, v_phi, jhat, x, Omg;
+  double H0eff, H0, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
+  double ggm0[14], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
   double C0;
-  double Omg;
-  double Gtilde, dGtilde_dr, duc_dr, psic, r_omg;
+  double Gtilde, dGtilde_dr, duc_dr;
+
+  //printf("r0 = %.12e\n",r0);
 
   int i;
   for (i = 0; i < 2*N; i++) {
@@ -157,30 +150,29 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     eob_metric_s(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB);
     
     /** Compute minimum of Heff0 using bisection method */
-    rorb   = r[i];
-    pphorb = rorb/sqrt(rorb-3.);
+    pphorb = r[i]/sqrt(r[i]-3.);
     eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
-    pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,rorb,A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
+    pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
+
+    //printf("r = %.12e rc = %.12e drc = %.12e d2rc = %.12e A = %.12e dA = %.12e aK2 = %.12e S = %.12e Ss = %.12e pph = %.12e\n",r[i],rc[i],drc_dr[i],d2rc_dr2[i],A[i],dA[i],aK2,S,Ss,pph[i]);
 
   }
 
   /** Post-circular initial conditions */
   
   /* pph by finite diff. */
-  double dpph_dr[2*N];
-  D0(pph, dr, 2*N, dpph_dr);
-  
+  double dpph_dr[2*N]; 
+  D0(pph, dr, 2*N, dpph_dr); //CHECK: This drvt differs from C++ ... but C++ is wrong
+  //double dpph_dr_ttt[2*N]; D0_x(pph, r, 2*N, dpph_dr_ttt);
+
   for (i = 0; i < 2*N; i++) {
     
     sqrtAbyB = sqrt(A[i]/B[i]);
     uc  = 1./rc[i];
     uc2 = uc*uc;
-    
-    /* circular angular momentum */
-    pph2 = pph[i]*pph[i];
-
+        
     /* Orbital effective Hamiltonian */
-    Horbeff0 = sqrt(A[i]*(1. + pph2*uc2));
+    Horbeff0 = sqrt(A[i]*(1. + SQ(pph[i])*uc2));
     
     /* Compute gyro-gravitomagnetic coupling functions */
     eob_dyn_s_GS(r[i], rc[i], drc_dr[i], aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
@@ -212,7 +204,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     Gtilde     =  GS_0*S     + GSs_0*Ss;
     dGtilde_dr =  dGS_dr_0*S + dGSs_dr_0*Ss;
     duc_dr     = -uc2*drc_dr[i];
-    psic       = (duc_dr + dGtilde_dr*rc[i]*sqrt(A[i]/pph2 + A[i]*uc2)/A[i])/(-0.5*dA[i]);
+    psic       = (duc_dr + dGtilde_dr*rc[i]*sqrt(A[i]/(SQ(pph[i])) + A[i]*uc2)/A[i])/(-0.5*dA[i]);
     r_omg      =  pow((pow(rc[i]*rc[i]*rc[i]*psic,-1./2)+Gtilde)*one_H0,-2./3.);
     v_phi      =  r_omg*Omg;
     x          =  v_phi*v_phi;
@@ -220,34 +212,47 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
     Fphi[i]    = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0., dyn);
     prstar[i]  = Fphi[i]/(dpph_dr[i]*C0);
-    pr[i]      = prstar[i]* sqrt(B[i]/A[i]);
+    pr[i]      = prstar[i]/sqrtAbyB; 
 
     j[i]       = pph[i];
     E0[i]      = H0;
     Omega_j[i] = Omg;
 
+    //printf("%d Omg = %.12e Fphi = %.12e pph = %.12e dpph_dr = %.12e C0 = %.12e prstar = %.12e \n",i,Omg,Fphi[i],pph[i],dpph_dr[i],C0,prstar[i]);
+    //printf("Omg = %.12e Fphi = %.12e dpph_dr = %.12e C0 = %.12e prstar = %.12e \n",Omg,Fphi[i],dpph_dr[i],C0,prstar[i]);
+    //printf("dpph_dr = %.12e ( %.12e )\n",dpph_dr[i],dpph_dr_ttt[i]);
+
   }
-  
+
+  //printf("%d Omg = %.12e Fphi = %.12e pph = %.12e dpph_dr = %.12e C0 = %.12e prstar = %.12e \n",N-1,Omg,Fphi[N-1],pph[N-1],dpph_dr[N-1],C0,prstar[N-1]);
+
+  //SB: UP TO HERE MATCH THE C++, except small diffs in dpph_dr
+
 #if (POSTPOSTCIRCULAR)  
   
   /** Post-post-circular initial data */
   
   double dpi1bydj[2*N];
-  D0(prstar, dr, 2*N, dpi1bydj);
+  D0_x(prstar, j, 2*N, dpi1bydj); // ................
 
   double dpi1dt, prstar4, a,b,c;
 
-  //for (i = 0; i < 2*N; i++) {
-  i = N-1;
+    for (i = 0; i < 2*N; i++) {
+  //i = N-1;
+
+  //  if (i>0)
+  //  printf("prstar = %.12e j = %.12e dprstardj =  %.12e (%.12e) \n",prstar[i],j[i],dpi1bydj[i],(prstar[i]-prstar[i-1])/(j[i]-j[i-1]));
+  //printf("prstar = %.12e j = %.12e dprstardj = %.12e \n",prstar[i],j[i],dpi1bydj[i]);
+  
+  sqrtAbyB = sqrt(A[i]/B[i]);
+  uc  = 1./rc[i];
+  uc2 = uc*uc;
   
   dpi1dt   = dpi1bydj[i]*Fphi[i];
   prstar4  = prstar[i]*prstar[i]*prstar[i]*prstar[i];
-    
-  /* Circular angular momentum */
-  pph2     = pph[i]*pph[i];              
   
   /* Still circular, no pr* dependence here */
-  Horbeff  = sqrt(A[i]*(1. + pph2*uc2)); 
+  Horbeff  = sqrt(A[i]*(1. + SQ(pph[i])*uc2)); 
   
   eob_dyn_s_GS(r[i], rc[i], drc_dr[i], aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
   GS      = ggm0[2];
@@ -261,15 +266,19 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   /* Total EOB energy */
   H        = sqrt( 1. + 2.*nu*(Heff - 1.));     
   
+  //printf("%e %e %e %e %e %e %e %e\n",sqrtAbyB,SQ(pph[i]),uc2,Horbeff,Heff,dA[i],A[i],drc_dr[i]);
+  
   /* Setting up second order equation for the orbital angular momentum */       
-  a = -sqrtAbyB*uc2/(2.*H*Horbeff)*(dA[i]  - 2.*A[i]*uc*drc[i]);                       
+  a = -sqrtAbyB*uc2/(2.*H*Horbeff)*(dA[i]  - 2.*A[i]*uc*drc_dr[i]);                       
   b = -sqrtAbyB/H*(dGS_dr*S + dGSs_dr*Ss); 
-  c = -dpi1dt - sqrtAbyB/(2.*H*Horbeff)*(dA[i] + z3*prstar4*uc2*(dA[i] - 2.*A[i]*uc*drc[i]));
+  c = -dpi1dt - sqrtAbyB/(2.*H*Horbeff)*(dA[i] + z3*prstar4*uc2*(dA[i] - 2.*A[i]*uc*drc_dr[i]));
   
   /* Fill out the array of the post-circular angular momentum */ 
   pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
   
-  //}
+  //printf("%e %e %e %e %e\n",a,b,c,b*b-4*a*c,pph[i]);
+
+    }
   
 #endif
 
@@ -328,7 +337,7 @@ double eob_dyn_DHeff0(double x, void *params)
 
 /** Root finder: Compute minimum of Heff0 */
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3,
-		       double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss)
+			    double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss)
 {
   
 #define max_iter (200)
