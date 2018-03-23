@@ -903,8 +903,8 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
 
   /** derivatives (nonuniform grid) */
   for (k=0; k<KMAX; k++) {
-    D0_nux(phase[k], T, size, omg[k]);
-    D0_nux(omg[k]  , T, size, domg[k]);
+    D0_x(phase[k], T, size, omg[k]);
+    D0_x(omg[k]  , T, size, domg[k]);
   }
   
   /**  Case 'NQC_fit_hybrid' */
@@ -1088,10 +1088,10 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
 #endif    
 
   /** Derivatives for the phase */
-  D0_nux(n4,T,size, d_n4);
-  D0_nux(n5,T,size, d_n5);
-  D0_nux(d_n4,T,size, d2_n4);
-  D0_nux(d_n5,T,size, d2_n5);
+  D0_x(n4,T,size, d_n4);
+  D0_x(n5,T,size, d_n5);
+  D0_x(d_n4,T,size, d2_n4);
+  D0_x(d_n5,T,size, d2_n5);
 
 #if (DEBUG)
   fp = fopen("dNQC_func.txt", "w");
@@ -1140,9 +1140,9 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
       p1tmp[k][j] = A[k][j];      
     }
     /* Take FD derivatives */
-    D0_nux(m11[k],T,size, m21[k]);
-    D0_nux(m12[k],T,size, m22[k]);
-    D0_nux(A[k],T,size, p2tmp[k]);
+    D0_x(m11[k],T,size, m21[k]);
+    D0_x(m12[k],T,size, m22[k]);
+    D0_x(A[k],T,size, p2tmp[k]);
   }
 
 
