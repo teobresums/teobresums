@@ -47,6 +47,23 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv2.h>
 
+/** Following macros can be set during compilation for special feats */
+#ifndef VERBOSE
+#define VERBOSE 0 /* verbose mode is off by default */
+#endif
+
+#ifndef POSTPOSTCIRCULAR
+#define POSTPOSTCIRCULAR 1 /* use post-post-circular initial conditions by default */
+#endif
+
+#ifndef EXCLUDESPINSPINTIDES
+#define EXCLUDESPINSPINTIDES 0 /* use tidally deformed centr. radius with self-spin and tides by default */
+#endif
+
+#ifndef DEBUG 
+#define DEBUG 0 /* global debug option */ 
+#endif
+
 /** Macros */
 #define ERROR 1 /** generic error int */
 #define OK 0 /** generic go int */
@@ -270,7 +287,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
-int D0_nux(double *f, double *x, int n, double *df);
+int D0_x(double *f, double *x, int n, double *df);
 void set_multipolar_idx_mask(int *kmask, int n);
 void Waveform_alloc (Waveform **wav, int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
