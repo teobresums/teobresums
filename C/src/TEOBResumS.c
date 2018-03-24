@@ -411,7 +411,6 @@ int main (int argc, char* argv[])
 	dyn->data[v] = malloc ( size_tmp * sizeof(double) );
 	memset(dyn->data[v], 0, size_tmp*sizeof(double));
       }
-
       for (int i = 0; i < size_tmp; i++) {
 	dyn->time[i] = hlm->time[i];
       }      
@@ -434,13 +433,14 @@ int main (int argc, char* argv[])
   /** NQC and ringdown for BBH */
   if (!(use_tidal)) {
 
-    Waveform_lm_alloc (&hlm_nqc, size, par_get_s("output_dir")); strcat(hlm_nqc->name,"/dyn.txt"); 
+    Waveform_lm_alloc (&hlm_nqc, size, par_get_s("output_dir")); strcat(hlm_nqc->name,"/hlm_nqc.txt"); 
 
     /** Compute NQC corrections */
     eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, hlm_nqc);
 
     /** Extend arrays */
     size += par_get_i("ringdown_extend_array");
+    par_set_i("size", size); 
     Waveform_lm_push (&hlm, size);
     Dynamics_push (&dyn, size );
 
@@ -449,11 +449,11 @@ int main (int argc, char* argv[])
     
     /** Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
-    //eob_wav_ringdown(dyn, hlm, hlm_ringdown);
+    //eob_wav_ringdown(dyn, hlm, hlm_ringdown);//TODO
 
     if (par_get_i("output_nqc")) 
       Waveform_lm_output (hlm_nqc);
-    //if (par_get_i("output_ringdwon")) 
+    //if (par_get_i("output_ringdown")) 
     //Waveform_lm_output (hlm_ringdown);
 
     Waveform_lm_free (hlm_nqc);
@@ -461,10 +461,6 @@ int main (int argc, char* argv[])
 
   }
     
-  /** Update waveform size */
-  size = hlm->size;
-  par_set_i("size", size); 
-
   /** Alloc memory for (h+,hx) */
   Waveform *hpc; 
   Waveform_alloc (&hpc, size, "hpc");
