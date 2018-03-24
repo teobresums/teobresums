@@ -99,8 +99,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     hlmNQC[k] = NQC.ampli[k];
   } else {
     for (k = 0; k < KMAX; k++) {
-      hlmNQC[k] = 1;
+      hlmNQC[k] = 1.;
     }
+    //memset(hlmNQC, 1., KMAX*sizeof(double));//FIXME: does not work?!
   }
 
   /** Sum up */
