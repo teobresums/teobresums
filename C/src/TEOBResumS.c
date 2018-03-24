@@ -290,6 +290,7 @@ int main (int argc, char* argv[])
     
     /** Append dynamics and waveform to vectors */
     for (k = 0; k < KMAX; k++) {
+      hlm->time[iter]     = dyn->t; 
       hlm->ampli[k][iter] = hlm_t->ampli[k]; 
       hlm->phase[k][iter] = hlm_t->phase[k]; 
     }
@@ -351,7 +352,9 @@ int main (int argc, char* argv[])
   Waveform_lm_push (&hlm, iter);
   Dynamics_push (&dyn, iter);
 
-  if (par_get_i("output_dynamics")) 
+  if ((DEBUG) && (par_get_i("output_multipoles"))) 
+    Waveform_lm_output (hlm);
+  if ((DEBUG) && (par_get_i("output_dynamics"))) 
     Dynamics_output(dyn);
 
   DBGSTOP
@@ -367,7 +370,7 @@ int main (int argc, char* argv[])
     /* Build uniform grid of width dt and alloc tmp memory */
     
     if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));    
-    //WARNING: is this rounding under control ?!
+    //CHECKME: is this rounding under control ?!
     const int size_vecg = (int)((dyn->time[size] - dyn->time[0])/dyn->dt + 1);
 
     Waveform_lm_alloc (&hlm_vecg, size_vecg, "hlm_tmp");
