@@ -542,14 +542,17 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->kapT4 = par_get_d("kappaTl4");
   dyn->khatA2 = par_get_d("khatAl2");
   dyn->khatB2 = par_get_d("khatBl2");
+  dyn->bar_alph2_1 = par_get_d("bar_alph2_1");
+  dyn->bar_alph2_2 = par_get_d("bar_alph2_2");
+  dyn->bar_alph3_1 = par_get_d("bar_alph3_1");
+  dyn->bar_alph3_2 = par_get_d("bar_alph3_2");
   dyn->pGSF_tidal = par_get_d("pGSF_tidal");
   dyn->Mbhf = par_get_d("BH_final_mass");
   dyn->abhf = par_get_d("BH_final_spin");
   dyn->use_tidal = par_get_i("use_tidal");
   dyn->use_spins = par_get_i("use_spins");
   dyn->dt        = par_get_d("dt");
-  //dyn->t1       = par_get_d("ode_t1");
-  dyn->t_stop   = par_get_d("ode_tmax");
+  dyn->t_stop    = par_get_d("ode_tmax");
 }
 
 /** Convert time in sec to dimensionless and mass-rescaled units */
