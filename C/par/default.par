@@ -32,6 +32,44 @@ pGSF_tidal = 4. # p-power in GSF tidal potential model
 use_spins = 0 # use spins ?
 
 # ----------------------
+# options
+# ----------------------
+
+use_geometric_units = 1 # use geometric units for I/O ?
+
+use_speedytail = 1 # use special routine to speed up tail computation ?
+
+interp_uniform_grid = 0 # interpolate on uniform grid ?
+
+compute_LR = 1 # calculate LR ?
+compute_LSO = 1 # calculate LSO ?
+compute_LR_guess = 3.
+compute_LSO_guess = 6. 
+
+output_dir = "./data/" # output dir
+output_multipoles = 1 # output multipoles
+output_lm = [-1] # indexes of multipoles to ouput
+output_dynamics = 0 # output dynamics
+output_nqc = 0 # output NQC waveform
+output_ringdown = 0 # output ringdown waveform
+
+# ----------------------
+# Evolution settings
+# ----------------------
+
+srate = 4096. # sampling rate, used if input is given in physical unit, reset based on tstep otherwise
+dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
+
+size = 1 # size of the arrays (chunks, dynamically extended)
+ringdown_extend_array = 500 # grid points to extend arrays for ringdown attachment
+
+ode_timestep = "uniform" # specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
+ode_abstol = 1e-13 # ODE solver absolute accuracy
+ode_reltol = 1e-11 # ODE solver relative accuracy
+ode_tmax = 1e8 # max integration time
+ode_stop_at_radius = 2. # stop ODE integration at this radius (if > 0)
+
+# ----------------------
 # following pars are set by the code
 # ----------------------
 
@@ -76,41 +114,3 @@ rLR = 0. # radius of light-ring
 rLSO = 0. # radius of last stable orbit 
 
 use_tidal = 0 # index for tidal modus
-
-# ----------------------
-# options
-# ----------------------
-
-use_geometric_units = 1 # use geometric units for I/O ?
-
-use_speedytail = 1 # use special routine to speed up tail computation ?
-
-interp_uniform_grid = 0 # interpolate on uniform grid ?
-
-compute_LR = 1 # calculate LR ?
-compute_LSO = 1 # calculate LSO ?
-compute_LR_guess = 3.
-compute_LSO_guess = 6. 
-
-output_dir = "./data/" # output dir
-output_multipoles = 1 # output multipoles
-output_lm = [-1] # indexes of multipoles to ouput
-output_dynamics = 0 # output dynamics
-output_nqc = 0 # output NQC waveform
-output_ringdown = 0 # output ringdown waveform
-
-# ----------------------
-# Evolution settings
-# ----------------------
-
-srate = 4096. # sampling rate, used if input is given in physical unit, reset based on tstep otherwise
-dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
-
-size = 1 # size of the arrays (chunks, dynamically extended)
-ringdown_extend_array = 500 # grid points to extend arrays for ringdown attachment
-
-ode_timestep = "uniform" # specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
-ode_abstol = 1e-13 # ODE solver absolute accuracy
-ode_reltol = 1e-11 # ODE solver relative accuracy
-ode_tmax = 1e8 # max integration time
-ode_stop_at_radius = 2. # stop ODE integration at this radius (if > 0)
