@@ -44,11 +44,11 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     
   double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
-  double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
+  double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardr[2*N];
 
   double A, B, d2A, dB;
   double r2, r3, j3;
-  double H0eff, H0, psi, r_omega, v_phi, jhat, x;
+  double H0eff, H0, psi, r_omega, v_phi, jhat, x, dprstardt;
   
   for (int i = 0; i < 2*N; i++) {
     
@@ -88,11 +88,11 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   }
     
   /** prstar by finite diff. */
-  D0(prstar, dr, 2*N, dprstardt);
+  D0(prstar, dr, 2*N, dprstardr);
 
   int i = N-1;
-  dprstardt[i] *= Fphi[i]/djdr[i];
-  pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt[i] - z3*gsl_pow_int(prstar[i],4)/j2[i]);
+  dprstardt = dprstardr[i] * Fphi[i]/djdr[i];
+  pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt - z3*gsl_pow_int(prstar[i],4)/j2[i]);
   
   y_init[EOB_ID_RAD]    = r[N-1];
   y_init[EOB_ID_PPHI]   = pph[N-1];
@@ -131,7 +131,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 
   double r[2*N], dA[2*N], j[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
-  double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardt[2*N];
+  double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N];
   double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N]; //, drc[2*N];
   double A[2*N],B[2*N],d2A[2*N],dB, sqrtAbyB;
   double pphorb, uc, uc2, psic, r_omg, v_phi, jhat, x, Omg;
