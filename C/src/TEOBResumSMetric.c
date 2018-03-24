@@ -171,11 +171,14 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
     dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
       - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
-    d2A_u = -90.*kapT4*u8
-      - kapT2*(2*bar_alph2_2*u6 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u)
-	     + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2))
-      - kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
-  
+
+    if (d2AT != NULL) {
+      d2A_u = -90.*kapT4*u8
+	- kapT2*(2*bar_alph2_2*u6 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u)
+		 + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2))
+	- kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
+    }
+
   } else { 
 
     const double c1  =  8.53353;
@@ -203,13 +206,6 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
     double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
     
-    double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
-    double d2A1SF = d2Acub*f23 + 2*dAcub*df23 + Acub*d2f23;
-    double d2A2SF = 674./28.;
-    double d2f0   = 6*(oom3u*oom3u*oom3u);
-    double d2f1   = 0.25*(63*(rLR*rLR)*A1SF + 4*(-1+rLR*u)*(-7*rLR*dA1SF + (-1+rLR*u)*d2A1SF))*pow(oom3u,11./2.);
-    double d2f2   = (rLR*p*((1+p)*rLR*A2SF - 2*(-1+rLR*u)*dA2SF +(-1.+rLR*u)*(-1.+rLR*u) *d2A2SF))*pow(oom3u,p+2);
-
     double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
     double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
     double AT4    = - kapT4*u10;
@@ -218,20 +214,30 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double dAT3  = - kapT3*(8.*u7 + 9*bar_alph3_1*u8 + 10*bar_alph3_2*u9);
     double dAT4  = - kapT4*10.*u9;
 
-    double d2AT2  = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
-    
-    double d2AT3  = - kapT3*(56*u6 + 72*bar_alph3_1*u7 + 90*bar_alph3_2*u8);
-    double d2AT4  = - kapT4*90*u8;
-
     A     = AT2   + AT3   + AT4;
     dA_u  = dAT2  + dAT3  + dAT4;
-    d2A_u = d2AT2 + d2AT3 + d2AT4;
+
+    if (d2AT != NULL) {
+      double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
+      double d2A1SF = d2Acub*f23 + 2*dAcub*df23 + Acub*d2f23;
+      double d2A2SF = 674./28.;
+      double d2f0   = 6*(oom3u*oom3u*oom3u);
+      double d2f1   = 0.25*(63*(rLR*rLR)*A1SF + 4*(-1+rLR*u)*(-7*rLR*dA1SF + (-1+rLR*u)*d2A1SF))*pow(oom3u,11./2.);
+      double d2f2   = (rLR*p*((1+p)*rLR*A2SF - 2*(-1+rLR*u)*dA2SF +(-1.+rLR*u)*(-1.+rLR*u) *d2A2SF))*pow(oom3u,p+2);
+      
+      double d2AT2  = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
+      double d2AT3  = - kapT3*(56*u6 + 72*bar_alph3_1*u7 + 90*bar_alph3_2*u8);
+      double d2AT4  = - kapT4*90*u8;
+      
+      d2A_u = d2AT2 + d2AT3 + d2AT4;
+    }
     
   }
 
   *AT   = A;
   *dAT  = dA_u;
-  *d2AT = d2A_u;
+  if (d2AT != NULL) *d2AT = d2A_u;
+
 }
 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
