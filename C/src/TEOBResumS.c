@@ -306,13 +306,13 @@ int main (int argc, char* argv[])
 
     /** Stop integration if reached max time */    
     if (dyn->t > dyn->t_stop) {
-      printf("Max integration time reached.");
+      printf("Stop: Max integration time reached.\n");
       dyn->ode_stop = true;
     }
 
     /** Stop integration at given radius (if rstop >= 0) */    
     if ((dyn->ode_stop_radius) && (dyn->r < rstop) ) {
-      printf("Stopping radius reached.");
+      printf("Stop: radius reached.\n");
       dyn->ode_stop = true;
     }
 
@@ -332,7 +332,7 @@ int main (int argc, char* argv[])
       }
     } else {
       if (dyn->t >= dyn->t_stop) {
-	printf("Peak of Omega reached.");
+	printf("Stop: Peak of Omega reached.\n");
 	dyn->ode_stop = true;
       }
     }
@@ -345,14 +345,18 @@ int main (int argc, char* argv[])
   gsl_odeiv2_step_free (s);
   gsl_odeiv2_driver_free (d);
 
+  /** Update waveform size 
+      resize to actual size */
+  par_set_i("size", iter); 
+  Waveform_lm_push (&hlm, iter);
+  Dynamics_push (&dyn, iter);
+
   if (par_get_i("output_dynamics")) 
     Dynamics_output(dyn);
 
   DBGSTOP
 
 
-  /** Update waveform size */
-  par_set_i("size", size); 
 
   /** Uniform grid */
   if (interp_uniform_grid) {
