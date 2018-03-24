@@ -450,7 +450,11 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   
 }
 
-
-
-
-
+/** Light-ring approximation, vacuum nonspinning case */
+double eob_approxLR(const double nu) 
+{
+  const double x = 1.-4.*nu;
+  const double r0 = 1.818461553848201e+00; // x=0 (q=1)
+  const double r1 = 1.821043720041472e+00; // x=1 (3M)
+  return r0*x + r1;
+}

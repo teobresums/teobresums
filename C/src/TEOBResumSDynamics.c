@@ -516,10 +516,16 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   const double epsabs = 0.; /* if converges, precision is |r-r*| = epsabs + epsrel r*  */
   const double epsrel = 1e-10; 
   const gsl_root_fsolver_type *T;
-  double x;
-  double x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
-  double x_hi = 3.1; // 3 nu = 0
-  if (dyn->use_tidal) x_hi = 18.; 
+  double x, x_lo, x_hi;
+  if (dyn->use_tidal) {
+    x_lo = 2.8; // nu~1/4 kappaT2 ~ 12
+    x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
+  } else {
+    /* double x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
+       double x_hi = 3.1; // 3 nu = 0 */
+    x_lo = 0.95*eob_approxLR(dyn->nu);
+    x_hi = 1.05*eob_approxLR(dyn->nu);
+  }
 
   gsl_root_fsolver *s;
   gsl_function F;
