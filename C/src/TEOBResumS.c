@@ -296,11 +296,12 @@ int main (int argc, char* argv[])
     if (store_dynamics) {
       dyn->time[iter]             = dyn->t; 
       dyn->data[EOB_RAD][iter]    = dyn->r;
-      dyn->data[EOB_MOMG][iter]   = dyn->Omg;
+      dyn->data[EOB_PHI][iter]    = dyn->phi;
       dyn->data[EOB_PPHI][iter]   = dyn->pphi;
+      dyn->data[EOB_MOMG][iter]   = dyn->Omg;
+      dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
       dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
-      dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
     }
 
     /** Stop integration if reached max time */    
