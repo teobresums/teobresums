@@ -521,11 +521,11 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
     x_lo = 2.8; // nu~1/4 kappaT2 ~ 12
     x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
   } else {
-    double x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
-    double x_hi = 3.1; // 3 nu = 0 
-    /* x_lo = 0.95*eob_approxLR(dyn->nu); */
-    /* x_hi = 1.05*eob_approxLR(dyn->nu); */
-  }
+    x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
+    x_hi = 3.1; // 3 nu = 0 
+    //x_lo = 0.9*eob_approxLR(dyn->nu); 
+    //x_hi = 1.1*eob_approxLR(dyn->nu); 
+  }  
 
   gsl_root_fsolver *s;
   gsl_function F;
