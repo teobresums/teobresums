@@ -390,7 +390,7 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
   const int dn = size - (*wav)->size;
   (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
   if ((*wav)->time == NULL) errorexit("Out of memory.");
-  if (dn>0) memset( (*wav)->time + n, 0, dn * sizeof(double) );
+  /* if (dn>0) memset( (*wav)->time + n, 0, dn * sizeof(double) ); */
   for (k=0; k<KMAX; k++) {
     (*wav)->ampli[k] = realloc ( (*wav)->ampli[k], size * sizeof(double) );
     if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
