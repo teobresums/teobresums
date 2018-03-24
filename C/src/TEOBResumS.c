@@ -107,7 +107,7 @@ int main (int argc, char* argv[])
   const int use_spins = par_get_i("use_spins");
   const int use_tidal = par_get_i("use_tidal");
   int interp_uniform_grid = par_get_i("interp_uniform_grid");  
-  if (use_tidal) interp_uniform_grid = 1;
+  if (!(use_tidal)) interp_uniform_grid = 1;
   int store_dynamics = par_get_i("output_dynamics");
 
   Dynamics_set_params(dyn);
@@ -348,76 +348,88 @@ int main (int argc, char* argv[])
 
   /** Update waveform size 
       resize to actual size */
-  par_set_i("size", iter); 
-  Waveform_lm_push (&hlm, iter);
-  Dynamics_push (&dyn, iter);
+  size = iter;
+  par_set_i("size", size); 
+  Waveform_lm_push (&hlm, size);
+  Dynamics_push (&dyn, size);
 
-  if ((DEBUG) && (par_get_i("output_multipoles"))) 
-    Waveform_lm_output (hlm);
-  if ((DEBUG) && (par_get_i("output_dynamics"))) 
-    Dynamics_output(dyn);
-
-  DBGSTOP
-
-
-
+  if (DEBUG) {
+    if(par_get_i("output_multipoles")) {
+      strcat(hlm->name,"_insplunge");
+      Waveform_lm_output (hlm);
+    }
+    if (par_get_i("output_dynamics"))
+      Dynamics_output(dyn);
+  }
+  
   /** Uniform grid */
   if (interp_uniform_grid) {
 
-    Waveform_lm *hlm_vecg; 
-    Dynamics *dyn_vecg; 
+    Waveform_lm *hlm_tmp; 
+    Dynamics *dyn_tmp; 
   
     /* Build uniform grid of width dt and alloc tmp memory */
-    
-    if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));    
     //CHECKME: is this rounding under control ?!
-    const int size_vecg = (int)((dyn->time[size] - dyn->time[0])/dyn->dt + 1);
+    const double dt = par_get_d("dt"); /* use dt from parfile */
+    const int size_tmp = (int)((dyn->time[size-1] - dyn->time[0])/dt + 1);
+    if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));    
+    if (DEBUG) printf("New grid: size_tmp=%d dt=%.12e t[size-1]=%.12e (%.12e)\n",
+		      size_tmp,dt,dyn->time[size-1],dyn->time[size-1]-(dyn->time[0]+(size_tmp-1)*dt));    
 
-    Waveform_lm_alloc (&hlm_vecg, size_vecg, "hlm_tmp");
-    
-    int i;    
-    for (i = 0; i < size_vecg; i++) {
-      hlm_vecg->time[i] = i*dyn->dt;
-    }
+    Waveform_lm_alloc (&hlm_tmp, size_tmp, "hlm_tmp");
 
-    /* Interpolate on uniform grid */
-    for (k = 0; k < KMAX; k++) {
-      interp_grid(hlm->time, hlm->ampli[k], hlm->size, hlm_vecg->time, size_vecg, hlm_vecg->ampli[k]);
+    /* Interpolate on uniform grid */  
+    for (int i = 0; i < size_tmp; i++) {
+      hlm_tmp->time[i] = dyn->time[0] + i*dt;
     }
-    for (k = 0; k < KMAX; k++) {
-      interp_grid(hlm->time, hlm->phase[k], hlm->size, hlm_vecg->time, size_vecg, hlm_vecg->phase[k]);
+    for (int k = 0; k < KMAX; k++) {
+      interp_spline(hlm->time, hlm->ampli[k], hlm->size, hlm_tmp->time, size_tmp, hlm_tmp->ampli[k]);
+    }
+    for (int k = 0; k < KMAX; k++) {
+      interp_spline(hlm->time, hlm->phase[k], hlm->size, hlm_tmp->time, size_tmp, hlm_tmp->phase[k]);
     }
 
     /* Swap pointers and free old memory */
-    SWAPTRS(hlm_vecg, hlm);
+    SWAPTRS(hlm_tmp, hlm);
+    strcpy(hlm->name, par_get_s("output_dir")); strcat(hlm->name,"/hlm_i");
+    Waveform_lm_free (hlm_tmp);
 
-    Waveform_lm_free (hlm_vecg);
-    strcpy(hlm->name, par_get_s("output_dir")); strcat(hlm->name,"/hlm");
+    if ((DEBUG) && (par_get_i("output_multipoles"))) 
+      Waveform_lm_output (hlm);
 
     if (store_dynamics) {
 
-      /* Same for dynamics */
-      Dynamics_alloc(&dyn_vecg, size_vecg, "dyn_vecg");
-      for (i = 0; i < size_vecg; i++) {
-	dyn_vecg->time[i] = i*dyn->dt;
+      /* Similar for dynamics, 
+	 need first to copy fields and allocate new mem */
+
+      Dynamics_alloc(&dyn_tmp, size, "");
+      memcpy(dyn_tmp, dyn, sizeof(Dynamics));
+      
+      dyn->size = size_tmp; 
+      dyn->time = malloc ( size_tmp * sizeof(double) );
+      for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+	dyn->data[v] = malloc ( size_tmp * sizeof(double) );
+	memset(dyn->data[v], 0, size_tmp*sizeof(double));
+      }
+
+      for (int i = 0; i < size_tmp; i++) {
+	dyn->time[i] = hlm->time[i];
       }      
-      for (k = 0; k < EOB_DYNAMICS_NVARS; k++) {
-	interp_grid(dyn->time, dyn->data[k], size, dyn_vecg->time, size_vecg, dyn_vecg->data[k]);
+      for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) {
+	interp_spline(dyn_tmp->time, dyn_tmp->data[k], size, dyn->time, size_tmp, dyn->data[k]);
       }
 
-      /* Swap array data pointers and structure pointers
-	 maintains old scalar data and parameters */
-      for (k = 0; k < EOB_DYNAMICS_NVARS; k++) {
-	SWAPTRS(dyn_vecg->data[k], dyn->data[k]); //CHECKME!
-      }
-      SWAPTRS(dyn_vecg, dyn);
-
-      Dynamics_free (dyn_vecg);
-      strcpy(dyn->name, par_get_s("output_dir")); strcat(dyn->name,"/dyn.txt");
-
+      strcpy(dyn->name, par_get_s("output_dir")); strcat(dyn->name,"/dyn_i.txt");
+      Dynamics_free (dyn_tmp);
+      
+      if ((DEBUG) && (par_get_i("output_dynamics")))
+	Dynamics_output(dyn);
+    
     }
     
   }
+
+  DBGSTOP
   
   /** NQC and ringdown for BBH */
   if (!(use_tidal)) {
