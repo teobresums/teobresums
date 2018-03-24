@@ -42,7 +42,6 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   const double C_Q1 = dyn->C_Q1;
   const double C_Q2 = dyn->C_Q2;
   const double X12 = X1-X2;
-  //const double sqrt_one_4nu = sqrt(1.-4.*nu);
 
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
@@ -69,7 +68,6 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
   
   FNewt22 = FNewtlm[1];
-
 
   /** Tidal amplitude */
   if (usetidal) {
@@ -101,7 +99,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     for (k = 0; k < KMAX; k++) {
       hlmNQC[k] = 1.;
     }
-    //memset(hlmNQC, 1., KMAX*sizeof(double));//FIXME: does not work?!
+    //memset(hlmNQC, 1., KMAX*sizeof(hlmNQC[0]));//FIXME: does not work?!
   }
 
   /** Sum up */
@@ -196,8 +194,7 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
   };
 
   /** Newtonian partial fluxes*/
-  int k;
-  for (k = 0; k < KMAX; k++) {
+  for (int k = 0; k < KMAX; k++) {
     Nlm[k] = CNlm[k] * spx[k];
   }
   
