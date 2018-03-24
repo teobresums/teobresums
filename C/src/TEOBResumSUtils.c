@@ -487,6 +487,7 @@ void Dynamics_output (Dynamics *dyn)
   FILE* fp; 
   if ((fp = fopen(dyn->name, "w")) == NULL)
     errorexits("error opening file",dyn->name);
+  fprintf(fp, "# t:0 r:1 phi:2 MOmega:3 ddotr:4 prstar:5 MOmega_orb:6\n");
   for (i = 0; i < dyn->size; i++) {
     fprintf(fp, "%.9e", dyn->time[i]);
     for (v = 0; v < EOB_DYNAMICS_NVARS; v++)
