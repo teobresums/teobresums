@@ -43,6 +43,7 @@ Special and minimal data structures are defined together with routines to alloca
 | `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
 |                                                            || 2017.03.18 Dynamics nospin BBH is correct                     |
 |                                                            || 2017.03.23 Dynamics spin BBH is correct                       |
+|                                                            || 2017.03.23 Dynamics nospin BNS runs (small diff wrtr C++)     |
 
 [Debug LOG. Please keep update with development milestones]
 
