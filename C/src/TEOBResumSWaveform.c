@@ -408,15 +408,13 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   const double x5 = gsl_pow_int(x,5);
   
   double hA[KMAX], hB[KMAX], betaA1[KMAX],betaB1[KMAX];
-  int k;
-  for (k=0; k<KMAX; k++) {
-    hTidallm[k]=0.;
-    hA[k]=0.;
-    hB[k]=0.;
-    betaA1[k]=0;
-    betaB1[k]=0;
-  }
-  
+
+  memset(hTidallm, 0., KMAX*sizeof(double));
+  memset(hA, 0., KMAX*sizeof(double));
+  memset(hB, 0., KMAX*sizeof(double));
+  memset(betaA1, 0., KMAX*sizeof(double));
+  memset(betaB1, 0., KMAX*sizeof(double));
+
   /** l=2 */
   hA[1]     = 2 * khatA_2 *(XA/XB+3);
   hB[1]     = 2 * khatB_2 *(XB/XA+3);
