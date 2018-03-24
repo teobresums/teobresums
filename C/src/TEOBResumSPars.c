@@ -325,7 +325,20 @@ void eob_set_params(char *s, int n)
   double S = S1 + S2;            /* in the EMRL this becomes the spin of the BH */
   double Sstar = X2*a1 + X1*a2;  /* in the EMRL this becomes the spin of the particle */
 
-  int usetidal = par_get_i("use_tidal");
+  int j;
+
+  for (j=0; j<=TIDES_NOPT; j++) {
+    if (STREQUAL(par_get_s("tides"),tides_opt[j])) {
+      if (VERBOSE) printf("%-40s = %s\n","tides",tides_opt[j]);
+      break;
+    }
+  }
+  if (j==TIDES_NOPT) {
+    if (VERBOSE) printf("tides '%s' undefined, set to default\n",par_get_s("tides"));
+    j = TIDES_OFF;
+  }
+  par_set_i("use_tidal",j);
+  int usetidal = j;
   
   double LambdaAl2 = par_get_d("LambdaAl2");
   double LambdaBl2 = par_get_d("LambdaBl2");
