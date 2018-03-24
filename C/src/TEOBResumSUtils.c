@@ -47,7 +47,7 @@ double Eulerlog(const double x,const double m)
 }
 
 /** Spline interpolation with GSL routines */
-void interp_grid(double *t, double *y, int n, double *ti, int ni, double *yi)
+void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
   int k;
   double yi_pt;
