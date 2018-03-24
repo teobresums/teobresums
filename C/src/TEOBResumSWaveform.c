@@ -410,6 +410,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   double hA[KMAX], hB[KMAX], betaA1[KMAX],betaB1[KMAX];
   int k;
   for (k=0; k<KMAX; k++) {
+    hTidallm[k]=0.;
     hA[k]=0.;
     hB[k]=0.;
     betaA1[k]=0;

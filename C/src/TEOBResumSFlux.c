@@ -69,19 +69,21 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
   
   FNewt22 = FNewtlm[1];
-  
-  /*
-  printf("x %.12e\n",x);
-  printf("FNewt22 %.12e\n",FNewt22);
-  printf("f22 %.12e\n",flm[1]);
-  printf("T22 %.12e\n",MTlm[1]);
-  DBGSTOP
-  */
+
 
   /** Tidal amplitude */
   if (usetidal) {
     eob_wav_hlmTidal(x,dyn, hlmTidal);
   }
+
+  /*
+  printf("x %.12e\n",x);
+  printf("FNewt22 %.12e\n",FNewt22);
+  printf("f22 %.12e\n",flm[1]);
+  printf("T22 %.12e\n",MTlm[1]);
+  printf("hT22 %.12e\n",hlmTidal[1]);
+  DBGSTOP
+  */
   
   /** NQC correction to the modulus of the (l,m) waveform */  
   int k;
@@ -90,7 +92,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, &NQC);
     for (k = 0; k < KMAX; k++) {
       //hlmNQC[k] = NQC.ampli[k];
-      hlmNQC[k] = 1;
+      hlmNQC[k] = 1.;
     }
     // Set NQC only in 22:
     k=1;
@@ -114,10 +116,11 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
       Modhhatlm += MTlm[k] * hlmTidal[k];
     }  	
     /* Total flux multipoles */
-    //printf("%.12e %.12e\n",Modhhatlm, FNewtlm[k]);
+    //printf("%d %.12e %.12e %.12e %.12e %.12e %.12e\n",k,Modhhatlm, FNewtlm[k],prefact[k],MTlm[k],flm[k],hlmTidal[k]);
     sum_k += SQ(Modhhatlm) * FNewtlm[k];     
   }
-    
+  //DBGSTOP
+
   /** Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
  
