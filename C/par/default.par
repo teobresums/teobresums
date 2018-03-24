@@ -19,12 +19,17 @@ polarisation = 0.
 r0 = 0.	
 initial_frequency = 0.004 # initial GW frequency
 
+tides = "no" 
 LambdaAl2 = 0. # Tidal parameter Lambda for star A ell=2
 LambdaBl2 = 0.
 LambdaAl3 = 0. 
 LambdaAl4 = 0. 
 LambdaBl3 = 0. 
 LambdaBl4 = 0. 
+use_Yagi_fits = 0 # use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+pGSF_tidal = 4. # p-power in GSF tidal potential model
+
+use_spins = 0 # use spins ?
 
 # ----------------------
 # following pars are set by the code
@@ -62,9 +67,7 @@ bar_alph3_1 = 0. #
 bar_alph3_2 = 0. #
 khatAl2 = 0. #
 khatBl2 = 0. #
-
 rLR_tidal = 0. # radius of light-ring for NNLO tidal model
-pGSF_tidal = 0. # p-power in GSF tidal potential model
 
 BH_final_mass = 0. # final BH mass
 BH_final_spin = 0. # final BH spin
@@ -72,18 +75,15 @@ BH_final_spin = 0. # final BH spin
 rLR = 0. # radius of light-ring
 rLSO = 0. # radius of last stable orbit 
 
+use_tidal = 0 # index for tidal modus
+
 # ----------------------
 # options
 # ----------------------
 
 use_geometric_units = 1 # use geometric units for I/O ?
 
-use_tidal = 0 # use tides ?
-use_spins = 0 # use spins ?
-
 use_speedytail = 1 # use special routine to speed up tail computation ?
-
-use_Yagi_fits = 0 # use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
 
 interp_uniform_grid = 0 # interpolate on uniform grid ?
 

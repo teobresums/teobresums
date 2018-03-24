@@ -155,7 +155,7 @@ enum{
   TIDES_TEOBRESUM,
   TIDES_NOPT
 };
-static const char* const tides_opt[] = {"off","NNLO","TEOBRESUM","undefined"};
+static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM","undefined"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -175,7 +175,7 @@ enum{
   ROOT_ERRORS
 };
 static const char* const root_errors[] = {"none","root is not bracketed.","root finder did not converged.","root finder failed."};
-#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} //TODO: CHECKME!
+#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} //TODO: CHECK THIS MACRO (LOGIC INVOLVED)
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */

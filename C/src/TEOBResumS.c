@@ -104,25 +104,26 @@ int main (int argc, char* argv[])
   const double nu   = par_get_d("nu");
   const double chi1 = par_get_d("chi1");
   const double chi2 = par_get_d("chi2");
-  int interp_uniform_grid = par_get_i("interp_uniform_grid");  
-  int store_dynamics = par_get_i("output_dynamics");
-  const int use_tidal = par_get_i("use_tidal");
   const int use_spins = par_get_i("use_spins");
+  const int use_tidal = par_get_i("use_tidal");
+  int interp_uniform_grid = par_get_i("interp_uniform_grid");  
   if (use_tidal) interp_uniform_grid = 1;
+  int store_dynamics = par_get_i("output_dynamics");
 
   Dynamics_set_params(dyn);
   
   /** Compute light-ring and LSO (if needed) */
- int check_status;
+  int check_status;
   if (use_tidal) {
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO;
     dyn->use_spins = 0;
-    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
+    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal)));
     par_set_d("rLR_tidal", dyn->rLR_tidal);
     /* Reset options */
     dyn->use_tidal = par_get_i("use_tidal");
     dyn->use_spins = par_get_i("use_spins");
+    if (VERBOSE) PRFORM("rLR_tidal",dyn->rLR_tidal);
   }
   if (par_get_i("compute_LR")) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
@@ -183,7 +184,7 @@ int main (int argc, char* argv[])
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
   const double rstop = par_get_d("ode_stop_at_radius");
-  if (rstop>=0.) {
+  if (rstop>0.) {
     dyn->ode_stop_radius   = true;
   }
 
