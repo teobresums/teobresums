@@ -290,7 +290,7 @@ int main (int argc, char* argv[])
     
     /** Append dynamics and waveform to vectors */
     for (k = 0; k < KMAX; k++) {
-      hlm->time[iter]     = dyn->t; 
+      hlm->time[iter]     = hlm_t->time;
       hlm->ampli[k][iter] = hlm_t->ampli[k]; 
       hlm->phase[k][iter] = hlm_t->phase[k]; 
     }
@@ -362,9 +362,10 @@ int main (int argc, char* argv[])
       Dynamics_output(dyn);
   }
   
-  /** Uniform grid */
   if (interp_uniform_grid) {
 
+    /** Interpolate on uniform grid */
+    
     Waveform_lm *hlm_tmp; 
     Dynamics *dyn_tmp; 
   
@@ -376,11 +377,12 @@ int main (int argc, char* argv[])
     if (DEBUG) printf("New grid: size_tmp=%d dt=%.12e t[size-1]=%.12e (%.12e)\n",
 		      size_tmp,dt,dyn->time[size-1],dyn->time[size-1]-(dyn->time[0]+(size_tmp-1)*dt));    
 
-    Waveform_lm_alloc (&hlm_tmp, size_tmp, "hlm_tmp");
+    Waveform_lm_alloc (&hlm_tmp, size_tmp, "");
 
     /* Interpolate on uniform grid */  
     for (int i = 0; i < size_tmp; i++) {
       hlm_tmp->time[i] = dyn->time[0] + i*dt;
+      //printf("%e\n",hlm_tmp->time[i]);
     }
     for (int k = 0; k < KMAX; k++) {
       interp_spline(hlm->time, hlm->ampli[k], hlm->size, hlm_tmp->time, size_tmp, hlm_tmp->ampli[k]);
@@ -430,9 +432,10 @@ int main (int argc, char* argv[])
 
   DBGSTOP
   
-  /** NQC and ringdown for BBH */
   if (!(use_tidal)) {
 
+    /** NQC and ringdown for BBH */
+    
     Waveform_lm_alloc (&hlm_nqc, size, par_get_s("output_dir")); strcat(hlm_nqc->name,"/hlm_nqc.txt"); 
 
     /** Compute NQC corrections */

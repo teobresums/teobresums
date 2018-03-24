@@ -49,6 +49,8 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const double jhat   = dyn->jhat;
   const double rw     = dyn->r_omega;
 
+  hlm->time = t;
+
   /** Source term */
   double source[] = {
     jhat,Heff,
