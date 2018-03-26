@@ -425,6 +425,7 @@ double HorizonFlux(const double x, const double Heff, const double jhat, const d
 
 double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
 {
+    /** Higher order terms can be found in ref Chatziiaonnou, Poisson, Yunes PRD 94, 084043 (2016) */
     
     double x2 = x*x;
     double x3 = x2*x;
@@ -439,7 +440,8 @@ double s_HorizonFlux(double x, double Heff, double jhat, double nu, double X1, d
     cv5[0] = -1./4.*chi1*(1.+3.*chi1*chi1)*X1*X1*X1;
     cv5[1] = -1./4.*chi2*(1.+3.*chi2*chi2)*X2*X2*X2;
     
-    /** Coefficients of the v^8=x^4 term */
+    /** Coefficients of the v^8=x^4 term
+        eq.46 of https://arxiv.org/pdf/1112.2840.pdf */
     cv8[0] = 0.5*(1.+sqrt(1.-chi1*chi1))*(1.+3.*chi1*chi1)*X1*X1*X1*X1;
     cv8[1] = 0.5*(1.+sqrt(1.-chi2*chi2))*(1.+3.*chi2*chi2)*X2*X2*X2*X2;
     

@@ -590,7 +590,8 @@ int s_RHS(double t, const double y[], double f[], void *params)
 vector<double> s_A5PNlog(double r, void *params, bool nnlo_flag){
     
     /*  This function computes the Pade' (1,5) resummed A function 
-        with the 5PN NR-informed coefficient.*/
+        with the 5PN NR-informed coefficient.
+        The function is defined (for example) in Damour,Nagar PRD 90, 044018 (2014). The most up to date value of a6c can be found here: https://arxiv.org/abs/1506.08457, while the c3 value can be found here: https://arxiv.org/abs/1703.06814. */
     
     // parameters
     bool tidal_flag = (*(TEOBResumParams *)params).flags.tidal;
@@ -967,6 +968,8 @@ vector<double> s_GS(double r, double rc, double drc_dr, double aK2, double prsta
 
 vector <double> s_get_rc(double r, void *params)
 {
+    /** The centrifugal radius, introduced in eq. 8-22 of Damour,Nagar PRD 90, 044018 (2014), is needed to factorize out the metric A potential.
+        This function computes the centrifugal radius in the spinning case. */
     
     
     double nu         = (*(TEOBResumParams *)params).nu;
