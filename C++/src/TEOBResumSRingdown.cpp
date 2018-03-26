@@ -79,7 +79,8 @@ double JimenezFortezaRemnantSpin(TEOBResumParams params)
     double b3t     = b3*(f31*nu + f32*nu*nu + f33*nu*nu*nu);
     double b5t     = b5*(f50 + f51*nu + f53*nu*nu*nu);
     
-    /** The functional form is taken from eq. (8), page 6. */
+    /** The functional form is taken from eq. (8), page 6.
+        The reference paper has an additional term L(0.25,0) = 0.68637 here, which is lately subtracted in eq. (10). We do not add the term here and do not subtract it lately, so overall the final result is correct.*/
     double Lorb_eq_spin  = (0.00954*b3t*S*S*S + 0.0851*b2t*S*S - 0.194*b1t*S)/(1 - 0.579*b5t*S);
     
     /** These values are taken from Table IV, page 10: */
