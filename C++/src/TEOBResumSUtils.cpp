@@ -410,7 +410,8 @@ void spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, 
 
 double fLR(double r, void *params)
 {
-    
+    /** Computing the light ring */
+
     vector<double> metric=Metric(r, params,true);
     
     double A  = metric[0];
@@ -493,7 +494,7 @@ void SetDefaultFlagsValues(TEOBResumFlags *flags)
 
 double logQ(double x)
 {
-    /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
+    /** This function computes the quadrupole induced by rotation. Reference: Yunes-Yagi, PRD 88, 023009.logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
      here x = log(lambda) and the output is the log of the coefficient
      that describes the quadrupole deformation due to spin. */
     double ai = 0.194;
@@ -514,6 +515,8 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
      Yagi 2013 fits for multipolar
      $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
      Eq.(10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.0872
+     Only the coefficients for NS are used.
+     “lny” can be identified with Eq. (61).
      */
     double lnx = log(barlam2);
     double coeffs[5] = {0.0};
@@ -803,9 +806,9 @@ TEOBResumParams read_config(char *fname)
     // of Damour&Nagar, PRD 81, 084016 (2010)
     //-----------------------------------------------------------------------------------
     params.bar_alph2_1 = (5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
-    params.bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;
-    params.bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;
-    params.bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+    params.bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;/**Eq. 6.10 di Bini, Damour, Faye, PRD 85 124034 */
+    params.bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;/**Eq. 6.21 di Bini, Damour, Faye, PRD 85 124034 */
+    params.bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;/**Eq. 6.22 di Bini, Damour, Faye, PRD 85 124034 */
     
     
     //double lambda1 = params.LambdaAl2;
@@ -925,9 +928,9 @@ TEOBResumParams process_input_parameters(
     
     params.cN3LO = c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2,params.flags.tidal);
     
-    /** Computing the tidal coupling constants */
+    /** Computing the tidal coupling constants. Defined in ref: https://arxiv.org/pdf/1412.4553.pdf */
     
-    double kapA2 = 3.   * LambdaAl2 * XA*XA*XA*XA*XA / q; //Note: kap stands for kappa; see eqn(1) of REF
+    double kapA2 = 3.   * LambdaAl2 * XA*XA*XA*XA*XA / q; //Note: kap stands for kappa; see eqn(1) of https://arxiv.org/pdf/1412.4553.pdf
     double kapA3 = 15.  * LambdaAl3 * XA*XA*XA*XA*XA*XA*XA / q;
     double kapA4 = 105. * LambdaAl4 * XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
     
