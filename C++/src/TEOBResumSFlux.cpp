@@ -204,25 +204,9 @@ double s_Flux(double x,
             Modhhatlm *= hnqclm;
         }
         
-        /* Re-introduce the nu-dependent prefactor in the tidal case */
+        /* Adding the tidal waveform amplitude to the point-mass baseline */
         if (tidal_flag==true)
-        {
-            switch (k)
-            {
-                case 0: // (2,1)
-		  Modhhatlm *= X12;
-                    break;
-                case 2: // (3,1)
-		  Modhhatlm *= X12;
-                    break;
-                case 4: // (3,3)
-		  Modhhatlm *= X12;
-                    break;
-                    
-                default: Modhhatlm *= 1.;
-                    break;
-            }
-            
+        {            
             Modhhatlm += MTlm[k]*hlmTidal[k];
         }
         
@@ -283,7 +267,7 @@ vector<double> FlmNewt(const double x, void *params)
     if (spin_flag==true)
     {
         sp2 = 1.;
-        sp4 = (2*nu-1)*(2*nu-1);
+        sp4 = (2.*nu-1.)*(2.*nu-1.);	
     }
     else
     {   /** Nonspinning case*/
