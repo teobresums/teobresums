@@ -672,14 +672,15 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
     for (int n=5; n-- >1; ) { // 4,3,2,1 // printf(" %d\n",n);
       rholm[k] += clm[k][n]*xn[n];
     } 
-    rholm[k] += 1.; 
+    rholm[k] += clm[k][0]; 
   }
 
   /** Amplitudes */
   for (int k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
+      //printf("flm %d %.16e\n",k,flm[k]);
   }
-  
+  //DBGSTOP  
 }
 
 /** Resummed amplitudes for the spin case. 
@@ -1633,7 +1634,7 @@ void eob_wav_flm_old(double x,double nu, double *rholm, double *flm)
   rholm[29] = 1. + (0.00005482456140350877*(20598. - 131059.*nu + 249018.*nu2 - 149950.*nu3 + 24520.*nu4)*x)/(-1. + 6.*nu - 10.*nu2 + 4.*nu3) - 0.4196774909106648*PMTERMS_eps*x2;
   /** (8,4) */
   rholm[30] = 1. + (0.0003654970760233918*(2666. - 19434.*nu + 42627.*nu2 - 28965.*nu3 + 4899.*nu4)*x)/(-1. + 7.*nu - 14.*nu2 + 7.*nu3) - 0.47652059150068155*PMTERMS_eps*x2;
-    /** (8,5) */
+  /** (8,5) */
   rholm[31] = 1. + (0.00027412280701754384*(4350. - 28055.*nu + 54642.*nu2 - 34598.*nu3 + 6056.*nu4)*x)/(-1. + 6.*nu - 10.*nu2 + 4.*nu3)- 0.7220789990670207*PMTERMS_eps*x2;
   /** (8,6) */
   rholm[32] = 1. + (0.0010964912280701754*(1002. - 7498.*nu + 17269.*nu2 - 13055.*nu3 + 2653.*nu4)*x)/(-1. + 7.*nu - 14.*nu2 + 7.*nu3)- 0.9061610303170207*PMTERMS_eps*x2;
@@ -1646,7 +1647,9 @@ void eob_wav_flm_old(double x,double nu, double *rholm, double *flm)
   int k;
   for (k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
+      //printf("flm %d %.16e\n",k,flm[k]);
   }
+  //DBGSTOP
   
 }
 
