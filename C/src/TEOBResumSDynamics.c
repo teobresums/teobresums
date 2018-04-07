@@ -523,8 +523,8 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   } else {
     x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
     x_hi = 3.1; // 3 nu = 0 
-    //x_lo = 0.9*eob_approxLR(dyn->nu); 
-    //x_hi = 1.1*eob_approxLR(dyn->nu); 
+    /* x_lo = 0.9*eob_approxLR(dyn->nu); 
+       x_hi = 1.1*eob_approxLR(dyn->nu); */
   }  
 
   gsl_root_fsolver *s;
