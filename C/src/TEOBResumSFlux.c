@@ -41,7 +41,6 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   const double a2 = dyn->a2;
   const double C_Q1 = dyn->C_Q1;
   const double C_Q2 = dyn->C_Q2;
-  const double X12 = X1-X2;
 
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
@@ -108,10 +107,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     /* Compute modulus of hhat_lm (with NQC) */
     Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]; 
     if (usetidal) {
-      /* Re-introduce the nu-dependent prefactor in the tidal case */
-      if (k==0) Modhhatlm *= X12;
-      if (k==2) Modhhatlm *= X12;
-      if (k==4) Modhhatlm *= X12;
+      /* Adding the tidal waveform amplitude to the point-mass baseline */
       Modhhatlm += MTlm[k] * hlmTidal[k];
     }  	
     /* Total flux multipoles */
