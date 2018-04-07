@@ -93,7 +93,7 @@
     a = b;	    \
     b = temp;	    \
   })
-#define PRFORM(s,x) {printf("%-40s = %.12e\n", s,x);}//TODO: handle also int
+#define PRFORM(s,x) {printf("%-40s = %.16e\n", s,x);}//TODO: handle also int
 /* helpers for debug */
 #define DBGPR(s) printf("DEBUG: %s\n",s);
 #define DBGSTOP errorexit("DEBUG: STOP");
