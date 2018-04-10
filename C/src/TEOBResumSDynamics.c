@@ -186,7 +186,11 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   eob_ham_s(nu, r, rc, drc_dr, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, 
 	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20);
   
-  const double ooH  = 1./H;
+  /* H follows the same convention of Heff, i.e. it is the energy per unit mass,
+     while E is the real energy.*/
+  double E = nu*H;
+  const double ooH = 1./E;
+    
   const double sqrtAbyB       = sqrt(A/B);
   const double dp_rstar_dt_0  = - sqrtAbyB*ooH*dHeff_dr;
   const double ddotr_dp_rstar = sqrtAbyB*ooH*d2Heff_dprstar20;
@@ -227,8 +231,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double v_phi      = r_omg*Omg;
   const double x          = v_phi*v_phi;
   const double jhat       = pphi/(r_omg*v_phi);
-  
-  const double Fphi = eob_flx_Flux_s(x,Omg,r_omg,H,Heff,jhat,r,prstar,ddotr,dyn);
+  const double Fphi = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
   
   dy[EOB_EVOLVE_PPHI] = Fphi;
   
@@ -242,7 +245,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     dyn->Omg = Omg;
     dyn->Omg_orb = Omg; //FIXME: This must be orbital!
     dyn->H = H;
-    //    dyn->E = E;
+    dyn->E = E;
     dyn->Heff = Heff;
     dyn->A = A;
     dyn->dA = dA;
@@ -311,7 +314,7 @@ void eob_ham_s(double nu,
     /* Compute Hamiltonian and its derivatives */
     *Heff_orb         = sqrt( prstar2+A*(1. + pphi2*uc2 +  z3*prstar4*uc2) );
     *Heff             = *Heff_orb + (GS*S + GSs*Sstar)*pphi;
-    *H                = sqrt( 1. + 2.*nu*(*Heff - 1.) );
+    *H                = sqrt( 1. + 2.*nu*(*Heff - 1.) )/nu;
     if (dHeff_dr != NULL)         *dHeff_dr         = pphi*(dGS_dr*S + dGSs_dr*Sstar) + 1./(2.*(*Heff_orb))*( dA*(1. + pphi2*uc2 + z3*prstar4*uc2) - 2.*A*uc3*drc_dr*(pphi2 + z3*prstar4) );
     if (dHeff_dprstar != NULL)    *dHeff_dprstar    = pphi*(dGS_dprstar*S + dGSs_dprstar*Sstar) + (prstar/(*Heff_orb))*(1. + 2.*A*uc2*z3*prstar2);
     if (d2Heff_dprstar20 != NULL) *d2Heff_dprstar20 = pphi*(d2GS_dprstar20*S + d2GSs_dprstar20*Sstar) +  (1./(*Heff_orb))*(1. + 2.*A*uc2*z3*prstar2); /* second derivative of Heff wrt to pr_star neglecting all pr_star^2 terms */
