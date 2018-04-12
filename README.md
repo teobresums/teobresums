@@ -1,5 +1,8 @@
 # Effective-one-body model with spin and tidal interactions
 
+The C++ code was reviewed by LVC. Review was concluded on 11.04.2018. 
+That version is tagged as `LVC-reviewed`.
+
 ## Authors
 
 Alessandro Nagar, Gregorio Carullo, Ka Wa Tsang, Philipp Fleig, Sebastiano Bernuzzi, Walter Del Pozzo
