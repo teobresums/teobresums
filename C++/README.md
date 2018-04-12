@@ -9,8 +9,8 @@
 
 There are 2 options
 
-- simple Makefile
-- build that includes Python wrapper
+- Simple Makefile
+- Build that includes Python wrapper. NOTE THE BUILD WITH PYTHON IS POORLY TESTED AND MIGHT NOT WORK ON CERTAIN PLATFORMS
 
 ### Makefile
 
@@ -52,55 +52,17 @@ to the path
 
 ## How to run 
 
-Usage/help 
+Usage/help:
 
 ```
 $ ./TEOBResumS.x 
-
-USAGE:
-        ./TEOBResumS.x -p <parfile>
-        ./TEOBResumS.x [OPTIONS]
-
-OPTIONS:
-        -p                   <parfile>  reads input parameters from parfile. Overrides all other arguments. []
-        -m1                  <double>   mass of the primary [Msun]. [40]
-        -m2                  <double>   mass of the secondary [Msun].  [40]
-        -chi1                <double>   dimensionless spin component along the orbital angular momentum of the primary. [0]
-        -chi2                <double>   dimensionless spin component along the orbital angular momentum of the secondary. [0]
-        -distance            <double>   source distance [Mpc]. [100]
-        -inclination         <double>   (IOTA) inclination angle [rad]. [0]
-        -polarisation        <double>   (PSI) polarisation angle [rad]. [0]
-        -f_min               <double>   starting frequency [Hz / geom.units mass rescaled]. [20]
-        -srate               <double>   sampling rate [Hz]. [4096]
-        -lambda1_l2          <double>   l=2 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled. [0]
-        -lambda2_l2          <double>   l=2 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled. [0]
-        -lambda1_l3          <double>   l=3 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled. [0]
-        -lambda2_l3          <double>   l=3 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled. [0]
-        -lambda1_l4          <double>   l=4 tidal deformability for body 1 (Lambda/M^5). Only if tidal corrections are enabled. [0]
-        -lambda2_l4          <double>   l=4 tidal deformability for body 2 (Lambda/M^5). Only if tidal corrections are enabled. [0]
-        -tidal               <int>      enable tidal corrections. [0 (false)]
-        -speedy              <int>      faster tails calculations. [1 (true)]
-        -dynamics            <int>      output dynamics evolution. [0 (false)]
-        -RW                  <int>      Regge-Wheeler-Zerilli potential. [0 (false)]
-        -multipoles          <int>      enable single multipole output, in geometrical units. [0 (false)]
-        -lm                  <int>      index for the output multipole. Requires multipoles output format. [-1]
-        -Yagi_fits           <int>      enable Yagi fits for Lambda_l=3,4. [0 (false)]
-        -output              <filename> output file. If multipoles is enable will contain t/M amplitude phase. Otherwise t(s) h+ hx. ['waveform.dat']
-        -geometric           <int>      use geometric units and mass rescaled quantities. [0 (false)]
-
 ```
 
-If you want to specify a parfile
+The code can be run by specifying a parfile
 
 ```
 $ ./TEOBResum -p <parfile>
 ```
 
-please see
-
-`examples/example.par`
-
-for an example for a BBH q=1 chi1=chi2=0.7.
-
-
+or by specifying inputs of key quantities from command line. Please see `examples/`.
 
