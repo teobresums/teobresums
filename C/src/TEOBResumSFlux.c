@@ -41,6 +41,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   const double a2 = dyn->a2;
   const double C_Q1 = dyn->C_Q1;
   const double C_Q2 = dyn->C_Q2;
+  const double X12  = X1-X2;
 
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
@@ -71,6 +72,14 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   /** Tidal amplitude */
   if (usetidal) {
     eob_wav_hlmTidal(x,dyn, hlmTidal);
+    if (!(usespins)) {
+      /* Fix normalization nomvention */
+      //TODO: check also k=0,2,4 modes in the tidal waveform
+      //FIXME: use a common normalization for both spin and nospin case
+      hlmTidal[0] *= X12;
+      hlmTidal[2] *= X12;
+      hlmTidal[4] *= X12;
+    }
   }
 
   /*
