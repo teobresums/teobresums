@@ -36,7 +36,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
   const int usespeedytail = par_get_i("use_speedytail");
-  const double X12 = X1-X2;;  
+  const double X12 = X1-X2; /* sqrt(1-4nu) */
 
   const double t   = dyn->t;
   const double phi = dyn->phi; 
@@ -689,9 +689,8 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
   /** Amplitudes */
   for (int k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
-      //printf("flm %d %.16e\n",k,flm[k]);
   }
-  //DBGSTOP  
+
 }
 
 /** Resummed amplitudes for the spin case. 

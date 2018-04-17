@@ -355,7 +355,7 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 void eob_flx_Tlm(double w, double *MTlm);
-void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nlm);
+void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
 double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 

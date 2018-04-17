@@ -41,7 +41,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   const double a2 = dyn->a2;
   const double C_Q1 = dyn->C_Q1;
   const double C_Q2 = dyn->C_Q2;
-  const double X12  = X1-X2;
+  const double X12  = X1-X2; /* sqrt(1-4nu) */
+  const double X12sq = SQ(X12); /* (1-4nu) */
+  const double ooX12sq = 1./X12sq; /* 1/(1-4nu) */
 
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
@@ -59,8 +61,31 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double sum_k=0.; /* sum */
 
-  eob_flx_FlmNewt(x, nu, usetidal, usespins, FNewtlm);
+  /** Newtonian flux */
+  eob_flx_FlmNewt(x, nu, FNewtlm);
+
+  /* Correct amplitudes for specific multipoles and cases */
+  if (usespins) {
+    /* Correct (2,1), (3,1) and (3,3) [sp2 = 1] */
+    FNewtlm[0] *= ooX12sq; /* (2,1) */
+    FNewtlm[2] *= ooX12sq; /* (3,1) */
+    FNewtlm[4] *= ooX12sq; /* (3,3) */
+    /* Correct (4,1), (4,3)  [sp4 = (1-2nu)^2 ] */
+    FNewtlm[5] *= ooX12sq; /* (4,1) */
+    FNewtlm[7] *= ooX12sq; /* (4,3) */
+  } else {
+    if (usetidal) {
+      /* Correct (2,1), (3,1) and (3,3) [sp2 = 1] */
+      FNewtlm[0] *= ooX12sq; /* (2,1) */
+      FNewtlm[2] *= ooX12sq; /* (3,1) */
+      FNewtlm[4] *= ooX12sq; /* (3,3) */
+    }
+  }
+
+  /** Tail term */
   eob_flx_Tlm(E*Omega, MTlm);
+
+  /** Amplitudes */
   if (usespins) {
     eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
   } else {
@@ -69,27 +94,17 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   
   FNewt22 = FNewtlm[1];
 
-  /** Tidal amplitude */
+  /** Tidal amplitudes */
   if (usetidal) {
     eob_wav_hlmTidal(x,dyn, hlmTidal);
     if (!(usespins)) {
       /* Fix normalization nomvention */
       //TODO: check also k=0,2,4 modes in the tidal waveform
-      //FIXME: use a common normalization for both spin and nospin case
       hlmTidal[0] *= X12;
       hlmTidal[2] *= X12;
       hlmTidal[4] *= X12;
     }
   }
-
-  /*
-  printf("x %.12e\n",x);
-  printf("FNewt22 %.12e\n",FNewt22);
-  printf("f22 %.12e\n",flm[1]);
-  printf("T22 %.12e\n",MTlm[1]);
-  printf("hT22 %.12e\n",hlmTidal[1]);
-  DBGSTOP
-  */
   
   /** NQC correction to the modulus of the (l,m) waveform */  
   int k;
@@ -120,11 +135,8 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
       Modhhatlm += MTlm[k] * hlmTidal[k];
     }  	
     /* Total flux multipoles */
-    //printf("%d %.12e %.12e %.12e %.12e %.12e %.12e\n",k,Modhhatlm, FNewtlm[k],prefact[k],MTlm[k],flm[k],hlmTidal[k]);
     sum_k += SQ(Modhhatlm) * FNewtlm[k];     
   }
-  //printf("%.16e %.16e\n",x, sum_k);
-  //DBGSTOP
 
   /** Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
@@ -167,7 +179,7 @@ static const double CNlm[35] = {
 };
 
 /** Newtonian partial fluxes */
-void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nlm)
+void eob_flx_FlmNewt(double x, double nu, double *Nlm)
 {
   
   /** Shorthands*/
@@ -182,23 +194,13 @@ void eob_flx_FlmNewt(double x, double nu, int usetidal, int usespins, double *Nl
   const double x11 = x*x10;
   const double x12 = x*x11;
   
-  double sp2 = 1.-4.*nu;
-  double sp4 = (1-4*nu)*SQ((1-2*nu));
+  const double sp2 = 1.-4.*nu;
+  const double sp4 = (1-4*nu)*SQ((1-2*nu));
   const double sp3 = (1.-3.*nu)*(1.-3.*nu);
   const double sp5 = (1.-5.*nu+5.*nu2)*(1.-5.*nu+5.*nu2);
   const double sp6 = (1-4*nu)*(3*nu2-4*nu +1)*(3*nu2-4*nu +1);
   const double sp7 = (1 - 7*nu + 14*nu2 - 7*nu3)*(1 - 7*nu + 14*nu2 - 7*nu3);
   const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
-  
-  if (usespins) {
-    sp2 = 1.;
-    sp4 = SQ((2*nu-1));
-  } else {
-    //TODO: check case with tides and spins 
-    if (usetidal) {
-      sp2 = 1.;
-    } 
-  }
 
   double spx[] = {
     sp2 * x6, x5, 
