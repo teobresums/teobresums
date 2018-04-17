@@ -71,16 +71,16 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     /* Need to correct the l=5, m=odd modes when spin is present
        because p4 is defined without the factor sqrt(1-4*nu) that 
        is reintroduced in the calculation of the flm */
-    hlmNewt->ampli[9]  *= X12; /* (5,1) */
-    hlmNewt->ampli[11] *= X12; /* (5,3) */
-    hlmNewt->ampli[13] *= X12; /* (5,5) */
+    hNewt.ampli[9]  *= X12; /* (5,1) */
+    hNewt.ampli[11] *= X12; /* (5,3) */
+    hNewt.ampli[13] *= X12; /* (5,5) */
   }
 
   if (usetidal) {
     /* Need to correct the m=odd modes for tides */
-    hlmNewt->ampli[0] /= X12; /* (2,1) */
-    hlmNewt->ampli[2] /= X12; /* (3,1) */
-    hlmNewt->ampli[4] /= X12; /* (3,3) */
+    hNewt.ampli[0] /= X12; /* (2,1) */
+    hNewt.ampli[2] /= X12; /* (3,1) */
+    hNewt.ampli[4] /= X12; /* (3,3) */
   }
 
   /** Compute corrections */
