@@ -63,22 +63,12 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   /** Newtonian flux */
   eob_flx_FlmNewt(x, nu, FNewtlm);
 
-  /* Correct amplitudes for specific multipoles and cases */
-  if (usespins) {
-    /* Correct (2,1), (3,1) and (3,3) [sp2 = 1] */
-    FNewtlm[0] /= X12sq; /* (2,1) */
-    FNewtlm[2] /= X12sq; /* (3,1) */
-    FNewtlm[4] /= X12sq; /* (3,3) */
-    /* Correct (4,1), (4,3)  [sp4 = (1-2nu)^2 ] */
-    FNewtlm[5] /= X12sq; /* (4,1) */
-    FNewtlm[7] /= X12sq; /* (4,3) */
-  } else {
-    if (usetidal) {
+  /* Correct amplitudes for specific multipoles and cases FIXME: we need to agg (usespins) case */
+  if (usetidal) {
       /* Correct (2,1), (3,1) and (3,3) [sp2 = 1] */
       FNewtlm[0] *= X12sq; /* (2,1) */
       FNewtlm[2] *= X12sq; /* (3,1) */
       FNewtlm[4] *= X12sq; /* (3,3) */
-    }
   }
 
   /** Tail term */
