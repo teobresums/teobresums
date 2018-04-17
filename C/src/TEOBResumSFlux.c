@@ -43,7 +43,6 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   const double C_Q2 = dyn->C_Q2;
   const double X12  = X1-X2; /* sqrt(1-4nu) */
   const double X12sq = SQ(X12); /* (1-4nu) */
-  const double ooX12sq = 1./X12sq; /* 1/(1-4nu) */
 
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
@@ -67,18 +66,18 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   /* Correct amplitudes for specific multipoles and cases */
   if (usespins) {
     /* Correct (2,1), (3,1) and (3,3) [sp2 = 1] */
-    FNewtlm[0] *= ooX12sq; /* (2,1) */
-    FNewtlm[2] *= ooX12sq; /* (3,1) */
-    FNewtlm[4] *= ooX12sq; /* (3,3) */
+    FNewtlm[0] /= X12sq; /* (2,1) */
+    FNewtlm[2] /= X12sq; /* (3,1) */
+    FNewtlm[4] /= X12sq; /* (3,3) */
     /* Correct (4,1), (4,3)  [sp4 = (1-2nu)^2 ] */
-    FNewtlm[5] *= ooX12sq; /* (4,1) */
-    FNewtlm[7] *= ooX12sq; /* (4,3) */
+    FNewtlm[5] /= X12sq; /* (4,1) */
+    FNewtlm[7] /= X12sq; /* (4,3) */
   } else {
     if (usetidal) {
       /* Correct (2,1), (3,1) and (3,3) [sp2 = 1] */
-      FNewtlm[0] *= ooX12sq; /* (2,1) */
-      FNewtlm[2] *= ooX12sq; /* (3,1) */
-      FNewtlm[4] *= ooX12sq; /* (3,3) */
+      FNewtlm[0] *= X12sq; /* (2,1) */
+      FNewtlm[2] *= X12sq; /* (3,1) */
+      FNewtlm[4] *= X12sq; /* (3,3) */
     }
   }
 
