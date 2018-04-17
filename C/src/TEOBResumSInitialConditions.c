@@ -40,7 +40,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
 
   /** Build a small grid */
 #define N (6)
-  const double dr = 1e-8;
+  const double dr = 1e-10;
     
   double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
