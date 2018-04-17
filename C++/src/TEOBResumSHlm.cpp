@@ -66,7 +66,7 @@ vector<gsl_complex> hlmNewt(const double r,
     const double p1 = 1.;
     const double p2 = sqrt(1.-4.*nu);                   /*(2,1), (3,3) & (3,1)*/
     const double p3 = (3.*nu-1.);
-    const double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);        /*(4,3) & (4,1)*/
+    const double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);        /*(4,3), (4,1), (5,5), (5,3), (5,1) */
     const double p5 = 1.-5.*nu+5.*nu2;
     const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
     const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
@@ -167,6 +167,16 @@ vector<gsl_complex> hlmNewt(const double r,
     
     hlmNewt[13].dat[1] = pi/2. - M[13];
     hlmNewt[13].dat[0] = 125./12.*sqrt(5.*pi/66.)        * pv45;
+    if (spin_flag==true)
+      /* Need to correct the l=5, m=odd modes when spin is present
+         because p4 is defined without the factor sqrt(1-4*nu) that 
+	 is reintroduced in the calculation of the flm Fixed, 17-04-2018 */
+      {
+	hlmNewt[9].dat[0] = 1./180.*sqrt(pi/77.)         * sqrt(1.-4.*nu)  * pv45;
+	hlmNewt[11].dat[0] = 9./20.*sqrt(3*pi/22.)       * sqrt(1.-4.*nu)  * pv45;
+	hlmNewt[13].dat[0] = 125./12.*sqrt(5.*pi/66.)    * sqrt(1.-4.*nu)  * pv45;
+      }
+
     
     /** l=6 ------------------------------------------------------------------ */
     

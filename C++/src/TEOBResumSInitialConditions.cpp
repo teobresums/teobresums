@@ -47,8 +47,8 @@ vector<double> initial(TEOBResumParams *params)
     double OmgKepler = 1./(sqrt(r0)*sqrt(r0)*sqrt(r0));
     
     vector<double> y_init(7);
-    int N  = 10;
-    const double dr = 1.e-10;
+    int N  = 100;
+    const double dr = 1.e-4;
     
     vector<double> r(2*N), dA(2*N), j(2*N), j2(2*N), djdr(2*N); /** j:angular momentum */
     vector<double> E0(2*N), Omega_j(2*N);
