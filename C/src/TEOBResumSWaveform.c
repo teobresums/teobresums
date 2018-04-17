@@ -1460,10 +1460,9 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   if (usetidal) {
     /* Need to correct the m=odd modes for tides (p2 = 1)*/
     double vphi3 = gsl_pow_int(rw*Omega,3);
-    int k;
-    k=0; hNewt.ampli[k] = ChlmNewt_ampli[k] * 2 * phi * vphi3; /* (2,1) */
-    k=2; hNewt.ampli[k] = ChlmNewt_ampli[k] * 3 * phi * vphi3; /* (3,1) */
-    k=4; hNewt.ampli[k] = ChlmNewt_ampli[k] * 3 * phi * vphi3; /* (3,3) */
+    hNewt.ampli[0] = ChlmNewt_ampli[0] * 2 * phi * vphi3; /* (2,1) */
+    hNewt.ampli[2] = ChlmNewt_ampli[2] * 3 * phi * vphi3; /* (3,1) */
+    hNewt.ampli[4] = ChlmNewt_ampli[4] * 3 * phi * vphi3; /* (3,3) */
   }
 
   /** Compute corrections */

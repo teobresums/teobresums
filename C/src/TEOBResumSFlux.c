@@ -20,131 +20,6 @@
 
 #include "TEOBResumS.h"
 
-/** Flux calculation for Newton-Normalized energy flux 
-    Use the DIN resummation procedure. 
-    Add non-QC and non-K corrections to (2,2) partial flux. */
-double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
-{
-  return eob_flx_Flux_s(x, Omega, r_omega, E, Heff, jhat, r, pr_star, ddotr,dyn);
-}
-
-/** Flux calculation for spinning systems */
-//FIXME: NQC are not applied in spin case!
-double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
-{
-  const double nu = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double X1 = dyn->X1;
-  const double X2 = dyn->X2;
-  const double a1 = dyn->a1;
-  const double a2 = dyn->a2;
-  const double C_Q1 = dyn->C_Q1;
-  const double C_Q2 = dyn->C_Q2;
-  const double X12  = X1-X2; /* sqrt(1-4nu) */
-  const double X12sq = SQ(X12); /* (1-4nu) */
-
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
-  
-  double prefact[] = {
-    jhat, Heff,
-    Heff, jhat, Heff,
-    jhat, Heff, jhat, Heff,
-    Heff, jhat, Heff, jhat, Heff,
-    jhat, Heff, jhat, Heff, jhat, Heff,
-    Heff, jhat, Heff, jhat, Heff, jhat, Heff,
-    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
-  
-  double FNewt22, Modhhatlm;  
-  double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
-  double sum_k=0.; /* sum */
-
-  /** Newtonian flux */
-  eob_flx_FlmNewt(x, nu, FNewtlm);
-
-  /* Correct amplitudes for specific multipoles and cases FIXME: we need to agg (usespins) case */
-  if (usetidal) {
-      /* Correct (2,1), (3,1) and (3,3) [sp2 = 1] */
-      FNewtlm[0] *= X12sq; /* (2,1) */
-      FNewtlm[2] *= X12sq; /* (3,1) */
-      FNewtlm[4] *= X12sq; /* (3,3) */
-  }
-
-  /** Tail term */
-  eob_flx_Tlm(E*Omega, MTlm);
-
-  /** Amplitudes */
-  if (usespins) {
-    eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
-  } else {
-    eob_wav_flm(x,nu, rholm, flm);
-  }
-  
-  FNewt22 = FNewtlm[1];
-
-  /** Tidal amplitudes */
-  if (usetidal) {
-    eob_wav_hlmTidal(x,dyn, hlmTidal);
-    if (!(usespins)) {
-      /* Fix normalization nomvention */
-      //TODO: check also k=0,2,4 modes in the tidal waveform
-      hlmTidal[0] *= X12;
-      hlmTidal[2] *= X12;
-      hlmTidal[4] *= X12;
-    }
-  }
-  
-  /** NQC correction to the modulus of the (l,m) waveform */  
-  int k;
-  Waveform_lm_t NQC;  
-  if ( (!(usetidal)) && (!(usespins)) ) {
-    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, &NQC);
-    for (k = 0; k < KMAX; k++) {
-      //hlmNQC[k] = NQC.ampli[k];
-      hlmNQC[k] = 1.;
-    }
-    // Set NQC only in 22:
-    k=1;
-    hlmNQC[k] = NQC.ampli[k];
-  } else {
-    for (k = 0; k < KMAX; k++) {
-      hlmNQC[k] = 1.;
-    }
-    //memset(hlmNQC, 1., KMAX*sizeof(hlmNQC[0]));//FIXME: does not work?!
-  }
-
-  /** Sum up */
-  /* for (k = 0; k < KMAX; k++) { */
-  for (k = KMAX; k--;) { 
-    /* Compute modulus of hhat_lm (with NQC) */
-    Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]; 
-    if (usetidal) {
-      /* Adding the tidal waveform amplitude to the point-mass baseline */
-      Modhhatlm += MTlm[k] * hlmTidal[k];
-    }  	
-    /* Total flux multipoles */
-    sum_k += SQ(Modhhatlm) * FNewtlm[k];     
-  }
-
-  /** Normalize to the 22 Newtonian multipole */
-  double hatf = sum_k/(FNewt22);
- 
-  /** Horizon flux */ 
-  if (!(usetidal)) {
-    double hatFH;
-    if (usespins) {
-      hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
-    } else {
-      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
-    }
-    hatf += hatFH;
-  }
-
-  /* return Fphi */  
-  return (-32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf);  
-}
-
 /** Coefficients for Newtonian flux */
 /*
 static const double CNlm[35] = {
@@ -321,4 +196,142 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
   double hatFH  = FH22_S + FH22 + FH21;
     
   return hatFH;
+}
+
+/** Flux calculation for Newton-Normalized energy flux 
+    Use the DIN resummation procedure. 
+    Add non-QC and non-K corrections to (2,2) partial flux. */
+double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
+{
+  return eob_flx_Flux_s(x, Omega, r_omega, E, Heff, jhat, r, pr_star, ddotr,dyn);
+}
+
+/** Flux calculation for spinning systems */
+//FIXME: NQC are not applied in spin case!
+double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
+{
+  const double nu = dyn->nu;
+  const double chi1 = dyn->chi1;
+  const double chi2 = dyn->chi2;
+  const double X1 = dyn->X1;
+  const double X2 = dyn->X2;
+  const double a1 = dyn->a1;
+  const double a2 = dyn->a2;
+  const double C_Q1 = dyn->C_Q1;
+  const double C_Q2 = dyn->C_Q2;
+  const double X12  = X1-X2; /* sqrt(1-4nu) */
+  const double X12sq = SQ(X12); /* (1-4nu) */
+
+  const int usetidal = dyn->use_tidal;
+  const int usespins = dyn->use_spins;
+  
+  double prefact[] = {
+    jhat, Heff,
+    Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff,
+    Heff, jhat, Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff, jhat, Heff,
+    Heff, jhat, Heff, jhat, Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
+  
+  double FNewt22, Modhhatlm;  
+  double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
+  double sum_k=0.; /* sum */
+
+  /** Newtonian flux */
+  eob_flx_FlmNewt(x, nu, FNewtlm);
+
+  /* Correct amplitudes for specific multipoles and cases */
+  if (usespins) {
+    /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+    double x6 = gsl_pow_int(x, 6);
+    FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
+    FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
+    FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
+    /* Correct (4,1), (4,3)  ( sp4 = (1-2nu)^2 ) */
+    double sp4x8 = SQ((1-2*nu)) * gsl_pow_int(x, 8);
+    FNewtlm[5] = CNlm[5] * sp4x8; /* (4,1) */
+    FNewtlm[7] = CNlm[7] * sp4x8; /* (4,3) */
+  } else {
+    if (usetidal) {
+      /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+      double x6 = gsl_pow_int(x, 6);
+      FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
+      FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
+      FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
+    }
+  }
+
+  /** Tail term */
+  eob_flx_Tlm(E*Omega, MTlm);
+
+  /** Amplitudes */
+  if (usespins) {
+    eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
+  } else {
+    eob_wav_flm(x,nu, rholm, flm);
+  }
+  
+  FNewt22 = FNewtlm[1];
+
+  /** Tidal amplitudes */
+  if (usetidal) {
+    eob_wav_hlmTidal(x,dyn, hlmTidal);
+    if (!(usespins)) {
+      /* Fix normalization nomvention */
+      //TODO: check also k=0,2,4 modes in the tidal waveform
+      hlmTidal[0] *= X12;
+      hlmTidal[2] *= X12;
+      hlmTidal[4] *= X12;
+    }
+  }
+  
+  /** NQC correction to the modulus of the (l,m) waveform */  
+  int k;
+  Waveform_lm_t NQC;  
+  if ( (!(usetidal)) && (!(usespins)) ) {
+    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, &NQC);
+    for (k = 0; k < KMAX; k++) {
+      //hlmNQC[k] = NQC.ampli[k];
+      hlmNQC[k] = 1.;
+    }
+    // Set NQC only in 22:
+    k=1;
+    hlmNQC[k] = NQC.ampli[k];
+  } else {
+    for (k = 0; k < KMAX; k++) {
+      hlmNQC[k] = 1.;
+    }
+    //memset(hlmNQC, 1., KMAX*sizeof(hlmNQC[0]));//FIXME: does not work?!
+  }
+
+  /** Sum up */
+  /* for (k = 0; k < KMAX; k++) { */
+  for (k = KMAX; k--;) { 
+    /* Compute modulus of hhat_lm (with NQC) */
+    Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]; 
+    if (usetidal) {
+      /* Adding the tidal waveform amplitude to the point-mass baseline */
+      Modhhatlm += MTlm[k] * hlmTidal[k];
+    }  	
+    /* Total flux multipoles */
+    sum_k += SQ(Modhhatlm) * FNewtlm[k];     
+  }
+
+  /** Normalize to the 22 Newtonian multipole */
+  double hatf = sum_k/(FNewt22);
+ 
+  /** Horizon flux */ 
+  if (!(usetidal)) {
+    double hatFH;
+    if (usespins) {
+      hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+    } else {
+      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
+    }
+    hatf += hatFH;
+  }
+
+  /* return Fphi */  
+  return (-32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf);  
 }
