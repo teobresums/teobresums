@@ -20,295 +20,6 @@
 
 #include "TEOBResumS.h"
 
-/** Main routine for factorized EOB waveform */
-void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
-{
-
-  const double nu = dyn->nu;  
-  const double chi1 = dyn->chi1;  
-  const double chi2 = dyn->chi2;  
-  const double a1 = dyn->a1;  
-  const double a2 = dyn->a2;  
-  const double X1 = dyn->X1;  
-  const double X2 = dyn->X2;  
-  const double C_Q1 = dyn->C_Q1;  
-  const double C_Q2 = dyn->C_Q2;  
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
-  const int usespeedytail = par_get_i("use_speedytail");
-  const double X12 = X1-X2; /* sqrt(1-4nu) */
-
-  const double t   = dyn->t;
-  const double phi = dyn->phi; 
-  const double r   = dyn->r;
-  const double pph = dyn->pphi;
-  const double prstar = dyn->prstar;
-  const double Omega  = dyn->Omg;
-  const double ddotr  = dyn-> ddotr;
-  const double H      = dyn->H;
-  const double Heff   = dyn->Heff;
-  const double jhat   = dyn->jhat;
-  const double rw     = dyn->r_omega;
-
-  hlm->time = t;
-
-  /** Source term */
-  double source[] = {
-    jhat,Heff,
-    Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,
-    Heff,jhat,Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,jhat,Heff,
-    Heff,jhat,Heff,jhat,Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff
-  };
-  
-  /** Newtonian waveform */
-  Waveform_lm_t hNewt;
-  eob_wav_hlmNewt(rw,Omega,phi,nu, &hNewt);
-
-  if (usespins) {
-    /* Need to correct the l=5, m=odd modes when spin is present
-       because p4 is defined without the factor sqrt(1-4*nu) that 
-       is reintroduced in the calculation of the flm */
-    hNewt.ampli[9]  *= X12; /* (5,1) */
-    hNewt.ampli[11] *= X12; /* (5,3) */
-    hNewt.ampli[13] *= X12; /* (5,5) */
-  }
-
-  if (usetidal) {
-    /* Need to correct the m=odd modes for tides */
-    hNewt.ampli[0] /= X12; /* (2,1) */
-    hNewt.ampli[2] /= X12; /* (3,1) */
-    hNewt.ampli[4] /= X12; /* (3,3) */
-  }
-
-  /** Compute corrections */
-  double rholm[KMAX], flm[KMAX];
-  double x = SQ(rw*Omega);
-  if (usespins){
-    eob_wav_flm_s(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
-  } else {
-    eob_wav_flm(x, nu, rholm,flm);
-  }
-  
-  /** Computing the tail */
-#define r0 (1.213061319425267e+00)
-  const double Hreal = H * nu;
-  Waveform_lm_t tlm;
-  if (usespeedytail) {
-    eob_wav_speedyTail(Omega,Hreal, r0, &tlm); 
-  } else {
-    eob_wav_hhatlmTail(Omega,Hreal, r0, &tlm); 
-  }
-  
-  /** Residual phase corrections delta_{lm} */
-  double dlm[KMAX];
-  eob_wav_deltalm(Hreal, Omega, nu, dlm); 
-  
-  /** NQC */
-  Waveform_lm_t hNQC; 
-  if (!(usetidal)) {
-    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); 
-  }
-
-  /** Put together the different contributions */
-  int k;
-  for (k = 0; k < KMAX; k++) {
-    
-    /* Compute \hat{h}_lm */
-    hlm->ampli[k] =   hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
-    hlm->phase[k] =  -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
-    
-    /* NQC correction */
-    if ( (!(usetidal)) && (!(usespins)) ) {
-      hlm->ampli[k] *= hNQC.ampli[k];
-      hlm->phase[k] -= hNQC.phase[k];
-    }
-
-  }
-  
-  if (usetidal) {
-        
-    /** Compute tidal contribution */
-    double hlmtidal[KMAX];
-    eob_wav_hlmTidal(x, dyn, hlmtidal);
-    
-    /** Update waveform */
-    const double p2 = sqrt(1-4*nu);
-    for (k = 0; k < KMAX; k++) {
-      if (k==0) hlm->ampli[k] *= p2;
-      if (k==2) hlm->ampli[k] *= p2;
-      if (k==4) hlm->ampli[k] *= p2;
-      hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
-    }
-
-  }
-  
-}
-
-/** Residual phase corrections delta_{lm} up to l=m=5.
-    Reference(s)
-    Damour, Iyer & Nagar, PRD 79, 064004 (2008)
-    Fujita & Iyer, PRD 82 044051 (2010)
-    Faye et al., Class. Q. Grav. 29 175004 (2012)
-    Damour, Nagar & Bernuzzi, PRD 87, 084035 (2013) */   
-
-//  TODO: this routine requires optimization
-//  - precompute coefficients c(nu)
-
-void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
-{
-    
-  /** Useful shorthands*/
-  double pi     = Pi;
-  double pi2    = SQ(Pi);
-  double nu2    = SQ(nu);
-  double y      = cbrt(Hreal*Omega*Hreal*Omega);
-  double sqrt_y = sqrt(y);
-  double y3     = y*y*y;
-  double y32    = Hreal*Omega;
-  
-  /** Leading order contributions*/
-  double delta22LO = 7./3.   * y32;
-  double delta21LO = 2./3.   * y32;
-  double delta33LO = 13./10. * y32;
-  double delta31LO = 13./30. * y32;
-  
-  /** Init phase */
-  int k;
-  for (k = 0; k < KMAX; k++) {
-    dlm[k] = 0.;
-  }
-  
-  /** Residual phases in Pade-resummed form when possible */
-  double num;
-  double den;
-
-  /* l=2 */
-  /* Pade(1,2) approximant */
-  num        = 69020.*nu + 5992.*pi*sqrt_y;
-  den        = 5992.*pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
-  dlm[0] = delta21LO*num/den;
-  /* Pade(2,2) approximant */
-  num        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
-  den        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
-  dlm[1] = delta22LO*num/den;
-  
-  /* l=3 */
-  /* Pade(1,2) approximant */
-  num        = 4641.*nu + 1690.*pi*sqrt_y;
-  den        = num + 18207.*nu2*y;
-  dlm[2] = delta31LO*num/den;
-  /* Taylor-expanded form */
-  num        = 1.  + 94770.*pi/(566279.*nu)*sqrt_y;
-  den        = num + 80897.* nu/3159.*y;
-  dlm[3] = (10.+33.*nu)/(15.*(1.-3.*nu)) * y32 + 52./21.*pi*y3;
-  /* Pade(1,2) approximant */
-  dlm[4] = delta33LO*num/den;
-  
-  /* l=4 */
-  dlm[5] =   (2.+507.*nu)/(10.*(1.-2.*nu))*y32   + 1571./3465.*pi*y3;
-  dlm[6] =  7.*(1.+6.*nu)/(15.*(1.-3.*nu))*y32   + 6284./3465.*pi*y3;
-  dlm[7] = (486.+4961.*nu)/(810.*(1.-2.*nu))*y32 + 1571./385.*pi*y3;
-  dlm[8] =  (112.+219.*nu)/(120.*(1.-3.*nu))*y32 + 25136./3465.*pi*y3;
-  
-  /* l=5 */
-  dlm[9] = (96875. + 857528.*nu)/(131250.*(1.-2.*nu))*y32;
-  
-}
-
-/** Tail contribution to the resummed wave.   
-    Ref. Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
-void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
-{
-  double k;
-  double hhatk;
-  
-  gsl_sf_result num_rad;
-  gsl_sf_result num_phase;
-  gsl_sf_result denom_rad;
-  gsl_sf_result denom_phase;
-  
-  double ratio_rad;
-  double ratio_ang;
-  double tlm_rad;
-  double tlm_phase;
-  
-  int i;
-  for (i = 0; i < KMAX; i++) {
-    k     = MINDEX[i] * Omega;
-    hhatk = k * Hreal;
-    
-    gsl_sf_lngamma_complex_e(LINDEX[i] + 1., -2.*hhatk, &num_rad, &num_phase);
-    gsl_sf_lngamma_complex_e(LINDEX[i] + 1., 0., &denom_rad, &denom_phase);
-    
-    ratio_rad     = num_rad.val-denom_rad.val;
-    ratio_ang     = num_phase.val-0.;
-    
-    tlm_rad       = ratio_rad + Pi * hhatk;
-    tlm_phase     = ratio_ang + 2.*hhatk*log(2.*k*bphys);
-    
-    tlm->ampli[i] = exp(tlm_rad);
-    tlm->phase[i] = tlm_phase;
-  }
-
-}
-
-/** Alternative implementation of the phase of the tail factor */
-void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
-{
-  double x;
-  double x2;
-  double x3;
-  double x4;
-  double x5;
-  double tlm_ang;
-  double num_ang;
-  
-  /** Fit coefficients*/
-  const double b1[] = {
-    0.1113090643348557, 0.1112593821157397, 0.0424759238428813, 0.0424489015884926, 0.0424717446800903, 0.0215953972500844, 0.0215873812155663, 0.0215776183122621, 0.0216017621863542, 0.0128123696874894, 0.0128097056242375, 0.0128038943888768, 0.0128025242617949, 0.0128202485907368, 0.0083762045692408, 0.0083751913886140, 0.0083724067460769, 0.0083694435961860, 0.0083710364141552, 0.0083834483913443, 0.0058540393221396, 0.0058536069384738, 0.0058522594457692, 0.0058502436535615, 0.0058491157293566, 0.0058514875071582, 0.0058602498033381, 0.0042956812356573, 0.0042954784390887, 0.0042947951664056, 0.0042935886137697, 0.0042923691461384, 0.0042922256848799, 0.0042945927126022, 0.0043009106861259};
-  
-  const double b2[] = {
-    0.0004643273300862, 0.0009375605440004, 0.0000597134489198, 0.0002551406918111, 0.0001741036904709, 0.0000124649041611, 0.0000685496215625, 0.0001131160409390, 0.0000419907542591, 0.0000035218982282, 0.0000219211271097, 0.0000473186962874, 0.0000524142634057, 0.0000106823372552, 0.0000012237574387, 0.0000081742188269, 0.0000201940563214, 0.0000295722761753, 0.0000260539631956, 0.0000018994753518, 0.0000004932942990, 0.0000034477210351, 0.0000092294406360, 0.0000155143073237, 0.0000183386499818, 0.0000137922469695, -0.0000007075155453, 0.0000002223410995, 0.0000016045317657, 0.0000045260028113, 0.0000082655700107, 0.0000112393599417, 0.0000115758243113, 0.0000076838709956, -0.0000014020591745};
-  
-  const double b3[] = {
-    -0.0221835462237291, -0.0235386333304348, -0.0042911639711832, -0.0047431560217121, -0.0046577314472149, -0.0013089557502947, -0.0014343968205390, -0.0014978542575474, -0.0014329302934532, -0.0005167994164556, -0.0005573939123058, -0.0005921030407223, -0.0005978284714483, -0.0005673965369076, -0.0002409269302708, -0.0002561516055118, -0.0002723768586352, -0.0002815958312453, -0.0002792078156272, -0.0002646630240693, -0.0001261183503407, -0.0001325622938779, -0.0001403198638518, -0.0001464084186977, -0.0001485971591029, -0.0001459023931717, -0.0001384829633836, -0.0000719062974278, -0.0000749128468013, -0.0000788187384314, -0.0000824202283094, -0.0000846673495936, -0.0000849054394951, -0.0000829269749240, -0.0000788883333858};
-  
-  const double b4[] = {
-    0.0058366730167965, 0.0070452306758401, 0.0006914295465364, 0.0010322294603561, 0.0010057563135650, 0.0001394203795507, 0.0002309706405978, 0.0002596611624417, 0.0002409588083156, 0.0000386949167221, 0.0000679154947896, 0.0000830199015202, 0.0000850120755064, 0.0000780125513602, 0.0000133034384660, 0.0000241813441339, 0.0000311573885555, 0.0000340233089866, 0.0000335167900637, 0.0000307571022927, 0.0000053305073331, 0.0000099143129290, 0.0000132296989826, 0.0000150959309402, 0.0000156304390748, 0.0000151274875147, 0.0000139320508803, 0.0000023959090314, 0.0000045285807761, 0.0000061918979830, 0.0000072894226381, 0.0000078251853305, 0.0000078772667984, 0.0000075606242809, 0.0000069956215270
-  };
-  
-  double Tlm_real[KMAX];
-  eob_flx_Tlm(Omega*Hreal, Tlm_real);
-  
-  /** Pre-computed psi */
-  const double psi[] = {0.9227843350984671394, 0.9227843350984671394,
-			1.256117668431800473, 1.256117668431800473, 1.256117668431800473,
-			1.506117668431800473, 1.506117668431800473, 1.506117668431800473, 1.506117668431800473,
-			1.706117668431800473, 1.706117668431800473, 1.706117668431800473, 1.706117668431800473, 1.706117668431800473,
-			1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139,
-			2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997,
-			2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997};
-  
-  double k;
-  int i;
-  for (i=0; i<KMAX; i++) {
-    k  = MINDEX[i] * Omega;
-    x  = k * Hreal; /* hathatk */
-    x2 = x * x;
-    x3 = x2 * x;
-    x4 = x3 * x;
-    x5 = x4 * x;      
-    num_ang   = 1. + b1[i]*x2 + b2[i]*x3 + b3[i]*x4 + b4[i]*x5; 
-    tlm_ang   = (- 2. * psi[i] * x * num_ang) + 2.*x* log(2. * k * bphys);
-    tlm->ampli[i] = Tlm_real[i];
-    tlm->phase[i] = tlm_ang;
-  }
-  
-}
-
 /** hlmNewt coefficients for amplitude */
 static const double ChlmNewt_ampli[35] = {2.1137745587232057, 6.341323676169617, 0.1412325034218127, 1.7864655618418102, 4.9229202032627635, 0.023872650234580958, 0.2250735048768909, 1.7053495827316825, 4.763908164911493, 0.001122165903318321, 0.06333806741197714, 0.2945348827200268, 1.755276012972272, 5.0817902739730565, 0.00014954736544380072, 0.005296595280255638, 0.10342548105284892, 0.3713362832603404, 1.8983258440274462, 5.727111757630886, 5.184622059790144e-06, 0.0012191691413436815, 0.011783593824950922, 0.14639129995388936, 0.4653654097044924, 2.125638973894669, 6.685178460621457, 7.9955401278763745, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
@@ -409,53 +120,162 @@ void eob_wav_hlmNewt(double r,
   
 }
 
-/** Calculate tidal correction to multipolar waveform amplitude
-    Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 */
-void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
+/** Tail contribution to the resummed wave.   
+    Ref. Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
+void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
 {
-  const double XA       = dyn->X1;
-  const double XB       = dyn->X2;
-  const double khatA_2  = dyn->khatA2;
-  const double khatB_2  = dyn->khatB2;
+  double k;
+  double hhatk;
   
-  const double x5 = gsl_pow_int(x,5);
+  gsl_sf_result num_rad;
+  gsl_sf_result num_phase;
+  gsl_sf_result denom_rad;
+  gsl_sf_result denom_phase;
   
-  double hA[KMAX], hB[KMAX], betaA1[KMAX],betaB1[KMAX];
-
-  memset(hTidallm, 0., KMAX*sizeof(double));
-  memset(hA, 0., KMAX*sizeof(double));
-  memset(hB, 0., KMAX*sizeof(double));
-  memset(betaA1, 0., KMAX*sizeof(double));
-  memset(betaB1, 0., KMAX*sizeof(double));
-
-  /** l=2 */
-  hA[1]     = 2 * khatA_2 *(XA/XB+3);
-  hB[1]     = 2 * khatB_2 *(XB/XA+3);
-
-  betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
-  betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
+  double ratio_rad;
+  double ratio_ang;
+  double tlm_rad;
+  double tlm_phase;
+  
+  int i;
+  for (i = 0; i < KMAX; i++) {
+    k     = MINDEX[i] * Omega;
+    hhatk = k * Hreal;
     
-  hA[0]     = 3 * khatA_2 * XB * (3-4*XA)/XA;
-  hB[0]     = 3 * khatB_2 * XA * (3-4*XB)/XB;
+    gsl_sf_lngamma_complex_e(LINDEX[i] + 1., -2.*hhatk, &num_rad, &num_phase);
+    gsl_sf_lngamma_complex_e(LINDEX[i] + 1., 0., &denom_rad, &denom_phase);
     
-  /** l=3 */
-  hA[2] = hA[4];
-  hB[2] = hB[4];
+    ratio_rad     = num_rad.val-denom_rad.val;
+    ratio_ang     = num_phase.val-0.;
+    
+    tlm_rad       = ratio_rad + Pi * hhatk;
+    tlm_phase     = ratio_ang + 2.*hhatk*log(2.*k*bphys);
+    
+    tlm->ampli[i] = exp(tlm_rad);
+    tlm->phase[i] = tlm_phase;
+  }
+
+}
+
+/** Alternative implementation of the phase of the tail factor */
+void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
+{
+  double x;
+  double x2;
+  double x3;
+  double x4;
+  double x5;
+  double tlm_ang;
+  double num_ang;
   
-  hA[4] = 12 * khatA_2 * XB*XB/XA;
-  hB[4] = 12 * khatB_2 * XA*XA/XB;
+  /** Fit coefficients*/
+  const double b1[] = {
+    0.1113090643348557, 0.1112593821157397, 0.0424759238428813, 0.0424489015884926, 0.0424717446800903, 0.0215953972500844, 0.0215873812155663, 0.0215776183122621, 0.0216017621863542, 0.0128123696874894, 0.0128097056242375, 0.0128038943888768, 0.0128025242617949, 0.0128202485907368, 0.0083762045692408, 0.0083751913886140, 0.0083724067460769, 0.0083694435961860, 0.0083710364141552, 0.0083834483913443, 0.0058540393221396, 0.0058536069384738, 0.0058522594457692, 0.0058502436535615, 0.0058491157293566, 0.0058514875071582, 0.0058602498033381, 0.0042956812356573, 0.0042954784390887, 0.0042947951664056, 0.0042935886137697, 0.0042923691461384, 0.0042922256848799, 0.0042945927126022, 0.0043009106861259};
   
-  /** l=2 */
-  /* (2,1) */
-  hTidallm[0] = ( -hA[0] + hB[0] )*x5;
-  /* (2,2) */
-  hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
+  const double b2[] = {
+    0.0004643273300862, 0.0009375605440004, 0.0000597134489198, 0.0002551406918111, 0.0001741036904709, 0.0000124649041611, 0.0000685496215625, 0.0001131160409390, 0.0000419907542591, 0.0000035218982282, 0.0000219211271097, 0.0000473186962874, 0.0000524142634057, 0.0000106823372552, 0.0000012237574387, 0.0000081742188269, 0.0000201940563214, 0.0000295722761753, 0.0000260539631956, 0.0000018994753518, 0.0000004932942990, 0.0000034477210351, 0.0000092294406360, 0.0000155143073237, 0.0000183386499818, 0.0000137922469695, -0.0000007075155453, 0.0000002223410995, 0.0000016045317657, 0.0000045260028113, 0.0000082655700107, 0.0000112393599417, 0.0000115758243113, 0.0000076838709956, -0.0000014020591745};
   
-  /** l=3 */
-  /* (3,1) */
-  hTidallm[2] = ( -hA[2] + hB[2] )*x5;
-  /* (3,3) */
-  hTidallm[4] = ( -hA[4] + hB[4] )*x5;
+  const double b3[] = {
+    -0.0221835462237291, -0.0235386333304348, -0.0042911639711832, -0.0047431560217121, -0.0046577314472149, -0.0013089557502947, -0.0014343968205390, -0.0014978542575474, -0.0014329302934532, -0.0005167994164556, -0.0005573939123058, -0.0005921030407223, -0.0005978284714483, -0.0005673965369076, -0.0002409269302708, -0.0002561516055118, -0.0002723768586352, -0.0002815958312453, -0.0002792078156272, -0.0002646630240693, -0.0001261183503407, -0.0001325622938779, -0.0001403198638518, -0.0001464084186977, -0.0001485971591029, -0.0001459023931717, -0.0001384829633836, -0.0000719062974278, -0.0000749128468013, -0.0000788187384314, -0.0000824202283094, -0.0000846673495936, -0.0000849054394951, -0.0000829269749240, -0.0000788883333858};
+  
+  const double b4[] = {
+    0.0058366730167965, 0.0070452306758401, 0.0006914295465364, 0.0010322294603561, 0.0010057563135650, 0.0001394203795507, 0.0002309706405978, 0.0002596611624417, 0.0002409588083156, 0.0000386949167221, 0.0000679154947896, 0.0000830199015202, 0.0000850120755064, 0.0000780125513602, 0.0000133034384660, 0.0000241813441339, 0.0000311573885555, 0.0000340233089866, 0.0000335167900637, 0.0000307571022927, 0.0000053305073331, 0.0000099143129290, 0.0000132296989826, 0.0000150959309402, 0.0000156304390748, 0.0000151274875147, 0.0000139320508803, 0.0000023959090314, 0.0000045285807761, 0.0000061918979830, 0.0000072894226381, 0.0000078251853305, 0.0000078772667984, 0.0000075606242809, 0.0000069956215270
+  };
+  
+  double Tlm_real[KMAX];
+  eob_flx_Tlm(Omega*Hreal, Tlm_real);
+  
+  /** Pre-computed psi */
+  const double psi[] = {0.9227843350984671394, 0.9227843350984671394,
+			1.256117668431800473, 1.256117668431800473, 1.256117668431800473,
+			1.506117668431800473, 1.506117668431800473, 1.506117668431800473, 1.506117668431800473,
+			1.706117668431800473, 1.706117668431800473, 1.706117668431800473, 1.706117668431800473, 1.706117668431800473,
+			1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139, 1.872784335098467139,
+			2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997,
+			2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997};
+  
+  double k;
+  int i;
+  for (i=0; i<KMAX; i++) {
+    k  = MINDEX[i] * Omega;
+    x  = k * Hreal; /* hathatk */
+    x2 = x * x;
+    x3 = x2 * x;
+    x4 = x3 * x;
+    x5 = x4 * x;      
+    num_ang   = 1. + b1[i]*x2 + b2[i]*x3 + b3[i]*x4 + b4[i]*x5; 
+    tlm_ang   = (- 2. * psi[i] * x * num_ang) + 2.*x* log(2. * k * bphys);
+    tlm->ampli[i] = Tlm_real[i];
+    tlm->phase[i] = tlm_ang;
+  }
+  
+}
+
+/** Residual phase corrections delta_{lm} up to l=m=5.
+    Reference(s)
+    Damour, Iyer & Nagar, PRD 79, 064004 (2008)
+    Fujita & Iyer, PRD 82 044051 (2010)
+    Faye et al., Class. Q. Grav. 29 175004 (2012)
+    Damour, Nagar & Bernuzzi, PRD 87, 084035 (2013) */   
+//TODO: this routine requires optimization, precompute coefficients c(nu)
+void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
+{
+    
+  /** Useful shorthands*/
+  double pi     = Pi;
+  double pi2    = SQ(Pi);
+  double nu2    = SQ(nu);
+  double y      = cbrt(Hreal*Omega*Hreal*Omega);
+  double sqrt_y = sqrt(y);
+  double y3     = y*y*y;
+  double y32    = Hreal*Omega;
+  
+  /** Leading order contributions*/
+  double delta22LO = 7./3.   * y32;
+  double delta21LO = 2./3.   * y32;
+  double delta33LO = 13./10. * y32;
+  double delta31LO = 13./30. * y32;
+  
+  /** Init phase */
+  int k;
+  for (k = 0; k < KMAX; k++) {
+    dlm[k] = 0.;
+  }
+  
+  /** Residual phases in Pade-resummed form when possible */
+  double num;
+  double den;
+
+  /* l=2 */
+  /* Pade(1,2) approximant */
+  num        = 69020.*nu + 5992.*pi*sqrt_y;
+  den        = 5992.*pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
+  dlm[0] = delta21LO*num/den;
+  /* Pade(2,2) approximant */
+  num        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
+  den        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
+  dlm[1] = delta22LO*num/den;
+  
+  /* l=3 */
+  /* Pade(1,2) approximant */
+  num        = 4641.*nu + 1690.*pi*sqrt_y;
+  den        = num + 18207.*nu2*y;
+  dlm[2] = delta31LO*num/den;
+  /* Taylor-expanded form */
+  num        = 1.  + 94770.*pi/(566279.*nu)*sqrt_y;
+  den        = num + 80897.* nu/3159.*y;
+  dlm[3] = (10.+33.*nu)/(15.*(1.-3.*nu)) * y32 + 52./21.*pi*y3;
+  /* Pade(1,2) approximant */
+  dlm[4] = delta33LO*num/den;
+  
+  /* l=4 */
+  dlm[5] =   (2.+507.*nu)/(10.*(1.-2.*nu))*y32   + 1571./3465.*pi*y3;
+  dlm[6] =  7.*(1.+6.*nu)/(15.*(1.-3.*nu))*y32   + 6284./3465.*pi*y3;
+  dlm[7] = (486.+4961.*nu)/(810.*(1.-2.*nu))*y32 + 1571./385.*pi*y3;
+  dlm[8] =  (112.+219.*nu)/(120.*(1.-3.*nu))*y32 + 25136./3465.*pi*y3;
+  
+  /* l=5 */
+  dlm[9] = (96875. + 857528.*nu)/(131250.*(1.-2.*nu))*y32;
   
 }
 
@@ -799,6 +619,56 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   
   flm[8] = gsl_pow_int(rholm[8] + rho44S, 4);
       
+}
+
+/** Calculate tidal correction to multipolar waveform amplitude
+    Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 */
+void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
+{
+  const double XA       = dyn->X1;
+  const double XB       = dyn->X2;
+  const double khatA_2  = dyn->khatA2;
+  const double khatB_2  = dyn->khatB2;
+  
+  const double x5 = gsl_pow_int(x,5);
+  
+  double hA[KMAX], hB[KMAX], betaA1[KMAX],betaB1[KMAX];
+
+  memset(hTidallm, 0., KMAX*sizeof(double));
+  memset(hA, 0., KMAX*sizeof(double));
+  memset(hB, 0., KMAX*sizeof(double));
+  memset(betaA1, 0., KMAX*sizeof(double));
+  memset(betaB1, 0., KMAX*sizeof(double));
+
+  /** l=2 */
+  hA[1]     = 2 * khatA_2 *(XA/XB+3);
+  hB[1]     = 2 * khatB_2 *(XB/XA+3);
+
+  betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
+  betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
+    
+  hA[0]     = 3 * khatA_2 * XB * (3-4*XA)/XA;
+  hB[0]     = 3 * khatB_2 * XA * (3-4*XB)/XB;
+    
+  /** l=3 */
+  hA[2] = hA[4];
+  hB[2] = hB[4];
+  
+  hA[4] = 12 * khatA_2 * XB*XB/XA;
+  hB[4] = 12 * khatB_2 * XA*XA/XB;
+  
+  /** l=2 */
+  /* (2,1) */
+  hTidallm[0] = ( -hA[0] + hB[0] )*x5;
+  /* (2,2) */
+  hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
+  
+  /** l=3 */
+  /* (3,1) */
+  hTidallm[2] = ( -hA[2] + hB[2] )*x5;
+  /* (3,3) */
+  hTidallm[4] = ( -hA[4] + hB[4] )*x5;
+  
 }
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
@@ -1529,6 +1399,154 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   free(sigma);
 
 }
+
+
+/** Main routine for factorized EOB waveform */
+void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
+{
+
+  const double nu = dyn->nu;  
+  const double chi1 = dyn->chi1;  
+  const double chi2 = dyn->chi2;  
+  const double a1 = dyn->a1;  
+  const double a2 = dyn->a2;  
+  const double X1 = dyn->X1;  
+  const double X2 = dyn->X2;  
+  const double C_Q1 = dyn->C_Q1;  
+  const double C_Q2 = dyn->C_Q2;  
+  const int usetidal = dyn->use_tidal;
+  const int usespins = dyn->use_spins;
+  const int usespeedytail = par_get_i("use_speedytail");
+  const double X12 = X1-X2; /* sqrt(1-4nu) */
+
+  const double t   = dyn->t;
+  const double phi = dyn->phi; 
+  const double r   = dyn->r;
+  const double pph = dyn->pphi;
+  const double prstar = dyn->prstar;
+  const double Omega  = dyn->Omg;
+  const double ddotr  = dyn-> ddotr;
+  const double H      = dyn->H;
+  const double Heff   = dyn->Heff;
+  const double jhat   = dyn->jhat;
+  const double rw     = dyn->r_omega;
+
+  hlm->time = t;
+
+  /** Source term */
+  double source[] = {
+    jhat,Heff,
+    Heff,jhat,Heff,
+    jhat,Heff,jhat,Heff,
+    Heff,jhat,Heff,jhat,Heff,
+    jhat,Heff,jhat,Heff,jhat,Heff,
+    Heff,jhat,Heff,jhat,Heff,jhat,Heff,
+    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff
+  };
+  
+  /** Newtonian waveform */
+  Waveform_lm_t hNewt;
+  eob_wav_hlmNewt(rw,Omega,phi,nu, &hNewt);
+
+  if (usespins) {
+    /* Need to correct the l=5, m=odd modes when spin is present
+       because p4 is defined without the factor sqrt(1-4*nu) that 
+       is reintroduced in the calculation of the flm */
+    hNewt.ampli[9]  *= X12; /* (5,1) */
+    hNewt.ampli[11] *= X12; /* (5,3) */
+    hNewt.ampli[13] *= X12; /* (5,5) */
+  }
+
+  if (usetidal) {
+    /* Need to correct the m=odd modes for tides (p2 = 1)*/
+    double vphi3 = gsl_pow_int(rw*Omega,3);
+    int k;
+    k=0; hNewt.ampli[k] = ChlmNewt_ampli[k] * 2 * phi * vphi3; /* (2,1) */
+    k=2; hNewt.ampli[k] = ChlmNewt_ampli[k] * 3 * phi * vphi3; /* (3,1) */
+    k=4; hNewt.ampli[k] = ChlmNewt_ampli[k] * 3 * phi * vphi3; /* (3,3) */
+  }
+
+  /** Compute corrections */
+  double rholm[KMAX], flm[KMAX];
+  double x = SQ(rw*Omega);
+  if (usespins){
+    eob_wav_flm_s(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
+  } else {
+    eob_wav_flm(x, nu, rholm,flm);
+  }
+  
+  /** Computing the tail */
+#define r0 (1.213061319425267e+00)
+  const double Hreal = H * nu;
+  Waveform_lm_t tlm;
+  if (usespeedytail) {
+    eob_wav_speedyTail(Omega,Hreal, r0, &tlm); 
+  } else {
+    eob_wav_hhatlmTail(Omega,Hreal, r0, &tlm); 
+  }
+  
+  /** Residual phase corrections delta_{lm} */
+  double dlm[KMAX];
+  eob_wav_deltalm(Hreal, Omega, nu, dlm); 
+  
+  /** NQC */
+  Waveform_lm_t hNQC; 
+  if (!(usetidal)) {
+    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); 
+  }
+
+  /** Put together the different contributions */
+  int k;
+  for (k = 0; k < KMAX; k++) {
+    
+    /* Compute \hat{h}_lm */
+    hlm->ampli[k] =   hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
+    hlm->phase[k] =  -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
+    
+    /* NQC correction */
+    if ( (!(usetidal)) && (!(usespins)) ) {
+      hlm->ampli[k] *= hNQC.ampli[k];
+      hlm->phase[k] -= hNQC.phase[k];
+    }
+
+  }
+  
+  if (usetidal) {
+        
+    /** Compute tidal contribution */
+    double hlmtidal[KMAX];
+    eob_wav_hlmTidal(x, dyn, hlmtidal);
+    
+    /** Update waveform */
+    const double p2 = sqrt(1-4*nu);
+    for (k = 0; k < KMAX; k++) {
+      if (k==0) hlm->ampli[k] *= p2;
+      if (k==2) hlm->ampli[k] *= p2;
+      if (k==4) hlm->ampli[k] *= p2;
+      hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
+    }
+
+  }
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** OLD ROUTINES */
+
+
 
 /** Resummed amplitudes in the general nu-dependent case.
  *  Refs:
