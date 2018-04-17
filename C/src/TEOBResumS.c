@@ -152,7 +152,7 @@ int main (int argc, char* argv[])
     for (int i = 0; i < EOB_ID_NVARS; i++)
       PRFORM(eob_id_var[i], dyn->y0[i]);
   }
-  
+DBGSTOP  
   /** Initial conditions: t, r, phi, prstar, pphi */
   gsl_odeiv2_system sys = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
   dyn->t                    = 0.;
