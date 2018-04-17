@@ -1449,20 +1449,18 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   eob_wav_hlmNewt(rw,Omega,phi,nu, &hNewt);
 
   if (usespins) {
-    /* Need to correct the l=5, m=odd modes when spin is present
-       because p4 is defined without the factor sqrt(1-4*nu) that 
-       is reintroduced in the calculation of the flm */
-    hNewt.ampli[9]  *= X12; /* (5,1) */
-    hNewt.ampli[11] *= X12; /* (5,3) */
-    hNewt.ampli[13] *= X12; /* (5,5) */
+    /* Need to correct the l=4 m=odd modes (p4 = (2nu-1)) */
+    double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5);
+    hNewt.ampli[5] = ChlmNewt_ampli[5] * p4_vphi5; /* (4,1) */
+    hNewt.ampli[7] = ChlmNewt_ampli[7] * p4_vphi5; /* (4,3) */
   }
 
   if (usetidal) {
     /* Need to correct the m=odd modes for tides (p2 = 1)*/
-    double vphi3 = gsl_pow_int(rw*Omega,3);
-    hNewt.ampli[0] = ChlmNewt_ampli[0] * 2 * phi * vphi3; /* (2,1) */
-    hNewt.ampli[2] = ChlmNewt_ampli[2] * 3 * phi * vphi3; /* (3,1) */
-    hNewt.ampli[4] = ChlmNewt_ampli[4] * 3 * phi * vphi3; /* (3,3) */
+    double phi_vphi3 = phi * gsl_pow_int(rw*Omega,3);
+    hNewt.ampli[0] = ChlmNewt_ampli[0] * 2 * phi_vphi3; /* (2,1) */
+    hNewt.ampli[2] = ChlmNewt_ampli[2] * 3 * phi_vphi3; /* (3,1) */
+    hNewt.ampli[4] = ChlmNewt_ampli[4] * 3 * phi_vphi3; /* (3,3) */
   }
 
   /** Compute corrections */
