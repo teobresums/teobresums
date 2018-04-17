@@ -364,7 +364,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm);
 void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
-void eob_wav_hlmNewt(double r, double Omega, double phi, double nu, int usetidal, Waveform_lm_t *hNewt);
+void eob_wav_hlmNewt(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
 void eob_wav_flm(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);

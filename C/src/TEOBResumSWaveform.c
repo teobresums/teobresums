@@ -36,7 +36,8 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
   const int usespeedytail = par_get_i("use_speedytail");
-  
+  const double X12 = X1-X2;;  
+
   const double t   = dyn->t;
   const double phi = dyn->phi; 
   const double r   = dyn->r;
@@ -64,8 +65,24 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   
   /** Newtonian waveform */
   Waveform_lm_t hNewt;
-  eob_wav_hlmNewt(rw,Omega,phi,nu,usetidal, &hNewt);
-  
+  eob_wav_hlmNewt(rw,Omega,phi,nu, &hNewt);
+
+  if (usespins) {
+    /* Need to correct the l=5, m=odd modes when spin is present
+       because p4 is defined without the factor sqrt(1-4*nu) that 
+       is reintroduced in the calculation of the flm */
+    hlmNewt->ampli[9]  *= X12; /* (5,1) */
+    hlmNewt->ampli[11] *= X12; /* (5,3) */
+    hlmNewt->ampli[13] *= X12; /* (5,5) */
+  }
+
+  if (usetidal) {
+    /* Need to correct the m=odd modes for tides */
+    hlmNewt->ampli[0] /= X12; /* (2,1) */
+    hlmNewt->ampli[2] /= X12; /* (3,1) */
+    hlmNewt->ampli[4] /= X12; /* (3,3) */
+  }
+
   /** Compute corrections */
   double rholm[KMAX], flm[KMAX];
   double x = SQ(rw*Omega);
@@ -326,7 +343,6 @@ void eob_wav_hlmNewt(double r,
 		     double Omega,
 		     double phi,
 		     double nu,
-		     int usetidal,
 		     Waveform_lm_t *hlmNewt)
 {
   /** Shorthands */
@@ -344,17 +360,13 @@ void eob_wav_hlmNewt(double r,
   
   /** Polynomials in nu */
   const double p1 = 1.;
-  double       p2 = sqrt(1.-4.*nu); /* can change */
+  const double p2 = sqrt(1.-4.*nu); 
   const double p3 = (3.*nu-1.);
   const double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);
   const double p5 = 1.-5.*nu+5.*nu2;
   const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
   const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
-  
-  if (usetidal) {
-    p2 = 1.;
-  }
-  
+    
   const double phix2 = 2. * phi;
   const double phix3 = 3. * phi;
   const double phix4 = 4. * phi;
@@ -390,8 +402,7 @@ void eob_wav_hlmNewt(double r,
   };
     
   /** Compute hlmNewt (without phase factor) in complex Polar coords */
-  int k;
-  for (k = 0; k < KMAX; k++) {
+  for (int k = 0; k < KMAX; k++) {
     hlmNewt->phase[k] = - phim[k] + ChlmNewt_phase[k];
     hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
   }
