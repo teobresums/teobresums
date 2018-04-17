@@ -306,7 +306,17 @@ vector<double> FlmNewt(const double x, void *params)
     Nlm[11] = 2187./70400                           * sp4 * x8 ; /*(5,3)*/
     Nlm[12] = 131072./66825                         * sp5 * x9 ; /*(5,4)*/
     Nlm[13] = 1953125./76032                        * sp4 * x8 ; /*(5,5)*/
-
+    if (spin_flag==true)
+      /* Need to correct the l=5, m=odd modes when spin is present
+         because sp4 is defined without the factor (1-4*nu) that is
+         reintroduced in the calculation of the flm 
+         Fixed, 17-04-2018 */
+    {
+      Nlm[9]  = 1./19958400                           * sp4*(1.-4.*nu) * x8 ; /*(5,1)*/
+      Nlm[11] = 2187./70400                           * sp4*(1.-4.*nu) * x8 ; /*(5,3)*/
+      Nlm[13] = 1953125./76032                        * sp4*(1.-4.*nu) * x8 ; /*(5,5)*/
+    }
+    
     /* l=6 */
     Nlm[14] = 1./1123782660                         * sp6 * x10; /*(6,1)*/
     Nlm[15] = 128./28667925                         * sp5 * x9 ; /*(6,2)*/
