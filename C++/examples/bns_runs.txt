@@ -15,6 +15,8 @@ time ./TEOBResumS.x -m1 1.40 -m2 1.40 -chi1 0.0 -chi2 0.0 -f_min 10 -lambda1_l2 
 ##Sly 1.35+1.35 from 180Hz for straight Matlab comparison
 time ./TEOBResumS.x -m1 1.34999999961 -m2 1.34999999961 -chi1 0.0 -chi2 0.0 -f_min 180 -lambda1_l2 389.962705820636 -lambda1_l3 706.632091237209 -lambda1_l4 1241.672392344051 -lambda2_l2 389.962705820636 -lambda2_l3 706.632091237209 -lambda2_l4 1241.672392344051 -tidal 1 -multipoles -lm 1 -srate 80000
 
+##Sly 1.35+1.35 from 20Hz. One of the models of paper
+time ./TEOBResumS.x -m1 1.349829989184 -m2  1.349829989184 -chi1 0.0 -chi2 0.0 -f_min 20 -lambda1_l2 392.060075829611 -lambda1_l3 710.31348374843 -lambda1_l4 1248.979660686121 -lambda2_l2 392.060075829611 -lambda2_l3 710.31348374843 -lambda2_l4 1248.979660686121 -tidal 1 -multipoles -lm 1 
 
 
 
