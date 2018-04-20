@@ -407,7 +407,7 @@ int rhs(double t, const double y[], double f[], void *params){
     const double dHeff_dprstar = (prstar + z3*2.0*A*u2*prstar3)/Heff;
     const double dprstar_dt    = f[2];
     const double dr_dt         = f[0];
-    const double ddotr_dr      = sqrAB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA*one_A-dB*one_B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2.*A*u3)*prstar3)/E;
+    const double ddotr_dr      = sqrAB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA*one_A-dB*one_B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2.*A*u3)*prstar3)*one_denE;
     const double ddotr_dprstar = sqrAB*( 1.+z3*6.*A*u2*prstar2-(prstar + z3*2.*A*u2*prstar3)*dHeff_dprstar*tmpE)*one_denE;
     
     
