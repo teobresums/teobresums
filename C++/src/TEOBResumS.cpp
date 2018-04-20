@@ -199,7 +199,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     params.Mbh = final_mass;
     
     /** Initialize ODE system solver */
-    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
+    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
     gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc(T, 4);
     gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new(1.e-13, 1.e-11);
     gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc(4);
