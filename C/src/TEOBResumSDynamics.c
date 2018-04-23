@@ -77,7 +77,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   const double tmpE    = 1./Heff+nu/(E*E);
   const double dprstar_dt    = dy[EOB_EVOLVE_PRSTAR];
   const double dr_dt         = dy[EOB_EVOLVE_RAD];
-  const double ddotr_dr      = sqrtAbyB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA/A-dB/B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2.*A*u3)*prstar3)/E;
+  const double ddotr_dr      = sqrtAbyB*( (prstar + z3*2.*A*u2*prstar3)*(0.5*(dA/A-dB/B)-dHeff_dr*tmpE)+ 2.0*z3*(dA*u2 - 2.*A*u3)*prstar3)*divHE;
   const double ddotr_dprstar = sqrtAbyB*( 1.+z3*6.*A*u2*prstar2-(prstar + z3*2.*A*u2*prstar3)*dHeff_dprstar*tmpE)*divHE;
   
   /* Approximate ddot(r) without Flux */
@@ -192,19 +192,19 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double ooH = 1./E;
     
   const double sqrtAbyB       = sqrt(A/B);
-  const double dp_rstar_dt_0  = - sqrtAbyB*ooH*dHeff_dr;
-  const double ddotr_dp_rstar = sqrtAbyB*ooH*d2Heff_dprstar20;
-  const double Omg            = ooH*dHeff_dpphi;
+  const double dp_rstar_dt_0  = - sqrtAbyB*dHeff_dr*ooH;
+  const double ddotr_dp_rstar = sqrtAbyB*d2Heff_dprstar20*ooH;
+  const double Omg            = dHeff_dpphi*ooH;
   const double ddotr          = dp_rstar_dt_0*ddotr_dp_rstar; /* approximate ddot(r)_0 without Fphi, order pr_star^2 neglected */
   
   /* r evol eqn rhs */
-  dy[EOB_EVOLVE_RAD] = sqrtAbyB*ooH*dHeff_dprstar;
+  dy[EOB_EVOLVE_RAD] = sqrtAbyB*dHeff_dprstar*ooH;
   
   /* phi evol eqn rhs */
   dy[EOB_EVOLVE_PHI] = Omg;
   
   /* dp_{r*}/dt */
-  dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*ooH*dHeff_dr;
+  dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*dHeff_dr*ooH;
   
   /** Compute flux */
   
