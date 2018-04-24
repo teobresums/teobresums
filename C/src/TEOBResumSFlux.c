@@ -267,8 +267,10 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   /** Amplitudes */
   if (usespins) {
+    //eob_wav_flm_s_old(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
     eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
   } else {
+    //eob_wav_flm_old(x,nu, rholm, flm);
     eob_wav_flm(x,nu, rholm, flm);
   }
   

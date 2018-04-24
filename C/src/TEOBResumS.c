@@ -152,7 +152,7 @@ int main (int argc, char* argv[])
     for (int i = 0; i < EOB_ID_NVARS; i++)
       PRFORM(eob_id_var[i], dyn->y0[i]);
   }
-DBGSTOP  
+
   /** Initial conditions: t, r, phi, prstar, pphi */
   gsl_odeiv2_system sys = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
   dyn->t                    = 0.;
@@ -355,6 +355,7 @@ DBGSTOP
 
   if (DEBUG) {
     if(par_get_i("output_multipoles")) {
+      /* Output pre-interpolation wave and dynamics */
       strcat(hlm->name,"_insplunge");
       Waveform_lm_output (hlm);
     }
@@ -430,7 +431,9 @@ DBGSTOP
     
   }
 
-  DBGSTOP
+  //FIXME: Temporarily exclude NQC, ringdown and h+,hx
+  //       They need writing and debugging
+#if (0) 
   
   if (!(use_tidal)) {
 
@@ -488,12 +491,14 @@ DBGSTOP
     Waveform_lm_output (hlm);
   if (par_get_i("output_dynamics")) 
     Dynamics_output(dyn);
+
+#endif
   
   /** Free memory */
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);
   Waveform_lm_t_free (hlm_t);
-  Waveform_free (hpc);
+  //Waveform_free (hpc);
   eob_free_params();
 
   return OK;

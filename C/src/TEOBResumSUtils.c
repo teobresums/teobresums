@@ -37,13 +37,14 @@ double nu_to_X1(const double nu)
   return 0.5*(1.+sqrt(1.-4.*nu));
 }
 
-/** Eulerlog function */
-double Eulerlog(const double x,const double m)
+/** Eulerlog function (constants are defined in header) */
+static const double Logm[] = {0.,Log1,Log2,Log3,Log4,Log5,Log6,Log7};
+double Eulerlog(const double x,const int m)
 {
-  /* const double EulerGamma = 0.5772156649015328606065121; */
-  /* const double Log2       = 0.6931471805599453094172321; */
-  /* above constants are defined in header */
-  return EulerGamma + Log2 + log(m) + 0.5*log(x);
+  double logm = 0.;
+  if ((m>0) & (m<8)) logm = Logm[m];
+  else logm = log((double)m);
+  return EulerGamma_Log2 + logm + 0.5*log(x);
 }
 
 /** Spline interpolation with GSL routines */

@@ -99,16 +99,23 @@
 #define DBGSTOP errorexit("DEBUG: STOP");
 
 /* Useful constants */
-#define Pi 3.1415926535897932384626433832795028
-#define Sqrt2 1.41421356237309504880168872420969808
-#define Sqrt3 1.73205080756887729352744634150587237
-#define ooSqrt2 0.707106781186547524400844362104849039284836
-#define Log2  0.6931471805599453094172321
-#define MSUN_M 1.47662504e3; /** G/c^3 */
-#define MSUN_S 4.925491025543575903411922162094833998e-6 /** G/c^2 */
-#define MPC_M  3.086e22
-#define EulerGamma 0.5772156649015328606065121
-  
+#define Pi (3.1415926535897932384626433832795028)
+#define Sqrt2 (1.41421356237309504880168872420969808)
+#define Sqrt3 (1.73205080756887729352744634150587237)
+#define ooSqrt2 (0.707106781186547524400844362104849039284836)
+#define Log1  (0.)
+#define Log2  (0.693147180559945309417232)
+#define Log3  (1.09861228866810969139525)
+#define Log4  (1.38629436111989061883446)
+#define Log5  (1.60943791243410037460076)
+#define Log6  (1.79175946922805500081248)
+#define Log7  (1.94591014905531330510535)
+#define MSUN_M (1.47662504e3) /* G/c^3 */
+#define MSUN_S (4.925491025543575903411922162094833998e-6) /* G/c^2 */
+#define MPC_M  (3.086e22)
+#define EulerGamma (0.5772156649015328606065121)
+#define EulerGamma_Log2 (1.27036284546147817002374) /** EulerGamma + Log2 */
+
 /** Index list of EOB evolved variables */
 enum{
     EOB_EVOLVE_RAD, 
@@ -274,7 +281,7 @@ void eob_free_params();
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);
 double nu_to_X1(const double nu);
-double Eulerlog(const double x,const double m);
+double Eulerlog(const double x,const int m);
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi);
 int find_point_bisection(double x, int n, double *xp, int o);
 double baryc_f(double xx, int n, double *f, double *x);
@@ -367,7 +374,9 @@ void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
 void eob_wav_hlmNewt(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
 void eob_wav_flm(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
+void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *psilmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double *sigma, double *psi);
