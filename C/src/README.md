@@ -41,10 +41,7 @@ Special and minimal data structures are defined together with routines to alloca
 | `TEOBResumSWaveform.c`          | Waveform                  | 2017.12.02 Compiles                                           |
 |                                                            || 2017.03.22 Optimized eob_wav_flm() and eob_wav_flm_s()        |
 | `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
-|                                                            || 2017.03.18 Dynamics nospin BBH is correct                     |
-|                                                            || 2017.03.23 Dynamics spin BBH is correct                       |
-|                                                            || 2017.03.24 Dynamics nospin BNS is correct                     |
-|                                                            || 2017.03.24 Dynamics spin BNS is correct                       |
+|                                                            || 2017.04.24 Dynamics nospin BBH is correct                     |
 
 [Debug LOG. Please keep update with development milestones]
 
@@ -54,6 +51,8 @@ Special and minimal data structures are defined together with routines to alloca
 
  * Verify corretness, compare with Matlab and C++ on master
 
+ * The code currently implements two ways of summing up the rholm in eob_wav_flm(). One way is 1 + c_1 x  + c_2 x^2 + ... as in the C++ code. The other way is c_5 x^5 + c_4 x^4 + ... + 1 . They disagree and some significatn error accumulates during evolution.
+ 
  * Several parts needs checking; to see what please do
  ```
  fgrep "//CHECKME" *
@@ -76,7 +75,7 @@ Special and minimal data structures are defined together with routines to alloca
 ## Frequent errors
 
  * Error: unknown parameter  (/home/bernuzzi/Codes/teobresums/C/src/TEOBResumSPars.c, line
- A parameter is probably undefined in the par/default.par or has wrong name/type. 
+   A parameter is probably undefined in the par/default.par or has wrong name/type. 
 
 
 
