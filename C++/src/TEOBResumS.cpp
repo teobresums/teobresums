@@ -203,7 +203,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc(T, 4);
     gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new(1.e-13, 1.e-11);
     gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc(4);
-    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rk8pd,dt, 1.e-10, 1.e-10);
+    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rk8pd,dt, 1.e-13, 1.e-11);
 
     /************************************************/
     /*                                              */
