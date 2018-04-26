@@ -2,7 +2,9 @@
 
 ## Authors and license
 
-Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
+Sarp Ackay, Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
+
+## License
 
 TEOBResumS is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -14,15 +16,12 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-## Compilation
+## Pre-requisites
 
-### Libraries
-
- * Standard C libs iuncluding lbconfig, ...
+ * Standard C libs, including lbconfig
  * GSL
- * BLAS (? TODO: verify)
 
-### Compilation
+## Compilation
 
 ```
 $ export TEOBRESUMS=/PATH/TO/teobresums/C/
@@ -33,11 +32,11 @@ $ make -f Makefile.TEOBResumS
 ## Usage
 
 ```
-$ export TEOBRESUMS=/PATH/TO/teobresums/C/
 $ cd $TEOBRESUMS
-$ ./TEOBResumS.x
+$ ./TEOBResumS.x <parfile>
 ```
 
-examples ...
+For example parfiles see `par/`
+
 
 
