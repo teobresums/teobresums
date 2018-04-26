@@ -321,11 +321,11 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   /* Compute modulus of hhat_lm (with NQC) */  
   for (int k = 0; k < KMAX; k++) { 
-    Modhhatlm[k] = (prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]) + (MTlm[k] * hlmTidal[k]); 
+    Modhhatlm[k] = mod_norm_cor[k] * (prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]) + (MTlm[k] * hlmTidal[k]); 
   }
 
   /* Total multipolar flux */
-  for (int k = KMAX; k--;) sum_k += SQ(mod_norm_cor[k] * Modhhatlm[k]) * FNewtlm[k]; 
+  for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k]; 
 
   /** Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
