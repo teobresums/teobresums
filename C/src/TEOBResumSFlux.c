@@ -236,7 +236,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   
   double FNewt22, sum_k=0.; 
   double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
-  double Modhhatlm[KMAX], mod_norm_cor[KMAX];  
+  double Modhhatlm[KMAX];  
 
   /** Newtonian flux */
   eob_flx_FlmNewt(x, nu, FNewtlm);
@@ -276,21 +276,6 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   
   FNewt22 = FNewtlm[1];
 
-  /** Tidal amplitudes */
- for (int k = 0; k < KMAX; k++) hlmTidal[k] = 0.; /* no tides */
-  if (usetidal) {
-    eob_wav_hlmTidal(x,dyn, hlmTidal);
-  }
-
-  /** Fix normalization convention */
-  for (int k = 0; k < KMAX; k++) mod_norm_cor[k] = 1.;
-  if ((usetidal) && (!(usespins))) {
-    /* Correct (2,1) (3,1), (3,3) */
-    mod_norm_cor[0] = X12;
-    mod_norm_cor[2] = X12;
-    mod_norm_cor[4] = X12;
-  }
-
   /** NQC correction to the modulus of the (l,m) waveform */  
   Waveform_lm_t NQC;  
   for (int k = 0; k < KMAX; k++) hlmNQC[k] = 1.; /* no NQC */
@@ -303,25 +288,24 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     hlmNQC[1] = NQC.ampli[1];
   } 
 
-  /** Sum up */
-  /* for (int k = KMAX; k--;) {  */
-  /*   /\* Compute modulus of hhat_lm (with NQC) *\/ */
-  /*   Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k];  */
-  /*   if (usetidal) { */
-  /*     /\* Adding the tidal waveform amplitude to the point-mass baseline *\/ */
-  /*     Modhhatlm += MTlm[k] * hlmTidal[k]; */
-  /*     if (!(usespins)) { */
-  /* 	/\* Fix normalization convention *\/ */
-  /* 	if (k==0 || k==2 || k==4) Modhhatlm *= X12; */
-  /*     } */
-  /*   }  	 */
-  /*   /\* Total flux multipoles *\/ */
-  /*   sum_k += SQ(Modhhatlm) * FNewtlm[k];      */
-  /* } */
-
   /* Compute modulus of hhat_lm (with NQC) */  
   for (int k = 0; k < KMAX; k++) { 
-    Modhhatlm[k] = mod_norm_cor[k] * (prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]) + (MTlm[k] * hlmTidal[k]); 
+    Modhhatlm[k] = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k];
+  }
+
+  if (usetidal) {
+    /** Tidal amplitudes */
+    eob_wav_hlmTidal(x,dyn, hlmTidal);
+    if (!(usespins)) {
+      /* Correct normalization of (2,1) (3,1), (3,3) point-mass amplitudes */
+      Modhhatlm[0] *= X12;
+      Modhhatlm[2] *= X12;
+      Modhhatlm[4] *= X12;
+    }
+    /* Add tidal amplitudes */
+    for (int k = 0; k < KMAX; k++) { 
+      Modhhatlm[k] += MTlm[k] * hlmTidal[k]; 
+    }
   }
 
   /* Total multipolar flux */
