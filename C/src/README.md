@@ -2,7 +2,7 @@
 
 LOG file for TEOBResumS `development` branch
 
-Last updated: 2018.03.23
+Last updated: 2018.04.26
 
 ## Brief introduction for developers
 
@@ -41,35 +41,36 @@ Special and minimal data structures are defined together with routines to alloca
 | `TEOBResumSWaveform.c`          | Waveform                  | 2017.12.02 Compiles                                           |
 |                                                            || 2017.03.22 Optimized eob_wav_flm() and eob_wav_flm_s()        |
 | `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
-|                                                            || 2017.04.24 Dynamics nospin BBH is correct                     |
+|                                                            || 2017.04.24 Dynamics and waveform nospin BBH is correct        |
+|                                                            || 2017.04.26 Dynamics and waveform nospin BNS is correct        |
 
 [Debug LOG. Please keep update with development milestones]
 
 ## TODOLIST
 
- * Check runtime errors
+ * [] Check runtime errors
 
- * Verify corretness, compare with Matlab and C++ on master
+ * [] Verify corretness, compare with Matlab and C++ on master
 
- * The code currently implements two ways of summing up the rholm in eob_wav_flm(). One way is 1 + c_1 x  + c_2 x^2 + ... as in the C++ code. The other way is c_5 x^5 + c_4 x^4 + ... + 1 . They disagree and some significatn error accumulates during evolution.
+ * [] The code currently implements two ways of summing up the rholm in eob_wav_flm(). One way is 1 + c_1 x  + c_2 x^2 + ... as in the C++ code. The other way is c_5 x^5 + c_4 x^4 + ... + 1 . They disagree and some significant error accumulates during evolution.
  
- * Several parts needs checking; to see what please do
+ * [] Several parts needs checking; to see what please do
  ```
  fgrep "//CHECKME" *
  fgrep "//FIXME" *
  fgrep "//TODO" *
  ```
 
- * LR/LSO computation for spining BBH
+ * [] LR/LSO computation for spining BBH
    Precompute guesses for all the cases, use Netwon-Rapshon.
 
- * Stopping conditions need to be improved
+ * [] Stopping conditions need to be improved
 
- * Ringdown attachment needs to be improved from the C++
+ * [] Ringdown attachment needs to be improved from the C++
 
- * Include iteration  for NQC for spinning case (not there in C++)
+ * [] Include iteration  for NQC for spinning case (not there in C++)
 
- * Improve code documentation, especially in `TEOBResumS.h`
+ * [] Improve code documentation, especially in `TEOBResumS.h`
 
 
 ## Frequent errors
