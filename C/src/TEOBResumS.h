@@ -322,7 +322,9 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
-double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2);
+double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2);
+double eob_nqc_dtfit(const double chi, const double chi0);
+double eob_nqc_timeshift(double nu, double chi1);
 double logQ(double x);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);

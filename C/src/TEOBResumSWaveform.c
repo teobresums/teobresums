@@ -746,48 +746,6 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   
 }
 
-/** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
-double eob_wav_dtnqc_fit(const double chi, const double chi0)
-{
-  const double n1 = -16.06288206;
-  const double d1 = -4.04266459;
-  double x     = chi-chi0;
-  double dtnqc = (1.+n1*x)/(1.+d1*x);
-  return dtnqc;  
-}
-
-/** Time-shift for NQC */
-double eob_wav_timeshift_nqc(double nu, double chi1)
-{
-
-  double DeltaT_nqc = 1.; /* standard choice inspired by test-particle results */  
-
-  if (chi1 >= 0.8498) {
-    
-    /* Interpolating fit for Deltat_NQC. See Eq.(21) of arXiv:1506.08457 
-       This is a formula that was obtained in the equal-mass, equal-spin
-       case and promoted also to any other case where the spin on the larger
-       BH is larger than 0.8498. This is a guess to extrapolate the model
-       outside the domain of calibration */
-    
-    DeltaT_nqc = eob_wav_dtnqc_fit(chi1,0.8498);
-
-  } 
-
-  if ((chi1 <=-0.80) && (nu <= 8./81.)) {
-    
-    /* This condition was a simple hack to avoid unphysical features in the
-       modulus amplitude when one (or both) the spins are large and negative
-       and the mass ratio is large. This little modification in the location
-       of the NQC point guarantees that the determination of the NQC parameters
-       guarantees just a small perturbation of the non-NQC EOB waveform. The
-       iResum waveform will be robust enough that this hack will not be needed*/  
-    
-	DeltaT_nqc = 3.0;
-  }    
-  
-  return DeltaT_nqc;  
-}
 
 /** Computes the factors and the coefficients that build the  
     NQC corrections to the waveform in the spinning case */
@@ -1070,7 +1028,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
 
   /** Time */
   double tOmgOrb_pk = T[Omgmax_index];
-  double DeltaT_nqc = eob_wav_timeshift_nqc(nu, chi1);
+  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
 #if (DEBUG)
@@ -1359,7 +1317,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   tOmg_pk *= ooMbh;
 
   /** Merger time t_max(A22) */
-  double DeltaT_nqc = eob_wav_timeshift_nqc(nu, chi1);
+  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tmrg[KMAX], tmatch[35], dtmrg[2];
             
   /** nonspinning case */ // OLD

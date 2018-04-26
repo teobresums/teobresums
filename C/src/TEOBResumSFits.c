@@ -22,7 +22,7 @@
 
 /** Fit of c3 
     REF ... */
-double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2) //, bool tidal_flag)
+double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2) //, bool tidal_flag)
 {  
   const double nu2 = nu*nu;
   const double nu3 = nu2*nu;
@@ -44,6 +44,49 @@ double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, 
   double c3_uneq = cnu*(a1+a2)*nu*sqrt(1.-4.*nu) + cnu2*(a1+a2)*nu2*sqrt(1.-4.*nu) + cnu3*(a1+a2)*nu3*sqrt(1.-4.*nu) + ca1_a2*(a1-a2)*nu2;
   double c3 = c3_eq + c3_uneq;
   return c3;
+}
+
+/** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
+double eob_nqc_dtfit(const double chi, const double chi0)
+{
+  const double n1 = -16.06288206;
+  const double d1 = -4.04266459;
+  double x     = chi-chi0;
+  double dtnqc = (1.+n1*x)/(1.+d1*x);
+  return dtnqc;  
+}
+
+/** Time-shift for NQC */
+double eob_nqc_timeshift(double nu, double chi1)
+{
+
+  double DeltaT_nqc = 1.; /* standard choice inspired by test-particle results */  
+
+  if (chi1 >= 0.8498) {
+    
+    /* Interpolating fit for Deltat_NQC. See Eq.(21) of arXiv:1506.08457 
+       This is a formula that was obtained in the equal-mass, equal-spin
+       case and promoted also to any other case where the spin on the larger
+       BH is larger than 0.8498. This is a guess to extrapolate the model
+       outside the domain of calibration */
+    
+    DeltaT_nqc = eob_nqc_dtfit(chi1,0.8498);
+
+  } 
+
+  if ((chi1 <=-0.80) && (nu <= 8./81.)) {
+    
+    /* This condition was a simple hack to avoid unphysical features in the
+       modulus amplitude when one (or both) the spins are large and negative
+       and the mass ratio is large. This little modification in the location
+       of the NQC point guarantees that the determination of the NQC parameters
+       guarantees just a small perturbation of the non-NQC EOB waveform. The
+       iResum waveform will be robust enough that this hack will not be needed*/  
+    
+	DeltaT_nqc = 3.0;
+  }    
+  
+  return DeltaT_nqc;  
 }
 
 /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
@@ -458,3 +501,4 @@ double eob_approxLR(const double nu)
   const double r1 = 1.821043720041472e+00; // x=1 (3M)
   return r0*x + r1;
 }
+
