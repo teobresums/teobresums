@@ -1,6 +1,6 @@
 # Summary of code validation 
 
-S.Ackay, S.Bernuzzi
+S.Akcay, S.Bernuzzi
 
 --- WORK IN PROGRESS ---
 
@@ -27,8 +27,8 @@ The parfiles for these runs can be found in the directory `../benchmark/`.
 
 The validation process shows agreement between the two codes with relative differences at or below the level <~ 1e-6 in 
 
-  * Dynamical variables
-  * Multipolar waveforms (all multipoles up to l=8)
+  * Dynamical variables (file names Dyn_ ...)
+  * Multipolar waveforms (all multipoles up to l=8, file name Waveform_ ...)
 
 Various plots showing relative differences can be found in this directory.
 
