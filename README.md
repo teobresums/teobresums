@@ -1,6 +1,6 @@
 # TEOBResumS: Effective-one-body model with spin and tidal interactions
 
-## Authors and license
+## Authors
 
 Sarp Ackay, Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
 
