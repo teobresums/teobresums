@@ -234,9 +234,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     Heff, jhat, Heff, jhat, Heff, jhat, Heff,
     jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
   
-  double FNewt22, Modhhatlm;  
+  double FNewt22, sum_k=0.; 
   double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
-  double sum_k=0.; /* sum */
+  double Modhhatlm[KMAX], mod_norm_cor[KMAX];  
 
   /** Newtonian flux */
   eob_flx_FlmNewt(x, nu, FNewtlm);
@@ -255,10 +255,11 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   } else {
     if (usetidal) {
       /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+      //SARP: the following is not needed I think, can you check?
       double x6 = gsl_pow_int(x, 6);
-      FNewtlm[0] = CNlm[0] * x6*X12; /* (2,1) */
-      FNewtlm[2] = CNlm[2] * x6*X12; /* (3,1) */
-      FNewtlm[4] = CNlm[4] * x6*X12; /* (3,3) */
+      FNewtlm[0] = CNlm[0] * x6 * X12; /* (2,1) */
+      FNewtlm[2] = CNlm[2] * x6 * X12; /* (3,1) */
+      FNewtlm[4] = CNlm[4] * x6 * X12; /* (3,3) */
     }
   }
 
@@ -277,48 +278,55 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   FNewt22 = FNewtlm[1];
 
   /** Tidal amplitudes */
+ for (int k = 0; k < KMAX; k++) hlmTidal[k] = 0.; /* no tides */
   if (usetidal) {
     eob_wav_hlmTidal(x,dyn, hlmTidal);
-    if (!(usespins)) {
-      /* Fix normalization nomvention */
-      //TODO: check also k=0,2,4 modes in the tidal waveform
-      hlmTidal[0] *= X12;
-      hlmTidal[2] *= X12;
-      hlmTidal[4] *= X12;
-    }
-  }
-  
-  /** NQC correction to the modulus of the (l,m) waveform */  
-  int k;
-  Waveform_lm_t NQC;  
-  if ( (!(usetidal)) && (!(usespins)) ) {
-    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, &NQC);
-    for (k = 0; k < KMAX; k++) {
-      //hlmNQC[k] = NQC.ampli[k];
-      hlmNQC[k] = 1.;
-    }
-    // Set NQC only in 22:
-    k=1;
-    hlmNQC[k] = NQC.ampli[k];
-  } else {
-    for (k = 0; k < KMAX; k++) {
-      hlmNQC[k] = 1.;
-    }
-    //memset(hlmNQC, 1., KMAX*sizeof(hlmNQC[0]));//FIXME: does not work?!
   }
 
-  /** Sum up */
-  /* for (k = 0; k < KMAX; k++) { */
-  for (k = KMAX; k--;) { 
-    /* Compute modulus of hhat_lm (with NQC) */
-    Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]; 
-    if (usetidal) {
-      /* Adding the tidal waveform amplitude to the point-mass baseline */
-      Modhhatlm += MTlm[k] * hlmTidal[k];
-    }  	
-    /* Total flux multipoles */
-    sum_k += SQ(Modhhatlm) * FNewtlm[k];     
+  /** Fix normalization convention */
+  for (int k = 0; k < KMAX; k++) mod_norm_cor[k] = 1.;
+  if ((usetidal) && (!(usespins))) {
+    /* Correct (2,1) (3,1), (3,3) */
+    mod_norm_cor[0] = X12;
+    mod_norm_cor[2] = X12;
+    mod_norm_cor[4] = X12;
   }
+
+  /** NQC correction to the modulus of the (l,m) waveform */  
+  Waveform_lm_t NQC;  
+  for (int k = 0; k < KMAX; k++) hlmNQC[k] = 1.; /* no NQC */
+  if ( (!(usetidal)) && (!(usespins)) ) {
+    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, &NQC);
+    /* for (int k = 0; k < KMAX; k++) { */
+    /* hlmNQC[k] = NQC.ampli[k]; */
+    /* } */
+    /* Set NQC only in 22: */
+    hlmNQC[1] = NQC.ampli[1];
+  } 
+
+  /** Sum up */
+  /* for (int k = KMAX; k--;) {  */
+  /*   /\* Compute modulus of hhat_lm (with NQC) *\/ */
+  /*   Modhhatlm = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k];  */
+  /*   if (usetidal) { */
+  /*     /\* Adding the tidal waveform amplitude to the point-mass baseline *\/ */
+  /*     Modhhatlm += MTlm[k] * hlmTidal[k]; */
+  /*     if (!(usespins)) { */
+  /* 	/\* Fix normalization convention *\/ */
+  /* 	if (k==0 || k==2 || k==4) Modhhatlm *= X12; */
+  /*     } */
+  /*   }  	 */
+  /*   /\* Total flux multipoles *\/ */
+  /*   sum_k += SQ(Modhhatlm) * FNewtlm[k];      */
+  /* } */
+
+  /* Compute modulus of hhat_lm (with NQC) */  
+  for (int k = 0; k < KMAX; k++) { 
+    Modhhatlm[k] = (prefact[k] * MTlm[k] * flm[k] * hlmNQC[k]) + (MTlm[k] * hlmTidal[k]); 
+  }
+
+  /* Total multipolar flux */
+  for (int k = KMAX; k--;) sum_k += SQ(mod_norm_cor[k] * Modhhatlm[k]) * FNewtlm[k]; 
 
   /** Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
