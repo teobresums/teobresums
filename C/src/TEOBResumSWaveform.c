@@ -1523,19 +1523,42 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   Waveform_lm_t hNewt;
   eob_wav_hlmNewt(rw,Omega,phi,nu, &hNewt);
 
-  if (usespins) {
-    /* Need to correct the l=4 m=odd modes (p4 = (2nu-1)) */
+  if (usetidal) {
+    /* Need to correct some of the m=odd modes. 
+       The Newtonian factor has a different normalization when entering the point-mass 
+       and the tidal term. The factor X12 = sqrt*1-4nu) is re-introduced in the point-mass term 
+       in eob_wav_hlm() */
+    double vphi3 = gsl_pow_int(rw*Omega,3);
+    hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3; /* (2,1) */
+    hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /* (3,1) */
+    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /* (3,3) */
+
     double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5);
-    hNewt.ampli[5] = ChlmNewt_ampli[5] * p4_vphi5; /* (4,1) */
-    hNewt.ampli[7] = ChlmNewt_ampli[7] * p4_vphi5; /* (4,3) */
+    hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5; /* (4,1) */
+    hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; /* (4,3) */
+    hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5; /* (5,1) */
+    hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5; /* (5,3) */
+    hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; /* (5,5) */
   }
 
-  if (usetidal) {
-    /* Need to correct some of the m=odd modes for tides (p2 = 1)*/
+  if (usespins) {
+    /* Special treatment when spin is on because of the singularity in the sqrt(1-4*nu) 
+       for m=odd mode and nu=1/4. See discussion in 
+       Damour & Nagar, PRD 90, 044018, Sec. 4, Eq.(89). 
+       This is not done for multipoles l>4 because no spinning information is included there */ 
+    
     double vphi3 = gsl_pow_int(rw*Omega,3);
-    hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3 * X12; /* (2,1) */
-    hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3 * X12; /* (3,1) */
-    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3 * X12; /* (3,3) */
+    hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3; /* (2,1) */
+    hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /* (3,1) */
+    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /* (3,3) */
+
+    //FIXME: Following needs check in the case spin+tides
+    double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5);
+    hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5; /* (4,1) */
+    hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; /* (4,3) */
+    hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5 * X12; /* (5,1) */
+    hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5 * X12; /* (5,3) */
+    hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5 * X12; /* (5,5) */
   }
 
   /** Compute corrections */
@@ -1573,8 +1596,8 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 
   /* Compute \hat{h}_lm */
   for (int k = 0; k < KMAX; k++) {
-    hlm->ampli[k] =   hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
-    hlm->phase[k] =  -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
+    hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
+    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
   }
 
   if ( (!(usetidal)) && (!(usespins)) ) {
@@ -1593,12 +1616,13 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     double hlmtidal[KMAX];
     eob_wav_hlmTidal(x, dyn, hlmtidal);
     
+    /* Correct normalization of point-mass wave for some of the m=odd modes */
+    hlm->ampli[0] *= X12;
+    hlm->ampli[2] *= X12;
+    hlm->ampli[4] *= X12;
+
     /* Add tidal contribution to waveform */
-    const double p2 = sqrt(1-4*nu);
     for (int k = 0; k < KMAX; k++) {
-      if (k==0) hlm->ampli[k] *= p2;
-      if (k==2) hlm->ampli[k] *= p2;
-      if (k==4) hlm->ampli[k] *= p2;
       hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
     }
 
@@ -1944,7 +1968,7 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
     flm[2] = gsl_pow_int(rholm[2], 3);
     flm[2] = (X12*flm[2] + f31S);
 
-    flm[3]=gsl_pow_int(rholm[3]+ rho32S, 3);
+    flm[3] = gsl_pow_int(rholm[3]+ rho32S, 3);
 
     flm[4] = gsl_pow_int(rholm[4], 3);
     flm[4] = (X12*flm[4] + f33S);
