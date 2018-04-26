@@ -1532,10 +1532,10 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 
   if (usetidal) {
     /* Need to correct some of the m=odd modes for tides (p2 = 1)*/
-    double phi_vphi3 = phi * gsl_pow_int(rw*Omega,3);
-    hNewt.ampli[0] = ChlmNewt_ampli[0] * 2 * phi_vphi3; /* (2,1) */
-    hNewt.ampli[2] = ChlmNewt_ampli[2] * 3 * phi_vphi3; /* (3,1) */
-    hNewt.ampli[4] = ChlmNewt_ampli[4] * 3 * phi_vphi3; /* (3,3) */
+    double vphi3 = gsl_pow_int(rw*Omega,3);
+    hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3 * X12; /* (2,1) */
+    hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3 * X12; /* (3,1) */
+    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3 * X12; /* (3,3) */
   }
 
   /** Compute corrections */
@@ -1589,11 +1589,11 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 
   if (usetidal) {
         
-    /** Compute tidal contribution */
+    /* Compute tidal contribution */
     double hlmtidal[KMAX];
     eob_wav_hlmTidal(x, dyn, hlmtidal);
     
-    /** Update waveform */
+    /* Add tidal contribution to waveform */
     const double p2 = sqrt(1-4*nu);
     for (int k = 0; k < KMAX; k++) {
       if (k==0) hlm->ampli[k] *= p2;
