@@ -1,5 +1,7 @@
 # Summary of code validation 
 
+S.Ackay, S.Bernuzzi
+
 --- WORK IN PROGRESS ---
 
 The new C implementation on branch `development`
