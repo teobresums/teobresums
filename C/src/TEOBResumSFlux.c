@@ -288,7 +288,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     hlmNQC[1] = NQC.ampli[1];
   } 
 
-  /* Compute modulus of hhat_lm (with NQC) */  
+  /** Compute modulus of hhat_lm (with NQC) */  
   for (int k = 0; k < KMAX; k++) { 
     Modhhatlm[k] = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k];
   }
@@ -308,7 +308,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     }
   }
 
-  /* Total multipolar flux */
+  /** Total multipolar flux */
   for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k]; 
 
   /** Normalize to the 22 Newtonian multipole */
