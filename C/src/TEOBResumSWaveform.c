@@ -770,7 +770,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   const double aeff     = aK + 1/3*a12*X12;
   const double aeff_omg = aK + a12*X12;
     
-  double *T       = dyn->time;
+  double *t       = dyn->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG];
   double *pph     = dyn->data[EOB_PPHI];
@@ -804,25 +804,24 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   double p1tmp[KMAX][size];
   double p2tmp[KMAX][size];
 
-  int k, j;
-
   /** Regge-Wheeler-Zerilli normalized amplitude. The ringdown
       coefficient refer to this normalization.
       Check Nagar & Rezzolla, CQG 22 (2005) R167 */           
-  for (k=0; k<KMAX; k++) {
-    for (j=0; j<size; j++) {
+  for (int k=0; k<KMAX; k++) {
+    for (int j=0; j<size; j++) {
       A[k][j]     = h->ampli[k][j]/sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) );
       phase[k][j] = h->phase[k][j];
     }
   }
 
-  /** derivatives (nonuniform grid) */
-  for (k=0; k<KMAX; k++) {
-    D0_x(phase[k], T, size, omg[k]);
-    D0_x(omg[k]  , T, size, domg[k]);
+  /** omega derivatives */
+  const double dt = t[1]-t[0];
+  for (int k=0; k<KMAX; k++) {
+    D0(phase[k], dt, size, omg[k]);
+    D0(omg[k]  , dt, size, domg[k]);
   }
   
-  /**  Case 'NQC_fit_hybrid' */
+  /** NR fits */
   if (nu == 0.25) {
 
     pA[0]    =  0.00178195;
@@ -901,8 +900,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   
   }  else {
 
-    /* This fit is the most updated and recent that Gunnar did by 
-       incorporating in the fits also the test-particle NQC point
+    /* Fit by G.Riemanschneider incorporating the test-particle NQC point
        obtained from the most-recent Teukolsky waveforms done by
        M. Colleoni using the 6PN-accurare iResum-radiation reaction.
        These points assure a smooth connection between merger and
@@ -955,23 +953,21 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
     
   }
 
-  for (k=0; k<KMAX; k++) {   
+  /** Switch on the 22 values (only) */
+  for (int k=0; k<KMAX; k++) {   
     max_A[k]    = 0.;
     max_dA[k]   = 0.;
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
   
-  /** Switch on the 22  values (only) */
   max_A[1]    = A_tmp;
   max_dA[1]   = dA_tmp;
   max_omg[1]  = omg_tmp;
   max_domg[1] = domg_tmp;
 
 #if (DEBUG)
-  printf("--------------------------------\n");
   printf("NR values for NQC determination:\n");
-  printf("--------------------------------\n");
   printf("Amrg    =%10.6f\n",max_A[1]);
   printf("dAmrg   =%10.6f\n",max_dA[1]);
   printf("omg_mrg =%10.6f\n",max_omg[1]);
@@ -983,8 +979,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
    * note: n3 and n6 are not used
    */
   double pr_star2, r2, w2;
-
-  for (j=0; j<size; j++) {
+  for (int j=0; j<size; j++) {
     pr_star2 = pr_star[j] * pr_star[j];
     r2       = r[j] * r[j];
     w2       = w[j] * w[j];
@@ -995,23 +990,23 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   }
     
 #if (DEBUG)
-  FILE* fp = fopen("NQC_func.txt", "w");
-  for (j=0; j<size; j++) {
-    fprintf(fp, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", T[j], n1[j], n2[j], n4[j], n5[j]);
+  FILE* fp = fopen("qnc_nfunc.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", t[j], n1[j], n2[j], n4[j], n5[j]);
   }
   fclose(fp);
 #endif    
 
   /** Derivatives for the phase */
-  D0_x(n4,T,size, d_n4);
-  D0_x(n5,T,size, d_n5);
-  D0_x(d_n4,T,size, d2_n4);
-  D0_x(d_n5,T,size, d2_n5);
+  D0(n4,dt,size, d_n4);
+  D0(n5,dt,size, d_n5);
+  D0(d_n4,dt,size, d2_n4);
+  D0(d_n5,dt,size, d2_n5);
 
 #if (DEBUG)
-  fp = fopen("dNQC_func.txt", "w");
-  for (j=0; j<size; j++) {
-    fprintf(fp, "%f\t%f\t%f\t%f\t%f\n", T[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);  
+  fp = fopen("nqc_dfunc.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp, "%f\t%f\t%f\t%f\t%f\n", t[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);  
   }
   fclose(fp);
 #endif    
@@ -1019,7 +1014,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   /** Find max Omg */
   int Omgmax_index = 0;
   double Omg_max   = Omg_orb[0];
-  for (j=0; j<size; j++) {
+  for (int j=0; j<size; j++) {
     if (Omg_orb[j] > Omg_max) {
       Omg_max = Omg_orb[j];
       Omgmax_index = j;
@@ -1027,50 +1022,49 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   }
 
   /** Time */
-  double tOmgOrb_pk = T[Omgmax_index];
+  double tOmgOrb_pk = t[Omgmax_index];
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
 #if (DEBUG)
-  printf("-------------------------------\n");
-  printf("Check: NQC related information:\n");
-  printf("-------------------------------\n");
+  printf("NQC info:\n");
   printf("DeltaT_tNQC = %f\n",DeltaT_nqc);
   printf("tNQC [bare] = %f\n",tNQC);
 #endif
 
-  /** Find jmax: T[jmax] <= tNQC */
+  /** Find jmax: t[jmax] <= tNQC */
   int jmax = 0;
-  for (j=0; j<size; j++) {
-    if(T[j] > tNQC) break;
+  for (int j=0; j<size; j++) {
+    if(t[j] > tNQC) {
+      jmax = j-1;
+      break;
+    }
   }
-  jmax = j-1;
 
   /** Solve the linear systems */
-  for (k=0; k<KMAX; k++) {
-    for (j=0; j<size; j++) {
+  for (int k=0; k<KMAX; k++) {
+    for (int j=0; j<size; j++) {
       /* Matrix elements: waveform amplitude at all points */
       m11[k][j] = n1[j]*A[k][j];
       m12[k][j] = n2[j]*A[k][j];
       p1tmp[k][j] = A[k][j];      
     }
     /* Take FD derivatives */
-    D0_x(m11[k],T,size, m21[k]);
-    D0_x(m12[k],T,size, m22[k]);
-    D0_x(A[k],T,size, p2tmp[k]);
+    D0(m11[k],dt,size, m21[k]);
+    D0(m12[k],dt,size, m22[k]);
+    D0(A[k],dt,size, p2tmp[k]);
   }
 
-
 #if (DEBUG)
-  fp = fopen("Amp_func.txt", "w");
-  for (j=0; j<size; j++) {
-    fprintf(fp, "%f\t%f\t%f\n", T[j], p1tmp[1][j], p2tmp[1][j]);
+  fp = fopen("nqc_amp_func.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp, "%f\t%f\t%f\n", t[j], p1tmp[1][j], p2tmp[1][j]);
   }
   fclose(fp);  
 #endif
 
   double detM = 1.;
-  for (k=0; k<KMAX; k++) {
+  for (int k=0; k<KMAX; k++) {
     
     /* Computation of ai coefficients */
     P[0]     = max_A[k]  - p1tmp[k][jmax];
@@ -1101,9 +1095,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   }
   
 #if (DEBUG)
-  printf("-------------------\n");
-  printf("NQC coefficients:  \n");
-  printf("-------------------\n");
+  printf("NQC coefficients:\n");
   printf("a1 = %f\n",ai[1][0]);
   printf("a2 = %f\n",ai[1][1]);
   printf("b1 = %f\n",bi[1][0]);
@@ -1111,19 +1103,17 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
 #endif    
 
   /** Set amplitude and phase */
-  for (k=0; k<KMAX; k++) {
-    for (j=0; j<size; j++) {
+  for (int k=0; k<KMAX; k++) {
+    for (int j=0; j<size; j++) {
       hnqc->ampli[k][j] = 1. + ai[k][0]*n1[j] + ai[k][1]*n2[j];
       hnqc->phase[k][j] =      bi[k][0]*n4[j] + bi[k][1]*n5[j];
     }
   }
-
+  
   /** Multiply waveform to NQC */
- 
-  // FIXME: RWZ normalization? Don't we need to re-introduce it here ???
-
-  for (k=0; k<KMAX; k++) {
-    for (j=0; j<size; j++) {
+  //CHECKME: RWZ normalization? Don't we need to re-introduce it here ???
+  for (int k=0; k<KMAX; k++) {
+    for (int j=0; j<size; j++) {
       h->ampli[k][j] *= hnqc->ampli[k][j];
       h->phase[k][j] *= hnqc->phase[k][j];
     }
@@ -1170,7 +1160,7 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   }
   */
 
-  /* Coefficients */
+  /* NR fits */
 	 
   /* (2,1) */
   a1[0] =  0.0162387198*(7.32653082*xnu2 + 1.19616248*xnu + 0.73496656);
