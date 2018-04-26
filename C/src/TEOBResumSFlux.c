@@ -257,9 +257,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
       /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
       //SARP: the following is not needed I think, can you check?
       double x6 = gsl_pow_int(x, 6);
-      FNewtlm[0] = CNlm[0] * x6 * X12; /* (2,1) */
-      FNewtlm[2] = CNlm[2] * x6 * X12; /* (3,1) */
-      FNewtlm[4] = CNlm[4] * x6 * X12; /* (3,3) */
+      FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
+      FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
+      FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
     }
   }
 
