@@ -789,7 +789,7 @@ double eob_wav_timeshift_nqc(double nu, double chi1)
   return DeltaT_nqc;  
 }
 
-/** Computes the factors and the coefficients) that build the  
+/** Computes the factors and the coefficients that build the  
     NQC corrections to the waveform in the spinning case */
 void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {
@@ -1174,118 +1174,85 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
 }
 
 /** NQC corrections to the RWZ multipolar waveform
-    References: Nagar, Damour, Reisswig, Pollney http://arxiv.org/abs/1506.08457 */
+    Nagar, Damour, Reisswig, Pollney http://arxiv.org/abs/1506.08457 
+    Current fits: 9/02/2016 */
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
 		    Waveform_lm_t *psilmnqc)
-{
-      
-  double n[6];
-  double a1;
-  double a2;
-  double a3;
-  double b1;
-  double b2;
-  double b3;
-    
-  /** FITS: possibly to be improved further. Current fits: 9/02/2016 */
+{      
   const double xnu  = 1-4*nu;
   const double xnu2 = SQ(xnu);
-    
-  int k;
-    
-  for (k = 0; k < KMAX; k++) {
 
-    a1   = 0.;
-    a2   = 0.;
-    a3   = 0.;
-    
-    b1   = 0.;
-    b2   = 0.;
-    b3   = 0.;
-    
-    n[0] = 0.;
-    n[1] = 0.;
-    n[2] = 0.;
-    
-    n[3] = 0.;
-    n[4] = 0.;
-    n[5] = 0.;
+  double a1[KMAX], a2[KMAX], a3[KMAX];
+  double b1[KMAX], b2[KMAX], b3[KMAX];
+  double n[6];    
 
-	 
-    if (k == 0) {
-      /** l=2 --------------------------------------------
-	 (2,1) */
-      a1 =  0.0162387198*( 7.32653082*xnu2 + 1.19616248*xnu + 0.73496656);
-      a2 =                -1.80492460*xnu2 + 1.78172686*xnu + 0.30865284 ;
-      a3 =                                                            0.0;
-      
-      b1 =  -0.0647955017*(3.59934444*xnu2 - 4.08628784*xnu + 1.37890907);
-      b2 =   1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
-      b3 =                                                            0.0;
-      
-      // NQC corrections to the modulus
-      n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-      n[1] = ddotr/(r*Omega*Omega);
-      n[2] = n[0]*prstar*prstar;
-      
-      
-      // NQC corrections to the phase
-      n[3] = prstar/(r*Omega);
-      n[4] = n[3]*cbrt(Omega*Omega);
-      n[5] = n[4]*prstar*prstar;
-    
-    }
+  /* NQC corrections to the modulus */
+  n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+  n[1] = ddotr/(r*Omega*Omega);
+  n[2] = n[0]*prstar*prstar;
 
-    if (k==1) {
-      /** l=2 --------------------------------------------
-	  (2,2) */
-      a1   = -0.0805236959*( 1 - 2.00332326*xnu2)/( 1 + 3.08595088*xnu2);
-      a2   =  1.5299534255*( 1 + 1.16438929*xnu2)/( 1 + 1.92033923*xnu2);
-      a3   =  0.0;
-      
-      b1   = 0.146768094955*( 0.07417121*xnu + 1.01691256);
-      b2   = 0.896911234248*(-0.61072011*xnu + 0.94295129);
-      b3   = 0.0;
-      
-      // NQC corrections to the modulus
-      n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-      n[1] = ddotr/(r*Omega*Omega);
-      n[2] = n[0]*prstar*prstar;
-      
-      //% NQC corrections to the phase
-      n[3] = prstar/(r*Omega);
-      n[4] = n[3]*(r*Omega)*(r*Omega);
-      n[5] = n[4]*prstar*prstar;
-      
-    }      
-                
-    if (k==4) { 
-      /** l=3 -----------------------------------------------
-	  (3,3) */
-      a1   = -0.0377680000*(1 - 14.61548907*xnu2)/( 1 + 2.44559263*xnu2);
-      a2   =  1.9898000000*(1 + 2.09750346 *xnu2)/( 1 + 2.57489466*xnu2);
-      a3   =  0.0;
-      
-      b1   = 0.1418400000*(1.07430512 - 1.23906804*xnu + 4.44910652*xnu2);
-      b2   = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
-      b3   = 0.0;
-      
-      // NQC corrections to the modulus
-      n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-      n[1] = ddotr/(r*Omega*Omega);
-      n[2] = n[0]*prstar*prstar;
-      
-      // NQC corrections to the phase
-      n[3] = prstar/(r*Omega);
-      n[4] = n[3]*cbrt(Omega*Omega);
-      n[5] = n[4]*prstar*prstar;
-      
-    }
-                
-    psilmnqc->ampli[k] = 1. + a1*n[0] + a2*n[1] + a3*n[2];
-    psilmnqc->phase[k] =      b1*n[3] + b2*n[4] + b3*n[5];
-  
+  /* NQC corrections to the phase */
+  n[3] = prstar/(r*Omega);
+  n[4] = n[3]*cbrt(Omega*Omega);
+  n[5] = n[4]*prstar*prstar;
+
+  for (int k = 0; k < KMAX; k++) {
+    psilmnqc->ampli[k] = 1.; 
+    psilmnqc->phase[k] = 0.; 
   }
+
+  /*
+  for (int k = 0; k < KMAX; k++) {
+    a1[k] = 0.;
+    a2[k] = 0.;
+    a3[k] = 0.;
+    b1[k] = 0.;
+    b2[k] = 0.;
+    b3[k] = 0.;
+  }
+  */
+
+  /* Coefficients */
+	 
+  /* (2,1) */
+  a1[0] =  0.0162387198*(7.32653082*xnu2 + 1.19616248*xnu + 0.73496656);
+  a2[0] =                -1.80492460*xnu2 + 1.78172686*xnu + 0.30865284;
+  a3[0] =                                                           0.0;
+  
+  b1[0] =  -0.0647955017*(3.59934444*xnu2 - 4.08628784*xnu + 1.37890907);
+  b2[0] =   1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
+  b3[0] =                                                            0.0;
+      
+  /* (2,2) */
+  a1[1]   = -0.0805236959*( 1 - 2.00332326*xnu2)/( 1 + 3.08595088*xnu2);
+  a2[1]   =  1.5299534255*( 1 + 1.16438929*xnu2)/( 1 + 1.92033923*xnu2);
+  a3[1]   =  0.0;
+  
+  b1[1]   = 0.146768094955*( 0.07417121*xnu + 1.01691256);
+  b2[1]   = 0.896911234248*(-0.61072011*xnu + 0.94295129);
+  b3[1]   = 0.0;
+      
+  /* (3,3) */
+  a1[4]   = -0.0377680000*(1 - 14.61548907*xnu2)/( 1 + 2.44559263*xnu2);
+  a2[4]   =  1.9898000000*(1 + 2.09750346 *xnu2)/( 1 + 2.57489466*xnu2);
+  a3[4]   =  0.0;
+  
+  b1[4]   = 0.1418400000*(1.07430512 - 1.23906804*xnu + 4.44910652*xnu2);
+  b2[4]   = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
+  b3[4]   = 0.0;
+  
+  /* NQC factor */
+  int k = 0; /* (2,1) */
+  psilmnqc->ampli[k] = 1. + a1[k]*n[0] + a2[k]*n[1] + a3[k]*n[2];
+  psilmnqc->phase[k] =      b1[k]*n[3] + b2[k]*n[4] + b3[k]*n[5];
+  
+  k = 1; /* (2,2) */
+  psilmnqc->ampli[k] = 1. + a1[k]*n[0] + a2[k]*n[1] + a3[k]*n[2];
+  psilmnqc->phase[k] =      b1[k]*n[3] + b2[k]*n[4] + b3[k]*n[5];
+  
+  k = 4; /* (3,3) */
+  psilmnqc->ampli[k] = 1. + a1[k]*n[0] + a2[k]*n[1] + a3[k]*n[2];
+  psilmnqc->phase[k] =      b1[k]*n[3] + b2[k]*n[4] + b3[k]*n[5];
   
 }
 
@@ -1564,10 +1531,10 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   double rholm[KMAX], flm[KMAX];
   double x = SQ(rw*Omega);
   if (usespins){
-    //eob_wav_flm_s_old(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
+    /* eob_wav_flm_s_old(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); */ 
     eob_wav_flm_s(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
   } else {
-    //eob_wav_flm_old(x, nu, rholm,flm);
+    /* eob_wav_flm_old(x, nu, rholm,flm); */
     eob_wav_flm(x, nu, rholm,flm);
   }
   
@@ -1591,27 +1558,22 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); 
   }
 
-  /** Put together the different contributions */
-
-  /* Compute \hat{h}_lm */
+  /** Point-mass h_lm */
   for (int k = 0; k < KMAX; k++) {
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
     hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
   }
 
   if ( (!(usetidal)) && (!(usespins)) ) {
-
-    /* Add NQC correction */
+    /** Add NQC correction */
     for (int k = 0; k < KMAX; k++) {
       hlm->ampli[k] *= hNQC.ampli[k];
       hlm->phase[k] -= hNQC.phase[k];
     }
-
   }
 
-  if (usetidal) {
-        
-    /* Compute tidal contribution */
+  if (usetidal) {   
+    /** Tidal contribution */
     double hlmtidal[KMAX];
     eob_wav_hlmTidal(x, dyn, hlmtidal);
     
