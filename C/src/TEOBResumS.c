@@ -145,7 +145,9 @@ int main (int argc, char* argv[])
     eob_dyn_ic_s(r0, dyn, dyn->y0);
   } else {
     p_eob_dyn_rhs = &eob_dyn_rhs;
+    if ((SARP) && (dyn->use_tidal)) printf("\nd2A printed from Initial conditions for use in C++\n{");
     eob_dyn_ic(r0, dyn, dyn->y0);
+    if (SARP) printf("};\n\n");
   }
   if (VERBOSE) {
     printf("Initial conditions\n");
@@ -217,8 +219,7 @@ int main (int argc, char* argv[])
   int iter = 0;
   int k;
   while (!(dyn->ode_stop)) {
-    if (VERBOSE) printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n",
-			iter, dyn->t, dyn->dt, dyn->r);
+   if ( (VERBOSE) && (!SARP) )  printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r);
     iter++;
 
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
@@ -281,7 +282,7 @@ int main (int argc, char* argv[])
    
     /** Update size and push arrays (if needed) */
     if (iter>size) {
-      if (DEBUG) printf("Push memory\n");
+      if ( (DEBUG) && (!SARP) )  printf("Push memory\n");
       size += chunk;
       par_set_i("size", size);
       Waveform_lm_push (&hlm, size);
@@ -374,7 +375,7 @@ int main (int argc, char* argv[])
     //CHECKME: is this rounding under control ?!
     const double dt = par_get_d("dt"); /* use dt from parfile */
     const int size_tmp = (int)((dyn->time[size-1] - dyn->time[0])/dt + 1);
-    if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));    
+    if ( (DEBUG) && (!SARP) ) 	printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
     if (DEBUG) printf("New grid: size_tmp=%d dt=%.12e t[size-1]=%.12e (%.12e)\n",
 		      size_tmp,dt,dyn->time[size-1],dyn->time[size-1]-(dyn->time[0]+(size_tmp-1)*dt));    
 

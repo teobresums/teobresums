@@ -60,6 +60,10 @@
 #define EXCLUDESPINSPINTIDES 0 /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
+#ifndef SARP
+#define SARP 0 /* use Sarp's printing routines for code comparisons, set to 0 to TURN it OFF */
+#endif
+
 #ifndef DEBUG 
 #define DEBUG 0 /* global debug option */ 
 #endif

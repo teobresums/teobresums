@@ -416,6 +416,11 @@ void Waveform_lm_output (Waveform_lm *wav)
       FILE* fp;
       if ((fp = fopen(fname, "w")) == NULL)
 	errorexits("error opening file",fname);
+      if(SARP){   
+		for (i = 4; i < n; i+=20) { 
+			fprintf(fp, "%.1f\t%.16e\t%.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
+		}
+      }
       for (i = 0; i < n; i++) {
 	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
       }
@@ -488,12 +493,16 @@ void Dynamics_output (Dynamics *dyn)
   FILE* fp; 
   if ((fp = fopen(dyn->name, "w")) == NULL)
     errorexits("error opening file",dyn->name);
-  fprintf(fp, "# t:0 r:1 phi:2 MOmega:3 ddotr:4 prstar:5 MOmega_orb:6\n");
-  for (i = 0; i < dyn->size; i++) {
-    fprintf(fp, "%.9e", dyn->time[i]);
-    for (v = 0; v < EOB_DYNAMICS_NVARS; v++)
-      fprintf(fp, " %.12e", dyn->data[v][i]);
-    fprintf(fp, "\n"); 
+	if(!SARP)  fprintf(fp, "# t:0 r:1 phi:2 MOmega:3 ddotr:4 prstar:5 MOmega_orb:6\n"); 
+	if(SARP)  	for (i = 4; i < dyn->size; i+=4) {
+	if(!SARP) 	fprintf(fp, "%.9e", dyn->time[i]);
+	if(!SARP) 	for (v = 0; v < EOB_DYNAMICS_NVARS; v++)
+	if(!SARP)   	fprintf(fp, " %.12e", dyn->data[v][i]);
+	if(!SARP) 	fprintf(fp, "\n"); 
+	if(SARP){
+			fprintf(fp, "%.1f\t", dyn->time[i]);
+			fprintf(fp, "%.16f\t%.16f\t%.16f\t%.26f\t%.16f\t%.16f\n", dyn->data[0][i], dyn->data[2][i], dyn->data[3][i], dyn->data[4][i], dyn->data[5][i], dyn->data[6][i]); 
+	}
   }
   fclose(fp);
 }
