@@ -11,7 +11,7 @@ q = 1. # mass ratio
 chi1 = 0. # dimensioneless spin 1 z-component 
 chi2 = 0. # dimensioneless spin 2 z-component 
 
-distance = 100. 
+distance = 1. 
 inclination = 0.
 coalescence_angle = 0.
 polarisation = 0.
