@@ -1,6 +1,7 @@
 /**
- * Copyright (C) 2017 Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
  * This file is part of TEOBResumS
+ *
+ * Copyright (C) 2017-2018 See AUTHORS file
  *
  * TEOBResumS is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,9 +14,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with with program; see the file COPYING. If not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA  02111-1307  USA
+ * along with this program. If not, see http://www.gnu.org/licenses/.       
+ *
  */
 
 #include "TEOBResumS.h"
@@ -311,14 +311,14 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 		     double Mbh, double abh,  
 		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
-		     double **sigma)
+		     double *sigmar, double *sigmai)
 {
 
   const double a12        = X1*chi1 - X2*chi2;
   const double X12        = X1 - X2;
   const double aeff       = aK + 1./3.*a12*X12;
   const double aeff_omg   = aK + a12*X12;
-  const double af         = abh; //JimenezFortezaRemnantSpin(nu, X1, X2, chi1, chi2);
+  const double af         = abh; 
   const double nu2        = SQ(nu);
   const double nu3        = nu2*nu;
   const double aeff2      = SQ(aeff);
@@ -335,12 +335,11 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   const int usespins = par_get_i("use_spins");  
   
   int k;
-  const int k22 = 1;
   const int k21 = 0;
+  const int k22 = 1;
   const int k33 = 4;
   const int k44 = 8;
     
-
   if (!(usespins)) {
     
     /** Last updates: 05/09/2017 from CoM extrapolated SXS data */
@@ -386,21 +385,23 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     Amrg[k44]    =  0.9438333992719329 *nu2 +  -1.0464153920266663 *nu +  0.2897769169572948;
     
     for (k=0; k<KMAX; k++) {
-      sigma[k][0] = 0.;
-      sigma[k][1] = 0.;
+      sigmar[k] = 0.;
+      sigmai[k] = 0.;
     }
 
     k=k21;
-    sigma[k][0] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
-    sigma[k][1] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
+    //sigma[k][0] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
+    //sigma[k][1] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
+    sigmar[k] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
+    sigmai[k] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
 
     k=k22;
-    sigma[k][0] = -0.364177*nu3 + 0.010951*nu2 - 0.010591*nu + 0.08896;
-    sigma[k][1] =  2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
+    sigmar[k] = -0.364177*nu3 + 0.010951*nu2 - 0.010591*nu + 0.08896;
+    sigmai[k] =  2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
 
     k=k33;
-    sigma[k][0] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
-    sigma[k][1] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
+    sigmar[k] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
+    sigmai[k] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
     
   } else {
     
@@ -472,15 +473,17 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     Domg[k22]      = omega1[k22] - Mbh*omgmx;
     
     /* renaming real & imaginary part of the QNM complex frequency sigma */
-    sigma[k22][0] = alpha1[k22];
-    sigma[k22][1] = omega1[k22];
+    //sigma[k22][0] = alpha1[k22];
+    //sigma[k22][1] = omega1[k22];
+    sigmar[k22] = alpha1[k22];
+    sigmai[k22] = omega1[k22];
   
   }
 
   double cosh_c3A;
   for (k=0; k<KMAX; k++) {
     c2A[k] = 0.5*alpha21[k];
-    cosh_c3A = cosh(c3A[k]);
+    cosh_c3A = cosh(c3A[k]);  
     a1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
     a2[k] = c2A[k];
     a3[k] = c3A[k];

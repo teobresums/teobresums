@@ -1,21 +1,21 @@
 /**
- *  Copyright (C) 2017 Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
- *  This file is part of TEOBResumS
+ * This file is part of TEOBResumS
  *
- *  TEOBResumS is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * Copyright (C) 2017-2018 See AUTHORS file
  *
- *  TEOBResumS is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * TEOBResumS is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with with program; see the file COPYING. If not, write to the
- *  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- *  MA  02111-1307  USA
+ * TEOBResumS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see http://www.gnu.org/licenses/.       
+ *
  */
 
 /**
@@ -65,7 +65,7 @@
 #endif
 
 #ifndef DEBUG 
-#define DEBUG 0 /* global debug option */ 
+#define DEBUG 1 /* global debug option */ 
 #endif
 
 /** Macros */
@@ -128,7 +128,7 @@ enum{
     EOB_EVOLVE_PPHI,
     EOB_EVOLVE_NVARS
 };
-static const char* eob_evolve_var[] = {"r","phi","prstar","pphi"};
+static const char* eob_evolve_var[] = {"r","phi","Prstar","Pphi"};
 
 /** Index list of EOB variables for initial data */
 enum{
@@ -141,7 +141,7 @@ enum{
   EOB_ID_OMGJ,
   EOB_ID_NVARS
 };
-static const char* eob_id_var[] = {"r","pphi","prstar","pr","j","E0","Omega"};
+static const char* eob_id_var[] = {"r","Pphi","Prstar","Pr","j","E0","Omega"};
 
 /** Index list of EOB dynamical variables (to be stored in arrays) */ 
 enum{
@@ -154,7 +154,7 @@ enum{
   EOB_OMGORB,
   EOB_DYNAMICS_NVARS
 };
-static const char* eob_var[] = {"r","phi","pphi","momega","ddor","prstar","Omgorb"};
+static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb"};
 
 #define KMAX (35) /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
@@ -295,7 +295,7 @@ double interp1d (const int order, double xx, int nx, double *f, double *x);
 double fact(int n);
 double wigner_d_function(int l, int m, int s, double i);
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
-void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
+void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
@@ -307,6 +307,7 @@ void Waveform_free (Waveform *wav);
 void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
 void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
+void Waveform_lm_output_reim (Waveform_lm *wav);
 void Waveform_lm_free (Waveform_lm *wav);
 void Waveform_lm_t_alloc (Waveform_lm_t **wav);
 void Waveform_lm_t_free (Waveform_lm_t *wav);
@@ -336,7 +337,7 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK,
 		     double Mbh, double abh,  
 		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
-		     double **sigma);
+		     double *sigmar, double *sigmai); 
 double eob_approxLR(const double nu);
 
 /* TEOBResumSDynamics.c */
@@ -385,6 +386,6 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *psilmnqc);
-void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double *sigma, double *psi);
+void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
 void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm);
 

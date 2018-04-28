@@ -1,6 +1,7 @@
 /**
- * Copyright (C) 2017 Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
  * This file is part of TEOBResumS
+ *
+ * Copyright (C) 2017-2018 See AUTHORS file
  *
  * TEOBResumS is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,9 +14,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with with program; see the file COPYING. If not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA  02111-1307  USA
+ * along with this program. If not, see http://www.gnu.org/licenses/.       
+ *
  */
 
 #include "TEOBResumS.h"
@@ -1205,12 +1205,12 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
 }
 
 /** Ringdown waveform template */
-void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double *sigma, double *psi)
+void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi)
 {  
   double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
   double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));   
-  psi[0] = amp * exp(-sigma[0]*x); /* amplitude */
-  psi[1] = - (phase - sigma[1]*x); /* phase, minus sign in front by convention */
+  psi[0] = amp * exp(-sigmar*x); /* amplitude */
+  psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
 }
 
 /** Ringdown calculation and match to the dynamics */ 
@@ -1218,7 +1218,6 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 {
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
-
   const double nu    = dyn->nu;
   const double chi1  = dyn->chi1;
   const double chi2  = dyn->chi2;
@@ -1226,167 +1225,129 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const double X2    = dyn->X2;
   const double aK    = dyn->a1+dyn->a2;
 
-  double *t     = dyn->time;
-  double *Omega = dyn->data[EOB_MOMG];
-
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
-  
-  const int size = dyn->size;
 
+  double *Omega = dyn->data[EOB_MOMG];
+  
+  /* Note:
+     dynsize < size , since the wf has been extended 
+     but the two time arrays agree up to dynsize */
+  const int dynsize = dyn->size; 
+  const int size = hlm->size; 
+  double *t     = hlm->time;
+  
+  if (DEBUG) {
+    printf("Ringdown: size (dynamics) = %d\n",dynsize);
+    printf("Ringdown: size (waveform) = %d\n",size);
+  }
+    
   const int k21 = 0;
   const int k22 = 1;
   const int k33 = 4;
-  int k, j;
   
   /** Find peak of Omega */
   /* Assume it is a monotonically increasing function */
-  int index_pk = 0;
+  int index_pk = dynsize-1;
   double Omega_pk = Omega[index_pk];
-  for (j = 1; j < size ; j++ ) {
-      if (Omega[j] < Omega_pk) 
+  for (int j = dynsize-2; j-- ; ) {
+    //printf("%d %e %e %e\n",j,Omega[j],Omega_pk,t[j]);
+    if (Omega[j] < Omega_pk) 
 	break;
       index_pk = j;
       Omega_pk = Omega[j];
   }
-  if (index_pk == size-1) {
+  if (DEBUG) printf("Ringdown: index_pk = %d\n",index_pk);
+  if (index_pk >= dynsize-2) {
     if (VERBOSE) printf("No omega-maximum found.\n");
-    //index_pk = size - 4;
   }
-  if (index_pk > size-4) {
+  if (index_pk > dynsize-4) {
     errorexit("Not enough points to interpolate.\n");
   }
 
-  /*
-  int j = size;
-  double Omega_pk = Omega[j-1];
-  while (Omega[j] > Omega_pk) {
-    index_pk = j;
-    Omega_pk = Omega[j];
-    j--;
-  }
-  if (index_pk == -1) {
-    if (VERBOSE) printf("No omega-maximum found.\n");
-    index_pk = size - 4;
-  }
-  if (index_pk > size-4) {
-    errorexit("Not enough points to interpolate.\n");
-  }
-  */
-
-  // NOTE: following is slightly different from C++ thing (that I do not understand).
-  // here we just refine the 7 pts grid, populate by spline, and look for a maximum on that
-  
-#define n_grid (7)
-  double *Omega_pk_grid, *t_Omega_pk_grid;
-  Omega_pk_grid = &Omega[index_pk-3];
-  t_Omega_pk_grid = &t[index_pk-3];
-
-#define n_refine (21)
-  double dt = (t_Omega_pk_grid[n_grid-1] - t_Omega_pk_grid[0])/(n_refine-1); 
-  double ti[n_refine],oi[n_refine];
-  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-  gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, 7);
-  gsl_spline_init (spline, t_Omega_pk_grid, Omega_pk_grid, n_grid);  
-  for (j = 0; j < n_refine; j++) {
-    ti[j] = t_Omega_pk_grid[0] + j*dt;
-    oi[j] = gsl_spline_eval (spline, ti[j], acc);
-  }
-  gsl_spline_free (spline);
-  gsl_interp_accel_free (acc);
-  index_pk = 0;
-  Omega_pk = oi[0];
-  for (j = 0; j < n_refine; j++) {
-    if (oi[j] > Omega_pk) {
-      index_pk = j;
-      Omega_pk = oi[j];
-    }
-  }
-  
-  double tOmg_pk = ti[index_pk];
+  double tOmg_pk = t[index_pk];
+  if (DEBUG) printf("Ringdown: tOmg_pk  = %e\n",tOmg_pk);
   tOmg_pk *= ooMbh;
-
+  
   /** Merger time t_max(A22) */
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tmrg[KMAX], tmatch[35], dtmrg[2];
-            
-  /** nonspinning case */ // OLD
-  /* tmrg[k22]  = tOmg_pk-3./Mbh; */          
-     
-  /** nonspinning case */
-  tmrg[k22]  = tOmg_pk-(DeltaT_nqc + 2)/Mbh;     
+  double tmrg[KMAX], tmatch[KMAX], dtmrg[KMAX];
+
+  /* nonspinning case */
+  /* tmrg[k22]  = tOmg_pk-3./Mbh; */ /* OLD */       
+  double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
+  if (DEBUG) printf("Ringdown: tmrgA22  = %e\n",tmrgA22);
+  
+  for (int k=0; k<KMAX; k++) {
+    tmrg[k] = tmrgA22;
+  }
+  
+  /* The following values are the difference between the time of the peak of
+     the 22 waveform and the 21 and 33. These specific values refer to the
+     nonspinning case. They are different in the spinning case, which
+     is however not implemented. These are here only as placeholder */
   dtmrg[k21] = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
   dtmrg[k33] = 4.29550934 - 0.85938*xnu;                         //k33
   tmrg[k21]  = tmrg[k22] + dtmrg[k21]/Mbh;     // t_max(A21) => peak of 21 mode
   tmrg[k33]  = tmrg[k22] + dtmrg[k33]/Mbh;     // t_max(A33) => peak of 33 mode
 
-  /** postmerger-ringdown matching time */
-  for (k=0; k<KMAX; k++) {
+  /** Postmerger-Ringdown matching time */
+  for (int k=0; k<KMAX; k++) {
     tmatch[k] = 2.*ooMbh + tmrg[k];
   }
-
+  
   /** Compute QNM */
-  double **sigma;//[KMAX][2]; // real, imag
-  *sigma = malloc ( KMAX * sizeof(double*) );
-  for (k=0; k<KMAX; k++) 
-    sigma[k] = malloc ( 2 * sizeof(double) );
-
+  double sigma[2][KMAX];
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
   double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX]; 
   QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		  a1, a2, a3, a4, b1, b2, b3, b4, 
-		  sigma);
+		  sigma[0],sigma[1]);
 
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
-  for (k=0; k<KMAX; k++) {
+  for (int k=0; k<KMAX; k++) {
     t_lm[k] =  malloc ( size * sizeof(double) );
-    for (j = 0; j < size; j++ ) {  
+    for (int j = 0; j < size; j++ ) {  
       t_lm[k][j] = t[j] * ooMbh;
     }
-  }
+  }  
 
   /** Find attachment index */
   int idx[KMAX];
-  for (k = 0; k < KMAX; k++) {
-    for (j = 0; j < size ; j++ ) {  
-      if (t_lm[k][j] >= tmatch[k]) break;
+  for (int k = 0; k < KMAX; k++) {
+    for (int j = size-1; j-- ; ) {  
+      if (t_lm[k][j] < tmatch[k]) {
+	idx[k] = j;
+	break;
+      }
     }
-    idx[k] = j;
   }
-
-  /** Calculate deltaphi */
-  double t0, psi[2];
-  double Deltaphi[KMAX];
-  /*
-  for (k = 0; k < KMAX; k++) {
-    t0 = t_lm[k][idx[k]] - tmrg[k]; // I or I-1 or I-2 ?
-    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[k], psi);
-    Deltaphi[k] = psi[1] - hlm[k]->phase[idx[k]];
-  }
-  */
 
   /** Compute Ringdown waveform for t>=tmatch */
-  for (k = 0; k < KMAX; k++) {
-    for (j = idx[k]; j < size ; j++ ) {  
-      //t0 = t_lm[k][j];
-      t0 = t_lm[k][j] - tmrg[k];   
-      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[k], psi);
-      if (j==idx[k]) {
-	Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
-      }
+  double t0, tm, psi[2];
+  double Deltaphi[KMAX];
+  for (int k = 0; k < KMAX; k++) {
+    /* Calculate Deltaphi */
+    //t0 = t_lm[k][idx[k]] - tmrg[k]; 
+    //printf("%d %d %e %e %e\n",k,idx[k],t0,t_lm[k][idx[k]],tmrg[k]);
+    eob_wav_ringdown_template(t_lm[k][idx[k]], a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+    Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
+    /* Compute and attach ringdown */
+    for (int j = idx[k]; j < size ; j++ ) {  
+      tm = t_lm[k][j] - tmrg[k];
+      //printf("%e %e %e\n",tm,t_lm[k][j],tmrg[k]);
+      eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       hlm->phase[k][j] = psi[1] - Deltaphi[k];
       hlm->ampli[k][j] = psi[0];
     }
   }
- 
+  
   /** Free mem. */
-  for (k=0; k<KMAX; k++) {
-    free(sigma[k]);
+  for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);
   }
-  free(sigma);
 
 }
 
@@ -1502,6 +1463,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   
   /** NQC */
   Waveform_lm_t hNQC; 
+  //CHECKME: if ( (!(usetidal)) && (!(usespins)) ) {
   if (!(usetidal)) {
     eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); 
   }
@@ -1668,9 +1630,7 @@ void eob_wav_flm_old(double x,double nu, double *rholm, double *flm)
   int k;
   for (k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
-      //printf("flm %d %.16e\n",k,flm[k]);
   }
-  //DBGSTOP
   
 }
 

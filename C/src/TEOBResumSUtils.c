@@ -1,6 +1,7 @@
 /**
- * Copyright (C) 2017 Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
  * This file is part of TEOBResumS
+ *
+ * Copyright (C) 2017-2018 See AUTHORS file
  *
  * TEOBResumS is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,9 +14,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with with program; see the file COPYING. If not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA  02111-1307  USA
+ * along with this program. If not, see http://www.gnu.org/licenses/.       
+ *
  */
 
 #include "TEOBResumS.h"
@@ -155,15 +155,15 @@ double interp1d (const int order, double xx, int nx, double *f, double *x)
 /** Factorial */
 double fact(int n)
 {
-    double f[] = {1., 1., 2., 6., 24., 120., 720., 5040., 40320., 362880.,
+  double f[] = {1., 1., 2., 6., 24., 120., 720., 5040., 40320., 362880.,
         3628800., 39916800., 479001600., 6227020800., 87178291200.};
-    if (n < 0){
-      errorexit(" computing a negative factorial.\n");
-    } else if (n <= 14){
-      return f[n];
-    } else {
-      return n*fact(n-1);
-    }
+  if (n < 0){
+    errorexit(" computing a negative factorial.\n");
+  } else if (n <= 14){
+    return f[n];
+  } else {
+    return n*fact(n-1);
+  }
 }
 
 /** Wigner d-function */
@@ -198,7 +198,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 }
 
 /** (h+, hx) polarizations from the multipolar waveform */
-void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc)
+void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc)
 {
   static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
   double Y_real, Y_imag;
@@ -206,21 +206,21 @@ void compute_hpc(Waveform_lm **hlm, double nu, double M, double distance, double
   int k,i;
   for (k = 0; k < KMAX; k++ ) {
     spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
-    for (i = 0; i < (*hlm)->size; i++) {
-      Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
-      cosPhi = cos( (*hlm)->phase[k][i] );
-      sinPhi = sin( (*hlm)->phase[k][i] );
+    for (i = 0; i < hlm->size; i++) {
+      Aki    = amplitude_prefactor * hlm->ampli[k][i];
+      cosPhi = cos( hlm->phase[k][i] );
+      sinPhi = sin( hlm->phase[k][i] );
       hpc->real[i] += Aki*(cosPhi*Y_real + sinPhi*Y_imag);
       hpc->imag[i] -= Aki*(sinPhi*Y_real + cosPhi*Y_imag); // overall check sign
-      hpc->time[i] *= M; 
+      hpc->time[i] = hlm->time[i]*M; 
     }
     if ( (mneg) && (MINDEX[k]!=0) ) { 
       /* add m<0 modes */
       spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota);
-      for (i = 0; i < (*hlm)->size; i++) {
-	Aki    = amplitude_prefactor * (*hlm)->ampli[k][i];
-	cosPhi = cos( (*hlm)->phase[k][i] ); 
-	sinPhi = sin( (*hlm)->phase[k][i] ); 
+      for (i = 0; i < hlm->size; i++) {
+	Aki    = amplitude_prefactor * hlm->ampli[k][i];
+	cosPhi = cos( hlm->phase[k][i] ); 
+	sinPhi = sin( hlm->phase[k][i] ); 
 	hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
 	hpc->imag[i] += Aki*(sinPhi*Y_real - cosPhi*Y_imag); // overall check sign
       }     
@@ -280,25 +280,6 @@ int D0_x_2(double *f, double *x, int n, double *df)
   return OK;
 }
 
-/** 4th order centered stencil first derivative, nonuniform grids */
-//FIXME: This is wrong.
-int D0_x(double *f, double *x, int n, double *df)
-{
-  int i;
-  for(i=2; i<n-2; i++) {
-    df[i] = (8.*f[1+i] - f[i+2] - 8.*f[i-1] + f[i-2])/(3.*(x[2+i]-x[i-2]));
-  }
-  i = 0;
-  df[i] = (-25*f[i] + 48*f[i+1] - 36*f[i+2] +16*f[i+3]-3*f[i+4])/(3.*(x[i+4]-x[i]));
-  i = 1;
-  df[i] = (-3*f[i-1]-10*f[i]+18*f[i+1]-6*f[i+2]+f[i+3])/(3*(x[i+3]-x[i-1]));
-  i = n-2;
-  df[i] = (-f[i-3]+6*f[i-2]-18*f[i-1]+10*f[i]+3*f[i+1])/(3*(x[i+1]-x[i-3]));  
-  i = n-1;
-  df[i] = (25*f[i] - 48*f[i-1] + 36*f[i-2] - 16*f[i-3]+3*f[i-4])/(3*(x[i]-x[i-4]));
-  return OK;
-}
-
 /** This routine sets a 0/1 mask for the multipolar linear index */
 void set_multipolar_idx_mask(int *kmask, int n)
 {
@@ -347,11 +328,21 @@ void Waveform_push (Waveform **wav, int size)
 
 void Waveform_output (Waveform *wav)
 {
-  int i;
   FILE* fp;
-  if ((fp = fopen(wav->name, "w")) == NULL)
+  char fname[STRLEN];
+  strcpy(fname,par_get_s("output_dir"));
+  strcat(fname,"/");
+  strcat(fname,wav->name);
+  strcat(fname,".txt");
+  if ((fp = fopen(fname, "w")) == NULL)
     errorexits("error opening file",wav->name);
-  for (i = 0; i < wav->size; i++) {
+  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
+  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
+	  par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
+	  par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
+  fprintf(fp, "# D=%e psi=%e iota=%e\n",par_get_d("distance"),par_get_d("coalescence_angle"),par_get_d("inclination"));
+  fprintf(fp, "# t:0 real:1 imag:2\n");
+  for (int i = 0; i < wav->size; i++) {
     fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->real[i], wav->imag[i]);
   }
   fclose(fp);
@@ -386,13 +377,12 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
 
 void Waveform_lm_push (Waveform_lm **wav, int size)
 {
-  int k, i;
   const int n  = (*wav)->size;
   const int dn = size - (*wav)->size;
   (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
   if ((*wav)->time == NULL) errorexit("Out of memory.");
   /* if (dn>0) memset( (*wav)->time + n, 0, dn * sizeof(double) ); */
-  for (k=0; k<KMAX; k++) {
+  for (int k=0; k<KMAX; k++) {
     (*wav)->ampli[k] = realloc ( (*wav)->ampli[k], size * sizeof(double) );
     if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
     (*wav)->phase[k] = realloc ( (*wav)->phase[k], size * sizeof(double) );
@@ -408,21 +398,41 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
 void Waveform_lm_output (Waveform_lm *wav)
 {
   char fname[STRLEN];
-  int k,i;
   const int n = wav->size;
-  for (k=0; k<KMAX; k++) {
+  for (int k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
-      sprintf(fname,"%s_l%01d_m%01d.txt",wav->name,LINDEX[k],MINDEX[k]);
+      sprintf(fname,"%s/%s_l%01d_m%01d.txt",par_get_s("output_dir"),wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w")) == NULL)
 	errorexits("error opening file",fname);
       if(SARP){   
-		for (i = 4; i < n; i+=20) { 
-			fprintf(fp, "%.1f\t%.16e\t%.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
-		}
+	for (int i = 4; i < n; i+=20) { 
+	  fprintf(fp, "%.1f\t%.16e\t%.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
+	}
       }
-      for (i = 0; i < n; i++) {
+      for (int i = 0; i < n; i++) {
 	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
+      }
+      fclose(fp);
+    }
+  }
+}
+
+void Waveform_lm_output_reim (Waveform_lm *wav)
+{
+  char fname[STRLEN];
+  double re,im;
+  const int n = wav->size;
+  for (int k=0; k<KMAX; k++) {
+    if (wav->kmask[k]) {
+      sprintf(fname,"%s/%s_l%01d_m%01d_reim.txt",par_get_s("output_dir"),wav->name,LINDEX[k],MINDEX[k]);
+      FILE* fp;
+      if ((fp = fopen(fname, "w")) == NULL)
+	errorexits("error opening file",fname);
+      for (int i = 0; i < n; i++) {
+	re = + wav->ampli[k][i] * cos(wav->phase[k][i]);
+	im = - wav->ampli[k][i] * sin(wav->phase[k][i]);
+	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], re,im);
       }
       fclose(fp);
     }
@@ -431,8 +441,7 @@ void Waveform_lm_output (Waveform_lm *wav)
 
 void Waveform_lm_free (Waveform_lm *wav)
 {
-  int k;
-  for (k=0; k<KMAX; k++) {
+  for (int k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
       if (wav->ampli[k]) free(wav->ampli[k]);
       if (wav->phase[k]) free(wav->phase[k]);
@@ -466,8 +475,7 @@ void Dynamics_alloc (Dynamics **dyn, int size, const char *name)
   (*dyn)->size = size; 
   (*dyn)->time = malloc ( size * sizeof(double) );
   memset((*dyn)->time, 0, size*sizeof(double));
-  int v;
-  for (v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
     (*dyn)->data[v] = malloc ( size * sizeof(double) );
     memset((*dyn)->data[v], 0, size*sizeof(double));
   }
@@ -475,11 +483,10 @@ void Dynamics_alloc (Dynamics **dyn, int size, const char *name)
 
 void Dynamics_push (Dynamics **dyn, int size)
 {
-  int v,i;
   const int n  = (*dyn)->size;
   const int dn = size - (*dyn)->size;
   (*dyn)->time = realloc ( (*dyn)->time, size * sizeof(double) );
-  for (v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
     (*dyn)->data[v] = realloc ( (*dyn)->data[v], size * sizeof(double) );
     if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
     /* if (dn>0) memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) ); */
@@ -487,31 +494,56 @@ void Dynamics_push (Dynamics **dyn, int size)
   (*dyn)->size = size; 
 }
 
+#if (SARP) 
+ 
 void Dynamics_output (Dynamics *dyn)
 {
-  int v, i;
   FILE* fp; 
-  if ((fp = fopen(dyn->name, "w")) == NULL)
+  char fname[STRLEN];
+  strcpy(fname,par_get_s("output_dir"));
+  strcat(fname,"/");
+  strcat(fname,dyn->name);
+  strcat(fname,".txt");
+  if ((fp = fopen(fname, "w")) == NULL)
     errorexits("error opening file",dyn->name);
-	if(!SARP)  fprintf(fp, "# t:0 r:1 phi:2 MOmega:3 ddotr:4 prstar:5 MOmega_orb:6\n"); 
-	if(SARP)  	for (i = 4; i < dyn->size; i+=4) {
-	if(!SARP) 	fprintf(fp, "%.9e", dyn->time[i]);
-	if(!SARP) 	for (v = 0; v < EOB_DYNAMICS_NVARS; v++)
-	if(!SARP)   	fprintf(fp, " %.12e", dyn->data[v][i]);
-	if(!SARP) 	fprintf(fp, "\n"); 
-	if(SARP){
-			fprintf(fp, "%.1f\t", dyn->time[i]);
-			fprintf(fp, "%.16f\t%.16f\t%.16f\t%.26f\t%.16f\t%.16f\n", dyn->data[0][i], dyn->data[2][i], dyn->data[3][i], dyn->data[4][i], dyn->data[5][i], dyn->data[6][i]); 
-	}
+  for (int i = 4; i < dyn->size; i+=4) {
+    fprintf(fp, "%.1f\t", dyn->time[i]);
+    fprintf(fp, "%.16f\t%.16f\t%.16f\t%.26f\t%.16f\t%.16f\n", dyn->data[0][i], dyn->data[2][i], dyn->data[3][i], dyn->data[4][i], dyn->data[5][i], dyn->data[6][i]); 
   }
   fclose(fp);
 }
 
+#else
+
+void Dynamics_output (Dynamics *dyn)
+{
+  FILE* fp; 
+  char fname[STRLEN];
+  strcpy(fname,par_get_s("output_dir"));
+  strcat(fname,"/");
+  strcat(fname,dyn->name);
+  strcat(fname,".txt");
+  if ((fp = fopen(fname, "w")) == NULL)
+    errorexits("error opening file",dyn->name);
+  fprintf(fp, "#");
+  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
+    fprintf(fp, " %s:%d",eob_var[v],v);
+  fprintf(fp, "\n");
+  for (int i = 0; i < dyn->size; i++) {
+    fprintf(fp, "%.9e", dyn->time[i]);
+    for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
+      fprintf(fp, " %.12e", dyn->data[v][i]);
+    fprintf(fp, "\n");
+  }
+  fclose(fp);
+}
+
+#endif
+
 void Dynamics_free (Dynamics *dyn)
 {
   if (dyn->time) free(dyn->time);
-  int v;
-  for (v = 0; v < EOB_DYNAMICS_NVARS; v++)
+  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
     if (dyn->data[v]) free(dyn->data[v]);
   free(dyn);
 }

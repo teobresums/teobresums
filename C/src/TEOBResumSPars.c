@@ -1,6 +1,7 @@
 /**
- * Copyright (C) 2017 Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
  * This file is part of TEOBResumS
+ *
+ * Copyright (C) 2017-2018 See AUTHORS file
  *
  * TEOBResumS is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,9 +14,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with with program; see the file COPYING. If not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA  02111-1307  USA
+ * along with this program. If not, see http://www.gnu.org/licenses/.       
+ *
  */
 
 /**
@@ -130,8 +130,12 @@ void par_db_default ()
   }
 }
 
-void par_db_write_file (const char *fname)
+void par_db_write_file (const char *name)
 {
+  char fname[STRLEN];
+  strcpy(fname,par_get_s("output_dir"));
+  strcat(fname,"/");
+  strcat(fname,name);
   if (!(config_write_file(cf, fname))) {
     fprintf(stderr, "Error writing file %s\n", fname);
     config_destroy(cf);
