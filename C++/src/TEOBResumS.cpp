@@ -194,7 +194,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     y[1] = 0.;
     y[2] = initial_data[2];
     y[3] = initial_data[1];
-
+    
     double final_mass = HealyBBHFitRemnant(spin1z, spin2z, q);
     params.Mbh = final_mass;
     
@@ -219,33 +219,48 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     ddotr         = 0.;
     stop_flag     = false;
     MOmgpeak_flag = false;
+    int init_flag = 1; /* Flag used to append the first point (initial conditions) without evolving.*/
     
     /** start the do - while loop to integrate the PDEs **/
     do
     {
-        switch (params.flags.solver_scheme)
+        if(init_flag==0)
         {
-            case 0:
+            switch (params.flags.solver_scheme)
             {
-                int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-
-                if (status != GSL_SUCCESS)
-                {
-                    break;
-                }
-                break;
-            }
-            case 1:
-            {
-                if (y[0]>r_LSO)
+                case 0:
                 {
                     int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
+
                     if (status != GSL_SUCCESS)
                     {
                         break;
                     }
+                    break;
                 }
-                else
+                case 1:
+                {
+                    if (y[0]>r_LSO)
+                    {
+                        int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
+                        if (status != GSL_SUCCESS)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        double ti = t+dt;
+                        int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
+                        if (status != GSL_SUCCESS)
+                        {
+                            printf ("error, return value=%d\n", status);
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case 2:
                 {
                     double ti = t+dt;
                     int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
@@ -254,29 +269,22 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                         printf ("error, return value=%d\n", status);
                         break;
                     }
-                }
-                break;
-            }
-            case 2:
-            {
-                double ti = t+dt;
-                int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
-                if (status != GSL_SUCCESS)
-                {
-                    printf ("error, return value=%d\n", status);
                     break;
                 }
-                break;
-            }
-            default:
-            {
-                int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
-                if (status != GSL_SUCCESS)
+                default:
                 {
+                    int status = gsl_odeiv2_evolve_apply (e, c, s, &sys, &t, t1, &h, y);
+                    if (status != GSL_SUCCESS)
+                    {
+                        break;
+                    }
                     break;
                 }
-                break;
             }
+        }
+        else
+        {
+            init_flag=0;
         }
         
         /** Read out computation */
@@ -284,7 +292,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         phi    = y[1];
         prstar = y[2];
         pphi   = y[3];
-        
+
         /** Checking whether the dynamics produces NaN values
             this can happen if radius r becomes too small */
         if (std::isfinite(r))
