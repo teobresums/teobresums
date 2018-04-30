@@ -179,7 +179,21 @@ int main (int argc, char* argv[])
     dyn->data[EOB_PRSTAR][0] = dyn->prstar;
     dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
   }
+
+  /** Waveform computation 
+      Needs a r.h.s. evaluation */
+  dyn->store = 1;
+  p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
+  dyn->store = 0;
+  eob_wav_hlm(dyn, hlm_t); 
   
+  /** Append waveform to arrays */
+  hlm->time[0] = 0.;
+  for (int k = 0; k < KMAX; k++) {
+    hlm->ampli[k][0] = hlm_t->ampli[k];
+    hlm->phase[k][0] = hlm_t->phase[k]; 
+  }
+    
   /** Final BH */
   if (!(dyn->use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -235,7 +249,6 @@ int main (int argc, char* argv[])
   /** Solve ODE */
   int STATUS = OK;
   int iter = 0;
-  int k;
   while (!(dyn->ode_stop)) {
    if ( (VERBOSE) && (!SARP) )  printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r);
     iter++;
@@ -307,9 +320,9 @@ int main (int argc, char* argv[])
       Dynamics_push (&dyn, size);
     }
     
-    /** Append dynamics and waveform to vectors */
+    /** Append dynamics and waveform to arrays */
     hlm->time[iter] = hlm_t->time;
-    for (k = 0; k < KMAX; k++) {
+    for (int k = 0; k < KMAX; k++) {
       hlm->ampli[k][iter] = hlm_t->ampli[k];
       hlm->phase[k][iter] = hlm_t->phase[k]; 
     }
