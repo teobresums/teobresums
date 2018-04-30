@@ -308,11 +308,12 @@ int main (int argc, char* argv[])
     }
     
     /** Append dynamics and waveform to vectors */
+    hlm->time[iter] = hlm_t->time;
     for (k = 0; k < KMAX; k++) {
-      hlm->time[iter]     = hlm_t->time;
-      hlm->ampli[k][iter] = hlm_t->ampli[k]; 
+      hlm->ampli[k][iter] = hlm_t->ampli[k];
       hlm->phase[k][iter] = hlm_t->phase[k]; 
     }
+      
     if (store_dynamics) {
       dyn->time[iter]             = dyn->t; 
       dyn->data[EOB_RAD][iter]    = dyn->r;
