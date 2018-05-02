@@ -1132,25 +1132,46 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
 
   double a1[KMAX], a2[KMAX], a3[KMAX];
   double b1[KMAX], b2[KMAX], b3[KMAX];
-  double n[6];    
+  double n[KMAX][6];    
 
-  /* NQC corrections to the modulus */
-  n[0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-  n[1] = ddotr/(r*Omega*Omega);
-  n[2] = n[0]*prstar*prstar;
+  const int k21 = 0;
+  const int k22 = 1;
+  const int k33 = 4;
+  int k;
 
-  /* NQC corrections to the phase */
-  n[3] = prstar/(r*Omega);
-  n[4] = n[3]*cbrt(Omega*Omega);
-  //n[4] = n[3]*(r*Omega)*(r*Omega);//CHECKME/FIXME: this line is implemented in C++ for the 22 mode only.
-  n[5] = n[4]*prstar*prstar;
-
+  /** NQC corrections to the modulus and phase */
   for (int k = 0; k < KMAX; k++) {
-    psilmnqc->ampli[k] = 1.; 
-    psilmnqc->phase[k] = 0.; 
+    for (int j = 0; j < 6; j++) {
+      n[k][j] = 0.;
+    }    
   }
 
-  /* NR fits */
+  k = k21;
+  n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+  n[k][1] = ddotr/(r*Omega*Omega);
+  n[k][2] = n[k][0]*prstar*prstar;
+  n[k][3] = prstar/(r*Omega);
+  n[k][4] = n[k][3]*cbrt(Omega*Omega);
+  n[k][5] = n[k][4]*prstar*prstar;
+
+  k = k21;
+  n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+  n[k][1] = ddotr/(r*Omega*Omega);
+  n[k][2] = n[k][0]*prstar*prstar;
+  n[k][3] = prstar/(r*Omega);
+  /* n[k][4] = n[k][3]*cbrt(Omega*Omega); */
+  n[k][4] = n[k][3]*(r*Omega)*(r*Omega);
+  n[k][5] = n[k][4]*prstar*prstar;
+
+  k = k33;
+  n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+  n[k][1] = ddotr/(r*Omega*Omega);
+  n[k][2] = n[k][0]*prstar*prstar;
+  n[k][3] = prstar/(r*Omega);
+  n[k][4] = n[k][3]*cbrt(Omega*Omega);
+  n[k][5] = n[k][4]*prstar*prstar;
+
+  /** NR fits */
 
   for (int k = 0; k < KMAX; k++) {
     a1[k] = 0.;
@@ -1188,18 +1209,24 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   b2[4]   = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
   b3[4]   = 0.0;
   
-  /* NQC factor */
-  int k = 0; /* (2,1) */
-  psilmnqc->ampli[k] = 1. + a1[k]*n[0] + a2[k]*n[1] + a3[k]*n[2];
-  psilmnqc->phase[k] =      b1[k]*n[3] + b2[k]*n[4] + b3[k]*n[5];
+  /** NQC factor */
+
+  for (int k = 0; k < KMAX; k++) {
+    psilmnqc->ampli[k] = 1.; 
+    psilmnqc->phase[k] = 0.; 
+  }
+
+  k = k21; /* (2,1) */
+  psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
+  psilmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
   
-  k = 1; /* (2,2) */
-  psilmnqc->ampli[k] = 1. + a1[k]*n[0] + a2[k]*n[1] + a3[k]*n[2];
-  psilmnqc->phase[k] =      b1[k]*n[3] + b2[k]*n[4] + b3[k]*n[5];
+  k = k22; /* (2,2) */
+  psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
+  psilmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
   
-  k = 4; /* (3,3) */
-  psilmnqc->ampli[k] = 1. + a1[k]*n[0] + a2[k]*n[1] + a3[k]*n[2];
-  psilmnqc->phase[k] =      b1[k]*n[3] + b2[k]*n[4] + b3[k]*n[5];
+  k = k33; /* (3,3) */
+  psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
+  psilmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
   
 }
 
