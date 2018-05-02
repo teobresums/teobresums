@@ -1142,6 +1142,7 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   /* NQC corrections to the phase */
   n[3] = prstar/(r*Omega);
   n[4] = n[3]*cbrt(Omega*Omega);
+  //n[4] = n[3]*(r*Omega)*(r*Omega);//CHECKME/FIXME: this line is implemented in C++ for the 22 mode only.
   n[5] = n[4]*prstar*prstar;
 
   for (int k = 0; k < KMAX; k++) {
@@ -1149,7 +1150,8 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
     psilmnqc->phase[k] = 0.; 
   }
 
-  /*
+  /* NR fits */
+
   for (int k = 0; k < KMAX; k++) {
     a1[k] = 0.;
     a2[k] = 0.;
@@ -1158,9 +1160,6 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
     b2[k] = 0.;
     b3[k] = 0.;
   }
-  */
-
-  /* NR fits */
 	 
   /* (2,1) */
   a1[0] =  0.0162387198*(7.32653082*xnu2 + 1.19616248*xnu + 0.73496656);
