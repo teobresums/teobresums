@@ -217,7 +217,7 @@ vector<double> s_initial(TEOBResumParams *params){
     
     vector<double> y_init(7);
     
-    int N = 100;
+    int N = 6;
     const double dr = 1.e-4;
     vector<double> r(2*N);
     
