@@ -203,29 +203,32 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
   static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
-  int k,i;
-  for (k = 0; k < KMAX; k++ ) {
-    spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
-    for (i = 0; i < hlm->size; i++) {
-      Aki    = amplitude_prefactor * hlm->ampli[k][i];
+  if (DEBUG) printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",nu,M,distance,psi,iota,amplitude_prefactor);
+  for (int i = 0; i < hlm->size; i++) {
+    hpc->time[i] = hlm->time[i]*M; 
+    hpc->real[i] = 0.;
+    hpc->imag[i] = 0.;
+    for (int k = 0; k < KMAX; k++ ) {
+      spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
+      Aki  = amplitude_prefactor * hlm->ampli[k][i];
       cosPhi = cos( hlm->phase[k][i] );
       sinPhi = sin( hlm->phase[k][i] );
       hpc->real[i] += Aki*(cosPhi*Y_real + sinPhi*Y_imag);
-      hpc->imag[i] -= Aki*(sinPhi*Y_real + cosPhi*Y_imag); // overall check sign
-      hpc->time[i] = hlm->time[i]*M; 
-    }
-    if ( (mneg) && (MINDEX[k]!=0) ) { 
-      /* add m<0 modes */
-      spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota);
-      for (i = 0; i < hlm->size; i++) {
+      hpc->imag[i] -= Aki*(sinPhi*Y_real + cosPhi*Y_imag); //TODO: overall check sign
+      //printf("%e %e\n",hlm->ampli[k][i],hlm->phase[k][i]); //nans?
+      //printf("%e %e\n",hpc->real[i],hpc->imag[i]);
+      if ( (mneg) && (MINDEX[k]!=0) ) { 
+	/* add m<0 modes */
+	spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota);
 	Aki    = amplitude_prefactor * hlm->ampli[k][i];
-	cosPhi = cos( hlm->phase[k][i] ); 
-	sinPhi = sin( hlm->phase[k][i] ); 
+	//cosPhi = cos( hlm->phase[k][i] ); 
+	//sinPhi = sin( hlm->phase[k][i] ); 
 	hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
 	hpc->imag[i] += Aki*(sinPhi*Y_real - cosPhi*Y_imag); // overall check sign
-      }     
-    } /* mneg */
+      }    
+    } 
   }
+  
 }
 
 /** 4th order centered stencil first derivative, uniform grids */
