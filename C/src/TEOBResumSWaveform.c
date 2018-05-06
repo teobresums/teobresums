@@ -749,8 +749,9 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 
 /** Computes the factors and the coefficients that build the  
     NQC corrections to the waveform in the spinning case */
-void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
+void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {
+
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
     
   const double nu   = dyn->nu;
@@ -777,7 +778,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   double *pr_star = dyn->data[EOB_PRSTAR];
   double *Omg_orb = dyn->data[EOB_OMGORB];
   double *ddotr   = dyn->data[EOB_DDOTR];
-
+  
   double c_p1,     c_p2,     c_p3,   c_p4;
   double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
   double c_pdomg1, c_pdomg2;
@@ -786,38 +787,44 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   
   double P[2], M[4], p1[2], p2[2], p3[2], p4[2], pA[5], pdA[5];    
   double pomg[5], pdomg[5], pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
-  double n1[size], n2[size], n3[size], n4[size], n5[size], n6[size], d_n4[size], d_n5[size], d2_n4[size], d2_n5[size];
-  double max_A[35],max_dA[35],d2max[35],d3max[35],max_omg[35],max_domg[35],maxd2omg[35], DeltaT[35];
-    
-  double A[KMAX][size];
-  double phase[KMAX][size];
-
-  double ai[KMAX][size];
-  double bi[KMAX][size];
-  double omg[KMAX][size];
-  double domg[KMAX][size];
-  double m11[KMAX][size];
-  double m12[KMAX][size];
-  double m13[KMAX][size];
-  double m21[KMAX][size];
-  double m22[KMAX][size];
-  double p1tmp[KMAX][size];
-  double p2tmp[KMAX][size];
-
-  /** Regge-Wheeler-Zerilli normalized amplitude. The ringdown
-      coefficient refer to this normalization.
-      Check Nagar & Rezzolla, CQG 22 (2005) R167 */           
+  double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
+  double ai[KMAX][2];
+  double bi[KMAX][2];
+  
+  const int size = h->size;
+  
+  double *omg[KMAX], *domg[KMAX];
+  double *n1,*n2,*n3,*n4,*n5,*n6, *d_n4,*d_n5, *d2_n4,*d2_n5;
+  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
+  
   for (int k=0; k<KMAX; k++) {
-    for (int j=0; j<size; j++) {
-      A[k][j]     = h->ampli[k][j]/sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) );
-      phase[k][j] = h->phase[k][j];
-    }
+    omg[k]  = (double*) calloc (size,sizeof(double));
+    domg[k] = (double*) calloc (size,sizeof(double));
+    m11[k] = (double*) calloc (size,sizeof(double));
+    m12[k] = (double*) calloc (size,sizeof(double));
+    m13[k] = (double*) calloc (size,sizeof(double));
+    m21[k] = (double*) calloc (size,sizeof(double));
+    m22[k] = (double*) calloc (size,sizeof(double));
+    p1tmp[k] = (double*) calloc (size,sizeof(double));
+    p2tmp[k] = (double*) calloc (size,sizeof(double));
   }
+  
+  n1 = (double*) calloc (size,sizeof(double));
+  n2 = (double*) calloc (size,sizeof(double));
+  n3 = (double*) calloc (size,sizeof(double));
+  n4 = (double*) calloc (size,sizeof(double));
+  n5 = (double*) calloc (size,sizeof(double));
+  n6 = (double*) calloc (size,sizeof(double));
+  d_n4 = (double*) calloc (size,sizeof(double));
+  d_n5 = (double*) calloc (size,sizeof(double));
+  d2_n4 = (double*) calloc (size,sizeof(double));
+  d2_n5 = (double*) calloc (size,sizeof(double));
 
   /** omega derivatives */
   const double dt = t[1]-t[0];
   for (int k=0; k<KMAX; k++) {
-    D0(phase[k], dt, size, omg[k]);
+    D0(h->phase[k], dt, size, omg[k]);
     D0(omg[k]  , dt, size, domg[k]);
   }
   
@@ -960,7 +967,6 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
-  
   max_A[1]    = A_tmp;
   max_dA[1]   = dA_tmp;
   max_omg[1]  = omg_tmp;
@@ -988,7 +994,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
     n4[j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
     n5[j]  = n4[j]*r2*w2;              /* (pr*)*(r Omg) */
   }
-    
+  
 #if (DEBUG)
   FILE* fp = fopen("qnc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
@@ -1043,16 +1049,22 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
 
   /** Solve the linear systems */
   for (int k=0; k<KMAX; k++) {
+    double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
+    for (int j=0; j<size; j++) {
+      /** Regge-Wheeler-Zerilli normalized amplitude. 
+	  The ringdown coefficient refer to this normalization.
+	  Nagar & Rezzolla, CQG 22 (2005) R167 */           
+      p1tmp[k][j] = h->ampli[k][j] * nlm;      
+    }
     for (int j=0; j<size; j++) {
       /* Matrix elements: waveform amplitude at all points */
-      m11[k][j] = n1[j]*A[k][j];
-      m12[k][j] = n2[j]*A[k][j];
-      p1tmp[k][j] = A[k][j];      
+      m11[k][j] = n1[j] * p1tmp[k][j];
+      m12[k][j] = n2[j] * p1tmp[k][j];
     }
     /* Take FD derivatives */
     D0(m11[k],dt,size, m21[k]);
     D0(m12[k],dt,size, m22[k]);
-    D0(A[k],dt,size, p2tmp[k]);
+    D0(p1tmp[k],dt,size, p2tmp[k]);
   }
 
 #if (DEBUG)
@@ -1119,6 +1131,30 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
     }
   }
 
+
+  /** Free mem */
+  for (int k=0; k<KMAX; k++) {
+    free(omg[k]);
+    free(domg[k]);
+    free(m11[k]);
+    free(m12[k]);
+    free(m13[k]);
+    free(m21[k]);
+    free(m22[k]);
+    free(p1tmp[k]);
+    free(p2tmp[k]);
+  }
+  free(n1);
+  free(n2);
+  free(n3);
+  free(n4);
+  free(n5);
+  free(n6);
+  free(d_n4);
+  free(d_n5);
+  free(d2_n4);
+  free(d2_n5);
+  
 }
 
 /** NQC corrections to the RWZ multipolar waveform
@@ -1288,10 +1324,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   if (index_pk >= dynsize-2) {
     if (VERBOSE) printf("No omega-maximum found.\n");
   }
-  if (index_pk > dynsize-4) {
-    errorexit("Not enough points to interpolate.\n");
-  }
-
+  //if (index_pk > dynsize-4) {
+  //  errorexit("Not enough points to interpolate.\n");
+  //}
+  //TODO: there's no interp at the moment.
+  
   double tOmg_pk = t[index_pk];
   if (DEBUG) printf("Ringdown: tOmg_pk  = %e\n",tOmg_pk);
   tOmg_pk *= ooMbh;

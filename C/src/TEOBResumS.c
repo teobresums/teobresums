@@ -513,7 +513,7 @@ int main (int argc, char* argv[])
       Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
       
       /* Compute NQC corrections */
-      eob_wav_hlmNQC_find_a1a2a3(size, dyn, hlm, hlm_nqc);
+      eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
       
       if (par_get_i("output_nqc")) 
 	Waveform_lm_output (hlm_nqc);
