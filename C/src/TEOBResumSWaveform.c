@@ -773,10 +773,10 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
-  double *w       = dyn->data[EOB_MOMG];
+  double *w       = dyn->data[EOB_MOMG]; /* Omega */
   double *pph     = dyn->data[EOB_PPHI];
   double *pr_star = dyn->data[EOB_PRSTAR];
-  double *Omg_orb = dyn->data[EOB_OMGORB];
+  double *Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn->data[EOB_DDOTR];
   
   double c_p1,     c_p2,     c_p3,   c_p4;
@@ -991,7 +991,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   for (int j=0; j<size; j++) {
     pr_star2 = SQ(pr_star[j]);
     r2       = SQ(r[j]);
-    w2       = SQ(w[j]);
+    w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
     n1[j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
     n2[j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
     n4[j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
@@ -1362,14 +1362,15 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
 
-  double *Omega = dyn->data[EOB_MOMG];
+  //double *Omega = dyn->data[EOB_MOMG];
+  double *Omega = dyn->data[EOB_OMGORB];// use this for spin?
   
   /* Note:
      dynsize < size , since the wf has been extended 
      but the two time arrays agree up to dynsize */
   const int dynsize = dyn->size; 
   const int size = hlm->size; 
-  double *t     = hlm->time;
+  double *t = hlm->time;
   
   if (DEBUG) {
     printf("Ringdown: size (dynamics) = %d\n",dynsize);
@@ -1439,6 +1440,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 		  a1, a2, a3, a4, b1, b2, b3, b4, 
 		  sigma[0],sigma[1]);
 
+  //for (int k=0; k<KMAX; k++) {
+  //printf("%d %e %e\n", k, sigma[0][k], sigma[1][k]);
+  //}
+
+    
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
@@ -1460,6 +1466,9 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     }
   }
 
+  //TODO: check memory access hlm->phase[k][idx[k]]
+  //TODO: check psi computation
+  
   /** Compute Ringdown waveform for t>=tmatch */
   double t0, tm, psi[2];
   double Deltaphi[KMAX];
@@ -1469,6 +1478,8 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     //printf("%d %d %e %e %e\n",k,idx[k],t0,t_lm[k][idx[k]],tmrg[k]);
     eob_wav_ringdown_template(t_lm[k][idx[k]], a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
     Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
+    //printf("%d %e %e\n", k, sigma[0][k], sigma[1][k]);
+    printf("%d %e %e %e\n", k,Deltaphi[k], psi[1], hlm->phase[k][idx[k]]);
     /* Compute and attach ringdown */
     for (int j = idx[k]; j < size ; j++ ) {  
       tm = t_lm[k][j] - tmrg[k];
