@@ -27,7 +27,7 @@ The parfiles for these runs can be found in the directory `../benchmark/`.
 
 The validation process shows agreement between the two codes with relative differences at or below the level <~ 1e-6 in 
 
-  * Dynamical variables (file names Dyn_ ...)
+  * Dynamical variables (file names dyn*.txt )
   * Multipolar waveforms (all multipoles up to l=8, file name Waveform_ ...)
 
 Various plots showing relative differences can be found in this directory.
@@ -36,10 +36,13 @@ TODO: Add statements for NQC and ringdown
 
 During the validation process we found minor bugs in the C++ implementation
 
-   * Mistake in the second derivative of the metric A function.
+   * Mistake in the computation of the second derivative of the metric A function.
      The mistake affect only the initial data for tidal and nonspinning runs.     
    * Memory bug in the routine computing the finite difference
      The bug does not affect any physical result
+   * Multipolar spinning waveform in (2,1),(3,1) and (3,3) modes.
+     Abuse of `const double` code, resulting in wrong values of `p2` and `p3` in Newtonian waveform for spin case
+     The bug does not affect results using just the (2,2) mode
    * ...
    
 
