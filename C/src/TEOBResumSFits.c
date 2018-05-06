@@ -326,11 +326,15 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   const double af2        = SQ(af);
   const double af3        = SQ(af2);
   const double aeff_omg2  = SQ(aeff_omg); 
-  const double aeff_omg3  = SQ(aeff_omg2);
+  const double aeff_omg3  = aeff_omg2*aeff_omg;
   const double aeff_omg4  = SQ(aeff_omg2);
   const double X12_2      = SQ(X12);
 
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
+  for (int k=0; k<KMAX; k++) {
+    sigmar[k] = 0.;
+    sigmai[k] = 0.;
+  }
       
   const int usespins = par_get_i("use_spins");  
   
@@ -383,12 +387,8 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     c4phi[k44]   = 25.4170586178559716 *nu  +  -0.4151371540505313;
     Domg[k44]    = -1.5342842283421341 *nu2 +   1.5224173843877831 *nu +  0.0897013049238634;
     Amrg[k44]    =  0.9438333992719329 *nu2 +  -1.0464153920266663 *nu +  0.2897769169572948;
-    
-    for (k=0; k<KMAX; k++) {
-      sigmar[k] = 0.;
-      sigmai[k] = 0.;
-    }
 
+    
     k=k21;
     //sigma[k][0] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
     //sigma[k][1] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
