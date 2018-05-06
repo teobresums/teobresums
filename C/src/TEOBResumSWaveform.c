@@ -832,7 +832,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
   
   /** NR fits */
-  if (nu == 0.25) {
+  if (DEQUAL(nu,0.25,1e-9)) {
 
     pA[0]    =  0.00178195;
     pA[1]    =  0.00435589;
@@ -1122,7 +1122,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   printf("a2 = %f\n",ai[1][1]);
   printf("b1 = %f\n",bi[1][0]);
   printf("b2 = %f\n",bi[1][1]);
-#endif    
+#endif
 
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
@@ -1133,14 +1133,36 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
   
   /** Multiply waveform to NQC */
-  //CHECKME: RWZ normalization? Don't we need to re-introduce it here ???
   for (int k=0; k<KMAX; k++) {
     for (int j=0; j<size; j++) {
       h->ampli[k][j] *= hnqc->ampli[k][j];
-      h->phase[k][j] *= hnqc->phase[k][j];
+      h->phase[k][j] += hnqc->phase[k][j];
     }
   }
 
+  /*
+  //TODO: dump NQC coefs
+  //TODO: [main] input NQC pars, routine to using input NQC, and iterations and (cf. MATLAB code)
+  if (par_get_i("output_nqc_coefs")) {
+  char fname[STRLEN];
+  strcpy(fname, par_get_s("output_dir"));
+  strcat(fname, "nqc_coefs.txt");
+  fp = fopen(fname, "w");
+  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
+  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
+  par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
+  par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
+  fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
+  for (int k=0; k<KMAX; k++) {
+  fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
+  a[k][0], a[k][1], a[k][2], 
+  b[k][0], b[k][1], b[k][2], 
+  );
+  }
+  fclose(fp);  
+  }
+  */
+  
   /** Free mem */
   for (int k=0; k<KMAX; k++) {
     free(omg[k]);
@@ -1274,6 +1296,46 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
   psilmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
   
+}
+
+
+/** Generic routine for NQC, input pars (not from fits) */
+//CURRENTLY UNUSED 
+void eob_wav_hlmNQC_gen(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
+			double *a1, double *a2, double *a3, double *b1, double *b2, double *b3,
+			Waveform_lm_t *psilmnqc)
+{      
+
+  /** n functions */
+  double n[KMAX][6];    
+  const int k22 = 1;   /* multipoles with special treatment */
+
+  for (int k = 0; k < KMAX; k++) {
+    for (int j = 0; j < 6; j++) {
+      n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+      n[k][1] = ddotr/(r*Omega*Omega);
+      n[k][2] = n[k][0]*prstar*prstar;
+      n[k][3] = prstar/(r*Omega);
+      n[k][4] = n[k][3]*cbrt(Omega*Omega);
+      n[k][5] = n[k][4]*prstar*prstar;
+    }    
+  }
+
+  int k = k22;
+  n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+  n[k][1] = ddotr/(r*Omega*Omega);
+  n[k][2] = n[k][0]*prstar*prstar;
+  n[k][3] = prstar/(r*Omega);
+  /* n[k][4] = n[k][3]*cbrt(Omega*Omega); */
+  n[k][4] = n[k][3]*(r*Omega)*(r*Omega);
+  n[k][5] = n[k][4]*prstar*prstar;
+
+  /** NQC wave factor */
+  for (int k = 0; k < KMAX; k++) {
+    psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];; 
+    psilmnqc->phase[k] = b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5]; 
+  }
+
 }
 
 /** Ringdown waveform template */
