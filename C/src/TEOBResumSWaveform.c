@@ -1439,11 +1439,6 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		  a1, a2, a3, a4, b1, b2, b3, b4, 
 		  sigma[0],sigma[1]);
-
-  //for (int k=0; k<KMAX; k++) {
-  //printf("%d %e %e\n", k, sigma[0][k], sigma[1][k]);
-  //}
-
     
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
@@ -1465,9 +1460,6 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
       }
     }
   }
-
-  //TODO: check memory access hlm->phase[k][idx[k]]
-  //TODO: check psi computation
   
   /** Compute Ringdown waveform for t>=tmatch */
   double t0, tm, psi[2];
@@ -1476,10 +1468,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     /* Calculate Deltaphi */
     //t0 = t_lm[k][idx[k]] - tmrg[k]; 
     //printf("%d %d %e %e %e\n",k,idx[k],t0,t_lm[k][idx[k]],tmrg[k]);
+    //printf("%d %e %e %e %e %e %e %e %e\n", k, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k]);
     eob_wav_ringdown_template(t_lm[k][idx[k]], a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
     Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
     //printf("%d %e %e\n", k, sigma[0][k], sigma[1][k]);
-    printf("%d %e %e %e\n", k,Deltaphi[k], psi[1], hlm->phase[k][idx[k]]);
+    //printf("%d %e %e %e\n", k,Deltaphi[k], psi[1], hlm->phase[k][idx[k]]);
     /* Compute and attach ringdown */
     for (int j = idx[k]; j < size ; j++ ) {  
       tm = t_lm[k][j] - tmrg[k];
