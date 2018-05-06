@@ -771,7 +771,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   const double aeff     = aK + 1/3*a12*X12;
   const double aeff_omg = aK + a12*X12;
     
-  double *t       = dyn->time;
+  double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG];
   double *pph     = dyn->data[EOB_PPHI];
@@ -792,6 +792,9 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double bi[KMAX][2];
   
   const int size = h->size;
+  for (int i = 0; i < size; i++) {
+    hnqc->time[i] = t[i];
+  }
   
   double *omg[KMAX], *domg[KMAX];
   double *n1,*n2,*n3,*n4,*n5,*n6, *d_n4,*d_n5, *d2_n4,*d2_n5;
@@ -825,7 +828,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   const double dt = t[1]-t[0];
   for (int k=0; k<KMAX; k++) {
     D0(h->phase[k], dt, size, omg[k]);
-    D0(omg[k]  , dt, size, domg[k]);
+    D0(omg[k], dt, size, domg[k]);
   }
   
   /** NR fits */
@@ -986,9 +989,9 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
    */
   double pr_star2, r2, w2;
   for (int j=0; j<size; j++) {
-    pr_star2 = pr_star[j] * pr_star[j];
-    r2       = r[j] * r[j];
-    w2       = w[j] * w[j];
+    pr_star2 = SQ(pr_star[j]);
+    r2       = SQ(r[j]);
+    w2       = SQ(w[j]);
     n1[j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
     n2[j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
     n4[j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
@@ -1048,20 +1051,27 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
 
   /** Solve the linear systems */
+  
+  /* Regge-Wheeler-Zerilli normalized amplitude. 
+     The ringdown coefficient refer to this normalization.
+     Nagar & Rezzolla, CQG 22 (2005) R167 */      
   for (int k=0; k<KMAX; k++) {
     double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
     for (int j=0; j<size; j++) {
-      /** Regge-Wheeler-Zerilli normalized amplitude. 
-	  The ringdown coefficient refer to this normalization.
-	  Nagar & Rezzolla, CQG 22 (2005) R167 */           
       p1tmp[k][j] = h->ampli[k][j] * nlm;      
     }
+  }
+
+  /* Matrix elements: waveform amplitude at all points */
+  for (int k=0; k<KMAX; k++) {
     for (int j=0; j<size; j++) {
-      /* Matrix elements: waveform amplitude at all points */
       m11[k][j] = n1[j] * p1tmp[k][j];
       m12[k][j] = n2[j] * p1tmp[k][j];
     }
-    /* Take FD derivatives */
+  }
+
+  /* Take FD derivatives */
+  for (int k=0; k<KMAX; k++) {
     D0(m11[k],dt,size, m21[k]);
     D0(m12[k],dt,size, m22[k]);
     D0(p1tmp[k],dt,size, p2tmp[k]);
@@ -1078,7 +1088,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double detM = 1.;
   for (int k=0; k<KMAX; k++) {
     
-    /* Computation of ai coefficients */
+    /* Computation of ai coefficients at Omega peak */
     P[0]     = max_A[k]  - p1tmp[k][jmax];
     P[1]     = max_dA[k] - p2tmp[k][jmax];
     
@@ -1091,7 +1101,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
     ai[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
     
-    /* Computation of bi coefficients */
+    /* Computation of bi coefficients at Omega peak */
     P[0]     = omg[k][jmax]   - max_omg[k];
     P[1]     = domg[k][jmax]  - max_domg[k];
     
@@ -1130,7 +1140,6 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
       h->phase[k][j] *= hnqc->phase[k][j];
     }
   }
-
 
   /** Free mem */
   for (int k=0; k<KMAX; k++) {

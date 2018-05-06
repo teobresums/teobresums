@@ -106,7 +106,6 @@ int main (int argc, char* argv[])
   const int use_tidal = par_get_i("use_tidal");
   int interp_uniform_grid = par_get_i("interp_uniform_grid");  
   int store_dynamics = par_get_i("output_dynamics");
-
   if (!(use_tidal)) interp_uniform_grid = 1; /* NQC and ringdown attachment assume uniform grids */
   if (!(use_tidal) && (use_spins)) store_dynamics = 1; /* NQC need dynamical variables */
 
@@ -236,7 +235,7 @@ int main (int argc, char* argv[])
   dyn->ode_timestep  = j;
   const int ode_tstep = dyn->ode_timestep;
   if (ode_tstep == ODE_TSTEP_UNIFORM) interp_uniform_grid = 0;
-
+  
   const double ode_abstol = par_get_d("ode_abstol");
   const double ode_reltol = par_get_d("ode_reltol");
 
@@ -514,9 +513,17 @@ int main (int argc, char* argv[])
       
       /* Compute NQC corrections */
       eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
-      
-      if (par_get_i("output_nqc")) 
-	Waveform_lm_output (hlm_nqc);
+      strcat(hlm->name,"_nqc");      
+
+      if (DEBUG) {
+	if (par_get_i("output_nqc")) { 
+	  Waveform_lm_output (hlm_nqc);
+	}
+	if (par_get_i("output_multipoles")) {
+	  Waveform_lm_output (hlm);
+	  /* Waveform_lm_output_reim (hlm); */
+	}	
+      }
       
       Waveform_lm_free (hlm_nqc);
       
@@ -536,10 +543,18 @@ int main (int argc, char* argv[])
     }
     size += size_ringdown;
     par_set_i("size", size);
-	
+    
     /** Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
+    strcat(hlm->name,"_ringdown");
     
+    if (DEBUG) {
+      if (par_get_i("output_multipoles")) {
+	Waveform_lm_output (hlm);
+	Waveform_lm_output_reim (hlm);
+      }
+    }
+
   }
   
   /** Alloc memory for (h+,hx) */
@@ -561,11 +576,6 @@ int main (int argc, char* argv[])
   
   /** Output */
   Waveform_output (hpc);
-  if (par_get_i("output_multipoles")) {
-      strcat(hlm->name,"_ringdown");
-      Waveform_lm_output (hlm);
-      Waveform_lm_output_reim (hlm);
-  }
     
   /** Free memory */
   Dynamics_free (dyn);
