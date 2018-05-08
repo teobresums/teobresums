@@ -37,17 +37,24 @@ TODO: Add statements for NQC and ringdown
 During the validation process we found minor bugs in the C++ implementation
 
    1. Mistake in the computation of the second derivative of the metric A function.
-     The mistake affects only the initial data for tidal and nonspinning runs.
-     For comparative tests we imposed manually the values of A'' in the C++ code.
+      The mistake affects only the initial data for tidal and nonspinning runs.
+      For comparative tests we imposed manually the values of A'' in the C++ code.
      
    2. Memory bug in the routine computing the finite difference.
-     The bug does not affect any physical result.
+      The bug does not affect any physical result.
      
    3. Multipolar spinning waveform in (2,1),(3,1) and (3,3) modes.
-     Abuse of `const double` code, resulting in wrong values of `p2` and `p3` in Newtonian waveform for spin case
-     The bug does not affect results using just the (2,2) mode
+      Abuse of `const double` code, resulting in wrong values of `p2`
+      and `p3` in Newtonian waveform for spin case. 
+      The bug does not affect results using just the (2,2) mode
 
-   4. Bug in the interpolation.
+   4. Waveform was not computed in first step, resulting in small time
+      shift after the interpolation (if performed). 
+      
+   5. Waveform for spin and tides employs nonspinning
+      Hamiltonian. This result in differences of order ~ 1e-5 in 
+      dynamical variables that remain of that order due to
+      cancellations, but it larger in variable ddotr. 
 
 All the above bugs except 1. have been fixed in several commits up to
 
