@@ -189,22 +189,14 @@ vector<gsl_complex> s_waveform(double t,
        SPINNING PART STARTS HERE
       *************************/
       
-      double B, dA;
-      double z3 = 2.*nu*(4.-3.*nu);        
-      vector<double> metric;
-        if (tidal_flag==true) {
-            metric = Metric(r, params,false);
-            A  = metric[0];
-            B  = metric[3];
-            dA = metric[1];
-        }
-        else
-        {
-            metric = s_Metric(r, params,false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
-            A      = metric[0];
-            B      = metric[1];
-            dA     = metric[2];
-        }
+        double B, dA;
+        double z3 = 2.*nu*(4.-3.*nu);        
+        vector<double> metric;
+
+        metric = s_Metric(r, params,false); //{A,B,dA,d2A} data[0]=A; data[1]=A_dr; data[2]=A_du; data[3]=B; data[4]=B_dr;
+        A      = metric[0];
+        B      = metric[1];
+        dA     = metric[2];
 
 	// Definition of the centrifugal radius
         vector<double> rc_vec;
