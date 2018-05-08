@@ -749,8 +749,9 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 
 /** Computes the factors and the coefficients that build the  
     NQC corrections to the waveform in the spinning case */
-void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
+void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {
+
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
     
   const double nu   = dyn->nu;
@@ -770,14 +771,14 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   const double aeff     = aK + 1/3*a12*X12;
   const double aeff_omg = aK + a12*X12;
     
-  double *t       = dyn->time;
+  double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
-  double *w       = dyn->data[EOB_MOMG];
+  double *w       = dyn->data[EOB_MOMG]; /* Omega */
   double *pph     = dyn->data[EOB_PPHI];
   double *pr_star = dyn->data[EOB_PRSTAR];
-  double *Omg_orb = dyn->data[EOB_OMGORB];
+  double *Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn->data[EOB_DDOTR];
-
+  
   double c_p1,     c_p2,     c_p3,   c_p4;
   double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
   double c_pdomg1, c_pdomg2;
@@ -786,43 +787,52 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   
   double P[2], M[4], p1[2], p2[2], p3[2], p4[2], pA[5], pdA[5];    
   double pomg[5], pdomg[5], pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
-  double n1[size], n2[size], n3[size], n4[size], n5[size], n6[size], d_n4[size], d_n5[size], d2_n4[size], d2_n5[size];
-  double max_A[35],max_dA[35],d2max[35],d3max[35],max_omg[35],max_domg[35],maxd2omg[35], DeltaT[35];
-    
-  double A[KMAX][size];
-  double phase[KMAX][size];
-
-  double ai[KMAX][size];
-  double bi[KMAX][size];
-  double omg[KMAX][size];
-  double domg[KMAX][size];
-  double m11[KMAX][size];
-  double m12[KMAX][size];
-  double m13[KMAX][size];
-  double m21[KMAX][size];
-  double m22[KMAX][size];
-  double p1tmp[KMAX][size];
-  double p2tmp[KMAX][size];
-
-  /** Regge-Wheeler-Zerilli normalized amplitude. The ringdown
-      coefficient refer to this normalization.
-      Check Nagar & Rezzolla, CQG 22 (2005) R167 */           
-  for (int k=0; k<KMAX; k++) {
-    for (int j=0; j<size; j++) {
-      A[k][j]     = h->ampli[k][j]/sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) );
-      phase[k][j] = h->phase[k][j];
-    }
+  double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
+  double ai[KMAX][2];
+  double bi[KMAX][2];
+  
+  const int size = h->size;
+  for (int i = 0; i < size; i++) {
+    hnqc->time[i] = t[i];
   }
+  
+  double *omg[KMAX], *domg[KMAX];
+  double *n1,*n2,*n3,*n4,*n5,*n6, *d_n4,*d_n5, *d2_n4,*d2_n5;
+  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
+  
+  for (int k=0; k<KMAX; k++) {
+    omg[k]  = (double*) calloc (size,sizeof(double));
+    domg[k] = (double*) calloc (size,sizeof(double));
+    m11[k] = (double*) calloc (size,sizeof(double));
+    m12[k] = (double*) calloc (size,sizeof(double));
+    m13[k] = (double*) calloc (size,sizeof(double));
+    m21[k] = (double*) calloc (size,sizeof(double));
+    m22[k] = (double*) calloc (size,sizeof(double));
+    p1tmp[k] = (double*) calloc (size,sizeof(double));
+    p2tmp[k] = (double*) calloc (size,sizeof(double));
+  }
+  
+  n1 = (double*) calloc (size,sizeof(double));
+  n2 = (double*) calloc (size,sizeof(double));
+  n3 = (double*) calloc (size,sizeof(double));
+  n4 = (double*) calloc (size,sizeof(double));
+  n5 = (double*) calloc (size,sizeof(double));
+  n6 = (double*) calloc (size,sizeof(double));
+  d_n4 = (double*) calloc (size,sizeof(double));
+  d_n5 = (double*) calloc (size,sizeof(double));
+  d2_n4 = (double*) calloc (size,sizeof(double));
+  d2_n5 = (double*) calloc (size,sizeof(double));
 
   /** omega derivatives */
   const double dt = t[1]-t[0];
   for (int k=0; k<KMAX; k++) {
-    D0(phase[k], dt, size, omg[k]);
-    D0(omg[k]  , dt, size, domg[k]);
+    D0(h->phase[k], dt, size, omg[k]);
+    D0(omg[k], dt, size, domg[k]);
   }
   
   /** NR fits */
-  if (nu == 0.25) {
+  if (DEQUAL(nu,0.25,1e-9)) {
 
     pA[0]    =  0.00178195;
     pA[1]    =  0.00435589;
@@ -960,7 +970,6 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
-  
   max_A[1]    = A_tmp;
   max_dA[1]   = dA_tmp;
   max_omg[1]  = omg_tmp;
@@ -980,15 +989,15 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
    */
   double pr_star2, r2, w2;
   for (int j=0; j<size; j++) {
-    pr_star2 = pr_star[j] * pr_star[j];
-    r2       = r[j] * r[j];
-    w2       = w[j] * w[j];
+    pr_star2 = SQ(pr_star[j]);
+    r2       = SQ(r[j]);
+    w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
     n1[j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
     n2[j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
     n4[j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
     n5[j]  = n4[j]*r2*w2;              /* (pr*)*(r Omg) */
   }
-    
+  
 #if (DEBUG)
   FILE* fp = fopen("qnc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
@@ -1042,17 +1051,30 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   }
 
   /** Solve the linear systems */
+  
+  /* Regge-Wheeler-Zerilli normalized amplitude. 
+     The ringdown coefficient refer to this normalization.
+     Nagar & Rezzolla, CQG 22 (2005) R167 */      
+  for (int k=0; k<KMAX; k++) {
+    double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
+    for (int j=0; j<size; j++) {
+      p1tmp[k][j] = h->ampli[k][j] * nlm;      
+    }
+  }
+
+  /* Matrix elements: waveform amplitude at all points */
   for (int k=0; k<KMAX; k++) {
     for (int j=0; j<size; j++) {
-      /* Matrix elements: waveform amplitude at all points */
-      m11[k][j] = n1[j]*A[k][j];
-      m12[k][j] = n2[j]*A[k][j];
-      p1tmp[k][j] = A[k][j];      
+      m11[k][j] = n1[j] * p1tmp[k][j];
+      m12[k][j] = n2[j] * p1tmp[k][j];
     }
-    /* Take FD derivatives */
+  }
+
+  /* Take FD derivatives */
+  for (int k=0; k<KMAX; k++) {
     D0(m11[k],dt,size, m21[k]);
     D0(m12[k],dt,size, m22[k]);
-    D0(A[k],dt,size, p2tmp[k]);
+    D0(p1tmp[k],dt,size, p2tmp[k]);
   }
 
 #if (DEBUG)
@@ -1066,7 +1088,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   double detM = 1.;
   for (int k=0; k<KMAX; k++) {
     
-    /* Computation of ai coefficients */
+    /* Computation of ai coefficients at Omega peak */
     P[0]     = max_A[k]  - p1tmp[k][jmax];
     P[1]     = max_dA[k] - p2tmp[k][jmax];
     
@@ -1079,7 +1101,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
     ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
     ai[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
     
-    /* Computation of bi coefficients */
+    /* Computation of bi coefficients at Omega peak */
     P[0]     = omg[k][jmax]   - max_omg[k];
     P[1]     = domg[k][jmax]  - max_domg[k];
     
@@ -1100,7 +1122,7 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   printf("a2 = %f\n",ai[1][1]);
   printf("b1 = %f\n",bi[1][0]);
   printf("b2 = %f\n",bi[1][1]);
-#endif    
+#endif
 
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
@@ -1111,14 +1133,59 @@ void eob_wav_hlmNQC_find_a1a2a3(const int size, Dynamics *dyn, Waveform_lm *h, W
   }
   
   /** Multiply waveform to NQC */
-  //CHECKME: RWZ normalization? Don't we need to re-introduce it here ???
   for (int k=0; k<KMAX; k++) {
     for (int j=0; j<size; j++) {
       h->ampli[k][j] *= hnqc->ampli[k][j];
-      h->phase[k][j] *= hnqc->phase[k][j];
+      h->phase[k][j] += hnqc->phase[k][j];
     }
   }
 
+  /*
+  //TODO: dump NQC coefs
+  //TODO: [main] input NQC pars, routine to using input NQC, and iterations and (cf. MATLAB code)
+  if (par_get_i("output_nqc_coefs")) {
+  char fname[STRLEN];
+  strcpy(fname, par_get_s("output_dir"));
+  strcat(fname, "nqc_coefs.txt");
+  fp = fopen(fname, "w");
+  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
+  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
+  par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
+  par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
+  fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
+  for (int k=0; k<KMAX; k++) {
+  fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
+  a[k][0], a[k][1], a[k][2], 
+  b[k][0], b[k][1], b[k][2], 
+  );
+  }
+  fclose(fp);  
+  }
+  */
+  
+  /** Free mem */
+  for (int k=0; k<KMAX; k++) {
+    free(omg[k]);
+    free(domg[k]);
+    free(m11[k]);
+    free(m12[k]);
+    free(m13[k]);
+    free(m21[k]);
+    free(m22[k]);
+    free(p1tmp[k]);
+    free(p2tmp[k]);
+  }
+  free(n1);
+  free(n2);
+  free(n3);
+  free(n4);
+  free(n5);
+  free(n6);
+  free(d_n4);
+  free(d_n5);
+  free(d2_n4);
+  free(d2_n5);
+  
 }
 
 /** NQC corrections to the RWZ multipolar waveform
@@ -1231,6 +1298,46 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   
 }
 
+
+/** Generic routine for NQC, input pars (not from fits) */
+//CURRENTLY UNUSED 
+void eob_wav_hlmNQC_gen(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
+			double *a1, double *a2, double *a3, double *b1, double *b2, double *b3,
+			Waveform_lm_t *psilmnqc)
+{      
+
+  /** n functions */
+  double n[KMAX][6];    
+  const int k22 = 1;   /* multipoles with special treatment */
+
+  for (int k = 0; k < KMAX; k++) {
+    for (int j = 0; j < 6; j++) {
+      n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+      n[k][1] = ddotr/(r*Omega*Omega);
+      n[k][2] = n[k][0]*prstar*prstar;
+      n[k][3] = prstar/(r*Omega);
+      n[k][4] = n[k][3]*cbrt(Omega*Omega);
+      n[k][5] = n[k][4]*prstar*prstar;
+    }    
+  }
+
+  int k = k22;
+  n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
+  n[k][1] = ddotr/(r*Omega*Omega);
+  n[k][2] = n[k][0]*prstar*prstar;
+  n[k][3] = prstar/(r*Omega);
+  /* n[k][4] = n[k][3]*cbrt(Omega*Omega); */
+  n[k][4] = n[k][3]*(r*Omega)*(r*Omega);
+  n[k][5] = n[k][4]*prstar*prstar;
+
+  /** NQC wave factor */
+  for (int k = 0; k < KMAX; k++) {
+    psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];; 
+    psilmnqc->phase[k] = b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5]; 
+  }
+
+}
+
 /** Ringdown waveform template */
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi)
 {  
@@ -1255,14 +1362,15 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
 
-  double *Omega = dyn->data[EOB_MOMG];
+  //double *Omega = dyn->data[EOB_MOMG];
+  double *Omega = dyn->data[EOB_OMGORB];// use this for spin?
   
   /* Note:
      dynsize < size , since the wf has been extended 
      but the two time arrays agree up to dynsize */
   const int dynsize = dyn->size; 
   const int size = hlm->size; 
-  double *t     = hlm->time;
+  double *t = hlm->time;
   
   if (DEBUG) {
     printf("Ringdown: size (dynamics) = %d\n",dynsize);
@@ -1288,10 +1396,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   if (index_pk >= dynsize-2) {
     if (VERBOSE) printf("No omega-maximum found.\n");
   }
-  if (index_pk > dynsize-4) {
-    errorexit("Not enough points to interpolate.\n");
-  }
-
+  //if (index_pk > dynsize-4) {
+  //  errorexit("Not enough points to interpolate.\n");
+  //}
+  //TODO: there's no interp at the moment.
+  
   double tOmg_pk = t[index_pk];
   if (DEBUG) printf("Ringdown: tOmg_pk  = %e\n",tOmg_pk);
   tOmg_pk *= ooMbh;
@@ -1330,7 +1439,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		  a1, a2, a3, a4, b1, b2, b3, b4, 
 		  sigma[0],sigma[1]);
-
+    
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
@@ -1351,7 +1460,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
       }
     }
   }
-
+  
   /** Compute Ringdown waveform for t>=tmatch */
   double t0, tm, psi[2];
   double Deltaphi[KMAX];
@@ -1359,8 +1468,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     /* Calculate Deltaphi */
     //t0 = t_lm[k][idx[k]] - tmrg[k]; 
     //printf("%d %d %e %e %e\n",k,idx[k],t0,t_lm[k][idx[k]],tmrg[k]);
+    //printf("%d %e %e %e %e %e %e %e %e\n", k, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k]);
     eob_wav_ringdown_template(t_lm[k][idx[k]], a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
     Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
+    //printf("%d %e %e\n", k, sigma[0][k], sigma[1][k]);
+    //printf("%d %e %e %e\n", k,Deltaphi[k], psi[1], hlm->phase[k][idx[k]]);
     /* Compute and attach ringdown */
     for (int j = idx[k]; j < size ; j++ ) {  
       tm = t_lm[k][j] - tmrg[k];

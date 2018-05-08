@@ -243,7 +243,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     dyn->pphi = pphi;
     dyn->prstar = prstar;
     dyn->Omg = Omg;
-    dyn->Omg_orb = Omg; //FIXME: This must be orbital!
+    dyn->Omg_orb = ooH*pphi*A*uc2/Heff_orb;
     dyn->H = H;
     dyn->E = E;
     dyn->Heff = Heff;
