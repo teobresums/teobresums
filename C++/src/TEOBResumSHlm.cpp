@@ -64,9 +64,9 @@ vector<gsl_complex> hlmNewt(const double r,
     
     /** Polynomials in nu */
     const double p1 = 1.;
-    const double p2 = sqrt(1.-4.*nu);                   /*(2,1), (3,3) & (3,1)*/
+    double p2 = sqrt(1.-4.*nu);                   /*(2,1), (3,3) & (3,1)*/
     const double p3 = (3.*nu-1.);
-    const double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);        /*(4,3), (4,1), (5,5), (5,3), (5,1) */
+    double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);        /*(4,3), (4,1), (5,5), (5,3), (5,1) */
     const double p5 = 1.-5.*nu+5.*nu2;
     const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
     const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
@@ -78,14 +78,14 @@ vector<gsl_complex> hlmNewt(const double r,
        This is not done for multipole with l>4 because no spinning information is included in the waveform. */
     if (spin_flag==true)
     {
-        const double p2 = 1;
-        const double p4 = 2.*nu-1;
+	p2 = 1;
+	p4 = 2.*nu-1;
     }
     	
     if (tidal_flag==true)
     {
-        const double p2 = 1.;
-        const double p4 = 2*nu-1;
+	p2 = 1.;
+	p4 = 2*nu-1;
     }
     
     int kmax = 35;

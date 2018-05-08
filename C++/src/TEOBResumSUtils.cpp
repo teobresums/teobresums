@@ -548,41 +548,38 @@ double radius0(double M, double f_start,double chi1,double chi2)
    done using the Newtonian Kepler's law */
   
 {
-  if (chi1<0 || chi2<0)
-    /* Quick fix to avoid f_min (by default 20 or 10Hz) to be too 
-       high when the total mass is large, e.g. for binaries 
-       of 100 + 100. If the default f_min is kept the dynamics
-       in this case starts in the plunge already and the code gives
-       and error that just comes from the choice of the initial radius.
-       Here we arbitrarily decide to increase the initial frequency
-       to be sure to have enough cycles of inspiral using starting
-       from the Schwarzschild frequency corresponding to r=8.
-       This is a simple way to avoid the problem. In the future one
-       will have to do this by monitoring the EOB LSO frequency, 
-       that always exists when the spins are anti-aligned with the
-       orbital angular momentum.
+	if (chi1<0 || chi2<0)
+	{
+	    /* Quick fix to avoid f_min (by default 20 or 10Hz) to be too 
+	       high when the total mass is large, e.g. for binaries 
+	       of 100 + 100. If the default f_min is kept the dynamics
+	       in this case starts in the plunge already and the code gives
+	       and error that just comes from the choice of the initial radius.
+	       Here we arbitrarily decide to increase the initial frequency
+	       to be sure to have enough cycles of inspiral using starting
+	       from the Schwarzschild frequency corresponding to r=8.
+	       This is a simple way to avoid the problem. In the future one
+	       will have to do this by monitoring the EOB LSO frequency, 
+	       that always exists when the spins are anti-aligned with the
+	       orbital angular momentum.
 
-       Note also that the intial radius r_0 is computed from the frequency
-       using the Newtonian Kepler's law, that is just an approximation in
-       the EOB case. This means that, even if one inputs a value f_start,
-       the intial starting frequency of the waveform is actually different.
+	       Note also that the intial radius r_0 is computed from the frequency
+	       using the Newtonian Kepler's law, that is just an approximation in
+	       the EOB case. This means that, even if one inputs a value f_start,
+	       the intial starting frequency of the waveform is actually different.
 
-       This is of no importance here: one should just make sure that there
-       are enough inspiral cycles in the waveform so to capture the full
-       transition from inspiral to plunge and avoid evident inaccuracies.*/ 
-    {
-      double fcirc_Schw = 0.04419417382415922/(M*MSUN_S*M_PI);
-      if (f_start >=fcirc_Schw)
-	{
-	  f_start = 0.5*fcirc_Schw;
+	       This is of no importance here: one should just make sure that there
+	       are enough inspiral cycles in the waveform so to capture the full
+	       transition from inspiral to plunge and avoid evident inaccuracies.*/ 
+    
+		double fcirc_Schw = 0.04419417382415922/(M*MSUN_S*M_PI);
+		if (f_start >=fcirc_Schw)
+		{
+			f_start = 0.5*fcirc_Schw;
+		}
+
 	}
-      else
-	{
-	}
-    }
-      else
-	{
-	}
+
 
   
     double x = (M*f_start*MSUN_S*2.*M_PI)/2.;
