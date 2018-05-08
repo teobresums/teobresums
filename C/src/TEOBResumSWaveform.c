@@ -1538,22 +1538,22 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   Waveform_lm_t hNewt;
   eob_wav_hlmNewt(rw,Omega,phi,nu, &hNewt);
 
-  /* if (usetidal) { */
+   if (usetidal) {
   /* Need to correct some of the m=odd modes. 
      The Newtonian factor has a different normalization when entering the point-mass 
      and the tidal term. The factor X12 = sqrt*1-4nu) is re-introduced in the point-mass term 
      in eob_wav_hlm() */
-  /* double vphi3 = gsl_pow_int(rw*Omega,3); */
-  /* hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3; /\* (2,1) *\/ */
-  /* hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /\* (3,1) *\/ */
-  /* hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /\* (3,3) *\/ */
-  /* double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5); */
-  /* hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5; /\* (4,1) *\/ */
-  /* hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; /\* (4,3) *\/ */
-  /* hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5; /\* (5,1) *\/ */
-  /* hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5; /\* (5,3) *\/ */
-  /* hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; /\* (5,5) *\/ */
-  /* } */
+	double vphi3 = gsl_pow_int(rw*Omega,3); 
+	hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3;
+	hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3;
+	hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
+	double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5); 
+	hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5;
+	 hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; 
+	hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5; 
+	hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5;
+	hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; 
+  }
 
   if (usespins) {
     /* Special treatment when spin is on because of the singularity in the sqrt(1-4*nu) 
