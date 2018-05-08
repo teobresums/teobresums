@@ -431,6 +431,7 @@ void eob_set_params(char *s, int n)
 
   // Set more as needed ...
   double c3  = eob_c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2);
+  if(usetidal) c3 =0.0;
   par_set_d("cN3LO", c3 );
   
   if (par_get_i("use_geometric_units")) {
