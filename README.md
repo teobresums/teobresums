@@ -2,7 +2,7 @@
 
 ## Authors
 
-Sarp Ackay, Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
+Sarp Akcay, Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
 
 ## License
 
