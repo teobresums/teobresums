@@ -223,8 +223,8 @@ vector<gsl_complex> hlmNewt(const double r,
     
     /** l=8 ------------------------------------------------------------------ */
     /** FIXME: higher l=8 terms to be implemented soon...*/
-    hlmNewt[27].dat[1] = pi - M[27];
-    hlmNewt[27].dat[0] = 131072./315.*sqrt(2.*pi/17017.) * pv78;
+    hlmNewt[34].dat[1] = pi - M[34];
+    hlmNewt[34].dat[0] = 131072./315.*sqrt(2.*pi/17017.) * pv78;
     
     hlmNewt[28].dat[1] = - M[28];
     hlmNewt[28].dat[0] = 0.;
@@ -244,8 +244,8 @@ vector<gsl_complex> hlmNewt(const double r,
     hlmNewt[33].dat[1] = - M[33];
     hlmNewt[33].dat[0] = 0.;
     
-    hlmNewt[34].dat[1] = - M[34];
-    hlmNewt[34].dat[0] = 0.;
+    hlmNewt[27].dat[1] = - M[27];
+    hlmNewt[27].dat[0] = 0.;
     
     return hlmNewt;
 }
