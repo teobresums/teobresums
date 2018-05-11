@@ -1,4 +1,4 @@
-# parfile for BBH q=1 nospin run 
+# parfile for BBH q=1 spins=0.7+0.7 run 
 # builds on default options
 
 use_geometric_units = 1 # use geometric units for I/O ?
