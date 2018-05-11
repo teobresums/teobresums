@@ -20,8 +20,8 @@
 
 #include "TEOBResumS.h"
 
-/** Fit of c3 
-    TEOBResumS paper Nagar et al. (2018) */
+/** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
+    Note: c3 = 0 with tides*/
 double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2)
 {  
   const double nu2 = nu*nu;
