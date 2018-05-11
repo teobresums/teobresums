@@ -22,28 +22,36 @@
 
 /** Fit of c3 
     REF ... */
-double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2) //, bool tidal_flag)
+double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2)
 {  
-  const double nu2 = nu*nu;
-  const double nu3 = nu2*nu;
+	const double nu2 = nu*nu;
+	const double nu3 = nu2*nu;
   /* equal-mass, equal-spin coefficients 
      NEW values used in the paper Nagar et al. The value
      in Eq. (12) was kept, by mistake, to c0 = 44.786477
      that is an old value obtained with Fitting_c3.m
   */
-  const double c0 =  44.822889;
-  const double n1 =  -1.879350;
-  const double n2 =   0.894242;
-  const double d1 =  -0.797702;
-  const double c3_eq = c0*(1. + n1*(a1+a2) + n2*(a1+a2)*(a1+a2))/(1.+d1*(a1+a2));
-  /* New fit: different functional form */
-  double cnu    = 1222.36;
-  double cnu2   = -12764.4;
-  double cnu3   =  36689.6;
-  double ca1_a2 = -358.086;
-  double c3_uneq = cnu*(a1+a2)*nu*sqrt(1.-4.*nu) + cnu2*(a1+a2)*nu2*sqrt(1.-4.*nu) + cnu3*(a1+a2)*nu3*sqrt(1.-4.*nu) + ca1_a2*(a1-a2)*nu2;
-  double c3 = c3_eq + c3_uneq;
-  return c3;
+	double c0 =  43.371638;
+        double n1 =  -1.174839;
+        double n2 =   0.354064;
+        double d1 =  -0.151961;
+	
+        double c3_eq = c0*(1. + n1*(a1+a2) + n2*(a1+a2)*(a1+a2))/(1.+d1*(a1+a2));
+
+
+	/**********************************************************/
+	/* New coefficient with the correct l=5 modes: 10/05/2018 */
+	/**********************************************************/
+	double cnu    =  929.579;
+        double cnu2   = -9178.87;
+        double cnu3   =  23632.3;
+        double ca1_a2 = -104.891;
+
+	double c3_uneq = cnu*(a1+a2)*nu*sqrt(1.-4.*nu) + cnu2*(a1+a2)*nu2*sqrt(1.-4.*nu) + cnu3*(a1+a2)*nu3*sqrt(1.-4.*nu) + ca1_a2*(a1-a2)*nu2;
+
+	double c3 = c3_eq + c3_uneq;
+
+	return c3;
 }
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
@@ -60,31 +68,22 @@ double eob_nqc_dtfit(const double chi, const double chi0)
 double eob_nqc_timeshift(double nu, double chi1)
 {
 
-  double DeltaT_nqc = 1.; /* standard choice inspired by test-particle results */  
+	double DeltaT_nqc;  
 
-  if (chi1 >= 0.8498) {
-    
-    /* Interpolating fit for Deltat_NQC. See Eq.(21) of arXiv:1506.08457 
-       This is a formula that was obtained in the equal-mass, equal-spin
-       case and promoted also to any other case where the spin on the larger
-       BH is larger than 0.8498. This is a guess to extrapolate the model
-       outside the domain of calibration */
-    
-    DeltaT_nqc = eob_nqc_dtfit(chi1,0.8498);
+	/* Additional time-shift only needed ONLY for large, negative, spins.
+        This change from 1.0 to 4.0 eliminates unphysical features in the
+        frequency related to the imperfect behavior of the NQC functions */
 
-  } 
+	if ((chi1 <-0.85) && (nu <= 14./225.))
+	{
+		DeltaT_nqc = 4.0;
+	}
+	else
+	{
+		DeltaT_nqc = 1.0; /* standard choice inspired by test-particle results */
+	}  
 
-  if ((chi1 <=-0.80) && (nu <= 8./81.)) {
-    
-    /* This condition was a simple hack to avoid unphysical features in the
-       modulus amplitude when one (or both) the spins are large and negative
-       and the mass ratio is large. This little modification in the location
-       of the NQC point guarantees that the determination of the NQC parameters
-       guarantees just a small perturbation of the non-NQC EOB waveform. The
-       iResum waveform will be robust enough that this hack will not be needed*/  
-    
-	DeltaT_nqc = 3.0;
-  }    
+  
   
   return DeltaT_nqc;  
 }
@@ -322,25 +321,19 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   const double nu2        = SQ(nu);
   const double nu3        = nu2*nu;
   const double aeff2      = SQ(aeff);
-  const double aeff3      = aeff2*aeff;
+  const double aeff3      = SQ(aeff2);
   const double af2        = SQ(af);
-  const double af3        = af2*af;
+  const double af3        = SQ(af2);
   const double aeff_omg2  = SQ(aeff_omg); 
-  const double aeff_omg3  = aeff_omg2*aeff_omg;
+  const double aeff_omg3  = SQ(aeff_omg2);
   const double aeff_omg4  = SQ(aeff_omg2);
   const double X12_2      = SQ(X12);
 
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
-  int modeon[KMAX];
-  for (int k=0; k<KMAX; k++) {
-    sigmar[k] = sigmai[k] = 0.;
-    a1[k] = a2[k] = a3[k] = a4[k] = 0.; 
-    b1[k] = b2[k] = b3[k] = b4[k] = 0.; 
-    modeon[k] = 0;
-  }
       
   const int usespins = par_get_i("use_spins");  
   
+  int k;
   const int k21 = 0;
   const int k22 = 1;
   const int k33 = 4;
@@ -390,25 +383,24 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     Domg[k44]    = -1.5342842283421341 *nu2 +   1.5224173843877831 *nu +  0.0897013049238634;
     Amrg[k44]    =  0.9438333992719329 *nu2 +  -1.0464153920266663 *nu +  0.2897769169572948;
     
-    /* sigma[k][0] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896; */
-    /* sigma[k][1] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367; */
-    sigmar[k21] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
-    sigmai[k21] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
+    for (k=0; k<KMAX; k++) {
+      sigmar[k] = 0.;
+      sigmai[k] = 0.;
+    }
 
-    sigmar[k22] = -0.364177*nu3 + 0.010951*nu2 - 0.010591*nu + 0.08896;
-    sigmai[k22] =  2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
+    k=k21;
+    //sigma[k][0] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
+    //sigma[k][1] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
+    sigmar[k] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
+    sigmai[k] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
 
-    sigmar[k33] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
-    sigmai[k33] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
+    k=k22;
+    sigmar[k] = -0.364177*nu3 + 0.010951*nu2 - 0.010591*nu + 0.08896;
+    sigmai[k] =  2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
 
-    /* sigmar[k44] =  0.; */
-    /* sigmai[k44] =  0.; */
-
-    /* which modes are on */
-    modeon[k21] = 1;
-    modeon[k22] = 1;
-    modeon[k33] = 1;
-    /* modeon[k44] = 1; */
+    k=k33;
+    sigmar[k] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
+    sigmai[k] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
     
   } else {
     
@@ -422,7 +414,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     double omega1_d    = -0.2358960279 * af3 + 1.3152369374 * af2 - 2.0764065380 * af + 1;
     omega1[k22]        =  0.3736716844 * (omega1_c/omega1_d);
     
-    /* alpha1 - real part (damping time) of the fundamental mode */
+        /* alpha1 - real part (damping time) of the fundamental mode */
     double alpha1_c    =  0.1211263886 * af3 + 0.7015835813 * af2 - 1.8226060896 * af + 1;
     double alpha1_d    =  0.0811633377 * af3 + 0.7201166020 * af2 - 1.8002031358 * af + 1;
     alpha1[k22]        =  0.0889623157 * (alpha1_c/alpha1_d);
@@ -480,29 +472,25 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     Domg[k22]      = omega1[k22] - Mbh*omgmx;
     
     /* renaming real & imaginary part of the QNM complex frequency sigma */
-    /* sigma[k22][0] = alpha1[k22]; */
-    /* sigma[k22][1] = omega1[k22]; */
+    //sigma[k22][0] = alpha1[k22];
+    //sigma[k22][1] = omega1[k22];
     sigmar[k22] = alpha1[k22];
     sigmai[k22] = omega1[k22];
-
-    /* which modes are on */
-    modeon[k22] = 1;
-    
+  
   }
 
-  for (int k=0; k<KMAX; k++) {
-    if (modeon[k]) {
-      c2A[k] = 0.5*alpha21[k];
-      double cosh_c3A = cosh(c3A[k]);  
-      a1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
-      a2[k] = c2A[k];
-      a3[k] = c3A[k];
-      a4[k] = Amrg[k] - a1[k] * tanh(c3A[k]);
-      b2[k] = alpha21[k];
-      b3[k] = c3phi[k];
-      b4[k] = c4phi[k];
-      b1[k] = Domg[k] * (1. +c3phi[k]+c4phi[k]) / (b2[k]*(c3phi[k] + 2.*c4phi[k]));
-    }
+  double cosh_c3A;
+  for (k=0; k<KMAX; k++) {
+    c2A[k] = 0.5*alpha21[k];
+    cosh_c3A = cosh(c3A[k]);  
+    a1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
+    a2[k] = c2A[k];
+    a3[k] = c3A[k];
+    a4[k] = Amrg[k] - a1[k] * tanh(c3A[k]);
+    b2[k] = alpha21[k];
+    b3[k] = c3phi[k];
+    b4[k] = c4phi[k];
+    b1[k] = Domg[k] * (1+c3phi[k]+c4phi[k]) / (b2[k]*(c3phi[k] + 2.*c4phi[k]));
   }
   
 }
