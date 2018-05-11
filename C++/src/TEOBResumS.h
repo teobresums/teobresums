@@ -23,7 +23,8 @@
 //extern "C" {
 //#endif
 
-#define DEBUG 0
+#define DEBUG (0)
+#define BNS_OUTPUTMODES_EXIT (0) /* compile with this option for rapid PE with BNS */
 
 #include <vector>
 #include "cmath"

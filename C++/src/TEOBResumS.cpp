@@ -410,8 +410,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
      for Qomg computation. Output of the pure RK evolution.
     **********************************************************/
 
-    if (DEBUG) 
-    {
+#if (DEBUG) 
         char   outputr[256]   = "h22_inspl.dat";	
         std::FILE* waveform_preint   = std::fopen(outputr, "w");
         int j                 = 0;
@@ -422,8 +421,31 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             std::fprintf(waveform_preint, "%20.12f\t%20.12f\t%20.12f\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
         }
         std::fclose(waveform_preint);
-	}
+#endif
     
+#if (BNS_OUTPUTMODES_EXIT)
+	/* MODIFS FOR USED IN RAPID PE OF BNS:
+	   output the modes and exit. */
+	char   outputr[256]   = "hlm_insp.dat";
+	std::FILE* waveform_preint   = std::fopen(outputr, "w");
+	int j                 = 0;
+	int lm_index          = 0;
+	int Nw                 = hlm_ampl[1].size();
+	
+	for (j=0;j<Nw;j++)
+	  {
+	    std::fprintf(waveform_preint, "%20.12f\t",t_vec[j]);
+	    for (lm_index=0;lm_index<35;lm_index++)
+	      {
+		std::fprintf(waveform_preint, "%20.12f\t %20.12f\t ", hlm_ampl[lm_index][j], hlm_phase[lm_index][j]);
+	      }
+	    std::fprintf(waveform_preint, "\n");
+	  }
+	std::fclose(waveform_preint);
+	/* BYE BYE */
+	exit(0);      
+#endif
+
     /** Interpolate quantities on a grid of fixed spacing dt */
     grid_length = (int)((t_vec.back()-t_vec[0])/dt + 1);
     vector<double> t_vecg(grid_length);
@@ -442,7 +464,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
     vector<double> MOmg_vecg      = MOmg_vec;
     vector<double> pph_vecg       = pph_vec;
     vector<double> prstar_vecg    = prstar_vec;
-    vector<double> ddotr_vecg     = ddotr_vec;
+    vector<double> ddotr_vecg     = ddotr_vec; 
     vector<double> OmgOrb_vecg    = Omg_orb_vec;
     if (params.flags.tidal == 0)
     {
