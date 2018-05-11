@@ -844,21 +844,45 @@ double c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, 
 	/*------------------------------------
           equal-mass, equal-spin coefficients
 	  ------------------------------------*/
+	// OLD fits with the incorrect treatment of the l=5, m=odd modes
+	// Before 10/05/2018
+	// -- TO BE DELETED EVENTUALLY
+	/*
         double c0 =  44.822889;
         double n1 =  -1.879350;
         double n2 =   0.894242;
         double d1 =  -0.797702;
+	*/
+	/**********************************************************/
+	/* New coefficient with the correct l=5 modes: 10/05/2018 */
+	/**********************************************************/
+	double c0 =  43.371638;
+        double n1 =  -1.174839;
+        double n2 =   0.354064;
+        double d1 =  -0.151961;
+	
+        double c3_eq = c0*(1. + n1*(a1+a2) + n2*(a1+a2)*(a1+a2))/(1.+d1*(a1+a2));
 
 	/*----------------------------------------
           unequal-mass, unequal-spin coefficients
 	  ----------------------------------------*/
-        double c3_eq = c0*(1. + n1*(a1+a2) + n2*(a1+a2)*(a1+a2))/(1.+d1*(a1+a2));
-        
+	// OLD fits with the incorrect treatment of the l=5, m=odd modes
+	// Before 10/05/2018
+	// -- TO BE DELETED EVENTUALLY
+	/*
         double cnu    = 1222.36;
         double cnu2   = -12764.4;
         double cnu3   =  36689.6;
         double ca1_a2 = -358.086;
-        
+	*/
+	/**********************************************************/
+	/* New coefficient with the correct l=5 modes: 10/05/2018 */
+	/**********************************************************/
+	double cnu    =  929.579;
+        double cnu2   = -9178.87;
+        double cnu3   =  23632.3;
+        double ca1_a2 = -104.891;
+	        
         double c3_uneq = cnu*(a1+a2)*nu*sqrt(1.-4.*nu) + cnu2*(a1+a2)*nu2*sqrt(1.-4.*nu) + cnu3*(a1+a2)*nu3*sqrt(1.-4.*nu) + ca1_a2*(a1-a2)*nu2;
         
         c3 = c3_eq + c3_uneq;
