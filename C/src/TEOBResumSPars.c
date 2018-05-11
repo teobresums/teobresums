@@ -429,7 +429,7 @@ void eob_set_params(char *s, int n)
   par_set_d("C_Q1",C_Q1);
   par_set_d("C_Q2",C_Q2);
 
-  // Set more as needed ...
+  /** Set more as needed ... */
   double c3 = 0.;
   if(usetidal) c3 = 0.0;
   else         c3 = eob_c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2); 
