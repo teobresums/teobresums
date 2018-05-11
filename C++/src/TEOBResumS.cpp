@@ -414,9 +414,9 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         char   outputr[256]   = "h22_inspl.dat";	
         std::FILE* waveform_preint   = std::fopen(outputr, "w");
         int j                 = 0;
-        int N                 = hlm_ampl[1].size();
+        int Ntmp                 = hlm_ampl[1].size();
         
-        for (j=0;j<N;j++)
+        for (j=0;j<Ntmp;j++)
         {
             std::fprintf(waveform_preint, "%20.12f\t%20.12f\t%20.12f\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
         }
