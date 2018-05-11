@@ -68,22 +68,17 @@ double eob_nqc_dtfit(const double chi, const double chi0)
 double eob_nqc_timeshift(double nu, double chi1)
 {
 
-	double DeltaT_nqc;  
-
-	/* Additional time-shift only needed ONLY for large, negative, spins.
-        This change from 1.0 to 4.0 eliminates unphysical features in the
-        frequency related to the imperfect behavior of the NQC functions */
-
-	if ((chi1 <-0.85) && (nu <= 14./225.))
-	{
-		DeltaT_nqc = 4.0;
-	}
-	else
-	{
-		DeltaT_nqc = 1.0; /* standard choice inspired by test-particle results */
-	}  
-
+  double DeltaT_nqc = 1.0;  
   
+  /* Additional time-shift only needed ONLY for large, negative, spins.
+     This change from 1.0 to 4.0 eliminates unphysical features in the
+     frequency related to the imperfect behavior of the NQC functions */
+  
+  if ((chi1 <-0.85) && (nu <= 14./225.)) {
+    DeltaT_nqc = 4.0;
+  } else {
+    DeltaT_nqc = 1.0; /* standard choice inspired by test-particle results */
+  }  
   
   return DeltaT_nqc;  
 }
