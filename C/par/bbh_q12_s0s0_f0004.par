@@ -14,3 +14,4 @@ compute_LSO = 1 # calculate LSO ?
 ode_timestep = "adaptive"
 ode_stop_at_radius = 1. # rLR = 1.81...
 ringdown_extend_array = 800
+output_dir = "./bbh_q12_s0s0_f0004/" # output dir
