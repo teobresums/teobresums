@@ -32,3 +32,21 @@ time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -f_min 10 -lambda1_l2 
 
 time ./TEOBResumS.x -m1 1.35 -m2 1.35 -chi1 0.1 -chi2 0.1 -f_min 10 -lambda1_l2 1531 -lambda2_l2 1531 -tidal 1 -Yagi_fits 1 -multipoles -lm 1
 
+#———————————————————————————————————————————————————————————————————————————————————
+## Worst match with SEOBNRv4T
+#———————————————————————————————————————————————————————————————————————————————————
+time ./TEOBResumS.x -m1 2.99173181168 -m2  1.54656708774  -chi1 -0.00403135733793 -chi2 0.104676230478 -f_min 40 -lambda1_l2 1595.82370308 -lambda2_l2 410.054257357 -Yagi_fits 1 -tidal 1 -multipoles -lm 1 
+
+#———————————————————————————————————————————————————————————————————————————————————
+## Same as above, but changing initial frequency to be consistent with SEOBNRv4T ID
+#———————————————————————————————————————————————————————————————————————————————————
+time ./TEOBResumS.x -m1 2.99173181168 -m2  1.54656708774  -chi1 -0.00403135733793 -chi2 0.104676230478 -f_min 39.9215 -lambda1_l2 1595.82370308 -lambda2_l2 410.054257357 -Yagi_fits 1 -tidal 1 -multipoles -lm 1 
+
+
+
+
+
+
+
+
+
