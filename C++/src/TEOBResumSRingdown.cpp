@@ -555,9 +555,9 @@ int ringdown(TEOBResumParams params, vector<vector<double> > &t_vec, vector<doub
     int k22 = 1;
     int k33 = 4;
     
-    /* Additional time-shift only needed ONLY for large, negative, spins.
-       This change from 1.0 to 4.0 eliminates unphysical features in the
-       frequency related to the imperfect behavior of the NQC functions */
+    /*Additional usual time-shift for matching/NQC calculation with respect to the
+      peak of the pure orbital frequency. It is 1 always, except for very large mass
+      ratios and high, negative, spins */
 
     if ((chi1 <-0.85) && (nu <= 14./225.))
       {

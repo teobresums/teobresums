@@ -1197,11 +1197,32 @@ vector<vector<gsl_complex> > find_a1a2a3(
     double tOmgOrb_pk = T[Omgmax_index];
     double DeltaT_nqc = 0.;
 
+    /*Additional usual time-shift for matching/NQC calculation with respect to the
+      peak of the pure orbital frequency. It is 1 always, except for very large mass
+      ratios and high, negative, spins */
+
+    if ((chi1 <-0.85) && (nu <= 14./225.))
+      {
+	DeltaT_nqc = 4.0;
+      }
+    else
+    {
+        DeltaT_nqc = 1.0;
+    }
+
+    /****************************************************************************
+     All this commented block belongs to pre May 10, 2018. It was the hack needed
+     from the very beginning, 2013, to account for high-positive spin. This was
+     actually related to a factor X1-X2 missing in the l=5, m=odd modes. Fixed
+     this, all this is now useless, though it needs a new representation of c3
+     - THIS COMMENTED BLOCK TO BE DELETED
+     ****************************************************************************
+    
     /* Additional time-shift needed when the largest object  is  highly spinning
        and/or for high, anti-aligned spins. Quick hack that will be removed once
        the iResum waveform will be available */
-    if (chi1 >= 0.8498)
-      {
+    //if (chi1 >= 0.8498)
+    //  {
        
 	/* Interpolating fit for Deltat_NQC. See Eq.(21) of arXiv:1506.08457 
 	   This is a formula that was obtained in the equal-mass, equal-spin
@@ -1209,24 +1230,26 @@ vector<vector<gsl_complex> > find_a1a2a3(
 	   BH is larger than 0.8498. This is a guess to extrapolate the model
 	   outside the domain of calibration */
       
-        DeltaT_nqc = dtnqc_fit(chi1,0.8498);
-      }
-    else if ((chi1 <=-0.80) && (nu <= 8./81.))
+    //  DeltaT_nqc = dtnqc_fit(chi1,0.8498);
+    //  }
+    //else if ((chi1 <=-0.80) && (nu <= 8./81.))
       /* This condition was a simple hack to avoid unphysical features in the
          modulus amplitude when one (or both) the spins are large and negative
          and the mass ratio is large. This little modification in the location
          of the NQC point guarantees that the determination of the NQC parameters
          guarantees just a small perturbation of the non-NQC EOB waveform. The
          iResum waveform will be robust enough that this hack will not be needed*/  
-      {
-	DeltaT_nqc = 3.0;
-      }    
-    else
+    //  {
+    //	DeltaT_nqc = 3.0;
+    //  }    
+    //else
       /* standard choice inspired by test-particle results */  
-      {
-        DeltaT_nqc = 1.;
-      }
-     
+    //  {
+    //    DeltaT_nqc = 1.;
+    //  }
+    //=============================================================================
+
+    
     double tNQC = tOmgOrb_pk - DeltaT_nqc;
     if (DEBUG)
     {
