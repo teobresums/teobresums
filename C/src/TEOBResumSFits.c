@@ -21,37 +21,31 @@
 #include "TEOBResumS.h"
 
 /** Fit of c3 
-    REF ... */
+    TEOBResumS paper Nagar et al. (2018) */
 double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2)
 {  
-	const double nu2 = nu*nu;
-	const double nu3 = nu2*nu;
-  /* equal-mass, equal-spin coefficients 
-     NEW values used in the paper Nagar et al. The value
-     in Eq. (12) was kept, by mistake, to c0 = 44.786477
-     that is an old value obtained with Fitting_c3.m
-  */
-	double c0 =  43.371638;
-        double n1 =  -1.174839;
-        double n2 =   0.354064;
-        double d1 =  -0.151961;
+  const double nu2 = nu*nu;
+  const double nu3 = nu2*nu;
+  const double X12 = sqrt(1.-4.*nu);
+  const double a12 = a1+a2;
+    
+  /* Equal-mass, equal-spin coefficients */
+  const double c0 =  43.371638;
+  const double n1 =  -1.174839;
+  const double n2 =   0.354064;
+  const double d1 =  -0.151961;
 	
-        double c3_eq = c0*(1. + n1*(a1+a2) + n2*(a1+a2)*(a1+a2))/(1.+d1*(a1+a2));
-
-
-	/**********************************************************/
-	/* New coefficient with the correct l=5 modes: 10/05/2018 */
-	/**********************************************************/
-	double cnu    =  929.579;
-        double cnu2   = -9178.87;
-        double cnu3   =  23632.3;
-        double ca1_a2 = -104.891;
-
-	double c3_uneq = cnu*(a1+a2)*nu*sqrt(1.-4.*nu) + cnu2*(a1+a2)*nu2*sqrt(1.-4.*nu) + cnu3*(a1+a2)*nu3*sqrt(1.-4.*nu) + ca1_a2*(a1-a2)*nu2;
-
-	double c3 = c3_eq + c3_uneq;
-
-	return c3;
+  const double c3_eq = c0*(1. + n1*a12 + n2*a12*a12)/(1.+d1*a12);
+  
+  /* Coefficients 10/05/2018 */
+  const double cnu    =  929.579;
+  const double cnu2   = -9178.87;
+  const double cnu3   =  23632.3;
+  const double ca1_a2 = -104.891;
+  
+  const double c3_uneq = cnu*a12*nu*X12 + cnu2*a12*nu2*X12 + cnu3*a12*nu3*X12 + ca1_a2*(a1-a2)*nu2;
+  
+  return c3_eq + c3_uneq;
 }
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
