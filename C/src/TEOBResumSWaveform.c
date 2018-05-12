@@ -1399,7 +1399,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   //if (index_pk > dynsize-4) {
   //  errorexit("Not enough points to interpolate.\n");
   //}
-  //TODO: there's no interp at the moment.
+  //TODO: there's no max to interp at the moment.
   
   double tOmg_pk = t[index_pk];
   if (DEBUG) printf("Ringdown: tOmg_pk  = %e\n",tOmg_pk);
@@ -1466,10 +1466,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   double Deltaphi[KMAX];
   for (int k = 0; k < KMAX; k++) {
     /* Calculate Deltaphi */
-    //t0 = t_lm[k][idx[k]] - tmrg[k]; 
+    t0 = t_lm[k][idx[k]] - tmrg[k]; 
     //printf("%d %d %e %e %e\n",k,idx[k],t0,t_lm[k][idx[k]],tmrg[k]);
-    //printf("%d %e %e %e %e %e %e %e %e\n", k, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k]);
-    eob_wav_ringdown_template(t_lm[k][idx[k]], a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+    //printf("%d %e %e %e %e %e %e %e %e %e %e\n", k, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k]);
+    //eob_wav_ringdown_template(t_lm[k][idx[k]], a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
     Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
     //printf("%d %e %e\n", k, sigma[0][k], sigma[1][k]);
     //printf("%d %e %e %e\n", k,Deltaphi[k], psi[1], hlm->phase[k][idx[k]]);

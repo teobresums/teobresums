@@ -310,25 +310,36 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   const double nu2        = SQ(nu);
   const double nu3        = nu2*nu;
   const double aeff2      = SQ(aeff);
-  const double aeff3      = SQ(aeff2);
+  const double aeff3      = aeff2*aeff;
   const double af2        = SQ(af);
-  const double af3        = SQ(af2);
+  const double af3        = af2*af;
   const double aeff_omg2  = SQ(aeff_omg); 
-  const double aeff_omg3  = SQ(aeff_omg2);
+  const double aeff_omg3  = aeff_omg2*aeff_omg;
   const double aeff_omg4  = SQ(aeff_omg2);
   const double X12_2      = SQ(X12);
 
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
       
   const int usespins = par_get_i("use_spins");  
-  
-  int k;
+
+  int modeon[KMAX];
   const int k21 = 0;
   const int k22 = 1;
   const int k33 = 4;
   const int k44 = 8;
-    
+ 
+  for (int k=0; k<KMAX; k++) {
+    modeon[k] = 0; /* off */
+    sigmar[k] = sigmai[k] = 0.;
+    a1[k] = a2[k] = a3[k] = a4[k] = 0.;
+    b1[k] = b2[k] = b3[k] = b4[k] = 0.;
+  }
+
   if (!(usespins)) {
+
+    modeon[k21]=1;
+    modeon[k22]=1;
+    modeon[k33]=1;
     
     /** Last updates: 05/09/2017 from CoM extrapolated SXS data */
     
@@ -364,34 +375,28 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     
     // l=4 ------------------------------------------------------------------
     /* (l=4,m=4)*/
-    alpha21[k44] = -0.3991680748908423 *nu2 +   0.0287698202159666 *nu +  0.1880112530796091;
-    alpha1[k44]  = -0.2003781755488581 *nu2 +   0.0171888841352427 *nu +  0.0930836242032652;
-    c3A[k44]     =  3.1899853343683140 *nu  +  -0.4131730594856833;
-    c3phi[k44]   = 31.5753575286023747 *nu  +  -1.0375600524681363;
-    c4phi[k44]   = 25.4170586178559716 *nu  +  -0.4151371540505313;
-    Domg[k44]    = -1.5342842283421341 *nu2 +   1.5224173843877831 *nu +  0.0897013049238634;
-    Amrg[k44]    =  0.9438333992719329 *nu2 +  -1.0464153920266663 *nu +  0.2897769169572948;
+    /* alpha21[k44] = -0.3991680748908423 *nu2 +   0.0287698202159666 *nu +  0.1880112530796091; */
+    /* alpha1[k44]  = -0.2003781755488581 *nu2 +   0.0171888841352427 *nu +  0.0930836242032652; */
+    /* c3A[k44]     =  3.1899853343683140 *nu  +  -0.4131730594856833; */
+    /* c3phi[k44]   = 31.5753575286023747 *nu  +  -1.0375600524681363; */
+    /* c4phi[k44]   = 25.4170586178559716 *nu  +  -0.4151371540505313; */
+    /* Domg[k44]    = -1.5342842283421341 *nu2 +   1.5224173843877831 *nu +  0.0897013049238634; */
+    /* Amrg[k44]    =  0.9438333992719329 *nu2 +  -1.0464153920266663 *nu +  0.2897769169572948; */
     
-    for (k=0; k<KMAX; k++) {
-      sigmar[k] = 0.;
-      sigmai[k] = 0.;
-    }
-
-    k=k21;
     //sigma[k][0] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
     //sigma[k][1] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
-    sigmar[k] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
-    sigmai[k] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
+    sigmar[k21] = -0.208936*nu3 - 0.028103*nu2 - 0.005383*nu + 0.08896;
+    sigmai[k21] =  0.733477*nu3 + 0.188359*nu2 + 0.220659*nu + 0.37367;
 
-    k=k22;
-    sigmar[k] = -0.364177*nu3 + 0.010951*nu2 - 0.010591*nu + 0.08896;
-    sigmai[k] =  2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
+    sigmar[k22] = -0.364177*nu3 + 0.010951*nu2 - 0.010591*nu + 0.08896;
+    sigmai[k22] =  2.392808*nu3 + 0.051309*nu2 + 0.449425*nu + 0.37365;
 
-    k=k33;
-    sigmar[k] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
-    sigmai[k] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
+    sigmar[k33] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
+    sigmai[k33] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
     
   } else {
+
+    modeon[k22]=1;
     
     /** Setting up coefficients from the phenomenological description of the ringdown.
 	For notation: Damour&Nagar, PRD 90 (2015), 024054 and Del Pozzo & Nagar, PRD 95 (2017), 124034
@@ -468,18 +473,19 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   
   }
 
-  double cosh_c3A;
-  for (k=0; k<KMAX; k++) {
-    c2A[k] = 0.5*alpha21[k];
-    cosh_c3A = cosh(c3A[k]);  
-    a1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
-    a2[k] = c2A[k];
-    a3[k] = c3A[k];
-    a4[k] = Amrg[k] - a1[k] * tanh(c3A[k]);
-    b2[k] = alpha21[k];
-    b3[k] = c3phi[k];
-    b4[k] = c4phi[k];
-    b1[k] = Domg[k] * (1+c3phi[k]+c4phi[k]) / (b2[k]*(c3phi[k] + 2.*c4phi[k]));
+  for (int k=0; k<KMAX; k++) {
+    if (modeon[k]) {
+      c2A[k] = 0.5*alpha21[k];
+      double cosh_c3A = cosh(c3A[k]);  
+      a1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
+      a2[k] = c2A[k];
+      a3[k] = c3A[k];
+      a4[k] = Amrg[k] - a1[k] * tanh(c3A[k]);
+      b2[k] = alpha21[k];
+      b3[k] = c3phi[k];
+      b4[k] = c4phi[k];
+      b1[k] = Domg[k] * (1+c3phi[k]+c4phi[k]) / (b2[k]*(c3phi[k] + 2.*c4phi[k]));
+    }
   }
   
 }
