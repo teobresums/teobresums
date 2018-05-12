@@ -157,12 +157,29 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax)
 {
   const int i = 0;
   double xmax = x0;
+  double d1f = 0., d2f = 0.;
   if (n==3) {
-    double d2 = (f[i-1]-2*f[i]+f[i+1]); //TODO: check != 0 
-    xmax += 0.5*dx*(f[i-1]-f[i+1])/d2;
-    if (fmax!=NULL)
-      *fmax = -0.125*( SQ(f[i-1]) + SQ((-4.*f[i]+f[i+1])) - 2.*f[i-1]*(-4.*f[i]+f[i+1]) )/d2;
-  } errorexit("Implemented only n=3");
+    d1f = 0.5*(f[i+1]-f[i-1]);
+    d2f = (f[i-1]-2*f[i]+f[i+1]); 
+  } else if (n==5) {
+    const double oo12 = 0.08333333333333333;
+    d1f = (8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2])*oo12;
+    d2f = (-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]))*oo12;
+  } errorexit("Implemented only n = 3,5");    
+  if (d2f != 0.) 
+    xmax -= dx*d1f/d2f;
+  /* Eval function */
+  if (fmax!=NULL) {
+    if (n==3) {
+      *fmax = ( -((dx + x0 - xmax)*(-x0 + xmax)*f[-1 + i])
+		+ (dx - x0 + xmax)*(2*(dx + x0 - xmax)*f[i] + (-x0 + xmax)*f[1 + i]) );
+      *fmax /= (2.*SQ(dx));
+    } else if (n==5) {
+      *fmax = ((dx + x0 - xmax)*(2*dx + x0 - xmax)*(-x0 + xmax)*(dx - x0 + xmax)*f[-2 + i]
+	       + (2*dx - x0 + xmax)*(-4*(dx + x0 - xmax)*(2*dx + x0 - xmax)*(-x0 + xmax)*f[-1 + i]+(dx - x0 + xmax)*(6*(dx + x0 - xmax)*(2*dx + x0 - xmax)*f[i] + (-x0 + xmax)*(4*(2*dx + x0 - xmax)*f[1 + i]- (dx + x0 - xmax)*f[2 + i]))));
+      *fmax /= (24.*pow(dx,4));
+    }
+  }
   return xmax;
 }
 
