@@ -152,6 +152,20 @@ double interp1d (const int order, double xx, int nx, double *f, double *x)
   return( ff );
 }
 
+/** Find max location by poynomial interpolation around x0 (uniform grid) */
+double find_max (const int n, double dx, double x0, double *f, double *fmax)
+{
+  const int i = 0;
+  double xmax = x0;
+  if (n==3) {
+    double d2 = (f[i-1]-2*f[i]+f[i+1]); //TODO: check != 0 
+    xmax += 0.5*dx*(f[i-1]-f[i+1])/d2;
+    if (fmax!=NULL)
+      *fmax = -0.125*( SQ(f[i-1]) + SQ((-4.*f[i]+f[i+1])) - 2.*f[i-1]*(-4.*f[i]+f[i+1]) )/d2;
+  } errorexit("Implemented only n=3");
+  return xmax;
+}
+
 /** Factorial */
 double fact(int n)
 {
