@@ -314,6 +314,20 @@ int D0_x_2(double *f, double *x, int n, double *df)
   return OK;
 }
 
+/** Trapezoidal rule */
+double cumtrapz(double *f, double *x, const int n, double *sum)
+{
+  sum[0] = 0.;
+  if (x != NULL) {
+    for (int i=1; i < n; i++) 
+      sum[i] = sum[i-1] + 0.5*(x[i] - x[i-1])*(f[i] + f[i-1]);
+  } else {
+    for (int i=1; i < n; i++) 
+      sum[i] = sum[i-1] + 0.5*(f[i] + f[i-1]);
+  }
+  return sum[n-1];
+}
+
 /** This routine sets a 0/1 mask for the multipolar linear index */
 void set_multipolar_idx_mask(int *kmask, int n)
 {
