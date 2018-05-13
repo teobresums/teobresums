@@ -328,6 +328,55 @@ double cumtrapz(double *f, double *x, const int n, double *sum)
   return sum[n-1];
 }
 
+/** Third-order polynomial integration */
+double cumint3(double *f, double *x, const int n, double *sum)
+{
+  double xe[n+2], fe[n+2];
+  double x0[n-1],x1[n-1],x2[n-1],x3[n-1];
+  double f0[n-1],f1[n-1],f2[n-1],f3[n-1];
+  double a,b,c,d,e,h,g,z;
+  const double oo12 = 0.08333333333333333;
+  
+  for (int i=1; i < n+1; i++) {
+    xe[i] = x[i-1];
+    fe[i] = f[i-1];
+  }
+  xe[0] = x[3];
+  xe[n+1] = x[n-4];
+  fe[0] = f[3];
+  fe[n+1] = f[n-4];
+    
+  for (int i=0; i < n-1; i++) {
+    x0[i] = xe[i];
+    x1[i] = xe[i+1];
+    x2[i] = xe[i+2];
+    x3[i] = xe[i+3];
+  }
+  for (int i=0; i < n-1; i++) {
+    f0[i] = fe[i];
+    f1[i] = fe[i+1];
+    f2[i] = fe[i+2];
+    f3[i] = fe[i+3];
+  }
+  
+  /* z is the integral from x1 to x2 of a cubic
+     polynomial running through (x0,y0),(x1,y1),(x2,y2),(x3,y3) */
+  sum[0] = 0.;
+  for (int i=0; i < n-1; i++) {
+    a = x1[i]-x0[i];
+    b = x2[i]-x1[i];
+    c = x3[i]-x2[i];
+    d = f1[i]-f0[i];
+    e = f2[i]-f1[i];
+    h = f3[i]-f2[i];
+    g = 0.5*(f1[i]+f2[i]);
+    z = b*g + oo12*b*b*(c*b*(2*c+b)*(c+b)*d-a*c*(c-a)*(2*c+2*a+3*b)*e-a*b*(2*a+b)*(a+b)*h)/(a*c*(a+b)*(c+b)*(c+a+b));
+    sum[i+1] = sum[i] + z;
+  }
+
+  return sum[n-1];
+}
+
 /** This routine sets a 0/1 mask for the multipolar linear index */
 void set_multipolar_idx_mask(int *kmask, int n)
 {
