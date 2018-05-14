@@ -332,8 +332,8 @@ double cumtrapz(double *f, double *x, const int n, double *sum)
 double cumint3(double *f, double *x, const int n, double *sum)
 {
   double xe[n+2], fe[n+2];
-  double x0[n-1],x1[n-1],x2[n-1],x3[n-1];
-  double f0[n-1],f1[n-1],f2[n-1],f3[n-1];
+  double *x0,*x1,*x2,*x3;
+  double *f0,*f1,*f2,*f3;
   double a,b,c,d,e,h,g,z;
   const double oo12 = 0.08333333333333333;
   
@@ -345,22 +345,17 @@ double cumint3(double *f, double *x, const int n, double *sum)
   xe[n+1] = x[n-4];
   fe[0] = f[3];
   fe[n+1] = f[n-4];
-    
-  for (int i=0; i < n-1; i++) {
-    x0[i] = xe[i];
-    x1[i] = xe[i+1];
-    x2[i] = xe[i+2];
-    x3[i] = xe[i+3];
-  }
-  for (int i=0; i < n-1; i++) {
-    f0[i] = fe[i];
-    f1[i] = fe[i+1];
-    f2[i] = fe[i+2];
-    f3[i] = fe[i+3];
-  }
+
+  x0 = &xe[0];
+  x1 = &xe[1];
+  x2 = &xe[2];  
+  x3 = &xe[3];
+
+  f0 = &fe[0];
+  f1 = &fe[1];
+  f2 = &fe[2];  
+  f3 = &fe[3];
   
-  /* z is the integral from x1 to x2 of a cubic
-     polynomial running through (x0,y0),(x1,y1),(x2,y2),(x3,y3) */
   sum[0] = 0.;
   for (int i=0; i < n-1; i++) {
     a = x1[i]-x0[i];
