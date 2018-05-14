@@ -41,6 +41,11 @@ use_speedytail = 1 # use special routine to speed up tail computation ?
 
 interp_uniform_grid = 0 # interpolate on uniform grid ?
 
+postadiabatic_dynamics = "no"
+postadiabatic_dynamics_N = 6 # post-adiabatic order
+postadiabatic_dynamics_size = 1000 # grid size 
+postadiabatic_dynamics_stop = "yes" # stop after post-adiabatic dynamics
+
 compute_LR = 1 # calculate LR ?
 compute_LSO = 1 # calculate LSO ?
 compute_LR_guess = 3.
