@@ -50,12 +50,10 @@ double Eulerlog(const double x,const int m)
 /** Spline interpolation with GSL routines */
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
-  int k;
-  double yi_pt;
   gsl_interp_accel *acc = gsl_interp_accel_alloc ();
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
   gsl_spline_init (spline, t, y, n);
-  for (k = 0; k < ni; k++) {
+  for (int k = 0; k < ni; k++) {
     yi[k] = gsl_spline_eval (spline, ti[k], acc);
   }
   gsl_spline_free (spline);
