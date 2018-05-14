@@ -83,20 +83,7 @@ int main (int argc, char* argv[])
   }
 
   //TODO: CHECK PAR RANGES AND FIX PARAMETERS
-
-  const int chunk = par_get_i("size");
-  int size = chunk; /* note: size can vary */
-
-  /** Alloc memory for dynamics and multipolar waveform */
-  Dynamics *dyn;
-  Waveform_lm *hlm; /* h_lm */ 
-  Waveform_lm_t *hlm_t;
-  Waveform_lm *hlm_nqc; /* NQC */
-
-  Dynamics_alloc (&dyn, size, "dyn"); 
-  Waveform_lm_alloc (&hlm, size, "hlm"); 
-  Waveform_lm_t_alloc (&hlm_t);
-
+  
   /** Set useful pars/vars */
   const double q    = par_get_d("q");
   const double nu   = par_get_d("nu");
@@ -108,8 +95,38 @@ int main (int argc, char* argv[])
   int store_dynamics = par_get_i("output_dynamics");
   if (!(use_tidal)) interp_uniform_grid = 1; /* NQC and ringdown attachment assume uniform grids */
   if (!(use_tidal) && (use_spins)) store_dynamics = 1; /* NQC need dynamical variables */
+  const int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
+  if (use_postadiab_dyn) store_dynamics = 1;
 
+  /** Alloc memory for dynamics and multipolar waveform */
+  Dynamics *dyn;
+  Waveform_lm *hlm; /* h_lm */ 
+  Waveform_lm_t *hlm_t;
+  Waveform_lm *hlm_nqc; /* NQC */
+
+  const int chunk = par_get_i("size");
+  int size = chunk; /* note: size can vary */
+  int size_pa = 0; /* size for post-adiabatic dynamics */
+   
+  if (use_postadiab_dyn) {
+    size_pa = par_get_i("postadiabatic_dynamics_size"); 
+    Dynamics_alloc (&dyn, size_pa, "dyn");
+    Waveform_lm_alloc (&hlm, size_pa, "hlm"); 
+  } else {
+    Dynamics_alloc (&dyn, size, "dyn"); 
+    Waveform_lm_alloc (&hlm, size, "hlm"); 
+  }
+
+  Waveform_lm_t_alloc (&hlm_t);
+  
   Dynamics_set_params(dyn);
+
+  dyn->store = dyn->noflx = 0; /* Default: do not store vars, flux on */
+  
+  /** Set r.h.s. fun pointer */
+  int (*p_eob_dyn_rhs)();
+  if (use_spins) p_eob_dyn_rhs = &eob_dyn_rhs_s;
+  else           p_eob_dyn_rhs = &eob_dyn_rhs;
   
   /** Compute light-ring and LSO (if needed) */
   int check_status;
@@ -136,63 +153,7 @@ int main (int argc, char* argv[])
     par_set_d("rLSO", dyn->rLSO);
     if (VERBOSE) PRFORM("rLSO",dyn->rLSO);
   }
-  
-  /** Computing the initial conditions */
-  int (*p_eob_dyn_rhs)();
-  if (use_spins) {
-    p_eob_dyn_rhs = &eob_dyn_rhs_s;
-    eob_dyn_ic_s(r0, dyn, dyn->y0);
-  } else {
-    p_eob_dyn_rhs = &eob_dyn_rhs;
-    if ((SARP) && (dyn->use_tidal)) printf("\nd2A printed from Initial conditions for use in C++\n{");
-    eob_dyn_ic(r0, dyn, dyn->y0);
-    if (SARP) printf("};\n\n");
-  }
-  if (VERBOSE) {
-    printf("Initial conditions\n");
-    for (int i = 0; i < EOB_ID_NVARS; i++)
-      PRFORM(eob_id_var[i], dyn->y0[i]);
-  }
 
-  /** Initial conditions: t, r, phi, prstar, pphi */
-  gsl_odeiv2_system sys = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
-  dyn->t = 0.;
-  dyn->r       = dyn->y0[EOB_ID_RAD];
-  dyn->phi     = 0.;
-  dyn->pphi    = dyn->y0[EOB_ID_PPHI];
-  dyn->Omg     = dyn->y0[EOB_ID_OMGJ];//CHECKME
-  dyn->ddotr   = 0.; 
-  dyn->prstar  = dyn->y0[EOB_ID_PRSTAR];
-  dyn->Omg_orb = 0.;//FIXME
-  dyn->y[EOB_EVOLVE_RAD]    = dyn->r;
-  dyn->y[EOB_EVOLVE_PHI]    = dyn->phi;
-  dyn->y[EOB_EVOLVE_PRSTAR] = dyn->prstar; 
-  dyn->y[EOB_EVOLVE_PPHI]   = dyn->pphi;
-  if (store_dynamics) {
-    dyn->time[0]             = dyn->t; 
-    dyn->data[EOB_RAD][0]    = dyn->r;
-    dyn->data[EOB_PHI][0]    = dyn->phi;
-    dyn->data[EOB_PPHI][0]   = dyn->pphi;
-    dyn->data[EOB_MOMG][0]   = dyn->Omg;
-    dyn->data[EOB_DDOTR][0]  = dyn->ddotr;
-    dyn->data[EOB_PRSTAR][0] = dyn->prstar;
-    dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
-  }
-
-  /** Waveform computation 
-      Needs a r.h.s. evaluation */
-  dyn->store = 1;
-  p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
-  dyn->store = 0;
-  eob_wav_hlm(dyn, hlm_t); 
-  
-  /** Append waveform to arrays */
-  hlm->time[0] = 0.;
-  for (int k = 0; k < KMAX; k++) {
-    hlm->ampli[k][0] = hlm_t->ampli[k];
-    hlm->phase[k][0] = hlm_t->phase[k]; 
-  }
-    
   /** Final BH */
   if (!(dyn->use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -206,7 +167,120 @@ int main (int argc, char* argv[])
     par_set_d("BH_final_mass", dyn->Mbhf);
     par_set_d("BH_final_spin", dyn->abhf);
   }
+
+  /* Iteration index */
+  int iter = 0;  
+  
+  if (use_postadiab_dyn) {
+
+    /*
+     * Post-adiabatic dynamics
+     */
+
+    /** Calculate dynamics */
+    eob_dyn_Npostadiabatic(dyn, r0); 
     
+    /** Calculate waveform */
+    for (int i = 0; i < size_pa; i++) 
+      hlm->time[i] = dyn->time[i];
+    
+    dyn->store = dyn->noflx = 1;
+
+    for (int i = 0; i < size_pa; i++) {
+      dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
+      dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];
+      dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i]; 
+      dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
+      p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
+      eob_wav_hlm(dyn, hlm_t); 
+      for (int k = 0; k < KMAX; k++) {
+	hlm->ampli[k][i] = hlm_t->ampli[k];
+	hlm->phase[k][i] = hlm_t->phase[k]; 
+      }
+    }
+
+    dyn->store = dyn->noflx = 0;
+    
+    if (STREQUAL(par_get_s("postadiabatic_dynamics_stop"),"yes")) {
+      if (DEBUG) printf("post-adiabatic dynamics: skip evolution.");
+      goto SKIP_EVOLUTION; 
+    }
+    
+    /** Prepare for evolution */
+
+    /* start counting from here */
+    iter = size_pa-1;
+    
+    /* Set arrays with initial conditions 
+       Note current time is already set in dyn->t */
+    dyn->y0[EOB_ID_RAD]  = dyn->r;
+    dyn->y0[EOB_ID_PHI]  = dyn->phi;
+    dyn->y0[EOB_ID_PPHI] = dyn->pphi;
+    dyn->y0[EOB_ID_OMGJ] = dyn->Omg;
+    dyn->y0[EOB_ID_PRSTAR] = dyn->prstar;
+    //dyn->Omg_orb = 0.;//FIXME ?
+    dyn->y[EOB_EVOLVE_RAD]    = dyn->r;
+    dyn->y[EOB_EVOLVE_PHI]    = dyn->phi;
+    dyn->y[EOB_EVOLVE_PRSTAR] = dyn->prstar; 
+    dyn->y[EOB_EVOLVE_PPHI]   = dyn->pphi;
+    
+  } else {
+
+    /*
+     * Initial conditions for the evolution
+     */
+    
+    /** Compute the initial conditions */
+    if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
+    else           eob_dyn_ic(r0, dyn, dyn->y0);
+    
+    /** Se arrays with initial conditions */
+    dyn->t       = 0.;
+    dyn->r       = dyn->y0[EOB_ID_RAD];
+    dyn->phi     = 0.;
+    dyn->pphi    = dyn->y0[EOB_ID_PPHI];
+    dyn->Omg     = dyn->y0[EOB_ID_OMGJ];//CHECKME
+    dyn->ddotr   = 0.; 
+    dyn->prstar  = dyn->y0[EOB_ID_PRSTAR];
+    dyn->Omg_orb = 0.;//FIXME
+    dyn->y[EOB_EVOLVE_RAD]    = dyn->r;
+    dyn->y[EOB_EVOLVE_PHI]    = dyn->phi;
+    dyn->y[EOB_EVOLVE_PRSTAR] = dyn->prstar; 
+    dyn->y[EOB_EVOLVE_PPHI]   = dyn->pphi;
+    if (store_dynamics) {
+      dyn->time[0]             = dyn->t; 
+      dyn->data[EOB_RAD][0]    = dyn->r;
+      dyn->data[EOB_PHI][0]    = dyn->phi;
+      dyn->data[EOB_PPHI][0]   = dyn->pphi;
+      dyn->data[EOB_MOMG][0]   = dyn->Omg;
+      dyn->data[EOB_DDOTR][0]  = dyn->ddotr;
+      dyn->data[EOB_PRSTAR][0] = dyn->prstar;
+      dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
+    }
+    
+    /** Waveform computation at t = 0 
+	Needs a r.h.s. evaluation for some vars (no flux) */
+    dyn->store = dyn->noflx = 1;
+    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
+    dyn->store = dyn->noflx = 0;
+    eob_wav_hlm(dyn, hlm_t); 
+    
+    /** Append waveform to arrays */
+    hlm->time[0] = 0.;
+    for (int k = 0; k < KMAX; k++) {
+      hlm->ampli[k][0] = hlm_t->ampli[k];
+      hlm->phase[k][0] = hlm_t->phase[k]; 
+    }
+    
+  }
+  
+  if (VERBOSE) {
+    /* Print initial conditions */
+    printf("Initial conditions\n");
+    for (int i = 0; i < EOB_ID_NVARS; i++)
+      PRFORM(eob_id_var[i], dyn->y0[i]);
+  }
+   
   /** Initialize ODE system solver */
   const double dt = par_get_d("dt") * time_unit_fact;; 
   dyn->dt     = dt;
@@ -239,6 +313,7 @@ int main (int argc, char* argv[])
   const double ode_abstol = par_get_d("ode_abstol");
   const double ode_reltol = par_get_d("ode_reltol");
 
+  gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
   gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
@@ -247,7 +322,6 @@ int main (int argc, char* argv[])
     
   /** Solve ODE */
   int STATUS = OK;
-  int iter = 0;
   while (!(dyn->ode_stop)) {
    if ( (VERBOSE) && (!SARP) )  printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r);
     iter++;
@@ -304,10 +378,10 @@ int main (int argc, char* argv[])
     }
 
     /** Waveform computation 
-	Needs a r.h.s. evaluation */
-    dyn->store = 1;
+	Needs a r.h.s. evaluation for some vars (but no flux) */
+    dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
-    dyn->store = 0;
+    dyn->store = dyn->noflx = 0;
     eob_wav_hlm(dyn, hlm_t); 
    
     /** Update size and push arrays (if needed) */
@@ -319,7 +393,7 @@ int main (int argc, char* argv[])
       Dynamics_push (&dyn, size);
     }
     
-    /** Append dynamics and waveform to arrays */
+    /** Append waveform and dynamics to arrays */
     hlm->time[iter] = hlm_t->time;
     for (int k = 0; k < KMAX; k++) {
       hlm->ampli[k][iter] = hlm_t->ampli[k];
@@ -378,13 +452,15 @@ int main (int argc, char* argv[])
   gsl_odeiv2_step_free (s);
   gsl_odeiv2_driver_free (d);
 
-  /** Update waveform size 
+  /** Update waveform and dynamics size 
       resize to actual size */
   size = iter;
   par_set_i("size", size); 
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
-
+  
+ SKIP_EVOLUTION:;
+  
   if (DEBUG) {
     /* Output pre-interpolation wave and dynamics */
     if(par_get_i("output_multipoles")) {
@@ -397,7 +473,9 @@ int main (int argc, char* argv[])
   
   if (interp_uniform_grid) {
 
-    /** Interpolate on uniform grid */
+    /* 
+     * Interpolate on uniform grid
+     */
 
     /* Auxiliary vars */
     Waveform_lm *hlm_aux; 
@@ -410,11 +488,9 @@ int main (int argc, char* argv[])
     if (DEBUG) printf("Interpolation_grid: size_new=%d dt=%.12e t[size-1]=%.12e (%.12e)\n",
 		      size_new,dt,hlm->time[size-1],hlm->time[size-1]-(hlm->time[0]+(size_new-1)*dt));
 
-    /* Waveform */
-        
+    /** Waveform */ 
     Waveform_lm_alloc (&hlm_aux, size, "");
     memcpy(hlm_aux, hlm, sizeof(Waveform_lm));
-
     strcpy(hlm->name, "hlm_insplunge_interp");
     hlm->size = size_new;
     hlm->time = malloc ( size_new * sizeof(double) );
@@ -426,43 +502,22 @@ int main (int argc, char* argv[])
     for (int i = 0; i < size_new; i++) {
       hlm->time[i] = i*dt;
     }    
-
     for (int k = 0; k < KMAX; k++) {
       interp_spline(hlm_aux->time, hlm_aux->ampli[k], size, hlm->time, size_new, hlm->ampli[k]);
     }
     for (int k = 0; k < KMAX; k++) {
       interp_spline(hlm_aux->time, hlm_aux->phase[k], size, hlm->time, size_new, hlm->phase[k]);
     }
-
+    
     Waveform_lm_free (hlm_aux);
-
-    //OLD CODE
-    /*
-    Waveform_lm_alloc (&hlm_aux, size_new, "");
-    // Interpolate on uniform grid 
-    for (int i = 0; i < size_new; i++) {
-      hlm_aux->time[i] = dyn->time[0] + i*dt;
-    }
-    for (int k = 0; k < KMAX; k++) {
-      interp_spline(hlm->time, hlm->ampli[k], hlm->size, hlm_aux->time, size_new, hlm_aux->ampli[k]);
-    }
-    for (int k = 0; k < KMAX; k++) {
-      interp_spline(hlm->time, hlm->phase[k], hlm->size, hlm_aux->time, size_new, hlm_aux->phase[k]);
-    }
-    // Swap pointers and free old memory 
-    SWAPTRS(hlm_aux, hlm);
-    strcpy(hlm->name, "hlm_insplunge_interp");
-    Waveform_lm_free (hlm_aux);
-    */
     
     if (store_dynamics) {
 
-      /* Similar for dynamics, 
-	 need first to copy fields and allocate new mem */
+      /** Dynamics, 
+	  Similar, but need to keep the non-array fields */
 
       Dynamics_alloc(&dyn_aux, size, "");
       memcpy(dyn_aux, dyn, sizeof(Dynamics));
-
       strcpy(dyn->name, "dyn_interp");
       dyn->dt   = dt;
       dyn->size = size_new; 
@@ -475,7 +530,6 @@ int main (int argc, char* argv[])
       for (int i = 0; i < size_new; i++) {
 	dyn->time[i] = hlm->time[i];
       }      
-
       for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) {
 	interp_spline(dyn_aux->time, dyn_aux->data[k], size, dyn->time, size_new, dyn->data[k]);
       }
@@ -484,7 +538,7 @@ int main (int argc, char* argv[])
       
     }
 
-    /* Update size */
+    /** Update size */
     size = size_new;
     par_set_i("size", size); 
     
@@ -503,7 +557,9 @@ int main (int argc, char* argv[])
   
   if (!(use_tidal)) {
 
-    /* BBH : add NQC and Ringdown */
+    /* 
+     * BBH : add NQC and Ringdown
+     */
 
     /** NQC */
 
@@ -556,7 +612,7 @@ int main (int argc, char* argv[])
     }
 
   }
-  
+    
   /** Alloc memory for (h+,hx) */
   Waveform *hpc; 
   Waveform_alloc (&hpc, size, "waveform"); 
