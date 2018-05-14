@@ -83,9 +83,10 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   /* Approximate ddot(r) without Flux */
   const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
   
-  /** dp_{\phi}/dt */
-  dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
-
+  /** Compute flux and dp_{\phi}/dt */
+  if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
+  else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
+  
   if(dyn->store) {
     /* Store values */
     dyn->t = t;
@@ -205,13 +206,10 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   
   /* dp_{r*}/dt */
   dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*dHeff_dr*ooH;
-  
-  /** Compute flux */
-  
+    
   /* Compute here the new r_omg radius
      Compute same quantities with prstar=0. This to obtain psi.
-     Procedure consistent with the nonspinning case.
-  */
+     Procedure consistent with the nonspinning case. */
   double ggm0[14];
   eob_dyn_s_GS(r, rc, drc_dr, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
   
@@ -231,9 +229,10 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double v_phi      = r_omg*Omg;
   const double x          = v_phi*v_phi;
   const double jhat       = pphi/(r_omg*v_phi);
-  const double Fphi = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
-  
-  dy[EOB_EVOLVE_PPHI] = Fphi;
+
+  /** Compute flux and dp_{\phi}/dt */
+  if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
+  else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
   
   if (dyn->store) {
     /* Store values */
