@@ -132,7 +132,8 @@ static const char* eob_evolve_var[] = {"r","phi","Prstar","Pphi"};
 
 /** Index list of EOB variables for initial data */
 enum{
-  EOB_ID_RAD, 
+  EOB_ID_RAD,
+  EOB_ID_PHI,
   EOB_ID_PPHI,
   EOB_ID_PRSTAR,
   EOB_ID_PR,
@@ -231,6 +232,7 @@ typedef struct tagDynamics
   char name[STRLEN];
   /* various pointwise variables */
   int store; /* store following values? */
+  int noflx; /* compute rhs without flux */
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
   double A,dA,d2A, B,dB;
@@ -355,6 +357,9 @@ double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
+
+/* TEOBResumSPostAdiabatic.c */
+int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0);
 
 /* TEOBResumSInitialCondition.c */
 void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);
