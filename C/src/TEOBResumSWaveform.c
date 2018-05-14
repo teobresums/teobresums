@@ -1021,6 +1021,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 #endif    
 
   /** Find max Omg */
+  //TODO: search backwards!
   int Omgmax_index = 0;
   double Omg_max   = Omg_orb[0];
   for (int j=0; j<size; j++) {
@@ -1386,7 +1387,6 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   int index_pk = dynsize-1;
   double Omega_pk = Omega[index_pk];
   for (int j = dynsize-2; j-- ; ) {
-    //printf("%d %e %e %e\n",j,Omega[j],Omega_pk,t[j]);
     if (Omega[j] < Omega_pk) 
 	break;
       index_pk = j;
@@ -1399,7 +1399,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   //if (index_pk > dynsize-4) {
   //  errorexit("Not enough points to interpolate.\n");
   //}
-  //TODO: there's no max to interp at the moment.
+  //TODO: there's no max interp at the moment. It does not seem necessary.
   
   double tOmg_pk = t[index_pk];
   if (DEBUG) printf("Ringdown: tOmg_pk  = %e\n",tOmg_pk);
@@ -1467,17 +1467,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   for (int k = 0; k < KMAX; k++) {
     /* Calculate Deltaphi */
     t0 = t_lm[k][idx[k]] - tmrg[k]; 
-    //printf("%d %d %e %e %e\n",k,idx[k],t0,t_lm[k][idx[k]],tmrg[k]);
-    //printf("%d %e %e %e %e %e %e %e %e %e %e\n", k, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k]);
-    //eob_wav_ringdown_template(t_lm[k][idx[k]], a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
     eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
     Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
-    //printf("%d %e %e\n", k, sigma[0][k], sigma[1][k]);
-    //printf("%d %e %e %e\n", k,Deltaphi[k], psi[1], hlm->phase[k][idx[k]]);
     /* Compute and attach ringdown */
     for (int j = idx[k]; j < size ; j++ ) {  
       tm = t_lm[k][j] - tmrg[k];
-      //printf("%e %e %e\n",tm,t_lm[k][j],tmrg[k]);
       eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       hlm->phase[k][j] = psi[1] - Deltaphi[k];
       hlm->ampli[k][j] = psi[0];
@@ -1516,7 +1510,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const double pph = dyn->pphi;
   const double prstar = dyn->prstar;
   const double Omega  = dyn->Omg;
-  const double ddotr  = dyn-> ddotr;
+  const double ddotr  = dyn->ddotr;
   const double H      = dyn->H;
   const double Heff   = dyn->Heff;
   const double jhat   = dyn->jhat;
@@ -1539,21 +1533,21 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   Waveform_lm_t hNewt;
   eob_wav_hlmNewt(rw,Omega,phi,nu, &hNewt);
 
-   if (usetidal) {
-  /* Need to correct some of the m=odd modes. 
-     The Newtonian factor has a different normalization when entering the point-mass 
-     and the tidal term. The factor X12 = sqrt*1-4nu) is re-introduced in the point-mass term 
-     in eob_wav_hlm() */
-	double vphi3 = gsl_pow_int(rw*Omega,3); 
-	hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3;
-	hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3;
-	hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
-	double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5); 
-	hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5;
-	 hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; 
-	hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5; 
-	hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5;
-	hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; 
+  if (usetidal) {
+    /* Need to correct some of the m=odd modes. 
+       The Newtonian factor has a different normalization when entering the point-mass 
+       and the tidal term. The factor X12 = sqrt*1-4nu) is re-introduced in the point-mass term 
+       in eob_wav_hlm() */
+    double vphi3 = gsl_pow_int(rw*Omega,3); 
+    hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3;
+    hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3;
+    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
+    double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5); 
+    hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5;
+    hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; 
+    hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5; 
+    hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5;
+    hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; 
   }
 
   if (usespins) {
@@ -1566,7 +1560,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3; /* (2,1) */
     hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /* (3,1) */
     hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /* (3,3) */
-
+    
     //FIXME: Following needs check in the case spin+tides
     double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5);
     hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5; /* (4,1) */
