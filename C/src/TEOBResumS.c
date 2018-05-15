@@ -203,7 +203,7 @@ int main (int argc, char* argv[])
     
     if (STREQUAL(par_get_s("postadiabatic_dynamics_stop"),"yes")) {
       if (DEBUG) printf("post-adiabatic dynamics: skip evolution.");
-      goto SKIP_EVOLUTION; 
+      goto END_ODE_EVOLUTION; 
     }
     
     /** Prepare for evolution */
@@ -459,7 +459,7 @@ int main (int argc, char* argv[])
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
   
- SKIP_EVOLUTION:;
+ END_ODE_EVOLUTION:;
   
   if (DEBUG) {
     /* Output pre-interpolation wave and dynamics */
