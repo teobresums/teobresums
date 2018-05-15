@@ -163,7 +163,7 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax)
     //const double oo12 = 0.08333333333333333;
     d1f = (8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2]); //*oo12;
     d2f = (-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]));//*oo12;
-  } errorexit("Implemented only n = 3,5");    
+  } else errorexit("Implemented only n = 3,5");    
   if (d2f != 0.) 
     xmax -= dx*d1f/d2f;
   /* Eval function */
