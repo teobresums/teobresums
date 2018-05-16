@@ -232,30 +232,31 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
   static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
+  double sumr, sumi;
   if (DEBUG) printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",nu,M,distance,psi,iota,amplitude_prefactor);
   for (int i = 0; i < hlm->size; i++) {
     hpc->time[i] = hlm->time[i]*M; 
-    hpc->real[i] = 0.;
-    hpc->imag[i] = 0.;
+    //hpc->real[i] = hpc->imag[i] = 0.;
+    sumr = sumi = 0.;
     for (int k = 0; k < KMAX; k++ ) {
       spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
       Aki  = amplitude_prefactor * hlm->ampli[k][i];
       cosPhi = cos( hlm->phase[k][i] );
       sinPhi = sin( hlm->phase[k][i] );
-      hpc->real[i] += Aki*(cosPhi*Y_real + sinPhi*Y_imag);
-      hpc->imag[i] -= Aki*(sinPhi*Y_real + cosPhi*Y_imag); //TODO: overall check sign
-      //printf("%e %e\n",hlm->ampli[k][i],hlm->phase[k][i]); //nans?
-      //printf("%e %e\n",hpc->real[i],hpc->imag[i]);
+      sumr += Aki*(cosPhi*Y_real + sinPhi*Y_imag);
+      sumi -= Aki*(sinPhi*Y_real + cosPhi*Y_imag); //TODO: overall check sign
       if ( (mneg) && (MINDEX[k]!=0) ) { 
 	/* add m<0 modes */
 	spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota);
 	Aki    = amplitude_prefactor * hlm->ampli[k][i];
 	//cosPhi = cos( hlm->phase[k][i] ); 
 	//sinPhi = sin( hlm->phase[k][i] ); 
-	hpc->real[i] += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-	hpc->imag[i] += Aki*(sinPhi*Y_real - cosPhi*Y_imag); // overall check sign
+	sumr += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
+	sumi += Aki*(sinPhi*Y_real - cosPhi*Y_imag); // overall check sign
       }    
-    } 
+    }
+    hpc->real[i] = sumr;
+    hpc->imag[i] = sumi;
   }
   
 }
@@ -424,7 +425,7 @@ void Waveform_output (Waveform *wav)
   strcat(fname,"/");
   strcat(fname,wav->name);
   strcat(fname,".txt");
-  if ((fp = fopen(fname, "w")) == NULL)
+  if ((fp = fopen(fname, "w+")) == NULL)
     errorexits("error opening file",wav->name);
   fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
   fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
@@ -493,7 +494,7 @@ void Waveform_lm_output (Waveform_lm *wav)
     if (wav->kmask[k]) {
       sprintf(fname,"%s/%s_l%01d_m%01d.txt",par_get_s("output_dir"),wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
-      if ((fp = fopen(fname, "w")) == NULL)
+      if ((fp = fopen(fname, "w+")) == NULL)
 	errorexits("error opening file",fname);
       if(SARP){   
 	for (int i = 4; i < n; i+=20) { 
@@ -517,7 +518,7 @@ void Waveform_lm_output_reim (Waveform_lm *wav)
     if (wav->kmask[k]) {
       sprintf(fname,"%s/%s_l%01d_m%01d_reim.txt",par_get_s("output_dir"),wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
-      if ((fp = fopen(fname, "w")) == NULL)
+      if ((fp = fopen(fname, "w+")) == NULL)
 	errorexits("error opening file",fname);
       for (int i = 0; i < n; i++) {
 	re = + wav->ampli[k][i] * cos(wav->phase[k][i]);
@@ -594,7 +595,7 @@ void Dynamics_output (Dynamics *dyn)
   strcat(fname,"/");
   strcat(fname,dyn->name);
   strcat(fname,".txt");
-  if ((fp = fopen(fname, "w")) == NULL)
+  if ((fp = fopen(fname, "w+")) == NULL)
     errorexits("error opening file",dyn->name);
   for (int i = 4; i < dyn->size; i+=4) {
     fprintf(fp, "%.1f\t", dyn->time[i]);
@@ -613,7 +614,7 @@ void Dynamics_output (Dynamics *dyn)
   strcat(fname,"/");
   strcat(fname,dyn->name);
   strcat(fname,".txt");
-  if ((fp = fopen(fname, "w")) == NULL)
+  if ((fp = fopen(fname, "w+")) == NULL)
     errorexits("error opening file",dyn->name);
   fprintf(fp, "#");
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
