@@ -66,7 +66,7 @@ class GravitationalWaveDetector(object):
             timeShift = self.Epoch - tc
         timeShift += timedelay
         #np.exp(1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])*
-        return (fp*hptilde[self.kmin:self.kmax]+fc*hctilde[self.kmin:self.kmax])*np.exp(-1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])
+        return (fp*hptilde[self.kmin:self.kmax]+fc*hctilde[self.kmin:self.kmax])*np.exp(1j*2.0*np.pi*timeShift*self.Frequency[self.kmin:self.kmax])
 
     def logLikelihood(self, hptilde, hctilde, ra, dec, psi, tc, domain = "F"):
         
@@ -96,9 +96,9 @@ if __name__ == "__main__":
                                   psd_file = '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-T0900288-v3-ZERO_DET_high_P.txt',
                                   trigtime = trigtime,
                                   starttime= starttime,
-                                  T = 16.0,
-                                  flow = 40.,
-                                  sampling_rate = 2048.,
+                                  T = 4.0,
+                                  flow = 30.,
+                                  sampling_rate = 4096.,
                                   zero_noise = True)
 
     import lalsimulation as lalsim

@@ -209,7 +209,7 @@ class GravitationalWaveModel(cpnest.model.Model):
                          [self.trigtime-0.05,self.trigtime+0.05],
                          [25.0,35.0],
                          [0.5,1.0],
-                         [-np.pi/2.,np.pi/2.],
+                         [0.0,np.pi],
                          [0.0,np.pi],
                          [1.0,1000.0],
                          [-0.8,0.8],[-0.8,0.8]]
@@ -301,7 +301,7 @@ class GravitationalWaveModel(cpnest.model.Model):
         self.calculate_plain_template(x)
         if np.any(np.isnan(self.plain_template)):
             return -np.inf
-        logL = np.sum([d.logLikelihood(self.plain_template[0], self.plain_template[1], x['ra'], x['dec'], x['psi'], x['tc']) for d in self.detectors])
+        logL = np.sum([d.logLikelihood(self.plain_template[0], self.plain_template[1], x['ra'], x['dec'], x['psi'], x['tc'], domain = "T") for d in self.detectors])
 
         return logL
     
@@ -309,7 +309,7 @@ class GravitationalWaveModel(cpnest.model.Model):
         if np.isfinite(super(GravitationalWaveModel,self).log_prior(x)):
             logP = 2.0*np.log(x['distance'])
             logP += np.log(np.abs(np.cos(x['dec'])))
-            logP += np.log(np.abs(np.cos(x['iota'])))
+            logP += np.log(np.abs(np.sin(x['iota'])))
             mc = x['mc']
             q = x['q']
             m1, m2 = McQ2Masses(mc, q)
@@ -364,7 +364,7 @@ if __name__=='__main__':
         opts.out_dir='./gw150914/'
 
     if opts.full_run:
-        signal_model = GravitationalWaveModel(['H1','L1','V1'],
+        signal_model = GravitationalWaveModel(['H1','L1'],
                                               T         = opts.seglen,
                                               template  = opts.template,
                                               sampling_rate = opts.sampling_rate,
@@ -374,11 +374,11 @@ if __name__=='__main__':
                                               trigtime      = trigtime,
 #                                              psd_files = ['H-GW15-asd.txt',
 #                                                           'L-GW15-asd.txt'],
-                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
-                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
+#                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
+#                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
 #                                                               '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
-#                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
+                                              datafiles = ['data/H-H1_LOSC_4_V1-1126259446-32.txt','data/L-L1_LOSC_4_V1-1126259446-32.txt'],
                                               flow=opts.flow,
                                               fhigh=opts.fhigh)
         print('Noise evidence {0}'.format(signal_model.logZnoise))
@@ -400,11 +400,11 @@ if __name__=='__main__':
         signal_model = GravitationalWaveModel(['H1','L1'],#,'V1'],
                                               T=opts.seglen,
                                               template = opts.template,
-                                              sampling_rate = 2048.,
+                                              sampling_rate = opts.sampling_rate,
                                               injection = opts.inject,
                                               zero_noise = opts.zero_noise,
-                                              starttime = 1126259459.423,
-                                              trigtime = 1126259462.423,
+                                              starttime = starttime,
+                                              trigtime = trigtime,
 #                                              psd_files = ['/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
 #                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt',
 #                                                           '/Users/wdp/src/lalsuite/lalsimulation/src/LIGO-P1200087-v18-AdV_DESIGN.txt'],
@@ -413,20 +413,69 @@ if __name__=='__main__':
                                               fhigh=opts.fhigh)
         x = np.genfromtxt(os.path.join(opts.out_dir,'posterior.dat'),names=True)
         logZ = np.loadtxt(os.path.join(opts.out_dir,'chain_{0}_1234.txt_evidence.txt'.format(opts.nlive)))[0]
+
+#        out_full = open(os.path.join(opts.out_dir,'posterior_full.dat'),'a')
+#        out_full.write('\t'.join(x.dtype.names))
+#        out_full.write('\n')
+#        for f in os.listdir(opts.out_dir):
+#            if 'mcmc' in f:
+#                samps = np.genfromtxt(os.path.join(opts.out_dir,f),names=True)
+#                for i in np.arange(0,samps.shape[0],100):
+#                    for n in x.dtype.names:
+#                        out_full.write('%.15f\t'%samps[n][i])
+#                    out_full.write('\n')
+#        for i in range(x.shape[0]):
+#            for n in x.dtype.names:
+#                out_full.write('%.15f\t'%x[n][i])
+#            out_full.write('\n')
+#        out_full.close()
+#        exit()
         print('Signal evidence {0}'.format(logZ))
         logB = logZ-signal_model.logZnoise
         print('log B {0}'.format(logB))
+    for n in x.dtype.names:
+        l,m,h = np.percentile(x[n],[5,50,95])
+        print n,"$%.1f_{-%.1f}^{+%.1f}$"%(m,m-l,h-m)
+    m1, m2 = McQ2Masses(x['mc'],x['q'])
+    mtot = m1+m2
+
+    l,m,h = np.percentile(m1,[5,50,95])
+    print "m1 $%.1f_{-%.1f}^{+%.1f}$"%(m,m-l,h-m)
+    l,m,h = np.percentile(m2,[5,50,95])
+    print "m2 $%.1f_{-%.1f}^{+%.1f}$"%(m,m-l,h-m)
+    l,m,h = np.percentile(mtot,[5,50,95])
+    print "mtot $%.1f_{-%.1f}^{+%.1f}$"%(m,m-l,h-m)
+    h = np.percentile(np.abs(x['spin1z']),[90])
+    print "s1 $\leq %.1f$"%h
+    h = np.percentile(np.abs(x['spin2z']),[90])
+    print "s2 $leq %.1f$"%h
+
     import corner
     import matplotlib.pyplot as plt
-    intrinsic = ['mc','q','spin1','spin2']
 
-    figure = corner.corner(np.array([x[n] for n in intrinsic]).T, labels=[r"$\mathcal{M}$", r"$q$", r"$s_{1}$", r"$s_{2}$"],
-                       quantiles=[0.16, 0.5, 0.84], truths = [signal_model.injection_parameters[n] for n in intrinsic],
-                       show_titles=True, title_kwargs={"fontsize": 12}, smooth1d=0.5)
-    plt.savefig(os.path.join(opts.out_dir,'intrinsic.pdf'),bbbox_inches='tight')
+    figure = corner.corner(np.column_stack((m1,m2)), labels=[r"$m_1/M_{\odot}$", r"$m_2/M_{\odot}$"],
+                       quantiles=[0.05, 0.5, 0.95],
+                       show_titles=False, title_kwargs={"fontsize": 12}, smooth2d=2.0, levels=(1-np.exp(-0.5),))
+    plt.savefig(os.path.join(opts.out_dir,'m1_m2.pdf'),bbox_inches='tight')
+    exit()
+
+    intrinsic = ['mc','q','spin1z','spin2z']
+
+    try:
+        truths = [signal_model.injection_parameters[n] for n in intrinsic]
+    except:
+        truths = None
+
+    figure = corner.corner(np.array([x[n] for n in intrinsic]).T, labels=[r"$\mathcal{M}$", r"$q$", r"$s_{1z}$", r"$s_{2z}$"],
+                       quantiles=[0.16, 0.5, 0.84], truths = truths,
+                       show_titles=True, title_kwargs={"fontsize": 12}, smooth2d=1.0)
+    plt.savefig(os.path.join(opts.out_dir,'intrinsic.pdf'),bbox_inches='tight')
     extrinsic = ['ra','dec','distance','tc']
-
+    try:
+        truths = [signal_model.injection_parameters[n] for n in extrinsic]
+    except:
+        truths = None
     figure = corner.corner(np.array([x[n] for n in extrinsic]).T, labels=[r"$\mathrm{RA}$", r"$\mathrm{dec}$", r"$D_L/Mpc$", r"$t_c/s$"],
-               quantiles=[0.16, 0.5, 0.84], truths = [signal_model.injection_parameters[n] for n in extrinsic],
-               show_titles=True, title_kwargs={"fontsize": 12}, smooth1d=0.5)
-    plt.savefig(os.path.join(opts.out_dir,'extrinsic.pdf'),bbbox_inches='tight')
+               quantiles=[0.16, 0.5, 0.84], truths = truths,
+               show_titles=True, title_kwargs={"fontsize": 12}, smooth2d=1.0)
+    plt.savefig(os.path.join(opts.out_dir,'extrinsic.pdf'),bbox_inches='tight')
