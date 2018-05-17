@@ -999,7 +999,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
   
 #if (DEBUG)
-  FILE* fp = fopen("qnc_nfunc.txt", "w");
+  FILE* fp = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
     fprintf(fp, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", t[j], n1[j], n2[j], n4[j], n5[j]);
   }
