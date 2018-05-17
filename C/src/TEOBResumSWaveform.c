@@ -1001,7 +1001,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 #if (DEBUG)
   FILE* fp = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", t[j], n1[j], n2[j], n4[j], n5[j]);
+    fprintf(fp, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[j], n2[j], n4[j], n5[j]);
   }
   fclose(fp);
 #endif    
@@ -1015,7 +1015,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 #if (DEBUG)
   fp = fopen("nqc_dfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%f\t%f\t%f\t%f\t%f\n", t[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);  
+    fprintf(fp, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);  
   }
   fclose(fp);
 #endif    
