@@ -65,9 +65,12 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     double *dprstar_dr_vec         = (double*)malloc(size * sizeof (double));
     double *dHdPrs                 = (double*)malloc(size * sizeof (double));
     double *dHdPphi_o_dHdPrs       = (double*)malloc(size * sizeof (double));
+    double *H_vec                  = (double*)malloc(size * sizeof (double));
+    double *Heff_vec               = (double*)malloc(size * sizeof (double));
+    double *Heff_orb_vec           = (double*)malloc(size * sizeof (double));
     double ggm[14];
 
-    double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc;
+    double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, dHeff_dpph;
 
     /** Compute radius of inflection point of Pr* */
     //TODO implementing a robust stopping condition (which)
@@ -142,35 +145,33 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
         {
 
             eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,0.0,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
-                      &H,             real EOB Hamiltonian divided by mu=m1m2/(m1+m2)
-                      &Heff,          effective EOB Hamiltonian (divided by mu)
-               &Heff_orb,
-               &dHeff_dr,      drvt Heff,r
-               &dHeff_dprstar, drvt Heff,prstar
-               &dHeff_dpphi,    drvt Heff,pphi
-               &d2Heff_dprstar20
+               &H_vec[i],             // real EOB Hamiltonian divided by mu=m1m2/(m1+m2)
+               &Heff_vec[i],          // effective EOB Hamiltonian (divided by mu)
+               &Heff_orb_vec[i],
+               NULL,      // drvt Heff,r
+               NULL, // drvt Heff,prstar
+               NULL,   // drvt Heff,pphi
+               NULL
                )
 
-            Horbeff[0,:] = sqrt(A*(1 + pphi[0,:]**2*uc2))
-            Heff[0,:]    = G[0,:]*pphi[0,:] + Horbeff[0,:]
-            H[0,:]       = sqrt(1 + 2*nu*(Heff[0,:] - 1))  //Convention: H = H_EOB * nu
             one_H[0,:]   = 1./H[0,:]
 
             // Circular orbital frequency
-            dHeff_dpph   = G[0,:] + pphi[0,:]*A*uc2./Horbeff[0,:]
-            Omg[0,:]     = one_H[0,:]*dHeff_dpph
+            dHeff_dpph   = G_vec[i] + dyn->pphi]*A_vec[i]*uc2_vec[i]/Heff_orb_vec[i]
+            dyn->Omg     = ( 1./(H_vec[i]*nu) )*dHeff_dpph
         }
         else
         {
             //NON spinning hamiltonian
         }
         dyn->data[EOB_RAD][i]    = dyn->r;
-        dyn->data[EOB_PPHI][i]    = dyn->pphi;
+        dyn->data[EOB_PPHI][i]   = dyn->pphi;
+        dyn->data[EOB_MOMG][i]   = dyn->Omg;
     }
     // END r-GRID FOR
     
     // Initialize derivatives. FIXME check which derivative to use
-//    D0(dyn->data[EOB_PPHI], dr, 12, dphidr_vec);
+//    D0(dyn->data[EOB_PPHI], dr, size, dphidr_vec);
     
     /** Compute Pphi and Pr* by iteration */
     for (int n = 0; n < Npa; n++)
