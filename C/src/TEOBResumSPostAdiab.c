@@ -66,7 +66,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     double *dHdPrs                 = (double*)malloc(size * sizeof (double));
     double *dHdPphi_o_dHdPrs       = (double*)malloc(size * sizeof (double));
     double ggm[14];
-
+    
     double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc;
 
     /** Compute radius of inflection point of Pr* */
@@ -204,10 +204,30 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     /** Compute orbital phase */
     cumint3(dHdPphi_o_dHdPrs, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
 
-    /** Print su file */
+    /** Print on file */
+    
     /* Free memory */
+    free(A_vec);
+    free(dA_vec);
+    free(d2A_vec);
+    free(B_vec);
+    free(dB_vec);
+    free(sqrtAbyB_vec);
+    free(rc_vec);
+    free(drc_dr_vec);
+    free(d2rc_dr_vec);
+    free(uc2_vec);
+    free(duc_dr_vec);
+    free(dAuc2_dr_vec);
+    free(G_vec);
+    free(dG_dr_vec);
+    free(dG_dprstar_vec);
+    free(dG_dprstarbyprstar_vec);
+    free(dpphi_dr_vec);
+    free(dprstar_dr_vec);
     free(dHdPrs);
     free(dHdPphi_o_dHdPrs);
+    
     printf("\n\nDAJECHEGIRO\n\n");
     return OK;
 }
