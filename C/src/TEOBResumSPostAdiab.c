@@ -141,25 +141,25 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
         // Circular Hamiltonians, ref: arXiv: 1406.6913
         if(usespins)
         {
-//
-//            eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,0.0,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
-//                      *H,             /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-//                      *Heff,          /* effective EOB Hamiltonian (divided by mu) */
-//               *Heff_orb,
-//               *dHeff_dr,      /* drvt Heff,r */
-//               *dHeff_dprstar, /* drvt Heff,prstar */
-//               *dHeff_dpphi,    /* drvt Heff,pphi */
-//               *d2Heff_dprstar20
-//               )
-//
-//            Horbeff[0,:] = sqrt(A*(1 + pphi[0,:]**2*uc2))
-//            Heff[0,:]    = G[0,:]*pphi[0,:] + Horbeff[0,:]
-//            H[0,:]       = sqrt(1 + 2*nu*(Heff[0,:] - 1))  //Convention: H = H_EOB * nu
-//            one_H[0,:]   = 1./H[0,:]
-//
-//            // Circular orbital frequency
-//            dHeff_dpph   = G[0,:] + pphi[0,:]*A*uc2./Horbeff[0,:]
-//            Omg[0,:]     = one_H[0,:]*dHeff_dpph
+
+            eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,0.0,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
+                      &H,             real EOB Hamiltonian divided by mu=m1m2/(m1+m2)
+                      &Heff,          effective EOB Hamiltonian (divided by mu)
+               &Heff_orb,
+               &dHeff_dr,      drvt Heff,r
+               &dHeff_dprstar, drvt Heff,prstar
+               &dHeff_dpphi,    drvt Heff,pphi
+               &d2Heff_dprstar20
+               )
+
+            Horbeff[0,:] = sqrt(A*(1 + pphi[0,:]**2*uc2))
+            Heff[0,:]    = G[0,:]*pphi[0,:] + Horbeff[0,:]
+            H[0,:]       = sqrt(1 + 2*nu*(Heff[0,:] - 1))  //Convention: H = H_EOB * nu
+            one_H[0,:]   = 1./H[0,:]
+
+            // Circular orbital frequency
+            dHeff_dpph   = G[0,:] + pphi[0,:]*A*uc2./Horbeff[0,:]
+            Omg[0,:]     = one_H[0,:]*dHeff_dpph
         }
         else
         {
