@@ -43,32 +43,31 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     const int size = dyn->size;
     const int Npa = par_get_i("postadiabatic_dynamics_N");
 
-    // FIXME: USE C structures here
-    double A_vec[size]  ;
-    double dA_vec[size] ;
-    double d2A_vec[size];
-    double B_vec[size]  ;
-    double dB_vec[size] ;
-    double sqrtAbyB_vec[size];
-    double rc_vec[size];
-    double drc_dr_vec[size];
-    double d2rc_dr_vec[size];
-    double uc2_vec[size];
-    double duc_dr_vec[size];
-    double dAuc2_dr_vec[size];
+    /* Mem for quantities to be used. FIXME: Can we avoid allocating the memory?
+     Can we use already-defined C-structures here? */
+    double *A_vec                  = (double*)malloc(size * sizeof (double));
+    double *dA_vec                 = (double*)malloc(size * sizeof (double));
+    double *d2A_vec                = (double*)malloc(size * sizeof (double));
+    double *B_vec                  = (double*)malloc(size * sizeof (double));
+    double *dB_vec                 = (double*)malloc(size * sizeof (double));
+    double *sqrtAbyB_vec           = (double*)malloc(size * sizeof (double));
+    double *rc_vec                 = (double*)malloc(size * sizeof (double));
+    double *drc_dr_vec             = (double*)malloc(size * sizeof (double));
+    double *d2rc_dr_vec            = (double*)malloc(size * sizeof (double));
+    double *uc2_vec                = (double*)malloc(size * sizeof (double));
+    double *duc_dr_vec             = (double*)malloc(size * sizeof (double));
+    double *dAuc2_dr_vec           = (double*)malloc(size * sizeof (double));
+    double *G_vec                  = (double*)malloc(size * sizeof (double));
+    double *dG_dr_vec              = (double*)malloc(size * sizeof (double));
+    double *dG_dprstar_vec         = (double*)malloc(size * sizeof (double));
+    double *dG_dprstarbyprstar_vec = (double*)malloc(size * sizeof (double));
+    double *dpphi_dr_vec           = (double*)malloc(size * sizeof (double));
+    double *dprstar_dr_vec         = (double*)malloc(size * sizeof (double));
+    double *dHdPrs                 = (double*)malloc(size * sizeof (double));
+    double *dHdPphi_o_dHdPrs       = (double*)malloc(size * sizeof (double));
     double ggm[14];
-    double G_vec[size]  ;
-    double dG_dr_vec[size]  ;
-    double dG_dprstar_vec[size]  ;
-    double dG_dprstarbyprstar_vec[size]  ;
-    double dpphi_dr_vec[size];
-    double dprstar_dr_vec[size];
 
     double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc;
-    
-    /* Mem for integrant of t and phi */
-    double *dHdPrs = (double*)malloc(size * sizeof (double));
-    double *dHdPphi_o_dHdPrs = (double*)malloc(size * sizeof (double));
 
     /** Compute radius of inflection point of Pr* */
     //TODO implementing a robust stopping condition (which)
