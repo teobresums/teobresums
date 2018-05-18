@@ -139,7 +139,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
         }
         // Define momenta in the circular orbit approximation
         dyn->pphi                = sqrt(j02);
-        dyn->data[EOB_PRSTAR][i] = 0.0;
+        dyn->prstar              = 0.0;
         dprstar_dr_vec[i]        = 0.0;
         
         // Circular Hamiltonians, ref: arXiv: 1406.6913
@@ -152,28 +152,37 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
                &Heff_orb_vec[i],
                NULL,      // drvt Heff,r
                NULL, // drvt Heff,prstar
-               NULL,   // drvt Heff,pphi
+               &dHeff_dpph,   // drvt Heff,pphi
                NULL
                )
 
-            one_H[0,:]   = 1./H[0,:]
-
-            // Circular orbital frequency
-            dHeff_dpph   = G_vec[i] + dyn->pphi]*A_vec[i]*uc2_vec[i]/Heff_orb_vec[i]
-            dyn->Omg     = ( 1./(H_vec[i]*nu) )*dHeff_dpph
         }
         else
         {
             //NON spinning hamiltonian
+            eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
+            &H_vec[i], /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+            &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
+            NULL, /* drvt Heff,r */
+            NULL, /* drvt Heff,prstar */
+            &dHeff_dpph  /* drvt Heff,pphi */
+	     )
         }
+        
+        
+
+        // Circular orbital frequency
+        dyn->Omg     = ( 1./(H_vec[i]*nu) )*dHeff_dpph;
+        
         dyn->data[EOB_RAD][i]    = dyn->r;
         dyn->data[EOB_PPHI][i]   = dyn->pphi;
-        dyn->data[EOB_MOMG][i]   = dyn->Omg;
+        dyn->data[EOB_MOMG][i]   = dyn->Omg; //Check conventions on Omega and MOmega
+        dyn->data[EOB_PRSTAR][i] = dyn->prstar;
     }
     // END r-GRID FOR
     
-    // Initialize derivatives. FIXME check which derivative to use
-//    D0(dyn->data[EOB_PPHI], dr, size, dphidr_vec);
+    // Initialize derivatives
+    D0(dyn->data[EOB_PPHI], dr, size, dpphi_dr_vec);
     
     /** Compute Pphi and Pr* by iteration */
     for (int n = 0; n < Npa; n++)
