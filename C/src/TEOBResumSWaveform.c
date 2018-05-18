@@ -1046,7 +1046,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   int jmax = 0;
   for (int j=0; j<size; j++) {
     if(t[j] > tNQC) {
-      jmax = j-1;
+      jmax = j-2;
       break;
     }
   }
