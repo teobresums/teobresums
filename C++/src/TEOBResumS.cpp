@@ -150,6 +150,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 
     std::vector<double> t_vec={};
     std::vector<double> r_vec={};
+    std::vector<double> phi_vec={};
     std::vector<double> pph_vec={};
     std::vector<double> MOmg_vec={};
     std::vector<double> ddotr_vec={};
@@ -341,6 +342,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 t_vec.push_back(t);
                 MOmg_vec.push_back(Omg);
                 r_vec.push_back(r);
+                phi_vec.push_back(phi);
                 pph_vec.push_back(pphi);
                 prstar_vec.push_back(prstar);
                 Omg_orb_vec.push_back(Omg_orb);
@@ -409,6 +411,19 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
      IMPORTANT STEP HERE: with solver 2, this waveform is OK
      for Qomg computation. Output of the pure RK evolution.
     **********************************************************/
+
+#if (DEBUG) 
+ 	char   outputd[256]   = "dyn.dat";	
+        std::FILE* waveform_preint   = std::fopen(outputd, "w");
+        int jd                 = 0;
+        int Nd                 = hlm_ampl[1].size();
+        
+        for (j=0;j<Nd;j++)
+        {
+	        std::fprintf(waveform_preint, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t_vec[j], r_vec[j], phi_vec[j], pph_vec[j], MOmg_vec[j], ddotr_vec[j],prstar_vec[j],Omg_orb_vec[j]);
+        }
+        std::fclose(waveform_preint);
+#endif
 
 #if (DEBUG) 
         char   outputr[256]   = "h22_inspl.dat";	
