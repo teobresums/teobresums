@@ -1137,7 +1137,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   for (int k=0; k<KMAX; k++) {
     for (int j=0; j<size; j++) {
       h->ampli[k][j] *= hnqc->ampli[k][j];
-      h->phase[k][j] += hnqc->phase[k][j];
+      h->phase[k][j] -= hnqc->phase[k][j];
     }
   }
 
