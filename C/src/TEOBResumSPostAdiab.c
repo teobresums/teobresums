@@ -71,14 +71,13 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   double *Heff_vec               = (double*)malloc(size * sizeof (double));
   double *Heff_orb_vec           = (double*)malloc(size * sizeof (double));
   double *dt_dr_vec              = (double*)malloc(size * sizeof (double));
-  double *H0_vec                 = (double*)malloc(size * sizeof (double));
   double *G0_vec                 = (double*)malloc(size * sizeof (double));
   double *dG_dr0_vec             = (double*)malloc(size * sizeof (double));
 
   double ggm[14];
     
   double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, dHeff_dpph, r_omg4, Omg5, dr_dtbypr, dHeff_dprstar,
-    dHeff_dprstarbyprstar, ddotr, prstar_fake, x, jhat, psi, r_omg, sqrtW, v_phi, Fphi, dr_dtbyprstar, prstar4;
+    dHeff_dprstarbyprstar, ddotr, prstar_fake, x, jhat, psi, r_omg, sqrtW, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_f, H_f;
 
     
 
@@ -146,13 +145,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
         
       // Effective prescription: If the Tilde G function is negative, take the positive solution and vice versa.
       if (G_vec[i] < 0)
-        {
-	  j02 = sol_p;
-        }
+        {j02 = sol_p;}
       else
-        {
-	  j02 = sol_m;
-        }
+        {j02 = sol_m;}
       // Define momenta in the circular orbit approximation
       dyn->pphi                = sqrt(j02);
       dyn->prstar              = 0.0;
@@ -187,10 +182,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 
       /* Defining circular quantities for the flux calculation 
 	 (must not be overwritten in successive iterations)    */
-      H0_vec[i]     = H_vec[i];
-      G0_vec[i]     = G_vec[i];
-      dG_dr0_vec[i] = dG_dr_vec[i];
-
+      G0_vec[i]        = G_vec[i];
+      dG_dr0_vec[i]    = dG_dr_vec[i];
 	
         
       dyn->data[EOB_RAD][i]    = dyn->r;
@@ -199,13 +192,15 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
       dyn->data[EOB_PRSTAR][i] = dyn->prstar;
     }
   // END r-GRID FOR
-    
+
+
+  // Computing angular momentum derivative
+  D0(dyn->data[EOB_PPHI],-dr, size, dpphi_dr_vec); //dJ0/dr
+
+  
   printf("Circular is OK.\n");
 
-  // Initialize derivatives
-  D0(dyn->data[EOB_PPHI],-dr, size, dpphi_dr_vec);
-
-
+  
   /***************
    * PA dynamics *
    ***************/
@@ -234,11 +229,13 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 	      if(usespins)
                 {
 		  // Variables for which Kepler's law is still valid
-		  psi   = (duc_dr_vec[i] + dG_dr0_vec[i]*rc_vec[i]*sqrt(A_vec[i]/(SQ(dyn->data[EOB_PPHI][i])) + A_vec[i]*uc2_vec[i])/A_vec[i])/(-0.5*dA_vec[i]);
-		  r_omg = 1.0/cbrt(SQ(((1./sqrt(rc_vec[i]*rc_vec[i]*rc_vec[i]*psi))+G0_vec[i])/(nu*H0_vec[i])));
-		  v_phi = r_omg*dyn->data[EOB_MOMG][i];
-		  x     = v_phi*v_phi;
-		  jhat  = dyn->data[EOB_PPHI][i]/(r_omg*v_phi);
+		  Heff_f = G0_vec[i]*dyn->data[EOB_PPHI][i] + Heff_orb_vec[i];
+                  H_f    = sqrt(1 + 2*nu*(Heff_f - 1));
+		  psi    = (duc_dr_vec[i] + dG_dr0_vec[i]*rc_vec[i]*sqrt(A_vec[i]/(SQ(dyn->data[EOB_PPHI][i])) + A_vec[i]*uc2_vec[i])/A_vec[i])/(-0.5*dA_vec[i]);
+		  r_omg  = 1.0/cbrt(SQ(((1./sqrt(rc_vec[i]*rc_vec[i]*rc_vec[i]*psi))+G0_vec[i])/(nu*H_f)));
+		  v_phi  = r_omg*dyn->data[EOB_MOMG][i];
+		  x      = v_phi*v_phi;
+		  jhat   = dyn->data[EOB_PPHI][i]/(r_omg*v_phi);
 		    
 		  ddotr       = 0.0; //FIXME: To be changed when considering NQCs.
 		  prstar_fake = 0.0; //FIXME: To be changed to the true prstar value when considering NQCs.
@@ -390,7 +387,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     
   /** Compute time */
   cumint3(dt_dr_vec, dyn->data[EOB_RAD], size, dyn->time);
-  /** FIXME dHdPrs^-1*/
 
   /* Set last value for evolution */
   dyn->t = dyn->time[size-1];
@@ -434,7 +430,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   free(H_vec);
   free(Heff_vec);
   free(Heff_orb_vec);
-  free(dt_dr_vec);
+  free(G0_vec);
+  free(dG_dr0_vec);
+  
 
   printf("\n\nDAJECHEGIRO\n\n");
   return OK;
