@@ -8,8 +8,8 @@
 M = 1. # total binary mass
 q = 1. # mass ratio
 
-chi1 = 0.001 # dimensioneless spin 1 z-component 
-chi2 = 0.001 # dimensioneless spin 2 z-component 
+chi1 = -0.99 # dimensioneless spin 1 z-component 
+chi2 = -0.99 # dimensioneless spin 2 z-component 
 
 distance = 1. 
 inclination = 0.
@@ -42,7 +42,7 @@ use_speedytail = 1 # use special routine to speed up tail computation ?
 interp_uniform_grid = 0 # interpolate on uniform grid ?
 
 postadiabatic_dynamics = "yes"
-postadiabatic_dynamics_N = 2 # post-adiabatic order
+postadiabatic_dynamics_N = 8 # post-adiabatic order
 postadiabatic_dynamics_size = 100 # grid size 
 postadiabatic_dynamics_stop = "yes" # stop after post-adiabatic dynamics
 
