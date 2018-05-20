@@ -79,11 +79,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, dHeff_dpphi, r_omg4, Omg5, dr_dtbypr, dHeff_dprstar,
     dHeff_dprstarbyprstar, ddotr_fake, prstar_fake, x, jhat, psi, r_omg, sqrtW, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_f, H_f;
 
-    
-
   /* Compute radius of inflection point of Pr* */
   //TODO implementing a robust stopping condition (which)
-  r0 =22;
+  r0        = 22;
   double ri = 12.;
 
   /* Build a uniform grid and compute circular dynamics */
@@ -98,28 +96,28 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
       /* Computing metric functions and centrifugal radius */
       if(usespins)
         {
-	  eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &d2A_vec[i], &dB_vec[i]);
-	    
-	  eob_dyn_s_get_rc(dyn->r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc_vec[i], &drc_dr_vec[i], &d2rc_dr_vec[i]);
-	    
-	  eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);           
-	  G_vec[i]                  = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss
-	  dG_dr_vec[i]              = ggm[6] *S+ggm[7] *Sstar;
-	  dG_dprstar_vec[i]         = ggm[4] *S+ggm[5] *Sstar;
-	  dG_dprstarbyprstar_vec[i] = ggm[10]*S+ggm[11]*Sstar;
+          eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &d2A_vec[i], &dB_vec[i]);
+            
+          eob_dyn_s_get_rc(dyn->r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc_vec[i], &drc_dr_vec[i], &d2rc_dr_vec[i]);
+            
+          eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+          G_vec[i]                  = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss
+          dG_dr_vec[i]              = ggm[6] *S+ggm[7] *Sstar;
+          dG_dprstar_vec[i]         = ggm[4] *S+ggm[5] *Sstar;
+          dG_dprstarbyprstar_vec[i] = ggm[10]*S+ggm[11]*Sstar;
         }
       else
         {
-	  eob_metric(dyn->r ,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &d2A_vec[i], &dB_vec[i]);
-	    
-	  rc_vec[i]                 = dyn->r; //Nonspinning case: rc = r
-	  drc_dr_vec[i]             = 1;
-	  d2rc_dr_vec[i]            = 0;
-	    
-	  G_vec[i]                  = 0.0;
-	  dG_dr_vec[i]              = 0.0;
-	  dG_dprstar_vec[i]         = 0.0;
-	  dG_dprstarbyprstar_vec[i] = 0.0;
+          eob_metric(dyn->r ,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &d2A_vec[i], &dB_vec[i]);
+            
+          rc_vec[i]                 = dyn->r; //Nonspinning case: rc = r
+          drc_dr_vec[i]             = 1;
+          d2rc_dr_vec[i]            = 0;
+            
+          G_vec[i]                  = 0.0;
+          dG_dr_vec[i]              = 0.0;
+          dG_dprstar_vec[i]         = 0.0;
+          dG_dprstarbyprstar_vec[i] = 0.0;
         }
         
       /* Auxiliary variables*/
@@ -130,66 +128,68 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
       dAuc2_dr_vec[i] = uc2_vec[i]*(dA_vec[i]-2*A_vec[i]*uc*drc_dr_vec[i]);
 
 	
-      /*********************
-       * Circular dynamics *
-       *********************/
+      /**************************
+       * Circular approximation *
+       **************************/
 
-      // Computing the circular angular momentum by solving eq. (A15) of TEOBResum paper (which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). The procedure to choose the physical solution of the quadratic equation is effective but not understood.  FIXME
+      // Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper (which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). The procedure to choose the physical solution of the quadratic equation is effective but not understood.  FIXME
 
-      a_coeff    = dAuc2_dr_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*uc2_vec[i]*dG_dr_vec[i]*dG_dr_vec[i];  // First coefficient of the quadratic equation a*x^2+b*x+c=0
-      b_coeff    = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*dG_dr_vec[i]*dG_dr_vec[i];                 // Second coefficient of the quadratic equation
-      c_coeff    = dA_vec[i]*dA_vec[i];                             // Third coefficient of the quadratic equation
-      Delta      = b_coeff*b_coeff - 4*a_coeff*c_coeff ;            // Delta of the quadratic equation
-      sol_p      = (-b_coeff + sqrt(Delta))/(2*a_coeff);            // Plus  solution of the quadratic equation
-      sol_m      = (-b_coeff - sqrt(Delta))/(2*a_coeff);            // Minus solution of the quadratic equation
+      a_coeff    = dAuc2_dr_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*uc2_vec[i]*dG_dr_vec[i]*dG_dr_vec[i];  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
+      b_coeff    = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*dG_dr_vec[i]*dG_dr_vec[i];                 /* Second coefficient of the quadratic equation */
+      c_coeff    = dA_vec[i]*dA_vec[i];                             /* Third coefficient of the quadratic equation */
+      Delta      = b_coeff*b_coeff - 4*a_coeff*c_coeff ;            /* Delta of the quadratic equation */
+      sol_p      = (-b_coeff + sqrt(Delta))/(2*a_coeff);            /* Plus  solution of the quadratic equation */
+      sol_m      = (-b_coeff - sqrt(Delta))/(2*a_coeff);            /* Minus solution of the quadratic equation */
         
-      // Effective prescription: If the Tilde G function is negative, take the positive solution and vice versa.
+      /* Effective prescription: If the Tilde G function is negative, take the positive solution and viceversa. */
       if (G_vec[i] < 0)
         {j02 = sol_p;}
       else
         {j02 = sol_m;}
-      // Define momenta in the circular orbit approximation
+        
+      /* Now the circular approximation is completely determined. Next steps will precompute quantities needed for the first PA approximation, i.e. the ones entering (A19) of TEOBResumS paper. */
+      /* Define momenta in the circular orbit approximation */
       dyn->pphi                = sqrt(j02);
       dyn->prstar              = 0.0;
       dprstar_dr_vec[i]        = 0.0;
         
       // Circular Hamiltonians, ref: arXiv: 1406.6913
       if(usespins)
-        {
-	  eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,dyn->prstar,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
-		    &H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-		    &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu)       */
-		    &Heff_orb_vec[i],
-		    NULL,             /* drvt Heff,r      */
-		    NULL,             /* drvt Heff,prstar */
-		    &dHeff_dpphi,      /* drvt Heff,pphi   */
-		    NULL);
-        }
+      {
+        eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,dyn->prstar,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
+        &H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+        &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu)       */
+        &Heff_orb_vec[i],
+        NULL,             /* drvt Heff,r      */
+        NULL,             /* drvt Heff,prstar */
+        &dHeff_dpphi,      /* drvt Heff,pphi   */
+        NULL);
+      }
       else
-        {
-	  //NON spinning hamiltonian
-	  eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
-		  &H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-		  &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
-		  NULL,             /* drvt Heff,r      */
-		  NULL,             /* drvt Heff,prstar */
-		  &dHeff_dpphi);     /* drvt Heff,pphi   */
-        }
+      {
+        //NON spinning hamiltonian
+        eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
+        &H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+        &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
+        NULL,             /* drvt Heff,r      */
+        NULL,             /* drvt Heff,prstar */
+        &dHeff_dpphi);     /* drvt Heff,pphi   */
+      }
         
       // Circular orbital frequency
       dyn->Omg     = 1./(H_vec[i]*nu)*dHeff_dpphi;
 
 
-      /* Defining circular quantities for the flux calculation 
-	 (must not be overwritten in successive iterations)    */
+      /* Defining circular quantities for the flux calculation.
+	     Must not be overwritten in successive iterations, thus
+         we define separate quantities with the subscripts 0. */
       G0_vec[i]        = G_vec[i];
       dG_dr0_vec[i]    = dG_dr_vec[i];
 	
-        
       dyn->data[EOB_RAD][i]    = dyn->r;
       dyn->data[EOB_PPHI][i]   = dyn->pphi;
       dyn->data[EOB_PRSTAR][i] = dyn->prstar;
-      dyn->data[EOB_MOMG][i]   = dyn->Omg; //Check conventions on Omega and MOmega
+      dyn->data[EOB_MOMG][i]   = dyn->Omg;
     }
   // END r-GRID FOR
 
@@ -214,13 +214,13 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   bool prstar_bool = 1;
     
   /* For on PA orders */
-  for (int n = 1; n < Npa; n++)
+    for (int n = 1; n < Npa; n++)
     {
  
       if (n%2==0) /*Separating even and odd orders*/
-	{prstar_bool = 0;} 
+        {prstar_bool = 0;}
       else
-	{prstar_bool = 1;}
+        {prstar_bool = 1;}
 
       /* For on r-grid */
       for (int i = 0; i < size; i++)
@@ -244,7 +244,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
                 {
 		  // Variables for which Kepler's law is still valid
 		  Heff_f = G0_vec[i]*dyn->pphi + Heff_orb_vec[i];
-                  H_f    = sqrt(1 + 2*nu*(Heff_f - 1));
+          H_f    = sqrt(1 + 2*nu*(Heff_f - 1));
 		  psi    = (duc_dr_vec[i] + dG_dr0_vec[i]*rc_vec[i]*sqrt(A_vec[i]/(SQ(dyn->pphi)) + A_vec[i]*uc2_vec[i])/A_vec[i])/(-0.5*dA_vec[i]);
 		  r_omg  = 1.0/cbrt(SQ(((1./sqrt(rc_vec[i]*rc_vec[i]*rc_vec[i]*psi))+G0_vec[i])/(nu*H_f)));
 		  v_phi  = r_omg*dyn->Omg;
@@ -281,7 +281,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 	      dHeff_dprstarbyprstar = dyn->pphi*dG_dprstarbyprstar_vec[i] + 1./Heff_orb_vec[i]*(1+2*z3*A_vec[i]*uc2_vec[i]*SQ(dyn->prstar));
 	      dr_dtbyprstar         = sqrtAbyB_vec[i]/(nu*H_vec[i])*dHeff_dprstarbyprstar;
 
-	      dyn->prstar = Fphi/dpphi_dr_vec[i]/dr_dtbyprstar;
+	      dyn->prstar = Fphi/dpphi_dr_vec[i]/dr_dtbyprstar; /* Computing first PA using the approximation detailed above A19 of TEOBResumS paper and Hamilton's equations. */
 
 	      /***************************************
 	       * p_phi does not change at odd orders *
@@ -319,6 +319,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
                 
 	      /*******************************************************
 	       * prstar and G functions do not change at even orders *
+           * (G does not change because of the chosen gauge,     *
+           * which eliminates the dependence of G from pphi).    *
 	       *******************************************************/
                 
 	    }
@@ -361,11 +363,11 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 	   * dr_dt *
 	   *********/
 	  //    dyn->dy[EOB_EVOLVE_RAD]  FIXME: to be checked
-	  dt_dr_vec[i]    = 1.0/(sqrtAbyB_vec[i]/(nu*H_vec[i])*dHeff_dprstar); /* dt_dr = 1/dr_dt */
+	  dt_dr_vec[i]    = 1.0/( (sqrtAbyB_vec[i]*dHeff_dprstar)/(nu*H_vec[i]) ); /* dt_dr = 1/dr_dt */
 	  dphi_dr_vec[i]  = dyn->Omg*dt_dr_vec[i];                             /* d(phi)_dt = d(phi)_dr*dr_dt */
 
 	  
-          /* Re-assigning quantities to array elements */ 
+        /* Re-assigning quantities to array elements */
 	  dyn->data[EOB_PHI][i]    = dyn->phi;
 	  dyn->data[EOB_PPHI][i]   = dyn->pphi;
 	  dyn->data[EOB_MOMG][i]   = dyn->Omg;
