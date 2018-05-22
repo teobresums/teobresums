@@ -388,7 +388,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   printf("I am computing the dynamics with r0: %f\n", r0);
   char outputadiab[256]     = "Post_adiab_";
   strcat(outputadiab, ro_string);
-  strcat(outputadiab, ".dat"); */
+  strcat(outputadiab, ".dat"); 
  
   /* FILE* Post_adiab_debug = fopen(outputadiab, "w");
   for (int kt = 0; kt < size; kt++)
@@ -406,9 +406,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   /** Try to integrate from from Matlab data, to see if cumint behaves properly */
   FILE *matlab;
   matlab = fopen("/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics_old/Matlabdynam_q1_chi1_0.0_chi2_0.0.txt", "r");
-  printf("Fino a qui funziona\n");
   fscanf(matlab, "%*[^\n]\n");
-  printf("Ho saltato la riga commentata\n");
   for (int v=0; v<size; v++){
       fscanf(matlab, "\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", &r_mat_vec[v], &prstar_mat_vec[v], &pphi_mat_vec[v],
       &dr_dt_mat_vec[v], &omg_mat_vec[v], &t_mat_vec[v], &phi_mat_vec[v]);
@@ -440,9 +438,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   char q_string[256]; //size of the number
   sprintf(q_string, "_q_%1.0f", dyn->q);
   char chi1_string[256]; 
-  sprintf(chi1_string, "_chi1_%3.2f", dyn->chi1);
+  sprintf(chi1_string, "_chi1_%2.1f", dyn->chi1);
   char chi2_string[256]; 
-  sprintf(chi2_string, "_chi2_%3.2f", dyn->chi2);
+  sprintf(chi2_string, "_chi2_%2.1f", dyn->chi2);
   char lAL2_string[256]; 
   sprintf(lAL2_string, "_lAL2_%3d", lAL2); 
   char lBL2_string[256]; 
