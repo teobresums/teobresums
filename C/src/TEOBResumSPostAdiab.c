@@ -17,7 +17,7 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.       
  *
  */
-
+#include <string.h>
 #include "TEOBResumS.h"
 
 /** Post-adiabatic dynamics */
@@ -70,9 +70,18 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   double *H_vec                  = (double*)malloc(size * sizeof (double));
   double *Heff_vec               = (double*)malloc(size * sizeof (double));
   double *Heff_orb_vec           = (double*)malloc(size * sizeof (double));
+  double *dr_dt_vec              = (double*)malloc(size * sizeof (double));
   double *dt_dr_vec              = (double*)malloc(size * sizeof (double));
   double *G0_vec                 = (double*)malloc(size * sizeof (double));
   double *dG_dr0_vec             = (double*)malloc(size * sizeof (double));
+  double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double));
+  double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double));
+  double *r_mat_vec              = (double*)malloc(size * sizeof (double));
+  double *prstar_mat_vec         = (double*)malloc(size * sizeof (double));
+  double *pphi_mat_vec           = (double*)malloc(size * sizeof (double));
+  double *omg_mat_vec            = (double*)malloc(size * sizeof (double));
+  double *t_mat_vec              = (double*)malloc(size * sizeof (double));
+  double *phi_mat_vec            = (double*)malloc(size * sizeof (double));
   
   double ggm[14];
     
@@ -90,9 +99,10 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     
   for (int i = 0; i < size; i++)
     {
+      
       //FIXME dyn->data[EOB_RAD] forse non e' quello da usare, in altri punti usa dyn->r. Io non voglio che dyn->data cambi, quindi non mi piace passargli il puntatore.
       dyn->r = r0 - i*dr;
-
+      
       /* Computing metric functions and centrifugal radius */
       if(usespins)
         {
@@ -347,6 +357,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 	   * dr_dt *
 	   *********/
 	  //    dyn->dy[EOB_EVOLVE_RAD]  FIXME: to be checked
+      dr_dt_vec[i]    = ( (sqrtAbyB_vec[i]*dHeff_dprstar)/(nu*H_vec[i]) );
 	  dt_dr_vec[i]    = 1.0/( (sqrtAbyB_vec[i]*dHeff_dprstar)/(nu*H_vec[i]) ); /* dt_dr = 1/dr_dt */
 	  dphi_dr_vec[i]  = dyn->Omg*dt_dr_vec[i];                             /* d(phi)_dt = d(phi)_dr*dr_dt */
 	  
@@ -367,25 +378,41 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 	{D0(dyn->data[EOB_PPHI],-dr, size, dpphi_dr_vec);}
     }
   // END PA-CORRECTIONS FOR
-    
-  printf("\n\n\nI am debugging Post-adiab!!!!!!!!!!!\n\n\n");
-  char ro_string[256]; //size of the number
+  
+  /*printf("\n\n\nI am debugging Post-adiab!!!!! printf("\n\n\nAttenzione!!!!!!!!!!!\n\n\n");
+  /* char ro_string[256]; //size of the number
   sprintf(ro_string, "r0_%f", r0);
   printf("I am computing the dynamics with r0: %f\n", r0);
   char outputadiab[256]     = "Post_adiab_";
   strcat(outputadiab, ro_string);
-  strcat(outputadiab, ".dat");
+  strcat(outputadiab, ".dat"); */
  
-  FILE* Post_adiab_debug = fopen(outputadiab, "w");
+  /* FILE* Post_adiab_debug = fopen(outputadiab, "w");
   for (int kt = 0; kt < size; kt++)
     {
       fprintf(Post_adiab_debug, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", dyn->data[EOB_RAD][kt], dyn->data[EOB_PPHI][kt], dyn->data[EOB_PRSTAR][kt], dt_dr_vec[kt], dphi_dr_vec[kt]);
     }
-  fclose(Post_adiab_debug);
+  fclose(Post_adiab_debug); */
+  
+  
 
   /***********************
    * Computing integrals *
    ***********************/
+  
+  /** Try to integrate from from Matlab data, to see if cumint behaves properly */
+  FILE *matlab;
+  matlab = fopen("/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics_old/Matlabdynam_q1_chi1_0.0_chi2_0.0.txt", "r");
+  printf("Fino a qui funziona\n");
+  fscanf(matlab, "%*[^\n]\n");
+  printf("Ho saltato la riga commentata\n");
+  for (int v=0; v<size; v++){
+      fscanf(matlab, "\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", &r_mat_vec[v], &prstar_mat_vec[v], &pphi_mat_vec[v],
+      &dr_dt_mat_vec[v], &omg_mat_vec[v], &t_mat_vec[v], &phi_mat_vec[v]);
+      dt_dr_mat_vec[v]=1./dr_dt_mat_vec[v];
+  }
+  fclose(matlab);
+  
   
   /** Compute time */
   cumint3(dt_dr_vec, dyn->data[EOB_RAD], size, dyn->time);
@@ -395,19 +422,46 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 
   /** Compute orbital phase */
   cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
-    
-  char output_tphi[256]     = "tphi_";
-  strcat(output_tphi, ro_string);
-  strcat(output_tphi, ".dat");
-  FILE* tphi_debug = fopen(output_tphi, "w");
+  
+  
+  /** Print Post-adiab dynamics on file for comparison with Matlab code */ 
+  int lAL2, lBL2;
+  if (usetidal)
+    {lAL2 = par_get_i("LambdaAl2");
+    lBL2 = par_get_i("LambdaAl2");
+    }
+  else
+    {lAL2 = 0;
+    lBL2 = 0;
+    }
+  char q_string[256]; //size of the number
+  sprintf(q_string, "_q_%1.0f", dyn->q);
+  char chi1_string[256]; 
+  sprintf(chi1_string, "_chi1_%3.2f", dyn->chi1);
+  char chi2_string[256]; 
+  sprintf(chi2_string, "_chi2_%3.2f", dyn->chi2);
+  char lAL2_string[256]; 
+  sprintf(lAL2_string, "_lAL2_%3d", lAL2); 
+  char lBL2_string[256]; 
+  sprintf(lBL2_string, "_lBL2_%3d", lBL2); 
+  char post_adiab_dyn[256]     = "Post_adiab_dynamics";
+  strcat(post_adiab_dyn, q_string);
+  strcat(post_adiab_dyn, chi1_string);
+  strcat(post_adiab_dyn, chi2_string);
+  strcat(post_adiab_dyn, lAL2_string);
+  strcat(post_adiab_dyn, lBL2_string);
+  strcat(post_adiab_dyn, ".dat");
+  printf("I'm running with chi1 = %f and chi2=%f\n", dyn->chi1, dyn->chi2);
+  
+  FILE* Post_adiab_dynamics = fopen(post_adiab_dyn, "w");
+  fprintf(Post_adiab_dynamics, "#8PA\tr\tp_r*\tp_phi\tdr_dt\tMOmg\tt\tphi\n");
   for (int kt = 0; kt < size; kt++)
     {
-      fprintf(tphi_debug, "%20.12f\t%20.12f\n", dyn->time[kt], dyn->data[EOB_PHI][kt]);
+      fprintf(Post_adiab_dynamics, "\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\n", dyn->data[EOB_RAD][kt], dyn->data[EOB_PRSTAR][kt], dyn->data[EOB_PPHI][kt],
+      dr_dt_vec[kt], dyn->data[EOB_MOMG][kt], dyn->time[kt], dyn->data[EOB_PHI][kt]);
     }
-  fclose(tphi_debug);
-  exit(0);
+  fclose(Post_adiab_dynamics);
     
-  /** Print on file? */
     
   /* Free memory */
   free(A_vec);
@@ -436,6 +490,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   free(dG_dr0_vec);
 
   printf("\n\nDAJECHEGIRO\n\n");
+  
   
   return OK;
 }
