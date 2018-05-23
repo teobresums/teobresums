@@ -142,19 +142,30 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
        **************************/
       // Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper (which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). The procedure to choose the physical solution of the quadratic equation is effective but not understood.  FIXME
 
-      a_coeff    = dAuc2_dr_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*uc2_vec[i]*dG_dr_vec[i]*dG_dr_vec[i];  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
-      b_coeff    = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*dG_dr_vec[i]*dG_dr_vec[i];                 /* Second coefficient of the quadratic equation */
-      c_coeff    = dA_vec[i]*dA_vec[i];                             /* Third coefficient of the quadratic equation */
-      Delta      = b_coeff*b_coeff - 4*a_coeff*c_coeff ;            /* Delta of the quadratic equation */
-      sol_p      = (-b_coeff + sqrt(Delta))/(2*a_coeff);            /* Plus  solution of the quadratic equation */
-      sol_m      = (-b_coeff - sqrt(Delta))/(2*a_coeff);            /* Minus solution of the quadratic equation */
-        
-      /* Effective prescription: If the Tilde G function is negative, take the positive solution and viceversa. */
-      if (G_vec[i] < 0)
-        {j02 = sol_p;}
+      if (usespins)
+	{
+	  a_coeff = dAuc2_dr_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*uc2_vec[i]*dG_dr_vec[i]*dG_dr_vec[i];  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
+	  b_coeff = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*dG_dr_vec[i]*dG_dr_vec[i];                 /* Second coefficient of the quadratic equation */
+	  c_coeff = dA_vec[i]*dA_vec[i]; /* Third coefficient of the quadratic equation */
+	  Delta   = b_coeff*b_coeff - 4*a_coeff*c_coeff ; /* Delta of the quadratic equation */
+	  
+	  sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); /* Plus  solution of the quadratic equation */
+	  sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff); /* Minus solution of the quadratic equation */
+	  
+	  /* Effective prescription: If the Tilde G function is negative, take the positive solution and viceversa. */
+	  if (G_vec[i] < 0)
+	    {j02 = sol_p;}
+	  else
+	    {j02 = sol_m;}
+	}
       else
-        {j02 = sol_m;}
-        
+	{
+	  a_coeff = dAuc2_dr_vec[i];
+	  b_coeff = dA_vec[i];
+	  
+	  j02 = -b_coeff/a_coeff;
+        }
+      
       /* Define momenta in the circular orbit approximation */
       dyn->pphi                = sqrt(j02);
       dyn->prstar              = 0.0;
@@ -390,12 +401,12 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   strcat(outputadiab, ro_string);
   strcat(outputadiab, ".dat"); 
  
-  /* FILE* Post_adiab_debug = fopen(outputadiab, "w");
+  FILE* Post_adiab_debug = fopen(outputadiab, "w");
   for (int kt = 0; kt < size; kt++)
     {
       fprintf(Post_adiab_debug, "%20.12f\t%20.12f\t%20.12f\t%20.12f\t%20.12f\n", dyn->data[EOB_RAD][kt], dyn->data[EOB_PPHI][kt], dyn->data[EOB_PRSTAR][kt], dt_dr_vec[kt], dphi_dr_vec[kt]);
     }
-  fclose(Post_adiab_debug); */
+  fclose(Post_adiab_debug);
   
   
 
