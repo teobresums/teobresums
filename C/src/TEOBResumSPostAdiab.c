@@ -188,10 +188,12 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
         //NON spinning hamiltonian
         eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
         &H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-        &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
+	&Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). */
         NULL,             /* drvt Heff,r      */
         NULL,             /* drvt Heff,prstar */
         &dHeff_dpphi);     /* drvt Heff,pphi   */
+
+	Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
       }
         
       // Circular orbital frequency
@@ -286,6 +288,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 		  Fphi = eob_flx_Flux(x,dyn->Omg,r_omg, nu*H_vec[i], Heff_vec[i],jhat,dyn->r,prstar_fake, ddotr_fake, dyn);
                 }
 
+
 	      /**********************
 	       * Calculating prstar *
 	       **********************/
@@ -358,6 +361,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 		      NULL,             /* drvt Heff,r      */
 		      &dHeff_dprstar,   /* drvt Heff,prstar */
 		      &dHeff_dpphi);     /* drvt Heff,pphi   */
+
+	      Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
             }
       
 	  /*********************
