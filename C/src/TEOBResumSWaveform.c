@@ -1362,8 +1362,9 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
-  const double dt = 0.5;	// Grid width for find_max routine
-
+  //const double dt = par_get_d("dt");	
+  const double dt = dyn->dt;
+  
   //double *Omega = dyn->data[EOB_MOMG];
   double *Omega = dyn->data[EOB_OMGORB];// use this for spin?
   
@@ -1398,19 +1399,15 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     if (VERBOSE) printf("No omega-maximum found.\n");
   }
 
-	
-  const int n = 7;	// USE 7, it seems we need at least 7 points to determine t_Omega_peak properly
-  double tmax = (index_pk)*dt;
-  double *Omegas;
-  double Xvals[7]= {index_pk-3,index_pk-2,index_pk-1,index_pk,index_pk+1,index_pk+2,index_pk+3};
-  double Yvals[7]={Omega[index_pk-3],Omega[index_pk-2], Omega[index_pk-1], Omega[index_pk], Omega[index_pk+1], Omega[index_pk+2],Omega[index_pk+3]};
-  Omegas= Yvals;
-  double *Omega_max;
-  double tOmg_pk = find_max(n, dt, tmax, Omegas, Omega_max);
-
-  
-  if (DEBUG) printf("Ringdown: tOmg_pk  = %e\n",tOmg_pk);
+  const int n = 7; /* USE 7, it seems we need at least 7 points to determine t_Omega_peak properly */
+  if ( (index_pk + (n-1)/2) > (dynsize-1) ) {
+    errorexit("Not enough points to interpolate.\n");
+  }	
+  double tmax = dyn->time[index_pk];  
+  double *Omega_ptr = &Omega[index_pk-3];
+  double tOmg_pk = find_max(n, dt, tmax, Omega_ptr, NULL);
   tOmg_pk *= ooMbh;
+  if (DEBUG) printf("Ringdown: tOmg_pk  = %.12e\n",tOmg_pk);
   
   /** Merger time t_max(A22) */
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
