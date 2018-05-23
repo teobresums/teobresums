@@ -1362,6 +1362,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
+  const double dt = 0.5;	// Grid width for find_max routine
 
   //double *Omega = dyn->data[EOB_MOMG];
   double *Omega = dyn->data[EOB_OMGORB];// use this for spin?
@@ -1396,12 +1397,18 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   if (index_pk >= dynsize-2) {
     if (VERBOSE) printf("No omega-maximum found.\n");
   }
-  //if (index_pk > dynsize-4) {
-  //  errorexit("Not enough points to interpolate.\n");
-  //}
-  //TODO: there's no max interp at the moment. It does not seem necessary.
+
+	
+  const int n = 7;	// USE 7, it seems we need at least 7 points to determine t_Omega_peak properly
+  double tmax = (index_pk)*dt;
+  double *Omegas;
+  double Xvals[7]= {index_pk-3,index_pk-2,index_pk-1,index_pk,index_pk+1,index_pk+2,index_pk+3};
+  double Yvals[7]={Omega[index_pk-3],Omega[index_pk-2], Omega[index_pk-1], Omega[index_pk], Omega[index_pk+1], Omega[index_pk+2],Omega[index_pk+3]};
+  Omegas= Yvals;
+  double *Omega_max;
+  double tOmg_pk = find_max(n, dt, tmax, Omegas, Omega_max);
+
   
-  double tOmg_pk = t[index_pk];
   if (DEBUG) printf("Ringdown: tOmg_pk  = %e\n",tOmg_pk);
   tOmg_pk *= ooMbh;
   
@@ -1455,7 +1462,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   for (int k = 0; k < KMAX; k++) {
     for (int j = size-1; j-- ; ) {  
       if (t_lm[k][j] < tmatch[k]) {
-	idx[k] = j;
+	idx[k] = j -1;    // j-1 gives the same index as C++
 	break;
       }
     }
@@ -1470,7 +1477,8 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
     Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
     /* Compute and attach ringdown */
-    for (int j = idx[k]; j < size ; j++ ) {  
+    for (int j = idx[k]; j < size-2 ; j++ ) // size-2 to be consistent with C++, but size is fine as well, it just means C uses ringdown routine for 2 more time steps than C++
+    {   
       tm = t_lm[k][j] - tmrg[k];
       eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       hlm->phase[k][j] = psi[1] - Deltaphi[k];
