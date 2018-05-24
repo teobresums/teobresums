@@ -436,16 +436,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   
  
   /** Print Post-adiab dynamics on file for comparison with Matlab code */ 
-  //FIXME: Adds two extra spaces after lAL2_ and lBL2_, don't know why.
-  int lAL2, lBL2;
-  if (usetidal)
-    {lAL2 = par_get_i("LambdaAl2");
-    lBL2 = par_get_i("LambdaAl2");
-    }
-  else
-    {lAL2 =0;
-    lBL2 =0;
-    }
+  
   char q_string[256]; //size of the number
   sprintf(q_string, "_q_%1.0f", dyn->q);
   char chi1_string[256]; 
@@ -453,15 +444,12 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   char chi2_string[256]; 
   sprintf(chi2_string, "_chi2_%3.2f", dyn->chi2);
   char lAL2_string[256]; 
-  sprintf(lAL2_string, "_lAL2_%3d", lAL2); 
-  char lBL2_string[256]; 
-  sprintf(lBL2_string, "_lBL2_%3d", lBL2); 
   char post_adiab_dyn[256]     = "Post_adiab_dynamics";
+  if (!usetidal){
+    strcat(post_adiab_dyn, "_bbh");}
   strcat(post_adiab_dyn, q_string);
   strcat(post_adiab_dyn, chi1_string);
   strcat(post_adiab_dyn, chi2_string);
-  strcat(post_adiab_dyn, lAL2_string);
-  strcat(post_adiab_dyn, lBL2_string);
   strcat(post_adiab_dyn, ".dat");
   printf("I'm running with chi1 = %f and chi2=%f\n", dyn->chi1, dyn->chi2);
   
@@ -481,7 +469,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   strcat(file_name_mat, chi1_string);
   strcat(file_name_mat, chi2_string);
   strcat(file_name_mat, ".txt"); */
-  char file_name_mat[256] =  "/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics/Matlab_bbh_q_5_chi1_0.8_chi2_-0.75.txt";
+  char file_name_mat[256] =  "/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics/Matlab_bbh_q_1_chi1_0_chi2_0.txt";
   FILE *matlab;
   matlab = fopen(file_name_mat, "r");
   fscanf(matlab, "%*[^\n]\n");
@@ -506,8 +494,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   strcat(matlab_string, q_string);
   strcat(matlab_string, chi1_string);
   strcat(matlab_string, chi2_string);
-  strcat(matlab_string, lAL2_string);
-  strcat(matlab_string, lBL2_string);
   strcat(matlab_string, ".dat");
   
   FILE* matlab_int = fopen(matlab_string, "w");
