@@ -222,8 +222,7 @@ void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
 {
     
   /** Useful shorthands*/
-  double pi     = Pi;
-  double pi2    = SQ(Pi);
+  const double Pi2 = SQ(Pi);
   double nu2    = SQ(nu);
   double y      = cbrt(Hreal*Omega*Hreal*Omega);
   double sqrt_y = sqrt(y);
@@ -247,31 +246,31 @@ void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
 
   /* l=2 */
   /* Pade(1,2) approximant */
-  num        = 69020.*nu + 5992.*pi*sqrt_y;
-  den        = 5992.*pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
+  num        = 69020.*nu + 5992.*Pi*sqrt_y;
+  den        = 5992.*Pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
   dlm[0] = delta21LO*num/den;
   /* Pade(2,2) approximant */
-  num        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
-  den        = (808920.*nu*pi*sqrt(y) + 137388.*pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
+  num        = (808920.*nu*Pi*sqrt(y) + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
+  den        = (808920.*nu*Pi*sqrt(y) + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
   dlm[1] = delta22LO*num/den;
   
   /* l=3 */
   /* Pade(1,2) approximant */
-  num        = 4641.*nu + 1690.*pi*sqrt_y;
+  num        = 4641.*nu + 1690.*Pi*sqrt_y;
   den        = num + 18207.*nu2*y;
   dlm[2] = delta31LO*num/den;
   /* Taylor-expanded form */
-  num        = 1.  + 94770.*pi/(566279.*nu)*sqrt_y;
+  num        = 1.  + 94770.*Pi/(566279.*nu)*sqrt_y;
   den        = num + 80897.* nu/3159.*y;
-  dlm[3] = (10.+33.*nu)/(15.*(1.-3.*nu)) * y32 + 52./21.*pi*y3;
+  dlm[3] = (10.+33.*nu)/(15.*(1.-3.*nu)) * y32 + 52./21.*Pi*y3;
   /* Pade(1,2) approximant */
   dlm[4] = delta33LO*num/den;
   
   /* l=4 */
-  dlm[5] =   (2.+507.*nu)/(10.*(1.-2.*nu))*y32   + 1571./3465.*pi*y3;
-  dlm[6] =  7.*(1.+6.*nu)/(15.*(1.-3.*nu))*y32   + 6284./3465.*pi*y3;
-  dlm[7] = (486.+4961.*nu)/(810.*(1.-2.*nu))*y32 + 1571./385.*pi*y3;
-  dlm[8] =  (112.+219.*nu)/(120.*(1.-3.*nu))*y32 + 25136./3465.*pi*y3;
+  dlm[5] =   (2.+507.*nu)/(10.*(1.-2.*nu))*y32   + 1571./3465.*Pi*y3;
+  dlm[6] =  7.*(1.+6.*nu)/(15.*(1.-3.*nu))*y32   + 6284./3465.*Pi*y3;
+  dlm[7] = (486.+4961.*nu)/(810.*(1.-2.*nu))*y32 + 1571./385.*Pi*y3;
+  dlm[8] =  (112.+219.*nu)/(120.*(1.-3.*nu))*y32 + 25136./3465.*Pi*y3;
   
   /* l=5 */
   dlm[9] = (96875. + 857528.*nu)/(131250.*(1.-2.*nu))*y32;
@@ -293,6 +292,7 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
   const double nu2 = nu*nu;
   const double nu3 = nu*nu2;
   const double nu4 = nu*nu3;
+  const double Pi2 = SQ(Pi);
   
   static int firstcall = 1;
   if (firstcall) {
@@ -501,15 +501,15 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
   clm[1][3] = (12.736034731834051  - 2.902228713904598 *nu - 1.9301558466099282*nu2 + 0.2715020968103451*nu3 - 4.076190476190476*el2);
   clm[1][4] = (-2.4172313935587004 + 4.173242630385488 *el2);
   clm[1][5] = (-30.14143102836864  + 7.916297736025627 *el2);
-  
-  clm[2][3] = (1.9098284139598072 - 0.4126984126984127*el1);
+
+  clm[2][3] = (1.9098284139598072 - 0.4126984126984127*el1+ (-4.646868015386534 + (0.21354166666666666)*Pi2)*nu + 2.3020866307903347*nu2 - 0.5813492634480288*nu3);  
   clm[2][4] = (0.5368150316615179 + 0.2980599647266314*el1);
   clm[2][5] = (1.4497991763035063 - 0.0058477188106817735*el1)*PMTERMS_eps;
     
   clm[3][3] = (6.220997955214429 - 1.6507936507936507*el2);
   clm[3][4] = (-3.4527288879001268 + 2.005408583186361*el2)*PMTERMS_eps;
   
-  clm[4][3] = (14.10891386831863 - 3.7142857142857144*el3);
+  clm[4][3] = (14.10891386831863 - 3.7142857142857144*el3 + (-5.031429681429682 + (0.21354166666666666)*Pi2)*nu - 1.7781727531727531*nu2 + 0.25923767590434255*nu3);
   clm[4][4] = (-6.723375314944128 + 4.333333333333333*el3);
   clm[4][5] = (-29.568699895427518 + 6.302092352092352*el3)*PMTERMS_eps;
   
@@ -1647,8 +1647,11 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
  *  . Damour, Iyer & Nagar, PRD 79, 064004 (2009)     [theory]
  *  . Fujita & Iyer, PRD 82, 044051 (2010)            [test-mass 5.5PN]
  *  . Damour, Nagar & Bernuzzi, PRD 87, 084035 (2013) [complete information]
- * Old version, with coefficients computed all the times.
  */
+/* Old version
+   - coefficients computed all the times.
+   - (3,1) and (3,3) mode do not contain nu-corrections.
+*/
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm)
 {
   
@@ -1785,7 +1788,10 @@ void eob_wav_flm_old(double x,double nu, double *rholm, double *flm)
     combinations of these quantities are used here to write the spin-dependent
     part of the waveform in particularly compact form, so that the (spinning)
     test-particle limit is recovered just by visual inspection of the equations 
-    Old version, repeats the rholm computation for the orbital part.
+*/
+/* Old version
+   - repeats the rholm computation for the orbital part.
+   - (3,1) and (3,3) mode do not contain nu-corrections.
 */
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
 		       double *rholm, double *flm)
