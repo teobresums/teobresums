@@ -118,7 +118,11 @@ def load_data(fname,
 
     if psd_file is None:
         # Compute the PSD
-        psd, freqs = mlab.psd(strain[mask], Fs = srate, NFFT = np.int(srate), window=tukey(np.int(srate),padding))
+        # Compute the PSD
+        psd, freqs = mlab.psd(strain[mask], Fs = srate,
+                              NFFT = chunksize,
+                              noverlap =  chunksize/2,
+                              window=tukey(chunksize,padding))
         psd_int = interp1d(freqs, psd, bounds_error=False, fill_value=np.inf)
     else:
         f, psd = np.loadtxt(psd_file,unpack=True)

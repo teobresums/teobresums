@@ -278,14 +278,14 @@ class GravitationalWaveModel(cpnest.model.Model):
                              d,
                              -1,
                              self.flags)
-
+            h[np.isnan(h)] = 0
             hp, hc = noise.resize_time_series(h, self.segment_length, self.dt, self.epoch, x['tc'])
 
             hp*=self.window
             hc*=self.window
 
-            hp = np.fft.rfft(hp)*self.windowNorm*self.dt# we multiply by dt to get the dimensionfull FFT
-            hc = np.fft.rfft(hc)*self.windowNorm*self.dt
+            hp = np.fft.fft(hp)*self.windowNorm*self.dt# we multiply by dt to get the dimensionfull FFT
+            hc = np.fft.fft(hc)*self.windowNorm*self.dt
         
         self.plain_template = (hp,hc)
     
@@ -299,8 +299,8 @@ class GravitationalWaveModel(cpnest.model.Model):
     def log_likelihood(self,x):
         
         self.calculate_plain_template(x)
-        if np.any(np.isnan(self.plain_template)):
-            return -np.inf
+#        if np.any(np.isnan(self.plain_template)):
+#            return -np.inf
         logL = np.sum([d.logLikelihood(self.plain_template[0], self.plain_template[1], x['ra'], x['dec'], x['psi'], x['tc'], domain = "T") for d in self.detectors])
 
         return logL

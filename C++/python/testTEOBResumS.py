@@ -1,6 +1,6 @@
 from pyTEOBResumS import pyTEOBResumS
 import numpy as np
-import lalsimulation as lalsim
+#import lalsimulation as lalsim
 
 m1=40.0
 m2=40.0
@@ -42,7 +42,7 @@ wave_flags = None
 non_GR_params = None
 amp_order=0
 phase_order=7
-approx = lalsim.SEOBNRv4
+#approx = lalsim.SEOBNRv4
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
@@ -72,23 +72,23 @@ for inclination in [0.0]:#,np.pi/3.,np.pi/2.]:
                     lm,
                     flags)
                     
-    hp,hc = lalsim.SimInspiralChooseTDWaveform(phase,
-                                 dt,
-                                 m1*lalsim.lal.MSUN_SI, m2*lalsim.lal.MSUN_SI,
-                                 spin1x, spin1y, spin1z,
-                                 spin2x, spin2y, spin2z,
-                                 f_min, f_min,
-                                 distance*lalsim.lal.PC_SI*1e6,
-                                 inclination,
-                                 LambdaAl2, LambdaBl2,
-                                 wave_flags, non_GR_params,
-                                 amp_order, phase_order,
-                                 approx)
+#    hp,hc = lalsim.SimInspiralChooseTDWaveform(phase,
+#                                 dt,
+#                                 m1*lalsim.lal.MSUN_SI, m2*lalsim.lal.MSUN_SI,
+#                                 spin1x, spin1y, spin1z,
+#                                 spin2x, spin2y, spin2z,
+#                                 f_min, f_min,
+#                                 distance*lalsim.lal.PC_SI*1e6,
+#                                 inclination,
+#                                 LambdaAl2, LambdaBl2,
+#                                 wave_flags, non_GR_params,
+#                                 amp_order, phase_order,
+#                                 approx)
 
 
     ax1.plot(h[:,0],label=str(inclination))
-    ax1.plot(hp.data.data,linestyle='dashed')
+#    ax1.plot(hp.data.data,linestyle='dashed')
     ax2.plot(h[:,1])
-    ax2.plot(hc.data.data,linestyle='dashed')
+#    ax2.plot(hc.data.data,linestyle='dashed')
 ax1.legend()
 plt.show()

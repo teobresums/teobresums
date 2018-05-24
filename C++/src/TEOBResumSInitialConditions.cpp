@@ -126,7 +126,7 @@ vector<double> initial(TEOBResumParams *params)
     y_init[4] = j[N-1];
     y_init[5] = E0[N-1];
     y_init[6] = Omega_j[N-1];
-    //if (DEBUG)
+    if (DEBUG)
     {
         printf("-----------------------------------\n");
         printf("Initial configuration:\n");
