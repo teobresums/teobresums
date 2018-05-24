@@ -153,19 +153,25 @@ double interp1d (const int order, double xx, int nx, double *f, double *x)
 /** Find max location by poynomial interpolation around x0 (uniform grid) */
 double find_max (const int n, double dx, double x0, double *f, double *fmax)
 {
-  const int i = 0;
+  const int i = (n-1)/2; /* To centre the grid for n = N, e.g., n=7, i-3 = 0. */
   double xmax = x0;
   double d1f = 0., d2f = 0.;
   if (n==3) {
     d1f = 0.5*(f[i+1]-f[i-1]);
     d2f = (f[i-1]-2*f[i]+f[i+1]); 
   } else if (n==5) {
-    //const double oo12 = 0.08333333333333333;
-    d1f = (8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2]); //*oo12;
-    d2f = (-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]));//*oo12;
-  } else errorexit("Implemented only n = 3,5");    
-  if (d2f != 0.) 
+    d1f = (8.*(f[i+1]-f[i-1]) - f[i+2] + f[i-2]); 
+    d2f = (-30*f[i]+16*(f[i+1]+f[i-1])-(f[i+2]+f[i-2]));
+  } else if (n==7) { 
+    d1f = ( 45.0*(f[i+1]-f[i-1]) - 9.0*(f[i+2] - f[i-2]) + f[i+3] - f[i-3] )/(60.0);
+    d2f = ( -490.0*f[i]+270.0*(f[i+1]+f[i-1])-27.0*(f[i+2]+f[i-2])+2.0*(f[i+3]+f[i-3]) )/(180.0); 
+  }
+  else errorexit("Implemented only n = 3,5,7");    
+  
+  if (d2f != 0.) {
+    //xmax = xmax - dx*d1f/d2f;
     xmax -= dx*d1f/d2f;
+  }
   /* Eval function */
   if (fmax!=NULL) {
     if (n==3) {
@@ -176,8 +182,10 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax)
       *fmax = ((dx + x0 - xmax)*(2*dx + x0 - xmax)*(-x0 + xmax)*(dx - x0 + xmax)*f[-2 + i]
 	       + (2*dx - x0 + xmax)*(-4*(dx + x0 - xmax)*(2*dx + x0 - xmax)*(-x0 + xmax)*f[-1 + i]+(dx - x0 + xmax)*(6*(dx + x0 - xmax)*(2*dx + x0 - xmax)*f[i] + (-x0 + xmax)*(4*(2*dx + x0 - xmax)*f[1 + i]- (dx + x0 - xmax)*f[2 + i]))));
       *fmax /= (24.*pow(dx,4));
-    }
+      
+    } else errorexit("Implemented only n = 3,5");    
   }
+  
   return xmax;
 }
 
