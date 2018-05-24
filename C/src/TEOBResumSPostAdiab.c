@@ -70,18 +70,20 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   double *H_vec                  = (double*)malloc(size * sizeof (double));
   double *Heff_vec               = (double*)malloc(size * sizeof (double));
   double *Heff_orb_vec           = (double*)malloc(size * sizeof (double));
-  double *dr_dt_vec              = (double*)malloc(size * sizeof (double));
   double *dt_dr_vec              = (double*)malloc(size * sizeof (double));
   double *G0_vec                 = (double*)malloc(size * sizeof (double));
   double *dG_dr0_vec             = (double*)malloc(size * sizeof (double));
-  double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double));
-  double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double));
-  double *r_mat_vec              = (double*)malloc(size * sizeof (double));
-  double *prstar_mat_vec         = (double*)malloc(size * sizeof (double));
-  double *pphi_mat_vec           = (double*)malloc(size * sizeof (double));
-  double *omg_mat_vec            = (double*)malloc(size * sizeof (double));
-  double *t_mat_vec              = (double*)malloc(size * sizeof (double));
-  double *phi_mat_vec            = (double*)malloc(size * sizeof (double));
+  double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
+  double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
+  double *r_mat_vec              = (double*)malloc(size * sizeof (double)); // matlab data
+  double *prstar_mat_vec         = (double*)malloc(size * sizeof (double)); // matlab data
+  double *pphi_mat_vec           = (double*)malloc(size * sizeof (double)); // matlab data
+  double *omg_mat_vec            = (double*)malloc(size * sizeof (double)); // matlab data
+  double *t_mat_vec              = (double*)malloc(size * sizeof (double)); // matlab data
+  double *phi_mat_vec            = (double*)malloc(size * sizeof (double)); // matlab data
+  double *dphi_dr_mat_vec        = (double*)malloc(size * sizeof (double)); // matlab data
+  double *time_integral_m        = (double*)malloc(size * sizeof (double)); // time integrated with matlab data 
+  double *phi_integral_m         = (double*)malloc(size * sizeof (double)); // phi integrated with matlab data 
   
   double ggm[14];
     
@@ -403,17 +405,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
    * Computing integrals *
    ***********************/
   
-  /** Try to integrate from from Matlab data, to see if cumint behaves properly */
-  FILE *matlab;
-  matlab = fopen("/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics_old/Matlabdynam_q1_chi1_0.0_chi2_0.0.txt", "r");
-  fscanf(matlab, "%*[^\n]\n");
-  for (int v=0; v<size; v++){
-      fscanf(matlab, "\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", &r_mat_vec[v], &prstar_mat_vec[v], &pphi_mat_vec[v],
-      &dr_dt_mat_vec[v], &omg_mat_vec[v], &t_mat_vec[v], &phi_mat_vec[v]);
-      dt_dr_mat_vec[v]=1./dr_dt_mat_vec[v];
-  }
-  fclose(matlab);
-  
   
   /** Compute time */
   cumint3(dt_dr_vec, dyn->data[EOB_RAD], size, dyn->time);
@@ -425,22 +416,24 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
   
   
+ 
   /** Print Post-adiab dynamics on file for comparison with Matlab code */ 
+  //FIXME: Adds two extra spaces after lAL2_ and lBL2_, don't know why.
   int lAL2, lBL2;
   if (usetidal)
     {lAL2 = par_get_i("LambdaAl2");
     lBL2 = par_get_i("LambdaAl2");
     }
   else
-    {lAL2 = 0;
-    lBL2 = 0;
+    {lAL2 =0;
+    lBL2 =0;
     }
   char q_string[256]; //size of the number
   sprintf(q_string, "_q_%1.0f", dyn->q);
   char chi1_string[256]; 
-  sprintf(chi1_string, "_chi1_%2.1f", dyn->chi1);
+  sprintf(chi1_string, "_chi1_%3.2f", dyn->chi1);
   char chi2_string[256]; 
-  sprintf(chi2_string, "_chi2_%2.1f", dyn->chi2);
+  sprintf(chi2_string, "_chi2_%3.2f", dyn->chi2);
   char lAL2_string[256]; 
   sprintf(lAL2_string, "_lAL2_%3d", lAL2); 
   char lBL2_string[256]; 
@@ -455,13 +448,57 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   printf("I'm running with chi1 = %f and chi2=%f\n", dyn->chi1, dyn->chi2);
   
   FILE* Post_adiab_dynamics = fopen(post_adiab_dyn, "w");
-  fprintf(Post_adiab_dynamics, "#8PA\tr\tp_r*\tp_phi\tdr_dt\tMOmg\tt\tphi\n");
+  fprintf(Post_adiab_dynamics, "#8PA\tr\tp_r*\tp_phi\tMOmg\tt\tphi\n");
   for (int kt = 0; kt < size; kt++)
     {
-      fprintf(Post_adiab_dynamics, "\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\n", dyn->data[EOB_RAD][kt], dyn->data[EOB_PRSTAR][kt], dyn->data[EOB_PPHI][kt],
-      dr_dt_vec[kt], dyn->data[EOB_MOMG][kt], dyn->time[kt], dyn->data[EOB_PHI][kt]);
+      fprintf(Post_adiab_dynamics, "\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\n", dyn->data[EOB_RAD][kt], dyn->data[EOB_PRSTAR][kt], dyn->data[EOB_PPHI][kt],
+      dyn->data[EOB_MOMG][kt], dyn->time[kt], dyn->data[EOB_PHI][kt]);
     }
   fclose(Post_adiab_dynamics);
+  
+  
+  /** Try to integrate from from Matlab data, to see if cumint behaves properly */
+  /* char file_name_mat[256] =  "/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics/Matlab_bbh";
+  strcat(file_name_mat, q_string);
+  strcat(file_name_mat, chi1_string);
+  strcat(file_name_mat, chi2_string);
+  strcat(file_name_mat, ".txt"); */
+  char file_name_mat[256] =  "/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics/Matlab_bbh_q_5_chi1_0.8_chi2_-0.75.txt";
+  FILE *matlab;
+  matlab = fopen(file_name_mat, "r");
+  fscanf(matlab, "%*[^\n]\n");
+  for (int v=0; v<size; v++){
+      fscanf(matlab, "\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", &r_mat_vec[v], &prstar_mat_vec[v], &pphi_mat_vec[v],
+      &dr_dt_mat_vec[v], &omg_mat_vec[v], &t_mat_vec[v], &phi_mat_vec[v], &dphi_dr_mat_vec[v]);
+      dt_dr_mat_vec[v]=1./dr_dt_mat_vec[v];
+  }
+  fclose(matlab);
+  
+  /** Compute time from Matlab data */
+  cumint3(dt_dr_mat_vec, dyn->data[EOB_RAD], size, time_integral_m);
+  
+   /** Compute orbital phase with Matlab data */
+  cumint3(dphi_dr_mat_vec, dyn->data[EOB_RAD], size, phi_integral_m);
+  /** end of matlab integration */
+  
+  
+  
+  /** Save matlab integrals on file */
+  char matlab_string[256]     = "matlab_integral_with_cumint";
+  strcat(matlab_string, q_string);
+  strcat(matlab_string, chi1_string);
+  strcat(matlab_string, chi2_string);
+  strcat(matlab_string, lAL2_string);
+  strcat(matlab_string, lBL2_string);
+  strcat(matlab_string, ".dat");
+  
+  FILE* matlab_int = fopen(matlab_string, "w");
+  fprintf(matlab_int, "#8PA\tt\tphi\n");
+  for (int kt = 0; kt < size; kt++)
+    {
+      fprintf(matlab_int, "\t%20.14f\t%20.14f\n", time_integral_m[kt], phi_integral_m[kt]);
+    }
+  fclose(matlab_int);
     
     
   /* Free memory */
