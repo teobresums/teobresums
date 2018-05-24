@@ -32,13 +32,14 @@ The validation process shows agreement between the two codes with relative diffe
 
 Various plots showing relative differences can be found in this directory.
 
-TODO: Add statements for NQC and ringdown
+TODO: Add statements for NQC and ringdown .....
 
 During the validation process we found minor bugs in the C++ implementation
 
    1. Mistake in the computation of the second derivative of the metric A function.
       The mistake affects only the initial data for tidal and nonspinning runs.
       For comparative tests we imposed manually the values of A'' in the C++ code.
+      We did not fixed the bug in C++.
      
    2. Memory bug in the routine computing the finite difference.
       The bug does not affect any physical result.
@@ -49,12 +50,11 @@ During the validation process we found minor bugs in the C++ implementation
       The bug does not affect results using just the (2,2) mode
 
    4. Waveform was not computed in first step, resulting in small time
-      shift after the interpolation (if performed). 
+      shift after the interpolation (if performed).
+      Bug has been fixed.
       
-   5. Waveform for spin and tides employs nonspinning
-      Hamiltonian. This result in differences of order ~ 1e-5 in 
-      dynamical variables that remain of that order due to
-      cancellations, but it larger in variable ddotr. 
+   5. Amplitudes rholm (3,1) and (3,3) did not contain the nu-dependent corrections.
+      Bug has been fixed.
 
 All the above bugs except 1. have been fixed in several commits up to
 
