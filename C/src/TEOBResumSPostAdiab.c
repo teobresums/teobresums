@@ -41,64 +41,50 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
     
-  const int size = 100;//dyn->size;
+  // FIXME: Already defined? size_pa?
+  const int size = par_get_i("postadiabatic_dynamics_size");
   printf("\nI am using size: %d\n",size);
 
   const int Npa = par_get_i("postadiabatic_dynamics_N");
 
   /* Mem for quantities to be used. FIXME: Can we avoid allocating the memory?
      Can we use already-defined C-structures here? */
+
   double *A_vec                  = (double*)malloc(size * sizeof (double));
   double *dA_vec                 = (double*)malloc(size * sizeof (double));
-  double *d2A_vec                = (double*)malloc(size * sizeof (double));
   double *B_vec                  = (double*)malloc(size * sizeof (double));
-  double *dB_vec                 = (double*)malloc(size * sizeof (double));
   double *sqrtAbyB_vec           = (double*)malloc(size * sizeof (double));
   double *rc_vec                 = (double*)malloc(size * sizeof (double));
   double *drc_dr_vec             = (double*)malloc(size * sizeof (double));
-  double *d2rc_dr_vec            = (double*)malloc(size * sizeof (double));
   double *uc2_vec                = (double*)malloc(size * sizeof (double));
   double *duc_dr_vec             = (double*)malloc(size * sizeof (double));
   double *dAuc2_dr_vec           = (double*)malloc(size * sizeof (double));
-  double *G_vec                  = (double*)malloc(size * sizeof (double));
   double *dG_dr_vec              = (double*)malloc(size * sizeof (double));
   double *dG_dprstar_vec         = (double*)malloc(size * sizeof (double));
   double *dG_dprstarbyprstar_vec = (double*)malloc(size * sizeof (double));
-  double *dphi_dr_vec            = (double*)malloc(size * sizeof (double));
-  double *dpphi_dr_vec           = (double*)malloc(size * sizeof (double));
-  double *dprstar_dr_vec         = (double*)malloc(size * sizeof (double));
-  double *H_vec                  = (double*)malloc(size * sizeof (double));
+  double *G0_vec                 = (double*)malloc(size * sizeof (double));
+  double *dG_dr0_vec             = (double*)malloc(size * sizeof (double));
   double *E_vec                  = (double*)malloc(size * sizeof (double));
   double *Heff_vec               = (double*)malloc(size * sizeof (double));
   double *Heff_orb_vec           = (double*)malloc(size * sizeof (double));
+  double *dpphi_dr_vec           = (double*)malloc(size * sizeof (double));
+  double *dprstar_dr_vec         = (double*)malloc(size * sizeof (double));
+  double *dphi_dr_vec            = (double*)malloc(size * sizeof (double));
   double *dt_dr_vec              = (double*)malloc(size * sizeof (double));
-  double *G0_vec                 = (double*)malloc(size * sizeof (double));
-  double *dG_dr0_vec             = (double*)malloc(size * sizeof (double));
-  double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
-  double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
-  double *r_mat_vec              = (double*)malloc(size * sizeof (double)); // matlab data
-  double *prstar_mat_vec         = (double*)malloc(size * sizeof (double)); // matlab data
-  double *pphi_mat_vec           = (double*)malloc(size * sizeof (double)); // matlab data
-  double *omg_mat_vec            = (double*)malloc(size * sizeof (double)); // matlab data
-  double *t_mat_vec              = (double*)malloc(size * sizeof (double)); // matlab data
-  double *phi_mat_vec            = (double*)malloc(size * sizeof (double)); // matlab data
-  double *dphi_dr_mat_vec        = (double*)malloc(size * sizeof (double)); // matlab data
-  double *time_integral_m        = (double*)malloc(size * sizeof (double)); // time integrated with matlab data 
-  double *phi_integral_m         = (double*)malloc(size * sizeof (double)); // phi integrated with matlab data 
   
   double ggm[14];
     
-  double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, dHeff_dpphi, r_omg4, Omg5, dr_dtbypr, dHeff_dprstar,
-    dHeff_dprstarbyprstar, ddotr_fake, prstar_fake, x, jhat, psi, r_omg, sqrtW, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
+  double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, dHeff_dpphi, dHeff_dprstar, dHeff_dprstarbyprstar,
+    H, G, pl_hold, ddotr_fake, prstar_fake, x, jhat, psi, r_omg, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
 
-  /* Compute radius of inflection point of Pr* */
-  //TODO implementing a robust stopping condition (which)
+  /* FIXME Starting radius from parfile */
   r0        = 22;
+
+  /* TODO Implementing a robust stopping condition. For the time being, we fix ri = 12 */
   double ri = 12.;
 
   /* Build a uniform grid and compute circular dynamics */
-  const double dr = 0.1;//FIXME(r0 - ri)/(size-1);
-  /*Better to set fixed resolution. For the moment the derivative oscillates when there are too many points (higher order derivative or maximum resolution)*/
+  const double dr = (r0 - ri)/size;
     
   for (int i = 0; i < size; i++)
     {
@@ -109,30 +95,35 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
       /* Computing metric functions and centrifugal radius */
       if(usespins)
         {
-          eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &d2A_vec[i], &dB_vec[i]);
+          eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
             
-          eob_dyn_s_get_rc(dyn->r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc_vec[i], &drc_dr_vec[i], &d2rc_dr_vec[i]);
+          eob_dyn_s_get_rc(dyn->r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
             
           eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
-          G_vec[i]                  = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss
+          G                         = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss
           dG_dr_vec[i]              = ggm[6] *S+ggm[7] *Sstar;
           dG_dprstar_vec[i]         = ggm[4] *S+ggm[5] *Sstar;
           dG_dprstarbyprstar_vec[i] = ggm[10]*S+ggm[11]*Sstar;
         }
       else
         {
-          eob_metric(dyn->r ,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &d2A_vec[i], &dB_vec[i]);
+          eob_metric(dyn->r ,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
             
           rc_vec[i]                 = dyn->r; //Nonspinning case: rc = r
           drc_dr_vec[i]             = 1;
-          d2rc_dr_vec[i]            = 0;
             
-          G_vec[i]                  = 0.0;
+          G                         = 0.0;
           dG_dr_vec[i]              = 0.0;
           dG_dprstar_vec[i]         = 0.0;
           dG_dprstarbyprstar_vec[i] = 0.0;
         }
-        
+
+      /* Defining circular quantities for the flux calculation.
+	 Must not be overwritten in successive iterations, thus
+         we define separate quantities with the subscripts 0. */
+      G0_vec[i]        = G;
+      dG_dr0_vec[i]    = dG_dr_vec[i];
+      
       /* Auxiliary variables*/
       sqrtAbyB_vec[i] = sqrt(A_vec[i]/B_vec[i]);
       uc              = 1./rc_vec[i];
@@ -148,15 +139,15 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
       if (usespins)
 	{
 	  a_coeff = SQ(dAuc2_dr_vec[i]) - 4*A_vec[i]*uc2_vec[i]*SQ(dG_dr_vec[i]);  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
-	  b_coeff = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*SQ(dG_dr_vec[i]);                 /* Second coefficient of the quadratic equation */
-	  c_coeff = SQ(dA_vec[i]); /* Third coefficient of the quadratic equation */
-	  Delta   = SQ(b_coeff) - 4*a_coeff*c_coeff ; /* Delta of the quadratic equation */
+	  b_coeff = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*SQ(dG_dr_vec[i]);     /* Second coefficient of the quadratic equation */
+	  c_coeff = SQ(dA_vec[i]);                                                 /* Third coefficient of the quadratic equation */
+	  Delta   = SQ(b_coeff) - 4*a_coeff*c_coeff ;                              /* Delta of the quadratic equation */
 	  
 	  sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); /* Plus  solution of the quadratic equation */
 	  sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff); /* Minus solution of the quadratic equation */
 	  
 	  /* Effective prescription: If the Tilde G function is negative, take the positive solution and viceversa. */
-	  if (G_vec[i] < 0)
+	  if (G < 0)
 	    {j02 = sol_p;}
 	  else
 	    {j02 = sol_m;}
@@ -178,38 +169,32 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
       if(usespins)
       {
         eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,dyn->prstar,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
-        &H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+        &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
         &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu)       */
         &Heff_orb_vec[i],
         NULL,             /* drvt Heff,r      */
         NULL,             /* drvt Heff,prstar */
-        &dHeff_dpphi,      /* drvt Heff,pphi   */
+        &dHeff_dpphi,     /* drvt Heff,pphi   */
         NULL);
 
-	E_vec[i] = nu*H_vec[i];
+	E_vec[i] = nu*H;
       }
       else
       {
         //NON spinning hamiltonian
         eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
-        &H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+        &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
 	&Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). */
         NULL,             /* drvt Heff,r      */
         NULL,             /* drvt Heff,prstar */
-        &dHeff_dpphi);     /* drvt Heff,pphi   */
+        &dHeff_dpphi);    /* drvt Heff,pphi   */
 
 	Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
- 	E_vec[i] = nu*H_vec[i];
+ 	E_vec[i] = nu*H;
      }
         
       // Circular orbital frequency
       dyn->Omg     = dHeff_dpphi/E_vec[i];
-
-      /* Defining circular quantities for the flux calculation.
-	 Must not be overwritten in successive iterations, thus
-         we define separate quantities with the subscripts 0. */
-      G0_vec[i]        = G_vec[i];
-      dG_dr0_vec[i]    = dG_dr_vec[i];
 	
       dyn->data[EOB_RAD][i]    = dyn->r;
       dyn->data[EOB_PPHI][i]   = dyn->pphi;
@@ -315,7 +300,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 	       *********************/
 	      eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], aK2, dyn->prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
                 
-	      G_vec[i]                  = ggm[2] *S+ggm[3] *Sstar;    // Tilde G
 	      dG_dr_vec[i]              = ggm[6] *S+ggm[7] *Sstar;
 	      dG_dprstar_vec[i]         = ggm[4] *S+ggm[5] *Sstar;
 	      dG_dprstarbyprstar_vec[i] = ggm[10]*S+ggm[11]*Sstar;
@@ -352,28 +336,28 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
 	  if(usespins)
             {
 	      eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,dyn->prstar,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
-			&H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+			&H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
 			&Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
 			&Heff_orb_vec[i],
 			NULL,             /* drvt Heff,r      */
 			&dHeff_dprstar,   /* drvt Heff,prstar */
-			&dHeff_dpphi,      /* drvt Heff,pphi   */
+			&dHeff_dpphi,     /* drvt Heff,pphi   */
 			NULL);
 
-	      E_vec[i] = nu*H_vec[i];
+	      E_vec[i] = nu*H;
             }
 	  else
             {
 	      //NON spinning hamiltonian
 	      eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
-		      &H_vec[i],        /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+		      &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
 		      &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
 		      NULL,             /* drvt Heff,r      */
 		      &dHeff_dprstar,   /* drvt Heff,prstar */
-		      &dHeff_dpphi);     /* drvt Heff,pphi   */
+		      &dHeff_dpphi);    /* drvt Heff,pphi   */
 
 	      Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
-	      E_vec[i] = nu*H_vec[i];
+	      E_vec[i] = nu*H;
             }
       
 	  /*********************
@@ -408,7 +392,38 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     }
   // END PA-CORRECTIONS FOR
 
-  printf("\n\n\nI am debugging Post-adiab!!!!!!!!!!!\n\n\n");
+  /***********************
+   * Computing integrals *
+   ***********************/
+  
+  /** Compute time */
+  cumint3(dt_dr_vec, dyn->data[EOB_RAD], size, dyn->time);
+
+  /* Set last value for evolution */
+  dyn->t = dyn->time[size-1];
+
+  /** Compute orbital phase */
+  cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
+  
+
+  /******************** End of main code **********************/
+
+
+  
+  
+  double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
+  double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
+  double *r_mat_vec              = (double*)malloc(size * sizeof (double)); // matlab data
+  double *prstar_mat_vec         = (double*)malloc(size * sizeof (double)); // matlab data
+  double *pphi_mat_vec           = (double*)malloc(size * sizeof (double)); // matlab data
+  double *omg_mat_vec            = (double*)malloc(size * sizeof (double)); // matlab data
+  double *t_mat_vec              = (double*)malloc(size * sizeof (double)); // matlab data
+  double *phi_mat_vec            = (double*)malloc(size * sizeof (double)); // matlab data
+  double *dphi_dr_mat_vec        = (double*)malloc(size * sizeof (double)); // matlab data
+  double *time_integral_m        = (double*)malloc(size * sizeof (double)); // time integrated with matlab data 
+  double *phi_integral_m         = (double*)malloc(size * sizeof (double)); // phi integrated with matlab data
+  
+    printf("\n\n\nI am debugging Post-adiab!!!!!!!!!!!\n\n\n");
   char ro_string[256]; //size of the number
 
   sprintf(ro_string, "r0_%f", r0);
@@ -424,23 +439,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     }
   fclose(Post_adiab_debug);
   
-  
-
-  /***********************
-   * Computing integrals *
-   ***********************/
-  
-  
-  /** Compute time */
-  cumint3(dt_dr_vec, dyn->data[EOB_RAD], size, dyn->time);
-
-  /* Set last value for evolution */
-  dyn->t = dyn->time[size-1];
-
-  /** Compute orbital phase */
-  cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
-  
-  
  
   /** Print Post-adiab dynamics on file for comparison with Matlab code */ 
   
@@ -451,7 +449,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   char chi2_string[256]; 
   sprintf(chi2_string, "_chi2_%3.2f", dyn->chi2);
   char lAL2_string[256]; 
-  char post_adiab_dyn[256]     = "Post_adiab_dynamics";
+  char post_adiab_dyn[256] = "Post_adiab_dynamics";
   if (!usetidal){
     strcat(post_adiab_dyn, "_bbh");}
   strcat(post_adiab_dyn, q_string);
@@ -511,32 +509,33 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
     }
   fclose(matlab_int);
     
-    
+
+
+
+  
   /* Free memory */
   free(A_vec);
   free(dA_vec);
-  free(d2A_vec);
   free(B_vec);
-  free(dB_vec);
   free(sqrtAbyB_vec);
   free(rc_vec);
   free(drc_dr_vec);
-  free(d2rc_dr_vec);
   free(uc2_vec);
   free(duc_dr_vec);
   free(dAuc2_dr_vec);
-  free(G_vec);
   free(dG_dr_vec);
   free(dG_dprstar_vec);
   free(dG_dprstarbyprstar_vec);
-  free(dphi_dr_vec);
-  free(dpphi_dr_vec);
-  free(dprstar_dr_vec);
-  free(H_vec);
-  free(Heff_vec);
-  free(Heff_orb_vec);
   free(G0_vec);
   free(dG_dr0_vec);
+  free(E_vec);
+  free(Heff_vec);
+  free(Heff_orb_vec);
+  free(dpphi_dr_vec);
+  free(dprstar_dr_vec);
+  free(dphi_dr_vec);
+  free(dt_dr_vec);
+
 
   printf("\n\nDAJECHEGIRO\n\n");
   
