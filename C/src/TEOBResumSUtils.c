@@ -505,13 +505,15 @@ void Waveform_lm_output (Waveform_lm *wav)
       if ((fp = fopen(fname, "w+")) == NULL)
 	errorexits("error opening file",fname);
       if(SARP){   
-	for (int i = 4; i < n; i+=20) { 
-	  fprintf(fp, "%.1f\t%.16e\t%.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
+	for (int i = 0; i < n; i++) { 
+	  fprintf(fp, "%e\t%.16e\t%.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
 	}
       }
-      for (int i = 0; i < n; i++) {
-	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
-      }
+      if(!SARP){ 
+	      for (int i = 0; i < n; i++) {
+	      fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
+	      }
+	}
       fclose(fp);
     }
   }
@@ -606,8 +608,8 @@ void Dynamics_output (Dynamics *dyn)
   if ((fp = fopen(fname, "w+")) == NULL)
     errorexits("error opening file",dyn->name);
   for (int i = 4; i < dyn->size; i+=4) {
-    fprintf(fp, "%.1f\t", dyn->time[i]);
-    fprintf(fp, "%.16f\t%.16f\t%.16f\t%.26f\t%.16f\t%.16f\n", dyn->data[0][i], dyn->data[2][i], dyn->data[3][i], dyn->data[4][i], dyn->data[5][i], dyn->data[6][i]); 
+    fprintf(fp, "%e\t", dyn->time[i]);
+    fprintf(fp, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", dyn->data[0][i], dyn->data[1][i], dyn->data[2][i], dyn->data[3][i], dyn->data[4][i], dyn->data[5][i], dyn->data[6][i]); 
   }
   fclose(fp);
 }
