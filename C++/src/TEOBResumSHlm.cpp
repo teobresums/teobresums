@@ -222,30 +222,30 @@ vector<gsl_complex> hlmNewt(const double r,
     hlmNewt[26].dat[0] = 16807./180.*sqrt(7.*pi/4290.)   * pv67;
     
     /** l=8 ------------------------------------------------------------------ */
-    /** FIXME: higher l=8 terms to be implemented soon...*/
+    hlmNewt[27].dat[1] = 3.*pi/2. - M[27];
+    hlmNewt[27].dat[0] = ( 5.54485779151375621e-7 ) 	* pv89;
+    
+    hlmNewt[28].dat[1] = 0.0 - M[28];
+    hlmNewt[28].dat[0] = ( 0.0000763473331250837455 ) 	* pv78;
+    
+    hlmNewt[29].dat[1] = pi/2. - M[29];
+    hlmNewt[29].dat[0] = ( 0.00353250998285463003 )  	* pv89;
+    
+    hlmNewt[30].dat[1] = pi - M[30];
+    hlmNewt[30].dat[0] = ( 0.0204988821800401766 )	* pv78;
+    
+    hlmNewt[31].dat[1] = 3.*pi/2. - M[31];
+    hlmNewt[31].dat[0] = ( 0.19579402814926015 ) 	* pv89;
+    
+    hlmNewt[32].dat[1] = 0.0 - M[32];
+    hlmNewt[32].dat[0] = ( 0.584571015778149663 ) 	* pv78;
+    
+    hlmNewt[33].dat[1] = pi/2. - M[33];
+    hlmNewt[33].dat[0] = ( 2.44207899966355693 ) * pv89;
+
     hlmNewt[34].dat[1] = pi - M[34];
     hlmNewt[34].dat[0] = 131072./315.*sqrt(2.*pi/17017.) * pv78;
     
-    hlmNewt[28].dat[1] = - M[28];
-    hlmNewt[28].dat[0] = 0.;
-    
-    hlmNewt[29].dat[1] = - M[29];
-    hlmNewt[29].dat[0] = 0.;
-    
-    hlmNewt[30].dat[1] = - M[30];
-    hlmNewt[30].dat[0] = 0.;
-    
-    hlmNewt[31].dat[1] = - M[31];
-    hlmNewt[31].dat[0] = 0.;
-    
-    hlmNewt[32].dat[1] = - M[32];
-    hlmNewt[32].dat[0] = 0.;
-    
-    hlmNewt[33].dat[1] = - M[33];
-    hlmNewt[33].dat[0] = 0.;
-    
-    hlmNewt[27].dat[1] = - M[27];
-    hlmNewt[27].dat[0] = 0.;
     
     return hlmNewt;
 }
