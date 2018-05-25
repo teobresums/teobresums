@@ -437,6 +437,24 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         }
         std::fclose(waveform_preint);
 #endif
+
+/* Check ALL inspiral waveforms */
+#if (DEBUG)
+	char   outputins[256]      = "Waveform_insp_ALL_modes.dat";
+	std::FILE* waveform_insp   = std::fopen(outputins, "w");
+	int Nins                   = hlm_ampl[1].size();
+	
+	for(int k=0; k< 35; k++)        
+	{
+	        for (j=0; j<Nins; j++)
+	        {
+
+			if( fabs(hlm_ampl[k][j]) != 0.0 ) std::fprintf(waveform_insp, "%20.12f\t%.16e\t%.16e\n", t_vec[j], hlm_ampl[k][j], hlm_phase[k][j]);
+        	}
+	}
+        std::fclose(waveform_insp);
+
+#endif
     
 #if (BNS_OUTPUTMODES_EXIT)
 	/* MODIFS FOR USED IN RAPID PE OF BNS:
