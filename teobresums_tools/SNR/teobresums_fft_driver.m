@@ -18,9 +18,9 @@ linewidth= [1                1             1             2              2 ];
 ni       = 1;
 ne       = 1;
 GMsunbyc3= 4.925490947e-6*1e3; % Conversion factor in Hz
-
-for n=ni:ne
-    fname                        = '../h22_q1_sly_30Hz.dat';
+M = 80; % Msun
+for n=1
+    fname                        = '../../C++/waveform.dat';
     [o{n}.fM, o{n}.AF, o{n}.Psi] = teobresums_fft(0.0001,fname,outfile{n},1,npts_end(n),[Tau(n) Tau_end(n)],[alph1(n) alph2(n)],tapering(n),0);
     o{n}.fMHz                    = o{n}.fM/(M(n).*GMsunbyc3);   
     
