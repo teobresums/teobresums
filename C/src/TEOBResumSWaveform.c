@@ -109,7 +109,7 @@ void eob_wav_hlmNewt(double r,
     pv45, pv56, pv45, pv56, pv45, 
     pv67, pv56, pv67, pv56, pv67, pv56, 
     pv67, pv78, pv67, pv78, pv67, pv78, pv67, 
-    pv78, 1., 1., 1., 1., 1., 1., 1. 
+    1., 1., 1., 1., 1., 1., 1., pv78
   };
     
   /** Compute hlmNewt (without phase factor) in complex Polar coords */
