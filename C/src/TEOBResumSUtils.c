@@ -607,7 +607,7 @@ void Dynamics_output (Dynamics *dyn)
   strcat(fname,".txt");
   if ((fp = fopen(fname, "w+")) == NULL)
     errorexits("error opening file",dyn->name);
-  for (int i = 4; i < dyn->size; i+=4) {
+  for (int i = 0; i < dyn->size; i++) {
     fprintf(fp, "%e\t", dyn->time[i]);
     fprintf(fp, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", dyn->data[0][i], dyn->data[1][i], dyn->data[2][i], dyn->data[3][i], dyn->data[4][i], dyn->data[5][i], dyn->data[6][i]); 
   }
