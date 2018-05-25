@@ -414,26 +414,26 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 
 #if (DEBUG) 
  	char   outputd[256]   = "dyn.dat";	
-        std::FILE* waveform_preint   = std::fopen(outputd, "w");
-        int jd                 = 0;
+        std::FILE* dynamics   = std::fopen(outputd, "w");
+        int j                 = 0;
         int Nd                 = hlm_ampl[1].size();
         
         for (j=0;j<Nd;j++)
         {
-	        std::fprintf(waveform_preint, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t_vec[j], r_vec[j], phi_vec[j], pph_vec[j], MOmg_vec[j], ddotr_vec[j],prstar_vec[j],Omg_orb_vec[j]);
+	        std::fprintf(dynamics, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t_vec[j], r_vec[j], phi_vec[j], pph_vec[j], MOmg_vec[j], ddotr_vec[j],prstar_vec[j],Omg_orb_vec[j]);
         }
-        std::fclose(waveform_preint);
+        std::fclose(dynamics);
 #endif
 
 #if (DEBUG) 
         char   outputr[256]   = "h22_inspl.dat";	
         std::FILE* waveform_preint   = std::fopen(outputr, "w");
-        int j                 = 0;
+        //int j                 = 0;
         int Ntmp                 = hlm_ampl[1].size();
         
         for (j=0;j<Ntmp;j++)
         {
-            std::fprintf(waveform_preint, "%20.12f\t%20.12f\t%20.12f\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
+            std::fprintf(waveform_preint, "%20.12f\t%.16e\t%.16e\n", t_vec[j], hlm_ampl[1][j], hlm_phase[1][j]);
         }
         std::fclose(waveform_preint);
 #endif
@@ -515,6 +515,20 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 //        }
 //        std::fclose(waveform_preNQC);
 //    }
+
+/* Counting the modes with NON-zero GW wave amplitude */
+#if(DEBUG)
+	printf("\nModes with NON-zero Amplitudes:\n");
+		int count= 0;
+		int nonzero= 0;
+		for( int l = 2; l<=8; l++){
+			for(int m=1; m<= l; m++){
+				if( fabs(hlm_ampl[count][3]) !=0.0 )	{printf("{%d, %d}, ", l, m); nonzero++; }
+				count++;
+			}
+		}
+	printf("\nNumber of NON-zero modes:%d\n\n", nonzero); //SARP
+#endif
     
     if (params.flags.tidal==0 && params.flags.spin==1)
     {
@@ -543,7 +557,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
 //        
 //        for (j=0;j<N;j++)
 //        {
-//        std::fprintf(waveform_postNQC, "%20.12f\t%20.12f\t%20.12f\n", t_vecg[j], hlm_ampl_g[1][j], hlm_phase_g[1][j]);
+//        std::fprintf(waveform_postNQC, "%20.12f\t%.16e\t%.16e\n", t_vecg[j], hlm_ampl_g[1][j], hlm_phase_g[1][j]);
 //        }
 //        std::fclose(waveform_postNQC);
 //    }
