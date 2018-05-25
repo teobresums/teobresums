@@ -1,4 +1,4 @@
-function [fM, AF, PhaseF, tc_PN, phic_PN, fM_i, fM_e] = teobresums_fft(fM_min, filename,outfile,q,n_cutoff, Tau,alpha,tapering,plotting)
+function [fM, AF, PhaseF, tc_PN, phic_PN, fM_i, fM_e] = teobresums_fft(Mtot, filename,outfile,q,n_cutoff, Tau,alpha,tapering,plotting)
 
 % [fM, AF, PhaseF, tc_PN, phic_PN] = getEOBwvf(fM_min, filename, q,n_cutoff, plotting)
 %
@@ -25,9 +25,9 @@ dwnsmpl_log = 1;
 
 %% Default values
 
-if (fM_min <= 0)
-    fM_min = 1e-4; % min fM value for ground-based detector: 10Hz * 3Ms
-end
+%if (fM_min <= 0)
+%    fM_min = 1e-4; % min fM value for ground-based detector: 10Hz * 3Ms
+%end
 
 %% Defining some constants and aux variables
 
@@ -79,11 +79,16 @@ y=load(filename);
 
 % renaming quantities
 Msun  = 4.925491025543575903411922162094833998e-6;
-M     = (1.35+1.35)*Msun;
-tmpT  = y(:,1)/M;
+M     = Mtot*Msun;
+% =========================================
+% FIXME
+% remove the first point: for some reason
+% the C++ with BBH gives nan the first line
+% =========================================
+tmpT  = y(2:end,1)/M;
 time  = tmpT;
-A     = y(:,2);
-phi   = y(:,3);
+A     = y(2:end,2);
+phi   = y(2:end,3);
 
 % define psi with the correct normalization
 psi    = A.*exp(-1i.*phi)/sqrt(24);

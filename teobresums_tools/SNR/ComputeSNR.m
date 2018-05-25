@@ -14,15 +14,15 @@ function ComputeSNR
 % anagar 25/5/2018
 
 % Specify parameters
-M = 70;  % Total mass in solar-mass units
+M = 80;  % Total mass in solar-mass units
 
 %=========================================================================
 % loading datasets. This routine was originally conceived to compute the 
 % faithfulness (of match). The match of a waveform with itself is the SNR.
 % Here we compute the SNR as the match of a waveform d1 with itself, d2
 %=========================================================================
-d1   = load('Data_FT/q1_eob_fft_chi_000.dat');
-d2   = load('Data_FT/q1_eob_fft_chi_000.dat');    
+d1   = load('Data_FT/FT_bbh_80Msun.dat');
+d2   = load('Data_FT/FT_bbh_80Msun.dat');    
 
 % set colors (might be useful)
 gray           = [0.8 0.8 0.8];

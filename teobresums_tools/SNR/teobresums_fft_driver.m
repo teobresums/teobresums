@@ -2,8 +2,6 @@ function teobresums_fft_driver
 % Generate FFTs
 % This scripts generates FFTs from data nd writes files
 
-dirs      = {'sly_135135'        'sly-140120'        'h4_135135'        'alf2_140110'        'ms1b_100150' };
-outfile   = {'FT_sly_135135.dat' 'FT_sly_140120.dat' 'FT_h4_135135.dat' 'FT_alf2_140110.dat' 'FT_ms1b_100150.dat'};
 orange   = [1 0.6 0];
 Tau      = [1.0          0.6          0.6             1.0          0.9];
 Tau_end  = [0.99            0.99         0.99            0.98         0.96];
@@ -18,10 +16,11 @@ linewidth= [1                1             1             2              2 ];
 ni       = 1;
 ne       = 1;
 GMsunbyc3= 4.925490947e-6*1e3; % Conversion factor in Hz
-M = 80; % Msun
+Mtot    = 80; % Msun
+outfile = 'Data_FT/FT_bbh_80Msun.dat'; 
 for n=1
     fname                        = '../../C++/waveform.dat';
-    [o{n}.fM, o{n}.AF, o{n}.Psi] = teobresums_fft(0.0001,fname,outfile{n},1,npts_end(n),[Tau(n) Tau_end(n)],[alph1(n) alph2(n)],tapering(n),0);
+    [o{n}.fM, o{n}.AF, o{n}.Psi] = teobresums_fft(Mtot,fname,outfile,1,npts_end(n),[Tau(n) Tau_end(n)],[alph1(n) alph2(n)],tapering(n),0);
     o{n}.fMHz                    = o{n}.fM/(M(n).*GMsunbyc3);   
     
     % remove the unphysical region of the FFT
