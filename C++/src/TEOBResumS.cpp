@@ -418,9 +418,9 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
         int j                 = 0;
         int Nd                 = hlm_ampl[1].size();
         
-        for (j=0;j<Nd;j++)
+        for (j=1;j<Nd;j++)  // For some reason C++ prints phi_vec with an offset.
         {
-	        std::fprintf(dynamics, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t_vec[j], r_vec[j], phi_vec[j], pph_vec[j], MOmg_vec[j], ddotr_vec[j],prstar_vec[j],Omg_orb_vec[j]);
+	        std::fprintf(dynamics, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t_vec[j], r_vec[j], phi_vec[j-1], pph_vec[j], MOmg_vec[j], ddotr_vec[j],prstar_vec[j],Omg_orb_vec[j]);
         }
         std::fclose(dynamics);
 #endif
