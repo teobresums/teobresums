@@ -980,13 +980,13 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   max_omg[1]  = omg_tmp;
   max_domg[1] = domg_tmp;
 
-#if (DEBUG)
-  printf("NR values for NQC determination:\n");
-  printf("Amrg    =%10.6f\n",max_A[1]);
-  printf("dAmrg   =%10.6f\n",max_dA[1]);
-  printf("omg_mrg =%10.6f\n",max_omg[1]);
-  printf("domg_mrg=%10.6f\n",max_domg[1]);
-#endif
+  if (VERBOSE) {
+    printf("NR values for NQC determination:\n");
+    PRFORMd("A22_mrg",max_A[1]);
+    PRFORMd("dA22_mrg",max_dA[1]);
+    PRFORMd("omg22_mrg",max_omg[1]);
+    PRFORMd("domg22_mrg",max_domg[1]);
+  }
   
   /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
    * NQC basis for (2,2) waveform : AMPLITUDE
@@ -1041,11 +1041,11 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
-#if (DEBUG)
-  printf("NQC info:\n");
-  printf("DeltaT_tNQC = %f\n",DeltaT_nqc);
-  printf("tNQC [bare] = %f\n",tNQC);
-#endif
+  if (VERBOSE) {
+    printf("NQC info:\n");
+    PRFORMd("DeltaT_tNQC",DeltaT_nqc);
+    PRFORMd("tNQC[bare]",tNQC);
+  }
 
   /** Find jmax: t[jmax] <= tNQC */
   int jmax = 0;
@@ -1122,13 +1122,13 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   
   }
   
-#if (DEBUG)
-  printf("NQC coefficients:\n");
-  printf("a1 = %f\n",ai[1][0]);
-  printf("a2 = %f\n",ai[1][1]);
-  printf("b1 = %f\n",bi[1][0]);
-  printf("b2 = %f\n",bi[1][1]);
-#endif
+  if (VERBOSE){
+    printf("NQC coefficients for 22 mode:\n");
+    PRFORMd("a1",ai[1][0]);
+    PRFORMd("a2",ai[1][1]);
+    PRFORMd("b1",bi[1][0]);
+    PRFORMd("b2",bi[1][1]);
+  }
 
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
@@ -1380,9 +1380,9 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const int size = hlm->size; 
   double *t = hlm->time;
   
-  if (DEBUG) {
-    printf("Ringdown: size (dynamics) = %d\n",dynsize);
-    printf("Ringdown: size (waveform) = %d\n",size);
+  if (VERBOSE) {
+    PRFORMi("ringdown_dynamics_size",dynsize);
+    PRFORMi("ringdown_waveform_size",size);
   }
     
   const int k21 = 0;
@@ -1399,7 +1399,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
       index_pk = j;
       Omega_pk = Omega[j];
   }
-  if (DEBUG) printf("Ringdown: index_pk = %d\n",index_pk);
+  if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
   if (index_pk >= dynsize-2) {
     if (VERBOSE) printf("No omega-maximum found.\n");
   }
@@ -1412,7 +1412,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   double *Omega_ptr = &Omega[index_pk-3];
   double tOmg_pk = find_max(n, dt, tmax, Omega_ptr, NULL);
   tOmg_pk *= ooMbh;
-  if (DEBUG) printf("Ringdown: tOmg_pk  = %.12e\n",tOmg_pk);
+  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk);
   
   /** Merger time t_max(A22) */
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
@@ -1421,7 +1421,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   /* nonspinning case */
   /* tmrg[k22]  = tOmg_pk-3./Mbh; */ /* OLD */       
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
-  if (DEBUG) printf("Ringdown: tmrgA22  = %e\n",tmrgA22);
+  if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
   
   for (int k=0; k<KMAX; k++) {
     tmrg[k] = tmrgA22;
