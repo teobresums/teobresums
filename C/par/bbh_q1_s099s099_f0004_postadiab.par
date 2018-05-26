@@ -23,12 +23,12 @@ use_geometric_units = 1 # use geometric units for I/O ?
 
 use_speedytail = 1 # use special routine to speed up tail computation ?
 
-interp_uniform_grid = 0 # interpolate on uniform grid ?
+interp_uniform_grid = 0 # interpolate on uniform grid ? (Note for BBH this is done auto)
 
 postadiabatic_dynamics = "yes"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
 postadiabatic_dynamics_size = 100 # grid size 
-postadiabatic_dynamics_rmin = 8. # stop post-adiabatic dynamics at this radius
+postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
 postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
 
 compute_LR = 0 # calculate LR ?
@@ -45,8 +45,8 @@ output_dynamics = 1 # output dynamics
 
 dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
 
-size = 500 # size of the arrays (chunks, dynamically extended)
-ringdown_extend_array = 1700 # grid points to extend arrays for ringdown attachment
+size = 2000 # size of the arrays (chunks, dynamically extended)
+ringdown_extend_array = 400 # grid points to extend arrays for ringdown attachment
 
 ode_timestep = "uniform" # specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
 ode_stop_at_radius = 1. # stop ODE integration at this radius (if > 0)
