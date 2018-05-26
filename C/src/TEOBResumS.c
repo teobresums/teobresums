@@ -53,7 +53,10 @@ int main (int argc, char* argv[])
     printf(TEOBResumS_Info);
     print_date_time();
     eob_set_params(argv[1], argc);
-    if (VERBOSE) par_db_screen ();
+    if (VERBOSE) {
+      PRSECTN("Parameters");
+      par_db_screen ();
+    }
   } else {
     TEOBResumS_Usage(argv[0]);
     exit(OK);
@@ -97,6 +100,7 @@ int main (int argc, char* argv[])
   if (!(use_tidal) && (use_spins)) store_dynamics = 1; /* NQC need dynamical variables */
   const int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
   if (use_postadiab_dyn) store_dynamics = 1;
+  const double dt = par_get_d("dt") * time_unit_fact;
 
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
@@ -106,21 +110,20 @@ int main (int argc, char* argv[])
 
   const int chunk = par_get_i("size");
   int size = chunk; /* note: size can vary */
-  int size_pa = 0; /* size for post-adiabatic dynamics */
-   
+    
   if (use_postadiab_dyn) {
-    size_pa = par_get_i("postadiabatic_dynamics_size"); 
-    Dynamics_alloc (&dyn, size_pa, "dyn");
-    Waveform_lm_alloc (&hlm, size_pa, "hlm"); 
+    size = par_get_i("postadiabatic_dynamics_size"); 
+    par_set_i("size",size);
+    Dynamics_alloc (&dyn, size, "dyn");
+    Waveform_lm_alloc (&hlm, size, "hlm"); 
   } else {
     Dynamics_alloc (&dyn, size, "dyn"); 
     Waveform_lm_alloc (&hlm, size, "hlm"); 
   }
-
   Waveform_lm_t_alloc (&hlm_t);
-  
-  Dynamics_set_params(dyn);
 
+  /* Set quick-access parameters dyn (be careful here) */
+  Dynamics_set_params(dyn);
   dyn->store = dyn->noflx = 0; /* Default: do not store vars, flux on */
   
   /** Set r.h.s. fun pointer */
@@ -139,19 +142,19 @@ int main (int argc, char* argv[])
     /* Reset options */
     dyn->use_tidal = par_get_i("use_tidal");
     dyn->use_spins = par_get_i("use_spins");
-    if (VERBOSE) PRFORM("rLR_tidal",dyn->rLR_tidal);
+    if (VERBOSE) PRFORMd("rLR_tidal",dyn->rLR_tidal);
   }
   if (par_get_i("compute_LR")) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
     par_set_d("rLR", dyn->rLR);
-    if (VERBOSE) PRFORM("rLR",dyn->rLR);
+    if (VERBOSE) PRFORMd("rLR",dyn->rLR);
   }
   if (par_get_i("compute_LSO")) {
     //TODO: LSO COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
     par_set_d("rLSO", dyn->rLSO);
-    if (VERBOSE) PRFORM("rLSO",dyn->rLSO);
+    if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }
 
   /** Final BH */
@@ -159,10 +162,10 @@ int main (int argc, char* argv[])
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
     dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
     if (VERBOSE) {
-      printf("Final black hole\n");
-      PRFORM("BH_final_mass[Healy]",dyn->Mbhf); 
-      PRFORM("BH_final_spin[Healy]",dyn->abhf);
-      PRFORM("BH_final_spin[JimenezForteza]",dyn->abhf);
+      PRSECTN("Final black hole");
+      PRFORMd("BH_final_mass[Healy]",dyn->Mbhf); 
+      PRFORMd("BH_final_spin[Healy]",dyn->abhf);
+      PRFORMd("BH_final_spin[JimenezForteza]",dyn->abhf);
     }
     par_set_d("BH_final_mass", dyn->Mbhf);
     par_set_d("BH_final_spin", dyn->abhf);
@@ -176,17 +179,19 @@ int main (int argc, char* argv[])
     /*
      * Post-adiabatic dynamics
      */
+    
+    if (VERBOSE) PRSECTN("Post-adiabatic dynamics");
 
     /** Calculate dynamics */
     eob_dyn_Npostadiabatic(dyn, r0); 
     
     /** Calculate waveform */
-    for (int i = 0; i < size_pa; i++) 
+    for (int i = 0; i < size; i++) 
       hlm->time[i] = dyn->time[i];
     
     dyn->store = dyn->noflx = 1;
 
-    for (int i = 0; i < size_pa; i++) {
+    for (int i = 0; i < size; i++) {
       dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
       dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];
       dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i]; 
@@ -202,14 +207,14 @@ int main (int argc, char* argv[])
     dyn->store = dyn->noflx = 0;
     
     if (STREQUAL(par_get_s("postadiabatic_dynamics_stop"),"yes")) {
-      if (DEBUG) printf("post-adiabatic dynamics: skip evolution.");
+      if (VERBOSE) printf("# Post-adiabatic dynamics: skip evolution.\n");
       goto END_ODE_EVOLUTION; 
     }
     
     /** Prepare for evolution */
 
     /* start counting from here */
-    iter = size_pa-1;
+    iter = size-1;
     
     /* Set arrays with initial conditions 
        Note current time is already set in dyn->t */
@@ -276,13 +281,12 @@ int main (int argc, char* argv[])
   
   if (VERBOSE) {
     /* Print initial conditions */
-    printf("Initial conditions\n");
+    PRSECTN("Initial conditions");
     for (int i = 0; i < EOB_ID_NVARS; i++)
-      PRFORM(eob_id_var[i], dyn->y0[i]);
+      PRFORMd(eob_id_var[i], dyn->y0[i]);
   }
    
   /** Initialize ODE system solver */
-  const double dt = par_get_d("dt") * time_unit_fact;; 
   dyn->dt     = dt;
   dyn->t_stop = par_get_d("ode_tmax") * time_unit_fact;
   par_set_d("dt",       dyn->dt);
@@ -308,7 +312,10 @@ int main (int argc, char* argv[])
   }
   dyn->ode_timestep  = j;
   const int ode_tstep = dyn->ode_timestep;
-  if (ode_tstep == ODE_TSTEP_UNIFORM) interp_uniform_grid = 0;
+
+  /* Adjust interpolation option */
+  if (ode_tstep == ODE_TSTEP_UNIFORM)        interp_uniform_grid = 0; /* Not needed with uniform tstep */
+  if ((use_postadiab_dyn) && (!(use_tidal))) interp_uniform_grid = 1; /* Always needed with post-adiab and BBH */
   
   const double ode_abstol = par_get_d("ode_abstol");
   const double ode_reltol = par_get_d("ode_reltol");
@@ -321,6 +328,7 @@ int main (int argc, char* argv[])
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
     
   /** Solve ODE */
+  PRSECTN("ODE Evolution");
   int STATUS = OK;
   while (!(dyn->ode_stop)) {
    if ( (VERBOSE) && (!SARP) )  printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r);
@@ -484,9 +492,14 @@ int main (int argc, char* argv[])
     /* Build uniform grid of width dt and alloc tmp memory */
     //CHECKME: is this rounding under control ?!
     const int size_new = (int)((hlm->time[size-1] - hlm->time[0])/dt + 1); /* use dt from parfile */
-    if ( (DEBUG) && (!SARP) ) 	printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
-    if (DEBUG) printf("Interpolation_grid: size_new=%d dt=%.12e t[size-1]=%.12e (%.12e)\n",
-		      size_new,dt,hlm->time[size-1],hlm->time[size-1]-(hlm->time[0]+(size_new-1)*dt));
+    if ( (DEBUG) && (!SARP) ) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
+    if (VERBOSE) {
+      PRSECTN("Interpolation to uniform grid");
+      PRFORMi("interpolation_grid_size",size_new);
+      PRFORMd("interpolation_grid_dt",dt);
+      PRFORMd("interpolation_grid_t0",hlm->time[0]);
+      PRFORMd("interpolation_grid_tN",hlm->time[size-1]);
+    }
 
     /** Waveform */ 
     Waveform_lm_alloc (&hlm_aux, size, "");
@@ -565,6 +578,8 @@ int main (int argc, char* argv[])
 
     if (use_spins) {
 
+      if (VERBOSE) PRSECTN("NQC Calculation");
+
       Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
       
       /* Compute NQC corrections */
@@ -587,6 +602,8 @@ int main (int argc, char* argv[])
     
     /** Ringdown */
     
+    if (VERBOSE) PRSECTN("Ringdown");
+
     /* Extend arrays */    
     const int size_ringdown = par_get_i("ringdown_extend_array");
     Waveform_lm_push (&hlm, (size+size_ringdown));
