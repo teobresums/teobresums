@@ -479,8 +479,6 @@ int main (int argc, char* argv[])
       Dynamics_output(dyn);
   }
   
-  //DBGSTOP //
-
   if (interp_uniform_grid) {
 
     /* 
