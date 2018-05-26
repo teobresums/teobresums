@@ -207,7 +207,7 @@ int main (int argc, char* argv[])
     dyn->store = dyn->noflx = 0;
     
     if (STREQUAL(par_get_s("postadiabatic_dynamics_stop"),"yes")) {
-      if (VERBOSE) printf("# Post-adiabatic dynamics: skip evolution.\n");
+      if (VERBOSE) printf("Post-adiabatic dynamics: skip evolution.\n");
       goto END_ODE_EVOLUTION; 
     }
     
