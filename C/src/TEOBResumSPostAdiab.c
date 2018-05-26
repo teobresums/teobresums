@@ -20,8 +20,10 @@
 #include <string.h>
 #include "TEOBResumS.h"
 
+#define nv (21) /* temp arrays */
+
 /** Post-adiabatic dynamics */
-int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
+int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 {
   /* Unpack values */
   const double nu    = dyn->nu;
@@ -40,51 +42,48 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   const double z3    = 2.0*nu*(4.0-3.0*nu);
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
-    
+
+  /* Parameters for post adiabatic dynamics */
+  const int Npa = par_get_i("postadiabatic_dynamics_N");    
   const int size = par_get_i("postadiabatic_dynamics_size");
   if (size != dyn->size) errorexit("problem allocating memory for post adiabatic dynamics.");
+  const double rmin = par_get_d("postadiabatic_dynamics_rmin");    
 
-  const int Npa = par_get_i("postadiabatic_dynamics_N");
+  /* Additional memory */
+  double *buffer[nv]; 
+  for (int v=0; v < nv; v++)
+    buffer[v] = (double*)malloc(size * sizeof (double));
 
-  /* Mem for quantities to be used. FIXME: Can we avoid allocating the memory?
-     Can we use already-defined C-structures here? */
-
-  double *A_vec                  = (double*)malloc(size * sizeof (double));
-  double *dA_vec                 = (double*)malloc(size * sizeof (double));
-  double *B_vec                  = (double*)malloc(size * sizeof (double));
-  double *sqrtAbyB_vec           = (double*)malloc(size * sizeof (double));
-  double *rc_vec                 = (double*)malloc(size * sizeof (double));
-  double *drc_dr_vec             = (double*)malloc(size * sizeof (double));
-  double *uc2_vec                = (double*)malloc(size * sizeof (double));
-  double *duc_dr_vec             = (double*)malloc(size * sizeof (double));
-  double *dAuc2_dr_vec           = (double*)malloc(size * sizeof (double));
-  double *dG_dr_vec              = (double*)malloc(size * sizeof (double));
-  double *dG_dprstar_vec         = (double*)malloc(size * sizeof (double));
-  double *dG_dprstarbyprstar_vec = (double*)malloc(size * sizeof (double));
-  double *G0_vec                 = (double*)malloc(size * sizeof (double));
-  double *dG_dr0_vec             = (double*)malloc(size * sizeof (double));
-  double *E_vec                  = (double*)malloc(size * sizeof (double));
-  double *Heff_vec               = (double*)malloc(size * sizeof (double));
-  double *Heff_orb_vec           = (double*)malloc(size * sizeof (double));
-  double *dpphi_dr_vec           = (double*)malloc(size * sizeof (double));
-  double *dprstar_dr_vec         = (double*)malloc(size * sizeof (double));
-  double *dphi_dr_vec            = (double*)malloc(size * sizeof (double));
-  double *dt_dr_vec              = (double*)malloc(size * sizeof (double));
+  double *A_vec                  = buffer[0];
+  double *dA_vec                 = buffer[1];
+  double *B_vec                  = buffer[2];
+  double *sqrtAbyB_vec           = buffer[3];
+  double *rc_vec                 = buffer[4];
+  double *drc_dr_vec             = buffer[5];
+  double *uc2_vec                = buffer[6];
+  double *duc_dr_vec             = buffer[7];
+  double *dAuc2_dr_vec           = buffer[8];
+  double *dG_dr_vec              = buffer[9];
+  double *dG_dprstar_vec         = buffer[10];
+  double *dG_dprstarbyprstar_vec = buffer[11];
+  double *G0_vec                 = buffer[12];
+  double *dG_dr0_vec             = buffer[13];
+  double *E_vec                  = buffer[14];
+  double *Heff_vec               = buffer[15];
+  double *Heff_orb_vec           = buffer[16];
+  double *dpphi_dr_vec           = buffer[17];
+  double *dprstar_dr_vec         = buffer[18];
+  double *dphi_dr_vec            = buffer[19];
+  double *dt_dr_vec              = buffer[20];
   
-  double ggm[14];
-    
+  double ggm[14]; 
   double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, dHeff_dpphi, dHeff_dprstar, dHeff_dprstarbyprstar,
     H, G, pl_hold, ddotr_fake, prstar_fake, x, jhat, psi, r_omg, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
 
-  /* FIXME Starting radius from parfile */
-  r0        = 22;
-
-  /* TODO Implementing a robust stopping condition. For the time being, we fix ri = 12 */
-  double ri = 12.;
-
-  /* Build a uniform grid and compute circular dynamics */
-  const double dr = (r0 - ri)/size;
+  /* Build a uniform grid */
+  const double dr = (r0 - rmin)/size;
     
+  /* Compute circular dynamics */
   for (int i = 0; i < size; i++)
     {
       
@@ -405,10 +404,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
   
 
-  /******************** End of main code **********************/
 
 
-  
+#if (0)  // *************************************** CODE FOR DEBUG TO BE REMOVED
   
   double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
   double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
@@ -445,9 +443,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   sprintf(q_string, "_q_%1.0f", dyn->q);
   char chi1_string[256]; 
   sprintf(chi1_string, "_chi1_%3.2f", dyn->chi1);
-  char chi2_string[256]; 
+  char chi2_string[256];
   sprintf(chi2_string, "_chi2_%3.2f", dyn->chi2);
-  char lAL2_string[256]; 
+  char lAL2_string[256];
   char post_adiab_dyn[256] = "Post_adiab_dynamics";
   if (!usetidal){
     strcat(post_adiab_dyn, "_bbh");}
@@ -490,9 +488,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
    /** Compute orbital phase with Matlab data */
   cumint3(dphi_dr_mat_vec, dyn->data[EOB_RAD], size, phi_integral_m);
   /** end of matlab integration */
-  
-  
-  
+    
   /** Save matlab integrals on file */
   char matlab_string[256]     = "matlab_integral_with_cumint";
   strcat(matlab_string, q_string);
@@ -507,12 +503,16 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
       fprintf(matlab_int, "\t%20.14f\t%20.14f\n", time_integral_m[kt], phi_integral_m[kt]);
     }
   fclose(matlab_int);
-    
 
+#endif // *************************************** CODE FOR DEBUG TO BE REMOVED - end
 
 
   
   /* Free memory */
+  for (int v=0; v < nv; v++)
+    free(buffer[v]);
+  
+/*
   free(A_vec);
   free(dA_vec);
   free(B_vec);
@@ -534,10 +534,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   free(dprstar_dr_vec);
   free(dphi_dr_vec);
   free(dt_dr_vec);
-
-
-  printf("\n\nDAJECHEGIRO\n\n");
-  
+*/
   
   return OK;
 }
