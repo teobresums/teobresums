@@ -333,7 +333,7 @@ void eob_set_params(char *s, int n)
 
   for (j=0; j<=TIDES_NOPT; j++) {
     if (STREQUAL(par_get_s("tides"),tides_opt[j])) {
-      if (VERBOSE) printf("%-40s = %s\n","tides",tides_opt[j]);
+      if (DEBUG) printf("%-40s = %s\n","tides",tides_opt[j]);
       break;
     }
   }
