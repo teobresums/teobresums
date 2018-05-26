@@ -25,7 +25,7 @@ use_speedytail = 1 # use special routine to speed up tail computation ?
 
 interp_uniform_grid = 0 # interpolate on uniform grid ? (Note for BBH this is done auto)
 
-postadiabatic_dynamics = "yes"
+postadiabatic_dynamics = "no"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
 postadiabatic_dynamics_size = 100 # grid size 
 postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
@@ -34,7 +34,7 @@ postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
 compute_LR = 0 # calculate LR ?
 compute_LSO = 0 # calculate LSO ?
 
-output_dir = "./bbh_q1_s099s099_f0004_postadiab/" # output dir
+output_dir = "./bbh_q1_s-099s-099_f0004/" # output dir
 output_multipoles = 1 # output multipoles
 output_lm = [1] # indexes of multipoles to ouput
 output_dynamics = 1 # output dynamics
@@ -49,5 +49,5 @@ size = 2000 # size of the arrays (chunks, dynamically extended)
 ringdown_extend_array = 400 # grid points to extend arrays for ringdown attachment
 
 ode_timestep = "uniform" # specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
-ode_stop_at_radius = 1. # stop ODE integration at this radius (if > 0)
+ode_stop_at_radius = 1.2 # stop ODE integration at this radius (if > 0)
 
