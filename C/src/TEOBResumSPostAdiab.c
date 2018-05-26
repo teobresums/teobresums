@@ -41,9 +41,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0)
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
     
-  // FIXME: Already defined? size_pa?
   const int size = par_get_i("postadiabatic_dynamics_size");
-  printf("\nI am using size: %d\n",size);
+  if (size != dyn->size) errorexit("problem allocating memory for post adiabatic dynamics.");
 
   const int Npa = par_get_i("postadiabatic_dynamics_N");
 
