@@ -35,6 +35,9 @@ Various plots showing relative differences can be found in this directory.
 
 TODO: Add statements for NQC and ringdown .....
 
+
+FOR: BBH (1,0.98,0.98,0.001) and BNS (1.5, 0.2, 0.4, 5e-4) we used ONLY the adaptive ODE routine in both codes for the comparison as uniform routines take a while and generate gigabytes of data.
+
 During the validation process we found minor bugs in the C++ implementation
 
    1. Mistake in the computation of the second derivative of the metric A function.
