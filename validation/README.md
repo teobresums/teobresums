@@ -6,11 +6,12 @@ S.Akcay, S.Bernuzzi
 
 The new C implementation on branch `development`
 
-    commit ???
+    commit 8e64500adef87e1f1b969af8c3c9c6d39bccbb0b
 
 is tested against the previous C++ implementation on branch `master`  
 
-    commit bc8c1a7e49b6ecbb098eebff51678dfd3acf2112
+    commit 1fde4f901af43e724c43959faed89509b7d1435c
+
 
 Tests
 
