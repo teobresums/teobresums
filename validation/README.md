@@ -1,8 +1,6 @@
 # Summary of code validation 
 
-S.Akcay, S.Bernuzzi
-
---- WORK IN PROGRESS ---
+## S.Akcay, S.Bernuzzi
 
 The new C implementation on branch `development`
 
@@ -11,7 +9,6 @@ The new C implementation on branch `development`
 is tested against the previous C++ implementation on branch `master`  
 
     commit 1fde4f901af43e724c43959faed89509b7d1435c
-
 
 Tests
 
@@ -28,17 +25,17 @@ The parfiles for these runs can be found in the directory `../benchmark/`.
 
 The validation process shows agreement between the two codes with relative differences at or below the level <~ 1e-6 in 
 
-  * Dynamical variables (file names dyn*.txt )
-  * Multipolar waveforms (all multipoles up to l=8, file name Waveform_ ...)
+  * Dynamical variables (file names `dyn*.txt`)
+  * Multipolar waveforms (all multipoles up to l=8, file name `hlm_*`)
+
+TODO: comment on NQC/ringdown/
 
 Various plots showing relative differences can be found in this directory.
+For cases BBH (q,Sz^A,Sz^B,f0)=(1,0.98,0.98,0.001) and BNS (1.5, 0.2,
+0.4, 5e-4) we used ONLY the adaptive ODE routine since uniform
+timestepping takes too long and generates gigabytes of data.  
 
-TODO: Add statements for NQC and ringdown .....
-
-
-FOR: BBH (1,0.98,0.98,0.001) and BNS (1.5, 0.2, 0.4, 5e-4) we used ONLY the adaptive ODE routine in both codes for the comparison as uniform routines take a while and generate gigabytes of data.
-
-During the validation process we found minor bugs in the C++ implementation
+During the validation process we found minor bugs in the C++ implementation:
 
    1. Mistake in the computation of the second derivative of the metric A function.
       The mistake affects only the initial data for tidal and nonspinning runs.
@@ -59,9 +56,5 @@ During the validation process we found minor bugs in the C++ implementation
       
    5. Amplitudes rholm (3,1) and (3,3) did not contain the nu-dependent corrections.
       Bug has been fixed.
-
-All the above bugs except 1. have been fixed in several commits up to
-
-    commit XXX
 
 
