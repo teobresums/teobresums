@@ -519,16 +519,30 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   const double epsrel = 1e-10; 
   const gsl_root_fsolver_type *T;
   double x, x_lo, x_hi;
+    
+  /* Set interval to search root */
   if (dyn->use_tidal) {
-    x_lo = 2.8; // nu~1/4 kappaT2 ~ 12
-    x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
+    /* Tides are always temporarily set as = NNLO to compute LR, 
+       But we may want to define different searches intervals */
+    const int tides = par_get_i("use_tidal");
+    if (tides == TIDES_TEOBRESUM_BHNS) {
+      /* BHNS */
+      //FIXME best interval
+      x_lo = 1.8; 
+      x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
+    } else {
+      /* BNS */
+      x_lo = 2.8; // nu~1/4 kappaT2 ~ 12
+      x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
+    }
   } else {
+    /* BBH */
     x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
-    x_hi = 3.1; // 3 nu = 0 
+    x_hi = 3.1; // 3. nu = 0 
     /* x_lo = 0.9*eob_approxLR(dyn->nu); 
        x_hi = 1.1*eob_approxLR(dyn->nu); */
   }  
-
+  
   gsl_root_fsolver *s;
   gsl_function F;
   F.function = &eob_dyn_fLR;

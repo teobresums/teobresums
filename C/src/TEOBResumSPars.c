@@ -371,6 +371,10 @@ void eob_set_params(char *s, int n)
   double kapT3 = kapA3 + kapB3;
   double kapT4 = kapA4 + kapB4;
 
+  if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
+  if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
+  if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
+  
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
   double bar_alph2_1 = (5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
@@ -381,12 +385,18 @@ void eob_set_params(char *s, int n)
   /* Tidal coefficients for the amplitude */
   double khatA_2  = 3./2. * LambdaAl2 * XB/XA * gsl_pow_int(XA,5);
   double khatB_2  = 3./2. * LambdaBl2 * XA/XB * gsl_pow_int(XB,5);
-
+  
   /* self-spin coefficients */
-  double logC_Q1 = logQ(log(LambdaAl2));
-  double logC_Q2 = logQ(log(LambdaBl2));
-  double C_Q1    = exp(logC_Q1);
-  double C_Q2    = exp(logC_Q2);
+  double C_Q1 = 0.;
+  double C_Q2 = 0.;
+  if (LambdaAl2>0.) {
+    double logC_Q1 = logQ(log(LambdaAl2));
+    C_Q1           = exp(logC_Q1);
+  }
+  if (LambdaBl2>0.) {
+    double logC_Q2 = logQ(log(LambdaBl2));
+    C_Q2           = exp(logC_Q2);
+  }
   
   /* Set aux parfiles in database */
   

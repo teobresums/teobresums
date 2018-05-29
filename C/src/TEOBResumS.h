@@ -168,9 +168,10 @@ enum{
   TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
   TIDES_NNLO, 
   TIDES_TEOBRESUM,
+  TIDES_TEOBRESUM_BHNS,
   TIDES_NOPT
 };
-static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM","undefined"};
+static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM","TEOBRESUM_BHNS","undefined"};
 
 /** List of options for ODE timestepping */
 enum{

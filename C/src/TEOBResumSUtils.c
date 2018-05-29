@@ -169,7 +169,6 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax)
   else errorexit("Implemented only n = 3,5,7");    
   
   if (d2f != 0.) {
-    //xmax = xmax - dx*d1f/d2f;
     xmax -= dx*d1f/d2f;
   }
   /* Eval function */
