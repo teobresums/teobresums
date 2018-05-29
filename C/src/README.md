@@ -2,7 +2,7 @@
 
 LOG file for TEOBResumS `development` branch
 
-Last updated: 2018.04.26
+Last updated: 2018.05.26
 
 ## Brief introduction for developers
 
@@ -23,7 +23,7 @@ Special and minimal data structures are defined together with routines to alloca
  * `Waveform` Waveform data type for h+, hx.
  * `Waveform_lm` Multipolar waveform data type.
  * `Waveform_lm_t` Multipolar waveform data type at given time, comes at handy for given applications.
- * If you need to start to understand what is in the code, the reference file is `TEOBResumS.h`
+ * If you need to start with the code, the reference file is `TEOBResumS.h`
 
 ## Development timeline
 
@@ -40,19 +40,16 @@ Special and minimal data structures are defined together with routines to alloca
 | `TEOBResumSFlux.c`              | Flux                      | 2017.11.07 Compiles                                           | 
 | `TEOBResumSWaveform.c`          | Waveform                  | 2017.12.02 Compiles                                           |
 |                                                            || 2017.03.22 Optimized eob_wav_flm() and eob_wav_flm_s()        |
+| `TEOBResumSPostAdiabatic.c`     | Post-adiabatic dynamics   | 2017.05.15 Started work                                       |
+|                                                            || 2017.05.26 Method is correct                                  |
 | `TEOBResumS.c`                  | Main                      | 2017.03.07 Compiles, made several changes also in other *.c   |
 |                                                            || 2017.04.24 Dynamics and waveform nospin BBH is correct        |
 |                                                            || 2017.04.26 Dynamics and waveform nospin BNS is correct        |
+|                                                            || 2017.05.26 Dynamics and waveform spin BNS/BBH is correct      |
 
 [Debug LOG. Please keep update with development milestones]
 
 ## TODOLIST
-
- * [] Check runtime errors
-
- * [] Verify corretness, compare with Matlab and C++ on master
-
- * [] The code currently implements two ways of summing up the rholm in eob_wav_flm(). One way is 1 + c_1 x  + c_2 x^2 + ... as in the C++ code. The other way is c_5 x^5 + c_4 x^4 + ... + 1 . They disagree and some significant error accumulates during evolution.
  
  * [] Several parts needs checking; to see what please do
  ```
@@ -60,9 +57,8 @@ Special and minimal data structures are defined together with routines to alloca
  fgrep "//FIXME" *
  fgrep "//TODO" *
  ```
-
- * [] LR/LSO computation for spining BBH
-   Precompute guesses for all the cases, use Netwon-Rapshon.
+ 
+ * [] LR/LSO computation for spining BBH, Precompute guesses for all the cases, use Netwon-Raphson.
 
  * [] Stopping conditions need to be improved
 
@@ -72,6 +68,9 @@ Special and minimal data structures are defined together with routines to alloca
 
  * [] Improve code documentation, especially in `TEOBResumS.h`
 
+ * [] The code currently implements two ways of summing up the rholm in eob_wav_flm(). One way is 1 + c_1 x  + c_2 x^2 + ... as in the C++ code. The other way is c_5 x^5 + c_4 x^4 + ... + 1 . They disagree and some significant error accumulates during evolution. Further investigatins needed.
+
+* [x] Verify corretness, compare with Matlab and C++ on master
 
 ## Frequent errors
 
