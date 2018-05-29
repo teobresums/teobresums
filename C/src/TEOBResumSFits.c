@@ -98,6 +98,7 @@ double logQ(double x)
     Eq.(10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.0872 */
 double Yagi13_fit_barlamdel(double barlam2, int ell)
 {
+  if (barlam2<=0.) return 0.;
   double lnx = log(barlam2);
   double coeffs[5];
   if (ell == 3) {
