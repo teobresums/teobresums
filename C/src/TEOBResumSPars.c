@@ -387,8 +387,8 @@ void eob_set_params(char *s, int n)
   double khatB_2  = 3./2. * LambdaBl2 * XA/XB * gsl_pow_int(XB,5);
   
   /* self-spin coefficients */
-  double C_Q1 = 0.;
-  double C_Q2 = 0.;
+  double C_Q1 = 1.;
+  double C_Q2 = 1.;
   if (LambdaAl2>0.) {
     double logC_Q1 = logQ(log(LambdaAl2));
     C_Q1           = exp(logC_Q1);
