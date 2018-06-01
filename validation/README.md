@@ -99,6 +99,6 @@ During the validation process we found minor bugs in the C++ implementation:
    5. Amplitudes rholm (3,1) and (3,3) did not contain the nu-dependent corrections.
       Bug has been fixed.
 
-   6. (8,8) mode had been labelled as the (8,1) mode and the remaining l=8 modes were missing both in the Newtonian flux and the Newtonian waveform functions. These have been added.git co
+   6. (8,8) mode had been labelled as the (8,1) mode and the remaining l=8 modes were missing both in the Newtonian flux and the Newtonian waveform functions. These have been added.
 
 
