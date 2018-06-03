@@ -20,12 +20,14 @@ r0 = 0.
 initial_frequency = 0.004 # initial GW frequency
 
 tides = "no" 
-LambdaAl2 = 0. # Tidal parameter Lambda for star A ell=2
+LambdaAl2 = 0. # Tidal gravitoelectirc parameter Lambda for star A ell=2
 LambdaBl2 = 0.
 LambdaAl3 = 0. 
 LambdaAl4 = 0. 
 LambdaBl3 = 0. 
 LambdaBl4 = 0. 
+SigmaAl2 = 0. # Tidal gravitomagnetic parameter Sigma for star A ell=2
+SigmaBl2 = 0.
 use_Yagi_fits = 0 # use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
 pGSF_tidal = 4. # p-power in GSF tidal potential model
 
