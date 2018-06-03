@@ -350,12 +350,16 @@ void eob_set_params(char *s, int n)
   double LambdaBl3 = par_get_d("LambdaBl3");
   double LambdaAl4 = par_get_d("LambdaAl4");
   double LambdaBl4 = par_get_d("LambdaBl4");
+  double SigmaAl2 = par_get_d("SigmaAl2");
+  double SigmaBl2 = par_get_d("SigmaBl2");
   
   if (par_get_i("use_Yagi_fits")) {
     LambdaAl3 = Yagi13_fit_barlamdel(LambdaAl2, 3);
     LambdaBl3 = Yagi13_fit_barlamdel(LambdaBl2, 3);
     LambdaAl4 = Yagi13_fit_barlamdel(LambdaAl2, 4);
     LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
+    SigmaAl2 = Yagi13_fit_barsigmalambda(LambdaAl2);
+    SigmaBl2 = Yagi13_fit_barsigmalambda(LambdaBl2);
   }
   
   /* Tidal coupling constants */    
@@ -417,6 +421,9 @@ void eob_set_params(char *s, int n)
   par_set_d("LambdaAl4",LambdaAl4);
   par_set_d("LambdaBl3",LambdaBl3);
   par_set_d("LambdaBl4",LambdaBl4);
+
+  par_set_d("SigmaAl2",SigmaAl2);
+  par_set_d("SigmaBl2",SigmaBl2);
 
   par_set_d("kappaAl2", kapA2 );
   par_set_d("kappaAl3", kapA3 );
