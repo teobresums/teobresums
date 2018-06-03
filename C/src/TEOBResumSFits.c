@@ -93,9 +93,9 @@ double logQ(double x)
   return ai + bi*x + ci*x2 + di*x3 + ei*x4;
 }
 
-/** Yagi 2013 fits for multipolar
+/** Yagi 2013 fits for NS multipolar
     $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
-    Eq.(10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.0872 */
+    Eq.(9,10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.0872 */
 double Yagi13_fit_barlamdel(double barlam2, int ell)
 {
   if (barlam2<=0.) return 0.;
@@ -116,6 +116,23 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
   }
   else 
     errorexit("Yagi fits are for ell=3,4.");
+  double lny = coeffs[0]*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx+coeffs[2]*lnx*lnx+coeffs[3]*lnx+coeffs[4];
+  return exp(lny);
+}
+
+/** Yagi 2013 fits for NS multipolar
+    $\bar{\sigma_2}( \bar{\lambda}_2 )$
+    Eq.(9,11),(61); Tab.I; Fig.9 http://arxiv.org/abs/1311.0872 */
+double Yagi13_fit_barsigmalambda(double barlam2)
+{
+  if (barlam2<=0.) return 0.;
+  double lnx = log(barlam2);
+  double coeffs[5];
+  coeffs[4] = 0.126;
+  coeffs[3] = 0.617;
+  coeffs[2] = 2.81e-2;
+  coeffs[1] = 3.59e-4;
+  coeffs[0] = -3.61e-5;
   double lny = coeffs[0]*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx+coeffs[2]*lnx*lnx+coeffs[3]*lnx+coeffs[4];
   return exp(lny);
 }
