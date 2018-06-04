@@ -15,9 +15,10 @@ The results are in the directory `../validation` under the branch `development`
 
 More specifically, we computed the relative disagreement between the two codes " \Delta_{rel}"
 for: 
-	- 7 dynamical quantities: {r, phi, p_phi, M*Omega, \ddot{r}, p_r*, M*Omega_orb} during the inspiral
-	- Waveforms h_lm in both amplitude and phase for all non-zero {l,m} modes during the inspiral
-	- Waveform for the (2,2) mode in both amplitude and phase including NQC and RINGDOWN.
+
+ - 7 dynamical quantities: {r, phi, p_phi, M*Omega, \ddot{r}, p_r*, M*Omega_orb} during the inspiral
+ - Waveforms h_lm in both amplitude and phase for all non-zero {l,m} modes during the inspiral
+ - Waveform for the (2,2) mode in both amplitude and phase including NQC and RINGDOWN.
 
 We performed our comparison for a total of 11 different binary black hole (BBH/bbh) and 6 different binary neutron star (BNS/bns) runs each of which is parametrized in terms of
 
@@ -59,23 +60,20 @@ we used ONLY the adaptive ODE routine since uniform timestepping takes too long 
 Because of this "caveat" the "adaptive" folders contain 17 (= 11 BBH+6 BNS) cases whereas the rest contain 10 BBH + 5 BNS = 15 cases.
 
 Each case is labelled by 
-		bbh_qx_sy_sz_fw
-		bns_qx_sy_sz_fw
+		bbh_q<x>_s<y>_s<z>_f<w>
+		bns_q<x>_s<y>_s<z>_f<w>
 where {x, y, z, w} are the values for {q, Sz^A, SZ^B, f_min}. 
 
 The validation process shows agreement between the two codes with relative differences at or below the level <~ 1e-6 or much smaller in almost every single comparison we present.
 
 There are cases in the multipolar waveform comparisons in which the relative disagreement exceeds the 1e-3 threshold. These happen only for high modes and are due to the fact that the absolute magnitudes of these modes are becoming comparable to the 1e-11 ODE integrator accuracy. These relative differences can be decreased by increasing the accuracy of the ODE solvers in both C and C++ at the expense of runtime. Part of this disagreement is due to the external Mathematica interpolator we used to interpolate the C++ data in the comparisons of Adaptive and Adaptive_Uniform cases where the ODE integrators use different time steps. In the case of Uniform timestepping, there is no need for such interpolation hence the disagreements are always <~ 1e-5 except maybe at the last few time steps.
 
-
 For the NQC checks, we used a smaller set as ringdown checks serve as a proxy for NQC.
-
 
 For the ringdown, we compared only the (2,2) mode as this is what is currently available from the C++ code. As an extra check, we once again compared the waveform from t=0 until the end of the ringdown. We additionally zoomed in on the attachment point of the ringdown and showed the amplitude, phase comparisons in subfolders called "Attachment_22". As ringdown only occurs for BBHs, our comparison set contains 11 cases for "Adaptive" routines and 10 for "Adaptive_Uniform".
 
 There is a clear disagreement between the two codes during ringdown, but in all our comparisons we found this to be less than 1e-3.
 We discovered that this disagreement is due to a numerical cancellation in the ringdown routine that amplifies a <~ 1e-6 relative disagreement to nearly 1e-3 in some cases. This <~1e-6 disagreement comes out of the function that finds the time of the peak frequency. We believe the routine in the C code is more accurate and confirmed this to be mostly true using Mathematica. We further confirmed that this is the cause of the disagreement by forcing the C code to use C++'s result for this peak time which resulted in the agreement of the ringdown waveform amplitudes to better than 1e-12.
-
 
 During the validation process we found minor bugs in the C++ implementation:
 
@@ -97,7 +95,7 @@ During the validation process we found minor bugs in the C++ implementation:
       Bug has been fixed.
       
    5. Amplitudes rholm (3,1) and (3,3) did not contain the nu-dependent corrections.
-      Bug has been fixed.
+      These corrections ave been added.
 
    6. (8,8) mode had been labelled as the (8,1) mode and the remaining l=8 modes were missing both in the Newtonian flux and the Newtonian waveform functions. These have been added.
 
