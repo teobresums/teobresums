@@ -46,22 +46,23 @@ We chose the following values for the above parameters in our comparisons.
 The parfiles for these runs can be found in the directory `../benchmark/`.
 
 We repeated each comparison three times because both codes have "uniform" or "adaptive" time stepping routines in their'respective ODE integrators. Therefore, the three cases we considered are
-	- Adaptive(C++) vs. Adaptive(C) labelled as "Adaptive" in the subfolders.
-	- Adaptive(C++) vs. Uniform(C) labelled as "Adaptive_Uniform" in the subfolders.
-	- Uniform(C++) vs. Uniform(C) labelled as "Uniform" in the subfolders.
+
+ - Adaptive(C++) vs. Adaptive(C) labelled as "Adaptive" in the subfolders.
+ - Adaptive(C++) vs. Uniform(C) labelled as "Adaptive_Uniform" in the subfolders.
+ - Uniform(C++) vs. Uniform(C) labelled as "Uniform" in the subfolders.
 
 As we considered the Adaptive_Uniform case to be representative of the Uniform_Adaptive case, we did not repeat the comparisons for the latter. We had an additional motivation for this as C++ code only seems to perform the ringdown computations for the "adaptive" case.
 
 We should remark that for the two "low"-frequency cases: 
-	1) BBH(1,0.98,0.98,0.001) and 
+	1) BBH (1,0.98,0.98,0.001) and 
 	2) BNS (1.5, 0.2, 0.4, 5e-4) 
 we used ONLY the adaptive ODE routine since uniform timestepping takes too long and generates gigabytes of data.
 
 Because of this "caveat" the "adaptive" folders contain 17 (= 11 BBH+6 BNS) cases whereas the rest contain 10 BBH + 5 BNS = 15 cases.
 
 Each case is labelled by 
-		bbh_q<x>_s<y>_s<z>_f<w>
-		bns_q<x>_s<y>_s<z>_f<w>
+		`bbh_q<x>_s<y>_s<z>_f<w>`
+		`bns_q<x>_s<y>_s<z>_f<w>`
 where {x, y, z, w} are the values for {q, Sz^A, SZ^B, f_min}. 
 
 The validation process shows agreement between the two codes with relative differences at or below the level <~ 1e-6 or much smaller in almost every single comparison we present.
