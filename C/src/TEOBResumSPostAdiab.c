@@ -376,16 +376,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   /** Compute time */
   cumint3(dt_dr_vec, dyn->data[EOB_RAD], size, dyn->time);
 
-
-      for (int kt = 1; kt < size; kt++)
-    {
-	if (dyn->time[kt]<dyn->time[kt-1])
-	printf("\n NOOOOOOOOOOOOOOOOOOOOOOOOOOO \n");
-    }
-
-
-      
-
   /* Set last value for evolution */
   dyn->t = dyn->time[size-1];
   
@@ -393,7 +383,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
   
 
-#if (1)  // *************************************** CODE FOR DEBUG TO BE REMOVED
+#if (0)  // *************************************** CODE FOR DEBUG TO BE REMOVED
   
   double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
   double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
