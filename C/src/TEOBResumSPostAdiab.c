@@ -152,8 +152,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); /* Plus  solution of the quadratic equation */
       sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff); /* Minus solution of the quadratic equation */
       
-      /* Effective prescription: If the Tilde G function is negative, take the positive solution and viceversa. */
-      if (G < 0) j02 = sol_p;
+      /* dGdr sign determines choice of solution */
+      if (dG_dr0_vec[i] > 0) j02 = sol_p;
       else       j02 = sol_m;
     
     } else {
@@ -307,9 +307,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	c_coeff = dA_vec[i] + 2*dyn->prstar*dprstar_dr_vec[i]*(1+2*z3*A_vec[i]*uc2_vec[i]*SQ(dyn->prstar)) + z3*dAuc2_dr_vec[i]*prstar4;
 	Delta   = SQ(b_coeff) - 4*a_coeff*c_coeff;   /* Delta of the quadratic equation */
         
-	/* sol_p = (-b_coeff + sqrt(Delta))/(2*a_coeff); */  /* Plus solution of the quadratic equation */
+	/* sol_p = (-b_coeff + sqrt(Delta))/(2*a_coeff); */  /* Plus solution - Unphysical */
 	sol_m = (-b_coeff - sqrt(Delta))/(2*a_coeff);  /* Minus solution of the quadratic equation */
-	dyn->pphi = sol_m;                             /* Choosing minus solution - To be understood */
+	dyn->pphi = sol_m;                             
         
 	/** Note: prstar and G functions do not change at even orders 
 	   G does not change because of the chosen gauge,     
@@ -376,6 +376,16 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   /** Compute time */
   cumint3(dt_dr_vec, dyn->data[EOB_RAD], size, dyn->time);
 
+
+      for (int kt = 1; kt < size; kt++)
+    {
+	if (dyn->time[kt]<dyn->time[kt-1])
+	printf("\n NOOOOOOOOOOOOOOOOOOOOOOOOOOO \n");
+    }
+
+
+      
+
   /* Set last value for evolution */
   dyn->t = dyn->time[size-1];
   
@@ -383,7 +393,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
   
 
-#if (0)  // *************************************** CODE FOR DEBUG TO BE REMOVED
+#if (1)  // *************************************** CODE FOR DEBUG TO BE REMOVED
   
   double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
   double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
@@ -481,8 +491,11 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     }
   fclose(matlab_int);
 
+
+
+    
 #endif // *************************************** CODE FOR DEBUG TO BE REMOVED - end
-  
+
   /* Free memory */
   for (int v=0; v < nv; v++)
     free(buffer[v]);
