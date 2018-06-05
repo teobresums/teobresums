@@ -85,7 +85,7 @@ vector<gsl_complex> hlmNewt(const double r,
     if (tidal_flag==true)
     {
 	p2 = 1.;
-	p4 = 2*nu-1;
+	p4 = 2.*nu-1;
     }
     
     int kmax = 35;
