@@ -63,20 +63,49 @@ vector<gsl_complex> hlmNewt(const double r,
     
     
     /** Polynomials in nu */
-    const double p1 = 1.;
-    double p2 = sqrt(1.-4.*nu);                   /*(2,1), (3,3) & (3,1)*/
+    const double X12 = sqrt(1.-4.*nu);
+    const double p1  = 1.;
+    double p2 = 0.0;      /*(2,1), (3,3) & (3,1)*/
+    double p4 = 0.0;      /*(4,3), (4,1), (5,5), (5,3), (5,1) */
     const double p3 = (3.*nu-1.);
-    double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);        /*(4,3), (4,1), (5,5), (5,3), (5,1) */
+    //double p2 = sqrt(1.-4.*nu);                   /*(2,1), (3,3) & (3,1)*/
+    //double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);        /*(4,3), (4,1), (5,5), (5,3), (5,1) */
     const double p5 = 1.-5.*nu+5.*nu2;
-    const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
+    const double p6 = (1.-4.*nu+3.*nu2)*X12;
     const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
-    const double p8 = (4*nu3-10*nu2+6*nu-1)*sqrt(1-4*nu);
+    const double p8 = (4*nu3-10*nu2+6*nu-1)*X12;
 
     /* Special treatment when spin is on because of the singularity in the sqrt(1-4*nu) factor whn m=odd when nu=1/4.
        The nu-dependence is not factored out in the spin part, while in the nonspinning part it is re-introduced
        when the full waveform is computed. See discussion in Damour & Nagar, PRD 90, 044018, Sec. 4, Eq.(89).
        This is not done for multipole with l>4 because no spinning information is included in the waveform. */
-    if (spin_flag==true)
+
+    if (spin_flag==true)      
+      {
+	p2 = 1.0;
+	p4 = 2.*nu-1;
+      }
+    else
+      { /* Nonspinning case*/
+	if (tidal_flag==false)
+	  {
+	    //p2 = sqrt(1.-4.*nu);
+	    //p4 = (2.*nu-1)*sqrt(1.-4.*nu);
+
+	    p2 = X12;
+	    p4 = (2.*nu-1)*X12;
+	    
+	      }
+	else
+	  {
+	    p2 = 1.;
+	    //p4 = (2.*nu-1)*sqrt(1.-4.*nu);
+	    p4 = (2.*nu-1)*X12;
+	      }
+      }
+
+    /* old conditions: incorrect and inconsistent with the flux */
+    /*if (spin_flag==true)
     {
 	p2 = 1;
 	p4 = 2.*nu-1;
@@ -86,7 +115,7 @@ vector<gsl_complex> hlmNewt(const double r,
     {
 	p2 = 1.;
 	p4 = 2.*nu-1;
-    }
+	}*/
     
     int kmax = 35;
     const double phix2 = 2. * phi;
@@ -131,8 +160,8 @@ vector<gsl_complex> hlmNewt(const double r,
     hlmNewt[2].dat[1] = 3.*pi/2. - M[2];
     hlmNewt[2].dat[0] = 1./3.*sqrt(2.*pi/35.)            * pv23;
     
-    hlmNewt[3].dat[1] = - M[3];
-    hlmNewt[3].dat[0] = 8./3.*sqrt(pi/7.)                * pv34;
+    hlmNewt[3].dat[1] =  - M[3];
+    hlmNewt[3].dat[0] =  8./3.*sqrt(pi/7.)                * pv34;
     
     hlmNewt[4].dat[1] = pi/2. - M[4];
     hlmNewt[4].dat[0] = 3.*sqrt(6.*pi/7.)                * pv23;
