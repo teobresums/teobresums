@@ -46,7 +46,7 @@ double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double 
   const double c3_uneq = cnu*a12*nu*X12 + cnu2*a12*nu2*X12 + cnu3*a12*nu3*X12 + ca1_a2*(a1-a2)*nu2;
   
   return c3_eq + c3_uneq;
-
+}
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
 double eob_nqc_dtfit(const double chi, const double chi0)
@@ -144,7 +144,7 @@ double Yagi13_fit_barsigmalambda(double barlam2)
   double lny = coeffs[0]*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx+coeffs[2]*lnx*lnx+coeffs[3]*lnx+coeffs[4];
   return exp(lny);
 }
-
+ 
 /** Mass and angular momentum of the final black hole
   Healey, Lousto and Zochlower (HLZ),
   arXiv: 1406.7295, published as PRD 90, 104004 (2014)
