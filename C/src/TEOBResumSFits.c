@@ -46,7 +46,7 @@ double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double 
   const double c3_uneq = cnu*a12*nu*X12 + cnu2*a12*nu2*X12 + cnu3*a12*nu3*X12 + ca1_a2*(a1-a2)*nu2;
   
   return c3_eq + c3_uneq;
-}
+
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
 double eob_nqc_dtfit(const double chi, const double chi0)
@@ -122,17 +122,25 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
 
 /** Yagi 2013 fits for NS multipolar
     $\bar{\sigma_2}( \bar{\lambda}_2 )$
-    Eq.(9,11),(61); Tab.I; Fig.9 http://arxiv.org/abs/1311.0872 */
+    Eq.(9,11),(61); Tab.I; Fig.9 http://arxiv.org/abs/1311.0872 
+    See also later erratum */
 double Yagi13_fit_barsigmalambda(double barlam2)
 {
   if (barlam2<=0.) return 0.;
   double lnx = log(barlam2);
   double coeffs[5];
+  /*
   coeffs[4] = 0.126;
   coeffs[3] = 0.617;
   coeffs[2] = 2.81e-2;
   coeffs[1] = 3.59e-4;
   coeffs[0] = -3.61e-5;
+  */
+  coeffs[4] = -2.01;
+  coeffs[3] =  0.462;
+  coeffs[2] =  1.68e-2;
+  coeffs[1] = -1.58e-4;
+  coeffs[0] = -6.03e-6;
   double lny = coeffs[0]*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx+coeffs[2]*lnx*lnx+coeffs[3]*lnx+coeffs[4];
   return exp(lny);
 }
