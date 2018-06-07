@@ -154,7 +154,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       
       /* dGdr sign determines choice of solution */
       if (dG_dr0_vec[i] > 0) j02 = sol_p;
-      else       j02 = sol_m;
+      else                   j02 = sol_m;
     
     } else {
       
