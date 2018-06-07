@@ -92,7 +92,7 @@ vector<gsl_complex> hlmNewt(const double r,
 	      }
 	else
 	  {
-	    p2 = 1.;   /*the X12 is reintroduced in hlm */
+	    p2 = 1.;              /*the X12 is reintroduced in hlm below */
 	    p4 = (2.*nu-1)*X12;
 	      }
       }
