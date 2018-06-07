@@ -426,7 +426,7 @@ int main (int argc, char* argv[])
     }
 
     /** Stop integration at given radius (if rstop >= 0) */    
-    if ((dyn->ode_stop_radius) && (dyn->r < rstop) ) {
+    if ((dyn->ode_stop_radius) && (dyn->r > rstop) ) {
       if (VERBOSE) printf("Stop: radius reached.\n");
       dyn->ode_stop = true;
     }
