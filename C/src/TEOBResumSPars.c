@@ -143,9 +143,9 @@ void par_db_write_file (const char *name)
   }
 }
 
-void par_db_screen ()
+void par_db_screen (const int pr)
 {
-  config_write(cf, stderr);
+  if (pr) config_write(cf, stderr);
 }
 
 /* 'get' routines */
