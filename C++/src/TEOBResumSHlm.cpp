@@ -64,16 +64,14 @@ vector<gsl_complex> hlmNewt(const double r,
     
     /** Polynomials in nu */
     const double X12 = sqrt(1.-4.*nu);
-    const double p1  = 1.;
-    double p2 = 0.0;      /*(2,1), (3,3) & (3,1)*/
-    double p4 = 0.0;      /*(4,3), (4,1), (5,5), (5,3), (5,1) */
-    const double p3 = (3.*nu-1.);
-    //double p2 = sqrt(1.-4.*nu);                   /*(2,1), (3,3) & (3,1)*/
-    //double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);        /*(4,3), (4,1), (5,5), (5,3), (5,1) */
-    const double p5 = 1.-5.*nu+5.*nu2;
-    const double p6 = (1.-4.*nu+3.*nu2)*X12;
-    const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
-    const double p8 = (4*nu3-10*nu2+6*nu-1)*X12;
+    const double p1  = 1.;          /*(2,2)*/
+    double p2        = 0.0;         /*(2,1), (3,3) & (3,1)*/
+    double p4        = 0.0;         /*(4,3), (4,1), (5,5), (5,3), (5,1) */
+    const double p3  = (3.*nu-1.);
+    const double p5  = 1.-5.*nu+5.*nu2;
+    const double p6  = (1.-4.*nu+3.*nu2)*X12;
+    const double p7  = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
+    const double p8  = (4*nu3-10*nu2+6*nu-1)*X12;
 
     /* Special treatment when spin is on because of the singularity in the sqrt(1-4*nu) factor whn m=odd when nu=1/4.
        The nu-dependence is not factored out in the spin part, while in the nonspinning part it is re-introduced
@@ -89,33 +87,15 @@ vector<gsl_complex> hlmNewt(const double r,
       { /* Nonspinning case*/
 	if (tidal_flag==false)
 	  {
-	    //p2 = sqrt(1.-4.*nu);
-	    //p4 = (2.*nu-1)*sqrt(1.-4.*nu);
-
 	    p2 = X12;
-	    p4 = (2.*nu-1)*X12;
-	    
+	    p4 = (2.*nu-1)*X12;	    
 	      }
 	else
 	  {
-	    p2 = 1.;
-	    //p4 = (2.*nu-1)*sqrt(1.-4.*nu);
+	    p2 = 1.;   /*the X12 is reintroduced in hlm */
 	    p4 = (2.*nu-1)*X12;
 	      }
       }
-
-    /* old conditions: incorrect and inconsistent with the flux */
-    /*if (spin_flag==true)
-    {
-	p2 = 1;
-	p4 = 2.*nu-1;
-    }
-    	
-    if (tidal_flag==true)
-    {
-	p2 = 1.;
-	p4 = 2.*nu-1;
-	}*/
     
     int kmax = 35;
     const double phix2 = 2. * phi;
@@ -1640,8 +1620,14 @@ vector<gsl_complex> hlm(double       t,
         /** Compute tidal contribution */
         vector<double> hlmtidal   = hlm_Tidal(x, params);
         
-        /** Update waveform */
-        double p2 = sqrt(1-4*nu);
+        /** reintroduce the sqrt(1-4*nu) except for spinning **/	
+	double p2 = sqrt(1-4*nu);  
+
+	if (spin_flag==1)
+	  {
+	    p2 = 1.0;
+	   }
+	
         for (int k=35; k--;)
         {
             switch (k)
