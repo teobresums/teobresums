@@ -50,12 +50,12 @@ int main (int argc, char* argv[])
 
   /** Input parameters */
   if (argc == 2) {
-    printf(TEOBResumS_Info);
-    print_date_time();
-    eob_set_params(argv[1], argc);
+    eob_set_params(argv[1], argc);    
     if (VERBOSE) {
+      printf(TEOBResumS_Info);
+      print_date_time();
       PRSECTN("Parameters");
-      par_db_screen ();
+      par_db_screen (VERBOSE);
     }
   } else {
     TEOBResumS_Usage(argv[0]);
@@ -328,7 +328,7 @@ int main (int argc, char* argv[])
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
     
   /** Solve ODE */
-  PRSECTN("ODE Evolution");
+  if (VERBOSE) PRSECTN("ODE Evolution");
   int STATUS = OK;
   while (!(dyn->ode_stop)) {
    if ( (VERBOSE) && (!SARP) )  printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r);
@@ -427,7 +427,7 @@ int main (int argc, char* argv[])
 
     /** Stop integration at given radius (if rstop >= 0) */    
     if ((dyn->ode_stop_radius) && (dyn->r < rstop) ) {
-      printf("Stop: radius reached.\n");
+      if (VERBOSE) printf("Stop: radius reached.\n");
       dyn->ode_stop = true;
     }
 
