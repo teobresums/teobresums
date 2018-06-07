@@ -65,7 +65,7 @@
 #endif
 
 #ifndef DEBUG 
-#define DEBUG 1 /* global debug option */ 
+#define DEBUG 0 /* global debug option */ 
 #endif
 
 /** Macros */
@@ -272,7 +272,7 @@ void par_db_default ();
 void par_file_parse (const char *fname);
 void par_file_parse_merge (const char *fname);
 void par_db_write_file (const char *fname);
-void par_db_screen ();
+void par_db_screen (const int pr);
 void par_set_i(const char *key, int val);
 void par_set_b(const char *key, int val);
 void par_set_d(const char *key, double val);
