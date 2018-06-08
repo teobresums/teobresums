@@ -87,6 +87,7 @@
 #define MAX3(a,b,c) (((a) > (b)) ? MAX(a,c) : MAX(b,c))
 #define MIN3(a,b,c) (((a) < (b)) ? MIN(a,c) : MIN(b,c))
 #define SQ(a) ((a)*(a))
+#define DISZERO(a,eps) (fabs((a))<(eps)) /** Is double = 0 to precision eps ?*/
 #define DEQUAL(a,b,eps) (fabs((a)-(b))<(eps)) /** double compare */
 #define DUNEQUAL(a,b,eps) (fabs((a)-(b))>(eps))
 #define STREQUAL(s,t) ((strcmp((s),(t))==0)) /** string compare */  
