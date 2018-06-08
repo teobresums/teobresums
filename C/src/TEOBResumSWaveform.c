@@ -1086,7 +1086,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 #if (DEBUG)
   fp = fopen("nqc_amp_func.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%f\t%f\t%f\n", t[j], p1tmp[1][j], p2tmp[1][j]);
+    fprintf(fp, "%e\t%e\t%e\n", t[j], p1tmp[1][j], p2tmp[1][j]);
   }
   fclose(fp);  
 #endif
