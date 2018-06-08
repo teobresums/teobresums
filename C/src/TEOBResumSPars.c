@@ -374,10 +374,12 @@ void eob_set_params(char *s, int n)
   double kapT2 = kapA2 + kapB2;
   double kapT3 = kapA3 + kapB3;
   double kapT4 = kapA4 + kapB4;
-
-  if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
-  if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
-  if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
+  
+  if (usetidal) {
+    if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
+    if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
+    if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
+  } 
   
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
