@@ -773,7 +773,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   const double aK3  = aK2*aK;
   const double aK4  = aK2*aK2;
   const double a12  = X1*chi1 - X2*chi2;
-  const double aeff     = aK + 1/3*a12*X12;
+  const double aeff     = aK + 1./3.*a12*X12;
   const double aeff_omg = aK + a12*X12;
     
   double *t       = h->time;
@@ -1092,8 +1092,12 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 #endif
 
   double detM = 1.;
+  double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
     
+    ai[k][0] = ai[k][1] = 0.;
+    bi[k][0] = bi[k][1] = 0.;
+
     /* Computation of ai coefficients at Omega peak */
     P[0]     = max_A[k]  - p1tmp[k][jmax];
     P[1]     = max_dA[k] - p2tmp[k][jmax];
@@ -1103,10 +1107,16 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     M[2]     = m21[k][jmax];
     M[3]     = m22[k][jmax];
     
-    detM     = M[0]*M[3]-M[1]*M[2];
-    ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
-    ai[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
-    
+    /* detM     = M[0]*M[3]-M[1]*M[2]; 
+       ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
+       ai[k][1] = (M[0]*P[1] - M[2]*P[0])/detM; */
+    /* safe version (amplitude can be zero) */
+    oodetM   = 1.0/(M[0]*M[3]-M[1]*M[2]);
+    if (isfinite(oodetM)) {
+      ai[k][0] = (M[3]*P[0] - M[1]*P[1])*oodetM;
+      ai[k][1] = (M[0]*P[1] - M[2]*P[0])*oodetM;
+    }
+
     /* Computation of bi coefficients at Omega peak */
     P[0]     = omg[k][jmax]   - max_omg[k];
     P[1]     = domg[k][jmax]  - max_domg[k];
@@ -1115,13 +1125,19 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     M[1]     = d_n5[jmax];
     M[2]     = d2_n4[jmax];
     M[3]     = d2_n5[jmax];
-    
-    detM     =  M[0]*M[3] - M[1]*M[2];
-    bi[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
-    bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM;
-  
+
+    /* detM     =  M[0]*M[3] - M[1]*M[2];
+       bi[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
+       bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM; */
+    /* safe version (phase can be zero) */
+    oodetM   = 1.0/(M[0]*M[3]-M[1]*M[2]);
+    if (isfinite(oodetM)) {
+      bi[k][0] = (M[3]*P[0] - M[1]*P[1])*oodetM;
+      bi[k][1] = (M[0]*P[1] - M[2]*P[0])*oodetM;
+    }
+
   }
-  
+
   if (VERBOSE){
     printf("NQC coefficients for 22 mode:\n");
     PRFORMd("a1",ai[1][0]);
