@@ -342,7 +342,7 @@ void eob_set_params(char *s, int n)
     j = TIDES_OFF;
   }
   par_set_i("use_tidal",j);
-  int usetidal = j;
+  const int usetidal = j;
   
   double LambdaAl2 = par_get_d("LambdaAl2");
   double LambdaBl2 = par_get_d("LambdaBl2");
