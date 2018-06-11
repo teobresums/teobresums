@@ -61,7 +61,7 @@
 #endif
 
 #ifndef SARP
-#define SARP 0 /* use Sarp's printing routines for code comparisons, set to 0 to TURN it OFF */
+#define SARP 1 /* use Sarp's printing routines for code comparisons, set to 0 to TURN it OFF */
 #endif
 
 #ifndef DEBUG 
