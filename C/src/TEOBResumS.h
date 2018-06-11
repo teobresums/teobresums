@@ -261,8 +261,10 @@ typedef struct tagDynamics
   double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2, cN3LO;
   double rLR, rLSO;
-  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4, khatA2,khatB2, kapA2j, kapB2j, kapT2j;
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2;
+  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
+  double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
+  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
+  double kapA2j, kapB2j, kapT2j;
   double rLR_tidal, pGSF_tidal;
   double Mbhf, abhf; /* final BH */
   int use_tidal, use_spins;
