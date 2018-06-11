@@ -189,6 +189,9 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     const double a2j =  3.44936982829705884;	// Nagar gravitomagnetic fit param
     const double elsix = 1.833333333333333333333;  // 11/6
 
+//const double Sigma.Tl(2)
+
+
     double Acub   = 5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
     double dAcub  = 5./2.*     (1. -2*(c1+c2)*u + 3*c1*c2*u2);
     double d2Acub = 5    *     (   -  (c1+c2)   + 3*c1*c2*u);
@@ -209,13 +212,29 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
     double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
 
-    double Ahat1GSFfitGM = elsix*u*(1. - a1j*u)*(1. - a2j*u)*pow(oom3u, 3.5);
-    double DAhat1GSFfitGM = 0.5*elsix * ( 2. + 5.*rLR*u - 1.*a2j*u*(4. + 3.*rLR*u) + 
+    double Ahat1GSFfitj = elsix*u*(1. - a1j*u)*(1. - a2j*u)*pow(oom3u, 3.5);
+    double dAhat1GSFfitj = 0.5*elsix * ( 2. + 5.*rLR*u - 1.*a2j*u*(4. + 3.*rLR*u) + 
        a1j*u*(-4. - 3.*rLR*u + a2j*u*(6. + rLR*u) ) )  * pow(oom3u, 4.5);
-    double D2Ahat1GSFfitGM = 0.25*elsix * ( 7.*rLR*(4. + 5.*rLR*u) - (a1j+a2j)*( 8. + 40.*rLR*u + 15.*pow(rLR, 2.)*pow(u, 2.) ) + a1j*a2j*( 3.*u*(8. + 12.*rLR*u + pow(rLR, 2.)*pow(u, 2.)) ) ) * pow(oom3u, 5.5); 
+    double d2Ahat1GSFfitj = 0.25*elsix * ( 7.*rLR*(4. + 5.*rLR*u) - (a1j+a2j)*( 8. + 40.*rLR*u + 15.*pow(rLR, 2.)*pow(u, 2.) ) + a1j*a2j*( 3.*u*(8. + 12.*rLR*u + pow(rLR, 2.)*pow(u, 2.)) ) ) * pow(oom3u, 5.5); 
 
+    // 0SF -- gravitomagnetic Schwarzschild terms
+    double Ahat0GSFj     =  (1.-2.*u)*oom3u;
+    double dAhat0GSFj    =  (rLR-2.)*oom3u*oom3u;
+    double d2Ahat0GSFj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
 
-    
+    // 2SF -- gravitomagnetic Schwarzschild terms
+    double Ahat2GSFj    =  u*pow(oom3u,p);
+    double dAhat2GSFj    =  ( 1.+ (p-1.)*rLR*u ) * pow(oom3u, p+1);
+    double d2Ahat2GSFj   =  p*rLR * ( 2.+ (p-1.)*rLR*u ) * pow(oom3u, p+2);
+
+    // Total gravitomagnetic potential as a series in XA and XB
+    double AhatjA   = Ahat0GSFj + XA*Ahat1GSFfitj + XA*XA*Ahat2GSFj;
+    double dAhatjA  = dAhat0GSFj + XA*dAhat1GSFfitj + XA*XA*dAhat2GSFj;
+    double d2AhatjA = d2Ahat0GSFj + XA*d2Ahat1GSFfitj + XA*XA*d2Ahat2GSFj;
+    double AhatjB   = Ahat0GSFj + XB*Ahat1GSFfitj + XB*XB*Ahat2GSFj;
+    double dAhatjB  = dAhat0GSFj + XB*dAhat1GSFfitj + XB*XB*dAhat2GSFj;
+    double d2AhatjB = d2Ahat0GSFj + XB*d2Ahat1GSFfitj + XB*XB*d2Ahat2GSFj;
+
     double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
     double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
     double AT4    = - kapT4*u10;
@@ -223,6 +242,11 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double dAT2  = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );
     double dAT3  = - kapT3*(8.*u7 + 9*bar_alph3_1*u8 + 10*bar_alph3_2*u9);
     double dAT4  = - kapT4*10.*u9;
+
+// l=2 gravitomagnetic total contribution
+//double ATj_2      = -Sigma.Tl(2).*u7.*Ahatj;
+//double dATj_2     = -Sigma.Tl(2).*(7*u6.*Ahatj + u7.*dAhatj);
+//double d2ATj_2    = -Sigma.Tl(2).*(42*u5.*Ahatj + 14*u6.*dAhatj + u7.*d2Ahatj);
 
     A     = AT2   + AT3   + AT4;
     dA_u  = dAT2  + dAT3  + dAT4;
