@@ -371,14 +371,21 @@ void eob_set_params(char *s, int n)
   double kapB3 = 15.  * LambdaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
   double kapB4 = 105. * LambdaBl4 * XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
   
+  /* gravitomagnetic tidal coupling constants el = 2 only */    
+  double kapA2j = 24.   * SigmaAl2 * XA*XA*XA*XA*XA / q; 
+  double kapB2j = 24.   * SigmaBl2 * XB*XB*XB*XB*XB * q;
+
+
   double kapT2 = kapA2 + kapB2;
   double kapT3 = kapA3 + kapB3;
   double kapT4 = kapA4 + kapB4;
+  double kapT2j = kapA2j + kapB2j;
   
   if (usetidal) {
     if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
     if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
     if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
+    if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
   } 
   
   /* Tidal coefficients cons dynamics

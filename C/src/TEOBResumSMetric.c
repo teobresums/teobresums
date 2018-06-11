@@ -140,6 +140,8 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double kapT2 = dyn->kapT2;
   const double kapT3 = dyn->kapT3;
   const double kapT4 = dyn->kapT4;
+  const double kapA2j = dyn->kapA2j;
+  const double kapB2j = dyn->kapB2j;
 
   /* Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, 
      Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
@@ -243,13 +245,13 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double dAT3  = - kapT3*(8.*u7 + 9*bar_alph3_1*u8 + 10*bar_alph3_2*u9);
     double dAT4  = - kapT4*10.*u9;
 
-// l=2 gravitomagnetic total contribution
-//double ATj_2      = -Sigma.Tl(2).*u7.*Ahatj;
-//double dATj_2     = -Sigma.Tl(2).*(7*u6.*Ahatj + u7.*dAhatj);
-//double d2ATj_2    = -Sigma.Tl(2).*(42*u5.*Ahatj + 14*u6.*dAhatj + u7.*d2Ahatj);
+    // l=2 gravitomagnetic total contribution
+    double ATj_2      = -1.*kapA2j*u7*( AhatjA ) - 1.*kapB2j*u7*( AhatjB );
+    double dATj_2     = -1.*kapA2j * ( 7.*u6*AhatjA + u7*dAhatjA ) - 1.*kapB2j * ( 7.*u6*AhatjB + u7*dAhatjB );
+    double d2ATj_2    = -1.*kapA2j * ( 42.*u5*AhatjA + 14.*u6*dAhatjA + u7*d2AhatjA ) - 1.*kapB2j * ( 42.*u5*AhatjB + 14.*u6*dAhatjB + u7*d2AhatjB );
 
-    A     = AT2   + AT3   + AT4;
-    dA_u  = dAT2  + dAT3  + dAT4;
+    A     = AT2   + AT3   + AT4 + ATj_2;
+    dA_u  = dAT2  + dAT3  + dAT4 + dATj_2;
 
     if (d2AT != NULL) {
       double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
@@ -263,7 +265,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       double d2AT3  = - kapT3*(56*u6 + 72*bar_alph3_1*u7 + 90*bar_alph3_2*u8);
       double d2AT4  = - kapT4*90*u8;
       
-      d2A_u = d2AT2 + d2AT3 + d2AT4;
+      d2A_u = d2AT2 + d2AT3 + d2AT4 + d2ATj_2;
     }
     
   }
