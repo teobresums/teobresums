@@ -97,12 +97,15 @@ C_Q1 = 0. #
 C_Q2 = 0. #
 cN3LO = 0. #
 
-kappaAl2 = 0. #
+kappaAl2 = 0. # gravitoelectric kappa star A
 kappaAl3 = 0. #
 kappaAl4 = 0. #
 kappaBl2 = 0. #
 kappaBl3 = 0. #
 kappaBl4 = 0. #
+
+kappajAl2 = 0. # gravitomagnetic kappa star A
+kappajBl2 = 0.
 
 kappaTl2 = 0. #
 kappaTl3 = 0. #
