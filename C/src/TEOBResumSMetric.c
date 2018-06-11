@@ -185,6 +185,9 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     const double c2  =  3.04309;
     const double n1  =  0.840058;
     const double d2  =  17.73239;
+    const double a1j =  12.2686645586131480;	// Nagar gravitomagnetic fit param
+    const double a2j =  3.44936982829705884;	// Nagar gravitomagnetic fit param
+    const double elsix = 1.833333333333333333333;  // 11/6
 
     double Acub   = 5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
     double dAcub  = 5./2.*     (1. -2*(c1+c2)*u + 3*c1*c2*u2);
@@ -205,6 +208,13 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double df0    = 3*u*(2.-rLR*u)*(oom3u*oom3u);
     double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
     double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
+
+    double Ahat1GSFfitGM = elsix*u*(1. - a1j*u)*(1. - a2j*u)*pow(oom3u, 3.5);
+    double DAhat1GSFfitGM = 0.5*elsix * ( 2. + 5.*rLR*u - 1.*a2j*u*(4. + 3.*rLR*u) + 
+       a1j*u*(-4. - 3.*rLR*u + a2j*u*(6. + rLR*u) ) )  * pow(oom3u, 4.5);
+    double D2Ahat1GSFfitGM = 0.25*elsix * ( 7.*rLR*(4. + 5.*rLR*u) - (a1j+a2j)*( 8. + 40.*rLR*u + 15.*pow(rLR, 2.)*pow(u, 2.) ) + a1j*a2j*( 3.*u*(8. + 12.*rLR*u + pow(rLR, 2.)*pow(u, 2.)) ) ) * pow(oom3u, 5.5); 
+
+
     
     double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
     double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
