@@ -729,22 +729,16 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
     
   hA[0]     = 3 * khatA_2 * (3-4*XA);
   hB[0]     = 3 * khatB_2 * (3-4*XB);
-  // hA[0]     = 3 * khatA_2 * XB * (3-4*XA)/XA; // OLD version
-  // hB[0]     = 3 * khatB_2 * XA * (3-4*XB)/XB; // OLD version
     
   /** l=3 */  
   hA[2] = 12 * khatA_2 * XB;
   hB[2] = 12 * khatB_2 * XA;
-  // hA[2] = hA[4];  // OLD version
-  // hB[2] = hB[4];  // OLD version
 
   betaA1[2] = (-6. -5.*XA +131.*XA*XA -130.*XA*XA*XA)/(36.*(1.-XA));
   betaB1[2] = (-6. -5.*XB +131.*XB*XB -130.*XB*XB*XB)/(36.*(1.-XB));
 
   hA[4] = hA[2];
   hB[4] = hB[2];
-  // hA[4] = 12 * khatA_2 * XB*XB/XA;  // OLD version
-  // hB[4] = 12 * khatB_2 * XA*XA/XB;  // OLD version
 
   betaA1[4] = ( (XA-3.)*(10.*XA*XA - 25.*XA+ 14.) )/(12.*(1.-XA));
   betaB1[4] = ( (XB-3.)*(10.*XB*XB - 25.*XB+ 14.) )/(12.*(1.-XB));
@@ -762,6 +756,36 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   hTidallm[3] = 8.*( khatA_2*(1. -2.*XB + 3.*XB*XB) +khatB_2*(1. -2.*XA + 3.*XA*XA) )*x5;
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
+
+  /* OLD STUFF 
+   // l=2 
+  hA[1]     = 2 * khatA_2 *(XA/XB+3);
+  hB[1]     = 2 * khatB_2 *(XB/XA+3);
+
+  betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
+  betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
+    
+  hA[0]     = 3 * khatA_2 * XB * (3-4*XA)/XA;
+  hB[0]     = 3 * khatB_2 * XA * (3-4*XB)/XB;
+    
+  // l=3 
+  hA[2] = hA[4];
+  hB[2] = hB[4];
+  
+  hA[4] = 12 * khatA_2 * XB*XB/XA;
+  hB[4] = 12 * khatB_2 * XA*XA/XB;
+  
+  // l=2 
+  // (2,1) 
+  hTidallm[0] = ( -hA[0] + hB[0] )*x5;
+  // (2,2) 
+  hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
+  
+  // l=3 
+  // (3,1) 
+  hTidallm[2] = ( -hA[2] + hB[2] )*x5;
+  // (3,3) 
+  hTidallm[4] = ( -hA[4] + hB[4] )*x5; */
   
 }
 
