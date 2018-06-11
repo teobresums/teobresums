@@ -358,8 +358,8 @@ void eob_set_params(char *s, int n)
     LambdaBl3 = Yagi13_fit_barlamdel(LambdaBl2, 3);
     LambdaAl4 = Yagi13_fit_barlamdel(LambdaAl2, 4);
     LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
-    SigmaAl2 = Yagi13_fit_barsigmalambda(LambdaAl2);
-    SigmaBl2 = Yagi13_fit_barsigmalambda(LambdaBl2);
+    //SigmaAl2 = Yagi13_fit_barsigmalambda(LambdaAl2);
+    //SigmaBl2 = Yagi13_fit_barsigmalambda(LambdaBl2);
   }
   
   /* Tidal coupling constants */    
@@ -385,7 +385,7 @@ void eob_set_params(char *s, int n)
     if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
     if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
     if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
-    if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
+    //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");//FIXME: later check for division?
   } 
   
   /* Tidal coefficients cons dynamics
