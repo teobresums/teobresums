@@ -758,10 +758,10 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   /** l=3 */
   /* (3,1) */
   hTidallm[2] = ( -hA[2]*(1. + betaA1[2]*x) + hB[2]*(1. + betaB1[2]*x) )*x5;
-  /* (3,3) */
-  hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
   /* (3,2) */
   hTidallm[3] = 8.*( khatA_2*(1. -2.*XB + 3.*XB*XB) +khatB_2*(1. -2.*XA + 3.*XA*XA) )*x5;
+  /* (3,3) */
+  hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
   
 }
 
