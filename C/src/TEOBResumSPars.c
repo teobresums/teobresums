@@ -375,7 +375,6 @@ void eob_set_params(char *s, int n)
   double kapA2j = 24.   * SigmaAl2 * XA*XA*XA*XA*XA / q; 
   double kapB2j = 24.   * SigmaBl2 * XB*XB*XB*XB*XB * q;
 
-
   double kapT2 = kapA2 + kapB2;
   double kapT3 = kapA3 + kapB3;
   double kapT4 = kapA4 + kapB4;
@@ -443,6 +442,9 @@ void eob_set_params(char *s, int n)
   par_set_d("kappaTl2", kapT2 );
   par_set_d("kappaTl3", kapT3 );
   par_set_d("kappaTl4", kapT4 );
+
+  par_set_d("kappajAl2", kapA2j );
+  par_set_d("kappajBl2", kapB2j );
 
   par_set_d("bar_alph2_1",bar_alph2_1);
   par_set_d("bar_alph2_2",bar_alph2_2);
