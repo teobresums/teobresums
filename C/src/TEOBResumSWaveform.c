@@ -705,6 +705,7 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
     Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 */
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 {
+  const double nu       = dyn->nu;
   const double XA       = dyn->X1;
   const double XB       = dyn->X2;
   const double khatA_2  = dyn->khatA2;
@@ -753,7 +754,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   /* (3,1) */
   hTidallm[2] = ( -hA[2]*(1. + betaA1[2]*x) + hB[2]*(1. + betaB1[2]*x) )*x5;
   /* (3,2) */
-  hTidallm[3] = 8.*( khatA_2*(1. -2.*XB + 3.*XB*XB) +khatB_2*(1. -2.*XA + 3.*XA*XA) )*x5;
+  hTidallm[3] = 8.*( khatA_2*(1. -2.*XB + 3.*XB*XB) +khatB_2*(1. -2.*XA + 3.*XA*XA) )*x5/(1.-3.*nu);
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
 
