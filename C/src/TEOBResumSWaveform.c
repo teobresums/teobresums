@@ -710,8 +710,12 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   const double XB       = dyn->X2;
   const double khatA_2  = dyn->khatA2;
   const double khatB_2  = dyn->khatB2;
+  const double kapA2j   = dyn->kapA2j;
+  const double kapB2j   = dyn->kapB2j;
+  const double kapT2j   = dyn->kapT2j;
   
   const double x5 = gsl_pow_int(x,5);
+  const double x6 = gsl_pow_int(x,6);
   
   double hA[KMAX], hB[KMAX], betaA1[KMAX],betaB1[KMAX];
 
@@ -757,6 +761,19 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   hTidallm[3] = 8.*( khatA_2*(1. -2.*XB + 3.*XB*XB) +khatB_2*(1. -2.*XA + 3.*XA*XA) )*x5/(1.-3.*nu);
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
+
+#if(USEGRAVITOMAGNETICTERMS)
+
+    const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
+    const double fourthird = 1.3333333333333333333; // 32/24 = 4/3
+
+    hTidallm[0] += 0.5*( -1.*kapA2j/XB + kapB2j/XA )*x5;
+    hTidallm[1] += fourtnine*kapT2j*x6;
+    hTidallm[2] += 0.5*( kapA2j*(4. - 17.*XB) - kapB2J*(4. - 17.*XA) )*x6;
+    hTidallm[3] += fourthird*kapT2j*x5;
+    hTidallm[4] += 0.5*( kapA2j*(4. - 9.*XB) - kapB2J*(4. - 9.*XA) )*x6;
+
+#endif
 
   /* OLD STUFF 
    // l=2 
