@@ -64,14 +64,14 @@ vector<gsl_complex> hlmNewt(const double r,
     
     /** Polynomials in nu */
     const double X12 = sqrt(1.-4.*nu);
-    const double p1  = 1.;          /*(2,2)*/
-    double p2        = 0.0;         /*(2,1), (3,3) & (3,1)*/
-    double p4        = 0.0;         /*(4,3), (4,1), (5,5), (5,3), (5,1) */
-    const double p3  = (3.*nu-1.);
-    const double p5  = 1.-5.*nu+5.*nu2;
-    const double p6  = (1.-4.*nu+3.*nu2)*X12;
-    const double p7  = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
-    const double p8  = (4*nu3-10*nu2+6*nu-1)*X12;
+    const double p1  = 1.;                           /*(2,2)*/
+    double p2        = 0.0;                          /*(2,1), (3,3), (3,1)*/
+    double p4        = 0.0;                          /*(4,3), (4,1), (5,5), (5,3), (5,1) */
+    const double p3  = (3.*nu-1.);                   /*(3,2), (4,2), (4,4)*/
+    const double p5  = 1.-5.*nu+5.*nu2;              /*(5,2), (5,4), (6,2), (6,4), (6,6)*/
+    const double p6  = (1.-4.*nu+3.*nu2)*X12;        /*(6,1), (6,3), (6,5), (7,1), (7,3), (7,5), (7,7)*/
+    const double p7  = 7.*nu3 - 14.*nu2 + 7.*nu -1.; /*(7,2), (7,4), (7,8), (8,2), (8,4), (8,6), (8,8)*/
+    const double p8  = (4*nu3-10*nu2+6*nu-1)*X12;    /*(8,1), (8,3), (8,5), (8,7)
 
     /* Special treatment when spin is on because of the singularity in the sqrt(1-4*nu) factor whn m=odd when nu=1/4.
        The nu-dependence is not factored out in the spin part, while in the nonspinning part it is re-introduced
@@ -128,52 +128,52 @@ vector<gsl_complex> hlmNewt(const double r,
     
     /** Compute hlmNewt (without phase factor) in complex Polar coords
      * l=2 ------------------------------------------------------------------ */
-    
+    /*(2,1)*/
     hlmNewt[0].dat[1] = 3.*pi/2. - M[0];
     hlmNewt[0].dat[0] = 8./3.*sqrt(pi/5.)                * pv23;
-    
+    /*(2,2)*/
     hlmNewt[1].dat[1] = pi - M[1];
     hlmNewt[1].dat[0] = 8.*sqrt(pi/5.)                   * p1 * vphi2;
     
     /** l=3 ------------------------------------------------------------------ */
-    
+    /*(3,1)*/
     hlmNewt[2].dat[1] = 3.*pi/2. - M[2];
     hlmNewt[2].dat[0] = 1./3.*sqrt(2.*pi/35.)            * pv23;
-    
+    /*(3,2)*/
     hlmNewt[3].dat[1] =  - M[3];
-    hlmNewt[3].dat[0] =  8./3.*sqrt(pi/7.)                * pv34;
-    
+    hlmNewt[3].dat[0] =  8./3.*sqrt(pi/7.)               * pv34;
+    /*(3,3)*/
     hlmNewt[4].dat[1] = pi/2. - M[4];
     hlmNewt[4].dat[0] = 3.*sqrt(6.*pi/7.)                * pv23;
     
     /** l=4 ------------------------------------------------------------------ */
-    
+    /*(4,1)*/
     hlmNewt[5].dat[1] = pi/2. - M[5];
     hlmNewt[5].dat[0] = 1./105.*sqrt(2.*pi)              * pv45;
-    
+    /*(4,2)*/
     hlmNewt[6].dat[1] = - M[6];
     hlmNewt[6].dat[0] = 8./63.*sqrt(pi)                  * pv34;
-    
+    /*(4,3)*/
     hlmNewt[7].dat[1] = 3.*pi/2. - M[7];
     hlmNewt[7].dat[0] = 9./5*sqrt(2*pi/7.)               * pv45;
-    
+    /*(4,4)*/
     hlmNewt[8].dat[1] = pi - M[8];
     hlmNewt[8].dat[0] = 64./9.*sqrt(pi/7.)               * pv34;
     
     /** l=5 ------------------------------------------------------------------ */
-    
+    /*(5,1)*/
     hlmNewt[9].dat[1] = pi/2. - M[9];
     hlmNewt[9].dat[0] = 1./180.*sqrt(pi/77.)             * pv45;
-    
+    /*(5,2)*/
     hlmNewt[10].dat[1] = pi - M[10];
     hlmNewt[10].dat[0] = 16./135.*sqrt(pi/11.)           * pv56;
-    
+    /*(5,3)*/
     hlmNewt[11].dat[1] = 3.*pi/2. - M[11];
     hlmNewt[11].dat[0] = 9./20.*sqrt(3*pi/22.)           * pv45;
-    
+    /*(5,4)*/
     hlmNewt[12].dat[1] = - M[12];
     hlmNewt[12].dat[0] = 256./45.*sqrt(pi/33.)           * pv56;
-    
+    /*(5,5)*/
     hlmNewt[13].dat[1] = pi/2. - M[13];
     hlmNewt[13].dat[0] = 125./12.*sqrt(5.*pi/66.)        * pv45;
     if (spin_flag==true)
@@ -181,77 +181,78 @@ vector<gsl_complex> hlmNewt(const double r,
          because p4 is defined without the factor sqrt(1-4*nu) that 
 	 is reintroduced in the calculation of the flm Fixed, 17-04-2018 */
       {
-	hlmNewt[9].dat[0] = 1./180.*sqrt(pi/77.)         * sqrt(1.-4.*nu)  * pv45;
-	hlmNewt[11].dat[0] = 9./20.*sqrt(3*pi/22.)       * sqrt(1.-4.*nu)  * pv45;
-	hlmNewt[13].dat[0] = 125./12.*sqrt(5.*pi/66.)    * sqrt(1.-4.*nu)  * pv45;
+	hlmNewt[9].dat[0] = 1./180.*sqrt(pi/77.)         * X12  * pv45;
+	hlmNewt[11].dat[0] = 9./20.*sqrt(3*pi/22.)       * X12  * pv45;
+	hlmNewt[13].dat[0] = 125./12.*sqrt(5.*pi/66.)    * X12  * pv45;
       }
 
     
     /** l=6 ------------------------------------------------------------------ */
-    
+    /*(6,1)*/
     hlmNewt[14].dat[1] = 3.*pi/2. - M[14];
     hlmNewt[14].dat[0] = 1./2079.*sqrt(2.*pi/65.)        * pv67;
-    
+    /*(6,2)*/    
     hlmNewt[15].dat[1] = pi - M[15];
     hlmNewt[15].dat[0] = 16./1485.*sqrt(pi/13.)          * pv56;
-    
+    /*(6,3)*/
     hlmNewt[16].dat[1] = pi/2. - M[16];
     hlmNewt[16].dat[0] = 81./385.*sqrt(pi/13.)           * pv67;
-    
+    /*(6,4)*/
     hlmNewt[17].dat[1] = - M[17];
     hlmNewt[17].dat[0] = 1024./495.*sqrt(2.*pi/195.)     * pv56;
-    
+    /*(6,5)*/
     hlmNewt[18].dat[1] = 3.*pi/2. - M[18];
     hlmNewt[18].dat[0] = 625./63*sqrt(5.*pi/429.)        * pv67;
-    
+    /*(6,6)*/
     hlmNewt[19].dat[1] = pi - M[19];
     hlmNewt[19].dat[0] = 432./5*sqrt(pi/715.)            * pv56;
     
     /** l=7 ------------------------------------------------------------------ */
-    
+    /*(7,1)*/
     hlmNewt[20].dat[1] = 3.*pi/2. - M[20];
     hlmNewt[20].dat[0] = 1./108108.*sqrt(pi/10.)         * pv67;
-    
+    /*(7,2)*/
     hlmNewt[21].dat[1] = - M[21];
     hlmNewt[21].dat[0] = 8./3003.*sqrt(pi/15.)           * pv78;
-    
+    /*(7,3)*/
     hlmNewt[22].dat[1] = pi/2. - M[22];
     hlmNewt[22].dat[0] = 243./20020.*sqrt(3.*pi/10.)     * pv67;
-    
+    /*(7,4)*/    
     hlmNewt[23].dat[1] = pi - M[23];
     hlmNewt[23].dat[0] = 1024./1365.*sqrt(2.*pi/165.)    * pv78;
-    
+    /*(7,5)*/    
     hlmNewt[24].dat[1] = 3.*pi/2. - M[24];
     hlmNewt[24].dat[0] = 3125./3276.*sqrt(5.*pi/66.)     * pv67;
-    
+    /*(7,6)*/    
     hlmNewt[25].dat[1] = - M[25];
     hlmNewt[25].dat[0] = 648./35.*sqrt(3.*pi/715.)       * pv78;
-    
+    /*(7,7)*/    
     hlmNewt[26].dat[1] = pi/2. - M[26];
     hlmNewt[26].dat[0] = 16807./180.*sqrt(7.*pi/4290.)   * pv67;
     
     /** l=8 ------------------------------------------------------------------ */
+    /*(8,1)*/
     hlmNewt[27].dat[1] = 3.*pi/2. - M[27];
     hlmNewt[27].dat[0] = ( 5.54485779151375621e-7 ) 	* pv89;
-    
+    /*(8,2)*/    
     hlmNewt[28].dat[1] = 0.0 - M[28];
     hlmNewt[28].dat[0] = ( 0.0000763473331250837455 ) 	* pv78;
-    
+    /*(8,3)*/    
     hlmNewt[29].dat[1] = pi/2. - M[29];
     hlmNewt[29].dat[0] = ( 0.00353250998285463003 )  	* pv89;
-    
+    /*(8,4)*/    
     hlmNewt[30].dat[1] = pi - M[30];
     hlmNewt[30].dat[0] = ( 0.0204988821800401766 )	* pv78;
-    
+    /*(8,5)*/    
     hlmNewt[31].dat[1] = 3.*pi/2. - M[31];
     hlmNewt[31].dat[0] = ( 0.19579402814926015 ) 	* pv89;
-    
+    /*(8,6)*/    
     hlmNewt[32].dat[1] = 0.0 - M[32];
     hlmNewt[32].dat[0] = ( 0.584571015778149663 ) 	* pv78;
-    
+    /*(8,7)*/    
     hlmNewt[33].dat[1] = pi/2. - M[33];
     hlmNewt[33].dat[0] = ( 2.44207899966355693 ) * pv89;
-
+    /*(8,8)*/
     hlmNewt[34].dat[1] = pi - M[34];
     hlmNewt[34].dat[0] = 131072./315.*sqrt(2.*pi/17017.) * pv78;
     
