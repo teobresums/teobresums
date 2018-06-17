@@ -42,7 +42,7 @@ For example parfiles see `par/`
 
 Main reference
 
- * Nagar et al [Time-domain effective-one-body gravitational waveforms for coalescing compact binaries with nonprecessing spins, tides and self-spin effects](https://inspirehep.net/record/1676430)
+ * Nagar et al (2018) [Time-domain effective-one-body gravitational waveforms for coalescing compact binaries with nonprecessing spins, tides and self-spin effects](https://inspirehep.net/record/1676430)
 
 **please cite the above reference** when using the code.
 
@@ -72,9 +72,10 @@ A short description of the code can be found in `C/src/README.md`. Please, take 
 Since June 2018 the repository is managed (roughly) following the description [here](https://gist.github.com/digitaljhelms/4287848). 
 
 If you want to start a new branch or a new development make sure to
-* Talk to us 
-* Run the benchmark *before* applying any change 
-* Run the benchmark *after* you applied your changes and before pushing them; compare and make sure you did not break anything.
+
+ * Talk to us 
+ * Run the benchmark *before* applying any change 
+ * Run the benchmark *after* you applied your changes and before pushing them; compare and make sure you did not break anything.
 
 
 
