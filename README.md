@@ -18,8 +18,8 @@ GNU General Public License for more details.
 
 ## Pre-requisites
 
- * Standard C libs, including lbconfig
- * GSL
+ * Standard C libs, including libconfig
+ * GSL lib
 
 ## Compilation
 
@@ -42,11 +42,12 @@ For example parfiles see `par/`
 
 Main reference
 
- * Nagar et al [to appear]()
+ * Nagar et al [Time-domain effective-one-body gravitational waveforms for coalescing compact binaries with nonprecessing spins, tides and self-spin effects](https://inspirehep.net/record/1676430)
+
+**please cite the above reference** when using the code.
 
 Other key references
 
- * ...
  * Nagar, Riemenschneider, Pratten (2017) [Impact of Numerical Relativity information on effective-one-body waveform models](http://inspirehep.net/record/1518392)
  * Del Pozzo, Nagar (2016) [Analytic family of post-merger template waveforms](http://inspirehep.net/record/1469053)
  * Nagar, Damour, Reisswig, Pollney (2015) [Energetics and phasing of nonprecessing spinning coalescing black hole binaries](http://inspirehep.net/record/1380155) NRAR comparison, BBH spin
@@ -61,3 +62,23 @@ Other key references
  * Damour, Nagar (2009) [Relativistic tidal properties of neutron stars](http://inspirehep.net/record/821786) Formalism relativistic Love numbers
  * Damour, Nagar (2009) [An Improved analytical description of inspiralling and coalescing black-hole binaries](http://inspirehep.net/record/812296)
  * Damour, Iyer, Nagar (2008) [Improved resummation of post-Newtonian multipolar waveforms from circularized compact binaries](http://inspirehep.net/record/802497) Resummed EOB waveform
+
+## Developers
+
+Please contact us if you wish to be included in the list of developers.
+
+A short description of the code can be found in `C/src/README.md`. Please, take a moment to understand the data structures and how the parameters are managed.
+
+Since June 2018 the repository is managed (roughly) following the description [here](https://gist.github.com/digitaljhelms/4287848). 
+
+If you want to start a new branch or a new development make sure to
+* Talk to us 
+* Run the benchmark *before* applying any change 
+* Run the benchmark *after* you applied your changes and before pushing them; compare and make sure you did not break anything.
+
+
+
+
+
+
+
