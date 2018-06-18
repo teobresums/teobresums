@@ -23,7 +23,7 @@ This is `v0.x` of TEOBResumS. This C++ implementation was abandoned in June 2018
 
 The C++ code was reviewed by LVC. Review was concluded on
 11.04.2018. The review's final statement can be found
-(here)[https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/TEOBResumS/FinalReviewStatement] 
+[here](https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/TEOBResumS/FinalReviewStatement)
 The reviewed version is tagged as `LVC-review-end `. 
 
 ## Usage
