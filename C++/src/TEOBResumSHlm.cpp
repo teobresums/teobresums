@@ -326,6 +326,7 @@ vector<double> hlm_Tidal(double x,
     double lambdaB2 = (*(TEOBResumParams *)params).LambdaBl2;
     double XA       = (*(TEOBResumParams *)params).X1;
     double XB       = (*(TEOBResumParams *)params).X2;
+    double nu       = (*(TEOBResumParams *)params).nu;
     double khatA_2  = 3./2. * lambdaA2 * XB/XA * gsl_pow_int(XA,5);
     double khatB_2  = 3./2. * lambdaB2 * XA/XB * gsl_pow_int(XB,5);
     
@@ -351,16 +352,22 @@ vector<double> hlm_Tidal(double x,
     betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
 
     /*(2,1) mode */
-    hA[0]     = 3. * khatA_2 * XB * (3.-4.*XA)/XA;
-    hB[0]     = 3. * khatB_2 * XA * (3.-4.*XB)/XB;
+    hA[0]     = 3 * khatA_2 * (3-4*XA);
+    hB[0]     = 3 * khatB_2 * (3-4*XB);
     
     /* (3,1) mode */
-    hA[2] = 12. * khatA_2 * XB*XB/XA;
-    hB[2] = 12. * khatB_2 * XA*XA/XB;
+    hA[2] = 12 * khatA_2 * XB;
+    hB[2] = 12 * khatB_2 * XA;
+
+    betaA1[2] = (-6. -5.*XA +131.*XA*XA -130.*XA*XA*XA)/(36.*(1.-XA));
+    betaB1[2] = (-6. -5.*XB +131.*XB*XB -130.*XB*XB*XB)/(36.*(1.-XB));
 
     /* (3,3) mode */
     hA[4] = hA[2];
     hB[4] = hB[2];
+
+    betaA1[4] = ( (XA-3.)*(10.*XA*XA - 25.*XA+ 14.) )/(12.*(1.-XA));
+    betaB1[4] = ( (XB-3.)*(10.*XB*XB - 25.*XB+ 14.) )/(12.*(1.-XB));
     
     /**********************************************************************
      Combining the pieces together to construct the tidal waveform. Note 
@@ -369,17 +376,19 @@ vector<double> hlm_Tidal(double x,
      subdominant multipoles matches Eqs.(A16)-(A17) of DNV.
     **********************************************************************/
     
-    /* (2,2) */
-    hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
-    
+    /** l=2 */
     /* (2,1) */
     hTidallm[0] = ( -hA[0] + hB[0] )*x5;
-        
-    /* (3,3) */
-    hTidallm[4] = ( -hA[4] + hB[4] )*x5;
-
+    /* (2,2) */
+    hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
+  
+    /** l=3 */
     /* (3,1) */
-    hTidallm[2] = ( -hA[2] + hB[2] )*x5;
+    hTidallm[2] = ( -hA[2]*(1. + betaA1[2]*x) + hB[2]*(1. + betaB1[2]*x) )*x5;
+    /* (3,2) */
+    hTidallm[3] = 8.*( khatA_2*(1. -2.*XB + 3.*XB*XB) +khatB_2*(1. -2.*XA + 3.*XA*XA) )*x5/(1.-3.*nu);
+    /* (3,3) */
+    hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
     
         
     return hTidallm;
