@@ -65,11 +65,11 @@ Other key references
 
 ## Developers
 
-Please contact us if you wish to be included in the list of developers.
+Please contact Sebastiano Bernuzzi and Alessandro Nagar if you wish to be included in the list of developers.
 
-A short description of the code can be found in `C/src/README.md`. Please, take a moment to understand the data structures and how the parameters are managed.
+A short description of the code can be found in [here](C/src/README.md). Please, take a moment to understand the data structures and how the parameters are managed.
 
-Since June 2018 the repository is managed (roughly) following the description [here](https://gist.github.com/digitaljhelms/4287848). 
+Since June 2018 the repository is managed (roughly) following a master/stable wotrkflow, see e.g. the description [here](https://gist.github.com/digitaljhelms/4287848) and [here](https://fle.github.io/an-efficient-git-workflow-for-midlong-term-projects.html). 
 
 If you want to start a new branch or a new development make sure to
 
