@@ -69,9 +69,9 @@ Please contact Sebastiano Bernuzzi and Alessandro Nagar if you wish to be includ
 
 A short description of the code can be found in [here](C/src/README.md). Please, take a moment to understand the data structures and how the parameters are managed.
 
-Since June 2018 the repository is managed (roughly) following a `master`/`stable` wotrkflow, see e.g. the description [here](https://gist.github.com/digitaljhelms/4287848) and [here](https://fle.github.io/an-efficient-git-workflow-for-midlong-term-projects.html). 
+Since June 2018 the repository is managed (roughly) following a `master`/`development` workflow, see e.g. the description [here](https://nvie.com/posts/a-successful-git-branching-model/).
 
-If you want to start a new branch or a new development make sure to
+If you want to start a new branch or development make sure to
 
  * Talk to us 
  * Run the benchmark *before* applying any change 
