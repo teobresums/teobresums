@@ -18,7 +18,7 @@ GNU General Public License for more details.
 
 ## Code version
 
-This is `v0.0` of TEOBResumS. This C++ implementation was abandoned in June 2018 and the code development is frozen. 
+This is `v0.x` of TEOBResumS. This C++ implementation was abandoned in June 2018 and the code development is frozen. 
 
 
 The C++ code was reviewed by LVC. Review was concluded on
