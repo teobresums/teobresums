@@ -28,7 +28,7 @@ The reviewed version is tagged as `LVC-review-end `.
 
 ## Usage
 
-See the (quick start guide)[C++/README.md].
+See the [quick start guide](C++/README.md).
 
 ## References
 
