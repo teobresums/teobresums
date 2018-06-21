@@ -1551,8 +1551,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
     Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
     /* Compute and attach ringdown */
-    for (int j = idx[k]; j < size-2 ; j++ ) // size-2 to be consistent with C++, but size is fine as well, it just means C uses ringdown routine for 2 more time steps than C++
-    {   
+    for (int j = idx[k]; j < size ; j++ ) {   
       tm = t_lm[k][j] - tmrg[k];
       eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       hlm->phase[k][j] = psi[1] - Deltaphi[k];
