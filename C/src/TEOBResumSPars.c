@@ -122,7 +122,7 @@ void par_db_default ()
   eobcodepath = getenv (eobcodeenvv);
   if (!eobcodepath) {
     printf ("Enviroment variable '%s' is not set\n", eobcodeenvv);
-    errorexit("Default values for parameters cennot be set.\n");
+    errorexit("Default values for parameters cannot be set.\n");
   }
   else {
     par_file_parse (strcat(eobcodepath,"/par/default.par"));
