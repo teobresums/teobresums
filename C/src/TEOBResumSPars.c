@@ -120,10 +120,9 @@ void par_db_default ()
   static const char *eobcodeenvv = "TEOBRESUMS";
   char *eobcodepath = NULL;
   eobcodepath = getenv (eobcodeenvv);
-  if (! eobcodepath) {
+  if (!eobcodepath) {
     printf ("Enviroment variable '%s' is not set\n", eobcodeenvv);
-    printf ("Default values for parameters are not set.\n");
-    return;
+    errorexit("Default values for parameters cennot be set.\n");
   }
   else {
     par_file_parse (strcat(eobcodepath,"/par/default.par"));
