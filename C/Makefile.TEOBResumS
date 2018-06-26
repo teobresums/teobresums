@@ -28,6 +28,7 @@ CFLAGS=-O3 -std=c99 `gsl-config --cflags`
 CFLAGS += -DDEBUG=1 # turn on debug mode
 CFLAGS += -DVERBOSE=1 # turn on verbose mode
 CFLAGS += -DUSEGRAVITOMAGNETICTERMS=0 # do not use gravitomagnetic
+#CFLAGS += -DUSERK45=0 # use rk8pd default
 #CFLAGS += -DPOSTPOSTCIRCULAR=0 # use post-circular initial conditions
 #CFLAGS += -DEXCLUDESPINSPINTIDES=1 # exclude spin^2-tidal couplings
 LFLAGS=`gsl-config --libs`

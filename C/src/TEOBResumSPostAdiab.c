@@ -138,7 +138,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     
     /** Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper 
 	(which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). 
-	The procedure to choose the physical solution of the quadratic equation is effective but not fully understood.
+	The procedure to choose the physical solution of the quadratic equation is effective 
+	but not fully understood.
     */
                                                                                    
     if (usespins) {
@@ -146,11 +147,14 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       a_coeff = SQ(dAuc2_dr_vec[i]) - 4*A_vec[i]*uc2_vec[i]*SQ(dG_dr_vec[i]);  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
       b_coeff = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*SQ(dG_dr_vec[i]);     /* Second coefficient of the quadratic equation */
       c_coeff = SQ(dA_vec[i]);                                                 /* Third coefficient of the quadratic equation */
-      
-      if (S==0 && Sstar==0)  /* Tilde G =0, so Delta=0 in this case. Numerical fluctuations makes it negative sometimes (e.g. -1e-30). Setting it to 0 by hand */
-          Delta=0;                                                             /* Delta of the quadratic equation */                                   
-      else
-          Delta   = SQ(b_coeff) - 4*a_coeff*c_coeff ;                          /* Delta of the quadratic equation */
+
+      /* Delta of the quadratic equation */
+      Delta = SQ(b_coeff) - 4*a_coeff*c_coeff; 
+      if (S==0 && Sstar==0)  
+	/* Tilde G =0, so Delta=0 in this case. 
+	   Numerical fluctuations makes it negative sometimes (e.g. -1e-30). 
+	   Setting it to 0 by hand */
+          Delta=0;                                              
       
       sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); /* Plus  solution of the quadratic equation */
       sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff); /* Minus solution of the quadratic equation */
@@ -251,6 +255,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	/** Calculating the flux Fphi */
 	//FIXME USE C-routines, jhat etc. are already present inside dynamics
 	//FIXME Non-spinning routine gives 1e-2 difference between PA and full EOB waveform
+	//      SB: BNS or BBH? What cases?
 	if (usespins) {
 	  
 	  /* Variables for which Kepler's law is still valid */

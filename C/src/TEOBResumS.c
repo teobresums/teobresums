@@ -294,6 +294,7 @@ int main (int argc, char* argv[])
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
   const double rstop = par_get_d("ode_stop_at_radius");
+  const int nstep_stop = par_get_i("ode_stop_afterNdt");
   if (rstop>0.) {
     dyn->ode_stop_radius   = true;
   }
@@ -320,8 +321,15 @@ int main (int argc, char* argv[])
   const double ode_reltol = par_get_d("ode_reltol");
 
   gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
+
+#if (USERK45)
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
   gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
+#else
+  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
+ gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
+#endif
+
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
@@ -380,8 +388,7 @@ int main (int argc, char* argv[])
     /** Checking whether the dynamics produces NaN values
 	this can happen if radius r becomes too small */
     if (!(isfinite(dyn->r))) {
-	printf ("ODE solver returned NaN radius.\n");
-	return ERROR;      
+      errorexit("ODE solver returned NaN radius.\n");
     }
 
     /** Waveform computation 
@@ -390,7 +397,7 @@ int main (int argc, char* argv[])
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
     eob_wav_hlm(dyn, hlm_t); 
-   
+    
     /** Update size and push arrays (if needed) */
     if (iter>size) {
       if ( (DEBUG) && (!SARP) )  printf("Push memory\n");
@@ -431,7 +438,7 @@ int main (int argc, char* argv[])
     }
 
     /** Check when to break the computation
-	find peak of omega curve and continue for 10 * dt afterwards if the time step is adaptive, for 4 * dt for the other cases */
+	find peak of omega curve and continue for nstep_stop iters */
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
@@ -440,13 +447,7 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-    
-    if(ode_tstep == ODE_TSTEP_ADAPTIVE) 
-        dyn->t_stop            = dyn->t + 10.*dyn->dt; // Adaptive time step requires 10 * dt to have enough points to interpolate
-    
-    else 
-        dyn->t_stop            = dyn->t + 4.*dyn->dt; // 10 * dt with uniform step make it crash
-    
+        dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; 
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }

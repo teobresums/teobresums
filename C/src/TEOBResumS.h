@@ -64,6 +64,10 @@
 #define USEGRAVITOMAGNETICTERMS 0 /* use gravitomagnetic terms in tidal potential and waveform */
 #endif
 
+#ifndef USERK45
+#define USERK45 0 /* use GSL rkf45 instead of rk8pd */
+#endif
+
 #ifndef SARP
 #define SARP 0 /* use Sarp's printing routines for code comparisons, set to 0 to TURN it OFF */
 #endif
