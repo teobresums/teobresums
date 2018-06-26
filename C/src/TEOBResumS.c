@@ -212,9 +212,8 @@ int main (int argc, char* argv[])
     }
     
     /** Prepare for evolution */
-
     /* start counting from here */
-    iter = size-1;
+    iter = size-1; 
     
     /* Set arrays with initial conditions 
        Note current time is already set in dyn->t */
@@ -247,7 +246,7 @@ int main (int argc, char* argv[])
     dyn->Omg     = dyn->y0[EOB_ID_OMGJ];//CHECKME
     dyn->ddotr   = 0.; 
     dyn->prstar  = dyn->y0[EOB_ID_PRSTAR];
-    dyn->Omg_orb = 0.;//FIXME
+    dyn->Omg_orb = 0.;//FIXME 
     dyn->y[EOB_EVOLVE_RAD]    = dyn->r;
     dyn->y[EOB_EVOLVE_PHI]    = dyn->phi;
     dyn->y[EOB_EVOLVE_PRSTAR] = dyn->prstar; 
@@ -321,8 +320,8 @@ int main (int argc, char* argv[])
   const double ode_reltol = par_get_d("ode_reltol");
 
   gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
-  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
-  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
+  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
@@ -432,7 +431,7 @@ int main (int argc, char* argv[])
     }
 
     /** Check when to break the computation
-	find peak of omega curve and continue for 4 * dt afterwards */
+	find peak of omega curve and continue for 10 * dt afterwards if the time step is adaptive, for 4 * dt for the other cases */
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
@@ -441,7 +440,13 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-	dyn->t_stop            = dyn->t + 4.*dyn->dt;
+    
+    if(ode_tstep == ODE_TSTEP_ADAPTIVE) 
+        dyn->t_stop            = dyn->t + 10.*dyn->dt; // Adaptive time step requires 10 * dt to have enough points to interpolate
+    
+    else 
+        dyn->t_stop            = dyn->t + 4.*dyn->dt; // 10 * dt with uniform step make it crash
+    
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }

@@ -45,7 +45,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 
   /* Parameters for post adiabatic dynamics */
   const int Npa = par_get_i("postadiabatic_dynamics_N");    
-  const int size = par_get_i("postadiabatic_dynamics_size");
+  const int size = par_get_i("postadiabatic_dynamics_size"); /* FIXME PostAdiab crashes if size is changed */
   if (size != dyn->size) errorexit("problem allocating memory for post adiabatic dynamics.");
   const double rmin = par_get_d("postadiabatic_dynamics_rmin");    
   const double dr = (r0 - rmin)/(size-1); /* Uniform grid spacing */
@@ -101,7 +101,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     if(usespins){ 
       
       eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
-
       eob_dyn_s_get_rc(dyn->r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
       eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
       
@@ -141,13 +140,17 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	(which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). 
 	The procedure to choose the physical solution of the quadratic equation is effective but not fully understood.
     */
-    
+                                                                                   
     if (usespins) {
       
       a_coeff = SQ(dAuc2_dr_vec[i]) - 4*A_vec[i]*uc2_vec[i]*SQ(dG_dr_vec[i]);  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
       b_coeff = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*SQ(dG_dr_vec[i]);     /* Second coefficient of the quadratic equation */
       c_coeff = SQ(dA_vec[i]);                                                 /* Third coefficient of the quadratic equation */
-      Delta   = SQ(b_coeff) - 4*a_coeff*c_coeff ;                              /* Delta of the quadratic equation */
+      
+      if (S==0 && Sstar==0)  /* Tilde G =0, so Delta=0 in this case. Numerical fluctuations makes it negative sometimes (e.g. -1e-30). Setting it to 0 by hand */
+          Delta=0;                                                             /* Delta of the quadratic equation */                                   
+      else
+          Delta   = SQ(b_coeff) - 4*a_coeff*c_coeff ;                          /* Delta of the quadratic equation */
       
       sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); /* Plus  solution of the quadratic equation */
       sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff); /* Minus solution of the quadratic equation */
@@ -162,9 +165,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       b_coeff = dA_vec[i];
       
       j02 = -b_coeff/a_coeff;
-    
     }
-    
+  
     /** Define momenta in the circular orbit approximation */
     dyn->pphi                = sqrt(j02);
     dyn->prstar              = 0.0;
@@ -201,10 +203,14 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     /* Circular orbital frequency */
     dyn->Omg     = dHeff_dpphi/E_vec[i];
     
+    /* Circular real orbital frequency */
+    dyn->Omg_orb     = (dyn->pphi*A_vec[i]*uc2_vec[i])/(E_vec[i]*Heff_orb_vec[i]);
+    
     dyn->data[EOB_RAD][i]    = dyn->r;
     dyn->data[EOB_PPHI][i]   = dyn->pphi;
     dyn->data[EOB_PRSTAR][i] = dyn->prstar;
     dyn->data[EOB_MOMG][i]   = dyn->Omg;
+    dyn->data[EOB_OMGORB][i] = dyn->Omg_orb;
   
   } // END r-GRID FOR
 
@@ -235,7 +241,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       dyn->ddotr   = dyn->data[EOB_DDOTR][i]; // Not used for the moment
       dyn->prstar  = dyn->data[EOB_PRSTAR][i];
       dyn->Omg_orb = dyn->data[EOB_OMGORB][i];
-      
+    
       if (parity)  {
 	
 	/* ***********************************
@@ -244,7 +250,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	
 	/** Calculating the flux Fphi */
 	//FIXME USE C-routines, jhat etc. are already present inside dynamics
-	
+	//FIXME Non-spinning routine gives 1e-2 difference between PA and full EOB waveform
 	if (usespins) {
 	  
 	  /* Variables for which Kepler's law is still valid */
@@ -265,7 +271,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	} else {
 	  
 	  Heff_orb_f = sqrt(A_vec[i]*(1.0 + SQ(dyn->pphi)*uc2_vec[i]));
-	  Heff_f     = G0_vec[i]*dyn->pphi + Heff_orb_f;
+	  Heff_f     = Heff_orb_f;
+      E_f        = sqrt(1 + 2*nu*(Heff_f - 1));
+	 
 	  psi        = 2.*(1.0 + 2.0*nu*(Heff_orb_f - 1.0))/(SQ(dyn->r)*dA_vec[i]);
 	  r_omg      = dyn->r*cbrt(psi);
 	  v_phi      = r_omg*dyn->Omg;
@@ -283,6 +291,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	dHeff_dprstarbyprstar = dyn->pphi*dG_dprstarbyprstar_vec[i] + (1+2*z3*A_vec[i]*uc2_vec[i]*SQ(dyn->prstar))/Heff_orb_vec[i];	
 	dr_dtbyprstar         = sqrtAbyB_vec[i]/(E_vec[i])*dHeff_dprstarbyprstar;
 	dyn->prstar           = Fphi/dpphi_dr_vec[i]/dr_dtbyprstar; 
+    
 
 	/** Note: p_phi does not change at odd orders 
 	    Computing first PA using the approximation detailed above A19 of TEOBResumS paper and Hamilton's equations.   
@@ -294,7 +303,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	dG_dr_vec[i]              = ggm[6] *S+ggm[7] *Sstar;
 	dG_dprstar_vec[i]         = ggm[4] *S+ggm[5] *Sstar;
 	dG_dprstarbyprstar_vec[i] = ggm[10]*S+ggm[11]*Sstar;
-      
+   
       } else {
 	
 	/* ***********************************
@@ -314,8 +323,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	/** Note: prstar and G functions do not change at even orders 
 	   G does not change because of the chosen gauge,     
 	   which eliminates the dependence of G from pphi).
-	*/                
-      
+	*/
+                     
       } //END IF-ELSE parity
       
       /** New Hamiltonians */
@@ -331,7 +340,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 		  NULL);
 	
 	E_vec[i] = nu*H;
-      
+  
       } else {
 	
 	eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
@@ -348,6 +357,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       
       /** Orbital Frequency */
       dyn->Omg = dHeff_dpphi/E_vec[i];
+      
+      /** Real Orbital Frequency */
+      dyn->Omg_orb = (dyn->pphi*A_vec[i]*uc2_vec[i])/(E_vec[i]*Heff_orb_vec[i]);
 
       /** dr_dt */
       dt_dr_vec[i]   = E_vec[i]/(sqrtAbyB_vec[i]*dHeff_dprstar); /* dt_dr = 1/dr_dt */
@@ -366,7 +378,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     /* Computing derivatives of the momenta */
     if (parity) D0(dyn->data[EOB_PRSTAR],-dr, size, dprstar_dr_vec);
     else        D0(dyn->data[EOB_PPHI],-dr, size, dpphi_dr_vec);
-    
+
   } // END PA-CORRECTIONS FOR
 
   /*
@@ -381,110 +393,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   
   /** Compute orbital phase */
   cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
-  
-
-#if (0)  // *************************************** CODE FOR DEBUG TO BE REMOVED
-  
-  double *dt_dr_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
-  double *dr_dt_mat_vec          = (double*)malloc(size * sizeof (double)); // matlab data
-  double *r_mat_vec              = (double*)malloc(size * sizeof (double)); // matlab data
-  double *prstar_mat_vec         = (double*)malloc(size * sizeof (double)); // matlab data
-  double *pphi_mat_vec           = (double*)malloc(size * sizeof (double)); // matlab data
-  double *omg_mat_vec            = (double*)malloc(size * sizeof (double)); // matlab data
-  double *t_mat_vec              = (double*)malloc(size * sizeof (double)); // matlab data
-  double *phi_mat_vec            = (double*)malloc(size * sizeof (double)); // matlab data
-  double *dphi_dr_mat_vec        = (double*)malloc(size * sizeof (double)); // matlab data
-  double *time_integral_m        = (double*)malloc(size * sizeof (double)); // time integrated with matlab data 
-  double *phi_integral_m         = (double*)malloc(size * sizeof (double)); // phi integrated with matlab data
-  
-    printf("\n\n\nI am debugging Post-adiab!!!!!!!!!!!\n\n\n");
-  char ro_string[256]; //size of the number
-
-  sprintf(ro_string, "r0_%f", r0);
-  printf("I am computing the dynamics with r0: %f\n", r0);
-  char outputadiab[256]     = "Post_adiab_";
-  strcat(outputadiab, ro_string);
-  strcat(outputadiab, ".dat"); 
  
-  FILE* Post_adiab_debug = fopen(outputadiab, "w");
-  for (int kt = 0; kt < size; kt++)
-    {
-      fprintf(Post_adiab_debug, "%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\n", dyn->data[EOB_RAD][kt], dyn->data[EOB_PPHI][kt], dyn->data[EOB_PRSTAR][kt], dt_dr_vec[kt], dphi_dr_vec[kt]);
-    }
-  fclose(Post_adiab_debug);
-  
- 
-  /** Print Post-adiab dynamics on file for comparison with Matlab code */ 
-  
-  char q_string[256]; //size of the number
-  sprintf(q_string, "_q_%1.0f", dyn->q);
-  char chi1_string[256]; 
-  sprintf(chi1_string, "_chi1_%3.2f", dyn->chi1);
-  char chi2_string[256];
-  sprintf(chi2_string, "_chi2_%3.2f", dyn->chi2);
-  char lAL2_string[256];
-  char post_adiab_dyn[256] = "Post_adiab_dynamics";
-  if (!usetidal){
-    strcat(post_adiab_dyn, "_bbh");}
-  strcat(post_adiab_dyn, q_string);
-  strcat(post_adiab_dyn, chi1_string);
-  strcat(post_adiab_dyn, chi2_string);
-  strcat(post_adiab_dyn, ".dat");
-  printf("I'm running with chi1 = %f and chi2=%f\n", dyn->chi1, dyn->chi2);
-  
-  FILE* Post_adiab_dynamics = fopen(post_adiab_dyn, "w");
-  fprintf(Post_adiab_dynamics, "#8PA\tr\tp_r*\tp_phi\tMOmg\tt\tphi\n");
-  for (int kt = 0; kt < size; kt++)
-    {
-      fprintf(Post_adiab_dynamics, "\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\t%20.14f\n", dyn->data[EOB_RAD][kt], dyn->data[EOB_PRSTAR][kt], dyn->data[EOB_PPHI][kt],
-      dyn->data[EOB_MOMG][kt], dyn->time[kt], dyn->data[EOB_PHI][kt]);
-    }
-  fclose(Post_adiab_dynamics);
-  
-  
-  /** Try to integrate from from Matlab data, to see if cumint behaves properly */
-  /* char file_name_mat[256] =  "/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics/Matlab_bbh";
-  strcat(file_name_mat, q_string);
-  strcat(file_name_mat, chi1_string);
-  strcat(file_name_mat, chi2_string);
-  strcat(file_name_mat, ".txt"); */
-  char file_name_mat[256] =  "/mnt/c/Users/giuli/Repositories/teobresums/Matlab_Dynamics/Matlab_bbh_q_1_chi1_0_chi2_0.txt";
-  FILE *matlab;
-  matlab = fopen(file_name_mat, "r");
-  fscanf(matlab, "%*[^\n]\n");
-  for (int v=0; v<size; v++){
-      fscanf(matlab, "\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", &r_mat_vec[v], &prstar_mat_vec[v], &pphi_mat_vec[v],
-      &dr_dt_mat_vec[v], &omg_mat_vec[v], &t_mat_vec[v], &phi_mat_vec[v], &dphi_dr_mat_vec[v]);
-      dt_dr_mat_vec[v]=1./dr_dt_mat_vec[v];
-  }
-  fclose(matlab);
-  
-  /** Compute time from Matlab data */
-  cumint3(dt_dr_mat_vec, dyn->data[EOB_RAD], size, time_integral_m);
-  
-   /** Compute orbital phase with Matlab data */
-  cumint3(dphi_dr_mat_vec, dyn->data[EOB_RAD], size, phi_integral_m);
-  /** end of matlab integration */
-    
-  /** Save matlab integrals on file */
-  char matlab_string[256]     = "matlab_integral_with_cumint";
-  strcat(matlab_string, q_string);
-  strcat(matlab_string, chi1_string);
-  strcat(matlab_string, chi2_string);
-  strcat(matlab_string, ".dat");
-  
-  FILE* matlab_int = fopen(matlab_string, "w");
-  fprintf(matlab_int, "#8PA\tt\tphi\n");
-  for (int kt = 0; kt < size; kt++)
-    {
-      fprintf(matlab_int, "\t%20.14f\t%20.14f\n", time_integral_m[kt], phi_integral_m[kt]);
-    }
-  fclose(matlab_int);
 
-
-
-    
-#endif // *************************************** CODE FOR DEBUG TO BE REMOVED - end
 
   /* Free memory */
   for (int v=0; v < nv; v++)
