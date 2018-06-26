@@ -272,8 +272,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	  
 	  Heff_orb_f = sqrt(A_vec[i]*(1.0 + SQ(dyn->pphi)*uc2_vec[i]));
 	  Heff_f     = Heff_orb_f;
-      E_f        = sqrt(1 + 2*nu*(Heff_f - 1));
-	 
 	  psi        = 2.*(1.0 + 2.0*nu*(Heff_orb_f - 1.0))/(SQ(dyn->r)*dA_vec[i]);
 	  r_omg      = dyn->r*cbrt(psi);
 	  v_phi      = r_omg*dyn->Omg;
