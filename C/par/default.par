@@ -76,6 +76,7 @@ ode_abstol = 1e-13 # ODE solver absolute accuracy
 ode_reltol = 1e-11 # ODE solver relative accuracy
 ode_tmax = 1e8 # max integration time
 ode_stop_at_radius = 2. # stop ODE integration at this radius (if > 0)
+ode_stop_afterNdt = 4 # stop ODE N iters after the Omega peak
 
 # ----------------------
 # following pars are set by the code
