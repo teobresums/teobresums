@@ -138,8 +138,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     
     /** Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper 
 	(which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). 
-	The procedure to choose the physical solution of the quadratic equation is effective 
-	but not fully understood.
     */
                                                                                    
     if (usespins) {
@@ -254,8 +252,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	
 	/** Calculating the flux Fphi */
 	//FIXME USE C-routines, jhat etc. are already present inside dynamics
-	//FIXME Non-spinning routine gives 1e-2 difference between PA and full EOB waveform
-	//      SB: BNS or BBH? What cases?
+	//FIXME Non-spinning routine gives 1e-2 difference between PA and full EOB waveform. Tested cases: bbh q 1 f 0.001 and q 5 f 0.006.
+    
 	if (usespins) {
 	  
 	  /* Variables for which Kepler's law is still valid */
