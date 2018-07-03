@@ -258,15 +258,17 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 #if(USEGRAVITOMAGNETICTERMS)
     /** Gravito-magnetic tides for el = 2 */
-    const double a1j =  12.2686645586131480;	// Nagar gravitomagnetic fit param
-    const double a2j =  3.44936982829705884;	// Nagar gravitomagnetic fit param
+    const double a1j =  0.728591192;
+    const double a2j =  3.100367557;	
+    const double n1j = -15.04421708
+    const double d2j =  12.55229698;
+
 
     /* 1SF -- el = 2 gravitomagnetic terms */
-    double Ahat1GSFfitj = elsix*u*(1. - a1j*u)*(1. - a2j*u)*pow(oom3u, 3.5);
-    double dAhat1GSFfitj = 0.5*elsix * ( 2. + 5.*rLR*u - 1.*a2j*u*(4. + 3.*rLR*u) + 
-					 a1j*u*(-4. - 3.*rLR*u + a2j*u*(6. + rLR*u) ) )  * pow(oom3u, 4.5);
-    double d2Ahat1GSFfitj = 0.25*elsix * ( 7.*rLR*(4. + 5.*rLR*u) - (a1j+a2j)*( 8. + 40.*rLR*u + 15.*pow(rLR, 2.)*pow(u, 2.) ) 
-					   + a1j*a2j*( 3.*u*(8. + 12.*rLR*u + pow(rLR, 2.)*pow(u, 2.)) ) ) * pow(oom3u, 5.5); 
+    double Denomj = 1./(1. + d2j*u2);
+    double Ahat1GSFfitj = elsix*u*(1. - a1j*u)*(1. - a2j*u)*(1. + n1j*u)*Denomj*pow(oom3u, 3.5);
+    double dAhat1GSFfitj = 0.5*elsix * Denomj * Denomj * ( 2 + (15 - 4*a1j - 4*a2j + 4*n1j)*u -  (2*d2j - 9*n1j + a2j*(9 + 6*n1j) + a1j*(9 - 6*a2j + 6*n1j))*pow(u, 2.) +    (27*d2j - 3*a2j*n1j + a1j*(-3*n1j + a2j*(3 + 8*n1j)))*pow(u, 3.) +    (a1j*(d2j*(-21 + 2*a2j - 2*n1j) - 3*a2j*n1j) + d2j*(21*n1j - a2j*(21 + 2*n1j)))*pow(u, 4.) + d2j*(-15*a2j*n1j + a1j*(-15*n1j + a2j*(15 + 4*n1j)))*pow(u, 5.) +    9*a1j*a2j*d2j*n1j*pow(u, 6.) ) * pow(oom3u, 4.5);
+    double d2Ahat1GSFfitj = 0.25*elsix * Denomj * Denomj * Denomj * ( 4*(1 - rLR*u)*(-2 + (-15 + 4*a1j)*u + 9*a1j*pow(u, 2.))*(1 + d2j*pow(u, 2.))*(a2j - n1j + 2*d2j*u + 2*a2j*n1j*u - a2j*d2j*pow(u, 2.) + d2j*n1j*pow(u, 2.)) + (-1 + a2j*u)*(1 + n1j*u)*pow(1 + d2j*pow(u, 2.), 2.)* (-21*(4 + 15*u) + a1j*(8 + 120*u + 135*pow(u, 2.))) + 8*pow(1 - rLR*u, 2.)*u*(-1 + a1j*u)*(a2j*n1j + pow(d2j, 2.)*pow(u, 2.)*(-3 + a2j*u - n1j*u) + d2j*(1 + 3*n1j*u - 3*a2j*u*(1 + n1j*u))) ) * pow(oom3u, 5.5); 
     
     /* 2SF -- el = 2 gravitomagnetic terms */
     double Ahat2GSFj    =  u*pow(oom3u,p);
