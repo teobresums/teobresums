@@ -204,10 +204,10 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
   } else { 
 
-    const double c1  =  8.53353;
-    const double c2  =  3.04309;
-    const double n1  =  0.840058;
-    const double d2  =  17.73239;
+    const double c1  =  3.043093411; 	// OLD value 8.53353;
+    const double c2  = -0.8400636422;	// OLD value 3.04309;
+    const double n1  =  -8.533515908;	// OLD value 0.840058;
+    const double d2  =  17.7324036;	// OLD value 17.73239
 
     double Acub   = 5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
     double dAcub  = 5./2.*     (1. -2*(c1+c2)*u + 3*c1*c2*u2);
