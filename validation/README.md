@@ -2,6 +2,24 @@
 
 ## S.Akcay, S.Bernuzzi
 
+UPDATE as of July:
+
+The C code now contains new terms that are not in the C++ as we have ceased to support it.
+
+The last time the C/C++ code were checked to be FULLY consistent was on 18 June 2018 by comparing the dynamics and the inspiral+merger+ringdown waveforms 9 BBH cases and dynamics+inspiral waveform for 6 BNS cases.
+
+The checked versions are:
+
+- C on branch `development`     commit  2ac8bb48a5804010c8951a6e23904d89117cf62d    on 18 June 2018
+
+- C++ on branch `master`        commit e97b08cb43d25b23cc9524c46ed74e7b9a1e2c64     on 18 June 2018
+
+
+
+--------------------------------------------------------
+
+
+
 The new C implementation on branch `development`
 
     commit 8e64500adef87e1f1b969af8c3c9c6d39bccbb0b
