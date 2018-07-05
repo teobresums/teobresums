@@ -632,49 +632,92 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   
   const double v  = sqrt(x);
   const double v2 = x;
-  const double v3 = v*v2;
+  const double v3 = v2*v;
   const double v4 = v3*v;
   const double v5 = v4*v;
+  const double v6 = v5*v;
+  const double v7 = v6*v;
      
   /** l=m=2 multipole */
   /* spin-orbit */
   const double cSO_lo    = (-0.5*a0 - a12X12/6.);
   const double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12;
+  const double cSO_nnlo  = (32873./21168 + 477563./42336.*nu + 147421./84672.*nu*nu)*a0 - (23687./63504 - 171791./127008.*nu + 50803./254016.*nu*nu)*a12X12;
   
   /* SPIN-SPIN contribution */
   double cSS_lo;
+  double cSS_nlo;
   if (usetidal) {
 #if (EXCLUDESPINSPINTIDES)
     /* Switch off spin-spin-tidal couplings */
     /* See also: eob_dyn_s_get_rc() */
-    cSS_lo = 0.;
+    cSS_lo  = 0.;
+    cSS_nlo = 0.;
     /* Above code switch off everything, 
        Alt. one can set C_Q1=C_Q2=0, but keep the term: */
     /*
       cSS_lo = a1*a2;
     */
 #else
-    cSS_lo = 0.5*(C_Q1*a1*a1 + 2.*a1*a2 + C_Q2*a2*a2);
+    cSS_lo  = 0.5*(C_Q1*a1*a1 + 2.*a1*a2 + C_Q2*a2*a2);
+    cSS_nlo = (-85./63. + 383./252.*nu)*a1*a2 + (-2./3. - 5./18.*nu)*(a1*a1 + a2*a2) + (1./7. + 27./56.*nu)*(C_Q1*a1*a1 + C_Q2*a2*a2) + 2./9.*X12*(a1*a1 - a2*a2) + 55./84.*X12*(C_Q1*a1*a1 - C_Q2*a2*a2);
 #endif
   } else {
-    cSS_lo = 0.5*a0*a0; 
+    cSS_lo  = 0.5*a0*a0;
+    cSS_nlo = 1./504.*(2.*(19. - 70.*nu)*a12*a12 + (-302. + 243.*nu)*a0*a0 + 442.*X12*a0*a12);
   }
 
+  /* Cubic spin */
+  const double cSSS_lo = 7./12.*a0*a0*a0 - 0.25*a12X12*a0*a0;
+    
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
-  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 ;
+  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 + cSS_nlo*v6; //FIXME: Add v7 terms?  + CSO_nnlo*v7 + CSSS_lo*v7;
     
   /** l>=3, m=even: multipoles rewritten in compact and self-explanatory form */
-  rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
+  rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v + ((-1433. + 5530.*nu - 3985.*nu*nu)*a0 + (1793. - 4270.*nu -3035.*nu*nu)*a12X12)/(1620.*(1.-3.*nu)*(1.-3.*nu))*v3;
   rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
   rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
   
-  /** l>=2, m=odd: multipoles rewritten in compact and self-explanatory form */
-  f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3;
-  f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3;
-  f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3;
+  /** l>=2, m=odd*/
+  /* spin-orbit */
+  f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3 + ((-3331./1008. - 13./504.*nu + 613./1008.*nu*nu)*a12 + (-443./252. + 1735./1008.*nu)*a0X12)*v5;
+  f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3 + ((-233./120. + 29./15.*nu + 241./30.*nu*nu)*a12 + (-313./120. + 83./60.*nu)*a0X12)*v5;
+  f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3 + ((41./8. - 137./9.*nu + 5./2.*nu*nu)*a12 + (-65./72. + 433./36.*nu)*a0X12)*v5;
   f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v;
   f41S = f43S;
-    
+  
+  /* SPIN-SPIN contribution */
+  double c21SS_lo;
+  double c33SS_lo;
+  double c31SS_lo;
+  if (usetidal) {
+#if (EXCLUDESPINSPINTIDES)
+    /* Switch off spin-spin-tidal couplings */
+    /* See also: eob_dyn_s_get_rc() */
+    c21SS_lo  = 0.;
+    c33SS_lo  = 0.;
+    c31SS_lo  = 0.;
+    /* Above code switch off everything, 
+       Alt. one can set C_Q1=C_Q2=0, but keep the term: */
+#else
+    c21SS_lo  = -19./8.*(a1*a1 - a2*a2) - (C_Q1*a1*a1 - C_Q2*a2*a2) + 1./8.*(-9.*a1*a1 + 10*a1*a2 -9.*a2*a2 + 12.*(C_Q1*a1*a1 + C_Q2*a2*a2))*X12;
+    c33SS_lo  = 3.*(a1*a2 + 0.5*(C_Q1*a1*a1 + C_Q2*a2*a2))*X12;
+    c31SS_lo  = -4.*(C_Q1*a1*a1 - C_Q2*a2*a2) + 3.*(a1*a2 + 0.5*(C_Q1*a1*a1 + C_Q2*a2*a2))*X12;
+#endif
+  } else {
+    c21SS_lo  = 1./8.*(-27.*(a1*a1 - a2*a2) + (3.*a1*a1 + 10.*a1*a2 + 3.*a2*a2)*X12);
+    c33SS_lo  = 3./2.*a0*a0*X12;
+    c31SS_lo  = -4.*(a1*a1 - a2*a2) + 3./2.*a0*a0*X12;
+  }
+
+  /* Cubic spin */
+  const double c21SSS_lo = 3./4.*a0*a0*a12;
+
+  /* Adding pieces together */
+  f21S = f21S + c21SS_lo*v4 + c21SSS_lo*v5;
+  f33S = f33S + c33SS_lo*v4;
+  f31S = f31S + c31SS_lo*v4;
+  
   /** Amplitudes (correct with spin terms) */
   flm[0] = gsl_pow_int(rholm[0], 2);
   flm[0] = (X12*flm[0] + f21S);
