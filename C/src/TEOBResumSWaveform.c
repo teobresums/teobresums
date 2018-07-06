@@ -645,8 +645,8 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   const double cSO_nnlo  = (32873./21168 + 477563./42336.*nu + 147421./84672.*nu*nu)*a0 - (23687./63504 - 171791./127008.*nu + 50803./254016.*nu*nu)*a12X12;
   
   /* SPIN-SPIN contribution */
-  double cSS_lo;
-  double cSS_nlo;
+  double cSS_lo = 0.;
+  double cSS_nlo = 0.;
   if (usetidal) {
 #if (EXCLUDESPINSPINTIDES)
     /* Switch off spin-spin-tidal couplings */
@@ -671,20 +671,38 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   const double cSSS_lo = 7./12.*a0*a0*a0 - 0.25*a12X12*a0*a0;
     
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
-  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 + cSS_nlo*v6; //FIXME: Add v7 terms?  + CSO_nnlo*v7 + CSSS_lo*v7;
-    
+  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5;
+  
   /** l>=3, m=even: multipoles rewritten in compact and self-explanatory form */
-  rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v + ((-1433. + 5530.*nu - 3985.*nu*nu)*a0 + (1793. - 4270.*nu -3035.*nu*nu)*a12X12)/(1620.*(1.-3.*nu)*(1.-3.*nu))*v3;
+  rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
   rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
   rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
-  
+
+  double c32SO_nlo = ((-1433. + 5530.*nu - 3985.*nu*nu)*a0 + (1793. - 4270.*nu -3035.*nu*nu)*a12X12)/(1620.*(1.-3.*nu)*(1.-3.*nu));
+
+  // FIXME: flag that adds new pieces (only in BNS case)
+  // We have to decide whether to add v7 terms.
+  int new_spin_flag = 0;
+  if (new_spin_flag)
+    {
+      if (usetidal)
+	{
+	  rho22S += cSS_nlo*v6; // + cSO_nnlo*v7 + cSSS_lo*v7;
+	  rho32S += c32SO_nlo*v3;
+	}
+    }
+    
   /** l>=2, m=odd*/
   /* spin-orbit */
-  f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3 + ((-3331./1008. - 13./504.*nu + 613./1008.*nu*nu)*a12 + (-443./252. + 1735./1008.*nu)*a0X12)*v5;
-  f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3 + ((-233./120. + 29./15.*nu + 241./30.*nu*nu)*a12 + (-313./120. + 83./60.*nu)*a0X12)*v5;
-  f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3 + ((41./8. - 137./9.*nu + 5./2.*nu*nu)*a12 + (-65./72. + 433./36.*nu)*a0X12)*v5;
+  f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3;
+  f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3;
+  f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3;
   f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v;
   f41S = f43S;
+  
+  double c21SO_nlo = ((-3331./1008. - 13./504.*nu + 613./1008.*nu*nu)*a12 + (-443./252. + 1735./1008.*nu)*a0X12);
+  double c33SO_nlo = ((-233./120. + 29./15.*nu + 241./30.*nu*nu)*a12 + (-313./120. + 83./60.*nu)*a0X12);
+  double c31SO_nlo = ((41./8. - 137./9.*nu + 5./2.*nu*nu)*a12 + (-65./72. + 433./36.*nu)*a0X12);
   
   /* SPIN-SPIN contribution */
   double c21SS_lo;
@@ -713,10 +731,17 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   /* Cubic spin */
   const double c21SSS_lo = 3./4.*a0*a0*a12;
 
-  /* Adding pieces together */
-  f21S = f21S + c21SS_lo*v4 + c21SSS_lo*v5;
-  f33S = f33S + c33SS_lo*v4;
-  f31S = f31S + c31SS_lo*v4;
+  // FIXME: flag that adds new pieces (only in BNS case)
+  int new_spin_flag = 0;
+  if (new_spin_flag)
+    {
+      if (usetidal)
+	{
+	  f21S = f21S + c21SS_lo*v4 + c21SO_nlo*v5 + c21SSS_lo*v5;
+	  f33S = f33S + c33SS_lo*v4 + c33SO_nlo*v5;
+	  f31S = f31S + c31SS_lo*v4 + c31SO_nlo*v5;
+	}
+    }
   
   /** Amplitudes (correct with spin terms) */
   flm[0] = gsl_pow_int(rholm[0], 2);
