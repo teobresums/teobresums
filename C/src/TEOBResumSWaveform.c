@@ -732,14 +732,13 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   const double c21SSS_lo = 3./4.*a0*a0*a12;
 
   // FIXME: flag that adds new pieces (only in BNS case)
-  int new_spin_flag = 0;
   if (new_spin_flag)
     {
       if (usetidal)
 	{
-	  f21S = f21S + c21SS_lo*v4 + c21SO_nlo*v5 + c21SSS_lo*v5;
-	  f33S = f33S + c33SS_lo*v4 + c33SO_nlo*v5;
-	  f31S = f31S + c31SS_lo*v4 + c31SO_nlo*v5;
+	  f21S += c21SS_lo*v4 + c21SO_nlo*v5 + c21SSS_lo*v5;
+	  f33S += c33SS_lo*v4 + c33SO_nlo*v5;
+	  f31S += c31SS_lo*v4 + c31SO_nlo*v5;
 	}
     }
   
