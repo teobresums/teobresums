@@ -668,7 +668,7 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   }
 
   /* Cubic spin */
-  const double cSSS_lo = 7./12.*a0*a0*a0 - 0.25*a12X12*a0*a0;
+  const double cSSS_lo = 7./12.*a0*a0*a0 - 0.25*a12X12*a0*a0; //FIXME: Not added. Depends on EOS
     
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
   rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5;
@@ -680,14 +680,13 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
 
   double c32SO_nlo = ((-1433. + 5530.*nu - 3985.*nu*nu)*a0 + (1793. - 4270.*nu -3035.*nu*nu)*a12X12)/(1620.*(1.-3.*nu)*(1.-3.*nu));
 
-  // FIXME: flag that adds new pieces (only in BNS case)
-  // We have to decide whether to add v7 terms.
+  // FIXME: flag that adds new spin pieces (only in BNS case)
   int new_spin_flag = 0;
   if (new_spin_flag)
     {
       if (usetidal)
 	{
-	  rho22S += cSS_nlo*v6; // + cSO_nnlo*v7 + cSSS_lo*v7;
+	  rho22S += cSS_nlo*v6 + cSO_nnlo*v7;
 	  rho32S += c32SO_nlo*v3;
 	}
     }
@@ -729,14 +728,14 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   }
 
   /* Cubic spin */
-  const double c21SSS_lo = 3./4.*a0*a0*a12;
+  const double c21SSS_lo = 3./4.*a0*a0*a12; //FIXME: Not added. It should depend on EOS.
 
   // FIXME: flag that adds new pieces (only in BNS case)
   if (new_spin_flag)
     {
       if (usetidal)
 	{
-	  f21S += c21SS_lo*v4 + c21SO_nlo*v5 + c21SSS_lo*v5;
+	  f21S += c21SS_lo*v4 + c21SO_nlo*v5;
 	  f33S += c33SS_lo*v4 + c33SO_nlo*v5;
 	  f31S += c31SS_lo*v4 + c31SO_nlo*v5;
 	}
