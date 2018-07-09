@@ -668,7 +668,7 @@ void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, doubl
   }
 
   /* Cubic spin */
-  const double cSSS_lo = 7./12.*a0*a0*a0 - 0.25*a12X12*a0*a0; //FIXME: Not added. Depends on EOS
+  const double cSSS_lo = 7./12.*a0*a0*a0 - 0.25*a12X12*a0*a0; //FIXME: Not added. It should depend on EOS.
     
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
   rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5;
