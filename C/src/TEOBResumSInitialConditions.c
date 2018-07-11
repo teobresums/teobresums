@@ -57,14 +57,6 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     
     /** Compute metric  */
     eob_metric(r[i], dyn, &A, &B, &dA[i], &d2A, &dB);
-
-    if( (SARP) ){  // Prints d2A for the C++ code to use
-	const int usetidal = dyn->use_tidal;
-	if (usetidal){
-		if (i<2*N-1) printf("%.16e, ", d2A);
-		else printf("%.16e", d2A);
-	}
-    }
     
     //printf("%d %.16e %.16e %.16e\n",i,r[i],A,dA[i]);
 

@@ -503,16 +503,9 @@ void Waveform_lm_output (Waveform_lm *wav)
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
 	errorexits("error opening file",fname);
-      if(SARP){   
-	for (int i = 0; i < n; i++) { 
-	  fprintf(fp, "%e\t%.16e\t%.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
-	}
+      for (int i = 0; i < n; i++) {
+        fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
       }
-      if(!SARP){ 
-	      for (int i = 0; i < n; i++) {
-	      fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
-	      }
-	}
       fclose(fp);
     }
   }
@@ -594,7 +587,7 @@ void Dynamics_push (Dynamics **dyn, int size)
   (*dyn)->size = size; 
 }
 
-#if (SARP) 
+#if (DEBUG) 
  
 void Dynamics_output (Dynamics *dyn)
 {

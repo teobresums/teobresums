@@ -87,8 +87,6 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
 
-if (SARP) printf("t = %.16e\tFlux = %.16e\n", t, eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn) );
-  
   if(dyn->store) {
     /* Store values */
     dyn->t = t;
@@ -236,8 +234,6 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
 
-if (SARP) printf("t = %.16e\tFlux = %.16e\n", t, eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn) );
-  
   if (dyn->store) {
     /* Store values */
     dyn->t = t;

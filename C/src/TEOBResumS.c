@@ -338,7 +338,7 @@ int main (int argc, char* argv[])
   if (VERBOSE) PRSECTN("ODE Evolution");
   int STATUS = OK;
   while (!(dyn->ode_stop)) {
-   if ( (VERBOSE) && (!SARP) )  printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r);
+   if (VERBOSE) printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r);
     iter++;
 
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
@@ -400,7 +400,7 @@ int main (int argc, char* argv[])
     
     /** Update size and push arrays (if needed) */
     if (iter>size) {
-      if ( (DEBUG) && (!SARP) )  printf("Push memory\n");
+      if (DEBUG)  printf("Push memory\n");
       size += chunk;
       par_set_i("size", size);
       Waveform_lm_push (&hlm, size);
@@ -498,7 +498,7 @@ int main (int argc, char* argv[])
     /* Build uniform grid of width dt and alloc tmp memory */
     //CHECKME: is this rounding under control ?!
     const int size_new = (int)((hlm->time[size-1] - hlm->time[0])/dt + 1); /* use dt from parfile */
-    if ( (DEBUG) && (!SARP) ) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
+    if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
     if (VERBOSE) {
       PRSECTN("Interpolation to uniform grid");
       PRFORMi("interpolation_grid_size",size_new);
