@@ -80,7 +80,7 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
   double dD4 = (-320*(-4 + nu)*nu*(-828672 - 32256*nu2 + 756*nu*(-768 + nu*(3584 + 24*a5 - 123*pi2)) + nu*(5006848 + 42024*a5 + 8064*a6 - 174045*pi2)))/(7.*gsl_pow_int(1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)),2)*u);
   double dD5 = (nu*(-8400*nu*(-24*(a6 - (4*logu*(1751 + 756*nu))/105.)*(1536 + nu*(-3776 + 123*pi2)) + nu*(-2304*gsl_pow_int(a5 + (64*logu)/5.,2) + 96*(a5 + (64*logu)/5.)*(-3392 + 123*pi2) - (-3776 + 123*pi2)*(-32*(94 + 3*nu) + 123*pi2))) - (1536*logu*nu + 5*(-768 + nu*(3584 + 24*a5 - 123*pi2)))*(4128768*logu*nu + 5*(-2689536 + nu*(11170624 + 64512*a5 - 380685*pi2) - 756*nu*(1536 + nu*(-3776 + 123*pi2))))))/(2625.*gsl_pow_int(-768 + nu*(3584 + 24*(a5 + (64*logu)/5.) - 123*pi2),2)*u);
   
-  /* Numerator and denominato of the Pade */
+  /* Numerator and denominator of the Pade */
   double Num = 1 + N1*u;
   double Den = 1 + D1*u + D2*u2 + D3*u3 + D4*u4 + D5*u5;
   *A = Num/Den;
@@ -132,12 +132,15 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   double A, dA_u, d2A_u, dA, d2A;
 
   const double elsix = 1.833333333333333333333;  // 11/6
+  const double eightthird = 2.6666666666666666667; // 8/3
   const double nu    = dyn->nu;
   const double rLR   = dyn->rLR_tidal;
   const double XA    = dyn->X1;
   const double XB    = dyn->X2;
   const double kapA2 = dyn->kapA2;
   const double kapB2 = dyn->kapB2;
+  const double kapA3 = dyn->kapA3;
+  const double kapB3 = dyn->kapB3;
   const double kapT2 = dyn->kapT2;
   const double kapT3 = dyn->kapT3;
   const double kapT4 = dyn->kapT4;
@@ -202,11 +205,22 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     }
 #endif
 
+
+#if(USEOCTUPOELECTRICTERMS)
+   
+    A   += -1.0*kapT3*(1.0 - 2.0*u)*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*( kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u ) );
+    dA_u += -1.0*kapT3*(1.0 - 2.0*u)*u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 8.0*kapT3*(1.0 - 2.0*u)*u7*( 1.0 + eightthird*u2*oom3u ) + 2.0*kapT3*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*( kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB ) );  - 9.0*u8*( kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u ) );
+    if (d2AT != NULL) {
+      d2A_u += -1.0*kapT3*(1.0 - 2.0*u)*(  u8*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) + 16.0*u7*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 56.0*u6*( 1.0 + eightthird*u2*oom3u )  ) + 4.0*kapT3*(  u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 8.0*u7*( 1.0 + eightthird*u2*oom3u )  ) - 18.0*u8*( kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB ) ) - 72.0*u7*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  );
+
+    }
+#endif
+
   } else { 
 
-    const double c1  =  3.043093411; 	// OLD value 8.53353;
-    const double c2  = -0.8400636422;	// OLD value 3.04309;
-    const double n1  =  -8.533515908;	// OLD value 0.840058;
+    const double c1  =  8.533515908;  	// OLD value 8.53353;
+    const double c2  = 3.043093411;	// OLD value 3.04309;
+    const double n1  =  0.8400636422; 	// OLD value 0.840058;
     const double d2  =  17.7324036;	// OLD value 17.73239
 
     double Acub   = 5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
