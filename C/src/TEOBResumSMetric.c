@@ -312,6 +312,61 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 #endif
 
+
+#if(USEOCTUPOELECTRICTERMS)
+    /** el = 3+, i.e.,  even parity tidal potential **/
+
+    /* 1GSF fitting parameters */
+    const double C1 = 6.42807264163465;
+    const double C2 = -7.818562387634129;
+    const double C3 = 25.06785964656125;
+    const double C4 = 4.4512752793307175;
+    const double C5 = 34.6256087369367;
+
+    /* 0SF -- el = 3+, i.e.,  even parity terms */
+    double A3hat_Sch    = (1.0 - 2.0*u)*( 1.0 + eightthird*u2*oom3u );
+    double dA3hat_Sch   = (1.0 - 2.0*u)*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 2.0*( 1.0 + eightthird*u2*oom3u );
+    double d2A3hat_Sch  = (1.0 - 2.0*u)*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) - 4.0*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u );
+
+    /* 1SF -- el = 3+, i.e.,  even parity terms */
+    double Denom3    = 1./(1. + C3*u + C4*u2);
+    double A3tilde   = (-2. + C5*u)*(1. + C1*u + C2*u2)*Denom3;
+    double dA3tilde  = ( 1.*C5 - 4.*C2*u + 4.*C4*u + 3.*C2*C5*u2 - 1.*C4*C5*u2 + 1.*C2*C4*C5*u4 + 1.*C1*(-2. + 2.*C4*u2 + 1.*C5*u*(2. + 1.*C3*u)) + 2.*C3*(1. + 1.*C2*u2*(-1. + 1.*C5*u)) )*Denom3*Denom3;
+    double d2A3tilde = 2.*(-2.*C3*C3 + 2.*C4 - 1.*C3*C5 - 6.*C3*C4*u - 3.*C4*C5*u - 6.*C4*C4*u2 + 1.*C4*C4*C5*u3 + 1.*C2*(-2. + 2.*C4*u2*(3. + 1.*C3*u) + 1.*C5*u*(3. + 3.*C3*u + 1.*C3*C3*u2 - 1.*C4*u2)) + 1.*C1*(1.*C5 - 3.*C4*C5*u2 - 2.*C4*u*(-3. + 1.*C4*u2) + 1.*C3*(2. - 1.*C4*C5*u3)));
+    double A3hat1GSFfit =  A3tilde*pow(oom3u, 3.5);
+    double dA3hat1GSFfit = 3.5*rLR*A3tilde*pow(oom3u, 4.5) + dA3tilde*pow(oom3u, 3.5);
+    double d2A3hat1GSFfit = 15.75*rLR*rLR*A3tilde*pow(oom3u, 5.5) + 7.0*rLR*dA3tilde*pow(oom3u, 4.5) + d2A3tilde*pow(oom3u, 3.5);
+    
+    /* 2SF -- el = 3+, i.e.,  even parity terms */
+    double A3hat2GSF     =  36.666666666666666667*u2*pow(oom3u,p);
+    double dA3hat2GSF    =  36.666666666666666667*u*( 2. + (1.*p - 2.)*rLR*u ) * pow(oom3u, p+1);
+    double d2A3hat2GSF   =  36.666666666666666667*( 2. + 4.*(1.*p - 1.)*rLR*u + (2. - 3.*p + 1.*p*p)*rLR*rLR*u2 ) * pow(oom3u, p+2);
+
+     /* Total el = 3+ potential as a GSF series */
+    double A3hatA   = A3hat_Sch + XA*A3hat1GSFfit + XA*XA*A3hat2GSF;
+    double dA3hatA  = dA3hat_Sch + XA*dA3hat1GSFfit + XA*XA*dA3hat2GSF;
+    double A3hatB   = A3hat_Sch + XB*A3hat1GSFfit + XB*XB*A3hat2GSF;
+    double dA3hatB  = dA3hat_Sch + XB*dA3hat1GSFfit + XB*XB*dA3hat2GSF;
+    
+    /* el = 2 gravitomagnetic total contribution */
+    double A3plus      = -1.*kapA3*u8*( A3hatA ) - 1.*kapB3*u8*( A3hatB );
+    double dA3plus     = -1.*kapA3 * ( 8.*u7*A3hatA + 1.*u8*dA3hatA ) -1.*kapB3 * ( 8.*u7*A3hatB + 1.*u8*dA3hatB );
+    
+    A    += A3plus;
+    dA_u += dA3plus;
+    
+    if (d2AT != NULL) {
+      double d2A3hatA = d2A3hat_Sch + XA*d2A3hat1GSFfit + XA*XA*d2A3hat2GSF;
+      double d2A3hatB = d2A3hat_Sch + XB*d2A3hat1GSFfit + XB*XB*d2A3hat2GSF;
+      double d2A3plus = -1.*kapA3 * ( 56.*u6*A3hatA + 16.*u7*dA3hatA + 1.*u8*d2A3hatA );
+      
+      d2A_u += d2A3plus;
+    }
+
+
+
+#endif
+
   }
 
   *AT   = A;
