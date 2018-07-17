@@ -53,19 +53,19 @@
 #endif
 
 #ifndef POSTPOSTCIRCULAR
-#define POSTPOSTCIRCULAR 1 /* use post-post-circular initial conditions by default */
+#define POSTPOSTCIRCULAR 0 /* use post-post-circular initial conditions by default */
 #endif
 
 #ifndef EXCLUDESPINSPINTIDES
 #define EXCLUDESPINSPINTIDES 0 /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
-#ifndef USEGRAVITOMAGNETICTERMS
-#define USEGRAVITOMAGNETICTERMS 0 /* use gravitomagnetic terms in tidal potential and waveform */
+#ifndef USE_GRAVITOMAGNETICTERMS
+#define USE_GRAVITOMAGNETICTERMS 0 /* use gravitomagnetic terms in tidal potential and waveform */
 #endif
 
 #ifndef USEOCTUPOELECTRICTERMS
-#define USEOCTUPOELECTRICTERMS 0 /* use l=3 even parity terms in the tidal potential */
+#define USEOCTUPOELECTRICTERMS 1 /* use l=3 even parity terms in the tidal potential */
 #endif
 
 #ifndef USERK45

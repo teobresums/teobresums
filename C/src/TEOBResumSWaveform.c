@@ -828,17 +828,16 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
 
-#if(USEGRAVITOMAGNETICTERMS)
-
+#if(USE_GRAVITOMAGNETICTERMS)
+{
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
     const double fourthird = 1.3333333333333333333; // 32/24 = 4/3
-
     hTidallm[0] += 0.5*( -1.*kapA2j/XB + kapB2j/XA )*x5;
     hTidallm[1] += fourtnine*kapT2j*x6;
-    hTidallm[2] += 0.5*( kapA2j*(4. - 17.*XB) - kapB2J*(4. - 17.*XA) )*x6;
+    hTidallm[2] += 0.5*( kapA2j*(4. - 17.*XB) - kapB2j*(4. - 17.*XA) )*x6;
     hTidallm[3] += fourthird*kapT2j*x5/(1.-3.*nu);
-    hTidallm[4] += 0.5*( kapA2j*(4. - 9.*XB) - kapB2J*(4. - 9.*XA) )*x6;
-
+    hTidallm[4] += 0.5*( kapA2j*(4. - 9.*XB) - kapB2j*(4. - 9.*XA) )*x6;
+}
 #endif
 
   /* OLD STUFF 

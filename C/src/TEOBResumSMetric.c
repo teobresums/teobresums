@@ -188,7 +188,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 	- kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
     }
 
-#if(USEGRAVITOMAGNETICTERMS)
+#if(USE_GRAVITOMAGNETICTERMS)
     const double Ahat1PNjAcoef = (elsix*XA + XA*XA);
     const double Ahat1PNjBcoef = (elsix*XB + XB*XB);
     // Schwarzschild gravito-magnetic term
@@ -269,13 +269,17 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
     }
 
-#if(USEGRAVITOMAGNETICTERMS)
+
+#if(USE_GRAVITOMAGNETICTERMS)
     /** Gravito-magnetic tides for el = 2 */
     const double a1j =  0.728591192;
     const double a2j =  3.100367557;	
-    const double n1j = -15.04421708
+    const double n1j = -15.04421708;
     const double d2j =  12.55229698;
-
+    // Schwarzschild gravito-magnetic term
+    double Ahat_Schj     =  (1.-2.*u)*oom3u;	
+    double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;
+    double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
 
     /* 1SF -- el = 2 gravitomagnetic terms */
     double Denomj = 1./(1. + d2j*u2);

@@ -142,6 +142,7 @@ double Yagi13_fit_barsigmalambda(double barlam2)
   coeffs[1] = -1.58e-4;
   coeffs[0] = -6.03e-6;
   double lny = coeffs[0]*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx+coeffs[2]*lnx*lnx+coeffs[3]*lnx+coeffs[4];
+
   return exp(lny);
 }
  

@@ -107,6 +107,7 @@ kappaBl4 = 0. #
 
 kappajAl2 = 0. # gravitomagnetic kappa star A
 kappajBl2 = 0.
+kappajTl2 = 0.
 
 kappaTl2 = 0. #
 kappaTl3 = 0. #

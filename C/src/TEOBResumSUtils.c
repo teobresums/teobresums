@@ -504,7 +504,7 @@ void Waveform_lm_output (Waveform_lm *wav)
       if ((fp = fopen(fname, "w+")) == NULL)
 	errorexits("error opening file",fname);
       for (int i = 0; i < n; i++) {
-        fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
+        fprintf(fp, "%.9e %.16e %.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
       }
       fclose(fp);
     }
@@ -678,6 +678,9 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->kapT4 = par_get_d("kappaTl4");
   dyn->khatA2 = par_get_d("khatAl2");
   dyn->khatB2 = par_get_d("khatBl2");
+  dyn->kapA2j = par_get_d("kappajAl2");
+  dyn->kapB2j = par_get_d("kappajBl2");
+  dyn->kapT2j = par_get_d("kappajTl2");
   dyn->bar_alph2_1 = par_get_d("bar_alph2_1");
   dyn->bar_alph2_2 = par_get_d("bar_alph2_2");
   dyn->bar_alph3_1 = par_get_d("bar_alph3_1");
