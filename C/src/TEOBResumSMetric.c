@@ -174,12 +174,6 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   double logu = log(u);
   double oom3u  = 1./(1.-rLR*u);
 
-#if(USEGRAVITOMAGNETICTERMS)
-  // Schwarzschild gravito-magnetic term
-  double Ahat_Schj     =  (1.-2.*u)*oom3u;	
-  double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;
-  double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
-#endif
 
   if (dyn->use_tidal==TIDES_NNLO) {
 
@@ -197,6 +191,10 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 #if(USEGRAVITOMAGNETICTERMS)
     const double Ahat1PNjAcoef = (elsix*XA + XA*XA);
     const double Ahat1PNjBcoef = (elsix*XB + XB*XB);
+    // Schwarzschild gravito-magnetic term
+    double Ahat_Schj     =  (1.-2.*u)*oom3u;	
+    double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;
+    double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
     A += -1.*kapA2j*u8*Ahat1PNjAcoef - 1.*kapB2j*u8*Ahat1PNjBcoef - kapT2j*u7*Ahat_Schj;
     dA_u += -1.*kapT2j*u6*(u*dAhat_Schj + 7.*Ahat_Schj ) - 8.*u7*( kapA2j*Ahat1PNjAcoef + kapB2j*Ahat1PNjBcoef );
     if (d2AT != NULL) {
@@ -207,7 +205,8 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 
 #if(USEOCTUPOELECTRICTERMS)
-   
+
+    /* el = 3+ tidal terms as a PN series */   
     A   += -1.0*kapT3*(1.0 - 2.0*u)*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*( kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u ) );
     dA_u += -1.0*kapT3*(1.0 - 2.0*u)*u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 8.0*kapT3*(1.0 - 2.0*u)*u7*( 1.0 + eightthird*u2*oom3u ) + 2.0*kapT3*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*( kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB ) );  - 9.0*u8*( kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u ) );
     if (d2AT != NULL) {
