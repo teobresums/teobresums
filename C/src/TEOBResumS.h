@@ -65,7 +65,7 @@
 #endif
 
 #ifndef USEOCTUPOELECTRICTERMS
-#define USEOCTUPOELECTRICTERMS 1 /* use l=3 even parity terms in the tidal potential */
+#define USEOCTUPOELECTRICTERMS 0 /* use l=3 even parity terms in the tidal potential */
 #endif
 
 #ifndef USERK45
