@@ -192,13 +192,13 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     const double Ahat1PNjAcoef = (elsix*XA + XA*XA);
     const double Ahat1PNjBcoef = (elsix*XB + XB*XB);
     // Schwarzschild gravito-magnetic term
-    double Ahat_Schj     =  (1.-2.*u)*oom3u;	
-    double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;
-    double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
-    A += -1.*kapA2j*u8*Ahat1PNjAcoef - 1.*kapB2j*u8*Ahat1PNjBcoef - kapT2j*u7*Ahat_Schj;
-    dA_u += -1.*kapT2j*u6*(u*dAhat_Schj + 7.*Ahat_Schj ) - 8.*u7*( kapA2j*Ahat1PNjAcoef + kapB2j*Ahat1PNjBcoef );
+    double Ahat_SchjExp     =  1. + u + 3.*u2;	//(1.-2.*u)*oom3u;	
+    double dAhat_SchjExp    =  1. + 6.*u;	//(rLR-2.)*oom3u*oom3u;
+    double d2Ahat_SchjExp   =  6.0;		//-2.*rLR*(rLR-2.)*pow(oom3u, 3.);
+    A += -1.*kapA2j*u8*Ahat1PNjAcoef - 1.*kapB2j*u8*Ahat1PNjBcoef - kapT2j*u7*Ahat_SchjExp;
+    dA_u += -1.*kapT2j*u6*(u*dAhat_SchjExp + 7.*Ahat_SchjExp ) - 8.*u7*( kapA2j*Ahat1PNjAcoef + kapB2j*Ahat1PNjBcoef );
     if (d2AT != NULL) {
-      d2A_u += -1.*kapT2j * ( 42.*u5*Ahat_Schj + 14.*u6*dAhat_Schj + u7*d2Ahat_Schj ) 
+      d2A_u += -1.*kapT2j * ( 42.*u5*Ahat_SchjExp + 14.*u6*dAhat_SchjExp + u7*d2Ahat_SchjExp ) 
 	- 1.*kapA2j*(56.*u6*Ahat1PNjAcoef ) - 1.*kapB2j * ( 56.*u6*Ahat1PNjBcoef );
     }
 #endif
@@ -207,10 +207,10 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 #if(USEOCTUPOELECTRICTERMS)
 
     /* el = 3+ tidal terms as a PN series */   
-    A    += -1.0*kapT3*(1.0 - 2.0*u)*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  );
-    dA_u += -1.0*kapT3*(1.0 - 2.0*u)*u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 8.0*kapT3*(1.0 - 2.0*u)*u7*( 1.0 + eightthird*u2*oom3u ) + 2.0*kapT3*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  )  - 9.0*u8*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  );
+    A    += /*-1.0*kapT3*(1.0 - 2.0*u)*u8*( 1.0 + eightthird*u2*oom3u )*/ -1.0*kapT3*u8*( 1.0 - 2.*u + eightthird*u2 ) - 1.0*u9*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  );
+    dA_u += /*-1.0*kapT3*(1.0 - 2.0*u)*u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 8.0*kapT3*(1.0 - 2.0*u)*u7*( 1.0 + eightthird*u2*oom3u ) + 2.0*kapT3*u8*( 1.0 + eightthird*u2*oom3u )*/ -1.0*kapT3*u7*( 1.*u*(-2. + 2.*eightthird*u) + 8.*( 1.0 - 2.*u + eightthird*u2 ) ) - 1.0*u9*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  )  - 9.0*u8*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  );
     if (d2AT != NULL) {
-      d2A_u += -1.0*kapT3*(1.0 - 2.0*u)*(  u8*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) + 16.0*u7*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 56.0*u6*( 1.0 + eightthird*u2*oom3u )  ) + 4.0*kapT3*(  u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 8.0*u7*( 1.0 + eightthird*u2*oom3u )  ) - 18.0*u8*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  ) - 72.0*u7*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  );
+      d2A_u += /*-1.0*kapT3*(1.0 - 2.0*u)*(  u8*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) + 16.0*u7*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 56.0*u6*( 1.0 + eightthird*u2*oom3u )  ) + 4.0*kapT3*(  u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 8.0*u7*( 1.0 + eightthird*u2*oom3u )  )*/ -1.0*kapT3*u6*( 2.*u2*eightthird + 16.*u*(-2. + 2.*eightthird*u) + 8.*( 1.0 - 2.*u + eightthird*u2 ) ) - 18.0*u8*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  ) - 72.0*u7*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  );
 
     }
 #endif
