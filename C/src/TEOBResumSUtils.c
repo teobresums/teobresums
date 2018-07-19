@@ -685,6 +685,7 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->bar_alph2_2 = par_get_d("bar_alph2_2");
   dyn->bar_alph3_1 = par_get_d("bar_alph3_1");
   dyn->bar_alph3_2 = par_get_d("bar_alph3_2");
+  dyn->bar_alph2j_1 = par_get_d("bar_alph2j_1");
   dyn->pGSF_tidal = par_get_d("pGSF_tidal");
   dyn->Mbhf = par_get_d("BH_final_mass");
   dyn->abhf = par_get_d("BH_final_spin");

@@ -116,6 +116,7 @@ bar_alph2_1 = 0. #
 bar_alph2_2 = 0. #
 bar_alph3_1 = 0. #
 bar_alph3_2 = 0. #
+bar_alph2j_1 = 0. #
 khatAl2 = 0. #
 khatBl2 = 0. #
 rLR_tidal = 0. # radius of light-ring for NNLO tidal model

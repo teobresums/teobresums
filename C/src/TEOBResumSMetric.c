@@ -156,6 +156,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double bar_alph2_2 = dyn->bar_alph2_2;
   const double bar_alph3_1 = dyn->bar_alph3_1;
   const double bar_alph3_2 = dyn->bar_alph3_2;
+  const double bar_alph2j_1 = dyn->bar_alph2j_1;
 
   const double p = dyn->pGSF_tidal; 
   
@@ -179,43 +180,17 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
   if (dyn->use_tidal==TIDES_NNLO) {
 
-    A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
-    dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u)
-      - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+    A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2) - kapT2j*u7*(1. +  bar_alph2j_1*u);
+    dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u) - kapT2j*u7*bar_alph2j_1
+      - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2) - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u);
 
     if (d2AT != NULL) {
       d2A_u = -90.*kapT4*u8
 	- kapT2*(2*bar_alph2_2*u6 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u)
 		 + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2))
-	- kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
+	- kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2)) - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
     }
 
-    #if(USEGRAVITOMAGNETICTERMS)
-      const double Ahat1PNjAcoef = (elsix*XA + XA*XA);
-      const double Ahat1PNjBcoef = (elsix*XB + XB*XB);
-      // Schwarzschild gravito-magnetic term
-      double Ahat_Schj     =  (1.-2.*u)*oom3u;			//1. + u + 3.*u2;	
-      double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;		//1. + 6.*u;	
-      double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);	//6.0;		
-      A += -1.*kapA2j*u8*Ahat1PNjAcoef - 1.*kapB2j*u8*Ahat1PNjBcoef - kapT2j*u7*Ahat_Schj;
-      dA_u += -1.*kapT2j*u6*(u*dAhat_Schj + 7.*Ahat_Schj ) - 8.*u7*( kapA2j*Ahat1PNjAcoef + kapB2j*Ahat1PNjBcoef );
-      if (d2AT != NULL) {
-      d2A_u += -1.*kapT2j * ( 42.*u5*Ahat_Schj + 14.*u6*dAhat_Schj + u7*d2Ahat_Schj ) 
-	- 1.*kapA2j*(56.*u6*Ahat1PNjAcoef ) - 1.*kapB2j * ( 56.*u6*Ahat1PNjBcoef );
-      }
-    #endif
-
-
-  #if(USEOCTUPOELECTRICTERMS)
-
-      /* el = 3+ tidal terms as a PN series */   
-      A    += -1.0*kapT3*(1.0 - 2.0*u)*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  ); /*-1.0*kapT3*u8*( 1.0 - 2.*u + eightthird*u2 ) */
-      dA_u += -1.0*kapT3*(1.0 - 2.0*u)*u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 8.0*kapT3*(1.0 - 2.0*u)*u7*( 1.0 + eightthird*u2*oom3u ) + 2.0*kapT3*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  )  - 9.0*u8*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  ); /* -1.0*kapT3*u7*( 1.*u*(-2. + 2.*eightthird*u) + 8.*( 1.0 - 2.*u + eightthird*u2 ) )*/
-      if (d2AT != NULL) {
-      d2A_u += -1.0*kapT3*(1.0 - 2.0*u)*(  u8*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) + 16.0*u7*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 56.0*u6*( 1.0 + eightthird*u2*oom3u )  ) + 4.0*kapT3*(  u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 8.0*u7*( 1.0 + eightthird*u2*oom3u )  ) - 18.0*u8*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  ) - 72.0*u7*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  ); /* -1.0*kapT3*u6*( 2.*u2*eightthird + 16.*u*(-2. + 2.*eightthird*u) + 8.*( 1.0 - 2.*u + eightthird*u2 ) )*/
-
-      }
-    #endif
 
   } else { 
 

@@ -392,6 +392,8 @@ void eob_set_params(char *s, int n)
   double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;
   double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;
   double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+  /* Gravitomagnetic term, see Eq.(6.27) if Bini-Damour-Faye 2012 */
+  double bar_alph2j_1 = ( kapA2j*(1. + (11./6.)*XA + XA*XA) + kapB2j*(1. + (11./6.)*XB + XB*XB) )/kapT2j;
 
   /* Tidal coefficients for the amplitude */
   double khatA_2  = 3./2. * LambdaAl2 * XB/XA * gsl_pow_int(XA,5);
@@ -450,6 +452,7 @@ void eob_set_params(char *s, int n)
   par_set_d("bar_alph2_2",bar_alph2_2);
   par_set_d("bar_alph3_1",bar_alph3_1);
   par_set_d("bar_alph3_2",bar_alph3_2);
+  par_set_d("bar_alph2j_1",bar_alph2j_1);
 
   par_set_d("khatAl2",khatA_2);
   par_set_d("khatBl2",khatB_2);
