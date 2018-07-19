@@ -190,32 +190,32 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 	- kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
     }
 
-#if(USEGRAVITOMAGNETICTERMS)
-    const double Ahat1PNjAcoef = (elsix*XA + XA*XA);
-    const double Ahat1PNjBcoef = (elsix*XB + XB*XB);
-    // Schwarzschild gravito-magnetic term
-    double Ahat_Schj     =  (1.-2.*u)*oom3u;			//1. + u + 3.*u2;	
-    double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;		//1. + 6.*u;	
-    double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);	//6.0;		
-    A += -1.*kapA2j*u8*Ahat1PNjAcoef - 1.*kapB2j*u8*Ahat1PNjBcoef - kapT2j*u7*Ahat_Schj;
-    dA_u += -1.*kapT2j*u6*(u*dAhat_Schj + 7.*Ahat_Schj ) - 8.*u7*( kapA2j*Ahat1PNjAcoef + kapB2j*Ahat1PNjBcoef );
-    if (d2AT != NULL) {
+    #if(USEGRAVITOMAGNETICTERMS)
+      const double Ahat1PNjAcoef = (elsix*XA + XA*XA);
+      const double Ahat1PNjBcoef = (elsix*XB + XB*XB);
+      // Schwarzschild gravito-magnetic term
+      double Ahat_Schj     =  (1.-2.*u)*oom3u;			//1. + u + 3.*u2;	
+      double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;		//1. + 6.*u;	
+      double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);	//6.0;		
+      A += -1.*kapA2j*u8*Ahat1PNjAcoef - 1.*kapB2j*u8*Ahat1PNjBcoef - kapT2j*u7*Ahat_Schj;
+      dA_u += -1.*kapT2j*u6*(u*dAhat_Schj + 7.*Ahat_Schj ) - 8.*u7*( kapA2j*Ahat1PNjAcoef + kapB2j*Ahat1PNjBcoef );
+      if (d2AT != NULL) {
       d2A_u += -1.*kapT2j * ( 42.*u5*Ahat_Schj + 14.*u6*dAhat_Schj + u7*d2Ahat_Schj ) 
 	- 1.*kapA2j*(56.*u6*Ahat1PNjAcoef ) - 1.*kapB2j * ( 56.*u6*Ahat1PNjBcoef );
-    }
-#endif
+      }
+    #endif
 
 
-#if(USEOCTUPOELECTRICTERMS)
+  #if(USEOCTUPOELECTRICTERMS)
 
-    /* el = 3+ tidal terms as a PN series */   
-    A    += -1.0*kapT3*(1.0 - 2.0*u)*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  ); /*-1.0*kapT3*u8*( 1.0 - 2.*u + eightthird*u2 ) */
-    dA_u += -1.0*kapT3*(1.0 - 2.0*u)*u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 8.0*kapT3*(1.0 - 2.0*u)*u7*( 1.0 + eightthird*u2*oom3u ) + 2.0*kapT3*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  )  - 9.0*u8*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  ); /* -1.0*kapT3*u7*( 1.*u*(-2. + 2.*eightthird*u) + 8.*( 1.0 - 2.*u + eightthird*u2 ) )*/
-    if (d2AT != NULL) {
+      /* el = 3+ tidal terms as a PN series */   
+      A    += -1.0*kapT3*(1.0 - 2.0*u)*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  ); /*-1.0*kapT3*u8*( 1.0 - 2.*u + eightthird*u2 ) */
+      dA_u += -1.0*kapT3*(1.0 - 2.0*u)*u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 8.0*kapT3*(1.0 - 2.0*u)*u7*( 1.0 + eightthird*u2*oom3u ) + 2.0*kapT3*u8*( 1.0 + eightthird*u2*oom3u ) - 1.0*u9*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  )  - 9.0*u8*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  ); /* -1.0*kapT3*u7*( 1.*u*(-2. + 2.*eightthird*u) + 8.*( 1.0 - 2.*u + eightthird*u2 ) )*/
+      if (d2AT != NULL) {
       d2A_u += -1.0*kapT3*(1.0 - 2.0*u)*(  u8*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) + 16.0*u7*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 56.0*u6*( 1.0 + eightthird*u2*oom3u )  ) + 4.0*kapT3*(  u8*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) + 8.0*u7*( 1.0 + eightthird*u2*oom3u )  ) - 18.0*u8*(  kapA3*( - 12.958333333333333333*XA + 36.666666666666666667*XA*XA ) + kapB3*( - 12.958333333333333333*XB + 36.666666666666666667*XB*XB )  ) - 72.0*u7*(  kapA3*( 7.5*XA - 12.958333333333333333*XA*u + 36.666666666666666667*XA*XA*u ) + kapB3*( 7.5*XB - 12.958333333333333333*XB*u + 36.666666666666666667*XB*XB*u )  ); /* -1.0*kapT3*u6*( 2.*u2*eightthird + 16.*u*(-2. + 2.*eightthird*u) + 8.*( 1.0 - 2.*u + eightthird*u2 ) )*/
 
-    }
-#endif
+      }
+    #endif
 
   } else { 
 
@@ -272,105 +272,103 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     }
 
 
-#if(USEGRAVITOMAGNETICTERMS)
-    /** Gravito-magnetic tides for el = 2 */
-    const double a1j =  0.728591192;
-    const double a2j =  3.100367557;	
-    const double n1j = -15.04421708;
-    const double d2j =  12.55229698;
-    // Schwarzschild gravito-magnetic term
-    double Ahat_Schj     =  (1.-2.*u)*oom3u;	
-    double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;
-    double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
+    #if(USEGRAVITOMAGNETICTERMS)
+      /** Gravito-magnetic tides for el = 2 */
+      const double a1j =  0.728591192;
+      const double a2j =  3.100367557;	
+      const double n1j = -15.04421708;
+      const double d2j =  12.55229698;
+      // Schwarzschild gravito-magnetic term
+      double Ahat_Schj     =  (1.-2.*u)*oom3u;	
+      double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;
+      double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
 
-    /* 1SF -- el = 2 gravitomagnetic terms */
-    double Denomj = 1./(1. + d2j*u2);
-    double Ahat1GSFfitj = elsix*u*(1. - a1j*u)*(1. - a2j*u)*(1. + n1j*u)*Denomj*pow(oom3u, 3.5);
-    double dAhat1GSFfitj = 0.5*elsix * Denomj * Denomj * ( 2 + (15 - 4*a1j - 4*a2j + 4*n1j)*u -  (2*d2j - 9*n1j + a2j*(9 + 6*n1j) + a1j*(9 - 6*a2j + 6*n1j))*pow(u, 2.) +    (27*d2j - 3*a2j*n1j + a1j*(-3*n1j + a2j*(3 + 8*n1j)))*pow(u, 3.) +    (a1j*(d2j*(-21 + 2*a2j - 2*n1j) - 3*a2j*n1j) + d2j*(21*n1j - a2j*(21 + 2*n1j)))*pow(u, 4.) + d2j*(-15*a2j*n1j + a1j*(-15*n1j + a2j*(15 + 4*n1j)))*pow(u, 5.) +    9*a1j*a2j*d2j*n1j*pow(u, 6.) ) * pow(oom3u, 4.5);
-    double d2Ahat1GSFfitj = 0.25*elsix * Denomj * Denomj * Denomj * ( 4*(1 - rLR*u)*(-2 + (-15 + 4*a1j)*u + 9*a1j*pow(u, 2.))*(1 + d2j*pow(u, 2.))*(a2j - n1j + 2*d2j*u + 2*a2j*n1j*u - a2j*d2j*pow(u, 2.) + d2j*n1j*pow(u, 2.)) + (-1 + a2j*u)*(1 + n1j*u)*pow(1 + d2j*pow(u, 2.), 2.)* (-21*(4 + 15*u) + a1j*(8 + 120*u + 135*pow(u, 2.))) + 8*pow(1 - rLR*u, 2.)*u*(-1 + a1j*u)*(a2j*n1j + pow(d2j, 2.)*pow(u, 2.)*(-3 + a2j*u - n1j*u) + d2j*(1 + 3*n1j*u - 3*a2j*u*(1 + n1j*u))) ) * pow(oom3u, 5.5); 
+      /* 1SF -- el = 2 gravitomagnetic terms */
+      double Denomj = 1./(1. + d2j*u2);
+      double Ahat1GSFfitj = elsix*u*(1. - a1j*u)*(1. - a2j*u)*(1. + n1j*u)*Denomj*pow(oom3u, 3.5);
+      double dAhat1GSFfitj = 0.5*elsix * Denomj * Denomj * ( 2 + (15 - 4*a1j - 4*a2j + 4*n1j)*u -  (2*d2j - 9*n1j + a2j*(9 + 6*n1j) + a1j*(9 - 6*a2j + 6*n1j))*pow(u, 2.) +    (27*d2j - 3*a2j*n1j + a1j*(-3*n1j + a2j*(3 + 8*n1j)))*pow(u, 3.) +    (a1j*(d2j*(-21 + 2*a2j - 2*n1j) - 3*a2j*n1j) + d2j*(21*n1j - a2j*(21 + 2*n1j)))*pow(u, 4.) + d2j*(-15*a2j*n1j + a1j*(-15*n1j + a2j*(15 + 4*n1j)))*pow(u, 5.) +    9*a1j*a2j*d2j*n1j*pow(u, 6.) ) * pow(oom3u, 4.5);
+      double d2Ahat1GSFfitj = 0.25*elsix * Denomj * Denomj * Denomj * ( 4*(1 - rLR*u)*(-2 + (-15 + 4*a1j)*u + 9*a1j*pow(u, 2.))*(1 + d2j*pow(u, 2.))*(a2j - n1j + 2*d2j*u + 2*a2j*n1j*u - a2j*d2j*pow(u, 2.) + d2j*n1j*pow(u, 2.)) + (-1 + a2j*u)*(1 + n1j*u)*pow(1 + d2j*pow(u, 2.), 2.)* (-21*(4 + 15*u) + a1j*(8 + 120*u + 135*pow(u, 2.))) + 8*pow(1 - rLR*u, 2.)*u*(-1 + a1j*u)*(a2j*n1j + pow(d2j, 2.)*pow(u, 2.)*(-3 + a2j*u - n1j*u) + d2j*(1 + 3*n1j*u - 3*a2j*u*(1 + n1j*u))) ) * pow(oom3u, 5.5); 
     
-    /* 2SF -- el = 2 gravitomagnetic terms */
-    double Ahat2GSFj    =  u*pow(oom3u,p);
-    double dAhat2GSFj    =  ( 1.+ (p-1.)*rLR*u ) * pow(oom3u, p+1);
-    double d2Ahat2GSFj   =  p*rLR * ( 2.+ (p-1.)*rLR*u ) * pow(oom3u, p+2);
+      /* 2SF -- el = 2 gravitomagnetic terms */
+      double Ahat2GSFj    =  u*pow(oom3u,p);
+      double dAhat2GSFj    =  ( 1.+ (p-1.)*rLR*u ) * pow(oom3u, p+1);
+      double d2Ahat2GSFj   =  p*rLR * ( 2.+ (p-1.)*rLR*u ) * pow(oom3u, p+2);
 
-     /* Total el = 2 gravitomagnetic potential as a GSF series */
-    double AhatjA   = Ahat_Schj + XA*Ahat1GSFfitj + XA*XA*Ahat2GSFj;
-    double dAhatjA  = dAhat_Schj + XA*dAhat1GSFfitj + XA*XA*dAhat2GSFj;
-    double AhatjB   = Ahat_Schj + XB*Ahat1GSFfitj + XB*XB*Ahat2GSFj;
-    double dAhatjB  = dAhat_Schj + XB*dAhat1GSFfitj + XB*XB*dAhat2GSFj;
+       /* Total el = 2 gravitomagnetic potential as a GSF series */
+      double AhatjA   = Ahat_Schj + XA*Ahat1GSFfitj + XA*XA*Ahat2GSFj;
+      double dAhatjA  = dAhat_Schj + XA*dAhat1GSFfitj + XA*XA*dAhat2GSFj;
+      double AhatjB   = Ahat_Schj + XB*Ahat1GSFfitj + XB*XB*Ahat2GSFj;
+      double dAhatjB  = dAhat_Schj + XB*dAhat1GSFfitj + XB*XB*dAhat2GSFj;
     
-    /* el = 2 gravitomagnetic total contribution */
-    double ATj_2      = -1.*kapA2j*u7*( AhatjA ) - 1.*kapB2j*u7*( AhatjB );
-    double dATj_2     = -1.*kapA2j * ( 7.*u6*AhatjA + u7*dAhatjA ) - 1.*kapB2j * ( 7.*u6*AhatjB + u7*dAhatjB );
+      /* el = 2 gravitomagnetic total contribution */
+      double ATj_2      = -1.*kapA2j*u7*( AhatjA ) - 1.*kapB2j*u7*( AhatjB );
+      double dATj_2     = -1.*kapA2j * ( 7.*u6*AhatjA + u7*dAhatjA ) - 1.*kapB2j * ( 7.*u6*AhatjB + u7*dAhatjB );
     
-    A    += ATj_2;
-    dA_u += ATj_2;
+      A    += ATj_2;
+      dA_u += ATj_2;
     
-    if (d2AT != NULL) {
-      double d2AhatjA = d2Ahat_Schj + XA*d2Ahat1GSFfitj + XA*XA*d2Ahat2GSFj;
-      double d2AhatjB = d2Ahat_Schj + XB*d2Ahat1GSFfitj + XB*XB*d2Ahat2GSFj;
-      double d2ATj_2    = -1.*kapA2j * ( 42.*u5*AhatjA + 14.*u6*dAhatjA + u7*d2AhatjA ) - 1.*kapB2j * ( 42.*u5*AhatjB + 14.*u6*dAhatjB + u7*d2AhatjB );
+      if (d2AT != NULL) {
+        double d2AhatjA = d2Ahat_Schj + XA*d2Ahat1GSFfitj + XA*XA*d2Ahat2GSFj;
+        double d2AhatjB = d2Ahat_Schj + XB*d2Ahat1GSFfitj + XB*XB*d2Ahat2GSFj;
+        double d2ATj_2    = -1.*kapA2j * ( 42.*u5*AhatjA + 14.*u6*dAhatjA + u7*d2AhatjA ) - 1.*kapB2j * ( 42.*u5*AhatjB + 14.*u6*dAhatjB + u7*d2AhatjB );
       
-      d2A_u += d2ATj_2;
-    }
+       d2A_u += d2ATj_2;
+      }
 
-#endif
+  #endif
 
 
-#if(USEOCTUPOELECTRICTERMS)
-    /** el = 3+, i.e.,  even parity tidal potential **/
+    #if(USEOCTUPOELECTRICTERMS)
+      /** el = 3+, i.e.,  even parity tidal potential **/
 
-    /* 1GSF fitting parameters */
-    const double C1 = -7.818562387634129;
-    const double C2 = 25.06785964656125;
-    const double C3 = 4.4512752793307175;
-    const double C4 = 34.6256087369367;
-    const double C5 = 6.42807264163465;
+      /* 1GSF fitting parameters */
+      const double C1 = -7.818562387634129;
+      const double C2 = 25.06785964656125;
+      const double C3 = 4.4512752793307175;
+      const double C4 = 34.6256087369367;
+      const double C5 = 6.42807264163465;
 
-    /* 0SF -- el = 3+, i.e.,  even parity terms */
-    double A3hat_Sch    = (1.0 - 2.0*u)*( 1.0 + eightthird*u2*oom3u );
-    double dA3hat_Sch   = (1.0 - 2.0*u)*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 2.0*( 1.0 + eightthird*u2*oom3u );
-    double d2A3hat_Sch  = (1.0 - 2.0*u)*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) - 4.0*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u );
+      /* 0SF -- el = 3+, i.e.,  even parity terms */
+      double A3hat_Sch    = (1.0 - 2.0*u)*( 1.0 + eightthird*u2*oom3u );
+      double dA3hat_Sch   = (1.0 - 2.0*u)*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 2.0*( 1.0 + eightthird*u2*oom3u );
+      double d2A3hat_Sch  = (1.0 - 2.0*u)*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) - 4.0*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u );
 
-    /* 1SF -- el = 3+, i.e.,  even parity terms */
-    double Denom3    = 1./(1. + C3*u + C4*u2);
-    double A3tilde   = (-2. + C5*u)*(1. + C1*u + C2*u2)*Denom3;
-    double dA3tilde  = ( 1.*C5 - 4.*C2*u + 4.*C4*u + 3.*C2*C5*u2 - 1.*C4*C5*u2 + 1.*C2*C4*C5*u4 + 1.*C1*(-2. + 2.*C4*u2 + 1.*C5*u*(2. + 1.*C3*u)) + 2.*C3*(1. + 1.*C2*u2*(-1. + 1.*C5*u)) )*Denom3*Denom3;
-    double d2A3tilde = 2.*(-2.*C3*C3 + 2.*C4 - 1.*C3*C5 - 6.*C3*C4*u - 3.*C4*C5*u - 6.*C4*C4*u2 + 1.*C4*C4*C5*u3 + 1.*C2*(-2. + 2.*C4*u2*(3. + 1.*C3*u) + 1.*C5*u*(3. + 3.*C3*u + 1.*C3*C3*u2 - 1.*C4*u2)) + 1.*C1*(1.*C5 - 3.*C4*C5*u2 - 2.*C4*u*(-3. + 1.*C4*u2) + 1.*C3*(2. - 1.*C4*C5*u3)))*Denom3*Denom3*Denom3;
-    double A3hat1GSFfit =  A3tilde*pow(oom3u, 3.5);
-    double dA3hat1GSFfit = 3.5*rLR*A3tilde*pow(oom3u, 4.5) + dA3tilde*pow(oom3u, 3.5);
-    double d2A3hat1GSFfit = 15.75*rLR*rLR*A3tilde*pow(oom3u, 5.5) + 7.0*rLR*dA3tilde*pow(oom3u, 4.5) + d2A3tilde*pow(oom3u, 3.5);
+      /* 1SF -- el = 3+, i.e.,  even parity terms */
+      double Denom3    = 1./(1. + C3*u + C4*u2);
+      double A3tilde   = (-2. + C5*u)*(1. + C1*u + C2*u2)*Denom3;
+      double dA3tilde  = ( 1.*C5 - 4.*C2*u + 4.*C4*u + 3.*C2*C5*u2 - 1.*C4*C5*u2 + 1.*C2*C4*C5*u4 + 1.*C1*(-2. + 2.*C4*u2 + 1.*C5*u*(2. + 1.*C3*u)) + 2.*C3*(1. + 1.*C2*u2*(-1. + 1.*C5*u)) )*Denom3*Denom3;
+      double d2A3tilde = 2.*(-2.*C3*C3 + 2.*C4 - 1.*C3*C5 - 6.*C3*C4*u - 3.*C4*C5*u - 6.*C4*C4*u2 + 1.*C4*C4*C5*u3 + 1.*C2*(-2. + 2.*C4*u2*(3. + 1.*C3*u) + 1.*C5*u*(3. + 3.*C3*u + 1.*C3*C3*u2 - 1.*C4*u2)) + 1.*C1*(1.*C5 - 3.*C4*C5*u2 - 2.*C4*u*(-3. + 1.*C4*u2) + 1.*C3*(2. - 1.*C4*C5*u3)))*Denom3*Denom3*Denom3;
+      double A3hat1GSFfit =  A3tilde*pow(oom3u, 3.5);
+      double dA3hat1GSFfit = 3.5*rLR*A3tilde*pow(oom3u, 4.5) + dA3tilde*pow(oom3u, 3.5);
+      double d2A3hat1GSFfit = 15.75*rLR*rLR*A3tilde*pow(oom3u, 5.5) + 7.0*rLR*dA3tilde*pow(oom3u, 4.5) + d2A3tilde*pow(oom3u, 3.5);
     
-    /* 2SF -- el = 3+, i.e.,  even parity terms */
-    double A3hat2GSF     =  36.666666666666666667*u2*pow(oom3u,p);
-    double dA3hat2GSF    =  36.666666666666666667*u*( 2. + (p - 2.)*rLR*u ) * pow(oom3u, p+1);
-    double d2A3hat2GSF   =  36.666666666666666667*( 2. + 4.*(p - 1.)*rLR*u + (2. - 3.*p + 1.*p*p)*rLR*rLR*u2 ) * pow(oom3u, p+2);
+      /* 2SF -- el = 3+, i.e.,  even parity terms */
+      double A3hat2GSF     =  36.666666666666666667*u2*pow(oom3u,p);
+      double dA3hat2GSF    =  36.666666666666666667*u*( 2. + (p - 2.)*rLR*u ) * pow(oom3u, p+1);
+      double d2A3hat2GSF   =  36.666666666666666667*( 2. + 4.*(p - 1.)*rLR*u + (2. - 3.*p + 1.*p*p)*rLR*rLR*u2 ) * pow(oom3u, p+2);
 
-     /* Hatted el = 3+ potential as a GSF series */
-    double A3hatA   = A3hat_Sch + XA*A3hat1GSFfit + XA*XA*A3hat2GSF;
-    double dA3hatA  = dA3hat_Sch + XA*dA3hat1GSFfit + XA*XA*dA3hat2GSF;
-    double A3hatB   = A3hat_Sch + XB*A3hat1GSFfit + XB*XB*A3hat2GSF;
-    double dA3hatB  = dA3hat_Sch + XB*dA3hat1GSFfit + XB*XB*dA3hat2GSF;
+       /* Hatted el = 3+ potential as a GSF series */
+      double A3hatA   = A3hat_Sch + XA*A3hat1GSFfit + XA*XA*A3hat2GSF;
+      double dA3hatA  = dA3hat_Sch + XA*dA3hat1GSFfit + XA*XA*dA3hat2GSF;
+      double A3hatB   = A3hat_Sch + XB*A3hat1GSFfit + XB*XB*A3hat2GSF;
+      double dA3hatB  = dA3hat_Sch + XB*dA3hat1GSFfit + XB*XB*dA3hat2GSF;
     
-    /* Total el = 3+ tidal potential */
-    double A3plus      = -1.*kapA3*u8*( A3hatA ) - 1.*kapB3*u8*( A3hatB );
-    double dA3plus     = -1.*kapA3*u7*( 8.*A3hatA + 1.*u*dA3hatA ) - 1.*kapB3*u7*( 8.*A3hatB + 1.*u*dA3hatB );
+      /* Total el = 3+ tidal potential */
+      double A3plus      = -1.*kapA3*u8*( A3hatA ) - 1.*kapB3*u8*( A3hatB );
+      double dA3plus     = -1.*kapA3*u7*( 8.*A3hatA + 1.*u*dA3hatA ) - 1.*kapB3*u7*( 8.*A3hatB + 1.*u*dA3hatB );
     
-    A    += A3plus;
-    dA_u += dA3plus;
+      A    += A3plus;
+      dA_u += dA3plus;
     
-    if (d2AT != NULL) {
-      double d2A3hatA = d2A3hat_Sch + XA*d2A3hat1GSFfit + XA*XA*d2A3hat2GSF;
-      double d2A3hatB = d2A3hat_Sch + XB*d2A3hat1GSFfit + XB*XB*d2A3hat2GSF;
-      double d2A3plus = -1.*kapA3 * ( 56.*u6*A3hatA + 16.*u7*dA3hatA + 1.*u8*d2A3hatA ) - 1.*kapB3 * ( 56.*u6*A3hatB + 16.*u7*dA3hatB + 1.*u8*d2A3hatB );
+      if (d2AT != NULL) {
+        double d2A3hatA = d2A3hat_Sch + XA*d2A3hat1GSFfit + XA*XA*d2A3hat2GSF;
+        double d2A3hatB = d2A3hat_Sch + XB*d2A3hat1GSFfit + XB*XB*d2A3hat2GSF;
+        double d2A3plus = -1.*kapA3 * ( 56.*u6*A3hatA + 16.*u7*dA3hatA + 1.*u8*d2A3hatA ) - 1.*kapB3 * ( 56.*u6*A3hatB + 16.*u7*dA3hatB + 1.*u8*d2A3hatB );
       
-      d2A_u += d2A3plus;
-    }
+        d2A_u += d2A3plus;
+      }
 
-
-
-#endif
+  #endif
 
   }
 
