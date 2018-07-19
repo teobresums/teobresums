@@ -135,7 +135,7 @@ int main (int argc, char* argv[])
   int check_status;
   if (use_tidal) {
     /* Compute rLR_tidal for NNLO potential and without spin part */
-    dyn->use_tidal = TIDES_TEOBRESUM; // TIDES_NNLO;
+    dyn->use_tidal = TIDES_NNLO; //TIDES_TEOBRESUM; // 
     dyn->use_spins = 0;
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal)));
     par_set_d("rLR_tidal", dyn->rLR_tidal);
