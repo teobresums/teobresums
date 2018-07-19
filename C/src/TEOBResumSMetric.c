@@ -179,17 +179,23 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
   if (dyn->use_tidal==TIDES_NNLO) {
 
-    A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2) - kapT2j*u7*(1. +  bar_alph2j_1*u);
-    dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u) - kapT2j*u7*bar_alph2j_1
-      - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2) - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u);
+    A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2) ;
+    dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u) 
+      - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
 
     if (d2AT != NULL) {
       d2A_u = -90.*kapT4*u8
 	- kapT2*(2*bar_alph2_2*u6 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u)
 		 + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2))
-	- kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2)) - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
+	- kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2)) ;
     }
 
+    #if(USEGRAVITOMAGNETICTERMS)
+	/* PN series for the (2-) tidal potential */
+	A    +=-kapT2j*u7*(1. +  bar_alph2j_1*u);
+	dA_u += -kapT2j*u7*bar_alph2j_1 - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u);
+	d2A_u += - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
+    #endif
 
   } else { 
 

@@ -177,6 +177,7 @@ enum{
   TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
   TIDES_NNLO, 
   TIDES_TEOBRESUM,
+  TIDES_TEOBRESUM3,
   TIDES_TEOBRESUM_BHNS,
   TIDES_NOPT
 };
