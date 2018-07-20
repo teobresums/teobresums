@@ -181,7 +181,7 @@ enum{
   TIDES_TEOBRESUM_BHNS,
   TIDES_NOPT
 };
-static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM","TEOBRESUM_BHNS","undefined"};
+static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM", "TEOBRESUM3", "TEOBRESUM_BHNS","undefined"};
 
 /** List of options for ODE timestepping */
 enum{
