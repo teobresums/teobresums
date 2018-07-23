@@ -64,10 +64,6 @@
 #define USE_GRAVITOMAGNETICTERMS 0 /* use gravitomagnetic terms in tidal potential and waveform */
 #endif
 
-#ifndef USEOCTUPOELECTRICTERMS
-#define USEOCTUPOELECTRICTERMS 0 /* use l=3 even parity terms in the tidal potential */
-#endif
-
 #ifndef USERK45
 #define USERK45 0 /* use GSL rkf45 instead of rk8pd */
 #endif

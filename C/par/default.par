@@ -8,8 +8,8 @@
 M = 1. # total binary mass
 q = 1. # mass ratio
 
-chi1 = 0. # dimensioneless spin 1 z-component 
-chi2 = 0. # dimensioneless spin 2 z-component 
+chi1 = 0. # dimensionless spin 1 z-component 
+chi2 = 0. # dimensionless spin 2 z-component 
 
 distance = 1. 
 inclination = 0.
