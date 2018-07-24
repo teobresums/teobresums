@@ -690,6 +690,7 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->Mbhf = par_get_d("BH_final_mass");
   dyn->abhf = par_get_d("BH_final_spin");
   dyn->use_tidal = par_get_i("use_tidal");
+  dyn->use_tidal_gravitomagnetic = par_get_i("use_tidal_gravitomagnetic");
   dyn->use_spins = par_get_i("use_spins");
   dyn->dt        = par_get_d("dt");
   dyn->t_stop    = par_get_d("ode_tmax");

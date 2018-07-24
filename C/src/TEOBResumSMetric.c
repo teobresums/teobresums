@@ -176,7 +176,6 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   double logu = log(u);
   double oom3u  = 1./(1.-rLR*u);
 
-
   if (dyn->use_tidal==TIDES_NNLO) {
 
     A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2) ;
@@ -340,62 +339,61 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
   }
 
+printf("r = %f\tA post (+) tides = %e\n", 1/u, A);
 
-  #if(USEGRAVITOMAGNETICTERMS)
-    if (dyn->use_tidal==TIDES_NNLO) {
-      /* PN series for the (2-) tidal potential */
-      A    +=-kapT2j*u7*(1. +  bar_alph2j_1*u);
-      dA_u += -kapT2j*u7*bar_alph2j_1 - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u);
-      if (d2AT != NULL) {
-        d2A_u += - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
-      }
-
-    } else {
-      /** GSF series for the (2-) tidal potential */
-      const double a1j =  0.728591192;
-      const double a2j =  3.100367557;	
-      const double n1j = -15.04421708;
-      const double d2j =  12.55229698;
-      // Schwarzschild gravito-magnetic term
-      double Ahat_Schj     =  (1.-2.*u)*oom3u;	
-      double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;
-      double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
-
-      /* 1SF -- el = 2 gravitomagnetic terms */
-      double Denomj = 1./(1. + d2j*u2);
-      double Ahat1GSFfitj = elsix*u*(1. - a1j*u)*(1. - a2j*u)*(1. + n1j*u)*Denomj*pow(oom3u, 3.5);
-      double dAhat1GSFfitj = 0.5*elsix * Denomj * Denomj * ( 2 + (15 - 4*a1j - 4*a2j + 4*n1j)*u -  (2*d2j - 9*n1j + a2j*(9 + 6*n1j) + a1j*(9 - 6*a2j + 6*n1j))*pow(u, 2.) +    (27*d2j - 3*a2j*n1j + a1j*(-3*n1j + a2j*(3 + 8*n1j)))*pow(u, 3.) +    (a1j*(d2j*(-21 + 2*a2j - 2*n1j) - 3*a2j*n1j) + d2j*(21*n1j - a2j*(21 + 2*n1j)))*pow(u, 4.) + d2j*(-15*a2j*n1j + a1j*(-15*n1j + a2j*(15 + 4*n1j)))*pow(u, 5.) +    9*a1j*a2j*d2j*n1j*pow(u, 6.) ) * pow(oom3u, 4.5);
-      double d2Ahat1GSFfitj = 0.25*elsix * Denomj * Denomj * Denomj * ( 4*(1 - rLR*u)*(-2 + (-15 + 4*a1j)*u + 9*a1j*pow(u, 2.))*(1 + d2j*pow(u, 2.))*(a2j - n1j + 2*d2j*u + 2*a2j*n1j*u - a2j*d2j*pow(u, 2.) + d2j*n1j*pow(u, 2.)) + (-1 + a2j*u)*(1 + n1j*u)*pow(1 + d2j*pow(u, 2.), 2.)* (-21*(4 + 15*u) + a1j*(8 + 120*u + 135*pow(u, 2.))) + 8*pow(1 - rLR*u, 2.)*u*(-1 + a1j*u)*(a2j*n1j + pow(d2j, 2.)*pow(u, 2.)*(-3 + a2j*u - n1j*u) + d2j*(1 + 3*n1j*u - 3*a2j*u*(1 + n1j*u))) ) * pow(oom3u, 5.5); 
-    
-      /* 2SF -- el = 2 gravitomagnetic terms */
-      double Ahat2GSFj    =  u*pow(oom3u,p);
-      double dAhat2GSFj    =  ( 1.+ (p-1.)*rLR*u ) * pow(oom3u, p+1);
-      double d2Ahat2GSFj   =  p*rLR * ( 2.+ (p-1.)*rLR*u ) * pow(oom3u, p+2);
-
-       /* Total el = 2 gravitomagnetic potential as a GSF series */
-      double AhatjA   = Ahat_Schj + XA*Ahat1GSFfitj + XA*XA*Ahat2GSFj;
-      double dAhatjA  = dAhat_Schj + XA*dAhat1GSFfitj + XA*XA*dAhat2GSFj;
-      double AhatjB   = Ahat_Schj + XB*Ahat1GSFfitj + XB*XB*Ahat2GSFj;
-      double dAhatjB  = dAhat_Schj + XB*dAhat1GSFfitj + XB*XB*dAhat2GSFj;
-    
-      /* el = 2 gravitomagnetic total contribution */
-      double ATj_2      = -1.*kapA2j*u7*( AhatjA ) - 1.*kapB2j*u7*( AhatjB );
-      double dATj_2     = -1.*kapA2j * ( 7.*u6*AhatjA + u7*dAhatjA ) - 1.*kapB2j * ( 7.*u6*AhatjB + u7*dAhatjB );
-    
-      A    += ATj_2;
-      dA_u += dATj_2;
-    
-      if (d2AT != NULL) {
-        double d2AhatjA = d2Ahat_Schj + XA*d2Ahat1GSFfitj + XA*XA*d2Ahat2GSFj;
-        double d2AhatjB = d2Ahat_Schj + XB*d2Ahat1GSFfitj + XB*XB*d2Ahat2GSFj;
-        double d2ATj_2    = -1.*kapA2j * ( 42.*u5*AhatjA + 14.*u6*dAhatjA + u7*d2AhatjA ) - 1.*kapB2j * ( 42.*u5*AhatjB + 14.*u6*dAhatjB + u7*d2AhatjB );
-      
-       d2A_u += d2ATj_2;
-      }
+  if (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) {
+    /* PN series for the (2-) tidal potential */
+    A    +=-kapT2j*u7*(1. +  bar_alph2j_1*u);
+    dA_u += -kapT2j*u7*bar_alph2j_1 - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u);
+    if (d2AT != NULL) {
+      d2A_u += - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
     }
+printf("A post (2-)PN tide = %e\n", A);
 
-  #endif
+  } else if (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) {
+    /** GSF series for the (2-) tidal potential */
+    const double a1j =  0.728591192;
+    const double a2j =  3.100367557;	
+    const double n1j = -15.04421708;
+    const double d2j =  12.55229698;
+    // Schwarzschild gravito-magnetic term
+    double Ahat_Schj     =  (1.-2.*u)*oom3u;	
+    double dAhat_Schj    =  (rLR-2.)*oom3u*oom3u;
+    double d2Ahat_Schj   =  -2.*rLR*(rLR-2.)*pow(oom3u, 3.);
 
+    /* 1SF -- el = 2 gravitomagnetic terms */
+    double Denomj = 1./(1. + d2j*u2);
+    double Ahat1GSFfitj = elsix*u*(1. - a1j*u)*(1. - a2j*u)*(1. + n1j*u)*Denomj*pow(oom3u, 3.5);
+    double dAhat1GSFfitj = 0.5*elsix * Denomj * Denomj * ( 2 + (15 - 4*a1j - 4*a2j + 4*n1j)*u -  (2*d2j - 9*n1j + a2j*(9 + 6*n1j) + a1j*(9 - 6*a2j + 6*n1j))*pow(u, 2.) +    (27*d2j - 3*a2j*n1j + a1j*(-3*n1j + a2j*(3 + 8*n1j)))*pow(u, 3.) +    (a1j*(d2j*(-21 + 2*a2j - 2*n1j) - 3*a2j*n1j) + d2j*(21*n1j - a2j*(21 + 2*n1j)))*pow(u, 4.) + d2j*(-15*a2j*n1j + a1j*(-15*n1j + a2j*(15 + 4*n1j)))*pow(u, 5.) +    9*a1j*a2j*d2j*n1j*pow(u, 6.) ) * pow(oom3u, 4.5);
+    double d2Ahat1GSFfitj = 0.25*elsix * Denomj * Denomj * Denomj * ( 4*(1 - rLR*u)*(-2 + (-15 + 4*a1j)*u + 9*a1j*pow(u, 2.))*(1 + d2j*pow(u, 2.))*(a2j - n1j + 2*d2j*u + 2*a2j*n1j*u - a2j*d2j*pow(u, 2.) + d2j*n1j*pow(u, 2.)) + (-1 + a2j*u)*(1 + n1j*u)*pow(1 + d2j*pow(u, 2.), 2.)* (-21*(4 + 15*u) + a1j*(8 + 120*u + 135*pow(u, 2.))) + 8*pow(1 - rLR*u, 2.)*u*(-1 + a1j*u)*(a2j*n1j + pow(d2j, 2.)*pow(u, 2.)*(-3 + a2j*u - n1j*u) + d2j*(1 + 3*n1j*u - 3*a2j*u*(1 + n1j*u))) ) * pow(oom3u, 5.5); 
+    
+    /* 2SF -- el = 2 gravitomagnetic terms */
+    double Ahat2GSFj    =  u*pow(oom3u,p);
+    double dAhat2GSFj    =  ( 1.+ (p-1.)*rLR*u ) * pow(oom3u, p+1);
+    double d2Ahat2GSFj   =  p*rLR * ( 2.+ (p-1.)*rLR*u ) * pow(oom3u, p+2);
+
+    /* Total el = 2 gravitomagnetic potential as a GSF series */
+    double AhatjA   = Ahat_Schj + XA*Ahat1GSFfitj + XA*XA*Ahat2GSFj;
+    double dAhatjA  = dAhat_Schj + XA*dAhat1GSFfitj + XA*XA*dAhat2GSFj;
+    double AhatjB   = Ahat_Schj + XB*Ahat1GSFfitj + XB*XB*Ahat2GSFj;
+    double dAhatjB  = dAhat_Schj + XB*dAhat1GSFfitj + XB*XB*dAhat2GSFj;
+    
+    /* el = 2 gravitomagnetic total contribution */
+    double ATj_2      = -1.*kapA2j*u7*( AhatjA ) - 1.*kapB2j*u7*( AhatjB );
+    double dATj_2     = -1.*kapA2j * ( 7.*u6*AhatjA + u7*dAhatjA ) - 1.*kapB2j * ( 7.*u6*AhatjB + u7*dAhatjB );
+    
+    A    += ATj_2;
+    dA_u += dATj_2;
+    
+    if (d2AT != NULL) {
+      double d2AhatjA = d2Ahat_Schj + XA*d2Ahat1GSFfitj + XA*XA*d2Ahat2GSFj;
+      double d2AhatjB = d2Ahat_Schj + XB*d2Ahat1GSFfitj + XB*XB*d2Ahat2GSFj;
+      double d2ATj_2    = -1.*kapA2j * ( 42.*u5*AhatjA + 14.*u6*dAhatjA + u7*d2AhatjA ) - 1.*kapB2j * ( 42.*u5*AhatjB + 14.*u6*dAhatjB + u7*d2AhatjB );
+      
+      d2A_u += d2ATj_2;
+    }
+printf("A post (2-)GSF tide = %e\n", A);
+  }
 
   *AT   = A;
   *dAT  = dA_u;

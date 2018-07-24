@@ -13,6 +13,7 @@ compute_LR = 0 # calculate LR ?
 compute_LSO = 0 # calculate LSO ?
 ode_timestep = "uniform"
 tides = "TEOBRESUM"
+tides_gravitomagnetic = "GSF"
 LambdaAl2 = 1531. # MS1b 1.35
 LambdaBl2 = 1531.
 use_Yagi_fits = 1

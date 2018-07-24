@@ -20,6 +20,7 @@ r0 = 0.
 initial_frequency = 0.004 # initial GW frequency
 
 tides = "no" 
+tides_gravitomagnetic = "no"
 LambdaAl2 = 0. # Tidal gravitoelectirc parameter Lambda for star A ell=2
 LambdaBl2 = 0.
 LambdaAl3 = 0. 
@@ -128,3 +129,4 @@ rLR = 0. # radius of light-ring
 rLSO = 0. # radius of last stable orbit 
 
 use_tidal = 0 # index for tidal modus
+use_tidal_gravitomagnetic = 0 # index for gravitomagnetic tide

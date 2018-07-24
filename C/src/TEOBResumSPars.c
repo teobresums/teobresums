@@ -342,6 +342,23 @@ void eob_set_params(char *s, int n)
   }
   par_set_i("use_tidal",j);
   const int usetidal = j;
+
+
+  int k;
+
+  for (k=0; k<=TIDES_GM_NOPT; k++) {
+    if (STREQUAL(par_get_s("tides_gravitomagnetic"), tides_gravitomagnetic_opt[k])) {
+      if (DEBUG) printf("%-40s = %s\n","tides_gravitomagnetic", tides_gravitomagnetic_opt[k]);
+      break;
+    }
+  }
+  if (k==TIDES_GM_NOPT) {
+    if (VERBOSE) printf("gravitomagnetic tides '%s' undefined, set to default\n",par_get_s("tides_gravitomagnetic"));
+    k = TIDES_GM_OFF;
+  }
+  par_set_i("use_tidal_gravitomagnetic",k);
+  const int usetidalGM = k;
+  
   
   double LambdaAl2 = par_get_d("LambdaAl2");
   double LambdaBl2 = par_get_d("LambdaBl2");
@@ -385,6 +402,12 @@ void eob_set_params(char *s, int n)
     if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
     //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");//FIXME: later check for division?
   } 
+
+
+  if (usetidalGM) {
+    if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
+  } 
+
   
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */

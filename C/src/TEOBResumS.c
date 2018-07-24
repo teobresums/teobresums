@@ -94,6 +94,7 @@ int main (int argc, char* argv[])
   const double chi2 = par_get_d("chi2");
   const int use_spins = par_get_i("use_spins");
   const int use_tidal = par_get_i("use_tidal");
+  const int use_tidal_gravitomagnetic = par_get_i("use_tidal_gravitomagnetic");
   int interp_uniform_grid = par_get_i("interp_uniform_grid");  
   int store_dynamics = par_get_i("output_dynamics");
   if (!(use_tidal)) interp_uniform_grid = 1; /* NQC and ringdown attachment assume uniform grids */

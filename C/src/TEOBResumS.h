@@ -179,6 +179,15 @@ enum{
 };
 static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM", "TEOBRESUM3", "TEOBRESUM_BHNS","undefined"};
 
+/** List of options for the gravitomagnetic tidal potential */
+enum{
+  TIDES_GM_OFF, /* = 0 , keep first to allow syntax: if(use_tidal_gravitomagnetic) { ... */
+  TIDES_GM_PN, 
+  TIDES_GM_GSF,
+  TIDES_GM_NOPT
+};
+static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","undefined"};
+
 /** List of options for ODE timestepping */
 enum{
   ODE_TSTEP_UNIFORM, 
@@ -268,7 +277,7 @@ typedef struct tagDynamics
   double kapA2j, kapB2j, kapT2j;
   double rLR_tidal, pGSF_tidal;
   double Mbhf, abhf; /* final BH */
-  int use_tidal, use_spins;
+  int use_tidal, use_spins, use_tidal_gravitomagnetic;
 } Dynamics;
 
 /* Function protoypes grouped based on file */
