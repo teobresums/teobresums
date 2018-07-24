@@ -336,10 +336,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       
       d2A_u += d2AT3;
       }
-
   }
-
-printf("r = %f\tA post (+) tides = %e\n", 1/u, A);
 
   if (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) {
     /* PN series for the (2-) tidal potential */
@@ -348,7 +345,6 @@ printf("r = %f\tA post (+) tides = %e\n", 1/u, A);
     if (d2AT != NULL) {
       d2A_u += - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
     }
-printf("A post (2-)PN tide = %e\n", A);
 
   } else if (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) {
     /** GSF series for the (2-) tidal potential */
@@ -392,7 +388,6 @@ printf("A post (2-)PN tide = %e\n", A);
       
       d2A_u += d2ATj_2;
     }
-printf("A post (2-)GSF tide = %e\n", A);
   }
 
   *AT   = A;
