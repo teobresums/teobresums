@@ -148,7 +148,6 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double kapB2j = dyn->kapB2j;
   const double kapT2j = dyn->kapT2j;
 
-
   /* Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, 
      Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
   const double bar_alph2_1 = dyn->bar_alph2_1;
@@ -338,15 +337,21 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       }
   }
 
+
+#if(USE_GRAVITOMAGNETICTERMS)
+  
   if (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) {
+    
     /* PN series for the (2-) tidal potential */
     A    +=-kapT2j*u7*(1. +  bar_alph2j_1*u);
     dA_u += -kapT2j*u7*bar_alph2j_1 - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u);
+    
     if (d2AT != NULL) {
       d2A_u += - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
     }
 
   } else if (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) {
+    
     /** GSF series for the (2-) tidal potential */
     const double a1j =  0.728591192;
     const double a2j =  3.100367557;	
@@ -388,8 +393,11 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       
       d2A_u += d2ATj_2;
     }
+    
   }
 
+#endif
+  
   *AT   = A;
   *dAT  = dA_u;
   if (d2AT != NULL) *d2AT = d2A_u;

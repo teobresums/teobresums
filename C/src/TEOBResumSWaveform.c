@@ -607,7 +607,7 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
     part of the waveform in particularly compact form, so that the (spinning)
     test-particle limit is recovered just by visual inspection of the equations */
 void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
-		   double *rholm, double *flm)
+			double *rholm, double *flm)
 {
 
   /** Orbital part */
@@ -719,8 +719,8 @@ void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, 
     combinations of these quantities are used here to write the spin-dependent
     part of the waveform in particularly compact form, so that the (spinning)
     test-particle limit is recovered just by visual inspection of the equations */
-void eob_wav_flm_s(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
-		   double *rholm, double *flm)
+void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
+			 double *rholm, double *flm)
 {
 
   /** Orbital part */
@@ -942,6 +942,8 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
 
+#if(USE_GRAVITOMAGNETICTERMS)
+  
   if ( (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) || (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) ) {
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
     const double fourthird = 1.3333333333333333333; // 32/24 = 4/3
@@ -952,6 +954,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
     hTidallm[4] += 0.5*( kapA2j*(4. - 9.*XB) - kapB2j*(4. - 9.*XA) )*x6;
   }
 
+#endif
 
   /* OLD STUFF 
    // l=2 
