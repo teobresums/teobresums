@@ -23,6 +23,10 @@ AC_ARG_ENABLE(profile,
               [  --enable-profile        Add gprof-friendly stuff to CXXFLAGS],
               [ CXXFLAGS="$CXXFLAGS -pg -fprofile-arcs" ],)
 
+AC_CHECK_LIB([m],[cos])
+AC_CHECK_LIB([gslcblas],[cblas_dgemm])
+AC_CHECK_LIB([gsl],[gsl_blas_dgemm])
+
 dnl GSL
 AC_LANG_C
 AC_ARG_WITH(gsllib, 
@@ -33,7 +37,7 @@ if test $gsllib; then
   LDFLAGS="$LDFLAGS -L$gsllib"
   AC_CHECK_LIB( gsl, main, ,
       AC_MSG_ERROR("libgsl not in location specified by --with-gsllib: $gsllib"),
-      [ -lm -lgslcblas -L$gsllib ] )
+      [ -lm -lgsl -lgslcblas -L$gsllib ] )
   AC_CHECK_LIB( gslcblas, main, ,
       AC_MSG_ERROR("libgslcblas not in location specified by --with-gsllib: $gsllib"),
       [ -lm -L$gsllib ] )
