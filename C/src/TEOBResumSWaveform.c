@@ -599,6 +599,120 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
     The orbital part is taken at the usual 3^{+2} PN order, i.e. 3PN terms
     are integrated by the 4PN and 5PN test-particle terms, with the higher
     modes obtained by Fujita & Iyer.
+    It only includes spin-spin interaction at LO for the (2,2) mode.
+    Note that the variables called here (a1,a2)
+    are what we usually cal tilde{a}_1 and tilde{a}_2 and are defined as
+    a1 = X1*chi1, a2=X2*chi2 and are passed here as parameters. Special 
+    combinations of these quantities are used here to write the spin-dependent
+    part of the waveform in particularly compact form, so that the (spinning)
+    test-particle limit is recovered just by visual inspection of the equations */
+void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
+		   double *rholm, double *flm)
+{
+
+  /** Orbital part */
+  //double rholm_orb[KMAX], flm_orb[KMAX];
+  eob_wav_flm(x,nu, rholm, flm);
+
+  /** Spin corrections */
+  double rho22S;
+  double rho32S;
+  double rho44S;
+  double rho42S;
+  double f21S;
+  double f33S;
+  double f31S;
+  double f43S;
+  double f41S;
+      
+  const double a0      = a1+a2;
+  const double a12     = a1-a2;
+  const double X12     = X1-X2;
+  const double a0X12   = a0*X12;
+  const double a12X12  = a12*X12;
+  
+  const double v  = sqrt(x);
+  const double v2 = x;
+  const double v3 = v*v2;
+  const double v4 = v3*v;
+  const double v5 = v4*v;
+     
+  /** l=m=2 multipole */
+  /* spin-orbit */
+  const double cSO_lo    = (-0.5*a0 - a12X12/6.);
+  const double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12;
+  
+  /* SPIN-SPIN contribution */
+  double cSS_lo;
+  if (usetidal) {
+#if (EXCLUDESPINSPINTIDES)
+    /* Switch off spin-spin-tidal couplings */
+    /* See also: eob_dyn_s_get_rc() */
+    cSS_lo = 0.;
+    /* Above code switch off everything, 
+       Alt. one can set C_Q1=C_Q2=0, but keep the term: */
+    /*
+      cSS_lo = a1*a2;
+    */
+#else
+    cSS_lo = 0.5*(C_Q1*a1*a1 + 2.*a1*a2 + C_Q2*a2*a2);
+#endif
+  } else {
+    cSS_lo = 0.5*a0*a0; 
+  }
+
+  /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
+  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 ;
+    
+  /** l>=3, m=even: multipoles rewritten in compact and self-explanatory form */
+  rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
+  rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
+  rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
+  
+  /** l>=2, m=odd: multipoles rewritten in compact and self-explanatory form */
+  f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3;
+  f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3;
+  f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3;
+  f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v;
+  f41S = f43S;
+    
+  /** Amplitudes (correct with spin terms) */
+  flm[0] = gsl_pow_int(rholm[0], 2);
+  flm[0] = (X12*flm[0] + f21S);
+  
+  flm[1] = gsl_pow_int(rholm[1]+ rho22S, 2);
+  
+  flm[2] = gsl_pow_int(rholm[2], 3);
+  flm[2] = (X12*flm[2] + f31S);
+  
+  flm[3] = gsl_pow_int(rholm[3]+ rho32S, 3);
+  
+  flm[4] = gsl_pow_int(rholm[4], 3);
+  flm[4] = (X12*flm[4] + f33S);
+  
+  flm[5] = gsl_pow_int(rholm[5], 4);
+  flm[5] = (X12*flm[5] + f41S);
+  
+  flm[6] = gsl_pow_int(rholm[6] + rho42S, 4);
+  
+  flm[7] = gsl_pow_int(rholm[7], 4);
+  flm[7] = (X12*flm[7] + f43S);
+  
+  flm[8] = gsl_pow_int(rholm[8] + rho44S, 4);
+      
+}
+
+
+/** Resummed amplitudes for the spin case. 
+    This function computes the residual amplitude corrections flm's as 
+    introduced in Damour, Iyer & Nagar, PRD 79, 064004 (2008).
+    The orbital part is taken at the usual 3^{+2} PN order, i.e. 3PN terms
+    are integrated by the 4PN and 5PN test-particle terms, with the higher
+    modes obtained by Fujita & Iyer.
+    The function includes spin-spin interaction at NLO for the (2,2) mode
+    and at LO for the (2,1),(3,1) and (3,3) modes. 
+    W.r.t "eob_wav_flm_s_SSLO", it also includes NNLO spin-orbit terms for
+    the l=2 multipoles and NLO spin-orbit terms for l=3.
     Note that the variables called here (a1,a2)
     are what we usually cal tilde{a}_1 and tilde{a}_2 and are defined as
     a1 = X1*chi1, a2=X2*chi2 and are passed here as parameters. Special 
