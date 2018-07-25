@@ -368,7 +368,7 @@ void eob_set_params(char *s, int n)
   double LambdaBl4 = par_get_d("LambdaBl4");
   double SigmaAl2 = par_get_d("SigmaAl2");
   double SigmaBl2 = par_get_d("SigmaBl2");
-  
+
   if (par_get_i("use_Yagi_fits")) {
     LambdaAl3 = Yagi13_fit_barlamdel(LambdaAl2, 3);
     LambdaBl3 = Yagi13_fit_barlamdel(LambdaBl2, 3);

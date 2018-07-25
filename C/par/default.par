@@ -21,7 +21,7 @@ initial_frequency = 0.004 # initial GW frequency
 
 tides = "no" 
 tides_gravitomagnetic = "no"
-LambdaAl2 = 0. # Tidal gravitoelectirc parameter Lambda for star A ell=2
+LambdaAl2 = 0. # Tidal gravitoelectric parameter Lambda for star A ell=2
 LambdaBl2 = 0.
 LambdaAl3 = 0. 
 LambdaAl4 = 0. 

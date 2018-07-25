@@ -398,6 +398,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 #endif
   
+
   *AT   = A;
   *dAT  = dA_u;
   if (d2AT != NULL) *d2AT = d2A_u;
