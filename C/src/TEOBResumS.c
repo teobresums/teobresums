@@ -434,11 +434,6 @@ int main (int argc, char* argv[])
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
     }
 
-//printf("Omg =%f\tr = %f\n", dyn->MOmg, dyn->r); // SARP
-  double LambdaAl2 = par_get_d("LambdaAl2");  // SARP
-  double LambdaBl2 = par_get_d("LambdaBl2");  //SARP
-  double q = par_get_d("q");  //SARP
-
     /** Stop integration if reached max time */    
     if (dyn->t > dyn->t_stop) {
       printf("Stop: Max integration time reached.\n");
@@ -461,8 +456,7 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-printf("{%.2f, %f, %f, %.16f, %.16f, %.16f},\n", q, LambdaAl2, LambdaBl2, dyn->MOmg_prev, dyn->r, dyn->rLR_tidal); // SARP
-
+	//printf("%.2f\t%.2f\t%.3f\t%.16f\t%.16f\t%.16f\n", q, LambdaAl2, LambdaBl2, dyn->MOmg_prev, dyn->r, dyn->rLR_tidal); // SARP
         dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; 
       } else {
 	dyn->MOmg_prev = dyn->MOmg;

@@ -532,8 +532,8 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
       x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
     } else {
       /* BNS */
-      x_lo = 2.8; // nu~1/4 kappaT2 ~ 12
-      x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
+      x_lo = 2.8; // nu~1/4 kappaT2 ~ 12  
+      x_hi = 5.6; // nu~1/4 kappaT2 ~ 600 
     }
   } else {
     /* BBH */
