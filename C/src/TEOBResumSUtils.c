@@ -504,7 +504,7 @@ void Waveform_lm_output (Waveform_lm *wav)
       if ((fp = fopen(fname, "w+")) == NULL)
 	errorexits("error opening file",fname);
       for (int i = 0; i < n; i++) {
-        fprintf(fp, "%.9e %.16e %.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]);
+        fprintf(fp, "%.9e %.16e %.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
       }
       fclose(fp);
     }
