@@ -61,7 +61,7 @@
 #endif
 
 #ifndef USE_GRAVITOMAGNETICTERMS
-#define USE_GRAVITOMAGNETICTERMS 0 /* use gravitomagnetic terms in tidal potential and waveform */
+#define USE_GRAVITOMAGNETICTERMS 1 /* use gravitomagnetic terms in tidal potential and waveform */
 #endif
 
 #ifndef USERK45
