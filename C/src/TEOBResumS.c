@@ -456,7 +456,6 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-	//printf("%.2f\t%.16f\t%.16f\trLR=%.16f\n", q, dyn->MOmg_prev, dyn->r, dyn->rLR_tidal); // SARP
         dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; 
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
