@@ -279,11 +279,12 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     /** el = 3+, i.e.,  even parity tidal potential **/
 
     /* 1GSF fitting parameters */
-    const double C1 = -7.818562387634129;
-    const double C2 = 25.06785964656125;
-    const double C3 = 4.4512752793307175;
-    const double C4 = 34.6256087369367;
-    const double C5 = 6.42807264163465;
+    const double C1 = -3.6820949997216643;
+    const double C2 = 5.171003322924513;
+    const double C3 = -7.639164165720986;
+    const double C4 = -8.63278143009751;
+    const double C5 = 12.319646912775516;
+    const double C6 = 16.36009385150114;
 
     /* 0SF -- el = 3+, i.e.,  even parity terms */
     double A3hat_Sch    = (1.0 - 2.0*u)*( 1.0 + eightthird*u2*oom3u );
@@ -291,10 +292,10 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double d2A3hat_Sch  = (1.0 - 2.0*u)*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) - 4.0*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u );
 
     /* 1SF -- el = 3+, i.e.,  even parity terms */
-    double Denom3    = 1./(1. + C3*u + C4*u2);
-    double A3tilde   = (-2. + C5*u)*(1. + C1*u + C2*u2)*Denom3;
-    double dA3tilde  = ( 1.*C5 - 4.*C2*u + 4.*C4*u + 3.*C2*C5*u2 - 1.*C4*C5*u2 + 1.*C2*C4*C5*u4 + 1.*C1*(-2. + 2.*C4*u2 + 1.*C5*u*(2. + 1.*C3*u)) + 2.*C3*(1. + 1.*C2*u2*(-1. + 1.*C5*u)) )*Denom3*Denom3;
-    double d2A3tilde = 2.*(-2.*C3*C3 + 2.*C4 - 1.*C3*C5 - 6.*C3*C4*u - 3.*C4*C5*u - 6.*C4*C4*u2 + 1.*C4*C4*C5*u3 + 1.*C2*(-2. + 2.*C4*u2*(3. + 1.*C3*u) + 1.*C5*u*(3. + 3.*C3*u + 1.*C3*C3*u2 - 1.*C4*u2)) + 1.*C1*(1.*C5 - 3.*C4*C5*u2 - 2.*C4*u*(-3. + 1.*C4*u2) + 1.*C3*(2. - 1.*C4*C5*u3)))*Denom3*Denom3*Denom3;
+    double Denom3    = 1./(1. + C5*u2);
+    double A3tilde   = 7.5*u*( 1 + C1*u + C2*u2 + C3*u3 )*( 1 + C4*u + C6*u2 )*Denom3;
+    double dA3tilde  = 7.5*( 1 + 3*C2*u2 + 3*C6*u2 + 4*C3*u3 + 5*C2*C6*u4 + 6*C3*C6*u5 + C1*u*(2 + 3*C4*u + 4*C6*u2) + C4*u*(2 + 4*C2*u2 + 5*C3*u3) )*Denom3 + ( -15.*C5*u2*(1. + C4*u + C6*u2)*(1. + C1*u + C2*u2 + C3*u3) )*Denom3*Denom3;
+    double d2A3tilde = 15.*( C1*(1 + 3*C4*u - 3*C5*pow(u,2) + 6*C6*pow(u,2) - C4*C5*pow(u,3) + 3*C5*C6*pow(u,4) + pow(C5,2)*C6*pow(u,6)) + C4*(1 - 3*C5*pow(u,2) + 10*C3*pow(u,3) +  9*C3*C5*pow(u,5) + 3*C3*pow(C5,2)*pow(u,7) +  C2*pow(u,2)*(6 + 3*C5*pow(u,2) + pow(C5,2)*pow(u,4))) + u*(3*(C6 + 2*C3*u + 5*C3*C6*pow(u,3)) + C5*(-3 - C6*pow(u,2) + 3*C3*pow(u,3) +17*C3*C6*pow(u,5)) + pow(C5,2)*(pow(u,2) + C3*pow(u,5) + 6*C3*C6*pow(u,7)) + C2*(3 + 10*C6*pow(u,2) + 3*pow(C5,2)*C6*pow(u,6) + C5*pow(u,2)*(-1 + 9*C6*pow(u,2)))) )*Denom3*Denom3*Denom3;
     double A3hat1GSFfit =  A3tilde*pow(oom3u, 3.5);
     double dA3hat1GSFfit = 3.5*rLR*A3tilde*pow(oom3u, 4.5) + dA3tilde*pow(oom3u, 3.5);
     double d2A3hat1GSFfit = 15.75*rLR*rLR*A3tilde*pow(oom3u, 5.5) + 7.0*rLR*dA3tilde*pow(oom3u, 4.5) + d2A3tilde*pow(oom3u, 3.5);
@@ -316,7 +317,6 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
     A     = AT2   + AT3   + AT4; 
     dA_u  = dAT2  + dAT3  + dAT4;
-
 
     if (d2AT != NULL) {
       double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
