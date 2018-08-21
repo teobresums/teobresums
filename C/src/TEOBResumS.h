@@ -161,9 +161,11 @@ enum{
   EOB_DDOTR,
   EOB_PRSTAR,
   EOB_OMGORB,
+  EOB_E0,
   EOB_DYNAMICS_NVARS
+
 };
-static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb"};
+static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E"};
 
 #define KMAX (35) /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */

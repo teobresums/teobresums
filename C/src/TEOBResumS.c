@@ -269,6 +269,7 @@ int main (int argc, char* argv[])
       dyn->data[EOB_DDOTR][0]  = dyn->ddotr;
       dyn->data[EOB_PRSTAR][0] = dyn->prstar;
       dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
+      dyn->data[EOB_E0][0] = dyn->E;//SARP
     }
     
     /** Waveform computation at t = 0 
@@ -409,7 +410,7 @@ int main (int argc, char* argv[])
     
     /** Update size and push arrays (if needed) */
     if (iter>size) {
-      if (DEBUG)  printf("Push memory\n");
+      if (DEBUG)  printf("Push memory\n"); 
       size += chunk;
       par_set_i("size", size);
       Waveform_lm_push (&hlm, size);
@@ -432,6 +433,7 @@ int main (int argc, char* argv[])
       dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
       dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
+      dyn->data[EOB_E0][iter] = dyn->E;//SARP
     }
 
     /** Stop integration if reached max time */    
