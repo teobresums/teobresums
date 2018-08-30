@@ -438,23 +438,23 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   const double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
 
   /* B potential and derivative with respect to r */
-  double Btmp, dBtmp_u;
+  double Btmp, dBtmp_r;
   Btmp   = D/(Atmp);
-  dBtmp_u  = (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
+  dBtmp_r  = (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
 
   /* Add here tides if needed */
   if (dyn->use_tidal) {
     double BT, dBT;
     // Vines, Flanagan term:
-    double kT2 = par_get_d("kappaTl2");
-    BT = kT2*3.*(3. - 5.*nu)*u6;
-    dBT = kT2*18.*(3. - 5.*nu)*u4*u;  
-    Btmp  += BT;
-    dBtmp_u += dBT;
+//    double kT2 = par_get_d("kappaTl2");
+//    BT = kT2*3.*(3. - 5.*nu)*u6;
+//    dBT = -kT2*18.*(3. - 5.*nu)*u4*u3;  
+//    Btmp  += BT;
+//    dBtmp_r += dBT;
   }
 
   *B  = Btmp;
-  *dB = dBtmp_u;
+  *dB = dBtmp_r;
 
 }
  
