@@ -30,7 +30,7 @@ LambdaBl4 = 0.
 SigmaAl2 = 0. # Tidal gravitomagnetic parameter Sigma for star A ell=2
 SigmaBl2 = 0.
 use_Yagi_fits = 0 # use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
-pGSF_tidal = 4. # p-power in GSF tidal potential model
+pGSF_tidal = 4.0 # p-power in GSF tidal potential model
 
 use_spins = 0 # use spins ?
 

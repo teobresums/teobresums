@@ -156,8 +156,8 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double bar_alph3_2 = dyn->bar_alph3_2;
   const double bar_alph2j_1 = dyn->bar_alph2j_1;
 
-  const double p = dyn->pGSF_tidal; 
-  
+  const double p = dyn->pGSF_tidal;
+
   /* shortcuts */
   double nu2  = nu*nu;
   double pi2  = Pi*Pi;
@@ -412,6 +412,7 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   const double u2    = u*u;
   const double u3    = u2*u;
   const double u4    = u2*u2;
+  const double u6    = u2*u4;
 
   /* A potential and derivative with respect to u */  
   double Atmp, dAtmp_u, d2Atmp_u;
@@ -437,8 +438,23 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   const double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
 
   /* B potential and derivative with respect to r */
-  *B   = D/(Atmp);
-  *dB  = (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
+  double Btmp, dBtmp_u;
+  Btmp   = D/(Atmp);
+  dBtmp_u  = (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
+
+  /* Add here tides if needed */
+  if (dyn->use_tidal) {
+    double BT, dBT;
+    // Vines, Flanagan term:
+    double kT2 = par_get_d("kappaTl2");
+    BT = kT2*3.*(3. - 5.*nu)*u6;
+    dBT = kT2*18.*(3. - 5.*nu)*u4*u;  
+    Btmp  += BT;
+    dBtmp_u += dBT;
+  }
+
+  *B  = Btmp;
+  *dB = dBtmp_u;
 
 }
  
@@ -500,6 +516,9 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   /* B potential and derivative with respect to r */
   *B   = r*r*uc2*D/(*A);
   *dB  = (dD*(*A) - D*(*dA))/((*A)*(*A));
+
+  /* Add here tides if needed */
+  
 
 }
 
