@@ -942,7 +942,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
 
-#if(USE_GRAVITOMAGNETICTERMS)
+#if(USEGRAVITOMAGNETICTERMS)
   
   if ( (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) || (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) ) {
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
