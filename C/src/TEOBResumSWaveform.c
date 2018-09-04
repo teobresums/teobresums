@@ -1400,7 +1400,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
 
   if (par_get_i("output_nqc_coefs")) {
-    /** output the NQC coefficients */
+    /** Output the NQC coefficients */
     char fname[STRLEN];
     strcpy(fname, par_get_s("output_dir"));
     strcat(fname, "nqc_coefs.txt");
@@ -1444,6 +1444,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 
 /** NQC corrections to the RWZ multipolar waveform
     Nagar, Damour, Reisswig, Pollney http://arxiv.org/abs/1506.08457 
+    Nonspinning case
     Current fits: 9/02/2016 */
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
 		    Waveform_lm_t *psilmnqc)
