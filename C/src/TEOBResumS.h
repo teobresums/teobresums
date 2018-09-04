@@ -362,6 +362,7 @@ void errorexits(char *file, int line, const char *s, const char *t);
 double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2);
 double eob_nqc_dtfit(const double chi, const double chi0);
 double eob_nqc_timeshift(double nu, double chi1);
+void eob_nqc_coefs(double *a1, double *a2, double *a3, double *b1, double *b2, double *b3);
 double logQ(double x);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
 double Yagi13_fit_barsigmalambda(double barlam2);

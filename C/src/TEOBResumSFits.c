@@ -77,6 +77,121 @@ double eob_nqc_timeshift(double nu, double chi1)
   return DeltaT_nqc;  
 }
 
+/** Routine for NQC coefficients.
+    Return a_i, b_i coefficients either from specific NR fits 
+    or from a file */
+void eob_nqc_coefs(double *a1, double *a2, double *a3, double *b1, double *b2, double *b3)
+{
+  /* Get pars */
+  const double nu = par_get_d("nu");
+  
+  const double xnu  = 1-4*nu;
+  const double xnu2 = SQ(xnu);
+
+  const int k21 = 0;
+  const int k22 = 1;
+  const int k33 = 4;
+
+  /* Init NQC coefs to zero */
+  for (int k = 0; k < KMAX; k++) {
+    a1[k] = 0.;
+    a2[k] = 0.;
+    a3[k] = 0.;
+    b1[k] = 0.;
+    b2[k] = 0.;
+    b3[k] = 0.;
+  }
+
+  char mode[STRLEN];
+  strcpy(mode, par_get_s("nqc_coefs"));
+
+  if (STREQUAL(mode,"none")) {
+    /** NQC coefficients are all zeros*/
+    return;
+  }
+  
+  else if (STREQUAL(mode,"nrfit_nospin_20160209")) {
+    /* NR fits for Nonspinning case 2016/02/09 
+       Currently hardcoded in eob_wav_hlmNQC() */
+
+    /* (2,1) */
+    a1[k21] =  0.0162387198*(7.32653082*xnu2 + 1.19616248*xnu + 0.73496656);
+    a2[k21] =                -1.80492460*xnu2 + 1.78172686*xnu + 0.30865284;
+    a3[k21] =                                                           0.0;
+    
+    b1[k21] =  -0.0647955017*(3.59934444*xnu2 - 4.08628784*xnu + 1.37890907);
+    b2[k21] =   1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
+    b3[k21] =                                                            0.0;
+  
+    /* (2,2) */
+    a1[k22]   = -0.0805236959*( 1 - 2.00332326*xnu2)/( 1 + 3.08595088*xnu2);
+    a2[k22]   =  1.5299534255*( 1 + 1.16438929*xnu2)/( 1 + 1.92033923*xnu2);
+    a3[k22]   =  0.0;
+    
+    b1[k22]   = 0.146768094955*( 0.07417121*xnu + 1.01691256);
+    b2[k22]   = 0.896911234248*(-0.61072011*xnu + 0.94295129);
+    b3[k22]   = 0.0;
+    
+    /* (3,3) */
+    a1[k33]   = -0.0377680000*(1 - 14.61548907*xnu2)/( 1 + 2.44559263*xnu2);
+    a2[k33]   =  1.9898000000*(1 + 2.09750346 *xnu2)/( 1 + 2.57489466*xnu2);
+    a3[k33]   =  0.0;
+    
+    b1[k33]   = 0.1418400000*(1.07430512 - 1.23906804*xnu + 4.44910652*xnu2);
+    b2[k33]   = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
+    b3[k33]   = 0.0;
+
+  }
+
+  // TODO: ADD HERE YOUR LATEST FITS
+  //else if (STREQUAL(mode,"nrfit_spin_20200101")) {
+  //}
+
+  else if (STREQUAL(mode,"from_file")) {
+    /* NR fits for Nonspinning case 2016/02/09 
+       Currently hardcoded in eob_wav_hlmNQC() */
+
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    size_t read;
+    int nl = 0;
+    char fname[STRLEN];
+    strcpy(fname, par_get_s("nqc_coefs_file"));
+
+    int k,l,m;
+    double a1k,a2k,a3k, b1k,b2k,b3k;
+
+    if ((fp = fopen(fname, "w+")) == NULL)
+      errorexits("error opening file",fname);
+
+    //TODO: check how safe is to use 'getline'
+    while ((read = getline(&line, &len, fp)) != -1) {
+      nl++;
+      if (line[0]='#') continue; /* skip comment */
+      if (nl>KMAX) break;
+      sscanf(line, "%d %d %d %lf %lf %lf %lf %lf %lf\n", 
+	     &k, &l, &m, &a1k,&a2k,&a3k, &b1k,&b2k,&b3k);
+      if (k>=0 && k<KMAX) {
+	a1[k] = a1k;
+	a2[k] = a2k;
+	a3[k] = a3k;
+	b1[k] = b1k;
+	b2[k] = b2k;
+	b3[k] = b3k;
+      }
+    }
+    
+    if (line) free(line);
+    fclose(fp);
+    
+  }
+
+  else
+    errorexit("unknown mode for NQC coefs");
+
+}
+
 /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
     here x = log(lambda) and the output is the log of the coefficient
     that describes the quadrupole deformation due to spin. */
