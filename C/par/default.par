@@ -57,6 +57,9 @@ compute_LSO = 1 # calculate LSO ?
 compute_LR_guess = 3.
 compute_LSO_guess = 6. 
 
+nqc_coefs = "none" # {"none", "nrfit_nospin_20160209", "from_file"}
+nqc_coefs_file = "none"
+
 output_dir = "./data/" # output dir
 output_multipoles = 1 # output multipoles
 output_lm = [-1] # indexes of multipoles to ouput
