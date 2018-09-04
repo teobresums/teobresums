@@ -63,6 +63,7 @@ output_lm = [-1] # indexes of multipoles to ouput
 output_dynamics = 0 # output dynamics
 output_nqc = 0 # output NQC waveform
 output_ringdown = 0 # output ringdown waveform
+output_nqc_coefs = 0 # output multipolar NQC coefs (if determined)
 
 # ----------------------
 # Evolution settings

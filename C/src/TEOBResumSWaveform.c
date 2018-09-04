@@ -1399,29 +1399,24 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     }
   }
 
-  /*
-  //TODO: dump NQC coefs
-  //TODO: [main] input NQC pars, routine to using input NQC, and iterations and (cf. MATLAB code)
   if (par_get_i("output_nqc_coefs")) {
-  char fname[STRLEN];
-  strcpy(fname, par_get_s("output_dir"));
-  strcat(fname, "nqc_coefs.txt");
-  fp = fopen(fname, "w");
-  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
-  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
-  par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
-  par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
-  fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-  for (int k=0; k<KMAX; k++) {
-  fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-  a[k][0], a[k][1], a[k][2], 
-  b[k][0], b[k][1], b[k][2], 
-  );
+    /** output the NQC coefficients */
+    char fname[STRLEN];
+    strcpy(fname, par_get_s("output_dir"));
+    strcat(fname, "nqc_coefs.txt");
+    fp = fopen(fname, "w");
+    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
+    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
+	    par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
+	    par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
+    for (int k=0; k<KMAX; k++) {
+      fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
+	      ai[k][0], ai[k][1], ai[k][2], 
+	      bi[k][0], bi[k][1], bi[k][2]);
+    }  
+    fclose(fp);  
   }
-  fclose(fp);  
-  }
-  */
-  
+ 
   /** Free mem */
   for (int k=0; k<KMAX; k++) {
     free(omg[k]);
