@@ -44,6 +44,9 @@ const int MINDEX[KMAX] = {
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
 
+/** Global var for NQC coefficient */
+NQCdata *NQC;
+
 /** TEOBResumS main */
 int main (int argc, char* argv[]) 
 {
@@ -140,6 +143,10 @@ int main (int argc, char* argv[])
     eob_wav_flm_s = &eob_wav_flm_s_SSNLO;
   }
   
+  /** NQC data */  
+  NQCdata_alloc (&NQC);
+  eob_nqc_setcoefs(NQC);
+  
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
@@ -179,7 +186,7 @@ int main (int argc, char* argv[])
     par_set_d("BH_final_mass", dyn->Mbhf);
     par_set_d("BH_final_spin", dyn->abhf);
   }
-
+  
   /* Iteration index */
   int iter = 0;  
   
@@ -588,21 +595,19 @@ int main (int argc, char* argv[])
   if (!(use_tidal)) {
 
     /* 
-     * BBH : add NQC and Ringdown
+     * BBH : add NQC 
      */
-
-    /** NQC */
-
-    if (use_spins) {
-
+    
+    if (STREQUAL(par_get_s("nqc_coefs_hlm"),"compute")) {
+      
       if (VERBOSE) PRSECTN("NQC Calculation");
-
+      
       Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
       
       /* Compute NQC corrections */
       eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
       strcat(hlm->name,"_nqc");      
-
+      
       if (DEBUG) {
 	if (par_get_i("output_nqc")) { 
 	  Waveform_lm_output (hlm_nqc);
@@ -612,12 +617,14 @@ int main (int argc, char* argv[])
 	  /* Waveform_lm_output_reim (hlm); */
 	}	
       }
-      
+    
       Waveform_lm_free (hlm_nqc);
-      
+    
     }
     
-    /** Ringdown */
+    /* 
+     * BBH : add Ringdown 
+     */
     
     if (VERBOSE) PRSECTN("Ringdown");
 
@@ -672,6 +679,7 @@ int main (int argc, char* argv[])
   Waveform_lm_free (hlm);
   Waveform_lm_t_free (hlm_t);
   Waveform_free (hpc);
+  NQCdata_free (NQC);
   eob_free_params();
 
   return OK;
