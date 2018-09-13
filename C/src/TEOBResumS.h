@@ -387,7 +387,7 @@ void errorexits(char *file, int line, const char *s, const char *t);
 double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2);
 double eob_nqc_dtfit(const double chi, const double chi0);
 double eob_nqc_timeshift(double nu, double chi1);
-void eob_nqc_coefs(NQCdata *nqc);
+void eob_nqc_setcoefs(NQCdata *nqc);
 void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc);
 void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname);
 double logQ(double x);
@@ -424,8 +424,8 @@ double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, doub
 double eob_dyn_DHeff0(double x, void *params);
 double eob_dyn_r0_Kepler (double f0);
 double eob_dyn_r0_eob (double f0, Dynamics *dyn);
-double eob_dyn_omg_orb0(double r, void *params);
-double eob_dyn_bisecomg_orb0(Dynamics *dyn,double omg_orb0,double r0_kepl);
+double eob_dyn_Omegaorb0(double r, void *params);
+double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 
 /* TEOBResumSMetric.c */
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
