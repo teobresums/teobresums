@@ -85,7 +85,8 @@ int main (int argc, char* argv[])
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in geometric units and mass rescaled */
     par_set_d("M", 1.);
-    r0 = pow(f0*Pi, -2./3.);
+    r0 = eob_dyn_r0_Kepler(f0);
+    //r0 = eob_dyn_r0_eob(f0,dyn);
   }
 
   //TODO: CHECK PAR RANGES AND FIX PARAMETERS
@@ -188,7 +189,7 @@ int main (int argc, char* argv[])
   }
   
   /* Iteration index */
-  int iter = 0;  
+  int iter = 0;
   
   if (use_postadiab_dyn) {
 

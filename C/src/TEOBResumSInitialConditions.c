@@ -365,3 +365,178 @@ double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, doub
   
   return r;
 }
+
+/** Initial radius from initial frequency using Kepler's law */
+double eob_dyn_r0_Kepler (double f0)
+{
+  double omg_orb0 = Pi*f0;                 // =2*Pi*(f_orb0/2)
+
+  double r0       = pow(omg_orb0, -2./3.);
+  
+  return r0;
+}
+
+/** Initial radius from initial frequency using EOB circular dynamics */
+double eob_dyn_r0_eob (double f0, Dynamics *dyn)
+{
+  double omg_orb0 = Pi*f0;
+
+  double r0_kepl  = eob_dyn_r0_Kepler(f0);
+
+  double r0       = eob_dyn_bisecomg_orb0(dyn,omg_orb0,r0_kepl);
+  
+  return r0; 
+}
+
+/** Function for root finder: omega = omega_circ */
+struct omg_orb0_tmp_params
+{
+  double omg_orb0;
+  Dynamics *dyn;
+};
+
+double eob_dyn_omg_orb0(double r, void *params)
+{
+  /* Unpack parameters */
+  struct omg_orb0_tmp_params *p
+    = (struct omg_orb0_tmp_params *) params;
+
+  double   omg_orb0 = p->omg_orb0;
+  Dynamics *dyn     = p->dyn;
+
+  /* Unpack dynamics constants */
+  const double nu    = dyn->nu;
+  const double X1    = dyn->X1;
+  const double X2    = dyn->X2;
+  const double chi1  = dyn->chi1;
+  const double chi2  = dyn->chi2;
+  const double a1    = dyn->a1;
+  const double a2    = dyn->a2;
+  const double aK2   = dyn->aK2;
+  const double S     = dyn->S;
+  const double Sstar = dyn->Sstar;
+  const double c3    = dyn->cN3LO;
+  const double C_Q1  = dyn->C_Q1;
+  const double C_Q2  = dyn->C_Q2;
+  
+  const int usetidal = dyn->use_tidal;
+  const int usespins = dyn->use_spins;
+
+  double A,B,dA,rc,drc_dr,G,dG_dr,uc,uc2,dAuc2_dr,j02,j0,H,Heff,Heff_orb,dHeff_dj0,omg_orb;
+
+  double pl_hold,a_coeff,b_coeff,c_coeff,Delta,sol_p,sol_m;
+
+  double ggm[14];
+
+  /* Computing metric, centrifugal radius and ggm functions*/
+  if(usespins)
+    { 
+      eob_metric_s(r,dyn, &A, &B, &dA, &pl_hold, &pl_hold);
+    
+      eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc, &drc_dr, &pl_hold);
+    
+      eob_dyn_s_GS(r, rc, drc_dr, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+      
+      G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
+      dG_dr = ggm[6]*S + ggm[7]*Sstar;
+    }
+  else
+    {
+      eob_metric(r ,dyn, &A, &B, &dA, &pl_hold, &pl_hold);
+      
+      rc     = r;   //Nonspinning case: rc = r; G = 0;
+      drc_dr = 1;  
+
+      G      = 0.0;
+      dG_dr  = 0.0;
+    }
+
+  /* Auxiliary variables*/
+  uc       = 1./rc;
+  uc2      = uc*uc;
+  dAuc2_dr = uc2*(dA-2*A*uc*drc_dr);
+
+  /* Circular angular momentum */
+  if (usespins)
+    {
+      // Quadratic equation a*x^2+b*x+c=0 
+      a_coeff = SQ(dAuc2_dr)  - 4*A*uc2*SQ(dG_dr);
+      b_coeff = 2*dA*dAuc2_dr - 4*A*SQ(dG_dr);
+      c_coeff = SQ(dA);
+      
+      Delta = SQ(b_coeff) - 4*a_coeff*c_coeff;
+      
+      if (S==0 && Sstar==0)  
+	Delta=0;             // dG_dr=0 -> Set Delta=0 to avoid num. errors          
+      
+      sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); 
+      sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff);
+      
+      if (dG_dr > 0)
+	j02 = sol_p;
+      else
+	j02 = sol_m;
+    }
+  else
+    {
+      // Linear equation a*x+b=0
+      a_coeff = dAuc2_dr;
+      b_coeff = dA;
+      
+      j02 = -b_coeff/a_coeff;    
+    }
+
+  j0 = sqrt(j02);
+    
+  /* Circular Hamiltonians */
+  Heff_orb = sqrt(A*(1+j02*uc2));
+  Heff     = Heff_orb + j0*G;
+  H        = sqrt(1+2*nu*(Heff-1))/nu;
+    
+  /* Circular orbital frequency */
+  dHeff_dj0 = G + A*j0*uc2/Heff_orb;
+  omg_orb   = dHeff_dj0/nu/H;
+
+  /* Subtraction of initial evolution frequency */
+  double omg_orb_zero = omg_orb - omg_orb0;
+  
+  return omg_orb_zero;
+}
+
+/** Root finder: Compute r0 such that omg_orb = omg_orb0 */
+double eob_dyn_bisecomg_orb0(Dynamics *dyn,double omg_orb0,double r0_kepl)
+{
+#define max_iter (200)
+#define tolerance (1e-14)
+
+  int status;
+  int iter = 0;
+  const gsl_root_fsolver_type *T;
+  gsl_root_fsolver *s;
+  
+  double r0;
+  double x_lo = 0.5*r0_kepl, x_hi = 1.5*r0_kepl;
+
+  gsl_function F;
+  
+  struct omg_orb0_tmp_params p = {omg_orb0,dyn};
+  
+  F.function = &eob_dyn_omg_orb0;
+  F.params = &p;
+  T = gsl_root_fsolver_bisection;
+  s = gsl_root_fsolver_alloc (T);
+  gsl_root_fsolver_set (s, &F, x_lo, x_hi);
+  do
+    {
+      iter++;
+      status = gsl_root_fsolver_iterate (s);
+      r0     = gsl_root_fsolver_root (s);
+      x_lo   = gsl_root_fsolver_x_lower (s);
+      x_hi   = gsl_root_fsolver_x_upper (s);
+      status = gsl_root_test_interval (x_lo, x_hi, 0, tolerance);
+    }
+  while (status == GSL_CONTINUE && iter < max_iter);
+  gsl_root_fsolver_free (s);
+  
+  return r0;
+}
