@@ -71,26 +71,19 @@ int main (int argc, char* argv[])
 
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = par_get_d("M"); /* Msun */ 
-  const double f0 = par_get_d("initial_frequency");
   double time_unit_fact = 1;
-  double r0;
   if (!(par_get_i("use_geometric_units"))) {
     /* Input given in physical units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz */
     time_unit_fact = time_units_factor(M);
-    r0 = radius0(M, f0);
   } else {
     /* Input given in geometric units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in geometric units and mass rescaled */
     par_set_d("M", 1.);
-    r0 = eob_dyn_r0_Kepler(f0);
-    //r0 = eob_dyn_r0_eob(f0,dyn);
   }
 
-  //TODO: CHECK PAR RANGES AND FIX PARAMETERS
-  
   /** Set useful pars/vars */
   const double q    = par_get_d("q");
   const double nu   = par_get_d("nu");
@@ -174,6 +167,11 @@ int main (int argc, char* argv[])
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }
 
+  /** Compute initial radius */
+  const double f0 = par_get_d("initial_frequency")/time_unit_fact;
+  const double r0 = eob_dyn_r0_Kepler(f0);
+  //const double r0 = eob_dyn_r0_eob(f0, dyn);
+
   /** Final BH */
   if (!(dyn->use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -187,7 +185,7 @@ int main (int argc, char* argv[])
     par_set_d("BH_final_mass", dyn->Mbhf);
     par_set_d("BH_final_spin", dyn->abhf);
   }
-  
+
   /* Iteration index */
   int iter = 0;
   
