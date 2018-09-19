@@ -1013,6 +1013,8 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   const double aeff     = aK + 1./3.*a12*X12;
   const double aeff_omg = aK + a12*X12;
     
+  FILE* fp;
+
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG]; /* Omega */
@@ -1241,7 +1243,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
   
 #if (DEBUG)
-  FILE* fp = fopen("nqc_nfunc.txt", "w");
+  fp = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
     fprintf(fp, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[j], n2[j], n4[j], n5[j]);
   }
