@@ -145,6 +145,41 @@ double Yagi13_fit_barsigmalambda(double barlam2)
 
   return exp(lny);
 }
+
+
+double JFAPG_fit_Sigma_Irrotational(double barlam2)
+{
+  if (barlam2<=0.) return 0.;
+  double lnx = log(barlam2);
+  double coeffs[6];
+ 
+  coeffs[5] = -2.03;
+  coeffs[4] =  0.487;
+  coeffs[3] =  9.69e-3;
+  coeffs[2] =  1.03e-3;
+  coeffs[1] = -9.37e-5;
+  coeffs[0] =  2.24e-6;
+  double lny = coeffs[0]*lnx*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx*lnx+coeffs[2]*lnx*lnx*lnx+coeffs[3]*lnx*lnx+coeffs[4]*lnx+coeffs[5];
+
+  return -1.0*exp(lny);
+}
+
+double JFAPG_fit_Sigma_Static(double barlam2)
+{
+  if (barlam2<=0.) return 0.;
+  double lnx = log(barlam2);
+  double coeffs[6];
+ 
+  coeffs[5] = -2.66;
+  coeffs[4] =  0.786;
+  coeffs[3] =  -0.01;
+  coeffs[2] =  1.28e-3;
+  coeffs[1] = -6.37e-5;
+  coeffs[0] =  1.18e-6;
+  double lny = coeffs[0]*lnx*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx*lnx+coeffs[2]*lnx*lnx*lnx+coeffs[3]*lnx*lnx+coeffs[4]*lnx+coeffs[5];
+
+  return exp(lny);
+}
  
 /** Mass and angular momentum of the final black hole
   Healey, Lousto and Zochlower (HLZ),

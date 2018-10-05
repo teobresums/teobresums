@@ -1882,7 +1882,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     /** Tidal contribution */
     double hlmtidal[KMAX];
     eob_wav_hlmTidal(x, dyn, hlmtidal);
-    if( (nu!=0.25)&&(!(usespins)) )
+    if( !(usespins) ) 
     {	
 	    /* Correct normalization of point-mass wave for some of the m=odd modes */
 	    hlm->ampli[0] *= X12;

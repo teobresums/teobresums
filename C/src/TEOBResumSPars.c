@@ -376,6 +376,19 @@ void eob_set_params(char *s, int n)
     LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
     SigmaAl2 = Yagi13_fit_barsigmalambda(LambdaAl2);
     SigmaBl2 = Yagi13_fit_barsigmalambda(LambdaBl2);
+    //printf("Inside Yagi Sigma:%.16e\n", SigmaAl2);
+  }
+
+  if (par_get_i("use_JFAPG_fit")) {
+    SigmaAl2 = JFAPG_fit_Sigma_Irrotational(LambdaAl2);
+    SigmaBl2 = JFAPG_fit_Sigma_Irrotational(LambdaBl2);
+    //printf("Sigma_Irr = %.16e\n", SigmaAl2);
+  }
+
+  if (par_get_i("use_static_Sigma")) {
+    SigmaAl2 = JFAPG_fit_Sigma_Static(LambdaAl2);
+    SigmaBl2 = JFAPG_fit_Sigma_Static(LambdaBl2);
+    //printf("Sigma_Stat = %.16e\n", SigmaAl2);
   }
 
   /* Tidal coupling constants */    
@@ -386,7 +399,11 @@ void eob_set_params(char *s, int n)
   double kapB2 = 3.   * LambdaBl2 * XB*XB*XB*XB*XB * q;
   double kapB3 = 15.  * LambdaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
   double kapB4 = 105. * LambdaBl4 * XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
-  
+
+//printf("%.16e\t", SigmaAl2);
+//SigmaAl2 = -6.391111111111112;
+//printf("%.16e\t", SigmaAl2);
+//SigmaBl2= SigmaAl2;  
   /* gravitomagnetic tidal coupling constants el = 2 only */    
   double kapA2j = 24.   * SigmaAl2 * XA*XA*XA*XA*XA / q; 
   double kapB2j = 24.   * SigmaBl2 * XB*XB*XB*XB*XB * q;
@@ -395,18 +412,19 @@ void eob_set_params(char *s, int n)
   double kapT3 = kapA3 + kapB3;
   double kapT4 = kapA4 + kapB4;
   double kapT2j = kapA2j + kapB2j;
-  
+  printf("kapT(2-) = %.16e\n", kapT2j);
+
   if (usetidal) {
     if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
     if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
     if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
-    //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");//FIXME: later check for division?
+    //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0"); //FIXME: later check for division?
   } 
 
 
-  if (usetidalGM) {
-    if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
-  } 
+  //if (usetidalGM) {
+      //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
+  //} 
 
   
   /* Tidal coefficients cons dynamics

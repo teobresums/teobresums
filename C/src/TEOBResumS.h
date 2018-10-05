@@ -361,6 +361,8 @@ double eob_nqc_timeshift(double nu, double chi1);
 double logQ(double x);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
 double Yagi13_fit_barsigmalambda(double barlam2);
+double JFAPG_fit_Sigma_Irrotational(double barlam2);
+double JFAPG_fit_Sigma_Static(double barlam2);
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);
 double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2);
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK,

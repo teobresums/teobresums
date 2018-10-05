@@ -339,9 +339,11 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 
 #if(USE_GRAVITOMAGNETICTERMS)
-  
+  //printf("GM tides on\t");  
+  //printf("%e\t", kapT2j);  
+
   if (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) {
-    
+ 
     /* PN series for the (2-) tidal potential */
     A    +=-kapT2j*u7*(1. +  bar_alph2j_1*u);
     dA_u += -kapT2j*u7*bar_alph2j_1 - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u);
@@ -446,11 +448,11 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   if (dyn->use_tidal) {
     double BT, dBT;
     // Vines, Flanagan term:
-//    double kT2 = par_get_d("kappaTl2");
-//    BT = kT2*3.*(3. - 5.*nu)*u6;
-//    dBT = -kT2*18.*(3. - 5.*nu)*u4*u3;  
-//    Btmp  += BT;
-//    dBtmp_r += dBT;
+    double kT2 = par_get_d("kappaTl2");
+    BT = kT2*3.*(3. - 5.*nu)*u6;
+    dBT = -kT2*18.*(3. - 5.*nu)*u4*u3;  
+    Btmp  += BT;
+    dBtmp_r += dBT;
   }
 
   *B  = Btmp;

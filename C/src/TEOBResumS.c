@@ -410,7 +410,7 @@ int main (int argc, char* argv[])
     
     /** Update size and push arrays (if needed) */
     if (iter>size) {
-      if (DEBUG)  printf("Push memory\n"); 
+    //  if (DEBUG)  printf("Push memory\n"); 
       size += chunk;
       par_set_i("size", size);
       Waveform_lm_push (&hlm, size);
@@ -458,6 +458,7 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
+printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r), dyn->rLR_tidal); 
         dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; 
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
