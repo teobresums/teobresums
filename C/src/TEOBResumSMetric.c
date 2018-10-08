@@ -339,11 +339,9 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 
 #if(USE_GRAVITOMAGNETICTERMS)
-  //printf("GM tides on\t");  
-  //printf("%e\t", kapT2j);  
 
   if (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) {
- 
+
     /* PN series for the (2-) tidal potential */
     A    +=-kapT2j*u7*(1. +  bar_alph2j_1*u);
     dA_u += -kapT2j*u7*bar_alph2j_1 - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u);
@@ -353,7 +351,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     }
 
   } else if (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) {
-    
+
     /** GSF series for the (2-) tidal potential */
     const double a1j =  0.728591192;
     const double a2j =  3.100367557;	

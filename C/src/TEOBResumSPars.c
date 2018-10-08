@@ -374,22 +374,14 @@ void eob_set_params(char *s, int n)
     LambdaBl3 = Yagi13_fit_barlamdel(LambdaBl2, 3);
     LambdaAl4 = Yagi13_fit_barlamdel(LambdaAl2, 4);
     LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
-    SigmaAl2 = Yagi13_fit_barsigmalambda(LambdaAl2);
-    SigmaBl2 = Yagi13_fit_barsigmalambda(LambdaBl2);
-    //printf("Inside Yagi Sigma:%.16e\n", SigmaAl2);
   }
+#if(USE_GRAVITOMAGNETICTERMS)
 
-  if (par_get_i("use_JFAPG_fit")) {
     SigmaAl2 = JFAPG_fit_Sigma_Irrotational(LambdaAl2);
     SigmaBl2 = JFAPG_fit_Sigma_Irrotational(LambdaBl2);
-    //printf("Sigma_Irr = %.16e\n", SigmaAl2);
-  }
+    printf("Sigma_Irr = %.16e\n", SigmaAl2);
 
-  if (par_get_i("use_static_Sigma")) {
-    SigmaAl2 = JFAPG_fit_Sigma_Static(LambdaAl2);
-    SigmaBl2 = JFAPG_fit_Sigma_Static(LambdaBl2);
-    //printf("Sigma_Stat = %.16e\n", SigmaAl2);
-  }
+#endif
 
   /* Tidal coupling constants */    
   double kapA2 = 3.   * LambdaAl2 * XA*XA*XA*XA*XA / q; 
@@ -400,10 +392,6 @@ void eob_set_params(char *s, int n)
   double kapB3 = 15.  * LambdaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
   double kapB4 = 105. * LambdaBl4 * XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
 
-//printf("%.16e\t", SigmaAl2);
-//SigmaAl2 = -6.391111111111112;
-//printf("%.16e\t", SigmaAl2);
-//SigmaBl2= SigmaAl2;  
   /* gravitomagnetic tidal coupling constants el = 2 only */    
   double kapA2j = 24.   * SigmaAl2 * XA*XA*XA*XA*XA / q; 
   double kapB2j = 24.   * SigmaBl2 * XB*XB*XB*XB*XB * q;

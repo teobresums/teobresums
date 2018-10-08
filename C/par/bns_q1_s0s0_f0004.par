@@ -17,7 +17,5 @@ tides_gravitomagnetic = "no"
 LambdaAl2 = 1531.34
 LambdaBl2 = 1531.34
 use_Yagi_fits = 1
-use_JFAPG_fit = 1
-use_static_Sigma = 0
 ode_stop_at_radius = 4.0
 output_dir = "./bns_q1_s0s0_f0004/" # output dir
