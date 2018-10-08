@@ -60,8 +60,12 @@
 #define EXCLUDESPINSPINTIDES 0 /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
-#ifndef USE_GRAVITOMAGNETICTERMS
-#define USE_GRAVITOMAGNETICTERMS 1 /* use gravitomagnetic terms in tidal potential and waveform */
+#ifndef USEGRAVITOMAGNETICTERMS
+#define USEGRAVITOMAGNETICTERMS 1 /* use gravitomagnetic terms in tidal potential and waveform */
+#endif
+
+#ifndef USEBTIDALPOTENTIAL
+#define USEBTIDALPOTENTIAL 0 /* add B LO tidal potential */
 #endif
 
 #ifndef USERK45
@@ -214,8 +218,31 @@ static const char* const root_errors[] = {"none","root is not bracketed.","root 
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */
 extern const int MINDEX[KMAX]; /* defined in TEOBResumS.c */
 
-/** Type for complex double */
-typedef double complex cdouble;
+/** Multipolar coefficients for NQC waveform */
+typedef struct tagNQCcoefs
+{
+  double a1[KMAX];
+  double a2[KMAX];
+  double a3[KMAX];
+  double b1[KMAX];
+  double b2[KMAX];
+  double b3[KMAX];
+  double n[KMAX][6];
+  int activemode[KMAX]; /* mask for modes with nonzero NQC */
+  int maxk; /* index of maximum active mode */
+  int add; /* flag */
+} NQCcoefs;
+
+/** NQC data for flux and waveform */
+typedef struct tagNQCdata
+{
+  NQCcoefs *flx;
+  NQCcoefs *hlm;
+} NQCdata;
+
+static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "fromfile"};
+static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "fromfile", "compute"};
+extern NQCdata *NQC; /* defined in TEOBResumS.c */
 
 /** Waveform data type */
 typedef struct tagWaveform
@@ -344,6 +371,8 @@ void Dynamics_push (Dynamics **dyn, int size);
 void Dynamics_output (Dynamics *dyn);
 void Dynamics_free (Dynamics *dyn);
 void Dynamics_set_params (Dynamics *dyn);
+void NQCdata_alloc (NQCdata **nqc);
+void NQCdata_free (NQCdata *nqc);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
@@ -358,6 +387,9 @@ void errorexits(char *file, int line, const char *s, const char *t);
 double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2);
 double eob_nqc_dtfit(const double chi, const double chi0);
 double eob_nqc_timeshift(double nu, double chi1);
+void eob_nqc_setcoefs(NQCdata *nqc);
+void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc);
+void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname);
 double logQ(double x);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
 double Yagi13_fit_barsigmalambda(double barlam2);
@@ -392,6 +424,10 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[]);
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
 double eob_dyn_DHeff0(double x, void *params);
+double eob_dyn_r0_Kepler (double f0);
+double eob_dyn_r0_eob (double f0, Dynamics *dyn);
+double eob_dyn_Omegaorb0(double r, void *params);
+double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 
 /* TEOBResumSMetric.c */
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
@@ -421,7 +457,8 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
 void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
-void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *psilmnqc);
+void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
+void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
 void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm);
 

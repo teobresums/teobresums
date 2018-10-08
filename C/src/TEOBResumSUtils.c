@@ -696,6 +696,27 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->t_stop    = par_get_d("ode_tmax");
 }
 
+/** NQC data */
+void NQCdata_alloc (NQCdata **nqc)
+{
+  *nqc = (NQCdata *) calloc(1, sizeof(NQCdata));
+  if (nqc == NULL)
+    errorexit("Out of memory");
+  (*nqc)->flx = (NQCcoefs *) calloc(1, sizeof(NQCcoefs));
+  if ((*nqc)->flx == NULL)
+    errorexit("Out of memory");
+  (*nqc)->hlm = (NQCcoefs *) calloc(1, sizeof(NQCcoefs)); 
+  if ((*nqc)->hlm == NULL)
+    errorexit("Out of memory");
+}
+
+void NQCdata_free (NQCdata *nqc)
+{
+  if (nqc->flx) free (nqc->flx);
+  if (nqc->hlm) free (nqc->hlm);
+  if (nqc)      free (nqc);
+}
+
 /** Convert time in sec to dimensionless and mass-rescaled units */
 double time_units_factor(double M)
 {

@@ -337,8 +337,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       }
   }
 
-
-#if(USE_GRAVITOMAGNETICTERMS)
+#if(USEGRAVITOMAGNETICTERMS)
 
   if (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) {
 
@@ -414,17 +413,28 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   const double u4    = u2*u2;
   const double u6    = u2*u4;
 
+  double Atmp=0., dAtmp_u=0., d2Atmp_u=0.;
+  double Btmp=0., dBtmp_r=0.;
+
   /* A potential and derivative with respect to u */  
-  double Atmp, dAtmp_u, d2Atmp_u;
   eob_metric_A5PNlog(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u);
 
   /* Add here tides if needed */
   if (dyn->use_tidal) {
     double AT, dAT_u, d2AT_u;
+    double BT, dBT;
     eob_metric_Atidal(r, dyn, &AT, &dAT_u, &d2AT_u);
     Atmp     += AT;
     dAtmp_u  += dAT_u;
     d2Atmp_u += d2AT_u;
+#if (USEBTIDALPOTENTIAL)
+    /* Vines, Flanagan 1PN term in B */
+    double kT2 = par_get_d("kappaTl2");
+    BT  = kT2*3.*(3. - 5.*nu)*u6;
+    dBT = -kT2*18.*(3. - 5.*nu)*u4*u3;  
+    Btmp    += BT;
+    dBtmp_r += dBT;
+#endif
   }
 
   /* A potential and derivative with respect to r */  
@@ -438,6 +448,7 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   const double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
 
   /* B potential and derivative with respect to r */
+<<<<<<< HEAD
   double Btmp, dBtmp_r;
   Btmp   = D/(Atmp);
   dBtmp_r  = (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
@@ -452,6 +463,10 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
     Btmp  += BT;
     dBtmp_r += dBT;
   }
+=======
+  Btmp    += D/(Atmp);
+  dBtmp_r += (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
+>>>>>>> 55aae7ace9ca5be6c8dc62dab27bb3bcc1d75cbb
 
   *B  = Btmp;
   *dB = dBtmp_r;

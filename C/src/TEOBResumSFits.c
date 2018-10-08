@@ -77,6 +77,155 @@ double eob_nqc_timeshift(double nu, double chi1)
   return DeltaT_nqc;  
 }
 
+/** Set NQC coefficients */
+void eob_nqc_setcoefs(NQCdata *nqc)
+{
+
+  nqc->flx->add = 1;
+  nqc->hlm->add = 1;
+
+  if (STREQUAL(par_get_s("nqc_coefs_flx"),"none"))
+    nqc->flx->add = 0;
+  if (STREQUAL(par_get_s("nqc_coefs_hlm"),"none"))
+    nqc->hlm->add = 0;
+      
+  /* Init NQC coefs to zero */
+  for (int k = 0; k < KMAX; k++) {
+    for (int j = 0; j < 6; j++) {
+      nqc->flx->n[k][j] = 0.;
+      nqc->hlm->n[k][j] = 0.;
+    }
+    nqc->flx->a1[k] = 0.;
+    nqc->flx->a2[k] = 0.;
+    nqc->flx->a3[k] = 0.;
+    nqc->flx->b1[k] = 0.;
+    nqc->flx->b2[k] = 0.;
+    nqc->flx->b3[k] = 0.;
+    nqc->flx->activemode[k] = 0; 
+    nqc->hlm->a1[k] = 0.;
+    nqc->hlm->a2[k] = 0.;
+    nqc->hlm->a3[k] = 0.;
+    nqc->hlm->b1[k] = 0.;
+    nqc->hlm->b2[k] = 0.;
+    nqc->hlm->b3[k] = 0.;
+    nqc->hlm->activemode[k] = 0; 
+  }
+  nqc->flx->maxk = -1;
+  nqc->hlm->maxk = -1; 
+  
+  if (nqc->flx->add + nqc->hlm->add == 0) 
+    return;
+
+  if (STREQUAL(par_get_s("nqc_coefs_flx"),"nrfit_nospin201602")) 
+    eob_nqc_setcoefs_nospin201602(nqc->flx);
+  if (STREQUAL(par_get_s("nqc_coefs_flx"),"fromfile")) 
+    eob_nqc_setcoefs_fromfile(nqc->flx, par_get_s("nqc_coefs_flx_file"));
+  // TODO: ADD HERE YOUR LATEST FITS
+  //else if (STREQUAL(par_get_s("nqc_coefs_flx"),"nrfit_spin_202001")) 
+  
+  if (STREQUAL(par_get_s("nqc_coefs_hlm"),"nrfit_nospin201602")) 
+    eob_nqc_setcoefs_nospin201602(nqc->hlm);
+   if (STREQUAL(par_get_s("nqc_coefs_hlm"),"fromfile")) 
+    eob_nqc_setcoefs_fromfile(nqc->hlm, par_get_s("nqc_coefs_hlm_file"));
+   // TODO: ADD HERE YOUR LATEST FITS
+   //else if (STREQUAL(par_get_s("nqc_coefs_hlm"),"nrfit_spin_202001")) 
+  
+}
+
+/** Set NQC coefficients 
+    NR fits for nonspinning case 2016/02/09 
+    Hardcoded in eob_wav_hlmNQC_nospin201602() */
+void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc)
+{
+
+  const double nu = par_get_d("nu");  
+  const double xnu  = 1-4*nu;
+  const double xnu2 = SQ(xnu);
+
+  const int k21 = 0;
+  const int k22 = 1;
+  const int k33 = 4;
+
+  nqc->activemode[k21]=1;
+  nqc->activemode[k22]=1;
+  nqc->activemode[k33]=1;
+  
+  /* (2,1) */
+  nqc->a1[k21] =  0.0162387198*(7.32653082*xnu2 + 1.19616248*xnu + 0.73496656);
+  nqc->a2[k21] = -1.80492460*xnu2 + 1.78172686*xnu + 0.30865284;
+  nqc->a3[k21] =  0.0;
+    
+  nqc->b1[k21] = -0.0647955017*(3.59934444*xnu2 - 4.08628784*xnu + 1.37890907);
+  nqc->b2[k21] =  1.3410693180*(0.38491989*xnu2 + 0.10969453*xnu + 0.97513971);
+  nqc->b3[k21] =  0.0;
+  
+  /* (2,2) */
+  nqc->a1[k22] = -0.0805236959*( 1 - 2.00332326*xnu2)/( 1 + 3.08595088*xnu2);
+  nqc->a2[k22] =  1.5299534255*( 1 + 1.16438929*xnu2)/( 1 + 1.92033923*xnu2);
+  nqc->a3[k22] =  0.0;
+    
+  nqc->b1[k22] = 0.146768094955*( 0.07417121*xnu + 1.01691256);
+  nqc->b2[k22] = 0.896911234248*(-0.61072011*xnu + 0.94295129);
+  nqc->b3[k22] = 0.0;
+    
+  /* (3,3) */
+  nqc->a1[k33] = -0.0377680000*(1 - 14.61548907*xnu2)/( 1 + 2.44559263*xnu2);
+  nqc->a2[k33] =  1.9898000000*(1 + 2.09750346 *xnu2)/( 1 + 2.57489466*xnu2);
+  nqc->a3[k33] =  0.0;
+    
+  nqc->b1[k33] = 0.1418400000*(1.07430512 - 1.23906804*xnu + 4.44910652*xnu2);
+  nqc->b2[k33] = 0.6191300000*(0.80672432 + 4.07432829*xnu - 7.47270977*xnu2);
+  nqc->b3[k33] = 0.0;
+
+  nqc->add = 1;
+  nqc->maxk = k33;
+
+}
+
+/** Set NQC coefficients from file */
+//TODO: how portable is 'getline'
+void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname)
+{
+  FILE *fp;
+  char *line = NULL;
+  size_t len = 0;
+  size_t read;
+  int nl = 0;
+  
+  int k, maxk=-1;
+  double a1k,a2k,a3k, b1k,b2k,b3k;
+  
+  if ((fp = fopen(fname, "r")) == NULL)
+    errorexits("error opening file",fname);
+  
+  while ((read = getline(&line, &len, fp)) != -1) {
+    /* printf("Retrieved line of length %zu :\n", read);  */
+    /* printf("%s", line); */
+    if (line[0]=='#') continue; /* skip comment */
+    nl++;
+    if (nl>KMAX) break;
+    sscanf(line, "%d %*d %*d %lf %lf %lf %lf %lf %lf", 
+	   &k, &a1k,&a2k,&a3k, &b1k,&b2k,&b3k);
+    /* printf("%d: %d %e %e %e %e %e %e\n",nl, k,a1k,a2k,a3k, b1k,b2k,b3k); */
+    if (k>=0 && k<KMAX) {
+      nqc->a1[k] = a1k;
+      nqc->a2[k] = a2k;
+      nqc->a3[k] = a3k;
+      nqc->b1[k] = b1k;
+      nqc->b2[k] = b2k;
+      nqc->b3[k] = b3k;
+      if (k>maxk) maxk = k;
+      nqc->activemode[k]=1;
+    }
+  }
+  
+  if (line) free(line);
+  fclose(fp);
+
+  nqc->add = 1;
+  nqc->maxk = maxk;
+}
+
 /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
     here x = log(lambda) and the output is the log of the coefficient
     that describes the quadrupole deformation due to spin. */

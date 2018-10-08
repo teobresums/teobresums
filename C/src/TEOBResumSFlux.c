@@ -267,27 +267,33 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   /** Amplitudes */
   if (usespins) {
-    //eob_wav_flm_s_old(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
+    /* eob_wav_flm_s_old(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm); */
     eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
   } else {
-    //eob_wav_flm_old(x,nu, rholm, flm);
+    /* eob_wav_flm_old(x,nu, rholm, flm); */
     eob_wav_flm(x,nu, rholm, flm);
   }
   
   FNewt22 = FNewtlm[1];
 
   /** NQC correction to the modulus of the (l,m) waveform */  
-  Waveform_lm_t NQC;  
   for (int k = 0; k < KMAX; k++) hlmNQC[k] = 1.; /* no NQC */
-  if ( (!(usetidal)) && (!(usespins)) ) {
-    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, &NQC);
-    /* for (int k = 0; k < KMAX; k++) { */
-    /* hlmNQC[k] = NQC.ampli[k]; */
-    /* } */
-    /* Set NQC only in 22: */
-    hlmNQC[1] = NQC.ampli[1];
+  if (!(STREQUAL(par_get_s("nqc_coefs_flx"),"none"))) {
+    Waveform_lm_t hNQC;
+    /* eob_wav_hlmNQC_nospin201602(nu,r,pr_star,Omega,ddotr, &hNQC); */ 
+    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, NQC->flx, &hNQC);
+    const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
+    /*
+      for (int k = 0; k < maxk; k++) {
+      if (NQC->hlm->activemode[k]) {
+	hlmNQC[k] = hNQC.ampli[k]; 
+      }
+    }
+    */
+    /* Use only the 22:  */
+    hlmNQC[1] = hNQC.ampli[1]; 
   } 
-
+  
   /** Compute modulus of hhat_lm (with NQC) */  
   for (int k = 0; k < KMAX; k++) { 
     Modhhatlm[k] = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k];

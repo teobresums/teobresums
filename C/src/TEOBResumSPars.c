@@ -294,18 +294,11 @@ void eob_set_params(char *s, int n)
   /* Set default values */
   par_db_default ();
 
-  //if (mode==INPUT_FILE) {
   /* Parse input parfile */
   par_file_parse_merge (s);
-  //} 
-  //if (mode==COMMAND_LINE) {
-  /* Parse command line */
-  //par_file_parse (s, n);    
-  //}
-  //if (mode==NONE) {
-  //errorexit("unknown mode for input parameters mode ");
-  //}
 
+  const int usespins = par_get_i("use_spins");
+  
   /* Set auxiliary parameters */
   double dt = par_get_d("dt");
   double M = par_get_d("M");
@@ -343,7 +336,6 @@ void eob_set_params(char *s, int n)
   par_set_i("use_tidal",j);
   const int usetidal = j;
 
-
   int k;
 
   for (k=0; k<=TIDES_GM_NOPT; k++) {
@@ -358,8 +350,7 @@ void eob_set_params(char *s, int n)
   }
   par_set_i("use_tidal_gravitomagnetic",k);
   const int usetidalGM = k;
-  
-  
+    
   double LambdaAl2 = par_get_d("LambdaAl2");
   double LambdaBl2 = par_get_d("LambdaBl2");
   double LambdaAl3 = par_get_d("LambdaAl3");
@@ -400,20 +391,12 @@ void eob_set_params(char *s, int n)
   double kapT3 = kapA3 + kapB3;
   double kapT4 = kapA4 + kapB4;
   double kapT2j = kapA2j + kapB2j;
-  printf("kapT(2-) = %.16e\n", kapT2j);
 
   if (usetidal) {
     if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
     if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
     if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
-    //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0"); //FIXME: later check for division?
   } 
-
-
-  //if (usetidalGM) {
-      //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
-  //} 
-
   
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
@@ -428,7 +411,7 @@ void eob_set_params(char *s, int n)
   double khatA_2  = 3./2. * LambdaAl2 * XB/XA * gsl_pow_int(XA,5);
   double khatB_2  = 3./2. * LambdaBl2 * XA/XB * gsl_pow_int(XB,5);
   
-  /* self-spin coefficients */
+  /* Self-spin coefficients */
   double C_Q1 = 1.;
   double C_Q2 = 1.;
   if (LambdaAl2>0.) {
@@ -439,6 +422,34 @@ void eob_set_params(char *s, int n)
     double logC_Q2 = logQ(log(LambdaBl2));
     C_Q2           = exp(logC_Q2);
   }
+
+  /* Default settings for NQC */
+  //FIXME: current defaults reproduce the setup of v0.0.
+  //       They will change once all the NQC fits are ready
+  if (STREQUAL(par_get_s("nqc"),"auto")) {
+    if (usetidal) {
+      par_set_s("nqc_coefs_flx","none");
+      par_set_s("nqc_coefs_hlm","none");
+    } else {
+      if (usespins) {
+	par_set_s("nqc_coefs_flx","none");
+	par_set_s("nqc_coefs_hlm","compute");
+      } else {
+	par_set_s("nqc_coefs_flx","nrfit_nospin201602");
+	par_set_s("nqc_coefs_hlm","nrfit_nospin201602");
+      }
+    }
+  } 
+  
+  /* Check the NQC option is known */
+  for (j = 0; j < 3; j++)
+    if (STREQUAL(par_get_s("nqc_coefs_flx"),nqc_flx_opt[j]))
+      break;
+  if(j>2) errorexit("unknown option for nqc_coefs_flx");
+  for (j = 0; j < 4; j++)
+    if (STREQUAL(par_get_s("nqc_coefs_hlm"),nqc_hlm_opt[j]))
+      break;
+  if(j>3) errorexit("unknown option for nqc_coefs_hlm");
   
   /* Set aux parfiles in database */
   
@@ -521,6 +532,10 @@ void eob_set_params(char *s, int n)
     par_set_d("r0",  radius0(M, fmin) );
   }
 
+
+
+
+  
 }
 
 void eob_free_params()

@@ -942,7 +942,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
 
-#if(USE_GRAVITOMAGNETICTERMS)
+#if(USEGRAVITOMAGNETICTERMS)
   
   if ( (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) || (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) ) {
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
@@ -1013,6 +1013,8 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   const double aeff     = aK + 1./3.*a12*X12;
   const double aeff_omg = aK + a12*X12;
     
+  FILE* fp;
+
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG]; /* Omega */
@@ -1241,7 +1243,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
   
 #if (DEBUG)
-  FILE* fp = fopen("nqc_nfunc.txt", "w");
+  fp = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
     fprintf(fp, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[j], n2[j], n4[j], n5[j]);
   }
@@ -1399,29 +1401,24 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     }
   }
 
-  /*
-  //TODO: dump NQC coefs
-  //TODO: [main] input NQC pars, routine to using input NQC, and iterations and (cf. MATLAB code)
   if (par_get_i("output_nqc_coefs")) {
-  char fname[STRLEN];
-  strcpy(fname, par_get_s("output_dir"));
-  strcat(fname, "nqc_coefs.txt");
-  fp = fopen(fname, "w");
-  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
-  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
-  par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
-  par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
-  fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-  for (int k=0; k<KMAX; k++) {
-  fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-  a[k][0], a[k][1], a[k][2], 
-  b[k][0], b[k][1], b[k][2], 
-  );
+    /** Output the NQC coefficients */
+    char fname[STRLEN];
+    strcpy(fname, par_get_s("output_dir"));
+    strcat(fname, "nqc_coefs.txt");
+    fp = fopen(fname, "w");
+    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
+    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
+	    par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
+	    par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
+    for (int k=0; k<KMAX; k++) {
+      fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
+	      ai[k][0], ai[k][1], ai[k][2], 
+	      bi[k][0], bi[k][1], bi[k][2]);
+    }  
+    fclose(fp);  
   }
-  fclose(fp);  
-  }
-  */
-  
+ 
   /** Free mem */
   for (int k=0; k<KMAX; k++) {
     free(omg[k]);
@@ -1449,9 +1446,9 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 
 /** NQC corrections to the RWZ multipolar waveform
     Nagar, Damour, Reisswig, Pollney http://arxiv.org/abs/1506.08457 
-    Current fits: 9/02/2016 */
-void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
-		    Waveform_lm_t *psilmnqc)
+    Nonspinning case, Current fits: 9/02/2016 */
+void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
+				 Waveform_lm_t *hlmnqc)
 {      
   const double xnu  = 1-4*nu;
   const double xnu2 = SQ(xnu);
@@ -1465,8 +1462,7 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   const int k33 = 4;
   int k;
 
-  /** NR fits */
-  
+  /** NR fits */  
   for (int k = 0; k < KMAX; k++) {
     a1[k] = 0.;
     a2[k] = 0.;
@@ -1504,7 +1500,6 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   b3[k33]   = 0.0;
   
   /** NQC corrections to the modulus and phase */
-
   for (int k = 0; k < KMAX; k++) {
     for (int j = 0; j < 6; j++) {
       n[k][j] = 0.;
@@ -1537,64 +1532,75 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   n[k][5] = n[k][4]*prstar*prstar;
 
   /** NQC factor */
-
   for (int k = 0; k < KMAX; k++) {
-    psilmnqc->ampli[k] = 1.; 
-    psilmnqc->phase[k] = 0.; 
+    hlmnqc->ampli[k] = 1.; 
+    hlmnqc->phase[k] = 0.; 
   }
 
   k = k21; /* (2,1) */
-  psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
-  psilmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
+  hlmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
+  hlmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
   
   k = k22; /* (2,2) */
-  psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
-  psilmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
+  hlmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
+  hlmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
   
   k = k33; /* (3,3) */
-  psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
-  psilmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
+  hlmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];
+  hlmnqc->phase[k] =      b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5];
   
 }
 
-
-/** Generic routine for NQC, input pars (not from fits) */
-//CURRENTLY UNUSED 
-void eob_wav_hlmNQC_gen(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
-			double *a1, double *a2, double *a3, double *b1, double *b2, double *b3,
-			Waveform_lm_t *psilmnqc)
+/** Generic routine for NQC */
+void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, 
+		    Waveform_lm_t *hlmnqc)
 {      
+  const int maxk = MIN(KMAX, nqc->maxk+1);
+  
+  /* Multipoles with special treatment */
+  const int k22 = 1;
 
+  /* Shorthand */
+  const double n0 = (prstar/(r*Omega))*(prstar/(r*Omega));
+  const double n1 = ddotr/(r*Omega*Omega);
+  const double n2 = n0*SQ(prstar);
+  const double n3 = prstar/(r*Omega);
+  const double n4 = n3*cbrt(Omega*Omega);
+  const double n5 = n4*SQ(prstar);
+  
+  const double n4_k = n3*SQ((r*Omega)); 
+  const double n5_k = n4*SQ(prstar);
+  
   /** n functions */
-  double n[KMAX][6];    
-  const int k22 = 1;   /* multipoles with special treatment */
-
-  for (int k = 0; k < KMAX; k++) {
-    for (int j = 0; j < 6; j++) {
-      n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-      n[k][1] = ddotr/(r*Omega*Omega);
-      n[k][2] = n[k][0]*prstar*prstar;
-      n[k][3] = prstar/(r*Omega);
-      n[k][4] = n[k][3]*cbrt(Omega*Omega);
-      n[k][5] = n[k][4]*prstar*prstar;
-    }    
+  for (int k = 0; k < maxk; k++) {
+    if (nqc->activemode[k]) {
+      nqc->n[k][0] = n0;
+      nqc->n[k][1] = n1;
+      nqc->n[k][2] = n2;
+      nqc->n[k][3] = n3;
+      nqc->n[k][4] = n4;
+      nqc->n[k][5] = n5;
+    }
   }
 
+  /** Change special multipoles */
   int k = k22;
-  n[k][0] = (prstar/(r*Omega))*(prstar/(r*Omega));
-  n[k][1] = ddotr/(r*Omega*Omega);
-  n[k][2] = n[k][0]*prstar*prstar;
-  n[k][3] = prstar/(r*Omega);
-  /* n[k][4] = n[k][3]*cbrt(Omega*Omega); */
-  n[k][4] = n[k][3]*(r*Omega)*(r*Omega);
-  n[k][5] = n[k][4]*prstar*prstar;
-
+  nqc->n[k][4] = n4_k;
+  nqc->n[k][5] = n5_k;
+  
   /** NQC wave factor */
   for (int k = 0; k < KMAX; k++) {
-    psilmnqc->ampli[k] = 1. + a1[k]*n[k][0] + a2[k]*n[k][1] + a3[k]*n[k][2];; 
-    psilmnqc->phase[k] = b1[k]*n[k][3] + b2[k]*n[k][4] + b3[k]*n[k][5]; 
+    hlmnqc->ampli[k] = 1.;
+    hlmnqc->phase[k] = 0.;
   }
-
+  
+  for (int k = 0; k < maxk; k++) {
+    if (nqc->activemode[k]) {
+      hlmnqc->ampli[k] += nqc->a1[k]*nqc->n[k][0] + nqc->a2[k]*nqc->n[k][1] + nqc->a3[k]*nqc->n[k][2]; 
+      hlmnqc->phase[k] += nqc->b1[k]*nqc->n[k][3] + nqc->b2[k]*nqc->n[k][4] + nqc->b3[k]*nqc->n[k][5]; 
+    }
+  }
+  
 }
 
 /** Ringdown waveform template */
@@ -1747,7 +1753,6 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 
 }
 
-
 /** Main routine for factorized EOB waveform */
 void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 {
@@ -1823,7 +1828,6 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /* (3,1) */
     hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /* (3,3) */
     
-    //FIXME: Following needs check in the case spin+tides
     double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5);
     hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5; /* (4,1) */
     hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; /* (4,3) */
@@ -1856,49 +1860,49 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   /** Residual phase corrections delta_{lm} */
   double dlm[KMAX];
   eob_wav_deltalm(Hreal, Omega, nu, dlm); 
-  
-  /** NQC */
-  Waveform_lm_t hNQC; 
-  //CHECKME: if ( (!(usetidal)) && (!(usespins)) ) {
-  if (!(usetidal)) {
-    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, &hNQC); 
-  }
-
+    
   /** Point-mass h_lm */
   for (int k = 0; k < KMAX; k++) {
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
     hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
   }
 
-  if ( (!(usetidal)) && (!(usespins)) ) {
-    /** Add NQC correction */
-    for (int k = 0; k < KMAX; k++) {
-      hlm->ampli[k] *= hNQC.ampli[k];
-      hlm->phase[k] -= hNQC.phase[k];
+  /** NQC */
+  if (!(STREQUAL(par_get_s("nqc_coefs_hlm"),"none")) &&
+      !(STREQUAL(par_get_s("nqc_coefs_hlm"),"compute"))) {
+    /** Add NQC correction */    
+    Waveform_lm_t hNQC; 
+    /* eob_wav_hlmNQC_nospin2016(nu,r,prstar,Omega,ddotr, &hNQC); */ 
+    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, NQC->hlm, &hNQC); 
+    const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
+    for (int k = 0; k < maxk; k++) {
+      if (NQC->hlm->activemode[k]) {
+	 hlm->ampli[k] *= hNQC.ampli[k];
+	 hlm->phase[k] -= hNQC.phase[k];
+      }
     }
   }
-
+  
   if (usetidal) {   
     /** Tidal contribution */
     double hlmtidal[KMAX];
     eob_wav_hlmTidal(x, dyn, hlmtidal);
-    if( !(usespins) ) 
-    {	
-	    /* Correct normalization of point-mass wave for some of the m=odd modes */
-	    hlm->ampli[0] *= X12;
-	    hlm->ampli[2] *= X12;
-	    hlm->ampli[4] *= X12;
-	    hlm->ampli[5] *= X12;
-	    hlm->ampli[7] *= X12;
-	    hlm->ampli[9] *= X12;
-	    hlm->ampli[11] *= X12;
-	    hlm->ampli[13] *= X12;
+
+    if( !(usespins) ) {
+      /* Correct normalization of point-mass wave for some of the m=odd modes */
+      hlm->ampli[0] *= X12;
+      hlm->ampli[2] *= X12;
+      hlm->ampli[4] *= X12;
+      hlm->ampli[5] *= X12;
+      hlm->ampli[7] *= X12;
+      hlm->ampli[9] *= X12;
+      hlm->ampli[11] *= X12;
+      hlm->ampli[13] *= X12;
     }
     /* Add tidal contribution to waveform */
     for (int k = 0; k < KMAX; k++) {
       hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
-    }
-
+    } 
   }
   
 }

@@ -44,6 +44,9 @@ const int MINDEX[KMAX] = {
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
 
+/** Global var for NQC coefficient */
+NQCdata *NQC;
+
 /** TEOBResumS main */
 int main (int argc, char* argv[]) 
 {
@@ -68,25 +71,19 @@ int main (int argc, char* argv[])
 
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = par_get_d("M"); /* Msun */ 
-  const double f0 = par_get_d("initial_frequency");
   double time_unit_fact = 1;
-  double r0;
   if (!(par_get_i("use_geometric_units"))) {
     /* Input given in physical units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz */
     time_unit_fact = time_units_factor(M);
-    r0 = radius0(M, f0);
   } else {
     /* Input given in geometric units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in geometric units and mass rescaled */
     par_set_d("M", 1.);
-    r0 = pow(f0*Pi, -2./3.);
   }
 
-  //TODO: CHECK PAR RANGES AND FIX PARAMETERS
-  
   /** Set useful pars/vars */
   const double q    = par_get_d("q");
   const double nu   = par_get_d("nu");
@@ -140,6 +137,10 @@ int main (int argc, char* argv[])
     eob_wav_flm_s = &eob_wav_flm_s_SSNLO;
   }
   
+  /** NQC data */  
+  NQCdata_alloc (&NQC);
+  eob_nqc_setcoefs(NQC);
+  
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
@@ -166,6 +167,11 @@ int main (int argc, char* argv[])
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }
 
+  /** Compute initial radius */
+  const double f0 = par_get_d("initial_frequency")/time_unit_fact;
+  const double r0 = eob_dyn_r0_Kepler(f0);
+  //const double r0 = eob_dyn_r0_eob(f0, dyn);
+
   /** Final BH */
   if (!(dyn->use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -181,7 +187,7 @@ int main (int argc, char* argv[])
   }
 
   /* Iteration index */
-  int iter = 0;  
+  int iter = 0;
   
   if (use_postadiab_dyn) {
 
@@ -589,21 +595,19 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
   if (!(use_tidal)) {
 
     /* 
-     * BBH : add NQC and Ringdown
+     * BBH : add NQC 
      */
-
-    /** NQC */
-
-    if (use_spins) {
-
+    
+    if (STREQUAL(par_get_s("nqc_coefs_hlm"),"compute")) {
+      
       if (VERBOSE) PRSECTN("NQC Calculation");
-
+      
       Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
       
       /* Compute NQC corrections */
       eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
       strcat(hlm->name,"_nqc");      
-
+      
       if (DEBUG) {
 	if (par_get_i("output_nqc")) { 
 	  Waveform_lm_output (hlm_nqc);
@@ -613,12 +617,14 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
 	  /* Waveform_lm_output_reim (hlm); */
 	}	
       }
-      
+    
       Waveform_lm_free (hlm_nqc);
-      
+    
     }
     
-    /** Ringdown */
+    /* 
+     * BBH : add Ringdown 
+     */
     
     if (VERBOSE) PRSECTN("Ringdown");
 
@@ -673,6 +679,7 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
   Waveform_lm_free (hlm);
   Waveform_lm_t_free (hlm_t);
   Waveform_free (hpc);
+  NQCdata_free (NQC);
   eob_free_params();
 
   return OK;
