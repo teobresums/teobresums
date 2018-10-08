@@ -337,6 +337,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       }
   }
 
+
 #if(USEGRAVITOMAGNETICTERMS)
 
   if (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) {
@@ -449,6 +450,7 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
 
   /* B potential and derivative with respect to r */
 <<<<<<< HEAD
+<<<<<<< HEAD
   double Btmp, dBtmp_r;
   Btmp   = D/(Atmp);
   dBtmp_r  = (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
@@ -463,6 +465,10 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
     Btmp  += BT;
     dBtmp_r += dBT;
   }
+=======
+  Btmp    += D/(Atmp);
+  dBtmp_r += (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
+>>>>>>> 55aae7ace9ca5be6c8dc62dab27bb3bcc1d75cbb
 =======
   Btmp    += D/(Atmp);
   dBtmp_r += (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
