@@ -136,7 +136,7 @@ int main (int argc, char* argv[])
   } else {
     eob_wav_flm_s = &eob_wav_flm_s_SSNLO;
   }
-  
+
   /** NQC data */  
   NQCdata_alloc (&NQC);
   eob_nqc_setcoefs(NQC);
@@ -187,7 +187,7 @@ int main (int argc, char* argv[])
   }
 
   /* Iteration index */
-  int iter = 0;
+  int iter = 0;  
   
   if (use_postadiab_dyn) {
 

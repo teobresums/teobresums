@@ -298,7 +298,7 @@ void eob_set_params(char *s, int n)
   par_file_parse_merge (s);
 
   const int usespins = par_get_i("use_spins");
-  
+
   /* Set auxiliary parameters */
   double dt = par_get_d("dt");
   double M = par_get_d("M");
@@ -349,8 +349,8 @@ void eob_set_params(char *s, int n)
     k = TIDES_GM_OFF;
   }
   par_set_i("use_tidal_gravitomagnetic",k);
-  const int usetidalGM = k;
-    
+  const int usetidalGM = k;  
+  
   double LambdaAl2 = par_get_d("LambdaAl2");
   double LambdaBl2 = par_get_d("LambdaBl2");
   double LambdaAl3 = par_get_d("LambdaAl3");
@@ -366,13 +366,12 @@ void eob_set_params(char *s, int n)
     LambdaAl4 = Yagi13_fit_barlamdel(LambdaAl2, 4);
     LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
   }
-#if(USE_GRAVITOMAGNETICTERMS)
 
+  #if(USEGRAVITOMAGNETICTERMS)
     SigmaAl2 = JFAPG_fit_Sigma_Irrotational(LambdaAl2);
     SigmaBl2 = JFAPG_fit_Sigma_Irrotational(LambdaBl2);
     printf("Sigma_Irr = %.16e\n", SigmaAl2);
-
-#endif
+  #endif
 
   /* Tidal coupling constants */    
   double kapA2 = 3.   * LambdaAl2 * XA*XA*XA*XA*XA / q; 
@@ -390,18 +389,18 @@ void eob_set_params(char *s, int n)
   double kapT2 = kapA2 + kapB2;
   double kapT3 = kapA3 + kapB3;
   double kapT4 = kapA4 + kapB4;
-  double kapT2j = kapA2j + kapB2j;
+  double kapT2j = kapA2j + kapB2j;  //printf("kapT(2-) = %.16e\n", kapT2j);
 
   if (usetidal) {
     if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
     if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
     if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
-    //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");//FIXME: later check for division?
-  }
- 
-  if (usetidalGM) {
-    if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
+    //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0"); //FIXME: later check for division?
   } 
+
+  //if (usetidalGM) {
+      //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
+  //} 
   
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
@@ -428,7 +427,7 @@ void eob_set_params(char *s, int n)
     C_Q2           = exp(logC_Q2);
   }
 
-  /* Default settings for NQC */
+ /* Default settings for NQC */
   //FIXME: current defaults reproduce the setup of v0.0.
   //       They will change once all the NQC fits are ready
   if (STREQUAL(par_get_s("nqc"),"auto")) {
@@ -537,10 +536,6 @@ void eob_set_params(char *s, int n)
     par_set_d("r0",  radius0(M, fmin) );
   }
 
-
-
-
-  
 }
 
 void eob_free_params()

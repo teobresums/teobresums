@@ -1012,9 +1012,9 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   const double a12  = X1*chi1 - X2*chi2;
   const double aeff     = aK + 1./3.*a12*X12;
   const double aeff_omg = aK + a12*X12;
-    
-  FILE* fp;
 
+  FILE* fp;
+    
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG]; /* Omega */
@@ -1418,7 +1418,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     }  
     fclose(fp);  
   }
- 
+  
   /** Free mem */
   for (int k=0; k<KMAX; k++) {
     free(omg[k]);
@@ -1449,7 +1449,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     Nonspinning case, Current fits: 9/02/2016 */
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr,
 				 Waveform_lm_t *hlmnqc)
-{      
+{       
   const double xnu  = 1-4*nu;
   const double xnu2 = SQ(xnu);
 
@@ -1860,7 +1860,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   /** Residual phase corrections delta_{lm} */
   double dlm[KMAX];
   eob_wav_deltalm(Hreal, Omega, nu, dlm); 
-    
+
   /** Point-mass h_lm */
   for (int k = 0; k < KMAX; k++) {
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
@@ -1887,7 +1887,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     /** Tidal contribution */
     double hlmtidal[KMAX];
     eob_wav_hlmTidal(x, dyn, hlmtidal);
-    if( !(usespins) ) {
+    if( !(usespins) ){ 
       /* Correct normalization of point-mass wave for some of the m=odd modes */
       hlm->ampli[0] *= X12;
       hlm->ampli[2] *= X12;
@@ -1901,7 +1901,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     /* Add tidal contribution to waveform */
     for (int k = 0; k < KMAX; k++) {
       hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
-    } 
+    }
   }
   
 }

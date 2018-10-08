@@ -65,7 +65,7 @@
 #endif
 
 #ifndef USEBTIDALPOTENTIAL
-#define USEBTIDALPOTENTIAL 0 /* add B LO tidal potential */
+#define USEBTIDALPOTENTIAL 1 /* add B LO tidal potential */
 #endif
 
 #ifndef USERK45

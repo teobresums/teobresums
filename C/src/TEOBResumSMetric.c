@@ -428,14 +428,14 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
     Atmp     += AT;
     dAtmp_u  += dAT_u;
     d2Atmp_u += d2AT_u;
-#if (USEBTIDALPOTENTIAL)
-    /* Vines, Flanagan 1PN term in B */
-    double kT2 = par_get_d("kappaTl2");
-    BT  = kT2*3.*(3. - 5.*nu)*u6;
-    dBT = -kT2*18.*(3. - 5.*nu)*u4*u3;  
-    Btmp    += BT;
-    dBtmp_r += dBT;
-#endif
+    #if (USEBTIDALPOTENTIAL)
+      /* Vines, Flanagan 1PN term in B */
+      double kT2 = par_get_d("kappaTl2");
+      BT  = kT2*3.*(3. - 5.*nu)*u6;
+      dBT = -kT2*18.*(3. - 5.*nu)*u4*u3;  
+      Btmp    += BT;
+      dBtmp_r += dBT;
+    #endif
   }
 
   /* A potential and derivative with respect to r */  
@@ -449,8 +449,8 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   const double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
 
   /* B potential and derivative with respect to r */
-  Btmp   = D/(Atmp);
-  dBtmp_r  = (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
+  Btmp    += D/(Atmp);
+  dBtmp_r += (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
 
   *B  = Btmp;
   *dB = dBtmp_r;
