@@ -395,12 +395,11 @@ void eob_set_params(char *s, int n)
     if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
     if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
     if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
-    //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0"); //FIXME: later check for division?
   } 
 
-  //if (usetidalGM) {
-      //if (!(kapT2j > 0.)) errorexit("kappaT2j must be >0");
-  //} 
+  if (usetidalGM) {
+      if (kapT2j > 0.) errorexit("kappaT2j must be negative because we use irrotational gravitomagnetic Love numbers");
+  } 
   
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
@@ -427,7 +426,7 @@ void eob_set_params(char *s, int n)
     C_Q2           = exp(logC_Q2);
   }
 
- /* Default settings for NQC */
+  /* Default settings for NQC */
   //FIXME: current defaults reproduce the setup of v0.0.
   //       They will change once all the NQC fits are ready
   if (STREQUAL(par_get_s("nqc"),"auto")) {
