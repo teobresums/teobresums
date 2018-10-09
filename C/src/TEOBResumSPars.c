@@ -370,7 +370,7 @@ void eob_set_params(char *s, int n)
   #if(USEGRAVITOMAGNETICTERMS)
     SigmaAl2 = JFAPG_fit_Sigma_Irrotational(LambdaAl2);
     SigmaBl2 = JFAPG_fit_Sigma_Irrotational(LambdaBl2);
-    printf("Sigma_Irr = %.16e\n", SigmaAl2);
+    //printf("Sigma_Irr = %.16e\n", SigmaAl2);
   #endif
 
   /* Tidal coupling constants */    
@@ -389,16 +389,12 @@ void eob_set_params(char *s, int n)
   double kapT2 = kapA2 + kapB2;
   double kapT3 = kapA3 + kapB3;
   double kapT4 = kapA4 + kapB4;
-  double kapT2j = kapA2j + kapB2j;  //printf("kapT(2-) = %.16e\n", kapT2j);
+  double kapT2j = kapA2j + kapB2j;
 
   if (usetidal) {
     if (!(kapT2 > 0.)) errorexit("kappaT2 must be >0");
     if (!(kapT3 > 0.)) errorexit("kappaT3 must be >0");
     if (!(kapT4 > 0.)) errorexit("kappaT4 must be >0");
-  } 
-
-  if (usetidalGM) {
-      if (kapT2j > 0.) errorexit("kappaT2j must be negative because we use irrotational gravitomagnetic Love numbers");
   } 
   
   /* Tidal coefficients cons dynamics
