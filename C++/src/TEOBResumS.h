@@ -363,7 +363,6 @@ double s_bisec(double pph, double rorb, double A, double dA, double rc, double d
 /* _s_flm_h */
 
 vector<double> s_flm(double x, void *params);
-vector<double> s_flm_LO(double x, void *params);
 
 /* _s_get_rc_h */
 
