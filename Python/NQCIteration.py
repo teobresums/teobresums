@@ -4,11 +4,9 @@
 Script to run TEOBResumS C code for iterating NQC
 
 Please, see the wiki page
-
 ```
-  https://bitbucket.org/eob_ihes/teobresums/wiki/NQC.md
+    https://bitbucket.org/eob_ihes/teobresums/wiki/NQC.md
 ```
-
 and understand how to do an iteration by yourself before using this script.
 
 Example
@@ -21,9 +19,7 @@ NOTES
 
  * It assumes you have compiled the EOB C code and the executable is somewehere accessible following 
    $TEOBRESUMS/TEOBResumS.x
-
  * It can be called with several different parfiles so to span the parameter space
-
  * It automatically changes some option for NQC 
 
 SB 10/2018
