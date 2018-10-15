@@ -1405,7 +1405,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     /** Output the NQC coefficients */
     char fname[STRLEN];
     strcpy(fname, par_get_s("output_dir"));
-    strcat(fname, "nqc_coefs.txt");
+    strcat(fname, "/nqc_coefs.txt");
     fp = fopen(fname, "w");
     fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
     fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
