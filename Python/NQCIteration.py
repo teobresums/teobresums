@@ -17,7 +17,7 @@ Run the EOB binary set up in `test_NQCIteration.par` for 2 iterations.
 
 NOTES
 
- * It assumes you have compiled the EOB C code and the executable is somewehere accessible following 
+ * It assumes you have compiled the EOB C code and the exe is
    $TEOBRESUMS/TEOBResumS.x
  * It can be called with several different parfiles so to span the parameter space
  * It automatically changes some option for NQC 
@@ -28,38 +28,7 @@ SB 10/2018
 import os, fileinput, glob, shutil
 import argparse, re 
 import subprocess
-
-def run(parfile):
-    """
-    Run TEOBResumS C code using subprocess call
-    """
-    x = "$TEOBRESUMS/TEOBResumS.x " + parfile
-    return subprocess.call(x, shell=True)
-
-def substitute_refline(fname, s1, s2):
-    """
-    Substitute file-line matching with regular expression in s1 with string in s2
-    """
-    r = re.compile(s1)
-    for line in fileinput.input(fname, inplace=True):
-        print( r.sub( s2, line.rstrip() ) )
-    return 
-
-def search_refline(fname, s):
-    """
-    Search regular expression in s in file
-    """
-    with open(fname) as f:
-        m = re.search(s,f.read(), re.MULTILINE)
-    return m 
-
-def add_fline(fname, s):
-    """
-    Add the line in s to a file
-    """
-    with open(fname, "a") as f:
-        f.write(s+"\n")
-    return 
+from EOBUtils import *
 
 def generate_fnamei(fname, i):
     """

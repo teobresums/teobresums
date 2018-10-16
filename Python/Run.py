@@ -9,23 +9,12 @@ $ python3 Run.py test_NQCIteration.par
 $ python3 Run.py *.par
 $ python3 Run.py ../C/par/*.par
 
-NOTE
-
- * It assumes you have compiled the EOB C code and the executable is somewehere accessible following 
-   $TEOBRESUMS/TEOBResumS.x
-
 SB 10/2018
 """
 
 import sys, glob
-import subprocess
 
-def run(parfile):
-    """
-    Run TEOBResumS C code using subprocess call
-    """
-    x = "$TEOBRESUMS/TEOBResumS.x " + parfile
-    return subprocess.call(x, shell=True)
+from EOBUtils import *
 
 if __name__ == "__main__": 
     
