@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
 """
-Script to auto generate parfiles 
+Script to auto generate parfiles and run them
 
 Given a template parfile with basic setup, 
 generates parfiles for all combination of a given subset of parameters
-(e.g. to vary binary masses and spins)
+(e.g. to vary binary masses and spins). Then it run the code.
 
 SB 10/2018
 """
@@ -16,6 +16,7 @@ import itertools
 from EOBUtils import *
 
 if __name__ == "__main__": 
+
 
     # Setup -----------------------------------------
     
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     # ------------------------------------------
     # DO NOT CHANGE BELOW HERE
     # ------------------------------------------
-    
+
     # Generate parfiles ----------------------------
     
     # Read the base parfile
@@ -55,6 +56,7 @@ if __name__ == "__main__":
     print("Creating {} parfiles".format(N))
         
     # Write parfiles
+    parfile = []
     basen, ext =  os.path.splitext(basep)
     for s in range(N):
         for key in set(d.keys()) & set(n.keys()):
@@ -62,7 +64,14 @@ if __name__ == "__main__":
             d[key] = str(xv[key].__next__())
             print(d)
         # Output to file
-        write_parfile_dict(based+"/"+basen+"_"+str(s)+ext, d)
+        parfile.append(based+"/"+basen+"_"+str(s)+ext)
+        write_parfile_dict(parfile[::-1], d)
         print("Written {}".format(s))
 
-    
+    # Run  ----------------------------
+
+    for p in parfile:
+        run(p)
+        os.remove(p)
+
+

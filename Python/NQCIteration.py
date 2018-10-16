@@ -28,6 +28,7 @@ SB 10/2018
 import os, fileinput, glob, shutil
 import argparse, re 
 import subprocess
+
 from EOBUtils import *
 
 def generate_fnamei(fname, i):
@@ -119,4 +120,7 @@ if __name__ == "__main__":
             # Save previous iteration name
             basename_prev = basename
             
+            # Remove parfile (they are copied in the simulation dir)
+            os.remove(parfile)
+                
             
