@@ -1016,7 +1016,15 @@ vector <double> s_get_rc(double r, void *params)
     if (tidal_flag==true)
     {
         
-        /* Inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
+      /* Inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
+         The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
+         deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
+         the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
+
+	 NS quadrupoles due to rotation
+         These are parameters that should be specified in the parameter file
+         
+         Inclusion of LO spin-square coupling. The S1*S1 term coincides with the BBH one, no effect of structure.
          The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
          deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
          the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
@@ -1028,11 +1036,20 @@ vector <double> s_get_rc(double r, void *params)
         //BNS effective spin parameter
         double a02      = C_Q1*at1*at1 + 2.*at1*at2 + C_Q2*at2*at2;
         
-        //tidally-modified centrifugal radius
-        double rc2 = r2 + a02*(1.+2.*u);
+	double delta_a2 = X12*(at1*at1*(C_Q1+0.25) - at2*at2*(C_Q2+0.25))
+	                + at1*at1*(-17./4.+3.*C_Q1-0.5*nu)
+	                + at2*at2*(-17./4.+3.*C_Q2-0.5*nu)
+	                + at1*at2*(nu-2.0);
+
+	  
+	// double alphanu2 = 1. + 0.5/a02*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
+
+	double alphanu2 = 1. + 0.5/a02*delta_a2;
+        
+        double rc2 = r2 + a02*(1. + 2.*alphanu2/r);
         rc         = sqrt(rc2);
-        drc_dr     = r/rc*(1.-a02*u3);
-        d2rc_dr2   = 1./rc*( 1.-drc_dr*r/rc*(1.-a02*u3)+2.*a02*u3);
+        drc_dr     = r/rc*(1.+a02*(-alphanu2*u3 ));
+        d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*a02*u3)+ 2.*alphanu2*a02*u3);
         
         //NO spin-spin-tidal couplings
         /*double rc2 = r2;
