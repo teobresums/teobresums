@@ -965,6 +965,10 @@ TEOBResumParams process_input_parameters(
     double C_Q1    = exp(logC_Q1);
     double C_Q2    = exp(logC_Q2);    
 
+    /*
+    C_Q1 = 0;
+    C_Q2 = 0;
+    */
     params.C_Q1 = C_Q1;
     params.C_Q2 = C_Q2;
 
