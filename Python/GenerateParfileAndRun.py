@@ -11,7 +11,6 @@ SB 10/2018
 """
 
 import os
-import itertools
 
 from EOBUtils import *
 
@@ -44,24 +43,15 @@ if __name__ == "__main__":
     # Read the base parfile
     d = read_parfile_dict(basep)
 
-    # Create a dict of cycling iterators for each key
-    xv = {}
-    for key in n.keys():
-        xv[key] = itertools.cycle(n[key])
-
-    # Count how many parfile
-    N = 1
-    for key, val in n.items():
-        N *= len(val)
-    print("Creating {} parfiles".format(N))
-        
+    # Generate combinations
+    x, keys = combine_parameters(n)
+    
     # Write parfiles
-    parfile = []
     basen, ext =  os.path.splitext(basep)
-    for s in range(N):
-        for key in set(d.keys()) & set(n.keys()):
-            d[key] = str(xv[key].__next__())
-            print(d)
+    for s in range(len(x)):
+        for i in range(len(keys)):
+            d[keys[i]] = str(x[s][i])
+        ##print(d)
         # Output to file
         parfile.append(based+"/"+basen+"_"+str(s)+ext)
         write_parfile_dict(parfile[::-1], d)

@@ -5,7 +5,8 @@ Various python utilities to run TEOBResumS
 """
 
 import os, fileinput, glob, shutil
-import argparse, re 
+import argparse, re
+import itertools
 import subprocess
 
 def run(parfile):
@@ -19,6 +20,18 @@ def run(parfile):
     """
     x = "$TEOBRESUMS/TEOBResumS.x " + parfile
     return subprocess.call(x, shell=True)
+
+def combine_parameters(pars):
+    """
+    Given a dictionary of parameters and their values in lists, 
+    Generate all the combinations (return the key list for the ordering)
+    """
+    x, k = [], []
+    for key in pars.keys(): 
+        x.append(pars[key])
+        k.append(key)
+    x = list(itertools.product(*x))
+    return x, k
 
 #
 # Files, I/O, etc
