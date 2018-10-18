@@ -58,7 +58,6 @@ if __name__ == "__main__":
     basen, ext =  os.path.splitext(basep)
     for s in range(N):
         for key in set(d.keys()) & set(n.keys()):
-            print('%s: %s ' % (key, xv[key].__next__() ))
             d[key] = str(xv[key].__next__())
             print(d)
         # Output to file
