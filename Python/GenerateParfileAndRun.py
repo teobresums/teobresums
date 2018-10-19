@@ -24,7 +24,7 @@ if __name__ == "__main__":
     basep = "test_NQCIteration.par"
 
     # Set new values/ranges for parameters (Use lists)
-    q = [1., 1.2, 1.4, 2., 10.]
+    q = [1., 1.2, 1.4]
     chi1 = [0., 0.8]
     chi2 = [0., 0.8, 0.9]
     
@@ -47,14 +47,15 @@ if __name__ == "__main__":
     x, keys = combine_parameters(n)
     
     # Write parfiles
-    basen, ext =  os.path.splitext(basep)
+    parfile = []
+    basen, ext = os.path.splitext(basep)
     for s in range(len(x)):
         for i in range(len(keys)):
             d[keys[i]] = str(x[s][i])
-        ##print(d)
         # Output to file
+        print(d)
         parfile.append(based+"/"+basen+"_"+str(s)+ext)
-        write_parfile_dict(parfile[::-1], d)
+        write_parfile_dict(parfile[-1], d)
         print("Written {}".format(s))
 
     # Run  ----------------------------
