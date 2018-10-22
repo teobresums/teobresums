@@ -267,7 +267,7 @@ int main (int argc, char* argv[])
       dyn->data[EOB_DDOTR][0]  = dyn->ddotr;
       dyn->data[EOB_PRSTAR][0] = dyn->prstar;
       dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
-      dyn->data[EOB_E0][0] = dyn->E;//SARP
+      dyn->data[EOB_E0][0]     = dyn->E;
     }
     
     /** Waveform computation at t = 0 
@@ -330,13 +330,13 @@ int main (int argc, char* argv[])
 
   gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
 
-#if (USERK45)
-  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
-  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
-#else
-  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
- gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
-#endif
+  #if (USERK45)
+    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
+    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
+  #else
+    const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
+    gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
+  #endif
 
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
@@ -456,7 +456,6 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r), dyn->rLR_tidal); 
         dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; 
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
