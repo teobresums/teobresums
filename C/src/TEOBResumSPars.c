@@ -531,6 +531,26 @@ void eob_set_params(char *s, int n)
     par_set_d("r0",  radius0(M, fmin) );
   }
 
+  /* Function pointers */
+  
+    /** Set f_lm fun pointer */
+  if ((STREQUAL(par_get_s("use_flm"),"SSLO"))) {
+    /* eob_wav_flm_s = &eob_wav_flm_s_old; */
+    eob_wav_flm_s = &eob_wav_flm_s_SSLO;
+  } else {
+    eob_wav_flm_s = &eob_wav_flm_s_SSNLO;
+  }
+
+  /** Set rc fun pointer */
+  if ((STREQUAL(par_get_s("centrifugal_radius"),"LO"))) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
+  } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NLO"))) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NLO;
+  } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NOSPIN"))) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOSPIN;
+  } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NOTIDES"))) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
+  }
 }
 
 void eob_free_params()

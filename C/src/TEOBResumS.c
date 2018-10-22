@@ -128,15 +128,7 @@ int main (int argc, char* argv[])
   int (*p_eob_dyn_rhs)();
   if (use_spins) p_eob_dyn_rhs = &eob_dyn_rhs_s;
   else           p_eob_dyn_rhs = &eob_dyn_rhs;
-
-  /** Set f_lm fun pointer */
-  if ((STREQUAL(par_get_s("use_flm"),"SSLO"))) {
-    /* eob_wav_flm_s = &eob_wav_flm_s_old; */
-    eob_wav_flm_s = &eob_wav_flm_s_SSLO;
-  } else {
-    eob_wav_flm_s = &eob_wav_flm_s_SSNLO;
-  }
-
+  
   /** NQC data */  
   NQCdata_alloc (&NQC);
   eob_nqc_setcoefs(NQC);

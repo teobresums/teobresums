@@ -703,7 +703,10 @@ void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, 
 }
 
 
-/** Resummed amplitudes for the spin case. 
+/** 
+    THIS IS STILL EXPERIMENTAL CODE - For the moment, only NLO spin-spin terms
+    are added and only for BNS systems.
+    Resummed amplitudes for the spin case. 
     This function computes the residual amplitude corrections flm's as 
     introduced in Damour, Iyer & Nagar, PRD 79, 064004 (2008).
     The orbital part is taken at the usual 3^{+2} PN order, i.e. 3PN terms
@@ -794,17 +797,12 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
 
   double c32SO_nlo = ((-1433. + 5530.*nu - 3985.*nu*nu)*a0 + (1793. - 4270.*nu -3035.*nu*nu)*a12X12)/(1620.*(1.-3.*nu)*(1.-3.*nu));
 
-  // FIXME: flag that adds new spin pieces (only in BNS case)
-  int new_spin_flag = 0;
-  if (new_spin_flag)
+  if (usetidal)
     {
-      if (usetidal)
-	{
-	  rho22S += cSS_nlo*v6 + cSO_nnlo*v7;
-	  rho32S += c32SO_nlo*v3;
-	}
+      rho22S += cSS_nlo*v6;// + cSO_nnlo*v7;
+      rho32S += 0.;//c32SO_nlo*v3;
     }
-    
+  
   /** l>=2, m=odd*/
   /* spin-orbit */
   f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3;
@@ -844,15 +842,11 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
   /* Cubic spin */
   const double c21SSS_lo = 3./4.*a0*a0*a12; //FIXME: Not added. It should depend on EOS.
 
-  // FIXME: flag that adds new pieces (only in BNS case)
-  if (new_spin_flag)
+  if (usetidal)
     {
-      if (usetidal)
-	{
-	  f21S += c21SS_lo*v4 + c21SO_nlo*v5;
-	  f33S += c33SS_lo*v4 + c33SO_nlo*v5;
-	  f31S += c31SS_lo*v4 + c31SO_nlo*v5;
-	}
+      f21S += c21SS_lo*v4;// + c21SO_nlo*v5;
+      f33S += c33SS_lo*v4;// + c33SO_nlo*v5;
+      f31S += c31SS_lo*v4;// + c31SO_nlo*v5;
     }
   
   /** Amplitudes (correct with spin terms) */
@@ -1405,7 +1399,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     /** Output the NQC coefficients */
     char fname[STRLEN];
     strcpy(fname, par_get_s("output_dir"));
-    strcat(fname, "nqc_coefs.txt");
+    strcat(fname, "/nqc_coefs.txt");
     fp = fopen(fname, "w");
     fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
     fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),

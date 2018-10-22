@@ -50,6 +50,7 @@ postadiabatic_dynamics_size = 1000 # grid size
 postadiabatic_dynamics_rmin = 12. # minimum radius (end of PA dynamics)
 postadiabatic_dynamics_stop = "yes" # stop after post-adiabatic dynamics
 
+centrifugal_radius = "LO" # {LO, NLO, NOSPIN, NOTIDES}
 use_flm = "SSLO" # "SSLO", "SSNLO"
 
 compute_LR = 1 # calculate LR ?
