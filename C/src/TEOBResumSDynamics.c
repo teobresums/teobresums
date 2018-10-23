@@ -35,7 +35,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   const double r      = y[EOB_EVOLVE_RAD];
   const double pphi   = y[EOB_EVOLVE_PPHI];
   const double prstar = y[EOB_EVOLVE_PRSTAR];
-  
+ 
   /** Compute EOB Metric */
   double A, B, dA, d2A, dB;
   eob_metric(r, d, &A, &B, &dA, &d2A, &dB);

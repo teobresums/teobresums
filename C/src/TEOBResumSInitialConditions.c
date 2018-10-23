@@ -79,8 +79,6 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
 
     Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn); 
 
-    //printf("%d %.16e %.16e %.16e %.16e %.16e %.16e %.16e %.16e\n",i,r[i],x,Omega_j[i], r_omega, E0[i], H0eff, jhat,Fphi[i]);
-
     /** Radial momentum conjugate to r*: post-circular ID  */
     Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
     prstar[i] = Ctmp[i]*Fphi[i]/djdr[i];
@@ -94,14 +92,11 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   D0(prstar, dr, 2*N, dprstardr);
   
   int i = N-1;
-  //for (int i = 0; i < 2*N; i++) {
   dprstardt = dprstardr[i] * Fphi[i]/djdr[i];
   pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt - z3*gsl_pow_int(prstar[i],4)/j2[i]);
   //printf("%d %.16e %.16e %.16e %.16e %.16e %.16e\n",i,r[i],Fphi[i],djdr[i],dprstardr[i],dprstardt,pph[i]);
-  //}
-  //int i = N-1;
   //printf("%d %.16e %.16e %.16e %.16e %.16e %.16e\n",i,r[i],Fphi[i],djdr[i],dprstardr[i],dprstardt,pph[i]);
-  //DBGSTOP
+
 
   y_init[EOB_ID_RAD]    = r[N-1];
   y_init[EOB_ID_PHI]    = 0.;

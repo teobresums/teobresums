@@ -516,18 +516,17 @@ void eob_set_params(char *s, int n)
     par_set_d("srate", 1./dt );
     par_set_d("distance", 1. );
     par_set_d("M", 1. );
+
   } else {
     /* input given in physical units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz 
     */
     if (DEBUG) printf("Assume physical units for pars values\n");
+    dt  = 1./par_get_d("srate");      
     dt = time_units_conversion(M, dt);
-    if (DUNEQUAL(dt,1./par_get_d("srate"),1e-12)) {
-      dt  = 1./par_get_d("srate");
-      par_set_d("dt", dt);
-      printf("warning: input values for dt inconsistent with sample rate, use sample rate.\n");
-    } 
+    //printf("dt=%e\n",dt);
+    par_set_d("dt", dt);
     par_set_d("r0",  radius0(M, fmin) );
   }
 

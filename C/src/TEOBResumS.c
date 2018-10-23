@@ -98,8 +98,7 @@ int main (int argc, char* argv[])
   if (!(use_tidal) && (use_spins)) store_dynamics = 1; /* NQC need dynamical variables */
   const int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
   if (use_postadiab_dyn) store_dynamics = 1;
-  const double dt = par_get_d("dt") * time_unit_fact;
-
+  const double dt = par_get_d("dt"); 
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
   Waveform_lm *hlm; /* h_lm */ 
@@ -250,7 +249,7 @@ int main (int argc, char* argv[])
     dyn->r       = dyn->y0[EOB_ID_RAD];
     dyn->phi     = 0.;
     dyn->pphi    = dyn->y0[EOB_ID_PPHI];
-    dyn->Omg     = dyn->y0[EOB_ID_OMGJ];//CHECKME
+    dyn->Omg     = dyn->y0[EOB_ID_OMGJ];	//CHECKME
     dyn->ddotr   = 0.; 
     dyn->prstar  = dyn->y0[EOB_ID_PRSTAR];
     dyn->Omg_orb = 0.;//FIXME 
@@ -346,7 +345,7 @@ int main (int argc, char* argv[])
   if (VERBOSE) PRSECTN("ODE Evolution");
   int STATUS = OK;
   while (!(dyn->ode_stop)) {
-   if (VERBOSE) printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r);
+    if (VERBOSE) printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r); 
     iter++;
 
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
@@ -431,7 +430,7 @@ int main (int argc, char* argv[])
       dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
       dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
-      dyn->data[EOB_E0][iter] = dyn->E;//SARP
+      dyn->data[EOB_E0][iter] 	  = dyn->E;
     }
 
     /** Stop integration if reached max time */    
