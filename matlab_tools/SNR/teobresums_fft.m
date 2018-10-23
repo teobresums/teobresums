@@ -111,14 +111,14 @@ deltat = time(2)-time(1);
 
 if tapering
     % tapering h    
-    ftaper     =  1/2*(1+tanh(time*alpha(1)-Tau(1)));
-    ftaper_end = -1/2*(tanh((time-Tau(2)*time(end))*alpha(2))-1);
+%     ftaper     =  1/2*(1+tanh(time*alpha(1)-Tau(1)));
+%     ftaper_end = -1/2*(tanh((time-Tau(2)*time(end))*alpha(2))-1);
     
     % the raw waveform
     hraw = h;
     % taper it at beginnend and at the end
-    h    = h.*ftaper; %.*ftaper_end;
-
+%     h    = h.*ftaper; %.*ftaper_end;
+    h   = schwartz_tapering(h,time,freqM);
     %%{
     figure('Name','Test tapering')
     subplot(3,1,[1 2])
