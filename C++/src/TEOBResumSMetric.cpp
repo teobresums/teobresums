@@ -1010,6 +1010,7 @@ vector <double> s_get_rc(double r, void *params)
     double u   = 1./r;
     double u2  = u*u;
     double u3  = u*u2;
+    double u4  = u*u3;
     double r2  = r*r;
     double X12 = sqrt(1.-4.*nu);   //(X1-X2) will be defined at the beginning and not redefined several times
     
@@ -1041,15 +1042,23 @@ vector <double> s_get_rc(double r, void *params)
 	                + at2*at2*(-17./4.+3.*C_Q2-0.5*nu)
 	                + at1*at2*(nu-2.0);
 
+	double delta_a2_nnlo = at1*at1*C_Q1*(12.196428571428571 -123*nu/28.)
+	                     + at2*at2*C_Q2*(12.196428571428571 - 123*nu/28.)  
+                             + at1*at2*(-11.75 - 101*nu/8. - 3*nu*nu)/4.  
+                             + at1*at1*(-17.258928571428573 - 131*nu/14.+ 3*nu*nu/8.)  
+                             + at2*at2*(-17.258928571428573 - 131*nu/14.+ 3*nu*nu/8.)  
+                             + X12*(149*at1*at1*C_Q1/28. - 149*at2*at2*C_Q2/28.  
+			     + at1*at1*(-0.38392857142857145 - 21*nu/8.) + at2*at2*(0.38392857142857145 + 21*nu)/8.);
+
 	  
 	// double alphanu2 = 1. + 0.5/a02*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
 
 	double alphanu2 = 1. + 0.5/a02*delta_a2;
-        
-        double rc2 = r2 + a02*(1. + 2.*alphanu2/r);
+
+	double rc2 = r2 + a02*(1. + 2.*alphanu2/r) + delta_a2_nnlo/(r*r);
         rc         = sqrt(rc2);
-        drc_dr     = r/rc*(1.+a02*(-alphanu2*u3 ));
-        d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*a02*u3)+ 2.*alphanu2*a02*u3);
+        drc_dr     = r/rc*(1.+a02*(-alphanu2*u3 ) - delta_a2_nnlo*u4);
+        d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*a02*u3 - delta_a2_nnlo*u4) + 2.*alphanu2*a02*u3+3*delta_a2_nnlo*u4);
         
         //NO spin-spin-tidal couplings
         /*double rc2 = r2;
