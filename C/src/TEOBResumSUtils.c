@@ -493,7 +493,7 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
   (*wav)->size = size;
 }
 
-/* Alloc a new multipolar waveform and interp */
+/* Alloc a new multipolar waveform and fill by interp from another */
 void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name)
 {
   /* Alloc new memory */  
@@ -521,7 +521,7 @@ void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const in
   for (int k = 0; k < KMAX; k++) {
     interp_spline( hlm->time, hlm->phase[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->phase[k]);
   }
-    
+  
 }
 
 /* Interp and overwrite a multipolar waveform */
@@ -534,13 +534,16 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   if (strcmp(name, "")) strcpy(hlm->name, name);
 
   /* Overwrite and realloc arrays */
-  // TODO: should we free first, or realloc? 
   hlm->size = size;
+  if (hlm->time) free(hlm->time);
   hlm->time = malloc ( size * sizeof(double) );
   for (int k = 0; k < KMAX; k++) {
+    if (hlm->ampli[k]) free(hlm->ampli[k]);
+    if (hlm->phase[k]) free(hlm->phase[k]);
     hlm->ampli[k] = malloc ( size * sizeof(double) );
     hlm->phase[k] = malloc ( size * sizeof(double) );
   } 
+
   for (int i = 0; i < size; i++) 
     hlm->time[i] = i*dt + t0;
 
@@ -603,7 +606,7 @@ void Waveform_lm_free (Waveform_lm *wav)
   free(wav);
 }
 
-/** Multipolar waveform (complex) */
+/** Multipolar waveform at time point (complex) */
 void Waveform_lm_t_alloc (Waveform_lm_t **wav)
 {
   *wav = (Waveform_lm_t *) calloc(1, sizeof(Waveform_lm_t)); 
@@ -647,6 +650,12 @@ void Dynamics_push (Dynamics **dyn, int size)
   (*dyn)->size = size; 
 }
 
+/* Alloc a new dynamics structure and fill by interp from another */
+void Dynamics_alloc_interp ()
+{
+  //TODO:
+}
+
 /* Interp and overwrite a multipolar waveform */
 void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const double dt, const char *name)
 {
@@ -657,22 +666,22 @@ void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const doub
   if (strcmp(name, "")) strcpy(dyn->name, name);
 
   /* Overwrite and realloc arrays */
-  // TODO: should we free first, or realloc? 
   dyn->dt   = dt;
   dyn->size = size; 
+  if (dyn->time) free(dyn->time);
   dyn->time = malloc ( size * sizeof(double) );
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+    if (dyn->data[v]) free(dyn->data[v]);
     dyn->data[v] = malloc ( size * sizeof(double) );
     memset(dyn->data[v], 0., size*sizeof(double));
   }        
-  for (int i = 0; i < size; i++) {
+
+  for (int i = 0; i < size; i++)
     dyn->time[i] = i*dt + t0;
-  }      
 
   /* Interp */
-  for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) {
+  for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
     interp_spline(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
-  }
   
   Dynamics_free (dyn_aux);
 }
