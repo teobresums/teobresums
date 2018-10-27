@@ -771,7 +771,7 @@ void system_mkdir(const char *name)
 {
   char s[STRLEN];
   sprintf(s,"mkdir -p %s",name);
-  if (!system(s)) errorexit("Error during system call to make directory."); 
+  if (system(s)) errorexit("Error during system call to make directory."); 
 }
 
 /** Date and time */
