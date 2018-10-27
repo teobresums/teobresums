@@ -493,6 +493,37 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
   (*wav)->size = size;
 }
 
+/* Alloc a new waveform and interp */
+void Waveform_lm_new_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name)
+{
+  
+  Waveform_lm_alloc(hlm_new, size, "");
+  memcpy((*hlm_new), hlm, sizeof(Waveform_lm)); /* this does not duplicate the memory pointed by ptrs */
+  strcpy((*hlm_new)->name, name);
+
+  /* Alloc new memory */
+  (*hlm_new)->size = size;
+  (*hlm_new)->time = malloc ( size * sizeof(double) );
+  for (int k = 0; k < KMAX; k++) {
+    (*hlm_new)->ampli[k] = malloc ( size * sizeof(double) );
+    (*hlm_new)->phase[k] = malloc ( size * sizeof(double) );
+  } 
+  
+  /* Time array */
+  for (int i = 0; i < size; i++) {
+    (*hlm_new)->time[i] = i*dt + t0;
+  }    
+   
+  /* Interp */
+  for (int k = 0; k < KMAX; k++) {
+    interp_spline( (*hlm_new)->time, (*hlm_new)->ampli[k], hlm->size, hlm->time, size, hlm->ampli[k]);
+  }
+  for (int k = 0; k < KMAX; k++) {
+    interp_spline( (*hlm_new)->time, (*hlm_new)->phase[k], hlm->size, hlm->time, size, hlm->phase[k]);
+  }
+    
+}
+
 void Waveform_lm_output (Waveform_lm *wav)
 {
   char fname[STRLEN];
@@ -740,7 +771,7 @@ void system_mkdir(const char *name)
 {
   char s[STRLEN];
   sprintf(s,"mkdir -p %s",name);
-  system(s); 
+  if (!system(s)) errorexit("Error during system call to make directory."); 
 }
 
 /** Date and time */
