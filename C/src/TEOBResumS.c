@@ -516,6 +516,7 @@ int main (int argc, char* argv[])
     }
 
     /** Waveform */ 
+#if (0)
     Waveform_lm_alloc (&hlm_aux, size, "");
     memcpy(hlm_aux, hlm, sizeof(Waveform_lm));
     strcpy(hlm->name, "hlm_insplunge_interp");
@@ -525,7 +526,6 @@ int main (int argc, char* argv[])
       hlm->ampli[k] = malloc ( size_new * sizeof(double) );
       hlm->phase[k] = malloc ( size_new * sizeof(double) );
     } 
-   
     for (int i = 0; i < size_new; i++) {
       hlm->time[i] = i*dt;
     }    
@@ -535,14 +535,19 @@ int main (int argc, char* argv[])
     for (int k = 0; k < KMAX; k++) {
       interp_spline(hlm_aux->time, hlm_aux->phase[k], size, hlm->time, size_new, hlm->phase[k]);
     }
-    
     Waveform_lm_free (hlm_aux);
+    // this block of code is now done by the following call:
+    // (this block of code should be eliminatedin future commits)
+#else
+    Waveform_lm_interp (hlm, size_new, 0., dt, "hlm_insplunge_interp");
+#endif
     
     if (store_dynamics) {
 
       /** Dynamics, 
 	  Similar, but need to keep the non-array fields */
 
+#if (0)
       Dynamics_alloc(&dyn_aux, size, "");
       memcpy(dyn_aux, dyn, sizeof(Dynamics));
       strcpy(dyn->name, "dyn_interp");
@@ -553,15 +558,18 @@ int main (int argc, char* argv[])
 	dyn->data[v] = malloc ( size_new * sizeof(double) );
 	memset(dyn->data[v], 0., size_new*sizeof(double));
       }      
-
       for (int i = 0; i < size_new; i++) {
 	dyn->time[i] = hlm->time[i];
       }      
       for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) {
 	interp_spline(dyn_aux->time, dyn_aux->data[k], size, dyn->time, size_new, dyn->data[k]);
       }
-      
       Dynamics_free (dyn_aux);
+      // this block of code is now done by the following call:
+      // (this block of code should be eliminatedin future commits)
+#else
+      Dynamics_interp (dyn, size_new, 0., dt, "dyn_interp");
+#endif
       
     }
 
