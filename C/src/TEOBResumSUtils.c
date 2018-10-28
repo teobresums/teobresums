@@ -501,30 +501,28 @@ void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const in
   memcpy((*hlm_new), hlm, sizeof(Waveform_lm)); 
   strcpy((*hlm_new)->name, name);
 
-  // TODO: should we free first, or realloc? 
   (*hlm_new)->size = size;
+  if ((*hlm_new)->time) free((*hlm_new)->time);
   (*hlm_new)->time = malloc ( size * sizeof(double) );
   for (int k = 0; k < KMAX; k++) {
+    if ((*hlm_new)->ampli[k]) free((*hlm_new)->ampli[k]);
+    if ((*hlm_new)->phase[k]) free((*hlm_new)->phase[k]);
     (*hlm_new)->ampli[k] = malloc ( size * sizeof(double) );
     (*hlm_new)->phase[k] = malloc ( size * sizeof(double) );
   } 
   
   /* Time array */
-  for (int i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) 
     (*hlm_new)->time[i] = i*dt + t0;
-  }    
    
   /* Interp */
-  for (int k = 0; k < KMAX; k++) {
+  for (int k = 0; k < KMAX; k++) 
     interp_spline( hlm->time, hlm->ampli[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->ampli[k]);
-  }
-  for (int k = 0; k < KMAX; k++) {
-    interp_spline( hlm->time, hlm->phase[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->phase[k]);
-  }
-  
+  for (int k = 0; k < KMAX; k++) 
+    interp_spline( hlm->time, hlm->phase[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->phase[k]);  
 }
 
-/* Interp and overwrite a multipolar waveform */
+/* Interp on uniform time array and overwrite a multipolar waveform */
 void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -555,6 +553,57 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
     
   Waveform_lm_free (hlm_aux);
 }
+
+/* A special routine: join two multipolar waveforms at t = tm */
+#if (1)
+void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
+{
+  /* Time arrays are suppose to be ordered as
+     hlma->time:  x x x x x x x x x 
+     hlmb->time:       o o o o o o o o o 
+     to        :                |
+     But they do not need to overlap or be uniformly spaced.
+     Following checks enforce this structure if possible
+  */
+  if (hlma->time[0] > hlmb->time[0]) {
+    SWAPTRS( hlma, hlmb );
+    if ((DEBUG) || (VERBOSE)) PRWARN("Swapped waveforms while joining.");
+  }
+  if (to > hlmb->time[hlmb->size-1]) {
+    /* Nothing to join */
+    return;
+  }
+  if (to <= hlma->time[0]) {
+    /* Swap to return hlmb as hlma */
+    SWAPTRS( hlma, hlmb );
+    return;
+  }
+
+  /* Find indexes of closest elements to to */
+  const int ioa = find_point_bisection(to, hlma->size, hlma->time, 1);
+  const int iob = find_point_bisection(to, hlmb->size, hlmb->time, 1);
+
+  /* Calculate the new size */
+  const int Na = hlma->size - ioa;
+  const int Nb = hlmb->size - iob;
+  const int N  = Na+Nb;
+
+  /* Resize a */
+  Waveform_lm_push (&hlma, N);
+  hlma->size = N;
+
+  /* Copy the relevant part of b into a */
+  for (int i = 0; i < Nb; i++) 
+    hlma->time[ioa + i] = hlmb->time[iob + i]; 
+  for (int k=0; k<KMAX; k++) {
+    for (int i = 0; i < Nb; i++) {
+      hlma->ampli[k][ioa + i] = hlmb->ampli[k][iob + i];
+      hlma->phase[k][ioa + i] = hlmb->phase[k][iob + i];
+    }
+  }
+  
+}
+#endif
 
 void Waveform_lm_output (Waveform_lm *wav)
 {
