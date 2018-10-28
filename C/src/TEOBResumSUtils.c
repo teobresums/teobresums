@@ -554,8 +554,7 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   Waveform_lm_free (hlm_aux);
 }
 
-/* A special routine: join two multipolar waveforms at t = tm */
-#if (1)
+/* A special routine: join two multipolar waveforms at t = to */
 void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
 {
   /* Time arrays are suppose to be ordered as
@@ -563,7 +562,10 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
      hlmb->time:       o o o o o o o o o 
      to        :                |
      But they do not need to overlap or be uniformly spaced.
-     Following checks enforce this structure if possible
+     Note to can be 
+     to > hlma->time[hlma->size-1] => extend the a waveform
+     to < hlmb->time[0]            => join the whole b waveform
+     Following checks enforce the above structure, if possible.
   */
   if (hlma->time[0] > hlmb->time[0]) {
     SWAPTRS( hlma, hlmb );
@@ -571,11 +573,12 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
   }
   if (to > hlmb->time[hlmb->size-1]) {
     /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Waveforms not joined.");
     return;
   }
   if (to <= hlma->time[0]) {
-    /* Swap to return hlmb as hlma */
-    SWAPTRS( hlma, hlmb );
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Waveforms not joined.");
     return;
   }
 
@@ -603,7 +606,6 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
   }
   
 }
-#endif
 
 void Waveform_lm_output (Waveform_lm *wav)
 {
