@@ -69,7 +69,9 @@ if __name__ == "__main__":
     # Launch tasks
     pool = mp.Pool(processes=nproc)
     result_list = pool.map(run, parfile)
-
+    pool.close() 
+    pool.join()
+    
     for m in result_list:
         print(m)
     print("done")
