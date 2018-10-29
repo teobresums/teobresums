@@ -51,6 +51,11 @@ NQCdata *NQC;
 int main (int argc, char* argv[]) 
 {
 
+  /* *****************************************
+   * Init 
+   * *****************************************
+   */
+  
   /** Input parameters */
   if (argc == 2) {
     eob_set_params(argv[1], argc);    
@@ -68,7 +73,7 @@ int main (int argc, char* argv[])
   /** Make output dir */
   system_mkdir(par_get_s("output_dir"));
   par_db_write_file("params.txt");
-
+  
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = par_get_d("M"); /* Msun */ 
   double time_unit_fact = 1;
@@ -91,13 +96,17 @@ int main (int argc, char* argv[])
   const double chi2 = par_get_d("chi2");
   const int use_spins = par_get_i("use_spins");
   const int use_tidal = par_get_i("use_tidal");
-  int interp_uniform_grid = par_get_i("interp_uniform_grid");  /* reset below if needed */
   int store_dynamics = par_get_i("output_dynamics"); 
   if (!(use_tidal) && (use_spins)) store_dynamics = 1; /* NQC determination need dynamical variables */
   const int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = par_get_d("dt");
 
+  /* *****************************************
+   * Set Memory & do preliminary computations
+   * *****************************************
+   */
+  
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
   Waveform_lm *hlm; /* h_lm */ 
@@ -181,8 +190,9 @@ int main (int argc, char* argv[])
   
   if (use_postadiab_dyn) {
 
-    /*
+    /* *****************************************
      * Post-adiabatic dynamics
+     * *****************************************
      */
     
     if (VERBOSE) PRSECTN("Post-adiabatic dynamics");
@@ -213,6 +223,7 @@ int main (int argc, char* argv[])
     
     if (STREQUAL(par_get_s("postadiabatic_dynamics_stop"),"yes")) {
       if (VERBOSE) printf("Post-adiabatic dynamics: skip evolution.\n");
+      /* SKIP ODE EVOLUTION */
       goto END_ODE_EVOLUTION; 
     }
     
@@ -235,8 +246,9 @@ int main (int argc, char* argv[])
     
   } else {
 
-    /*
+    /* *****************************************
      * Initial conditions for the evolution
+     * *****************************************
      */
     
     /** Compute the initial conditions */
@@ -290,7 +302,12 @@ int main (int argc, char* argv[])
     for (int i = 0; i < EOB_ID_NVARS; i++)
       PRFORMd(eob_id_var[i], dyn->y0[i]);
   }
-   
+
+  /* *****************************************
+   * ODE Evolution
+   * *****************************************
+   */
+     
   /** Initialize ODE system solver */
   dyn->dt     = dt;
   dyn->t_stop = par_get_d("ode_tmax") * time_unit_fact;
@@ -317,15 +334,7 @@ int main (int argc, char* argv[])
     j = ODE_TSTEP_ADAPTIVE;
   }
   dyn->ode_timestep  = j;
-  const int ode_tstep = dyn->ode_timestep;
-
-  /* Adjust interpolation option */
-  if (!(use_tidal)) interp_uniform_grid = 1; /* NQC and ringdown attachment assume uniform grids */
-
-
-  if (ode_tstep == ODE_TSTEP_UNIFORM)        interp_uniform_grid = 0; /* Not needed with uniform tstep */
-  if ((use_postadiab_dyn) && (!(use_tidal))) interp_uniform_grid = 1; /* Always needed with post-adiab and BBH */
-  
+  const int ode_tstep = dyn->ode_timestep;   
   const double ode_abstol = par_get_d("ode_abstol");
   const double ode_reltol = par_get_d("ode_reltol");
 
@@ -351,7 +360,7 @@ int main (int argc, char* argv[])
     iter++;
 
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
-      /*  Uniform timestepping  */
+      /* Uniform timestepping  */
       dyn->ti = dyn->t + dyn->dt;
       STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
       if (STATUS != GSL_SUCCESS) {
@@ -486,7 +495,7 @@ int main (int argc, char* argv[])
  END_ODE_EVOLUTION:;
   
 #if (DEBUG) 
-  /* Output pre-interpolation wave and dynamics */
+  /* Output wave and dynamics */
   if(par_get_i("output_multipoles")) {
     strcat(hlm->name,"_insplunge");
     Waveform_lm_output (hlm);
@@ -494,134 +503,133 @@ int main (int argc, char* argv[])
   if (par_get_i("output_dynamics"))
     Dynamics_output(dyn);
 #endif
-  
-  if (interp_uniform_grid) {
-    
-    /* 
-     * Interpolate on uniform grid
-     */
 
-    /* Auxiliary vars */
-    Waveform_lm *hlm_aux; 
-    Dynamics *dyn_aux; 
-  
-    /* Build uniform grid of width dt and alloc tmp memory */
-    //CHECKME: is this rounding under control ?!
-    const int size_new = (int)((hlm->time[size-1] - hlm->time[0])/dt + 1); /* use dt from parfile */
-    if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
-    if (VERBOSE) {
-      PRSECTN("Interpolation to uniform grid");
-      PRFORMi("interpolation_grid_size",size_new);
-      PRFORMd("interpolation_grid_dt",dt);
-      PRFORMd("interpolation_grid_t0",hlm->time[0]);
-      PRFORMd("interpolation_grid_tN",hlm->time[size-1]);
-    }
-
-    /** Waveform */ 
-#if (0)
-    Waveform_lm_alloc (&hlm_aux, size, "");
-    memcpy(hlm_aux, hlm, sizeof(Waveform_lm));
-    strcpy(hlm->name, "hlm_insplunge_interp");
-    hlm->size = size_new;
-    hlm->time = malloc ( size_new * sizeof(double) );
-    for (int k = 0; k < KMAX; k++) {
-      hlm->ampli[k] = malloc ( size_new * sizeof(double) );
-      hlm->phase[k] = malloc ( size_new * sizeof(double) );
-    } 
-    for (int i = 0; i < size_new; i++) 
-      hlm->time[i] = i*dt;
-    for (int k = 0; k < KMAX; k++) 
-      interp_spline(hlm_aux->time, hlm_aux->ampli[k], size, hlm->time, size_new, hlm->ampli[k]);
-    for (int k = 0; k < KMAX; k++) 
-      interp_spline(hlm_aux->time, hlm_aux->phase[k], size, hlm->time, size_new, hlm->phase[k]);
-    Waveform_lm_free (hlm_aux);
-    // this block of code is now done by the following call:
-    // (this block of code should be eliminatedin future commits)
-#else
-    Waveform_lm_interp (hlm, size_new, 0., dt, "hlm_insplunge_interp");
-#endif
-    
-    if (store_dynamics) {
-
-      /** Dynamics, 
-	  Similar, but need to keep the non-array fields */
-
-#if (0)
-      Dynamics_alloc(&dyn_aux, size, "");
-      memcpy(dyn_aux, dyn, sizeof(Dynamics));
-      strcpy(dyn->name, "dyn_interp");
-      dyn->dt   = dt;
-      dyn->size = size_new; 
-      dyn->time = malloc ( size_new * sizeof(double) );
-      for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
-	dyn->data[v] = malloc ( size_new * sizeof(double) );
-	memset(dyn->data[v], 0., size_new*sizeof(double));
-      }      
-      for (int i = 0; i < size_new; i++) 
-	dyn->time[i] = hlm->time[i];
-      for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
-	interp_spline(dyn_aux->time, dyn_aux->data[k], size, dyn->time, size_new, dyn->data[k]);
-      Dynamics_free (dyn_aux);
-      // this block of code is now done by the following call:
-      // (this block of code should be eliminatedin future commits)
-#else
-      Dynamics_interp (dyn, size_new, 0., dt, "dyn_interp");
-#endif
-      
-    }
-
-    /** Update size */
-    size = size_new;
-    par_set_i("size", size); 
-    
-  }
-
-#if (DEBUG) 
-  /* Output post-interpolation wave and dynamics */
-  if(par_get_i("output_multipoles")) {
-      Waveform_lm_output (hlm);
-      Waveform_lm_output_reim (hlm);
-  }
-  if (par_get_i("output_dynamics")) {
-    Dynamics_output(dyn);
-  }
-#endif
-  
   if (!(use_tidal)) {
     
-    /* 
-     * BBH : compute and add NQC 
+    /* *****************************************
+     * Following is for BBH : NQC & Ringdown
+     * *****************************************
      */
     
+    /* This is a BBH run.
+       NQC and ringdown attachment currently assume uniform grids.
+       Do we need to interpolate ? */
+    int post_dynamics_interp = 1; /* In general, yes ... */
+    if (ode_tstep != ODE_TSTEP_ADAPTIVE) post_dynamics_interp = 0; /* ... except if merger is covered by uniform tstep */
+    
+    if (post_dynamics_interp) {
+      
+      /**  Interpolate on uniform grid */
+      
+      /* Build uniform grid of width dt and alloc tmp memory */
+      //CHECKME: is this rounding under control ?!
+      //(int)((hlm->time[size-1] - hlm->time[0])/dt + 1); /* use dt from parfile */
+      const int size_new = get_uniform_size(hlm->time[size-1], hlm->time[0], dt);
+      if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
+      if (VERBOSE) {
+	PRSECTN("Interpolation to uniform grid");
+	PRFORMi("interpolation_grid_size",size_new);
+	PRFORMd("interpolation_grid_dt",dt);
+	PRFORMd("interpolation_grid_t0",hlm->time[0]);
+	PRFORMd("interpolation_grid_tN",hlm->time[size-1]);
+      }
+      
+      /** Waveform */ 
+#if (0)
+      Waveform_lm *hlm_aux; 
+      Waveform_lm_alloc (&hlm_aux, size, "");
+      memcpy(hlm_aux, hlm, sizeof(Waveform_lm));
+      strcpy(hlm->name, "hlm_insplunge_interp");
+      hlm->size = size_new;
+      hlm->time = malloc ( size_new * sizeof(double) );
+      for (int k = 0; k < KMAX; k++) {
+	hlm->ampli[k] = malloc ( size_new * sizeof(double) );
+	hlm->phase[k] = malloc ( size_new * sizeof(double) );
+      } 
+      for (int i = 0; i < size_new; i++) 
+	hlm->time[i] = i*dt;
+      for (int k = 0; k < KMAX; k++) 
+	interp_spline(hlm_aux->time, hlm_aux->ampli[k], size, hlm->time, size_new, hlm->ampli[k]);
+      for (int k = 0; k < KMAX; k++) 
+	interp_spline(hlm_aux->time, hlm_aux->phase[k], size, hlm->time, size_new, hlm->phase[k]);
+      Waveform_lm_free (hlm_aux);
+      // this block of code is now done by the following call:
+      // (this block of code should be eliminated in future commits)
+#else
+      Waveform_lm_interp (hlm, size_new, 0., dt, "hlm_insplunge_interp");
+#endif
+      
+      if (store_dynamics) {
+	
+	/** Dynamics */
+	
+#if (0)
+	Dynamics *dyn_aux; 
+	Dynamics_alloc(&dyn_aux, size, "");
+	memcpy(dyn_aux, dyn, sizeof(Dynamics));
+	strcpy(dyn->name, "dyn_interp");
+	dyn->dt   = dt;
+	dyn->size = size_new; 
+	dyn->time = malloc ( size_new * sizeof(double) );
+	for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+	  dyn->data[v] = malloc ( size_new * sizeof(double) );
+	  memset(dyn->data[v], 0., size_new*sizeof(double));
+	}      
+	for (int i = 0; i < size_new; i++) 
+	  dyn->time[i] = hlm->time[i];
+	for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
+	  interp_spline(dyn_aux->time, dyn_aux->data[k], size, dyn->time, size_new, dyn->data[k]);
+	Dynamics_free (dyn_aux);
+	// this block of code is now done by the following call:
+	// (this block of code should be eliminatedin future commits)
+#else
+	Dynamics_interp (dyn, size_new, 0., dt, "dyn_postdyn_interp");
+#endif
+	
+      } 
+      
+      /** Update size */
+      size = size_new;
+      par_set_i("size", size); 
+      
+#if (DEBUG) 
+      /* Output post-interpolation wave and dynamics */
+      if(par_get_i("output_multipoles")) {
+	Waveform_lm_output (hlm);
+	Waveform_lm_output_reim (hlm);
+      }
+      if (par_get_i("output_dynamics")) 
+	Dynamics_output(dyn);
+#endif
+      
+    } /* End of post-dynamics interp */
+    
+    
     if (STREQUAL(par_get_s("nqc_coefs_hlm"),"compute")) {
+      
+      /** BBH : compute and add NQC */
       
       if (VERBOSE) PRSECTN("NQC Calculation");
       
       Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
-      
-      /* Compute NQC corrections */
       eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
       strcat(hlm->name,"_nqc");      
       
 #if (DEBUG) 
       if (par_get_i("output_nqc"))  
 	Waveform_lm_output (hlm_nqc);
-      if (par_get_i("output_multipoles")) {
+      if (par_get_i("output_multipoles")) 
 	Waveform_lm_output (hlm);
-	/* Waveform_lm_output_reim (hlm); */
-      }	
 #endif
       
       Waveform_lm_free (hlm_nqc);
       
     }
     
-    /* 
-     * BBH : add Ringdown 
-     */
+    /** BBH : add Ringdown */
     
     if (VERBOSE) PRSECTN("Ringdown");
-
+    
     /* Extend arrays */    
     const int size_ringdown = par_get_i("ringdown_extend_array");
     Waveform_lm_push (&hlm, (size+size_ringdown));
@@ -634,12 +642,17 @@ int main (int argc, char* argv[])
     size += size_ringdown;
     par_set_i("size", size);
     
-    /** Ringdown attachment */
+    /* Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
     strcat(hlm->name,"_ringdown");
     
   } /* End of BBH section */
-    
+
+  /* *****************************************
+   * Compute h+, hx 
+   * *****************************************
+   */
+  
   /** Alloc memory for (h+,hx) */
   Waveform *hpc; 
   Waveform_alloc (&hpc, size, "waveform"); 
@@ -656,6 +669,17 @@ int main (int argc, char* argv[])
 
   /** Computation of (h+,hx) */
   compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
+
+  if (par_get_i("interp_uniform_grid")) {
+    /** Interp to uniform grid (if needed) */
+    const double dt_interp = par_get_d("dt_interp");
+    const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt);
+    Waveform_interp    (hpc, size_interp, 0., dt_interp, "hpc_interp");
+    if (par_get_i("output_multipoles")) 
+      Waveform_lm_interp (hlm, size_interp, 0., dt_interp, "hlm_interp");
+    if (par_get_i("output_dynamics"))
+      Dynamics_interp (dyn, size_interp, 0., dt_interp, "dyn_interp");
+  }
   
   /** Output */
   Waveform_output (hpc);
@@ -663,6 +687,13 @@ int main (int argc, char* argv[])
     Waveform_lm_output (hlm);
     Waveform_lm_output_reim (hlm);
   }
+  if (par_get_i("output_dynamics"))
+    Dynamics_output(dyn);
+
+  /* *****************************************
+   * Finalize 
+   * *****************************************
+   */
   
   /** Free memory */
   Dynamics_free (dyn);

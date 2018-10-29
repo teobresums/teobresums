@@ -300,7 +300,6 @@ void eob_set_params(char *s, int n)
   const int usespins = par_get_i("use_spins");
 
   /* Set auxiliary parameters */
-  double dt = par_get_d("dt");
   double M = par_get_d("M");
   double fmin = par_get_d("initial_frequency");
   double q =  par_get_d("q");  
@@ -503,28 +502,37 @@ void eob_set_params(char *s, int n)
   if(usetidal) c3 = 0.0;
   else         c3 = eob_c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2); 
   par_set_d("cN3LO", c3 );
-  
+
+  double dt = par_get_d("dt");
   if (par_get_i("use_geometric_units")) {
     /* input given in geometric units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in geometric units and mass rescaled 
        reset sample rate using dt
     */
-    if (DEBUG) printf("Assume geometric units for pars values\n");
+    if (VERBOSE) printf("Assume geometric units for pars values\n");
     par_set_d("r0", pow(fmin*Pi, -2./3.) );
     par_set_d("srate", 1./dt );
     par_set_d("distance", 1. );
     par_set_d("M", 1. );
-
+    par_set_d("dt_interp", dt );
   } else {
     /* input given in physical units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz 
-       set dt = 0.5M by default
     */
-    if (DEBUG) printf("Assume physical units for pars values\n");
+    if (VERBOSE) printf("Assume physical units for pars values\n");
     par_set_d("r0",  radius0(M, fmin) );
-    par_set_d("dt", 0.5*M );
+    dt = 1./par_get_d("srate");      
+    dt = time_units_conversion(M, dt);
+    par_set_d("dt", dt);
+    par_set_d("dt_interp", dt );
+    if (par_get_i("interp_uniform_grid")) {
+      /* Output will be interpolated on uniform grid 
+	 Set dt = 0.5M by default */
+      par_set_d("dt", 0.5*M );
+    }
+    if (VERBOSE) PRFORMd("dt",dt);
   }
 
   /* Function pointers */

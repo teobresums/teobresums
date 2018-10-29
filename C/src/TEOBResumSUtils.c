@@ -391,6 +391,12 @@ void set_multipolar_idx_mask(int *kmask, int n)
       if (idx[j] == k) kmask[k] = 1; 
 }
 
+/** Compute size of a uniform grid t0:dt:tf */
+int get_uniform_size(const double tN, const double t0, const double dt)
+{
+  return ((int)((tN - t0)/dt + 1)); 
+}
+
 /* Alloc/Free data type routines */
 
 /** Waveform (complex) */
@@ -422,6 +428,33 @@ void Waveform_push (Waveform **wav, int size)
   /*   memset( (*wav)->time + n, 0, dn * sizeof(double) ); */
   /* } */
   (*wav)->size = size; 
+}
+
+void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name)
+{
+  /* Alloc and init aux memory */  
+  Waveform *h_aux;
+  Waveform_alloc(&h_aux, h->size, "");
+  memcpy(h_aux, h, sizeof(Waveform));
+  if (strcmp(name, "")) strcpy(h->name, name);
+
+  /* Overwrite and realloc arrays */
+  h->size = size;
+  if (h->time) free(h->time);
+  if (h->real) free(h->real);
+  if (h->imag) free(h->imag);
+  h->time = malloc ( size * sizeof(double) );
+  h->real = malloc ( size * sizeof(double) );
+  h->imag = malloc ( size * sizeof(double) );
+
+  for (int i = 0; i < size; i++) 
+    h->time[i] = i*dt + t0;
+  
+  /* Interp */
+  interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
+  interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
+    
+  Waveform_free (h_aux);
 }
 
 void Waveform_output (Waveform *wav)
@@ -493,35 +526,6 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
   (*wav)->size = size;
 }
 
-/* Alloc a new multipolar waveform and fill by interp from another */
-void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name)
-{
-  /* Alloc new memory */  
-  Waveform_lm_alloc(hlm_new, size, "");
-  memcpy((*hlm_new), hlm, sizeof(Waveform_lm)); 
-  strcpy((*hlm_new)->name, name);
-
-  (*hlm_new)->size = size;
-  if ((*hlm_new)->time) free((*hlm_new)->time);
-  (*hlm_new)->time = malloc ( size * sizeof(double) );
-  for (int k = 0; k < KMAX; k++) {
-    if ((*hlm_new)->ampli[k]) free((*hlm_new)->ampli[k]);
-    if ((*hlm_new)->phase[k]) free((*hlm_new)->phase[k]);
-    (*hlm_new)->ampli[k] = malloc ( size * sizeof(double) );
-    (*hlm_new)->phase[k] = malloc ( size * sizeof(double) );
-  } 
-  
-  /* Time array */
-  for (int i = 0; i < size; i++) 
-    (*hlm_new)->time[i] = i*dt + t0;
-   
-  /* Interp */
-  for (int k = 0; k < KMAX; k++) 
-    interp_spline( hlm->time, hlm->ampli[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->ampli[k]);
-  for (int k = 0; k < KMAX; k++) 
-    interp_spline( hlm->time, hlm->phase[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->phase[k]);  
-}
-
 /* Interp on uniform time array and overwrite a multipolar waveform */
 void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name)
 {
@@ -552,6 +556,37 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
     interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
     
   Waveform_lm_free (hlm_aux);
+}
+
+#if (0) //TODO: experimental/untested/unused code
+
+/* Alloc a new multipolar waveform and fill by interp from another */
+void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name)
+{
+  /* Alloc new memory */  
+  Waveform_lm_alloc(hlm_new, size, "");
+  memcpy((*hlm_new), hlm, sizeof(Waveform_lm)); 
+  strcpy((*hlm_new)->name, name);
+
+  (*hlm_new)->size = size;
+  if ((*hlm_new)->time) free((*hlm_new)->time);
+  (*hlm_new)->time = malloc ( size * sizeof(double) );
+  for (int k = 0; k < KMAX; k++) {
+    if ((*hlm_new)->ampli[k]) free((*hlm_new)->ampli[k]);
+    if ((*hlm_new)->phase[k]) free((*hlm_new)->phase[k]);
+    (*hlm_new)->ampli[k] = malloc ( size * sizeof(double) );
+    (*hlm_new)->phase[k] = malloc ( size * sizeof(double) );
+  } 
+  
+  /* Time array */
+  for (int i = 0; i < size; i++) 
+    (*hlm_new)->time[i] = i*dt + t0;
+   
+  /* Interp */
+  for (int k = 0; k < KMAX; k++) 
+    interp_spline( hlm->time, hlm->ampli[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->ampli[k]);
+  for (int k = 0; k < KMAX; k++) 
+    interp_spline( hlm->time, hlm->phase[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->phase[k]);  
 }
 
 /* A special routine: join two multipolar waveforms at t = to */
@@ -606,6 +641,7 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
   }
   
 }
+#endif
 
 void Waveform_lm_output (Waveform_lm *wav)
 {

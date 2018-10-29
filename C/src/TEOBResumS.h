@@ -356,8 +356,10 @@ int D0_x(double *f, double *x, int n, double *df);
 double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
 void set_multipolar_idx_mask(int *kmask, int n);
+int get_uniform_size(const double tf, const double t0, const double dt);
 void Waveform_alloc (Waveform **wav, int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
+void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name);
 void Waveform_output (Waveform *wav);
 void Waveform_free (Waveform *wav);
 void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
@@ -366,8 +368,8 @@ void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_output_reim (Waveform_lm *wav);
 void Waveform_lm_free (Waveform_lm *wav);
 void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name);
-void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name);
-void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to);
+/* void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name); */
+/* void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to); */
 void Waveform_lm_t_alloc (Waveform_lm_t **wav);
 void Waveform_lm_t_free (Waveform_lm_t *wav);
 void Dynamics_alloc (Dynamics **dyn, int size, const char *name);
