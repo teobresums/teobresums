@@ -240,7 +240,10 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
   double sumr, sumi;
-  if (DEBUG) printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",nu,M,distance,psi,iota,amplitude_prefactor);
+#if (DEBUG)
+    printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",
+	   nu,M,distance,psi,iota,amplitude_prefactor);
+#endif
   for (int i = 0; i < hlm->size; i++) {
     hpc->time[i] = hlm->time[i]*M; 
     //hpc->real[i] = hpc->imag[i] = 0.;

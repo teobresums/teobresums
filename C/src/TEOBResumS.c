@@ -675,12 +675,15 @@ int main (int argc, char* argv[])
     
     /** Interp to uniform grid (if needed) */
     const double dt_interp = par_get_d("dt_interp");
-    const int size_interp = get_uniform_size(hpc->time[hpc->size-1], hpc->time[0], dt_interp);
-    Waveform_interp (hpc, size_interp, 0., dt_interp, "hpc_interp");
+    int size_interp = get_uniform_size(hpc->time[hlm->size-1], hlm->time[0], dt_interp);
+    Waveform_interp (hpc, size_interp, hpc->time[0], dt_interp * M, "hpc_interp");
     if (par_get_i("output_multipoles")) 
-      Waveform_lm_interp (hlm, size_interp, 0., dt_interp, "hlm_interp");
-    if (par_get_i("output_dynamics"))
-      Dynamics_interp (dyn, size_interp, 0., dt_interp, "dyn_interp");
+      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");
+    if (par_get_i("output_dynamics")) {
+      size_interp = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp);
+      Dynamics_interp (dyn, size_interp, dyn->time[0], dt_interp, "dyn_interp");
+    }
+    
   }
 #endif
   
