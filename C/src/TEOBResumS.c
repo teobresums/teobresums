@@ -91,14 +91,12 @@ int main (int argc, char* argv[])
   const double chi2 = par_get_d("chi2");
   const int use_spins = par_get_i("use_spins");
   const int use_tidal = par_get_i("use_tidal");
-  const int use_tidal_gravitomagnetic = par_get_i("use_tidal_gravitomagnetic");
-  int interp_uniform_grid = par_get_i("interp_uniform_grid");  
-  int store_dynamics = par_get_i("output_dynamics");
-  if (!(use_tidal)) interp_uniform_grid = 1; /* NQC and ringdown attachment assume uniform grids */
-  if (!(use_tidal) && (use_spins)) store_dynamics = 1; /* NQC need dynamical variables */
+  int interp_uniform_grid = par_get_i("interp_uniform_grid");  /* reset below if needed */
+  int store_dynamics = par_get_i("output_dynamics"); 
+  if (!(use_tidal) && (use_spins)) store_dynamics = 1; /* NQC determination need dynamical variables */
   const int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
   if (use_postadiab_dyn) store_dynamics = 1;
-  const double dt = par_get_d("dt") * time_unit_fact;
+  const double dt = par_get_d("dt");
 
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
@@ -162,8 +160,8 @@ int main (int argc, char* argv[])
   /** Compute initial radius */
   const double f0 = par_get_d("initial_frequency")/time_unit_fact;
   const double r0 = eob_dyn_r0_Kepler(f0);
-  //const double r0 = eob_dyn_r0_eob(f0, dyn);
-
+  // const double r0 = eob_dyn_r0_eob(f0, dyn); /* Radius from EOB equations. This is what should be used. */
+  
   /** Final BH */
   if (!(dyn->use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -322,6 +320,9 @@ int main (int argc, char* argv[])
   const int ode_tstep = dyn->ode_timestep;
 
   /* Adjust interpolation option */
+  if (!(use_tidal)) interp_uniform_grid = 1; /* NQC and ringdown attachment assume uniform grids */
+
+
   if (ode_tstep == ODE_TSTEP_UNIFORM)        interp_uniform_grid = 0; /* Not needed with uniform tstep */
   if ((use_postadiab_dyn) && (!(use_tidal))) interp_uniform_grid = 1; /* Always needed with post-adiab and BBH */
   
@@ -335,7 +336,7 @@ int main (int argc, char* argv[])
   gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
 #else
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
- gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
 #endif
 
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
@@ -408,7 +409,7 @@ int main (int argc, char* argv[])
     
     /** Update size and push arrays (if needed) */
     if (iter>size) {
-    //  if (DEBUG)  printf("Push memory\n"); 
+      /* if (DEBUG)  printf("Push memory\n"); */ 
       size += chunk;
       par_set_i("size", size);
       Waveform_lm_push (&hlm, size);
@@ -436,7 +437,7 @@ int main (int argc, char* argv[])
 
     /** Stop integration if reached max time */    
     if (dyn->t > dyn->t_stop) {
-      printf("Stop: Max integration time reached.\n");
+      if (VERBOSE) printf("Stop: Max integration time reached.\n");
       dyn->ode_stop = true;
     }
 
@@ -456,14 +457,13 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r), dyn->rLR_tidal); 
-        dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; 
+	dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; 
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }
     } else {
       if (dyn->t >= dyn->t_stop) {
-	printf("Stop: Peak of Omega reached.\n");
+	if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
 	dyn->ode_stop = true;
       }
     }
@@ -485,18 +485,18 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
   
  END_ODE_EVOLUTION:;
   
-  if (DEBUG) {
-    /* Output pre-interpolation wave and dynamics */
-    if(par_get_i("output_multipoles")) {
-      strcat(hlm->name,"_insplunge");
-      Waveform_lm_output (hlm);
-    }
-    if (par_get_i("output_dynamics"))
-      Dynamics_output(dyn);
+#if (DEBUG) 
+  /* Output pre-interpolation wave and dynamics */
+  if(par_get_i("output_multipoles")) {
+    strcat(hlm->name,"_insplunge");
+    Waveform_lm_output (hlm);
   }
+  if (par_get_i("output_dynamics"))
+    Dynamics_output(dyn);
+#endif
   
   if (interp_uniform_grid) {
-
+    
     /* 
      * Interpolate on uniform grid
      */
@@ -528,15 +528,12 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
       hlm->phase[k] = malloc ( size_new * sizeof(double) );
     } 
    
-    for (int i = 0; i < size_new; i++) {
+    for (int i = 0; i < size_new; i++) 
       hlm->time[i] = i*dt;
-    }    
-    for (int k = 0; k < KMAX; k++) {
+    for (int k = 0; k < KMAX; k++) 
       interp_spline(hlm_aux->time, hlm_aux->ampli[k], size, hlm->time, size_new, hlm->ampli[k]);
-    }
-    for (int k = 0; k < KMAX; k++) {
+    for (int k = 0; k < KMAX; k++) 
       interp_spline(hlm_aux->time, hlm_aux->phase[k], size, hlm->time, size_new, hlm->phase[k]);
-    }
     
     Waveform_lm_free (hlm_aux);
     
@@ -556,12 +553,10 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
 	memset(dyn->data[v], 0., size_new*sizeof(double));
       }      
 
-      for (int i = 0; i < size_new; i++) {
+      for (int i = 0; i < size_new; i++) 
 	dyn->time[i] = hlm->time[i];
-      }      
-      for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) {
+      for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
 	interp_spline(dyn_aux->time, dyn_aux->data[k], size, dyn->time, size_new, dyn->data[k]);
-      }
       
       Dynamics_free (dyn_aux);
       
@@ -573,21 +568,21 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
     
   }
 
-  if (DEBUG) {
-    /* Output post-interpolation wave and dynamics */
-    if(par_get_i("output_multipoles")) {
+#if (DEBUG) 
+  /* Output post-interpolation wave and dynamics */
+  if(par_get_i("output_multipoles")) {
       Waveform_lm_output (hlm);
       Waveform_lm_output_reim (hlm);
-    }
-    if (par_get_i("output_dynamics")) {
-      Dynamics_output(dyn);
-    }
   }
+  if (par_get_i("output_dynamics")) {
+    Dynamics_output(dyn);
+  }
+#endif
   
   if (!(use_tidal)) {
-
+    
     /* 
-     * BBH : add NQC 
+     * BBH : compute and add NQC 
      */
     
     if (STREQUAL(par_get_s("nqc_coefs_hlm"),"compute")) {
@@ -600,18 +595,17 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
       eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
       strcat(hlm->name,"_nqc");      
       
-      if (DEBUG) {
-	if (par_get_i("output_nqc")) { 
-	  Waveform_lm_output (hlm_nqc);
-	}
-	if (par_get_i("output_multipoles")) {
-	  Waveform_lm_output (hlm);
-	  /* Waveform_lm_output_reim (hlm); */
-	}	
-      }
-    
+#if (DEBUG) 
+      if (par_get_i("output_nqc"))  
+	Waveform_lm_output (hlm_nqc);
+      if (par_get_i("output_multipoles")) {
+	Waveform_lm_output (hlm);
+	/* Waveform_lm_output_reim (hlm); */
+      }	
+#endif
+      
       Waveform_lm_free (hlm_nqc);
-    
+      
     }
     
     /* 
@@ -627,9 +621,8 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
       printf("Push memory for ringdown (%d + %d):",size,par_get_i("ringdown_extend_array"));
       printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt,dt*size_ringdown,hlm->time[size-1]+dt*size_ringdown);
     }
-    for (int i = size; i < (size+size_ringdown); i++) {
+    for (int i = size; i < (size+size_ringdown); i++) 
       hlm->time[i] = hlm->time[i-1] + dt;
-    }
     size += size_ringdown;
     par_set_i("size", size);
     
@@ -637,14 +630,7 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
     eob_wav_ringdown(dyn, hlm);
     strcat(hlm->name,"_ringdown");
     
-    if (DEBUG) {
-      if (par_get_i("output_multipoles")) {
-	Waveform_lm_output (hlm);
-	Waveform_lm_output_reim (hlm);
-      }
-    }
-
-  }
+  } /* End of BBH section */
     
   /** Alloc memory for (h+,hx) */
   Waveform *hpc; 
@@ -665,7 +651,11 @@ printf("%.2f\t%.16f\tuPeak = %.16f\trLR=%.16f\n", q, dyn->MOmg_prev, 1./(dyn->r)
   
   /** Output */
   Waveform_output (hpc);
-    
+  if (par_get_i("output_multipoles")) {
+    Waveform_lm_output (hlm);
+    Waveform_lm_output_reim (hlm);
+  }
+  
   /** Free memory */
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);

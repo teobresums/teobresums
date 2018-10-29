@@ -367,11 +367,10 @@ void eob_set_params(char *s, int n)
     LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
   }
 
-  #if(USEGRAVITOMAGNETICTERMS)
+#if(USEGRAVITOMAGNETICTERMS)
     SigmaAl2 = JFAPG_fit_Sigma_Irrotational(LambdaAl2);
     SigmaBl2 = JFAPG_fit_Sigma_Irrotational(LambdaBl2);
-    //printf("Sigma_Irr = %.16e\n", SigmaAl2);
-  #endif
+#endif
 
   /* Tidal coupling constants */    
   double kapA2 = 3.   * LambdaAl2 * XA*XA*XA*XA*XA / q; 
@@ -520,15 +519,11 @@ void eob_set_params(char *s, int n)
     /* input given in physical units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz 
+       set dt = 0.5M by default
     */
     if (DEBUG) printf("Assume physical units for pars values\n");
-    dt = time_units_conversion(M, dt);
-    if (DUNEQUAL(dt,1./par_get_d("srate"),1e-12)) {
-      dt  = 1./par_get_d("srate");
-      par_set_d("dt", dt);
-      printf("warning: input values for dt inconsistent with sample rate, use sample rate.\n");
-    } 
     par_set_d("r0",  radius0(M, fmin) );
+    par_set_d("dt", 0.5*M );
   }
 
   /* Function pointers */
