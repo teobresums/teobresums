@@ -559,34 +559,34 @@ int main (int argc, char* argv[])
       Waveform_lm_interp (hlm, size_new, 0., dt, "hlm_insplunge_interp");
 #endif
       
-      if (store_dynamics) {
+      //if (store_dynamics) {
 	
-	/** Dynamics */
-	
+      /** Dynamics */
+      
 #if (0)
-	Dynamics *dyn_aux; 
-	Dynamics_alloc(&dyn_aux, size, "");
-	memcpy(dyn_aux, dyn, sizeof(Dynamics));
-	strcpy(dyn->name, "dyn_interp");
-	dyn->dt   = dt;
-	dyn->size = size_new; 
-	dyn->time = malloc ( size_new * sizeof(double) );
-	for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
-	  dyn->data[v] = malloc ( size_new * sizeof(double) );
-	  memset(dyn->data[v], 0., size_new*sizeof(double));
-	}      
-	for (int i = 0; i < size_new; i++) 
-	  dyn->time[i] = hlm->time[i];
-	for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
-	  interp_spline(dyn_aux->time, dyn_aux->data[k], size, dyn->time, size_new, dyn->data[k]);
-	Dynamics_free (dyn_aux);
-	// this block of code is now done by the following call:
-	// (this block of code should be eliminatedin future commits)
+      Dynamics *dyn_aux; 
+      Dynamics_alloc(&dyn_aux, size, "");
+      memcpy(dyn_aux, dyn, sizeof(Dynamics));
+      strcpy(dyn->name, "dyn_interp");
+      dyn->dt   = dt;
+      dyn->size = size_new; 
+      dyn->time = malloc ( size_new * sizeof(double) );
+      for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+	dyn->data[v] = malloc ( size_new * sizeof(double) );
+	memset(dyn->data[v], 0., size_new*sizeof(double));
+      }      
+      for (int i = 0; i < size_new; i++) 
+	dyn->time[i] = hlm->time[i];
+      for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
+	interp_spline(dyn_aux->time, dyn_aux->data[k], size, dyn->time, size_new, dyn->data[k]);
+      Dynamics_free (dyn_aux);
+      // this block of code is now done by the following call:
+      // (this block of code should be eliminatedin future commits)
 #else
-	Dynamics_interp (dyn, size_new, 0., dt, "dyn_postdyn_interp");
+      Dynamics_interp (dyn, size_new, 0., dt, "dyn_postdyn_interp");
 #endif
 	
-      } 
+      //} 
       
       /** Update size */
       size = size_new;
@@ -671,9 +671,10 @@ int main (int argc, char* argv[])
   compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
 
   if (par_get_i("interp_uniform_grid")) {
+    
     /** Interp to uniform grid (if needed) */
     const double dt_interp = par_get_d("dt_interp");
-    const int size_interp = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp);
+    const int size_interp = get_uniform_size(hpc->time[hpc->size-1], hpc->time[0], dt_interp);
     Waveform_interp (hpc, size_interp, 0., dt_interp, "hpc_interp");
     if (par_get_i("output_multipoles")) 
       Waveform_lm_interp (hlm, size_interp, 0., dt_interp, "hlm_interp");
