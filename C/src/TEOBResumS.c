@@ -369,8 +369,8 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
-      if (dyn->r > dyn->rLSO) {
-	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
+      if (dyn->r >dyn->rLSO ) { 
+	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y); 
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
 	  return STATUS;
@@ -493,7 +493,7 @@ int main (int argc, char* argv[])
       Dynamics_output(dyn);
   }
   
-  if (interp_uniform_grid) {
+  if (interp_uniform_grid) { 
 
     /* 
      * Interpolate on uniform grid

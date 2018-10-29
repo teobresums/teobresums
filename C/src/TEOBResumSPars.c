@@ -523,9 +523,10 @@ void eob_set_params(char *s, int n)
        compute r0 from the initial GW frequency in Hz 
     */
     if (DEBUG) printf("Assume physical units for pars values\n");
-    dt  = 1./par_get_d("srate");      
+    dt  = 1./(par_get_d("srate"));
     dt = time_units_conversion(M, dt);
-    //printf("dt=%e\n",dt);
+    //dt = 0.5;
+    printf("dt=%e\tM=%f\n", dt, M);
     par_set_d("dt", dt);
     par_set_d("r0",  radius0(M, fmin) );
   }
