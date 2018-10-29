@@ -2114,6 +2114,7 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
     /*
       cSS_lo = a1*a2;
     */
+
 #else
     cSS_lo = 0.5*(C_Q1*a1*a1 + 2.*a1*a2 + C_Q2*a2*a2);
 #endif

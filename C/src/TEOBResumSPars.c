@@ -515,6 +515,7 @@ void eob_set_params(char *s, int n)
     par_set_d("srate", 1./dt );
     par_set_d("distance", 1. );
     par_set_d("M", 1. );
+
   } else {
     /* input given in physical units, 
        rescale to geometric units and mass rescaled quantities

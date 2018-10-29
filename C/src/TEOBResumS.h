@@ -110,6 +110,7 @@
 #define PRSECTN(s) {printf("#\n# %s\n#\n",s);} /* Print section */
 #define PRFORMd(s,x) {printf("%-40s = %.16e\n", s,x);} /* Print double */
 #define PRFORMi(s,x) {printf("%-40s = %d\n", s,x);} /* Print int */
+#define PRWARN(s) {printf("# WARNING: %s\n",s);} 
 /* helpers for debug */
 #define DBGPR(s) printf("DEBUG: %s\n",s);
 #define DBGSTOP errorexit("DEBUG: STOP");
@@ -127,7 +128,7 @@
 #define Log6  (1.79175946922805500081248)
 #define Log7  (1.94591014905531330510535)
 #define MSUN_M (1.47662504e3) /* G/c^3 */
-#define MSUN_S (4.925491025543575903411922162094833998e-6) /* G/c^2 */
+#define MSUN_S (4.925491025543575903411922162094833998e-6) /* G/c^3 */
 #define MPC_M  (3.086e22)
 #define EulerGamma (0.5772156649015328606065121)
 #define EulerGamma_Log2 (1.27036284546147817002374) /** EulerGamma + Log2 */
@@ -364,12 +365,16 @@ void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_output_reim (Waveform_lm *wav);
 void Waveform_lm_free (Waveform_lm *wav);
+void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name);
+void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name);
+void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to);
 void Waveform_lm_t_alloc (Waveform_lm_t **wav);
 void Waveform_lm_t_free (Waveform_lm_t *wav);
 void Dynamics_alloc (Dynamics **dyn, int size, const char *name);
 void Dynamics_push (Dynamics **dyn, int size);
 void Dynamics_output (Dynamics *dyn);
 void Dynamics_free (Dynamics *dyn);
+void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const double dt, const char *name);
 void Dynamics_set_params (Dynamics *dyn);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
