@@ -83,5 +83,6 @@ cpdef cnp.ndarray[double, ndim=2, mode = 'c'] pyTEOBResumS(double m1,
     if hp : free(hp)
     if hc.data: free(hc.data)
     if hc: free(hc)
+    h[np.isnan(h)] = 0.0
     return h
 
