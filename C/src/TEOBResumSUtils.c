@@ -391,6 +391,12 @@ void set_multipolar_idx_mask(int *kmask, int n)
       if (idx[j] == k) kmask[k] = 1; 
 }
 
+/** Compute size of a uniform grid t0:dt:tf */
+int get_uniform_size(const double tN, const double t0, const double dt)
+{
+  return ((int)((tN - t0)/dt + 1)); 
+}
+
 /* Alloc/Free data type routines */
 
 /** Waveform (complex) */
@@ -422,6 +428,33 @@ void Waveform_push (Waveform **wav, int size)
   /*   memset( (*wav)->time + n, 0, dn * sizeof(double) ); */
   /* } */
   (*wav)->size = size; 
+}
+
+void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name)
+{
+  /* Alloc and init aux memory */  
+  Waveform *h_aux;
+  Waveform_alloc(&h_aux, h->size, "");
+  memcpy(h_aux, h, sizeof(Waveform));
+  if (strcmp(name, "")) strcpy(h->name, name);
+
+  /* Overwrite and realloc arrays */
+  h->size = size;
+  if (h->time) free(h->time);
+  if (h->real) free(h->real);
+  if (h->imag) free(h->imag);
+  h->time = malloc ( size * sizeof(double) );
+  h->real = malloc ( size * sizeof(double) );
+  h->imag = malloc ( size * sizeof(double) );
+
+  for (int i = 0; i < size; i++) 
+    h->time[i] = i*dt + t0;
+  
+  /* Interp */
+  interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
+  interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
+    
+  Waveform_free (h_aux);
 }
 
 void Waveform_output (Waveform *wav)
@@ -493,6 +526,123 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
   (*wav)->size = size;
 }
 
+/* Interp on uniform time array and overwrite a multipolar waveform */
+void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name)
+{
+  /* Alloc and init aux memory */  
+  Waveform_lm *hlm_aux;
+  Waveform_lm_alloc(&hlm_aux, hlm->size, "");
+  memcpy(hlm_aux, hlm, sizeof(Waveform_lm));
+  if (strcmp(name, "")) strcpy(hlm->name, name);
+
+  /* Overwrite and realloc arrays */
+  hlm->size = size;
+  if (hlm->time) free(hlm->time);
+  hlm->time = malloc ( size * sizeof(double) );
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->ampli[k]) free(hlm->ampli[k]);
+    if (hlm->phase[k]) free(hlm->phase[k]);
+    hlm->ampli[k] = malloc ( size * sizeof(double) );
+    hlm->phase[k] = malloc ( size * sizeof(double) );
+  } 
+
+  for (int i = 0; i < size; i++) 
+    hlm->time[i] = i*dt + t0;
+
+  /* Interp */
+  for (int k = 0; k < KMAX; k++) 
+    interp_spline(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
+  for (int k = 0; k < KMAX; k++) 
+    interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
+    
+  Waveform_lm_free (hlm_aux);
+}
+
+#if (0) //TODO: experimental/untested/unused code
+
+/* Alloc a new multipolar waveform and fill by interp from another */
+void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name)
+{
+  /* Alloc new memory */  
+  Waveform_lm_alloc(hlm_new, size, "");
+  memcpy((*hlm_new), hlm, sizeof(Waveform_lm)); 
+  strcpy((*hlm_new)->name, name);
+
+  (*hlm_new)->size = size;
+  if ((*hlm_new)->time) free((*hlm_new)->time);
+  (*hlm_new)->time = malloc ( size * sizeof(double) );
+  for (int k = 0; k < KMAX; k++) {
+    if ((*hlm_new)->ampli[k]) free((*hlm_new)->ampli[k]);
+    if ((*hlm_new)->phase[k]) free((*hlm_new)->phase[k]);
+    (*hlm_new)->ampli[k] = malloc ( size * sizeof(double) );
+    (*hlm_new)->phase[k] = malloc ( size * sizeof(double) );
+  } 
+  
+  /* Time array */
+  for (int i = 0; i < size; i++) 
+    (*hlm_new)->time[i] = i*dt + t0;
+   
+  /* Interp */
+  for (int k = 0; k < KMAX; k++) 
+    interp_spline( hlm->time, hlm->ampli[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->ampli[k]);
+  for (int k = 0; k < KMAX; k++) 
+    interp_spline( hlm->time, hlm->phase[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->phase[k]);  
+}
+
+/* A special routine: join two multipolar waveforms at t = to */
+void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
+{
+  /* Time arrays are suppose to be ordered as
+     hlma->time:  x x x x x x x x x 
+     hlmb->time:       o o o o o o o o o 
+     to        :                |
+     But they do not need to overlap or be uniformly spaced.
+     Note to can be 
+     to > hlma->time[hlma->size-1] => extend the a waveform
+     to < hlmb->time[0]            => join the whole b waveform
+     Following checks enforce the above structure, if possible.
+  */
+  if (hlma->time[0] > hlmb->time[0]) {
+    SWAPTRS( hlma, hlmb );
+    if ((DEBUG) || (VERBOSE)) PRWARN("Swapped waveforms while joining.");
+  }
+  if (to > hlmb->time[hlmb->size-1]) {
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Waveforms not joined.");
+    return;
+  }
+  if (to <= hlma->time[0]) {
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Waveforms not joined.");
+    return;
+  }
+
+  /* Find indexes of closest elements to to */
+  const int ioa = find_point_bisection(to, hlma->size, hlma->time, 1);
+  const int iob = find_point_bisection(to, hlmb->size, hlmb->time, 1);
+
+  /* Calculate the new size */
+  const int Na = hlma->size - ioa;
+  const int Nb = hlmb->size - iob;
+  const int N  = Na+Nb;
+
+  /* Resize a */
+  Waveform_lm_push (&hlma, N);
+  hlma->size = N;
+
+  /* Copy the relevant part of b into a */
+  for (int i = 0; i < Nb; i++) 
+    hlma->time[ioa + i] = hlmb->time[iob + i]; 
+  for (int k=0; k<KMAX; k++) {
+    for (int i = 0; i < Nb; i++) {
+      hlma->ampli[k][ioa + i] = hlmb->ampli[k][iob + i];
+      hlma->phase[k][ioa + i] = hlmb->phase[k][iob + i];
+    }
+  }
+  
+}
+#endif
+
 void Waveform_lm_output (Waveform_lm *wav)
 {
   char fname[STRLEN];
@@ -543,7 +693,7 @@ void Waveform_lm_free (Waveform_lm *wav)
   free(wav);
 }
 
-/** Multipolar waveform (complex) */
+/** Multipolar waveform at time point (complex) */
 void Waveform_lm_t_alloc (Waveform_lm_t **wav)
 {
   *wav = (Waveform_lm_t *) calloc(1, sizeof(Waveform_lm_t)); 
@@ -585,6 +735,42 @@ void Dynamics_push (Dynamics **dyn, int size)
     /* if (dn>0) memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) ); */
   }
   (*dyn)->size = size; 
+}
+
+/* Alloc a new dynamics structure and fill by interp from another */
+void Dynamics_alloc_interp ()
+{
+  //TODO:
+}
+
+/* Interp and overwrite a multipolar waveform */
+void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const double dt, const char *name)
+{
+  /* Alloc and init aux memory */  
+  Dynamics *dyn_aux;
+  Dynamics_alloc(&dyn_aux, dyn->size, "");
+  memcpy(dyn_aux, dyn, sizeof(Dynamics));
+  if (strcmp(name, "")) strcpy(dyn->name, name);
+
+  /* Overwrite and realloc arrays */
+  dyn->dt   = dt;
+  dyn->size = size; 
+  if (dyn->time) free(dyn->time);
+  dyn->time = malloc ( size * sizeof(double) );
+  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+    if (dyn->data[v]) free(dyn->data[v]);
+    dyn->data[v] = malloc ( size * sizeof(double) );
+    memset(dyn->data[v], 0., size*sizeof(double));
+  }        
+
+  for (int i = 0; i < size; i++)
+    dyn->time[i] = i*dt + t0;
+
+  /* Interp */
+  for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
+    interp_spline(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
+  
+  Dynamics_free (dyn_aux);
 }
 
 #if (DEBUG) 
@@ -740,7 +926,7 @@ void system_mkdir(const char *name)
 {
   char s[STRLEN];
   sprintf(s,"mkdir -p %s",name);
-  system(s); 
+  if (system(s)) errorexit("Error during system call to make directory."); 
 }
 
 /** Date and time */
