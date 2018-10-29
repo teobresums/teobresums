@@ -670,7 +670,8 @@ int main (int argc, char* argv[])
   /** Computation of (h+,hx) */
   compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
 
-  if (par_get_i("interp_uniform_grid")) {
+#if (0)
+  if (par_get_i("interp_uniform_grid")) { 
     
     /** Interp to uniform grid (if needed) */
     const double dt_interp = par_get_d("dt_interp");
@@ -681,6 +682,7 @@ int main (int argc, char* argv[])
     if (par_get_i("output_dynamics"))
       Dynamics_interp (dyn, size_interp, 0., dt_interp, "dyn_interp");
   }
+#endif
   
   /** Output */
   Waveform_output (hpc);
