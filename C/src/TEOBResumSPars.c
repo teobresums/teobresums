@@ -529,9 +529,11 @@ void eob_set_params(char *s, int n)
     par_set_d("dt_interp", dt );
     if (par_get_i("interp_uniform_grid")) {
       /* Output will be interpolated on uniform grid 
-	 Set dt = 0.5M by default */
-      par_set_d("dt", 0.5 );
-    par_set_d("dt_interp", dt );
+ 	Set dt = 0.5M by default */
+      par_set_d("dt", 0.5*M );
+      dt = 0.5;
+      par_set_d("dt", dt);
+      par_set_d("dt_interp", dt);
     }
     if (VERBOSE) PRFORMd("dt",dt);
   }
