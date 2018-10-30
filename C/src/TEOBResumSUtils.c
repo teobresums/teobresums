@@ -437,12 +437,15 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
 {
   /* Alloc and init aux memory */  
   Waveform *h_aux;
-  Waveform_alloc(&h_aux, h->size, "");
-  memcpy(h_aux, h, sizeof(Waveform));
-  if (strcmp(name, "")) strcpy(h->name, name);
-
-  /* Overwrite and realloc arrays */
+  const int oldsize = h->size;  
+  Waveform_alloc(&h_aux, oldsize, "");
+  memcpy(h_aux->time, h->time, oldsize * sizeof(double));
+  memcpy(h_aux->real, h->real, oldsize * sizeof(double));
+  memcpy(h_aux->imag, h->imag, oldsize * sizeof(double));
+ 
+  /* Realloc arrays */
   h->size = size;
+  if (strcmp(name, "")) strcpy(h->name, name);
   if (h->time) free(h->time);
   if (h->real) free(h->real);
   if (h->imag) free(h->imag);
@@ -450,13 +453,15 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
   h->real = malloc ( size * sizeof(double) );
   h->imag = malloc ( size * sizeof(double) );
 
-  for (int i = 0; i < size; i++) 
+  /* Fill new time array */
+  for (int i = 0; i < size; i++)
     h->time[i] = i*dt + t0;
   
   /* Interp */
   interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
   interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
-    
+
+  /* Free aux memory */
   Waveform_free (h_aux);
 }
 
@@ -534,13 +539,18 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
 {
   /* Alloc and init aux memory */  
   Waveform_lm *hlm_aux;
-  Waveform_lm_alloc(&hlm_aux, hlm->size, "");
-  memcpy(hlm_aux, hlm, sizeof(Waveform_lm));
-  if (strcmp(name, "")) strcpy(hlm->name, name);
+  const int oldsize = hlm->size;
+  Waveform_lm_alloc(&hlm_aux, oldsize, "");
+  memcpy(hlm_aux->time, hlm->time, oldsize * sizeof(double));
+  for (int k = 0; k < KMAX; k++) {
+    memcpy(hlm_aux->ampli[k], hlm->ampli[k], oldsize * sizeof(double));
+    memcpy(hlm_aux->phase[k], hlm->phase[k], oldsize * sizeof(double));
+  }
 
-  /* Overwrite and realloc arrays */
+  /* Realloc arrays */
   hlm->size = size;
-  if (hlm->time) free(hlm->time);
+  if (strcmp(name, "")) strcpy(hlm->name, name);
+  if (hlm->time) free(hlm->time); 
   hlm->time = malloc ( size * sizeof(double) );
   for (int k = 0; k < KMAX; k++) {
     if (hlm->ampli[k]) free(hlm->ampli[k]);
@@ -548,16 +558,18 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
     hlm->ampli[k] = malloc ( size * sizeof(double) );
     hlm->phase[k] = malloc ( size * sizeof(double) );
   } 
-
+  
+  /* Fill new time array */
   for (int i = 0; i < size; i++) 
     hlm->time[i] = i*dt + t0;
-
+  
   /* Interp */
   for (int k = 0; k < KMAX; k++) 
     interp_spline(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
   for (int k = 0; k < KMAX; k++) 
     interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
-    
+
+  /* Free aux memory */
   Waveform_lm_free (hlm_aux);
 }
 
@@ -568,18 +580,7 @@ void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const in
 {
   /* Alloc new memory */  
   Waveform_lm_alloc(hlm_new, size, "");
-  memcpy((*hlm_new), hlm, sizeof(Waveform_lm)); 
   strcpy((*hlm_new)->name, name);
-
-  (*hlm_new)->size = size;
-  if ((*hlm_new)->time) free((*hlm_new)->time);
-  (*hlm_new)->time = malloc ( size * sizeof(double) );
-  for (int k = 0; k < KMAX; k++) {
-    if ((*hlm_new)->ampli[k]) free((*hlm_new)->ampli[k]);
-    if ((*hlm_new)->phase[k]) free((*hlm_new)->phase[k]);
-    (*hlm_new)->ampli[k] = malloc ( size * sizeof(double) );
-    (*hlm_new)->phase[k] = malloc ( size * sizeof(double) );
-  } 
   
   /* Time array */
   for (int i = 0; i < size; i++) 
@@ -751,28 +752,33 @@ void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const doub
 {
   /* Alloc and init aux memory */  
   Dynamics *dyn_aux;
-  Dynamics_alloc(&dyn_aux, dyn->size, "");
-  memcpy(dyn_aux, dyn, sizeof(Dynamics));
-  if (strcmp(name, "")) strcpy(dyn->name, name);
-
+  const int oldsize = dyn->size;
+  Dynamics_alloc(&dyn_aux, oldsize, "");
+  memcpy(dyn_aux->time, dyn->time, oldsize * sizeof(double));
+  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
+    memcpy(dyn_aux->data[v], dyn->data[v], oldsize * sizeof(double));
+  
   /* Overwrite and realloc arrays */
   dyn->dt   = dt;
   dyn->size = size; 
+  if (strcmp(name, "")) strcpy(dyn->name, name);
   if (dyn->time) free(dyn->time);
   dyn->time = malloc ( size * sizeof(double) );
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
     if (dyn->data[v]) free(dyn->data[v]);
     dyn->data[v] = malloc ( size * sizeof(double) );
-    memset(dyn->data[v], 0., size*sizeof(double));
+    /* memset(dyn->data[v], 0., size*sizeof(double)); */
   }        
 
+  /* Fill new time array */
   for (int i = 0; i < size; i++)
     dyn->time[i] = i*dt + t0;
-
+  
   /* Interp */
   for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
     interp_spline(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
-  
+
+  /* Free aux memory */
   Dynamics_free (dyn_aux);
 }
 

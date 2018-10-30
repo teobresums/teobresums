@@ -535,58 +535,10 @@ int main (int argc, char* argv[])
       }
       
       /** Waveform */ 
-#if (0)
-      Waveform_lm *hlm_aux; 
-      Waveform_lm_alloc (&hlm_aux, size, "");
-      memcpy(hlm_aux, hlm, sizeof(Waveform_lm));
-      strcpy(hlm->name, "hlm_insplunge_interp");
-      hlm->size = size_new;
-      hlm->time = malloc ( size_new * sizeof(double) );
-      for (int k = 0; k < KMAX; k++) {
-	hlm->ampli[k] = malloc ( size_new * sizeof(double) );
-	hlm->phase[k] = malloc ( size_new * sizeof(double) );
-      } 
-      for (int i = 0; i < size_new; i++) 
-	hlm->time[i] = i*dt;
-      for (int k = 0; k < KMAX; k++) 
-	interp_spline(hlm_aux->time, hlm_aux->ampli[k], size, hlm->time, size_new, hlm->ampli[k]);
-      for (int k = 0; k < KMAX; k++) 
-	interp_spline(hlm_aux->time, hlm_aux->phase[k], size, hlm->time, size_new, hlm->phase[k]);
-      Waveform_lm_free (hlm_aux);
-      // this block of code is now done by the following call:
-      // (this block of code should be eliminated in future commits)
-#else
       Waveform_lm_interp (hlm, size_new, 0., dt, "hlm_insplunge_interp");
-#endif
       
-      //if (store_dynamics) {
-	
       /** Dynamics */
-      
-#if (0)
-      Dynamics *dyn_aux; 
-      Dynamics_alloc(&dyn_aux, size, "");
-      memcpy(dyn_aux, dyn, sizeof(Dynamics));
-      strcpy(dyn->name, "dyn_interp");
-      dyn->dt   = dt;
-      dyn->size = size_new; 
-      dyn->time = malloc ( size_new * sizeof(double) );
-      for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
-	dyn->data[v] = malloc ( size_new * sizeof(double) );
-	memset(dyn->data[v], 0., size_new*sizeof(double));
-      }      
-      for (int i = 0; i < size_new; i++) 
-	dyn->time[i] = hlm->time[i];
-      for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
-	interp_spline(dyn_aux->time, dyn_aux->data[k], size, dyn->time, size_new, dyn->data[k]);
-      Dynamics_free (dyn_aux);
-      // this block of code is now done by the following call:
-      // (this block of code should be eliminatedin future commits)
-#else
       Dynamics_interp (dyn, size_new, 0., dt, "dyn_postdyn_interp");
-#endif
-	
-      //} 
       
       /** Update size */
       size = size_new;
@@ -633,10 +585,10 @@ int main (int argc, char* argv[])
     /* Extend arrays */    
     const int size_ringdown = par_get_i("ringdown_extend_array");
     Waveform_lm_push (&hlm, (size+size_ringdown));
-    if (DEBUG) {
-      printf("Push memory for ringdown (%d + %d):",size,par_get_i("ringdown_extend_array"));
-      printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt,dt*size_ringdown,hlm->time[size-1]+dt*size_ringdown);
-    }
+#if (DEBUG) 
+    printf("Push memory for ringdown (%d + %d):",size,par_get_i("ringdown_extend_array"));
+    printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt,dt*size_ringdown,hlm->time[size-1]+dt*size_ringdown);
+#endif
     for (int i = size; i < (size+size_ringdown); i++) 
       hlm->time[i] = hlm->time[i-1] + dt;
     size += size_ringdown;
