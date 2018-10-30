@@ -16,11 +16,31 @@ def run(parfile):
     NOTE
 
     * It assumes you have compiled the EOB C code and the exe is
-    $TEOBRESUMS/TEOBResumS.x
+      $TEOBRESUMS/TEOBResumS.x
     """
     x = "$TEOBRESUMS/TEOBResumS.x " + parfile
     return subprocess.call(x, shell=True)
 
+def run_exception(parfile, rm_file=0):
+    """
+    Run TEOBResumS C code using subprocess call
+
+    NOTE
+
+    * It assumes you have compiled the EOB C code and the exe is
+      $TEOBRESUMS/TEOBResumS.x
+    * 
+    * optionally delete the parfile of run if successful 
+    """
+    x = "$TEOBRESUMS/TEOBResumS.x " + parfile
+    try:
+        subprocess.check_output(x, shell=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        return(e.returncode)
+    if (rm_file): os.remove(parfile)
+    return "ok"
+        
 def combine_parameters(pars):
     """
     Given a dictionary of parameters and their values in lists, 
