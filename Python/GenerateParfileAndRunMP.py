@@ -5,31 +5,34 @@ Script to auto generate parfiles and run them in parallel with multiprocess
 
 Given a template parfile with basic setup, 
 generates parfiles for all combination of a given subset of parameters
-(e.g. to vary binary masses and spins). Then it runs the code with multiprocess.
+(e.g. to vary binary masses and spins). 
+Then it runs the code with multiprocess.
 
 SB 10/2018
 """
 
 import multiprocessing as mp
-#from functools import partial
+from functools import partial
 #import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
-              
-if __name__ == "__main__": 
 
+from EOBUtils import *
+
+if __name__ == "__main__": 
 
     # Setup -----------------------------------------
     
     # Base dir & parfile
     based = "./"
     basep = "test_NQCIteration.par"
+    ##basep = "tmp.par"
 
     # Set new values/ranges for parameters (Use lists)
     q = [1., 1.2, 1.4]
-    chi1 = [0., 0.8]
-    chi2 = [0., 0.8, 0.9]
+    chi1 = [0., 0.2]
+    chi2 = [0., 0.4]
     
     # Pack them into a dictionary
     # NOTE: keys must match those in parfile otherwise ignored
@@ -38,7 +41,7 @@ if __name__ == "__main__":
          'chi2': chi2}
 
     # Set the number of processes
-    nproc = 4
+    nproc = 1
     
     # ------------------------------------------
     # DO NOT CHANGE BELOW HERE
@@ -59,22 +62,23 @@ if __name__ == "__main__":
         for i in range(len(keys)):
             d[keys[i]] = str(x[s][i])
         # Output to file
-        print(d)
-        parfile.append(based+"/"+basen+"_"+str(s)+ext)
+        ##print(d)
+        parfile.append(based+"/"+basen+"_{:04d}".format(s)+ext)
         write_parfile_dict(parfile[-1], d)
-        print("Written {}".format(s))
+        print("Written {:04d}".format(s))
 
     # Run  ----------------------------
 
     # Launch tasks
     pool = mp.Pool(processes=nproc)
-    result_list = pool.map(run, parfile)
+    task = partial(run_exception, rm_file=1)
+    result_list = pool.map(task, parfile)
     pool.close() 
     pool.join()
     
-    for m in result_list:
-        print(m)
-    print("done")
+    #for m in result_list:
+    #    print(m)
+    #print("done")
 
     #TODO:
     # - check errors
