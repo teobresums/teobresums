@@ -70,7 +70,7 @@ if __name__ == "__main__":
         
         # Make sure you have the needed options in the parfile
         if not search_refline(f, "^output_dir = .*"):
-            add_fline(f, 'output_dir = "PLACEHOLDER_WILL_BE CHANGED"')
+            add_fline(f, 'output_dir = "PLACEHOLDER_WILL_BE_CHANGED"')
             
         if not search_refline(f, "^nqc = .*"):
             add_fline(f, 'nqc = "manual"')

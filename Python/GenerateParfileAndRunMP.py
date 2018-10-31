@@ -61,6 +61,7 @@ if __name__ == "__main__":
     for s in range(len(x)):
         for i in range(len(keys)):
             d[keys[i]] = str(x[s][i])
+        d['output_dir'] = basen+"_{:04d}".format(s) # outputdir
         # Output to file
         ##print(d)
         parfile.append(based+"/"+basen+"_{:04d}".format(s)+ext)
@@ -68,24 +69,13 @@ if __name__ == "__main__":
         print("Written {:04d}".format(s))
 
     # Run  ----------------------------
-
+    
     # Launch tasks
     pool = mp.Pool(processes=nproc)
     task = partial(run_exception, rm_file=1)
     result_list = pool.map(task, parfile)
     pool.close() 
     pool.join()
-    
-    #for m in result_list:
-    #    print(m)
-    #print("done")
 
-    #TODO:
-    # - check errors
-    # - remove all parfiles that did not fail
-    
-    #for p in parfile:
-    #    run(p)
-    #os.remove(p)
 
 
