@@ -42,7 +42,7 @@ use_geometric_units = 1 # use geometric units for I/O ?
 
 use_speedytail = 1 # use special routine to speed up tail computation ?
 
-interp_uniform_grid = 0 # interpolate on uniform grid ?
+interp_uniform_grid = 1 # interpolate on uniform grid ?
 
 postadiabatic_dynamics = "no"
 postadiabatic_dynamics_N = 8 # post-adiabatic order

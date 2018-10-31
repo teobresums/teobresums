@@ -42,7 +42,7 @@ use_geometric_units = 1 # use geometric units for I/O ?
 
 use_speedytail = 1 # use special routine to speed up tail computation ?
 
-interp_uniform_grid = 0 # interpolate on uniform grid ?
+interp_uniform_grid = 1 # interpolate on uniform grid ?
 
 postadiabatic_dynamics = "no"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
@@ -50,6 +50,7 @@ postadiabatic_dynamics_size = 1000 # grid size
 postadiabatic_dynamics_rmin = 12. # minimum radius (end of PA dynamics)
 postadiabatic_dynamics_stop = "yes" # stop after post-adiabatic dynamics
 
+centrifugal_radius = "LO" # {LO, NLO, NOSPIN, NOTIDES}
 use_flm = "SSLO" # "SSLO", "SSNLO"
 
 compute_LR = 1 # calculate LR ?
@@ -77,6 +78,7 @@ output_ringdown = 0 # output ringdown waveform
 
 srate = 4096. # sampling rate, used if input is given in physical unit, reset based on tstep otherwise
 dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
+dt_interp = 0.5 # timestep to be used for final interpolation
 
 size = 1 # size of the arrays (chunks, dynamically extended)
 ringdown_extend_array = 500 # grid points to extend arrays for ringdown attachment
