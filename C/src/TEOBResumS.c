@@ -626,9 +626,6 @@ int main (int argc, char* argv[])
     
     /** Interp to uniform grid (if needed) */
     const double dt_interp = par_get_d("dt_interp");
-
-    //TODO: please check at this point must be : size = hlm->size = hpc->size 
-
     int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
     Waveform_interp (hpc, size_interp, hpc->time[0], dt_interp * M, "hpc_interp");
     if (par_get_i("output_multipoles")) 
