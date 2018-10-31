@@ -16,3 +16,11 @@ compute_LSO = 0 # calculate LSO ?
 ode_timestep = "adaptive"
 ode_stop_at_radius = 1. # stop ODE integration at this radius (if > 0)
 output_dir = "fuckyou"
+
+# Following options will be automatically included by the python script
+# nqc = "manual"
+# output_nqc_coefs = 1
+# nqc_coefs_hlm = "compute"
+# nqc_coefs_flx = "nrfit_nospin201602"
+# nqc_coefs_flx_file = ""
+# nqc_coefs_hlm_file = ""
