@@ -29,18 +29,20 @@ def run_exception(parfile, rm_file=0):
 
     * It assumes you have compiled the EOB C code and the exe is
       $TEOBRESUMS/TEOBResumS.x
-    * 
-    * optionally delete the parfile of run if successful 
+    * Please compile with no debug/verbose options
+    * Return timing info
+    * Optionally delete the parfile of run if successful 
     """
-    x = "$TEOBRESUMS/TEOBResumS.x " + parfile
+    x = "echo $TEOBRESUMS/TEOBResumS.x '"+parfile+"'; time $TEOBRESUMS/TEOBResumS.x " + parfile
     try:
-        subprocess.check_output(x, shell=True)
+        p = subprocess.check_output(x, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
     except subprocess.CalledProcessError as e:
         print(e.output)
         return(e.returncode)
+    #print("Output: \n{}\n".format(p))
     if (rm_file): os.remove(parfile)
-    return "ok"
-        
+    return p 
+
 def combine_parameters(pars):
     """
     Given a dictionary of parameters and their values in lists, 

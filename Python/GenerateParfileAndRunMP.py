@@ -17,8 +17,25 @@ from functools import partial
 import matplotlib.pyplot as plt
 import os
 import sys
+import time , datetime
 
 from EOBUtils import *
+
+def split_out_time_info(s):
+    """
+    Split output and time info from run_exception() output
+    TODO: improve
+    """
+    T = {}    
+    s = s.split("\n");
+    T["run"] = s[0].split(" ")[1] # run no and parfile
+    i = s[1].split(" ")
+    T["user"] = float(i[0].replace("user", ""))
+    T["system"] = float(i[1].replace("system", ""))
+    ms = i[2].replace("elapsed", "").split(":")
+    T["elapsed"] = 60*float(ms[0]) + float(ms[1])
+    T["CPU"] = int(i[3].replace("%CPU", ""))
+    return T
 
 if __name__ == "__main__": 
 
@@ -66,16 +83,32 @@ if __name__ == "__main__":
         ##print(d)
         parfile.append(based+"/"+basen+"_{:04d}".format(s)+ext)
         write_parfile_dict(parfile[-1], d)
-        print("Written {:04d}".format(s))
+        ##print("# Written {:04d}".format(s))
+    print("# Written {:04d} parfiles".format(s))
 
     # Run  ----------------------------
     
     # Launch tasks
+    print("# Running ...")
     pool = mp.Pool(processes=nproc)
     task = partial(run_exception, rm_file=1)
-    result_list = pool.map(task, parfile)
+    results = pool.map(task, parfile)
     pool.close() 
     pool.join()
+    print("# ... done")
 
+    # Compute timing info
+    print("# Computing timing info ...")
+    T = [split_out_time_info(r) for r in results]
+    maxT = max(T, key=lambda x:x['elapsed'])
+    minT = min(T, key=lambda x:x['elapsed'])
+    avg_elapsed = sum(t['elapsed'] for t in T) / len(T)
+    avg_CPU = sum(t['CPU'] for t in T) / len(T)
+    print("Average elapsed time = "+str(avg_elapsed))
+    print("Average CPU usage = "+str(avg_CPU))
+    print("Max: {}".format(maxT))
+    print("Min: {}".format(minT))
 
-
+    # PLOTS (timing and wf)
+    # TODO ... 
+    
