@@ -24,7 +24,7 @@ from EOBUtils import *
 def split_out_time_info(s):
     """
     Split output and time info from run_exception() output
-    TODO: improve
+    TODO: improve, need to handle failed runs with return code...
     """
     T = {}    
     s = s.split("\n");
@@ -99,6 +99,7 @@ if __name__ == "__main__":
 
     # Compute timing info
     print("# Computing timing info ...")
+    ##TODO: currently no check for failed runs
     T = [split_out_time_info(r) for r in results]
     maxT = max(T, key=lambda x:x['elapsed'])
     minT = min(T, key=lambda x:x['elapsed'])
