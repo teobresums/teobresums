@@ -622,7 +622,6 @@ int main (int argc, char* argv[])
   /** Computation of (h+,hx) */
   compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
 
-#if (1)
   if (par_get_i("interp_uniform_grid")) { 
     
     /** Interp to uniform grid (if needed) */
@@ -637,7 +636,6 @@ int main (int argc, char* argv[])
     }
     
   }
-#endif
   
   /** Output */
   Waveform_output (hpc);
