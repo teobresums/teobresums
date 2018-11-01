@@ -3,10 +3,19 @@
 """
 Script to auto generate parfiles and run them in parallel with multiprocess
 
-Given a template parfile with basic setup, 
-generates parfiles for all combination of a given subset of parameters
-(e.g. to vary binary masses and spins). 
-Then it runs the code with multiprocess.
+Given a template parfile with basic setup, generates parfiles for all
+combination of a given subset of parameters (e.g. to vary binary
+masses and spins) and runs the code with multiprocess.
+
+Note:
+
+ * It assumes you have compiled the EOB C code with with debug/verbose
+   options switched OFF and the exe is $TEOBRESUMS/TEOBResumS.x
+   Please make sure your template parfile works and to change only
+   physics parameters within this script.
+ * It deletes the parfile of run IF successful. 
+ * It return timing info, makes some wf plots and output some info
+   about the failed runs.
 
 SB 10/2018
 """
@@ -51,18 +60,18 @@ def extract_basename(p):
     """
     return os.path.splitext( os.path.basename(p) )
     
-
 if __name__ == "__main__": 
 
     # Setup -----------------------------------------
     
-    # Base dir & parfile
+    # Base dir & template parfile
     based = "./"
     basep = "test_NQCIteration.par"
 
-    # Set new values/ranges for parameters (Use lists)
+    # Set new values/ranges for parameters
+    # NOTE: use lists
     q = [1., 1.2, 1.4]
-    chi1 = [0., 1.2] ## try: chi1 = [0., 1.2] to check failures
+    chi1 = [0., 0.7] ## try: chi1 = [0., 1.2] to check failures
     chi2 = [0., 0.4]
     
     # Pack them into a dictionary
@@ -109,6 +118,8 @@ if __name__ == "__main__":
     results = pool.map(task, parfile)
     pool.close() 
     pool.join()
+
+    # Diagnosis -----------------------
 
     # Compute timing info
     print("# Computing timing info ...")
