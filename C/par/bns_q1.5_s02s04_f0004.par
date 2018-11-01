@@ -17,6 +17,6 @@ tides_gravitomagnetic = "no"
 LambdaAl2 = 1531. # MS1b 1.35
 LambdaBl2 = 1531.
 use_Yagi_fits = 1
-ode_stop_at_radius = 4.5
+ode_stop_at_radius = 4.0
 use_spins = 1
 output_dir = "./bns_q1.5_s02s04_f0004/" # output dir
