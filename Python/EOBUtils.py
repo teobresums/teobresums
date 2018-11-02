@@ -37,8 +37,9 @@ def run_exception(parfile, rm_file=0):
     try:
         p = subprocess.check_output(x, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
     except subprocess.CalledProcessError as e:
-        print(e.output)
-        return(e.returncode)
+        ##print(e.output)
+        return("FAILED:\n"+e.output)
+        ##return(e.returncode)
     #print("Output: \n{}\n".format(p))
     if (rm_file): os.remove(parfile)
     return p 
