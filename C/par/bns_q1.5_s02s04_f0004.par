@@ -1,6 +1,6 @@
 # parfile for BNS q=1 spins=0.4+0.4 run 
 # builds on default options
-
+use_spins = 1
 use_geometric_units = 1 # use geometric units for I/O ?
 q = 1.5 # mass ratio
 chi1 = 0.2 # dimensionless spin 1 z-component 
@@ -18,5 +18,5 @@ LambdaAl2 = 1531. # MS1b 1.35
 LambdaBl2 = 1531.
 use_Yagi_fits = 1
 ode_stop_at_radius = 4.0
-use_spins = 1
+
 output_dir = "./bns_q1.5_s02s04_f0004/" # output dir
