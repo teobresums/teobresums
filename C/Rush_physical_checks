@@ -53,6 +53,12 @@ With these, I made 20 more comparisons. In each case, I compared the hpc (plus,c
 
 These comparisons have been added to the repo under teobresums/Mathematica/PostAdiab_comparisons as .png figures and have been labelled by the par file names. Each figure contains the physical paramaters and the value of Rmin as well.
 
+	BLUE curves are the no-rush waveforms
+	RED are the rush run waveforms
+
+In each plot, the top panel shows the waveforms for the entire run, at the beginning and at the end. The bottom panel shows the relative difference in the waveform, the relative difference in the amplitude and the phase difference where I computed the phase from ArcTan[hx/h+].
+
+
 The agreement is usually very good. However, there are some weird behaviours that the PA experts might wish to check. 
 
 For example, in the bns_q1_s014s014_f375 case, the rush run ends a few cycles before the no-rush run, but its geometric-unit counterpart, i.e., bns_q1_s014s014_f0005, exhibits no such behaviour.
