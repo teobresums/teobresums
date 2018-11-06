@@ -240,7 +240,7 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
   double sumr, sumi;
-#if (DEBUG)
+  #if (DEBUG)
     printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",
 	   nu,M,distance,psi,iota,amplitude_prefactor);
 #endif
@@ -403,16 +403,20 @@ int get_uniform_size(const double tN, const double t0, const double dt)
 /* Alloc/Free data type routines */
 
 /** Waveform (complex) */
-void Waveform_alloc (Waveform **wav, int size, const char *name)
+void Waveform_alloc (Waveform **wav, const int size, const char *name)
 {
   *wav = (Waveform *) calloc(1, sizeof(Waveform)); 
   if (wav == NULL)
     errorexit("Out of memory");
-  (*wav)->real = malloc ( size * sizeof(double) );
-  (*wav)->imag = malloc ( size * sizeof(double) );
-  (*wav)->time = malloc ( size * sizeof(double) );
+  (*wav)->real =  malloc ( size * sizeof(double) );
+  (*wav)->imag =  malloc ( size * sizeof(double) );
+  (*wav)->ampli = malloc ( size * sizeof(double) );
+  (*wav)->phase = malloc ( size * sizeof(double) );
+  (*wav)->time =  malloc ( size * sizeof(double) );
   memset( (*wav)->real, 0, size * sizeof(double) );
   memset( (*wav)->imag, 0, size * sizeof(double) );
+  memset((*wav)->ampli, 0, size * sizeof(double) );
+  memset((*wav)->phase, 0, size * sizeof(double) );
   memset( (*wav)->time, 0, size * sizeof(double) );
   (*wav)->size = size; 
   strcpy((*wav)->name,name);
@@ -420,9 +424,11 @@ void Waveform_alloc (Waveform **wav, int size, const char *name)
 
 void Waveform_push (Waveform **wav, int size)
 {
-  if ((*wav)->real) (*wav)->real = realloc ( (*wav)->real, size * sizeof(double) );
-  if ((*wav)->imag) (*wav)->imag = realloc ( (*wav)->imag, size * sizeof(double) );
-  if ((*wav)->time) (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
+  if ((*wav)->real)  (*wav)->real  = realloc ( (*wav)->real,  size * sizeof(double) );
+  if ((*wav)->imag)  (*wav)->imag  = realloc ( (*wav)->imag,  size * sizeof(double) );
+  if ((*wav)->ampli) (*wav)->ampli = realloc ( (*wav)->ampli, size * sizeof(double) );
+  if ((*wav)->phase) (*wav)->phase = realloc ( (*wav)->phase, size * sizeof(double) );
+  if ((*wav)->time)  (*wav)->time  = realloc ( (*wav)->time,  size * sizeof(double) );
   const int n  = (*wav)->size;
   const int dn = size - (*wav)->size;
   /* if (dn>0) { */
@@ -437,7 +443,7 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
 {
   /* Alloc and init aux memory */  
   Waveform *h_aux;
-  const int oldsize = h->size;  
+  const int oldsize = h->size;
   Waveform_alloc(&h_aux, oldsize, "");
   memcpy(h_aux->time, h->time, oldsize * sizeof(double));
   memcpy(h_aux->real, h->real, oldsize * sizeof(double));
@@ -452,7 +458,6 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
   h->time = malloc ( size * sizeof(double) );
   h->real = malloc ( size * sizeof(double) );
   h->imag = malloc ( size * sizeof(double) );
-
   /* Fill new time array */
   for (int i = 0; i < size; i++)
     h->time[i] = i*dt + t0;
@@ -460,6 +465,124 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
   /* Interp */
   interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
   interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
+
+  /* Free aux memory */
+  Waveform_free (h_aux);
+}
+
+/* Trial code that unwraps phase angles */
+void unwrap(double p[], int N)
+ // ported from matlab (Dec 2002)
+{
+    double dp[MAX_LENGTH];     
+    double dps[MAX_LENGTH];    
+    double dp_corr[MAX_LENGTH];
+    double cumsum[MAX_LENGTH];
+    double cutoff = M_PI;               /* default value in matlab */
+    int j;
+
+    assert(N <= MAX_LENGTH);
+    
+   // incremental phase variation 
+   // MATLAB: dp = diff(p, 1, 1);
+    for (j = 0; j < N-1; j++){
+      dp[j] = p[j+1] - p[j];
+      dps[j] = (dp[j]+M_PI) - floor( (dp[j]+M_PI)/ (2*M_PI) )*(2*M_PI) - M_PI;
+      if ((dps[j] == -M_PI) && (dp[j] > 0))
+        dps[j] = M_PI;
+      //dp_corr[j] = dps[j] - dp[j];
+      if (fabs(dp[j]) < cutoff)
+        //dp_corr[j] = 0;
+       
+	/* MY routine */	
+	dp_corr[j] = 0.0;	
+	if( p[j+1] < p[j] ) dp_corr[j] = 2*M_PI;
+	
+ 	//if (j< 10) printf("j=%d\tp=%f\tdp =%f\t%f\t%f\tratio=%f\tterm/2pi=%.1f\n", j, p[j], dp[j], dps[j], dp_corr[j], (dp[j]+M_PI)/ (2*M_PI), floor( (dp[j]+M_PI)/ (2*M_PI) ));
+
+    }      
+
+   // Find cumulative sum of deltas
+   // MATLAB: cumsum = cumsum(dp_corr, 1);
+    cumsum[0] = dp_corr[0];
+    for (j = 1; j < N-1; j++){
+      cumsum[j] = cumsum[j-1] + dp_corr[j];
+      //printf("j=%d\t%f\t%f\n", j, dp_corr[j], cumsum[j]);
+   }
+
+   // Integrate corrections and add to P to produce smoothed phase values
+   // MATLAB: p(2:m,:) = p(2:m,:) + cumsum(dp_corr,1);
+    for (j = 1; j < N; j++){
+      p[j] += cumsum[j-1];
+      //if (j < 9) printf("j=%d\tunwrapped = %f\n", j, p[j]);
+   }
+      printf("total hpc phase = %f\n", p[N-1]);   
+}
+
+void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name)
+{
+  /* First compute Amp and Phase of hpc */
+  int N = h->size;
+  double angle[N];
+  double Phase[N];
+  double Amp[N];
+
+  /* Turn hpc's Re, Im parts to phase and amplitude */
+  for (int i = 0; i < N; i++){
+      angle[i] = M_PI - atan2(h->imag[i], h->real[i]);
+      //if (angle[i] < -M_PI || angle[i] > M_PI) printf("i = %d\tphi mod 2pi = %.3f\n", i, angle[i]);
+      //if (i < 15 ) printf("t = %f\tphi mod 2pi = %.3f\n", h->time[i], angle[i]);
+  }
+
+  unwrap(angle, N); /* Unwrap the phase angle */ 
+  for (int i = 0; i < N; i++){
+    Phase[i] = 1.0*angle[i]; 
+    Amp[i]   = sqrt( h->real[i]*h->real[i] + h->imag[i]*h->imag[i] );
+    h->ampli[i] = Amp[i];
+    h->phase[i] = Phase[i] + (Phase[0] - M_PI);  // to undo M_PI - atan2 in line 533
+    //if (i < 15 ) printf("i = %d\tt = %f\tAmp = %f\tPhase = %f\n", i, h->time[i], h->ampli[i], h->phase[i]);    
+  }
+  //printf("total hpc phase = %f\n", Phase[N-1]);
+
+  /* Alloc and init aux memory */  
+  Waveform *h_aux;
+  const int oldsize = h->size;
+  Waveform_alloc(&h_aux, oldsize, "");
+  memcpy(h_aux->time, h->time, oldsize * sizeof(double));
+  memcpy(h_aux->real, h->real, oldsize * sizeof(double));
+  memcpy(h_aux->imag, h->imag, oldsize * sizeof(double));
+  memcpy(h_aux->ampli, h->ampli, oldsize * sizeof(double));
+  memcpy(h_aux->phase, h->phase, oldsize * sizeof(double));
+
+  for (int i = 0; i < N; i++){
+    //printf("i = %d\tt = %f\tAmp = %f\tPhase = %f\t%f\t%f\t%f\n", i, h_aux->time[i], h_aux->ampli[i], h_aux->phase[i], h->time[i], h->ampli[i], h->phase[i]);    
+  }
+ 
+  /* Realloc arrays */
+  h->size = size;
+  if (strcmp(name, "")) strcpy(h->name, name);
+  if (h->time) free(h->time);
+  if (h->real) free(h->real);
+  if (h->imag) free(h->imag);
+  if (h->ampli) free(h->ampli);
+  if (h->phase) free(h->phase);
+  h->time  = malloc ( size * sizeof(double) );
+  h->real  = malloc ( size * sizeof(double) );
+  h->imag  = malloc ( size * sizeof(double) );
+  h->ampli = malloc ( size * sizeof(double) );
+  h->phase = malloc ( size * sizeof(double) );
+
+  /* Fill new time array */
+  for (int i = 0; i < size; i++)
+    h->time[i] = i*dt + t0;
+ 
+  /* Interp */
+  interp_spline(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
+  interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
+
+  for (int i = 0; i < size; i++){
+    //printf("i = %d\tt = %f\tAmp = %f\tPhase = %f\n", i, h->time[i], h->ampli[i], h->phase[i]);    
+  }
 
   /* Free aux memory */
   Waveform_free (h_aux);
@@ -480,9 +603,11 @@ void Waveform_output (Waveform *wav)
 	  par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
 	  par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
   fprintf(fp, "# D=%e psi=%e iota=%e\n",par_get_d("distance"),par_get_d("coalescence_angle"),par_get_d("inclination"));
-  fprintf(fp, "# t:0 real:1 imag:2\n");
+  fprintf(fp, "# t:0 Ampli:1 Phase:2 real:3 imag:4\n");
   for (int i = 0; i < wav->size; i++) {
-    fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], wav->real[i], wav->imag[i]);
+    wav->real[i] = wav->ampli[i]*cos( wav->phase[i] );
+    wav->imag[i] = wav->ampli[i]*sin( wav->phase[i] );
+    fprintf(fp, "%.9e %.12e %.12e %.12e %.12e\n", wav->time[i], wav->ampli[i], wav->phase[i], wav->real[i], wav->imag[i]);
   }
   fclose(fp);
 }
@@ -491,6 +616,8 @@ void Waveform_free (Waveform *wav)
 {
   if (wav->real) free(wav->real);
   if (wav->imag) free(wav->imag);
+  if (wav->ampli) free(wav->ampli);
+  if (wav->phase) free(wav->phase);
   free(wav);
 }
 
@@ -572,6 +699,8 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   /* Free aux memory */
   Waveform_lm_free (hlm_aux);
 }
+
+
 
 #if (0) //TODO: experimental/untested/unused code
 
@@ -657,7 +786,7 @@ void Waveform_lm_output (Waveform_lm *wav)
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
 	errorexits("error opening file",fname);
-      for (int i = 0; i < n; i+=2) {
+      for (int i = 0; i < n; i++) {
         fprintf(fp, "%.9e %.16e %.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
       }
       fclose(fp);

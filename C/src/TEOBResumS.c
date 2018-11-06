@@ -621,18 +621,28 @@ int main (int argc, char* argv[])
 
   /** Computation of (h+,hx) */
   compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
-
+ 
   if (par_get_i("interp_uniform_grid")) { 
     
     /** Interp to uniform grid (if needed) */
     const double dt_interp = par_get_d("dt_interp");
-    int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
-    Waveform_interp (hpc, size_interp, hpc->time[0], dt_interp * M, "hpc_interp");
+    const double dt_interp2 = dt_interp * M;
+    const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
+    const int size_interp2 = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp); 
+    const double t01 = hlm->time[0];
+    const double t02 = hpc->time[0];
+printf("size_interp = %d\tsize_interp2 = %d\tdt_interp = %f\tdt_interp * M =%f\n",size_interp,size_interp2, dt_interp, dt_interp * M);
+//printf("hpc time0 = %f\n", hpc->time[0]);
+
+      Waveform_interp_ap (hpc, size_interp2, t02, dt_interp2, "hpc_interp");
+    //Waveform_interp (hpc, size_interp, hpc->time[0], dt_interp2, "hpc_interp");
     if (par_get_i("output_multipoles")) 
-      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");
+      Waveform_lm_interp (hlm, size_interp, t01, dt_interp, "hlm_interp");
+      //Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");
+
     if (par_get_i("output_dynamics")) {
-      size_interp = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp);
-      Dynamics_interp (dyn, size_interp, dyn->time[0], dt_interp, "dyn_interp");
+      const int size_interp3 = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp);
+      Dynamics_interp (dyn, size_interp3, dyn->time[0], dt_interp, "dyn_interp");
     }
     
   }
