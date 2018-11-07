@@ -119,6 +119,7 @@
 
 /* Useful constants */
 #define Pi (3.1415926535897932384626433832795028)
+#define TwoPi (6.283185307179586476925286766559)
 #define Sqrt2 (1.41421356237309504880168872420969808)
 #define Sqrt3 (1.73205080756887729352744634150587237)
 #define ooSqrt2 (0.707106781186547524400844362104849039284836)
@@ -359,10 +360,12 @@ int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
 double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
+void unwrap(double p[], int N); /* Trial code to unwrap phase angles */// to be removed
 void set_multipolar_idx_mask(int *kmask, int n);
 int get_uniform_size(const double tf, const double t0, const double dt);
 void Waveform_alloc (Waveform **wav, const int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
+void Waveform_rmap (Waveform *h, const int mode);
 void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name);
 void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name);
 void Waveform_output (Waveform *wav);
@@ -373,7 +376,6 @@ void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_output_reim (Waveform_lm *wav);
 void Waveform_lm_free (Waveform_lm *wav);
 void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name);
-void unwrap(double p[], int N); /* Trial code to unwrap phase angles */
 /* void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name); */
 /* void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to); */
 void Waveform_lm_t_alloc (Waveform_lm_t **wav);

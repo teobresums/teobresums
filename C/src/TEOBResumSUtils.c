@@ -240,7 +240,7 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
   double sumr, sumi;
-  #if (DEBUG)
+#if (DEBUG)
     printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",
 	   nu,M,distance,psi,iota,amplitude_prefactor);
 #endif
@@ -381,6 +381,70 @@ double cumint3(double *f, double *x, const int n, double *sum)
   return sum[n-1];
 }
 
+/* Trial code that unwraps phase angles */ // this is bad, rm
+void unwrap(double p[], int N)
+ // ported from matlab (Dec 2002)
+{
+    double dp[MAX_LENGTH];     
+    double dps[MAX_LENGTH];    
+    double dp_corr[MAX_LENGTH];
+    double cumsum[MAX_LENGTH];
+    double cutoff = M_PI;               /* default value in matlab */
+    int j;
+
+    assert(N <= MAX_LENGTH);
+    
+   // incremental phase variation 
+   // MATLAB: dp = diff(p, 1, 1);
+    for (j = 0; j < N-1; j++){
+      dp[j] = p[j+1] - p[j];
+      dps[j] = (dp[j]+M_PI) - floor( (dp[j]+M_PI)/ (2*M_PI) )*(2*M_PI) - M_PI;
+      if ((dps[j] == -M_PI) && (dp[j] > 0))
+        dps[j] = M_PI;
+      //dp_corr[j] = dps[j] - dp[j];
+      if (fabs(dp[j]) < cutoff)
+        //dp_corr[j] = 0;
+       
+	/* MY routine */	
+	dp_corr[j] = 0.0;	
+	if( p[j+1] < p[j] ) dp_corr[j] = 2*M_PI;
+	
+ 	//if (j< 10) printf("j=%d\tp=%f\tdp =%f\t%f\t%f\tratio=%f\tterm/2pi=%.1f\n", j, p[j], dp[j], dps[j], dp_corr[j], (dp[j]+M_PI)/ (2*M_PI), floor( (dp[j]+M_PI)/ (2*M_PI) ));
+
+    }      
+
+   // Find cumulative sum of deltas
+   // MATLAB: cumsum = cumsum(dp_corr, 1);
+    cumsum[0] = dp_corr[0];
+    for (j = 1; j < N-1; j++){
+      cumsum[j] = cumsum[j-1] + dp_corr[j];
+      //printf("j=%d\t%f\t%f\n", j, dp_corr[j], cumsum[j]);
+   }
+
+   // Integrate corrections and add to P to produce smoothed phase values
+   // MATLAB: p(2:m,:) = p(2:m,:) + cumsum(dp_corr,1);
+    for (j = 1; j < N; j++){
+      p[j] += cumsum[j-1];
+      //if (j < 9) printf("j=%d\tunwrapped = %f\n", j, p[j]);
+   }
+    printf("total hpc phase = %f\n", p[N-1]);   
+}
+
+/* unwraps phase angles */
+void unwrap_new(double *p, const int size)
+{
+  double curr, prev, corph; 
+  if (size < 1) return;
+  prev = p[0];
+  for (int i = 1; i < size; i++) {
+    curr = p[i];
+    corph = curr - prev;
+    corph = (corph > Pi) ? corph - TwoPi : (corph < -Pi ? corph + TwoPi : corph);
+    p[i] = p[i-1] + corph;
+    prev = curr;
+  }      
+}
+
 /** This routine sets a 0/1 mask for the multipolar linear index */
 void set_multipolar_idx_mask(int *kmask, int n)
 {
@@ -439,6 +503,42 @@ void Waveform_push (Waveform **wav, int size)
   (*wav)->size = size; 
 }
 
+/* Compute real/imag <-> amplitude/phase */
+void Waveform_rmap (Waveform *h, const int mode)
+{
+  const int size = h->size;
+
+  if (mode) {
+    /** (Re, Im) -> (Amplitude, phase) */
+    for (int i = 0; i < size; i++)
+      h->ampli[i] = sqrt( SQ(h->real[i]) + SQ(h->imag[i]) );
+    /* Unwrapped phase */
+    double curr, prev, corph; 
+    prev = atan2(h->imag[0], h->real[0]);
+    h->phase[0] = prev;
+    for (int i = 1; i < size; i++) {
+      curr = atan2(h->imag[i], h->real[i]);
+      corph = curr - prev;
+      corph = (corph > Pi) ? corph - TwoPi : (corph < -Pi ? corph + TwoPi : corph);
+      h->phase[i] = h->phase[i-1] + corph;
+      prev = curr;
+    }    
+    //alternative better code using the unwrap routine:
+    /*
+      for (int i = 0; i < size; i++) 
+      h->phase[0] = atan2(h->imag[i], h->real[i]);
+      unwrap_new(h->phase, size);
+    */
+  } else {
+    /** (Amplitude, phase) -> (Re, Im) */
+    for (int i = 0; i < size; i++) {
+      h->real[i] = h->ampli[i] * cos(h->phase[i]); // check this remember - in def: h =  A exp( -i phi)
+      h->imag[i] = h->ampli[i] * sin(h->phase[i]);
+    }
+  }
+
+}
+
 void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -462,65 +562,64 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
   for (int i = 0; i < size; i++)
     h->time[i] = i*dt + t0;
   
-  /* Interp */
+  /* Interp real/imag*/
   interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
   interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
+
+  /* Compute phase and amplitude */
+  Waveform_rmap (h, 1);
 
   /* Free aux memory */
   Waveform_free (h_aux);
 }
 
-/* Trial code that unwraps phase angles */
-void unwrap(double p[], int N)
- // ported from matlab (Dec 2002)
-{
-    double dp[MAX_LENGTH];     
-    double dps[MAX_LENGTH];    
-    double dp_corr[MAX_LENGTH];
-    double cumsum[MAX_LENGTH];
-    double cutoff = M_PI;               /* default value in matlab */
-    int j;
-
-    assert(N <= MAX_LENGTH);
-    
-   // incremental phase variation 
-   // MATLAB: dp = diff(p, 1, 1);
-    for (j = 0; j < N-1; j++){
-      dp[j] = p[j+1] - p[j];
-      dps[j] = (dp[j]+M_PI) - floor( (dp[j]+M_PI)/ (2*M_PI) )*(2*M_PI) - M_PI;
-      if ((dps[j] == -M_PI) && (dp[j] > 0))
-        dps[j] = M_PI;
-      //dp_corr[j] = dps[j] - dp[j];
-      if (fabs(dp[j]) < cutoff)
-        //dp_corr[j] = 0;
-       
-	/* MY routine */	
-	dp_corr[j] = 0.0;	
-	if( p[j+1] < p[j] ) dp_corr[j] = 2*M_PI;
-	
- 	//if (j< 10) printf("j=%d\tp=%f\tdp =%f\t%f\t%f\tratio=%f\tterm/2pi=%.1f\n", j, p[j], dp[j], dps[j], dp_corr[j], (dp[j]+M_PI)/ (2*M_PI), floor( (dp[j]+M_PI)/ (2*M_PI) ));
-
-    }      
-
-   // Find cumulative sum of deltas
-   // MATLAB: cumsum = cumsum(dp_corr, 1);
-    cumsum[0] = dp_corr[0];
-    for (j = 1; j < N-1; j++){
-      cumsum[j] = cumsum[j-1] + dp_corr[j];
-      //printf("j=%d\t%f\t%f\n", j, dp_corr[j], cumsum[j]);
-   }
-
-   // Integrate corrections and add to P to produce smoothed phase values
-   // MATLAB: p(2:m,:) = p(2:m,:) + cumsum(dp_corr,1);
-    for (j = 1; j < N; j++){
-      p[j] += cumsum[j-1];
-      //if (j < 9) printf("j=%d\tunwrapped = %f\n", j, p[j]);
-   }
-      printf("total hpc phase = %f\n", p[N-1]);   
-}
-
 void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name)
 {
+
+#if (0) ////////////////////////////  
+  // this routine should be simpler:
+
+  /* Alloc and init aux memory */  
+  Waveform *h_aux;
+  const int oldsize = h->size;
+  Waveform_alloc(&h_aux, oldsize, "");
+  memcpy(h_aux->time, h->time, oldsize * sizeof(double));
+  memcpy(h_aux->real, h->real, oldsize * sizeof(double));
+  memcpy(h_aux->imag, h->imag, oldsize * sizeof(double));
+  memcpy(h_aux->ampli, h->ampli, oldsize * sizeof(double)); 
+  memcpy(h_aux->phase, h->phase, oldsize * sizeof(double)); 
+
+  /* Realloc arrays */
+  h->size = size;
+  if (strcmp(name, "")) strcpy(h->name, name);
+  if (h->time) free(h->time);
+  if (h->real) free(h->real);
+  if (h->imag) free(h->imag);
+  if (h->ampli) free(h->ampli);
+  if (h->phase) free(h->phase);
+  h->time  = malloc ( size * sizeof(double) );
+  h->real  = malloc ( size * sizeof(double) );
+  h->imag  = malloc ( size * sizeof(double) );
+  h->ampli = malloc ( size * sizeof(double) );
+  h->phase = malloc ( size * sizeof(double) );
+
+  /* Fill new time array */
+  for (int i = 0; i < size; i++)
+    h->time[i] = i*dt + t0;
+ 
+  /* Interp */
+  interp_spline(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
+  interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
+
+  /* Compute Real/Imag*/
+  Waveform_rmap (h, 0);
+
+  /* Free aux memory */
+  Waveform_free (h_aux);
+
+#endif
+  ////////////////////////////  
+
   /* First compute Amp and Phase of hpc */
   int N = h->size;
   double angle[N];
@@ -605,7 +704,7 @@ void Waveform_output (Waveform *wav)
   fprintf(fp, "# D=%e psi=%e iota=%e\n",par_get_d("distance"),par_get_d("coalescence_angle"),par_get_d("inclination"));
   fprintf(fp, "# t:0 Ampli:1 Phase:2 real:3 imag:4\n");
   for (int i = 0; i < wav->size; i++) {
-    wav->real[i] = wav->ampli[i]*cos( wav->phase[i] );
+    wav->real[i] = wav->ampli[i]*cos( wav->phase[i] ); //these should be filled elsewhere or printed 0, not here.
     wav->imag[i] = wav->ampli[i]*sin( wav->phase[i] );
     fprintf(fp, "%.9e %.12e %.12e %.12e %.12e\n", wav->time[i], wav->ampli[i], wav->phase[i], wav->real[i], wav->imag[i]);
   }
