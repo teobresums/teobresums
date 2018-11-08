@@ -631,14 +631,11 @@ int main (int argc, char* argv[])
     const int size_interp2 = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp); 
     const double t01 = hlm->time[0];
     const double t02 = hpc->time[0];
-printf("size_interp = %d\tsize_interp2 = %d\tdt_interp = %f\tdt_interp * M =%f\n",size_interp,size_interp2, dt_interp, dt_interp * M);
-//printf("hpc time0 = %f\n", hpc->time[0]);
+    //printf("size_interp = %d\tsize_interp2 = %d\tdt_interp = %f\tdt_interp * M =%f\n", size_interp,size_interp2, dt_interp, dt_interp * M);
 
-
-
-/* Waveform_interp (hpc, size_interp, hpc->time[0], dt_interp2, "hpc_interp"); */
-// Waveform_rmap (hcp, 1); // need to fill ampli, phase arrays ...
-      Waveform_interp_ap (hpc, size_interp2, t02, dt_interp2, "hpc_interp");
+    /* Waveform_interp (hpc, size_interp, hpc->time[0], dt_interp2, "hpc_interp"); */
+    Waveform_rmap (hlm, hpc, 1); // need to fill ampli, phase arrays ...
+    Waveform_interp_ap (hlm, hpc, size_interp2, t02, dt_interp2, "waveform_interp");
     if (par_get_i("output_multipoles")) 
       Waveform_lm_interp (hlm, size_interp, t01, dt_interp, "hlm_interp");
       //Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");
@@ -646,14 +643,13 @@ printf("size_interp = %d\tsize_interp2 = %d\tdt_interp = %f\tdt_interp * M =%f\n
     if (par_get_i("output_dynamics")) {
       const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp);
       Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp, "dyn_interp");
-    }
-    
+    }    
   }
   
   /** Output */
   Waveform_output (hpc);
   if (par_get_i("output_multipoles")) {
-    Waveform_lm_output (hlm);
+    Waveform_lm_output (hlm); 
     Waveform_lm_output_reim (hlm);
   }
   if (par_get_i("output_dynamics"))

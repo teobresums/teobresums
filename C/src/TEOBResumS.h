@@ -35,7 +35,6 @@
 #include <math.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h> /* for use in phase unwrap function */
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
@@ -81,7 +80,6 @@
 #define ERROR 1 /** generic error int */
 #define OK 0 /** generic go int */
 #define STRLEN 128 /** Standard string length */
-#define MAX_LENGTH 100000 /** For the trial phase unwrapping code */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
 #define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);} 
 #define SIGN(x,y) ((y) >= 0.0 ? fabs(x) : -fabs(x)) 
@@ -360,14 +358,15 @@ int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
 double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
-void unwrap(double p[], int N); /* Trial code to unwrap phase angles */// to be removed
+void unwrap(double *p, const int size);
+void unwrap_proxy (Waveform_lm  *h_lm, Waveform *h, const int size);
 void set_multipolar_idx_mask(int *kmask, int n);
 int get_uniform_size(const double tf, const double t0, const double dt);
 void Waveform_alloc (Waveform **wav, const int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
-void Waveform_rmap (Waveform *h, const int mode);
-void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name);
-void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name);
+void Waveform_rmap (Waveform_lm *hlm, Waveform *h, const int mode);
+void Waveform_interp (Waveform_lm *hlm, Waveform *h, const int size, const double t0, const double dt, const char *name);
+void Waveform_interp_ap (Waveform_lm  *hlm, Waveform *h, const int size, const double t0, const double dt, const char *name);
 void Waveform_output (Waveform *wav);
 void Waveform_free (Waveform *wav);
 void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
