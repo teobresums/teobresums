@@ -629,21 +629,23 @@ int main (int argc, char* argv[])
     const double dt_interp_hpc = dt_interp_hlm * M;
     const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
     const int size_interp_hpc = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp_hpc); 
-    //const double t01 = hlm->time[0];
-    //const double t02 = hpc->time[0];
     //printf("size_interp = %d\tsize_interp2 = %d\tdt_interp = %f\tdt_interp * M =%f\n", size_interp,size_interp2, dt_interp, dt_interp * M);
 
     /* Interp real/imag */
     /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */
     /* Interp phase/amplitude */
-    Waveform_rmap (hpc, 1, 0); /* do not unwrap here ... */
-    unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* ... but here using phi22 as proxy */
+    Waveform_rmap (hpc, 1, 1); /* unwrap here ...for 0 crossings */
+    unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* ...  use phi22 for extra 2pi crossings */
+#if (DEBUG) 
+     printf("phi_pc = %.3f vs. phi22 = %.3f\n", hpc->phase[size-1], hlm->phase[1][size-1]);
+#endif
     Waveform_interp_ap (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
     if (par_get_i("output_multipoles")) 
       Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
     if (par_get_i("output_dynamics")) {
       const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_hlm);
       Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_hlm, "dyn_interp");
+
     }    
   }
   

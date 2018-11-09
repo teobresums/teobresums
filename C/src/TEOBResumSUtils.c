@@ -381,19 +381,31 @@ double cumint3(double *f, double *x, const int n, double *sum)
   return sum[n-1];
 }
 
-/* Simple unwrap for phase angles */
+/* Simple unwrap for phase angles */ // Do NOT mess with it
 void unwrap(double *p, const int size)
 {
-  double curr, prev, corph; 
-  if (size < 1) return;
+ if (size < 1) return;
+  int j;
+  int fact = 0;  // For making the initial negative phase angles positive
+  double curr, prev; 
+  double corr = 0.0;
+  double dphi = 0.0;
+
   prev = p[0];
-  for (int i = 1; i < size; i++) {
-    curr = p[i];
-    corph = curr - prev;
-    corph = (corph > Pi) ? corph - TwoPi : (corph < -Pi ? corph + TwoPi : corph);
-    p[i] = p[i-1] + corph;
+  if( p[0] < 0 ) fact = 1;
+  if( p[1] < p[0] ) 
+    dphi = TwoPi;
+
+  for (j = 1; j < size; j++){
+    p[j] += fact*TwoPi;
+    curr = p[j];
+    if( curr < prev ) 
+      dphi = TwoPi;
+    corr += dphi;
+    p[j] += corr - fact*TwoPi;         
     prev = curr;
-  }   
+    dphi = 0.0;    
+  }  
 }
 
 /* Unwrap unsign number of cycles from reference phase as proxy */
@@ -414,16 +426,17 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
 
   if (shift0) {
     /* shift phase : p(0) = r(0) */
-    const double dp = r0 - p[0];
+    const double dp = (r0 - p[0] );
     for (int i = 0; i < size; i++) 
       p[i] += dp; 
+printf("dp=%f\n", dp);
   }
 
   /* unwrap based on no cycles */
   const double p0 = p[0];  
   for (int i = 0; i < size; i++) {
     int np = (int) ( ( p[i] - p0) * ooTwoPi );
-    if (np != n[i]) p[i] += (np - n[i])*TwoPi; // sign? Pi or 2 Pi?
+    if (np != n[i]) p[i] += (n[i] - np)*TwoPi; // sign? Pi or 2 Pi?
   }
 
   free(n);
@@ -496,7 +509,7 @@ void Waveform_rmap (Waveform *h, const int mode, const int unw)
     for (int i = 0; i < size; i++)
       h->ampli[i] = sqrt( SQ(h->real[i]) + SQ(h->imag[i]) );
     for (int i = 0; i < size; i++)
-      h->phase[i] = Pi - atan2(h->imag[i], h->real[i]); /* exp(- i phi) => Pi  */                 
+      h->phase[i] = Pi - atan2(h->imag[i], h->real[i]); /* exp(- i phi) => Pi  */
     if (unw) unwrap(h->phase, h->size); 
   } else {
     /** (Amplitude, phase) -> (Re, Im) */
@@ -587,6 +600,7 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
 
 void Waveform_output (Waveform *wav)
 {
+  //Waveform_rmap (wav, 1, 1);
   FILE* fp;
   char fname[STRLEN];
   strcpy(fname,par_get_s("output_dir"));
