@@ -635,21 +635,10 @@ int main (int argc, char* argv[])
 
     /* Interp real/imag */
     /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */
-
     /* Interp phase/amplitude */
-
-    // SARP:
-    //Waveform_rmap_sarp (hlm, hpc, 1); // need to fill ampli, phase arrays ...
-    //Waveform_interp_ap (hlm, hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
-
-    // SB:
-    // 1. calculate phase and ampli
-    Waveform_rmap (hpc, 1);
-    // 2. unwrap phase using number of cycles from phi22 as proxy
-    unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1);
-    // 3. interp
+    Waveform_rmap (hpc, 1, 0); /* do not unwrap here ... */
+    unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* ... but here using phi22 as proxy */
     Waveform_interp_ap (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
-
     if (par_get_i("output_multipoles")) 
       Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
     if (par_get_i("output_dynamics")) {

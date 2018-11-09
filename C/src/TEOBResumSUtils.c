@@ -381,7 +381,7 @@ double cumint3(double *f, double *x, const int n, double *sum)
   return sum[n-1];
 }
 
-/* simple unwrap for phase angles */
+/* Simple unwrap for phase angles */
 void unwrap(double *p, const int size)
 {
   double curr, prev, corph; 
@@ -394,6 +394,39 @@ void unwrap(double *p, const int size)
     p[i] = p[i-1] + corph;
     prev = curr;
   }   
+}
+
+/* Unwrap unsign number of cycles from reference phase as proxy */
+void unwrap_proxy(double *p, double *r, const int size, const int shift0)
+{
+  if (size < 1) return;
+
+  int *n = (int *) calloc(size, sizeof(int));
+  if (n == NULL)
+    errorexit("Out of memory");
+
+  const double ooTwoPi = 1.0/(TwoPi);
+  const double r0 = r[0];
+
+  /* no cycles from reference phase, assume r>0 */
+  for (int i = 0; i < size; i++)
+    n[i] = (int) ( (r[i] - r0) * ooTwoPi );
+
+  if (shift0) {
+    /* shift phase : p(0) = r(0) */
+    const double dp = r0 - p[0];
+    for (int i = 0; i < size; i++) 
+      p[i] += dp; 
+  }
+
+  /* unwrap based on no cycles */
+  const double p0 = p[0];  
+  for (int i = 0; i < size; i++) {
+    int np = (int) ( ( p[i] - p0) * ooTwoPi );
+    if (np != n[i]) p[i] += (np - n[i])*TwoPi; // sign? Pi or 2 Pi?
+  }
+
+  free(n);
 }
 
 /** This routine sets a 0/1 mask for the multipolar linear index */
@@ -454,218 +487,8 @@ void Waveform_push (Waveform **wav, int size)
   (*wav)->size = size; 
 }
 
-#if (0) 
-// ////////////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////
-// SARP:
-void unwrap(double *p, const int size)
-{
-  if (size < 1) return;
-  int j;
-  int fact = 0;  // For making the initial negative phase angles positive                                                                                                            
-  double curr, prev;
-  double corr = 0.0;
-  double dphi = 0.0;
-
-  prev = p[0];
-  if( p[0] < 0 ) fact = 1;
-  if( p[1] < p[0] )
-    dphi = TwoPi;
-
-  for (j = 1; j < size; j++){
-    p[j] += fact*TwoPi;
-    curr = p[j];
-    if( curr < prev )
-      dphi = TwoPi;
-    corr += dphi;
-    p[j] += corr - fact*TwoPi;
-    prev = curr;
-    dphi = 0.0;
-    //for (j = 0; j < 10; j++) printf("p[%d] = %f\t%f\n", j,p[j], p[j]+TwoPi);                                                                                                       
-  }
-  //printf("Inside newest unwrap:   = %f\n", p[size-1]);                                                                                                                             
-}
-
-void unwrap_proxy (Waveform_lm  *h_lm, Waveform *h, const int size)
-{
-  double Diff, phase, DiffMod, Ncycles, N22cycles, CycleDiff;
-  double ph22[size];
-  double *phase22;
-
-  for (int i = 0; i < size; i++){
-    ph22[i] = atan2( (h_lm->ampli[1][i])*sin(h_lm->phase[1][i]), (h_lm->ampli[1][i])*cos(h_lm->phase[1][i]) );
-    //if( i<10 ) printf("i=%d\tArcTan22=%f\n", i, ph22[i]);                                                                                                                          
-  }
-
-  phase22 = ph22;
-  unwrap(phase22, size);
-
-  for (int i = 0; i < size; i++){
-    phase   = h->phase[i] - M_PI;
-    Diff    = h_lm->phase[1][i] - phase22[i];
-    DiffMod = Diff/TwoPi;
-    //if( i<10 ) printf("i=%d\tph22=%f\tUnwrapped22=%f\tArcTan = %f\tDiff=%f\tDiffMod=%f\t", i, h_lm->phase[1][i], phase22[i], phase, Diff, DiffMod);                                
-    if( DiffMod  > 0.0 ){
-      phase += 2.0*M_PI*DiffMod;
-      phase22[i] += 2.0*M_PI*DiffMod;
-    }
-    h->phase[i] = phase;
-    //if( i < 10 ) printf("phase=%f\tphase22=%f\n", phase, phase22[i]);                                                                                                              
-  }
-  N22cycles = floor( (h_lm->phase[1][size-1] - h_lm->phase[1][0])/TwoPi );
-  Ncycles = floor( (h->phase[size-1] - h->phase[0])/TwoPi );
-  CycleDiff = floor( N22cycles - Ncycles);
-#if (DEBUG)
-  if( CycleDiff > 0.0 ) printf("N22=%.0f vs N = %.0f\n", N22cycles, Ncycles);
-  if( fabs( phase22[size-1] - h_lm->phase[1][size-1] )/h_lm->phase[1][size-1] > 1e-14 )
-    printf("Unwrap proxy 22 check:\nunwrap22-phi22 = %e\tDel_rel_phi22 = %e\n", ( phase22[size-1] - h_lm->phase[1][size-1] ), fabs( phase22[size-1] - h_lm->phase[1][size-1] )/h_lm->p\
-	   hase[1][size-1] );
-#endif
-}
-
 /* Compute real/imag <-> amplitude/phase */
-void Waveform_rmap_sarp (Waveform_lm *hlm, Waveform *h, const int mode)
-{
-  const int size = h->size;
- 
-  if (mode) {
-    /** (Re, Im) -> (Amplitude, phase) */
-    for (int i = 0; i < size; i++)
-      h->ampli[i] = sqrt( SQ(h->real[i]) + SQ(h->imag[i]) );
-    for (int i = 0; i < size; i++) 
-      h->phase[i] = M_PI - atan2(h->imag[i], h->real[i]); // Because of exp(- i phi)
-    unwrap(h->phase, size);
-    unwrap_proxy(hlm, h, size);
-#if (DEBUG)
-  printf("Unwrapped phi_pc = %f vs. phi22 = %f\n", h->phase[size-1], hlm->phase[1][size-1]);
-#endif    
-  } else {
-    /** (Amplitude, phase) -> (Re, Im) */
-    for (int i = 0; i < size; i++) {
-      h->real[i] = h->ampli[i] * cos(h->phase[i]); // check this remember - in def: h =  A exp( -i phi)
-      h->imag[i] = h->ampli[i] * sin(h->phase[i]);
-    }
-  }
-}
-
-void Waveform_interp (Waveform_lm *hlm, Waveform *h, const int size, const double t0, const double dt, const char *name)
-{
-  /* Alloc and init aux memory */
-  Waveform *h_aux;
-  const int oldsize = h->size;
-  Waveform_alloc(&h_aux, oldsize, "");
-  memcpy(h_aux->time, h->time, oldsize * sizeof(double));
-  memcpy(h_aux->real, h->real, oldsize * sizeof(double));
-  memcpy(h_aux->imag, h->imag, oldsize * sizeof(double));
-
-  /* Realloc arrays */
-  h->size = size;
-  if (strcmp(name, "")) strcpy(h->name, name);
-  if (h->time) free(h->time);
-  if (h->real) free(h->real);
-  if (h->imag) free(h->imag);
-  h->time = malloc ( size * sizeof(double) );
-  h->real = malloc ( size * sizeof(double) );
-  h->imag = malloc ( size * sizeof(double) );
-
-  /* Fill new time array */
-  for (int i = 0; i < size; i++)
-    h->time[i] = i*dt + t0;
-
-  /* Interp real/imag*/
-  interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
-  interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
-
-  /* Compute phase and amplitude */
-  Waveform_rmap_sarp (hlm, h, 1);                                                                                                                                                  
- 
- /* Free aux memory */
-  Waveform_free (h_aux);
-}
-
-void Waveform_interp_ap (Waveform_lm  *hlm, Waveform *h, const int size, const double t0, const double dt, const char *name)
-{
-  /* Alloc and init aux memory */
-  Waveform *h_aux;
-  const int oldsize = h->size;
-  Waveform_alloc(&h_aux, oldsize, "");
-  memcpy(h_aux->time, h->time, oldsize * sizeof(double));
-  memcpy(h_aux->real, h->real, oldsize * sizeof(double));
-  memcpy(h_aux->imag, h->imag, oldsize * sizeof(double));
-  memcpy(h_aux->ampli, h->ampli, oldsize * sizeof(double));
-  memcpy(h_aux->phase, h->phase, oldsize * sizeof(double));
-
-  /* Realloc arrays */
-  h->size = size;
-  if (strcmp(name, "")) strcpy(h->name, name);
-  if (h->time) free(h->time);
-  if (h->real) free(h->real);
-  if (h->imag) free(h->imag);
-  if (h->ampli) free(h->ampli);
-  if (h->phase) free(h->phase);
-  h->time  = malloc ( size * sizeof(double) );
-  h->real  = malloc ( size * sizeof(double) );
-  h->imag  = malloc ( size * sizeof(double) );
-  h->ampli = malloc ( size * sizeof(double) );
-  h->phase = malloc ( size * sizeof(double) );
-
-  /* Fill new time array */
-  for (int i = 0; i < size; i++)
-    h->time[i] = i*dt + t0;
-
-  /* Interp phase and amplitude */
-  interp_spline(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
-  interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
-
-  /* Compute Real/Imag */
-  Waveform_rmap (h, 0);
-
-  /* Free aux memory */
-  Waveform_free (h_aux);
-}
-
-// ////////////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////
-// SB
-#else
-
-void unwrap_proxy(double *p, double *r, const int size, const int shift0)
-{
-  if (size < 1) return;
-
-  int *n = (int *) calloc(size, sizeof(int));
-  if (n == NULL)
-    errorexit("Out of memory");
-
-  const double ooTwoPi = 1.0/(TwoPi);
-  const double r0 = r[0];
-
-  /* no cycles from reference phase, assume r>0 */
-  for (int i = 0; i < size; i++)
-    n[i] = (int) ( (r[i] - r0) * ooTwoPi );
-
-  if (shift0) {
-    /* shift phase : p(0) = r(0) */
-    const double dp = r0 - p[0];
-    for (int i = 0; i < size; i++) 
-      p[i] += dp; 
-  }
-
-  /* unwrap based on no cycles */
-  const double p0 = p[0];  
-  for (int i = 0; i < size; i++) {
-    int np = (int) ( ( p[i] - p0) * ooTwoPi );
-    if (np != n[i]) p[i] += (np - n[i])*TwoPi; // sign? Pi or 2 Pi?
-  }
-
-  free(n);
-}
-
-/* Compute real/imag <-> amplitude/phase */
-void Waveform_rmap (Waveform *h, const int mode)
+void Waveform_rmap (Waveform *h, const int mode, const int unw)
 {
   const int size = h->size;
   if (mode) {
@@ -674,14 +497,14 @@ void Waveform_rmap (Waveform *h, const int mode)
       h->ampli[i] = sqrt( SQ(h->real[i]) + SQ(h->imag[i]) );
     for (int i = 0; i < size; i++)
       h->phase[i] = Pi - atan2(h->imag[i], h->real[i]); /* exp(- i phi) => Pi  */                 
-    unwrap(h->phase, h->size); /* Note: this phase might still needsunwrap ! */
+    if (unw) unwrap(h->phase, h->size); 
   } else {
     /** (Amplitude, phase) -> (Re, Im) */
     /* h =  A exp( -i phi) */
     for (int i = 0; i < size; i++) 
-      h->real[i] = h->ampli[i] * cos(- h->phase[i]);  
+      h->real[i] = + h->ampli[i] * cos(h->phase[i]);  
     for (int i = 0; i < size; i++)
-      h->imag[i] = h->ampli[i] * sin(- h->phase[i]); 
+      h->imag[i] = - h->ampli[i] * sin(h->phase[i]); 
   }
 }
 
@@ -714,7 +537,8 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
   interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
 
   /* Compute phase and amplitude */
-  Waveform_rmap(h, 1);
+  /* Waveform_rmap(h, 1, 1); */ /* unwrap */
+  Waveform_rmap(h, 1, 0);  /* do not unwrap */
 
   /* Free aux memory */
   Waveform_free (h_aux);
@@ -755,13 +579,11 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
   interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
 
   /* Compute Real/Imag */
-  Waveform_rmap (h, 0);
+  Waveform_rmap (h, 0, 0); /* do not unwrap */
 
   /* Free aux memory */
   Waveform_free (h_aux);
 }
-
-#endif
 
 void Waveform_output (Waveform *wav)
 {
