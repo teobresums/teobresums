@@ -625,24 +625,36 @@ int main (int argc, char* argv[])
   if (par_get_i("interp_uniform_grid")) { 
     
     /** Interp to uniform grid (if needed) */
-    const double dt_interp = par_get_d("dt_interp");
-    const double dt_interp2 = dt_interp * M;
-    const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
-    const int size_interp2 = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp); 
-    const double t01 = hlm->time[0];
-    const double t02 = hpc->time[0];
+    const double dt_interp_hlm = par_get_d("dt_interp");
+    const double dt_interp_hpc = dt_interp_hlm * M;
+    const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
+    const int size_interp_hpc = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp_hpc); 
+    //const double t01 = hlm->time[0];
+    //const double t02 = hpc->time[0];
     //printf("size_interp = %d\tsize_interp2 = %d\tdt_interp = %f\tdt_interp * M =%f\n", size_interp,size_interp2, dt_interp, dt_interp * M);
 
-    /* Waveform_interp (hpc, size_interp, hpc->time[0], dt_interp2, "hpc_interp"); */
-    Waveform_rmap (hlm, hpc, 1); // need to fill ampli, phase arrays ...
-    Waveform_interp_ap (hlm, hpc, size_interp2, t02, dt_interp2, "waveform_interp");
-    if (par_get_i("output_multipoles")) 
-      Waveform_lm_interp (hlm, size_interp, t01, dt_interp, "hlm_interp");
-      //Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");
+    /* Interp real/imag */
+    /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */
 
+    /* Interp phase/amplitude */
+
+    // SARP:
+    //Waveform_rmap_sarp (hlm, hpc, 1); // need to fill ampli, phase arrays ...
+    //Waveform_interp_ap (hlm, hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
+
+    // SB:
+    // 1. calculate phase and ampli
+    Waveform_rmap (hpc, 1);
+    // 2. unwrap phase using number of cycles from phi22 as proxy
+    unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1);
+    // 3. interp
+    Waveform_interp_ap (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
+
+    if (par_get_i("output_multipoles")) 
+      Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
     if (par_get_i("output_dynamics")) {
-      const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp);
-      Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp, "dyn_interp");
+      const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_hlm);
+      Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_hlm, "dyn_interp");
     }    
   }
   
