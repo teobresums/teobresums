@@ -324,7 +324,7 @@ void eob_set_params(char *s, int n)
 
   for (j=0; j<=TIDES_NOPT; j++) {
     if (STREQUAL(par_get_s("tides"),tides_opt[j])) {
-      if (DEBUG) printf("%-40s = %s\n","tides",tides_opt[j]);
+      /* if (DEBUG) printf("%-40s = %s\n","tides",tides_opt[j]); */
       break;
     }
   }
@@ -339,7 +339,7 @@ void eob_set_params(char *s, int n)
 
   for (k=0; k<=TIDES_GM_NOPT; k++) {
     if (STREQUAL(par_get_s("tides_gravitomagnetic"), tides_gravitomagnetic_opt[k])) {
-      if (DEBUG) printf("%-40s = %s\n","tides_gravitomagnetic", tides_gravitomagnetic_opt[k]);
+      /* if (DEBUG) printf("%-40s = %s\n","tides_gravitomagnetic", tides_gravitomagnetic_opt[k]); */
       break;
     }
   }
