@@ -426,10 +426,9 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
 
   if (shift0) {
     /* shift phase : p(0) = r(0) */
-    const double dp = (r0 - p[0] );
+    const double dp = (r0 - p[0]);
     for (int i = 0; i < size; i++) 
       p[i] += dp; 
-printf("dp=%f\n", dp);
   }
 
   /* unwrap based on no cycles */
@@ -600,7 +599,6 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
 
 void Waveform_output (Waveform *wav)
 {
-  //Waveform_rmap (wav, 1, 1);
   FILE* fp;
   char fname[STRLEN];
   strcpy(fname,par_get_s("output_dir"));
