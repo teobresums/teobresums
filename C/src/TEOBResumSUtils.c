@@ -408,6 +408,8 @@ void unwrap(double *p, const int size)
   }  
 }
 
+#define dbg_unwrap_proxy (0) // stops after routine, use: ./TEOBResumS.x test.par > out 
+
 /* Unwrap unsign number of cycles from reference phase as proxy */
 void unwrap_proxy(double *p, double *r, const int size, const int shift0)
 {
@@ -420,9 +422,9 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
   const double ooTwoPi = 1.0/(TwoPi);
   const double r0 = r[0];
 
-  /* no cycles from reference phase, assume r>0 */
+  /* no cycles from reference phase, r>0 */
   for (int i = 0; i < size; i++)
-    n[i] = (int) ( (r[i] - r0) * ooTwoPi );
+    n[i] = floor ( (r[i] - r0) * ooTwoPi );
 
   if (shift0) {
     /* shift phase : p(0) = r(0) */
@@ -430,15 +432,23 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
     for (int i = 0; i < size; i++) 
       p[i] += dp; 
   }
-
+  
   /* unwrap based on no cycles */
   const double p0 = p[0];  
+  int np = 0;
+  if (dbg_unwrap_proxy) printf("#i:0 r:1 n:2 p:3 (r-p_unwrap):4 np:5 (n-np):6 p_unwrap_correct:7 (r-p_unwrap_corrected):8\n");
   for (int i = 0; i < size; i++) {
-    int np = (int) ( ( p[i] - p0) * ooTwoPi );
-    if (np != n[i]) p[i] += (n[i] - np)*TwoPi; // sign? Pi or 2 Pi?
+    if (dbg_unwrap_proxy) printf("%06d %+.16e %06d %+.16e ",i,r[i],n[i],p[i]);
+    p[i] += n[i]*TwoPi;
+    if (dbg_unwrap_proxy) printf("%+.16e", r[i]-p[i]);
+    /* correct cases p = - Pi + epsilon */
+    np = floor ( ( p[i] - p0 )*ooTwoPi );
+    p[i] += (n[i]-np)*TwoPi;
+    if (dbg_unwrap_proxy) printf(" %06d %06d %+.16e %+.16e\n",np, n[i]-np, p[i], r[i]-p[i]);
   }
 
   free(n);
+  if (dbg_unwrap_proxy) DBGSTOP;
 }
 
 /** This routine sets a 0/1 mask for the multipolar linear index */

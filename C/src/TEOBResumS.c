@@ -634,7 +634,7 @@ int main (int argc, char* argv[])
     /* Interp real/imag */
     /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */
     /* Interp phase/amplitude */
-    Waveform_rmap (hpc, 1, 1); /* unwrap here ...for 0 crossings */
+    Waveform_rmap (hpc, 1, 0); /* unwrap here ...for 0 crossings */
     unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* ...  use phi22 for extra 2pi crossings */
 #if (DEBUG) 
      printf("phi_pc = %.3f vs. phi22 = %.3f\n", hpc->phase[size-1], hlm->phase[1][size-1]);
