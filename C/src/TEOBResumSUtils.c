@@ -395,14 +395,17 @@ void unwrap(double *p, const int size)
   if( p[0] < 0 ) fact = 1;
   if( p[1] < p[0] ) 
     dphi = TwoPi;
-
+    //printf("phi[0]= %.3f\tfact=%d\n", p[0], fact);
   for (j = 1; j < size; j++){
+    //if(j<10)printf("j=%d\tp[j]= %.3f\t", j, p[j]);
     p[j] += fact*TwoPi;
+    //if(j<10)printf("p[j]+/-fact= %.3f\t", p[j]);
     curr = p[j];
     if( curr < prev ) 
       dphi = TwoPi;
     corr += dphi;
-    p[j] += corr - fact*TwoPi;         
+    p[j] += corr - fact*TwoPi;      
+    //if(j<10)printf("p[j]corr= %.3f\n", p[j]);   
     prev = curr;
     dphi = 0.0;    
   }  
