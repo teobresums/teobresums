@@ -27,7 +27,7 @@
  *
  */
 
-#define _GNU_SOURCE //FIXME: this is just for getline()
+#define _GNU_SOURCE /* This is just for getline() */
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -205,6 +205,14 @@ enum{
   ODE_TSTEP_NOPT
 };
 static const char* const ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
+
+/** List of options for interp_uniform_grid */
+enum{
+  INTERP_UNIFORM_GRID_OFF,
+  INTERP_UNIFORM_GRID_HPC,
+  INTERP_UNIFORM_GRID_HLM,
+  INTERP_UNIFORM_GRID_NOPT
+};
 
 /** Error handler for root finders */
 enum{ 

@@ -620,35 +620,45 @@ int main (int argc, char* argv[])
   const double iota = par_get_d("inclination");
 
   /** Computation of (h+,hx) */
+
+  const int interp_uniform_grid = par_get_i("interp_uniform_grid");
+
+  if (interp_uniform_grid == INTERP_UNIFORM_GRID_HLM) {
+    /* Interp to uniform grid the multipoles before hpc computation */
+    const double dt_interp = par_get_d("dt_interp");
+    const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
+    Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");    
+  }
+
+  /* h+, hx */
   compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
- 
-  if (par_get_i("interp_uniform_grid")) { 
+
+  if (interp_uniform_grid == INTERP_UNIFORM_GRID_HPC) {
     
-    /** Interp to uniform grid (if needed) */
-    const double dt_interp_hlm = par_get_d("dt_interp");
-    const double dt_interp_hpc = dt_interp_hlm * M;
-    const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
+    /* Interp to uniform grid phase and amplitude of h+, hx  */
+    const double dt_interp_hpc = par_get_d("dt_interp") * M;
     const int size_interp_hpc = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp_hpc); 
-    //printf("size_interp = %d\tsize_interp2 = %d\tdt_interp = %f\tdt_interp * M =%f\n", size_interp,size_interp2, dt_interp, dt_interp * M);
 
-    /* Interp real/imag */
-    /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */
-    /* Interp phase/amplitude */
-    Waveform_rmap (hpc, 1, 1); /* Do not unwrap here  */
-    unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* Unwrap using phi22 as proxy */
-#if (DEBUG) 
-     printf("phi_pc = %.3f vs. phi22 = %.3f\n", hpc->phase[size-1], hlm->phase[1][size-1]);
-#endif
+    Waveform_rmap (hpc, 1, 0); /* do not unwrap here ... */
+    unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* ... but use phi22 as unwrap proxy */
     Waveform_interp_ap (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
-    if (par_get_i("output_multipoles")) 
+    /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */ /* this interp real/imag */
+    
+    if (par_get_i("output_multipoles")) {
+      const double dt_interp_hlm = par_get_d("dt_interp");
+      const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
       Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
-    if (par_get_i("output_dynamics")) {
-      const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_hlm);
-      Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_hlm, "dyn_interp");
-
-    }    
+    }
+    
   }
   
+  if ( (interp_uniform_grid) && (par_get_i("output_dynamics")) ) {
+    /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
+    const double dt_interp_dyn = par_get_d("dt_interp");
+    const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
+    Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
+  }
+        
   /** Output */
   Waveform_output (hpc);
   if (par_get_i("output_multipoles")) {
