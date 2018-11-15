@@ -375,7 +375,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
             if (MOmg < MOmg_prev)
             {
                 MOmgpeak_flag = true;
-                t_stop        = t + 5.*dt; 
+                t_stop        = t + 10.*dt; 
             }
             else
             {
@@ -400,7 +400,7 @@ void TEOBResumS(Waveform **hplus,       /** h+ return array                     
                 stop_flag = true;
 		}*/
 	
-    }while (stop_flag == false);
+    } while (stop_flag == false);
     gsl_odeiv2_evolve_free (e);
     gsl_odeiv2_control_free (c);
     gsl_odeiv2_step_free (s);

@@ -54,29 +54,46 @@ double Eulerlog(const double x,const double m)
     return EulerGamma + Log2 + log(m) + 0.5*log(x);
 }
 
-double interpolate(double dt,vector<gsl_complex> grid)
+double interpolate(double dt, vector<gsl_complex> grid)
 {
     double xi, yi;
-    double x[]      = {0.,0.,0.,0.,0.,0.,0.};
-    double y[]      = {0.,0.,0.,0.,0.,0.,0.};
     double step     = 0.01; //dt/5.;
     double omeg_max = 0.;
     double t_max    = 0.;
     bool peak_flag  = false;
+    int size = grid.size();
+    double x[]      = {0.,0.,0.,0.,0.,0.,0.};
+    double y[]      = {0.,0.,0.,0.,0.,0.,0.};
+    // find the maximum index up to which the time is increasing
+    int sorted_size = 1;
     
-    for (int i=0; i<=6; i++)
+    for (int i=0; i<=size; i++)
     {
+        //printf("size = %d t = %f om = %f\n",size,grid[i].dat[0],grid[i].dat[1]);
         x[i] = grid[i].dat[0]; //time
         y[i] = grid[i].dat[1]; //omega
     }
     
+    for (int i=0; i<size; i++)
+    {
+        if (x[i] < x[i+1]) sorted_size += 1;
+        else break;
+    }
+    //printf("sorted size = %d\n",sorted_size);
+    if (sorted_size >= size) sorted_size = size;
     
-    
+    double x1[sorted_size];
+    double y1[sorted_size];
+    for (int i=0; i<sorted_size; i++)
+    {
+        x1[i] = grid[i].dat[0]; //time
+        y1[i] = grid[i].dat[1]; //omega
+    }
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-    gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, 7);
-    gsl_spline_init (spline, x, y, 7);
+    gsl_spline *spline    = gsl_spline_alloc (gsl_interp_cspline, sorted_size);
+    gsl_spline_init (spline, x1, y1, sorted_size);
     
-    for (xi = x[0]; xi < x[6]; xi += step)
+    for (xi = x1[0]; xi < x1[sorted_size-1]; xi += step)
     {
         yi = gsl_spline_eval (spline, xi, acc);
         if (peak_flag==false)
@@ -572,11 +589,11 @@ double radius0(double M, double f_start,double chi1,double chi2)
 	       are enough inspiral cycles in the waveform so to capture the full
 	       transition from inspiral to plunge and avoid evident inaccuracies.*/ 
     
-		double fcirc_Schw = 0.04419417382415922/(M*MSUN_S*M_PI);
-		if (f_start >=fcirc_Schw)
-		{
-			f_start = 0.5*fcirc_Schw;
-		}
+        double fcirc_Schw = 0.04419417382415922/(M*MSUN_S*M_PI);
+        if (f_start >=fcirc_Schw)
+        {
+            f_start = 0.5*fcirc_Schw;
+        }
 
 	}
 
@@ -872,7 +889,7 @@ TEOBResumParams process_input_parameters(
       // rescale to geometric units and mass rescaled quantities
       // compute r0 from the initial GW frequency in Hz
         params.dt = time_units_conversion(mtot, dt);
-        params.r0 = radius0(mtot, f_min,params.chi1,params.chi2);
+        params.r0 = radius0(mtot, f_min, params.chi1, params.chi2);
     }
     else
     {
