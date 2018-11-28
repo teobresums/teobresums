@@ -1046,7 +1046,7 @@ vector <double> s_get_rc(double r, void *params)
 	    (  387./28.  - 207./28.*nu)*(C_Q1*at1*at1 + C_Q2*at2*at2)
           + (-2171./212. - 269./28.*nu + 0.375*nu*nu)*(at1*at1 + at2*at2)
 	  + (- 25./2    - 145./8.*nu - 0.75 *nu*nu)*at1*at2
-	  + 163./28.                               *X12*a0a12
+	  + 163./28.                               *X12*(C_Q1*at1*at1 - C_Q2*at2*at2)
 	  + (  -29./112. - 2.625   *nu ) *X12*(at1*at1 - at2*at2);
 
 	  
