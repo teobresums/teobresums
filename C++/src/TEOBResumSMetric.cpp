@@ -1042,11 +1042,12 @@ vector <double> s_get_rc(double r, void *params)
 	                + at2*at2*(-17./4.+3.*C_Q2-0.5*nu)
 	                + at1*at2*(nu-2.0);
 
-	double delta_a2_nnlo = (11*(at1-at2)*(at1-at2))/32. - (4419*(at1 + at2)*(at1 + at2))/224. + at1*at2*(28.392857142857142 - (123*nu)/14.) - 
-	                       (127*(at1 - at2)*(at1 - at2)*nu)/32. - (1263*(at1 + at2)*(at1 + at2)*nu)/224. + (3*(at1 - at2)*(at1-at2)*nu*nu)/8. + 
-                               sqrt(1 - 4*nu)*((-29*(at1 - at2)*(at1 + at2))/112. - (21*(at1 - at2)*(at1 + at2)*nu)/8.) + 
-                               at1*at1*((795*C_Q1)/56. + (163*C_Q1*sqrt(1 - 4*nu))/28. - (123*C_Q1*nu)/28.) + 
-	                       at2*at2*((795*C_Q2)/56. - (163*C_Q2*sqrt(1 - 4*nu))/28. - (123*C_Q2*nu)/28.);
+        double delta_a2_nnlo  =
+	    (  387./28.  - 207./28.*nu)*(C_Q1*at1*at1 + C_Q2*at2*at2)
+          + (-2171./212. - 269./28.*nu + 0.375*nu*nu)*(at1*at1 + at2*at2)
+	  + (- 25./2    - 145./8.*nu - 0.75 *nu*nu)*at1*at2
+	  + 163./28.                               *X12*a0a12
+	  + (  -29./112. - 2.625   *nu ) *X12*(at1*at1 - at2*at2);
 
 	  
 	// double alphanu2 = 1. + 0.5/a02*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
