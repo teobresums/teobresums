@@ -649,7 +649,7 @@ double eob_dyn_fLR(double r, void  *params)
   double A,B,dA,d2A,dB;
   //if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
   //else
-  eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
+  eob_metric (r, dyn, &A,&B,&dA,&d2A,&dB);
   double u = 1./r;
   double dA_u = (-dA)*SQ(r);
   return A + 0.5 * u * dA_u;
