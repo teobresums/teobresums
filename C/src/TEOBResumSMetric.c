@@ -431,8 +431,8 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
     #if (USEBTIDALPOTENTIAL)
       /* Vines, Flanagan 1PN term in B */
       double kT2 = par_get_d("kappaTl2");
-      BT  = kT2*3.*(3. - 5.*nu)*u6;
-      dBT = -kT2*18.*(3. - 5.*nu)*u4*u3;  
+      BT  = kT2*(8. - 15.*nu)*u6; 
+      dBT = -kT2*6.*(8. - 15.*nu)*u4*u3; 
       Btmp    += BT;
       dBtmp_r += dBT;
     #endif
