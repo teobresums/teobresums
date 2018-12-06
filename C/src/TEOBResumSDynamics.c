@@ -590,7 +590,7 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
                        + ( 87.16   -  2.625*nu              )*X12*a0 *a12;
 
     
-    double rc2   = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo + u2*c_ss_nlo;
+    double rc2   = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo + u2*c_ss_nnlo;
     *rc          = sqrt(rc2);
     double divrc = 1.0/(*rc);
     *drc_dr      = r*divrc*(1-(aK2 + 0.5*c_ss_nlo)*u3 - 0.5*u4*c_ss_nnlo);	
