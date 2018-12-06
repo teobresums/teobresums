@@ -148,11 +148,11 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 
       /* Delta of the quadratic equation */
       Delta = SQ(b_coeff) - 4*a_coeff*c_coeff; 
-      if (S==0 && Sstar==0)  
-	/* Tilde G =0, so Delta=0 in this case. 
-	   Numerical fluctuations makes it negative sometimes (e.g. -1e-30). 
+      if (Delta<0)  
+	/* If the spins are very small, 
+	   numerical fluctuations sometimes make Delta negative (e.g. -1e-30). 
 	   Setting it to 0 by hand */
-          Delta=0;                                              
+          Delta=0.;                                              
       
       sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); /* Plus  solution of the quadratic equation */
       sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff); /* Minus solution of the quadratic equation */
