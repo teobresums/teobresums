@@ -552,6 +552,8 @@ void eob_set_params(char *s, int n)
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
   } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NLO"))) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NLO;
+  } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NNLO"))) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NNLO;
   } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NOSPIN"))) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOSPIN;
   } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NOTIDES"))) {
