@@ -704,8 +704,6 @@ void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, 
 
 
 /** 
-    THIS IS STILL EXPERIMENTAL CODE - For the moment, only NLO spin-spin terms
-    are added and only for BNS systems.
     Resummed amplitudes for the spin case. 
     This function computes the residual amplitude corrections flm's as 
     introduced in Damour, Iyer & Nagar, PRD 79, 064004 (2008).
@@ -714,14 +712,9 @@ void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, 
     modes obtained by Fujita & Iyer.
     The function includes spin-spin interaction at NLO for the (2,2) mode
     and at LO for the (2,1),(3,1) and (3,3) modes. 
-    W.r.t "eob_wav_flm_s_SSLO", it also includes NNLO spin-orbit terms for
-    the l=2 multipoles and NLO spin-orbit terms for l=3.
     Note that the variables called here (a1,a2)
     are what we usually cal tilde{a}_1 and tilde{a}_2 and are defined as
-    a1 = X1*chi1, a2=X2*chi2 and are passed here as parameters. Special 
-    combinations of these quantities are used here to write the spin-dependent
-    part of the waveform in particularly compact form, so that the (spinning)
-    test-particle limit is recovered just by visual inspection of the equations */
+    a1 = X1*chi1, a2=X2*chi2 and are passed here as parameters. */
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal,
 			 double *rholm, double *flm)
 {
@@ -783,25 +776,17 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
     cSS_lo  = 0.5*a0*a0;
     cSS_nlo = 1./504.*(2.*(19. - 70.*nu)*a12*a12 + (-302. + 243.*nu)*a0*a0 + 442.*X12*a0*a12);
   }
-
-  /* Cubic spin */
-  const double cSSS_lo = 7./12.*a0*a0*a0 - 0.25*a12X12*a0*a0; //FIXME: Not added. It should depend on EOS.
     
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
   rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5;
-  
+
+  // Adding NLO SS term w.r.t. eob_wav_flm_s_SSLO
+  rho22S += cSS_nlo*v6;
+
   /** l>=3, m=even: multipoles rewritten in compact and self-explanatory form */
   rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
   rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
   rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
-
-  double c32SO_nlo = ((-1433. + 5530.*nu - 3985.*nu*nu)*a0 + (1793. - 4270.*nu -3035.*nu*nu)*a12X12)/(1620.*(1.-3.*nu)*(1.-3.*nu));
-
-  if (usetidal)
-    {
-      rho22S += cSS_nlo*v6;// + cSO_nnlo*v7;
-      rho32S += 0.;//c32SO_nlo*v3;
-    }
   
   /** l>=2, m=odd*/
   /* spin-orbit */
@@ -810,10 +795,6 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
   f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3;
   f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v;
   f41S = f43S;
-  
-  double c21SO_nlo = ((-3331./1008. - 13./504.*nu + 613./1008.*nu*nu)*a12 + (-443./252. + 1735./1008.*nu)*a0X12);
-  double c33SO_nlo = ((-233./120. + 29./15.*nu + 241./30.*nu*nu)*a12 + (-313./120. + 83./60.*nu)*a0X12);
-  double c31SO_nlo = ((41./8. - 137./9.*nu + 5./2.*nu*nu)*a12 + (-65./72. + 433./36.*nu)*a0X12);
   
   /* SPIN-SPIN contribution */
   double c21SS_lo;
@@ -839,15 +820,10 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
     c31SS_lo  = -4.*(a1*a1 - a2*a2) + 3./2.*a0*a0*X12;
   }
 
-  /* Cubic spin */
-  const double c21SSS_lo = 3./4.*a0*a0*a12; //FIXME: Not added. It should depend on EOS.
-
-  if (usetidal)
-    {
-      f21S += c21SS_lo*v4;// + c21SO_nlo*v5;
-      f33S += c33SS_lo*v4;// + c33SO_nlo*v5;
-      f31S += c31SS_lo*v4;// + c31SO_nlo*v5;
-    }
+  // Adding LO SS term w.r.t. eob_wav_flm_s_SSLO
+  f21S += c21SS_lo*v4;
+  f33S += c33SS_lo*v4;
+  f31S += c31SS_lo*v4;
   
   /** Amplitudes (correct with spin terms) */
   flm[0] = gsl_pow_int(rholm[0], 2);
