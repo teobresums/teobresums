@@ -30,7 +30,7 @@ use_Yagi_fits = 1
 #
 
 tides = "TEOBRESUM3"
-tides_gravitomagnetic = "no"
+tides_gravitomagnetic = "PN"
 
 #
 # Output dir, output modes 
