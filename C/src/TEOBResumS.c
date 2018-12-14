@@ -522,8 +522,6 @@ int main (int argc, char* argv[])
       /**  Interpolate on uniform grid */
       
       /* Build uniform grid of width dt and alloc tmp memory */
-      //CHECKME: is this rounding under control ?!
-      //(int)((hlm->time[size-1] - hlm->time[0])/dt + 1); /* use dt from parfile */
       const int size_new = get_uniform_size(hlm->time[size-1], hlm->time[0], dt);
       if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
       if (VERBOSE) {
@@ -660,7 +658,8 @@ int main (int argc, char* argv[])
   }
         
   /** Output */
-  Waveform_output (hpc);
+  if (par_get_i("output_hpc"))
+    Waveform_output (hpc);
   if (par_get_i("output_multipoles")) {
     Waveform_lm_output (hlm); 
     Waveform_lm_output_reim (hlm);

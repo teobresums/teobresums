@@ -515,26 +515,26 @@ void eob_set_params(char *s, int n)
     par_set_d("srate", 1./dt );
     par_set_d("distance", 1. );
     par_set_d("M", 1. );
-    par_set_d("dt_interp", dt );
+    /* par_set_d("dt_interp", dt ); */ /* Do not reset interp_dt, just use parfile value */
   } else {
     /* input given in physical units, 
        rescale to geometric units and mass rescaled quantities
        compute r0 from the initial GW frequency in Hz 
     */
     if (VERBOSE) printf("Assume physical units for pars values\n");
+    /* Set interpolation dt */
+    dt = 1./par_get_d("srate_interp");
+    dt = time_units_conversion(M, dt);
+    par_set_d("dt_interp", dt );
+    /* Set dt */
     par_set_d("r0",  radius0(M, fmin) );
-    dt = 1./par_get_d("srate");      
+    dt = 1./par_get_d("srate");
     dt = time_units_conversion(M, dt);
     par_set_d("dt", dt);
-    par_set_d("dt_interp", dt );
-    if (par_get_i("interp_uniform_grid")) {
-      /* Output will be interpolated on uniform grid 
-	 Set dt = 0.5 by default */
-      dt = 0.5;
-      par_set_d("dt", dt);
-      par_set_d("dt_interp", dt);
-    }
     if (VERBOSE) PRFORMd("dt",dt);
+    if (VERBOSE)
+      if (par_get_i("interp_uniform_grid"))
+	PRFORMd("dt_interp",par_get_d("dt_interp"));
   }
 
   /* Function pointers */

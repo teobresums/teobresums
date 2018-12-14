@@ -43,6 +43,8 @@ use_geometric_units = 1 # use geometric units for I/O ?
 use_speedytail = 1 # use special routine to speed up tail computation ?
 
 interp_uniform_grid = 0 # interpolate on uniform grid ?
+dt_interp = 0.5 # timestep to be used for final interpolation (used if input is given in geometrical unit, unused otherwise)
+srate_interp = 4096. # sampling rate to be used for final interpolation (used if input is given in physical unit, unused otherwise)
 
 postadiabatic_dynamics = "no"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
@@ -53,8 +55,8 @@ postadiabatic_dynamics_stop = "yes" # stop after post-adiabatic dynamics
 centrifugal_radius = "LO" # {LO, NLO, NNLO, NOSPIN, NOTIDES}
 use_flm = "SSLO" # "SSLO", "SSNLO"
 
-compute_LR = 1 # calculate LR ?
-compute_LSO = 1 # calculate LSO ?
+compute_LR = 0 # calculate LR ?
+compute_LSO = 0 # calculate LSO ?
 compute_LR_guess = 3.
 compute_LSO_guess = 6. 
 
@@ -65,7 +67,8 @@ nqc_coefs_flx_file = ""
 nqc_coefs_hlm_file = ""
 
 output_dir = "./data/" # output dir
-output_multipoles = 1 # output multipoles
+output_hpc = 1 # output h+,hx
+output_multipoles = 0 # output multipoles
 output_lm = [-1] # indexes of multipoles to ouput
 output_dynamics = 0 # output dynamics
 output_nqc = 0 # output NQC waveform
@@ -78,7 +81,6 @@ output_ringdown = 0 # output ringdown waveform
 
 srate = 4096. # sampling rate, used if input is given in physical unit, reset based on tstep otherwise
 dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
-dt_interp = 0.5 # timestep to be used for final interpolation
 
 size = 1 # size of the arrays (chunks, dynamically extended)
 ringdown_extend_array = 500 # grid points to extend arrays for ringdown attachment
