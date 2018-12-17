@@ -634,17 +634,15 @@ int main (int argc, char* argv[])
   compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
 
   if (interp_uniform_grid == INTERP_UNIFORM_GRID_HPC) {
-    
     /* Interp to uniform grid phase and amplitude of h+, hx  */
     const double dt_interp_hpc = par_get_d("dt_interp") * M;
     const int size_interp_hpc = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp_hpc); 
-
     Waveform_rmap (hpc, 1, 0); /* do not unwrap here ... */
     unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* ... but use phi22 as unwrap proxy */
     Waveform_interp_ap (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
     /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */ /* this interp real/imag */
     
-    if (par_get_i("output_multipoles")) {
+    if ( par_get_i("output_multipoles") ) {
       const double dt_interp_hlm = par_get_d("dt_interp");
       const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
       Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
