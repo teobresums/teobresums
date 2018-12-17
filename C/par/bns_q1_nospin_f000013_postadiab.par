@@ -19,7 +19,7 @@ use_spins = 0
 chi1 = 0. # dimensionless spin 1 z-component 
 chi2 = 0. # dimensionless spin 2 z-component 
 
-initial_frequency = 0.0002 # initial GW freq
+initial_frequency = 0.000132988255569 # initial GW freq 10 Hz for M= 2.7 M_sun
 
 LambdaAl2 = 1531. # MS1b 1.35
 LambdaBl2 = 1531.
@@ -57,7 +57,7 @@ compute_LSO = 0 # calculate LSO ?
 interp_uniform_grid = 1 # yes, only h+,hx
 #interp_uniform_grid = 2 # yes, all modes
 
-dt_interp = 18. # interpolation spacing, delta_t/M  ~ 4k Hz
+dt_interp = 18. # interpolation spacing, delta_t/M = 18.3581 for sample rate = 4096Hz and M=2.7M_sun
 
 #
 # Setup for PA

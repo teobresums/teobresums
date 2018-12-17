@@ -640,7 +640,7 @@ int main (int argc, char* argv[])
     Waveform_interp_ap (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
     /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */ /* this interp real/imag */
     
-    if ( par_get_i("output_multipoles") ) {
+    if (par_get_i("output_multipoles")) {
       const double dt_interp_hlm = par_get_d("dt_interp");
       const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
       Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
