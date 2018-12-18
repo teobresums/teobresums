@@ -162,10 +162,10 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double a2    = dyn->a2;
   const double C_Q1  = dyn->C_Q1;
   const double C_Q2  = dyn->C_Q2;
-  const double C_OctA = dyn->C_OctA;
-  const double C_OctB = dyn->C_OctB;
-  const double C_HexA = dyn->C_HexA;
-  const double C_HexB = dyn->C_HexB;
+  const double C_Oct1 = dyn->C_Oct1;
+  const double C_Oct2 = dyn->C_Oct2;
+  const double C_Hex1 = dyn->C_Hex1;
+  const double C_Hex2 = dyn->C_Hex2;
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
   
@@ -181,7 +181,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   
   /* Compute centrifugal radius */
   double rc, drc_dr, d2rc_dr;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_OctA, C_OctB, C_HexA, C_HexB, usetidal, &rc, &drc_dr, &d2rc_dr);
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr);
   const double uc     = 1./rc;
   const double uc2    = uc*uc;
   const double uc3    = uc2*uc;
@@ -445,7 +445,7 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar,
    paper, PRD 88, 023009, the bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. 
    The dimensionless bar{\lambda} love number is related to our apsidal constant as lambda = 2/3 k2/(C^5) so that both quantities have to appear here.  
 */
-void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, 
+void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
 
@@ -501,7 +501,7 @@ void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2,
 }
 
 // tidal rc with NLO coefficient that depends on C_Qi
-void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, 
+void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
 
@@ -544,7 +544,7 @@ void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2
 }
 
 // tidal rc with NNLO coefficient that depends on C_Qi
-void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, 
+void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
 
@@ -604,7 +604,7 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
 }
 
 // tidal rc @ NNLO with the addition of the LO spin^4 coefficient that depends on C_Q, C_Oct and C_Hex
-void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2)
+void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2)
 {
 
   double u   = 1./r;
@@ -632,11 +632,11 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
       +    163./28.                               *X12*(C_Q1*at1*at1-C_Q2*at2*at2)
       + (  -29./112. - 2.625   *nu              ) *X12*(at1*at1-at2*at2);
 
-    double delta_a4_lo = 0.75*(C_HexA - C_Q1*C_Q1)*at1*at1*at1*at1
-                         + 3.*(C_OctA - C_Q1)     *at1*at1*at1*at2
+    double delta_a4_lo = 0.75*(C_Hex1 - C_Q1*C_Q1)*at1*at1*at1*at1
+                         + 3.*(C_Oct1 - C_Q1)     *at1*at1*at1*at2
                          + 3.*(C_Q1*C_Q2 - 1)     *at1*at1*at2*at2
-                         + 3.*(C_OctB - C_Q2)     *at1*at2*at2*at2
-                       + 0.75*(C_HexB - C_Q2*C_Q2)*at2*at2*at2*at2;
+                         + 3.*(C_Oct2 - C_Q2)     *at1*at2*at2*at2
+                       + 0.75*(C_Hex2 - C_Q2*C_Q2)*at2*at2*at2*at2;
     
     double alphanu2 = 1. + 0.5/a02*delta_a2;
         
@@ -669,7 +669,7 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
 }
 
 /* Non-spinning case -- rc = r */
-void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, 
+void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
     *rc = r;
@@ -678,7 +678,7 @@ void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double 
 }
 
 /* LO case with C_Q1 = 0 for tidal part*/
-void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, 
+void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
 

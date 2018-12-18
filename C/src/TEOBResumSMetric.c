@@ -467,10 +467,10 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   const double aK2   = dyn->aK2;
   const double C_Q1  = dyn->C_Q1;
   const double C_Q2  = dyn->C_Q2;
-  const double C_OctA = dyn->C_OctA;
-  const double C_OctB = dyn->C_OctB;
-  const double C_HexA = dyn->C_HexA;
-  const double C_HexB = dyn->C_HexB;
+  const double C_Oct1 = dyn->C_Oct1;
+  const double C_Oct2 = dyn->C_Oct2;
+  const double C_Hex1 = dyn->C_Hex1;
+  const double C_Hex2 = dyn->C_Hex2;
   const int usetidal = dyn->use_tidal;
 
   const double u   = 1./r;
@@ -479,7 +479,7 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   const double u4  = u2*u2;
   
   double rc, drc, d2rc;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_OctA, C_OctB, C_HexA, C_HexB, usetidal, &rc, &drc, &d2rc);
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc);
 
   /* A potential and derivative with respect to u */  
   double Aorb, dAorb_u, d2Aorb_u;

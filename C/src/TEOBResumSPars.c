@@ -411,21 +411,21 @@ void eob_set_params(char *s, int n)
   /* Self-spin coefficients */
   double C_Q1   = 1.;
   double C_Q2   = 1.;
-  double C_OctA = 1.;
-  double C_OctB = 1.;
-  double C_HexA = 1.;
-  double C_HexB = 1.;
+  double C_Oct1 = 1.;
+  double C_Oct2 = 1.;
+  double C_Hex1 = 1.;
+  double C_Hex2 = 1.;
   if (LambdaAl2>0.) {
     double logC_Q1 = logQ(log(LambdaAl2));
     C_Q1           = exp(logC_Q1);
-    C_OctA         = Yagi14_fit_Coct(C_Q1);
-    C_HexA         = Yagi14_fit_Chex(C_Q1);
+    C_Oct1         = Yagi14_fit_Coct(C_Q1);
+    C_Hex1         = Yagi14_fit_Chex(C_Q1);
   }
   if (LambdaBl2>0.) {
     double logC_Q2 = logQ(log(LambdaBl2));
     C_Q2           = exp(logC_Q2);
-    C_OctB         = Yagi14_fit_Coct(C_Q2);
-    C_HexB         = Yagi14_fit_Chex(C_Q2);
+    C_Oct2         = Yagi14_fit_Coct(C_Q2);
+    C_Hex2         = Yagi14_fit_Chex(C_Q2);
   }
 
   /* Default settings for NQC */

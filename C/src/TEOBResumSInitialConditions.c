@@ -125,10 +125,10 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   const double aK2  = dyn->aK2;
   const double C_Q1 = dyn->C_Q1;
   const double C_Q2 = dyn->C_Q2;
-  const double C_OctA = dyn->C_OctA;
-  const double C_OctB = dyn->C_OctB;
-  const double C_HexA = dyn->C_HexA;
-  const double C_HexB = dyn->C_HexB;
+  const double C_Oct1 = dyn->C_Oct1;
+  const double C_Oct2 = dyn->C_Oct2;
+  const double C_Hex1 = dyn->C_Hex1;
+  const double C_Hex2 = dyn->C_Hex2;
 
   const double S  = S1 + S2;        
   const double Ss = X2*a1 + X1*a2;  
@@ -158,7 +158,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     
     /** Compute minimum of Heff0 using bisection method */
     pphorb = r[i]/sqrt(r[i]-3.);
-    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_OctA, C_OctB, C_HexA, C_HexB, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
+    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
     pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
 
   }
@@ -407,10 +407,10 @@ double eob_dyn_Omegaorb0(double r, void *params)
   const double c3    = dyn->cN3LO;
   const double C_Q1  = dyn->C_Q1;
   const double C_Q2  = dyn->C_Q2;
-  const double C_OctA = dyn->C_OctA;
-  const double C_OctB = dyn->C_OctB;
-  const double C_HexA = dyn->C_HexA;
-  const double C_HexB = dyn->C_HexB;
+  const double C_Oct1 = dyn->C_Oct1;
+  const double C_Oct2 = dyn->C_Oct2;
+  const double C_Hex1 = dyn->C_Hex1;
+  const double C_Hex2 = dyn->C_Hex2;
 
   const int usetidal = dyn->use_tidal;  
   const int usespins = dyn->use_spins;
@@ -422,7 +422,7 @@ double eob_dyn_Omegaorb0(double r, void *params)
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
     eob_metric_s(r,dyn, &A, &B, &dA, &pl_hold, &pl_hold);
-    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_OctA, C_OctB, C_HexA, C_HexB, usetidal, &rc, &drc_dr, &pl_hold);
+    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
     eob_dyn_s_GS(r, rc, drc_dr, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
     dG_dr = ggm[6]*S + ggm[7]*Sstar;
