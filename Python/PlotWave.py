@@ -5,8 +5,8 @@ Simple script to plot TEOBResumS waveform
 
 Example
 
-$ python Run.py sim1/waveform.txt sim2/waveform.txt ...
-$ python Run.py sim?/waveform.txt 
+$ python PlotWave.py sim1/waveform.txt sim2/waveform.txt ...
+$ python PlotWave.py sim?/waveform.txt 
 
 SB 12/2018
 """
