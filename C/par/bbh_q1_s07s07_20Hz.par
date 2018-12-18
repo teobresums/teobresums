@@ -1,4 +1,4 @@
-# parfile for BBH q=1 nospin run from 10 Hz
+# parfile for BBH q=1, chi_A = chi_B = 0.7 run from 20 Hz
 # ODE run
 # builds on default options
 
