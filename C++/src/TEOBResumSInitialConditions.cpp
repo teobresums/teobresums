@@ -201,6 +201,10 @@ vector<double> s_initial(TEOBResumParams *params){
     /**************************************/   
     double CQ1       = (*(TEOBResumParams *)params).C_Q1;
     double CQ2       = (*(TEOBResumParams *)params).C_Q2;
+    double C_Oct1    = (*(TEOBResumParams *)params).C_Oct1;
+    double C_Oct2    = (*(TEOBResumParams *)params).C_Oct2;
+    double C_Hex1    = (*(TEOBResumParams *)params).C_Hex1;
+    double C_Hex2    = (*(TEOBResumParams *)params).C_Hex2;
     double lambdaAl2 = (*(TEOBResumParams *)params).LambdaAl2;
     double lambdaAl3 = (*(TEOBResumParams *)params).LambdaAl3;
     double lambdaAl4 = (*(TEOBResumParams *)params).LambdaAl4;

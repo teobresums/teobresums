@@ -559,6 +559,34 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
     return exp(lny);
 }
 
+double Yagi_fit_Coct(double C_Q)
+{
+  /* Yagi et al. fits for C_Oct
+     Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
+  
+  double A0  = -0.925;
+  double B1  =  1.98;
+  double nu1 =  0.273;
+
+  double cubrootCoct = A0 + B1*pow(C_Q,nu1);
+
+  return cubrootCoct*cubrootCoct*cubrootCoct;
+}
+
+double Yagi_fit_Chex(double C_Q)
+{  
+  /* Yagi et al. fits for C_Hex
+     Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
+  
+  double A0  = -0.413;
+  double B1  =  1.5;
+  double nu1 =  0.466;
+
+  double fourthrootChex = A0 + B1*pow(C_Q,nu1);
+
+  return fourthrootChex*fourthrootChex*fourthrootChex*fourthrootChex;
+}
+
 double radius0(double M, double f_start,double chi1,double chi2)
 /* This function computed the initial radius r0 to feed the
    EOB dynamics from a given value f_start in Hz. This is 
@@ -832,9 +860,17 @@ TEOBResumParams read_config(char *fname)
     double logC_Q2 = logQ(log(LambdaBl2));
     double C_Q1    = exp(logC_Q1);
     double C_Q2    = exp(logC_Q2);
+    double C_Oct1  = Yagi_fit_Coct(C_Q1);
+    double C_Oct2  = Yagi_fit_Coct(C_Q2);
+    double C_Hex1  = Yagi_fit_Chex(C_Q1);
+    double C_Hex2  = Yagi_fit_Chex(C_Q2);
     params.C_Q1    = C_Q1;
     params.C_Q2    = C_Q2;
-        
+    params.C_Oct1  = C_Oct1;
+    params.C_Oct2  = C_Oct2;
+    params.C_Hex1  = C_Hex1;
+    params.C_Hex2  = C_Hex2;
+    
     return params;
 }
 
@@ -976,18 +1012,27 @@ TEOBResumParams process_input_parameters(
     params.bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;
     params.bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;			     			   
     params.bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
-    
+
     double logC_Q1 = logQ(log(LambdaAl2));
     double logC_Q2 = logQ(log(LambdaBl2));
     double C_Q1    = exp(logC_Q1);
-    double C_Q2    = exp(logC_Q2);    
+    double C_Q2    = exp(logC_Q2);
+    double C_Oct1  = Yagi_fit_Coct(C_Q1);
+    double C_Oct2  = Yagi_fit_Coct(C_Q2);
+    double C_Hex1  = Yagi_fit_Chex(C_Q1);
+    double C_Hex2  = Yagi_fit_Chex(C_Q2);   
 
     /*
     C_Q1 = 0;
     C_Q2 = 0;
     */
-    params.C_Q1 = C_Q1;
-    params.C_Q2 = C_Q2;
+
+    params.C_Q1    = C_Q1;
+    params.C_Q2    = C_Q2;
+    params.C_Oct1  = C_Oct1;
+    params.C_Oct2  = C_Oct2;
+    params.C_Hex1  = C_Hex1;
+    params.C_Hex2  = C_Hex2;
 
     params.LambdaAl2 = LambdaAl2;
     params.LambdaAl3 = LambdaAl3;

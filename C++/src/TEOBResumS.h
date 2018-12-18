@@ -126,6 +126,10 @@ typedef struct tagTEOBResumParams
     double bar_alph3_2;         /**                                                          */
     double C_Q1;                /**                                                          */
     double C_Q2;                /**                                                          */
+    double C_Oct1;              /**                                                          */
+    double C_Oct2;              /**                                                          */
+    double C_Hex1;              /**                                                          */
+    double C_Hex2;              /**                                                          */
     double Mbh;                 /** Mass of the final BH                                     */
     double Abh;                 /** Spin of the final BH                                     */
     TEOBResumFlags flags;       /** Flag structure                                           */
@@ -290,6 +294,8 @@ int find_point_bisection(double x, int n, double *xp, int o);
 /* _read_config_h */
 
 double logQ(double x);
+double Yagi_fit_Coct(double C_Q);
+double Yagi_fit_Chex(double C_Q);
 
 TEOBResumParams process_input_parameters(double m1,
                                 double m2,

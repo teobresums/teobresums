@@ -1004,6 +1004,10 @@ vector <double> s_get_rc(double r, void *params)
     
     double C_Q1       = (*(TEOBResumParams *)params).C_Q1;
     double C_Q2       = (*(TEOBResumParams *)params).C_Q2;
+    double C_Oct1     = (*(TEOBResumParams *)params).C_Oct1;
+    double C_Oct2     = (*(TEOBResumParams *)params).C_Oct2;
+    double C_Hex1     = (*(TEOBResumParams *)params).C_Hex1;
+    double C_Hex2     = (*(TEOBResumParams *)params).C_Hex2;
     
     double rc, drc_dr, d2rc_dr2;
     
@@ -1049,17 +1053,22 @@ vector <double> s_get_rc(double r, void *params)
 	  + 163./28.                               *X12*(C_Q1*at1*at1 - C_Q2*at2*at2)
 	  + (  -29./112. - 2.625   *nu ) *X12*(at1*at1 - at2*at2);
 
-	  
-	// double alphanu2 = 1. + 0.5/a02*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
+	double delta_a4_lo = 0.75*(C_Hex1 - C_Q1*C_Q1)*at1*at1*at1*at1
+	                     + 3.*(C_Oct1 - C_Q1)     *at1*at1*at1*at2
+	                     + 3.*(C_Q1*C_Q2 - 1)     *at1*at1*at2*at2
+	                     + 3.*(C_Oct2 - C_Q2)     *at1*at2*at2*at2
+	                   + 0.75*(C_Hex2 - C_Q2*C_Q2)*at2*at2*at2*at2;
 
+	delta_a4_lo = 0.;
+	
 	double alphanu2 = 1. + 0.5/a02*delta_a2;
-
-	double rc2 = r2 + a02*(1. + 2.*alphanu2/r) + delta_a2_nnlo/(r*r);
-        rc         = sqrt(rc2);
-        drc_dr     = r/rc*(1.+a02*(-alphanu2*u3 ) - delta_a2_nnlo*u4);
-        d2rc_dr2   = 1./rc*(1.-drc_dr*r/rc*(1.-alphanu2*a02*u3 - delta_a2_nnlo*u4) + 2.*alphanu2*a02*u3+3*delta_a2_nnlo*u4);
         
-        //NO spin-spin-tidal couplings
+	double rc2   = r2 + a02*(1. + 2.*alphanu2*u) + (delta_a2_nnlo+delta_a4_lo)*u2;
+	rc          = sqrt(rc2);
+	drc_dr      = r/rc*(1. -alphanu2*a02*u3 - (delta_a2_nnlo+delta_a4_lo)*u4);
+	d2rc_dr2    = 1./rc*(1. -drc_dr*drc_dr +2.*alphanu2*a02*u3 +3.*(delta_a2_nnlo+delta_a4_lo)*u4);
+
+	//NO spin-spin-tidal couplings
         /*double rc2 = r2;
          rc = r;
          drc_dr = 1;
