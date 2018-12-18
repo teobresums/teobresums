@@ -409,15 +409,23 @@ void eob_set_params(char *s, int n)
   double khatB_2  = 3./2. * LambdaBl2 * XA/XB * gsl_pow_int(XB,5);
   
   /* Self-spin coefficients */
-  double C_Q1 = 1.;
-  double C_Q2 = 1.;
+  double C_Q1   = 1.;
+  double C_Q2   = 1.;
+  double C_OctA = 1.;
+  double C_OctB = 1.;
+  double C_HexA = 1.;
+  double C_HexB = 1.;
   if (LambdaAl2>0.) {
     double logC_Q1 = logQ(log(LambdaAl2));
     C_Q1           = exp(logC_Q1);
+    C_OctA         = Yagi14_fit_Coct(C_Q1);
+    C_HexA         = Yagi14_fit_Chex(C_Q1);
   }
   if (LambdaBl2>0.) {
     double logC_Q2 = logQ(log(LambdaBl2));
     C_Q2           = exp(logC_Q2);
+    C_OctB         = Yagi14_fit_Coct(C_Q2);
+    C_HexB         = Yagi14_fit_Chex(C_Q2);
   }
 
   /* Default settings for NQC */
@@ -554,6 +562,8 @@ void eob_set_params(char *s, int n)
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NLO;
   } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NNLO"))) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NNLO;
+  } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NNLOS4"))) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NNLO_S4;
   } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NOSPIN"))) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOSPIN;
   } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NOTIDES"))) {

@@ -295,6 +295,31 @@ double Yagi13_fit_barsigmalambda(double barlam2)
   return -1.0*exp(lny);
 }
 
+/* Yagi et al. fits for C_Oct
+   Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
+double Yagi14_fit_Coct(double C_Q)
+{
+  double A0  = -0.925;
+  double B1  =  1.98;
+  double nu1 =  0.273;
+
+  double cubrootCoct = A0 + B1*pow(C_Q,nu1);
+
+  return cubrootCoct*cubrootCoct*cubrootCoct;
+}
+
+/* Yagi et al. fits for C_Hex
+   Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
+double Yagi14_fit_Chex(double C_Q)
+{
+  double A0  = -0.413;
+  double B1  =  1.5;
+  double nu1 =  0.466;
+
+  double fourthrootChex = A0 + B1*pow(C_Q,nu1);
+
+  return SQ(SQ(fourthrootChex));
+}
 
 double JFAPG_fit_Sigma_Irrotational(double barlam2)
 {
