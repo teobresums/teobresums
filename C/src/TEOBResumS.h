@@ -54,7 +54,7 @@
 #endif
 
 #ifndef POSTPOSTCIRCULAR
-#define POSTPOSTCIRCULAR 0 /* use post-post-circular initial conditions by default */
+#define POSTPOSTCIRCULAR 1 /* use post-post-circular initial conditions by default */
 #endif
 
 #ifndef EXCLUDESPINSPINTIDES
