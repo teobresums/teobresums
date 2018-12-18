@@ -39,6 +39,10 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   const double a2    = dyn->a2;
   const double C_Q1  = dyn->C_Q1;
   const double C_Q2  = dyn->C_Q2;
+  const double C_Oct1 = dyn->C_Oct1;
+  const double C_Oct2 = dyn->C_Oct2;
+  const double C_Hex1 = dyn->C_Hex1;
+  const double C_Hex2 = dyn->C_Hex2;
   const double z3    = 2.0*nu*(4.0-3.0*nu);
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
@@ -101,7 +105,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     if(usespins){ 
       
       eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
-      eob_dyn_s_get_rc(dyn->r, nu, a1, a2, aK2, C_Q1, C_Q2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
+      eob_dyn_s_get_rc(dyn->r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
       eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
       
       G                         = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss

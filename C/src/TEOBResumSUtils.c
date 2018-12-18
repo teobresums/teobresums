@@ -980,7 +980,11 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->a2    = par_get_d("a2"); 
   dyn->aK2   = par_get_d("aK2"); 
   dyn->C_Q1  = par_get_d("C_Q1");
-  dyn->C_Q2  = par_get_d("C_Q2"); 
+  dyn->C_Q2  = par_get_d("C_Q2");
+  dyn->C_Oct1 = par_get_d("C_Oct1");
+  dyn->C_Oct2 = par_get_d("C_Oct2");
+  dyn->C_Hex1 = par_get_d("C_Hex1");
+  dyn->C_Hex2 = par_get_d("C_Hex2");
   dyn->cN3LO = par_get_d("cN3LO");
   dyn->rLR   = par_get_d("rLR");
   dyn->rLR_tidal = par_get_d("rLR_tidal");

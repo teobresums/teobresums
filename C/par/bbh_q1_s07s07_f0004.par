@@ -17,4 +17,5 @@ ode_timestep = "uniform"
 interp_uniform_grid = 1 # use 1 for adaptive time step for evenly-spaced output
 ode_stop_at_radius = 1. # stop ODE integration at this radius (if > 0)
 output_nqc = 1
+dt = 0.5
 output_dir = "./bbh_q1_s07s07_f0004/" # output dir

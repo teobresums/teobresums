@@ -52,7 +52,7 @@ postadiabatic_dynamics_size = 1000 # grid size
 postadiabatic_dynamics_rmin = 12. # minimum radius (end of PA dynamics)
 postadiabatic_dynamics_stop = "yes" # stop after post-adiabatic dynamics
 
-centrifugal_radius = "LO" # {LO, NLO, NNLO, NOSPIN, NOTIDES}
+centrifugal_radius = "LO" # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
 use_flm = "SSLO" # "SSLO", "SSNLO"
 
 compute_LR = 0 # calculate LR ?
@@ -110,6 +110,10 @@ aK = 0. #
 aK2 = 0. # 
 C_Q1 = 0. #
 C_Q2 = 0. #
+C_Oct1 = 0. #
+C_Oct2 = 0. #
+C_Hex1 = 0. #
+C_Hex2 = 0. #
 cN3LO = 0. #
 
 kappaAl2 = 0. # gravitoelectric kappa star A
