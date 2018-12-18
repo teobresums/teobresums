@@ -19,6 +19,6 @@ from EOBUtils import *
 if __name__ == "__main__": 
     
     print(sys.argv)
-    for parfile in glob.glob(sys.arg):
+    for parfile in glob.glob(sys.argv):
         run(parfile)
         
