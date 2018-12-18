@@ -54,7 +54,7 @@
 #endif
 
 #ifndef POSTPOSTCIRCULAR
-#define POSTPOSTCIRCULAR 0 /* use post-post-circular initial conditions by default */
+#define POSTPOSTCIRCULAR 1 /* use post-post-circular initial conditions by default */
 #endif
 
 #ifndef EXCLUDESPINSPINTIDES
@@ -311,7 +311,7 @@ typedef struct tagDynamics
   double *data[EOB_DYNAMICS_NVARS]; 
   /* key parameters for quick access */
   double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1,C_Q2, cN3LO;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_OctA, C_OctB, C_HexA, C_HexB, cN3LO;
   double rLR, rLSO;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
@@ -416,6 +416,8 @@ void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname);
 double logQ(double x);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
 double Yagi13_fit_barsigmalambda(double barlam2);
+double Yagi14_fit_Coct(double C_Q);
+double Yagi14_fit_Chex(double C_Q);
 double JFAPG_fit_Sigma_Irrotational(double barlam2);
 double JFAPG_fit_Sigma_Static(double barlam2);
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);
@@ -434,11 +436,12 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 void eob_ham_s(double nu, double r, double rc, double drc_dr, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 void (*eob_dyn_s_get_rc)();
-void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_OctA, double C_OctB, double C_HexA, double C_HexB, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);

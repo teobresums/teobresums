@@ -1,5 +1,5 @@
-# parfile for BNS q=1 nospins
-# postadiabatic ("rush") + ODE run
+# parfile for BNS q=1, chi_A = chi_B = -0.1 from 10 Hz
+# Post-adiabatic + ODE run
 # builds on default options
 
 #
@@ -15,28 +15,27 @@ use_geometric_units = 1
 
 q = 1. # mass ratio
 
-use_spins = 0
-chi1 = 0. # dimensioneless spin 1 z-component 
-chi2 = 0. # dimensioneless spin 2 z-component 
+use_spins = 1
+chi1 = -0.1 # dimensioneless spin 1 z-component 
+chi2 = -0.1 # dimensioneless spin 2 z-component 
 
-initial_frequency = 0.0002 # initial GW freq
+initial_frequency = 0.0001329882576896766 # initial GW freq = 10 Hz
 
-LambdaAl2 = 1531. # MS1b 1.35
-LambdaBl2 = 1531.
+tides = "TEOBRESUM"
+tides_gravitomagnetic = "no"
+LambdaAl2 = 390.608866261215     # SLy mA = mB = 1.35*Msun
+LambdaBl2 = 390.608866261215
+LambdaAl3 = 709.518721258149
+LambdaBl3 = 709.518721258149
+LambdaAl4 = 1245.540991372862
+LambdaBl4 = 1245.540991372862
 use_Yagi_fits = 1
-
-#
-# Tidal model: TEOBResum GSF23+PN2- Akcay+ 2018 
-#
-
-tides = "TEOBRESUM3"
-tides_gravitomagnetic = "PN"
 
 #
 # Output dir, output modes 
 #
 
-output_dir = "./bns_q1_nospin_f00002_postadiab/"
+output_dir = "./bns_q1_s-01s-01_10Hz_postadiab/"
 output_hpc = 1 # switch this off to test performances!!!
 output_multipoles = 0
 output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34 ]
@@ -57,7 +56,7 @@ compute_LSO = 0 # calculate LSO ?
 interp_uniform_grid = 1 # yes, only h+,hx
 #interp_uniform_grid = 2 # yes, all modes
 
-dt_interp = 18. # interpolation spacing, delta_t/M  ~ 4k Hz
+dt_interp = 18.360370960904238 # interpolation spacing, delta_t/M  = 4096 Hz
 
 #
 # Setup for PA
@@ -65,7 +64,7 @@ dt_interp = 18. # interpolation spacing, delta_t/M  ~ 4k Hz
 
 postadiabatic_dynamics = "yes"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
-postadiabatic_dynamics_size = 800 # grid size 
+postadiabatic_dynamics_size = 830 # grid size 
 postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
 postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
 
