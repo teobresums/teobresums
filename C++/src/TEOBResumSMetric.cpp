@@ -1058,8 +1058,6 @@ vector <double> s_get_rc(double r, void *params)
 	                     + 3.*(C_Q1*C_Q2 - 1)     *at1*at1*at2*at2
 	                     + 3.*(C_Oct2 - C_Q2)     *at1*at2*at2*at2
 	                   + 0.75*(C_Hex2 - C_Q2*C_Q2)*at2*at2*at2*at2;
-
-	delta_a4_lo = 0.;
 	
 	double alphanu2 = 1. + 0.5/a02*delta_a2;
         
