@@ -25,17 +25,17 @@ if __name__ == "__main__":
             for fname in glob.glob(a):
               
               # t:0 real:1 imag:2 Ampli:3 Phase:4
-              #t, Reh, Imh, A, phi = np.loadtxt(fname, unpack=True)
-              t, Reh, Imh = np.loadtxt(fname, unpack=True)
+              t, Reh, Imh, A, phi = np.loadtxt(fname, unpack=True)
+              #t, Reh, Imh = np.loadtxt(fname, unpack=True)
 
               A = np.sqrt(Reh**2 +Imh**2)
               phi = np.unwrap(-np.angle(Reh+1j*Imh))
               omg = np.diff(phi)/np.diff(t)
 
-              plt.plot(t, A, label=r"$A/M$")
-              plt.plot(t, Reh, label=r"$\Re{h}$")
+              plt.plot(t, A, label=r"$A_{22}/\nu$")
+              plt.plot(t, Reh, label=r"$\Re{[h_{22}]/\nu}$")
               plt.plot(t[1:], omg, label=r"$M\omega$")
-              plt.xlabel('t/M')
+              plt.xlabel('$t/M$')
               #plt.ylabel('...')
               plt.title(fname)
               #plt.grid(True)
