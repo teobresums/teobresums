@@ -31,6 +31,9 @@ LambdaAl4 = 1245.540991372862
 LambdaBl4 = 1245.540991372862
 use_Yagi_fits = 1
 
+centrifugal_radius = "NNLO" 
+use_flm = "SSNLO"
+
 #
 # Output dir, output modes 
 #
