@@ -268,7 +268,6 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
     hpc->real[i] = sumr;
     hpc->imag[i] = sumi;
   }
-  
 }
 
 /** 4th order centered stencil first derivative, uniform grids */
