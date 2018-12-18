@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 
 """
-Script to plot TEOBResumS waveform
+Simple script to plot TEOBResumS waveform
 
 Example
 
-$ python Run.py sim1/waveform.txt sim2/waveform.txt ...
-$ python Run.py sim?/waveform.txt 
+$ python PlotWave.py sim1/waveform.txt sim2/waveform.txt ...
+$ python PlotWave.py sim?/waveform.txt 
 
 SB 12/2018
 """
@@ -26,10 +26,12 @@ if __name__ == "__main__":
               
               # t:0 real:1 imag:2 Ampli:3 Phase:4
               t, Reh, Imh, A, phi = np.loadtxt(fname, unpack=True)
-              #t, Reh, Imh = np.loadtxt(fname, unpack=True)
 
-              A = np.sqrt(Reh**2 +Imh**2)
-              phi = np.unwrap(-np.angle(Reh+1j*Imh))
+              # OLD FORMAT:
+              #t, Reh, Imh = np.loadtxt(fname, unpack=True)
+              #A = np.sqrt(Reh**2 +Imh**2)
+              #phi = np.unwrap(-np.angle(Reh+1j*Imh))
+              
               omg = np.diff(phi)/np.diff(t)
 
               plt.plot(t, A, label=r"$A_{22}/\nu$")
@@ -42,7 +44,7 @@ if __name__ == "__main__":
               #plt.xlim(0, t[-1])
               plt.ylim(-.75, .75)
               plt.legend(loc='upper left')
-              plt.savefig(".png")
+              plt.savefig(fname+".png", dpi=400)
               plt.show()
 
         
