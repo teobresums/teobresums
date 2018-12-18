@@ -97,7 +97,7 @@ int main (int argc, char* argv[])
   const int use_spins = par_get_i("use_spins");
   const int use_tidal = par_get_i("use_tidal");
   int store_dynamics = par_get_i("output_dynamics"); 
-  if (!(use_tidal) && (use_spins)) store_dynamics = 1; /* NQC determination need dynamical variables */
+  if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
   const int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = par_get_d("dt");
@@ -649,10 +649,11 @@ int main (int argc, char* argv[])
   }
   
   if ( (interp_uniform_grid) && (par_get_i("output_dynamics")) ) {
+printf("HERE?\n");
     /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
     const double dt_interp_dyn = par_get_d("dt_interp");
     const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
-    Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
+    //Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
   }
         
   /** Output */
@@ -663,7 +664,8 @@ int main (int argc, char* argv[])
     Waveform_lm_output_reim (hlm);
   }
   if (par_get_i("output_dynamics"))
-    Dynamics_output(dyn);
+printf("HERE?\n");
+   // Dynamics_output(dyn);
 
   /* *****************************************
    * Finalize 
