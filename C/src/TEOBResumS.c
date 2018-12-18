@@ -652,7 +652,7 @@ int main (int argc, char* argv[])
     /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
     const double dt_interp_dyn = par_get_d("dt_interp");
     const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
-    //Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
+    Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
   }
         
   /** Output */
@@ -663,7 +663,7 @@ int main (int argc, char* argv[])
     Waveform_lm_output_reim (hlm);
   }
   if (par_get_i("output_dynamics"))
-   // Dynamics_output(dyn);
+    Dynamics_output(dyn);
 
   /* *****************************************
    * Finalize 
