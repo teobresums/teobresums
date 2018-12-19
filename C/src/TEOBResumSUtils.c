@@ -475,11 +475,12 @@ void set_multipolar_idx_mask_old(int *kmask, int n)
 void set_multipolar_idx_mask(int *kmask, int n, const char *key, int on)
 {
   int m, k,j;
-  if (on) for (k = 0; k<n; k++) kmask[k] = 1; /* all on */
-  else    for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
+  for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
   int *idx = par_get_arrayi(key, &m);
-  if (m==0) return;
-  if (m==1 && idx[0]==-1) return;
+  if ( (m<=0) || (m==1 && idx[0]==-1) ) {
+    if(on) for (k = 0; k<n; k++) kmask[k] = 1; /* all on */
+    return;
+  }
   for (k = 0; k<n; k++)
     for (j = 0; j<m; j++)
       if (idx[j] == k) kmask[k] = 1; 
