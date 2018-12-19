@@ -1235,7 +1235,6 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 #endif    
 
   /** Find max Omg */
-  //TODO: search backwards!
   int Omgmax_index = 0;
   double Omg_max   = Omg_orb[0];
   for (int j=0; j<size; j++) {
@@ -1244,7 +1243,19 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
       Omgmax_index = j;
     }
   }
-
+  //TODO:
+  //Test the search backwards
+  /*
+  int Omgmax_index = size-1;
+  double Omg_max   = Omg_orb[Omgmax_index];
+  for (int j=(size-2); j--; ) {
+    if (Omg_orb[j] < Omg_max) 
+    break;
+    Omg_max = Omg_orb[j];
+    Omgmax_index = j;
+  }
+  */
+  
   /** Time */
   double tOmgOrb_pk = t[Omgmax_index];
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
@@ -1368,6 +1379,513 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     for (int j=0; j<size; j++) {
       h->ampli[k][j] *= hnqc->ampli[k][j];
       h->phase[k][j] -= hnqc->phase[k][j];
+    }
+  }
+
+  if (par_get_i("output_nqc_coefs")) {
+    /** Output the NQC coefficients */
+    char fname[STRLEN];
+    strcpy(fname, par_get_s("output_dir"));
+    strcat(fname, "/nqc_coefs.txt");
+    fp = fopen(fname, "w");
+    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
+    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
+	    par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
+	    par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
+    for (int k=0; k<KMAX; k++) {
+      fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
+	      ai[k][0], ai[k][1], ai[k][2], 
+	      bi[k][0], bi[k][1], bi[k][2]);
+    }  
+    fclose(fp);  
+  }
+  
+  /** Free mem */
+  for (int k=0; k<KMAX; k++) {
+    free(omg[k]);
+    free(domg[k]);
+    free(m11[k]);
+    free(m12[k]);
+    free(m13[k]);
+    free(m21[k]);
+    free(m22[k]);
+    free(p1tmp[k]);
+    free(p2tmp[k]);
+  }
+  free(n1);
+  free(n2);
+  free(n3);
+  free(n4);
+  free(n5);
+  free(n6);
+  free(d_n4);
+  free(d_n5);
+  free(d2_n4);
+  free(d2_n5);
+  
+}
+
+/** Computes the factors and the coefficients that build the  
+    NQC corrections to the waveform in the spinning case. 
+    This routine works around merger with dyn and h and 
+    then add everything also to hlm */
+void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+				    Dynamics *dyn, Waveform_lm *hlm)
+{
+
+  double A_tmp, dA_tmp, omg_tmp, domg_tmp;
+    
+  const double nu   = dyn->nu;
+  const double X1   = dyn->X1;
+  const double X2   = dyn->X2;
+  const double chi1 = dyn->chi1;
+  const double chi2 = dyn->chi2;
+  const double aK   = dyn->a1 + dyn->a2;
+
+  const double nu2  = SQ(nu);
+  const double nu3  = nu2*nu;
+  const double X12  = X1 - X2;  
+  const double aK2  = SQ(aK);
+  const double aK3  = aK2*aK;
+  const double aK4  = aK2*aK2;
+  const double a12  = X1*chi1 - X2*chi2;
+  const double aeff     = aK + 1./3.*a12*X12;
+  const double aeff_omg = aK + a12*X12;
+
+  FILE* fp;
+    
+  double *t       = hlm_mrg->time;
+  double *r       = dyn_mrg->data[EOB_RAD];
+  double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
+  double *pph     = dyn_mrg->data[EOB_PPHI];
+  double *pr_star = dyn_mrg->data[EOB_PRSTAR];
+  double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
+  double *ddotr   = dyn_mrg->data[EOB_DDOTR];
+  
+  double c_p1,     c_p2,     c_p3,   c_p4;
+  double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
+  double c_pdomg1, c_pdomg2;
+  double n0, d1;
+  double a0_omg_tmp, a1_omg_tmp, a2_omg_tmp, b0_omg_tmp, b1_omg_tmp, b2_omg_tmp, a0_domg_tmp, a1_domg_tmp, a2_domg_tmp, b0_domg_tmp, b1_domg_tmp, b2_domg_tmp, a0_A_tmp, a1_A_tmp , a2_A_tmp, b0_A_tmp, b1_A_tmp, b2_A_tmp, a0_dA_tmp, a1_dA_tmp, a2_dA_tmp, b0_dA_tmp, b1_dA_tmp, b2_dA_tmp, omg_tmp_nu, omg_tmp_equal, domg_tmp_nu, domg_tmp_equal,  A_tmp_scale_nu, A_tmp_scale_equal, dA_tmp_scale_nu, dA_tmp_scale_equal ;
+  
+  double P[2], M[4], p1[2], p2[2], p3[2], p4[2], pA[5], pdA[5];    
+  double pomg[5], pdomg[5], pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
+  double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
+  double ai[KMAX][2];
+  double bi[KMAX][2];
+  
+  const int size = hlm_mrg->size;
+  for (int i = 0; i < size; i++) {
+    hnqc->time[i] = t[i];
+  }
+  
+  double *omg[KMAX], *domg[KMAX];
+  double *n1,*n2,*n3,*n4,*n5,*n6, *d_n4,*d_n5, *d2_n4,*d2_n5;
+  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
+  
+  for (int k=0; k<KMAX; k++) {
+    omg[k]  = (double*) calloc (size,sizeof(double));
+    domg[k] = (double*) calloc (size,sizeof(double));
+    m11[k] = (double*) calloc (size,sizeof(double));
+    m12[k] = (double*) calloc (size,sizeof(double));
+    m13[k] = (double*) calloc (size,sizeof(double));
+    m21[k] = (double*) calloc (size,sizeof(double));
+    m22[k] = (double*) calloc (size,sizeof(double));
+    p1tmp[k] = (double*) calloc (size,sizeof(double));
+    p2tmp[k] = (double*) calloc (size,sizeof(double));
+  }
+  
+  n1 = (double*) calloc (size,sizeof(double));
+  n2 = (double*) calloc (size,sizeof(double));
+  n3 = (double*) calloc (size,sizeof(double));
+  n4 = (double*) calloc (size,sizeof(double));
+  n5 = (double*) calloc (size,sizeof(double));
+  n6 = (double*) calloc (size,sizeof(double));
+  d_n4 = (double*) calloc (size,sizeof(double));
+  d_n5 = (double*) calloc (size,sizeof(double));
+  d2_n4 = (double*) calloc (size,sizeof(double));
+  d2_n5 = (double*) calloc (size,sizeof(double));
+
+  /** omega derivatives */
+  const double dt = t[1]-t[0];
+  for (int k=0; k<KMAX; k++) {
+    D0(hlm_mrg->phase[k], dt, size, omg[k]);
+    D0(omg[k], dt, size, domg[k]);
+  }
+  
+  /** NR fits */
+  if (DEQUAL(nu,0.25,1e-9)) {
+
+    pA[0]    =  0.00178195;
+    pA[1]    =  0.00435589;
+    pA[2]    =  0.00344489;
+    pA[3]    = -0.00076165;
+    pA[4]    =  0.31973334;
+    A_tmp    =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[3]*aK     + pA[4];
+    
+    pdA[0]   =  0.00000927;
+    pdA[1]   = -0.00024550;
+    pdA[2]   =  0.00012469;
+    pdA[3]   =  0.00123845;
+    pdA[4]   = -0.00195014;
+    dA_tmp   =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[3]*aK   + pdA[4];
+    
+    pomg[0]  =  0.00603482;
+    pomg[1]  =  0.01604555;
+    pomg[2]  =  0.02290799;
+    pomg[3]  =  0.07084587;
+    pomg[4]  =  0.38321834;
+    omg_tmp  =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[3]*aK  + pomg[4];
+    
+    pdomg[0] =  0.00024066;
+    pdomg[1] =  0.00038123;
+    pdomg[2] = -0.00049714;
+    pdomg[3] =  0.00041219;
+    pdomg[4] =  0.01190548;
+    domg_tmp =  pdomg[0]*aK4 + pdomg[1]*aK3 + pdomg[2]*aK2 + pdomg[3]*aK + pdomg[4];
+  
+  }  else if( nu > 0.16) {
+    
+    p1[0]      =  0.04680896;
+    p1[1]      = -0.00632114;
+    p2[0]      =  0.06586192;
+    p2[1]      = -0.01180039;
+    p3[0]      = -0.11617413;
+    p3[1]      =  0.02704959;
+    p4[0]      =  0.15597465;
+    p4[1]      =  0.28034978;
+    c_p1       =  p1[0]*nu + p1[1];
+    c_p2       =  p2[0]*nu + p2[1];
+    c_p3       =  p3[0]*nu + p3[1];
+    c_p4       =  p4[0]*nu + p4[1];
+    A_tmp      =  c_p1*aK3 + c_p2*aK2 + c_p3*aK + c_p4;
+    
+    pdA1[0]    = -0.00130824;
+    pdA1[1]    =  0.00006202;
+    pdA2[0]    =  0.00199855;
+    pdA2[1]    = -0.00027474;
+    pdA3[0]    =  0.00218838;
+    pdA3[1]    =  0.00071540;
+    pdA4[0]    = -0.00362779;
+    pdA4[1]    = -0.00105397;
+    c_pdA1     =  pdA1[0]*nu + pdA1[1];
+    c_pdA2     =  pdA2[0]*nu + pdA2[1];
+    c_pdA3     =  pdA3[0]*nu + pdA3[1];
+    c_pdA4     =  pdA4[0]*nu + pdA4[1];
+    dA_tmp     =  c_pdA1*aK3   + c_pdA2*aK2 + c_pdA3*aK+ c_pdA4;
+    
+    pn0[0]     =  0.46908067;
+    pn0[1]     =  0.27022141;
+    pd1[0]     =  0.64131115;
+    pd1[1]     = -0.37878384;
+    n0         =  pn0[0]*nu + pn0[1];
+    d1         =  pd1[0]*nu + pd1[1];
+    omg_tmp    =  n0/(1 + d1*aK);
+    
+    ppdomg1[0] =  0.00061175;
+    ppdomg1[1] =  0.00074001;
+    ppdomg2[0] =  0.02504442;
+    ppdomg2[1] =  0.00548217;
+    c_pdomg1   =  ppdomg1[0]*nu + ppdomg1[1];
+    c_pdomg2   =  ppdomg2[0]*nu + ppdomg2[1];
+    domg_tmp   =  c_pdomg1*aK   + c_pdomg2;
+  
+  }  else {
+
+    /* Fit by G.Riemanschneider incorporating the test-particle NQC point
+       obtained from the most-recent Teukolsky waveforms done by
+       M. Colleoni using the 6PN-accurare iResum-radiation reaction.
+       These points assure a smooth connection between merger and
+       ringdown also outside the "calibration" domain, notably for
+       large-mass ratios (though q<=20) and large (negative) spins
+       Updated, 28/09/2017 */
+    
+    a0_omg_tmp    = -0.1460961247;
+    a1_omg_tmp    =  0.0998056;
+    a2_omg_tmp    = -0.118098;
+    b0_omg_tmp    = -0.3430184009;
+    b1_omg_tmp    =  0.0921551;
+    b2_omg_tmp    = -0.0740285;
+    omg_tmp_nu    = +0.5427169903*nu2 +0.2512395608*nu +0.2863992248;
+    omg_tmp_equal =((a2_omg_tmp*X12*X12 + a1_omg_tmp*X12 + a0_omg_tmp)*aeff_omg+1)/((b2_omg_tmp*X12*X12 +b1_omg_tmp*X12 + b0_omg_tmp)*aeff_omg+1);
+    omg_tmp       = omg_tmp_nu*omg_tmp_equal;
+
+    a0_domg_tmp    = +0.0604556289;
+    b0_domg_tmp    = -0.0299583285;
+    a1_domg_tmp    = 0.0711715;
+    a2_domg_tmp    = -0.0500886;
+    b1_domg_tmp    = 0.0461239;
+    b2_domg_tmp    = -0.0153068;
+    
+    domg_tmp_nu    = ( +0.0045213831*nu +0.0064934920)/( -1.4466409969*nu+1);
+    domg_tmp_equal = (a2_domg_tmp*X12*X12 +a1_domg_tmp*X12 +b0_domg_tmp)*aeff_omg*aeff_omg +(b2_domg_tmp*X12*X12 +b1_domg_tmp*X12+a0_domg_tmp)*aeff_omg+1;
+    domg_tmp       = domg_tmp_nu*domg_tmp_equal;
+    
+    a0_A_tmp 	= -0.2750516062;
+    b0_A_tmp 	= -0.4693776065;
+    a1_A_tmp 	=  0.143066;
+    a2_A_tmp 	= -0.0425947;
+    b1_A_tmp 	=  0.176955;
+    b2_A_tmp 	= -0.111902;
+    
+    A_tmp_scale_nu    = -0.9862040409*nu3 +0.8167558040*nu2 -0.0427442282*nu+0.2948879452;
+    A_tmp_scale_equal = ((a2_A_tmp*X12*X12 + a1_A_tmp*X12 +a0_A_tmp)*aeff+1)/((b2_A_tmp*X12*X12 + b1_A_tmp*X12 +b0_A_tmp)*aeff+1);
+    A_tmp             = A_tmp_scale_nu*A_tmp_scale_equal*(1-0.5*omg_tmp*aeff);
+    
+    a0_dA_tmp 	= +0.0037461628;
+    b0_dA_tmp 	= +0.0636082543;
+    a1_dA_tmp 	=  0.00129393;
+    a2_dA_tmp 	= -0.00239069;
+    b1_dA_tmp 	= -0.0534209;
+    b2_dA_tmp 	= -0.186101;
+    
+    dA_tmp_scale_nu    = ( -0.0847947167*nu -0.0042142765)/( +16.1559461812*nu+1);
+    dA_tmp_scale_equal = ((a2_dA_tmp*X12*X12 + a1_dA_tmp*X12+ a0_dA_tmp)*aeff)/((b2_dA_tmp*X12*X12 + b1_dA_tmp*X12 + b0_dA_tmp)*aeff+1);
+    dA_tmp             = (dA_tmp_scale_nu +dA_tmp_scale_equal)*omg_tmp;
+    
+  }
+
+  /** Switch on the 22 values (only) */
+  for (int k=0; k<KMAX; k++) {   
+    max_A[k]    = 0.;
+    max_dA[k]   = 0.;
+    max_omg[k]  = 0.;
+    max_domg[k] = 0.;
+  }
+  max_A[1]    = A_tmp;
+  max_dA[1]   = dA_tmp;
+  max_omg[1]  = omg_tmp;
+  max_domg[1] = domg_tmp;
+
+  if (VERBOSE) {
+    printf("NR values for NQC determination:\n");
+    PRFORMd("A22_mrg",max_A[1]);
+    PRFORMd("dA22_mrg",max_dA[1]);
+    PRFORMd("omg22_mrg",max_omg[1]);
+    PRFORMd("domg22_mrg",max_domg[1]);
+  }
+  
+  /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
+   * NQC basis for (2,2) waveform : AMPLITUDE
+   * note: n3 and n6 are not used
+   */
+  double pr_star2, r2, w2;
+  for (int j=0; j<size; j++) {
+    pr_star2 = SQ(pr_star[j]);
+    r2       = SQ(r[j]);
+    w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
+    n1[j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
+    n2[j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
+    n4[j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
+    n5[j]  = n4[j]*r2*w2;              /* (pr*)*(r Omg) */
+  }
+  
+#if (DEBUG)
+  fp = fopen("nqc_nfunc.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[j], n2[j], n4[j], n5[j]);
+  }
+  fclose(fp);
+#endif    
+
+  /** Derivatives for the phase */
+  D0(n4,dt,size, d_n4);
+  D0(n5,dt,size, d_n5);
+  D0(d_n4,dt,size, d2_n4);
+  D0(d_n5,dt,size, d2_n5);
+
+#if (DEBUG)
+  fp = fopen("nqc_dfunc.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[j], d_n5[j], d2_n4[j], d2_n5[j]);  
+  }
+  fclose(fp);
+#endif    
+
+  /** Find max Omg */
+  int Omgmax_index = 0;
+  double Omg_max   = Omg_orb[0];
+  for (int j=0; j<size; j++) {
+    if (Omg_orb[j] > Omg_max) {
+      Omg_max = Omg_orb[j];
+      Omgmax_index = j;
+    }
+  }
+  //TODO:
+  //Test the search backwards
+  /*
+  int Omgmax_index = size-1;
+  double Omg_max   = Omg_orb[Omgmax_index];
+  for (int j=(size-2); j--; ) {
+    if (Omg_orb[j] < Omg_max) 
+    break;
+    Omg_max = Omg_orb[j];
+    Omgmax_index = j;
+  }
+  */
+  
+  /** Time */
+  double tOmgOrb_pk = t[Omgmax_index];
+  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
+  double tNQC = tOmgOrb_pk - DeltaT_nqc;
+
+  if (VERBOSE) {
+    printf("NQC info:\n");
+    PRFORMd("DeltaT_tNQC",DeltaT_nqc);
+    PRFORMd("tNQC[bare]",tNQC);
+  }
+
+  /** Find jmax: t[jmax] <= tNQC */
+  int jmax = 0;
+  for (int j=0; j<size; j++) {
+    if(t[j] > tNQC) {
+      jmax = j-2;
+      break;
+    }
+  }
+
+  /** Solve the linear systems */
+  
+  /* Regge-Wheeler-Zerilli normalized amplitude. 
+     The ringdown coefficient refer to this normalization.
+     Nagar & Rezzolla, CQG 22 (2005) R167 */      
+  for (int k=0; k<KMAX; k++) {
+    double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
+    for (int j=0; j<size; j++) {
+      p1tmp[k][j] = hlm_mrg->ampli[k][j] * nlm;      
+    }
+  }
+
+  /* Matrix elements: waveform amplitude at all points */
+  for (int k=0; k<KMAX; k++) {
+    for (int j=0; j<size; j++) {
+      m11[k][j] = n1[j] * p1tmp[k][j];
+      m12[k][j] = n2[j] * p1tmp[k][j];
+    }
+  }
+
+  /* Take FD derivatives */
+  for (int k=0; k<KMAX; k++) {
+    D0(m11[k],dt,size, m21[k]);
+    D0(m12[k],dt,size, m22[k]);
+    D0(p1tmp[k],dt,size, p2tmp[k]);
+  }
+
+#if (DEBUG)
+  fp = fopen("nqc_amp_func.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp, "%e\t%e\t%e\n", t[j], p1tmp[1][j], p2tmp[1][j]);
+  }
+  fclose(fp);  
+#endif
+
+  double detM = 1.;
+  double oodetM = 1.;
+  for (int k=0; k<KMAX; k++) {
+    
+    ai[k][0] = ai[k][1] = 0.;
+    bi[k][0] = bi[k][1] = 0.;
+
+    /* Computation of ai coefficients at Omega peak */
+    P[0]     = max_A[k]  - p1tmp[k][jmax];
+    P[1]     = max_dA[k] - p2tmp[k][jmax];
+    
+    M[0]     = m11[k][jmax];
+    M[1]     = m12[k][jmax];
+    M[2]     = m21[k][jmax];
+    M[3]     = m22[k][jmax];
+    
+    /* detM     = M[0]*M[3]-M[1]*M[2]; 
+       ai[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
+       ai[k][1] = (M[0]*P[1] - M[2]*P[0])/detM; */
+    /* safe version (amplitude can be zero) */
+    oodetM   = 1.0/(M[0]*M[3]-M[1]*M[2]);
+    if (isfinite(oodetM)) {
+      ai[k][0] = (M[3]*P[0] - M[1]*P[1])*oodetM;
+      ai[k][1] = (M[0]*P[1] - M[2]*P[0])*oodetM;
+    }
+
+    /* Computation of bi coefficients at Omega peak */
+    P[0]     = omg[k][jmax]   - max_omg[k];
+    P[1]     = domg[k][jmax]  - max_domg[k];
+    
+    M[0]     = d_n4[jmax];
+    M[1]     = d_n5[jmax];
+    M[2]     = d2_n4[jmax];
+    M[3]     = d2_n5[jmax];
+
+    /* detM     =  M[0]*M[3] - M[1]*M[2];
+       bi[k][0] = (M[3]*P[0] - M[1]*P[1])/detM;
+       bi[k][1] = (M[0]*P[1] - M[2]*P[0])/detM; */
+    /* safe version (phase can be zero) */
+    oodetM   = 1.0/(M[0]*M[3]-M[1]*M[2]);
+    if (isfinite(oodetM)) {
+      bi[k][0] = (M[3]*P[0] - M[1]*P[1])*oodetM;
+      bi[k][1] = (M[0]*P[1] - M[2]*P[0])*oodetM;
+    }
+
+  }
+
+  if (VERBOSE){
+    printf("NQC coefficients for 22 mode:\n");
+    PRFORMd("a1",ai[1][0]);
+    PRFORMd("a2",ai[1][1]);
+    PRFORMd("b1",bi[1][0]);
+    PRFORMd("b2",bi[1][1]);
+  }
+
+  /** Set amplitude and phase */
+  for (int k=0; k<KMAX; k++) {
+    for (int j=0; j<size; j++) {
+      hnqc->ampli[k][j] = 1. + ai[k][0]*n1[j] + ai[k][1]*n2[j];
+      hnqc->phase[k][j] =      bi[k][0]*n4[j] + bi[k][1]*n5[j];
+    }
+  }
+  
+  /** Multiply merger waveform to NQC */
+  for (int k=0; k<KMAX; k++) {
+    for (int j=0; j<size; j++) {
+      hlm_mrg->ampli[k][j] *= hnqc->ampli[k][j];
+      hlm_mrg->phase[k][j] -= hnqc->phase[k][j];
+    }
+  }
+
+  /** Multiply full waveform to NQC */
+  
+  r       = dyn->data[EOB_RAD];
+  w       = dyn->data[EOB_MOMG]; /* Omega */
+  pph     = dyn->data[EOB_PPHI];
+  pr_star = dyn->data[EOB_PRSTAR];
+  Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
+  ddotr   = dyn->data[EOB_DDOTR];
+
+  free(n1);
+  free(n2);
+  free(n4);
+  free(n5);
+
+  const int fullsize = hlm->size;
+  
+  n1 = (double*) calloc (fullsize,sizeof(double));
+  n2 = (double*) calloc (fullsize,sizeof(double));
+  n4 = (double*) calloc (fullsize,sizeof(double));
+  n5 = (double*) calloc (fullsize,sizeof(double));
+
+  for (int j=0; j<fullsize; j++) {
+    pr_star2 = SQ(pr_star[j]);
+    r2       = SQ(r[j]);
+    w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
+    n1[j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
+    n2[j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
+    n4[j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
+    n5[j]  = n4[j]*r2*w2;              /* (pr*)*(r Omg) */
+  }
+
+  for (int k=0; k<KMAX; k++) {
+    for (int j=0; j<fullsize; j++) {
+      hlm->ampli[k][j] *= (1. + ai[k][0]*n1[j] + ai[k][1]*n2[j]);
+      hlm->phase[k][j] -= (bi[k][0]*n4[j] + bi[k][1]*n5[j]);
     }
   }
 
@@ -1596,11 +2114,11 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
-  //const double dt = par_get_d("dt");	
+  /* const double dt = par_get_d("dt"); */	
   const double dt = dyn->dt;
   
-  //double *Omega = dyn->data[EOB_MOMG];
-  double *Omega = dyn->data[EOB_OMGORB];// use this for spin?
+  /* double *Omega = dyn->data[EOB_MOMG]; */
+  double *Omega = dyn->data[EOB_OMGORB]; /* use this for spin */
   
   /* Note:
      dynsize < size , since the wf has been extended 
@@ -1608,7 +2126,15 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const int dynsize = dyn->size; 
   const int size = hlm->size; 
   double *t = hlm->time;
-  
+
+  /*
+    for (int j = 0; j< size ; j++) {
+    printf(" %d %.8e", j, hlm->time[j]);
+    if (j<dynsize) printf(" %.8e (%.8e)", dyn->time[j], dyn->time[j]-hlm->time[j]);
+    printf("\n");
+    }
+  */
+    
   if (VERBOSE) {
     PRFORMi("ringdown_dynamics_size",dynsize);
     PRFORMi("ringdown_waveform_size",size);
@@ -1619,7 +2145,8 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const int k33 = 4;
   
   /** Find peak of Omega */
-  /* Assume it is a monotonically increasing function */
+  /* Assume a monotonically increasing function, then the peak 
+     start from after the peak */
   int index_pk = dynsize-1;
   double Omega_pk = Omega[index_pk];
   for (int j = dynsize-2; j-- ; ) {
@@ -1632,15 +2159,21 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   if (index_pk >= dynsize-2) {
     if (VERBOSE) printf("No omega-maximum found.\n");
   }
-
+  
   const int n = 7; /* USE 7, it seems we need at least 7 points to determine t_Omega_peak properly */
   if ( (index_pk + (n-1)/2) > (dynsize-1) ) {
     errorexit("Not enough points to interpolate.\n");
-  }	
+  }
+  
   double tmax = dyn->time[index_pk];  
   double *Omega_ptr = &Omega[index_pk-3];
   double tOmg_pk = find_max(n, dt, tmax, Omega_ptr, NULL);
   tOmg_pk *= ooMbh;
+
+  if (VERBOSE) PRFORMd("ringdown_Omega_pk",Omega_pk);
+  if (VERBOSE) PRFORMd("ringdown_Omega_ptr",Omega_ptr[0]);
+  if (VERBOSE) PRFORMd("ringdown_tmax",tmax);
+  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk/ooMbh);
   if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk);
   
   /** Merger time t_max(A22) */
@@ -1687,13 +2220,13 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
       t_lm[k][j] = t[j] * ooMbh;
     }
   }  
-
+  
   /** Find attachment index */
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
     for (int j = size-1; j-- ; ) {  
       if (t_lm[k][j] < tmatch[k]) {
-	idx[k] = j -1;    // j-1 gives the same index as C++
+	idx[k] = j - 1;
 	break;
       }
     }

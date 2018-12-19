@@ -112,7 +112,9 @@ int main (int argc, char* argv[])
   Waveform_lm *hlm; /* h_lm */ 
   Waveform_lm_t *hlm_t;
   Waveform_lm *hlm_nqc; /* NQC */
-
+  Waveform_lm *hlm_mrg; /* merger chunk */
+  Dynamics *dyn_mrg;
+    
   const int chunk = par_get_i("size");
   int size = chunk; /* note: size can vary */
     
@@ -514,60 +516,102 @@ int main (int argc, char* argv[])
     /* This is a BBH run.
        NQC and ringdown attachment currently assume uniform grids.
        Do we need to interpolate ? */
-    int post_dynamics_interp = 1; /* In general, yes ... */
-    if (ode_tstep != ODE_TSTEP_ADAPTIVE) post_dynamics_interp = 0; /* ... except if merger is covered by uniform tstep */
-    
-    if (post_dynamics_interp) {
+    int merger_interp = 1; /* In general, yes ... */
+    if (ode_tstep != ODE_TSTEP_ADAPTIVE) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
+
+    /* Make sure merger ptrs point to something */
+    hlm_mrg = hlm; 
+    dyn_mrg = dyn;
+
+    if (merger_interp) {
+
+      /** NQC and ringdown attachment is done around merger 
+	  using auxiliary variables defined around [tmin,tmax] 
+	  Recall that parameters are NOT stored into these auxiliary vars */
+
+      const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
+      const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use ot get last point */
       
-      /**  Interpolate on uniform grid */
+      hlm_mrg = NULL;
+      dyn_mrg = NULL;
+      
+      Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
+      Dynamics_extract (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
+
+#if (0)
+      Waveform_lm_output (hlm);
+      Dynamics_output(dyn);
+      Waveform_lm_output (hlm_mrg);
+      Dynamics_output(dyn_mrg);
+#endif
+
+      /**  Interpolate mrg on uniform grid */
       
       /* Build uniform grid of width dt and alloc tmp memory */
-      const int size_new = get_uniform_size(hlm->time[size-1], hlm->time[0], dt);
-      if (DEBUG) printf("iter=%d size=%d (%d)\n",iter,size,(iter==size));      
+      const double dt_merger_interp = par_get_d("dt_merger_interp"); 
+      const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
       if (VERBOSE) {
-	PRSECTN("Interpolation to uniform grid");
-	PRFORMi("interpolation_grid_size",size_new);
-	PRFORMd("interpolation_grid_dt",dt);
-	PRFORMd("interpolation_grid_t0",hlm->time[0]);
-	PRFORMd("interpolation_grid_tN",hlm->time[size-1]);
+	PRSECTN("Interpolation of merger to uniform grid");
+	PRFORMi("interpolation_grid_size",size_mrg);
+	PRFORMd("interpolation_grid_dt",dt_merger_interp);
+	PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
+	PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
       }
       
-      /** Waveform */ 
-      Waveform_lm_interp (hlm, size_new, 0., dt, "hlm_insplunge_interp");
+      /* Interp Waveform */ 
+      Waveform_lm_interp (hlm_mrg, size_mrg, hlm_mrg->time[0], dt_merger_interp, "hlm_mrg_interp");
       
-      /** Dynamics */
-      Dynamics_interp (dyn, size_new, 0., dt, "dyn_postdyn_interp");
-      
-      /** Update size */
-      size = size_new;
-      par_set_i("size", size); 
-      
+      /* Interp Dynamics */
+      Dynamics_interp (dyn_mrg, size_mrg, dyn_mrg->time[0], dt_merger_interp, "dyn_mrg_interp");
+
 #if (DEBUG) 
       /* Output post-interpolation wave and dynamics */
       if(par_get_i("output_multipoles")) {
-	Waveform_lm_output (hlm);
-	Waveform_lm_output_reim (hlm);
+	Waveform_lm_output (hlm_mrg);
+	Waveform_lm_output_reim (hlm_mrg);
       }
       if (par_get_i("output_dynamics")) 
-	Dynamics_output(dyn);
+	Dynamics_output(dyn_mrg);
 #endif
-      
-    } /* End of post-dynamics interp */
+       
+    } /* End of merger interp */
     
     
     if (STREQUAL(par_get_s("nqc_coefs_hlm"),"compute")) {
-      
+
       /** BBH : compute and add NQC */
-      
+
       if (VERBOSE) PRSECTN("NQC Calculation");
       
-      Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
-      eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
-      strcat(hlm->name,"_nqc");      
+      if (merger_interp) {
+
+	/* Compute NQC only around merger, 
+	   add to both merger and full waveform */
+	Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
+	eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+	strcat(hlm_mrg->name,"_nqc");
+
+	/* Join merger to full waveform */
+	Waveform_lm_join (hlm, hlm_mrg, hlm_mrg->time[0]);
+	Dynamics_join (dyn, dyn_mrg, dyn_mrg->time[0]);
+	size = hlm->size;
+	par_set_i("size", size);
+	
+      } else {
+	
+	/* Compute NQC and add them to full waveform */
+	Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
+	eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
+
+      }
       
+      strcat(hlm->name,"_nqc");      
+
 #if (DEBUG) 
-      if (par_get_i("output_nqc"))  
+      if (par_get_i("output_nqc"))  {
 	Waveform_lm_output (hlm_nqc);
+	Waveform_lm_output (hlm_mrg);
+      }
       if (par_get_i("output_multipoles")) 
 	Waveform_lm_output (hlm);
 #endif
@@ -581,14 +625,19 @@ int main (int argc, char* argv[])
     if (VERBOSE) PRSECTN("Ringdown");
     
     /* Extend arrays */    
-    const int size_ringdown = par_get_i("ringdown_extend_array");
-    Waveform_lm_push (&hlm, (size+size_ringdown));
+    const int size_ringdown = par_get_i("ringdown_extend_array");    
+    double dt_rngdn = dt;
+    if (merger_interp)
+      dt_rngdn = par_get_d("dt_merger_interp"); 
+    
 #if (DEBUG) 
     printf("Push memory for ringdown (%d + %d):",size,par_get_i("ringdown_extend_array"));
-    printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt,dt*size_ringdown,hlm->time[size-1]+dt*size_ringdown);
+    printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt_rngdn,dt_rngdn*size_ringdown,hlm->time[size-1]+dt_rngdn*size_ringdown);
 #endif
+
+    Waveform_lm_push (&hlm, (size+size_ringdown));
     for (int i = size; i < (size+size_ringdown); i++) 
-      hlm->time[i] = hlm->time[i-1] + dt;
+      hlm->time[i] = hlm->time[i-1] + dt_rngdn;
     size += size_ringdown;
     par_set_i("size", size);
     
