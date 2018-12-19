@@ -96,7 +96,7 @@ if __name__ == "__main__":
         if "r" in mode:
             plt.plot(t, Reh, color='cyan', label=r"$\Re{h/(M\nu)}$", alpha=0.6)
         if "i" in mode:
-            plt.plot(t, Imh, color='yellow', label=r"$\Im{h/(M\nu)}$", alpha=0.6)
+            plt.plot(t, Imh, color='orange', label=r"$\Im{h/(M\nu)}$", alpha=0.6)
 
         name = build_output_fname(f)
         
