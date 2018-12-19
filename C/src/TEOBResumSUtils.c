@@ -819,22 +819,7 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
   
 }
 
-void Waveform_lm_free (Waveform_lm *wav)
-{
-  for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
-      if (wav->ampli[k]) free(wav->ampli[k]);
-      if (wav->phase[k]) free(wav->phase[k]);
-    }
-  }
-  free(wav);
-}
-
-#if (0)
-
-/** BEGIN: Block of experimental/untested/unused code */
-
-/* A special routine: join two multipolar waveforms at t = to */
+/* Join two multipolar waveforms at t = to */
 void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
 {
   /* Time arrays are suppose to be ordered as
@@ -867,10 +852,15 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
   const int iob = find_point_bisection(to, hlmb->size, hlmb->time, 1);
 
   /* Calculate the new size */
-  const int Na = hlma->size - ioa;
   const int Nb = hlmb->size - iob;
-  const int N  = Na+Nb;
+  const int N  = ioa + Nb;
 
+#if (0)
+  printf("Waveform (a) i = %d time[i] = %.6e \n",ioa, hlma->time[ioa]);
+  printf("Waveform (b) i = %d time[i] = %.6e \n",iob, hlmb->time[iob]);
+  printf("Total size (a)+(b) = %d + %d = %d \n",Nb, iob, N);
+#endif 
+  
   /* Resize a */
   Waveform_lm_push (&hlma, N);
   hlma->size = N;
@@ -886,6 +876,21 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
   }
   
 }
+
+void Waveform_lm_free (Waveform_lm *wav)
+{
+  for (int k=0; k<KMAX; k++) {
+    if (wav->kmask[k]) {
+      if (wav->ampli[k]) free(wav->ampli[k]);
+      if (wav->phase[k]) free(wav->phase[k]);
+    }
+  }
+  free(wav);
+}
+
+#if (1)
+
+/** BEGIN: Block of experimental/untested/unused code */
 
 /* /\* Alloc a new multipolar waveform and fill by interp from another *\/ */
 /* void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name) */
