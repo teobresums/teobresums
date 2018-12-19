@@ -88,15 +88,15 @@ if __name__ == "__main__":
 
         # Plots
         if "a" in mode:
-            plt.plot(t, A, label=r"$A/(M\nu)$")
+            plt.plot(t, A, color='blue', label=r"$A/(M\nu)$")
         if "p" in mode:
-            plt.plot(t, phi, label=r"$\phi$")
+            plt.plot(t, phi, color='gray', label=r"$\phi$")
         if "o" in mode:
-            plt.plot(t[1:], omg, label=r"$M\omega$")
+            plt.plot(t[1:], omg, color='red', label=r"$M\omega$")
         if "r" in mode:
-            plt.plot(t, Reh, label=r"$\Re{h/(M\nu)}$")
+            plt.plot(t, Reh, color='cyan', label=r"$\Re{h/(M\nu)}$", alpha=0.6)
         if "i" in mode:
-            plt.plot(t, Imh, label=r"$\Im{h/(M\nu)}$")
+            plt.plot(t, Imh, color='yellow', label=r"$\Im{h/(M\nu)}$", alpha=0.6)
 
         name = build_output_fname(f)
         
