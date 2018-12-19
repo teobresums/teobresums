@@ -29,7 +29,7 @@ output_dir = "./bbh_q1_s07s07_20Hz_postadiab/"
 output_hpc = 0 # switch this off to test performances!!!
 output_multipoles = 0
 output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34 ];
-use_mode_lm = [ 1 ]; # for BBH h_{+,x}, this will be updated
+use_mode_lm = [ 1 ]; # Use only (2,2) mode for BBH h_{+,x}, this will be updated
 output_dynamics = 0
 
 #
