@@ -32,7 +32,7 @@ if __name__ == "__main__":
                         help="Output directory")    
     parser.add_argument("-m", dest="mode", 
                         nargs=1, default="aor", 
-                        help="Type of plot. A string containint one or more of the chars 'apori' for amplitude, phase, frequency, real, and imaginary")
+                        help="Type of plot. A string containing one or more of the chars 'apori' for amplitude, phase, frequency, real, and imaginary")
     parser.add_argument("-s", dest="show", 
                         nargs=1, default="yes",
                         help="Show plot")
