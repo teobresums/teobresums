@@ -112,3 +112,21 @@ def add_fline(fname, s):
         f.write(s+"\n")
     return 
 
+def id_data_file(fname):
+    """
+    Identify TEOBResumS datafile
+    """
+    t = ["triap","tri","tap"]
+    f = os.path.abspath(fname).split("/")[-1]
+    f = os.path.splitext(f)[0]
+    p = f.split("_")
+    #print(p[0])
+    if p[0] == "waveform":
+        return t[0]
+    elif p[0] == "hlm":
+        if p[-1] == "reim": return t[1]
+        return t[2]
+    else:
+        print("Unknown datafile: "+fname)
+        return None
+

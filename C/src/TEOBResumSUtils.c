@@ -240,15 +240,18 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
   double Y_real, Y_imag;
   double Aki, cosPhi, sinPhi;
   double sumr, sumi;
+  int activemode[KMAX];
+  set_multipolar_idx_mask(activemode, KMAX, "use_mode_lm", 1);
 #if (DEBUG)
     printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",
 	   nu,M,distance,psi,iota,amplitude_prefactor);
 #endif
   for (int i = 0; i < hlm->size; i++) {
     hpc->time[i] = hlm->time[i]*M; 
-    //hpc->real[i] = hpc->imag[i] = 0.;
+    /* hpc->real[i] = hpc->imag[i] = 0.; */
     sumr = sumi = 0.;
     for (int k = 0; k < KMAX; k++ ) {
+      if (!activemode[k]) continue;
       spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
       Aki  = amplitude_prefactor * hlm->ampli[k][i];
       cosPhi = cos( hlm->phase[k][i] );
@@ -455,7 +458,7 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
 }
 
 /** This routine sets a 0/1 mask for the multipolar linear index */
-void set_multipolar_idx_mask(int *kmask, int n)
+void set_multipolar_idx_mask_old(int *kmask, int n)
 {
   int m, k,j;
   for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
@@ -464,7 +467,25 @@ void set_multipolar_idx_mask(int *kmask, int n)
   if (m==1 && idx[0]==-1) return;
   for (k = 0; k<n; k++)
     for (j = 0; j<m; j++)
+      if (idx[j] == k) kmask[k] = 1;
+  free(idx);
+}
+
+/** This routine sets a 0/1 mask for the multipolar linear index 
+    work for any parameter and can specify default all on/off */
+void set_multipolar_idx_mask(int *kmask, int n, const char *key, int on)
+{
+  int m, k,j;
+  for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
+  int *idx = par_get_arrayi(key, &m);
+  if ( (m<=0) || (m==1 && idx[0]==-1) ) {
+    if(on) for (k = 0; k<n; k++) kmask[k] = 1; /* all on */
+    return;
+  }
+  for (k = 0; k<n; k++)
+    for (j = 0; j<m; j++)
       if (idx[j] == k) kmask[k] = 1; 
+  free(idx);
 }
 
 /** Compute size of a uniform grid t0:dt:tf */
@@ -648,7 +669,7 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->size = size; 
-  set_multipolar_idx_mask((*wav)->kmask, KMAX); 
+  set_multipolar_idx_mask((*wav)->kmask, KMAX, "output_lm", 0); 
   (*wav)->time = malloc ( size * sizeof(double) );
   memset((*wav)->time, 0, size*sizeof(double));
   int k;
@@ -856,7 +877,7 @@ void Waveform_lm_t_alloc (Waveform_lm_t **wav)
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->time = 0.;
-  set_multipolar_idx_mask((*wav)->kmask, KMAX); 
+  set_multipolar_idx_mask((*wav)->kmask, KMAX, "output_lm", 0); 
 }
 
 void Waveform_lm_t_free (Waveform_lm_t *wav)

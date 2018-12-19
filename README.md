@@ -1,11 +1,14 @@
 # TEOBResumS: Effective-one-body model with spin and tidal interactions
 
+To start, checkout the [WIKI](https://bitbucket.org/eob_ihes/teobresums/wiki/EOB-repo-usage).
+
 ## Authors
 
 Sarp Akcay, Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
 
 ## License
 
+```
 TEOBResumS is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -15,6 +18,7 @@ TEOBResumS is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
+```
 
 ## Pre-requisites
 
@@ -48,6 +52,7 @@ Main reference
 
 Other key references
 
+ * Akcay, Bernuzzi, Messina, Nagar, Ortiz, Rettegno [Effective-one-body multipolar waveform for tidally interacting binary neutron stars up to merger](http://inspirehep.net/record/1707624) 
  * Nagar, Riemenschneider, Pratten (2017) [Impact of Numerical Relativity information on effective-one-body waveform models](http://inspirehep.net/record/1518392)
  * Del Pozzo, Nagar (2016) [Analytic family of post-merger template waveforms](http://inspirehep.net/record/1469053)
  * Nagar, Damour, Reisswig, Pollney (2015) [Energetics and phasing of nonprecessing spinning coalescing black hole binaries](http://inspirehep.net/record/1380155) NRAR comparison, BBH spin
@@ -69,7 +74,7 @@ Please contact Sebastiano Bernuzzi and Alessandro Nagar if you wish to be includ
 
 A short description of the code can be found in [here](C/src/README.md). Please, take a moment to understand the data structures and how the parameters are managed.
 
-Since June 2018 the repository is managed (roughly) following a `master`/`development` workflow, see e.g. the description [here](https://nvie.com/posts/a-successful-git-branching-model/).
+Since June 2018 the repository is managed (roughly) following a `master`/`development` workflow, see e.g. the description [here](https://bitbucket.org/eob_ihes/teobresums/wiki/EOB-repo-usage).
 
 If you want to start a new branch or development make sure to
 

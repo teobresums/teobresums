@@ -46,6 +46,8 @@ interp_uniform_grid = 0 # interpolate on uniform grid ?
 dt_interp = 0.5 # timestep to be used for final interpolation (used if input is given in geometrical unit, unused otherwise)
 srate_interp = 4096. # sampling rate to be used for final interpolation (used if input is given in physical unit, unused otherwise)
 
+use_mode_lm = [-1] # indexes of multipoles to use in h+,hx (if [-1], use all)
+
 postadiabatic_dynamics = "no"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
 postadiabatic_dynamics_size = 1000 # grid size 
