@@ -802,10 +802,10 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
   /* Calculate the new size */ 
   const int N  = in-io;
 
-#if (1)
+#if (0)
   printf("size = %d t[0] = %.6e t[size-1]= %.6e to = %.6e tn = %.6e\n",
 	 hlma->size,hlma->time[0],hlma->time[hlma->size-1],to,tn);
-  printf("io = %d in = %d (N=%d) t[io]= %.6e\n\nALERT ====> t[in] = %.6e <====\n\n",
+  printf("io = %d in = %d (N=%d) t[io]= %.6e t[in] = %.6e\n",
 	 io, in, N, hlma->time[io],hlma->time[in]);
 #endif
   
@@ -1023,10 +1023,10 @@ void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamic
   /* Calculate the new size */ 
   const int N  = in-io;
 
-#if (1)
+#if (0)
   printf("size = %d t[0] = %.6e t[size-1]= %.6e to = %.6e tn = %.6e\n",
 	 dyna->size,dyna->time[0],dyna->time[dyna->size-1],to,tn);
-  printf("io = %d in = %d (N=%d) t[io]= %.6e\n\nALERT ====> t[in] = %.6e <====\n\n",
+  printf("io = %d in = %d (N=%d) t[io]= %.6e t[in] = %.6e\n",
 	 io, in, N, dyna->time[io],dyna->time[in]);
 #endif
   
