@@ -23,7 +23,7 @@ LIB=$(LIBD)/lib$(NAME).a
 #
 
 CC=gcc
-CFLAGS=-g -O0 -std=c99 `gsl-config --cflags`
+CFLAGS=-g -std=c99 `gsl-config --cflags`
 #CFLAGS=-O3 -std=c99 `gsl-config --cflags`
 CFLAGS += -DDEBUG=1 # 1/0 to turn on/off debug mode
 CFLAGS += -DVERBOSE=1 # 1/0 to turn on/off verbose mode

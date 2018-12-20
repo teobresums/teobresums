@@ -247,13 +247,11 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
     printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",
 	   nu,M,distance,psi,iota,amplitude_prefactor);
 #endif
-
   for (int i = 0; i < hlm->size; i++) {
     hpc->time[i] = hlm->time[i]*M; 
     /* hpc->real[i] = hpc->imag[i] = 0.; */
     sumr = sumi = 0.;
     for (int k = 0; k < KMAX; k++ ) {
-//printf(" ACTIVE MODE = %d\n", activemode[k]);
       if (!activemode[k]) continue;
       spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
       Aki  = amplitude_prefactor * hlm->ampli[k][i];
@@ -269,14 +267,10 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
 	/* sinPhi = sin( hlm->phase[k][i] );  */
 	sumr += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
 	sumi += Aki*(sinPhi*Y_real - cosPhi*Y_imag); //TODO: overall check sign
-//printf(" MODE COUNT = %d\n", k);
       }    
     }
     hpc->real[i] = sumr;
     hpc->imag[i] = sumi;
-//int ef;
-//printf("After compute_hpc\n");
-//for (ef =1; ef<1000; ef++) printf("%d", ef);
   }
 }
 
