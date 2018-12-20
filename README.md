@@ -11,6 +11,8 @@ The C++ code was reviewed by LVC. Review was concluded on
 [here](https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/TEOBResumS/FinalReviewStatement)
 The reviewed version is tagged as `LVC-review-end `. 
 
+## Authors
+
 Sarp Akcay, Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
 
 ## License
