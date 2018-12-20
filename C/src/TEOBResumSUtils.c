@@ -792,8 +792,12 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
     errorexit("Nothing to extract, tn < time[0]");
 
   /* Find indexes of closest elements to  (to, tn) */
-  const int io = find_point_bisection(to, hlma->size, hlma->time, 1);
-  const int in = find_point_bisection(tn, hlma->size, hlma->time, 0);
+  int io = 0;
+  int in = hlma->size-1;
+  if (to > hlma->time[0])
+    io = find_point_bisection(to, hlma->size, hlma->time, 1);
+  if (tn < hlma->time[hlma->size-1])
+    in = find_point_bisection(tn, hlma->size, hlma->time, 0);
   
   /* Calculate the new size */ 
   const int N  = in-io;
@@ -1009,8 +1013,12 @@ void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamic
     errorexit("Nothing to extract, tn < time[0]");
 
   /* Find indexes of closest elements to  (to, tn) */
-  const int io = find_point_bisection(to, dyna->size, dyna->time, 1);
-  const int in = find_point_bisection(tn, dyna->size, dyna->time, 0);
+  int io = 0;
+  int in = dyna->size-1;
+  if (to > dyna->time[0])
+    io = find_point_bisection(to, dyna->size, dyna->time, 1);
+  if (tn < dyna->time[dyna->size-1])
+    in = find_point_bisection(tn, dyna->size, dyna->time, 0);
   
   /* Calculate the new size */ 
   const int N  = in-io;
