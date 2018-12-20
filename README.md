@@ -31,8 +31,9 @@ GNU General Public License for more details.
 
 ## Pre-requisites
 
- * Standard C libs, including libconfig
- * GSL lib
+ * C standard library
+ * GSL
+ * libconfig
 
 ## Compilation
 
