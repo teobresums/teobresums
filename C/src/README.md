@@ -70,7 +70,7 @@ Special and minimal data structures are defined together with routines to alloca
 
  * [] The code currently implements two ways of summing up the rholm in eob_wav_flm(). One way is 1 + c_1 x  + c_2 x^2 + ... as in the C++ code. The other way is c_5 x^5 + c_4 x^4 + ... + 1 . They disagree and some significant error accumulates during evolution. Further investigatins needed.
 
-* [x] Verify corretness, compare with Matlab and C++ on master
+* [x] Verify correctness, compare with Matlab and C++ on master
 
 ## Frequent errors
 

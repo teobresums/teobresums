@@ -16,8 +16,8 @@ use_geometric_units = 1
 q = 1. # mass ratio
 
 use_spins = 1
-chi1 = 0.1 # dimensioneless spin 1 z-component 
-chi2 = 0.1 # dimensioneless spin 2 z-component 
+chi1 = 0.1 # dimensionless spin 1 z-component 
+chi2 = 0.1 # dimensionless spin 2 z-component 
 
 initial_frequency = 0.0002659765153793532 # initial GW freq = 20 Hz
 
