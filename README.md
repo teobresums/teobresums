@@ -15,6 +15,8 @@ See the [`AUTHORS`](https://bitbucket.org/eob_ihes/teobresums/src/master/AUTHORS
 
 ## License
 
+See the ['LICENSE'](https://bitbucket.org/eob_ihes/teobresums/src/master/LICENSE) file.
+
 ```
 TEOBResumS is a free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
