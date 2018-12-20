@@ -1,0 +1,67 @@
+#!/usr/bin/python3
+
+"""
+Script to auto generate parfiles and run them
+
+Given a template parfile with basic setup, 
+generates parfiles for all combination of a given subset of parameters
+(e.g. to vary binary masses and spins). Then it run the code.
+
+SB 10/2018
+"""
+
+import os
+
+from EOBUtils import *
+
+if __name__ == "__main__": 
+
+
+    # Setup -----------------------------------------
+    
+    # Base dir & parfile
+    based = "./"
+    basep = "test_NQCIteration.par"
+
+    # Set new values/ranges for parameters (Use lists)
+    q = [1., 1.2, 1.4]
+    chi1 = [0., 0.8]
+    chi2 = [0., 0.8, 0.9]
+    
+    # Pack them into a dictionary
+    # NOTE: keys must match those in parfile otherwise ignored
+    n = {'q': q,
+         'chi1': chi1,
+         'chi2': chi2}
+    
+    # ------------------------------------------
+    # DO NOT CHANGE BELOW HERE
+    # ------------------------------------------
+
+    # Generate parfiles ----------------------------
+    
+    # Read the base parfile
+    d = read_parfile_dict(basep)
+
+    # Generate combinations
+    x, keys = combine_parameters(n)
+    
+    # Write parfiles
+    parfile = []
+    basen, ext = os.path.splitext(basep)
+    for s in range(len(x)):
+        for i in range(len(keys)):
+            d[keys[i]] = str(x[s][i])
+        # Output to file
+        print(d)
+        parfile.append(based+"/"+basen+"_"+str(s)+ext)
+        write_parfile_dict(parfile[-1], d)
+        print("Written {}".format(s))
+
+    # Run  ----------------------------
+
+    for p in parfile:
+        run(p)
+        os.remove(p)
+
+

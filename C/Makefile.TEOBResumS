@@ -1,0 +1,72 @@
+# Makefile for TEOBResumS
+
+# make sure to use bash on Debian/Ubuntu, not dash
+SHELL=/bin/bash
+
+#
+# names and dirs 
+#
+
+BASE=$(shell /bin/pwd)
+SRCD=$(BASE)/src
+OBJD=$(BASE)/obj
+LIBD=$(BASE)/lib
+
+NAME=TEOBResumS
+EXE=$(NAME).x
+SRC=$(wildcard $(SRCD)/*.c)
+OBJ=$(patsubst $(SRCD)/%.c,$(OBJD)/%.o,$(SRC))
+LIB=$(LIBD)/lib$(NAME).a
+
+#
+# compilation options
+#
+
+CC=gcc
+CFLAGS=-g -std=c99 `gsl-config --cflags`
+#CFLAGS=-O3 -std=c99 `gsl-config --cflags`
+CFLAGS += -DDEBUG=1 # 1/0 to turn on/off debug mode
+CFLAGS += -DVERBOSE=1 # 1/0 to turn on/off verbose mode
+CFLAGS += -DUSEGRAVITOMAGNETICTERMS=1 # 1/0 to turn on gravitomagnetic terms
+CFLAGS += -DUSEBTIDALPOTENTIAL=1 # 1/0 to turn on B tidal terms
+#CFLAGS += -DUSERK45=0 # use rk45? rk8pd is default
+#CFLAGS += -DPOSTPOSTCIRCULAR=0 # 1/0 to turn on post-post-circular initial conditions
+#CFLAGS += -DEXCLUDESPINSPINTIDES=1 # 1/0 to turn off/on (exclude) spin^2-tidal couplings
+LFLAGS=`gsl-config --libs`
+LDLFLAGS=-lgsl -lgslcblas -lm -lconfig
+
+#
+# rules
+#
+
+all: $(EXE) # $(LIB)
+	@echo "All done"
+
+$(EXE): $(OBJ)
+	@echo "Building $@ ..."
+	@$(CC) $(CFLAGS) $(LFLAGS) $(OBJ) -o $@ $(LDLFLAGS)
+
+$(OBJD)/%.o: $(SRCD)/%.c
+	@mkdir -p $(dir $@)
+	@echo "Compiling $< ... -> $@"
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+clean: 
+	@echo "Cleaning ..."
+	@rm -vf $(OBJ) 
+	@rm -vf $(LIB) 
+	@echo "... done"
+
+new: clean $(EXE)
+	@echo "All done"
+
+clearup: clean 
+	@echo "Removing dirs and exe ..."
+	@rm -rvf $(OBJ) 
+	@rm -rvf $(LIB) 
+	@rm -rvf $(EXE) 
+	@echo "All done"
+
+.PHONY: all clean new #help
+
+# DO NOT DELETE
