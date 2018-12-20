@@ -648,9 +648,9 @@ int main (int argc, char* argv[])
   
   /** Scale to physical units (if necessary) */
   const double distance = par_get_d("distance");
-  double amplitude_prefactor = 1.;    
+  double amplitude_prefactor = 1.;   
   if (!(par_get_i("use_geometric_units"))) {
-    M *= MSUN_M;
+    M *= MSUN_S;
     amplitude_prefactor = nu*M/(distance*MPC_M);
   } 
   const double psi = par_get_d("coalescence_angle"); 
