@@ -530,7 +530,7 @@ int main (int argc, char* argv[])
 	  Recall that parameters are NOT stored into these auxiliary vars */
 
       const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
-      const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use ot get last point */
+      const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
       
       hlm_mrg = NULL;
       dyn_mrg = NULL;
