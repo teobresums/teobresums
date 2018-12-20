@@ -538,13 +538,6 @@ int main (int argc, char* argv[])
       Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
       Dynamics_extract (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
 
-#if (0)
-      Waveform_lm_output (hlm);
-      Dynamics_output(dyn);
-      Waveform_lm_output (hlm_mrg);
-      Dynamics_output(dyn_mrg);
-#endif
-
       /**  Interpolate mrg on uniform grid */
       
       /* Build uniform grid of width dt and alloc tmp memory */

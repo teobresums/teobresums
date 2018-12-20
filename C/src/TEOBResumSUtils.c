@@ -398,7 +398,7 @@ void unwrap(double *p, const int size)
   if( p[0] < 0 ) fact = 1;
   if( p[1] < p[0] ) 
     dphi = TwoPi;
-    //printf("phi[0]= %.3f\tfact=%d\n", p[0], fact);
+  //printf("phi[0]= %.3f\tfact=%d\n", p[0], fact);
   for (j = 1; j < size; j++){
     //if(j<10)printf("j=%d\tp[j]= %.3f\t", j, p[j]);
     p[j] += fact*TwoPi;
@@ -807,6 +807,7 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
   
   /* Alloc output waveform b */
   Waveform_lm_alloc (hlmb, N, name);
+  /* TODO: Parameters are not copied in the new wf !*/
   
   /* Copy the relevant part of a into b */
   for (int i = 0; i < N; i++) 
@@ -1021,22 +1022,19 @@ void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamic
 	 io, in, N, dyna->time[io],dyna->time[in]);
 #endif
   
-  /* Alloc output waveform b 
-     WARNING: we do not copy parameters here! */
+  /* Alloc output waveform b */
   Dynamics_alloc (dynb, N, name); 
+
+  /* TODO: Parameters are not copied in the new wf !*/
   /*
-  (*dynb) = (Dynamics *) calloc(1, sizeof(Dynamics)); 
-  if (dynb == NULL)
+    (*dynb) = (Dynamics *) calloc(1, sizeof(Dynamics)); 
+    if (dynb == NULL)
     errorexit("Out of memory");
-  strcpy((*dynb)->name,name);
-  (*dynb)->size = N;
-  memcpy(*dynb, dyna, sizeof(Dynamics));
-  //(*dynb) = dyna; // copy parameters 
-  (*dynb)->time = NULL;
-  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
-    (*dynb)->data[v] = NULL;
-  (*dynb)->time = malloc ( N * sizeof(double) );
-  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) 
+    strcpy((*dynb)->name,name);
+    (*dynb)->size = N;
+    memcpy(*dynb, dyna, sizeof(Dynamics)); // copy parameters 
+    (*dynb)->time = malloc ( N * sizeof(double) );
+    for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) 
     (*dynb)->data[v] = malloc ( N * sizeof(double) );
   */
     
