@@ -42,7 +42,9 @@ use_geometric_units = 1 # use geometric units for I/O ?
 
 use_speedytail = 1 # use special routine to speed up tail computation ?
 
-interp_uniform_grid = 0 # interpolate on uniform grid ?
+dt_merger_interp = 0.5 # dt for interpolating merger waveform and NQC/ringdown attachment
+
+interp_uniform_grid = 0 # interpolate on uniform grid final result ?
 dt_interp = 0.5 # timestep to be used for final interpolation (used if input is given in geometrical unit, unused otherwise)
 srate_interp = 4096. # sampling rate to be used for final interpolation (used if input is given in physical unit, unused otherwise)
 
