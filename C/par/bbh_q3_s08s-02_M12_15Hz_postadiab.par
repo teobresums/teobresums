@@ -43,8 +43,8 @@ use_speedytail = 1 # use special routine to speed up tail computation ?
 
 # interpolate on uniform grid?
 #interp_uniform_grid = 0 # no, interpolates/outputs on a grid of dt = 0.5 
-interp_uniform_grid = 1 # yes, only h+,hx on a grid of dt_interp
-#interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
+#interp_uniform_grid = 1 # yes, only h+,hx on a grid of dt_interp
+interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
 
 #dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
 srate        = 3.383757391950041e+04

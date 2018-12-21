@@ -243,8 +243,9 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
   double sumr, sumi;
   int activemode[KMAX];
   set_multipolar_idx_mask(activemode, KMAX, "use_mode_lm", 1);
+  if (!(par_get_i("use_geometric_units"))) M = M/MSUN_S;
 #if (DEBUG)
-    printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",
+    printf("h+,x: nu = %e M = %e D = %e Mpc psi = %e iota = %e prefactor = %e\n",
 	   nu,M,distance,psi,iota,amplitude_prefactor);
 #endif
   for (int i = 0; i < hlm->size; i++) {

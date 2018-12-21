@@ -651,7 +651,7 @@ int main (int argc, char* argv[])
   double amplitude_prefactor = 1.;   
   if (!(par_get_i("use_geometric_units"))) {
     amplitude_prefactor = nu*M*MSUN_M/(distance*MPC_M);    
-    M *= MSUN_S;    
+    M *= MSUN_S;   
   } 
   const double psi = par_get_d("coalescence_angle"); 
   const double iota = par_get_d("inclination");
