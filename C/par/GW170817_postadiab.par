@@ -1,4 +1,4 @@
-# parfile for BNS GW170817, m1= 1.46, m2 = 1.27, q = 1.15, D = 40 Mpc
+# Parfile for GW170817: BNS with m1= 1.46, m2 = 1.27, q = 1.15, D = 40 Mpc
 # Post-adiabatic + ODE run
 # builds on default options
 
