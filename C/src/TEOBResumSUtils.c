@@ -168,9 +168,10 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax)
   }
   else errorexit("Implemented only n = 3,5,7");    
   
-  if (d2f != 0.) {
+  if (d2f != 0.) {    
     xmax -= dx*d1f/d2f;
   }
+
   /* Eval function */
   if (fmax!=NULL) {
     if (n==3) {
@@ -242,8 +243,9 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
   double sumr, sumi;
   int activemode[KMAX];
   set_multipolar_idx_mask(activemode, KMAX, "use_mode_lm", 1);
+  if (!(par_get_i("use_geometric_units"))) M = M/MSUN_S;
 #if (DEBUG)
-    printf("h+,x: nu = %e M = %e D = %e psi = %e iota = %e prefactor = %e\n",
+    printf("h+,x: nu = %e M = %e D = %e Mpc psi = %e iota = %e prefactor = %e\n",
 	   nu,M,distance,psi,iota,amplitude_prefactor);
 #endif
   for (int i = 0; i < hlm->size; i++) {
@@ -397,7 +399,7 @@ void unwrap(double *p, const int size)
   if( p[0] < 0 ) fact = 1;
   if( p[1] < p[0] ) 
     dphi = TwoPi;
-    //printf("phi[0]= %.3f\tfact=%d\n", p[0], fact);
+  //printf("phi[0]= %.3f\tfact=%d\n", p[0], fact);
   for (j = 1; j < size; j++){
     //if(j<10)printf("j=%d\tp[j]= %.3f\t", j, p[j]);
     p[j] += fact*TwoPi;
@@ -779,40 +781,52 @@ void Waveform_lm_output_reim (Waveform_lm *wav)
   }
 }
 
-void Waveform_lm_free (Waveform_lm *wav)
+/* Extract a multipolar waveforms at times t >= to and t < tn, Alloc a new Waveform_lm var */
+void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, Waveform_lm **hlmb, const char *name)
 {
-  for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
-      if (wav->ampli[k]) free(wav->ampli[k]);
-      if (wav->phase[k]) free(wav->phase[k]);
-    }
-  }
-  free(wav);
-}
+  /* Check limits */
+  if (tn<to)
+    errorexit("Bad choice of times: tn < to");
+  if (to > hlma->time[hlma->size-1]) 
+    errorexit("Nothing to extract, to > time[size-1]");
+  if (tn < hlma->time[0]) 
+    errorexit("Nothing to extract, tn < time[0]");
+
+  /* Find indexes of closest elements to  (to, tn) */
+  int io = 0;
+  int in = hlma->size-1;
+  if (to > hlma->time[0])
+    io = find_point_bisection(to, hlma->size, hlma->time, 1);
+  if (tn < hlma->time[hlma->size-1])
+    in = find_point_bisection(tn, hlma->size, hlma->time, 0);
+  
+  /* Calculate the new size */ 
+  const int N  = in-io;
 
 #if (0)
-
-/** BEGIN: Block of experimental/untested/unused code */
-
-/* Alloc a new multipolar waveform and fill by interp from another */
-void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name)
-{
-  /* Alloc new memory */  
-  Waveform_lm_alloc(hlm_new, size, "");
-  strcpy((*hlm_new)->name, name);
+  printf("size = %d t[0] = %.6e t[size-1]= %.6e to = %.6e tn = %.6e\n",
+	 hlma->size,hlma->time[0],hlma->time[hlma->size-1],to,tn);
+  printf("io = %d in = %d (N=%d) t[io]= %.6e t[in] = %.6e\n",
+	 io, in, N, hlma->time[io],hlma->time[in]);
+#endif
   
-  /* Time array */
-  for (int i = 0; i < size; i++) 
-    (*hlm_new)->time[i] = i*dt + t0;
-   
-  /* Interp */
-  for (int k = 0; k < KMAX; k++) 
-    interp_spline( hlm->time, hlm->ampli[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->ampli[k]);
-  for (int k = 0; k < KMAX; k++) 
-    interp_spline( hlm->time, hlm->phase[k], hlm->size, (*hlm_new)->time, size, (*hlm_new)->phase[k]);  
+  /* Alloc output waveform b */
+  Waveform_lm_alloc (hlmb, N, name);
+  /* TODO: Parameters are not copied in the new wf !*/
+  
+  /* Copy the relevant part of a into b */
+  for (int i = 0; i < N; i++) 
+    (*hlmb)->time[i] = hlma->time[io + i]; 
+  for (int k=0; k<KMAX; k++) {
+    for (int i = 0; i < N; i++) {
+      (*hlmb)->ampli[k][i] = hlma->ampli[k][io + i];
+      (*hlmb)->phase[k][i] = hlma->phase[k][io + i];
+    }
+  }
+  
 }
 
-/* A special routine: join two multipolar waveforms at t = to */
+/* Join two multipolar waveforms at t = to */
 void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
 {
   /* Time arrays are suppose to be ordered as
@@ -840,34 +854,51 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
     return;
   }
 
-  /* Find indexes of closest elements to to */
+  /* Find indexes of closest elements to "to" 
+     If the two arrays exactly overlap at "to" this should give: 
+     time_a[ioa] = time_b[iob] */
   const int ioa = find_point_bisection(to, hlma->size, hlma->time, 1);
-  const int iob = find_point_bisection(to, hlmb->size, hlmb->time, 1);
-
-  /* Calculate the new size */
-  const int Na = hlma->size - ioa;
+  int iob = find_point_bisection(to, hlmb->size, hlmb->time, 1);
+  if ( DEQUAL(hlma->time[ioa], hlmb->time[iob], 1e-10) ) iob++;
+  
+  /* Calculate the new size N */
   const int Nb = hlmb->size - iob;
-  const int N  = Na+Nb;
+  const int N  = ioa + Nb;
 
   /* Resize a */
   Waveform_lm_push (&hlma, N);
-  hlma->size = N;
 
   /* Copy the relevant part of b into a */
-  for (int i = 0; i < Nb; i++) 
+  for (int i = 0; i < Nb; i++) {
     hlma->time[ioa + i] = hlmb->time[iob + i]; 
-  for (int k=0; k<KMAX; k++) {
+    /* printf("%d %.6e\n",ioa+i, hlma->time[ioa+i]); */
+  }
+    for (int k=0; k<KMAX; k++) {
     for (int i = 0; i < Nb; i++) {
       hlma->ampli[k][ioa + i] = hlmb->ampli[k][iob + i];
       hlma->phase[k][ioa + i] = hlmb->phase[k][iob + i];
     }
   }
+
+#if (0)
+  printf("Waveform (a) i = %d time[i] = %.6e \n",ioa, hlma->time[ioa]);
+  printf("Waveform (b) i = %d time[i] = %.6e \n",iob, hlmb->time[iob]);
+  printf("Total size (a)+(b) = %d + %d = %d (%d)\n",Nb, iob, N, hlma->size);
+  printf("%.6e - %.6e = %.6e\n",hlma->time[hlma->size-1], hlmb->time[hlmb->size-1],hlma->time[hlma->size-1]-hlmb->time[hlmb->size-1]);
+#endif  
   
 }
 
-/** END: Block of experimental/untested/unused code */
-
-#endif
+void Waveform_lm_free (Waveform_lm *wav)
+{
+  for (int k=0; k<KMAX; k++) {
+    if (wav->kmask[k]) {
+      if (wav->ampli[k]) free(wav->ampli[k]);
+      if (wav->phase[k]) free(wav->phase[k]);
+    }
+  }
+  free(wav);
+}
 
 /** Multipolar waveform at time point (complex) */
 void Waveform_lm_t_alloc (Waveform_lm_t **wav)
@@ -969,6 +1000,120 @@ void Dynamics_output (Dynamics *dyn)
     fprintf(fp, "\n");
   }
   fclose(fp);
+}
+
+/* Extract Dynamics at times t >= to and t < tn, Alloc a new Dynamics var */
+void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamics **dynb, const char *name)
+{
+  /* Check limits */
+  if (tn<to)
+    errorexit("Bad choice of times: tn < to");
+  if (to > dyna->time[dyna->size-1]) 
+    errorexit("Nothing to extract, to > time[size-1]");
+  if (tn < dyna->time[0]) 
+    errorexit("Nothing to extract, tn < time[0]");
+
+  /* Find indexes of closest elements to  (to, tn) */
+  int io = 0;
+  int in = dyna->size-1;
+  if (to > dyna->time[0])
+    io = find_point_bisection(to, dyna->size, dyna->time, 1);
+  if (tn < dyna->time[dyna->size-1])
+    in = find_point_bisection(tn, dyna->size, dyna->time, 0);
+  
+  /* Calculate the new size */ 
+  const int N  = in-io;
+
+#if (0)
+  printf("size = %d t[0] = %.6e t[size-1]= %.6e to = %.6e tn = %.6e\n",
+	 dyna->size,dyna->time[0],dyna->time[dyna->size-1],to,tn);
+  printf("io = %d in = %d (N=%d) t[io]= %.6e t[in] = %.6e\n",
+	 io, in, N, dyna->time[io],dyna->time[in]);
+#endif
+  
+  /* Alloc output waveform b */
+  Dynamics_alloc (dynb, N, name); 
+
+  /* TODO: Parameters are not copied in the new wf !*/
+  /*
+    (*dynb) = (Dynamics *) calloc(1, sizeof(Dynamics)); 
+    if (dynb == NULL)
+    errorexit("Out of memory");
+    strcpy((*dynb)->name,name);
+    (*dynb)->size = N;
+    memcpy(*dynb, dyna, sizeof(Dynamics)); // copy parameters 
+    (*dynb)->time = malloc ( N * sizeof(double) );
+    for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) 
+    (*dynb)->data[v] = malloc ( N * sizeof(double) );
+  */
+    
+  /* Copy the relevant part of a into b */
+  for (int i = 0; i < N; i++) 
+    (*dynb)->time[i] = dyna->time[io + i]; 
+  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+    for (int i = 0; i < N; i++) {
+      (*dynb)->data[v][i] = dyna->data[v][io + i];
+    }
+  }
+  
+}
+
+/* Join two dynamics time series at t = to */
+void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to)
+{
+  /* Time arrays are suppose to be ordered as
+     dyna->time:  x x x x x x x x x 
+     dynb->time:       o o o o o o o o o 
+     to        :                |
+     But they do not need to overlap or be uniformly spaced.
+     Note to can be 
+     to > dyna->time[hlma->size-1] => extend the dynamics data
+     to < dynb->time[0]            => join the whole b dynamics
+     Following checks enforce the above structure, if possible.
+  */
+  if (dyna->time[0] > dynb->time[0]) {
+    SWAPTRS( dyna, dynb );
+    if ((DEBUG) || (VERBOSE)) PRWARN("Swapped dynamics while joining.");
+  }
+  if (to > dynb->time[dynb->size-1]) {
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Dynamics not joined.");
+    return;
+  }
+  if (to <= dyna->time[0]) {
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Dynamics not joined.");
+    return;
+  }
+
+  /* Find indexes of closest elements to to */
+  const int ioa = find_point_bisection(to, dyna->size, dyna->time, 1);
+  int iob = find_point_bisection(to, dynb->size, dynb->time, 1);
+  if ( DEQUAL(dyna->time[ioa], dynb->time[iob], 1e-10) ) iob++;
+  
+  /* Calculate the new size */
+  const int Nb = dynb->size - iob;
+  const int N  = ioa + Nb;
+
+  /* Resize a */
+  Dynamics_push (&dyna, N);
+
+  /* Copy the relevant part of b into a */
+  for (int i = 0; i < Nb; i++) 
+    dyna->time[ioa + i] = dynb->time[iob + i]; 
+  for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+    for (int i = 0; i < Nb; i++) {
+      dyna->data[v][ioa + i] = dynb->data[v][iob + i];
+    }
+  }
+
+#if (0)
+  printf("Dynamics (a) i = %d time[i] = %.6e \n",ioa, dyna->time[ioa]);
+  printf("Dynamics (b) i = %d time[i] = %.6e \n",iob, dynb->time[iob]);
+  printf("Total size (a)+(b) = %d + %d = %d (%d)\n",Nb, iob, N, dyna->size);
+  printf("%.6e - %.6e = %.6e\n",dyna->time[dyna->size-1], dynb->time[dynb->size-1],dyna->time[dyna->size-1]-dynb->time[dynb->size-1]);
+#endif 
+    
 }
 
 void Dynamics_free (Dynamics *dyn)
