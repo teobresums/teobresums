@@ -1,0 +1,64 @@
+# Parfile for GW170729: BBH with, m1= 50.6, m2 = 34.3, q = 1.47, D = 2750 Mpc
+# PA + ODE run
+# builds on default options
+
+use_geometric_units = 0 # use geometric units for I/O ?
+
+#
+# Binary properties in physical units
+#
+
+M = 84.9 # total binary mass in solar masses
+q = 1.4752186588921283 # mass ratio
+distance = 2750.   # distance in megaparsecs
+
+use_spins = 1 # use spins ?
+chi1 = 0.8 # dimensionless spin 1 z-component 
+chi2 = 0.7 # dimensionless spin 2 z-component 
+
+initial_frequency = 7. # in units of Hz
+
+#
+# Output dir, output modes 
+#
+
+output_dir = "./GW170729_postadiab/" # output dir
+output_hpc = 1 # switch this off to test performances!!!
+output_multipoles = 0 # output multipoles
+output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30] # indexes of multipoles to output
+use_mode_lm = [ 1 ]; # for BBH h_{+,x}, this will be updated
+output_dynamics = 0 # output dynamics
+
+#
+# Setup
+#
+
+size = 250 # size of the arrays (chunks, dynamically extended)
+ode_timestep = "adaptive" 
+compute_LR = 0 # calculate LR ?
+compute_LSO = 1 # calculate LSO ?
+ode_stop_at_radius = 1. # stop ODE integration at this radius (if > 0)
+
+ringdown_extend_array = 400 # grid points to extend arrays for ringdown attachment
+use_speedytail = 1 # use special routine to speed up tail computation ?
+
+# interpolate on uniform grid?
+#interp_uniform_grid = 0 # no, interpolates/outputs on a grid of dt = 0.5 
+interp_uniform_grid = 1 # yes, only h+,hx on a grid of dt_interp
+#interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
+
+#dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
+srate        = 4782.696036619934
+srate_interp = 4096.  # interpolation spacing
+
+postadiabatic_dynamics      = "yes"
+postadiabatic_dynamics_N    = 8 # post-adiabatic order
+postadiabatic_dynamics_size = 190 # grid size 
+postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
+postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
+
+
+
+
+
+
