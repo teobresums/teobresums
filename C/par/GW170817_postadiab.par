@@ -1,4 +1,4 @@
-# parfile for BNS GW170817, m1= 1.46, m2 = 1.27, q = 1.15
+# Parfile for GW170817: BNS with m1= 1.46, m2 = 1.27, q = 1.15, D = 40 Mpc
 # Post-adiabatic + ODE run
 # builds on default options
 
@@ -58,7 +58,8 @@ compute_LSO = 0 # calculate LSO ?
 #interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
 
 dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
-dt_interp = 18.156322147088574 # interpolation spacing, M/delta_t  = 4096 Hz for M = 2.73 M_sun
+srate        = 148736.59102894957
+srate_interp = 4096.  # interpolation spacing
 
 
 #
