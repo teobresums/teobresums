@@ -61,7 +61,8 @@ interp_uniform_grid = 0 # no, interpolates/outputs on a grid of dt = 0.5
 #interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
 
 dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
-dt_interp = 18.360370960904238 # interpolation spacing, M/delta_t  = 4096 Hz for M = 20 M_sun
+srate        = 150389.2198181601
+srate_interp = 4096.  # interpolation spacing
 
 
 #
