@@ -36,9 +36,13 @@ if __name__ == "__main__":
     parser.add_argument("-s", dest="show", 
                         nargs=1, default="yes",
                         help="Show plot")
+    parser.add_argument("-l", dest="legend", 
+                        nargs=1, default="yes",
+                        help="Show legend")
     parser.add_argument("-a", dest="yrange",
                         type=float, nargs='+',
-                        default=[-0.75,0.75], 
+                        #default=[-0.75,0.75],
+                        default=None,
                         help="Ranges of yaxis")    
 
     if len(sys.argv)==1:
@@ -69,6 +73,10 @@ if __name__ == "__main__":
         if t is "triap":
             # t:0 real:1 imag:2 Ampli:3 Phase:4
             t, Reh, Imh, A, phi = np.loadtxt(f, unpack=True)
+            if not A.any():
+                A = np.sqrt(Reh**2 +Imh**2)
+            if not phi.any():
+                phi = np.unwrap(-np.angle(Reh+1j*Imh))
         if t is "tri":
             # t:0 real:1 imag:2
             t, Reh, Imh = np.loadtxt(f, unpack=True)
@@ -100,13 +108,15 @@ if __name__ == "__main__":
 
         name = build_output_fname(f)
         
-        plt.xlabel('$t/M$')
+        #plt.xlabel('$t/M$')
+        plt.xlabel('time')
+        plt.ylabel('h')
         plt.title(name)
         #plt.grid(True)
         #plt.xlim(0, t[-1])
-        plt.ylim(args.yrange)
-        plt.legend(loc='upper left')
-
+        if args.yrange is not None: plt.ylim(args.yrange)
+        if str(args.legend) is "yes": plt.legend(loc='upper left')
+        
         plt.savefig(args.outputdir+"/"+name+".png", dpi=400)
 
         if str(args.show) is "yes": plt.show()
