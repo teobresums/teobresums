@@ -1,5 +1,5 @@
-# parfile for BNS q=1, chi_A = chi_B = 0.1 from 20 Hz
-# Post-adiabatic + ODE run
+# parfile for BNS q=1, non-spinning from 10 Hz
+# ODE run
 # builds on default options
 
 use_geometric_units = 0 # use geometric units for I/O ?
@@ -11,11 +11,11 @@ use_geometric_units = 0 # use geometric units for I/O ?
 M = 2.7 # total binary mass in solar masses
 q = 1. # mass ratio
 
-use_spins = 1 # use spins ?
-chi1 = 0.1 # dimensionless spin 1 z-component 
-chi2 = 0.1 # dimensionless spin 2 z-component 
+use_spins = 0 # use spins ?
+chi1 = 0.0 # dimensionless spin 1 z-component 
+chi2 = 0.0 # dimensionless spin 2 z-component 
 
-initial_frequency = 20. # in units of Hz
+initial_frequency = 10. # in units of Hz
 
 tides = "TEOBRESUM"
 tides_gravitomagnetic = "no"
@@ -35,7 +35,7 @@ use_flm = "SSNLO"
 # Output dir, output modes 
 #
 
-output_dir = "./bns_q1_s01s01_M2.7_20Hz_postadiab/" # output dir
+output_dir = "./bns_q1_s0s0_M2.7_10Hz/" # output dir
 output_hpc = 1 # switch this off to test performances!!!
 output_multipoles = 0 # output multipoles
 output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30] # indexes of multipoles to output
@@ -62,19 +62,6 @@ interp_uniform_grid = 0 # no, interpolates/outputs on a grid of dt = 0.5
 
 dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
 dt_interp = 18.360370960904238 # interpolation spacing, M/delta_t  = 4096 Hz for M = 20 M_sun
-
-
-#
-# Setup for PA
-#
-
-postadiabatic_dynamics = "yes"
-postadiabatic_dynamics_N = 8 # post-adiabatic order
-postadiabatic_dynamics_size = 500 # grid size 
-postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
-postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
-
-
 
 
 
