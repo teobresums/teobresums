@@ -15,7 +15,7 @@ See the [`AUTHORS`](https://bitbucket.org/eob_ihes/teobresums/src/master/AUTHORS
 
 ## License
 
-See the ['LICENSE'](https://bitbucket.org/eob_ihes/teobresums/src/master/LICENSE) file.
+See the [`LICENSE`](https://bitbucket.org/eob_ihes/teobresums/src/master/LICENSE) file.
 
 ```
 TEOBResumS is a free software; you can redistribute it and/or modify
@@ -62,6 +62,7 @@ Main reference
 
 Other key references
 
+ * Nagar, Messina, Rettegno, Bini, Damour, Geralico, Akcay, Bernuzzi (2018) [Nonlinear-in-spin effects in effective-one-body waveform models of spin-aligned, inspiralling, neutron star binaries](https://inspirehep.net/record/1710050)
  * Akcay, Bernuzzi, Messina, Nagar, Ortiz, Rettegno [Effective-one-body multipolar waveform for tidally interacting binary neutron stars up to merger](http://inspirehep.net/record/1707624) 
  * Nagar, Riemenschneider, Pratten (2017) [Impact of Numerical Relativity information on effective-one-body waveform models](http://inspirehep.net/record/1518392)
  * Del Pozzo, Nagar (2016) [Analytic family of post-merger template waveforms](http://inspirehep.net/record/1469053)

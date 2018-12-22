@@ -15,37 +15,41 @@ from EOBUtils import * # id_data_file
 
 def build_output_fname(fname):
     """
-    Build a file name from the 
+    Build a file name from fname
     """
     x = os.path.abspath(fname).split("/")
     return x[-2]+"_"+os.path.splitext(x[-1])[0]    
     
 if __name__ == "__main__": 
 
+    #
     # Parse input
+    #
     parser = ArgumentParser(description="Simple plot of waveform files from TEOBResumS")
-    parser.add_argument("-i", dest="filenames", 
-                        nargs='+', required=True,
+    parser.add_argument('-i', '--input-files', dest="filenames", nargs='+', required=True,
                         help="Input files", metavar="FILE")
-    parser.add_argument("-o", dest="outputdir", 
-                        nargs='?', default=os.getcwd(),
+    parser.add_argument('-o-', '--output-dir', dest="outputdir", nargs='?', default=os.getcwd(),
                         help="Output directory")    
-    parser.add_argument("-m", dest="mode", 
-                        nargs=1, default="aor", 
+    parser.add_argument('-m', '--mode', dest='mode', nargs=1, default="aor", 
                         help="Type of plot. A string containing one or more of the chars 'apori' for amplitude, phase, frequency, real, and imaginary")
-    parser.add_argument("-s", dest="show", 
-                        nargs=1, default="yes",
-                        help="Show plot")
-    parser.add_argument("-a", dest="yrange",
-                        type=float, nargs='+',
-                        default=[-0.75,0.75], 
-                        help="Ranges of yaxis")    
-
+    parser.add_argument('-x', '--xrange', dest="xrange", type=float, nargs='+', default=[],
+                        help="Range of xaxis") # Note argparse might have problems with scientific notation.   
+    parser.add_argument('-y', '--yrange', dest="yrange", type=float, nargs='+', default=[],
+                        help="Range of yaxis")    
+    parser.add_argument('--no-title', dest='showtitle', action='store_false', default=True,
+                        help="Do not show title")
+    parser.add_argument('--no-legend', dest='showlegend', action='store_false', default=True,
+                        help="Do not show legend")
+    parser.add_argument('--no-show', dest='showplot', action='store_false', default=True,
+                        help="Do not show plot")
+    
     if len(sys.argv)==1:
         parser.print_help()
         sys.exit()
-    
-    # Info/checks
+
+    #
+    # Checks
+    #
     args = parser.parse_args()
     files_found = []
     for f in args.filenames:
@@ -61,14 +65,20 @@ if __name__ == "__main__":
     print("Process %d files of %d" % (len(files_found),len(args.filenames)))
 
     mode = str(args.mode) # "apori"
-    
+
     for f in files_found:
 
+        #
         # Load data
+        #
         t = id_data_file(f)
         if t is "triap":
             # t:0 real:1 imag:2 Ampli:3 Phase:4
             t, Reh, Imh, A, phi = np.loadtxt(f, unpack=True)
+            if not A.any():
+                A = np.sqrt(Reh**2 +Imh**2)
+            if not phi.any():
+                phi = np.unwrap(-np.angle(Reh+1j*Imh))
         if t is "tri":
             # t:0 real:1 imag:2
             t, Reh, Imh = np.loadtxt(f, unpack=True)
@@ -82,11 +92,15 @@ if __name__ == "__main__":
             Imh = np.imag(h)
         if t is None:
             continue
-        
+
+        #
         # Compute Frequency
+        #
         omg = np.diff(phi)/np.diff(t)
 
+        #
         # Plots
+        #
         if "a" in mode:
             plt.plot(t, A, color='blue', label=r"$A/(M\nu)$")
         if "p" in mode:
@@ -98,17 +112,25 @@ if __name__ == "__main__":
         if "i" in mode:
             plt.plot(t, Imh, color='orange', label=r"$\Im{h/(M\nu)}$", alpha=0.6)
 
+        #plt.xlabel('$t/M$')            
+        plt.xlabel('time')
+        plt.ylabel('h')
+        #plt.grid(True)
+        if args.xrange: plt.xlim(args.xrange)
+        if args.yrange: plt.xlim(args.yrange)
+        if args.showlegend: plt.legend(loc='upper left')
+            
+        #
+        # Build a name for output and title
+        #
         name = build_output_fname(f)
         
-        plt.xlabel('$t/M$')
-        plt.title(name)
-        #plt.grid(True)
-        #plt.xlim(0, t[-1])
-        plt.ylim(args.yrange)
-        plt.legend(loc='upper left')
+        if args.showtitle: plt.title(name)        
 
+        #
+        # Show/save
+        #
+        if args.showplot: plt.show()
         plt.savefig(args.outputdir+"/"+name+".png", dpi=400)
 
-        if str(args.show) is "yes": plt.show()
-
-        
+                
