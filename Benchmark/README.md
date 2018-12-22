@@ -5,7 +5,7 @@
 Parfile for several relevant test cases are collected in the dir
 
 ```
-$ ./parfiles/
+$ ../C/par/
 ```
 
 To add a test simply add parfiles there. A basic but complete set of tests comprises
@@ -14,7 +14,8 @@ To add a test simply add parfiles there. A basic but complete set of tests compr
  * tides/no tides (bns/bbh)
  * spins/no spins
  * equal/unequal spins
-
+ * post-adiabatic/full ODE evolution
+ 
 ## How to run
 
 Type
