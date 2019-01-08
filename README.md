@@ -6,8 +6,8 @@ To start, checkout the [WIKI](https://bitbucket.org/eob_ihes/teobresums/wiki/bro
 
 Code versions are tagged on master
 
- * `v1.*` C implementation currently maintained and developed.
- * `v0.*` C++ implementation abandoned in June 2018 and code development is frozen. `v0.0` was reviewed by LVC. Review was concluded on 11.04.2018. The review's final statement can be found [here](https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/TEOBResumS/FinalReviewStatement). The reviewed version is tagged as `LVC-review-end `. 
+ * [![C version](https://img.shields.io/badge/C_release-v1.0-green.svg)](https://bitbucket.org/eob_ihes/teobresums/src/v1.0/C/) C implementation currently maintained and developed.
+ * [![C++ version](https://img.shields.io/badge/C++_release-v0.1-orange.svg)](https://bitbucket.org/eob_ihes/teobresums/src/v1.0/C++/) C++ implementation abandoned in June 2018 and code development is frozen. `v0.0` was reviewed by LVC. Review was concluded on 11.04.2018. The review's final statement can be found [here](https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/TEOBResumS/FinalReviewStatement). The reviewed version is tagged as `LVC-review-end `.
 
 ## Authors
 
