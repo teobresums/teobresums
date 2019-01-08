@@ -386,7 +386,8 @@ void Waveform_lm_output_reim (Waveform_lm *wav);
 void Waveform_lm_free (Waveform_lm *wav);
 void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name);
 /* void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name); */
-/* void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to); */
+void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, Waveform_lm **hlmb, const char *name);
+void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to);
 void Waveform_lm_t_alloc (Waveform_lm_t **wav);
 void Waveform_lm_t_free (Waveform_lm_t *wav);
 void Dynamics_alloc (Dynamics **dyn, int size, const char *name);
@@ -394,6 +395,8 @@ void Dynamics_push (Dynamics **dyn, int size);
 void Dynamics_output (Dynamics *dyn);
 void Dynamics_free (Dynamics *dyn);
 void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const double dt, const char *name);
+void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamics **dynb, const char *name);
+void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
@@ -489,6 +492,8 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
 void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
+void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+				    Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
