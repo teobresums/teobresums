@@ -521,14 +521,11 @@ void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2
       + at2*at2*(-17./4.+3.*C_Q2-0.5*nu)
       + at1*at2*(nu-2.0);
 
-    // double alphanu2 = 1. + 0.5/a02*(- at2*at2*(5./4. + 5./4.*X12 + nu/2.) - at1*at1*(5./4. - 5./4.*X12 +nu/2.) + at1*at2*(-2.+nu));
-
-    double alphanu2 = 1. + 0.5/a02*delta_a2;
-    double rc2 = r2 + a02*(1. + 2.*alphanu2/r);
+    double rc2 = r2 + a02*(1. + 2.*u) + delta_a2*u;
     *rc         = sqrt(rc2);
     double divrc = 1.0/(*rc);
-    *drc_dr     = r*divrc*(1.+a02*(-alphanu2*u3 ));
-    *d2rc_dr2   = 1.*divrc*(1.-(*drc_dr)*r*divrc*(1.-alphanu2*a02*u3)+ 2.*alphanu2*a02*u3);
+    *drc_dr     = divrc*(r - (a02 + 0.5*delta_a2)*u2);
+    *d2rc_dr2   = divrc*(1 + (2.*a02 + delta_a2)*u3 - (*drc_dr)*(*drc_dr));
 
   } else {
     
@@ -575,11 +572,12 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
     
     double alphanu2 = 1. + 0.5/a02*delta_a2;
         
-    double rc2   = r2 + a02*(1. + 2.*alphanu2*u) + delta_a2_nnlo*u2;
+    double rc2   =  r2 + a02*(1. + 2.*u) + delta_a2*u + delta_a2_nnlo*u2;
     *rc          = sqrt(rc2);
     double divrc = 1.0/(*rc);
-    *drc_dr      = r*divrc*(1. -alphanu2*a02*u3 - delta_a2_nnlo*u4);
-    *d2rc_dr2    = 1.*divrc*(1. -(*drc_dr)*(*drc_dr) +2.*alphanu2*a02*u3 +3.*delta_a2_nnlo*u4);
+    *drc_dr      = divrc*(r - (a02 + 0.5*delta_a2)*u2 - delta_a2_nnlo*u3);
+    *d2rc_dr2    = divrc*(1 + (2.*a02 + delta_a2)*u3
+			  + 3*delta_a2_nnlo*u4 - (*drc_dr)*(*drc_dr));
 
   } else {
 
@@ -638,13 +636,12 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
                          + 3.*(C_Oct2 - C_Q2)     *at1*at2*at2*at2
                        + 0.75*(C_Hex2 - C_Q2*C_Q2)*at2*at2*at2*at2;
     
-    double alphanu2 = 1. + 0.5/a02*delta_a2;
-        
-    double rc2   = r2 + a02*(1. + 2.*alphanu2*u) + (delta_a2_nnlo+delta_a4_lo)*u2;
+    double rc2   =  r2 + a02*(1. + 2.*u) + delta_a2*u + (delta_a2_nnlo+delta_a4_lo)*u2;
     *rc          = sqrt(rc2);
     double divrc = 1.0/(*rc);
-    *drc_dr      = r*divrc*(1. -alphanu2*a02*u3 - (delta_a2_nnlo+delta_a4_lo)*u4);
-    *d2rc_dr2    = 1.*divrc*(1. -(*drc_dr)*(*drc_dr) +2.*alphanu2*a02*u3 +3.*(delta_a2_nnlo+delta_a4_lo)*u4);
+    *drc_dr      = divrc*(r - (a02 + 0.5*delta_a2)*u2 - (delta_a2_nnlo+delta_a4_lo)*u3);
+    *d2rc_dr2    = divrc*(1 + (2.*a02 + delta_a2)*u3
+			  + 3*(delta_a2_nnlo+delta_a4_lo)*u4 - (*drc_dr)*(*drc_dr));
 
   } else {
 
