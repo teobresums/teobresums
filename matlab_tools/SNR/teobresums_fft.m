@@ -171,15 +171,15 @@ Phf_EOB = unwrap(angle(hf));
 jAmx = find(fM_EOB(1:end)>fM_Amx,1,'first');
 
 %[outfit_Phf_EOB]  = fit(fM_EOB(floor(end/2):end),Phf_EOB(floor(end/2):end),'poly1');
-[outfit_Phf_EOB]  = fit(fM_EOB(1:jAmx),Phf_EOB(1:jAmx),'poly1');
+%[outfit_Phf_EOB]  = fit(fM_EOB(1:jAmx),Phf_EOB(1:jAmx),'poly1');
+%Phf_EOB = Phf_EOB - (fM_EOB*outfit_Phf_EOB.p1 + outfit_Phf_EOB.p2);
 
-
-Phf_EOB = Phf_EOB - (fM_EOB*outfit_Phf_EOB.p1 + outfit_Phf_EOB.p2);
+p       = polyfit(fM_EOB(1:jAmx),Phf_EOB(1:jAmx),1);
+Phf_EOB = Phf_EOB - (fM_EOB*p(1) + p(2));
 
 AF     = Af_EOB; %.*match_win  + Af_PN.*(1-match_win);
 PhaseF = Phf_EOB; %.*match_win + Phf_PN.*(1-match_win);
 fM     = fM_EOB;
-
 
 %{
 AF     = Af_EOB;
