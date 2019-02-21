@@ -16,12 +16,13 @@ linewidth= [1                1             1             2              2 ];
 ni       = 1;
 ne       = 1;
 GMsunbyc3= 4.925490947e-6*1e3; % Conversion factor in Hz
-Mtot    = 80; % Msun
-outfile = 'Data_FT/FT_bbh_80Msun.dat'; 
+Mtot     = 2.7; % Msun
+outfile  = 'Data_FT/FT_bns.dat'; 
 for n=1
-    fname                        = '../../C++/waveform.dat';
-    [o{n}.fM, o{n}.AF, o{n}.Psi] = teobresums_fft(Mtot,fname,outfile,1,npts_end(n),[Tau(n) Tau_end(n)],[alph1(n) alph2(n)],tapering(n),0);
-    o{n}.fMHz                    = o{n}.fM/(M(n).*GMsunbyc3);   
+    %fname                        = '../../C++/waveform.dat';
+    fname                        = '../../C/bns_q1_s0s0_M2.7_20Hz_postadiab/hlm_interp_l2_m2.txt';
+    [o{n}.fM, o{n}.AF, o{n}.Psi] = teobresums_fft(fname,outfile,1,npts_end(n),[Tau(n) Tau_end(n)],[alph1(n) alph2(n)],tapering(n),0);
+    o{n}.fMHz                    = o{n}.fM/(M(n).*GMsunbyc3);  
     
     % remove the unphysical region of the FFT
     n0 = 18;
@@ -49,20 +50,13 @@ for n=1
     %}
 end
 
-figure('Name','Qomg FD')
-for n=ni:ne
-    plot(o{n}.fM,o{n}.Qomg,'k');
-end
-
-
-
 
 figure('Name','Phase of the FT in fM')
 for n=ni:ne
     semilogx(o{n}.fM,o{n}.Psi,'Color',clr{n},'LineStyle',style{n},'LineWidth',linewidth(n))
 hold on;
 end
-xlabel('$Mf$','FontSize',14,'Interpreter','Latex');
+xlabel('$Mf$','FontSize',20,'Interpreter','Latex');
 ylabel('$\Psi(fM)$','FontSize',20,'Interpreter','Latex');
 xlim([0.0 0.1]);
 leg=legend('SLy-135135','SLy-140120','H4-135135','ALF2-140110','MS1b-150100');
@@ -73,9 +67,9 @@ figure('Name','Amplitude of the FT in fM')
 for n=ni:ne
 loglog(o{n}.fM,o{n}.AF,'Color',clr{n},'LineStyle',style{n},'LineWidth',linewidth(n))
 hold on;
-xlim([0.005 0.1]);
-ylim([0.1 100]);
-xlabel('$Mf$','FontSize',14,'Interpreter','Latex');
+%xlim([0.005 0.1]);
+%ylim([0.1 100]);
+xlabel('$Mf$','FontSize',20,'Interpreter','Latex');
 ylabel('$\tilde{A}(fM)$','FontSize',20,'Interpreter','Latex');
 end
 leg=legend('SLy-135135','SLy-140120','H4-135135','ALF2-140110','MS1b-150100');
