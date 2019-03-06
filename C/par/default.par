@@ -96,6 +96,9 @@ ode_tmax = 1e8 # max integration time
 ode_stop_at_radius = 2. # stop ODE integration at this radius (if > 0)
 ode_stop_afterNdt = 4 # stop ODE N iters after the Omega peak
 
+openmp_threads = 1 # OpenMP threads
+openmp_timeron = 0 # OpenMP timers
+
 # ----------------------
 # following pars are set by the code
 # ----------------------

@@ -52,7 +52,7 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
   gsl_interp_accel *acc = gsl_interp_accel_alloc ();
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
-  gsl_spline_init (spline, t, y, n);
+  gsl_spline_init (spline, t, y, n);    
   for (int k = 0; k < ni; k++) {
     yi[k] = gsl_spline_eval (spline, ti[k], acc);
   }
@@ -60,6 +60,30 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
   gsl_interp_accel_free (acc);
 }
 
+/* An OpenMP version. We keep two versions because we might want to introduce the 
+   thread-parallelism at different levels */
+void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi)
+{
+#ifdef _OPENMP
+  openmp_timer_start("interp_spline");
+#endif  
+#pragma omp parallel 
+  {
+    gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+    gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
+    gsl_spline_init (spline, t, y, n);    
+#pragma omp for
+    for (int k = 0; k < ni; k++) {
+      yi[k] = gsl_spline_eval (spline, ti[k], acc);
+    }
+    gsl_spline_free (spline);
+    gsl_interp_accel_free (acc);
+  }
+#ifdef _OPENMP
+    openmp_timer_stop("interp_spline");
+#endif    
+}
+  
 /** Find nearest point index in 1d array */
 int find_point_bisection(double x, int n, double *xp, int o)
 {
@@ -78,7 +102,7 @@ int find_point_bisection(double x, int n, double *xp, int o)
 }
 
 /** Barycentric Lagrange interpolation at xx with n points of f(x), 
-   equivalent to standard Lagrangian interpolation */   
+    equivalent to standard Lagrangian interpolation */   
 #define tiny 1e-12
 double baryc_f(double xx, int n, double *f, double *x)
 {
@@ -190,14 +214,48 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax)
 }
 
 /** Factorial */
+static const double f35[] = {1.,
+			     1.,
+			     2.,
+			     6.,
+			     24.,
+			     120.,
+			     720.,
+			     5040.,
+			     40320.,
+			     362880.,
+			     3628800., 
+			     39916800.,
+			     479001600.,
+			     6227020800.,
+			     87178291200.,
+			     1307674368000.,
+			     20922789888000.,
+			     355687428096000.,
+			     6402373705728000.,
+			     121645100408832000.,
+			     2432902008176640000.,
+			     51090942171709440000.,
+			     1124000727777607680000.,
+			     25852016738884976640000.,
+			     620448401733239439360000.,
+			     15511210043330985984000000.,
+			     403291461126605635584000000.,
+			     10888869450418352160768000000.,
+			     304888344611713860501504000000.,
+			     8841761993739701954543616000000.,
+			     265252859812191058636308480000000.,
+			     8222838654177922817725562880000000.,
+			     263130836933693530167218012160000000.,
+			     8683317618811886495518194401280000000.,
+			     295232799039604140847618609643520000000.,
+			     10333147966386144929666651337523200000000.};
 double fact(int n)
 {
-  double f[] = {1., 1., 2., 6., 24., 120., 720., 5040., 40320., 362880.,
-        3628800., 39916800., 479001600., 6227020800., 87178291200.};
   if (n < 0){
     errorexit(" computing a negative factorial.\n");
-  } else if (n <= 14){
-    return f[n];
+  } else if (n <= 35){
+    return f35[n];
   } else {
     return n*fact(n-1);
   }
@@ -206,74 +264,93 @@ double fact(int n)
 /** Wigner d-function */
 double wigner_d_function(int l, int m, int s, double i)
 {
-  double dWig = 0.;
-  double costheta = cos(i*0.5);
-  double sintheta = sin(i*0.5);
-  int ki = MAX( 0  , m-s );
-  int kf = MIN( l+m, l-s );
-  int k;
-  for( k = ki; k <= kf; k++ ){
-    dWig +=
-      ( pow(-1.,k) * pow(costheta,2*l+m-s-2*k) * pow(sintheta,2*k+s-m) )/
-      ( fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) );
+  const double costheta = cos(i*0.5);
+  const double sintheta = sin(i*0.5);
+  const double norm = sqrt( (fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s)) );
+  const int ki = MAX( 0  , m-s );
+  const int kf = MIN( l+m, l-s );
+  double dWig = 0.;  
+  double div;
+  for (int k = ki; k <= kf; k++ ) {
+    div = 1.0/( fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) );
+    dWig += div*( pow(-1.,k) * pow(costheta,2*l+m-s-2*k) * pow(sintheta,2*k+s-m) );
   }
-  return (sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s)) * dWig);
+  return (norm * dWig);
 }
 
 /** Spin-weighted spherical harmonic 
     Ref: https://arxiv.org/pdf/0709.0093.pdf */
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
 {
-    if ((l<0) || (m<-l) || (m>l)) {
-        errorexit(" wrong (l,m) inside spinspharmY\n");
-    }
-    double c = pow(-1.,-s) * sqrt( (2.*l+1.)/(4.*M_PI) );
-    double dWigner = c * wigner_d_function(l,m,-s,i);
-    *rY = cos((double)(m)*phi) * dWigner;
-    *iY = sin((double)(m)*phi) * dWigner;
-    return OK;
+  if ((l<0) || (m<-l) || (m>l)) {
+    errorexit(" wrong (l,m) inside spinspharmY\n");
+  }
+  double c = pow(-1.,-s) * sqrt( (2.*l+1.)/(4.*M_PI) );
+  double dWigner = c * wigner_d_function(l,m,-s,i);
+  *rY = cos((double)(m)*phi) * dWigner;
+  *iY = sin((double)(m)*phi) * dWigner;
+  return OK;
 }
 
 /** (h+, hx) polarizations from the multipolar waveform */
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc)
-{
-  static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
-  double Y_real, Y_imag;
-  double Aki, cosPhi, sinPhi;
-  double sumr, sumi;
-  int activemode[KMAX];
-  double Msun = M;
-  set_multipolar_idx_mask(activemode, KMAX, "use_mode_lm", 1);
-  if (!(par_get_i("use_geometric_units"))) Msun = M/MSUN_S;
+{  
+#ifdef _OPENMP
+  openmp_timer_start("compute_hpc");
+#endif    
+#pragma omp parallel 
+  {
+    double Y_real[KMAX], Y_imag[KMAX];
+    static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
+    double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
+    double Aki, cosPhi, sinPhi;
+    double sumr, sumi;
+    int activemode[KMAX];
+    double Msun = M;
+    set_multipolar_idx_mask(activemode, KMAX, "use_mode_lm", 1);
+    if (!(par_get_i("use_geometric_units"))) Msun = M/MSUN_S;
 #if (DEBUG)
     printf("h+,x: nu = %e M = %e D = %e Mpc psi = %e iota = %e prefactor = %e\n",
 	   nu,Msun,distance,psi,iota,amplitude_prefactor);
 #endif
-  for (int i = 0; i < hlm->size; i++) {
-    hpc->time[i] = hlm->time[i]*M; 
-    /* hpc->real[i] = hpc->imag[i] = 0.; */
-    sumr = sumi = 0.;
+    /* Precompute Ylm */
     for (int k = 0; k < KMAX; k++ ) {
       if (!activemode[k]) continue;
-      spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota);
-      Aki  = amplitude_prefactor * hlm->ampli[k][i];
-      cosPhi = cos( hlm->phase[k][i] );
-      sinPhi = sin( hlm->phase[k][i] );
-      sumr += Aki*(cosPhi*Y_real + sinPhi*Y_imag);
-      sumi -= Aki*(sinPhi*Y_real + cosPhi*Y_imag); //TODO: overall check sign
-      if ( (mneg) && (MINDEX[k]!=0) ) { 
-	/* add m<0 modes */
-	spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota);
-	Aki    = amplitude_prefactor * hlm->ampli[k][i];
-	/* cosPhi = cos( hlm->phase[k][i] );  */
-	/* sinPhi = sin( hlm->phase[k][i] );  */
-	sumr += Aki*(cosPhi*Y_real - sinPhi*Y_imag);
-	sumi += Aki*(sinPhi*Y_real - cosPhi*Y_imag); //TODO: overall check sign
-      }    
+      spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], psi,iota);
+      if ( (mneg) && (MINDEX[k]!=0) )  /* add m<0 modes */
+	spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], psi,iota); 
     }
-    hpc->real[i] = sumr;
-    hpc->imag[i] = sumi;
+    /* Sum up  hlm * Ylm */
+#pragma omp for
+    for (int i = 0; i < hlm->size; i++) {
+      hpc->time[i] = hlm->time[i]*M; 
+      /* hpc->real[i] = hpc->imag[i] = 0.; */
+      sumr = sumi = 0.;
+      for (int k = 0; k < KMAX; k++ ) {
+	if (!activemode[k]) continue;
+	/* spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota); */
+	Aki  = amplitude_prefactor * hlm->ampli[k][i];
+	cosPhi = cos( hlm->phase[k][i] );
+	sinPhi = sin( hlm->phase[k][i] );
+	sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
+	sumi -= Aki*(sinPhi*Y_real[k] + cosPhi*Y_imag[k]); //TODO: overall check sign
+	if ( (mneg) && (MINDEX[k]!=0) ) { 
+	  /* add m<0 modes */
+	  /* spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota); */
+	  Aki    = amplitude_prefactor * hlm->ampli[k][i];
+	  /* cosPhi = cos( hlm->phase[k][i] );  */
+	  /* sinPhi = sin( hlm->phase[k][i] );  */
+	  sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
+	  sumi += Aki*(sinPhi*Y_real_mneg[k] - cosPhi*Y_imag_mneg[k]); //TODO: overall check sign
+	}    
+      }
+      hpc->real[i] = sumr;
+      hpc->imag[i] = sumi;
+    }
   }
+#ifdef _OPENMP
+  openmp_timer_stop("compute_hpc");
+#endif    
 }
 
 /** 4th order centered stencil first derivative, uniform grids */
@@ -623,12 +700,12 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
     h->time[i] = i*dt + t0;
 
   /* Interp phase and amplitude */
-  interp_spline(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
-  interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
-
+  interp_spline_omp(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
+  interp_spline_omp(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
+  
   /* Compute Real/Imag */
   Waveform_rmap (h, 0, 0); /* do not unwrap */
-
+  
   /* Free aux memory */
   Waveform_free (h_aux);
 }
@@ -738,7 +815,7 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
     interp_spline(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
   for (int k = 0; k < KMAX; k++) 
     interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
-
+  
   /* Free aux memory */
   Waveform_lm_free (hlm_aux);
 }
@@ -818,6 +895,7 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
   /* Copy the relevant part of a into b */
   for (int i = 0; i < N; i++) 
     (*hlmb)->time[i] = hlma->time[io + i]; 
+  
   for (int k=0; k<KMAX; k++) {
     for (int i = 0; i < N; i++) {
       (*hlmb)->ampli[k][i] = hlma->ampli[k][io + i];
@@ -868,13 +946,14 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
 
   /* Resize a */
   Waveform_lm_push (&hlma, N);
-
+  
   /* Copy the relevant part of b into a */
   for (int i = 0; i < Nb; i++) {
     hlma->time[ioa + i] = hlmb->time[iob + i]; 
     /* printf("%d %.6e\n",ioa+i, hlma->time[ioa+i]); */
   }
-    for (int k=0; k<KMAX; k++) {
+
+  for (int k=0; k<KMAX; k++) {
     for (int i = 0; i < Nb; i++) {
       hlma->ampli[k][ioa + i] = hlmb->ampli[k][iob + i];
       hlma->phase[k][ioa + i] = hlmb->phase[k][iob + i];
@@ -1051,6 +1130,7 @@ void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamic
   /* Copy the relevant part of a into b */
   for (int i = 0; i < N; i++) 
     (*dynb)->time[i] = dyna->time[io + i]; 
+  
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
     for (int i = 0; i < N; i++) {
       (*dynb)->data[v][i] = dyna->data[v][io + i];
@@ -1102,6 +1182,7 @@ void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to)
   /* Copy the relevant part of b into a */
   for (int i = 0; i < Nb; i++) 
     dyna->time[ioa + i] = dynb->time[iob + i]; 
+
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
     for (int i = 0; i < Nb; i++) {
       dyna->data[v][ioa + i] = dynb->data[v][iob + i];

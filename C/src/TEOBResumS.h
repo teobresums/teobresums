@@ -48,6 +48,11 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv2.h>
 
+#ifdef _OPENMP
+#include <omp.h>
+#define omp ignore
+#endif
+
 /** Following macros can be set during compilation for special feats */
 #ifndef VERBOSE
 #define VERBOSE 0 /* verbose mode is off by default */
@@ -352,6 +357,7 @@ double q_to_nu(const double q);
 double nu_to_X1(const double nu);
 double Eulerlog(const double x,const int m);
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi);
+void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi);
 int find_point_bisection(double x, int n, double *xp, int o);
 double baryc_f(double xx, int n, double *f, double *x);
 void baryc_weights(int n, double *x, double *omega);
@@ -499,3 +505,10 @@ void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
 void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm);
 
+#ifdef _OPENMP
+/* TEOBResumSOMP.c */
+void openmp_init();
+void openmp_timer_start(char *name);
+void openmp_timer_stop(char *name);
+void openmp_free();
+#endif
