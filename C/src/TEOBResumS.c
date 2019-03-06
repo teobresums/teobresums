@@ -74,6 +74,10 @@ int main (int argc, char* argv[])
   system_mkdir(par_get_s("output_dir"));
   par_db_write_file("params.txt");
   
+#ifdef _OPENMP
+  openmp_init();
+#endif
+  
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = par_get_d("M"); /* Msun */ 
   double time_unit_fact = 1;
@@ -167,12 +171,12 @@ int main (int argc, char* argv[])
     par_set_d("rLSO", dyn->rLSO);
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }
-
+  
   /** Compute initial radius */
   const double f0 = par_get_d("initial_frequency")/time_unit_fact;
   const double r0 = eob_dyn_r0_Kepler(f0);
-  // const double r0 = eob_dyn_r0_eob(f0, dyn); /* Radius from EOB equations. This is what should be used. */
-  
+  //const double r0 = eob_dyn_r0_eob(f0, dyn); /* Radius from EOB equations. This is what should be used. */
+
   /** Final BH */
   if (!(dyn->use_tidal)) {
     HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -252,7 +256,7 @@ int main (int argc, char* argv[])
      * Initial conditions for the evolution
      * *****************************************
      */
-    
+
     /** Compute the initial conditions */
     if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
     else           eob_dyn_ic(r0, dyn, dyn->y0);
@@ -293,6 +297,8 @@ int main (int argc, char* argv[])
     hlm->time[0] = 0.;
     for (int k = 0; k < KMAX; k++) {
       hlm->ampli[k][0] = hlm_t->ampli[k];
+    }
+    for (int k = 0; k < KMAX; k++) {
       hlm->phase[k][0] = hlm_t->phase[k]; 
     }
     
@@ -672,9 +678,9 @@ int main (int argc, char* argv[])
   Waveform *hpc; 
   Waveform_alloc (&hpc, size, "waveform"); 
 
-  /* h+, hx */
+  /* h+, hx */  
   compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
-
+  
   if (interp_uniform_grid == INTERP_UNIFORM_GRID_HPC) {
     /* Interp to uniform grid phase and amplitude of h+, hx  */
     const double dt_interp_hpc = par_get_d("dt_interp") * M;
@@ -683,7 +689,6 @@ int main (int argc, char* argv[])
     unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* ... but use phi22 as unwrap proxy */
     Waveform_interp_ap (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
     /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */ /* this interp real/imag */
-    
     if (par_get_i("output_multipoles")) {
       const double dt_interp_hlm = par_get_d("dt_interp");
       const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
@@ -713,6 +718,10 @@ int main (int argc, char* argv[])
    * Finalize 
    * *****************************************
    */
+  
+#ifdef _OPENMP
+  openmp_free(); 
+#endif
   
   /** Free memory */
   Dynamics_free (dyn);

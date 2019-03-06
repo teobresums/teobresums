@@ -83,28 +83,20 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
   
 }
 
-/* Factorials evaluated for the tail term */
-static const double f14[] = {1.,         1.,          2.,
-			     6.,         24.,         120.,
-			     720.,       5040.,       40320.,
-			     362880.,    3628800.,    39916800.,
-			     479001600., 6227020800., 87178291200.};
-
 /** Tail term (modulus) */
 void eob_flx_Tlm(const double w, double *MTlm)
 {
-  double hhatk, x2, y, prod;
-  int k, j;    
-  for (k = 0; k < KMAX; k++ ) {
+  double hhatk, x2, y, prod, fl;
+  for (int k = 0; k < KMAX; k++) {
     hhatk = MINDEX[k] * w;
     x2    = 4.*hhatk*hhatk;
     prod  = 1.;
-    for (j=1; j <= LINDEX[k]; j++ ) {
+    for (int j=1; j <= LINDEX[k]; j++) {
       prod *= ( j*j + x2 );
     }
     y  = 4.*Pi*hhatk;
     y /= ( 1. - exp(-y) ); 
-    MTlm[k] = sqrt( 1./(f14[LINDEX[k]]*f14[LINDEX[k]]) * y * prod );
+    MTlm[k] = sqrt( 1./( SQ(fact(LINDEX[k])) ) * y * prod );
   }
 }
 
