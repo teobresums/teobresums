@@ -13,7 +13,7 @@ use_geometric_units = 1
 # Binary properties
 #
 
-q = 2.6 # mass ratio
+q = 5. # mass ratio
 
 use_spins = 0
 chi1 = 0.0 # dimensionless spin 1 z-component 
@@ -23,8 +23,8 @@ initial_frequency = 0.0001329882576896766 # initial GW freq = 10 Hz for M = 2.7 
 
 tides = "TEOBRESUM"
 tides_gravitomagnetic = "no"
-LambdaAl2 = 1.     # SLy mA = mB = 1.35*Msun
-LambdaBl2 = 1.
+LambdaAl2 = 5000.     # SLy mA = mB = 1.35*Msun
+LambdaBl2 = 10000.
 LambdaAl3 = 709.518721258149
 LambdaBl3 = 709.518721258149
 LambdaAl4 = 1245.540991372862
