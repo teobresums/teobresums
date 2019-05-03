@@ -2351,13 +2351,13 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   }
   
   /** Computing the tail */
-#define r0 (1.213061319425267e+00)
+#define RTAIL (1.213061319425267e+00)
   const double Hreal = H * nu;
   Waveform_lm_t tlm;
   if (usespeedytail) {
-    eob_wav_speedyTail(Omega,Hreal, r0, &tlm); 
+    eob_wav_speedyTail(Omega,Hreal, RTAIL, &tlm); 
   } else {
-    eob_wav_hhatlmTail(Omega,Hreal, r0, &tlm); 
+    eob_wav_hhatlmTail(Omega,Hreal, RTAIL, &tlm); 
   }
   
   /** Residual phase corrections delta_{lm} */

@@ -57,7 +57,7 @@ dt_interp = 4.130563222595265 # M/delta_t = 4096 Hz for M=15*Msun
 postadiabatic_dynamics      = "yes"
 postadiabatic_dynamics_N    = 8 # post-adiabatic order
 postadiabatic_dynamics_size = 190 # grid size 
-postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
+#postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
 postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
 
 

@@ -13,7 +13,7 @@ use_geometric_units = 1
 # Binary properties
 #
 
-q = 5. # mass ratio
+q = 1. # mass ratio
 
 use_spins = 0
 chi1 = 0.0 # dimensionless spin 1 z-component 
@@ -23,8 +23,8 @@ initial_frequency = 0.0001329882576896766 # initial GW freq = 10 Hz for M = 2.7 
 
 tides = "TEOBRESUM"
 tides_gravitomagnetic = "no"
-LambdaAl2 = 5000.     # SLy mA = mB = 1.35*Msun
-LambdaBl2 = 10000.
+LambdaAl2 = 400.     # SLy mA = mB = 1.35*Msun
+LambdaBl2 = 500.
 LambdaAl3 = 709.518721258149
 LambdaBl3 = 709.518721258149
 LambdaAl4 = 1245.540991372862
@@ -64,8 +64,8 @@ dt_interp = 18.360370960904238 # interpolation spacing, delta_t/M  = 4096 Hz
 
 postadiabatic_dynamics = "yes"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
-postadiabatic_dynamics_size = 830 # grid size 
-postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
+#postadiabatic_dynamics_size = 830 # grid size 
+#postadiabatic_dynamics_rmin = 14. # stop post-adiabatic dynamics at this radius
 postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
 
 

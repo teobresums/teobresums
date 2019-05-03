@@ -102,7 +102,7 @@ int main (int argc, char* argv[])
   const int use_tidal = par_get_i("use_tidal");
   int store_dynamics = par_get_i("output_dynamics"); 
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
-  const int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
+  int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = par_get_d("dt");
 
@@ -121,9 +121,21 @@ int main (int argc, char* argv[])
     
   const int chunk = par_get_i("size");
   int size = chunk; /* note: size can vary */
-    
+
+  /** Compute initial radius */
+  const double f0 = par_get_d("initial_frequency")/time_unit_fact;
+  double r0 = eob_dyn_r0_Kepler(f0);
+//printf("r0 = %f\n", r0);
+  //const double r0 = eob_dyn_r0_eob(f0, dyn); /* Radius from EOB equations. This is what should be used. */ 
+  if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
+//printf("r0 = %f\n", r0);
+ 
   if (use_postadiab_dyn) {
-    size = par_get_i("postadiabatic_dynamics_size"); 
+    //size = par_get_i("postadiabatic_dynamics_size");
+    double rmin = par_get_d("postadiabatic_dynamics_rmin");
+    if(use_tidal) rmin = par_get_d("postadiabatic_dynamics_rmin_BNS");
+    size = floor(fabs(r0 - rmin)/POSTADIABATIC_DR) + 1;
+    //printf("size=%d\n",size);
     par_set_i("size",size);
     Dynamics_alloc (&dyn, size, "dyn");
     Waveform_lm_alloc (&hlm, size, "hlm"); 
@@ -132,6 +144,14 @@ int main (int argc, char* argv[])
     Waveform_lm_alloc (&hlm, size, "hlm"); 
   }
   Waveform_lm_t_alloc (&hlm_t);
+
+    /* If initial radius is too close to PA limit then skip PA and go directly to ODE */
+    if (size - 1 < POSTADIABATIC_NSTEP_MIN) {
+        size = chunk;
+        use_postadiab_dyn = 0;
+    }
+//printf("size=%d\n",size);
+//printf("%d\n", use_postadiab_dyn);  
 
   /* Set quick-access parameters dyn (be careful here) */
   Dynamics_set_params(dyn);
@@ -154,6 +174,14 @@ int main (int argc, char* argv[])
     dyn->use_spins = 0;
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal)));
     par_set_d("rLR_tidal", dyn->rLR_tidal);
+
+	double LambdaAl2  = par_get_d("LambdaAl2");
+	if( fabs(LambdaAl2) < TEOB_LAMBDA_TOL ) LambdaAl2 = 0.0;
+	double LambdaBl2 = par_get_d("LambdaBl2");
+	if( fabs(LambdaBl2) < TEOB_LAMBDA_TOL ) LambdaBl2 = 0.0;
+	double q = par_get_d("q");
+	//printf("%.2f\t%.1f\t%.1f\t%.16f\n", q, LambdaAl2, LambdaBl2, dyn->rLR_tidal);
+
     /* Reset options */
     dyn->use_tidal = par_get_i("use_tidal");
     dyn->use_spins = par_get_i("use_spins");
@@ -171,11 +199,6 @@ int main (int argc, char* argv[])
     par_set_d("rLSO", dyn->rLSO);
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }
-  
-  /** Compute initial radius */
-  const double f0 = par_get_d("initial_frequency")/time_unit_fact;
-  const double r0 = eob_dyn_r0_Kepler(f0);
-  //const double r0 = eob_dyn_r0_eob(f0, dyn); /* Radius from EOB equations. This is what should be used. */
 
   /** Final BH */
   if (!(dyn->use_tidal)) {
@@ -205,7 +228,7 @@ int main (int argc, char* argv[])
 
     /** Calculate dynamics */
     eob_dyn_Npostadiabatic(dyn, r0); 
-    
+ 
     /** Calculate waveform */
     for (int i = 0; i < size; i++) 
       hlm->time[i] = dyn->time[i];
@@ -425,7 +448,7 @@ int main (int argc, char* argv[])
     eob_wav_hlm(dyn, hlm_t); 
     
     /** Update size and push arrays (if needed) */
-    if (iter>size) {
+    if (iter==size) {
       /* if (DEBUG)  printf("Push memory\n"); */ 
       size += chunk;
       par_set_i("size", size);
@@ -474,7 +497,8 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-	dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; 
+	dyn->dt = MIN(dyn->dt, 0.4);        // MA: This should always work!
+	dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; // MA: This should never shoot beyond 2M!
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }
@@ -495,7 +519,7 @@ int main (int argc, char* argv[])
 
   /** Update waveform and dynamics size 
       resize to actual size */
-  size = iter;
+  size = iter+1;
   par_set_i("size", size); 
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
