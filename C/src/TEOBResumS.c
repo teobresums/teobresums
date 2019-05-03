@@ -125,17 +125,21 @@ int main (int argc, char* argv[])
   /** Compute initial radius */
   const double f0 = par_get_d("initial_frequency")/time_unit_fact;
   double r0 = eob_dyn_r0_Kepler(f0);
-//printf("r0 = %f\n", r0);
+printf("r0 = %f\n", r0);
   //const double r0 = eob_dyn_r0_eob(f0, dyn); /* Radius from EOB equations. This is what should be used. */ 
-  if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
-//printf("r0 = %f\n", r0);
+  
+
+printf("size=%d\n",size);
  
   if (use_postadiab_dyn) {
+    if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
+    printf("r0 = %f\n", r0);
     //size = par_get_i("postadiabatic_dynamics_size");
     double rmin = par_get_d("postadiabatic_dynamics_rmin");
     if(use_tidal) rmin = par_get_d("postadiabatic_dynamics_rmin_BNS");
-    size = floor(fabs(r0 - rmin)/POSTADIABATIC_DR) + 1;
-    //printf("size=%d\n",size);
+    size = floor((r0 - rmin)/POSTADIABATIC_DR) + 1;
+    printf("size=%d\n",size);
+//size=200;
     par_set_i("size",size);
     Dynamics_alloc (&dyn, size, "dyn");
     Waveform_lm_alloc (&hlm, size, "hlm"); 
@@ -150,8 +154,9 @@ int main (int argc, char* argv[])
         size = chunk;
         use_postadiab_dyn = 0;
     }
-//printf("size=%d\n",size);
-//printf("%d\n", use_postadiab_dyn);  
+size=1000;
+printf("size=%d\n",size);
+printf("%d\n", use_postadiab_dyn);  
 
   /* Set quick-access parameters dyn (be careful here) */
   Dynamics_set_params(dyn);
