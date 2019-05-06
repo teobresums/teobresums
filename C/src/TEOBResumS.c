@@ -102,7 +102,7 @@ int main (int argc, char* argv[])
   const int use_tidal = par_get_i("use_tidal");
   int store_dynamics = par_get_i("output_dynamics"); 
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
-  const int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
+  int use_postadiab_dyn = STREQUAL(par_get_s("postadiabatic_dynamics"),"yes");
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = par_get_d("dt");
 
@@ -121,9 +121,26 @@ int main (int argc, char* argv[])
     
   const int chunk = par_get_i("size");
   int size = chunk; /* note: size can vary */
- 
- if (use_postadiab_dyn) {
+
+  /** Compute initial radius */
+  const double f0 = par_get_d("initial_frequency")/time_unit_fact;
+  double r0 = eob_dyn_r0_Kepler(f0);
+  //const double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
+
+  /* If f_min is too high fall back to a minimum acceptable initial radius */
+  if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
+
+  if (use_postadiab_dyn) {
     size = par_get_i("postadiabatic_dynamics_size"); 
+    double rmin = par_get_d("postadiabatic_dynamics_rmin");
+    if(use_tidal) rmin = par_get_d("postadiabatic_dynamics_rmin_BNS");
+    size = floor(fabs(r0 - rmin)/POSTADIABATIC_DR) + 1;
+    
+    /* If initial radius is too close to PA limit then skip PA and go directly to ODE */
+    if (size - 1 < POSTADIABATIC_NSTEP_MIN) {
+        size = chunk;
+        use_postadiab_dyn = 0;
+    }
     par_set_i("size",size);
     Dynamics_alloc (&dyn, size, "dyn");
     Waveform_lm_alloc (&hlm, size, "hlm"); 
@@ -177,12 +194,7 @@ int main (int argc, char* argv[])
     ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
     par_set_d("rLSO", dyn->rLSO);
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
-  }  
-
-  /** Compute initial radius */
-  const double f0 = par_get_d("initial_frequency")/time_unit_fact;
-  double r0 = eob_dyn_r0_Kepler(f0);
-  //const double r0 = eob_dyn_r0_eob(f0, dyn); /* Radius from EOB equations. This is what should be used. */ 
+  }   
 
   /** Final BH */
   if (!(dyn->use_tidal)) {
