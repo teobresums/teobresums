@@ -66,7 +66,7 @@ dt_interp = 18. # interpolation spacing, delta_t/M = 18.3581 for sample rate = 4
 postadiabatic_dynamics = "yes"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
 postadiabatic_dynamics_size = 800 # grid size 
-#postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
+postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
 postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
 
 

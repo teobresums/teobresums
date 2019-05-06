@@ -47,15 +47,12 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
 
-  /* Parameters for post adiabatic dynamics */
+ /* Parameters for post adiabatic dynamics */
   const int Npa = par_get_i("postadiabatic_dynamics_N");    
-  //int size = par_get_i("postadiabatic_dynamics_size");    
-  double rmin = par_get_d("postadiabatic_dynamics_rmin");
-  if(usetidal) rmin = par_get_d("postadiabatic_dynamics_rmin_BNS");    
-  const double dr = POSTADIABATIC_DR; // as suggested by M. Agathos (r0 - rmin)/(size-1); /* Uniform grid spacing */
-  int size = floor((r0 - rmin)/dr) + 1;
+  const int size = par_get_i("postadiabatic_dynamics_size"); /* FIXME PostAdiab crashes if size is changed */
   if (size != dyn->size) errorexit("problem allocating memory for post adiabatic dynamics.");
-
+  const double rmin = par_get_d("postadiabatic_dynamics_rmin");    
+  const double dr = (r0 - rmin)/(size-1); /* Uniform grid spacing */
 
 
   if (VERBOSE) {

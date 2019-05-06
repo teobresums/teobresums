@@ -58,7 +58,7 @@ srate_interp = 4096.  # interpolation spacing
 postadiabatic_dynamics = "yes"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
 postadiabatic_dynamics_size = 500 # grid size 
-#postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
+postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
 postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
 
 
