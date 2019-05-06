@@ -19,7 +19,7 @@ use_spins = 0
 chi1 = 0.0 # dimensionless spin 1 z-component 
 chi2 = 0.0 # dimensionless spin 2 z-component 
 
-initial_frequency = 0.01 #0.000492549094700 # initial GW freq of 10 Hz for M = 10 M_sun
+initial_frequency = 0.000492549094700 # initial GW freq of 10 Hz for M = 10 M_sun
 
 #
 # Output dir, output modes 
@@ -55,8 +55,8 @@ dt_interp = 4.95667594616 # interpolation spacing, M/delta_t  = 4096 Hz for M = 
 
 postadiabatic_dynamics = "yes"
 postadiabatic_dynamics_N = 8 # post-adiabatic order
-#postadiabatic_dynamics_size = 830 # grid size 
-#postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
+postadiabatic_dynamics_size = 830 # grid size 
+postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
 postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
 
 
