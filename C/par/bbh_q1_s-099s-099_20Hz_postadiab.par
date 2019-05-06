@@ -19,7 +19,7 @@ use_spins = 1
 chi1 = -0.99 # dimensionless spin 1 z-component 
 chi2 = -0.99 # dimensionless spin 2 z-component 
 
-initial_frequency = 0.00059105892307 # initial GW freq of 10 Hz for M = 10 M_sun
+initial_frequency = 0.00059105892307 # initial GW freq of 10 Hz for M = 6 M_sun?
 
 #
 # Output dir, output modes 
