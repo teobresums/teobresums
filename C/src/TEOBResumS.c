@@ -343,7 +343,7 @@ int main (int argc, char* argv[])
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
-  const double rstop = par_get_d("ode_stop_at_radius");
+  const double rstop = MAX( par_get_d("ode_stop_at_radius"), dyn->rLR) ;
   const int nstep_stop = par_get_i("ode_stop_afterNdt");
   if (rstop>0.) {
     dyn->ode_stop_radius   = true;
