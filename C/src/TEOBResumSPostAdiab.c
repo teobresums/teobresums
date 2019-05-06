@@ -49,10 +49,10 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 
  /* Parameters for post adiabatic dynamics */
   const int Npa = par_get_i("postadiabatic_dynamics_N");    
-  const int size = par_get_i("postadiabatic_dynamics_size"); /* FIXME PostAdiab crashes if size is changed */
-  if (size != dyn->size) errorexit("problem allocating memory for post adiabatic dynamics.");
-  const double rmin = par_get_d("postadiabatic_dynamics_rmin");    
-  const double dr = (r0 - rmin)/(size-1); /* Uniform grid spacing */
+  const int size = dyn->size; // PA clause in main.c sets dyn->size= PA size overwriting PA par files
+  double rmin = par_get_d("postadiabatic_dynamics_rmin"); 
+  if(usetidal) rmin = par_get_d("postadiabatic_dynamics_rmin_BNS");   
+  const double dr = POSTADIABATIC_DR; //(r0 - rmin)/(size-1); /* Uniform grid spacing */
 
 
   if (VERBOSE) {
