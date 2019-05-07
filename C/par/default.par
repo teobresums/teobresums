@@ -85,7 +85,7 @@ output_ringdown = 0 # output ringdown waveform
 # ----------------------
 
 srate = 4096. # sampling rate, used if input is given in physical unit, reset based on tstep otherwise
-dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
+dt = 0.1 # timestep, used if input is given in geometric unit, reset based on srate otherwise
 
 size = 1 # size of the arrays (chunks, dynamically extended)
 ringdown_extend_array = 500 # grid points to extend arrays for ringdown attachment

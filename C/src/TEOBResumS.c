@@ -407,7 +407,7 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
-      if (dyn->r > dyn->rLSO) {
+      if (dyn->r > (dyn->rLSO+dyn->rLR)/2.) { // NOTE: In order to not sacrifice too much run time I start this routine not at r=LSO but at r=(LSO+LR)/2
 	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
@@ -415,6 +415,10 @@ int main (int argc, char* argv[])
 	}
       } else {
 	/* ... uniform afterwards */
+	if ( (fabs(chi1) >=0.85) && (fabs(chi2) >= 0.85) )	dyn->dt = 0.1/q;
+	else if ( (fabs(chi1) >=0.75) && (fabs(chi2) >= 0.75) )	dyn->dt = 0.5/q;
+	else if ( (fabs(chi1) >=0.7) || (fabs(chi2) >= 0.7) )	dyn->dt = 1.0/q; // FIXME we may have to fine-tune these a bit more
+	else dyn->dt = 0.5;
 	dyn->ti = dyn->t + dyn->dt;
 	STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
@@ -470,7 +474,7 @@ int main (int argc, char* argv[])
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
       dyn->data[EOB_E0][iter] 	  = dyn->E;
     }
-
+    //printf("t_stop = %f\n", dyn->t_stop);
     /** Stop integration if reached max time */    
     if (dyn->t > dyn->t_stop) {
       if (VERBOSE) printf("Stop: Max integration time reached.\n");
@@ -493,7 +497,8 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-	dyn->dt = MIN(dyn->dt, 0.4);        // MA: This should always work!
+	dyn->dt = MIN(dyn->dt, 0.1);        // MA: This should always work!
+
 	dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; // MA: This should never shoot beyond 2M!
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
@@ -557,7 +562,6 @@ int main (int argc, char* argv[])
 
       const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
       const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
-      
       hlm_mrg = NULL;
       dyn_mrg = NULL;
       
@@ -567,7 +571,8 @@ int main (int argc, char* argv[])
       /**  Interpolate mrg on uniform grid */
       
       /* Build uniform grid of width dt and alloc tmp memory */
-      const double dt_merger_interp = par_get_d("dt_merger_interp"); 
+      double dt_merger_interp = par_get_d("dt_merger_interp"); 
+      //dt_merger_interp = 0.5;
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
       if (VERBOSE) {
 	PRSECTN("Interpolation of merger to uniform grid");

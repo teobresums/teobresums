@@ -2106,6 +2106,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
   const double nu    = dyn->nu;
+  const double q    = dyn->q;
   const double chi1  = dyn->chi1;
   const double chi2  = dyn->chi2;
   const double X1    = dyn->X1;
@@ -2145,15 +2146,17 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   const int k33 = 4;
   
   /** Find peak of Omega */
-  /* Assume a monotonically increasing function, then the peak 
+  /* Assume a monotonically increasing function, 
      start from after the peak */
   int index_pk = dynsize-1;
   double Omega_pk = Omega[index_pk];
   for (int j = dynsize-2; j-- ; ) {
+  //if (j > dynsize-10 ) printf("j=%d\tOmega=%f\n", j, Omega[j]);
     if (Omega[j] < Omega_pk) 
 	break;
       index_pk = j;
       Omega_pk = Omega[j];
+
   }
   if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
   if (index_pk >= dynsize-2) {
@@ -2161,13 +2164,16 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   }
   
   const int n = 7; /* USE 7, it seems we need at least 7 points to determine t_Omega_peak properly */
-  if ( (index_pk + (n-1)/2) > (dynsize-1) ) {
+  if ( (index_pk + (n-1)/2) > (dynsize-1) ) { 
+    printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);
+    printf("%d vs. %d\n", (index_pk + (n-1)/2), (dynsize-1));
     errorexit("Not enough points to interpolate.\n");
   }
   
   double tmax = dyn->time[index_pk];  
   double *Omega_ptr = &Omega[index_pk-3];
   double tOmg_pk = find_max(n, dt, tmax, Omega_ptr, NULL);
+//printf("t_peak = %f\n", tOmg_pk);
   tOmg_pk *= ooMbh;
 
   if (VERBOSE) PRFORMd("ringdown_Omega_pk",Omega_pk);
