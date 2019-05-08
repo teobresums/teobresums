@@ -417,8 +417,8 @@ int main (int argc, char* argv[])
 	/* ... uniform afterwards */
 	if ( (fabs(chi1) >=0.85) && (fabs(chi2) >= 0.85) )	dyn->dt = 0.1/q;
 	else if ( (fabs(chi1) >=0.75) && (fabs(chi2) >= 0.75) )	dyn->dt = 0.5/q;
-	else if ( (fabs(chi1) >=0.7) || (fabs(chi2) >= 0.7) )	dyn->dt = 1.0/q; // FIXME we may have to fine-tune these a bit more
-	else dyn->dt = 0.5;
+	//else if ( (fabs(chi1) >=0.7) || (fabs(chi2) >= 0.7) )	dyn->dt = 1.0/q; // FIXME we may have to fine-tune these a bit more
+	else dyn->dt = 0.5/q;
 	dyn->ti = dyn->t + dyn->dt;
 	STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
