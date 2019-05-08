@@ -407,7 +407,7 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
-      if (dyn->r > (dyn->rLSO+dyn->rLR)/2.) { // NOTE: In order to not sacrifice too much run time I start this routine not at r=LSO but at r=(LSO+LR)/2
+      if (dyn->r > (dyn->rLSO + 2.0*dyn->rLR)/3.) { // NOTE: In order to not sacrifice too much run time I start this routine not at r=LSO but at r=(LSO+2LR)/3
 	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
@@ -415,10 +415,13 @@ int main (int argc, char* argv[])
 	}
       } else {
 	/* ... uniform afterwards */
-	if ( (fabs(chi1) >=0.85) && (fabs(chi2) >= 0.85) )	dyn->dt = 0.1/q;
-	else if ( (fabs(chi1) >=0.75) && (fabs(chi2) >= 0.75) )	dyn->dt = 0.5/q;
+	//if ( (chi1 <= -0.95) && (chi2 <= -0.95) )	        dyn->dt = ;  // NOTE: no amount of fine tuning fixed this
+	if ( (chi1 < -0.95) && (chi2 < -0.8) )	       		dyn->dt = 0.01/q;
+	else if ( (chi1 < -0.92) && (chi2 < -0.8) )	        dyn->dt = 0.05/q;
+	else if( (fabs(chi1) >=0.85) && (fabs(chi2) >= 0.85) )	dyn->dt = 0.1/q;
+	else if ( (fabs(chi1) >=0.75) && (fabs(chi2) >= 0.75) )	dyn->dt = 0.25/q;
 	//else if ( (fabs(chi1) >=0.7) || (fabs(chi2) >= 0.7) )	dyn->dt = 1.0/q; // FIXME we may have to fine-tune these a bit more
-	else dyn->dt = 0.5/q;
+	else dyn->dt = 0.25/q;
 	dyn->ti = dyn->t + dyn->dt;
 	STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
@@ -437,6 +440,7 @@ int main (int argc, char* argv[])
     /** Checking whether the dynamics produces NaN values
 	this can happen if radius r becomes too small */
     if (!(isfinite(dyn->r))) {
+      printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);	
       errorexit("ODE solver returned NaN radius.\n");
     }
 
