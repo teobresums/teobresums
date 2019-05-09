@@ -735,3 +735,14 @@ double eob_approxLR(const double nu)
   return r0*x + r1;
 }
 
+/** Compute optimized timestep around merger */
+double get_mrg_timestep(double q, double chi1, double chi2)
+{
+  double dt = 0.5/q; // a nonspinning choice 
+  if      ( (chi1 < -0.95) && (chi2 < -0.8) ) dt = 0.01/q;
+  else if ( (chi1 < -0.92) && (chi2 < -0.8) ) dt = 0.05/q;
+  else if ( (fabs(chi1) >=0.85) && (fabs(chi2) >= 0.85) ) dt = 0.1/q;
+  else if ( (fabs(chi1) >=0.75) && (fabs(chi2) >= 0.75) ) dt = 0.25/q;
+  return dt;
+}
+
