@@ -125,7 +125,7 @@ int main (int argc, char* argv[])
   /** Compute initial radius */
   const double f0 = par_get_d("initial_frequency")/time_unit_fact;
   double r0 = eob_dyn_r0_Kepler(f0);
-  //const double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
+  //double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
 
   /* If f_min is too high fall back to a minimum acceptable initial radius */
   if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
@@ -380,7 +380,9 @@ int main (int argc, char* argv[])
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
-  int firstime_adaptive_uniform  = 1;
+
+  /* Set optimized dt around merger */
+  const double dt_adaptive_uniform_mrg = get_mrg_timestep(q, chi1, chi2);
   
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
@@ -410,28 +412,17 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
-      if (dyn->r > dyn->rLSO) { //(dyn->rLSO + 2.0*dyn->rLR)/3.) { // TO BE OPTMIZED LATER
+      if (dyn->r > dyn->rLSO) { 
 	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
 	  return STATUS;
 	}
       } else {
-	/* ... uniform afterwards */	
-	if (firstime_adaptive_uniform) {
-	  firstime_adaptive_uniform = 0; /* do not come back here */
-	  /* Set optimized dt around merger */
-	  dyn->dt = get_mrg_timestep(q, chi1, chi2);
-	  /* Realloc the GSL structure */
-	  gsl_odeiv2_driver_free (d);
-#if (USERK45)
-	  gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
-#else
-	  gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
-#endif
-	}	
+	/* ... uniform afterwards */
+	dyn->dt = dt_adaptive_uniform_mrg;
 	dyn->ti = dyn->t + dyn->dt;
-	STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
+	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
 	  return STATUS;
@@ -508,8 +499,8 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {	  
 	dyn->ode_stop_MOmgpeak = true;
-	dyn->dt = MIN(dyn->dt, 0.4);        // MA: This should always work!
-	dyn->t_stop            = dyn->t + nstep_stop*dyn->dt; // MA: This should never shoot beyond 2M!
+	//dyn->dt = MIN(dyn->dt, 0.1);        // MA: This should always work!
+	dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // MA: This should never shoot beyond 2M!
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }
@@ -685,7 +676,6 @@ int main (int argc, char* argv[])
    * Compute h+, hx 
    * *****************************************
    */
-  
   
   /** Scale to physical units (if necessary) */
   const double distance = par_get_d("distance");
