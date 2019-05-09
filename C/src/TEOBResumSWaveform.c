@@ -2151,12 +2151,10 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   int index_pk = dynsize-1;
   double Omega_pk = Omega[index_pk];
   for (int j = dynsize-2; j-- ; ) {
-  //if (j > dynsize-10 ) printf("j=%d\tOmega=%f\n", j, Omega[j]);
     if (Omega[j] < Omega_pk) 
-	break;
-      index_pk = j;
-      Omega_pk = Omega[j];
-
+      break;
+    index_pk = j;
+    Omega_pk = Omega[j]; 
   }
   if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
   if (index_pk >= dynsize-2) {
@@ -2173,7 +2171,6 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   double tmax = dyn->time[index_pk];  
   double *Omega_ptr = &Omega[index_pk-3];
   double tOmg_pk = find_max(n, dt, tmax, Omega_ptr, NULL);
-//printf("t_peak = %f\n", tOmg_pk);
   tOmg_pk *= ooMbh;
 
   if (VERBOSE) PRFORMd("ringdown_Omega_pk",Omega_pk);
