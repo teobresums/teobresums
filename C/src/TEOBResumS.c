@@ -377,19 +377,11 @@ int main (int argc, char* argv[])
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
   gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
 #endif
-  if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
-    /* Set the optimized merger timstep */
-    gsl_odeiv2_driver_free (d);
-#if (USERK45)
-    gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, get_mrg_timestep(q, chi1, chi2), ode_abstol, ode_reltol);    
-#else
-    gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, get_mrg_timestep(q, chi1, chi2), ode_abstol, ode_reltol);    
-#endif
-  }  
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
-    
+  int firstime_adaptive_uniform  = 1;
+  
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
   int STATUS = OK;
@@ -426,8 +418,18 @@ int main (int argc, char* argv[])
 	}
       } else {
 	/* ... uniform afterwards */	
-	/* Note the "d" structure is allocate above with dyn->dt = get_mrg_timestep(q, chi1, chi2); */
-	dyn->dt = get_mrg_timestep(q, chi1, chi2); 
+	if (firstime_adaptive_uniform) {
+	  firstime_adaptive_uniform = 0; /* do not come back here */
+	  /* Set optimized dt around merger */
+	  dyn->dt = get_mrg_timestep(q, chi1, chi2);
+	  /* Realloc the GSL structure */
+	  gsl_odeiv2_driver_free (d);
+#if (USERK45)
+	  gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
+#else
+	  gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
+#endif
+	}	
 	dyn->ti = dyn->t + dyn->dt;
 	STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
