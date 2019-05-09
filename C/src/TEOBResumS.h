@@ -441,6 +441,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
 		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
 		     double *sigmar, double *sigmai); 
 double eob_approxLR(const double nu);
+double get_mrg_timestep(double q, double chi1, double chi2);
 
 /* TEOBResumSDynamics.c */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *params);

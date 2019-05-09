@@ -166,6 +166,7 @@ int main (int argc, char* argv[])
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
+
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO; 
     dyn->use_spins = 0;
@@ -176,7 +177,6 @@ int main (int argc, char* argv[])
     double LambdaBl2 = par_get_d("LambdaBl2");
     if( fabs(LambdaBl2) < TEOB_LAMBDA_TOL ) LambdaBl2 = 0.0;
     double q = par_get_d("q");
-    //printf("%.2f\t%.1f\t%.1f\t%.16f\n", q, LambdaAl2, LambdaBl2, dyn->rLR_tidal);
 
     /* Reset options */
     dyn->use_tidal = par_get_i("use_tidal");
@@ -255,6 +255,7 @@ int main (int argc, char* argv[])
     /** Prepare for evolution */
     /* start counting from here */
     iter = size-1; 
+    dyn->dt = 0.5*(dyn->time[iter]-dyn->time[iter-1]);
     
     /* Set arrays with initial conditions 
        Note current time is already set in dyn->t */
@@ -320,6 +321,9 @@ int main (int argc, char* argv[])
     for (int k = 0; k < KMAX; k++) {
       hlm->phase[k][0] = hlm_t->phase[k]; 
     }
+
+    /** Prepare for evolution */
+    dyn->dt = dt;
     
   }
   
@@ -336,9 +340,8 @@ int main (int argc, char* argv[])
    */
      
   /** Initialize ODE system solver */
-  dyn->dt     = dt;
+  //dyn->dt     = dt;
   dyn->t_stop = par_get_d("ode_tmax") * time_unit_fact;
-  par_set_d("dt",       dyn->dt);
   par_set_d("ode_tmax", dyn->t_stop);
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
@@ -349,24 +352,24 @@ int main (int argc, char* argv[])
     dyn->ode_stop_radius   = true;
   }
 
-  int j;
-  for (j=0; j<ODE_TSTEP_NOPT; j++) {
-    if (STREQUAL(par_get_s("ode_timestep"),ode_tstep_opt[j])) {
-      if (VERBOSE) printf("%-40s = %s\n","ode_timestep",ode_tstep_opt[j]);
+  for (dyn->ode_timestep=0; dyn->ode_timestep<ODE_TSTEP_NOPT; dyn->ode_timestep++) {
+    if (STREQUAL(par_get_s("ode_timestep"),ode_tstep_opt[ dyn->ode_timestep ])) {
+      if (VERBOSE) printf("%-40s = %s\n","ode_timestep",ode_tstep_opt[ dyn->ode_timestep ]);
       break;
     }
   }
-  if (j==ODE_TSTEP_NOPT) {
+  if (dyn->ode_timestep==ODE_TSTEP_NOPT) {
     if (VERBOSE) printf("ode_timestep '%s' undefined, set to default\n",par_get_s("ode_timestep"));
-    j = ODE_TSTEP_ADAPTIVE;
+    dyn->ode_timestep = ODE_TSTEP_ADAPTIVE;
   }
-  dyn->ode_timestep  = j;
   const int ode_tstep = dyn->ode_timestep;   
   const double ode_abstol = par_get_d("ode_abstol");
   const double ode_reltol = par_get_d("ode_reltol");
+  if (ode_tstep == ODE_TSTEP_UNIFORM) dyn->dt = dt;
+  par_set_d("dt", dyn->dt);  
 
+  /* GSL integrator memory */
   gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
-
 #if (USERK45)
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
   gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
@@ -374,7 +377,15 @@ int main (int argc, char* argv[])
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
   gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
 #endif
-
+  if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
+    /* Set the optimized merger timstep */
+    gsl_odeiv2_driver_free (d);
+#if (USERK45)
+    gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, get_mrg_timestep(q, chi1, chi2), ode_abstol, ode_reltol);    
+#else
+    gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, get_mrg_timestep(q, chi1, chi2), ode_abstol, ode_reltol);    
+#endif
+  }  
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
@@ -407,21 +418,16 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
-      if (dyn->r > (dyn->rLSO + 2.0*dyn->rLR)/3.) { // NOTE: In order to not sacrifice too much run time I start this routine not at r=LSO but at r=(LSO+2LR)/3
+      if (dyn->r > dyn->rLSO) { //(dyn->rLSO + 2.0*dyn->rLR)/3.) { // TO BE OPTMIZED LATER
 	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
 	  printf ("ODE solver failed. Error = %d\n", STATUS);
 	  return STATUS;
 	}
       } else {
-	/* ... uniform afterwards */
-	//if ( (chi1 <= -0.95) && (chi2 <= -0.95) )	        dyn->dt = ;  // NOTE: no amount of fine tuning fixed this
-	if ( (chi1 < -0.95) && (chi2 < -0.8) )	       		dyn->dt = 0.01/q;
-	else if ( (chi1 < -0.92) && (chi2 < -0.8) )	        dyn->dt = 0.05/q;
-	else if( (fabs(chi1) >=0.85) && (fabs(chi2) >= 0.85) )	dyn->dt = 0.1/q;
-	else if ( (fabs(chi1) >=0.75) && (fabs(chi2) >= 0.75) )	dyn->dt = 0.25/q;
-	//else if ( (fabs(chi1) >=0.7) || (fabs(chi2) >= 0.7) )	dyn->dt = 1.0/q; // FIXME we may have to fine-tune these a bit more
-	else dyn->dt = 0.25/q;
+	/* ... uniform afterwards */	
+	/* Note the "d" structure is allocate above with dyn->dt = get_mrg_timestep(q, chi1, chi2); */
+	dyn->dt = get_mrg_timestep(q, chi1, chi2); 
 	dyn->ti = dyn->t + dyn->dt;
 	STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
