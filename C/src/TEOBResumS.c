@@ -340,13 +340,12 @@ int main (int argc, char* argv[])
    */
      
   /** Initialize ODE system solver */
-  //dyn->dt     = dt;
   dyn->t_stop = par_get_d("ode_tmax") * time_unit_fact;
   par_set_d("ode_tmax", dyn->t_stop);
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
-  const double rstop = par_get_d("ode_stop_at_radius");
+  const double rstop   = par_get_d("ode_stop_at_radius"); 
   const int nstep_stop = par_get_i("ode_stop_afterNdt");
   if (rstop>0.) {
     dyn->ode_stop_radius   = true;
@@ -382,7 +381,7 @@ int main (int argc, char* argv[])
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
 
   /* Set optimized dt around merger */
-  const double dt_adaptive_uniform_mrg = get_mrg_timestep(q, chi1, chi2);
+  const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
   
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
@@ -403,7 +402,11 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE) {
       /* Adaptive timestepping */
-      STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
+      if ( dyn->ode_stop_MOmgpeak == true )
+	/* slow down and fix the last steps ! */
+	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
+      else
+	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
       if (STATUS != GSL_SUCCESS) {
 	printf ("ODE solver failed. Error = %d\n", STATUS);
 	return STATUS;	
@@ -420,7 +423,7 @@ int main (int argc, char* argv[])
 	}
       } else {
 	/* ... uniform afterwards */
-	dyn->dt = dt_adaptive_uniform_mrg;
+	dyn->dt = dt_tuned_mrg;
 	dyn->ti = dyn->t + dyn->dt;
 	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
 	if (STATUS != GSL_SUCCESS) {
@@ -497,10 +500,11 @@ int main (int argc, char* argv[])
       dyn->MOmg = dyn->Omg;
     }
     if (dyn->ode_stop_MOmgpeak == false) {
-      if (dyn->MOmg < dyn->MOmg_prev) {	  
+      if (dyn->MOmg < dyn->MOmg_prev) {
+	if (VERBOSE) printf("Peak of Omega reached, doing extra steps\n");
 	dyn->ode_stop_MOmgpeak = true;
-	//dyn->dt = MIN(dyn->dt, 0.1);        // MA: This should always work!
-	dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // MA: This should never shoot beyond 2M!
+	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
+	dyn->t_stop = dyn->t + nstep_stop*dyn->dt; 
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }

@@ -2151,9 +2151,9 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   double Omega_pk = Omega[index_pk];
   for (int j = dynsize-2; j-- ; ) {
     if (Omega[j] < Omega_pk) 
-	break;
-      index_pk = j;
-      Omega_pk = Omega[j];
+      break;
+    index_pk = j;
+    Omega_pk = Omega[j]; 
   }
   if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
   if (index_pk >= dynsize-2) {
