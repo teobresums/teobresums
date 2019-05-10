@@ -503,10 +503,16 @@ int main (int argc, char* argv[])
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {
 	dyn->ode_stop_MOmgpeak = true;
-	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
-	//dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // continue for nstep_stop iters 
-	dyn->t_stop = dyn->t + 2.;
-	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
+	if( (use_tidal) ) {
+	  dyn->ode_stop = true;
+	  if (VERBOSE) printf("Peak of Omega reached\n");
+	}
+	else {
+	  dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
+	  //dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // continue for nstep_stop iters 
+ 	  dyn->t_stop = dyn->t + 2.;
+	  if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
+	}
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }
