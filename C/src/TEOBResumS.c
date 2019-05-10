@@ -382,6 +382,7 @@ int main (int argc, char* argv[])
 
   /* Set optimized dt around merger */
   const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
+  int nsteps_after_Omgpeak = 0 ;
   
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
@@ -511,6 +512,15 @@ int main (int argc, char* argv[])
 	dyn->MOmg_prev = dyn->MOmg;
       }
     } else {
+
+      /* Take a step, continue only if radius is finite */
+      // TODO: This needs more checking, there might be some inconsistency in the dyn->y ...
+      STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
+      if ( !isfinite(dyn->y[EOB_EVOLVE_RAD]) ) {
+	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
+	dyn->ode_stop = true;
+      }
+      
       if (dyn->t >= dyn->t_stop) {
 	if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
 	dyn->ode_stop = true;
