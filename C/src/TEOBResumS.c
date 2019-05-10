@@ -494,7 +494,7 @@ int main (int argc, char* argv[])
     }
 
     /** Check when to break the computation
-	find peak of omega curve and continue for nstep_stop iters */
+	find peak of omega curve and continue for 2M */
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
@@ -502,10 +502,11 @@ int main (int argc, char* argv[])
     }
     if (dyn->ode_stop_MOmgpeak == false) {
       if (dyn->MOmg < dyn->MOmg_prev) {
-	if (VERBOSE) printf("Peak of Omega reached, doing extra steps\n");
 	dyn->ode_stop_MOmgpeak = true;
 	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
-	dyn->t_stop = dyn->t + nstep_stop*dyn->dt; 
+	//dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // continue for nstep_stop iters 
+	dyn->t_stop = dyn->t + 2.;
+	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }
@@ -578,7 +579,7 @@ int main (int argc, char* argv[])
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp = par_get_d("dt_merger_interp"); 
-      //dt_merger_interp = 0.5;
+      //dt_merger_interp = MIN(dt_merger_interp,dyn->dt);
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
       if (VERBOSE) {
 	PRSECTN("Interpolation of merger to uniform grid");
