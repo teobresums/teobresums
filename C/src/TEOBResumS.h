@@ -75,7 +75,7 @@
 #endif
 
 #ifndef USERK45
-#define USERK45 0 /* use GSL rkf45 instead of rk8pd */
+#define USERK45 1 /* use GSL rkf45 instead of rk8pd */
 #endif
 
 #ifndef DEBUG 

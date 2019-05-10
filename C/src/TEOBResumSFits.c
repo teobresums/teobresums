@@ -735,29 +735,11 @@ double eob_approxLR(const double nu)
   return r0*x + r1;
 }
 
-/** Compute optimized timestep around merger */
+/** Compute optimized timestep after merger */
 double get_mrg_timestep(double q, double chi1, double chi2)
 {
-  double dt = 0.5;
-  if (q <= 7.) {
-    // works for (chi1,chi2) = ( +/-.999  +/+.999 )
-    if ( (chi1 < -0.9) || (chi2 < -0.9) ) dt = 0.25;
-    else dt = 0.5;
-  }
-  else if (q <= 10.) {
-    // works for (chi1,chi2) = ( +/-.96  +/+.96 )
-    if      ( (chi1 < -0.88) && (chi2 < -0.88) ) dt = 0.0625;
-    else if ( (chi1 < -0.82) && (chi2 < -0.82) ) dt = 0.125;
-    else if ( (chi1 < -0.72) && (chi2 < -0.72) ) dt = 0.25;
-    else dt = 0.5;
-  }
-  else if (q <= 14.) {
-    //if ( (chi1 < -0.7) && (chi2 < -0.7) ) dt = 0.25; else
-    // TODO
-  } 
-  else if (q <= 20.) {
-    // TODO
-  } 
+  double dt = 0.1;
+  // ...
   return dt;
 }
 
