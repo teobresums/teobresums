@@ -30,7 +30,7 @@ CFLAGS=-std=c99 `gsl-config --cflags` # Debug
 CFLAGS +=-O3  # Optimized
 
 CFLAGS += -DDEBUG=0 # 1/0 to turn on/off debug mode
-CFLAGS += -DVERBOSE=1 # 1/0 to turn on/off verbose mode
+CFLAGS += -DVERBOSE=0 # 1/0 to turn on/off verbose mode
 
 #CFLAGS += -fopenmp # OpenMP
 
