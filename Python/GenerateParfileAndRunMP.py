@@ -63,28 +63,33 @@ def extract_basename(p):
 if __name__ == "__main__": 
 
     # Setup -----------------------------------------
+
+    test_name = "bns_test"
     
     # Base dir & template parfile
     based = "./"
-    basep = "test_NQCIteration.par"
+    basep = "bns_test.par"
 
     # Set new values/ranges for parameters
     # NOTE: use lists
-    q = [1., 1.2, 1.4]
-    chi1 = [0., 0.7] ## try: chi1 = [0., 1.2] to check failures
-    chi2 = [0., 0.4]
-    
+    q = np.linspace(1.,2.,4)
+    chi1 = np.linspace(0.,0.5,4)
+    chi2 = np.linspace(0.,0.5,4)
+    lambd = np.linspace(1,2000,50) 
+     
     # Pack them into a dictionary
     # NOTE: keys must match those in parfile otherwise ignored
-    n = {'q': q,
-         'chi1': chi1,
-         'chi2': chi2}
+    ##n = {'q': q, 'chi1': chi1, 'chi2': chi2}
+    n = {'q': q, 'chi1': chi1, 'chi2': chi2, 'LambdaAl2': lambd, 'LambdaAl2': lambd}
 
     # Set the number of processes
-    nproc = 1
+    nproc = 4
+
+    # Produce plot?
+    plotme = 0
     
     # ------------------------------------------
-    # DO NOT CHANGE BELOW HERE
+    # DO NOT CHANGE BELOW HERE 
     # ------------------------------------------
 
     # Generate parfiles ----------------------------
@@ -135,16 +140,19 @@ if __name__ == "__main__":
     print("Max: {}".format(maxT))
     print("Min: {}".format(minT))
     
-    # Plot wf
-    fig, ax = plt.subplots()
-    for p in S:
-        b, e = extract_basename(p["parfile"])
-        t, re, im = np.loadtxt(b+"/waveform.txt",unpack=True)
-        ax.plot(t, re, '--', t, np.fabs(re**2+im**2), '-')## check/improve
-    ax.set(xlabel='time', ylabel='wafeform', title=b)
-    ax.grid()
-    ##fig.savefig(b+".png")
-    plt.show()
+    if plotme:
+        # Plot wf
+        fig, ax = plt.subplots()
+        for p in S:
+            b, e = extract_basename(p["parfile"])
+            #t, re, im, amp, phi = np.loadtxt(b+"/waveform.txt",unpack=True)
+            t, re, im, amp, phi = np.loadtxt(b+"/waveform_interp.txt",unpack=True)
+            ax.plot(t, amp, '-')## check/improve
+            #ax.plot(t, amp, '--', t, np.fabs(re**2+im**2), '-')## check/improve
+            ax.set(xlabel='time', ylabel='amplitude', title=test_name)
+            ax.grid()
+            fig.savefig(test_name+".png")
+            ##plt.show()
 
     # Failed runs
     print("# Info about failed runs ...")
@@ -153,6 +161,4 @@ if __name__ == "__main__":
         print(f["parfile"]+" ===> "+f["error"])
         #print(f["output"]) ## uncomment for full error message
 
-    #TODO ...
-    # one could load the failed parfiles and search for intersection of parameter values ...
 
