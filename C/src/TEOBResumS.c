@@ -403,7 +403,7 @@ int main (int argc, char* argv[])
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE) {
       /* Adaptive timestepping */
-      if ( dyn->ode_stop_MOmgpeak == true )
+      if ( dyn->ode_stop_MOmgpeak == true ) 
 	/* slow down and fix the last steps ! */
 	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
       else
@@ -505,9 +505,17 @@ int main (int argc, char* argv[])
       if (dyn->MOmg < dyn->MOmg_prev) {
 	dyn->ode_stop_MOmgpeak = true;
 	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
-	  //dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // continue for nstep_stop iters 
+	//dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // continue for nstep_stop iters 
 	dyn->t_stop = dyn->t + 2.;
 	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
+	
+	for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] = dyn->y[v];
+	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, ytmp);
+	if ( (STATUS != GSL_SUCCESS) || (!isfinite(ytmp[EOB_EVOLVE_RAD])) ) {
+	  if (VERBOSE) printf("Stop: extra-steps not possible.\n");
+	  dyn->ode_stop = true;
+	}
+
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }
@@ -518,7 +526,7 @@ int main (int argc, char* argv[])
       //p_eob_dyn_rhs(dyn->t, ytmp, dytmp, dyn);
       //for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] += dt*dytmp[v];
       STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, ytmp);
-      if ( (STATUS != GSL_SUCCESS) || (!isfinite(ytmp[EOB_EVOLVE_RAD])) ) {
+       if ( (STATUS != GSL_SUCCESS) || (!isfinite(ytmp[EOB_EVOLVE_RAD])) ) {
 	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
 	dyn->ode_stop = true;
       }
