@@ -118,7 +118,7 @@ int main (int argc, char* argv[])
   Waveform_lm *hlm_nqc; /* NQC */
   Waveform_lm *hlm_mrg; /* merger chunk */
   Dynamics *dyn_mrg;
-  double ytmp[EOB_EVOLVE_NVARS], dytmp[EOB_EVOLVE_NVARS]; /* Additional buffer for post-Omegapeak ev */
+  double ytmp[EOB_EVOLVE_NVARS], dytmp[EOB_EVOLVE_NVARS], ttmp; /* Additional buffer for post-Omegapeak ev */
   
   const int chunk = par_get_i("size");
   int size = chunk; /* note: size can vary */
@@ -507,29 +507,29 @@ int main (int argc, char* argv[])
 	//dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // continue for nstep_stop iters 
 	dyn->t_stop = dyn->t + 2.;
 	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
-	
+	/* Take a step, and verify everything is Ok */
 	for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] = dyn->y[v];
-	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, ytmp);
+	ttmp = dyn->t;
+	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &ttmp, dyn->dt, ytmp);
 	if ( (STATUS != GSL_SUCCESS) || (!isfinite(ytmp[EOB_EVOLVE_RAD])) ) {
 	  if (VERBOSE) printf("Stop: extra-steps not possible.\n");
 	  dyn->ode_stop = true;
 	}
-
       } else {
 	dyn->MOmg_prev = dyn->MOmg;
       }
     } else {
-
-      /* Take a step, continue only if radius is finite */
+      /* Take a step, and verify everything is Ok */
       for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] = dyn->y[v];
-      //p_eob_dyn_rhs(dyn->t, ytmp, dytmp, dyn);
-      //for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] += dt*dytmp[v];
-      STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, ytmp);
+      /* p_eob_dyn_rhs(dyn->t, ytmp, dytmp, dyn);
+      for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] += dt*dytmp[v]; 
+      */
+      ttmp = dyn->t;
+      STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &ttmp, dyn->dt, ytmp);
        if ( (STATUS != GSL_SUCCESS) || (!isfinite(ytmp[EOB_EVOLVE_RAD])) ) {
 	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
 	dyn->ode_stop = true;
       }
-      
       if (dyn->t >= dyn->t_stop) {
 	if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
 	dyn->ode_stop = true;
