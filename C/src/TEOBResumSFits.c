@@ -67,13 +67,22 @@ double eob_nqc_timeshift(double nu, double chi1)
   /* Additional time-shift only needed ONLY for large, negative, spins.
      This change from 1.0 to 4.0 eliminates unphysical features in the
      frequency related to the imperfect behavior of the NQC functions */
-  
+
+  /* Old Delta_T NQC
   if ((chi1 <-0.85) && (nu <= 14./225.)) {
     DeltaT_nqc = 4.0;
   } else {
-    DeltaT_nqc = 1.0; /* standard choice inspired by test-particle results */
+    DeltaT_nqc = 1.0; // standard choice inspired by test-particle results
   }  
-  
+  */
+
+  /* New Delta_T NQC determined in TEOBResumS paper (arXiv:1806.01772) */
+  if (((chi1 < -0.9) && (nu < 8./81.)) || ((chi1 < -0.8) && (nu < 11./144.))) {
+    DeltaT_nqc = 4.0;
+  } else {
+    DeltaT_nqc = 1.0; // standard choice inspired by test-particle results
+  }
+    
   return DeltaT_nqc;  
 }
 
