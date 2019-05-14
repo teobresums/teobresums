@@ -470,9 +470,9 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[]);
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
 double eob_dyn_DHeff0(double x, void *params);
 double eob_dyn_r0_Kepler (double f0);
-double eob_dyn_r0_eob (double f0);
+double eob_dyn_r0_eob (double f0, Dynamics *dyn);
 double eob_dyn_Omegaorb0(double r, void *params);
-double eob_dyn_bisecOmegaorb0(double omg_orb0,double r0_kepl);
+double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 
 /* TEOBResumSMetric.c */
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);

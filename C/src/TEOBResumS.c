@@ -120,17 +120,26 @@ int main (int argc, char* argv[])
   Dynamics *dyn_mrg;
   double ytmp[EOB_EVOLVE_NVARS], dytmp[EOB_EVOLVE_NVARS], ttmp; /* Additional buffer for post-Omegapeak ev */
   
-  const int chunk = par_get_i("size");
-  int size = chunk; /* note: size can vary */
-
+  /* Set quick-access parameters dyn (be careful here) */
+  Dynamics_alloc (&dyn, 0, "dyn"); 
+  Dynamics_set_params(dyn);
+  dyn->store = dyn->noflx = 0; /* Default: do not store vars, flux on */
+  
   /** Compute initial radius */
   const double f0 = par_get_d("initial_frequency")/time_unit_fact;
   double r0 = eob_dyn_r0_Kepler(f0);
-  //double r0 = eob_dyn_r0_eob(f0); /* TODO: Radius from EOB equations. This is what should be used. */
+  //double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
 
   /* If f_min is too high fall back to a minimum acceptable initial radius */
   if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
 
+  /* Saving initial radius */
+  par_set_d("r0", r0);
+
+  const int chunk = par_get_i("size");
+  int size = chunk; /* note: size can vary */
+  
+  /* Change size when using PA dynamics */
   if (use_postadiab_dyn) {
     size = par_get_i("postadiabatic_dynamics_size"); 
     double rmin = par_get_d("postadiabatic_dynamics_rmin");
@@ -143,18 +152,13 @@ int main (int argc, char* argv[])
         use_postadiab_dyn = 0;
     }
     par_set_i("size",size);
-    Dynamics_alloc (&dyn, size, "dyn");
-    Waveform_lm_alloc (&hlm, size, "hlm"); 
-  } else {
-    Dynamics_alloc (&dyn, size, "dyn"); 
-    Waveform_lm_alloc (&hlm, size, "hlm"); 
   }
+
+  /* Allocating memory for dynamics and waveform */
+  Dynamics_push (&dyn, size);
+  Waveform_lm_alloc (&hlm, size, "hlm"); 
   Waveform_lm_t_alloc (&hlm_t); 
 
-  /* Set quick-access parameters dyn (be careful here) */
-  Dynamics_set_params(dyn);
-  dyn->store = dyn->noflx = 0; /* Default: do not store vars, flux on */
-  
   /** Set r.h.s. fun pointer */
   int (*p_eob_dyn_rhs)();
   if (use_spins) p_eob_dyn_rhs = &eob_dyn_rhs_s;
