@@ -372,48 +372,94 @@ double eob_dyn_r0_Kepler (double f0)
 }
 
 /** Initial radius from initial frequency using EOB circular dynamics */
-double eob_dyn_r0_eob (double f0, Dynamics *dyn)
+double eob_dyn_r0_eob (double f0)
 {
   const double omg_orb0 = Pi*f0;
   const double r0_kepl  = eob_dyn_r0_Kepler(f0);
-  return eob_dyn_bisecOmegaorb0(dyn,omg_orb0,r0_kepl);
+  return eob_dyn_bisecOmegaorb0(omg_orb0,r0_kepl);
 }
 
 /** Function for root finder: omega = omega_circ */
 struct Omegaorb0_tmp_params {
   double omg_orb0;
-  Dynamics *dyn;
 };
 
 double eob_dyn_Omegaorb0(double r, void *params)
 {
- 
   /* Unpack parameters */  
   struct Omegaorb0_tmp_params *p
     = (struct Omegaorb0_tmp_params *) params;
   double   omg_orb0 = p->omg_orb0;
-  Dynamics *dyn     = p->dyn;
 
-  const double nu    = dyn->nu;
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
-  const double a1    = dyn->a1;
-  const double a2    = dyn->a2;
-  const double aK2   = dyn->aK2;
-  const double S     = dyn->S;
-  const double Sstar = dyn->Sstar;
-  const double c3    = dyn->cN3LO;
-  const double C_Q1  = dyn->C_Q1;
-  const double C_Q2  = dyn->C_Q2;
-  const double C_Oct1 = dyn->C_Oct1;
-  const double C_Oct2 = dyn->C_Oct2;
-  const double C_Hex1 = dyn->C_Hex1;
-  const double C_Hex2 = dyn->C_Hex2;
+  /* Dynamics structure needed for EOB metric */
+  Dynamics *r0dyn;
+  r0dyn = (Dynamics *) calloc(1, sizeof(Dynamics)); 
+  
+  r0dyn->nu    = par_get_d("nu");
+  r0dyn->q     = par_get_d("q");
+  r0dyn->X1    = par_get_d("X1");
+  r0dyn->X2    = par_get_d("X2");
+  r0dyn->chi1  = par_get_d("chi1");
+  r0dyn->chi2  = par_get_d("chi2");
+  r0dyn->S1    = par_get_d("S1");
+  r0dyn->S2    = par_get_d("S2");
+  r0dyn->S     = par_get_d("S");
+  r0dyn->Sstar = par_get_d("Sstar");
+  r0dyn->a1    = par_get_d("a1");
+  r0dyn->a2    = par_get_d("a2"); 
+  r0dyn->aK2   = par_get_d("aK2"); 
+  r0dyn->C_Q1  = par_get_d("C_Q1");
+  r0dyn->C_Q2  = par_get_d("C_Q2");
+  r0dyn->C_Oct1 = par_get_d("C_Oct1");
+  r0dyn->C_Oct2 = par_get_d("C_Oct2");
+  r0dyn->C_Hex1 = par_get_d("C_Hex1");
+  r0dyn->C_Hex2 = par_get_d("C_Hex2");
+  r0dyn->cN3LO  = par_get_d("cN3LO");
+  r0dyn->rLR_tidal = par_get_d("rLR_tidal");
+  r0dyn->kapA2 = par_get_d("kappaAl2");
+  r0dyn->kapA3 = par_get_d("kappaAl3");
+  r0dyn->kapA4 = par_get_d("kappaAl4");
+  r0dyn->kapB2 = par_get_d("kappaBl2");
+  r0dyn->kapB3 = par_get_d("kappaBl3");
+  r0dyn->kapB4 = par_get_d("kappaBl4");
+  r0dyn->kapT2 = par_get_d("kappaTl2");
+  r0dyn->kapT3 = par_get_d("kappaTl3");
+  r0dyn->kapT4 = par_get_d("kappaTl4");
+  r0dyn->khatA2 = par_get_d("khatAl2");
+  r0dyn->khatB2 = par_get_d("khatBl2");
+  r0dyn->kapA2j = par_get_d("kappajAl2");
+  r0dyn->kapB2j = par_get_d("kappajBl2");
+  r0dyn->kapT2j = par_get_d("kappajTl2");
+  r0dyn->bar_alph2_1 = par_get_d("bar_alph2_1");
+  r0dyn->bar_alph2_2 = par_get_d("bar_alph2_2");
+  r0dyn->bar_alph3_1 = par_get_d("bar_alph3_1");
+  r0dyn->bar_alph3_2 = par_get_d("bar_alph3_2");
+  r0dyn->bar_alph2j_1 = par_get_d("bar_alph2j_1");
+  r0dyn->pGSF_tidal = par_get_d("pGSF_tidal");
+  r0dyn->use_tidal = par_get_i("use_tidal");
+  r0dyn->use_tidal_gravitomagnetic = par_get_i("use_tidal_gravitomagnetic");
+  r0dyn->use_spins = par_get_i("use_spins");
 
-  const int usetidal = dyn->use_tidal;  
-  const int usespins = dyn->use_spins;
+  /* Shorthands */
+  const double nu    = r0dyn->nu;
+  const double X1    = r0dyn->X1;
+  const double X2    = r0dyn->X2;
+  const double chi1  = r0dyn->chi1;
+  const double chi2  = r0dyn->chi2;
+  const double a1    = r0dyn->a1;
+  const double a2    = r0dyn->a2;
+  const double aK2   = r0dyn->aK2;
+  const double S     = r0dyn->S;
+  const double Sstar = r0dyn->Sstar;
+  const double c3    = r0dyn->cN3LO;
+  const double C_Q1  = r0dyn->C_Q1;
+  const double C_Q2  = r0dyn->C_Q2;
+  const double C_Oct1 = r0dyn->C_Oct1;
+  const double C_Oct2 = r0dyn->C_Oct2;
+  const double C_Hex1 = r0dyn->C_Hex1;
+  const double C_Hex2 = r0dyn->C_Hex2;
+  const int usetidal = r0dyn->use_tidal;  
+  const int usespins = r0dyn->use_spins;
 
   double A,B,dA,rc,drc_dr,G,dG_dr,uc,uc2,dAuc2_dr,j02,j0,H,Heff,Heff_orb,dHeff_dj0,omg_orb;
   double pl_hold,a_coeff,b_coeff,c_coeff,Delta,sol_p,sol_m;
@@ -421,13 +467,13 @@ double eob_dyn_Omegaorb0(double r, void *params)
 
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
-    eob_metric_s(r,dyn, &A, &B, &dA, &pl_hold, &pl_hold);
+    eob_metric_s(r, r0dyn, &A, &B, &dA, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
     eob_dyn_s_GS(r, rc, drc_dr, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
     dG_dr = ggm[6]*S + ggm[7]*Sstar;
   } else {
-    eob_metric(r ,dyn, &A, &B, &dA, &pl_hold, &pl_hold);
+    eob_metric(r, r0dyn, &A, &B, &dA, &pl_hold, &pl_hold);
     rc     = r;   //Nonspinning case: rc = r; G = 0;
     drc_dr = 1;  
     G      = 0.0;
@@ -478,12 +524,15 @@ double eob_dyn_Omegaorb0(double r, void *params)
   dHeff_dj0 = G + A*j0*uc2/Heff_orb;
   omg_orb   = dHeff_dj0/nu/H;
 
+  /* Free memory */
+  free(r0dyn);
+  
   /* Subtraction of initial evolution frequency */
   return (omg_orb - omg_orb0);
 }
 
 /** Root finder: Compute r0 such that omg_orb = omg_orb0 */
-double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl)
+double eob_dyn_bisecOmegaorb0(double omg_orb0,double r0_kepl)
 {
 #define max_iter (200)
 #define tolerance (1e-14)
@@ -496,7 +545,7 @@ double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl)
   double x_lo = 0.5*r0_kepl, x_hi = 1.5*r0_kepl;
   gsl_function F;
   
-  struct  Omegaorb0_tmp_params p = {omg_orb0,dyn};
+  struct  Omegaorb0_tmp_params p = {omg_orb0};
   
   F.function = &eob_dyn_Omegaorb0;
   F.params = &p;
