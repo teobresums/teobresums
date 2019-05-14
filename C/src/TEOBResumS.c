@@ -126,7 +126,7 @@ int main (int argc, char* argv[])
   /** Compute initial radius */
   const double f0 = par_get_d("initial_frequency")/time_unit_fact;
   double r0 = eob_dyn_r0_Kepler(f0);
-  //double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
+  //double r0 = eob_dyn_r0_eob(f0); /* TODO: Radius from EOB equations. This is what should be used. */
 
   /* If f_min is too high fall back to a minimum acceptable initial radius */
   if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
