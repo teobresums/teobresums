@@ -399,45 +399,45 @@ int main (int argc, char* argv[])
       /* Uniform timestepping  */
       dyn->ti = dyn->t + dyn->dt;
       STATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
-      if (STATUS != GSL_SUCCESS) {
-	printf ("ODE solver failed. Error = %d\n", STATUS);
-	return STATUS;
-      }
     } 
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE) {
       /* Adaptive timestepping */
       if ( dyn->ode_stop_MOmgpeak == true ) 
-	/* slow down and fix the last steps ! */
+	/* if we are after the peak, slow down and fix the last steps ! */
 	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
       else
 	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
-      if (STATUS != GSL_SUCCESS) {
-	printf ("ODE solver failed. Error = %d\n", STATUS);
-	return STATUS;	
-      }
     }
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
       if (dyn->r > dyn->rLSO) { 
 	STATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
-	if (STATUS != GSL_SUCCESS) {
-	  printf ("ODE solver failed. Error = %d\n", STATUS);
-	  return STATUS;
-	}
       } else {
 	/* ... uniform afterwards */
 	dyn->dt = dt_tuned_mrg;
 	dyn->ti = dyn->t + dyn->dt;
 	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
-	if (STATUS != GSL_SUCCESS) {
-	  printf ("ODE solver failed. Error = %d\n", STATUS);
-	  return STATUS;
-	}
       }
     }
 
+    /* Check for failures ... */
+    if (dyn->ode_stop_MOmgpeak == true) {
+      /* ... if after the Omega_orb peak, stop integration */
+      if ( (STATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
+	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
+	iter--; /* do count this iter! */
+	dyn->ode_stop = true;
+	break; /* (while) stop */
+      }
+    }
+    if (STATUS != GSL_SUCCESS) {
+      /* ... if before the Omega_orb peak, this is an actual error */
+      printf ("ODE solver failed. Error = %d\n", STATUS);
+      return STATUS;
+    }        
+    
     /** Unpack data */
     dyn->r      = dyn->y[EOB_EVOLVE_RAD];
     dyn->phi    = dyn->y[EOB_EVOLVE_PHI];
@@ -504,36 +504,21 @@ int main (int argc, char* argv[])
     } else {
       dyn->MOmg = dyn->Omg;
     }
+
     if (dyn->ode_stop_MOmgpeak == false) {
+      /* Before the Omega_orb peak */      
       if (dyn->MOmg < dyn->MOmg_prev) {
+	/* This is the first step after the peak
+	   Set things for uniform tstep evolution */      
 	dyn->ode_stop_MOmgpeak = true;
 	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
-	//dyn->t_stop = dyn->t + nstep_stop*dyn->dt; // continue for nstep_stop iters 
 	dyn->t_stop = dyn->t + 2.;
 	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
-	/* Take a step, and verify everything is Ok */
-	for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] = dyn->y[v];
-	ttmp = dyn->t;
-	STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &ttmp, dyn->dt, ytmp);
-	if ( (STATUS != GSL_SUCCESS) || (!isfinite(ytmp[EOB_EVOLVE_RAD])) ) {
-	  if (VERBOSE) printf("Stop: extra-steps not possible.\n");
-	  dyn->ode_stop = true;
-	}
       } else {
+	/* Peak not reached, update the max */
 	dyn->MOmg_prev = dyn->MOmg;
-      }
+      }      
     } else {
-      /* Take a step, and verify everything is Ok */
-      for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] = dyn->y[v];
-      /* p_eob_dyn_rhs(dyn->t, ytmp, dytmp, dyn);
-      for (int v = 0; v < EOB_EVOLVE_NVARS; v++) ytmp[v] += dt*dytmp[v]; 
-      */
-      ttmp = dyn->t;
-      STATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &ttmp, dyn->dt, ytmp);
-       if ( (STATUS != GSL_SUCCESS) || (!isfinite(ytmp[EOB_EVOLVE_RAD])) ) {
-	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
-	dyn->ode_stop = true;
-      }
       if (dyn->t >= dyn->t_stop) {
 	if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
 	dyn->ode_stop = true;
