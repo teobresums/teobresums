@@ -351,7 +351,6 @@ int main (int argc, char* argv[])
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
   const double rstop   = par_get_d("ode_stop_at_radius"); 
-  const int nstep_stop = par_get_i("ode_stop_afterNdt");
   if (rstop>0.) {
     dyn->ode_stop_radius   = true;
   }
@@ -510,7 +509,8 @@ int main (int argc, char* argv[])
       /* Before the Omega_orb peak */      
       if (dyn->MOmg < dyn->MOmg_prev) {
 	/* This is the first step after the peak
-	   Set things for uniform tstep evolution */      
+	   Set things for uniform tstep evolution */
+	dyn->tMOmgpeak = dyn->t; // = dyn->t-0.5*dyn->dt;
 	dyn->ode_stop_MOmgpeak = true;
 	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
 	dyn->t_stop = dyn->t + 2.;
@@ -588,8 +588,8 @@ int main (int argc, char* argv[])
       /**  Interpolate mrg on uniform grid */
       
       /* Build uniform grid of width dt and alloc tmp memory */
-      double dt_merger_interp = par_get_d("dt_merger_interp"); 
-      //dt_merger_interp = MIN(dt_merger_interp,dyn->dt);
+      double dt_merger_interp = par_get_d("dt_merger_interp");
+      dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/3 ); /* Make sure to have always 3 points */
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
       if (VERBOSE) {
 	PRSECTN("Interpolation of merger to uniform grid");
