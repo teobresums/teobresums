@@ -291,7 +291,7 @@ int main (int argc, char* argv[])
     dyn->r       = dyn->y0[EOB_ID_RAD];
     dyn->phi     = 0.;
     dyn->pphi    = dyn->y0[EOB_ID_PPHI];
-    dyn->Omg     = dyn->y0[EOB_ID_OMGJ];	//CHECKME
+    dyn->Omg     = dyn->y0[EOB_ID_OMGJ];
     dyn->ddotr   = 0.; 
     dyn->prstar  = dyn->y0[EOB_ID_PRSTAR];
     dyn->Omg_orb = 0.;//FIXME 
@@ -422,7 +422,7 @@ int main (int argc, char* argv[])
       }
     }
 
-    /* Check for failures ... */
+    /** Check for failures ... */
     if (dyn->ode_stop_MOmgpeak == true) {
       /* ... if after the Omega_orb peak, stop integration */
       if ( (STATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
@@ -432,24 +432,25 @@ int main (int argc, char* argv[])
 	break; /* (while) stop */
       }
     }
+
+    /* ... if before the Omega_orb peak, this is an actual error */
     if (STATUS != GSL_SUCCESS) {
-      /* ... if before the Omega_orb peak, this is an actual error */
-      printf ("ODE solver failed. Error = %d\n", STATUS);
-      return STATUS;
-    }        
+      printf("Error = %d", STATUS);
+      errorexit("ODE solver returned error.\n");
+    }
     
+    /** Checking whether the dynamics produces NaN values
+       this can happen if radius r becomes too small */
+    if (!(isfinite(dyn->r))) {
+      errorexit("ODE solver returned NaN radius.\n");
+    }
+
     /** Unpack data */
     dyn->r      = dyn->y[EOB_EVOLVE_RAD];
     dyn->phi    = dyn->y[EOB_EVOLVE_PHI];
     dyn->prstar = dyn->y[EOB_EVOLVE_PRSTAR];
     dyn->pphi   = dyn->y[EOB_EVOLVE_PPHI];
-        
-    /** Checking whether the dynamics produces NaN values
-	this can happen if radius r becomes too small */
-    if (!(isfinite(dyn->r))) {
-      errorexit("ODE solver returned NaN radius.\n");
-    }
-
+    
     /** Waveform computation 
 	Needs a r.h.s. evaluation for some vars (but no flux) */
     dyn->store = dyn->noflx = 1;
@@ -570,7 +571,7 @@ int main (int argc, char* argv[])
     dyn_mrg = dyn;
 
     if (merger_interp) {
-
+      
       /** NQC and ringdown attachment is done around merger 
 	  using auxiliary variables defined around [tmin,tmax] 
 	  Recall that parameters are NOT stored into these auxiliary vars */
