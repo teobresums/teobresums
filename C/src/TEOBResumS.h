@@ -305,7 +305,7 @@ typedef struct tagDynamics
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
   double A,dA,d2A, B,dB;
-  double MOmg, MOmg_prev;
+  double MOmg, MOmg_prev, tMOmgpeak;
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_NVARS]; /* rhs storage */
   double dy[EOB_EVOLVE_NVARS];
