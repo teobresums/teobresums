@@ -1,0 +1,71 @@
+# parfile for BBH spin from initial_frequency = 0.001
+# spins in centrifugal radius at NLO
+
+
+#
+# use geometric units for I/O
+# everything is given geometric units and binary mass-rescaled 
+#
+
+use_geometric_units = 1
+
+
+#
+# Binary properties
+#
+q = 20. # mass ratio
+
+use_spins = 1
+chi1 = -0.9 # dimensionless spin 1 z-component
+chi2 = -0.9 # dimensionless spin 2 z-component
+
+initial_frequency = 0.001 # initial GW freq of 10 Hz for M = 10 M_sun
+
+#
+# Output dir, output modes 
+#
+
+output_dir = "./bbh_test/"
+output_hpc = 1 # switch this off to test performances!!!
+output_multipoles = 0
+output_lm = [1]; 
+use_mode_lm = [ 1 ]; # for BBH h_{+,x}, this will be updated
+output_dynamics = 0
+
+
+#
+# Setup
+#
+
+centrifugal_radius = "NLO" # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+use_flm = "SSNLO" # "SSLO", "SSNLO"
+
+size = 200 # size of the arrays (chunks, dynamically extended)
+#ode_timestep = "uniform"  
+ode_timestep = "adaptive"
+compute_LR = 0 # calculate LR ?
+compute_LSO = 0 # calculate LSO ?
+ode_stop_at_radius = 1. # rLR = 1.81...
+
+dt_merger_interp = 0.5
+
+# interpolate on uniform grid?
+#interp_uniform_grid = 0 # no, interpolates/outputs on a grid of dt = 0.5 
+interp_uniform_grid = 1 # yes, only h+,hx on a grid of dt_interp
+#interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
+
+dt_interp = 5. #4.95667594616 # interpolation spacing, M/delta_t  = 4096 Hz for M = 10 M_sun
+
+
+#
+# Setup for PA
+#
+
+postadiabatic_dynamics = "yes"
+postadiabatic_dynamics_N = 8 # post-adiabatic order
+postadiabatic_dynamics_size = 50 # grid size
+postadiabatic_dynamics_rmin = 18. # stop post-adiabatic dynamics at this radius
+postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
+
+
+

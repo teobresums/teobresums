@@ -42,6 +42,7 @@ def run_exception(parfile, rm_file=0):
         ##return(e.returncode)
     #print("Output: \n{}\n".format(p))
     if (rm_file): os.remove(parfile)
+    ##if (rm_dir): os.remove(dirname)
     return p 
 
 def combine_parameters(pars):

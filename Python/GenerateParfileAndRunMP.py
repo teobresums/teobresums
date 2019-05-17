@@ -64,29 +64,34 @@ if __name__ == "__main__":
 
     # Setup -----------------------------------------
 
-    test_name = "bns_test"
+    ##test_name = "bns_test"
+    test_name = "bbh_test"
     
     # Base dir & template parfile
     based = "./"
     basep = "bns_test.par"
+    basep = "bbh_test.par"
 
     # Set new values/ranges for parameters
     # NOTE: use lists
-    q = np.linspace(1.,2.,4)
-    chi1 = np.linspace(0.,0.5,4)
-    chi2 = np.linspace(0.,0.5,4)
-    lambd = np.linspace(1,2000,50) 
+    q = np.linspace(1.,20.,10)
+    chi1 = np.linspace(-0.9,0.9,10)
+    chi2 = np.linspace(-0.9,0.9,10)
+    ##q = np.linspace(1.,2.,10)
+    ##chi1 = np.linspace(-0.5,0.5,10)
+    ##chi2 = np.linspace(-0.5,0.5,10)
+    ##lambd = np.linspace(1,2000,50) 
      
     # Pack them into a dictionary
     # NOTE: keys must match those in parfile otherwise ignored
-    ##n = {'q': q, 'chi1': chi1, 'chi2': chi2}
-    n = {'q': q, 'chi1': chi1, 'chi2': chi2, 'LambdaAl2': lambd, 'LambdaAl2': lambd}
+    n = {'q': q, 'chi1': chi1, 'chi2': chi2}
+    ##n = {'q': q, 'chi1': chi1, 'chi2': chi2, 'LambdaAl2': lambd, 'LambdaAl2': lambd}
 
     # Set the number of processes
     nproc = 4
 
     # Produce plot?
-    plotme = 0
+    plotme = 1
     
     # ------------------------------------------
     # DO NOT CHANGE BELOW HERE 
@@ -147,6 +152,7 @@ if __name__ == "__main__":
             b, e = extract_basename(p["parfile"])
             #t, re, im, amp, phi = np.loadtxt(b+"/waveform.txt",unpack=True)
             t, re, im, amp, phi = np.loadtxt(b+"/waveform_interp.txt",unpack=True)
+            if np.any(np.isnan(re)): print("NaN data in: {}".format(b))
             ax.plot(t, amp, '-')## check/improve
             #ax.plot(t, amp, '--', t, np.fabs(re**2+im**2), '-')## check/improve
             ax.set(xlabel='time', ylabel='amplitude', title=test_name)
