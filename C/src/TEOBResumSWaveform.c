@@ -2163,8 +2163,10 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
 #if (0)
   
   /* This is a hard-fix that always guarantee the 7 points */
-  /* Make sure to uncomment the following line in main:
+  /* Make sure to comment the following line in main:
      dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); 
+     and uncomment:
+     dt_merger_interp = MIN(dt_merger_interp, dyn->dt);
   */
   double *Omega_ptr = &Omega[index_pk-3];  
   double tOmg_pk; /* New interpolated value of the Omega peak */
@@ -2174,14 +2176,15 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   if ( (index_pk + (n-1)/2) > (dynsize-1) ) { 
     /* Here there are not enough points after the Omega peak 
        We always need 3; we compute what we need by linear extrapolation */
+    double Omega_pk_grid[7]; /* Temporary buffer for the 7-point interp */
+    const int ni = (index_pk + (n-1)/2) - (dynsize-1) ; /* Pts to extrap, 0 <  ni <= 3 */
     if (VERBOSE) {
-      printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);
+      printf("q=%.1f\tchi1=%.3f\tchi2=%.3f\n", q, chi1, chi2);
       printf("%d vs. %d\n", (index_pk + (n-1)/2), (dynsize-1));
+      printf("Extrapolate ni=%d points\n",ni);
     } 
     /* errorexit("Not enough points to interpolate.\n"); */
 
-    double Omega_pk_grid[7]; /* Temporary buffer for the 7-point interp */
-    const int ni = dynsize-1 - index_pk; /* Pts to extrap, 0 <  ni <= 3 */
     /* Copy the pts we have */
     for (int j = 0; j < (7-ni); j++) 
       Omega_pk_grid[j] = Omega_ptr[j];
