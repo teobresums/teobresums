@@ -2218,7 +2218,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   double tOmg_pk = find_max(n, dt, tmax, Omega_ptr, NULL);
   tOmg_pk *= ooMbh;
 
-#fi
+#endif
 
   if (VERBOSE) PRFORMd("ringdown_Omega_pk",Omega_pk);
   if (VERBOSE) PRFORMd("ringdown_Omega_ptr",Omega_ptr[0]);
