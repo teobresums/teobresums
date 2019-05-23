@@ -2192,6 +2192,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     /* Extrapolate the others */
     if (ni==1) {
       Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
+      //Omega_pk_grid[6] =3.*Omega_pk_grid[5]-3.*Omega_pk_grid[4]+Omega_pk_grid[3];//quadratic, PLEASE CHECK
     } else if (ni==2) {
       Omega_pk_grid[5] = 2.*Omega_pk_grid[4]-Omega_pk_grid[3];
       Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
