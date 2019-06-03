@@ -85,7 +85,7 @@
 /** Macros */
 #define ERROR 1 /** generic error int */
 #define OK 0 /** generic go int */
-#define STRLEN 128 /** Standard string length */
+#define STRLEN 1024 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
 #define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);} 
 #define SIGN(x,y) ((y) >= 0.0 ? fabs(x) : -fabs(x)) 
