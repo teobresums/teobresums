@@ -52,11 +52,11 @@ static const double ChlmNewt_phase[35] = {4.71238898038469, 3.141592653589793, 4
 
 /** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform. 
     Reference: Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
-void eob_wav_hlmNewt(double r,
-		     double Omega,
-		     double phi,
-		     double nu,
-		     Waveform_lm_t *hlmNewt)
+void eob_wav_hlmNewt_v1(double r,
+			double Omega,
+			double phi,
+			double nu,
+			Waveform_lm_t *hlmNewt)
 {
   /** Shorthands */
   double nu2   = nu*nu;
@@ -112,6 +112,97 @@ void eob_wav_hlmNewt(double r,
     pv23, pv34, pv23, 
     pv45, pv34, pv45, pv34, 
     pv45, pv56, pv45, pv56, pv45, 
+    pv67, pv56, pv67, pv56, pv67, pv56, 
+    pv67, pv78, pv67, pv78, pv67, pv78, pv67, 
+    pv89, pv78, pv89, pv78, pv89, pv78, pv89, pv78
+  };
+    
+  /** Compute hlmNewt (without phase factor) in complex Polar coords */
+  for (int k = 0; k < KMAX; k++) {
+    hlmNewt->phase[k] = - phim[k] + ChlmNewt_phase[k];
+    hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
+  }
+  
+}
+
+/** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform.
+    New terms vphi and vOmg for higher modes. 
+    Reference:     TO BE UPDATED    Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
+void eob_wav_hlmNewt_HM(double r,
+			double Omega,
+			double phi,
+			double nu,
+			Waveform_lm_t *hlmNewt)
+{
+  /** Shorthands */
+  double nu2   = nu*nu;
+  double nu3   = nu*nu2;
+
+  double vOmg  = pow(Omega,1./3.);
+  double vOmg2 = vOmg*vOmg;
+  double vOmg3 = vOmg*vOmg2;
+  double vOmg4 = vOmg*vOmg3;
+  double vOmg5 = vOmg*vOmg4;
+
+  double vphi  = r*Omega;
+  double vphi2 = vphi*vphi;
+  double vphi3 = vphi*vphi2;
+  double vphi4 = vphi*vphi3;
+  double vphi5 = vphi*vphi4;
+  double vphi6 = vphi*vphi5;
+  double vphi7 = vphi*vphi6;
+  double vphi8 = vphi*vphi7;
+  double vphi9 = vphi*vphi8;
+
+  /** Polynomials in nu */
+  const double p1 = 1.;
+  const double p2 = sqrt(1.-4.*nu); 
+  const double p3 = (3.*nu-1.);
+  const double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);
+  const double p5 = 1.-5.*nu+5.*nu2;
+  const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
+  const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
+  const double p8 = (4.*nu3 - 10.*nu2 + 6.*nu -1.)*sqrt(1.-4.*nu);
+    
+  const double phix2 = 2. * phi;
+  const double phix3 = 3. * phi;
+  const double phix4 = 4. * phi;
+  const double phix5 = 5. * phi;
+  const double phix6 = 6. * phi;
+  const double phix7 = 7. * phi;
+  
+  const double pv45 = p4 * vphi5;
+  const double pv56 = p5 * vphi6;
+  const double pv67 = p6 * vphi7;
+  const double pv78 = p7 * vphi8;
+  const double pv89 = p8 * vphi9;
+
+  const double fact22 = p1*vphi2;
+  const double fact21 = p2*vphi3;
+  const double fact33 = p2*vphi*vOmg2;
+  const double fact32 = p3*vphi2*vOmg2;
+  const double fact31 = p2*vOmg3;
+  const double fact44 = p3*vphi2*vOmg2;
+  const double fact43 = p4*vphi2*vOmg3;
+  const double fact42 = p3*vphi*vOmg3;
+  const double fact41 = p4*vOmg5;
+  const double fact55 = p4*vphi*vOmg4;
+
+  double phim[35] = {
+    phi,phix2,
+    phi,phix2,phix3,
+    phi,phix2,phix3,phix4,
+    phi,phix2,phix3,phix4,phix5,
+    phi,phix2,phix3,phix4,phix5,phix6,
+    phi,phix2,phix3,phix4,phix5,phix6,phix7,
+    phi,phix2,phix3,phix4,phix5,phix6,phix7,8.*phi
+  };
+
+  double Alm[35] = {
+    fact21, fact22, 
+    fact31, fact32, fact33, 
+    fact41, fact42, fact43, fact44, 
+    fact55, pv56, pv45, pv56, pv45, 
     pv67, pv56, pv67, pv56, pv67, pv56, 
     pv67, pv78, pv67, pv78, pv67, pv78, pv67, 
     pv89, pv78, pv89, pv78, pv89, pv78, pv89, pv78
@@ -288,7 +379,7 @@ void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
  *  . Fujita & Iyer, PRD 82, 044051 (2010)            [test-mass 5.5PN]
  *  . Damour, Nagar & Bernuzzi, PRD 87, 084035 (2013) [complete information]
  */
-void eob_wav_flm(double x,double nu, double *rholm, double *flm)
+void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
 {
 
   /** Coefficients */
@@ -593,6 +684,411 @@ void eob_wav_flm(double x,double nu, double *rholm, double *flm)
 
 }
 
+/** Resummed amplitudes in the general nu-dependent case.
+ *  Function introduced for higher modes
+ *  (2,2) is taken at 3^{+2} PN order
+ *  (4,4), (4,2) and (5,5) and l >= 7 modes are Talyor expanded 
+ *  (3,2) is resummed with a Padé 32
+ *  (2,1) is resummed with a Padé 51
+ *  All other modes are resummed with a Padé 42
+ *  *  Refs:
+ *  TO BE UPDATED
+ */
+void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
+{
+  /** Coefficients */
+  static double clm[KMAX][7];
+  
+  const double nu2 = nu*nu;
+  const double nu3 = nu*nu2;
+  const double nu4 = nu*nu3;
+  const double Pi2 = SQ(Pi);
+  
+  static int firstcall = 1;
+  if (firstcall) {
+    if (0) printf("Precompute some rholm coefs\n");
+    firstcall = 0;
+    
+    for (int k=0; k<KMAX; k++) clm[k][0] = 1.;
+    for (int k=0; k<KMAX; k++) for (int n=1; n<7; n++) clm[k][n] = 0.;
+
+    /** (2,1) */
+    clm[0][1] = (-1.0535714285714286 + 0.27380952380952384 *nu);
+    clm[0][2] = (-0.8327841553287982 - 0.7789824263038548  *nu + 0.13116496598639457*nu2);
+
+    /** (2,2) */
+    clm[1][1] = (-1.0238095238095237 + 0.6547619047619048*nu);
+    clm[1][2] = (-1.94208238851096   - 1.5601379440665155*nu + 0.4625614134542706*nu2);
+
+    /** (3,1) */
+    clm[2][1] = (-0.7222222222222222 - 0.2222222222222222*nu);
+    clm[2][2] = (0.014169472502805836 - 0.9455667789001122*nu - 0.46520763187429853*nu2);
+
+    /** (3,2) */
+    clm[3][1] = (0.003703703703703704*(328. - 1115.*nu + 320.*nu2))/(-1. + 3.*nu);
+    clm[3][2] = (6.235191420376606e-7*(-1.444528e6 + 8.050045e6*nu - 4.725605e6*nu2 - 2.033896e7*nu3 + 3.08564e6*nu4))/((-1. + 3.*nu)*(-1. + 3.*nu));
+
+    /** (3,3) */
+    clm[4][1] =  (-1.1666666666666667 + 0.6666666666666666*nu);
+    clm[4][2] = (-1.6967171717171716 - 1.8797979797979798*nu + 0.45151515151515154*nu2);
+    
+    /** (4,1) */
+    clm[5][1] = (0.001893939393939394*(602. - 1385.*nu + 288.*nu2))/(-1. + 2.*nu);
+    clm[5][2] = (- 0.36778992787515513);
+    
+    /** (4,2) */
+    clm[6][1] = (0.0007575757575757576*(1146. - 3530.*nu + 285.*nu2))/(-1. + 3.*nu);
+    clm[6][2] = - (3.1534122443213353e-9*(1.14859044e8 - 2.95834536e8*nu - 1.204388696e9*nu2 + 3.04798116e9*nu3 + 3.79526805e8*nu4))/((-1. + 3.*nu)*(-1. + 3.*nu));
+        
+    /** (4,3) */
+    clm[7][1] = (0.005681818181818182*(222. - 547.*nu + 160.*nu2))/(-1. + 2.*nu);
+    clm[7][2] = (- 0.9783218202252293);
+    
+    /** (4,4) */
+    clm[8][1] = (0.0007575757575757576*(1614. - 5870.*nu + 2625.*nu2))/(-1. + 3.*nu);
+    clm[8][2] = (3.1534122443213353e-9*(-5.11573572e8 + 2.338945704e9*nu - 3.13857376e8*nu2 - 6.733146e9*nu3 + 1.252563795e9*nu4))/((-1. + 3.*nu)*(-1. + 3.*nu));
+    
+    /** (5,1) */
+    clm[9][1] = (0.002564102564102564*(319. - 626.*nu + 8.*nu2))/(-1. + 2.*nu);
+    clm[9][2] = (- 0.1047896120973044);
+    
+    /** (5,2) */
+    clm[10][1] = (0.00007326007326007326*(-15828. + 84679.*nu - 104930.*nu2 + 21980.*nu3))/(1. - 5.*nu + 5.*nu2);
+    clm[10][2] = (- 0.4629337197600934)*PMTERMS_eps; 
+    
+    /** (5,3) */
+    clm[11][1] = (0.002564102564102564*(375. - 850.*nu + 176.*nu2))/(-1. + 2.*nu);
+    clm[11][2] = (- 0.5788010707241477);
+    
+    /** (5,4) */
+    clm[12][1] = (0.00007326007326007326*(-17448. + 96019.*nu - 127610.*nu2 + 33320.*nu3))/(1. - 5.*nu + 5.*nu2);
+    clm[12][2] = (- 1.0442142414362194)*PMTERMS_eps;
+    
+    /** (5,5) */
+    clm[13][1] = (0.002564102564102564*(487. - 1298.*nu + 512.*nu2))/(-1. + 2.*nu);
+    clm[13][2] = (- 1.5749727622804546);
+        
+    /** (6,1) */
+    clm[14][1] = (0.006944444444444444*(-161. + 694.*nu - 670.*nu2 + 124.*nu3))/(1. - 4.*nu + 3.*nu2);
+    clm[14][2] = (- 0.29175486850885135)*PMTERMS_eps;
+    
+    /** (6,2) */
+    clm[15][1] = (0.011904761904761904*(-74. + 378.*nu - 413.*nu2 + 49.*nu3))/(1. - 5.*nu + 5.*nu2);
+    clm[15][2] = ( - 0.24797525070634313)*PMTERMS_eps;
+    
+    /** (6,3) */
+    clm[16][1] = (0.006944444444444444*(-169. + 742.*nu - 750.*nu2 + 156.*nu3))/(1. - 4.*nu + 3.*nu2);
+    clm[16][2] = (- 0.5605554442947213)*PMTERMS_eps;
+    
+    /** (6,4) */
+    clm[17][1] = (0.011904761904761904*(-86. + 462.*nu - 581.*nu2 + 133.*nu3))/(1. - 5.*nu + 5.*nu2);
+    clm[17][2] = (- 0.7228451986855349)*PMTERMS_eps;
+    
+    /** (6,5) */
+    clm[18][1] = (0.006944444444444444*(-185. + 838.*nu - 910.*nu2 + 220.*nu3))/(1. - 4.*nu + 3.*nu2);
+    clm[18][2] = (- 1.0973940686333457)*PMTERMS_eps;
+  
+    /** (6,6) */
+    clm[19][1] = (0.011904761904761904*(-106. + 602.*nu - 861.*nu2 + 273.*nu3))/(1. - 5.*nu + 5.*nu2); 
+    clm[19][2] = (- 1.5543111183867486)*PMTERMS_eps;
+  
+    /** (7,1) */
+    clm[20][1] = (0.0014005602240896359*(-618. + 2518.*nu - 2083.*nu2 + 228.*nu3))/(1. - 4.*nu + 3.*nu2);
+    clm[20][2] = ( - 0.1508235111143767)*PMTERMS_eps;
+  
+    /** (7,2) */
+    clm[21][1] = (0.00006669334400426837*(16832. - 123489.*nu + 273924.*nu2 - 190239.*nu3 + 32760.*nu4))/(-1. + 7.*nu - 14.*nu2 + 7.*nu3);
+    clm[21][2] = (- 0.351319484450667)*PMTERMS_eps;
+    
+    /** (7,3) */
+    clm[22][1] = (0.0014005602240896359*(-666. + 2806.*nu - 2563.*nu2 + 420.*nu3))/(1. - 4.*nu + 3.*nu2);
+    clm[22][2] = (- 0.37187416047628863)*PMTERMS_eps;
+  
+    /** (7,4) */
+    clm[23][1] = (0.00006669334400426837*(17756. - 131805.*nu + 298872.*nu2 - 217959.*nu3 + 41076.*nu4))/(-1. + 7.*nu - 14.*nu2 + 7.*nu3);
+    clm[23][2] = (- 0.6473746896670599)*PMTERMS_eps;
+    
+    /** (7,5) */
+    clm[24][1] = (0.0014005602240896359*(-762. + 3382.*nu - 3523.*nu2 + 804.*nu3))/(1. - 4.*nu + 3.*nu2);
+    clm[24][2] = (- 0.8269193364414116)*PMTERMS_eps;
+  
+    /** (7,6) */
+    clm[25][1] = (0.0006002400960384153*(2144. - 16185.*nu + 37828.*nu2 - 29351.*nu3 + 6104.*nu4))/(-1. + 7.*nu - 14.*nu2 + 7.*nu3);
+    clm[25][2] = (- 1.1403265020692532)*PMTERMS_eps;
+    
+    /** (7,7) */
+    clm[26][1] = (0.0014005602240896359*(-906. + 4246.*nu - 4963.*nu2 + 1380.*nu3))/(1. - 4.*nu + 3.*nu2);
+    clm[26][2] = (- 1.5418467934923434)*PMTERMS_eps;
+  
+    /** (8,1) */
+    clm[27][1] = (0.00005482456140350877*(20022. - 126451.*nu + 236922.*nu2 - 138430.*nu3 + 21640.*nu4))/(-1. + 6.*nu - 10.*nu2 + 4.*nu3);
+    clm[27][2] = (- 0.26842133517043704)*PMTERMS_eps;
+
+    /** (8,2) */
+    clm[28][1] = (0.0003654970760233918*(2462. - 17598.*nu + 37119.*nu2 - 22845.*nu3 + 3063.*nu4))/(-1. + 7.*nu - 14.*nu2 + 7.*nu3);
+    clm[28][2] = (- 0.2261796441029474)*PMTERMS_eps;
+
+    /** (8,3) */
+    clm[29][1] = (0.00005482456140350877*(20598. - 131059.*nu + 249018.*nu2 - 149950.*nu3 + 24520.*nu4))/(-1. + 6.*nu - 10.*nu2 + 4.*nu3);
+    clm[29][2] = (- 0.4196774909106648)*PMTERMS_eps;
+
+    /** (8,4) */
+    clm[30][1] = (0.0003654970760233918*(2666. - 19434.*nu + 42627.*nu2 - 28965.*nu3 + 4899.*nu4))/(-1. + 7.*nu - 14.*nu2 + 7.*nu3);
+    clm[30][2] = (- 0.47652059150068155)*PMTERMS_eps;
+
+    /** (8,5) */
+    clm[31][1] = (0.00027412280701754384*(4350. - 28055.*nu + 54642.*nu2 - 34598.*nu3 + 6056.*nu4))/(-1. + 6.*nu - 10.*nu2 + 4.*nu3);
+    clm[31][2] = (- 0.7220789990670207)*PMTERMS_eps;
+
+    /** (8,6) */
+    clm[32][1] = (0.0010964912280701754*(1002. - 7498.*nu + 17269.*nu2 - 13055.*nu3 + 2653.*nu4))/(-1. + 7.*nu - 14.*nu2 + 7.*nu3);
+    clm[32][2] = (- 0.9061610303170207)*PMTERMS_eps;
+
+    /** (8,7) */
+    clm[33][1] = (0.00005482456140350877*(23478. - 154099.*nu + 309498.*nu2 - 207550.*nu3 + 38920.*nu4))/(-1. + 6.*nu - 10.*nu2 + 4.*nu3);
+    clm[33][2] = (- 1.175404252991305)*PMTERMS_eps;
+
+    /** (8,8) */
+    clm[34][1] = (0.0003654970760233918*(3482. - 26778.*nu + 64659.*nu2 - 53445.*nu3 + 12243.*nu4))/(-1. + 7.*nu - 14.*nu2 + 7.*nu3);
+    clm[34][2] = (- 1.5337092502821381)*PMTERMS_eps;
+
+  }
+
+  /** Compute EulerLogs */
+  const double el1 = Eulerlog(x,1);
+  const double el2 = Eulerlog(x,2);
+  const double el3 = Eulerlog(x,3);
+  const double el4 = Eulerlog(x,4);
+  const double el5 = Eulerlog(x,5);
+  const double el6 = Eulerlog(x,6);
+  const double el7 = Eulerlog(x,7);
+
+  const double logx  = log(x);
+  const double log2x = logx*logx;
+  
+  /** Coefs with Eulerlogs */
+  /* l = 2 */
+  clm[0][3] = (2.9192806270460925  - 1.019047619047619   *el1);
+  clm[0][4] = (-1.28235780892213   + 1.073639455782313   *el1);
+  clm[0][5] = (-3.8466571723355227 + 0.8486467106683944  *el1)*PMTERMS_eps;
+  clm[0][6] = -0.53614531347435562831 - 1.5600367264240624649*logx + 0.1298072562358276644*log2x;
+  
+  clm[1][3] = (12.736034731834051  - 2.902228713904598 *nu - 1.9301558466099282*nu2 + 0.2715020968103451*nu3 - 4.076190476190476*el2);
+  clm[1][4] = (-2.4172313935587004 + 4.173242630385488 *el2);
+  clm[1][5] = (-30.14143102836864  + 7.916297736025627 *el2);
+
+  /* l = 3 */
+  clm[2][3] = (1.9098284139598072 - 0.4126984126984127*el1+ (-4.646868015386534 + (0.21354166666666666)*Pi2)*nu + 2.3020866307903347*nu2 - 0.5813492634480288*nu3);  
+  clm[2][4] = (0.5368150316615179 + 0.2980599647266314*el1);
+  clm[2][5] = (1.4497991763035063 - 0.0058477188106817735*el1)*PMTERMS_eps;
+    
+  clm[3][3] = (6.220997955214429 - 1.6507936507936507*el2);
+  clm[3][4] = (-3.4527288879001268 + 2.005408583186361*el2)*PMTERMS_eps;
+  clm[3][5] = -4.5270419165221037846 + 0.74342737585535939445*logx;
+  clm[3][6] = 2.9819373321032360597 - 4.1746594065141637002*logx + 0.34063995968757873520*log2x;
+    
+  clm[4][3] = (14.10891386831863 - 3.7142857142857144*el3 + (-5.031429681429682 + (0.21354166666666666)*Pi2)*nu - 1.7781727531727531*nu2 + 0.25923767590434255*nu3);
+  clm[4][4] = (-6.723375314944128 + 4.333333333333333*el3);
+  clm[4][5] = (-29.568699895427518 + 6.302092352092352*el3)*PMTERMS_eps;
+  clm[4][6] = 4.2434215365016546735 - 18.544715779075533606*logx + 1.7244897959183673469*log2x;
+
+  /* l = 4 */
+  clm[5][3] = (0.6981550175535535 - 0.2266955266955267*el1);
+  clm[5][4] = (-0.7931524512893319 + 0.2584672482399755*el1)*PMTERMS_eps;
+  clm[5][5] = -0.73874769521337814809 + 0.041688165706484035882*logx;
+  clm[5][6] = -0.60643478766899956315 - 0.078148517222175236907*logx + 0.0064238577279702820828*log2x;
+  
+  clm[6][3] = 4.550378418934105e-12*(8.48238724511e11 - 1.9927619712e11*el2);
+  clm[6][4] = (-0.6621921297263365 + 0.787251738160829*el2)*PMTERMS_eps;
+  clm[6][5] = 0.066452311537142230164 + 0.16421729454462630378*logx;
+  clm[6][6] = 4.7020949396983490140 - 1.4492579183627638456*logx + 0.10278172364752451333*log2x;
+  
+  clm[7][3] = (8.519456157072423 - 2.0402597402597404*el3)*PMTERMS_eps;
+  clm[7][4] = (-5.353216984886716 + 2.5735094451003544*el3)*PMTERMS_eps;
+  clm[7][5] = -6.0091714045534954041 + 0.99801531141158133484*logx;
+  clm[7][6] = 4.9466129199935928986 - 6.3245279024451771064*logx + 0.52033247596559284871*log2x;
+  
+  clm[8][3] = (15.108111214795123 - 3.627128427128427*el4);
+  clm[8][4] = (-8.857121657199649 + 4.434988849534304*el4)*PMTERMS_eps;
+  clm[8][5] = -14.633690582678763747 + 2.9256460798810267523*logx;
+  clm[8][6] = 5.3708202812535269509 - 18.028080626090983076*logx + 1.6445075783603922132*log2x;
+
+  /* l = 5 */
+  clm[9][3] = (0.642701885362399 - 0.14414918414918415*el1)*PMTERMS_eps;
+  clm[9][4] = (-0.07651588046467575 + 0.11790664036817883*el1)*PMTERMS_eps;
+  clm[9][5] = -14.633690582678763747 + 2.9256460798810267523*logx;
+  clm[9][6] = 5.3708202812535269509 - 18.028080626090983076*logx + 1.6445075783603922132*log2x;
+  
+  clm[10][3] = (2.354458371550237 - 0.5765967365967366*el2)*PMTERMS_eps;
+  clm[10][4] = -0.36261168338728289637 + 0.33429938266861343784*logx;
+  clm[10][5] = -1.2210109278350054619 + 0.13346303603712902107*logx;
+  clm[10][6] = 0.33075256130927413448 + 0.041557974581750805527*log2x - 0.55630499019814556741*logx;
+  
+  clm[11][3] = (5.733973288504755 - 1.2973426573426574*el3)*PMTERMS_eps;
+  clm[11][4] = (-1.9573287625526001 + 1.2474448628294783*el3)*PMTERMS_eps;
+  clm[11][5] = -1.2893903635541462354 + 0.37545165958302052977*logx;
+  clm[11][6] = 5.5345161119771993654 + 0.21038724632011345298*log2x - 2.758182643809987602*logx;
+  
+  clm[12][3] = (10.252052781721588 - 2.3063869463869464*el4)*PMTERMS_eps;
+  clm[12][4] = 0.97104909920221130334 + 1.4740600527677450754*logx;
+  clm[12][5] = -7.1507394017332213549 + 1.2041810478399218889*logx;
+  clm[12][6] = 6.1586857187986271095 + 0.66492759330801288843*log2x - 8.0193253436649521323*logx;
+  
+  clm[13][3] = (15.939827047208668 - 3.6037296037296036*el5)*PMTERMS_eps;
+  clm[13][4] = (-10.272578060123237 + 4.500041838503377*el5)*PMTERMS_eps;
+  clm[13][5] = -14.676578889547799889 + 2.8378879842489309945*logx;
+  clm[13][6] = 5.9456506579632350247 + 1.6233583820996408409*log2x - 17.987106103978598244*logx;
+
+  /* l = 6 */
+  clm[14][3] = (0.21653486654395454 - 0.10001110001110002*el1)*PMTERMS_eps;
+  clm[14][4] = -0.41910058747759839184 + 0.05590898299231632565*logx;
+  clm[14][5] = -0.54703676004200114476 + 0.014589362666582032864*logx;
+  clm[14][6] = -0.54703676004200114476 + 0.014589362666582032864*logx;
+  
+  clm[15][3] = (1.7942694138754138 - 0.40004440004440006*el2)*PMTERMS_eps;
+  clm[15][4] = 0.11894436114207465266 + 0.17621003335289049575*logx;
+  clm[15][5] = -0.020168519020176921191 + 0.049600555197339365552*logx;
+  clm[15][6] = 1.3092135879268909484 + 0.020004440250860497281*log2x - 0.29998579925017448295*logx;
+  
+  clm[16][3] = (4.002558222882566 - 0.9000999000999002*el3)*PMTERMS_eps;
+  clm[16][4] = -0.17301414399537528118 + 0.52818362193362193362*logx;
+  clm[16][5] = -1.8598787273050426274 + 0.25227794970506685875*logx;
+  clm[16][6] = 1.5038409846301927305 + 0.10127247876998126748*log2x - 1.3388799755686528906*logx;
+  
+  clm[17][3] = (7.359388663371044 - 1.6001776001776002*el4)*PMTERMS_eps;
+  clm[17][4] = 1.1251294602654682041 + 0.81913853342424770996*logx;
+  clm[17][5] = -2.5262527575555087974 + 0.57834034766625984931*logx;
+  clm[17][6] = 6.2193866198899176839 + 0.32007104401376795649*log2x - 4.058212416583905376*logx;
+
+  clm[18][3] = (11.623366217471297 - 2.5002775002775004*el5)*PMTERMS_eps;
+  clm[18][4] = 1.1674823841175551524 + 1.6060810331643664977*logx;
+  clm[18][5] = -8.0397483562766587382 + 1.3718948493709684487*logx;
+  clm[18][6] = 6.9514240915914444298 + 0.78142344729923817503*log2x - 9.3656857835417176404*logx;
+  
+  clm[19][3] = (16.645950799433503 - 3.6003996003996006*el6)*PMTERMS_eps;
+  clm[19][4] = 2.5867656736437215138 + 2.2716807002521288236*logx;
+  clm[19][5] = -14.719871717781358093 + 2.7980705647681528943*logx;
+  clm[19][6] = 6.3131827696196368972 + 1.6203596603197002797*log2x - 18.073907939714613453*logx;
+
+  /* l = 7 */
+  clm[20][3] = (0.2581280702019663 - 0.07355557607658449*el1)*PMTERMS_eps;
+  
+  clm[22][3] = (3.0835293524055283 - 0.6620001846892604*el3)*PMTERMS_eps;
+  
+  clm[24][3] = (8.750589067052443 - 1.838889401914612*el5)*PMTERMS_eps;
+  
+  clm[26][3] = (17.255875091408523 - 3.6042232277526396*el7)*PMTERMS_eps;
+
+  /** rho_lm */
+  const double x2  = x*x;
+  const double x3  = x*x2;
+  const double x4  = x*x3;
+  const double x5  = x*x4;
+  const double x6  = x*x5;
+  const double xn[] = {1.,x,x2,x3,x4,x5,x6};
+
+  /** Initializing Padé approximants */
+  double cden,n1,n2,n3,n4,n5,d1,d2 = 0.;
+  double k = 0.;
+
+  // Padé (3,2) : Used for (3,1) multipole
+  const int kmaxPade32 = 1;
+  int kPade32[] = {2};
+  
+  for (int i=0; i<kmaxPade32; i++) {
+    int k = kPade32[i];
+    
+    cden = SQ(clm[k][3]) - clm[k][2]*clm[k][4];
+
+    n1 = clm[k][1]*SQ(clm[k][3]) - clm[k][1]*clm[k][2]*clm[k][4] - clm[k][3]*clm[k][4] + clm[k][2]*clm[k][5];
+    n2 = clm[k][2]*SQ(clm[k][3]) - clm[k][1]*clm[k][3]*clm[k][4] + SQ(clm[k][4]) + clm[k][1]*clm[k][2]*clm[k][5] - clm[k][3]*clm[k][5];
+    n3 = SQ(clm[k][3]) - 2.*SQ(clm[k][3])*clm[k][5] + clm[k][1]*SQ(clm[k][4]) + SQ(clm[k][2])*clm[k][5] - clm[k][1]*clm[k][3]*clm[k][5];
+    d1 = - clm[k][3]*clm[k][4] + clm[k][2]*clm[k][5];
+    d2 = SQ(clm[k][4]) - clm[k][3]*clm[k][5];
+
+    rholm[k] = (cden + n1*x + n2*x2 + n3*x3)/(cden + d1*x + d2*x2);
+  }
+
+  // Padé (4,2)
+  const int kmaxPade42 = 14;
+  int kPade42[] = {3,4,5,7,9,10,11,12,14,15,16,17,18,19};
+  
+  for (int i=0; i<kmaxPade42; i++) {
+    int k = kPade42[i];
+    
+    cden = SQ(clm[k][4]) - clm[k][3]*clm[k][5];
+
+    n1 = clm[k][1]*SQ(clm[k][4]) - clm[k][1]*clm[k][3]*clm[k][5] - clm[k][4]*clm[k][5] + clm[k][3]*clm[k][6];
+    n2 = clm[k][2]*SQ(clm[k][4]) - clm[k][2]*clm[k][3]*clm[k][5] - clm[k][1]*clm[k][4]*clm[k][5] + SQ(clm[k][5])
+	  + clm[k][1]*clm[k][3]*clm[k][6] - clm[k][4]*clm[k][6];
+    n3 = clm[k][3]*SQ(clm[k][4]) - SQ(clm[k][3])*clm[k][5] - clm[k][2]*clm[k][4]*clm[k][5] + clm[k][1]*SQ(clm[k][5])
+	  + clm[k][2]*clm[k][3]*clm[k][6] - clm[k][1]*clm[k][4]*clm[k][6];
+    n4 = SQ(clm[k][4])*clm[k][4] - 2*clm[k][3]*clm[k][4]*clm[k][5] + clm[k][2]*SQ(clm[k][5]) + SQ(clm[k][3])*clm[k][6]
+	  - clm[k][2]*clm[k][4]*clm[k][6];
+    d1 = - clm[k][4]*clm[k][5] + clm[k][3]*clm[k][6];
+    d2 = SQ(clm[k][5]) - clm[k][4]*clm[k][6];
+
+    rholm[k] = (cden + n1*x + n2*x2 + n3*x3 + n4*x4)/(cden + d1*x + d2*x2);
+  }
+
+  // Padé (5,1)
+  const int kmaxPade51 = 1;
+  int kPade51[] = {0};
+  
+  for (int i=0; i<kmaxPade51; i++) {
+    int k = kPade51[i];
+    
+    n1 = clm[k][1]*clm[k][5] -           clm[k][6];
+    n2 = clm[k][2]*clm[k][5] - clm[k][1]*clm[k][6];
+    n3 = clm[k][3]*clm[k][5] - clm[k][2]*clm[k][6];
+    n4 = clm[k][4]*clm[k][5] - clm[k][3]*clm[k][6];
+    n5 = clm[k][5]*clm[k][5] - clm[k][4]*clm[k][6];
+
+    d1 = - clm[k][6];
+      
+    rholm[k] = (clm[k][5] + n1*x + n2*x2 + n3*x3 + n4*x4 + n5*x5)/(clm[k][5] + d1*x);
+  }
+
+  // Taylor series : (2,2) at 5PN, (4,4), (4,2), (5,5) at 6PN
+  int kmaxTaylor = 19;
+  int kTaylor[19];
+  kTaylor[0] = 1;
+  kTaylor[1] = 6;
+  kTaylor[2] = 8;
+  kTaylor[3] = 13;
+  for (int i=4; i<kmaxTaylor; i++) {
+    kTaylor[i] = 16 + i;
+  }
+  
+  for (int i=0; i<kmaxTaylor; i++) {
+    int k = kTaylor[i];
+    
+    /* Note: the two sums give different result */
+#if (1)
+    rholm[k] = clm[k][0];
+    for (int n=1; n<7; n++) {
+      rholm[k] += clm[k][n]*xn[n];
+    }
+#else  
+    rholm[k] = x6*clm[k][6];
+    for (int n=6; n-- >1; ) { // 4,3,2,1 // 
+      rholm[k] += clm[k][n]*xn[n];
+    } 
+    rholm[k] += clm[k][0];
+#endif
+  }
+
+  if (kmaxTaylor+kmaxPade32+kmaxPade42+kmaxPade51 != KMAX) {
+    errorexit("Wrong function: not all multipoles are written.\n");
+  }
+  
+  /** Amplitudes */
+  for (int k = 0; k < KMAX; k++) {
+      flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
+  }
+
+}
+  
 /** Resummed amplitudes for the spin case. 
     This function computes the residual amplitude corrections flm's as 
     introduced in Damour, Iyer & Nagar, PRD 79, 064004 (2008).
@@ -849,6 +1345,187 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
   
   flm[8] = gsl_pow_int(rholm[8] + rho44S, 4);
       
+}
+
+/** 
+    Resummed amplitudes for the spin case. 
+    This function computes the residual amplitude corrections flm's as 
+    introduced in Damour, Iyer & Nagar, PRD 79, 064004 (2008).
+    The m=even modes have the usual structure (rho_lm^orb + rho_lm^spin)^l.
+    The m=odd modes are factorized as f_lm^orb * f_lm^spin.
+    Some of the f_lm^spin are inverse-resummed
+    Function introduced for higher modes.
+    Ref: TO BE UPDATED
+    Note that the variables called here (a1,a2)
+    are what we usually cal tilde{a}_1 and tilde{a}_2 and are defined as
+    a1 = X1*chi1, a2=X2*chi2 and are passed here as parameters. */
+void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2,
+		      double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm)
+{
+  /** Orbital part */
+  //double rholm_orb[KMAX], flm_orb[KMAX];
+  eob_wav_flm(x,nu, rholm, flm);
+
+  /** Spin corrections */
+  double rho22S;
+  double rho32S;
+  double rho44S;
+  double rho42S;
+  double f21S;
+  double f33S;
+  double f31S;
+  double f43S;
+  double f41S;
+  double f55S;
+
+  double nu2 = nu*nu;
+
+  const double el1 = Eulerlog(x,1);
+  const double el2 = Eulerlog(x,2);
+  const double el3 = Eulerlog(x,3);
+  const double el4 = Eulerlog(x,4);
+  const double el5 = Eulerlog(x,5);
+  const double el6 = Eulerlog(x,6);
+  const double el7 = Eulerlog(x,7);
+  
+  const double a0      = a1+a2;
+  const double a12     = a1-a2;
+  const double X12     = X1-X2;
+  const double a0X12   = a0*X12;
+  const double a12X12  = a12*X12;
+  
+  const double v  = sqrt(x);
+  const double v2 = x;
+  const double v3 = v2*v;
+  const double v4 = v3*v;
+  const double v5 = v4*v;
+  const double v6 = v5*v;
+  const double v7 = v6*v;
+  const double v8 = v7*v;
+  const double v9 = v8*v;
+     
+  /** l=m=2 multipole */
+  /* spin-orbit */
+  const double cSO_lo    = (-0.5*a0 - a12X12/6.);
+  const double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12;
+  
+  /* SPIN-SPIN contribution */
+  double cSS_lo = 0.;
+  double cSS_nlo = 0.;
+  if (usetidal) {
+#if (EXCLUDESPINSPINTIDES)
+    /* Switch off spin-spin-tidal couplings */
+    /* See also: eob_dyn_s_get_rc() */
+    cSS_lo  = 0.;
+    cSS_nlo = 0.;
+    /* Above code switch off everything, 
+       Alt. one can set C_Q1=C_Q2=0, but keep the term: */
+    /*
+      cSS_lo = a1*a2;
+    */
+#else
+    cSS_lo  = 0.5*(C_Q1*a1*a1 + 2.*a1*a2 + C_Q2*a2*a2);
+    cSS_nlo = (-85./63. + 383./252.*nu)*a1*a2 + (-2./3. - 5./18.*nu)*(a1*a1 + a2*a2) + (1./7. + 27./56.*nu)*(C_Q1*a1*a1 + C_Q2*a2*a2) + 2./9.*X12*(a1*a1 - a2*a2) + 55./84.*X12*(C_Q1*a1*a1 - C_Q2*a2*a2);
+#endif
+  } else {
+    cSS_lo  = 0.5*a0*a0;
+    cSS_nlo = 1./504.*(2.*(19. - 70.*nu)*a12*a12 + (-302. + 243.*nu)*a0*a0 + 442.*X12*a0*a12);
+  }
+  
+  /* New cubic-in-spin term */
+  double cS3_lo = (7./12.*a0 - 0.25*X12*a12)*a0*a0;
+  
+  /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
+  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 + cSS_nlo*v6 + cS3_lo*v7;
+  
+  /* l=3, m=2 */
+  /* spin-orbit coefficients */
+  double c32_SO_lo   = 0.;
+  double c32_SO_nlo  = 0.;
+  double c32_SO_nnlo = 0.;
+  c32_SO_lo   = (a0-a12X12)/(3.*(1.-3.*nu));
+  c32_SO_nlo  = 1./(162*pow((1.-3.*nu),2))*((-1433./10. + 553.*nu - 797./2.*nu2)*a0
+                                    -(-1793./10. + 427.*nu + 607./2.*nu2)*a12*X12 );
+  c32_SO_nnlo = -2571199./1924560.*a0 - a12*X12*1844993./1924560.;
+  
+  rho32S = c32_SO_lo*v + c32_SO_nlo*v3 + c32_SO_nnlo*v5;
+  
+  /* l=4, m=4 */
+  /* spin-orbit coefficients */
+  double c44_SO_lo   = 0.;
+  double c44_SO_nlo  = 0.;
+  double c44_SO_nnlo = 0.;
+  c44_SO_lo   = -19./30.*a0 - (1. - 21.*nu)/(30. - 90.*nu)*a12*X12;
+  c44_SO_nlo  = -199./550.*a0 - 491./550.*a12*X12;
+  c44_SO_nnlo = 527001653./264264000.*a0 + 3208967./264264000.*a12*X12;
+  
+  rho44S = c44_SO_lo*v3 + c44_SO_nlo*v5 + c44_SO_nnlo*v7;
+  
+  /* l=4, m=2 */
+  /* spin-orbit coefficients */
+  double c42_SO_lo   = 0.;
+  double c42_SO_nlo  = 0.;
+  double c42_SO_nnlo = 0.;
+  double c42_SO_n3lo = 0.;
+  c42_SO_lo   = -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12;
+  c42_SO_nlo  = -219./550.*a0 + 92./275.*a12*X12;
+  c42_SO_nnlo = -329051729./264264000.*a0 + 169512229./264264000.*a12*X12;
+  c42_SO_n3lo =  -(32079746680643./16482145680000. + 17581./51975.*el2)*a0
+    -(28943192016227./16482145680000. - 10697./51975.*el2)*a12*X12;
+  
+  rho42S = c42_SO_lo*v3 + c42_SO_nlo*v5 + c42_SO_nnlo*v7 + c42_SO_n3lo*v9;
+  
+  /** l>=2, m=odd*/
+  double if210s = 1. + 13./84.*a0*v3 - 3./8.*(a1+a2)*(a1+3.*a2)*v4 + a0*(14705./7056. - 12743./7056.*nu)*v5;
+  double if211s = 1. - 9./4.*a0*v3 + (349./252. + 74./63.*nu)*v2 + (65969./31752. + 89477./31752.*nu + 46967./31752.*nu2 - 0.5*a0*a0)*v4;
+  f21S = X12/if210s - 1.5*v*a12/if211s;
+
+  double if330s = 1. + 7./4.*a0*v3 - 1.5*a0*a0*v4 + + 1./60.*a0*(211. - 127.*nu)*v5;
+  double f331s = (10.*nu -1. + (-169. + 671.*nu + 182.*nu2)/15.*x);
+  f33S = X12/if330s + 0.25*a12*v3*f331s;
+
+  double if310s = 1. - 0.25*a0*v3 - 1.5*a0*a0*v4 + 1./36.*a0*(13. - 449.*nu)*v5;
+  double f311s  = 26.*nu - 9. - 16.*a0*v + (9. - 95.*nu + 66.*nu2)/9.*v2;
+  f31S = X12/if310s + 0.25*a12*v3*f311s;
+
+  double f430s = 1. - 1.25/(2.*nu - 1.)*a0*v;
+  double f431s = 1.;            
+  f43S = X12*f430s - 1.25*a12*v*f431s;
+
+  double f410s = 1. - 1.25/(2.*nu - 1.)*a0*v;
+  double f411s = 1.;
+  f41S   = X12*f410s - 1.25*a12*v*f411s;
+
+  double if550s = 1. + 10./3.*a0*v3 - 2.5*a0*a0*v4;
+  double f551s  = 1.;
+  f55S   = X12/if550s + 10.*nu*(1. - 3.*nu)/(3. - 6.*nu)*a12*v3*f551s;
+	    
+  /** Amplitudes (correct with spin terms) */
+  flm[0] = gsl_pow_int(rholm[0], 2);
+  flm[0] = flm[0]*f21S;
+  
+  flm[1] = gsl_pow_int(rholm[1]+ rho22S, 2);
+  
+  flm[2] = gsl_pow_int(rholm[2], 3);
+  flm[2] = flm[2]*f31S;
+  
+  flm[3] = gsl_pow_int(rholm[3]+ rho32S, 3);
+  
+  flm[4] = gsl_pow_int(rholm[4], 3);
+  flm[4] = flm[4]*f33S;
+  
+  flm[5] = gsl_pow_int(rholm[5], 4);
+  flm[5] = flm[5]*f41S;
+  
+  flm[6] = gsl_pow_int(rholm[6] + rho42S, 4);
+  
+  flm[7] = gsl_pow_int(rholm[7], 4);
+  flm[7] = flm[7]*f43S;
+  
+  flm[8] = gsl_pow_int(rholm[8] + rho44S, 4);
+
+  flm[13] = gsl_pow_int(rholm[13], 4);
+  flm[13] = flm[13]*f55S;      
 }
 
 /** Calculate tidal correction to multipolar waveform amplitude

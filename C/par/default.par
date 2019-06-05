@@ -58,7 +58,7 @@ postadiabatic_dynamics_rmin_BNS = 14. # minimum radius (end of PA dynamics for B
 postadiabatic_dynamics_stop = "yes" # stop after post-adiabatic dynamics
 
 centrifugal_radius = "LO" # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-use_flm = "SSLO" # "SSLO", "SSNLO"
+use_flm = "SSLO" # "SSLO", "SSNLO", "HM"
 
 compute_LR = 0 # calculate LR ?
 compute_LSO = 0 # calculate LSO ?

@@ -548,11 +548,19 @@ void eob_set_params(char *s, int n)
   /* Function pointers */
   
     /** Set f_lm fun pointer */
-  if ((STREQUAL(par_get_s("use_flm"),"SSLO"))) {
+  if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+    eob_wav_hlmNewt = &eob_wav_hlmNewt_HM;
+    eob_wav_flm     = &eob_wav_flm_HM;
+    eob_wav_flm_s   = &eob_wav_flm_s_HM;
+  }  else if ((STREQUAL(par_get_s("use_flm"),"SSLO"))) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
-    eob_wav_flm_s = &eob_wav_flm_s_SSLO;
+    eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
+    eob_wav_flm     = &eob_wav_flm_v1;
+    eob_wav_flm_s   = &eob_wav_flm_s_SSLO;
   } else {
-    eob_wav_flm_s = &eob_wav_flm_s_SSNLO;
+    eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
+    eob_wav_flm     = &eob_wav_flm_v1;
+    eob_wav_flm_s   = &eob_wav_flm_s_SSNLO;
   }
 
   /** Set rc fun pointer */
