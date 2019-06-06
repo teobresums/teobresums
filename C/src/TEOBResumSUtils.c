@@ -1232,6 +1232,7 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->C_Oct2 = par_get_d("C_Oct2");
   dyn->C_Hex1 = par_get_d("C_Hex1");
   dyn->C_Hex2 = par_get_d("C_Hex2");
+  dyn->a6c   = par_get_d("a6c");
   dyn->cN3LO = par_get_d("cN3LO");
   dyn->rLR   = par_get_d("rLR");
   dyn->rLR_tidal = par_get_d("rLR_tidal");

@@ -122,6 +122,7 @@ C_Oct1 = 0. #
 C_Oct2 = 0. #
 C_Hex1 = 0. #
 C_Hex2 = 0. #
+a6c    = 0. #
 cN3LO = 0. #
 
 kappaAl2 = 0. # gravitoelectric kappa star A

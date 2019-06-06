@@ -319,7 +319,7 @@ typedef struct tagDynamics
   double *data[EOB_DYNAMICS_NVARS]; 
   /* key parameters for quick access */
   double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, cN3LO;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
@@ -420,6 +420,8 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
+double eob_a6c_fit(double nu);
+double eob_a6c_fit_HM(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
 double eob_nqc_dtfit(const double chi, const double chi0);

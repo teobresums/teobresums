@@ -20,6 +20,27 @@
 
 #include "TEOBResumS.h"
 
+/** Fit of a6c, TEOBResumS paper Nagar et al. (2018) */
+double eob_a6c_fit(double nu)
+{
+  return 3097.3*nu*nu - 1330.6*nu + 81.38;
+}
+
+/** Fit of a6c, higher multipoles: REF TO BE UPDATED */
+double eob_a6c_fit_HM(double nu)
+{
+  double nu2 = nu*nu;
+  double nu3 = nu2*nu;
+  
+  const double n0 =   5.9951;
+  const double n1 = -34.4844;
+  const double n2 = -79.2997;
+  const double n3 = 713.4451;
+  const double d1 =  -3.167;
+  
+  return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
+}
+
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
     Note: c3 = 0 with tides*/
 double eob_c3_fit_global(double nu, double a1, double a2)

@@ -506,6 +506,15 @@ void eob_set_params(char *s, int n)
   par_set_d("C_Q2",C_Q2);
 
   /** Set more as needed ... */
+  double a6c = 0.;
+  if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+    /* Higher modes */
+    a6c = eob_a6c_fit_HM(nu);
+  } else {
+    a6c = eob_a6c_fit(nu);
+  }
+  par_set_d("a6c", a6c);
+
   double c3 = 0.;
   if(usetidal) c3 = 0.0;
   else if ((STREQUAL(par_get_s("use_flm"),"HM"))) {

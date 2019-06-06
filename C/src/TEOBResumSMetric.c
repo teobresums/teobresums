@@ -57,7 +57,7 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
   double a5c0 = -4237./60. + 2275./512.*pi2 + 256./5.*Log2 + 128./5.*EulerGamma;
   double a5c1 = -221./6.   + 41./32.*pi2;
   double a5   =  a5c0 + nu*a5c1;
-  double a6   =  3097.3*nu2 - 1330.6*nu + 81.38;
+  double a6   =  par_get_d("a6c");
   
   /* 4PN and 5PN coefficients including all known log terms */
   double a5tot  = a5  + 64./5.*logu;
