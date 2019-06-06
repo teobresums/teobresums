@@ -420,7 +420,8 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
-double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2);
+double eob_c3_fit_global(double nu, double a1, double a2);
+double eob_c3_fit_HM(double nu, double a1, double a2);
 double eob_nqc_dtfit(const double chi, const double chi0);
 double eob_nqc_timeshift(double nu, double chi1);
 void eob_nqc_setcoefs(NQCdata *nqc);
@@ -499,8 +500,8 @@ void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
 void (*eob_wav_flm)();
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
-void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
 void (*eob_wav_flm_s)();
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);

@@ -22,7 +22,7 @@
 
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
     Note: c3 = 0 with tides*/
-double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2)
+double eob_c3_fit_global(double nu, double a1, double a2)
 {  
   const double nu2 = nu*nu;
   const double nu3 = nu2*nu;
@@ -46,6 +46,35 @@ double eob_c3_fit_global(double nu, double chi1, double chi2, double X1, double 
   const double c3_uneq = cnu*a12*nu*X12 + cnu2*a12*nu2*X12 + cnu3*a12*nu3*X12 + ca1_a2*(a1-a2)*nu2;
   
   return c3_eq + c3_uneq;
+}
+
+/** Fit of c3, HM paper: REF TO BE UPDATED 
+    Note: c3 = 0 with tides*/
+double eob_c3_fit_HM(double nu, double a1, double a2)
+{  
+  const double nu2 = nu*nu;
+  const double X12 = sqrt(1.-4.*nu);
+  const double a0  = a1+a2;
+  const double a02 = a0*a0;
+  const double a03 = a02*a0;
+  const double a04 = a03*a0;
+  
+  /* Equal-mass, equal-spin coefficients */
+  const double p0 =  46.323097;
+  const double n1 =  -1.418623;
+  const double n2 =   0.457118;
+  const double n3 =   0.000435;
+  const double n4 =   0.097791;
+  const double d1 =  -0.519003;
+	  
+  /* Other coefficients */
+  const double p1 =   46.2914;
+  const double p2 = -103.0997;
+  
+  const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
+    + p1*nu*X12*a0 + p2*nu2*(a1 - a2);
+  
+  return c3;
 }
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */

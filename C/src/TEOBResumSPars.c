@@ -508,7 +508,12 @@ void eob_set_params(char *s, int n)
   /** Set more as needed ... */
   double c3 = 0.;
   if(usetidal) c3 = 0.0;
-  else         c3 = eob_c3_fit_global(nu,chi1,chi2,X1,X2,a1,a2); 
+  else if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+    /* Higher modes */
+    c3 = eob_c3_fit_HM(nu,a1,a2);
+  } else {
+    c3 = eob_c3_fit_global(nu,a1,a2);
+  }
   par_set_d("cN3LO", c3 );
 
   double dt = par_get_d("dt");
@@ -549,6 +554,7 @@ void eob_set_params(char *s, int n)
   
     /** Set f_lm fun pointer */
   if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+    /* Higher modes */
     eob_wav_hlmNewt = &eob_wav_hlmNewt_HM;
     eob_wav_flm     = &eob_wav_flm_HM;
     eob_wav_flm_s   = &eob_wav_flm_s_HM;
