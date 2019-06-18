@@ -424,6 +424,8 @@ double eob_a6c_fit(double nu);
 double eob_a6c_fit_HM(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
+void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
+void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 double eob_nqc_dtfit(const double chi, const double chi0);
 double eob_nqc_timeshift(double nu, double chi1);
 void eob_nqc_setcoefs(NQCdata *nqc);

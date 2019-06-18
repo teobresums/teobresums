@@ -98,14 +98,353 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
   return c3;
 }
 
-/** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
-double eob_nqc_dtfit(const double chi, const double chi0)
+/** Fits for NR point used to determine NQC corrections */
+void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
-  const double n1 = -16.06288206;
-  const double d1 = -4.04266459;
-  double x     = chi-chi0;
-  double dtnqc = (1.+n1*x)/(1.+d1*x);
-  return dtnqc;  
+
+  const double nu   = dyn->nu;
+  const double X1   = dyn->X1;
+  const double X2   = dyn->X2;
+  const double chi1 = dyn->chi1;
+  const double chi2 = dyn->chi2;
+  const double aK   = dyn->a1 + dyn->a2;
+
+  const double nu2  = SQ(nu);
+  const double nu3  = nu2*nu;
+  const double X12  = X1 - X2;  
+  const double aK2  = SQ(aK);
+  const double aK3  = aK2*aK;
+  const double aK4  = aK2*aK2;
+  const double a12  = X1*chi1 - X2*chi2;
+  const double aeff     = aK + 1./3.*a12*X12;
+  const double aeff_omg = aK + a12*X12;
+
+  double pA[5], pdA[5], pomg[5], pdomg[5];
+  double c_p1,     c_p2,     c_p3,   c_p4;
+  double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
+  double c_pdomg1, c_pdomg2;
+  double n0, d1;
+
+    double a0_omg_tmp, a1_omg_tmp, a2_omg_tmp, b0_omg_tmp, b1_omg_tmp, b2_omg_tmp, a0_domg_tmp, a1_domg_tmp, a2_domg_tmp, b0_domg_tmp, b1_domg_tmp, b2_domg_tmp, a0_A_tmp, a1_A_tmp , a2_A_tmp, b0_A_tmp, b1_A_tmp, b2_A_tmp, a0_dA_tmp, a1_dA_tmp, a2_dA_tmp, b0_dA_tmp, b1_dA_tmp, b2_dA_tmp, omg_tmp_nu, omg_tmp_equal, domg_tmp_nu, domg_tmp_equal,  A_tmp_scale_nu, A_tmp_scale_equal, dA_tmp_scale_nu, dA_tmp_scale_equal ;
+
+    double p1[2], p2[2], p3[2], p4[2]; 
+    double pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
+
+      
+  if (DEQUAL(nu,0.25,1e-9)) {
+
+    pA[0]    =  0.00178195;
+    pA[1]    =  0.00435589;
+    pA[2]    =  0.00344489;
+    pA[3]    = -0.00076165;
+    pA[4]    =  0.31973334;
+    *A_tmp    =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[3]*aK     + pA[4];
+    
+    pdA[0]   =  0.00000927;
+    pdA[1]   = -0.00024550;
+    pdA[2]   =  0.00012469;
+    pdA[3]   =  0.00123845;
+    pdA[4]   = -0.00195014;
+    *dA_tmp   =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[3]*aK   + pdA[4];
+    
+    pomg[0]  =  0.00603482;
+    pomg[1]  =  0.01604555;
+    pomg[2]  =  0.02290799;
+    pomg[3]  =  0.07084587;
+    pomg[4]  =  0.38321834;
+    *omg_tmp  =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[3]*aK  + pomg[4];
+    
+    pdomg[0] =  0.00024066;
+    pdomg[1] =  0.00038123;
+    pdomg[2] = -0.00049714;
+    pdomg[3] =  0.00041219;
+    pdomg[4] =  0.01190548;
+    *domg_tmp =  pdomg[0]*aK4 + pdomg[1]*aK3 + pdomg[2]*aK2 + pdomg[3]*aK + pdomg[4];
+  
+  }  else if( nu > 0.16) {
+    
+    p1[0]      =  0.04680896;
+    p1[1]      = -0.00632114;
+    p2[0]      =  0.06586192;
+    p2[1]      = -0.01180039;
+    p3[0]      = -0.11617413;
+    p3[1]      =  0.02704959;
+    p4[0]      =  0.15597465;
+    p4[1]      =  0.28034978;
+    c_p1       =  p1[0]*nu + p1[1];
+    c_p2       =  p2[0]*nu + p2[1];
+    c_p3       =  p3[0]*nu + p3[1];
+    c_p4       =  p4[0]*nu + p4[1];
+    *A_tmp      =  c_p1*aK3 + c_p2*aK2 + c_p3*aK + c_p4;
+    
+    pdA1[0]    = -0.00130824;
+    pdA1[1]    =  0.00006202;
+    pdA2[0]    =  0.00199855;
+    pdA2[1]    = -0.00027474;
+    pdA3[0]    =  0.00218838;
+    pdA3[1]    =  0.00071540;
+    pdA4[0]    = -0.00362779;
+    pdA4[1]    = -0.00105397;
+    c_pdA1     =  pdA1[0]*nu + pdA1[1];
+    c_pdA2     =  pdA2[0]*nu + pdA2[1];
+    c_pdA3     =  pdA3[0]*nu + pdA3[1];
+    c_pdA4     =  pdA4[0]*nu + pdA4[1];
+    *dA_tmp     =  c_pdA1*aK3   + c_pdA2*aK2 + c_pdA3*aK+ c_pdA4;
+    
+    pn0[0]     =  0.46908067;
+    pn0[1]     =  0.27022141;
+    pd1[0]     =  0.64131115;
+    pd1[1]     = -0.37878384;
+    n0         =  pn0[0]*nu + pn0[1];
+    d1         =  pd1[0]*nu + pd1[1];
+    *omg_tmp    =  n0/(1 + d1*aK);
+    
+    ppdomg1[0] =  0.00061175;
+    ppdomg1[1] =  0.00074001;
+    ppdomg2[0] =  0.02504442;
+    ppdomg2[1] =  0.00548217;
+    c_pdomg1   =  ppdomg1[0]*nu + ppdomg1[1];
+    c_pdomg2   =  ppdomg2[0]*nu + ppdomg2[1];
+    *domg_tmp   =  c_pdomg1*aK   + c_pdomg2;
+  
+  }  else {
+
+    /* Fit by G.Riemanschneider incorporating the test-particle NQC point
+       obtained from the most-recent Teukolsky waveforms done by
+       M. Colleoni using the 6PN-accurare iResum-radiation reaction.
+       These points assure a smooth connection between merger and
+       ringdown also outside the "calibration" domain, notably for
+       large-mass ratios (though q<=20) and large (negative) spins
+       Updated, 28/09/2017 */
+
+    a0_A_tmp 	= -0.2750516062;
+    b0_A_tmp 	= -0.4693776065;
+    a1_A_tmp 	=  0.143066;
+    a2_A_tmp 	= -0.0425947;
+    b1_A_tmp 	=  0.176955;
+    b2_A_tmp 	= -0.111902;
+    
+    A_tmp_scale_nu    = -0.9862040409*nu3 +0.8167558040*nu2 -0.0427442282*nu+0.2948879452;
+    A_tmp_scale_equal = ((a2_A_tmp*X12*X12 + a1_A_tmp*X12 +a0_A_tmp)*aeff+1)/((b2_A_tmp*X12*X12 + b1_A_tmp*X12 +b0_A_tmp)*aeff+1);
+    *A_tmp             = A_tmp_scale_nu*A_tmp_scale_equal*(1-0.5*(*omg_tmp)*aeff);
+    
+    a0_dA_tmp 	= +0.0037461628;
+    b0_dA_tmp 	= +0.0636082543;
+    a1_dA_tmp 	=  0.00129393;
+    a2_dA_tmp 	= -0.00239069;
+    b1_dA_tmp 	= -0.0534209;
+    b2_dA_tmp 	= -0.186101;
+    
+    dA_tmp_scale_nu    = ( -0.0847947167*nu -0.0042142765)/( +16.1559461812*nu+1);
+    dA_tmp_scale_equal = ((a2_dA_tmp*X12*X12 + a1_dA_tmp*X12+ a0_dA_tmp)*aeff)/((b2_dA_tmp*X12*X12 + b1_dA_tmp*X12 + b0_dA_tmp)*aeff+1);
+    *dA_tmp             = (dA_tmp_scale_nu +dA_tmp_scale_equal)*(*omg_tmp);
+    
+    a0_omg_tmp    = -0.1460961247;
+    a1_omg_tmp    =  0.0998056;
+    a2_omg_tmp    = -0.118098;
+    b0_omg_tmp    = -0.3430184009;
+    b1_omg_tmp    =  0.0921551;
+    b2_omg_tmp    = -0.0740285;
+    omg_tmp_nu    = +0.5427169903*nu2 +0.2512395608*nu +0.2863992248;
+    omg_tmp_equal =((a2_omg_tmp*X12*X12 + a1_omg_tmp*X12 + a0_omg_tmp)*aeff_omg+1)/((b2_omg_tmp*X12*X12 +b1_omg_tmp*X12 + b0_omg_tmp)*aeff_omg+1);
+    *omg_tmp       = omg_tmp_nu*omg_tmp_equal;
+
+    a0_domg_tmp    = +0.0604556289;
+    b0_domg_tmp    = -0.0299583285;
+    a1_domg_tmp    = 0.0711715;
+    a2_domg_tmp    = -0.0500886;
+    b1_domg_tmp    = 0.0461239;
+    b2_domg_tmp    = -0.0153068;
+    
+    domg_tmp_nu    = ( +0.0045213831*nu +0.0064934920)/( -1.4466409969*nu+1);
+    domg_tmp_equal = (a2_domg_tmp*X12*X12 +a1_domg_tmp*X12 +b0_domg_tmp)*aeff_omg*aeff_omg +(b2_domg_tmp*X12*X12 +b1_domg_tmp*X12+a0_domg_tmp)*aeff_omg+1;
+    *domg_tmp       = domg_tmp_nu*domg_tmp_equal;
+
+  }
+
+}
+
+/** Fits for NR point used to determine NQC corrections 
+    New fits for higer modes paper
+    Ref TO BE UPDATED                                   */
+void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
+{
+
+  const double nu   = dyn->nu;
+  const double X1   = dyn->X1;
+  const double X2   = dyn->X2;
+  const double chi1 = dyn->chi1;
+  const double chi2 = dyn->chi2;
+  const double aK   = dyn->a1 + dyn->a2;
+
+  const double nu2  = SQ(nu);
+  const double nu3  = nu2*nu;
+  const double X12  = X1 - X2;  
+  const double aK2  = SQ(aK);
+  const double aK3  = aK2*aK;
+  const double aK4  = aK2*aK2;
+  const double a12  = X1*chi1 - X2*chi2;
+  const double Shat = aK + a12*X12;
+
+  double pA[5], pdA[5], pomg[5], pdomg[5];
+  double c_p1,     c_p2,     c_p3,   c_p4;
+  double c_pdA1,   c_pdA2,   c_pdA3, c_pdA4;
+  double c_pdomg1, c_pdomg2;
+  double n0, d1;
+
+  double a0_omg_tmp, a1_omg_tmp, a2_omg_tmp, b0_omg_tmp, b1_omg_tmp, b2_omg_tmp, c11_omg_tmp, c12_omg_tmp, c21_omg_tmp, c22_omg_tmp, c31_omg_tmp, c32_omg_tmp;
+  double a0_domg_tmp, a1_domg_tmp, a2_domg_tmp, b1_domg_tmp, b2_domg_tmp, c1_domg_tmp, c2_domg_tmp;
+  double scale, a0_A_tmp, a1_A_tmp , a2_A_tmp, b0_A_tmp, b1_A_tmp, b2_A_tmp, c11_A_tmp, c12_A_tmp, c21_A_tmp, c22_A_tmp, c31_A_tmp, c32_A_tmp;
+  double a0_dA_tmp, a1_dA_tmp, a2_dA_tmp, b1_dA_tmp, b2_dA_tmp, c1_dA_tmp, c2_dA_tmp;
+  double omg_tmp_nu, omg_tmp_equal, omg_tmp_den, domg_tmp_nu, domg_tmp_equal, A_tmp_scale_nu, A_tmp_scale_equal, A_tmp_scale_den, dA_tmp_scale_nu, dA_tmp_scale_equal;
+
+  double p1[2], p2[2], p3[2], p4[2]; 
+  double pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
+
+      
+  if (DEQUAL(nu,0.25,1e-9)) {
+
+    pA[0]    =  0.00178195;
+    pA[1]    =  0.00435589;
+    pA[2]    =  0.00344489;
+    pA[3]    = -0.00076165;
+    pA[4]    =  0.31973334;
+    *A_tmp    =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[3]*aK     + pA[4];
+      
+    pdA[0]   =  0.00000927;
+    pdA[1]   = -0.00024550;
+    pdA[2]   =  0.00012469;
+    pdA[3]   =  0.00123845;
+    pdA[4]   = -0.00195014;
+    *dA_tmp   =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[3]*aK   + pdA[4];
+    
+    pomg[0]  =  0.00603482;
+    pomg[1]  =  0.01604555;
+    pomg[2]  =  0.02290799;
+    pomg[3]  =  0.07084587;
+    pomg[4]  =  0.38321834;
+    *omg_tmp  =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[3]*aK  + pomg[4];
+    
+    pdomg[0] =  0.00024066;
+    pdomg[1] =  0.00038123;
+    pdomg[2] = -0.00049714;
+    pdomg[3] =  0.00041219;
+    pdomg[4] =  0.01190548;
+    *domg_tmp =  pdomg[0]*aK4 + pdomg[1]*aK3 + pdomg[2]*aK2 + pdomg[3]*aK + pdomg[4];
+    
+  }  else if( nu > 0.16) {
+      
+    p1[0]      =  0.04680896;
+    p1[1]      = -0.00632114;
+    p2[0]      =  0.06586192;
+    p2[1]      = -0.01180039;
+    p3[0]      = -0.11617413;
+    p3[1]      =  0.02704959;
+    p4[0]      =  0.15597465;
+    p4[1]      =  0.28034978;
+    c_p1       =  p1[0]*nu + p1[1];
+    c_p2       =  p2[0]*nu + p2[1];
+    c_p3       =  p3[0]*nu + p3[1];
+    c_p4       =  p4[0]*nu + p4[1];
+    *A_tmp      =  c_p1*aK3 + c_p2*aK2 + c_p3*aK + c_p4;
+      
+    pdA1[0]    = -0.00130824;
+    pdA1[1]    =  0.00006202;
+    pdA2[0]    =  0.00199855;
+    pdA2[1]    = -0.00027474;
+    pdA3[0]    =  0.00218838;
+    pdA3[1]    =  0.00071540;
+    pdA4[0]    = -0.00362779;
+    pdA4[1]    = -0.00105397;
+    c_pdA1     =  pdA1[0]*nu + pdA1[1];
+    c_pdA2     =  pdA2[0]*nu + pdA2[1];
+    c_pdA3     =  pdA3[0]*nu + pdA3[1];
+    c_pdA4     =  pdA4[0]*nu + pdA4[1];
+    *dA_tmp     =  c_pdA1*aK3   + c_pdA2*aK2 + c_pdA3*aK+ c_pdA4;
+    
+    pn0[0]     =  0.46908067;
+    pn0[1]     =  0.27022141;
+    pd1[0]     =  0.64131115;
+    pd1[1]     = -0.37878384;
+    n0         =  pn0[0]*nu + pn0[1];
+    d1         =  pd1[0]*nu + pd1[1];
+    *omg_tmp    =  n0/(1 + d1*aK);
+    
+    ppdomg1[0] =  0.00061175;
+    ppdomg1[1] =  0.00074001;
+    ppdomg2[0] =  0.02504442;
+    ppdomg2[1] =  0.00548217;
+    c_pdomg1   =  ppdomg1[0]*nu + ppdomg1[1];
+    c_pdomg2   =  ppdomg2[0]*nu + ppdomg2[1];
+    *domg_tmp   =  c_pdomg1*aK   + c_pdomg2;
+  
+    }  else {
+
+    a0_omg_tmp    = 0.285588;
+    a1_omg_tmp    = 0.91704;
+    a2_omg_tmp    = 1.7912;
+    b0_omg_tmp    = -0.46550;
+    b1_omg_tmp    = -0.078787;
+    b2_omg_tmp    = -0.852284;
+    c11_omg_tmp   = -0.338008;
+    c12_omg_tmp   = 1.077812;
+    c21_omg_tmp   = 0.0555533;
+    c22_omg_tmp   = -0.312861;
+    c31_omg_tmp   = 0.289185;
+    c32_omg_tmp   = -0.195838;
+
+    omg_tmp_nu    = a0_omg_tmp*(1 + a1_omg_tmp*nu + a2_omg_tmp*nu2);
+    omg_tmp_equal = 1 + (b0_omg_tmp + c11_omg_tmp*X12)/(1 + c12_omg_tmp*X12)*Shat + (b1_omg_tmp + c21_omg_tmp*X12)/(1 + c22_omg_tmp*X12)*Shat*Shat;
+    omg_tmp_den = 1 + (b2_omg_tmp + c31_omg_tmp*X12)/(1 + c32_omg_tmp*X12)*Shat;
+
+    *omg_tmp       = omg_tmp_nu*omg_tmp_equal/omg_tmp_den;
+    
+    a0_domg_tmp    = 0.00628027;
+    a1_domg_tmp    = 2.4351;
+    a2_domg_tmp    = 4.4928;
+    b1_domg_tmp    = 0.001425242;
+    b2_domg_tmp    = -0.00096073;
+    c1_domg_tmp    = -0.000063766;
+    c2_domg_tmp    = 0.000513197;
+
+    domg_tmp_nu    = a0_domg_tmp*(1 + a1_domg_tmp*nu + a2_domg_tmp*nu2);
+    domg_tmp_equal = (b1_domg_tmp + c1_domg_tmp*X12)*Shat
+      + (b2_domg_tmp + c2_domg_tmp*X12)*Shat*Shat;
+    *domg_tmp      = domg_tmp_nu + domg_tmp_equal;
+
+    scale       = 1 - (*omg_tmp)*Shat;
+    a0_A_tmp 	= 0.294773;
+    a1_A_tmp 	= -0.052697;
+    a2_A_tmp 	= 1.6088;
+    b0_A_tmp 	= -0.705226;
+    b1_A_tmp 	= -0.0953944;
+    b2_A_tmp 	= -1.087280; 
+    c11_A_tmp   = 0.009335;
+    c12_A_tmp   = 0.582869;
+    c31_A_tmp   = -0.140747;
+    c32_A_tmp   = 0.505807;
+    
+    A_tmp_scale_nu    = a0_A_tmp*(1 + a1_A_tmp*nu + a2_A_tmp*nu2)*scale;
+    A_tmp_scale_equal = 1 + (b0_A_tmp + c11_A_tmp*X12)/(1 + c12_omg_tmp*X12)*Shat + b1_A_tmp*Shat*Shat;
+    A_tmp_scale_den   = 1 + (b2_A_tmp + c31_A_tmp*X12)/(1 + c32_A_tmp*X12)*Shat;
+
+    *A_tmp       = A_tmp_scale_nu*A_tmp_scale_equal/A_tmp_scale_den;
+
+    scale       = 0.5*(*omg_tmp)/sqrt(6);
+    a0_dA_tmp 	= -0.0011936600;
+    a1_dA_tmp 	=  2.86637;
+    a2_dA_tmp 	= -1.3667;
+    b1_dA_tmp 	=  0.02679530;
+    b2_dA_tmp 	= -0.0064409;
+    c1_dA_tmp   = -0.015395218;
+    c2_dA_tmp   = 0.008732589;
+    
+    dA_tmp_scale_nu    = a0_dA_tmp*(1 + a1_dA_tmp*nu + a2_dA_tmp*nu2);
+    dA_tmp_scale_equal = (b1_dA_tmp+0.02679530 + c1_dA_tmp*X12)*Shat + (b2_dA_tmp + c2_dA_tmp*X12)*Shat*Shat;
+    *dA_tmp            = dA_tmp_scale_nu*scale*dA_tmp_scale_equal;
+
+    }
+
 }
 
 /** Time-shift for NQC */
