@@ -98,6 +98,19 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
   return c3;
 }
 
+/** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
+double eob_nqc_dtfit(const double chi, const double chi0)
+{
+  const double n1 = -16.06288206;
+  const double d1 = -4.04266459;
+
+  double x     = chi-chi0;
+
+  double dtnqc = (1.+n1*x)/(1.+d1*x);
+
+  return dtnqc;
+}
+
 /** Fits for NR point used to determine NQC corrections */
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
