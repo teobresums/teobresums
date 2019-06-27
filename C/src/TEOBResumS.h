@@ -90,13 +90,13 @@
 #define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);} 
 #define SIGN(x,y) ((y) >= 0.0 ? fabs(x) : -fabs(x)) 
 #define typeof __typeof__
-#define MAX(a,b)                \
-  ({ typeof (a) _a = (a);       \
-    typeof (b) _b = (b);        \
+#define MAX(a,b)				\
+  ({ typeof (a) _a = (a);			\
+    typeof (b) _b = (b);			\
     _a > _b ? _a : _b; })       
-#define MIN(a,b)                \
-  ({ typeof (a) _a = (a);       \
-    typeof (b) _b = (b);        \
+#define MIN(a,b)				\
+  ({ typeof (a) _a = (a);			\
+    typeof (b) _b = (b);			\
     _a < _b ? _a : _b; })       
 #define MAX3(a,b,c) (((a) > (b)) ? MAX(a,c) : MAX(b,c))
 #define MIN3(a,b,c) (((a) < (b)) ? MIN(a,c) : MIN(b,c))
@@ -105,12 +105,12 @@
 #define DEQUAL(a,b,eps) (fabs((a)-(b))<(eps)) /** double compare */
 #define DUNEQUAL(a,b,eps) (fabs((a)-(b))>(eps))
 #define STREQUAL(s,t) ((strcmp((s),(t))==0)) /** string compare */  
-#define SWAPTRS(a,b)   \
-  ({		    \
-    typeof(a) temp; \
-    temp = a;	    \
-    a = b;	    \
-    b = temp;	    \
+#define SWAPTRS(a,b)				\
+  ({						\
+    typeof(a) temp;				\
+    temp = a;					\
+    a = b;					\
+    b = temp;					\
   })
 /* helpers for formatted printf */
 #define PRSECTN(s) {printf("#\n# %s\n#\n",s);} /* Print section */
@@ -146,11 +146,11 @@
 
 /** Index list of EOB evolved variables */
 enum{
-    EOB_EVOLVE_RAD, 
-    EOB_EVOLVE_PHI,
-    EOB_EVOLVE_PRSTAR,
-    EOB_EVOLVE_PPHI,
-    EOB_EVOLVE_NVARS
+  EOB_EVOLVE_RAD, 
+  EOB_EVOLVE_PHI,
+  EOB_EVOLVE_PRSTAR,
+  EOB_EVOLVE_PPHI,
+  EOB_EVOLVE_NVARS
 };
 static const char* eob_evolve_var[] = {"r","phi","Prstar","Pphi"};
 
@@ -396,7 +396,7 @@ void Waveform_lm_free (Waveform_lm *wav);
 void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name);
 /* void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name); */
 void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, Waveform_lm **hlmb, const char *name);
- void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to); 
+void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to); 
 void Waveform_lm_t_alloc (Waveform_lm_t **wav);
 void Waveform_lm_t_free (Waveform_lm_t *wav);
 void Dynamics_alloc (Dynamics **dyn, int size, const char *name);
@@ -426,8 +426,13 @@ double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
+void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
+			    double c1phi, double c2phi, double c3phi, double c4phi,
+			    double alpha1, double omega1,
+			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 double eob_nqc_dtfit(const double chi, const double chi0);
 double eob_nqc_timeshift(double nu, double chi1);
+void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm);
 void eob_nqc_setcoefs(NQCdata *nqc);
 void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc);
 void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname);
@@ -443,7 +448,12 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK,
 		     double Mbh, double abh,  
 		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
-		     double *sigmar, double *sigmai); 
+		     double *sigmar, double *sigmai);
+void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi2, double aK,
+			double Mbh, double abh,  
+			double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+			double *sigmar, double *sigmai);
+void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);
 
