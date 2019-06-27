@@ -2654,11 +2654,19 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   /** Compute QNM */
   double sigma[2][KMAX];
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
-  double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX]; 
-  QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-		  a1, a2, a3, a4, b1, b2, b3, b4, 
-		  sigma[0],sigma[1]);
-    
+  double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
+
+  if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+    /* Higher modes */
+  QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+		     a1, a2, a3, a4, b1, b2, b3, b4, 
+		     sigma[0],sigma[1]);
+  } else {
+    QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+		    a1, a2, a3, a4, b1, b2, b3, b4, 
+		    sigma[0],sigma[1]);
+  }
+  
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
