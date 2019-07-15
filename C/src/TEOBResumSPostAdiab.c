@@ -90,8 +90,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   double *dt_dr_vec              = buffer[20];
   
   double ggm[14]; 
-  double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, dHeff_dpphi, dHeff_dprstar, dHeff_dprstarbyprstar,
-    H, G, pl_hold, ddotr_fake, prstar_fake, x, jhat, psi, r_omg, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
+  double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, u2, prstar2, dHeff_dpphi, dHeff_dprstar, dHeff_dr, dHeff_dprstarbyprstar, d2Heff_dprstar20,
+    H, G, pl_hold, x, jhat, psi, r_omg, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
   
   /* 
    * Compute circular dynamics 
@@ -189,7 +189,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 		NULL,             /* drvt Heff,r      */
 		NULL,             /* drvt Heff,prstar */
 		&dHeff_dpphi,     /* drvt Heff,pphi   */
-		NULL);
+		&d2Heff_dprstar20);
       
       E_vec[i] = nu*H;
       
@@ -201,7 +201,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	      NULL,             /* drvt Heff,r      */
 	      NULL,             /* drvt Heff,prstar */
 	      &dHeff_dpphi);    /* drvt Heff,pphi   */
-      
+
+      d2Heff_dprstar20 = 1/Heff_orb_vec[i];
+
       Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
       E_vec[i] = nu*H;
     
@@ -211,7 +213,10 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     dyn->Omg     = dHeff_dpphi/E_vec[i];
     
     /* Circular real orbital frequency */
-    dyn->Omg_orb     = (dyn->pphi*A_vec[i]*uc2_vec[i])/(E_vec[i]*Heff_orb_vec[i]);
+    dyn->Omg_orb = (dyn->pphi*A_vec[i]*uc2_vec[i])/(E_vec[i]*Heff_orb_vec[i]);
+    
+    /** ddotr */
+    dyn->ddotr   = -A_vec[i]/B_vec[i]*dHeff_dr*d2Heff_dprstar20;
     
     dyn->data[EOB_RAD][i]    = dyn->r;
     dyn->data[EOB_PPHI][i]   = dyn->pphi;
@@ -245,7 +250,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       dyn->phi     = dyn->data[EOB_PHI][i];
       dyn->pphi    = dyn->data[EOB_PPHI][i];
       dyn->Omg     = dyn->data[EOB_MOMG][i];
-      dyn->ddotr   = dyn->data[EOB_DDOTR][i]; // Not used for the moment
+      dyn->ddotr   = dyn->data[EOB_DDOTR][i];
       dyn->prstar  = dyn->data[EOB_PRSTAR][i];
       dyn->Omg_orb = dyn->data[EOB_OMGORB][i];
     
@@ -271,10 +276,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	  x          = SQ(v_phi);
 	  jhat       = dyn->pphi/(r_omg*v_phi);
 	  
-	  ddotr_fake  = 0.0; //FIXME To be changed when considering NQCs (dyn->ddotr or dyn->data[EOB_DDOTR][i])
-	  prstar_fake = 0.0; //FIXME To be changed to the true prstar value when considering NQCs.
-	  
-	  Fphi = eob_flx_Flux_s(x,dyn->Omg,r_omg, E_vec[i], Heff_vec[i],jhat,dyn->r,prstar_fake, ddotr_fake, dyn);
+	  Fphi = eob_flx_Flux_s(x,dyn->Omg,r_omg, E_vec[i], Heff_vec[i],jhat,dyn->r,dyn->prstar, dyn->ddotr, dyn);
 	
 	} else {
 	  
@@ -285,11 +287,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	  v_phi      = r_omg*dyn->Omg;
 	  x          = SQ(v_phi);
 	  jhat       = dyn->pphi/(r_omg*v_phi);
-          
-	  ddotr_fake  = 0.0; //FIXME To be changed when considering NQCs (dyn->ddotr or dyn->data[EOB_DDOTR][i])
-	  prstar_fake = 0.0; //FIXME To be changed to the true prstar value when considering NQCs.
 	  
-	  Fphi = eob_flx_Flux(x,dyn->Omg,r_omg, E_vec[i], Heff_vec[i],jhat,dyn->r,prstar_fake, ddotr_fake, dyn);
+	  Fphi = eob_flx_Flux(x,dyn->Omg,r_omg, E_vec[i], Heff_vec[i],jhat,dyn->r,dyn->prstar, dyn->ddotr, dyn);
 	
 	}
 
@@ -298,7 +297,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	dr_dtbyprstar         = sqrtAbyB_vec[i]/(E_vec[i])*dHeff_dprstarbyprstar;
 	dyn->prstar           = Fphi/dpphi_dr_vec[i]/dr_dtbyprstar; 
     
-
 	/** Note: p_phi does not change at odd orders 
 	    Computing first PA using the approximation detailed above A19 of TEOBResumS paper and Hamilton's equations.   
 	*/
@@ -343,7 +341,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 		  NULL,             /* drvt Heff,r      */
 		  &dHeff_dprstar,   /* drvt Heff,prstar */
 		  &dHeff_dpphi,     /* drvt Heff,pphi   */
-		  NULL);
+		  &d2Heff_dprstar20);
 	
 	E_vec[i] = nu*H;
   
@@ -352,10 +350,14 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
 		&H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
 		&Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
-		NULL,             /* drvt Heff,r      */
+		&dHeff_dr,        /* drvt Heff,r      */
 		&dHeff_dprstar,   /* drvt Heff,prstar */
 		&dHeff_dpphi);    /* drvt Heff,pphi   */
-	
+
+	u2      = 1./((dyn->r)*(dyn->r));
+	prstar2 = (dyn->prstar)*(dyn->prstar);
+	d2Heff_dprstar20 = (1. + 2.*A_vec[i]*u2*z3*prstar2)/Heff_orb_vec[i];
+	  
 	Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
 	E_vec[i] = nu*H;
       
@@ -367,7 +369,10 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       /** Real Orbital Frequency */
       dyn->Omg_orb = (dyn->pphi*A_vec[i]*uc2_vec[i])/(E_vec[i]*Heff_orb_vec[i]);
 
-      /** dr_dt */
+      /** ddotr */
+      dyn->ddotr = -A_vec[i]/B_vec[i]*dHeff_dr*d2Heff_dprstar20;
+      
+      /** Time and phase radial derivatives */
       dt_dr_vec[i]   = E_vec[i]/(sqrtAbyB_vec[i]*dHeff_dprstar); /* dt_dr = 1/dr_dt */
       dphi_dr_vec[i] = dyn->Omg*dt_dr_vec[i];                    /* d(phi)_dr = d(phi)_dt*dt_dr */
       
@@ -400,7 +405,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   /** Compute orbital phase */
   cumint3(dphi_dr_vec, dyn->data[EOB_RAD], size, dyn->data[EOB_PHI]);
  
-
 
   /* Free memory */
   for (int v=0; v < nv; v++)
