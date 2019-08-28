@@ -136,7 +136,7 @@
 #define Log7  (1.94591014905531330510535)
 #define MSUN_M (1.47662504e3) /* G/c^3 */
 #define MSUN_S (4.925491025543575903411922162094833998e-6) /* G/c^3 */
-#define MPC_M  (3.086e22)
+#define MPC_M  (3.085677581491367278913937957796471611e22) 
 #define EulerGamma (0.5772156649015328606065121)
 #define EulerGamma_Log2 (1.27036284546147817002374) /** EulerGamma + Log2 */
 #define TEOB_LAMBDA_TOL (1.0)   /* Minimum tidal Lambda_2 value */
