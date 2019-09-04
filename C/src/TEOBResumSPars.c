@@ -505,6 +505,11 @@ void eob_set_params(char *s, int n)
   par_set_d("C_Q1",C_Q1);
   par_set_d("C_Q2",C_Q2);
 
+  par_set_d("C_Oct1",C_Oct1);
+  par_set_d("C_Oct2",C_Oct2);
+  par_set_d("C_Hex1",C_Hex1);
+  par_set_d("C_Hex2",C_Hex2);
+  
   /** Set more as needed ... */
   double a6c = 0.;
   if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
