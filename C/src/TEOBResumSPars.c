@@ -66,17 +66,54 @@ void EOBParameters_free (EOBParameters *eobp)
   free(eobp);
 }
 
+/* Following default parameters should match those for production runs */
 void EOBParameters_defaults (int choose, EOBParameters *eobp)
 {
+
+  //TODO this needs a patience filling ...
+  
+  eobp->use_geometric_units = 0;
+  eobp->use_speedytail = 1;
+
+  eobp->dt_merger_interp = 0.5;
+
+  eobp->interp_uniform_grid = 0;
+  eobp->dt_interp = 0.5;
+  eobp->srate_interp = 4096.;
+
+
+  eobp->r0 = 0;
   
   if (choose == DEFAULT_PARS_BBH) {
-    //TODO
+    eobp->M = 1.;
+    eobp->q = 1.;
+    eobp->chi1 = 0.;
+    eobp->chi2 = 0.;
+
+    eobp->centrifugal_radius = CENTRAD_LO;
+      
   }
   else if (choose == DEFAULT_PARS_BNS) {
-    //TODO
+    eobp->M = 1.4;
+    eobp->q = 1.;
+    eobp->chi1 = 0.;
+    eobp->chi2 = 0.;
+    
+    eobp->pGSF_tidal = 4.0;
+
+    eobp->postadiabatic_dynamics = 1;
+    eobp->postadiabatic_dynamics_N = 8;
+    eobp->postadiabatic_dynamics_size = 1000;
+    eobp->postadiabatic_dynamics_rmin = 14.;
+    eobp->postadiabatic_dynamics_stop = 1;
+
+    eobp->centrifugal_radius = CENTRAD_NNLO;
+    //eobp->use_flm =
+    
   }
   else if (choose == DEFAULT_PARS_BHNS) {
-    //TODO
+
+    
   }
   else errorexit("unknown default parameter choice.");
 }
@@ -265,7 +302,8 @@ void par_db_default ()
   par_add_b("openmp_timeron", 0); // OpenMP timers
   
   /* following pars are set later by the code */
-  
+  // TODO: they will be removed from the db and only kept in EOBParameters
+
   par_add_d("nu", 0.); // symmetric mass ratio
   par_add_d("X1", 0.); // mass ratio M1/M
   par_add_d("X2", 0.); // mass ratio M2/M
@@ -574,6 +612,7 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     system_mkdir(par_get_s("output_dir"));//FIXME: only if output_dir not null and if some output requested
     par_db_write_file("params.txt");//FIXME: (as above)
     par_db_free();
+
   }
   
   // TODO: Set auxiliary parameters (code as below, but set EOBParams)

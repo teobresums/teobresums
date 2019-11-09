@@ -202,7 +202,6 @@ enum{
   TIDES_TEOBRESUM_BHNS,
   TIDES_NOPT
 };
-
 static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM", "TEOBRESUM3", "TEOBRESUM_BHNS","undefined"};
 
 /** List of options for the gravitomagnetic tidal potential */
@@ -213,6 +212,28 @@ enum{
   TIDES_GM_NOPT
 };
 static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","undefined"};
+
+/** List of options for centriful radius */
+enum{
+  CENTRAD_LO,
+  CENTRAD_NLO,
+  CENTRAD_NNLO,
+  CENTRAD_NNLOS4,
+  CENTRAD_NOSPIN,
+  CENTRAD_NOTIDES,
+  CENTRAD_NOPT
+};
+static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS4", "NOSPIN", "NOTIDES"};
+
+/** List of options for flm amplitudes */
+enum{
+  USEFLM_SSLO,
+  USEFLM_SSNLO,
+  USEFLM_NNLO,
+  USEFLM_HM,
+  USEFLM_NOPT
+};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "HM"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -268,9 +289,32 @@ typedef struct tagNQCdata
   NQCcoefs *hlm;
 } NQCdata;
 
-static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "fromfile"};
-static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "fromfile", "compute"};
 extern NQCdata *NQC; /* defined in TEOBResumS.c */
+
+enum{
+  NQC_ADD_NO,
+  NQC_ADD_AUTO,
+  NQC_ADD_MANUAL,
+  NQC_ADD_NOPT
+};
+static const char* const nqc_add_opt[] = {"no", "auto", "manual"};
+
+enum{
+  NQC_FLX_NONE,
+  NQC_FLX_NRFIT_NOSPIN201602,
+  NQC_FLX_FROMFILE,
+  NQC_FLX_NOPT
+};
+static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "fromfile"};
+
+enum{
+  NQC_HLM_NONE,
+  NQC_HLM_NRFIT_NOSPIN201602,
+  NQC_HLM_FROMFILE,
+  NQC_HLM_COMPUTE,
+  NQC_HLM_NOPT
+};
+static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "fromfile", "compute"};
 
 /** Waveform data type */
 typedef struct tagWaveform
@@ -344,17 +388,58 @@ typedef struct tagDynamics
 typedef struct tagEOBParameters
 {
   double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2;
+  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
+  double LambdaAl2,LambdaAl3,LambdaAl4, LambdaBl2,LambdaBl3,LambdaBl4, SigmaAl2,SigmaBl2;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
+  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;//new names
+  
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
   double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
   double kapA2j, kapB2j, kapT2j;
   double rLR_tidal, pGSF_tidal;
-  double Mbhf, abhf; /* final BH */
-  int use_tidal, use_spins, use_tidal_gravitomagnetic;
+  double Mbhf, abhf; // final BH 
 
-  // TODO: add many more here
+  double r0, initial_frequency;
+  
+  int use_tidal, use_spins, use_tidal_gravitomagnetic;
+  int use_Yagi_fits;
+  int use_geometric_units;
+  int use_speedytail;
+
+  double dt_merger_interp, dt_interp, srate_interp;
+  int interp_uniform_grid;
+
+  int use_mode_lm[KMAX];//NEW
+
+  int postadiabatic_dynamics, postadiabatic_dynamics_stop;
+  int postadiabatic_dynamics_N;
+  int postadiabatic_dynamics_size;
+  double postadiabatic_dynamics_rmin;
+
+  int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "HM"
+
+  int compute_LR, compute_LSO, compte_LR_guess, compute_LSO_guess;
+
+  int nqc_add, nqc_coefs_flm, nqc_coefs_hlm; // NEW, INDEXES
+  char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
+
+  char output_dir[STRLEN];
+  int output_hpc, output_multipoles, output_dynamics, output_nqc, output_nqc_coefs, output_ringdown;
+  int output_lm[KMAX]; //NEW
+
+  double srate, dt;
+  int size;
+  int ringdown_extend_array;
+  int ode_timestep;
+  double ode_abstol, ode_reltol;
+  double ode_tmax;
+  double ode_stop_radius;
+  int ode_stop_afterNdt;
+
+  int openmp_threads, ompenmp_timeron;
   
 } EOBParameters;
 
