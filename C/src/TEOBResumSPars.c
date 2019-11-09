@@ -93,7 +93,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
 
 /** database for parameters */
 config_t cfg, *cf;
-config_setting_t * csroot, *csetting;
+config_setting_t *csroot, *csetting;
 
 void par_db_init ()
 {
@@ -169,13 +169,14 @@ void par_file_parse_merge (const char *fname)
 // This sets parameters without using the external default.par
 // See https://github.com/hyperrealm/libconfig/blob/master/examples/c/example3.c
 // See par/default.par for what default parameters are needed
-// TODO: First test this with current code, later: these defaults should set from the elements of (default) eobpars->
-void par_db_default_new ()
+// Tested with current code
+// TODO: later these defaults should be set from the elements of (default) eobpars->
+void par_db_default ()
 {
   
   /* Physical input pars */
   
-  par_add_d("M", 1.); // total binary mass
+  par_add_d("M", 1.); // total binary mass  
   par_add_d("q", 1.); // mass ratio
   par_add_d("chi1", 0.); // dimensionless spin 1 z-component 
   par_add_d("chi2", 0.); // dimensionless spin 2 z-component 
@@ -185,7 +186,7 @@ void par_db_default_new ()
   par_add_d("polarisation", 0.);
   par_add_d("r0", 0.); //initial radius	
   par_add_d("initial_frequency", 0.004); // initial GW frequency
-
+  
   par_add_d("LambdaAl2", 0.); // Tidal gravitoelectric parameter Lambda for star A ell=2
   par_add_d("LambdaBl2",0.);
   par_add_d("LambdaAl3",0.); 
@@ -220,7 +221,7 @@ void par_db_default_new ()
   par_add_d("postadiabatic_dynamics_rmin", 14.); // minimum radius (end of PA dynamics)
   par_add_d("postadiabatic_dynamics_rmin_BNS", 14.); // minimum radius (end of PA dynamics for BNS) //FIXME:this should be removed, use only above.
   par_add_s("postadiabatic_dynamics_stop","yes"); // stop after post-adiabatic dynamics //FIXME: make bool
-  
+
   par_add_s("centrifugal_radius", "LO"); // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   par_add_s("use_flm", "SSLO"); // "SSLO", "SSNLO", "HM"
   par_add_b("compute_LR", 0); // calculate LR ?
@@ -235,7 +236,7 @@ void par_db_default_new ()
   par_add_s("nqc_coefs_hlm_file", "");
 
   /* Output */
-  
+
   par_add_s("output_dir", "./data/"); // output dir
   par_add_b("output_hpc", 1); // output h+,hx
   par_add_b("output_multipoles", 0); // output multipoles
@@ -282,7 +283,7 @@ void par_db_default_new ()
   par_add_d("C_Oct2", 0.); //
   par_add_d("C_Hex1", 0.); //
   par_add_d("C_Hex2", 0.); //
-  par_add_d("a6c   ", 0.); //
+  par_add_d("a6c", 0.); //
   par_add_d("cN3LO", 0.); //
   
   par_add_d("kappaAl2", 0.); // gravitoelectric kappa star A
@@ -316,13 +317,13 @@ void par_db_default_new ()
   
   par_add_i("use_tidal", 0); // index for tidal modus
   par_add_i("use_tidal_gravitomagnetic", 0); // index for gravitomagnetic tide
-  
+
   return;    
 }
 
 /** default values for parameters are expected in file
     $TEOBRESUMS/par/default.par */
-void par_db_default ()
+void par_db_default_fromfile ()
 {
   static const char *eobcodeenvv = "TEOBRESUMS";
   char *eobcodepath = NULL;
@@ -365,8 +366,10 @@ void par_add_i (const char *key, int val)
 
 void par_add_b (const char *key, int val)
 {
-  csetting = config_setting_add(csroot, key, CONFIG_TYPE_BOOL);
-  config_setting_set_bool(csetting, val);
+  csetting = config_setting_add(csroot, key, CONFIG_TYPE_INT);
+  config_setting_set_int(csetting, val);
+  /* csetting = config_setting_add(csroot, key, CONFIG_TYPE_BOOL); */
+  /* config_setting_set_bool(csetting, val); */
   return;
 }
 
@@ -564,7 +567,7 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     /* Deal with input parfile if necessary 
        (this is the current logic, we'll keep it for compatibility) */
     par_db_init ();
-    par_db_default_new (); 
+    par_db_default (); 
     par_file_parse_merge (parfile);
     par_db_screen (VERBOSE);
     // TODO: write EOBParameters
@@ -584,8 +587,9 @@ void eob_set_params(char *s, int n)
   par_db_init ();
 
   /* Set default values */
-  par_db_default ();
-
+  par_db_default_fromfile ();
+  //par_db_default ();
+    
   /* Parse input parfile */
   par_file_parse_merge (s);
 

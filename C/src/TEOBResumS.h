@@ -202,6 +202,7 @@ enum{
   TIDES_TEOBRESUM_BHNS,
   TIDES_NOPT
 };
+
 static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM", "TEOBRESUM3", "TEOBRESUM_BHNS","undefined"};
 
 /** List of options for the gravitomagnetic tidal potential */
@@ -364,6 +365,7 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 /* TEOBResumSPars.c */
 void par_db_init ();
 void par_db_free ();
+void par_db_default_fromfile ();
 void par_db_default ();
 void par_file_parse (const char *fname);
 void par_file_parse_merge (const char *fname);
