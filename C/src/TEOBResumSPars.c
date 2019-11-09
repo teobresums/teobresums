@@ -29,6 +29,10 @@
  * Note autoconversion int/float is disabled, type must be specified in the *.par
  */
 
+// SB 11/2019: Added the par structure type EOBParameters and
+// started coding necessary routines for new parameters management
+// Routines "_new" will substitute the current ones but are not yet in use
+
 #include "TEOBResumS.h"
 
 #define DEBUG_THIS_FILE 0 /* = 1 to compile and debug this files */
@@ -39,15 +43,63 @@
 #define errorexits(s,t) {printf("%s %s\n",s,t); exit(ERROR);}
 #endif
 
+
+/*
+ * routines to work with EOBParameters
+ */
+
+/** Global var for EOB parameters 
+    (there is an extern in the header) */
+EOBParameters *EOBPars;
+
+void EOBParameters_alloc (EOBParameters **eobp)
+{
+  *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
+  if (eobp == NULL)
+    errorexit("Out of memory");
+}
+
+void EOBParameters_free (EOBParameters *eobp)
+{
+  //TODO: first free any array:
+  //if (eobp->array) free (eobp->array);
+  free(eobp);
+}
+
+void EOBParameters_defaults (int choose, EOBParameters *eobp)
+{
+  
+  if (choose == DEFAULT_PARS_BBH) {
+    //TODO
+  }
+  else if (choose == DEFAULT_PARS_BNS) {
+    //TODO
+  }
+  else if (choose == DEFAULT_PARS_BHNS) {
+    //TODO
+  }
+  else errorexit("unknown default parameter choice.");
+}
+
+/** overwrites the EOBParameters entries from the db values */
+void EOBParameters_set_from_db (EOBParameters *eobp)
+{
+  //TODO
+}
+
+/*
+ * libconfig wrappers
+ */
+
 /** database for parameters */
 config_t cfg, *cf;
-config_setting_t * csroot;
+config_setting_t * csroot, *csetting;
 
 void par_db_init ()
 {
   cf = &cfg;
   config_init(cf);
-  /* csroot = config_root_setting(cf); */
+  csroot = config_root_setting(cf); 
 }
 
 void par_db_free ()
@@ -113,6 +165,161 @@ void par_file_parse_merge (const char *fname)
   config_destroy(cf1);
 }
 
+/** default values for parameters */
+// This sets parameters without using the external default.par
+// See https://github.com/hyperrealm/libconfig/blob/master/examples/c/example3.c
+// See par/default.par for what default parameters are needed
+// TODO: First test this with current code, later: these defaults should set from the elements of (default) eobpars->
+void par_db_default_new ()
+{
+  
+  /* Physical input pars */
+  
+  par_add_d("M", 1.); // total binary mass
+  par_add_d("q", 1.); // mass ratio
+  par_add_d("chi1", 0.); // dimensionless spin 1 z-component 
+  par_add_d("chi2", 0.); // dimensionless spin 2 z-component 
+  par_add_d("distance", 1.); 
+  par_add_d("inclination", 0.);
+  par_add_d("coalescence_angle", 0.);
+  par_add_d("polarisation", 0.);
+  par_add_d("r0", 0.); //initial radius	
+  par_add_d("initial_frequency", 0.004); // initial GW frequency
+
+  par_add_d("LambdaAl2", 0.); // Tidal gravitoelectric parameter Lambda for star A ell=2
+  par_add_d("LambdaBl2",0.);
+  par_add_d("LambdaAl3",0.); 
+  par_add_d("LambdaAl4", 0.); 
+  par_add_d("LambdaBl3", 0.); 
+  par_add_d("LambdaBl4", 0.); 
+  par_add_d("SigmaAl2", 0.); // Tidal gravitomagnetic parameter Sigma for star A ell=2
+  par_add_d("SigmaBl2", 0.);
+  par_add_d("pGSF_tidal", 4.0);// p-power in GSF tidal potential model
+
+  /* EOB Settings */
+
+  int indexeslm[1] = {-1};  // indexes of multipoles to use in h+,hx (if [-1], use all) and to output
+  
+  par_add_b("use_spins", 0); // use spins ?
+  par_add_s("tides", "no");
+  par_add_s("tides_gravitomagnetic","no");
+  par_add_b("use_Yagi_fits", 0); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+  par_add_b("use_geometric_units", 1); // use geometric units for I/O ?
+  par_add_b("use_speedytail", 1); // use special routine to speed up tail computation ?
+  
+  par_add_d("dt_merger_interp", 0.5); // dt for interpolating merger waveform and NQC/ringdown attachment
+  par_add_b("interp_uniform_grid", 0); // interpolate on uniform grid final result ?
+  par_add_d("dt_interp", 0.5); // timestep to be used for final interpolation (used if input is given in geometrical unit, unused otherwise)
+  par_add_d("srate_interp", 4096.); // sampling rate to be used for final interpolation (used if input is given in physical unit, unused otherwise)
+  
+  par_add_arrayi("use_mode_lm", indexeslm, 1); // indexes of multipoles to use in h+,hx (if [-1], use all)
+  
+  par_add_s("postadiabatic_dynamics", "no");
+  par_add_i("postadiabatic_dynamics_N", 8); // post-adiabatic order
+  par_add_i("postadiabatic_dynamics_size", 1000); // grid size 
+  par_add_d("postadiabatic_dynamics_rmin", 14.); // minimum radius (end of PA dynamics)
+  par_add_d("postadiabatic_dynamics_rmin_BNS", 14.); // minimum radius (end of PA dynamics for BNS) //FIXME:this should be removed, use only above.
+  par_add_s("postadiabatic_dynamics_stop","yes"); // stop after post-adiabatic dynamics //FIXME: make bool
+  
+  par_add_s("centrifugal_radius", "LO"); // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  par_add_s("use_flm", "SSLO"); // "SSLO", "SSNLO", "HM"
+  par_add_b("compute_LR", 0); // calculate LR ?
+  par_add_b("compute_LSO", 0); // calculate LSO ?
+  par_add_d("compute_LR_guess", 3.);
+  par_add_d("compute_LSO_guess", 6.);
+
+  par_add_s("nqc", "auto"); // {"auto", "manual"}
+  par_add_s("nqc_coefs_flx", "none"); // {"none", "nrfit_nospin20160209", "fromfile"}
+  par_add_s("nqc_coefs_hlm", "none"); // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+  par_add_s("nqc_coefs_flx_file", "");
+  par_add_s("nqc_coefs_hlm_file", "");
+
+  /* Output */
+  
+  par_add_s("output_dir", "./data/"); // output dir
+  par_add_b("output_hpc", 1); // output h+,hx
+  par_add_b("output_multipoles", 0); // output multipoles
+  par_add_arrayi("output_lm", indexeslm, 1); // indexes of multipoles to ouput
+  par_add_b("output_dynamics", 0); // output dynamics
+  par_add_b("output_nqc", 0); // output NQC waveform
+  par_add_b("output_nqc_coefs", 0); // output multipolar NQC coefs (if determined)
+  par_add_b("output_ringdown", 0); // output ringdown waveform
+  
+  /* Evolution settings */
+  
+  par_add_d("srate", 4096.); // sampling rate, used if input is given in physical unit, reset based on tstep otherwise
+  par_add_d("dt", 0.5); // timestep, used if input is given in geometric unit, reset based on srate otherwise
+  par_add_i("size", 1); // size of the arrays (chunks, dynamically extended)
+  par_add_i("ringdown_extend_array", 500); // grid points to extend arrays for ringdown attachment
+  par_add_s("ode_timestep", "uniform"); // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
+  par_add_d("ode_abstol", 1e-13); // ODE solver absolute accuracy
+  par_add_d("ode_reltol", 1e-11); //  ODE solver relative accuracy
+  par_add_d("ode_tmax", 1e9); // max integration time
+  par_add_d("ode_stop_at_radius", 2.); // stop ODE integration at this radius (if > 0)
+  par_add_i("ode_stop_afterNdt", 4); // stop ODE N iters after the Omega peak
+  
+  /* OMP settings */
+  
+  par_add_i("openmp_threads", 1); // OpenMP threads
+  par_add_b("openmp_timeron", 0); // OpenMP timers
+  
+  /* following pars are set later by the code */
+  
+  par_add_d("nu", 0.); // symmetric mass ratio
+  par_add_d("X1", 0.); // mass ratio M1/M
+  par_add_d("X2", 0.); // mass ratio M2/M
+  par_add_d("S1", 0.);
+  par_add_d("S2", 0.);
+  par_add_d("S", 0.);
+  par_add_d("Sstar", 0.);
+  par_add_d("a1", 0.);
+  par_add_d("a2", 0.); // 
+  par_add_d("aK", 0.); //
+  par_add_d("aK2", 0.); // 
+  par_add_d("C_Q1", 0.); //
+  par_add_d("C_Q2", 0.); //
+  par_add_d("C_Oct1", 0.); //
+  par_add_d("C_Oct2", 0.); //
+  par_add_d("C_Hex1", 0.); //
+  par_add_d("C_Hex2", 0.); //
+  par_add_d("a6c   ", 0.); //
+  par_add_d("cN3LO", 0.); //
+  
+  par_add_d("kappaAl2", 0.); // gravitoelectric kappa star A
+  par_add_d("kappaAl3", 0.); //
+  par_add_d("kappaAl4", 0.); //
+  par_add_d("kappaBl2", 0.); //
+  par_add_d("kappaBl3", 0.); //
+  par_add_d("kappaBl4", 0.); //
+  
+  par_add_d("kappajAl2", 0.); // gravitomagnetic kappa star A
+  par_add_d("kappajBl2", 0.);
+  par_add_d("kappajTl2", 0.);
+  
+  par_add_d("kappaTl2", 0.); //
+  par_add_d("kappaTl3", 0.); //
+  par_add_d("kappaTl4", 0.); //
+  par_add_d("bar_alph2_1", 0.); //
+  par_add_d("bar_alph2_2", 0.); //
+  par_add_d("bar_alph3_1", 0.); //
+  par_add_d("bar_alph3_2", 0.); //
+  par_add_d("bar_alph2j_1", 0.); //
+  par_add_d("khatAl2", 0.); //
+  par_add_d("khatBl2", 0.); //
+  par_add_d("rLR_tidal", 0.); // radius of light-ring for NNLO tidal model
+  
+  par_add_d("BH_final_mass", 0.); // final BH mass
+  par_add_d("BH_final_spin", 0.); // final BH spin
+  
+  par_add_d("rLR", 0.); // radius of light-ring
+  par_add_d("rLSO", 0.); // radius of last stable orbit 
+  
+  par_add_i("use_tidal", 0); // index for tidal modus
+  par_add_i("use_tidal_gravitomagnetic", 0); // index for gravitomagnetic tide
+  
+  return;    
+}
+
 /** default values for parameters are expected in file
     $TEOBRESUMS/par/default.par */
 void par_db_default ()
@@ -145,6 +352,58 @@ void par_db_write_file (const char *name)
 void par_db_screen (const int pr)
 {
   if (pr) config_write(cf, stderr);
+}
+
+/* 'add' routines */
+
+void par_add_i (const char *key, int val)
+{
+  csetting = config_setting_add(csroot, key, CONFIG_TYPE_INT);
+  config_setting_set_int(csetting, val);
+  return;
+}
+
+void par_add_b (const char *key, int val)
+{
+  csetting = config_setting_add(csroot, key, CONFIG_TYPE_BOOL);
+  config_setting_set_bool(csetting, val);
+  return;
+}
+
+void par_add_d (const char *key, double val)
+{
+  csetting = config_setting_add(csroot, key, CONFIG_TYPE_FLOAT);
+  config_setting_set_float(csetting, val);
+  return;
+}
+
+void par_add_s (const char *key, char *val)
+{
+  csetting = config_setting_add(csroot, key, CONFIG_TYPE_STRING);
+  config_setting_set_string(csetting, val);
+  return;
+}
+
+void par_add_arrayi (const char *key, int *a, int size)
+{
+  config_setting_t * array;
+  array = config_setting_add(csroot, key, CONFIG_TYPE_ARRAY);
+  for(int i = 0; i < size; ++i) {
+    csetting = config_setting_add(array, NULL, CONFIG_TYPE_INT);
+    config_setting_set_int(csetting, a[i]);
+  }
+  return;
+}
+
+void par_add_arrayd (const char *key, double *a, int size)
+{
+  config_setting_t * array;
+  array = config_setting_add(csroot, key, CONFIG_TYPE_ARRAY);
+  for(int i = 0; i < size; ++i) {
+    csetting = config_setting_add(array, NULL, CONFIG_TYPE_FLOAT);
+    config_setting_set_float(csetting, a[i]);
+  }
+  return;
 }
 
 /* 'get' routines */
@@ -284,6 +543,39 @@ void par_set_arrayd (const char *key, double *array, int n)
 }
 
 #if (!DEBUG_THIS_FILE)
+
+/*
+ * main routine to set parameters
+ */
+
+/** Set parameters */
+// New main routine to set the parameters
+// This now uses the new type EOBParameters but keeps the parfile management with libconfig
+void eob_set_params_new(char *parfile, int n, int default_choice)
+{
+
+  /* Init memory EOBParameters */
+  EOBParameters_alloc( &EOBPars );
+  
+  /* Set defaults for BNS, BBH, BHNS */
+  EOBParameters_defaults (default_choice, EOBPars);
+  
+  if (parfile!=NULL) {
+    /* Deal with input parfile if necessary 
+       (this is the current logic, we'll keep it for compatibility) */
+    par_db_init ();
+    par_db_default_new (); 
+    par_file_parse_merge (parfile);
+    par_db_screen (VERBOSE);
+    // TODO: write EOBParameters
+    system_mkdir(par_get_s("output_dir"));//FIXME: only if output_dir not null and if some output requested
+    par_db_write_file("params.txt");//FIXME: (as above)
+    par_db_free();
+  }
+  
+  // TODO: Set auxiliary parameters (code as below, but set EOBParams)
+  
+}
 
 /** Set parameters */
 void eob_set_params(char *s, int n)

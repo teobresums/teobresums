@@ -185,6 +185,14 @@ static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmeg
 #define KMAX (35) /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
+/** List for default parameter options */
+enum{
+  DEFAULT_PARS_BBH,
+  DEFAULT_PARS_BNS,
+  DEFAULT_PARS_BHNS,
+  DEFAULT_PARS_NOPT
+};
+
 /** List of options for tidal potential */
 enum{
   TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
@@ -318,6 +326,7 @@ typedef struct tagDynamics
   double *time;
   double *data[EOB_DYNAMICS_NVARS]; 
   /* key parameters for quick access */
+  // TODO: REMOVE THEM FROM HERE, put them in EOBParameters
   double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
@@ -330,6 +339,26 @@ typedef struct tagDynamics
   int use_tidal, use_spins, use_tidal_gravitomagnetic;
 } Dynamics;
 
+/** Parameter data type */
+typedef struct tagEOBParameters
+{
+  double M, nu, q, X1, X2;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
+  double rLR, rLSO;
+  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
+  double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
+  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
+  double kapA2j, kapB2j, kapT2j;
+  double rLR_tidal, pGSF_tidal;
+  double Mbhf, abhf; /* final BH */
+  int use_tidal, use_spins, use_tidal_gravitomagnetic;
+
+  // TODO: add many more here
+  
+} EOBParameters;
+
+extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */ 
+
 /* Function protoypes grouped based on file */
 
 /* TEOBResumSPars.c */
@@ -340,6 +369,12 @@ void par_file_parse (const char *fname);
 void par_file_parse_merge (const char *fname);
 void par_db_write_file (const char *fname);
 void par_db_screen (const int pr);
+void par_add_i (const char *key, int val);
+void par_add_b (const char *key, int val);
+void par_add_d (const char *key, double val);
+void par_add_s (const char *key, char *val);
+void par_add_arrayi (const char *key, int *a, int size);
+void par_add_arrayd (const char *key, double *a, int size);
 void par_set_i(const char *key, int val);
 void par_set_b(const char *key, int val);
 void par_set_d(const char *key, double val);
