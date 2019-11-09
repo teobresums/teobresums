@@ -117,6 +117,8 @@
 #define PRFORMd(s,x) {printf("%-40s = %.16e\n", s,x);} /* Print double */
 #define PRFORMi(s,x) {printf("%-40s = %d\n", s,x);} /* Print int */
 #define PRWARN(s) {printf("# WARNING: %s\n",s);} 
+#define INT2YESNO(i)((i)?"yes":"no")
+#define YESNO2INT(s)((strcmp(s,"no")==0)?0:1)
 /* helpers for debug */
 #define DBGPR(s) printf("DEBUG: %s\n",s);
 #define DBGSTOP errorexit("DEBUG: STOP");
@@ -229,7 +231,7 @@ static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS
 enum{
   USEFLM_SSLO,
   USEFLM_SSNLO,
-  USEFLM_NNLO,
+  USEFLM_SSNNLO,
   USEFLM_HM,
   USEFLM_NOPT
 };
@@ -292,12 +294,12 @@ typedef struct tagNQCdata
 extern NQCdata *NQC; /* defined in TEOBResumS.c */
 
 enum{
-  NQC_ADD_NO,
-  NQC_ADD_AUTO,
-  NQC_ADD_MANUAL,
-  NQC_ADD_NOPT
+  NQC_NO,
+  NQC_AUTO,
+  NQC_MANUAL,
+  NQC_NOPT
 };
-static const char* const nqc_add_opt[] = {"no", "auto", "manual"};
+static const char* const nqc_opt[] = {"no", "auto", "manual"};
 
 enum{
   NQC_FLX_NONE,
@@ -369,7 +371,8 @@ typedef struct tagDynamics
   /* arrays */
   int size;
   double *time;
-  double *data[EOB_DYNAMICS_NVARS]; 
+  double *data[EOB_DYNAMICS_NVARS];
+  
   /* key parameters for quick access */
   // TODO: REMOVE THEM FROM HERE, put them in EOBParameters
   double M, nu, q, X1, X2;
@@ -388,12 +391,12 @@ typedef struct tagDynamics
 typedef struct tagEOBParameters
 {
   double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
   double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
   double LambdaAl2,LambdaAl3,LambdaAl4, LambdaBl2,LambdaBl3,LambdaBl4, SigmaAl2,SigmaBl2;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
-  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;//new names
+  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;//new names!
   
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
   double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
@@ -402,6 +405,8 @@ typedef struct tagEOBParameters
   double Mbhf, abhf; // final BH 
 
   double r0, initial_frequency;
+
+  double distance, inclination, polarization, coalescence_angle;
   
   int use_tidal, use_spins, use_tidal_gravitomagnetic;
   int use_Yagi_fits;
@@ -411,7 +416,7 @@ typedef struct tagEOBParameters
   double dt_merger_interp, dt_interp, srate_interp;
   int interp_uniform_grid;
 
-  int use_mode_lm[KMAX];//NEW
+  int *use_mode_lm, use_mode_lm_size;
 
   int postadiabatic_dynamics, postadiabatic_dynamics_stop;
   int postadiabatic_dynamics_N;
@@ -421,23 +426,23 @@ typedef struct tagEOBParameters
   int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "HM"
 
-  int compute_LR, compute_LSO, compte_LR_guess, compute_LSO_guess;
+  int compute_LR, compute_LSO, compute_LR_guess, compute_LSO_guess;
 
-  int nqc_add, nqc_coefs_flm, nqc_coefs_hlm; // NEW, INDEXES
+  int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
 
   char output_dir[STRLEN];
   int output_hpc, output_multipoles, output_dynamics, output_nqc, output_nqc_coefs, output_ringdown;
-  int output_lm[KMAX]; //NEW
+  int *output_lm, output_lm_size; 
 
   double srate, dt;
-  int size;
+  int size; // this should stay with Dynamics...
   int ringdown_extend_array;
   int ode_timestep;
   double ode_abstol, ode_reltol;
   double ode_tmax;
-  double ode_stop_radius;
   int ode_stop_afterNdt;
+  int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
 
   int openmp_threads, ompenmp_timeron;
   
