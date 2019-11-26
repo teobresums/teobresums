@@ -394,8 +394,8 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar,
   double dGSs_dprstar = GSs0*dhGSs_dprstar + dGSs0_dprstar*hGSs; 
   
   /* derivatives of hat{G} with respect to uc */
-  double dhGS_duc  = -hGS*hGS*(  c10 + 2.*c20*uc  + 3.*c30*uc2);
-  double dhGSs_duc = -hGSs*hGSs*(cs10 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3);
+  double dhGS_duc  = -hGS*hGS*(  c10 + 2.*c20*uc  + 3.*c30*uc2 +  c12*prstar2);
+  double dhGSs_duc = -hGSs*hGSs*(cs10 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3 +  cs12*prstar2);
   
   /* derivatives of G with respect to uc */
   double dGS_duc  =  dGS0_duc*hGS  +  GS0*dhGS_duc;
