@@ -1010,7 +1010,7 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
     rholm[k] = (cden + n1*x + n2*x2 + n3*x3)/(cden + d1*x + d2*x2);
   }
 
-  // Padé (4,2)
+  // Padé (4,2) - Used for (3,2), (3,3), (4,1), (4,3), (5,2), (5,3), (5,4) and l=6 except (6,1) 
   const int kmaxPade42 = 12;
   int kPade42[] = {3,4,5,7,10,11,12,15,16,17,18,19};
   
@@ -1051,7 +1051,8 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
   }
 
   
-  // Taylor series : (2,2) at 5PN, (4,4), (4,2), (5,5) at 6PN
+  // Taylor series : (2,2) at 5PN;
+  //                 (4,4), (4,2), (5,5), (5,1), (6,1) and l>6  at 6PN
   const int kmaxTaylor = 21;
   int kTaylor[kmaxTaylor];
   kTaylor[0] = 1;
