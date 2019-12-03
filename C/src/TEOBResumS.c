@@ -589,8 +589,8 @@ int main (int argc, char* argv[])
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp = par_get_d("dt_merger_interp");
-      dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
-      //dt_merger_interp = MIN(dt_merger_interp, dyn->dt);
+      // dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
+      dt_merger_interp = MIN(dt_merger_interp, dyn->dt);
 
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
       if (VERBOSE) {
@@ -702,7 +702,12 @@ int main (int argc, char* argv[])
     amplitude_prefactor = nu*M*MSUN_M/(distance*MPC_M);    
     M *= MSUN_S;   
   } 
-  const double psi = par_get_d("coalescence_angle"); 
+  /** Consistent with LAL master conventions for input parameters */
+  /** Azimuthal angle phi follows LAL convention of LIGO-T1800226 for master, 
+    * where the polarization basis is defined with \f$\Omega=\pi/2\f$ and
+    * \f$Z = \sin{\iota}\sin{\Phi}x + \sin{\iota}\cos{\Phi}y + \cos{\iota}z\f$
+    */
+  const double phi = Pi/2.0 - par_get_d("coalescence_angle"); 
   const double iota = par_get_d("inclination");
 
   /** Computation of (h+,hx) */
@@ -722,7 +727,7 @@ int main (int argc, char* argv[])
   Waveform_alloc (&hpc, size, "waveform"); 
 
   /* h+, hx */  
-  compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
+  compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, hpc);
   
   if (interp_uniform_grid == INTERP_UNIFORM_GRID_HPC) {
     /* Interp to uniform grid phase and amplitude of h+, hx  */
