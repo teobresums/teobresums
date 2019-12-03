@@ -667,7 +667,7 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
     rholm[k] = clm[k][0];
     for (int n=1; n<6; n++) {
       rholm[k] += clm[k][n]*xn[n];
-    }
+    }	     
 #else  
     rholm[k] = x5*clm[k][5];
     for (int n=5; n-- >1; ) { // 4,3,2,1 // 
@@ -916,8 +916,8 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
   /* l = 5 */
   clm[9][3] = (0.642701885362399 - 0.14414918414918415*el1)*PMTERMS_eps;
   clm[9][4] = (-0.07651588046467575 + 0.11790664036817883*el1)*PMTERMS_eps;
-  clm[9][5] = -14.633690582678763747 + 2.9256460798810267523*logx;
-  clm[9][6] = 5.3708202812535269509 - 18.028080626090983076*logx + 1.6445075783603922132*log2x;
+  clm[9][5] =  0.2112256289378054518 + 0.007552668545567954*logx;
+  clm[9][6] =  0.6954698480021733513 - 0.045868829656707944*logx + 0.0025973734113594253*log2x;
   
   clm[10][3] = (2.354458371550237 - 0.5765967365967366*el2)*PMTERMS_eps;
   clm[10][4] = -0.36261168338728289637 + 0.33429938266861343784*logx;
@@ -943,7 +943,7 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
   clm[14][3] = (0.21653486654395454 - 0.10001110001110002*el1)*PMTERMS_eps;
   clm[14][4] = -0.41910058747759839184 + 0.05590898299231632565*logx;
   clm[14][5] = -0.54703676004200114476 + 0.014589362666582032864*logx;
-  clm[14][6] = -0.54703676004200114476 + 0.014589362666582032864*logx;
+  clm[14][6] = -0.67046877793201698851 - 0.010612705664941704748*logx + 0.001250277515678781080*log2x;
   
   clm[15][3] = (1.7942694138754138 - 0.40004440004440006*el2)*PMTERMS_eps;
   clm[15][4] = 0.11894436114207465266 + 0.17621003335289049575*logx;
@@ -1001,8 +1001,9 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
     cden = SQ(clm[k][3]) - clm[k][2]*clm[k][4];
 
     n1 = clm[k][1]*SQ(clm[k][3]) - clm[k][1]*clm[k][2]*clm[k][4] - clm[k][3]*clm[k][4] + clm[k][2]*clm[k][5];
-    n2 = clm[k][2]*SQ(clm[k][3]) - clm[k][1]*clm[k][3]*clm[k][4] + SQ(clm[k][4]) + clm[k][1]*clm[k][2]*clm[k][5] - clm[k][3]*clm[k][5];
-    n3 = SQ(clm[k][3]) - 2.*SQ(clm[k][3])*clm[k][5] + clm[k][1]*SQ(clm[k][4]) + SQ(clm[k][2])*clm[k][5] - clm[k][1]*clm[k][3]*clm[k][5];
+    n2 = clm[k][2]*SQ(clm[k][3]) - SQ(clm[k][2])*clm[k][4] - clm[k][1]*clm[k][3]*clm[k][4] + SQ(clm[k][4]) + clm[k][1]*clm[k][2]*clm[k][5] - clm[k][3]*clm[k][5];
+    n3 = SQ(clm[k][3])*clm[k][3] - 2.*clm[k][2]*clm[k][3]*clm[k][4] + clm[k][1]*SQ(clm[k][4]) + SQ(clm[k][2])*clm[k][5] - clm[k][1]*clm[k][3]*clm[k][5];
+    
     d1 = - clm[k][3]*clm[k][4] + clm[k][2]*clm[k][5];
     d2 = SQ(clm[k][4]) - clm[k][3]*clm[k][5];
 
@@ -1010,8 +1011,8 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
   }
 
   // Padé (4,2)
-  const int kmaxPade42 = 14;
-  int kPade42[] = {3,4,5,7,9,10,11,12,14,15,16,17,18,19};
+  const int kmaxPade42 = 12;
+  int kPade42[] = {3,4,5,7,10,11,12,15,16,17,18,19};
   
   for (int i=0; i<kmaxPade42; i++) {
     int k = kPade42[i];
@@ -1031,7 +1032,7 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
     rholm[k] = (cden + n1*x + n2*x2 + n3*x3 + n4*x4)/(cden + d1*x + d2*x2);
   }
 
-  // Padé (5,1)
+  // Padé (5,1) - Used for (2,1)
   const int kmaxPade51 = 1;
   int kPade51[] = {0};
   
@@ -1049,15 +1050,18 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
     rholm[k] = (clm[k][5] + n1*x + n2*x2 + n3*x3 + n4*x4 + n5*x5)/(clm[k][5] + d1*x);
   }
 
+  
   // Taylor series : (2,2) at 5PN, (4,4), (4,2), (5,5) at 6PN
-  int kmaxTaylor = 19;
-  int kTaylor[19];
+  const int kmaxTaylor = 21;
+  int kTaylor[kmaxTaylor];
   kTaylor[0] = 1;
   kTaylor[1] = 6;
   kTaylor[2] = 8;
-  kTaylor[3] = 13;
-  for (int i=4; i<kmaxTaylor; i++) {
-    kTaylor[i] = 16 + i;
+  kTaylor[3] = 9;
+  kTaylor[4] = 13;
+  kTaylor[5] = 14;
+  for (int i=6; i<kmaxTaylor; i++) {
+    kTaylor[i] = 14 + i;
   }
   
   for (int i=0; i<kmaxTaylor; i++) {
@@ -1066,18 +1070,18 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
     /* Note: the two sums give different result */
 #if (1)
     rholm[k] = clm[k][0];
-    for (int n=1; n<7; n++) {
+    for (int n=1; n<7; n++) {	
       rholm[k] += clm[k][n]*xn[n];
     }
 #else  
     rholm[k] = x6*clm[k][6];
-    for (int n=6; n-- >1; ) { // 4,3,2,1 // 
+    for (int n=6; n-- >1; ) { // 4,3,2,1 //
       rholm[k] += clm[k][n]*xn[n];
     } 
     rholm[k] += clm[k][0];
 #endif
   }
-
+  
   if (kmaxTaylor+kmaxPade32+kmaxPade42+kmaxPade51 != KMAX) {
     errorexit("Wrong function: not all multipoles are written.\n");
   }
@@ -1410,6 +1414,8 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
   /* spin-orbit */
   const double cSO_lo    = (-0.5*a0 - a12X12/6.);
   const double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12;
+  const double cSO_nnlo  = (32873./21168 + 477563./42336.*nu + 147421./84672.*nu*nu)*a0 - (23687./63504 - 171791./127008.*nu + 50803./254016.*nu*nu)*a12X12; // Not used for the moment
+
   
   /* SPIN-SPIN contribution */
   double cSS_lo = 0.;
@@ -1438,7 +1444,7 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
   double cS3_lo = (7./12.*a0 - 0.25*X12*a12)*a0*a0;
   
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
-  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 + cSS_nlo*v6 + cS3_lo*v7;
+  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 + cSS_nlo*v6 + cS3_lo*v7; //+ cSO_nnlo*v7;
   
   /* l=3, m=2 */
   /* spin-orbit coefficients */
@@ -1476,10 +1482,11 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
   rho42S = c42_SO_lo*v3 + c42_SO_nlo*v5 + c42_SO_nnlo*v7 + c42_SO_n3lo*v9;
   
   /** l>=2, m=odd*/
-  double if210s = 1. + 13./84.*a0*v3 - 3./8.*(a1+a2)*(a1+3.*a2)*v4 + a0*(14705./7056. - 12743./7056.*nu)*v5;
+  double if210s = 1. + 13./84.*a0*v3 - 1./8.*(3.*a1+a2)*(a1+3.*a2)*v4 + a0*(14705./7056. - 12743./7056.*nu)*v5;
   double if211s = 1. - 9./4.*a0*v3 + (349./252. + 74./63.*nu)*v2 + (65969./31752. + 89477./31752.*nu + 46967./31752.*nu2 - 0.5*a0*a0)*v4;
   f21S = X12/if210s - 1.5*v*a12/if211s;
 
+  
   double if330s = 1. + 7./4.*a0*v3 - 1.5*a0*a0*v4 + + 1./60.*a0*(211. - 127.*nu)*v5;
   double f331s = (10.*nu -1. + (-169. + 671.*nu + 182.*nu2)/15.*x);
   f33S = X12/if330s + 0.25*a12*v3*f331s;
@@ -1524,8 +1531,11 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
   
   flm[8] = gsl_pow_int(rholm[8] + rho44S, 4);
 
-  flm[13] = gsl_pow_int(rholm[13], 4);
-  flm[13] = flm[13]*f55S;      
+  flm[13] = gsl_pow_int(rholm[13], 5);
+  flm[13] = flm[13]*f55S;
+
+  
+
 }
 
 /** Calculate tidal correction to multipolar waveform amplitude
@@ -2825,7 +2835,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
     hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
   }
-
+  
   /** NQC */
   if (!(STREQUAL(par_get_s("nqc_coefs_hlm"),"none")) &&
       !(STREQUAL(par_get_s("nqc_coefs_hlm"),"compute"))) {
