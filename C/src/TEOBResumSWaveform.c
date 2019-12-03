@@ -2552,7 +2552,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
     if (VERBOSE) printf("No omega-maximum found.\n");
   }
   
-#if (0)
+#if (1)
   
   /* This is a hard-fix that always guarantee the 7 points */
   /* Make sure to comment the following line in main:
