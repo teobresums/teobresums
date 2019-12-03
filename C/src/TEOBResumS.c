@@ -589,8 +589,8 @@ int main (int argc, char* argv[])
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp = par_get_d("dt_merger_interp");
-      dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
-      //dt_merger_interp = MIN(dt_merger_interp, dyn->dt);
+      // dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
+      dt_merger_interp = MIN(dt_merger_interp, dyn->dt);
 
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
       if (VERBOSE) {
