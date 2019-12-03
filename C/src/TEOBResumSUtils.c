@@ -293,7 +293,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 }
 
 /** (h+, hx) polarizations from the multipolar waveform */
-void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc)
+void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
 {  
 #ifdef _OPENMP
   openmp_timer_start("compute_hpc");
@@ -309,43 +309,46 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
     double Msun = M;
     set_multipolar_idx_mask(activemode, KMAX, "use_mode_lm", 1);
     if (!(par_get_i("use_geometric_units"))) Msun = M/MSUN_S;
+      
 #if (DEBUG)
-    printf("h+,x: nu = %e M = %e D = %e Mpc psi = %e iota = %e prefactor = %e\n",
-	   nu,Msun,distance,psi,iota,amplitude_prefactor);
+    printf("h+,x: nu = %e M = %e D = %e Mpc phi = %e iota = %e prefactor = %e\n",
+	   nu,Msun,distance,phi,iota,amplitude_prefactor);
 #endif
+      
     /* Precompute Ylm */
     for (int k = 0; k < KMAX; k++ ) {
       if (!activemode[k]) continue;
-      spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], psi,iota);
-      if ( (mneg) && (MINDEX[k]!=0) )  /* add m<0 modes */
-	spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], psi,iota); 
+      spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
+
+      /* add m<0 modes */
+      if ( (mneg) && (MINDEX[k]!=0) )
+          spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
     }
+      
     /* Sum up  hlm * Ylm */
 #pragma omp for
     for (int i = 0; i < hlm->size; i++) {
-      hpc->time[i] = hlm->time[i]*M; 
-      /* hpc->real[i] = hpc->imag[i] = 0.; */
-      sumr = sumi = 0.;
-      for (int k = 0; k < KMAX; k++ ) {
-	if (!activemode[k]) continue;
-	/* spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], MINDEX[k], psi,iota); */
-	Aki  = amplitude_prefactor * hlm->ampli[k][i];
-	cosPhi = cos( hlm->phase[k][i] );
-	sinPhi = sin( hlm->phase[k][i] );
-	sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
-	sumi -= Aki*(sinPhi*Y_real[k] + cosPhi*Y_imag[k]); //TODO: overall check sign
-	if ( (mneg) && (MINDEX[k]!=0) ) { 
-	  /* add m<0 modes */
-	  /* spinsphericalharm(&Y_real, &Y_imag, -2, LINDEX[k], -MINDEX[k], psi,iota); */
-	  Aki    = amplitude_prefactor * hlm->ampli[k][i];
-	  /* cosPhi = cos( hlm->phase[k][i] );  */
-	  /* sinPhi = sin( hlm->phase[k][i] );  */
-	  sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
-	  sumi += Aki*(sinPhi*Y_real_mneg[k] - cosPhi*Y_imag_mneg[k]); //TODO: overall check sign
-	}    
-      }
-      hpc->real[i] = sumr;
-      hpc->imag[i] = sumi;
+        hpc->time[i] = hlm->time[i]*M; 
+        sumr = sumi = 0.;
+        /* Loop over modes */
+        for (int k = 0; k < KMAX; k++ ) {
+            if (!activemode[k]) continue;
+            Aki  = amplitude_prefactor * hlm->ampli[k][i];
+            cosPhi = cos( hlm->phase[k][i] );
+            sinPhi = sin( hlm->phase[k][i] );
+            sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
+            sumi += Aki*(-sinPhi*Y_real[k] + cosPhi*Y_imag[k]); //TODO: overall check sign
+            /* add m<0 modes */
+            if ( (mneg) && (MINDEX[k]!=0) ) { 
+                sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
+                /* H_{l-m} = (-)^l H^{*}_{lm} */
+                if (LINDEX[k] % 2) sumi -= Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); //TODO: overall check sign
+                else sumi += Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); //TODO: overall check sign
+            }    
+        }
+        /* h = h+ - i hx */
+        hpc->real[i] = sumr;
+        hpc->imag[i] = -sumi;
     }
   }
 #ifdef _OPENMP
@@ -724,7 +727,7 @@ void Waveform_output (Waveform *wav)
   fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
 	  par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
 	  par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
-  fprintf(fp, "# D=%e psi=%e iota=%e\n",par_get_d("distance"),par_get_d("coalescence_angle"),par_get_d("inclination"));
+  fprintf(fp, "# D=%e phi=%e iota=%e\n",par_get_d("distance"),par_get_d("coalescence_angle"),par_get_d("inclination"));
   fprintf(fp, "# t:0 real:1 imag:2 Ampli:3 Phase:4\n");
   for (int i = 0; i < wav->size; i++) {
     fprintf(fp, "%.9e %.12e %.12e %.12e %.12e\n", wav->time[i], wav->real[i], wav->imag[i], wav->ampli[i], wav->phase[i]);
