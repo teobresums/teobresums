@@ -240,11 +240,16 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
     FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
     FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
-    /* Correct (4,1), (4,3), (5,5)  ( sp4 = (1-2nu)^2 ) */
+    /* Correct (4,1), (4,3)  ( sp4 = (1-2nu)^2 ) */
     double sp4x8 = SQ((1-2*nu)) * gsl_pow_int(x, 8);
     FNewtlm[5]  = CNlm[5] * sp4x8; /* (4,1) */
     FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
-    FNewtlm[13] = CNlm[13] * sp4x8; /* (4,3) */
+    
+    /* Correcting (5,5) for Higher Modes */
+    if ((STREQUAL(par_get_s("use_flm"),"HM"))){
+      FNewtlm[13] = CNlm[13] * sp4x8;
+    }
+    
   } else {
     if (usetidal) {
       /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
@@ -308,8 +313,8 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
 
   /** Total multipolar flux */
-  for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k]; 
-
+  for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k];
+  
   /** Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
     
