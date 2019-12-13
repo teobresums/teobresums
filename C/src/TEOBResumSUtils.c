@@ -330,6 +330,7 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
      * but the convention is hlm=Alm Exp[-I phi_lm] we have
      * h_{l,m>0} = Alm( cos(phi) - I*sin(phi) ) for m>0 and
      * h_{l,m<0} = Alm( cos(phi) + I*sin(phi) ) for m<0 below
+     * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
      */
 #pragma omp for
     for (int i = 0; i < hlm->size; i++) {
@@ -351,7 +352,7 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
 		    sumi -= Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); 
                 }
                 else { 
-		    sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); /* TODO: CHECK THIS */
+		    sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
 		    sumi += Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); 
   		}
             }    
