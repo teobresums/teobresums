@@ -706,6 +706,7 @@ int main (int argc, char* argv[])
   /** Azimuthal angle phi follows LAL convention of LIGO-T1800226 for master, 
     * where the polarization basis is defined with \f$\Omega=\pi/2\f$ and
     * \f$Z = \sin{\iota}\sin{\Phi}x + \sin{\iota}\cos{\Phi}y + \cos{\iota}z\f$
+    * where Phi = phiref = coalescence_angle
     */
   const double phi = Pi/2.0 - par_get_d("coalescence_angle"); 
   const double iota = par_get_d("inclination");

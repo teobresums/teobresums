@@ -293,7 +293,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   }
   if (eobp->ode_timestep==ODE_TSTEP_NOPT) {
     eobp->ode_timestep = ODE_TSTEP_ADAPTIVE;
-    if (VERBOSE) printf("ode_timestep '%s' undefined, set to default\n",par_get_s("ode_timestep"),
+    if (VERBOSE) printf("ode_timestep '%s' undefined, set to default %s\n",par_get_s("ode_timestep"),
 			ode_tstep_opt[eobp->ode_timestep]);
   }
 
