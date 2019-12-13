@@ -346,7 +346,7 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
             /* add m<0 modes */
             if ( (mneg) && (MINDEX[k]!=0) ) { 
                 /* H_{l-m} = (-)^l H^{*}_{lm} */
-                if (LINDEX[k] % 2) {
+                if (!(LINDEX[k] % 2)) {
 		    sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
 		    sumi -= Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); 
                 }
