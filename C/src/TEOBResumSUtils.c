@@ -328,7 +328,8 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
     /* Sum up  hlm * Ylm 
      * Note because EOB code defines phase>0, 
      * but the convention is hlm=Alm Exp[-I phi_lm] we have
-     * h_{l,m>0} = Alm( cos(phi) - I*sin(phi) ) going into the computations below
+     * h_{l,m>0} = Alm( cos(phi) - I*sin(phi) ) for m>0 and
+     * h_{l,m<0} = Alm( cos(phi) + I*sin(phi) ) for m<0 below
      */
 #pragma omp for
     for (int i = 0; i < hlm->size; i++) {
