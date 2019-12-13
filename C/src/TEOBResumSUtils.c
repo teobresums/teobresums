@@ -325,7 +325,13 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
           spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
     }
       
-    /* Sum up  hlm * Ylm */
+    /* Sum up  hlm * Ylm 
+     * Note because EOB code defines phase>0, 
+     * but the convention is hlm=Alm Exp[-I phi_lm] we have
+     * h_{l,m>0} = Alm( cos(phi) - I*sin(phi) ) for m>0 and
+     * h_{l,m<0} = Alm( cos(phi) + I*sin(phi) ) for m<0 below
+     * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
+     */
 #pragma omp for
     for (int i = 0; i < hlm->size; i++) {
         hpc->time[i] = hlm->time[i]*M; 
@@ -337,13 +343,18 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
             cosPhi = cos( hlm->phase[k][i] );
             sinPhi = sin( hlm->phase[k][i] );
             sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
-            sumi += Aki*(-sinPhi*Y_real[k] + cosPhi*Y_imag[k]); //TODO: overall check sign
+            sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
             /* add m<0 modes */
             if ( (mneg) && (MINDEX[k]!=0) ) { 
-                sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
                 /* H_{l-m} = (-)^l H^{*}_{lm} */
-                if (LINDEX[k] % 2) sumi -= Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); //TODO: overall check sign
-                else sumi += Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); //TODO: overall check sign
+                if (!(LINDEX[k] % 2)) {
+		    sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
+		    sumi -= Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); 
+                }
+                else { 
+		    sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
+		    sumi += Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); 
+  		}
             }    
         }
         /* h = h+ - i hx */
