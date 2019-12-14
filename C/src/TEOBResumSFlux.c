@@ -246,7 +246,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
     
     /* Correcting (5,5) for Higher Modes */
-    if ((STREQUAL(par_get_s("use_flm"),"HM"))){
+    if (EOBPars->use_flm == USEFLM_HM ){
       FNewtlm[13] = CNlm[13] * sp4x8;
     }
     
