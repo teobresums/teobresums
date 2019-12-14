@@ -561,8 +561,8 @@
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp = EOBPars->dt_merger_interp;
-      dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
-      //dt_merger_interp = MIN(dt_merger_interp, dyn->dt);
+      //dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
+      dt_merger_interp = MIN(dt_merger_interp, dyn->dt);
 
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
       if (VERBOSE) {
@@ -674,7 +674,7 @@
     amplitude_prefactor = nu*M*MSUN_M/(distance*MPC_M);    
     M *= MSUN_S;   
   } 
-  const double psi = EOBPars->coalescence_angle; 
+  const double phi = Pi/2.0 - EOBPars->coalescence_angle; 
   const double iota = EOBPars->inclination;
 
   /** Computation of (h+,hx) */
@@ -693,7 +693,7 @@
   Waveform_alloc (hpc, size, "waveform");   
   
   /* h+, hx */  
-  compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, *hpc);
+  compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
   
   if (interp_uniform_grid == INTERP_UNIFORM_GRID_HPC) {
     /* Interp to uniform grid phase and amplitude of h+, hx  */
