@@ -83,7 +83,7 @@
 #endif
 
 #ifndef EOBRUN
-#define EOBRUN 1
+#define EOBRUN 0
 #endif
 
 /** Macros */
