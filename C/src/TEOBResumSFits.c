@@ -537,7 +537,7 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
   const double Shat  = 0.5*(aK + a12*X12);
   const double Shat2 = SQ(Shat);
   
-  const int usespins = par_get_i("use_spins");  
+  const int usespins = EOBPars->use_spins;  
 
   double Dt_lm_TP[KMAX];
   for (int k=0; k<KMAX; k++) {
@@ -711,9 +711,9 @@ void eob_nqc_setcoefs(NQCdata *nqc)
   nqc->flx->add = 1;
   nqc->hlm->add = 1;
 
-  if (STREQUAL(par_get_s("nqc_coefs_flx"),"none"))
+  if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"none"))
     nqc->flx->add = 0;
-  if (STREQUAL(par_get_s("nqc_coefs_hlm"),"none"))
+  if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"none"))
     nqc->hlm->add = 0;
       
   /* Init NQC coefs to zero */
@@ -743,17 +743,18 @@ void eob_nqc_setcoefs(NQCdata *nqc)
   if (nqc->flx->add + nqc->hlm->add == 0) 
     return;
 
-  if (STREQUAL(par_get_s("nqc_coefs_flx"),"nrfit_nospin201602")) 
+  if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"nrfit_nospin201602"))
     eob_nqc_setcoefs_nospin201602(nqc->flx);
-  if (STREQUAL(par_get_s("nqc_coefs_flx"),"fromfile")) 
-    eob_nqc_setcoefs_fromfile(nqc->flx, par_get_s("nqc_coefs_flx_file"));
+
+  if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"fromfile")) 
+    eob_nqc_setcoefs_fromfile(nqc->flx, EOBPars->nqc_coefs_flx_file);
   // TODO: ADD HERE YOUR LATEST FITS
   //else if (STREQUAL(par_get_s("nqc_coefs_flx"),"nrfit_spin_202001")) 
-  
-  if (STREQUAL(par_get_s("nqc_coefs_hlm"),"nrfit_nospin201602")) 
+
+  if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"nrfit_nospin201602")) 
     eob_nqc_setcoefs_nospin201602(nqc->hlm);
-   if (STREQUAL(par_get_s("nqc_coefs_hlm"),"fromfile")) 
-    eob_nqc_setcoefs_fromfile(nqc->hlm, par_get_s("nqc_coefs_hlm_file"));
+   if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"fromfile")) 
+    eob_nqc_setcoefs_fromfile(nqc->hlm,EOBPars->nqc_coefs_hlm_file);
    // TODO: ADD HERE YOUR LATEST FITS
    //else if (STREQUAL(par_get_s("nqc_coefs_hlm"),"nrfit_spin_202001")) 
   
@@ -765,7 +766,7 @@ void eob_nqc_setcoefs(NQCdata *nqc)
 void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc)
 {
 
-  const double nu = par_get_d("nu");  
+  const double nu = EOBPars->nu;  
   const double xnu  = 1-4*nu;
   const double xnu2 = SQ(xnu);
 
@@ -1183,7 +1184,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
 
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX], c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX];
       
-  const int usespins = par_get_i("use_spins");  
+  const int usespins = EOBPars->use_spins;  
 
   int modeon[KMAX];
   const int k21 = 0;
@@ -1379,7 +1380,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   
   double c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX], omgmrg[KMAX];
       
-  const int usespins = par_get_i("use_spins");  
+  const int usespins = EOBPars->use_spins;  
 
   int modeon[KMAX];
   const int k21 = 0;

@@ -1703,7 +1703,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
   
   /** NR fits */
-  if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
     /* Higher modes */
     eob_nqc_point_HM(dyn, &A_tmp, &dA_tmp, &omg_tmp, &domg_tmp);
   } else {
@@ -1915,16 +1915,16 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     }
   }
 
-  if (par_get_i("output_nqc_coefs")) {
+  if (EOBPars->output_nqc_coefs) {
     /** Output the NQC coefficients */
     char fname[STRLEN];
-    strcpy(fname, par_get_s("output_dir"));
+    strcpy(fname, EOBPars->output_dir);
     strcat(fname, "/nqc_coefs.txt");
     fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
-	    par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
-	    par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
+    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
+    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
+	    EOBPars->LambdaAl2, EOBPars->LambdaAl3,EOBPars->LambdaAl4,
+	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
     for (int k=0; k<KMAX; k++) {
       fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
 	      ai[k][0], ai[k][1], ai[k][2], 
@@ -2030,7 +2030,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
   }
   
   /** NR fits */
-  if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
     /* Higher modes */
     eob_nqc_point_HM(dyn, &A_tmp, &dA_tmp, &omg_tmp, &domg_tmp);
   } else {
@@ -2280,16 +2280,16 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
     }
   }
 
-  if (par_get_i("output_nqc_coefs")) {
+  if (EOBPars->output_nqc_coefs) {
     /** Output the NQC coefficients */
     char fname[STRLEN];
-    strcpy(fname, par_get_s("output_dir"));
+    strcpy(fname, EOBPars->output_dir);
     strcat(fname, "/nqc_coefs.txt");
     fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
-	    par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
-	    par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
+    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
+    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
+	    EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
+	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
     for (int k=0; k<KMAX; k++) {
       fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
 	      ai[k][0], ai[k][1], ai[k][2], 
@@ -2656,7 +2656,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
   double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
 
-  if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
     /* Higher modes */
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     a1, a2, a3, a4, b1, b2, b3, b4, 
@@ -2727,7 +2727,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const double C_Q2 = dyn->C_Q2;  
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
-  const int usespeedytail = par_get_i("use_speedytail");
+  const int usespeedytail = EOBPars->use_speedytail;
   const double X12 = X1-X2; /* sqrt(1-4nu) */
 
   const double t   = dyn->t;
@@ -2827,8 +2827,8 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   }
 
   /** NQC */
-  if (!(STREQUAL(par_get_s("nqc_coefs_hlm"),"none")) &&
-      !(STREQUAL(par_get_s("nqc_coefs_hlm"),"compute"))) {
+  if (!(STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"none")) &&
+      !(STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"compute"))) {
     /** Add NQC correction */    
     Waveform_lm_t hNQC; 
     /* eob_wav_hlmNQC_nospin2016(nu,r,prstar,Omega,ddotr, &hNQC); */ 

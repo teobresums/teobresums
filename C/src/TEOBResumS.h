@@ -82,6 +82,10 @@
 #define DEBUG 0 /* global debug option */ 
 #endif
 
+#ifndef EOBRUN
+#define EOBRUN 1
+#endif
+
 /** Macros */
 #define ERROR 1 /** generic error int */
 #define OK 0 /** generic go int */
@@ -215,7 +219,7 @@ enum{
 };
 static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","undefined"};
 
-/** List of options for centriful radius */
+/** List of options for centrifugal radius */
 enum{
   CENTRAD_LO,
   CENTRAD_NLO,
@@ -235,7 +239,7 @@ enum{
   USEFLM_HM,
   USEFLM_NOPT
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "HM"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -424,7 +428,7 @@ typedef struct tagEOBParameters
   double postadiabatic_dynamics_rmin;
 
   int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "HM"
+  int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM"
 
   int compute_LR, compute_LSO, compute_LR_guess, compute_LSO_guess;
 
@@ -436,7 +440,7 @@ typedef struct tagEOBParameters
   int *output_lm, output_lm_size; 
 
   double srate, dt;
-  int size; // this should stay with Dynamics...
+  int size;
   int ringdown_extend_array;
   int ode_timestep;
   double ode_abstol, ode_reltol;
@@ -444,7 +448,7 @@ typedef struct tagEOBParameters
   int ode_stop_afterNdt;
   int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
 
-  int openmp_threads, ompenmp_timeron;
+  int openmp_threads, openmp_timeron;
   
 } EOBParameters;
 
@@ -452,11 +456,15 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 
 /* Function protoypes grouped based on file */
 
+/*TEOBResumSEOBRun.c */
+void EOBRunTD(Waveform **hpc, double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall);
+
 /* TEOBResumSPars.c */
 void par_db_init ();
 void par_db_free ();
 void par_db_default_fromfile ();
 void par_db_default ();
+void par_db_from_EOBPar (EOBParameters *EOBPars);
 void par_file_parse (const char *fname);
 void par_file_parse_merge (const char *fname);
 void par_db_write_file (const char *fname);
@@ -480,6 +488,8 @@ const char * par_get_s(const char *key);
 int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
 void eob_set_params(char *s, int n);
+void eob_set_params_new(char *s, int n, int default_choice);
+void eob_set_params_EOBRun(double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall);
 void eob_free_params();
 
 /* TEOBResumSUtil.c */
@@ -506,7 +516,7 @@ double cumint3(double *f, double *x, const int n, double *sum);
 void unwrap(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void set_multipolar_idx_mask_old(int *kmask, int n);
-void set_multipolar_idx_mask(int *kmask, int n, const char *key, int on);
+void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);
 int get_uniform_size(const double tf, const double t0, const double dt);
 void Waveform_alloc (Waveform **wav, const int size, const char *name);
 void Waveform_push (Waveform **wav, int size);

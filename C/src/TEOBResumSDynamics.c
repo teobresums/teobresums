@@ -734,7 +734,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   if (dyn->use_tidal) {
     /* Tides are always temporarily set as = NNLO to compute LR, 
        But we may want to define different searches intervals */
-    const int tides = par_get_i("use_tidal");
+    const int tides = EOBPars->use_tidal;
     if (tides == TIDES_TEOBRESUM_BHNS) {
       /* BHNS */
       //FIXME best interval

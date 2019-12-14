@@ -76,7 +76,7 @@ void openmp_timer_output()
   if (!USETIMERS) return;
   FILE *fp;
   char fname[STRLEN];
-  strcpy(fname,par_get_s("output_dir"));
+  strcpy(fname,EOBPars->output_dir);
   strcat(fname,"/openmp_timers.txt");
   fp = fopen(fname,"w");
   if (!fp) errorexit("failed to open file");
@@ -89,7 +89,7 @@ void openmp_timer_output()
 
 void openmp_init() 
 {
-  const int nt  = par_get_i("openmp_threads");
+  const int nt  = EOBPars->openmp_threads;
   if (nt==0) {
     printf("OMP: Use automatic settings\n");
   } else {
@@ -103,7 +103,7 @@ void openmp_init()
     }
   }
   if (USETIMERS) {
-    timeron = par_get_i("openmp_timeron");
+    timeron = EOBPars->openmp_timeron;
     openmp_timer_start("main");
   }
 }

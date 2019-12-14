@@ -78,50 +78,211 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
   //TODO this needs a patience filling ...
   
-  eobp->use_geometric_units = 0;
+  eobp->M = 1.;
+  eobp->q = 1.;
+
+  eobp->chi1 = 0.;
+  eobp->chi2 = 0.;
+  
+  eobp->distance = 1.;
+  eobp->inclination = 0.;
+  eobp->coalescence_angle = 0.;
+  eobp->polarization = 0.;
+
+  eobp->r0 = 0;
+  eobp->initial_frequency = 0.004;
+
+  //tides = "no" 
+  //tides_gravitomagnetic = "no"
+
+  eobp->LambdaAl2 = 0.; // Tidal gravitoelectric parameter Lambda for star A ell=2
+  eobp->LambdaBl2 = 0.;
+  eobp->LambdaAl3 = 0.; 
+  eobp->LambdaAl4 = 0.; 
+  eobp->LambdaBl3 = 0.; 
+  eobp->LambdaBl4 = 0.; 
+  eobp->SigmaAl2  = 0.; // Tidal gravitomagnetic parameter Sigma for star A ell=2
+  eobp->SigmaBl2  = 0.;
+  eobp->use_Yagi_fits = 0;
+  eobp->pGSF_tidal =4.0;// p-power in GSF tidal potential model
+
+  eobp->use_spins=0; // use spins ?
+
+  /* options */
+
+  eobp->use_geometric_units = 1;
+
   eobp->use_speedytail = 1;
 
   eobp->dt_merger_interp = 0.5;
 
-  eobp->interp_uniform_grid = 0;
+  eobp->interp_uniform_grid = 0; //INTERP_UNIFORM_GRID_HPC;
   eobp->dt_interp = 0.5;
   eobp->srate_interp = 4096.;
 
+  int hlm[] = {-1};      //indexes of multipoles to use
+  eobp->use_mode_lm_size = 1;
+  eobp->use_mode_lm = malloc (eobp->use_mode_lm_size * sizeof(int) );
+  memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
 
-  eobp->r0 = 0;
+  /* EOB Settings */
   
-  if (choose == DEFAULT_PARS_BBH) {
-    eobp->M = 1.;
-    eobp->q = 1.;
-    eobp->chi1 = 0.;
-    eobp->chi2 = 0.;
+  eobp->postadiabatic_dynamics=0;
+  eobp->postadiabatic_dynamics_N=8; // post-adiabatic order
+  eobp->postadiabatic_dynamics_size=1000; // grid size 
+  eobp->postadiabatic_dynamics_rmin=14.; // minimum radius (end of PA dynamics)
+  eobp->postadiabatic_dynamics_stop=1; // stop after post-adiabatic dynamics //FIXME: make bool
 
-    eobp->centrifugal_radius = CENTRAD_LO;
-      
+  eobp->centrifugal_radius=CENTRAD_LO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
+  
+  eobp->compute_LR=0; // calculate LR ?
+  eobp->compute_LSO=0; // calculate LSO ?
+  eobp->compute_LR_guess=3.;
+  eobp->compute_LSO_guess=6.;
+
+  eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
+  eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
+  eobp->nqc_coefs_hlm=NQC_HLM_NONE; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+  strcpy(eobp->nqc_coefs_flx_file,"");
+  strcpy(eobp->nqc_coefs_hlm_file,"");
+
+  /* Output */
+  strcpy(eobp->output_dir, "./data");  // output dir
+  eobp->output_hpc= 1; // output h+,hx
+  eobp->output_multipoles= 0; // output multipoles
+  eobp->output_dynamics=0; // output dynamics
+  eobp->output_nqc=0; // output NQC waveform
+  eobp->output_nqc_coefs=0; // output multipolar NQC coefs (if determined)
+  eobp->output_ringdown=0; // output ringdown waveform
+  
+  int klm[] = {-1};      //indexes of multipoles to ouput
+  eobp->output_lm_size = 1;
+  eobp->output_lm = malloc (eobp->output_lm_size * sizeof(int) );
+  memcpy(eobp->output_lm, klm, eobp->output_lm_size * sizeof(int));
+  
+  /* Evolution settings */
+  eobp->srate=4096.; // sampling rate, used if input is given in physical unit, reset based on tstep otherwise
+  eobp->dt=0.5; // timestep, used if input is given in geometric unit, reset based on srate otherwise
+  eobp->size=1; // size of the arrays (chunks, dynamically extended)
+  eobp->ringdown_extend_array=500; // grid points to extend arrays for ringdown attachment
+  eobp->ode_timestep=ODE_TSTEP_UNIFORM; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
+  eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
+  eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
+  eobp->ode_tmax=2e8; // max integration time
+  eobp->ode_stop_radius=2.; // stop ODE integration at this radius (if > 0)
+  eobp->ode_stop_afterNdt=4; // stop ODE N iters after the Omega peak
+  
+  /* OMP settings */
+  eobp->openmp_threads=1; // OpenMP threads
+  eobp->openmp_timeron=0; // OpenMP timers
+  
+
+  /* following pars are set later by the code */
+  // TODO: they will be removed from the db and only kept in EOBParameters
+
+  eobp->nu= 0. ; // symmetric mass ratio
+  eobp->X1= 0. ; // mass ratio M1/M
+  eobp->X2= 0. ; // mass ratio M2/M
+  eobp->S1= 0. ;
+  eobp->S2= 0. ;
+  eobp->S= 0. ;
+  eobp->Sstar= 0. ;
+  eobp->a1= 0. ;
+  eobp->a2= 0. ; // 
+  eobp->aK= 0. ; //
+  eobp->aK2= 0. ; // 
+  eobp->C_Q1= 0. ; //
+  eobp->C_Q2= 0. ; //
+  eobp->C_Oct1= 0. ; //
+  eobp->C_Oct2= 0. ; //
+  eobp->C_Hex1= 0. ; //
+  eobp->C_Hex2= 0. ; //
+  eobp->a6c= 0. ; //
+  eobp->cN3LO= 0. ; //
+  
+  eobp->kapA2= 0. ; // gravitoelectric kappa star A
+  eobp->kapA3= 0. ; //
+  eobp->kapA4= 0. ; //
+  eobp->kapB2= 0. ; //
+  eobp->kapB3= 0. ; //
+  eobp->kapB4= 0. ; //
+  eobp->kapT2= 0. ; //
+  eobp->kapT3= 0. ; //
+  eobp->kapT4= 0. ; //
+
+  eobp->japA2= 0. ; // gravitomagnetic kappa star A
+  //eobp->japA3= 0. ; 
+  //eobp->japA4= 0. ; 
+  eobp->japB2= 0. ;
+  //eobp->japB3= 0. ;
+  //eobp->japB4= 0. ;
+  eobp->japT2= 0. ;
+  //eobp->japT3= 0. ;
+  //eobp->japT4= 0. ;  
+
+  eobp->bar_alph2_1= 0. ; //
+  eobp->bar_alph2_2= 0. ; //
+  eobp->bar_alph3_1= 0. ; //
+  eobp->bar_alph3_2= 0. ; //
+  eobp->bar_alph2j_1= 0. ; //
+  eobp->khatA2= 0. ; //
+  eobp->khatB2= 0. ; //
+  eobp->rLR_tidal= 0. ; // radius of light-ring for NNLO tidal model
+  
+  eobp->Mbhf= 0. ; // final BH mass
+  eobp->abhf= 0. ; // final BH spin
+  
+  eobp->rLR= 0. ; // radius of light-ring
+  eobp->rLSO= 0. ; // radius of last stable orbit 
+  
+  eobp->use_tidal= TIDES_OFF ; // index for tidal modus
+  eobp->use_tidal_gravitomagnetic= TIDES_GM_OFF ; // index for gravitomagnetic tide
+
+  if (choose == DEFAULT_PARS_BBH) {
+
+    eobp->centrifugal_radius = CENTRAD_NLO;
+    eobp->use_flm = USEFLM_SSLO;
+    eobp->use_tidal=TIDES_OFF;
+    eobp->use_tidal_gravitomagnetic=TIDES_GM_OFF;
+
+    eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
+    eobp->nqc_coefs_flx=NQC_FLX_NRFIT_NOSPIN201602; // {"none", "nrfit_nospin20160209", "fromfile"}
+    eobp->nqc_coefs_hlm=NQC_HLM_NRFIT_NOSPIN201602; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
   }
   else if (choose == DEFAULT_PARS_BNS) {
-    eobp->M = 1.4;
-    eobp->q = 1.;
-    eobp->chi1 = 0.;
-    eobp->chi2 = 0.;
-    
-    eobp->pGSF_tidal = 4.0;
 
+    eobp->use_tidal=TIDES_TEOBRESUM3;
+    eobp->use_tidal_gravitomagnetic=TIDES_GM_GSF;
+    eobp->pGSF_tidal = 4.0;
+    eobp->use_Yagi_fits = 1;
     eobp->postadiabatic_dynamics = 1;
     eobp->postadiabatic_dynamics_N = 8;
-    eobp->postadiabatic_dynamics_size = 1000;
+    eobp->postadiabatic_dynamics_size = 800;
     eobp->postadiabatic_dynamics_rmin = 14.;
-    eobp->postadiabatic_dynamics_stop = 1;
+    eobp->postadiabatic_dynamics_stop = 0;
 
     eobp->centrifugal_radius = CENTRAD_NNLO;
-    //eobp->use_flm =
-    
+    eobp->use_flm = USEFLM_SSNLO;
+    eobp->nqc=NQC_NO; // {"no", "auto", "manual"}
+    eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
+    eobp->nqc_coefs_hlm=NQC_HLM_NONE;
   }
-  else if (choose == DEFAULT_PARS_BHNS) {
 
-    
+  /*
+  else if (choose == DEFAULT_PARS_BHNS) {
+     
+    //Still to be decided & set I guess?
+    //Let's have a BH with m = 5 and a NS with m = 1.4
+    eobp->M = 6.4;
+    eobp->q = 3.6;
+    eobp->chi1 = 0.;
+    eobp->chi2 = 0.;
+    eobp->use_spins = 0;
   }
+  */
   else errorexit("unknown default parameter choice.");
+
 }
 
 /** overwrites the EOBParameters entries from the db values */
@@ -153,8 +314,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->pGSF_tidal = par_get_d("pGSF_tidal");// p-power in GSF tidal potential model
 
   /* EOB Settings */
-  
-  eobp->use_spins = par_get_b("use_spins"); // use spins ?
+  eobp->use_spins = par_get_i("use_spins"); // use spins ? 
 
   for (eobp->use_tidal=0; eobp->use_tidal<TIDES_NOPT; eobp->use_tidal++) {
     if (STREQUAL(par_get_s("tides"),tides_opt[eobp->use_tidal])) {
@@ -177,13 +337,12 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
 			par_get_s("tides_gravitomagnetic"), tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
   }
-
-  eobp->use_Yagi_fits = par_get_b("use_Yagi_fits"); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
-  eobp->use_geometric_units = par_get_b("use_geometric_units"); // use geometric units for I/O ?
-  eobp->use_speedytail = par_get_b("use_speedytail"); // use special routine to speed up tail computation ?
+  eobp->use_Yagi_fits = par_get_i("use_Yagi_fits"); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+  eobp->use_geometric_units = par_get_i("use_geometric_units"); // use geometric units for I/O ?
+  eobp->use_speedytail = par_get_i("use_speedytail"); // use special routine to speed up tail computation ?
   eobp->dt_merger_interp = par_get_d("dt_merger_interp"); // dt for interpolating merger waveform and NQC/ringdown attachment
 
-  eobp->interp_uniform_grid = par_get_b("interp_uniform_grid"); // interpolate on uniform grid final result ?
+  eobp->interp_uniform_grid = par_get_i("interp_uniform_grid"); // interpolate on uniform grid final result ?
   eobp->dt_interp = par_get_d("dt_interp"); // timestep to be used for final interpolation (used if input is given in geometrical unit, unused otherwise)
   eobp->srate_interp = par_get_d("srate_interp"); // sampling rate to be used for final interpolation (used if input is given in physical unit, unused otherwise)
 
@@ -196,6 +355,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->postadiabatic_dynamics_N = par_get_i("postadiabatic_dynamics_N"); // post-adiabatic order
   eobp->postadiabatic_dynamics_size = par_get_i("postadiabatic_dynamics_size"); // grid size 
   eobp->postadiabatic_dynamics_rmin = par_get_d("postadiabatic_dynamics_rmin"); // minimum radius (end of PA dynamics)
+  //eobp->postadiabatic_dynamics_rmin_BNS = par_get_d("postadiabatic_dynamics_rmin_BNS"); // minimum radius (end of PA dynamics)
   eobp->postadiabatic_dynamics_stop = YESNO2INT(par_get_s("postadiabatic_dynamics_stop")); // stop after post-adiabatic dynamics //FIXME: make bool
 
   for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<CENTRAD_NOPT; eobp->centrifugal_radius++) {
@@ -220,8 +380,8 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
 			par_get_s("use_flm"), use_flm_opt[eobp->use_flm]);
   }
 
-  eobp->compute_LR = par_get_b("compute_LR"); // calculate LR ?
-  eobp->compute_LSO = par_get_b("compute_LSO"); // calculate LSO ?
+  eobp->compute_LR = par_get_i("compute_LR"); // calculate LR ?
+  eobp->compute_LSO = par_get_i("compute_LSO"); // calculate LSO ?
   eobp->compute_LR_guess = par_get_d("compute_LR_guess");
   eobp->compute_LSO_guess = par_get_d("compute_LSO_guess");
 
@@ -258,25 +418,25 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
 			par_get_s("nqc_coefs_hlm"), nqc_hlm_opt[eobp->nqc_coefs_hlm]);
   }
 
-  strcpy(eobp->nqc_coefs_flx_file,par_get_s("nqc_coefs_flx_file"));
-  strcpy(eobp->nqc_coefs_hlm_file,par_get_s("nqc_coefs_hlm_file"));
+  strcpy(eobp->nqc_coefs_flx_file, par_get_s("nqc_coefs_flx_file"));
+  strcpy(eobp->nqc_coefs_hlm_file, par_get_s("nqc_coefs_hlm_file"));
 
   /* Output */
 
   strcpy(eobp->output_dir, par_get_s("output_dir")); // output dir
-  eobp->output_hpc = par_get_b("output_hpc"); // output h+,hx
-  eobp->output_multipoles = par_get_b("output_multipoles"); // output multipoles
+  eobp->output_hpc = par_get_i("output_hpc"); // output h+,hx
+  eobp->output_multipoles = par_get_i("output_multipoles"); // output multipoles
 
-  klm = par_get_arrayi("output_lm", &eobp->use_mode_lm_size);// indexes of multipoles to ouput
+  klm = par_get_arrayi("output_lm", &eobp->output_lm_size);// indexes of multipoles to ouput
   free(eobp->output_lm);
   eobp->output_lm = malloc ( eobp->output_lm_size * sizeof(int) );
   memcpy(eobp->output_lm, klm, eobp->output_lm_size * sizeof(int));
 
-  eobp->output_dynamics = par_get_b("output_dynamics"); // output dynamics
-  eobp->output_nqc = par_get_b("output_nqc"); // output NQC waveform
-  eobp->output_nqc_coefs = par_get_b("output_nqc_coefs"); // output multipolar NQC coefs (if determined)
-  eobp->output_ringdown = par_get_b("output_ringdown"); // output ringdown waveform
-  
+  eobp->output_dynamics = par_get_i("output_dynamics"); // output dynamics
+  eobp->output_nqc = par_get_i("output_nqc"); // output NQC waveform
+  eobp->output_nqc_coefs = par_get_i("output_nqc_coefs"); // output multipolar NQC coefs (if determined)
+  eobp->output_ringdown = par_get_i("output_ringdown"); // output ringdown waveform
+
   /* Evolution settings */
   
   eobp->srate = par_get_d("srate"); // sampling rate, used if input is given in physical unit, reset based on tstep otherwise
@@ -293,7 +453,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   }
   if (eobp->ode_timestep==ODE_TSTEP_NOPT) {
     eobp->ode_timestep = ODE_TSTEP_ADAPTIVE;
-    if (VERBOSE) printf("ode_timestep '%s' undefined, set to default\n",par_get_s("ode_timestep"),
+    if (VERBOSE) printf("ode_timestep '%s' undefined, set to default %s\n",par_get_s("ode_timestep"),
 			ode_tstep_opt[eobp->ode_timestep]);
   }
 
@@ -306,8 +466,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   /* OMP settings */
   
   eobp->openmp_threads = par_get_i("openmp_threads");
-  eobp->ompenmp_timeron = par_get_b("openmp_timeron"); 
-
+  eobp->openmp_timeron = par_get_i("openmp_timeron"); 
 }
 
 /*
@@ -386,6 +545,158 @@ void par_file_parse_merge (const char *fname)
   }
   /* free extra cfg */
   config_destroy(cf1);
+}
+
+void par_db_from_EOBPar (EOBParameters *EOBPars)
+{
+  
+  /* Physical input pars */
+  
+  par_add_d("M", EOBPars->M); // total binary mass  
+  par_add_d("q", EOBPars->q); // mass ratio
+  par_add_d("chi1", EOBPars->chi1); // dimensionless spin 1 z-component 
+  par_add_d("chi2", EOBPars->chi2); // dimensionless spin 2 z-component 
+  par_add_d("distance", EOBPars->distance); 
+  par_add_d("inclination", EOBPars->inclination);
+  par_add_d("coalescence_angle", EOBPars->coalescence_angle);
+  par_add_d("polarisation", EOBPars->polarization);
+  par_add_d("r0", EOBPars->r0); //initial radius	
+  par_add_d("initial_frequency", EOBPars->initial_frequency); // initial GW frequency
+  
+  par_add_d("LambdaAl2", EOBPars->LambdaAl2); // Tidal gravitoelectric parameter Lambda for star A ell=2
+  par_add_d("LambdaBl2",EOBPars->LambdaBl2);
+  par_add_d("LambdaAl3",EOBPars->LambdaAl3); 
+  par_add_d("LambdaAl4", EOBPars->LambdaAl4); 
+  par_add_d("LambdaBl3", EOBPars->LambdaBl3); 
+  par_add_d("LambdaBl4", EOBPars->LambdaBl4); 
+  par_add_d("SigmaAl2", EOBPars->SigmaAl2); // Tidal gravitomagnetic parameter Sigma for star A ell=2
+  par_add_d("SigmaBl2", EOBPars->SigmaBl2);
+  par_add_d("pGSF_tidal", EOBPars->pGSF_tidal);// p-power in GSF tidal potential model
+  /* EOB Settings */
+
+  //int indexeslm[1] = {-1};  // indexes of multipoles to use in h+,hx (if [-1], use all) and to output
+  char int2YESNO[2][STRLEN] = {"no", "yes"};
+
+  par_add_b("use_spins", EOBPars->use_spins); // use spins ?
+  par_add_s("tides", tides_opt[EOBPars->use_tidal]);
+  par_add_s("tides_gravitomagnetic", tides_gravitomagnetic_opt[EOBPars->use_tidal_gravitomagnetic]);
+  
+  par_add_b("use_Yagi_fits", EOBPars->use_Yagi_fits); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+  par_add_b("use_geometric_units", EOBPars->use_geometric_units); // use geometric units for I/O ?
+  par_add_b("use_speedytail", EOBPars->use_speedytail); // use special routine to speed up tail computation ?
+  
+  par_add_d("dt_merger_interp", EOBPars->dt_merger_interp); // dt for interpolating merger waveform and NQC/ringdown attachment
+  par_add_b("interp_uniform_grid", EOBPars->interp_uniform_grid); // interpolate on uniform grid final result ?
+  par_add_d("dt_interp", EOBPars->dt_interp); // timestep to be used for final interpolation (used if input is given in geometrical unit, unused otherwise)
+  par_add_d("srate_interp", EOBPars->srate_interp); // sampling rate to be used for final interpolation (used if input is given in physical unit, unused otherwise)
+  
+  par_add_arrayi("use_mode_lm", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size); // indexes of multipoles to use in h+,hx (if [-1], use all)
+
+  par_add_s("postadiabatic_dynamics", int2YESNO[EOBPars->postadiabatic_dynamics]);
+  par_add_i("postadiabatic_dynamics_N", EOBPars->postadiabatic_dynamics_N); // post-adiabatic order
+  par_add_i("postadiabatic_dynamics_size", EOBPars->postadiabatic_dynamics_size); // grid size 
+  par_add_d("postadiabatic_dynamics_rmin",EOBPars->postadiabatic_dynamics_rmin); // minimum radius (end of PA dynamics)
+  par_add_d("postadiabatic_dynamics_rmin_BNS",EOBPars->postadiabatic_dynamics_rmin); // minimum radius (end of PA dynamics)
+  par_add_s("postadiabatic_dynamics_stop",int2YESNO[EOBPars->postadiabatic_dynamics_stop]); // stop after post-adiabatic dynamics //FIXME: make bool
+
+  par_add_s("centrifugal_radius", centrifugal_radius_opt[EOBPars->centrifugal_radius]); // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  par_add_s("use_flm", use_flm_opt[EOBPars->use_flm]); // "SSLO", "SSNLO", "HM"
+  par_add_b("compute_LR", EOBPars->compute_LR); // calculate LR ?
+  par_add_b("compute_LSO",EOBPars->compute_LSO); // calculate LSO ?
+  par_add_d("compute_LR_guess", EOBPars->compute_LR_guess);
+  par_add_d("compute_LSO_guess",EOBPars->compute_LSO_guess);
+
+  par_add_s("nqc", nqc_opt[EOBPars->nqc]); // {"auto", "manual"}
+  par_add_s("nqc_coefs_flx", nqc_flx_opt[EOBPars->nqc_coefs_flx]); // {"none", "nrfit_nospin20160209", "fromfile"}
+  par_add_s("nqc_coefs_hlm", nqc_hlm_opt[EOBPars->nqc_coefs_hlm]); // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+  par_add_s("nqc_coefs_flx_file", EOBPars->nqc_coefs_flx_file);
+  par_add_s("nqc_coefs_hlm_file", EOBPars->nqc_coefs_hlm_file);
+
+  /* Output */
+
+  par_add_s("output_dir",EOBPars->output_dir); // output dir
+  par_add_b("output_hpc", EOBPars->output_hpc); // output h+,hx
+  par_add_b("output_multipoles", EOBPars->output_multipoles); // output multipoles
+  par_add_arrayi("output_lm", EOBPars->output_lm, EOBPars->output_lm_size); // indexes of multipoles to ouput
+  par_add_b("output_dynamics", EOBPars->output_dynamics); // output dynamics
+  par_add_b("output_nqc",EOBPars->output_nqc); // output NQC waveform
+  par_add_b("output_nqc_coefs", EOBPars->output_nqc_coefs); // output multipolar NQC coefs (if determined)
+  par_add_b("output_ringdown", EOBPars->output_ringdown); // output ringdown waveform
+  
+  /* Evolution settings */
+  
+  par_add_d("srate", EOBPars->srate); // sampling rate, used if input is given in physical unit, reset based on tstep otherwise
+  par_add_d("dt", EOBPars->dt); // timestep, used if input is given in geometric unit, reset based on srate otherwise
+  par_add_i("size", EOBPars->size); // size of the arrays (chunks, dynamically extended)
+  par_add_i("ringdown_extend_array", EOBPars->ringdown_extend_array); // grid points to extend arrays for ringdown attachment
+  par_add_s("ode_timestep", ode_tstep_opt[EOBPars->ode_timestep]); // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
+  par_add_d("ode_abstol",EOBPars->ode_abstol); // ODE solver absolute accuracy
+  par_add_d("ode_reltol",EOBPars->ode_reltol); //  ODE solver relative accuracy
+  par_add_d("ode_tmax", EOBPars->ode_tmax); // max integration time
+  par_add_d("ode_stop_at_radius",EOBPars->ode_stop_radius); // stop ODE integration at this radius (if > 0)
+  par_add_i("ode_stop_afterNdt",EOBPars->ode_stop_afterNdt); // stop ODE N iters after the Omega peak
+  
+  /* OMP settings */
+  
+  par_add_i("openmp_threads", EOBPars->openmp_threads); // OpenMP threads
+  par_add_b("openmp_timeron", EOBPars->openmp_timeron); // OpenMP timers
+  
+  /* following pars are set later by the code */
+  // TODO: they will be removed from the db and only kept in EOBParameters
+
+  par_add_d("nu",  EOBPars->nu); // symmetric mass ratio
+  par_add_d("X1",  EOBPars->X1); // mass ratio M1/M
+  par_add_d("X2",  EOBPars->X2); // mass ratio M2/M
+  par_add_d("S1",  EOBPars->S1);
+  par_add_d("S2",  EOBPars->S2);
+  par_add_d("S",  EOBPars->S);
+  par_add_d("Sstar",  EOBPars->Sstar);
+  par_add_d("a1",  EOBPars->a1);
+  par_add_d("a2",  EOBPars->a2); // 
+  par_add_d("aK",  EOBPars->aK); //
+  par_add_d("aK2",  EOBPars->aK2); // 
+  par_add_d("C_Q1",  EOBPars->C_Q1); //
+  par_add_d("C_Q2",  EOBPars->C_Q2); //
+  par_add_d("C_Oct1",  EOBPars->C_Oct1); //
+  par_add_d("C_Oct2",  EOBPars->C_Oct2); //
+  par_add_d("C_Hex1",  EOBPars->C_Hex1); //
+  par_add_d("C_Hex2",  EOBPars->C_Hex2); //
+  par_add_d("a6c",  EOBPars->a6c); //
+  par_add_d("cN3LO",  EOBPars->cN3LO); //
+  
+  par_add_d("kappaAl2",  EOBPars->kapA2); // gravitoelectric kappa star A
+  par_add_d("kappaAl3",  EOBPars->kapA3); //
+  par_add_d("kappaAl4",  EOBPars->kapA4); //
+  par_add_d("kappaBl2",  EOBPars->kapB2); //
+  par_add_d("kappaBl3",  EOBPars->kapB3); //
+  par_add_d("kappaBl4",  EOBPars->kapB4); //
+  
+  par_add_d("kappajAl2",  EOBPars->japA2); // gravitomagnetic kappa star A
+  par_add_d("kappajBl2",  EOBPars->japB2);
+  par_add_d("kappajTl2",  EOBPars->japT2);
+  
+  par_add_d("kappaTl2",  EOBPars->kapT2); //
+  par_add_d("kappaTl3",  EOBPars->kapT3); //
+  par_add_d("kappaTl4",  EOBPars->kapT4); //
+  par_add_d("bar_alph2_1", EOBPars->bar_alph2_1); //
+  par_add_d("bar_alph2_2", EOBPars->bar_alph2_2); //
+  par_add_d("bar_alph3_1", EOBPars->bar_alph3_1); //
+  par_add_d("bar_alph3_2", EOBPars->bar_alph3_2); //
+  par_add_d("bar_alph2j_1", EOBPars->bar_alph2j_1); //
+  par_add_d("khatAl2",  EOBPars->khatA2); //
+  par_add_d("khatBl2",  EOBPars->khatB2); //
+  par_add_d("rLR_tidal",  EOBPars->rLR_tidal); // radius of light-ring for NNLO tidal model
+  
+  par_add_d("BH_final_mass",  EOBPars->Mbhf); // final BH mass
+  par_add_d("BH_final_spin",  EOBPars->abhf); // final BH spin
+  
+  par_add_d("rLR",  EOBPars->rLR); // radius of light-ring
+  par_add_d("rLSO",  EOBPars->rLSO); // radius of last stable orbit 
+  
+  par_add_i("use_tidal", EOBPars->use_tidal); // index for tidal modus
+  par_add_i("use_tidal_gravitomagnetic", EOBPars->use_tidal_gravitomagnetic); // index for gravitomagnetic tide
+
+  return;    
 }
 
 /** default values for parameters */
@@ -780,7 +1091,7 @@ void par_set_arrayd (const char *key, double *array, int n)
 // This now uses the new type EOBParameters but keeps the parfile management with libconfig
 void eob_set_params_new(char *parfile, int n, int default_choice)
 {
-
+  
   /* Init memory EOBParameters */ 
   EOBParameters_alloc( &EOBPars );
   
@@ -791,37 +1102,32 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     /* Deal with input parfile if necessary 
        (this is the current logic, we'll keep it for compatibility) */
     par_db_init ();
-    par_db_default (); 
+    //par_db_default (); 
+    par_db_from_EOBPar (EOBPars);
     par_file_parse_merge (parfile);
     par_db_screen (VERBOSE);
     // TODO: write EOBParameters
-    system_mkdir(par_get_s("output_dir"));//FIXME: only if output_dir not null and if some output requested
-    par_db_write_file("params.txt");//FIXME: (as above)
+    // RG: DONE(?)
+    EOBParameters_set_from_db (EOBPars);
     par_db_free();
-
   }
-
+  
   //FIXME: we want to do allocation and default setting in main
   // so to set there already the PE parameters from the input
   // the following assumes the EOBPars has set the correct 
   // M,q,chi1,chi2,fmin,Lambda ... (extrinsic pars)
 
-  //double M =  EOBPars->M;
-  const double q =  EOBPars->q;
-  const double chi1 = EOBPars->chi1;
-  const double chi2 = EOBPars->chi2;
+  const double M =  EOBPars->M;
   const double fmin = EOBPars->initial_frequency;
-  const int usespins = EOBPars->use_spins;
-  const int usetidal = EOBPars->use_tidal;
-  const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
-  
-  /* Set auxiliary parameters */
+  const double q =  EOBPars->q;
   EOBPars->nu = q_to_nu(q);
   EOBPars->X1 = nu_to_X1(EOBPars->nu);
   EOBPars->X2 = 1. -  EOBPars->X1;
   const double XA = EOBPars->X1; /* tidal part used different notation, used here for simplicity */
   const double XB = EOBPars->X2;
-  
+
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
   EOBPars->S1 = SQ(XA) * chi1;
   EOBPars->S2 = SQ(XB) * chi2;
   EOBPars->a1 = XA*chi1;
@@ -830,6 +1136,10 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
   EOBPars->aK2 = SQ(EOBPars->aK);   
   EOBPars->S = EOBPars->S1 +  EOBPars->S2;            /* in the EMRL this becomes the spin of the BH */
   EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;  /* in the EMRL this becomes the spin of the particle */
+
+  const int usespins = EOBPars->use_spins;
+  const int usetidal = EOBPars->use_tidal;
+  const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
 
   if (EOBPars->use_Yagi_fits) {
     EOBPars->LambdaAl3 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 3);
@@ -870,12 +1180,14 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
   
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
-  EOBPars->bar_alph2_1 = (5./2.*XA*EOBPars->kapA2 + 5./2.*XB*EOBPars->kapB2)/EOBPars->kapT2;
-  EOBPars->bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*EOBPars->kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*EOBPars->kapB2)/EOBPars->kapT2;
-  EOBPars->bar_alph3_1 = ((-2.+15./2.*XA)*EOBPars->kapA3 + (-2.+15./2.*XB)*EOBPars->kapB3)/EOBPars->kapT3;
-  EOBPars->bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*EOBPars->kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*EOBPars->kapB3)/EOBPars->kapT3;
+  if(usetidal){
+    EOBPars->bar_alph2_1 = (5./2.*XA*EOBPars->kapA2 + 5./2.*XB*EOBPars->kapB2)/EOBPars->kapT2;
+    EOBPars->bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*EOBPars->kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*EOBPars->kapB2)/EOBPars->kapT2;
+    EOBPars->bar_alph3_1 = ((-2.+15./2.*XA)*EOBPars->kapA3 + (-2.+15./2.*XB)*EOBPars->kapB3)/EOBPars->kapT3;
+    EOBPars->bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*EOBPars->kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*EOBPars->kapB3)/EOBPars->kapT3;
   /* Gravitomagnetic term, see Eq.(6.27) of Bini-Damour-Faye 2012 */
-  EOBPars->bar_alph2j_1 = ( EOBPars->japA2*(1. + (11./6.)*XA + XA*XA) + EOBPars->japB2*(1. + (11./6.)*XB + XB*XB) )/EOBPars->japT2;
+    EOBPars->bar_alph2j_1 = ( EOBPars->japA2*(1. + (11./6.)*XA + XA*XA) + EOBPars->japB2*(1. + (11./6.)*XB + XB*XB) )/EOBPars->japT2;
+  }
 
   /* Tidal coefficients for the amplitude */
   EOBPars->khatA2  = 3./2. * EOBPars->LambdaAl2 * XB/XA * gsl_pow_int(XA,5);
@@ -946,6 +1258,7 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     if (VERBOSE) printf("Assume geometric units for pars values\n");
     EOBPars->r0 = pow(fmin*Pi, -2./3.);
     EOBPars->srate = 1./dt;
+    EOBPars->distance = 1.;
     EOBPars->M = 1.;
   } else {
     /* input given in physical units, 
@@ -1006,6 +1319,14 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
   } else errorexit("unknown option for centrifugal_radius");
   
+/* if (parfile!=NULL) {
+    par_db_init ();
+    par_db_from_EOBPar (EOBPars);
+    system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
+    par_db_write_file("params.txt");//FIXME: (as above)
+    par_db_free();
+  }
+*/
 }
 
 /** Set parameters */
@@ -1016,11 +1337,18 @@ void eob_set_params(char *s, int n)
 
   /* Set default values */
   par_db_default_fromfile ();
-  //par_db_default ();
-    
+  /* RG: test EOBPars structure: load db from EOBPars default, then free
+  EOBParameters_alloc (&EOBPars);
+  EOBParameters_defaults(0, EOBPars);
+  par_db_from_EOBPar (EOBPars);
+  EOBParameters_free (EOBPars);
+  */
   /* Parse input parfile */
-  par_file_parse_merge (s);
-
+  if (s!=NULL) {
+    /* Deal with input parfile if necessary 
+    (this is the current logic, we'll keep it for compatibility) */
+    par_file_parse_merge (s);
+  }
   const int usespins = par_get_i("use_spins");
 
   /* Set auxiliary parameters */
@@ -1121,12 +1449,20 @@ void eob_set_params(char *s, int n)
   
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
-  double bar_alph2_1 = (5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
-  double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;
-  double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;
-  double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
-  /* Gravitomagnetic term, see Eq.(6.27) if Bini-Damour-Faye 2012 */
-  double bar_alph2j_1 = ( kapA2j*(1. + (11./6.)*XA + XA*XA) + kapB2j*(1. + (11./6.)*XB + XB*XB) )/kapT2j;
+  double bar_alph2_1  = 0.;
+  double bar_alph2_2  = 0.;
+  double bar_alph3_1  = 0.;
+  double bar_alph3_2  = 0.;
+  double bar_alph2j_1 = 0.;
+
+  if (usetidal){
+    bar_alph2_1 = (5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
+    bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;
+    bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;
+    bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+    /* Gravitomagnetic term, see Eq.(6.27) if Bini-Damour-Faye 2012 */
+    bar_alph2j_1 = ( kapA2j*(1. + (11./6.)*XA + XA*XA) + kapB2j*(1. + (11./6.)*XB + XB*XB) )/kapT2j;
+  }
 
   /* Tidal coefficients for the amplitude */
   double khatA_2  = 3./2. * LambdaAl2 * XB/XA * gsl_pow_int(XA,5);
@@ -1321,6 +1657,239 @@ void eob_set_params(char *s, int n)
   } else if ((STREQUAL(par_get_s("centrifugal_radius"),"NOTIDES"))) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
   }
+}
+
+void eob_set_params_EOBRun(double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall)
+{
+  if(firstcall) {
+    /* Init memory EOBParameters */ 
+    EOBParameters_alloc( &EOBPars );
+    /* Set defaults for BNS, BBH, BHNS */
+    EOBParameters_defaults (default_choice, EOBPars);
+  }
+  /* Set intrinsic parameters as given by user */
+  /* FIXME: these lines are actually useless, should just delete the relevant ones below... */
+  EOBPars->M = mass;
+  EOBPars->q = mratio;
+  EOBPars->chi1=s1;
+  EOBPars->chi2=s2;
+  EOBPars->LambdaAl2 = L1;
+  EOBPars->LambdaBl2 = L2;
+  
+  //FIXME: we want to do allocation and default setting in main
+  // so to set there already the PE parameters from the input
+  // the following assumes the EOBPars has set the correct 
+  // M, q, chi1, chi2, fmin, Lambda ... (extrinsic pars)
+
+  const double M =  EOBPars->M;
+  const double fmin = EOBPars->initial_frequency;
+  const double q =  EOBPars->q;
+  EOBPars->nu = q_to_nu(q);
+  EOBPars->X1 = nu_to_X1(EOBPars->nu);
+  EOBPars->X2 = 1. -  EOBPars->X1;
+  const double XA = EOBPars->X1; /* tidal part used different notation, used here for simplicity */
+  const double XB = EOBPars->X2;
+
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  EOBPars->S1 = SQ(XA) * chi1;
+  EOBPars->S2 = SQ(XB) * chi2;
+  EOBPars->a1 = XA*chi1;
+  EOBPars->a2 = XB*chi2;
+  EOBPars->aK = EOBPars->a1 +  EOBPars->a2;
+  EOBPars->aK2 = SQ(EOBPars->aK);   
+  EOBPars->S = EOBPars->S1 +  EOBPars->S2;            /* in the EMRL this becomes the spin of the BH */
+  EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;  /* in the EMRL this becomes the spin of the particle */
+
+  const int usespins = EOBPars->use_spins;
+  const int usetidal = EOBPars->use_tidal;
+  const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
+
+  if (EOBPars->use_Yagi_fits) {
+    EOBPars->LambdaAl3 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 3);
+    EOBPars->LambdaBl3 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 3);
+    EOBPars->LambdaAl4 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 4);
+    EOBPars->LambdaBl4 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 4);
+  }
+
+#if(USEGRAVITOMAGNETICTERMS)
+ EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
+ EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
+#endif
+
+  /* Tidal coupling constants */    
+  EOBPars->kapA2 = 3.   * EOBPars->LambdaAl2 * XA*XA*XA*XA*XA / q; 
+  EOBPars->kapA3 = 15.  * EOBPars->LambdaAl3 * XA*XA*XA*XA*XA*XA*XA / q;
+  EOBPars->kapA4 = 105. * EOBPars->LambdaAl4 * XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
+  
+  EOBPars->kapB2 = 3.   * EOBPars->LambdaBl2 * XB*XB*XB*XB*XB * q;
+  EOBPars->kapB3 = 15.  * EOBPars->LambdaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
+  EOBPars->kapB4 = 105. * EOBPars->LambdaBl4 * XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
+
+  /* gravitomagnetic tidal coupling constants el = 2 only */    
+  EOBPars->japA2 = 24.   * EOBPars->SigmaAl2 * XA*XA*XA*XA*XA / q; 
+  EOBPars->japB2 = 24.   * EOBPars->SigmaBl2 * XB*XB*XB*XB*XB * q;
+
+  EOBPars->kapT2 = EOBPars->kapA2 + EOBPars->kapB2;
+  EOBPars->kapT3 = EOBPars->kapA3 + EOBPars->kapB3;
+  EOBPars->kapT4 = EOBPars->kapA4 + EOBPars->kapB4;
+  
+  EOBPars->japT2 = EOBPars->japA2 + EOBPars->japB2;
+
+  if (usetidal) {
+    if (!(EOBPars->kapT2 > 0.)) errorexit("kappaT2 must be >0");
+    if (!(EOBPars->kapT3 > 0.)) errorexit("kappaT3 must be >0");
+    if (!(EOBPars->kapT4 > 0.)) errorexit("kappaT4 must be >0");
+  } 
+
+  /* Tidal coefficients cons dynamics
+     \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
+  if(usetidal){
+    EOBPars->bar_alph2_1 = (5./2.*XA*EOBPars->kapA2 + 5./2.*XB*EOBPars->kapB2)/EOBPars->kapT2;
+    EOBPars->bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*EOBPars->kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*EOBPars->kapB2)/EOBPars->kapT2;
+    EOBPars->bar_alph3_1 = ((-2.+15./2.*XA)*EOBPars->kapA3 + (-2.+15./2.*XB)*EOBPars->kapB3)/EOBPars->kapT3;
+    EOBPars->bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*EOBPars->kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*EOBPars->kapB3)/EOBPars->kapT3;
+  /* Gravitomagnetic term, see Eq.(6.27) of Bini-Damour-Faye 2012 */
+    EOBPars->bar_alph2j_1 = ( EOBPars->japA2*(1. + (11./6.)*XA + XA*XA) + EOBPars->japB2*(1. + (11./6.)*XB + XB*XB) )/EOBPars->japT2;
+  }
+
+  /* Tidal coefficients for the amplitude */
+  EOBPars->khatA2  = 3./2. * EOBPars->LambdaAl2 * XB/XA * gsl_pow_int(XA,5);
+  EOBPars->khatB2  = 3./2. * EOBPars->LambdaBl2 * XA/XB * gsl_pow_int(XB,5);
+  
+  /* Self-spin coefficients */
+  EOBPars->C_Q1   = 1.;
+  EOBPars->C_Q2   = 1.;
+  EOBPars->C_Oct1 = 1.;
+  EOBPars->C_Oct2 = 1.;
+  EOBPars->C_Hex1 = 1.;
+  EOBPars->C_Hex2 = 1.;
+  if (EOBPars->LambdaAl2>0.) {
+    double logC_Q1 = logQ(log(EOBPars->LambdaAl2));
+    EOBPars->C_Q1           = exp(logC_Q1);
+    EOBPars->C_Oct1         = Yagi14_fit_Coct(EOBPars->C_Q1);
+    EOBPars->C_Hex1         = Yagi14_fit_Chex(EOBPars->C_Q1);
+  }
+  if (EOBPars->LambdaBl2>0.) {
+    double logC_Q2 = logQ(log(EOBPars->LambdaBl2));
+    EOBPars->C_Q2           = exp(logC_Q2);
+    EOBPars->C_Oct2         = Yagi14_fit_Coct(EOBPars->C_Q2);
+    EOBPars->C_Hex2         = Yagi14_fit_Chex(EOBPars->C_Q2);
+  }
+
+  /* Default settings for NQC */
+  //FIXME: current defaults reproduce the setup of v0.0.
+  //       They will change once all the NQC fits are ready
+  if (EOBPars->nqc == NQC_AUTO) {
+    if (usetidal) {
+      EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+      EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
+    } else {
+      if (usespins) {
+	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+      } else {
+	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN201602;
+	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN201602;
+      }
+    }
+  } 
+  
+  /** Set more as needed ... */
+  EOBPars->a6c = 0.;
+  if (EOBPars->use_flm == USEFLM_HM) {
+    /* Higher modes */
+    EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
+  } else {
+    EOBPars->a6c = eob_a6c_fit(EOBPars->nu);
+  }
+
+  EOBPars->cN3LO = 0.;
+  if (usetidal) EOBPars->cN3LO = 0.0;
+  else if (EOBPars->use_flm == USEFLM_HM) {
+    EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+  } else {
+    EOBPars->cN3LO = eob_c3_fit_global(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+  }
+
+  double dt = EOBPars->dt;
+  if (EOBPars->use_geometric_units) {
+    /* input given in geometric units, 
+       rescale to geometric units and mass rescaled quantities
+       compute r0 from the initial GW frequency in geometric units and mass rescaled 
+       reset sample rate using dt
+    */
+    if (VERBOSE) printf("Assume geometric units for pars values\n");
+    EOBPars->r0 = pow(fmin*Pi, -2./3.);
+    EOBPars->srate = 1./dt;
+    EOBPars->distance = 1.;
+    EOBPars->M = 1.;
+  } else {
+    /* input given in physical units, 
+       rescale to geometric units and mass rescaled quantities
+       compute r0 from the initial GW frequency in Hz 
+    */
+    if (VERBOSE) printf("Assume physical units for pars values\n");
+    /* Set interpolation dt */
+    dt = 1./EOBPars->srate_interp;
+    dt = time_units_conversion(EOBPars->M, dt);
+    EOBPars->dt_interp = dt;
+    /* Set dt */
+    EOBPars->r0 = radius0(EOBPars->M, fmin);
+    EOBPars->dt = 1./EOBPars->srate;
+    EOBPars->dt = time_units_conversion(EOBPars->M, dt);
+    if (VERBOSE) PRFORMd("dt",EOBPars->dt);
+    if (VERBOSE)
+      if (EOBPars->interp_uniform_grid)
+	PRFORMd("dt_interp",EOBPars->dt_interp);
+  }
+
+  /* Function pointers */
+  
+  /** Set f_lm fun pointer */
+  if (EOBPars->use_flm == USEFLM_HM) {
+    eob_wav_hlmNewt = &eob_wav_hlmNewt_HM;
+    eob_wav_flm     = &eob_wav_flm_HM;
+    eob_wav_flm_s   = &eob_wav_flm_s_HM;
+  } else if (EOBPars->use_flm == USEFLM_SSLO) {
+    /* eob_wav_flm_s = &eob_wav_flm_s_old; */
+    eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
+    eob_wav_flm     = &eob_wav_flm_v1;
+    eob_wav_flm_s   = &eob_wav_flm_s_SSLO;
+  } else if (EOBPars->use_flm == USEFLM_SSNLO) {
+    eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
+    eob_wav_flm     = &eob_wav_flm_v1;
+    eob_wav_flm_s   = &eob_wav_flm_s_SSNLO;
+    /*
+      } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
+      eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
+      eob_wav_flm     = &eob_wav_flm_v1;
+      eob_wav_flm_s   = &eob_wav_flm_s_SSNNLO;
+    */
+  } else errorexit("unknown option for use_flm");
+
+  /** Set rc fun pointer */
+  if (EOBPars->centrifugal_radius == CENTRAD_LO) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
+  } else if (EOBPars->centrifugal_radius == CENTRAD_NLO) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NLO;
+  } else if (EOBPars->centrifugal_radius == CENTRAD_NNLO) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NNLO;
+  } else if (EOBPars->centrifugal_radius == CENTRAD_NNLOS4) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NNLO_S4;
+  } else if (EOBPars->centrifugal_radius == CENTRAD_NOSPIN) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOSPIN;
+  } else if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
+  } else errorexit("unknown option for centrifugal_radius");
+/* if (parfile!=NULL) {
+    par_db_init ();
+    par_db_from_EOBPar (EOBPars);
+    system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
+    par_db_write_file("params.txt");//FIXME: (as above)
+    par_db_free();
+  }
+*/
 }
 
 void eob_free_params()

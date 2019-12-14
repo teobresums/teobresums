@@ -26,60 +26,24 @@
  * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
  */
 
-/** Global vars, defined as external in header */
-const int LINDEX[KMAX] = {
-    2,2,
-    3,3,3,
-    4,4,4,4,
-    5,5,5,5,5,
-    6,6,6,6,6,6,
-    7,7,7,7,7,7,7,
-    8,8,8,8,8,8,8,8};
-const int MINDEX[KMAX] = {
-    1,2,
-    1,2,3,
-    1,2,3,4,
-    1,2,3,4,5,
-    1,2,3,4,5,6,
-    1,2,3,4,5,6,7,
-    1,2,3,4,5,6,7,8};
-
-/** Global var for NQC coefficient */
-NQCdata *NQC;
-
-/** TEOBResumS main */
-
-#if !EOBRUN
-  int main (int argc, char* argv[]) 
+  void EOBRunTD(Waveform **hpc, double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall)
   {
-   
   /* *****************************************
    * Init 
    * *****************************************
    */
+    
+    eob_set_params_EOBRun(mass, mratio, s1, s2, L1, L2, default_choice, firstcall);
 
-  /** Input parameters */
-  if (argc == 2) {
-    eob_set_params_new(argv[1], argc, 0);  
-    if (VERBOSE) {
-      printf(TEOBResumS_Info);
-      print_date_time();
-      PRSECTN("Parameters");
-      //par_db_screen (VERBOSE);
-    }
-  } else {
-    //TEOBResumS_Usage(argv[0]);
-    //exit(OK);
-    eob_set_params_new(argv[1], argc, 0);
-  }
-
-  /** Make output dir */
-  system_mkdir(EOBPars->output_dir);
-  //par_db_write_file("params.txt");
+    //eob_set_params_new(NULL, 0, 0);
   
-#ifdef _OPENMP
-  openmp_init();
-#endif
+    /** Make output dir */
+    //system_mkdir(EOBPars->output_dir);
+    //par_db_write_file("params.txt");
+  
+  #ifdef _OPENMP
+    openmp_init();
+  #endif
 
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = EOBPars->M; /* Msun */ 
@@ -174,7 +138,6 @@ NQCdata *NQC;
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
-
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO; 
     dyn->use_spins = 0;
@@ -342,11 +305,11 @@ NQCdata *NQC;
       PRFORMd(eob_id_var[i], dyn->y0[i]);
   }
 
-    par_db_init ();
-    par_db_from_EOBPar (EOBPars);
-    system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
-    par_db_write_file("params.txt");//FIXME: (as above)
-    par_db_free();
+    // par_db_init ();
+    // par_db_from_EOBPar (EOBPars);
+    // system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
+    // par_db_write_file("params.txt");//FIXME: (as above)
+    // par_db_free();
 
   /* *****************************************
    * ODE Evolution
@@ -553,15 +516,15 @@ NQCdata *NQC;
   
  END_ODE_EVOLUTION:;
   
-#if (DEBUG) 
-  /* Output wave and dynamics */
-  if(EOBPars->output_multipoles) {
-    strcat(hlm->name,"_insplunge");
-    Waveform_lm_output (hlm);
-  }
-  if (EOBPars->output_dynamics)
-    Dynamics_output(dyn);
-#endif
+// #if (DEBUG) 
+//   /* Output wave and dynamics */
+//   if(EOBPars->output_multipoles) {
+//     strcat(hlm->name,"_insplunge");
+//     Waveform_lm_output (hlm);
+//   }
+//   if (EOBPars->output_dynamics)
+//     Dynamics_output(dyn);
+// #endif
 
   if (!(use_tidal)) {
     
@@ -616,15 +579,15 @@ NQCdata *NQC;
       /* Interp Dynamics */
       Dynamics_interp (dyn_mrg, size_mrg, dyn_mrg->time[0], dt_merger_interp, "dyn_mrg_interp");
 
-#if (DEBUG) 
-      /* Output post-interpolation wave and dynamics */
-      if(EOBPars->output_multipoles) {
-	Waveform_lm_output (hlm_mrg);
-	Waveform_lm_output_reim (hlm_mrg);
-      }
-      if (EOBPars->output_dynamics) 
-	Dynamics_output(dyn_mrg);
-#endif
+// #if (DEBUG) 
+//       /* Output post-interpolation wave and dynamics */
+//       if(EOBPars->output_multipoles) {
+// 	Waveform_lm_output (hlm_mrg);
+// 	Waveform_lm_output_reim (hlm_mrg);
+//       }
+//       if (EOBPars->output_dynamics) 
+// 	Dynamics_output(dyn_mrg);
+// #endif
        
     } /* End of merger interp */
     
@@ -659,14 +622,14 @@ NQCdata *NQC;
       
       strcat(hlm->name,"_nqc");      
 
-#if (DEBUG) 
-      if (EOBPars->output_nqc)  {
-	Waveform_lm_output (hlm_nqc);
-	Waveform_lm_output (hlm_mrg);
-      }
-      if (EOBPars->output_multipoles) 
-	Waveform_lm_output (hlm);
-#endif
+// #if (DEBUG) 
+//       if (EOBPars->output_nqc)  {
+// 	Waveform_lm_output (hlm_nqc);
+// 	Waveform_lm_output (hlm_mrg);
+//       }
+//       if (EOBPars->output_multipoles) 
+// 	Waveform_lm_output (hlm);
+// #endif
       
       Waveform_lm_free (hlm_nqc);
       
@@ -727,44 +690,46 @@ NQCdata *NQC;
   }
 
   /** Alloc memory for (h+,hx) */
-  Waveform *hpc; 
-  Waveform_alloc (&hpc, size, "waveform"); 
-
+  Waveform_alloc (hpc, size, "waveform");   
+  
   /* h+, hx */  
-  compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, hpc);
+  compute_hpc(hlm, nu, M, distance, amplitude_prefactor, psi, iota, *hpc);
   
   if (interp_uniform_grid == INTERP_UNIFORM_GRID_HPC) {
     /* Interp to uniform grid phase and amplitude of h+, hx  */
     const double dt_interp_hpc = EOBPars->dt_interp * M;
-    const int size_interp_hpc = get_uniform_size(hpc->time[size-1], hpc->time[0], dt_interp_hpc); 
-    Waveform_rmap (hpc, 1, 0); /* do not unwrap here ... */
-    unwrap_proxy(hpc->phase, hlm->phase[1], hpc->size, 1); /* ... but use phi22 as unwrap proxy */
-    Waveform_interp_ap (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp");
+    const int size_interp_hpc = get_uniform_size((*hpc)->time[size-1], (*hpc)->time[0], dt_interp_hpc); 
+    Waveform_rmap ((*hpc), 1, 0); /* do not unwrap here ... */
+    unwrap_proxy((*hpc)->phase, hlm->phase[1], (*hpc)->size, 1); /* ... but use phi22 as unwrap proxy */
+    Waveform_interp_ap (*hpc, size_interp_hpc, (*hpc)->time[0], dt_interp_hpc, "waveform_interp");
     /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */ /* this interp real/imag */
-    if (EOBPars->output_multipoles) {
-      const double dt_interp_hlm = EOBPars->dt_interp;
-      const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
-      Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
-    }
-    
+    // if (EOBPars->output_multipoles) {
+    //   const double dt_interp_hlm = EOBPars->dt_interp;
+    //   const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
+    //   Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
+    // }
+
   }
-  
-  if ( (interp_uniform_grid) && (EOBPars->output_dynamics) ) {
-    /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
-    const double dt_interp_dyn = EOBPars->dt_interp;
-    const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
-    Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
-  }
+
+  //*t = &(hpc->time[0]);
+  //if (VERBOSE) PRFORMd("then here:", **t); 
+
+  // if ( (interp_uniform_grid) && (EOBPars->output_dynamics) ) {
+  //   /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
+  //   const double dt_interp_dyn = EOBPars->dt_interp;
+  //   const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
+  //   Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
+  // }
         
-  /** Output */
-  if (EOBPars->output_hpc)
-    Waveform_output (hpc);
-  if (EOBPars->output_multipoles) {
-    Waveform_lm_output (hlm); 
-    Waveform_lm_output_reim (hlm);
-  }
-  if (EOBPars->output_dynamics)
-    Dynamics_output(dyn);
+  // /** Output */
+  // if (EOBPars->output_hpc)
+  //   Waveform_output (hpc);
+  // if (EOBPars->output_multipoles) {
+  //   Waveform_lm_output (hlm); 
+  //   Waveform_lm_output_reim (hlm);
+  // }
+  // if (EOBPars->output_dynamics)
+  //   Dynamics_output(dyn);
 
   /* *****************************************
    * Finalize 
@@ -774,36 +739,13 @@ NQCdata *NQC;
 #ifdef _OPENMP
   openmp_free(); 
 #endif
-  
+
   /** Free memory */
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);
   Waveform_lm_t_free (hlm_t);
-  Waveform_free (hpc);
   NQCdata_free (NQC);
-  eob_free_params();
-
-  return OK;
-}
-#endif
-
-#if EOBRUN
-  int main (){
-    Waveform *hpc; 
-    
-    //hpc, M, q, s1, s2, Lambda1, Lambda2, default_choice, firstcall
-    //FIXME: use EOBPars directly
-    int fc = 1;
-    //for(int i = 0; i < 3; i++){
-      EOBRunTD(&hpc, 2.7, 1., 0., 0., 100., 100., 1, fc);
-    //  fc = 0;
-    //}
-
-    // check
-    if (VERBOSE) PRFORMd("t[100]:", hpc->time[100]); //OK
-
-    Waveform_free (hpc);
-
-    return OK;
+  
   }
-#endif
+
+

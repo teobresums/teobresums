@@ -307,8 +307,8 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
     double sumr, sumi;
     int activemode[KMAX];
     double Msun = M;
-    set_multipolar_idx_mask(activemode, KMAX, "use_mode_lm", 1);
-    if (!(par_get_i("use_geometric_units"))) Msun = M/MSUN_S;
+    set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
+    if (!(EOBPars->use_geometric_units)) Msun = M/MSUN_S;
 #if (DEBUG)
     printf("h+,x: nu = %e M = %e D = %e Mpc psi = %e iota = %e prefactor = %e\n",
 	   nu,Msun,distance,psi,iota,amplitude_prefactor);
@@ -552,19 +552,17 @@ void set_multipolar_idx_mask_old(int *kmask, int n)
 
 /** This routine sets a 0/1 mask for the multipolar linear index 
     work for any parameter and can specify default all on/off */
-void set_multipolar_idx_mask(int *kmask, int n, const char *key, int on)
+void set_multipolar_idx_mask (int *kmask, int n, const int *idx, int m, int on)
 {
-  int m, k,j;
+  int k,j;
   for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
-  int *idx = par_get_arrayi(key, &m);
   if ( (m<=0) || (m==1 && idx[0]==-1) ) {
     if(on) for (k = 0; k<n; k++) kmask[k] = 1; /* all on */
     return;
-  }
+  } 
   for (k = 0; k<n; k++)
     for (j = 0; j<m; j++)
       if (idx[j] == k) kmask[k] = 1; 
-  free(idx);
 }
 
 /** Compute size of a uniform grid t0:dt:tf */
@@ -714,17 +712,17 @@ void Waveform_output (Waveform *wav)
 {
   FILE* fp;
   char fname[STRLEN];
-  strcpy(fname,par_get_s("output_dir"));
+  strcpy(fname,EOBPars->output_dir);
   strcat(fname,"/");
   strcat(fname,wav->name);
   strcat(fname,".txt");
   if ((fp = fopen(fname, "w+")) == NULL)
     errorexits("error opening file",wav->name);
-  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",par_get_d("q"),par_get_d("chi1"),par_get_d("chi2"),par_get_d("initial_frequency"));
-  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",par_get_d("M"),
-	  par_get_d("LambdaAl2"),par_get_d("LambdaAl3"),par_get_d("LambdaAl4"),
-	  par_get_d("LambdaBl2"),par_get_d("LambdaBl3"),par_get_d("LambdaBl4") );
-  fprintf(fp, "# D=%e psi=%e iota=%e\n",par_get_d("distance"),par_get_d("coalescence_angle"),par_get_d("inclination"));
+  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
+  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
+	  EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
+	  EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
+  fprintf(fp, "# D=%e psi=%e iota=%e\n",EOBPars->distance,EOBPars->coalescence_angle,EOBPars->inclination);
   fprintf(fp, "# t:0 real:1 imag:2 Ampli:3 Phase:4\n");
   for (int i = 0; i < wav->size; i++) {
     fprintf(fp, "%.9e %.12e %.12e %.12e %.12e\n", wav->time[i], wav->real[i], wav->imag[i], wav->ampli[i], wav->phase[i]);
@@ -748,7 +746,7 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->size = size; 
-  set_multipolar_idx_mask((*wav)->kmask, KMAX, "output_lm", 0); 
+  set_multipolar_idx_mask((*wav)->kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);
   (*wav)->time = malloc ( size * sizeof(double) );
   memset((*wav)->time, 0, size*sizeof(double));
   int k;
@@ -822,16 +820,16 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
 
 void Waveform_lm_output (Waveform_lm *wav)
 {
-  char fname[STRLEN];
+  char fname[STRLEN*2];
   const int n = wav->size;
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
-      sprintf(fname,"%s/%s_l%01d_m%01d.txt",par_get_s("output_dir"),wav->name,LINDEX[k],MINDEX[k]);
+    if (wav->kmask[k]) {      
+      sprintf(fname,"%s/%s_l%01d_m%01d.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
-	errorexits("error opening file",fname);
+	      errorexits("error opening file",fname);
       for (int i = 0; i < n; i++) {
-	fprintf(fp, "%.9e %.16e %.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
+	      fprintf(fp, "%.9e %.16e %.16e\n", wav->time[i], wav->ampli[k][i], wav->phase[k][i]); 
       }
       fclose(fp);
     }
@@ -840,19 +838,19 @@ void Waveform_lm_output (Waveform_lm *wav)
 
 void Waveform_lm_output_reim (Waveform_lm *wav)
 {
-  char fname[STRLEN];
+  char fname[STRLEN*2];
   double re,im;
   const int n = wav->size;
   for (int k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
-      sprintf(fname,"%s/%s_l%01d_m%01d_reim.txt",par_get_s("output_dir"),wav->name,LINDEX[k],MINDEX[k]);
+      sprintf(fname,"%s/%s_l%01d_m%01d_reim.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
-	errorexits("error opening file",fname);
+	       errorexits("error opening file",fname);
       for (int i = 0; i < n; i++) {
-	re = + wav->ampli[k][i] * cos(wav->phase[k][i]);
-	im = - wav->ampli[k][i] * sin(wav->phase[k][i]);
-	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], re,im);
+	       re = + wav->ampli[k][i] * cos(wav->phase[k][i]);
+	       im = - wav->ampli[k][i] * sin(wav->phase[k][i]);
+	       fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], re,im);
       }
       fclose(fp);
     }
@@ -987,7 +985,7 @@ void Waveform_lm_t_alloc (Waveform_lm_t **wav)
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->time = 0.;
-  set_multipolar_idx_mask((*wav)->kmask, KMAX, "output_lm", 0); 
+  set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0); 
 }
 
 void Waveform_lm_t_free (Waveform_lm_t *wav)
@@ -1063,7 +1061,7 @@ void Dynamics_output (Dynamics *dyn)
 {
   FILE* fp; 
   char fname[STRLEN];
-  strcpy(fname,par_get_s("output_dir"));
+  strcpy(fname,EOBPars->output_dir);
   strcat(fname,"/");
   strcat(fname,dyn->name);
   strcat(fname,".txt");
@@ -1211,59 +1209,59 @@ void Dynamics_free (Dynamics *dyn)
 void Dynamics_set_params (Dynamics *dyn)
 {
   dyn->store = 0;
-  dyn->size  = par_get_i("size");
-  dyn->M     = par_get_d("M");
-  dyn->nu    = par_get_d("nu");
-  dyn->q     = par_get_d("q");
-  dyn->X1    = par_get_d("X1");  
-  dyn->X2    = par_get_d("X2");
-  dyn->chi1  = par_get_d("chi1");
-  dyn->chi2  = par_get_d("chi2");
-  dyn->S1    = par_get_d("S1");
-  dyn->S2    = par_get_d("S2");
-  dyn->S     = par_get_d("S");
-  dyn->Sstar = par_get_d("Sstar");
-  dyn->a1    = par_get_d("a1");
-  dyn->a2    = par_get_d("a2"); 
-  dyn->aK2   = par_get_d("aK2"); 
-  dyn->C_Q1  = par_get_d("C_Q1");
-  dyn->C_Q2  = par_get_d("C_Q2");
-  dyn->C_Oct1 = par_get_d("C_Oct1");
-  dyn->C_Oct2 = par_get_d("C_Oct2");
-  dyn->C_Hex1 = par_get_d("C_Hex1");
-  dyn->C_Hex2 = par_get_d("C_Hex2");
-  dyn->a6c   = par_get_d("a6c");
-  dyn->cN3LO = par_get_d("cN3LO");
-  dyn->rLR   = par_get_d("rLR");
-  dyn->rLR_tidal = par_get_d("rLR_tidal");
-  dyn->rLSO  = par_get_d("rLSO");
-  dyn->kapA2 = par_get_d("kappaAl2");
-  dyn->kapA3 = par_get_d("kappaAl3");
-  dyn->kapA4 = par_get_d("kappaAl4");
-  dyn->kapB2 = par_get_d("kappaBl2");
-  dyn->kapB3 = par_get_d("kappaBl3");
-  dyn->kapB4 = par_get_d("kappaBl4");
-  dyn->kapT2 = par_get_d("kappaTl2");
-  dyn->kapT3 = par_get_d("kappaTl3");
-  dyn->kapT4 = par_get_d("kappaTl4");
-  dyn->khatA2 = par_get_d("khatAl2");
-  dyn->khatB2 = par_get_d("khatBl2");
-  dyn->kapA2j = par_get_d("kappajAl2");
-  dyn->kapB2j = par_get_d("kappajBl2");
-  dyn->kapT2j = par_get_d("kappajTl2");
-  dyn->bar_alph2_1 = par_get_d("bar_alph2_1");
-  dyn->bar_alph2_2 = par_get_d("bar_alph2_2");
-  dyn->bar_alph3_1 = par_get_d("bar_alph3_1");
-  dyn->bar_alph3_2 = par_get_d("bar_alph3_2");
-  dyn->bar_alph2j_1 = par_get_d("bar_alph2j_1");
-  dyn->pGSF_tidal = par_get_d("pGSF_tidal");
-  dyn->Mbhf = par_get_d("BH_final_mass");
-  dyn->abhf = par_get_d("BH_final_spin");
-  dyn->use_tidal = par_get_i("use_tidal");
-  dyn->use_tidal_gravitomagnetic = par_get_i("use_tidal_gravitomagnetic");
-  dyn->use_spins = par_get_i("use_spins");
-  dyn->dt        = par_get_d("dt");
-  dyn->t_stop    = par_get_d("ode_tmax");
+  dyn->size  = EOBPars->size;
+  dyn->M     = EOBPars->M;
+  dyn->nu    = EOBPars->nu;
+  dyn->q     = EOBPars->q;
+  dyn->X1    = EOBPars->X1;  
+  dyn->X2    = EOBPars->X2;
+  dyn->chi1  = EOBPars->chi1;
+  dyn->chi2  = EOBPars->chi2;
+  dyn->S1    = EOBPars->S1;
+  dyn->S2    = EOBPars->S2;
+  dyn->S     = EOBPars->S;
+  dyn->Sstar = EOBPars->Sstar;
+  dyn->a1    = EOBPars->a1;
+  dyn->a2    = EOBPars->a2; 
+  dyn->aK2   = EOBPars->aK2; 
+  dyn->C_Q1  = EOBPars->C_Q1;
+  dyn->C_Q2  = EOBPars->C_Q2;
+  dyn->C_Oct1 = EOBPars->C_Oct1;
+  dyn->C_Oct2 = EOBPars->C_Oct2;
+  dyn->C_Hex1 = EOBPars->C_Hex1;
+  dyn->C_Hex2 = EOBPars->C_Hex2;
+  dyn->a6c   = EOBPars->a6c;
+  dyn->cN3LO = EOBPars->cN3LO;
+  dyn->rLR   = EOBPars->rLR;
+  dyn->rLR_tidal = EOBPars->rLR_tidal;
+  dyn->rLSO  = EOBPars->rLSO;
+  dyn->kapA2 = EOBPars->kapA2;
+  dyn->kapA3 = EOBPars->kapA3;
+  dyn->kapA4 = EOBPars->kapA4;
+  dyn->kapB2 = EOBPars->kapB2;
+  dyn->kapB3 = EOBPars->kapB3;
+  dyn->kapB4 = EOBPars->kapB4;
+  dyn->kapT2 = EOBPars->kapT2;
+  dyn->kapT3 = EOBPars->kapT3;
+  dyn->kapT4 = EOBPars->kapT4;
+  dyn->khatA2 = EOBPars->khatA2;
+  dyn->khatB2 = EOBPars->khatB2;
+  dyn->kapA2j = EOBPars->japA2;
+  dyn->kapB2j = EOBPars->japB2;
+  dyn->kapT2j = EOBPars->japT2;
+  dyn->bar_alph2_1 = EOBPars->bar_alph2_1;
+  dyn->bar_alph2_2 = EOBPars->bar_alph2_2;
+  dyn->bar_alph3_1 = EOBPars->bar_alph3_1;
+  dyn->bar_alph3_2 = EOBPars->bar_alph3_2;
+  dyn->bar_alph2j_1 = EOBPars->bar_alph2j_1;
+  dyn->pGSF_tidal = EOBPars->pGSF_tidal;
+  dyn->Mbhf = EOBPars->Mbhf;
+  dyn->abhf = EOBPars->abhf;
+  dyn->use_tidal = EOBPars->use_tidal;
+  dyn->use_tidal_gravitomagnetic = EOBPars->use_tidal_gravitomagnetic;
+  dyn->use_spins = EOBPars->use_spins;
+  dyn->dt        = EOBPars->dt;
+  dyn->t_stop    = EOBPars->ode_tmax;
 }
 
 /** NQC data */

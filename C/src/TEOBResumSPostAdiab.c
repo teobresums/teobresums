@@ -48,10 +48,10 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   const int usespins = dyn->use_spins;
 
  /* Parameters for post adiabatic dynamics */
-  const int Npa = par_get_i("postadiabatic_dynamics_N");    
+  const int Npa = EOBPars->postadiabatic_dynamics_N;    
   const int size = dyn->size; // PA clause in main.c sets dyn->size= PA size overwriting PA par files
-  double rmin = par_get_d("postadiabatic_dynamics_rmin"); 
-  if(usetidal) rmin = par_get_d("postadiabatic_dynamics_rmin_BNS");   
+  double rmin = EOBPars->postadiabatic_dynamics_rmin; 
+  //if(usetidal) rmin = EOBPars->postadiabatic_dynamics_rmin;   
   const double dr = POSTADIABATIC_DR; //(r0 - rmin)/(size-1); /* Uniform grid spacing */
 
 
@@ -92,7 +92,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   double ggm[14]; 
   double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, u2, prstar2, dHeff_dpphi, dHeff_dprstar, dHeff_dr, dHeff_dprstarbyprstar, d2Heff_dprstar20,
     H, G, pl_hold, x, jhat, psi, r_omg, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
-  
+
   /* 
    * Compute circular dynamics 
    */
@@ -101,7 +101,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     
     /* Current radius */
     dyn->r = r0 - i*dr;
-    
+
     /** Computing metric functions and centrifugal radius */
     if(usespins){ 
       
@@ -127,7 +127,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       dG_dprstarbyprstar_vec[i] = 0.0;
     
     }
-    
+
     /** Defining circular quantities for the flux calculation.
 	Must not be overwritten in successive iterations, thus
 	we define separate quantities with the subscripts 0. */
@@ -234,7 +234,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
    */
   
   int parity = 1; /* parity of the post-adiab iteration */
-  
+
   /* For on PA orders */
   for (int n = 1; n <= Npa; n++) {
     
@@ -263,7 +263,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	/** Calculating the flux Fphi */
 	//FIXME USE C-routines, jhat etc. are already present inside dynamics
 	//FIXME Non-spinning routine gives 1e-2 difference between PA and full EOB waveform. Tested cases: bbh q 1 f 0.001 and q 5 f 0.006.
-    
+
 	if (usespins) {
 	  
 	  /* Variables for which Kepler's law is still valid */
@@ -275,9 +275,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	  v_phi      = r_omg*dyn->Omg;
 	  x          = SQ(v_phi);
 	  jhat       = dyn->pphi/(r_omg*v_phi);
-	  
+
 	  Fphi = eob_flx_Flux_s(x,dyn->Omg,r_omg, E_vec[i], Heff_vec[i],jhat,dyn->r,dyn->prstar, dyn->ddotr, dyn);
-	
+    
 	} else {
 	  
 	  Heff_orb_f = sqrt(A_vec[i]*(1.0 + SQ(dyn->pphi)*uc2_vec[i]));
@@ -398,7 +398,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   
   /** Compute time */
   cumint3(dt_dr_vec, dyn->data[EOB_RAD], size, dyn->time);
-
+  
   /* Set last value for evolution */
   dyn->t = dyn->time[size-1];
   
