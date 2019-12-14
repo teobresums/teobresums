@@ -322,7 +322,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->use_tidal == TIDES_NOPT) {
-    eobp->use_tidal == TIDES_OFF;
+    eobp->use_tidal = TIDES_OFF;
     if (VERBOSE) printf("tides '%s' undefined, set to '%s'\n",
 			par_get_s("tides"),tides_opt[eobp->use_tidal]);
   }
@@ -333,7 +333,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
-    eobp->use_tidal_gravitomagnetic == TIDES_GM_OFF;
+    eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
     if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
 			par_get_s("tides_gravitomagnetic"), tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
   }
@@ -364,7 +364,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->centrifugal_radius == CENTRAD_NOPT) {
-    eobp->centrifugal_radius == CENTRAD_LO;
+    eobp->centrifugal_radius = CENTRAD_LO;
     if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
 			par_get_s("centrifugal_radius"), centrifugal_radius_opt[eobp->centrifugal_radius]);
   }
@@ -375,7 +375,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->use_flm == USEFLM_NOPT) {
-    eobp->centrifugal_radius == USEFLM_SSLO;
+    eobp->centrifugal_radius = USEFLM_SSLO;
     if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
 			par_get_s("use_flm"), use_flm_opt[eobp->use_flm]);
   }
@@ -391,7 +391,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->nqc == NQC_NOPT) {
-    eobp->nqc == NQC_AUTO;
+    eobp->nqc = NQC_AUTO;
     if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
 			par_get_s("use_flm"), nqc_opt[eobp->nqc]);
   }
@@ -402,7 +402,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->nqc_coefs_flx == NQC_FLX_NOPT) {
-    eobp->nqc_coefs_flx == NQC_FLX_NONE;
+    eobp->nqc_coefs_flx = NQC_FLX_NONE;
     if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
 			par_get_s("nqc_coefs_flx"), nqc_flx_opt[eobp->nqc_coefs_flx]);
   }
@@ -413,7 +413,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->nqc_coefs_hlm == NQC_HLM_NOPT) {
-    eobp->nqc_coefs_hlm == NQC_HLM_NONE;
+    eobp->nqc_coefs_hlm = NQC_HLM_NONE;
     if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
 			par_get_s("nqc_coefs_hlm"), nqc_hlm_opt[eobp->nqc_coefs_hlm]);
   }
