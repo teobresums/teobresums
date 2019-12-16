@@ -182,31 +182,31 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     /** Circular Hamiltonians, ref: arXiv: 1406.6913 */
     if(usespins) {
       
-      eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,dyn->prstar,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
-		&H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-		&Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu)       */
-		&Heff_orb_vec[i],
-		NULL,             /* drvt Heff,r      */
-		NULL,             /* drvt Heff,prstar */
-		&dHeff_dpphi,     /* drvt Heff,pphi   */
-		&d2Heff_dprstar20);
+      eob_ham_s(nu, dyn->r, rc_vec[i], drc_dr_vec[i], dyn->pphi, dyn->prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A_vec[i], dA_vec[i],
+                &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+                &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu)       */
+                &Heff_orb_vec[i],
+                &dHeff_dr,        /* drvt Heff,r      */
+                NULL,             /* drvt Heff,prstar */
+                &dHeff_dpphi,     /* drvt Heff,pphi   */
+                &d2Heff_dprstar20);
       
       E_vec[i] = nu*H;
       
     } else {
-
+      
       eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
-	      &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-	      &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). */
-	      NULL,             /* drvt Heff,r      */
-	      NULL,             /* drvt Heff,prstar */
-	      &dHeff_dpphi);    /* drvt Heff,pphi   */
-
+              &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+              &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). */
+              &dHeff_dr,        /* drvt Heff,r      */
+              NULL,             /* drvt Heff,prstar */
+              &dHeff_dpphi);    /* drvt Heff,pphi   */
+      
       d2Heff_dprstar20 = 1/Heff_orb_vec[i];
-
+      
       Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
       E_vec[i] = nu*H;
-    
+      
     }
     
     /* Circular orbital frequency */
@@ -221,6 +221,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     dyn->data[EOB_RAD][i]    = dyn->r;
     dyn->data[EOB_PPHI][i]   = dyn->pphi;
     dyn->data[EOB_PRSTAR][i] = dyn->prstar;
+    dyn->data[EOB_DDOTR][i]  = dyn->ddotr;
     dyn->data[EOB_MOMG][i]   = dyn->Omg;
     dyn->data[EOB_OMGORB][i] = dyn->Omg_orb;
   
@@ -333,34 +334,34 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       
       /** New Hamiltonians */
       if(usespins) {
-	
-	eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,dyn->prstar,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
-		  &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-		  &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
-		  &Heff_orb_vec[i],
-		  NULL,             /* drvt Heff,r      */
-		  &dHeff_dprstar,   /* drvt Heff,prstar */
-		  &dHeff_dpphi,     /* drvt Heff,pphi   */
-		  &d2Heff_dprstar20);
-	
-	E_vec[i] = nu*H;
-  
+        
+        eob_ham_s(nu, dyn->r, rc_vec[i], drc_dr_vec[i], dyn->pphi, dyn->prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A_vec[i], dA_vec[i],
+                  &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+                  &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
+                  &Heff_orb_vec[i],
+                  &dHeff_dr,        /* drvt Heff,r      */
+                  &dHeff_dprstar,   /* drvt Heff,prstar */
+                  &dHeff_dpphi,     /* drvt Heff,pphi   */
+                  &d2Heff_dprstar20);
+        
+        E_vec[i] = nu*H;
+        
       } else {
-	
-	eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
-		&H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-		&Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
-		&dHeff_dr,        /* drvt Heff,r      */
-		&dHeff_dprstar,   /* drvt Heff,prstar */
-		&dHeff_dpphi);    /* drvt Heff,pphi   */
-
-	u2      = 1./((dyn->r)*(dyn->r));
-	prstar2 = (dyn->prstar)*(dyn->prstar);
-	d2Heff_dprstar20 = (1. + 2.*A_vec[i]*u2*z3*prstar2)/Heff_orb_vec[i];
-	  
-	Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
-	E_vec[i] = nu*H;
-      
+        
+        eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
+                &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+                &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
+                &dHeff_dr,        /* drvt Heff,r      */
+                &dHeff_dprstar,   /* drvt Heff,prstar */
+                &dHeff_dpphi);    /* drvt Heff,pphi   */
+        
+        u2      = 1./((dyn->r)*(dyn->r));
+        prstar2 = (dyn->prstar)*(dyn->prstar);
+        d2Heff_dprstar20 = (1. + 2.*A_vec[i]*u2*z3*prstar2)/Heff_orb_vec[i];
+        
+        Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
+        E_vec[i] = nu*H;
+        
       }
       
       /** Orbital Frequency */
