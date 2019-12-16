@@ -276,7 +276,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	  x          = SQ(v_phi);
 	  jhat       = dyn->pphi/(r_omg*v_phi);
 
-	  Fphi = eob_flx_Flux_s(x,dyn->Omg,r_omg, E_vec[i], Heff_vec[i],jhat,dyn->r,dyn->prstar, dyn->ddotr, dyn);
+	  Fphi = eob_flx_Flux_s(x, dyn->Omg, r_omg, E_vec[i], Heff_vec[i], jhat, dyn->r, dyn->prstar, dyn->ddotr, dyn);
     
 	} else {
 	  
@@ -288,7 +288,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	  x          = SQ(v_phi);
 	  jhat       = dyn->pphi/(r_omg*v_phi);
 	  
-	  Fphi = eob_flx_Flux(x,dyn->Omg,r_omg, E_vec[i], Heff_vec[i],jhat,dyn->r,dyn->prstar, dyn->ddotr, dyn);
+	  Fphi = eob_flx_Flux(x, dyn->Omg, r_omg, E_vec[i], Heff_vec[i], jhat, dyn->r, dyn->prstar, dyn->ddotr, dyn);
 	
 	}
 
@@ -334,7 +334,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
       /** New Hamiltonians */
       if(usespins) {
 	
-	eob_ham_s(nu,dyn->r,rc_vec[i],drc_dr_vec[i],dyn->pphi,dyn->prstar,S,Sstar,chi1,chi2,X1,X2,aK2,c3,A_vec[i],dA_vec[i],
+	eob_ham_s(nu, dyn->r, rc_vec[i], drc_dr_vec[i], dyn->pphi, dyn->prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A_vec[i], dA_vec[i],
 		  &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
 		  &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
 		  &Heff_orb_vec[i],

@@ -326,15 +326,16 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
       
     /* Sum up  hlm * Ylm 
      * Note because EOB code defines phase>0, 
-     * but the convention is hlm=Alm Exp[-I phi_lm] we have
-     * h_{l,m>0} = Alm( cos(phi) - I*sin(phi) ) for m>0 and
-     * h_{l,m<0} = Alm( cos(phi) + I*sin(phi) ) for m<0 below
+     * but the convention is h_lm = A_lm Exp[-I phi_lm] we have
+     * h_{l,m>=0} = A_lm ( cos(phi_lm) - I*sin(phi_lm) ) for m>0 and
+     * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
      * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
      */
 #pragma omp for
     for (int i = 0; i < hlm->size; i++) {
         hpc->time[i] = hlm->time[i]*M; 
         sumr = sumi = 0.;
+        
         /* Loop over modes */
         for (int k = 0; k < KMAX; k++ ) {
             if (!activemode[k]) continue;
@@ -343,17 +344,18 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
             sinPhi = sin( hlm->phase[k][i] );
             sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
             sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
+            
             /* add m<0 modes */
             if ( (mneg) && (MINDEX[k]!=0) ) { 
                 /* H_{l-m} = (-)^l H^{*}_{lm} */
-                if (!(LINDEX[k] % 2)) {
-		    sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
-		    sumi -= Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); 
+                if (LINDEX[k] % 2) {
+                    sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
+                    sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
                 }
                 else { 
-		    sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
-		    sumi += Aki*(sinPhi*Y_real_mneg[k] + cosPhi*Y_imag_mneg[k]); 
-  		}
+                    sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
+                    sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+                }
             }    
         }
         /* h = h+ - i hx */
