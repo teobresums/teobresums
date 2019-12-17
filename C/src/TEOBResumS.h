@@ -457,7 +457,7 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 /* Function protoypes grouped based on file */
 
 /*TEOBResumSEOBRun.c */
-void EOBRunTD(Waveform **hpc, double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall);
+void EOBRunTD(Waveform **hpc, int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
 void par_db_init ();

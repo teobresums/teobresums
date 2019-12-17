@@ -26,20 +26,25 @@
  * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
  */
 
-  void EOBRunTD(Waveform **hpc, double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall)
+  void EOBRunTD(Waveform **hpc, int default_choice, int firstcall)
   {
   /* *****************************************
    * Init 
    * *****************************************
    */
     
-    eob_set_params_EOBRun(mass, mratio, s1, s2, L1, L2, default_choice, firstcall);
+    eob_set_params_EOBRun(EOBPars->M, EOBPars->q, EOBPars->chi1, EOBPars->chi2, EOBPars->LambdaAl2, EOBPars->LambdaBl2, default_choice, firstcall);
 
     //eob_set_params_new(NULL, 0, 0);
   
     /** Make output dir */
-    //system_mkdir(EOBPars->output_dir);
-    //par_db_write_file("params.txt");
+    int output = 0;
+    if (EOBPars->output_dynamics != 0 || EOBPars->output_multipoles != 0 || EOBPars->output_hpc != 0){
+    /** Make output dir */
+      output = 1;
+      system_mkdir(EOBPars->output_dir);
+      //par_db_write_file("params.txt");
+    }
   
   #ifdef _OPENMP
     openmp_init();
@@ -305,11 +310,13 @@
       PRFORMd(eob_id_var[i], dyn->y0[i]);
   }
 
-    // par_db_init ();
-    // par_db_from_EOBPar (EOBPars);
-    // system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
-    // par_db_write_file("params.txt");//FIXME: (as above)
-    // par_db_free();
+    if(output){
+      par_db_init ();
+      par_db_from_EOBPar (EOBPars);
+      system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
+      par_db_write_file("params.txt");//FIXME: (as above)
+      par_db_free();
+    }
 
   /* *****************************************
    * ODE Evolution
@@ -703,33 +710,30 @@
     unwrap_proxy((*hpc)->phase, hlm->phase[1], (*hpc)->size, 1); /* ... but use phi22 as unwrap proxy */
     Waveform_interp_ap (*hpc, size_interp_hpc, (*hpc)->time[0], dt_interp_hpc, "waveform_interp");
     /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */ /* this interp real/imag */
-    // if (EOBPars->output_multipoles) {
-    //   const double dt_interp_hlm = EOBPars->dt_interp;
-    //   const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
-    //   Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
-    // }
+     if (EOBPars->output_multipoles) {
+       const double dt_interp_hlm = EOBPars->dt_interp;
+       const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
+       Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
+     }
 
   }
-
-  //*t = &(hpc->time[0]);
-  //if (VERBOSE) PRFORMd("then here:", **t); 
-
-  // if ( (interp_uniform_grid) && (EOBPars->output_dynamics) ) {
-  //   /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
-  //   const double dt_interp_dyn = EOBPars->dt_interp;
-  //   const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
-  //   Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
-  // }
+ 
+   if ( (interp_uniform_grid) && (EOBPars->output_dynamics) ) {
+     /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
+     const double dt_interp_dyn = EOBPars->dt_interp;
+     const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
+     Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
+   }
         
-  // /** Output */
-  // if (EOBPars->output_hpc)
-  //   Waveform_output (hpc);
-  // if (EOBPars->output_multipoles) {
-  //   Waveform_lm_output (hlm); 
-  //   Waveform_lm_output_reim (hlm);
-  // }
-  // if (EOBPars->output_dynamics)
-  //   Dynamics_output(dyn);
+   /** Output */
+   if (EOBPars->output_hpc)
+     Waveform_output (*hpc);
+   if (EOBPars->output_multipoles) {
+     Waveform_lm_output (hlm); 
+     Waveform_lm_output_reim (hlm);
+   }
+   if (EOBPars->output_dynamics)
+     Dynamics_output(dyn);
 
   /* *****************************************
    * Finalize 

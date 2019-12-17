@@ -72,10 +72,13 @@ NQCdata *NQC;
     //exit(OK);
     eob_set_params_new(argv[1], argc, 0);
   }
-
+  int output = 0;
+  if (EOBPars->output_dynamics != 0 || EOBPars->output_multipoles != 0 || EOBPars->output_hpc != 0){
   /** Make output dir */
+  output = 1;
   system_mkdir(EOBPars->output_dir);
   //par_db_write_file("params.txt");
+  }
   
 #ifdef _OPENMP
   openmp_init();
@@ -341,12 +344,14 @@ NQCdata *NQC;
     for (int i = 0; i < EOB_ID_NVARS; i++)
       PRFORMd(eob_id_var[i], dyn->y0[i]);
   }
-
+  
+  if(output){
     par_db_init ();
     par_db_from_EOBPar (EOBPars);
     system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
     par_db_write_file("params.txt");//FIXME: (as above)
     par_db_free();
+  }
 
   /* *****************************************
    * ODE Evolution
@@ -794,19 +799,23 @@ NQCdata *NQC;
 #endif
 
 #if EOBRUN
-  int main (){
+  int main (){    
     Waveform *hpc; 
     
-    //hpc, M, q, s1, s2, Lambda1, Lambda2, default_choice, firstcall
-    //FIXME: use EOBPars directly
     int fc = 1;
-    //for(int i = 0; i < 3; i++){
-      EOBRunTD(&hpc, 2.7, 1., 0., 0., 100., 100., 1, fc);
+    //alloc
+    EOBParameters_alloc( &EOBPars );
+    EOBPars->M = 2.7;
+    EOBPars->q = 1.;
+    EOBPars->chi1 = 0.;
+    EOBPars->chi2 = 0.;
+    EOBPars->LambdaAl2 = 100.;
+    EOBPars->LambdaBl2 = 100.;
+
+    //for(int i = 0; i < 3; i++){ for loop to test the firstcall flag
+    EOBRunTD(&hpc, 1, fc);        //hpc, default_choice, firstcall
     //  fc = 0;
     //}
-
-    // check
-    if (VERBOSE) PRFORMd("t[100]:", hpc->time[100]); //OK
 
     Waveform_free (hpc);
 
