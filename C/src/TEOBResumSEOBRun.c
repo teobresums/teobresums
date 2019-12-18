@@ -39,7 +39,7 @@
   
     /** Make output dir */
     int output = 0;
-    if (EOBPars->output_dynamics != 0 || EOBPars->output_multipoles != 0 || EOBPars->output_hpc != 0){
+    if (EOBPars->output_dynamics != 0 || EOBPars->output_multipoles != 0 || EOBPars->output_hpc != 0 || EOBPars->output_nqc !=0){
     /** Make output dir */
       output = 1;
       system_mkdir(EOBPars->output_dir);

@@ -491,6 +491,10 @@ void eob_set_params(char *s, int n);
 void eob_set_params_new(char *s, int n, int default_choice);
 void eob_set_params_EOBRun(double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall);
 void eob_free_params();
+void EOBParameters_alloc (EOBParameters **eobp);
+void EOBParameters_free (EOBParameters *eobp);
+void EOBParameters_defaults (int choose, EOBParameters *eobp);
+void EOBParameters_set_from_db (EOBParameters *eobp);
 
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);
