@@ -53,15 +53,15 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   //if (EOBRunTD(size, a, &p)) return NULL;
   
   /*  Construct the output arrays */
-  int dims[2];
+  npy_intp dims[1];
   dims[0] = hpc->size;
   PyArrayObject *pto;
   PyArrayObject *phpo;
   PyArrayObject *phco;
 
-  pto  = (PyArrayObject *) PyArray_FromDims(1,dims,NPY_DOUBLE);
-  phpo = (PyArrayObject *) PyArray_FromDims(1,dims,NPY_DOUBLE);
-  phco = (PyArrayObject *) PyArray_FromDims(1,dims,NPY_DOUBLE);
+  pto  = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+  phpo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+  phco = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
   
   /* Cast py *arrays into C *arrays   */
   pt = pyvector_to_Carrayptrs(pto);
