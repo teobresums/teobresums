@@ -14,7 +14,7 @@
 #define ERROR (1);
 int foo(int size, double a, double **p)
 {
-  *p = (double*)malloc(size);
+  *p = (double*)malloc(size * sizeof(double));
   if(*p == NULL) return ERROR;
   for (int i=0; i<size; ++i) (*p)[i] = a;
   return OK;
@@ -40,7 +40,7 @@ double *pyvector_to_Carrayptrs(PyArrayObject *arrayin)
 /* Wrapped function */
 static PyObject* foo_func(PyObject* self, PyObject* args)
 {
-  int size, error;
+  int size;
   double a;
   double *p, *pa;
 
@@ -54,13 +54,13 @@ static PyObject* foo_func(PyObject* self, PyObject* args)
   if (foo(size, a, &p)) return NULL;
   
   /*  Construct the output array */
-  int dims[2];
+  npy_intp dims[1];
   dims[0] = size;
   PyArrayObject *pao;
-  pao = (PyArrayObject *) PyArray_FromDims(1,dims,NPY_DOUBLE);
+  pao = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
   
   /* Cast py *arrays into C *arrays   */
-  pa = pyvector_to_Carrayptrs(pao);
+  pa =(double*)PyArray_DATA(pao);
   
   /* Copy */
   memcpy(pa, p, size * sizeof(double));
@@ -79,7 +79,8 @@ static PyMethodDef FooMethods[] = {
   {"foo", foo_func, METH_VARARGS, "Init and return a double array"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
-  {NULL, NULL}  /* {NULL, NULL, 0, NULL} */ 
+  {NULL, NULL, 0, NULL} 
+  //{NULL, NULL, 0, NULL} //*/ 
 };
 
 #if PY_MAJOR_VERSION >= 3
