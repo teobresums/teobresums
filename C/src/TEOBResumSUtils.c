@@ -65,22 +65,24 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
 #ifdef _OPENMP
-  openmp_timer_start("interp_spline");
+  if (DEBUG) openmp_timer_start("interp_spline");
 #endif  
 #pragma omp parallel 
   {
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
     gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
     gsl_spline_init (spline, t, y, n);    
-#pragma omp for
+#pragma omp for simd
     for (int k = 0; k < ni; k++) {
+      //SB: the gsl_spline_eval() should be declared 
+      //    #pragma omp declare simd
       yi[k] = gsl_spline_eval (spline, ti[k], acc);
     }
     gsl_spline_free (spline);
     gsl_interp_accel_free (acc);
   }
 #ifdef _OPENMP
-    openmp_timer_stop("interp_spline");
+  if (DEBUG) openmp_timer_stop("interp_spline");
 #endif    
 }
   
@@ -747,6 +749,7 @@ void Waveform_output (Waveform *wav)
 
 void Waveform_free (Waveform *wav)
 {
+  if (!wav) return;
   if (wav->real) free(wav->real);
   if (wav->imag) free(wav->imag);
   if (wav->ampli) free(wav->ampli);
@@ -984,6 +987,7 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
 
 void Waveform_lm_free (Waveform_lm *wav)
 {
+  if (!wav) return;
   for (int k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {
       if (wav->ampli[k]) free(wav->ampli[k]);
@@ -1005,6 +1009,7 @@ void Waveform_lm_t_alloc (Waveform_lm_t **wav)
 
 void Waveform_lm_t_free (Waveform_lm_t *wav)
 {
+  if (!wav) return;
   free(wav);
 }
 
@@ -1213,6 +1218,7 @@ void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to)
 
 void Dynamics_free (Dynamics *dyn)
 {
+  if (!dyn) return;
   if (dyn->time) free(dyn->time);
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
     if (dyn->data[v]) free(dyn->data[v]);
@@ -1295,6 +1301,7 @@ void NQCdata_alloc (NQCdata **nqc)
 
 void NQCdata_free (NQCdata *nqc)
 {
+  if (!nqc) return;
   if (nqc->flx) free (nqc->flx);
   if (nqc->hlm) free (nqc->hlm);
   if (nqc)      free (nqc);
@@ -1319,11 +1326,12 @@ double radius0(double M, double fHz)
 }
 
 /** Make dir */
-void system_mkdir(const char *name)
+int system_mkdir(const char *name)
 {
   char s[STRLEN];
   sprintf(s,"mkdir -p %s",name);
-  if (system(s)) errorexit("Error during system call to make directory."); 
+  return system(s);
+  /* if (system(s)) errorexit("Error during system call to make directory.");  */
 }
 
 /** Date and time */

@@ -1080,6 +1080,22 @@ void par_set_arrayd (const char *key, double *array, int n)
   }
 }
 
+
+
+
+
+// SB: below we have 3 routines:
+// - eob_set_params_new()
+// - eob_set_params()
+// - eob_set_params_EOBRun()
+// we should have only 2: the old and the new working with EOBPars
+// (seems to be eob_set_params_EOBRun() )
+
+// SB: it is unclear
+
+
+
+
 #if (!DEBUG_THIS_FILE)
 
 /*
@@ -1659,14 +1675,24 @@ void eob_set_params(char *s, int n)
   }
 }
 
+
+
+
+
 void eob_set_params_EOBRun(double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall)
 {
+
+  //SB: I would keep EOBPars allocation, de-allocation and set as 3
+  //    separated things to be used in the main/python wrapper.
+  //    For the moment I would postpone the first call thingy.
   if(firstcall) {
     /* Init memory EOBParameters */ 
     EOBParameters_alloc( &EOBPars );
     /* Set defaults for BNS, BBH, BHNS */
     EOBParameters_defaults (default_choice, EOBPars);
   }
+
+  
   /* Set intrinsic parameters as given by user */
   /* FIXME: these lines are actually useless, should just delete the relevant ones below... */
   EOBPars->M = mass;
@@ -1897,7 +1923,14 @@ void eob_free_params()
   par_db_free ();
 }
 
+
+
+
+
 #else
+
+
+
 
 /* test 
    gcc TEOBResumSPars.c -lconfig -o testpars.x */

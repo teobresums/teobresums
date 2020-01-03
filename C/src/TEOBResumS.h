@@ -83,12 +83,11 @@
 #endif
 
 #ifndef EOBRUN
-#define EOBRUN 0
+#define EOBRUN 0 /* 0/1 for old/new main */ //FIXME: to be removed after v2 is ready for production, we'll use only the new main.
 #endif
 
 /** Macros */
 #define ERROR 1 /** generic error int */
-#define OK 0 /** generic go int */
 #define STRLEN 1024 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
 #define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);} 
@@ -149,6 +148,21 @@
 #define POSTADIABATIC_DR (0.1) /* PA step dr = 0.1 */
 #define TEOB_R0_THRESHOLD (14) /* PA minimum tolerated radius */
 #define POSTADIABATIC_NSTEP_MIN (10) /* Minimum requires PA steps, any less than this, the code switches off PA */
+
+/** Simple/generic error handler */
+enum{OK,
+     ERROR_OUTOFMEM,
+     ERROR_FILEOPEN,
+     ERROR_MKDIR,
+     ERROR_ROOTFINDER,
+     ERROR_ODEINT,
+     NERROR
+};
+static const char* eob_error_msg[] = {
+  "ok",
+  "out of memory", "error opening file", "error while making directory",
+  "root finder failed.", "ODE solver failed."
+};
 
 /** Index list of EOB evolved variables */
 enum{
@@ -267,7 +281,8 @@ enum{
   ROOT_ERRORS
 };
 static const char* const root_errors[] = {"none","root is not bracketed.","root finder did not converged.","root finder failed."};
-#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} //TODO: CHECK THIS MACRO (LOGIC INVOLVED)
+//#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} 
+#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { printf("%s\n",root_errors[(i)]); }}
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */
@@ -456,8 +471,8 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 
 /* Function protoypes grouped based on file */
 
-/*TEOBResumSEOBRun.c */
-void EOBRunTD(Waveform **hpc, int default_choice, int firstcall);
+/* Main TD EOB */
+int EOBRunTD(Waveform **hpc, int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
 void par_db_init ();
@@ -553,7 +568,7 @@ void NQCdata_free (NQCdata *nqc);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
-void system_mkdir(const char *name);
+int system_mkdir(const char *name);
 void print_date_time();
 void errorexit(char *file, int line, const char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
