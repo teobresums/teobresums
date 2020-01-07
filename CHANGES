@@ -1,0 +1,32 @@
+Version 1.1 07-01-2020
+======================
+
+# What's changed since v1.0
+
+	* C/src/TEOBResumS.c:
+	(main): Parameter conventions are consistent with LALSimulation.
+	(main): Several performance improvements and minor bug fixes.
+	(main): Automated behaviour of postadiabatic (PA) evolution and termination/transition to ODE.
+	(main): Deactivated H+/x interpolation scheme and set HLM interpolation as default. The INTERP_UNIFORM_GRID_HPC option for the interpolation scheme was problematic, especially for PA and non-zero inclinations, and has now been abandoned. The INTERP_UNIFORM_GRID_HLM option is now default but interpolates each mode individually which incurs an additional computational cost if higher modes are switched on.
+
+	* C/src/TEOBResumSOMP.c: Started implementing parallelization with openmp.
+
+	* C/src/TEOBResumSWaveform.c (eob_wav_ringdown): Activated a hardfix in that guarantees we have 3 points (7 in total) after the OmegaPeak.
+
+	* C/src/TEOBResumSPars.c: Bugfix in Oct and Hex tides calculation.
+
+	* C/src/TEOBResumSPostAdiab.c: Uniformized grid spacing using a pre-defined dr.
+	(eob_dyn_Npostadiabatic): Added ddotr variable to PA dynamics to be consistent with ODE.
+
+	* C/src/TEOBResumS.c (main): Improved post-OmegaPeak and merger interpolation stage and fine-tuned to minimize parameter region where root-finder fails.
+
+	* C/src/TEOBResumSFits.c (eob_nqc_timeshift): Implemented new NQC timeshift.
+
+	* C/src/TEOBResumSDynamics.c: Fixed rc calculation; corrected \hatGS derivative.
+
+	* matlab_tools/: Cleaned up MATLAB scripts.
+
+	* par/: Updated default and example parfiles.
+
+	* README.md: updated to v1.1
+
