@@ -30,7 +30,7 @@ pyprofit_ext = Extension('EOBRunTD_module',
                        sources = eob_sources,
                        include_dirs = incdirs,
                        libraries = libs,
-                       extra_compile_args=["-w"] #to ignore all warnings (do not use when debugging)
+                       extra_compile_args=["-w", "-std=c99"] #to ignore all warnings (do not use when debugging)
                        )
 
 setup(ext_modules=[pyprofit_ext],)
