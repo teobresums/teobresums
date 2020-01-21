@@ -68,6 +68,7 @@ int main (int argc, char* argv[]) {
    * Init 
    * *****************************************
    */
+   
 
   /** Input parameters */
   if (argc == 2) {
@@ -231,6 +232,7 @@ int main (int argc, char* argv[]) {
 
   /* Iteration index */
   int iter = 0;  
+
   
   if (use_postadiab_dyn) {
 
@@ -821,25 +823,34 @@ int main (int argc, char* argv[]) {
 
 /** TEOBResumS v2.* main */
 
-int main (){    
+int main (int argc, char* argv[]){    
   
   Waveform *hpc; 
   
-  int fc = 1;
+  int fc = 1; //firstcall, set to 1 for now
+  int dc = DEFAULT_PARS_BBH; //default_choice, set to BBH
 
-  //SB: here we should have some logic to get input from parfile (for backwards compatbility).
-  
   //alloc
   EOBParameters_alloc( &EOBPars );
-  EOBPars->M = 2.7;
-  EOBPars->q = 1.;
-  EOBPars->chi1 = 0.;
-  EOBPars->chi2 = 0.;
-  EOBPars->LambdaAl2 = 100.;
-  EOBPars->LambdaBl2 = 100.;
+  //set defaults
+  EOBParameters_defaults (dc, EOBPars);
 
-  //SB: I would call the EOBPars params_set routine here, not in EOBRunTD
-  
+  if (argv[1]!=NULL) {
+    /* Deal with input parfile if necessary 
+       (this is the current logic, we'll keep it for compatibility) */
+    par_db_init ();
+    par_db_from_EOBPar (EOBPars);
+    par_file_parse_merge (argv[1]);
+    par_db_screen (VERBOSE);
+    EOBParameters_set_from_db (EOBPars);
+    par_db_free();
+
+    /* RG: if input parfile specifies BNS runs, change default_choice */ 
+    if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
+  }
+
+  eob_set_params_EOBRun(dc, fc); 
+
   //for(int i = 0; i < 3; i++){ for loop to test the firstcall flag
   int status = EOBRunTD(&hpc, 1, fc);        //hpc, default_choice, firstcall
   //  fc = 0;
@@ -890,7 +901,6 @@ int EOBRunTD(Waveform **hpc, int default_choice, int firstcall)
    * *****************************************
    */
 
-  eob_set_params_EOBRun(EOBPars->M, EOBPars->q, EOBPars->chi1, EOBPars->chi2, EOBPars->LambdaAl2, EOBPars->LambdaBl2, default_choice, firstcall);  //SB: I put some comments in TEOBResumSPars.c about this
   //eob_set_params_new(NULL, 0, 0);
 
   /** Do any output ? */
@@ -903,7 +913,7 @@ int EOBRunTD(Waveform **hpc, int default_choice, int firstcall)
       //if (VERBOSE) par_db_write_file("params.txt");//SB: we should write this only if input is from parfile
     }
   }
-  
+
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = EOBPars->M; /* Msun */ 
   double time_unit_fact = 1;

@@ -504,7 +504,7 @@ int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
 void eob_set_params(char *s, int n);
 void eob_set_params_new(char *s, int n, int default_choice);
-void eob_set_params_EOBRun(double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall);
+void eob_set_params_EOBRun(int default_choice, int firstcall);
 void eob_free_params();
 void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);

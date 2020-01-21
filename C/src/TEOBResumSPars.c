@@ -1679,33 +1679,14 @@ void eob_set_params(char *s, int n)
 
 
 
-void eob_set_params_EOBRun(double mass, double mratio, double s1, double s2, double L1, double L2, int default_choice, int firstcall)
+void eob_set_params_EOBRun(int default_choice, int firstcall)
 {
 
   //SB: I would keep EOBPars allocation, de-allocation and set as 3
   //    separated things to be used in the main/python wrapper.
   //    For the moment I would postpone the first call thingy.
-  if(firstcall) {
-    /* Init memory EOBParameters */ 
-    EOBParameters_alloc( &EOBPars );
-    /* Set defaults for BNS, BBH, BHNS */
-    EOBParameters_defaults (default_choice, EOBPars);
-  }
 
-  
   /* Set intrinsic parameters as given by user */
-  /* FIXME: these lines are actually useless, should just delete the relevant ones below... */
-  EOBPars->M = mass;
-  EOBPars->q = mratio;
-  EOBPars->chi1=s1;
-  EOBPars->chi2=s2;
-  EOBPars->LambdaAl2 = L1;
-  EOBPars->LambdaBl2 = L2;
-  
-  //FIXME: we want to do allocation and default setting in main
-  // so to set there already the PE parameters from the input
-  // the following assumes the EOBPars has set the correct 
-  // M, q, chi1, chi2, fmin, Lambda ... (extrinsic pars)
 
   const double M =  EOBPars->M;
   const double fmin = EOBPars->initial_frequency;
