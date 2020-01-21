@@ -40,17 +40,22 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   /* Call the C function */
   Waveform *hpc;   
   int fc = 1;
-  int default_choice = 1;
+  int default_choice = 0;
+  if(LA > 1. && LB > 1.) default_choice = 1;
+
   //alloc
-  EOBParameters_alloc( &EOBPars );
+  EOBParameters_alloc ( &EOBPars ); 
+  EOBParameters_defaults (default_choice, EOBPars);
+
   EOBPars->M = M;
   EOBPars->q = q;
   EOBPars->chi1 = chi1;
   EOBPars->chi2 = chi2;
   EOBPars->LambdaAl2 = LA;
   EOBPars->LambdaBl2 = LB;
+
+  eob_set_params_EOBRun(default_choice, fc); 
   EOBRunTD(&hpc, default_choice, fc);
-  //if (EOBRunTD(size, a, &p)) return NULL;
   
   /*  Construct the output arrays */
   npy_intp dims[1];
