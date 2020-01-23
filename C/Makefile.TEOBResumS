@@ -49,8 +49,13 @@ LDLFLAGS=-lgsl -lgslcblas -lm -lconfig
 # rules
 #
 
-all: $(EXE) # $(LIB)
+all: $(EXE) # pywrap $(LIB)
 	@echo "All done"
+	
+#pywrap: $(EXE)
+pywrap:
+	@echo "Wrapping ..."
+	python TEOBResumSWrap_setup.py build_ext --inplace
 
 $(EXE): $(OBJ)
 	@echo "Building $@ ..."
