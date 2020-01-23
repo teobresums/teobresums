@@ -73,9 +73,7 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
   https://github.com/ampl/gsl/blob/master/interpolation/spline.c#L118
   https://github.com/ampl/gsl/blob/master/interpolation/interp.c#L140
 */
-#ifdef _OPENMP
 #pragma omp declare simd uniform(x) linear(i: 1)
-#endif  
 double gsl_spline_eval_omp(const gsl_spline * spline, double *x, gsl_interp_accel * acc, int i)
 {
   return gsl_spline_eval(spline, x[i], acc);
@@ -84,24 +82,19 @@ double gsl_spline_eval_omp(const gsl_spline * spline, double *x, gsl_interp_acce
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
 #ifdef _OPENMP
-  if (DEBUG) openmp_timer_start("interp_spline");
-#endif  
-  /* #pragma omp parallel {  */
+  if (USETIMERS) openmp_timer_start("interp_spline");
+#endif
   gsl_interp_accel *acc = gsl_interp_accel_alloc ();
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
   gsl_spline_init (spline, t, y, n);    
-  /* #pragma omp for  */
-#ifdef _OPENMP
 #pragma omp simd 
-#endif  
-  for (int k = 0; k < ni; k++) {
-  yi[k] = gsl_spline_eval_omp (spline, ti, acc, k);
-}
+  for (int k = 0; k < ni; k++) 
+    yi[k] = gsl_spline_eval_omp (spline, ti, acc, k);
   gsl_spline_free (spline);
   gsl_interp_accel_free (acc);
-#ifdef _OPENMP
-  if (DEBUG) openmp_timer_stop("interp_spline");
-#endif    
+#ifdef _OPENMP  
+  if (USETIMERS) openmp_timer_stop("interp_spline");
+#endif
 }
  
 /** Find nearest point index in 1d array */
@@ -316,8 +309,8 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
 {  
 #ifdef _OPENMP
-  openmp_timer_start("compute_hpc");
-#endif    
+  if (USETIMERS) openmp_timer_start("compute_hpc");
+#endif
 #pragma omp parallel 
   {
     double Y_real[KMAX], Y_imag[KMAX];
@@ -333,16 +326,15 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
     printf("h+,x: nu = %e M = %e D = %e Mpc phi = %e iota = %e prefactor = %e\n",
 	   nu,Msun,distance,phi,iota,amplitude_prefactor);
 #endif
-      
+    
     /* Precompute Ylm */
     for (int k = 0; k < KMAX; k++ ) {
       if (!activemode[k]) continue;
       spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
-
       /* add m<0 modes */
       if ( (mneg) && (MINDEX[k]!=0) )
-          spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
-    }
+	spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
+      }
       
     /* Sum up  hlm * Ylm 
      * Note because EOB code defines phase>0, 
@@ -355,28 +347,28 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
     for (int i = 0; i < hlm->size; i++) {
         hpc->time[i] = hlm->time[i]*M; 
         sumr = sumi = 0.;
-        
+	
         /* Loop over modes */
         for (int k = 0; k < KMAX; k++ ) {
-            if (!activemode[k]) continue;
-            Aki  = amplitude_prefactor * hlm->ampli[k][i];
-            cosPhi = cos( hlm->phase[k][i] );
-            sinPhi = sin( hlm->phase[k][i] );
-            sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
-            sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
-            
-            /* add m<0 modes */
-            if ( (mneg) && (MINDEX[k]!=0) ) { 
-                /* H_{l-m} = (-)^l H^{*}_{lm} */
-                if (LINDEX[k] % 2) {
-                    sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
-                    sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-                }
-                else { 
-                    sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
-                    sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-                }
-            }    
+	  if (!activemode[k]) continue;
+	  Aki  = amplitude_prefactor * hlm->ampli[k][i];
+	  cosPhi = cos( hlm->phase[k][i] );
+	  sinPhi = sin( hlm->phase[k][i] );
+	  sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
+	  sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
+          
+	  /* add m<0 modes */
+	  if ( (mneg) && (MINDEX[k]!=0) ) { 
+	    /* H_{l-m} = (-)^l H^{*}_{lm} */
+	    if (LINDEX[k] % 2) {
+	      sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
+	      sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+	    }
+	    else { 
+	      sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
+	      sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+	    }
+	  }    
         }
         /* h = h+ - i hx */
         hpc->real[i] = sumr;
@@ -384,8 +376,8 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
     }
   }
 #ifdef _OPENMP
-  openmp_timer_stop("compute_hpc");
-#endif    
+  if (USETIMERS) openmp_timer_stop("compute_hpc");
+#endif
 }
 
 /** 4th order centered stencil first derivative, uniform grids */
@@ -528,8 +520,7 @@ void unwrap(double *p, const int size)
   }  
 }
 
-#define dbg_unwrap_proxy (0) // stops after routine, use: ./TEOBResumS.x test.par > out 
-
+#define dbg_unwrap_proxy (0)  /* stops after routine, use: ./TEOBResumS.x test.par > out */ 
 /* Unwrap unsign number of cycles from reference phase as proxy */
 void unwrap_proxy(double *p, double *r, const int size, const int shift0)
 {
@@ -637,11 +628,6 @@ void Waveform_push (Waveform **wav, int size)
   if ((*wav)->time)  (*wav)->time  = realloc ( (*wav)->time,  size * sizeof(double) );
   const int n  = (*wav)->size;
   const int dn = size - (*wav)->size;
-  /* if (dn>0) { */
-  /*   memset( (*wav)->real + n, 0, dn * sizeof(double) ); */
-  /*   memset( (*wav)->imag + n, 0, dn * sizeof(double) ); */
-  /*   memset( (*wav)->time + n, 0, dn * sizeof(double) ); */
-  /* } */
   (*wav)->size = size; 
 }
 
@@ -651,16 +637,20 @@ void Waveform_rmap (Waveform *h, const int mode, const int unw)
   const int size = h->size;
   if (mode) {
     /** (Re, Im) -> (Amplitude, phase) */
+#pragma omp simd
     for (int i = 0; i < size; i++)
       h->ampli[i] = sqrt( SQ(h->real[i]) + SQ(h->imag[i]) );
+#pragma omp simd
     for (int i = 0; i < size; i++)
       h->phase[i] = Pi - atan2(h->imag[i], h->real[i]); /* exp(- i phi) => Pi  */
     if (unw) unwrap(h->phase, h->size); 
   } else {
     /** (Amplitude, phase) -> (Re, Im) */
     /* h =  A exp( -i phi) */
+#pragma omp simd
     for (int i = 0; i < size; i++) 
       h->real[i] = + h->ampli[i] * cos(h->phase[i]);  
+#pragma omp simd
     for (int i = 0; i < size; i++)
       h->imag[i] = - h->ampli[i] * sin(h->phase[i]); 
   }
@@ -687,12 +677,13 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
   h->imag = malloc ( size * sizeof(double) );
 
   /* Fill new time array */
+#pragma omp simd
   for (int i = 0; i < size; i++)
     h->time[i] = i*dt + t0;
   
   /* Interp real/imag*/
-  interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
-  interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
+  interp_spline_omp(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
+  interp_spline_omp(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
 
   /* Compute phase and amplitude */
   /* Waveform_rmap(h, 1, 1); */ /* unwrap */
@@ -729,12 +720,13 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
   h->phase = malloc ( size * sizeof(double) );
 
   /* Fill new time array */
+#pragma omp simd
   for (int i = 0; i < size; i++)
     h->time[i] = i*dt + t0;
 
   /* Interp phase and amplitude */
-  interp_spline(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
-  interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
+  interp_spline_omp(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
+  interp_spline_omp(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
   
   /* Compute Real/Imag */
   Waveform_rmap (h, 0, 0); /* do not unwrap */
@@ -807,10 +799,6 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
     if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
     (*wav)->phase[k] = realloc ( (*wav)->phase[k], size * sizeof(double) );
     if ((*wav)->phase[k] == NULL) errorexit("Out of memory.");
-    /* if (dn>0) { */
-    /*   memset( (*wav)->ampli[k] + n, 0, dn * sizeof(double) ); */
-    /*   memset( (*wav)->phase[k] + n, 0, dn * sizeof(double) ); */
-    /* }  */
   }
   (*wav)->size = size;
 }
@@ -841,14 +829,15 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   } 
   
   /* Fill new time array */
+#pragma omp simd
   for (int i = 0; i < size; i++) 
     hlm->time[i] = i*dt + t0;
   
   /* Interp */
   for (int k = 0; k < KMAX; k++) 
-    interp_spline(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
+    interp_spline_omp(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
   for (int k = 0; k < KMAX; k++) 
-    interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
+    interp_spline_omp(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
   
   /* Free aux memory */
   Waveform_lm_free (hlm_aux);
@@ -931,6 +920,7 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
     (*hlmb)->time[i] = hlma->time[io + i]; 
   
   for (int k=0; k<KMAX; k++) {
+#pragma omp simd
     for (int i = 0; i < N; i++) {
       (*hlmb)->ampli[k][i] = hlma->ampli[k][io + i];
       (*hlmb)->phase[k][i] = hlma->phase[k][io + i];
@@ -982,18 +972,19 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
   Waveform_lm_push (&hlma, N);
   
   /* Copy the relevant part of b into a */
+#pragma omp simd
   for (int i = 0; i < Nb; i++) {
     hlma->time[ioa + i] = hlmb->time[iob + i]; 
-    /* printf("%d %.6e\n",ioa+i, hlma->time[ioa+i]); */
   }
 
   for (int k=0; k<KMAX; k++) {
+#pragma omp simd
     for (int i = 0; i < Nb; i++) {
       hlma->ampli[k][ioa + i] = hlmb->ampli[k][iob + i];
       hlma->phase[k][ioa + i] = hlmb->phase[k][iob + i];
     }
   }
-
+    
 #if (0)
   printf("Waveform (a) i = %d time[i] = %.6e \n",ioa, hlma->time[ioa]);
   printf("Waveform (b) i = %d time[i] = %.6e \n",iob, hlmb->time[iob]);
@@ -1089,7 +1080,7 @@ void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const doub
   
   /* Interp */
   for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
-    interp_spline(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
+    interp_spline_omp(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
 
   /* Free aux memory */
   Dynamics_free (dyn_aux);
@@ -1216,14 +1207,16 @@ void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to)
   Dynamics_push (&dyna, N);
 
   /* Copy the relevant part of b into a */
+#pragma omp simd
   for (int i = 0; i < Nb; i++) 
     dyna->time[ioa + i] = dynb->time[iob + i]; 
-
+  
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++) {
+#pragma omp simd
     for (int i = 0; i < Nb; i++) {
       dyna->data[v][ioa + i] = dynb->data[v][iob + i];
     }
-  }
+ }
 
 #if (0)
   printf("Dynamics (a) i = %d time[i] = %.6e \n",ioa, dyna->time[ioa]);

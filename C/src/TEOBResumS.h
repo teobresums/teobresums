@@ -54,39 +54,42 @@
 #endif
 
 /** Following macros can be set during compilation for special feats */
-
 /* NOTE: below are the defaults; macros should be changed exclusively from makefile */
 
+#ifndef USETIMERS
+#define USETIMERS (0) /* This requires OMP otherwise do nothing! */
+#endif
+
 #ifndef VERBOSE
-#define VERBOSE 0 /* verbose mode is off by default */
+#define VERBOSE (0) /* verbose mode is off by default */
 #endif
 
 #ifndef POSTPOSTCIRCULAR
-#define POSTPOSTCIRCULAR 1 /* use post-post-circular initial conditions by default */
+#define POSTPOSTCIRCULAR (1) /* use post-post-circular initial conditions by default */
 #endif
 
 #ifndef EXCLUDESPINSPINTIDES
-#define EXCLUDESPINSPINTIDES 0 /* use tidally deformed centr. radius with self-spin and tides by default */
+#define EXCLUDESPINSPINTIDES (0) /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
 #ifndef USEGRAVITOMAGNETICTERMS
-#define USEGRAVITOMAGNETICTERMS 1 /* use gravitomagnetic terms in tidal potential and waveform */
+#define USEGRAVITOMAGNETICTERMS (1) /* use gravitomagnetic terms in tidal potential and waveform */
 #endif
 
 #ifndef USEBTIDALPOTENTIAL
-#define USEBTIDALPOTENTIAL 1 /* add B LO tidal potential */
+#define USEBTIDALPOTENTIAL (1) /* add B LO tidal potential */
 #endif
 
 #ifndef USERK45
-#define USERK45 1 /* use GSL rkf45 instead of rk8pd */
+#define USERK45 (1) /* use GSL rkf45 instead of rk8pd */
 #endif
 
 #ifndef DEBUG 
-#define DEBUG 0 /* global debug option */ 
+#define DEBUG (0) /* global debug option */ 
 #endif
 
 #ifndef EOBRUN
-#define EOBRUN 0 /* 0/1 for old/new main */ //FIXME: to be removed after v2 is ready for production, we'll use only the new main.
+#define EOBRUN (0) /* 0/1 for old/new main */ //FIXME: to be removed after v2 is ready for production, we'll use only the new main.
 #endif
 
 /** Macros */
@@ -690,7 +693,7 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm);
 
 #ifdef _OPENMP
 /* TEOBResumSOMP.c */
-void openmp_init();
+void openmp_init(const int verbose);
 void openmp_timer_start(char *name);
 void openmp_timer_stop(char *name);
 void openmp_free();

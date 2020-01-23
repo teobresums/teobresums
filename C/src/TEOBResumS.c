@@ -893,7 +893,7 @@ int EOBRunTD(Waveform **hpc, int default_choice, int firstcall)
   int status = OK;
 
 #ifdef _OPENMP
-  openmp_init();
+  openmp_init(VERBOSE);
 #endif
   
   /* *****************************************
