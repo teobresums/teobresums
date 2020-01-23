@@ -54,6 +54,9 @@
 #endif
 
 /** Following macros can be set during compilation for special feats */
+
+/* NOTE: below are the defaults; macros should be changed exclusively from makefile */
+
 #ifndef VERBOSE
 #define VERBOSE 0 /* verbose mode is off by default */
 #endif
