@@ -915,7 +915,7 @@ void par_add_d (const char *key, double val)
   return;
 }
 
-void par_add_s (const char *key, char *val)
+void par_add_s (const char *key, const char *val)
 {
   csetting = config_setting_add(csroot, key, CONFIG_TYPE_STRING);
   config_setting_set_string(csetting, val);

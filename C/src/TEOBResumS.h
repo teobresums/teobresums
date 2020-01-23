@@ -487,7 +487,7 @@ void par_db_screen (const int pr);
 void par_add_i (const char *key, int val);
 void par_add_b (const char *key, int val);
 void par_add_d (const char *key, double val);
-void par_add_s (const char *key, char *val);
+void par_add_s (const char *key, const char *val);
 void par_add_arrayi (const char *key, int *a, int size);
 void par_add_arrayd (const char *key, double *a, int size);
 void par_set_i(const char *key, int val);
