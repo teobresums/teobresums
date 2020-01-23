@@ -31,7 +31,6 @@ void openmp_pr_info()
 }
 
 /* Rough timers system */
-#define USETIMERS (0)
 int timeron = 0; /* screen timers? */
 struct timer
 {
@@ -87,18 +86,18 @@ void openmp_timer_output()
   fclose(fp); 
 }
 
-void openmp_init() 
+void openmp_init(const int verbose) 
 {
   const int nt  = EOBPars->openmp_threads;
   if (nt==0) {
-    printf("OMP: Use automatic settings\n");
+    if (verbose) printf("OMP: Use automatic settings\n");
   } else {
     omp_set_dynamic(0); // disable dynamic teams  
     if (nt>0) {
-      printf("OMP: Set num_threads = %d\n", nt);
+      if (verbose) printf("OMP: Set num_threads = %d\n", nt);
       omp_set_num_threads(nt);
     } else { 
-      printf("OMP: Set num_threads = 1\n");
+      if (verbose) printf("OMP: Set num_threads = 1\n");
       omp_set_num_threads(1);   
     }
   }

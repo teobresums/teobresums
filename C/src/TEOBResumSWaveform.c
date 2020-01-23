@@ -118,6 +118,7 @@ void eob_wav_hlmNewt_v1(double r,
   };
     
   /** Compute hlmNewt (without phase factor) in complex Polar coords */
+#pragma omp simd
   for (int k = 0; k < KMAX; k++) {
     hlmNewt->phase[k] = - phim[k] + ChlmNewt_phase[k];
     hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
@@ -209,6 +210,7 @@ void eob_wav_hlmNewt_HM(double r,
   };
     
   /** Compute hlmNewt (without phase factor) in complex Polar coords */
+#pragma omp simd
   for (int k = 0; k < KMAX; k++) {
     hlmNewt->phase[k] = - phim[k] + ChlmNewt_phase[k];
     hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
@@ -233,8 +235,7 @@ void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
   double tlm_rad;
   double tlm_phase;
   
-  int i;
-  for (i = 0; i < KMAX; i++) {
+  for (int i = 0; i < KMAX; i++) {
     k     = MINDEX[i] * Omega;
     hhatk = k * Hreal;
     
@@ -291,8 +292,7 @@ void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
 			2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997};
   
   double k;
-  int i;
-  for (i=0; i<KMAX; i++) {
+  for (int i=0; i<KMAX; i++) {
     k  = MINDEX[i] * Omega;
     x  = k * Hreal; /* hathatk */
     x2 = x * x;
@@ -332,6 +332,7 @@ void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm)
   double delta31LO = 13./30. * y32;
   
   /** Init phase */
+#pragma omp simd
   for (int k = 0; k < KMAX; k++) {
     dlm[k] = 0.;
   }
@@ -678,6 +679,7 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
   }
 
   /** Amplitudes */
+#pragma omp simd
   for (int k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
   }
@@ -1088,6 +1090,7 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
   }
   
   /** Amplitudes */
+#pragma omp simd
   for (int k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
   }
