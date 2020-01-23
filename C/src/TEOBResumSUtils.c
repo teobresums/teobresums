@@ -62,30 +62,48 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 
 /* An OpenMP version. We keep two versions because we might want to introduce the 
    thread-parallelism at different levels */
+/*
+  Notes for SIMD
+  * SIMD Functions need to be declared, see e.g.
+    P.25 https://info.ornl.gov/sites/publications/files/Pub69214.pdf
+  * How does it work with GSL? Is wrapper enough?
+  * 'uniform' means 'arg does not change'
+  * 'linear' means 'arg will be increased between each successive call fo the fun'
+  GSL pointers:
+  https://github.com/ampl/gsl/blob/master/interpolation/spline.c#L118
+  https://github.com/ampl/gsl/blob/master/interpolation/interp.c#L140
+*/
+#ifdef _OPENMP
+#pragma omp declare simd uniform(x) linear(i: 1)
+#endif  
+double gsl_spline_eval_omp(const gsl_spline * spline, double *x, gsl_interp_accel * acc, int i)
+{
+  return gsl_spline_eval(spline, x[i], acc);
+}
+
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
 #ifdef _OPENMP
   if (DEBUG) openmp_timer_start("interp_spline");
 #endif  
-#pragma omp parallel 
-  {
-    gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-    gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
-    gsl_spline_init (spline, t, y, n);    
-#pragma omp for simd
-    for (int k = 0; k < ni; k++) {
-      //SB: the gsl_spline_eval() should be declared 
-      //    #pragma omp declare simd
-      yi[k] = gsl_spline_eval (spline, ti[k], acc);
-    }
-    gsl_spline_free (spline);
-    gsl_interp_accel_free (acc);
-  }
+  /* #pragma omp parallel {  */
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+  gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
+  gsl_spline_init (spline, t, y, n);    
+  /* #pragma omp for  */
+#ifdef _OPENMP
+#pragma omp simd 
+#endif  
+  for (int k = 0; k < ni; k++) {
+  yi[k] = gsl_spline_eval_omp (spline, ti, acc, k);
+}
+  gsl_spline_free (spline);
+  gsl_interp_accel_free (acc);
 #ifdef _OPENMP
   if (DEBUG) openmp_timer_stop("interp_spline");
 #endif    
 }
-  
+ 
 /** Find nearest point index in 1d array */
 int find_point_bisection(double x, int n, double *xp, int o)
 {
