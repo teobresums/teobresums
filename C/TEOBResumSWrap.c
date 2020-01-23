@@ -63,6 +63,28 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
   EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
 
+  /* Optional arguments for the dictionary */
+  // FIXME: reduce number of calls to PyDict_GetItemString
+  
+  if ( PyDict_GetItemString(dict, "r0") != NULL ) {
+    EOBPars->r0 = PyFloat_AsDouble(PyDict_GetItemString(dict, "r0"));
+  }
+  if ( PyDict_GetItemString(dict, "initial_frequency") != NULL ) {
+    EOBPars->initial_frequency = PyFloat_AsDouble(PyDict_GetItemString(dict, "initial_frequency"));
+  }
+  if ( PyDict_GetItemString(dict, "distance") != NULL ) {
+    EOBPars->distance = PyFloat_AsDouble(PyDict_GetItemString(dict, "distance"));
+  }
+  if ( PyDict_GetItemString(dict, "inclination") != NULL ) {
+    EOBPars->inclination = PyFloat_AsDouble(PyDict_GetItemString(dict, "inclination"));
+  }
+  if ( PyDict_GetItemString(dict, "polarization") != NULL ) {
+    EOBPars->polarization = PyFloat_AsDouble(PyDict_GetItemString(dict, "polarization"));
+  }
+  if ( PyDict_GetItemString(dict, "coalescence_angle") != NULL ) {
+    EOBPars->coalescence_angle = PyFloat_AsDouble(PyDict_GetItemString(dict, "coalescence_angle"));
+  }
+
   eob_set_params_EOBRun(default_choice, fc); 
   EOBRunTD(&hpc, default_choice, fc);
   
