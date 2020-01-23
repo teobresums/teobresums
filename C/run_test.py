@@ -2,7 +2,16 @@
 import EOBRunTD_module
 import matplotlib.pyplot as plt
 
-t, hp, hc = EOBRunTD_module.EOBRunTD(2.7, 1., 0., 0., 100.,100.)
+pars = {
+    'M': 50.,
+    'q': 1.,
+    'chi1': 0.,
+    'chi2': 0.,
+    'Lambda1': 0.,
+    'Lambda2': 0.
+}
+
+t, hp, hc = EOBRunTD_module.EOBRunTD(pars)
 
 plt.plot(t, hp)
 plt.show()

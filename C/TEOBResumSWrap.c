@@ -28,31 +28,40 @@ double *pyvector_to_Carrayptrs(PyArrayObject *arrayin)
 /* Wrapped function */
 static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
 {
-  double M, q, chi1, chi2, LA, LB;
+  PyObject* dict;
   double *pt, *php, *phc;
 
-  /* Parse the input, from python float to c double 
+  /* Parse the input: from python float to c double or from dictionary to C pointer
      https://docs.python.org/3/c-api/arg.html 
+     https://docs.python.org/2/c-api/dict.html
   */
-  if (!PyArg_ParseTuple(args, "dddddd", &M, &q, &chi1, &chi2, &LA, &LB))
+  if (!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict)) 
     return NULL;
-  
-  /* Call the C function */
+
+  /* alloc output, set some defaults */
   Waveform *hpc;   
   int fc = 1;
   int default_choice = 0;
-  if(LA > 1. && LB > 1.) default_choice = 1;
 
-  //alloc
+  //alloc EOBPars and set defaults based on Lambdas
   EOBParameters_alloc ( &EOBPars ); 
-  EOBParameters_defaults (default_choice, EOBPars);
 
-  EOBPars->M = M;
-  EOBPars->q = q;
-  EOBPars->chi1 = chi1;
-  EOBPars->chi2 = chi2;
-  EOBPars->LambdaAl2 = LA;
-  EOBPars->LambdaBl2 = LB;
+  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
+  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+
+  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = 1;
+  EOBParameters_defaults (default_choice, EOBPars);  
+
+
+  /* Read the dictionary in EOBPars */
+  /* RG: there has to be a faster way...*/
+
+  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
+  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
+  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
+  EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
+  EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
 
   eob_set_params_EOBRun(default_choice, fc); 
   EOBRunTD(&hpc, default_choice, fc);
