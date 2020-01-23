@@ -733,8 +733,8 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
     h->time[i] = i*dt + t0;
 
   /* Interp phase and amplitude */
-  interp_spline_omp(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
-  interp_spline_omp(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
+  interp_spline(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
+  interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
   
   /* Compute Real/Imag */
   Waveform_rmap (h, 0, 0); /* do not unwrap */
