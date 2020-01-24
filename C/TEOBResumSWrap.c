@@ -65,7 +65,6 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
 
   /* Optional arguments for the dictionary */
   // FIXME: reduce number of calls to PyDict_GetItemString
-  // for integers, do the same but with int val = (int) PyInt_AsLong(pyObj_val);
 
   /* Options */
   if ( PyDict_GetItemString(dict, "r0") != NULL ) {
@@ -79,6 +78,12 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   }
   if ( PyDict_GetItemString(dict, "use_spins") != NULL ) { 
     EOBPars->use_spins = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_spins"));
+  }
+  if ( PyDict_GetItemString(dict, "use_tidal") != NULL ) { 
+    EOBPars->use_tidal = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_tidal"));
+  }
+  if ( PyDict_GetItemString(dict, "use_tidal_gravitomagnetic") != NULL ) { 
+    EOBPars->use_tidal_gravitomagnetic = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_tidal_gravitomagnetic"));
   }
   if ( PyDict_GetItemString(dict, "use_Yagi_fits") != NULL ) { 
     EOBPars->use_Yagi_fits = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_Yagi_fits"));
@@ -98,8 +103,20 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "dt_interp") != NULL ) { 
     EOBPars->dt_interp = PyFloat_AsDouble(PyDict_GetItemString(dict, "dt_interp"));
   }
+  if ( PyDict_GetItemString(dict, "dt") != NULL ) { 
+    EOBPars->dt = PyFloat_AsDouble(PyDict_GetItemString(dict, "dt"));
+  }
   if ( PyDict_GetItemString(dict, "srate_interp") != NULL ) { 
     EOBPars->srate_interp = PyFloat_AsDouble(PyDict_GetItemString(dict, "srate_interp"));
+  }
+  if ( PyDict_GetItemString(dict, "srate") != NULL ) { 
+    EOBPars->srate = PyFloat_AsDouble(PyDict_GetItemString(dict, "srate"));
+  }
+  if ( PyDict_GetItemString(dict, "size") != NULL ) { 
+    EOBPars->size = (int) PyInt_AsLong(PyDict_GetItemString(dict, "size"));
+  }
+  if ( PyDict_GetItemString(dict, "ringdown_extend_array") != NULL ) { 
+    EOBPars->ringdown_extend_array = (int) PyInt_AsLong(PyDict_GetItemString(dict, "ringdown_extend_array"));
   }
 
   /* Extrinsic */
@@ -133,37 +150,83 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
     EOBPars->postadiabatic_dynamics_rmin = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin"));
   }
 
-  /* options yet to add
+  /* rc and flm */
+  if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 
+    EOBPars->centrifugal_radius = (int) PyInt_AsLong(PyDict_GetItemString(dict, "centrifugal_radius"));
+  }
+  if ( PyDict_GetItemString(dict, "use_flm") != NULL ) { 
+    EOBPars->use_flm = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_flm"));
+  }
 
-  eobp->centrifugal_radius=CENTRAD_LO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
+  /* NQC */
+  if ( PyDict_GetItemString(dict, "nqc") != NULL ) { 
+    EOBPars->nqc = (int) PyInt_AsLong(PyDict_GetItemString(dict, "nqc"));
+  }
+  if ( PyDict_GetItemString(dict, "nqc_coefs_flx") != NULL ) { 
+    EOBPars->nqc_coefs_flx = (int) PyInt_AsLong(PyDict_GetItemString(dict, "nqc_coefs_flx"));
+  }
+  if ( PyDict_GetItemString(dict, "nqc_coefs_hlm") != NULL ) { 
+    EOBPars->nqc_coefs_hlm = (int) PyInt_AsLong(PyDict_GetItemString(dict, "nqc_coefs_hlm"));
+  }
+
+
+  /* LR and LSO */
+  if ( PyDict_GetItemString(dict, "compute_LR") != NULL ) { 
+    EOBPars->compute_LR = (int) PyInt_AsLong(PyDict_GetItemString(dict, "compute_LR"));
+  }
+  if ( PyDict_GetItemString(dict, "compute_LR_guess") != NULL ) { 
+    EOBPars->compute_LR_guess = PyFloat_AsDouble(PyDict_GetItemString(dict, "compute_LR_guess"));
+  }
+  if ( PyDict_GetItemString(dict, "compute_LSO") != NULL ) { 
+    EOBPars->compute_LSO = (int) PyInt_AsLong(PyDict_GetItemString(dict, "compute_LSO"));
+  }
+  if ( PyDict_GetItemString(dict, "compute_LSO_guess") != NULL ) { 
+    EOBPars->compute_LSO_guess = PyFloat_AsDouble(PyDict_GetItemString(dict, "compute_LSO_guess"));
+  }
   
-  eobp->compute_LR=0; // calculate LR ?
-  eobp->compute_LSO=0; // calculate LSO ?
-  eobp->compute_LR_guess=3.;
-  eobp->compute_LSO_guess=6.;
+  /* Output */
+  if ( PyDict_GetItemString(dict, "output_hpc") != NULL ) { 
+    EOBPars->output_hpc = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_hpc"));
+  }
+  if ( PyDict_GetItemString(dict, "output_multipoles") != NULL ) { 
+    EOBPars->output_multipoles = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_multipoles"));
+  }
+  if ( PyDict_GetItemString(dict, "output_dynamics") != NULL ) { 
+    EOBPars->output_dynamics = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_dynamics"));
+  }
+  if ( PyDict_GetItemString(dict, "output_nqc") != NULL ) { 
+    EOBPars->output_dynamics = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_dynamics"));
+  }
+  if ( PyDict_GetItemString(dict, "output_nqc") != NULL ) { 
+    EOBPars->output_nqc = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_nqc"));
+  }
+  if ( PyDict_GetItemString(dict, "output_nqc_coefs") != NULL ) { 
+    EOBPars->output_nqc_coefs = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_nqc_coefs"));
+  }
+  if ( PyDict_GetItemString(dict, "output_ringdown") != NULL ) { 
+    EOBPars->output_ringdown = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_ringdown"));
+  }
 
-  eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
-  eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
-  eobp->nqc_coefs_hlm=NQC_HLM_NONE; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
-  eobp->output_hpc= 0; // output h+,hx
-  eobp->output_multipoles= 0; // output multipoles
-  eobp->output_dynamics=0; // output dynamics
-  eobp->output_nqc=0; // output NQC waveform
-  eobp->output_nqc_coefs=0; // output multipolar NQC coefs (if determined)
-  eobp->output_ringdown=0; // output ringdown waveform
-  eobp->srate=4096.; // sampling rate, used if input is given in physical unit, reset based on tstep otherwise
-  eobp->dt=0.5; // timestep, used if input is given in geometric unit, reset based on srate otherwise
-  eobp->size=1; // size of the arrays (chunks, dynamically extended)
-  eobp->ringdown_extend_array=500; // grid points to extend arrays for ringdown attachment
-  eobp->ode_timestep=ODE_TSTEP_UNIFORM; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
-  eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
-  eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
-  eobp->ode_tmax=2e8; // max integration time
-  eobp->ode_stop_radius=2.; // stop ODE integration at this radius (if > 0)
-  eobp->ode_stop_afterNdt=4; // stop ODE N iters after the Omega peak
+  /* ODE */
 
-  */
+  if ( PyDict_GetItemString(dict, "ode_timestep") != NULL ) { 
+    EOBPars->ode_timestep = (int) PyInt_AsLong(PyDict_GetItemString(dict, "ode_timestep"));
+  }
+  if ( PyDict_GetItemString(dict, "ode_abstol") != NULL ) { 
+    EOBPars->ode_abstol = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_abstol"));
+  }
+  if ( PyDict_GetItemString(dict, "ode_reltol") != NULL ) { 
+    EOBPars->ode_reltol = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_reltol"));
+  }
+  if ( PyDict_GetItemString(dict, "ode_tmax") != NULL ) { 
+    EOBPars->ode_tmax = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_tmax"));
+  }
+  if ( PyDict_GetItemString(dict, "ode_stop_radius") != NULL ) { 
+    EOBPars->ode_stop_radius = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_stop_radius"));
+  }
+  if ( PyDict_GetItemString(dict, "ode_stop_afterNdt") != NULL ) { 
+    EOBPars->ode_stop_afterNdt = (int) PyInt_AsLong(PyDict_GetItemString(dict, "ode_stop_afterNdt"));
+  }
 
   eob_set_params_EOBRun(default_choice, fc); 
   EOBRunTD(&hpc, default_choice, fc);
