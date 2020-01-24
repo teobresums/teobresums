@@ -65,13 +65,44 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
 
   /* Optional arguments for the dictionary */
   // FIXME: reduce number of calls to PyDict_GetItemString
-  
+  // for integers, do the same but with int val = (int) PyInt_AsLong(pyObj_val);
+
+  /* Options */
   if ( PyDict_GetItemString(dict, "r0") != NULL ) {
     EOBPars->r0 = PyFloat_AsDouble(PyDict_GetItemString(dict, "r0"));
   }
-  if ( PyDict_GetItemString(dict, "initial_frequency") != NULL ) {
+  if ( PyDict_GetItemString(dict, "initial_frequency") != NULL ) { 
     EOBPars->initial_frequency = PyFloat_AsDouble(PyDict_GetItemString(dict, "initial_frequency"));
   }
+  if ( PyDict_GetItemString(dict, "use_geometric_units") != NULL ) { 
+    EOBPars->use_geometric_units = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_geometric_units"));
+  }
+  if ( PyDict_GetItemString(dict, "use_spins") != NULL ) { 
+    EOBPars->use_spins = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_spins"));
+  }
+  if ( PyDict_GetItemString(dict, "use_Yagi_fits") != NULL ) { 
+    EOBPars->use_Yagi_fits = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_Yagi_fits"));
+  }
+  if ( PyDict_GetItemString(dict, "use_speedytail") != NULL ) { 
+    EOBPars->use_speedytail = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_speedytail"));
+  }
+  if ( PyDict_GetItemString(dict, "interp_uniform_grid") != NULL ) { 
+    EOBPars->interp_uniform_grid = (int) PyInt_AsLong(PyDict_GetItemString(dict, "interp_uniform_grid"));
+  }
+  if ( PyDict_GetItemString(dict, "pGSF_tidal") != NULL ) { 
+    EOBPars->pGSF_tidal = PyFloat_AsDouble(PyDict_GetItemString(dict, "pGSF_tidal"));
+  }
+  if ( PyDict_GetItemString(dict, "dt_merger_interp") != NULL ) { 
+    EOBPars->dt_merger_interp = PyFloat_AsDouble(PyDict_GetItemString(dict, "dt_merger_interp"));
+  }
+  if ( PyDict_GetItemString(dict, "dt_interp") != NULL ) { 
+    EOBPars->dt_interp = PyFloat_AsDouble(PyDict_GetItemString(dict, "dt_interp"));
+  }
+  if ( PyDict_GetItemString(dict, "srate_interp") != NULL ) { 
+    EOBPars->srate_interp = PyFloat_AsDouble(PyDict_GetItemString(dict, "srate_interp"));
+  }
+
+  /* Extrinsic */
   if ( PyDict_GetItemString(dict, "distance") != NULL ) {
     EOBPars->distance = PyFloat_AsDouble(PyDict_GetItemString(dict, "distance"));
   }
@@ -84,6 +115,55 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "coalescence_angle") != NULL ) {
     EOBPars->coalescence_angle = PyFloat_AsDouble(PyDict_GetItemString(dict, "coalescence_angle"));
   }
+
+  /* Post Adiabatic Dynamics */
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics") != NULL ) { 
+    EOBPars->postadiabatic_dynamics = (int) PyInt_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_N") != NULL ) { 
+    EOBPars->postadiabatic_dynamics_N = (int) PyInt_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_N"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_size") != NULL ) { 
+    EOBPars->postadiabatic_dynamics_size = (int) PyInt_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_size"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_stop") != NULL ) { 
+    EOBPars->postadiabatic_dynamics_stop = (int) PyInt_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_stop"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin") != NULL ) {
+    EOBPars->postadiabatic_dynamics_rmin = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin"));
+  }
+
+  /* options yet to add
+
+  eobp->centrifugal_radius=CENTRAD_LO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
+  
+  eobp->compute_LR=0; // calculate LR ?
+  eobp->compute_LSO=0; // calculate LSO ?
+  eobp->compute_LR_guess=3.;
+  eobp->compute_LSO_guess=6.;
+
+  eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
+  eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
+  eobp->nqc_coefs_hlm=NQC_HLM_NONE; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+  eobp->output_hpc= 0; // output h+,hx
+  eobp->output_multipoles= 0; // output multipoles
+  eobp->output_dynamics=0; // output dynamics
+  eobp->output_nqc=0; // output NQC waveform
+  eobp->output_nqc_coefs=0; // output multipolar NQC coefs (if determined)
+  eobp->output_ringdown=0; // output ringdown waveform
+  eobp->srate=4096.; // sampling rate, used if input is given in physical unit, reset based on tstep otherwise
+  eobp->dt=0.5; // timestep, used if input is given in geometric unit, reset based on srate otherwise
+  eobp->size=1; // size of the arrays (chunks, dynamically extended)
+  eobp->ringdown_extend_array=500; // grid points to extend arrays for ringdown attachment
+  eobp->ode_timestep=ODE_TSTEP_UNIFORM; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
+  eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
+  eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
+  eobp->ode_tmax=2e8; // max integration time
+  eobp->ode_stop_radius=2.; // stop ODE integration at this radius (if > 0)
+  eobp->ode_stop_afterNdt=4; // stop ODE N iters after the Omega peak
+
+  */
 
   eob_set_params_EOBRun(default_choice, fc); 
   EOBRunTD(&hpc, default_choice, fc);
@@ -110,6 +190,7 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   memcpy(phc, hpc->imag, hpc->size * sizeof(double));
 
   Waveform_free (hpc); /* Free C memory */
+  EOBParameters_free (EOBPars);
 
   return Py_BuildValue("OOO", pto, phpo, phco);  /* This also works, maybe better for multiple outputs? */
 }
