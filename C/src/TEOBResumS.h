@@ -343,6 +343,13 @@ enum{
 };
 static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "fromfile", "compute"};
 
+enum { 
+  FIRSTCALL_EOBWAVFLMV1, 
+  FIRSTCALL_EOBWAVFLMHM, 
+  FIRSTCALL_EOBDYNSGS, 
+  NFIRSTCALL
+};
+
 /** Waveform data type */
 typedef struct tagWaveform
 {
@@ -470,6 +477,8 @@ typedef struct tagEOBParameters
   int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
 
   int openmp_threads, openmp_timeron;
+
+  int firstcall[NFIRSTCALL];
   
 } EOBParameters;
 

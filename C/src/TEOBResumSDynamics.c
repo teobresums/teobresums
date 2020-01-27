@@ -340,9 +340,9 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar,
   static double cs10,cs20,cs30,cs40,cs02,cs12,cs04;
 
   /* Compute the nu-dep. coefficient at first call only */
-  static int firstcall = 1;  
-  if (firstcall) {
-    firstcall = 0;      
+  //static int firstcall = 1;  
+  if (EOBPars->firstcall[FIRSTCALL_EOBDYNSGS]) {
+    EOBPars->firstcall[FIRSTCALL_EOBDYNSGS] = 0;      
     double nu2   = nu*nu;
     /* coefficients of hat{GS} */
     c10 =  5./16.*nu;

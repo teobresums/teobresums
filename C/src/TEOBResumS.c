@@ -90,8 +90,12 @@ int main (int argc, char* argv[]) {
   output = 1;
   system_mkdir(EOBPars->output_dir);
   //par_db_write_file("params.txt");
+  }  
+
+  /* set all firstcalls = 1 */
+  for (int k; k < NFIRSTCALL; k++){ 
+    EOBPars->firstcall[k] = 1;
   }
-  
 
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = EOBPars->M; /* Msun */ 
@@ -823,7 +827,9 @@ int main (int argc, char* argv[]) {
 
 /** TEOBResumS v2.* main */
 
-int main (int argc, char* argv[]){    
+int main (int argc, char* argv[]){   
+  
+  PRSECTN("Running with EOBRunTD ...");
   
   Waveform *hpc; 
   
@@ -847,6 +853,11 @@ int main (int argc, char* argv[]){
 
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
+  }
+
+  /* set all firstcalls = 1 */
+  for (int k; k < NFIRSTCALL; k++){ 
+    EOBPars->firstcall[k] = 1;
   }
 
   eob_set_params_EOBRun(dc, fc); 

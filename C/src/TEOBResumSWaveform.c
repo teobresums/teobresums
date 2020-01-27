@@ -391,10 +391,10 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
   const double nu4 = nu*nu3;
   const double Pi2 = SQ(Pi);
   
-  static int firstcall = 1;
-  if (firstcall) {
+  //static int firstcall = 1;
+  if (EOBPars->firstcall[FIRSTCALL_EOBWAVFLMV1]) {
     if (0) printf("Precompute some rholm coefs\n");
-    firstcall = 0;
+    EOBPars->firstcall[FIRSTCALL_EOBWAVFLMV1] = 0;
     
     for (int k=0; k<KMAX; k++) clm[k][0] = 1.;
     for (int k=0; k<KMAX; k++) for (int n=1; n<6; n++) clm[k][n] = 0.;
@@ -706,10 +706,10 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
   const double nu4 = nu*nu3;
   const double Pi2 = SQ(Pi);
   
-  static int firstcall = 1;
-  if (firstcall) {
+  //static int firstcall = 1;
+  if (EOBPars->firstcall[FIRSTCALL_EOBWAVFLMHM]) {
     if (0) printf("Precompute some rholm coefs\n");
-    firstcall = 0;
+    EOBPars->firstcall[FIRSTCALL_EOBWAVFLMHM] = 0;
     
     for (int k=0; k<KMAX; k++) clm[k][0] = 1.;
     for (int k=0; k<KMAX; k++) for (int n=1; n<7; n++) clm[k][n] = 0.;
@@ -2696,8 +2696,8 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   for (int k = 0; k < KMAX; k++) {
     for (int j = size-1; j-- ; ) {  
       if (t_lm[k][j] < tmatch[k]) {
-	idx[k] = j - 1;
-	break;
+	      idx[k] = j - 1;
+	      break;
       }
     }
   }
