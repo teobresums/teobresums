@@ -89,7 +89,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->coalescence_angle = 0.;
   eobp->polarization = 0.;
 
-  eobp->r0 = 0;
+  eobp->r0 = 0.;
   eobp->initial_frequency = 0.004;
 
   //tides = "no" 
@@ -166,11 +166,11 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->dt=0.5; // timestep, used if input is given in geometric unit, reset based on srate otherwise
   eobp->size=1; // size of the arrays (chunks, dynamically extended)
   eobp->ringdown_extend_array=500; // grid points to extend arrays for ringdown attachment
-  eobp->ode_timestep=ODE_TSTEP_UNIFORM; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
+  eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
   eobp->ode_tmax=2e8; // max integration time
-  eobp->ode_stop_radius=2.; // stop ODE integration at this radius (if > 0)
+  eobp->ode_stop_radius=1.; // stop ODE integration at this radius (if > 0)
   eobp->ode_stop_afterNdt=4; // stop ODE N iters after the Omega peak
   
   /* OMP settings */
@@ -245,10 +245,18 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_flm = USEFLM_SSLO;
     eobp->use_tidal=TIDES_OFF;
     eobp->use_tidal_gravitomagnetic=TIDES_GM_OFF;
+    eobp->use_spins=1;
+
 
     eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_flx=NQC_FLX_NRFIT_NOSPIN201602; // {"none", "nrfit_nospin20160209", "fromfile"}
     eobp->nqc_coefs_hlm=NQC_HLM_NRFIT_NOSPIN201602; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+
+    eobp->postadiabatic_dynamics = 1;
+    eobp->postadiabatic_dynamics_N = 8;
+    eobp->postadiabatic_dynamics_size = 800;
+    eobp->postadiabatic_dynamics_rmin = 14.;
+    eobp->postadiabatic_dynamics_stop = 0;
   }
   else if (choose == DEFAULT_PARS_BNS) {
 
@@ -1238,11 +1246,11 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
       EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
       if (usespins) {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+	      EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+	      EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
       } else {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN201602;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN201602;
+	      EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN201602;
+	      EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN201602;
       }
     }
   } 

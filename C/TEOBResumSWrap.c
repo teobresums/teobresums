@@ -63,6 +63,7 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
   EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
 
+  if (EOBPars-> chi1 > 1e-3 || EOBPars->chi2 > 1e-3) EOBPars->use_spins=1;
   /* Optional arguments for the dictionary */
   // FIXME: reduce number of calls to PyDict_GetItemString
 
