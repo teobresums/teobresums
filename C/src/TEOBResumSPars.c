@@ -106,7 +106,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_Yagi_fits = 0;
   eobp->pGSF_tidal =4.0;// p-power in GSF tidal potential model
 
-  eobp->use_spins=0; // use spins ?
+  eobp->use_spins=1; // use spins ?
 
   /* options */
 
@@ -120,18 +120,18 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->dt_interp = 0.5;
   eobp->srate_interp = 4096.;
 
-  int hlm[] = {-1};      //indexes of multipoles to use
+  int hlm[] = {1};      //indexes of multipoles to use
   eobp->use_mode_lm_size = 1;
   eobp->use_mode_lm = malloc (eobp->use_mode_lm_size * sizeof(int) );
   memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
 
   /* EOB Settings */
   
-  eobp->postadiabatic_dynamics=0;
+  eobp->postadiabatic_dynamics=1;
   eobp->postadiabatic_dynamics_N=8; // post-adiabatic order
-  eobp->postadiabatic_dynamics_size=1000; // grid size 
+  eobp->postadiabatic_dynamics_size=800; // grid size 
   eobp->postadiabatic_dynamics_rmin=14.; // minimum radius (end of PA dynamics)
-  eobp->postadiabatic_dynamics_stop=1; // stop after post-adiabatic dynamics //FIXME: make bool
+  eobp->postadiabatic_dynamics_stop=0; // stop after post-adiabatic dynamics //FIXME: make bool
 
   eobp->centrifugal_radius=CENTRAD_LO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
@@ -156,7 +156,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->output_nqc_coefs=0; // output multipolar NQC coefs (if determined)
   eobp->output_ringdown=0; // output ringdown waveform
   
-  int klm[] = {-1};      //indexes of multipoles to ouput
+  int klm[] = {1};      //indexes of multipoles to ouput
   eobp->output_lm_size = 1;
   eobp->output_lm = malloc (eobp->output_lm_size * sizeof(int) );
   memcpy(eobp->output_lm, klm, eobp->output_lm_size * sizeof(int));
@@ -176,7 +176,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   /* OMP settings */
   eobp->openmp_threads=1; // OpenMP threads
   eobp->openmp_timeron=0; // OpenMP timers
-  
+
 
   /* following pars are set later by the code */
   // TODO: they will be removed from the db and only kept in EOBParameters
@@ -245,30 +245,18 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_flm = USEFLM_SSLO;
     eobp->use_tidal=TIDES_OFF;
     eobp->use_tidal_gravitomagnetic=TIDES_GM_OFF;
-    eobp->use_spins=1;
-
 
     eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_flx=NQC_FLX_NRFIT_NOSPIN201602; // {"none", "nrfit_nospin20160209", "fromfile"}
     eobp->nqc_coefs_hlm=NQC_HLM_NRFIT_NOSPIN201602; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
-
-    eobp->postadiabatic_dynamics = 1;
-    eobp->postadiabatic_dynamics_N = 8;
-    eobp->postadiabatic_dynamics_size = 800;
-    eobp->postadiabatic_dynamics_rmin = 14.;
-    eobp->postadiabatic_dynamics_stop = 0;
+     
   }
   else if (choose == DEFAULT_PARS_BNS) {
 
     eobp->use_tidal=TIDES_TEOBRESUM3;
-    eobp->use_tidal_gravitomagnetic=TIDES_GM_GSF;
+    eobp->use_tidal_gravitomagnetic=TIDES_GM_PN;
     eobp->pGSF_tidal = 4.0;
     eobp->use_Yagi_fits = 1;
-    eobp->postadiabatic_dynamics = 1;
-    eobp->postadiabatic_dynamics_N = 8;
-    eobp->postadiabatic_dynamics_size = 800;
-    eobp->postadiabatic_dynamics_rmin = 14.;
-    eobp->postadiabatic_dynamics_stop = 0;
 
     eobp->centrifugal_radius = CENTRAD_NNLO;
     eobp->use_flm = USEFLM_SSNLO;
