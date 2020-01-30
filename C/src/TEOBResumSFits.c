@@ -81,16 +81,17 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
   const double a04 = a03*a0;
   
   /* Equal-mass, equal-spin coefficients */
-  const double p0 =  46.323097;
-  const double n1 =  -1.418623;
-  const double n2 =   0.457118;
-  const double n3 =   0.000435;
-  const double n4 =   0.097791;
-  const double d1 =  -0.519003;
-	  
+  const double p0 =  45.235903;//46.323097;
+  const double n1 =  -1.688708;//-1.418623;
+  const double n2 =   0.787959;//0.457118;
+  const double n3 =  -0.018080;//0.000435;
+  const double n4 =   -0.001906;//0.097791;
+  const double d1 =  -0.751479;//-0.519003;
+		  
   /* Other coefficients */
-  const double p1 =   46.2914;
-  const double p2 = -103.0997;
+  const double p1 =  47.3756;// 46.2914;
+  const double p2 = -36.1964;//-103.0997;
+	
   
   const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
     + p1*nu*X12*a0 + p2*nu2*(a1 - a2);
@@ -298,6 +299,7 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
   const double aK4  = aK2*aK2;
   const double a12  = X1*chi1 - X2*chi2;
   const double Shat = 0.5*(aK + a12*X12);
+  const double Shat2 = Shat*Shat;
 
   double pA[5], pdA[5], pomg[5], pdomg[5];
   double c_p1,     c_p2,     c_p3,   c_p4;
@@ -305,48 +307,48 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
   double c_pdomg1, c_pdomg2;
   double n0, d1;
 
-  double a0_omg_tmp, a1_omg_tmp, a2_omg_tmp, b0_omg_tmp, b1_omg_tmp, b2_omg_tmp, c11_omg_tmp, c12_omg_tmp, c21_omg_tmp, c22_omg_tmp, c31_omg_tmp, c32_omg_tmp;
-  double a0_domg_tmp, a1_domg_tmp, a2_domg_tmp, b1_domg_tmp, b2_domg_tmp, c1_domg_tmp, c2_domg_tmp;
-  double scale, a0_A_tmp, a1_A_tmp , a2_A_tmp, b0_A_tmp, b1_A_tmp, b2_A_tmp, c11_A_tmp, c12_A_tmp, c21_A_tmp, c22_A_tmp, c31_A_tmp, c32_A_tmp;
-  double a0_dA_tmp, a1_dA_tmp, a2_dA_tmp, b1_dA_tmp, b2_dA_tmp, c1_dA_tmp, c2_dA_tmp;
+  double a0_omg_tmp, a1_omg_tmp, a2_omg_tmp, b0_omg_tmp, b1_omg_tmp, b2_omg_tmp, b3_omg_tmp, c11_omg_tmp, c12_omg_tmp, c21_omg_tmp, c22_omg_tmp, c31_omg_tmp, c32_omg_tmp;
+  double a0_domg_tmp, a1_domg_tmp, a2_domg_tmp, b1_domg_tmp, b2_domg_tmp, b3_domg_tmp, b4_domg_tmp, c1_domg_tmp, c2_domg_tmp;
+  double scale, a0_A_tmp, a1_A_tmp , a2_A_tmp, b0_A_tmp, b1_A_tmp, b2_A_tmp, b3_A_tmp, b4_A_tmp, b5_A_tmp, b6_A_tmp, c11_A_tmp, c12_A_tmp, c21_A_tmp, c22_A_tmp, c31_A_tmp, c32_A_tmp;
+  double a0_dA_tmp, a1_dA_tmp, a2_dA_tmp, b1_dA_tmp, b2_dA_tmp, b3_dA_tmp, c1_dA_tmp, c2_dA_tmp;
   double omg_tmp_nu, omg_tmp_equal, omg_tmp_den, domg_tmp_nu, domg_tmp_equal, A_tmp_scale_nu, A_tmp_scale_equal, A_tmp_scale_den, dA_tmp_scale_nu, dA_tmp_scale_equal;
 
   double p1[2], p2[2], p3[2], p4[2]; 
   double pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
 
-      
+  /* l=2, m=2 */
   if (DEQUAL(nu,0.25,1e-9)) {
-
+	    
     pA[0]    =  0.00178195;
     pA[1]    =  0.00435589;
     pA[2]    =  0.00344489;
     pA[3]    = -0.00076165;
     pA[4]    =  0.31973334;
-    *A_tmp   =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[3]*aK     + pA[4];
-      
+    A_tmp[1] =  pA[0]*aK4    + pA[1]*aK3   + pA[2]*aK2    + pA[3]*aK     + pA[4];
+	      
     pdA[0]   =  0.00000927;
     pdA[1]   = -0.00024550;
     pdA[2]   =  0.00012469;
     pdA[3]   =  0.00123845;
     pdA[4]   = -0.00195014;
-    *dA_tmp  =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[3]*aK   + pdA[4];
-    
+    dA_tmp[1] =  pdA[0]*aK4   + pdA[1]*aK3   + pdA[2]*aK2   + pdA[3]*aK   + pdA[4];
+	    
     pomg[0]  =  0.00603482;
     pomg[1]  =  0.01604555;
     pomg[2]  =  0.02290799;
     pomg[3]  =  0.07084587;
     pomg[4]  =  0.38321834;
-    *omg_tmp =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[3]*aK  + pomg[4];
-    
+    omg_tmp[1] =  pomg[0]*aK4  + pomg[1]*aK3  + pomg[2]*aK2  + pomg[3]*aK  + pomg[4];
+	    
     pdomg[0]  =  0.00024066;
     pdomg[1]  =  0.00038123;
     pdomg[2]  = -0.00049714;
     pdomg[3]  =  0.00041219;
     pdomg[4]  =  0.01190548;
-    *domg_tmp =  pdomg[0]*aK4 + pdomg[1]*aK3 + pdomg[2]*aK2 + pdomg[3]*aK + pdomg[4];
-    
+    domg_tmp[1] =  pdomg[0]*aK4 + pdomg[1]*aK3 + pdomg[2]*aK2 + pdomg[3]*aK + pdomg[4];
+	    
   }  else if( nu > 0.16) {
-      
+	
     p1[0]      =  0.04680896;
     p1[1]      = -0.00632114;
     p2[0]      =  0.06586192;
@@ -359,8 +361,8 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
     c_p2       =  p2[0]*nu + p2[1];
     c_p3       =  p3[0]*nu + p3[1];
     c_p4       =  p4[0]*nu + p4[1];
-    *A_tmp     =  c_p1*aK3 + c_p2*aK2 + c_p3*aK + c_p4;
-      
+    A_tmp[1]   =  c_p1*aK3 + c_p2*aK2 + c_p3*aK + c_p4;
+	      
     pdA1[0]    = -0.00130824;
     pdA1[1]    =  0.00006202;
     pdA2[0]    =  0.00199855;
@@ -373,26 +375,26 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
     c_pdA2     =  pdA2[0]*nu + pdA2[1];
     c_pdA3     =  pdA3[0]*nu + pdA3[1];
     c_pdA4     =  pdA4[0]*nu + pdA4[1];
-    *dA_tmp    =  c_pdA1*aK3   + c_pdA2*aK2 + c_pdA3*aK+ c_pdA4;
-    
+    dA_tmp[1]  =  c_pdA1*aK3   + c_pdA2*aK2 + c_pdA3*aK+ c_pdA4;
+	    
     pn0[0]     =  0.46908067;
     pn0[1]     =  0.27022141;
     pd1[0]     =  0.64131115;
     pd1[1]     = -0.37878384;
     n0         =  pn0[0]*nu + pn0[1];
     d1         =  pd1[0]*nu + pd1[1];
-    *omg_tmp   =  n0/(1 + d1*aK);
-    
+    omg_tmp[1] =  n0/(1 + d1*aK);
+	    
     ppdomg1[0] =  0.00061175;
     ppdomg1[1] =  0.00074001;
     ppdomg2[0] =  0.02504442;
     ppdomg2[1] =  0.00548217;
     c_pdomg1   =  ppdomg1[0]*nu + ppdomg1[1];
     c_pdomg2   =  ppdomg2[0]*nu + ppdomg2[1];
-    *domg_tmp  =  c_pdomg1*aK   + c_pdomg2;
-  
-    }  else {
-
+    domg_tmp[1] =  c_pdomg1*aK   + c_pdomg2;
+	  
+  }  else {
+	    
     a0_omg_tmp    = 0.285588;
     a1_omg_tmp    = 0.91704;
     a2_omg_tmp    = 1.7912;
@@ -405,12 +407,12 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
     c22_omg_tmp   = -0.312861;
     c31_omg_tmp   = 0.289185;
     c32_omg_tmp   = -0.195838;
-
+	
     omg_tmp_nu    = a0_omg_tmp*(1. + a1_omg_tmp*nu + a2_omg_tmp*nu2);
     omg_tmp_equal = 1. + (b0_omg_tmp + c11_omg_tmp*X12)/(1. + c12_omg_tmp*X12)*Shat + (b1_omg_tmp + c21_omg_tmp*X12)/(1. + c22_omg_tmp*X12)*Shat*Shat;
     omg_tmp_den   = 1. + (b2_omg_tmp + c31_omg_tmp*X12)/(1. + c32_omg_tmp*X12)*Shat;
-    *omg_tmp      = omg_tmp_nu*omg_tmp_equal/omg_tmp_den;
-    
+    omg_tmp[1]    = omg_tmp_nu*omg_tmp_equal/omg_tmp_den;
+	    
     a0_domg_tmp    = 0.00628027;
     a1_domg_tmp    = 2.4351;
     a2_domg_tmp    = 4.4928;
@@ -418,12 +420,12 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
     b2_domg_tmp    = -0.00096073;
     c1_domg_tmp    = -0.000063766;
     c2_domg_tmp    = 0.000513197;
-
+	
     domg_tmp_nu    = a0_domg_tmp*(1. + a1_domg_tmp*nu + a2_domg_tmp*nu2);
     domg_tmp_equal = (b1_domg_tmp + c1_domg_tmp*X12)*Shat
       + (b2_domg_tmp + c2_domg_tmp*X12)*Shat*Shat;
-    *domg_tmp      = domg_tmp_nu + domg_tmp_equal;
-
+    domg_tmp[1]    = domg_tmp_nu + domg_tmp_equal;
+	
     scale       = 1 - (*omg_tmp)*Shat;
     a0_A_tmp 	= 0.294773;
     a1_A_tmp 	= -0.052697;
@@ -435,12 +437,12 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
     c12_A_tmp   = 0.582869;
     c31_A_tmp   = -0.140747;
     c32_A_tmp   = 0.505807;
-    
+	    
     A_tmp_scale_nu    = a0_A_tmp*(1. + a1_A_tmp*nu + a2_A_tmp*nu2)*scale;
     A_tmp_scale_equal = 1. + (b0_A_tmp + c11_A_tmp*X12)/(1. + c12_A_tmp*X12)*Shat + b1_A_tmp*Shat*Shat;
     A_tmp_scale_den   = 1. + (b2_A_tmp + c31_A_tmp*X12)/(1. + c32_A_tmp*X12)*Shat;
-    *A_tmp            = A_tmp_scale_nu*A_tmp_scale_equal/A_tmp_scale_den;
-    
+    A_tmp[1]          = A_tmp_scale_nu*A_tmp_scale_equal/A_tmp_scale_den;
+	    
     scale       = 0.5*(*omg_tmp)/sqrt(6);
     a0_dA_tmp 	= -0.0011936600;
     a1_dA_tmp 	=  2.86637;
@@ -449,13 +451,84 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
     b2_dA_tmp 	= -0.0064409;
     c1_dA_tmp   = -0.015395218;
     c2_dA_tmp   = 0.008732589;
-
+	
     dA_tmp_scale_nu    = a0_dA_tmp*(1. + a1_dA_tmp*nu + a2_dA_tmp*nu2)*scale;
     dA_tmp_scale_equal = (b1_dA_tmp + c1_dA_tmp*X12)*Shat + (b2_dA_tmp + c2_dA_tmp*X12)*Shat*Shat;
-    *dA_tmp            = dA_tmp_scale_nu*dA_tmp_scale_equal;
-
-    }
-
+    dA_tmp[1]          = dA_tmp_scale_nu*dA_tmp_scale_equal;
+	    
+  }
+	
+  /* l=3, m=1 */
+  A_tmp[2]    = 0.00520201*X12*(1 - 4.9441*nu + 8.9339*nu2);
+  dA_tmp[2]   = -0.00043382*(1 - 9.0479*nu + 23.054*nu2)/(1 + 88.626*nu2);
+  omg_tmp[2]  = 0.485186*(1 - 0.4421*nu - 6.8184*nu2);
+  domg_tmp[2] = 0.0673118*(1 + 13.318*nu)/(1 + 70.552*nu);
+	  
+  /* l=3, m=3 */
+  b1_A_tmp = +0.0067063;
+  b2_A_tmp = +4.814781;
+  b3_A_tmp = +0.0111876;
+  b4_A_tmp = -1.079532;
+  b5_A_tmp = +2.967227;
+  b6_A_tmp = -2.571783;
+	  
+  A_tmp[4] = 0.0512928*X12*(1 + 0.09537*nu + 3.7217*nu2);
+  A_tmp[4] += ( (0.0092449444 + b1_A_tmp*nu)/(1 + b2_A_tmp*nu)*a12 + (-0.000087052+b3_A_tmp*nu)/(1 + b4_A_tmp*nu)*SQ(a12))/(1 + (-0.4796687 + b5_A_tmp*nu)/(1 + b6_A_tmp*nu)*a12);
+	
+  b1_dA_tmp = -0.0004671176;
+  b2_dA_tmp = -4.0270198;
+	  
+  dA_tmp[4] = -0.00039568*(1 + 1.0985*nu - 13.458*nu2);
+  dA_tmp[4] += (0.0001415043*Shat + (+0.0001046803 + b1_dA_tmp*nu)/(1 + b2_dA_tmp*nu)*Shat2)/(1-0.422066*Shat);
+	
+  omg_tmp[4] = 0.476647*(1 + 1.0886*nu + 3.0658*nu2)*(1 + (-0.2362713 - 0.085544*nu)*Shat)/(1 + (-0.5828922 - 0.523365*nu)*Shat);        
+	
+  b1_domg_tmp = -0.00045666;
+  b2_domg_tmp = +0.0290846;
+  b3_domg_tmp = -0.00388909;
+  b4_domg_tmp = +0.0087659;
+	
+  domg_tmp[4] = 0.0110394*(1 + 2.7962*nu) + (b1_domg_tmp+b2_domg_tmp*nu)*Shat + (b3_domg_tmp+b4_domg_tmp*nu)*Shat2;
+	  
+  /* l=4, m=1 */
+  A_tmp[5]    = 0.00043987*X12*(1-2.*nu)*(1 - 8.4975*nu + 27.31*nu2)/(1 - 1.2002*nu);
+  dA_tmp[5]   = -0.00001827*(1 - 2.8242*nu - 3.1871*nu2);
+  omg_tmp[5]  = 0.735051*(1 - 8.3628*nu + 20.529*nu2)/(1 - 7.4883*nu + 18.695*nu2);
+  domg_tmp[5] = 0.0739078*(1 + 0.99186*nu - 19.435*nu2);
+	
+  /* l=4, m=4 (only dA) */
+  b1_dA_tmp = -0.000152614*(1. -7.63783*nu + 15.8089*nu2)/(1. - 5.88951*nu + 11.1555*nu2);  
+  b2_dA_tmp = (0.0000376236 - 0.0000645958*nu)/(1. - 2.35613*nu);
+  b3_dA_tmp = (-0.819379    - 298.678*nu)     /(1. - 1063.08*nu);
+  dA_tmp[8] = b1_dA_tmp + b2_dA_tmp*Shat/(1. + b3_dA_tmp*Shat);
+		
+  /* l=5, m=5 */
+  b1_A_tmp = -0.0829447;
+  b2_A_tmp = +8.434479;
+  b3_A_tmp = +1.197758;
+  b4_A_tmp = -0.260704;
+	
+  A_tmp[13] = 0.00516272*X12*(1-2*nu)*(1 - 0.68569*nu + 7.7267*nu2) + 0.034503277967117711167*(0.04402930 + b1_A_tmp*nu)/(1 + b2_A_tmp*nu)*a12/(1 + (-0.5749409+b3_A_tmp*nu)/(1 + b4_A_tmp*nu)*a12);
+	
+  b1_dA_tmp = +0.00171106;
+  b2_dA_tmp = +0.00475246;
+  b3_dA_tmp = +6.508129;
+	  
+  dA_tmp[13] = -0.0000658001*(1 - 3.3212*nu) + 0.034503277967117711167*((0.0002250231 + b1_dA_tmp*nu)*a12 + (0.0002322527 + b2_dA_tmp*nu)*SQ(a12))/(1 + (-0.8223640 + b3_dA_tmp*nu)*a12);
+	
+  b1_omg_tmp = -1.711526;
+  b2_omg_tmp = -1.546737;
+  b3_omg_tmp = -2.023890;
+	
+  omg_tmp[13] =  0.855016*(1 + 1.1639*nu)*(1 + (-0.3577869 + b1_omg_tmp*nu)*Shat + (-0.0627735 + b2_omg_tmp*nu)*Shat2)/(1 + (-0.7053108 + b3_omg_tmp*nu)*Shat);
+	
+  b1_domg_tmp = -0.01040098;
+  b2_domg_tmp = +0.1384369;
+  b3_domg_tmp = -0.03244646;
+  b4_domg_tmp = +0.2250689;
+	  
+  domg_tmp[13] =  0.0178326*(1 + 3.1304*nu) + (b1_domg_tmp + b2_domg_tmp*nu)*Shat + (b3_domg_tmp + b4_domg_tmp*nu)*Shat2;
+	  
 }
 
 /** This function computes the NQC functioning points by evaluating the post-peak template and its dervatives*/
@@ -465,7 +538,7 @@ void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, doub
 			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
   
-  double tau, Mbh2, x, x2, dA_tmp1, dA_tmp2, domg_tmp1, domg_tmp2;
+  double tau, Mbh2, x, x2, dA_tmp1, dA_tmp2, omg_tmp1, omg_tmp2, domg_tmp_n1,domg_tmp_n2,domg_tmp_d1,domg_tmp_d2;
   
   /* the time variable in the post-peak template is given in units of Mbh*/
   tau  = 2./Mbh;
@@ -480,11 +553,15 @@ void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, doub
   
   x        = exp(-c2phi*tau);
   x2       = x*x;
-  *omg_tmp = omega1/Mbh2 - (c1phi*c2phi/Mbh)*(c3phi*x + 2*c4phi*x2)/(1 + c3phi*x + c4phi*x2);
-	
-  domg_tmp1 = (c3phi*x + 4*c4phi*x2)/(1 + c3phi*x + c4phi*x2);
-  domg_tmp2 = (c3phi*x + 2*c4phi*x2)/(1 + c3phi*x + c4phi*x2);
-  *domg_tmp = (c1phi*c2phi*c2phi/Mbh2)*(domg_tmp1 - domg_tmp2*domg_tmp2);
+  omg_tmp1 = c1phi*(-2.*c2phi*c4phi*exp(-2.*c2phi*tau) - c2phi*c3phi*x);
+  omg_tmp2 = 1 + c4phi*exp(-2.*c2phi*tau) + c3phi*x;
+  *omg_tmp = (omg_tmp1/omg_tmp2)/Mbh + omega1/Mbh;
+	  
+  domg_tmp_n1 = c1phi*SQ(-2.*c2phi*c4phi*x2 - c2phi*c3phi*x);
+  domg_tmp_d1 = SQ(1 + c4phi*x2 + c3phi*x);
+  domg_tmp_n2 = c1phi*(4.*SQ(c2phi)*c4phi*x2 + SQ(c2phi)*c3phi*x);
+  domg_tmp_d2 = 1 + c4phi*x2 + c3phi*x;
+  *domg_tmp   = -(domg_tmp_n1/domg_tmp_d1 - domg_tmp_n2/domg_tmp_d2)/Mbh2;
 }
 
 /** Time-shift for NQC */
@@ -544,14 +621,14 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
     Dt_lm[k] = Dt_lm_TP[k] = 0;
   }
 
-  Dt_lm_TP[0]  = 11.7900;
+  Dt_lm_TP[0]  = 11.75925;
   Dt_lm_TP[2]  = 12.9338;
-  Dt_lm_TP[3]  = 9.22687;
-  Dt_lm_TP[4]  = 3.49238;
+  Dt_lm_TP[3]  = 9.16665;
+  Dt_lm_TP[4]  = 3.42593;
   Dt_lm_TP[5]  = 13.1116;
-  Dt_lm_TP[6]  = 11.9225;
-  Dt_lm_TP[7]  = 9.59669;
-  Dt_lm_TP[8]  = 5.28280;
+  Dt_lm_TP[6]  = 11.66665;
+  Dt_lm_TP[7]  = 9.53705;
+  Dt_lm_TP[8]  = 5.27778;
   Dt_lm_TP[13] = 6.561811;
 
   if (!(usespins)) {
@@ -576,7 +653,7 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
     double n1, n2, d1, d2;
 
     /* (l = 2, m = 1) */
-    Dt_21_orb	= (Dt_lm_TP[0]*X12_2 + 4*6.6264*nu)*(1-2.0728*nu*pow(X12_2,1/2));
+    Dt_21_orb	= (Dt_lm_TP[0]*X12_2 + 4*6.6264*nu)*(1-2.0728*nu*X12);
 
     c11Dtlm   = -1976.13; 
     c12Dtlm   = 3719.88;
@@ -648,15 +725,18 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
     Dt_42_orb  = Dt_lm_TP[6]*(1 - 9.8446172795*nu + 23.3229430582*nu2)/(1 - 5.7604819848*nu + 7.1217930024*nu2);
     
     if (nu < 6./25.) {
-      Dt_lm[6] = Dt_42_orb;
+      b1       = 0.;
+      b2       = 0.;
+      b3       = 0.;
+      b4       = 0.;
     } else {
       b1       = +24.604717;
       b2       = -0.808279;
       b3       = +62.471781;
       b4       = +48.340961;
-      Dt_42_S  = (1 + (-1.3002045 + b1*nu)/(1 + b2*nu)*Shat)/(1 + (-0.9494348+b3*nu)/(1+b4*nu)*Shat);
-      Dt_lm[6] = Dt_42_orb*Dt_42_S;
     }
+    Dt_42_S  = (1 + (-1.3002045 + b1*nu)/(1 + b2*nu)*Shat)/(1 + (-0.9494348+b3*nu)/(1+b4*nu)*Shat);
+    Dt_lm[6] = Dt_42_orb*Dt_42_S;
 
     /* (l = 4, m = 3) */
     a1Dt      = -11.2377;
@@ -1093,6 +1173,83 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
   *spin = abh;
 }
 
+/** Final mass fit of Jimenez-Forteza et al. (arxiv 1611.00332) */
+double JimenezFortezaRemnantMass(double nu, double X1, double X2, double chi1, double chi2)
+{
+  const double xnu     = sqrt(1.0-4.0*nu);
+  const double Dchi    = chi1-chi2;
+  const double S       = (X1*X1*chi1+X2*X2*chi2)/(X1*X1+X2*X2);
+	
+  double S2 = S*S;
+  double S3 = S2*S;
+	
+  double Dchi2 = Dchi*Dchi;
+	
+  double nu2 = nu*nu;
+  double nu3 = nu2*nu;
+  double nu4 = nu3*nu;
+	  
+  /** Coeffcients taken from Table VII, page 13: */ 
+  const double a2      = 0.5610;
+  const double a3      = -0.847;
+  const double a4      = 3.145;
+	
+  /** The functional form is taken from eq. (21), page 14. */
+  double E_rad_spin_zero = a4*nu4 + a3*nu3 + a2*nu2 + (1-2.*sqrt(2)/3.)*nu;
+	
+  /** Coeffcients taken from Table VIII, page 13: */
+  const double b1      = -0.209;
+  const double b2      = -0.197;
+  const double b3      = -0.159;
+  const double b5      = 2.985;
+	 
+  /** Coeffcients taken from Table IX, page 14: */
+  const double f20     = 4.27;
+  const double f30     = 31.09;
+  const double f50     = 1.56735;
+  const double f10     = -0.574752*f20 - 0.280958*f30 + 64.6408*f50 - 88.3165; //1.81
+	
+  /** Coeffcients taken from Table X, page 17: */
+  const double f11     = 15.7;
+  const double f21     = 0.;
+  const double f31     = -243.6;
+  const double f51     = -0.58;
+	  
+  /** Coeffcients evaluated from eq.(24), page 15: */
+  const double f12     = 16. - 16.*f10 - 4.*f11;
+  const double f22     = 16. - 16.*f20 - 4.*f21;
+  const double f32     = 16. - 16.*f30 - 4.*f31;
+  const double f52     = 16. - 16.*f50 - 4.*f51;
+	
+  /** this transformation is given in eq. (9), page 7: */
+  const double b1tot      = b1*(f10 + f11*nu + f12*nu2);
+  const double b2tot      = b2*(f20 + f21*nu + f22*nu2);
+  const double b3tot      = b3*(f30 + f31*nu + f32*nu2);
+  const double b5tot      = b5*(f50 + f51*nu + f52*nu2);
+	  
+  /** The functional form is taken from eq. (22), page 14: */
+  double E_rad_eq_spin = 0.0484161*(0.128*b3tot*S3 + 0.211*b2tot*S2 + 0.346*b1tot*S + 1)/(1 - 0.212*b5tot*S);
+	
+  double E_rad_eq = 0.0484161;
+	  
+  /** These values are taken from Table IV, page 10: */
+  const double d10     = -0.098;
+  const double d11     = -3.23;
+  const double d20     = 0.0112;
+  const double d30     = -0.0198;
+  const double d31     = -4.92;
+	  
+  /** The functional form is taken from eq. (27a-c), page 10: */
+  const double A1      = d10*sqrt(1 - 4.*nu)*nu2*(d11*nu + 1);
+  const double A2      = d20*nu3;
+  const double A3      = d30*sqrt(1-4.*nu)*nu*(d31*nu+1);
+	  
+  /** The functional form is taken from eq. (15), page 9: */
+  double E_rad_uneq_mass = A1*Dchi + A2*Dchi2 + A3*S*Dchi; 
+	
+  return 1 - (E_rad_spin_zero*E_rad_eq_spin/E_rad_eq + E_rad_uneq_mass);
+}
+
 /** Final spin fit of */
 double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2)
 {
@@ -1377,6 +1534,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   const double Sbar2 = SQ(Sbar);
   const double X12_2 = SQ(X12);
   const double aK2   = SQ(aK);
+  const double aeff  = aK + 1./3.*a12*X12;
+  const double aeff2 = SQ(aeff);
+  const double aeff3 = aeff2*aeff;
   
   double c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX], omgmrg[KMAX];
       
@@ -1404,32 +1564,34 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   /* Defining the test-particle data used in the fits of the peak. */
   double ATP[KMAX], omgTP[KMAX];
   
-  ATP[0]    = 0.523877;
+  ATP[0]    = 0.5238781992;
   ATP[1]    = 1.44959;
   ATP[2]    = 0.0623783;
-  ATP[3]    = 0.199020;
-  ATP[4]    = 0.566018;
+  ATP[3]    = 0.1990192432;
+  ATP[4]    = 0.5660165890;
   ATP[5]    = 0.00925061;
-  ATP[6]    = 0.0314270;
-  ATP[7]    = 0.0941576;
-  ATP[8]    = 0.276619;
+  ATP[6]    = 0.0314363901;
+  ATP[7]    = 0.0941569508;
+  ATP[8]    = 0.2766182761;
   ATP[13]   = 0.151492;
-  omgTP[0]  = 0.290672;
+  omgTP[0]  = 0.2906425497;
   omgTP[1]  = 0.273356;
   omgTP[2]  = 0.411755;
-  omgTP[3]  = 0.451817;
-  omgTP[4]  = 0.454622;
+  omgTP[3]  = 0.4516072248;
+  omgTP[4]  = 0.4541278937;
   omgTP[5]  = 0.552201;
-  omgTP[6]  = 0.626030;
-  omgTP[7]  = 0.636870;
-  omgTP[8]  = 0.635415;
+  omgTP[6]  = 0.6175331548;
+  omgTP[7]  = 0.6361300619;
+  omgTP[8]  = 0.6356586393;
   omgTP[13] = 0.818117;
   
   /* If RWZ-normalization is needed. */
+  /*
   for (int k=0; k<KMAX; k++) {
     double l = LINDEX[k];
     ATP[k] = ATP[k]/sqrt((l+2)*(l+1)*l*(l-1));
   }
+  */
       
   if (!(usespins)) {
 
@@ -1608,23 +1770,32 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     omgmrg[0] = omgOrb*omgS;
 
     /* (l=2, m=2)*/
-    omg1      = 0.84074;
-    omg2      = 1.6976;
-    orb       = omgTP[1]*(1+omg1*nu + omg2*nu2);
-	
-    // Equal Mass fit calibrated to the q=1 SXS data
-    b1 	      = -0.42311;
-    b2        = -0.066699;
-    b3        = -0.83053;
-	
-    // Unequal Mass corrections to the q=1 fit based on SXS, BAM and TP data
-    c1        = 0.15873;
-    c2	      = -0.43361;
-    c3        = 0.60589;
-    c4        = -0.71383;
-    num       = 1 + (b1+c1*X12)/(1+c2*X12)*Shat + b2*Shat2;
-    denom     = 1 + (b3+c3*X12)/(1+c4*X12)*Shat;
-    omgmrg[1] = (orb*num/denom);
+    /*
+      omg1      = 0.84074;
+      omg2      = 1.6976;
+      orb       = omgTP[1]*(1+omg1*nu + omg2*nu2);
+		
+      // Equal Mass fit calibrated to the q=1 SXS data
+      b1 	      = -0.42311;
+      b2        = -0.066699;
+      b3        = -0.83053;
+		
+      // Unequal Mass corrections to the q=1 fit based on SXS, BAM and TP data
+      c1        = 0.15873;
+      c2	      = -0.43361;
+      c3        = 0.60589;
+      c4        = -0.71383;
+      num       = 1 + (b1+c1*X12)/(1+c2*X12)*Shat + b2*Shat2;
+      denom     = 1 + (b3+c3*X12)/(1+c4*X12)*Shat;
+      omgmrg[1] = (orb*num/denom);
+    */
+    c2 = -0.122735;
+    c1 = 0.0857478;
+    c4 = -0.0760023;
+    c3 = 0.0826514;
+    omg1 = (c2*SQ(X12) +c1*X12 -0.1416002395)*2.*Shat + 1;
+    omg2 = (c4*SQ(X12) + c3*X12 -0.3484804901)*2.*Shat + 1;
+    omgmrg[1] = (+0.481958619443355*nu2 +0.223976694441952*nu +0.273813064427363)*omg1/omg2;
 
     /* (l=3, m=2)*/
     a1Omg     = -9.13525;
@@ -1650,10 +1821,10 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b1Omg     = -0.406161;
     b2Omg     = -0.0647944;
     b3Omg     = -0.748126;
-    c1Omg     = -0.408045;
-    c2Omg     = 3.83374;
-    c5Omg     = 2.98209;
-    c6Omg     = -3.98242;
+    c1Omg     = 0.85777;
+    c2Omg     = -0.70066;
+    c5Omg     = 2.97025;
+    c6Omg     = -3.96242;
     b1Omg     = (b1Omg + c1Omg*nu)/(1 + c2Omg*nu);
     b3Omg     = (b3Omg + c5Omg*nu)/(1 + c6Omg*nu);
 
@@ -1725,22 +1896,22 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b2Omg     = -0.0985658;
     b3Omg     = -0.0307812;
     b4Omg     = -0.801552;
-    b11Omg    = -3.35206;
-    b12Omg    = 36.529;
-    b13Omg    = -0.921102; 
-    b14Omg    = 6.29655;
-    b21Omg    = 0.546738;
-    b22Omg    = -0.609896; 
-    b23Omg    = 0.287705;
-    b24Omg    = -17.1508;
-    b31Omg    = -0.00075178; 
-    b32Omg    = 0.211898;
-    b33Omg    = -0.935375;
-    b34Omg    = -12.5669; 
-    b41Omg    = 2.83266;
-    b42Omg    = 4.6913;
-    b43Omg    = -6.16042; 
-    b44Omg    = 17.7021;
+    b11Omg    = -0.92902;
+    b12Omg    = 10.86310;
+    b13Omg    = -4.44930;
+    b14Omg    = 3.01808;
+    b21Omg    = 0;
+    b22Omg    = 1.62523;
+    b23Omg    = -7.70486;
+    b24Omg    = 15.06517;
+    b31Omg    = 0;
+    b32Omg    = 0;
+    b33Omg    = 0;
+    b34Omg    = 0;
+    b41Omg    = 0.93790;
+    b42Omg    = 8.36038;
+    b43Omg    = -4.85774;
+    b44Omg    = 4.80446;
     a1Omg     = (b1Omg + b11Omg*nu + b12Omg*nu2)/(1 + b13Omg*nu + b14Omg*nu2);
     a2Omg     = (b2Omg + b21Omg*nu + b22Omg*nu2)/(1 + b23Omg*nu + b24Omg*nu2);
     a3Omg     = (b3Omg + b31Omg*nu + b32Omg*nu2)/(1 + b33Omg*nu + b34Omg*nu2);
@@ -1780,21 +1951,32 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     Amrg[0] = Aorb + Aspin;
     
     /* (l=2, m=2)*/    
-    scale    = 1 - Shat*omgmrg[1];
-    Amax1    = -0.041285;
-    Amax2    = 1.5971;
-    b1Amax   = -0.74124;
-    b2Amax   = -0.088705;
-    b3Amax   = -1.0939;
-    c1Amax   = 0.15372;
-    c2Amax   = 0.32082;
-    c3Amax   = -0.072578;
-    c4Amax   = 0.44091;
-    num_A    = 1 + (b1Amax + c1Amax*X12)/(1 + c2Amax*X12)*Shat + b2Amax*Shat2;
-    denom_A  = 1 + (b3Amax + c3Amax*X12)/(1 + c4Amax*X12)*Shat;
-
-    Aorb     = ATP[1]*(1 + Amax1*nu + Amax2*nu2);
-    Amrg[1]  = nu*Aorb*scale*(num_A/denom_A);
+    /*
+      scale    = 1 - Shat*omgmrg[1];
+      Amax1    = -0.041285;
+      Amax2    = 1.5971;
+      b1Amax   = -0.74124;
+      b2Amax   = -0.088705;
+      b3Amax   = -1.0939;
+      c1Amax   = 0.15372;
+      c2Amax   = 0.32082;
+      c3Amax   = -0.072578;
+      c4Amax   = 0.44091;
+      num_A    = 1 + (b1Amax + c1Amax*X12)/(1 + c2Amax*X12)*Shat + b2Amax*Shat2;
+      denom_A  = 1 + (b3Amax + c3Amax*X12)/(1 + c4Amax*X12)*Shat;
+	
+      Aorb     = ATP[1]*(1 + Amax1*nu + Amax2*nu2);
+      Amrg[1]  = nu*Aorb*scale*(num_A/denom_A);
+    */
+    scale = 1 - 0.5*aeff*omgmrg[1];
+    c4Amax = -0.0820894;
+    c3Amax = 0.176126;
+    c2Amax = -0.150239;
+    c1Amax = 0.20491;    
+    num_A    = (c4Amax*SQ(X12) + c3Amax*X12 - 0.2935238329)*aeff + 1.;
+    denom_A  = 1. + (c2Amax*SQ(X12) + c1Amax*X12 -0.4728707630)*aeff;    
+    Aorb = +1.826573640739664*nu2 + 0.100709438291872*nu + 1.438424467327531;
+    Amrg[1] = Aorb*scale*(num_A/denom_A);
 
     /* (l=3, m=2)*/
     a1      = -6.06831;
@@ -1937,10 +2119,20 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 
     // c3A
     /* (l=2, m=2)*/
-    b1 = 0.1659421;
-    b2 = -0.2560047;
-    b3 = -0.9418946;
-    c3A[k22] = -0.5585 + 0.81196*nu + (-0.398576+b1*X12)*Shat + (0.099805+b2*X12)*Shat2 + (0.72125+b3*X12)*Shat3;
+    /* (l=2, m=2)*/
+    /*
+      b1 = 0.1659421;
+      b2 = -0.2560047;
+      b3 = -0.9418946;
+      c3A[k22] = -0.5585 + 0.81196*nu + (-0.398576+b1*X12)*Shat + (0.099805+b2*X12)*Shat2 + (0.72125+b3*X12)*Shat3;
+    */
+    b1 =  0.0169543;
+    b2 = -0.0799343;
+    b3 = -0.115928;
+    double c3A_nu =  0.8298678603 * nu - 0.5615838975;
+    double c3A_eq =  (b3*X12 + 0.0907476903)*aeff3 + (b2*X12 + 0.0227344099)*aeff2 + (b1*X12 - 0.1994944332)*aeff;
+    c3A[k22]            =  c3A_nu + c3A_eq;
+	    
     /* (l=3, m=3)*/
     b1 = -0.3502608;
     b2 = 1.587606;
@@ -1951,52 +2143,99 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b1 = -9.614738;
     b2 = 122.461125;
     c3A[k44] = -0.41591 + 3.2099*nu + b1*nu*Shat + b2*nu*Shat2;
+
+    /* (l=5, m=5)*/
+    b1 = -7.063079;
+    b2 = +65.464944;
+    b3 = -2.055335;
+    b4 = -0.585373;
+    b5 = -12.631409;
+    b6 = +19.271346;
+    c3A[k55] = b1 + b2*nu + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
     
     // c3phi
-    /* (l=2, m=2)*/
-    b1 = -1.323643;
-    b2 = -3.555007;
-    b3 = 7.011267;
-    b4 = 32.737824;
-    c3phi[k22] = 3.8436 + 0.71565*nu + (+5.12794 + b1*X12)*Shat + (9.9136 + b2*X12)*Shat2 + (-4.1075 + b3*X12)*Shat3 +(-31.5562 + b4*X12)*Shat4;
+    /*
+      b1 = -1.323643;
+      b2 = -3.555007;
+      b3 = 7.011267;
+      b4 = 32.737824;
+      c3phi[k22] = 3.8436 + 0.71565*nu + (+5.12794 + b1*X12)*Shat + (9.9136 + b2*X12)*Shat2 + (-4.1075 + b3*X12)*Shat3 +(-31.5562 + b4*X12)*Shat4;
+    */
+    b1 = -0.462321;
+    b2 = -0.904512;
+    b3 =  0.437747;
+    b4 =  1.8275;
+    double c3phi_nu     =  0.4558467286*nu + 3.8883812141;
+    double c3phi_equal  =  (b4*X12 - 2.0575868122)*16*Shat4 +(b3*X12 - 0.5051534498)*8*Shat3 +(b2*X12 + 2.5742292762)*4*Shat2 +(b1*X12 + 2.5599640181)*2*Shat;
+    c3phi[k22]          = c3phi_nu + c3phi_equal;
 	
     /* (l=3, m=3)*/
     b1 = -0.634377;
     b2 = 5.983525; 
     b3 = -5.881900;
-    c3phi[k33] = 3.0611 - 6.1597*nu + (b1 + b2*X12 + b3*X12_2)*Shat;
+    c3phi[k33] = 3.0611 - 6.1597*nu;// + (b1 + b2*X12 + b3*X12_2)*Shat;
 
     /* (l=4, m=4)*/
     b1 = 7.911653;
     b2 = 21.181688;
-    c3phi[k44] = (3.6662 - 30.072*nu +76.371*nu2)/(1 - 3.5522*nu) + (-4.9184 + b1*X12)*Shat + (-15.6772 + b2*X12)*Shat2;
+    c3phi[k44] = (3.6662 - 30.072*nu +76.371*nu2)/(1 - 3.5522*nu);// + (-4.9184 + b1*X12)*Shat + (-15.6772 + b2*X12)*Shat2;
 
+    /* (l=5, m=5)*/
+    b1 = -1.510167;
+    b2 = +30.569461;
+    b3 = -2.687133;
+    b4 = +4.873750;
+    b5 = -14.629684;
+    b6 = +19.696954;
+    c3phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+	    
     // c4phi
     /* (l=2, m=2)*/
-    b1 = 0.779683;
-    b2 = -0.069638;
-    c4phi[k22] = 1.4736 + 2.2337*nu + (8.26539 + b1*X12)*Shat + (14.2053 + b2*X12)*Shat2;
+    /*
+      b1 = 0.779683;
+      b2 = -0.069638;
+      c4phi[k22] = 1.4736 + 2.2337*nu + (8.26539 + b1*X12)*Shat + (14.2053 + b2*X12)*Shat2;
+    */
+      b1 = -0.449976;
+      b2 = -0.980913;
+      double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
+      double c4phi_equal  =  (b2*X12 + 3.5695199109)*4*Shat2 + (b1*X12 + 4.1312404030)*2*Shat;
+      c4phi[k22]          =  c4phi_nu + c4phi_equal;
 
     /* (l=3, m=3)*/
     b1 = -3.877528;
     b2 = 12.043300; 
     b3 = -6.524665;
-    c4phi[k33] = 1.789 - 5.6684*nu + (b1 + b2*X12 + b3*X12_2)*Shat;
+    c4phi[k33] = 1.789 - 5.6684*nu;// + (b1 + b2*X12 + b3*X12_2)*Shat;
 
     /* (l=4, m=4)*/
     b1 = 11.746452;
     b2 = 34.922883;
-    c4phi[k44] = 0.21595 + 23.216*nu + (-3.4207 + b1*X12)*Shat + (-15.5383 + b2*X12)*Shat2;
-	
+    c4phi[k44] = 0.21595 + 23.216*nu;// + (-3.4207 + b1*X12)*Shat + (-15.5383 + b2*X12)*Shat2;
+
+    /* (l=5, m=5)*/
+    b1 = -1.383721;
+    b2 = +56.871881;
+    b3 = +7.198729;
+    b4 = -3.870998;
+    b5 = -25.992190;
+    b6 = +36.882645;
+    c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
 	
     // These fits are taken from the testparticle limit and approximate the spinning case
     /* (l=3, m=1)*/
-    Amrg[2]   = ATP[2]*X12*(1 - 5.49*nu + 10.915*nu2);
-    omgmrg[2] = omgTP[2]*(1 + 7.5362*nu2)/(1 - 2.7555*nu + 38.572*nu2);
-
+    if (DEQUAL(nu,0.25,1e-9)){
+      Amrg[2]   = 0.;
+      omgmrg[2] = 0.;
+    }
+    else{
+      Amrg[2]   = ATP[2]*X12*(1 - 5.49*nu + 10.915*nu2);
+      omgmrg[2] = omgTP[2]*(1 + 7.5362*nu2)/(1 - 2.7555*nu + 38.572*nu2);
+    }
+	    
     /* (l=4, m=1)*/
-    Amrg[5]   = ATP[5]*X12*(1-2*nu)*(1 - 8.4449*nu + 26.825*nu2)/(1 - 1.2565*nu);
-    omgmrg[5] = omgTP[5]*(1 - 10.876*nu + 37.904*nu2)/(1 - 11.194*nu + 42.77*nu2);
+    Amrg[5]   = 0;//ATP[5]*X12*(1-2*nu)*(1 - 8.4449*nu + 26.825*nu2)/(1 - 1.2565*nu);
+    omgmrg[5] = 0;//omgTP[5]*(1 - 10.876*nu + 37.904*nu2)/(1 - 11.194*nu + 42.77*nu2);
 
     // Postpeak parameter fits
     /* (l=2, m=1)*/
@@ -2046,9 +2285,11 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     c4phi[7] = (2.4966 - 6.2043*nu)/(1 - 252.47*nu4);
 
     /* (l=5, m=5)*/
+    /*
     c3A[13]   = (-0.19751 + 3.607*nu - 14.898*nu2)/(1 - 20.046*nu + 108.42*nu2);
     c3phi[13] = 0.83326 + 10.945*nu;
     c4phi[13] = (0.45082 - 9.5961*nu + 52.88*nu2)/(1 - 19.808*nu + 99.078*nu2);
+    */
   }
   
   if (DEQUAL(nu,0.25,1e-9) && DEQUAL(chi1,chi2,1e-9)){
@@ -2100,9 +2341,22 @@ void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1)
   alpha21[0] = +0.184952*(1 - 1.1329*af - 0.3520*af2 + 0.4924*af3)/(1 - 1.10334*af - 0.3037*af2 + 0.4262*af3);
   
   /* l = 2, m = 2*/
-  omega1[1]  = +0.373672*(1 - 1.5367*af + 0.5503*af2)/(1 - 1.8700*af + 0.9848*af2 - 0.10943*af3);
-  alpha1[1]  = +0.08896*(1 - 1.90036*af + 0.86200*af2 + 0.0384893*af3)/(1 - 1.87933*af + 0.88062*af2);
-  alpha21[1] = +0.184953*(1 - 1.89397*af + 0.88126*af2 + 0.0130256*af3)/(1 - 1.83901*af + 0.84162*af2);
+  /*
+    omega1[1]  = +0.373672*(1 - 1.5367*af + 0.5503*af2)/(1 - 1.8700*af + 0.9848*af2 - 0.10943*af3);
+    alpha1[1]  = +0.08896*(1 - 1.90036*af + 0.86200*af2 + 0.0384893*af3)/(1 - 1.87933*af + 0.88062*af2);
+    alpha21[1] = +0.184953*(1 - 1.89397*af + 0.88126*af2 + 0.0130256*af3)/(1 - 1.83901*af + 0.84162*af2);
+  */
+  double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
+  double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
+  omega1[1] =  0.3736716844*(omega1_c/omega1_d);
+	    
+  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
+  double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
+  alpha1[1] = 0.0889623157 * (alpha1_c/alpha1_d);
+	    
+  double alpha21_c = 0.4764196512*af3 - 0.0593165805*af2 - 1.4168096833*af + 1;
+  double alpha21_d = 0.4385578151*af3 - 0.0763529088*af2 - 1.3595491146*af + 1;
+  alpha21[1] = 0.1849525596*(alpha21_c/alpha21_d);
   
   /* l = 3, m = 1*/
   omega1[2]  = +0.599443*(1 - 0.70941*af - 0.16975*af2 + 0.08559*af3)/(1 - 0.82174*af - 0.16792*af2 + 0.14524*af3);
