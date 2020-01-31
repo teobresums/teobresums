@@ -1301,15 +1301,18 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     eob_wav_hlmNewt = &eob_wav_hlmNewt_HM;
     eob_wav_flm     = &eob_wav_flm_HM;
     eob_wav_flm_s   = &eob_wav_flm_s_HM;
+    eob_wav_deltalm = &eob_wav_deltalm_HM;
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
     eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
     eob_wav_flm     = &eob_wav_flm_v1;
     eob_wav_flm_s   = &eob_wav_flm_s_SSLO;
+    eob_wav_deltalm = &eob_wav_deltalm_v1;
   } else if (EOBPars->use_flm == USEFLM_SSNLO) {
     eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
     eob_wav_flm     = &eob_wav_flm_v1;
     eob_wav_flm_s   = &eob_wav_flm_s_SSNLO;
+    eob_wav_deltalm = &eob_wav_deltalm_v1;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
@@ -1646,15 +1649,18 @@ void eob_set_params(char *s, int n)
     eob_wav_hlmNewt = &eob_wav_hlmNewt_HM;
     eob_wav_flm     = &eob_wav_flm_HM;
     eob_wav_flm_s   = &eob_wav_flm_s_HM;
+    eob_wav_deltalm = &eob_wav_deltalm_HM;
   }  else if ((STREQUAL(par_get_s("use_flm"),"SSLO"))) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
     eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
     eob_wav_flm     = &eob_wav_flm_v1;
     eob_wav_flm_s   = &eob_wav_flm_s_SSLO;
+    eob_wav_deltalm = &eob_wav_deltalm_v1;
   } else {
     eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
     eob_wav_flm     = &eob_wav_flm_v1;
     eob_wav_flm_s   = &eob_wav_flm_s_SSNLO;
+    eob_wav_deltalm = &eob_wav_deltalm_v1;
   }
 
   /** Set rc fun pointer */
@@ -1856,15 +1862,18 @@ void eob_set_params_EOBRun(int default_choice, int firstcall)
     eob_wav_hlmNewt = &eob_wav_hlmNewt_HM;
     eob_wav_flm     = &eob_wav_flm_HM;
     eob_wav_flm_s   = &eob_wav_flm_s_HM;
+    eob_wav_deltalm = &eob_wav_deltalm_HM;
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
     eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
     eob_wav_flm     = &eob_wav_flm_v1;
     eob_wav_flm_s   = &eob_wav_flm_s_SSLO;
+    eob_wav_deltalm = &eob_wav_deltalm_v1;
   } else if (EOBPars->use_flm == USEFLM_SSNLO) {
     eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
     eob_wav_flm     = &eob_wav_flm_v1;
     eob_wav_flm_s   = &eob_wav_flm_s_SSNLO;
+    eob_wav_deltalm = &eob_wav_deltalm_v1;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;

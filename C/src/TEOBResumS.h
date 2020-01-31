@@ -630,6 +630,7 @@ double Yagi14_fit_Chex(double C_Q);
 double JFAPG_fit_Sigma_Irrotational(double barlam2);
 double JFAPG_fit_Sigma_Static(double barlam2);
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);
+double JimenezFortezaRemnantMass(double nu, double X1, double X2, double chi1, double chi2);
 double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2);
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK,
 		     double Mbh, double abh,  
@@ -691,7 +692,9 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
 
 /* TEOBResumSWaveform.c */
 void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm);
-void eob_wav_deltalm(double Hreal,double Omega,double nu, double *dlm);
+void (*eob_wav_deltalm)();
+void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm);
+void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
 void (*eob_wav_hlmNewt)();
