@@ -232,8 +232,12 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
     EOBPars->ode_stop_afterNdt = (int) PyInt_AsLong(PyDict_GetItemString(dict, "ode_stop_afterNdt"));
   }
 
+  if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
+    EOBPars->domain = (int) PyInt_AsLong(PyDict_GetItemString(dict, "domain"));
+  }
+
   eob_set_params_EOBRun(default_choice, fc); 
-  EOBRunTD(&hpc, default_choice, fc);
+  EOBRun(&hpc, default_choice, fc);
   
   /*  Construct the output arrays */
   npy_intp dims[1];
@@ -252,7 +256,8 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   phc = pyvector_to_Carrayptrs(phco);
 
   /* Copy */
-  memcpy(pt,  hpc->time, hpc->size * sizeof(double));
+  if (EOBPars->domain==DOMAIN_TD) memcpy(pt,  hpc->time, hpc->size * sizeof(double));
+  if (EOBPars->domain==DOMAIN_FD) memcpy(pt,  hpc->frequency, hpc->size * sizeof(double));
   memcpy(php, hpc->real, hpc->size * sizeof(double));
   memcpy(phc, hpc->imag, hpc->size * sizeof(double));
 

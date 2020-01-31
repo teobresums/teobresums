@@ -610,11 +610,14 @@ void Waveform_alloc (Waveform **wav, const int size, const char *name)
   (*wav)->ampli = malloc ( size * sizeof(double) );
   (*wav)->phase = malloc ( size * sizeof(double) );
   (*wav)->time =  malloc ( size * sizeof(double) );
+  (*wav)->frequency =  malloc ( size * sizeof(double) );
   memset( (*wav)->real, 0, size * sizeof(double) );
   memset( (*wav)->imag, 0, size * sizeof(double) );
   memset((*wav)->ampli, 0, size * sizeof(double) );
   memset((*wav)->phase, 0, size * sizeof(double) );
   memset( (*wav)->time, 0, size * sizeof(double) );
+  memset( (*wav)->frequency, 0, size * sizeof(double) );
+
   (*wav)->size = size; 
   strcpy((*wav)->name,name);
 }
@@ -626,6 +629,7 @@ void Waveform_push (Waveform **wav, int size)
   if ((*wav)->ampli) (*wav)->ampli = realloc ( (*wav)->ampli, size * sizeof(double) );
   if ((*wav)->phase) (*wav)->phase = realloc ( (*wav)->phase, size * sizeof(double) );
   if ((*wav)->time)  (*wav)->time  = realloc ( (*wav)->time,  size * sizeof(double) );
+  if ((*wav)->frequency)  (*wav)->frequency  = realloc ( (*wav)->frequency,  size * sizeof(double) );
   const int n  = (*wav)->size;
   const int dn = size - (*wav)->size;
   (*wav)->size = size; 
@@ -654,6 +658,30 @@ void Waveform_rmap (Waveform *h, const int mode, const int unw)
     for (int i = 0; i < size; i++)
       h->imag[i] = - h->ampli[i] * sin(h->phase[i]); 
   }
+}
+
+void Vect_Interp (double *y, double *x, const int new_size, const int old_size, const double x0, const double dx )
+{
+
+/* Alloc and init aux memory */  
+double *y_aux = (double*) malloc ( old_size * sizeof(double) );
+double *x_aux = (double*) malloc ( old_size * sizeof(double) );
+memcpy( y_aux, y, old_size * sizeof(double) );
+memcpy( x_aux, x, old_size * sizeof(double) );
+
+/* Realloc */
+free(y);
+free(x);
+y = malloc ( new_size * sizeof(double) );
+x = malloc ( new_size * sizeof(double) );
+
+/*Fill new x array */
+#pragma omp simd
+  for (int i = 0; i < new_size; i++)
+    x[i] = i*dx + x0;
+
+interp_spline_omp(x_aux, y_aux, old_size, x, new_size, y);
+
 }
 
 void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name)
@@ -1316,6 +1344,165 @@ void NQCdata_free (NQCdata *nqc)
   if (nqc->flx) free (nqc->flx);
   if (nqc->hlm) free (nqc->hlm);
   if (nqc)      free (nqc);
+}
+
+/** SPA related stuff */
+void spa(double *F, double *ampf, double *phasef, double *time, double *ampt, double *phaset, int size){
+  
+  /* Compute frequencies */
+  
+  double *Fdot = (double*)malloc(size * sizeof(double));
+
+  D0_x_2(phaset, time, size, F);  //second order for now, fourth eventually
+  D0_x_2(F, time, size, Fdot);
+  
+  for (int i=0; i < size; i++){
+  //PRFORMd("Fdot",Fdot[i]); 
+  //PRFORMd("F", F[i]); 
+    F[i] = F[i]/(2.*Pi);
+    Fdot[i] = Fdot[i]/(Pi*2);
+    phasef[i] = (2 * Pi * F[i] * time[i] - phaset[i]- Pi/4);
+    ampf[i] = ampt[i]/sqrt(Fdot[i]);   
+  }
+  free(Fdot);
+}
+
+/** (h+, hx) polarizations from the multipolar waveform, FD */
+void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
+{  
+    double Y_real[KMAX], Y_imag[KMAX];
+    static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
+    double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
+    double *ampt =  (double*) malloc(hlm->size * sizeof(double));
+    double *phast = (double*) malloc(hlm->size * sizeof(double));
+    double Aki, conv;
+    double sumr, sumi;
+    int activemode[KMAX];
+    double Msun = M;
+    if (!(EOBPars->use_geometric_units)) {
+      Msun = M/MSUN_S;
+      conv = time_units_factor(Msun);
+    }
+
+    //SPA-related arrays
+    double *ampf = (double*) malloc(hlm->size * sizeof(double));
+    double *phif = (double*) malloc(hlm->size * sizeof(double));
+
+    /* 22 only */
+    int k = 1;
+
+    /* Precompute Y22 */
+    spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
+    /* add m<0 mode */
+    if ( (mneg) && (MINDEX[k]!=0) ) spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
+
+    //loop over times
+    for (int i = 0; i < hlm->size; i++) {
+      if (!(EOBPars->use_geometric_units)) hlm->time[i] = hlm->time[i]/conv;
+	    Aki  = amplitude_prefactor * hlm->ampli[k][i];
+      ampt[i] = Aki;
+      phast[i] = hlm->phase[k][i];
+    }
+
+    //Ok, now we have A and phi for the 22 mode in time domain. We need A and psif in FD, and F.
+    spa(hpc->frequency, ampf, phif, hlm->time, ampt, phast, hlm->size);
+
+    // cool, now it's time to add the prefactors that account for the shperical harmonics
+    // note: here we actually pass Re(h+) and Im(h+). It should be possible to obtain hx from h+
+    // through a change of phase (?) and some multiplicative factors in front
+
+    for (int i=0; i < hlm->size; i++){
+        hpc->real[i] = ampf[i]/2. * (cos(phif[i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[i])* (Y_imag[k] - Y_imag_mneg[k]));
+        hpc->imag[i] = ampf[i]/2. * (cos(phif[i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[i])* (Y_real[k] + Y_real_mneg[k]));
+    }
+
+    free(ampt);
+    free(phast);
+    free(ampf);
+    free(phif);
+}
+
+/** (h+, hx) polarizations from the multipolar waveform, FD, all active modes (interpolate after SPA, needed to correctly add modes together) */
+void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
+{  
+    double Y_real[KMAX], Y_imag[KMAX];
+    static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
+    double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
+    double *ampt =  (double*) malloc(hlm->size * sizeof(double));
+    double *phast = (double*) malloc(hlm->size * sizeof(double));
+    double Aki, conv;
+    double sumr, sumi;
+    int activemode[KMAX];
+    set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
+    double Msun = M;
+    if (!(EOBPars->use_geometric_units)) {
+      Msun = M/MSUN_S;
+      conv = time_units_factor(Msun);
+    }
+
+    //SPA-related arrays
+    double **ampf;//[KMAX][hlm->size];
+    double **phif;//[KMAX][hlm->size];
+    double **F;//[KMAX][hlm->size];
+
+    /* Precompute Ylm */
+    for (int k = 0; k < KMAX; k++ ) {
+      if (!activemode[k]) continue;
+      spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
+      /* add m<0 modes */
+      if ( (mneg) && (MINDEX[k]!=0) ) 
+        spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
+      }
+
+    double df = EOBPars->df;
+    double f0 = EOBPars->initial_frequency;
+    double FMmin = f0; //the minimum (over modes) max F. Needed for interpolation!
+    /* loop over modes */
+    for (int k = 0; k < KMAX; k++ ){
+      
+      if (!activemode[k]) continue;
+
+      ampf[k] = (double*) malloc(hlm->size * sizeof(double));
+      phif[k] = (double*) malloc(hlm->size * sizeof(double));
+      F[k] = (double*) malloc(hlm->size * sizeof(double));
+
+      /* loop over times */
+      for (int i = 0; i < hlm->size; i++) {
+        if (!(EOBPars->use_geometric_units)) hlm->time[i] = hlm->time[i]/conv;
+	      ampt[i]  = amplitude_prefactor * hlm->ampli[k][i];
+      }
+      /* Ok, now we have A and phi in time domain. We need A and psif in FD, and F.*/
+      spa(F[k], ampf[k], phif[k], hlm->time, ampt, hlm->phase[k], hlm->size);
+      
+      if ( F[k][hlm->size -1] < FMmin) FMmin = F[k][hlm->size -1];
+
+      }
+
+      /* free some memory*/
+      free(ampt);
+      free(phast);
+
+      int size = floor(fabs(FMmin- f0)/df) +1;
+
+      /* add interpolation of ampf, phif and F here */
+      for (int k=0; k< KMAX; k++){
+        if (!activemode[k]) continue;
+        Vect_Interp (ampf[k], F[k], size, hlm->size, f0, df);
+        Vect_Interp (ampf[k], F[k], size, hlm->size, f0, df);
+
+        /* add the prefactors that account for the shperical harmonics
+        note: here we actually pass Re(h+) and Im(h+). It should be possible to obtain hx from h+
+        through a change of phase/ some multiplicative factors in front */
+        /*FIXME: add (-1)^l factor! recompute and check */
+
+        for (int i=0; i < hlm->size; i++){
+          hpc->real[i] += ampf[k][i] * (cos(phif[k][i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] - Y_imag_mneg[k]));
+          hpc->imag[i] += ampf[k][i] * (cos(phif[k][i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] + Y_real_mneg[k]));
+        }
+        free(ampf[k]);
+        free(phif[k]);
+      }
+      
 }
 
 /** Convert time in sec to dimensionless and mass-rescaled units */

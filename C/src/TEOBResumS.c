@@ -860,10 +860,13 @@ int main (int argc, char* argv[]){
     EOBPars->firstcall[k] = 1;
   }
 
+  /* set domain */
+  EOBPars->domain = DOMAIN_TD;
+
   eob_set_params_EOBRun(dc, fc); 
 
   //for(int i = 0; i < 3; i++){ for loop to test the firstcall flag
-  int status = EOBRunTD(&hpc, 1, fc);        //hpc, default_choice, firstcall
+  int status = EOBRun(&hpc, 1, fc);        //hpc, default_choice, firstcall
   //  fc = 0;
   //}
   if (status) printf("ERROR: %s\n",eob_error_msg[status]);
@@ -898,7 +901,7 @@ int main (int argc, char* argv[]){
  * assumes the EOBPars are allocated and filled.
  */    
 
-int EOBRunTD(Waveform **hpc, int default_choice, int firstcall)
+int EOBRun(Waveform **hpc, int default_choice, int firstcall)
 {
 
   int status = OK;
@@ -1581,56 +1584,74 @@ int EOBRunTD(Waveform **hpc, int default_choice, int firstcall)
 
   /** Computation of (h+,hx) */
 
-  const int interp_uniform_grid = EOBPars->interp_uniform_grid;
+  if (EOBPars->domain == DOMAIN_TD) { 
 
-  if (interp_uniform_grid == INTERP_UNIFORM_GRID_HLM) {
-    /* Interp to uniform grid the multipoles before hpc computation */
-    const double dt_interp = EOBPars->dt_interp;
-    const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
-    Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");  
-    size = size_interp;  
-  }
+    const int interp_uniform_grid = EOBPars->interp_uniform_grid;
 
-  /** Alloc memory for (h+,hx) */
-  Waveform_alloc (hpc, size, "waveform");   
+    if (interp_uniform_grid == INTERP_UNIFORM_GRID_HLM) {
+      /* Interp to uniform grid the multipoles before hpc computation */
+      const double dt_interp = EOBPars->dt_interp;
+      const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
+      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");  
+      size = size_interp;
+    }
+
+    /** Alloc memory for (h+,hx) */
+    Waveform_alloc (hpc, size, "waveform");   
   
-  /* h+, hx */  
-  compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+    /* h+, hx */  
+    compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+        
 
-
-  //SB: the HPC proxied interpolation is not correct, we should remove it.
-  if (interp_uniform_grid == INTERP_UNIFORM_GRID_HPC) {
+    //SB: the HPC proxied interpolation is not correct, we should remove it.
+    //if (interp_uniform_grid == INTERP_UNIFORM_GRID_HPC) {
     /* Interp to uniform grid phase and amplitude of h+, hx  */
-    const double dt_interp_hpc = EOBPars->dt_interp * M;
-    const int size_interp_hpc = get_uniform_size((*hpc)->time[size-1], (*hpc)->time[0], dt_interp_hpc); 
-    Waveform_rmap ((*hpc), 1, 0); /* do not unwrap here ... */
-    unwrap_proxy((*hpc)->phase, hlm->phase[1], (*hpc)->size, 1); /* ... but use phi22 as unwrap proxy */
-    Waveform_interp_ap (*hpc, size_interp_hpc, (*hpc)->time[0], dt_interp_hpc, "waveform_interp");
-    /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */ /* this interp real/imag */
-     if (EOBPars->output_multipoles) {
-       const double dt_interp_hlm = EOBPars->dt_interp;
-       const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
-       Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
-     }
+    //  const double dt_interp_hpc = EOBPars->dt_interp * M;
+    //  const int size_interp_hpc = get_uniform_size((*hpc)->time[size-1], (*hpc)->time[0], dt_interp_hpc); 
+    //  Waveform_rmap ((*hpc), 1, 0); /* do not unwrap here ... */
+    //  unwrap_proxy((*hpc)->phase, hlm->phase[1], (*hpc)->size, 1); /* ... but use phi22 as unwrap proxy */
+    //  Waveform_interp_ap (*hpc, size_interp_hpc, (*hpc)->time[0], dt_interp_hpc, "waveform_interp");
+      /* Waveform_interp (hpc, size_interp_hpc, hpc->time[0], dt_interp_hpc, "waveform_interp"); */ /* this interp real/imag */
+    //  if (EOBPars->output_multipoles) {
+    //    const double dt_interp_hlm = EOBPars->dt_interp;
+    //    const int size_interp_hlm = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp_hlm); 
+    //    Waveform_lm_interp (hlm, size_interp_hlm, hlm->time[0], dt_interp_hlm, "hlm_interp");
+    //  }
+
+    //}
+    
+    /** Output */
+    if (output) {
+      if (EOBPars->output_hpc)        Waveform_output (*hpc);
+      if (EOBPars->output_multipoles) Waveform_lm_output (hlm); 
+      if (EOBPars->output_multipoles) Waveform_lm_output_reim (hlm);
+      if (EOBPars->output_dynamics) {
+        if (interp_uniform_grid) {
+	      /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
+	      const double dt_interp_dyn = EOBPars->dt_interp;
+	      const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
+	      Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
+        }
+      Dynamics_output(dyn);
+      }
+    }
+   
+  } else {
+    /* Frequency domain. For now, 22 only SPA */
+    const int interp_uniform_grid = EOBPars->interp_uniform_grid;
+    if (interp_uniform_grid == INTERP_UNIFORM_GRID_HLM) {
+      /* Interp to uniform grid the multipoles before hpc computation */
+      const double dt_interp = EOBPars->dt_interp;
+      const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
+      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");  
+      size = size_interp;  
+    }
+
+    Waveform_alloc (hpc, size, "waveform");
+
+    compute_hpc_FD_22(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);   
 
   }
-        
-   /** Output */
-   if (output) {
-     if (EOBPars->output_hpc)        Waveform_output (*hpc);
-     if (EOBPars->output_multipoles) Waveform_lm_output (hlm); 
-     if (EOBPars->output_multipoles) Waveform_lm_output_reim (hlm);
-     if (EOBPars->output_dynamics) {
-       if (interp_uniform_grid) {
-	 /* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
-	 const double dt_interp_dyn = EOBPars->dt_interp;
-	 const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
-	 Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
-       }
-       Dynamics_output(dyn);
-     }
-   }
-   
   /* *****************************************
    * Finalize 
    * *****************************************

@@ -77,6 +77,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 {
 
   //TODO this needs a patience filling ...
+  eobp->domain = DOMAIN_TD;
   
   eobp->M = 1.;
   eobp->q = 1.;
@@ -91,6 +92,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
   eobp->r0 = 0.;
   eobp->initial_frequency = 0.004;
+  eobp->df = 1.;
 
   //tides = "no" 
   //tides_gravitomagnetic = "no"
