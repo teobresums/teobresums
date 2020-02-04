@@ -231,9 +231,14 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "ode_stop_afterNdt") != NULL ) { 
     EOBPars->ode_stop_afterNdt = (int) PyInt_AsLong(PyDict_GetItemString(dict, "ode_stop_afterNdt"));
   }
-
-  if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
+    if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
     EOBPars->domain = (int) PyInt_AsLong(PyDict_GetItemString(dict, "domain"));
+  }
+  if ( PyDict_GetItemString(dict, "interp_FD_waveform") != NULL ) { 
+    EOBPars->interp_FD_waveform = (int) PyInt_AsLong(PyDict_GetItemString(dict, "interp_FD_waveform"));
+  }
+  if ( PyDict_GetItemString(dict, "df") != NULL ) { 
+    EOBPars->df = PyFloat_AsDouble(PyDict_GetItemString(dict, "df"));
   }
 
   eob_set_params_EOBRun(default_choice, fc); 
@@ -257,7 +262,7 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
 
   /* Copy */
   if (EOBPars->domain==DOMAIN_TD) memcpy(pt,  hpc->time, hpc->size * sizeof(double));
-  if (EOBPars->domain==DOMAIN_FD) memcpy(pt,  hpc->frequency, hpc->size * sizeof(double));
+  if (!(EOBPars->domain==DOMAIN_TD)) memcpy(pt,  hpc->frequency, hpc->size * sizeof(double));
   memcpy(php, hpc->real, hpc->size * sizeof(double));
   memcpy(phc, hpc->imag, hpc->size * sizeof(double));
 

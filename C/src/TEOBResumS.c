@@ -1648,9 +1648,13 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
     }
 
     Waveform_alloc (hpc, size, "waveform");
-
-    compute_hpc_FD_22(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);   
-
+    if (EOBPars->domain == DOMAIN_FD_22) {
+      compute_hpc_FD_22(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc); 
+    } else if (EOBPars->domain == DOMAIN_FD_HM) {
+      printf("Work in progress!");
+      //compute_hpc_FD_HM(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+    }
+    
   }
   /* *****************************************
    * Finalize 

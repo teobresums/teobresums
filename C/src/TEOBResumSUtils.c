@@ -660,27 +660,41 @@ void Waveform_rmap (Waveform *h, const int mode, const int unw)
   }
 }
 
-void Vect_Interp (double *y, double *x, const int new_size, const int old_size, const double x0, const double dx )
+void Vect_Interp (double **y, double **x, double **z, const int new_size, const int old_size, const double x0, const double dx )
 {
 
 /* Alloc and init aux memory */  
-double *y_aux = (double*) malloc ( old_size * sizeof(double) );
-double *x_aux = (double*) malloc ( old_size * sizeof(double) );
-memcpy( y_aux, y, old_size * sizeof(double) );
-memcpy( x_aux, x, old_size * sizeof(double) );
+double *y_aux = (double *) malloc ( old_size * sizeof(double) );
+double *z_aux = (double *) malloc ( old_size * sizeof(double) );
+double *x_aux = (double *) malloc ( old_size * sizeof(double) );
+
+memcpy( y_aux, *y, old_size * sizeof(double) );
+memcpy( z_aux, *z, old_size * sizeof(double) );
+memcpy( x_aux, *x, old_size * sizeof(double) );
 
 /* Realloc */
-free(y);
-free(x);
-y = malloc ( new_size * sizeof(double) );
-x = malloc ( new_size * sizeof(double) );
+*y = realloc(*y, new_size * sizeof(double));
+*z = realloc(*z, new_size * sizeof(double));
+*x = realloc(*x, new_size * sizeof(double));
+
 
 /*Fill new x array */
 #pragma omp simd
-  for (int i = 0; i < new_size; i++)
-    x[i] = i*dx + x0;
+  for (int i = 0; i < new_size; i++){
+    (*x)[i] = i*dx + x0;
+    //printf("%f ", (*x)[i]);
+  }  
 
-interp_spline_omp(x_aux, y_aux, old_size, x, new_size, y);
+for (int i = 0; i < old_size-1; i++) {
+  if (x_aux[i+1] < x_aux[i]) printf("%i %f %f \n", i, x_aux[i], x_aux[i+1]);
+}
+
+interp_spline_omp(x_aux, y_aux, old_size, *x, new_size, *y);
+interp_spline_omp(x_aux, z_aux, old_size, *x, new_size, *z);
+
+free(x_aux);
+free(y_aux);
+free(z_aux);
 
 }
 
@@ -1360,9 +1374,9 @@ void spa(double *F, double *ampf, double *phasef, double *time, double *ampt, do
   //PRFORMd("Fdot",Fdot[i]); 
   //PRFORMd("F", F[i]); 
     F[i] = F[i]/(2.*Pi);
-    Fdot[i] = Fdot[i]/(Pi*2);
+    Fdot[i] = Fdot[i]/(2.*Pi);
     phasef[i] = (2 * Pi * F[i] * time[i] - phaset[i]- Pi/4);
-    ampf[i] = ampt[i]/sqrt(Fdot[i]);   
+    ampf[i] = ampt[i]/sqrt(fabs(Fdot[i]));   
   }
   free(Fdot);
 }
@@ -1387,6 +1401,7 @@ void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, d
     //SPA-related arrays
     double *ampf = (double*) malloc(hlm->size * sizeof(double));
     double *phif = (double*) malloc(hlm->size * sizeof(double));
+    double *F    = (double*) malloc(hlm->size * sizeof(double));
 
     /* 22 only */
     int k = 1;
@@ -1405,13 +1420,23 @@ void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, d
     }
 
     //Ok, now we have A and phi for the 22 mode in time domain. We need A and psif in FD, and F.
-    spa(hpc->frequency, ampf, phif, hlm->time, ampt, phast, hlm->size);
+    spa(F, ampf, phif, hlm->time, ampt, phast, hlm->size);    
+    
+    if (EOBPars->interp_FD_waveform){
+      double f0 = F[0];
+      double df = EOBPars->df;
+      printf("here\n");
 
-    // cool, now it's time to add the prefactors that account for the shperical harmonics
-    // note: here we actually pass Re(h+) and Im(h+). It should be possible to obtain hx from h+
-    // through a change of phase (?) and some multiplicative factors in front
+      int i_aux = 0;
+      while(F[i_aux+1] > F[i_aux]) i_aux++;
+    
+      int nsize = floor(fabs(F[i_aux]- f0)/df) +1;
+      Waveform_push(&hpc, nsize);
+      Vect_Interp (&phif, &F, &ampf, nsize, i_aux+1, f0, df);
+    }
 
-    for (int i=0; i < hlm->size; i++){
+    for (int i=0; i < hpc->size; i++){
+        hpc->frequency[i] = F[i];
         hpc->real[i] = ampf[i]/2. * (cos(phif[i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[i])* (Y_imag[k] - Y_imag_mneg[k]));
         hpc->imag[i] = ampf[i]/2. * (cos(phif[i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[i])* (Y_real[k] + Y_real_mneg[k]));
     }
@@ -1420,6 +1445,7 @@ void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, d
     free(phast);
     free(ampf);
     free(phif);
+    free(F);
 }
 
 /** (h+, hx) polarizations from the multipolar waveform, FD, all active modes (interpolate after SPA, needed to correctly add modes together) */
@@ -1487,8 +1513,8 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
       /* add interpolation of ampf, phif and F here */
       for (int k=0; k< KMAX; k++){
         if (!activemode[k]) continue;
-        Vect_Interp (ampf[k], F[k], size, hlm->size, f0, df);
-        Vect_Interp (ampf[k], F[k], size, hlm->size, f0, df);
+        //Vect_Interp (ampf[k], F[k], size, hlm->size, f0, df);
+        //Vect_Interp (ampf[k], F[k], size, hlm->size, f0, df);
 
         /* add the prefactors that account for the shperical harmonics
         note: here we actually pass Re(h+) and Im(h+). It should be possible to obtain hx from h+

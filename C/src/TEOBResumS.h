@@ -352,7 +352,8 @@ enum {
 
 enum {
   DOMAIN_TD,
-  DOMAIN_FD,
+  DOMAIN_FD_22,
+  DOMAIN_FD_HM,
 };
 
 /** Waveform data type */
@@ -487,6 +488,7 @@ typedef struct tagEOBParameters
   int firstcall[NFIRSTCALL];
 
   int domain; //Time or frequency domain
+  int interp_FD_waveform;
   double df;  //frequency interp df, can be set from srate (?)
   
 } EOBParameters;
@@ -502,7 +504,8 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall);
 void spa(double *F, double *ampf, double *phasef, double *time, double *ampt, double *phaset, int size);
 void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor,  double psi, double iota, Waveform *hpc);
 void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor,  double psi, double iota, Waveform *hpc);
-void Vect_Interp (double *y, double *x, const int new_size, const int old_size, const double x0, const double dx );
+void Vect_Interp (double **y, double **x, double **z, const int new_size, const int old_size, const double x0, const double dx );
+
 
 /* TEOBResumSPars.c */
 void par_db_init ();
