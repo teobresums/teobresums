@@ -1376,7 +1376,7 @@ void spa(double *F, double *ampf, double *phasef, double *time, double *ampt, do
     F[i] = F[i]/(2.*Pi);
     Fdot[i] = Fdot[i]/(2.*Pi);
     phasef[i] = (2 * Pi * F[i] * time[i] - phaset[i]- Pi/4);
-    ampf[i] = ampt[i]/sqrt(fabs(Fdot[i]));   
+    ampf[i] = ampt[i]/sqrt(fabs(Fdot[i])); 
   }
   free(Fdot);
 }
@@ -1464,12 +1464,15 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
     if (!(EOBPars->use_geometric_units)) {
       Msun = M/MSUN_S;
       conv = time_units_factor(Msun);
+      for (int i = 0; i < hlm->size; i++) 
+        hlm->time[i] = hlm->time[i]/conv;
     }
 
     //SPA-related arrays
-    double **ampf;//[KMAX][hlm->size];
-    double **phif;//[KMAX][hlm->size];
-    double **F;//[KMAX][hlm->size];
+    double **ampf = (double **) malloc(KMAX * sizeof(double*));
+    double **phif = (double **) malloc(KMAX * sizeof(double*));
+    double **F    = (double **) malloc(KMAX * sizeof(double*));
+    int *i_aux = (int*) malloc(KMAX * sizeof(int));
 
     /* Precompute Ylm */
     for (int k = 0; k < KMAX; k++ ) {
@@ -1482,7 +1485,9 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
 
     double df = EOBPars->df;
     double f0 = EOBPars->initial_frequency;
-    double FMmin = f0; //the minimum (over modes) max F. Needed for interpolation!
+    double FMmax = f0; //the minimum (over modes) max F. Needed for interpolation!
+    double Fmmin = f0;
+
     /* loop over modes */
     for (int k = 0; k < KMAX; k++ ){
       
@@ -1490,45 +1495,60 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
 
       ampf[k] = (double*) malloc(hlm->size * sizeof(double));
       phif[k] = (double*) malloc(hlm->size * sizeof(double));
-      F[k] = (double*) malloc(hlm->size * sizeof(double));
+      F[k]    = (double*) malloc(hlm->size * sizeof(double));
 
       /* loop over times */
       for (int i = 0; i < hlm->size; i++) {
-        if (!(EOBPars->use_geometric_units)) hlm->time[i] = hlm->time[i]/conv;
 	      ampt[i]  = amplitude_prefactor * hlm->ampli[k][i];
       }
-      /* Ok, now we have A and phi in time domain. We need A and psif in FD, and F.*/
+
+      /* SPA */
       spa(F[k], ampf[k], phif[k], hlm->time, ampt, hlm->phase[k], hlm->size);
+      /* find interval over which F is monotonically increasing */
+      i_aux[k] = 0;
+      while ( F[k][i_aux[k]+1] > F[k][i_aux[k]] ) i_aux[k]++; 
       
-      if ( F[k][hlm->size -1] < FMmin) FMmin = F[k][hlm->size -1];
+      /* Determine FMmax and Fmmin */
+      if ( F[k][i_aux[k]] > FMmax ) FMmax = F[k][i_aux[k]];
+      if ( F[k][0] < Fmmin )  Fmmin = F[k][0];
+    }
 
+    /* free some memory */
+    free(ampt);
+    free(phast);
+
+    /* Determine size of hpc */
+    int nsize = floor(fabs(FMmax- Fmmin)/df) +1;
+    Waveform_push(&hpc, nsize);
+
+    /* Write frequency array */
+    for (int i = 0; i < nsize; i++) 
+      hpc->frequency[i] = Fmmin + i*df; 
+    
+    /* interpolation & hpc computation */
+    for (int k=0; k< KMAX; k++){
+      if (!activemode[k]) continue;
+
+      /* find range of interpolation */
+      /* FIXME: instead of always adding +1 and -1 decide basing whether F(i) is in range */ 
+      int i0 = find_point_bisection(F[k][0], hpc->size, hpc->frequency, 1) +1;
+      int in = find_point_bisection(F[k][i_aux[k]], hpc->size, hpc->frequency, 1) -1;
+
+      /* interpolate */
+      Vect_Interp (&ampf[k], &F[k], &phif[k], in - i0, i_aux[k]+1, hpc->frequency[i0], df);
+
+      /* add modes to hp */
+      /* FIXME: add (-1)^l */
+      for (int i=0; i < in -i0; i++){
+        hpc->real[i+i0] += ampf[k][i] * (cos(phif[k][i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] - Y_imag_mneg[k]));
+        hpc->imag[i+i0] += ampf[k][i] * (cos(phif[k][i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] + Y_real_mneg[k]));
       }
-
-      /* free some memory*/
-      free(ampt);
-      free(phast);
-
-      int size = floor(fabs(FMmin- f0)/df) +1;
-
-      /* add interpolation of ampf, phif and F here */
-      for (int k=0; k< KMAX; k++){
-        if (!activemode[k]) continue;
-        //Vect_Interp (ampf[k], F[k], size, hlm->size, f0, df);
-        //Vect_Interp (ampf[k], F[k], size, hlm->size, f0, df);
-
-        /* add the prefactors that account for the shperical harmonics
-        note: here we actually pass Re(h+) and Im(h+). It should be possible to obtain hx from h+
-        through a change of phase/ some multiplicative factors in front */
-        /*FIXME: add (-1)^l factor! recompute and check */
-
-        for (int i=0; i < hlm->size; i++){
-          hpc->real[i] += ampf[k][i] * (cos(phif[k][i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] - Y_imag_mneg[k]));
-          hpc->imag[i] += ampf[k][i] * (cos(phif[k][i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] + Y_real_mneg[k]));
-        }
-        free(ampf[k]);
-        free(phif[k]);
-      }
-      
+      free(ampf[k]);
+      free(phif[k]);
+      free(F[k]);
+    }
+    
+    free(i_aux);
 }
 
 /** Convert time in sec to dimensionless and mass-rescaled units */
