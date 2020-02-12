@@ -685,10 +685,6 @@ memcpy( x_aux, *x, old_size * sizeof(double) );
     //printf("%f ", (*x)[i]);
   }  
 
-for (int i = 0; i < old_size-1; i++) {
-  if (x_aux[i+1] < x_aux[i]) printf("%i %f %f \n", i, x_aux[i], x_aux[i+1]);
-}
-
 interp_spline_omp(x_aux, y_aux, old_size, *x, new_size, *y);
 interp_spline_omp(x_aux, z_aux, old_size, *x, new_size, *z);
 
@@ -1361,23 +1357,52 @@ void NQCdata_free (NQCdata *nqc)
 }
 
 /** SPA related stuff */
-void spa(double *F, double *ampf, double *phasef, double *time, double *ampt, double *phaset, int size){
-  
+void spa(double **F, double **ampf, double **phasef, double *time, double *ampt, double *phaset, int size, int *newsize){
+
   /* Compute frequencies */
-  
   double *Fdot = (double*)malloc(size * sizeof(double));
 
-  D0_x_2(phaset, time, size, F);  //second order for now, fourth eventually
-  D0_x_2(F, time, size, Fdot);
+  D0_x_2(phaset, time, size, *F);  //second order for now, fourth eventually?
+  D0_x_2(*F, time, size, Fdot);
   
   for (int i=0; i < size; i++){
-  //PRFORMd("Fdot",Fdot[i]); 
-  //PRFORMd("F", F[i]); 
-    F[i] = F[i]/(2.*Pi);
+    (*F)[i] = (*F)[i]/(2.*Pi);
     Fdot[i] = Fdot[i]/(2.*Pi);
-    phasef[i] = (2 * Pi * F[i] * time[i] - phaset[i]- Pi/4);
-    ampf[i] = ampt[i]/sqrt(fabs(Fdot[i])); 
+    (*phasef)[i] = (2 * Pi * (*F)[i] * time[i] - phaset[i]- Pi/4);
+    (*ampf)[i] = ampt[i]/sqrt(fabs(Fdot[i])); 
   }
+
+  /* Make sure that F is monotonically increasing */
+  int i_aux = 0;
+  while((*F)[i_aux+1] > (*F)[i_aux]) i_aux++;
+  i_aux = i_aux - 100; //for attachment, this is just a test
+  *newsize = i_aux +1;
+
+  /* If necessary, prolong the waveform */
+  if ((*F)[i_aux+1] < EOBPars->srate_interp/2.){
+    /* Define new size of arrays */
+    double df = 1; // hard fixed
+    *newsize = i_aux + 1 + floor((EOBPars->srate_interp/2. - (*F)[i_aux])/df) +1; 
+
+    *F      = realloc(*F, *newsize * sizeof(double));
+    *ampf   = realloc(*ampf, *newsize * sizeof(double));
+    *phasef = realloc(*phasef, *newsize * sizeof(double));
+
+    /* the amplitude is expected to behave as 1./f asymptotically (see eg 3.31a of arXiv:gr-qc/0001023) 
+      for the phase, we express it as phi(f) = (a + b*f)/(1 + c*f), with a,b and c determined 
+      from asking phi(f) to be C1 at Fmax and that phi(f->inf) = phi(Fmax) - Pi/2
+    */
+    double a = (*phasef)[i_aux];
+    double c = -4*time[i_aux];
+    double b = c*(a - Pi/2.); 
+    for (int i=i_aux; i < *newsize; i++){
+      (*F)[i]      = (*F)[i_aux] + (i-i_aux)*df;
+      (*ampf)[i]   = (*ampf)[i_aux]/(*F)[i]*(*F)[i_aux];
+      (*phasef)[i] = (a + b*( (*F)[i] - (*F)[i_aux] ))/(1 + c*( (*F)[i] - (*F)[i_aux] ));
+      //(*phasef)[i] = (*phasef)[i_aux] + Pi*((*F)[i] - (*F)[i_aux])*((*F)[i] - (*F)[i_aux])/Fdot[i_aux]; 
+    }
+  }
+
   free(Fdot);
 }
 
@@ -1419,22 +1444,25 @@ void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, d
       phast[i] = hlm->phase[k][i];
     }
 
-    //Ok, now we have A and phi for the 22 mode in time domain. We need A and psif in FD, and F.
-    spa(F, ampf, phif, hlm->time, ampt, phast, hlm->size);    
+    /*Ok, now we have A and phi for the 22 mode in time domain. We need A and psif in FD, and F*/
+    int nsize;
+    spa(&F, &ampf, &phif, hlm->time, ampt, phast, hlm->size, &nsize);
     
+    /*interpolate based on df */
     if (EOBPars->interp_FD_waveform){
       double f0 = F[0];
+      // Set df for (eventual?) interpolation
+      EOBPars->df = 1./hlm->time[hlm->size -1];
       double df = EOBPars->df;
-      printf("here\n");
-
-      int i_aux = 0;
-      while(F[i_aux+1] > F[i_aux]) i_aux++;
     
-      int nsize = floor(fabs(F[i_aux]- f0)/df) +1;
+      int int_size = floor(fabs(F[nsize-1]- f0)/df) +1;
+      Waveform_push(&hpc, int_size);
+      Vect_Interp (&phif, &F, &ampf, int_size, nsize, f0, df);
+    } else{
       Waveform_push(&hpc, nsize);
-      Vect_Interp (&phif, &F, &ampf, nsize, i_aux+1, f0, df);
     }
 
+    /* populate hpc */
     for (int i=0; i < hpc->size; i++){
         hpc->frequency[i] = F[i];
         hpc->real[i] = ampf[i]/2. * (cos(phif[i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[i])* (Y_imag[k] - Y_imag_mneg[k]));
@@ -1483,10 +1511,10 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
         spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
       }
 
-    double df = EOBPars->df;
+    double df = 1./hlm->time[hlm->size -1];
     double f0 = EOBPars->initial_frequency;
-    double FMmax = f0; //the minimum (over modes) max F. Needed for interpolation!
-    double Fmmin = f0;
+    double FMmax = f0; //the maximum (over modes) FMax. Needed for interpolation!
+    double Fmmin = f0; //the minimum (over modes) Fmin
 
     /* loop over modes */
     for (int k = 0; k < KMAX; k++ ){
@@ -1503,16 +1531,14 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
       }
 
       /* SPA */
-      spa(F[k], ampf[k], phif[k], hlm->time, ampt, hlm->phase[k], hlm->size);
-      /* find interval over which F is monotonically increasing */
-      i_aux[k] = 0;
-      while ( F[k][i_aux[k]+1] > F[k][i_aux[k]] ) i_aux[k]++; 
+      spa(&F[k], &ampf[k], &phif[k], hlm->time, ampt, hlm->phase[k], hlm->size, &i_aux[k]);
+      i_aux[k] = i_aux[k] -1;
       
-      /* Determine FMmax and Fmmin */
+      /* Determine FMmax and Fmmin over modes*/
       if ( F[k][i_aux[k]] > FMmax ) FMmax = F[k][i_aux[k]];
       if ( F[k][0] < Fmmin )  Fmmin = F[k][0];
     }
-
+    
     /* free some memory */
     free(ampt);
     free(phast);
@@ -1529,8 +1555,8 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
     for (int k=0; k< KMAX; k++){
       if (!activemode[k]) continue;
 
-      /* find range of interpolation */
-      /* FIXME: instead of always adding +1 and -1 decide basing whether F(i) is in range */ 
+      /* find range of interpolation,  different for each mode (Not all modes span the whole range Fmmin - FMmax)*/
+      /* FIXME: instead of always adding +1 and -1 decide based on whether F(i) is in range */ 
       int i0 = find_point_bisection(F[k][0], hpc->size, hpc->frequency, 1) +1;
       int in = find_point_bisection(F[k][i_aux[k]], hpc->size, hpc->frequency, 1) -1;
 
@@ -1540,8 +1566,13 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
       /* add modes to hp */
       /* FIXME: add (-1)^l */
       for (int i=0; i < in -i0; i++){
-        hpc->real[i+i0] += ampf[k][i] * (cos(phif[k][i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] - Y_imag_mneg[k]));
-        hpc->imag[i+i0] += ampf[k][i] * (cos(phif[k][i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] + Y_real_mneg[k]));
+        if (LINDEX[k] % 2) {
+          hpc->real[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (Y_real[k] - Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] + Y_imag_mneg[k]));
+          hpc->imag[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (-Y_imag[k]- Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] - Y_real_mneg[k]));
+        } else {
+          hpc->real[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] - Y_imag_mneg[k]));
+          hpc->imag[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] + Y_real_mneg[k]));
+        }
       }
       free(ampf[k]);
       free(phif[k]);
@@ -1550,6 +1581,21 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
     
     free(i_aux);
 }
+
+/** Compute the FD waveform in the reduced approximation, assuming that phi_GW = 2 phi_orb and assuming the leading order PN expression for A(f) */
+/*
+compute_hpc_FD_an (Dynamics *dyn, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
+{
+  double *dotOmega = (double *) malloc(dyn->size *sizeof(double));
+  for (int i=0; i < dyn->size; i++){
+    dotOmega[i] = ...
+    hpc->frequency[i] = ...
+    hpc->real[i] = ...
+    hpc->imag[i] = ...
+  }
+
+}
+*/
 
 /** Convert time in sec to dimensionless and mass-rescaled units */
 double time_units_factor(double M)

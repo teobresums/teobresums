@@ -501,7 +501,7 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 int EOBRun(Waveform **hpc, int default_choice, int firstcall);
 
 /* FD stuff */
-void spa(double *F, double *ampf, double *phasef, double *time, double *ampt, double *phaset, int size);
+void spa(double **F, double **ampf, double **phasef, double *time, double *ampt, double *phaset, int size, int *nsize);
 void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor,  double psi, double iota, Waveform *hpc);
 void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor,  double psi, double iota, Waveform *hpc);
 void Vect_Interp (double **y, double **x, double **z, const int new_size, const int old_size, const double x0, const double dx );
