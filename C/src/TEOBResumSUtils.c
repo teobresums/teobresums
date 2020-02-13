@@ -1445,10 +1445,11 @@ void spa(double **F, double **ampf, double **phasef, double *time, double *ampt,
     (*ampf)[i] = ampt[i]/sqrt(fabs(Fdot[i])); 
   }
 
-  /* Make sure that F is monotonically increasing */
+  /* Make sure that Fdot is monotonically increasing (for attachment)*/
   int i_aux = 0;
-  while((*F)[i_aux+1] > (*F)[i_aux]) i_aux++;
-  i_aux = i_aux - 100; //for attachment, this is just a test
+  while(Fdot[i_aux+1] > Fdot[i_aux]) i_aux++;
+  //while((*F)[i_aux+1] > (*F)[i_aux]) i_aux++;
+  //i_aux = i_aux - 10; //for attachment, this is just a test
   *newsize = i_aux +1;
 
   /* If necessary, prolong the waveform */
@@ -1462,17 +1463,17 @@ void spa(double **F, double **ampf, double **phasef, double *time, double *ampt,
     *phasef = realloc(*phasef, *newsize * sizeof(double));
 
     /* the amplitude is expected to behave as 1./f asymptotically (see eg 3.31a of arXiv:gr-qc/0001023) 
-      for the phase, we express it as phi(f) = (a + b*f)/(1 + c*f), with a,b and c determined 
-      from asking phi(f) to be C1 at Fmax and that phi(f->inf) = phi(Fmax) - Pi/2
+      for the phase, we express it as phi(f) = (a + b*f) 
     */
     double a = (*phasef)[i_aux];
-    double c = -4*time[i_aux];
-    double b = c*(a - Pi/2.); 
+    //double c = -4*time[i_aux];
+    //double b = c*(a - Pi/2.); 
+    double c = 0.;
+    double b = 2*Pi*time[i_aux];
     for (int i=i_aux; i < *newsize; i++){
       (*F)[i]      = (*F)[i_aux] + (i-i_aux)*df;
       (*ampf)[i]   = (*ampf)[i_aux]/(*F)[i]*(*F)[i_aux];
       (*phasef)[i] = (a + b*( (*F)[i] - (*F)[i_aux] ))/(1 + c*( (*F)[i] - (*F)[i_aux] ));
-      //(*phasef)[i] = (*phasef)[i_aux] + Pi*((*F)[i] - (*F)[i_aux])*((*F)[i] - (*F)[i_aux])/Fdot[i_aux]; 
     }
   }
 
