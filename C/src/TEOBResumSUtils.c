@@ -432,6 +432,77 @@ int D0_x_2(double *f, double *x, int n, double *df)
   return OK;
 }
 
+/** 4th order first derivative, nonuniform grid */
+/** FIXME: can be further optimized! */
+int D0_x_4(double *f, double *x, int n, double *df)
+{
+  double *ix = x;
+  double *iy = f;
+
+  /* left boundary */
+  df[0] = d4(ix, iy, 0);
+  df[1] = d4(ix, iy, 1);
+
+  /* central stencil */
+  for(int k = 2; k < n-2; k++){
+    df[k] = d4(ix, iy, 2);
+    ix++; iy++;
+  }
+
+  /*right boundary*/
+  df[n-2] = d4(ix, iy, 3);
+  df[n-1] = d4(ix, iy, 4);
+  
+  return OK;
+}
+
+double d4(double *x, double *y, int i)
+{
+  double dy_i =0.; 
+  double ld_j;
+
+  for (int j = 0; j < 5; j++){
+    ld_j = l_deriv(x, i, j);
+    dy_i = *(y+j) *ld_j + dy_i;
+  }
+  return dy_i;
+}
+
+double l_deriv(double *x,int i,int j)
+{
+  double xi = *(x +i);
+  double xj = *(x +j);
+  double ld_ji;
+  /*compute denominator*/
+  double D = 1.;
+  for (int a = 0; a<5; a++){
+    if (a != j) D = D*(xj - *(x +a));
+  }
+  /*compute N and N/D */
+  double N = 1.;
+  if (i != j){                            //case 1: i != j
+    for (int b = 0; b < 5 ; b++){
+      if (b != j && b!= i) 
+        N = N*(xi - *(x +b));
+    }
+    ld_ji = N/D;
+  } else {                                //case 2: 1 ==j
+    double tmp = 0.;
+    for (int c = 0; c < 5; c++){
+      double N = 1;
+      if (c != j){
+        for (int b = 0; b < 5; b++){
+          if (b !=j && b != c) N = N*(xj - *(x + b));
+        }
+      tmp = tmp + N;  
+      }
+    }
+    ld_ji = tmp/D;
+  }
+
+  return ld_ji;
+}
+
 /** Trapezoidal rule */
 double cumtrapz(double *f, double *x, const int n, double *sum)
 {
@@ -1362,9 +1433,11 @@ void spa(double **F, double **ampf, double **phasef, double *time, double *ampt,
   /* Compute frequencies */
   double *Fdot = (double*)malloc(size * sizeof(double));
 
-  D0_x_2(phaset, time, size, *F);  //second order for now, fourth eventually?
-  D0_x_2(*F, time, size, Fdot);
-  
+  //D0_x_2(phaset, time, size, *F);  //second order for now, fourth eventually?
+  //D0_x_2(*F, time, size, Fdot);
+  D0_x_4(phaset, time, size, *F);
+  D0_x_4(*F, time, size, Fdot);
+
   for (int i=0; i < size; i++){
     (*F)[i] = (*F)[i]/(2.*Pi);
     Fdot[i] = Fdot[i]/(2.*Pi);

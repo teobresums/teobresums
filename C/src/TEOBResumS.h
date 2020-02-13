@@ -563,6 +563,9 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
+int D0_x_4(double *f, double *x, int n, double *df);
+double d4(double *x, double *y, int i);
+double l_deriv(double *x,int i,int j);
 double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
 void unwrap(double *p, const int size);
