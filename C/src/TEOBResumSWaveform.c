@@ -51,13 +51,16 @@ static const double ChlmNewt_phase[35] = {4.71238898038469, 3.141592653589793, 4
 */
 
 /* Negative amplitude modes */
-static const int nNegAmp[35] = {0, 0,
-				0, 1, 0,
-				1, 1, 1, 1,
-				1, 0, 1, 0, 1,
-				0, 0, 0, 0, 0, 0,
-				0, 1, 0, 1, 0, 1, 0,
-				1, 1, 1, 1, 1, 1, 1, 1};
+int nNegAmp[35];	
+	/* 	
+	= {0, 0,	
+	   0, 1, 0,	
+	   1, 1, 1, 1,	
+	   1, 0, 1, 0, 1,	
+	   0, 0, 0, 0, 0, 0,	
+	   0, 1, 0, 1, 0, 1, 0,	
+	   1, 1, 1, 1, 1, 1, 1, 1};	
+	*/
 
 /** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform. 
     Reference: Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
@@ -1970,7 +1973,6 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
   /*
   //TODO: Check differences
-  printf ("jmax = %d \n",jmax);
   for (int j=0; j<size; j++) {
     if(t[j] >= tmrg[1]) {
       jmax = j;
@@ -2004,6 +2006,13 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
      Nagar & Rezzolla, CQG 22 (2005) R167 */      
   for (int k=0; k<KMAX; k++) {
     double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
+    		
+    if (h->ampli[k][0] > 0.) {	
+      nNegAmp[k] = 0;	
+    } else {		
+      nNegAmp[k] = 1;	
+    }
+    
     for (int j=0; j<size; j++) {
       p1tmp[k][j] = fabs(h->ampli[k][j] * nlm);      
     }
@@ -2302,7 +2311,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
   if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
     for (int j=0; j<size; j++) {
       /* l=2,m=1 */
-      n1[0][j] = cbrt(SQ(w[j]))*n1[0][j];
+      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
       /* l=3 & l=4 */
       for (int k=2; k<14; k++) {   
@@ -2381,7 +2390,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
   }
   /*
   //TODO: Check differences
-  printf ("jmax = %d \n",jmax);
   for (int j=0; j<size; j++) {
     if(t[j] >= tmrg[1]) {
       jmax = j;
@@ -2415,6 +2423,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
      Nagar & Rezzolla, CQG 22 (2005) R167 */      
   for (int k=0; k<KMAX; k++) {
     double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
+
+    if (hlm_mrg->ampli[k][0] > 0.) {	
+      nNegAmp[k] = 0;	
+    } else {		
+      nNegAmp[k] = 1;	
+    }
+    
     for (int j=0; j<size; j++) {
       p1tmp[k][j] = fabs(hlm_mrg->ampli[k][j] * nlm);      
     }
@@ -2558,7 +2573,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
   if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
     for (int j=0; j<fullsize; j++) {
       /* l=2,m=1 */
-      n1[0][j] = cbrt(SQ(w[j]))*n1[0][j];
+      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
       /* l=3 & l=4 */
       for (int k=2; k<14; k++) {   
