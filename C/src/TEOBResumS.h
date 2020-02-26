@@ -722,7 +722,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
-void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm);
+void (*eob_wav_ringdown)();
+void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 
 #ifdef _OPENMP
 /* TEOBResumSOMP.c */

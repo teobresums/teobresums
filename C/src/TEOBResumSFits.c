@@ -26,7 +26,7 @@ double eob_a6c_fit(double nu)
   return 3097.3*nu*nu - 1330.6*nu + 81.38;
 }
 
-/** Fit of a6c, higher multipoles: REF TO BE UPDATED */
+/** Fit of a6c, higher multipoles: arXiv:2001.09082 */
 double eob_a6c_fit_HM(double nu)
 {
   double nu2 = nu*nu;
@@ -69,7 +69,7 @@ double eob_c3_fit_global(double nu, double a1, double a2)
   return c3_eq + c3_uneq;
 }
 
-/** Fit of c3, HM paper: REF TO BE UPDATED 
+/** Fit of c3, HM paper: arXiv:2001.09082
     Note: c3 = 0 with tides*/
 double eob_c3_fit_HM(double nu, double a1, double a2)
 {  
@@ -279,8 +279,7 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
 }
 
 /** Fits for NR point used to determine NQC corrections 
-    New fits for higer modes paper
-    Ref TO BE UPDATED                                   */
+    New fits for higer modes paper: arXiv:2001.09082 */
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
@@ -1511,8 +1510,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   
 }
 
-/** QNM fits for higher modes
-    Ref TO BE UPDATED */
+/** QNM fits for higher modes - arXiv:2001.09082 */
 void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 			double Mbh, double abh,  
 			double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 

@@ -140,7 +140,7 @@ void eob_wav_hlmNewt_v1(double r,
 
 /** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform.
     New terms vphi and vOmg for higher modes. 
-    Reference:     TO BE UPDATED    Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
+    Reference: arXiv:2001.09082 */
 void eob_wav_hlmNewt_HM(double r,
 			double Omega,
 			double phi,
@@ -387,9 +387,7 @@ void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm)
 }
 
 /** Residual phase corrections delta_{lm} up to l=m=5 for higher modes
- *  *  Refs:
- *  TO BE UPDATED
- */
+ *  Ref: arXiv:2001.09082 */
 void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm)
 {
     
@@ -789,9 +787,7 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
  *  (3,2) is resummed with a Padé 32
  *  (2,1) is resummed with a Padé 51
  *  All other modes are resummed with a Padé 42
- *  *  Refs:
- *  TO BE UPDATED
- */
+ *  Ref: arXiv:2001.09082 */
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
 {
   /** Coefficients */
@@ -1459,7 +1455,7 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
     The m=odd modes are factorized as f_lm^orb * f_lm^spin.
     Some of the f_lm^spin are inverse-resummed
     Function introduced for higher modes.
-    Ref: TO BE UPDATED
+    Ref: arXiv:2001.09082
     Note that the variables called here (a1,a2)
     are what we usually cal tilde{a}_1 and tilde{a}_2 and are defined as
     a1 = X1*chi1, a2=X2*chi2 and are passed here as parameters. */
@@ -1971,15 +1967,6 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
       break;
     }
   }
-  /*
-  //TODO: Check differences
-  for (int j=0; j<size; j++) {
-    if(t[j] >= tmrg[1]) {
-      jmax = j;
-      break;
-    }
-  }
-  */
 	     
   double dtmrg[KMAX];
   double t_NQC[KMAX];
@@ -1990,15 +1977,19 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     for (int k=0; k<KMAX; k++) {   
       tmrg[k]  = tmrg[1] + dtmrg[k];
       t_NQC[k] = tmrg[k] + 2.;
-		
-      for (int j=0; j<size; j++) {
-	if(t[j] >= t_NQC[k]) {
-	  j_NQC[k] = j;
-	  break;}
+    
+      j_NQC[k] = size-1;
+      for (int j=size-2; j>=0; j--) {
+	if(t[j] < t_NQC[k]) {
+	  break;
+	}
+	j_NQC[k] = j;
       }
     }
   }
 
+
+  
   /** Solve the linear systems */
   
   /* Regge-Wheeler-Zerilli normalized amplitude. 
@@ -2089,7 +2080,6 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
       bi[k][0] = (M[3]*P[0] - M[1]*P[1])*oodetM;
       bi[k][1] = (M[0]*P[1] - M[2]*P[0])*oodetM;
     }
-
   }
 
   if (VERBOSE){
@@ -2388,33 +2378,26 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
       break;
     }
   }
-  /*
-  //TODO: Check differences
-  for (int j=0; j<size; j++) {
-    if(t[j] >= tmrg[1]) {
-      jmax = j;
-      break;
-    }
-  }
-  */
   
   double dtmrg[KMAX];
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
   if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
-      eob_nqc_deltat_lm(dyn, dtmrg);
+    eob_nqc_deltat_lm(dyn, dtmrg);
 	      
-      for (int k=0; k<KMAX; k++) {   
-	tmrg[k]  = tmrg[1] + dtmrg[k];
-	t_NQC[k] = tmrg[k] + 2.;
-		
-	for (int j=0; j<size; j++) {
-	  if(t[j] >= t_NQC[k]) {
-	    j_NQC[k] = j;
-	    break;}
+    for (int k=0; k<KMAX; k++) {   
+      tmrg[k]  = tmrg[1] + dtmrg[k];
+      t_NQC[k] = tmrg[k] + 2.;
+	
+      j_NQC[k] = size-1;
+      for (int j=size-2; j>=0; j--) {
+	if(t[j] < t_NQC[k]) {
+	  break;
 	}
-      }    
+	j_NQC[k] = j;
+      }
     }
+  }
 
   /** Solve the linear systems */
   
@@ -2799,7 +2782,7 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 }
 
 /** Ringdown calculation and match to the dynamics */ 
-void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
+void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 {
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
@@ -2942,17 +2925,13 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   
   /* The following values are the difference between the time of the peak of
      the 22 waveform and the other modes. */
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
-    eob_nqc_deltat_lm(dyn, dtmrg);
-  }    else{
-    /* These specific values refer to the 21 and 33 in the
-       nonspinning case. They are different in the spinning case, which
-       is however not implemented. These are here only as placeholder */
-    dtmrg[k21] = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
-    dtmrg[k33] = 4.29550934 - 0.85938*xnu;                         //k33
-    //tmrg[k21]  = tmrg[k22] + dtmrg[k21]/Mbh;     // t_max(A21) => peak of 21 mode
-    //tmrg[k33]  = tmrg[k22] + dtmrg[k33]/Mbh;     // t_max(A33) => peak of 33 mode
-  }
+  /* These specific values refer to the 21 and 33 in the
+     nonspinning case. They are different in the spinning case, which
+     is however not implemented. These are here only as placeholder */
+  dtmrg[k21] = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
+  dtmrg[k33] = 4.29550934 - 0.85938*xnu;                         //k33
+  //tmrg[k21]  = tmrg[k22] + dtmrg[k21]/Mbh;     // t_max(A21) => peak of 21 mode
+  //tmrg[k33]  = tmrg[k22] + dtmrg[k33]/Mbh;     // t_max(A33) => peak of 33 mode
 	  
   for (int k=0; k<KMAX; k++) {
     tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
@@ -2968,16 +2947,9 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
   double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
 
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
-    /* Higher modes */
-  QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-		     a1, a2, a3, a4, b1, b2, b3, b4, 
-		     sigma[0],sigma[1]);
-  } else {
-    QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-		    a1, a2, a3, a4, b1, b2, b3, b4, 
-		    sigma[0],sigma[1]);
-  }
+  QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+		  a1, a2, a3, a4, b1, b2, b3, b4, 
+		  sigma[0],sigma[1]);
   
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
@@ -3014,10 +2986,6 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
       eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       hlm->phase[k][j] = psi[1] - Deltaphi[k];
       hlm->ampli[k][j] = psi[0];
-
-      if(nNegAmp[k]==1) {
-	hlm->ampli[k][j] = -hlm->ampli[k][j];
-      }
     }
   }
   
@@ -3025,7 +2993,143 @@ void eob_wav_ringdown(Dynamics *dyn, Waveform_lm *hlm)
   for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);
   }
+  
+}
+	
+/** Ringdown calculation and match to the dynamics 
+    This refers to the higher modes paper: arXiv:2001.09082 
+*/ 
+void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
+{
+  const double Mbh   = dyn->Mbhf;
+  const double abh   = dyn->abhf;
+  const double nu    = dyn->nu;
+  const double q    = dyn->q;
+  const double chi1  = dyn->chi1;
+  const double chi2  = dyn->chi2;
+  const double X1    = dyn->X1;
+  const double X2    = dyn->X2;
+  const double aK    = dyn->a1+dyn->a2;
+	
+  const double xnu   = (1.-4.*nu);
+  const double ooMbh = 1./Mbh;
+  /* const double dt = par_get_d("dt"); */	
+  const double dt = dyn->dt;
+	  
+  /* double *Omega = dyn->data[EOB_MOMG]; */
+  double *Omega = dyn->data[EOB_OMGORB]; /* use this for spin */
+	  
+  /* Note:
+     dynsize < size , since the wf has been extended 
+     but the two time arrays agree up to dynsize */
+  const int dynsize = dyn->size; 
+  const int size = hlm->size; 
+  double *t = hlm->time;
+	    
+  if (VERBOSE) {
+    PRFORMi("ringdown_dynamics_size",dynsize);
+    PRFORMi("ringdown_waveform_size",size);
+  }
+  
+  /** Find peak of Omega */
+  /* Assume a monotonically increasing function, 
+     start from after the peak */
+  int index_pk = dynsize-1;
+  double Omega_pk = Omega[index_pk];
+  for (int j = dynsize-2; j-- ; ) {
+    if (Omega[j] < Omega_pk) 
+      break;
+    index_pk = j;
+    Omega_pk = Omega[j]; 
+  }
+  if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
+  if (index_pk >= dynsize-2) {
+    if (VERBOSE) printf("No omega-maximum found.\n");
+  }
+  
+  double tOmg_pk = dyn->time[index_pk]*ooMbh;  
+	
+  if (VERBOSE) PRFORMd("ringdown_Omega_pk",Omega_pk);
+  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk/ooMbh);
+  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk);
+	  
+  /** Merger time t_max(A22) */
+  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
+  double tmrg[KMAX], tmatch[KMAX], dtmrg[KMAX];
+	
+  /* nonspinning case */
+  double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
+  if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
+	  
+  /* The following values are the difference between the time of the peak of
+     the 22 waveform and the other modes. */
+  eob_nqc_deltat_lm(dyn, dtmrg);	  
+  for (int k=0; k<KMAX; k++) {
+    tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
+  }	  
+		
+  /** Postmerger-Ringdown matching time */
+  int idx[KMAX];
+  for (int k = 0; k < KMAX; k++) {
+    for (int j = size-1; j-- ; ) {  
+      if (t[j] * ooMbh < tmrg[k]) {
+	break;
+      }
+      idx[k] = j;
+    }
+    tmatch[k] = (t[idx[k]])*ooMbh;	    
+  }
+	  
+  /** Compute QNM */
+  double sigma[2][KMAX];
+  double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
+  double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
 
+  QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+		     a1, a2, a3, a4, b1, b2, b3, b4, 
+		     sigma[0],sigma[1]);
+  
+  /** Define a time vector for each multipole, scale by mass
+      Ringdown of each multipole has its own starting time */
+  double *t_lm[KMAX];
+  for (int k=0; k<KMAX; k++) {
+    t_lm[k] =  malloc ( size * sizeof(double) );
+    for (int j = 0; j < size; j++ ) {  
+      t_lm[k][j] = t[j] * ooMbh;
+    }
+  }
+	  
+  /** Compute Ringdown waveform for t>=tmatch */
+  double t0, tm, psi[2];
+  double Deltaphi[KMAX];
+  int n0 = 2/dt*ooMbh;
+	  
+  for (int k = 0; k < KMAX; k++) {
+    /* Calculate Deltaphi */
+    t0 = t_lm[k][idx[k]+n0] - tmatch[k];
+	
+    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+    Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]+n0];
+	    
+    /* Compute and attach ringdown */
+    for (int j = idx[k]+n0-1; j < size ; j++ ) {
+      tm = t_lm[k][j] - tmatch[k];
+	      
+      eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+      hlm->phase[k][j] = psi[1] - Deltaphi[k];
+      hlm->ampli[k][j] = psi[0];
+      
+      if(nNegAmp[k]==1) {
+	hlm->ampli[k][j] = -hlm->ampli[k][j];
+      }
+    }
+  }
+	  
+  /** Free mem. */
+  for (int k=0; k<KMAX; k++) {
+    free(t_lm[k]);
+  }
+	
 }
 
 /** Main routine for factorized EOB waveform */
