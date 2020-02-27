@@ -44,6 +44,7 @@ const int MINDEX[KMAX] = {
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
 
+
 /** Global var for NQC coefficient */
 NQCdata *NQC;
 
