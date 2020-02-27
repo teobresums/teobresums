@@ -20,6 +20,12 @@
 
 #include "TEOBResumS.h"
 
+/**
+ * GSL routines for ODE integration
+ * https://www.gnu.org/software/gsl/doc/html/ode-initval.html
+ * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
+ */
+
 /** Global vars, defined as external in header */
 const int LINDEX[KMAX] = {
     2,2,
@@ -188,7 +194,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Compute initial radius */
   const double f0 = EOBPars->initial_frequency/time_unit_fact;
-  double r0 = eob_dyn_r0_Kepler(f0);
+  double r0 = eob_dyn_r0_ecc(f0, dyn);
+  
+  //double r0 = eob_dyn_r0_Kepler(f0);
   //double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
 
   /* If f_min is too high fall back to a minimum acceptable initial radius */
@@ -357,8 +365,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
      */
 
     /** Compute the initial conditions */
-    if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
-    else           eob_dyn_ic(r0, dyn, dyn->y0);
+    //if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
+    //else           eob_dyn_ic(r0, dyn, dyn->y0);
+    eob_dyn_ic_ecc(r0, dyn, dyn->y0);
     
     /** Se arrays with initial conditions */
     dyn->t       = 0.;
