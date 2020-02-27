@@ -308,12 +308,13 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   const double S     = S1 + S2;        
   const double Sstar = X2*a1 + X1*a2;  
   const double z3 = 2.0*nu*(4.0-3.0*nu);
-  
+  const double ecc = 0.089; //FIXME PR: dyn->ecc;
+
   const int usetidal = dyn->use_tidal;  
   const int usespins = dyn->use_spins;
 
-  double r1, A1, rc1, B1, ggm1[26], G1;
-  double r2, A2, rc2, B2, ggm2[26], G2;
+  double r1, A1, rc1, B1, ggm1[14], G1;
+  double r2, A2, rc2, B2, ggm2[14], G2;
   double pl_hold, A12, B12, DA, DB, DG;
   double j0, j02, Heff_orb1, Heff1, H1, dHeff1_dj0, omg_orb1;
   
@@ -328,22 +329,20 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
     eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
-    eob_metric_s(r2, dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r2, dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
     eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
-    eob_metric(r1 ,dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r1 ,dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc1 = r1;   //Nonspinning case: rc = r; G = 0;  
     G1  = 0.0;
 
-    eob_metric(r2 ,dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r2 ,dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc2 = r2;
     G2  = 0.0;
   }
-  B1 = A1/SQ(rc1);
-  B2 = A2/SQ(rc2);
 
   A12 = A1 + A2;
   DA  = A1 - A2;
@@ -528,10 +527,10 @@ struct Omegaorb0_tmp_params {
 
 /** Initial radius from initial frequency using EOB circular dynamics */
 double eob_dyn_r0_ecc (double f0, Dynamics *dyn)
-{
+{  
   const double omg_orb0 = Pi*f0;
   const double r0_kepl  = eob_dyn_r0_Kepler(f0);
-  
+
   return eob_dyn_bisecOmegaecc0(dyn,omg_orb0,r0_kepl);
 }
 
