@@ -146,7 +146,8 @@ int main (int argc, char* argv[]) {
 
   /** Compute initial radius */
   const double f0 = EOBPars->initial_frequency/time_unit_fact;
-  double r0 = eob_dyn_r0_Kepler(f0);
+  double r0 = eob_dyn_r0_ecc(f0, dyn);
+  //double r0 = eob_dyn_r0_Kepler(f0);
   //double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
 
   /* If f_min is too high fall back to a minimum acceptable initial radius */
@@ -303,8 +304,9 @@ int main (int argc, char* argv[]) {
      */
 
     /** Compute the initial conditions */
-    if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
-    else           eob_dyn_ic(r0, dyn, dyn->y0);
+    //if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
+    //else           eob_dyn_ic(r0, dyn, dyn->y0);
+    eob_dyn_ic_ecc(r0, dyn, dyn->y0);
     
     /** Se arrays with initial conditions */
     dyn->t       = 0.;
@@ -976,7 +978,9 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
 
   /** Compute initial radius */
   const double f0 = EOBPars->initial_frequency/time_unit_fact;
-  double r0 = eob_dyn_r0_Kepler(f0);
+  double r0 = eob_dyn_r0_ecc(f0, dyn);
+  
+  //double r0 = eob_dyn_r0_Kepler(f0);
   //double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
 
   /* If f_min is too high fall back to a minimum acceptable initial radius */
@@ -1143,8 +1147,9 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
      */
 
     /** Compute the initial conditions */
-    if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
-    else           eob_dyn_ic(r0, dyn, dyn->y0);
+    //if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
+    //else           eob_dyn_ic(r0, dyn, dyn->y0);
+    eob_dyn_ic_ecc(r0, dyn, dyn->y0);
     
     /** Se arrays with initial conditions */
     dyn->t       = 0.;
