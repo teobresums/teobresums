@@ -731,7 +731,7 @@ double eob_dyn_Omegaecc0(double r, void *params)
   }
   B1 = A1/SQ(rc1);
   B2 = A2/SQ(rc2);
-    
+
   A12 = A1 + A2;
   DA  = A1 - A2;
   B12 = B1 + B2;
@@ -748,7 +748,7 @@ double eob_dyn_Omegaecc0(double r, void *params)
   /* Orbital frequency */
   dHeff1_dj0 = G1 + j0*A1/(Heff_orb1*SQ(rc1));
   omg_orb1    = dHeff1_dj0/nu/H1;
-
+  
   /* Subtraction of initial evolution frequency */
   return (omg_orb1 - omg_orb0);
 }
