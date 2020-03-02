@@ -23,7 +23,7 @@ incdirs = [numpy.get_include(), '/usr/include/']
 
 libs = ['gsl', 'gslcblas', 'm', 'config']
 
-pyprofit_ext = Extension('EOBRunTD_module',
+pyprofit_ext = Extension('EOBRun_module',
                        depends=glob.glob('src/*.h'),
                        language='c99',
                        define_macros = [('HAVE_GSL',1)],

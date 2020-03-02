@@ -21,55 +21,7 @@ double *pyvector_to_Carrayptrs(PyArrayObject *arrayin)
   return (double *) arrayin->data;
 }
 
-/*
- * Wrapper
- */
-
-/* Wrapped function */
-static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
-{
-  PyObject* dict;
-  double *pt, *php, *phc;
-
-  /* Parse the input: from python float to c double or from dictionary to C pointer
-     https://docs.python.org/3/c-api/arg.html 
-     https://docs.python.org/2/c-api/dict.html
-  */
-  if (!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict)) 
-    return NULL;
-
-  /* alloc output, set some defaults */
-  Waveform *hpc;   
-  int fc = 1;
-  int default_choice = 0;
-
-  //alloc EOBPars and set defaults based on Lambdas
-  EOBParameters_alloc ( &EOBPars ); 
-
-  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
-  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
-
-  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = 1;
-  EOBParameters_defaults (default_choice, EOBPars);  
-
-
-  /* Read the dictionary in EOBPars */
-  /* RG: there has to be a faster way...*/
-
-  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
-  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
-  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
-  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
-  EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
-  EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
-
-  for (int k; k < NFIRSTCALL; k++){ 
-    EOBPars->firstcall[k] = 1;
-  }
-
-  /* Optional arguments for the dictionary */
-  // FIXME: reduce number of calls to PyDict_GetItemString
-
+int SetOptionalVariables(PyObject* dict){
   /* Options */
   if ( PyDict_GetItemString(dict, "r0") != NULL ) {
     EOBPars->r0 = PyFloat_AsDouble(PyDict_GetItemString(dict, "r0"));
@@ -240,7 +192,64 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "df") != NULL ) { 
     EOBPars->df = PyFloat_AsDouble(PyDict_GetItemString(dict, "df"));
   }
+  return OK;
+}
 
+/*
+ * Wrapper
+ */
+
+/* Wrapped functions */
+static PyObject* EOBRunTD(PyObject* self, PyObject* args)
+{
+  PyObject* dict;
+  double *pt, *php, *phc;
+
+  /* Parse the input: from python float to c double or from dictionary to C pointer
+     https://docs.python.org/3/c-api/arg.html 
+     https://docs.python.org/2/c-api/dict.html
+  */
+  if (!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict)) 
+    return NULL;
+
+  /* alloc output, set some defaults */
+  Waveform *hpc;   
+  int fc = 1;
+  int default_choice = 0;
+
+  //alloc EOBPars and set defaults based on Lambdas
+  EOBParameters_alloc ( &EOBPars ); 
+
+  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
+  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+
+  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = 1;
+  EOBParameters_defaults (default_choice, EOBPars);  
+
+  /* Read the dictionary in EOBPars */
+  /* RG: there has to be a faster way...*/
+
+  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
+  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
+  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
+  EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
+  EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
+
+  for (int k; k < NFIRSTCALL; k++){ 
+    EOBPars->firstcall[k] = 1;
+  }
+
+  /* Optional arguments for the dictionary */
+  // FIXME: reduce number of calls to PyDict_GetItemString
+
+  /* Options */
+  SetOptionalVariables(dict);
+
+  /* Fix to TD */
+  EOBPars->domain=DOMAIN_TD;
+
+  /* Run */
   eob_set_params_EOBRun(default_choice, fc); 
   EOBRun(&hpc, default_choice, fc);
   
@@ -261,10 +270,9 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   phc = pyvector_to_Carrayptrs(phco);
 
   /* Copy */
-  if (EOBPars->domain==DOMAIN_TD) memcpy(pt,  hpc->time, hpc->size * sizeof(double));
-  if (!(EOBPars->domain==DOMAIN_TD)) memcpy(pt,  hpc->frequency, hpc->size * sizeof(double));
-  memcpy(php, hpc->real, hpc->size * sizeof(double));
-  memcpy(phc, hpc->imag, hpc->size * sizeof(double));
+  memcpy(pt,  hpc->time, hpc->size * sizeof(double)); //t
+  memcpy(php, hpc->real, hpc->size * sizeof(double)); //h+
+  memcpy(phc, hpc->imag, hpc->size * sizeof(double)); //hx
 
   Waveform_free (hpc); /* Free C memory */
   EOBParameters_free (EOBPars);
@@ -272,13 +280,104 @@ static PyObject* EOBRunTD_func(PyObject* self, PyObject* args)
   return Py_BuildValue("OOO", pto, phpo, phco);  /* This also works, maybe better for multiple outputs? */
 }
 
+/* Wrapped functions */
+static PyObject* EOBRunFD(PyObject* self, PyObject* args)
+{
+  PyObject* dict;
+  double *pf, *phpreal, *phpimag, *phcreal, *phcimag;
+
+  /* Parse the input: from python float to c double or from dictionary to C pointer
+     https://docs.python.org/3/c-api/arg.html 
+     https://docs.python.org/2/c-api/dict.html
+  */
+  if (!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict)) 
+    return NULL;
+
+  /* alloc output, set some defaults */
+  Waveform *hpc;   
+  int fc = 1;
+  int default_choice = 0;
+
+  //alloc EOBPars and set defaults based on Lambdas
+  EOBParameters_alloc ( &EOBPars ); 
+
+  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
+  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+
+  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = 1;
+  EOBParameters_defaults (default_choice, EOBPars);  
+
+  /* Read the dictionary in EOBPars */
+  /* RG: there has to be a faster way...*/
+
+  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
+  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
+  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
+  EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
+  EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
+
+  for (int k; k < NFIRSTCALL; k++){ 
+    EOBPars->firstcall[k] = 1;
+  }
+
+  /* Optional arguments for the dictionary */
+  // FIXME: reduce number of calls to PyDict_GetItemString
+
+  /* Options */
+  SetOptionalVariables(dict);
+
+  /* Fix to FD */
+  EOBPars->domain=1;
+
+  /* Run */
+  eob_set_params_EOBRun(default_choice, fc); 
+  EOBRun(&hpc, default_choice, fc);
+  
+  /*  Construct the output arrays */
+  npy_intp dims[1];
+  dims[0] = hpc->size;
+  PyArrayObject *pfo;
+  PyArrayObject *phprealo;
+  PyArrayObject *phpimago;
+  PyArrayObject *phcrealo;
+  PyArrayObject *phcimago;
+
+  pfo  = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+  phprealo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+  phpimago = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+  phcrealo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+  phcimago = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+  
+  /* Cast py *arrays into C *arrays   */
+  pf = pyvector_to_Carrayptrs(pfo);
+  phpreal = pyvector_to_Carrayptrs(phprealo);
+  phpimag = pyvector_to_Carrayptrs(phpimago);
+  phcreal = pyvector_to_Carrayptrs(phcrealo);
+  phcimag = pyvector_to_Carrayptrs(phcimago);
+
+
+  memcpy(pf,  hpc->frequency,  hpc->size * sizeof(double)); //f
+  memcpy(phpreal, hpc->hpreal, hpc->size * sizeof(double)); //Re h+
+  memcpy(phpimag, hpc->hpimag, hpc->size * sizeof(double)); //Im h+
+  memcpy(phcreal, hpc->hcreal, hpc->size * sizeof(double)); //Re hx
+  memcpy(phcimag, hpc->hcimag, hpc->size * sizeof(double)); //Im hx
+
+  Waveform_free (hpc); /* Free C memory */
+  EOBParameters_free (EOBPars);
+
+  return Py_BuildValue("OOOOO", pfo, phprealo, phpimago, phcrealo, phcimago);  /* This also works, maybe better for multiple outputs? */
+}
+
 /*
  * Define module
  */
 
 /* Define functions in module */
-static PyMethodDef EOBRunTDMethods[] = {
-  {"EOBRunTD", EOBRunTD_func, METH_VARARGS, "Generate a TD TEOBResumS waveform"},
+static PyMethodDef EOBRunMethods[] = {
+  {"EOBRunTD", EOBRunTD, METH_VARARGS, "Generate a time domain TEOBResumS waveform"},
+  {"EOBRunFD", EOBRunFD, METH_VARARGS, "Generate a frequency domain TEOBResumS waveform"},
+
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
   {NULL, NULL}  /* {NULL, NULL, 0, NULL} */ 
@@ -290,13 +389,13 @@ static PyMethodDef EOBRunTDMethods[] = {
 /* Python version 3*/
 static struct PyModuleDef cModPyDem = {
   PyModuleDef_HEAD_INIT,
-  "EOBRunTD_module", "Some documentation",
+  "EOBRun_module", "Some documentation",
   -1,
-  EOBRunTDMethods
+  EOBRunMethods
 };
 
 PyMODINIT_FUNC
-PyInit_EOBRunTD_module(void)
+PyInit_EOBRun_module(void)
 {
   PyObject *module;
   module = PyModule_Create(&cModPyDem);
@@ -311,11 +410,11 @@ PyInit_EOBRunTD_module(void)
 /* module initialization */
 /* Python version 2 */
 PyMODINIT_FUNC
-initEOBRunTD_module(void)
+initEOBRun_module(void)
 {
   //(void) Py_InitModule("EOBRunTD_module", EOBRunTDMethods);
   PyObject *module;
-  module = Py_InitModule("EOBRunTD_module", EOBRunTDMethods);
+  module = Py_InitModule("EOBRun_module", EOBRunMethods);
   if(module==NULL) return;
   import_array();  /* IMPORTANT: this must be called */
   return;
