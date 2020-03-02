@@ -681,6 +681,10 @@ void Waveform_alloc (Waveform **wav, const int size, const char *name)
   (*wav)->ampli = malloc ( size * sizeof(double) );
   (*wav)->phase = malloc ( size * sizeof(double) );
   (*wav)->time =  malloc ( size * sizeof(double) );
+  (*wav)->hpreal =  malloc ( size * sizeof(double) );
+  (*wav)->hpimag =  malloc ( size * sizeof(double) );
+  (*wav)->hcreal =  malloc ( size * sizeof(double) );
+  (*wav)->hcimag =  malloc ( size * sizeof(double) );
   (*wav)->frequency =  malloc ( size * sizeof(double) );
   memset( (*wav)->real, 0, size * sizeof(double) );
   memset( (*wav)->imag, 0, size * sizeof(double) );
@@ -700,6 +704,10 @@ void Waveform_push (Waveform **wav, int size)
   if ((*wav)->ampli) (*wav)->ampli = realloc ( (*wav)->ampli, size * sizeof(double) );
   if ((*wav)->phase) (*wav)->phase = realloc ( (*wav)->phase, size * sizeof(double) );
   if ((*wav)->time)  (*wav)->time  = realloc ( (*wav)->time,  size * sizeof(double) );
+  if ((*wav)->hpreal)(*wav)->hpreal= realloc ( (*wav)->hpreal,size * sizeof(double) );
+  if ((*wav)->hpimag)(*wav)->hpimag= realloc ( (*wav)->hpimag,size * sizeof(double) );
+  if ((*wav)->hcreal)(*wav)->hcreal= realloc ( (*wav)->hcreal,size * sizeof(double) );
+  if ((*wav)->hcimag)(*wav)->hcimag= realloc ( (*wav)->hcimag,size * sizeof(double) );
   if ((*wav)->frequency)  (*wav)->frequency  = realloc ( (*wav)->frequency,  size * sizeof(double) );
   const int n  = (*wav)->size;
   const int dn = size - (*wav)->size;
@@ -873,6 +881,11 @@ void Waveform_free (Waveform *wav)
   if (wav->imag) free(wav->imag);
   if (wav->ampli) free(wav->ampli);
   if (wav->phase) free(wav->phase);
+  if (wav->hpreal) free(wav->hpreal);
+  if (wav->hpimag) free(wav->hpimag);
+  if (wav->hcreal) free(wav->hcreal);
+  if (wav->hcimag) free(wav->hcimag);
+  if (wav->frequency) free(wav->frequency);
   free(wav);
 }
 
@@ -1522,25 +1535,44 @@ void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, d
     int nsize;
     spa(&F, &ampf, &phif, hlm->time, ampt, phast, hlm->size, &nsize);
     
-    /*interpolate based on df */
+    /* FIXME: add interpolation based on user-input array */
+
+    /* interpolate based on df */
+    int dN = 0;
+    double f0 = F[0];
+    double df = EOBPars->df;
+    //double df = 1./hlm->time[hlm->size -1];
+
     if (EOBPars->interp_FD_waveform){
-      double f0 = F[0];
-      // Set df for (eventual?) interpolation
-      EOBPars->df = 1./hlm->time[hlm->size -1];
-      double df = EOBPars->df;
-    
+      f0 = EOBPars->initial_frequency;  
+
+      /* the waveform *has* to start at f0 */
+      if (F[0] > f0) 
+        dN = floor((F[0] - f0)/df) +1; 
+          
       int int_size = floor(fabs(F[nsize-1]- f0)/df) +1;
       Waveform_push(&hpc, int_size);
-      Vect_Interp (&phif, &F, &ampf, int_size, nsize, f0, df);
+      Vect_Interp (&phif, &F, &ampf, int_size - dN, nsize, f0+dN*df, df);
     } else{
       Waveform_push(&hpc, nsize);
     }
 
     /* populate hpc */
+    double pm3 = 3.*Pi/2.;
     for (int i=0; i < hpc->size; i++){
-        hpc->frequency[i] = F[i];
-        hpc->real[i] = ampf[i]/2. * (cos(phif[i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[i])* (Y_imag[k] - Y_imag_mneg[k]));
-        hpc->imag[i] = ampf[i]/2. * (cos(phif[i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[i])* (Y_real[k] + Y_real_mneg[k]));
+        if (i < dN){
+          hpc->frequency[i] = f0 + i*df;
+          hpc->hpreal[i] = 0.;
+          hpc->hpimag[i] = 0.;
+          hpc->hcreal[i] = 0.;
+          hpc->hcimag[i] = 0.;
+        } else {
+          hpc->frequency[i] = F[i-dN];
+          hpc->hpreal[i] = ampf[i-dN]/2.  * (cos(phif[i-dN])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[i-dN])* (Y_imag[k] - Y_imag_mneg[k]));
+          hpc->hpimag[i] = ampf[i-dN]/2.  * (cos(phif[i-dN])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[i-dN])* (Y_real[k] + Y_real_mneg[k]));
+          hpc->hcreal[i] = -ampf[i-dN]/2. * (cos(phif[i-dN] +pm3)* (Y_real[k] - Y_real_mneg[k]) + sin(phif[i-dN] + pm3)* (Y_imag[k] + Y_imag_mneg[k]));
+          hpc->hcimag[i] = -ampf[i-dN]/2. * (-cos(phif[i-dN] +pm3)*(Y_imag[k] + Y_imag_mneg[k]) + sin(phif[i-dN] + pm3)* (Y_real[k] - Y_real_mneg[k]));
+        }
     }
 
     free(ampt);
@@ -1639,13 +1671,19 @@ void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, d
 
       /* add modes to hp */
       /* FIXME: add (-1)^l */
+      double pm3 = 3.*Pi/2.;
+
       for (int i=0; i < in -i0; i++){
         if (LINDEX[k] % 2) {
-          hpc->real[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (Y_real[k] - Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] + Y_imag_mneg[k]));
-          hpc->imag[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (-Y_imag[k]- Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] - Y_real_mneg[k]));
+          hpc->hpreal[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (Y_real[k] - Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] + Y_imag_mneg[k]));
+          hpc->hpimag[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (-Y_imag[k]- Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] - Y_real_mneg[k]));
+          hpc->hcreal[i+i0] += -ampf[k][i]/2.* (cos(phif[k][i] +pm3)* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i] + pm3)* (Y_imag[k] - Y_imag_mneg[k]));
+          hpc->hcimag[i+i0] += -ampf[k][i]/2.* (-cos(phif[k][i] +pm3)*(Y_real[k] - Y_real_mneg[k]) + sin(phif[k][i] + pm3)* (Y_imag[k] + Y_imag_mneg[k]));
         } else {
-          hpc->real[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] - Y_imag_mneg[k]));
-          hpc->imag[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] + Y_real_mneg[k]));
+          hpc->hpreal[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] - Y_imag_mneg[k]));
+          hpc->hpimag[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] + Y_real_mneg[k]));
+          hpc->hcreal[i+i0] += -ampf[k][i]/2.* (cos(phif[k][i] +pm3)* (Y_real[k] - Y_real_mneg[k]) + sin(phif[k][i] + pm3)* (Y_imag[k] + Y_imag_mneg[k]));
+          hpc->hcimag[i+i0] += -ampf[k][i]/2.* (-cos(phif[k][i] +pm3)*(Y_imag[k] + Y_imag_mneg[k]) + sin(phif[k][i] + pm3)* (Y_real[k] - Y_real_mneg[k]));
         }
       }
       free(ampf[k]);

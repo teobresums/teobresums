@@ -366,6 +366,11 @@ typedef struct tagWaveform
   double *ampli;
   double *phase;
   double *frequency;
+  double *hpreal;
+  double *hpimag;
+  double *hcreal;
+  double *hcimag;
+  
   char name[STRLEN];
 }  Waveform;
 
