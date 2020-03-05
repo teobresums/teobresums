@@ -11,6 +11,8 @@ q = 1. # mass ratio
 chi1 = 0. # dimensionless spin 1 z-component 
 chi2 = 0. # dimensionless spin 2 z-component 
 
+ecc = 0. # eccentricity
+
 distance = 1. 
 inclination = 0.
 coalescence_angle = 0.
