@@ -87,11 +87,11 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->chi2 = 0.;
   
   eobp->ecc = 0.;
-
+  
   eobp->r_hyp = 0.;
   eobp->H_hyp = 0.;
   eobp->j_hyp = 0.;
-
+  
   eobp->distance = 1.;
   eobp->inclination = 0.;
   eobp->coalescence_angle = 0.;
@@ -1415,6 +1415,8 @@ void eob_set_params(char *s, int n)
   double aK2 = aK*aK;   
   double S = S1 + S2;            /* in the EMRL this becomes the spin of the BH */
   double Sstar = X2*a1 + X1*a2;  /* in the EMRL this becomes the spin of the particle */
+
+  double ecc = par_get_d("ecc");
 
   int j;
 
