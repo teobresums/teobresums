@@ -89,7 +89,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   double *dphi_dr_vec            = buffer[19];
   double *dt_dr_vec              = buffer[20];
   
-  double ggm[14]; 
+  double ggm[26]; 
   double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, u2, prstar2, dHeff_dpphi, dHeff_dprstar, dHeff_dr, dHeff_dprstarbyprstar, d2Heff_dprstar20,
     H, G, pl_hold, x, jhat, psi, r_omg, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
 
@@ -105,9 +105,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     /** Computing metric functions and centrifugal radius */
     if(usespins){ 
       
-      eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
+      eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold, &pl_hold);
       eob_dyn_s_get_rc(dyn->r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
-      eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+      eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
       
       G                         = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss
       dG_dr_vec[i]              = ggm[6] *S+ggm[7] *Sstar;
@@ -116,7 +116,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
     
     } else {
       
-      eob_metric(dyn->r ,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
+      eob_metric(dyn->r ,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold, &pl_hold);
       
       rc_vec[i]                 = dyn->r; //Nonspinning case: rc = r
       drc_dr_vec[i]             = 1;  
@@ -303,7 +303,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	*/
  
 	/** New GGM functions */
-	eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], aK2, dyn->prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+	eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], 0.0, aK2, dyn->prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
 	
 	dG_dr_vec[i]              = ggm[6] *S+ggm[7] *Sstar;
 	dG_dprstar_vec[i]         = ggm[4] *S+ggm[5] *Sstar;

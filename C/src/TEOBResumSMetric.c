@@ -405,7 +405,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 }
 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
-void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
+void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B)
 {
   const double nu    = dyn->nu;
   const double u     = 1./r;
@@ -454,11 +454,12 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
 
   *B  = Btmp;
   *dB = dBtmp_r;
-
+  *d2B = 0.;
+  
 }
  
 /** EOB Metric potentials A(r), B(r), and their derivatives, spin version */
-void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
+void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B)
 {
 
   const double nu    = dyn->nu;
@@ -500,26 +501,45 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   double uc3 = uc2*uc;
   double uc4 = uc2*uc2;
 
-  double dAorb  = -dAorb_u*uc2;
-  double d2Aorb = 2.*dAorb_u*uc3 + d2Aorb_u*uc4;
+  double dAorb_drc   = -dAorb_u*uc2;
+  double d2Aorb_drc2 = 2.*dAorb_u*uc3 + d2Aorb_u*uc4;
+
+  double dAorb  = dAorb_drc*drc;
+  double d2Aorb = d2rc*dAorb_drc + SQ(drc)*d2Aorb_drc2;
 
   /* Correct A for spin */
-  double AKerr_Multipole = (1.+2.*uc)/(1.+2.*u);
-  double fss = 1.;
+  double AKerr_Multipole   = (1.+2.*uc)/(1.+2.*u);
+  double dAKerr_Multipole  = -2.*uc2*drc/(1.+2.*u) + 2.*(1.+2.*uc)/SQ(1.+2.*u)*u2;
+  double d2AKerr_Multipole = 2./(1+2.*u)*(2.*uc3*SQ(drc) - SQ(uc)*d2rc
+			    - 4.*u2*uc2/(1+2.*u)*drc - 2.*u3*(1+2.*uc)/(1+2.*u) 
+			    + 4.*u4*(1+2.*uc)/SQ(1+2.*u));
 
-  *A   = Aorb*AKerr_Multipole*fss;    
-  *dA  = dAorb*drc*(1.+2.*uc)/(1.+2.*u) - 2.*Aorb*drc*uc2/(1.+2.*u) + 2.*Aorb*(1.+2.*uc)*u2/((1.+2.*u)*(1.+2.*u));
-  *d2A = d2Aorb*(1.+2.*uc)/(1.+2.*u) + 4.*dAorb*( u2*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) - uc2/(1.+2.*u)*drc) + Aorb*(-4.*u3*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) + 8.*u4*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)*(1.+2.*u))+4.*uc3*(1.+2.*u)*drc*drc - 2.*uc2/(1.+2.*u)*d2rc);
+  *A   = Aorb*AKerr_Multipole;    
+  *dA  =  dAorb*AKerr_Multipole + Aorb*dAKerr_Multipole;
+  *d2A = d2Aorb*AKerr_Multipole + 2.*dAorb*dAKerr_Multipole
+                + Aorb*d2AKerr_Multipole;
 
   /* D potential and derivative with respect to r */
   double Dp = 1.0 + 6.*nu*uc2 - 2.*(3.0*nu-26.0)*nu*uc3; // Pade' resummation of D
-  double D  = 1./Dp;
-  double dD = 6.*uc2*(2.*nu*uc-(3.*nu-26.)*nu*uc2)*D*D;
+  double dDp_duc   = 6.*nu*(2.*uc - (3.0*nu-26.0)*uc2);
+  double d2Dp_duc2 = 12.*nu*(1. - (3.0*nu-26.0)*uc);
+  
+  double D        = 1./Dp;
+  double dD_duc   = -SQ(D)*dDp_duc;
+  double d2D_duc2 = 2.*SQ(D)*D*SQ(dDp_duc) - SQ(D)*d2Dp_duc2;
 
+  double dD  = -uc2*drc*dD_duc;
+  double d2D = (2.*uc3*SQ(drc) - uc2*d2rc)*dD_duc + SQ(uc2*drc)*d2D_duc2;
+  
   /* B potential and derivative with respect to r */
-  *B   = r*r*uc2*D/(*A);
-  *dB  = (dD*(*A) - D*(*dA))/((*A)*(*A));
-
+  double fact   = r*r*uc2;
+  double dfact  = 2.*r*uc2 - 2.*r*r*uc3*drc;
+  double d2fact = 2.*uc2 - 8.*r*uc3*drc + 6.*r*r*uc4*SQ(drc) - 2.*r*r*uc3*d2rc;
+  
+  *B   = fact*D/(*A);
+  *dB  = (*B)*(dfact/fact + dD/D - (*dA)/(*A));
+  *d2B = SQ(*dB)/(*B) + (*B)*(d2fact/fact - SQ(dfact/fact) + d2D/D - SQ(dD/D)
+			 - (*d2A)/(*A) + SQ((*dA)/(*A)));
   /* Add here tides if needed */
   
 
