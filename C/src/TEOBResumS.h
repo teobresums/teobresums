@@ -459,7 +459,11 @@ typedef struct tagEOBParameters
 {
   double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
+<<<<<<< HEAD
   double ecc, r_hyp, H_hyp, j_hyp;
+=======
+  double ecc;
+>>>>>>> Added eccentricity parameter
   double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
   double LambdaAl2,LambdaAl3,LambdaAl4, LambdaBl2,LambdaBl3,LambdaBl4, SigmaAl2,SigmaBl2;

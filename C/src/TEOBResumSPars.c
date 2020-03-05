@@ -1416,6 +1416,8 @@ void eob_set_params(char *s, int n)
   double S = S1 + S2;            /* in the EMRL this becomes the spin of the BH */
   double Sstar = X2*a1 + X1*a2;  /* in the EMRL this becomes the spin of the particle */
 
+  double ecc = par_get_d("ecc");
+
   int j;
 
   for (j=0; j<=TIDES_NOPT; j++) {
