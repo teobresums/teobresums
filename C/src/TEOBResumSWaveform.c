@@ -1629,9 +1629,6 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
 
   flm[13] = gsl_pow_int(rholm[13], 5);
   flm[13] = flm[13]*f55S;
-
-  
-
 }
 
 /** Calculate tidal correction to multipolar waveform amplitude
