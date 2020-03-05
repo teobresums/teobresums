@@ -86,6 +86,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->chi1 = 0.;
   eobp->chi2 = 0.;
   
+  eobp->ecc = 0.;
+
   eobp->distance = 1.;
   eobp->inclination = 0.;
   eobp->coalescence_angle = 0.;
@@ -297,6 +299,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->q = par_get_d("q"); // mass ratio
   eobp->chi1 = par_get_d("chi1"); // dimensionless spin 1 z-component 
   eobp->chi2 = par_get_d("chi2"); // dimensionless spin 2 z-component 
+  eobp->ecc = par_get_d("ecc"); // eccentricity 
   eobp->distance = par_get_d("distance"); 
   eobp->inclination = par_get_d("inclination");
   eobp->coalescence_angle = par_get_d("coalescence_angle");
@@ -559,6 +562,7 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_d("q", EOBPars->q); // mass ratio
   par_add_d("chi1", EOBPars->chi1); // dimensionless spin 1 z-component 
   par_add_d("chi2", EOBPars->chi2); // dimensionless spin 2 z-component 
+  par_add_d("ecc", EOBPars->ecc); // eccentricity
   par_add_d("distance", EOBPars->distance); 
   par_add_d("inclination", EOBPars->inclination);
   par_add_d("coalescence_angle", EOBPars->coalescence_angle);
@@ -717,6 +721,7 @@ void par_db_default ()
   par_add_d("q", 1.); // mass ratio
   par_add_d("chi1", 0.); // dimensionless spin 1 z-component 
   par_add_d("chi2", 0.); // dimensionless spin 2 z-component 
+  par_add_d("ecc", 0.); // eccentricity 
   par_add_d("distance", 1.); 
   par_add_d("inclination", 0.);
   par_add_d("coalescence_angle", 0.);
@@ -1397,6 +1402,8 @@ void eob_set_params(char *s, int n)
   double aK2 = aK*aK;   
   double S = S1 + S2;            /* in the EMRL this becomes the spin of the BH */
   double Sstar = X2*a1 + X1*a2;  /* in the EMRL this becomes the spin of the particle */
+
+  double ecc = par_get_d("ecc");
 
   int j;
 
