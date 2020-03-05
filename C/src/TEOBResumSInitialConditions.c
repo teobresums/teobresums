@@ -308,8 +308,7 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   const double S     = S1 + S2;        
   const double Sstar = X2*a1 + X1*a2;  
   const double z3 = 2.0*nu*(4.0-3.0*nu);
-  const double ecc = 0.089; //FIXME PR: dyn->ecc;
-
+  
   const int usetidal = dyn->use_tidal;  
   const int usespins = dyn->use_spins;
 
