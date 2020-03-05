@@ -298,6 +298,7 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   const double a1   = dyn->a1;
   const double a2   = dyn->a2;
   const double aK2  = dyn->aK2;
+  const double ecc = dyn->ecc;
   const double C_Q1 = dyn->C_Q1;
   const double C_Q2 = dyn->C_Q2;
   const double C_Oct1 = dyn->C_Oct1;
@@ -307,8 +308,7 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   const double S     = S1 + S2;        
   const double Sstar = X2*a1 + X1*a2;  
   const double z3 = 2.0*nu*(4.0-3.0*nu);
-  const double ecc = 0.089; //FIXME PR: dyn->ecc;
-
+  
   const int usetidal = dyn->use_tidal;  
   const int usespins = dyn->use_spins;
 
@@ -645,8 +645,8 @@ double eob_dyn_Omegaecc0(double r, void *params)
   const double C_Oct2 = dyn->C_Oct2;
   const double C_Hex1 = dyn->C_Hex1;
   const double C_Hex2 = dyn->C_Hex2;
-  const double ecc = 0.089; //FIXME PR: dyn->ecc;
-
+  const double ecc = dyn->ecc;
+  
   const int usetidal = dyn->use_tidal;  
   const int usespins = dyn->use_spins;
 
