@@ -422,7 +422,7 @@ typedef struct tagDynamics
   /* key parameters for quick access */
   // TODO: REMOVE THEM FROM HERE, put them in EOBParameters
   double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, ecc, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
@@ -438,6 +438,7 @@ typedef struct tagEOBParameters
 {
   double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
+  double ecc;
   double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
   double LambdaAl2,LambdaAl3,LambdaAl4, LambdaBl2,LambdaBl3,LambdaBl4, SigmaAl2,SigmaBl2;
