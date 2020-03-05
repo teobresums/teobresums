@@ -197,7 +197,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /** Compute initial radius */
   const double f0 = EOBPars->initial_frequency/time_unit_fact;
-<<<<<<< HEAD
   double r0;
   if (ecc != 0.) {
     r0 = eob_dyn_r0_ecc(f0, dyn);
@@ -205,12 +204,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     r0 = eob_dyn_r0_Kepler(f0);
   }
   //r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
-=======
-  double r0 = eob_dyn_r0_ecc(f0, dyn);
-  
-  //double r0 = eob_dyn_r0_Kepler(f0);
-  //double r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
->>>>>>> Initial conditions for the spin case
 
   /* If f_min is too high fall back to a minimum acceptable initial radius */
   if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
@@ -385,7 +378,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
      */
 
     /** Compute the initial conditions */
-<<<<<<< HEAD
     if (r_hyp != 0.) {
       eob_dyn_ic_hyp(r_hyp, H_hyp, j_hyp, dyn, dyn->y0);
     } else if (ecc != 0.) {
@@ -395,11 +387,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } else {
       eob_dyn_ic(r0, dyn, dyn->y0);
     }
-=======
-    //if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
-    //else           eob_dyn_ic(r0, dyn, dyn->y0);
-    eob_dyn_ic_ecc(r0, dyn, dyn->y0);
->>>>>>> Initial conditions for the spin case
     
     /** Se arrays with initial conditions */
     dyn->t       = 0.;
