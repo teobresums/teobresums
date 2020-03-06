@@ -145,7 +145,7 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
     double pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
 
       
-  if (DEQUAL(nu,0.25,1e-9)) {
+  if ( nu > 0.2485)) {
 
     pA[0]    =  0.00178195;
     pA[1]    =  0.00435589;
@@ -316,7 +316,7 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
   double pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
 
   /* l=2, m=2 */
-  if (DEQUAL(nu,0.25,1e-9)) {
+  if (nu>0.2485) {
 	    
     pA[0]    =  0.00178195;
     pA[1]    =  0.00435589;
@@ -824,18 +824,17 @@ void eob_nqc_setcoefs(NQCdata *nqc)
 
   if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"nrfit_nospin201602"))
     eob_nqc_setcoefs_nospin201602(nqc->flx);
-
-  if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"fromfile")) 
+  else if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"fit_spin_202002"))
+    eob_nqc_setcoefs_spin202002(nqc->flx);
+  else if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"fromfile")) 
     eob_nqc_setcoefs_fromfile(nqc->flx, EOBPars->nqc_coefs_flx_file);
-  // TODO: ADD HERE YOUR LATEST FITS
-  //else if (STREQUAL(par_get_s("nqc_coefs_flx"),"nrfit_spin_202001")) 
 
   if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"nrfit_nospin201602")) 
     eob_nqc_setcoefs_nospin201602(nqc->hlm);
-   if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"fromfile")) 
+  else if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"fit_spin_202002")) 
+    eob_nqc_setcoefs_spin202002(nqc->hlm);
+  else if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"fromfile")) 
     eob_nqc_setcoefs_fromfile(nqc->hlm,EOBPars->nqc_coefs_hlm_file);
-   // TODO: ADD HERE YOUR LATEST FITS
-   //else if (STREQUAL(par_get_s("nqc_coefs_hlm"),"nrfit_spin_202001")) 
   
 }
 
@@ -932,7 +931,198 @@ void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname)
   nqc->add = 1;
   nqc->maxk = maxk;
 }
-
+void eob_nqc_setcoefs_spin202002(NQCcoefs *nqc)
+{
+  const int k22 = 1;
+  const double nu = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;  
+  const double chi2 = EOBPars->chi2;  
+  nqc->activemode[k22]=1;
+	  
+  double a1fit = get_a1_fit_22(nu, chi1, chi2);
+  double a2fit = get_a2_fit_22(nu, chi1, chi2);
+	  
+  /* (2,2) */
+  nqc->a1[k22] = a1fit;
+  nqc->a2[k22] = a2fit;
+  nqc->a3[k22] = 0.0;
+	    
+  nqc->b1[k22] = 0.0;
+  nqc->b2[k22] = 0.0;
+  nqc->b3[k22] = 0.0;
+	
+  nqc->add = 1;
+  nqc->maxk = k22;
+}
+	
+double get_a1_fit_22(double nu, double chi1, double chi2)
+{
+  const int usespins = EOBPars->use_spins;
+  double res = 0.;
+  if (usespins) 
+    {
+      double a1_q1 = 0.070974;
+      double b1    = 0.786350;
+      double b2    = -9.085105;
+      double X     = 1.-4.*nu;
+      res          = a1_q1/(1. + b1*X + b2*X*X);
+    }
+  else if (nu>0.2485)
+    {
+      double b1    = 0.121187;
+      double b2    = -5.950663;
+      double b3    = 9.420324;
+      double b4    = -10.601339;
+      double b5    = 17.641549;
+      double b6    = -5.684777;
+      double b7    = 10.910451;
+      double b8    = -6.867377;
+      double X12  = sqrt(1.-4*nu);
+      double X1   = 0.5*(1.+X12);
+      double X2   = 1.-X1;
+      double Shat = (X1*X1*chi1 + X2*X2*chi2);
+      res      = b1*(1. + b2*Shat + b3*Shat*Shat+ b4*Shat*Shat*Shat+ b5*Shat*Shat*Shat*Shat)/(1. + b6*Shat+ b7*Shat*Shat+ b8*Shat*Shat*Shat);
+    }
+  else if (nu>0.16)
+    {
+      double b1    = 0.26132647;
+      double b2    = -4.90302367;
+      double b3    = 20.67036124;
+      double b4    		= -3.17109808;
+      double a1_nospin   = b1*(1. + b2*nu + b3*nu*nu*nu)/(1. + b4*nu);
+	
+      double X12  		= sqrt(1.-4.*nu);
+      double X1   		= 0.5*(1.+X12);
+      double X2   		= 1.-X1;
+      double Shat_norm 	= (X1*X1*chi1 + X2*X2*chi2)/(X1*X1 + X2*X2);
+      double c1    = -3.082861;
+      double c2    = 2.169948;
+      double c3    = -0.636353;
+      double c4    = 0.741419;
+      double c5    = -2.843896;
+      double c6    = 2.709697;
+      double c7    = -0.832894;
+      double a1_spin = (1. + c1*Shat_norm + c2*Shat_norm*Shat_norm+ c3*Shat_norm*Shat_norm*Shat_norm+ c4*Shat_norm*Shat_norm*Shat_norm*Shat_norm)/(1. + c5*Shat_norm+ c6*Shat_norm*Shat_norm+ c7*Shat_norm*Shat_norm*Shat_norm);
+      res      = a1_nospin*a1_spin;
+    }
+  else
+    {
+      double b1    = 0.341803;
+      double b2    = -1.350488;
+      double b3    = -6.353357;
+      double b4    = 2.216156;
+      double a1_nospin   = b1*(1. + b2*nu + b3*nu*nu*nu)/(1 + b4*nu);
+	
+      double c1    = 7.650946;
+      double c2    = 7.106992;
+      double c3    = -60.630748;
+      double c4    = -69.630357;
+      double c5    = 47.114247;
+      double c6    = 5.733002;
+      double c7    = -12.905707;
+      double c8    = 5.045688;
+      double c9    = 3.515869;
+      double c10    = 1.564146;
+      double c11    = 0.642864;
+      double c12    = 2.947890;
+      double c13    = 31.023038;
+      double c14    = 1.829543;
+      double xnu    = nu-0.16;
+      double X12  		= sqrt(1.-4.*nu);
+      double X1   		= 0.5*(1.+X12);
+      double X2   		= 1.-X1;
+      double Shat_norm 	= (X1*X1*chi1 + X2*X2*chi2)/(X1*X1 + X2*X2);
+      double a1_spin  =  (1.-2.287721*(1.+c1*xnu)/(1.+c2*xnu)*Shat_norm-0.598451*(1.+c3*xnu)/(1.+c4*xnu)*Shat_norm*Shat_norm+0.766069*(1.+c5*xnu)/(1.+c6*xnu)*Shat_norm*Shat_norm*Shat_norm+1.857169*(1.+c7*xnu)/(1.+c8*xnu)*Shat_norm*Shat_norm*Shat_norm*Shat_norm)/(1.-2.035234*(1.+c9*xnu)/(1.+c10*xnu)*Shat_norm+0.836427*(1.+c11*xnu)/(1.+c12*xnu)*Shat_norm*Shat_norm+0.297476*(1.+c13*xnu)/(1.+c14*xnu)*Shat_norm*Shat_norm*Shat_norm);
+      res  = a1_nospin*a1_spin;
+    }
+}
+	
+double get_a2_fit_22(double nu, double chi1, double chi2)
+{
+  const int usespins = EOBPars->use_spins;
+  double res = 0.;
+  if (usespins) 
+    {
+      double x     	= sqrt(1.-4.*nu);
+      double a2q1 	= 1.315133;
+      double b1    	= -0.324849;
+      double b2    	= -0.304506;
+      double b3    	= -0.371614;
+      res      		= a2q1*(1. + b1*x + b2*x*x)/(1. + b3*x);
+    }
+  else if (nu>0.2485)
+    {
+      double b1   = 1.331703;
+      double b2   = -4.237724;
+      double b3   = 1.786023;
+      double b4   = 10.546205;
+      double b5   = -9.698233;
+      double b6   = -6.225823;
+      double b7   = 13.209381;
+      double b8   = -9.402513;
+      double X12  = sqrt(1.-4.*nu);
+      double X1   = 0.5*(1.+X12);
+      double X2   = 1.-X1;
+      double Shat = (X1*X1*chi1 + X2*X2*chi2);
+      res      	= b1*(1. + b2*Shat + b3*Shat*Shat+ b4*Shat*Shat*Shat+ b5*Shat*Shat*Shat*Shat)/(1. + b6*Shat+ b7*Shat*Shat+ b8*Shat*Shat*Shat);
+    }
+  else if (nu>0.16)
+    {
+      double b1    		= 1.03364144;
+      double b2    		= -3.46191440;
+      double b3    		= -7.86652243;
+      double b4    		= -3.96268815;
+      double a2_nospin 	= b1*(1. + b2*nu + b3*nu*nu*nu)/(1. + b4*nu);
+	
+      double c1    		= 0.036452;
+      double c2    		= -64.360789;
+      double c3    		= 0.275707;
+      double c4    		= -34.573145;
+      double c5    		= -0.113951;
+      double c6    		= -2.531304;
+      double c7    		= -7.691661;
+      double c8    		= -1.025824;
+      double c9    		= 4.237539;
+      double c10    		= 0.593579;
+      double c11    		= 1.661809;
+      double c12    		= -0.939736;
+      double c13    		= -6.333442;
+      double X12  		= sqrt(1.-4.*nu);
+      double X1   		= 0.5*(1.+X12);
+      double X2   		= 1.-X1;
+      double Shat_norm 	= (X1*X1*chi1 + X2*X2*chi2)/(X1*X1 + X2*X2);
+      double a2_spin 		= (1. + c1*(1.+c2*nu)*Shat_norm + c3*(1.+c4*nu)*Shat_norm*Shat_norm + c5*Shat_norm*Shat_norm*Shat_norm+ c6*(1.+c7*nu)*Shat_norm*Shat_norm*Shat_norm*Shat_norm)/(1. + c8*(1.+c9*nu)*Shat_norm+ c10*(1.+c11*nu)*Shat_norm*Shat_norm + c12*(1.+c13*nu)*Shat_norm*Shat_norm*Shat_norm);
+      res 	= a2_nospin*a2_spin;
+    }
+  else
+    {
+      double b1    = 0.929192;
+      double b2    = 1.334263;
+      double b3    = -26.389790;
+      double b4    = -1.289984;
+      double a2_nospin  = b1*(1. + b2*nu + b3*nu*nu*nu)/(1. + b4*nu);
+      double c1    = 15.871482;
+      double c2    = 5.066190;
+      double c3    = 7.168498;
+      double c4    = 6.709490;
+      double c5    = 18.583382;
+      double c6    = 5.764512;
+      double c7    = -14.038564;
+      double c8    = -17.126231;
+      double c9    = 6.387917;
+      double c10    = 3.438456;
+      double c11    = 8.867098;
+      double c12    = 2.910938;
+      double xnu    = nu-0.16;
+      double X12   = sqrt(1.-4.*nu);
+      double X1    = 0.5*(1.+X12);
+      double X2    = 1.-X1;
+      double Shat_norm 	= (X1*X1*chi1 + X2*X2*chi2)/(X1*X1 + X2*X2);
+      double a2_spin = (1.-0.886561*(1+c1*xnu)/(1+c2*xnu)*Shat_norm-1.953955*(1+c3*xnu)/(1+c4*xnu)*Shat_norm*Shat_norm+1.366537*(1+c5*xnu)/(1+c6*xnu)*Shat_norm*Shat_norm*Shat_norm+0.950212*(1+c7*xnu)/(1+c8*xnu)*Shat_norm*Shat_norm*Shat_norm*Shat_norm)/(1.-2.531000*(1+c9*xnu)/(1+c10*xnu)*Shat_norm+1.723991*(1+c11*xnu)/(1+c12*xnu)*Shat_norm*Shat_norm);
+	
+      res      = a2_nospin*a2_spin;
+    }
+}
 /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
     here x = log(lambda) and the output is the log of the coefficient
     that describes the quadrupole deformation due to spin. */

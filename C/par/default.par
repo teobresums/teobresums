@@ -66,8 +66,8 @@ compute_LR_guess = 3.
 compute_LSO_guess = 6. 
 
 nqc = "auto" # {"auto", "manual"}
-nqc_coefs_flx = "none" # {"none", "nrfit_nospin20160209", "fromfile"}
-nqc_coefs_hlm = "none" # {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+nqc_coefs_flx = "none" # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+nqc_coefs_hlm = "none" # {"compute", "none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
 nqc_coefs_flx_file = ""
 nqc_coefs_hlm_file = ""
 

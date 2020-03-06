@@ -329,19 +329,21 @@ static const char* const nqc_opt[] = {"no", "auto", "manual"};
 enum{
   NQC_FLX_NONE,
   NQC_FLX_NRFIT_NOSPIN201602,
+  NQC_FLX_FIT_SPIN_202002,
   NQC_FLX_FROMFILE,
   NQC_FLX_NOPT
 };
-static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "fromfile"};
+static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "fit_spin_202002", "fromfile"};
 
 enum{
   NQC_HLM_NONE,
   NQC_HLM_NRFIT_NOSPIN201602,
+  NQC_HLM_FIT_SPIN_202002,
   NQC_HLM_FROMFILE,
   NQC_HLM_COMPUTE,
   NQC_HLM_NOPT
 };
-static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "fromfile", "compute"};
+static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "fit_spin_202002", "fromfile", "compute"};
 
 enum { 
   FIRSTCALL_EOBWAVFLMV1, 
@@ -633,6 +635,9 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm);
 void eob_nqc_setcoefs(NQCdata *nqc);
 void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc);
 void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname);
+void eob_nqc_setcoefs_spin202002(NQCcoefs *nqc);
+double get_a1_fit_22(double nu, double chi1, double chi2);
+double get_a2_fit_22(double nu, double chi1, double chi2);
 double logQ(double x);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
 double Yagi13_fit_barsigmalambda(double barlam2);
