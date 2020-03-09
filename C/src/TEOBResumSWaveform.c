@@ -270,7 +270,7 @@ void eob_wav_hlmNewt_ecc(double r,
   /* Eccentric variables */
   double Re_vphi22_ecc = vphi2 - 0.5*(SQ(rdot) + r*r2dot);
   double Im_vphi22_ecc = 2.*vphi*rdot + 0.5*Omegadot*SQ(r);
-
+  
   double Re_vphi21_ecc = vphi3 - 6.*vphi*SQ(rdot) - 3.*vphi*r*r2dot
     - 6.*SQ(r)*rdot*Omegadot - SQ(r)*r*Omega2dot;
   double Im_vphi21_ecc = 3.*SQ(r)*(2.*rdot*SQ(Omega) + vphi*Omegadot);
