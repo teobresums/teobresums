@@ -304,12 +304,9 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->chi1 = par_get_d("chi1"); // dimensionless spin 1 z-component 
   eobp->chi2 = par_get_d("chi2"); // dimensionless spin 2 z-component 
   eobp->ecc = par_get_d("ecc"); // eccentricity 
-<<<<<<< HEAD
   eobp->r_hyp = par_get_d("r_hyp"); // initial radius for hyperbolic systems 
   eobp->H_hyp = par_get_d("H_hyp"); // initial energy for hyperbolic systems
   eobp->j_hyp = par_get_d("j_hyp"); // initial angular momentum for hyperbolic systems
-=======
->>>>>>> Added eccentricity parameter
   eobp->distance = par_get_d("distance"); 
   eobp->inclination = par_get_d("inclination");
   eobp->coalescence_angle = par_get_d("coalescence_angle");
@@ -573,12 +570,9 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_d("chi1", EOBPars->chi1); // dimensionless spin 1 z-component 
   par_add_d("chi2", EOBPars->chi2); // dimensionless spin 2 z-component 
   par_add_d("ecc", EOBPars->ecc); // eccentricity
-<<<<<<< HEAD
   par_add_d("r_hyp", EOBPars->r_hyp); // initial radius for hyperbolic orbits
   par_add_d("H_hyp", EOBPars->H_hyp); // initial energy for hyperbolic orbits
   par_add_d("j_hyp", EOBPars->j_hyp); // initial angular momentum for hyperbolic orbits
-=======
->>>>>>> Added eccentricity parameter
   par_add_d("distance", EOBPars->distance); 
   par_add_d("inclination", EOBPars->inclination);
   par_add_d("coalescence_angle", EOBPars->coalescence_angle);
