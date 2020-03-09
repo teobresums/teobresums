@@ -246,7 +246,7 @@ void eob_wav_hlmNewt_ecc(double r,
 			 double phi,
 			 double nu,
 			 Waveform_lm_t *hlmNewt)
-{  
+{
   /** Shorthands */
   double nu2   = nu*nu;
   double nu3   = nu*nu2;
