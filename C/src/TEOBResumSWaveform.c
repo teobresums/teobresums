@@ -242,6 +242,252 @@ void eob_wav_hlmNewt_HM(double r,
   
 }
 
+/** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform.
+    Eccentric version */
+void eob_wav_hlmNewt_ecc(double r,
+			 double rdot,
+			 double r2dot,
+			 double r3dot,
+			 double r4dot,
+			 double r5dot,
+			 double Omega,
+			 double Omegadot,
+			 double Omega2dot,
+			 double Omega3dot,
+			 double Omega4dot,
+			 double Omega5dot,
+			 double phi,
+			 double nu,
+			 Waveform_lm_t *hlmNewt)
+{
+  /** Shorthands */
+  double nu2   = nu*nu;
+  double nu3   = nu*nu2;
+
+  double vOmg  = pow(Omega,1./3.);
+  double vOmg2 = vOmg*vOmg;
+  double vOmg3 = vOmg*vOmg2;
+  double vOmg4 = vOmg*vOmg3;
+  double vOmg5 = vOmg*vOmg4;
+
+  double vphi  = r*Omega;
+  double vphi2 = vphi*vphi;
+  double vphi3 = vphi*vphi2;
+  double vphi4 = vphi*vphi3;
+  double vphi5 = vphi*vphi4;
+  double vphi6 = vphi*vphi5;
+  double vphi7 = vphi*vphi6;
+  double vphi8 = vphi*vphi7;
+  double vphi9 = vphi*vphi8;
+
+  /* Eccentric variables */
+  double Re_vphi22_ecc = vphi2 - 0.5*(SQ(rdot) + r*r2dot);
+  double Im_vphi22_ecc = 2.*vphi*rdot + 0.5*Omegadot*SQ(r);
+
+  // FIXME PR: Check!
+  double Re_vphi21_ecc = vphi3 - 6.*vphi*SQ(rdot) - 3.*vphi*r*r2dot
+    - 6.*SQ(r)*rdot*Omegadot - SQ(r)*r*Omega2dot;
+  double Im_vphi21_ecc = 3.*SQ(r)*(2.*rdot*SQ(Omega) + vphi*Omegadot);
+
+  double Re_vphi33_ecc = vphi3 - vphi*(r*r2dot + 2.*SQ(rdot))
+    - 1./9*r*SQ(r)*Omega2dot - SQ(r)*rdot*Omegadot;
+  double Im_vphi33_ecc = vphi*SQ(r)*Omegadot + 3.*vphi2*rdot
+    - 2./9.*SQ(rdot)*rdot -2./3.*r*rdot*r2dot - 1./9.*SQ(r)*r3dot; 
+
+  double Re_vphi32_ecc = vphi4 - 3.*vphi2*(r*r2dot + 3.*SQ(rdot))
+    - SQ(SQ(r))*Omega*Omega2dot - 9.*vphi*SQ(r)*rdot*Omegadot
+    - 0.75*SQ(SQ(r)*Omegadot);
+  double Im_vphi32_ecc = 6.*vphi3*rdot -0.5*vphi*SQ(r)*r3dot
+    - 4.5*Omega*SQ(r)*rdot*r2dot - 3.*vphi*rdot*SQ(rdot)
+    - 1.5*SQ(r)*r*rdot*Omega2dot - 0.125*SQ(SQ(r))*Omega3dot
+    - 1.5*SQ(r)*r*r2dot*Omegadot - 4.5*SQ(r)*SQ(rdot)*Omegadot
+    + 3.*SQ(r)*vphi2*Omegadot;
+
+  double Re_vphi31_ecc = vphi3 - 9.*vphi*r*r2dot - 18.*vphi*SQ(rdot)
+    -9.*SQ(r)*rdot*Omegadot - SQ(r)*r*Omega2dot;
+  double Im_vphi31_ecc = 9.*vphi2*rdot - 3.*SQ(r)*r3dot - 18.*r*rdot*r2dot
+    - 6.*SQ(rdot)*rdot + 3.*vphi*SQ(r)*Omegadot;
+
+  double Re_vphi44_ecc = vphi4 + 0.015625*SQ(r)*r*r4dot
+    - 0.1875*SQ(SQ(r)*Omegadot) + 0.1875*SQ(r)*rdot*r3dot
+    + 0.09375*SQ(SQ(rdot)) + 0.140625*SQ(r*r2dot) -4.5*vphi2*SQ(rdot)
+    - 1.5*vphi2*r*r2dot - 0.25*vphi*SQ(r)*r*Omega2dot
+    - 3.*vphi*SQ(r)*rdot*Omegadot + 0.5625*r*SQ(rdot)*r2dot;
+  double Im_vphi44_ecc = 4.*vphi3*rdot - 1.5*vphi*SQ(rdot)*rdot
+    - 0.015625*SQ(SQ(r))*Omega3dot - 0.25*vphi*SQ(r)*r3dot
+    + 1.5*vphi2*SQ(r)*Omegadot - 0.25*SQ(r)*r*rdot*Omega2dot
+    - 2.25*vphi*r*rdot*r2dot - 0.375*SQ(r)*r*r2dot*Omegadot
+    - 1.125*SQ(r*rdot)*Omegadot;
+
+  double Re_vphi43_ecc = vphi5 + 5./81.*SQ(SQ(r))*Omega*r4dot
+    + 20./27.*vphi*SQ(r*r2dot) + 80./81.*vphi*SQ(r)*rdot*r3dot
+    + 40./9.*vphi*r*SQ(rdot)*r2dot + 40./27.*vphi*SQ(SQ(rdot))
+    - 10./3.*vphi3*r*r2dot - 40./3.*vphi3*SQ(rdot)
+    + 10./27.*SQ(SQ(r))*r2dot*Omega2dot + 40./27.*SQ(r)*r*SQ(rdot)*Omega2dot
+    - 10./9.*vphi2*SQ(r)*r*Omega2dot + 20./81.*SQ(SQ(r))*rdot*Omega3dot
+    + 1./81.*SQ(SQ(r))*r*Omega4dot + 20./81.*SQ(SQ(r))*r3dot*Omegadot
+    + 80./27.*SQ(r)*r*rdot*r2dot*Omegadot
+    + 80./27.*SQ(r)*SQ(rdot)*rdot*Omegadot - 40./3.*vphi2*SQ(r)*rdot*Omegadot
+    - 5./3.*vphi*SQ(SQ(r)*Omegadot);
+  double Im_vphi43_ecc = 20./3.*vphi4*rdot - 20./27.*vphi2*SQ(r)*r3dot
+    - 80./9.*vphi2*r*rdot*r2dot - 80./9.*vphi2*SQ(rdot)*rdot 
+    - 80./27.*SQ(SQ(r))*Omega*rdot*Omega2dot - 5./27.*vphi*SQ(SQ(r))*Omega3dot
+    - 10./3.*SQ(SQ(r))*Omega*Omegadot*r2dot
+    - 40./3.*vphi*SQ(r*rdot)*Omegadot + 10./3.*vphi3*SQ(r)*Omegadot
+    - 10./27.*SQ(SQ(r))*r*Omegadot*Omega2dot
+    - 20./9.*SQ(SQ(r)*Omegadot)*rdot;
+
+  double Re_vphi42_ecc = vphi4 + 2.25*SQ(r*r2dot) + 0.25*SQ(r)*r*r4dot
+    + 3.*SQ(r)*rdot*r3dot + 9.*r*SQ(rdot)*r2dot + 1.5*SQ(SQ(rdot))
+    - 6.*vphi2*r*r2dot - 18.*vphi2*SQ(rdot) - SQ(SQ(r))*Omega*Omega2dot
+    - 12*vphi*SQ(r)*rdot*Omegadot - 0.75*SQ(SQ(r)*Omegadot);
+  double Im_vphi42_ecc =  8.*vphi3*rdot - 2.*vphi*SQ(r)*r3dot
+    - 18.*vphi*r*rdot*r2dot - 12.*vphi*SQ(rdot)*rdot
+    - 2.*SQ(r)*r*rdot*Omega2dot - 0.125*SQ(SQ(r))*Omega3dot
+    - 3.*SQ(r)*r*r2dot*Omegadot - 9.*SQ(r*rdot)*Omegadot
+    + 3.*vphi2*SQ(r)*Omegadot;
+
+  double Re_vphi41_ecc = vphi5 + 60.*vphi*SQ(r*r2dot)
+    + 5.*SQ(SQ(r))*Omega*r4dot + 80.*vphi*SQ(r)*rdot*r3dot
+    + 360.*vphi*r*SQ(rdot)*r2dot + 120.*vphi*SQ(SQ(rdot)) - 30.*vphi3*r*r2dot
+    - 120.*vphi3*SQ(rdot) + 30.*SQ(SQ(r))*r2dot*Omega2dot
+    + 120.*SQ(r*rdot)*r*Omega2dot - 10.*vphi2*SQ(r)*r*Omega2dot
+    + 20.*SQ(SQ(r))*rdot*Omega3dot + SQ(SQ(r))*r*Omega4dot
+    + 20.*SQ(SQ(r))*r3dot*Omegadot + 240.*SQ(r)*r*rdot*r2dot*Omegadot
+    + 240.*SQ(r*rdot)*rdot*Omegadot - 120.*vphi2*SQ(r)*rdot*Omegadot
+    - 15.*vphi*SQ(SQ(r)*Omegadot);
+  double Im_vphi41_ecc = 20.*vphi4*rdot - 20.*vphi2*SQ(r)*r3dot
+    - 240.*vphi2*r*rdot*r2dot - 240.*vphi2*SQ(rdot)*rdot
+    - 80.*SQ(SQ(r))*Omega*rdot*Omega2dot - 5.*vphi*SQ(SQ(r))*Omega3dot
+    - 90.*SQ(SQ(r))*Omega*Omegadot*r2dot - 360.*vphi*SQ(r*rdot)*Omegadot
+    + 10.*vphi3*SQ(r)*Omegadot - 10.*SQ(SQ(r))*r*Omegadot*Omega2dot
+    - 60.*SQ(SQ(r)*Omegadot)*rdot;
+
+  double Re_vphi55_ecc = vphi5 + 0.48*vphi*SQ(r*r2dot)
+    + 0.04*SQ(SQ(r))*Omega*r4dot + 0.64*vphi*SQ(r)*rdot*r3dot
+    + 2.88*vphi*r*SQ(rdot)*r2dot + 0.96*vphi*SQ(SQ(rdot)) - 2.*vphi3*r*r2dot
+    - 8.*vphi3*SQ(rdot) + 0.08*SQ(SQ(r))*r2dot*Omega2dot
+    + 0.32*SQ(r*rdot)*r*Omega2dot - 0.4*vphi2*SQ(r)*r*Omega2dot
+    + 0.04*SQ(SQ(r))*rdot*Omega3dot + 0.0016*SQ(SQ(r))*r*Omega4dot
+    + 0.08*SQ(SQ(r))*r3dot*Omegadot + 0.96*SQ(r)*r*rdot*r2dot*Omegadot
+    + 0.96*SQ(r*rdot)*rdot*Omegadot - 6.*vphi2*SQ(r)*rdot*Omegadot
+    - 0.6*vphi*SQ(SQ(r)*Omegadot);
+  double Im_vphi55_ecc = 5.*vphi4*rdot + 0.0016*SQ(SQ(r))*r5dot
+    + 0.064*SQ(r)*r*r2dot*r3dot + 0.288*SQ(r*r2dot)*rdot
+    + 0.032*SQ(r)*r*rdot*r4dot + 0.192*SQ(r*rdot)*r3dot
+    + 0.384*r*SQ(rdot)*rdot*r2dot + 0.0384*SQ(SQ(rdot))*rdot
+    - 0.4*vphi2*SQ(r)*r3dot - 4.8*vphi2*r*rdot*r2dot
+    - 4.8*vphi2*SQ(rdot)*rdot - 0.8*SQ(SQ(r))*Omega*rdot*Omega2dot
+    - 0.04*vphi*SQ(SQ(r))*Omega3dot - 1.2*SQ(SQ(r))*Omega*r2dot*Omegadot
+    - 4.8*vphi*SQ(r*rdot)*Omegadot + 2.*vphi3*SQ(r)*Omegadot
+    - 0.08*SQ(SQ(r))*r*Omegadot*Omega2dot - 0.6*SQ(SQ(r)*Omegadot)*rdot;
+
+  double A22_ecc   = sqrt(SQ(Re_vphi22_ecc) + SQ(Im_vphi22_ecc));
+  double A21_ecc   = sqrt(SQ(Re_vphi21_ecc) + SQ(Im_vphi21_ecc));
+  double A33_ecc   = sqrt(SQ(Re_vphi33_ecc) + SQ(Im_vphi33_ecc));
+  double A32_ecc   = sqrt(SQ(Re_vphi32_ecc) + SQ(Im_vphi32_ecc));
+  double A31_ecc   = sqrt(SQ(Re_vphi31_ecc) + SQ(Im_vphi31_ecc));
+  double A44_ecc   = sqrt(SQ(Re_vphi44_ecc) + SQ(Im_vphi44_ecc));
+  double A43_ecc   = sqrt(SQ(Re_vphi43_ecc) + SQ(Im_vphi43_ecc));
+  double A42_ecc   = sqrt(SQ(Re_vphi42_ecc) + SQ(Im_vphi42_ecc));
+  double A41_ecc   = sqrt(SQ(Re_vphi41_ecc) + SQ(Im_vphi41_ecc));
+  double A55_ecc   = sqrt(SQ(Re_vphi55_ecc) + SQ(Im_vphi55_ecc));
+
+  double phi22_ecc = atan(Im_vphi22_ecc/Re_vphi22_ecc);
+  double phi21_ecc = atan(Im_vphi21_ecc/Re_vphi21_ecc);
+  double phi33_ecc = atan(Im_vphi33_ecc/Re_vphi33_ecc);
+  double phi32_ecc = atan(Im_vphi32_ecc/Re_vphi32_ecc);
+  double phi31_ecc = atan(Im_vphi31_ecc/Re_vphi31_ecc);
+  double phi44_ecc = atan(Im_vphi44_ecc/Re_vphi44_ecc);
+  double phi43_ecc = atan(Im_vphi43_ecc/Re_vphi43_ecc);
+  double phi42_ecc = atan(Im_vphi42_ecc/Re_vphi42_ecc);
+  double phi41_ecc = atan(Im_vphi41_ecc/Re_vphi41_ecc);
+  double phi55_ecc = atan(Im_vphi55_ecc/Re_vphi55_ecc);
+
+  if (Re_vphi22_ecc < 0.)    phi22_ecc = phi22_ecc + Pi;
+  if (Re_vphi21_ecc < 0.)    phi21_ecc = phi21_ecc + Pi;
+  if (Re_vphi33_ecc < 0.)    phi33_ecc = phi33_ecc + Pi;
+  if (Re_vphi32_ecc < 0.)    phi32_ecc = phi32_ecc + Pi;
+  if (Re_vphi31_ecc < 0.)    phi31_ecc = phi31_ecc + Pi;
+  if (Re_vphi44_ecc < 0.)    phi44_ecc = phi44_ecc + Pi;
+  if (Re_vphi43_ecc < 0.)    phi43_ecc = phi43_ecc + Pi;
+  if (Re_vphi42_ecc < 0.)    phi42_ecc = phi42_ecc + Pi;
+  if (Re_vphi41_ecc < 0.)    phi41_ecc = phi41_ecc + Pi;
+  if (Re_vphi55_ecc < 0.)    phi55_ecc = phi55_ecc + Pi;
+  
+  /** Polynomials in nu */
+  const double p1 = 1.;
+  const double p2 = 1.;//sqrt(1.-4.*nu); 
+  const double p3 = (3.*nu-1.);
+  const double p4 = (2.*nu-1.);//*sqrt(1.-4.*nu);
+  const double p5 = 1.-5.*nu+5.*nu2;
+  const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
+  const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
+  const double p8 = (4.*nu3 - 10.*nu2 + 6.*nu -1.)*sqrt(1.-4.*nu);
+    
+  const double phix2 = 2. * phi;
+  const double phix3 = 3. * phi;
+  const double phix4 = 4. * phi;
+  const double phix5 = 5. * phi;
+  const double phix6 = 6. * phi;
+  const double phix7 = 7. * phi;
+  
+  const double pv45 = p4 * vphi5;
+  const double pv56 = p5 * vphi6;
+  const double pv67 = p6 * vphi7;
+  const double pv78 = p7 * vphi8;
+  const double pv89 = p8 * vphi9;
+
+  const double fact22 = p1*A22_ecc;
+  const double fact21 = p2*A21_ecc;
+  const double fact33 = p2*A33_ecc;
+  const double fact32 = p3*A32_ecc;
+  const double fact31 = p2*A31_ecc;
+  const double fact44 = p3*A44_ecc;
+  const double fact43 = p4*A43_ecc;
+  const double fact42 = p3*A42_ecc;
+  const double fact41 = p4*A41_ecc;
+  const double fact55 = p4*A55_ecc;
+
+  double phiecc[35] = {
+    phi21_ecc, phi22_ecc,
+    phi31_ecc, phi32_ecc, phi33_ecc,
+    phi41_ecc, phi42_ecc, phi43_ecc, phi44_ecc,
+    0.,        0.,        0.,        0.,        phi55_ecc,
+    0.,        0.,        0.,        0.,        0.,        0.,
+    0.,        0.,        0.,        0.,        0.,        0., 0., 
+    0.,        0.,        0.,        0.,        0.,        0., 0., 0. 
+  };
+
+  double phim[35] = {
+    phi, phix2,
+    phi, phix2, phix3,
+    phi, phix2, phix3, phix4,
+    phi, phix2, phix3, phix4, phix5,
+    phi, phix2, phix3, phix4, phix5, phix6,
+    phi, phix2, phix3, phix4, phix5, phix6, phix7,
+    phi, phix2, phix3, phix4, phix5, phix6, phix7, 8.*phi
+  };
+
+  double Alm[35] = {
+    fact21, fact22, 
+    fact31, fact32, fact33, 
+    fact41, fact42, fact43, fact44, 
+    pv45,   pv56,   pv45,   pv56,   fact55, 
+    pv67,   pv56,   pv67,   pv56,   pv67,   pv56, 
+    pv67,   pv78,   pv67,   pv78,   pv67,   pv78, pv67, 
+    pv89,   pv78,   pv89,   pv78,   pv89,   pv78, pv89, pv78
+  };
+    
+  /** Compute hlmNewt (without phase factor) in complex Polar coords */
+#pragma omp simd
+  for (int k = 0; k < KMAX; k++) {
+    hlmNewt->phase[k] = - phim[k] + phiecc[k] + ChlmNewt_phase[k];
+    hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
+  }
+  getchar();
+}
+
 /** Tail contribution to the resummed wave.   
     Ref. Damour, Iyer & Nagar, PRD 79, 064004 (2009) */
 void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
