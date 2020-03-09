@@ -792,6 +792,7 @@ void eob_wav_hlmNewt_eccv1(double phi,
     hlmNewt->phase[k] = - phim[k] + phiecc[k] + ChlmNewt_phase[k];
     hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
   }
+  
 }
 
 /** Tail contribution to the resummed wave.   
