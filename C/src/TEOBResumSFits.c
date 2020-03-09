@@ -145,7 +145,7 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
     double pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
 
       
-  if ( nu > 0.2485)) {
+  if ( nu > 0.2485) {
 
     pA[0]    =  0.00178195;
     pA[1]    =  0.00435589;
