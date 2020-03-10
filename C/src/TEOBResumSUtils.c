@@ -1366,6 +1366,9 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->a2    = EOBPars->a2; 
   dyn->aK2   = EOBPars->aK2; 
   dyn->ecc   = EOBPars->ecc;
+  dyn->r_hyp = EOBPars->r_hyp;
+  dyn->H_hyp = EOBPars->H_hyp;
+  dyn->j_hyp = EOBPars->j_hyp;
   dyn->C_Q1  = EOBPars->C_Q1;
   dyn->C_Q2  = EOBPars->C_Q2;
   dyn->C_Oct1 = EOBPars->C_Oct1;
