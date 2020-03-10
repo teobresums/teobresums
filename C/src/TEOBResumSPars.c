@@ -102,6 +102,10 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   
   eobp->ecc = 0.;
 
+  eobp->r_hyp = 0.;
+  eobp->H_hyp = 0.;
+  eobp->j_hyp = 0.;
+
   eobp->distance = 1.;
   eobp->inclination = 0.;
   eobp->coalescence_angle = 0.;
@@ -309,6 +313,9 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->chi1 = par_get_d("chi1"); // dimensionless spin 1 z-component 
   eobp->chi2 = par_get_d("chi2"); // dimensionless spin 2 z-component 
   eobp->ecc = par_get_d("ecc"); // eccentricity 
+  eobp->r_hyp = par_get_d("r_hyp"); // initial radius for hyperbolic systems 
+  eobp->H_hyp = par_get_d("H_hyp"); // initial energy for hyperbolic systems
+  eobp->j_hyp = par_get_d("j_hyp"); // initial angular momentum for hyperbolic systems
   eobp->distance = par_get_d("distance"); 
   eobp->inclination = par_get_d("inclination");
   eobp->coalescence_angle = par_get_d("coalescence_angle");
@@ -573,6 +580,9 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_d("chi1", EOBPars->chi1); // dimensionless spin 1 z-component 
   par_add_d("chi2", EOBPars->chi2); // dimensionless spin 2 z-component 
   par_add_d("ecc", EOBPars->ecc); // eccentricity
+  par_add_d("r_hyp", EOBPars->r_hyp); // initial radius for hyperbolic orbits
+  par_add_d("H_hyp", EOBPars->H_hyp); // initial energy for hyperbolic orbits
+  par_add_d("j_hyp", EOBPars->j_hyp); // initial angular momentum for hyperbolic orbits
   par_add_d("distance", EOBPars->distance); 
   par_add_d("inclination", EOBPars->inclination);
   par_add_d("coalescence_angle", EOBPars->coalescence_angle);
@@ -732,6 +742,9 @@ void par_db_default ()
   par_add_d("chi1", 0.); // dimensionless spin 1 z-component 
   par_add_d("chi2", 0.); // dimensionless spin 2 z-component 
   par_add_d("ecc", 0.); // eccentricity 
+  par_add_d("r_hyp", 0.); // initial radius for hyperbolic orbits  
+  par_add_d("H_hyp", 0.); // initial energy for hyperbolic orbits 
+  par_add_d("j_hyp", 0.); // initial angular momentum for hyperbolic orbits
   par_add_d("distance", 1.); 
   par_add_d("inclination", 0.);
   par_add_d("coalescence_angle", 0.);
@@ -1364,8 +1377,6 @@ void eob_set_params_old(char *s, int n)
   double aK2 = aK*aK;   
   double S = S1 + S2;            /* in the EMRL this becomes the spin of the BH */
   double Sstar = X2*a1 + X1*a2;  /* in the EMRL this becomes the spin of the particle */
-
-  double ecc = par_get_d("ecc");
 
   int j;
 
