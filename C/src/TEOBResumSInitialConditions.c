@@ -375,7 +375,6 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
 void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
 		    Dynamics *dyn, double y_init[])
 {
-  
   const double nu   = dyn->nu;
   const double X1   = dyn->X1;
   const double X2   = dyn->X2;
@@ -403,16 +402,16 @@ void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
   if (Delta == 0.){
     prstar0 = - b/(2.*a);
   } else if (Delta > SQ(b)) {
-    prstar0 = sqrt((-b + sqrt(Delta))/(2.*a));
+    prstar0 = -sqrt((-b + sqrt(Delta))/(2.*a));
   } else {
     errorexit("Impossible to determine initial conditions");
   }
   pr0 = prstar0*sqrt(B/A);
 
-  eob_ham(nu, r0, j_ADM, prstar0, A, dA, &H0, NULL, NULL, NULL, &dHeff0_dpphi);
+  eob_ham(nu, r0, j_ADM, prstar0, A, dA, &H0, &pl_hold, NULL, NULL, &dHeff0_dpphi);
   E0 = nu*H0;
   Omg0 = dHeff0_dpphi/E0;
-    
+  
   y_init[EOB_ID_RAD]    = r0;
   y_init[EOB_ID_PHI]    = 0.;
   y_init[EOB_ID_PPHI]   = j_ADM;
@@ -421,7 +420,6 @@ void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
   y_init[EOB_ID_J]      = 0.;
   y_init[EOB_ID_E0]     = E0;
   y_init[EOB_ID_OMGJ]   = Omg0;
-  
 }
 
 /** Function for root finder: Derivative of the effective Hamiltonian */
@@ -528,10 +526,10 @@ struct Omegaorb0_tmp_params {
 
 /** Initial radius from initial frequency using EOB circular dynamics */
 double eob_dyn_r0_ecc (double f0, Dynamics *dyn)
-{  
+{
   const double omg_orb0 = Pi*f0;
   const double r0_kepl  = eob_dyn_r0_Kepler(f0);
-
+  
   return eob_dyn_bisecOmegaecc0(dyn,omg_orb0,r0_kepl);
 }
 
@@ -732,7 +730,7 @@ double eob_dyn_Omegaecc0(double r, void *params)
     G2  = 0.0;
   }
   B1 = A1/SQ(rc1);
-  B1 = A1/SQ(rc1);
+  B2 = A2/SQ(rc2);
     
   A12 = A1 + A2;
   DA  = A1 - A2;
