@@ -324,13 +324,11 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   if(usespins) {
     eob_metric_s(r1, dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold, &pl_hold);
-    B1 = A1/SQ(rc1);
     eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
     eob_metric_s(r2, dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
-    B2 = A2/SQ(rc2);
     eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
@@ -342,6 +340,8 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
     rc2 = r2;
     G2  = 0.0;
   }
+  B1 = A1/SQ(rc1);
+  B2 = A2/SQ(rc2);
 
   A12 = A1 + A2;
   DA  = A1 - A2;
@@ -368,6 +368,59 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j0;
   y_init[EOB_ID_E0]     = H1*nu;
   y_init[EOB_ID_OMGJ]   = omg_orb1;
+  
+}
+
+/** Initial conditions calculation for hyperbolic systems */
+void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
+		    Dynamics *dyn, double y_init[])
+{
+  
+  const double nu   = dyn->nu;
+  const double X1   = dyn->X1;
+  const double X2   = dyn->X2;
+  const double z3 = 2.0*nu*(4.0-3.0*nu);
+  
+  const int usetidal = dyn->use_tidal;
+
+  double A, B, dA, Heff, H0, E0, Omg0, dHeff0_dpphi, pl_hold;
+  double pr0, prstar0, u, u2, a, b, c, Delta;
+
+  u  = 1./r0;
+  u2 = u*u;
+  
+  Heff = 1./(2.*nu)*(SQ(H_ADM) - 1.) + 1.;
+
+  /* Computing metric */
+  eob_metric(r0 ,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
+
+  a = z3*A*u2;
+  b = 1;
+  c = A*(1. + SQ(j_ADM*u)) - SQ(Heff);
+
+  Delta = SQ(b) - 4*a*c;
+
+  if (Delta == 0.){
+    prstar0 = - b/(2.*a);
+  } else if (Delta > SQ(b)) {
+    prstar0 = sqrt((-b + sqrt(Delta))/(2.*a));
+  } else {
+    errorexit("Impossible to determine initial conditions");
+  }
+  pr0 = prstar0*sqrt(B/A);
+
+  eob_ham(nu, r0, j_ADM, prstar0, A, dA, &H0, NULL, NULL, NULL, &dHeff0_dpphi);
+  E0 = nu*H0;
+  Omg0 = dHeff0_dpphi/E0;
+    
+  y_init[EOB_ID_RAD]    = r0;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = j_ADM;
+  y_init[EOB_ID_PRSTAR] = prstar0;
+  y_init[EOB_ID_PR]     = 0.;
+  y_init[EOB_ID_J]      = 0.;
+  y_init[EOB_ID_E0]     = E0;
+  y_init[EOB_ID_OMGJ]   = Omg0;
   
 }
 
@@ -662,13 +715,11 @@ double eob_dyn_Omegaecc0(double r, void *params)
   if(usespins) {
     eob_metric_s(r1, dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold);
-    B1 = A1/SQ(rc1);
     eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
     eob_metric_s(r2, dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
-    B2 = A2/SQ(rc2);
     eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
@@ -680,7 +731,9 @@ double eob_dyn_Omegaecc0(double r, void *params)
     rc2 = r2;
     G2  = 0.0;
   }
-
+  B1 = A1/SQ(rc1);
+  B1 = A1/SQ(rc1);
+    
   A12 = A1 + A2;
   DA  = A1 - A2;
   B12 = B1 + B2;
