@@ -732,12 +732,9 @@ void par_db_default ()
   par_add_d("chi1", 0.); // dimensionless spin 1 z-component 
   par_add_d("chi2", 0.); // dimensionless spin 2 z-component 
   par_add_d("ecc", 0.); // eccentricity 
-<<<<<<< HEAD
   par_add_d("r_hyp", 0.); // initial radius for hyperbolic orbits  
   par_add_d("H_hyp", 0.); // initial energy for hyperbolic orbits 
   par_add_d("j_hyp", 0.); // initial angular momentum for hyperbolic orbits
-=======
->>>>>>> Added eccentricity parameter
   par_add_d("distance", 1.); 
   par_add_d("inclination", 0.);
   par_add_d("coalescence_angle", 0.);

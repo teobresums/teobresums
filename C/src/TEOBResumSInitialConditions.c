@@ -342,6 +342,8 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
     rc2 = r2;
     G2  = 0.0;
   }
+  B1 = A1/SQ(rc1);
+  B2 = A2/SQ(rc2);
 
   A12 = A1 + A2;
   DA  = A1 - A2;
