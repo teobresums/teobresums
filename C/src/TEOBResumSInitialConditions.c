@@ -392,7 +392,6 @@ void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
 
   /* Computing metric */
   eob_metric(r0 ,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
-  
   a = z3*A*u2;
   b = 1;
   c = A*(1. + SQ(j_ADM*u)) - SQ(Heff);
@@ -731,7 +730,7 @@ double eob_dyn_Omegaecc0(double r, void *params)
   }
   B1 = A1/SQ(rc1);
   B2 = A2/SQ(rc2);
-
+  
   A12 = A1 + A2;
   DA  = A1 - A2;
   B12 = B1 + B2;
