@@ -528,10 +528,10 @@ struct Omegaorb0_tmp_params {
 
 /** Initial radius from initial frequency using EOB circular dynamics */
 double eob_dyn_r0_ecc (double f0, Dynamics *dyn)
-{  
+{
   const double omg_orb0 = Pi*f0;
   const double r0_kepl  = eob_dyn_r0_Kepler(f0);
-
+  
   return eob_dyn_bisecOmegaecc0(dyn,omg_orb0,r0_kepl);
 }
 
