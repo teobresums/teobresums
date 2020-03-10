@@ -13,6 +13,10 @@ chi2 = 0. # dimensionless spin 2 z-component
 
 ecc = 0. # eccentricity
 
+r_hyp = 0. # initial radius for hyperbolic orbits
+H_hyp = 0. # initial energy for hyperbolic orbits
+j_hyp = 0. # initial angular momentum for hyperbolic orbits
+
 distance = 1. 
 inclination = 0.
 coalescence_angle = 0.
