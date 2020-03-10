@@ -30,25 +30,25 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->initial_frequency = PyFloat_AsDouble(PyDict_GetItemString(dict, "initial_frequency"));
   }
   if ( PyDict_GetItemString(dict, "use_geometric_units") != NULL ) { 
-    EOBPars->use_geometric_units = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_geometric_units"));
+    EOBPars->use_geometric_units = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_geometric_units"));
   }
   if ( PyDict_GetItemString(dict, "use_spins") != NULL ) { 
-    EOBPars->use_spins = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_spins"));
+    EOBPars->use_spins = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_spins"));
   }
   if ( PyDict_GetItemString(dict, "use_tidal") != NULL ) { 
-    EOBPars->use_tidal = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_tidal"));
+    EOBPars->use_tidal = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_tidal"));
   }
   if ( PyDict_GetItemString(dict, "use_tidal_gravitomagnetic") != NULL ) { 
-    EOBPars->use_tidal_gravitomagnetic = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_tidal_gravitomagnetic"));
+    EOBPars->use_tidal_gravitomagnetic = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_tidal_gravitomagnetic"));
   }
   if ( PyDict_GetItemString(dict, "use_Yagi_fits") != NULL ) { 
-    EOBPars->use_Yagi_fits = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_Yagi_fits"));
+    EOBPars->use_Yagi_fits = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_Yagi_fits"));
   }
   if ( PyDict_GetItemString(dict, "use_speedytail") != NULL ) { 
-    EOBPars->use_speedytail = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_speedytail"));
+    EOBPars->use_speedytail = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_speedytail"));
   }
   if ( PyDict_GetItemString(dict, "interp_uniform_grid") != NULL ) { 
-    EOBPars->interp_uniform_grid = (int) PyInt_AsLong(PyDict_GetItemString(dict, "interp_uniform_grid"));
+    EOBPars->interp_uniform_grid = (int) PyLong_AsLong(PyDict_GetItemString(dict, "interp_uniform_grid"));
   }
   if ( PyDict_GetItemString(dict, "pGSF_tidal") != NULL ) { 
     EOBPars->pGSF_tidal = PyFloat_AsDouble(PyDict_GetItemString(dict, "pGSF_tidal"));
@@ -69,10 +69,10 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->srate = PyFloat_AsDouble(PyDict_GetItemString(dict, "srate"));
   }
   if ( PyDict_GetItemString(dict, "size") != NULL ) { 
-    EOBPars->size = (int) PyInt_AsLong(PyDict_GetItemString(dict, "size"));
+    EOBPars->size = (int) PyLong_AsLong(PyDict_GetItemString(dict, "size"));
   }
   if ( PyDict_GetItemString(dict, "ringdown_extend_array") != NULL ) { 
-    EOBPars->ringdown_extend_array = (int) PyInt_AsLong(PyDict_GetItemString(dict, "ringdown_extend_array"));
+    EOBPars->ringdown_extend_array = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ringdown_extend_array"));
   }
 
   /* Extrinsic */
@@ -91,16 +91,16 @@ int SetOptionalVariables(PyObject* dict){
 
   /* Post Adiabatic Dynamics */
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics") != NULL ) { 
-    EOBPars->postadiabatic_dynamics = (int) PyInt_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics"));
+    EOBPars->postadiabatic_dynamics = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics"));
   }
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_N") != NULL ) { 
-    EOBPars->postadiabatic_dynamics_N = (int) PyInt_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_N"));
+    EOBPars->postadiabatic_dynamics_N = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_N"));
   }
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_size") != NULL ) { 
-    EOBPars->postadiabatic_dynamics_size = (int) PyInt_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_size"));
+    EOBPars->postadiabatic_dynamics_size = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_size"));
   }
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_stop") != NULL ) { 
-    EOBPars->postadiabatic_dynamics_stop = (int) PyInt_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_stop"));
+    EOBPars->postadiabatic_dynamics_stop = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_stop"));
   }
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin") != NULL ) {
     EOBPars->postadiabatic_dynamics_rmin = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin"));
@@ -108,33 +108,33 @@ int SetOptionalVariables(PyObject* dict){
 
   /* rc and flm */
   if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 
-    EOBPars->centrifugal_radius = (int) PyInt_AsLong(PyDict_GetItemString(dict, "centrifugal_radius"));
+    EOBPars->centrifugal_radius = (int) PyLong_AsLong(PyDict_GetItemString(dict, "centrifugal_radius"));
   }
   if ( PyDict_GetItemString(dict, "use_flm") != NULL ) { 
-    EOBPars->use_flm = (int) PyInt_AsLong(PyDict_GetItemString(dict, "use_flm"));
+    EOBPars->use_flm = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_flm"));
   }
 
   /* NQC */
   if ( PyDict_GetItemString(dict, "nqc") != NULL ) { 
-    EOBPars->nqc = (int) PyInt_AsLong(PyDict_GetItemString(dict, "nqc"));
+    EOBPars->nqc = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc"));
   }
   if ( PyDict_GetItemString(dict, "nqc_coefs_flx") != NULL ) { 
-    EOBPars->nqc_coefs_flx = (int) PyInt_AsLong(PyDict_GetItemString(dict, "nqc_coefs_flx"));
+    EOBPars->nqc_coefs_flx = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc_coefs_flx"));
   }
   if ( PyDict_GetItemString(dict, "nqc_coefs_hlm") != NULL ) { 
-    EOBPars->nqc_coefs_hlm = (int) PyInt_AsLong(PyDict_GetItemString(dict, "nqc_coefs_hlm"));
+    EOBPars->nqc_coefs_hlm = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc_coefs_hlm"));
   }
 
 
   /* LR and LSO */
   if ( PyDict_GetItemString(dict, "compute_LR") != NULL ) { 
-    EOBPars->compute_LR = (int) PyInt_AsLong(PyDict_GetItemString(dict, "compute_LR"));
+    EOBPars->compute_LR = (int) PyLong_AsLong(PyDict_GetItemString(dict, "compute_LR"));
   }
   if ( PyDict_GetItemString(dict, "compute_LR_guess") != NULL ) { 
     EOBPars->compute_LR_guess = PyFloat_AsDouble(PyDict_GetItemString(dict, "compute_LR_guess"));
   }
   if ( PyDict_GetItemString(dict, "compute_LSO") != NULL ) { 
-    EOBPars->compute_LSO = (int) PyInt_AsLong(PyDict_GetItemString(dict, "compute_LSO"));
+    EOBPars->compute_LSO = (int) PyLong_AsLong(PyDict_GetItemString(dict, "compute_LSO"));
   }
   if ( PyDict_GetItemString(dict, "compute_LSO_guess") != NULL ) { 
     EOBPars->compute_LSO_guess = PyFloat_AsDouble(PyDict_GetItemString(dict, "compute_LSO_guess"));
@@ -142,31 +142,31 @@ int SetOptionalVariables(PyObject* dict){
   
   /* Output */
   if ( PyDict_GetItemString(dict, "output_hpc") != NULL ) { 
-    EOBPars->output_hpc = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_hpc"));
+    EOBPars->output_hpc = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_hpc"));
   }
   if ( PyDict_GetItemString(dict, "output_multipoles") != NULL ) { 
-    EOBPars->output_multipoles = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_multipoles"));
+    EOBPars->output_multipoles = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_multipoles"));
   }
   if ( PyDict_GetItemString(dict, "output_dynamics") != NULL ) { 
-    EOBPars->output_dynamics = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_dynamics"));
+    EOBPars->output_dynamics = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_dynamics"));
   }
   if ( PyDict_GetItemString(dict, "output_nqc") != NULL ) { 
-    EOBPars->output_dynamics = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_dynamics"));
+    EOBPars->output_dynamics = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_dynamics"));
   }
   if ( PyDict_GetItemString(dict, "output_nqc") != NULL ) { 
-    EOBPars->output_nqc = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_nqc"));
+    EOBPars->output_nqc = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_nqc"));
   }
   if ( PyDict_GetItemString(dict, "output_nqc_coefs") != NULL ) { 
-    EOBPars->output_nqc_coefs = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_nqc_coefs"));
+    EOBPars->output_nqc_coefs = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_nqc_coefs"));
   }
   if ( PyDict_GetItemString(dict, "output_ringdown") != NULL ) { 
-    EOBPars->output_ringdown = (int) PyInt_AsLong(PyDict_GetItemString(dict, "output_ringdown"));
+    EOBPars->output_ringdown = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_ringdown"));
   }
 
   /* ODE */
 
   if ( PyDict_GetItemString(dict, "ode_timestep") != NULL ) { 
-    EOBPars->ode_timestep = (int) PyInt_AsLong(PyDict_GetItemString(dict, "ode_timestep"));
+    EOBPars->ode_timestep = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ode_timestep"));
   }
   if ( PyDict_GetItemString(dict, "ode_abstol") != NULL ) { 
     EOBPars->ode_abstol = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_abstol"));
@@ -181,13 +181,13 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->ode_stop_radius = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_stop_radius"));
   }
   if ( PyDict_GetItemString(dict, "ode_stop_afterNdt") != NULL ) { 
-    EOBPars->ode_stop_afterNdt = (int) PyInt_AsLong(PyDict_GetItemString(dict, "ode_stop_afterNdt"));
+    EOBPars->ode_stop_afterNdt = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ode_stop_afterNdt"));
   }
     if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
-    EOBPars->domain = (int) PyInt_AsLong(PyDict_GetItemString(dict, "domain"));
+    EOBPars->domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "domain"));
   }
   if ( PyDict_GetItemString(dict, "interp_FD_waveform") != NULL ) { 
-    EOBPars->interp_FD_waveform = (int) PyInt_AsLong(PyDict_GetItemString(dict, "interp_FD_waveform"));
+    EOBPars->interp_FD_waveform = (int) PyLong_AsLong(PyDict_GetItemString(dict, "interp_FD_waveform"));
   }
   if ( PyDict_GetItemString(dict, "df") != NULL ) { 
     EOBPars->df = PyFloat_AsDouble(PyDict_GetItemString(dict, "df"));
