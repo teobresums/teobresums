@@ -744,7 +744,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
 
-  
  END_ODE_EVOLUTION:;
 
   /*  

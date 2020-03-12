@@ -343,7 +343,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   
   /* phi evol eqn rhs */
   dy[EOB_EVOLVE_PHI] = Omg;
-    
+  
   /* Compute here the new r_omg radius */
   double r_omg       = eob_dyn_get_romg(r, prstar, pphi, d);
   const double v_phi = r_omg*Omg;
@@ -384,7 +384,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
-  }
+  }  
   
   return GSL_SUCCESS;
 }
