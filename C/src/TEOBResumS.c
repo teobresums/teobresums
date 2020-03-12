@@ -48,7 +48,6 @@ const int MINDEX[KMAX] = {
 NQCdata *NQC;
 
 /** TEOBResumS v2.* main */
-
 int main (int argc, char* argv[])
 {   
   PRSECTN(TEOBResumS_Info);
