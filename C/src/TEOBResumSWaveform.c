@@ -3937,7 +3937,6 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   eob_wav_hlmNewt_ecc(rw, rdot, r2dot, r3dot, r4dot, r5dot,
 		      Omega, Omegadot, Omega2dot, Omega3dot, Omega4dot,
 		      phi, nu, &hNewt);
-  
   if (usetidal) {
     /* Need to correct some of the m=odd modes. 
        The Newtonian factor has a different normalization when entering the point-mass 
