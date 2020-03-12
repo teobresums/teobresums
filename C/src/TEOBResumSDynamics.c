@@ -300,26 +300,37 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   
   const double pphi2  = pphi*pphi;
   
-  /** Compute Metric */
+  /** Compute Metric, centrifugal radius and Hamiltonan */
   double A, B, dA, d2A, dB, pl_hold;
-  eob_metric_s(r, d, &A, &B, &dA, &d2A, &dB, &pl_hold);
-  
-  /* Compute centrifugal radius */
-  double rc, drc_dr, d2rc_dr;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr);
-  const double uc     = 1./rc;
-  const double uc2    = uc*uc;
-  const double uc3    = uc2*uc;
-  
-  /* Compute Hamiltonian */
+  double rc, drc_dr, d2rc_dr2;
   double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi;
-  eob_ham_s(nu, r, rc, drc_dr, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, 
-	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20);
+
+  if (usespins) {
+    eob_metric_s(r, d, &A, &B, &dA, &d2A, &dB, &pl_hold);
+
+    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2);
+
+    eob_ham_s(nu, r, rc, drc_dr, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, 
+	      &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20);
+  } else {
+    eob_metric(r, d, &A, &B, &dA, &d2A, &dB, &pl_hold);
+
+    eob_ham(nu, r, pphi, prstar, A, dA, 
+	    &H, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi);
+    
+    Heff = Heff_orb;
+    d2Heff_dprstar20 = 1/Heff_orb;
+
+    rc = r;
+    drc_dr = 1.;
+    d2rc_dr2 = 0.;
+  }
   
-  /* H follows the same convention of Heff, i.e. it is the energy per unit mass,
-     while E is the real energy.*/
-  double E = nu*H;
-  const double ooH = 1./E;
+  double uc     = 1./rc;
+  double uc2    = uc*uc;
+  double uc3    = uc2*uc;
+  double E      = nu*H;
+  double ooH    = 1./E;
     
   const double sqrtAbyB       = sqrt(A/B);
   const double dp_rstar_dt_0  = - sqrtAbyB*dHeff_dr*ooH;
@@ -336,6 +347,8 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   /* Compute here the new r_omg radius
      Compute same quantities with prstar=0. This to obtain psi.
      Procedure consistent with the nonspinning case. */
+  double psic, r_omg;
+  if (usespins) {
   double ggm0[26];
   eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
   
@@ -350,12 +363,18 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   const double Gtilde     = GS_0*S     + GSs_0*Sstar;
   const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
   const double duc_dr     = -uc2*drc_dr;
-  const double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
-  const double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
+  psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
+  r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
+
+  } else {
+    double V = A*(1. + SQ(pphi/r));
+    psic  = 2.*(1. + 2.*nu*(sqrt(V) - 1.))/(SQ(r)*dA);
+    r_omg = r*pow(psic,1./3.);
+  }
   const double v_phi      = r_omg*Omg;
   const double x          = v_phi*v_phi;
   const double jhat       = pphi/(r_omg*v_phi);
-
+  
   /** Compute flux and dp_{\phi}/dt */
   double Fphi = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
   double Fphi_NC = eob_flx_Fphi_ecc(x, Omg, r_omg, jhat, dy[EOB_EVOLVE_RAD], dyn);
@@ -390,7 +409,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
-  }
+  }  
   
   return GSL_SUCCESS;
 }
@@ -703,8 +722,8 @@ void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2,
     /* See also: eob_wav_flm_s() */
     double rc2 = r2;
     *rc = r;
-    *drc_dr = 1;
-    *d2rc_dr2 = 0;
+    *drc_dr = 1.;
+    *d2rc_dr2 = 0.;
     /* Above code switch off everything, 
        Alt. one can set C_Q1=C_Q2=0, but keep centrifugal radius */
     /* 
@@ -913,8 +932,8 @@ void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
     *rc = r;
-    *drc_dr = 1;
-    *d2rc_dr2 = 0;
+    *drc_dr = 1.;
+    *d2rc_dr2 = 0.;
 }
 
 /* LO case with C_Q1 = 0 for tidal part*/
