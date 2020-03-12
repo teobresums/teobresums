@@ -392,7 +392,7 @@ void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
 
   /* Computing metric */
   eob_metric(r0 ,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
-
+  
   a = z3*A*u2;
   b = 1;
   c = A*(1. + SQ(j_ADM*u)) - SQ(Heff);
@@ -583,7 +583,7 @@ double eob_dyn_Omegaorb0(double r, void *params)
   } else {
     eob_metric(r ,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
     rc     = r;   //Nonspinning case: rc = r; G = 0;
-    drc_dr = 1;  
+    drc_dr = 1.0;  
     G      = 0.0;
     dG_dr  = 0.0;
   }
@@ -748,7 +748,7 @@ double eob_dyn_Omegaecc0(double r, void *params)
   /* Orbital frequency */
   dHeff1_dj0 = G1 + j0*A1/(Heff_orb1*SQ(rc1));
   omg_orb1    = dHeff1_dj0/nu/H1;
-  
+
   /* Subtraction of initial evolution frequency */
   return (omg_orb1 - omg_orb0);
 }
