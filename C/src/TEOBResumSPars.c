@@ -1284,12 +1284,13 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     if (VERBOSE) printf("Assume physical units for pars values\n");
     /* Set interpolation dt */
     dt = 1./EOBPars->srate_interp;
-    dt = time_units_conversion(EOBPars->M, dt);
+    dt = time_units_conversion(M, dt);
     EOBPars->dt_interp = dt;
     /* Set dt */
-    EOBPars->r0 = radius0(EOBPars->M, fmin);
-    EOBPars->dt = 1./EOBPars->srate;
-    EOBPars->dt = time_units_conversion(EOBPars->M, dt);
+    EOBPars->r0 = radius0(M, fmin);
+    dt = 1./EOBPars->srate;
+    dt = time_units_conversion(M, dt);
+    EOBPars->dt = dt;
     if (VERBOSE) PRFORMd("dt",EOBPars->dt);
     if (VERBOSE)
       if (EOBPars->interp_uniform_grid)
@@ -1851,12 +1852,13 @@ void eob_set_params_EOBRun(int default_choice, int firstcall)
     if (VERBOSE) printf("Assume physical units for pars values\n");
     /* Set interpolation dt */
     dt = 1./EOBPars->srate_interp;
-    dt = time_units_conversion(EOBPars->M, dt);
+    dt = time_units_conversion(M, dt);
     EOBPars->dt_interp = dt;
     /* Set dt */
-    EOBPars->r0 = radius0(EOBPars->M, fmin);
-    EOBPars->dt = 1./EOBPars->srate;
-    EOBPars->dt = time_units_conversion(EOBPars->M, dt);
+    EOBPars->r0 = radius0(M, fmin);
+    dt = 1./EOBPars->srate;
+    dt = time_units_conversion(M, dt);
+    EOBPars->dt = dt;
     if (VERBOSE) PRFORMd("dt",EOBPars->dt);
     if (VERBOSE)
       if (EOBPars->interp_uniform_grid)
