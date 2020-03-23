@@ -424,6 +424,7 @@ typedef struct tagDynamics
   int store; /* store following values? */
   int noflx; /* compute rhs without flux */
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
+  double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
   double A,dA,d2A, B,dB;
   double MOmg, MOmg_prev, tMOmgpeak;
@@ -586,6 +587,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
+int D0_x_2(double *f, double *x, int n, double *df);
 int D0_x_4(double *f, double *x, int n, double *df);
 double d4(double *x, double *y, int i);
 double l_deriv(double *x,int i,int j);
@@ -705,6 +707,7 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
 void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn);
 double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
@@ -747,11 +750,11 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
 
 /* TEOBResumSWaveform.c */
 void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm);
+void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm);
 void (*eob_wav_deltalm)();
 void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm);
-void eob_wav_hlmNewt_ecc(double r,double rdot,double r2dot,double r3dot,double r4dot,double r5dot,double Omega,double Omegadot,double Omega2dot,double Omega3dot,double Omega4dot,double Omega5dot,double phi,double nu,Waveform_lm_t *hlmNewt);
-void eob_wav_hlmNewt_eccv1(double phi,Dynamics *dyn,Waveform_lm_t *hlmNewt);
+void eob_wav_hlmNewt_ecc(double r,double rdot,double r2dot,double r3dot,double r4dot,double r5dot,double Omega,double Omegadot,double Omega2dot,double Omega3dot,double Omega4dot,double phi,double nu,Waveform_lm_t *hlmNewt);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
 void (*eob_wav_hlmNewt)();

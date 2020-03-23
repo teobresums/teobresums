@@ -80,7 +80,7 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
   for (int k = 0; k < KMAX; k++) {
     Nlm[k] = CNlm[k] * spx[k];
   }
-  
+
 }
 
 /** Tail term (modulus) */
@@ -317,7 +317,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   
   /** Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
-      
+
   /** Horizon flux */
   if (!(usetidal)) {
     double hatFH;
@@ -459,7 +459,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
 
   sqrtAbyB = sqrt(A/B);
   fact = (dA*B - A*dB)/SQ(B);
-  dsqrtAbyB_dr   = 0.5*sqrtAbyB*fact;
+  dsqrtAbyB_dr   = 0.5/sqrtAbyB*fact;
   d2sqrtAbyB_d2r = -0.25*sqrtAbyB*SQ(dA*B - A*dB)/(SQ(A)*SQ(B)) + 0.5/sqrtAbyB*(d2A*SQ(B) - A*B*d2B - 2.*dA*dB*B + 2.*A*SQ(dB))/(SQ(B)*B);
 
   /** Circular Hamiltonians, ref: arXiv: 1406.6913 */
@@ -513,9 +513,10 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     E2dot    = nu*(r2dot*Fr + Omgdot*Fphi);
     Heff2dot = 1./nu*(SQ(Edot) + E*E2dot);
     
-    prstar2dot = dsqrtAbyB_dr/sqrtAbyB*rdot*prstardot
-      + sqrtAbyB*(Frdot -0.5/EHeff_orb*(rdot*(d2A + d2Abyrc2) - dA*EHeff_orbdot/EHeff_orb
-	+ dAbyrc2*(pphi*(2.*Fphi - pphi*EHeff_orbdot/EHeff_orb)
+    prstar2dot = dsqrtAbyB_dr/sqrtAbyB*rdot*prstardot + sqrtAbyB
+      *(Frdot -0.5/EHeff_orb*(rdot*(d2A + d2Abyrc2*(pphi2 + Q*prstar4))
+        - dA*EHeff_orbdot/EHeff_orb + dAbyrc2*(pphi*(2.*Fphi
+	- pphi*EHeff_orbdot/EHeff_orb)
 	+ Q*prstar3*(4.*prstardot - prstar*EHeff_orbdot/EHeff_orb)))
 	- 1./E*(dG_dr*(Fphi - pphi*Edot/E) + pphi*(d2G_dr2*rdot + d2G_dr_dprstar*prstardot)));
     
@@ -554,7 +555,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Fphi      = Fphi_Newt*Fphi;
     Edot      = nu*(rdot*Fr + Omg*Fphi);
   }
-  
+
   /* return F_NC */  
   return Fphi_Newt;  
 }
