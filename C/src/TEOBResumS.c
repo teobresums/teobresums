@@ -1468,19 +1468,99 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
   EOBPars->size = size; 
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
+
+  
+  /* Over-writing waveform with the eccentric one 
+     For now, only in uniform case */
+  if ((ecc != 0.) || (r_hyp != 0.)) {
+    double *r_omg     = (double*) calloc (size,sizeof(double));
+    double *rdot      = (double*) calloc (size,sizeof(double));
+    double *r2dot     = (double*) calloc (size,sizeof(double));
+    double *r3dot     = (double*) calloc (size,sizeof(double));
+    double *r4dot     = (double*) calloc (size,sizeof(double));
+    double *r5dot     = (double*) calloc (size,sizeof(double));
+    double *Omegadot  = (double*) calloc (size,sizeof(double));
+    double *Omega2dot = (double*) calloc (size,sizeof(double));
+    double *Omega3dot = (double*) calloc (size,sizeof(double));
+    double *Omega4dot = (double*) calloc (size,sizeof(double));
+    
+    for (int i = 0; i < size; i++) {
+      r_omg[i] = eob_dyn_get_romg(dyn->data[EOB_RAD][i],
+				  dyn->data[EOB_PRSTAR][i],
+				  dyn->data[EOB_PPHI][i],
+				  dyn);
+    }
+
+    /*    
+    //D0(dyn->data[EOB_RAD], dyn->dt, size, rdot);
+    D0(r_omg, dyn->dt, size, rdot);
+    D0(rdot,  dyn->dt, size, r2dot);
+    D0(r2dot, dyn->dt, size, r3dot);
+    D0(r3dot, dyn->dt, size, r4dot);
+    D0(r4dot, dyn->dt, size, r5dot);
+    D0(dyn->data[EOB_MOMG], dyn->dt, size, Omegadot);
+    D0(Omegadot,  dyn->dt, size, Omega2dot);
+    D0(Omega2dot, dyn->dt, size, Omega3dot);
+    D0(Omega3dot, dyn->dt, size, Omega4dot);
+    */
+    
+    //D0_x_2(dyn->data[EOB_RAD], dyn->time, size, rdot);
+    D0_x_2(r_omg, dyn->time, size, rdot);
+    D0_x_2(rdot,  dyn->time, size, r2dot);
+    D0_x_2(r2dot, dyn->time, size, r3dot);
+    D0_x_2(r3dot, dyn->time, size, r4dot);
+    D0_x_2(r4dot, dyn->time, size, r5dot);
+    D0_x_2(dyn->data[EOB_MOMG], dyn->time, size, Omegadot);
+    D0_x_2(Omegadot,  dyn->time, size, Omega2dot);
+    D0_x_2(Omega2dot, dyn->time, size, Omega3dot);
+    D0_x_2(Omega3dot, dyn->time, size, Omega4dot);
+    
+    for (int i = 0; i < size; i++) {
+      dyn->store = 1;
+      dyn->y[EOB_EVOLVE_PHI] = dyn->data[EOB_PHI][i];
+      dyn->y[EOB_EVOLVE_RAD] = dyn->data[EOB_RAD][i];
+      dyn->y[EOB_EVOLVE_PPHI] = dyn->data[EOB_PPHI][i];
+      dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
+      eob_dyn_rhs_ecc(0., dyn->y, dyn->dy, dyn);
+      /*
+      dyn->t       = dyn->time[i];
+      dyn->r       = dyn->data[EOB_RAD][i];
+      dyn->phi     = dyn->data[EOB_PHI][i];
+      dyn->prstar  = dyn->data[EOB_PRSTAR][i]; 
+      dyn->pphi    = dyn->data[EOB_PPHI][i];
+      dyn->Omg     = dyn->data[EOB_MOMG][i];
+      dyn->r_omega = r_omg[i];
+      */
+      dyn->rdot    = rdot[i];
+      dyn->r2dot   = r2dot[i];
+      dyn->r3dot   = r3dot[i];
+      dyn->r4dot   = r4dot[i];
+      dyn->r5dot   = r5dot[i];
+      dyn->Omegadot  = Omegadot[i];
+      dyn->Omega2dot = Omega2dot[i];
+      dyn->Omega3dot = Omega3dot[i];
+      dyn->Omega4dot = Omega4dot[i];
+      eob_wav_hlm_ecc(dyn, hlm_t); 
+      for (int k = 0; k < KMAX; k++) {
+	hlm->ampli[k][i] = hlm_t->ampli[k];
+	hlm->phase[k][i] = hlm_t->phase[k]; 
+      }
+    }
+  }
+
   
  END_ODE_EVOLUTION:;
   
-// #if (DEBUG) 
-//   /* Output wave and dynamics */
-//   if(EOBPars->output_multipoles) {
-//     strcat(hlm->name,"_insplunge");
-//     Waveform_lm_output (hlm);
-//   }
-//   if (EOBPars->output_dynamics)
-//     Dynamics_output(dyn);
-// #endif
-
+#if (DEBUG) 
+  /* Output wave and dynamics */
+  if(EOBPars->output_multipoles) {
+    strcat(hlm->name,"_insplunge");
+    Waveform_lm_output (hlm);
+  }
+  if (EOBPars->output_dynamics)
+    Dynamics_output(dyn);
+#endif
+  
   if (!(use_tidal) && (r_hyp == 0.)) {
     
     /* *****************************************

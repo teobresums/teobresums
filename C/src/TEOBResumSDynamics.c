@@ -344,36 +344,11 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   /* phi evol eqn rhs */
   dy[EOB_EVOLVE_PHI] = Omg;
     
-  /* Compute here the new r_omg radius
-     Compute same quantities with prstar=0. This to obtain psi.
-     Procedure consistent with the nonspinning case. */
-  double psic, r_omg;
-  if (usespins) {
-  double ggm0[26];
-  eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
-  
-  const double GS_0       = ggm0[2];
-  const double GSs_0      = ggm0[3];
-  const double dGS_dr_0   = ggm0[6];
-  const double dGSs_dr_0  = ggm0[7];
-  const double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));    /* effective Hamiltonian H_0^eff */
-  const double Heff_0     = Heff_orb_0 + (GS_0*S + GSs_0*Sstar)*pphi;
-  const double H0         = sqrt(1.0 + 2.0*nu*(Heff_0 - 1.0) );
-  const double ooH0       = 1./H0;
-  const double Gtilde     = GS_0*S     + GSs_0*Sstar;
-  const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
-  const double duc_dr     = -uc2*drc_dr;
-  psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
-  r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
-
-  } else {
-    double V = A*(1. + SQ(pphi/r));
-    psic  = 2.*(1. + 2.*nu*(sqrt(V) - 1.))/(SQ(r)*dA);
-    r_omg = r*pow(psic,1./3.);
-  }
-  const double v_phi      = r_omg*Omg;
-  const double x          = v_phi*v_phi;
-  const double jhat       = pphi/(r_omg*v_phi);
+  /* Compute here the new r_omg radius */
+  double r_omg       = eob_dyn_get_romg(r, prstar, pphi, d);
+  const double v_phi = r_omg*Omg;
+  const double x     = v_phi*v_phi;
+  const double jhat  = pphi/(r_omg*v_phi);
   
   /** Compute flux and dp_{\phi}/dt */
   double Fphi = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
@@ -409,7 +384,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
-  }  
+  }
   
   return GSL_SUCCESS;
 }
@@ -966,6 +941,80 @@ void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double
     *d2rc_dr2    = divrc*(1.-(*drc_dr)*r*divrc*(1.-(aK2+0.5*c_ss_nlo)*u3)+ (2.*aK2 + c_ss_nlo)*u3);
   }
   
+}
+
+// function to evaluate r_omega
+double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
+{
+  /* Unpack values */
+  const double nu    = dyn->nu;
+  const double S     = dyn->S;
+  const double Sstar = dyn->Sstar;
+  const double chi1  = dyn->chi1;
+  const double chi2  = dyn->chi2;
+  const double X1    = dyn->X1;
+  const double X2    = dyn->X2;
+  const double c3    = dyn->cN3LO;
+  const double aK2   = dyn->aK2;
+  const double a1    = dyn->a1;
+  const double a2    = dyn->a2;
+  const double C_Q1  = dyn->C_Q1;
+  const double C_Q2  = dyn->C_Q2;
+  const double C_Oct1 = dyn->C_Oct1;
+  const double C_Oct2 = dyn->C_Oct2;
+  const double C_Hex1 = dyn->C_Hex1;
+  const double C_Hex2 = dyn->C_Hex2;
+  const int usetidal = dyn->use_tidal;
+  const int usespins = dyn->use_spins;
+  
+  const double pphi2  = pphi*pphi;
+  
+  /** Compute Metric, centrifugal radius and Hamiltonan */
+  double A, dA, rc, drc_dr, pl_hold;
+
+  if (usespins) {
+    eob_metric_s(r, dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold);
+
+    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
+  } else {
+    eob_metric(r, dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold);
+
+    rc = r;
+    drc_dr = 1.;
+  }
+  
+  double uc     = 1./rc;
+  double uc2    = uc*uc;
+    
+  /* Compute here the new r_omg radius
+     Compute same quantities with prstar=0. This to obtain psi.
+     Procedure consistent with the nonspinning case. */
+  double psic, r_omg;
+  if (usespins) {
+    double ggm0[26];
+    eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
+  
+    const double GS_0       = ggm0[2];
+    const double GSs_0      = ggm0[3];
+    const double dGS_dr_0   = ggm0[6];
+    const double dGSs_dr_0  = ggm0[7];
+    const double Heff_orb_0 = sqrt(A*(1.0 + pphi2*uc2));    /* effective Hamiltonian H_0^eff */
+    const double Heff_0     = Heff_orb_0 + (GS_0*S + GSs_0*Sstar)*pphi;
+    const double H0         = sqrt(1.0 + 2.0*nu*(Heff_0 - 1.0) );
+    const double ooH0       = 1./H0;
+    const double Gtilde     = GS_0*S     + GSs_0*Sstar;
+    const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
+    const double duc_dr     = -uc2*drc_dr;
+    psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
+    r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
+
+  } else {
+    double V = A*(1. + SQ(pphi/r));
+    psic  = 2.*(1. + 2.*nu*(sqrt(V) - 1.))/(SQ(r)*dA);
+    r_omg = r*pow(psic,1./3.);
+  }
+
+  return r_omg;
 }
 
 /** Root function to compute light-ring */
