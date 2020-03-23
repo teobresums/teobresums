@@ -359,7 +359,7 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   /* Orbital frequency */
   dHeff1_dj0 = G1 + j0*A1/(Heff_orb1*SQ(rc1));
   omg_orb1    = dHeff1_dj0/nu/H1;
-
+  
   y_init[EOB_ID_RAD]    = r1;
   y_init[EOB_ID_PHI]    = 0.;
   y_init[EOB_ID_PPHI]   = j0;
