@@ -349,6 +349,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   const double v_phi = r_omg*Omg;
   const double x     = v_phi*v_phi;
   const double jhat  = pphi/(r_omg*v_phi);
+  
   /** Compute flux and dp_{\phi}/dt */
   double Fphi = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
   double Fphi_NC = eob_flx_Fphi_ecc(x, Omg, r_omg, jhat, dy[EOB_EVOLVE_RAD], dyn);
@@ -383,7 +384,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
-  }  
+  }
   
   return GSL_SUCCESS;
 }
