@@ -765,9 +765,10 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     E2dot    = nu*(r2dot*Fr + Omgdot*Fphi);
     Heff2dot = 1./nu*(SQ(Edot) + E*E2dot);
     
-    prstar2dot = dsqrtAbyB_dr/sqrtAbyB*rdot*prstardot
-      + sqrtAbyB*(Frdot -0.5/EHeff_orb*(rdot*(d2A + d2Abyrc2) - dA*EHeff_orbdot/EHeff_orb
-	+ dAbyrc2*(pphi*(2.*Fphi - pphi*EHeff_orbdot/EHeff_orb)
+    prstar2dot = dsqrtAbyB_dr/sqrtAbyB*rdot*prstardot + sqrtAbyB
+      *(Frdot -0.5/EHeff_orb*(rdot*(d2A + d2Abyrc2*(pphi2 + Q*prstar4))
+        - dA*EHeff_orbdot/EHeff_orb + dAbyrc2*(pphi*(2.*Fphi
+	- pphi*EHeff_orbdot/EHeff_orb)
 	+ Q*prstar3*(4.*prstardot - prstar*EHeff_orbdot/EHeff_orb)))
 	- 1./E*(dG_dr*(Fphi - pphi*Edot/E) + pphi*(d2G_dr2*rdot + d2G_dr_dprstar*prstardot)));
     
@@ -806,7 +807,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Fphi      = Fphi_Newt*Fphi;
     Edot      = nu*(rdot*Fr + Omg*Fphi);
   }
-  
+
   /* return F_NC */  
   return Fphi_Newt;  
 }
