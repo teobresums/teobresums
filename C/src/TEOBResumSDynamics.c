@@ -384,7 +384,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
-  }  
+  }
   
   return GSL_SUCCESS;
 }

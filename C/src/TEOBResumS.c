@@ -664,7 +664,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   EOBPars->size = size; 
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
-
   
   /* Over-writing waveform with the eccentric one 
      For now, only in uniform case */
