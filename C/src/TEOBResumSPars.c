@@ -168,7 +168,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   /* Evolution settings */
   eobp->srate=4096.; // sampling rate, used if input is given in physical unit, reset based on tstep otherwise
   eobp->dt=0.5; // timestep, used if input is given in geometric unit, reset based on srate otherwise
-  eobp->size=1; // size of the arrays (chunks, dynamically extended)
+  eobp->size=500; // size of the arrays (chunks, dynamically extended)
   eobp->ringdown_extend_array=500; // grid points to extend arrays for ringdown attachment
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
