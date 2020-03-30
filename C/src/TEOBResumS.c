@@ -756,7 +756,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Dynamics_output(dyn);
 #endif
   
-  if (!(use_tidal) && (r_hyp == 0.)) {
+  if (!(use_tidal) && (dyn->r < 2.)) {
     
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
