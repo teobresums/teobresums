@@ -251,6 +251,25 @@ static PyObject* EOBRunTD(PyObject* self, PyObject* args)
 
   /* Run */
   eob_set_params_EOBRun(default_choice, fc); 
+  /* Overwrite spin-spin parameters, if required */
+  if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
+    EOBPars->C_Q1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Q1"));
+  }  
+  if ( PyDict_GetItemString(dict, "C_Q2") != NULL ) { 
+    EOBPars->C_Q2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Q2"));
+  }
+  if ( PyDict_GetItemString(dict, "C_Oct1") != NULL ) { 
+    EOBPars->C_Oct1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Oct1"));
+  }  
+  if ( PyDict_GetItemString(dict, "C_Oct2") != NULL ) { 
+    EOBPars->C_Oct2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Oct2"));
+  }
+  if ( PyDict_GetItemString(dict, "C_Hex1") != NULL ) { 
+    EOBPars->C_Hex1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex1"));
+  }  
+  if ( PyDict_GetItemString(dict, "C_Hex2") != NULL ) { 
+    EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
+  }
   EOBRun(&hpc, default_choice, fc);
   
   /*  Construct the output arrays */
@@ -332,6 +351,26 @@ static PyObject* EOBRunFD(PyObject* self, PyObject* args)
 
   /* Run */
   eob_set_params_EOBRun(default_choice, fc); 
+  
+  /* Overwrite spin-spin parameters, if required */
+  if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
+    EOBPars->C_Q1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Q1"));
+  }  
+  if ( PyDict_GetItemString(dict, "C_Q2") != NULL ) { 
+    EOBPars->C_Q2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Q2"));
+  }
+  if ( PyDict_GetItemString(dict, "C_Oct1") != NULL ) { 
+    EOBPars->C_Oct1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Oct1"));
+  }  
+  if ( PyDict_GetItemString(dict, "C_Oct2") != NULL ) { 
+    EOBPars->C_Oct2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Oct2"));
+  }
+  if ( PyDict_GetItemString(dict, "C_Hex1") != NULL ) { 
+    EOBPars->C_Hex1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex1"));
+  }  
+  if ( PyDict_GetItemString(dict, "C_Hex2") != NULL ) { 
+    EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
+  }
   EOBRun(&hpc, default_choice, fc);
   
   /*  Construct the output arrays */
