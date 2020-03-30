@@ -29,6 +29,18 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "initial_frequency") != NULL ) { 
     EOBPars->initial_frequency = PyFloat_AsDouble(PyDict_GetItemString(dict, "initial_frequency"));
   }
+  if ( PyDict_GetItemString(dict, "ecc") != NULL ) {
+    EOBPars->ecc = PyFloat_AsDouble(PyDict_GetItemString(dict, "ecc"));
+  }
+  if ( PyDict_GetItemString(dict, "r_hyp") != NULL ) {
+    EOBPars->r_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "r_hyp"));
+  }
+  if ( PyDict_GetItemString(dict, "H_hyp") != NULL ) {
+    EOBPars->H_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "H_hyp"));
+  }
+  if ( PyDict_GetItemString(dict, "j_hyp") != NULL ) {
+    EOBPars->j_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "j_hyp"));
+  }
   if ( PyDict_GetItemString(dict, "use_geometric_units") != NULL ) { 
     EOBPars->use_geometric_units = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_geometric_units"));
   }
