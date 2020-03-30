@@ -602,7 +602,7 @@ int main (int argc, char* argv[]) {
     Dynamics_output(dyn);
 #endif
 
-  if (!(use_tidal) && (r_hyp == 0.)) {
+  if (!(use_tidal) && (dyn->r < 2.)) {
     
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
@@ -1573,8 +1573,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (EOBPars->output_dynamics)
     Dynamics_output(dyn);
 #endif
-
-  if (!(use_tidal) && (r_hyp == 0.)) {
+  
+  if (!(use_tidal) && (dyn->r < 2.)) {
     
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
