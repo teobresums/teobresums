@@ -886,6 +886,7 @@ void Waveform_free (Waveform *wav)
   if (wav->hcreal) free(wav->hcreal);
   if (wav->hcimag) free(wav->hcimag);
   if (wav->frequency) free(wav->frequency);
+  if (wav->time)   free(wav->time);
   free(wav);
 }
 
@@ -1125,6 +1126,7 @@ void Waveform_lm_free (Waveform_lm *wav)
       if (wav->phase[k]) free(wav->phase[k]);
     }
   }
+  if (wav->time) free(wav->time);
   free(wav);
 }
 

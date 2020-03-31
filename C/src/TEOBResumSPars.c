@@ -57,12 +57,13 @@ void EOBParameters_alloc (EOBParameters **eobp)
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
   if (eobp == NULL)
     errorexit("Out of memory");
-  (*eobp)->use_mode_lm_size = 1; 
-  (*eobp)->use_mode_lm = malloc ( 1 * sizeof(int) );
-  (*eobp)->use_mode_lm [0] = -1;
-  (*eobp)->output_lm_size = 1;
-  (*eobp)->output_lm = malloc ( 1 * sizeof(int) );
-  (*eobp)->output_lm [0] = -1;
+    /* the arrays below are already allocated in EOBParameters_defaults */
+  // (*eobp)->use_mode_lm_size = 1; 
+  // (*eobp)->use_mode_lm = malloc ( 1 * sizeof(int) );
+  // (*eobp)->use_mode_lm [0] = -1;
+  // (*eobp)->output_lm_size = 1;
+  // (*eobp)->output_lm = malloc ( 1 * sizeof(int) );
+  // (*eobp)->output_lm [0] = -1;
 }
 
 void EOBParameters_free (EOBParameters *eobp)
@@ -350,7 +351,8 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   free(eobp->use_mode_lm);
   eobp->use_mode_lm = malloc ( eobp->use_mode_lm_size * sizeof(int) );
   memcpy(eobp->use_mode_lm, klm, eobp->use_mode_lm_size * sizeof(int));
-  
+  free(klm);
+
   eobp->postadiabatic_dynamics = YESNO2INT(par_get_s("postadiabatic_dynamics")); //CHECK THIS MACRO ITS NEW... no=0, else yes=1
   eobp->postadiabatic_dynamics_N = par_get_i("postadiabatic_dynamics_N"); // post-adiabatic order
   eobp->postadiabatic_dynamics_size = par_get_i("postadiabatic_dynamics_size"); // grid size 
@@ -427,10 +429,11 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->output_hpc = par_get_i("output_hpc"); // output h+,hx
   eobp->output_multipoles = par_get_i("output_multipoles"); // output multipoles
 
-  klm = par_get_arrayi("output_lm", &eobp->output_lm_size);// indexes of multipoles to ouput
+  int *olm = par_get_arrayi("output_lm", &eobp->output_lm_size);// indexes of multipoles to ouput
   free(eobp->output_lm);
   eobp->output_lm = malloc ( eobp->output_lm_size * sizeof(int) );
-  memcpy(eobp->output_lm, klm, eobp->output_lm_size * sizeof(int));
+  memcpy(eobp->output_lm, olm, eobp->output_lm_size * sizeof(int));
+  free(olm);
 
   eobp->output_dynamics = par_get_i("output_dynamics"); // output dynamics
   eobp->output_nqc = par_get_i("output_nqc"); // output NQC waveform
