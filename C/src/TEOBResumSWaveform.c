@@ -2787,7 +2787,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
   const double nu    = dyn->nu;
-  const double q    = dyn->q;
+  const double q     = dyn->q;
   const double chi1  = dyn->chi1;
   const double chi2  = dyn->chi2;
   const double X1    = dyn->X1;
@@ -2922,6 +2922,10 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
   /* tmrg[k22]  = tOmg_pk-3./Mbh; */ /* OLD */       
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
+
+  for (int k=0; k<KMAX; k++) {
+    tmrg[k] = tmrgA22;
+  }
   
   /* The following values are the difference between the time of the peak of
      the 22 waveform and the other modes. */
@@ -2930,12 +2934,12 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
      is however not implemented. These are here only as placeholder */
   dtmrg[k21] = 5.70364338 + 1.85804796*xnu  + 4.0332262*xnu*xnu; //k21
   dtmrg[k33] = 4.29550934 - 0.85938*xnu;                         //k33
-  //tmrg[k21]  = tmrg[k22] + dtmrg[k21]/Mbh;     // t_max(A21) => peak of 21 mode
-  //tmrg[k33]  = tmrg[k22] + dtmrg[k33]/Mbh;     // t_max(A33) => peak of 33 mode
+  tmrg[k21]  = tmrg[k22] + dtmrg[k21]/Mbh;     // t_max(A21) => peak of 21 mode
+  tmrg[k33]  = tmrg[k22] + dtmrg[k33]/Mbh;     // t_max(A33) => peak of 33 mode
 	  
-  for (int k=0; k<KMAX; k++) {
-    tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
-  }	  
+  // for (int k=0; k<KMAX; k++) {
+  //   tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
+  // }	  
 	
   /** Postmerger-Ringdown matching time */
   for (int k=0; k<KMAX; k++) {
@@ -3056,7 +3060,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /** Merger time t_max(A22) */
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tmrg[KMAX], tmatch[KMAX], dtmrg[KMAX];
-	
+ 
   /* nonspinning case */
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
