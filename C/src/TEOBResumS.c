@@ -689,7 +689,8 @@ int main (int argc, char* argv[]) {
       Waveform_lm_free (hlm_nqc);
       
     }
-    
+    Waveform_lm_free(hlm_mrg);
+    Dynamics_free(dyn_mrg);
     /** BBH : add Ringdown */
     
     if (VERBOSE) PRSECTN("Ringdown");
@@ -1454,8 +1455,8 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
     dyn_mrg = dyn;
 
     /** NQC and ringdown attachment is done around merger 
-	using auxiliary variables defined around [tmin,tmax] 
-	Recall that parameters are NOT stored into these auxiliary vars */
+	  using auxiliary variables defined around [tmin,tmax] 
+	  Recall that parameters are NOT stored into these auxiliary vars */
     
     if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
       
@@ -1464,10 +1465,10 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
       int index_pk = dyn->size-1;
       double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
       for (int j = dyn->size-2; j-- ; ) {
-	if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
-	  break;
-	index_pk = j;
-	Omega_pk = dyn->data[EOB_OMGORB][j]; 
+        if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
+          break;
+        index_pk = j;
+        Omega_pk = dyn->data[EOB_OMGORB][j]; 
       }
       double tpeak = dyn->time[index_pk];
       double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-3];
@@ -1490,11 +1491,11 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
       double tstart_mrg = tOmg_pk-8.;
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
       if (VERBOSE) {
-	PRSECTN("Interpolation of merger to uniform grid");
-	PRFORMi("interpolation_grid_size",size_mrg);
-	PRFORMd("interpolation_grid_dt",dt_merger_interp);
-	PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
-	PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
+        PRSECTN("Interpolation of merger to uniform grid");
+        PRFORMi("interpolation_grid_size",size_mrg);
+        PRFORMd("interpolation_grid_dt",dt_merger_interp);
+        PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
+        PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
       }
 	      
       /* Interp Waveform */ 
@@ -1523,11 +1524,11 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
 
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
       if (VERBOSE) {
-	PRSECTN("Interpolation of merger to uniform grid");
-	PRFORMi("interpolation_grid_size",size_mrg);
-	PRFORMd("interpolation_grid_dt",dt_merger_interp);
-	PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
-	PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
+        PRSECTN("Interpolation of merger to uniform grid");
+        PRFORMi("interpolation_grid_size",size_mrg);
+        PRFORMd("interpolation_grid_dt",dt_merger_interp);
+        PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
+        PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
       }
       
       /* Interp Waveform */ 
@@ -1536,15 +1537,15 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
       /* Interp Dynamics */
       Dynamics_interp (dyn_mrg, size_mrg, dyn_mrg->time[0], dt_merger_interp, "dyn_mrg_interp");
 
-// #if (DEBUG) 
-//       /* Output post-interpolation wave and dynamics */
-//       if(EOBPars->output_multipoles) {
-// 	Waveform_lm_output (hlm_mrg);
-// 	Waveform_lm_output_reim (hlm_mrg);
-//       }
-//       if (EOBPars->output_dynamics) 
-// 	Dynamics_output(dyn_mrg);
-// #endif
+      // #if (DEBUG) 
+      //       /* Output post-interpolation wave and dynamics */
+      //       if(EOBPars->output_multipoles) {
+      // 	Waveform_lm_output (hlm_mrg);
+      // 	Waveform_lm_output_reim (hlm_mrg);
+      //       }
+      //       if (EOBPars->output_dynamics) 
+      // 	Dynamics_output(dyn_mrg);
+      // #endif
        
     } /* End of merger interp */
     
@@ -1557,41 +1558,42 @@ int EOBRun(Waveform **hpc, int default_choice, int firstcall)
       
       if ((merger_interp) || (STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
 	
-	/* Compute NQC only around merger, 
-	   add to both merger and full waveform */
-	Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
-	eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
-	strcat(hlm_mrg->name,"_nqc");
+        /* Compute NQC only around merger, 
+          add to both merger and full waveform */
+        Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
+        eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        strcat(hlm_mrg->name,"_nqc");
 
-	/* Join merger to full waveform */
-	Waveform_lm_join (hlm, hlm_mrg, hlm_mrg->time[0]);
-	Dynamics_join (dyn, dyn_mrg, dyn_mrg->time[0]);
-	size = hlm->size;
-	EOBPars->size = size;
+        /* Join merger to full waveform */
+        Waveform_lm_join (hlm, hlm_mrg, hlm_mrg->time[0]);
+        Dynamics_join (dyn, dyn_mrg, dyn_mrg->time[0]);
+        size = hlm->size;
+        EOBPars->size = size;
 	
       } else {
 
-	/* Compute NQC and add them to full waveform */
-	Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
-	eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
+        /* Compute NQC and add them to full waveform */
+        Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
+        eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
 
       }
       
       strcat(hlm->name,"_nqc");      
 
-// #if (DEBUG) 
-//       if (EOBPars->output_nqc)  {
-// 	Waveform_lm_output (hlm_nqc);
-// 	Waveform_lm_output (hlm_mrg);
-//       }
-//       if (EOBPars->output_multipoles) 
-// 	Waveform_lm_output (hlm);
-// #endif
+    // #if (DEBUG) 
+    //       if (EOBPars->output_nqc)  {
+    // 	Waveform_lm_output (hlm_nqc);
+    // 	Waveform_lm_output (hlm_mrg);
+    //       }
+    //       if (EOBPars->output_multipoles) 
+    // 	Waveform_lm_output (hlm);
+    // #endif
       
       Waveform_lm_free (hlm_nqc);
       
     }
-    
+    Waveform_lm_free(hlm_mrg);
+    Dynamics_free(dyn_mrg);
     /** BBH : add Ringdown */
     
     if (VERBOSE) PRSECTN("Ringdown");
