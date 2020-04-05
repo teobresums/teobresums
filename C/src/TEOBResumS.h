@@ -88,10 +88,6 @@
 #define DEBUG (0) /* global debug option */ 
 #endif
 
-#ifndef EOBRUN
-#define EOBRUN (0) /* 0/1 for old/new main */ //FIXME: to be removed after v2 is ready for production, we'll use only the new main.
-#endif
-
 /** Macros */
 #define ERROR 1 /** generic error int */
 #define STRLEN 1024 /** Standard string length */
@@ -366,15 +362,21 @@ typedef struct tagWaveform
   double *real; 
   double *imag; 
   double *ampli;
-  double *phase;
-  double *frequency;
-  double *hpreal;
-  double *hpimag;
-  double *hcreal;
-  double *hcimag;
-  
+  double *phase;  
   char name[STRLEN];
 }  Waveform;
+
+/** FD Waveform data type */
+typedef struct tagWaveformFD
+{
+  int size;
+  double *freq;
+  double *real; 
+  double *imag; 
+  double *ampli;
+  double *phase;  
+  char name[STRLEN];
+}  WaveformFD;
 
 /** Multipolar waveform data type */
 typedef struct tagWaveform_lm
@@ -387,10 +389,24 @@ typedef struct tagWaveform_lm
   int kmask[KMAX]; /* mask for multipoles */
 }  Waveform_lm;
 
-/** Multipolar waveform at given time, comes at handy */
+/** Multipolar FD waveform data type */
+typedef struct tagWaveformFD_lm
+{
+  int size;
+  double *freq; /* uniform frequency array */
+  double *ampli[KMAX]; /* amplitude */
+  double *phase[KMAX]; /* phase */
+  double *F[KMAX], *Fdot[KMAX]; /* Freq, and drvts for SPA */
+  char name[STRLEN];
+  int kmask[KMAX]; /* mask for multipoles */
+}  WaveformFD_lm;
+
+
+/** Multipolar waveform at given time or frequency, comes at handy */
 typedef struct tagWaveform_lm_t
 {
   double time;
+  double freq;
   double ampli[KMAX]; /* amplitude */
   double phase[KMAX]; /* phase */
   int kmask[KMAX]; /* mask for multipoles */
@@ -566,7 +582,6 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax);
 double fact(int n);
 double wigner_d_function(int l, int m, int s, double i);
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
-void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
@@ -596,6 +611,17 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
 /* void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name); */
 void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, Waveform_lm **hlmb, const char *name);
 void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to); 
+void WaveformFD_alloc (WaveformFD **wav, const int size, const char *name);
+void WaveformFD_push (WaveformFD **wav, int size);
+void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const double df, const char *name);
+void WaveformFD_output (WaveformFD *wav);
+void WaveformFD_free (WaveformFD *wav);
+void WaveformFD_lm_alloc (WaveformFD_lm **wav, int size, const char *name);
+void WaveformFD_lm_push (WaveformFD_lm **wav, int size);
+void WaveformFD_lm_output (WaveformFD_lm *wav);
+void WaveformFD_lm_output_reim (WaveformFD_lm *wav);
+void WaveformFD_lm_free (WaveformFD_lm *wav);
+void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f0, const double df, const char *name);
 void Waveform_lm_t_alloc (Waveform_lm_t **wav);
 void Waveform_lm_t_free (Waveform_lm_t *wav);
 void Dynamics_alloc (Dynamics **dyn, int size, const char *name);
@@ -608,6 +634,9 @@ void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
+void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
+void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
+void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc);//...WaveformFD hpc);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
