@@ -60,6 +60,24 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
   gsl_interp_accel_free (acc);
 }
 
+/** Spline interpolation with GSL routines 
+    Check limits and set to zero points outside interp range */
+void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, double *yi)
+{
+  const double ta = t[0];
+  const double tb = t[n-1];
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+  gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
+  gsl_spline_init (spline, t, y, n);    
+  for (int k = 0; k < ni; k++) {
+    if ((ti[k]<=ta)||(ti[k]>=tb)) yi[k] = 0.;
+    else yi[k] = gsl_spline_eval (spline, ti[k], acc);
+  }
+  gsl_spline_free (spline);
+  gsl_interp_accel_free (acc);
+}
+
+
 /* An OpenMP version. We keep two versions because we might want to introduce the 
    thread-parallelism at different levels */
 /*
@@ -1272,8 +1290,10 @@ void WaveformFD_lm_push (WaveformFD_lm **wav, int size)
 }
 
 /* Interp on uniform freq array and overwrite a multipolar waveform 
-   Note each mode has its own frequency array hlm->F[k]
-   and that the uniform array is stored in hlm->freq */
+   Notes 
+   - each mode has its own frequency array hlm->F[k]
+   - the uniform array is stored in hlm->freq 
+   - use interp_spline_checklim() and set to zero points outside interp range */
 void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f0, const double df, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -1316,10 +1336,12 @@ void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f
   /* Interp */
   for (int k = 0; k < KMAX; k++) 
     if (hlm->kmask[k]) 
-      interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+      //interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+      interp_spline_checklim(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
   for (int k = 0; k < KMAX; k++) 
     if (hlm->kmask[k]) 
-      interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+      //interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+      interp_spline_checklim(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
   
   /* Free aux memory */
   WaveformFD_lm_free (hlm_aux);
@@ -1387,8 +1409,7 @@ void WaveformFD_lm_free (WaveformFD_lm *wav)
 void Waveform_lm_t_alloc (Waveform_lm_t **wav)
 {
   *wav = (Waveform_lm_t *) calloc(1, sizeof(Waveform_lm_t)); 
-  if (wav == NULL)
-    errorexit("Out of memory");
+  if (wav == NULL) errorexit("Out of memory");
   (*wav)->time = 0.;
   (*wav)->freq = 0.;
   set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0); 
@@ -1700,18 +1721,19 @@ void NQCdata_free (NQCdata *nqc)
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
 {
   const int size = TDlm->size;
-  int newsize = 0;
-  double Fmin=0., Fmax=0.;
   const double f0 = EOBPars->initial_frequency;  
   const double df = EOBPars->df;
+  const double half_srate_interp = EOBPars->srate_interp/2.;  
+  
+  //double Fmin=0., Fmax=0.;
+  //int nmax[KMAX]; // Fmax index
+  int nmin[KMAX]; // Fmin > f0 index
 
+  const double Pio4 = Pi/4.;
   int *activemode = TDlm->kmask;
   //int activemode[KMAX];
   //set_multipolar_idx_mask (activemode, KMAX, 
   //EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
-
-  const double Pio4 = Pi/4.;
-  const double half_srate_interp = EOBPars->srate_interp/2.;
   
   /* For each active mode... */
   for (int k = 0; k < KMAX; k++ ) {
@@ -1730,28 +1752,37 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
       FDlm->ampli[k][i] = TDlm->ampli[k][i]/sqrt(fabs(FDlm->Fdot[k][i])); 
     }
 
+    /* Track multipoles w\ Fmin > f0 */
+    nmin[k] = (FDlm->F[k][0]>f0)?(1):(0);
+
     /* Get last index until Fdot is monotonically increasing (for attachment) */
     //int i_aux = 0;
     //while(FDlm->Fdot[i_aux+1] > FDlm->Fdot[i_aux]) i_aux++;
-    //*newsize = i_aux +1; // i_axu = nmono
+    //*newsize = i_aux +1; // i_axu = n
     //SB: I changed the logic above to avoid overflow of the array Fdot.
-    //    please check nmono is correctly set (could be offset of 1...)
+    //    please check n is correctly set (could be offset of 1...)
     int n = 1;
-    while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1]) n++;
+    while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1] && n<size) n++;
+    //nmax[k] = n; 
 
     /* Prolong the waveform, if necessary  
-       The amplitude is expected to behave as 1./f asymptotically 
-       (see eg 3.31a of arXiv:gr-qc/0001023) 
-       For the phase, we express it as phi(f) = (a + b*f) 
+       - Fill the points between Fmax and half_srate_interp such that 
+         FDlm->F[k][n] > half_srate_interp (strictly larger)
+	 for later interp;
+       - The amplitude is expected to behave as 1./f asymptotically 
+         (see eg 3.31a of arXiv:gr-qc/0001023);
+       - For the phase, we express it as phi(f) = (a + b*f);
     */
     if (FDlm->F[k][n] < half_srate_interp) { 
+      const int n1 = n1;
       double Fn1 = FDlm->F[k][n-1];
       double An1 = FDlm->ampli[k][n-1];
       double pn1 =  FDlm->phase[k][n-1];
       //double c = 0.;
       double b = TwoPi * TDlm->time[n-1];
+      double dfk = (half_srate_interp - FDlm->F[k][n])/(size-n+1); // one point more
       for (int i=n; i < size; i++){
-	FDlm->F[k][i] = Fn1 + (i-(n-1))*df;
+	FDlm->F[k][i] = Fn1 + (i-n1)*dfk;
 	FDlm->ampli[k][i] = An1/FDlm->F[k][i]*Fn1;
 	//FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1))/(1 + c*(FDlm->F[k][i] - Fn1));
 	FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1));
@@ -1759,18 +1790,31 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     }
 
     /* Absolute min/max */
-    Fmin = MIN(Fmin,FDlm->F[k][0]);
-    Fmax = MIN(Fmax,FDlm->F[k][n]);
-
+    //Fmin = MIN(Fmin,FDlm->F[k][0]);
+    //Fmax = MIN(Fmax,FDlm->F[k][n]);
+    
   }
 
   /* Determine the output frequency array */
-  //if (Fmin > f0) //  do something or rely on the interp ? TESTME
-  //if (FMax < half_srate_interp) // do something on rely interp ? TESTME
   const int interp_size = get_uniform_size(half_srate_interp,f0, df);
   
   /* Interpolate each mode */
   WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
+
+  /* Correct Fmin > f0 */
+  for (int k = 0; k < KMAX; k++ ) {
+    if (!activemode[k]) continue;
+    if (nmin[k]) {
+      /* f0 < Fmin , the interpolation returned 0s at those points
+	 -> fill points with linear extrapolation starting from innermost */
+      int i0 = 0;
+      while(FDlm->freq[i0]<f0 && i0<size) i0++;
+      for (int i = i0-1; i>=0; i--){
+	FDlm->ampli[k][i] = 2*FDlm->ampli[k][i+1] - FDlm->ampli[k][i+2]; //TODO: check sign!
+	FDlm->phase[k][i] = 2*FDlm->phase[k][i+1] - FDlm->phase[k][i+2]; 
+      }
+    }
+  }
   
 }
 
