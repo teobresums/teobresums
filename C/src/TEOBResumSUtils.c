@@ -862,13 +862,17 @@ void WaveformFD_alloc (WaveformFD **wav, const int size, const char *name)
   *wav = (WaveformFD *) calloc(1, sizeof(WaveformFD)); 
   if (wav == NULL)
     errorexit("Out of memory");
-  (*wav)->real =  malloc ( size * sizeof(double) );
-  (*wav)->imag =  malloc ( size * sizeof(double) );
+  (*wav)->preal = malloc ( size * sizeof(double) );
+  (*wav)->pimag = malloc ( size * sizeof(double) );
+  (*wav)->creal = malloc ( size * sizeof(double) );
+  (*wav)->cimag = malloc ( size * sizeof(double) );
   (*wav)->ampli = malloc ( size * sizeof(double) );
   (*wav)->phase = malloc ( size * sizeof(double) );
-  (*wav)->freq =  malloc ( size * sizeof(double) );
-  memset( (*wav)->real, 0, size * sizeof(double) );
-  memset( (*wav)->imag, 0, size * sizeof(double) );
+  (*wav)->freq = malloc ( size * sizeof(double) );
+  memset( (*wav)->preal, 0, size * sizeof(double) );
+  memset( (*wav)->pimag, 0, size * sizeof(double) );
+  memset( (*wav)->creal, 0, size * sizeof(double) );
+  memset( (*wav)->cimag, 0, size * sizeof(double) );
   memset((*wav)->ampli, 0, size * sizeof(double) );
   memset((*wav)->phase, 0, size * sizeof(double) );
   (*wav)->size = size; 
@@ -877,8 +881,10 @@ void WaveformFD_alloc (WaveformFD **wav, const int size, const char *name)
 
 void WaveformFD_push (WaveformFD **wav, int size)
 {
-  if ((*wav)->real)  (*wav)->real  = realloc ( (*wav)->real,  size * sizeof(double) );
-  if ((*wav)->imag)  (*wav)->imag  = realloc ( (*wav)->imag,  size * sizeof(double) );
+  if ((*wav)->preal)  (*wav)->preal  = realloc ( (*wav)->preal,  size * sizeof(double) );
+  if ((*wav)->pimag)  (*wav)->pimag  = realloc ( (*wav)->pimag,  size * sizeof(double) );
+  if ((*wav)->creal)  (*wav)->creal  = realloc ( (*wav)->creal,  size * sizeof(double) );
+  if ((*wav)->cimag)  (*wav)->cimag  = realloc ( (*wav)->cimag,  size * sizeof(double) );
   if ((*wav)->ampli) (*wav)->ampli = realloc ( (*wav)->ampli, size * sizeof(double) );
   if ((*wav)->phase) (*wav)->phase = realloc ( (*wav)->phase, size * sizeof(double) );
   if ((*wav)->freq)  (*wav)->freq  = realloc ( (*wav)->freq,  size * sizeof(double) );
@@ -894,21 +900,21 @@ void WaveformFD_rmap (WaveformFD *h, const int mode, const int unw)
   if (mode) {
     /** (Re, Im) -> (Amplitude, phase) */
 #pragma omp simd
-    for (int i = 0; i < size; i++)
-      h->ampli[i] = sqrt( SQ(h->real[i]) + SQ(h->imag[i]) );
+    for (int i = 0; i < size; i++) {
+      double real = h->preal[i]+h->creal[i];
+      double imag = h->pimag[i]+h->cimag[i];
+      h->ampli[i] = sqrt( SQ(real) + SQ(imag) );
+    }
 #pragma omp simd
-    for (int i = 0; i < size; i++)
-      h->phase[i] = Pi - atan2(h->imag[i], h->real[i]); /* exp(- i phi) => Pi  */
-    if (unw) unwrap(h->phase, h->size); 
+    for (int i = 0; i < size; i++) {
+      double real = h->preal[i]+h->creal[i];
+      double imag = h->cimag[i]+h->cimag[i];
+      h->phase[i] = Pi - atan2(imag, real); /* exp(- i phi) => Pi  */
+      if (unw) unwrap(h->phase, h->size); 
+    }   
   } else {
     /** (Amplitude, phase) -> (Re, Im) */
-    /* h =  A exp( -i phi) */
-#pragma omp simd
-    for (int i = 0; i < size; i++) 
-      h->real[i] = + h->ampli[i] * cos(h->phase[i]);  
-#pragma omp simd
-    for (int i = 0; i < size; i++)
-      h->imag[i] = - h->ampli[i] * sin(h->phase[i]); 
+    errorexit("cannot fill real/imag of cross/plus polarization.");
   }
 }
 
@@ -919,8 +925,10 @@ void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const
   const int oldsize = h->size;
   WaveformFD_alloc(&h_aux, oldsize, "");
   memcpy(h_aux->freq, h->freq, oldsize * sizeof(double));
-  memcpy(h_aux->real, h->real, oldsize * sizeof(double));
-  memcpy(h_aux->imag, h->imag, oldsize * sizeof(double));
+  memcpy(h_aux->preal, h->preal, oldsize * sizeof(double));
+  memcpy(h_aux->pimag, h->pimag, oldsize * sizeof(double));
+  memcpy(h_aux->creal, h->creal, oldsize * sizeof(double));
+  memcpy(h_aux->cimag, h->cimag, oldsize * sizeof(double));
   memcpy(h_aux->ampli, h->ampli, oldsize * sizeof(double)); 
   memcpy(h_aux->phase, h->phase, oldsize * sizeof(double)); 
 
@@ -928,13 +936,17 @@ void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const
   h->size = size;
   if (strcmp(name, "")) strcpy(h->name, name);
   if (h->freq) free(h->freq);
-  if (h->real) free(h->real);
-  if (h->imag) free(h->imag);
+  if (h->preal) free(h->preal);
+  if (h->pimag) free(h->pimag);
+  if (h->creal) free(h->creal);
+  if (h->cimag) free(h->cimag);
   if (h->ampli) free(h->ampli);
   if (h->phase) free(h->phase);
   h->freq  = malloc ( size * sizeof(double) );
-  h->real  = malloc ( size * sizeof(double) );
-  h->imag  = malloc ( size * sizeof(double) );
+  h->preal  = malloc ( size * sizeof(double) );
+  h->pimag  = malloc ( size * sizeof(double) );
+  h->creal  = malloc ( size * sizeof(double) );
+  h->cimag  = malloc ( size * sizeof(double) );
   h->ampli = malloc ( size * sizeof(double) );
   h->phase = malloc ( size * sizeof(double) );
 
@@ -946,9 +958,6 @@ void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const
   /* Interp phase and amplitude */
   interp_spline_omp(h_aux->freq, h_aux->ampli, h_aux->size, h->freq, size, h->ampli);
   interp_spline_omp(h_aux->freq, h_aux->phase, h_aux->size, h->freq, size, h->phase);
-  
-  /* Compute Real/Imag */
-  WaveformFD_rmap (h, 0, 0); /* do not unwrap */
   
   /* Free aux memory */
   WaveformFD_free (h_aux);
@@ -971,7 +980,7 @@ void WaveformFD_output (WaveformFD *wav)
   fprintf(fp, "# D=%e phi=%e iota=%e\n",EOBPars->distance,EOBPars->coalescence_angle,EOBPars->inclination);
   fprintf(fp, "# f:0 real:1 imag:2 Ampli:3 Phase:4\n");
   for (int i = 0; i < wav->size; i++) {
-    fprintf(fp, "%.9e %.12e %.12e %.12e %.12e\n", wav->freq[i], wav->real[i], wav->imag[i], wav->ampli[i], wav->phase[i]);
+    fprintf(fp, "%.9e %.12e %.12e %.12e %.12e\n", wav->freq[i], wav->preal[i], wav->pimag[i], wav->creal[i], wav->cimag[i]);
   }
   fclose(fp);
 }
@@ -979,8 +988,10 @@ void WaveformFD_output (WaveformFD *wav)
 void WaveformFD_free (WaveformFD *wav)
 {
   if (!wav) return;
-  if (wav->real) free(wav->real);
-  if (wav->imag) free(wav->imag);
+  if (wav->preal) free(wav->preal);
+  if (wav->pimag) free(wav->pimag);
+  if (wav->creal) free(wav->creal);
+  if (wav->cimag) free(wav->cimag);
   if (wav->ampli) free(wav->ampli);
   if (wav->phase) free(wav->phase);
   if (wav->freq) free(wav->freq);
@@ -1819,89 +1830,132 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
 }
 
 /** (h+, hx) polarizations from the multipolar waveform, FD, all active modes (interpolate after SPA, needed to correctly add modes together) */
-void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
+void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc)
 {  
 #ifdef _OPENMP
   if (USETIMERS) openmp_timer_start("compute_hpc_FD");
 #endif
-#pragma omp parallel 
-  {
-    double Y_real[KMAX] = {0};
-    double Y_imag[KMAX] = {0};
-    double Y_real_mneg[KMAX] = {0};
-    double Y_imag_mneg[KMAX] = {0};
-    static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
-    double conv=1.;
-    double sumr=0., sumi=0.;
-    
-    int *activemode = hflm->kmask;
-    
-    double Msun = M;
-    if (!(EOBPars->use_geometric_units)) {
-      Msun = M/MSUN_S;
-      conv = time_units_factor(Msun);
+  
+  double Y_real[KMAX] = {0};
+  double Y_imag[KMAX] = {0};
+  double Y_real_mneg[KMAX] = {0};
+  double Y_imag_mneg[KMAX] = {0};
+  static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
+  double conv=1.;
+  double sumr=0., sumi=0.;
+  double sumpr=0., sumpi=0., sumcr=0., sumci=0.;
+  
+  int *activemode = hflm->kmask;
+  
+  double Msun = M;
+  if (!(EOBPars->use_geometric_units)) {
+    Msun = M/MSUN_S;
+    conv = time_units_factor(Msun);
       for (int i = 0; i < hflm->size; i++) 
 	hflm->freq[i] = hflm->freq[i]*conv; //CHECKME!
-    }
-    
+  }
+  
     /* Precompute Ylm */
-    for (int k = 0; k < KMAX; k++ ) {
+  for (int k = 0; k < KMAX; k++ ) {
     if (!activemode[k]) continue;
     spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
     /* add m<0 modes */
     if ( (mneg) && (MINDEX[k]!=0) ) 
       spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
-    }
-    
-    /* Sum up  hlm * Ylm 
-     * Note because EOB code defines phase>0, 
-     * but the convention is h_lm = A_lm Exp[-I phi_lm] we have
-     * h_{l,m>=0} = A_lm ( cos(phi_lm) - I*sin(phi_lm) ) for m>0 and
-     * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
-     * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
-     */
-#pragma omp for
-    for (int i = 0; i < hflm->size; i++) {
-      hpc->time[i] = hflm->freq[i]*M; // NOTE HERE
-      sumr = sumi = 0.;
-      
-      /* Loop over modes */
-      for (int k = 0; k < KMAX; k++ ) {
-	if (!activemode[k]) continue;
-	double Aki  = amplitude_prefactor * hflm->ampli[k][i];
-	double cosPhi = cos( hflm->phase[k][i] );
-	double sinPhi = sin( hflm->phase[k][i] );
-	sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
-	sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
-        
-	/* add m<0 modes */
-	if ( (mneg) && (MINDEX[k]!=0) ) { 
-	  /* H_{l-m} = (-)^l H^{*}_{lm} */
-	  if (LINDEX[k] % 2) {
-	    sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
-	    sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	  }
-	  else { 
-	    sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
-	    sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	  }
-	}    
-      }
-      /* h = h+ - i hx */
-      hpc->real[i] = sumr;
-      hpc->imag[i] = -sumi;
-    } 
   }
+  
+  /* Sum up  hlm * Ylm 
+   * Note because EOB code defines phase>0, 
+   * but the convention is h_lm = A_lm Exp[-I phi_lm] we have
+   * h_{l,m>=0} = A_lm ( cos(phi_lm) - I*sin(phi_lm) ) for m>0 and
+   * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
+   * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
+   */
+#if (0)
+  
+  //SB: Taken from TD (?) to be check
+  
+  for (int i = 0; i < hflm->size; i++) {
+    hpc->freq[i] = hflm->freq[i]*M; 
+    sumr = sumi = 0.;
+    
+    /* Loop over modes */
+    for (int k = 0; k < KMAX; k++ ) {
+      if (!activemode[k]) continue;
+      double Aki  = amplitude_prefactor * hflm->ampli[k][i];
+      double cosPhi = cos( hflm->phase[k][i] );
+      double sinPhi = sin( hflm->phase[k][i] );
+      sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
+      sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
+      
+      /* add m<0 modes */
+      if ( (mneg) && (MINDEX[k]!=0) ) { 
+	/* H_{l-m} = (-)^l H^{*}_{lm} */
+	if (LINDEX[k] % 2) {
+	  sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
+	  sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+	}
+	else { 
+	  sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
+	  sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+	}
+      }    
+    }
 
+    /* h = h+ - i hx */
+    hpc->real[i] = sumr;
+    hpc->imag[i] = -sumi;
+  }
+  
   /* Compute amplitude & Phase */
   Waveform_rmap(hpc,1,1); // with unwrap
   //Waveform_rmap(hpc,1,0); // without
+  
+#else
+  
+  const double pm3 = 3.*Pi/2.;
+  for (int i = 0; i < hflm->size; i++) {
+    hpc->freq[i] = hflm->freq[i]*M; 
+    sumpr = sumpi = sumcr = sumci = 0.;
+    
+    for (int k=0; k< KMAX; k++){
+      if (!activemode[k]) continue;
+      double Aki  = 0.5*amplitude_prefactor * hflm->ampli[k][i];
+      double cosPhi = cos( hflm->phase[k][i] );
+      double sinPhi = sin( hflm->phase[k][i] );
+      double cosPhipm3 = cos( hflm->phase[k][i] + pm3 );
+      double sinPhipm3 = sin( hflm->phase[k][i] + pm3 );
+      
+      /* H_{l-m} = (-)^l H^{*}_{lm} */
+      for (int i=0; i < hflm->size; i++){
+	if (LINDEX[k] % 2) {
+	  sumpr +=  Aki * (cosPhi*(Y_real[k] - Y_real_mneg[k]) + sinPhi* (Y_imag[k] + Y_imag_mneg[k]));
+	  sumpi +=  Aki * (cosPhi*(-Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
+	  sumcr += -Aki * (cosPhipm3*(Y_real[k] + Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] - Y_imag_mneg[k]));
+	  sumci += -Aki * (-cosPhipm3*(Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
+	} else {
+	  sumpr +=  Aki * (cosPhi* (Y_real[k] + Y_real_mneg[k]) + sinPhi* (Y_imag[k] - Y_imag_mneg[k]));
+	  sumpi +=  Aki * (cosPhi* (-Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
+	  sumcr += -Aki * (cosPhipm3* (Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
+	  sumci += -Aki * (-cosPhipm3*(Y_imag[k] + Y_imag_mneg[k]) + sinPhipm3* (Y_real[k] - Y_real_mneg[k]));
+	}
+      }
+      
+      hpc->preal[i] = sumpr; 
+      hpc->pimag[i] = sumpi;
+      hpc->creal[i] = sumcr;
+      hpc->cimag[i] = sumci;	  
+    }
 
+  }
+    
+#endif
+    
 #ifdef _OPENMP
-  if (USETIMERS) openmp_timer_stop("compute_hpc_FD");
+    if (USETIMERS) openmp_timer_stop("compute_hpc_FD");
 #endif
 }
-
+  
 /** Convert time in sec to dimensionless and mass-rescaled units */
 double time_units_factor(double M)
 {

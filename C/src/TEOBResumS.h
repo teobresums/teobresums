@@ -371,8 +371,10 @@ typedef struct tagWaveformFD
 {
   int size;
   double *freq;
-  double *real; 
-  double *imag; 
+  double *preal; 
+  double *pimag; 
+  double *creal; 
+  double *cimag; 
   double *ampli;
   double *phase;  
   char name[STRLEN];
@@ -520,15 +522,9 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 
 /* Function protoypes grouped based on file */
 
-/* Main TD EOB */
-int EOBRun(Waveform **hpc, int default_choice, int firstcall);
-
-/* FD stuff */
-void spa(double **F, double **ampf, double **phasef, double *time, double *ampt, double *phaset, int size, int *nsize);
-void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor,  double psi, double iota, Waveform *hpc);
-void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor,  double psi, double iota, Waveform *hpc);
-void Vect_Interp (double **y, double **x, double **z, const int new_size, const int old_size, const double x0, const double dx );
-
+/* TEOBResumS.c */
+//int EOBRun(Waveform **hpc, int default_choice, int firstcall);
+int EOBRun(void **wvf, int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
 void par_db_init ();
@@ -637,7 +633,7 @@ void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
-void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc);//...WaveformFD hpc);
+void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
