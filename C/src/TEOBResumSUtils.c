@@ -1448,7 +1448,7 @@ void spa(double **F, double **ampf, double **phasef, double *time, double *ampt,
   /* Compute frequencies */
   double *Fdot = (double*)malloc(size * sizeof(double));
 
-  //D0_x_2(phaset, time, size, *F);  //second order for now, fourth eventually?
+  //D0_x_2(phaset, time, size, *F); 
   //D0_x_2(*F, time, size, Fdot);
   D0_x_4(phaset, time, size, *F);
   D0_x_4(*F, time, size, Fdot);
@@ -1463,14 +1463,12 @@ void spa(double **F, double **ampf, double **phasef, double *time, double *ampt,
   /* Make sure that Fdot is monotonically increasing (for attachment)*/
   int i_aux = 0;
   while(Fdot[i_aux+1] > Fdot[i_aux]) i_aux++;
-  //while((*F)[i_aux+1] > (*F)[i_aux]) i_aux++;
-  //i_aux = i_aux - 10; //for attachment, this is just a test
-  *newsize = i_aux +1;
+  *newsize = i_aux + 1; 
 
   /* If necessary, prolong the waveform */
   if ((*F)[i_aux+1] < EOBPars->srate_interp/2.){
     /* Define new size of arrays */
-    double df = 1; // hard fixed
+    double df = EOBPars->df;
     *newsize = i_aux + 1 + floor((EOBPars->srate_interp/2. - (*F)[i_aux])/df) +1; 
 
     *F      = realloc(*F, *newsize * sizeof(double));
@@ -1525,7 +1523,7 @@ void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, d
     /* add m<0 mode */
     if ( (mneg) && (MINDEX[k]!=0) ) spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
 
-    //loop over times
+    /* loop over times */
     for (int i = 0; i < hlm->size; i++) {
       if (!(EOBPars->use_geometric_units)) hlm->time[i] = hlm->time[i]/conv;
 	    Aki  = amplitude_prefactor * hlm->ampli[k][i];
@@ -1533,7 +1531,7 @@ void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, d
       phast[i] = hlm->phase[k][i];
     }
 
-    /*Ok, now we have A and phi for the 22 mode in time domain. We need A and psif in FD, and F*/
+    /* Compute A, psif and F in FD */
     int nsize;
     spa(&F, &ampf, &phif, hlm->time, ampt, phast, hlm->size, &nsize);
     
@@ -1543,7 +1541,6 @@ void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, d
     int dN = 0;
     double f0 = F[0];
     double df = EOBPars->df;
-    //double df = 1./hlm->time[hlm->size -1];
 
     if (EOBPars->interp_FD_waveform){
       f0 = EOBPars->initial_frequency;  
