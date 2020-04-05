@@ -1808,7 +1808,7 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
       /* f0 < Fmin , the interpolation returned 0s at those points
 	 -> fill points with linear extrapolation starting from innermost */
       int i0 = 0;
-      while(FDlm->freq[i0]<f0 && i0<size) i0++;
+      while(FDlm->ampli[k][i0]==0. && i0<size) i0++;
       for (int i = i0-1; i>=0; i--){
 	FDlm->ampli[k][i] = 2*FDlm->ampli[k][i+1] - FDlm->ampli[k][i+2]; //TODO: check sign!
 	FDlm->phase[k][i] = 2*FDlm->phase[k][i+1] - FDlm->phase[k][i+2]; 
