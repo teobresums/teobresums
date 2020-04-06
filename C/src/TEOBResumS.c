@@ -53,11 +53,12 @@ int main (int argc, char* argv[]){
   
   PRSECTN("Running with EOBRunTD ...");
   
-  Waveform *hpc; 
+  Waveform *hpc = NULL; /* TD wvf */
+  WaveformFD *hfpc = NULL; /* FD wvf */
   
   int fc = 1; //firstcall, set to 1 for now
   int dc = DEFAULT_PARS_BBH; //default_choice, set to BBH
-
+  
   //alloc
   EOBParameters_alloc( &EOBPars );
   //set defaults
@@ -72,11 +73,11 @@ int main (int argc, char* argv[]){
     par_db_screen (VERBOSE);
     EOBParameters_set_from_db (EOBPars);
     par_db_free();
-
+    
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
   }
-
+  
   /* set all firstcalls = 1 */
   for (int k; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
@@ -84,16 +85,17 @@ int main (int argc, char* argv[]){
 
   /* set domain */
   EOBPars->domain = DOMAIN_TD;
-
   eob_set_params_EOBRun(dc, fc); 
-
+  
   //for(int i = 0; i < 3; i++){ for loop to test the firstcall flag
-  int status = EOBRun(&hpc, 1, fc);        //hpc, default_choice, firstcall
+  /* TD hpc, FD hpc, default_choice, firstcall */
+  int status = EOBRun(&hpc, &hfpc, 1, fc);
   //  fc = 0;
   //}
   if (status) printf("ERROR: %s\n",eob_error_msg[status]);
   
   Waveform_free (hpc);
+  WaveformFD_free (hfpc);
   EOBParameters_free (EOBPars);
   return status;
 }
@@ -103,7 +105,8 @@ int main (int argc, char* argv[]){
  * assumes the EOBPars are allocated and filled.
  */    
 
-int EOBRun(void **wvf, int default_choice, int firstcall)
+int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
+	   int default_choice, int firstcall)
 {
 
   int status = OK;
@@ -162,8 +165,6 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
    */
 
   /** Alloc memory for dynamics and multipolar waveform */
-  Waveform *hpc; /* TD waveform -> wvf */
-  Waveform *hfpc; /* FD waveform -> wvf */
   Dynamics *dyn;
   Waveform_lm *hlm; /* h_lm */ 
   WaveformFD_lm *hflm; /* hf_lm (FD) */ 
@@ -861,10 +862,10 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
     }
 
     /** Alloc memory for (h+,hx) */
-    Waveform_alloc (&hpc, size, "waveform");   
+    Waveform_alloc (hpc, size, "waveform");   
   
     /* h+, hx */  
-    compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, hpc);
+    compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
   } else {
     
@@ -881,10 +882,10 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
     size = hflm->size;
     
     /** Alloc memory for (h+,hx) */
-    WaveformFD_alloc (&hfpc, size, "waveform");   
-    
+    WaveformFD_alloc (hfpc, size, "waveform");   
+        
     /* h+, hx */  
-    compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, hfpc);
+    compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, *hfpc);
     
   }
 
@@ -895,8 +896,8 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
 
   if (output) {
     if (EOBPars->output_hpc)
-      if (EOBPars->domain == DOMAIN_TD) Waveform_output (hpc); 
-      else                              WaveformFD_output (hfpc); 
+      if (EOBPars->domain == DOMAIN_TD) Waveform_output (*hpc); 
+      else                              WaveformFD_output (*hfpc); 
     if (EOBPars->output_multipoles) Waveform_lm_output (hlm); 
     if (EOBPars->output_multipoles) Waveform_lm_output_reim (hlm);
     //if (EOBPars->output_multipoles_fd) WaveformFD_lm_output (hflm);  //TODO: add this parameter
@@ -918,18 +919,18 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
 
  EXIT_POINT:;
 
-   if (status) {
-     /** There was an error, return zeros waveform */
-     //SB: the size here needs to be fixed to the required sampling frequency.
-     //    not if the code jumps here size is still the one from default...
-     Waveform_alloc (hpc, size, "waveform");
-   } else {
-
-     if (EOBPars->domain == DOMAIN_TD) wvf = hpc; 
-     else                              wvf = hfpc; 
-
-   }
-   
+  if (status) {
+    /** There was an error, return zeros waveform */
+    if (EOBPars->domain == DOMAIN_TD) {
+      //SB: the size here needs to be fixed to the required sampling frequency.
+      //    if not, the code jumps here and size is still the one from default...
+      Waveform_alloc (hpc, size, "waveform");
+    } else  {                             
+      const int interp_fd_size = get_uniform_size(EOBPars->initial_frequency, EOBPars->initial_frequency, EOBPars->df);
+      WaveformFD_alloc (hfpc, interp_fd_size, "waveform");
+    }
+  }
+  
 #ifdef _OPENMP
   openmp_free(); 
 #endif
