@@ -97,7 +97,6 @@ int main (int argc, char* argv[]){
   Waveform_free (hpc);
   WaveformFD_free (hfpc);
   EOBParameters_free (EOBPars);
-  free(wvf);
   return status;
 }
 
@@ -166,8 +165,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   /** Alloc memory for dynamics and multipolar waveform */
-  Waveform *hpc; /* TD waveform -> wvf */
-  WaveformFD *hfpc; /* FD waveform -> wvf */
+  // Waveform *hpc; /* TD waveform -> wvf */
+  // WaveformFD *hfpc; /* FD waveform -> wvf */
   Dynamics *dyn;
   Waveform_lm *hlm; /* h_lm */ 
   WaveformFD_lm *hflm; /* hf_lm (FD) */ 
