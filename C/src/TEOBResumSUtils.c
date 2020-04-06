@@ -1873,7 +1873,7 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
    */
 #if (0)
   
-  //SB: Taken from TD (?) to be check
+  //SB: Taken from TD (?) to be checked
   
   for (int i = 0; i < hflm->size; i++) {
     hpc->freq[i] = hflm->freq[i]*M; 
@@ -1908,8 +1908,8 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
   }
   
   /* Compute amplitude & Phase */
-  Waveform_rmap(hpc,1,1); // with unwrap
-  //Waveform_rmap(hpc,1,0); // without
+  //Waveform_rmap(hpc,1,1); // with unwrap
+  Waveform_rmap(hpc,1,0); // without
   
 #else
   
@@ -1927,18 +1927,16 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
       double sinPhipm3 = sin( hflm->phase[k][i] + pm3 );
       
       /* H_{l-m} = (-)^l H^{*}_{lm} */
-      for (int i=0; i < hflm->size; i++){
-	if (LINDEX[k] % 2) {
-	  sumpr +=  Aki * (cosPhi*(Y_real[k] - Y_real_mneg[k]) + sinPhi* (Y_imag[k] + Y_imag_mneg[k]));
-	  sumpi +=  Aki * (cosPhi*(-Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
-	  sumcr += -Aki * (cosPhipm3*(Y_real[k] + Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] - Y_imag_mneg[k]));
-	  sumci += -Aki * (-cosPhipm3*(Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
-	} else {
-	  sumpr +=  Aki * (cosPhi* (Y_real[k] + Y_real_mneg[k]) + sinPhi* (Y_imag[k] - Y_imag_mneg[k]));
-	  sumpi +=  Aki * (cosPhi* (-Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
-	  sumcr += -Aki * (cosPhipm3* (Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
-	  sumci += -Aki * (-cosPhipm3*(Y_imag[k] + Y_imag_mneg[k]) + sinPhipm3* (Y_real[k] - Y_real_mneg[k]));
-	}
+      if (LINDEX[k] % 2) {
+	sumpr +=  Aki * (cosPhi*(Y_real[k] - Y_real_mneg[k]) + sinPhi* (Y_imag[k] + Y_imag_mneg[k]));
+	sumpi +=  Aki * (cosPhi*(-Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
+	sumcr += -Aki * (cosPhipm3*(Y_real[k] + Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] - Y_imag_mneg[k]));
+	sumci += -Aki * (-cosPhipm3*(Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
+      } else {
+	sumpr +=  Aki * (cosPhi* (Y_real[k] + Y_real_mneg[k]) + sinPhi* (Y_imag[k] - Y_imag_mneg[k]));
+	sumpi +=  Aki * (cosPhi* (-Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
+	sumcr += -Aki * (cosPhipm3* (Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
+	sumci += -Aki * (-cosPhipm3*(Y_imag[k] + Y_imag_mneg[k]) + sinPhipm3* (Y_real[k] - Y_real_mneg[k]));
       }
       
       hpc->preal[i] = sumpr; 
@@ -1946,7 +1944,6 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
       hpc->creal[i] = sumcr;
       hpc->cimag[i] = sumci;	  
     }
-
   }
     
 #endif
