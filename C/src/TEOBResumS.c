@@ -20,12 +20,6 @@
 
 #include "TEOBResumS.h"
 
-/**
- * GSL routines for ODE integration
- * https://www.gnu.org/software/gsl/doc/html/ode-initval.html
- * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
- */
-
 /** Global vars, defined as external in header */
 const int LINDEX[KMAX] = {
     2,2,
@@ -49,36 +43,37 @@ NQCdata *NQC;
 
 /** TEOBResumS v2.* main */
 
-int main (int argc, char* argv[]){   
-  
-  PRSECTN("Running with EOBRunTD ...");
+int main (int argc, char* argv[])
+{   
+  PRSECTN(TEOBResumS_Info);
   
   Waveform *hpc = NULL; /* TD wvf */
+  Waveform_lm *hmodes = NULL; /* modes */
+
   WaveformFD *hfpc = NULL; /* FD wvf */
+  WaveformFD_lm *hfmodes = NULL; /* modes */
 
-  int fc = 1; //firstcall, set to 1 for now
-  int dc = DEFAULT_PARS_BBH; //default_choice, set to BBH
+  int fc = 1; /* firstcall, set to 1 for now */
+  int dc = DEFAULT_PARS_BBH; /* default_choice, set to BBH */
   
-  //alloc
+  /* Init parameters & set defaults */
   EOBParameters_alloc( &EOBPars );
-  //set defaults
   EOBParameters_defaults (dc, EOBPars);
-
+  
   if (argv[1]!=NULL) {
     /* Deal with input parfile if necessary 
-       (this is the current logic, we'll keep it for compatibility) */
+       (Kepr for backward compatibility) */
     par_db_init ();
     par_db_from_EOBPar (EOBPars);
     par_file_parse_merge (argv[1]);
     par_db_screen (VERBOSE);
     EOBParameters_set_from_db (EOBPars);
     par_db_free();
-    
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
   }
   
-  /* set all firstcalls = 1 */
+  /* Set all firstcalls = 1 */
   for (int k; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
   }
@@ -87,15 +82,17 @@ int main (int argc, char* argv[]){
   EOBPars->domain = DOMAIN_TD;
   eob_set_params_EOBRun(dc, fc); 
   
-  //for(int i = 0; i < 3; i++){ for loop to test the firstcall flag
-  /* TD hpc, FD hpc, default_choice, firstcall */
-  int status = EOBRun(&hpc, &hfpc, 1, fc);
-  //  fc = 0;
-  //}
-  if (status) printf("ERROR: %s\n",eob_error_msg[status]);
+  /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
+  int status = EOBRun(&hpc, &hfpc, 
+		      &hmodes, &hfmodes, 
+		      1, fc);
+  if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
   
   Waveform_free (hpc);
   WaveformFD_free (hfpc);
+  Waveform_lm_free (hmodes);
+  WaveformFD_lm_free (hfmodes);
+
   EOBParameters_free (EOBPars);
   return status;
 }
@@ -106,6 +103,7 @@ int main (int argc, char* argv[]){
  */    
 
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
+	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, 
 	   int default_choice, int firstcall)
 {
 
@@ -449,6 +447,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (ode_tstep == ODE_TSTEP_UNIFORM) dyn->dt = dt;
   EOBPars->dt = dyn->dt;  
 
+  /** GSL routines for ODE integration
+   * https://www.gnu.org/software/gsl/doc/html/ode-initval.html
+   * http://www.csse.uwa.edu.au/programming/gsl-1.0/gsl-ref_24.html
+   */
+  
   /* GSL integrator memory */
   gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
 #if (USERK45)
@@ -934,14 +937,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
   
+  *hmodes = hlm; /* do not free these! */
+  *hfmodes = hflm; /* do not free these! */
+
 #ifdef _OPENMP
   openmp_free(); 
 #endif
   
   /** Free memory */
   Dynamics_free (dyn);
-  Waveform_lm_free (hlm);
-  WaveformFD_lm_free (hflm);
+  /* Waveform_lm_free (hlm); */
+  /* WaveformFD_lm_free (hflm); */
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
 

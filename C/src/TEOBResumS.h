@@ -89,10 +89,11 @@
 #endif
 
 /** Macros */
-#define ERROR 1 /** generic error int */
-#define STRLEN 1024 /** Standard string length */
 #define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
-#define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);} 
+#define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);}
+
+#define STRLEN 1024 /** Standard string length */
+ 
 #define SIGN(x,y) ((y) >= 0.0 ? fabs(x) : -fabs(x)) 
 #define typeof __typeof__
 #define MAX(a,b)				\
@@ -152,6 +153,7 @@
 #define POSTADIABATIC_NSTEP_MIN (10) /* Minimum requires PA steps, any less than this, the code switches off PA */
 
 /** Simple/generic error handler */
+#define ERROR (1) /** generic error int */
 enum{OK,
      ERROR_OUTOFMEM,
      ERROR_FILEOPEN,
@@ -524,6 +526,7 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 
 /* TEOBResumS.c */
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
+	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, 
 	   int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
