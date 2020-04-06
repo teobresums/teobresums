@@ -53,8 +53,11 @@ int main (int argc, char* argv[]){
   
   PRSECTN("Running with EOBRunTD ...");
   
-  Waveform *hpc; 
-  
+  Waveform *hpc;
+  Waveform_alloc(&hpc, 1, "test");
+  Waveform_free(hpc);
+  void *wvf;
+
   int fc = 1; //firstcall, set to 1 for now
   int dc = DEFAULT_PARS_BBH; //default_choice, set to BBH
 
@@ -88,13 +91,13 @@ int main (int argc, char* argv[]){
   eob_set_params_EOBRun(dc, fc); 
 
   //for(int i = 0; i < 3; i++){ for loop to test the firstcall flag
-  int status = EOBRun(&hpc, 1, fc);        //hpc, default_choice, firstcall
+  //int status = EOBRun(&hpc, 1, fc);        //hpc, default_choice, firstcall
+  int status = EOBRun(&wvf, 1, fc);        //hpc, default_choice, firstcall
   //  fc = 0;
   //}
   if (status) printf("ERROR: %s\n",eob_error_msg[status]);
-  
-  Waveform_free (hpc);
   EOBParameters_free (EOBPars);
+  free(wvf);
   return status;
 }
 
@@ -163,7 +166,7 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
 
   /** Alloc memory for dynamics and multipolar waveform */
   Waveform *hpc; /* TD waveform -> wvf */
-  Waveform *hfpc; /* FD waveform -> wvf */
+  WaveformFD *hfpc; /* FD waveform -> wvf */
   Dynamics *dyn;
   Waveform_lm *hlm; /* h_lm */ 
   WaveformFD_lm *hflm; /* hf_lm (FD) */ 
@@ -308,8 +311,10 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
       p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
       eob_wav_hlm(dyn, hlm_t); 
       for (int k = 0; k < KMAX; k++) {
-	hlm->ampli[k][i] = hlm_t->ampli[k];
-	hlm->phase[k][i] = hlm_t->phase[k]; 
+        if((hlm->kmask[k])){
+	        hlm->ampli[k][i] = hlm_t->ampli[k];
+	        hlm->phase[k][i] = hlm_t->phase[k]; 
+        }
       }
     }
 
@@ -385,10 +390,10 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
     /** Append waveform to arrays */
     hlm->time[0] = 0.;
     for (int k = 0; k < KMAX; k++) {
-      hlm->ampli[k][0] = hlm_t->ampli[k];
+      if(hlm->kmask[k]) hlm->ampli[k][0] = hlm_t->ampli[k];
     }
     for (int k = 0; k < KMAX; k++) {
-      hlm->phase[k][0] = hlm_t->phase[k]; 
+      if(hlm->kmask[k]) hlm->phase[k][0] = hlm_t->phase[k]; 
     }
 
     /** Prepare for evolution */
@@ -550,8 +555,10 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
     /** Append waveform and dynamics to arrays */
     hlm->time[iter] = hlm_t->time;
     for (int k = 0; k < KMAX; k++) {
-      hlm->ampli[k][iter] = hlm_t->ampli[k];
-      hlm->phase[k][iter] = hlm_t->phase[k]; 
+      if(hlm->kmask[k]){
+        hlm->ampli[k][iter] = hlm_t->ampli[k];
+        hlm->phase[k][iter] = hlm_t->phase[k]; 
+      }
     }
       
     if (store_dynamics) {
@@ -835,7 +842,7 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
    * Compute h+, hx 
    * *****************************************
    */
-  
+
   /** Scale to physical units (if necessary) */
   const double distance = EOBPars->distance;
   double amplitude_prefactor = 1.;   
@@ -885,7 +892,7 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
     
     /* h+, hx */  
     compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, hfpc);
-    
+    WaveformFD_lm_free (hflm);
   }
 
   /* *****************************************
@@ -915,21 +922,19 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
    * Finalize 
    * *****************************************
    */
-
  EXIT_POINT:;
 
    if (status) {
      /** There was an error, return zeros waveform */
      //SB: the size here needs to be fixed to the required sampling frequency.
      //    not if the code jumps here size is still the one from default...
-     Waveform_alloc (hpc, size, "waveform");
+     Waveform_alloc (&hpc, size, "waveform");
    } else {
 
-     if (EOBPars->domain == DOMAIN_TD) wvf = hpc; 
-     else                              wvf = hfpc; 
+     if (EOBPars->domain == DOMAIN_TD) *wvf = hpc; 
+     else                              *wvf = hfpc; 
 
    }
-   
 #ifdef _OPENMP
   openmp_free(); 
 #endif
@@ -937,7 +942,6 @@ int EOBRun(void **wvf, int default_choice, int firstcall)
   /** Free memory */
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);
-  WaveformFD_lm_free (hflm);
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
 
