@@ -656,7 +656,7 @@ void set_multipolar_idx_mask_old(int *kmask, int n)
 {
   int m, k,j;
   for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
-  int *idx = par_get_arrayi("output_lm", &m);
+  int *idx = par_get_arrayi("use_mode_lm", &m);
   if (m==0) return;
   if (m==1 && idx[0]==-1) return;
   for (k = 0; k<n; k++)
@@ -1423,7 +1423,7 @@ void Waveform_lm_t_alloc (Waveform_lm_t **wav)
   if (wav == NULL) errorexit("Out of memory");
   (*wav)->time = 0.;
   (*wav)->freq = 0.;
-  set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0); 
+  set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0); 
 }
 
 void Waveform_lm_t_free (Waveform_lm_t *wav)

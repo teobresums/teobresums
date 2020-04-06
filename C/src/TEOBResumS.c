@@ -55,7 +55,7 @@ int main (int argc, char* argv[]){
   
   Waveform *hpc = NULL; /* TD wvf */
   WaveformFD *hfpc = NULL; /* FD wvf */
-  
+
   int fc = 1; //firstcall, set to 1 for now
   int dc = DEFAULT_PARS_BBH; //default_choice, set to BBH
   
@@ -97,6 +97,7 @@ int main (int argc, char* argv[]){
   Waveform_free (hpc);
   WaveformFD_free (hfpc);
   EOBParameters_free (EOBPars);
+  free(wvf);
   return status;
 }
 
@@ -165,6 +166,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   /** Alloc memory for dynamics and multipolar waveform */
+  Waveform *hpc; /* TD waveform -> wvf */
+  WaveformFD *hfpc; /* FD waveform -> wvf */
   Dynamics *dyn;
   Waveform_lm *hlm; /* h_lm */ 
   WaveformFD_lm *hflm; /* hf_lm (FD) */ 
@@ -309,8 +312,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
       eob_wav_hlm(dyn, hlm_t); 
       for (int k = 0; k < KMAX; k++) {
-	hlm->ampli[k][i] = hlm_t->ampli[k];
-	hlm->phase[k][i] = hlm_t->phase[k]; 
+        if((hlm->kmask[k])){
+	        hlm->ampli[k][i] = hlm_t->ampli[k];
+	        hlm->phase[k][i] = hlm_t->phase[k]; 
+        }
       }
     }
 
@@ -386,10 +391,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /** Append waveform to arrays */
     hlm->time[0] = 0.;
     for (int k = 0; k < KMAX; k++) {
-      hlm->ampli[k][0] = hlm_t->ampli[k];
+      if(hlm->kmask[k]) hlm->ampli[k][0] = hlm_t->ampli[k];
     }
     for (int k = 0; k < KMAX; k++) {
-      hlm->phase[k][0] = hlm_t->phase[k]; 
+      if(hlm->kmask[k]) hlm->phase[k][0] = hlm_t->phase[k]; 
     }
 
     /** Prepare for evolution */
@@ -551,8 +556,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /** Append waveform and dynamics to arrays */
     hlm->time[iter] = hlm_t->time;
     for (int k = 0; k < KMAX; k++) {
-      hlm->ampli[k][iter] = hlm_t->ampli[k];
-      hlm->phase[k][iter] = hlm_t->phase[k]; 
+      if(hlm->kmask[k]){
+        hlm->ampli[k][iter] = hlm_t->ampli[k];
+        hlm->phase[k][iter] = hlm_t->phase[k]; 
+      }
     }
       
     if (store_dynamics) {
@@ -836,7 +843,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    * Compute h+, hx 
    * *****************************************
    */
-  
+
   /** Scale to physical units (if necessary) */
   const double distance = EOBPars->distance;
   double amplitude_prefactor = 1.;   
@@ -916,7 +923,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    * Finalize 
    * *****************************************
    */
-
  EXIT_POINT:;
 
   if (status) {
@@ -934,11 +940,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 #ifdef _OPENMP
   openmp_free(); 
 #endif
-
+  
   /** Free memory */
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);
-  WaveformFD_lm_free (hflm);
+  Waveform_lm_free (hflm);
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
 
