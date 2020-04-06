@@ -68,7 +68,16 @@ int main (int argc, char* argv[])
     par_file_parse_merge (argv[1]);
     par_db_screen (VERBOSE);
     EOBParameters_set_from_db (EOBPars);
+    const int output = EOBPars->output_dynamics + EOBPars->output_multipoles + EOBPars->output_hpc + EOBPars->output_nqc;    
+    if (output) {
+      if (system_mkdir(EOBPars->output_dir)) {
+	printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
+	return ERROR_MKDIR;
+      }
+      par_db_write_file("params.txt");
+    }
     par_db_free();
+    
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
   }
@@ -79,7 +88,7 @@ int main (int argc, char* argv[])
   }
 
   /* set domain */
-  EOBPars->domain = DOMAIN_TD;
+  EOBPars->domain = DOMAIN_TD;//FIXME: this can be the deafault, but we should enable FD as well
   eob_set_params_EOBRun(dc, fc); 
   
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
@@ -119,13 +128,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   /** Do any output ? */
-  int output = EOBPars->output_dynamics + EOBPars->output_multipoles + EOBPars->output_hpc + EOBPars->output_nqc;    
+  const int output = EOBPars->output_dynamics + EOBPars->output_multipoles + EOBPars->output_hpc + EOBPars->output_nqc;    
   if (output) {
     /* Make output dir */
     if (system_mkdir(EOBPars->output_dir)) {
-      status  = ERROR_MKDIR;
+      status = ERROR_MKDIR;
       goto EXIT_POINT;
-      //if (VERBOSE) par_db_write_file("params.txt");//SB: we should write this only if input is from parfile
     }
   }
 
@@ -402,17 +410,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     PRSECTN("Initial conditions");
     for (int i = 0; i < EOB_ID_NVARS; i++)
       PRFORMd(eob_id_var[i], dyn->y0[i]);
-  }
-
-
-  //SB: I think this block can go in main.
-  //    it is true that not all the parameters are set, but we need params.txt only to reproduce a run
-  if(output){
-    par_db_init ();
-    par_db_from_EOBPar (EOBPars);
-    system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
-    par_db_write_file("params.txt");//FIXME: (as above)
-    par_db_free();
   }
 
   /* *****************************************
