@@ -943,7 +943,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** Free memory */
   Dynamics_free (dyn);
   Waveform_lm_free (hlm);
-  Waveform_lm_free (hflm);
+  WaveformFD_lm_free (hflm);
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
 
