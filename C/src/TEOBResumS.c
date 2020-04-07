@@ -83,7 +83,7 @@ int main (int argc, char* argv[])
   }
   
   /* Set all firstcalls = 1 */
-  for (int k; k < NFIRSTCALL; k++){ 
+  for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
   }
 
