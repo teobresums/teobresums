@@ -88,13 +88,13 @@ int main (int argc, char* argv[])
   }
 
   /* set domain */
-  EOBPars->domain = DOMAIN_TD;//FIXME: this can be the deafault, but we should enable FD as well
+  EOBPars->domain = 1;//DOMAIN_TD;//FIXME: this can be the deafault, but we should enable FD as well
   eob_set_params_EOBRun(dc, fc); 
   
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
 		      &hmodes, &hfmodes, 
-		      1, fc);
+		      dc, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
 
   Waveform_free (hpc);
