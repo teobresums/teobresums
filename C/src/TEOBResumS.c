@@ -96,7 +96,7 @@ int main (int argc, char* argv[])
 		      &hmodes, &hfmodes, 
 		      1, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
-  
+
   Waveform_free (hpc);
   WaveformFD_free (hfpc);
   Waveform_lm_free (hmodes);
@@ -174,6 +174,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Dynamics *dyn;
   Waveform_lm *hlm; /* h_lm */ 
   WaveformFD_lm *hflm; /* hf_lm (FD) */ 
+
+  if(EOBPars->domain==DOMAIN_TD) hflm = NULL;
+  
   Waveform_lm_t *hlm_t;
   Waveform_lm *hlm_nqc; /* NQC */
   Waveform_lm *hlm_mrg; /* merger chunk */
@@ -928,9 +931,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       //SB: the size here needs to be fixed to the required sampling frequency.
       //    if not, the code jumps here and size is still the one from default...
       Waveform_alloc (hpc, size, "waveform");
+      Waveform_lm_alloc (hmodes, size, "waveform");
     } else  {                             
       const int interp_fd_size = get_uniform_size(EOBPars->initial_frequency, EOBPars->initial_frequency, EOBPars->df);
       WaveformFD_alloc (hfpc, interp_fd_size, "waveform");
+      WaveformFD_lm_alloc (hfmodes, interp_fd_size, "waveform");
     }
   }
   
