@@ -1338,7 +1338,7 @@ void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f
       hlm->Fdot[k] = NULL;// this info is lost in the interp.
     } 
   }
-  
+
   /* Fill new freq array */
 #pragma omp simd
   for (int i = 0; i < size; i++) 
@@ -1729,13 +1729,24 @@ void NQCdata_free (NQCdata *nqc)
 }
 
 /** Stationary Phase Approximation of multipolar wvf */
-void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
+void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm, double M)
 {
   const int size = TDlm->size;
-  const double f0 = EOBPars->initial_frequency;  
-  const double df = EOBPars->df;
-  const double half_srate_interp = EOBPars->srate_interp/2.;  
-  
+  double tmpf0 = EOBPars->initial_frequency;  
+  double tmpdf = EOBPars->df;
+  double tmpsrate = EOBPars->srate_interp/2.;
+
+  /* if necessary, transform f0, df and srate_interp to geom units */
+  if (!(EOBPars->use_geometric_units)){
+    double Msun = M/MSUN_S;
+    double conv = time_units_factor(Msun);
+    tmpsrate = tmpsrate/conv; //FIXME: this must be transformed in geom units 
+    tmpf0    = tmpf0/conv;
+    tmpdf    = tmpdf/conv;
+  }
+  const double half_srate_interp = tmpsrate;
+  const double f0 = tmpf0;
+  const double df = tmpdf;
   //double Fmin=0., Fmax=0.;
   //int nmax[KMAX]; // Fmax index
   int nmin[KMAX]; // Fmin > f0 index
@@ -1757,8 +1768,8 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     D0_x_4(FDlm->F[k], TDlm->time, size, FDlm->Fdot[k]);
     
     for (int i=0; i < size; i++){
-      FDlm->F[k][i] = FDlm->F[k][i]/(TwoPi);
-      FDlm->Fdot[k][i] = FDlm->Fdot[k][i]/(TwoPi);
+      FDlm->F[k][i]     = FDlm->F[k][i]/(TwoPi);
+      FDlm->Fdot[k][i]  = FDlm->Fdot[k][i]/(TwoPi);
       FDlm->phase[k][i] = (TwoPi * FDlm->F[k][i] * TDlm->time[i] - TDlm->phase[k][i]- Pio4);
       FDlm->ampli[k][i] = TDlm->ampli[k][i]/sqrt(fabs(FDlm->Fdot[k][i])); 
     }
@@ -1785,7 +1796,7 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
        - For the phase, we express it as phi(f) = (a + b*f);
     */
     if (FDlm->F[k][n] < half_srate_interp) { 
-      const int n1 = n1;
+      const int n1 = n-1;
       double Fn1 = FDlm->F[k][n-1];
       double An1 = FDlm->ampli[k][n-1];
       double pn1 =  FDlm->phase[k][n-1];
@@ -1793,17 +1804,19 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
       double b = TwoPi * TDlm->time[n-1];
       double dfk = (half_srate_interp - FDlm->F[k][n])/(size-n+1); // one point more
       for (int i=n; i < size; i++){
-	FDlm->F[k][i] = Fn1 + (i-n1)*dfk;
-	FDlm->ampli[k][i] = An1/FDlm->F[k][i]*Fn1;
-	//FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1))/(1 + c*(FDlm->F[k][i] - Fn1));
-	FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1));
+        FDlm->F[k][i] = Fn1 + (i-n1)*dfk;
+        FDlm->ampli[k][i] = An1/FDlm->F[k][i]*Fn1;
+        //FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1))/(1 + c*(FDlm->F[k][i] - Fn1));
+        FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1));
       }
+    } else{
+      /*update size to assure F runs over chosen range*/
+      FDlm->size = n;
     }
 
     /* Absolute min/max */
     //Fmin = MIN(Fmin,FDlm->F[k][0]);
     //Fmax = MIN(Fmax,FDlm->F[k][n]);
-    
   }
 
   /* Determine the output frequency array */
@@ -1851,8 +1864,8 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
   if (!(EOBPars->use_geometric_units)) {
     Msun = M/MSUN_S;
     conv = time_units_factor(Msun);
-      for (int i = 0; i < hflm->size; i++) 
-	hflm->freq[i] = hflm->freq[i]*conv; //CHECKME!
+    for (int i = 0; i < hflm->size; i++)
+	    hflm->freq[i] = hflm->freq[i]*conv; //CHECKME!
   }
   
     /* Precompute Ylm */
@@ -1915,7 +1928,7 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
   
   const double pm3 = 3.*Pi/2.;
   for (int i = 0; i < hflm->size; i++) {
-    hpc->freq[i] = hflm->freq[i]*M; 
+    hpc->freq[i] = hflm->freq[i]; 
     sumpr = sumpi = sumcr = sumci = 0.;
     
     for (int k=0; k< KMAX; k++){

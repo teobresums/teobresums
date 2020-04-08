@@ -848,7 +848,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const double distance = EOBPars->distance;
   double amplitude_prefactor = 1.;   
   if (!(EOBPars->use_geometric_units)) {
-    amplitude_prefactor = nu*M*MSUN_M/(distance*MPC_M);    
+    if(EOBPars->domain==DOMAIN_TD) {
+      amplitude_prefactor = nu*M*MSUN_M/(distance*MPC_M); 
+    } else {
+      amplitude_prefactor = nu*M*M*MSUN_M*MSUN_S/(distance*MPC_M);
+    }
     M *= MSUN_S;   
   } 
   const double phi = Pi/2.0 - EOBPars->coalescence_angle; 
@@ -882,7 +886,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     WaveformFD_lm_alloc (&hflm, size, "hflm");
     
     /** Calculate the SPA for the multipolar waveform */
-    SPA(hlm, hflm);
+    SPA(hlm, hflm, M);
     
     /* The SPA performs an interpolation, 
        need to update the size */

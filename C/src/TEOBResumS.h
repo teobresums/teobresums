@@ -634,7 +634,7 @@ void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
-void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
+void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm, double M);
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
 double time_units_factor(double M);
