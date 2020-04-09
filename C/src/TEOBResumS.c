@@ -172,10 +172,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn;
-  Waveform_lm *hlm; /* h_lm */ 
-  WaveformFD_lm *hflm; /* hf_lm (FD) */ 
-
-  if(EOBPars->domain==DOMAIN_TD) hflm = NULL;
+  Waveform_lm *hlm = NULL; /* h_lm */ 
+  WaveformFD_lm *hflm = NULL; /* hf_lm (FD) */ 
   
   Waveform_lm_t *hlm_t;
   Waveform_lm *hlm_nqc; /* NQC */
@@ -935,11 +933,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       //SB: the size here needs to be fixed to the required sampling frequency.
       //    if not, the code jumps here and size is still the one from default...
       Waveform_alloc (hpc, size, "waveform");
-      Waveform_lm_alloc (hmodes, size, "waveform");
+      Waveform_lm_alloc (hmodes, size, "hlm");
     } else  {                             
       const int interp_fd_size = get_uniform_size(EOBPars->initial_frequency, EOBPars->initial_frequency, EOBPars->df);
-      WaveformFD_alloc (hfpc, interp_fd_size, "waveform");
-      WaveformFD_lm_alloc (hfmodes, interp_fd_size, "waveform");
+      WaveformFD_alloc (hfpc, interp_fd_size, "waveform_fd");
+      WaveformFD_lm_alloc (hfmodes, interp_fd_size, "hlm_fd");
     }
   }
   
