@@ -884,7 +884,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     WaveformFD_lm_alloc (&hflm, size, "hflm");
     
     /** Calculate the SPA for the multipolar waveform */
-    SPA(hlm, hflm, M);
+    SPA(hlm, hflm);
     
     /* The SPA performs an interpolation, 
        need to update the size */

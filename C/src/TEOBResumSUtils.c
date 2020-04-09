@@ -1732,7 +1732,7 @@ void NQCdata_free (NQCdata *nqc)
 }
 
 /** Stationary Phase Approximation of multipolar wvf */
-void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm, double M)
+void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
 {
   const int size = TDlm->size;
   double tmpf0 = EOBPars->initial_frequency;  
@@ -1741,7 +1741,7 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm, double M)
 
   /* if necessary, transform f0, df and srate_interp to geom units */
   if (!(EOBPars->use_geometric_units)){
-    double Msun = M/MSUN_S;
+    double Msun = EOBPars->M;
     double conv = time_units_factor(Msun);
     tmpsrate = tmpsrate/conv; //FIXME: this must be transformed in geom units 
     tmpf0    = tmpf0/conv;
