@@ -1,6 +1,7 @@
 /* Example of wrapping with the Python-C-API. 
  * See:
  * https://scipy-lectures.org/advanced/interfacing_with_c/interfacing_with_c.html
+ * https://pythonextensionpatterns.readthedocs.io/en/latest/refcount.html
  * And C_arraytest.c - SciPy Cookbook
  */
 
