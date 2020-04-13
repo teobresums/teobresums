@@ -25,15 +25,15 @@ LIB=$(LIBD)/lib$(NAME).a
 CC=gcc
 CFLAGS=-std=c99 `gsl-config --cflags` # Debug
 
-#CFLAGS +=-g  # Debug
+CFLAGS +=-g  # Debug
 #CFLAGS +=-pg # Debug & Profile
-CFLAGS +=-O3  # Optimized
+#CFLAGS +=-O3  # Optimized
 
 CFLAGS += -DDEBUG=0 # 1/0 to turn on/off debug mode
 CFLAGS += -DVERBOSE=0 # 1/0 to turn on/off verbose mode
 
 #CFLAGS += -fopenmp # OpenMP
-#CFLAGS += -DUSETIMERS=1 # OpenMP timers, note they need OpenMP
+#CFLAGS += -DUSETIMERS=0 # OpenMP timers, note they need OpenMP
 
 CFLAGS += -DUSEGRAVITOMAGNETICTERMS=1 # 1/0 to turn on gravitomagnetic terms
 CFLAGS += -DUSEBTIDALPOTENTIAL=1 # 1/0 to turn on B tidal terms
