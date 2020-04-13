@@ -200,10 +200,9 @@ int SetOptionalVariables(PyObject* dict){
  */
 
 /* Wrapped functions */
-static PyObject* EOBRunTD(PyObject* self, PyObject* args)
+static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 {
   PyObject* dict;
-  double *pt, *php, *phc;
 
   /* Parse the input: from python float to c double or from dictionary to C pointer
      https://docs.python.org/3/c-api/arg.html 
@@ -213,9 +212,14 @@ static PyObject* EOBRunTD(PyObject* self, PyObject* args)
     return NULL;
 
   /* alloc output, set some defaults */
-  Waveform *hpc;   
+
+  Waveform *hpc = NULL; /* TD wvf */
+  Waveform_lm *hmodes = NULL; /* modes */
+
+  WaveformFD *hfpc = NULL; /* FD wvf */
+  WaveformFD_lm *hfmodes = NULL; /* modes */
   int fc = 1;
-  int default_choice = 0;
+  int default_choice = DEFAULT_PARS_BBH; /* default_choice, set to BBH */
 
   //alloc EOBPars and set defaults based on Lambdas
   EOBParameters_alloc ( &EOBPars ); 
@@ -236,7 +240,7 @@ static PyObject* EOBRunTD(PyObject* self, PyObject* args)
   EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
   EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
 
-  for (int k; k < NFIRSTCALL; k++){ 
+  for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
   }
 
@@ -246,11 +250,9 @@ static PyObject* EOBRunTD(PyObject* self, PyObject* args)
   /* Options */
   SetOptionalVariables(dict);
 
-  /* Fix to TD */
-  EOBPars->domain=DOMAIN_TD;
-
   /* Run */
   eob_set_params_EOBRun(default_choice, fc); 
+
   /* Overwrite spin-spin parameters, if required */
   if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
     EOBPars->C_Q1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Q1"));
@@ -270,152 +272,126 @@ static PyObject* EOBRunTD(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "C_Hex2") != NULL ) { 
     EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
   }
-  EOBRun(&hpc, default_choice, fc);
-  
+
+  int status = EOBRun(&hpc, &hfpc, &hmodes, &hfmodes, default_choice, fc);
+  if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
   /*  Construct the output arrays */
-  npy_intp dims[1];
-  dims[0] = hpc->size;
-  PyArrayObject *pto;
-  PyArrayObject *phpo;
-  PyArrayObject *phco;
 
-  pto  = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-  phpo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-  phco = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-  
-  /* Cast py *arrays into C *arrays   */
-  pt = pyvector_to_Carrayptrs(pto);
-  php = pyvector_to_Carrayptrs(phpo);
-  phc = pyvector_to_Carrayptrs(phco);
+  if(EOBPars->domain==DOMAIN_TD){
 
-  /* Copy */
-  memcpy(pt,  hpc->time, hpc->size * sizeof(double)); //t
-  memcpy(php, hpc->real, hpc->size * sizeof(double)); //h+
-  memcpy(phc, hpc->imag, hpc->size * sizeof(double)); //hx
+    double *pt, *php, *phc; /*t, h+ and hx */
+    PyObject* hlmdict  = PyDict_New(); /*hlm dictionary */
 
-  Waveform_free (hpc); /* Free C memory */
-  EOBParameters_free (EOBPars);
+    npy_intp dims[1];
+    dims[0] = hpc->size;
+    PyArrayObject *pto;
+    PyArrayObject *phpo;
+    PyArrayObject *phco;
+    PyArrayObject *pAhlmo;
+    PyArrayObject *pphlmo;
 
-  return Py_BuildValue("OOO", pto, phpo, phco);  /* This also works, maybe better for multiple outputs? */
+    pto  = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    phpo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    phco = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+
+    /* Cast py *arrays into C *arrays   */
+    pt = pyvector_to_Carrayptrs(pto);
+    php = pyvector_to_Carrayptrs(phpo);
+    phc = pyvector_to_Carrayptrs(phco);
+
+    /* Copy */
+    memcpy(pt,  hpc->time, hpc->size * sizeof(double)); //t
+    memcpy(php, hpc->real, hpc->size * sizeof(double)); //h+
+    memcpy(phc, hpc->imag, hpc->size * sizeof(double)); //hx
+
+    double *pAhlm, *pphlm;
+    /*build hlm dictionary */
+    for(int k=0; k<KMAX; k++){
+      if(hmodes->kmask[k]){
+        pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        pAhlm = pyvector_to_Carrayptrs(pAhlmo);
+        pphlm = pyvector_to_Carrayptrs(pphlmo);
+        memcpy(pAhlm, hmodes->ampli[k], hmodes->size * sizeof(double));
+        memcpy(pphlm, hmodes->phase[k], hmodes->size * sizeof(double));
+        PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
+        char kst[12];
+        sprintf(kst, "%i", k);
+        PyDict_SetItemString(hlmdict, kst, obj);
+      }
+    }
+
+    Waveform_free (hpc);          /* Free C memory */
+    WaveformFD_free (hfpc);       /* Free C memory */
+    Waveform_lm_free(hmodes);     /* Free C memory */
+    WaveformFD_lm_free(hfmodes);  /* Free C memory */
+
+    EOBParameters_free (EOBPars);
+
+    return Py_BuildValue("OOOO", pto, phpo, phco, hlmdict);  /* This also works, maybe better for multiple outputs? */
+  } else {
+
+    double *pf, *phpr, *phpi, *phcr, *phci; /*FD: f,  Re and Im of h+, hx */
+    PyObject* hflmdict = PyDict_New();      /* hlm dictionary */
+
+    npy_intp dims[1];
+    dims[0] = hfpc->size;
+    PyArrayObject *pfo;                 /* f  */
+    PyArrayObject *phprealo, *phpimago; /* h+ */
+    PyArrayObject *phcrealo, *phcimago; /* hx */
+    PyArrayObject *pAhflmo,  *pphflmo;  /* Alm and philm */
+
+    pfo      = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    phprealo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    phpimago = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    phcrealo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    phcimago = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    
+    /* Cast py *arrays into C *arrays   */
+    pf   = pyvector_to_Carrayptrs(pfo);
+    phpr = pyvector_to_Carrayptrs(phprealo);
+    phpi = pyvector_to_Carrayptrs(phpimago);
+    phcr = pyvector_to_Carrayptrs(phcrealo);
+    phci = pyvector_to_Carrayptrs(phcimago);
+
+    memcpy(pf,   hfpc->freq,  hfpc->size * sizeof(double)); //f
+    memcpy(phpr, hfpc->preal, hfpc->size * sizeof(double)); //Re h+
+    memcpy(phpi, hfpc->pimag, hfpc->size * sizeof(double)); //Im h+
+    memcpy(phcr, hfpc->creal, hfpc->size * sizeof(double)); //Re hx
+    memcpy(phci, hfpc->cimag, hfpc->size * sizeof(double)); //Im hx
+    
+    double *pAhflm, *pphflm;
+    /*build hlm dictionary */ 
+    /* CHECKME: possible leaks here? are pAhflm and pphflm freed correctly? */
+    for(int k=0; k<KMAX; k++){
+      if(hfmodes->kmask[k]){
+        pAhflmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        pphflmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        pAhflm = pyvector_to_Carrayptrs(pAhflmo);
+        pphflm = pyvector_to_Carrayptrs(pphflmo);
+        memcpy(pAhflm, hfmodes->ampli[k], hfmodes->size * sizeof(double));
+        memcpy(pphflm, hfmodes->phase[k], hfmodes->size * sizeof(double));
+        PyObject *obj = Py_BuildValue("O:O", pAhflmo, pphflmo);
+        char kst[12];
+        sprintf(kst, "%i", k);
+        PyDict_SetItemString(hflmdict, kst, obj);
+      }
+    }
+
+    Waveform_free (hpc);          /* Free C memory */
+    WaveformFD_free (hfpc);       /* Free C memory */
+    Waveform_lm_free(hmodes);     /* Free C memory */
+    WaveformFD_lm_free(hfmodes);  /* Free C memory */
+
+    EOBParameters_free (EOBPars);
+
+    return Py_BuildValue("OOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict);
+  }
 }
-
-/* Wrapped functions */
-static PyObject* EOBRunFD(PyObject* self, PyObject* args)
-{
-  PyObject* dict;
-  double *pf, *phpreal, *phpimag, *phcreal, *phcimag;
-
-  /* Parse the input: from python float to c double or from dictionary to C pointer
-     https://docs.python.org/3/c-api/arg.html 
-     https://docs.python.org/2/c-api/dict.html
-  */
-  if (!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict)) 
-    return NULL;
-
-  /* alloc output, set some defaults */
-  Waveform *hpc;   
-  int fc = 1;
-  int default_choice = 0;
-
-  //alloc EOBPars and set defaults based on Lambdas
-  EOBParameters_alloc ( &EOBPars ); 
-
-  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
-  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
-
-  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = 1;
-  EOBParameters_defaults (default_choice, EOBPars);  
-
-  /* Read the dictionary in EOBPars */
-  /* RG: there has to be a faster way...*/
-
-  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
-  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
-  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
-  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
-  EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
-  EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
-
-  for (int k; k < NFIRSTCALL; k++){ 
-    EOBPars->firstcall[k] = 1;
-  }
-
-  /* Optional arguments for the dictionary */
-  // FIXME: reduce number of calls to PyDict_GetItemString
-
-  /* Options */
-  SetOptionalVariables(dict);
-
-  /* Fix to FD */
-  EOBPars->domain=1;
-
-  /* Run */
-  eob_set_params_EOBRun(default_choice, fc); 
-  
-  /* Overwrite spin-spin parameters, if required */
-  if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
-    EOBPars->C_Q1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Q1"));
-  }  
-  if ( PyDict_GetItemString(dict, "C_Q2") != NULL ) { 
-    EOBPars->C_Q2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Q2"));
-  }
-  if ( PyDict_GetItemString(dict, "C_Oct1") != NULL ) { 
-    EOBPars->C_Oct1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Oct1"));
-  }  
-  if ( PyDict_GetItemString(dict, "C_Oct2") != NULL ) { 
-    EOBPars->C_Oct2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Oct2"));
-  }
-  if ( PyDict_GetItemString(dict, "C_Hex1") != NULL ) { 
-    EOBPars->C_Hex1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex1"));
-  }  
-  if ( PyDict_GetItemString(dict, "C_Hex2") != NULL ) { 
-    EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
-  }
-  EOBRun(&hpc, default_choice, fc);
-  
-  /*  Construct the output arrays */
-  npy_intp dims[1];
-  dims[0] = hpc->size;
-  PyArrayObject *pfo;
-  PyArrayObject *phprealo;
-  PyArrayObject *phpimago;
-  PyArrayObject *phcrealo;
-  PyArrayObject *phcimago;
-
-  pfo  = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-  phprealo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-  phpimago = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-  phcrealo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-  phcimago = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-  
-  /* Cast py *arrays into C *arrays   */
-  pf = pyvector_to_Carrayptrs(pfo);
-  phpreal = pyvector_to_Carrayptrs(phprealo);
-  phpimag = pyvector_to_Carrayptrs(phpimago);
-  phcreal = pyvector_to_Carrayptrs(phcrealo);
-  phcimag = pyvector_to_Carrayptrs(phcimago);
-
-
-  memcpy(pf,  hpc->frequency,  hpc->size * sizeof(double)); //f
-  memcpy(phpreal, hpc->hpreal, hpc->size * sizeof(double)); //Re h+
-  memcpy(phpimag, hpc->hpimag, hpc->size * sizeof(double)); //Im h+
-  memcpy(phcreal, hpc->hcreal, hpc->size * sizeof(double)); //Re hx
-  memcpy(phcimag, hpc->hcimag, hpc->size * sizeof(double)); //Im hx
-
-  Waveform_free (hpc); /* Free C memory */
-  EOBParameters_free (EOBPars);
-
-  return Py_BuildValue("OOOOO", pfo, phprealo, phpimago, phcrealo, phcimago);  /* This also works, maybe better for multiple outputs? */
-}
-
-/*
- * Define module
- */
 
 /* Define functions in module */
 static PyMethodDef EOBRunMethods[] = {
-  {"EOBRunTD", EOBRunTD, METH_VARARGS, "Generate a time domain TEOBResumS waveform"},
-  {"EOBRunFD", EOBRunFD, METH_VARARGS, "Generate a frequency domain TEOBResumS waveform"},
+  {"EOBRunPy", EOBRunPy, METH_VARARGS, "Generate a time or frequency domain TEOBResumS waveform"},
 
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */

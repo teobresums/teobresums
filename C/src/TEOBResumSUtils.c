@@ -60,6 +60,24 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
   gsl_interp_accel_free (acc);
 }
 
+/** Spline interpolation with GSL routines 
+    Check limits and set to zero points outside interp range */
+void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, double *yi)
+{
+  const double ta = t[0];
+  const double tb = t[n-1];
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+  gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
+  gsl_spline_init (spline, t, y, n);    
+  for (int k = 0; k < ni; k++) {
+    if ((ti[k]<=ta)||(ti[k]>=tb)) yi[k] = 0.;
+    else yi[k] = gsl_spline_eval (spline, ti[k], acc);
+  }
+  gsl_spline_free (spline);
+  gsl_interp_accel_free (acc);
+}
+
+
 /* An OpenMP version. We keep two versions because we might want to introduce the 
    thread-parallelism at different levels */
 /*
@@ -638,7 +656,7 @@ void set_multipolar_idx_mask_old(int *kmask, int n)
 {
   int m, k,j;
   for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
-  int *idx = par_get_arrayi("output_lm", &m);
+  int *idx = par_get_arrayi("use_mode_lm", &m);
   if (m==0) return;
   if (m==1 && idx[0]==-1) return;
   for (k = 0; k<n; k++)
@@ -681,18 +699,10 @@ void Waveform_alloc (Waveform **wav, const int size, const char *name)
   (*wav)->ampli = malloc ( size * sizeof(double) );
   (*wav)->phase = malloc ( size * sizeof(double) );
   (*wav)->time =  malloc ( size * sizeof(double) );
-  (*wav)->hpreal =  malloc ( size * sizeof(double) );
-  (*wav)->hpimag =  malloc ( size * sizeof(double) );
-  (*wav)->hcreal =  malloc ( size * sizeof(double) );
-  (*wav)->hcimag =  malloc ( size * sizeof(double) );
-  (*wav)->frequency =  malloc ( size * sizeof(double) );
   memset( (*wav)->real, 0, size * sizeof(double) );
   memset( (*wav)->imag, 0, size * sizeof(double) );
   memset((*wav)->ampli, 0, size * sizeof(double) );
   memset((*wav)->phase, 0, size * sizeof(double) );
-  memset( (*wav)->time, 0, size * sizeof(double) );
-  memset( (*wav)->frequency, 0, size * sizeof(double) );
-
   (*wav)->size = size; 
   strcpy((*wav)->name,name);
 }
@@ -704,11 +714,6 @@ void Waveform_push (Waveform **wav, int size)
   if ((*wav)->ampli) (*wav)->ampli = realloc ( (*wav)->ampli, size * sizeof(double) );
   if ((*wav)->phase) (*wav)->phase = realloc ( (*wav)->phase, size * sizeof(double) );
   if ((*wav)->time)  (*wav)->time  = realloc ( (*wav)->time,  size * sizeof(double) );
-  if ((*wav)->hpreal)(*wav)->hpreal= realloc ( (*wav)->hpreal,size * sizeof(double) );
-  if ((*wav)->hpimag)(*wav)->hpimag= realloc ( (*wav)->hpimag,size * sizeof(double) );
-  if ((*wav)->hcreal)(*wav)->hcreal= realloc ( (*wav)->hcreal,size * sizeof(double) );
-  if ((*wav)->hcimag)(*wav)->hcimag= realloc ( (*wav)->hcimag,size * sizeof(double) );
-  if ((*wav)->frequency)  (*wav)->frequency  = realloc ( (*wav)->frequency,  size * sizeof(double) );
   const int n  = (*wav)->size;
   const int dn = size - (*wav)->size;
   (*wav)->size = size; 
@@ -737,40 +742,6 @@ void Waveform_rmap (Waveform *h, const int mode, const int unw)
     for (int i = 0; i < size; i++)
       h->imag[i] = - h->ampli[i] * sin(h->phase[i]); 
   }
-}
-
-void Vect_Interp (double **y, double **x, double **z, const int new_size, const int old_size, const double x0, const double dx )
-{
-
-/* Alloc and init aux memory */  
-double *y_aux = (double *) malloc ( old_size * sizeof(double) );
-double *z_aux = (double *) malloc ( old_size * sizeof(double) );
-double *x_aux = (double *) malloc ( old_size * sizeof(double) );
-
-memcpy( y_aux, *y, old_size * sizeof(double) );
-memcpy( z_aux, *z, old_size * sizeof(double) );
-memcpy( x_aux, *x, old_size * sizeof(double) );
-
-/* Realloc */
-*y = realloc(*y, new_size * sizeof(double));
-*z = realloc(*z, new_size * sizeof(double));
-*x = realloc(*x, new_size * sizeof(double));
-
-
-/*Fill new x array */
-#pragma omp simd
-  for (int i = 0; i < new_size; i++){
-    (*x)[i] = i*dx + x0;
-    //printf("%f ", (*x)[i]);
-  }  
-
-interp_spline_omp(x_aux, y_aux, old_size, *x, new_size, *y);
-interp_spline_omp(x_aux, z_aux, old_size, *x, new_size, *z);
-
-free(x_aux);
-free(y_aux);
-free(z_aux);
-
 }
 
 void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name)
@@ -881,12 +852,149 @@ void Waveform_free (Waveform *wav)
   if (wav->imag) free(wav->imag);
   if (wav->ampli) free(wav->ampli);
   if (wav->phase) free(wav->phase);
-  if (wav->hpreal) free(wav->hpreal);
-  if (wav->hpimag) free(wav->hpimag);
-  if (wav->hcreal) free(wav->hcreal);
-  if (wav->hcimag) free(wav->hcimag);
-  if (wav->frequency) free(wav->frequency);
   if (wav->time)   free(wav->time);
+  free(wav);
+}
+
+/** WaveformFD (complex) */
+void WaveformFD_alloc (WaveformFD **wav, const int size, const char *name)
+{
+  *wav = (WaveformFD *) calloc(1, sizeof(WaveformFD)); 
+  if (wav == NULL)
+    errorexit("Out of memory");
+  (*wav)->preal = malloc ( size * sizeof(double) );
+  (*wav)->pimag = malloc ( size * sizeof(double) );
+  (*wav)->creal = malloc ( size * sizeof(double) );
+  (*wav)->cimag = malloc ( size * sizeof(double) );
+  (*wav)->ampli = malloc ( size * sizeof(double) );
+  (*wav)->phase = malloc ( size * sizeof(double) );
+  (*wav)->freq = malloc ( size * sizeof(double) );
+  memset( (*wav)->preal, 0, size * sizeof(double) );
+  memset( (*wav)->pimag, 0, size * sizeof(double) );
+  memset( (*wav)->creal, 0, size * sizeof(double) );
+  memset( (*wav)->cimag, 0, size * sizeof(double) );
+  memset((*wav)->ampli, 0, size * sizeof(double) );
+  memset((*wav)->phase, 0, size * sizeof(double) );
+  (*wav)->size = size; 
+  strcpy((*wav)->name,name);
+}
+
+void WaveformFD_push (WaveformFD **wav, int size)
+{
+  if ((*wav)->preal)  (*wav)->preal  = realloc ( (*wav)->preal,  size * sizeof(double) );
+  if ((*wav)->pimag)  (*wav)->pimag  = realloc ( (*wav)->pimag,  size * sizeof(double) );
+  if ((*wav)->creal)  (*wav)->creal  = realloc ( (*wav)->creal,  size * sizeof(double) );
+  if ((*wav)->cimag)  (*wav)->cimag  = realloc ( (*wav)->cimag,  size * sizeof(double) );
+  if ((*wav)->ampli) (*wav)->ampli = realloc ( (*wav)->ampli, size * sizeof(double) );
+  if ((*wav)->phase) (*wav)->phase = realloc ( (*wav)->phase, size * sizeof(double) );
+  if ((*wav)->freq)  (*wav)->freq  = realloc ( (*wav)->freq,  size * sizeof(double) );
+  const int n  = (*wav)->size;
+  const int dn = size - (*wav)->size;
+  (*wav)->size = size; 
+}
+
+/* Compute real/imag <-> amplitude/phase */
+void WaveformFD_rmap (WaveformFD *h, const int mode, const int unw)
+{
+  const int size = h->size;
+  if (mode) {
+    /** (Re, Im) -> (Amplitude, phase) */
+#pragma omp simd
+    for (int i = 0; i < size; i++) {
+      double real = h->preal[i]+h->creal[i];
+      double imag = h->pimag[i]+h->cimag[i];
+      h->ampli[i] = sqrt( SQ(real) + SQ(imag) );
+    }
+#pragma omp simd
+    for (int i = 0; i < size; i++) {
+      double real = h->preal[i]+h->creal[i];
+      double imag = h->cimag[i]+h->cimag[i];
+      h->phase[i] = Pi - atan2(imag, real); /* exp(- i phi) => Pi  */
+      if (unw) unwrap(h->phase, h->size); 
+    }   
+  } else {
+    /** (Amplitude, phase) -> (Re, Im) */
+    errorexit("cannot fill real/imag of cross/plus polarization.");
+  }
+}
+
+void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const double df, const char *name)
+{
+  /* Alloc and init aux memory */  
+  WaveformFD *h_aux;
+  const int oldsize = h->size;
+  WaveformFD_alloc(&h_aux, oldsize, "");
+  memcpy(h_aux->freq, h->freq, oldsize * sizeof(double));
+  memcpy(h_aux->preal, h->preal, oldsize * sizeof(double));
+  memcpy(h_aux->pimag, h->pimag, oldsize * sizeof(double));
+  memcpy(h_aux->creal, h->creal, oldsize * sizeof(double));
+  memcpy(h_aux->cimag, h->cimag, oldsize * sizeof(double));
+  memcpy(h_aux->ampli, h->ampli, oldsize * sizeof(double)); 
+  memcpy(h_aux->phase, h->phase, oldsize * sizeof(double)); 
+
+  /* Realloc arrays */
+  h->size = size;
+  if (strcmp(name, "")) strcpy(h->name, name);
+  if (h->freq) free(h->freq);
+  if (h->preal) free(h->preal);
+  if (h->pimag) free(h->pimag);
+  if (h->creal) free(h->creal);
+  if (h->cimag) free(h->cimag);
+  if (h->ampli) free(h->ampli);
+  if (h->phase) free(h->phase);
+  h->freq  = malloc ( size * sizeof(double) );
+  h->preal  = malloc ( size * sizeof(double) );
+  h->pimag  = malloc ( size * sizeof(double) );
+  h->creal  = malloc ( size * sizeof(double) );
+  h->cimag  = malloc ( size * sizeof(double) );
+  h->ampli = malloc ( size * sizeof(double) );
+  h->phase = malloc ( size * sizeof(double) );
+
+  /* Fill new time array */
+#pragma omp simd
+  for (int i = 0; i < size; i++)
+    h->freq[i] = i*df + f0;
+
+  /* Interp phase and amplitude */
+  interp_spline_omp(h_aux->freq, h_aux->ampli, h_aux->size, h->freq, size, h->ampli);
+  interp_spline_omp(h_aux->freq, h_aux->phase, h_aux->size, h->freq, size, h->phase);
+  
+  /* Free aux memory */
+  WaveformFD_free (h_aux);
+}
+
+void WaveformFD_output (WaveformFD *wav)
+{
+  FILE* fp;
+  char fname[STRLEN];
+  strcpy(fname,EOBPars->output_dir);
+  strcat(fname,"/");
+  strcat(fname,wav->name);
+  strcat(fname,".txt");
+  if ((fp = fopen(fname, "w+")) == NULL)
+    errorexits("error opening file",wav->name);
+  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
+  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
+	  EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
+	  EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
+  fprintf(fp, "# D=%e phi=%e iota=%e\n",EOBPars->distance,EOBPars->coalescence_angle,EOBPars->inclination);
+  fprintf(fp, "# f:0 real:1 imag:2 Ampli:3 Phase:4\n");
+  for (int i = 0; i < wav->size; i++) {
+    fprintf(fp, "%.9e %.12e %.12e %.12e %.12e\n", wav->freq[i], wav->preal[i], wav->pimag[i], wav->creal[i], wav->cimag[i]);
+  }
+  fclose(fp);
+}
+
+void WaveformFD_free (WaveformFD *wav)
+{
+  if (!wav) return;
+  if (wav->preal) free(wav->preal);
+  if (wav->pimag) free(wav->pimag);
+  if (wav->creal) free(wav->creal);
+  if (wav->cimag) free(wav->cimag);
+  if (wav->ampli) free(wav->ampli);
+  if (wav->phase) free(wav->phase);
+  if (wav->freq) free(wav->freq);
   free(wav);
 }
 
@@ -897,16 +1005,17 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->size = size; 
-  set_multipolar_idx_mask((*wav)->kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);
+  set_multipolar_idx_mask((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0);
   (*wav)->time = malloc ( size * sizeof(double) );
   memset((*wav)->time, 0, size*sizeof(double));
-  int k;
-  for (k=0; k<KMAX; k++) {
-    (*wav)->ampli[k] = malloc ( size * sizeof(double) );
-    (*wav)->phase[k] = malloc ( size * sizeof(double) );
-    memset((*wav)->ampli[k], 0, size*sizeof(double));
-    memset((*wav)->phase[k], 0, size*sizeof(double));
-    strcpy((*wav)->name,name);
+  for (int k=0; k<KMAX; k++) {
+    if ((*wav)->kmask[k]){
+      (*wav)->ampli[k] = malloc ( size * sizeof(double) );
+      (*wav)->phase[k] = malloc ( size * sizeof(double) );
+      memset((*wav)->ampli[k], 0, size*sizeof(double));
+      memset((*wav)->phase[k], 0, size*sizeof(double));
+      strcpy((*wav)->name,name);
+    }
   }
 }
 
@@ -916,12 +1025,13 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
   const int dn = size - (*wav)->size;
   (*wav)->time = realloc ( (*wav)->time, size * sizeof(double) );
   if ((*wav)->time == NULL) errorexit("Out of memory.");
-  /* if (dn>0) memset( (*wav)->time + n, 0, dn * sizeof(double) ); */
   for (int k=0; k<KMAX; k++) {
-    (*wav)->ampli[k] = realloc ( (*wav)->ampli[k], size * sizeof(double) );
-    if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
-    (*wav)->phase[k] = realloc ( (*wav)->phase[k], size * sizeof(double) );
-    if ((*wav)->phase[k] == NULL) errorexit("Out of memory.");
+    if ((*wav)->kmask[k]){
+      (*wav)->ampli[k] = realloc ( (*wav)->ampli[k], size * sizeof(double) );
+      if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
+      (*wav)->phase[k] = realloc ( (*wav)->phase[k], size * sizeof(double) );
+      if ((*wav)->phase[k] == NULL) errorexit("Out of memory.");
+    }
   }
   (*wav)->size = size;
 }
@@ -935,8 +1045,10 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   Waveform_lm_alloc(&hlm_aux, oldsize, "");
   memcpy(hlm_aux->time, hlm->time, oldsize * sizeof(double));
   for (int k = 0; k < KMAX; k++) {
-    memcpy(hlm_aux->ampli[k], hlm->ampli[k], oldsize * sizeof(double));
-    memcpy(hlm_aux->phase[k], hlm->phase[k], oldsize * sizeof(double));
+    if (hlm->kmask[k]){
+      memcpy(hlm_aux->ampli[k], hlm->ampli[k], oldsize * sizeof(double));
+      memcpy(hlm_aux->phase[k], hlm->phase[k], oldsize * sizeof(double));
+    }
   }
 
   /* Realloc arrays */
@@ -945,10 +1057,12 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   if (hlm->time) free(hlm->time); 
   hlm->time = malloc ( size * sizeof(double) );
   for (int k = 0; k < KMAX; k++) {
-    if (hlm->ampli[k]) free(hlm->ampli[k]);
-    if (hlm->phase[k]) free(hlm->phase[k]);
-    hlm->ampli[k] = malloc ( size * sizeof(double) );
-    hlm->phase[k] = malloc ( size * sizeof(double) );
+    if (hlm->kmask[k]){
+      if (hlm->ampli[k]) free(hlm->ampli[k]);
+      if (hlm->phase[k]) free(hlm->phase[k]);
+      hlm->ampli[k] = malloc ( size * sizeof(double) );
+      hlm->phase[k] = malloc ( size * sizeof(double) );
+    }
   } 
   
   /* Fill new time array */
@@ -958,9 +1072,11 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   
   /* Interp */
   for (int k = 0; k < KMAX; k++) 
-    interp_spline_omp(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
-  for (int k = 0; k < KMAX; k++) 
-    interp_spline_omp(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
+    if (hlm->kmask[k])
+      interp_spline_omp(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
+  for (int k = 0; k < KMAX; k++)
+    if (hlm->kmask[k]) 
+      interp_spline_omp(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
   
   /* Free aux memory */
   Waveform_lm_free (hlm_aux);
@@ -968,10 +1084,12 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
 
 void Waveform_lm_output (Waveform_lm *wav)
 {
+  int kmask[KMAX];
+  set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
   char fname[STRLEN*2];
   const int n = wav->size;
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {      
+    if (kmask[k]) {      
       sprintf(fname,"%s/%s_l%01d_m%01d.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
@@ -986,19 +1104,21 @@ void Waveform_lm_output (Waveform_lm *wav)
 
 void Waveform_lm_output_reim (Waveform_lm *wav)
 {
+  int kmask[KMAX];
+  set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
   char fname[STRLEN*2];
   double re,im;
   const int n = wav->size;
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
+    if (kmask[k]) {
       sprintf(fname,"%s/%s_l%01d_m%01d_reim.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
-	       errorexits("error opening file",fname);
+	errorexits("error opening file",fname);
       for (int i = 0; i < n; i++) {
-	       re = + wav->ampli[k][i] * cos(wav->phase[k][i]);
-	       im = - wav->ampli[k][i] * sin(wav->phase[k][i]);
-	       fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], re,im);
+	re = + wav->ampli[k][i] * cos(wav->phase[k][i]);
+	im = - wav->ampli[k][i] * sin(wav->phase[k][i]);
+	fprintf(fp, "%.9e %.12e %.12e\n", wav->time[i], re,im);
       }
       fclose(fp);
     }
@@ -1043,10 +1163,12 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
     (*hlmb)->time[i] = hlma->time[io + i]; 
   
   for (int k=0; k<KMAX; k++) {
+    if ((*hlmb)->kmask[k]){ 
 #pragma omp simd
-    for (int i = 0; i < N; i++) {
-      (*hlmb)->ampli[k][i] = hlma->ampli[k][io + i];
-      (*hlmb)->phase[k][i] = hlma->phase[k][io + i];
+      for (int i = 0; i < N; i++) {
+	(*hlmb)->ampli[k][i] = hlma->ampli[k][io + i];
+	(*hlmb)->phase[k][i] = hlma->phase[k][io + i];
+      }
     }
   }
   
@@ -1101,10 +1223,12 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
   }
 
   for (int k=0; k<KMAX; k++) {
+    if (hlma->kmask[k]){ 
 #pragma omp simd
-    for (int i = 0; i < Nb; i++) {
-      hlma->ampli[k][ioa + i] = hlmb->ampli[k][iob + i];
-      hlma->phase[k][ioa + i] = hlmb->phase[k][iob + i];
+      for (int i = 0; i < Nb; i++) {
+	hlma->ampli[k][ioa + i] = hlmb->ampli[k][iob + i];
+	hlma->phase[k][ioa + i] = hlmb->phase[k][iob + i];
+      }
     }
   }
     
@@ -1121,7 +1245,7 @@ void Waveform_lm_free (Waveform_lm *wav)
 {
   if (!wav) return;
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
+    if (wav->kmask[k]) { 
       if (wav->ampli[k]) free(wav->ampli[k]);
       if (wav->phase[k]) free(wav->phase[k]);
     }
@@ -1130,14 +1254,179 @@ void Waveform_lm_free (Waveform_lm *wav)
   free(wav);
 }
 
+/** Multipolar waveform (complex) */
+void WaveformFD_lm_alloc (WaveformFD_lm **wav, int size, const char *name)
+{
+  *wav = (WaveformFD_lm *) calloc(1, sizeof(WaveformFD_lm)); 
+  if (wav == NULL)
+    errorexit("Out of memory");
+  (*wav)->size = size; 
+  set_multipolar_idx_mask((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0);
+  (*wav)->freq = malloc ( size * sizeof(double) );
+  memset((*wav)->freq, 0, size*sizeof(double));
+  for (int k=0; k<KMAX; k++) {
+    if ((*wav)->kmask[k]) { 
+      (*wav)->ampli[k] = malloc ( size * sizeof(double) );
+      (*wav)->phase[k] = malloc ( size * sizeof(double) );
+      (*wav)->F[k] = malloc ( size * sizeof(double) );
+      (*wav)->Fdot[k] = malloc ( size * sizeof(double) );
+      memset((*wav)->ampli[k], 0, size*sizeof(double));
+      memset((*wav)->phase[k], 0, size*sizeof(double));
+      memset((*wav)->F[k], 0, size*sizeof(double));
+      memset((*wav)->Fdot[k], 0, size*sizeof(double));
+      strcpy((*wav)->name,name);
+    }
+  }
+}
+
+void WaveformFD_lm_push (WaveformFD_lm **wav, int size)
+{
+  const int n  = (*wav)->size;
+  const int dn = size - (*wav)->size;
+  (*wav)->freq = realloc ( (*wav)->freq, size * sizeof(double) );
+  if ((*wav)->freq == NULL) errorexit("Out of memory.");
+  for (int k=0; k<KMAX; k++) {
+    if ((*wav)->kmask[k]) { 
+      (*wav)->ampli[k] = realloc ( (*wav)->ampli[k], size * sizeof(double) );
+      if ((*wav)->ampli[k] == NULL) errorexit("Out of memory.");
+      (*wav)->phase[k] = realloc ( (*wav)->phase[k], size * sizeof(double) );
+      if ((*wav)->phase[k] == NULL) errorexit("Out of memory.");
+      (*wav)->F[k] = realloc ( (*wav)->F[k], size * sizeof(double) );
+      if ((*wav)->F[k] == NULL) errorexit("Out of memory.");
+      (*wav)->Fdot[k] = realloc ( (*wav)->Fdot[k], size * sizeof(double) );
+      if ((*wav)->Fdot[k] == NULL) errorexit("Out of memory.");
+    }
+  }
+  (*wav)->size = size;
+}
+
+/* Interp on uniform freq array and overwrite a multipolar waveform 
+   Notes 
+   - each mode has its own frequency array hlm->F[k]
+   - the uniform array is stored in hlm->freq 
+   - use interp_spline_checklim() and set to zero points outside interp range */
+void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f0, const double df, const char *name)
+{
+  /* Alloc and init aux memory */  
+  WaveformFD_lm *hlm_aux;
+  const int oldsize = hlm->size;
+  WaveformFD_lm_alloc(&hlm_aux, oldsize, "");
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->kmask[k]) {  
+      memcpy(hlm_aux->ampli[k], hlm->ampli[k], oldsize * sizeof(double));
+      memcpy(hlm_aux->phase[k], hlm->phase[k], oldsize * sizeof(double));
+      memcpy(hlm_aux->F[k], hlm->F[k], oldsize * sizeof(double));
+      //memcpy(hlm_aux->Fdot[k], hlm->Fdot[k], oldsize * sizeof(double));
+    }
+  }
+
+  /* Realloc arrays */
+  hlm->size = size;
+  if (strcmp(name, "")) strcpy(hlm->name, name);
+  if (hlm->freq) free(hlm->freq); 
+  hlm->freq = malloc ( size * sizeof(double) );
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->kmask[k]) {  
+      if (hlm->ampli[k]) free(hlm->ampli[k]);
+      if (hlm->phase[k]) free(hlm->phase[k]);
+      if (hlm->F[k]) free(hlm->F[k]);
+      if (hlm->Fdot[k]) free(hlm->Fdot[k]);
+      
+      hlm->ampli[k] = malloc ( size * sizeof(double) );
+      hlm->phase[k] = malloc ( size * sizeof(double) );
+      hlm->F[k] = NULL; // this info is lost in the interp.
+      hlm->Fdot[k] = NULL;// this info is lost in the interp.
+    } 
+  }
+
+  /* Fill new freq array */
+#pragma omp simd
+  for (int i = 0; i < size; i++) 
+    hlm->freq[i] = i*df + f0;
+  
+  /* Interp */
+  for (int k = 0; k < KMAX; k++){
+    if (hlm->kmask[k]){
+      //interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+      interp_spline_checklim(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+    }
+  }
+  for (int k = 0; k < KMAX; k++){
+    if (hlm->kmask[k]) {
+      //interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+      interp_spline_checklim(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+    }
+  }
+  /* Free aux memory */
+  WaveformFD_lm_free (hlm_aux);
+}
+
+void WaveformFD_lm_output (WaveformFD_lm *wav)
+{
+  int kmask[KMAX];
+  set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
+  char fname[STRLEN*2];
+  const int n = wav->size;
+  for (int k=0; k<KMAX; k++) {
+    if (kmask[k]) {      
+      sprintf(fname,"%s/FD_%s_l%01d_m%01d.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
+      FILE* fp;
+      if ((fp = fopen(fname, "w+")) == NULL)
+	errorexits("error opening file",fname);
+      for (int i = 0; i < n; i++) {
+	fprintf(fp, "%.9e %.16e %.16e\n", wav->freq[i], wav->ampli[k][i], wav->phase[k][i]); 
+      }
+      fclose(fp);
+    }
+  }
+}
+
+void WaveformFD_lm_output_reim (WaveformFD_lm *wav)
+{
+  int kmask[KMAX];
+  set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
+  char fname[STRLEN*2];
+  double re,im;
+  const int n = wav->size;
+  for (int k=0; k<KMAX; k++) {
+    if (wav->kmask[k]) {
+      sprintf(fname,"%s/FD_%s_l%01d_m%01d_reim.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
+      FILE* fp;
+      if ((fp = fopen(fname, "w+")) == NULL)
+	errorexits("error opening file",fname);
+      for (int i = 0; i < n; i++) {
+	re = + wav->ampli[k][i] * cos(wav->phase[k][i]);
+	im = - wav->ampli[k][i] * sin(wav->phase[k][i]);
+	fprintf(fp, "%.9e %.12e %.12e\n", wav->freq[i], re,im);
+      }
+      fclose(fp);
+    }
+  }
+}
+
+void WaveformFD_lm_free (WaveformFD_lm *wav)
+{
+  if (!wav) return;
+  for (int k=0; k<KMAX; k++) {
+    if (wav->kmask[k]) {
+      if (wav->ampli[k]) free(wav->ampli[k]);
+      if (wav->phase[k]) free(wav->phase[k]);
+      if (wav->F[k]) free(wav->F[k]);
+      if (wav->Fdot[k]) free(wav->Fdot[k]);
+    }
+  }
+  if (wav->freq) free(wav->freq);
+  free(wav);
+}
+
 /** Multipolar waveform at time point (complex) */
 void Waveform_lm_t_alloc (Waveform_lm_t **wav)
 {
   *wav = (Waveform_lm_t *) calloc(1, sizeof(Waveform_lm_t)); 
-  if (wav == NULL)
-    errorexit("Out of memory");
+  if (wav == NULL) errorexit("Out of memory");
   (*wav)->time = 0.;
-  set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0); 
+  (*wav)->freq = 0.;
+  set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0); 
 }
 
 void Waveform_lm_t_free (Waveform_lm_t *wav)
@@ -1442,272 +1731,248 @@ void NQCdata_free (NQCdata *nqc)
   if (nqc)      free (nqc);
 }
 
-/** SPA related stuff */
-void spa(double **F, double **ampf, double **phasef, double *time, double *ampt, double *phaset, int size, int *newsize){
+/** Stationary Phase Approximation of multipolar wvf */
+void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
+{
+  const int size = TDlm->size;
+  double tmpf0 = EOBPars->initial_frequency;  
+  double tmpdf = EOBPars->df;
+  double tmpsrate = EOBPars->srate_interp/2.;
 
-  /* Compute frequencies */
-  double *Fdot = (double*)malloc(size * sizeof(double));
-
-  //D0_x_2(phaset, time, size, *F); 
-  //D0_x_2(*F, time, size, Fdot);
-  D0_x_4(phaset, time, size, *F);
-  D0_x_4(*F, time, size, Fdot);
-
-  for (int i=0; i < size; i++){
-    (*F)[i] = (*F)[i]/(2.*Pi);
-    Fdot[i] = Fdot[i]/(2.*Pi);
-    (*phasef)[i] = (2 * Pi * (*F)[i] * time[i] - phaset[i]- Pi/4);
-    (*ampf)[i] = ampt[i]/sqrt(fabs(Fdot[i])); 
+  /* if necessary, transform f0, df and srate_interp to geom units */
+  if (!(EOBPars->use_geometric_units)){
+    double Msun = EOBPars->M;
+    double conv = time_units_factor(Msun);
+    tmpsrate = tmpsrate/conv; //FIXME: this must be transformed in geom units 
+    tmpf0    = tmpf0/conv;
+    tmpdf    = tmpdf/conv;
   }
+  const double half_srate_interp = tmpsrate;
+  const double f0 = tmpf0;
+  const double df = tmpdf;
+  //double Fmin=0., Fmax=0.;
+  //int nmax[KMAX]; // Fmax index
+  int nmin[KMAX]; // Fmin > f0 index
 
-  /* Make sure that Fdot is monotonically increasing (for attachment)*/
-  int i_aux = 0;
-  while(Fdot[i_aux+1] > Fdot[i_aux]) i_aux++;
-  *newsize = i_aux + 1; 
-
-  /* If necessary, prolong the waveform */
-  if ((*F)[i_aux+1] < EOBPars->srate_interp/2.){
-    /* Define new size of arrays */
-    double df = EOBPars->df;
-    *newsize = i_aux + 1 + floor((EOBPars->srate_interp/2. - (*F)[i_aux])/df) +1; 
-
-    *F      = realloc(*F, *newsize * sizeof(double));
-    *ampf   = realloc(*ampf, *newsize * sizeof(double));
-    *phasef = realloc(*phasef, *newsize * sizeof(double));
-
-    /* the amplitude is expected to behave as 1./f asymptotically (see eg 3.31a of arXiv:gr-qc/0001023) 
-      for the phase, we express it as phi(f) = (a + b*f) 
-    */
-    double a = (*phasef)[i_aux];
-    //double c = -4*time[i_aux];
-    //double b = c*(a - Pi/2.); 
-    double c = 0.;
-    double b = 2*Pi*time[i_aux];
-    for (int i=i_aux; i < *newsize; i++){
-      (*F)[i]      = (*F)[i_aux] + (i-i_aux)*df;
-      (*ampf)[i]   = (*ampf)[i_aux]/(*F)[i]*(*F)[i_aux];
-      (*phasef)[i] = (a + b*( (*F)[i] - (*F)[i_aux] ))/(1 + c*( (*F)[i] - (*F)[i_aux] ));
-    }
-  }
-
-  free(Fdot);
-}
-
-/** (h+, hx) polarizations from the multipolar waveform, FD */
-void compute_hpc_FD_22(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
-{  
-    double Y_real[KMAX], Y_imag[KMAX];
-    static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
-    double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
-    double *ampt =  (double*) malloc(hlm->size * sizeof(double));
-    double *phast = (double*) malloc(hlm->size * sizeof(double));
-    double Aki, conv;
-    double sumr, sumi;
-    int activemode[KMAX];
-    double Msun = M;
-    if (!(EOBPars->use_geometric_units)) {
-      Msun = M/MSUN_S;
-      conv = time_units_factor(Msun);
-    }
-
-    //SPA-related arrays
-    double *ampf = (double*) malloc(hlm->size * sizeof(double));
-    double *phif = (double*) malloc(hlm->size * sizeof(double));
-    double *F    = (double*) malloc(hlm->size * sizeof(double));
-
-    /* 22 only */
-    int k = 1;
-
-    /* Precompute Y22 */
-    spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
-    /* add m<0 mode */
-    if ( (mneg) && (MINDEX[k]!=0) ) spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
-
-    /* loop over times */
-    for (int i = 0; i < hlm->size; i++) {
-      if (!(EOBPars->use_geometric_units)) hlm->time[i] = hlm->time[i]/conv;
-	    Aki  = amplitude_prefactor * hlm->ampli[k][i];
-      ampt[i] = Aki;
-      phast[i] = hlm->phase[k][i];
-    }
-
-    /* Compute A, psif and F in FD */
-    int nsize;
-    spa(&F, &ampf, &phif, hlm->time, ampt, phast, hlm->size, &nsize);
+  const double Pio4 = Pi/4.;
+  int *activemode = TDlm->kmask;
+  //int activemode[KMAX];
+  //set_multipolar_idx_mask (activemode, KMAX, 
+  //EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
+  
+  /* For each active mode... */
+  for (int k = 0; k < KMAX; k++ ) {
+    if (!activemode[k]) continue;
     
-    /* FIXME: add interpolation based on user-input array */
+    /* Compute frequencies */
+    /* D0_x_2(phaset, time, size, *F);  
+       D0_x_2(*F, time, size, Fdot); */
+    D0_x_4(TDlm->phase[k], TDlm->time, size, FDlm->F[k]);
+    D0_x_4(FDlm->F[k], TDlm->time, size, FDlm->Fdot[k]);
+    
+    for (int i=0; i < size; i++){
+      FDlm->F[k][i]     = FDlm->F[k][i]/(TwoPi);
+      FDlm->Fdot[k][i]  = FDlm->Fdot[k][i]/(TwoPi);
+      FDlm->phase[k][i] = (TwoPi * FDlm->F[k][i] * TDlm->time[i] - TDlm->phase[k][i]- Pio4);
+      FDlm->ampli[k][i] = TDlm->ampli[k][i]/sqrt(fabs(FDlm->Fdot[k][i])); 
+    }
 
-    /* interpolate based on df */
-    int dN = 0;
-    double f0 = F[0];
-    double df = EOBPars->df;
+    /* Track multipoles w\ Fmin > f0 */
+    nmin[k] = (FDlm->F[k][0]>f0)?(1):(0);
 
-    if (EOBPars->interp_FD_waveform){
-      f0 = EOBPars->initial_frequency;  
+    /* Get last index until Fdot is monotonically increasing (for attachment) */
+    //int i_aux = 0;
+    //while(FDlm->Fdot[i_aux+1] > FDlm->Fdot[i_aux]) i_aux++;
+    //*newsize = i_aux +1; // i_axu = n
+    //SB: I changed the logic above to avoid overflow of the array Fdot.
+    //    please check n is correctly set (could be offset of 1...)
+    int n = 1;
+    while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1] && n<size) n++;
+    //nmax[k] = n; 
 
-      /* the waveform *has* to start at f0 */
-      if (F[0] > f0) 
-        dN = floor((F[0] - f0)/df) +1; 
-          
-      int int_size = floor(fabs(F[nsize-1]- f0)/df) +1;
-      Waveform_push(&hpc, int_size);
-      Vect_Interp (&phif, &F, &ampf, int_size - dN, nsize, f0+dN*df, df);
+    /* Prolong the waveform, if necessary  
+       - Fill the points between Fmax and half_srate_interp such that 
+         FDlm->F[k][n] > half_srate_interp (strictly larger)
+	 for later interp;
+       - The amplitude is expected to behave as 1./f asymptotically 
+         (see eg 3.31a of arXiv:gr-qc/0001023);
+       - For the phase, we express it as phi(f) = (a + b*f);
+    */
+    if (FDlm->F[k][n] < half_srate_interp) { 
+      const int n1 = n-1;
+      double Fn1 = FDlm->F[k][n-1];
+      double An1 = FDlm->ampli[k][n-1];
+      double pn1 =  FDlm->phase[k][n-1];
+      //double c = 0.;
+      double b = TwoPi * TDlm->time[n-1];
+      double dfk = (half_srate_interp - FDlm->F[k][n1])/(size-n-1); // one point more
+      for (int i=n; i < size; i++){
+        FDlm->F[k][i] = Fn1 + (i-n1)*dfk;
+        FDlm->ampli[k][i] = An1/(FDlm->F[k][i])*Fn1;  // \approx 1/f
+        //FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1))/(1 + c*(FDlm->F[k][i] - Fn1));
+        FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1));
+      }
     } else{
-      Waveform_push(&hpc, nsize);
+      /*update values with index >= n to assure F is formally increasing (for interpolation).
+        Note that we do not care about frequencies higher than srate_interp/2, so
+        we can fill F however we want */
+      double Fn1 = FDlm->F[k][n-1];
+      const int n1 = n-1;
+      for (int i=n; i < size; i++) FDlm->F[k][i] = Fn1 + (i-n1);
     }
 
-    /* populate hpc */
-    double pm3 = 3.*Pi/2.;
-    for (int i=0; i < hpc->size; i++){
-        if (i < dN){
-          hpc->frequency[i] = f0 + i*df;
-          hpc->hpreal[i] = 0.;
-          hpc->hpimag[i] = 0.;
-          hpc->hcreal[i] = 0.;
-          hpc->hcimag[i] = 0.;
-        } else {
-          hpc->frequency[i] = F[i-dN];
-          hpc->hpreal[i] = ampf[i-dN]/2.  * (cos(phif[i-dN])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[i-dN])* (Y_imag[k] - Y_imag_mneg[k]));
-          hpc->hpimag[i] = ampf[i-dN]/2.  * (cos(phif[i-dN])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[i-dN])* (Y_real[k] + Y_real_mneg[k]));
-          hpc->hcreal[i] = -ampf[i-dN]/2. * (cos(phif[i-dN] +pm3)* (Y_real[k] - Y_real_mneg[k]) + sin(phif[i-dN] + pm3)* (Y_imag[k] + Y_imag_mneg[k]));
-          hpc->hcimag[i] = -ampf[i-dN]/2. * (-cos(phif[i-dN] +pm3)*(Y_imag[k] + Y_imag_mneg[k]) + sin(phif[i-dN] + pm3)* (Y_real[k] - Y_real_mneg[k]));
-        }
-    }
+    /* Absolute min/max */
+    //Fmin = MIN(Fmin,FDlm->F[k][0]);
+    //Fmax = MIN(Fmax,FDlm->F[k][n]);
+  }
 
-    free(ampt);
-    free(phast);
-    free(ampf);
-    free(phif);
-    free(F);
+  /* Determine the output frequency array */
+  const int interp_size = get_uniform_size(half_srate_interp,f0, df);
+  
+  /* Interpolate each mode */
+  WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
+
+  /* Correct Fmin > f0 */
+  for (int k = 0; k < KMAX; k++ ) {
+    if (!activemode[k]) continue;
+    if (nmin[k]) {
+      /* f0 < Fmin , the interpolation returned 0s at those points
+	 -> fill points with linear extrapolation starting from innermost */
+      int i0 = 0;
+      while(FDlm->ampli[k][i0]==0. && i0<size) i0++;
+      for (int i = i0-1; i>=0; i--){
+        FDlm->ampli[k][i] = 2*FDlm->ampli[k][i+1] - FDlm->ampli[k][i+2]; //TODO: check sign!
+        FDlm->phase[k][i] = 2*FDlm->phase[k][i+1] - FDlm->phase[k][i+2]; 
+      }
+    }
+  }
+  
 }
 
 /** (h+, hx) polarizations from the multipolar waveform, FD, all active modes (interpolate after SPA, needed to correctly add modes together) */
-void compute_hpc_FD_HM(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
+void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc)
 {  
-    double Y_real[KMAX], Y_imag[KMAX];
-    static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
-    double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
-    double *ampt =  (double*) malloc(hlm->size * sizeof(double));
-    double *phast = (double*) malloc(hlm->size * sizeof(double));
-    double Aki, conv;
-    double sumr, sumi;
-    int activemode[KMAX];
-    set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
-    double Msun = M;
-    if (!(EOBPars->use_geometric_units)) {
-      Msun = M/MSUN_S;
-      conv = time_units_factor(Msun);
-      for (int i = 0; i < hlm->size; i++) 
-        hlm->time[i] = hlm->time[i]/conv;
-    }
-
-    //SPA-related arrays
-    double **ampf = (double **) malloc(KMAX * sizeof(double*));
-    double **phif = (double **) malloc(KMAX * sizeof(double*));
-    double **F    = (double **) malloc(KMAX * sizeof(double*));
-    int *i_aux = (int*) malloc(KMAX * sizeof(int));
-
+#ifdef _OPENMP
+  if (USETIMERS) openmp_timer_start("compute_hpc_FD");
+#endif
+  
+  double Y_real[KMAX] = {0};
+  double Y_imag[KMAX] = {0};
+  double Y_real_mneg[KMAX] = {0};
+  double Y_imag_mneg[KMAX] = {0};
+  static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
+  double conv=1.;
+  double sumr=0., sumi=0.;
+  double sumpr=0., sumpi=0., sumcr=0., sumci=0.;
+  
+  int *activemode = hflm->kmask;
+  
+  double Msun = M;
+  if (!(EOBPars->use_geometric_units)) {
+    Msun = M/MSUN_S;
+    conv = time_units_factor(Msun);
+    for (int i = 0; i < hflm->size; i++)
+	    hflm->freq[i] = hflm->freq[i]*conv; //CHECKME!
+  }
+  
     /* Precompute Ylm */
+  for (int k = 0; k < KMAX; k++ ) {
+    if (!activemode[k]) continue;
+    spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
+    /* add m<0 modes */
+    if ( (mneg) && (MINDEX[k]!=0) ) 
+      spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
+  }
+  
+  /* Sum up  hlm * Ylm 
+   * Note because EOB code defines phase>0, 
+   * but the convention is h_lm = A_lm Exp[-I phi_lm] we have
+   * h_{l,m>=0} = A_lm ( cos(phi_lm) - I*sin(phi_lm) ) for m>0 and
+   * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
+   * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
+   */
+#if (0)
+  
+  //SB: Taken from TD (?) to be checked
+  
+  for (int i = 0; i < hflm->size; i++) {
+    hpc->freq[i] = hflm->freq[i]*M; 
+    sumr = sumi = 0.;
+    
+    /* Loop over modes */
     for (int k = 0; k < KMAX; k++ ) {
       if (!activemode[k]) continue;
-      spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
+      double Aki  = amplitude_prefactor * hflm->ampli[k][i];
+      double cosPhi = cos( hflm->phase[k][i] );
+      double sinPhi = sin( hflm->phase[k][i] );
+      sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
+      sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
+      
       /* add m<0 modes */
-      if ( (mneg) && (MINDEX[k]!=0) ) 
-        spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
-      }
-
-    double df = 1./hlm->time[hlm->size -1];
-    double f0 = EOBPars->initial_frequency;
-    double FMmax = f0; //the maximum (over modes) FMax. Needed for interpolation!
-    double Fmmin = f0; //the minimum (over modes) Fmin
-
-    /* loop over modes */
-    for (int k = 0; k < KMAX; k++ ){
-      
-      if (!activemode[k]) continue;
-
-      ampf[k] = (double*) malloc(hlm->size * sizeof(double));
-      phif[k] = (double*) malloc(hlm->size * sizeof(double));
-      F[k]    = (double*) malloc(hlm->size * sizeof(double));
-
-      /* loop over times */
-      for (int i = 0; i < hlm->size; i++) {
-	      ampt[i]  = amplitude_prefactor * hlm->ampli[k][i];
-      }
-
-      /* SPA */
-      spa(&F[k], &ampf[k], &phif[k], hlm->time, ampt, hlm->phase[k], hlm->size, &i_aux[k]);
-      i_aux[k] = i_aux[k] -1;
-      
-      /* Determine FMmax and Fmmin over modes*/
-      if ( F[k][i_aux[k]] > FMmax ) FMmax = F[k][i_aux[k]];
-      if ( F[k][0] < Fmmin )  Fmmin = F[k][0];
+      if ( (mneg) && (MINDEX[k]!=0) ) { 
+	/* H_{l-m} = (-)^l H^{*}_{lm} */
+	if (LINDEX[k] % 2) {
+	  sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
+	  sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+	}
+	else { 
+	  sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
+	  sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+	}
+      }    
     }
-    
-    /* free some memory */
-    free(ampt);
-    free(phast);
 
-    /* Determine size of hpc */
-    int nsize = floor(fabs(FMmax- Fmmin)/df) +1;
-    Waveform_push(&hpc, nsize);
-
-    /* Write frequency array */
-    for (int i = 0; i < nsize; i++) 
-      hpc->frequency[i] = Fmmin + i*df; 
+    /* h = h+ - i hx */
+    hpc->real[i] = sumr;
+    hpc->imag[i] = -sumi;
+  }
+  
+  /* Compute amplitude & Phase */
+  //Waveform_rmap(hpc,1,1); // with unwrap
+  Waveform_rmap(hpc,1,0); // without
+  
+#else
+  
+  const double pm3 = 3.*Pi/2.;
+  for (int i = 0; i < hflm->size; i++) {
+    hpc->freq[i] = hflm->freq[i]; 
+    sumpr = sumpi = sumcr = sumci = 0.;
     
-    /* interpolation & hpc computation */
     for (int k=0; k< KMAX; k++){
       if (!activemode[k]) continue;
-
-      /* find range of interpolation,  different for each mode (Not all modes span the whole range Fmmin - FMmax)*/
-      /* FIXME: instead of always adding +1 and -1 decide based on whether F(i) is in range */ 
-      int i0 = find_point_bisection(F[k][0], hpc->size, hpc->frequency, 1) +1;
-      int in = find_point_bisection(F[k][i_aux[k]], hpc->size, hpc->frequency, 1) -1;
-
-      /* interpolate */
-      Vect_Interp (&ampf[k], &F[k], &phif[k], in - i0, i_aux[k]+1, hpc->frequency[i0], df);
-
-      /* add modes to hp */
-      /* FIXME: add (-1)^l */
-      double pm3 = 3.*Pi/2.;
-
-      for (int i=0; i < in -i0; i++){
-        if (LINDEX[k] % 2) {
-          hpc->hpreal[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (Y_real[k] - Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] + Y_imag_mneg[k]));
-          hpc->hpimag[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (-Y_imag[k]- Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] - Y_real_mneg[k]));
-          hpc->hcreal[i+i0] += -ampf[k][i]/2.* (cos(phif[k][i] +pm3)* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i] + pm3)* (Y_imag[k] - Y_imag_mneg[k]));
-          hpc->hcimag[i+i0] += -ampf[k][i]/2.* (-cos(phif[k][i] +pm3)*(Y_real[k] - Y_real_mneg[k]) + sin(phif[k][i] + pm3)* (Y_imag[k] + Y_imag_mneg[k]));
-        } else {
-          hpc->hpreal[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (Y_real[k] + Y_real_mneg[k]) + sin(phif[k][i])* (Y_imag[k] - Y_imag_mneg[k]));
-          hpc->hpimag[i+i0] += ampf[k][i]/2. * (cos(phif[k][i])* (-Y_imag[k]+ Y_imag_mneg[k]) + sin(phif[k][i])* (Y_real[k] + Y_real_mneg[k]));
-          hpc->hcreal[i+i0] += -ampf[k][i]/2.* (cos(phif[k][i] +pm3)* (Y_real[k] - Y_real_mneg[k]) + sin(phif[k][i] + pm3)* (Y_imag[k] + Y_imag_mneg[k]));
-          hpc->hcimag[i+i0] += -ampf[k][i]/2.* (-cos(phif[k][i] +pm3)*(Y_imag[k] + Y_imag_mneg[k]) + sin(phif[k][i] + pm3)* (Y_real[k] - Y_real_mneg[k]));
-        }
+      double Aki  = 0.5*amplitude_prefactor * hflm->ampli[k][i];
+      double cosPhi = cos( hflm->phase[k][i] );
+      double sinPhi = sin( hflm->phase[k][i] );
+      double cosPhipm3 = cos( hflm->phase[k][i] + pm3 );
+      double sinPhipm3 = sin( hflm->phase[k][i] + pm3 );
+      
+      /* H_{l-m} = (-)^l H^{*}_{lm} */
+      if (LINDEX[k] % 2) {
+        sumpr +=  Aki * (cosPhi*(Y_real[k] - Y_real_mneg[k]) + sinPhi* (Y_imag[k] + Y_imag_mneg[k]));
+        sumpi +=  Aki * (cosPhi*(-Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
+        sumcr += -Aki * (cosPhipm3*(Y_real[k] + Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] - Y_imag_mneg[k]));
+        sumci += -Aki * (-cosPhipm3*(Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
+      } else {
+        sumpr +=  Aki * (cosPhi* (Y_real[k] + Y_real_mneg[k]) + sinPhi* (Y_imag[k] - Y_imag_mneg[k]));
+        sumpi +=  Aki * (cosPhi* (-Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
+        sumcr += -Aki * (cosPhipm3* (Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
+        sumci += -Aki * (-cosPhipm3*(Y_imag[k] + Y_imag_mneg[k]) + sinPhipm3* (Y_real[k] - Y_real_mneg[k]));
       }
-      free(ampf[k]);
-      free(phif[k]);
-      free(F[k]);
+      
+      hpc->preal[i] = sumpr; 
+      hpc->pimag[i] = sumpi;
+      hpc->creal[i] = sumcr;
+      hpc->cimag[i] = sumci;	  
     }
-    
-    free(i_aux);
-}
-
-/** Compute the FD waveform in the reduced approximation, assuming that phi_GW = 2 phi_orb and assuming the leading order PN expression for A(f) */
-/*
-compute_hpc_FD_an (Dynamics *dyn, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
-{
-  double *dotOmega = (double *) malloc(dyn->size *sizeof(double));
-  for (int i=0; i < dyn->size; i++){
-    dotOmega[i] = ...
-    hpc->frequency[i] = ...
-    hpc->real[i] = ...
-    hpc->imag[i] = ...
   }
-
+    
+#endif
+    
+#ifdef _OPENMP
+    if (USETIMERS) openmp_timer_stop("compute_hpc_FD");
+#endif
 }
-*/
-
+  
 /** Convert time in sec to dimensionless and mass-rescaled units */
 double time_units_factor(double M)
 {
@@ -1769,23 +2034,6 @@ void errorexits(char *file, int line, const char *s, const char *t)
 }
 
 /* do not write functions beyond this line: errorexit undef/define */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
