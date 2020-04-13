@@ -42,8 +42,8 @@ static PyObject* foo_func(PyObject* self, PyObject* args)
 {
   int size;
   double a;
-  double *p, *pa;
-
+  double *p;
+ 
   /* Parse the input, from python float to c double 
      https://docs.python.org/3/c-api/arg.html 
   */
@@ -54,17 +54,17 @@ static PyObject* foo_func(PyObject* self, PyObject* args)
   if (foo(size, a, &p)) return NULL;
   
   /*  Construct the output array */
-  npy_intp dims[1];
-  dims[0] = size;
-  PyArrayObject *pao;
-  pao = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+  npy_intp dims[1] = {size};
+  PyArrayObject *pao = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
   
   /* Cast py *arrays into C *arrays   */
-  pa =(double*)PyArray_DATA(pao);
+  double *pa = (double*) PyArray_DATA(pao);
   
   /* Copy */
   memcpy(pa, p, size * sizeof(double));
-  free(p); /* Free C memory */
+
+  /* Free C memory */
+  free(p); 
 
   return PyArray_Return(pao);
   /* return Py_BuildValue("O", pao); */ /* This also works, maybe better for multiple outputs? */
@@ -77,10 +77,7 @@ static PyObject* foo_func(PyObject* self, PyObject* args)
 /* Define functions in module */
 static PyMethodDef FooMethods[] = {
   {"foo", foo_func, METH_VARARGS, "Init and return a double array"},
-  /* SB: Not understood following line, but uncommented version
-  prevent a segfault after runtime ... */
-  {NULL, NULL, 0, NULL} 
-  //{NULL, NULL, 0, NULL} //*/ 
+  {NULL}, 
 };
 
 #if PY_MAJOR_VERSION >= 3
