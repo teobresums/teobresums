@@ -287,8 +287,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     PyArrayObject *pto;
     PyArrayObject *phpo;
     PyArrayObject *phco;
-    PyArrayObject *pAhlmo;
-    PyArrayObject *pphlmo;
 
     pto  = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
     phpo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
@@ -304,31 +302,44 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     memcpy(php, hpc->real, hpc->size * sizeof(double)); //h+
     memcpy(phc, hpc->imag, hpc->size * sizeof(double)); //hx
 
-    double *pAhlm, *pphlm;
     /*build hlm dictionary */
     for(int k=0; k<KMAX; k++){
       if(hmodes->kmask[k]){
-        pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-        pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        double *pAhlm, *pphlm;
+        PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
         pAhlm = pyvector_to_Carrayptrs(pAhlmo);
         pphlm = pyvector_to_Carrayptrs(pphlmo);
         memcpy(pAhlm, hmodes->ampli[k], hmodes->size * sizeof(double));
         memcpy(pphlm, hmodes->phase[k], hmodes->size * sizeof(double));
+        /* build dictionary entry*/
         PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
         char kst[12];
         sprintf(kst, "%i", k);
-        PyDict_SetItemString(hlmdict, kst, obj);
+        /* populate the dictionary */
+        PyDict_SetItemString(hlmdict, kst, obj); 
+        /* free */
+        Py_DECREF(pAhlmo);
+        Py_DECREF(pphlmo);
+        Py_DECREF(obj);
       }
     }
+
+    /* build the final object */
+    PyObject *ret = Py_BuildValue("OOOO", pto, phpo, phco, hlmdict);
 
     Waveform_free (hpc);          /* Free C memory */
     WaveformFD_free (hfpc);       /* Free C memory */
     Waveform_lm_free(hmodes);     /* Free C memory */
     WaveformFD_lm_free(hfmodes);  /* Free C memory */
-
     EOBParameters_free (EOBPars);
 
-    return Py_BuildValue("OOOO", pto, phpo, phco, hlmdict);  /* This also works, maybe better for multiple outputs? */
+    Py_DECREF(pto);               /* Free Python memory */
+    Py_DECREF(phpo);
+    Py_DECREF(phco);
+    Py_DECREF(hlmdict);
+
+    return ret;  /* This also works, maybe better for multiple outputs? */
   } else {
 
     double *pf, *phpr, *phpi, *phcr, *phci; /*FD: f,  Re and Im of h+, hx */
@@ -360,32 +371,45 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     memcpy(phcr, hfpc->creal, hfpc->size * sizeof(double)); //Re hx
     memcpy(phci, hfpc->cimag, hfpc->size * sizeof(double)); //Im hx
     
-    double *pAhflm, *pphflm;
     /*build hlm dictionary */ 
-    /* CHECKME: possible leaks here? are pAhflm and pphflm freed correctly? */
     for(int k=0; k<KMAX; k++){
       if(hfmodes->kmask[k]){
+        double *pAhflm, *pphflm;
         pAhflmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
         pphflmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
         pAhflm = pyvector_to_Carrayptrs(pAhflmo);
         pphflm = pyvector_to_Carrayptrs(pphflmo);
         memcpy(pAhflm, hfmodes->ampli[k], hfmodes->size * sizeof(double));
         memcpy(pphflm, hfmodes->phase[k], hfmodes->size * sizeof(double));
+        /*build dictionary entry*/
         PyObject *obj = Py_BuildValue("O:O", pAhflmo, pphflmo);
         char kst[12];
         sprintf(kst, "%i", k);
+        /*populate the dictionary*/
         PyDict_SetItemString(hflmdict, kst, obj);
+        /*free*/
+        Py_DECREF(pAhflmo);
+        Py_DECREF(pphflmo);
+        Py_DECREF(obj);
       }
     }
+
+    /* build the final object */
+    PyObject *ret = Py_BuildValue("OOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict);
 
     Waveform_free (hpc);          /* Free C memory */
     WaveformFD_free (hfpc);       /* Free C memory */
     Waveform_lm_free(hmodes);     /* Free C memory */
     WaveformFD_lm_free(hfmodes);  /* Free C memory */
-
     EOBParameters_free (EOBPars);
-
-    return Py_BuildValue("OOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict);
+    
+    Py_DECREF(pfo);               /* Free Python memory */
+    Py_DECREF(phprealo);
+    Py_DECREF(phpimago);
+    Py_DECREF(phcrealo);
+    Py_DECREF(phcimago);
+    Py_DECREF(hflmdict);
+    return ret;
   }
 }
 
