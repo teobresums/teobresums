@@ -66,8 +66,13 @@ static PyObject* foo_func(PyObject* self, PyObject* args)
   /* Free C memory */
   free(p); 
 
-  return PyArray_Return(pao);
-  /* return Py_BuildValue("O", pao); */ /* This also works, maybe better for multiple outputs? */
+  return PyArray_Return(pao); 
+  /* Alternative code, better for outputting several objects */
+  /*
+    PyArrayObject *pout = Py_BuildValue("O", pao);
+    Py_DECREF(pao);  // IMPORTANT: comment out to see mem leak
+    return pout;
+  */
 }
 
 /*
