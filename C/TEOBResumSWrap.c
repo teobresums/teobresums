@@ -88,7 +88,7 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "coalescence_angle") != NULL ) {
     EOBPars->coalescence_angle = PyFloat_AsDouble(PyDict_GetItemString(dict, "coalescence_angle"));
   }
-  
+
   /* Modes */
   if ( PyDict_GetItemString(dict, "use_mode_lm") != NULL ) {
     free(EOBPars->use_mode_lm);
@@ -310,6 +310,11 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
   /*  Construct the output arrays */
 
+  /* return modes? */
+  int arg_out = 0; 
+  if ( PyDict_GetItemString(dict, "arg_out") != NULL ) { 
+    arg_out = (int) PyLong_AsLong(PyDict_GetItemString(dict, "arg_out"));
+  }
   if(EOBPars->domain==DOMAIN_TD){
 
     double *pt, *php, *phc; /*t, h+ and hx */
@@ -359,7 +364,15 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     }
 
     /* build the final object */
-    PyObject *ret = Py_BuildValue("OOOO", pto, phpo, phco, hlmdict);
+    PyObject *ret;
+    if (arg_out == 0){
+      ret = Py_BuildValue("OOO", pto, phpo, phco);
+    } else if (arg_out == 1){
+      ret = Py_BuildValue("OOOO", pto, phpo, phco, hlmdict);
+    } else {
+      printf("ERROR: arg_out has to be equal to 0 or 1");
+      ret = NULL;
+    }
 
     Waveform_free (hpc);          /* Free C memory */
     WaveformFD_free (hfpc);       /* Free C memory */
@@ -428,7 +441,15 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     }
 
     /* build the final object */
-    PyObject *ret = Py_BuildValue("OOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict);
+    PyObject *ret;
+    if (arg_out == 0){
+      ret = Py_BuildValue("OOOOO", pfo, phprealo, phpimago, phcrealo, phcimago);
+    } else if (arg_out == 1){
+      ret = Py_BuildValue("OOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict);
+    } else {
+      printf("ERROR: arg_out has to be equal to 0 or 1");
+      ret = NULL;
+    }
 
     Waveform_free (hpc);          /* Free C memory */
     WaveformFD_free (hfpc);       /* Free C memory */
