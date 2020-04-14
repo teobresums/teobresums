@@ -16,7 +16,14 @@ def memory_usage_resource():
     mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / rusage_denom
     return mem
 
+def modes_to_k(modes):
+    return map(lambda x: x[0]*(x[0]-1)/2 + x[1]-2, modes)
 # Example run
+
+# use 22 and 31
+modes = [[2,2], [3,1]]
+k = modes_to_k(modes)
+print(k)
 
 # Define a dictionary with input parameters
 pars = {
@@ -28,8 +35,8 @@ pars = {
     'Lambda2'            : 0.,     
     'domain'             : 0,      #Set 1 for FD. Default = 0
     'arg_out'            : 1,      #Output hlm/hflm. Default = 0
-    'use_mode_lm'        : [1,2],  #List of modes to use/output through EOBRunPy
-    'output_lm'          : [1,2],  #List of modes to print on file
+    'use_mode_lm'        : k,      #List of modes to use/output through EOBRunPy
+    'output_lm'          : k,      #List of modes to print on file
     'srate_interp'       : 4096.,  #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,      #output quantities in geometric units. Default = 1
     'df'                 : 0.01,   #df for FD interpolation
