@@ -2,11 +2,13 @@
 
 To start, checkout the [WIKI](https://bitbucket.org/eob_ihes/teobresums/wiki/EOB-repo-usage).
 
-## Authors
+## Authors 
 
-Sarp Akcay, Sebastiano Bernuzzi, Gregorio Carullo, Walter Del Pozzo, Alessandro Nagar, Ka Wa Tsang
+See the [`AUTHORS`](https://bitbucket.org/eob_ihes/teobresums/src/master/AUTHORS) file.
 
 ## License
+
+See the [`LICENSE`](https://bitbucket.org/eob_ihes/teobresums/src/master/LICENSE) file.
 
 ```
 TEOBResumS is a free software; you can redistribute it and/or modify
@@ -28,9 +30,14 @@ GNU General Public License for more details.
 ## Compilation
 
 ```
-$ export TEOBRESUMS=/PATH/TO/teobresums/C/
 $ cd $TEOBRESUMS
 $ make -f Makefile.TEOBResumS
+```
+
+Alternatively, you can build a python module using [disutil](https://docs.python.org/3/library/distutils.html) and the following script
+```
+$ cd /PATH/TO/teobresums/C/
+$ python TEOBResumSWrap_setup.py build_ext --inplace
 ```
 
 ## Usage
