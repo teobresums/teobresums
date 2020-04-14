@@ -88,6 +88,39 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "coalescence_angle") != NULL ) {
     EOBPars->coalescence_angle = PyFloat_AsDouble(PyDict_GetItemString(dict, "coalescence_angle"));
   }
+  
+  /* Modes */
+  if ( PyDict_GetItemString(dict, "use_mode_lm") != NULL ) {
+    free(EOBPars->use_mode_lm);
+    PyListObject *tmp;
+    tmp = PyDict_GetItemString(dict, "use_mode_lm");
+    EOBPars->use_mode_lm_size = PyObject_Length(tmp);
+    EOBPars->use_mode_lm = malloc ( EOBPars->use_mode_lm_size * sizeof(int) );
+
+    for (int i = 0; i < EOBPars->use_mode_lm_size; i++){
+      PyObject *item;
+      item = PyList_GetItem(tmp, i);
+      EOBPars->use_mode_lm[i] = (int) PyLong_AsLong(item); 
+      Py_DECREF(item);
+    }
+    //Py_DECREF(tmp);
+  }
+
+  if ( PyDict_GetItemString(dict, "output_lm") != NULL ) {
+    free(EOBPars->output_lm);
+    PyListObject *tmp;
+    tmp = PyDict_GetItemString(dict, "output_lm");
+    EOBPars->output_lm_size = PyObject_Length(tmp);
+    EOBPars->output_lm = malloc ( EOBPars->output_lm_size * sizeof(int) );
+
+    for (int i = 0; i < EOBPars->output_lm_size; i++){
+      PyObject *item;
+      item = PyList_GetItem(tmp, i);
+      EOBPars->output_lm[i] = (int) PyLong_AsLong(item); 
+      Py_DECREF(item);
+    }
+    //Py_DECREF(tmp);
+  }
 
   /* Post Adiabatic Dynamics */
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics") != NULL ) { 
