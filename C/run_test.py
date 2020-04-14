@@ -1,24 +1,61 @@
 # Run a test
 import EOBRun_module
 import matplotlib.pyplot as plt
+import numpy as np
+import os
+import psutil
+import resource
 
-# Example un
+def memory_usage_psutil():
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info()[0] / float(2 ** 20)
+    return mem
 
+def memory_usage_resource():
+    rusage_denom = 1024.
+    mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / rusage_denom
+    return mem
+
+# Example run
+
+# Define a dictionary with input parameters
 pars = {
-    'M': 50.,
-    'q': 1.2,
-    'chi1': 0.,
-    'chi2': 0.,
-    'Lambda1': 0.,
-    'Lambda2': 0.,
-    'domain':0,      #Set 1 for FD
+    'M'                  : 50.,
+    'q'                  : 1.2,
+    'chi1'               : 0.,
+    'chi2'               : 0.,
+    'Lambda1'            : 0.,
+    'Lambda2'            : 0.,     
+    'domain'             : 0,      #Set 1 for FD. Default = 0
+    'arg_out'            : 1,      #Output hlm/hflm. Default = 0
+    'use_mode_lm'        : [1,2],  #List of modes to use/output through EOBRunPy
+    'output_lm'          : [1,2],  #List of modes to print on file
+    'srate_interp'       : 4096.,  #srate at which to interpolate. Default = 4096.
+    'use_geometric_units': 0,      #output quantities in geometric units. Default = 1
+    'df'                 : 0.01,   #df for FD interpolation
+    'initial_frequency'  : 20.,    #in Hz if use_geometric_units = 0, else in geometric units
+    'interp_uniform_grid': 2       #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 }
 
+#Run the WF generator
 t, hp, hcm, hlm = EOBRun_module.EOBRunPy(pars)
-#f, hpr, hpi, hcr, hci, hflm = EOBRun_module.EOBRunPy(pars) # If FD
 
-# Plots
+# Plot h+
 plt.plot(t, hp)
 plt.show()
-plt.plot(t, hlm['1'][0]) #22 Amplitude
+
+# Plot Re[h_22]
+Ah22   = hlm['1'][0]
+Phih22 = hlm['1'][1]
+plt.plot(t, Ah22*np.cos(Phih22)) 
 plt.show()
+
+# If arg_out = 0
+#t, hp, hcm = EOBRun_module.EOBRunPy(pars)          
+
+# If FD
+#f, hpr, hpi, hcr, hci = EOBRun_module.EOBRunPy(pars) 
+
+#to test for leaks, uncomment below
+#print(memory_usage_psutil(),memory_usage_resource())
+
