@@ -1815,10 +1815,15 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     } else{
       /*update values with index >= n to assure F is formally increasing (for interpolation).
         Note that we do not care about frequencies higher than srate_interp/2, so
-        we can fill F however we want */
+        we can fill F however we want. We also fill A, to avoid inf which may appear
+        and would mess up the spline 
+      */
       double Fn1 = FDlm->F[k][n-1];
       const int n1 = n-1;
-      for (int i=n; i < size; i++) FDlm->F[k][i] = Fn1 + (i-n1);
+      for (int i=n; i < size; i++){
+        FDlm->F[k][i] = Fn1 + (i-n1);
+        FDlm->ampli[k][i] = FDlm->ampli[k][n1];
+      }
     }
 
     /* Absolute min/max */
