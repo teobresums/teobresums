@@ -17,7 +17,7 @@ def memory_usage_resource():
     return mem
 
 def modes_to_k(modes):
-    return map(lambda x: x[0]*(x[0]-1)/2 + x[1]-2, modes)
+    return [int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes]
 # Example run
 
 # use 22 and 31
