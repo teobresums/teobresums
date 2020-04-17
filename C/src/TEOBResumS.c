@@ -760,7 +760,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   */
   
   if (!(use_tidal) && (dyn->r < 2.)) {
-  
+    
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
      * *****************************************

@@ -3460,7 +3460,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5;
     hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; 
   }
-
+  
   if (usespins) {
     /* Special treatment when spin is on because of the singularity in the sqrt(1-4*nu) 
        for m=odd mode and nu=1/4. See discussion in 
@@ -3483,7 +3483,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
       hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5 * X12; /* (5,5) */
     }
   }
-
+  
   /** Compute corrections */
   double rholm[KMAX], flm[KMAX];
   double x = SQ(rw*Omega);
@@ -3551,7 +3551,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
       hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
     }
   }
-
+  
 }
 
 /** Routine for factorized EOB waveform and eccentric systems */

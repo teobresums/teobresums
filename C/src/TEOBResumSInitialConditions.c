@@ -731,6 +731,7 @@ double eob_dyn_Omegaecc0(double r, void *params)
   }
   B1 = A1/SQ(rc1);
   B2 = A2/SQ(rc2);
+  
   A12 = A1 + A2;
   DA  = A1 - A2;
   B12 = B1 + B2;

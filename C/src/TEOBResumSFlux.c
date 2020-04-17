@@ -423,6 +423,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   double Adot, prstardot, sqrtAbyBdot, dAbyrc2, d2Abyrc2, Omgdot_0, Heffdot, HSOdot, Edot,
     Heff_orbdot, EHeff_orbdot, Omgdot, Omg2dot, r2dot, r3dot, EHeff_orb2dot,
     HSO2dot, Heff_orb2dot, prstar2dot, Heff2dot, E2dot;
+  
   double Fr, Fphi, Fphi_Newt;
   
   /* Computing metric, centrifugal radius and ggm functions*/
@@ -494,7 +495,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
 
   EHeff_orb = E*Heff_orb;
   Omgdot_0 = 1./EHeff_orb*dAbyrc2*rdot*pphi + 1./E*(dG_dr*rdot + dG_dprstar*prstardot);
-
+  
   /* Begin iteration */
   int iter = 2; // Hard-fixed to 2: seems to be enough
     
@@ -558,7 +559,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Fphi      = Fphi_Newt*Fphi;
     Edot      = nu*(rdot*Fr + Omg*Fphi);
   }
-    
+  
   /* return F_NC */  
   return Fphi_Newt;  
 }
