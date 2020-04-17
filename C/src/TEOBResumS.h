@@ -268,14 +268,6 @@ enum{
 };
 static const char* const ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
 
-/** List of options for interp_uniform_grid */
-enum{
-  INTERP_UNIFORM_GRID_OFF,
-  INTERP_UNIFORM_GRID_HPC,
-  INTERP_UNIFORM_GRID_HLM,
-  INTERP_UNIFORM_GRID_NOPT
-};
-
 /** Error handler for root finders */
 enum{ 
   ROOT_ERRORS_NO,
