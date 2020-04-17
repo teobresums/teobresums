@@ -28,7 +28,7 @@ print(k)
 # Define a dictionary with input parameters
 pars = {
     'M'                  : 50.,
-    'q'                  : 1.2,
+    'q'                  : 1.,
     'chi1'               : 0.,
     'chi2'               : 0.,
     'Lambda1'            : 0.,
@@ -41,7 +41,11 @@ pars = {
     'use_geometric_units': 0,      #output quantities in geometric units. Default = 1
     'df'                 : 0.01,   #df for FD interpolation
     'initial_frequency'  : 20.,    #in Hz if use_geometric_units = 0, else in geometric units
-    'interp_uniform_grid': 2       #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+    'interp_uniform_grid': 2,      #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+    'ecc'                : 0.1,    #Eccentricity. Default = 0.
+    'j_hyp'              : 0.,     #J_hyp. Default = 0.
+    'r_hyp'              : 0.,     #r_hyp. Default = 0.
+    'H_hyp'              : 0.,     #H_hyp. Default = 0.
 }
 
 #Run the WF generator
