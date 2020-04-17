@@ -744,6 +744,18 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         }
       }
     }
+
+    /* free some memory */
+    free(r_omg);
+    free(rdot);
+    free(r2dot);
+    free(r3dot);
+    free(r4dot);
+    free(r5dot);
+    free(Omegadot);
+    free(Omega2dot);
+    free(Omega3dot);
+    free(Omega4dot);
   }
   
  END_ODE_EVOLUTION:;
