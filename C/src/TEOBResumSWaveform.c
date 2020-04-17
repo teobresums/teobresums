@@ -3195,10 +3195,6 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
   tmrg[k21]  = tmrg[k22] + dtmrg[k21]/Mbh;     // t_max(A21) => peak of 21 mode
   tmrg[k33]  = tmrg[k22] + dtmrg[k33]/Mbh;     // t_max(A33) => peak of 33 mode
 	  
-  // for (int k=0; k<KMAX; k++) {
-  //   tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
-  // }	  
-	
   /** Postmerger-Ringdown matching time */
   for (int k=0; k<KMAX; k++) {
     tmatch[k] = 2.*ooMbh + tmrg[k];
@@ -3325,14 +3321,14 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /* nonspinning case */
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
-	  
+
   /* The following values are the difference between the time of the peak of
      the 22 waveform and the other modes. */
   eob_nqc_deltat_lm(dyn, dtmrg);	  
   for (int k=0; k<KMAX; k++) {
     tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
   }	  
-		
+
   /** Postmerger-Ringdown matching time */
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
@@ -3353,7 +3349,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     a1, a2, a3, a4, b1, b2, b3, b4, 
 		     sigma[0],sigma[1]);
-  
+
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
@@ -3368,28 +3364,30 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   double t0, tm, psi[2];
   double Deltaphi[KMAX];
   int n0 = 2/dt*ooMbh;
-	  
-  for (int k = 0; k < KMAX; k++) {
-    /* Calculate Deltaphi */
-    t0 = t_lm[k][idx[k]+n0] - tmatch[k];
+
+    for (int k = 0; k < KMAX; k++) {
+      if(hlm->kmask[k]){
+	/* Calculate Deltaphi */
+	t0 = t_lm[k][idx[k]+n0] - tmatch[k];
 	
-    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-    Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]+n0];
+	eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+	Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]+n0];
 	    
-    /* Compute and attach ringdown */
-    for (int j = idx[k]+n0-1; j < size ; j++ ) {
-      tm = t_lm[k][j] - tmatch[k];
+	/* Compute and attach ringdown */
+	for (int j = idx[k]+n0-1; j < size ; j++ ) {
+	  tm = t_lm[k][j] - tmatch[k];
 	      
-      eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-      hlm->phase[k][j] = psi[1] - Deltaphi[k];
-      hlm->ampli[k][j] = psi[0];
+	  eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+	  hlm->phase[k][j] = psi[1] - Deltaphi[k];
+	  hlm->ampli[k][j] = psi[0];
       
-      if(nNegAmp[k]==1) {
-	hlm->ampli[k][j] = -hlm->ampli[k][j];
+	  if(nNegAmp[k]==1) {
+	    hlm->ampli[k][j] = -hlm->ampli[k][j];
+	  }
+	}
       }
     }
-  }
-	  
+
   /** Free mem. */
   for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);

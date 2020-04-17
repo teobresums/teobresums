@@ -325,7 +325,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 
 /** (h+, hx) polarizations from the multipolar waveform */
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
-{  
+{
 #ifdef _OPENMP
   if (USETIMERS) openmp_timer_start("compute_hpc");
 #endif
@@ -1088,9 +1088,11 @@ void Waveform_lm_output (Waveform_lm *wav)
   set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
   char fname[STRLEN*2];
   const int n = wav->size;
-  for (int k=0; k<KMAX; k++) {
-    if (kmask[k]) {      
+
+  for (int k=1; k<KMAX; k++) {
+    if (kmask[k]) {
       sprintf(fname,"%s/%s_l%01d_m%01d.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
+
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
 	      errorexits("error opening file",fname);
