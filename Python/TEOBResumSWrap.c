@@ -182,9 +182,6 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->output_dynamics = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_dynamics"));
   }
   if ( PyDict_GetItemString(dict, "output_nqc") != NULL ) { 
-    EOBPars->output_dynamics = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_dynamics"));
-  }
-  if ( PyDict_GetItemString(dict, "output_nqc") != NULL ) { 
     EOBPars->output_nqc = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_nqc"));
   }
   if ( PyDict_GetItemString(dict, "output_nqc_coefs") != NULL ) { 
@@ -216,9 +213,6 @@ int SetOptionalVariables(PyObject* dict){
   }
     if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
     EOBPars->domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "domain"));
-  }
-  if ( PyDict_GetItemString(dict, "interp_FD_waveform") != NULL ) { 
-    EOBPars->interp_FD_waveform = (int) PyLong_AsLong(PyDict_GetItemString(dict, "interp_FD_waveform"));
   }
   if ( PyDict_GetItemString(dict, "df") != NULL ) { 
     EOBPars->df = PyFloat_AsDouble(PyDict_GetItemString(dict, "df"));

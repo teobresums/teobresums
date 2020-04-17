@@ -507,7 +507,6 @@ typedef struct tagEOBParameters
   int firstcall[NFIRSTCALL];
 
   int domain; //Time or frequency domain
-  int interp_FD_waveform;
   double df;  //frequency interp df, can be set from srate (?)
   
 } EOBParameters;
