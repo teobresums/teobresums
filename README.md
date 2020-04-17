@@ -36,7 +36,7 @@ $ make -f Makefile.TEOBResumS
 
 Alternatively, you can build a python module using [disutil](https://docs.python.org/3/library/distutils.html) and the following script
 ```
-$ cd /PATH/TO/teobresums/C/
+$ cd /PATH/TO/teobresums/Python/
 $ python TEOBResumSWrap_setup.py build_ext --inplace
 ```
 
