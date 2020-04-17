@@ -754,10 +754,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if(EOBPars->output_multipoles) {
       strcat(hlm->name,"_insplunge");
       Waveform_lm_output (hlm);
-      }
-      if (EOBPars->output_dynamics)
-      Dynamics_output(dyn);
-      #endif
   */
 
   if (!(use_tidal) && (dyn->r < 2.)) {

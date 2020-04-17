@@ -343,7 +343,11 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   
   /* phi evol eqn rhs */
   dy[EOB_EVOLVE_PHI] = Omg;
+<<<<<<< HEAD
   
+=======
+    
+>>>>>>> 49daa8cac9692f05654716b3bb5beda3a542c969
   /* Compute here the new r_omg radius */
   double r_omg       = eob_dyn_get_romg(r, prstar, pphi, d);
   const double v_phi = r_omg*Omg;

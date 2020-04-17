@@ -3551,7 +3551,6 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
       hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
     }
   }
-
 }
 
 /** Routine for factorized EOB waveform and eccentric systems */
