@@ -1,12 +1,12 @@
 # Calculate match between a waveform and others
 
-#from __future__ import division
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
-
 import sys
 sys.path.append('../')
+import EOBRun_module
+
+import numpy as np
+from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 
 def modes_to_k(modes):
     """
@@ -37,7 +37,7 @@ def match(hptilde1, hctilde1, hptilde2, hctilde2, dt, timeShift, frequencies, si
     norm1 = np.sum( 2*np.conj(template)*template/sigmasq ).real
     norm2 = np.sum( 2*np.conj(data)*data/sigmasq ).real
     Norma = np.sqrt( norm1*norm2 )
-    return overlap/Normalisation
+    return overlap/Norma
 
 if __name__ == "__main__":
 
@@ -46,8 +46,8 @@ if __name__ == "__main__":
     # Generate the target waveform
     M1 = 36 # Mo
     M2 = 29 # Mo
-    Deff = 410 # Mpc
-    iota = 0.
+    Deff = 410. # Mpc
+    iota = np.pi/2.
     k = modes_to_k([[2,2]])# Use 22 mode only
     pars = {
         'M'                  : M1+M2,
@@ -67,11 +67,11 @@ if __name__ == "__main__":
         
     }
     T, Hp, Hc = EOBRun_module.EOBRunPy(pars)
-    Htildep, Htildec = JBJF(Hp,Hc,T[1]-T[0])
+    Hptilde, Hctilde = JBJF(Hp,Hc,T[1]-T[0])
 
     # PSD
     # https://github.com/lscsoft/lalsuite-archive/blob/master/lalsimulation/src/LIGO-P1200087-v18-aLIGO_BNS_OPTIMIZED.txt
-    f, psd  = np.loadtxt("./LIGO-P1200087-v18-AdV_DESIGN.txt",unpack=True) # ASD
+    f, psd  = np.loadtxt("./LIGO-P1200087-v18-aLIGO_BNS_OPTIMIZED.txt",unpack=True) # ASD
     psd *= psd
 
     # Generate an interpolant for the PSD
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     # As an example, we vary the sky location 
     # and compute the match of the same source located at different positions
-    iota_range = linspace(0,np.pi,20)
+    iota_range = np.linspace(0,np.pi,20)
     
     # Compute the match 
     F = []
@@ -91,8 +91,8 @@ if __name__ == "__main__":
 
         # Time shifts and normalisation of the Fourier transform                       
         dt              =  t[1]-t[0]
-        n1              = len(hp_eob)
-        n2              = len(hp_pa)
+        n1              = len(Hp)
+        n2              = len(hp)
         n               = np.minimum(n1,n2) 
         tc_index1 = np.argmax(Hp[:n]**2+Hc[:n]**2)       
         tc_1      = T[tc_index1]
@@ -102,15 +102,18 @@ if __name__ == "__main__":
         frequencies = np.fft.rfftfreq(n,d=dt)
         sigmasq     =  psd_int(frequencies) * dt**2
 
-        htildep, htildec = JBJF(hp,hc,t[1]-t[0])
+        hptilde, hctilde = JBJF(hp,hc,t[1]-t[0])
 
-        F.append( match(hptilde1, hctilde1,
-                        hptilde2, hctilde2,
+        F.append( match(Hptilde, Hctilde,
+                        hptilde, hctilde,
                         dt, timeShift, 
                         frequencies, sigmasq) )
 
-        if (verbose): print(F)
+        if (verbose): print(F[-1])
 
-
-
+    # Plot
+    plt.plot(iota_range, F, '')
+    plt.xlabel(r'$\iota$')
+    plt.xlabel(r'$F$')
+    plt.show()
       
