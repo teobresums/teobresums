@@ -257,8 +257,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   //alloc EOBPars and set defaults based on Lambdas
   EOBParameters_alloc ( &EOBPars ); 
 
-  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
-  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+  if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
+    EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
+  if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
+    EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
 
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = 1;
   EOBParameters_defaults (default_choice, EOBPars);  
@@ -266,8 +268,11 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   /* Read the dictionary in EOBPars */
   /* RG: there has to be a faster way...*/
 
-  EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
-  EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+  if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
+    EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
+  if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
+    EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+    
   EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
   EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
   EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
