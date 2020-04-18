@@ -89,7 +89,7 @@
 #endif
 
 /** Macros */
-#define TEOBResumS_Info "TEOBResumS code (C) 2017\n"
+#define TEOBResumS_Info "TEOBResumS code (c) 2017-2020"
 #define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);}
 
 #define STRLEN 1024 /** Standard string length */
