@@ -1,7 +1,7 @@
 # Produce a waveform compatible with GW150914
 
 import sys
-sys.path.append('../')
+sys.path.insert(1,'../')
 import EOBRun_module
 
 import numpy as np
@@ -33,9 +33,10 @@ pars = {
     'srate_interp'       : 4096.,  # srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
     'initial_frequency'  : 35.,    # in Hz if use_geometric_units = 0, else in geometric units
-    'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
-    'distance': Deff,
-    'inclination':iota,
+    'interp_uniform_grid': 1,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+    'distance'           : Deff,
+    'inclination'        : iota,
+    'output_hpc'         : 0
 }
 
 # Run the WF generator

@@ -268,14 +268,6 @@ enum{
 };
 static const char* const ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
 
-/** List of options for interp_uniform_grid */
-enum{
-  INTERP_UNIFORM_GRID_OFF,
-  INTERP_UNIFORM_GRID_HPC,
-  INTERP_UNIFORM_GRID_HLM,
-  INTERP_UNIFORM_GRID_NOPT
-};
-
 /** Error handler for root finders */
 enum{ 
   ROOT_ERRORS_NO,
@@ -515,7 +507,6 @@ typedef struct tagEOBParameters
   int firstcall[NFIRSTCALL];
 
   int domain; //Time or frequency domain
-  int interp_FD_waveform;
   double df;  //frequency interp df, can be set from srate (?)
   
 } EOBParameters;

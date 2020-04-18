@@ -94,7 +94,6 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->r0 = 0.;
   eobp->initial_frequency = 0.004;
 
-  eobp->interp_FD_waveform = 0;
   eobp->df = 1.;
 
   //tides = "no" 

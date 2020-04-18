@@ -1,7 +1,7 @@
 # Calculate match between a waveform and others
 
 import sys
-sys.path.append('../')
+sys.path.insert(1,'../')
 import EOBRun_module
 
 import numpy as np

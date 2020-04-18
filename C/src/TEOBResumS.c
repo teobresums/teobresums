@@ -88,7 +88,6 @@ int main (int argc, char* argv[])
   }
 
   /* set domain */
-  EOBPars->domain = 1;//DOMAIN_TD;//FIXME: this can be the deafault, but we should enable FD as well
   eob_set_params_EOBRun(dc, fc); 
   
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
@@ -862,7 +861,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /** TIME DOMAIN */
     
-    if (EOBPars->interp_uniform_grid == INTERP_UNIFORM_GRID_HLM) {
+    if (EOBPars->interp_uniform_grid) {
       /* Interp to uniform grid the multipoles before hpc computation */
       const double dt_interp = EOBPars->dt_interp;
       const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
