@@ -169,14 +169,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   /** Alloc memory for dynamics and multipolar waveform */
-  Dynamics *dyn;
+  Dynamics *dyn = NULL;
   Waveform_lm *hlm = NULL; /* h_lm */ 
   WaveformFD_lm *hflm = NULL; /* hf_lm (FD) */ 
   
-  Waveform_lm_t *hlm_t;
-  Waveform_lm *hlm_nqc; /* NQC */
-  Waveform_lm *hlm_mrg; /* merger chunk */
-  Dynamics *dyn_mrg;
+  Waveform_lm_t *hlm_t = NULL;
+  Waveform_lm *hlm_nqc = NULL; /* NQC */
+  Waveform_lm *hlm_mrg = NULL; /* merger chunk */
+  Dynamics *dyn_mrg = NULL;
   double ytmp[EOB_EVOLVE_NVARS], dytmp[EOB_EVOLVE_NVARS], ttmp; /* Additional buffer for post-Omegapeak ev */
 
   /* Set quick-access parameters dyn (be careful here) */
@@ -659,23 +659,28 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     int merger_interp = 1; /* In general, yes ... */
     if (ode_tstep != ODE_TSTEP_ADAPTIVE) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
 
-    /* Make sure merger ptrs point to something */
-    hlm_mrg = hlm; 
-    dyn_mrg = dyn;
-
     /** NQC and ringdown attachment is done around merger 
-	  using auxiliary variables defined around [tmin,tmax] 
-	  Recall that parameters are NOT stored into these auxiliary vars */
+	using auxiliary variables defined around [tmin,tmax] 
+	Recall that parameters are NOT stored into these auxiliary vars */
     
-    if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+    if (merger_interp) {
+
+      /** Extract the waveform and dynamics around merger */
+      const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
+      const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
+      
+      /* The following routines alloc memory for the *_mrg ptrs */
+      Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
+      Dynamics_extract (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
       
       /** Find peak of Omega */
+      
       /* Assume a monotonically increasing function, start from after the peak */
       int index_pk = dyn->size-1;
       double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
       for (int j = dyn->size-2; j-- ; ) {
-        if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
-          break;
+	if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
+	  break;
         index_pk = j;
         Omega_pk = dyn->data[EOB_OMGORB][j]; 
       }
@@ -683,110 +688,76 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-3];
       const int nn = 7;  
       double tOmg_pk = find_max(nn, 0.5, tpeak, Omega_ptr, NULL);
-	      
-      const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
-      const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
-      hlm_mrg = NULL;
-      dyn_mrg = NULL;
-	      
-      Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
-      Dynamics_extract (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
-	
-      /**  Interpolate mrg on uniform grid */
-	      
-      /* Build uniform grid of width dt and alloc tmp memory */
-      double dt_merger_interp = 0.5;
-	
-      double tstart_mrg = tOmg_pk-8.;
+      
+      /** Build uniform grid of width dt and alloc tmp memory */
+      const double dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
+      //dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
+      const double tstart_mrg = tOmg_pk - 8.;
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
+      
       if (VERBOSE) {
-        PRSECTN("Interpolation of merger to uniform grid");
-        PRFORMi("interpolation_grid_size",size_mrg);
-        PRFORMd("interpolation_grid_dt",dt_merger_interp);
-        PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
-        PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
+	PRSECTN("Interpolation of merger to uniform grid");
+	PRFORMi("interpolation_grid_size",size_mrg);
+	PRFORMd("interpolation_grid_dt",dt_merger_interp);
+	PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
+	PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
       }
-	      
+      
+      /*
+	#if (DEBUG) 
+	// Output post-interpolation wave and dynamics 
+	if(EOBPars->output_multipoles) {
+	Waveform_lm_output (hlm_mrg);
+	Waveform_lm_output_reim (hlm_mrg);
+	}
+	if (EOBPars->output_dynamics) 
+	Dynamics_output(dyn_mrg);
+	#endif
+      */
+      
+      /**  Interpolate mrg on uniform grid */
+      
       /* Interp Waveform */ 
       Waveform_lm_interp (hlm_mrg, size_mrg, tstart_mrg, dt_merger_interp, "hlm_mrg_interp");
       
       /* Interp Dynamics */
       Dynamics_interp (dyn_mrg, size_mrg, tstart_mrg, dt_merger_interp, "dyn_mrg_interp");	       
-    
-    }
-    else if (merger_interp) {
-
-      const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
-      const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
-      hlm_mrg = NULL;
-      dyn_mrg = NULL;
       
-      Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
-      Dynamics_extract (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
-
-      /**  Interpolate mrg on uniform grid */
       
-      /* Build uniform grid of width dt and alloc tmp memory */
-      double dt_merger_interp = EOBPars->dt_merger_interp;
-      //dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
-      dt_merger_interp = MIN(dt_merger_interp, dyn->dt);
-
-      const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], hlm_mrg->time[0], dt_merger_interp);
-      if (VERBOSE) {
-        PRSECTN("Interpolation of merger to uniform grid");
-        PRFORMi("interpolation_grid_size",size_mrg);
-        PRFORMd("interpolation_grid_dt",dt_merger_interp);
-        PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
-        PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
-      }
-      
-      /* Interp Waveform */ 
-      Waveform_lm_interp (hlm_mrg, size_mrg, hlm_mrg->time[0], dt_merger_interp, "hlm_mrg_interp");
-      
-      /* Interp Dynamics */
-      Dynamics_interp (dyn_mrg, size_mrg, dyn_mrg->time[0], dt_merger_interp, "dyn_mrg_interp");
-
-      /*
-	#if (DEBUG) 
-	// Output post-interpolation wave and dynamics 
-	if(EOBPars->output_multipoles) {
-       	Waveform_lm_output (hlm_mrg);
-       	Waveform_lm_output_reim (hlm_mrg);
-	}
-	if (EOBPars->output_dynamics) 
-       	Dynamics_output(dyn_mrg);
-	#endif
-      */
- 
     } /* End of merger interp */
     
     
-    if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"compute")) {
+    if (EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) {
       
       /** BBH : compute and add NQC */
       
       if (VERBOSE) PRSECTN("NQC Calculation");
       
-      if ((merger_interp) || (STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+      if (merger_interp) { 
 	
         /* Compute NQC only around merger, 
-          add to both merger and full waveform */
+	   add to both merger and full waveform */
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
         eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
         strcat(hlm_mrg->name,"_nqc");
-
+	
         /* Join merger to full waveform */
         Waveform_lm_join (hlm, hlm_mrg, hlm_mrg->time[0]);
         Dynamics_join (dyn, dyn_mrg, dyn_mrg->time[0]);
         size = hlm->size;
         EOBPars->size = size;
+
+	/* Free the *_mrg buffers 
+	   Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
+	Waveform_lm_free(hlm_mrg);
+	Dynamics_free(dyn_mrg);
 	
       } else {
-
+	
         /* Compute NQC and add them to full waveform */
         Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
         eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
-
+	
       }
       
       strcat(hlm->name,"_nqc");      
@@ -804,9 +775,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       Waveform_lm_free (hlm_nqc);
       
-    }
-    Waveform_lm_free(hlm_mrg);
-    Dynamics_free(dyn_mrg);
+    } // NQC_HLM_COMPUTE
+
     
     /** BBH : add Ringdown */
     

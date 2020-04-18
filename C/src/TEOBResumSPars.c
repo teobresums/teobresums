@@ -22,28 +22,30 @@
  * @file TEOBResumPars.h
  * @brief Parameter manager
  *
+ * Parameters are managed using the type EOBParameters.
+ * Parameters can be input via a parfile as versions < v2.0.
+ * 
+ * This file contains routines to manage
+ * - EOBParameters
+ * - the old parameters db (libconfig wrappers, see below)
+ * - copying between the two
+ * - set EOB parameters for the run
+ * 
+ * History
+ * - SB 11/2019 Added the par structure type EOBParameters and routines to work with it.
+ * - v0.0 and v1.0 worked only with the parameter db and the parfile.
+ *
+ *  TODO
+ * - SB 04/2020 we want to simplify the logic for the input file, and also have command-line inputs for the PE parameters (similar to the C++).
+ *
+ * OLD Documentation about the parameter db:
+ *
  * Parameters are managed using a database (db) ' key = value '
  * The db is initialized by the file $TEOBRESUMS/par/default.par
  * Use libconfig API but in a simplified way (http://hyperrealm.com/libconfig/libconfig_manual.html)
  * The db entries can be set/accessed in other parts of the code with simple wrapper functions
  * Note autoconversion int/float is disabled, type must be specified in the *.par
  */
-
-/*
-  This file contains routines to manage
-  - the structure EOBParameters
-  - a simple parameters database set from parfile (libconfig wrappers)
-  - copy things between the two
-  - set EOB parameters for the run
-  
-  History
-  - SB 04/2020 Some cleaning.
-  - SB 11/2019 Added the par structure type EOBParameters and routines to work with it.
-  - v0.0 and v1.0 worked only with the parameter database and the parfile.
-
-  TODO
-  - SB 04/2020 we want to simplify the logic for the input file, and also have command-line inputs for the PE parameters (similar to the C++).
-*/
 
 #include "TEOBResumS.h"
 
@@ -254,25 +256,25 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
     eobp->centrifugal_radius = CENTRAD_NLO;
     eobp->use_flm = USEFLM_SSLO;
-    eobp->use_tidal=TIDES_OFF;
-    eobp->use_tidal_gravitomagnetic=TIDES_GM_OFF;
+    eobp->use_tidal = TIDES_OFF;
+    eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
 
-    eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
-    eobp->nqc_coefs_flx=NQC_FLX_NRFIT_NOSPIN201602; // {"none", "nrfit_nospin20160209", "fromfile"}
-    eobp->nqc_coefs_hlm=NQC_HLM_NRFIT_NOSPIN201602; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+    eobp->nqc = NQC_AUTO; // {"no", "auto", "manual"}
+    eobp->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN_201602; // {"none", "nrfit_nospin20160209", "fromfile"}
+    eobp->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
      
   } else if (choose == DEFAULT_PARS_BNS) {
 
-    eobp->use_tidal=TIDES_TEOBRESUM3;
-    eobp->use_tidal_gravitomagnetic=TIDES_GM_PN;
+    eobp->use_tidal = TIDES_TEOBRESUM3;
+    eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
     eobp->pGSF_tidal = 4.0;
     eobp->use_Yagi_fits = 1;
 
     eobp->centrifugal_radius = CENTRAD_NNLO;
     eobp->use_flm = USEFLM_SSNLO;
-    eobp->nqc=NQC_NO; // {"no", "auto", "manual"}
-    eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
-    eobp->nqc_coefs_hlm=NQC_HLM_NONE;
+    eobp->nqc = NQC_NO; // {"no", "auto", "manual"}
+    eobp->nqc_coefs_flx = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
+    eobp->nqc_coefs_hlm = NQC_HLM_NONE;
 
   }
 
@@ -1206,8 +1208,8 @@ void eob_set_params(int default_choice, int firstcall)
 	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
 	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
       } else {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN201602;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN201602;
+	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN_201602;
+	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602;
       }
     }
   } 
@@ -1284,7 +1286,6 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
-    /*
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;

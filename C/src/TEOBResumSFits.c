@@ -279,7 +279,7 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
 }
 
 /** Fits for NR point used to determine NQC corrections 
-    New fits for higer modes paper: arXiv:2001.09082 */
+    New fits for higher modes paper: arXiv:2001.09082 */
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
@@ -786,14 +786,11 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
 /** Set NQC coefficients */
 void eob_nqc_setcoefs(NQCdata *nqc)
 {
-
   nqc->flx->add = 1;
   nqc->hlm->add = 1;
 
-  if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"none"))
-    nqc->flx->add = 0;
-  if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"none"))
-    nqc->hlm->add = 0;
+  if (EOBPars->nqc_coefs_flx == NQC_FLX_NONE) nqc->flx->add = 0;
+  if (EOBPars->nqc_coefs_hlm == NQC_HLM_NONE) nqc->hlm->add = 0;
       
   /* Init NQC coefs to zero */
   for (int k = 0; k < KMAX; k++) {
@@ -822,18 +819,18 @@ void eob_nqc_setcoefs(NQCdata *nqc)
   if (nqc->flx->add + nqc->hlm->add == 0) 
     return;
 
-  if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"nrfit_nospin201602"))
+  if (EOBPars->nqc_coefs_flx == NQC_FLX_NRFIT_NOSPIN_201602)
     eob_nqc_setcoefs_nospin201602(nqc->flx);
-  else if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"fit_spin_202002"))
+  else if (EOBPars->nqc_coefs_flx == NQC_FLX_NRFIT_SPIN_202002)
     eob_nqc_setcoefs_spin202002(nqc->flx);
-  else if (STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"fromfile")) 
+  else if (EOBPars->nqc_coefs_flx == NQC_FLX_FROMFILE) 
     eob_nqc_setcoefs_fromfile(nqc->flx, EOBPars->nqc_coefs_flx_file);
 
-  if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"nrfit_nospin201602")) 
+  if (EOBPars->nqc_coefs_hlm == NQC_HLM_NRFIT_NOSPIN_201602) 
     eob_nqc_setcoefs_nospin201602(nqc->hlm);
-  else if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"fit_spin_202002")) 
+  else if (EOBPars->nqc_coefs_hlm == NQC_HLM_NRFIT_SPIN_202002)
     eob_nqc_setcoefs_spin202002(nqc->hlm);
-  else if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"fromfile")) 
+  else if (EOBPars->nqc_coefs_hlm == NQC_HLM_FROMFILE) 
     eob_nqc_setcoefs_fromfile(nqc->hlm,EOBPars->nqc_coefs_hlm_file);
   
 }

@@ -318,8 +318,8 @@ static const char* const nqc_opt[] = {"no", "auto", "manual"};
 
 enum{
   NQC_FLX_NONE,
-  NQC_FLX_NRFIT_NOSPIN201602,
-  NQC_FLX_FIT_SPIN_202002,
+  NQC_FLX_NRFIT_NOSPIN_201602,
+  NQC_FLX_NRFIT_SPIN_202002,
   NQC_FLX_FROMFILE,
   NQC_FLX_NOPT
 };
@@ -327,8 +327,8 @@ static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "fit_spi
 
 enum{
   NQC_HLM_NONE,
-  NQC_HLM_NRFIT_NOSPIN201602,
-  NQC_HLM_FIT_SPIN_202002,
+  NQC_HLM_NRFIT_NOSPIN_201602,
+  NQC_HLM_NRFIT_SPIN_202002,
   NQC_HLM_FROMFILE,
   NQC_HLM_COMPUTE,
   NQC_HLM_NOPT
