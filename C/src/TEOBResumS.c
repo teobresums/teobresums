@@ -660,8 +660,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (ode_tstep != ODE_TSTEP_ADAPTIVE) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
 
     /* Make sure merger ptrs point to something */
-    hlm_mrg = hlm; 
-    dyn_mrg = dyn;
+    hlm_mrg = NULL; 
+    dyn_mrg = NULL;
 
     /** NQC and ringdown attachment is done around merger 
 	  using auxiliary variables defined around [tmin,tmax] 
@@ -759,7 +759,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       */
  
     } /* End of merger interp */
-    
     
     if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"compute")) {
       
