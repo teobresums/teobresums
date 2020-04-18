@@ -76,8 +76,7 @@ int main (int argc, char* argv[])
       }
       par_db_write_file("params.txt");
     }
-    par_db_free();
-    
+    par_db_free();    
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
   }
@@ -88,7 +87,7 @@ int main (int argc, char* argv[])
   }
 
   /* set domain */
-  eob_set_params_EOBRun(dc, fc); 
+  eob_set_params(dc, fc); 
   
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 

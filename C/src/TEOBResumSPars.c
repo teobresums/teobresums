@@ -29,13 +29,25 @@
  * Note autoconversion int/float is disabled, type must be specified in the *.par
  */
 
-// SB 11/2019: Added the par structure type EOBParameters and
-// started coding necessary routines for new parameters management
-// Routines "_new" will substitute the current ones but are not yet in use
+/*
+  This file contains routines to manage
+  - the structure EOBParameters
+  - a simple parameters database set from parfile (libconfig wrappers)
+  - copy things between the two
+  - set EOB parameters for the run
+  
+  History
+  - SB 04/2020 Some cleaning.
+  - SB 11/2019 Added the par structure type EOBParameters and routines to work with it.
+  - v0.0 and v1.0 worked only with the parameter database and the parfile.
+
+  TODO
+  - SB 04/2020 we want to simplify the logic for the input file, and also have command-line inputs for the PE parameters (similar to the C++).
+*/
 
 #include "TEOBResumS.h"
 
-#define DEBUG_THIS_FILE 0 /* = 1 to compile and debug this files */
+#define DEBUG_THIS_FILE (0) /* = 1 to compile and debug various rutines in this file */
 #if (DEBUG_THIS_FILE)
 #undef errorexit
 #undef errorexits
@@ -57,14 +69,14 @@ void EOBParameters_alloc (EOBParameters **eobp)
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
   if (eobp == NULL)
     errorexit("Out of memory");
-    /* the arrays below are already allocated in EOBParameters_defaults */
-  // (*eobp)->use_mode_lm_size = 1; 
-  // (*eobp)->use_mode_lm = malloc ( 1 * sizeof(int) );
-  // (*eobp)->use_mode_lm [0] = -1;
-  // (*eobp)->output_lm_size = 1;
-  // (*eobp)->output_lm = malloc ( 1 * sizeof(int) );
-  // (*eobp)->output_lm [0] = -1;
-}
+  /* the arrays below are already allocated in EOBParameters_defaults */
+  /* (*eobp)->use_mode_lm_size = 1;  */
+  /* (*eobp)->use_mode_lm = malloc ( 1 * sizeof(int) ); */
+  /* (*eobp)->use_mode_lm [0] = -1; */
+  /* (*eobp)->output_lm_size = 1; */
+  /* (*eobp)->output_lm = malloc ( 1 * sizeof(int) ); */
+  /* (*eobp)->output_lm [0] = -1; */
+} 
 
 void EOBParameters_free (EOBParameters *eobp)
 {
@@ -77,7 +89,6 @@ void EOBParameters_free (EOBParameters *eobp)
 void EOBParameters_defaults (int choose, EOBParameters *eobp)
 {
 
-  //TODO this needs a patience filling ...
   eobp->domain = DOMAIN_TD;
   
   eobp->M = 1.;
@@ -95,9 +106,6 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->initial_frequency = 0.004;
 
   eobp->df = 1.;
-
-  //tides = "no" 
-  //tides_gravitomagnetic = "no"
 
   eobp->LambdaAl2 = 0.; // Tidal gravitoelectric parameter Lambda for star A ell=2
   eobp->LambdaBl2 = 0.;
@@ -183,7 +191,6 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
 
   /* following pars are set later by the code */
-  // TODO: they will be removed from the db and only kept in EOBParameters
 
   eobp->nu= 0. ; // symmetric mass ratio
   eobp->X1= 0. ; // mass ratio M1/M
@@ -254,8 +261,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->nqc_coefs_flx=NQC_FLX_NRFIT_NOSPIN201602; // {"none", "nrfit_nospin20160209", "fromfile"}
     eobp->nqc_coefs_hlm=NQC_HLM_NRFIT_NOSPIN201602; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
      
-  }
-  else if (choose == DEFAULT_PARS_BNS) {
+  } else if (choose == DEFAULT_PARS_BNS) {
 
     eobp->use_tidal=TIDES_TEOBRESUM3;
     eobp->use_tidal_gravitomagnetic=TIDES_GM_PN;
@@ -267,6 +273,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->nqc=NQC_NO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
     eobp->nqc_coefs_hlm=NQC_HLM_NONE;
+
   }
 
   /*
@@ -281,17 +288,15 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_spins = 0;
   }
   */
+
   else errorexit("unknown default parameter choice.");
 
 }
 
 /** overwrites the EOBParameters entries from the db values */
+// This is the 'inverse' of par_db_default
 void EOBParameters_set_from_db (EOBParameters *eobp)
 {
-  //TODO
-  // This is the 'inverse' of par_db_default
-  // since (almost all) parameters have the same names, this can be probably automatized in 4 lines...
-
   eobp->M = par_get_d("M"); // total binary mass  
   eobp->q = par_get_d("q"); // mass ratio
   eobp->chi1 = par_get_d("chi1"); // dimensionless spin 1 z-component 
@@ -470,6 +475,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->openmp_threads = par_get_i("openmp_threads");
   eobp->openmp_timeron = par_get_i("openmp_timeron"); 
 }
+
 
 /*
  * libconfig wrappers
@@ -1083,57 +1089,14 @@ void par_set_arrayd (const char *key, double *array, int n)
 }
 
 
-
-
-
-// SB: below we have 3 routines:
-// - eob_set_params_new()
-// - eob_set_params()
-// - eob_set_params_EOBRun()
-// we should have only 2: the old and the new working with EOBPars
-// (seems to be eob_set_params_EOBRun() )
-
-// SB: it is unclear
-
-
-
-
-#if (!DEBUG_THIS_FILE)
-
 /*
- * main routine to set parameters
+ * main routine to set parameters for the run
  */
 
-/** Set parameters */
-// New main routine to set the parameters
-// This now uses the new type EOBParameters but keeps the parfile management with libconfig
-void eob_set_params_new(char *parfile, int n, int default_choice)
+void eob_set_params(int default_choice, int firstcall)
 {
   
-  /* Init memory EOBParameters */ 
-  EOBParameters_alloc( &EOBPars );
-  
-  /* Set defaults for BNS, BBH, BHNS */
-  EOBParameters_defaults (default_choice, EOBPars);
-
-  if (parfile!=NULL) {
-    /* Deal with input parfile if necessary 
-       (this is the current logic, we'll keep it for compatibility) */
-    par_db_init ();
-    //par_db_default (); 
-    par_db_from_EOBPar (EOBPars);
-    par_file_parse_merge (parfile);
-    par_db_screen (VERBOSE);
-    // TODO: write EOBParameters
-    // RG: DONE(?)
-    EOBParameters_set_from_db (EOBPars);
-    par_db_free();
-  }
-  
-  //FIXME: we want to do allocation and default setting in main
-  // so to set there already the PE parameters from the input
-  // the following assumes the EOBPars has set the correct 
-  // M,q,chi1,chi2,fmin,Lambda ... (extrinsic pars)
+  /* Set intrinsic parameters as given by user */
 
   const double M =  EOBPars->M;
   const double fmin = EOBPars->initial_frequency;
@@ -1195,7 +1158,7 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     if (!(EOBPars->kapT3 > 0.)) errorexit("kappaT3 must be >0");
     if (!(EOBPars->kapT4 > 0.)) errorexit("kappaT4 must be >0");
   } 
-  
+
   /* Tidal coefficients cons dynamics
      \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
   if(usetidal){
@@ -1232,19 +1195,19 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
   }
 
   /* Default settings for NQC */
-  //FIXME: current defaults reproduce the setup of v0.0.
-  //       They will change once all the NQC fits are ready
+  //TODO: current defaults reproduce the setup of v0.0.
+  //      They will change once all the NQC fits are ready
   if (EOBPars->nqc == NQC_AUTO) {
     if (usetidal) {
       EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
       EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
       if (usespins) {
-	      EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-	      EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
       } else {
-	      EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN201602;
-	      EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN201602;
+	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN201602;
+	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN201602;
       }
     }
   } 
@@ -1322,6 +1285,7 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
     /*
+    /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
       eob_wav_flm     = &eob_wav_flm_v1;
@@ -1343,31 +1307,19 @@ void eob_set_params_new(char *parfile, int n, int default_choice)
   } else if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
   } else errorexit("unknown option for centrifugal_radius");
-  
-/* if (parfile!=NULL) {
-    par_db_init ();
-    par_db_from_EOBPar (EOBPars);
-    system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
-    par_db_write_file("params.txt");//FIXME: (as above)
-    par_db_free();
-  }
-*/
+
 }
 
 /** Set parameters */
-void eob_set_params(char *s, int n)
+/* Old routine working with the parfile/libconfig/parameter DB */
+void eob_set_params_old(char *s, int n)
 {
   /* init db */
   par_db_init ();
 
   /* Set default values */
   par_db_default_fromfile ();
-  /* RG: test EOBPars structure: load db from EOBPars default, then free
-  EOBParameters_alloc (&EOBPars);
-  EOBParameters_defaults(0, EOBPars);
-  par_db_from_EOBPar (EOBPars);
-  EOBParameters_free (EOBPars);
-  */
+
   /* Parse input parfile */
   if (s!=NULL) {
     /* Deal with input parfile if necessary 
@@ -1691,250 +1643,7 @@ void eob_set_params(char *s, int n)
 }
 
 
-
-
-
-void eob_set_params_EOBRun(int default_choice, int firstcall)
-{
-
-  //SB: I would keep EOBPars allocation, de-allocation and set as 3
-  //    separated things to be used in the main/python wrapper.
-  //    For the moment I would postpone the first call thingy.
-
-  /* Set intrinsic parameters as given by user */
-
-  const double M =  EOBPars->M;
-  const double fmin = EOBPars->initial_frequency;
-  const double q =  EOBPars->q;
-  EOBPars->nu = q_to_nu(q);
-  EOBPars->X1 = nu_to_X1(EOBPars->nu);
-  EOBPars->X2 = 1. -  EOBPars->X1;
-  const double XA = EOBPars->X1; /* tidal part used different notation, used here for simplicity */
-  const double XB = EOBPars->X2;
-
-  const double chi1 = EOBPars->chi1;
-  const double chi2 = EOBPars->chi2;
-  EOBPars->S1 = SQ(XA) * chi1;
-  EOBPars->S2 = SQ(XB) * chi2;
-  EOBPars->a1 = XA*chi1;
-  EOBPars->a2 = XB*chi2;
-  EOBPars->aK = EOBPars->a1 +  EOBPars->a2;
-  EOBPars->aK2 = SQ(EOBPars->aK);   
-  EOBPars->S = EOBPars->S1 +  EOBPars->S2;            /* in the EMRL this becomes the spin of the BH */
-  EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;  /* in the EMRL this becomes the spin of the particle */
-
-  const int usespins = EOBPars->use_spins;
-  const int usetidal = EOBPars->use_tidal;
-  const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
-
-  if (EOBPars->use_Yagi_fits) {
-    EOBPars->LambdaAl3 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 3);
-    EOBPars->LambdaBl3 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 3);
-    EOBPars->LambdaAl4 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 4);
-    EOBPars->LambdaBl4 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 4);
-  }
-
-#if(USEGRAVITOMAGNETICTERMS)
- EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
- EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
-#endif
-
-  /* Tidal coupling constants */    
-  EOBPars->kapA2 = 3.   * EOBPars->LambdaAl2 * XA*XA*XA*XA*XA / q; 
-  EOBPars->kapA3 = 15.  * EOBPars->LambdaAl3 * XA*XA*XA*XA*XA*XA*XA / q;
-  EOBPars->kapA4 = 105. * EOBPars->LambdaAl4 * XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
-  
-  EOBPars->kapB2 = 3.   * EOBPars->LambdaBl2 * XB*XB*XB*XB*XB * q;
-  EOBPars->kapB3 = 15.  * EOBPars->LambdaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
-  EOBPars->kapB4 = 105. * EOBPars->LambdaBl4 * XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
-
-  /* gravitomagnetic tidal coupling constants el = 2 only */    
-  EOBPars->japA2 = 24.   * EOBPars->SigmaAl2 * XA*XA*XA*XA*XA / q; 
-  EOBPars->japB2 = 24.   * EOBPars->SigmaBl2 * XB*XB*XB*XB*XB * q;
-
-  EOBPars->kapT2 = EOBPars->kapA2 + EOBPars->kapB2;
-  EOBPars->kapT3 = EOBPars->kapA3 + EOBPars->kapB3;
-  EOBPars->kapT4 = EOBPars->kapA4 + EOBPars->kapB4;
-  
-  EOBPars->japT2 = EOBPars->japA2 + EOBPars->japB2;
-
-  if (usetidal) {
-    if (!(EOBPars->kapT2 > 0.)) errorexit("kappaT2 must be >0");
-    if (!(EOBPars->kapT3 > 0.)) errorexit("kappaT3 must be >0");
-    if (!(EOBPars->kapT4 > 0.)) errorexit("kappaT4 must be >0");
-  } 
-
-  /* Tidal coefficients cons dynamics
-     \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
-  if(usetidal){
-    EOBPars->bar_alph2_1 = (5./2.*XA*EOBPars->kapA2 + 5./2.*XB*EOBPars->kapB2)/EOBPars->kapT2;
-    EOBPars->bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*EOBPars->kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*EOBPars->kapB2)/EOBPars->kapT2;
-    EOBPars->bar_alph3_1 = ((-2.+15./2.*XA)*EOBPars->kapA3 + (-2.+15./2.*XB)*EOBPars->kapB3)/EOBPars->kapT3;
-    EOBPars->bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*EOBPars->kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*EOBPars->kapB3)/EOBPars->kapT3;
-  /* Gravitomagnetic term, see Eq.(6.27) of Bini-Damour-Faye 2012 */
-    EOBPars->bar_alph2j_1 = ( EOBPars->japA2*(1. + (11./6.)*XA + XA*XA) + EOBPars->japB2*(1. + (11./6.)*XB + XB*XB) )/EOBPars->japT2;
-  }
-
-  /* Tidal coefficients for the amplitude */
-  EOBPars->khatA2  = 3./2. * EOBPars->LambdaAl2 * XB/XA * gsl_pow_int(XA,5);
-  EOBPars->khatB2  = 3./2. * EOBPars->LambdaBl2 * XA/XB * gsl_pow_int(XB,5);
-  
-  /* Self-spin coefficients */
-  EOBPars->C_Q1   = 1.;
-  EOBPars->C_Q2   = 1.;
-  EOBPars->C_Oct1 = 1.;
-  EOBPars->C_Oct2 = 1.;
-  EOBPars->C_Hex1 = 1.;
-  EOBPars->C_Hex2 = 1.;
-  if (EOBPars->LambdaAl2>0.) {
-    double logC_Q1 = logQ(log(EOBPars->LambdaAl2));
-    EOBPars->C_Q1           = exp(logC_Q1);
-    EOBPars->C_Oct1         = Yagi14_fit_Coct(EOBPars->C_Q1);
-    EOBPars->C_Hex1         = Yagi14_fit_Chex(EOBPars->C_Q1);
-  }
-  if (EOBPars->LambdaBl2>0.) {
-    double logC_Q2 = logQ(log(EOBPars->LambdaBl2));
-    EOBPars->C_Q2           = exp(logC_Q2);
-    EOBPars->C_Oct2         = Yagi14_fit_Coct(EOBPars->C_Q2);
-    EOBPars->C_Hex2         = Yagi14_fit_Chex(EOBPars->C_Q2);
-  }
-
-  /* Default settings for NQC */
-  //FIXME: current defaults reproduce the setup of v0.0.
-  //       They will change once all the NQC fits are ready
-  if (EOBPars->nqc == NQC_AUTO) {
-    if (usetidal) {
-      EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-      EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
-    } else {
-      if (usespins) {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
-      } else {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN201602;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN201602;
-      }
-    }
-  } 
-  
-  /** Set more as needed ... */
-  EOBPars->a6c = 0.;
-  if (EOBPars->use_flm == USEFLM_HM) {
-    /* Higher modes */
-    EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
-  } else {
-    EOBPars->a6c = eob_a6c_fit(EOBPars->nu);
-  }
-
-  EOBPars->cN3LO = 0.;
-  if (usetidal) EOBPars->cN3LO = 0.0;
-  else if (EOBPars->use_flm == USEFLM_HM) {
-    EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
-  } else {
-    EOBPars->cN3LO = eob_c3_fit_global(EOBPars->nu,EOBPars->a1,EOBPars->a2);
-  }
-
-  double dt = EOBPars->dt;
-  if (EOBPars->use_geometric_units) {
-    /* input given in geometric units, 
-       rescale to geometric units and mass rescaled quantities
-       compute r0 from the initial GW frequency in geometric units and mass rescaled 
-       reset sample rate using dt
-    */
-    if (VERBOSE) printf("Assume geometric units for pars values\n");
-    EOBPars->r0 = pow(fmin*Pi, -2./3.);
-    EOBPars->srate = 1./dt;
-    EOBPars->distance = 1.;
-    EOBPars->M = 1.;
-  } else {
-    /* input given in physical units, 
-       rescale to geometric units and mass rescaled quantities
-       compute r0 from the initial GW frequency in Hz 
-    */
-    if (VERBOSE) printf("Assume physical units for pars values\n");
-    /* Set interpolation dt */
-    dt = 1./EOBPars->srate_interp;
-    dt = time_units_conversion(M, dt);
-    EOBPars->dt_interp = dt;
-    /* Set dt */
-    EOBPars->r0 = radius0(M, fmin);
-    dt = 1./EOBPars->srate;
-    dt = time_units_conversion(M, dt);
-    EOBPars->dt = dt;
-    if (VERBOSE) PRFORMd("dt",EOBPars->dt);
-    if (VERBOSE)
-      if (EOBPars->interp_uniform_grid)
-	PRFORMd("dt_interp",EOBPars->dt_interp);
-  }
-
-  /* Function pointers */
-  
-  /** Set f_lm fun pointer */
-if (EOBPars->use_flm == USEFLM_HM) {
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
-    eob_wav_flm      = &eob_wav_flm_HM;
-    eob_wav_flm_s    = &eob_wav_flm_s_HM;
-    eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_HM;
-  } else if (EOBPars->use_flm == USEFLM_SSLO) {
-    /* eob_wav_flm_s = &eob_wav_flm_s_old; */
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
-    eob_wav_flm      = &eob_wav_flm_v1;
-    eob_wav_flm_s    = &eob_wav_flm_s_SSLO;
-    eob_wav_deltalm  = &eob_wav_deltalm_v1;
-    eob_wav_ringdown = &eob_wav_ringdown_v1;
-  } else if (EOBPars->use_flm == USEFLM_SSNLO) {
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
-    eob_wav_flm      = &eob_wav_flm_v1;
-    eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
-    eob_wav_deltalm  = &eob_wav_deltalm_v1;
-    eob_wav_ringdown = &eob_wav_ringdown_v1;
-    /*
-    /*
-      } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
-      eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
-      eob_wav_flm     = &eob_wav_flm_v1;
-      eob_wav_flm_s   = &eob_wav_flm_s_SSNNLO;
-    */
-  } else errorexit("unknown option for use_flm");
-
-  /** Set rc fun pointer */
-  if (EOBPars->centrifugal_radius == CENTRAD_LO) {
-    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
-  } else if (EOBPars->centrifugal_radius == CENTRAD_NLO) {
-    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NLO;
-  } else if (EOBPars->centrifugal_radius == CENTRAD_NNLO) {
-    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NNLO;
-  } else if (EOBPars->centrifugal_radius == CENTRAD_NNLOS4) {
-    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NNLO_S4;
-  } else if (EOBPars->centrifugal_radius == CENTRAD_NOSPIN) {
-    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOSPIN;
-  } else if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) {
-    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
-  } else errorexit("unknown option for centrifugal_radius");
-/* if (parfile!=NULL) {
-    par_db_init ();
-    par_db_from_EOBPar (EOBPars);
-    system_mkdir(par_get_s("output_dir")); //FIXME: only if output_dir not null and if some output requested
-    par_db_write_file("params.txt");//FIXME: (as above)
-    par_db_free();
-  }
-*/
-}
-
-void eob_free_params()
-{
-  par_db_free ();
-}
-
-
-
-
-
-#else
-
-
-
+#if (DEBUG_THIS_FILE)
 
 /* test 
    gcc TEOBResumSPars.c -lconfig -o testpars.x */
