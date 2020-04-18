@@ -281,7 +281,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   SetOptionalVariables(dict);
 
   /* Run */
-  eob_set_params_EOBRun(default_choice, fc); 
+  eob_set_params(default_choice, fc); 
 
   /* Overwrite spin-spin parameters, if required */
   if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
