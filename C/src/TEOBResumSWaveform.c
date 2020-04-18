@@ -1922,7 +1922,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
 
 #if (DEBUG)
-  fqp = fopen("nqc_dfunc.txt", "w");
+  fp = fopen("nqc_dfunc.txt", "w");
   for (int j=0; j<size; j++) {
     fprintf(fp, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
   }
