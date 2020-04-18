@@ -1746,7 +1746,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
     NQC corrections to the waveform in the spinning case */
 void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {
-  
+
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
   double alpha1[KMAX], omega1[KMAX];
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
@@ -1785,7 +1785,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
     *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
-  
+
   for (int k=0; k<KMAX; k++) {
     omg[k]  = (double*) calloc (size,sizeof(double));
     domg[k] = (double*) calloc (size,sizeof(double));
@@ -1809,10 +1809,11 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   /** omega derivatives */
   const double dt = t[1]-t[0];
   for (int k=0; k<KMAX; k++) {
-    D0(h->phase[k], dt, size, omg[k]);
-    D0(omg[k], dt, size, domg[k]);
+    if(h->kmask[k]){
+      D0(h->phase[k], dt, size, omg[k]);
+      D0(omg[k], dt, size, domg[k]);
+    }
   }
-  
   /** NR fits */
   for (int k=0; k<KMAX; k++) {   
     max_A[k]    = 0.;
@@ -1820,7 +1821,6 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
-	  
   if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
 	    
     /* Higher modes */
@@ -1944,7 +1944,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     Omgmax_index = j;
     }
   */
-  
+
   /** Time */
   double tOmgOrb_pk = t[Omgmax_index];
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
@@ -1996,16 +1996,18 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
      The ringdown coefficient refer to this normalization.
      Nagar & Rezzolla, CQG 22 (2005) R167 */      
   for (int k=0; k<KMAX; k++) {
-    double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
-    		
-    if (h->ampli[k][0] > 0.) {	
-      nNegAmp[k] = 0;	
-    } else {		
-      nNegAmp[k] = 1;	
-    }
+    if(h->kmask[k]){
+      double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
+      
+      if (h->ampli[k][0] > 0.) {
+        nNegAmp[k] = 0;
+      } else {
+        nNegAmp[k] = 1;
+      }
     
-    for (int j=0; j<size; j++) {
-      p1tmp[k][j] = fabs(h->ampli[k][j] * nlm);      
+      for (int j=0; j<size; j++) {
+        p1tmp[k][j] = fabs(h->ampli[k][j] * nlm);    
+      }
     }
   }
 
@@ -2092,20 +2094,23 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
-    for (int j=0; j<size; j++) {
-      hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
-      hnqc->phase[k][j] =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
+    if(hnqc->kmask[k]){
+      for (int j=0; j<size; j++) {
+        hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
+        hnqc->phase[k][j] =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
+      }
     }
   }
   
   /** Multiply waveform to NQC */
   for (int k=0; k<KMAX; k++) {
-    for (int j=0; j<size; j++) {
-      h->ampli[k][j] *= hnqc->ampli[k][j];
-      h->phase[k][j] -= hnqc->phase[k][j];
+    if(h->kmask[k]){
+      for (int j=0; j<size; j++) {
+        h->ampli[k][j] *= hnqc->ampli[k][j];
+        h->phase[k][j] -= hnqc->phase[k][j];
+      }
     }
   }
-
   if (EOBPars->output_nqc_coefs) {
     /** Output the NQC coefficients */
     char fname[STRLEN];
