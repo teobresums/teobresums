@@ -1272,6 +1272,7 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm      = &eob_wav_flm_HM;
     eob_wav_flm_s    = &eob_wav_flm_s_HM;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
+    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
     eob_wav_ringdown = &eob_wav_ringdown_HM;
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
@@ -1279,12 +1280,14 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm      = &eob_wav_flm_v1;
     eob_wav_flm_s    = &eob_wav_flm_s_SSLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
+    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
   } else if (EOBPars->use_flm == USEFLM_SSNLO) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
     eob_wav_flm      = &eob_wav_flm_v1;
     eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
+    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {

@@ -738,6 +738,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         /* Compute NQC only around merger, 
 	   add to both merger and full waveform */
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
+        /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
         eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
         strcat(hlm_mrg->name,"_nqc");
 	
