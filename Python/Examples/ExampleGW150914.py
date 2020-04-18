@@ -1,15 +1,18 @@
 # Produce a waveform compatible with GW150914
 
+import sys
+sys.path.append('../')
 import EOBRun_module
-import matplotlib.pyplot as plt
+
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Source parameters
 # https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.116.061102
 M1 = 36 # Mo
 M2 = 29 # Mo
 Deff = 410 # Mpc
-iota = 0.
+iota = 150./360.*np.pi
 
 # Use 22 mode only
 def modes_to_k(modes):
