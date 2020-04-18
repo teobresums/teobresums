@@ -47,7 +47,7 @@
 
 #include "TEOBResumS.h"
 
-#define DEBUG_THIS_FILE (0) /* = 1 to compile and debug various rutines in this file */
+#define DEBUG_THIS_FILE (0) /* = 1 to compile and debug various routines in this file */
 #if (DEBUG_THIS_FILE)
 #undef errorexit
 #undef errorexits
