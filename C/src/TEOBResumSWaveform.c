@@ -2126,6 +2126,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   
   if (EOBPars->output_nqc_coefs) {
     /** Output the NQC coefficients */
+    FILE* fp;
     char fname[STRLEN];
     strcpy(fname, EOBPars->output_dir);
     strcat(fname, "/nqc_coefs.txt");
@@ -2599,6 +2600,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 
   if (EOBPars->output_nqc_coefs) {
     /** Output the NQC coefficients */
+    FILE* fp;
     char fname[STRLEN];
     strcpy(fname, EOBPars->output_dir);
     strcat(fname, "/nqc_coefs.txt");
@@ -2952,6 +2954,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 
   if (EOBPars->output_nqc_coefs) {
     /** Output the NQC coefficients */
+    FILE* fp;
     char fname[STRLEN];
     strcpy(fname, EOBPars->output_dir);
     strcat(fname, "/nqc_coefs.txt");
