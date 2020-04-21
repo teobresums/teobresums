@@ -59,6 +59,8 @@ Main reference
 
 Other key references
 
+ * Danilo Chiaramello, Alessandro Nagar [A faithful analytical effective one body waveform model for spin-aligned, moderately eccentric, coalescing black hole binaries](https://inspirehep.net/literature/1778128)
+ * Alessandro Nagar, Gunnar Riemenschneider, Geraint Pratten, Piero Rettegno, Francesco Messina (2020) [A multipolar effective one body waveform model for spin-aligned black hole binaries](https://inspirehep.net/literature/1777194)
  * Nagar, Messina, Rettegno, Bini, Damour, Geralico, Akcay, Bernuzzi (2018) [Nonlinear-in-spin effects in effective-one-body waveform models of spin-aligned, inspiralling, neutron star binaries](https://inspirehep.net/record/1710050)
  * Akcay, Bernuzzi, Messina, Nagar, Ortiz, Rettegno (2018) [Effective-one-body multipolar waveform for tidally interacting binary neutron stars up to merger](http://inspirehep.net/record/1707624) 
  * Nagar, Riemenschneider, Pratten (2017) [Impact of Numerical Relativity information on effective-one-body waveform models](http://inspirehep.net/record/1518392)
