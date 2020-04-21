@@ -1903,12 +1903,12 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }  
 
 #if (DEBUG)
-  FILE* fp;
-  fp = fopen("nqc_nfunc.txt", "w");
+  FILE* fp_dbg;
+  fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
   }
-  fclose(fp);
+  fclose(fp_dbg);
 #endif    
   
   /** Derivatives for the phase */
@@ -1922,11 +1922,11 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
 
 #if (DEBUG)
-  fp = fopen("nqc_dfunc.txt", "w");
+  fp_dbg = fopen("nqc_dfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
+    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
   }
-  fclose(fp);
+  fclose(fp_dbg);
 #endif    
 
   /** Find max Omg */
@@ -2037,11 +2037,11 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
 
 #if (DEBUG)
-  fp = fopen("nqc_amp_func.txt", "w");
+  fp_dbg = fopen("nqc_amp_func.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%e\t%e\t%e\n", t[j], p1tmp[1][j], p2tmp[1][j]);
+    fprintf(fp_dbg, "%e\t%e\t%e\n", t[j], p1tmp[1][j], p2tmp[1][j]);
   }
-  fclose(fp);  
+  fclose(fp_dbg);  
 #endif
   
   double detM = 1.;
@@ -2328,12 +2328,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 	     
 #if (DEBUG)
-  FILE* fp;
-  fp = fopen("nqc_nfunc.txt", "w");
+  FILE* fp_dbg;
+  fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
   }
-  fclose(fp);
+  fclose(fp_dbg);
 #endif    
 
   /** Derivatives for the phase */
@@ -2347,11 +2347,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 
 #if (DEBUG)
-  fp = fopen("nqc_dfunc.txt", "w");
+  fp_dbg = fopen("nqc_dfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
+    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
   }
-  fclose(fp);
+  fclose(fp_dbg);
 #endif    
 
   /** Find max Omg */
@@ -2449,11 +2449,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 
 #if (DEBUG)
-  fp = fopen("nqc_amp_func.txt", "w");
+  fp_dbg = fopen("nqc_amp_func.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%e\t%e\t%e\n", t[j], p1tmp[1][j], p2tmp[1][j]);
+    fprintf(fp_dbg, "%e\t%e\t%e\n", t[j], p1tmp[1][j], p2tmp[1][j]);
   }
-  fclose(fp);  
+  fclose(fp_dbg);  
 #endif
 
   double detM = 1.;
@@ -2759,12 +2759,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
   
 #if (DEBUG)
-  FILE* fp;
-  fp = fopen("nqc_nfunc.txt", "w");
+  FILE* fp_dbg;
+  fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[k22][j], n2[k22][j], n4[k22][j], n5[k22][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[k22][j], n2[k22][j], n4[k22][j], n5[k22][j]);
   }
-  fclose(fp);
+  fclose(fp_dbg);
 #endif    
 
   /** Derivatives for the phase */
@@ -2774,11 +2774,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   D0(d_n5[k22],dt,size, d2_n5[k22]);
   
 #if (DEBUG)
-  fp = fopen("nqc_dfunc.txt", "w");
+  fp_dbg = fopen("nqc_dfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[k22][j], d_n5[k22][j], d2_n4[k22][j], d2_n5[k22][j]);  
+    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[k22][j], d_n5[k22][j], d2_n4[k22][j], d2_n5[k22][j]);  
   }
-  fclose(fp);
+  fclose(fp_dbg);
 #endif    
 
   /** Find max Omg */
@@ -2847,11 +2847,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   D0(p1tmp[k22],dt,size, p2tmp[k22]);
 
 #if (DEBUG)
-  fp = fopen("nqc_amp_func.txt", "w");
+  fp_dbg = fopen("nqc_amp_func.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp, "%e\t%e\t%e\n", t[j], p1tmp[k22][j], p2tmp[k22][j]);
+    fprintf(fp_dbg, "%e\t%e\t%e\n", t[j], p1tmp[k22][j], p2tmp[k22][j]);
   }
-  fclose(fp);  
+  fclose(fp_dbg);  
 #endif
 
   double detM = 1.;
