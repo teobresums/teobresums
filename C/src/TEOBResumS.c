@@ -600,7 +600,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
 	dyn->t_stop = dyn->t + 2.;
 	
-	if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+	if (EOBPars->use_flm == USEFLM_HM) {
 	  dyn->dt     = 0.5;
 	  dyn->t_stop = dyn->t + 10.;
 	}
@@ -634,18 +634,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
  END_ODE_EVOLUTION:;
 
-  /*  
-      #if (DEBUG) 
-      // Output wave and dynamics 
-      if(EOBPars->output_multipoles) {
-      strcat(hlm->name,"_insplunge");
-      Waveform_lm_output (hlm);
-      }
-      if (EOBPars->output_dynamics)
-      Dynamics_output(dyn);
-      #endif
-  */
-
+#if (DEBUG) 
+  // Output wave and dynamics 
+  if(EOBPars->output_multipoles) {
+    strcat(hlm->name,"_insplunge");
+    Waveform_lm_output (hlm);
+  }
+  if (EOBPars->output_dynamics)
+    Dynamics_output(dyn);
+#endif
+  
   if (!(use_tidal)) {
     
     /* *****************************************
@@ -667,7 +665,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	  using auxiliary variables defined around [tmin,tmax] 
 	  Recall that parameters are NOT stored into these auxiliary vars */
     
-    if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+    if (EOBPars->use_flm == USEFLM_HM) {
       
       /** Find peak of Omega */
       /* Assume a monotonically increasing function, start from after the peak */
@@ -746,18 +744,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       /* Interp Dynamics */
       Dynamics_interp (dyn_mrg, size_mrg, dyn_mrg->time[0], dt_merger_interp, "dyn_mrg_interp");
 
-      /*
-	#if (DEBUG) 
-	// Output post-interpolation wave and dynamics 
-	if(EOBPars->output_multipoles) {
+#if (DEBUG) 
+      // Output post-interpolation wave and dynamics 
+      if(EOBPars->output_multipoles) {
        	Waveform_lm_output (hlm_mrg);
        	Waveform_lm_output_reim (hlm_mrg);
-	}
-	if (EOBPars->output_dynamics) 
+      }
+      if (EOBPars->output_dynamics) 
        	Dynamics_output(dyn_mrg);
-	#endif
-      */
- 
+#endif
+      
     } /* End of merger interp */
     
     if (STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"compute")) {
@@ -790,16 +786,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       strcat(hlm->name,"_nqc");      
 
-      /*
-	#if (DEBUG) 
-	if (EOBPars->output_nqc)  {
+#if (DEBUG) 
+      if (EOBPars->output_nqc)  {
      	Waveform_lm_output (hlm_nqc);
      	Waveform_lm_output (hlm_mrg);
-	}
-	if (EOBPars->output_multipoles) 
+      }
+      if (EOBPars->output_multipoles) 
      	Waveform_lm_output (hlm);
-	#endif
-      */
+#endif
       
       Waveform_lm_free (hlm_nqc);
       

@@ -1821,8 +1821,8 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
-	    
+
+  if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     /* 21, 32, 42, 43 and 44 extracted from postpeak */
     int K_HM[5] = {0,3,6,7,8};
@@ -1887,7 +1887,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     }
   }
 	  
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+  if (EOBPars->use_flm == USEFLM_HM) {
     for (int j=0; j<size; j++) {
       /* l=2,m=1 */
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
@@ -1971,7 +1971,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double dtmrg[KMAX];
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+  if (EOBPars->use_flm == USEFLM_HM) {
     eob_nqc_deltat_lm(dyn, dtmrg);
 	      
     for (int k=0; k<KMAX; k++) {   
@@ -2038,7 +2038,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
 
-    if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+    if (EOBPars->use_flm == USEFLM_HM) {
       jmax = j_NQC[k];
     }
 		  
@@ -2237,7 +2237,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
     max_domg[k] = 0.;
   }
 	  
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+  if (EOBPars->use_flm == USEFLM_HM) {
 	    
     /* Higher modes */
     /* 21, 32, 42, 43 and 44 extracted from postpeak */
@@ -2305,7 +2305,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
     }
   }
 	
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+  if (EOBPars->use_flm == USEFLM_HM) {
     for (int j=0; j<size; j++) {
       /* l=2,m=1 */
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
@@ -2389,7 +2389,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
   double dtmrg[KMAX];
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+  if (EOBPars->use_flm == USEFLM_HM) {
     eob_nqc_deltat_lm(dyn, dtmrg);
 	      
     for (int k=0; k<KMAX; k++) {   
@@ -2459,7 +2459,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask){
 
-      if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+      if (EOBPars->use_flm == USEFLM_HM) {
         jmax = j_NQC[k];
       }
       
@@ -2572,7 +2572,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Wav
     }
   }
 	  
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+  if (EOBPars->use_flm == USEFLM_HM) {
     for (int j=0; j<fullsize; j++) {
       /* l=2,m=1 */
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
@@ -3031,6 +3031,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 */ 
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 {
+  
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
   const double nu    = dyn->nu;
@@ -3090,7 +3091,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /* nonspinning case */
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
-	  
+  
   /* The following values are the difference between the time of the peak of
      the 22 waveform and the other modes. */
   eob_nqc_deltat_lm(dyn, dtmrg);	  
@@ -3118,7 +3119,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     a1, a2, a3, a4, b1, b2, b3, b4, 
 		     sigma[0],sigma[1]);
-  
+    
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
@@ -3135,31 +3136,34 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   int n0 = 2/dt*ooMbh;
 	  
   for (int k = 0; k < KMAX; k++) {
-    /* Calculate Deltaphi */
-    t0 = t_lm[k][idx[k]+n0] - tmatch[k];
-	
-    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-    Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]+n0];
-	    
-    /* Compute and attach ringdown */
-    for (int j = idx[k]+n0-1; j < size ; j++ ) {
-      tm = t_lm[k][j] - tmatch[k];
-	      
-      eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-      hlm->phase[k][j] = psi[1] - Deltaphi[k];
-      hlm->ampli[k][j] = psi[0];
+    if(hlm->kmask[k]){
       
-      if(nNegAmp[k]==1) {
-	hlm->ampli[k][j] = -hlm->ampli[k][j];
+      /* Calculate Deltaphi */
+      t0 = t_lm[k][idx[k]+n0] - tmatch[k];
+      
+      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+      Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]+n0];
+      
+      /* Compute and attach ringdown */
+      for (int j = idx[k]+n0-1; j < size ; j++ ) {
+	tm = t_lm[k][j] - tmatch[k];
+	
+	eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+	hlm->phase[k][j] = psi[1] - Deltaphi[k];
+	hlm->ampli[k][j] = psi[0];
+	
+	if(nNegAmp[k]==1) {
+	  hlm->ampli[k][j] = -hlm->ampli[k][j];
+	}
       }
     }
-  }
+  } 
 	  
   /** Free mem. */
   for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);
   }
-	
+  
 }
 
 /** Main routine for factorized EOB waveform */
@@ -3239,7 +3243,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5 * X12; /* (5,1) */
     hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5 * X12; /* (5,3) */
 
-  if ((STREQUAL(use_flm_opt[EOBPars->use_flm],"HM"))) {
+  if (EOBPars->use_flm == USEFLM_HM) {
     } else {
       hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /* (3,1) */
       hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /* (3,3) */
