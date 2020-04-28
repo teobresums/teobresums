@@ -34,9 +34,6 @@ t, hp, hc = EOBRun_module.EOBRunTD(pars)
     'initial_frequency'  : 20.,    #in Hz if use_geometric_units = 0, else in geometric units
     'interp_uniform_grid': 2,      #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
     'ecc'                : 0.1,    #Eccentricity. Default = 0.
-    'j_hyp'              : 0.,     #J_hyp. Default = 0.
-    'r_hyp'              : 0.,     #r_hyp. Default = 0.
-    'H_hyp'              : 0.,     #H_hyp. Default = 0.
 }
 
 #Run the WF generator
