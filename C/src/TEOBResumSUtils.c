@@ -1735,6 +1735,8 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
   double tmpf0 = EOBPars->initial_frequency;  
   double tmpdf = EOBPars->df;
   double tmpsrate = EOBPars->srate_interp/2.;
+  /* Determine the size of output frequency array */
+  const int interp_size = get_uniform_size(tmpsrate,tmpf0,tmpdf);
 
   /* if necessary, transform f0, df and srate_interp to geom units */
   if (!(EOBPars->use_geometric_units)){
@@ -1828,8 +1830,6 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     //Fmax = MIN(Fmax,FDlm->F[k][n]);
   }
 
-  /* Determine the output frequency array */
-  const int interp_size = get_uniform_size(half_srate_interp,f0, df);
   
   /* Interpolate each mode */
   WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
