@@ -1,0 +1,35 @@
+# parfile for BNS q=1.5 0.2+0.4 spins run 
+# builds on default options
+use_geometric_units = 1 # use geometric units for I/O ?
+q = 1.5
+use_spins = 1
+chi1 = 0.2 # dimensionless spin 1 z-component 
+chi2 = 0.4 # dimensionless spin 2 z-component 
+initial_frequency = 0.0004 # initial GW freq
+size = 1800 # size of the arrays (chunks, dynamically extended)
+output_lm = [ ] #, 4, 5 , 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34 ];
+output_dynamics = 0
+#store_dynamics = 0
+compute_LR = 0 # calculate LR ?
+compute_LSO = 0 # calculate LSO ?
+ode_timestep = "adaptive"
+tides = "TEOBRESUM3"
+tides_gravitomagnetic = "GSF"
+LambdaAl2 = 392.  # SLY 1.35
+LambdaBl2 = 392.
+use_Yagi_fits = 1
+ode_stop_at_radius = 4.0
+
+interp_uniform_grid = 1
+dt = 18.
+
+postadiabatic_dynamics = "yes"
+postadiabatic_dynamics_N = 8 # post-adiabatic order
+postadiabatic_dynamics_size = 500 # grid size 
+postadiabatic_dynamics_rmin = 10. # stop post-adiabatic dynamics at this radius
+postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
+
+output_dir = "./bns_q15_s02s04_f0004_adiab/" # output dir
+
+
+
