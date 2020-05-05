@@ -1,6 +1,7 @@
 # Validation of PA ("rush")
 
-2 November 2018
+Used version in commit c1883829eeb6cf0b9af807c466e8c7b402b914e7  (2 November 2018) for these checks
+
 
 This report is in regards to minor bug fix in the waveform output interpolation routine for when using PHYSICAL units whether for RUSH (post-adiabatic, henceforth PA) or no-rush (regular ODE solving) runs. 
 
