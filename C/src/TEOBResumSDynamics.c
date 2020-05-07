@@ -228,7 +228,9 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double Gtilde     = GS_0*S     + GSs_0*Sstar;
   const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
   const double duc_dr     = -uc2*drc_dr;
-  const double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
+  const double psic       = fabs((duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA));
+  // FIXME: Different from Matlab code.
+  //        Added absolute value to avoid NaN
   const double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
   const double v_phi      = r_omg*Omg;
   const double x          = v_phi*v_phi;
