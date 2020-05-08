@@ -1205,8 +1205,8 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
       if (usespins) {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002;
+	EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
       } else {
 	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN_201602;
 	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602;
