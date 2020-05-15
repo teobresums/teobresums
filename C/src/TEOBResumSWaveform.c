@@ -2250,7 +2250,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
-  
+
   /* Higher modes */
   /* 21, 32, 42, 43 and 44 extracted from postpeak */
   int K_HM[5] = {0,3,6,7,8}; 
@@ -2295,7 +2295,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("omg22_mrg",max_omg[1]);
     PRFORMd("domg22_mrg",max_domg[1]);
   }
-  
+
   /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
@@ -2316,17 +2316,19 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       }
     }
   }
-  
+
   for (int j=0; j<size; j++) {
     /* l=2,m=1 */
     n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
     n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     /* l=3 & l=4 */
-    for (int k=2; k<14; k++) {   
-      n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+    for (int k=2; k<14; k++) {
+      if(hlm_mrg->kmask[k]){
+	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+      }
     }
   }
-	     
+      
 #if (DEBUG)
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
@@ -2335,7 +2337,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
   fclose(fp_dbg);
 #endif    
-
+      
   /** Derivatives for the phase */
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask[k]){   
@@ -2345,7 +2347,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       D0(d_n5[k],dt,size, d2_n5[k]);
     }
   }
-
+    
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
   for (int j=0; j<size; j++) {
@@ -2407,7 +2409,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       } 
     }
   }
-
+  
   /** Solve the linear systems */
   
   /* Regge-Wheeler-Zerilli normalized amplitude. 
@@ -2418,8 +2420,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
 
       if (hlm_mrg->ampli[k][0] > 0.) {	
-        nNegAmp[k] = 0;	
-      } else {		
+        nNegAmp[k] = 0;
+      } else {	
         nNegAmp[k] = 1;	
       }
       
@@ -2428,10 +2430,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       }
     }
   }
-
+  
   /* Matrix elements: waveform amplitude at all points */
   for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask){
+    if(hlm_mrg->kmask[k]){
       for (int j=0; j<size; j++) {
         m11[k][j] = n1[k][j] * p1tmp[k][j];
         m12[k][j] = n2[k][j] * p1tmp[k][j];
@@ -2441,7 +2443,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 
   /* Take FD derivatives */
   for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask){
+    if(hlm_mrg->kmask[k]){
       D0(m11[k],dt,size, m21[k]);
       D0(m12[k],dt,size, m22[k]);
       D0(p1tmp[k],dt,size, p2tmp[k]);
@@ -2459,7 +2461,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask){
+    if(hlm_mrg->kmask[k]){
       
       if (EOBPars->use_flm == USEFLM_HM) {
         jmax = j_NQC[k];
@@ -2578,17 +2580,19 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       }
     }
   }
-	  
+
   for (int j=0; j<fullsize; j++) {
     /* l=2,m=1 */
     n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
     n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     /* l=3 & l=4 */
     for (int k=2; k<14; k++) {   
-      n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+      if(hlm_mrg->kmask[k]){   
+	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+      }
     }
   }
-	  
+  
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask[k]){
       for (int j=0; j<fullsize; j++) {
@@ -2826,9 +2830,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   const double nlm = 1./(sqrt( (LINDEX[k22]+2)*(LINDEX[k22]+1)*LINDEX[k22]*(LINDEX[k22]-1) ) );
 
   if (hlm_mrg->ampli[k22][0] > 0.) {	
-    nNegAmp[k22] = 0;	
+    nNegAmp[k22] = 0;
   } else {		
-    nNegAmp[k22] = 1;	
+    nNegAmp[k22] = 1;
   }
       
   for (int j=0; j<size; j++) {
@@ -3489,22 +3493,25 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   int n0 = 2/dt*ooMbh;
 	  
   for (int k = 0; k < KMAX; k++) {
-    /* Calculate Deltaphi */
-    t0 = t_lm[k][idx[k]+n0] - tmatch[k];
-	
-    eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-    Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]+n0];
-	    
-    /* Compute and attach ringdown */
-    for (int j = idx[k]+n0-1; j < size ; j++ ) {
-      tm = t_lm[k][j] - tmatch[k];
-	      
-      eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-      hlm->phase[k][j] = psi[1] - Deltaphi[k];
-      hlm->ampli[k][j] = psi[0];
+    if(hlm->kmask[k]){
       
-      if(nNegAmp[k]==1) {
-	hlm->ampli[k][j] = -hlm->ampli[k][j];
+      /* Calculate Deltaphi */
+      t0 = t_lm[k][idx[k]+n0] - tmatch[k];
+	
+      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+      Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]+n0];
+      
+      /* Compute and attach ringdown */
+      for (int j = idx[k]+n0-1; j < size ; j++ ) {
+	tm = t_lm[k][j] - tmatch[k];
+	
+	eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+	hlm->phase[k][j] = psi[1] - Deltaphi[k];
+	hlm->ampli[k][j] = psi[0];
+	
+	if(nNegAmp[k]==1) {
+	  hlm->ampli[k][j] = -hlm->ampli[k][j];
+	}
       }
     }
   }

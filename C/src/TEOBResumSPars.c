@@ -1206,8 +1206,8 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
       if (usespins) {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002;
+	EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
       } else {
 	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN_201602;
 	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602;
@@ -1554,7 +1554,7 @@ void eob_set_params_old(char *s, int n)
   
   /** Set more as needed ... */
   double a6c = 0.;
-  if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+  if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     a6c = eob_a6c_fit_HM(nu);
   } else {
@@ -1564,7 +1564,7 @@ void eob_set_params_old(char *s, int n)
 
   double c3 = 0.;
   if(usetidal) c3 = 0.0;
-  else if ((STREQUAL(par_get_s("use_flm"),"HM"))) {
+  else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     c3 = eob_c3_fit_HM(nu,a1,a2);
   } else {
