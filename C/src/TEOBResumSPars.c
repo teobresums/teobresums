@@ -82,6 +82,7 @@ void EOBParameters_alloc (EOBParameters **eobp)
 
 void EOBParameters_free (EOBParameters *eobp)
 {
+  if (!eobp) return;
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
   if (eobp->output_lm) free (eobp->output_lm);
   free(eobp);
