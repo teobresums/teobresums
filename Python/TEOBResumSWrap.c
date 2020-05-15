@@ -91,32 +91,24 @@ int SetOptionalVariables(PyObject* dict){
 
   /* Modes */
   if ( PyDict_GetItemString(dict, "use_mode_lm") != NULL ) {
-    free(EOBPars->use_mode_lm);
-    PyListObject *tmp;
-    tmp = PyDict_GetItemString(dict, "use_mode_lm");
+    if (EOBPars->use_mode_lm) free(EOBPars->use_mode_lm);
+    PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm");
     EOBPars->use_mode_lm_size = PyObject_Length(tmp);
     EOBPars->use_mode_lm = malloc ( EOBPars->use_mode_lm_size * sizeof(int) );
-
     for (int i = 0; i < EOBPars->use_mode_lm_size; i++){
-      PyObject *item;
-      item = PyList_GetItem(tmp, i);
+      PyObject *item = PyList_GetItem(tmp, i);
       EOBPars->use_mode_lm[i] = (int) PyLong_AsLong(item); 
-      Py_DECREF(item);
     }
   }
 
   if ( PyDict_GetItemString(dict, "output_lm") != NULL ) {
-    free(EOBPars->output_lm);
-    PyListObject *tmp;
-    tmp = PyDict_GetItemString(dict, "output_lm");
+    if (EOBPars->output_lm) free(EOBPars->output_lm);
+    PyListObject *tmp = PyDict_GetItemString(dict, "output_lm");
     EOBPars->output_lm_size = PyObject_Length(tmp);
     EOBPars->output_lm = malloc ( EOBPars->output_lm_size * sizeof(int) );
-
     for (int i = 0; i < EOBPars->output_lm_size; i++){
-      PyObject *item;
-      item = PyList_GetItem(tmp, i);
+      PyObject *item = PyList_GetItem(tmp, i);
       EOBPars->output_lm[i] = (int) PyLong_AsLong(item); 
-      Py_DECREF(item);
     }
   }
 
@@ -275,7 +267,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   }
 
   /* Optional arguments for the dictionary */
-  //FIXME: reduce number of calls to PyDict_GetItemString
 
   /* Options */
   SetOptionalVariables(dict);
@@ -474,7 +465,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 /* Define functions in module */
 static PyMethodDef EOBRunMethods[] = {
   {"EOBRunPy", EOBRunPy, METH_VARARGS, "Generate a time or frequency domain TEOBResumS waveform"},
-  {NULL, NULL} 
+  {NULL} 
 };
 
 #if PY_MAJOR_VERSION >= 3
