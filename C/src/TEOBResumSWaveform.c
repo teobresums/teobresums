@@ -3376,7 +3376,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
       }
     }
   }
-  
+
   /** Free mem. */
   for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);
@@ -3448,26 +3448,28 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /* nonspinning case */
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
-	  
+
   /* The following values are the difference between the time of the peak of
      the 22 waveform and the other modes. */
   eob_nqc_deltat_lm(dyn, dtmrg);	  
   for (int k=0; k<KMAX; k++) {
     tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
   }	  
-		
+    
   /** Postmerger-Ringdown matching time */
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
-    for (int j = size-1; j-- ; ) {  
-      if (t[j] * ooMbh < tmrg[k]) {
-	break;
+    if(hlm->kmask[k]){    
+      for (int j = size-1; j-- ; ) {  
+	if (t[j] * ooMbh < tmrg[k]) {
+	  break;
+	}
+	idx[k] = j;
       }
-      idx[k] = j;
+      tmatch[k] = (t[idx[k]])*ooMbh;	    
     }
-    tmatch[k] = (t[idx[k]])*ooMbh;	    
   }
-	  
+  
   /** Compute QNM */
   double sigma[2][KMAX];
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
