@@ -425,13 +425,13 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
       + (b2_domg_tmp + c2_domg_tmp*X12)*Shat*Shat;
     domg_tmp[1]    = domg_tmp_nu + domg_tmp_equal;
 	
-    scale       = 1 - (*omg_tmp)*Shat;
+    scale       = 1 - omg_tmp[1]*Shat;
     a0_A_tmp 	= 0.294773;
     a1_A_tmp 	= -0.052697;
     a2_A_tmp 	= 1.6088;
     b0_A_tmp 	= -0.705226;
     b1_A_tmp 	= -0.0953944;
-    b2_A_tmp 	= -1.087280; 
+    b2_A_tmp 	= -1.087280;
     c11_A_tmp   = 0.009335;
     c12_A_tmp   = 0.582869;
     c31_A_tmp   = -0.140747;
@@ -441,8 +441,8 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
     A_tmp_scale_equal = 1. + (b0_A_tmp + c11_A_tmp*X12)/(1. + c12_A_tmp*X12)*Shat + b1_A_tmp*Shat*Shat;
     A_tmp_scale_den   = 1. + (b2_A_tmp + c31_A_tmp*X12)/(1. + c32_A_tmp*X12)*Shat;
     A_tmp[1]          = A_tmp_scale_nu*A_tmp_scale_equal/A_tmp_scale_den;
-	    
-    scale       = 0.5*(*omg_tmp)/sqrt(6);
+  
+    scale       = 0.5*omg_tmp[1]/sqrt(6);
     a0_dA_tmp 	= -0.0011936600;
     a1_dA_tmp 	=  2.86637;
     a2_dA_tmp 	= -1.3667;
@@ -456,7 +456,7 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
     dA_tmp[1]          = dA_tmp_scale_nu*dA_tmp_scale_equal;
 	    
   }
-	
+  
   /* l=3, m=1 */
   A_tmp[2]    = 0.00520201*X12*(1 - 4.9441*nu + 8.9339*nu2);
   dA_tmp[2]   = -0.00043382*(1 - 9.0479*nu + 23.054*nu2)/(1 + 88.626*nu2);
