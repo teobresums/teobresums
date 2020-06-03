@@ -481,10 +481,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE) {
       /* Adaptive timestepping */
-      if ( dyn->ode_stop_MOmgpeak == true ) 
+      if ( dyn->ode_stop_MOmgpeak == true ) {
 	/* if we are after the peak, slow down and fix the last steps ! */
-	GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
-      else
+	//GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
+	dyn->ti = dyn->t + dyn->dt;
+	GSLSTATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
+      } else
 	GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
     }
     
@@ -501,6 +503,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
 
     /** Check for failures ... */
+    if (use_spins) {
+      dyn->MOmg = dyn->Omg_orb;
+    } else {
+      dyn->MOmg = dyn->Omg;
+    }
+	
     if (dyn->ode_stop_MOmgpeak == true) {
       /* ... if after the Omega_orb peak, stop integration */
       if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
@@ -509,6 +517,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	dyn->ode_stop = true;
 	break; /* (while) stop */
       }
+
+      if (dyn->MOmg > dyn->MOmg_prev) {
+	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
+	iter--; /* do count this iter! */
+	dyn->ode_stop = true;
+	break; /* (while) stop */
+      } else {
+	/* Mininum not reached, update the max */
+	dyn->MOmg_prev = dyn->MOmg;
+      } 
     }
 
     /* ... if before the Omega_orb peak, this is an actual error */
@@ -586,12 +604,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /** Check when to break the computation
 	find peak of omega curve and continue for 2M */
-    if (use_spins) {
-      dyn->MOmg = dyn->Omg_orb;
-    } else {
-      dyn->MOmg = dyn->Omg;
-    }
-
     if (dyn->ode_stop_MOmgpeak == false) {
       /* Before the Omega_orb peak */      
       if (dyn->MOmg < dyn->MOmg_prev) {
