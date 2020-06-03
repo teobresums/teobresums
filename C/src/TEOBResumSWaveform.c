@@ -151,7 +151,7 @@ void eob_wav_hlmNewt_HM(double r,
   double nu2   = nu*nu;
   double nu3   = nu*nu2;
 
-  double vOmg  = pow(Omega,1./3.);
+  double vOmg  = pow(fabs(Omega),1./3.);
   double vOmg2 = vOmg*vOmg;
   double vOmg3 = vOmg*vOmg2;
   double vOmg4 = vOmg*vOmg3;
@@ -227,6 +227,18 @@ void eob_wav_hlmNewt_HM(double r,
     hlmNewt->phase[k] = - phim[k] + ChlmNewt_phase[k];
     hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
   }
+
+  /* Correcting phase in case of negative freuqency */
+  if (Omega < 0.) {
+    hlmNewt->phase[2]  += Pi; 
+    hlmNewt->phase[3]  += 2./3.*Pi; 
+    hlmNewt->phase[4]  += 2./3.*Pi; 
+    hlmNewt->phase[5]  += 5./3.*Pi; 
+    hlmNewt->phase[6]  += Pi; 
+    hlmNewt->phase[7]  += Pi; 
+    hlmNewt->phase[8]  += 2./3.*Pi; 
+    hlmNewt->phase[13] += 4./3.*Pi; 
+  }
   
 }
 
@@ -257,8 +269,13 @@ void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
     ratio_rad     = num_rad.val-denom_rad.val;
     ratio_ang     = num_phase.val-0.;
     
-    tlm_rad       = ratio_rad + Pi * hhatk;
-    tlm_phase     = ratio_ang + 2.*hhatk*log(2.*k*bphys);
+    if (Omega > 0.) {
+      tlm_rad       = ratio_rad + Pi * hhatk;
+      tlm_phase     = ratio_ang + 2.*hhatk*log(2.*k*bphys);
+    } else {
+      tlm_rad       = ratio_rad - Pi * hhatk;
+      tlm_phase     = ratio_ang + 2.*hhatk*log(-2.*k*bphys);
+    }
     
     tlm->ampli[i] = exp(tlm_rad);
     tlm->phase[i] = tlm_phase;
@@ -2464,10 +2481,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask[k]){
-      
-      if (EOBPars->use_flm == USEFLM_HM) {
-        jmax = j_NQC[k];
-      }
+
+      jmax = j_NQC[k];
       
       ai[k][0] = ai[k][1] = 0.;
       bi[k][0] = bi[k][1] = 0.;
