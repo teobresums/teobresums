@@ -334,6 +334,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     iter = size-1; 
     dyn->dt = 0.5*(dyn->time[iter]-dyn->time[iter-1]);
 
+    if (dyn->dt > 100.) dyn->dt = 100.;
+
     /* Set arrays with initial conditions 
        Note current time is already set in dyn->t */
     dyn->y0[EOB_ID_RAD]  = dyn->r;
@@ -601,7 +603,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	dyn->t_stop = dyn->t + 2.;
 	
 	if (EOBPars->use_flm == USEFLM_HM) {
-	  dyn->dt     = 0.5;
+	  dyn->dt     = 0.1;
 	  dyn->t_stop = dyn->t + 10.;
 	}
 	
