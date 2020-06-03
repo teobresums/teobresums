@@ -2421,7 +2421,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     if(hlm_mrg->kmask[k]){
       double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
 
-      if (hlm_mrg->ampli[k][0] > 0.) {	
+      if (hlm->ampli[k][0] > 0.) {	
         nNegAmp[k] = 0;
       } else {	
         nNegAmp[k] = 1;	
@@ -2833,7 +2833,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
      Nagar & Rezzolla, CQG 22 (2005) R167 */      
   const double nlm = 1./(sqrt( (LINDEX[k22]+2)*(LINDEX[k22]+1)*LINDEX[k22]*(LINDEX[k22]-1) ) );
 
-  if (hlm_mrg->ampli[k22][0] > 0.) {	
+  if (hlm->ampli[k22][0] > 0.) {	
     nNegAmp[k22] = 0;
   } else {		
     nNegAmp[k22] = 1;
