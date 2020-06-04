@@ -669,7 +669,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
        NQC and ringdown attachment currently assume uniform grids.
        Do we need to interpolate ? */
     int merger_interp = 1; /* In general, yes ... */
-    if (ode_tstep != ODE_TSTEP_ADAPTIVE) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
+    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM)) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
 
     /** NQC and ringdown attachment is done around merger 
 	using auxiliary variables defined around [tmin,tmax] 
