@@ -3421,7 +3421,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
   /* const double dt = par_get_d("dt"); */	
-  const double dt = dyn->dt;
+  const double dt = 0.5;//dyn->dt;
 	  
   /* double *Omega = dyn->data[EOB_MOMG]; */
   double *Omega = dyn->data[EOB_OMGORB]; /* use this for spin */
@@ -3512,18 +3512,23 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   double t0, tm, psi[2];
   double Deltaphi[KMAX];
   int n0 = 2/dt*ooMbh;
+  int index_rng;
 	  
   for (int k = 0; k < KMAX; k++) {
     if(hlm->kmask[k]){
+
+      /* Ringdown attachment index */      
+      index_rng = idx[k]+n0;
+      if (index_rng > dynsize -1) index_rng = dynsize - 1;
       
       /* Calculate Deltaphi */
-      t0 = t_lm[k][idx[k]+n0] - tmatch[k];
+      t0 = t_lm[k][index_rng] - tmatch[k];
 	
       eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-      Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]+n0];
+      Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
       
       /* Compute and attach ringdown */
-      for (int j = idx[k]+n0-1; j < size ; j++ ) {
+      for (int j = index_rng-1; j < size ; j++ ) {
 	tm = t_lm[k][j] - tmatch[k];
 	
 	eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);

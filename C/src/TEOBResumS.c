@@ -502,33 +502,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
     }
 
-    /** Check for failures ... */
-    if (use_spins) {
-      dyn->MOmg = dyn->Omg_orb;
-    } else {
-      dyn->MOmg = dyn->Omg;
-    }
-	
-    if (dyn->ode_stop_MOmgpeak == true) {
-      /* ... if after the Omega_orb peak, stop integration */
-      if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
-	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
-	iter--; /* do count this iter! */
-	dyn->ode_stop = true;
-	break; /* (while) stop */
-      }
-
-      if (dyn->MOmg > dyn->MOmg_prev) {
-	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
-	iter--; /* do count this iter! */
-	dyn->ode_stop = true;
-	break; /* (while) stop */
-      } else {
-	/* Mininum not reached, update the max */
-	dyn->MOmg_prev = dyn->MOmg;
-      } 
-    }
-
     /* ... if before the Omega_orb peak, this is an actual error */
     if (GSLSTATUS != GSL_SUCCESS) {
       printf("GSL Error = %d", GSLSTATUS);
@@ -559,6 +532,33 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
     eob_wav_hlm(dyn, hlm_t); 
+
+        /** Check for failures ... */
+    if (use_spins) {
+      dyn->MOmg = dyn->Omg_orb;
+    } else {
+      dyn->MOmg = dyn->Omg;
+    }
+	
+    if (dyn->ode_stop_MOmgpeak == true) {
+      /* ... if after the Omega_orb peak, stop integration */
+      if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
+	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
+	iter--; /* do count this iter! */
+	dyn->ode_stop = true;
+	break; /* (while) stop */
+      }
+
+      if (dyn->MOmg > dyn->MOmg_prev) {
+	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
+	iter--; /* do count this iter! */
+	dyn->ode_stop = true;
+	break; /* (while) stop */
+      } else {
+	/* Mininum not reached, update the max */
+	dyn->MOmg_prev = dyn->MOmg;
+      } 
+    }
     
     /** Update size and push arrays (if needed) */
     if (iter==size) {
@@ -810,10 +810,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
-    strcat(hlm->name,"_ringdown");
     
   } /* End of BBH section */
 
+#if (DEBUG) 
+  // Output wave and dynamics 
+  if(EOBPars->output_multipoles) {
+    strcat(hlm->name,"_ringdown");
+    Waveform_lm_output (hlm);
+  }
+#endif
+  
   /* *****************************************
    * Compute h+, hx 
    * *****************************************
