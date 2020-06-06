@@ -702,8 +702,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       double tOmg_pk = find_max(nn, 0.5, tpeak, Omega_ptr, NULL);
       
       /** Build uniform grid of width dt and alloc tmp memory */
-      const double dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
-      //dt_merger_interp = MIN(dt_merger_interp, (dyn->time[size-1] - dyn->tMOmgpeak)/4 ); /* Make sure to have always 3 points */
+      double dt_merger_interp;
+      if (EOBPars->use_flm == USEFLM_HM) {
+	dt_merger_interp = 0.5;
+      } else {
+	dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
+      }
       const double tstart_mrg = tOmg_pk - 8.;
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
       
