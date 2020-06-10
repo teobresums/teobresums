@@ -162,7 +162,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
- 
+  
   /* *****************************************
    * Set Memory & do preliminary computations
    * *****************************************
@@ -501,24 +501,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
       }
     }
-
-    /* ... if before the Omega_orb peak, this is an actual error */
-    if (GSLSTATUS != GSL_SUCCESS) {
-      printf("GSL Error = %d", GSLSTATUS);
-      /* errorexit("ODE solver returned error.\n"); */
-      status = ERROR_ODEINT;
-      goto EXIT_POINT;
-    }
-    
-    /** Checking whether the dynamics produces NaN values
-       this can happen if radius r becomes too small */
-    if (!(isfinite(dyn->r))) {
-      printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);	
-      /* errorexit("ODE solver returned NaN radius.\n"); */
-      printf("ODE solver returned NaN radius.\n");
-      status = ERROR_ODEINT;
-      goto EXIT_POINT;
-    }
     
     /** Unpack data */
     dyn->r      = dyn->y[EOB_EVOLVE_RAD];
@@ -533,7 +515,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->store = dyn->noflx = 0;
     eob_wav_hlm(dyn, hlm_t); 
 
-        /** Check for failures ... */
+    /** Check for failures ... */
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
@@ -558,6 +540,24 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	/* Mininum not reached, update the max */
 	dyn->MOmg_prev = dyn->MOmg;
       } 
+    }
+
+    /* ... if before the Omega_orb peak, this is an actual error */
+    if (GSLSTATUS != GSL_SUCCESS) {
+      printf("GSL Error = %d", GSLSTATUS);
+      /* errorexit("ODE solver returned error.\n"); */
+      status = ERROR_ODEINT;
+      goto EXIT_POINT;
+    }
+    
+    /** Checking whether the dynamics produces NaN values
+	this can happen if radius r becomes too small */
+    if (!(isfinite(dyn->r))) {
+      printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);	
+      /* errorexit("ODE solver returned NaN radius.\n"); */
+      printf("ODE solver returned NaN radius.\n");
+      status = ERROR_ODEINT;
+      goto EXIT_POINT;
     }
     
     /** Update size and push arrays (if needed) */

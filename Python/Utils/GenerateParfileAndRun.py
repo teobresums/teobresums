@@ -11,6 +11,7 @@ SB 10/2018
 """
 
 import os
+import numpy as np
 
 from EOBUtils import *
 
@@ -24,9 +25,9 @@ if __name__ == "__main__":
     basep = "test_NQCIteration.par"
 
     # Set new values/ranges for parameters (Use lists)
-    q = [1., 1.2, 1.4]
-    chi1 = [0., 0.8]
-    chi2 = [0., 0.8, 0.9]
+    q    = 1+99*np.random.rand(100)
+    chi1 = 1-2*np.random.rand(10)
+    chi2 = 1-2*np.random.rand(10)
     
     # Pack them into a dictionary
     # NOTE: keys must match those in parfile otherwise ignored
