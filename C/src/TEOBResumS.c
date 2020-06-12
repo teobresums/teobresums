@@ -686,8 +686,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       Dynamics_extract (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
       
       /** Find peak of Omega */
-      
-      /* Assume a monotonically increasing function, start from after the peak */
       int index_pk = dyn->size-1;
       double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
       for (int j = dyn->size-2; j-- ; ) {
@@ -696,10 +694,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         index_pk = j;
         Omega_pk = dyn->data[EOB_OMGORB][j]; 
       }
-      double tpeak = dyn->time[index_pk];
-      double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-3];
-      const int nn = 7;  
-      double tOmg_pk = find_max(nn, 0.5, tpeak, Omega_ptr, NULL);
+      double *t_ptr     = &dyn->time[index_pk-2];
+      double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-2];
+      double tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
       
       /** Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;

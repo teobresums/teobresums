@@ -244,6 +244,26 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax)
   return xmax;
 }
 
+/** Find max location around x0 using 5 points (non-uniform grid) */
+double find_max_grid (double *x, double *f)
+{
+  const int i = 2; /* centre the grid around third point */
+  
+  double dx[7];
+  for (int j = 0; j < 4; j++){
+    dx[j] = x[j+1] - x[j];
+  }
+  
+  double d1f = 0., d2f = 0.;
+  d1f = 0.5*(f[i+1]-f[i])/dx[i] + 0.5*(f[i]-f[i-1])/dx[i-1];
+  d2f = 0.25*((f[i+2]-f[i+1])/dx[i+1] - (f[i]-f[i-1])/dx[i-1])/dx[i]
+    + 0.25*((f[i+1]-f[i])/dx[i] - (f[i-1]-f[i-2])/dx[i-2])/dx[i-1];  
+      
+  double xmax = x[i] - d1f/d2f;
+
+  return xmax;
+}
+
 /** Factorial */
 static const double f35[] = {1.,
 			     1.,

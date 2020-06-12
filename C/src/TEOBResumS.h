@@ -568,6 +568,7 @@ void baryc_weights(int n, double *x, double *omega);
 double baryc_f_weights(double xx, int n, double *f, double *x, double *omega);
 double interp1d (const int order, double xx, int nx, double *f, double *x);
 double find_max (const int n, double dx, double x0, double *f, double *fmax);
+double find_max_grid (double *x, double *f);
 double fact(int n);
 double wigner_d_function(int l, int m, int s, double i);
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
