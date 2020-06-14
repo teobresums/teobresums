@@ -276,8 +276,8 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   /** NQC correction to the modulus of the (l,m) waveform */  
   for (int k = 0; k < KMAX; k++) hlmNQC[k] = 1.; /* no NQC */
   
-  if (!(EOBPars->nqc_coefs_flx ==  NQC_FLX_NONE)) {
-
+  if (!(EOBPars->nqc_coefs_flx == NQC_FLX_NONE)) {
+    
     Waveform_lm_t hNQC;
     /* eob_wav_hlmNQC_nospin201602(nu,r,pr_star,Omega,ddotr, &hNQC); */ 
     eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, NQC->flx, &hNQC);
