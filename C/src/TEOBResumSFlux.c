@@ -199,7 +199,6 @@ double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Hef
 }
 
 /** Flux calculation for spinning systems */
-//FIXME: NQC are not applied in spin case!
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
   const double nu = dyn->nu;
@@ -276,7 +275,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   /** NQC correction to the modulus of the (l,m) waveform */  
   for (int k = 0; k < KMAX; k++) hlmNQC[k] = 1.; /* no NQC */
-  if (!(STREQUAL(nqc_flx_opt[EOBPars->nqc_coefs_flx],"none"))) {
+  
+  if (!(EOBPars->nqc_coefs_flx ==  NQC_FLX_NONE)) {
+
     Waveform_lm_t hNQC;
     /* eob_wav_hlmNQC_nospin201602(nu,r,pr_star,Omega,ddotr, &hNQC); */ 
     eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, NQC->flx, &hNQC);
@@ -284,9 +285,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     /*
       for (int k = 0; k < maxk; k++) {
       if (NQC->hlm->activemode[k]) {
-	hlmNQC[k] = hNQC.ampli[k]; 
+      hlmNQC[k] = hNQC.ampli[k]; 
       }
-    }
+      }
     */
     /* Use only the 22:  */
     hlmNQC[1] = hNQC.ampli[1]; 

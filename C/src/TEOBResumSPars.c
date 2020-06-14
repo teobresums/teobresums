@@ -146,7 +146,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->postadiabatic_dynamics_N=8; // post-adiabatic order
   eobp->postadiabatic_dynamics_size=800; // grid size 
   eobp->postadiabatic_dynamics_rmin=14.; // minimum radius (end of PA dynamics)
-  eobp->postadiabatic_dynamics_stop=0; // stop after post-adiabatic dynamics //FIXME: make bool
+  eobp->postadiabatic_dynamics_stop=0; // stop after post-adiabatic dynamics 
 
   eobp->centrifugal_radius=CENTRAD_LO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
@@ -157,8 +157,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->compute_LSO_guess=6.;
 
   eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
-  eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
-  eobp->nqc_coefs_hlm=NQC_HLM_NONE; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+  eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
+  eobp->nqc_coefs_hlm=NQC_HLM_NONE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
   strcpy(eobp->nqc_coefs_flx_file,"");
   strcpy(eobp->nqc_coefs_hlm_file,"");
 
@@ -261,8 +261,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
 
     eobp->nqc = NQC_AUTO; // {"no", "auto", "manual"}
-    eobp->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN_201602; // {"none", "nrfit_nospin20160209", "fromfile"}
-    eobp->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602; // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
+    eobp->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
+    eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
      
   } else if (choose == DEFAULT_PARS_BNS) {
 
@@ -274,7 +274,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->centrifugal_radius = CENTRAD_NNLO;
     eobp->use_flm = USEFLM_SSNLO;
     eobp->nqc = NQC_NO; // {"no", "auto", "manual"}
-    eobp->nqc_coefs_flx = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "fromfile"}
+    eobp->nqc_coefs_flx = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
     eobp->nqc_coefs_hlm = NQC_HLM_NONE;
 
   }
@@ -1198,8 +1198,7 @@ void eob_set_params(int default_choice, int firstcall)
   }
 
   /* Default settings for NQC */
-  //TODO: current defaults reproduce the setup of v0.0.
-  //      They will change once all the NQC fits are ready
+  // NOTE: The defaults are different from v0.0 and v1.0
   if (EOBPars->nqc == NQC_AUTO) {
     if (usetidal) {
       EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
@@ -1471,15 +1470,15 @@ void eob_set_params_old(char *s, int n)
   }
 
   /* Default settings for NQC */
-  //FIXME: current defaults reproduce the setup of v0.0.
-  //       They will change once all the NQC fits are ready
+  // NOTE: The defaults are different from v0.0 and v1.0
   if (STREQUAL(par_get_s("nqc"),"auto")) {
     if (usetidal) {
       par_set_s("nqc_coefs_flx","none");
       par_set_s("nqc_coefs_hlm","none");
     } else {
       if (usespins) {
-	par_set_s("nqc_coefs_flx","none");
+	//par_set_s("nqc_coefs_flx","none");
+	par_set_s("nqc_coefs_flx", "nrfit_spin202002");
 	par_set_s("nqc_coefs_hlm","compute");
       } else {
 	par_set_s("nqc_coefs_flx","nrfit_nospin201602");

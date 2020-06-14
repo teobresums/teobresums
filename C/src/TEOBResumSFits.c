@@ -928,13 +928,17 @@ void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname)
   nqc->add = 1;
   nqc->maxk = maxk;
 }
+
+
+/** Set NQC coefficients 
+    NR fits for nonspinning case 2020/02 */
 void eob_nqc_setcoefs_spin202002(NQCcoefs *nqc)
 {
   const int k22 = 1;
   const double nu = EOBPars->nu;
   const double chi1 = EOBPars->chi1;  
   const double chi2 = EOBPars->chi2;  
-  nqc->activemode[k22]=1;
+  nqc->activemode[k22] = 1;
 	  
   double a1fit = get_a1_fit_22(nu, chi1, chi2);
   double a2fit = get_a2_fit_22(nu, chi1, chi2);
@@ -1120,6 +1124,7 @@ double get_a2_fit_22(double nu, double chi1, double chi2)
       res      = a2_nospin*a2_spin;
     }
 }
+
 /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
     here x = log(lambda) and the output is the log of the coefficient
     that describes the quadrupole deformation due to spin. */

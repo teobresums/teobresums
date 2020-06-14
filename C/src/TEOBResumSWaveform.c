@@ -3668,19 +3668,20 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   }
   
   /** NQC */
-  if (!(STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"none")) &&
-      !(STREQUAL(nqc_hlm_opt[EOBPars->nqc_coefs_hlm],"compute"))) {
-    /** Add NQC correction */    
+  if (!(EOBPars->nqc_coefs_hlm == NQC_HLM_NONE) &&
+      !(EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
+
+    /* Add NQC correction */    
     Waveform_lm_t hNQC; 
-    /* eob_wav_hlmNQC_nospin2016(nu,r,prstar,Omega,ddotr, &hNQC); */ 
     eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, NQC->hlm, &hNQC); 
     const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
     for (int k = 0; k < maxk; k++) {
       if (NQC->hlm->activemode[k]) {
-	 hlm->ampli[k] *= hNQC.ampli[k];
-	 hlm->phase[k] -= hNQC.phase[k];
+	hlm->ampli[k] *= hNQC.ampli[k];
+	hlm->phase[k] -= hNQC.phase[k];
       }
     }
+    
   }
   
   if (usetidal) {   

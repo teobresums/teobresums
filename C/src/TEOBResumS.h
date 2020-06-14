@@ -323,7 +323,7 @@ enum{
   NQC_FLX_FROMFILE,
   NQC_FLX_NOPT
 };
-static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "fit_spin_202002", "fromfile"};
+static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile"};
 
 enum{
   NQC_HLM_NONE,
@@ -333,7 +333,7 @@ enum{
   NQC_HLM_COMPUTE,
   NQC_HLM_NOPT
 };
-static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "fit_spin_202002", "fromfile", "compute"};
+static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile", "compute"};
 
 enum { 
   FIRSTCALL_EOBWAVFLMV1, 
