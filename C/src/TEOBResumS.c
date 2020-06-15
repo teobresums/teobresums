@@ -705,7 +705,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       } else {
 	dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
       }
-      const double tstart_mrg = tOmg_pk - 8.;
+      double tstart_mrg = tOmg_pk - 8.;
+      while (tstart_mrg < hlm_mrg->time[0]) /** Make sure it does not exrapolate */
+	tstart_mrg += dt_merger_interp;
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
       
       if (VERBOSE) {
