@@ -3478,7 +3478,8 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /** Postmerger-Ringdown matching time */
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
-    if(hlm->kmask[k]){    
+    if(hlm->kmask[k]){
+      idx[k] = size-1;
       for (int j = size-1; j-- ; ) {  
 	if (t[j] * ooMbh < tmrg[k]) {
 	  break;
