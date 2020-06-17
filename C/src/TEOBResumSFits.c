@@ -2681,3 +2681,9 @@ double get_mrg_timestep(double q, double chi1, double chi2)
   return dt;
 }
 
+/** p_phi LSO, from XYZ */
+double pph_lso_orbital(const double nu)
+{
+  return 3.46343 - 0.774482*nu -0.69200*nu*nu; 
+} 
+
