@@ -484,9 +484,62 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   }
 }
 
+static PyObject* eob_metric_A5PNlog_py(PyObject* self, PyObject* args)
+{
+  double r, nu;
+  double A=0., dA=0., d2A=0.;
+
+  /*alloc EOBPars, necessary for a6 call in A function */
+  EOBParameters_alloc ( &EOBPars ); 
+  EOBParameters_defaults (1, EOBPars);  
+
+  if (!PyArg_ParseTuple(args, "dd", &r, &nu))
+    return NULL;
+
+  eob_metric_A5PNlog(r, nu, &A, &dA, &d2A);
+  
+  /* free */
+  EOBParameters_free (EOBPars);
+
+  PyObject *ret;
+  ret = Py_BuildValue("ddd", A, dA, d2A);
+  return ret;
+}
+
+static PyObject* eob_c3_fit_HM_py(PyObject* self, PyObject* args)
+{
+  double nu, c3;
+
+  if (!PyArg_ParseTuple(args, "d", &nu))
+    return NULL;
+
+  c3 = eob_c3_fit_HM(nu, 0., 0.);
+
+  PyObject *ret;
+  ret = Py_BuildValue("d", c3);
+  return ret;
+}
+
+static PyObject* pph_lso_orbital_py(PyObject* self, PyObject* args)
+{
+  double nu, p_lso;
+
+  if (!PyArg_ParseTuple(args, "d", &nu))
+    return NULL;
+
+  p_lso = pph_lso_orbital(nu);
+
+  PyObject *ret;
+  ret = Py_BuildValue("d", p_lso);
+  return ret;
+}
+
 /* Define functions in module */
 static PyMethodDef EOBRunMethods[] = {
   {"EOBRunPy", EOBRunPy, METH_VARARGS, "Generate a time or frequency domain TEOBResumS waveform"},
+  {"eob_metric_A5PNlog_py", eob_metric_A5PNlog_py, METH_VARARGS, "Compute the A(r) metric potential"},
+  {"eob_c3_fit_HM_py", eob_c3_fit_HM_py, METH_VARARGS, "Fit to compute the c3 for nonspinning BBH"},
+  {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso"},
 
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
