@@ -1,5 +1,7 @@
 import EOBRun_module
 import numpy as np
+import math as math
+import cmath as cmath
 import matplotlib.pyplot as plt
 
 # --------------------------------------------------
@@ -82,7 +84,7 @@ if __name__ == "__main__":
     Emn, Emx, Einfl = EnergyLimits(r, nu, j)
     print("j = %s" %j)
     print("Emin = %s, Emax = %s" %(Emn, Emx))
-    E0   = 0.999;
+    E0   = 1.0015;
     print("r0 = %s" %r)
     print("E0 = %s" %E0)
     
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     'Lambda1'            : 0.,
     'Lambda2'            : 0.,     
     'domain'             : 0,                 #Set 1 for FD. Default = 0
-    'arg_out'            : 0,                 #Output hlm/hflm. Default = 0
+    'arg_out'            : 1,                 #Output hlm/hflm. Default = 0
     'use_mode_lm'        : [1],               #List of modes to use/output through EOBRunPy
     'output_lm'          : [1],               #List of modes to print on file
     #'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
@@ -112,7 +114,7 @@ if __name__ == "__main__":
 
         
     #run the wf generator
-    t, hp, hc = EOBRun_module.EOBRunPy(pars)
+    t, hp, hc, hlm = EOBRun_module.EOBRunPy(pars)
 
     # plot
     plt.plot(t, hp, label=r'h_+')
@@ -120,9 +122,15 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-
-
-
-
+    # plot amplitude and phase
+    A22   = hlm['1'][0]
+    Phi22 = hlm['1'][1]
+    Reh22   = A22*np.cos(-Phi22)
+    Imh22   = A22*np.sin(-Phi22)
+        
+    plt.plot(t,Reh22)
+    plt.show()
+    
+ 
 
 
