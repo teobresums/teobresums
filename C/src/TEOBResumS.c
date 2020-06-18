@@ -498,7 +498,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	/* ... uniform afterwards */
 	dyn->dt = dt_tuned_mrg;
 	dyn->ti = dyn->t + dyn->dt;
-	GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
+	GSLSTATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
       }
     }
     
