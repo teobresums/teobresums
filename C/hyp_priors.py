@@ -74,17 +74,17 @@ if __name__ == "__main__":
 
     # main
 
-    r  = 90.
+    r  = 1500.
     q  = 1. 
     nu = q/(1+q)**2
 
     pphi_lso = EOBRun_module.pph_lso_orbital_py(nu);
     
-    j = 1.2*pphi_lso
+    j = 1.16*pphi_lso 
     Emn, Emx, Einfl = EnergyLimits(r, nu, j)
     print("j = %s" %j)
     print("Emin = %s, Emax = %s" %(Emn, Emx))
-    E0   = 1.0015;
+    E0   = 1.0002;
     print("r0 = %s" %r)
     print("E0 = %s" %E0)
     
@@ -100,6 +100,7 @@ if __name__ == "__main__":
     'arg_out'            : 1,                 #Output hlm/hflm. Default = 0
     'use_mode_lm'        : [1],               #List of modes to use/output through EOBRunPy
     'output_lm'          : [1],               #List of modes to print on file
+    'output_dynamics'    : 1,                 #output of the dynamics
     #'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 1,                 #output quantities in geometric units. Default = 1
     'r0':r,
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     'j_hyp'              : j,                 #J_hyp. Default = 0.
     'r_hyp'              : r,                 #r_hyp. Default = 0.
     'H_hyp'              : E0,                #H_hyp. Default = 0.
-    'ode_tmax'           : 1e3,
+    'ode_tmax'           : 4e4,
     }
 
 
