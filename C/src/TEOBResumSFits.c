@@ -1036,6 +1036,8 @@ double get_a1_fit_22(double nu, double chi1, double chi2)
       double a1_spin  =  (1.-2.287721*(1.+c1*xnu)/(1.+c2*xnu)*Shat_norm-0.598451*(1.+c3*xnu)/(1.+c4*xnu)*Shat_norm*Shat_norm+0.766069*(1.+c5*xnu)/(1.+c6*xnu)*Shat_norm*Shat_norm*Shat_norm+1.857169*(1.+c7*xnu)/(1.+c8*xnu)*Shat_norm*Shat_norm*Shat_norm*Shat_norm)/(1.-2.035234*(1.+c9*xnu)/(1.+c10*xnu)*Shat_norm+0.836427*(1.+c11*xnu)/(1.+c12*xnu)*Shat_norm*Shat_norm+0.297476*(1.+c13*xnu)/(1.+c14*xnu)*Shat_norm*Shat_norm*Shat_norm);
       res  = a1_nospin*a1_spin;
     }
+
+  return res;
 }
 	
 double get_a2_fit_22(double nu, double chi1, double chi2)
@@ -1123,6 +1125,8 @@ double get_a2_fit_22(double nu, double chi1, double chi2)
 	
       res      = a2_nospin*a2_spin;
     }
+
+  return res;
 }
 
 /** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
