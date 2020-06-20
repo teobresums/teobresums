@@ -960,7 +960,7 @@ double get_a1_fit_22(double nu, double chi1, double chi2)
 {
   const int usespins = EOBPars->use_spins;
   double res = 0.;
-  if (usespins) 
+  if (!(usespins)) 
     {
       double a1_q1 = 0.070974;
       double b1    = 0.786350;
@@ -1044,7 +1044,7 @@ double get_a2_fit_22(double nu, double chi1, double chi2)
 {
   const int usespins = EOBPars->use_spins;
   double res = 0.;
-  if (usespins) 
+  if (!(usespins)) 
     {
       double x     	= sqrt(1.-4.*nu);
       double a2q1 	= 1.315133;
