@@ -101,10 +101,11 @@ if __name__ == "__main__":
     'use_mode_lm'        : [1],               #List of modes to use/output through EOBRunPy
     'output_lm'          : [1],               #List of modes to print on file
     'output_dynamics'    : 1,                 #output of the dynamics
+    'ode_tstep_opt'      : 1,                 #fixing uniform or adaptive. Default = 1 
     #'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 1,                 #output quantities in geometric units. Default = 1
     'r0':r,
-    'interp_uniform_grid': 0,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+    'interp_uniform_grid': 1,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
     'ecc'                : 0.18,              #Eccentricity. Default = 0.
     'j_hyp'              : j,                 #J_hyp. Default = 0.
     'r_hyp'              : r,                 #r_hyp. Default = 0.
@@ -129,8 +130,17 @@ if __name__ == "__main__":
     Reh22   = A22*np.cos(-Phi22)
     Imh22   = A22*np.sin(-Phi22)
         
-    plt.plot(t,Reh22)
+    #plt.plot(t,Reh22)
+    #plt.plot(t,Imh22)
+    #plt.show()
+
+
+    plt.plot(t,A22)
     plt.show()
+
+    plt.plot(Phi22)
+    plt.show()
+
     
  
 
