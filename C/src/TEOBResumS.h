@@ -581,6 +581,7 @@ double l_deriv(double *x,int i,int j);
 double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
 void unwrap(double *p, const int size);
+void unwrap_HM(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void set_multipolar_idx_mask_old(int *kmask, int n);
 void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);

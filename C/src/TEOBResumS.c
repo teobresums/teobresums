@@ -648,6 +648,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
  END_ODE_EVOLUTION:;
 
+  /* Unwrap phase for higher modes */
+  if (EOBPars->use_flm == USEFLM_HM) {
+    for (int k = 0; k < KMAX; k++) {
+      if(hlm->kmask[k]){
+	unwrap_HM(hlm->phase[k],hlm->size);
+      }
+    }
+  }
+  
 #if (DEBUG) 
   // Output wave and dynamics 
   if(EOBPars->output_multipoles) {

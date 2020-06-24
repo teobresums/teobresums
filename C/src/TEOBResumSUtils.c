@@ -629,6 +629,32 @@ void unwrap(double *p, const int size)
   }  
 }
 
+/* Slightly modified unwrap function for HM phases */
+void unwrap_HM(double *p, const int size)
+{
+  if (size < 1) return;
+  int j;
+  double dphi, corr, curr, prev;
+  dphi = 0.;
+  corr = 0.;
+  
+  prev = p[0];  
+  for (j = 1; j < size; j++){
+    curr = p[j];
+    
+    if( curr < prev - Pi) 
+      dphi = TwoPi;
+    if( curr > prev + TwoPi)
+      dphi = -TwoPi;
+
+    corr += dphi;
+    p[j] += corr;      
+
+    prev = curr;
+    dphi = 0.0;
+  }  
+}
+
 #define dbg_unwrap_proxy (0)  /* stops after routine, use: ./TEOBResumS.x test.par > out */ 
 /* Unwrap unsign number of cycles from reference phase as proxy */
 void unwrap_proxy(double *p, double *r, const int size, const int shift0)
