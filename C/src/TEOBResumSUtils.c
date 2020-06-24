@@ -466,7 +466,8 @@ int D0_x_4(double *f, double *x, int n, double *df)
     df[k] = d4(ix, iy, 2);
     ix++; iy++;
   }
-
+  ix--;iy--;
+  
   /*right boundary*/
   df[n-2] = d4(ix, iy, 3);
   df[n-1] = d4(ix, iy, 4);
