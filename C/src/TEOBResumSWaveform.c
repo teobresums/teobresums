@@ -280,38 +280,40 @@ void eob_wav_hlmNewt_ecc(double r,
   double vphi9 = vphi*vphi8;
 
   /* Eccentric variables */
-  double Re_vphi22_ecc = vphi2 - 0.5*(SQ(rdot) + r*r2dot);
+  double SQrdot = SQ(rdot);
+  
+  double Re_vphi22_ecc = vphi2 - 0.5*(SQrdot + r*r2dot);
   double Im_vphi22_ecc = 2.*vphi*rdot + 0.5*Omegadot*SQ(r);
-
-  double Re_vphi21_ecc = vphi3 - 6.*vphi*SQ(rdot) - 3.*vphi*r*r2dot
+  
+  double Re_vphi21_ecc = vphi3 - 6.*vphi*SQrdot - 3.*vphi*r*r2dot
     - 6.*SQ(r)*rdot*Omegadot - SQ(r)*r*Omega2dot;
   double Im_vphi21_ecc = 3.*SQ(r)*(2.*rdot*SQ(Omega) + vphi*Omegadot);
 
-  double Re_vphi33_ecc = vphi3 - vphi*(r*r2dot + 2.*SQ(rdot))
+  double Re_vphi33_ecc = vphi3 - vphi*(r*r2dot + 2.*SQrdot)
     - 1./9*r*SQ(r)*Omega2dot - SQ(r)*rdot*Omegadot;
   double Im_vphi33_ecc = vphi*SQ(r)*Omegadot + 3.*vphi2*rdot
-    - 2./9.*SQ(rdot)*rdot -2./3.*r*rdot*r2dot - 1./9.*SQ(r)*r3dot; 
+    - 2./9.*SQrdot*rdot -2./3.*r*rdot*r2dot - 1./9.*SQ(r)*r3dot; 
 
-  double Re_vphi32_ecc = vphi4 - 3.*vphi2*(r*r2dot + 3.*SQ(rdot))
+  double Re_vphi32_ecc = vphi4 - 3.*vphi2*(r*r2dot + 3.*SQrdot)
     - SQ(SQ(r))*Omega*Omega2dot - 9.*vphi*SQ(r)*rdot*Omegadot
     - 0.75*SQ(SQ(r)*Omegadot);
   double Im_vphi32_ecc = 6.*vphi3*rdot -0.5*vphi*SQ(r)*r3dot
-    - 4.5*Omega*SQ(r)*rdot*r2dot - 3.*vphi*rdot*SQ(rdot)
+    - 4.5*Omega*SQ(r)*rdot*r2dot - 3.*vphi*rdot*SQrdot
     - 1.5*SQ(r)*r*rdot*Omega2dot - 0.125*SQ(SQ(r))*Omega3dot
-    - 1.5*SQ(r)*r*r2dot*Omegadot - 4.5*SQ(r)*SQ(rdot)*Omegadot
+    - 1.5*SQ(r)*r*r2dot*Omegadot - 4.5*SQ(r)*SQrdot*Omegadot
     + 3.*SQ(r)*vphi2*Omegadot;
 
-  double Re_vphi31_ecc = vphi3 - 9.*vphi*r*r2dot - 18.*vphi*SQ(rdot)
+  double Re_vphi31_ecc = vphi3 - 9.*vphi*r*r2dot - 18.*vphi*SQrdot
     -9.*SQ(r)*rdot*Omegadot - SQ(r)*r*Omega2dot;
   double Im_vphi31_ecc = 9.*vphi2*rdot - 3.*SQ(r)*r3dot - 18.*r*rdot*r2dot
-    - 6.*SQ(rdot)*rdot + 3.*vphi*SQ(r)*Omegadot;
+    - 6.*SQrdot*rdot + 3.*vphi*SQ(r)*Omegadot;
 
   double Re_vphi44_ecc = vphi4 + 0.015625*SQ(r)*r*r4dot
     - 0.1875*SQ(SQ(r)*Omegadot) + 0.1875*SQ(r)*rdot*r3dot
-    + 0.09375*SQ(SQ(rdot)) + 0.140625*SQ(r*r2dot) -4.5*vphi2*SQ(rdot)
+    + 0.09375*SQ(SQrdot) + 0.140625*SQ(r*r2dot) -4.5*vphi2*SQrdot
     - 1.5*vphi2*r*r2dot - 0.25*vphi*SQ(r)*r*Omega2dot
-    - 3.*vphi*SQ(r)*rdot*Omegadot + 0.5625*r*SQ(rdot)*r2dot;
-  double Im_vphi44_ecc = 4.*vphi3*rdot - 1.5*vphi*SQ(rdot)*rdot
+    - 3.*vphi*SQ(r)*rdot*Omegadot + 0.5625*r*SQrdot*r2dot;
+  double Im_vphi44_ecc = 4.*vphi3*rdot - 1.5*vphi*SQrdot*rdot
     - 0.015625*SQ(SQ(r))*Omega3dot - 0.25*vphi*SQ(r)*r3dot
     + 1.5*vphi2*SQ(r)*Omegadot - 0.25*SQ(r)*r*rdot*Omega2dot
     - 2.25*vphi*r*rdot*r2dot - 0.375*SQ(r)*r*r2dot*Omegadot
@@ -319,16 +321,16 @@ void eob_wav_hlmNewt_ecc(double r,
 
   double Re_vphi43_ecc = vphi5 + 5./81.*SQ(SQ(r))*Omega*r4dot
     + 20./27.*vphi*SQ(r*r2dot) + 80./81.*vphi*SQ(r)*rdot*r3dot
-    + 40./9.*vphi*r*SQ(rdot)*r2dot + 40./27.*vphi*SQ(SQ(rdot))
-    - 10./3.*vphi3*r*r2dot - 40./3.*vphi3*SQ(rdot)
-    + 10./27.*SQ(SQ(r))*r2dot*Omega2dot + 40./27.*SQ(r)*r*SQ(rdot)*Omega2dot
+    + 40./9.*vphi*r*SQrdot*r2dot + 40./27.*vphi*SQ(SQrdot)
+    - 10./3.*vphi3*r*r2dot - 40./3.*vphi3*SQrdot
+    + 10./27.*SQ(SQ(r))*r2dot*Omega2dot + 40./27.*SQ(r)*r*SQrdot*Omega2dot
     - 10./9.*vphi2*SQ(r)*r*Omega2dot + 20./81.*SQ(SQ(r))*rdot*Omega3dot
     + 1./81.*SQ(SQ(r))*r*Omega4dot + 20./81.*SQ(SQ(r))*r3dot*Omegadot
     + 80./27.*SQ(r)*r*rdot*r2dot*Omegadot
-    + 80./27.*SQ(r)*SQ(rdot)*rdot*Omegadot - 40./3.*vphi2*SQ(r)*rdot*Omegadot
+    + 80./27.*SQ(r)*SQrdot*rdot*Omegadot - 40./3.*vphi2*SQ(r)*rdot*Omegadot
     - 5./3.*vphi*SQ(SQ(r)*Omegadot);
   double Im_vphi43_ecc = 20./3.*vphi4*rdot - 20./27.*vphi2*SQ(r)*r3dot
-    - 80./9.*vphi2*r*rdot*r2dot - 80./9.*vphi2*SQ(rdot)*rdot 
+    - 80./9.*vphi2*r*rdot*r2dot - 80./9.*vphi2*SQrdot*rdot 
     - 80./27.*SQ(SQ(r))*Omega*rdot*Omega2dot - 5./27.*vphi*SQ(SQ(r))*Omega3dot
     - 10./3.*SQ(SQ(r))*Omega*Omegadot*r2dot
     - 40./3.*vphi*SQ(r*rdot)*Omegadot + 10./3.*vphi3*SQ(r)*Omegadot
@@ -336,26 +338,26 @@ void eob_wav_hlmNewt_ecc(double r,
     - 20./9.*SQ(SQ(r)*Omegadot)*rdot;
 
   double Re_vphi42_ecc = vphi4 + 2.25*SQ(r*r2dot) + 0.25*SQ(r)*r*r4dot
-    + 3.*SQ(r)*rdot*r3dot + 9.*r*SQ(rdot)*r2dot + 1.5*SQ(SQ(rdot))
-    - 6.*vphi2*r*r2dot - 18.*vphi2*SQ(rdot) - SQ(SQ(r))*Omega*Omega2dot
+    + 3.*SQ(r)*rdot*r3dot + 9.*r*SQrdot*r2dot + 1.5*SQ(SQrdot)
+    - 6.*vphi2*r*r2dot - 18.*vphi2*SQrdot - SQ(SQ(r))*Omega*Omega2dot
     - 12*vphi*SQ(r)*rdot*Omegadot - 0.75*SQ(SQ(r)*Omegadot);
   double Im_vphi42_ecc =  8.*vphi3*rdot - 2.*vphi*SQ(r)*r3dot
-    - 18.*vphi*r*rdot*r2dot - 12.*vphi*SQ(rdot)*rdot
+    - 18.*vphi*r*rdot*r2dot - 12.*vphi*SQrdot*rdot
     - 2.*SQ(r)*r*rdot*Omega2dot - 0.125*SQ(SQ(r))*Omega3dot
     - 3.*SQ(r)*r*r2dot*Omegadot - 9.*SQ(r*rdot)*Omegadot
     + 3.*vphi2*SQ(r)*Omegadot;
 
   double Re_vphi41_ecc = vphi5 + 60.*vphi*SQ(r*r2dot)
     + 5.*SQ(SQ(r))*Omega*r4dot + 80.*vphi*SQ(r)*rdot*r3dot
-    + 360.*vphi*r*SQ(rdot)*r2dot + 120.*vphi*SQ(SQ(rdot)) - 30.*vphi3*r*r2dot
-    - 120.*vphi3*SQ(rdot) + 30.*SQ(SQ(r))*r2dot*Omega2dot
+    + 360.*vphi*r*SQrdot*r2dot + 120.*vphi*SQ(SQrdot) - 30.*vphi3*r*r2dot
+    - 120.*vphi3*SQrdot + 30.*SQ(SQ(r))*r2dot*Omega2dot
     + 120.*SQ(r*rdot)*r*Omega2dot - 10.*vphi2*SQ(r)*r*Omega2dot
     + 20.*SQ(SQ(r))*rdot*Omega3dot + SQ(SQ(r))*r*Omega4dot
     + 20.*SQ(SQ(r))*r3dot*Omegadot + 240.*SQ(r)*r*rdot*r2dot*Omegadot
     + 240.*SQ(r*rdot)*rdot*Omegadot - 120.*vphi2*SQ(r)*rdot*Omegadot
     - 15.*vphi*SQ(SQ(r)*Omegadot);
   double Im_vphi41_ecc = 20.*vphi4*rdot - 20.*vphi2*SQ(r)*r3dot
-    - 240.*vphi2*r*rdot*r2dot - 240.*vphi2*SQ(rdot)*rdot
+    - 240.*vphi2*r*rdot*r2dot - 240.*vphi2*SQrdot*rdot
     - 80.*SQ(SQ(r))*Omega*rdot*Omega2dot - 5.*vphi*SQ(SQ(r))*Omega3dot
     - 90.*SQ(SQ(r))*Omega*Omegadot*r2dot - 360.*vphi*SQ(r*rdot)*Omegadot
     + 10.*vphi3*SQ(r)*Omegadot - 10.*SQ(SQ(r))*r*Omegadot*Omega2dot
@@ -363,8 +365,8 @@ void eob_wav_hlmNewt_ecc(double r,
 
   double Re_vphi55_ecc = vphi5 + 0.48*vphi*SQ(r*r2dot)
     + 0.04*SQ(SQ(r))*Omega*r4dot + 0.64*vphi*SQ(r)*rdot*r3dot
-    + 2.88*vphi*r*SQ(rdot)*r2dot + 0.96*vphi*SQ(SQ(rdot)) - 2.*vphi3*r*r2dot
-    - 8.*vphi3*SQ(rdot) + 0.08*SQ(SQ(r))*r2dot*Omega2dot
+    + 2.88*vphi*r*SQrdot*r2dot + 0.96*vphi*SQ(SQrdot) - 2.*vphi3*r*r2dot
+    - 8.*vphi3*SQrdot + 0.08*SQ(SQ(r))*r2dot*Omega2dot
     + 0.32*SQ(r*rdot)*r*Omega2dot - 0.4*vphi2*SQ(r)*r*Omega2dot
     + 0.04*SQ(SQ(r))*rdot*Omega3dot + 0.0016*SQ(SQ(r))*r*Omega4dot
     + 0.08*SQ(SQ(r))*r3dot*Omegadot + 0.96*SQ(r)*r*rdot*r2dot*Omegadot
@@ -373,9 +375,9 @@ void eob_wav_hlmNewt_ecc(double r,
   double Im_vphi55_ecc = 5.*vphi4*rdot + 0.0016*SQ(SQ(r))*r5dot
     + 0.064*SQ(r)*r*r2dot*r3dot + 0.288*SQ(r*r2dot)*rdot
     + 0.032*SQ(r)*r*rdot*r4dot + 0.192*SQ(r*rdot)*r3dot
-    + 0.384*r*SQ(rdot)*rdot*r2dot + 0.0384*SQ(SQ(rdot))*rdot
+    + 0.384*r*SQrdot*rdot*r2dot + 0.0384*SQ(SQrdot)*rdot
     - 0.4*vphi2*SQ(r)*r3dot - 4.8*vphi2*r*rdot*r2dot
-    - 4.8*vphi2*SQ(rdot)*rdot - 0.8*SQ(SQ(r))*Omega*rdot*Omega2dot
+    - 4.8*vphi2*SQrdot*rdot - 0.8*SQ(SQ(r))*Omega*rdot*Omega2dot
     - 0.04*vphi*SQ(SQ(r))*Omega3dot - 1.2*SQ(SQ(r))*Omega*r2dot*Omegadot
     - 4.8*vphi*SQ(r*rdot)*Omegadot + 2.*vphi3*SQ(r)*Omegadot
     - 0.08*SQ(SQ(r))*r*Omegadot*Omega2dot - 0.6*SQ(SQ(r)*Omegadot)*rdot;
@@ -401,7 +403,7 @@ void eob_wav_hlmNewt_ecc(double r,
   double phi42_ecc = atan(Im_vphi42_ecc/Re_vphi42_ecc);
   double phi41_ecc = atan(Im_vphi41_ecc/Re_vphi41_ecc);
   double phi55_ecc = atan(Im_vphi55_ecc/Re_vphi55_ecc);
-
+  
   if (Re_vphi22_ecc < 0.)    phi22_ecc = phi22_ecc + Pi;
   if (Re_vphi21_ecc < 0.)    phi21_ecc = phi21_ecc + Pi;
   if (Re_vphi33_ecc < 0.)    phi33_ecc = phi33_ecc + Pi;
@@ -412,6 +414,7 @@ void eob_wav_hlmNewt_ecc(double r,
   if (Re_vphi42_ecc < 0.)    phi42_ecc = phi42_ecc + Pi;
   if (Re_vphi41_ecc < 0.)    phi41_ecc = phi41_ecc + Pi;
   if (Re_vphi55_ecc < 0.)    phi55_ecc = phi55_ecc + Pi;
+  
   
   /** Polynomials in nu */
   const double p1 = 1.;
@@ -4069,7 +4072,7 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   /** Point-mass h_lm */
   for (int k = 0; k < KMAX; k++) {
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
-    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
+    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */    
   }
   
   /** NQC */
