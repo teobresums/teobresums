@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # main
 
     r  = 1500.
-    q  = 1. 
+    q  = 1.0
     nu = q/(1+q)**2
 
     pphi_lso = EOBRun_module.pph_lso_orbital_py(nu);
@@ -95,11 +95,13 @@ if __name__ == "__main__":
     'chi1'               : 0.,
     'chi2'               : 0.,
     'Lambda1'            : 0.,
-    'Lambda2'            : 0.,     
+    'Lambda2'            : 0.,
+    'dt'                 : 0.5,
+    'dt_interp'          : 0.5,
     'domain'             : 0,                 #Set 1 for FD. Default = 0
     'arg_out'            : 1,                 #Output hlm/hflm. Default = 0
-    'use_mode_lm'        : [1],               #List of modes to use/output through EOBRunPy
-    'output_lm'          : [1],               #List of modes to print on file
+    'use_mode_lm'        : [0,1,2],               #List of modes to use/output through EOBRunPy
+    'output_lm'          : [0,1,2],               #List of modes to print on file
     'output_dynamics'    : 1,                 #output of the dynamics
     'ode_tstep_opt'      : 1,                 #fixing uniform or adaptive. Default = 1 
     #'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
@@ -129,7 +131,21 @@ if __name__ == "__main__":
     Phi22 = hlm['1'][1]
     Reh22   = A22*np.cos(-Phi22)
     Imh22   = A22*np.sin(-Phi22)
-        
+
+    # plot amplitude and phase
+    A21   = hlm['0'][0]
+    Phi21 = hlm['0'][1]
+    Reh21   = A21*np.cos(-Phi21)
+    Imh21   = A21*np.sin(-Phi21)
+
+
+
+    
+    print("A22 = %s" %A22)
+    print("phi22 = %s" %Phi22)
+    print("A21 = %s" %A21)
+    print("phi21 = %s" %Phi21)
+    
     #plt.plot(t,Reh22)
     #plt.plot(t,Imh22)
     #plt.show()
@@ -141,6 +157,7 @@ if __name__ == "__main__":
     plt.plot(Phi22)
     plt.show()
 
+    
     
  
 
