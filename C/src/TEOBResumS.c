@@ -1423,9 +1423,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /** Stop integration if reached max time */    
     if (dyn->t > dyn->t_stop) {
       if (VERBOSE) printf("Stop: Max integration time reached.\n");
-      dyn->ode_stop = true;
+      dyn->ode_stop = true;      
     }
-
+    
     /** Stop integration at given radius (if rstop >= 0) */    
     if ((dyn->ode_stop_radius) && (dyn->r < rstop) ) {
       if (VERBOSE) printf("Stop: radius reached.\n");
@@ -1504,8 +1504,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 				  dyn);
     }
 
-    /*    
+        
     //D0(dyn->data[EOB_RAD], dyn->dt, size, rdot);
+    /*
     D0(r_omg, dyn->dt, size, rdot);
     D0(rdot,  dyn->dt, size, r2dot);
     D0(r2dot, dyn->dt, size, r3dot);
@@ -1528,6 +1529,18 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     D0_x_2(Omega2dot, dyn->time, size, Omega3dot);
     D0_x_2(Omega3dot, dyn->time, size, Omega4dot);
     
+    //*
+    D0_x_4(r_omg, dyn->time, size, rdot);
+    D0_x_4(rdot,  dyn->time, size, r2dot);
+    D0_x_4(r2dot, dyn->time, size, r3dot);
+    D0_x_4(r3dot, dyn->time, size, r4dot);
+    D0_x_4(r4dot, dyn->time, size, r5dot);
+    D0_x_4(dyn->data[EOB_MOMG], dyn->time, size, Omegadot);
+    D0_x_4(Omegadot,  dyn->time, size, Omega2dot);
+    D0_x_4(Omega2dot, dyn->time, size, Omega3dot);
+    D0_x_4(Omega3dot, dyn->time, size, Omega4dot);
+    //*/
+
     for (int i = 0; i < size; i++) {
       dyn->store = 1;
       dyn->y[EOB_EVOLVE_PHI] = dyn->data[EOB_PHI][i];
