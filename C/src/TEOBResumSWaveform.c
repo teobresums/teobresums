@@ -2019,6 +2019,9 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   const double aK   = dyn->a1+dyn->a2;
   const double Mbh  = dyn->Mbhf;
   const double abh  = dyn->abhf;
+  const double ecc  = dyn->ecc;
+
+  FILE* fp;
     
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
@@ -2362,7 +2365,30 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     PRFORMd("b1",bi[1][0]);
     PRFORMd("b2",bi[1][1]);
   }
-  
+=======
+
+  if (ecc != 0.) {
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+    double *smooth_theta;
+    smooth_theta = (double*) calloc (size, sizeof(double));
+   
+    for (int j=0; j<size; j++) {
+      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+
+      for (int k=0; k<KMAX; k++) {
+	if(hnqc->kmask[k]){
+	  n1[k][j] = n1[k][j]*smooth_theta[j];
+	  n2[k][j] = n2[k][j]*smooth_theta[j];
+	  n4[k][j] = n4[k][j]*smooth_theta[j];
+	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	}
+      }
+    }
+    
+    free(smooth_theta);
+  }
+
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
     if(h->kmask[k]) {  
@@ -2446,6 +2472,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   const double aK   = dyn->a1+dyn->a2;
   const double Mbh  = dyn->Mbhf;
   const double abh  = dyn->abhf;
+  const double ecc  = dyn->ecc;
+
+  FILE* fp;
     
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
@@ -2770,6 +2799,28 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[1][1]);
   }
 
+  if (ecc != 0.) {
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+    double *smooth_theta;
+    smooth_theta = (double*) calloc (size, sizeof(double));
+
+    for (int j=0; j<size; j++) {
+      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+
+      for (int k=0; k<KMAX; k++) {
+	if(hnqc->kmask[k]){
+	  n1[k][j] = n1[k][j]*smooth_theta[j];
+	  n2[k][j] = n2[k][j]*smooth_theta[j];
+	  n4[k][j] = n4[k][j]*smooth_theta[j];
+	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	}
+      }
+    }
+    
+    free(smooth_theta);
+  }
+  
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask[k]){
@@ -2845,7 +2896,29 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       }
     }
   }
-  
+
+  if (ecc != 0.) {
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+    double *smooth_theta;
+    smooth_theta = (double*) calloc (fullsize, sizeof(double));
+    
+    for (int j=0; j<fullsize; j++) {
+      smooth_theta[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
+
+      for (int k=0; k<KMAX; k++) {
+	if(hlm->kmask[k]){
+	  n1[k][j] = n1[k][j]*smooth_theta[j];
+	  n2[k][j] = n2[k][j]*smooth_theta[j];
+	  n4[k][j] = n4[k][j]*smooth_theta[j];
+	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	}
+      }
+    }
+
+    free(smooth_theta);
+  }
+
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask[k]){
       for (int j=0; j<fullsize; j++) {
