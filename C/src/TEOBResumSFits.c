@@ -970,10 +970,6 @@ void eob_nqc_setcoefs_spin202002(NQCcoefs *nqc)
 	
   nqc->add = 1;
   nqc->maxk = k22;
-
-  printf("a1 = %1.10e \n",a1fit);
-  printf("a2 = %1.10e \n",a2fit);
-  getchar();
   
 }
 	
