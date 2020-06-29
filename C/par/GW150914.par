@@ -37,7 +37,7 @@ output_dynamics = 1 # output dynamics
 
 size = 200 # size of the arrays (chunks, dynamically extended)
 ode_timestep = "adaptive" 
-ode_stop_at_radius = 4. # stop ODE integration at this radius (if > 0)
+ode_stop_at_radius = 1. # stop ODE integration at this radius (if > 0)
 compute_LR = 0 # calculate LR ?
 compute_LSO = 0 # calculate LSO ?
 
