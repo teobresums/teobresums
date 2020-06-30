@@ -605,7 +605,7 @@ void unwrap(double *p, const int size)
  if (size < 1) return;
   int j;
   int fact = 0;  // For making the initial negative phase angles positive
-  double curr, prev; 
+  double curr, prev;
   double corr = 0.0;
   double dphi = 0.0;
 
@@ -625,8 +625,8 @@ void unwrap(double *p, const int size)
     p[j] += corr - fact*TwoPi;      
     //if(j<10)printf("p[j]corr= %.3f\n", p[j]);   
     prev = curr;
-    dphi = 0.0;    
-  }  
+    dphi = 0.0;
+  }
 }
 
 /* Slightly modified unwrap function for HM phases */
@@ -638,21 +638,23 @@ void unwrap_HM(double *p, const int size)
   dphi = 0.;
   corr = 0.;
   
-  prev = p[0];  
+  prev = *p;  
   for (j = 1; j < size; j++){
-    curr = p[j];
+    p++;
+    curr = *p;
     
-    if( curr < prev - Pi) 
+    if(curr < prev - Pi) 
       dphi = TwoPi;
-    if( curr > prev + TwoPi)
+    if(curr > prev + TwoPi)
       dphi = -TwoPi;
 
     corr += dphi;
-    p[j] += corr;      
+    *p += corr;    
 
     prev = curr;
-    dphi = 0.0;
-  }  
+    dphi = 0.0;    
+  } 
+  
 }
 
 #define dbg_unwrap_proxy (0)  /* stops after routine, use: ./TEOBResumS.x test.par > out */ 
@@ -2081,11 +2083,3 @@ void errorexits(char *file, int line, const char *s, const char *t)
 }
 
 /* do not write functions beyond this line: errorexit undef/define */
-
-
-
-
-
-
-
-

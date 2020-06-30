@@ -287,6 +287,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Iteration index */
   int iter = 0;  
+  int pasize = 0;
   
   if (use_postadiab_dyn) {
 
@@ -331,10 +332,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /** Prepare for evolution */
     /* start counting from here */
+    pasize = size;
     iter = size-1; 
     dyn->dt = 0.5*(dyn->time[iter]-dyn->time[iter-1]);
 
-    if (dyn->dt > 100.) dyn->dt = 100.;
+    if (dyn->dt > 10.) dyn->dt = 10.;
 
     /* Set arrays with initial conditions 
        Note current time is already set in dyn->t */
@@ -539,7 +541,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       } else {
 	/* Mininum not reached, update the max */
 	dyn->MOmg_prev = dyn->MOmg;
-      } 
+    } 
     }
 
     /* ... if before the Omega_orb peak, this is an actual error */
@@ -647,16 +649,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Dynamics_push (&dyn, size);
   
  END_ODE_EVOLUTION:;
-
-  /* Unwrap phase for higher modes */
+  
+  /** Unwrap phase for higher modes.
+      Skip PA phases: they can jump 2Pi by construction */
   if (EOBPars->use_flm == USEFLM_HM) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
-	unwrap_HM(hlm->phase[k],hlm->size);
+	unwrap_HM(&hlm->phase[k][pasize],size-pasize);
       }
     }
   }
-  
+	  
 #if (DEBUG) 
   // Output wave and dynamics 
   if(EOBPars->output_multipoles) {
@@ -830,6 +833,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if(EOBPars->output_multipoles) {
     strcat(hlm->name,"_ringdown");
     Waveform_lm_output (hlm);
+    Waveform_lm_output_reim (hlm);
   }
 #endif
   
