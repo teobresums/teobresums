@@ -127,7 +127,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
   eobp->use_geometric_units = 1;
 
-  eobp->use_speedytail = 1;
+  eobp->use_speedytail = 0;
 
   eobp->dt_merger_interp = 0.5;
 
@@ -135,8 +135,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->dt_interp = 0.5;
   eobp->srate_interp = 4096.;
 
-  int hlm[] = {1, 2};      //indexes of multipoles to use
-  eobp->use_mode_lm_size = 2;
+  int hlm[] = {1};      //indexes of multipoles to use
+  eobp->use_mode_lm_size = 1;
   eobp->use_mode_lm = malloc (eobp->use_mode_lm_size * sizeof(int) );
   memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
 
@@ -751,7 +751,7 @@ void par_db_default ()
   par_add_s("tides_gravitomagnetic","no");
   par_add_b("use_Yagi_fits", 0); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
   par_add_b("use_geometric_units", 1); // use geometric units for I/O ?
-  par_add_b("use_speedytail", 1); // use special routine to speed up tail computation ?
+  par_add_b("use_speedytail", 0); // use special routine to speed up tail computation ?
   
   par_add_d("dt_merger_interp", 0.5); // dt for interpolating merger waveform and NQC/ringdown attachment
   par_add_b("interp_uniform_grid", 0); // interpolate on uniform grid final result ?
