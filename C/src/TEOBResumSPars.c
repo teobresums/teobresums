@@ -384,7 +384,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->use_flm == USEFLM_NOPT) {
-    eobp->centrifugal_radius = USEFLM_SSLO;
+    eobp->centrifugal_radius = CENTRAD_LO;
     if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
 			par_get_s("use_flm"), use_flm_opt[eobp->use_flm]);
   }
