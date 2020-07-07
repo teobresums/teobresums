@@ -2233,7 +2233,8 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b1      = (b1 + c11Amp*nu + c12Amp*nu2)/(1 + c13Amp*nu + c14Amp*nu2);
     b2      = (b2 + c21Amp*nu + c22Amp*nu2)/(1 + c23Amp*nu + c24Amp*nu2);
  
-    scale   = 1 + aK*pow(omgmrg[3]/2.,1./3.);
+    scale   = 1 + aK*pow(fabs(omgmrg[3])/2.,1./3.);
+    // FIXME: Different from Matlab. Complex for negative frequencies
     Aorb    = ATP[3]*(1-3*nu)*(1 + a1*nu + a2*nu2)/(1 + a3*nu);
     Aspin   = (1 + b1*aK)/(1 + b2*aK);
     Amrg[3] = Aorb*scale*Aspin; 
