@@ -148,7 +148,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->postadiabatic_dynamics_rmin=14.; // minimum radius (end of PA dynamics)
   eobp->postadiabatic_dynamics_stop=0; // stop after post-adiabatic dynamics 
 
-  eobp->centrifugal_radius=CENTRAD_LO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
   
   eobp->compute_LR=0; // calculate LR ?
@@ -373,7 +373,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->centrifugal_radius == CENTRAD_NOPT) {
-    eobp->centrifugal_radius = CENTRAD_LO;
+    eobp->centrifugal_radius = CENTRAD_NLO;
     if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
 			par_get_s("centrifugal_radius"), centrifugal_radius_opt[eobp->centrifugal_radius]);
   }
@@ -384,7 +384,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->use_flm == USEFLM_NOPT) {
-    eobp->centrifugal_radius = CENTRAD_LO;
+    eobp->use_flm = USEFLM_SSLO;
     if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
 			par_get_s("use_flm"), use_flm_opt[eobp->use_flm]);
   }
@@ -767,7 +767,7 @@ void par_db_default ()
   par_add_d("postadiabatic_dynamics_rmin_BNS", 14.); // minimum radius (end of PA dynamics for BNS) //FIXME:this should be removed, use only above.
   par_add_s("postadiabatic_dynamics_stop","yes"); // stop after post-adiabatic dynamics //FIXME: make bool
 
-  par_add_s("centrifugal_radius", "LO"); // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  par_add_s("centrifugal_radius", "NLO"); // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   par_add_s("use_flm", "SSLO"); // "SSLO", "SSNLO", "HM"
   par_add_b("compute_LR", 0); // calculate LR ?
   par_add_b("compute_LSO", 0); // calculate LSO ?
