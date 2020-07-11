@@ -389,7 +389,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     PyArrayObject *pfo;                 /* f  */
     PyArrayObject *phprealo, *phpimago; /* h+ */
     PyArrayObject *phcrealo, *phcimago; /* hx */
-    PyArrayObject *pAhflmo,  *pphflmo;  /* Alm and philm */
 
     pfo      = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
     phprealo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
@@ -414,8 +413,8 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     for(int k=0; k<KMAX; k++){
       if(hfmodes->kmask[k]){
         double *pAhflm, *pphflm;
-        pAhflmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-        pphflmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        PyArrayObject  *pAhflmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        PyArrayObject  *pphflmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
         pAhflm = pyvector_to_Carrayptrs(pAhflmo);
         pphflm = pyvector_to_Carrayptrs(pphflmo);
         memcpy(pAhflm, hfmodes->ampli[k], hfmodes->size * sizeof(double));

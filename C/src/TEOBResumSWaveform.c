@@ -1762,7 +1762,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 /** Computes the factors and the coefficients that build the  
     NQC corrections to the waveform in the spinning case */
 void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
-{  
+{
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
   double alpha1[KMAX], omega1[KMAX];
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
@@ -1799,7 +1799,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
     *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
-  
+
   for (int k=0; k<KMAX; k++) {
     omg[k]  = (double*) calloc (size,sizeof(double));
     domg[k] = (double*) calloc (size,sizeof(double));
@@ -1823,12 +1823,11 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   /** omega derivatives */
   const double dt = t[1]-t[0];
   for (int k=0; k<KMAX; k++) {
-    if(h->kmask[k]) {
+    if(h->kmask[k]){
       D0(h->phase[k], dt, size, omg[k]);
       D0(omg[k], dt, size, domg[k]);
     }
   }
-  
   /** NR fits */
   for (int k=0; k<KMAX; k++) {   
     max_A[k]    = 0.;
@@ -1906,7 +1905,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
       }
     }
   }
-  
+
   if (EOBPars->use_flm == USEFLM_HM) {
     for (int j=0; j<size; j++) {
       /* l=2,m=1 */
@@ -1967,7 +1966,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     Omgmax_index = j;
     }
   */
-  
+
   /** Time */
   double tOmgOrb_pk = t[Omgmax_index];
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
@@ -2021,7 +2020,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
      The ringdown coefficient refer to this normalization.
      Nagar & Rezzolla, CQG 22 (2005) R167 */      
   for (int k=0; k<KMAX; k++) {
-    if(h->kmask[k]) {  
+    if(h->kmask[k]){  
       double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
       if (h->ampli[k][0] > 0.) {	
 	nNegAmp[k] = 0;	
@@ -2029,7 +2028,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 	nNegAmp[k] = 1;	
       }
       for (int j=0; j<size; j++) {
-	p1tmp[k][j] = fabs(h->ampli[k][j] * nlm);      
+	p1tmp[k][j] = fabs(h->ampli[k][j] * nlm);
       }
     }
   }
@@ -2133,7 +2132,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   
   /** Multiply waveform to NQC */
   for (int k=0; k<KMAX; k++) {
-    if(h->kmask[k]) {    
+    if(h->kmask[k]){    
       for (int j=0; j<size; j++) {
 	h->ampli[k][j] *= hnqc->ampli[k][j];
 	h->phase[k][j] -= hnqc->phase[k][j];
@@ -2270,15 +2269,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 
   /* Higher modes */
   /* 21, 32, 42, 43 and 44 extracted from postpeak */
-  int K_HM[5] = {0,3,6,7,8}; 
-  //SB: Do you need to specify this?
-  //    The idea is that the (k-index of the) modes one wants to activative are specified in the parameter 
-  //     `use_mode_lm`
-  //     in turn, this info is available in the h*->kmask[k] =0,1 array in each allocated waveform_lm.
-  //    A loop
-  //     for (int k=0; k<KMAX; k++) {
-  //        if(hlm_mrg->kmask[k]){
-  //    might be enough for all the cases?
+  int K_HM[5] = {0,3,6,7,8};
 
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
@@ -2415,7 +2406,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   eob_nqc_deltat_lm(dyn, dtmrg);
   
   for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask[k]){ 
+    if(hlm_mrg->kmask[k]){
       tmrg[k]  = tmrg[1] + dtmrg[k];
       t_NQC[k] = tmrg[k] + 2.;
       
@@ -3408,6 +3399,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 */ 
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 {
+  
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
   const double nu    = dyn->nu;
@@ -3467,7 +3459,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /* nonspinning case */
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
-
+  
   /* The following values are the difference between the time of the peak of
      the 22 waveform and the other modes. */
   eob_nqc_deltat_lm(dyn, dtmrg);	  
@@ -3498,7 +3490,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     a1, a2, a3, a4, b1, b2, b3, b4, 
 		     sigma[0],sigma[1]);
-  
+    
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
@@ -3530,6 +3522,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
       
       /* Compute and attach ringdown */
       for (int j = index_rng-1; j < size ; j++ ) {
+	
 	tm = t_lm[k][j] - tmatch[k];
 	
 	eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
@@ -3541,13 +3534,13 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 	}
       }
     }
-  }
+  } 
 	  
   /** Free mem. */
   for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);
   }
-	
+  
 }
 
 /** Main routine for factorized EOB waveform */

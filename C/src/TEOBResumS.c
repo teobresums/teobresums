@@ -659,7 +659,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
     }
   }
-	  
+
 #if (DEBUG) 
   // Output wave and dynamics 
   if(EOBPars->output_multipoles) {
@@ -669,7 +669,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (EOBPars->output_dynamics)
     Dynamics_output(dyn);
 #endif
-
+  
   if (!(use_tidal)) {
     
     /* *****************************************

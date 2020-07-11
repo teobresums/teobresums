@@ -486,7 +486,7 @@ int D0_x_4(double *f, double *x, int n, double *df)
     df[k] = d4(ix, iy, 2);
     ix++; iy++;
   }
-
+  ix--;iy--;
   /*right boundary*/
   df[n-2] = d4(ix, iy, 3);
   df[n-1] = d4(ix, iy, 4);
@@ -1134,6 +1134,7 @@ void Waveform_lm_output (Waveform_lm *wav)
 {
   char fname[STRLEN*2];
   const int n = wav->size;
+  
   for (int k=0; k<KMAX; k++) {
     if (wav->kmask[k]) {      
       sprintf(fname,"%s/%s_l%01d_m%01d.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
@@ -1782,6 +1783,8 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
   double tmpf0 = EOBPars->initial_frequency;  
   double tmpdf = EOBPars->df;
   double tmpsrate = EOBPars->srate_interp/2.;
+  /* Determine the size of output frequency array */
+  const int interp_size = get_uniform_size(tmpsrate,tmpf0,tmpdf);
 
   /* if necessary, transform f0, df and srate_interp to geom units */
   if (!(EOBPars->use_geometric_units)){
@@ -1875,8 +1878,6 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     //Fmax = MIN(Fmax,FDlm->F[k][n]);
   }
 
-  /* Determine the output frequency array */
-  const int interp_size = get_uniform_size(half_srate_interp,f0, df);
   
   /* Interpolate each mode */
   WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
