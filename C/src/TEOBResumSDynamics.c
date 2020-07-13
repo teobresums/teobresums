@@ -865,3 +865,487 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
   
   return status;
 }
+
+
+
+/** spin dynamics */
+
+
+/** Compute alpha from Lhat */
+double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz)
+{
+  return atan2(Lhy,Lhx);
+}
+
+/** Compute beta from Lhat */
+double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz)
+{
+  return acos(Lhz);
+}
+
+/** r.h.s. of the PN precessing equations 
+    https://arxiv.org/abs/1307.4418
+    https://arxiv.org/abs/1703.03967
+*/
+int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
+{
+
+  (void)(t); /* avoid unused parameter warning */
+  DynamicsSpin *dyn = d;  
+
+  const double q = EOBPars->q; // Assume q = MA/MB >=1 //CHECKME paper convention!
+  const double nu = EOBPars->nu; 
+  const double nu2 = nu*nu;
+  const double nu3 = nu2*nu;
+  const double nu4 = nu3*nu;
+  const double nu5 = nu4*nu;
+
+  const double M = EOBPars->M; 
+  const double M2 = SQ(M);
+  const double MA = q * M; 
+  const double MB = M - MA;
+  const double dm = MA - MB; 
+  const double ma_o_mb = q; 
+  const double mb_o_ma = 1./q;
+
+  const double Pi2 = SQ(Pi);
+  const double Pi3 = Pi2*Pi;
+  const double oothree = 0.3333333333333333; // 1/3
+  const double eleven_o_three = 3.6666666666666665; // 11/3
+
+  /** Unpack y */ 
+  double SA[IN3], SB[IN3], Lh[IN3]; 
+  SA[Ix] = y[EOB_EVOLVE_SPIN_SxA];
+  SA[Iy] = y[EOB_EVOLVE_SPIN_SyA];
+  SA[Iz] = y[EOB_EVOLVE_SPIN_SzA];
+
+  SB[Ix] = y[EOB_EVOLVE_SPIN_SxB];
+  SB[Iy] = y[EOB_EVOLVE_SPIN_SyB];
+  SB[Iz] = y[EOB_EVOLVE_SPIN_SzB];
+
+  Lh[Ix] = y[EOB_EVOLVE_SPIN_Lx];
+  Lh[Iy] = y[EOB_EVOLVE_SPIN_Ly];
+  Lh[Iz] = y[EOB_EVOLVE_SPIN_Lz];
+
+  const double omg = y[EOB_EVOLVE_SPIN_Momg]; // M omega
+  const double lnomg = log(omg);
+  const double v = pow(omg/M, oothree); // division by M !
+  const double v2 = v*v;
+  const double v3 = v2*v;
+  const double v4 = v3*v;
+  const double v5 = v4*v;
+  const double v6 = v5*v;
+  const double v7 = v6*v;
+  const double v8 = v7*v;
+  const double v9 = v8*v;
+  
+  /** rhs */
+
+  /* spins and Lhat */
+  
+  // Note: alpha and beta are not actually evolved,
+  //       their rhs is left to 0 
+  for(int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    dy[v] = 0.; 
+
+  double qSAB[IN3], SABq[IN3];
+  double OmgA[IN3], OmgB[IN3];
+  double Omg_x_SA[IN3], Omg_x_SB[IN3];
+  
+  /* NLO */
+  for(int a=Ix; a<IN3; a++) qSAB[a] = q*SA[a] + SB[a];
+  for(int a=Ix; a<IN3; a++) SABq[a] = SA[a] + SB[a]/q;
+
+  double qSABLh, SABqLh;
+  vect_dot3(qSAB, Lh, &qSABLh);
+  vect_dot3(SABq, Lh, &SABqLh);
+
+  for(int a=Ix; a<IN3; a++) 
+    OmgA[a] = v5*(nu*(2+1.5*q) + 0.5*v*(SB[a]-3*qSABLh))*Lh[a];
+  for(int a=Ix; a<IN3; a++) 
+    OmgB[a] = v5*(nu*(2+1.5*q) + 0.5*v*(SA[a]-3*SABqLh))*Lh[a];
+  
+  vect_cross3(OmgA, SA, Omg_x_SA);
+  vect_cross3(OmgB, SB, Omg_x_SB);
+  
+  dy[EOB_EVOLVE_SPIN_SxA] += Omg_x_SA[Ix];
+  dy[EOB_EVOLVE_SPIN_SyA] += Omg_x_SA[Iy];
+  dy[EOB_EVOLVE_SPIN_SzA] += Omg_x_SA[Iz];
+  
+  dy[EOB_EVOLVE_SPIN_SxB] += Omg_x_SB[Ix];
+  dy[EOB_EVOLVE_SPIN_SyB] += Omg_x_SB[Iy];
+  dy[EOB_EVOLVE_SPIN_SzB] += Omg_x_SB[Iz];
+  
+  const double v_o_nu = v/nu;
+  dy[EOB_EVOLVE_SPIN_Lx] += -(v_o_nu) * ( Omg_x_SA[Ix] + Omg_x_SB[Ix] );
+  dy[EOB_EVOLVE_SPIN_Ly] += -(v_o_nu) * ( Omg_x_SA[Iy] + Omg_x_SB[Iy] );
+  dy[EOB_EVOLVE_SPIN_Lz] += -(v_o_nu) * ( Omg_x_SA[Iz] + Omg_x_SB[Iz] );  
+    
+  /* N4LO */
+  /*
+  const double cv7 = v7*( 0.5625 + 1.25*nu - 0.04166666666666666*nu2 + dm*(-0.5625+0.625*nu) );
+  const double cv9 = v9*( 0.84375 + 0.1875*nu - 3.28125*nu2 - 0.02083333333333*nu3
+			  + dm*(-0.84375+4.875*nu-0.15625*nu2) );
+  const double csA = -0.25*(3+1./mA);
+  const double csB = -0.25*(3+1./mB);
+  const double csAL = -0.08333333333333333*(1+27./mA);
+  const double csBL = -0.08333333333333333*(1+27./mB);
+  const double L2PN = 1 + v2*(1.5+0.1666666666666667*nu) + v4*(3.375 - 2.375*nu + 0.04166666666666666*nu2);
+
+  dy[EOB_EVOLVE_SPIN_SxA] += cv7 + cv9; //CHECKME: are these eqs correct in sarp paper?
+  dy[EOB_EVOLVE_SPIN_SyA] += cv7 + cv9;
+  dy[EOB_EVOLVE_SPIN_SzA] += cv7 + cv9;
+
+  dy[EOB_EVOLVE_SPIN_SxB] += cv7 + cv9;
+  dy[EOB_EVOLVE_SPIN_SyB] += cv7 + cv9;
+  dy[EOB_EVOLVE_SPIN_SzB] += cv7 + cv9;
+
+  dy[EOB_EVOLVE_SPIN_Lx] -= 2*(cv7 + cv9); //CHECKME: isn't this the only piece missing to be added?
+  dy[EOB_EVOLVE_SPIN_Ly] -= 2*(cv7 + cv9); //         unclear why using (4c) ???
+  dy[EOB_EVOLVE_SPIN_Lz] -= 2*(cv7 + cv9);  
+  */
+
+  /* dot gamma = dot alpha(t) * cos(beta(t)) = dot alpha(t) * Lhz */
+
+  dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * ( Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] - Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
+    
+  /* dot omg (Rad.React.) */
+
+  const double vlo = 0.33333333333*v9;
+  double SAdotLh, SBdotLh, SAdotSB, SA2, SB2;
+  vect_dot3(SA, Lh, &SAdotLh);
+  vect_dot3(SB, Lh, &SBdotLh);    
+  vect_dot3(SA, SB, &SAdotSB);
+  vect_dot3(SA, SA, &SA2);
+  vect_dot3(SB, SB, &SB2);
+
+  double a[12], b[12], beta[9];
+  for (int i=0; i<12; i++) a[i] = 0;
+  for (int i=0; i<12; i++) b[i] = 0;
+  for (int i=0; i<9; i++) beta[i]= 0;
+  
+  //TODO: precompted spin independent coefs as first call       
+  // sgima, beta, a_3-8 are spin-dependend, precompute the fractions
+  
+  // https://arxiv.org/abs/1307.4418 , App.A 
+  
+  double sigma4 = ( 247./48*SAdotSB - 721./48*SAdotLh*SBdotLh )/(nu*SQ(M2))
+    + (233./96*SA2 - 719./96*SQ(SAdotLh))/(M2*SQ(MA))
+    + (233./96*SB2 - 719./96*SQ(SBdotLh))/(M2*SQ(MB)); 
+  
+  
+  beta[3] = (113./12 + 25./4*mb_o_ma)*SAdotLh/M2
+    + (113./12 + 25./4*ma_o_mb)*SBdotLh/M2; 
+
+  beta[5] = ((31319./1008-1159./24*nu) + mb_o_ma*( 809./84 - 281./8*nu))*SAdotLh/M2
+    + ((31319./1008-1159./24*nu) + ma_o_mb*( 809./84 - 281./8*nu))*SBdotLh/M2; 
+
+  beta[6] = Pi/M2 * (75./2+151./6*mb_o_ma)*SAdotLh
+    + Pi/M2 * (75./2+151./6*ma_o_mb)*SBdotLh; 
+
+  beta[7] = ((130325./756 - 796069./2016*nu+100019./864*nu2)+ mb_o_ma*(1195759./18144-257023./1008*nu+2903./32*nu2))*SAdotLh/M2 
+    + ((130325./756 - 796069./2016*nu+100019./864*nu2)+ ma_o_mb*(1195759./18144-257023./1008*nu+2903./32*nu2))*SBdotLh/M2;
+  
+  beta[8] = Pi/M2*(76927./504 -220055./672*nu) + mb_o_ma*(1665./28-50483./224*nu)*SAdotLh
+    + Pi/M2*(76927./504 -220055./672*nu) + ma_o_mb*(1665./28-50483./224*nu)*SBdotLh;
+
+  
+  b[6] = -1712./315;  
+
+  b[8] = - 856./315*nu + 124741./4410;  
+
+  b[9] = - 6848./105* Pi;  
+
+  b[10] = 3090781./26460*nu -  2354./945*nu2 - 11821184./1964655;  
+
+  b[11] = 311233./5880*Pi - 3424./315*Pi*nu;
+
+  
+  a[0] = 96./5*nu;
+
+  a[2] = -743./336-11./4*nu;
+
+  a[3] = 4*Pi-beta[3];
+
+  a[4] = 34103./18144 + 13661./2016*nu + 59./18*nu2 - sigma4;
+
+  a[5] = -4159./672*Pi - 189./8*Pi*nu - beta[5];
+
+  a[6] = 16447322263./139708800 + 16./3*Pi2 - 856./105*log(16.) - 1712./105*EulerGamma - beta[6]
+    + nu *( 451./48*Pi2- 56198689./217728) + nu2*541./896 - nu3*5605./2592;
+
+  a[7] = - 4415./4032*Pi + 358675./6048*Pi*nu +91495./1512*Pi*nu2 - beta[7];
+
+  a[8] = 3971984677513./25427001600 + 127751./1470*Log2  - 47385./1568*Log3 + 124741./4410*EulerGamma -361./126*Pi2 + 82651980013./838252800*nu - 1712./315*nu*Log2
+    - 856./315*EulerGamma*nu  - 31495./8064*Pi2*nu + 54732199./93312*nu2- 3157./144*Pi2*nu2  - 18927373./435456*nu3 -95./3888*nu4 -beta[8];
+
+  a[9] = 343801320119./745113600*Pi- 13696./105*Pi*Log2 -  6848./105*Pi*EulerGamma - 51438847./48384*Pi*nu + 205./6*Pi3*nu + 42680611./145152*Pi*nu2  +  9731./1344*Pi*nu3;
+
+  a[10] = 29619150939541789./36248733480960  -107638990./392931*Log2 + 616005./3136*Log3 - 11821184./1964655*EulerGamma - 21512./1701*Pi2 - 884576519037433./228843014400*nu 
+    + 2105111./8820*nu*Log2 - 15795./3136*nu*Log3 + 3090781./26460*EulerGamma*nu+ 14555455./217728*Pi2*nu  + 1175999369413./914457600*nu2 - 4708./945*nu2*Log2
+    - 126809./3024*Pi2*nu2 - 2354./945*EulerGamma*nu2 - 9007327699./11757312*nu3 + 9799./384*Pi2*nu3 + 51439207./1741824*nu4 - 34613./186624*nu5;
+
+  a[11] =  91347297344213./81366405120*Pi+ 5069891./17640*Pi*Log2- 142155./784*Pi*Log3  + 311233./5880*Pi*EulerGamma - 1903651780081./4470681600*Pi*nu- 6848./315*Pi*nu*Log2
+    - 3424./315*Pi*EulerGamma*nu - 26035./16128*Pi3*nu + 1760705531./290304*Pi*nu2 - 112955./576*Pi3*nu2 - 7030123./13608*Pi*nu3 + 49187./6048*Pi*nu4;  
+  
+  // Eq.(A1) of https://arxiv.org/abs/1307.4418 for Momega
+  for (int i=11; i<=2; i--)
+    dy[EOB_EVOLVE_SPIN_Momg] += (a[i] + b[i]*lnomg)*pow(omg,(double)i*oothree);
+  dy[EOB_EVOLVE_SPIN_Momg] += 1.;  
+  dy[EOB_EVOLVE_SPIN_Momg] *= a[0]*pow(omg, eleven_o_three); // LO
+      
+  return GSL_SUCCESS;
+}
+
+/** r.h.s. of the PN precessing equations for the angle */ 
+int eob_spin_dyn_rhs_PN_abc(double t, const double y[], double dy[], void *d)
+{
+
+  //TODO
+  // SB: This is a better approach, just evolve alpha, beta, gamma and omega
+  //     Not sure why we did not do this from the beginning ...
+  
+  return GSL_SUCCESS;
+}
+
+/** r.h.s. of the EOB precessing equations */ 
+int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d)
+{
+
+  //TODO
+  
+  return GSL_SUCCESS;
+}
+
+
+/** Precessing dynamics ODE integration 
+    The initial data are those stored in dyn->y */
+int eob_spin_dyn_integrate(DynamicsSpin *dyn)
+{
+  const int chunk = dyn->size;
+  int size = chunk; // can change
+  
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    dyn->data[v][0]  = dyn->y[v];
+  
+  /* GSL integrator memory */
+  dyn->omg_stop = 0; //EOBPars->spin_odes_omg_stop; //FIXME: add this parameter!   
+  dyn->dt = 0;//EOBPars->spin_odes_dt; //FIXME: add this parameter!   
+  const double ode_abstol = EOBPars->ode_abstol;
+  const double ode_reltol = EOBPars->ode_reltol;
+  
+  gsl_odeiv2_system sys          = {p_eob_spin_dyn_rhs, NULL, EOB_EVOLVE_SPIN_NVARS, dyn};
+#if (USERK45)
+  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
+#else
+  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
+#endif
+  gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_SPIN_NVARS);
+  gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
+  gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_SPIN_NVARS);
+  
+  /** Solve ODE */
+  if (VERBOSE) PRSECTN("ODE Precession evolution");
+  int iter = 0;
+  int status;
+  int GSLSTATUS = OK;
+  while (1) {
+    if (VERBOSE) printf("iter %09d\n", iter); 
+    iter++;
+    
+    //GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);//uniform
+    GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
+    
+    /** Check for failures ... */
+    if (GSLSTATUS != GSL_SUCCESS) {
+      printf("GSL Error = %d", GSLSTATUS);
+      return ERROR_ODEINT;
+    }
+    
+    /** Update alpha and beta angles */
+    dyn->y[EOB_EVOLVE_SPIN_alp] = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
+						     dyn->y[EOB_EVOLVE_SPIN_Ly],
+						     dyn->y[EOB_EVOLVE_SPIN_Lz]);
+    dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
+						    dyn->y[EOB_EVOLVE_SPIN_Ly],
+						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
+    
+    /** Update size and push arrays (if needed) */
+    if (iter==size) {
+      /* if (DEBUG)  printf("Push memory\n"); */ 
+      size += chunk;
+      dyn->size = size;
+      DynamicsSpin_push (&dyn, size);
+    }
+    
+    dyn->time[iter]  = dyn->t; 
+    for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+      dyn->data[v][iter]  = dyn->y[v];   
+
+    /** Stop integration */
+    if (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop)
+      break;
+    if ((dyn->t_stop>0) && (dyn->t > dyn->t_stop>0))
+      break;
+    
+  } /* end time iteration */
+  
+  /** Free ODE system solver */
+  gsl_odeiv2_evolve_free (e);
+  gsl_odeiv2_control_free (c);
+  gsl_odeiv2_step_free (s);
+  gsl_odeiv2_driver_free (d);
+  
+  return OK;
+}
+
+/** Precessing dynamics main driver routine */
+void eob_spin_dyn(DynamicsSpin *dyn)
+{
+  const int chunk = dyn->size;
+
+  //FIXME add option in EOBpars and add PN_abc and EOB rhs (when coded)
+  p_eob_spin_dyn_rhs = eob_spin_dyn_rhs_PN;
+    
+  /* Initial data */
+  dyn->y[EOB_EVOLVE_SPIN_SxA] = 0;//EOBPars->chi1x; //FIXME add these input pars
+  dyn->y[EOB_EVOLVE_SPIN_SyA] = 0;//EOBPars->chi1y;
+  dyn->y[EOB_EVOLVE_SPIN_SzA] = 0;//EOBPars->chi1z;
+  dyn->y[EOB_EVOLVE_SPIN_SxB] = 0;//EOBPars->chi2x;
+  dyn->y[EOB_EVOLVE_SPIN_SyB] = 0;//EOBPars->chi2y;
+  dyn->y[EOB_EVOLVE_SPIN_SzB] = 0;//EOBPars->chi2z;
+  dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; //FIXME Lh t=0 ?
+  dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
+  dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;
+  dyn->y[EOB_EVOLVE_SPIN_alp] =  eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
+						    dyn->y[EOB_EVOLVE_SPIN_Ly],
+						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
+  dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
+						  dyn->y[EOB_EVOLVE_SPIN_Ly],
+						  dyn->y[EOB_EVOLVE_SPIN_Lz]);
+  dyn->y[EOB_EVOLVE_SPIN_gam] = 0.; // ?
+  dyn->y[EOB_EVOLVE_SPIN_Momg] = Pi * EOBPars->initial_frequency; 
+  
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    dyn->data[v][0]  = dyn->y[v];
+  
+  /* Integrate ODEs */
+  if (eob_spin_dyn_integrate(dyn))
+    errorexit("error during spin integration");//FIXME: error handler
+  
+}
+
+/** Helper routine to interpolate Euler angles at given time */
+void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time,
+			     double *alpha_p, double *beta_p, double *gamma_p,
+			     int continue_integration)
+{
+  const int smax = dyn->size-1;
+  double alpha, beta, gamma;
+  int interp = 1;
+  
+  if (time >= dyn->time[smax]) {
+    
+    /* The precessing dynamics is too short ! 
+       We have two options 
+       1. continue the integration to time we need
+       2. return the last angle
+     */
+    if (continue_integration) {      
+
+      dyn->t_stop = time + dyn->dt;
+      eob_spin_dyn_integrate(dyn);      
+
+    } else {
+
+      alpha = dyn->data[EOB_EVOLVE_SPIN_alp][smax];
+      beta = dyn->data[EOB_EVOLVE_SPIN_bet][smax];
+      gamma = dyn->data[EOB_EVOLVE_SPIN_gam][smax];
+
+      interp = 0;// skip interpolation below      
+      if (VERBOSE) errorexit("Spin dynamics too short to interp!\n");
+    }
+  }
+  
+  /* Interp */
+  if (interp) {
+    alpha = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_alp], dyn->size, time);
+    beta = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_bet], dyn->size, time);
+    gamma = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_gam], dyn->size, time);
+  }
+  
+  *alpha_p = alpha;
+  *beta_p = beta;
+  *gamma_p = gamma;
+}
+
+/** Helper routine to interpolate spins parallel to orbital ang. mom. at given time */
+void eob_spin_dyn_Sp_interp(DynamicsSpin *dyn, double time,
+			    double *SpA, double *SpB,
+			    int continue_integration)
+{
+  const int smax = dyn->size-1;
+  double SA[IN3], SB[IN3], Lh[IN3];
+  int interp = 1;
+  
+  if (time >= dyn->time[smax]) {
+    
+    /* The precessing dynamics is too short ! 
+       We have two options 
+       1. continue the integration to time we need
+       2. return the last angle
+    */
+    if (continue_integration) {      
+      
+      dyn->t_stop = time + dyn->dt;
+      eob_spin_dyn_integrate(dyn);      
+      
+    } else {
+      
+      SA[Ix] = dyn->data[EOB_EVOLVE_SPIN_SxA][smax];
+      SA[Iy] = dyn->data[EOB_EVOLVE_SPIN_SyA][smax];
+      SA[Iz] = dyn->data[EOB_EVOLVE_SPIN_SzA][smax];
+      
+      SB[Ix] = dyn->data[EOB_EVOLVE_SPIN_SxB][smax];
+      SB[Iy] = dyn->data[EOB_EVOLVE_SPIN_SyB][smax];
+      SB[Iz] = dyn->data[EOB_EVOLVE_SPIN_SzB][smax];
+      
+      Lh[Ix] = dyn->data[EOB_EVOLVE_SPIN_Lx][smax];
+      Lh[Iy] = dyn->data[EOB_EVOLVE_SPIN_Ly][smax];
+      Lh[Iz] = dyn->data[EOB_EVOLVE_SPIN_Lz][smax];
+      
+      interp = 0;// skip interpolation below
+      if (VERBOSE) errorexit("Spin dynamics too short to interp!\n");
+    }
+  }
+
+  
+  /* Interp */
+  if (interp) {
+    SA[Ix] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_SxA], dyn->size, time);
+    SA[Iy] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_SyA], dyn->size, time);
+    SA[Iz] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_SzA], dyn->size, time);
+    
+    SB[Ix] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_SxB], dyn->size, time);
+    SB[Iy] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_SyB], dyn->size, time);
+    SB[Iz] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_SzB], dyn->size, time);
+    
+    Lh[Ix] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_Lx], dyn->size, time);
+    Lh[Iy] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_Ly], dyn->size, time);
+    Lh[Iz] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_Lz], dyn->size, time);
+  }
+  
+  /* Projections */
+  double LSA, LSB, normL;
+  vect_dot3(SA, Lh, &LSA);
+  vect_dot3(SB, Lh, &LSB);
+  vect_dot3(Lh, Lh, &normL); //CHECKME: is it correct to calculate the norm this way?
+  double oonormL = 1./sqrt(normL); 
+  
+  *SpA = LSA * oonormL;
+  *SpB = LSB * oonormL;
+}
+
+
