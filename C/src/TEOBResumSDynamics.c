@@ -1007,7 +1007,7 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
     const double Gtilde     = GS_0*S     + GSs_0*Sstar;
     const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
     const double duc_dr     = -uc2*drc_dr;
-    psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
+    psic       = fabs((duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA));
     r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
 
   } else {
