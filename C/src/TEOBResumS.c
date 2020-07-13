@@ -553,6 +553,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } else {
       dyn->MOmg = dyn->Omg;
     }
+
+    if (r_hyp != 0.) {
+      if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
+	if (VERBOSE) printf("Stop: Hyperbolic orbit crossed event horizon.\n");
+	iter--; /* do count this iter! */
+	dyn->ode_stop = true;
+	break; /* (while) stop */
+      }
+    }
 	
     if (dyn->ode_stop_MOmgpeak == true) {
       /* ... if after the Omega_orb peak, stop integration */
