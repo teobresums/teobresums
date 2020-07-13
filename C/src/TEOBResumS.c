@@ -60,7 +60,8 @@ int main (int argc, char* argv[])
   
   Waveform *hpc = NULL; /* TD wvf */
   Waveform_lm *hmodes = NULL; /* modes */
-
+  Waveform_lm *hTmodes = NULL; /* twisted modes */
+  
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
 
@@ -109,6 +110,7 @@ int main (int argc, char* argv[])
   Waveform_free (hpc);
   WaveformFD_free (hfpc);
   Waveform_lm_free (hmodes);
+  Waveform_lm_free (hTmodes);
   WaveformFD_lm_free (hfmodes);
 
   EOBParameters_free (EOBPars);
@@ -181,6 +183,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Alloc memory for dynamics and multipolar waveform */
   Dynamics *dyn = NULL;
+  DynamicsSpin *spindyn = NULL;
   Waveform_lm *hlm = NULL; /* h_lm */ 
   WaveformFD_lm *hflm = NULL; /* hf_lm (FD) */ 
   
@@ -190,11 +193,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Dynamics *dyn_mrg = NULL;
   double ytmp[EOB_EVOLVE_NVARS], dytmp[EOB_EVOLVE_NVARS], ttmp; /* Additional buffer for post-Omegapeak ev */
 
-  /* Set quick-access parameters dyn (be careful here) */
+  /* Alloc dynamics, 
+     Set quick-access parameters dyn (be careful here) */
   Dynamics_alloc (&dyn, 0, "dyn"); 
   Dynamics_set_params(dyn); 
   dyn->store = dyn->noflx = 0; /* Default: do not store vars, flux on */
 
+  /* Alloc spin dynamics, if needed */
+  if (use_spins == MODE_SPINS_GENERIC) {   
+    DynamicsSpin_alloc (&spindyn, 0);//EOBPars->spin_dyn_size); //FIXME: add this parameter and use it here in the call!
+  }
+  
   /** Compute initial radius */
   const double f0 = EOBPars->initial_frequency/time_unit_fact;
   double r0 = eob_dyn_r0_Kepler(f0);
@@ -229,6 +238,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_alloc (&hlm, size, "hlm"); 
   Waveform_lm_t_alloc (&hlm_t); 
 
+  /** Integrate spin dynamics, if needed */
+  if (use_spins == MODE_SPINS_GENERIC)
+    eob_spin_dyn(spindyn);
+  
   /** Set r.h.s. fun pointer */
   int (*p_eob_dyn_rhs)();
   if (use_spins) p_eob_dyn_rhs = &eob_dyn_rhs_s;
@@ -677,8 +690,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     strcat(hlm->name,"_insplunge");
     Waveform_lm_output (hlm);
   }
-  if (EOBPars->output_dynamics)
+  if (EOBPars->output_dynamics) {
     Dynamics_output(dyn);
+    if (use_spins == MODE_SPINS_GENERIC)
+      DynamicsSpin_output(spindyn);
+  }
 #endif
   
   if (!(use_tidal)) {
@@ -961,6 +977,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /** Free memory */
   Dynamics_free (dyn);
+  if (use_spins == MODE_SPINS_GENERIC)
+    DynamicsSpin_free (spindyn);  
   /* Waveform_lm_free (hlm); */
   /* WaveformFD_lm_free (hflm); */
   Waveform_lm_t_free (hlm_t);
