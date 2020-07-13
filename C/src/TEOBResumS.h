@@ -486,7 +486,6 @@ typedef struct tagDynamics
 typedef struct tagDynamicsSpin
 {
   int size;
-  double f0, Sx0,Sy0,Sz0;
   double *time;
   double *data[EOB_EVOLVE_SPIN_NVARS]; 
   double y[EOB_EVOLVE_SPIN_NVARS], dy[EOB_EVOLVE_SPIN_NVARS];
