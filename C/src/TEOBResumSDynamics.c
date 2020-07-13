@@ -1205,9 +1205,6 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
 void eob_spin_dyn(DynamicsSpin *dyn)
 {
   const int chunk = dyn->size;
-
-  //FIXME add option in EOBpars and add PN_abc and EOB rhs (when coded)
-  p_eob_spin_dyn_rhs = eob_spin_dyn_rhs_PN;
     
   /* Initial data */
   dyn->y[EOB_EVOLVE_SPIN_SxA] = 0;//EOBPars->chi1x; //FIXME add these input pars

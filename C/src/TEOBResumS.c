@@ -239,8 +239,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_t_alloc (&hlm_t); 
 
   /** Integrate spin dynamics, if needed */
-  if (use_spins == MODE_SPINS_GENERIC)
+  if (use_spins == MODE_SPINS_GENERIC) {
+    //FIXME add option in EOBpars and add PN_abc and EOB rhs (when coded)
+    p_eob_spin_dyn_rhs = eob_spin_dyn_rhs_PN;
     eob_spin_dyn(spindyn);
+  }
   
   /** Set r.h.s. fun pointer */
   int (*p_eob_dyn_rhs)();
