@@ -129,6 +129,9 @@
 #define DBGPR(s) printf("DEBUG: %s\n",s);
 #define DBGSTOP errorexit("DEBUG: STOP");
 
+/* indexes of 3-vectors */
+enum{Ix, Iy, Iz, IN3};
+
 /* Useful constants */
 #define Pi (3.1415926535897932384626433832795028)
 #define TwoPi (6.283185307179586476925286766559)
@@ -559,6 +562,13 @@ void EOBParameters_set_from_db (EOBParameters *eobp);
 double q_to_nu(const double q);
 double nu_to_X1(const double nu);
 double Eulerlog(const double x,const int m);
+void vect_dot(double ax, double ay, double az, double bx, double by, double bz, double *s);
+void vect_dot3(double *a, double *b, double *s);
+void vect_cross(double ax, double ay, double az, double bx, double by, double bz, double *cx, double *cy, double *cz);
+void vect_cross3(double *a, double *b, double *c);
+void vect_rotate(int axis, double angle, double *vx_p, double *vy_p, double *vz_p);
+void vect_rotate3(int axis, double angle, double *v);
+double interp_spline_pt(double *t, double *y, int n, double ti);
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi);
