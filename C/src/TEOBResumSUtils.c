@@ -47,6 +47,123 @@ double Eulerlog(const double x,const int m)
   return EulerGamma_Log2 + logm + 0.5*log(x);
 }
 
+/** vector scalar product */
+void vect_dot(double ax, double ay, double az,
+	      double bx, double by, double bz,
+	      double *s)
+{
+  *s = ax*bx + ay*by + az*bz;
+}
+
+void vect_dot3(double *a, double *b, 
+	       double *s)
+{
+  *s = a[Ix]*b[Ix] + a[Iy]*b[Iy] + a[Iz]*b[Iz];
+}
+
+/** vector curl product */
+void vect_cross(double ax, double ay, double az,
+		double bx, double by, double bz,
+		double *cx, double *cy, double *cz)
+{
+  *cx = ay*bz - az*by;
+  *cy = az*bx - ax*bz;
+  *cz = ax*by - ay*bx;
+}
+
+void vect_cross3(double *a, double *b, 
+		 double *c)
+{
+  c[Ix] = a[Iy]*b[Iz] - a[Iz]*b[Iy];
+  c[Iy] = a[Iz]*b[Ix] - a[Ix]*b[Iz];
+  c[Iz] = a[Ix]*b[Iy] - a[Iy]*b[Ix];
+}
+
+/** vector rotation about an axis */
+void vect_rotate(int axis, double angle, double *vx_p, double *vy_p, double *vz_p)
+{
+  double tmp1, tmp2;
+  const double ca = cos(angle);
+  const double sa = sin(angle);
+
+  double vx = *vx_p;
+  double vy = *vy_p;
+  double vz = *vz_p;  
+
+  if (axis==3) {
+    // z-axis
+    tmp1 = vx * ca - vy * sa;	    
+    tmp2 = vx * sa + vy * ca;
+    vx = tmp1;
+    vy = tmp2;
+  } else if (axis==2) {
+    // y-axis
+    tmp1 = vx * ca + vz * sa;
+    tmp2 = - vx * sa + vz * ca;
+    vx = tmp1;
+    vz = tmp2;
+  } else if (axis==1) {
+    // x-axis
+    tmp1 = vy * ca - vz * sa;
+    tmp2 = vy * sa + vz * ca;
+    vy = tmp1;
+    vz = tmp2;
+  } else
+    errorexit("unkown rotation axis");
+  
+  *vx_p = vx;
+  *vy_p = vy;
+  *vz_p = vz;  
+}
+
+void vect_rotate3(int axis, double angle, double *v)
+{
+  double tmp1, tmp2;
+  const double ca = cos(angle);
+  const double sa = sin(angle);
+
+  double vx = v[Ix];
+  double vy = v[Iy];
+  double vz = v[Iz];  
+
+  if (axis==3) {
+    // z-axis
+    tmp1 = vx * ca - vy * sa;	    
+    tmp2 = vx * sa + vy * ca;
+    vx = tmp1;
+    vy = tmp2;
+  } else if (axis==2) {
+    // y-axis
+    tmp1 = vx * ca + vz * sa;
+    tmp2 = - vx * sa + vz * ca;
+    vx = tmp1;
+    vz = tmp2;
+  } else if (axis==1) {
+    // x-axis
+    tmp1 = vy * ca - vz * sa;
+    tmp2 = vy * sa + vz * ca;
+    vy = tmp1;
+    vz = tmp2;
+  } else
+    errorexit("unkown rotation axis");
+  
+  v[Ix] = vx;
+  v[Iy] = vy;
+  v[Iz] = vz;  
+}
+
+/** Spline interpolation with GSL routines at single point */
+double interp_spline_pt(double *t, double *y, int n, double ti)
+{
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+  gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
+  gsl_spline_init (spline, t, y, n);    
+  double yi = gsl_spline_eval (spline, ti, acc);
+  gsl_spline_free (spline);
+  gsl_interp_accel_free (acc);
+  return yi;
+}
+
 /** Spline interpolation with GSL routines */
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
@@ -1692,6 +1809,63 @@ void Dynamics_free (Dynamics *dyn)
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
     if (dyn->data[v]) free(dyn->data[v]);
   free(dyn);
+}
+
+/** Spin dynamics */
+void DynamicsSpins_alloc (DynamicsSpins **dyn, int size)
+{
+  *dyn = (DynamicsSpins *) calloc(1, sizeof(DynamicsSpins)); 
+  if (dyn == NULL) errorexit("Out of memory");
+  (*dyn)->size = size; 
+  (*dyn)->time = malloc (size * sizeof(double));
+  memset((*dyn)->time, 0, size*sizeof(double));
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++) {
+    (*dyn)->data[v] = malloc (size * sizeof(double));  
+    memset((*dyn)->data[v], 0, size*sizeof(double));
+  }
+  (*dyn)->t_stop=-1;// use Momg as stopping criterion, if not otherwise specified. 
+}
+
+void DynamicsSpins_push (DynamicsSpins **dyn, int size)
+{
+  const int n  = (*dyn)->size;
+  const int dn = size - (*dyn)->size;
+  (*dyn)->time = realloc ( (*dyn)->time, size * sizeof(double) );
+  for (int v = 0; v < EOB_EVOLVE_SPIN_NVARS; v++) {
+    (*dyn)->data[v] = realloc ( (*dyn)->data[v], size * sizeof(double) );
+    if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
+  }
+  (*dyn)->size = size; 
+}
+
+void DynamicsSpins_free (DynamicsSpins *dyn)
+{
+  if (!dyn) return;
+  if (dyn->time) free(dyn->time);
+  if (dyn->data)
+    for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+      if (dyn->data[v]) free(dyn->data[v]);
+  free(dyn);
+}
+
+void DynamicsSpins_output (DynamicsSpins *dyn)
+{  
+  char fname[STRLEN*2];
+  const int n = dyn->size;
+  sprintf(fname,"%s/dynspin.txt",EOBPars->output_dir);
+  FILE* fp;
+  if ((fp = fopen(fname, "w+")) == NULL) errorexits("error opening file",fname);
+  fprintf(fp, "#"); 
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    fprintf(fp, " %s",  eob_prec_var[v]); 
+  fprintf(fp, "\n"); 
+  for (int i = 0; i < n; i++) {
+    fprintf(fp, "%.9e", dyn->time[i]);
+    for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+      fprintf(fp, " %.16e", dyn->data[v][i]); 
+    fprintf(fp, "\n");
+  }
+  fclose(fp);
 }
 
 /** Sync some quick access parameters in dyn with parameter database 

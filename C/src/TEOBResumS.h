@@ -271,6 +271,39 @@ enum{
 };
 static const char* const ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
 
+/** List of options for 'usespin' parameter */
+enum{
+  MODE_SPINs_NOSPIN,
+  MODE_SPINS_ALIGNED,
+  MODE_SPINS_GENERIC,
+  MODE_SPINS_NOPT,
+};
+static const char* const mode_spin_opt[] = {"nospin","aligned","generic","undefined"};
+
+/** List for precesing vars indexes */
+enum{
+  EOB_EVOLVE_SPIN_SxA,
+  EOB_EVOLVE_SPIN_SyA,
+  EOB_EVOLVE_SPIN_SzA,
+  EOB_EVOLVE_SPIN_SxB,
+  EOB_EVOLVE_SPIN_SyB,
+  EOB_EVOLVE_SPIN_SzB,
+  EOB_EVOLVE_SPIN_Lx,
+  EOB_EVOLVE_SPIN_Ly,
+  EOB_EVOLVE_SPIN_Lz,
+  EOB_EVOLVE_SPIN_alp,
+  EOB_EVOLVE_SPIN_bet,
+  EOB_EVOLVE_SPIN_gam,
+  EOB_EVOLVE_SPIN_Momg,
+  EOB_EVOLVE_SPIN_NVARS,
+};
+static const char* eob_prec_var[] = {
+  "SxA","SyA","SzA",
+  "SxB","SyB","SzB",
+  "Lx","Ly","Lz",
+  "alpha","beta","gamma",
+  "Momega"};
+
 /** Error handler for root finders */
 enum{ 
   ROOT_ERRORS_NO,
@@ -286,6 +319,7 @@ static const char* const root_errors[] = {"none","root is not bracketed.","root 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */
 extern const int MINDEX[KMAX]; /* defined in TEOBResumS.c */
+extern const int KINDEX[9][9]; /* defined in TEOBResumS.c */ //FIXME: hardcoded for KMAX=35
 
 /** Multipolar coefficients for NQC waveform */
 typedef struct tagNQCcoefs
@@ -447,6 +481,19 @@ typedef struct tagDynamics
   double Mbhf, abhf; /* final BH */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;
 } Dynamics;
+
+/** Data type for spin dynamics */
+typedef struct tagDynamicsSpins
+{
+  int size;
+  double f0, Sx0,Sy0,Sz0;
+  double *time;
+  double *data[EOB_EVOLVE_SPIN_NVARS]; 
+  double y[EOB_EVOLVE_SPIN_NVARS], dy[EOB_EVOLVE_SPIN_NVARS];
+  double t, dt;
+  double t_stop; // stopping time, if >0
+  double omg_stop; // stopping frequency Momega
+} DynamicsSpins;
 
 /** Parameter data type */
 typedef struct tagEOBParameters
@@ -632,6 +679,10 @@ void Dynamics_free (Dynamics *dyn);
 void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const double dt, const char *name);
 void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamics **dynb, const char *name);
 void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to);
+void DynamicsSpins_alloc (DynamicsSpins **dyn, int size);
+void DynamicsSpins_push (DynamicsSpins **dyn, int size);
+void DynamicsSpins_free (DynamicsSpins *dyn);
+void DynamicsSpins_output (DynamicsSpins *dyn);
 void Dynamics_set_params (Dynamics *dyn);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
