@@ -2366,6 +2366,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     PRFORMd("b2",bi[1][1]);
   }
 
+  
   if (ecc != 0.) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
@@ -2996,7 +2997,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   const double aK   = dyn->a1+dyn->a2;
   const double Mbh  = dyn->Mbhf;
   const double abh  = dyn->abhf;
-    
+  const double ecc  = dyn->ecc;
+
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
@@ -3234,6 +3236,24 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[k22][1]);
   }
 
+  if (ecc != 0.) {
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+    double *smooth_theta;
+    smooth_theta = (double*) calloc (size, sizeof(double));
+
+    for (int j=0; j<size; j++) {
+      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+      
+      n1[k22][j] = n1[k22][j]*smooth_theta[j];
+      n2[k22][j] = n2[k22][j]*smooth_theta[j];
+      n4[k22][j] = n4[k22][j]*smooth_theta[j];
+      n5[k22][j] = n5[k22][j]*smooth_theta[j];
+    }
+    
+    free(smooth_theta);
+  }
+
   /** Set amplitude and phase */
   for (int j=0; j<size; j++) {
     hnqc->ampli[k22][j] = 1. + ai[k22][0]*n1[k22][j] + ai[k22][1]*n2[k22][j];
@@ -3274,6 +3294,24 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     n2[k22][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
     n4[k22][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
     n5[k22][j]  = n4[k22][j]*r2*w2;              /* (pr*)*(r Omg) */
+  }
+
+  if (ecc != 0.) {
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+    double *smooth_theta;
+    smooth_theta = (double*) calloc (fullsize, sizeof(double));
+    
+    for (int j=0; j<fullsize; j++) {
+      smooth_theta[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
+
+      n1[k22][j] = n1[k22][j]*smooth_theta[j];
+      n2[k22][j] = n2[k22][j]*smooth_theta[j];
+      n4[k22][j] = n4[k22][j]*smooth_theta[j];
+      n5[k22][j] = n5[k22][j]*smooth_theta[j];
+    }
+
+    free(smooth_theta);
   }
 	  	  
   for (int j=0; j<fullsize; j++) {
