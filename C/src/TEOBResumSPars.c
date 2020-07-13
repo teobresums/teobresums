@@ -105,7 +105,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->r_hyp = 0.;
   eobp->H_hyp = 0.;
   eobp->j_hyp = 0.;
-
+  
   eobp->distance = 1.;
   eobp->inclination = 0.;
   eobp->coalescence_angle = 0.;

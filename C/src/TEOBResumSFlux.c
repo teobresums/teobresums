@@ -412,6 +412,9 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   double prstar2 = prstar*prstar;
   double prstar3 = prstar2*prstar;
   double prstar4 = prstar3*prstar;
+
+  double Frdot = 0.;
+  double pphi2dot = 0.;
   
   double A, dA, d2A, B, dB, d2B, Q, sqrtAbyB, dsqrtAbyB_dr, d2sqrtAbyB_d2r, fact;
   double ggm[26], G, dG_dr, dG_dprstar,d2G_dr2, d2G_dr_dprstar, d2G_dprstar2,
@@ -420,7 +423,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   double H, Heff, Heff_orb, E, dHeff_dr, dHeff_dpphi, EHeff_orb;
   double Adot, prstardot, sqrtAbyBdot, dAbyrc2, d2Abyrc2, Omgdot_0, Heffdot, HSOdot, Edot,
     Heff_orbdot, EHeff_orbdot, Omgdot, Omg2dot, r2dot, r3dot, EHeff_orb2dot,
-    HSO2dot, pphi2dot, Heff_orb2dot, prstar2dot, Heff2dot, E2dot, Frdot;
+    HSO2dot, Heff_orb2dot, prstar2dot, Heff2dot, E2dot;
   double Fr, Fphi, Fphi_Newt;
   
   /* Computing metric, centrifugal radius and ggm functions*/
@@ -556,7 +559,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Fphi      = Fphi_Newt*Fphi;
     Edot      = nu*(rdot*Fr + Omg*Fphi);
   }
-
+  
   /* return F_NC */  
   return Fphi_Newt;  
 }

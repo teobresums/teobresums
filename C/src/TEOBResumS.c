@@ -48,7 +48,6 @@ const int MINDEX[KMAX] = {
 NQCdata *NQC;
 
 /** TEOBResumS v2.* main */
-
 int main (int argc, char* argv[])
 {   
   PRSECTN(TEOBResumS_Info);
@@ -93,7 +92,7 @@ int main (int argc, char* argv[])
   }
 
   /* set domain */
-  eob_set_params(dc, fc); 
+  eob_set_params(dc, fc);
   
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
@@ -337,8 +336,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       eob_wav_hlm(dyn, hlm_t); 
       for (int k = 0; k < KMAX; k++) {
         if((hlm->kmask[k])){
-	        hlm->ampli[k][i] = hlm_t->ampli[k];
-	        hlm->phase[k][i] = hlm_t->phase[k]; 
+	  hlm->ampli[k][i] = hlm_t->ampli[k];
+	  hlm->phase[k][i] = hlm_t->phase[k]; 
         }
       }
     }
@@ -748,10 +747,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->Omega2dot = Omega2dot[i];
       dyn->Omega3dot = Omega3dot[i];
       dyn->Omega4dot = Omega4dot[i];
-      eob_wav_hlm_ecc(dyn, hlm_t); 
+      
+      eob_wav_hlm_ecc(dyn, hlm_t);
+
       for (int k = 0; k < KMAX; k++) {
-	hlm->ampli[k][i] = hlm_t->ampli[k];
-	hlm->phase[k][i] = hlm_t->phase[k]; 
+        if((hlm->kmask[k])){
+	  hlm->ampli[k][i] = hlm_t->ampli[k];
+	  hlm->phase[k][i] = hlm_t->phase[k]; 
+        }
       }
     }
 
@@ -767,7 +770,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     free(Omega3dot);
     free(Omega4dot);
   }
-
   
  END_ODE_EVOLUTION:;
   
@@ -790,6 +792,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (EOBPars->output_dynamics)
     Dynamics_output(dyn);
 #endif
+
   
   if (!(use_tidal) && (dyn->r < 2.)) {
     
@@ -860,9 +863,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (EOBPars->output_dynamics) 
 	Dynamics_output(dyn_mrg);
 #endif
-      
-      /**  Interpolate mrg on uniform grid */
-      
+            
       /* Interp Waveform */ 
       Waveform_lm_interp (hlm_mrg, size_mrg, tstart_mrg, dt_merger_interp, "hlm_mrg_interp");
       
@@ -943,7 +944,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       hlm->time[i] = hlm->time[i-1] + dt_rngdn;
     size += size_ringdown;
     EOBPars->size = size;
-    
+
     /* Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
     
@@ -979,7 +980,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Computation of (h+,hx) */
   
-  if (EOBPars->domain == DOMAIN_TD) { 
+  if (EOBPars->domain == DOMAIN_TD) {
 
     /** TIME DOMAIN */
     
@@ -998,12 +999,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
   } else {
-    
+
     /** FREQUENCY DOMAIN */
     
     /** Frequency domain multipolar waveform */
     WaveformFD_lm_alloc (&hflm, size, "hflm");
-    
+
     /** Calculate the SPA for the multipolar waveform */
     SPA(hlm, hflm);
     
@@ -1023,14 +1024,20 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    * Output
    * *****************************************
    */
-
+      
   if (output) {
+    
     if (EOBPars->output_hpc)
       if (EOBPars->domain == DOMAIN_TD) Waveform_output (*hpc); 
-      else                              WaveformFD_output (*hfpc); 
-    if (EOBPars->output_multipoles) Waveform_lm_output (hlm); 
-    if (EOBPars->output_multipoles) Waveform_lm_output_reim (hlm);
+      else                              WaveformFD_output (*hfpc);
+
+    //FIXME: To be reinstated
+    //if (EOBPars->output_multipoles) Waveform_lm_output (hlm);
+
+    //if (EOBPars->output_multipoles) Waveform_lm_output_reim (hlm);
+
     //if (EOBPars->output_multipoles_fd) WaveformFD_lm_output (hflm);  //TODO: add this parameter
+
     if (EOBPars->output_dynamics) {
       if (EOBPars->interp_uniform_grid) {
 	/* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
