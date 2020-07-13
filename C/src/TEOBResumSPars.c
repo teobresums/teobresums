@@ -1129,6 +1129,7 @@ void eob_set_params(int default_choice, int firstcall)
   EOBPars->X2 = 1. -  EOBPars->X1;
   const double XA = EOBPars->X1; /* tidal part used different notation, used here for simplicity */
   const double XB = EOBPars->X2;
+  const double ecc = EOBPars->ecc;
 
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
@@ -1229,7 +1230,10 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
       EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
-      if (usespins) {
+      if (ecc != 0.) {
+	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+      } else if (usespins) {
 	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002;
 	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
       } else {
