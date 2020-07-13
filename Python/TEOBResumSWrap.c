@@ -151,7 +151,6 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->nqc_coefs_hlm = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc_coefs_hlm"));
   }
 
-
   /* LR and LSO */
   if ( PyDict_GetItemString(dict, "compute_LR") != NULL ) { 
     EOBPars->compute_LR = (int) PyLong_AsLong(PyDict_GetItemString(dict, "compute_LR"));
@@ -165,7 +164,21 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "compute_LSO_guess") != NULL ) { 
     EOBPars->compute_LSO_guess = PyFloat_AsDouble(PyDict_GetItemString(dict, "compute_LSO_guess"));
   }
-  
+
+  /* Spin Dynamics */
+  if ( PyDict_GetItemString(dict, "project_spins") != NULL ) { 
+    EOBPars->project_spins = (int) PyLong_AsLong(PyDict_GetItemString(dict, "project_spins"));
+  }
+  if ( PyDict_GetItemString(dict, "spin_interp_domain") != NULL ) { 
+    EOBPars->spin_interp_domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_interp_domain"));
+  }
+  if ( PyDict_GetItemString(dict, "spin_flx") != NULL ) { 
+    EOBPars->spin_flx = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_flx"));
+  }
+  if ( PyDict_GetItemString(dict, "ringdown_eulerangles") != NULL ) { 
+    EOBPars->ringdown_eulerangles = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ringdown_eulerangles"));
+  }
+
   /* Output */
   if ( PyDict_GetItemString(dict, "output_hpc") != NULL ) { 
     EOBPars->output_hpc = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_hpc"));
@@ -255,11 +268,14 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   Waveform *hpc = NULL; /* TD wvf */
   Waveform_lm *hmodes = NULL; /* modes */
+  Waveform_lm *hTmodes = NULL; /* twisted modes */
+  Waveform_lm *hTmmodes = NULL; /*twisted modes, m<0 */
 
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
 
   Dynamics *dynf = NULL;
+  WaveformFD_lm *hfTmodes = NULL; /* twisted modes */
 
   int fc = 1;
   int default_choice = DEFAULT_PARS_BBH; /* default_choice, set to BBH */
@@ -272,21 +288,41 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
     EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
 
-  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = 1;
+  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = DEFAULT_PARS_BNS;
+  //if(EOBPars->LambdaAl2 < 1. && EOBPars->LambdaBl2 > 1.) default_choice = DEFAULT_PARS_BHNS;
   EOBParameters_defaults (default_choice, EOBPars);  
 
   /* Read the dictionary in EOBPars */
   /* RG: there has to be a faster way...*/
 
+  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
+  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
+
+  /* Tides*/
   if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
     EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
   if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
     EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
-    
-  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
-  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
-  EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
-  EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
+  
+  /* Spins*/
+  if (PyDict_GetItemString(dict, "chi1x") != NULL )
+      EOBPars->chi1x = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1x"));
+  if (PyDict_GetItemString(dict, "chi1y") != NULL )
+      EOBPars->chi1y = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1y"));
+  if (PyDict_GetItemString(dict, "chi1z") != NULL )
+      EOBPars->chi1z = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1z"));
+  if (PyDict_GetItemString(dict, "chi1") != NULL )
+      EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
+
+  if (PyDict_GetItemString(dict, "chi2x") != NULL )
+      EOBPars->chi2x = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2x"));
+  if (PyDict_GetItemString(dict, "chi2y") != NULL )
+      EOBPars->chi2y = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2y"));
+  if (PyDict_GetItemString(dict, "chi2z") != NULL )
+      EOBPars->chi2z = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2z"));
+  if (PyDict_GetItemString(dict, "chi2") != NULL )
+     EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
+
 
   for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
@@ -298,7 +334,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   SetOptionalVariables(dict);
 
   /* Run */
-  eob_set_params(default_choice, fc); 
+  eob_set_params(default_choice, fc);
 
   /* Overwrite spin-spin parameters, if required */
   if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
@@ -320,9 +356,13 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
   }
 
-  int status = EOBRun(&hpc, &hfpc, &hmodes, &hfmodes, &dynf, default_choice, fc);
+  int status = EOBRun(&hpc,    &hfpc, 
+                      &hmodes, &hfmodes, &dynf,
+                      &hTmodes, &hTmmodes,
+                      &hfTmodes,
+                      default_choice, fc);
+
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
-  
   /*  Construct the output arrays */
 
   /* return modes? */
@@ -380,28 +420,51 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     memcpy(phc, hpc->imag, hpc->size * sizeof(double)); //hx
 
     /*build hlm dictionary */
-    for(int k=0; k<KMAX; k++){
-      if(hmodes->kmask[k]){
-        double *pAhlm, *pphlm;
-        PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-        PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-        pAhlm = pyvector_to_Carrayptrs(pAhlmo);
-        pphlm = pyvector_to_Carrayptrs(pphlmo);
-        memcpy(pAhlm, hmodes->ampli[k], hmodes->size * sizeof(double));
-        memcpy(pphlm, hmodes->phase[k], hmodes->size * sizeof(double));
-        /* build dictionary entry*/
-        PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
-        char kst[12];
-        sprintf(kst, "%i", k);
-        /* populate the dictionary */
-        PyDict_SetItemString(hlmdict, kst, obj); 
-        /* free */
-        Py_DECREF(pAhlmo);
-        Py_DECREF(pphlmo);
-        Py_DECREF(obj);
+    if (EOBPars->use_spins ==  MODE_SPINS_ALIGNED){
+      for(int k=0; k<KMAX; k++){
+        if(hmodes->kmask[k]){
+          double *pAhlm, *pphlm;
+          PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          pAhlm = pyvector_to_Carrayptrs(pAhlmo);
+          pphlm = pyvector_to_Carrayptrs(pphlmo);
+          memcpy(pAhlm, hmodes->ampli[k], hmodes->size * sizeof(double));
+          memcpy(pphlm, hmodes->phase[k], hmodes->size * sizeof(double));
+          /* build dictionary entry*/
+          PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
+          char kst[12];
+          sprintf(kst, "%i", k);
+          /* populate the dictionary */
+          PyDict_SetItemString(hlmdict, kst, obj);
+          /* free */
+          Py_DECREF(pAhlmo);
+          Py_DECREF(pphlmo);
+          Py_DECREF(obj);
+        }
+      }
+    } else {
+      for(int k=0; k<KMAX; k++){
+        if(hTmodes->kmask[k]){
+          double *pAhlm, *pphlm;
+          PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          pAhlm = pyvector_to_Carrayptrs(pAhlmo);
+          pphlm = pyvector_to_Carrayptrs(pphlmo);
+          memcpy(pAhlm, hTmodes->ampli[k], hTmodes->size * sizeof(double));
+          memcpy(pphlm, hTmodes->phase[k], hTmodes->size * sizeof(double));
+          /* build dictionary entry*/
+          PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
+          char kst[12];
+          sprintf(kst, "%i", k);
+          /* populate the dictionary */
+          PyDict_SetItemString(hlmdict, kst, obj); 
+          /* free */
+          Py_DECREF(pAhlmo);
+          Py_DECREF(pphlmo);
+          Py_DECREF(obj);
+        }
       }
     }
-
     /* build the final object */
     PyObject *ret;
     if (arg_out == 0){
@@ -412,12 +475,14 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
       printf("ERROR: arg_out has to be equal to 0 or 1");
       ret = NULL;
     }
-
     /* Free C memory */
     Waveform_free (hpc);          
     WaveformFD_free (hfpc);       
-    Waveform_lm_free(hmodes);     
+    Waveform_lm_free(hmodes);    
+    Waveform_lm_free (hTmodes);
+    Waveform_lm_free (hTmmodes);
     WaveformFD_lm_free(hfmodes);  
+    WaveformFD_lm_free (hfTmodes);
     EOBParameters_free (EOBPars);
     Dynamics_free (dynf);
 
@@ -532,7 +597,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Waveform_free (hpc);          
     WaveformFD_free (hfpc); 
     Waveform_lm_free(hmodes); 
+    Waveform_lm_free (hTmodes);
     WaveformFD_lm_free(hfmodes);
+    WaveformFD_lm_free (hfTmodes);
     EOBParameters_free (EOBPars);
     Dynamics_free (dynf);
 

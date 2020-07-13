@@ -112,6 +112,23 @@ double eob_nqc_dtfit(const double chi, const double chi0)
   return dtnqc;
 }
 
+/** Fit of GW frequency of NR merger */
+double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2)
+{
+  const double nu2 = SQ(nu);
+  const double X12 = sqrt(1-4*nu);
+  const double a1  = X1*chi1;
+  const double a2  = X2*chi2;
+  const double a0  = a1+a2;
+  const double a12 = a1-a2;
+  const double Shat = 0.5*(a0 + X12*a12);
+  const double Shat2 = SQ(Shat);
+  const double b[4] = {0.066045, -0.23876, 0.76819, -0.9201};
+  return( 0.273356*(1+0.84074*nu+1.6976*nu2)*
+	  (1+((-0.42311+b[0]*X12)/(1+b[1]*X12))*Shat
+	   +((-0.066699))*Shat2)/(1+((-0.83053+b[2]*X12)/(1+b[3]*X12))*Shat) );
+}
+
 /** Fits for NR point used to determine NQC corrections */
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
@@ -1532,8 +1549,8 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
     
   }
 
-  *mass = Mbh;
-  *spin = abh;
+  if (mass) *mass = Mbh;
+  if (spin) *spin = abh;
 }
 
 /** Final mass fit of Jimenez-Forteza et al. (arxiv 1611.00332) */
@@ -1677,6 +1694,50 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
   double Lorb_uneq_mass  = A1*Dchi + A2*Dchi*Dchi + A3*S*Dchi;
   
   return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
+}
+
+double PrecessingRemnantSpin(Dynamics *dyn)
+{
+  /*
+  eq. 20 of https://arxiv.org/pdf/1611.00332.pdf
+  */
+
+  double SAmrg[3];
+  double SBmrg[3];
+  double Lhmrg[3];
+  double Sperp[3];
+  double SApar, SBpar, sqSperp;
+
+  double omgmrg = eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
+  
+  /*find merger*/
+  //FIXME: this is a rough estimate
+  int imrg = find_point_bisection(omgmrg, dyn->spins->size, dyn->spins->data[EOB_EVOLVE_SPIN_Momg], 1);
+
+  SAmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_SxA][imrg];
+  SAmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_SyA][imrg];
+  SAmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_SzA][imrg];
+
+  SBmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_SxB][imrg];
+  SBmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_SyB][imrg];
+  SBmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_SzB][imrg];
+
+  Lhmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_Lx][imrg];
+  Lhmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_Ly][imrg];
+  Lhmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_Lz][imrg];
+
+  vect_dot3(SAmrg, Lhmrg, &SApar);  
+  vect_dot3(SBmrg, Lhmrg, &SBpar); 
+  //HealyBBHFitRemnant(SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2), EOBPars->q, &(EOBPars->Mbhf), NULL);
+  EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2));
+  for(int i=0; i < IN3; i++)
+    Sperp[i] = (SAmrg[i] - SApar*Lhmrg[i]) + (SBmrg[i] - SBpar*Lhmrg[i]);
+
+  vect_dot3(Sperp, Sperp, &sqSperp);
+  double sqMbhf = SQ(EOBPars->Mbhf);
+  
+  return sqrt(SQ(EOBPars->abhf) + sqSperp/SQ(sqMbhf));
+
 }
 
 /** QNM fits for the 22 mode for spinning systems */
