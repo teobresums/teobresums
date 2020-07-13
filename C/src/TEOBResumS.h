@@ -483,7 +483,7 @@ typedef struct tagDynamics
 } Dynamics;
 
 /** Data type for spin dynamics */
-typedef struct tagDynamicsSpins
+typedef struct tagDynamicsSpin
 {
   int size;
   double f0, Sx0,Sy0,Sz0;
@@ -493,7 +493,7 @@ typedef struct tagDynamicsSpins
   double t, dt;
   double t_stop; // stopping time, if >0
   double omg_stop; // stopping frequency Momega
-} DynamicsSpins;
+} DynamicsSpin;
 
 /** Parameter data type */
 typedef struct tagEOBParameters
@@ -640,6 +640,7 @@ double cumint3(double *f, double *x, const int n, double *sum);
 void unwrap(double *p, const int size);
 void unwrap_HM(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
+void rmap (double *re, double *im, double *p, double *a, const int mode);
 void set_multipolar_idx_mask_old(int *kmask, int n);
 void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);
 int get_uniform_size(const double tf, const double t0, const double dt);
@@ -679,10 +680,10 @@ void Dynamics_free (Dynamics *dyn);
 void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const double dt, const char *name);
 void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamics **dynb, const char *name);
 void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to);
-void DynamicsSpins_alloc (DynamicsSpins **dyn, int size);
-void DynamicsSpins_push (DynamicsSpins **dyn, int size);
-void DynamicsSpins_free (DynamicsSpins *dyn);
-void DynamicsSpins_output (DynamicsSpins *dyn);
+void DynamicsSpin_alloc (DynamicsSpin **dyn, int size);
+void DynamicsSpin_push (DynamicsSpin **dyn, int size);
+void DynamicsSpin_free (DynamicsSpin *dyn);
+void DynamicsSpin_output (DynamicsSpin *dyn);
 void Dynamics_set_params (Dynamics *dyn);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
@@ -816,8 +817,10 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 void (*eob_wav_ringdown)();
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
-void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
+void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm);
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
+void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
+void twist_hlm_FD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
 
 #ifdef _OPENMP

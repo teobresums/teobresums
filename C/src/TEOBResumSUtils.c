@@ -460,80 +460,6 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
   return OK;
 }
 
-/** (h+, hx) polarizations from the multipolar waveform */
-void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
-{  
-#ifdef _OPENMP
-  if (USETIMERS) openmp_timer_start("compute_hpc");
-#endif
-#pragma omp parallel 
-  {
-    double Y_real[KMAX], Y_imag[KMAX];
-    static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
-    double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
-    double Aki, cosPhi, sinPhi;
-    double sumr, sumi;
-    int activemode[KMAX];
-    double Msun = M;
-    set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
-    if (!(EOBPars->use_geometric_units)) Msun = M/MSUN_S;
-#if (DEBUG)
-    printf("h+,x: nu = %e M = %e D = %e Mpc phi = %e iota = %e prefactor = %e\n",
-	   nu,Msun,distance,phi,iota,amplitude_prefactor);
-#endif
-    
-    /* Precompute Ylm */
-    for (int k = 0; k < KMAX; k++ ) {
-      if (!activemode[k]) continue;
-      spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
-      /* add m<0 modes */
-      if ( (mneg) && (MINDEX[k]!=0) )
-	spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
-      }
-      
-    /* Sum up  hlm * Ylm 
-     * Note because EOB code defines phase>0, 
-     * but the convention is h_lm = A_lm Exp[-I phi_lm] we have
-     * h_{l,m>=0} = A_lm ( cos(phi_lm) - I*sin(phi_lm) ) for m>0 and
-     * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
-     * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
-     */
-#pragma omp for
-    for (int i = 0; i < hlm->size; i++) {
-        hpc->time[i] = hlm->time[i]*M; 
-        sumr = sumi = 0.;
-	
-        /* Loop over modes */
-        for (int k = 0; k < KMAX; k++ ) {
-	  if (!activemode[k]) continue;
-	  Aki  = amplitude_prefactor * hlm->ampli[k][i];
-	  cosPhi = cos( hlm->phase[k][i] );
-	  sinPhi = sin( hlm->phase[k][i] );
-	  sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
-	  sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
-          
-	  /* add m<0 modes */
-	  if ( (mneg) && (MINDEX[k]!=0) ) { 
-	    /* H_{l-m} = (-)^l H^{*}_{lm} */
-	    if (LINDEX[k] % 2) {
-	      sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
-	      sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	    }
-	    else { 
-	      sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
-	      sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	    }
-	  }    
-        }
-        /* h = h+ - i hx */
-        hpc->real[i] = sumr;
-        hpc->imag[i] = -sumi;
-    }
-  }
-#ifdef _OPENMP
-  if (USETIMERS) openmp_timer_stop("compute_hpc");
-#endif
-}
 
 /** 4th order centered stencil first derivative, uniform grids */
 int D0(double *f, double dx, int n, double *df)
@@ -814,6 +740,22 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
 
   free(n);
   if (dbg_unwrap_proxy) DBGSTOP;
+}
+
+/* Compute real/imag <-> amplitude/phase */
+void rmap (double *re, double *im, double *p, double *a, const int mode)
+{
+  /* h =  A exp( -i phi) */
+  if (mode) {
+    /** (Re, Im) -> (Amplitude, phase) */
+    *a = sqrt( SQ((*re)) + SQ((*im)) );
+    *p = Pi - atan2((*im), (*re)); /* exp(- i phi) => Pi  */
+    //TODO: unwrap?
+  } else {
+    /** (Amplitude, phase) -> (Re, Im) */
+    *re = + (*a) * cos((*p));  
+    *im = - (*a) * sin((*p));  
+  }
 }
 
 /** This routine sets a 0/1 mask for the multipolar linear index */
@@ -1812,9 +1754,9 @@ void Dynamics_free (Dynamics *dyn)
 }
 
 /** Spin dynamics */
-void DynamicsSpins_alloc (DynamicsSpins **dyn, int size)
+void DynamicsSpin_alloc (DynamicsSpin **dyn, int size)
 {
-  *dyn = (DynamicsSpins *) calloc(1, sizeof(DynamicsSpins)); 
+  *dyn = (DynamicsSpin *) calloc(1, sizeof(DynamicsSpin)); 
   if (dyn == NULL) errorexit("Out of memory");
   (*dyn)->size = size; 
   (*dyn)->time = malloc (size * sizeof(double));
@@ -1826,7 +1768,7 @@ void DynamicsSpins_alloc (DynamicsSpins **dyn, int size)
   (*dyn)->t_stop=-1;// use Momg as stopping criterion, if not otherwise specified. 
 }
 
-void DynamicsSpins_push (DynamicsSpins **dyn, int size)
+void DynamicsSpin_push (DynamicsSpin **dyn, int size)
 {
   const int n  = (*dyn)->size;
   const int dn = size - (*dyn)->size;
@@ -1838,7 +1780,7 @@ void DynamicsSpins_push (DynamicsSpins **dyn, int size)
   (*dyn)->size = size; 
 }
 
-void DynamicsSpins_free (DynamicsSpins *dyn)
+void DynamicsSpin_free (DynamicsSpin *dyn)
 {
   if (!dyn) return;
   if (dyn->time) free(dyn->time);
@@ -1848,7 +1790,7 @@ void DynamicsSpins_free (DynamicsSpins *dyn)
   free(dyn);
 }
 
-void DynamicsSpins_output (DynamicsSpins *dyn)
+void DynamicsSpin_output (DynamicsSpin *dyn)
 {  
   char fname[STRLEN*2];
   const int n = dyn->size;
