@@ -284,7 +284,7 @@ void eob_wav_hlmNewt_ecc(double r,
   
   double Re_vphi22_ecc = vphi2 - 0.5*(SQrdot + r*r2dot);
   double Im_vphi22_ecc = 2.*vphi*rdot + 0.5*Omegadot*SQ(r);
-  
+
   double Re_vphi21_ecc = vphi3 - 6.*vphi*SQrdot - 3.*vphi*r*r2dot
     - 6.*SQ(r)*rdot*Omegadot - SQ(r)*r*Omega2dot;
   double Im_vphi21_ecc = 3.*SQ(r)*(2.*rdot*SQ(Omega) + vphi*Omegadot);
@@ -4015,7 +4015,6 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
       hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
     }
   }
-  
 }
 
 /** Routine for factorized EOB waveform and eccentric systems */
