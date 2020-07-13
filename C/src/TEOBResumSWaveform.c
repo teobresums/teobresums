@@ -3909,9 +3909,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const double X1 = dyn->X1;  
   const double X2 = dyn->X2;  
   const double C_Q1 = dyn->C_Q1;  
-  const double C_Q2 = dyn->C_Q2;  
-  const double ecc = dyn->ecc;  
-  const double r_hyp = dyn->r_hyp;  
+  const double C_Q2 = dyn->C_Q2;
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
   const int usespeedytail = EOBPars->use_speedytail;
