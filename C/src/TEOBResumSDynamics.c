@@ -1119,14 +1119,20 @@ int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d)
 
 
 /** Precessing dynamics ODE integration 
-    The initial data are those stored in dyn->y */
+    The initial data are those stored in dyn->y 
+    integration starts at dyn->t */
 int eob_spin_dyn_integrate(DynamicsSpin *dyn)
 {
   const int chunk = dyn->size;
   int size = chunk; // can change
-  
+
+  /* index of closest element to dyn->t in dyn->time 
+     initial data refer to this time */
+  const int i0 = find_point_bisection(dyn->t, dyn->size, dyn->time, 0);//CHECKME: 0 or 1?
+
+  /* Set initial data */
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
-    dyn->data[v][0]  = dyn->y[v];
+    dyn->data[v][i0]  = dyn->y[v];
   
   /* GSL integrator memory */
   dyn->omg_stop = 0; //EOBPars->spin_odes_omg_stop; //FIXME: add this parameter!   
@@ -1182,7 +1188,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
     
     dyn->time[iter]  = dyn->t; 
     for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
-      dyn->data[v][iter]  = dyn->y[v];   
+      dyn->data[v][i0+iter]  = dyn->y[v];   
 
     /** Stop integration */
     if (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop)
@@ -1191,6 +1197,10 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
       break;
     
   } /* end time iteration */
+
+  /** Resize to actual size */
+  size = i0 + iter + 1;
+  DynamicsSpin_push (&dyn, size);
   
   /** Free ODE system solver */
   gsl_odeiv2_evolve_free (e);
@@ -1205,8 +1215,10 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
 void eob_spin_dyn(DynamicsSpin *dyn)
 {
   const int chunk = dyn->size;
-    
-  /* Initial data */
+
+  dyn->t = 0.;
+  
+  /** Initial data */
   dyn->y[EOB_EVOLVE_SPIN_SxA] = 0;//EOBPars->chi1x; //FIXME add these input pars
   dyn->y[EOB_EVOLVE_SPIN_SyA] = 0;//EOBPars->chi1y;
   dyn->y[EOB_EVOLVE_SPIN_SzA] = 0;//EOBPars->chi1z;
@@ -1228,7 +1240,7 @@ void eob_spin_dyn(DynamicsSpin *dyn)
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     dyn->data[v][0]  = dyn->y[v];
   
-  /* Integrate ODEs */
+  /** Integrate ODEs */
   if (eob_spin_dyn_integrate(dyn))
     errorexit("error during spin integration");//FIXME: error handler
   
@@ -1252,6 +1264,7 @@ void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time,
      */
     if (continue_integration) {      
 
+      dyn->t = dyn->time[smax];
       dyn->t_stop = time + dyn->dt;
       eob_spin_dyn_integrate(dyn);      
 
@@ -1295,7 +1308,8 @@ void eob_spin_dyn_Sp_interp(DynamicsSpin *dyn, double time,
        2. return the last angle
     */
     if (continue_integration) {      
-      
+
+      dyn->t = dyn->time[smax];
       dyn->t_stop = time + dyn->dt;
       eob_spin_dyn_integrate(dyn);      
       
