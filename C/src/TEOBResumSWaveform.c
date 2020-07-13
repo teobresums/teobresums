@@ -3066,10 +3066,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
-    PRFORMd("A22_mrg",max_A[1]);
-    PRFORMd("dA22_mrg",max_dA[1]);
-    PRFORMd("omg22_mrg",max_omg[1]);
-    PRFORMd("domg22_mrg",max_domg[1]);
+    PRFORMd("A22_mrg",max_A[k22]);
+    PRFORMd("dA22_mrg",max_dA[k22]);
+    PRFORMd("omg22_mrg",max_omg[k22]);
+    PRFORMd("domg22_mrg",max_domg[k22]);
   }
   
   /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
