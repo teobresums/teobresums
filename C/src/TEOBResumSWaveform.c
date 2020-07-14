@@ -2636,13 +2636,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 #endif    
 
   /** Find max Omg */
-  int Omgmax_index = 0;
-  double Omg_max   = Omg_orb[0];
-  for (int j=0; j<size; j++) {
-    if (Omg_orb[j] > Omg_max) {
-      Omg_max = Omg_orb[j];
-      Omgmax_index = j;
-    }
+  int Omgmax_index = size-1;
+  double Omg_max = Omg_orb[Omgmax_index];
+  for (int j = size-2; j-- ; ) {
+    if (Omg_orb[j] < Omg_max) 
+      break;
+    Omgmax_index = j;
+    Omg_max = Omg_orb[j]; 
   }
   
   /** Time */
@@ -3110,13 +3110,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 #endif    
 
   /** Find max Omg */
-  int Omgmax_index = 0;
-  double Omg_max   = Omg_orb[0];
-  for (int j=0; j<size; j++) {
-    if (Omg_orb[j] > Omg_max) {
-      Omg_max = Omg_orb[j];
-      Omgmax_index = j;
-    }
+  int Omgmax_index = size-1;
+  double Omg_max = Omg_orb[Omgmax_index];
+  for (int j = size-2; j-- ; ) {
+    if (Omg_orb[j] < Omg_max) 
+      break;
+    Omgmax_index = j;
+    Omg_max = Omg_orb[j]; 
   }
   
   /** Time */
