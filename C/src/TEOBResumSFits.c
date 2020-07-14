@@ -2662,3 +2662,8 @@ double pph_lso_orbital(const double nu)
   return 3.46343 - 0.774482*nu -0.69200*nu*nu; 
 } 
 
+/** Horizon radius, Nagar fit 13/07/20 */
+double horizon_radius(const double nu)
+{
+  return 2.02156 -6.85222*nu + 13.2842*nu*nu - 72.9496*nu*nu*nu; 
+}

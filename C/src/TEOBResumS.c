@@ -456,7 +456,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
-  const double rstop   = EOBPars->ode_stop_radius; 
+  double rstop = EOBPars->ode_stop_radius;
+  /* Avoiding useless computations for hyperbolic cases */
+  if (r_hyp != 0.) {
+    double r_hor = horizon_radius(dyn->nu);
+    rstop = MAX(rstop,r_hor);
+  }
   if (rstop>0.) {
     dyn->ode_stop_radius   = true;
   }
@@ -823,8 +828,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (merger_interp) {
 
       /** Extract the waveform and dynamics around merger */
-      const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
+      double tmin = hlm->time[size-1] - 20.;         /* Use last 20M points */
       const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
+      
+      /* For hyperbolic orbits, find time when r = 10 */
+      if (r_hyp != 0.) {
+	for (int j = dyn->size-1; j-- ; ) {
+	  tmin = dyn->time[j];
+	  if (dyn->data[EOB_RAD][j] > 10.)
+	    break;
+	}
+      }
       
       /* The following routines alloc memory for the *_mrg ptrs */
       Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
