@@ -445,43 +445,6 @@ typedef struct tagWaveform_lm_t
   int kmask[KMAX]; /* mask for multipoles */
 }  Waveform_lm_t;
 
-/** Dynamics data type */
-typedef struct tagDynamics
-{
-  char name[STRLEN];
-  /* various pointwise variables */
-  int store; /* store following values? */
-  int noflx; /* compute rhs without flux */
-  double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
-  double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
-  double A,dA,d2A, B,dB;
-  double MOmg, MOmg_prev, tMOmgpeak;
-  /* stuff for ODE solver */
-  double y[EOB_EVOLVE_NVARS]; /* rhs storage */
-  double dy[EOB_EVOLVE_NVARS];
-  double y0[EOB_ID_NVARS]; /* ID storage */
-  double dt, t_stop, ti;
-  int ode_timestep;
-  bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
-  /* arrays */
-  int size;
-  double *time;
-  double *data[EOB_DYNAMICS_NVARS];
-  
-  /* key parameters for quick access */
-  // TODO: REMOVE THEM FROM HERE, put them in EOBParameters
-  double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
-  double rLR, rLSO;
-  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
-  double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
-  double kapA2j, kapB2j, kapT2j;
-  double rLR_tidal, pGSF_tidal;
-  double Mbhf, abhf; /* final BH */
-  int use_tidal, use_spins, use_tidal_gravitomagnetic;
-} Dynamics;
-
 /** Data type for spin dynamics */
 typedef struct tagDynamicsSpin
 {
@@ -493,6 +456,49 @@ typedef struct tagDynamicsSpin
   double t_stop; // stopping time, if >0
   double omg_stop; // stopping frequency Momega
 } DynamicsSpin;
+
+/** Dynamics data type */
+typedef struct tagDynamics
+{
+  char name[STRLEN];
+  
+  /* various pointwise variables */
+  int store; /* store following values? */
+  int noflx; /* compute rhs without flux */
+  double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
+  double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
+  double A,dA,d2A, B,dB;
+  double MOmg, MOmg_prev, tMOmgpeak;
+
+  /* stuff for ODE solver */
+  double y[EOB_EVOLVE_NVARS]; /* rhs storage */
+  double dy[EOB_EVOLVE_NVARS];
+  double y0[EOB_ID_NVARS]; /* ID storage */
+  double dt, t_stop, ti;
+  int ode_timestep;
+  bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
+
+  /* arrays */
+  int size;
+  double *time;
+  double *data[EOB_DYNAMICS_NVARS];
+
+  /* ptr to reference spin dynamics */
+  DynamicsSpin *spins; /* do not allocate mem to this one! */
+  
+  /* key parameters for quick access */
+  //TODO: REMOVE THEM FROM HERE, put them in EOBParameters
+  double M, nu, q, X1, X2;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
+  double rLR, rLSO;
+  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
+  double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
+  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
+  double kapA2j, kapB2j, kapT2j;
+  double rLR_tidal, pGSF_tidal;
+  double Mbhf, abhf; /* final BH */
+  int use_tidal, use_spins, use_tidal_gravitomagnetic;
+} Dynamics;
 
 /** Parameter data type */
 typedef struct tagEOBParameters

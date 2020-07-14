@@ -1553,6 +1553,7 @@ void Dynamics_alloc (Dynamics **dyn, int size, const char *name)
     (*dyn)->data[v] = malloc ( size * sizeof(double) );
     memset((*dyn)->data[v], 0, size*sizeof(double));
   }
+  (*dyn)->spins = NULL;
 }
 
 void Dynamics_push (Dynamics **dyn, int size)
@@ -1750,6 +1751,7 @@ void Dynamics_free (Dynamics *dyn)
   if (dyn->time) free(dyn->time);
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
     if (dyn->data[v]) free(dyn->data[v]);
+  if (dyn->spins) dyn->spins = NULL;
   free(dyn);
 }
 

@@ -202,6 +202,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Alloc spin dynamics, if needed */
   if (use_spins == MODE_SPINS_GENERIC) {   
     DynamicsSpin_alloc (&spindyn, 0);//EOBPars->spin_dyn_size); //FIXME: add this parameter and use it here in the call!
+    /* Set up a reference to spin dynamics in the dynamics structure */
+    dyn->spins = spindyn; 
   }
   
   /** Compute initial radius */
