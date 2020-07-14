@@ -1112,15 +1112,21 @@ void eob_set_params(int default_choice, int firstcall)
 
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
-  EOBPars->S1 = SQ(XA) * chi1;
-  EOBPars->S2 = SQ(XB) * chi2;
-  EOBPars->a1 = XA*chi1;
-  EOBPars->a2 = XB*chi2;
-  EOBPars->aK = EOBPars->a1 +  EOBPars->a2;
-  EOBPars->aK2 = SQ(EOBPars->aK);   
-  EOBPars->S = EOBPars->S1 +  EOBPars->S2;            /* in the EMRL this becomes the spin of the BH */
-  EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;  /* in the EMRL this becomes the spin of the particle */
-
+  set_spin_vars(XA,XB, EOBPars->chi1,EOBPars->chi2, 
+		&EOBPars->S1, &EOBPars->S2,
+		&EOBPars->a1, &EOBPars->a2,
+		&EOBPars->aK, &EOBPars->aK2,
+		&EOBPars->S, &EOBPars->Sstar);
+  /*
+    EOBPars->S1 = SQ(XA) * chi1;
+    EOBPars->S2 = SQ(XB) * chi2;
+    EOBPars->a1 = XA*chi1;
+    EOBPars->a2 = XB*chi2;
+    EOBPars->aK = EOBPars->a1 +  EOBPars->a2;
+    EOBPars->aK2 = SQ(EOBPars->aK);   
+    EOBPars->S = EOBPars->S1 +  EOBPars->S2;            // in the EMRL this becomes the spin of the BH 
+    EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;  // in the EMRL this becomes the spin of the particle 
+*/
   const int usespins = EOBPars->use_spins;
   const int usetidal = EOBPars->use_tidal;
   const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;

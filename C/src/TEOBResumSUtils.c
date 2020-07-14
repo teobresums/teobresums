@@ -37,6 +37,22 @@ double nu_to_X1(const double nu)
   return 0.5*(1.+sqrt(1.-4.*nu));
 }
 
+/** Set spins vars */
+void set_spin_vars(double X1, double X2, double chi1, double chi2,
+		   double *S1, double *S2, double *a1, double *a2,
+		   double *aK, double *aK2,
+		   double *S, double *Sstar)
+{
+  *S1 = SQ(X1) * chi1;
+  *S2 = SQ(X2) * chi2;
+  *a1 = X1 * chi1;
+  *a2 = X2 * chi2;
+  *aK = (*a1) +  (*a2);
+  *aK2 = SQ((*aK));   
+  *S = (*S1) +  (*S2);           
+  *Sstar = X2 * (*a1) + X1 * (*a2);
+}
+
 /** Eulerlog function (constants are defined in header) */
 static const double Logm[] = {0.,Log1,Log2,Log3,Log4,Log5,Log6,Log7};
 double Eulerlog(const double x,const int m)
@@ -1814,6 +1830,8 @@ void DynamicsSpin_output (DynamicsSpin *dyn)
 
 /** Sync some quick access parameters in dyn with parameter database 
     to be used carefully */
+//TODO: REMOVE we should use EOBPars only
+/*
 void Dynamics_set_params (Dynamics *dyn)
 {
   dyn->store = 0;
@@ -1871,6 +1889,7 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->dt        = EOBPars->dt;
   dyn->t_stop    = EOBPars->ode_tmax;
 }
+*/
 
 /** NQC data */
 void NQCdata_alloc (NQCdata **nqc)

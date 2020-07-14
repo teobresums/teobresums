@@ -35,7 +35,7 @@
 */
 void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
 {
-  const double nu = dyn->nu;
+  const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);    
 
   /** Build a small grid */
@@ -112,23 +112,23 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
 /** Initial conditions calculation for spinning systems */
 void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 {
-  const double nu   = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double S1   = dyn->S1;
-  const double S2   = dyn->S2;
-  const double c3   = dyn->cN3LO;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double a1   = dyn->a1;
-  const double a2   = dyn->a2;
-  const double aK2  = dyn->aK2;
-  const double C_Q1 = dyn->C_Q1;
-  const double C_Q2 = dyn->C_Q2;
-  const double C_Oct1 = dyn->C_Oct1;
-  const double C_Oct2 = dyn->C_Oct2;
-  const double C_Hex1 = dyn->C_Hex1;
-  const double C_Hex2 = dyn->C_Hex2;
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double S1   = EOBPars->S1;
+  const double S2   = EOBPars->S2;
+  const double c3   = EOBPars->cN3LO;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double a1   = EOBPars->a1;
+  const double a2   = EOBPars->a2;
+  const double aK2  = EOBPars->aK2;
+  const double C_Q1 = EOBPars->C_Q1;
+  const double C_Q2 = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
 
   const double S  = S1 + S2;        
   const double Ss = X2*a1 + X1*a2;  
@@ -158,7 +158,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     
     /** Compute minimum of Heff0 using bisection method */
     pphorb = r[i]/sqrt(r[i]-3.);
-    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, dyn->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
+    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, EOBPars->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
     pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
 
   }
@@ -394,26 +394,26 @@ double eob_dyn_Omegaorb0(double r, void *params)
   double   omg_orb0 = p->omg_orb0;
   Dynamics *dyn     = p->dyn;
 
-  const double nu    = dyn->nu;
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
-  const double a1    = dyn->a1;
-  const double a2    = dyn->a2;
-  const double aK2   = dyn->aK2;
-  const double S     = dyn->S;
-  const double Sstar = dyn->Sstar;
-  const double c3    = dyn->cN3LO;
-  const double C_Q1  = dyn->C_Q1;
-  const double C_Q2  = dyn->C_Q2;
-  const double C_Oct1 = dyn->C_Oct1;
-  const double C_Oct2 = dyn->C_Oct2;
-  const double C_Hex1 = dyn->C_Hex1;
-  const double C_Hex2 = dyn->C_Hex2;
+  const double nu    = EOBPars->nu;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double a1    = EOBPars->a1;
+  const double a2    = EOBPars->a2;
+  const double aK2   = EOBPars->aK2;
+  const double S     = EOBPars->S;
+  const double Sstar = EOBPars->Sstar;
+  const double c3    = EOBPars->cN3LO;
+  const double C_Q1  = EOBPars->C_Q1;
+  const double C_Q2  = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
 
-  const int usetidal = dyn->use_tidal;  
-  const int usespins = dyn->use_spins;
+  const int usetidal = EOBPars->use_tidal;  
+  const int usespins = EOBPars->use_spins;
 
   double A,B,dA,rc,drc_dr,G,dG_dr,uc,uc2,dAuc2_dr,j02,j0,H,Heff,Heff_orb,dHeff_dj0,omg_orb;
   double pl_hold,a_coeff,b_coeff,c_coeff,Delta,sol_p,sol_m;

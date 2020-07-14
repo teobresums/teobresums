@@ -33,5 +33,5 @@ Note for the logic:
 
 ## Other
 
- - [ ] remove parameters from Dynamics structure and put them in EOBPars (see comment in TEOBResumS.h)
+ - [x] remove parameters from Dynamics structure to void duplication, use EOBPars
  - [x] move compute_hpc in *Waveform.c 

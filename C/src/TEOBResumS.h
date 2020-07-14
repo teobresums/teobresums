@@ -487,7 +487,8 @@ typedef struct tagDynamics
   DynamicsSpin *spins; /* do not allocate mem to this one! */
   
   /* key parameters for quick access */
-  //TODO: REMOVE THEM FROM HERE, put them in EOBParameters
+  //USE EOBPars!
+  /*
   double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
@@ -496,8 +497,9 @@ typedef struct tagDynamics
   double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
   double kapA2j, kapB2j, kapT2j;
   double rLR_tidal, pGSF_tidal;
-  double Mbhf, abhf; /* final BH */
+  double Mbhf, abhf; // final BH 
   int use_tidal, use_spins, use_tidal_gravitomagnetic;
+  */
 } Dynamics;
 
 /** Parameter data type */
@@ -573,6 +575,7 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 /* TEOBResumS.c */
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
 	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, 
+	   Waveform_lm **hTmodes, WaveformFD_lm **hfTmodes,
 	   int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
@@ -613,6 +616,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp);
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);
 double nu_to_X1(const double nu);
+void set_spin_vars(double X1, double X2, double chi1, double chi2, double *S1, double *S2, double *a1, double *a2, double *aK, double *aK2, double *S, double *Sstar);
 double Eulerlog(const double x,const int m);
 void vect_dot(double ax, double ay, double az, double bx, double by, double bz, double *s);
 void vect_dot3(double *a, double *b, double *s);

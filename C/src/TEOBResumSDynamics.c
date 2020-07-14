@@ -27,7 +27,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;  
 
-  const double nu = dyn->nu;  //FIXME: use pars in EOBPars not in dyn!
+  const double nu = EOBPars->nu; 
   const double z3 = 2.0*nu*(4.0-3.0*nu);
 
   /** Unpack y */ 
@@ -147,52 +147,49 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
       
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
+  const int usetidal = EOBPars->use_tidal;
+  const int usespins = EOBPars->use_spins;
 
   /* Updated spins parallel to L, if required */
   if (usespins == MODE_SPINS_GENERIC) {
-
+    
     double SA, SB;
     eob_spin_dyn_Sp_interp(dyn->spins, t, &SA, &SB, 0);//EOBPars->spin_interp_integrate);
     //FIXME: add par EOBPars->spin_interp_integrate
-
+    
     const double M2 = SQ(EOBPars->M);
     const double XA = EOBPars->X1;
     const double XB = EOBPars->X2;
-
+    
     EOBPars->chi1 = SA / (SQ(XA)*M2);
     EOBPars->chi2 = SB / (SQ(XB)*M2);
     
-    EOBPars->S1 = SQ(XA) * EOBPars->chi1;
-    EOBPars->S2 = SQ(XB) * EOBPars->chi2;
-    EOBPars->a1 = XA*EOBPars->chi1;
-    EOBPars->a2 = XB*EOBPars->chi2;
-    EOBPars->aK = EOBPars->a1 +  EOBPars->a2;
-    EOBPars->aK2 = SQ(EOBPars->aK);   
-    EOBPars->S = EOBPars->S1 +  EOBPars->S2;           
-    EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;
+    set_spin_vars(XA,XB, EOBPars->chi1,EOBPars->chi2, 
+		  &EOBPars->S1, &EOBPars->S2,
+		  &EOBPars->a1, &EOBPars->a2,
+		  &EOBPars->aK, &EOBPars->aK2,
+		  &EOBPars->S, &EOBPars->Sstar);
     
   }
    
   /* Unpack values */
-  const double nu    = dyn->nu; //FIXME: use pars in EOBPars not in dyn!
-  const double S     = dyn->S;
-  const double Sstar = dyn->Sstar;
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
-  const double c3    = dyn->cN3LO;
-  const double aK2   = dyn->aK2;
-  const double a1    = dyn->a1;
-  const double a2    = dyn->a2;
-  const double C_Q1  = dyn->C_Q1;
-  const double C_Q2  = dyn->C_Q2;
-  const double C_Oct1 = dyn->C_Oct1;
-  const double C_Oct2 = dyn->C_Oct2;
-  const double C_Hex1 = dyn->C_Hex1;
-  const double C_Hex2 = dyn->C_Hex2;
+  const double nu    = EOBPars->nu; 
+  const double S     = EOBPars->S;
+  const double Sstar = EOBPars->Sstar;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double c3    = EOBPars->cN3LO;
+  const double aK2   = EOBPars->aK2;
+  const double a1    = EOBPars->a1;
+  const double a2    = EOBPars->a2;
+  const double C_Q1  = EOBPars->C_Q1;
+  const double C_Q2  = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
    
   /* Shorthands */
   const double r      = y[EOB_EVOLVE_RAD];
@@ -739,7 +736,7 @@ double eob_dyn_fLR(double r, void  *params)
 {
   Dynamics *dyn = params;     
   double A,B,dA,d2A,dB;
-  //if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
+  //if (EOBPars->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
   //else
   eob_metric (r, dyn, &A,&B,&dA,&d2A,&dB);
   double u = 1./r;
@@ -758,7 +755,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   double x, x_lo, x_hi;
     
   /* Set interval to search root */
-  if (dyn->use_tidal) {
+  if (EOBPars->use_tidal) {
     /* Tides are always temporarily set as = NNLO to compute LR, 
        But we may want to define different searches intervals */
     const int tides = EOBPars->use_tidal;
@@ -776,8 +773,8 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
     /* BBH */
     x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
     x_hi = 3.1; // 3. nu = 0 
-    /* x_lo = 0.9*eob_approxLR(dyn->nu); 
-       x_hi = 1.1*eob_approxLR(dyn->nu); */
+    /* x_lo = 0.9*eob_approxLR(EOBPars->nu); 
+       x_hi = 1.1*eob_approxLR(EOBPars->nu); */
   }  
   
   gsl_root_fsolver *s;
@@ -826,7 +823,7 @@ double eob_dyn_fLSO(double r, void  *params)
 {
   Dynamics *dyn = params;    
   double A,B,dA,d2A,dB;
-  //if (dyn->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
+  //if (EOBPars->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
   //else                
   eob_metric  (r, dyn, &A,&B,&dA,&d2A,&dB);
   double u = 1./r;
@@ -849,7 +846,7 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
   double x;
   double x_lo = 4.5; // 4.532648e+00 nu= 1/4
   double x_hi = 6.2; // 6 nu=0 
-  if (dyn->use_tidal) x_hi = 36.; 
+  if (EOBPars->use_tidal) x_hi = 36.; 
   
   gsl_root_fsolver *s;
   gsl_function F;

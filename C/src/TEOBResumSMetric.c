@@ -133,30 +133,30 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
   const double elsix = 1.833333333333333333333;  // 11/6
   const double eightthird = 2.6666666666666666667; // 8/3
-  const double nu    = dyn->nu;
-  const double rLR   = dyn->rLR_tidal;
-  const double XA    = dyn->X1;
-  const double XB    = dyn->X2;
-  const double kapA2 = dyn->kapA2;
-  const double kapB2 = dyn->kapB2;
-  const double kapA3 = dyn->kapA3;
-  const double kapB3 = dyn->kapB3;
-  const double kapT2 = dyn->kapT2;
-  const double kapT3 = dyn->kapT3;
-  const double kapT4 = dyn->kapT4;
-  const double kapA2j = dyn->kapA2j;
-  const double kapB2j = dyn->kapB2j;
-  const double kapT2j = dyn->kapT2j;
+  const double nu    = EOBPars->nu;
+  const double rLR   = EOBPars->rLR_tidal;
+  const double XA    = EOBPars->X1;
+  const double XB    = EOBPars->X2;
+  const double kapA2 = EOBPars->kapA2;
+  const double kapB2 = EOBPars->kapB2;
+  const double kapA3 = EOBPars->kapA3;
+  const double kapB3 = EOBPars->kapB3;
+  const double kapT2 = EOBPars->kapT2;
+  const double kapT3 = EOBPars->kapT3;
+  const double kapT4 = EOBPars->kapT4;
+  const double kapA2j = EOBPars->kapA2j;
+  const double kapB2j = EOBPars->kapB2j;
+  const double kapT2j = EOBPars->kapT2j;
 
   /* Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, 
      Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
-  const double bar_alph2_1 = dyn->bar_alph2_1;
-  const double bar_alph2_2 = dyn->bar_alph2_2;
-  const double bar_alph3_1 = dyn->bar_alph3_1;
-  const double bar_alph3_2 = dyn->bar_alph3_2;
-  const double bar_alph2j_1 = dyn->bar_alph2j_1;
+  const double bar_alph2_1 = EOBPars->bar_alph2_1;
+  const double bar_alph2_2 = EOBPars->bar_alph2_2;
+  const double bar_alph3_1 = EOBPars->bar_alph3_1;
+  const double bar_alph3_2 = EOBPars->bar_alph3_2;
+  const double bar_alph2j_1 = EOBPars->bar_alph2j_1;
 
-  const double p = dyn->pGSF_tidal;
+  const double p = EOBPars->pGSF_tidal;
 
   /* shortcuts */
   double nu2  = nu*nu;
@@ -175,7 +175,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   double logu = log(u);
   double oom3u  = 1./(1.-rLR*u);
 
-  if (dyn->use_tidal==TIDES_NNLO) {
+  if (EOBPars->use_tidal==TIDES_NNLO) {
 
     A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2) ;
     dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u) 
@@ -189,7 +189,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     }
 
 
-  } else if (dyn->use_tidal==TIDES_TEOBRESUM) { 
+  } else if (EOBPars->use_tidal==TIDES_TEOBRESUM) { 
 
     const double c1  =  8.533515908;  	// OLD value 8.53353;
     const double c2  = 3.043093411;	// OLD value 3.04309;
@@ -243,7 +243,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
     }
 
-  } else if (dyn->use_tidal==TIDES_TEOBRESUM3) { 
+  } else if (EOBPars->use_tidal==TIDES_TEOBRESUM3) { 
 
     const double c1  =  8.533515908;  
     const double c2  = 3.043093411;
@@ -340,7 +340,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 #if(USEGRAVITOMAGNETICTERMS)
 
-  if (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) {
+  if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_PN) {
 
     /* PN series for the (2-) tidal potential */
     A    +=-kapT2j*u7*(1. +  bar_alph2j_1*u);
@@ -350,7 +350,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       d2A_u += - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
     }
 
-  } else if (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) {
+  } else if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_GSF) {
 
     /** GSF series for the (2-) tidal potential */
     const double a1j =  0.728591192;
@@ -407,7 +407,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
 void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
-  const double nu    = dyn->nu;
+  const double nu    = EOBPars->nu;
   const double u     = 1./r;
   const double u2    = u*u;
   const double u3    = u2*u;
@@ -421,7 +421,7 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   eob_metric_A5PNlog(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u);
 
   /* Add here tides if needed */
-  if (dyn->use_tidal) {
+  if (EOBPars->use_tidal) {
     double AT, dAT_u, d2AT_u;
     double BT, dBT;
     eob_metric_Atidal(r, dyn, &AT, &dAT_u, &d2AT_u);
@@ -461,17 +461,17 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
 void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
 
-  const double nu    = dyn->nu;
-  const double a1    = dyn->a1;
-  const double a2    = dyn->a2;
-  const double aK2   = dyn->aK2;
-  const double C_Q1  = dyn->C_Q1;
-  const double C_Q2  = dyn->C_Q2;
-  const double C_Oct1 = dyn->C_Oct1;
-  const double C_Oct2 = dyn->C_Oct2;
-  const double C_Hex1 = dyn->C_Hex1;
-  const double C_Hex2 = dyn->C_Hex2;
-  const int usetidal = dyn->use_tidal;
+  const double nu    = EOBPars->nu;
+  const double a1    = EOBPars->a1;
+  const double a2    = EOBPars->a2;
+  const double aK2   = EOBPars->aK2;
+  const double C_Q1  = EOBPars->C_Q1;
+  const double C_Q2  = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
+  const int usetidal = EOBPars->use_tidal;
 
   const double u   = 1./r;
   const double u2  = u*u;
