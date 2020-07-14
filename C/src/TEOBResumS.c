@@ -343,7 +343,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       hlm->time[i] = dyn->time[i];
     
     dyn->store = dyn->noflx = 1;
-
+    
     for (int i = 0; i < size; i++) {
       dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
       dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];
@@ -353,12 +353,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       eob_wav_hlm(dyn, hlm_t); 
       for (int k = 0; k < KMAX; k++) {
         if((hlm->kmask[k])){
-	        hlm->ampli[k][i] = hlm_t->ampli[k];
-	        hlm->phase[k][i] = hlm_t->phase[k]; 
+	  hlm->ampli[k][i] = hlm_t->ampli[k];
+	  hlm->phase[k][i] = hlm_t->phase[k]; 
         }
       }
     }
-
+    
     dyn->store = dyn->noflx = 0;
     
     if (EOBPars->postadiabatic_dynamics_stop) {

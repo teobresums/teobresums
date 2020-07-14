@@ -27,7 +27,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;  
 
-  const double nu = dyn->nu;  
+  const double nu = dyn->nu;  //FIXME: use pars in EOBPars not in dyn!
   const double z3 = 2.0*nu*(4.0-3.0*nu);
 
   /** Unpack y */ 
@@ -147,9 +147,36 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
       
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
-  
+  const int usetidal = dyn->use_tidal;
+  const int usespins = dyn->use_spins;
+
+  /* Updated spins parallel to L, if required */
+  if (usespins == MODE_SPINS_GENERIC) {
+
+    double SA, SB;
+    eob_spin_dyn_Sp_interp(dyn->spins, t, &SA, &SB, 0);//EOBPars->spin_interp_integrate);
+    //FIXME: add par EOBPars->spin_interp_integrate
+
+    const double M2 = SQ(EOBPars->M);
+    const double XA = EOBPars->X1;
+    const double XB = EOBPars->X2;
+
+    EOBPars->chi1 = SA / (SQ(XA)*M2);
+    EOBPars->chi2 = SB / (SQ(XB)*M2);
+    
+    EOBPars->S1 = SQ(XA) * EOBPars->chi1;
+    EOBPars->S2 = SQ(XB) * EOBPars->chi2;
+    EOBPars->a1 = XA*EOBPars->chi1;
+    EOBPars->a2 = XB*EOBPars->chi2;
+    EOBPars->aK = EOBPars->a1 +  EOBPars->a2;
+    EOBPars->aK2 = SQ(EOBPars->aK);   
+    EOBPars->S = EOBPars->S1 +  EOBPars->S2;           
+    EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;
+    
+  }
+   
   /* Unpack values */
-  const double nu    = dyn->nu;
+  const double nu    = dyn->nu; //FIXME: use pars in EOBPars not in dyn!
   const double S     = dyn->S;
   const double Sstar = dyn->Sstar;
   const double chi1  = dyn->chi1;
@@ -166,9 +193,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double C_Oct2 = dyn->C_Oct2;
   const double C_Hex1 = dyn->C_Hex1;
   const double C_Hex2 = dyn->C_Hex2;
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
-  
+   
   /* Shorthands */
   const double r      = y[EOB_EVOLVE_RAD];
   const double prstar = y[EOB_EVOLVE_PRSTAR];
