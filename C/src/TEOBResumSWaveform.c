@@ -3546,9 +3546,11 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 /** Main routine for factorized EOB waveform */
 void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 {
-
+  
+  const double t   = dyn->t;
+  
   /* Updated spins parallel to L, if required */
-  if (usespins == MODE_SPINS_GENERIC) {
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC) {
     
     double SA, SB;
     eob_spin_dyn_Sp_interp(dyn->spins, t, &SA, &SB, 0);//EOBPars->spin_interp_integrate);
@@ -3583,7 +3585,6 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const int usespeedytail = EOBPars->use_speedytail;
   const double X12 = X1-X2; /* sqrt(1-4nu) */
 
-  const double t   = dyn->t;
   const double phi = dyn->phi; 
   const double r   = dyn->r;
   const double pph = dyn->pphi;
