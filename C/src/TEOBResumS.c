@@ -37,7 +37,7 @@ const int MINDEX[KMAX] = {
     1,2,3,4,5,6,
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
-const int KINDEX[9][9] = {// l = (m = 1 ...l)
+const int KINDEX[9][9] = {  // l (m = 1 ...l)
   {-1,-1,-1,-1,-1,-1,-1,-1},// 0 
   {-1,-1,-1,-1,-1,-1,-1,-1},// 1 
   { 0, 1,-1,-1,-1,-1,-1,-1},// 2 (1 2)
@@ -201,7 +201,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Alloc spin dynamics, if needed */
   if (use_spins == MODE_SPINS_GENERIC) {   
+    
     DynamicsSpin_alloc (&spindyn, 0);//EOBPars->spin_dyn_size); //FIXME: add this parameter and use it here in the call!
+    
     /* Set up a reference to spin dynamics in the dynamics structure */
     dyn->spins = spindyn; 
   }
@@ -242,9 +244,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Integrate spin dynamics, if needed */
   if (use_spins == MODE_SPINS_GENERIC) {
+    
     //FIXME add option in EOBpars and add PN_abc and EOB rhs (when coded)
     p_eob_spin_dyn_rhs = eob_spin_dyn_rhs_PN;
+    
     eob_spin_dyn(spindyn);
+    
+    if (EOBPars->output_dynamics) 
+      DynamicsSpin_output(spindyn);
+    
   }
   
   /** Set r.h.s. fun pointer */
@@ -697,8 +705,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   if (EOBPars->output_dynamics) {
     Dynamics_output(dyn);
-    if (use_spins == MODE_SPINS_GENERIC)
-      DynamicsSpin_output(spindyn);
   }
 #endif
   
