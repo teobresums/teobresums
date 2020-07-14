@@ -3547,6 +3547,28 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 {
 
+  /* Updated spins parallel to L, if required */
+  if (usespins == MODE_SPINS_GENERIC) {
+    
+    double SA, SB;
+    eob_spin_dyn_Sp_interp(dyn->spins, t, &SA, &SB, 0);//EOBPars->spin_interp_integrate);
+    //FIXME: add par EOBPars->spin_interp_integrate
+    
+    const double M2 = SQ(EOBPars->M);
+    const double XA = EOBPars->X1;
+    const double XB = EOBPars->X2;
+    
+    EOBPars->chi1 = SA / (SQ(XA)*M2);
+    EOBPars->chi2 = SB / (SQ(XB)*M2);
+    
+    set_spin_vars(XA,XB, EOBPars->chi1,EOBPars->chi2, 
+		  &EOBPars->S1, &EOBPars->S2,
+		  &EOBPars->a1, &EOBPars->a2,
+		  &EOBPars->aK, &EOBPars->aK2,
+		  &EOBPars->S, &EOBPars->Sstar);
+    
+  }
+  
   const double nu = EOBPars->nu;  
   const double chi1 = EOBPars->chi1;  
   const double chi2 = EOBPars->chi2;  
@@ -4066,6 +4088,10 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
     }
     
 }
+
+
+/** h+,x, SPA and Twist routines */
+
 
 /** Twist TD multipoles */
 void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
