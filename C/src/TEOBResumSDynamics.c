@@ -1266,7 +1266,7 @@ void eob_spin_dyn(DynamicsSpin *dyn)
   dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],
 						  dyn->y[EOB_EVOLVE_SPIN_Lz]);
-  dyn->y[EOB_EVOLVE_SPIN_gam] = 0.; // ?
+  dyn->y[EOB_EVOLVE_SPIN_gam] = Pi/2.; // P.8 https://arxiv.org/abs/2004.09442
   dyn->y[EOB_EVOLVE_SPIN_Momg] = Pi * EOBPars->initial_frequency; 
   
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
