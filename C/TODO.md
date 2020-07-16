@@ -4,6 +4,9 @@
 
 Urgent:
 
+ - [ ] check nothing was broken by removing old quick-access pars in Dynamics struct (see "Other")
+
+
  - [ ] PARS: fix EOB pars where needed (see //FIXME comments)
  - [ ] RHS: check PN coefs
  - [ ] RHS: check dot gamma angle (enforce >0?)
@@ -11,7 +14,7 @@ Urgent:
  - [ ] RHS: check definition of v  = omg^{1/3}, with or without M ?
  - [ ] RHS: add N4LO pieces (now NLO), Current N4LO equations in paper do not look good
  - [ ] RHS: Compute PN coefs at first call (as in other part of the code)
- - [ ] ODE stopping criterion (Momega = ?, should be sufficiently large to allow interpolation)
+ - [x] ODE stopping criterion (Momega = NR BBH, should be sufficiently large to allow interpolation)
  - [ ] Twist: check mapping real/imag <---> phase/ampli
  - [ ] interface with main: add routines to update the spin component along L in the appropriate places of the dynamics and aligned spin waveforms computation.
 
