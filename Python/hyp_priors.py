@@ -104,17 +104,17 @@ if __name__ == "__main__":
     'arg_out'            : 1,                 #Output hlm/hflm. Default = 0
     'use_mode_lm'        : [1],               #List of modes to use/output through EOBRunPy
     'output_lm'          : [1],               #List of modes to print on file
-    'output_dynamics'    : 1,                 #output of the dynamics
+    'output_dynamics'    : 0,                 #output of the dynamics
     'ode_tstep_opt'      : 1,                 #fixing uniform or adaptive. Default = 1 
     'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
-    'use_geometric_units': 1,                 #output quantities in geometric units. Default = 1
+    'use_geometric_units': 0,                 #output quantities in geometric units. Default = 1
     'r0':r,
-    'interp_uniform_grid': 1,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+    'interp_uniform_grid': 0,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
     'ecc'                : 0.18,              #Eccentricity. Default = 0.
     'j_hyp'              : j,                 #J_hyp. Default = 0.
     'r_hyp'              : r,                 #r_hyp. Default = 0.
     'H_hyp'              : E0,                #H_hyp. Default = 0.
-    'ode_tmax'           : 10e4,
+    'ode_tmax'           : 20e4,
     }
 
     #run the wf generator
@@ -122,7 +122,8 @@ if __name__ == "__main__":
     t, hp, hc, hlm = EOBRun_module.EOBRunPy(pars)
     #t, hp, hc = EOBRun_module.EOBRunPy(pars)
     end = time.time()
-    print(end-start);
+    DeltaT = end-start
+    print("ODE time=%s"%DeltaT);
     # plot
     plt.plot(t, hp, label=r'h_+')
     #plt.plot(t, hc, label=r'h_x')
