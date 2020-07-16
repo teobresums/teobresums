@@ -112,6 +112,23 @@ double eob_nqc_dtfit(const double chi, const double chi0)
   return dtnqc;
 }
 
+/** Fit of GW frequency of NR merger */
+double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2)
+{
+  const double nu2 = SQ(nu);
+  const double X12 = sqrt(1-4*nu);
+  const double a1  = X1*chi1;
+  const double a2  = X2*chi2;
+  const double a0  = a1+a2;
+  const double a12 = a1-a2;
+  const double Shat = 0.5*(a0 + X12*a12);
+  const double Shat2 = SQ(Shat);
+  const double b[4] = {0.066045, -0.23876, 0.76819, -0.9201};
+  return( 0.273356*(1+0.84074*nu+1.6976*nu2)*
+	  (1+((-0.42311+b[0]*X12)/(1+b[1]*X12))*Shat
+	   +((-0.066699))*Shat2)/(1+((-0.83053+b[2]*X12)/(1+b[3]*X12))*Shat) );
+}
+
 /** Fits for NR point used to determine NQC corrections */
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {

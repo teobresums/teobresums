@@ -213,6 +213,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_spins == MODE_SPINS_GENERIC) {   
     
     DynamicsSpin_alloc (&spindyn, 0);//EOBPars->spin_dyn_size); //FIXME: add this parameter and use it here in the call!
+
+    //FIXME: add the parameter EOBPars->spin_odes_omg_stop
+    //       default should be -1 => auto set to NR mrg BBH frequency
+    //spindyn->omg_stop = EOBPars->spin_odes_omg_stop; 
     
     /* Set up a reference to spin dynamics in the dynamics structure */
     dyn->spins = spindyn;

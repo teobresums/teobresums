@@ -1783,7 +1783,8 @@ void DynamicsSpin_alloc (DynamicsSpin **dyn, int size)
     (*dyn)->data[v] = malloc (size * sizeof(double));  
     memset((*dyn)->data[v], 0, size*sizeof(double));
   }
-  (*dyn)->t_stop=-1;// use Momg as stopping criterion, if not otherwise specified. 
+  (*dyn)->omg_stop=-1; // set from EOBPars or by NR merger
+  (*dyn)->t_stop=-1; // use Momg as stopping criterion, if not otherwise specified. 
 }
 
 void DynamicsSpin_push (DynamicsSpin **dyn, int size)
