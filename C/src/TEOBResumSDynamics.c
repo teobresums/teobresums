@@ -1245,7 +1245,7 @@ void eob_spin_dyn(DynamicsSpin *dyn)
   /* Set the stopping frequency as the NR merger (if not set) */
   //FIXME: add the parameter EOBPars->spin_odes_omg_stop
   if (dyn->omg_stop<0) {
-    const double fact = 1.01; // need to go slightly above for interpolation
+    const double fact = 1.1; // need to go slightly above for ringdown attachment
     dyn->omg_stop = fact * eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
     //EOBPars->spin_odes_omg_stop = dyn->omg_stop;
   }
