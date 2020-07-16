@@ -966,6 +966,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const int use_tidal = EOBPars->use_tidal;
   int store_dynamics = EOBPars->output_dynamics; 
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
+  if (ecc != 0.) EOBPars->postadiabatic_dynamics = 0;
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
