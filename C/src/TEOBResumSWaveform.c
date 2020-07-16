@@ -3551,9 +3551,12 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   
   /* Updated spins parallel to L, if required */
   if (EOBPars->use_spins == MODE_SPINS_GENERIC) {
-    
-    double SA, SB;
-    eob_spin_dyn_Sp_interp(dyn->spins, t, &SA, &SB, 0);//EOBPars->spin_interp_integrate);
+
+    double SA, SB; // projections of the spin parallel to hatL
+    eob_spin_dyn_Sproj_interp(dyn->spins, t,
+			      &SA, &SB, NULL, 
+			      NULL, NULL, NULL, 
+			      0);//EOBPars->spin_interp_integrate);
     //FIXME: add par EOBPars->spin_interp_integrate
     
     const double M2 = SQ(EOBPars->M);

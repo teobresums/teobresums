@@ -323,18 +323,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (VERBOSE) PRFORMd("rLSO",EOBPars->rLSO);
   }   
 
-  /** Final BH */
-  if (!(EOBPars->use_tidal)) {
-    HealyBBHFitRemnant(chi1, chi2, q, &(EOBPars->Mbhf), &(EOBPars->abhf));
-    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-    if (VERBOSE) {
-      PRSECTN("Final black hole");
-      PRFORMd("BH_final_mass[Healy]",EOBPars->Mbhf); 
-      PRFORMd("BH_final_spin[Healy]",EOBPars->abhf);
-      PRFORMd("BH_final_spin[JimenezForteza]",EOBPars->abhf);
-    }
-  }
-
   /* Iteration index */
   int iter = 0;  
   int pasize = 0;
@@ -710,14 +698,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
 
-  /** Twist the insplunge waveform */
-  if (use_spins == MODE_SPINS_GENERIC) {   
+  /** Twist the insplunge waveform for BNS */
+  if ((use_tidal) && (use_spins == MODE_SPINS_GENERIC)) {   
 
     Waveform_lm_alloc (&hTlm, size, "hTlm"); 
     
-    //FIXME: when we want to do this?
-    // - BNS TD
-    // - BBH    
     if (EOBPars->domain == DOMAIN_TD)
       twist_hlm_TD(hlm, dyn->spins, 1, hTlm);
     
@@ -870,7 +855,25 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
     } // NQC_HLM_COMPUTE
 
+    /** Final BH */
+    HealyBBHFitRemnant(chi1, chi2, q, &(EOBPars->Mbhf), NULL);
+    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+
     
+    if (use_spins == MODE_SPINS_GENERIC) {   
+
+      //TODO: correct for precession
+      //      see e.g. (4.17) https://arxiv.org/abs/2004.06503 
+
+    }
+    
+    if (VERBOSE) {
+      PRSECTN("Final black hole");
+      PRFORMd("BH_final_mass[Healy]",EOBPars->Mbhf); 
+      //PRFORMd("BH_final_spin[Healy]",EOBPars->abhf);
+      PRFORMd("BH_final_spin[JimenezForteza]",EOBPars->abhf);
+    }
+
     /** BBH : add Ringdown */
     
     if (VERBOSE) PRSECTN("Ringdown");
@@ -905,6 +908,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Waveform_lm_output_reim (hlm);
   }
 #endif
+  
+  /** Twist the modes in case of precession */
+  if (use_spins == MODE_SPINS_GENERIC) {   
+    
+    Waveform_lm_alloc (&hTlm, size, "hTlm"); 
+    
+    if (EOBPars->domain == DOMAIN_TD)
+      twist_hlm_TD(hlm, dyn->spins, 1, hTlm);
+    
+  }
   
   /* *****************************************
    * Compute h+, hx 
@@ -973,22 +986,35 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   if (output) {
+    // hpc
     if (EOBPars->output_hpc)
       if (EOBPars->domain == DOMAIN_TD) Waveform_output (*hpc); 
       else                              WaveformFD_output (*hfpc); 
-    if (EOBPars->output_multipoles) Waveform_lm_output (hlm); 
-    if (EOBPars->output_multipoles) Waveform_lm_output_reim (hlm);
-    //if (EOBPars->output_multipoles_fd) WaveformFD_lm_output (hflm);  //TODO: add this parameter
+    // modes
+    if (EOBPars->output_multipoles) {
+      if (EOBPars->domain == DOMAIN_TD) {
+	Waveform_lm_output (hlm); 
+	Waveform_lm_output_reim (hlm);
+	if (use_spins == MODE_SPINS_GENERIC)
+	  Waveform_lm_output (hTlm);
+      } else {
+	WaveformFD_lm_output (hflm);
+	if (use_spins == MODE_SPINS_GENERIC)
+	  WaveformFD_lm_output (hfTlm);
+      }
+    }
+    // dynamics
     if (EOBPars->output_dynamics) {
       if (EOBPars->interp_uniform_grid) {
-	/* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
+	/* Interp to uniform grid the dynamics, 
+	   rem the dyn size can be different from wf size */
 	const double dt_interp_dyn = EOBPars->dt_interp;
 	const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
 	Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
       }
       Dynamics_output(dyn);
       if (use_spins == MODE_SPINS_GENERIC)
-	DynamicsSpin_output (spindyn);  
+	DynamicsSpin_output (spindyn);
     }
   }
 

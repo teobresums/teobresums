@@ -775,9 +775,12 @@ int eob_spin_dyn_rhs_PN_abc(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_integrate(DynamicsSpin *dyn);
 void eob_spin_dyn(DynamicsSpin *dyn);
-void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time, double *alpha_p, double *beta_p, double *gamma_p, int continue_integration);
-void eob_spin_dyn_Sp_interp(DynamicsSpin *dyn, double time, double *SpA, double *SpB, int continue_integration);
-
+void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time, double
+*alpha_p, double *beta_p, double *gamma_p, int continue_integration);
+void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
+			       double *SApara, double *SBpara, double *Spara,
+			       double *SAperp, double *SBperp, double *Sperp,
+			       int continue_integration);
 
 /* TEOBResumSPostAdiabatic.c */
 int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0);

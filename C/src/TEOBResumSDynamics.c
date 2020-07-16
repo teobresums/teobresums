@@ -153,8 +153,10 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   /* Updated spins parallel to L, if required */
   if (usespins == MODE_SPINS_GENERIC) {
     
-    double SA, SB;
-    eob_spin_dyn_Sp_interp(dyn->spins, t, &SA, &SB, 0);//EOBPars->spin_interp_integrate);
+    double SA, SB; // projections of the spin parallel to hatL
+    eob_spin_dyn_Sproj_interp(dyn->spins, t, &SA, &SB, NULL, 
+			      NULL, NULL, NULL, 
+			      0);//EOBPars->spin_interp_integrate);
     //FIXME: add par EOBPars->spin_interp_integrate
     
     const double M2 = SQ(EOBPars->M);
@@ -1321,10 +1323,11 @@ void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time,
   *gamma_p = gamma;
 }
 
-/** Helper routine to interpolate spins parallel to orbital ang. mom. at given time */
-void eob_spin_dyn_Sp_interp(DynamicsSpin *dyn, double time,
-			    double *SpA, double *SpB,
-			    int continue_integration)
+/** Helper routine to interpolate spins parallel/perpendicular to orbital ang. mom. at given time */
+void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
+			       double *SApara, double *SBpara, double *Spara,
+			       double *SAperp, double *SBperp, double *Sperp, // these are 3-vectors
+			       int continue_integration)
 {
   const int smax = dyn->size-1;
   double SA[IN3], SB[IN3], Lh[IN3];
@@ -1377,16 +1380,42 @@ void eob_spin_dyn_Sp_interp(DynamicsSpin *dyn, double time,
     Lh[Iy] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_Ly], dyn->size, time);
     Lh[Iz] = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_Lz], dyn->size, time);
   }
+
+  /* Total spin */
+  //double SAB[IN3], S2;
+  //for (int i=0; i<IN3; i++) SAB[i] = SA[i]+SB[i];
+  //vect_dot3(SAB, SAB, &S2);
+
+  /* direction of Lh */
+  //FIXME: this should not be needed
+  double n[IN3], normL;
+  vect_dot3(Lh, Lh, &normL); 
+  const double oonormL = 1./normL; 
+  for (int i=0; i<IN3; i++) n[i] = Lh[i]*oonormL;
   
   /* Projections */
-  double LSA, LSB, normL;
-  vect_dot3(SA, Lh, &LSA);
-  vect_dot3(SB, Lh, &LSB);
-  vect_dot3(Lh, Lh, &normL); //CHECKME: is it correct to calculate the norm this way?
-  double oonormL = 1./sqrt(normL); 
-  
-  *SpA = LSA * oonormL;
-  *SpB = LSB * oonormL;
+  double LSA, LSB, LS;    
+  if (SApara) {
+    vect_dot3(SA, n, &LSA);
+    *SApara = LSA;
+  }
+  if (SBpara) {
+    vect_dot3(SB, n, &LSB);
+    *SBpara = LSB;
+  }
+  if (Spara) {
+    *Spara = *SApara + *SBpara;
+  }
+  if (SAperp) {
+    for (int i=0; i<IN3; i++) SAperp[i] = SA[i] - LS * n[i];
+  }
+  if (SBperp) {
+    for (int i=0; i<IN3; i++) SBperp[i] = SB[i] - LS * n[i];
+  }
+  if (Sperp) {
+    for (int i=0; i<IN3; i++) Sperp[i] = SAperp[i] - SBperp[i];
+  }
+
 }
 
 

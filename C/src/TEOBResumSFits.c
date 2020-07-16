@@ -1425,8 +1425,8 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
     
   }
 
-  *mass = Mbh;
-  *spin = abh;
+  if (mass) *mass = Mbh;
+  if (spin) *spin = abh;
 }
 
 /** Final mass fit of Jimenez-Forteza et al. (arxiv 1611.00332) */
