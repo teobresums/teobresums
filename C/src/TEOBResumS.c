@@ -459,8 +459,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->ode_stop_radius   = false;
   double rstop = EOBPars->ode_stop_radius;
   /* Avoiding useless computations for hyperbolic cases */
-  if (r_hyp != 0.) {
-    double r_hor = horizon_radius(dyn->nu);
+  if ((r_hyp != 0.) || (ecc != 0.)) {
+    double r_hor = horizon_radius(dyn->nu)+0.1;
     rstop = MAX(rstop,r_hor);
   }
   if (rstop>0.) {
@@ -560,9 +560,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->MOmg = dyn->Omg;
     }
 
-    if (r_hyp != 0.) {
+    if ((ecc != 0.) || (r_hyp != 0.)) {
       if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
-	if (VERBOSE) printf("Stop: Hyperbolic orbit crossed event horizon.\n");
+	if (VERBOSE) printf("Stop: Orbit crossed event horizon.\n");
 	iter--; /* do count this iter! */
 	dyn->ode_stop = true;
 	break; /* (while) stop */
