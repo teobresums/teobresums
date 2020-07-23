@@ -841,6 +841,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    * Compute h+, hx 
    * *****************************************
    */
+  
+  /** Set tc */
+  /** FIXME: tc (=merger time) is correct for BNS, not for BBH */
+  EOBPars->tc = hlm->time[size-1];
+
 
   /** Scale to physical units (if necessary) */
   const double distance = EOBPars->distance;
@@ -851,7 +856,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } else {
       amplitude_prefactor = nu*M*M*MSUN_M*MSUN_S/(distance*MPC_M);
     }
-    M *= MSUN_S;   
+    M *= MSUN_S;
+    EOBPars->tc*= M;   
   } 
   const double phi = Pi/2.0 - EOBPars->coalescence_angle; 
   const double iota = EOBPars->inclination;
@@ -895,6 +901,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         
     /* h+, hx */  
     compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, *hfpc);
+
+    /* time-shift the FD waveforms */
+    time_shift_FD(*hfpc, EOBPars->tc);
     
   }
 

@@ -507,7 +507,8 @@ typedef struct tagEOBParameters
   int firstcall[NFIRSTCALL];
 
   int domain; //Time or frequency domain
-  double df;  //frequency interp df, can be set from srate (?)
+  double df;  //frequency interp df
+  double tc;  //coalescence time
   
 } EOBParameters;
 
@@ -628,6 +629,7 @@ void NQCdata_free (NQCdata *nqc);
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
+void time_shift_FD(WaveformFD *hpc, double tc);
 double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
