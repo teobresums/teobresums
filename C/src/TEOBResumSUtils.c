@@ -2029,6 +2029,31 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
 #endif
 }
   
+/** Perform a time shift in FD */
+void time_shift_FD(WaveformFD *hpc, double tc){
+
+  double ts = -tc;
+  double twopits = 2*Pi*ts;
+  //printf("Time shifting\n");
+  //printf("%.2e %.2e %. \n", tc, EOBPars->df, hpc->size);
+
+  for(int i=0; i < hpc->size; i++){
+    double f = hpc->freq[i];
+    double cn = cos(-twopits*f);
+    double sn = sin(-twopits*f);
+    /** Shift: h-->h*e^{-2 Pi ts f} */
+    double tmpr = hpc->preal[i]*cn + hpc->pimag[i]*sn;
+    double tmpi = hpc->pimag[i]*cn - hpc->preal[i]*sn;
+    hpc->preal[i] = tmpr;
+    hpc->pimag[i] = tmpi;
+
+    tmpr  = hpc->creal[i]*cn + hpc->cimag[i]*sn;
+    tmpi  = hpc->cimag[i]*cn - hpc->creal[i]*sn;
+    hpc->creal[i] = tmpr;
+    hpc->cimag[i] = tmpi;
+  }
+}
+
 /** Convert time in sec to dimensionless and mass-rescaled units */
 double time_units_factor(double M)
 {
