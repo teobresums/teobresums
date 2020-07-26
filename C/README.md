@@ -5,22 +5,12 @@
  * Standard C libs, including libconfig
  * GSL lib
 
-## Compilation
+## Compilation & Usage
 
-```
-$ export TEOBRESUMS=$(pwd)
-$ cd $TEOBRESUMS
-$ make -f Makefile.TEOBResumS
-```
+See the [README](../README.md) or the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/Home)
 
-## Usage
 
-```
-$ cd $TEOBRESUMS
-$ ./TEOBResumS.x <parfile>
-```
 
-For example parfiles see `par/`
 
 
 
