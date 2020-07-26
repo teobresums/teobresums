@@ -1159,9 +1159,11 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
   
   /* GSL integrator memory */
   dyn->omg_stop = EOBPars->spin_odes_omg_stop; 
+  dyn->t_stop = EOBPars->spin_odes_t_stop;
   dyn->dt = EOBPars->spin_odes_dt; 
   const double ode_abstol = EOBPars->ode_abstol;
   const double ode_reltol = EOBPars->ode_reltol;
+  const double tstop = MAX(dyn->t_stop, EOBPars->ode_tmax);
   
   gsl_odeiv2_system sys          = {p_eob_spin_dyn_rhs, NULL, EOB_EVOLVE_SPIN_NVARS, dyn};
 #if (USERK45)
@@ -1177,15 +1179,16 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
   
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Precession evolution");
+  printf("t = %e\ndt = %e\ntstop = %e\n",dyn->t,dyn->dt,dyn->t_stop);
   int iter = 0;
   int status;
   int GSLSTATUS = OK;
   while (1) {
     if (VERBOSE) printf("iter %09d\n", iter); 
     iter++;
-    
+
     //GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);//uniform
-    GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
+    GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, tstop, &dyn->dt, dyn->y);
     
     /** Check for failures ... */
     if (GSLSTATUS != GSL_SUCCESS) {
@@ -1247,14 +1250,16 @@ int eob_spin_dyn(DynamicsSpin *dyn)
     dyn->omg_stop = fact * eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
     EOBPars->spin_odes_omg_stop = dyn->omg_stop;
   }
+  dyn->t_stop = EOBPars->spin_odes_t_stop;
   
   /** Initial data */
-  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x; 
-  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y;
-  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z;
-  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x;
-  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y;
-  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z;
+  const double ooM2 = 1.0/(SQ(EOBPars->M));
+  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *ooM2; 
+  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y *ooM2;
+  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z *ooM2;
+  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *ooM2;
+  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *ooM2;
+  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *ooM2;
   dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; //FIXME Lh t=0 ?
   dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
   dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;

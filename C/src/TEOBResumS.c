@@ -213,8 +213,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_spins == MODE_SPINS_GENERIC) {   
     
     DynamicsSpin_alloc (&spindyn, EOBPars->spin_dyn_size); 
-
-    spindyn->omg_stop = EOBPars->spin_odes_omg_stop; 
     
     /* Set up a reference to spin dynamics in the dynamics structure */
     dyn->spins = spindyn;
