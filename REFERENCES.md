@@ -6,6 +6,10 @@
 
 Other key references, please cite the ones relevant for the methods/functionalities you use
 
+ * Akcay, Gamba, Bernuzzi (2020) [A hybrid post-Newtonian -- effective-one-body scheme for spin-precessing compact-binary waveforms](https://inspirehep.net/literature/1795896)
+ * Chiaramello, Nagar (2020) [Faithful analytical effective-one-body waveform model for spin-aligned, moderately eccentric, coalescing black hole binaries](https://inspirehep.net/literature/1778128)
+ * Nagar, Riemenschneider, Pratten, Rettegno, Messina (2020) [A multipolar effective one body waveform model for spin-aligned black hole binaries](https://inspirehep.net/literature/1777194) Higher multipoles
+ * Rettegno, Martinetti, Nagar, Bini, Riemenschneider (2020) [Comparing Effective One Body Hamiltonians for spin-aligned coalescing binaries](https://inspirehep.net/literature/1766919) TEOBResumS vs SEOBNR
  * Nagar, Messina, Rettegno, Bini, Damour, Geralico, Akcay, Bernuzzi (2018) [Nonlinear-in-spin effects in effective-one-body waveform models of spin-aligned, inspiralling, neutron star binaries](https://inspirehep.net/record/1710050)
  * Akcay, Bernuzzi, Messina, Nagar, Ortiz, Rettegno (2018) [Effective-one-body multipolar waveform for tidally interacting binary neutron stars up to merger](http://inspirehep.net/record/1707624) 
  * Nagar, Riemenschneider, Pratten (2017) [Impact of Numerical Relativity information on effective-one-body waveform models](http://inspirehep.net/record/1518392)
