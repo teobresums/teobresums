@@ -1163,10 +1163,8 @@ void eob_set_params(EOBParameters *eobp, int default_choice, int firstcall)
 
   /* Spin parameters */
   if (usespins==MODE_SPINS_GENERIC) {
-    
     eobp->chi1 = eobp->chi1z;
     eobp->chi2 = eobp->chi2z;
-    
   }
   
   const double chi1 = eobp->chi1;

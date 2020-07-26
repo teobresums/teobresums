@@ -1151,14 +1151,17 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
   /* index of closest element to dyn->t in dyn->time 
      initial data refer to this time */
   const int i0 = find_point_bisection(dyn->t, dyn->size, dyn->time, 0);//CHECKME: 0 or 1?
-
+  if (DEBUG) printf("initial data at index %d\n",i0);
+  
   /* Set initial data */
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
-    dyn->data[v][i0]  = dyn->y[v];
+    dyn->data[v][i0] = dyn->y[v];
   
   /* GSL integrator memory */
-  dyn->omg_stop = EOBPars->spin_odes_omg_stop; 
-  dyn->t_stop = EOBPars->spin_odes_t_stop;
+  //dyn->omg_stop = EOBPars->spin_odes_omg_stop; 
+  //dyn->t_stop = EOBPars->spin_odes_t_stop;
+  if (DEBUG) printf("omg_stop = %e\n", dyn->omg_stop);
+  
   dyn->dt = EOBPars->spin_odes_dt; 
   const double ode_abstol = EOBPars->ode_abstol;
   const double ode_reltol = EOBPars->ode_reltol;
@@ -1178,7 +1181,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
   
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Precession evolution");
-  printf("t = %e\ndt = %e\ntstop = %e\n",dyn->t,dyn->dt,dyn->t_stop);
+  if (DEBUG) printf("t = %e\ndt = %e\ntstop = %e\n",dyn->t,dyn->dt,dyn->t_stop);
   int iter = 0;
   int status;
   int GSLSTATUS = OK;
@@ -1216,9 +1219,9 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
       dyn->data[v][i0+iter]  = dyn->y[v];   
 
     /** Stop integration */
-    if (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop)
+    if ((dyn->omg_stop>0) && (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop))
       break;
-    if ((dyn->t_stop>0) && (dyn->t > dyn->t_stop>0))
+    if ((dyn->t_stop>0) && (dyn->t > dyn->t_stop))
       break;
     
   } /* end time iteration */
@@ -1241,13 +1244,11 @@ int eob_spin_dyn(DynamicsSpin *dyn)
 {
   const int chunk = dyn->size;
 
-  dyn->t = 0.;
-
   //FIXME add option in EOBpars and add PN_abc and EOB rhs (when coded)
   p_eob_spin_dyn_rhs = eob_spin_dyn_rhs_PN;
   
   /* Set the stopping frequency as the NR merger (if not set) */
-  if (dyn->omg_stop<0) {
+  if (EOBPars->spin_odes_omg_stop<0) {
     const double fact = 1.1; // need to go slightly above for ringdown attachment
     dyn->omg_stop = fact * eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
     EOBPars->spin_odes_omg_stop = dyn->omg_stop;
@@ -1255,13 +1256,14 @@ int eob_spin_dyn(DynamicsSpin *dyn)
   dyn->t_stop = EOBPars->spin_odes_t_stop;
   
   /** Initial data */
-  const double ooM2 = 1.0/(SQ(EOBPars->M));
-  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *ooM2; 
-  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y *ooM2;
-  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z *ooM2;
-  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *ooM2;
-  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *ooM2;
-  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *ooM2;
+  dyn->t = 0.;
+  const double M2 = SQ(EOBPars->M);
+  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *M2; 
+  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y *M2;
+  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z *M2;
+  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *M2;
+  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *M2;
+  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *M2;
   dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; //FIXME Lh t=0 ?
   dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
   dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;
@@ -1275,7 +1277,7 @@ int eob_spin_dyn(DynamicsSpin *dyn)
   dyn->y[EOB_EVOLVE_SPIN_Momg] = Pi * EOBPars->initial_frequency; 
   
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
-    dyn->data[v][0]  = dyn->y[v];
+    dyn->data[v][0] = dyn->y[v];
   
   /** Integrate ODEs */
   return eob_spin_dyn_integrate(dyn);
@@ -1300,6 +1302,7 @@ void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time,
      */
     if (continue_integration) {      
 
+      dyn->omg_stop = -1; // use the tstop not Momg_stop
       dyn->t = dyn->time[smax];
       dyn->t_stop = time + dyn->dt;
       eob_spin_dyn_integrate(dyn);      
@@ -1346,6 +1349,7 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
     */
     if (continue_integration) {      
 
+      dyn->omg_stop = -1; // use the tstop not Momg_stop
       dyn->t = dyn->time[smax];
       dyn->t_stop = time + dyn->dt;
       eob_spin_dyn_integrate(dyn);      
