@@ -7,7 +7,7 @@ Urgent:
  - [ ] check nothing was broken by removing old quick-access pars in Dynamics struct (see "Other")
 
 
- - [ ] PARS: fix EOB pars where needed (see //FIXME comments)
+ - [x] PARS: fix EOB pars where needed 
  - [ ] RHS: check PN coefs
  - [ ] RHS: check dot gamma angle (enforce >0?)
  - [ ] RHS: check q convention in  https://arxiv.org/abs/1307.4418, > 1 ? < 1. Now assumed ours, q>1
