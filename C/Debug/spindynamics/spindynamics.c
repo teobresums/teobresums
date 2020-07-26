@@ -1,4 +1,5 @@
-/* program to test spin dynamics */
+/* program to test spin dynamics 
+   uses geometric units */
 
 #include <ctype.h>
 #include <stdio.h>
@@ -44,7 +45,7 @@ NQCdata *NQC;
 int main (int argc, char* argv[])
 {
   // Defaults
-  double f0 = 0.02; // initial frequency
+  double f0 = 0.01; // initial frequency
   double m = 1; // mass
   double q = 1; // mass ratio
   double S1x = 0; // x-comp spin 1
@@ -54,7 +55,7 @@ int main (int argc, char* argv[])
   double S2y = 0; // y-comp spin
   double S2z = 0.5; // z-comp spin
   double ti = 10; // time to interp
-  double momg_stop = 0.1; // ODE stop max freq
+  double momg_stop = -1; // ODE stop max freq if >0 , otherwise calculate from NR mrg fit
   double dt = 1; // ODE dt
   int interpint; // test integration in interp
   
@@ -87,11 +88,10 @@ int main (int argc, char* argv[])
   EOBParameters_alloc( &EOBPars );
   EOBParameters_defaults (DEFAULT_PARS_BBH, EOBPars);
 
+  EOBPars->M = m;
   EOBPars->spin_odes_omg_stop = momg_stop; 
   EOBPars->spin_odes_dt = dt; 
-
   EOBPars->initial_frequency = f0;
-
   EOBPars->q = q;
   EOBPars->nu = q_to_nu(q);
 
@@ -105,6 +105,10 @@ int main (int argc, char* argv[])
   EOBPars->chi2y = S2y/SQ(m2);
   EOBPars->chi2z = S2z/SQ(m2);
 
+  printf("Mass  : %e\n",m);
+  printf("Spin 1: (Sx,Sy,Sz)=(%e,%e,%e)\n",EOBPars->chi1x,EOBPars->chi1y,EOBPars->chi1z);
+  printf("Spin 2: (Sx,Sy,Sz)=(%e,%e,%e)\n",EOBPars->chi2x,EOBPars->chi2y,EOBPars->chi2z);
+  
   EOBPars->spin_interp_integrate = interpint;
   
   // Alloc mem
@@ -114,18 +118,22 @@ int main (int argc, char* argv[])
 
   // Solve 
   if (eob_spin_dyn(dp)) {
-    printf("ERROR\n");
     return ERROR_ODEINT;
   }
 
+  printf("final time at %e (tstop = %e):\n\t momg = %e\n\t momg_stop = %e (%e)\n",
+	 dp->t, dp->t_stop, dp->y[EOB_EVOLVE_SPIN_Momg],dp->omg_stop, momg_stop);
+  
   // Test interp
   double alpha, beta, gamma;
   eob_spin_dyn_abc_interp(dp, ti, &alpha,&beta,&gamma, EOBPars->spin_interp_integrate);
 
-  printf("angles at %e\n alpha = %e\n beta= %e\n gamma=%e\n",
+  printf("interp. angles at %e:\n\t alpha = %e\n\t beta = %e\n\t gamma = %e\n",
 	 ti,alpha,beta,gamma);
   
   // Output
+  strcpy(EOBPars->output_dir, "./output/");
+  system_mkdir(EOBPars->output_dir);
   DynamicsSpin_output(dp);
 
   // Free mem
