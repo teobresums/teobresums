@@ -27,14 +27,15 @@ SRC=../../src/TEOBResumSUtils.c\
 #
 
 CC=gcc
-CFLAGS=-std=c99 `gsl-config --cflags` # Debug
+CFLAGS=-std=gnu99 `gsl-config --cflags` # Debug
+#CFLAGS=-std=c99 `gsl-config --cflags` # Debug
 
 CFLAGS +=-g  # Debug
 #CFLAGS +=-pg # Debug & Profile
 #CFLAGS +=-O3  # Optimized
 
-CFLAGS += -DDEBUG=0 # 1/0 to turn on/off debug mode
-CFLAGS += -DVERBOSE=0 # 1/0 to turn on/off verbose mode
+CFLAGS += -DDEBUG=1 # 1/0 to turn on/off debug mode
+CFLAGS += -DVERBOSE=1 # 1/0 to turn on/off verbose mode
 
 #CFLAGS += -fopenmp # OpenMP
 #CFLAGS += -DUSETIMERS=0 # OpenMP timers, note they need OpenMP
@@ -53,10 +54,10 @@ LDLFLAGS=-lgsl -lgslcblas -lm -lconfig
 # rules
 #
 
-all: $(EXE) # pywrap $(LIB)
+all: $(EXE) 
 	@echo "All done"
 
-$(EXE): $(OBJ)
+$(EXE): $(SRC)
 	@echo "Building $@ ..."
 	@$(CC) $(CFLAGS) $(LFLAGS) $(SRC) -o $@ $(LDLFLAGS)
 

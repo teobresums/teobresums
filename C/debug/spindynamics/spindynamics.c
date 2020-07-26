@@ -44,7 +44,7 @@ NQCdata *NQC;
 int main (int argc, char* argv[])
 {
   // Defaults
-  double f0 = 10; // initial frequency
+  double f0 = 0.02; // initial frequency
   double m = 1; // mass
   double q = 1; // mass ratio
   double S1x = 0; // x-comp spin 1
