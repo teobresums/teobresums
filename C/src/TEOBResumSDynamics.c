@@ -912,7 +912,6 @@ double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz)
 */
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 {
-
   (void)(t); /* avoid unused parameter warning */
   DynamicsSpin *dyn = d;  
 
@@ -1244,6 +1243,9 @@ int eob_spin_dyn(DynamicsSpin *dyn)
 
   dyn->t = 0.;
 
+  //FIXME add option in EOBpars and add PN_abc and EOB rhs (when coded)
+  p_eob_spin_dyn_rhs = eob_spin_dyn_rhs_PN;
+  
   /* Set the stopping frequency as the NR merger (if not set) */
   if (dyn->omg_stop<0) {
     const double fact = 1.1; // need to go slightly above for ringdown attachment
