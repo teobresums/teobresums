@@ -44,7 +44,7 @@ CFLAGS += -DUSEBTIDALPOTENTIAL=1 # 1/0 to turn on B tidal terms
 #CFLAGS += -DUSERK45=0 # use rk45? rk8pd is default
 #CFLAGS += -DPOSTPOSTCIRCULAR=0 # 1/0 to turn on post-post-circular initial conditions
 #CFLAGS += -DEXCLUDESPINSPINTIDES=1 # 1/0 to turn off/on (exclude) spin^2-tidal couplings
-CFLAGS += -DEOBRUN=1 # use old/new main #TO BE REMOVED (use only new)
+#CFLAGS += -DEOBRUN=1 # use old/new main #TO BE REMOVED (use only new)
 
 LFLAGS=`gsl-config --libs`
 LDLFLAGS=-lgsl -lgslcblas -lm -lconfig
