@@ -3556,8 +3556,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     eob_spin_dyn_Sproj_interp(dyn->spins, t,
 			      &SA, &SB, NULL, 
 			      NULL, NULL, NULL, 
-			      0);//EOBPars->spin_interp_integrate);
-    //FIXME: add par EOBPars->spin_interp_integrate
+			      EOBPars->spin_interp_integrate);
     
     const double M2 = SQ(EOBPars->M);
     const double XA = EOBPars->X1;

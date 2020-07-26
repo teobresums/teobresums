@@ -100,7 +100,7 @@ int main (int argc, char* argv[])
   }
 
   /* set domain */
-  eob_set_params(dc, fc); 
+  eob_set_params(EOBPars, dc, fc); 
   
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
@@ -212,11 +212,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Alloc spin dynamics, if needed */
   if (use_spins == MODE_SPINS_GENERIC) {   
     
-    DynamicsSpin_alloc (&spindyn, 0);//EOBPars->spin_dyn_size); //FIXME: add this parameter and use it here in the call!
+    DynamicsSpin_alloc (&spindyn, EOBPars->spin_dyn_size); 
 
-    //FIXME: add the parameter EOBPars->spin_odes_omg_stop
-    //       default should be -1 => auto set to NR mrg BBH frequency
-    //spindyn->omg_stop = EOBPars->spin_odes_omg_stop; 
+    spindyn->omg_stop = EOBPars->spin_odes_omg_stop; 
     
     /* Set up a reference to spin dynamics in the dynamics structure */
     dyn->spins = spindyn;

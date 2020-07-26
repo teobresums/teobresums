@@ -156,8 +156,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     double SA, SB; // projections of the spin parallel to hatL
     eob_spin_dyn_Sproj_interp(dyn->spins, t, &SA, &SB, NULL, 
 			      NULL, NULL, NULL, 
-			      0);//EOBPars->spin_interp_integrate);
-    //FIXME: add par EOBPars->spin_interp_integrate
+			      EOBPars->spin_interp_integrate);
     
     const double M2 = SQ(EOBPars->M);
     const double XA = EOBPars->X1;
@@ -1159,8 +1158,8 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
     dyn->data[v][i0]  = dyn->y[v];
   
   /* GSL integrator memory */
-  dyn->omg_stop = 0; //EOBPars->spin_odes_omg_stop; //FIXME: add this parameter!   
-  dyn->dt = 0;//EOBPars->spin_odes_dt; //FIXME: add this parameter!   
+  dyn->omg_stop = EOBPars->spin_odes_omg_stop; 
+  dyn->dt = EOBPars->spin_odes_dt; 
   const double ode_abstol = EOBPars->ode_abstol;
   const double ode_reltol = EOBPars->ode_reltol;
   
@@ -1243,20 +1242,19 @@ void eob_spin_dyn(DynamicsSpin *dyn)
   dyn->t = 0.;
 
   /* Set the stopping frequency as the NR merger (if not set) */
-  //FIXME: add the parameter EOBPars->spin_odes_omg_stop
   if (dyn->omg_stop<0) {
     const double fact = 1.1; // need to go slightly above for ringdown attachment
     dyn->omg_stop = fact * eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
-    //EOBPars->spin_odes_omg_stop = dyn->omg_stop;
+    EOBPars->spin_odes_omg_stop = dyn->omg_stop;
   }
   
   /** Initial data */
-  dyn->y[EOB_EVOLVE_SPIN_SxA] = 0;//EOBPars->chi1x; //FIXME add these input pars
-  dyn->y[EOB_EVOLVE_SPIN_SyA] = 0;//EOBPars->chi1y;
-  dyn->y[EOB_EVOLVE_SPIN_SzA] = 0;//EOBPars->chi1z;
-  dyn->y[EOB_EVOLVE_SPIN_SxB] = 0;//EOBPars->chi2x;
-  dyn->y[EOB_EVOLVE_SPIN_SyB] = 0;//EOBPars->chi2y;
-  dyn->y[EOB_EVOLVE_SPIN_SzB] = 0;//EOBPars->chi2z;
+  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x; 
+  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y;
+  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z;
+  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x;
+  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y;
+  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z;
   dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; //FIXME Lh t=0 ?
   dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
   dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;

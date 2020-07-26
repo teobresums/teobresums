@@ -486,85 +486,89 @@ typedef struct tagDynamics
   /* ptr to reference spin dynamics */
   DynamicsSpin *spins; /* do not allocate mem to this one! */
   
-  /* key parameters for quick access */
-  //USE EOBPars!
-  /*
-  double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
-  double rLR, rLSO;
-  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
-  double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
-  double kapA2j, kapB2j, kapT2j;
-  double rLR_tidal, pGSF_tidal;
-  double Mbhf, abhf; // final BH 
-  int use_tidal, use_spins, use_tidal_gravitomagnetic;
-  */
 } Dynamics;
 
 /** Parameter data type */
 typedef struct tagEOBParameters
 {
+  /* binary parameters */
   double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
   double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
-  double rLR, rLSO;
   double LambdaAl2,LambdaAl3,LambdaAl4, LambdaBl2,LambdaBl3,LambdaBl4, SigmaAl2,SigmaBl2;
   double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
-  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;//new names!
-  
+  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;//new names!  
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
   double kapA2j, kapB2j, kapT2j;
-  double rLR_tidal, pGSF_tidal;
-  double Mbhf, abhf; // final BH 
 
-  double r0, initial_frequency;
-
-  double distance, inclination, polarization, coalescence_angle;
+  double chi1x,chi1y,chi1z;
+  double chi2x,chi2y,chi2z;
   
-  int use_tidal, use_spins, use_tidal_gravitomagnetic;
+  double distance, inclination, polarization, coalescence_angle;
+
+  /* options/settings */
+  int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM"
+  int use_tidal, use_spins, use_tidal_gravitomagnetic;  
   int use_Yagi_fits;
   int use_geometric_units;
   int use_speedytail;
-
+  
   double dt_merger_interp, dt_interp, srate_interp;
   int interp_uniform_grid;
 
   int *use_mode_lm, use_mode_lm_size;
 
-  int postadiabatic_dynamics, postadiabatic_dynamics_stop;
-  int postadiabatic_dynamics_N;
-  int postadiabatic_dynamics_size;
-  double postadiabatic_dynamics_rmin;
-
-  int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM"
-
+  /* dynamics */
+  double r0, initial_frequency;
   int compute_LR, compute_LSO, compute_LR_guess, compute_LSO_guess;
+  double rLR, rLSO;
+  double rLR_tidal, pGSF_tidal;
 
-  int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
-  char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
-
-  char output_dir[STRLEN];
-  int output_hpc, output_multipoles, output_dynamics, output_nqc, output_nqc_coefs, output_ringdown;
-  int *output_lm, output_lm_size; 
-
-  double srate, dt;
   int size;
-  int ringdown_extend_array;
   int ode_timestep;
+  double srate, dt;
   double ode_abstol, ode_reltol;
   double ode_tmax;
   int ode_stop_afterNdt;
   int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
 
-  int openmp_threads, openmp_timeron;
+  /* post-adiabatic */
+  int postadiabatic_dynamics, postadiabatic_dynamics_stop;
+  int postadiabatic_dynamics_N;
+  int postadiabatic_dynamics_size;
+  double postadiabatic_dynamics_rmin;
 
-  int firstcall[NFIRSTCALL];
+  /* spin dynamics */
+  int spin_dyn_size;
+  double spin_odes_omg_stop, spin_odes_t_stop;
+  double spin_odes_dt;
+  int spin_interp_integrate;
+  
+  /* final state */
+  double Mbhf, abhf; // final BH 
+
+  /* waveform */
+  int ringdown_extend_array;
 
   int domain; //Time or frequency domain
   double df;  //frequency interp df, can be set from srate (?)
+    
+  //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
+  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; 
+
+  /* NQC */
+  int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
+  char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
+  
+  /* output */
+  char output_dir[STRLEN];
+  int output_hpc, output_multipoles, output_dynamics, output_nqc, output_nqc_coefs, output_ringdown;
+  int *output_lm, output_lm_size; 
+
+  /* msc */
+  int openmp_threads, openmp_timeron;
+  int firstcall[NFIRSTCALL];
   
 } EOBParameters;
 
@@ -582,7 +586,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 void par_db_init ();
 void par_db_free ();
 void par_db_default_fromfile ();
-void par_db_default ();
+//void par_db_default ();//DEPRECATED
 void par_db_from_EOBPar (EOBParameters *EOBPars);
 void par_file_parse (const char *fname);
 void par_file_parse_merge (const char *fname);
@@ -606,8 +610,8 @@ double par_get_d(const char *key);
 const char * par_get_s(const char *key);
 int * par_get_arrayi(const char *key, int *n);
 double * par_get_arrayd(const char *key, int *n);
-void eob_set_params_old(char *s, int n);
-void eob_set_params(int default_choice, int firstcall);
+void eob_set_params(EOBParameters *eobp, int default_choice, int firstcall);
+//void eob_set_params_old(char *s, int n);//DEPRECATED
 void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);
 void EOBParameters_defaults (int choose, EOBParameters *eobp);
