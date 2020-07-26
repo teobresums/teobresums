@@ -55,10 +55,7 @@ Main reference
 
  * Nagar et al (2018) [Time-domain effective-one-body gravitational waveforms for coalescing compact binaries with nonprecessing spins, tides and self-spin effects](https://inspirehep.net/record/1676430)
 
-**please cite the above reference** when using the code.
-
-See the complete list of [`REFERENCES`](https://bitbucket.org/eob_ihes/teobresums/src/master/REFERENCES.md) 
-
+**please cite the above reference** when using the code. Please see also the complete list of [`REFERENCES`](https://bitbucket.org/eob_ihes/teobresums/src/master/REFERENCES.md) and cite papers according to what you use.
 ## Developers
 
 Please contact Sebastiano Bernuzzi and Alessandro Nagar if you wish to be included in the list of developers.
