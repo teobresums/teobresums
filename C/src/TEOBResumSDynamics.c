@@ -1235,7 +1235,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
 }
 
 /** Precessing dynamics main driver routine */
-void eob_spin_dyn(DynamicsSpin *dyn)
+int eob_spin_dyn(DynamicsSpin *dyn)
 {
   const int chunk = dyn->size;
 
@@ -1271,8 +1271,7 @@ void eob_spin_dyn(DynamicsSpin *dyn)
     dyn->data[v][0]  = dyn->y[v];
   
   /** Integrate ODEs */
-  if (eob_spin_dyn_integrate(dyn))
-    errorexit("error during spin integration");//FIXME: error handler
+  return eob_spin_dyn_integrate(dyn);
   
 }
 
