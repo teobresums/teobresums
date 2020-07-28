@@ -983,9 +983,9 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   vect_dot3(SABq, Lh, &SABqLh);
 
   for(int a=Ix; a<IN3; a++) 
-    OmgA[a] = v5*(nu*(2+1.5*q) + 0.5*v*(SB[a]-3*qSABLh))*Lh[a];
+    OmgA[a] = v5*(nu*(2+1.5*q) - 0.5*v*3*qSABLh)*Lh[a] + 0.5*v*SB[a];
   for(int a=Ix; a<IN3; a++) 
-    OmgB[a] = v5*(nu*(2+1.5*q) + 0.5*v*(SA[a]-3*SABqLh))*Lh[a];
+    OmgB[a] = v5*(nu*(2+1.5*q) - 0.5*v*3*SABqLh)*Lh[a] + 0.5*v*SA[a];
   
   vect_cross3(OmgA, SA, Omg_x_SA);
   vect_cross3(OmgB, SB, Omg_x_SB);
@@ -1111,6 +1111,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     - 3424./315*Pi*EulerGamma*nu - 26035./16128*Pi3*nu + 1760705531./290304*Pi*nu2 - 112955./576*Pi3*nu2 - 7030123./13608*Pi*nu3 + 49187./6048*Pi*nu4;  
   
   // Eq.(A1) of https://arxiv.org/abs/1307.4418 for Momega
+  dy[EOB_EVOLVE_SPIN_Momg] = 0.;
   for (int i=11; i<=2; i--)
     dy[EOB_EVOLVE_SPIN_Momg] += (a[i] + b[i]*lnomg)*pow(omg,(double)i*oothree);
   dy[EOB_EVOLVE_SPIN_Momg] += 1.;  
