@@ -61,7 +61,7 @@ int main (int argc, char* argv[])
   
   // Read-in pars
   int opt;
-  char opts[256] = "fmqxyzXYZtodi";
+  char opts[256] = "f:m:q:x:y:z:X:Y:Z:t:o:d:i:h";
   while ((opt = getopt(argc, argv, opts)) != -1) {
     switch (opt) {
     case 'f': f0 = atof(optarg); break;
@@ -77,10 +77,11 @@ int main (int argc, char* argv[])
     case 'o': momg_stop = atof(optarg); break;
     case 'd': dt = atof(optarg); break;
     case 'i': interpint = atoi(optarg); break;
+    case '?':
+      fprintf(stderr, "Usage: %s -{%s}\n", argv[0],opts);
+      return 1;
     default:      
-      fprintf(stderr, "Usage: %s [-%s] <value>\n", argv[0],opts);
       abort();
-      //exit(1);
     }
   }
   
