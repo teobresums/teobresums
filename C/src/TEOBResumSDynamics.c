@@ -1029,7 +1029,13 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 
   /* dot gamma = dot alpha(t) * cos(beta(t)) = dot alpha(t) * Lhz */
 
-  dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * ( Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] - Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
+  const double div = SQ(Lh[Ix]) + SQ(Lh[Iy]);
+  if (div == 0.)
+    /* Lh is along z
+       alpha is undefined, beta = 0 */
+    dy[EOB_EVOLVE_SPIN_gam] = 0.;
+  else
+    dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * ( Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] - Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
     
   /* dot omg (Rad.React.) */
 

@@ -186,7 +186,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
-  eobp->ode_tmax=2e8; // max integration time
+  eobp->ode_tmax=1e9; // max integration time
   eobp->ode_stop_radius=1.; // stop ODE integration at this radius (if > 0)
   eobp->ode_stop_afterNdt=4; // stop ODE N iters after the Omega peak
 
