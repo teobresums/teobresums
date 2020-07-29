@@ -50,10 +50,10 @@ int main (int argc, char* argv[])
   double q = 1; // mass ratio
   double S1x = 0; // x-comp spin 1
   double S1y = 0; // y-comp spin
-  double S1z = 0.5; // z-comp spin
+  double S1z = 0.125; // z-comp spin
   double S2x = 0; // x-comp spin 2
   double S2y = 0; // y-comp spin
-  double S2z = 0.5; // z-comp spin
+  double S2z = 0.125; // z-comp spin
   double ti = 10; // time to interp
   double momg_stop = -1; // ODE stop max freq if >0 , otherwise calculate from NR mrg fit
   double dt = 1; // ODE dt
