@@ -57,7 +57,7 @@ int main (int argc, char* argv[])
   double ti = 10; // time to interp
   double momg_stop = -1; // ODE stop max freq if >0 , otherwise calculate from NR mrg fit
   double dt = 1; // ODE dt
-  int interpint; // test integration in interp
+  int interpint = 0; // test integration in interp
   
   // Read-in pars
   int opt;
