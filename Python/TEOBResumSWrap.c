@@ -255,6 +255,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
+
+  Dynamics *dynf = NULL;
+
   int fc = 1;
   int default_choice = DEFAULT_PARS_BBH; /* default_choice, set to BBH */
 
@@ -314,7 +317,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
   }
 
-  int status = EOBRun(&hpc, &hfpc, &hmodes, &hfmodes, default_choice, fc);
+  int status = EOBRun(&hpc, &hfpc, &hmodes, &hfmodes, &dynf, default_choice, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
   
   /*  Construct the output arrays */
@@ -329,6 +332,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     
     double *pt, *php, *phc; /*t, h+ and hx */
     PyObject* hlmdict  = PyDict_New(); /*hlm dictionary */
+    PyObject* dyndict  = PyDict_New(); /*dyn dictionary */
 
     npy_intp dims[1];
     dims[0] = hpc->size;
@@ -373,12 +377,34 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
       }
     }
 
+    /* build the dynamics dictionary */
+    npy_intp dims_dyn[1];
+    dims_dyn[0] = dynf->size;
+
+    /*time */
+    double *pdt;
+    PyArrayObject *pdto = (PyArrayObject *) PyArray_SimpleNew(1,dims_dyn,NPY_DOUBLE);
+    pdt = pyvector_to_Carrayptrs(pdto);
+    memcpy(pdt, dynf->time, dynf->size *sizeof(double));
+    PyDict_SetItemString(dyndict, "t", pdto); 
+    Py_DECREF(pdto);
+
+    /* other variables */
+    for(int v=0; v <EOB_DYNAMICS_NVARS; v++){
+      double *pv;
+      PyArrayObject *pvo = (PyArrayObject *) PyArray_SimpleNew(1,dims_dyn,NPY_DOUBLE);
+      pv = pyvector_to_Carrayptrs(pvo);
+      memcpy(pv, dynf->data[v], dynf->size *sizeof(double));
+      PyDict_SetItemString(dyndict, eob_var[v], pvo); 
+      Py_DECREF(pvo);
+    }
+
     /* build the final object */
     PyObject *ret;
     if (arg_out == 0){
       ret = Py_BuildValue("OOO", pto, phpo, phco);
     } else if (arg_out == 1){
-      ret = Py_BuildValue("OOOO", pto, phpo, phco, hlmdict);
+      ret = Py_BuildValue("OOOOO", pto, phpo, phco, hlmdict, dyndict);
     } else {
       printf("ERROR: arg_out has to be equal to 0 or 1");
       ret = NULL;
@@ -390,13 +416,15 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Waveform_lm_free(hmodes);     
     WaveformFD_lm_free(hfmodes);  
     EOBParameters_free (EOBPars);
+    Dynamics_free (dynf);
 
     /* "Free" Python objects */
     Py_DECREF(pto);               
     Py_DECREF(phpo);
     Py_DECREF(phco);
     Py_DECREF(hlmdict);
-    
+    Py_DECREF(dyndict);
+
     return ret;  
 
   } else {
@@ -469,7 +497,8 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Waveform_lm_free(hmodes); 
     WaveformFD_lm_free(hfmodes);
     EOBParameters_free (EOBPars);
-    
+    Dynamics_free (dynf);
+
     /* "Free" Python objects */
     Py_DECREF(pfo);             
     Py_DECREF(phprealo);
