@@ -58,6 +58,8 @@ int main (int argc, char* argv[])
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
 
+  Dynamics *dynf = NULL;
+
   int fc = 1; /* firstcall, set to 1 for now */
   int dc = DEFAULT_PARS_BBH; /* default_choice, set to BBH */
   
@@ -96,7 +98,7 @@ int main (int argc, char* argv[])
   
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
-		      &hmodes, &hfmodes, 
+		      &hmodes, &hfmodes,&dynf,
 		      dc, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
 
@@ -104,7 +106,8 @@ int main (int argc, char* argv[])
   WaveformFD_free (hfpc);
   Waveform_lm_free (hmodes);
   WaveformFD_lm_free (hfmodes);
-
+  Dynamics_free (dynf);
+  
   EOBParameters_free (EOBPars);
   return status;
 }
@@ -115,7 +118,7 @@ int main (int argc, char* argv[])
  */    
 
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
-	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, 
+	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, Dynamics **dynf,
 	   int default_choice, int firstcall)
 {
   int status = OK;
@@ -1073,6 +1076,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
 
+
   /* *****************************************
    * Finalize 
    * *****************************************
@@ -1093,16 +1097,18 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
   
-  *hmodes = hlm; /* do not free these! */
+  *hmodes  = hlm;  /* do not free these! */
   *hfmodes = hflm; /* do not free these! */
+  *dynf = dyn;     /* do not free these! */
+ 
 
 #ifdef _OPENMP
   openmp_free(); 
 #endif
   
   /** Free memory */
-  Dynamics_free (dyn);
-  /* Waveform_lm_free (hlm); */
+  /* Dynamics_free (dyn);       */
+  /* Waveform_lm_free (hlm);    */
   /* WaveformFD_lm_free (hflm); */
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
