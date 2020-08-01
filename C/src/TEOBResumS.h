@@ -528,7 +528,7 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 
 /* TEOBResumS.c */
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
-	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, 
+	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, Dynamics **dynf,
 	   int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
