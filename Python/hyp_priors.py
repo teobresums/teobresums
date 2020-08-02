@@ -39,7 +39,7 @@ def E(r, pph, nu):
 
 def EnergyLimits(rmx, nu, pph_hyp):
 
-    x    = np.linspace(2.4,rmx+10, 1500)
+    x    = np.linspace(1.8,rmx+10, 3500)
     dx   = x[1]-x[0]
     E0   = [E(xi,  pph_hyp, nu) for xi in x]
     dE0  = D4(E0,  dx) 
@@ -75,17 +75,19 @@ if __name__ == "__main__":
 
     # main
 
-    r  = 1500.
-    q  = 1
+    r  = 10000.
+    q  = 8
     nu = q/(1+q)**2
 
     pphi_lso = EOBRun_module.pph_lso_orbital_py(nu);
     
-    j = 1.35*pphi_lso 
+    j = 1.15*pphi_lso
+    j = 4.314187009598183;
     Emn, Emx, Einfl = EnergyLimits(r, nu, j)
     print("j = %s" %j)
     print("Emin = %s, Emax = %s" %(Emn, Emx))
     E0   = 1.0002;
+    E0 = 1.0002698301647353;
     print("r0   = %s" %r)
     print("pph0 = %s" %j)
     print("E0   = %s" %E0)
@@ -94,8 +96,8 @@ if __name__ == "__main__":
     pars = {
     'M'                  : 1.,
     'q'                  : q,
-    'chi1'               : 0.,
-    'chi2'               : 0.,
+    'chi1'               : 0.0,
+    'chi2'               : 0.0,
     'Lambda1'            : 0.,
     'Lambda2'            : 0.,
     'dt'                 : 0.5,
@@ -110,6 +112,7 @@ if __name__ == "__main__":
     'use_geometric_units': 0,                 #output quantities in geometric units. Default = 1
     'r0':r,
     'interp_uniform_grid': 0,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+    'arg_out':1,
     'ecc'                : 0.18,              #Eccentricity. Default = 0.
     'j_hyp'              : j,                 #J_hyp. Default = 0.
     'r_hyp'              : r,                 #r_hyp. Default = 0.
@@ -119,7 +122,8 @@ if __name__ == "__main__":
 
     #run the wf generator
     start = time.time()
-    t, hp, hc, hlm = EOBRun_module.EOBRunPy(pars)
+    t, hp, hc, hlm, dyn = EOBRun_module.EOBRunPy(pars)
+    Momg_o = dyn['MOmega_orb']
     #t, hp, hc = EOBRun_module.EOBRunPy(pars)
     end = time.time()
     DeltaT = end-start
