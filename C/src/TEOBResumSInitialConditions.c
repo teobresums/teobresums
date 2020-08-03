@@ -372,7 +372,10 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
 }
 
 /** Initial conditions calculation for hyperbolic systems */
-void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
+//void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
+//SB 08/2020 workaround to make the run going 
+//FIXME!!!!
+int eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
 		    Dynamics *dyn, double y_init[])
 {
   const double nu   = dyn->nu;
@@ -404,7 +407,8 @@ void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
   } else if (Delta > SQ(b)) {
     prstar0 = -sqrt((-b + sqrt(Delta))/(2.*a));
   } else {
-    errorexit("Impossible to determine initial conditions");
+    //errorexit("Impossible to determine initial conditions");
+    return 1;
   }
   pr0 = prstar0*sqrt(B/A);
 
@@ -420,6 +424,8 @@ void eob_dyn_ic_hyp(double r0, double H_ADM, double j_ADM,
   y_init[EOB_ID_J]      = 0.;
   y_init[EOB_ID_E0]     = E0;
   y_init[EOB_ID_OMGJ]   = Omg0;
+
+  return OK;
 }
 
 /** Function for root finder: Derivative of the effective Hamiltonian */
