@@ -1184,7 +1184,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (r_hyp != 0.) {
       //SB 08/2020 workaround 
       //FIXME!!!!
-      if (eob_dyn_ic_hyp(r_hyp, H_hyp, j_hyp, dyn, dyn->y0)) return OK;
+      if (eob_dyn_ic_hyp(r_hyp, H_hyp, j_hyp, dyn, dyn->y0)) {
+	status = 1;
+	goto EXIT_POINT;
+      }
     } else if (ecc != 0.) {
       eob_dyn_ic_ecc(r0, dyn, dyn->y0);
     } else if (use_spins) {
