@@ -1264,7 +1264,7 @@ int eob_spin_dyn(DynamicsSpin *dyn)
   
   /** Initial data */
   dyn->t = 0.;
-  double m1 = EOBPars->M*nu_to_X1(EOBpars->nu);
+  double m1 = EOBPars->M*nu_to_X1(EOBPars->nu);
   double m2 = EOBPars->M - m1;
   const double M12 = SQ(m1);
   const double M22 = SQ(m2);  
