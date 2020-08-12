@@ -924,11 +924,11 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 
   const double M = EOBPars->M; 
   const double M2 = SQ(M);
-  const double MA = q * M; 
+  const double MA = M*nu_to_X1(nu); 
   const double MB = M - MA;
   const double dm = MA - MB; 
-  const double ma_o_mb = q; 
-  const double mb_o_ma = 1./q;
+  const double ma_o_mb = MA/MB;
+  const double mb_o_ma = MB/MA;
 
   const double Pi2 = SQ(Pi);
   const double Pi3 = Pi2*Pi;

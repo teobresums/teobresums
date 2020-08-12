@@ -96,7 +96,7 @@ int main (int argc, char* argv[])
   EOBPars->q = q;
   EOBPars->nu = q_to_nu(q);
 
-  double m1 = q*m/2.;
+  double m1 = m/(1.+q);
   double m2 = m-m1;
   
   EOBPars->chi1x = S1x/SQ(m1);
@@ -107,8 +107,8 @@ int main (int argc, char* argv[])
   EOBPars->chi2z = S2z/SQ(m2);
 
   printf("Mass  : %e\n",m);
-  printf("Spin 1: (Sx,Sy,Sz)=(%e,%e,%e)\n",EOBPars->chi1x,EOBPars->chi1y,EOBPars->chi1z);
-  printf("Spin 2: (Sx,Sy,Sz)=(%e,%e,%e)\n",EOBPars->chi2x,EOBPars->chi2y,EOBPars->chi2z);
+  printf("Spin 1: (Sx,Sy,Sz)=(%e,%e,%e)\n",S1x, S1y, S1z);
+  printf("Spin 2: (Sx,Sy,Sz)=(%e,%e,%e)\n",S2x, S2y, S2z);
   
   EOBPars->spin_interp_integrate = interpint;
   
