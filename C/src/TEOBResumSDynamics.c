@@ -983,9 +983,9 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   vect_dot3(SABq, Lh, &SABqLh);
 
   for(int a=Ix; a<IN3; a++) 
-    OmgA[a] = v5*(nu*(2+1.5*q) - 0.5*v*3*qSABLh)*Lh[a] + 0.5*v*SB[a];
+    OmgA[a] = v5*(nu*(2+1.5*q) - 1.5*v*qSABLh)*Lh[a] + 0.5*v6*SB[a];
   for(int a=Ix; a<IN3; a++) 
-    OmgB[a] = v5*(nu*(2+1.5*q) - 0.5*v*3*SABqLh)*Lh[a] + 0.5*v*SA[a];
+    OmgB[a] = v5*(nu*(2+1.5/q) - 1.5*v*SABqLh)*Lh[a] + 0.5*v6*SA[a];
   
   vect_cross3(OmgA, SA, Omg_x_SA);
   vect_cross3(OmgB, SB, Omg_x_SB);
@@ -1264,13 +1264,16 @@ int eob_spin_dyn(DynamicsSpin *dyn)
   
   /** Initial data */
   dyn->t = 0.;
-  const double M2 = SQ(EOBPars->M);
-  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *M2; 
-  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y *M2;
-  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z *M2;
-  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *M2;
-  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *M2;
-  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *M2;
+  double m1 = EOBPars->M*nu_to_X1(EOBpars->nu);
+  double m2 = EOBPars->M - m1;
+  const double M12 = SQ(m1);
+  const double M22 = SQ(m2);  
+  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *M12; 
+  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y *M12;
+  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z *M12;
+  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *M22;
+  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *M22;
+  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *M22;
   dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; //FIXME Lh t=0 ?
   dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
   dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;
