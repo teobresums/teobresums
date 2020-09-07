@@ -564,14 +564,16 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
 double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
 {
   double u, u2, u3, u4;
-  double Omg2, Omg3, Omg4, Omg5;
+  /*double Omg2, Omg3, Omg4, Omg5;*/
+  double invOmg,invOmg2,invOmg3,invOmg4,invOmg5;
+  double rdot2, rdot3, rdot4;
   double FphiNewtNC;
   
   u  = 1./r;
   u2 = u*u;
   u3 = u2*u;
   u4 = u3*u;
-  Omg2 = Omg*Omg;
+  /*Omg2 = Omg*Omg;
   Omg3 = Omg2*Omg;
   Omg4 = Omg3*Omg;
   Omg5 = Omg4*Omg;
@@ -580,7 +582,23 @@ double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3d
     + r2dot*(0.375*rdot*Omgdot*u2/Omg5 - 2.*u/Omg2 + Omg2dot/8.*u/Omg5)
     + SQ(rdot)*(Omg2dot*u2/Omg5/8. + 4.*u2/Omg2) + SQ(rdot)*rdot*0.75*Omgdot*u3/Omg5 
     + 0.75*SQ(Omgdot)/Omg4 + SQ(r2dot)*0.75*u2/Omg4 + SQ(rdot)*SQ(rdot)*u4/Omg4*0.75
-    - Omg2dot/Omg3/4. + rdot*Omgdot*u/Omg3*3.;
+    - Omg2dot/Omg3/4. + rdot*Omgdot*u/Omg3*3.;*/
 
+  invOmg  = 1./Omg;
+  invOmg2 = invOmg*invOmg;
+  invOmg3 = invOmg*invOmg2;
+  invOmg4 = invOmg*invOmg3;
+  invOmg5 = invOmg*invOmg4;
+
+  rdot2 = SQ(rdot);
+  rdot3 = rdot2*rdot;
+  rdot4 = rdot2*rdot2;
+
+  FphiNewtNC  =  1. - r3dot*(0.125*Omgdot*u*invOmg5 + 0.5*rdot*u2*invOmg4)
+              + r2dot*(0.375*rdot*Omgdot*u2*invOmg5 - 2.0*u*invOmg2             + 0.125*Omg2dot*u*invOmg5)
+              + rdot2*(0.125*Omg2dot*u2*invOmg5     + 4.*u2*invOmg2)            + rdot3*0.75*Omgdot*u3*invOmg5 
+              + 0.75*SQ(Omgdot)*invOmg4             + SQ(r2dot)*0.75*u2*invOmg4 + rdot4*u4*invOmg4*0.75
+              - 0.25*Omg2dot*invOmg3                + 3.0*rdot*Omgdot*u*invOmg3;
+  
   return FphiNewtNC;
 }
