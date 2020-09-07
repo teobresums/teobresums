@@ -552,12 +552,55 @@ static PyObject* pph_lso_orbital_py(PyObject* self, PyObject* args)
   return ret;
 }
 
+static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
+{
+  double r, q, pphi, prstar, chi1, chi2;
+  double rc, drc_dr, d2rc_dr2;
+  double A, dA, d2A;
+  double H;              /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
+  double Heff;           /* effective EOB Hamiltonian (divided by mu) */
+  double Heff_orb;
+  double dHeff_dr;       /* drvt Heff,r */
+  double dHeff_dprstar;  /* drvt Heff,prstar */
+  double dHeff_dpphi;    /* drvt Heff,pphi */
+  double d2Heff_dprstar20;
+
+  /* parse the input */
+  if (!PyArg_ParseTuple(args, "dddddd", &r, &q, &pphi, &prstar, &chi1, &chi2))
+    return NULL;
+  
+  double nu = q_to_nu(q);
+
+  /* Allocate the defaults & set the parameters */
+  EOBParameters_alloc ( &EOBPars ); 
+  EOBParameters_defaults (DEFAULT_PARS_BBH, EOBPars);
+  EOBPars->chi1 = chi1;
+  EOBPars->chi2 = chi2;
+  EOBPars->q    = q;
+  eob_set_params(DEFAULT_PARS_BBH, 1);
+
+  /* Compute rc and A */
+  eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
+  eob_metric_A5PNlog(r, nu, &A, &dA, &d2A);
+
+  /* Compute H */
+  eob_ham_s(nu, r, rc, drc_dr, pphi, prstar, EOBPars->S, EOBPars->Sstar, EOBPars->chi1, EOBPars->chi2, EOBPars->X1, EOBPars->X2, EOBPars->aK2, EOBPars->cN3LO, A, dA, &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20);
+
+  /* Free */ 
+  EOBParameters_free (EOBPars);
+
+  PyObject *ret;
+  ret = Py_BuildValue("dddddd", Heff, Heff_orb, dHeff_dr, dHeff_dprstar, dHeff_dpphi, d2Heff_dprstar20);
+  return ret;
+}
+
 /* Define functions in module */
 static PyMethodDef EOBRunMethods[] = {
   {"EOBRunPy", EOBRunPy, METH_VARARGS, "Generate a time or frequency domain TEOBResumS waveform"},
   {"eob_metric_A5PNlog_py", eob_metric_A5PNlog_py, METH_VARARGS, "Compute the A(r) metric potential"},
   {"eob_c3_fit_HM_py", eob_c3_fit_HM_py, METH_VARARGS, "Fit to compute the c3 for nonspinning BBH"},
   {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso"},
+  {"eob_ham_s_py", eob_ham_s_py, METH_VARARGS, "Compute the spinning EOB hamiltonian for BBH systems"},
 
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
