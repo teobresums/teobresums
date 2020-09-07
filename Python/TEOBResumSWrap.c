@@ -590,7 +590,7 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   EOBParameters_free (EOBPars);
 
   PyObject *ret;
-  ret = Py_BuildValue("dddddd", Heff, Heff_orb, dHeff_dr, dHeff_dprstar, dHeff_dpphi, d2Heff_dprstar20);
+  ret = Py_BuildValue("ddddddd", H, Heff, Heff_orb, dHeff_dr, dHeff_dprstar, dHeff_dpphi, d2Heff_dprstar20);
   return ret;
 }
 
