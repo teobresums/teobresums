@@ -39,7 +39,7 @@ def E(r, pph, nu):
 
 def EnergyLimits(rmx, nu, pph_hyp):
 
-    x    = np.linspace(1.8,rmx+10, 3500)
+    x    = np.linspace(2.4,rmx+10, 100000)
     dx   = x[1]-x[0]
     E0   = [E(xi,  pph_hyp, nu) for xi in x]
     dE0  = D4(E0,  dx) 
@@ -112,7 +112,6 @@ if __name__ == "__main__":
     'use_geometric_units': 0,                 #output quantities in geometric units. Default = 1
     'r0':r,
     'interp_uniform_grid': 0,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
-    'arg_out':1,
     'ecc'                : 0.18,              #Eccentricity. Default = 0.
     'j_hyp'              : j,                 #J_hyp. Default = 0.
     'r_hyp'              : r,                 #r_hyp. Default = 0.
