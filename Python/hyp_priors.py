@@ -37,14 +37,25 @@ def E(r, pph, nu):
     E0          = np.sqrt(1 + 2*nu*(Heff0-1))
     return E0
 
-def EnergyLimits(rmx, nu, pph_hyp):
+def Espin(r, pph, q, chi1, chi2):
+    # New energy potential energy function with the full spin dependence.
+    hatH = EOBRun_module.eob_ham_s_py(r, q, pph, 0., chi1, chi2)
+    nu   = q/(1+q)**2
+    E0   = nu*hatH[0]
+    return E0
+
+
+def EnergyLimits(rmx, nu, q, pph_hyp, chi1, chi2):
 
     x    = np.linspace(2.4,rmx+10, 100000)
     dx   = x[1]-x[0]
-    E0   = [E(xi,  pph_hyp, nu) for xi in x]
+    E0   = [Espin(xi, pph_hyp, q, chi1, chi2) for xi in x]
+    Emin = Espin(rmx, pph_hyp, q, chi1, chi2)
+    
+    #E0   = [E(xi,  pph_hyp, nu) for xi in x]
+    #Emin = E(rmx, pph_hyp, nu)
     dE0  = D4(E0,  dx) 
     d2E0 = D4(dE0, dx)
-    Emin = E(rmx, pph_hyp, nu)
 
     #-----------------------------------
     #  determine the max energy allowed
@@ -75,19 +86,22 @@ if __name__ == "__main__":
 
     # main
 
-    r  = 10000.
-    q  = 8
-    nu = q/(1+q)**2
+    r    = 10000. 
+    q    = 1
+    nu   = q/(1+q)**2
+    chi1 =  0.0;      # spin larger object
+    chi2 =  0.0;      # spin smaller object
+    E0   =  1.0055;   # initial energy
+    j    =  3.97;     # initial angular momentum
 
+    # nonspinning LSO computation
     pphi_lso = EOBRun_module.pph_lso_orbital_py(nu);
-    
-    j = 1.15*pphi_lso
-    j = 4.314187009598183;
-    Emn, Emx, Einfl = EnergyLimits(r, nu, j)
+    #j = 1.15*pphi_lso  # initial angular momentumn as multiple of LSO
+
+    # energy limits
+    Emn, Emx, Einfl = EnergyLimits(r, nu, q, j, chi1, chi2)
     print("j = %s" %j)
     print("Emin = %s, Emax = %s" %(Emn, Emx))
-    E0   = 1.0002;
-    E0 = 1.0002698301647353;
     print("r0   = %s" %r)
     print("pph0 = %s" %j)
     print("E0   = %s" %E0)
@@ -96,8 +110,8 @@ if __name__ == "__main__":
     pars = {
     'M'                  : 1.,
     'q'                  : q,
-    'chi1'               : 0.0,
-    'chi2'               : 0.0,
+    'chi1'               : chi1,
+    'chi2'               : chi2,
     'Lambda1'            : 0.,
     'Lambda2'            : 0.,
     'dt'                 : 0.5,
