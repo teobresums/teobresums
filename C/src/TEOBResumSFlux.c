@@ -413,6 +413,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   double prstar4 = prstar3*prstar;
   
   double A, dA, d2A, B, dB, d2B, Q, sqrtAbyB, dsqrtAbyB_dr, d2sqrtAbyB_d2r, fact;
+  double sqA,sqB;
   double ggm[26], G, dG_dr, dG_dprstar,d2G_dr2, d2G_dr_dprstar, d2G_dprstar2,
     d3G_dr2_dprstar, d3G_dr_dprstar2, d3G_dprstar3;
   double  rc, drc_dr, d2rc_dr2, uc, uc2, uc3, uc4;
@@ -421,6 +422,8 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Heff_orbdot, EHeff_orbdot, Omgdot, Omg2dot, r2dot, r3dot, EHeff_orb2dot,
     HSO2dot, pphi2dot, Heff_orb2dot, prstar2dot, Heff2dot, E2dot, Frdot;
   double Fr, Fphi, Fphi_Newt;
+  double oneby_EHeff_orb, oneby_E;
+  double rdot2;
   
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
@@ -428,25 +431,25 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2);
     eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
-    dG_dr      = ggm[6]*S   + ggm[7]*Sstar;
-    dG_dprstar = ggm[4]  *S + ggm[5]  *Sstar;
-    d2G_dr2        = ggm[14] *S + ggm[15] *Sstar;
-    d2G_dprstar2   = ggm[16] *S + ggm[17] *Sstar;
-    d2G_dr_dprstar = ggm[18] *S + ggm[19] *Sstar;
+    dG_dr           = ggm[6]*S   + ggm[7]*Sstar;
+    dG_dprstar      = ggm[4]  *S + ggm[5]  *Sstar;
+    d2G_dr2         = ggm[14] *S + ggm[15] *Sstar;
+    d2G_dprstar2    = ggm[16] *S + ggm[17] *Sstar;
+    d2G_dr_dprstar  = ggm[18] *S + ggm[19] *Sstar;
     d3G_dprstar3    = ggm[20] *S + ggm[21] *Sstar;
     d3G_dr2_dprstar = ggm[22] *S + ggm[23] *Sstar;
     d3G_dr_dprstar2 = ggm[24] *S + ggm[25] *Sstar;
   } else {
     eob_metric(r, dyn, &A, &B, &dA, &d2A, &dB, &d2B);
-    rc       = r;   //Nonspinning case: rc = r; G = 0;
-    drc_dr   = 1.0;
-    d2rc_dr2 = 0.0;
-    G        = 0.0;
-    dG_dr    = 0.0;
-    dG_dprstar = 0.0;
-    d2G_dr2        = 0.0;
-    d2G_dprstar2   = 0.0;
-    d2G_dr_dprstar = 0.0;
+    rc              = r;   //Nonspinning case: rc = r; G = 0;
+    drc_dr          = 1.0;
+    d2rc_dr2        = 0.0;
+    G               = 0.0;
+    dG_dr           = 0.0;
+    dG_dprstar      = 0.0;
+    d2G_dr2         = 0.0;
+    d2G_dprstar2    = 0.0;
+    d2G_dr_dprstar  = 0.0;
     d3G_dprstar3    = 0.0;
     d3G_dr2_dprstar = 0.0;
     d3G_dr_dprstar2 = 0.0;
@@ -458,9 +461,12 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   uc4 = uc3*uc;
 
   sqrtAbyB = sqrt(A/B);
+  sqB      = SQ(B);
+  sqA      = SQ(A);
   fact = (dA*B - A*dB)/SQ(B);
   dsqrtAbyB_dr   = 0.5/sqrtAbyB*fact;
-  d2sqrtAbyB_d2r = -0.25*sqrtAbyB*SQ(dA*B - A*dB)/(SQ(A)*SQ(B)) + 0.5/sqrtAbyB*(d2A*SQ(B) - A*B*d2B - 2.*dA*dB*B + 2.*A*SQ(dB))/(SQ(B)*B);
+  /*d2sqrtAbyB_d2r = -0.25*sqrtAbyB*SQ(dA*B - A*dB)/(SQ(A)*SQ(B)) + 0.5/sqrtAbyB*(d2A*SQ(B) - A*B*d2B - 2.*dA*dB*B + 2.*A*SQ(dB))/(SQ(B)*B);*/
+  d2sqrtAbyB_d2r = -0.25*sqrtAbyB*SQ(dA*B - A*dB)/(sqA*sqB) + 0.5/sqrtAbyB*(d2A*sqB - A*B*d2B - 2.*dA*dB*B + 2.*A*SQ(dB))/(SQ(B)*B);
 
   /** Circular Hamiltonians, ref: arXiv: 1406.6913 */
   if(usespins) {
@@ -489,8 +495,13 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   dAbyrc2  = (dA*uc2 - 2.*A*uc3*drc_dr);
   d2Abyrc2 = d2A*uc2 - 4.*dA*uc3*drc_dr  + 6.*A*uc4*SQ(drc_dr) - 2.*A*uc3*d2rc_dr2;
 
-  EHeff_orb = E*Heff_orb;
-  Omgdot_0 = 1./EHeff_orb*dAbyrc2*rdot*pphi + 1./E*(dG_dr*rdot + dG_dprstar*prstardot);
+  /* shorthands */
+  EHeff_orb       = E*Heff_orb;
+  oneby_EHeff_orb = 1.0/EHeff_orb;
+  oneby_E         = 1.0/E;
+  rdot2           = SQ(rdot);
+  /*  Omgdot_0 = 1./EHeff_orb*dAbyrc2*rdot*pphi + 1./E*(dG_dr*rdot + dG_dprstar*prstardot);*/
+  Omgdot_0 = oneby_EHeff_orb*dAbyrc2*rdot*pphi + oneby_E*(dG_dr*rdot + dG_dprstar*prstardot);
   
   /* Begin iteration */
   int iter = 2; // Hard-fixed to 2: seems to be enough
@@ -501,24 +512,41 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Heff_orbdot  = Heffdot - HSOdot;
     EHeff_orbdot = Edot*Heff_orb + E*Heff_orbdot;
 
-    Omgdot = Omgdot_0 + 1./EHeff_orb*A*uc2*(Fphi - pphi/EHeff_orb*EHeff_orbdot)
+    /*Omgdot = Omgdot_0 + 1./EHeff_orb*A*uc2*(Fphi - pphi/EHeff_orb*EHeff_orbdot)
+      - G*Edot/SQ(E);*/
+
+    Omgdot = Omgdot_0 + oneby_EHeff_orb*A*uc2*(Fphi - pphi*oneby_EHeff_orb*EHeff_orbdot)
       - G*Edot/SQ(E);
 
-    r2dot = dsqrtAbyB_dr/sqrtAbyB*SQ(rdot) + sqrtAbyB*
+    /*r2dot = dsqrtAbyB_dr/sqrtAbyB*SQ(rdot) + sqrtAbyB*
       (1./EHeff_orb*((prstardot - prstar/EHeff_orb*EHeff_orbdot)*(1. + 2.*Q*A*uc2*prstar2)
        + 2.*Q*SQ(prstar)*(dAbyrc2*prstar*rdot + 2.*A*uc2*prstardot))
        + 1./E*(dG_dprstar*(Fphi - pphi*Edot/E)
-       + pphi/E*(d2G_dr_dprstar*rdot + d2G_dprstar2*prstardot)));
+       + pphi/E*(d2G_dr_dprstar*rdot + d2G_dprstar2*prstardot)));*/
+
+   r2dot = dsqrtAbyB_dr/sqrtAbyB*rdot2 + sqrtAbyB*
+      (oneby_EHeff_orb*((prstardot - prstar*oneby_EHeff_orb*EHeff_orbdot)*(1. + 2.*Q*A*uc2*prstar2)
+       + 2.*Q*SQ(prstar)*(dAbyrc2*prstar*rdot + 2.*A*uc2*prstardot))
+       + oneby_E*(dG_dprstar*(Fphi - pphi*Edot*oneby_E)
+       + pphi*oneby_E*(d2G_dr_dprstar*rdot + d2G_dprstar2*prstardot)));
+    
     
     E2dot    = nu*(r2dot*Fr + Omgdot*Fphi);
     Heff2dot = 1./nu*(SQ(Edot) + E*E2dot);
     
-    prstar2dot = dsqrtAbyB_dr/sqrtAbyB*rdot*prstardot + sqrtAbyB
+    /*prstar2dot = dsqrtAbyB_dr/sqrtAbyB*rdot*prstardot + sqrtAbyB
       *(Frdot -0.5/EHeff_orb*(rdot*(d2A + d2Abyrc2*(pphi2 + Q*prstar4))
         - dA*EHeff_orbdot/EHeff_orb + dAbyrc2*(pphi*(2.*Fphi
 	- pphi*EHeff_orbdot/EHeff_orb)
 	+ Q*prstar3*(4.*prstardot - prstar*EHeff_orbdot/EHeff_orb)))
-	- 1./E*(dG_dr*(Fphi - pphi*Edot/E) + pphi*(d2G_dr2*rdot + d2G_dr_dprstar*prstardot)));
+	- 1./E*(dG_dr*(Fphi - pphi*Edot/E) + pphi*(d2G_dr2*rdot + d2G_dr_dprstar*prstardot)));*/
+
+    prstar2dot = dsqrtAbyB_dr/sqrtAbyB*rdot*prstardot + sqrtAbyB
+      *(Frdot -0.5*oneby_EHeff_orb*(rdot*(d2A + d2Abyrc2*(pphi2 + Q*prstar4))
+        - dA*EHeff_orbdot*oneby_EHeff_orb + dAbyrc2*(pphi*(2.*Fphi
+	- pphi*EHeff_orbdot*oneby_EHeff_orb)
+	+ Q*prstar3*(4.*prstardot - prstar*EHeff_orbdot*oneby_EHeff_orb)))
+	- oneby_E*(dG_dr*(Fphi - pphi*Edot*oneby_E) + pphi*(d2G_dr2*rdot + d2G_dr_dprstar*prstardot)));
     
     HSO2dot = pphi2dot*G + 2.*Fphi*(dG_dr*rdot + dG_dprstar*prstardot)
       + pphi*(d2G_dr2*rdot + dG_dr*r2dot + 2.*d2G_dr_dprstar*rdot*prstardot
@@ -527,16 +555,26 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Heff_orb2dot  = Heff2dot - HSO2dot;
     EHeff_orb2dot = E2dot*Heff_orb + 2.*Edot*Heff_orbdot + E*Heff_orb2dot;
     
-    Omg2dot = 1./EHeff_orb*(d2Abyrc2*pphi*SQ(rdot) + dAbyrc2*pphi*r2dot
+    /*Omg2dot = 1./EHeff_orb*(d2Abyrc2*pphi*SQ(rdot) + dAbyrc2*pphi*r2dot
 	      + 2.*dAbyrc2*rdot*(Fphi - pphi*EHeff_orbdot/EHeff_orb)
 	      + A*uc2*(pphi2dot - 2.*Fphi*EHeff_orbdot/EHeff_orb
               + pphi*(2*SQ(EHeff_orbdot/EHeff_orb) - EHeff_orb2dot/EHeff_orb)))
               + 1./E*(d2G_dr2*SQ(rdot) + dG_dr*(r2dot - 2.*rdot*Edot/E)
               + dG_dprstar*(prstar2dot - 2.*prstardot*Edot/E)
 	      + d2G_dprstar2*SQ(prstardot) + 2*d2G_dr_dprstar*rdot*prstardot
-              + G*(2.*SQ(Edot/E) - E2dot/E));
+              + G*(2.*SQ(Edot/E) - E2dot/E));*/
 
-    r3dot = rdot/sqrtAbyB*(dsqrtAbyB_dr*(3.*r2dot
+    Omg2dot = oneby_EHeff_orb*(d2Abyrc2*pphi*SQ(rdot) + dAbyrc2*pphi*r2dot
+	      + 2.*dAbyrc2*rdot*(Fphi - pphi*EHeff_orbdot*oneby_EHeff_orb)
+	      + A*uc2*(pphi2dot - 2.*Fphi*EHeff_orbdot*oneby_EHeff_orb
+              + pphi*(2.0*SQ(EHeff_orbdot*oneby_EHeff_orb) - EHeff_orb2dot*oneby_EHeff_orb)))
+              + oneby_E*(d2G_dr2*SQ(rdot) + dG_dr*(r2dot - 2.*rdot*Edot*oneby_E)
+              + dG_dprstar*(prstar2dot - 2.*prstardot*Edot*oneby_E)
+	      + d2G_dprstar2*SQ(prstardot) + 2*d2G_dr_dprstar*rdot*prstardot
+              + G*(2.*SQ(Edot/E) - E2dot*oneby_E));
+
+    
+    /*r3dot = rdot/sqrtAbyB*(dsqrtAbyB_dr*(3.*r2dot
 	    - 2.*dsqrtAbyB_dr/sqrtAbyB*SQ(rdot)) + d2sqrtAbyB_d2r*SQ(rdot))
             + 1./EHeff_orb*sqrtAbyB*(prstar2dot - 2.*prstardot*EHeff_orbdot/EHeff_orb
 	    + prstar*(2.*SQ(EHeff_orbdot/EHeff_orb) - EHeff_orb2dot/EHeff_orb)
@@ -549,7 +587,24 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
 	    - pphi*E2dot/E + 2.*pphi*SQ(Edot/E)) + pphi/E*(d3G_dr2_dprstar*SQ(rdot)
 	    + 2*d3G_dr_dprstar2*rdot*prstardot + d3G_dprstar3*SQ(prstardot)
 	    + d2G_dr_dprstar*r2dot + d2G_dprstar2*prstar2dot)
-	    + 2.*(Fphi - pphi*Edot/E)*(d2G_dr_dprstar*rdot + d2G_dprstar2*prstardot));
+	    + 2.*(Fphi - pphi*Edot/E)*(d2G_dr_dprstar*rdot + d2G_dprstar2*prstardot));*/
+
+
+    r3dot = rdot/sqrtAbyB*(dsqrtAbyB_dr*(3.*r2dot
+	    - 2.*dsqrtAbyB_dr/sqrtAbyB*SQ(rdot)) + d2sqrtAbyB_d2r*SQ(rdot))
+            + oneby_EHeff_orb*sqrtAbyB*(prstar2dot - 2.*prstardot*EHeff_orbdot*oneby_EHeff_orb
+	    + prstar*(2.*SQ(EHeff_orbdot*oneby_EHeff_orb) - EHeff_orb2dot*oneby_EHeff_orb)
+	    + 2.*Q*prstar*(A*uc2*(6.*SQ(prstardot)
+	    + prstar*(3.*prstar2dot - 6.*prstardot*EHeff_orbdot*oneby_EHeff_orb
+	    + prstar*(2.*SQ(EHeff_orbdot*oneby_EHeff_orb) - EHeff_orb2dot*oneby_EHeff_orb)))
+	    + dAbyrc2*(prstar2*(r2dot - 2.*rdot*EHeff_orbdot*oneby_EHeff_orb)
+		       + 6.*prstar*prstardot*rdot) + d2Abyrc2*rdot2*prstar2))
+            + sqrtAbyB*oneby_E*(dG_dprstar*(pphi2dot - 2.*Fphi*Edot*oneby_E
+	    - pphi*E2dot*oneby_E + 2.*pphi*SQ(Edot*oneby_E)) + pphi*oneby_E*(d3G_dr2_dprstar*SQ(rdot)
+	    + 2*d3G_dr_dprstar2*rdot*prstardot + d3G_dprstar3*SQ(prstardot)
+	    + d2G_dr_dprstar*r2dot + d2G_dprstar2*prstar2dot)
+	    + 2.*(Fphi - pphi*Edot*oneby_E)*(d2G_dr_dprstar*rdot + d2G_dprstar2*prstardot));
+
     
     Fphi_Newt = Fphi_NewtPref(r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot);
     Fphi      = Fphi_Newt*Fphi;
