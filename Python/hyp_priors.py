@@ -47,7 +47,7 @@ def Espin(r, pph, q, chi1, chi2):
 
 def EnergyLimits(rmx, nu, q, pph_hyp, chi1, chi2):
 
-    x    = np.linspace(2.4,rmx+10, 100000)
+    x    = np.linspace(0.7,rmx+10, 100000)
     dx   = x[1]-x[0]
     E0   = [Espin(xi, pph_hyp, q, chi1, chi2) for xi in x]
     Emin = Espin(rmx, pph_hyp, q, chi1, chi2)
@@ -87,13 +87,16 @@ if __name__ == "__main__":
     # main
 
     r    = 10000. 
+    #q    = 1
     q    = 1
     nu   = q/(1+q)**2
-    chi1 =  0.0;      # spin larger object
-    chi2 =  0.0;      # spin smaller object
-    E0   =  1.0055;   # initial energy
-    j    =  3.97;     # initial angular momentum
-
+    chi1 =  +0.5       # spin larger object
+    chi2 =  +0.5       # spin smaller object
+    E0   =  1.0055    # initial energy
+    j    =  3.97      # initial angular momentum
+    #E0  = 1.0002
+    #j   = 4.2
+    
     # nonspinning LSO computation
     pphi_lso = EOBRun_module.pph_lso_orbital_py(nu);
     #j = 1.15*pphi_lso  # initial angular momentumn as multiple of LSO
@@ -120,7 +123,7 @@ if __name__ == "__main__":
     'arg_out'            : 1,                 #Output hlm/hflm. Default = 0
     'use_mode_lm'        : [1],               #List of modes to use/output through EOBRunPy
     'output_lm'          : [1],               #List of modes to print on file
-    'output_dynamics'    : 0,                 #output of the dynamics
+    'output_dynamics'    : 1,                 #output of the dynamics
     'ode_tstep_opt'      : 1,                 #fixing uniform or adaptive. Default = 1 
     'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,                 #output quantities in geometric units. Default = 1
@@ -167,7 +170,7 @@ if __name__ == "__main__":
     #print("A21 = %s" %A21)
     #print("phi21 = %s" %Phi21)
     
-    plt.plot(t,Reh22)
+    plt.plot(t,-Reh22, label=r'h22')
     #plt.plot(t,Imh22)
     plt.legend()
     plt.show()
