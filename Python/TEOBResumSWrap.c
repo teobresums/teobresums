@@ -557,6 +557,7 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   double r, q, pphi, prstar, chi1, chi2;
   double rc, drc_dr, d2rc_dr2;
   double A, dA, d2A;
+  double B, dB, pl_hold;
   double H;              /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
   double Heff;           /* effective EOB Hamiltonian (divided by mu) */
   double Heff_orb;
@@ -564,6 +565,8 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   double dHeff_dprstar;  /* drvt Heff,prstar */
   double dHeff_dpphi;    /* drvt Heff,pphi */
   double d2Heff_dprstar20;
+
+  Dynamics *dyn;
 
   /* parse the input */
   if (!PyArg_ParseTuple(args, "dddddd", &r, &q, &pphi, &prstar, &chi1, &chi2))
@@ -577,17 +580,20 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   EOBPars->chi1 = chi1;
   EOBPars->chi2 = chi2;
   EOBPars->q    = q;
-  eob_set_params(DEFAULT_PARS_BBH, 1);
 
+  eob_set_params(DEFAULT_PARS_BBH, 1);
+  Dynamics_alloc (&dyn, 0, "dyn"); 
+  Dynamics_set_params(dyn); 
   /* Compute rc and A */
   eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
-  eob_metric_A5PNlog(r, nu, &A, &dA, &d2A);
+  eob_metric_s(r, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold);
 
   /* Compute H */
   eob_ham_s(nu, r, rc, drc_dr, pphi, prstar, EOBPars->S, EOBPars->Sstar, EOBPars->chi1, EOBPars->chi2, EOBPars->X1, EOBPars->X2, EOBPars->aK2, EOBPars->cN3LO, A, dA, &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20);
 
   /* Free */ 
   EOBParameters_free (EOBPars);
+  Dynamics_free(dyn);
 
   PyObject *ret;
   ret = Py_BuildValue("ddddddd", H, Heff, Heff_orb, dHeff_dr, dHeff_dprstar, dHeff_dpphi, d2Heff_dprstar20);
