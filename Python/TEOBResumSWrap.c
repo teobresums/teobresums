@@ -582,6 +582,11 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   EOBPars->q    = q;
 
   eob_set_params(DEFAULT_PARS_BBH, 1);
+  /* set firstcall */
+  for (int k=0; k < NFIRSTCALL; k++){ 
+    EOBPars->firstcall[k] = 1;
+  }
+
   Dynamics_alloc (&dyn, 0, "dyn"); 
   Dynamics_set_params(dyn); 
   /* Compute rc and A */
