@@ -47,7 +47,13 @@ def Espin(r, pph, q, chi1, chi2):
 
 def EnergyLimits(rmx, nu, q, pph_hyp, chi1, chi2):
 
-    x    = np.linspace(0.7,rmx+10, 100000)
+    if chi1!=0 or chi2!=0:
+        # important: rmin should be smaller with spin
+        rmin = 0.7
+    else:
+        rmin = 1.2
+        
+    x    = np.linspace(rmin,rmx+10, 100000)
     dx   = x[1]-x[0]
     E0   = [Espin(xi, pph_hyp, q, chi1, chi2) for xi in x]
     Emin = Espin(rmx, pph_hyp, q, chi1, chi2)
@@ -86,12 +92,15 @@ if __name__ == "__main__":
 
     # main
 
-    r    = 10000. 
+    r    = 1500. 
     #q    = 1
     q    = 1
     nu   = q/(1+q)**2
     chi1 =  +0.5       # spin larger object
     chi2 =  +0.5       # spin smaller object
+    #============================
+    # FIX E0 > 1
+    #=============================
     E0   =  1.0055    # initial energy
     j    =  3.97      # initial angular momentum
     #E0  = 1.0002
