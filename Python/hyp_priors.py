@@ -132,7 +132,7 @@ if __name__ == "__main__":
     'arg_out'            : 1,                 #Output hlm/hflm. Default = 0
     'use_mode_lm'        : [1],               #List of modes to use/output through EOBRunPy
     'output_lm'          : [1],               #List of modes to print on file
-    'output_dynamics'    : 1,                 #output of the dynamics
+    'output_dynamics'    : 0,                 #output of the dynamics
     'ode_tstep_opt'      : 1,                 #fixing uniform or adaptive. Default = 1 
     'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,                 #output quantities in geometric units. Default = 1
@@ -143,6 +143,7 @@ if __name__ == "__main__":
     'r_hyp'              : r,                 #r_hyp. Default = 0.
     'H_hyp'              : E0,                #H_hyp. Default = 0.
     'ode_tmax'           : 20e4,
+    'output_hpc'         : 0,                 #output waveform. Default = 1.
     }
 
     #run the wf generator
