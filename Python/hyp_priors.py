@@ -91,20 +91,20 @@ def EnergyLimits(rmx, nu, q, pph_hyp, chi1, chi2):
 if __name__ == "__main__":
 
     # main
-
+    # r = 10000 for scattering angle. For parspace survey, r=1500 is ok
     r    = 1500. 
-    #q    = 1
-    q    = 1
-    nu   = q/(1+q)**2
-    chi1 =  +0.5       # spin larger object
-    chi2 =  -0.5       # spin smaller object
+    chi1 =  0.0       # spin larger object
+    chi2 =  0.0       # spin smaller object
     #============================
     # FIX E0 > 1
-    #=============================
-    E0   =  1.0055    # initial energy
-    j    =  3.97      # initial angular momentum
-    #E0  = 1.0002
-    #j   = 4.2
+    #============================= 
+    #q    = 1
+    #E0   =  1.0055    # initial energy
+    #j    =  3.97      # initial angular momentum
+    q   =  3.5
+    E0  = 1.0067
+    j   = 4.1361
+    nu  = q/(1+q)**2
     
     # nonspinning LSO computation
     pphi_lso = EOBRun_module.pph_lso_orbital_py(nu);
