@@ -217,6 +217,14 @@ enum{
   DEFAULT_PARS_NOPT
 };
 
+/** List for fits Lambda3,4(Lambda2) */
+enum{
+  Lambda234_fits_NO,
+  Lambda234_fits_YAGI13,
+  Lambda234_fits_GODZIEBA20,
+  Lambda234_fits_NOPT
+};
+
 /** List of options for tidal potential */
 enum{
   TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
@@ -469,7 +477,7 @@ typedef struct tagEOBParameters
   double distance, inclination, polarization, coalescence_angle;
   
   int use_tidal, use_spins, use_tidal_gravitomagnetic;
-  int use_Yagi_fits;
+  int use_lambda234_fits;
   int use_geometric_units;
   int use_speedytail;
 
@@ -670,6 +678,7 @@ double Yagi14_fit_Coct(double C_Q);
 double Yagi14_fit_Chex(double C_Q);
 double JFAPG_fit_Sigma_Irrotational(double barlam2);
 double JFAPG_fit_Sigma_Static(double barlam2);
+double Godzieba20_fit_barlamdel(double barlam2, int ell);
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);
 double JimenezFortezaRemnantMass(double nu, double X1, double X2, double chi1, double chi2);
 double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2);

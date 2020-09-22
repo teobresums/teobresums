@@ -126,8 +126,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->LambdaBl4 = 0.; 
   eobp->SigmaAl2  = 0.; // Tidal gravitomagnetic parameter Sigma for star A ell=2
   eobp->SigmaBl2  = 0.;
-  eobp->use_Yagi_fits = 0;
-  eobp->pGSF_tidal =4.0;// p-power in GSF tidal potential model
+  eobp->use_lambda234_fits = Lambda234_fits_NO;
+  eobp->pGSF_tidal = 4.0;// p-power in GSF tidal potential model
 
   eobp->use_spins=1; // use spins ?
 
@@ -277,7 +277,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_tidal = TIDES_TEOBRESUM3;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
     eobp->pGSF_tidal = 4.0;
-    eobp->use_Yagi_fits = 1;
+    eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
 
     eobp->centrifugal_radius = CENTRAD_NNLO;
     eobp->use_flm = USEFLM_SSNLO;
@@ -357,7 +357,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
 			par_get_s("tides_gravitomagnetic"), tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
   }
-  eobp->use_Yagi_fits = par_get_i("use_Yagi_fits"); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+  eobp->use_lambda234_fits = par_get_i("use_lambda234_fits"); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
   eobp->use_geometric_units = par_get_i("use_geometric_units"); // use geometric units for I/O ?
   eobp->use_speedytail = par_get_i("use_speedytail"); // use special routine to speed up tail computation ?
   eobp->dt_merger_interp = par_get_d("dt_merger_interp"); // dt for interpolating merger waveform and NQC/ringdown attachment
@@ -608,7 +608,7 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_s("tides", tides_opt[EOBPars->use_tidal]);
   par_add_s("tides_gravitomagnetic", tides_gravitomagnetic_opt[EOBPars->use_tidal_gravitomagnetic]);
   
-  par_add_b("use_Yagi_fits", EOBPars->use_Yagi_fits); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+  par_add_b("use_lambda234_fits", EOBPars->use_lambda234_fits); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
   par_add_b("use_geometric_units", EOBPars->use_geometric_units); // use geometric units for I/O ?
   par_add_b("use_speedytail", EOBPars->use_speedytail); // use special routine to speed up tail computation ?
   
@@ -769,7 +769,7 @@ void par_db_default ()
   par_add_b("use_spins", 0); // use spins ?
   par_add_s("tides", "no");
   par_add_s("tides_gravitomagnetic","no");
-  par_add_b("use_Yagi_fits", 0); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+  par_add_b("use_lambda234_fits", 0); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
   par_add_b("use_geometric_units", 1); // use geometric units for I/O ?
   par_add_b("use_speedytail", 0); // use special routine to speed up tail computation ?
   
@@ -1147,11 +1147,16 @@ void eob_set_params(int default_choice, int firstcall)
   const int usetidal = EOBPars->use_tidal;
   const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
 
-  if (EOBPars->use_Yagi_fits) {
+  if (EOBPars->use_lambda234_fits == Lambda234_fits_YAGI13) {
     EOBPars->LambdaAl3 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 3);
     EOBPars->LambdaBl3 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 3);
     EOBPars->LambdaAl4 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 4);
     EOBPars->LambdaBl4 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 4);
+  } else if (EOBPars->use_lambda234_fits == Lambda234_fits_GODZIEBA20) {
+    EOBPars->LambdaAl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 3);
+    EOBPars->LambdaBl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 3);
+    EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
+    EOBPars->LambdaBl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 4);
   }
 
 #if(USEGRAVITOMAGNETICTERMS)
@@ -1424,11 +1429,16 @@ void eob_set_params_old(char *s, int n)
   double SigmaAl2 = par_get_d("SigmaAl2");
   double SigmaBl2 = par_get_d("SigmaBl2");
 
-  if (par_get_i("use_Yagi_fits")) {
-    LambdaAl3 = Yagi13_fit_barlamdel(LambdaAl2, 3);
-    LambdaBl3 = Yagi13_fit_barlamdel(LambdaBl2, 3);
-    LambdaAl4 = Yagi13_fit_barlamdel(LambdaAl2, 4);
-    LambdaBl4 = Yagi13_fit_barlamdel(LambdaBl2, 4);
+  if (EOBPars->use_lambda234_fits == Lambda234_fits_YAGI13) {
+    EOBPars->LambdaAl3 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 3);
+    EOBPars->LambdaBl3 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 3);
+    EOBPars->LambdaAl4 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 4);
+    EOBPars->LambdaBl4 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 4);
+  } else if (EOBPars->use_lambda234_fits == Lambda234_fits_GODZIEBA20) {
+    EOBPars->LambdaAl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 3);
+    EOBPars->LambdaBl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 3);
+    EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
+    EOBPars->LambdaBl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 4);
   }
 
 #if(USEGRAVITOMAGNETICTERMS)
