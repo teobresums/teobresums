@@ -41,8 +41,8 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "use_tidal_gravitomagnetic") != NULL ) { 
     EOBPars->use_tidal_gravitomagnetic = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_tidal_gravitomagnetic"));
   }
-  if ( PyDict_GetItemString(dict, "use_Yagi_fits") != NULL ) { 
-    EOBPars->use_Yagi_fits = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_Yagi_fits"));
+  if ( PyDict_GetItemString(dict, "use_lambda234_fits") != NULL ) { 
+    EOBPars->use_lambda234_fits = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_lambda234_fits"));
   }
   if ( PyDict_GetItemString(dict, "use_speedytail") != NULL ) { 
     EOBPars->use_speedytail = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_speedytail"));

@@ -26,7 +26,7 @@ tides = "TEOBRESUM3"
 tides_gravitomagnetic = "PN"
 LambdaAl2 = 1400.  
 LambdaBl2 = 200.
-use_Yagi_fits = 1
+use_lambda234_fits = 1
 
 #
 # Output dir, output modes 
