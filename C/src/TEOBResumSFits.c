@@ -1306,22 +1306,25 @@ double JFAPG_fit_Sigma_Static(double barlam2)
     $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
     Eq.(...),(...); Tab.I; Fig.X ... */
 double  Godzieba20_fit_barlamdel(double barlam2, int ell)
-{  
+{
   if (barlam2<=0.) return 0.;
   double lnx = log(barlam2);
   double *coef;
-  double c23[7] = {-1.052, 1.165, 6.590e-3, 4.990e-3, -7.176e-4,
+  if (ell == 3) {
+    double c23[7] = {-1.052, 1.165, 6.590e-3, 4.990e-3, -7.176e-4,
 		     3.741e-5, -6.694e-8};
-  double c24[7] = {-2.260, 1.384, 2.845e-4, 1.287e-2, -1.856e-3,
+    coef = &c23[0];
+  } else if (ell == 4) {
+    double c24[7] = {-2.260, 1.384, 2.845e-4, 1.287e-2, -1.856e-3,
 		     1.041e-4, -2.080e-6};
-  if (ell == 3) coef = c23;
-  else if (ell == 4) coef = c24;
+    coef = &c24[0];
+  }
   else 
     errorexit("Godzieba fits are for ell=3,4.");
   double lny = coef[0];
   double lnxp = lnx;
-  for (int i=1; i<=6; i++) {
-    lny += lnxp * coef[i];
+  for (int i=1; i++; i<=6) {
+    lny += coef[i]*lnxp;
     lnxp *= lnx;
   }
   return exp(lny);
