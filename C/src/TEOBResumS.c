@@ -50,7 +50,7 @@ NQCdata *NQC;
 /** TEOBResumS v2.* main */
 int main (int argc, char* argv[])
 {   
-  PRSECTN(TEOBResumS_Info);
+  if (VERBOSE) PRSECTN(TEOBResumS_Info);
   
   Waveform *hpc = NULL; /* TD wvf */
   Waveform_lm *hmodes = NULL; /* modes */
