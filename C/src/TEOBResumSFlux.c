@@ -611,6 +611,17 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Edot      = nu*(rdot*Fr + Omg*Fphi);
   }
 
+  /* Saving useful variables */
+  dyn->rdot  = rdot;
+  dyn->r2dot = r2dot;
+  dyn->r3dot = r3dot;
+  dyn->r4dot = 0.;
+  dyn->r5dot = 0.;
+  dyn->Omegadot  = Omgdot;
+  dyn->Omega2dot = Omg2dot;
+  dyn->Omega3dot = 0.;
+  dyn->Omega4dot = 0.;
+    
   /* return F_NC */  
   return Fphi_Newt;  
 }

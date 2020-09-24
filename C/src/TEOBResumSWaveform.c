@@ -244,22 +244,27 @@ void eob_wav_hlmNewt_HM(double r,
 
 /** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform.
     Eccentric version */
-void eob_wav_hlmNewt_ecc(double r,
-			 double rdot,
-			 double r2dot,
-			 double r3dot,
-			 double r4dot,
-			 double r5dot,
-			 double Omega,
-			 double Omegadot,
-			 double Omega2dot,
-			 double Omega3dot,
-			 double Omega4dot,
-			 double phi,
-			 double nu,
-			 Waveform_lm_t *hlmNewt)
-{  
-  /** Shorthands */
+void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
+{
+  /** Extracting variables */
+  const double nu = dyn->nu;
+  const double phi = dyn->phi; 
+
+  const double rw     = dyn->r_omega;
+
+  const double r     = dyn->r;
+  const double rdot  = dyn->rdot;
+  const double r2dot = dyn->r2dot;
+  const double r3dot = dyn->r3dot;
+  const double r4dot = dyn->r4dot;
+  const double r5dot = dyn->r5dot;
+  const double Omega     = dyn->Omg;
+  const double Omegadot  = dyn->Omegadot;
+  const double Omega2dot = dyn->Omega2dot;
+  const double Omega3dot = dyn->Omega3dot;
+  const double Omega4dot = dyn->Omega4dot;
+  
+  /** Shorthands */  
   double nu2   = nu*nu;
   double nu3   = nu*nu2;
 
@@ -269,7 +274,7 @@ void eob_wav_hlmNewt_ecc(double r,
   double vOmg4 = vOmg*vOmg3;
   double vOmg5 = vOmg*vOmg4;
 
-  double vphi  = r*Omega;
+  double vphi  = rw*Omega;
   double vphi2 = vphi*vphi;
   double vphi3 = vphi*vphi2;
   double vphi4 = vphi*vphi3;
@@ -3894,7 +3899,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 }
 
 /** Main routine for factorized EOB waveform */
-void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
+void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
 {
 
   const double nu = dyn->nu;  
@@ -4080,15 +4085,6 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   const double Heff   = dyn->Heff;
   const double jhat   = dyn->jhat;
   const double rw     = dyn->r_omega;
-  const double rdot  = dyn->rdot;
-  const double r2dot = dyn->r2dot;
-  const double r3dot = dyn->r3dot;
-  const double r4dot = dyn->r4dot;
-  const double r5dot = dyn->r5dot;
-  const double Omegadot  = dyn->Omegadot;
-  const double Omega2dot = dyn->Omega2dot;
-  const double Omega3dot = dyn->Omega3dot;
-  const double Omega4dot = dyn->Omega4dot;
   hlm->time = t;
 
   /** Source term */
@@ -4104,49 +4100,7 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   
   /** Newtonian waveform */
   Waveform_lm_t hNewt;
-  eob_wav_hlmNewt_ecc(rw, rdot, r2dot, r3dot, r4dot, r5dot,
-		      Omega, Omegadot, Omega2dot, Omega3dot, Omega4dot,
-		      phi, nu, &hNewt);
-  
-  if (usetidal) {
-    /* Need to correct some of the m=odd modes. 
-       The Newtonian factor has a different normalization when entering the point-mass 
-       and the tidal term. The factor X12 = sqrt*1-4nu) is re-introduced in the point-mass term 
-       in eob_wav_hlm() */
-    double vphi3 = gsl_pow_int(rw*Omega,3); 
-    hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3;
-    hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3;
-    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
-    double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5); 
-    hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5;
-    hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; 
-    hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5; 
-    hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5;
-    hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; 
-  }
-
-  if (usespins) {
-    /* Special treatment when spin is on because of the singularity in the sqrt(1-4*nu) 
-       for m=odd mode and nu=1/4. See discussion in 
-       Damour & Nagar, PRD 90, 044018, Sec. 4, Eq.(89). 
-       This is not done for multipoles l>4 because no spinning information is included there */ 
-    
-    double vphi3 = gsl_pow_int(rw*Omega,3);
-    hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3; /* (2,1) */
-    
-    double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5);
-    hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5 * X12; /* (5,1) */
-    hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5 * X12; /* (5,3) */
-
-    if (!(EOBPars->use_flm == USEFLM_HM)) {
-      hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /* (3,1) */
-      hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /* (3,3) */
-      hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5; /* (4,1) */
-      hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; /* (4,3) */
-      hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5 * X12; /* (5,5) */
-    }
-
-  }
+  eob_wav_hlmNewt_ecc(dyn, &hNewt);
 
   /** Compute corrections */
   double rholm[KMAX], flm[KMAX];
