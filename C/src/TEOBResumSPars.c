@@ -1319,6 +1319,13 @@ void eob_set_params(int default_choice, int firstcall)
     */
   } else errorexit("unknown option for use_flm");
 
+  /** Set hlm fun pointer */
+  if (ecc != 0.) {
+    eob_wav_hlm = &eob_wav_hlm_ecc;
+  } else  {
+    eob_wav_hlm = &eob_wav_hlm_circ;
+  }
+
   /** Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
