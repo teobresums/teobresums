@@ -101,9 +101,9 @@ if __name__ == "__main__":
     #q    = 1
     #E0   =  1.0055    # initial energy
     #j    =  3.97      # initial angular momentum
-    q   =  3.5
-    E0  = 1.0067
-    j   = 4.1361
+    q   =  1.0
+    E0  = 1.01
+    j   = 4.0
     nu  = q/(1+q)**2
     
     # nonspinning LSO computation
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,                 #output quantities in geometric units. Default = 1
     'r0':r,
-    'interp_uniform_grid': 0,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+    'interp_uniform_grid': 1,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
     'ecc'                : 0.18,              #Eccentricity. Default = 0.
     'j_hyp'              : j,                 #J_hyp. Default = 0.
     'r_hyp'              : r,                 #r_hyp. Default = 0.
