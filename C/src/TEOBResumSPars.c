@@ -1128,7 +1128,8 @@ void eob_set_params(int default_choice, int firstcall)
   const double XA = EOBPars->X1; /* tidal part used different notation, used here for simplicity */
   const double XB = EOBPars->X2;
   const double ecc = EOBPars->ecc;
-
+  const double r_hyp = EOBPars->r_hyp;
+  
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
   EOBPars->S1 = SQ(XA) * chi1;
@@ -1223,7 +1224,7 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
       EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
-      if (ecc != 0.) {
+      if ((ecc != 0.) || (r_hyp != 0.)) {
 	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
 	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
       } else if (usespins) {
@@ -1320,7 +1321,7 @@ void eob_set_params(int default_choice, int firstcall)
   } else errorexit("unknown option for use_flm");
 
   /** Set hlm fun pointer */
-  if (ecc != 0.) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     eob_wav_hlm = &eob_wav_hlm_ecc;
   } else  {
     eob_wav_hlm = &eob_wav_hlm_circ;

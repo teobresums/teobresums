@@ -286,7 +286,8 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 /** Initial conditions calculation for eccentric systems */
 void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
 {
-  
+
+  printf("here1 \n");
   const double nu   = dyn->nu;
   const double chi1 = dyn->chi1;
   const double chi2 = dyn->chi2;
@@ -536,6 +537,7 @@ struct Omegaorb0_tmp_params {
 /** Initial radius from initial frequency using EOB circular dynamics */
 double eob_dyn_r0_ecc (double f0, Dynamics *dyn)
 {
+  printf("here2 \n");
   const double omg_orb0 = Pi*f0;
   const double r0_kepl  = eob_dyn_r0_Kepler(f0);
   
@@ -682,6 +684,7 @@ double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl)
 
 double eob_dyn_Omegaecc0(double r, void *params)
 {
+  printf("here3 \n");
   /* Unpack parameters */  
   struct Omegaecc0_tmp_params *p
     = (struct Omegaecc0_tmp_params *) params;
@@ -771,6 +774,7 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
 #define max_iter (200)
 #define tolerance (1e-14)
 
+  printf("here4 \n");
   int status;
   int iter = 0;
   const gsl_root_fsolver_type *T;

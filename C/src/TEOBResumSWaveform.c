@@ -2016,16 +2016,17 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
   double c1phi[KMAX], c2phi[KMAX], c3phi[KMAX], c4phi[KMAX];
 	    
-  const double nu   = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double aK   = dyn->a1+dyn->a2;
-  const double Mbh  = dyn->Mbhf;
-  const double abh  = dyn->abhf;
-  const double ecc  = dyn->ecc;
-    
+  const double nu    = dyn->nu;
+  const double chi1  = dyn->chi1;
+  const double chi2  = dyn->chi2;
+  const double X1    = dyn->X1;
+  const double X2    = dyn->X2;
+  const double aK    = dyn->a1+dyn->a2;
+  const double Mbh   = dyn->Mbhf;
+  const double abh   = dyn->abhf;
+  const double ecc   = dyn->ecc;
+  const double r_hyp = dyn->r_hyp;
+  
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG]; /* Omega */
@@ -2370,7 +2371,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
 
   
-  if (ecc != 0.) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
@@ -2467,16 +2468,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
   double c1phi[KMAX], c2phi[KMAX], c3phi[KMAX], c4phi[KMAX];
 	  
-  const double nu   = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double aK   = dyn->a1+dyn->a2;
-  const double Mbh  = dyn->Mbhf;
-  const double abh  = dyn->abhf;
-  const double ecc  = dyn->ecc;
-    
+  const double nu    = dyn->nu;
+  const double chi1  = dyn->chi1;
+  const double chi2  = dyn->chi2;
+  const double X1    = dyn->X1;
+  const double X2    = dyn->X2;
+  const double aK    = dyn->a1+dyn->a2;
+  const double Mbh   = dyn->Mbhf;
+  const double abh   = dyn->abhf;
+  const double ecc   = dyn->ecc;
+  const double r_hyp = dyn->r_hyp;
+  
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
@@ -2800,7 +2802,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[1][1]);
   }
 
-  if (ecc != 0.) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
@@ -2898,7 +2900,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     }
   }
 
-  if (ecc != 0.) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
@@ -2990,16 +2992,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double c1A[KMAX_22], c2A[KMAX_22], c3A[KMAX_22], c4A[KMAX_22];
   double c1phi[KMAX_22], c2phi[KMAX_22], c3phi[KMAX_22], c4phi[KMAX_22];
 	  
-  const double nu   = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double aK   = dyn->a1+dyn->a2;
-  const double Mbh  = dyn->Mbhf;
-  const double abh  = dyn->abhf;
-  const double ecc  = dyn->ecc;
-
+  const double nu    = dyn->nu;
+  const double chi1  = dyn->chi1;
+  const double chi2  = dyn->chi2;
+  const double X1    = dyn->X1;
+  const double X2    = dyn->X2;
+  const double aK    = dyn->a1+dyn->a2;
+  const double Mbh   = dyn->Mbhf;
+  const double abh   = dyn->abhf;
+  const double ecc   = dyn->ecc;
+  const double r_hyp = dyn->r_hyp;
+  
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
@@ -3237,7 +3240,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[k22][1]);
   }
 
-  if (ecc != 0.) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
@@ -3297,7 +3300,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     n5[k22][j]  = n4[k22][j]*r2*w2;              /* (pr*)*(r Omg) */
   }
 
-  if (ecc != 0.) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
