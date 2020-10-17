@@ -969,7 +969,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const int use_tidal = EOBPars->use_tidal;
   int store_dynamics = EOBPars->output_dynamics; 
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
-  if (ecc != 0.) EOBPars->postadiabatic_dynamics = 0;
+  if ((ecc != 0.) || (r_hyp != 0.)) EOBPars->postadiabatic_dynamics = 0;
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
@@ -998,7 +998,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** Compute initial radius */
   const double f0 = EOBPars->initial_frequency/time_unit_fact;
   double r0;
-  if (ecc != 0.) {
+  if (r_hyp != 0.) {
+    r0 = r_hyp;
+  } else if (ecc != 0.) {
     r0 = eob_dyn_r0_ecc(f0, dyn);
   } else {
     r0 = eob_dyn_r0_Kepler(f0);
@@ -1043,6 +1045,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   } else {
     p_eob_dyn_rhs = &eob_dyn_rhs;
   }
+
   
   /** NQC data */  
   NQCdata_alloc (&NQC); 
@@ -1108,12 +1111,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->Mbhf = dyn->Mbhf;
     EOBPars->abhf = dyn->abhf;
   }
-  
-  /* Iteration index */
-  int iter = 0;
-  
-  if (use_postadiab_dyn) {
 
+  /* Iteration index */
+  int iter = 0;  
+  int pasize = 0;
+
+  if (use_postadiab_dyn) {
+      
     /* *****************************************
      * Post-adiabatic dynamics
      * *****************************************
@@ -1179,7 +1183,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
      * Initial conditions for the evolution
      * *****************************************
      */
-
+    
     /** Compute the initial conditions */
     if (r_hyp != 0.) {
       //SB 08/2020 workaround 
@@ -1505,7 +1509,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
 
-  
+
   /* Over-writing waveform with the eccentric one 
      For now, only in uniform case */
   /*
@@ -1789,7 +1793,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Waveform_lm_output_reim (hlm);
   }
 #endif
-  
+
   /* *****************************************
    * Compute h+, hx 
    * *****************************************
@@ -1824,7 +1828,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (EOBPars->interp_uniform_grid) {
       /* Interp to uniform grid the multipoles before hpc computation */
       const double dt_interp = EOBPars->dt_interp;
-      const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
+      const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp);
       Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");  
       size = size_interp;
     }
