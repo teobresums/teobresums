@@ -4106,17 +4106,16 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
   /* Euler angles */
   double *alpha, *beta, *gamma;
   if (interp_spin_abc) {
-    
+
     if (spin->time[spin->size-1] < hlm->time[size-1]) errorexit("spin dynamics too short");
     
     alpha = malloc ( size * sizeof(double) );
     beta  = malloc ( size * sizeof(double) );
     gamma = malloc ( size * sizeof(double) );
-    
     interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_alp], spin->size, hlm->time, size, alpha);
     interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_bet], spin->size, hlm->time, size, beta);
     interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_gam], spin->size, hlm->time, size, gamma);    
-    
+
   } else {
     
     alpha = spin->data[EOB_EVOLVE_SPIN_alp];
@@ -4124,7 +4123,7 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
     gamma = spin->data[EOB_EVOLVE_SPIN_gam];
     
   }
-  
+
   /* Loop over modes */
   for (int k = 0; k < KMAX; k++ ) {
     if (!activemode[k]) continue;
@@ -4135,13 +4134,13 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
     
     // for each time ...
     for (int i = 0; i < size; i++) {
-      
+
       // ... do the twist (sum up on m')
       double sumr = 0;
       double sumi = 0;
       for (int n = -ell; n <= ell; n++) {
 	      if (n==0) continue; // skip m=0 modes
-	      int j = KINDEX[ell][n]; // map to linear index (ell,n) -> j
+	      int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
 	
 	      double cosng = cos( n * gamma[i] );
 	      double sinng = sin( n * gamma[i] );
@@ -4154,7 +4153,7 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
 	      // but here we need real/imag
 	      double real=0, imag=0;
 	      rmap(&real,&imag, &(hlm->phase[j][i]), &(hlm->ampli[j][i]), 0);
-	
+
 	      // Here we need to deal with m<0 modes
 	      // H_{l-m} = (-)^l H^{*}_{lm}
 	      double hln_real, hln_imag;
