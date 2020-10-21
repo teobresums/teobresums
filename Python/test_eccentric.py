@@ -22,7 +22,7 @@ pars = {
 }
 
 #Run the WF generator
-t, hp, hcm, hlm = EOBRun_module.EOBRunPy(pars)
+t, hp, hcm, hlm, dyn = EOBRun_module.EOBRunPy(pars)
 
 plt.plot(t, hp)
 plt.show()
