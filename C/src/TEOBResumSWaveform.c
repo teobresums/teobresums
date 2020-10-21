@@ -4167,8 +4167,8 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
 	      }
 	  // 	sumr += cosng * dl_mn * hln_real;
 	  // sumi += sinng * dl_mn * hln_imag;
-	      sumr += dl_mn*(cosng * hln_real - sinng * hlm_imag);
-	      sumi += dl_mn*(sinng * hln_real + cosng * hlm_imag);
+	      sumr += dl_mn*(cosng * hln_real - sinng * hln_imag);
+	      sumi += dl_mn*(sinng * hln_real + cosng * hln_imag);
 	
       } // n (m')
       // double hlm_real = - sumr * cos( emm * alpha[i] );
