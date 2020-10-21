@@ -4110,7 +4110,7 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
     if (spin->time[spin->size-1] < hlm->time[size-1]) errorexit("spin dynamics too short");
     
     alpha = malloc ( size * sizeof(double) );
-    beta = malloc ( size * sizeof(double) );
+    beta  = malloc ( size * sizeof(double) );
     gamma = malloc ( size * sizeof(double) );
     
     interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_alp], spin->size, hlm->time, size, alpha);
@@ -4140,39 +4140,41 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
       double sumr = 0;
       double sumi = 0;
       for (int n = -ell; n <= ell; n++) {
-	if (n==0) continue; // skip m=0 modes
-	int j = KINDEX[ell][n]; // map to linear index (ell,n) -> j
+	      if (n==0) continue; // skip m=0 modes
+	      int j = KINDEX[ell][n]; // map to linear index (ell,n) -> j
 	
-	double cosng = cos( n * gamma[i] );
-	double sinng = sin( n * gamma[i] );
+	      double cosng = cos( n * gamma[i] );
+	      double sinng = sin( n * gamma[i] );
 	
-	// d^l_{m,s}(angle)
-	//CHECKME: index correct of Wigner matrices correct?
-	double dl_mn = wigner_d_function(ell, emm,n, -beta[i]);
+	      // d^l_{m,s}(angle)
+	      //CHECKME: index correct of Wigner matrices correct?
+	      double dl_mn = wigner_d_function(ell, emm,n, -beta[i]);
 
-	// hlm modes are given as phase/amplitude
-	// but here we need real/imag
-	double real=0, imag=0;
-	rmap(&real,&imag, &(hlm->phase[j][i]), &(hlm->ampli[j][i]), 0);
+	      // hlm modes are given as phase/amplitude
+	      // but here we need real/imag
+	      double real=0, imag=0;
+	      rmap(&real,&imag, &(hlm->phase[j][i]), &(hlm->ampli[j][i]), 0);
 	
-	// Here we need to deal with m<0 modes
-	// H_{l-m} = (-)^l H^{*}_{lm}
-	double hln_real, hln_imag;
-	if (n<0) {
-	  hln_real =   eps * real;
-	  hln_imag = - eps * imag;	  
-	} else {
-	  hln_real = real;
-	  hln_imag = imag;
-	}
-	
-	sumr += cosng * dl_mn * hln_real;
-	sumi += sinng * dl_mn * hln_imag;
+	      // Here we need to deal with m<0 modes
+	      // H_{l-m} = (-)^l H^{*}_{lm}
+	      double hln_real, hln_imag;
+	      if (n<0) {
+	        hln_real =   eps * real;
+	        hln_imag = - eps * imag;	  
+	      } else {
+	        hln_real = real;
+	        hln_imag = imag;
+	      }
+	  // 	sumr += cosng * dl_mn * hln_real;
+	  // sumi += sinng * dl_mn * hln_imag;
+	      sumr += dl_mn*(cosng * hln_real - sinng * hlm_imag);
+	      sumi += dl_mn*(sinng * hln_real + cosng * hlm_imag);
 	
       } // n (m')
-      
-      double hlm_real = - sumr * cos( emm * alpha[i] );
-      double hlm_imag = - sumi * sin( emm * alpha[i] );
+      // double hlm_real = - sumr * cos( emm * alpha[i] );
+      // double hlm_imag = - sumi * sin( emm * alpha[i] );
+      double hlm_real =   sumr * cos( emm * alpha[i] ) + sumi * sin( emm * alpha[i] );
+      double hlm_imag = - sumr * sin( emm * alpha[i] ) + sumi * cos( emm * alpha[i] );
       
       // Re-map back into phase/ampli
       rmap(&hlm_real,&hlm_imag, &(hTlm->phase[k][i]), &(hlm->ampli[k][i]), 1);
