@@ -96,7 +96,7 @@ int main (int argc, char* argv[])
   EOBPars->q = q;
   EOBPars->nu = q_to_nu(q);
 
-  double m1 = m/(1.+q);
+  double m1 = m*nu_to_X1(EOBPars->nu);
   double m2 = m-m1;
   
   EOBPars->chi1x = S1x/SQ(m1);
