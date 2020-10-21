@@ -975,17 +975,17 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   double Omg_x_SA[IN3], Omg_x_SB[IN3];
   
   /* NLO */
-  for(int a=Ix; a<IN3; a++) qSAB[a] = q*SA[a] + SB[a];
-  for(int a=Ix; a<IN3; a++) SABq[a] = SA[a] + SB[a]/q;
+  for(int a=Ix; a<IN3; a++) qSAB[a] = q/SA[a] + SB[a];
+  for(int a=Ix; a<IN3; a++) SABq[a] = SA[a] + SB[a]*q;
 
   double qSABLh, SABqLh;
   vect_dot3(qSAB, Lh, &qSABLh);
   vect_dot3(SABq, Lh, &SABqLh);
 
   for(int a=Ix; a<IN3; a++) 
-    OmgA[a] = v5*(nu*(2+1.5*q) - 1.5*v*qSABLh)*Lh[a] + 0.5*v6*SB[a];
+    OmgA[a] = v5*(nu*(2+1.5/q) - 1.5*v*qSABLh)*Lh[a] + 0.5*v6*SB[a];
   for(int a=Ix; a<IN3; a++) 
-    OmgB[a] = v5*(nu*(2+1.5/q) - 1.5*v*SABqLh)*Lh[a] + 0.5*v6*SA[a];
+    OmgB[a] = v5*(nu*(2+1.5*q) - 1.5*v*SABqLh)*Lh[a] + 0.5*v6*SA[a];
   
   vect_cross3(OmgA, SA, Omg_x_SA);
   vect_cross3(OmgB, SB, Omg_x_SB);
