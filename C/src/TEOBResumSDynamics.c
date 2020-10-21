@@ -975,7 +975,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   double Omg_x_SA[IN3], Omg_x_SB[IN3];
   
   /* NLO */
-  for(int a=Ix; a<IN3; a++) qSAB[a] = q/SA[a] + SB[a];
+  for(int a=Ix; a<IN3; a++) qSAB[a] = 1./q*SA[a] + SB[a];
   for(int a=Ix; a<IN3; a++) SABq[a] = SA[a] + SB[a]*q;
 
   double qSABLh, SABqLh;
