@@ -981,7 +981,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   double qSABLh, SABqLh;
   vect_dot3(qSAB, Lh, &qSABLh);
   vect_dot3(SABq, Lh, &SABqLh);
-
+  
   for(int a=Ix; a<IN3; a++) 
     OmgA[a] = v5*(nu*(2+1.5/q) - 1.5*v*qSABLh)*Lh[a] + 0.5*v6*SB[a];
   for(int a=Ix; a<IN3; a++) 
@@ -1002,33 +1002,78 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_SPIN_Lx] += -(v_o_nu) * ( Omg_x_SA[Ix] + Omg_x_SB[Ix] );
   dy[EOB_EVOLVE_SPIN_Ly] += -(v_o_nu) * ( Omg_x_SA[Iy] + Omg_x_SB[Iy] );
   dy[EOB_EVOLVE_SPIN_Lz] += -(v_o_nu) * ( Omg_x_SA[Iz] + Omg_x_SB[Iz] );  
-    
+  
+  
   /* N4LO */
   /*
-  const double cv7 = v7*( 0.5625 + 1.25*nu - 0.04166666666666666*nu2 + dm*(-0.5625+0.625*nu) );
-  const double cv9 = v9*( 0.84375 + 0.1875*nu - 3.28125*nu2 - 0.02083333333333*nu3
+  double OmgANLO[IN3],  OmgBNLO[IN3],  OmgANNLO[IN3],  OmgBNNLO[IN3],  OmgAN4LO[IN3],  OmgBN4LO[IN3];
+  double SdotANLO[IN3], SdotBNLO[IN3], SdotANNLO[IN3], SdotBNNLO[IN3], SdotAN4LO[IN3], SdotBN4LO[IN3];
+  const double cv7A = v7*( 0.5625 + 1.25*nu - 0.04166666666666666*nu2 + dm*(-0.5625+0.625*nu) );
+  const double cv7B = v7*( 0.5625 + 1.25*nu - 0.04166666666666666*nu2 - dm*(-0.5625+0.625*nu) );
+  const double cv9A = v9*( 0.84375 + 0.1875*nu - 3.28125*nu2 - 0.02083333333333*nu3
 			  + dm*(-0.84375+4.875*nu-0.15625*nu2) );
-  const double csA = -0.25*(3+1./mA);
-  const double csB = -0.25*(3+1./mB);
-  const double csAL = -0.08333333333333333*(1+27./mA);
-  const double csBL = -0.08333333333333333*(1+27./mB);
+  const double cv9B = v9*( 0.84375 + 0.1875*nu - 3.28125*nu2 - 0.02083333333333*nu3
+			  - dm*(-0.84375+4.875*nu-0.15625*nu2) );
+
+  for(int a=Ix; a <IN3; a++){
+    OmgANLO[a] = v5*(nu*(2+1.5/q) - 1.5*v*qSABLh)*Lh[a] + 0.5*v6*SB[a];
+    OmgBNLO[a] = v5*(nu*(2+1.5*q) - 1.5*v*SABqLh)*Lh[a] + 0.5*v6*SA[a];
+    OmgANNLO[a]= OmgANLO[a]  + cv7A*Lh[a];
+    OmgBNNLO[a]= OmgBNLO[a]  + cv7B*Lh[a];
+    OmgAN4LO[a]= OmgANNLO[a] + cv9A*Lh[a];
+    OmgBN4LO[a]= OmgBNNLO[a] + cv9B*Lh[a];
+  }  
+
+  vect_cross3(OmgANLO,  SA, SdotANLO);
+  vect_cross3(OmgANNLO, SA, SdotANNLO);
+  vect_cross3(OmgAN4LO, SA, SdotAN4LO);
+  vect_cross3(OmgBNLO,  SB, SdotBNLO);
+  vect_cross3(OmgBNNLO, SB, SdotBNNLO);
+  vect_cross3(OmgBN4LO, SB, SdotBN4LO);
+
+  dy[EOB_EVOLVE_SPIN_SxA] = SdotAN4LO[Ix];
+  dy[EOB_EVOLVE_SPIN_SyA] = SdotAN4LO[Iy];
+  dy[EOB_EVOLVE_SPIN_SzA] = SdotAN4LO[Iz];
+  dy[EOB_EVOLVE_SPIN_SxB] = SdotBN4LO[Ix];
+  dy[EOB_EVOLVE_SPIN_SyB] = SdotBN4LO[Iy];
+  dy[EOB_EVOLVE_SPIN_SzB] = SdotBN4LO[Iz];
+
+  // Lhdot
+  const double csA = -0.25*(3+M/MA);
+  const double csB = -0.25*(3+M/MB);
+  const double csAL = -0.08333333333333333*(1+27.*M/MA);
+  const double csBL = -0.08333333333333333*(1+27.*M/MB);
+  //const double csANL= 0.0625*(-31.+7*M/MA) + 0.0208333333333333*nu*(9. + 22* M/MA)
+  //const double csBNL= 0.0625*(-31.+7*M/MB) + 0.0208333333333333*nu*(9. + 22* M/MB)
   const double L2PN = 1 + v2*(1.5+0.1666666666666667*nu) + v4*(3.375 - 2.375*nu + 0.04166666666666666*nu2);
+  const double v_o_nu = v/nu;
 
-  dy[EOB_EVOLVE_SPIN_SxA] += cv7 + cv9; //CHECKME: are these eqs correct in sarp paper?
-  dy[EOB_EVOLVE_SPIN_SyA] += cv7 + cv9;
-  dy[EOB_EVOLVE_SPIN_SzA] += cv7 + cv9;
+  double SALh, SBLh;
+  double dSBNLOSA,  dSANLOSB;
+  double dSANNLOLh, dSBNNLOLh;
+  vect_dot3(SA, Lh, &SALh);
+  vect_dot3(SB, Lh, &SBLh);  
+  vect_dot3(SdotBNLO,  SA, &dSBNLOSA);
+  vect_dot3(SdotANLO,  SB, &dSANLOSB);
+  vect_dot3(SdotANNLO, Lh, &dSANNLOLh);
+  vect_dot3(SdotBNNLO, Lh, &dSBNNLOLh);
 
-  dy[EOB_EVOLVE_SPIN_SxB] += cv7 + cv9;
-  dy[EOB_EVOLVE_SPIN_SyB] += cv7 + cv9;
-  dy[EOB_EVOLVE_SPIN_SzB] += cv7 + cv9;
-
-  dy[EOB_EVOLVE_SPIN_Lx] -= 2*(cv7 + cv9); //CHECKME: isn't this the only piece missing to be added?
-  dy[EOB_EVOLVE_SPIN_Ly] -= 2*(cv7 + cv9); //         unclear why using (4c) ???
-  dy[EOB_EVOLVE_SPIN_Lz] -= 2*(cv7 + cv9);  
+  // Eq. (4c) of https://arxiv.org/abs/2005.05338
+  dy[EOB_EVOLVE_SPIN_Lx] = (v_o_nu*(-SdotAN4LO[Ix] -SdotBN4LO[Ix]) -v3*(csA*SdotANNLO[Ix] + csB*SdotBNNLO[Ix])
+                            -v3*(csAL*(-v_o_nu*(SdotANLO[Ix]+SdotBNLO[Ix])*SALh + Lh[Ix]*(-v_o_nu*dSBNLOSA + dSANNLOLh)) 
+                                +csBL*(-v_o_nu*(SdotBNLO[Ix]+SdotANLO[Ix])*SBLh + Lh[Ix]*(-v_o_nu*dSANLOSB + dSBNNLOLh))))/L2PN; 
+  
+  dy[EOB_EVOLVE_SPIN_Ly] = (v_o_nu*(-SdotAN4LO[Iy] -SdotBN4LO[Iy]) -v3*(csA*SdotANNLO[Iy] + csB*SdotBNNLO[Iy])
+                            -v3*(csAL*(-v_o_nu*(SdotANLO[Iy]+SdotBNLO[Iy])*SALh + Lh[Iy]*(-v_o_nu*dSBNLOSA + dSANNLOLh)) 
+                                +csBL*(-v_o_nu*(SdotBNLO[Iy]+SdotANLO[Iy])*SBLh + Lh[Iy]*(-v_o_nu*dSANLOSB + dSBNNLOLh))))/L2PN; 
+  
+  dy[EOB_EVOLVE_SPIN_Lz] = (v_o_nu*(-SdotAN4LO[Iz] -SdotBN4LO[Iz]) -v3*(csA*SdotANNLO[Iz] + csB*SdotBNNLO[Iz])
+                            -v3*(csAL*(-v_o_nu*(SdotANLO[Iz]+SdotBNLO[Iz])*SALh + Lh[Iz]*(-v_o_nu*dSBNLOSA + dSANNLOLh)) 
+                                +csBL*(-v_o_nu*(SdotBNLO[Iz]+SdotANLO[Iz])*SBLh + Lh[Iz]*(-v_o_nu*dSANLOSB + dSBNNLOLh))))/L2PN; 
   */
-
+  
   /* dot gamma = dot alpha(t) * cos(beta(t)) = dot alpha(t) * Lhz */
-
+ 
   const double div = SQ(Lh[Ix]) + SQ(Lh[Iy]);
   if (div == 0.)
     /* Lh is along z
