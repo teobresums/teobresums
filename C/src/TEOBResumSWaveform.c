@@ -4123,7 +4123,7 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
     gamma = spin->data[EOB_EVOLVE_SPIN_gam];
     
   }
-
+  
   /* Loop over modes */
   for (int k = 0; k < KMAX; k++ ) {
     if (!activemode[k]) continue;
@@ -4172,14 +4172,18 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
       } // n (m')
       // double hlm_real = - sumr * cos( emm * alpha[i] );
       // double hlm_imag = - sumi * sin( emm * alpha[i] );
-      double hlm_real =   sumr * cos( emm * alpha[i] ) + sumi * sin( emm * alpha[i] );
-      double hlm_imag = - sumr * sin( emm * alpha[i] ) + sumi * cos( emm * alpha[i] );
+      double hTlm_real =   sumr * cos( emm * alpha[i] ) + sumi * sin( emm * alpha[i] );
+      double hTlm_imag = - sumr * sin( emm * alpha[i] ) + sumi * cos( emm * alpha[i] );
       
       // Re-map back into phase/ampli
-      rmap(&hlm_real,&hlm_imag, &(hTlm->phase[k][i]), &(hlm->ampli[k][i]), 1);
+      rmap(&hTlm_real,&hTlm_imag, &(hTlm->phase[k][i]), &(hTlm->ampli[k][i]), 1);
       
     }// i (times)
   }// k (active modes)
+  
+  hTlm->size = size;
+  for(int i = 0; i < size; i++)
+    hTlm->time[i] = hlm->time[i];
   
   if (interp_spin_abc) {
     free(alpha);
