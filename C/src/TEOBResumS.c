@@ -945,7 +945,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Waveform_alloc (hpc, size, "waveform");   
   
     /* h+, hx */  
-    compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+    if (use_spins == MODE_SPINS_GENERIC)
+      compute_hpc(hTlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+    else
+      compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
   } else {
     
