@@ -741,6 +741,7 @@ double JFAPG_fit_Sigma_Static(double barlam2);
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);
 double JimenezFortezaRemnantMass(double nu, double X1, double X2, double chi1, double chi2);
 double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2);
+double PrecessingRemnantSpin(Dynamics *dyn);
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK,
 		     double Mbh, double abh,  
 		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 

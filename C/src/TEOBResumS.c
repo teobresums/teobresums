@@ -850,10 +850,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     
     if (use_spins == MODE_SPINS_GENERIC) {   
-
-      //TODO: correct for precession
-      //      see e.g. (4.17) https://arxiv.org/abs/2004.06503 
-
+      // (4.17) of https://arxiv.org/abs/2004.06503 
+      EOBPars->abhf = PrecessingRemnantSpin(dyn);
     }
     
     if (VERBOSE) {

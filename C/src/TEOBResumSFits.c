@@ -1572,6 +1572,35 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
   return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
 }
 
+double PrecessingRemnantSpin(Dynamics *dyn)
+{
+  /*
+  eq. 20 of https://arxiv.org/pdf/1611.00332.pdf
+  */
+
+  double SAmrg[3];
+  double SBmrg[3];
+  double omgmrg = eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
+  
+  /*find merger*/
+  //FIXME: this is a rough estimate
+  int imrg = find_point_bisection(omgmrg, dyn->spins->size, dyn->spins->data[EOB_EVOLVE_SPIN_Momg], 1);
+
+  SAmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_SxA][imrg];
+  SAmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_SyA][imrg];
+  SAmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_SzA][imrg];
+
+  SBmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_SxB][imrg];
+  SBmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_SyB][imrg];
+  SBmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_SzB][imrg];
+
+  double sqSperp = (SAmrg[0]+SBmrg[0])*(SAmrg[0]+SBmrg[0]) + (SAmrg[1]+SBmrg[1])*(SAmrg[1]+SBmrg[1]);
+  double sqMbhf = SQ(EOBPars->Mbhf);
+  
+  return sqrt(SQ(EOBPars->abhf) + sqSperp/SQ(sqMbhf));
+
+}
+
 /** QNM fits for the 22 mode for spinning systems */
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 		     double Mbh, double abh,  
