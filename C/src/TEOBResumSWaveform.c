@@ -3550,6 +3550,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const double t   = dyn->t;
   
   /* Updated spins parallel to L, if required */
+  /*
   if (EOBPars->use_spins == MODE_SPINS_GENERIC) {
 
     double SA, SB; // projections of the spin parallel to hatL
@@ -3572,7 +3573,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 		  &EOBPars->S, &EOBPars->Sstar);
     
   }
-  
+  */
   const double nu = EOBPars->nu;  
   const double chi1 = EOBPars->chi1;  
   const double chi2 = EOBPars->chi2;  

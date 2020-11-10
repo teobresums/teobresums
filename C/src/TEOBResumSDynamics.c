@@ -150,7 +150,9 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
 
+  
   /* Updated spins parallel to L, if required */
+  /*
   if (usespins == MODE_SPINS_GENERIC) {
     
     double SA, SB; // projections of the spin parallel to hatL
@@ -172,7 +174,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 		  &EOBPars->S, &EOBPars->Sstar);
     
   }
-   
+  */
+
   /* Unpack values */
   const double nu    = EOBPars->nu; 
   const double S     = EOBPars->S;
