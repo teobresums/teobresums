@@ -884,6 +884,26 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
+
+    if (use_spins == MODE_SPINS_GENERIC) {   
+      /* FIXME: the lines below are necessary for completing the evolution */
+      /* Prolong the spin dynamics to RD. constant euler angles, linear relation for omega(t) */
+      printf("Push spin dynamics for Ringdown \n");
+
+      if(hlm->time[size-1] - dyn->spins->time[dyn->spins->size-1] > 0){
+        int dN_spin = 100;
+        double dt_spin = (hlm->time[size-1] - dyn->spins->time[dyn->spins->size-1])/dN_spin;
+        int dspinsize = dyn->spins->size;
+        DynamicsSpin_push(&dyn->spins, dspinsize+dN_spin);
+        for(int i=0; i < dN_spin+1; i++){
+          dyn->spins->data[EOB_EVOLVE_SPIN_alp][dspinsize-1 +i] = dyn->spins->data[EOB_EVOLVE_SPIN_alp][dspinsize-1];
+          dyn->spins->data[EOB_EVOLVE_SPIN_bet][dspinsize-1 +i] = dyn->spins->data[EOB_EVOLVE_SPIN_bet][dspinsize-1];
+          dyn->spins->data[EOB_EVOLVE_SPIN_gam][dspinsize-1 +i] = dyn->spins->data[EOB_EVOLVE_SPIN_gam][dspinsize-1];
+          dyn->spins->data[EOB_EVOLVE_SPIN_Momg][dspinsize-1 +i] = dyn->spins->data[EOB_EVOLVE_SPIN_Momg][dspinsize-1]+0.001*i;
+          dyn->spins->time[dspinsize-1 +i] = dyn->spins->time[dspinsize-1]+i*dt_spin;
+        }
+      }
+    }
     
   } /* End of BBH section */
 
@@ -895,16 +915,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Waveform_lm_output_reim (hlm);
   }
 #endif
-  
-  /** Twist the modes in case of precession */
-  if (use_spins == MODE_SPINS_GENERIC) {   
-    
-    Waveform_lm_alloc (&hTlm, size, "hTlm"); 
-    
-    if (EOBPars->domain == DOMAIN_TD)
-      twist_hlm_TD(hlm, dyn->spins, 1, hTlm);
-    
-  }
   
   /* *****************************************
    * Compute h+, hx 
@@ -943,9 +953,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Waveform_alloc (hpc, size, "waveform");   
   
     /* h+, hx */  
-    if (use_spins == MODE_SPINS_GENERIC)
+    if (use_spins == MODE_SPINS_GENERIC){
+      Waveform_lm_alloc (&hTlm, size, "hTlm"); 
+      twist_hlm_TD(hlm, dyn->spins, 1, hTlm);
       compute_hpc(hTlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
-    else
+    } else
       compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
   } else {
