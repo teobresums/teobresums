@@ -4098,7 +4098,7 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
 
 
 /** Twist TD multipoles */
-void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
+void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
 		  Waveform_lm *hTlm)
 {  
   const int size = hlm->size;
@@ -4113,10 +4113,49 @@ void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
     alpha = malloc ( size * sizeof(double) );
     beta  = malloc ( size * sizeof(double) );
     gamma = malloc ( size * sizeof(double) );
-    interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_alp], spin->size, hlm->time, size, alpha);
-    interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_bet], spin->size, hlm->time, size, beta);
-    interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_gam], spin->size, hlm->time, size, gamma);    
+    if (0){ 
+    
+      /* find the max of the dynamic's omega*/
+      // CHECKME
+      int jM=0;
+      for(int i=0; i < dyn->size; i++) {
+        if (dyn->data[EOB_MOMG][i +1] < dyn->data[EOB_MOMG][i])
+          break;
+        jM++;
+      }
+      jM--;
+      double *alpha_tmp, *beta_tmp, *gamma_tmp;
+      alpha_tmp = malloc ( jM * sizeof(double) );
+      beta_tmp  = malloc ( jM * sizeof(double) );
+      gamma_tmp = malloc ( jM * sizeof(double) );
 
+      interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_alp], spin->size, dyn->data[EOB_MOMG], jM, alpha_tmp); //alpha(omega_eob)
+      interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_bet], spin->size, dyn->data[EOB_MOMG], jM, beta_tmp);
+      interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_gam], spin->size, dyn->data[EOB_MOMG], jM, gamma_tmp);
+
+      // the dynamics is shorter (in time) than the WF
+      // Interpolate up to end of dynamics
+      int tM_idx = find_point_bisection(dyn->time[jM], hlm->size-1, hlm->time, 0);
+      interp_spline_omp(dyn->time, alpha_tmp, jM+1, hlm->time, tM_idx, alpha);
+      interp_spline_omp(dyn->time, beta_tmp,  jM+1, hlm->time, tM_idx, beta);  
+      interp_spline_omp(dyn->time, gamma_tmp, jM+1, hlm->time, tM_idx, gamma); 
+
+      //for t > tM_idx, fox the values to the last
+      for(int j=tM_idx; j < hlm->size; j++){
+        alpha[j] = alpha[tM_idx];
+        beta[j]  = beta[tM_idx];
+        gamma[j] = gamma[tM_idx];
+      }
+
+      free(alpha_tmp);
+      free(beta_tmp);
+      free(gamma_tmp);
+
+    } else {
+      interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_alp], spin->size, hlm->time, size, alpha); //alpha(omega_eob)
+      interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_bet], spin->size, hlm->time, size, beta);
+      interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_gam], spin->size, hlm->time, size, gamma);
+    }
   } else {
     
     alpha = spin->data[EOB_EVOLVE_SPIN_alp];

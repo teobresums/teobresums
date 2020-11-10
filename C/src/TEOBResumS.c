@@ -693,7 +693,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Waveform_lm_alloc (&hTlm, size, "hTlm"); 
     
     if (EOBPars->domain == DOMAIN_TD)
-      twist_hlm_TD(hlm, dyn->spins, 1, hTlm);
+      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm);
     
   }
 
@@ -955,7 +955,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* h+, hx */  
     if (use_spins == MODE_SPINS_GENERIC){
       Waveform_lm_alloc (&hTlm, size, "hTlm"); 
-      twist_hlm_TD(hlm, dyn->spins, 1, hTlm);
+      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm);
       compute_hpc(hTlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
     } else
       compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);

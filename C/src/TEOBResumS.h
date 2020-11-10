@@ -845,7 +845,7 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 void (*eob_wav_ringdown)();
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
-void twist_hlm_TD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm);
+void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm);
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void twist_hlm_FD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm);
