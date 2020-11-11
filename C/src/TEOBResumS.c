@@ -312,6 +312,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (VERBOSE) PRFORMd("rLSO",EOBPars->rLSO);
   }   
 
+  /** Final BH */
+  if (!(EOBPars->use_tidal)) {
+    HealyBBHFitRemnant(chi1, chi2, q, &(EOBPars->Mbhf), NULL);
+    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+
+    if (use_spins == MODE_SPINS_GENERIC) {   
+      // (4.17) of https://arxiv.org/abs/2004.06503 
+      EOBPars->abhf = PrecessingRemnantSpin(dyn);
+    }
+    if (VERBOSE) {
+      PRSECTN("Final black hole");
+      PRFORMd("BH_final_mass[Healy]",EOBPars->Mbhf); 
+      //PRFORMd("BH_final_spin[Healy]",EOBPars->abhf);
+      PRFORMd("BH_final_spin[JimenezForteza]",EOBPars->abhf);
+    }
+  }
+  
   /* Iteration index */
   int iter = 0;  
   int pasize = 0;
@@ -343,8 +360,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       eob_wav_hlm(dyn, hlm_t); 
       for (int k = 0; k < KMAX; k++) {
         if((hlm->kmask[k])){
-	  hlm->ampli[k][i] = hlm_t->ampli[k];
-	  hlm->phase[k][i] = hlm_t->phase[k]; 
+	        hlm->ampli[k][i] = hlm_t->ampli[k];
+	        hlm->phase[k][i] = hlm_t->phase[k]; 
         }
       }
     }
@@ -843,23 +860,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       Waveform_lm_free (hlm_nqc);
       
     } // NQC_HLM_COMPUTE
-
-    /** Final BH */
-    HealyBBHFitRemnant(chi1, chi2, q, &(EOBPars->Mbhf), NULL);
-    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-
-    
-    if (use_spins == MODE_SPINS_GENERIC) {   
-      // (4.17) of https://arxiv.org/abs/2004.06503 
-      EOBPars->abhf = PrecessingRemnantSpin(dyn);
-    }
-    
-    if (VERBOSE) {
-      PRSECTN("Final black hole");
-      PRFORMd("BH_final_mass[Healy]",EOBPars->Mbhf); 
-      //PRFORMd("BH_final_spin[Healy]",EOBPars->abhf);
-      PRFORMd("BH_final_spin[JimenezForteza]",EOBPars->abhf);
-    }
 
     /** BBH : add Ringdown */
     
