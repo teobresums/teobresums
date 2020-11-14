@@ -232,9 +232,12 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   Waveform *hpc = NULL; /* TD wvf */
   Waveform_lm *hmodes = NULL; /* modes */
+  Waveform_lm *hTmodes = NULL; /* twisted modes */
 
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
+  WaveformFD_lm *hfTmodes = NULL; /* twisted modes */
+
   int fc = 1;
   int default_choice = DEFAULT_PARS_BBH; /* default_choice, set to BBH */
 
@@ -246,21 +249,41 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
     EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
 
-  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = 1;
+  if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = DEFAULT_PARS_BNS;
+  //if(EOBPars->LambdaAl2 < 1. && EOBPars->LambdaBl2 > 1.) default_choice = DEFAULT_PARS_BHNS;
   EOBParameters_defaults (default_choice, EOBPars);  
 
   /* Read the dictionary in EOBPars */
   /* RG: there has to be a faster way...*/
 
+  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
+  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
+
+  /* Tides*/
   if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
     EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
   if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
     EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
-    
-  EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));
-  EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
-  EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
-  EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
+  
+  /* Spins*/
+  if (PyDict_GetItemString(dict, "chi1x") != NULL )
+      EOBPars->chi1x = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1x"));
+  if (PyDict_GetItemString(dict, "chi1y") != NULL )
+      EOBPars->chi1y = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1y"));
+  if (PyDict_GetItemString(dict, "chi1z") != NULL )
+      EOBPars->chi1z = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1z"));
+  if (PyDict_GetItemString(dict, "chi1") != NULL )
+      EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
+
+  if (PyDict_GetItemString(dict, "chi2x") != NULL )
+      EOBPars->chi1x = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2x"));
+  if (PyDict_GetItemString(dict, "chi2y") != NULL )
+      EOBPars->chi1y = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2y"));
+  if (PyDict_GetItemString(dict, "chi2z") != NULL )
+      EOBPars->chi1z = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2z"));
+  if (PyDict_GetItemString(dict, "chi1") != NULL )
+     EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
+
 
   for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
@@ -272,7 +295,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   SetOptionalVariables(dict);
 
   /* Run */
-  eob_set_params(default_choice, fc); 
+  eob_set_params(EOBPars, default_choice, fc); 
 
   /* Overwrite spin-spin parameters, if required */
   if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
@@ -294,7 +317,11 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
   }
 
-  int status = EOBRun(&hpc, &hfpc, &hmodes, &hfmodes, default_choice, fc);
+  int status = EOBRun(&hpc,    &hfpc, 
+                      &hmodes, &hfmodes, 
+                      &hTmodes, &hfTmodes,
+                      default_choice, fc);
+
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
   
   /*  Construct the output arrays */
@@ -367,8 +394,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     /* Free C memory */
     Waveform_free (hpc);          
     WaveformFD_free (hfpc);       
-    Waveform_lm_free(hmodes);     
+    Waveform_lm_free(hmodes);    
+    Waveform_lm_free (hTmodes);
     WaveformFD_lm_free(hfmodes);  
+    WaveformFD_lm_free (hfTmodes);
     EOBParameters_free (EOBPars);
 
     /* "Free" Python objects */
@@ -447,7 +476,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Waveform_free (hpc);          
     WaveformFD_free (hfpc); 
     Waveform_lm_free(hmodes); 
+    Waveform_lm_free (hTmodes);
     WaveformFD_lm_free(hfmodes);
+    WaveformFD_lm_free (hfTmodes);
     EOBParameters_free (EOBPars);
     
     /* "Free" Python objects */
