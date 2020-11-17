@@ -1179,7 +1179,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   
   // Eq.(A1) of https://arxiv.org/abs/1307.4418 for Momega
   dy[EOB_EVOLVE_SPIN_Momg] = 0.;
-  for (int i=11; i<=2; i--)
+  for (int i=1; i<12; i++)
     dy[EOB_EVOLVE_SPIN_Momg] += (a[i] + b[i]*lnomg)*pow(omg,(double)i*oothree);
   dy[EOB_EVOLVE_SPIN_Momg] += 1.;  
   dy[EOB_EVOLVE_SPIN_Momg] *= a[0]*pow(omg, eleven_o_three); // LO
