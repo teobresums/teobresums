@@ -4113,7 +4113,7 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
     alpha = malloc ( size * sizeof(double) );
     beta  = malloc ( size * sizeof(double) );
     gamma = malloc ( size * sizeof(double) );
-    if (0){ 
+    if (1){ 
     
       /* find the max of the dynamic's omega*/
       // CHECKME

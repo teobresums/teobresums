@@ -925,7 +925,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   const double nu4 = nu3*nu;
   const double nu5 = nu4*nu;
 
-  const double M = EOBPars->M; 
+  const double M = 1.; 
   const double M2 = SQ(M);
   const double MA = M*nu_to_X1(nu); 
   const double MB = M - MA;
@@ -1325,8 +1325,8 @@ int eob_spin_dyn(DynamicsSpin *dyn)
   
   /** Initial data */
   dyn->t = 0.;
-  double m1 = EOBPars->M*nu_to_X1(EOBPars->nu);
-  double m2 = EOBPars->M - m1;
+  double m1 = nu_to_X1(EOBPars->nu);
+  double m2 = 1 - m1;
   const double M12 = SQ(m1);
   const double M22 = SQ(m2);  
   dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *M12; 
@@ -1345,7 +1345,12 @@ int eob_spin_dyn(DynamicsSpin *dyn)
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],
 						  dyn->y[EOB_EVOLVE_SPIN_Lz]);
   dyn->y[EOB_EVOLVE_SPIN_gam] = Pi/2.; // P.8 https://arxiv.org/abs/2004.09442
-  dyn->y[EOB_EVOLVE_SPIN_Momg] = Pi * EOBPars->initial_frequency; 
+  
+  double time_unit_fact = 1;
+  if(!EOBPars->use_geometric_units)
+    time_unit_fact = time_units_factor(EOBPars->M);
+
+  dyn->y[EOB_EVOLVE_SPIN_Momg] = Pi * EOBPars->initial_frequency/time_unit_fact; 
   
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     dyn->data[v][0] = dyn->y[v];
