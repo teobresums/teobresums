@@ -532,6 +532,7 @@ typedef struct tagEOBParameters
   double ode_tmax;
   int ode_stop_afterNdt;
   int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
+  int project_spins;
 
   /* post-adiabatic */
   int postadiabatic_dynamics, postadiabatic_dynamics_stop;

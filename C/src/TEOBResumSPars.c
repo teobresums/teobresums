@@ -122,6 +122,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->pGSF_tidal =4.0;// p-power in GSF tidal potential model
 
   eobp->use_spins=1; // use spins ?
+  eobp->project_spins=0;
 
   /* options */
 

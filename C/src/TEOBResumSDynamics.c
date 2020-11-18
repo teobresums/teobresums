@@ -152,8 +152,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 
   
   /* Updated spins parallel to L, if required */
-  /*
-  if (usespins == MODE_SPINS_GENERIC) {
+  
+  if (usespins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
     
     double SA, SB; // projections of the spin parallel to hatL
     eob_spin_dyn_Sproj_interp(dyn->spins, t, &SA, &SB, NULL, 
@@ -174,7 +174,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 		  &EOBPars->S, &EOBPars->Sstar);
     
   }
-  */
+
 
   /* Unpack values */
   const double nu    = EOBPars->nu; 
