@@ -1,5 +1,4 @@
 # parfile for BBH q=1 nospin run from 10 Hz
-# ODE run
 # builds on default options
 
 #
@@ -43,8 +42,8 @@ compute_LSO = 1 # calculate LSO ?
 ode_stop_at_radius = 1. # rLR = 1.81...
 
 # interpolate on uniform grid?
-interp_uniform_grid = 0 # no, outputs on a grid of dt = 0.5 
-#interp_uniform_grid = 1 # yes, only h+,hx on a grid of dt_interp
+#interp_uniform_grid = 0 # no, outputs on a grid of dt = 0.5 
+interp_uniform_grid = 1 # yes, only h+,hx on a grid of dt_interp
 #interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
 
 dt_interp = 4.95667594616 # interpolation spacing, M/delta_t  = 4096 Hz for M = 10 M_sun

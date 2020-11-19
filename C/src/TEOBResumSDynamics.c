@@ -228,7 +228,9 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double Gtilde     = GS_0*S     + GSs_0*Sstar;
   const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
   const double duc_dr     = -uc2*drc_dr;
-  const double psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA);
+  const double psic       = fabs((duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA));
+  // FIXME: Different from Matlab code.
+  //        Added absolute value to avoid NaN
   const double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
   const double v_phi      = r_omg*Omg;
   const double x          = v_phi*v_phi;
@@ -340,9 +342,9 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar,
   static double cs10,cs20,cs30,cs40,cs02,cs12,cs04;
 
   /* Compute the nu-dep. coefficient at first call only */
-  static int firstcall = 1;  
-  if (firstcall) {
-    firstcall = 0;      
+  //static int firstcall = 1;  
+  if (EOBPars->firstcall[FIRSTCALL_EOBDYNSGS]) {
+    EOBPars->firstcall[FIRSTCALL_EOBDYNSGS] = 0;      
     double nu2   = nu*nu;
     /* coefficients of hat{GS} */
     c10 =  5./16.*nu;
@@ -394,8 +396,8 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar,
   double dGSs_dprstar = GSs0*dhGSs_dprstar + dGSs0_dprstar*hGSs; 
   
   /* derivatives of hat{G} with respect to uc */
-  double dhGS_duc  = -hGS*hGS*(  c10 + 2.*c20*uc  + 3.*c30*uc2 +  c12*prstar2);
-  double dhGSs_duc = -hGSs*hGSs*(cs10 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3 +  cs12*prstar2);
+  double dhGS_duc  = -hGS*hGS*(c10 + 2.*c20*uc  + 3.*c30*uc2 + c12*prstar2);
+  double dhGSs_duc = -hGSs*hGSs*(cs10 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3 + cs12*prstar2);
   
   /* derivatives of G with respect to uc */
   double dGS_duc  =  dGS0_duc*hGS  +  GS0*dhGS_duc;
@@ -734,7 +736,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   if (dyn->use_tidal) {
     /* Tides are always temporarily set as = NNLO to compute LR, 
        But we may want to define different searches intervals */
-    const int tides = par_get_i("use_tidal");
+    const int tides = EOBPars->use_tidal;
     if (tides == TIDES_TEOBRESUM_BHNS) {
       /* BHNS */
       //FIXME best interval

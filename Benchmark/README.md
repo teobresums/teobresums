@@ -49,6 +49,6 @@ $ make # build and run
 Notes:
 
  * The benchmark directory is named after the last git revision, a subdirectory with the date is created.
- * Information about the git revision is stored in a text file; the whole source code is backed up for safety.
+ * Information about the git revision are stored in a text file; the whole source code is backupped for safety.
 
 

@@ -1,0 +1,58 @@
+# parfile for BBH (5,0.9,-0.4) from 10 Hz (M = 15*Msun)
+# builds on default options
+
+#
+# use geometric units for I/O
+# everything is given geometric units and binary mass-rescaled 
+#
+
+use_geometric_units = 1
+
+#
+# Binary properties
+#
+
+q = 5. # mass ratio
+
+use_spins = 1
+chi1 = 0.9 # dimensionless spin 1 z-component 
+chi2 = -0.4 # dimensionless spin 2 z-component 
+
+initial_frequency = 0.00059105892307 # initial GW freq of 10 Hz for M = 15 M_sun
+
+#
+# Output dir, output modes 
+#
+
+output_dir = "./bbh_q5_s09s-04_HM/"
+output_hpc = 1 # switch this off to test performances!!!
+output_multipoles = 1
+output_lm   = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ];
+use_mode_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ];
+output_dynamics = 1
+use_flm = "HM"
+
+#
+# Setup
+#
+
+size = 200 # size of the arrays (chunks, dynamically extended)
+ode_timestep = "adaptive"
+compute_LR = 1 # calculate LR ?
+compute_LSO = 1 # calculate LSO ?
+ode_stop_at_radius = 1. # rLR = 1.81...
+
+# interpolate on uniform grid?
+#interp_uniform_grid = 0 # no, outputs on a grid of dt = 0.5 
+interp_uniform_grid = 1 # yes, only h+,hx on a grid of dt_interp
+#interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
+
+dt_interp = 3.3044505781 # M/delta_t = 4096 Hz for M=15*Msun
+
+
+
+
+
+
+
+

@@ -1,0 +1,52 @@
+# default parameters
+# key = val # description
+
+# ----------------------
+# physical input pars
+# ----------------------
+
+M = 1. # total binary mass
+q = 1. # mass ratio
+
+chi1 = 0. # dimensionless spin 1 z-component 
+chi2 = 0. # dimensionless spin 2 z-component 
+
+initial_frequency = 0.005 # initial GW frequency
+
+
+# ----------------------
+# options
+# ----------------------
+
+use_geometric_units = 1 # use geometric units for I/O ?
+
+use_speedytail = 1 # use special routine to speed up tail computation ?
+
+interp_uniform_grid = 0 # interpolate on uniform grid ? (Note for BBH this is done auto)
+
+postadiabatic_dynamics = "yes"
+postadiabatic_dynamics_N = 8 # post-adiabatic order
+postadiabatic_dynamics_size = 100 # grid size 
+postadiabatic_dynamics_rmin = 12. # stop post-adiabatic dynamics at this radius
+postadiabatic_dynamics_stop = "no" # stop after post-adiabatic dynamics
+
+compute_LR = 0 # calculate LR ?
+compute_LSO = 0 # calculate LSO ?
+
+output_dir = "./bbh_q1_s0s0_f0005_postadiab/" # output dir
+output_multipoles = 1 # output multipoles
+output_lm = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30] # indexes of multipoles to ouput
+output_dynamics = 1 # output dynamics
+
+# ----------------------
+# Evolution settings
+# ----------------------
+
+dt = 0.5 # timestep, used if input is given in geometric unit, reset based on srate otherwise
+
+size = 250 # size of the arrays (chunks, dynamically extended)
+ringdown_extend_array = 400 # grid points to extend arrays for ringdown attachment
+
+ode_timestep = "adaptive" # specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
+ode_stop_at_radius = 1. # stop ODE integration at this radius (if > 0)
+

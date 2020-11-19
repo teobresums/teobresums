@@ -1,0 +1,520 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     17200,        511]
+NotebookOptionsPosition[     15170,        454]
+NotebookOutlinePosition[     15509,        469]
+CellTagsIndexPosition[     15466,        466]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Find maximum by local interpolation ", "Section",
+ CellChangeTimes->{{3.735095771997088*^9, 3.735095771997403*^9}, {
+  3.735095894239931*^9, 3.735095963914605*^9}, {3.735114570544614*^9, 
+  3.735114573506474*^9}}],
+
+Cell["\<\
+We use Newton - Raphson formula for the first derivative, assuming we have a \
+uniform grid and we have found a maximum on that grid. Three or five - points \
+formulas can be used to refine the maximum estimate.\
+\>", "Text",
+ CellChangeTimes->{{3.735114618228547*^9, 3.735114728797689*^9}, {
+  3.735115296755933*^9, 3.73511531508749*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ StyleBox[
+  RowBox[{
+   RowBox[{"Example", ":", " ", "N"}], "=", "3"}], "Subsection"]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.},
+ CellChangeTimes->{{3.735096288608419*^9, 3.735096309541353*^9}, {
+  3.735114740967924*^9, 3.735114764788617*^9}}],
+
+Cell[BoxData[
+ RowBox[{"FullSimplify", "[", 
+  RowBox[{"Solve", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"D", "[", 
+      RowBox[{
+       RowBox[{"InterpolatingPolynomial", "[", 
+        RowBox[{
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"{", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"Subscript", "[", 
+               RowBox[{"x", ",", "i"}], "]"}], "+", 
+              RowBox[{"k", " ", "h"}]}], ",", 
+             RowBox[{"Subscript", "[", 
+              RowBox[{"f", ",", 
+               RowBox[{"i", "+", "k"}]}], "]"}]}], "}"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"k", ",", 
+             RowBox[{"-", "1"}], ",", "1"}], "}"}]}], "]"}], ",", "z"}], 
+        "]"}], ",", "z"}], "]"}], "\[Equal]", "0"}], ",", "z"}], "]"}], 
+  "]"}]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.},
+ CellChangeTimes->{{3.735095776429288*^9, 3.735095862670465*^9}, {
+   3.735096488509522*^9, 3.735096489381301*^9}, {3.735096531728751*^9, 
+   3.7350965464486837`*^9}, {3.735097974988741*^9, 3.735097977182996*^9}, {
+   3.7350980357532463`*^9, 3.7350980503747797`*^9}, {3.735098172139423*^9, 
+   3.735098175177143*^9}, {3.73509821558967*^9, 3.735098217402741*^9}, 
+   3.735114740968034*^9}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"{", 
+   RowBox[{"z", "\[Rule]", 
+    RowBox[{
+     FractionBox[
+      RowBox[{"h", " ", 
+       RowBox[{"(", 
+        RowBox[{
+         SubscriptBox["f", 
+          RowBox[{
+           RowBox[{"-", "1"}], "+", "i"}]], "-", 
+         SubscriptBox["f", 
+          RowBox[{"1", "+", "i"}]]}], ")"}]}], 
+      RowBox[{"2", " ", 
+       RowBox[{"(", 
+        RowBox[{
+         SubscriptBox["f", 
+          RowBox[{
+           RowBox[{"-", "1"}], "+", "i"}]], "-", 
+         RowBox[{"2", " ", 
+          SubscriptBox["f", "i"]}], "+", 
+         SubscriptBox["f", 
+          RowBox[{"1", "+", "i"}]]}], ")"}]}]], "+", 
+     SubscriptBox["x", "i"]}]}], "}"}], "}"}]], "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.},
+ CellChangeTimes->{{3.735095802260377*^9, 3.7350958078212*^9}, {
+   3.735095841908648*^9, 3.735095863132276*^9}, 3.735096284004499*^9, 
+   3.735096335009699*^9, 3.735096489854265*^9, {3.735096532477138*^9, 
+   3.7350965470212393`*^9}, 3.7350979956535997`*^9, {3.735098044843391*^9, 
+   3.735098050851192*^9}, 3.7350980908199987`*^9, {3.735098146716503*^9, 
+   3.73509817572418*^9}, 3.7350982179446077`*^9, 3.735114740968395*^9}]
+}, Open  ]],
+
+Cell["\<\
+Note the above formula is a one - step Newton - Raphson with 3 - points \
+finite differencing stencils\
+\>", "Text",
+ CellChangeTimes->{{3.7351147747391977`*^9, 3.7351148317260933`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"FullSimplify", "[", 
+  RowBox[{
+   RowBox[{"InterpolatingPolynomial", "[", 
+    RowBox[{
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"Subscript", "[", 
+           RowBox[{"x", ",", "i"}], "]"}], "+", 
+          RowBox[{"k", " ", "h"}]}], ",", 
+         RowBox[{"Subscript", "[", 
+          RowBox[{"f", ",", 
+           RowBox[{"i", "+", "k"}]}], "]"}]}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"k", ",", 
+         RowBox[{"-", "1"}], ",", "1"}], "}"}]}], "]"}], ",", "z"}], "]"}], "/.", 
+   RowBox[{"{", 
+    RowBox[{"z", "\[Rule]", 
+     RowBox[{
+      FractionBox[
+       RowBox[{"h", " ", 
+        RowBox[{"(", 
+         RowBox[{
+          SubscriptBox["f", 
+           RowBox[{
+            RowBox[{"-", "1"}], "+", "i"}]], "-", 
+          SubscriptBox["f", 
+           RowBox[{"1", "+", "i"}]]}], ")"}]}], 
+       RowBox[{"2", " ", 
+        RowBox[{"(", 
+         RowBox[{
+          SubscriptBox["f", 
+           RowBox[{
+            RowBox[{"-", "1"}], "+", "i"}]], "-", 
+          RowBox[{"2", " ", 
+           SubscriptBox["f", "i"]}], "+", 
+          SubscriptBox["f", 
+           RowBox[{"1", "+", "i"}]]}], ")"}]}]], "+", 
+      SubscriptBox["x", "i"]}]}], "}"}]}], "]"}]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.},
+ CellChangeTimes->{{3.735096240989811*^9, 3.735096279374917*^9}, {
+   3.735096537346589*^9, 3.735096537501989*^9}, {3.735098224634655*^9, 
+   3.735098253417078*^9}, {3.7350997664461737`*^9, 3.7350997749337*^9}, 
+   3.7351147409684973`*^9}],
+
+Cell[BoxData[
+ RowBox[{"-", 
+  FractionBox[
+   RowBox[{
+    SubsuperscriptBox["f", 
+     RowBox[{
+      RowBox[{"-", "1"}], "+", "i"}], "2"], "+", 
+    SuperscriptBox[
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"-", "4"}], " ", 
+        SubscriptBox["f", "i"]}], "+", 
+       SubscriptBox["f", 
+        RowBox[{"1", "+", "i"}]]}], ")"}], "2"], "-", 
+    RowBox[{"2", " ", 
+     SubscriptBox["f", 
+      RowBox[{
+       RowBox[{"-", "1"}], "+", "i"}]], " ", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"4", " ", 
+        SubscriptBox["f", "i"]}], "+", 
+       SubscriptBox["f", 
+        RowBox[{"1", "+", "i"}]]}], ")"}]}]}], 
+   RowBox[{"8", " ", 
+    RowBox[{"(", 
+     RowBox[{
+      SubscriptBox["f", 
+       RowBox[{
+        RowBox[{"-", "1"}], "+", "i"}]], "-", 
+      RowBox[{"2", " ", 
+       SubscriptBox["f", "i"]}], "+", 
+      SubscriptBox["f", 
+       RowBox[{"1", "+", "i"}]]}], ")"}]}]]}]], "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.},
+ CellChangeTimes->{{3.7350997755111227`*^9, 3.735099801784337*^9}, 
+   3.735114740968617*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ StyleBox[
+  RowBox[{"Interpolating", " ", "poly"}], "Subsection"]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{{3.735096288608419*^9, 3.735096309541353*^9}, {
+   3.735113783358058*^9, 3.735113795439315*^9}, 3.735113849381484*^9, 
+   3.7351147567988033`*^9}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"CodeRule", "=", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"Subscript", "[", 
+       RowBox[{"x", ",", "i"}], "]"}], "\[Rule]", " ", "x0"}], ",", " ", 
+     RowBox[{"z", "\[Rule]", " ", "xmax"}], ",", " ", 
+     RowBox[{"h", "\[Rule]", " ", "dx"}]}], "}"}]}], ";"}]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{{3.735113939069285*^9, 3.735113985501101*^9}, {
+   3.735114023640856*^9, 3.735114026358265*^9}, 3.735114756798976*^9}],
+
+Cell["N = 3", "Subsubsection",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{3.735113804341654*^9, 3.735113849382184*^9, 
+  3.735114756799081*^9}],
+
+Cell[BoxData[
+ RowBox[{"P3", "=", 
+  RowBox[{"FullSimplify", "[", 
+   RowBox[{"InterpolatingPolynomial", "[", 
+    RowBox[{
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"Subscript", "[", 
+           RowBox[{"x", ",", "i"}], "]"}], "+", 
+          RowBox[{"k", " ", "h"}]}], ",", 
+         RowBox[{"Subscript", "[", 
+          RowBox[{"f", ",", 
+           RowBox[{"i", "+", "k"}]}], "]"}]}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"k", ",", 
+         RowBox[{"-", "1"}], ",", "1", ",", "1"}], "}"}]}], "]"}], ",", "z"}],
+     "]"}], "]"}]}]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{{3.73511384938232*^9, 3.735113876782229*^9}, 
+   3.735114756799217*^9}],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{
+   RowBox[{
+    RowBox[{"-", 
+     SubscriptBox["f", 
+      RowBox[{
+       RowBox[{"-", "1"}], "+", "i"}]]}], " ", 
+    RowBox[{"(", 
+     RowBox[{"z", "-", 
+      SubscriptBox["x", "i"]}], ")"}], " ", 
+    RowBox[{"(", 
+     RowBox[{"h", "-", "z", "+", 
+      SubscriptBox["x", "i"]}], ")"}]}], "+", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"h", "+", "z", "-", 
+      SubscriptBox["x", "i"]}], ")"}], " ", 
+    RowBox[{"(", 
+     RowBox[{
+      RowBox[{
+       SubscriptBox["f", 
+        RowBox[{"1", "+", "i"}]], " ", 
+       RowBox[{"(", 
+        RowBox[{"z", "-", 
+         SubscriptBox["x", "i"]}], ")"}]}], "+", 
+      RowBox[{"2", " ", 
+       SubscriptBox["f", "i"], " ", 
+       RowBox[{"(", 
+        RowBox[{"h", "-", "z", "+", 
+         SubscriptBox["x", "i"]}], ")"}]}]}], ")"}]}]}], 
+  RowBox[{"2", " ", 
+   SuperscriptBox["h", "2"]}]]], "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{{3.7351138550470943`*^9, 3.7351138776513643`*^9}, 
+   3.7351139878369083`*^9, 3.735114029138085*^9, 3.7351147567992887`*^9}],
+
+Cell[BoxData[
+ RowBox[{"CForm", "[", 
+  RowBox[{"P3", "/.", "CodeRule"}], "]"}]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{{3.735113883873711*^9, 3.7351139337853317`*^9}, {
+   3.735113970267889*^9, 3.735113972949726*^9}, 3.735114756799461*^9}],
+
+Cell["\<\
+(-((dx + x0 - xmax)*(-x0 + xmax)*Subscript(f,-1 + i)) + 
+     (dx - x0 + xmax)*(2*(dx + x0 - xmax)*Subscript(f,i) + 
+        (-x0 + xmax)*Subscript(f,1 + i)))/(2.*Power(dx,2))\
+\>", "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{
+  3.7351139236124163`*^9, {3.7351139732818317`*^9, 3.7351139886597967`*^9}, 
+   3.73511403002381*^9, 3.735114756799514*^9}],
+
+Cell["N = 5", "Subsubsection",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{{3.735096316624071*^9, 3.735096330992467*^9}, 
+   3.735113816247375*^9, 3.73511384938245*^9, 3.735114756799589*^9}],
+
+Cell[BoxData[
+ RowBox[{"P5", "=", 
+  RowBox[{"FullSimplify", "[", 
+   RowBox[{"InterpolatingPolynomial", "[", 
+    RowBox[{
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"Subscript", "[", 
+           RowBox[{"x", ",", "i"}], "]"}], "+", 
+          RowBox[{"k", " ", "h"}]}], ",", 
+         RowBox[{"Subscript", "[", 
+          RowBox[{"f", ",", 
+           RowBox[{"i", "+", "k"}]}], "]"}]}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"k", ",", 
+         RowBox[{"-", "2"}], ",", "2", ",", "1"}], "}"}]}], "]"}], ",", "z"}],
+     "]"}], "]"}]}]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{{3.7351137055651493`*^9, 3.735113728910315*^9}, 
+   3.735113849382606*^9, {3.735113879733485*^9, 3.73511388030308*^9}, 
+   3.735114756799694*^9}],
+
+Cell[BoxData[
+ RowBox[{
+  FractionBox["1", 
+   RowBox[{"24", " ", 
+    SuperscriptBox["h", "4"]}]], 
+  RowBox[{"(", 
+   RowBox[{
+    RowBox[{
+     SubscriptBox["f", 
+      RowBox[{
+       RowBox[{"-", "2"}], "+", "i"}]], " ", 
+     RowBox[{"(", 
+      RowBox[{"z", "-", 
+       SubscriptBox["x", "i"]}], ")"}], " ", 
+     RowBox[{"(", 
+      RowBox[{"h", "+", "z", "-", 
+       SubscriptBox["x", "i"]}], ")"}], " ", 
+     RowBox[{"(", 
+      RowBox[{"h", "-", "z", "+", 
+       SubscriptBox["x", "i"]}], ")"}], " ", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"2", " ", "h"}], "-", "z", "+", 
+       SubscriptBox["x", "i"]}], ")"}]}], "+", 
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"2", " ", "h"}], "+", "z", "-", 
+       SubscriptBox["x", "i"]}], ")"}], " ", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"-", "4"}], " ", 
+        SubscriptBox["f", 
+         RowBox[{
+          RowBox[{"-", "1"}], "+", "i"}]], " ", 
+        RowBox[{"(", 
+         RowBox[{"z", "-", 
+          SubscriptBox["x", "i"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{"h", "-", "z", "+", 
+          SubscriptBox["x", "i"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"2", " ", "h"}], "-", "z", "+", 
+          SubscriptBox["x", "i"]}], ")"}]}], "+", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"h", "+", "z", "-", 
+          SubscriptBox["x", "i"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"6", " ", 
+           SubscriptBox["f", "i"], " ", 
+           RowBox[{"(", 
+            RowBox[{"h", "-", "z", "+", 
+             SubscriptBox["x", "i"]}], ")"}], " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{"2", " ", "h"}], "-", "z", "+", 
+             SubscriptBox["x", "i"]}], ")"}]}], "+", 
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{"z", "-", 
+             SubscriptBox["x", "i"]}], ")"}], " ", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"-", 
+               SubscriptBox["f", 
+                RowBox[{"2", "+", "i"}]]}], " ", 
+              RowBox[{"(", 
+               RowBox[{"h", "-", "z", "+", 
+                SubscriptBox["x", "i"]}], ")"}]}], "+", 
+             RowBox[{"4", " ", 
+              SubscriptBox["f", 
+               RowBox[{"1", "+", "i"}]], " ", 
+              RowBox[{"(", 
+               RowBox[{
+                RowBox[{"2", " ", "h"}], "-", "z", "+", 
+                SubscriptBox["x", "i"]}], ")"}]}]}], ")"}]}]}], ")"}]}]}], 
+      ")"}]}]}], ")"}]}]], "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{
+  3.7351137302795877`*^9, {3.735113849383106*^9, 3.735113880822526*^9}, 
+   3.7351142930082912`*^9, 3.735114756799738*^9}],
+
+Cell[BoxData[
+ RowBox[{"CForm", "[", 
+  RowBox[{"P5", "/.", "CodeRule"}], "]"}]], "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{{3.735114303479494*^9, 3.735114303565666*^9}, 
+   3.735114756799849*^9}],
+
+Cell["\<\
+((dx + x0 - xmax)*(2*dx + x0 - xmax)*(-x0 + xmax)*(dx - x0 + xmax)*
+      Subscript(f,-2 + i) + (2*dx - x0 + xmax)*
+      (-4*(dx + x0 - xmax)*(2*dx + x0 - xmax)*(-x0 + xmax)*
+         Subscript(f,-1 + i) + 
+        (dx - x0 + xmax)*(6*(dx + x0 - xmax)*(2*dx + x0 - xmax)*
+            Subscript(f,i) + (-x0 + xmax)*
+            (4*(2*dx + x0 - xmax)*Subscript(f,1 + i) - 
+              (dx + x0 - xmax)*Subscript(f,2 + i)))))/(24.*Power(dx,4))\
+\>", "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.},
+ CellChangeTimes->{3.735114304260597*^9, 3.735114756799897*^9}]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{808, 911},
+WindowMargins->{{Automatic, 181}, {41, Automatic}},
+FrontEndVersion->"10.3 for Linux x86 (64-bit) (December 10, 2015)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 219, 3, 65, "Section"],
+Cell[802, 27, 349, 6, 77, "Text"],
+Cell[CellGroupData[{
+Cell[1176, 37, 279, 6, 41, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.}],
+Cell[1458, 45, 1259, 31, 99, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.}],
+Cell[2720, 78, 1191, 31, 52, "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.}]
+}, Open  ]],
+Cell[3926, 112, 196, 4, 33, "Text"],
+Cell[CellGroupData[{
+Cell[4147, 120, 1594, 46, 114, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.}],
+Cell[5744, 168, 1090, 37, 57, "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10001.}]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[6871, 210, 310, 6, 41, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[7184, 218, 518, 12, 32, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[7705, 232, 172, 3, 35, "Subsubsection",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[7880, 237, 778, 22, 77, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[8661, 261, 1100, 35, 50, "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[9764, 298, 283, 5, 32, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[10050, 305, 398, 8, 82, "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[10451, 315, 218, 3, 35, "Subsubsection",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[10672, 320, 852, 23, 77, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[11527, 345, 2788, 85, 97, "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[14318, 432, 235, 5, 32, "Input",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}],
+Cell[14556, 439, 586, 11, 172, "Output",
+ CellGroupingRules->{GroupTogetherGrouping, 10002.}]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)

@@ -199,7 +199,6 @@ double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Hef
 }
 
 /** Flux calculation for spinning systems */
-//FIXME: NQC are not applied in spin case!
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
   const double nu = dyn->nu;
@@ -242,8 +241,14 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
     /* Correct (4,1), (4,3)  ( sp4 = (1-2nu)^2 ) */
     double sp4x8 = SQ((1-2*nu)) * gsl_pow_int(x, 8);
-    FNewtlm[5] = CNlm[5] * sp4x8; /* (4,1) */
-    FNewtlm[7] = CNlm[7] * sp4x8; /* (4,3) */
+    FNewtlm[5]  = CNlm[5] * sp4x8; /* (4,1) */
+    FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
+    
+    /* Correcting (5,5) for Higher Modes */
+    if (EOBPars->use_flm == USEFLM_HM ){
+      FNewtlm[13] = CNlm[13] * sp4x8;
+    }
+    
   } else {
     if (usetidal) {
       /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
@@ -270,7 +275,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   /** NQC correction to the modulus of the (l,m) waveform */  
   for (int k = 0; k < KMAX; k++) hlmNQC[k] = 1.; /* no NQC */
-  if (!(STREQUAL(par_get_s("nqc_coefs_flx"),"none"))) {
+  
+  if (!(EOBPars->nqc_coefs_flx == NQC_FLX_NONE)) {
+    
     Waveform_lm_t hNQC;
     /* eob_wav_hlmNQC_nospin201602(nu,r,pr_star,Omega,ddotr, &hNQC); */ 
     eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, NQC->flx, &hNQC);
@@ -278,9 +285,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     /*
       for (int k = 0; k < maxk; k++) {
       if (NQC->hlm->activemode[k]) {
-	hlmNQC[k] = hNQC.ampli[k]; 
+      hlmNQC[k] = hNQC.ampli[k]; 
       }
-    }
+      }
     */
     /* Use only the 22:  */
     hlmNQC[1] = hNQC.ampli[1]; 
@@ -307,11 +314,11 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
 
   /** Total multipolar flux */
-  for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k]; 
-
+  for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k];
+  
   /** Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
- 
+    
   /** Horizon flux */ 
   if (!(usetidal)) {
     double hatFH;

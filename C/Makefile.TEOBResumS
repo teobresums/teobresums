@@ -25,20 +25,22 @@ LIB=$(LIBD)/lib$(NAME).a
 CC=gcc
 CFLAGS=-std=c99 `gsl-config --cflags` # Debug
 
-#CFLAGS +=-g  # Debug
+CFLAGS +=-g  # Debug
 #CFLAGS +=-pg # Debug & Profile
-CFLAGS +=-O3  # Optimized
+#CFLAGS +=-O3  # Optimized
 
 CFLAGS += -DDEBUG=0 # 1/0 to turn on/off debug mode
 CFLAGS += -DVERBOSE=0 # 1/0 to turn on/off verbose mode
 
 #CFLAGS += -fopenmp # OpenMP
+#CFLAGS += -DUSETIMERS=0 # OpenMP timers, note they need OpenMP
 
 CFLAGS += -DUSEGRAVITOMAGNETICTERMS=1 # 1/0 to turn on gravitomagnetic terms
 CFLAGS += -DUSEBTIDALPOTENTIAL=1 # 1/0 to turn on B tidal terms
 #CFLAGS += -DUSERK45=0 # use rk45? rk8pd is default
 #CFLAGS += -DPOSTPOSTCIRCULAR=0 # 1/0 to turn on post-post-circular initial conditions
 #CFLAGS += -DEXCLUDESPINSPINTIDES=1 # 1/0 to turn off/on (exclude) spin^2-tidal couplings
+CFLAGS += -DEOBRUN=1 # use old/new main #TO BE REMOVED (use only new)
 
 LFLAGS=`gsl-config --libs`
 LDLFLAGS=-lgsl -lgslcblas -lm -lconfig
@@ -47,9 +49,9 @@ LDLFLAGS=-lgsl -lgslcblas -lm -lconfig
 # rules
 #
 
-all: $(EXE) # $(LIB)
+all: $(EXE) # pywrap $(LIB)
 	@echo "All done"
-
+	
 $(EXE): $(OBJ)
 	@echo "Building $@ ..."
 	@$(CC) $(CFLAGS) $(LFLAGS) $(OBJ) -o $@ $(LDLFLAGS)

@@ -1,0 +1,23 @@
+# parfile for BNS q=1.5 spins=0.2+0.4 run 
+# builds on default options
+
+use_geometric_units = 1 # use geometric units for I/O ?
+q = 1.5 # mass ratio
+use_spins = 1
+chi1 = 0.2 # dimensionless spin 1 z-component 
+chi2 = 0.4 # dimensionless spin 2 z-component 
+initial_frequency = 0.0004 # initial GW freq
+size = 5000 # size of the arrays (chunks, dynamically extended)
+output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34 ];
+output_dynamics = 1
+compute_LR = 0 # calculate LR ?
+compute_LSO = 0 # calculate LSO ?
+ode_timestep = "adaptive"
+tides = "TEOBRESUM3"
+tides_gravitomagnetic = "GSF"
+LambdaAl2 = 392.  # SLY 1.35
+LambdaBl2 = 392.
+use_Yagi_fits = 1
+ode_stop_at_radius = 4.0
+
+output_dir = "./bns_q1.5_s02s04_f00004/" # output dir
