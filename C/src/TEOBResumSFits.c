@@ -41,6 +41,16 @@ double eob_a6c_fit_HM(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
+/** Fit of a6c, eccentric case */
+double eob_a6c_fit_ecc(double nu)
+{  
+  const double a0 = -0.052514;
+  const double a1 = +2.3486;
+  const double b1 = 24.6006;
+  
+  return (a0 + a1*nu)*exp(b1*nu);
+}
+
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
     Note: c3 = 0 with tides*/
 double eob_c3_fit_global(double nu, double a1, double a2)

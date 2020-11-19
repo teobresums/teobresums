@@ -1246,7 +1246,10 @@ void eob_set_params(int default_choice, int firstcall)
   
   /** Set more as needed ... */
   EOBPars->a6c = 0.;
-  if (EOBPars->use_flm == USEFLM_HM) {
+  if (ecc != 0.) {
+    /* Eccentric case */
+    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
+  } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
   } else {
@@ -1595,7 +1598,10 @@ void eob_set_params_old(char *s, int n)
   
   /** Set more as needed ... */
   double a6c = 0.;
-  if (EOBPars->use_flm == USEFLM_HM) {
+  if (EOBPars->ecc != 0.) {
+    /* Eccentric case */
+    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
+  } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     a6c = eob_a6c_fit_HM(nu);
   } else {
