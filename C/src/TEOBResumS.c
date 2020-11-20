@@ -273,16 +273,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Final BH */
   if (!(dyn->use_tidal)) {
-    HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
-    dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+    /** from BBH */
+    //HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
+    //dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+
+     /** Final BH from BHNS */
+    double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+    double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+    eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), LambdaBl2, m_bh, a_bh);
+    
     if (VERBOSE) {
       PRSECTN("Final black hole");
-      PRFORMd("BH_final_mass[Healy]",dyn->Mbhf); 
-      PRFORMd("BH_final_spin[Healy]",dyn->abhf);
-      PRFORMd("BH_final_spin[JimenezForteza]",dyn->abhf);
+      PRFORMd("BH_final_mass",dyn->Mbhf); 
+      PRFORMd("BH_final_spin",dyn->abhf);
+      /** PRFORMd("BH_final_spin[JimenezForteza]",dyn->abhf); */
     }
     EOBPars->Mbhf = dyn->Mbhf;
-    EOBPars->abhf = dyn->abhf;
+    EOBPars->abhf = dyn->abhf; 
   }
 
   /* Iteration index */

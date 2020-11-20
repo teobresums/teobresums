@@ -649,6 +649,7 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
+void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda, double m_bh, double a_bh);
 double eob_a6c_fit(double nu);
 double eob_a6c_fit_HM(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);

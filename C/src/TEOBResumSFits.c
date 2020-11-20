@@ -20,6 +20,47 @@
 
 #include "TEOBResumS.h"
 
+/** Fits of BH remnant from BHNS Frank's paper (2020) */
+void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda, double m_bh, double a_bh)
+{
+  /** m_bh & a_bh are the remnant mass & spin of Jimenez et al. fits (2017) */
+  double nu      = q/((1.+q)*(1.+q));
+
+     /** Mass Parameters                 Spin Parameters */                
+  const double p110 = -1.83E-3;    const double q110 = -5.44E-3; 
+  const double p111 = 2.39E-3;     const double q111 = 7.91E-3;
+  const double p120 = 4.29E-3;     const double q120 = 2.33E-2;
+  const double p121 = 9.8E-3;      const double q121 = 2.48E-2;
+  const double p210 = 2.34E-7;     const double q210 = -8.57E-7;
+  const double p211 = -8.28E-1;    const double q211 = -2.82E-6;
+  const double p220 = -1.64E-6;    const double q220 = 6.61E-6;
+  const double p221 = 8.08E-6;     const double q221 = 4.29E-5;
+  const double p310 = -2.01E-2;    const double q310 = -3.04E-2;
+  const double p311 = 1.32E-1;     const double q311 = -2.55E-6;
+  const double p320 = 6.51E-2;     const double q320 = 1.48E-1;
+  const double p321 = -1.43E-1;    const double q321 = -4.28E-1;
+
+  double p11 = p110*a + p111;      double q11 = q110*a + q111;
+  double p12 = p120*a + p121;      double q12 = q120*a + q121;
+  double p21 = p210*a + p211;      double q21 = q210*a + q211;
+  double p22 = p220*a + p221;      double q22 = q220*a + q221;
+  double p31 = p310*a + p331;      double q31 = q310*a + q331;
+  double p32 = p320*a + p321;      double q32 = q320*a + q321;
+
+  double p1 = p11*nu + p12*nu*nu;  double q1 = q11*nu + q12*nu*nu;
+  double p2 = p21*nu + p22*nu*nu;  double q2 = q21*nu + q22*nu*nu;
+  double p3 = p31*nu + p32*nu*nu;  double q3 = q31*nu + q32*nu*nu;
+  
+  double mbh;
+  double abh;
+
+  mbh = m_bh * ( (1+p1*lambda+p2*lambda*lambda)/((1+p3*p3*lambda)**2) );
+  abh = a_bh * ( (1+q1*lambda+q2*lambda*lambda)/((1+q3*q3*lambda)**2) );
+
+  *mass = mbh;
+  *spin = abh;
+}
+
 /** Fit of a6c, TEOBResumS paper Nagar et al. (2018) */
 double eob_a6c_fit(double nu)
 {
