@@ -20,11 +20,11 @@ iota = 0.
 #iota = 150./360.*np.pi
 
 # Use 22 mode only
-#def modes_to_k(modes):
-#    return [int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes]
+def modes_to_k(modes):
+    return [int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes]
 
 
-#k = modes_to_k([[2,2]])
+k = modes_to_k([[2,2]])
 
 # Define a dictionary with input parameters
 pars = {
@@ -36,8 +36,8 @@ pars = {
     'chi2'               : 0,
     'domain'             : 0,      # TD
     'arg_out'            : 1,      # Output hlm/hflm. Default = 0
-    'use_mode_lm'        : [0],      # List of modes to use/output through EOBRunPy
-    'output_lm'          : [0],      # List of modes to print on file
+    'use_mode_lm'        : k,      # List of modes to use/output through EOBRunPy
+    'output_lm'          : k,      # List of modes to print on file
     'srate_interp'       : 4096.,  # srate at which to interpolate. Default = 4096.
     'use_geometric_units': 1,      # output quantities in geometric units. Default = 1
     'initial_frequency'  : 0.005,    # in Hz if use_geometric_units = 0, else in geometric units 
