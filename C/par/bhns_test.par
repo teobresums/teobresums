@@ -13,18 +13,18 @@ distance = 410.   # distance in megaparsecs
 inclination = 0.0
 use_spins = 1 # use spins ?
 chi1 = 0. # dimensionless spin 1 z-component 
-chi2 = -0.2 # dimensionless spin 2 z-component 
+chi2 = 0. # dimensionless spin 2 z-component 
 use_flm ="HM"
-#nqc="auto"
-#nqc_coefs_flx = "nrfit_spin20202"
-#nqc_coefs_hlm = "compute"
+nqc="auto"
+nqc_coefs_flx = "nrfit_spin20202"
+nqc_coefs_hlm = "compute"
 initial_frequency = 0.005 # in units of Hz
 
-tides = "TEOBRESUM"
-tides_gravitomagnetic = "yes"
-LambdaAl2 = 2.    #keep this small
-LambdaBl2 = 791. # SLy mB = 1.35*Msun
-use_lambda234_fits = 1
+#tides = "TEOBRESUM"
+#tides_gravitomagnetic = "yes"
+#LambdaAl2 = 2.    #keep this small
+#LambdaBl2 = 791. # SLy mB = 1.35*Msun
+#use_lambda234_fits = 1
 
 
 #
@@ -32,7 +32,7 @@ use_lambda234_fits = 1
 #
 #[0,1,2] = 21,22,31
 
-output_dir = "./bhns0007/" # output dir
+output_dir = "./bhns0002_bbh/" # output dir
 output_hpc = 0 # switch this off to test performances!!!
 output_multipoles = 1 # output multipoles
 output_lm = [0,1,2,3,4,5,6,7,8,9,10,11,12,13] # indexes of multipoles to output
