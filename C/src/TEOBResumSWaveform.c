@@ -4099,7 +4099,7 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
 
 /** Twist TD multipoles */
 void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
-		  Waveform_lm *hTlm)
+		  Waveform_lm *hTlm, Waveform_lm *hTlm_neg)
 {  
   const int size = hlm->size;
   int *activemode = hlm->kmask;
@@ -4169,62 +4169,67 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
     if (!activemode[k]) continue;
     
     int ell = LINDEX[k];
-    int emm = MINDEX[k];
-    double eps = pow(-1., ell);
+    for (int q=0; q <2; q++){  // q=0->m >0, q =1->m < 0
+      int emm = MINDEX[k]*pow(-1, q);
+      double eps = pow(-1., ell);
+      
+      // for each time ...
+      for (int i = 0; i < size; i++) {
+        // ... do the twist (sum up on m')
+        double sumr = 0;
+        double sumi = 0;
+        for (int n = -ell; n <= ell; n++) {
+          if (n==0) continue; // skip m=0 modes
+          int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
     
-    // for each time ...
-    for (int i = 0; i < size; i++) {
+          double cosng = cos( n * gamma[i] );
+          double sinng = sin( n * gamma[i] );
+    
+          // d^l_{m,s}(angle)
+          //CHECKME: index correct of Wigner matrices correct?
+          double dl_mn = wigner_d_function(ell, emm,n, -beta[i]);
 
-      // ... do the twist (sum up on m')
-      double sumr = 0;
-      double sumi = 0;
-      for (int n = -ell; n <= ell; n++) {
-	      if (n==0) continue; // skip m=0 modes
-	      int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
-	
-	      double cosng = cos( n * gamma[i] );
-	      double sinng = sin( n * gamma[i] );
-	
-	      // d^l_{m,s}(angle)
-	      //CHECKME: index correct of Wigner matrices correct?
-	      double dl_mn = wigner_d_function(ell, emm,n, -beta[i]);
+          // hlm modes are given as phase/amplitude
+          // but here we need real/imag
+          double real=0, imag=0;
+          rmap(&real,&imag, &(hlm->phase[j][i]), &(hlm->ampli[j][i]), 0);
 
-	      // hlm modes are given as phase/amplitude
-	      // but here we need real/imag
-	      double real=0, imag=0;
-	      rmap(&real,&imag, &(hlm->phase[j][i]), &(hlm->ampli[j][i]), 0);
-
-	      // Here we need to deal with m<0 modes
-	      // H_{l-m} = (-)^l H^{*}_{lm}
-	      double hln_real, hln_imag;
-	      if (n<0) {
-	        hln_real =   eps * real;
-	        hln_imag = - eps * imag;	  
-	      } else {
-	        hln_real = real;
-	        hln_imag = imag;
-	      }
-	  // 	sumr += cosng * dl_mn * hln_real;
-	  // sumi += sinng * dl_mn * hln_imag;
-	      sumr += dl_mn*(cosng * hln_real - sinng * hln_imag);
-	      sumi += dl_mn*(sinng * hln_real + cosng * hln_imag);
-	
-      } // n (m')
-      // double hlm_real = - sumr * cos( emm * alpha[i] );
-      // double hlm_imag = - sumi * sin( emm * alpha[i] );
-      double hTlm_real =   sumr * cos( emm * alpha[i] ) + sumi * sin( emm * alpha[i] );
-      double hTlm_imag = - sumr * sin( emm * alpha[i] ) + sumi * cos( emm * alpha[i] );
-      
-      // Re-map back into phase/ampli
-      rmap(&hTlm_real,&hTlm_imag, &(hTlm->phase[k][i]), &(hTlm->ampli[k][i]), 1);
-      
-    }// i (times)
+          // Here we need to deal with m<0 modes
+          // H_{l-m} = (-)^l H^{*}_{lm}
+          double hln_real, hln_imag;
+          if (n<0) {
+            hln_real =   eps * real;
+            hln_imag = - eps * imag;	  
+          } else {
+            hln_real = real;
+            hln_imag = imag;
+          }
+      // 	sumr += cosng * dl_mn * hln_real;
+      // sumi += sinng * dl_mn * hln_imag;
+          sumr += dl_mn*(cosng * hln_real - sinng * hln_imag);
+          sumi += dl_mn*(sinng * hln_real + cosng * hln_imag);
+    
+        } // n (m')
+        // double hlm_real = - sumr * cos( emm * alpha[i] );
+        // double hlm_imag = - sumi * sin( emm * alpha[i] );
+        double hTlm_real =   sumr * cos( emm * alpha[i] ) + sumi * sin( emm * alpha[i] );
+        double hTlm_imag = - sumr * sin( emm * alpha[i] ) + sumi * cos( emm * alpha[i] );
+        
+        // Re-map back into phase/ampli
+        if(!q)
+          rmap(&hTlm_real,&hTlm_imag, &(hTlm->phase[k][i]), &(hTlm->ampli[k][i]), 1);
+        else
+          rmap(&hTlm_real,&hTlm_imag, &(hTlm_neg->phase[k][i]), &(hTlm_neg->ampli[k][i]), 1);
+        
+      }// i (times)
+    }
   }// k (active modes)
   
   hTlm->size = size;
-  for(int i = 0; i < size; i++)
+  for(int i = 0; i < size; i++){
     hTlm->time[i] = hlm->time[i];
-  
+    hTlm_neg->time[i]= hlm->time[i];
+  }
   if (interp_spin_abc) {
     free(alpha);
     free(beta);
@@ -4234,7 +4239,7 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
 }
 
 /** (h+, hx) polarizations from the multipolar waveform */
-void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
+void compute_hpc_old(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
 {  
 #ifdef _OPENMP
   if (USETIMERS) openmp_timer_start("compute_hpc");
@@ -4297,6 +4302,91 @@ void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double 
 	      sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
 	    }
 	  }    
+        }
+        /* h = h+ - i hx */
+        hpc->real[i] = sumr;
+        hpc->imag[i] = -sumi;
+    }
+  }
+#ifdef _OPENMP
+  if (USETIMERS) openmp_timer_stop("compute_hpc");
+#endif
+}
+
+void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
+{  
+#ifdef _OPENMP
+  if (USETIMERS) openmp_timer_start("compute_hpc");
+#endif
+#pragma omp parallel 
+  {
+    double Y_real[KMAX], Y_imag[KMAX];
+    int mneg = 0; 
+    if (hlm_neg == NULL) mneg =1;
+    double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
+    double Aki, cosPhi, sinPhi;
+    double sumr, sumi;
+    int activemode[KMAX];
+    double Msun = M;
+    set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
+    if (!(EOBPars->use_geometric_units)) Msun = M/MSUN_S;
+#if (DEBUG)
+    printf("h+,x: nu = %e M = %e D = %e Mpc phi = %e iota = %e prefactor = %e\n",
+	   nu,Msun,distance,phi,iota,amplitude_prefactor);
+#endif
+    
+    /* Precompute Ylm */
+    for (int k = 0; k < KMAX; k++ ) {
+      if (!activemode[k]) continue;
+      spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
+      /* add m<0 modes */
+      if ( (mneg) && (MINDEX[k]!=0) )
+	      spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
+      }
+      
+    /* Sum up  hlm * Ylm 
+     * Note because EOB code defines phase>0, 
+     * but the convention is h_lm = A_lm Exp[-I phi_lm] we have
+     * h_{l,m>=0} = A_lm ( cos(phi_lm) - I*sin(phi_lm) ) for m>0 and
+     * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
+     * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
+     */
+#pragma omp for
+    for (int i = 0; i < hlm->size; i++) {
+        hpc->time[i] = hlm->time[i]*M; 
+        sumr = sumi = 0.;
+	
+        /* Loop over modes */
+        for (int k = 0; k < KMAX; k++ ) {
+	        if (!activemode[k]) continue;
+          Aki  = amplitude_prefactor * hlm->ampli[k][i];
+          cosPhi = cos( hlm->phase[k][i] );
+          sinPhi = sin( hlm->phase[k][i] );
+          sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
+          sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
+          
+        /* precessing wf, there is no symmetry between +m and -m*/
+          if (EOBPars->use_spins==MODE_SPINS_GENERIC){
+            if (!activemode[k]) continue;
+            Aki  = amplitude_prefactor * hlm_neg->ampli[k][i];
+            cosPhi = cos( hlm_neg->phase[k][i] );
+            sinPhi = sin( hlm_neg->phase[k][i] );
+            sumr += Aki*(cosPhi*Y_real_mneg[k] + sinPhi*Y_imag_mneg[k]);
+            sumi += Aki*(cosPhi*Y_imag_mneg[k] - sinPhi*Y_real_mneg[k]); 
+          }
+
+        /* add m<0 modes */
+          if ( (mneg) && (MINDEX[k]!=0) ) {
+            /* H_{l-m} = (-)^l H^{*}_{lm} */
+            if (LINDEX[k] % 2) {
+              sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
+              sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+            }
+            else { 
+              sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
+              sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
+            }
+          }   
         }
         /* h = h+ - i hx */
         hpc->real[i] = sumr;

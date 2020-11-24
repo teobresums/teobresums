@@ -60,7 +60,8 @@ int main (int argc, char* argv[])
   
   Waveform *hpc = NULL; /* TD wvf */
   Waveform_lm *hmodes = NULL; /* modes */
-  Waveform_lm *hTmodes = NULL; /* twisted modes */
+  Waveform_lm *hTmodes = NULL; /* twisted modes, m>0*/
+  Waveform_lm *hTmmodes = NULL; /* twisted modes, m<0 */
   
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
@@ -105,7 +106,8 @@ int main (int argc, char* argv[])
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
 		      &hmodes, &hfmodes,
-		      &hTmodes, &hfTmodes,
+		      &hTmodes, &hTmmodes,
+          &hfTmodes,
 		      dc, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
 
@@ -113,6 +115,7 @@ int main (int argc, char* argv[])
   WaveformFD_free (hfpc);
   Waveform_lm_free (hmodes);
   Waveform_lm_free (hTmodes);
+  Waveform_lm_free (hTmmodes);
   WaveformFD_lm_free (hfmodes);
   WaveformFD_lm_free (hfTmodes);
 
@@ -127,7 +130,8 @@ int main (int argc, char* argv[])
 
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
 	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, 
-	   Waveform_lm **hTmodes,  WaveformFD_lm **hfTmodes,
+	   Waveform_lm **hTmodes,  Waveform_lm **hTmmodes,
+     WaveformFD_lm **hfTmodes,
 	   int default_choice, int firstcall)
 {
 
@@ -193,6 +197,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   WaveformFD_lm *hflm = NULL; /* hf_lm (FD) */
   
   Waveform_lm *hTlm = NULL; /* h_lm twisted */
+  Waveform_lm *hTlm_neg = NULL; /* h_lm twisted */
+
   WaveformFD_lm *hfTlm = NULL; /* h_lm twisted (FD) */
   
   Waveform_lm_t *hlm_t = NULL;
@@ -708,10 +714,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if ((use_tidal) && (use_spins == MODE_SPINS_GENERIC)) {   
 
     Waveform_lm_alloc (&hTlm, size, "hTlm"); 
+    Waveform_lm_alloc (&hTlm_neg, size, "hTlm_neg"); 
     
     if (EOBPars->domain == DOMAIN_TD)
-      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm);
-    
+      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm, hTlm_neg);
   }
 
   
@@ -955,10 +961,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* h+, hx */  
     if (use_spins == MODE_SPINS_GENERIC){
       Waveform_lm_alloc (&hTlm, size, "hTlm"); 
-      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm);
-      compute_hpc(hTlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+      Waveform_lm_alloc (&hTlm_neg, size, "hTlm_neg"); 
+      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm, hTlm_neg);
+      compute_hpc(hTlm, hTlm_neg, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
     } else
-      compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+      compute_hpc(hlm, NULL, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
   } else {
     
@@ -1043,6 +1050,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   *hmodes = hlm;   /* do not free these! */
   *hfmodes = hflm; /* do not free these! */
   *hTmodes = hTlm; /* do not free these! */
+  *hTmmodes = hTlm_neg; /* do not free these! */
   *hfTmodes = hfTlm; /* do not free these! */
 
 #ifdef _OPENMP

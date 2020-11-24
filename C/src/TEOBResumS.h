@@ -580,7 +580,8 @@ extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */
 /* TEOBResumS.c */
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
 	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, 
-	   Waveform_lm **hTmodes, WaveformFD_lm **hfTmodes,
+	   Waveform_lm **hT_modes, Waveform_lm **hTneg_modes,
+     WaveformFD_lm **hfTmodes,
 	   int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
@@ -846,8 +847,9 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 void (*eob_wav_ringdown)();
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
-void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm);
-void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
+void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm, Waveform_lm *hTlm_neg);
+void compute_hpc_old(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
+void compute_hpc(Waveform_lm *hlm,Waveform_lm *hlm_neg, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void twist_hlm_FD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
