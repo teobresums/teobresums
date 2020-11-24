@@ -278,6 +278,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   int check_status;
   if (use_tidal) {
     /* Compute rLR_tidal for NNLO potential and without spin part */
+    int tidal_tmp = EOBPars->use_tidal;
+    int spins_tmp = EOBPars->use_spins;
     EOBPars->use_tidal = TIDES_NNLO; 
     EOBPars->use_spins = 0;
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR_tidal)));
@@ -293,8 +295,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     double q = EOBPars->q;
 
     /* Reset options */
-    EOBPars->use_tidal = EOBPars->use_tidal;
-    EOBPars->use_spins = EOBPars->use_spins;
+    EOBPars->use_tidal = tidal_tmp;
+    EOBPars->use_spins = spins_tmp;
     if (VERBOSE) PRFORMd("rLR_tidal",EOBPars->rLR_tidal); 
   }
   if (EOBPars->compute_LR) {
