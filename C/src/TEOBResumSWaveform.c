@@ -4113,6 +4113,13 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
     alpha = malloc ( size * sizeof(double) );
     beta  = malloc ( size * sizeof(double) );
     gamma = malloc ( size * sizeof(double) );
+
+    /*FIXME: hardfix for discontinuities in alpha/gamma*/
+    spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
+    spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
+    unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
+    unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
+
     if (1){ 
     
       /* find the max of the dynamic's omega*/
@@ -4163,14 +4170,25 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
     gamma = spin->data[EOB_EVOLVE_SPIN_gam];
     
   }
-  
+#if (DEBUG)    
+    /*output angles */
+    char fname[STRLEN*2];
+    sprintf(fname,"%s/anglesint.txt",EOBPars->output_dir);
+    FILE* fp;
+    if ((fp = fopen(fname, "w+")) == NULL) errorexits("error opening file",fname);
+    for (int i = 0; i < hlm->size; i++) {
+      fprintf(fp, "%.9e  %.16e  %.16e  %.16e\n", hlm->time[i], alpha[i], beta[i], gamma[i]);
+    }
+    fclose(fp);
+#endif
+
   /* Loop over modes */
   for (int k = 0; k < KMAX; k++ ) {
     if (!activemode[k]) continue;
     
     int ell = LINDEX[k];
     for (int q=0; q <2; q++){  // q=0->m >0, q =1->m < 0
-      int emm = MINDEX[k]*pow(-1, q);
+      int emm = MINDEX[k]*(1 - 2*q);
       double eps = pow(-1., ell);
       
       // for each time ...
