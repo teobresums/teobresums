@@ -1782,6 +1782,7 @@ void DynamicsSpin_alloc (DynamicsSpin **dyn, int size)
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++) {
     (*dyn)->data[v] = malloc (size * sizeof(double));  
     memset((*dyn)->data[v], 0, size*sizeof(double));
+    (*dyn)->spline[v] = gsl_spline_alloc (gsl_interp_cspline, size);
   }
   (*dyn)->omg_stop=-1; // set from EOBPars or by NR merger
   (*dyn)->t_stop=-1; // use Momg as stopping criterion, if not otherwise specified. 
@@ -1795,6 +1796,8 @@ void DynamicsSpin_push (DynamicsSpin **dyn, int size)
   for (int v = 0; v < EOB_EVOLVE_SPIN_NVARS; v++) {
     (*dyn)->data[v] = realloc ( (*dyn)->data[v], size * sizeof(double) );
     if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
+    gsl_spline_free ((*dyn)->spline[v]);
+    (*dyn)->spline[v] = gsl_spline_alloc (gsl_interp_cspline, size);
   }
   (*dyn)->size = size; 
 }
@@ -1804,8 +1807,10 @@ void DynamicsSpin_free (DynamicsSpin *dyn)
   if (!dyn) return;
   if (dyn->time) free(dyn->time);
   if (dyn->data)
-    for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++){
       if (dyn->data[v]) free(dyn->data[v]);
+      gsl_spline_free (dyn->spline[v]);
+    }
   free(dyn);
 }
 

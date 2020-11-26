@@ -263,6 +263,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_spins == MODE_SPINS_GENERIC) {
     if (eob_spin_dyn(spindyn))
       errorexit("problem during spin dynamics");
+    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+      gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);   
   }
   
   /** Set r.h.s. fun pointer */

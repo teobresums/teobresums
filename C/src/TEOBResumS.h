@@ -453,8 +453,9 @@ typedef struct tagDynamicsSpin
   double *data[EOB_EVOLVE_SPIN_NVARS]; 
   double y[EOB_EVOLVE_SPIN_NVARS], dy[EOB_EVOLVE_SPIN_NVARS];
   double t, dt;
-  double t_stop; // stopping time, if >0
+  double t_stop;  // stopping time, if >0
   double omg_stop; // stopping frequency Momega
+  gsl_spline *spline[EOB_EVOLVE_SPIN_NVARS];
 } DynamicsSpin;
 
 /** Dynamics data type */
