@@ -170,7 +170,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const int use_tidal = EOBPars->use_tidal;
   int store_dynamics = EOBPars->output_dynamics; 
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
-  if ((ecc != 0.) || (r_hyp != 0.)) EOBPars->postadiabatic_dynamics = 0;
+  if ((ecc > 1e-4) || (r_hyp != 0.)) EOBPars->postadiabatic_dynamics = 0;
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
@@ -239,7 +239,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Set r.h.s. fun pointer */
   int (*p_eob_dyn_rhs)();
-  if ((ecc != 0.) || (r_hyp != 0.)) {
+  if ((ecc > 1e-4) || (r_hyp != 0.)) {
     p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
   } else if (use_spins) {
     p_eob_dyn_rhs = &eob_dyn_rhs_s;
@@ -393,7 +393,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	status = 1;
 	goto EXIT_POINT;
       }
-    } else if (ecc != 0.) {
+    } else if (ecc > 1e-4) {
       eob_dyn_ic_ecc(r0, dyn, dyn->y0);
     } else if (use_spins) {
       eob_dyn_ic_s(r0, dyn, dyn->y0);
@@ -470,7 +470,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->ode_stop_radius   = false;
   double rstop = EOBPars->ode_stop_radius;
   /* Avoiding useless computations for hyperbolic cases */
-  if ((r_hyp != 0.) || (ecc != 0.)) {
+  if ((r_hyp != 0.) || (ecc > 1e-4)) {
     double r_hor = horizon_radius(dyn->nu)+0.2;
     rstop = MAX(rstop,r_hor);
   }
@@ -571,7 +571,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->MOmg = dyn->Omg;
     }
 
-    if ((ecc != 0.) || (r_hyp != 0.)) {
+    if ((ecc > 1e-4) || (r_hyp != 0.)) {
       if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
 	if (VERBOSE) printf("Stop: Orbit crossed event horizon.\n");
 	iter--; /* do count this iter! */
@@ -662,7 +662,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /** Check when to break the computation
 	find peak of omega curve and continue for 2M */
-    if ((dyn->ode_stop_MOmgpeak == false) && (ecc == 0.) && (r_hyp == 0.)) {
+    if ((dyn->ode_stop_MOmgpeak == false) && (ecc > 1e-4) && (r_hyp == 0.)) {
       /* Before the Omega_orb peak */
       if (dyn->MOmg < dyn->MOmg_prev) {
 	/* This is the first step after the peak
@@ -708,7 +708,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Over-writing waveform with the eccentric one 
      For now, only in uniform case */
   /*
-    if ((ecc != 0.) || (r_hyp != 0.)) {
+    if ((ecc > 1e-4) || (r_hyp != 0.)) {
     double *r_omg     = (double*) calloc (size,sizeof(double));
     double *rdot      = (double*) calloc (size,sizeof(double));
     double *r2dot     = (double*) calloc (size,sizeof(double));
@@ -782,7 +782,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /** Unwrap phase for higher modes.
       Skip PA phases: they can jump 2Pi by construction */
-  if ((EOBPars->use_flm == USEFLM_HM) || (dyn->ecc != 0.)) {
+  if ((EOBPars->use_flm == USEFLM_HM) || (dyn->ecc > 1e-4)) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
 	unwrap_HM(&hlm->phase[k][pasize],size-pasize);
