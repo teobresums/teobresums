@@ -1231,7 +1231,7 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
       EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
-      if ((ecc != 0.) || (r_hyp != 0.)) {
+      if ((ecc > 1e-4) || (r_hyp != 0.)) {
 	EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
 	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
       } else if (usespins) {
@@ -1246,7 +1246,7 @@ void eob_set_params(int default_choice, int firstcall)
   
   /** Set more as needed ... */
   EOBPars->a6c = 0.;
-  if (ecc != 0.) {
+  if (ecc > 1e-4) {
     /* Eccentric case */
     EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
   } else if (EOBPars->use_flm == USEFLM_HM) {
@@ -1331,7 +1331,7 @@ void eob_set_params(int default_choice, int firstcall)
   } else errorexit("unknown option for use_flm");
 
   /** Set hlm fun pointer */
-  if ((ecc != 0.) || (r_hyp != 0.)) {
+  if ((ecc > 1e-4) || (r_hyp != 0.)) {
     eob_wav_hlm = &eob_wav_hlm_ecc;
   } else  {
     eob_wav_hlm = &eob_wav_hlm_circ;
@@ -1598,7 +1598,7 @@ void eob_set_params_old(char *s, int n)
   
   /** Set more as needed ... */
   double a6c = 0.;
-  if (EOBPars->ecc != 0.) {
+  if (EOBPars->ecc > 1e-4) {
     /* Eccentric case */
     EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
   } else if (EOBPars->use_flm == USEFLM_HM) {
