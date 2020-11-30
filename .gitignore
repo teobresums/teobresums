@@ -34,3 +34,12 @@ src/stamp-h1
 *.o
 *.DS_Store
 ../.DS_Store
+C/align/*.py
+*.png
+*.txt
+*.x
+C/par/*.par
+C/par/bhns_test.par
+*.par
+*.d
+*.h5
