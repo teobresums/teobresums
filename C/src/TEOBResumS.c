@@ -938,42 +938,46 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       Waveform_lm_free (hlm_nqc);
       
     } // NQC_HLM_COMPUTE
-
     
-    /** BBH : add Ringdown */
     
-    if (VERBOSE) PRSECTN("Ringdown");
+    /** BBH : add Ringdown (can be omitted with flag) */
+    if (EOBPars->compute_ringdown) {
+      
+      if (VERBOSE) PRSECTN("Ringdown");
     
-    /* Extend arrays */    
-    const int size_ringdown = EOBPars->ringdown_extend_array;    
-    double dt_rngdn = dt;
-    if (merger_interp)
-      dt_rngdn = EOBPars->dt_merger_interp; 
+      /* Extend arrays */    
+      const int size_ringdown = EOBPars->ringdown_extend_array;    
+      double dt_rngdn = dt;
+      if (merger_interp)
+	dt_rngdn = EOBPars->dt_merger_interp; 
     
 #if (DEBUG) 
-    printf("Push memory for ringdown (%d + %d):",size,EOBPars->ringdown_extend_array);
-    printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt_rngdn,dt_rngdn*size_ringdown,hlm->time[size-1]+dt_rngdn*size_ringdown);
+      printf("Push memory for ringdown (%d + %d):",size,EOBPars->ringdown_extend_array);
+      printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt_rngdn,dt_rngdn*size_ringdown,hlm->time[size-1]+dt_rngdn*size_ringdown);
 #endif
 
-    Waveform_lm_push (&hlm, (size+size_ringdown));
-    for (int i = size; i < (size+size_ringdown); i++) 
-      hlm->time[i] = hlm->time[i-1] + dt_rngdn;
-    size += size_ringdown;
-    EOBPars->size = size;
+      Waveform_lm_push (&hlm, (size+size_ringdown));
+      for (int i = size; i < (size+size_ringdown); i++) 
+	hlm->time[i] = hlm->time[i-1] + dt_rngdn;
+      size += size_ringdown;
+      EOBPars->size = size;
 
-    /* Ringdown attachment */
-    eob_wav_ringdown(dyn, hlm);
+      /* Ringdown attachment */
+      eob_wav_ringdown(dyn, hlm);
+
+#if (DEBUG) 
+      // Output wave and dynamics 
+      if(EOBPars->output_multipoles) {
+	strcat(hlm->name,"_ringdown");
+	Waveform_lm_output (hlm);
+	Waveform_lm_output_reim (hlm);
+      }
+#endif
+    }
     
   } /* End of BBH section */
 
-#if (DEBUG) 
-  // Output wave and dynamics 
-  if(EOBPars->output_multipoles) {
-    strcat(hlm->name,"_ringdown");
-    Waveform_lm_output (hlm);
-    Waveform_lm_output_reim (hlm);
-  }
-#endif
+
 
   /* *****************************************
    * Compute h+, hx 

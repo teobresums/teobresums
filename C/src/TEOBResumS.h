@@ -496,6 +496,8 @@ typedef struct tagEOBParameters
 
   int compute_LR, compute_LSO, compute_LR_guess, compute_LSO_guess;
 
+  int compute_ringdown;
+  
   int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
 
