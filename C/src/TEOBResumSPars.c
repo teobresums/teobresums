@@ -164,6 +164,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->compute_LR_guess=3.;
   eobp->compute_LSO_guess=6.;
 
+  eobp->compute_ringdown=1; // Calculate and add ringdown?
+
   eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
   eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
   eobp->nqc_coefs_hlm=NQC_HLM_NONE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
@@ -406,6 +408,8 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->compute_LR_guess = par_get_d("compute_LR_guess");
   eobp->compute_LSO_guess = par_get_d("compute_LSO_guess");
 
+  eobp->compute_ringdown = par_get_i("compute_ringdown"); // Calculate and add ringdown?
+
   for (eobp->nqc=0; eobp->nqc<NQC_NOPT; eobp->nqc++) {
     if (STREQUAL(par_get_s("nqc"), nqc_opt[eobp->nqc])) {
       break;
@@ -633,6 +637,8 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_d("compute_LR_guess", EOBPars->compute_LR_guess);
   par_add_d("compute_LSO_guess",EOBPars->compute_LSO_guess);
 
+  par_add_b("compute_ringdown",EOBPars->compute_ringdown); // Calculate and add ringdown?
+  
   par_add_s("nqc", nqc_opt[EOBPars->nqc]); // {"auto", "manual"}
   par_add_s("nqc_coefs_flx", nqc_flx_opt[EOBPars->nqc_coefs_flx]); // {"none", "nrfit_nospin20160209", "fromfile"}
   par_add_s("nqc_coefs_hlm", nqc_hlm_opt[EOBPars->nqc_coefs_hlm]); // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
@@ -794,6 +800,8 @@ void par_db_default ()
   par_add_d("compute_LR_guess", 3.);
   par_add_d("compute_LSO_guess", 6.);
 
+  par_add_b("compute_ringdown", 1); // Calculate and add ringdown?
+  
   par_add_s("nqc", "auto"); // {"auto", "manual"}
   par_add_s("nqc_coefs_flx", "none"); // {"none", "nrfit_nospin20160209", "fromfile"}
   par_add_s("nqc_coefs_hlm", "none"); // {"compute", "none", "nrfit_nospin20160209", "fromfile"}
@@ -1248,7 +1256,8 @@ void eob_set_params(int default_choice, int firstcall)
   EOBPars->a6c = 0.;
   if (ecc > 1e-4) {
     /* Eccentric case */
-    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
+    EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu); // For the moment, use this still
+    //EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
   } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
