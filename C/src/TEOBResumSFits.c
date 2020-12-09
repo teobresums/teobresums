@@ -1580,6 +1580,10 @@ double PrecessingRemnantSpin(Dynamics *dyn)
 
   double SAmrg[3];
   double SBmrg[3];
+  double Lhmrg[3];
+  double Sperp[3];
+  double SApar, SBpar, sqSperp;
+
   double omgmrg = eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
   
   /*find merger*/
@@ -1594,7 +1598,18 @@ double PrecessingRemnantSpin(Dynamics *dyn)
   SBmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_SyB][imrg];
   SBmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_SzB][imrg];
 
-  double sqSperp = (SAmrg[0]+SBmrg[0])*(SAmrg[0]+SBmrg[0]) + (SAmrg[1]+SBmrg[1])*(SAmrg[1]+SBmrg[1]);
+  Lhmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_Lx][imrg];
+  Lhmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_Ly][imrg];
+  Lhmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_Lz][imrg];
+
+  vect_dot3(SAmrg, Lhmrg, &SApar);  
+  vect_dot3(SAmrg, Lhmrg, &SBpar); 
+  //HealyBBHFitRemnant(SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2), EOBPars->q, &(EOBPars->Mbhf), NULL);
+  EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2));
+  for(int i=0; i < IN3; i++)
+    Sperp[i] = (SAmrg[i] - SApar*Lhmrg[i]) + (SBmrg[i] - SBpar*Lhmrg[i]);
+
+  vect_dot3(Sperp, Sperp, &sqSperp);
   double sqMbhf = SQ(EOBPars->Mbhf);
   
   return sqrt(SQ(EOBPars->abhf) + sqSperp/SQ(sqMbhf));
