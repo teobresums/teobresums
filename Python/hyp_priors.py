@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     # main
     # r = 10000 for scattering angle. For parspace survey, r=1500 is ok
-    r    = 200. 
+    r    = 1500. 
     chi1 =  0.0       # spin larger object
     chi2 =  0.0       # spin smaller object
     #============================
@@ -101,9 +101,10 @@ if __name__ == "__main__":
     # q    = 1
     # E0   =  1.0055    # initial energy
     # j    =  3.97      # initial angular momentum
-    q    = 1.44
-    E0   = 1.020
-    j    = 3.45
+    # Glitch-like signal
+    q    = 1
+    E0   = 1.010
+    j    = 4.2
     #q   =  1.0
     #E0  = 1.01
     #j   = 4.0
