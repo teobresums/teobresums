@@ -98,12 +98,16 @@ if __name__ == "__main__":
     #============================
     # FIX E0 > 1
     #============================= 
-    #q    = 1
-    #E0   =  1.0055    # initial energy
-    #j    =  3.97      # initial angular momentum
-    q   =  1.0
-    E0  = 1.01
-    j   = 4.0
+    # q    = 1
+    # E0   =  1.0055    # initial energy
+    # j    =  3.97      # initial angular momentum
+    # Glitch-like signal
+    q    = 1
+    E0   = 1.010
+    j    = 4.2
+    #q   =  1.0
+    #E0  = 1.01
+    #j   = 4.0
     nu  = q/(1+q)**2
     
     # nonspinning LSO computation
@@ -120,7 +124,7 @@ if __name__ == "__main__":
     
     # define the input parameters
     pars = {
-    'M'                  : 1.,
+    'M'                  : 1,
     'q'                  : q,
     'chi1'               : chi1,
     'chi2'               : chi2,
@@ -130,11 +134,14 @@ if __name__ == "__main__":
     'dt_interp'          : 0.5,
     'domain'             : 0,                 #Set 1 for FD. Default = 0
     'arg_out'            : 1,                 #Output hlm/hflm. Default = 0
+    'nqc'                : 2,
+    'nqc_coefs_hlm'      : 0,
+    'nqc_coefs_flx'      : 0,
     'use_mode_lm'        : [1],               #List of modes to use/output through EOBRunPy
     'output_lm'          : [1],               #List of modes to print on file
     'output_dynamics'    : 0,                 #output of the dynamics
     'ode_tstep_opt'      : 1,                 #fixing uniform or adaptive. Default = 1 
-    'srate_interp'       : 4096.,            #srate at which to interpolate. Default = 4096.
+    'srate_interp'       : 3000000.,            #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,                 #output quantities in geometric units. Default = 1
     'r0':r,
     'interp_uniform_grid': 1,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
@@ -149,17 +156,24 @@ if __name__ == "__main__":
     #run the wf generator
     start = time.time()
     t, hp, hc, hlm, dyn = EOBRun_module.EOBRunPy(pars)
+    print(dyn)
     Momg_o = dyn['MOmega_orb']
+    T      = dyn['t']
+    r      = dyn['r']
     #t, hp, hc = EOBRun_module.EOBRunPy(pars)
     end = time.time()
     DeltaT = end-start
     print("ODE time=%s"%DeltaT);
     # plot
     plt.plot(t, hp, label=r'h_+')
-    #plt.plot(t, hc, label=r'h_x')
+    plt.plot(t, hc, label=r'h_x')
     plt.legend()
     plt.show()
 
+    # plot Omg
+    plt.plot(T,r)
+    plt.show()
+    
     # plot amplitude and phase
     A22   = hlm['1'][0]
     Phi22 = hlm['1'][1]
