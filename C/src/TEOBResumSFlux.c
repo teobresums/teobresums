@@ -412,7 +412,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   double prstar3 = prstar2*prstar;
   double prstar4 = prstar3*prstar;
   
-  double A, dA, d2A, B, dB, d2B, Q, sqrtAbyB, dsqrtAbyB_dr, d2sqrtAbyB_d2r, fact;
+  double A, dA, d2A, B, dB, d2B, Q, sqrtAbyB, oosqrtAbyB, dsqrtAbyB_dr, d2sqrtAbyB_d2r, fact;
   double sqA,sqB;
   double ggm[26], G, dG_dr, dG_dprstar,d2G_dr2, d2G_dr_dprstar, d2G_dprstar2,
     d3G_dr2_dprstar, d3G_dr_dprstar2, d3G_dprstar3;
@@ -461,12 +461,13 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   uc4 = uc3*uc;
 
   sqrtAbyB = sqrt(A/B);
+  oosqrtAbyB = 1./sqrtAbyB;
   sqB      = SQ(B);
   sqA      = SQ(A);
-  fact = (dA*B - A*dB)/SQ(B);
-  dsqrtAbyB_dr   = 0.5/sqrtAbyB*fact;
+  fact = (dA*B - A*dB)/sqB;
+  dsqrtAbyB_dr   = 0.5*oosqrtAbyB*fact;
   /*d2sqrtAbyB_d2r = -0.25*sqrtAbyB*SQ(dA*B - A*dB)/(SQ(A)*SQ(B)) + 0.5/sqrtAbyB*(d2A*SQ(B) - A*B*d2B - 2.*dA*dB*B + 2.*A*SQ(dB))/(SQ(B)*B);*/
-  d2sqrtAbyB_d2r = -0.25*sqrtAbyB*SQ(dA*B - A*dB)/(sqA*sqB) + 0.5/sqrtAbyB*(d2A*sqB - A*B*d2B - 2.*dA*dB*B + 2.*A*SQ(dB))/(SQ(B)*B);
+  d2sqrtAbyB_d2r = -0.25*sqrtAbyB*SQ(dA*B - A*dB)/(sqA*sqB) + 0.5*oosqrtAbyB*(d2A*sqB - A*B*d2B - 2.*dA*dB*B + 2.*A*SQ(dB))/(sqB*B);
 
   /** Circular Hamiltonians, ref: arXiv: 1406.6913 */
   if(usespins) {
@@ -516,7 +517,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
       - G*Edot/SQ(E);*/
 
     Omgdot = Omgdot_0 + oneby_EHeff_orb*A*uc2*(Fphi - pphi*oneby_EHeff_orb*EHeff_orbdot)
-      - G*Edot/SQ(E);
+      - G*Edot*SQ(oneby_E);
 
     /*r2dot = dsqrtAbyB_dr/sqrtAbyB*SQ(rdot) + sqrtAbyB*
       (1./EHeff_orb*((prstardot - prstar/EHeff_orb*EHeff_orbdot)*(1. + 2.*Q*A*uc2*prstar2)
@@ -524,7 +525,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
        + 1./E*(dG_dprstar*(Fphi - pphi*Edot/E)
        + pphi/E*(d2G_dr_dprstar*rdot + d2G_dprstar2*prstardot)));*/
 
-   r2dot = dsqrtAbyB_dr/sqrtAbyB*rdot2 + sqrtAbyB*
+   r2dot = dsqrtAbyB_dr*oosqrtAbyB*rdot2 + sqrtAbyB*
       (oneby_EHeff_orb*((prstardot - prstar*oneby_EHeff_orb*EHeff_orbdot)*(1. + 2.*Q*A*uc2*prstar2)
        + 2.*Q*SQ(prstar)*(dAbyrc2*prstar*rdot + 2.*A*uc2*prstardot))
        + oneby_E*(dG_dprstar*(Fphi - pphi*Edot*oneby_E)
@@ -541,7 +542,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
 	+ Q*prstar3*(4.*prstardot - prstar*EHeff_orbdot/EHeff_orb)))
 	- 1./E*(dG_dr*(Fphi - pphi*Edot/E) + pphi*(d2G_dr2*rdot + d2G_dr_dprstar*prstardot)));*/
 
-    prstar2dot = dsqrtAbyB_dr/sqrtAbyB*rdot*prstardot + sqrtAbyB
+    prstar2dot = dsqrtAbyB_dr*oosqrtAbyB*rdot*prstardot + sqrtAbyB
       *(Frdot -0.5*oneby_EHeff_orb*(rdot*(d2A + d2Abyrc2*(pphi2 + Q*prstar4))
         - dA*EHeff_orbdot*oneby_EHeff_orb + dAbyrc2*(pphi*(2.*Fphi
 	- pphi*EHeff_orbdot*oneby_EHeff_orb)
@@ -571,7 +572,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
               + oneby_E*(d2G_dr2*SQ(rdot) + dG_dr*(r2dot - 2.*rdot*Edot*oneby_E)
               + dG_dprstar*(prstar2dot - 2.*prstardot*Edot*oneby_E)
 	      + d2G_dprstar2*SQ(prstardot) + 2*d2G_dr_dprstar*rdot*prstardot
-              + G*(2.*SQ(Edot/E) - E2dot*oneby_E));
+              + G*(2.*SQ(Edot*oneby_E) - E2dot*oneby_E));
 
     
     /*r3dot = rdot/sqrtAbyB*(dsqrtAbyB_dr*(3.*r2dot
@@ -590,8 +591,8 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
 	    + 2.*(Fphi - pphi*Edot/E)*(d2G_dr_dprstar*rdot + d2G_dprstar2*prstardot));*/
 
 
-    r3dot = rdot/sqrtAbyB*(dsqrtAbyB_dr*(3.*r2dot
-	    - 2.*dsqrtAbyB_dr/sqrtAbyB*SQ(rdot)) + d2sqrtAbyB_d2r*SQ(rdot))
+    r3dot = rdot*oosqrtAbyB*(dsqrtAbyB_dr*(3.*r2dot
+	    - 2.*dsqrtAbyB_dr*oosqrtAbyB*SQ(rdot)) + d2sqrtAbyB_d2r*SQ(rdot))
             + oneby_EHeff_orb*sqrtAbyB*(prstar2dot - 2.*prstardot*EHeff_orbdot*oneby_EHeff_orb
 	    + prstar*(2.*SQ(EHeff_orbdot*oneby_EHeff_orb) - EHeff_orb2dot*oneby_EHeff_orb)
 	    + 2.*Q*prstar*(A*uc2*(6.*SQ(prstardot)
@@ -610,7 +611,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Fphi      = Fphi_Newt*Fphi;
     Edot      = nu*(rdot*Fr + Omg*Fphi);
   }
-
+  
   /* Saving useful variables */
   dyn->rdot  = rdot;
   dyn->r2dot = r2dot;
