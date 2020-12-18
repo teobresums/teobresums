@@ -662,7 +662,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /** Check when to break the computation
 	find peak of omega curve and continue for 2M */
-    if ((dyn->ode_stop_MOmgpeak == false) && (ecc > 1e-4) && (r_hyp == 0.)) {
+    if ((dyn->ode_stop_MOmgpeak == false) && (ecc < 1e-4) && (r_hyp == 0.)) {
       /* Before the Omega_orb peak */
       if (dyn->MOmg < dyn->MOmg_prev) {
 	/* This is the first step after the peak
