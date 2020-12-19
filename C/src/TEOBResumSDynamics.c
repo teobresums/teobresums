@@ -352,14 +352,15 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   const double x     = v_phi*v_phi;
   const double jhat  = pphi/(r_omg*v_phi);
   
-  /** Compute flux and dp_{\phi}/dt */
-  double Fphi = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
-  double Fphi_NC = eob_flx_Fphi_ecc(x, Omg, r_omg, jhat, dy[EOB_EVOLVE_RAD], dyn);
+  /** Compute fluxes and dp_{\phi}/dt */
+  double Fphi   = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
+  double Fr     = eob_flx_Fr_ecc(r, prstar, pphi, dyn);
+  double Frstar = sqrtAbyB*Fr;
+  
+  double Fphi_NC = eob_flx_Fphi_ecc(r, prstar, pphi, Omg, dy[EOB_EVOLVE_RAD], Fphi, Fr, dyn);
+  
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = Fphi*Fphi_NC;
-
-  double Fr = eob_flx_Fr_ecc(r, prstar, pphi, dyn);
-  double Frstar = sqrtAbyB*Fr;
   
   /* dp_{r*}/dt */
   dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*dHeff_dr*ooH + Frstar;

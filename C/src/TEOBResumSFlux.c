@@ -376,7 +376,7 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn)
 }
 
 /** Non-circular flux for eccentric systems */
-double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, double rdot, Dynamics *dyn)
+double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fr, Dynamics *dyn)
 {  
   const double nu = dyn->nu;
   const double chi1 = dyn->chi1;
@@ -403,10 +403,6 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
 
-  double r      = dyn->r;
-  double pphi   = dyn->pphi;
-  double prstar = dyn->prstar;
-
   double pphi2 = pphi*pphi;
   double prstar2 = prstar*prstar;
   double prstar3 = prstar2*prstar;
@@ -420,8 +416,8 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   double H, Heff, Heff_orb, E, dHeff_dr, dHeff_dpphi, EHeff_orb;
   double Adot, prstardot, sqrtAbyBdot, dAbyrc2, d2Abyrc2, Omgdot_0, Heffdot, HSOdot, Edot,
     Heff_orbdot, EHeff_orbdot, Omgdot, Omg2dot, r2dot, r3dot, EHeff_orb2dot,
-    HSO2dot, pphi2dot, Heff_orb2dot, prstar2dot, Heff2dot, E2dot, Frdot;
-  double Fr, Fphi, Fphi_Newt;
+    HSO2dot, Heff_orb2dot, prstar2dot, Heff2dot, E2dot;
+  double Fphi_Newt;
   double oneby_EHeff_orb, oneby_E;
   double rdot2;
   
@@ -459,7 +455,7 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
   uc2 = uc*uc;
   uc3 = uc2*uc;
   uc4 = uc3*uc;
-
+  
   sqrtAbyB = sqrt(A/B);
   oosqrtAbyB = 1./sqrtAbyB;
   sqB      = SQ(B);
@@ -479,10 +475,6 @@ double eob_flx_Fphi_ecc(double x, double Omg, double r_omega, double jhat, doubl
     Heff = Heff_orb;
     E = nu*H;
   }
-
-  /* Fluxes */
-  Fphi = eob_flx_Flux_s(x, Omg, r_omega, E, Heff, jhat, r, prstar, rdot, dyn);
-  Fr   = eob_flx_Fr_ecc(r, prstar, pphi, dyn);
 
   Edot = nu*(rdot*Fr + Omg*Fphi);
   
