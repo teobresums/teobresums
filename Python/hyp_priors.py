@@ -98,13 +98,13 @@ if __name__ == "__main__":
     #============================
     # FIX E0 > 1
     #============================= 
-    # q    = 1
-    # E0   =  1.0055    # initial energy
-    # j    =  3.97      # initial angular momentum
+    q    =  1
+    E0   =  1.0055    # initial energy
+    j    =  3.97      # initial angular momentum
     # Glitch-like signal
-    q    = 1
-    E0   = 1.010
-    j    = 4.2
+    #q    = 1
+    #E0   = 1.010
+    #j    = 4.2
     #q   =  1.0
     #E0  = 1.01
     #j   = 4.0
@@ -155,8 +155,7 @@ if __name__ == "__main__":
 
     #run the wf generator
     start = time.time()
-    t, hp, hc, hlm, dyn = EOBRun_module.EOBRunPy(pars)
-    print(dyn)
+    t, hp, hc, hlm, dyn = EOBRun_module.EOBRunPy(pars)    
     Momg_o = dyn['MOmega_orb']
     T      = dyn['t']
     r      = dyn['r']
