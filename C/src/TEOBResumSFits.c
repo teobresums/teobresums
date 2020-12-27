@@ -44,7 +44,7 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   double p12 = p120*a + p121;      double q12 = q120*a + q121;
   double p21 = p210*a + p211;      double q21 = q210*a + q211;
   double p22 = p220*a + p221;      double q22 = q220*a + q221;
-  double p31 = p310*a + p331;      double q31 = q310*a + q331;
+  double p31 = p310*a + p311;      double q31 = q310*a + q311;
   double p32 = p320*a + p321;      double q32 = q320*a + q321;
 
   double p1 = p11*nu + p12*nu*nu;  double q1 = q11*nu + q12*nu*nu;
@@ -54,8 +54,8 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   double mbh;
   double abh;
 
-  mbh = m_bh * ( (1+p1*lambda+p2*lambda*lambda)/((1+p3*p3*lambda)**2) );
-  abh = a_bh * ( (1+q1*lambda+q2*lambda*lambda)/((1+q3*q3*lambda)**2) );
+  mbh = m_bh * ( (1+p1*lambda+p2*lambda*lambda)/((1+p3*p3*lambda)*(1+p3*p3*lambda)) );
+  abh = a_bh * ( (1+q1*lambda+q2*lambda*lambda)/((1+q3*q3*lambda)*(1+q3*q3*lambda)) );
 
   *mass = mbh;
   *spin = abh;

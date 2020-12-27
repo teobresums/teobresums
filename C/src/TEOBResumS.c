@@ -162,6 +162,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
+
+  bool bhns_mode = false;
+  double LambdaBl2;
   
   /* *****************************************
    * Set Memory & do preliminary computations
@@ -269,10 +272,20 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     EOBPars->rLSO = dyn->rLSO;
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
-  }   
+  }  
+
+  /** Turn on/off BHNS mode */
+  if ((dyn->use_tidal) && (EOBPars->LambdaAl2==0.)) {
+    //TODO: apply bhns mode (fits+NQC+ringdown) for q>=4 binaries
+    bhns_mode = true;
+    double LambdaBl2 = EOBPars->LambdaBl2;
+  }else if(!(dyn->use_tidal)){
+      double LambdaBl2 = 0.;
+  }
+  
 
   /** Final BH */
-  if (!(dyn->use_tidal)) {
+  if (!(dyn->use_tidal) || (bhns_mode==true)) {
     /** from BBH */
     //HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
     //dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
@@ -677,7 +690,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Dynamics_output(dyn);
 #endif
   
-  if (!(use_tidal)) {
+  if (!(use_tidal) || (bhns_mode==true)) {
     
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
