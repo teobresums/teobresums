@@ -275,26 +275,26 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }  
 
   /** Turn on/off BHNS mode */
-  if ((dyn->use_tidal) && (EOBPars->LambdaAl2==0.)) {
-    //TODO: apply bhns mode (fits+NQC+ringdown) for q>=4 binaries
+  if ((dyn->use_tidal) && (EOBPars->LambdaAl2==0.) && (q>2.)) {
+    //TODO: check if this works also for spinning cases
     bhns_mode = true;
-    double LambdaBl2 = EOBPars->LambdaBl2;
-  }else if(!(dyn->use_tidal)){
-      double LambdaBl2 = 0.;
   }
   
 
   /** Final BH */
   if (!(dyn->use_tidal) || (bhns_mode==true)) {
-    /** from BBH */
-    //HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
-    //dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
-
-     /** Final BH from BHNS */
-    double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
-    double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
-    eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), LambdaBl2, m_bh, a_bh);
     
+    if(bhns_mode==true){
+       /** Final BH from BHNS */
+      double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+      double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+      eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
+    }else{
+      /** from BBH */
+      HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
+      dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+    }
+
     if (VERBOSE) {
       PRSECTN("Final black hole");
       PRFORMd("BH_final_mass",dyn->Mbhf); 
