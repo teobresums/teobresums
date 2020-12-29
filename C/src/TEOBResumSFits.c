@@ -32,11 +32,11 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   const double p120 = 4.29E-3;     const double q120 = 2.33E-2;
   const double p121 = 9.8E-3;      const double q121 = 2.48E-2;
   const double p210 = 2.34E-7;     const double q210 = -8.57E-7;
-  const double p211 = -8.28E-1;    const double q211 = -2.82E-6;
+  const double p211 = -8.28E-7;    const double q211 = -2.82E-6;
   const double p220 = -1.64E-6;    const double q220 = 6.61E-6;
   const double p221 = 8.08E-6;     const double q221 = 4.29E-5;
   const double p310 = -2.01E-2;    const double q310 = -3.04E-2;
-  const double p311 = 1.32E-1;     const double q311 = -2.55E-6;
+  const double p311 = 1.32E-1;     const double q311 = 2.55E-1;
   const double p320 = 6.51E-2;     const double q320 = 1.48E-1;
   const double p321 = -1.43E-1;    const double q321 = -4.28E-1;
 
@@ -54,8 +54,8 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   double mbh;
   double abh;
 
-  mbh = m_bh * ( (1+p1*lambda+p2*lambda*lambda)/((1+p3*p3*lambda)*(1+p3*p3*lambda)) );
-  abh = a_bh * ( (1+q1*lambda+q2*lambda*lambda)/((1+q3*q3*lambda)*(1+q3*q3*lambda)) );
+  mbh = m_bh * ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p3*p3*lambda)*(1 + p3*p3*lambda)) );
+  abh = a_bh * ( (1 + q1*lambda + q2*lambda*lambda) / ((1 + q3*q3*lambda)*(1 + q3*q3*lambda)) );
 
   *mass = mbh;
   *spin = abh;
