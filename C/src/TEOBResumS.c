@@ -463,8 +463,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   /** Initialize ODE system solver */
-  dyn->t_stop = EOBPars->ode_tmax * time_unit_fact;
-  EOBPars->ode_tmax = dyn->t_stop;
+  dyn->t_stop = EOBPars->ode_tmax; // time_unit_fact;
+  //EOBPars->ode_tmax = dyn->t_stop;
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
