@@ -714,26 +714,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
 
-  /** Twist the insplunge waveform for BNS */
-  if ((use_tidal) && (use_spins == MODE_SPINS_GENERIC)) {   
-
-    Waveform_lm_alloc (&hTlm, size, "hTlm"); 
-    Waveform_lm_alloc (&hTlm_neg, size, "hTlm_neg"); 
-    
-    if (EOBPars->domain == DOMAIN_TD)
-      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm, hTlm_neg);
-  }
-
-  
 #if (DEBUG) 
   // Output wave and dynamics 
   if(EOBPars->output_multipoles) {
     strcat(hlm->name,"_insplunge");
     Waveform_lm_output (hlm);
-    if (use_spins == MODE_SPINS_GENERIC) {
-      strcat(hTlm->name,"_insplunge_twist");
-      Waveform_lm_output (hTlm);
-    }
   }
   if (EOBPars->output_dynamics) {
     Dynamics_output(dyn);
@@ -894,26 +879,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
-
-    if (use_spins == MODE_SPINS_GENERIC) {   
-      /* FIXME: the lines below are necessary for completing the evolution */
-      /* Prolong the spin dynamics to RD. constant euler angles, linear relation for omega(t) */
-      printf("Push spin dynamics for Ringdown \n");
-
-      if(hlm->time[size-1] - dyn->spins->time[dyn->spins->size-1] > 0){
-        int dN_spin = 100;
-        double dt_spin = (hlm->time[size-1] - dyn->spins->time[dyn->spins->size-1])/dN_spin;
-        int dspinsize = dyn->spins->size;
-        DynamicsSpin_push(&dyn->spins, dspinsize+dN_spin);
-        for(int i=0; i < dN_spin+1; i++){
-          dyn->spins->data[EOB_EVOLVE_SPIN_alp][dspinsize-1 +i] = dyn->spins->data[EOB_EVOLVE_SPIN_alp][dspinsize-1];
-          dyn->spins->data[EOB_EVOLVE_SPIN_bet][dspinsize-1 +i] = dyn->spins->data[EOB_EVOLVE_SPIN_bet][dspinsize-1];
-          dyn->spins->data[EOB_EVOLVE_SPIN_gam][dspinsize-1 +i] = dyn->spins->data[EOB_EVOLVE_SPIN_gam][dspinsize-1];
-          dyn->spins->data[EOB_EVOLVE_SPIN_Momg][dspinsize-1 +i] = dyn->spins->data[EOB_EVOLVE_SPIN_Momg][dspinsize-1]+0.001*i;
-          dyn->spins->time[dspinsize-1 +i] = dyn->spins->time[dspinsize-1]+i*dt_spin;
-        }
-      }
-    }
     
   } /* End of BBH section */
 

@@ -852,6 +852,7 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
 void compute_hpc_old(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 void compute_hpc(Waveform_lm *hlm,Waveform_lm *hlm_neg, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
+void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm);
 void twist_hlm_FD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
 

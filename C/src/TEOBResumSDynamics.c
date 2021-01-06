@@ -989,25 +989,25 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   for(int a=Ix; a<IN3; a++) 
     OmgB[a] = v5*(nu*(2+1.5*q) - 1.5*v*SABqLh)*Lh[a] + 0.5*v6*SA[a];
   
-  vect_cross3(OmgA, SA, Omg_x_SA);
-  vect_cross3(OmgB, SB, Omg_x_SB);
+  // vect_cross3(OmgA, SA, Omg_x_SA);
+  // vect_cross3(OmgB, SB, Omg_x_SB);
   
-  dy[EOB_EVOLVE_SPIN_SxA] += Omg_x_SA[Ix];
-  dy[EOB_EVOLVE_SPIN_SyA] += Omg_x_SA[Iy];
-  dy[EOB_EVOLVE_SPIN_SzA] += Omg_x_SA[Iz];
+  // dy[EOB_EVOLVE_SPIN_SxA] += Omg_x_SA[Ix];
+  // dy[EOB_EVOLVE_SPIN_SyA] += Omg_x_SA[Iy];
+  // dy[EOB_EVOLVE_SPIN_SzA] += Omg_x_SA[Iz];
   
-  dy[EOB_EVOLVE_SPIN_SxB] += Omg_x_SB[Ix];
-  dy[EOB_EVOLVE_SPIN_SyB] += Omg_x_SB[Iy];
-  dy[EOB_EVOLVE_SPIN_SzB] += Omg_x_SB[Iz];
+  // dy[EOB_EVOLVE_SPIN_SxB] += Omg_x_SB[Ix];
+  // dy[EOB_EVOLVE_SPIN_SyB] += Omg_x_SB[Iy];
+  // dy[EOB_EVOLVE_SPIN_SzB] += Omg_x_SB[Iz];
   
-  const double v_o_nu = v/nu;
-  dy[EOB_EVOLVE_SPIN_Lx] += -(v_o_nu) * ( Omg_x_SA[Ix] + Omg_x_SB[Ix] );
-  dy[EOB_EVOLVE_SPIN_Ly] += -(v_o_nu) * ( Omg_x_SA[Iy] + Omg_x_SB[Iy] );
-  dy[EOB_EVOLVE_SPIN_Lz] += -(v_o_nu) * ( Omg_x_SA[Iz] + Omg_x_SB[Iz] );  
+  // const double v_o_nu = v/nu;
+  // dy[EOB_EVOLVE_SPIN_Lx] += -(v_o_nu) * ( Omg_x_SA[Ix] + Omg_x_SB[Ix] );
+  // dy[EOB_EVOLVE_SPIN_Ly] += -(v_o_nu) * ( Omg_x_SA[Iy] + Omg_x_SB[Iy] );
+  // dy[EOB_EVOLVE_SPIN_Lz] += -(v_o_nu) * ( Omg_x_SA[Iz] + Omg_x_SB[Iz] );  
   
   
   /* N4LO */
-  /*
+  
   double OmgANLO[IN3],  OmgBNLO[IN3],  OmgANNLO[IN3],  OmgBNNLO[IN3],  OmgAN4LO[IN3],  OmgBN4LO[IN3];
   double SdotANLO[IN3], SdotBNLO[IN3], SdotANNLO[IN3], SdotBNNLO[IN3], SdotAN4LO[IN3], SdotBN4LO[IN3];
   double LNdotN4LO[IN3];
@@ -1085,7 +1085,6 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_SPIN_Ly] = LNdotN4LOperp[Iy];
   dy[EOB_EVOLVE_SPIN_Lz] = LNdotN4LOperp[Iz];
   
-  */
   
   /* dot gamma = dot alpha(t) * cos(beta(t)) = dot alpha(t) * Lhz */
  
@@ -1178,7 +1177,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   
   // Eq.(A1) of https://arxiv.org/abs/1307.4418 for Momega
   dy[EOB_EVOLVE_SPIN_Momg] = 0.;
-  for (int i=1; i<12; i++)
+  for (int i=2; i<8; i++)
     dy[EOB_EVOLVE_SPIN_Momg] += (a[i] + b[i]*lnomg)*pow(omg,(double)i*oothree);
   dy[EOB_EVOLVE_SPIN_Momg] += 1.;  
   dy[EOB_EVOLVE_SPIN_Momg] *= a[0]*pow(omg, eleven_o_three); // LO
@@ -1217,7 +1216,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
 
   /* index of closest element to dyn->t in dyn->time 
      initial data refer to this time */
-  const int i0 = find_point_bisection(dyn->t, dyn->size, dyn->time, 0);//CHECKME: 0 or 1?
+  const int i0 = find_point_bisection(dyn->t, dyn->size, dyn->time, 1);//CHECKME: 0 or 1?
   if (DEBUG) printf("initial data at index %d\n",i0);
   
   /* Set initial data */

@@ -1603,7 +1603,7 @@ double PrecessingRemnantSpin(Dynamics *dyn)
   Lhmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_Lz][imrg];
 
   vect_dot3(SAmrg, Lhmrg, &SApar);  
-  vect_dot3(SAmrg, Lhmrg, &SBpar); 
+  vect_dot3(SBmrg, Lhmrg, &SBpar); 
   //HealyBBHFitRemnant(SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2), EOBPars->q, &(EOBPars->Mbhf), NULL);
   EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2));
   for(int i=0; i < IN3; i++)

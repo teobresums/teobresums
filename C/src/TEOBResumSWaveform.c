@@ -4096,6 +4096,90 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
 
 /** h+,x, SPA and Twist routines */
 
+void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm){
+  
+  /* choose whether to use MOmega (from the dynamics) or MOmega_22 for the interpolation */
+  int map_from_22 = 0;
+  
+  /* First, unwrap alpha and gamma */
+  spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
+  spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
+  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
+  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
+
+  double *omega;
+  int size_omega;
+  if(map_from_22){
+    double *omg22_eob;
+    omg22_eob = malloc ( hlm->size * sizeof(double) );
+    D0(hlm->phase[1], hlm->time[1]-hlm->time[0], hlm->size, omg22_eob);
+    for(int i =0; i < hlm->size; i++) omg22_eob[i] = omg22_eob[i]/2;
+    omega = omg22_eob;
+    size_omega = hlm->size;
+  } else {
+    omega = dyn->data[EOB_MOMG];
+    size_omega = dyn->size;
+  }
+
+  /* Then, do the interpolations.
+  find the max of omega*/
+  int omg_jmax =0;
+  for(int i=0; i < size_omega; i++) {
+    omg_jmax = i;
+    if(omega[i+1] <= omega[i])
+      break;
+    if(omega[i+1] > spin->data[EOB_EVOLVE_SPIN_Momg][spin->size -1])
+      break;
+  }
+
+  /* allocate temporary angles*/
+  int size_tmp = omg_jmax +1;
+  double *alpha_tmp, *beta_tmp, *gamma_tmp;
+  int tM_idx;
+  alpha_tmp = malloc ( size_tmp * sizeof(double) );
+  beta_tmp  = malloc ( size_tmp * sizeof(double) );
+  gamma_tmp = malloc ( size_tmp * sizeof(double) );
+
+  /* first interpolation: angles(omega_PN)->angles(omega_EOB) */
+  interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_alp], spin->size, omega, size_tmp, alpha_tmp);
+  interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_bet], spin->size, omega, size_tmp, beta_tmp);
+  interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_gam], spin->size, omega, size_tmp, gamma_tmp);
+
+  if(!map_from_22){
+    /* map omega_dyn_EOB->t_EOB up to the peak of the EOB dynamics */
+    tM_idx = find_point_bisection(dyn->time[omg_jmax], hlm->size, hlm->time, 1);
+    interp_spline_omp(dyn->time, alpha_tmp, size_tmp, hlm->time, tM_idx+1, alpha);
+    interp_spline_omp(dyn->time, beta_tmp,  size_tmp, hlm->time, tM_idx+1, beta);  
+    interp_spline_omp(dyn->time, gamma_tmp, size_tmp, hlm->time, tM_idx+1, gamma); 
+  } else {
+    /* map omega22_EOB->t_EOB up to the peak of the EOB dynamics */
+    tM_idx = find_point_bisection(hlm->time[omg_jmax], hlm->size, hlm->time, 1);
+    interp_spline_omp(hlm->time, alpha_tmp, size_tmp, hlm->time, tM_idx+1, alpha);
+    interp_spline_omp(hlm->time, beta_tmp,  size_tmp, hlm->time, tM_idx+1, beta);  
+    interp_spline_omp(hlm->time, gamma_tmp, size_tmp, hlm->time, tM_idx+1, gamma); 
+    /* free */
+    free(omega);
+  }
+
+  /* Now, prolong the angles based on user request */
+  if (1) {
+    //for t > tM_idx, fix the values to the last
+    for(int j=tM_idx+1; j < hlm->size; j++){
+      alpha[j] = alpha[tM_idx];
+      beta[j]  = beta[tM_idx];
+      gamma[j] = gamma[tM_idx];
+    }
+  } else {
+    /* use QNM for alpha_dot, and fix beta constant */
+    /* TODO*/
+    for(int j=tM_idx+1; j < hlm->size; j++)
+       beta[j]  = beta[tM_idx];
+  }
+  /* free */
+  free(alpha_tmp);
+  free(beta_tmp);
+  free(gamma_tmp);
+}
 
 /** Twist TD multipoles */
 void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
@@ -4103,73 +4187,13 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
 {  
   const int size = hlm->size;
   int *activemode = hlm->kmask;
+  double *alpha, *beta, *gamma;
+  alpha = malloc ( size * sizeof(double) );
+  beta  = malloc ( size * sizeof(double) );
+  gamma = malloc ( size * sizeof(double) );
   
   /* Euler angles */
-  double *alpha, *beta, *gamma;
-  if (interp_spin_abc) {
-
-    if (spin->time[spin->size-1] < hlm->time[size-1]) errorexit("spin dynamics too short");
-    
-    alpha = malloc ( size * sizeof(double) );
-    beta  = malloc ( size * sizeof(double) );
-    gamma = malloc ( size * sizeof(double) );
-
-    /*FIXME: hardfix for discontinuities in alpha/gamma*/
-    spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
-    spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
-    unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
-    unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
-
-    if (1){ 
-    
-      /* find the max of the dynamic's omega*/
-      // CHECKME
-      int jM=0;
-      for(int i=0; i < dyn->size; i++) {
-        if (dyn->data[EOB_MOMG][i +1] < dyn->data[EOB_MOMG][i])
-          break;
-        jM++;
-      }
-      jM--;
-      double *alpha_tmp, *beta_tmp, *gamma_tmp;
-      alpha_tmp = malloc ( jM * sizeof(double) );
-      beta_tmp  = malloc ( jM * sizeof(double) );
-      gamma_tmp = malloc ( jM * sizeof(double) );
-
-      interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_alp], spin->size, dyn->data[EOB_MOMG], jM, alpha_tmp); //alpha(omega_eob)
-      interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_bet], spin->size, dyn->data[EOB_MOMG], jM, beta_tmp);
-      interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_gam], spin->size, dyn->data[EOB_MOMG], jM, gamma_tmp);
-
-      // the dynamics is shorter (in time) than the WF
-      // Interpolate up to end of dynamics
-      int tM_idx = find_point_bisection(dyn->time[jM], hlm->size-1, hlm->time, 0);
-      interp_spline_omp(dyn->time, alpha_tmp, jM+1, hlm->time, tM_idx, alpha);
-      interp_spline_omp(dyn->time, beta_tmp,  jM+1, hlm->time, tM_idx, beta);  
-      interp_spline_omp(dyn->time, gamma_tmp, jM+1, hlm->time, tM_idx, gamma); 
-
-      //for t > tM_idx, fox the values to the last
-      for(int j=tM_idx; j < hlm->size; j++){
-        alpha[j] = alpha[tM_idx];
-        beta[j]  = beta[tM_idx];
-        gamma[j] = gamma[tM_idx];
-      }
-
-      free(alpha_tmp);
-      free(beta_tmp);
-      free(gamma_tmp);
-
-    } else {
-      interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_alp], spin->size, hlm->time, size, alpha); //alpha(omega_eob)
-      interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_bet], spin->size, hlm->time, size, beta);
-      interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_gam], spin->size, hlm->time, size, gamma);
-    }
-  } else {
-    
-    alpha = spin->data[EOB_EVOLVE_SPIN_alp];
-    beta = spin->data[EOB_EVOLVE_SPIN_bet];
-    gamma = spin->data[EOB_EVOLVE_SPIN_gam];
-    
-  }
+  prolong_euler_angles(alpha, beta, gamma, dyn, spin, hlm);
 #if (DEBUG)    
     /*output angles */
     char fname[STRLEN*2];
@@ -4248,11 +4272,10 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
     hTlm->time[i] = hlm->time[i];
     hTlm_neg->time[i]= hlm->time[i];
   }
-  if (interp_spin_abc) {
-    free(alpha);
-    free(beta);
-    free(gamma);
-  }
+
+  free(alpha);
+  free(beta);
+  free(gamma);
   
 }
 
