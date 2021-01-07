@@ -552,6 +552,91 @@ static PyObject* pph_lso_orbital_py(PyObject* self, PyObject* args)
   return ret;
 }
 
+static PyObject* eob_j0_circ(PyObject *self, PyObject *args)
+{
+  double r, q, chi1, chi2;
+  double rc, drc_dr, d2rc_dr2;
+  double A, dA, d2A;
+  double B, dB, pl_hold;
+  double G, dG_dr, dG_dprstar, dG_dprstarbyprstar;
+  double H, Heff, Heff_orb, dHeff_dr, dHeff_dprstar, dHeff_dpphi, d2Heff_dprstar20;
+  double ggm[26];
+  double j02; 
+
+  Dynamics *dyn;
+
+  if (!PyArg_ParseTuple(args, "dddd", &r, &q, &chi1, &chi2))
+    return NULL;
+  
+  double nu = q_to_nu(q);
+
+/* Allocate the defaults & set the parameters */
+  EOBParameters_alloc ( &EOBPars ); 
+  EOBParameters_defaults (DEFAULT_PARS_BBH, EOBPars);
+  EOBPars->chi1 = chi1;
+  EOBPars->chi2 = chi2;
+  EOBPars->q    = q;
+  eob_set_params(DEFAULT_PARS_BBH, 1);
+  
+  /* set firstcall */
+  for (int k=0; k < NFIRSTCALL; k++){ 
+    EOBPars->firstcall[k] = 1;
+  }
+
+  Dynamics_alloc (&dyn, 0, "dyn"); 
+  Dynamics_set_params(dyn); 
+
+  const double S     = dyn->S;
+  const double Sstar = dyn->Sstar;
+  printf("S = %f, Sstar=%f\n", S, Sstar);
+  /** Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper 
+	(which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). */
+  eob_metric_s(r, dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
+  eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
+  eob_dyn_s_GS(r, rc, drc_dr, 0.0, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, EOBPars->X1, EOBPars->X2, EOBPars->cN3LO, ggm);
+
+  G                  = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss
+  dG_dr              = ggm[6] *S+ggm[7] *Sstar;
+  dG_dprstar         = ggm[4] *S+ggm[5] *Sstar;
+  dG_dprstarbyprstar = ggm[10]*S+ggm[11]*Sstar;
+  
+  // for(int i=0; i<26; i++)
+  //    printf("%d %f\n",i, ggm[i]);
+  // printf("G = %f\n dG_dr = %f\n dG_dprstar = %f\n dG_dprstarbyprstar = %f\n", G, dG_dr, dG_dprstar, dG_dprstarbyprstar);
+
+  double  sqrtAbyB = sqrt(A/B);
+  double  uc       = 1./rc;
+  double  uc2      = uc*uc;
+  double  duc_dr   = -uc2*drc_dr;
+  double  dAuc2_dr = uc2*(dA-2*A*uc*drc_dr);
+
+  double a_coeff = SQ(dAuc2_dr) - 4*A*uc2*SQ(dG_dr);  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
+  double b_coeff = 2*dA*dAuc2_dr- 4*A*SQ(dG_dr);     /* Second coefficient of the quadratic equation */
+  double c_coeff = SQ(dA);                                                 /* Third coefficient of the quadratic equation */
+  //printf("a = %f\n b = %f\n c = %f\n", a_coeff, b_coeff, c_coeff );
+
+ /* Delta of the quadratic equation */
+  double Delta = SQ(b_coeff) - 4*a_coeff*c_coeff; 
+  if (Delta<0) Delta=0.;                                              
+  
+  double sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); /* Plus  solution of the quadratic equation */
+  double sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff); /* Minus solution of the quadratic equation */
+  
+  /* dGdr sign determines choice of solution */
+  if (dG_dr > 0) j02 = sol_p;
+  else           j02 = sol_m;
+  
+  double j0 = sqrt(j02);
+  
+  /* Free */ 
+  EOBParameters_free (EOBPars);
+  Dynamics_free(dyn);
+
+  PyObject *ret;
+  ret = Py_BuildValue("d", j0);
+  return ret;
+}
+
 static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
 {
   double r, q, pphi, prstar, chi1, chi2;
@@ -612,7 +697,7 @@ static PyMethodDef EOBRunMethods[] = {
   {"eob_c3_fit_HM_py", eob_c3_fit_HM_py, METH_VARARGS, "Fit to compute the c3 for nonspinning BBH"},
   {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso"},
   {"eob_ham_s_py", eob_ham_s_py, METH_VARARGS, "Compute the spinning EOB hamiltonian for BBH systems"},
-
+  {"eob_j0_circ", eob_j0_circ, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
   {NULL, NULL}  /* {NULL, NULL, 0, NULL} */ 
