@@ -4112,6 +4112,7 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   if(map_from_22){
     double *omg22_eob;
     omg22_eob = malloc ( hlm->size * sizeof(double) );
+    //D0_x_4(hlm->phase[1], hlm->time, hlm->size, omg22_eob);
     D0(hlm->phase[1], hlm->time[1]-hlm->time[0], hlm->size, omg22_eob);
     for(int i =0; i < hlm->size; i++) omg22_eob[i] = omg22_eob[i]/2;
     omega = omg22_eob;
@@ -4381,7 +4382,7 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, do
       if (!activemode[k]) continue;
       spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
       /* add m<0 modes */
-      if ( (mneg) && (MINDEX[k]!=0) )
+      if ( (MINDEX[k]!=0) )
 	      spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
       }
       
@@ -4407,7 +4408,7 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, do
           sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
           
         /* precessing wf, there is no symmetry between +m and -m*/
-          if (EOBPars->use_spins==MODE_SPINS_GENERIC){
+          if (EOBPars->use_spins==MODE_SPINS_GENERIC && !mneg){
             if (!activemode[k]) continue;
             Aki  = amplitude_prefactor * hlm_neg->ampli[k][i];
             cosPhi = cos( hlm_neg->phase[k][i] );

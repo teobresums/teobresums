@@ -233,6 +233,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   Waveform *hpc = NULL; /* TD wvf */
   Waveform_lm *hmodes = NULL; /* modes */
   Waveform_lm *hTmodes = NULL; /* twisted modes */
+  Waveform_lm *hTmmodes = NULL; /*twisted modes, m<0 */
 
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
@@ -319,7 +320,8 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   int status = EOBRun(&hpc,    &hfpc, 
                       &hmodes, &hfmodes, 
-                      &hTmodes, &hfTmodes,
+                      &hTmodes, &hTmmodes,
+                      &hfTmodes,
                       default_choice, fc);
 
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
@@ -396,6 +398,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     WaveformFD_free (hfpc);       
     Waveform_lm_free(hmodes);    
     Waveform_lm_free (hTmodes);
+    Waveform_lm_free (hTmmodes);
     WaveformFD_lm_free(hfmodes);  
     WaveformFD_lm_free (hfTmodes);
     EOBParameters_free (EOBPars);

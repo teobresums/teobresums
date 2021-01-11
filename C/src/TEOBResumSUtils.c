@@ -704,7 +704,7 @@ void unwrap_HM(double *p, const int size)
     
     if(curr < prev - Pi) 
       dphi = TwoPi;
-    if(curr > prev + TwoPi)
+    if(curr > prev + Pi)
       dphi = -TwoPi;
 
     corr += dphi;
