@@ -2371,7 +2371,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
 
   
-  if ((ecc > 1e-4) || (r_hyp != 0.)) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
@@ -2802,7 +2802,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[1][1]);
   }
 
-  if ((ecc > 1e-4) || (r_hyp != 0.)) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
@@ -2900,7 +2900,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     }
   }
 
-  if ((ecc > 1e-4) || (r_hyp != 0.)) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
@@ -3240,7 +3240,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[k22][1]);
   }
 
-  if ((ecc > 1e-4) || (r_hyp != 0.)) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
@@ -3300,7 +3300,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     n5[k22][j]  = n4[k22][j]*r2*w2;              /* (pr*)*(r Omg) */
   }
 
-  if ((ecc > 1e-4) || (r_hyp != 0.)) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
     double alpha = 0.09;
     double *smooth_theta;
