@@ -649,6 +649,11 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
+void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh);
+double kerr_bh_freq(double a_bh);
+double apeak_bhns(double q, double k2t);
+double opeak_bhns(double q, double k2t);
+void postpeak_coef(double *cA, double *cP, double q);
 void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda, double m_bh, double a_bh);
 double eob_a6c_fit(double nu);
 double eob_a6c_fit_HM(double nu);
@@ -769,6 +774,8 @@ void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
 void (*eob_wav_ringdown)();
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_ringdown_templ_bhns(double *cA, double *cP, double tau, double alpha1, double omega1, double *psi);
+void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double LambdaBl2, double M);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 
 #ifdef _OPENMP

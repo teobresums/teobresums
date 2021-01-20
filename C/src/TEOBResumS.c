@@ -275,7 +275,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }  
 
   /** Turn on/off BHNS mode */
-  if ((dyn->use_tidal) && (EOBPars->LambdaAl2==0.) && (q>2.)) {
+  if ((dyn->use_tidal) && (EOBPars->LambdaAl2==0.)) {
     //TODO: check if this works also for spinning cases
     bhns_mode = true;
   }
@@ -844,7 +844,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->size = size;
     
     /* Ringdown attachment */
-    eob_wav_ringdown(dyn, hlm);
+    if(bhns_mode==true){
+      /** Ringdown Model for BHNS */
+      eob_wav_ringdown_bhns(dyn, hlm, EOBPars->LambdaBl2, EOBPars->M);
+    }else{
+      eob_wav_ringdown(dyn, hlm);
+      }
+    
     
   } /* End of BBH section */
 

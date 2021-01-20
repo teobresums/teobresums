@@ -20,6 +20,109 @@
 
 #include "TEOBResumS.h"
 
+/** BHNS Functions section */
+
+/** Fits of Kerr BH QNM complex frequencies for a (M_bh, a_bh) of the remnant BH (for l=2,m=2)
+ * Berti et al: arxiv:0512160
+ * Nagar et al: arxiv:1904.09550
+ */
+void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh)
+{
+  /** alpha_n = Q_{lmn} = q1 + q2( 1 - j )^q3  : inverse damping time of nth overtone */
+
+  /** n=0 fundamental overtone */
+  const double q10 = 0.7; 
+  const double q20 = 1.4187;
+  const double q30 = -0.4990;
+
+  /** n=1 first overtone */
+  const double q11 = 0.1;
+  const double q21 = 0.5436;
+  const double q31 = -0.4731;
+
+  *alpha1 = q10 + q20*pow(1. - a_bh, q30);
+  *alpha2 = q11 + q21*pow(1. - a_bh, q31);
+}
+
+double kerr_bh_freq(double a_bh)
+{
+  /** omega_n = Mbh*omega_{lmn} = F_{lmn} = f1 + f2( 1 - j )^f3  : dimensionless frequency of nth overtone */
+
+  /** n=0 fundamental overtone */
+  const double f10 = 0.7; 
+  const double f20 = 1.4187;
+  const double f30 = -0.4990;
+
+  /** n=1 first overtone */
+  const double f11 = 0.1;
+  const double f21 = 0.5436;
+  const double f31 = -0.4731;
+
+  /** double omega2 = f11 + f21*pow(1 - a_bh, f31); for 1st overtone*/
+  return f10 + f20*pow(1 - a_bh, f30);
+}
+
+double apeak_bhns(double q, double k2t)
+{
+  /** A^{peak}_{22} amplitude at tpeak (\dot{A}(tpeak)=0) fitted with Pade 2,2:
+   * A_bhns / A_bbh = a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) 
+   * ap_bbh is A^{peak}_{22} for BBH from Nagar et al */
+
+  double nu = q/((1.+q)*(1.+q));
+
+  const double A0 = 0.295896;
+  const double n1 = -0.041285;
+  const double n2 = 1.5971;
+  const double d1 = 0.; 
+  const double d2 = 0.;
+
+  double ap_bbh1 = 4.898979486*(1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
+  double ap_bbh = nu*A0*ap_bbh1;
+
+  const double a0 = 0.26320924;
+  const double a1 = 94.2190828;
+  const double a2 = 2.35690962;
+  const double b1 = 23.3662775;
+  const double b2 = 1.37603372;
+
+  return ap_bbh*( a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) )
+}
+
+double opeak_bhns(double q, double k2t)
+{
+  /** omega^{peak}_{22} frequency at tpeak fitted with Pade 2,2:
+   * omega_bhns / omega_bbh = a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) 
+   * op_bbh is omega^{peak}_{22} for BBH from Nagar et al */
+
+  double nu = q/((1.+q)*(1.+q));
+
+  const double omega0 = 0.273356;
+  const double n1 = 0.84074;
+  const double n2 = 1.6976;
+  const double d1 = 0.; 
+  const double d2 = 0.;
+
+  double op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
+  double op_bbh = omega0*op_bbh1;
+
+  const double a0 = 0.01246730;
+  const double a1 = 1173.38877;
+  const double a2 = 33.3455450;
+  const double b1 = 12.4989899;
+  const double b2 = 1.58893562;
+
+  return op_bbh*( a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) )
+}
+
+void postpeak_coef(double *cA, double *cP, double q)
+{
+  double nu      = q/((1.+q)*(1.+q));
+
+  *(cA + 2)   = -0.56187 + 0.75497*nu;
+  *(cP + 2) = ( 4.4414 - 63.107*nu + 296.64*nu*nu ) / ( 1 - 13.299*nu + 69.129*nu*nu );
+  *(cP + 3) = ( 7.1508 - 109.47*nu ) / ( 1 + 556.34*nu + 287.42*nu*nu );
+}
+
 /** Fits of BH remnant from BHNS Frank's paper (2020) */
 void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda, double m_bh, double a_bh)
 {
@@ -60,6 +163,8 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   *mass = mbh;
   *spin = abh;
 }
+
+/** End of BHNS section */
 
 /** Fit of a6c, TEOBResumS paper Nagar et al. (2018) */
 double eob_a6c_fit(double nu)
