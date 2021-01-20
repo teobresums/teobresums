@@ -2,6 +2,9 @@
 import EOBRun_module
 import matplotlib.pyplot as plt
 
+f0  = 18.132161296614207
+e0  = 0.0890000000
+
 pars = {
     'M'                  : 50.,
     'q'                  : 1.,
@@ -16,9 +19,9 @@ pars = {
     'srate_interp'       : 4096.,  #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,      #output quantities in geometric units. Default = 1
     'df'                 : 0.01,   #df for FD interpolation
-    'initial_frequency'  : 20.,    #in Hz if use_geometric_units = 0, else in geometric units
+    'initial_frequency'  : f0,    #in Hz if use_geometric_units = 0, else in geometric units
     'interp_uniform_grid': 2,      #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
-    'ecc'                : 0.1,    #Eccentricity. Default = 0.
+    'ecc'                : e0,    #Eccentricity. Default = 0.
 }
 
 #Run the WF generator
