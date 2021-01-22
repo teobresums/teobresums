@@ -46,7 +46,7 @@ void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh)
 
 double kerr_bh_freq(double a_bh)
 {
-  /** omega_n = Mbh*omega_{lmn} = F_{lmn} = f1 + f2( 1 - j )^f3  : dimensionless frequency of nth overtone */
+  /** Mbh*omega_{lmn} = F_{lmn} = f1 + f2( 1 - j )^f3  : dimensionless frequency of nth overtone */
 
   /** n=0 fundamental overtone */
   const double f10 = 0.7; 
@@ -59,16 +59,14 @@ double kerr_bh_freq(double a_bh)
   const double f31 = -0.4731;
 
   /** double omega2 = f11 + f21*pow(1 - a_bh, f31); for 1st overtone*/
-  return f10 + f20*pow(1 - a_bh, f30);
+  return f10 + f20*pow(1. - a_bh, f30);
 }
 
-double apeak_bhns(double q, double k2t)
+double apeak_bhns(double nu, double k2t)
 {
   /** A^{peak}_{22} amplitude at tpeak (\dot{A}(tpeak)=0) fitted with Pade 2,2:
    * A_bhns / A_bbh = a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) 
    * ap_bbh is A^{peak}_{22} for BBH from Nagar et al */
-
-  double nu = q/((1.+q)*(1.+q));
 
   const double A0 = 0.295896;
   const double n1 = -0.041285;
@@ -85,16 +83,14 @@ double apeak_bhns(double q, double k2t)
   const double b1 = 23.3662775;
   const double b2 = 1.37603372;
 
-  return ap_bbh*( a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) )
+  return ap_bbh*( a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) );
 }
 
-double opeak_bhns(double q, double k2t)
+double opeak_bhns(double nu, double k2t)
 {
   /** omega^{peak}_{22} frequency at tpeak fitted with Pade 2,2:
    * omega_bhns / omega_bbh = a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) 
    * op_bbh is omega^{peak}_{22} for BBH from Nagar et al */
-
-  double nu = q/((1.+q)*(1.+q));
 
   const double omega0 = 0.273356;
   const double n1 = 0.84074;
@@ -111,16 +107,36 @@ double opeak_bhns(double q, double k2t)
   const double b1 = 12.4989899;
   const double b2 = 1.58893562;
 
-  return op_bbh*( a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) )
+  return op_bbh*( a0*( 1 + a1*k2t + a2*k2t*k2t ) / ( 1 + b1*k2t + b2*k2t*k2t ) );
 }
 
-void postpeak_coef(double *cA, double *cP, double q)
+void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+                    double *sigmar, double *sigmai, double nu, double *alpha1, double *omega1, double Apeak, double alpha21,
+                    double Domega)
 {
-  double nu      = q/((1.+q)*(1.+q));
+  int modeon[KMAX];
+  const int k22 = 1;
+  
+  for (int k=0; k<KMAX; k++) {
+    modeon[k] = 0; /* off */
+    sigmar[k] = *alpha1;
+    sigmai[k] = *omega1;
+    a3[k] = b3[k] = b4[k] = 0.;
+    /** These are the same for all modes given the constraints
+     * for physically correct behaviour of the fits */
+    a1[k] = Apeak*(*alpha1)*(  (cosh(a3[k])*cosh(a3[k])) / a2[k] );
+    a2[k] = 0.5*alpha21;
+    a4[k] = Apeak - a1[k]*tanh(a3[k]);
+    b2[k] = alpha21;
+    b1[k] = Domega*(  ( 1 + b3[k] + b4[k] ) / ( b2[k]*( b3[k] + 2*b4[k] ) )  );
+  }
 
-  *(cA + 2)   = -0.56187 + 0.75497*nu;
-  *(cP + 2) = ( 4.4414 - 63.107*nu + 296.64*nu*nu ) / ( 1 - 13.299*nu + 69.129*nu*nu );
-  *(cP + 3) = ( 7.1508 - 109.47*nu ) / ( 1 + 556.34*nu + 287.42*nu*nu );
+  modeon[k22]=1;
+
+  /** l=2, m=2 **/
+  a3[k22] = -0.56187 + 0.75497*nu;
+  b3[k22] = ( 4.4414 - 63.107*nu + 296.64*nu*nu ) / ( 1 - 13.299*nu + 69.129*nu*nu );
+  b4[k22] = ( 7.1508 - 109.47*nu ) / ( 1 + 556.34*nu + 287.42*nu*nu );
 }
 
 /** Fits of BH remnant from BHNS Frank's paper (2020) */
