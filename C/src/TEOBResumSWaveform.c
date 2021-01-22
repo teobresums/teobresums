@@ -3268,7 +3268,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
     } else if (ni==2) {
       Omega_pk_grid[5] = 2.*Omega_pk_grid[4]-Omega_pk_grid[3];
       Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
-    } else if (ni==3) {cPhi[1] = alpha21;
+    } else if (ni==3) {
       Omega_pk_grid[4] = 2.*Omega_pk_grid[3]-Omega_pk_grid[2];
       Omega_pk_grid[5] = 2.*Omega_pk_grid[4]-Omega_pk_grid[3];
       Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
@@ -3396,21 +3396,8 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 
 /** BHNS Section */
 
-/** Ringdown calculation for l=2, m=2 */ 
-void eob_wav_ringdown_templ_bhns(double *cA, double *cP, double tau, double alpha1, double omega1, double *psi)
-{
-  /** Amplitude and phase of the QNM-factorized waveform \bar{h} = A*exp(i*Phi) */
-  double Amp = *(cA+0)*tanh( *(cA+1)*tau + *(cA+2) ) + *(cA+3);
-  double Phi = -*(cP+0)*log( ( 1. + *(cP+2)*exp( -*(cP+1)*tau ) + *(cP+3)*exp( -2* (*(cP+1)*tau) ) ) / ( 1 + *(cP+2) + *(cP+3) ) );
-
-  double sigma1r = alpha1;
-  double sigma1i = omega1;
-
-  psi[0] = Amp*exp( -sigma1r*tau );
-  psi[1] = - ( sigma1i*tau - Phi );
-}
-
-void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double LambdaBl2, double M)
+/** Ringdown calculation for l=2, m=2 */
+void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
 {
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
@@ -3418,20 +3405,21 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double LambdaBl2, do
   const double q    = dyn->q;
   const double chi1  = dyn->chi1;
   const double ooMbh = 1./Mbh;
+  const double dt = dyn->dt;
 
-  double *alpha1, *alpha2;
+  double alpha1, alpha2, *pa1, *pa2;
+  pa1 = &alpha1;
+  pa2 = &alpha2;
 
   /** Compute omega1, alpha1 and alpha2 from fits*/
   double omega1 = kerr_bh_freq(abh)/Mbh;
-  kerr_bh_qnm(&alpha1, &alpha2, a_bh);
+  double *po1;
+  po1 = &omega1;
+  kerr_bh_qnm(pa1, pa2, abh);
 
   /** Compute peak values for amplitude and frequency from fits */
-  double M1 = (q*M)/(1+q);
-  double M2 = M/(1+q);
-  double tLambda = (16./13.)*( (M2+12*M1)/pow(M1+M2,5) * pow(M2,4) * LambdaBl2 );
-  double k2t = (3./16.)*tLambda;
-  double Apeak = apeak_bhns(q, k2t);
-  double Opeak = opeak_bhns(q, k2t);
+  double Apeak = apeak_bhns(nu, kapT2);
+  double Opeak = opeak_bhns(nu, kapT2);
 
   double *Omega = dyn->data[EOB_OMGORB]; /* use this for spin */
   
@@ -3483,7 +3471,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double LambdaBl2, do
     } else if (ni==2) {
       Omega_pk_grid[5] = 2.*Omega_pk_grid[4]-Omega_pk_grid[3];
       Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
-    } else if (ni==3) {cPhi[1] = alpha21;
+    } else if (ni==3) {
       Omega_pk_grid[4] = 2.*Omega_pk_grid[3]-Omega_pk_grid[2];
       Omega_pk_grid[5] = 2.*Omega_pk_grid[4]-Omega_pk_grid[3];
       Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
@@ -3524,18 +3512,11 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double LambdaBl2, do
   /** Postpeak coefficients calculation */
   double alpha21 = alpha2 - alpha1;
   double Domega = omega1 - Mbh*Opeak; 
-  double *cA, *cP;
-  double cAmp[4], cPhi[4];
-  
-  cA = cAmp;
-  cP = cPhi;
+  double sigma[2][KMAX];
+  double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
+  double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
 
-  postpeak_coef(&cA, &cP, q);
-  cAmp[0] = Apeak*alpha1*(  (cosh(cAmp[2])*cosh(cAmp[2])) / cAmp[1] );
-  cAmp[1] = 0.5*alpha21;
-  cAmp[3] = Apeak - cAmp[0]*tanh(cAmp[2]);
-  cPhi[1] = alpha21;
-  cPhi[0] = Domega*(  ( 1 + cPhi[2] + cPhi[3] ) / ( cPhi[1]*( cPhi[2] + 2*cPhi[3] ) )  );
+  postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, pa1, po1, Apeak, alpha21, Domega);
 
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
@@ -3557,7 +3538,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double LambdaBl2, do
       }
     }
   }
-
+  
   /** Compute Ringdown waveform for t>=tmatch */
   double t0, tm, psi[2];
   double Deltaphi[KMAX];
@@ -3566,23 +3547,22 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double LambdaBl2, do
 
       /* Calculate Deltaphi */
       t0 = t_lm[k][idx[k]] - tmrg[k]; 
-      eob_wav_ringdown_templ_bhns(&cA, &cP, t0, alpha1, omega1, psi);
+      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
       /* Compute and attach ringdown */
       for (int j = idx[k]; j < size ; j++ ) {   
         tm = t_lm[k][j] - tmrg[k];
-        eob_wav_ringdown_templ_bhns(&cA, &cP, tm, alpha1, omega1, psi);
+        eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
         hlm->phase[k][j] = psi[1] - Deltaphi[k];
         hlm->ampli[k][j] = psi[0];
       }
     }
   }
-
+  
   /** Free mem. */
   for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);
   }
-
 }
 /** End of BHNS Section */
 	
