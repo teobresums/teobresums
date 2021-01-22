@@ -3166,7 +3166,7 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi)
 {  
   double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
-  double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));   
+  double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));  
   psi[0] = amp * exp(-sigmar*x); /* amplitude */
   psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
 }
@@ -3396,7 +3396,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 
 /** BHNS Section */
 
-/** Ringdown calculation for l=2, m=2 */
+/** Ringdown calculation for l=2, m=2 (KMAX_22)*/
 void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
 {
   const double Mbh   = dyn->Mbhf;
@@ -3421,6 +3421,11 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
   double Apeak = apeak_bhns(nu, kapT2);
   double Opeak = opeak_bhns(nu, kapT2);
 
+   if (VERBOSE) {
+    PRFORMd("Peak of Amplitude",Apeak);
+    PRFORMd("Peak of Omega",Opeak);
+  }
+
   double *Omega = dyn->data[EOB_OMGORB]; /* use this for spin */
   
   /* Note:
@@ -3436,8 +3441,8 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
   }
   
   /** Find peak of Omega */
-  int index_pk;
-  double Omega_pk = Opeak;
+  int index_pk = dynsize-1;
+  double Omega_pk = Omega[index_pk];
   for (int j = dynsize-2; j-- ; ) {
     if (Omega[j] < Omega_pk) 
       break;
@@ -3494,43 +3499,43 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
   
   /** Merger time t_max(A22) */
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tmrg[KMAX], tmatch[KMAX];
+  double tmrg[KMAX_22], tmatch[KMAX_22];
 
   /* nonspinning case */     
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
 
-  for (int k=0; k<KMAX; k++) {
+  for (int k=0; k<KMAX_22; k++) {
       tmrg[k] = tmrgA22;
   }
 
   /** Postmerger-Ringdown matching time */
-  for (int k=0; k<KMAX; k++) {
+  for (int k=0; k<KMAX_22; k++) {
     tmatch[k] = 2.*ooMbh + tmrg[k];
   }
 
   /** Postpeak coefficients calculation */
   double alpha21 = alpha2 - alpha1;
   double Domega = omega1 - Mbh*Opeak; 
-  double sigma[2][KMAX];
-  double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
-  double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
+  double sigma[2][KMAX_22];
+  double a1[KMAX_22], a2[KMAX_22], a3[KMAX_22], a4[KMAX_22];
+  double b1[KMAX_22], b2[KMAX_22], b3[KMAX_22], b4[KMAX_22];
 
   postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, pa1, po1, Apeak, alpha21, Domega);
 
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
-  double *t_lm[KMAX];
-  for (int k=0; k<KMAX; k++) {
+  double *t_lm[KMAX_22];
+  for (int k=0; k<KMAX_22; k++) {
     t_lm[k] =  malloc ( size * sizeof(double) );
     for (int j = 0; j < size; j++ ) {  
       t_lm[k][j] = t[j] * ooMbh;
     }
   }  
-  
+
   /** Find attachment index */
-  int idx[KMAX];
-  for (int k = 0; k < KMAX; k++) {
+  int idx[KMAX_22];
+  for (int k = 0; k < KMAX_22; k++) {
     for (int j = size-1; j-- ; ) {  
       if (t_lm[k][j] < tmatch[k]) {
 	      idx[k] = j - 1;
@@ -3538,17 +3543,17 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
       }
     }
   }
-  
+
   /** Compute Ringdown waveform for t>=tmatch */
   double t0, tm, psi[2];
-  double Deltaphi[KMAX];
-  for (int k = 0; k < KMAX; k++) {
+  double Deltaphi[KMAX_22];
+  for (int k = 0; k < KMAX_22; k++) {
     if(hlm->kmask[k]){
-
       /* Calculate Deltaphi */
       t0 = t_lm[k][idx[k]] - tmrg[k]; 
       eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
+      
       /* Compute and attach ringdown */
       for (int j = idx[k]; j < size ; j++ ) {   
         tm = t_lm[k][j] - tmrg[k];
@@ -3558,9 +3563,11 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
       }
     }
   }
-  
+
+  if (VERBOSE) PRFORMd("psi_ampli",psi[0]);
+  if (VERBOSE) PRFORMd("psi_phase",psi[1]);
   /** Free mem. */
-  for (int k=0; k<KMAX; k++) {
+  for (int k=0; k<KMAX_22; k++) {
     free(t_lm[k]);
   }
 }
