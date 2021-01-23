@@ -151,7 +151,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->postadiabatic_dynamics_stop=0; // stop after post-adiabatic dynamics 
 
   eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
+  eobp->use_flm=USEFLM_HM; // "SSLO", "SSNLO", "HM"
   
   eobp->compute_LR=0; // calculate LR ?
   eobp->compute_LSO=0; // calculate LSO ?
@@ -258,7 +258,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   if (choose == DEFAULT_PARS_BBH) {
 
     eobp->centrifugal_radius = CENTRAD_NLO;
-    eobp->use_flm = USEFLM_SSLO;
+    eobp->use_flm = USEFLM_HM;
     eobp->use_tidal = TIDES_OFF;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
 
@@ -386,7 +386,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->use_flm == USEFLM_NOPT) {
-    eobp->use_flm = USEFLM_SSLO;
+    eobp->use_flm = USEFLM_HM  ;
     if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
 			par_get_s("use_flm"), use_flm_opt[eobp->use_flm]);
   }
@@ -770,7 +770,7 @@ void par_db_default ()
   par_add_s("postadiabatic_dynamics_stop","yes"); // stop after post-adiabatic dynamics //FIXME: make bool
 
   par_add_s("centrifugal_radius", "NLO"); // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  par_add_s("use_flm", "SSLO"); // "SSLO", "SSNLO", "HM"
+  par_add_s("use_flm", "HM"); // "SSLO", "SSNLO", "HM"
   par_add_b("compute_LR", 0); // calculate LR ?
   par_add_b("compute_LSO", 0); // calculate LSO ?
   par_add_d("compute_LR_guess", 3.);
