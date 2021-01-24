@@ -692,9 +692,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   if (!(use_tidal) || (bhns_mode==true)) {
     
-    /* *****************************************
-     * Following is for BBH : NQC & Ringdown
-     * *****************************************
+    /* ********************************************************
+     * Following is for BBH : NQC & Ringdown (for BHNS as well)
+     * ********************************************************
      */
     
     /* This is a BBH run.
@@ -843,16 +843,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     size += size_ringdown;
     EOBPars->size = size;
     
-    /* Ringdown attachment */
-    if(bhns_mode==true){
-      /** Ringdown Model for BHNS */
-      eob_wav_ringdown_bhns(dyn, hlm, EOBPars->kapT2);
-    }else{
-      eob_wav_ringdown(dyn, hlm);
-      }
+    /* Ringdown attachment for BBH & BHNS */
+    eob_wav_ringdown(dyn, hlm, EOBPars->kapT2, bhns_mode);
     
     
-  } /* End of BBH section */
+  } /* End of BBH & BHNS section */
 
 #if (DEBUG) 
   // Output wave and dynamics 
