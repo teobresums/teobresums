@@ -774,7 +774,7 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
 void (*eob_wav_ringdown)();
-void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm, double kapT2, bool bhns_mode);
 void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 

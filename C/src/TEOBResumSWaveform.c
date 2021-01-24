@@ -3166,13 +3166,14 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi)
 {  
   double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
-  double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));  
+  double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));
+  /*if (VERBOSE) PRFORMd("phase", phase );*/
   psi[0] = amp * exp(-sigmar*x); /* amplitude */
   psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
 }
 
 /** Ringdown calculation and match to the dynamics */ 
-void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
+void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm, double kapT2, bool bhns_mode)
 {
 
   const double Mbh   = dyn->Mbhf;
@@ -3342,9 +3343,36 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
   double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
 
-  QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+  if(bhns_mode==true){
+    /** 
+     * BHNS Model (currently just for l=2, m=2)
+     **/
+    double alpha1, alpha2, *pa1, *pa2;
+    pa1 = &alpha1;
+    pa2 = &alpha2;
+
+    /** Compute omega1, alpha1 and alpha2 from fits*/
+    double omega1 = kerr_bh_freq(abh)/Mbh;
+    double *po1;
+    po1 = &omega1;
+    kerr_bh_qnm(pa1, pa2, abh);
+
+    /** Compute peak values for amplitude and frequency from fits */
+    double Apeak = apeak_bhns(nu, kapT2);
+    double Opeak = opeak_bhns(nu, kapT2);
+
+    /** Postpeak coefficients calculation */
+    double alpha21 = alpha2 - alpha1;
+    double Domega = omega1 - Mbh*Opeak; 
+    postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, pa1, po1, Apeak, alpha21, Domega);
+  }else{
+    /** 
+     * BBH Model
+     **/
+    QNMHybridFitCab(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		  a1, a2, a3, a4, b1, b2, b3, b4, 
 		  sigma[0],sigma[1]);
+  }
   
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
@@ -3393,185 +3421,6 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
   }
   
 }
-
-/** BHNS Section */
-
-/** Ringdown calculation for l=2, m=2 (KMAX_22)*/
-void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
-{
-  const double Mbh   = dyn->Mbhf;
-  const double abh   = dyn->abhf;
-  const double nu    = dyn->nu;
-  const double q    = dyn->q;
-  const double chi1  = dyn->chi1;
-  const double ooMbh = 1./Mbh;
-  const double dt = dyn->dt;
-
-  double alpha1, alpha2, *pa1, *pa2;
-  pa1 = &alpha1;
-  pa2 = &alpha2;
-
-  /** Compute omega1, alpha1 and alpha2 from fits*/
-  double omega1 = kerr_bh_freq(abh)/Mbh;
-  double *po1;
-  po1 = &omega1;
-  kerr_bh_qnm(pa1, pa2, abh);
-
-  /** Compute peak values for amplitude and frequency from fits */
-  double Apeak = apeak_bhns(nu, kapT2);
-  double Opeak = opeak_bhns(nu, kapT2);
-
-   if (VERBOSE) {
-    PRFORMd("Peak of Amplitude",Apeak);
-    PRFORMd("Peak of Omega",Opeak);
-  }
-
-  double *Omega = dyn->data[EOB_OMGORB]; /* use this for spin */
-  
-  /* Note:
-     dynsize < size , since the wf has been extended 
-     but the two time arrays agree up to dynsize */
-  const int dynsize = dyn->size; 
-  const int size = hlm->size; 
-  double *t = hlm->time;
-    
-  if (VERBOSE) {
-    PRFORMi("ringdown_dynamics_size",dynsize);
-    PRFORMi("ringdown_waveform_size",size);
-  }
-  
-  /** Find peak of Omega */
-  int index_pk = dynsize-1;
-  double Omega_pk = Omega[index_pk];
-  for (int j = dynsize-2; j-- ; ) {
-    if (Omega[j] < Omega_pk) 
-      break;
-    index_pk = j;
-    Omega_pk = Omega[j]; 
-  }
-  if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
-  if (index_pk >= dynsize-2) {
-    if (VERBOSE) printf("No omega-maximum found.\n");
-  }
-
-  /** New interpolated value of omega peak tOmg_pk */
-  double *Omega_ptr = &Omega[index_pk-3];  
-  double tOmg_pk; /* New interpolated value of the Omega peak */
-  const int n = 7; /* USE 7, it seems we need at least 7 points to determine t_Omega_peak properly */
-  double tmax = dyn->time[index_pk];   
-  
-  if ( (index_pk + (n-1)/2) > (dynsize-1) ) { 
-    /* Here there are not enough points after the Omega peak 
-       We always need 3; we compute what we need by linear extrapolation */
-    double Omega_pk_grid[7]; /* Temporary buffer for the 7-point interp */
-    const int ni = (index_pk + (n-1)/2) - (dynsize-1) ; /* Pts to extrap, 0 <  ni <= 3 */
-
-    /* Copy the pts we have */
-    for (int j = 0; j < (7-ni); j++) 
-      Omega_pk_grid[j] = Omega_ptr[j];
-    /* Extrapolate the others */
-    if (ni==1) {
-      Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
-      //Omega_pk_grid[6] =3.*Omega_pk_grid[5]-3.*Omega_pk_grid[4]+Omega_pk_grid[3];//quadratic, PLEASE CHECK
-    } else if (ni==2) {
-      Omega_pk_grid[5] = 2.*Omega_pk_grid[4]-Omega_pk_grid[3];
-      Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
-    } else if (ni==3) {
-      Omega_pk_grid[4] = 2.*Omega_pk_grid[3]-Omega_pk_grid[2];
-      Omega_pk_grid[5] = 2.*Omega_pk_grid[4]-Omega_pk_grid[3];
-      Omega_pk_grid[6] = 2.*Omega_pk_grid[5]-Omega_pk_grid[4];
-    } else errorexit("Wrong counting (ni)\n");
-    /* Now we have 7 */
-    tOmg_pk = find_max(n, dt, tmax, Omega_pk_grid, NULL);
-  } else {    
-    /* Here everything is good */
-    tOmg_pk = find_max(n, dt, tmax, Omega_ptr, NULL);
-  }
-
-  /* Scale peak value by BH mass */
-  tOmg_pk *= ooMbh;
-
-  if (VERBOSE) PRFORMd("ringdown_Omega_pk",Omega_pk);
-  if (VERBOSE) PRFORMd("ringdown_Omega_ptr",Omega_ptr[0]);
-  if (VERBOSE) PRFORMd("ringdown_tmax",tmax);
-  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk/ooMbh);
-  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk);
-  
-  /** Merger time t_max(A22) */
-  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tmrg[KMAX_22], tmatch[KMAX_22];
-
-  /* nonspinning case */     
-  double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
-  if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
-
-  for (int k=0; k<KMAX_22; k++) {
-      tmrg[k] = tmrgA22;
-  }
-
-  /** Postmerger-Ringdown matching time */
-  for (int k=0; k<KMAX_22; k++) {
-    tmatch[k] = 2.*ooMbh + tmrg[k];
-  }
-
-  /** Postpeak coefficients calculation */
-  double alpha21 = alpha2 - alpha1;
-  double Domega = omega1 - Mbh*Opeak; 
-  double sigma[2][KMAX_22];
-  double a1[KMAX_22], a2[KMAX_22], a3[KMAX_22], a4[KMAX_22];
-  double b1[KMAX_22], b2[KMAX_22], b3[KMAX_22], b4[KMAX_22];
-
-  postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, pa1, po1, Apeak, alpha21, Domega);
-
-  /** Define a time vector for each multipole, scale by mass
-      Ringdown of each multipole has its own starting time */
-  double *t_lm[KMAX_22];
-  for (int k=0; k<KMAX_22; k++) {
-    t_lm[k] =  malloc ( size * sizeof(double) );
-    for (int j = 0; j < size; j++ ) {  
-      t_lm[k][j] = t[j] * ooMbh;
-    }
-  }  
-
-  /** Find attachment index */
-  int idx[KMAX_22];
-  for (int k = 0; k < KMAX_22; k++) {
-    for (int j = size-1; j-- ; ) {  
-      if (t_lm[k][j] < tmatch[k]) {
-	      idx[k] = j - 1;
-	      break;
-      }
-    }
-  }
-
-  /** Compute Ringdown waveform for t>=tmatch */
-  double t0, tm, psi[2];
-  double Deltaphi[KMAX_22];
-  for (int k = 0; k < KMAX_22; k++) {
-    if(hlm->kmask[k]){
-      /* Calculate Deltaphi */
-      t0 = t_lm[k][idx[k]] - tmrg[k]; 
-      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-      Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
-      
-      /* Compute and attach ringdown */
-      for (int j = idx[k]; j < size ; j++ ) {   
-        tm = t_lm[k][j] - tmrg[k];
-        eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-        hlm->phase[k][j] = psi[1] - Deltaphi[k];
-        hlm->ampli[k][j] = psi[0];
-      }
-    }
-  }
-
-  if (VERBOSE) PRFORMd("psi_ampli",psi[0]);
-  if (VERBOSE) PRFORMd("psi_phase",psi[1]);
-  /** Free mem. */
-  for (int k=0; k<KMAX_22; k++) {
-    free(t_lm[k]);
-  }
-}
-/** End of BHNS Section */
 	
 /** Ringdown calculation and match to the dynamics 
     This refers to the higher modes paper: arXiv:2001.09082 
