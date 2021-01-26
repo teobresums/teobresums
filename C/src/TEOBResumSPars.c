@@ -386,7 +386,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     }
   }
   if (eobp->use_flm == USEFLM_NOPT) {
-    eobp->use_flm = USEFLM_HM  ;
+    eobp->use_flm = USEFLM_HM;
     if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
 			par_get_s("use_flm"), use_flm_opt[eobp->use_flm]);
   }
