@@ -1,3 +1,48 @@
+Version 2.0 27-01-2021
+======================
+
+# What's changed since v1.1
+
+	* C/src/TEOBResumS.c:
+	- Main now calls EOBRun function
+	- Small improvements in ringdown attachment
+	- Added functions to compute Fourier domain waveforms for BNSs (through the SPA)
+	
+	* C/src/TEOBResumSPars.c: 
+	- Parameters are managed with the struct type `EOBParameters`. No need for default.par.
+	- Using HM as default.
+
+	* C/src/TEOBResumSPostAdiab.c: Uniformized grid spacing using a pre-defined dr.
+	(eob_dyn_Npostadiabatic): Added ddotr variable to PA dynamics to be consistent with ODE.
+
+	* C/src/TEOBResumSFits.c: 
+	- New a6c and c3 fits for HM.
+	- New NQC point fits for HM and from postpeak.
+	- Added multipole-dependent time-shifts for ringdown attahcment.
+	- Added new fits for NQC parameters (a1,a2)
+	- New final mass fit of Jimenez-Forteza et al. (arxiv 1611.00332)
+	- New Lambda3, Lambda4 fits of Godzieba et al. (arxiv 2012.12151)
+	- Added QNM fits for HM
+	
+	* C/src/TEOBResumSWaveform.c: Added new HM waveforms.
+
+	* C/src/TEOBResumSPars.c: Some new unwrap and derivatives functions.
+	
+	* Minor improvements and bugfixes throughout the code
+	
+	* par/: Cleaned up example parfiles.
+
+	* Python/: Added Python wrapper and reorganized other scripts.
+
+	* Added Validation/ folder and plots.
+	
+	* Removed C++, matlab_tools, and parameter_estimation directories
+
+	* README.md: updated to v2.0
+	
+	
+	
+
 Version 1.1 07-01-2020
 ======================
 
