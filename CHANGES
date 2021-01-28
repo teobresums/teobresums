@@ -36,7 +36,9 @@ Version 2.0 27-01-2021
 
 	* Added Validation/ folder and plots.
 	
-	* Removed C++, matlab_tools, and parameter_estimation directories
+	* Moved matlab_tools/ to Matlab/
+	
+	* Removed C++ and parameter_estimation directories
 
 	* README.md: updated to v2.0
 	
