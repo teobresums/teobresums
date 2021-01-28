@@ -407,6 +407,9 @@ double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double
   double prstar2 = prstar*prstar;
   double prstar3 = prstar2*prstar;
   double prstar4 = prstar3*prstar;
+
+  double Frdot = 0.;
+  double pphi2dot = 0.;
   
   double A, dA, d2A, B, dB, d2B, Q, sqrtAbyB, oosqrtAbyB, dsqrtAbyB_dr, d2sqrtAbyB_d2r, fact;
   double sqA,sqB;

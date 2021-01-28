@@ -2369,8 +2369,6 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     PRFORMd("b1",bi[1][0]);
     PRFORMd("b2",bi[1][1]);
   }
-=======
-
   
   if ((ecc != 0.) || (r_hyp != 0.)) {
     double t0 = tNQC - 30.;
@@ -3686,10 +3684,6 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
   tmrg[k21]  = tmrg[k22] + dtmrg[k21]/Mbh;     // t_max(A21) => peak of 21 mode
   tmrg[k33]  = tmrg[k22] + dtmrg[k33]/Mbh;     // t_max(A33) => peak of 33 mode
 	  
-  // for (int k=0; k<KMAX; k++) {
-  //   tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
-  // }	  
-	
   /** Postmerger-Ringdown matching time */
   for (int k=0; k<KMAX; k++) {
     tmatch[k] = 2.*ooMbh + tmrg[k];
@@ -3823,8 +3817,8 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   eob_nqc_deltat_lm(dyn, dtmrg);	  
   for (int k=0; k<KMAX; k++) {
     tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
-  }	  
-    
+  }
+  
   /** Postmerger-Ringdown matching time */
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
@@ -3848,7 +3842,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     a1, a2, a3, a4, b1, b2, b3, b4, 
 		     sigma[0],sigma[1]);
-    
+  
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
