@@ -230,6 +230,27 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
        ringdown also outside the "calibration" domain, notably for
        large-mass ratios (though q<=20) and large (negative) spins
        Updated, 28/09/2017 */
+    
+    a0_omg_tmp    = -0.1460961247;
+    a1_omg_tmp    =  0.0998056;
+    a2_omg_tmp    = -0.118098;
+    b0_omg_tmp    = -0.3430184009;
+    b1_omg_tmp    =  0.0921551;
+    b2_omg_tmp    = -0.0740285;
+    omg_tmp_nu    = +0.5427169903*nu2 +0.2512395608*nu +0.2863992248;
+    omg_tmp_equal =((a2_omg_tmp*X12*X12 + a1_omg_tmp*X12 + a0_omg_tmp)*aeff_omg+1)/((b2_omg_tmp*X12*X12 +b1_omg_tmp*X12 + b0_omg_tmp)*aeff_omg+1);
+    *omg_tmp       = omg_tmp_nu*omg_tmp_equal;
+
+    a0_domg_tmp    = +0.0604556289;
+    b0_domg_tmp    = -0.0299583285;
+    a1_domg_tmp    = 0.0711715;
+    a2_domg_tmp    = -0.0500886;
+    b1_domg_tmp    = 0.0461239;
+    b2_domg_tmp    = -0.0153068;
+    
+    domg_tmp_nu    = ( +0.0045213831*nu +0.0064934920)/( -1.4466409969*nu+1);
+    domg_tmp_equal = (a2_domg_tmp*X12*X12 +a1_domg_tmp*X12 +b0_domg_tmp)*aeff_omg*aeff_omg +(b2_domg_tmp*X12*X12 +b1_domg_tmp*X12+a0_domg_tmp)*aeff_omg+1;
+    *domg_tmp       = domg_tmp_nu*domg_tmp_equal;
 
     a0_A_tmp 	= -0.2750516062;
     b0_A_tmp 	= -0.4693776065;
@@ -252,27 +273,6 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
     dA_tmp_scale_nu    = ( -0.0847947167*nu -0.0042142765)/( +16.1559461812*nu+1);
     dA_tmp_scale_equal = ((a2_dA_tmp*X12*X12 + a1_dA_tmp*X12+ a0_dA_tmp)*aeff)/((b2_dA_tmp*X12*X12 + b1_dA_tmp*X12 + b0_dA_tmp)*aeff+1);
     *dA_tmp             = (dA_tmp_scale_nu +dA_tmp_scale_equal)*(*omg_tmp);
-    
-    a0_omg_tmp    = -0.1460961247;
-    a1_omg_tmp    =  0.0998056;
-    a2_omg_tmp    = -0.118098;
-    b0_omg_tmp    = -0.3430184009;
-    b1_omg_tmp    =  0.0921551;
-    b2_omg_tmp    = -0.0740285;
-    omg_tmp_nu    = +0.5427169903*nu2 +0.2512395608*nu +0.2863992248;
-    omg_tmp_equal =((a2_omg_tmp*X12*X12 + a1_omg_tmp*X12 + a0_omg_tmp)*aeff_omg+1)/((b2_omg_tmp*X12*X12 +b1_omg_tmp*X12 + b0_omg_tmp)*aeff_omg+1);
-    *omg_tmp       = omg_tmp_nu*omg_tmp_equal;
-
-    a0_domg_tmp    = +0.0604556289;
-    b0_domg_tmp    = -0.0299583285;
-    a1_domg_tmp    = 0.0711715;
-    a2_domg_tmp    = -0.0500886;
-    b1_domg_tmp    = 0.0461239;
-    b2_domg_tmp    = -0.0153068;
-    
-    domg_tmp_nu    = ( +0.0045213831*nu +0.0064934920)/( -1.4466409969*nu+1);
-    domg_tmp_equal = (a2_domg_tmp*X12*X12 +a1_domg_tmp*X12 +b0_domg_tmp)*aeff_omg*aeff_omg +(b2_domg_tmp*X12*X12 +b1_domg_tmp*X12+a0_domg_tmp)*aeff_omg+1;
-    *domg_tmp       = domg_tmp_nu*domg_tmp_equal;
 
   }
 

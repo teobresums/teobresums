@@ -3177,7 +3177,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
-  const double nu    = dyn->nu;
+  const double nu    = dyn->nu;  
   const double q     = dyn->q;
   const double chi1  = dyn->chi1;
   const double chi2  = dyn->chi2;

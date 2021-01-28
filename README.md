@@ -1,6 +1,15 @@
 # TEOBResumS: Effective-one-body model with spin and tidal interactions
 
-To start, checkout the [WIKI](https://bitbucket.org/eob_ihes/teobresums/wiki/EOB-repo-usage).
+To start, checkout the [WIKI](https://bitbucket.org/eob_ihes/teobresums/wiki/browse/).
+
+## Code versions
+
+Code versions are tagged on master. 
+For detailed release notes of the most recent version see the [`CHANGES`](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES) file.
+
+ * [![C version](https://img.shields.io/badge/C_release-v2.0-green.svg)](https://bitbucket.org/eob_ihes/teobresums/src/v2.0/C/) C implementation currently maintained and developed.
+ * [![C version](https://img.shields.io/badge/C_release-v1.1-orange.svg)](https://bitbucket.org/eob_ihes/teobresums/src/v1.1/C/) Previous C implementation.
+ * [![C++ version](https://img.shields.io/badge/C++_release-v0.1-orange.svg)](https://bitbucket.org/eob_ihes/teobresums/src/v1.1/C++/) C++ implementation abandoned in June 2018 and code development is frozen. `v0.0` was reviewed by LVC. Review was concluded on 11.04.2018. The review's final statement can be found [here](https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/TEOBResumS/FinalReviewStatement). The reviewed version is tagged as `LVC-review-end `.
 
 ## Authors 
 
@@ -24,8 +33,9 @@ GNU General Public License for more details.
 
 ## Pre-requisites
 
- * Standard C libs, including libconfig
- * GSL lib
+ * C standard library
+ * GSL
+ * libconfig
 
 ## Compilation
 
@@ -69,10 +79,4 @@ If you want to start a new branch or development make sure to
  * Talk to us 
  * Run the benchmark *before* applying any change 
  * Run the benchmark *after* you applied your changes and before pushing them; compare and make sure you did not break anything.
-
-
-
-
-
-
 

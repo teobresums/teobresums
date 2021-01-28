@@ -40,7 +40,7 @@ pars = {
 }
 
 # Run the WF generator
-t, hp, hc, hlm = EOBRun_module.EOBRunPy(pars)
+t, hp, hc, hlm, dyn = EOBRun_module.EOBRunPy(pars)
 
 # Approximate merger time
 h = hp - 1j*hp

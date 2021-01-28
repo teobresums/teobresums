@@ -1,0 +1,79 @@
+Version 2.0 27-01-2021
+======================
+
+# What's changed since v1.1
+
+	* C/src/TEOBResumS.c:
+	- Main now calls EOBRun function
+	- Small improvements in ringdown attachment
+	- Added functions to compute Fourier domain waveforms for BNSs (through the SPA)
+	
+	* C/src/TEOBResumSPars.c: 
+	- Parameters are managed with the struct type `EOBParameters`. No need for default.par.
+	- Using HM as default.
+
+	* C/src/TEOBResumSPostAdiab.c: Uniformized grid spacing using a pre-defined dr.
+	(eob_dyn_Npostadiabatic): Added ddotr variable to PA dynamics to be consistent with ODE.
+
+	* C/src/TEOBResumSFits.c: 
+	- New a6c and c3 fits for HM.
+	- New NQC point fits for HM and from postpeak.
+	- Added multipole-dependent time-shifts for ringdown attahcment.
+	- Added new fits for NQC parameters (a1,a2)
+	- New final mass fit of Jimenez-Forteza et al. (arxiv 1611.00332)
+	- New Lambda3, Lambda4 fits of Godzieba et al. (arxiv 2012.12151)
+	- Added QNM fits for HM
+	
+	* C/src/TEOBResumSWaveform.c: Added new HM waveforms.
+
+	* C/src/TEOBResumSPars.c: Some new unwrap and derivatives functions.
+	
+	* Minor improvements and bugfixes throughout the code
+	
+	* par/: Cleaned up example parfiles.
+
+	* Python/: Added Python wrapper and reorganized other scripts.
+
+	* Added Validation/ folder and plots.
+	
+	* Moved matlab_tools/ to Matlab/
+	
+	* Removed C++ and parameter_estimation directories
+
+	* README.md: updated to v2.0
+	
+	
+	
+
+Version 1.1 07-01-2020
+======================
+
+# What's changed since v1.0
+
+	* C/src/TEOBResumS.c:
+	(main): Parameter conventions are consistent with LALSimulation.
+	(main): Several performance improvements and minor bug fixes.
+	(main): Automated behaviour of postadiabatic (PA) evolution and termination/transition to ODE.
+	(main): Deactivated H+/x interpolation scheme and set HLM interpolation as default. The INTERP_UNIFORM_GRID_HPC option for the interpolation scheme was problematic, especially for PA and non-zero inclinations, and has now been abandoned. The INTERP_UNIFORM_GRID_HLM option is now default but interpolates each mode individually which incurs an additional computational cost if higher modes are switched on.
+
+	* C/src/TEOBResumSOMP.c: Started implementing parallelization with openmp.
+
+	* C/src/TEOBResumSWaveform.c (eob_wav_ringdown): Activated a hardfix in that guarantees we have 3 points (7 in total) after the OmegaPeak.
+
+	* C/src/TEOBResumSPars.c: Bugfix in Oct and Hex tides calculation.
+
+	* C/src/TEOBResumSPostAdiab.c: Uniformized grid spacing using a pre-defined dr.
+	(eob_dyn_Npostadiabatic): Added ddotr variable to PA dynamics to be consistent with ODE.
+
+	* C/src/TEOBResumS.c (main): Improved post-OmegaPeak and merger interpolation stage and fine-tuned to minimize parameter region where root-finder fails.
+
+	* C/src/TEOBResumSFits.c (eob_nqc_timeshift): Implemented new NQC timeshift.
+
+	* C/src/TEOBResumSDynamics.c: Fixed rc calculation; corrected \hatGS derivative.
+
+	* matlab_tools/: Cleaned up MATLAB scripts.
+
+	* par/: Updated default and example parfiles.
+
+	* README.md: updated to v1.1
+
