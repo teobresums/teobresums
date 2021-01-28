@@ -1257,6 +1257,7 @@ void eob_set_params(int default_choice, int firstcall)
   if (ecc != 0.) {
     /* Eccentric case */
     EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
+    /* eob_a6c_fit_HM used in arXiv:2001.11736 */
   } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
@@ -1269,6 +1270,7 @@ void eob_set_params(int default_choice, int firstcall)
   else if (ecc != 0.) {
     /* Eccentric case */
     EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+    /* eob_c3_fit_HM used in arXiv:2001.11736 */
   } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
@@ -1613,6 +1615,7 @@ void eob_set_params_old(char *s, int n)
   if (EOBPars->ecc != 0.) {
     /* Eccentric case */
     EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
+    /* eob_a6c_fit_HM used in arXiv:2001.11736 */
   } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     a6c = eob_a6c_fit_HM(nu);
@@ -1626,6 +1629,7 @@ void eob_set_params_old(char *s, int n)
   else if (EOBPars->ecc != 0.) {
     /* Eccentric case */
     c3 = eob_c3_fit_ecc(nu,a1,a2);
+    /* eob_c3_fit_ecc used in arXiv:2001.11736 */
   } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     c3 = eob_c3_fit_HM(nu,a1,a2);

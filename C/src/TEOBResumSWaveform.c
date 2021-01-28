@@ -2371,8 +2371,13 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   }
   
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
     double *smooth_theta;
     smooth_theta = (double*) calloc (size, sizeof(double));
    
@@ -2802,8 +2807,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
     double *smooth_theta;
     smooth_theta = (double*) calloc (size, sizeof(double));
 
@@ -2900,8 +2910,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
     double *smooth_theta;
     smooth_theta = (double*) calloc (fullsize, sizeof(double));
     
@@ -3240,8 +3255,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
     double *smooth_theta;
     smooth_theta = (double*) calloc (size, sizeof(double));
 
@@ -3300,8 +3320,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
     double *smooth_theta;
     smooth_theta = (double*) calloc (fullsize, sizeof(double));
     
