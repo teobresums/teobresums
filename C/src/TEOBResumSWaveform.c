@@ -398,27 +398,16 @@ void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double A41_ecc   = sqrt(SQ(Re_vphi41_ecc) + SQ(Im_vphi41_ecc));
   double A55_ecc   = sqrt(SQ(Re_vphi55_ecc) + SQ(Im_vphi55_ecc));
 
-  double phi22_ecc = atan(Im_vphi22_ecc/Re_vphi22_ecc);
-  double phi21_ecc = atan(Im_vphi21_ecc/Re_vphi21_ecc);
-  double phi33_ecc = atan(Im_vphi33_ecc/Re_vphi33_ecc);
-  double phi32_ecc = atan(Im_vphi32_ecc/Re_vphi32_ecc);
-  double phi31_ecc = atan(Im_vphi31_ecc/Re_vphi31_ecc);
-  double phi44_ecc = atan(Im_vphi44_ecc/Re_vphi44_ecc);
-  double phi43_ecc = atan(Im_vphi43_ecc/Re_vphi43_ecc);
-  double phi42_ecc = atan(Im_vphi42_ecc/Re_vphi42_ecc);
-  double phi41_ecc = atan(Im_vphi41_ecc/Re_vphi41_ecc);
-  double phi55_ecc = atan(Im_vphi55_ecc/Re_vphi55_ecc);
-  
-  if (Re_vphi22_ecc < 0.)    phi22_ecc = phi22_ecc + Pi;
-  if (Re_vphi21_ecc < 0.)    phi21_ecc = phi21_ecc + Pi;
-  if (Re_vphi33_ecc < 0.)    phi33_ecc = phi33_ecc + Pi;
-  if (Re_vphi32_ecc < 0.)    phi32_ecc = phi32_ecc + Pi;
-  if (Re_vphi31_ecc < 0.)    phi31_ecc = phi31_ecc + Pi;
-  if (Re_vphi44_ecc < 0.)    phi44_ecc = phi44_ecc + Pi;
-  if (Re_vphi43_ecc < 0.)    phi43_ecc = phi43_ecc + Pi;
-  if (Re_vphi42_ecc < 0.)    phi42_ecc = phi42_ecc + Pi;
-  if (Re_vphi41_ecc < 0.)    phi41_ecc = phi41_ecc + Pi;
-  if (Re_vphi55_ecc < 0.)    phi55_ecc = phi55_ecc + Pi;
+  double phi22_ecc = atan2(Im_vphi22_ecc,Re_vphi22_ecc);
+  double phi21_ecc = atan2(Im_vphi21_ecc,Re_vphi21_ecc);
+  double phi33_ecc = atan2(Im_vphi33_ecc,Re_vphi33_ecc);
+  double phi32_ecc = atan2(Im_vphi32_ecc,Re_vphi32_ecc);
+  double phi31_ecc = atan2(Im_vphi31_ecc,Re_vphi31_ecc);
+  double phi44_ecc = atan2(Im_vphi44_ecc,Re_vphi44_ecc);
+  double phi43_ecc = atan2(Im_vphi43_ecc,Re_vphi43_ecc);
+  double phi42_ecc = atan2(Im_vphi42_ecc,Re_vphi42_ecc);
+  double phi41_ecc = atan2(Im_vphi41_ecc,Re_vphi41_ecc);
+  double phi55_ecc = atan2(Im_vphi55_ecc,Re_vphi55_ecc);
   
   
   /** Polynomials in nu */
