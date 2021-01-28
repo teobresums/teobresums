@@ -41,14 +41,17 @@ double eob_a6c_fit_HM(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
-/** Fit of a6c, eccentric case */
+/** Fit of a6c, all in one paper: arXiv:2101.08624 */
 double eob_a6c_fit_ecc(double nu)
-{  
-  const double a0 = -0.052514;
-  const double a1 = +2.3486;
-  const double b1 = 24.6006;
+{
+  double nu2 = nu*nu;
   
-  return (a0 + a1*nu)*exp(b1*nu);
+  const double n0 = -0.50395;
+  const double n1 =-4.8547;
+  const double n2 = 52.96;
+  const double n3 = 20.7013;
+    
+  return (n0 + n1*nu + n2*nu2)*exp(n3*nu);
 }
 
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
@@ -105,6 +108,35 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
   
   const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
     + p1*nu*X12*a0 + p2*nu2*(a1 - a2);
+  
+  return c3;
+}
+
+/** Fit of c3, all in one paper: arXiv:2101.08624 */
+double eob_c3_fit_ecc(double nu, double a1, double a2)
+{
+  const double nu2 = nu*nu;
+  const double X12 = sqrt(1.-4.*nu);
+  const double a0  = a1+a2;
+  const double a02 = a0*a0;
+  const double a03 = a02*a0;
+  const double a04 = a03*a0;
+  
+  /* Equal-mass, equal-spin coefficients */
+  const double p0 = 42.720039;
+  const double n1 = -0.710937;
+  const double n2 = -0.142503;
+  const double n3 = 0.183764;
+  const double n4 = 0.025030;
+  const double d1 = 0.331651;
+
+ /* Other coefficients */
+  const double p1 =  100.743;
+  const double p2 = -5.01934;
+  const double p3 = -61.6306;
+  
+  const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
+    + p1*nu*X12*a0 + p2*nu2*(a1 - a2) + p3*nu*X12*a02;
   
   return c3;
 }
