@@ -517,6 +517,7 @@ typedef struct tagEOBParameters
   int domain; //Time or frequency domain
   double df;  //frequency interp df
   double tc;  //coalescence time
+  int time_shift_FD;
   
 } EOBParameters;
 

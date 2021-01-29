@@ -109,7 +109,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->initial_frequency = 0.004;
 
   eobp->tc = 0;
-
+  eobp->time_shift_FD=1;
   eobp->df = 1.;
 
   eobp->LambdaAl2 = 0.; // Tidal gravitoelectric parameter Lambda for star A ell=2

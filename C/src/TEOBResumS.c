@@ -903,7 +903,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, *hfpc);
 
     /* time-shift the FD waveforms */
-    time_shift_FD(*hfpc, EOBPars->tc);
+    if(EOBPars->time_shift_FD) time_shift_FD(*hfpc, EOBPars->tc);
     
   }
 

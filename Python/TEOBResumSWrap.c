@@ -203,11 +203,16 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "ode_stop_afterNdt") != NULL ) { 
     EOBPars->ode_stop_afterNdt = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ode_stop_afterNdt"));
   }
-    if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
+
+  /* FD */
+  if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
     EOBPars->domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "domain"));
   }
   if ( PyDict_GetItemString(dict, "df") != NULL ) { 
     EOBPars->df = PyFloat_AsDouble(PyDict_GetItemString(dict, "df"));
+  }
+  if ( PyDict_GetItemString(dict,"time_shift_FD") != NULL ) { 
+    EOBPars->time_shift_FD = (int) PyLong_AsLong(PyDict_GetItemString(dict, "time_shift_FD"));
   }
   return OK;
 }
