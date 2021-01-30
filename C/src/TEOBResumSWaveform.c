@@ -268,6 +268,8 @@ void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double nu2   = nu*nu;
   double nu3   = nu*nu2;
 
+  double SQrdot = SQ(rdot);
+
   double vOmg  = pow(Omega,1./3.);
   double vOmg2 = vOmg*vOmg;
   double vOmg3 = vOmg*vOmg2;
@@ -285,8 +287,6 @@ void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double vphi9 = vphi*vphi8;
 
   /* Eccentric variables */
-  double SQrdot = SQ(rdot);
-  
   double Re_vphi22_ecc = vphi2 - 0.5*(SQrdot + r*r2dot);
   double Im_vphi22_ecc = 2.*vphi*rdot + 0.5*Omegadot*SQ(r);
 
@@ -2359,6 +2359,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     PRFORMd("b2",bi[1][1]);
   }
   
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
     /*
       Old configuration used for arXiv:2001.11736
@@ -2367,23 +2368,23 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     */
     double t0 = tNQC - 100.;
     double alpha = 0.02;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (size, sizeof(double));
+    double *sigmoid;
+    sigmoid = (double*) calloc (size, sizeof(double));
    
     for (int j=0; j<size; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
 
       for (int k=0; k<KMAX; k++) {
 	if(h->kmask[k]){
-	  n1[k][j] = n1[k][j]*smooth_theta[j];
-	  n2[k][j] = n2[k][j]*smooth_theta[j];
-	  n4[k][j] = n4[k][j]*smooth_theta[j];
-	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	  n1[k][j] = n1[k][j]*sigmoid[j];
+	  n2[k][j] = n2[k][j]*sigmoid[j];
+	  n4[k][j] = n4[k][j]*sigmoid[j];
+	  n5[k][j] = n5[k][j]*sigmoid[j];
 	}
       }
     }
     
-    free(smooth_theta);
+    free(sigmoid);
   }
 
   /** Set amplitude and phase */
@@ -2795,6 +2796,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[1][1]);
   }
 
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
     /*
       Old configuration used for arXiv:2001.11736
@@ -2803,23 +2805,23 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     */
     double t0 = tNQC - 100.;
     double alpha = 0.02;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (size, sizeof(double));
+    double *sigmoid;
+    sigmoid = (double*) calloc (size, sizeof(double));
 
     for (int j=0; j<size; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
 
       for (int k=0; k<KMAX; k++) {
 	if(hlm_mrg->kmask[k]){
-	  n1[k][j] = n1[k][j]*smooth_theta[j];
-	  n2[k][j] = n2[k][j]*smooth_theta[j];
-	  n4[k][j] = n4[k][j]*smooth_theta[j];
-	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	  n1[k][j] = n1[k][j]*sigmoid[j];
+	  n2[k][j] = n2[k][j]*sigmoid[j];
+	  n4[k][j] = n4[k][j]*sigmoid[j];
+	  n5[k][j] = n5[k][j]*sigmoid[j];
 	}
       }
     }
     
-    free(smooth_theta);
+    free(sigmoid);
   }
   
   /** Set amplitude and phase */
@@ -2898,6 +2900,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     }
   }
 
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
     /*
       Old configuration used for arXiv:2001.11736
@@ -2906,23 +2909,23 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     */
     double t0 = tNQC - 100.;
     double alpha = 0.02;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (fullsize, sizeof(double));
+    double *sigmoid;
+    sigmoid = (double*) calloc (fullsize, sizeof(double));
     
     for (int j=0; j<fullsize; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
 
       for (int k=0; k<KMAX; k++) {
 	if(hlm->kmask[k]){
-	  n1[k][j] = n1[k][j]*smooth_theta[j];
-	  n2[k][j] = n2[k][j]*smooth_theta[j];
-	  n4[k][j] = n4[k][j]*smooth_theta[j];
-	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	  n1[k][j] = n1[k][j]*sigmoid[j];
+	  n2[k][j] = n2[k][j]*sigmoid[j];
+	  n4[k][j] = n4[k][j]*sigmoid[j];
+	  n5[k][j] = n5[k][j]*sigmoid[j];
 	}
       }
     }
 
-    free(smooth_theta);
+    free(sigmoid);
   }
 
   for (int k=0; k<KMAX; k++) {
@@ -3243,6 +3246,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[k22][1]);
   }
 
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
     /*
       Old configuration used for arXiv:2001.11736
@@ -3251,19 +3255,19 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     */
     double t0 = tNQC - 100.;
     double alpha = 0.02;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (size, sizeof(double));
+    double *sigmoid;
+    sigmoid = (double*) calloc (size, sizeof(double));
 
     for (int j=0; j<size; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
       
-      n1[k22][j] = n1[k22][j]*smooth_theta[j];
-      n2[k22][j] = n2[k22][j]*smooth_theta[j];
-      n4[k22][j] = n4[k22][j]*smooth_theta[j];
-      n5[k22][j] = n5[k22][j]*smooth_theta[j];
+      n1[k22][j] = n1[k22][j]*sigmoid[j];
+      n2[k22][j] = n2[k22][j]*sigmoid[j];
+      n4[k22][j] = n4[k22][j]*sigmoid[j];
+      n5[k22][j] = n5[k22][j]*sigmoid[j];
     }
     
-    free(smooth_theta);
+    free(sigmoid);
   }
 
   /** Set amplitude and phase */
@@ -3308,6 +3312,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     n5[k22][j]  = n4[k22][j]*r2*w2;              /* (pr*)*(r Omg) */
   }
 
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
     /*
       Old configuration used for arXiv:2001.11736
@@ -3316,19 +3321,19 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     */
     double t0 = tNQC - 100.;
     double alpha = 0.02;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (fullsize, sizeof(double));
+    double *sigmoid;
+    sigmoid = (double*) calloc (fullsize, sizeof(double));
     
     for (int j=0; j<fullsize; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
 
-      n1[k22][j] = n1[k22][j]*smooth_theta[j];
-      n2[k22][j] = n2[k22][j]*smooth_theta[j];
-      n4[k22][j] = n4[k22][j]*smooth_theta[j];
-      n5[k22][j] = n5[k22][j]*smooth_theta[j];
+      n1[k22][j] = n1[k22][j]*sigmoid[j];
+      n2[k22][j] = n2[k22][j]*sigmoid[j];
+      n4[k22][j] = n4[k22][j]*sigmoid[j];
+      n5[k22][j] = n5[k22][j]*sigmoid[j];
     }
 
-    free(smooth_theta);
+    free(sigmoid);
   }
 	  	  
   for (int j=0; j<fullsize; j++) {
