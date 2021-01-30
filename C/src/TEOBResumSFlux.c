@@ -479,15 +479,10 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   /** Adding non-circular corrections and re-compute flux */
   sum_k = 0.;
   for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k] * Fphi_NC[k];
+
   hatf = sum_k/(FNewt22);
-  if (!(usetidal)) {
-    if (usespins) {
-      hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
-    } else {
-      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
-    }
-    hatf += hatFH;
-  }
+
+  hatf += hatFH;
 
   /** Compute circular Fphi */
   *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
