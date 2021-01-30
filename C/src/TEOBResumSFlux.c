@@ -333,6 +333,166 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   return (-32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf);
 }
 
+/** Flux calculation for eccentric systems */
+void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn)
+{
+  const double nu = dyn->nu;
+  const double chi1 = dyn->chi1;
+  const double chi2 = dyn->chi2;
+  const double X1 = dyn->X1;
+  const double X2 = dyn->X2;
+  const double a1 = dyn->a1;
+  const double a2 = dyn->a2;
+  const double C_Q1 = dyn->C_Q1;
+  const double C_Q2 = dyn->C_Q2;
+  const double X12  = X1-X2; /* sqrt(1-4nu) */
+  const double X12sq = SQ(X12); /* (1-4nu) */
+
+  const int usetidal = dyn->use_tidal;
+  const int usespins = dyn->use_spins;
+  
+  double prefact[] = {
+    jhat, Heff,
+    Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff,
+    Heff, jhat, Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff, jhat, Heff,
+    Heff, jhat, Heff, jhat, Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
+  
+  double FNewt22, sum_k=0.;
+  double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
+  double Modhhatlm[KMAX];
+
+  /** Newtonian flux */
+  eob_flx_FlmNewt(x, nu, FNewtlm);
+
+  /* Correct amplitudes for specific multipoles and cases */
+  if (usespins) {
+    /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+    double x6 = gsl_pow_int(x, 6);
+    FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
+    FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
+    FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
+    /* Correct (4,1), (4,3)  ( sp4 = (1-2nu)^2 ) */
+    double sp4x8 = SQ((1-2*nu)) * gsl_pow_int(x, 8);
+    FNewtlm[5]  = CNlm[5] * sp4x8; /* (4,1) */
+    FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
+    
+    /* Correcting (5,5) for Higher Modes */
+    if (EOBPars->use_flm == USEFLM_HM ){
+      FNewtlm[13] = CNlm[13] * sp4x8;
+    }
+    
+  } else {
+    if (usetidal) {
+      /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+      double x6 = gsl_pow_int(x, 6);
+      FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
+      FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
+      FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
+    }
+  }
+
+  /** Tail term */
+  eob_flx_Tlm(E*Omega, MTlm);
+
+  /** Amplitudes */
+  if (usespins) {
+    /* eob_wav_flm_s_old(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm); */
+    eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
+  } else {
+    /* eob_wav_flm_old(x,nu, rholm, flm); */
+    eob_wav_flm(x,nu, rholm, flm);
+  }
+  
+  FNewt22 = FNewtlm[1];
+
+  /** NQC correction to the modulus of the (l,m) waveform */
+  for (int k = 0; k < KMAX; k++) hlmNQC[k] = 1.; /* no NQC */
+  
+  if (!(EOBPars->nqc_coefs_flx == NQC_FLX_NONE)) {
+    
+    Waveform_lm_t hNQC;
+    /* eob_wav_hlmNQC_nospin201602(nu,r,pr_star,Omega,ddotr, &hNQC); */
+    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, NQC->flx, &hNQC);
+    const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
+    /*
+      for (int k = 0; k < maxk; k++) {
+      if (NQC->hlm->activemode[k]) {
+	hlmNQC[k] = hNQC.ampli[k];
+      }
+    */
+    /* Use only the 22:  */
+    hlmNQC[1] = hNQC.ampli[1];
+  }
+    
+  /** Compute modulus of hhat_lm (with NQC) */
+  for (int k = 0; k < KMAX; k++) {
+    Modhhatlm[k] = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k];
+  }
+  
+  if (usetidal) {
+    /** Tidal amplitudes */
+    eob_wav_hlmTidal(x,dyn, hlmTidal);
+    if (!(usespins)) {
+      /* Correct normalization of (2,1) (3,1), (3,3) point-mass amplitudes */
+      Modhhatlm[0] *= X12;
+      Modhhatlm[2] *= X12;
+      Modhhatlm[4] *= X12;
+    }
+    /* Add tidal amplitudes */
+    for (int k = 0; k < KMAX; k++) {
+      Modhhatlm[k] += MTlm[k] * hlmTidal[k];
+    }
+  }
+
+  /** Total multipolar flux */
+  for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k];
+  
+  /** Normalize to the 22 Newtonian multipole */
+  double hatf = sum_k/(FNewt22);
+
+  /** Horizon flux */
+  double hatFH = 0.;
+  if (!(usetidal)) {
+    if (usespins) {
+      hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+    } else {
+      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
+    }
+    hatf += hatFH;
+  }
+
+  /** Compute circular Fphi */
+  *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+
+  /** Compute eccentric Fr */
+  *Fr = eob_flx_Fr_ecc(r, pr_star, pphi, dyn);
+  
+  /** Compute non-circular Fphi */
+  double Fphi_NC[KMAX] = {1.};
+  Fphi_NC[1] = eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, *Fr, dyn);
+  // To recover old configuration used for arXiv:2001.11736, one should apply this to all multipoles
+  // for (int k = KMAX; k--;) Fphi_NC[k] = Fphi_NC[1];
+  
+  /** Adding non-circular corrections and re-compute flux */
+  sum_k = 0.;
+  for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k] * Fphi_NC[k];
+  hatf = sum_k/(FNewt22);
+  if (!(usetidal)) {
+    if (usespins) {
+      hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+    } else {
+      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
+    }
+    hatf += hatFH;
+  }
+
+  /** Compute circular Fphi */
+  *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+}
+
 /** Radial flux calculation for eccentric systems */
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn)
 {
