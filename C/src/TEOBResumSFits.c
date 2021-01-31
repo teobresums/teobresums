@@ -26,25 +26,8 @@
  * Berti et al: arxiv:0512160
  * Nagar et al: arxiv:1904.09550
  */
-void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh)
-{
-  /** alpha_n = Q_{lmn} = q1 + q2( 1 - j )^q3  : inverse damping time of nth overtone */
 
-  /** n=0 fundamental overtone */
-  const double q10 = 0.7; 
-  const double q20 = 1.4187;
-  const double q30 = -0.4990;
-
-  /** n=1 first overtone */
-  const double q11 = 0.1;
-  const double q21 = 0.5436;
-  const double q31 = -0.4731;
-
-  *alpha1 = q10 + q20*pow(1. - a_bh, q30);
-  *alpha2 = q11 + q21*pow(1. - a_bh, q31);
-}
-
-double kerr_bh_freq(double a_bh)
+void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh)
 {
   /** Mbh*omega_{lmn} = F_{lmn} = f1 + f2( 1 - j )^f3  : dimensionless frequency of nth overtone */
 
@@ -58,8 +41,29 @@ double kerr_bh_freq(double a_bh)
   const double f21 = -1.0260;
   const double f31 = 0.1628;
 
-  /** double omega2 = f11 + f21*pow(1 - a_bh, f31); for 1st overtone*/
-  return f10 + f20*pow(1. - a_bh, f30);
+  *omega1 = (f10 + f20*pow(1. - a_bh, f30));  ///Mbh;
+  *omega2 = (f11 + f21*pow(1 - a_bh, f31)); ///Mbh;
+}
+
+void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, double omega2)
+{
+  /** 0.5*omega_{lmn}*(1/alpha_n) = Q_{lmn} = q1 + q2( 1 - j )^q3  : inverse damping time of nth overtone */
+
+  /** n=0 fundamental overtone */
+  const double q10 = 0.7; 
+  const double q20 = 1.4187;
+  const double q30 = -0.4990;
+
+  /** n=1 first overtone */
+  const double q11 = 0.1;
+  const double q21 = 0.5436;
+  const double q31 = -0.4731;
+
+  double Q1 = q10 + q20*pow(1. - a_bh, q30);
+  double Q2 = q11 + q21*pow(1. - a_bh, q31);
+
+  *alpha1 = omega1 / (2. * Q1);
+  *alpha2 = omega2 / (2. * Q2);
 }
 
 double apeak_bhns(double nu, double k2t)
@@ -75,15 +79,17 @@ double apeak_bhns(double nu, double k2t)
   const double d2 = 0.;
 
   double ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
-  double ap_bbh = nu*A0*ap_bbh1;
+  double ap_bbh = A0*ap_bbh1;
 
-  const double a0 = 0.26320924;
-  const double a1 = 94.2190828;
-  const double a2 = 2.35690962;
-  const double b1 = 23.3662775;
-  const double b2 = 1.37603372;
+  const double a0 = 1.01800975;
+  const double a1 = 0.00299027;
+  const double a2 = 1.2220e-04;
+  const double a3 = -5.8718e-07;
+  const double b1 = 0.02661707;
+  //const double b2 = 1.37888236;
 
-  return ap_bbh*( a0*( 1. + a1*k2t + a2*k2t*k2t ) / ( 1. + b1*k2t + b2*k2t*k2t ) );
+  return ap_bbh*( a0*( 1. + a1*k2t + a2*k2t*k2t  + a3*k2t*k2t*k2t ) / ( 1. + b1*k2t ) );
+  //return ap_bbh;
 }
 
 double opeak_bhns(double nu, double k2t)
@@ -108,6 +114,7 @@ double opeak_bhns(double nu, double k2t)
   const double b2 = 1.58893562;
 
   return op_bbh*( a0*( 1. + a1*k2t + a2*k2t*k2t ) / ( 1. + b1*k2t + b2*k2t*k2t ) );
+  //return op_bbh;
 }
 
 void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
@@ -115,10 +122,8 @@ void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, d
                     double Domega)
 {
   /** from Nagar et al **/
-  #define KMAX_22 (2) // 0, 1 -> (2,1), (2,2) // k=0 unused.
-  int modeon[KMAX_22];
   
-  for (int k=0; k<KMAX_22; k++) {
+  for (int k=0; k<KMAX; k++) {
     sigmar[k] = *alpha1;
     sigmai[k] = *omega1;
       /** l=2, m=2 **/
@@ -133,6 +138,213 @@ void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, d
     b2[k] = alpha21;
     b1[k] = Domega*(  ( 1. + b3[k] + b4[k] ) / ( b2[k]*( b3[k] + 2*b4[k] ) )  );
   }
+}
+
+void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
+			double Mbh, double abh,  
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
+			double *sigmar, double *sigmai)
+{
+  const double a12   = X1*chi1 - X2*chi2;
+  const double X12   = X1 - X2;
+  const double Shat  = 0.5*(aK + a12*X12);
+  const double Sbar  = 0.5*(a12 + aK*X12);
+  const double af    = abh; 
+  const double nu2   = SQ(nu);
+  const double nu3   = nu2*nu;
+  const double nu4   = SQ(nu2);
+  const double af2   = SQ(af);
+  const double af3   = af2*af;
+  const double Shat2 = SQ(Shat); 
+  const double Shat3 = Shat2*Shat;
+  const double Shat4 = SQ(Shat2);
+  const double Sbar2 = SQ(Sbar);
+  const double X12_2 = SQ(X12);
+  const double aK2   = SQ(aK);
+  const double aeff  = aK + 1./3.*a12*X12;
+  const double aeff2 = SQ(aeff);
+  const double aeff3 = aeff2*aeff;
+  const double kapT2 = EOBPars->kapT2;
+  
+  double c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX], omgmrg[KMAX];
+      
+  const int usespins = EOBPars->use_spins;  
+
+  int modeon[KMAX];
+  const int k21 = 0;
+  const int k22 = 1;
+  const int k31 = 2;
+  const int k32 = 3;
+  const int k33 = 4;
+  const int k41 = 5;
+  const int k42 = 6;
+  const int k43 = 7;
+  const int k44 = 8;
+  const int k55 = 13;
+  
+  for (int k=0; k<KMAX; k++) {
+    modeon[k] = 0; /* off */
+    sigmar[k] = sigmai[k] = 0.;
+    ca1[k] = ca2[k] = ca3[k] = ca4[k] = 0.;
+    cb1[k] = cb2[k] = cb3[k] = cb4[k] = 0.;
+  }
+  
+  /* Defining the test-particle data used in the fits of the peak. */
+  double ATP[KMAX], omgTP[KMAX];
+  
+  ATP[0]    = 0.5238781992;
+  ATP[1]    = 1.44959;
+  ATP[2]    = 0.0623783;
+  ATP[3]    = 0.1990192432;
+  ATP[4]    = 0.5660165890;
+  ATP[5]    = 0.00925061;
+  ATP[6]    = 0.0314363901;
+  ATP[7]    = 0.0941569508;
+  ATP[8]    = 0.2766182761;
+  ATP[13]   = 0.151492;
+  omgTP[0]  = 0.2906425497;
+  omgTP[1]  = 0.273356;
+  omgTP[2]  = 0.411755;
+  omgTP[3]  = 0.4516072248;
+  omgTP[4]  = 0.4541278937;
+  omgTP[5]  = 0.552201;
+  omgTP[6]  = 0.6175331548;
+  omgTP[7]  = 0.6361300619;
+  omgTP[8]  = 0.6356586393;
+  omgTP[13] = 0.818117;
+  
+  /* If RWZ-normalization is needed. */
+  /*
+  for (int k=0; k<KMAX; k++) {
+    double l = LINDEX[k];
+    ATP[k] = ATP[k]/sqrt((l+2)*(l+1)*l*(l-1));
+  }
+  */
+    
+    modeon[0]  = 1;
+    modeon[1]  = 1;
+    modeon[2]  = 0;
+    modeon[3]  = 1;
+    modeon[4]  = 1;
+    modeon[5]  = 0;
+    modeon[6]  = 1;
+    modeon[7]  = 1;
+    modeon[8]  = 1;
+    modeon[13] = 1;
+    
+    /* a_vars */
+    double a1, a2, a3;
+    double a1Omg, a2Omg, a3Omg, a4Omg;
+    double a1Amp, a2Amp, a3Amp, a1AmpS, a2AmpS, a3AmpS;
+    
+    /* b_vars */
+    double b1, b2, b3, b4, b5, b6, b7, b8, b9;
+    double b1Omg, b2Omg, b3Omg, b4Omg;
+    double b11Omg, b12Omg, b13Omg, b14Omg, b21Omg, b22Omg, b23Omg;
+    double b24Omg, b31Omg, b32Omg, b33Omg, b34Omg, b41Omg, b42Omg; 
+    double b43Omg, b44Omg, b3Amp, b4Amp;
+    double b1Amax, b2Amax, b3Amax, b1Amp, b2Amp, b11Amp, b12Amp, b13Amp, b14Amp, b21Amp, b22Amp, b23Amp, b24Amp, b31Amp, b32Amp, b33Amp, b34Amp;
+    
+    /* c_vars */
+    double c1, c2, c3, c4;
+    double c1Omg, c2Omg, c5Omg, c6Omg;
+    double c11Omg, c12Omg, c13Omg, c21Omg, c22Omg, c23Omg, c31Omg, c32Omg, c33Omg, c41Omg, c42Omg, c43Omg;
+    double c1Amax, c2Amax, c3Amax, c4Amax, c1Amp, c2Amp, c3Amp, c4Amp, c5Amp, c6Amp;
+    double c11Amp, c12Amp, c13Amp, c14Amp, c21Amp, c22Amp, c23Amp, c24Amp;
+    double c31Amp, c32Amp, c41Amp, c42Amp;
+    
+    /* others vars */
+    double n1Omg, n2Omg, d1Omg, d2Omg;
+    double omg1, omg2, orb, num, denom, OmgOrb, Omgspin, omgOrb, omgS, omgorb, omgspin;
+    double Aorb, Aspin, scale, Amax1, Amax2, num_A, denom_A;
+    
+    // Peak Frequency
+
+    /* (l=2, m=2)*/
+    //c2 = -0.122735;
+    //c1 = 0.0857478;
+    //c4 = -0.0760023;
+    //c3 = 0.0826514;
+    //omg1 = (c2*SQ(X12) +c1*X12 -0.1416002395)*2.*Shat + 1;
+    //omg2 = (c4*SQ(X12) + c3*X12 -0.3484804901)*2.*Shat + 1;
+    //omgmrg[1] = (+0.481958619443355*nu2 +0.223976694441952*nu +0.273813064427363)*omg1/omg2;   
+    omgmrg[1] = opeak_bhns(nu, kapT2);
+    
+    
+    // Peak Amplitude
+    
+    /* (l=2, m=2)*/    
+    //scale = 1 - 0.5*aeff*omgmrg[1];
+    //c4Amax = -0.0820894;
+    //c3Amax = 0.176126;
+    //c2Amax = -0.150239;
+    //c1Amax = 0.20491;    
+    //num_A    = (c4Amax*SQ(X12) + c3Amax*X12 - 0.2935238329)*aeff + 1.;
+    //denom_A  = 1. + (c2Amax*SQ(X12) + c1Amax*X12 -0.4728707630)*aeff;    
+    //Aorb = +1.826573640739664*nu2 + 0.100709438291872*nu + 1.438424467327531;
+    //Amrg[1] = Aorb*scale*(num_A/denom_A);
+    Amrg[1] = apeak_bhns(nu, kapT2);
+     
+    // c3A
+    /* (l=2, m=2)*/
+    b1 =  0.0169543;
+    b2 = -0.0799343;
+    b3 = -0.115928;
+    double c3A_nu =  0.8298678603 * nu - 0.5615838975;
+    double c3A_eq =  (b3*X12 + 0.0907476903)*aeff3 + (b2*X12 + 0.0227344099)*aeff2 + (b1*X12 - 0.1994944332)*aeff;
+    c3A[k22]            =  c3A_nu + c3A_eq;
+    
+    // c3phi
+    /* (l=2, m=2)*/
+    b1 = -0.462321;
+    b2 = -0.904512;
+    b3 =  0.437747;
+    b4 =  1.8275;
+    double c3phi_nu     =  0.4558467286*nu + 3.8883812141;
+    double c3phi_equal  =  (b4*X12 - 2.0575868122)*16*Shat4 +(b3*X12 - 0.5051534498)*8*Shat3 +(b2*X12 + 2.5742292762)*4*Shat2 +(b1*X12 + 2.5599640181)*2*Shat;
+    c3phi[k22]          = c3phi_nu + c3phi_equal;
+	    
+    // c4phi
+    /* (l=2, m=2)*/
+      b1 = -0.449976;
+      b2 = -0.980913;
+      double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
+      double c4phi_equal  =  (b2*X12 + 3.5695199109)*4*Shat2 + (b1*X12 + 4.1312404030)*2*Shat;
+      c4phi[k22]          =  c4phi_nu + c4phi_equal;
+	    
+   
+  
+  
+  if (DEQUAL(nu,0.25,1e-9) && DEQUAL(chi1,chi2,1e-9)){
+    modeon[0] = modeon[2] = modeon[4] = modeon[5] = modeon[7] = modeon[13] = 0;
+  }
+
+  double alpha21[KMAX], alpha1[KMAX], omega1[KMAX];
+  QNM_coefs(af, alpha21, alpha1, omega1);
+  
+  for (int k=0; k<KMAX; k++) {
+    if (modeon[k]) {
+      sigmar[k] = alpha1[k];
+      sigmai[k] = omega1[k];
+      Domg[k] 	= omega1[k] - Mbh*omgmrg[k];
+    }
+  }
+  
+  for (int k=0; k<KMAX; k++) {
+    if (modeon[k]) {
+      c2A[k] = 0.5*alpha21[k];
+      double cosh_c3A= cosh(c3A[k]);  
+      ca1[k] = Amrg[k]*alpha1[k]*cosh_c3A*cosh_c3A/c2A[k];
+      ca2[k] = c2A[k];
+      ca3[k] = c3A[k];
+      ca4[k] = Amrg[k] - ca1[k]*tanh(c3A[k]);
+      cb2[k] = alpha21[k];
+      cb3[k] = c3phi[k];
+      cb4[k] = c4phi[k];
+      cb1[k] = Domg[k]*(1+c3phi[k]+c4phi[k])/(cb2[k]*(c3phi[k] + 2*c4phi[k]));
+    }
+  }
+  
 }
 
 /** Fits of BH remnant from BHNS - Frank's paper (2020) */
@@ -2017,15 +2229,15 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   if (!(usespins)) {
 
     modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
+    modeon[1] = 1;
+    modeon[2] = 1;
+    modeon[3] = 1;
+    modeon[4] = 1;
+    modeon[5] = 1;
+    modeon[6] = 1;
+    modeon[7] = 1;
+    modeon[8] = 1;
+    modeon[9] = 1;
     
     // Non spinning peak fits
     /* (l=2, m=1)*/
