@@ -466,15 +466,18 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   /** Compute circular Fphi */
   *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
-
+    
   /** Compute eccentric Fr */
-  *Fr = eob_flx_Fr_ecc(r, pr_star, pphi, dyn);
+  *Fr = eob_flx_Fr_ecc_BD(r, pr_star, pphi, dyn);
+  // Using circular radial flux. Full non-cicular below
+  // *Fr = eob_flx_Fr_ecc(r, pr_star, pphi, dyn);
   
   /** Compute non-circular Fphi */
-  double Fphi_NC[KMAX] = {1.};
-  Fphi_NC[1] = eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, *Fr, dyn);
-  // To recover old configuration used for arXiv:2001.11736, one should apply this to all multipoles
-  // for (int k = KMAX; k--;) Fphi_NC[k] = Fphi_NC[1];
+  double Fphi_NC[KMAX];
+  double fphi_nc = eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, *Fr, dyn);
+  for (int k = 0; k < KMAX; k++) Fphi_NC[k] = 1.;
+  Fphi_NC[1] = fphi_nc;
+  // To recover old configuration used for arXiv:2001.11736, one should apply this to all multipoles -> for (int k = KMAX; k--;) Fphi_NC[k] = fphi_nc;
   
   /** Adding non-circular corrections and re-compute flux */
   sum_k = 0.;
@@ -538,8 +541,28 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn)
   a1 = F1PN/F0PN;
   a2 = F2PN/F0PN;
   
-  /* return Fphi */
+  /* return Fr */
   return nu*u4*prstar*F0PN/(1 - a1 + (a1*a1 - a2));
+}
+
+/** Radial flux calculation for eccentric systems 
+    Circular expression from Bini-Damour inverse-resummed */
+double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn)
+{
+  const double nu = dyn->nu;
+  double nu2 = nu*nu;
+
+  double u  = 1/r;
+  double u2 = u*u;
+  double u4 = u2*u2;
+
+  double c1 = -573./280. - 118./35.*nu;
+  double c2 = (-237433. + 175311.*nu + 70794.*nu2)/15120.;
+
+  double if2 = 1./(1. - c1*u + (c1*c1 - c2)*u2);
+  
+  /* return Fr */
+  return nu*32./3.*u4*prstar*if2;
 }
 
 /** Non-circular flux for eccentric systems */
