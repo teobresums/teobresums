@@ -751,6 +751,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn);
 double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double ddotr, double Fphi, double Fr, Dynamics *dyn);
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn);
 double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
