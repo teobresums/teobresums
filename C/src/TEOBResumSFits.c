@@ -123,20 +123,20 @@ double eob_c3_fit_ecc(double nu, double a1, double a2)
   const double a04 = a03*a0;
   
   /* Equal-mass, equal-spin coefficients */
-  const double p0 = 42.720039;
-  const double n1 = -0.710937;
-  const double n2 = -0.142503;
-  const double n3 = 0.183764;
-  const double n4 = 0.025030;
-  const double d1 = 0.331651;
+ const double p0 = 35.482253; //42.720039;
+ const double n1 = -1.730483; //-0.710937;
+ const double n2 = 1.144438; //-0.142503;
+ const double n3 = 0.098420; //0.183764;
+ const double n4 = -0.329288; //0.025030;
+ const double d1 = -0.345207; //0.331651;
 
  /* Other coefficients */
-  const double p1 =  100.743;
-  const double p2 = -5.01934;
-  const double p3 = -61.6306;
-  
+ const double p1 = 244.505; //100.743;
+ const double p2 = 148.184; //-5.01934; 
+ const double p3 = -1085.35; //-61.6306; (for different functional form: nu*a0^2)
+ 
   const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
-    + p1*nu*X12*a0 + p2*nu2*(a1 - a2) + p3*nu*X12*a02;
+    + p1*nu*X12*a0 + p2*nu2*(a1 - a2) + p3*nu2*X12*a02; //p3*nu*X12*a02;
   
   return c3;
 }
