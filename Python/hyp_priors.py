@@ -101,6 +101,14 @@ if __name__ == "__main__":
     q    =  1
     E0   =  1.0055    # initial energy
     j    =  3.97      # initial angular momentum
+    q    = 1.498
+    E0   = 1.0076
+    j    = 3.95
+    q    = 1.5
+    j    = 4.19
+    E0   = 1.012
+    j    = 4.22
+    q    = 1.6264
     # Glitch-like signal
     #q    = 1
     #E0   = 1.010
@@ -118,6 +126,7 @@ if __name__ == "__main__":
     Emn, Emx, Einfl = EnergyLimits(r, nu, q, j, chi1, chi2)
     print("j = %s" %j)
     print("Emin = %s, Emax = %s" %(Emn, Emx))
+    print("q    = %s" %q)
     print("r0   = %s" %r)
     print("pph0 = %s" %j)
     print("E0   = %s" %E0)
@@ -141,7 +150,7 @@ if __name__ == "__main__":
     'output_lm'          : [1],               #List of modes to print on file
     'output_dynamics'    : 0,                 #output of the dynamics
     'ode_tstep_opt'      : 1,                 #fixing uniform or adaptive. Default = 1 
-    'srate_interp'       : 3000000.,            #srate at which to interpolate. Default = 4096.
+    'srate_interp'       : 300000.,            #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,                 #output quantities in geometric units. Default = 1
     'r0':r,
     'interp_uniform_grid': 1,                 #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
