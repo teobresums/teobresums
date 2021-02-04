@@ -659,6 +659,7 @@ double eob_a6c_fit_HM(double nu);
 double eob_a6c_fit_ecc(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
+double eob_c3_fit_ecc(double nu, double a1, double a2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
@@ -747,8 +748,10 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
 /* TEOBResumSFlux.c */
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
+void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn);
 double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double ddotr, double Fphi, double Fr, Dynamics *dyn);
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn);
 double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);

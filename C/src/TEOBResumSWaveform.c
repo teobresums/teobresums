@@ -268,6 +268,8 @@ void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double nu2   = nu*nu;
   double nu3   = nu*nu2;
 
+  double SQrdot = SQ(rdot);
+
   double vOmg  = pow(Omega,1./3.);
   double vOmg2 = vOmg*vOmg;
   double vOmg3 = vOmg*vOmg2;
@@ -285,8 +287,6 @@ void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double vphi9 = vphi*vphi8;
 
   /* Eccentric variables */
-  double SQrdot = SQ(rdot);
-  
   double Re_vphi22_ecc = vphi2 - 0.5*(SQrdot + r*r2dot);
   double Im_vphi22_ecc = 2.*vphi*rdot + 0.5*Omegadot*SQ(r);
 
@@ -398,27 +398,16 @@ void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double A41_ecc   = sqrt(SQ(Re_vphi41_ecc) + SQ(Im_vphi41_ecc));
   double A55_ecc   = sqrt(SQ(Re_vphi55_ecc) + SQ(Im_vphi55_ecc));
 
-  double phi22_ecc = atan(Im_vphi22_ecc/Re_vphi22_ecc);
-  double phi21_ecc = atan(Im_vphi21_ecc/Re_vphi21_ecc);
-  double phi33_ecc = atan(Im_vphi33_ecc/Re_vphi33_ecc);
-  double phi32_ecc = atan(Im_vphi32_ecc/Re_vphi32_ecc);
-  double phi31_ecc = atan(Im_vphi31_ecc/Re_vphi31_ecc);
-  double phi44_ecc = atan(Im_vphi44_ecc/Re_vphi44_ecc);
-  double phi43_ecc = atan(Im_vphi43_ecc/Re_vphi43_ecc);
-  double phi42_ecc = atan(Im_vphi42_ecc/Re_vphi42_ecc);
-  double phi41_ecc = atan(Im_vphi41_ecc/Re_vphi41_ecc);
-  double phi55_ecc = atan(Im_vphi55_ecc/Re_vphi55_ecc);
-  
-  if (Re_vphi22_ecc < 0.)    phi22_ecc = phi22_ecc + Pi;
-  if (Re_vphi21_ecc < 0.)    phi21_ecc = phi21_ecc + Pi;
-  if (Re_vphi33_ecc < 0.)    phi33_ecc = phi33_ecc + Pi;
-  if (Re_vphi32_ecc < 0.)    phi32_ecc = phi32_ecc + Pi;
-  if (Re_vphi31_ecc < 0.)    phi31_ecc = phi31_ecc + Pi;
-  if (Re_vphi44_ecc < 0.)    phi44_ecc = phi44_ecc + Pi;
-  if (Re_vphi43_ecc < 0.)    phi43_ecc = phi43_ecc + Pi;
-  if (Re_vphi42_ecc < 0.)    phi42_ecc = phi42_ecc + Pi;
-  if (Re_vphi41_ecc < 0.)    phi41_ecc = phi41_ecc + Pi;
-  if (Re_vphi55_ecc < 0.)    phi55_ecc = phi55_ecc + Pi;
+  double phi22_ecc = atan2(Im_vphi22_ecc,Re_vphi22_ecc);
+  double phi21_ecc = atan2(Im_vphi21_ecc,Re_vphi21_ecc);
+  double phi33_ecc = atan2(Im_vphi33_ecc,Re_vphi33_ecc);
+  double phi32_ecc = atan2(Im_vphi32_ecc,Re_vphi32_ecc);
+  double phi31_ecc = atan2(Im_vphi31_ecc,Re_vphi31_ecc);
+  double phi44_ecc = atan2(Im_vphi44_ecc,Re_vphi44_ecc);
+  double phi43_ecc = atan2(Im_vphi43_ecc,Re_vphi43_ecc);
+  double phi42_ecc = atan2(Im_vphi42_ecc,Re_vphi42_ecc);
+  double phi41_ecc = atan2(Im_vphi41_ecc,Re_vphi41_ecc);
+  double phi55_ecc = atan2(Im_vphi55_ecc,Re_vphi55_ecc);
   
   
   /** Polynomials in nu */
@@ -2369,28 +2358,33 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     PRFORMd("b1",bi[1][0]);
     PRFORMd("b2",bi[1][1]);
   }
-
   
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (size, sizeof(double));
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
+    double *sigmoid;
+    sigmoid = (double*) calloc (size, sizeof(double));
    
     for (int j=0; j<size; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
 
       for (int k=0; k<KMAX; k++) {
 	if(h->kmask[k]){
-	  n1[k][j] = n1[k][j]*smooth_theta[j];
-	  n2[k][j] = n2[k][j]*smooth_theta[j];
-	  n4[k][j] = n4[k][j]*smooth_theta[j];
-	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	  n1[k][j] = n1[k][j]*sigmoid[j];
+	  n2[k][j] = n2[k][j]*sigmoid[j];
+	  n4[k][j] = n4[k][j]*sigmoid[j];
+	  n5[k][j] = n5[k][j]*sigmoid[j];
 	}
       }
     }
     
-    free(smooth_theta);
+    free(sigmoid);
   }
 
   /** Set amplitude and phase */
@@ -2802,26 +2796,32 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[1][1]);
   }
 
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (size, sizeof(double));
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
+    double *sigmoid;
+    sigmoid = (double*) calloc (size, sizeof(double));
 
     for (int j=0; j<size; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
 
       for (int k=0; k<KMAX; k++) {
 	if(hlm_mrg->kmask[k]){
-	  n1[k][j] = n1[k][j]*smooth_theta[j];
-	  n2[k][j] = n2[k][j]*smooth_theta[j];
-	  n4[k][j] = n4[k][j]*smooth_theta[j];
-	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	  n1[k][j] = n1[k][j]*sigmoid[j];
+	  n2[k][j] = n2[k][j]*sigmoid[j];
+	  n4[k][j] = n4[k][j]*sigmoid[j];
+	  n5[k][j] = n5[k][j]*sigmoid[j];
 	}
       }
     }
     
-    free(smooth_theta);
+    free(sigmoid);
   }
   
   /** Set amplitude and phase */
@@ -2900,26 +2900,32 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     }
   }
 
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (fullsize, sizeof(double));
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
+    double *sigmoid;
+    sigmoid = (double*) calloc (fullsize, sizeof(double));
     
     for (int j=0; j<fullsize; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
 
       for (int k=0; k<KMAX; k++) {
 	if(hlm->kmask[k]){
-	  n1[k][j] = n1[k][j]*smooth_theta[j];
-	  n2[k][j] = n2[k][j]*smooth_theta[j];
-	  n4[k][j] = n4[k][j]*smooth_theta[j];
-	  n5[k][j] = n5[k][j]*smooth_theta[j];
+	  n1[k][j] = n1[k][j]*sigmoid[j];
+	  n2[k][j] = n2[k][j]*sigmoid[j];
+	  n4[k][j] = n4[k][j]*sigmoid[j];
+	  n5[k][j] = n5[k][j]*sigmoid[j];
 	}
       }
     }
 
-    free(smooth_theta);
+    free(sigmoid);
   }
 
   for (int k=0; k<KMAX; k++) {
@@ -3240,22 +3246,28 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     PRFORMd("b2",bi[k22][1]);
   }
 
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (size, sizeof(double));
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
+    double *sigmoid;
+    sigmoid = (double*) calloc (size, sizeof(double));
 
     for (int j=0; j<size; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
       
-      n1[k22][j] = n1[k22][j]*smooth_theta[j];
-      n2[k22][j] = n2[k22][j]*smooth_theta[j];
-      n4[k22][j] = n4[k22][j]*smooth_theta[j];
-      n5[k22][j] = n5[k22][j]*smooth_theta[j];
+      n1[k22][j] = n1[k22][j]*sigmoid[j];
+      n2[k22][j] = n2[k22][j]*sigmoid[j];
+      n4[k22][j] = n4[k22][j]*sigmoid[j];
+      n5[k22][j] = n5[k22][j]*sigmoid[j];
     }
     
-    free(smooth_theta);
+    free(sigmoid);
   }
 
   /** Set amplitude and phase */
@@ -3300,22 +3312,28 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     n5[k22][j]  = n4[k22][j]*r2*w2;              /* (pr*)*(r Omg) */
   }
 
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   if ((ecc != 0.) || (r_hyp != 0.)) {
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
-    double *smooth_theta;
-    smooth_theta = (double*) calloc (fullsize, sizeof(double));
+    /*
+      Old configuration used for arXiv:2001.11736
+      double t0 = tNQC - 30.;
+      double alpha = 0.09;
+    */
+    double t0 = tNQC - 100.;
+    double alpha = 0.02;
+    double *sigmoid;
+    sigmoid = (double*) calloc (fullsize, sizeof(double));
     
     for (int j=0; j<fullsize; j++) {
-      smooth_theta[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
+      sigmoid[j] = 1./(1. + exp(-alpha*(hlm->time[j] - t0)));
 
-      n1[k22][j] = n1[k22][j]*smooth_theta[j];
-      n2[k22][j] = n2[k22][j]*smooth_theta[j];
-      n4[k22][j] = n4[k22][j]*smooth_theta[j];
-      n5[k22][j] = n5[k22][j]*smooth_theta[j];
+      n1[k22][j] = n1[k22][j]*sigmoid[j];
+      n2[k22][j] = n2[k22][j]*sigmoid[j];
+      n4[k22][j] = n4[k22][j]*sigmoid[j];
+      n5[k22][j] = n5[k22][j]*sigmoid[j];
     }
 
-    free(smooth_theta);
+    free(sigmoid);
   }
 	  	  
   for (int j=0; j<fullsize; j++) {
@@ -3534,7 +3552,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 
   const double Mbh   = dyn->Mbhf;
   const double abh   = dyn->abhf;
-  const double nu    = dyn->nu;
+  const double nu    = dyn->nu;  
   const double q     = dyn->q;
   const double chi1  = dyn->chi1;
   const double chi2  = dyn->chi2;

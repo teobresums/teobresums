@@ -255,6 +255,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
+
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO; 
     dyn->use_spins = 0;
@@ -327,7 +328,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /** Calculate dynamics */
     eob_dyn_Npostadiabatic(dyn, r0); 
-
     /** Calculate waveform */
     for (int i = 0; i < size; i++) 
       hlm->time[i] = dyn->time[i];
@@ -801,7 +801,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 #endif
 
   
-  if (!(use_tidal) && (dyn->r < 2.)) {
+  if (!(use_tidal) && (dyn->r < 3.)) {
     
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
@@ -869,7 +869,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
 	PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
       }
-      
+
 #if (DEBUG) 
       // Output post-interpolation wave and dynamics 
       if(EOBPars->output_multipoles) {
@@ -893,7 +893,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) {
       
       /** BBH : compute and add NQC */
-      
+
       if (VERBOSE) PRSECTN("NQC Calculation");
       
       if (merger_interp) { 
@@ -1101,8 +1101,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   *hmodes  = hlm;  /* do not free these! */
   *hfmodes = hflm; /* do not free these! */
   *dynf = dyn;     /* do not free these! */
- 
-
+  
 #ifdef _OPENMP
   openmp_free(); 
 #endif

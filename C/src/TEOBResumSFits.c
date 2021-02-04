@@ -41,14 +41,17 @@ double eob_a6c_fit_HM(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
-/** Fit of a6c, eccentric case */
+/** Fit of a6c, all in one paper: arXiv:2101.08624 */
 double eob_a6c_fit_ecc(double nu)
-{  
-  const double a0 = -0.052514;
-  const double a1 = +2.3486;
-  const double b1 = 24.6006;
+{
+  double nu2 = nu*nu;
   
-  return (a0 + a1*nu)*exp(b1*nu);
+  const double n0 = -0.50395;
+  const double n1 =-4.8547;
+  const double n2 = 52.96;
+  const double n3 = 20.7013;
+    
+  return (n0 + n1*nu + n2*nu2)*exp(n3*nu);
 }
 
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
@@ -105,6 +108,35 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
   
   const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
     + p1*nu*X12*a0 + p2*nu2*(a1 - a2);
+  
+  return c3;
+}
+
+/** Fit of c3, all in one paper: arXiv:2101.08624 */
+double eob_c3_fit_ecc(double nu, double a1, double a2)
+{
+  const double nu2 = nu*nu;
+  const double X12 = sqrt(1.-4.*nu);
+  const double a0  = a1+a2;
+  const double a02 = a0*a0;
+  const double a03 = a02*a0;
+  const double a04 = a03*a0;
+  
+  /* Equal-mass, equal-spin coefficients */
+ const double p0 = 35.482253; //42.720039;
+ const double n1 = -1.730483; //-0.710937;
+ const double n2 = 1.144438; //-0.142503;
+ const double n3 = 0.098420; //0.183764;
+ const double n4 = -0.329288; //0.025030;
+ const double d1 = -0.345207; //0.331651;
+
+ /* Other coefficients */
+ const double p1 = 244.505; //100.743;
+ const double p2 = 148.184; //-5.01934; 
+ const double p3 = -1085.35; //-61.6306; (for different functional form: nu*a0^2)
+ 
+  const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
+    + p1*nu*X12*a0 + p2*nu2*(a1 - a2) + p3*nu2*X12*a02; //p3*nu*X12*a02;
   
   return c3;
 }
@@ -240,6 +272,27 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
        ringdown also outside the "calibration" domain, notably for
        large-mass ratios (though q<=20) and large (negative) spins
        Updated, 28/09/2017 */
+    
+    a0_omg_tmp    = -0.1460961247;
+    a1_omg_tmp    =  0.0998056;
+    a2_omg_tmp    = -0.118098;
+    b0_omg_tmp    = -0.3430184009;
+    b1_omg_tmp    =  0.0921551;
+    b2_omg_tmp    = -0.0740285;
+    omg_tmp_nu    = +0.5427169903*nu2 +0.2512395608*nu +0.2863992248;
+    omg_tmp_equal =((a2_omg_tmp*X12*X12 + a1_omg_tmp*X12 + a0_omg_tmp)*aeff_omg+1)/((b2_omg_tmp*X12*X12 +b1_omg_tmp*X12 + b0_omg_tmp)*aeff_omg+1);
+    *omg_tmp       = omg_tmp_nu*omg_tmp_equal;
+
+    a0_domg_tmp    = +0.0604556289;
+    b0_domg_tmp    = -0.0299583285;
+    a1_domg_tmp    = 0.0711715;
+    a2_domg_tmp    = -0.0500886;
+    b1_domg_tmp    = 0.0461239;
+    b2_domg_tmp    = -0.0153068;
+    
+    domg_tmp_nu    = ( +0.0045213831*nu +0.0064934920)/( -1.4466409969*nu+1);
+    domg_tmp_equal = (a2_domg_tmp*X12*X12 +a1_domg_tmp*X12 +b0_domg_tmp)*aeff_omg*aeff_omg +(b2_domg_tmp*X12*X12 +b1_domg_tmp*X12+a0_domg_tmp)*aeff_omg+1;
+    *domg_tmp       = domg_tmp_nu*domg_tmp_equal;
 
     a0_A_tmp 	= -0.2750516062;
     b0_A_tmp 	= -0.4693776065;
@@ -262,27 +315,6 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
     dA_tmp_scale_nu    = ( -0.0847947167*nu -0.0042142765)/( +16.1559461812*nu+1);
     dA_tmp_scale_equal = ((a2_dA_tmp*X12*X12 + a1_dA_tmp*X12+ a0_dA_tmp)*aeff)/((b2_dA_tmp*X12*X12 + b1_dA_tmp*X12 + b0_dA_tmp)*aeff+1);
     *dA_tmp             = (dA_tmp_scale_nu +dA_tmp_scale_equal)*(*omg_tmp);
-    
-    a0_omg_tmp    = -0.1460961247;
-    a1_omg_tmp    =  0.0998056;
-    a2_omg_tmp    = -0.118098;
-    b0_omg_tmp    = -0.3430184009;
-    b1_omg_tmp    =  0.0921551;
-    b2_omg_tmp    = -0.0740285;
-    omg_tmp_nu    = +0.5427169903*nu2 +0.2512395608*nu +0.2863992248;
-    omg_tmp_equal =((a2_omg_tmp*X12*X12 + a1_omg_tmp*X12 + a0_omg_tmp)*aeff_omg+1)/((b2_omg_tmp*X12*X12 +b1_omg_tmp*X12 + b0_omg_tmp)*aeff_omg+1);
-    *omg_tmp       = omg_tmp_nu*omg_tmp_equal;
-
-    a0_domg_tmp    = +0.0604556289;
-    b0_domg_tmp    = -0.0299583285;
-    a1_domg_tmp    = 0.0711715;
-    a2_domg_tmp    = -0.0500886;
-    b1_domg_tmp    = 0.0461239;
-    b2_domg_tmp    = -0.0153068;
-    
-    domg_tmp_nu    = ( +0.0045213831*nu +0.0064934920)/( -1.4466409969*nu+1);
-    domg_tmp_equal = (a2_domg_tmp*X12*X12 +a1_domg_tmp*X12 +b0_domg_tmp)*aeff_omg*aeff_omg +(b2_domg_tmp*X12*X12 +b1_domg_tmp*X12+a0_domg_tmp)*aeff_omg+1;
-    *domg_tmp       = domg_tmp_nu*domg_tmp_equal;
 
   }
 

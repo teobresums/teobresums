@@ -2,7 +2,7 @@
 
 ## Usage 
 
- * Before starting to change the code, run th ebenchmark and store the results
+ * Before starting to change the code, run the benchmark and store the results
  * If you are done with your work, or if you are stuck, run it again
  * Compare the results
 
@@ -18,7 +18,7 @@ In other cases you do expect a difference because you fixed the
 code. So you will need to inspect the data and see if you have done a
 good work.
 
-PLEASE USE THIS BENCHMARK, it is easy and can safe you/us lot of time.
+PLEASE USE THIS BENCHMARK, it is easy and can save you/us lots of time.
 
 ## What to run?
 
@@ -28,7 +28,7 @@ Parfiles for several relevant test cases are collected in the dir
 $ ../C/par/
 ```
 
-Those parfile can be added in the list `FILES` at the beginning of the makefile in this directory.  
+Those parfiles can be added in the list `FILES` at the beginning of the makefile in this directory.  
  
 ## How to run
 

@@ -92,7 +92,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   double ggm[26]; 
   double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, u2, prstar2, dHeff_dpphi, dHeff_dprstar, dHeff_dr, dHeff_dprstarbyprstar, d2Heff_dprstar20,
     H, G, pl_hold, x, jhat, psi, r_omg, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
-
   /* 
    * Compute circular dynamics 
    */
