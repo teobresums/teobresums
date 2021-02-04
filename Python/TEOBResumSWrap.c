@@ -86,6 +86,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "ringdown_extend_array") != NULL ) { 
     EOBPars->ringdown_extend_array = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ringdown_extend_array"));
   }
+  if ( PyDict_GetItemString(dict, "compute_ringdown") != NULL ) { 
+    EOBPars->compute_ringdown = (int) PyLong_AsLong(PyDict_GetItemString(dict, "compute_ringdown"));
+  }
 
   /* Extrinsic */
   if ( PyDict_GetItemString(dict, "distance") != NULL ) {
