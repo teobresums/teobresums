@@ -2148,14 +2148,41 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   if (EOBPars->use_flm == USEFLM_HM) {
     for (int j=0; j<size; j++) {
       /* l=2,m=1 */
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-      /* l=3 & l=4 */
-      for (int k=2; k<14; k++) {   
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+      if(h->kmask[0]){
+	n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
+	n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
+      }
+      /* l=3, l=4 & l=5 */
+      if ((ecc == 0.) || (chi1 <= 0.) || (chi2 <= 0.)) {
+	for (int k=2; k<14; k++) {
+	  if(h->kmask[k]){
+	    n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+	  }
+	}
+      }
+      if (ecc != 0.) {
+	/* l=3, m=2 */
+	if(h->kmask[3]){
+	  n2[3][j] = cbrt(SQ(w[j]))*n1[3][j];
+	  n5[3][j] = cbrt(SQ(w[j]))*n4[3][j];
+	}
+	/* l=4, m=2 */
+	if(h->kmask[6]){
+	  n2[6][j] = cbrt(SQ(w[j]))*n1[6][j];
+	  n5[6][j] = cbrt(SQ(w[j]))*n4[6][j];
+	}
+	/* l=4, m=3 */
+	if(h->kmask[7]){
+	  n2[7][j] = cbrt(SQ(w[j]))*n1[7][j];
+	  n5[7][j] = cbrt(SQ(w[j]))*n4[7][j];
+	}
+	/* l=5, m=5 */
+	if(h->kmask[13]){
+	  n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
+	}      
       }
     }
-  }  
+  }
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -2594,17 +2621,40 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     }
   }
 
-  for (int j=0; j<size; j++) {
+  for (int j=0; j<size; j++) { 
     /* l=2,m=1 */
     if(hlm_mrg->kmask[0]){
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
-    /* l=3 & l=4 */
-    for (int k=2; k<14; k++) {
-      if(hlm_mrg->kmask[k]){
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+    /* l=3, l=4 & l=5 */
+    if ((ecc == 0.) || (chi1 <= 0.) || (chi2 <= 0.)) {
+      for (int k=2; k<14; k++) {
+	if(hlm_mrg->kmask[k]){
+	  n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+	}
       }
+    }
+    if (ecc != 0.) {
+      /* l=3, m=2 */
+      if(hlm_mrg->kmask[3]){
+	n2[3][j] = cbrt(SQ(w[j]))*n1[3][j];
+	n5[3][j] = cbrt(SQ(w[j]))*n4[3][j];
+      }
+      /* l=4, m=2 */
+      if(hlm_mrg->kmask[6]){
+	n2[6][j] = cbrt(SQ(w[j]))*n1[6][j];
+	n5[6][j] = cbrt(SQ(w[j]))*n4[6][j];
+      }
+      /* l=4, m=3 */
+      if(hlm_mrg->kmask[7]){
+	n2[7][j] = cbrt(SQ(w[j]))*n1[7][j];
+	n5[7][j] = cbrt(SQ(w[j]))*n4[7][j];
+      }
+      /* l=5, m=5 */
+      if(hlm_mrg->kmask[13]){
+	n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
+      }      
     }
   }
       
@@ -2892,11 +2942,34 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
-    /* l=3 & l=4 */
-    for (int k=2; k<14; k++) {   
-      if(hlm_mrg->kmask[k]){   
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+    /* l=3, l=4 & l=5 */
+    if ((ecc == 0.) || (chi1 <= 0.) || (chi2 <= 0.)) {
+      for (int k=2; k<14; k++) {
+	if(hlm_mrg->kmask[k]){
+	  n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+	}
       }
+    }
+    if (ecc != 0.) {
+      /* l=3, m=2 */
+      if(hlm_mrg->kmask[3]){
+	n2[3][j] = cbrt(SQ(w[j]))*n1[3][j];
+	n5[3][j] = cbrt(SQ(w[j]))*n4[3][j];
+      }
+      /* l=4, m=2 */
+      if(hlm_mrg->kmask[6]){
+	n2[6][j] = cbrt(SQ(w[j]))*n1[6][j];
+	n5[6][j] = cbrt(SQ(w[j]))*n4[6][j];
+      }
+      /* l=4, m=3 */
+      if(hlm_mrg->kmask[7]){
+	n2[7][j] = cbrt(SQ(w[j]))*n1[7][j];
+	n5[7][j] = cbrt(SQ(w[j]))*n4[7][j];
+      }
+      /* l=5, m=5 */
+      if(hlm_mrg->kmask[13]){
+	n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
+      }      
     }
   }
 
