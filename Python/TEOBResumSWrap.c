@@ -693,6 +693,45 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   return ret;
 }
 
+static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
+{
+  /* Compute A and B */
+  double r, q;
+  double A, B, pl_hold;
+
+  Dynamics *dyn;
+
+  /* parse the input */
+  if (!PyArg_ParseTuple(args, "dd", &r, &q))
+    return NULL;
+  
+  double nu = q_to_nu(q);
+
+  /* Allocate the defaults & set the parameters */
+  EOBParameters_alloc ( &EOBPars ); 
+  EOBParameters_defaults (DEFAULT_PARS_BBH, EOBPars);
+  EOBPars->q    = q;
+
+  eob_set_params(DEFAULT_PARS_BBH, 1);
+  /* set firstcall */
+  for (int k=0; k < NFIRSTCALL; k++){ 
+    EOBPars->firstcall[k] = 1;
+  }
+
+  Dynamics_alloc (&dyn, 0, "dyn"); 
+  Dynamics_set_params(dyn); 
+  
+  eob_metric_s(r, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+
+  /* Free */ 
+  EOBParameters_free (EOBPars);
+  Dynamics_free(dyn);
+
+  PyObject *ret;
+  ret = Py_BuildValue("dd", A, B);
+  return ret;
+}
+
 /* Define functions in module */
 static PyMethodDef EOBRunMethods[] = {
   {"EOBRunPy", EOBRunPy, METH_VARARGS, "Generate a time or frequency domain TEOBResumS waveform"},
@@ -701,6 +740,7 @@ static PyMethodDef EOBRunMethods[] = {
   {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso"},
   {"eob_ham_s_py", eob_ham_s_py, METH_VARARGS, "Compute the spinning EOB hamiltonian for BBH systems"},
   {"eob_j0_circ", eob_j0_circ, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
+  {"eob_metricAB_py", eob_metricAB_py, METH_VARARGS, "Compute the metric potentials"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
   {NULL, NULL}  /* {NULL, NULL, 0, NULL} */ 
