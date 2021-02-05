@@ -138,30 +138,40 @@ if __name__ == "__main__":
 
     # main
     # r = 10000 for scattering angle. For parspace survey, r=1500 is ok
-    r    = 1500. 
+    #r    = 1500. 
+    r    =  50
     chi1 =  0.0       # spin larger object
     chi2 =  0.0       # spin smaller object
     #============================
     # FIX E0 > 1
     #============================= 
-    q    =  1
-    E0   =  1.0055    # initial energy
-    j    =  3.97      # initial angular momentum
-    q    = 1.498
-    E0   = 1.0076
-    j    = 3.95
-    q    = 1.5
-    j    = 4.19
-    E0   = 1.012
-    j    = 4.22
-    q    = 1.6264
-    # Glitch-like signal
+    # Pars for hyp-simulations: transition between 2 close passages and direct
+    #### q=1 ####
     #q    = 1
-    #E0   = 1.010
     #j    = 4.2
-    #q   =  1.0
-    #E0  = 1.01
-    #j   = 4.0
+    #E0   = 1.0005
+    #j    = 3.97
+    #E0   = 1.0044
+    #E0   = 1.0055
+    #E0   = 1.0066
+    #E0   = 1.008
+
+    #### q=4 ####
+    q    = 4
+    j    = 4
+    #E0   = 1.0025
+    E0   = 1.0027
+    #E0    = 1.003
+    #E0   = 1.0035
+
+    #### q=8 ####
+    #q    = 8
+    #j    = 3.97
+    #E0   = 1.0005
+    #E0   = 1.00055
+    #E0   = 1.00065
+    #E0   = 1.001
+
     nu  = q/(1+q)**2
     
     # nonspinning LSO computation
@@ -233,10 +243,19 @@ if __name__ == "__main__":
         plt.legend()
         plt.show()
 
-        # plot Omg
+        # plot r
         plt.plot(T,r)
         plt.show()
-    
+   
+        #pol1 = plt.figure()
+        #polax = pol1.add_axes([0.1,0.1,0.8,0.8],polar=True)
+        #polax.set_ylim(0,50)
+        #polax.plot(phi,r)
+        #plt.show()
+
+        plt.polar(phi, r)
+        plt.show()
+
         # plot amplitude and phase
         A22   = hlm['1'][0]
         Phi22 = hlm['1'][1]
@@ -254,16 +273,16 @@ if __name__ == "__main__":
         #print("A21 = %s" %A21)
         #print("phi21 = %s" %Phi21)
 
-        plt.plot(t,-Reh22, label=r'h22')
+        #plt.plot(t,-Reh22, label=r'h22')
         #plt.plot(t,Imh22)
-        plt.legend()
-        plt.show()
+        #plt.legend()
+        #plt.show()
 
-        plt.plot(t,A22)
-        plt.show()
+        #plt.plot(t,A22)
+        #plt.show()
 
-        plt.plot(Phi22)
-        plt.show()
+        #plt.plot(Phi22)
+        #plt.show()
 
 
     dashes    = '----------------------------';
@@ -288,15 +307,16 @@ if __name__ == "__main__":
 
     qa, pa = EobAdm('eob2adm', qe, pe, nu);
     print('\n', dashes, 'EOB', dashes)
-    print('qe = [',  qe[0], ', ',  qe[1], ']')
-    print('pe = [',  pe[0], ', ',  pe[1], ']')
+    print(' qe  = [',  qe[0], ', ',  qe[1], ']')
+    print(' pe  = [',  pe[0], ', ',  pe[1], ']')
     print('\n', dashes, 'ADM', dashes)
-    print('qa = [',  qa[0], ', ',  qa[1], ']')
-    print('pa = [',  pa[0], ', ',  pa[1], ']')
+    print(' qa  = [',  qa[0], ', ',  qa[1], ']')
+    print('|qa| =  ', np.sqrt(np.dot(qa,qa)))
+    print(' pa  = [',  pa[0], ', ',  pa[1], ']')
     print('\n', dashes[:-3], 'EOB check', dashes[:-3])
     qe_check, pe_check = EobAdm('adm2eob', qa, pa, nu);
-    print('qe = [',  qe_check[0], ', ',  qe_check[1], ']')
-    print('pe = [',  pe_check[0], ', ',  pe_check[1], ']')
+    print(' qe  = [',  qe_check[0], ', ',  qe_check[1], ']')
+    print(' pe  = [',  pe_check[0], ', ',  pe_check[1], ']')
 
     if debug:
         A_test, dA_test, d2A_test = EOBRun_module.eob_metric_A5PNlog_py(r[0], nu);
