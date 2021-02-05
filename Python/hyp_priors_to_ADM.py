@@ -293,10 +293,10 @@ if __name__ == "__main__":
     print('\n', dashes, 'ADM', dashes)
     print('qa = [',  qa[0], ', ',  qa[1], ']')
     print('pa = [',  pa[0], ', ',  pa[1], ']')
-    print('\n', dashes, 'EOB2', dashes)
-    qe_back, pe_back = EobAdm('adm2eob', qa, pa, nu);
-    print('qe = [',  qe_back[0], ', ',  qe_back[1], ']')
-    print('pe = [',  pe_back[0], ', ',  pe_back[1], ']')
+    print('\n', dashes[:-3], 'EOB check', dashes[:-3])
+    qe_check, pe_check = EobAdm('adm2eob', qa, pa, nu);
+    print('qe = [',  qe_check[0], ', ',  qe_check[1], ']')
+    print('pe = [',  pe_check[0], ', ',  pe_check[1], ']')
 
     if debug:
         A_test, dA_test, d2A_test = EOBRun_module.eob_metric_A5PNlog_py(r[0], nu);
