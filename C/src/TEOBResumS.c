@@ -974,7 +974,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	Waveform_lm_output (hlm); 
 	Waveform_lm_output_reim (hlm);
 	if (use_spins == MODE_SPINS_GENERIC)
-	  Waveform_lm_output (hTlm);
+	  Waveform_lm_output (hTlm);  
+	  Waveform_lm_output (hTlm_neg);
       } else {
 	WaveformFD_lm_output (hflm);
 	if (use_spins == MODE_SPINS_GENERIC)
