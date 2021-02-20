@@ -1166,6 +1166,7 @@ void eob_set_params(EOBParameters *eobp, int default_choice, int firstcall)
   if (usespins==MODE_SPINS_GENERIC) {
     eobp->chi1 = eobp->chi1z;
     eobp->chi2 = eobp->chi2z;
+    eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
   }
   
   const double chi1 = eobp->chi1;

@@ -4163,19 +4163,38 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   }
 
   /* Now, prolong the angles based on user request */
-  if (1) {
+  if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_CONSTANT) {
     //for t > tM_idx, fix the values to the last
     for(int j=tM_idx+1; j < hlm->size; j++){
       alpha[j] = alpha[tM_idx];
       beta[j]  = beta[tM_idx];
       gamma[j] = gamma[tM_idx];
     }
-  } else {
+  } else if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_QNMs){
     /* use QNM for alpha_dot, and fix beta constant */
-    /* TODO*/
-    for(int j=tM_idx+1; j < hlm->size; j++)
+    /* Table VIII or https://arxiv.org/pdf/gr-qc/0512160.pdf */
+  
+    /** (l,m,n)=(2,2,0) */
+    double f10 = 1.5251; 
+    double f20 = -1.1568;
+    double f30 = 0.1292;
+    double omega220  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+    /** (l,m,n)=(2,1,0) */
+    f10 = 0.6; 
+    f20 = -0.2339;
+    f30 = 0.4175;
+    double omega210  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+
+    for(int j=tM_idx+1; j < hlm->size; j++){
        beta[j]  = beta[tM_idx];
+       alpha[j] = alpha[tM_idx] + (hlm->time[j]-hlm->time[tM_idx])*(omega220-omega210);
+       gamma[j] = -alpha[j]*cos(beta[j]);
+    }
+    
+  } else {
+    errorexit("Need to specify angles for ringdown!\n");
   }
+
   /* free */
   free(alpha_tmp);
   free(beta_tmp);
