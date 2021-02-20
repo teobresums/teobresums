@@ -194,7 +194,7 @@ static const char* eob_id_var[] = {"r","phi","Pphi","Prstar","Pr","j","E0","Omeg
 
 /** Index list of EOB dynamical variables (to be stored in arrays) */ 
 enum{
-  EOB_RAD, 
+  EOB_RAD,
   EOB_PHI,
   EOB_PPHI,
   EOB_MOMG,
@@ -425,6 +425,7 @@ typedef struct tagDynamics
   int noflx; /* compute rhs without flux */
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
   double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot;
+  double tOmg_pk;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
   double A,dA,d2A, B,dB;
   double MOmg, MOmg_prev, tMOmgpeak;
@@ -762,10 +763,12 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
 void (*eob_wav_hlm)();
 void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm);
 void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm);
+void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm);
 void (*eob_wav_deltalm)();
 void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_hlmNewt_ecc(Dynamics *dyn,Waveform_lm_t *hlmNewt);
+void eob_wav_hlmNewt_ecc_sigmoid(Dynamics *dyn,Waveform_lm_t *hlmNewt);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
 void (*eob_wav_hlmNewt)();

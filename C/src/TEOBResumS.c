@@ -637,15 +637,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
       
     if (store_dynamics) {
-      dyn->time[iter]             = dyn->t; 
-      dyn->data[EOB_RAD][iter]    = dyn->r;
-      dyn->data[EOB_PHI][iter]    = dyn->phi;
-      dyn->data[EOB_PPHI][iter]   = dyn->pphi;
-      dyn->data[EOB_MOMG][iter]   = dyn->Omg;
-      dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
-      dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
-      dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
-      dyn->data[EOB_E0][iter] 	  = dyn->E;
+      dyn->time[iter]              = dyn->t; 
+      dyn->data[EOB_RAD][iter]     = dyn->r;
+      dyn->data[EOB_PHI][iter]     = dyn->phi;
+      dyn->data[EOB_PPHI][iter]    = dyn->pphi;
+      dyn->data[EOB_MOMG][iter]    = dyn->Omg;
+      dyn->data[EOB_DDOTR][iter]   = dyn->ddotr;
+      dyn->data[EOB_PRSTAR][iter]  = dyn->prstar;
+      dyn->data[EOB_OMGORB][iter]  = dyn->Omg_orb;
+      dyn->data[EOB_E0][iter] 	   = dyn->E;
     }
 
     /** Stop integration if reached max time */    
@@ -703,10 +703,46 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   EOBPars->size = size; 
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
+      
+  /** Find peak of Omega */
+  int index_pk = dyn->size-1;
+  double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
+  for (int j = dyn->size-2; j-- ; ) {
+    if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
+      break;
+    index_pk = j;
+    Omega_pk = dyn->data[EOB_OMGORB][j]; 
+  }
+  double *t_ptr     = &dyn->time[index_pk-2];
+  double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-2];
+  double tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
 
+  dyn->tOmg_pk = tOmg_pk;
 
-  /* Over-writing waveform with the eccentric one 
-     For now, only in uniform case */
+  /** Over-writing waveform in the eccentric case - adding sigmoid */
+  if ((ecc != 0) || (r_hyp != 0.)) {
+
+    for (int i = 0; i < size; i++) {
+      dyn->store = 1;
+      dyn->t = dyn->time[i];
+      dyn->y[EOB_EVOLVE_PHI] = dyn->data[EOB_PHI][i];
+      dyn->y[EOB_EVOLVE_RAD] = dyn->data[EOB_RAD][i];
+      dyn->y[EOB_EVOLVE_PPHI] = dyn->data[EOB_PPHI][i];
+      dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
+      eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
+      
+      eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
+
+      for (int k = 0; k < KMAX; k++) {
+	if((hlm->kmask[k])){
+	  hlm->ampli[k][i] = hlm_t->ampli[k];
+	  hlm->phase[k][i] = hlm_t->phase[k]; 
+	}
+      }
+    }
+  }
+  
+  /** Over-writing waveform in the eccentric case - computing numerical derivatives */
   /*
     if ((ecc != 0) || (r_hyp != 0.)) {
     double *r_omg     = (double*) calloc (size,sizeof(double));
@@ -789,8 +825,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
     }
   }
-
-#if (DEBUG) 
+  
+#if (DEBUG)
   /* Output wave and dynamics */
   if(EOBPars->output_multipoles) {
     strcat(hlm->name,"_insplunge");
@@ -799,7 +835,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (EOBPars->output_dynamics)
     Dynamics_output(dyn);
 #endif
-
   
   if (!(use_tidal) && (dyn->r < 3.)) {
     
@@ -837,19 +872,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
       Dynamics_extract (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
       
-      /** Find peak of Omega */
-      int index_pk = dyn->size-1;
-      double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
-      for (int j = dyn->size-2; j-- ; ) {
-	if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
-	  break;
-        index_pk = j;
-        Omega_pk = dyn->data[EOB_OMGORB][j]; 
-      }
-      double *t_ptr     = &dyn->time[index_pk-2];
-      double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-2];
-      double tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
-      
       /** Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
       if (EOBPars->use_flm == USEFLM_HM) {
@@ -879,13 +901,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (EOBPars->output_dynamics) 
 	Dynamics_output(dyn_mrg);
 #endif
-            
+      
       /* Interp Waveform */ 
       Waveform_lm_interp (hlm_mrg, size_mrg, tstart_mrg, dt_merger_interp, "hlm_mrg_interp");
       
       /* Interp Dynamics */
       Dynamics_interp (dyn_mrg, size_mrg, tstart_mrg, dt_merger_interp, "dyn_mrg_interp");	       
-      
       
     } /* End of merger interp */
     
@@ -893,7 +914,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) {
       
       /** BBH : compute and add NQC */
-
+      
       if (VERBOSE) PRSECTN("NQC Calculation");
       
       if (merger_interp) { 
@@ -910,7 +931,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         Dynamics_join (dyn, dyn_mrg, dyn_mrg->time[0]);
         size = hlm->size;
         EOBPars->size = size;
-
+	
 	/* Free the *_mrg buffers 
 	   Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
 	Waveform_lm_free(hlm_mrg);
@@ -925,7 +946,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
       
       strcat(hlm->name,"_nqc");      
-
+      
 #if (DEBUG) 
       if (EOBPars->output_nqc)  {
      	Waveform_lm_output (hlm_nqc);
@@ -944,27 +965,27 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (EOBPars->compute_ringdown) {
       
       if (VERBOSE) PRSECTN("Ringdown");
-    
+      
       /* Extend arrays */    
       const int size_ringdown = EOBPars->ringdown_extend_array;    
       double dt_rngdn = dt;
       if (merger_interp)
 	dt_rngdn = EOBPars->dt_merger_interp; 
-    
+      
 #if (DEBUG) 
       printf("Push memory for ringdown (%d + %d):",size,EOBPars->ringdown_extend_array);
       printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt_rngdn,dt_rngdn*size_ringdown,hlm->time[size-1]+dt_rngdn*size_ringdown);
 #endif
-
+      
       Waveform_lm_push (&hlm, (size+size_ringdown));
       for (int i = size; i < (size+size_ringdown); i++) 
 	hlm->time[i] = hlm->time[i-1] + dt_rngdn;
       size += size_ringdown;
       EOBPars->size = size;
-
+      
       /* Ringdown attachment */
       eob_wav_ringdown(dyn, hlm);
-
+      
 #if (DEBUG) 
       // Output wave and dynamics 
       if(EOBPars->output_multipoles) {
@@ -976,7 +997,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     
   } /* End of BBH section */
-
+  
 
 
   /* *****************************************
