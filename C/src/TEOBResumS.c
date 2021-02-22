@@ -845,7 +845,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Ringdown attachment for BBH & BHNS */
     if(bhns_mode==true){
-      eob_wav_ringdown_bhns(dyn, hlm, EOBPars->kapT2);
+      eob_wav_ringdown_bhns(dyn, hlm, EOBPars->kapT2, M);
     }else{
       eob_wav_ringdown(dyn, hlm);
     }

@@ -22,45 +22,269 @@
 
 /** BHNS Functions section */
 
+void tidal_disruption_cases(double q, double Mf, double M, bool *flag, bool *flag2)
+{
+  /** Filter tidal disruption cases that don't work with Berti's QNM fits */
+  double crit = Mf/M; // from Frank's bh remnant fits
+
+  if( (crit<0.963) && (q<=2) ){
+    *flag = true;
+  }
+
+  if( (crit<0.970) ){ // cases that work with 2,-2 mode Berti's fits
+    *flag2 = true;
+  }
+
+
+}
+
+void kerr_bh_freq_td(double *omega1, double *omega2, double k2t)
+{
+  /** Dimensionless frequency fits for tidal disruption cases (When Berti's QNM don't work) */
+  double a1, a2, b1, b2;
+
+  a1 = 9222.16120;
+  a2 = 151.312951;
+  b1 = 17579.4469;
+  b2 = 1947.31219;
+
+  *omega2 = ( 1 + a1*k2t + a2*k2t*k2t )  / ((1 + b1*k2t + b2*k2t*k2t));
+  *omega1 = 0;
+}
+
 /** Fits of Kerr BH QNM complex frequencies for a (M_bh, a_bh) of the remnant BH (for l=2,m=2)
  * Berti et al: arxiv:0512160
  * Nagar et al: arxiv:1904.09550
  */
 
-void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh)
+void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t, bool td2)
 {
   /** Mbh*omega_{lmn} = F_{lmn} = f1 + f2( 1 - j )^f3  : dimensionless frequency of nth overtone */
+  double f10[KMAX], f20[KMAX], f30[KMAX], f11[KMAX], f21[KMAX], f31[KMAX];
 
+  /** l=2  m=-2 **/
   /** n=0 fundamental overtone */
-  const double f10 = 1.5251; 
-  const double f20 = -1.1568;
-  const double f30 = 0.1292;
-
+  f10[7] = 0.2938; 
+  f20[7] = 0.0782;
+  f30[7] = 1.3546;
   /** n=1 first overtone */
-  const double f11 = 1.3673;
-  const double f21 = -1.0260;
-  const double f31 = 0.1628;
+  f11[7] = 0.2528;
+  f21[7] = 0.0921;
+  f31[7] = 1.3344;
 
-  *omega1 = (f10 + f20*pow(1. - a_bh, f30));  ///Mbh;
-  *omega2 = (f11 + f21*pow(1 - a_bh, f31)); ///Mbh;
+  /** l=2  m=-1 **/
+  /** n=0 fundamental overtone */
+  f10[6] = 0.3441; 
+  f20[6] = 0.0293;
+  f30[6] = 2.0010;
+  /** n=1 first overtone */
+  f11[6] = 0.3165;
+  f21[6] = 0.0301;
+  f31[6] = 2.3415;
+
+  /** l=2  m=0 **/
+  /** n=0 fundamental overtone */
+  f10[5] = 0.4437; 
+  f20[5] = -0.0739;
+  f30[5] = 0.3350;
+  /** n=1 first overtone */
+  f11[5] = 0.4185;
+  f21[5] = -0.0768;
+  f31[5] = 0.4355;
+
+  /** l=2  m=1 **/
+  /** n=0 fundamental overtone */
+  f10[0] = 0.6000; 
+  f20[0] = -0.2339;
+  f30[0] = 0.4175;
+  /** n=1 first overtone */
+  f11[0] = 0.5800;
+  f21[0] = -0.2416;
+  f31[0] = 0.4708;
+
+  /** l=2  m=2 **/
+  /** n=0 fundamental overtone */
+  f10[1] = 1.5251; 
+  f20[1] = -1.1568;
+  f30[1] = 0.1292;
+  /** n=1 first overtone */
+  f11[1] = 1.3673;
+  f21[1] = -1.0260;
+  f31[1] = 0.1628;
+
+  /** l=3  m=1 **/
+  /** n=0 fundamental overtone */
+  f10[2] = 0.8345; 
+  f20[2] = -0.2405;
+  f30[2] = 0.4095;
+  /** n=1 first overtone */
+  f11[2] = 0.8105;
+  f21[2] = -0.2342;
+  f31[2] = 0.4660;
+
+  /** l=3  m=1 **/
+  /** n=0 fundamental overtone */
+  f10[2] = 0.8345; 
+  f20[2] = -0.2405;
+  f30[2] = 0.4095;
+  /** n=1 first overtone */
+  f11[2] = 0.8105;
+  f21[2] = -0.2342;
+  f31[2] = 0.4660;
+
+  /** l=3  m=2 **/
+  /** n=0 fundamental overtone */
+  f10[3] = 1.1481; 
+  f20[3] = -0.5552;
+  f30[3] = 0.3002;
+  /** n=1 first overtone */
+  f11[3] = 1.1226;
+  f21[3] = -0.5471;
+  f31[3] = 0.3264;
+
+  /** l=3  m=3 **/
+  /** n=0 fundamental overtone */
+  f10[4] = 1.8956; 
+  f20[4] = -1.3043;
+  f30[4] = 0.1818;
+  /** n=1 first overtone */
+  f11[4] = 1.8566;
+  f21[4] = -1.2818;
+  f31[4] = 0.1934;
+
+  const int k21 = 0;
+  const int k22 = 1;
+  
+  int mode;
+  if(td2==true){
+    mode = 7;
+  }else
+  {
+    mode = 1;
+  }
+  
+  *omega1 = (f10[mode] + f20[mode]*pow(1. - a_bh, f30[mode]));
+  *omega2 = (f11[mode] + f21[mode]*pow(1 - a_bh, f31[mode])); 
+
 }
 
-void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, double omega2)
+void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t)
+{
+  /** Inverse damping time fits for tidal disruption cases */
+
+  double a1, a2, b1, b2;
+
+  a1 = 0.04221885;
+  a2 = -0.00049354;
+  b1 = 2.94836890;
+  b2 = -0.02816409;
+
+  *alpha2 = ( 1 + a1*k2t + a2*k2t*k2t )  / ((1 + b1*k2t + b2*k2t*k2t));
+  *alpha1 = 0;
+}
+
+
+void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, double omega2, double k2t, bool td2)
 {
   /** 0.5*omega_{lmn}*(1/alpha_n) = Q_{lmn} = q1 + q2( 1 - j )^q3  : inverse damping time of nth overtone */
+  double q10[KMAX], q20[KMAX], q30[KMAX], q11[KMAX], q21[KMAX], q31[KMAX];
 
+  /** l=2  m=-2 **/
   /** n=0 fundamental overtone */
-  const double q10 = 0.7; 
-  const double q20 = 1.4187;
-  const double q30 = -0.4990;
-
+  q10[7] = 1.670; 
+  q20[7] = 0.4192;
+  q30[7] = 1.4700;
   /** n=1 first overtone */
-  const double q11 = 0.1;
-  const double q21 = 0.5436;
-  const double q31 = -0.4731;
+  q11[7] = 0.455;
+  q21[7] = 0.1729;
+  q31[7] = 1.3617;
 
-  double Q1 = q10 + q20*pow(1. - a_bh, q30);
-  double Q2 = q11 + q21*pow(1. - a_bh, q31);
+  /** l=2  m=-1 **/
+  /** n=0 fundamental overtone */
+  q10[6] = 2.000; 
+  q20[6] = 0.1078;
+  q30[6] = 5.0069;
+  /** n=1 first overtone */
+  q11[6] = 0.610;
+  q21[6] = 0.0276;
+  q31[6] = 13.1683;
+
+  /** l=2  m=0 **/
+  /** n=0 fundamental overtone */
+  q10[5] = 4.0000; 
+  q20[5] = -1.9550;
+  q30[5] = 0.1420;
+  /** n=1 first overtone */
+  q11[5] = 1.2500;
+  q21[5] = -0.6359;
+  q31[5] = 0.1614;
+
+  /** l=2  m=1 **/
+  /** n=0 fundamental overtone */
+  q10[0] = -0.3000; 
+  q20[0] = 2.3561;
+  q30[0] = -0.2277;
+  /** n=1 first overtone */
+  q11[0] = -0.3300;
+  q21[0] = 0.9501;
+  q31[0] = -0.2072;
+
+  /** l=2  m=2 **/
+  /** n=0 fundamental overtone */
+  q10[1] = 0.7; 
+  q20[1] = 1.4187;
+  q30[1] = -0.4990;
+  /** n=1 first overtone */
+  q11[1] = 0.1;
+  q21[1] = 0.5436;
+  q31[1] = -0.4731;
+
+  /** l=3  m=1 **/
+  /** n=0 fundamental overtone */
+  q10[2] = 23.8450; 
+  q20[2] = -20.7240;
+  q30[2] = 0.03837;
+  /** n=1 first overtone */
+  q11[2] = 8.8530;
+  q21[2] = -7.8506;
+  q31[2] = 0.03418;
+
+   /** l=3  m=2 **/
+  /** n=0 fundamental overtone */
+  q10[3] = 0.8313; 
+  q20[3] = 2.3773;
+  q30[3] = -0.3655;
+  /** n=1 first overtone */
+  q11[3] = 0.2300;
+  q21[3] = 0.8025;
+  q31[3] = -0.3684;
+
+  /** l=3  m=3 **/
+  /** n=0 fundamental overtone */
+  q10[4] = 0.9000; 
+  q20[4] = 2.3430;
+  q30[4] = -0.4810;
+  /** n=1 first overtone */
+  q11[4] = 0.2274;
+  q21[4] = 0.8173;
+  q31[4] = -0.4731;
+
+  const int k21 = 0;
+  const int k22 = 1;
+  const int k31 = 2;
+  const int k32 = 3;
+  const int k33 = 4;
+
+  int mode;
+  if(td2==true){
+    mode = 7;
+  }else
+  {
+    mode = 1;
+  }
+
+  double Q1 = q10[mode] + q20[mode]*pow(1. - a_bh, q30[mode]);
+  double Q2 = q11[mode] + q21[mode]*pow(1. - a_bh, q31[mode]);
 
   *alpha1 = omega1 / (2. * Q1);
   *alpha2 = omega2 / (2. * Q2);
@@ -81,15 +305,22 @@ double apeak_bhns(double nu, double k2t)
   double ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
   double ap_bbh = A0*ap_bbh1;
 
-  const double a0 = 1.01800975;
-  const double a1 = 0.00299027;
-  const double a2 = 1.2220e-04;
-  const double a3 = -5.8718e-07;
-  const double b1 = 0.02661707;
-  //const double b2 = 1.37888236;
+  const double a11 = -0.25796013;
+  const double a12 = 1.50838511;
+  const double a21 = -0.00419364;
+  const double a22 = 0.02288870;
+  const double b11 = 0.25902747;
+  const double b12 = 1.65756576;
 
-  return ap_bbh*( a0*( 1. + a1*k2t + a2*k2t*k2t  + a3*k2t*k2t*k2t ) / ( 1. + b1*k2t ) );
-  //return ap_bbh;
+  double a1 = a11*nu + a12*nu*nu;
+  double a2 = a21*nu + a22*nu*nu;
+  double b1 = b11*nu + b12*nu*nu;
+
+  double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  if(Ap<0.){
+    Ap = 0.;
+  }
+  return ap_bbh*Ap;
 }
 
 double opeak_bhns(double nu, double k2t)
@@ -107,14 +338,22 @@ double opeak_bhns(double nu, double k2t)
   double op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
   double op_bbh = omega0*op_bbh1;
 
-  const double a0 = 0.01246730;
-  const double a1 = 1173.38877;
-  const double a2 = 33.3455450;
-  const double b1 = 12.4989899;
-  const double b2 = 1.58893562;
+  const double a11 = 4.79261658;
+  const double a12 = -7.18755583;
+  const double a21 = 0.53523450;
+  const double a22 = -1.87456571;
+  const double b11 = 5.53816410;
+  const double b12 = -13.7582720;
 
-  return op_bbh*( a0*( 1. + a1*k2t + a2*k2t*k2t ) / ( 1. + b1*k2t + b2*k2t*k2t ) );
-  //return op_bbh;
+  double a1 = a11*nu + a12*nu*nu;
+  double a2 = a21*nu + a22*nu*nu;
+  double b1 = b11*nu + b12*nu*nu;
+
+  double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) )  / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  if(Op>1.0){
+    Op = 1.0;
+  }
+  return op_bbh*Op;
 }
 
 void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 

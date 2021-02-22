@@ -649,8 +649,11 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
-void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, double omega2);
-void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh);
+void tidal_disruption_cases(double q, double Mf, double M, bool *flag, bool *flag2);
+void kerr_bh_freq_td(double *omega1, double *omega2, double k2t);
+void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t, bool td2);
+void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t);
+void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, double omega2, double k2t, bool td2);
 double apeak_bhns(double nu, double k2t);
 double opeak_bhns(double nu, double k2t);
 void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, double *sigmar, double *sigmai, double nu, 
@@ -779,7 +782,8 @@ void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
 void (*eob_wav_ringdown)();
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
-void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2);
+void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double *alpha2, double Amrg);
+void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2, double M);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 
 #ifdef _OPENMP

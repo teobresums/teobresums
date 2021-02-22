@@ -3168,6 +3168,7 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
   double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
   //if(VERBOSE) PRFORMd("test", a1*tanh(a2*x +a3) );
   double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));
+  //if(VERBOSE) PRFORMd("phase", b4*exp(-2.*b2*x) );
   
   psi[0] = amp * exp(-sigmar*x); /* amplitude */
   psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
@@ -3398,7 +3399,19 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 }
 
 /** BHNS ringdown model*/ 
-void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
+/*
+/** Ringdown waveform template for tidal disruption cases */
+void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double *alpha2, double Amrg)
+{  
+  double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
+  double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));
+  
+  double sigmar = -(*alpha2)*log( (Amrg/exp(1))/amp );
+
+  psi[0] = amp * exp(-sigmar*x); /* amplitude */
+  psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
+}
+void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2, double M)
 {
 
   const double Mbh   = dyn->Mbhf;
@@ -3492,14 +3505,25 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
    * BHNS only part
    **/
   double alpha1, alpha2, *pa1, *pa2, omega1, omega2, *po1, *po2;
+  bool td_case=false, td_case2=false, *td, *td2;
   pa1 = &alpha1;
   pa2 = &alpha2;
   po1 = &omega1;
   po2 = &omega2;
+  td = &td_case;
+  td2 = &td_case2; // cases that work with 2,-2 mode Berti's fits
+
+  tidal_disruption_cases(q, Mbh, M, td, td2);
 
   /** Compute omega1, omega2, alpha1 and alpha2 from fits*/
-  kerr_bh_freq(po1, po2, abh, Mbh);
-  kerr_bh_qnm(pa1, pa2, abh, omega1, omega2);
+  if(td_case==false){
+    kerr_bh_freq(po1, po2, abh, Mbh, kapT2, td2);
+    kerr_bh_qnm(pa1, pa2, abh, omega1, omega2, kapT2, td2);
+  }else{
+    kerr_bh_freq_td(po1, po2, kapT2);
+    kerr_bh_qnm_td(pa1, pa2, kapT2);
+  }
+  
   if (VERBOSE) PRFORMd("alpha1", alpha1 );
   if (VERBOSE) PRFORMd("alpha2", alpha2 );
   if (VERBOSE) PRFORMd("omega1", omega1 );
@@ -3513,6 +3537,10 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
   /** Postpeak coefficients calculation */
   double alpha21 = alpha2 - alpha1;
   double Domega = omega1 - Mbh*Opeak; 
+   
+   if(td_case==true){
+     alpha1 = alpha2;
+   }
   postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, pa1, po1, Apeak, alpha21, Domega);
   //QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 	     //a1, a2, a3, a4, b1, b2, b3, b4, 
@@ -3555,14 +3583,22 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2)
       
       /* Calculate Deltaphi */
       t0 = t_lm[k][index_rng] - tmatch[k];
-      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+      if (td_case==true){
+        eob_wav_ringdown_template_td(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, pa2, Apeak);
+      }else{
+        eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+      }
       Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
      
       /* Compute and attach ringdown */
       for (int j = index_rng-1; j < size ; j++ ) {
 	
 	      tm = t_lm[k][j] - tmatch[k];
-	      eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+	      if (td_case==true){
+          eob_wav_ringdown_template_td(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, pa2, Apeak);
+        }else{
+          eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+        }
 	      hlm->phase[k][j] = psi[1] - Deltaphi[k];
 	      hlm->ampli[k][j] = psi[0];
 	
