@@ -2827,6 +2827,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
     /* l=3, l=4 & l=5 */
+    // FIXME: condition on spins bad for non-spinning limit
     if ((ecc == 0.) || (chi1 <= 0.) || (chi2 <= 0.)) {
       for (int k=2; k<14; k++) {
 	if(hlm_mrg->kmask[k]){
@@ -3142,6 +3143,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
     /* l=3, l=4 & l=5 */
+    // FIXME: condition on spins bad for non-spinning limit
     if ((ecc == 0.) || (chi1 <= 0.) || (chi2 <= 0.)) {
       for (int k=2; k<14; k++) {
 	if(hlm_mrg->kmask[k]){
@@ -4116,7 +4118,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     if(hlm->kmask[k]){
       idx[k] = size-1;
       for (int j = size-1; j-- ; ) {  
-	if (t[j] * ooMbh < tmrg[k]) {
+	if (t[j] < tmrg[k]*Mbh) {
 	  break;
 	}
 	idx[k] = j;

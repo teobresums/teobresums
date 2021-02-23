@@ -2094,6 +2094,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
       denom     = 1 + (b3+c3*X12)/(1+c4*X12)*Shat;
       omgmrg[1] = (orb*num/denom);
     */
+    /*
     c2 = -0.122735;
     c1 = 0.0857478;
     c4 = -0.0760023;
@@ -2101,7 +2102,20 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     omg1 = (c2*SQ(X12) +c1*X12 -0.1416002395)*2.*Shat + 1;
     omg2 = (c4*SQ(X12) + c3*X12 -0.3484804901)*2.*Shat + 1;
     omgmrg[1] = (+0.481958619443355*nu2 +0.223976694441952*nu +0.273813064427363)*omg1/omg2;
+    */
+    omg1      = 0.84074;
+    omg2      = 1.6976;
+    orb       = omgTP[1]*(1+omg1*nu + omg2*nu2);
+		
+    b1 = 0.066045;
+    b2 = -0.23876;
+    b3 = 0.76819;
+    b4 = -0.9201;
 
+    num   = 1. + (-0.42311 + b1*X12)/(1. + b2*X12)*Shat -0.066699*Shat2;
+    denom = 1. + (-0.83053 + b3*X12)/(1. + b4*X12)*Shat;
+    omgmrg[1] = (orb*num/denom);
+    
     /* (l=3, m=2)*/
     a1Omg     = -9.13525;
     a2Omg     = 21.488;
@@ -2273,6 +2287,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
       Aorb     = ATP[1]*(1 + Amax1*nu + Amax2*nu2);
       Amrg[1]  = nu*Aorb*scale*(num_A/denom_A);
     */
+    /*
     scale = 1 - 0.5*aeff*omgmrg[1];
     c4Amax = -0.0820894;
     c3Amax = 0.176126;
@@ -2282,7 +2297,20 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     denom_A  = 1. + (c2Amax*SQ(X12) + c1Amax*X12 -0.4728707630)*aeff;    
     Aorb = +1.826573640739664*nu2 + 0.100709438291872*nu + 1.438424467327531;
     Amrg[1] = Aorb*scale*(num_A/denom_A);
+    */
+    scale = 1. - omgmrg[1]*Shat;
 
+    b1 = 0.4446696;
+    b2 = -0.3254310;
+    b3 = 0.4582812;
+    b4 = -0.2124477;
+
+    num_A   = 1. + (-0.741 + b1*X12)/(1. + b2*X12)*Shat - 0.0887*Shat2;
+    denom_A = 1. + (-1.094 + b3*X12)/(1. + b4*X12)*Shat;
+      
+    Aorb     = ATP[1]*(1. - 0.041285*nu + 1.5971*nu2);
+    Amrg[1]  = Aorb*scale*(num_A/denom_A);
+    
     /* (l=3, m=2)*/
     a1      = -6.06831;
     a2      = 10.7505;    
@@ -2425,20 +2453,19 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 
     // c3A
     /* (l=2, m=2)*/
-    /* (l=2, m=2)*/
+    b1 = 0.1659421;
+    b2 = -0.2560047;
+    b3 = -0.9418946;
+    c3A[k22] = -0.5585 + 0.81196*nu + (-0.398576+b1*X12)*Shat + (0.099805+b2*X12)*Shat2 + (0.72125+b3*X12)*Shat3;
     /*
-      b1 = 0.1659421;
-      b2 = -0.2560047;
-      b3 = -0.9418946;
-      c3A[k22] = -0.5585 + 0.81196*nu + (-0.398576+b1*X12)*Shat + (0.099805+b2*X12)*Shat2 + (0.72125+b3*X12)*Shat3;
+      b1 =  0.0169543;
+      b2 = -0.0799343;
+      b3 = -0.115928;
+      double c3A_nu =  0.8298678603 * nu - 0.5615838975;
+      double c3A_eq =  (b3*X12 + 0.0907476903)*aeff3 + (b2*X12 + 0.0227344099)*aeff2 + (b1*X12 - 0.1994944332)*aeff;
+      c3A[k22]            =  c3A_nu + c3A_eq;
     */
-    b1 =  0.0169543;
-    b2 = -0.0799343;
-    b3 = -0.115928;
-    double c3A_nu =  0.8298678603 * nu - 0.5615838975;
-    double c3A_eq =  (b3*X12 + 0.0907476903)*aeff3 + (b2*X12 + 0.0227344099)*aeff2 + (b1*X12 - 0.1994944332)*aeff;
-    c3A[k22]            =  c3A_nu + c3A_eq;
-	    
+      
     /* (l=3, m=3)*/
     b1 = -0.3502608;
     b2 = 1.587606;
@@ -2460,21 +2487,22 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     c3A[k55] = b1 + b2*nu + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
     
     // c3phi
+    /* (l=2, m=2)*/
+    b1 = -1.323643;
+    b2 = -3.555007;
+    b3 = 7.011267;
+    b4 = 32.737824;
+    c3phi[k22] = 3.8436 + 0.71565*nu + (5.12794 + b1*X12)*Shat + (9.9136 + b2*X12)*Shat2 + (-4.1075 + b3*X12)*Shat3 +(-31.5562 + b4*X12)*Shat4;
     /*
-      b1 = -1.323643;
-      b2 = -3.555007;
-      b3 = 7.011267;
-      b4 = 32.737824;
-      c3phi[k22] = 3.8436 + 0.71565*nu + (+5.12794 + b1*X12)*Shat + (9.9136 + b2*X12)*Shat2 + (-4.1075 + b3*X12)*Shat3 +(-31.5562 + b4*X12)*Shat4;
+      b1 = -0.462321;
+      b2 = -0.904512;
+      b3 =  0.437747;
+      b4 =  1.8275;
+      double c3phi_nu     =  0.4558467286*nu + 3.8883812141;
+      double c3phi_equal  =  (b4*X12 - 2.0575868122)*16*Shat4 +(b3*X12 - 0.5051534498)*8*Shat3 +(b2*X12 + 2.5742292762)*4*Shat2 +(b1*X12 + 2.5599640181)*2*Shat;
+      c3phi[k22]          = c3phi_nu + c3phi_equal;
     */
-    b1 = -0.462321;
-    b2 = -0.904512;
-    b3 =  0.437747;
-    b4 =  1.8275;
-    double c3phi_nu     =  0.4558467286*nu + 3.8883812141;
-    double c3phi_equal  =  (b4*X12 - 2.0575868122)*16*Shat4 +(b3*X12 - 0.5051534498)*8*Shat3 +(b2*X12 + 2.5742292762)*4*Shat2 +(b1*X12 + 2.5599640181)*2*Shat;
-    c3phi[k22]          = c3phi_nu + c3phi_equal;
-	
+      
     /* (l=3, m=3)*/
     b1 = -0.634377;
     b2 = 5.983525; 
@@ -2497,17 +2525,17 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 	    
     // c4phi
     /* (l=2, m=2)*/
+    b1 = 0.779683;
+    b2 = -0.069638;
+    c4phi[k22] = 1.4736 + 2.2337*nu + (8.26539 + b1*X12)*Shat + (14.2053 + b2*X12)*Shat2;
     /*
-      b1 = 0.779683;
-      b2 = -0.069638;
-      c4phi[k22] = 1.4736 + 2.2337*nu + (8.26539 + b1*X12)*Shat + (14.2053 + b2*X12)*Shat2;
-    */
       b1 = -0.449976;
       b2 = -0.980913;
       double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
       double c4phi_equal  =  (b2*X12 + 3.5695199109)*4*Shat2 + (b1*X12 + 4.1312404030)*2*Shat;
       c4phi[k22]          =  c4phi_nu + c4phi_equal;
-
+    */
+      
     /* (l=3, m=3)*/
     b1 = -3.877528;
     b2 = 12.043300; 
@@ -2647,23 +2675,24 @@ void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1)
   alpha21[0] = +0.184952*(1 - 1.1329*af - 0.3520*af2 + 0.4924*af3)/(1 - 1.10334*af - 0.3037*af2 + 0.4262*af3);
   
   /* l = 2, m = 2*/
+  omega1[1]  = +0.373672*(1 - 1.5367*af + 0.5503*af2)/(1 - 1.8700*af + 0.9848*af2 - 0.10943*af3);
+  alpha1[1]  = +0.08896*(1 - 1.90036*af + 0.86200*af2 + 0.0384893*af3)/(1 - 1.87933*af + 0.88062*af2);
+  alpha21[1] = +0.184953*(1 - 1.89397*af + 0.88126*af2 + 0.0130256*af3)/(1 - 1.83901*af + 0.84162*af2);
+
   /*
-    omega1[1]  = +0.373672*(1 - 1.5367*af + 0.5503*af2)/(1 - 1.8700*af + 0.9848*af2 - 0.10943*af3);
-    alpha1[1]  = +0.08896*(1 - 1.90036*af + 0.86200*af2 + 0.0384893*af3)/(1 - 1.87933*af + 0.88062*af2);
-    alpha21[1] = +0.184953*(1 - 1.89397*af + 0.88126*af2 + 0.0130256*af3)/(1 - 1.83901*af + 0.84162*af2);
+    double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
+    double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
+    omega1[1] =  0.3736716844*(omega1_c/omega1_d);
+	    
+    double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
+    double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
+    alpha1[1] = 0.0889623157 * (alpha1_c/alpha1_d);
+	    
+    double alpha21_c = 0.4764196512*af3 - 0.0593165805*af2 - 1.4168096833*af + 1;
+    double alpha21_d = 0.4385578151*af3 - 0.0763529088*af2 - 1.3595491146*af + 1;
+    alpha21[1] = 0.1849525596*(alpha21_c/alpha21_d);
   */
-  double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
-  double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
-  omega1[1] =  0.3736716844*(omega1_c/omega1_d);
-	    
-  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
-  double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
-  alpha1[1] = 0.0889623157 * (alpha1_c/alpha1_d);
-	    
-  double alpha21_c = 0.4764196512*af3 - 0.0593165805*af2 - 1.4168096833*af + 1;
-  double alpha21_d = 0.4385578151*af3 - 0.0763529088*af2 - 1.3595491146*af + 1;
-  alpha21[1] = 0.1849525596*(alpha21_c/alpha21_d);
-  
+    
   /* l = 3, m = 1*/
   omega1[2]  = +0.599443*(1 - 0.70941*af - 0.16975*af2 + 0.08559*af3)/(1 - 0.82174*af - 0.16792*af2 + 0.14524*af3);
   alpha1[2]  = +0.0927030*(1 - 1.2345*af - 0.30447*af2 + 0.5446*af3)/(1 - 1.2263*af - 0.24223*af2 + 0.47738*af3);
