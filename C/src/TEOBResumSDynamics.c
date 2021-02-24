@@ -1306,7 +1306,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
 }
 
 /** Precessing dynamics main driver routine */
-int eob_spin_dyn(DynamicsSpin *dyn)
+int eob_spin_dyn(DynamicsSpin *dyn, double omg0)
 {
   const int chunk = dyn->size;
 
@@ -1348,7 +1348,7 @@ int eob_spin_dyn(DynamicsSpin *dyn)
   if(!EOBPars->use_geometric_units)
     time_unit_fact = time_units_factor(EOBPars->M);
 
-  dyn->y[EOB_EVOLVE_SPIN_Momg] = Pi * EOBPars->initial_frequency/time_unit_fact; 
+  dyn->y[EOB_EVOLVE_SPIN_Momg] = omg0;//Pi * EOBPars->initial_frequency/time_unit_fact; 
   
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     dyn->data[v][0] = dyn->y[v];

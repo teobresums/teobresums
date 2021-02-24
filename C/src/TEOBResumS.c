@@ -259,13 +259,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_alloc (&hlm, size, "hlm"); 
   Waveform_lm_t_alloc (&hlm_t); 
 
-  /** Integrate spin dynamics, if needed */
-  if (use_spins == MODE_SPINS_GENERIC) {
-    if (eob_spin_dyn(spindyn))
-      errorexit("problem during spin dynamics");
-    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-      gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);   
-  }
+  // /** Integrate spin dynamics, if needed */
+  // if (use_spins == MODE_SPINS_GENERIC) {
+  //   if (eob_spin_dyn(spindyn))
+  //     errorexit("problem during spin dynamics");
+  //   for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+  //     gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);   
+  // }
   
   /** Set r.h.s. fun pointer */
   int (*p_eob_dyn_rhs)();
@@ -442,7 +442,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     
     /** Waveform computation at t = 0 
-	Needs a r.h.s. evaluation for some vars (no flux) */
+	  Needs a r.h.s. evaluation for some vars (no flux) */
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
@@ -468,6 +468,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     for (int i = 0; i < EOB_ID_NVARS; i++)
       PRFORMd(eob_id_var[i], dyn->y0[i]);
   }
+
+  /** Integrate spin dynamics, if needed */
+  /* do it after we fix the EOB i.c. */
+  if (use_spins == MODE_SPINS_GENERIC) {
+    if (eob_spin_dyn(spindyn, dyn->data[EOB_MOMG][0]))
+      errorexit("problem during spin dynamics");
+    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+      gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);   
+  }
+
 
   /* *****************************************
    * ODE Evolution
