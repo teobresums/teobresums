@@ -720,8 +720,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->tOmg_pk = tOmg_pk;
 
   /** Over-writing waveform in the eccentric case - adding sigmoid */
-  if ((ecc != 0) || (r_hyp != 0.)) {
-
+  if ((ecc != 0) && (r_hyp == 0.)) {
+    
     for (int i = 0; i < size; i++) {
       dyn->store = 1;
       dyn->t = dyn->time[i];
