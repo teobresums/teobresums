@@ -159,12 +159,11 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 			      NULL, NULL, NULL, 
 			      EOBPars->spin_interp_integrate);
     
-    const double M2 = SQ(EOBPars->M);
     const double XA = EOBPars->X1;
     const double XB = EOBPars->X2;
     
-    EOBPars->chi1 = SA / (SQ(XA)*M2);
-    EOBPars->chi2 = SB / (SQ(XB)*M2);
+    EOBPars->chi1 = SA /SQ(XA);
+    EOBPars->chi2 = SB /SQ(XB);
     
     set_spin_vars(XA,XB, EOBPars->chi1,EOBPars->chi2, 
 		  &EOBPars->S1, &EOBPars->S2,
@@ -1482,9 +1481,9 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 
   /* direction of Lh */
   //FIXME: this should not be needed
-  double n[IN3], normL;
-  vect_dot3(Lh, Lh, &normL); 
-  const double oonormL = 1./normL; 
+  double n[IN3], normL2;
+  vect_dot3(Lh, Lh, &normL2); 
+  const double oonormL = 1./sqrt(normL2); 
   for (int i=0; i<IN3; i++) n[i] = Lh[i]*oonormL;
   
   /* Projections */
