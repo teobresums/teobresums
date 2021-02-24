@@ -4252,6 +4252,7 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
           // d^l_{m,s}(angle)
           //CHECKME: index correct of Wigner matrices correct?
           double dl_mn = wigner_d_function(ell, n,emm, -beta[i]);
+          //double dl_mn = wigner_d_function_opt(ell, n,emm, -beta[i]);
 
           // hlm modes are given as phase/amplitude
           // but here we need real/imag

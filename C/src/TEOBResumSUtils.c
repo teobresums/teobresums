@@ -462,6 +462,101 @@ double wigner_d_function(int l, int m, int s, double i)
   return (norm * dWig);
 }
 
+// Check conventions
+double wigner_d_function_opt(int l, int mp, int m, double i)
+{ 
+  double c, c2, c3, c4, c5, c6;
+  double s, s2, s3, s4, s5, s6;
+  int prf = 1;
+
+  c  = cos(i*0.5);
+  c2 = c*c;  c3 = c2*c;  c4 = c3*c; c5 = c4*c; c6 = c3*c3;
+  s  = sin(i*0.5);
+  s2 = s*s;  s3 = s2*s;  s4 = s3*s; s5 = s4*s; s6 = s3*s3;
+  double dlm;
+
+  //use symmetry to obtain mp < 0 elements
+  if (mp < 0 && m < 0){
+    int tmp = mp;
+    mp = -m;
+    m = -tmp;
+  } else if(mp < 0 && m > 0){
+    prf = pow(-1, mp-m);
+    int tmp = mp;
+    mp = m;
+    m = tmp;
+  }
+  //taken from https://arxiv.org/pdf/2004.06503.pdf , App A
+  switch(l)
+  {
+    // ell = 2
+    case(2):
+      switch(mp)
+      {
+        case(2):
+          if(m == 2) dlm = c4; 
+          if(m == 1) dlm = 2*c3*s;
+          if(m == 0) dlm = sqrt(6)*c2*s2;
+          if(m ==-1) dlm = 2*c*s3;
+          if(m ==-2) dlm = s4;
+          break;
+        case(1):
+          if(m == 2) dlm = -2*c3*s;
+          if(m == 1) dlm = c4 - 3*s2*c2;
+          if(m == 0) dlm = sqrt(6)*(c3*s - c*s3);
+          if(m ==-1) dlm = -s4+ 3*s2*c2;
+          if(m ==-2) dlm =  2*c*s3;
+          break;
+        default:
+          printf("%i\n", mp);
+          errorexit("Error: s value incorrect");
+          break;
+      }
+    
+    //ell = 3
+    case(3):
+      switch(mp)
+      {
+        case(3):
+          if(m == 3) dlm = c6;
+          if(m == 2) dlm = sqrt(6)  *c5*s;
+          if(m == 1) dlm = sqrt(15) *c4*s2;
+          if(m == 0) dlm = 2*sqrt(5)*c3*s3;
+          if(m ==-1) dlm = sqrt(15) *c2*s4;
+          if(m ==-2) dlm = sqrt(6)  *c*s5;
+          if(m ==-3) dlm = s6;
+          break;
+        case(2):
+          if(m == 3) dlm = -sqrt(6) *c5*s;
+          if(m == 2) dlm = c6 - 5.*c4*s2;
+          if(m == 1) dlm = sqrt(10)*c3*(c2*s-2*s3);
+          if(m == 0) dlm = sqrt(30)*c2*s2*(c2-s2);
+          if(m ==-1) dlm = sqrt(10)*s3*(2*c3-c*s2);
+          if(m ==-2) dlm = -s6 + 5.*s4*c2;
+          if(m ==-3) dlm = sqrt(6)  *c*s5;
+          break;
+        case(1):
+        // add below
+          if(m == 3) dlm = 0;
+          if(m == 2) dlm = 0;
+          if(m == 1) dlm = 0;
+          if(m == 0) dlm = 0;
+          if(m ==-1) dlm = 0;
+          if(m ==-2) dlm = 0;
+          if(m ==-3) dlm = 0;
+          break;
+        default:
+          errorexit("Error: s value incorrect");
+          break;
+      }
+    
+    //add other cases below
+
+  }
+  return prf*dlm;
+}
+
+
 /** Spin-weighted spherical harmonic 
     Ref: https://arxiv.org/pdf/0709.0093.pdf */
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
