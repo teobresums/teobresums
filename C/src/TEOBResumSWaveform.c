@@ -4184,11 +4184,13 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
     f20 = -0.2339;
     f30 = 0.4175;
     double omega210  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+    double adot = omega220-omega210;
 
     for(int j=tM_idx+1; j < hlm->size; j++){
-       beta[j]  = beta[tM_idx];
-       alpha[j] = alpha[tM_idx] + (hlm->time[j]-hlm->time[tM_idx])*(omega220-omega210);
-       gamma[j] = -alpha[j]*cos(beta[j]);
+      double dt= hlm->time[j]-hlm->time[tM_idx];
+      beta[j]  = beta[tM_idx];
+      alpha[j] = alpha[tM_idx] + dt*adot;
+      gamma[j] = gamma[tM_idx] + dt*adot*cos(beta[j]);
     }
     
   } else {
