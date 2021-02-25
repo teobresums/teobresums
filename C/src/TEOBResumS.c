@@ -259,13 +259,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_alloc (&hlm, size, "hlm"); 
   Waveform_lm_t_alloc (&hlm_t); 
 
-  // /** Integrate spin dynamics, if needed */
-  // if (use_spins == MODE_SPINS_GENERIC) {
-  //   if (eob_spin_dyn(spindyn))
-  //     errorexit("problem during spin dynamics");
-  //   for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-  //     gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);   
-  // }
+  /** Integrate spin dynamics, if needed */
+  if (use_spins == MODE_SPINS_GENERIC) {
+    if (eob_spin_dyn(spindyn, Pi * EOBPars->initial_frequency/time_unit_fact))
+      errorexit("problem during spin dynamics");
+    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+      gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);   
+  }
   
   /** Set r.h.s. fun pointer */
   int (*p_eob_dyn_rhs)();
@@ -361,6 +361,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     dyn->store = dyn->noflx = 1;
     
+    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && use_spins == MODE_SPINS_GENERIC){
+      eob_spin_dyn_integrate_backwards(&spindyn, dyn->data[EOB_MOMG][0]);
+    }
+
     for (int i = 0; i < size; i++) {
       dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
       dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];
@@ -440,6 +444,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
       dyn->data[EOB_E0][0]     = dyn->E;
     }
+
+    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && use_spins == MODE_SPINS_GENERIC){
+      eob_spin_dyn_integrate_backwards(spindyn, dyn->data[EOB_MOMG][0]);
+    }
     
     /** Waveform computation at t = 0 
 	  Needs a r.h.s. evaluation for some vars (no flux) */
@@ -467,15 +475,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     PRSECTN("Initial conditions");
     for (int i = 0; i < EOB_ID_NVARS; i++)
       PRFORMd(eob_id_var[i], dyn->y0[i]);
-  }
-
-  /** Integrate spin dynamics, if needed */
-  /* do it after we fix the EOB i.c. */
-  if (use_spins == MODE_SPINS_GENERIC) {
-    if (eob_spin_dyn(spindyn, dyn->data[EOB_MOMG][0]))
-      errorexit("problem during spin dynamics");
-    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-      gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);   
   }
 
 
@@ -939,6 +938,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
     /* h+, hx */  
     if (use_spins == MODE_SPINS_GENERIC){
+      if (VERBOSE) PRSECTN("Twisting");
       Waveform_lm_alloc (&hTlm, size, "hTlm"); 
       Waveform_lm_alloc (&hTlm_neg, size, "hTlm_neg"); 
       twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm, hTlm_neg);

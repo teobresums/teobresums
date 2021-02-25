@@ -1929,6 +1929,72 @@ void DynamicsSpin_output (DynamicsSpin *dyn)
   fclose(fp);
 }
 
+
+/* Join two dynamics time series at t = to */
+void DynamicsSpin_join (DynamicsSpin *dyna, DynamicsSpin *dynb, double to)
+{
+  /* Time arrays are suppose to be ordered as
+     dyna->time:  x x x x x x x x x 
+     dynb->time:       o o o o o o o o o 
+     to        :                |
+     But they do not need to overlap or be uniformly spaced.
+     Note to can be 
+     to > dyna->time[hlma->size-1] => extend the dynamics data
+     to < dynb->time[0]            => join the whole b dynamics
+     Following checks enforce the above structure, if possible.
+  */
+  if (dyna->time[0] > dynb->time[0]) {
+    SWAPTRS( dyna, dynb );
+    if ((DEBUG) || (VERBOSE)) PRWARN("Swapped dynamics while joining.");
+  }
+  if (to > dynb->time[dynb->size-1]) {
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Dynamics not joined.");
+    return;
+  }
+  if (to <= dyna->time[0]) {
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Dynamics not joined.");
+    return;
+  }
+
+  /* Find indexes of closest elements to to */
+  const int ioa = find_point_bisection(to, dyna->size, dyna->time, 1);
+  int iob = find_point_bisection(to, dynb->size, dynb->time, 1);
+  if ( DEQUAL(dyna->time[ioa], dynb->time[iob], 1e-10) ) iob++;
+  
+  /* Calculate the new size */
+  const int Nb = dynb->size - iob;
+  const int N  = ioa + Nb;
+
+  /* Resize a */
+  DynamicsSpin_push (&dyna, N);
+
+  /* Copy the relevant part of b into a */
+#pragma omp simd
+  for (int i = 0; i < Nb; i++) 
+    dyna->time[ioa + i] = dynb->time[iob + i]; 
+  
+  for (int v = 0; v < EOB_EVOLVE_SPIN_NVARS; v++) {
+#pragma omp simd
+    for (int i = 0; i < Nb; i++) {
+      dyna->data[v][ioa + i] = dynb->data[v][iob + i];
+    }
+ }
+  for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+    gsl_spline_init (dyna->spline[v], dyna->time, dyna->data[v], dyna->size);   
+
+  
+
+#if (0)
+  printf("Dynamics (a) i = %d time[i] = %.6e \n",ioa, dyna->time[ioa]);
+  printf("Dynamics (b) i = %d time[i] = %.6e \n",iob, dynb->time[iob]);
+  printf("Total size (a)+(b) = %d + %d = %d (%d)\n",Nb, iob, N, dyna->size);
+  printf("%.6e - %.6e = %.6e\n",dyna->time[dyna->size-1], dynb->time[dynb->size-1],dyna->time[dyna->size-1]-dynb->time[dynb->size-1]);
+#endif 
+    
+}
+
 /** Sync some quick access parameters in dyn with parameter database 
     to be used carefully */
 //TODO: REMOVE we should use EOBPars only

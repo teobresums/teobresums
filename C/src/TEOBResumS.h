@@ -708,6 +708,7 @@ void DynamicsSpin_alloc (DynamicsSpin **dyn, int size);
 void DynamicsSpin_push (DynamicsSpin **dyn, int size);
 void DynamicsSpin_free (DynamicsSpin *dyn);
 void DynamicsSpin_output (DynamicsSpin *dyn);
+void DynamicsSpin_join (DynamicsSpin *dyn, DynamicsSpin *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
@@ -790,6 +791,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_PN_abc(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_integrate(DynamicsSpin *dyn);
+int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omega_stop);
 int eob_spin_dyn(DynamicsSpin *dyn, double omg0);
 void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time, double *alpha_p, double *beta_p, double *gamma_p, int continue_integration);
 void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
