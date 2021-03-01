@@ -1320,7 +1320,7 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omg0)
   DynamicsSpin_alloc(&spindyn_tmp, 10);
   EOBPars->spin_odes_dt = - EOBPars->spin_odes_dt/10;
   spindyn_tmp->omg_stop = omg0;
-  spindyn_tmp->t_stop = -100.;
+  spindyn_tmp->t_stop = -100000.;
   //eob_spin_dyn(spindyn_tmp, EOBPars->initial_frequency/time_units_factor(EOBPars->M));
 
   dyn->t = 0.;
