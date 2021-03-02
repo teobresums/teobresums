@@ -1374,8 +1374,23 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omg0)
   
   /*join at t=0*/
   DynamicsSpin_join(spindyn_tmp, dyn, 0);
-  DynamicsSpin_free(dyn);
-  *dyn = *spindyn_tmp;
+  
+  // FIXME: improve below
+  /*copy in dyn*/
+  DynamicsSpin_push(&dyn, spindyn_tmp->size);
+  for (int i = 0; i < spindyn_tmp->size; i++) 
+    dyn->time[i] = spindyn_tmp->time[i]; 
+
+  for (int v = 0; v < EOB_EVOLVE_SPIN_NVARS; v++) {
+    for (int i = 0; i < spindyn_tmp->size; i++) {
+      dyn->data[v][i] = spindyn_tmp->data[v][i];
+    }
+  }
+  for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+    gsl_spline_init (dyn->spline[v], dyn->time, dyn->data[v], dyn->size);  
+
+  /*free*/ 
+  DynamicsSpin_free(spindyn_tmp);
   return OK;
 }
 
