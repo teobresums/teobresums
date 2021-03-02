@@ -1321,7 +1321,7 @@ double  Godzieba20_fit_barlamdel(double barlam2, int ell)
       break;
     case 4:
       coef = c24;
-      break
+      break;
     default:
       errorexit("Godzieba fits are for ell=3,4.");
       break;
