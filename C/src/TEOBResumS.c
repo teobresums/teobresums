@@ -361,8 +361,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     dyn->store = dyn->noflx = 1;
     
-    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && use_spins == MODE_SPINS_GENERIC){
-      eob_spin_dyn_integrate_backwards(&spindyn, dyn->data[EOB_MOMG][0]);
+    if (use_spins == MODE_SPINS_GENERIC){
+      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0]){
+        eob_spin_dyn_integrate_backwards(spindyn, dyn->data[EOB_MOMG][0]);
+      }
     }
 
     for (int i = 0; i < size; i++) {
@@ -445,9 +447,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_E0][0]     = dyn->E;
     }
 
-    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && use_spins == MODE_SPINS_GENERIC){
-      eob_spin_dyn_integrate_backwards(spindyn, dyn->data[EOB_MOMG][0]);
-    }
+    if (use_spins == MODE_SPINS_GENERIC){
+      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0]){
+        eob_spin_dyn_integrate_backwards(spindyn, dyn->data[EOB_MOMG][0]);
+      }
+    }    
     
     /** Waveform computation at t = 0 
 	  Needs a r.h.s. evaluation for some vars (no flux) */
