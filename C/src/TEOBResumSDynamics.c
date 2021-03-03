@@ -591,7 +591,7 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
 
     double delta_a2_nnlo  =
         (  387./28.  - 207./28.*nu              )     *a02
-      + (-2171./212. - 269./28.*nu + 0.375*nu*nu)     *(at1*at1+at2*at2)
+      + (-2171./112. - 269./28.*nu + 0.375*nu*nu)     *(at1*at1+at2*at2)
       + (- 281./7    - 187./56.*nu - 0.75 *nu*nu)     *at1*at2
       +    163./28.                               *X12*(C_Q1*at1*at1-C_Q2*at2*at2)
       + (  -29./112. - 2.625   *nu              ) *X12*(at1*at1-at2*at2);
@@ -612,9 +612,9 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
     
     double c_ss_nlo = -1.125*a0*a0 -(0.125+0.5+nu)*a12*a12 + 1.25*X12*a0*a12;
 
-    double c_ss_nnlo = - (189./32. + 417.32*nu              )    *a0 *a0
-                       + ( 11./32. - 127.32*nu + 0.375*nu*nu)    *a12*a12
-                       + ( 87.16   -  2.625*nu              )*X12*a0 *a12;
+    double c_ss_nnlo = - (189./32. + 417./32.*nu              )    *a0 *a0
+                       + ( 11./32. - 127./32.*nu + 0.375*nu*nu)    *a12*a12
+                       + ( 89./16. -  2.625*nu              )*X12*a0 *a12;
 
     
     double rc2   = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo + u2*c_ss_nnlo;
@@ -651,7 +651,7 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
 
     double delta_a2_nnlo  =
         (  387./28.  - 207./28.*nu              )     *a02
-      + (-2171./212. - 269./28.*nu + 0.375*nu*nu)     *(at1*at1+at2*at2)
+      + (-2171./112. - 269./28.*nu + 0.375*nu*nu)     *(at1*at1+at2*at2)
       + (- 281./7    - 187./56.*nu - 0.75 *nu*nu)     *at1*at2
       +    163./28.                               *X12*(C_Q1*at1*at1-C_Q2*at2*at2)
       + (  -29./112. - 2.625   *nu              ) *X12*(at1*at1-at2*at2);
@@ -676,9 +676,9 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
     
     double c_ss_nlo = -1.125*a0*a0 -(0.125+0.5+nu)*a12*a12 + 1.25*X12*a0*a12;
 
-    double c_ss_nnlo = - (189./32. + 417.32*nu              )    *a0 *a0
-                       + ( 11./32. - 127.32*nu + 0.375*nu*nu)    *a12*a12
-                       + ( 87.16   -  2.625*nu              )*X12*a0 *a12;
+    double c_ss_nnlo = - (189./32. + 417./32.*nu              )    *a0 *a0
+                       + ( 11./32. - 127./32.*nu + 0.375*nu*nu)    *a12*a12
+                       + ( 89./16. -  2.625*nu              )*X12*a0 *a12;
 
     
     double rc2   = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo + u2*c_ss_nnlo;
