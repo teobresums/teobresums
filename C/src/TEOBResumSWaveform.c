@@ -1909,11 +1909,15 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   if (EOBPars->use_flm == USEFLM_HM) {
     for (int j=0; j<size; j++) {
       /* l=2,m=1 */
+      if(h->kmask[0]) {
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-      /* l=3 & l=4 */
+      }
+      /* l=3, l=4 & l=5 */
       for (int k=2; k<14; k++) {   
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+	if(h->kmask[k]) {
+	  n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+	}
       }
     }
   }  
@@ -2331,7 +2335,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
-    /* l=3 & l=4 */
+    /* l=3, l=4 & l=5 */
     for (int k=2; k<14; k++) {
       if(hlm_mrg->kmask[k]){
 	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
@@ -2595,7 +2599,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
-    /* l=3 & l=4 */
+    /* l=3, l=4 & l=5 */
     for (int k=2; k<14; k++) {   
       if(hlm_mrg->kmask[k]){   
 	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
@@ -3473,7 +3477,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     if(hlm->kmask[k]){
       idx[k] = size-1;
       for (int j = size-1; j-- ; ) {  
-	if (t[j] * ooMbh < tmrg[k]) {
+	if (t[j] < tmrg[k]*Mbh) {
 	  break;
 	}
 	idx[k] = j;
