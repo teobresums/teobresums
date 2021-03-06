@@ -79,6 +79,8 @@ int main (int argc, char* argv[])
     par_db_free();    
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
+    /* RG: if input parfile specifies BHNS runs, change default_choice */ 
+    if (EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BHNS;
   }
   
   /* Set all firstcalls = 1 */
@@ -163,8 +165,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
 
-  bool bhns_mode = false;
-  double LambdaBl2;
   
   /* *****************************************
    * Set Memory & do preliminary computations
@@ -273,19 +273,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->rLSO = dyn->rLSO;
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }  
-
-  /** Turn on/off BHNS mode */
-  if ((dyn->use_tidal) && (EOBPars->LambdaAl2==0.)) {
-    //TODO: check if this works also for spinning cases
-    bhns_mode = true;
-  }
   
 
   /** Final BH */
-  if (!(dyn->use_tidal) || (bhns_mode==true)) {
+  if (!(dyn->use_tidal) || (default_choice==DEFAULT_PARS_BHNS)) {
     
-    if(bhns_mode==true){
+    if(default_choice==DEFAULT_PARS_BHNS){
        /** Final BH from BHNS */
+      if (VERBOSE) PRSECTN("entered BHNS mode");
       double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
@@ -690,7 +685,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Dynamics_output(dyn);
 #endif
   
-  if (!(use_tidal) || (bhns_mode==true)) {
+  if (!(use_tidal) || (default_choice==DEFAULT_PARS_BHNS)) {
     
     /* ********************************************************
      * Following is for BBH : NQC & Ringdown (for BHNS as well)
@@ -822,7 +817,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } // NQC_HLM_COMPUTE
 
     
-    /** BBH : add Ringdown */
+    /** BBH, BHNS : add Ringdown */
     
     if (VERBOSE) PRSECTN("Ringdown");
     
@@ -844,12 +839,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->size = size;
     
     /* Ringdown attachment for BBH & BHNS */
-    if(bhns_mode==true){
-      eob_wav_ringdown_bhns(dyn, hlm, EOBPars->kapT2, M);
-    }else{
-      eob_wav_ringdown(dyn, hlm);
+    if(default_choice==DEFAULT_PARS_BHNS){ // Need M value for tidal disruption criteria in BHNS cases
+      EOBPars->M=M;
     }
-    
+    eob_wav_ringdown(dyn, hlm);
+    if (EOBPars->use_geometric_units) {
+      EOBPars->M=1.;
+    }
     
   } /* End of BBH & BHNS section */
 
