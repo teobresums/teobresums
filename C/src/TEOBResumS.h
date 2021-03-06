@@ -655,7 +655,9 @@ void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, doubl
 void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t);
 void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, double omega2, double k2t, bool td2);
 double apeak_bhns(double nu, double k2t);
+double apeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2, double Opeak);
 double opeak_bhns(double nu, double k2t);
+double opeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2);
 void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, double *sigmar, double *sigmai, double nu, 
             double *alpha1, double *omega1, double Apeak, double alpha21, double Domega);
 void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
@@ -783,7 +785,7 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 void (*eob_wav_ringdown)();
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double *alpha2, double Amrg);
-void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm, double kapT2, double M);
+void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 
 #ifdef _OPENMP
