@@ -217,11 +217,12 @@ enum{
   DEFAULT_PARS_NOPT
 };
 
-/** List for fits Lambda3,4(Lambda2) */
+/** List for fits Lambda_ell(Lambda2) */
 enum{
   Lambda234_fits_NO,
   Lambda234_fits_YAGI13,
   Lambda234_fits_GODZIEBA20,
+  Lambda2345678_fits_GODZIEBA20,
   Lambda234_fits_NOPT
 };
 
@@ -444,7 +445,7 @@ typedef struct tagDynamics
   double M, nu, q, X1, X2;
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
-  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
+  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8,kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8,kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
   double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
   double kapA2j, kapB2j, kapT2j;
@@ -460,8 +461,8 @@ typedef struct tagEOBParameters
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
   double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
-  double LambdaAl2,LambdaAl3,LambdaAl4, LambdaBl2,LambdaBl3,LambdaBl4, SigmaAl2,SigmaBl2;
-  double kapA2,kapA3,kapA4, kapB2,kapB3,kapB4, kapT2,kapT3,kapT4;
+  double LambdaAl2,LambdaAl3,LambdaAl4,LambdaAl5,LambdaAl6,LambdaAl7,LambdaAl8,LambdaBl2,LambdaBl3,LambdaBl4,LambdaBl5,LambdaBl6,LambdaBl7,LambdaBl8,SigmaAl2,SigmaBl2;
+  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8,kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8,kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;
   double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;//new names!
   
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally

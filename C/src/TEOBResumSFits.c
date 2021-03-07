@@ -230,7 +230,7 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
        ringdown also outside the "calibration" domain, notably for
        large-mass ratios (though q<=20) and large (negative) spins
        Updated, 28/09/2017 */
-    
+
     a0_omg_tmp    = -0.1460961247;
     a1_omg_tmp    =  0.0998056;
     a2_omg_tmp    = -0.118098;
@@ -1304,8 +1304,7 @@ double JFAPG_fit_Sigma_Static(double barlam2)
 
 /** Godzieba 2020 fits for NS multipolar
     $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
-    Eq.(4); Tab.I; https://arxiv.org/abs/2012.12151 
-*/
+    Eq.(...),(...); Tab.I; Fig.X ... */
 double  Godzieba20_fit_barlamdel(double barlam2, int ell)
 {  
   if (barlam2<=0.) return 0.;
@@ -1315,15 +1314,36 @@ double  Godzieba20_fit_barlamdel(double barlam2, int ell)
 		     3.749e-5, -6.803e-8};
   double c24[7] = {-2.262, 1.383, 1.662e-4, 1.225e-2, -1.752e-3,
 		     9.667e-5, -1.886-6};
-  switch (ell) {
-    case 3:
+  double c25[7] = {-4.511, 2.382, -0.3182, 0.08999, -0.01142,
+		     6.896e-4, -1.606e-05};
+  double c26[7] = {-7.662, 4.949, -1.644,  0.4715, -0.06856,
+		     0.004986, -1.44e-04};
+  double c27[7] = {-13.07, 9.799, -4.197, 1.242, -0.1966,
+         0.016,  -0.0005265};
+  double c28[7] = {-26.49, 30.03, -18.38, 6.54 , -1.291,
+         0.1346, -0.005795};
+  switch(ell)
+  {
+    case(3):
       coef = c23;
       break;
-    case 4:
+    case(4):
       coef = c24;
       break;
+    case(5):
+      coef = c25;
+      break;
+    case(6):
+      coef = c26;
+      break;
+    case(7):
+      coef = c27;
+      break;
+    case(8):
+      coef = c28;
+      break;
     default:
-      errorexit("Godzieba fits are for ell=3,4.");
+      errorexit("Godzieba fits are for ell=3,4,5,6,7,8.");
       break;
   }
   double lny = coef[0];

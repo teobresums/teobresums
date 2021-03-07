@@ -144,6 +144,10 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double kapT2 = dyn->kapT2;
   const double kapT3 = dyn->kapT3;
   const double kapT4 = dyn->kapT4;
+  const double kapT5 = dyn->kapT5;
+  const double kapT6 = dyn->kapT6;
+  const double kapT7 = dyn->kapT7;
+  const double kapT8 = dyn->kapT8;
   const double kapA2j = dyn->kapA2j;
   const double kapB2j = dyn->kapB2j;
   const double kapT2j = dyn->kapT2j;
@@ -170,19 +174,29 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   double u6   = u5*u;
   double u7   = u6*u;
   double u10  = u5*u5;
+  double u12  = u6*u6;
+  double u14  = u7*u7;
+  double u16  = u10*u6;
+  double u18  = u12*u6;
   double u8   = u5*u3;
   double u9   = u8*u;
+  double u11  = u10*u;
+  double u13  = u12*u;
+  double u15  = u14*u;
+  double u17  = u16*u;
   double logu = log(u);
   double oom3u  = 1./(1.-rLR*u);
 
   if (dyn->use_tidal==TIDES_NNLO) {
 
-    A    = -(kapT4*u10) - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2) ;
-    dA_u = -10.*kapT4*u9 - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u) 
-      - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+    A    = -(kapT8*u18) -(kapT7*u16) -(kapT6*u14) -(kapT5*u12) -(kapT4*u10) 
+           - kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2) - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2) ;
+    dA_u = -18.*kapT6*u17-16.*kapT6*u15-14.*kapT6*u13 - 12.*kapT5*u11 -10.*kapT4*u9 
+           - kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u) - kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u) 
+           - 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2) - 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
 
     if (d2AT != NULL) {
-      d2A_u = -90.*kapT4*u8
+      d2A_u = -306.*kapT6*u16 -240.*kapT6*u14-182.*kapT6*u12 - 132.*kapT5*u10 -90.*kapT4*u8
 	- kapT2*(2*bar_alph2_2*u6 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u)
 		 + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2))
 	- kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2)) ;
@@ -219,13 +233,21 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
     double AT3    = - kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
     double AT4    = - kapT4*u10;
+    double AT5    = - kapT5*u12;
+    double AT6    = - kapT6*u14;
+    double AT7    = - kapT7*u16;
+    double AT8    = - kapT8*u18;
 
     double dAT2  = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );
     double dAT3  = - kapT3*(8.*u7 + 9*bar_alph3_1*u8 + 10*bar_alph3_2*u9);
     double dAT4  = - kapT4*10.*u9;
+    double dAT5  = - kapT5*12.*u11;
+    double dAT6  = - kapT6*14.*u13;
+    double dAT7  = - kapT7*16.*u15;
+    double dAT8  = - kapT8*18.*u17;
 
-    A     = AT2 + AT3   + AT4;
-    dA_u  = dAT2 + dAT3  + dAT4;
+    A     = AT2 + AT3 + AT4 + AT5 + AT6 +AT7 + AT8;
+    dA_u  = dAT2 + dAT3  + dAT4 + dAT5 + dAT6 + dAT7 + dAT8;
 
     if (d2AT != NULL) {
       double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
@@ -235,11 +257,15 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       double d2f1   = 0.25*(63*(rLR*rLR)*A1SF + 4*(-1+rLR*u)*(-7*rLR*dA1SF + (-1+rLR*u)*d2A1SF))*pow(oom3u,11./2.);
       double d2f2   = (  rLR*p*(1+p)*rLR*A2SF +(-1+rLR*u)*( -2.*p*rLR*dA2SF +(-1.+rLR*u)*d2A2SF )  )*pow(oom3u,p+2);
       
-      double d2AT2  = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
-      double d2AT3  = - kapT3*(56*u6 + 72*bar_alph3_1*u7 + 90*bar_alph3_2*u8);
-      double d2AT4  = - kapT4*90*u8;
+      double d2AT2  = - kapA2*30.*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30.*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2.*kapA2*6.*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2.*kapB2*6.*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
+      double d2AT3  = - kapT3*(56.*u6 + 72.*bar_alph3_1*u7 + 90.*bar_alph3_2*u8);
+      double d2AT4  = - kapT4*90.*u8;
+      double d2AT5  = - kapT5*132.*u10; 
+      double d2AT6  = - kapT6*182.*u12;
+      double d2AT7  = - kapT7*240.*u14;
+      double d2AT8  = - kapT8*306.*u16;
 
-      d2A_u = d2AT2 + d2AT3 + d2AT4;
+      d2A_u = d2AT2 + d2AT3 + d2AT4 + d2AT5 + d2AT6 + d2AT7 + d2AT8;
 
     }
 
@@ -272,10 +298,18 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     /** Gravito-electric tides for el = 2, 4; el = 3 added below as a GSF series */
     double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
     double AT4    = - kapT4*u10;
+    double AT5    = - kapT5*u12;
+    double AT6    = - kapT6*u14;
+    double AT7    = - kapT7*u16;
+    double AT8    = - kapT8*u18;
 
     double dAT2  = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*f2 ) - kapA2*u6*( df0 + XA*df1 + XA*XA*df2 ) - kapB2*u6*( df0 + XB*df1 + XB*XB*df2 );
     double dAT4  = - kapT4*10.*u9;
-  
+    double dAT5  = - kapT5*12.*u11;
+    double dAT6  = - kapT6*14.*u13;
+    double dAT7  = - kapT7*16.*u15;
+    double dAT8  = - kapT8*18.*u17;
+
     /** el = 3+, i.e.,  even parity tidal potential **/
 
     /* 1GSF fitting parameters */
@@ -315,8 +349,8 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double AT3      = -1.*kapA3*u8*( A3hatA ) - 1.*kapB3*u8*( A3hatB );
     double dAT3     = -1.*kapA3*u7*( 8.*A3hatA + 1.*u*dA3hatA ) - 1.*kapB3*u7*( 8.*A3hatB + 1.*u*dA3hatB );
 
-    A     = AT2   + AT3   + AT4; 
-    dA_u  = dAT2  + dAT3  + dAT4;
+    A     = AT2   + AT3   + AT4 + AT5 + AT6 + AT7 + AT8; 
+    dA_u  = dAT2  + dAT3  + dAT4 + dAT5 + dAT6 + dAT7 + dAT8;;
 
     if (d2AT != NULL) {
       double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
@@ -328,12 +362,16 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       
       double d2AT2  = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
       double d2AT4  = - kapT4*90*u8;
+      double d2AT5  = - kapT5*132.*u10; 
+      double d2AT6  = - kapT6*182.*u12;
+      double d2AT7  = - kapT7*240.*u14;
+      double d2AT8  = - kapT8*306.*u16;
 
       double d2A3hatA = d2A3hat_Sch + XA*d2A3hat1GSFfit + XA*XA*d2A3hat2GSF;
       double d2A3hatB = d2A3hat_Sch + XB*d2A3hat1GSFfit + XB*XB*d2A3hat2GSF;
       double d2AT3 = -1.*kapA3 * ( 56.*u6*A3hatA + 16.*u7*dA3hatA + 1.*u8*d2A3hatA ) - 1.*kapB3 * ( 56.*u6*A3hatB + 16.*u7*dA3hatB + 1.*u8*d2A3hatB );
     
-      d2A_u += d2AT2  + d2AT3  + d2AT4;
+      d2A_u += d2AT2  + d2AT3  + d2AT4 + d2AT5 + d2AT6 + d2AT7 + d2AT8;
       }
   }
 

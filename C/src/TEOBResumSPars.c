@@ -116,8 +116,16 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->LambdaBl2 = 0.;
   eobp->LambdaAl3 = 0.; 
   eobp->LambdaAl4 = 0.; 
+  eobp->LambdaAl5 = 0.; 
+  eobp->LambdaAl6 = 0.; 
+  eobp->LambdaAl7 = 0.; 
+  eobp->LambdaAl8 = 0.; 
   eobp->LambdaBl3 = 0.; 
   eobp->LambdaBl4 = 0.; 
+  eobp->LambdaBl5 = 0.; 
+  eobp->LambdaBl6 = 0.; 
+  eobp->LambdaBl7 = 0.; 
+  eobp->LambdaBl8 = 0.; 
   eobp->SigmaAl2  = 0.; // Tidal gravitomagnetic parameter Sigma for star A ell=2
   eobp->SigmaBl2  = 0.;
   eobp->use_lambda234_fits = Lambda234_fits_NO;
@@ -151,7 +159,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->postadiabatic_dynamics_stop=0; // stop after post-adiabatic dynamics 
 
   eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  eobp->use_flm=USEFLM_HM; // "SSLO", "SSNLO", "HM"
+  eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
   
   eobp->compute_LR=0; // calculate LR ?
   eobp->compute_LSO=0; // calculate LSO ?
@@ -220,12 +228,24 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->kapA2= 0. ; // gravitoelectric kappa star A
   eobp->kapA3= 0. ; //
   eobp->kapA4= 0. ; //
+  eobp->kapA5= 0. ; //
+  eobp->kapA6= 0. ; //
+  eobp->kapA7= 0. ; //
+  eobp->kapA8= 0. ; //
   eobp->kapB2= 0. ; //
   eobp->kapB3= 0. ; //
   eobp->kapB4= 0. ; //
+  eobp->kapB5= 0. ; //
+  eobp->kapB6= 0. ; //
+  eobp->kapB7= 0. ; //
+  eobp->kapB8= 0. ; //
   eobp->kapT2= 0. ; //
   eobp->kapT3= 0. ; //
   eobp->kapT4= 0. ; //
+  eobp->kapT5= 0. ; //
+  eobp->kapT6= 0. ; //
+  eobp->kapT7= 0. ; //
+  eobp->kapT8= 0. ; //
 
   eobp->japA2= 0. ; // gravitomagnetic kappa star A
   //eobp->japA3= 0. ; 
@@ -1137,6 +1157,19 @@ void eob_set_params(int default_choice, int firstcall)
     EOBPars->LambdaBl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 3);
     EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
     EOBPars->LambdaBl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 4);
+  } else if (EOBPars->use_lambda234_fits == Lambda2345678_fits_GODZIEBA20) {
+    EOBPars->LambdaAl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 3);
+    EOBPars->LambdaBl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 3);
+    EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
+    EOBPars->LambdaBl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 4);
+    EOBPars->LambdaAl5 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 5);
+    EOBPars->LambdaBl5 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 5);
+    EOBPars->LambdaAl6 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 6);
+    EOBPars->LambdaBl6 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 6);
+    EOBPars->LambdaAl7 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 7);
+    EOBPars->LambdaBl7 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 7);
+    EOBPars->LambdaAl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 8);
+    EOBPars->LambdaBl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 8);
   }
 
 #if(USEGRAVITOMAGNETICTERMS)
@@ -1145,13 +1178,21 @@ void eob_set_params(int default_choice, int firstcall)
 #endif
 
   /* Tidal coupling constants */    
-  EOBPars->kapA2 = 3.   * EOBPars->LambdaAl2 * XA*XA*XA*XA*XA / q; 
-  EOBPars->kapA3 = 15.  * EOBPars->LambdaAl3 * XA*XA*XA*XA*XA*XA*XA / q;
-  EOBPars->kapA4 = 105. * EOBPars->LambdaAl4 * XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
-  
-  EOBPars->kapB2 = 3.   * EOBPars->LambdaBl2 * XB*XB*XB*XB*XB * q;
-  EOBPars->kapB3 = 15.  * EOBPars->LambdaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
-  EOBPars->kapB4 = 105. * EOBPars->LambdaBl4 * XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
+  EOBPars->kapA2 = 3.      * EOBPars->LambdaAl2 * XA*XA*XA*XA*XA / q; 
+  EOBPars->kapA3 = 15.     * EOBPars->LambdaAl3 * XA*XA*XA*XA*XA*XA*XA / q;
+  EOBPars->kapA4 = 105.    * EOBPars->LambdaAl4 * XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
+  EOBPars->kapA5 = 945.    * EOBPars->LambdaAl5 * XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
+  EOBPars->kapA6 = 10395.  * EOBPars->LambdaAl6 * XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
+  EOBPars->kapA7 = 135135. * EOBPars->LambdaAl7 * XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
+  EOBPars->kapA8 = 2027025.* EOBPars->LambdaAl8 * XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
+
+  EOBPars->kapB2 = 3.      * EOBPars->LambdaBl2 * XB*XB*XB*XB*XB * q;
+  EOBPars->kapB3 = 15.     * EOBPars->LambdaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
+  EOBPars->kapB4 = 105.    * EOBPars->LambdaBl4 * XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
+  EOBPars->kapB5 = 945.    * EOBPars->LambdaBl5 * XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
+  EOBPars->kapB6 = 10395.  * EOBPars->LambdaBl6 * XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
+  EOBPars->kapB7 = 135135. * EOBPars->LambdaBl7 * XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
+  EOBPars->kapB8 = 2027025.* EOBPars->LambdaBl8 * XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
 
   /* gravitomagnetic tidal coupling constants el = 2 only */    
   EOBPars->japA2 = 24.   * EOBPars->SigmaAl2 * XA*XA*XA*XA*XA / q; 
@@ -1160,6 +1201,10 @@ void eob_set_params(int default_choice, int firstcall)
   EOBPars->kapT2 = EOBPars->kapA2 + EOBPars->kapB2;
   EOBPars->kapT3 = EOBPars->kapA3 + EOBPars->kapB3;
   EOBPars->kapT4 = EOBPars->kapA4 + EOBPars->kapB4;
+  EOBPars->kapT5 = EOBPars->kapA5 + EOBPars->kapB5;
+  EOBPars->kapT6 = EOBPars->kapA6 + EOBPars->kapB6;
+  EOBPars->kapT7 = EOBPars->kapA7 + EOBPars->kapB7;
+  EOBPars->kapT8 = EOBPars->kapA8 + EOBPars->kapB8;
   
   EOBPars->japT2 = EOBPars->japA2 + EOBPars->japB2;
 
