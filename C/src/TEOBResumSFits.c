@@ -1304,7 +1304,8 @@ double JFAPG_fit_Sigma_Static(double barlam2)
 
 /** Godzieba 2020 fits for NS multipolar
     $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
-    Eq.(...),(...); Tab.I; Fig.X ... */
+    Eq.(4); Tab.I; https://arxiv.org/abs/2012.12151 
+-*/
 double  Godzieba20_fit_barlamdel(double barlam2, int ell)
 {  
   if (barlam2<=0.) return 0.;
