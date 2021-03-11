@@ -515,11 +515,16 @@ typedef struct tagEOBParameters
 
   int firstcall[NFIRSTCALL];
 
-  int domain; //Time or frequency domain
-  double df;  //frequency interp df
-  double tc;  //coalescence time
+  int domain;           //Time or frequency domain
+  double tc;            //coalescence time
   int time_shift_FD;
-  
+
+  double df;            //frequency interp df
+
+  int interp_freqs;
+  double *freqs; //array of frequencies for interpolation
+  int freqs_size;
+
 } EOBParameters;
 
 extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */ 
@@ -624,6 +629,7 @@ void WaveformFD_lm_output (WaveformFD_lm *wav);
 void WaveformFD_lm_output_reim (WaveformFD_lm *wav);
 void WaveformFD_lm_free (WaveformFD_lm *wav);
 void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f0, const double df, const char *name);
+void WaveformFD_lm_interp_ap_freqs (WaveformFD_lm *hlm, const char *name);
 void Waveform_lm_t_alloc (Waveform_lm_t **wav);
 void Waveform_lm_t_free (Waveform_lm_t *wav);
 void Dynamics_alloc (Dynamics **dyn, int size, const char *name);

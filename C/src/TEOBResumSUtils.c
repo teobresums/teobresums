@@ -1406,6 +1406,66 @@ void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f
   WaveformFD_lm_free (hlm_aux);
 }
 
+void WaveformFD_lm_interp_ap_freqs (WaveformFD_lm *hlm, const char *name)
+{
+  /* Alloc and init aux memory */  
+  WaveformFD_lm *hlm_aux;
+  int size = EOBPars->freqs_size;
+  const int oldsize = hlm->size;
+  WaveformFD_lm_alloc(&hlm_aux, oldsize, "");
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->kmask[k]) {  
+      memcpy(hlm_aux->ampli[k], hlm->ampli[k], oldsize * sizeof(double));
+      memcpy(hlm_aux->phase[k], hlm->phase[k], oldsize * sizeof(double));
+      memcpy(hlm_aux->F[k], hlm->F[k], oldsize * sizeof(double));
+      //memcpy(hlm_aux->Fdot[k], hlm->Fdot[k], oldsize * sizeof(double));
+    }
+  }
+
+  /* Realloc arrays */
+  hlm->size = size;
+  if (strcmp(name, "")) strcpy(hlm->name, name);
+  if (hlm->freq) free(hlm->freq); 
+  hlm->freq = malloc ( size * sizeof(double) );
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->kmask[k]) {  
+      if (hlm->ampli[k]) free(hlm->ampli[k]);
+      if (hlm->phase[k]) free(hlm->phase[k]);
+      if (hlm->F[k]) free(hlm->F[k]);
+      if (hlm->Fdot[k]) free(hlm->Fdot[k]);
+      
+      hlm->ampli[k] = malloc ( size * sizeof(double) );
+      hlm->phase[k] = malloc ( size * sizeof(double) );
+      hlm->F[k] = NULL; // this info is lost in the interp.
+      hlm->Fdot[k] = NULL;// this info is lost in the interp.
+    } 
+  }
+
+  /* Fill new freq array */
+#pragma omp simd
+  for (int i = 0; i < size; i++) 
+    hlm->freq[i] = EOBPars->freqs[i];
+  
+  /* Interp */
+  for (int k = 0; k < KMAX; k++){
+    if (hlm->kmask[k]){
+      //interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+      interp_spline_checklim(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+    }
+  }
+  for (int k = 0; k < KMAX; k++){
+    if (hlm->kmask[k]) {
+      //interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+      interp_spline_checklim(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+    }
+  }
+  /* Free aux memory */
+  WaveformFD_lm_free (hlm_aux);
+
+}
+
+
+
 void WaveformFD_lm_output (WaveformFD_lm *wav)
 {
   int kmask[KMAX];
@@ -1805,6 +1865,10 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     tmpsrate = tmpsrate/conv; //FIXME: this must be transformed in geom units 
     tmpf0    = tmpf0/conv;
     tmpdf    = tmpdf/conv;
+    if (EOBPars->interp_freqs){
+      for (int i=0; i < EOBPars->freqs_size; i++)
+        EOBPars->freqs[i] = EOBPars->freqs[i]/conv;
+    }
   }
   const double half_srate_interp = tmpsrate;
   const double f0 = tmpf0;
@@ -1884,8 +1948,10 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
 
   
   /* Interpolate each mode */
-  WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
-
+  if (EOBPars->interp_freqs)
+    WaveformFD_lm_interp_ap_freqs(FDlm, "");
+  else
+    WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
   /* Correct Fmin > f0 */
   for (int k = 0; k < KMAX; k++ ) {
     if (!activemode[k]) continue;

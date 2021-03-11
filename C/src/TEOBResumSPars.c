@@ -85,6 +85,7 @@ void EOBParameters_free (EOBParameters *eobp)
   if (!eobp) return;
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
   if (eobp->output_lm) free (eobp->output_lm);
+  if (eobp->freqs) free(eobp->freqs);
   free(eobp);
 }
 
@@ -107,10 +108,6 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
   eobp->r0 = 0.;
   eobp->initial_frequency = 0.004;
-
-  eobp->tc = 0;
-  eobp->time_shift_FD=1;
-  eobp->df = 1.;
 
   eobp->LambdaAl2 = 0.; // Tidal gravitoelectric parameter Lambda for star A ell=2
   eobp->LambdaBl2 = 0.;
@@ -149,6 +146,17 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_mode_lm_size = 1;
   eobp->use_mode_lm = malloc (eobp->use_mode_lm_size * sizeof(int) );
   memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
+
+  /* FD options */
+  eobp->tc = 0;
+  eobp->time_shift_FD=1;
+  eobp->df = 1.;
+  
+  eobp->interp_freqs=0;
+  double fr[] = {30.};      //indexes of multipoles to use
+  eobp->freqs_size = 1;
+  eobp->freqs = malloc (eobp->freqs_size * sizeof(double));
+  memcpy(eobp->freqs, fr, eobp->freqs_size * sizeof(double));
 
   /* EOB Settings */
   

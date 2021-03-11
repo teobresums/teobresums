@@ -214,6 +214,21 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict,"time_shift_FD") != NULL ) { 
     EOBPars->time_shift_FD = (int) PyLong_AsLong(PyDict_GetItemString(dict, "time_shift_FD"));
   }
+
+  if ( PyDict_GetItemString(dict,"interp_freqs") != NULL ) {
+    EOBPars->interp_freqs = (int) PyLong_AsLong(PyDict_GetItemString(dict, "interp_freqs"));
+  }
+  if ( PyDict_GetItemString(dict, "freqs") != NULL ) {
+    if (EOBPars->freqs) free(EOBPars->freqs);
+    PyListObject *tmp = PyDict_GetItemString(dict, "freqs");
+    EOBPars->freqs_size = PyObject_Length(tmp);
+    EOBPars->freqs = malloc ( EOBPars->freqs_size * sizeof(double) );
+    for (int i = 0; i < EOBPars->freqs_size; i++){
+      PyObject *item = PyList_GetItem(tmp, i);
+      EOBPars->freqs[i] = PyFloat_AsDouble(item);
+    }
+  }
+
   return OK;
 }
 
