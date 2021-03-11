@@ -711,8 +711,8 @@ double eob_dyn_Omegaecc0(double r, void *params)
   double r1, A1, B1, rc1, G1, ggm1[26];
   double r2, A2, B2, rc2, G2, ggm2[26];
   
-  double pl_hold, A12, B12, DA, DB, DG;
-  double j0, j02, Heff_orb1, Heff1, H1, dHeff1_dj0, omg_orb1;
+  double pl_hold, A12, B12, DA, DB, DG, j0, j02;
+  double Heff_orb1, Heff_orb2, Heff1, Heff2, H1, H2, dHeff1_dj0, dHeff2_dj0, omg_orb1, omg_orb2;
   
   r1 = r/(1-ecc);
   r2 = r/(1+ecc);
@@ -748,19 +748,26 @@ double eob_dyn_Omegaecc0(double r, void *params)
   DB  = B1 - B2;
   DG  = G1 - G2;
   
-  /* Angular momentum and energy */
+  /* Angular momentum */
   j02   = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
   j0    = sqrt(j02);
+
+  /* Energy */
   Heff_orb1 = sqrt(A1*(1. + j02/SQ(rc1)));
+  Heff_orb2 = sqrt(A2*(1. + j02/SQ(rc2)));
   Heff1     = Heff_orb1 + j0*G1;
+  Heff2     = Heff_orb2 + j0*G2;
   H1        = sqrt(1. + 2.*nu*(Heff1 - 1.))/nu;
+  H2        = sqrt(1. + 2.*nu*(Heff2 - 1.))/nu;
     
   /* Orbital frequency */
   dHeff1_dj0 = G1 + j0*A1/(Heff_orb1*SQ(rc1));
+  dHeff2_dj0 = G2 + j0*A2/(Heff_orb2*SQ(rc2));
   omg_orb1    = dHeff1_dj0/nu/H1;
+  omg_orb2    = dHeff2_dj0/nu/H2;
 
   /* Subtraction of initial evolution frequency */
-  return (omg_orb1 - omg_orb0);
+  return (0.5*(omg_orb1+omg_orb2) - omg_orb0);
 }
 
 /** Root finder: Compute eccentric p such that omg_orb = omg_orb0 */
