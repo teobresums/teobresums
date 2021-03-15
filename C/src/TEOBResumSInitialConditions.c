@@ -536,8 +536,23 @@ double eob_dyn_r0_ecc (double f0, Dynamics *dyn)
 {
   const double omg_orb0 = Pi*f0;
   const double r0_kepl  = eob_dyn_r0_Kepler(f0);
+  double ecc = dyn->ecc;
+
+  double r0;
+
+  /* Correct radius so to start at average separation */
+  if (EOBPars->ecc_freq == ECCFREQ_APASTRON) {
+    /* apastron frequency */
+    r0 = r0_kepl*(1-ecc);
+  } else if (EOBPars->ecc_freq == ECCFREQ_PERIASTRON) {
+    /* periastron frequency */
+    r0 = r0_kepl*(1+ecc);
+  } else {
+    /* secular (average) frequency */
+    r0 = r0_kepl;
+  }
   
-  return eob_dyn_bisecOmegaecc0(dyn,omg_orb0,r0_kepl);
+  return eob_dyn_bisecOmegaecc0(dyn,omg_orb0,r0);
 }
 
 /** Function for root finder: omega = omega_ecc */
@@ -711,7 +726,7 @@ double eob_dyn_Omegaecc0(double r, void *params)
   double r1, A1, B1, rc1, G1, ggm1[26];
   double r2, A2, B2, rc2, G2, ggm2[26];
   
-  double pl_hold, A12, B12, DA, DB, DG, j0, j02;
+  double pl_hold, A12, B12, DA, DB, DG, j0, j02, omg_orb;
   double Heff_orb1, Heff_orb2, Heff1, Heff2, H1, H2, dHeff1_dj0, dHeff2_dj0, omg_orb1, omg_orb2;
   
   r1 = r/(1-ecc);
@@ -759,15 +774,26 @@ double eob_dyn_Omegaecc0(double r, void *params)
   Heff2     = Heff_orb2 + j0*G2;
   H1        = sqrt(1. + 2.*nu*(Heff1 - 1.))/nu;
   H2        = sqrt(1. + 2.*nu*(Heff2 - 1.))/nu;
-    
+  
   /* Orbital frequency */
   dHeff1_dj0 = G1 + j0*A1/(Heff_orb1*SQ(rc1));
   dHeff2_dj0 = G2 + j0*A2/(Heff_orb2*SQ(rc2));
   omg_orb1    = dHeff1_dj0/nu/H1;
   omg_orb2    = dHeff2_dj0/nu/H2;
 
+  if (EOBPars->ecc_freq == ECCFREQ_APASTRON) {
+    /* apastron frequency */
+    omg_orb = omg_orb1;
+  } else if (EOBPars->ecc_freq == ECCFREQ_PERIASTRON) {
+    /* periastron frequency */
+    omg_orb = omg_orb2;
+  } else {
+    /* secular (average) frequency */
+    omg_orb = 0.5*(omg_orb1+omg_orb2);
+  }
+  
   /* Subtraction of initial evolution frequency */
-  return (0.5*(omg_orb1+omg_orb2) - omg_orb0);
+  return (omg_orb - omg_orb0);
 }
 
 /** Root finder: Compute eccentric p such that omg_orb = omg_orb0 */

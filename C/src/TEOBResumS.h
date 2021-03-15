@@ -257,6 +257,15 @@ enum{
 };
 static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS4", "NOSPIN", "NOTIDES"};
 
+/** List of options for eccentric initial frequency */
+enum{
+  ECCFREQ_PERIASTRON,
+  ECCFREQ_AVERAGE,
+  ECCFREQ_APASTRON,
+  ECCFREQ_NOPT
+};
+static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron"};
+
 /** List of options for flm amplitudes */
 enum{
   USEFLM_SSLO,
@@ -487,6 +496,8 @@ typedef struct tagEOBParameters
 
   int *use_mode_lm, use_mode_lm_size;
 
+  int ecc_freq;
+  
   int postadiabatic_dynamics, postadiabatic_dynamics_stop;
   int postadiabatic_dynamics_N;
   int postadiabatic_dynamics_size;
