@@ -29,6 +29,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "initial_frequency") != NULL ) { 
     EOBPars->initial_frequency = PyFloat_AsDouble(PyDict_GetItemString(dict, "initial_frequency"));
   }
+  if ( PyDict_GetItemString(dict, "ecc_freq") != NULL ) { 
+    EOBPars->ecc_freq = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ecc_freq"));
+  }
   if ( PyDict_GetItemString(dict, "ecc") != NULL ) {
     EOBPars->ecc = PyFloat_AsDouble(PyDict_GetItemString(dict, "ecc"));
   }
