@@ -684,6 +684,7 @@ double Yagi14_fit_Chex(double C_Q);
 double JFAPG_fit_Sigma_Irrotational(double barlam2);
 double JFAPG_fit_Sigma_Static(double barlam2);
 double Godzieba20_fit_barlamdel(double barlam2, int ell);
+double Chang14_fit_omegaf(double lam, int ell);
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin);
 double JimenezFortezaRemnantMass(double nu, double X1, double X2, double chi1, double chi2);
 double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2);

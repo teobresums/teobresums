@@ -1356,6 +1356,44 @@ double  Godzieba20_fit_barlamdel(double barlam2, int ell)
   return exp(lny);
 }
 
+/** Chang+ 2014 fits for f-mode frequency vs Lambda
+    Eq.(3.5) and Tab.I of https://arxiv.org/abs/1408.3789
+-*/
+double Chang14_fit_omegaf(double lam, int ell)
+{  
+  if (lam<=0.) return 0.;
+  double lnx = log(lam);
+  double *coef;
+  double a2[5] = {+1.820*1e-1, -6.836*1e-3, -4.196*1e-3, +5.215*1e-4, -1.857*1e-5};
+  double a3[5] = {+2.245*1e-1, -1.500*1e-2, -1.412*1e-3, +1.832*1e-4, -5.561*1e-6};
+  double a4[5] = {+2.501*1e-1, -1.646*1e-2, -5.897*1e-4, +8.695*1e-5, -2.368*1e-6};
+  double a5[5] = {+2.681*1e-1, -1.638*1e-2, -2.497*1e-4, +4.712*1e-5, -1.166*1e-6};
+  switch(ell) {
+    case(2):
+      coef = a2;
+      break;
+    case(3):
+      coef = a3;
+      break;
+    case(4):
+      coef = a4;
+      break;
+    case(5):
+      coef = a5;
+      break;
+    default:
+      errorexit("Chang fits are for ell=2,3,4,5");
+      break;
+  }
+  double y = coef[0];
+  double lnxp = lnx;
+  for (int i=1; i<=4; i++) {
+    y += lnxp * coef[i];
+    lnxp *= lnx;
+  }
+  return y;
+}
+
 /** Mass and angular momentum of the final black hole
   Healey, Lousto and Zochlower (HLZ),
   arXiv: 1406.7295, published as PRD 90, 104004 (2014)
