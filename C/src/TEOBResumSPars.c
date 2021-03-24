@@ -183,8 +183,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->output_nqc_coefs=0; // output multipolar NQC coefs (if determined)
   eobp->output_ringdown=0; // output ringdown waveform
   
-  int klm[] = {1, 2};      //indexes of multipoles to ouput
-  eobp->output_lm_size = 2;
+  int klm[] = {1};      //indexes of multipoles to ouput
+  eobp->output_lm_size = 1;
   eobp->output_lm = malloc (eobp->output_lm_size * sizeof(int) );
   memcpy(eobp->output_lm, klm, eobp->output_lm_size * sizeof(int));
   

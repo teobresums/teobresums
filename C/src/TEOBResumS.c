@@ -277,7 +277,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (VERBOSE) PRFORMd("rLR_tidal",dyn->rLR_tidal); 
   }
 
-  if (EOBPars->compute_LR) {
+  if (EOBPars->compute_LR && !(use_tidal)) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
     if (check_status) {
