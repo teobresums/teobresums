@@ -1016,29 +1016,47 @@ static long double Power_Series_C( long double x )
 
 /* test 
    gcc SpecialFuns.c -lm -o specfuns.x 
-   ./specfun.x  > Fresnel.txt
+   ./specfun.x  
    # gnuplot
-   #     p 'Fresnel.txt' u 1:2 w l t "Fresnel Sine", 'Fresnel.txt' u 1:3 w l t 'Fresnel Cosine"
-   # compare to mathematica output
+   #     p 'test_Fresnel1.txt' u 1:2 w l t "Fresnel Sine", 'test_Fresnel1.txt' u 1:3 w l t 'Fresnel Cosine"
+   # compare to mathematica output (need rescaling)
 */
 
 #include <stdio.h>
 
 int main (int argc, char* argv[])
 {
+  FILE *fp;
   // domain x in [a,b]
   double x;
-  int N = 200;
-  const double a = -5;
-  const double b = +5;
-  double dx = (b-a)/(N-1);
+  int N = 101;
   // test Fresnel sin/cos integral 
+  double a = -5;
+  double b = +5;
+  double dx = (b-a)/(N-1);
+  fp = fopen("test_Fresnel1.txt","w");
   for (int i=0; i<N; i++) {
     x = a + i*dx;
-    printf("%.16e %.16e %.16e\n", x,
-	   Fresnel_Sine_Integral( x ),
-	   Fresnel_Cosine_Integral( x ));
+    fprintf(fp,"%.16e %.16e %.16e\n", x,
+	    Fresnel_Sine_Integral( x ),
+	    Fresnel_Cosine_Integral( x ));
   }
+  fclose(fp);
+  // another test
+  a = -300;
+  b = 1.5;
+  dx = (b-a)/(N-1);
+  double omg1 = 3./8.;
+  double c = sqrt(3.14159265359/(2.*omg1));
+  double somg1 = sqrt(omg1);
+  fp = fopen("test_Fresnel2.txt","w");
+  for (int i=0; i<N; i++) {
+    x = a + i*dx;
+    fprintf(fp,"%.16e %.16e %.16e\n", x,
+	    c*(0.5 + Fresnel_Sine_Integral( somg1*x )),
+	    c*(0.5 + Fresnel_Cosine_Integral( somg1*x )));
+  }
+  fclose(fp);
   return 0;
 }
 
