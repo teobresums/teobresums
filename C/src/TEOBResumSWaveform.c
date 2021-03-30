@@ -4102,6 +4102,7 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   int map_from_22 = 0;
   
   /* First, unwrap alpha and gamma */
+  // Fix this with function
   spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
   spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
   unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
