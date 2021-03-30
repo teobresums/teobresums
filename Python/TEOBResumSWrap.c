@@ -277,12 +277,12 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
       EOBPars->chi1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi1"));
 
   if (PyDict_GetItemString(dict, "chi2x") != NULL )
-      EOBPars->chi1x = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2x"));
+      EOBPars->chi2x = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2x"));
   if (PyDict_GetItemString(dict, "chi2y") != NULL )
-      EOBPars->chi1y = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2y"));
+      EOBPars->chi2y = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2y"));
   if (PyDict_GetItemString(dict, "chi2z") != NULL )
-      EOBPars->chi1z = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2z"));
-  if (PyDict_GetItemString(dict, "chi1") != NULL )
+      EOBPars->chi2z = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2z"));
+  if (PyDict_GetItemString(dict, "chi2") != NULL )
      EOBPars->chi2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "chi2"));
 
 
@@ -325,7 +325,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
                       default_choice, fc);
 
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
-  
   /*  Construct the output arrays */
 
   /* return modes? */
@@ -381,7 +380,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
         Py_DECREF(obj);
       }
     }
-
     /* build the final object */
     PyObject *ret;
     if (arg_out == 0){
@@ -392,7 +390,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
       printf("ERROR: arg_out has to be equal to 0 or 1");
       ret = NULL;
     }
-
     /* Free C memory */
     Waveform_free (hpc);          
     WaveformFD_free (hfpc);       
@@ -408,7 +405,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Py_DECREF(phpo);
     Py_DECREF(phco);
     Py_DECREF(hlmdict);
-    
     return ret;  
 
   } else {
