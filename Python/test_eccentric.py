@@ -32,9 +32,10 @@ pars = {
     'srate_interp'       : 4096.,  #srate at which to interpolate. Default = 4096.
     'use_geometric_units': 0,      #output quantities in geometric units. Default = 1
     'df'                 : 0.01,   #df for FD interpolation
-    'initial_frequency'  : f0,    #in Hz if use_geometric_units = 0, else in geometric units
+    'initial_frequency'  : f0,     #in Hz if use_geometric_units = 0, else in geometric units
     'interp_uniform_grid': 1,      #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
-    'ecc'                : e0,    #Eccentricity. Default = 0.
+    'ecc'                : e0,     #Eccentricity. Default = 0.
+    'ecc_freq'           : 2,      #Use periastron (0), average (1) or apastron (2) frequency for initial condition computation. Default = 1
 }
 
 #Run the WF generator
