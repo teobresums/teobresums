@@ -3,6 +3,29 @@ import EOBRun_module
 import matplotlib.pyplot as plt
 import time
 
+# Example running for some eccentric inspirals. The script is set so to reproduce EOB runs in Table III of arXiv:2101.08624
+#
+# @article{Nagar:2021gss,
+#    author = "Nagar, Alessandro and Bonino, Alice and Rettegno, Piero",
+#    title = "{All in one: effective one body multipolar waveform model for spin-aligned, quasi-circular, eccentric, hyperbolic black hole binaries}",
+#    eprint = "2101.08624",
+#    archivePrefix = "arXiv",
+#    primaryClass = "gr-qc",
+#    month = "1",
+#    year = "2021"}
+#
+# The initial apastron frequency is expressed in Hz and the code runs by default in physical units.
+# The total mass is fixed to M=50*Msun. The dimensionless apastron frequency omg_a is transformed into
+# the physical apastron frequency f0 according to the formula
+#
+#  f = omg_a/(2*pi*M)
+# 
+# where Msun = 4.925490947e-6 sec.
+#
+# Running times for these initial data are of the order of 0.1 sec on  a 3.5GHz IntelCore i7, 16G RAM,
+# except for 1149 and 1169 when one gets arund 0.2sec. Initial physical frequency is always below 20Hz.
+
+
 #-------------------
 # SXS:BBH:1355 - q=1
 # omg_a = 0.02805750
@@ -123,6 +146,12 @@ e0 = 0.15035
 #---------------------
 f0 = 10.951353660604985
 e0 = 0.31388
+#--------------------
+#SXS:BBH:89   - (q=1,-0.50,0)
+# omg_a = 0.01779
+#---------------------
+f0 = 11.496788718409222
+e0 = 0.07201
 #---------------------------------------
 # SXS:BBH:324     - (q=1.22,+0.33,-0.44)
 # omg_a = 0.01894
