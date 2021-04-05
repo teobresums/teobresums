@@ -1916,7 +1916,7 @@ void DynamicsSpin_output (DynamicsSpin *dyn)
   sprintf(fname,"%s/dynspin.txt",EOBPars->output_dir);
   FILE* fp;
   if ((fp = fopen(fname, "w+")) == NULL) errorexits("error opening file",fname);
-  fprintf(fp, "#"); 
+  fprintf(fp, "# t "); 
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     fprintf(fp, " %s",  eob_prec_var[v]); 
   fprintf(fp, "\n"); 
