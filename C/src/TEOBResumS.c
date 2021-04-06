@@ -198,6 +198,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   Waveform_lm *hTlm = NULL; /* h_lm twisted */
   Waveform_lm *hTlm_neg = NULL; /* h_lm twisted */
+  Waveform_lm *hTl0     = NULL;
 
   WaveformFD_lm *hfTlm = NULL; /* h_lm twisted (FD) */
   
@@ -263,10 +264,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_spins == MODE_SPINS_GENERIC) {
     if (eob_spin_dyn(spindyn, Pi * EOBPars->initial_frequency/time_unit_fact))
       errorexit("problem during spin dynamics");
+      
+    spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
+    spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
+
     for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
       gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);   
   }
-  
   /** Set r.h.s. fun pointer */
   int (*p_eob_dyn_rhs)();
   if (use_spins) p_eob_dyn_rhs = &eob_dyn_rhs_s;
@@ -945,10 +949,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (VERBOSE) PRSECTN("Twisting");
       Waveform_lm_alloc (&hTlm, size, "hTlm"); 
       Waveform_lm_alloc (&hTlm_neg, size, "hTlm_neg"); 
-      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm, hTlm_neg);
-      compute_hpc(hTlm, hTlm_neg, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+      Waveform_lm_alloc (&hTl0, size, "hTl0"); 
+      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm, hTlm_neg, hTl0);
+      compute_hpc(hTlm, hTlm_neg, hTl0, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
     } else
-      compute_hpc(hlm, NULL, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+      compute_hpc(hlm, NULL, NULL, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
   } else {
     
@@ -966,10 +971,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /** Alloc memory for (h+,hx) */
     WaveformFD_alloc (hfpc, size, "waveform");   
-        
+
     /* h+, hx */  
-    compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, *hfpc);
-    
+    if (use_spins == MODE_SPINS_GENERIC){
+      twist_hlm_FD(hflm, dyn->spins, M, amplitude_prefactor, phi, iota, *hfpc); //this also computes hpc
+    } else {
+      compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, *hfpc);
+    }
   }
 
   /* *****************************************
@@ -985,15 +993,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     // modes
     if (EOBPars->output_multipoles) {
       if (EOBPars->domain == DOMAIN_TD) {
-	Waveform_lm_output (hlm); 
-	Waveform_lm_output_reim (hlm);
-	if (use_spins == MODE_SPINS_GENERIC)
-	  Waveform_lm_output (hTlm);  
-	  Waveform_lm_output (hTlm_neg);
+        Waveform_lm_output (hlm); 
+        Waveform_lm_output_reim (hlm);
+	      if (use_spins == MODE_SPINS_GENERIC){
+          Waveform_lm_output (hTlm);  
+          Waveform_lm_output (hTlm_neg);
+          Waveform_lm_output (hTl0);  
+        } 
       } else {
-	WaveformFD_lm_output (hflm);
-	if (use_spins == MODE_SPINS_GENERIC)
-	  WaveformFD_lm_output (hfTlm);
+    	  WaveformFD_lm_output (hflm);
+	      if (use_spins == MODE_SPINS_GENERIC)
+	        WaveformFD_lm_output (hfTlm);
       }
     }
     // dynamics
@@ -1045,6 +1055,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Dynamics_free (dyn);
   if (use_spins == MODE_SPINS_GENERIC)
     DynamicsSpin_free (spindyn);  
+    Waveform_lm_free(hTl0);
+
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
 

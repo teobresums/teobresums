@@ -984,9 +984,9 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   vect_dot3(SABq, Lh, &SABqLh);
   
   for(int a=Ix; a<IN3; a++) 
-    OmgA[a] = v5*(nu*(2+1.5/q) - 1.5*v*qSABLh)*Lh[a] + 0.5*v6*SB[a];
+    OmgA[a] = (v5*nu*(2+1.5/q) - 1.5*v6*qSABLh)*Lh[a] + 0.5*v6*SB[a];
   for(int a=Ix; a<IN3; a++) 
-    OmgB[a] = v5*(nu*(2+1.5*q) - 1.5*v*SABqLh)*Lh[a] + 0.5*v6*SA[a];
+    OmgB[a] = (v5*nu*(2+1.5*q) - 1.5*v6*SABqLh)*Lh[a] + 0.5*v6*SA[a];
   
   // vect_cross3(OmgA, SA, Omg_x_SA);
   // vect_cross3(OmgB, SB, Omg_x_SB);
@@ -1019,8 +1019,8 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 			  - dm*(-0.84375+4.875*nu-0.15625*nu2) );
 
   for(int a=Ix; a <IN3; a++){
-    OmgANLO[a] = v5*(nu*(2+1.5/q) - 1.5*v*qSABLh)*Lh[a] + 0.5*v6*SB[a];
-    OmgBNLO[a] = v5*(nu*(2+1.5*q) - 1.5*v*SABqLh)*Lh[a] + 0.5*v6*SA[a];
+    OmgANLO[a] = (v5*nu*(2+1.5/q) - 1.5*v6*qSABLh)*Lh[a] + 0.5*v6*SB[a];
+    OmgBNLO[a] = (v5*nu*(2+1.5*q) - 1.5*v6*SABqLh)*Lh[a] + 0.5*v6*SA[a];
     OmgANNLO[a]= OmgANLO[a]  + cv7A*Lh[a];
     OmgBNNLO[a]= OmgBNLO[a]  + cv7B*Lh[a];
     OmgAN4LO[a]= OmgANNLO[a] + cv9A*Lh[a];
@@ -1042,10 +1042,10 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_SPIN_SzB] = SdotBN4LO[Iz];
 
   // Lhdot
-  const double csA = -0.25*(3+M/MA);
-  const double csB = -0.25*(3+M/MB);
-  const double csAL = -0.08333333333333333*(1+27.*M/MA);
-  const double csBL = -0.08333333333333333*(1+27.*M/MB);
+  const double csA = -0.25*(3.+M/MA);
+  const double csB = -0.25*(3.+M/MB);
+  const double csAL = -0.08333333333333333*(1.+27.*M/MA);
+  const double csBL = -0.08333333333333333*(1.+27.*M/MB);
   //const double csANL= 0.0625*(-31.+7*M/MA) + 0.0208333333333333*nu*(9. + 22* M/MA)
   //const double csBNL= 0.0625*(-31.+7*M/MB) + 0.0208333333333333*nu*(9. + 22* M/MB)
   const double L2PN = 1 + v2*(1.5+0.1666666666666667*nu) + v4*(3.375 - 2.375*nu + 0.04166666666666666*nu2);
@@ -1255,8 +1255,12 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
   int status;
   int GSLSTATUS = OK;
   int breakit = 0; // flag to break while allowing for one more step
+  int eps = 1;
+  if (dyn->dt<0)
+    eps = -1;
+
   while (1) {
-    if (VERBOSE) printf("iter %09d, t=%.f, momg= %.10f\n", iter, dyn->t, dyn->y[EOB_EVOLVE_SPIN_Momg]); 
+    if (VERBOSE) printf("iter %09d, t=%.f, momg= %.17f, alpha=%.6f\n", iter, dyn->t, dyn->y[EOB_EVOLVE_SPIN_Momg], dyn->y[EOB_EVOLVE_SPIN_alp]); 
     iter++;
 
     //GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);//uniform
@@ -1267,12 +1271,15 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
       printf("GSL Error = %d", GSLSTATUS);
       return ERROR_ODEINT;
     }
-    
+    if (dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] - dyn->data[EOB_EVOLVE_SPIN_Momg][i0+iter-1] < 1e-15) ){
+      iter--; //don't count this iteration
+      break;
+    }
     /** Update alpha and beta angles */
     dyn->y[EOB_EVOLVE_SPIN_alp] = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						     dyn->y[EOB_EVOLVE_SPIN_Ly],
 						     dyn->y[EOB_EVOLVE_SPIN_Lz]);
-    dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
+    dyn->y[EOB_EVOLVE_SPIN_bet] = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
     
@@ -1322,34 +1329,25 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omg0)
   spindyn_tmp->omg_stop = omg0;
   spindyn_tmp->t_stop = -100000.;
   //eob_spin_dyn(spindyn_tmp, EOBPars->initial_frequency/time_units_factor(EOBPars->M));
-
+  int Nint = 0;
   dyn->t = 0.;
   double m1 = nu_to_X1(EOBPars->nu);
   double m2 = 1 - m1;
   const double M12 = SQ(m1);
   const double M22 = SQ(m2);  
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *M12; 
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y *M12;
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z *M12;
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *M22;
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *M22;
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *M22;
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_Lx] = 0; //FIXME Lh t=0 ?
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_Ly] = 0;
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_Lz] = 1.;
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_alp] =  eob_spin_dyn_alpha(spindyn_tmp->y[EOB_EVOLVE_SPIN_Lx],
-						    spindyn_tmp->y[EOB_EVOLVE_SPIN_Ly],
-						    spindyn_tmp->y[EOB_EVOLVE_SPIN_Lz]);
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(spindyn_tmp->y[EOB_EVOLVE_SPIN_Lx],
-						  spindyn_tmp->y[EOB_EVOLVE_SPIN_Ly],
-						  spindyn_tmp->y[EOB_EVOLVE_SPIN_Lz]);
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_gam] = Pi/2.; // P.8 https://arxiv.org/abs/2004.09442
-  
-  double time_unit_fact = 1;
-  if(!EOBPars->use_geometric_units)
-    time_unit_fact = time_units_factor(EOBPars->M);
-
-  spindyn_tmp->y[EOB_EVOLVE_SPIN_Momg] = Pi * EOBPars->initial_frequency/time_unit_fact; 
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_SxA] = dyn->data[EOB_EVOLVE_SPIN_SxA][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_SyA] = dyn->data[EOB_EVOLVE_SPIN_SyA][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_SzA] = dyn->data[EOB_EVOLVE_SPIN_SzA][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_SxB] = dyn->data[EOB_EVOLVE_SPIN_SxB][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_SyB] = dyn->data[EOB_EVOLVE_SPIN_SyB][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_SzB] = dyn->data[EOB_EVOLVE_SPIN_SzB][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_Lx]  = dyn->data[EOB_EVOLVE_SPIN_Lx][Nint]; 
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_Ly]  = dyn->data[EOB_EVOLVE_SPIN_Ly][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_Lz]  = dyn->data[EOB_EVOLVE_SPIN_Lz][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_alp] = dyn->data[EOB_EVOLVE_SPIN_alp][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_bet] = dyn->data[EOB_EVOLVE_SPIN_bet][Nint];
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_gam] = dyn->data[EOB_EVOLVE_SPIN_gam][Nint]; 
+  spindyn_tmp->y[EOB_EVOLVE_SPIN_Momg] = dyn->data[EOB_EVOLVE_SPIN_Momg][Nint];
   
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     spindyn_tmp->data[v][0] = spindyn_tmp->y[v];
@@ -1357,6 +1355,11 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omg0)
   eob_spin_dyn_integrate(spindyn_tmp);
 
   int size = spindyn_tmp->size;
+
+  /*shift by t0*/
+  for(int i=0; i<size;i++)
+    spindyn_tmp->time[i] = spindyn_tmp->time[i] + dyn->time[Nint];
+
   /* rearrange variables*/
   double tmp;
   for(int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++){
@@ -1372,9 +1375,8 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omg0)
     spindyn_tmp->time[size-1-i] = tmp;
   }
   
-  /*join at t=0*/
-  DynamicsSpin_join(spindyn_tmp, dyn, 0);
-  
+  /*join at t0*/
+  DynamicsSpin_join(spindyn_tmp, dyn, dyn->time[Nint]);
   // FIXME: improve below
   /*copy in dyn*/
   DynamicsSpin_push(&dyn, spindyn_tmp->size);

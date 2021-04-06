@@ -4099,7 +4099,7 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
 void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm){
   
   /* choose whether to use MOmega (from the dynamics) or MOmega_22 for the interpolation */
-  int map_from_22 = 0;
+  int map_from_22 = 1;
   
   /* First, unwrap alpha and gamma */
   spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
@@ -4121,13 +4121,17 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
     omega = dyn->data[EOB_MOMG];
     size_omega = dyn->size;
   }
+  
+  // printf("size_omega= %d\n", size_omega);
+  // for(int i=0; i<size_omega;i++)
+  //   printf("omega i = %.16f\n", omega[i]);
 
   /* Then, do the interpolations.
   find the max of omega*/
   int omg_jmax =0;
   for(int i=0; i < size_omega; i++) {
     omg_jmax = i;
-    if(omega[i+1] <= omega[i])
+    if(i >5 && omega[i+1] <= omega[i])
       break;
     if(omega[i+1] > spin->data[EOB_EVOLVE_SPIN_Momg][spin->size -1])
       break;
@@ -4140,6 +4144,9 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   alpha_tmp = malloc ( size_tmp * sizeof(double) );
   beta_tmp  = malloc ( size_tmp * sizeof(double) );
   gamma_tmp = malloc ( size_tmp * sizeof(double) );
+
+  // for(int i=0; i< spin->size;i++)
+  //   printf("%.17f\n", spin->data[EOB_EVOLVE_SPIN_Momg][i]);
 
   /* first interpolation: angles(omega_PN)->angles(omega_EOB) */
   interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_alp], spin->size, omega, size_tmp, alpha_tmp);
@@ -4203,9 +4210,39 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   free(gamma_tmp);
 }
 
+void prolong_euler_angles_FD(DynamicsSpin *spin, WaveformFD_lm *hlm)
+{
+  int spinsize = spin->size;
+  /* First, unwrap alpha and gamma */
+  spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
+  spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
+  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spinsize);
+  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spinsize);
+  
+  /*prolong up to final hlm frequency (constant angles by default)*/
+
+  double omg_fin = hlm->freq[hlm->size-1];
+  //printf("omg_fin = %.4f, hlm_fin = %.4f \n", omg_fin, hlm->freq[hlm->size-1]);
+  int N = 2;
+  double domg = (omg_fin - spin->data[EOB_EVOLVE_SPIN_Momg][spinsize-1])/N;
+  if (spin->data[EOB_EVOLVE_SPIN_Momg][spinsize-1] < omg_fin){
+    DynamicsSpin_push(&spin, spinsize + N);
+
+    /* fill the new points with constant angles */
+    for(int i = 0; i<N;i++){
+      spin->data[EOB_EVOLVE_SPIN_Momg][spinsize+i] = spin->data[EOB_EVOLVE_SPIN_Momg][spinsize-1] + (1+i)*domg;
+      spin->data[EOB_EVOLVE_SPIN_alp][spinsize+i]  = spin->data[EOB_EVOLVE_SPIN_alp][spinsize-1];
+      spin->data[EOB_EVOLVE_SPIN_bet][spinsize+i]  = spin->data[EOB_EVOLVE_SPIN_bet][spinsize-1];
+      spin->data[EOB_EVOLVE_SPIN_gam][spinsize+i]  = spin->data[EOB_EVOLVE_SPIN_gam][spinsize-1];
+    }
+  }
+
+}
+
+
 /** Twist TD multipoles */
 void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
-		  Waveform_lm *hTlm, Waveform_lm *hTlm_neg)
+		  Waveform_lm *hTlm, Waveform_lm *hTlm_neg, Waveform_lm *hTl0)
 {  
   const int size = hlm->size;
   int *activemode = hlm->kmask;
@@ -4219,22 +4256,30 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
 #if (DEBUG)    
     /*output angles */
     char fname[STRLEN*2];
-    sprintf(fname,"%s/anglesint.txt",EOBPars->output_dir);
-    FILE* fp;
-    if ((fp = fopen(fname, "w+")) == NULL) errorexits("error opening file",fname);
-    for (int i = 0; i < hlm->size; i++) {
-      fprintf(fp, "%.9e  %.16e  %.16e  %.16e\n", hlm->time[i], alpha[i], beta[i], gamma[i]);
+    if (EOBPars->output_hpc + EOBPars->output_multipoles + EOBPars->output_dynamics){
+      sprintf(fname,"%s/anglesint.txt",EOBPars->output_dir);
+      FILE* fp;
+      if ((fp = fopen(fname, "w+")) == NULL) errorexits("error opening file",fname);
+      for (int i = 0; i < hlm->size; i++) {
+        fprintf(fp, "%.9e  %.16e  %.16e  %.16e\n", hlm->time[i], alpha[i], beta[i], gamma[i]);
+      }
+      fclose(fp);
     }
-    fclose(fp);
 #endif
 
+  int emm_sign[3] = {1,-1,0}; //to loop over m>0, m<0, m=0
+  int zero_flag = 1;
   /* Loop over modes */
   for (int k = 0; k < KMAX; k++ ) {
     if (!activemode[k]) continue;
     
     int ell = LINDEX[k];
-    for (int q=0; q <2; q++){  // q=0->m >0, q =1->m < 0
-      int emm = MINDEX[k]*(1 - 2*q);
+
+    for (int q=0; q <=2; q++){
+      int emm = MINDEX[k]*emm_sign[q];
+
+      /* if you already computed the m=0 for this l, skip */
+      if(q==2 && !zero_flag) continue;
       double eps = pow(-1., ell);
       
       // for each time ...
@@ -4245,13 +4290,13 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
         for (int n = -ell; n <= ell; n++) {
           if (n==0) continue; // skip m=0 modes
           int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
-    
+          if (!activemode[j]) continue;  
           double cosng = cos( n * gamma[i] );
           double sinng = sin( n * gamma[i] );
     
           // d^l_{m,s}(angle)
           //CHECKME: index correct of Wigner matrices correct?
-          double dl_mn = wigner_d_function(ell, n,emm, -beta[i]);
+          double dl_mn = wigner_d_function(ell, emm, n, -beta[i]);
           //double dl_mn = wigner_d_function_opt(ell, n,emm, -beta[i]);
 
           // hlm modes are given as phase/amplitude
@@ -4269,31 +4314,33 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
             hln_real = real;
             hln_imag = imag;
           }
-      // 	sumr += cosng * dl_mn * hln_real;
-      // sumi += sinng * dl_mn * hln_imag;
           sumr += dl_mn*(cosng * hln_real - sinng * hln_imag);
           sumi += dl_mn*(sinng * hln_real + cosng * hln_imag);
     
         } // n (m')
-        // double hlm_real = - sumr * cos( emm * alpha[i] );
-        // double hlm_imag = - sumi * sin( emm * alpha[i] );
+
         double hTlm_real =   sumr * cos( emm * alpha[i] ) + sumi * sin( emm * alpha[i] );
         double hTlm_imag = - sumr * sin( emm * alpha[i] ) + sumi * cos( emm * alpha[i] );
         
         // Re-map back into phase/ampli
-        if(!q)
+        if(q==0)  // m>0 
           rmap(&hTlm_real,&hTlm_imag, &(hTlm->phase[k][i]), &(hTlm->ampli[k][i]), 1);
-        else
+        if(q==1)  // m<0
           rmap(&hTlm_real,&hTlm_imag, &(hTlm_neg->phase[k][i]), &(hTlm_neg->ampli[k][i]), 1);
-        
+        if(q==2){ // m=0
+          rmap(&hTlm_real,&hTlm_imag, &(hTl0->phase[k][i]), &(hTl0->ampli[k][i]), 1);
+          zero_flag = 0; //avoid re-computation of m=0 for fixed l
+        }
       }// i (times)
-    }
+    } // q (m>0,<0,=0)
+    if(LINDEX[k+1]-LINDEX[k]) zero_flag = 1;
   }// k (active modes)
   
   hTlm->size = size;
   for(int i = 0; i < size; i++){
-    hTlm->time[i] = hlm->time[i];
-    hTlm_neg->time[i]= hlm->time[i];
+    hTlm->time[i]     = hlm->time[i];
+    hTlm_neg->time[i] = hlm->time[i];
+    hTl0->time[i]     = hlm->time[i];
   }
 
   free(alpha);
@@ -4377,7 +4424,7 @@ void compute_hpc_old(Waveform_lm *hlm, double nu, double M, double distance, dou
 #endif
 }
 
-void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
+void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, Waveform_lm *hl0, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
 {  
 #ifdef _OPENMP
   if (USETIMERS) openmp_timer_start("compute_hpc");
@@ -4385,9 +4432,19 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, do
 #pragma omp parallel 
   {
     double Y_real[KMAX], Y_imag[KMAX];
+    /* m<0 */
     int mneg = 0; 
     if (hlm_neg == NULL) mneg =1;
     double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
+    /* m=0*/
+    int mzero = 1;
+    int zero_flag=1;
+    if (hl0 == NULL){
+      mzero =0;
+      zero_flag = 0;
+    }
+    double Y_real_m0[KMAX], Y_imag_m0[KMAX];
+
     double Aki, cosPhi, sinPhi;
     double sumr, sumi;
     int activemode[KMAX];
@@ -4405,7 +4462,9 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, do
       spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
       /* add m<0 modes */
       if ( (MINDEX[k]!=0) )
-	      spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
+	      spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota);
+      if ( (mzero !=0) )
+  	    spinsphericalharm(&Y_real_m0[k], &Y_imag_m0[k], -2, LINDEX[k], 0, phi, iota);
       }
       
     /* Sum up  hlm * Ylm 
@@ -4429,7 +4488,7 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, do
           sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
           sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
           
-        /* precessing wf, there is no symmetry between +m and -m*/
+          /* precessing wf, there is no symmetry between +m and -m*/
           if (EOBPars->use_spins==MODE_SPINS_GENERIC && !mneg){
             if (!activemode[k]) continue;
             Aki  = amplitude_prefactor * hlm_neg->ampli[k][i];
@@ -4439,7 +4498,7 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, do
             sumi += Aki*(cosPhi*Y_imag_mneg[k] - sinPhi*Y_real_mneg[k]); 
           }
 
-        /* add m<0 modes */
+          /* add m<0 modes */
           if ( (mneg) && (MINDEX[k]!=0) ) {
             /* H_{l-m} = (-)^l H^{*}_{lm} */
             if (LINDEX[k] % 2) {
@@ -4451,6 +4510,19 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, double nu, double M, do
               sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
             }
           }   
+
+          /* add m=0 modes */
+          if (EOBPars->use_spins==MODE_SPINS_GENERIC){
+            if ( (mzero) && zero_flag){
+              Aki  = amplitude_prefactor * hl0->ampli[k][i];
+              cosPhi = cos( hl0->phase[k][i] );
+              sinPhi = sin( hl0->phase[k][i] );
+              sumr += Aki*(cosPhi*Y_real_m0[k] + sinPhi*Y_imag_m0[k]); 
+              sumi += Aki*(cosPhi*Y_imag_m0[k] - sinPhi*Y_real_m0[k]);
+              zero_flag = 0;
+            }
+            if(LINDEX[k+1]-LINDEX[k]) zero_flag = 1;
+          }
         }
         /* h = h+ - i hx */
         hpc->real[i] = sumr;
@@ -4585,13 +4657,147 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
   
 }
 
-/** Twist FD multipoles */
-void twist_hlm_FD(Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
-		  Waveform_lm *hTlm)
+/** Twist FD multipoles and compute hpc*/
+void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc)
 {
 
-  //TODO
+ /* Rather than computing (twisted) modes, we directly compute the hpc
+    through eq. E16-E19 of https://arxiv.org/pdf/2004.06503.pdf.
+    Note the change: -m'<-->m' due to EOB convention.
+ */
   
+  const int size = hlm->size;
+  int *activemode = hlm->kmask;
+  /* initialize the splines for angles */
+  gsl_spline *alpha;
+  gsl_spline *beta;
+  gsl_spline *gamma;
+
+  double *frequencies;
+
+  prolong_euler_angles_FD(spin, hlm);
+  frequencies = malloc(spin->size*sizeof(double));
+
+  alpha = gsl_spline_alloc(gsl_interp_cspline, spin->size);
+  beta  = gsl_spline_alloc(gsl_interp_cspline, spin->size);
+  gamma = gsl_spline_alloc(gsl_interp_cspline, spin->size);
+  gsl_interp_accel *acc = gsl_interp_accel_alloc (); //FIXME have to free this eventually
+
+
+  double conv = 1.;
+  double Msun = M;
+  if (!(EOBPars->use_geometric_units)) {
+    Msun = M/MSUN_S;
+    conv = time_units_factor(Msun);
+  }
+
+  for(int i=0;i<spin->size;i++)
+    frequencies[i] = spin->data[EOB_EVOLVE_SPIN_Momg][i];
+  
+  /* spline for  the angles */
+  gsl_spline_init (alpha, frequencies, spin->data[EOB_EVOLVE_SPIN_alp], spin->size);  
+  gsl_spline_init (beta,  frequencies, spin->data[EOB_EVOLVE_SPIN_bet], spin->size);  
+  gsl_spline_init (gamma, frequencies, spin->data[EOB_EVOLVE_SPIN_gam], spin->size);  
+
+  /* precompute Ylms */
+  double Y_real[KMAX] = {0};
+  double Y_imag[KMAX] = {0};
+  double Y_real_mneg[KMAX] = {0};
+  double Y_imag_mneg[KMAX] = {0};
+  
+  static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
+  for (int k = 0; k < KMAX; k++ ) {
+    if (!activemode[k]) continue;
+    spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
+    /* add m<0 modes */
+    if ( (mneg) && (MINDEX[k]!=0) ) 
+      spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
+  }
+
+  double f022 = hlm->freq[0];
+
+  /* Loop over frequencies */
+  for(int i=0; i<size;i++){
+    double hpr = 0.;
+    double hpi = 0.;
+    double hcr = 0.;
+    double hci = 0.;
+    double f   = hlm->freq[i];
+
+    //printf("loop over modes:\n");
+    /* Loop over modes */
+    for(int k=0;k<KMAX;k++){
+      if(!activemode[k])
+        continue;
+      int emm = MINDEX[k];
+      int ell = LINDEX[k];
+      double f0lm = f022/2.*emm;
+
+      if(f < f0lm) 
+        continue;
+      double omg  = 2.*Pi*f/emm;
+      double alph = gsl_spline_eval(alpha, omg, acc); //evaluate spline
+      double bet  = gsl_spline_eval(beta , omg, acc); //evaluate spline
+      double gam  = gsl_spline_eval(gamma, omg, acc); //evaluate spline
+      double cosmg = cos(-emm * gam);
+      double sinmg = sin(-emm * gam);
+
+      double eps = pow (-1., ell);
+      double sumpr = 0.;
+      double sumpi = 0.;
+      double sumcr = 0.;
+      double sumci = 0.;
+      /* loop over n */
+      for(int n=-ell; n<=ell; n++){
+        if(n==0)
+          continue;
+        int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
+        double cosma = cos(n * alph);
+        double sinma = sin(n * alph);
+        double dl_mn = wigner_d_function(ell, emm, n, -bet);
+        double dl_mnn= wigner_d_function(ell, emm,-n, -bet);
+        if(n>0){
+          double rAlm  = cosma *Y_real[j] + sinma*Y_imag[j];
+          double iAlm  = cosma *Y_imag[j] - sinma*Y_real[j]; 
+          double check = rAlm*rAlm+iAlm*iAlm;
+          double check2=Y_real[j]*Y_real[j] + Y_imag[j]*Y_imag[j];
+          //printf("%d %.5f %.5f %.5f %.5f \n",j, Y_real[j], Y_imag[j], check, check2);
+          sumpr += rAlm*(dl_mn + eps*dl_mnn);
+          sumpi += iAlm*(dl_mn - eps*dl_mnn);
+          sumcr += rAlm*(dl_mn - eps*dl_mnn); 
+          sumci += iAlm*(dl_mn + eps*dl_mnn); 
+        } else {
+          double rAlm = cosma *Y_real_mneg[j] + sinma*Y_imag_mneg[j];
+          double iAlm = cosma *Y_imag_mneg[j] - sinma*Y_real_mneg[j]; 
+          sumpr += rAlm*(dl_mn + eps*dl_mnn);
+          sumpi += iAlm*(dl_mn - eps*dl_mnn);
+          sumcr += rAlm*(dl_mn - eps*dl_mnn);
+          sumci += iAlm*(dl_mn + eps*dl_mnn);
+        }
+      }
+      /* Add stuff to compute h+, hx */
+      double Amplm = hlm->ampli[k][i];
+      double clm   = cos(hlm->phase[k][i]);
+      double slm   = sin(hlm->phase[k][i]);
+      double tmpr  = cosmg*clm + sinmg*slm;
+      double tmpi  = cosmg*slm - sinmg*clm;
+      hpr +=  Amplm*(sumpr*tmpr - sumpi*tmpi); 
+      hpi +=  Amplm*(sumpi*tmpr + sumpr*tmpi);
+      hcr += -Amplm*(sumci*tmpr + sumcr*tmpi); 
+      hci +=  Amplm*(sumcr*tmpr - sumci*tmpi); 
+    }
+    hpc->preal[i] = amplitude_prefactor*0.5*hpr; 
+    hpc->pimag[i] = amplitude_prefactor*0.5*hpi;
+    hpc->creal[i] = amplitude_prefactor*0.5*hcr;
+    hpc->cimag[i] = amplitude_prefactor*0.5*hci;
+    hpc->freq[i]  = f*conv; 
+  }
+  /* free */
+  gsl_spline_free (alpha);
+  gsl_spline_free (beta);
+  gsl_spline_free (gamma);
+  gsl_interp_accel_free (acc);
+  free(frequencies);
 }
 
 /** (h+, hx) polarizations from the multipolar waveform, FD, all active modes (interpolate after SPA, needed to correctly add modes together) */
@@ -4636,47 +4842,6 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
    * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
    * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
    */
-#if (0)
-  
-  //SB: Taken from TD (?) to be checked
-  
-  for (int i = 0; i < hflm->size; i++) {
-    hpc->freq[i] = hflm->freq[i]*M; 
-    sumr = sumi = 0.;
-    
-    /* Loop over modes */
-    for (int k = 0; k < KMAX; k++ ) {
-      if (!activemode[k]) continue;
-      double Aki  = amplitude_prefactor * hflm->ampli[k][i];
-      double cosPhi = cos( hflm->phase[k][i] );
-      double sinPhi = sin( hflm->phase[k][i] );
-      sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
-      sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
-      
-      /* add m<0 modes */
-      if ( (mneg) && (MINDEX[k]!=0) ) { 
-	/* H_{l-m} = (-)^l H^{*}_{lm} */
-	if (LINDEX[k] % 2) {
-	  sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
-	  sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	}
-	else { 
-	  sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
-	  sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	}
-      }    
-    }
-
-    /* h = h+ - i hx */
-    hpc->real[i] = sumr;
-    hpc->imag[i] = -sumi;
-  }
-  
-  /* Compute amplitude & Phase */
-  //Waveform_rmap(hpc,1,1); // with unwrap
-  Waveform_rmap(hpc,1,0); // without
-  
-#else
   
   const double pm3 = 3.*Pi/2.;
   for (int i = 0; i < hflm->size; i++) {
@@ -4710,9 +4875,7 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
       hpc->cimag[i] = sumci;	  
     }
   }
-    
-#endif
-    
+        
 #ifdef _OPENMP
     if (USETIMERS) openmp_timer_stop("compute_hpc_FD");
 #endif
