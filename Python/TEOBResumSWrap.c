@@ -360,28 +360,51 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     memcpy(phc, hpc->imag, hpc->size * sizeof(double)); //hx
 
     /*build hlm dictionary */
-    for(int k=0; k<KMAX; k++){
-      if(hmodes->kmask[k]){
-        double *pAhlm, *pphlm;
-        PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-        PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
-        pAhlm = pyvector_to_Carrayptrs(pAhlmo);
-        pphlm = pyvector_to_Carrayptrs(pphlmo);
-        memcpy(pAhlm, hmodes->ampli[k], hmodes->size * sizeof(double));
-        memcpy(pphlm, hmodes->phase[k], hmodes->size * sizeof(double));
-        /* build dictionary entry*/
-        PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
-        char kst[12];
-        sprintf(kst, "%i", k);
-        /* populate the dictionary */
-        PyDict_SetItemString(hlmdict, kst, obj); 
-        /* free */
-        Py_DECREF(pAhlmo);
-        Py_DECREF(pphlmo);
-        Py_DECREF(obj);
+    if (EOBPars->use_spins ==  MODE_SPINS_ALIGNED){
+      for(int k=0; k<KMAX; k++){
+        if(hmodes->kmask[k]){
+          double *pAhlm, *pphlm;
+          PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          pAhlm = pyvector_to_Carrayptrs(pAhlmo);
+          pphlm = pyvector_to_Carrayptrs(pphlmo);
+          memcpy(pAhlm, hmodes->ampli[k], hmodes->size * sizeof(double));
+          memcpy(pphlm, hmodes->phase[k], hmodes->size * sizeof(double));
+          /* build dictionary entry*/
+          PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
+          char kst[12];
+          sprintf(kst, "%i", k);
+          /* populate the dictionary */
+          PyDict_SetItemString(hlmdict, kst, obj);
+          /* free */
+          Py_DECREF(pAhlmo);
+          Py_DECREF(pphlmo);
+          Py_DECREF(obj);
+        }
+      }
+    } else {
+      for(int k=0; k<KMAX; k++){
+        if(hTmodes->kmask[k]){
+          double *pAhlm, *pphlm;
+          PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          pAhlm = pyvector_to_Carrayptrs(pAhlmo);
+          pphlm = pyvector_to_Carrayptrs(pphlmo);
+          memcpy(pAhlm, hTmodes->ampli[k], hTmodes->size * sizeof(double));
+          memcpy(pphlm, hTmodes->phase[k], hTmodes->size * sizeof(double));
+          /* build dictionary entry*/
+          PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
+          char kst[12];
+          sprintf(kst, "%i", k);
+          /* populate the dictionary */
+          PyDict_SetItemString(hlmdict, kst, obj); 
+          /* free */
+          Py_DECREF(pAhlmo);
+          Py_DECREF(pphlmo);
+          Py_DECREF(obj);
+        }
       }
     }
-
     /* build the final object */
     PyObject *ret;
     if (arg_out == 0){
