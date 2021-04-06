@@ -4102,6 +4102,7 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   int map_from_22 = 1;
   
   /* First, unwrap alpha and gamma */
+  // Fix this with function
   spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
   spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
   unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
@@ -4295,8 +4296,8 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
           double sinng = sin( n * gamma[i] );
     
           // d^l_{m,s}(angle)
-          //CHECKME: index correct of Wigner matrices correct?
-          double dl_mn = wigner_d_function(ell, emm, n, -beta[i]);
+          //Checked by SA on April 2021
+          double dl_mn = wigner_d_function(ell, n,emm, -beta[i]);
           //double dl_mn = wigner_d_function_opt(ell, n,emm, -beta[i]);
 
           // hlm modes are given as phase/amplitude
