@@ -1116,7 +1116,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_SPIN_Lz] = LNdotN4LOperp[Iz];
   
   
-  /* dot gamma = dot alpha(t) * cos(beta(t)) = dot alpha(t) * Lhz */
+  /* dot gamma = -dot alpha(t) * cos(beta(t)) = -dot alpha(t) * Lhz */
  
   const double div = SQ(Lh[Ix]) + SQ(Lh[Iy]);
   if (div == 0.)
