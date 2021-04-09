@@ -900,8 +900,10 @@ double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz)
 {
   return atan2(Lhy,Lhx);
 }
-double alpha_initial_condition(double q, double v, double chi1x, double chi1y, double chi1z, double chi2x, double chi2y, double chi2z)
+double alpha_initial_condition(double q, double f0, double chi1x, double chi1y, double chi1z, double chi2x, double chi2y, double chi2z)
 {
+   //Convert f0 to v used here
+    double v = cbrt(2*Pi*f0);
    //Introduce temperary variables to make things more readable
    //q^2, 1+q, and (1+q)^2 come up often, so label them
 
