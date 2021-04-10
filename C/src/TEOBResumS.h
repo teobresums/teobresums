@@ -785,7 +785,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
 double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz);
-double alpha_initial_condition(double q, double f0, double chi1x, double chi1y, double chi1z, double chi2x, double chi2y, double chi2z);
+double alpha_initial_condition(EOBParameters *eobp); 
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz);
 int (*p_eob_spin_dyn_rhs)(); // ptr to r.h.s. for spins routine
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d);

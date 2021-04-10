@@ -900,12 +900,21 @@ double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz)
 {
   return atan2(Lhy,Lhx);
 }
-double alpha_initial_condition(double q, double f0, double chi1x, double chi1y, double chi1z, double chi2x, double chi2y, double chi2z)
+
+double alpha_initial_condition(EOBParameters *eobp)
 {
-   //Convert f0 to v used here
+   double q 	= eobp->q;
+   double f0 	= EOBPars->initial_frequency;
+   double chi1x = EOBPars->chi1x;
+   double chi1y = EOBPars->chi1y;
+   double chi1z = EOBPars->chi1z;
+   double chi2x = EOBPars->chi2x;
+   double chi2y = EOBPars->chi2y;
+   double chi2z = EOBPars->chi2z;
+
+   /*Convert f0 to v used here */
     double v = cbrt(2*Pi*f0);
-   //Introduce temperary variables to make things more readable
-   //q^2, 1+q, and (1+q)^2 come up often, so label them
+   /*Introduce temporary variables to make things more readable: q^2, 1+q, and (1+q)^2 come up often, so label them */
 
    double *oq, *oq2, *qq, *angle_x, *angle_y;
    oq = (double*) malloc(sizeof(double));
@@ -925,13 +934,15 @@ double alpha_initial_condition(double q, double f0, double chi1x, double chi1y, 
              96.;
    return atan2(*(angle_y), *(angle_x));
 
-   //Free everything
    free(oq);
    free(qq);
    free(oq2);
    free(angle_x);
    free(angle_y);
+
+
 }
+
 /** Compute beta from Lhat */
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz)
 {
@@ -1458,13 +1469,11 @@ int eob_spin_dyn(DynamicsSpin *dyn, double omg0)
   dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; //FIXME Lh t=0 ?
   dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
   dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;
-  dyn->y[EOB_EVOLVE_SPIN_alp] =  eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
-						    dyn->y[EOB_EVOLVE_SPIN_Ly],
-						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
+  dyn->y[EOB_EVOLVE_SPIN_alp] = alpha_initial_condition(EOBPars); 
   dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],
 						  dyn->y[EOB_EVOLVE_SPIN_Lz]);
-  dyn->y[EOB_EVOLVE_SPIN_gam] = Pi/2.; // P.8 https://arxiv.org/abs/2004.09442
+  dyn->y[EOB_EVOLVE_SPIN_gam] = -1.0*alpha_initial_condition(EOBPars); /* TODO check sign */
   
   double time_unit_fact = 1;
   if(!EOBPars->use_geometric_units)
