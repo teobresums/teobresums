@@ -1128,15 +1128,14 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_SPIN_Lz] = LNdotN4LOperp[Iz];
   
   
-  /* dot gamma = -dot alpha(t) * cos(beta(t)) = -dot alpha(t) * Lhz */
- 
+  /* dot{gamma} = + dot{alpha} cos{beta}, where cos{beta} = Lh[Iz] */ 
   const double div = SQ(Lh[Ix]) + SQ(Lh[Iy]);
   if (div == 0.)
     /* Lh is along z
        alpha is undefined, beta = 0 */
     dy[EOB_EVOLVE_SPIN_gam] = 0.;
   else
-    dy[EOB_EVOLVE_SPIN_gam] = - Lh[Iz] * ( Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] - Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
+    dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * (Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] - Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
     
   /* dot omg (Rad.React.) */
 
@@ -1474,7 +1473,7 @@ int eob_spin_dyn(DynamicsSpin *dyn, double omg0)
   dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],
 						  dyn->y[EOB_EVOLVE_SPIN_Lz]);
-  dyn->y[EOB_EVOLVE_SPIN_gam] = 1.0*alpha_initial_condition(EOBPars); /* TODO check sign */
+  dyn->y[EOB_EVOLVE_SPIN_gam] = 1.0*alpha_initial_condition(EOBPars); 
   
   double time_unit_fact = 1;
   if(!EOBPars->use_geometric_units)
