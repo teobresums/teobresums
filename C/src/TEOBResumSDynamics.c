@@ -913,9 +913,10 @@ double alpha_initial_condition(EOBParameters *eobp)
    double chi2z = EOBPars->chi2z;
 
    /*Convert f0 to v used here */
-    double v = cbrt(2*Pi*f0);
-   /*Introduce temporary variables to make things more readable: q^2, 1+q, and (1+q)^2 come up often, so label them */
+   double v = cbrt(Pi*f0);
+   if (!(EOBPars->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(EOBPars->M));
 
+   /*Introduce temporary variables to make things more readable: q^2, 1+q, and (1+q)^2 come up often, so label them */
    double *oq, *oq2, *qq, *angle_x, *angle_y;
    oq = (double*) malloc(sizeof(double));
    oq2=(double*) malloc(sizeof(double));
@@ -1473,7 +1474,7 @@ int eob_spin_dyn(DynamicsSpin *dyn, double omg0)
   dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],
 						  dyn->y[EOB_EVOLVE_SPIN_Lz]);
-  dyn->y[EOB_EVOLVE_SPIN_gam] = -1.0*alpha_initial_condition(EOBPars); /* TODO check sign */
+  dyn->y[EOB_EVOLVE_SPIN_gam] = 1.0*alpha_initial_condition(EOBPars); /* TODO check sign */
   
   double time_unit_fact = 1;
   if(!EOBPars->use_geometric_units)

@@ -4100,8 +4100,9 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   
   /* choose whether to use MOmega (from the dynamics) or MOmega_22 for the interpolation */
   int map_from_22 = 1;
-  spin->data[EOB_EVOLVE_SPIN_alp][0] = alpha_initial_condition(EOBPars); 
-  spin->data[EOB_EVOLVE_SPIN_gam][0] = -1.0*spin->data[EOB_EVOLVE_SPIN_alp][0];
+  spin->data[EOB_EVOLVE_SPIN_alp][0] = alpha_initial_condition(EOBPars);
+  printf("alpha(0) = %f\n", alpha_initial_condition(EOBPars)); 
+  spin->data[EOB_EVOLVE_SPIN_gam][0] = 1.0*spin->data[EOB_EVOLVE_SPIN_alp][0]; /* TODO check sign */
   /* First, unwrap alpha and gamma */
   unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
   unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
