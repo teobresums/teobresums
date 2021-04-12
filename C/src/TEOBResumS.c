@@ -320,7 +320,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	        hlm->phase[k][i] = hlm_t->phase[k]; 
         }
       }
-    }
+      
+      if (dyn->time[size-1] > EOBPars->ode_tmax)
+	EOBPars->postadiabatic_dynamics_stop = 1;
+     }
 
     dyn->store = dyn->noflx = 0;
     
@@ -670,7 +673,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Dynamics_output(dyn);
 #endif
   
-  if (!(use_tidal)) {
+  if (!(use_tidal) && (dyn->r < 3.)) {
     
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
