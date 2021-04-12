@@ -347,6 +347,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	  hlm->phase[k][i] = hlm_t->phase[k]; 
         }
       }
+
+      if (dyn->time[size-1] > EOBPars->ode_tmax)
+	EOBPars->postadiabatic_dynamics_stop = 1;
     }
 
     dyn->store = dyn->noflx = 0;
