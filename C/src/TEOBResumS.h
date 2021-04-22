@@ -42,6 +42,7 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_roots.h>
+#include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_spline.h>
@@ -705,8 +706,8 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *params);
 void eob_ham(double nu, double r, double pph, double prstar, double A, double dA,
 	     double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
-void eob_ham_s(double nu, double r, double rc, double drc_dr, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20);
-void eob_dyn_s_GS(double r, double rc, double drc_dr, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
+void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
+void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 void (*eob_dyn_s_get_rc)();
 void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
@@ -717,7 +718,9 @@ void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double
 double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
+int eob_dyn_fLSO_s(const gsl_vector *x, void * params, gsl_vector *f);
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
+int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO);
 
 /* TEOBResumSPostAdiabatic.c */
 int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0);
