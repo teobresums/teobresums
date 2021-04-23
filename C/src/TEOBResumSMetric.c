@@ -542,15 +542,15 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   double d2Aorb = 2.*dAorb_u*uc3*SQ(drc) + d2Aorb_u*uc4*SQ(drc) - uc2*dAorb_u*d2rc;
 
   /* Correct A for spin */
-  double AKerr_Multipole = (1.+2.*uc)/(1.+2.*u);
-  double dAKerr          = -2.*uc2/(1.+2.*u)*drc + 2.*u2*(1+2.*uc)/SQ(1.+2.*u);
-  double d2AKerr         = -2.*uc2/(1.+2.*u)*d2rc - 8.*u2*uc2/SQ(1.+2.*u)*drc + 4.*uc3/(1.+2.*u)*SQ(drc)
+  double AKerr_Multipole   = (1.+2.*uc)/(1.+2.*u);
+  double dAKerr_Multipole  = -2.*uc2/(1.+2.*u)*drc + 2.*u2*(1.+2.*uc)/SQ(1.+2.*u);
+  double d2AKerr_Multipole = -2.*uc2/(1.+2.*u)*d2rc - 8.*u2*uc2/SQ(1.+2.*u)*drc + 4.*uc3/(1.+2.*u)*SQ(drc)
     - 4.*u3*(1+2.*uc)/SQ(1.+2.*u) + 8.*u4*(1+2.*uc)/SQ(1.+2.*u)/(1.+2.*u);
   double fss = 1.;
   
   *A   = Aorb*AKerr_Multipole*fss;
-  *dA  = dAorb*AKerr_Multipole + Aorb*dAKerr;
-  *d2A = d2Aorb*AKerr_Multipole + 2.*dAorb*dAKerr + Aorb*d2AKerr;
+  *dA  = dAorb*AKerr_Multipole + Aorb*dAKerr_Multipole;
+  *d2A = d2Aorb*AKerr_Multipole + 2.*dAorb*dAKerr_Multipole + Aorb*d2AKerr_Multipole;
   //*d2A = d2Aorb*(1.+2.*uc)/(1.+2.*u) + 4.*dAorb*( u2*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) - uc2/(1.+2.*u)*drc) + Aorb*(-4.*u3*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) + 8.*u4*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)*(1.+2.*u))+4.*uc3/(1.+2.*u)*drc*drc - 2.*uc2/(1.+2.*u)*d2rc - 8.*u2*uc2/SQ(1.+2.*u)*drc); /* expanded *correct* form */
 
   /* D potential and derivative with respect to r */

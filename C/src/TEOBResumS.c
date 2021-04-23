@@ -262,8 +262,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (VERBOSE) PRFORMd("rLR",dyn->rLR);
   }
   if (EOBPars->compute_LSO) {
-    //TODO: LSO COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
+    //Spin version
+    //TODO: Decide what to do when LSO does not exist (large alignes spins) 
+    //double pphiLSO = 0.;
+    //ROOTFINDER(check_status, eob_dyn_LSO_s(dyn, &(dyn->rLSO), &pphiLSO));
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
