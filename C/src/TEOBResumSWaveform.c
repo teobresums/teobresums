@@ -3528,7 +3528,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   if(td_case==false){
     if (VERBOSE) PRSECTN("td_case=false");
     kerr_bh_freq(po1, po2, abh, Mbh, kapT2, td2);
-    kerr_bh_qnm(pa1, pa2, abh, omega1, omega2, kapT2, td2);
+    kerr_bh_qnm(pa1, pa2, abh, po1, po2, kapT2, td2);
   }else{
     if (VERBOSE) PRSECTN("td_case=true");
     kerr_bh_freq_td(po1, po2, kapT2);
@@ -3546,10 +3546,6 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   double Opeak;
   Apeak = apeak_bhns(nu, kapT2);
   Opeak = opeak_bhns(nu, kapT2);
-  //Spinning case functions
-    //Opeak = opeak_bhns_spin(nu, kapT2, chi1, X1, X2);
-    //Apeak = apeak_bhns_spin(nu, kapT2, chi1, X1, X2, Opeak);
-  
   
 
   /** Postpeak coefficients calculation */
@@ -3560,13 +3556,14 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
      alpha1 = alpha2;
    }
    
-   postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, pa1, po1, Apeak, alpha21, Domega);
-   //Spinning case function
-     //QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-	     //a1, a2, a3, a4, b1, b2, b3, b4, 
-	     //sigma[0],sigma[1]);
-   
-  
+   if( ((td_case==false) && (td_case2==false)) || (chi1!=0) ){
+     if (VERBOSE) PRSECTN("chi1!=0, spin case mode");
+    QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+	     a1, a2, a3, a4, b1, b2, b3, b4, 
+	     sigma[0],sigma[1]);
+   }else{
+     postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, pa1, po1, Apeak, alpha21, Domega);
+   }
   
   
   if (VERBOSE) PRFORMd("a1", a1[1] );
