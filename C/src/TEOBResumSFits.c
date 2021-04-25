@@ -184,7 +184,7 @@ void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t)
 }
 
 
-void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, double omega2, double k2t, bool td2)
+void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, double *omega2, double k2t, bool td2)
 {
   /** 0.5*omega_{lmn}*(1/alpha_n) = Q_{lmn} = q1 + q2( 1 - j )^q3  : inverse damping time of nth overtone */
   double q10[KMAX], q20[KMAX], q30[KMAX], q11[KMAX], q21[KMAX], q31[KMAX];
@@ -286,8 +286,8 @@ void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, dou
   double Q1 = q10[mode] + q20[mode]*pow(1. - a_bh, q30[mode]);
   double Q2 = q11[mode] + q21[mode]*pow(1. - a_bh, q31[mode]);
 
-  *alpha1 = omega1 / (2. * Q1);
-  *alpha2 = omega2 / (2. * Q2);
+  *alpha1 = *omega1 / (2. * Q1);
+  *alpha2 = *omega2 / (2. * Q2);
 }
 
 double apeak_bhns(double nu, double k2t)
@@ -613,13 +613,23 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
     // Peak Frequency
 
     /* (l=2, m=2)*/ 
-    omgmrg[1] = opeak_bhns_spin(nu, kapT2, chi1, X1, X2);
+    if(chi1==0){
+      omgmrg[1] = opeak_bhns(nu, kapT2);
+    }else{
+      omgmrg[1] = opeak_bhns_spin(nu, kapT2, chi1, X1, X2);
+    }
+    
     
     
     // Peak Amplitude
     
-    /* (l=2, m=2)*/    
-    Amrg[1] = apeak_bhns_spin(nu, kapT2, chi1, X1, X2, omgmrg[1]);
+    /* (l=2, m=2)*/  
+    if(chi1==0){
+      Amrg[1] = apeak_bhns(nu, kapT2);
+    }else{
+      Amrg[1] = apeak_bhns_spin(nu, kapT2, chi1, X1, X2, omgmrg[1]);
+    }
+    
      
     // c3phi
     b1 = -0.462321;
@@ -644,6 +654,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
 
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX];
   QNM_coefs(af, alpha21, alpha1, omega1);
+  
   
   for (int k=0; k<KMAX; k++) {
     if (modeon[k]) {
