@@ -842,7 +842,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if(default_choice==DEFAULT_PARS_BHNS){ // Need M value for tidal disruption criteria in BHNS cases
       EOBPars->M=M;
     }
-    eob_wav_ringdown(dyn, hlm);
+    
+    if( (default_choice==DEFAULT_PARS_BHNS) && (EOBPars->chi1!=0) ){
+      eob_wav_ringdown_bhns(dyn, hlm);
+    }else eob_wav_ringdown(dyn, hlm);
+    
     if (EOBPars->use_geometric_units) {
       EOBPars->M=1.;
     }
