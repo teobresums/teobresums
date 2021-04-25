@@ -653,7 +653,7 @@ void tidal_disruption_cases(double q, double Mf, double M, bool *flag, bool *fla
 void kerr_bh_freq_td(double *omega1, double *omega2, double k2t);
 void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t, bool td2);
 void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t);
-void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double omega1, double omega2, double k2t, bool td2);
+void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, double *omega2, double k2t, bool td2);
 double apeak_bhns(double nu, double k2t);
 double apeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2, double Opeak);
 double opeak_bhns(double nu, double k2t);
