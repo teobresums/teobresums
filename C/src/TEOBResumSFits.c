@@ -22,20 +22,107 @@
 
 /** BHNS Functions section */
 
-void tidal_disruption_cases(double q, double Mf, double M, bool *flag, bool *flag2)
+void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag, bool *flag2, bool *flag3)
 {
   /** Filter tidal disruption cases that don't work with Berti's QNM fits */
   double crit = Mf/M; // from Frank's bh remnant fits
 
-  if( (crit<0.963) && (q<=2) ){
-    *flag = true;
+  /** Spin contour fits */
+  const double a = 0.961033;
+  const double b = 0.01885704;
+  const double c = 3.43316824;
+  double cont = a*exp(-pow(chi1 - b, 2)/(2*pow(c, 2)));
+
+  /** Here begins conditions for nonspinning cases */
+  if(chi1==0){ 
+    if( (crit<0.963) && (q<=2) ){*flag = true;}
+    if(crit<0.970){*flag2 = true;}// cases that work with 2,-2 mode Berti's fits
+    
+  /** Here are the conditions for the spinning cases */
+  }else{
+    if(crit<cont){*flag3 = true;}
+  }
+}
+
+void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double kapT2, double nu)
+{
+  /** QNM fits for the tidal disruption cases in spinning BHNS */
+  double alpha_bbh = *alpha1;
+  double omega_bbh = *omega1;
+  double chi1 = af;
+  double k2t = kapT2;
+
+  // Inverse damping time
+
+  const double a110 = -3.95079482;
+  const double a111 = 0.49681922;
+  const double a120 = 22.2368762;
+  const double a121 = -0.99067704;
+  const double a210 = 0.42000219;
+  const double a211 = -0.26824839;
+  const double a220 = -1.87533980;
+  const double a221 = 1.32607387;
+  const double b110 = 2.50972052;
+  const double b111 = 0.10097995;
+  const double b120 = -9.42994855;
+  const double b121 = 7.08635549;
+
+  double a11 = a110*chi1 + a111;
+  double a12 = a120*chi1 + a121;
+  double a21 = a210*chi1 + a211;
+  double a22 = a220*chi1 + a221;
+  double b11 = b110*chi1 + b111;
+  double b12 = b120*chi1 + b121;
+
+  double a1 = a11*nu + a12*nu*nu;
+  double a2 = a21*nu + a22*nu*nu;
+  double b1 = b11*nu + b12*nu*nu;
+
+  double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  if(Ap>1.){
+    Ap = 1.;
+  }
+  if(Ap<0.0){
+    Ap = 0.0;
   }
 
-  if( (crit<0.970) ){ // cases that work with 2,-2 mode Berti's fits
-    *flag2 = true;
+  // Frequency
+
+  const double c110 = -17.8151271;
+  const double c111 = 10.6779154;
+  const double c120 = 87.7242256;
+  const double c121 = -11.2517961;
+  const double c210 = 6.53177751;
+  const double c211 = -3.43616964;
+  const double c220 = -27.5943674;
+  const double c221 = 16.1599098;
+  const double d110 = 8.27809745;
+  const double d111 = 2.23796811;
+  const double d120 = -30.2268880;
+  const double d121 = 2.06541065;
+
+  a11 = c110*chi1 + c111;
+  a12 = c120*chi1 + c121;
+  a21 = c210*chi1 + c211;
+  a22 = c220*chi1 + c221;
+  b11 = d110*chi1 + d111;
+  b12 = d120*chi1 + d121;
+
+  a1 = a11*nu + a12*nu*nu;
+  a2 = a21*nu + a22*nu*nu;
+  b1 = b11*nu + b12*nu*nu;
+
+  double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  if(Op>1.){
+    Op = 1.;
+  }
+  if(Op<0.0){
+    Op = 0.0;
   }
 
-
+  *alpha2 = Ap*alpha_bbh;
+  *alpha1 = 0.;
+  *omega1 = Op*omega_bbh;
 }
 
 void kerr_bh_freq_td(double *omega1, double *omega2, double k2t)
@@ -72,36 +159,6 @@ void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, doubl
   f21[7] = 0.0921;
   f31[7] = 1.3344;
 
-  /** l=2  m=-1 **/
-  /** n=0 fundamental overtone */
-  f10[6] = 0.3441; 
-  f20[6] = 0.0293;
-  f30[6] = 2.0010;
-  /** n=1 first overtone */
-  f11[6] = 0.3165;
-  f21[6] = 0.0301;
-  f31[6] = 2.3415;
-
-  /** l=2  m=0 **/
-  /** n=0 fundamental overtone */
-  f10[5] = 0.4437; 
-  f20[5] = -0.0739;
-  f30[5] = 0.3350;
-  /** n=1 first overtone */
-  f11[5] = 0.4185;
-  f21[5] = -0.0768;
-  f31[5] = 0.4355;
-
-  /** l=2  m=1 **/
-  /** n=0 fundamental overtone */
-  f10[0] = 0.6000; 
-  f20[0] = -0.2339;
-  f30[0] = 0.4175;
-  /** n=1 first overtone */
-  f11[0] = 0.5800;
-  f21[0] = -0.2416;
-  f31[0] = 0.4708;
-
   /** l=2  m=2 **/
   /** n=0 fundamental overtone */
   f10[1] = 1.5251; 
@@ -111,46 +168,6 @@ void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, doubl
   f11[1] = 1.3673;
   f21[1] = -1.0260;
   f31[1] = 0.1628;
-
-  /** l=3  m=1 **/
-  /** n=0 fundamental overtone */
-  f10[2] = 0.8345; 
-  f20[2] = -0.2405;
-  f30[2] = 0.4095;
-  /** n=1 first overtone */
-  f11[2] = 0.8105;
-  f21[2] = -0.2342;
-  f31[2] = 0.4660;
-
-  /** l=3  m=1 **/
-  /** n=0 fundamental overtone */
-  f10[2] = 0.8345; 
-  f20[2] = -0.2405;
-  f30[2] = 0.4095;
-  /** n=1 first overtone */
-  f11[2] = 0.8105;
-  f21[2] = -0.2342;
-  f31[2] = 0.4660;
-
-  /** l=3  m=2 **/
-  /** n=0 fundamental overtone */
-  f10[3] = 1.1481; 
-  f20[3] = -0.5552;
-  f30[3] = 0.3002;
-  /** n=1 first overtone */
-  f11[3] = 1.1226;
-  f21[3] = -0.5471;
-  f31[3] = 0.3264;
-
-  /** l=3  m=3 **/
-  /** n=0 fundamental overtone */
-  f10[4] = 1.8956; 
-  f20[4] = -1.3043;
-  f30[4] = 0.1818;
-  /** n=1 first overtone */
-  f11[4] = 1.8566;
-  f21[4] = -1.2818;
-  f31[4] = 0.1934;
 
   const int k21 = 0;
   const int k22 = 1;
@@ -199,36 +216,6 @@ void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, do
   q21[7] = 0.1729;
   q31[7] = 1.3617;
 
-  /** l=2  m=-1 **/
-  /** n=0 fundamental overtone */
-  q10[6] = 2.000; 
-  q20[6] = 0.1078;
-  q30[6] = 5.0069;
-  /** n=1 first overtone */
-  q11[6] = 0.610;
-  q21[6] = 0.0276;
-  q31[6] = 13.1683;
-
-  /** l=2  m=0 **/
-  /** n=0 fundamental overtone */
-  q10[5] = 4.0000; 
-  q20[5] = -1.9550;
-  q30[5] = 0.1420;
-  /** n=1 first overtone */
-  q11[5] = 1.2500;
-  q21[5] = -0.6359;
-  q31[5] = 0.1614;
-
-  /** l=2  m=1 **/
-  /** n=0 fundamental overtone */
-  q10[0] = -0.3000; 
-  q20[0] = 2.3561;
-  q30[0] = -0.2277;
-  /** n=1 first overtone */
-  q11[0] = -0.3300;
-  q21[0] = 0.9501;
-  q31[0] = -0.2072;
-
   /** l=2  m=2 **/
   /** n=0 fundamental overtone */
   q10[1] = 0.7; 
@@ -238,36 +225,6 @@ void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, do
   q11[1] = 0.1;
   q21[1] = 0.5436;
   q31[1] = -0.4731;
-
-  /** l=3  m=1 **/
-  /** n=0 fundamental overtone */
-  q10[2] = 23.8450; 
-  q20[2] = -20.7240;
-  q30[2] = 0.03837;
-  /** n=1 first overtone */
-  q11[2] = 8.8530;
-  q21[2] = -7.8506;
-  q31[2] = 0.03418;
-
-   /** l=3  m=2 **/
-  /** n=0 fundamental overtone */
-  q10[3] = 0.8313; 
-  q20[3] = 2.3773;
-  q30[3] = -0.3655;
-  /** n=1 first overtone */
-  q11[3] = 0.2300;
-  q21[3] = 0.8025;
-  q31[3] = -0.3684;
-
-  /** l=3  m=3 **/
-  /** n=0 fundamental overtone */
-  q10[4] = 0.9000; 
-  q20[4] = 2.3430;
-  q30[4] = -0.4810;
-  /** n=1 first overtone */
-  q11[4] = 0.2274;
-  q21[4] = 0.8173;
-  q31[4] = -0.4731;
 
   const int k21 = 0;
   const int k22 = 1;
@@ -620,7 +577,6 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
     }
     
     
-    
     // Peak Amplitude
     
     /* (l=2, m=2)*/  
@@ -653,8 +609,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
   }
 
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX];
-  QNM_coefs(af, alpha21, alpha1, omega1);
-  
+  QNM_coefs(af, alpha21, alpha1, omega1);  
   
   for (int k=0; k<KMAX; k++) {
     if (modeon[k]) {
