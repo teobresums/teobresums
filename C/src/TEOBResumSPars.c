@@ -1281,7 +1281,7 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm_s    = &eob_wav_flm_s_HM;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
-    if((default_choice==DEFAULT_PARS_BHNS)&&(EOBPars->q<5)){
+    if((default_choice==DEFAULT_PARS_BHNS)&&((EOBPars->q<5)||(EOBPars->chi1!=0))){
       eob_wav_ringdown = &eob_wav_ringdown_bhns;
     }else eob_wav_ringdown = &eob_wav_ringdown_HM;
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
