@@ -3530,8 +3530,8 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     kerr_bh_qnm(pa1, pa2, abh, po1, po2, kapT2, td2);
   }else{
     if (VERBOSE) PRSECTN("td_case=true");
-    kerr_bh_freq_td(po1, po2, kapT2);
-    kerr_bh_qnm_td(pa1, pa2, kapT2);
+    kerr_bh_freq_td(po1, po2, kapT2, nu);
+    kerr_bh_qnm_td(pa1, pa2, kapT2, nu);
   }
   if (td_spin==true){
     if (VERBOSE) PRSECTN("td_spin=true");

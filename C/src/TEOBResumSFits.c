@@ -27,16 +27,15 @@ void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *fl
   /** Filter tidal disruption cases that don't work with Berti's QNM fits */
   double crit = Mf/M; // from Frank's bh remnant fits
 
-  /** Spin contour fits */
-  const double a = 0.961033;
-  const double b = 0.01885704;
-  const double c = 3.43316824;
+  /** Contour fits */
+  const double a = 0.96181518;
+  const double b = 0.02007346;
+  const double c = 3.36964159;
   double cont = a*exp(-pow(chi1 - b, 2)/(2*pow(c, 2)));
 
   /** Here begins conditions for nonspinning cases */
   if(chi1==0){ 
-    if( (crit<0.963) && (q<=2) ){*flag = true;}
-    if(crit<0.970){*flag2 = true;}// cases that work with 2,-2 mode Berti's fits
+    if(crit<cont){*flag = true;}
     
   /** Here are the conditions for the spinning cases */
   }else{
@@ -47,10 +46,15 @@ void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *fl
 void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double kapT2, double nu)
 {
   /** QNM fits for the tidal disruption cases in spinning BHNS */
-  double alpha_bbh = *alpha1;
-  double omega_bbh = *omega1;
   double chi1 = af;
   double k2t = kapT2;
+
+  // BBH fits
+
+  double alpha21[KMAX];
+  QNM_coefs(af, alpha21, alpha1, omega1);
+  double alpha_bbh = *alpha1;
+  double omega_bbh = *omega1;
 
   // Inverse damping time
 
@@ -125,18 +129,49 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
   *omega1 = Op*omega_bbh;
 }
 
-void kerr_bh_freq_td(double *omega1, double *omega2, double k2t)
+void kerr_bh_freq_td(double *omega1, double *omega2, double k2t, double nu)
 {
   /** Dimensionless frequency fits for tidal disruption cases (When Berti's QNM don't work) */
-  double a1, a2, b1, b2;
 
-  a1 = 9222.16120;
-  a2 = 151.312951;
-  b1 = 17579.4469;
-  b2 = 1947.31219;
+  // BBH fits
+  double af = 0;
+  double af2 = pow(af,2);
+  double af3 = pow(af,3);
+  
+  /* l = 2, m = 2*/
+  double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
+  double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
+  double omega_bbh =  0.3736716844*(omega1_c/omega1_d);
+  //
 
-  *omega2 = ( 1 + a1*k2t + a2*k2t*k2t )  / ((1 + b1*k2t + b2*k2t*k2t));
-  *omega1 = 0;
+  const double c111 = -0.46547134;
+  const double c121 = 2.06136810;
+  const double c211 = -0.01554561;
+  const double c221 = 0.07249501;
+  const double d111 = -1.73278788;
+  const double d121 = 10.3197168;
+
+  double a11 = c111;
+  double a12 = c121;
+  double a21 = c211;
+  double a22 = c221;
+  double b11 = d111;
+  double b12 = d121;
+
+  double a1 = a11*nu + a12*nu*nu;
+  double a2 = a21*nu + a22*nu*nu;
+  double b1 = b11*nu + b12*nu*nu;
+
+  double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  if(Op>1.){
+    Op = 1.;
+  }
+  if(Op<0.0){
+    Op = 0.0;
+  }
+
+  *omega2 = 0;
+  *omega1 = Op*omega_bbh;
 }
 
 /** Fits of Kerr BH QNM complex frequencies for a (M_bh, a_bh) of the remnant BH (for l=2,m=2)
@@ -185,18 +220,48 @@ void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, doubl
 
 }
 
-void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t)
+void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t, double nu)
 {
   /** Inverse damping time fits for tidal disruption cases */
 
-  double a1, a2, b1, b2;
+  // BBH fits
+  double af = 0;
+  double af2 = pow(af,2);
+  double af3 = pow(af,3);
+  
+  /* l = 2, m = 2*/	    
+  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
+  double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
+  double alpha_bbh = 0.0889623157 * (alpha1_c/alpha1_d);
+  //
 
-  a1 = 0.04221885;
-  a2 = -0.00049354;
-  b1 = 2.94836890;
-  b2 = -0.02816409;
+  const double c111 = -0.35178201;
+  const double c121 = 5.56115641;
+  const double c211 = -0.04385969;
+  const double c221 = 0.28927232;
+  const double d111 = 1.72273820;
+  const double d121 = 0.43672158;
 
-  *alpha2 = ( 1 + a1*k2t + a2*k2t*k2t )  / ((1 + b1*k2t + b2*k2t*k2t));
+  double a11 = c111;
+  double a12 = c121;
+  double a21 = c211;
+  double a22 = c221;
+  double b11 = d111;
+  double b12 = d121;
+
+  double a1 = a11*nu + a12*nu*nu;
+  double a2 = a21*nu + a22*nu*nu;
+  double b1 = b11*nu + b12*nu*nu;
+
+  double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  if(Ap>1.){
+    Ap = 1.;
+  }
+  if(Ap<0.0){
+    Ap = 0.0;
+  }
+
+  *alpha2 = Ap*alpha_bbh;
   *alpha1 = 0;
 }
 
