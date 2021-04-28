@@ -1653,7 +1653,7 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
 
 /** Calculate tidal correction to multipolar waveform amplitude
     Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 */
-void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
+void eob_wav_hlmTidal(double x, double *hTidallm)
 {
   const double nu       = EOBPars->nu;
   const double XA       = EOBPars->X1;
@@ -3707,7 +3707,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   if (usetidal) {   
     /** Tidal contribution */
     double hlmtidal[KMAX];
-    eob_wav_hlmTidal(x, dyn, hlmtidal);
+    eob_wav_hlmTidal(x, hlmtidal);
     if( !(usespins) ) { 
       /* Correct normalization of point-mass wave for some of the m=odd modes */
       hlm->ampli[0] *= X12;

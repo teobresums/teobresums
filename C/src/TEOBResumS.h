@@ -820,8 +820,8 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
 void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 
 /* TEOBResumSFlux.c */
-double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
-double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
+double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr);
+double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
@@ -837,7 +837,7 @@ void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
 void (*eob_wav_hlmNewt)();
 void eob_wav_hlmNewt_v1(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
-void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
+void eob_wav_hlmTidal(double x, double *hTidallm);
 void (*eob_wav_flm)();
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);

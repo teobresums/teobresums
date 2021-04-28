@@ -193,13 +193,13 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
 /** Flux calculation for Newton-Normalized energy flux 
     Use the DIN resummation procedure. 
     Add non-QC and non-K corrections to (2,2) partial flux. */
-double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
+double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr)
 {
-  return eob_flx_Flux_s(x, Omega, r_omega, E, Heff, jhat, r, pr_star, ddotr,dyn);
+  return eob_flx_Flux_s(x, Omega, r_omega, E, Heff, jhat, r, pr_star, ddotr);
 }
 
 /** Flux calculation for spinning systems */
-double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
+double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr)
 {
   const double nu = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
@@ -300,7 +300,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   if (usetidal) {
     /** Tidal amplitudes */
-    eob_wav_hlmTidal(x,dyn, hlmTidal);
+    eob_wav_hlmTidal(x, hlmTidal);
     if (!(usespins)) {
       /* Correct normalization of (2,1) (3,1), (3,3) point-mass amplitudes */
       Modhhatlm[0] *= X12;

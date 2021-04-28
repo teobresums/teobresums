@@ -77,7 +77,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     x          = v_phi * v_phi;
     jhat       = j[i]/(r_omega*v_phi);                         /** Newton-normalized angular momentum  */
 
-    Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn); 
+    Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0); 
 
     /** Radial momentum conjugate to r*: post-circular ID  */
     Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
@@ -214,7 +214,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
     x          =  v_phi*v_phi;
     jhat       =  pph[i]/(r_omg*v_phi);  /* Newton-normalized angular momentum */
 
-    Fphi[i]    = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0., dyn);
+    Fphi[i]    = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[i], 0., 0.);
     prstar[i]  = Fphi[i]/(dpph_dr[i]*C0);
     pr[i]      = prstar[i]/sqrtAbyB; 
 

@@ -279,7 +279,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	  x          = SQ(v_phi);
 	  jhat       = dyn->pphi/(r_omg*v_phi);
 
-	  Fphi = eob_flx_Flux_s(x, dyn->Omg, r_omg, E_vec[i], Heff_vec[i], jhat, dyn->r, dyn->prstar, dyn->ddotr, dyn);
+	  Fphi = eob_flx_Flux_s(x, dyn->Omg, r_omg, E_vec[i], Heff_vec[i], jhat, dyn->r, dyn->prstar, dyn->ddotr);
     
 	} else {
 	  
@@ -291,7 +291,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 	  x          = SQ(v_phi);
 	  jhat       = dyn->pphi/(r_omg*v_phi);
 	  
-	  Fphi = eob_flx_Flux(x, dyn->Omg, r_omg, E_vec[i], Heff_vec[i], jhat, dyn->r, dyn->prstar, dyn->ddotr, dyn);
+	  Fphi = eob_flx_Flux(x, dyn->Omg, r_omg, E_vec[i], Heff_vec[i], jhat, dyn->r, dyn->prstar, dyn->ddotr);
 	
 	}
 
