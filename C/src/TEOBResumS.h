@@ -552,7 +552,7 @@ typedef struct tagEOBParameters
   int spin_dyn_size;
   double spin_odes_omg_stop, spin_odes_t_stop;
   double spin_odes_dt;
-  int spin_interp_integrate;
+  int spin_interp_domain;
   
   /* final state */
   double Mbhf, abhf; // final BH 

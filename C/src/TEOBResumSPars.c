@@ -197,7 +197,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->spin_odes_omg_stop = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
   eobp->spin_odes_t_stop = -1;
   eobp->spin_odes_dt = 1; // timestep for spin dynamics
-  eobp->spin_interp_integrate = 0; // do not further integrate spin dynamics during interp
+  eobp->spin_interp_domain = 0; // FD or TD interpolation
   eobp->chi1x = eobp->chi1y = eobp->chi1z = 0.;
   eobp->chi2x = eobp->chi2y = eobp->chi2z = 0.;
   
@@ -494,7 +494,8 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->spin_odes_omg_stop = par_get_d("spin_odes_omg_stop"); // stop ODE integration at this Momega set by NR BBH mrg freq fit 
   eobp->spin_odes_t_stop = par_get_d("spin_odes_t_stop");
   eobp->spin_odes_dt = par_get_d("spin_odes_dt"); // timestep for spin dynamics
-  eobp->spin_interp_integrate = par_get_d("spin_interp_integrate"); 
+  eobp->spin_interp_domain = par_get_i("spin_interp_domain"); 
+  eobp->project_spins = par_get_i("project_spins");           // spin projection in EOB dynamics
   eobp->chi1x = par_get_d("chi1x"); 
   eobp->chi1y = par_get_d("chi1y"); 
   eobp->chi1z = par_get_d("chi1z"); 
@@ -684,7 +685,8 @@ void par_db_from_EOBPar (EOBParameters *eobp)
   par_add_d("spin_odes_omg_stop", eobp->spin_odes_omg_stop);
   par_add_d("spin_odes_t_stop", eobp->spin_odes_t_stop);
   par_add_d("spin_odes_dt", eobp->spin_odes_dt);
-  par_add_d("spin_interp_integrate", eobp->spin_interp_integrate);
+  par_add_i("spin_interp_domain", eobp->spin_interp_domain);
+  par_add_i("project_spins", eobp->project_spins);
   par_add_d("chi1x", eobp->chi1x);
   par_add_d("chi1y", eobp->chi1y);
   par_add_d("chi1z", eobp->chi1z);
