@@ -3508,34 +3508,29 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
    * BHNS only part
    **/
   double alpha1, alpha2, *pa1, *pa2, omega1, omega2, *po1, *po2;
-  bool td_case=false, td_case2=false, *td, *td2, td_spin=false, *td_sp;
+  bool td_case=false, *td, td_spin=false, *td_sp;
   pa1 = &alpha1;
   pa2 = &alpha2;
   po1 = &omega1;
   po2 = &omega2;
   td = &td_case; // tidal disruption cases for nonspin case
-  td2 = &td_case2; // cases that work with 2,-2 mode Berti's fits
   td_sp = &td_spin; // tidal disruption cases for spin case
 
-  tidal_disruption_cases(q, Mbh, M, chi1, td, td2, td_sp);
+  tidal_disruption_cases(q, Mbh, M, chi1, td, td_sp);
 
   if(td_case==true){if (VERBOSE) PRSECTN("td_case=true");}
-  if(td_case2==true){if (VERBOSE) PRSECTN("td_case2=true");}
   if(td_spin==true){if (VERBOSE) PRSECTN("td_spin=true");}
 
   /** Compute omega1, omega2, alpha1 and alpha2 from fits*/
   if(td_case==false){
-    if (VERBOSE) PRSECTN("td_case=false");
-    kerr_bh_freq(po1, po2, abh, Mbh, kapT2, td2);
-    kerr_bh_qnm(pa1, pa2, abh, po1, po2, kapT2, td2);
+    kerr_bh_freq(po1, po2, abh, Mbh, kapT2);
+    kerr_bh_qnm(pa1, pa2, abh, po1, po2, kapT2);
   }else{
-    if (VERBOSE) PRSECTN("td_case=true");
     kerr_bh_freq_td(po1, po2, kapT2, nu);
     kerr_bh_qnm_td(pa1, pa2, kapT2, nu);
   }
   if (td_spin==true){
-    if (VERBOSE) PRSECTN("td_spin=true");
-    QNM_bhns_td(chi1, pa1, pa2, po1, kapT2, nu);
+    QNM_bhns_td(chi1, pa1, pa2, po1, po2, kapT2, nu);
   }
   
   if (VERBOSE) PRFORMd("alpha1", alpha1 );
@@ -3561,10 +3556,10 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   double Domega = omega1 - Mbh*Opeak; 
    
    if((td_case==true) || (td_spin==true)){
-     alpha1 = alpha2;
+     pa1 = &alpha2;
    }
    
-   if( ((td_case==false) && (td_case2==false) && (td_spin==false)) ){
+   if( ((td_case==false) && (td_spin==false)) ){
      if (VERBOSE) PRSECTN("No tidal disruption cases");
     QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 	     a1, a2, a3, a4, b1, b2, b3, b4, 

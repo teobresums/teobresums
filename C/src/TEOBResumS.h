@@ -649,12 +649,12 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
-void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag, bool *flag2, bool *flag3);
-void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double kapT2, double nu);
+void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag1, bool *flag2);
+void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double kapT2, double nu);
 void kerr_bh_freq_td(double *omega1, double *omega2, double k2t, double nu);
-void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t, bool td2);
+void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t);
 void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t, double nu);
-void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, double *omega2, double k2t, bool td2);
+void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, double *omega2, double k2t);
 double apeak_bhns(double nu, double k2t);
 double apeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2, double Opeak);
 double opeak_bhns(double nu, double k2t);
