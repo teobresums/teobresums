@@ -208,8 +208,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   //r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
 
-  /* If f_min is too high fall back to a minimum acceptable initial radius */
-  if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
+  /* If f_min is too high and ecc=0 fall back to a minimum acceptable initial radius */
+  if(ecc == 0)
+    if (r0 < TEOB_R0_THRESHOLD) r0 = TEOB_R0_THRESHOLD;
 
   /* Saving initial radius */
   EOBPars->r0 = r0;
