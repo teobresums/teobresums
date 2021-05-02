@@ -879,45 +879,38 @@ double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz)
 
 double alpha_initial_condition(EOBParameters *eobp)
 {
-   double q 	= eobp->q;
-   double f0 	= EOBPars->initial_frequency;
-   double chi1x = EOBPars->chi1x;
-   double chi1y = EOBPars->chi1y;
-   double chi1z = EOBPars->chi1z;
-   double chi2x = EOBPars->chi2x;
-   double chi2y = EOBPars->chi2y;
-   double chi2z = EOBPars->chi2z;
+  double q 	   = eobp->q;
+  double f0 	 = EOBPars->initial_frequency;
+  double chi1x = EOBPars->chi1x;
+  double chi1y = EOBPars->chi1y;
+  double chi1z = EOBPars->chi1z;
+  double chi2x = EOBPars->chi2x;
+  double chi2y = EOBPars->chi2y;
+  double chi2z = EOBPars->chi2z;
 
-   /*Convert f0 to v used here */
-   double v = cbrt(Pi*f0);
-   if (!(EOBPars->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(EOBPars->M));
+  /*Convert f0 to v used here */
+  double v = cbrt(Pi*f0);
+  if (!(EOBPars->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(EOBPars->M));
 
-   /*Introduce temporary variables to make things more readable: q^2, 1+q, and (1+q)^2 come up often, so label them */
-   double *oq, *oq2, *qq, *angle_x, *angle_y;
-   oq = (double*) malloc(sizeof(double));
-   oq2=(double*) malloc(sizeof(double));
-   qq = (double*) malloc(sizeof(double));
-   angle_x = (double*) malloc(sizeof(double));
-   angle_y = (double*) malloc(sizeof(double));
+  /*Introduce temporary variables to make things more readable: 
+    q^2, 1+q, and (1+q)^2 come up often, so label them */
+  double oq, oq2, qq, angle_x, angle_y;
+  oq = 1 + q;
+  qq = q * q;
+  oq2= oq*oq;
 
-   *(oq) = 1 + q;
-   *(qq) = q * q;
-   *(oq2)= *(oq)* *(oq);
-   *(angle_x) = (pow(q, -70) * pow(v, 5) * pow(1 + pow(q, -2), -32) * pow(1 + pow(q, -1), -6) * (-(*(qq) * *(oq2) * pow(v, 2) * ((1 + 4 * q) * (12 * chi1y * (3 + 4 * q) * (1 + *(qq)) * *(oq2) + chi1y * (*(oq)) * (27 + 15 * q + 98 * *(qq) + 14 * pow(q, 3) + 72 * pow(q, 4)) * pow(v, 2) - 12 * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * pow(1 + *(qq), 2)) + (4 + q) * (12 * chi2y * (4 + 3 * q) * (1 + *(qq)) * *(oq2) + chi2y * (*(oq)) * (72 + 14 * q + 98 * *(qq) + 15 * pow(q, 3) + 27 * pow(q, 4)) * pow(v, 2) - 12 * (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * pow(1 + *(qq), 2))) * pow(1 + *(qq), 29)) + 4 * chi2y * q * (72 + 14 * q + 98 * *(qq) + 15 * pow(q, 3) + 27 * pow(q, 4)) * pow(*(oq), 3) * pow(v, 2) * pow(1 + *(qq), 30) + 4 * chi1y * *(qq) * (27 + 15 * q + 98 * *(qq) + 14 * pow(q, 3) + 72 * pow(q, 4)) * pow(*(oq), 3) * pow(v, 2) * pow(1 + *(qq), 30) + 48 * chi2y * q * (4 + 3 * q) * pow(*(oq), 4) * pow(1 + *(qq), 31) + 48 * chi1y * (3 + 4 * q) * *(qq) * pow(*(oq), 4) * pow(1 + *(qq), 31) + 4 * q * (28 * chi2z + 27 * (chi1z + chi2z) * q + 28 * chi1z * *(qq)) * (-(q * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * (1 + *(qq))) - (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * (1 + *(qq)) + chi2y * (4 + 3 * q) * *(oq2) + chi1y * q * (3 + 4 * q) * *(oq2)) * pow(v, 3) * pow(1 + *(qq), 31) - 48 * q * (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * *(oq2) * pow(1 + *(qq), 32) - 48 * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * *(qq) * *(oq2) * pow(1 + *(qq), 32) - chi1y * *(qq) * pow(*(oq), 3) * pow(v, 4) * (2 * (*(oq))*pow(q, 3) * pow(1 + *(qq), 29) + 315 * (*(oq))**(qq) * pow(1 + *(qq), 30) - 18 * q * (*(oq))*pow(1 + *(qq), 31) - 81 * (*(oq))*pow(1 + *(qq), 32) - 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + *(qq), 31) + 27 * pow(1 + *(qq), 32))) - chi2y * pow(*(oq), 3) * pow(v, 4) * (2 * (*(oq))*pow(q, 3) * pow(1 + *(qq), 29) + 315 * (*(oq))**(qq) * pow(1 + *(qq), 30) - 18 * q * (*(oq))*pow(1 + *(qq), 31) - 81 * (*(oq))*pow(1 + *(qq), 32) + 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + *(qq), 31) + 27 * pow(1 + *(qq), 32)))) *
-              pow(1 + ((9 + q + 9 * *(qq)) * pow(v, 2) * pow(1 + *(qq), -1)) / 6. + (pow(v, 4) * (81 + *(qq) * pow(1 + *(qq), -2) - 57 * q * pow(1 + *(qq), -1))) / 24., -1)) /
+  double v2 = v*v;
+  double v3 = v2*v;
+  double v4 = v3*v;
+  double v5 = v4*v;
+
+  angle_x = (pow(q, -70) * v5 * pow(1 + pow(q, -2), -32) * pow(1 + pow(q, -1), -6) * (-(qq * oq2 * v2 * ((1 + 4 * q) * (12 * chi1y * (3 + 4 * q) * (1 + qq) * oq2 + chi1y * oq * (27 + 15 * q + 98 * qq + 14 * pow(q, 3) + 72 * pow(q, 4)) * v2 - 12 * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * pow(1 + qq, 2)) + (4 + q) * (12 * chi2y * (4 + 3 * q) * (1 + qq) * oq2 + chi2y * (oq) * (72 + 14 * q + 98 * qq + 15 * pow(q, 3) + 27 * pow(q, 4)) * v2 - 12 * (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * pow(1 + qq, 2))) * pow(1 + qq, 29)) + 4 * chi2y * q * (72 + 14 * q + 98 * qq + 15 * pow(q, 3) + 27 * pow(q, 4)) * pow(oq, 3) * v2 * pow(1 + qq, 30) + 4 * chi1y * qq * (27 + 15 * q + 98 * qq + 14 * pow(q, 3) + 72 * pow(q, 4)) * pow(oq, 3) * v2 * pow(1 + qq, 30) + 48 * chi2y * q * (4 + 3 * q) * pow(oq, 4) * pow(1 + qq, 31) + 48 * chi1y * (3 + 4 * q) * qq * pow(oq, 4) * pow(1 + qq, 31) + 4 * q * (28 * chi2z + 27 * (chi1z + chi2z) * q + 28 * chi1z * qq) * (-(q * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * (1 + qq)) - (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * (1 + qq) + chi2y * (4 + 3 * q) * oq2 + chi1y * q * (3 + 4 * q) * oq2) * v3 * pow(1 + qq, 31) - 48 * q * (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * oq2 * pow(1 + qq, 32) - 48 * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * qq * oq2 * pow(1 + qq, 32) - chi1y * qq * pow(oq, 3) * v4 * (2 * (oq)*pow(q, 3) * pow(1 + qq, 29) + 315 * (oq)*qq * pow(1 + qq, 30) - 18 * q * (oq)*pow(1 + qq, 31) - 81 * (oq)*pow(1 + qq, 32) - 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + qq, 31) + 27 * pow(1 + qq, 32))) - chi2y * pow(oq, 3) * v4 * (2 * (oq)*pow(q, 3) * pow(1 + qq, 29) + 315 * (oq)*qq * pow(1 + qq, 30) - 18 * q * (oq)*pow(1 + qq, 31) - 81 * (oq)*pow(1 + qq, 32) + 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + qq, 31) + 27 * pow(1 + qq, 32)))) *
+              pow(1 + ((9 + q + 9 * qq) * v2 * pow(1 + qq, -1)) / 6. + (v4 * (81 + qq * pow(1 + qq, -2) - 57 * q * pow(1 + qq, -1))) / 24., -1)) /
              96.;
-   *(angle_y) = -(pow(q, -70) * pow(v, 5) * pow(1 + pow(q, -2), -32) * pow(1 + pow(q, -1), -6) * (-(*(qq) * *(oq2) * pow(v, 2) * ((1 + 4 * q) * (12 * chi1x * (3 + 4 * q) * (1 + *(qq)) * *(oq2) + chi1x * (*(oq)) * (27 + 15 * q + 98 * *(qq) + 14 * pow(q, 3) + 72 * pow(q, 4)) * pow(v, 2) - 12 * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * pow(1 + *(qq), 2)) + (4 + q) * (12 * chi2x * (4 + 3 * q) * (1 + *(qq)) * *(oq2) + chi2x * (*(oq)) * (72 + 14 * q + 98 * *(qq) + 15 * pow(q, 3) + 27 * pow(q, 4)) * pow(v, 2) - 12 * (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * pow(1 + *(qq), 2))) * pow(1 + *(qq), 29)) + 4 * chi2x * q * (72 + 14 * q + 98 * *(qq) + 15 * pow(q, 3) + 27 * pow(q, 4)) * pow(*(oq), 3) * pow(v, 2) * pow(1 + *(qq), 30) + 4 * chi1x * *(qq) * (27 + 15 * q + 98 * *(qq) + 14 * pow(q, 3) + 72 * pow(q, 4)) * pow(*(oq), 3) * pow(v, 2) * pow(1 + *(qq), 30) + 48 * chi2x * q * (4 + 3 * q) * pow(*(oq), 4) * pow(1 + *(qq), 31) + 48 * chi1x * (3 + 4 * q) * *(qq) * pow(*(oq), 4) * pow(1 + *(qq), 31) + 4 * q * (28 * chi2z + 27 * (chi1z + chi2z) * q + 28 * chi1z * *(qq)) * (-(q * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * (1 + *(qq))) - (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * (1 + *(qq)) + chi2x * (4 + 3 * q) * *(oq2) + chi1x * q * (3 + 4 * q) * *(oq2)) * pow(v, 3) * pow(1 + *(qq), 31) - 48 * q * (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * *(oq2) * pow(1 + *(qq), 32) - 48 * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * *(qq) * *(oq2) * pow(1 + *(qq), 32) - chi1x * *(qq) * pow(*(oq), 3) * pow(v, 4) * (2 * (*(oq))*pow(q, 3) * pow(1 + *(qq), 29) + 315 * (*(oq))**(qq) * pow(1 + *(qq), 30) - 18 * q * (*(oq))*pow(1 + *(qq), 31) - 81 * (*(oq))*pow(1 + *(qq), 32) - 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + *(qq), 31) + 27 * pow(1 + *(qq), 32))) - chi2x * pow(*(oq), 3) * pow(v, 4) * (2 * (*(oq))*pow(q, 3) * pow(1 + *(qq), 29) + 315 * (*(oq))**(qq) * pow(1 + *(qq), 30) - 18 * q * (*(oq))*pow(1 + *(qq), 31) - 81 * (*(oq))*pow(1 + *(qq), 32) + 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + *(qq), 31) + 27 * pow(1 + *(qq), 32)))) *
-               pow(1 + ((9 + q + 9 * *(qq)) * pow(v, 2) * pow(1 + *(qq), -1)) / 6. + (pow(v, 4) * (81 + *(qq) * pow(1 + *(qq), -2) - 57 * q * pow(1 + *(qq), -1))) / 24., -1)) /
+  angle_y = -(pow(q, -70) * v5 * pow(1 + pow(q, -2), -32) * pow(1 + pow(q, -1), -6) * (-(qq * oq2 * v2 * ((1 + 4 * q) * (12 * chi1x * (3 + 4 * q) * (1 + qq) * oq2 + chi1x * (oq) * (27 + 15 * q + 98 * qq + 14 * pow(q, 3) + 72 * pow(q, 4)) * v2 - 12 * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * pow(1 + qq, 2)) + (4 + q) * (12 * chi2x * (4 + 3 * q) * (1 + qq) * oq2 + chi2x * (oq) * (72 + 14 * q + 98 * qq + 15 * pow(q, 3) + 27 * pow(q, 4)) * v2 - 12 * (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * pow(1 + qq, 2))) * pow(1 + qq, 29)) + 4 * chi2x * q * (72 + 14 * q + 98 * qq + 15 * pow(q, 3) + 27 * pow(q, 4)) * pow(oq, 3) * v2 * pow(1 + qq, 30) + 4 * chi1x * qq * (27 + 15 * q + 98 * qq + 14 * pow(q, 3) + 72 * pow(q, 4)) * pow(oq, 3) * v2 * pow(1 + qq, 30) + 48 * chi2x * q * (4 + 3 * q) * pow(oq, 4) * pow(1 + qq, 31) + 48 * chi1x * (3 + 4 * q) * qq * pow(oq, 4) * pow(1 + qq, 31) + 4 * q * (28 * chi2z + 27 * (chi1z + chi2z) * q + 28 * chi1z * qq) * (-(q * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * (1 + qq)) - (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * (1 + qq) + chi2x * (4 + 3 * q) * oq2 + chi1x * q * (3 + 4 * q) * oq2) * v3 * pow(1 + qq, 31) - 48 * q * (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * oq2 * pow(1 + qq, 32) - 48 * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * qq * oq2 * pow(1 + qq, 32) - chi1x * qq * pow(oq, 3) * v4 * (2 * (oq)*pow(q, 3) * pow(1 + qq, 29) + 315 * (oq)*qq * pow(1 + qq, 30) - 18 * q * (oq)*pow(1 + qq, 31) - 81 * (oq)*pow(1 + qq, 32) - 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + qq, 31) + 27 * pow(1 + qq, 32))) - chi2x * pow(oq, 3) * v4 * (2 * (oq)*pow(q, 3) * pow(1 + qq, 29) + 315 * (oq)*qq * pow(1 + qq, 30) - 18 * q * (oq)*pow(1 + qq, 31) - 81 * (oq)*pow(1 + qq, 32) + 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + qq, 31) + 27 * pow(1 + qq, 32)))) *
+               pow(1 + ((9 + q + 9 * qq) * v2 * pow(1 + qq, -1)) / 6. + (v4 * (81 + qq * pow(1 + qq, -2) - 57 * q * pow(1 + qq, -1))) / 24., -1)) /
              96.;
-   return atan2(*(angle_y), *(angle_x));
-
-   free(oq);
-   free(qq);
-   free(oq2);
-   free(angle_x);
-   free(angle_y);
-
-
+  return atan2(angle_y, angle_x);
 }
 
 /** Compute beta from Lhat */
