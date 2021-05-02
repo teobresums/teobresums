@@ -311,6 +311,14 @@ enum{
 };
 static const char* ringdown_eulerangles_opt[] = {"constant", "QNMs", "undefined"};
 
+/** PN omegadot for spin dynamics */
+enum{
+  SPIN_FLX_PN,
+  SPIN_FLX_EOB,
+  SPIN_FLX_NOPT,
+};
+static const char* spin_flx_opt[] = {"PN", "EOB", "undefined"};
+
 /** Error handler for root finders */
 enum{ 
   ROOT_ERRORS_NO,
@@ -541,6 +549,7 @@ typedef struct tagEOBParameters
   int ode_stop_afterNdt;
   int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
   int project_spins, ringdown_eulerangles;
+  int spin_flx;
 
   /* post-adiabatic */
   int postadiabatic_dynamics, postadiabatic_dynamics_stop;

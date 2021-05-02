@@ -895,7 +895,7 @@ double alpha_initial_condition(EOBParameters *eobp)
   /*Introduce temporary variables to make things more readable: 
     q^2, 1+q, and (1+q)^2 come up often, so label them */
   double oq, oq2, qq, angle_x, angle_y;
-  oq = 1 + q;
+  oq = 1. + q;
   qq = q * q;
   oq2= oq*oq;
 
@@ -1107,91 +1107,99 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * (Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] - Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
     
   /* dot omg (Rad.React.) */
+  if(EOBPars->spin_flx == SPIN_FLX_PN) {
+    /* PN omega_dot, taken from: 
+       https://arxiv.org/abs/1307.4418 , App.A */
 
-  const double vlo = 0.33333333333*v9;
-  double SAdotLh, SBdotLh, SAdotSB, SA2, SB2;
-  vect_dot3(SA, Lh, &SAdotLh);
-  vect_dot3(SB, Lh, &SBdotLh);    
-  vect_dot3(SA, SB, &SAdotSB);
-  vect_dot3(SA, SA, &SA2);
-  vect_dot3(SB, SB, &SB2);
+    const double vlo = 0.33333333333*v9;
+    double SAdotLh, SBdotLh, SAdotSB, SA2, SB2;
+    vect_dot3(SA, Lh, &SAdotLh);
+    vect_dot3(SB, Lh, &SBdotLh);    
+    vect_dot3(SA, SB, &SAdotSB);
+    vect_dot3(SA, SA, &SA2);
+    vect_dot3(SB, SB, &SB2);
 
-  double a[12], b[12], beta[9];
-  for (int i=0; i<12; i++) a[i] = 0;
-  for (int i=0; i<12; i++) b[i] = 0;
-  for (int i=0; i<9; i++) beta[i]= 0;
-  
-  //TODO: precompted spin independent coefs as first call       
-  // sgima, beta, a_3-8 are spin-dependend, precompute the fractions
-  
-  // https://arxiv.org/abs/1307.4418 , App.A 
-  
-  double sigma4 = ( 247./48*SAdotSB - 721./48*SAdotLh*SBdotLh )/(nu*SQ(M2))
-    + (233./96*SA2 - 719./96*SQ(SAdotLh))/(M2*SQ(MA))
-    + (233./96*SB2 - 719./96*SQ(SBdotLh))/(M2*SQ(MB)); 
-  
-  
-  beta[3] = (113./12 + 25./4*mb_o_ma)*SAdotLh/M2
-    + (113./12 + 25./4*ma_o_mb)*SBdotLh/M2; 
+    double a[12], b[12], beta[9];
+    for (int i=0; i<12; i++) a[i] = 0;
+    for (int i=0; i<12; i++) b[i] = 0;
+    for (int i=0; i<9; i++) beta[i]= 0;
+    
+    //TODO: precompted spin independent coefs as first call       
+    // sgima, beta, a_3-8 are spin-dependend, precompute the fractions
+        
+    double sigma4 = ( 247./48*SAdotSB - 721./48*SAdotLh*SBdotLh )/(nu*SQ(M2))
+      + (233./96*SA2 - 719./96*SQ(SAdotLh))/(M2*SQ(MA))
+      + (233./96*SB2 - 719./96*SQ(SBdotLh))/(M2*SQ(MB)); 
+    
+    
+    beta[3] = (113./12 + 25./4*mb_o_ma)*SAdotLh/M2
+      + (113./12 + 25./4*ma_o_mb)*SBdotLh/M2; 
 
-  beta[5] = ((31319./1008-1159./24*nu) + mb_o_ma*( 809./84 - 281./8*nu))*SAdotLh/M2
-    + ((31319./1008-1159./24*nu) + ma_o_mb*( 809./84 - 281./8*nu))*SBdotLh/M2; 
+    beta[5] = ((31319./1008-1159./24*nu) + mb_o_ma*( 809./84 - 281./8*nu))*SAdotLh/M2
+      + ((31319./1008-1159./24*nu) + ma_o_mb*( 809./84 - 281./8*nu))*SBdotLh/M2; 
 
-  beta[6] = Pi/M2 * (75./2+151./6*mb_o_ma)*SAdotLh
-    + Pi/M2 * (75./2+151./6*ma_o_mb)*SBdotLh; 
+    beta[6] = Pi/M2 * (75./2+151./6*mb_o_ma)*SAdotLh
+      + Pi/M2 * (75./2+151./6*ma_o_mb)*SBdotLh; 
 
-  beta[7] = ((130325./756 - 796069./2016*nu+100019./864*nu2)+ mb_o_ma*(1195759./18144-257023./1008*nu+2903./32*nu2))*SAdotLh/M2 
-    + ((130325./756 - 796069./2016*nu+100019./864*nu2)+ ma_o_mb*(1195759./18144-257023./1008*nu+2903./32*nu2))*SBdotLh/M2;
-  
-  beta[8] = Pi/M2*((76927./504 -220055./672*nu) + mb_o_ma*(1665./28-50483./224*nu))*SAdotLh
-    + Pi/M2*((76927./504 -220055./672*nu) + ma_o_mb*(1665./28-50483./224*nu))*SBdotLh;
+    beta[7] = ((130325./756 - 796069./2016*nu+100019./864*nu2)+ mb_o_ma*(1195759./18144-257023./1008*nu+2903./32*nu2))*SAdotLh/M2 
+      + ((130325./756 - 796069./2016*nu+100019./864*nu2)+ ma_o_mb*(1195759./18144-257023./1008*nu+2903./32*nu2))*SBdotLh/M2;
+    
+    beta[8] = Pi/M2*((76927./504 -220055./672*nu) + mb_o_ma*(1665./28-50483./224*nu))*SAdotLh
+      + Pi/M2*((76927./504 -220055./672*nu) + ma_o_mb*(1665./28-50483./224*nu))*SBdotLh;
 
-  
-  b[6] = -1712./315;  
+    
+    b[6] = -1712./315;  
 
-  b[8] = - 856./315*nu + 124741./4410;  
+    b[8] = - 856./315*nu + 124741./4410;  
 
-  b[9] = - 6848./105* Pi;  
+    b[9] = - 6848./105* Pi;  
 
-  b[10] = 3090781./26460*nu -  2354./945*nu2 - 11821184./1964655;  
+    b[10] = 3090781./26460*nu -  2354./945*nu2 - 11821184./1964655;  
 
-  b[11] = 311233./5880*Pi - 3424./315*Pi*nu;
+    b[11] = 311233./5880*Pi - 3424./315*Pi*nu;
 
-  
-  a[0] = 96./5*nu;
+    
+    a[0] = 96./5*nu;
 
-  a[2] = -743./336-11./4*nu;
+    a[2] = -743./336-11./4*nu;
 
-  a[3] = 4*Pi-beta[3];
+    a[3] = 4*Pi-beta[3];
 
-  a[4] = 34103./18144 + 13661./2016*nu + 59./18*nu2 - sigma4;
+    a[4] = 34103./18144 + 13661./2016*nu + 59./18*nu2 - sigma4;
 
-  a[5] = -4159./672*Pi - 189./8*Pi*nu - beta[5];
+    a[5] = -4159./672*Pi - 189./8*Pi*nu - beta[5];
 
-  a[6] = 16447322263./139708800 + 16./3*Pi2 - 856./105*log(16.) - 1712./105*EulerGamma - beta[6]
-    + nu *( 451./48*Pi2- 56198689./217728) + nu2*541./896 - nu3*5605./2592;
+    a[6] = 16447322263./139708800 + 16./3*Pi2 - 856./105*log(16.) - 1712./105*EulerGamma - beta[6]
+      + nu *( 451./48*Pi2- 56198689./217728) + nu2*541./896 - nu3*5605./2592;
 
-  a[7] = - 4415./4032*Pi + 358675./6048*Pi*nu +91495./1512*Pi*nu2 - beta[7];
+    a[7] = - 4415./4032*Pi + 358675./6048*Pi*nu +91495./1512*Pi*nu2 - beta[7];
 
-  a[8] = 3971984677513./25427001600 + 127751./1470*Log2  - 47385./1568*Log3 + 124741./4410*EulerGamma -361./126*Pi2 + 82651980013./838252800*nu - 1712./315*nu*Log2
-    - 856./315*EulerGamma*nu  - 31495./8064*Pi2*nu + 54732199./93312*nu2- 3157./144*Pi2*nu2  - 18927373./435456*nu3 -95./3888*nu4 -beta[8];
+    a[8] = 3971984677513./25427001600 + 127751./1470*Log2  - 47385./1568*Log3 + 124741./4410*EulerGamma -361./126*Pi2 + 82651980013./838252800*nu - 1712./315*nu*Log2
+      - 856./315*EulerGamma*nu  - 31495./8064*Pi2*nu + 54732199./93312*nu2- 3157./144*Pi2*nu2  - 18927373./435456*nu3 -95./3888*nu4 -beta[8];
 
-  a[9] = 343801320119./745113600*Pi- 13696./105*Pi*Log2 -  6848./105*Pi*EulerGamma - 51438847./48384*Pi*nu + 205./6*Pi3*nu + 42680611./145152*Pi*nu2  +  9731./1344*Pi*nu3;
+    a[9] = 343801320119./745113600*Pi- 13696./105*Pi*Log2 -  6848./105*Pi*EulerGamma - 51438847./48384*Pi*nu + 205./6*Pi3*nu + 42680611./145152*Pi*nu2  +  9731./1344*Pi*nu3;
 
-  a[10] = 29619150939541789./36248733480960  -107638990./392931*Log2 + 616005./3136*Log3 - 11821184./1964655*EulerGamma - 21512./1701*Pi2 - 884576519037433./228843014400*nu 
-    + 2105111./8820*nu*Log2 - 15795./3136*nu*Log3 + 3090781./26460*EulerGamma*nu+ 14555455./217728*Pi2*nu  + 1175999369413./914457600*nu2 - 4708./945*nu2*Log2
-    - 126809./3024*Pi2*nu2 - 2354./945*EulerGamma*nu2 - 9007327699./11757312*nu3 + 9799./384*Pi2*nu3 + 51439207./1741824*nu4 - 34613./186624*nu5;
+    a[10] = 29619150939541789./36248733480960  -107638990./392931*Log2 + 616005./3136*Log3 - 11821184./1964655*EulerGamma - 21512./1701*Pi2 - 884576519037433./228843014400*nu 
+      + 2105111./8820*nu*Log2 - 15795./3136*nu*Log3 + 3090781./26460*EulerGamma*nu+ 14555455./217728*Pi2*nu  + 1175999369413./914457600*nu2 - 4708./945*nu2*Log2
+      - 126809./3024*Pi2*nu2 - 2354./945*EulerGamma*nu2 - 9007327699./11757312*nu3 + 9799./384*Pi2*nu3 + 51439207./1741824*nu4 - 34613./186624*nu5;
 
-  a[11] =  91347297344213./81366405120*Pi+ 5069891./17640*Pi*Log2- 142155./784*Pi*Log3  + 311233./5880*Pi*EulerGamma - 1903651780081./4470681600*Pi*nu- 6848./315*Pi*nu*Log2
-    - 3424./315*Pi*EulerGamma*nu - 26035./16128*Pi3*nu + 1760705531./290304*Pi*nu2 - 112955./576*Pi3*nu2 - 7030123./13608*Pi*nu3 + 49187./6048*Pi*nu4;  
-  
-  // Eq.(A1) of https://arxiv.org/abs/1307.4418 for Momega
-  dy[EOB_EVOLVE_SPIN_Momg] = 0.;
-  for (int i=2; i<8; i++)
-    dy[EOB_EVOLVE_SPIN_Momg] += (a[i] + b[i]*lnomg)*pow(omg,(double)i*oothree);
-  dy[EOB_EVOLVE_SPIN_Momg] += 1.;  
-  dy[EOB_EVOLVE_SPIN_Momg] *= a[0]*pow(omg, eleven_o_three); // LO
-      
+    a[11] =  91347297344213./81366405120*Pi+ 5069891./17640*Pi*Log2- 142155./784*Pi*Log3  + 311233./5880*Pi*EulerGamma - 1903651780081./4470681600*Pi*nu- 6848./315*Pi*nu*Log2
+      - 3424./315*Pi*EulerGamma*nu - 26035./16128*Pi3*nu + 1760705531./290304*Pi*nu2 - 112955./576*Pi3*nu2 - 7030123./13608*Pi*nu3 + 49187./6048*Pi*nu4;  
+    
+    // Eq.(A1) of https://arxiv.org/abs/1307.4418 for Momega
+    dy[EOB_EVOLVE_SPIN_Momg] = 0.;
+    for (int i=2; i<8; i++)
+      dy[EOB_EVOLVE_SPIN_Momg] += (a[i] + b[i]*lnomg)*pow(omg,(double)i*oothree);
+    dy[EOB_EVOLVE_SPIN_Momg] += 1.;  
+    dy[EOB_EVOLVE_SPIN_Momg] *= a[0]*pow(omg, eleven_o_three); // LO
+  } else if (EOBPars->spin_flx == SPIN_FLX_EOB){
+      /* use the exact omega22 from the EOB dynamics */
+      /* do not explicitly integrate omgdot here*/
+      dy[EOB_EVOLVE_SPIN_Momg] = 0.;  
+  } else {
+    errorexit("specify an omega dot for the spin-precession evolution");
+  }
+
   return GSL_SUCCESS;
 }
 

@@ -200,7 +200,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->spin_interp_domain = 0; // FD or TD interpolation
   eobp->chi1x = eobp->chi1y = eobp->chi1z = 0.;
   eobp->chi2x = eobp->chi2y = eobp->chi2z = 0.;
-  
+  eobp->spin_flx=SPIN_FLX_EOB;
+
   /* OMP settings */
 
   eobp->openmp_threads=1; // OpenMP threads
@@ -502,7 +503,11 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->chi2x = par_get_d("chi2x"); 
   eobp->chi2y = par_get_d("chi2y"); 
   eobp->chi2z = par_get_d("chi2z"); 
-  
+  for (eobp->spin_flx=0; eobp->spin_flx<SPIN_FLX_NOPT; eobp->spin_flx++) {
+    if (STREQUAL(par_get_s("spin_flx"), spin_flx_opt[eobp->spin_flx])) {
+      break;
+    }
+  }
   /* OMP settings */
   
   eobp->openmp_threads = par_get_i("openmp_threads");
@@ -687,6 +692,7 @@ void par_db_from_EOBPar (EOBParameters *eobp)
   par_add_d("spin_odes_dt", eobp->spin_odes_dt);
   par_add_i("spin_interp_domain", eobp->spin_interp_domain);
   par_add_i("project_spins", eobp->project_spins);
+  par_add_s("spin_flx", spin_flx_opt[eobp->spin_flx]); // {"PN", "EOB"}
   par_add_d("chi1x", eobp->chi1x);
   par_add_d("chi1y", eobp->chi1y);
   par_add_d("chi1z", eobp->chi1z);
