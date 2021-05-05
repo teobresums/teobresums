@@ -3401,12 +3401,12 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 /** BHNS ringdown model*/ 
 /*
 /** Ringdown waveform template for tidal disruption cases */
-void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double *alpha2, double Amrg)
+void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double alpha2, double Amrg)
 {  
   double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
   double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));
   
-  double sigmar = -(*alpha2)*log( (Amrg/exp(1))/amp );
+  double sigmar = -(alpha2)*log( (Amrg/exp(1))/amp );
 
   psi[0] = amp * exp(-sigmar*x); /* amplitude */
   psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
@@ -3507,66 +3507,23 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   /** 
    * BHNS only part
    **/
-  double alpha1, alpha2, *pa1, *pa2, omega1, omega2, *po1, *po2;
-  bool td_case=false, *td, td_spin=false, *td_sp;
-  pa1 = &alpha1;
-  pa2 = &alpha2;
-  po1 = &omega1;
-  po2 = &omega2;
-  td = &td_case; // tidal disruption cases for nonspin case
-  td_sp = &td_spin; // tidal disruption cases for spin case
+  double Apeak[KMAX], alpha2[KMAX];
+  bool td_case=false, *td;
+  td = &td_case; // tidal disruption cases flag
 
-  tidal_disruption_cases(q, Mbh, M, chi1, td, td_sp);
+  tidal_disruption_cases(q, Mbh, M, chi1, td);
 
   if(td_case==true){if (VERBOSE) PRSECTN("td_case=true");}
-  if(td_spin==true){if (VERBOSE) PRSECTN("td_spin=true");}
-
-  /** Compute omega1, omega2, alpha1 and alpha2 from fits*/
-  if(td_case==false){
-    kerr_bh_freq(po1, po2, abh, Mbh, kapT2);
-    kerr_bh_qnm(pa1, pa2, abh, po1, po2, kapT2);
-  }else{
-    kerr_bh_freq_td(po1, po2, kapT2, nu);
-    kerr_bh_qnm_td(pa1, pa2, kapT2, nu);
-  }
-  if (td_spin==true){
-    QNM_bhns_td(chi1, pa1, pa2, po1, po2, kapT2, nu);
-  }
   
-  if (VERBOSE) PRFORMd("alpha1", alpha1 );
-  if (VERBOSE) PRFORMd("alpha2", alpha2 );
-  if (VERBOSE) PRFORMd("omega1", omega1 );
-  if (VERBOSE) PRFORMd("omega2", omega2 );
-  
-
-  /** Compute peak values for amplitude and frequency from fits */
-  double Apeak;
-  double Opeak;
-  if(td_spin==true){
-    Opeak = opeak_bhns_spin(nu, kapT2, chi1, X1, X2);
-    Apeak = apeak_bhns_spin(nu, kapT2, chi1, X1, X2, Opeak);
-  }else{
-    Apeak = apeak_bhns(nu, kapT2);
-    Opeak = opeak_bhns(nu, kapT2);
-  }
-  
-
-  /** Postpeak coefficients calculation */
-  double alpha21 = alpha2 - alpha1;
-  double Domega = omega1 - Mbh*Opeak; 
-   
-   if((td_case==true) || (td_spin==true)){
-     pa1 = &alpha2;
-   }
-   
-   if( ((td_case==false) && (td_spin==false)) ){
+  /** Postpeak coefficients calculation */   
+   if(td_case==false){
      if (VERBOSE) PRSECTN("No tidal disruption cases");
     QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 	     a1, a2, a3, a4, b1, b2, b3, b4, 
 	     sigma[0],sigma[1]);
    }else{
      if (VERBOSE) PRSECTN("Tidal disruption cases");
-     postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, pa1, po1, Apeak, alpha21, Domega);
+     postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, kapT2, chi1, X1, X2, Mbh, Apeak, alpha2);
    }
   
   if (VERBOSE) PRFORMd("a1", a1[1] );
@@ -3580,6 +3537,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
  /**
   * end of BHNS only part
   **/
+
   
  /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
@@ -3606,8 +3564,8 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
       
       /* Calculate Deltaphi */
       t0 = t_lm[k][index_rng] - tmatch[k];
-      if((td_case==true) || (td_spin==true)){
-        eob_wav_ringdown_template_td(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, pa2, Apeak);
+      if(td_case==true){
+        eob_wav_ringdown_template_td(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, alpha2[k], Apeak[k]);
       }else{
         eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       }
@@ -3617,8 +3575,8 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
       for (int j = index_rng-1; j < size ; j++ ) {
 	
 	      tm = t_lm[k][j] - tmatch[k];
-	      if((td_case==true) || (td_spin==true)){
-          eob_wav_ringdown_template_td(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, pa2, Apeak);
+	      if(td_case==true){
+          eob_wav_ringdown_template_td(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, alpha2[k], Apeak[k]);
         }else{
           eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
         }
