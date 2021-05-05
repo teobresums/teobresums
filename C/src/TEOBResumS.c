@@ -274,13 +274,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }  
   
-
+  
   /** Final BH */
   if (!(dyn->use_tidal) || (default_choice==DEFAULT_PARS_BHNS)) {
     
     if(default_choice==DEFAULT_PARS_BHNS){
        /** Final BH from BHNS */
       if (VERBOSE) PRSECTN("entered BHNS mode");
+      if (VERBOSE) PRFORMi("usetidal",use_tidal);
       double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
@@ -686,6 +687,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 #endif
   
   if (!(use_tidal) || (default_choice==DEFAULT_PARS_BHNS)) {
+  //if (!(use_tidal)) {
     
     /* ********************************************************
      * Following is for BBH : NQC & Ringdown (for BHNS as well)
@@ -744,6 +746,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
 	PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
       }
+
+
       
 #if (DEBUG) 
       // Output post-interpolation wave and dynamics 
@@ -820,7 +824,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /** BBH, BHNS : add Ringdown */
     
     if (VERBOSE) PRSECTN("Ringdown");
-    
+
     /* Extend arrays */    
     const int size_ringdown = EOBPars->ringdown_extend_array;    
     double dt_rngdn = dt;
@@ -843,9 +847,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       EOBPars->M=M;
     }
     
-    if( (default_choice==DEFAULT_PARS_BHNS) && (EOBPars->chi1!=0) ){
-      eob_wav_ringdown_bhns(dyn, hlm);
-    }else eob_wav_ringdown(dyn, hlm);
+    eob_wav_ringdown(dyn, hlm);
     
     if (EOBPars->use_geometric_units) {
       EOBPars->M=1.;
