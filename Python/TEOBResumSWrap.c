@@ -148,7 +148,6 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->nqc_coefs_hlm = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc_coefs_hlm"));
   }
 
-
   /* LR and LSO */
   if ( PyDict_GetItemString(dict, "compute_LR") != NULL ) { 
     EOBPars->compute_LR = (int) PyLong_AsLong(PyDict_GetItemString(dict, "compute_LR"));
@@ -162,7 +161,21 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "compute_LSO_guess") != NULL ) { 
     EOBPars->compute_LSO_guess = PyFloat_AsDouble(PyDict_GetItemString(dict, "compute_LSO_guess"));
   }
-  
+
+  /* Spin Dynamics */
+  if ( PyDict_GetItemString(dict, "project_spins") != NULL ) { 
+    EOBPars->project_spins = (int) PyLong_AsLong(PyDict_GetItemString(dict, "project_spins"));
+  }
+  if ( PyDict_GetItemString(dict, "spin_interp_domain") != NULL ) { 
+    EOBPars->spin_interp_domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_interp_domain"));
+  }
+  if ( PyDict_GetItemString(dict, "spin_flx") != NULL ) { 
+    EOBPars->spin_flx = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_flx"));
+  }
+  if ( PyDict_GetItemString(dict, "ringdown_eulerangles") != NULL ) { 
+    EOBPars->ringdown_eulerangles = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ringdown_eulerangles"));
+  }
+
   /* Output */
   if ( PyDict_GetItemString(dict, "output_hpc") != NULL ) { 
     EOBPars->output_hpc = (int) PyLong_AsLong(PyDict_GetItemString(dict, "output_hpc"));
