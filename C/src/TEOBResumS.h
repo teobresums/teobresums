@@ -800,10 +800,10 @@ int (*p_eob_spin_dyn_rhs)(); // ptr to r.h.s. for spins routine
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_PN_abc(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d);
-int eob_spin_dyn_integrate(DynamicsSpin *dyn);
-int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omega_stop);
-int eob_spin_dyn(DynamicsSpin *dyn, double omg0);
-void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time, double *alpha_p, double *beta_p, double *gamma_p, int continue_integration);
+int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm);
+int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omega_stop);
+int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0);
+void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double time, double *alpha_p, double *beta_p, double *gamma_p, int continue_integration);
 void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 			       double *SApara, double *SBpara, double *Spara,
 			       double *SAperp, double *SBperp, double *Sperp,

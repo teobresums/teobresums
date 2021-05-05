@@ -1227,7 +1227,7 @@ int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d)
 /** Precessing dynamics ODE integration 
     The initial data are those stored in dyn->y 
     integration starts at dyn->t */
-int eob_spin_dyn_integrate(DynamicsSpin *dyn)
+int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm)
 {
   const int chunk = dyn->size;
   int size = chunk; // can change
@@ -1242,13 +1242,11 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
     dyn->data[v][i0] = dyn->y[v];
   
   /* GSL integrator memory */
-  //dyn->omg_stop = EOBPars->spin_odes_omg_stop; 
-  //dyn->t_stop = EOBPars->spin_odes_t_stop;
   if (DEBUG) printf("omg_stop = %e\n", dyn->omg_stop);
   
   dyn->dt = EOBPars->spin_odes_dt; 
-  const double ode_abstol = EOBPars->ode_abstol;
-  const double ode_reltol = EOBPars->ode_reltol;
+  const double ode_abstol = EOBPars->ode_abstol*100;
+  const double ode_reltol = EOBPars->ode_reltol*100;
   double tstop;
   if (dyn->dt < 0)
     tstop = MIN(dyn->t_stop, EOBPars->ode_tmax);
@@ -1278,38 +1276,154 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
   if (dyn->dt<0)
     eps = -1;
 
+  /* PN/EOB flux auxiliary flags/variables */
+  double omg0eob=-1;
+  double omgeobmax=100;
+  double tshift=0;
+  int omg_jmax =0;
+  int dN       =1;
+  int spin_flx = SPIN_FLX_PN; //default it to PN
+  gsl_spline *omg_sp    = NULL; 
+  gsl_interp_accel *acc = NULL;
+
+  double *omega_eob = NULL;
+  double *time_eob  = NULL;
+  int size_eob;
+  int map_from_22 = 1; //use the 22 phase rather than the orbital phase
+
+  if(EOBPars->spin_flx==SPIN_FLX_EOB){
+    /* choose which omega_eob to use: orbital or omega22*/
+    if(map_from_22){
+      double *omg22_eob;
+      omg22_eob = malloc ( hlm->size * sizeof(double) );
+      D0_x_4(hlm->phase[1], hlm->time, hlm->size, omg22_eob);
+      //D0(hlm->phase[1], hlm->time[1]-hlm->time[0], hlm->size, omg22_eob);
+      for(int i =0; i < hlm->size; i++) omg22_eob[i] = omg22_eob[i]/2;
+      omega_eob  = omg22_eob;
+      time_eob   = hlm->time;
+      size_eob   = hlm->size;
+    } else {
+      omega_eob  = eobdyn->data[EOB_MOMG];
+      time_eob   = eobdyn->time;
+      size_eob   = eobdyn->size;
+    }
+    /* alloc */
+    omg_sp = gsl_spline_alloc (gsl_interp_cspline, size_eob);
+    acc    = gsl_interp_accel_alloc ();
+
+    /* compute spline for Momega_eob and compute Momega(t=0) */
+    gsl_spline_init (omg_sp, time_eob, omega_eob, size_eob);    
+    spin_flx = SPIN_FLX_EOB;
+    
+    dN = 5; //skip the first dN points, omega might be decreasing because of numerical errors
+    for(int i=0; i < size_eob; i++) {
+      omg_jmax = i;
+      if(i >dN && omega_eob[i+1] <= omega_eob[i])
+        break;
+    }
+    omgeobmax = omega_eob[omg_jmax];
+    omg0eob   = gsl_spline_eval(omg_sp, 0, acc);
+    gsl_interp_accel_reset(acc);
+
+    /* two possible cases: omega0_pn < omega_start_eob or viceversa. */  
+    if(dyn->y[EOB_EVOLVE_SPIN_Momg] < omega_eob[dN]){
+
+    /* case 1, use PN up to omega_start_EOB */
+      EOBPars->spin_flx=SPIN_FLX_PN;
+      if (dyn->dt < 0) spin_flx=SPIN_FLX_PN;
+
+    } else {
+
+    /* case 2, omega_start_eob > omega0_pn */
+      if (dyn->y[EOB_EVOLVE_SPIN_Momg] > omgeobmax){
+        
+        /* if omega0_PN > omega_finEOB use PN integration... */
+        if(VERBOSE) printf("WARNING: f0 is too high, moving to PN integration\n");
+        EOBPars->spin_flx=SPIN_FLX_PN;
+        spin_flx = SPIN_FLX_PN;
+
+      } else {
+
+        /* ... else, compute the timeshift */
+        gsl_spline *teob_sp = gsl_spline_alloc (gsl_interp_cspline,  omg_jmax+1-dN);
+        gsl_spline_init (teob_sp, omega_eob+dN, time_eob+dN, omg_jmax+1-dN);  
+        tshift     = - gsl_spline_eval(teob_sp, dyn->y[EOB_EVOLVE_SPIN_Momg], acc);
+        gsl_interp_accel_reset(acc);
+        gsl_spline_free(teob_sp);
+
+        if(dyn->dt>0){
+          /* if dt < 0 , the initial freq. has already been fixed*/
+          dyn->y[EOB_EVOLVE_SPIN_Momg]       = gsl_spline_eval(omg_sp, -tshift, acc);
+          gsl_interp_accel_reset(acc);
+          dyn->data[EOB_EVOLVE_SPIN_Momg][0] = gsl_spline_eval(omg_sp, -tshift, acc);
+        } else {
+          /* PN evolution for dt < 0 */
+          dyn->omg_stop    = omg0eob;
+          EOBPars->spin_flx= SPIN_FLX_PN;
+          spin_flx         = SPIN_FLX_PN;         
+        }
+
+        if (VERBOSE) printf("omg0 = %.17f, check = %.17f, tshift = %.17f, size=%d\n",dyn->y[EOB_EVOLVE_SPIN_Momg], gsl_spline_eval(omg_sp, -tshift, acc), tshift, size_eob);
+        gsl_interp_accel_reset(acc);
+      }
+    }
+  }
+
   while (1) {
     if (VERBOSE) printf("iter %09d, t=%.f, momg= %.17f, alpha=%.6f\n", iter, dyn->t, dyn->y[EOB_EVOLVE_SPIN_Momg], dyn->y[EOB_EVOLVE_SPIN_alp]); 
     iter++;
 
     //GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);//uniform
     GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, tstop, &dyn->dt, dyn->y);
-    
+
     /** Check for failures ... */
     if (GSLSTATUS != GSL_SUCCESS) {
       printf("GSL Error = %d", GSLSTATUS);
       return ERROR_ODEINT;
     }
-    if (dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] - dyn->data[EOB_EVOLVE_SPIN_Momg][i0+iter-1] < 1e-15) ){
+    if (EOBPars->spin_flx != SPIN_FLX_EOB && dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] - dyn->data[EOB_EVOLVE_SPIN_Momg][i0+iter-1] < 1e-15) ){
+      iter--; //don't count this iteration
+      break;
+    }
+    if (EOBPars->spin_flx == SPIN_FLX_EOB && dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] > omgeobmax) ){
       iter--; //don't count this iteration
       break;
     }
     /** Update alpha and beta angles */
-    dyn->y[EOB_EVOLVE_SPIN_alp] = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
+    dyn->y[EOB_EVOLVE_SPIN_alp]  = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						     dyn->y[EOB_EVOLVE_SPIN_Ly],
 						     dyn->y[EOB_EVOLVE_SPIN_Lz]);
-    dyn->y[EOB_EVOLVE_SPIN_bet] = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
+    dyn->y[EOB_EVOLVE_SPIN_bet]  = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
-    
+  
+    /** If going from PN to EOB exact flx (see case 1 above), compute the timeshift */
+    if(EOBPars->spin_flx == SPIN_FLX_PN && spin_flx== SPIN_FLX_EOB && (dyn->y[EOB_EVOLVE_SPIN_Momg] >= omega_eob[dN])){
+
+      gsl_spline *teob = gsl_spline_alloc (gsl_interp_cspline,  omg_jmax+1-dN);
+      gsl_spline_init (teob, omega_eob+dN, time_eob+dN, omg_jmax+1-dN); 
+      gsl_interp_accel_reset(acc);
+      tshift       = dyn->t - gsl_spline_eval(teob, dyn->y[EOB_EVOLVE_SPIN_Momg], acc);
+      gsl_interp_accel_reset(acc);
+      gsl_spline_free(teob);
+    }
+
+    if(EOBPars->spin_flx==SPIN_FLX_EOB && dyn->t-tshift > time_eob[size_eob-1]){
+      iter--;
+      break;
+    }
+
+    if(spin_flx==SPIN_FLX_EOB && (dyn->y[EOB_EVOLVE_SPIN_Momg] >= omega_eob[dN])){
+      EOBPars->spin_flx = spin_flx;
+      dyn->y[EOB_EVOLVE_SPIN_Momg] = gsl_spline_eval(omg_sp, dyn->t-tshift, acc); //evaluate spline
+    }
+
     /** Update size and push arrays (if needed) */
     if (iter==size) {
-      /* if (DEBUG)  printf("Push memory\n"); */ 
       size += chunk;
       dyn->size = size;
       DynamicsSpin_push (&dyn, size);
     }
-    
     dyn->time[iter]  = dyn->t; 
     for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
       dyn->data[v][i0+iter]  = dyn->y[v];   
@@ -1317,29 +1431,40 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn)
     /** Stop integration */
     if (breakit)
       break;
-    if ((dyn->omg_stop>0.) && (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop) && dyn->dt > 0.)
+    if ((dyn->omg_stop>0.) && (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop) && dyn->dt > 0.){
       break;
-    if ((dyn->t_stop>0.) && (dyn->t > dyn->t_stop))
+    }
+    if (iter>1 && dyn->dt > 0 && dyn->y[EOB_EVOLVE_SPIN_Momg] < dyn->data[EOB_EVOLVE_SPIN_Momg][i0+iter-1]){
+      iter--;
       break;
-    if (dyn->dt < 0. && (dyn->y[EOB_EVOLVE_SPIN_Momg] < dyn->omg_stop))
+    }
+    if ((dyn->t_stop>0.) && (dyn->t > dyn->t_stop)){
+      break;
+    }
+    if (dyn->dt < 0. && (dyn->y[EOB_EVOLVE_SPIN_Momg] < dyn->omg_stop)){
       breakit = 1; //break at next iteration
-    
+    }
   } /* end time iteration */
 
   /** Resize to actual size */
   size = i0 + iter + 1;
   DynamicsSpin_push (&dyn, size);
   
+  gsl_spline_free(omg_sp);
+  gsl_interp_accel_free(acc);
   /** Free ODE system solver */
   gsl_odeiv2_evolve_free (e);
   gsl_odeiv2_control_free (c);
   gsl_odeiv2_step_free (s);
   gsl_odeiv2_driver_free (d);
-  
+
+  if(map_from_22)
+    free(omega_eob);
+
   return OK;
 }
 
-int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omg0)
+int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0)
 {
   // Alloc new dynamics
   DynamicsSpin *spindyn_tmp = NULL;
@@ -1371,7 +1496,7 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omg0)
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     spindyn_tmp->data[v][0] = spindyn_tmp->y[v];
 
-  eob_spin_dyn_integrate(spindyn_tmp);
+  eob_spin_dyn_integrate(spindyn_tmp, eobdyn, hlm);
 
   int size = spindyn_tmp->size;
 
@@ -1416,7 +1541,7 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, double omg0)
 }
 
 /** Precessing dynamics main driver routine */
-int eob_spin_dyn(DynamicsSpin *dyn, double omg0)
+int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0)
 {
   const int chunk = dyn->size;
 
@@ -1462,12 +1587,12 @@ int eob_spin_dyn(DynamicsSpin *dyn, double omg0)
     dyn->data[v][0] = dyn->y[v];
   
   /** Integrate ODEs */
-  return eob_spin_dyn_integrate(dyn);
+  return eob_spin_dyn_integrate(dyn, eobdyn, hlm);
   
 }
 
 /** Helper routine to interpolate Euler angles at given time */
-void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time,
+void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double time,
 			     double *alpha_p, double *beta_p, double *gamma_p,
 			     int continue_integration)
 {
@@ -1487,7 +1612,7 @@ void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, double time,
       dyn->omg_stop = -1; // use the tstop not Momg_stop
       dyn->t = dyn->time[smax];
       dyn->t_stop = time + dyn->dt;
-      eob_spin_dyn_integrate(dyn);      
+      eob_spin_dyn_integrate(dyn, eobdyn, hlm);      
 
     } else {
 
