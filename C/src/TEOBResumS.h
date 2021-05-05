@@ -649,18 +649,14 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
-void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag1, bool *flag2);
-void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double kapT2, double nu);
-void kerr_bh_freq_td(double *omega1, double *omega2, double k2t, double nu);
+void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag);
+void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double kapT2, double nu);
 void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t);
-void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t, double nu);
 void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, double *omega2, double k2t);
-double apeak_bhns(double nu, double k2t);
-double apeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2, double Opeak);
-double opeak_bhns(double nu, double k2t);
-double opeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2);
-void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, double *sigmar, double *sigmai, double nu, 
-            double *alpha1, double *omega1, double Apeak, double alpha21, double Domega);
+void peak_bhns(double nu, double k2t, double chi1, double X1, double X2, double *Apeak, double *Opeak);
+void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+                    double *sigmar, double *sigmai, double nu, double k2t, double chi1, double X1, double X2, double Mbh,
+                    double *Apeak, double *alpha2);
 void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 			double Mbh, double abh,  
 			double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
@@ -785,7 +781,7 @@ void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
 void (*eob_wav_ringdown)();
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
-void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double *alpha2, double Amrg);
+void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double alpha2, double Amrg);
 void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 

@@ -22,9 +22,9 @@
 
 /** BHNS Functions section */
 
-void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag1, bool *flag2)
+void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag)
 {
-  /** Filter tidal disruption cases that don't work with Berti's QNM fits */
+  /** Filter tidal disruption cases */
   double crit = Mf/M; // from Frank's bh remnant fits
 
   /** Contour fits */
@@ -33,19 +33,17 @@ void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *fl
   const double c = 3.36964159;
   double cont = a*exp(-pow(chi1 - b, 2)/(2*pow(c, 2)));
 
-  /** Here begins conditions for nonspinning cases */
-  if(chi1==0){ 
-    if(crit<cont){*flag1 = true;}
-    
-  /** Here are the conditions for the spinning cases */
-  }else{
-    if(crit<cont){*flag2 = true;}
-  }
+  if(crit<cont){*flag = true;}
+  
 }
 
-void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double kapT2, double nu)
+void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double kapT2, double nu)
 {
-  /** QNM fits for the tidal disruption cases in spinning BHNS */
+  /** QNM fits for the tidal disruption cases in BHNS */
+  for (int k=0; k<KMAX; k++) {
+    alpha21[k] = alpha1[k] = alpha2[k] = omega1[k] = omega2[k]= 0.;
+  }
+
   double chi1 = af;
   double k2t = kapT2;
 
@@ -53,7 +51,7 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
   double af2 = pow(af,2);
   double af3 = pow(af,3);
   
-  /* l = 2, m = 2*/
+    /* l = 2, m = 2*/
   double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
   double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
   double alpha_bbh = 0.0889623157 * (alpha1_c/alpha1_d);
@@ -91,27 +89,21 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
   double b1 = b11*nu + b12*nu*nu;
 
   double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-  if(Ap>1.){
-    Ap = 1.;
-  }
-  if(Ap<0.0){
-    Ap = 0.0;
-  }
 
   // Frequency
 
-  const double c110 = -17.8151271;
-  const double c111 = 10.6779154;
-  const double c120 = 87.7242256;
-  const double c121 = -11.2517961;
-  const double c210 = 6.53177751;
-  const double c211 = -3.43616964;
-  const double c220 = -27.5943674;
-  const double c221 = 16.1599098;
-  const double d110 = 8.27809745;
-  const double d111 = 2.23796811;
-  const double d120 = -30.2268880;
-  const double d121 = 2.06541065;
+  const double c110 = -1.42376676; //-17.8151271;
+  const double c111 = -0.46547134; //10.6779154;
+  const double c120 = 6.18675084; //87.7242256;
+  const double c121 = 2.06136810; //-11.2517961;
+  const double c210 = 0.13558467; //6.53177751;
+  const double c211 = -0.01554561; //-3.43616964;
+  const double c220 = -0.60083059; //-27.5943674;
+  const double c221 = 0.07249501; //16.1599098;
+  const double d110 = 6.40369007; //8.27809745;
+  const double d111 = -1.73278788; //2.23796811;
+  const double d120 = -27.0597337; //-30.2268880;
+  const double d121 = 10.3197168; //2.06541065;
 
   a11 = c110*chi1 + c111;
   a12 = c120*chi1 + c121;
@@ -125,63 +117,13 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
   b1 = b11*nu + b12*nu*nu;
 
   double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-  if(Op>1.){
-    Op = 1.;
-  }
-  if(Op<0.0){
-    Op = 0.0;
-  }
 
-  *alpha2 = Ap*alpha_bbh;
-  *alpha1 = 0.;
-  *omega1 = Op*omega_bbh;
-  *omega2 = 0.;
+  alpha2[1] = Ap*alpha_bbh;
+  omega1[1] = Op*omega_bbh;
+  alpha21[1] = alpha2[1] - alpha1[1];
+  alpha1[1] = alpha2[1];
 }
 
-void kerr_bh_freq_td(double *omega1, double *omega2, double k2t, double nu)
-{
-  /** Dimensionless frequency fits for tidal disruption cases (When Berti's QNM don't work) */
-
-  // BBH fits
-  double af = 0;
-  double af2 = pow(af,2);
-  double af3 = pow(af,3);
-  
-  /* l = 2, m = 2*/
-  double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
-  double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
-  double omega_bbh =  0.3736716844*(omega1_c/omega1_d);
-  //
-
-  const double c111 = -0.46547134;
-  const double c121 = 2.06136810;
-  const double c211 = -0.01554561;
-  const double c221 = 0.07249501;
-  const double d111 = -1.73278788;
-  const double d121 = 10.3197168;
-
-  double a11 = c111;
-  double a12 = c121;
-  double a21 = c211;
-  double a22 = c221;
-  double b11 = d111;
-  double b12 = d121;
-
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
-
-  double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-  if(Op>1.){
-    Op = 1.;
-  }
-  if(Op<0.0){
-    Op = 0.0;
-  }
-
-  *omega2 = 0;
-  *omega1 = Op*omega_bbh;
-}
 
 /** Fits of Kerr BH QNM complex frequencies for a (M_bh, a_bh) of the remnant BH (for l=2,m=2)
  * Berti et al: arxiv:0512160
@@ -210,52 +152,6 @@ void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, doubl
 
 }
 
-void kerr_bh_qnm_td(double *alpha1, double *alpha2, double k2t, double nu)
-{
-  /** Inverse damping time fits for tidal disruption cases */
-
-  // BBH fits
-  double af = 0;
-  double af2 = pow(af,2);
-  double af3 = pow(af,3);
-  
-  /* l = 2, m = 2*/	    
-  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
-  double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
-  double alpha_bbh = 0.0889623157 * (alpha1_c/alpha1_d);
-  //
-
-  const double c111 = -0.35178201;
-  const double c121 = 5.56115641;
-  const double c211 = -0.04385969;
-  const double c221 = 0.28927232;
-  const double d111 = 1.72273820;
-  const double d121 = 0.43672158;
-
-  double a11 = c111;
-  double a12 = c121;
-  double a21 = c211;
-  double a22 = c221;
-  double b11 = d111;
-  double b12 = d121;
-
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
-
-  double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-  if(Ap>1.){
-    Ap = 1.;
-  }
-  if(Ap<0.0){
-    Ap = 0.0;
-  }
-
-  *alpha2 = Ap*alpha_bbh;
-  *alpha1 = 0;
-}
-
-
 void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, double *omega2, double k2t)
 {
   /** 0.5*omega_{lmn}*(1/alpha_n) = Q_{lmn} = q1 + q2( 1 - j )^q3  : inverse damping time of nth overtone */
@@ -280,78 +176,83 @@ void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, do
   *alpha2 = *omega2 / (2. * Q2);
 }
 
-double apeak_bhns(double nu, double k2t)
+void peak_bhns(double nu, double k2t, double chi1, double X1, double X2, double *Apeak, double *Opeak)
 {
-  /** A^{peak}_{22} amplitude at tpeak (\dot{A}(tpeak)=0) fitted with Pade 2,2:
-   * A_bhns / A_bbh =  ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) )
-   * ap_bbh is A^{peak}_{22} for BBH from Nagar et al */
+  /** A^{peak}_{22} amplitude and omega^{peak}_{22} frequency at tpeak (\dot{A}(tpeak)=0) 
+   * ap_bbh and op_bbh is for BBH from the function QNMHybridFitCab_HM in ..Fits.c */
 
-  const double A0 = 0.295896;
-  const double n1 = -0.041285;
-  const double n2 = 1.5971;
-  const double d1 = 0.; 
-  const double d2 = 0.;
-
-  double ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
-  double ap_bbh = A0*ap_bbh1;
-
-  const double a11=-0.35032081;
-  const double a12=7.08785231;
-  const double a21=-0.12526370;
-  const double a22=0.73962342;
-  const double b11=1.32875665;
-  const double b12=1.45671831;
-
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
-
-  double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-  if(Ap<0.){
-    Ap = 0.;
+  for (int k=0; k<KMAX; k++) {
+    Apeak[k] = Opeak[k] = 0.;
   }
-  return ap_bbh*Ap;
-}
 
-double apeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2, double Opeak)
-{
-  /** A^{peak}_{22} amplitude at tpeak (\dot{A}(tpeak)=0) fitted with Pade 2,2:
-   * A_bhns / A_bbh =  ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) )
-   * ap_bbh is A^{peak}_{22} for BBH from the function QNMHybridFitCab_HM in ..Fits.c */
+  // BBH fits (2,2)
+  double op_bbh, ap_bbh;
+  if(chi1==0){
 
-  // BBH fits
-  double chi2 = 0.;
-  double aK = X1*chi1 + X2*chi2;
-  double a12b = X1*chi1 - X2*chi2;
-  double X12 = X1 - X2;
-  double Shat = 0.5*(aK + a12b*X12);
-  double aeff = aK + (1./3.)*a12b*X12;
+    /* Omega peak */
+    const double omega0 = 0.273356;
+    double n1 = 0.84074;
+    double n2 = 1.6976;
+    double d1 = 0.; 
+    double d2 = 0.;
+    double op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
+    op_bbh = omega0*op_bbh1;
 
-  double scale = 1 - 0.5*aeff*Opeak;
-  double c4Amax = -0.0820894;
-  double c3Amax = 0.176126;
-  double c2Amax = -0.150239;
-  double c1Amax = 0.20491;   
-  double num_A    = (c4Amax*X12*X12 + c3Amax*X12 - 0.2935238329)*aeff + 1.;
-  double denom_A  = 1. + (c2Amax*X12*X12 + c1Amax*X12 -0.4728707630)*aeff;   
-  double Aorb = 1.826573640739664*nu*nu + 0.100709438291872*nu + 1.438424467327531;
-  double ap_bbh = Aorb*scale*(num_A/denom_A);
+    /* Amplitude peak */
+    const double A0 = 0.295896;
+    n1 = -0.041285;
+    n2 = 1.5971;
+    d1 = 0.; 
+    d2 = 0.;
+    double ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
+    ap_bbh = A0*ap_bbh1;
+
+  }else{
+
+    double chi2 = 0.;
+    double aK = X1*chi1 + X2*chi2;
+    double a12b = X1*chi1 - X2*chi2;
+    double X12 = X1 - X2;
+    double Shat = 0.5*(aK + a12b*X12);
+    double aeff = aK + (1./3.)*a12b*X12;
+
+    /* Omega peak */
+    double c2 = -0.122735;
+    double c1 = 0.0857478;
+    double c4 = -0.0760023;
+    double c3 = 0.0826514;
+    double omg1 = (c2*X12*X12 + c1*X12 -0.1416002395)*2.*Shat + 1;
+    double omg2 = (c4*X12*X12 + c3*X12 -0.3484804901)*2.*Shat + 1;
+    op_bbh = (0.481958619443355*nu*nu +0.223976694441952*nu +0.273813064427363)*omg1/omg2;
+
+    /* Amplitude peak */
+    double scale = 1 - 0.5*aeff*op_bbh;
+    double c4Amax = -0.0820894;
+    double c3Amax = 0.176126;
+    double c2Amax = -0.150239;
+    double c1Amax = 0.20491;   
+    double num_A    = (c4Amax*X12*X12 + c3Amax*X12 - 0.2935238329)*aeff + 1.;
+    double denom_A  = 1. + (c2Amax*X12*X12 + c1Amax*X12 -0.4728707630)*aeff;   
+    double Aorb = 1.826573640739664*nu*nu + 0.100709438291872*nu + 1.438424467327531;
+    ap_bbh = Aorb*scale*(num_A/denom_A);
+  }
   //
 
-  const double a110=-0.38027475;
-  const double a120=1.73728794;
-  const double a210=0.07178870;
-  const double a220=-0.27291110;
-  const double b110=0.86806508;
-  const double b120=-3.39063584;
+  /* Amplitude peak */
+  double a110=-0.38027475;
+  double a120=1.73728794;
+  double a210=0.07178870;
+  double a220=-0.27291110;
+  double b110=0.86806508;
+  double b120=-3.39063584;
 
-  const double a111=-0.35032081;
-  const double a121=7.08785231;
-  const double a211=-0.12526370;
-  const double a221=0.73962342;
-  const double b111=1.32875665;
-  const double b121=1.45671831;
-
+  double a111=-0.35032081;
+  double a121=7.08785231;
+  double a211=-0.12526370;
+  double a221=0.73962342;
+  double b111=1.32875665;
+  double b121=1.45671831;
+  
   double a11 = a110*chi1 + a111;
   double a12 = a120*chi1 + a121;
   double a21 = a210*chi1 + a211;
@@ -364,130 +265,77 @@ double apeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2,
   double b1 = b11*nu + b12*nu*nu;
 
   double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-  if(Ap>1.){
-    Ap = 1.;
-  }
-  if(Ap<0.0){
-    Ap = 0.0;
-  }
-  return ap_bbh*Ap;
-}
+  Apeak[1] = ap_bbh*Ap;
 
-double opeak_bhns(double nu, double k2t)
-{
-  /** omega^{peak}_{22} frequency at tpeak fitted with Pade 2,2:
-   * omega_bhns / omega_bbh = ( ( 1 + (a1*k2t + a2*k2t*k2t) )  / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) )
-   * op_bbh is omega^{peak}_{22} for BBH from Nagar et al */
+  /* Omega peak */
+  a110=-0.00964470;
+  a120=-0.16313222;
+  a210=0.12752691;
+  a220=-0.56409238;
+  b110=4.94134700;
+  b120=-21.4218986;
 
-  // BBH fits
-  const double omega0 = 0.273356;
-  const double n1 = 0.84074;
-  const double n2 = 1.6976;
-  const double d1 = 0.; 
-  const double d2 = 0.;
+  a111=-0.45404250;
+  a121=2.38512347;
+  a211=-0.01666600;
+  a221=0.08285400;
+  b111=-0.25507296;
+  b121=4.93088477;
 
-  double op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
-  double op_bbh = omega0*op_bbh1;
-  //
+  a11 = a110*chi1 + a111;
+  a12 = a120*chi1 + a121;
+  a21 = a210*chi1 + a211;
+  a22 = a220*chi1 + a221;
+  b11 = b110*chi1 + b111;
+  b12 = b120*chi1 + b121;
 
-  const double a11=-0.45404250;
-  const double a12=2.38512347;
-  const double a21=-0.01666600;
-  const double a22=0.08285400;
-  const double b11=-0.25507296;
-  const double b12=4.93088477;
-
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
+  a1 = a11*nu + a12*nu*nu;
+  a2 = a21*nu + a22*nu*nu;
+  b1 = b11*nu + b12*nu*nu;
 
   double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) )  / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-  if(Op>1.0){
-    Op = 1.0;
-  }
-  return op_bbh*Op;
-}
-
-double opeak_bhns_spin(double nu, double k2t, double chi1, double X1, double X2)
-{
-  /** omega^{peak}_{22} frequency at tpeak fitted with Pade 2,2:
-   * omega_bhns / omega_bbh = ( ( 1 + (a1*k2t + a2*k2t*k2t) )  / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) )
-   * op_bbh is omega^{peak}_{22} for BBH from the function QNMHybridFitCab_HM in ..Fits.c */
-
-  // BBH fits
-  double chi2 = 0.;
-
-  double aK = X1*chi1 + X2*chi2;
-  double a12b = X1*chi1 - X2*chi2;
-  double X12 = X1 - X2;
-  double Shat = 0.5*(aK + a12b*X12);
-  double aeff = aK + (1./3.)*a12b*X12;
-
-  double c2 = -0.122735;
-  double c1 = 0.0857478;
-  double c4 = -0.0760023;
-  double c3 = 0.0826514;
-  double omg1 = (c2*X12*X12 + c1*X12 -0.1416002395)*2.*Shat + 1;
-  double omg2 = (c4*X12*X12 + c3*X12 -0.3484804901)*2.*Shat + 1;
-  double op_bbh = (0.481958619443355*nu*nu +0.223976694441952*nu +0.273813064427363)*omg1/omg2;
-  //
-
-  const double a110=-0.00964470;
-  const double a120=-0.16313222;
-  const double a210=0.12752691;
-  const double a220=-0.56409238;
-  const double b110=4.94134700;
-  const double b120=-21.4218986;
-
-  const double a111=-0.45404250;
-  const double a121=2.38512347;
-  const double a211=-0.01666600;
-  const double a221=0.08285400;
-  const double b111=-0.25507296;
-  const double b121=4.93088477;
-
-  double a11 = a110*chi1 + a111;
-  double a12 = a120*chi1 + a121;
-  double a21 = a210*chi1 + a211;
-  double a22 = a220*chi1 + a221;
-  double b11 = b110*chi1 + b111;
-  double b12 = b120*chi1 + b121;
-
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
-
-  double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) )  / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-  if(Op>1.0){
-    Op = 1.0;
-  }
-  if(Op<0.0){
-    Op = 0.0;
-  }
-  return op_bbh*Op;
+  Opeak[1] = op_bbh*Op;
 }
 
 void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
-                    double *sigmar, double *sigmai, double nu, double *alpha1, double *omega1, double Apeak, double alpha21,
-                    double Domega)
+                    double *sigmar, double *sigmai, double nu, double k2t, double chi1, double X1, double X2, double Mbh,
+                    double *Apeak, double *alpha2)
 {
-  /** from Nagar et al **/
-  
+  int modeon[KMAX];
+  const int k22 = 1; // (2,2) mode
+
   for (int k=0; k<KMAX; k++) {
-    sigmar[k] = *alpha1;
-    sigmai[k] = *omega1;
-   
-      /** l=2, m=2 **/
-    a3[k] = -0.56187 + 0.75497*nu;
-    b3[k] = ( 4.4414 - 63.107*nu + 296.64*nu*nu ) / ( 1. - 13.299*nu + 69.129*nu*nu );
-    b4[k] = ( 7.1508 - 109.47*nu ) / ( 1. + 556.34*nu + 287.42*nu*nu );
+    modeon[k] = 0; /* off */
+    sigmar[k] = sigmai[k] = 0.;
+    a1[k] = a2[k] = a3[k] = a4[k] = 0.;
+    b1[k] = b2[k] = b3[k] = b4[k] = 0.;
+  }
+
+  modeon[1]  = 1;
+
+  double Opeak[KMAX], Domega[KMAX];
+  peak_bhns(nu, k2t, chi1, X1, X2, Apeak, Opeak);
+
+  double alpha1[KMAX], omega1[KMAX], omega2[KMAX], alpha21[KMAX];
+  QNM_bhns_td(chi1, alpha1, alpha2, omega1, omega2, alpha21, k2t, nu);
+
+  /** l=2, m=2 **/
+  a3[1] = -0.56187 + 0.75497*nu;
+  b3[1] = ( 4.4414 - 63.107*nu + 296.64*nu*nu ) / ( 1. - 13.299*nu + 69.129*nu*nu );
+  b4[1] = ( 7.1508 - 109.47*nu ) / ( 1. + 556.34*nu + 287.42*nu*nu );
+
+  /** from Nagar et al **/
+  for (int k=0; k<KMAX; k++) {
+    sigmar[k] = alpha1[k];
+    sigmai[k] = omega1[k];
+    Domega[k] = omega1[k]-Mbh*Opeak[k];     
     /** These are the same for all modes given the constraints
      * for physically correct behaviour of the fits */
-    a2[k] = 0.5*alpha21;
-    a1[k] = Apeak*(*alpha1)*(  (cosh(a3[k])*cosh(a3[k])) / a2[k] );
-    a4[k] = Apeak - a1[k]*tanh(a3[k]);
-    b2[k] = alpha21;
-    b1[k] = Domega*(  ( 1. + b3[k] + b4[k] ) / ( b2[k]*( b3[k] + 2*b4[k] ) )  );
+    a2[k] = 0.5*alpha21[k];
+    a1[k] = Apeak[k]*(alpha1[k])*(  (cosh(a3[k])*cosh(a3[k])) / a2[k] );
+    a4[k] = Apeak[k] - a1[k]*tanh(a3[k]);
+    b2[k] = alpha21[k];
+    b1[k] = Domega[k]*(  ( 1. + b3[k] + b4[k] ) / ( b2[k]*( b3[k] + 2*b4[k] ) )  );
   }
 }
 
@@ -563,14 +411,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
   omgTP[7]  = 0.6361300619;
   omgTP[8]  = 0.6356586393;
   omgTP[13] = 0.818117;
-  
-  /* If RWZ-normalization is needed. */
-  /*
-  for (int k=0; k<KMAX; k++) {
-    double l = LINDEX[k];
-    ATP[k] = ATP[k]/sqrt((l+2)*(l+1)*l*(l-1));
-  }
-  */
+
     
     modeon[0]  = 1;
     modeon[1]  = 1;
@@ -609,24 +450,9 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
     double omg1, omg2, orb, num, denom, OmgOrb, Omgspin, omgOrb, omgS, omgorb, omgspin;
     double Aorb, Aspin, scale, Amax1, Amax2, num_A, denom_A;
     
-    // Peak Frequency
-
+    // Peak Frequency & Amplitude
     /* (l=2, m=2)*/ 
-    if(chi1==0){
-      omgmrg[1] = opeak_bhns(nu, kapT2);
-    }else{
-      omgmrg[1] = opeak_bhns_spin(nu, kapT2, chi1, X1, X2);
-    }
-    
-    
-    // Peak Amplitude
-    
-    /* (l=2, m=2)*/  
-    if(chi1==0){
-      Amrg[1] = apeak_bhns(nu, kapT2);
-    }else{
-      Amrg[1] = apeak_bhns_spin(nu, kapT2, chi1, X1, X2, omgmrg[1]);
-    }
+    peak_bhns(nu, kapT2, chi1, X1, X2, Amrg, omgmrg);
     
      
     // c3phi
