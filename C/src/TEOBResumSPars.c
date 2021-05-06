@@ -122,7 +122,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->pGSF_tidal =4.0;// p-power in GSF tidal potential model
 
   eobp->use_spins=1; // use spins ?
-  eobp->project_spins=0;
+  eobp->project_spins=1;
 
   /* options */
 
@@ -200,7 +200,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->spin_interp_domain = 0; // FD or TD interpolation
   eobp->chi1x = eobp->chi1y = eobp->chi1z = 0.;
   eobp->chi2x = eobp->chi2y = eobp->chi2z = 0.;
-  eobp->spin_flx=SPIN_FLX_EOB;
+  eobp->spin_flx=SPIN_FLX_PN;
 
   /* OMP settings */
 

@@ -601,7 +601,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /* Update spins parallel to L, if required */
     if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
-      //printf("here yo: Momg EOB = %.10f, Momg spin = %.10f\n", dyn->MOmg, dyn->spins->data[EOB_EVOLVE_SPIN_Momg][0]);
       double SA, SB; // projections of the spin parallel to hatL
       if(EOBPars->spin_interp_domain==0){
         eob_spin_dyn_Sproj_interp(dyn->spins, dyn->t, &SA, &SB, NULL, 
