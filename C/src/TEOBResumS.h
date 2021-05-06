@@ -265,9 +265,10 @@ enum{
   USEFLM_SSNLO,
   USEFLM_SSNNLO,
   USEFLM_HM,
+  USEFLM_KERR,
   USEFLM_NOPT
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "Kerr"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -348,6 +349,8 @@ static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "nrfit_s
 enum { 
   FIRSTCALL_EOBWAVFLMV1, 
   FIRSTCALL_EOBWAVFLMHM, 
+  FIRSTCALL_EOBWAVFLMKERR, 
+  FIRSTCALL_EOBWAVFLMKERRS, 
   FIRSTCALL_EOBDYNSGS, 
   NFIRSTCALL
 };
@@ -576,6 +579,14 @@ void EOBParameters_set_from_db (EOBParameters *eobp);
 double q_to_nu(const double q);
 double nu_to_X1(const double nu);
 double Eulerlog(const double x,const int m);
+double Pade32(double x, double *a);
+double Pade23(double x, double *a);
+double Pade51(double x, double *a);
+double Pade42(double x, double *a);
+double Pade33(double x, double *a);
+double Pade15(double x, double *a);
+double Pade62(double x, double *a);
+double Taylorseries(double x, double *a, int N);
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi);
@@ -764,11 +775,13 @@ void (*eob_wav_flm)();
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_Kerr(double x,double nu, double *rholm, double *flm);
 void (*eob_wav_flm_s)();
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
+void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,

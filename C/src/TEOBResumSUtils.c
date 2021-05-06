@@ -47,6 +47,171 @@ double Eulerlog(const double x,const int m)
   return EulerGamma_Log2 + logm + 0.5*log(x);
 }
 
+double Pade32(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+
+  double cden = SQ(a[3]) - a[2]*a[4];
+
+  double n1 = a[1]*SQ(a[3]) - a[1]*a[2]*a[4] - a[3]*a[4] + a[2]*a[5];
+  double n2 = a[2]*SQ(a[3]) - SQ(a[2])*a[4] - a[1]*a[3]*a[4] + SQ(a[4]) + a[1]*a[2]*a[5] - a[3]*a[5];
+  double n3 = SQ(a[3])*a[3] - 2.*a[2]*a[3]*a[4] + a[1]*SQ(a[4]) + SQ(a[2])*a[5] - a[1]*a[3]*a[5];
+
+  double d1 = - a[3]*a[4] + a[2]*a[5];
+  double d2 = SQ(a[4]) - a[3]*a[5];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3)/(cden + d1*x + d2*x2);
+
+  return pade;
+}
+
+double Pade23(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+
+  double cden = SQ(a[2])*a[2] - 2.*a[1]*a[2]*a[3] + SQ(a[3]) + SQ(a[1])*a[4] - a[2]*a[4];
+
+  double n1 = a[1]*SQ(a[2])*a[2] - 2.*SQ(a[1])*a[2]*a[3] - SQ(a[2])*a[3] + 2.*a[1]*SQ(a[3]) + SQ(a[1])*a[1]*a[4] - a[3]*a[4] - SQ(a[1])*a[5] + a[2]*a[5];
+  double n2 = SQ(SQ(a[2])) - 3.*a[1]*SQ(a[2])*a[3] + SQ(a[1])*SQ(a[3]) + 2.*a[2]*SQ(a[3]) + 2.*SQ(a[1])*a[2]*a[4] - 2.*SQ(a[2])*a[4] - 2.*a[1]*a[3]*a[4] + SQ(a[4]) - SQ(a[1])*a[1]*a[5] + 2.*a[1]*a[2]*a[5] - a[3]*a[5];
+
+  double d1 = -SQ(a[2])*a[3] + a[1]*SQ(a[3]) + a[1]*a[2]*a[4] - a[3]*a[4] - SQ(a[1])*a[5] + a[2]*a[5];
+  double d2 = a[2]*SQ(a[3]) - SQ(a[2])*a[4] - a[1]*a[3]*a[4] + SQ(a[4]) + a[1]*a[2]*a[5] - a[3]*a[5];
+  double d3 = -SQ(a[3])*a[3] + 2.*a[2]*a[3]*a[4] - a[1]*SQ(a[4]) - SQ(a[2])*a[5] + a[1]*a[3]*a[5];
+    
+  double pade = (cden + n1*x + n2*x2)/(cden + d1*x + d2*x2 +d3*x3);
+
+  return pade;
+}
+
+double Pade51(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+  double x4 = x3*x;
+  double x5 = x4*x;
+
+  double cden = a[5];
+
+  double n1 = a[1]*a[5] -      a[6];
+  double n2 = a[2]*a[5] - a[1]*a[6];
+  double n3 = a[3]*a[5] - a[2]*a[6];
+  double n4 = a[4]*a[5] - a[3]*a[6];
+  double n5 = a[5]*a[5] - a[4]*a[6];
+
+  double d1 = - a[6];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3 + n4*x4 + n5*x5)/(cden + d1*x);
+
+  return pade;
+}
+
+double Pade42(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+  double x4 = x3*x;
+
+  double cden = SQ(a[4]) - a[3]*a[5];
+
+  double n1 = a[1]*SQ(a[4]) - a[1]*a[3]*a[5] - a[4]*a[5] + a[3]*a[6];
+  double n2 = a[2]*SQ(a[4]) - a[2]*a[3]*a[5] - a[1]*a[4]*a[5] + SQ(a[5]) + a[1]*a[3]*a[6] - a[4]*a[6];
+  double n3 = a[3]*SQ(a[4]) - SQ(a[3])*a[5] - a[2]*a[4]*a[5] + a[1]*SQ(a[5]) + a[2]*a[3]*a[6] - a[1]*a[4]*a[6];
+  double n4 = SQ(a[4])*a[4] - 2*a[3]*a[4]*a[5] + a[2]*SQ(a[5]) + SQ(a[3])*a[6] - a[2]*a[4]*a[6];
+  
+  double d1 = - a[4]*a[5] + a[3]*a[6];
+  double d2 = SQ(a[5]) - a[4]*a[6];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3 + n4*x4)/(cden + d1*x + d2*x2);
+
+  return pade;
+}
+
+double Pade33(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+
+  double cden = SQ(a[3])*a[3] - 2.*a[2]*a[3]*a[4] + a[1]*SQ(a[4]) + SQ(a[2])*a[5] - a[1]*a[3]*a[5];
+
+  double n1 = a[1]*a[3]*SQ(a[3]) - 2.*a[1]*a[2]*a[3]*a[4] - SQ(a[3])*a[4] + SQ(a[1])*SQ(a[4]) + a[2]*SQ(a[4]) + a[1]*SQ(a[2])*a[5] - SQ(a[1])*a[3]*a[5] + a[2]*a[3]*a[5] - a[1]*a[4]*a[5] - SQ(a[2])*a[6] + a[1]*a[3]*a[6];
+  double n2 = a[2]*a[3]*SQ(a[3]) - 2.*SQ(a[2])*a[3]*a[4] - a[1]*SQ(a[3])*a[4] + 2.*a[1]*a[2]*SQ(a[4]) + a[3]*SQ(a[4]) + a[2]*SQ(a[2])*a[5] - SQ(a[3])*a[5] - SQ(a[1])*a[4]*a[5] - a[2]*a[4]*a[5] + a[1]*SQ(a[5]) - a[1]*SQ(a[2])*a[6] + SQ(a[1])*a[3]*a[6] + a[2]*a[3]*a[6] - a[1]*a[4]*a[6];
+  double n3 = SQ(SQ(a[3])) -3.*a[2]*SQ(a[3])*a[4] + SQ(a[2])*SQ(a[4]) + 2.*a[1]*a[3]*SQ(a[4]) - a[4]*SQ(a[4]) + 2.*SQ(a[2])*a[3]*a[5] - 2.*a[1]*SQ(a[3])*a[5] - 2.*a[1]*a[2]*a[4]*a[5] + 2.*a[3]*a[4]*a[5] + SQ(a[1])*SQ(a[5]) - a[2]*SQ(a[5]) - a[2]*SQ(a[2])*a[6] + 2.*a[1]*a[2]*a[3]*a[6] - SQ(a[3])*a[6] - SQ(a[1])*a[4]*a[6] + a[2]*a[4]*a[6];
+  
+  double d1 = -SQ(a[3])*a[4] + a[2]*SQ(a[4]) + a[2]*a[3]*a[5] - a[1]*a[4]*a[5] - SQ(a[2])*a[6] + a[1]*a[3]*a[6];
+  double d2 = a[3]*SQ(a[4]) - SQ(a[3])*a[5] - a[2]*a[4]*a[5] + a[1]*SQ(a[5]) + a[2]*a[3]*a[6] - a[1]*a[4]*a[6];
+  double d3 = -SQ(a[4])*a[4] + 2.*a[3]*a[4]*a[5] - a[2]*SQ(a[5]) - SQ(a[3])*a[6] + a[2]*a[4]*a[6];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3)/(cden + d1*x + d2*x2 + d3*x3);
+
+  return pade;
+}
+
+double Pade15(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+  double x4 = x3*x;
+  double x5 = x4*x;
+
+  double cden = SQ(SQ(a[1]))*a[1] - 4.*SQ(a[1])*a[1]*a[2] + 3.*a[1]*SQ(a[2]) + 3.*SQ(a[1])*a[3] - 2.*a[2]*a[3] - 2.*a[1]*a[4] + a[5];
+
+  double n1 = SQ(SQ(a[1]))*SQ(a[1]) - 5.*SQ(SQ(a[1]))*a[2] + 6.*SQ(a[1])*SQ(a[2]) - SQ(a[2])*a[2] + 4.*SQ(a[1])*a[1]*a[3] - 6.*a[1]*a[2]*a[3] + SQ(a[3]) - 3.*SQ(a[1])*a[4] + 2.*a[2]*a[4] + 2.*a[1]*a[5] - a[6];
+
+  double d1 = -SQ(SQ(a[1]))*a[2] + 3.*SQ(a[1])*SQ(a[2]) - SQ(a[2])*a[2] + SQ(a[1])*a[1]*a[3] - 4.*a[1]*a[2]*a[3] + SQ(a[3]) - SQ(a[1])*a[4] + 2.*a[2]*a[4] + a[1]*a[5] - a[6];  
+  double d2 = SQ(a[1])*a[1]*SQ(a[2]) - 2.*a[1]*SQ(a[2])*a[2] - SQ(SQ(a[1]))*a[3] + SQ(a[1])*a[2]*a[3] + 2.*SQ(a[2])*a[3] - a[1]*SQ(a[3]) + SQ(a[1])*a[1]*a[4] - SQ(a[1])*a[5] - a[2]*a[5] + a[1]*a[6];  
+  double d3 = -SQ(a[1])*SQ(a[2])*a[2] + SQ(SQ(a[2])) + 2.*SQ(a[1])*a[1]*a[2]*a[3] - a[1]*SQ(a[2])*a[3] - 2.*SQ(a[1])*SQ(a[3]) +  a[2]*SQ(a[3]) - SQ(SQ(a[1]))*a[4] + SQ(a[1])*a[2]*a[4] - 2.*SQ(a[2])*a[4] + 2.*a[1]*a[3]*a[4] + SQ(a[1])*a[1]*a[5] - a[3]*a[5] - SQ(a[1])*a[6] + a[2]*a[6];  
+  double d4 = a[1]*SQ(SQ(a[2])) - 3.*SQ(a[1])*SQ(a[2])*a[3] - SQ(a[2])*a[2]*a[3] + SQ(a[1])*a[1]*SQ(a[3]) + 4.*a[1]*a[2]*SQ(a[3]) - SQ(a[3])*a[3] + 2.*SQ(a[1])*a[1]*a[2]*a[4] - a[1]*SQ(a[2])*a[4] - 4.*SQ(a[1])*a[3]*a[4] + 2.*a[1]*SQ(a[4]) - SQ(SQ(a[1]))*a[5] + SQ(a[1])*a[2]*a[5] + SQ(a[2])*a[5] - a[4]*a[5] + SQ(a[1])*a[1]*a[6] - 2.*a[1]*a[2]*a[6] + a[3]*a[6];  
+  double d5 = -SQ(SQ(a[2]))*a[2] + 4.*a[1]*SQ(a[2])*a[2]*a[3] - 3.*SQ(a[1])*a[2]*SQ(a[3]) - 3.*SQ(a[2])*SQ(a[3]) + 2.*a[1]*SQ(a[3])*a[3] - 3.*SQ(a[1])*SQ(a[2])*a[4] + 3.*SQ(a[2])*a[2]*a[4] + 2.*SQ(a[1])*a[1]*a[3]*a[4] + 2.*a[1]*a[2]*a[3]*a[4] - SQ(a[3])*a[4] - SQ(a[1])*SQ(a[4]) - 2.*a[2]*SQ(a[4]) + 2.*SQ(a[1])*a[1]*a[2]*a[5] - 4.*a[1]*SQ(a[2])*a[5] - 2.*SQ(a[1])*a[3]*a[5] + 4.*a[2]*a[3]*a[5] + 2.*a[1]*a[4]*a[5] - SQ(a[5]) - SQ(SQ(a[1]))*a[6] + 3.*SQ(a[1])*a[2]*a[6] - SQ(a[2])*a[6] - 2.*a[1]*a[3]*a[6] + a[4]*a[6];
+
+  double pade = (cden + n1*x)/(cden + d1*x + d2*x2 + d3*x3 + d4*x4 + d5*x5);
+
+  return pade;
+}
+
+double Pade62(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+  double x4 = x3*x;	
+  double x5 = x4*x;
+  double x6 = x5*x;
+
+  double cden = SQ(a[6]) - a[5]*a[7];
+
+  double n1 = a[1]*SQ(a[6]) - a[1]*a[5]*a[7] - a[6]*a[7] + a[5]*a[8];
+  double n2 = a[2]*SQ(a[6]) - a[2]*a[5]*a[7] - a[1]*a[6]*a[7] + SQ(a[7]) + a[1]*a[5]*a[8] - a[6]*a[8];
+  double n3 = a[3]*SQ(a[6]) - a[3]*a[5]*a[7] - a[2]*a[6]*a[7] + a[1]*SQ(a[7]) + a[2]*a[5]*a[8] - a[1]*a[6]*a[8];
+  double n4 = a[4]*SQ(a[6]) - a[4]*a[5]*a[7] - a[3]*a[6]*a[7] + a[2]*SQ(a[7]) + a[3]*a[5]*a[8] - a[2]*a[6]*a[8];
+  double n5 = a[5]*SQ(a[6]) - SQ(a[5])*a[7] - a[4]*a[6]*a[7] + a[3]*SQ(a[7]) + a[4]*a[5]*a[8] - a[3]*a[6]*a[8];
+  double n6 = a[6]*SQ(a[6]) - 2.*a[5]*a[6]*a[7] + a[4]*SQ(a[7]) + SQ(a[5])*a[8] - a[4]*a[6]*a[8];
+
+  double d1 = -a[6]*a[7] + a[5]*a[8];
+  double d2 = SQ(a[7]) - a[6]*a[8];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3 + n4*x4 + n5*x5 + n6*x6)/(cden + d1*x + d2*x2);
+
+  return pade;
+}
+
+double Taylorseries(double x, double *a, int N){
+  double xn[N+1];
+  xn[0] = 1.;
+  for (int n=1; n<N+1; n++) {	
+    xn[n] = xn[n-1]*x;
+  }
+  
+  double sum = 0.;
+#if (1)
+  sum = a[0];
+  for (int n=1; n<N+1; n++) {	
+    sum += a[n]*xn[n];
+  }
+#else  
+  sum = a[N]*xn[N];
+  for (int n=N-1; n-- > 1;) {
+    sum += a[n]*xn[n];
+  } 
+  sum rholm[k] += a[0];
+#endif
+
+  return sum;
+}
+
 /** Spline interpolation with GSL routines */
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
@@ -76,7 +241,6 @@ void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, dou
   gsl_spline_free (spline);
   gsl_interp_accel_free (acc);
 }
-
 
 /* An OpenMP version. We keep two versions because we might want to introduce the 
    thread-parallelism at different levels */
