@@ -2677,16 +2677,27 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
 
 /** Calculate tidal correction to multipolar waveform amplitude
     Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 */
+#define use_fmode_22amplitude_correction (1)
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 {
-  const double nu       = dyn->nu;
-  const double XA       = dyn->X1;
-  const double XB       = dyn->X2;
-  const double khatA_2  = dyn->khatA2;
-  const double khatB_2  = dyn->khatB2;
-  const double kapA2j   = dyn->kapA2j;
-  const double kapB2j   = dyn->kapB2j;
-  const double kapT2j   = dyn->kapT2j;
+  const double nu       = EOBPars->nu; //dyn->nu; 
+  const double XA       = EOBPars->X1; //dyn->X1;
+  const double XB       = EOBPars->X2; //dyn->X2;
+
+  double khatA_2 = 0.5*EOBPars->kapA2; //EOBPars->khatA2; // dyn->khatA2; 
+  double khatB_2 = 0.5*EOBPars->kapA2; //EOBPars->khatB2; //dyn->khatB2;
+  const double kapA2j   = EOBPars->kapA2j; //dyn->kapA2j;
+  const double kapB2j   = EOBPars->kapB2j; //dyn->kapB2j;
+  const double kapT2j   = EOBPars->kapT2j; //dyn->kapT2j;
+  
+#if (use_fmode_22amplitude_correction)
+  if (EOBPars->use_tidal_fmode_model) {
+    const double fact22A  = eob_wav_hlmTidal_fmode_fact22A(x, dyn->dress_tides_fmode_A[2], EOBPars->bomgfA[2], XB); 
+    const double fact22B  = eob_wav_hlmTidal_fmode_fact22A(x, dyn->dress_tides_fmode_B[2], EOBPars->bomgfB[2], XA);         
+    khatA_2 *= fact22A;
+    khatB_2 *= fact22B;
+  }
+#endif
   
   const double x5 = gsl_pow_int(x,5);
   const double x6 = gsl_pow_int(x,6);
@@ -2738,7 +2749,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 
 #if(USEGRAVITOMAGNETICTERMS)
   
-  if ( (dyn->use_tidal_gravitomagnetic==TIDES_GM_GSF) || (dyn->use_tidal_gravitomagnetic==TIDES_GM_PN) ) {
+  if ( (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_GSF) || (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_PN) ) {
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
     const double fourthird = 1.3333333333333333333; // 32/24 = 4/3
     hTidallm[0] += 0.5*( -1.*kapA2j/XB + kapB2j/XA )*x5;
@@ -2792,14 +2803,14 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
   double c1phi[KMAX], c2phi[KMAX], c3phi[KMAX], c4phi[KMAX];
 	    
-  const double nu   = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double aK   = dyn->a1+dyn->a2;
-  const double Mbh  = dyn->Mbhf;
-  const double abh  = dyn->abhf;
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double aK   = EOBPars->a1+EOBPars->a2;
+  const double Mbh  = EOBPars->Mbhf;
+  const double abh  = EOBPars->abhf;
     
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
@@ -3223,14 +3234,14 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
   double c1phi[KMAX], c2phi[KMAX], c3phi[KMAX], c4phi[KMAX];
 	  
-  const double nu   = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double aK   = dyn->a1+dyn->a2;
-  const double Mbh  = dyn->Mbhf;
-  const double abh  = dyn->abhf;
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double aK   = EOBPars->a1+EOBPars->a2;
+  const double Mbh  = EOBPars->Mbhf;
+  const double abh  = EOBPars->abhf;
     
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
@@ -3701,14 +3712,14 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double c1A[KMAX_22], c2A[KMAX_22], c3A[KMAX_22], c4A[KMAX_22];
   double c1phi[KMAX_22], c2phi[KMAX_22], c3phi[KMAX_22], c4phi[KMAX_22];
 	  
-  const double nu   = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double aK   = dyn->a1+dyn->a2;
-  const double Mbh  = dyn->Mbhf;
-  const double abh  = dyn->abhf;
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double aK   = EOBPars->a1+EOBPars->a2;
+  const double Mbh  = EOBPars->Mbhf;
+  const double abh  = EOBPars->abhf;
     
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
@@ -4203,15 +4214,15 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 {
 
-  const double Mbh   = dyn->Mbhf;
-  const double abh   = dyn->abhf;
-  const double nu    = dyn->nu;  
-  const double q     = dyn->q;
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
-  const double aK    = dyn->a1+dyn->a2;
+  const double Mbh   = EOBPars->Mbhf;
+  const double abh   = EOBPars->abhf;
+  const double nu    = EOBPars->nu;  
+  const double q     = EOBPars->q;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double aK    = EOBPars->a1+EOBPars->a2;
 
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
@@ -4428,15 +4439,15 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 {
   
-  const double Mbh   = dyn->Mbhf;
-  const double abh   = dyn->abhf;
-  const double nu    = dyn->nu;
-  const double q    = dyn->q;
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
-  const double aK    = dyn->a1+dyn->a2;
+  const double Mbh   = EOBPars->Mbhf;
+  const double abh   = EOBPars->abhf;
+  const double nu    = EOBPars->nu;
+  const double q    = EOBPars->q;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double aK    = EOBPars->a1+EOBPars->a2;
 	
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
@@ -4575,17 +4586,17 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
 {
 
-  const double nu = dyn->nu;  
-  const double chi1 = dyn->chi1;  
-  const double chi2 = dyn->chi2;  
-  const double a1 = dyn->a1;  
-  const double a2 = dyn->a2;  
-  const double X1 = dyn->X1;  
-  const double X2 = dyn->X2;  
-  const double C_Q1 = dyn->C_Q1;  
-  const double C_Q2 = dyn->C_Q2;  
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
+  const double nu = EOBPars->nu;  
+  const double chi1 = EOBPars->chi1;  
+  const double chi2 = EOBPars->chi2;  
+  const double a1 = EOBPars->a1;  
+  const double a2 = EOBPars->a2;  
+  const double X1 = EOBPars->X1;  
+  const double X2 = EOBPars->X2;  
+  const double C_Q1 = EOBPars->C_Q1;  
+  const double C_Q2 = EOBPars->C_Q2;  
+  const int usetidal = EOBPars->use_tidal;
+  const int usespins = EOBPars->use_spins;
   const int usespeedytail = EOBPars->use_speedytail;
   const double X12 = X1-X2; /* sqrt(1-4nu) */
 
@@ -5095,3 +5106,11 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
     
 }
 
+/** f-mode resonance correction for 22 amplitude of star A*/
+double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, double XB)
+{
+  const double Omega2 = gsl_pow_int(x,3);
+  const double y2 = Omega2/SQ(bomgf);
+  return ( y2 * (-1. + alpha*( 1 + 6.*XB/y2 ) )/( 3.*(1. + 2*XB) ) ); 
+  /* return ( (-1. + alpha)*SQ(bomgf) + 6.*alpha*XB*Omega2 )/( (1. + 2*XB)*(3.*Omega2) ); */
+}

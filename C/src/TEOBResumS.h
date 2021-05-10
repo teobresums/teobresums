@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <libconfig.h> /* library to manage parameters */
 #include <complex.h>
 #include <math.h>
@@ -124,7 +125,7 @@
 #define PRFORMd(s,x) {printf("%-40s = %.16e\n", s,x);} /* Print double */
 #define PRFORMi(s,x) {printf("%-40s = %d\n", s,x);} /* Print int */
 #define PRWARN(s) {printf("# WARNING: %s\n",s);} 
-#define INT2YESNO(i)((i)?"yes":"no")
+//#define INT2YESNO(i)((i)?"yes":"no")
 #define YESNO2INT(s)((strcmp(s,"no")==0)?0:1)
 /* helpers for debug */
 #define DBGPR(s) printf("DEBUG: %s\n",s);
@@ -431,6 +432,15 @@ typedef struct tagDynamics
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
   double A,dA,d2A, B,dB;
   double MOmg, MOmg_prev, tMOmgpeak;
+  double dress_tides_fmode_A[6], dress_tides_fmode_B[6]; // dressing factors for f-mode 
+  double dress_tides_fmode_A_u[6], dress_tides_fmode_B_u[6]; // dressing factors for f-mode, drvts wrt u
+  double dressed_C_Q1, dressed_C_Q1_u, dressed_C_Q1_uu;
+  double dressed_C_Q2, dressed_C_Q2_u, dressed_C_Q2_uu;
+  double dressed_C_Oct1, dressed_C_Oct1_u, dressed_C_Oct1_uu;
+  double dressed_C_Oct2, dressed_C_Oct2_u, dressed_C_Oct2_uu;
+  double dressed_C_Hex1, dressed_C_Hex1_u, dressed_C_Hex1_uu;
+  double dressed_C_Hex2, dressed_C_Hex2_u, dressed_C_Hex2_uu;
+  
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_NVARS]; /* rhs storage */
   double dy[EOB_EVOLVE_NVARS];
@@ -444,17 +454,21 @@ typedef struct tagDynamics
   double *data[EOB_DYNAMICS_NVARS];
   
   /* key parameters for quick access */
-  // TODO: REMOVE THEM FROM HERE, put them in EOBParameters
+  // TODO: REMOVE THEM FROM HERE, use only those in EOBParameters!
   double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, a6c, cN3LO;
   double rLR, rLSO;
-  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8,kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8,kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;
+  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8;
+  double kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8;
+  double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;
+  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2;
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
   double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
   double kapA2j, kapB2j, kapT2j;
   double rLR_tidal, pGSF_tidal;
-  double Mbhf, abhf; /* final BH */
+  double Mbhf, abhf; /* final BH */  
   int use_tidal, use_spins, use_tidal_gravitomagnetic;
+  
 } Dynamics;
 
 /** Parameter data type */
@@ -464,22 +478,28 @@ typedef struct tagEOBParameters
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
   double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
   double rLR, rLSO;
-  double LambdaAl2,LambdaAl3,LambdaAl4,LambdaAl5,LambdaAl6,LambdaAl7,LambdaAl8,LambdaBl2,LambdaBl3,LambdaBl4,LambdaBl5,LambdaBl6,LambdaBl7,LambdaBl8,SigmaAl2,SigmaBl2;
-  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8,kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8,kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;
-  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;//new names!
+  double LambdaAl2,LambdaAl3,LambdaAl4,LambdaAl5,LambdaAl6,LambdaAl7,LambdaAl8;
+  double LambdaBl2,LambdaBl3,LambdaBl4,LambdaBl5,LambdaBl6,LambdaBl7,LambdaBl8;
+  double SigmaAl2,SigmaBl2;
+  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8;
+  double kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8;
+  double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;
+  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;
   
   double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
+  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; 
   double kapA2j, kapB2j, kapT2j;
   double rLR_tidal, pGSF_tidal;
   double Mbhf, abhf; // final BH 
 
+  double bomgfA[6], bomgfB[6]; // f-mode frequencies star A,B (ell=2,3,4; indexes 0,1 not used)
+  
   double r0, initial_frequency;
-
   double distance, inclination, polarization, coalescence_angle;
   
   int use_tidal, use_spins, use_tidal_gravitomagnetic;
   int use_lambda234_fits;
+  int use_tidal_fmode_model;
   int use_geometric_units;
   int use_speedytail;
 
@@ -578,6 +598,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp);
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);
 double nu_to_X1(const double nu);
+double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell, double *kapA, double *kapB);
 double Eulerlog(const double x,const int m);
 double Pade32(double x, double *a);
 double Pade23(double x, double *a);
@@ -597,9 +618,6 @@ double baryc_f_weights(double xx, int n, double *f, double *x, double *omega);
 double interp1d (const int order, double xx, int nx, double *f, double *x);
 double find_max (const int n, double dx, double x0, double *f, double *fmax);
 double find_max_grid (double *x, double *f);
-double fact(int n);
-double wigner_d_function(int l, int m, int s, double i);
-int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
@@ -688,7 +706,9 @@ void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname);
 void eob_nqc_setcoefs_spin202002(NQCcoefs *nqc);
 double get_a1_fit_22(double nu, double chi1, double chi2);
 double get_a2_fit_22(double nu, double chi1, double chi2);
-double logQ(double x);
+void YagiYunes13_fit_logQ_coefs(double *c);
+double YagiYunes13_fit_logQ(double x);
+void YagiYunes13_fit_logQ_drvts(double Lam, double Lam_u, double Lam_uu, double *Q, double *Q_u, double *Q_uu);
 double Yagi13_fit_barlamdel(double barlam2, int ell);
 double Yagi13_fit_barsigmalambda(double barlam2);
 double Yagi14_fit_Coct(double C_Q);
@@ -712,6 +732,9 @@ void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);
 double get_mrg_timestop(double q, double chi1, double chi2);
+double fmode_resonance_dress_Love(double nu, double r, double bomgf, int ell, double *dtides, double *dtides_u);
+void fmode_resonance_dressing_factors(double r, Dynamics *dyn);
+void fmode_resonance_dress_QOH(Dynamics *dyn);
 
 /* TEOBResumSDynamics.c */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *params);
@@ -727,6 +750,7 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
 void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double u, double at1, double at2, double *drc_dr, double *d2rc_dr2);
 double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
@@ -750,6 +774,7 @@ double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 /* TEOBResumSMetric.c */
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
+void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB);
 
@@ -795,6 +820,15 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 void (*eob_wav_ringdown)();
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
+double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, double XB);
+
+/* SpecialFuns.c */
+double fact(int n);
+double doublefact(int n);
+double wigner_d_function(int l, int m, int s, double i);
+int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
+double Fresnel_Sine_Integral( double x );
+double Fresnel_Cosine_Integral( double x );
 
 #ifdef _OPENMP
 /* TEOBResumSOMP.c */

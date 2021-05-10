@@ -25,7 +25,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 {
   
   (void)(t); /* avoid unused parameter warning */
-  Dynamics *dyn = d;  
+  Dynamics *dyn = d;
 
   const double nu = dyn->nu;  
   const double z3 = 2.0*nu*(4.0-3.0*nu);
@@ -35,11 +35,15 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   const double r      = y[EOB_EVOLVE_RAD];
   const double pphi   = y[EOB_EVOLVE_PPHI];
   const double prstar = y[EOB_EVOLVE_PRSTAR];
- 
+  
+  if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model))
+    /** Update the dressing factors for the f-mode resonances */
+    fmode_resonance_dressing_factors(r, dyn);
+  
   /** Compute EOB Metric */
   double A, B, dA, d2A, dB;
-  eob_metric(r, d, &A, &B, &dA, &d2A, &dB);
-
+  eob_metric(r, dyn, &A, &B, &dA, &d2A, &dB);
+  
   /** Compute Hamiltonian */
   double H, Heff, dHeff_dr,dHeff_dprstar;
   eob_ham(nu, r,pphi,prstar,A,dA, &H,&Heff,&dHeff_dr,&dHeff_dprstar,NULL);
@@ -110,7 +114,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
   }
-
+  
   return GSL_SUCCESS;
 
 }
@@ -147,25 +151,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
       
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
-  
-  /* Unpack values */
-  const double nu    = dyn->nu;
-  const double S     = dyn->S;
-  const double Sstar = dyn->Sstar;
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
-  const double c3    = dyn->cN3LO;
-  const double aK2   = dyn->aK2;
-  const double a1    = dyn->a1;
-  const double a2    = dyn->a2;
-  const double C_Q1  = dyn->C_Q1;
-  const double C_Q2  = dyn->C_Q2;
-  const double C_Oct1 = dyn->C_Oct1;
-  const double C_Oct2 = dyn->C_Oct2;
-  const double C_Hex1 = dyn->C_Hex1;
-  const double C_Hex2 = dyn->C_Hex2;
+
   const int usetidal = dyn->use_tidal;
   const int usespins = dyn->use_spins;
   
@@ -174,6 +160,38 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double prstar = y[EOB_EVOLVE_PRSTAR];
   const double pphi   = y[EOB_EVOLVE_PPHI];
   const double pphi2  = pphi*pphi;
+
+  /* Unpack values */
+  const double nu    = EOBPars->nu;
+  const double S     = EOBPars->S;
+  const double Sstar = EOBPars->Sstar;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double c3    = EOBPars->cN3LO;
+  const double aK2   = EOBPars->aK2;
+  const double a1    = EOBPars->a1;
+  const double a2    = EOBPars->a2;
+  double C_Q1  = EOBPars->C_Q1;
+  double C_Q2  = EOBPars->C_Q2;
+  double C_Oct1 = EOBPars->C_Oct1;
+  double C_Oct2 = EOBPars->C_Oct2;
+  double C_Hex1 = EOBPars->C_Hex1;
+  double C_Hex2 = EOBPars->C_Hex2;
+
+  if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
+    /** Update the dressing factors for the f-mode resonances */
+    fmode_resonance_dressing_factors(r, dyn);
+    /* Update the QOH */
+    fmode_resonance_dress_QOH(dyn);
+    C_Q1 = dyn->dressed_C_Q1;
+    C_Q2 = dyn->dressed_C_Q2;
+    C_Oct1 = dyn->dressed_C_Oct1;
+    C_Oct2 = dyn->dressed_C_Oct2;
+    C_Hex1 = dyn->dressed_C_Hex1;
+    C_Hex2 = dyn->dressed_C_Hex2;
+  }
   
   /** Compute Metric */
   double A, B, dA, d2A, dB;
@@ -181,7 +199,15 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   
   /* Compute centrifugal radius */
   double rc, drc_dr, d2rc_dr2;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2);
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, 
+       &rc, &drc_dr, &d2rc_dr2);
+  
+  if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
+    /* Add derivative terms to rc' and rc'' from f-mode resonances u-dependent terms */
+    eob_dyn_s_rc_add_QOH_drvts(dyn, rc, r, a1, a2,
+			       &drc_dr, &d2rc_dr2);
+  }
+  
   const double uc     = 1./rc;
   const double uc2    = uc*uc;
   const double uc3    = uc2*uc;
@@ -229,8 +255,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double dGtilde_dr = dGS_dr_0*S + dGSs_dr_0*Sstar;
   const double duc_dr     = -uc2*drc_dr;
   const double psic       = fabs((duc_dr + dGtilde_dr*rc*sqrt(A/pphi2 + A*uc2)/A)/(-0.5*dA));
-  // FIXME: Different from Matlab code.
-  //        Added absolute value to avoid NaN
+  //NOTE Different from Matlab code.
+  //     Added absolute value to avoid NaN
   const double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+Gtilde)*ooH0, -2./3. );
   const double v_phi      = r_omg*Omg;
   const double x          = v_phi*v_phi;
@@ -532,7 +558,7 @@ void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2,
   
 }
 
-// tidal rc with NLO coefficient that depends on C_Qi
+/* Tidal rc with NLO coefficient that depends on C_Qi */
 void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
@@ -572,9 +598,9 @@ void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2
   
 }
 
-// tidal rc with NNLO coefficient that depends on C_Qi
+/* Tidal rc with NNLO coefficient that depends on C_Qi */
 void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
-		      double *rc, double *drc_dr, double *d2rc_dr2)
+			   double *rc, double *drc_dr, double *d2rc_dr2)
 {
 
   double u   = 1./r;
@@ -633,7 +659,7 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
   
 }
 
-// tidal rc @ NNLO with the addition of the LO spin^4 coefficient that depends on C_Q, C_Oct and C_Hex
+/* tidal rc @ NNLO with the addition of the LO spin^4 coefficient that depends on C_Q, C_Oct and C_Hex */
 void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2)
 {
 
@@ -737,6 +763,103 @@ void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double
   }
   
 }
+
+/** This routine implements the additional terms in the derivatives of rc
+ * that arise if the quadrupole, octupole and hexapole coefficients varies with u.
+ * In particular, the coefficients
+ * a02, delta_a2, delta_a2_nnlo, delta_a4_lo
+ * in the definition of rc
+ * r_c^2   =  r^2 + a02 (1 + 2 u) + delta_a2 u + (delta_a2_nnlo + delta_a4_lo) u^2 
+ * all become functions of u(r), and terms proportional top them need to be added to 
+ * drc_dr, d2rc_dr2  
+ *
+ * This is needed only if the f-mode resonance model is included. 
+ * More or less terms are needed depending on the option for rc:
+ * CENTRAD_LO, CENTRAD_NLO, CENTRAD_NNLO, CENTRAD_NNLOS4, CENTRAD_NOSPIN, CENTRAD_NOTIDES, ...
+ *
+ * NOTE: 2nd drvts are not used in the dynamics (but only LSO computation)
+ *       Not yet implemented for the dressing factors, and also not below here.
+ *       1st drvts of Oct_i and Hex_i are also omitted for simplicity.
+ * 
+ */
+void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
+				double at1, double at2, 
+				double *drc_dr, double *d2rc_dr2)
+{
+  if (!(EOBPars->use_tidal_fmode_model)) return;
+  if (EOBPars->centrifugal_radius == CENTRAD_NOSPIN) return;
+  if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) return;
+
+  const double u = 1./r;
+  const double u2 = SQ(u);
+  const double u3 = u*u2;
+  const double u4 = u2*u2;
+  const double divrc = 1./rc;
+  const double nu = EOBPars->nu; 
+  const double X12 = sqrt(1.-4.*nu);
+  const double at12 = SQ(at1);
+  const double at22 = SQ(at2);
+  
+  const double coef_a02 = 0.5*(1+2*u)*divrc;
+  const double coef_delta_a2 = 0.5*r*divrc;
+  const double coef_delta_a2_nnlo = u2;
+  
+  /* Compute r-drvts of dressed quadrupoles */
+  const double dCQ1_dr = - u2 * dyn->dressed_C_Q1_u;
+  const double dCQ2_dr = - u2 * dyn->dressed_C_Q2_u;
+  /* const double d2CQ1_dr2 = 2 * u3 * dyn->dressed_C_Q1_u + u4 * dyn->dressed_C_Q1_uu; */
+  /* const double d2CQ2_dr2 = 2 * u3 * dyn->dressed_C_Q2_u + u4 * dyn->dressed_C_Q2_uu; */
+
+  /* Add drvts terms from a02 */
+  const double da02_dr = dCQ1_dr * at12 + dCQ2_dr * at22;
+  /* double d2a02_dr2 = d2CQ1_dr2 * at12 + d2CQ2_dr2 * at22; */
+
+  const double drc_dr_a02_term = coef_a02 * da02_dr;
+  /* double d2rc_dr2_a02_term = 0; */
+ 
+  *drc_dr += drc_dr_a02_term;
+  /* *d2rc_dr2 += 0; */
+  
+  if (EOBPars->centrifugal_radius == CENTRAD_LO) 
+    return;
+  
+  /* Drvts terms from delta_a2 */
+  const double ddelta_a2_dr = X12*(at12*dCQ1_dr - at22*dCQ2_dr) + 3.*da02_dr;
+  /* double d2delta_a2_dr2 = 0; */
+  
+  const double drc_dr_delta_a2_term = coef_delta_a2 * ddelta_a2_dr;
+  /* double d2rc_dr2_delta_a2_term = 0; */
+
+  *drc_dr += drc_dr_delta_a2_term;
+  /* *d2rc_dr2 += 0; */
+
+  if (EOBPars->centrifugal_radius == CENTRAD_NLO) 
+    return;
+  
+  /* Drvts terms from delta_a2_nnlo */
+  const double ddelta_a2_nnlo_dr = ( (387 - 207*nu)*da02_dr + 163.*X12*(at12*dCQ1_dr - at22*dCQ2_dr) )/28;
+
+  const double drc_dr_delta_a2_nnlo_term = coef_delta_a2_nnlo * ddelta_a2_nnlo_dr;
+  /* double d2rc_dr2_delta_a2_nnlo_term = 0; */
+
+  *drc_dr += drc_dr_delta_a2_nnlo_term;
+  /* *d2rc_dr2 += 0; */
+  
+  if (EOBPars->centrifugal_radius == CENTRAD_NNLO) 
+    return;
+  
+  //TODO Correction for the following case not implement, we stop at NNLO.
+  // if (EOBPars->centrifugal_radius == CENTRAD_NNLOS4)  
+  /* Compute r-drvts of octupole and hexapole */
+  /* Drvts terms from delta_a4_lo */
+  /* double drc_dr_delta_a4_lo_term = 0; */
+  /* double d2rc_dr2_delta_a4_lo_term = 0; */
+  /* *drc_dr += drc_dr_delta_a4_lo_term; */
+  /* *d2rc_dr2 += d2rc_dr2_delta_a4_lo_term; */
+  //return;
+
+}
+
 
 /** Root function to compute light-ring */
 //TODO: THIS IS FOR NOSPIN

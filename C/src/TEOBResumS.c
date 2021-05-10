@@ -228,11 +228,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** NQC data */  
   NQCdata_alloc (&NQC); 
   eob_nqc_setcoefs(NQC);
-
+  
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
-
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO; 
     dyn->use_spins = 0;
@@ -247,11 +246,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     double LambdaBl2 = EOBPars->LambdaBl2;
     if( fabs(LambdaBl2) < TEOB_LAMBDA_TOL ) LambdaBl2 = 0.0;
     double q = EOBPars->q;
-
     /* Reset options */
     dyn->use_tidal = EOBPars->use_tidal;
     dyn->use_spins = EOBPars->use_spins;
-    if (VERBOSE) PRFORMd("rLR_tidal",dyn->rLR_tidal); 
+    if (VERBOSE) PRFORMd("rLR_tidal",dyn->rLR_tidal);
+    /* Set ODE stop to LR */
+    EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
   if (EOBPars->compute_LR && !(use_tidal)) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
@@ -292,6 +292,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->Mbhf = dyn->Mbhf;
     EOBPars->abhf = dyn->abhf;
   }
+
+  /** Compute the dressing factors for the f-mode resonances at r0 */
+  if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model))
+    fmode_resonance_dressing_factors(r0, dyn);  
 
   /* Iteration index */
   int iter = 0;  
@@ -436,7 +440,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
-  const double rstop   = EOBPars->ode_stop_radius; 
+  const double rstop = EOBPars->ode_stop_radius;
   if (rstop>0.) {
     dyn->ode_stop_radius   = true;
   }
@@ -695,7 +699,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	Recall that parameters are NOT stored into these auxiliary vars */
     
     if (merger_interp) {
-
+      
       /** Extract the waveform and dynamics around merger */
       const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
       const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
@@ -806,7 +810,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       Waveform_lm_free (hlm_nqc);
       
-    } // NQC_HLM_COMPUTE
+    }  /* NQC_HLM_COMPUTE */
 
     
     /** BBH : add Ringdown */

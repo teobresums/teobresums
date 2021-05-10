@@ -37,6 +37,17 @@ double nu_to_X1(const double nu)
   return 0.5*(1.+sqrt(1.-4.*nu));
 }
 
+/** Compute tidal coupling constants from tidal polarizability parameters */
+double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell,
+			     double *kapA, double *kapB)
+{
+  if (ell<2) errorexit("ell must be >2");
+  double f2lm1 = doublefact(2*ell-1);
+  int p = 2*ell + 1;
+  *kapA = f2lm1 * LamA * pow(XA,p) / q;
+  *kapB = f2lm1 * LamB * pow(XB,p) * q;
+}
+
 /** Eulerlog function (constants are defined in header) */
 static const double Logm[] = {0.,Log1,Log2,Log3,Log4,Log5,Log6,Log7};
 double Eulerlog(const double x,const int m)
@@ -423,85 +434,6 @@ double find_max_grid (double *x, double *f)
   double xmax = x[i] - d1f/d2f;
 
   return xmax;
-}
-
-/** Factorial */
-static const double f35[] = {1.,
-			     1.,
-			     2.,
-			     6.,
-			     24.,
-			     120.,
-			     720.,
-			     5040.,
-			     40320.,
-			     362880.,
-			     3628800., 
-			     39916800.,
-			     479001600.,
-			     6227020800.,
-			     87178291200.,
-			     1307674368000.,
-			     20922789888000.,
-			     355687428096000.,
-			     6402373705728000.,
-			     121645100408832000.,
-			     2432902008176640000.,
-			     51090942171709440000.,
-			     1124000727777607680000.,
-			     25852016738884976640000.,
-			     620448401733239439360000.,
-			     15511210043330985984000000.,
-			     403291461126605635584000000.,
-			     10888869450418352160768000000.,
-			     304888344611713860501504000000.,
-			     8841761993739701954543616000000.,
-			     265252859812191058636308480000000.,
-			     8222838654177922817725562880000000.,
-			     263130836933693530167218012160000000.,
-			     8683317618811886495518194401280000000.,
-			     295232799039604140847618609643520000000.,
-			     10333147966386144929666651337523200000000.};
-double fact(int n)
-{
-  if (n < 0){
-    errorexit(" computing a negative factorial.\n");
-  } else if (n <= 35){
-    return f35[n];
-  } else {
-    return n*fact(n-1);
-  }
-}
-
-/** Wigner d-function */
-double wigner_d_function(int l, int m, int s, double i)
-{
-  const double costheta = cos(i*0.5);
-  const double sintheta = sin(i*0.5);
-  const double norm = sqrt( (fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s)) );
-  const int ki = MAX( 0  , m-s );
-  const int kf = MIN( l+m, l-s );
-  double dWig = 0.;  
-  double div;
-  for (int k = ki; k <= kf; k++ ) {
-    div = 1.0/( fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) );
-    dWig += div*( pow(-1.,k) * pow(costheta,2*l+m-s-2*k) * pow(sintheta,2*k+s-m) );
-  }
-  return (norm * dWig);
-}
-
-/** Spin-weighted spherical harmonic 
-    Ref: https://arxiv.org/pdf/0709.0093.pdf */
-int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
-{
-  if ((l<0) || (m<-l) || (m>l)) {
-    errorexit(" wrong (l,m) inside spinspharmY\n");
-  }
-  double c = pow(-1.,-s) * sqrt( (2.*l+1.)/(4.*M_PI) );
-  double dWigner = c * wigner_d_function(l,m,-s,i);
-  *rY = cos((double)(m)*phi) * dWigner;
-  *iY = sin((double)(m)*phi) * dWigner;
-  return OK;
 }
 
 /** (h+, hx) polarizations from the multipolar waveform */
@@ -1917,6 +1849,7 @@ void Dynamics_free (Dynamics *dyn)
 
 /** Sync some quick access parameters in dyn with parameter database 
     to be used carefully */
+// TODO: remove redundant parameters already present in EOBPars and use directly the latter!
 void Dynamics_set_params (Dynamics *dyn)
 {
   dyn->store = 0;
@@ -1985,6 +1918,11 @@ void Dynamics_set_params (Dynamics *dyn)
   dyn->use_spins = EOBPars->use_spins;
   dyn->dt        = EOBPars->dt;
   dyn->t_stop    = EOBPars->ode_tmax;
+  for (int l=2; l<6; l++) {
+    dyn->dress_tides_fmode_A[l] = dyn->dress_tides_fmode_B[l] = 1;
+    dyn->dress_tides_fmode_A_u[l] = dyn->dress_tides_fmode_B_u[l] = 0;
+  }
+
 }
 
 /** NQC data */

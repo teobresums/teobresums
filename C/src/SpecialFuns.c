@@ -1,20 +1,147 @@
 /**
- * This file implements special functions not available in GNU GSL
- *
- * Most of the code is adapted from
- * http://www.mymathlib.com/
- * http://www.mymathlib.com/functions/
+ * This file implements special math functions 
  *
  */
 
-#include <math.h>           // required for fabsl(), sinl(), cosl()
-#include <float.h>          // required for LDBL_EPSILON
+#include "TEOBResumS.h"
 
 #define DEBUG_THIS_FILE (0) /* = 1 to compile and debug various routines in this file */
 
+
+/** Factorial */
+static const double f35[] = {1.,
+			     1.,
+			     2.,
+			     6.,
+			     24.,
+			     120.,
+			     720.,
+			     5040.,
+			     40320.,
+			     362880.,
+			     3628800., 
+			     39916800.,
+			     479001600.,
+			     6227020800.,
+			     87178291200.,
+			     1307674368000.,
+			     20922789888000.,
+			     355687428096000.,
+			     6402373705728000.,
+			     121645100408832000.,
+			     2432902008176640000.,
+			     51090942171709440000.,
+			     1124000727777607680000.,
+			     25852016738884976640000.,
+			     620448401733239439360000.,
+			     15511210043330985984000000.,
+			     403291461126605635584000000.,
+			     10888869450418352160768000000.,
+			     304888344611713860501504000000.,
+			     8841761993739701954543616000000.,
+			     265252859812191058636308480000000.,
+			     8222838654177922817725562880000000.,
+			     263130836933693530167218012160000000.,
+			     8683317618811886495518194401280000000.,
+			     295232799039604140847618609643520000000.,
+			     10333147966386144929666651337523200000000.};
+double fact(int n)
+{
+  if (n < 0){
+    errorexit(" computing a negative factorial.\n");
+  } else if (n <= 35){
+    return f35[n];
+  } else {
+    return n*fact(n-1);
+  }
+}
+
+
+/** Double factorial */
+static const double ff35[] = {1,
+			      1,
+			      2,
+			      3,
+			      8,
+			      15,
+			      48,
+			      105,
+			      384,
+			      945,
+			      3840,
+			      10395,
+			      46080,
+			      135135,
+			      645120,
+			      2027025,
+			      10321920,
+			      34459425,
+			      185794560,
+			      654729075,
+			      3715891200,
+			      13749310575,
+			      81749606400,
+			      316234143225,
+			      1961990553600,
+			      7905853580625,
+			      51011754393600,
+			      213458046676875,
+			      1428329123020800,
+			      6190283353629376,
+			      4.2849873690624e+16,
+			      1.918987839625107e+17,
+			      1.371195958099968e+18,
+			      6.332659870762852e+18,
+			      4.662066257539891e+19,
+			      2.2164309547669976e+20};
+
+double doublefact(int n)
+{
+  if (n < 0){
+    errorexit(" computing a negative factorial2.\n");
+  } else if (n <= 35){
+    return ff35[n];
+  } else {
+    return n*doublefact(n-2);
+  }
+}
+
+
+/** Wigner d-function */
+double wigner_d_function(int l, int m, int s, double i)
+{
+  const double costheta = cos(i*0.5);
+  const double sintheta = sin(i*0.5);
+  const double norm = sqrt( (fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s)) );
+  const int ki = MAX( 0  , m-s );
+  const int kf = MIN( l+m, l-s );
+  double dWig = 0.;  
+  double div;
+  for (int k = ki; k <= kf; k++ ) {
+    div = 1.0/( fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) );
+    dWig += div*( pow(-1.,k) * pow(costheta,2*l+m-s-2*k) * pow(sintheta,2*k+s-m) );
+  }
+  return (norm * dWig);
+}
+
+
+/** Spin-weighted spherical harmonic 
+    Ref: https://arxiv.org/pdf/0709.0093.pdf */
+int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
+{
+  if ((l<0) || (m<-l) || (m>l)) {
+    errorexit(" wrong (l,m) inside spinspharmY\n");
+  }
+  double c = pow(-1.,-s) * sqrt( (2.*l+1.)/(4.*M_PI) );
+  double dWigner = c * wigner_d_function(l,m,-s,i);
+  *rY = cos((double)(m)*phi) * dWigner;
+  *iY = sin((double)(m)*phi) * dWigner;
+  return OK;
+}
+
+
 /** Fresnel integrals
-    Adapted from
-    http://www.mymathlib.com/functions/fresnel_sin_cos_integrals.html 
+    Adapted from http://www.mymathlib.com/functions/fresnel_sin_cos_integrals.html 
 */
 
 ////////////////////////////////////////////////////////////////////////////////
