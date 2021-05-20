@@ -653,9 +653,9 @@ void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *fl
 void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double kapT2, double nu);
 void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t);
 void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, double *omega2, double k2t);
-void peak_bhns(double nu, double k2t, double chi1, double X1, double X2, double *Apeak, double *Opeak);
+void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak);
 void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
-                    double *sigmar, double *sigmai, double nu, double k2t, double chi1, double X1, double X2, double Mbh,
+                    double *sigmar, double *sigmai, double nu, double chi1, double X1, double X2, double Mbh, double abh,
                     double *Apeak, double *alpha2);
 void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 			double Mbh, double abh,  

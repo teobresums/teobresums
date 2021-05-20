@@ -3423,8 +3423,6 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   const double X1    = dyn->X1;
   const double X2    = dyn->X2;
   const double aK    = dyn->a1+dyn->a2;
-
-  const double kapT2 = EOBPars->kapT2;
   const double M = EOBPars->M;
 	
   const double xnu   = (1.-4.*nu);
@@ -3523,7 +3521,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
 	     sigma[0],sigma[1]);
    }else{
      if (VERBOSE) PRSECTN("Tidal disruption cases");
-     postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, kapT2, chi1, X1, X2, Mbh, Apeak, alpha2);
+     postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, chi1, X1, X2, Mbh, abh, Apeak, alpha2);
    }
   
   if (VERBOSE) PRFORMd("a1", a1[1] );

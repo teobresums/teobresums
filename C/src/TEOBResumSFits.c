@@ -37,15 +37,12 @@ void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *fl
   
 }
 
-void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double kapT2, double nu)
+void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double kt2, double nu)
 {
   /** QNM fits for the tidal disruption cases in BHNS */
   for (int k=0; k<KMAX; k++) {
     alpha21[k] = alpha1[k] = alpha2[k] = omega1[k] = omega2[k]= 0.;
   }
-
-  double chi1 = af;
-  double k2t = kapT2;
 
   // BBH fits
   double af2 = pow(af,2);
@@ -64,59 +61,59 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
 
   // Inverse damping time
 
-  const double a110=-2.56275793;
-  const double a111=-0.35178201;
-  const double a120=12.1236107;
-  const double a121=5.56115641;
-  const double a210=0.07815954;
-  const double a211=-0.04385969;
-  const double a220=-0.32102942;
-  const double a221=0.28927232;
-  const double b110=0.37712931;
-  const double b111=1.72273820;
-  const double b120=-0.85223799;
-  const double b121=0.43672158;
+  const double a110= -1.54144034;//-2.56275793; using initial spin BH
+  const double a111= -0.94594863;//-0.35178201;
+  const double a120= 8.15985138;//12.1236107;
+  const double a121= 8.38348865;//5.56115641;
+  const double a210= -0.12421662;//0.07815954;
+  const double a211= 0.14266854;//-0.04385969;
+  const double a220= 0.53806120;//-0.32102942;
+  const double a221= -0.50650508;//0.28927232;
+  const double b110= -0.61379071;//0.37712931;
+  const double b111= 2.80688664;//1.72273820;
+  const double b120= 3.15028993;//-0.85223799;
+  const double b121= -4.43302699;//0.43672158;
 
-  double a11 = a110*chi1 + a111;
-  double a12 = a120*chi1 + a121;
-  double a21 = a210*chi1 + a211;
-  double a22 = a220*chi1 + a221;
-  double b11 = b110*chi1 + b111;
-  double b12 = b120*chi1 + b121;
+  double a11 = a110*af + a111;
+  double a12 = a120*af + a121;
+  double a21 = a210*af + a211;
+  double a22 = a220*af + a221;
+  double b11 = b110*af + b111;
+  double b12 = b120*af + b121;
 
   double a1 = a11*nu + a12*nu*nu;
   double a2 = a21*nu + a22*nu*nu;
   double b1 = b11*nu + b12*nu*nu;
 
-  double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
 
   // Frequency
 
-  const double c110 = -1.42376676; //-17.8151271;
-  const double c111 = -0.46547134; //10.6779154;
-  const double c120 = 6.18675084; //87.7242256;
-  const double c121 = 2.06136810; //-11.2517961;
-  const double c210 = 0.13558467; //6.53177751;
-  const double c211 = -0.01554561; //-3.43616964;
-  const double c220 = -0.60083059; //-27.5943674;
-  const double c221 = 0.07249501; //16.1599098;
-  const double d110 = 6.40369007; //8.27809745;
-  const double d111 = -1.73278788; //2.23796811;
-  const double d120 = -27.0597337; //-30.2268880;
-  const double d121 = 10.3197168; //2.06541065;
+  const double c110 = 7448960.31;//-1.42376676; 
+  const double c111 = -7046736.48;//-0.46547134; 
+  const double c120 = -53299487.6;//6.18675084; 
+  const double c121 = 52569984.4;//2.06136810; 
+  const double c210 = 3046296.24;//0.13558467; 
+  const double c211 = -2361264.80;//-0.01554561;
+  const double c220 = -13831150.4;//-0.60083059;
+  const double c221 = 11055694.9;//0.07249501; 
+  const double d110 = 707.275121;//6.40369007; 
+  const double d111 = -416.865119;//-1.73278788;
+  const double d120 = -3183.26824;//-27.0597337;
+  const double d121 = 2221.66477;//10.3197168; 
 
-  a11 = c110*chi1 + c111;
-  a12 = c120*chi1 + c121;
-  a21 = c210*chi1 + c211;
-  a22 = c220*chi1 + c221;
-  b11 = d110*chi1 + d111;
-  b12 = d120*chi1 + d121;
+  a11 = c110*af + c111;
+  a12 = c120*af + c121;
+  a21 = c210*af + c211;
+  a22 = c220*af + c221;
+  b11 = d110*af + d111;
+  b12 = d120*af + d121;
 
   a1 = a11*nu + a12*nu*nu;
   a2 = a21*nu + a22*nu*nu;
   b1 = b11*nu + b12*nu*nu;
 
-  double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
 
   alpha2[1] = Ap*alpha_bbh;
   omega1[1] = Op*omega_bbh;
@@ -176,7 +173,7 @@ void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, do
   *alpha2 = *omega2 / (2. * Q2);
 }
 
-void peak_bhns(double nu, double k2t, double chi1, double X1, double X2, double *Apeak, double *Opeak)
+void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak)
 {
   /** A^{peak}_{22} amplitude and omega^{peak}_{22} frequency at tpeak (\dot{A}(tpeak)=0) 
    * ap_bbh and op_bbh is for BBH from the function QNMHybridFitCab_HM in ..Fits.c */
@@ -187,120 +184,13 @@ void peak_bhns(double nu, double k2t, double chi1, double X1, double X2, double 
   }
 
   // BBH fits 
-  if(chi1==0){
-    double omega0, A0;
-    double n1, n2, d1, d2, op_bbh1, ap_bbh1;
-
-    /* l=2, m=1 */
-    omega0 = 0.290672;
-    n1 = -0.060432;
-    n2 = 1.9995;
-    d1 = 0.23248; 
-    d2 = 0.;
-    op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
-    op_bbh[0] = omega0*op_bbh1;
-
-    A0 = 0.106935;
-    n1 = 9.0912;
-    n2 = 3.9331;
-    d1 = 11.108; 
-    d2 = 0.;
-    ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
-    ap_bbh[0] = A0*ap_bbh1;
-
-    /* l=2, m=2 */
-    omega0 = 0.273356;
-    n1 = 0.84074;
-    n2 = 1.6976;
-    d1 = 0.; 
-    d2 = 0.;
-    op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
-    op_bbh[1] = omega0*op_bbh1;
-
-    A0 = 0.295896;
-    n1 = -0.041285;
-    n2 = 1.5971;
-    d1 = 0.; 
-    d2 = 0.;
-    ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
-    ap_bbh[1] = A0*ap_bbh1;
-
-    /* l=3, m=2 */
-    omega0 = 0.451817;
-    n1 = -9.0214;
-    n2 = 21.078;
-    d1 = -8.6636; 
-    d2 = 19.493;
-    op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
-    op_bbh[3] = omega0*op_bbh1;
-
-    A0 = 0.018168;
-    n1 = -6.142;
-    n2 = 11.372;
-    d1 = -3.6448; 
-    d2 = 0.;
-    ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
-    ap_bbh[3] = A0*ap_bbh1;
-
-    /* l=3, m=3 */
-    omega0 = 0.454622;
-    n1 = 1.1054;
-    n2 = 2.2957;
-    d1 = 0.; 
-    d2 = 0.;
-    op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
-    op_bbh[4] = omega0*op_bbh1;
-
-    A0 = 0.051670;
-    n1 = 0.098379;
-    n2 = 3.8179;
-    d1 = 0.; 
-    d2 = 0.;
-    ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
-    ap_bbh[4] = A0*ap_bbh1;
-
-    /* l=4, m=4 */
-    omega0 = 0.635415;
-    n1 = 3.2876;
-    n2 = -29.122;
-    d1 = 1.696; 
-    d2 = -22.761;
-    op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
-    op_bbh[8] = omega0*op_bbh1;
-
-    A0 = 0.014579;
-    n1 = -3.6757;
-    n2 = 0.32156;
-    d1 = -3.6784; 
-    d2 = 0.;
-    ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
-    ap_bbh[8] = A0*ap_bbh1;
-
-    /* l=5, m=5 */
-    omega0 = 0.818117;
-    n1 = -2.8918;
-    n2 = -3.2012;
-    d1 = -3.773; 
-    d2 = 0.;
-    op_bbh1 = (1 + n1*nu + n2*nu*nu) / (1 + d1*nu + d2*nu*nu);
-    op_bbh[13] = omega0*op_bbh1;
-
-    A0 = 0.005227;
-    n1 = -0.29628;
-    n2 = 6.4207;
-    d1 = 0.; 
-    d2 = 0.;
-    ap_bbh1 = sqrt(24.)*(1. + n1*nu + n2*nu*nu) / (1. + d1*nu + d2*nu*nu);
-    ap_bbh[13] = A0*ap_bbh1;
-
-  }else{
     const double chi2 = 0.;
     const double aK = X1*chi1 + X2*chi2;
     const double a12c   = X1*chi1 - X2*chi2;
     const double X12   = X1 - X2;
     const double Shat  = 0.5*(aK + a12c*X12);
     const double Sbar  = 0.5*(a12c + aK*X12);
-    const double af    = chi1; 
+    const double af    = abh; 
     const double nu2   = SQ(nu);
     const double nu3   = nu2*nu;
     const double nu4   = SQ(nu2);
@@ -571,64 +461,61 @@ void peak_bhns(double nu, double k2t, double chi1, double X1, double X2, double 
     Aorb     = ATP[13]*sqrt(1-4*nu)*(1-2*nu)*(1 - 0.29628*nu + 6.4207*nu2);
     Aspin    = (0.04360530/(1 + b1*nu + b2*nu2)*a12c)/(1 - 0.5769451/(1+b3*nu+b4*nu2)*a12c);
     ap_bbh[13] = Aorb + Aspin;
-  }
   //
 
   /* Amplitude peak */
-  double a110=-0.38027475;
-  double a120=1.73728794;
-  double a210=0.07178870;
-  double a220=-0.27291110;
-  double b110=0.86806508;
-  double b120=-3.39063584;
-
-  double a111=-0.35032081;
-  double a121=7.08785231;
-  double a211=-0.12526370;
-  double a221=0.73962342;
-  double b111=1.32875665;
-  double b121=1.45671831;
+  double a110= 2.32180780;//-0.38027475; value with initial a_bh 
+  double a111= -2.86804959;//-0.35032081;
+  double a120= -6.66129049;//1.73728794;
+  double a121= 15.2341148;//7.08785231;
+  double a210= 0.36538472;//0.07178870;
+  double a211= -0.37339859;//-0.12526370;
+  double a220= -1.36946470;//-0.27291110;
+  double a221= 1.64236785;//0.73962342;
+  double b110= 8.70442331;//0.86806508;
+  double b111= -5.37200578;//1.32875665;
+  double b120= -35.6915301;//-3.39063584;
+  double b121= 28.9138000;//1.45671831;
   
-  double a11 = a110*chi1 + a111;
-  double a12 = a120*chi1 + a121;
-  double a21 = a210*chi1 + a211;
-  double a22 = a220*chi1 + a221;
-  double b11 = b110*chi1 + b111;
-  double b12 = b120*chi1 + b121;
-
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
-
-  double Ap = ( ( 1 + (a1*k2t + a2*k2t*k2t) ) / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
-
-  /* Omega peak */
-  a110=-0.00964470;
-  a120=-0.16313222;
-  a210=0.12752691;
-  a220=-0.56409238;
-  b110=4.94134700;
-  b120=-21.4218986;
-
-  a111=-0.45404250;
-  a121=2.38512347;
-  a211=-0.01666600;
-  a221=0.08285400;
-  b111=-0.25507296;
-  b121=4.93088477;
-
-  a11 = a110*chi1 + a111;
-  a12 = a120*chi1 + a121;
-  a21 = a210*chi1 + a211;
-  a22 = a220*chi1 + a221;
-  b11 = b110*chi1 + b111;
-  b12 = b120*chi1 + b121;
+  double a11 = a110*abh + a111;
+  double a12 = a120*abh + a121;
+  double a21 = a210*abh + a211;
+  double a22 = a220*abh + a221;
+  double b11 = b110*abh + b111;
+  double b12 = b120*abh + b121;
 
   a1 = a11*nu + a12*nu*nu;
   a2 = a21*nu + a22*nu*nu;
   b1 = b11*nu + b12*nu*nu;
 
-  double Op = ( ( 1 + (a1*k2t + a2*k2t*k2t) )  / ( (1 + b1*b1*k2t)*(1 + b1*b1*k2t) ) );
+  double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+
+  /* Omega peak */
+  a110= -5.39773717;//-0.00964470;
+  a111= 2.40363229;//-0.45404250;
+  a120= 37.8944767;//-0.16313222;
+  a121= -11.1196339;//2.38512347;
+  a210= 0.27594013;//0.12752691;
+  a211= -0.32972461;//-0.01666600;
+  a220= -0.48237706;//-0.56409238;
+  a221= 1.23472657;//0.08285400;
+  b110= 4.86625421;//4.94134700;
+  b111= -0.83986724;//-0.25507296;
+  b120= -13.1595703;//-21.4218986;
+  b121= 7.30996825;//4.93088477;
+
+  a11 = a110*abh + a111;
+  a12 = a120*abh + a121;
+  a21 = a210*abh + a211;
+  a22 = a220*abh + a221;
+  b11 = b110*abh + b111;
+  b12 = b120*abh + b121;
+
+  a1 = a11*nu + a12*nu*nu;
+  a2 = a21*nu + a22*nu*nu;
+  b1 = b11*nu + b12*nu*nu;
+
+  double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
 
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
@@ -638,9 +525,11 @@ void peak_bhns(double nu, double k2t, double chi1, double X1, double X2, double 
 }
 
 void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
-                    double *sigmar, double *sigmai, double nu, double k2t, double chi1, double X1, double X2, double Mbh,
+                    double *sigmar, double *sigmai, double nu, double chi1, double X1, double X2, double Mbh, double abh,
                     double *Apeak, double *alpha2)
 {
+  const double kapT2 = EOBPars->kapT2;
+
   int modeon[KMAX];
   const int k22 = 1; // (2,2) mode
 
@@ -654,10 +543,10 @@ void postpeak_coef(double *a1, double *a2, double *a3, double *a4, double *b1, d
   modeon[1]  = 1;
 
   double Opeak[KMAX], Domega[KMAX];
-  peak_bhns(nu, k2t, chi1, X1, X2, Apeak, Opeak);
+  peak_bhns(nu, kapT2, chi1, X1, X2, abh, Apeak, Opeak);
 
   double alpha1[KMAX], omega1[KMAX], omega2[KMAX], alpha21[KMAX];
-  QNM_bhns_td(chi1, alpha1, alpha2, omega1, omega2, alpha21, k2t, nu);
+  QNM_bhns_td(abh, alpha1, alpha2, omega1, omega2, alpha21, kapT2, nu);
 
   /** l=2, m=2 **/
   a3[1] = -0.56187 + 0.75497*nu;
@@ -703,7 +592,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
   const double aeff  = aK + 1./3.*a12*X12;
   const double aeff2 = SQ(aeff);
   const double aeff3 = aeff2*aeff;
-  const double kapT2 = EOBPars->kapT2;
+  const double kapt2 = EOBPars->kapT2;
   
   double c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX], omgmrg[KMAX];
       
@@ -741,7 +630,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
     
   // Peak Frequency & Amplitude
     /* Modes: 21, 22, 32, 33, 44, 55 */ 
-    peak_bhns(nu, kapT2, chi1, X1, X2, Amrg, omgmrg);
+    peak_bhns(nu, kapt2, chi1, X1, X2, abh, Amrg, omgmrg);
 
   // c3A
     /* l=2, m=1 */
@@ -878,19 +767,19 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   /** m_bh & a_bh are the remnant mass & spin of Jimenez et al. fits (2017) */
   double nu      = q/((1.+q)*(1.+q));
 
-     /** Mass Parameters                 Spin Parameters */                
-  const double p110 = -1.83E-3;    const double q110 = -5.44E-3; 
-  const double p111 = 2.39E-3;     const double q111 = 7.91E-3;
-  const double p120 = 4.29E-3;     const double q120 = 2.33E-2;
-  const double p121 = 9.8E-3;      const double q121 = 2.48E-2;
-  const double p210 = 2.34E-7;     const double q210 = -8.57E-7;
-  const double p211 = -8.28E-7;    const double q211 = -2.82E-6;
-  const double p220 = -1.64E-6;    const double q220 = 6.61E-6;
-  const double p221 = 8.08E-6;     const double q221 = 4.29E-5;
-  const double p310 = -2.01E-2;    const double q310 = -3.04E-2;
-  const double p311 = 1.32E-1;     const double q311 = 2.55E-1;
-  const double p320 = 6.51E-2;     const double q320 = 1.48E-1;
-  const double p321 = -1.43E-1;    const double q321 = -4.28E-1;
+     /** Mass Parameters                             Spin Parameters */                
+  const double p110 = -0.00149184983303879;    const double q110 = -0.005806649906608269; 
+  const double p111 = 0.002379097606139772;    const double q111 = 0.0080478216453302;
+  const double p120 = 0.0022364047165374427;   const double q120 = 0.025417446510092936;
+  const double p121 = 0.012865296874803454;    const double q121 = 0.02304350955931102;
+  const double p210 = 2.2260126905452596e-07;  const double q210 = -7.885609729416046e-07;
+  const double p211 = -9.90313586841387e-07;   const double q211 = -2.7419535067447896e-06;
+  const double p220 = -1.913951684400866e-06;  const double q220 = 6.824530257266093e-06;
+  const double p221 = 1.0173536685638278e-05;  const double q221 = 4.115495276575295e-05;
+  const double p310 = -0.01734245059913986;    const double q310 = -0.02896820746099147;
+  const double p311 = 0.13922802156359232;     const double q311 = 0.2520378980622243;
+  const double p320 = 0.05039262787904267;     const double q320 = 0.14409587180221356;
+  const double p321 = -0.14439512702586282;    const double q321 = -0.4226678233866285;
 
   double p11 = p110*a + p111;      double q11 = q110*a + q111;
   double p12 = p120*a + p121;      double q12 = q120*a + q121;
