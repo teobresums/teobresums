@@ -289,7 +289,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
     eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
 
-    eobp->use_tidal = TIDES_TEOBRESUM;
+    eobp->use_tidal = TIDES_TEOBRESUM3;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
     eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
   }
