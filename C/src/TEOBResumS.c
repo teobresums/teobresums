@@ -103,6 +103,7 @@ int main (int argc, char* argv[])
   WaveformFD_lm_free (hfmodes);
 
   EOBParameters_free (EOBPars);
+  
   return status;
 }
 
@@ -136,7 +137,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       goto EXIT_POINT;
     }
   }
-
+  
   /** Switch to mass-rescaled geometric units (if needed)*/
   double M = EOBPars->M; /* Msun */ 
   double time_unit_fact = 1;
@@ -160,11 +161,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const int use_spins = EOBPars->use_spins;
   const int use_tidal = EOBPars->use_tidal;
   int store_dynamics = EOBPars->output_dynamics; 
-  if (!(use_tidal) || (default_choice==DEFAULT_PARS_BHNS)) store_dynamics = 1; /* NQC determination need dynamical variables */
+  if (!(default_choice==DEFAULT_PARS_BNS)) store_dynamics = 1; /* NQC determination need dynamical variables */
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
-
+  
   
   /* *****************************************
    * Set Memory & do preliminary computations
@@ -229,7 +230,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** NQC data */  
   NQCdata_alloc (&NQC); 
   eob_nqc_setcoefs(NQC);
-
+  
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
@@ -276,7 +277,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   
   /** Final BH */
-  if (!(dyn->use_tidal) || (default_choice==DEFAULT_PARS_BHNS)) {
+  if (!(default_choice==DEFAULT_PARS_BNS)) {
     
     if(default_choice==DEFAULT_PARS_BHNS){
        /** Final BH from BHNS */
@@ -300,7 +301,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->Mbhf = dyn->Mbhf;
     EOBPars->abhf = dyn->abhf; 
   }
-
+  
   /* Iteration index */
   int iter = 0;  
   int pasize = 0;
@@ -430,7 +431,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     for (int i = 0; i < EOB_ID_NVARS; i++)
       PRFORMd(eob_id_var[i], dyn->y0[i]);
   }
-
+  
   /* *****************************************
    * ODE Evolution
    * *****************************************
@@ -680,13 +681,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   // Output wave and dynamics 
   if(EOBPars->output_multipoles) {
     strcat(hlm->name,"_insplunge");
-    Waveform_lm_output (hlm);
+    Waveform_lm_output_reim (hlm);
   }
   if (EOBPars->output_dynamics)
     Dynamics_output(dyn);
 #endif
   
-  if (!(use_tidal) || (default_choice==DEFAULT_PARS_BHNS)) {
+  if (!(default_choice==DEFAULT_PARS_BNS)) {
   //if (!(use_tidal)) {
     
     /* ********************************************************
@@ -753,7 +754,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       // Output post-interpolation wave and dynamics 
       if(EOBPars->output_multipoles) {
 	Waveform_lm_output (hlm_mrg);
-	Waveform_lm_output_reim (hlm_mrg);
       }
       if (EOBPars->output_dynamics) 
 	Dynamics_output(dyn_mrg);
@@ -782,7 +782,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         /* Compute NQC only around merger, 
 	   add to both merger and full waveform */
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
-        /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
+        /*eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);*/
         eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
         strcat(hlm_mrg->name,"_nqc");
 	
@@ -852,10 +852,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (EOBPars->use_geometric_units) {
       EOBPars->M=1.;
     }
-    
-  } /* End of BBH & BHNS section */
 
-#if (DEBUG) 
+    #if (DEBUG) 
   // Output wave and dynamics 
   if(EOBPars->output_multipoles) {
     strcat(hlm->name,"_ringdown");
@@ -863,6 +861,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Waveform_lm_output_reim (hlm);
   }
 #endif
+    
+  } /* End of BBH & BHNS section */
+
+
   
   /* *****************************************
    * Compute h+, hx 
