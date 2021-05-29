@@ -676,7 +676,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Dynamics_output(dyn);
 #endif
   
-  if (!(use_tidal) && (dyn->r < 3.)) {
+  if (!(use_tidal) && (dyn->ode_stop_MOmgpeak)) {
     
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
