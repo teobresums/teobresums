@@ -276,6 +276,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }  
   
   
+  bool td_case=false, *td;
+  td = &td_case; // tidal disruption cases flag
   /** Final BH */
   if (!(default_choice==DEFAULT_PARS_BNS)) {
     
@@ -286,6 +288,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
+      tidal_disruption_cases(q, dyn->Mbhf, M, chi1, td);
     }else{
       /** from BBH */
       HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -771,7 +774,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } /* End of merger interp */
     
     
-    if (EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) {
+    if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) && (td_case==false)) {
       
       /** BBH : compute and add NQC */
       
