@@ -27,13 +27,16 @@ void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *fl
   /** Filter tidal disruption cases */
   double crit = Mf/M; // from Frank's bh remnant fits
 
-  /** Contour fits */
-  const double a = 0.96181518;
-  const double b = 0.02007346;
-  const double c = 3.36964159;
-  double cont = a*exp(-pow(chi1 - b, 2)/(2*pow(c, 2)));
+  if(crit<0.962){*flag = true;}
+  
+}
 
-  if(crit<cont){*flag = true;}
+void bhns_criterion(double q, double Mf, double M, double chi1, bool *flag)
+{
+  /** Filter bhns from bbh-like cases */
+  double crit = Mf/M; // from Frank's bh remnant fits
+
+  if(crit<0.99){*flag = true;}
   
 }
 
@@ -340,18 +343,45 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
 
   double dOp = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
 
+  /* Amplitude */
+  a110= 0.84982859;
+  a111= -1.56559930;
+  a120= 0.16117790;
+  a121= 9.33760797;
+  a210= 0.25201404;
+  a211= -0.23030721;
+  a220= -0.84813795;
+  a221= 1.00121004;
+  b110= 4.69829530;
+  b111= -1.67331235;
+  b120= -17.6052060;
+  b121= 12.3618798;
+
+  a11 = a110*abh + a111;
+  a12 = a120*abh + a121;
+  a21 = a210*abh + a211;
+  a22 = a220*abh + a221;
+  b11 = b110*abh + b111;
+  b12 = b120*abh + b121;
+
+  a1 = a11*nu + a12*nu*nu;
+  a2 = a21*nu + a22*nu*nu;
+  b1 = b11*nu + b12*nu*nu;
+
+  double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
-    A_tmp[k] = A_tmp[k];
-    dA_tmp[k] = dA_tmp[k];
     omg_tmp[k] = Op*omg_tmp[k];
     domg_tmp[k] = dOp*domg_tmp[k];
+    A_tmp[k] = A_tmp[k];//5*nu*Ap*A_tmp[k];
+    dA_tmp[k] = dA_tmp[k];
   }
 	  
 }
 
 
-void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double kt2, double nu)
+void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double lambda, double nu, double chi1)
 {
   /** QNM fits for the tidal disruption cases in BHNS */
   for (int k=0; k<KMAX; k++) {
@@ -375,59 +405,59 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
 
   // Inverse damping time
 
-  const double a110= -1.54144034;//-2.56275793; using initial spin BH
-  const double a111= -0.94594863;//-0.35178201;
-  const double a120= 8.15985138;//12.1236107;
-  const double a121= 8.38348865;//5.56115641;
-  const double a210= -0.12421662;//0.07815954;
-  const double a211= 0.14266854;//-0.04385969;
-  const double a220= 0.53806120;//-0.32102942;
-  const double a221= -0.50650508;//0.28927232;
-  const double b110= -0.61379071;//0.37712931;
-  const double b111= 2.80688664;//1.72273820;
-  const double b120= 3.15028993;//-0.85223799;
-  const double b121= -4.43302699;//0.43672158;
+  const double a110= 0.08540533;
+  const double a111= 0.05952267;
+  const double a120= -0.38077744;
+  const double a121= -0.20439610;
+  const double a210= 9.9329e-06;
+  const double a211= 4.8199e-05;
+  const double a220= -2.9158e-05;
+  const double a221= -1.9268e-04;
+  const double b110= 0.21840792;
+  const double b111= 0.48995965;
+  const double b120= -0.92644561;
+  const double b121= -1.14839419;
 
-  double a11 = a110*af + a111;
-  double a12 = a120*af + a121;
-  double a21 = a210*af + a211;
-  double a22 = a220*af + a221;
-  double b11 = b110*af + b111;
-  double b12 = b120*af + b121;
+  double a11 = a110*chi1 + a111;
+  double a12 = a120*chi1 + a121;
+  double a21 = a210*chi1 + a211;
+  double a22 = a220*chi1 + a221;
+  double b11 = b110*chi1 + b111;
+  double b12 = b120*chi1 + b121;
 
   double a1 = a11*nu + a12*nu*nu;
   double a2 = a21*nu + a22*nu*nu;
   double b1 = b11*nu + b12*nu*nu;
 
-  double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+  double Ap = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
 
   // Frequency
 
-  const double c110 = 7448960.31;//-1.42376676; 
-  const double c111 = -7046736.48;//-0.46547134; 
-  const double c120 = -53299487.6;//6.18675084; 
-  const double c121 = 52569984.4;//2.06136810; 
-  const double c210 = 3046296.24;//0.13558467; 
-  const double c211 = -2361264.80;//-0.01554561;
-  const double c220 = -13831150.4;//-0.60083059;
-  const double c221 = 11055694.9;//0.07249501; 
-  const double d110 = 707.275121;//6.40369007; 
-  const double d111 = -416.865119;//-1.73278788;
-  const double d120 = -3183.26824;//-27.0597337;
-  const double d121 = 2221.66477;//10.3197168; 
+  const double c110 = 0.50000000; 
+  const double c111 = 1.4336e+08; 
+  const double c120 = 0.50000000; 
+  const double c121 = -6.1792e+08; 
+  const double c210 = 221452.634; 
+  const double c211 = -78106.4165;
+  const double c220 = -958373.808;
+  const double c221 = 378164.361; 
+  const double d110 = 183.897933; 
+  const double d111 = 20.9473022;
+  const double d120 = -760.934329;
+  const double d121 = 88.7743324; 
 
-  a11 = c110*af + c111;
-  a12 = c120*af + c121;
-  a21 = c210*af + c211;
-  a22 = c220*af + c221;
-  b11 = d110*af + d111;
-  b12 = d120*af + d121;
+  a11 = c110*chi1 + c111;
+  a12 = c120*chi1 + c121;
+  a21 = c210*chi1 + c211;
+  a22 = c220*chi1 + c221;
+  b11 = d110*chi1 + d111;
+  b12 = d120*chi1 + d121;
 
   a1 = a11*nu + a12*nu*nu;
   a2 = a21*nu + a22*nu*nu;
   b1 = b11*nu + b12*nu*nu;
 
-  double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+  double Op = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
 
   alpha2[1] = Ap*alpha_bbh;
   omega1[1] = Op*omega_bbh;
@@ -487,7 +517,7 @@ void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, do
   *alpha2 = *omega2 / (2. * Q2);
 }
 
-void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak)
+void peak_bhns(double nu, double lambda, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak)
 {
   /** A^{peak}_{22} amplitude and omega^{peak}_{22} frequency at tpeak (\dot{A}(tpeak)=0) 
    * ap_bbh and op_bbh is for BBH from the function QNMHybridFitCab_HM in ..Fits.c */
@@ -778,58 +808,58 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
   //
 
   /* Amplitude peak */
-  double a110= 2.32180780;//-0.38027475; value with initial a_bh 
-  double a111= -2.86804959;//-0.35032081;
-  double a120= -6.66129049;//1.73728794;
-  double a121= 15.2341148;//7.08785231;
-  double a210= 0.36538472;//0.07178870;
-  double a211= -0.37339859;//-0.12526370;
-  double a220= -1.36946470;//-0.27291110;
-  double a221= 1.64236785;//0.73962342;
-  double b110= 8.70442331;//0.86806508;
-  double b111= -5.37200578;//1.32875665;
-  double b120= -35.6915301;//-3.39063584;
-  double b121= 28.9138000;//1.45671831;
+  double a110= 0.01659226; 
+  double a111= -0.00692072;
+  double a120= -0.06769145;
+  double a121= 0.13640245;
+  double a210= 7.1467e-06;
+  double a211= -1.5699e-05;
+  double a220= -1.2851e-05;
+  double a221= 1.3198e-04;
+  double b110= 0.15180372;
+  double b111= 0.14184652;
+  double b120= -0.60793922;
+  double b121= 0.40672624;
   
-  double a11 = a110*abh + a111;
-  double a12 = a120*abh + a121;
-  double a21 = a210*abh + a211;
-  double a22 = a220*abh + a221;
-  double b11 = b110*abh + b111;
-  double b12 = b120*abh + b121;
+  double a11 = a110*chi1 + a111;
+  double a12 = a120*chi1 + a121;
+  double a21 = a210*chi1 + a211;
+  double a22 = a220*chi1 + a221;
+  double b11 = b110*chi1 + b111;
+  double b12 = b120*chi1 + b121;
 
   a1 = a11*nu + a12*nu*nu;
   a2 = a21*nu + a22*nu*nu;
   b1 = b11*nu + b12*nu*nu;
 
-  double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+  double Ap = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
 
   /* Omega peak */
-  a110= -5.39773717;//-0.00964470;
-  a111= 2.40363229;//-0.45404250;
-  a120= 37.8944767;//-0.16313222;
-  a121= -11.1196339;//2.38512347;
-  a210= 0.27594013;//0.12752691;
-  a211= -0.32972461;//-0.01666600;
-  a220= -0.48237706;//-0.56409238;
-  a221= 1.23472657;//0.08285400;
-  b110= 4.86625421;//4.94134700;
-  b111= -0.83986724;//-0.25507296;
-  b120= -13.1595703;//-21.4218986;
-  b121= 7.30996825;//4.93088477;
+  a110= 0.03584504;
+  a111= -0.01867853;
+  a120= -0.12554312;
+  a121= 0.22454162;
+  a210= 3.3923e-06;
+  a211= -1.3454e-05;
+  a220= 3.5174e-05;
+  a221= 1.1578e-04;
+  b110= 0.27514067;
+  b111= 0.07644215;
+  b120= -0.96445215;
+  b121= 0.89463739;
 
-  a11 = a110*abh + a111;
-  a12 = a120*abh + a121;
-  a21 = a210*abh + a211;
-  a22 = a220*abh + a221;
-  b11 = b110*abh + b111;
-  b12 = b120*abh + b121;
+  a11 = a110*chi1 + a111;
+  a12 = a120*chi1 + a121;
+  a21 = a210*chi1 + a211;
+  a22 = a220*chi1 + a221;
+  b11 = b110*chi1 + b111;
+  b12 = b120*chi1 + b121;
 
   a1 = a11*nu + a12*nu*nu;
   a2 = a21*nu + a22*nu*nu;
   b1 = b11*nu + b12*nu*nu;
 
-  double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+  double Op = ( ( 1 + (a1*lambda + a2*lambda*lambda) )  / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
 
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
@@ -861,10 +891,9 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
   const double aeff  = aK + 1./3.*a12*X12;
   const double aeff2 = SQ(aeff);
   const double aeff3 = aeff2*aeff;
-  const double kapt2 = EOBPars->kapT2;
+  const double lambda = EOBPars->LambdaBl2;
   
   double c3A[KMAX], c3phi[KMAX], c4phi[KMAX], c2A[KMAX];
-  const double kapT2 = EOBPars->kapT2;
 
   int modeon[KMAX];
   const int k21 = 0;
@@ -884,10 +913,10 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
   modeon[1]  = 1;
 
   double Opeak[KMAX], Domega[KMAX];
-  peak_bhns(nu, kapT2, chi1, X1, X2, abh, Apeak, Opeak);
+  peak_bhns(nu, lambda, chi1, X1, X2, abh, Apeak, Opeak);
 
   double alpha1[KMAX], omega1[KMAX], omega2[KMAX], alpha21[KMAX];
-  QNM_bhns_td(abh, alpha1, alpha2, omega1, omega2, alpha21, kapT2, nu);
+  QNM_bhns_td(abh, alpha1, alpha2, omega1, omega2, alpha21, lambda, nu, chi1);
 
   /** l=2, m=2 **/
   //a3[1] = -0.56187 + 0.75497*nu;
@@ -1037,7 +1066,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
   const double aeff  = aK + 1./3.*a12*X12;
   const double aeff2 = SQ(aeff);
   const double aeff3 = aeff2*aeff;
-  const double kapt2 = EOBPars->kapT2;
+  const double lambda = EOBPars->LambdaBl2;
   
   double c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX], omgmrg[KMAX];
       
@@ -1075,7 +1104,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
     
   // Peak Frequency & Amplitude
     /* Modes: 21, 22, 32, 33, 44, 55 */ 
-    peak_bhns(nu, kapt2, chi1, X1, X2, abh, Amrg, omgmrg);
+    peak_bhns(nu, lambda, chi1, X1, X2, abh, Amrg, omgmrg);
 
   // c3A
     /* l=2, m=1 */

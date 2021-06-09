@@ -3403,7 +3403,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
 {
-
+  if (VERBOSE) PRSECTN("BHNS NQC");
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
   double alpha1[KMAX], omega1[KMAX];
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];

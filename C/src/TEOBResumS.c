@@ -233,7 +233,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /** Compute light-ring and LSO (if needed) */
   int check_status;
-  if (use_tidal) {
+  if (default_choice==DEFAULT_PARS_BNS) {
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO; 
     dyn->use_spins = 0;
@@ -276,8 +276,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }  
   
   
-  bool td_case=false, *td;
+  bool td_case=false, *td, bhns_case=false, *bhns;
   td = &td_case; // tidal disruption cases flag
+  bhns = &bhns_case; // bhns (Type III case)
   /** Final BH */
   if (!(default_choice==DEFAULT_PARS_BNS)) {
     
@@ -289,6 +290,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
       tidal_disruption_cases(q, dyn->Mbhf, M, chi1, td);
+      bhns_criterion(q, dyn->Mbhf, M, chi1, bhns);
     }else{
       /** from BBH */
       HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -303,6 +305,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     EOBPars->Mbhf = dyn->Mbhf;
     EOBPars->abhf = dyn->abhf; 
+  }
+
+  if(bhns_case==false){
+    default_choice=DEFAULT_PARS_BBH;
+    if (VERBOSE) PRSECTN("BBH-like case");
   }
   
   /* Iteration index */
@@ -774,6 +781,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } /* End of merger interp */
     
     
+    
     if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) && (td_case==false)) {
       
       /** BBH : compute and add NQC */
@@ -786,9 +794,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	   add to both merger and full waveform */
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
         /*eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);*/
-        eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        
+        if(default_choice==DEFAULT_PARS_BHNS){
+          eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        }else
+        {
+          eob_wav_hlmNQC_find_a1a2a3_mrg_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        }
+        
         strcat(hlm_mrg->name,"_nqc");
-	
+	     
         /* Join merger to full waveform */
         Waveform_lm_join (hlm, hlm_mrg, hlm_mrg->time[0]);
         Dynamics_join (dyn, dyn_mrg, dyn_mrg->time[0]);
@@ -848,9 +863,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Ringdown attachment for BBH & BHNS */
     if(default_choice==DEFAULT_PARS_BHNS){ // Need M value for tidal disruption criteria in BHNS cases
       EOBPars->M=M;
+      eob_wav_ringdown_bhns(dyn, hlm);
+    }else{
+      eob_wav_ringdown_HM(dyn, hlm);
     }
     
-    eob_wav_ringdown(dyn, hlm);
+    
     
     if (EOBPars->use_geometric_units) {
       EOBPars->M=1.;

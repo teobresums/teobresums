@@ -1281,13 +1281,14 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm      = &eob_wav_flm_HM;
     eob_wav_flm_s    = &eob_wav_flm_s_HM;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    if((default_choice==DEFAULT_PARS_BHNS)&&((EOBPars->q<5)||(EOBPars->chi1!=0))){
-      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
-      eob_wav_ringdown = &eob_wav_ringdown_bhns;
-    }else{
+    if(default_choice==DEFAULT_PARS_BBH){
       eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
       eob_wav_ringdown = &eob_wav_ringdown_HM;
+    }else{
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
+      eob_wav_ringdown = &eob_wav_ringdown_bhns;
     } 
+    //eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
