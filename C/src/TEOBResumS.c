@@ -792,15 +792,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	
       }
       
-      strcat(hlm->name,"_nqc");      
-
 #if (DEBUG) 
       if (EOBPars->output_nqc)  {
      	Waveform_lm_output (hlm_nqc);
      	Waveform_lm_output (hlm_mrg);
       }
-      if (EOBPars->output_multipoles) 
-     	Waveform_lm_output (hlm);
+      if (EOBPars->output_multipoles) {
+	strcat(hlm->name,"_nqc");      
+	Waveform_lm_output (hlm);
+      }
 #endif
       
       Waveform_lm_free (hlm_nqc);
@@ -832,7 +832,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
 
-    strcat(hlm->name,"_ringdown");
+#if (DEBUG) 
+    if (EOBPars->output_multipoles) {
+      strcat(hlm->name,"_ringdown");
+      /* Waveform_lm_output (hlm); */ /* output goes later */
+    }
+#endif
     
   } /* End of BBH section */
 
