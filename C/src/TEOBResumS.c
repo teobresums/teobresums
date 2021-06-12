@@ -831,17 +831,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Ringdown attachment */
     eob_wav_ringdown(dyn, hlm);
+
+    strcat(hlm->name,"_ringdown");
     
   } /* End of BBH section */
 
-#if (DEBUG) 
-  // Output wave and dynamics 
-  if(EOBPars->output_multipoles) {
-    strcat(hlm->name,"_ringdown");
-    Waveform_lm_output (hlm);
-    Waveform_lm_output_reim (hlm);
-  }
-#endif
   
   /* *****************************************
    * Compute h+, hx 
@@ -922,8 +916,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (EOBPars->output_hpc)
       if (EOBPars->domain == DOMAIN_TD) Waveform_output (*hpc); 
       else                              WaveformFD_output (*hfpc); 
-    if (EOBPars->output_multipoles) Waveform_lm_output (hlm); 
-    if (EOBPars->output_multipoles) Waveform_lm_output_reim (hlm);
+    if (EOBPars->output_multipoles) {
+      Waveform_lm_output (hlm); 
+      Waveform_lm_output_reim (hlm);
+    }
     //if (EOBPars->output_multipoles_fd) WaveformFD_lm_output (hflm);  //TODO: add this parameter
     if (EOBPars->output_dynamics) {
       if (EOBPars->interp_uniform_grid) {
