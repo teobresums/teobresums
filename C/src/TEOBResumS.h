@@ -315,6 +315,8 @@ static const char* ringdown_eulerangles_opt[] = {"constant", "QNMs", "undefined"
 enum{
   SPIN_FLX_PN,
   SPIN_FLX_EOB,
+  SPIN_FLX_EOB_HYBRIDv1,
+  SPIN_FLX_EOB_HYBRIDv2,
   SPIN_FLX_NOPT,
 };
 static const char* spin_flx_opt[] = {"PN", "EOB", "undefined"};
