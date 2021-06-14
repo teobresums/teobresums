@@ -262,9 +262,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
  /** Integrate spin dynamics before EOB dyn if projecting */
   if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
+    int tmp_nqc = EOBPars->nqc_coefs_flx;
+    EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
     if (eob_spin_dyn(spindyn, NULL, NULL, Pi * EOBPars->initial_frequency/time_unit_fact))
       errorexit("problem during spin dynamics");
-      
+    EOBPars->nqc_coefs_flx = tmp_nqc;
+
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
     spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
 
@@ -607,7 +610,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
               NULL, NULL, NULL, 
               EOBPars->spin_interp_domain);
       } else{
-        eob_spin_dyn_Sproj_interp(dyn->spins, dyn->MOmg, &SA, &SB, NULL, 
+        eob_spin_dyn_Sproj_interp(dyn->spins, hlm_t->phase[1]/2., &SA, &SB, NULL, 
               NULL, NULL, NULL, 
               EOBPars->spin_interp_domain);
       }
@@ -617,7 +620,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       EOBPars->chi1 = SA /SQ(XA);
       EOBPars->chi2 = SB /SQ(XB);
       
-      set_spin_vars(XA,XB, EOBPars->chi1,EOBPars->chi2, 
+      set_spin_vars(XA,XB,EOBPars->chi1,EOBPars->chi2, 
         &EOBPars->S1, &EOBPars->S2,
         &EOBPars->a1, &EOBPars->a2,
         &EOBPars->aK, &EOBPars->aK2,
@@ -924,7 +927,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if(use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
       if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->initial_frequency/time_unit_fact))
         errorexit("problem during spin dynamics");
-    
+
       // for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
       //   gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);
       
