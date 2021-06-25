@@ -315,7 +315,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   double b1 = b11*nu + b12*nu*nu;
 
   double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
-
+  
   /* derivative omega */
   a110= -43452.8811;
   a111= -5061.98738;
@@ -369,13 +369,11 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   b1 = b11*nu + b12*nu*nu;
 
   double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
-
+  
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
     omg_tmp[k] = Op*omg_tmp[k];
-    domg_tmp[k] = dOp*domg_tmp[k];
-    A_tmp[k] = A_tmp[k];//5*nu*Ap*A_tmp[k];
-    dA_tmp[k] = dA_tmp[k];
+    domg_tmp[k] = dOp*domg_tmp[k];    
   }
 	  
 }
@@ -1201,6 +1199,11 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
     b5 = -25.992190;
     b6 = +36.882645;
     c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+
+  /* (l=3, m=2)*/
+    c3A[3]   = (0.1877 - 3.0017*nu + 19.501*nu2)/(1 - 1.8199*nu) - exp(-703.67*(nu - 2./9.)*(nu - 2./9.));
+    c3phi[3] = (0.90944 - 1.8924*nu + 3.6848*nu2)/(1 - 8.9739*nu + 21.024*nu2);
+    c4phi[3] = (2.3038 - 50.79*nu + 334.41*nu2)/(1 - 18.326*nu + 99.54*nu2);
 	    
   
   if (DEQUAL(nu,0.25,1e-9) && DEQUAL(chi1,chi2,1e-9)){
@@ -1217,7 +1220,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
       Domg[k] 	= omega1[k] - Mbh*omgmrg[k];
     }
   }
-  
+
   for (int k=0; k<KMAX; k++) {
     if (modeon[k]) {
       c2A[k] = 0.5*alpha21[k];
@@ -1796,7 +1799,7 @@ void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, doub
 {
   
   double tau, Mbh2, x, x2, dA_tmp1, dA_tmp2, omg_tmp1, omg_tmp2, domg_tmp_n1,domg_tmp_n2,domg_tmp_d1,domg_tmp_d2;
-  
+
   /* the time variable in the post-peak template is given in units of Mbh*/
   tau  = 2./Mbh;
   Mbh2 = SQ(Mbh);

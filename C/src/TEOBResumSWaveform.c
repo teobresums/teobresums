@@ -3485,9 +3485,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
 
   /* Higher modes */
   /* 21, 32, 42, 43 and 44 extracted from postpeak */
-  int K_HM[5] = {0,3,6,7,8};
+  //int K_HM[5] = {0,3,6,7,8};
+  int K_HM[5] = {0,3,4,8,13};
 
-  QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+  QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
 		     alpha1, omega1);
   
@@ -3508,13 +3509,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     max_omg[k]  = omg_tmp;
     max_domg[k] = domg_tmp;
   }
-  
+
   /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
   eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg, abh, kt2);
-	    
+
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
-    PRFORMd("A22_mrg",max_A[1]);
+    PRFORMd("A22_mrg",max_A[1]);    
     PRFORMd("dA22_mrg",max_dA[1]);
     PRFORMd("omg22_mrg",max_omg[1]);
     PRFORMd("domg22_mrg",max_domg[1]);
@@ -3737,10 +3738,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   
   if (VERBOSE){
     printf("NQC coefficients for 22 mode:\n");
-    PRFORMd("a1",ai[1][0]);
-    PRFORMd("a2",ai[1][1]);
-    PRFORMd("b1",bi[1][0]);
-    PRFORMd("b2",bi[1][1]);
+    PRFORMd("a1",ai[4][0]);
+    PRFORMd("a2",ai[4][1]);
+    PRFORMd("b1",bi[4][0]);
+    PRFORMd("b2",bi[4][1]);
   }
 
   /** Set amplitude and phase */
@@ -4281,13 +4282,13 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     double vphi3 = gsl_pow_int(rw*Omega,3); 
     hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3;
     hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3;
-    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
+    //hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
     double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5); 
     hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5;
     hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; 
     hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5; 
     hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5;
-    hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; 
+    //hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; 
   }
 
   if (usespins) {
@@ -4347,7 +4348,6 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   /** NQC */
   if (!(EOBPars->nqc_coefs_hlm == NQC_HLM_NONE) &&
       !(EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
-
     /* Add NQC correction */    
     Waveform_lm_t hNQC; 
     eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, NQC->hlm, &hNQC); 
@@ -4362,6 +4362,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   }
   
   if (usetidal) {   
+     
     /** Tidal contribution */
     double hlmtidal[KMAX];
     eob_wav_hlmTidal(x, dyn, hlmtidal);
