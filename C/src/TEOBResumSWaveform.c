@@ -3401,7 +3401,7 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 /** BHNS NQC **/
 /* based on NQC fits from arxiv:2001.09082 */
 void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
-				       Dynamics *dyn, Waveform_lm *hlm)
+				       Dynamics *dyn, Waveform_lm *hlm, bool *bhns)
 {
   if (VERBOSE) PRSECTN("BHNS NQC");
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
@@ -3511,7 +3511,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   }
 
   /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-  eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg, abh, kt2);
+  eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg, abh, kt2, bhns);
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
@@ -3738,10 +3738,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   
   if (VERBOSE){
     printf("NQC coefficients for 22 mode:\n");
-    PRFORMd("a1",ai[4][0]);
-    PRFORMd("a2",ai[4][1]);
-    PRFORMd("b1",bi[4][0]);
-    PRFORMd("b2",bi[4][1]);
+    PRFORMd("a1",ai[1][0]);
+    PRFORMd("a2",ai[1][1]);
+    PRFORMd("b1",bi[1][0]);
+    PRFORMd("b2",bi[1][1]);
   }
 
   /** Set amplitude and phase */
@@ -4219,6 +4219,15 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
       }
     }
   } 
+
+  if (VERBOSE) PRFORMd("a1", a1[1] );
+  if (VERBOSE) PRFORMd("a2", a2[1] );
+  if (VERBOSE) PRFORMd("a3", a3[1] );
+  if (VERBOSE) PRFORMd("a4", a4[1] );
+  if (VERBOSE) PRFORMd("b1", b1[1] );
+  if (VERBOSE) PRFORMd("b2", b2[1] );
+  if (VERBOSE) PRFORMd("b3", b3[1] );
+  if (VERBOSE) PRFORMd("b4", b4[1] );
 	  
   /** Free mem. */
   for (int k=0; k<KMAX; k++) {
@@ -4282,13 +4291,12 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     double vphi3 = gsl_pow_int(rw*Omega,3); 
     hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3;
     hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3;
-    //hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
+    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
     double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5); 
     hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5;
     hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; 
     hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5; 
     hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5;
-    //hNewt.ampli[13] = ChlmNewt_ampli[13] * p4_vphi5; 
   }
 
   if (usespins) {

@@ -40,7 +40,7 @@ void bhns_criterion(double q, double Mf, double M, double chi1, bool *flag)
   
 }
 
-void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp, double abh, double kt2)
+void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp, double abh, double kt2, bool *bhns)
 {
   /** BHNS fits just for omega^NQC and domega^NQC, for the amplitude it keeps the BBH ones from arxiv:2001.09082 **/
   const double nu   = dyn->nu;
@@ -342,6 +342,11 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   b1 = b11*nu + b12*nu*nu;
 
   double dOp = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+  if (dOp<0.){
+    *bhns = false;
+    dOp=1.;
+    Op =1.;
+  }
 
   /* Amplitude */
   a110= 0.84982859;

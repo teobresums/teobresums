@@ -159,9 +159,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
   const int use_spins = EOBPars->use_spins;
-  const int use_tidal = EOBPars->use_tidal;
+  int use_tidal = EOBPars->use_tidal;
   int store_dynamics = EOBPars->output_dynamics; 
-  if (!(default_choice==DEFAULT_PARS_BNS)) store_dynamics = 1; /* NQC determination need dynamical variables */
+  if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
@@ -231,9 +231,51 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   NQCdata_alloc (&NQC); 
   eob_nqc_setcoefs(NQC);
   
-  /** Compute light-ring and LSO (if needed) */
+  
+  bool td_case=false, *td, bhns_case=false, *bhns;
+  td = &td_case; // tidal disruption cases flag
+  bhns = &bhns_case; // bhns (Type III case)
+
+  /** Final BH */
+  if (!(default_choice==DEFAULT_PARS_BNS)) {
+    
+    if(default_choice==DEFAULT_PARS_BHNS){
+       /** Final BH from BHNS */
+      if (VERBOSE) PRSECTN("entered BHNS mode");
+      
+      double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+      double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+      eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
+      tidal_disruption_cases(q, dyn->Mbhf, M, chi1, td);
+      bhns_criterion(q, dyn->Mbhf, M, chi1, bhns);
+    }else{
+      /** from BBH */
+      HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
+      dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+    }
+
+    if (VERBOSE) {
+      PRSECTN("Final black hole");
+      PRFORMd("BH_final_mass",dyn->Mbhf); 
+      PRFORMd("BH_final_spin",dyn->abhf);
+      /** PRFORMd("BH_final_spin[JimenezForteza]",dyn->abhf); */
+    }
+    EOBPars->Mbhf = dyn->Mbhf;
+    EOBPars->abhf = dyn->abhf; 
+  }
+  if(td_case==false){
+    use_tidal = 0.;
+  }
+  if(bhns_case==false){
+    default_choice=DEFAULT_PARS_BBH;
+    if (VERBOSE) PRSECTN("BBH-like case");
+  }
+  
+  if (VERBOSE) PRFORMi("usetidal",use_tidal);
+
+/** Compute light-ring and LSO (if needed) */
   int check_status;
-  if (default_choice==DEFAULT_PARS_BNS) {
+  if (use_tidal && (chi1==0.)) { //TODO: change back to just use_tidal when finishing adding the LR for spin case
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO; 
     dyn->use_spins = 0;
@@ -253,6 +295,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->use_tidal = EOBPars->use_tidal;
     dyn->use_spins = EOBPars->use_spins;
     if (VERBOSE) PRFORMd("rLR_tidal",dyn->rLR_tidal); 
+    /* Set ODE stop to LR */
+    EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;
   }
   if (EOBPars->compute_LR) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
@@ -274,43 +318,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->rLSO = dyn->rLSO;
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }  
-  
-  
-  bool td_case=false, *td, bhns_case=false, *bhns;
-  td = &td_case; // tidal disruption cases flag
-  bhns = &bhns_case; // bhns (Type III case)
-  /** Final BH */
-  if (!(default_choice==DEFAULT_PARS_BNS)) {
-    
-    if(default_choice==DEFAULT_PARS_BHNS){
-       /** Final BH from BHNS */
-      if (VERBOSE) PRSECTN("entered BHNS mode");
-      if (VERBOSE) PRFORMi("usetidal",use_tidal);
-      double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
-      double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
-      eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
-      tidal_disruption_cases(q, dyn->Mbhf, M, chi1, td);
-      bhns_criterion(q, dyn->Mbhf, M, chi1, bhns);
-    }else{
-      /** from BBH */
-      HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
-      dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
-    }
 
-    if (VERBOSE) {
-      PRSECTN("Final black hole");
-      PRFORMd("BH_final_mass",dyn->Mbhf); 
-      PRFORMd("BH_final_spin",dyn->abhf);
-      /** PRFORMd("BH_final_spin[JimenezForteza]",dyn->abhf); */
-    }
-    EOBPars->Mbhf = dyn->Mbhf;
-    EOBPars->abhf = dyn->abhf; 
-  }
-
-  if(bhns_case==false){
-    default_choice=DEFAULT_PARS_BBH;
-    if (VERBOSE) PRSECTN("BBH-like case");
-  }
   
   /* Iteration index */
   int iter = 0;  
@@ -696,7 +704,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (EOBPars->output_dynamics)
     Dynamics_output(dyn);
 #endif
-  
+
   if (!(default_choice==DEFAULT_PARS_BNS) && (td_case==false)) {
   //if (!(default_choice==DEFAULT_PARS_BNS)) {
     
@@ -796,10 +804,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         /*eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);*/
         
         if(default_choice==DEFAULT_PARS_BHNS){
-          eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+          eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm, bhns);
         }else
         {
           eob_wav_hlmNQC_find_a1a2a3_mrg_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        }
+
+        if(bhns_case==false){
+          default_choice=DEFAULT_PARS_BBH;
+          if (VERBOSE) PRSECTN("BBH-like case");
         }
         
         strcat(hlm_mrg->name,"_nqc");
