@@ -275,11 +275,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
 /** Compute light-ring and LSO (if needed) */
   int check_status;
-  if (use_tidal && (chi1==0.)) { //TODO: change back to just use_tidal when finishing adding the LR for spin case
+  if (use_tidal) { //TODO: change back to just use_tidal when finishing adding the LR for spin case
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO; 
-    dyn->use_spins = 0;
-    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal)));
+    if((chi1==0) && (chi2==0)){
+      dyn->use_spins = 0;
+      ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal)));
+    }else{
+      ROOTFINDER(check_status, eob_dyn_LR_s(dyn, &(dyn->rLR_tidal)));
+    }
+    
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
@@ -319,7 +324,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }  
 
-  
+  if (VERBOSE) PRFORMi("rstop",EOBPars->ode_stop_radius);
   /* Iteration index */
   int iter = 0;  
   int pasize = 0;

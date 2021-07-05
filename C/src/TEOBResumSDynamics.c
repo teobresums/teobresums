@@ -865,3 +865,109 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
   
   return status;
 }
+
+/** Root function to compute LR spinning case */
+double eob_dyn_fLR_s (double r, void * params) {
+
+  Dynamics *dyn = params;
+  const double nu    = dyn->nu;
+  const double S     = dyn->S;
+  const double Sstar = dyn->Sstar;
+  const double chi1  = dyn->chi1;
+  const double chi2  = dyn->chi2;
+  const double X1    = dyn->X1;
+  const double X2    = dyn->X2;
+  const double c3    = dyn->cN3LO;
+  const double aK2   = dyn->aK2;
+  const double a1    = dyn->a1;
+  const double a2    = dyn->a2;
+  const double C_Q1  = dyn->C_Q1;
+  const double C_Q2  = dyn->C_Q2;
+  const double C_Oct1 = dyn->C_Oct1;
+  const double C_Oct2 = dyn->C_Oct2;
+  const double C_Hex1 = dyn->C_Hex1;
+  const double C_Hex2 = dyn->C_Hex2;
+  const int usetidal = dyn->use_tidal;
+  const int usespins = dyn->use_spins;
+   
+  double A, B, dA, d2A, dB;
+  eob_metric_s(r, dyn, &A, &B, &dA, &d2A, &dB);
+   
+  double u = 1./r;
+  double dA_u = (-dA)*SQ(r);
+  return A + 0.5 * u * dA_u;
+}
+
+/** Root finder for LR in spinning case */
+int eob_dyn_LR_s(Dynamics *dyn, double *rLR)
+{
+  int status;
+  int iter = 0, max_iter = 200;
+  const double epsabs = 0.; /* if converges, precision is |r-r*| = epsabs + epsrel r*  */
+  const double epsrel = 1e-10; 
+  const gsl_root_fsolver_type *T;
+  double x, x_lo, x_hi;
+    
+  /* Set interval to search root */
+  if (dyn->use_tidal) {
+    /* Tides are always temporarily set as = NNLO to compute LR, 
+       But we may want to define different searches intervals */
+    const int tides = EOBPars->use_tidal;
+    if (tides == TIDES_TEOBRESUM_BHNS) {
+      /* BHNS */
+      //FIXME best interval
+      x_lo = 1.8; 
+      x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
+    } else {
+      /* BNS */
+      x_lo = 2.1; // nu~1/4 kappaT2 ~ 12  
+      x_hi = 5.9; // nu~1/4 kappaT2 ~ 600 
+    }
+  } else {
+    /* BBH */
+    x_lo = 1.8; // 1.818461553848201e+00 nu = 1/4
+    x_hi = 3.1; // 3. nu = 0 
+    /* x_lo = 0.9*eob_approxLR(dyn->nu); 
+       x_hi = 1.1*eob_approxLR(dyn->nu); */
+  }  
+  
+  gsl_root_fsolver *s;
+  gsl_function F;
+  F.function = &eob_dyn_fLR_s;
+  F.params = dyn;
+  //T = gsl_root_fsolver_bisection;
+  T = gsl_root_fsolver_brent;
+  s = gsl_root_fsolver_alloc (T);
+  gsl_root_fsolver_set (s, &F, x_lo, x_hi);
+  
+  do
+    {
+      iter++;
+      status = gsl_root_fsolver_iterate (s);
+      x      = gsl_root_fsolver_root (s);
+      x_lo   = gsl_root_fsolver_x_lower (s);
+      x_hi   = gsl_root_fsolver_x_upper (s);
+      status = gsl_root_test_interval (x_lo, x_hi, epsabs, epsrel);
+    }
+  while (status == GSL_CONTINUE && iter < max_iter);
+  gsl_root_fsolver_free (s);
+
+  *rLR = 0.;
+  if (isfinite(x)) *rLR = x;
+
+  //if (status == ???) {
+  //  return ROOT_ERRORS_BRACKET;
+  //}
+  if (status == GSL_SUCCESS) {
+    return ROOT_ERRORS_NO;
+  } 
+  if (iter >= max_iter) {
+    return ROOT_ERRORS_MAXITS;
+  }
+  if (status != GSL_SUCCESS) {
+    return ROOT_ERRORS_NOSUCC;
+  }
+    
+  return status;
+}
+
