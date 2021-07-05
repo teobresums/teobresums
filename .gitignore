@@ -17,9 +17,13 @@ ltmain.sh
 m4/
 missing
 opt/
-python/build/
-python/pyTEOBResumS.cpp
-python/pyTEOBResumS.so
+Python/build/
+Python/pyTEOBResumS.cpp
+Python/pyTEOBResumS.so
+Python/CWrap/*.so
+Python/__pycache__/
+Python/build
+Python/Examples/bhns_test.py
 src/.deps/
 src/.libs/
 src/Makefile
@@ -44,3 +48,4 @@ C/par/bhns_test.par
 *.par~
 *.d
 *.h5
+*.py
