@@ -166,7 +166,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   /* Output */
   
   strcpy(eobp->output_dir, "./data");  // output dir
-  eobp->output_hpc= 1; // output h+,hx
+  eobp->output_hpc= 0; // output h+,hx
   eobp->output_multipoles= 0; // output multipoles
   eobp->output_dynamics=0; // output dynamics
   eobp->output_nqc=0; // output NQC waveform
@@ -1174,7 +1174,7 @@ void eob_set_params(EOBParameters *eobp, int default_choice, int firstcall)
   if (usespins==MODE_SPINS_GENERIC) {
     eobp->chi1 = eobp->chi1z;
     eobp->chi2 = eobp->chi2z;
-    eobp->ringdown_eulerangles = RD_EULERANGLES_CONSTANT;
+    eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
   }
   
   const double chi1 = eobp->chi1;
