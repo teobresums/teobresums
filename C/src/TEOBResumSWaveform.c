@@ -4154,17 +4154,60 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
     /* use QNM for alpha_dot, and fix beta constant */
     /* Table VIII or https://arxiv.org/pdf/gr-qc/0512160.pdf */
   
-    /** (l,m,n)=(2,2,0) */
-    double f10 = 1.5251; 
-    double f20 = -1.1568;
-    double f30 = 0.1292;
-    double omega220  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
-    /** (l,m,n)=(2,1,0) */
-    f10 = 0.6; 
-    f20 = -0.2339;
-    f30 = 0.4175;
-    double omega210  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
-    double adot = omega220-omega210;
+    //final spin (assume merger ~ max omega)
+    double SAmrg[3], SBmrg[3], Lmrg[3], Jmrg[3];
+    //FIXME: use the max of omega!
+    omg_jmax = spin->size-1;
+
+    SAmrg[0] = spin->data[EOB_EVOLVE_SPIN_SxA][omg_jmax];
+    SAmrg[1] = spin->data[EOB_EVOLVE_SPIN_SyA][omg_jmax];
+    SAmrg[2] = spin->data[EOB_EVOLVE_SPIN_SzA][omg_jmax];
+
+    SBmrg[0] = spin->data[EOB_EVOLVE_SPIN_SxB][omg_jmax];
+    SBmrg[1] = spin->data[EOB_EVOLVE_SPIN_SyB][omg_jmax];
+    SBmrg[2] = spin->data[EOB_EVOLVE_SPIN_SzB][omg_jmax];
+
+    //final L
+    double nu    = EOBPars->nu;
+    double nu2   = nu*nu;
+    double v2mrg = pow(spin->data[EOB_EVOLVE_SPIN_Momg][omg_jmax], 0.6666666666666);
+    double v4mrg = v2mrg*v2mrg;
+    const double L2PN = 1 + v2mrg*(1.5+0.1666666666666667*nu) + v4mrg*(3.375 - 2.375*nu + 0.04166666666666666*nu2);
+    Lmrg[0]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Lx][omg_jmax];
+    Lmrg[1]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Ly][omg_jmax];
+    Lmrg[2]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Lz][omg_jmax];
+
+    for(int i=0; i<3;i++)
+      Jmrg[i] = SAmrg[i]+SBmrg[i]+Lmrg[i];
+
+    double adot, JdotL;
+    vect_dot3(Jmrg, Lmrg, &JdotL);
+
+    if(JdotL>0){
+      /** (l,m,n)=(2,2,0) */
+      double f10 = 1.5251; 
+      double f20 = -1.1568;
+      double f30 = 0.1292;
+      double omega220  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+      /** (l,m,n)=(2,1,0) */
+      f10 = 0.6; 
+      f20 = -0.2339;
+      f30 = 0.4175;
+      double omega210  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+      adot = omega220-omega210;
+    } else {
+      /** (l,m,n)=(2,-2,0) */
+      double f10 = 0.2938; 
+      double f20 = 0.0782;
+      double f30 = 1.3546;
+      double omega2m20  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+      /** (l,m,n)=(2,-1,0) */
+      f10 = 0.3441; 
+      f20 = 0.0293;
+      f30 = 2.0010;
+      double omega2m10  = (f10 + f20*pow(1. - EOBPars->abhf, f30)); 
+      adot = omega2m10 - omega2m20;
+    }
 
     for(int j=tM_idx+1; j < hlm->size; j++){
       double dt= hlm->time[j]-hlm->time[tM_idx];
@@ -4172,7 +4215,6 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
       alpha[j] = alpha[tM_idx] + dt*adot;
       gamma[j] = gamma[tM_idx] + dt*adot*cos(beta[j]);
     }
-    
   } else {
     errorexit("Need to specify angles for ringdown!\n");
   }
@@ -4192,7 +4234,7 @@ void prolong_euler_angles_FD(DynamicsSpin *spin, WaveformFD_lm *hlm)
   unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spinsize);
   unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spinsize);
   
-  /*prolong up to final hlm frequency (constant angles by default)*/
+  /*prolong up to final hlm frequency (constant angles by default), add just N=2 points*/
 
   double omg_fin = hlm->freq[hlm->size-1];
   //printf("omg_fin = %.4f, hlm_fin = %.4f \n", omg_fin, hlm->freq[hlm->size-1]);
@@ -4244,7 +4286,8 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
   int zero_flag = 1;
   /* Loop over modes */
   for (int k = 0; k < KMAX; k++ ) {
-    if (!activemode[k]) continue;
+    /* compute all twisted modes */
+    if (!activemode[k]) continue;  
     
     int ell = LINDEX[k];
 
@@ -4636,7 +4679,7 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
 
  /* Rather than computing (twisted) modes, we directly compute the hpc
     through eq. E16-E19 of https://arxiv.org/pdf/2004.06503.pdf.
-    Note the change: -m'<-->m' due to EOB convention.
+    Note the change: -m'<-->m' due to EOB phase > 0.
  */
   
   const int size = hlm->size;
@@ -4654,7 +4697,9 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
   alpha = gsl_spline_alloc(gsl_interp_cspline, spin->size);
   beta  = gsl_spline_alloc(gsl_interp_cspline, spin->size);
   gamma = gsl_spline_alloc(gsl_interp_cspline, spin->size);
-  gsl_interp_accel *acc = gsl_interp_accel_alloc (); //FIXME have to free this eventually
+  gsl_interp_accel *acc_al = gsl_interp_accel_alloc ();
+  gsl_interp_accel *acc_bt = gsl_interp_accel_alloc ();
+  gsl_interp_accel *acc_gm = gsl_interp_accel_alloc ();
 
 
   double conv = 1.;
@@ -4671,7 +4716,6 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
   gsl_spline_init (alpha, frequencies, spin->data[EOB_EVOLVE_SPIN_alp], spin->size);  
   gsl_spline_init (beta,  frequencies, spin->data[EOB_EVOLVE_SPIN_bet], spin->size);  
   gsl_spline_init (gamma, frequencies, spin->data[EOB_EVOLVE_SPIN_gam], spin->size);  
-
   /* precompute Ylms */
   double Y_real[KMAX] = {0};
   double Y_imag[KMAX] = {0};
@@ -4688,7 +4732,7 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
   }
 
   double f022 = hlm->freq[0];
-
+  double omg0 = frequencies[0];
   /* Loop over frequencies */
   for(int i=0; i<size;i++){
     double hpr = 0.;
@@ -4707,11 +4751,16 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
       double f0lm = f022/2.*emm;
 
       if(f < f0lm) 
-        continue;
+        continue;      
       double omg  = 2.*Pi*f/emm;
-      double alph = gsl_spline_eval(alpha, omg, acc); //evaluate spline
-      double bet  = gsl_spline_eval(beta , omg, acc); //evaluate spline
-      double gam  = gsl_spline_eval(gamma, omg, acc); //evaluate spline
+    
+      /* avoid interpolation error (due to small numerical differences) */
+      if(k == 1 && f == f0lm) 
+        omg = omg0;
+
+      double alph = gsl_spline_eval(alpha, omg, acc_al); //evaluate spline
+      double bet  = gsl_spline_eval(beta , omg, acc_bt); //evaluate spline
+      double gam  = gsl_spline_eval(gamma, omg, acc_gm); //evaluate spline
       double cosmg = cos(-emm * gam);
       double sinmg = sin(-emm * gam);
 
@@ -4727,7 +4776,7 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
         int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
         double cosma = cos(n * alph);
         double sinma = sin(n * alph);
-        double dl_mn = wigner_d_function(ell, emm, n, -bet);
+        double dl_mn = wigner_d_function(ell, emm, n, -bet); //CHECKME
         double dl_mnn= wigner_d_function(ell, emm,-n, -bet);
         if(n>0){
           double rAlm  = cosma *Y_real[j] + sinma*Y_imag[j];
@@ -4769,7 +4818,10 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
   gsl_spline_free (alpha);
   gsl_spline_free (beta);
   gsl_spline_free (gamma);
-  gsl_interp_accel_free (acc);
+  gsl_interp_accel_free (acc_al);
+  gsl_interp_accel_free (acc_bt);
+  gsl_interp_accel_free (acc_gm);
+
   free(frequencies);
 }
 

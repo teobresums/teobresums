@@ -507,6 +507,9 @@ double wigner_d_function_opt(int l, int mp, int m, double i)
           if(m ==-1) dlm = -s4+ 3*s2*c2;
           if(m ==-2) dlm =  2*c*s3;
           break;
+        case(0):
+          dlm = 0.;
+          break;
         default:
           printf("%i\n", mp);
           errorexit("Error: s value incorrect");
@@ -544,6 +547,9 @@ double wigner_d_function_opt(int l, int mp, int m, double i)
           if(m ==-1) dlm = 0;
           if(m ==-2) dlm = 0;
           if(m ==-3) dlm = 0;
+          break;
+        case(0):
+          dlm = 0.;
           break;
         default:
           errorexit("Error: s value incorrect");
@@ -1878,6 +1884,8 @@ void DynamicsSpin_alloc (DynamicsSpin **dyn, int size)
     (*dyn)->data[v] = malloc (size * sizeof(double));  
     memset((*dyn)->data[v], 0, size*sizeof(double));
     (*dyn)->spline[v] = gsl_spline_alloc (gsl_interp_cspline, size);
+    (*dyn)->accel[v]  = gsl_interp_accel_alloc();
+
   }
   (*dyn)->omg_stop=-1; // set from EOBPars or by NR merger
   (*dyn)->t_stop=-1; // use Momg as stopping criterion, if not otherwise specified. 
@@ -1893,6 +1901,8 @@ void DynamicsSpin_push (DynamicsSpin **dyn, int size)
     if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
     gsl_spline_free ((*dyn)->spline[v]);
     (*dyn)->spline[v] = gsl_spline_alloc (gsl_interp_cspline, size);
+    gsl_interp_accel_free((*dyn)->accel[v]);
+    (*dyn)->accel[v]  = gsl_interp_accel_alloc();
   }
   (*dyn)->size = size; 
 }
@@ -1905,6 +1915,7 @@ void DynamicsSpin_free (DynamicsSpin *dyn)
     for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++){
       if (dyn->data[v]) free(dyn->data[v]);
       gsl_spline_free (dyn->spline[v]);
+      gsl_interp_accel_free(dyn->accel[v]);
     }
   free(dyn);
 }

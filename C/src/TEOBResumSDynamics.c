@@ -1291,18 +1291,18 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     /* EOB Flux */
     //double sqrtW = sqrt(A*(1.+jhat*jhat*SQ(u)));
     double psi   = 2.*(1.0 + 2.0*nu*(Heff- 1.0))/(SQ(r)*dA);
-    double r_omg = r*pow(psi, 1./3);
+    double r_omg = 1./v2;//r*pow(psi, 1./3);
     double v_phi = r_omg*omg;
     //double flx   = eob_flx_Flux_s(v_phi*v_phi, omg, r_omg, nu*H, Heff, jhat, r, 0, 0);
     double flx   = eob_flx_Flux_s(v2, omg, r_omg, nu*H, Heff, jhat, r, 0, 0);
 
-    if (DEBUG)
+    if (VERBOSE)
       printf("F=%.10f, djdomg=%.10f, omg=%.10f\n",flx, djdomg, omg);
-    
-    dy[EOB_EVOLVE_SPIN_Momg] = flx/djdomg; //flx is dj/dt. The energy flux is omg*flx (modulo nu terms)
     
     if(dy[EOB_EVOLVE_SPIN_Momg]<0.)
        dyn->omg_stop = 1e-10;
+
+    dy[EOB_EVOLVE_SPIN_Momg] = flx/djdomg; //flx is dj/dt. The energy flux is omg*flx (modulo nu terms)
 
     if (DEBUG){
       /* print to file omega, 3.5PN nonspinning flux divided by newtonian prefactor and EOB flux */
@@ -1345,7 +1345,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     const double Sstar = X2*a1+X1*a2;
 
     /*Compute r(omega) numerically by inverting hamilton Eq.*/
-    double r = eob_dyn_r0_eob(omg/Pi, NULL);
+    double r = 1./v2;//eob_dyn_r0_eob(omg/Pi, NULL);
     double u = 1./r;
     double u2= u*u;
     double u3= u2*u;
@@ -1696,6 +1696,10 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       printf("GSL Error = %d", GSLSTATUS);
       return ERROR_ODEINT;
     }
+
+    if (dyn->y[EOB_EVOLVE_SPIN_Momg] < 0.)
+      break;
+
     if (EOBPars->spin_flx != SPIN_FLX_EOB && dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] - dyn->data[EOB_EVOLVE_SPIN_Momg][i0+iter-1] < 1e-15) ){
       iter--; //don't count this iteration
       break;
@@ -1943,7 +1947,7 @@ void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *h
   /* Interp */
   if (interp) {
     alpha = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_alp], dyn->size, time);
-    beta = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_bet], dyn->size, time);
+    beta  = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_bet], dyn->size, time);
     gamma = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_gam], dyn->size, time);
   }
   
@@ -1981,28 +1985,17 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double var,
       interp = 0;
     }
     if(interp){
-      gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-      SA[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxA], time, acc);
-      gsl_interp_accel_reset(acc);
-      SA[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SyA], time, acc);
-      gsl_interp_accel_reset(acc);
-      SA[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SzA], time, acc);
-      gsl_interp_accel_reset(acc);
+      SA[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxA], time, dyn->accel[EOB_EVOLVE_SPIN_SxA]);
+      SA[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SyA], time, dyn->accel[EOB_EVOLVE_SPIN_SyA]);
+      SA[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SzA], time, dyn->accel[EOB_EVOLVE_SPIN_SzA]);
 
-      SB[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxB], time, acc);
-      gsl_interp_accel_reset(acc);
-      SB[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SyB], time, acc);
-      gsl_interp_accel_reset(acc);
-      SB[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SzB], time, acc);
-      gsl_interp_accel_reset(acc);
+      SB[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxB], time, dyn->accel[EOB_EVOLVE_SPIN_SxB]);
+      SB[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SyB], time, dyn->accel[EOB_EVOLVE_SPIN_SyB]);
+      SB[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SzB], time, dyn->accel[EOB_EVOLVE_SPIN_SzB]);
 
-      Lh[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lx], time, acc);
-      gsl_interp_accel_reset(acc);
-      Lh[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Ly], time, acc);
-      gsl_interp_accel_reset(acc);
-      Lh[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lz], time, acc);
-      gsl_interp_accel_reset(acc);
-      gsl_interp_accel_free(acc);
+      Lh[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lx], time, dyn->accel[EOB_EVOLVE_SPIN_Lx]);
+      Lh[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Ly], time, dyn->accel[EOB_EVOLVE_SPIN_Ly]);
+      Lh[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lz], time, dyn->accel[EOB_EVOLVE_SPIN_Lz]);
     }
 
   } else {// interpolate in omega
@@ -2037,28 +2030,17 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double var,
       interp = 0;  
     }
     if(interp){
-      gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-      SA[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxA], omg, acc);
-      gsl_interp_accel_reset(acc);
-      SA[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SyA], omg, acc);
-      gsl_interp_accel_reset(acc);
-      SA[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SzA], omg, acc);
-      gsl_interp_accel_reset(acc);
+      SA[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxA], omg, dyn->accel[EOB_EVOLVE_SPIN_SxA]);
+      SA[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SyA], omg, dyn->accel[EOB_EVOLVE_SPIN_SyA]);
+      SA[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SzA], omg, dyn->accel[EOB_EVOLVE_SPIN_SzA]);
 
-      SB[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxB], omg, acc);
-      gsl_interp_accel_reset(acc);
-      SB[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SyB], omg, acc);
-      gsl_interp_accel_reset(acc);
-      SB[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SzB], omg, acc);
-      gsl_interp_accel_reset(acc);
+      SB[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxB], omg, dyn->accel[EOB_EVOLVE_SPIN_SxB]);
+      SB[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SyB], omg, dyn->accel[EOB_EVOLVE_SPIN_SyB]);
+      SB[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SzB], omg, dyn->accel[EOB_EVOLVE_SPIN_SzB]);
 
-      Lh[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lx], omg, acc);
-      gsl_interp_accel_reset(acc);
-      Lh[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Ly], omg, acc);
-      gsl_interp_accel_reset(acc);
-      Lh[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lz], omg, acc);
-      gsl_interp_accel_reset(acc);
-      gsl_interp_accel_free(acc);
+      Lh[Ix] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lx], omg, dyn->accel[EOB_EVOLVE_SPIN_Lx]);
+      Lh[Iy] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Ly], omg, dyn->accel[EOB_EVOLVE_SPIN_Ly]);
+      Lh[Iz] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lz], omg, dyn->accel[EOB_EVOLVE_SPIN_Lz]);
     }
   }
 

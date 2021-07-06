@@ -319,7 +319,7 @@ enum{
   SPIN_FLX_EOB_HYBRIDv2,
   SPIN_FLX_NOPT,
 };
-static const char* spin_flx_opt[] = {"PN", "EOB", "undefined"};
+static const char* spin_flx_opt[] = {"PN", "EOB", "HYBv1","HYBv2","undefined"};
 
 /** Error handler for root finders */
 enum{ 
@@ -473,6 +473,7 @@ typedef struct tagDynamicsSpin
   double t_stop;  // stopping time, if >0
   double omg_stop; // stopping frequency Momega
   gsl_spline *spline[EOB_EVOLVE_SPIN_NVARS];
+  gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];
 } DynamicsSpin;
 
 /** Dynamics data type */
