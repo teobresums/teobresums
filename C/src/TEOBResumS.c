@@ -473,7 +473,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Set optimized dt around merger */
   const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
-  
+  const double deltat_tuned_mrg = get_mrg_timestop(q, chi1, chi2);
+    
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
   int GSLSTATUS = OK;
@@ -617,16 +618,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (dyn->MOmg < dyn->MOmg_prev) {
 	/* This is the first step after the peak
 	   Set things for uniform tstep evolution */
-	dyn->tMOmgpeak = dyn->t; // = dyn->t-0.5*dyn->dt;
+	dyn->tMOmgpeak = dyn->t; 
 	dyn->ode_stop_MOmgpeak = true;
+	
 	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
-	dyn->t_stop = dyn->t + 2.;
-	
-	if (EOBPars->use_flm == USEFLM_HM) {
-	  dyn->dt     = 0.1;
-	  dyn->t_stop = dyn->t + 10.;
-	}
-	
+	dyn->t_stop = dyn->t + deltat_tuned_mrg;
+		
 	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
       } else {
 	/* Peak not reached, update the max */
