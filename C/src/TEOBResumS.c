@@ -202,36 +202,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const int chunk = EOBPars->size;
   int size = chunk; /* note: size can vary */
 
-  /* Change size when using PA dynamics */
-  if (use_postadiab_dyn) {
-    size = EOBPars->postadiabatic_dynamics_size; 
-    double rmin = EOBPars->postadiabatic_dynamics_rmin;
-    if(use_tidal) rmin = 14.; //EOBPars->postadiabatic_dynamics_rmin;//SB: use EOBPar do not hardcode
-    size = floor(fabs(r0 - rmin)/POSTADIABATIC_DR) + 1;
-    
-    /* If initial radius is too close to PA limit then skip PA and go directly to ODE */
-    if (size - 1 < POSTADIABATIC_NSTEP_MIN) {
-        size = chunk;
-        use_postadiab_dyn = 0;
-    }
-    EOBPars->size = size;
-  }
-
-  /* Allocating memory for dynamics and waveform */
-  Dynamics_push (&dyn, size); 
-  Waveform_lm_alloc (&hlm, size, "hlm"); 
-  Waveform_lm_t_alloc (&hlm_t); 
-
-  /** Set r.h.s. fun pointer */
-  int (*p_eob_dyn_rhs)();
-  if (use_spins) p_eob_dyn_rhs = &eob_dyn_rhs_s;
-  else           p_eob_dyn_rhs = &eob_dyn_rhs;
-
-  /** NQC data */  
-  NQCdata_alloc (&NQC); 
-  eob_nqc_setcoefs(NQC);
-  
-  
+ 
   bool td_case=false, *td, bhns_case=false, *bhns;
   td = &td_case; // tidal disruption cases flag
   bhns = &bhns_case; // bhns (Type III case)
@@ -275,16 +246,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
 /** Compute light-ring and LSO (if needed) */
   int check_status;
-  if (use_tidal) { //TODO: change back to just use_tidal when finishing adding the LR for spin case
+  if (use_tidal) { 
     /* Compute rLR_tidal for NNLO potential and without spin part */
     dyn->use_tidal = TIDES_NNLO; 
-    if((chi1==0) && (chi2==0)){
-      dyn->use_spins = 0;
-      ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal)));
-    }else{
-      ROOTFINDER(check_status, eob_dyn_LR_s(dyn, &(dyn->rLR_tidal)));
-    }
-    
+    dyn->use_spins = 0;
+    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal))); //includes spin
+  
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
@@ -313,9 +280,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->rLR = dyn->rLR;
     if (VERBOSE) PRFORMd("rLR",dyn->rLR);
   }
+ 
   if (EOBPars->compute_LSO) {
-    //TODO: LSO COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
+    //Spin version
+    //TODO: Decide what to do when LSO does not exist (large alignes spins) 
+    //double pphiLSO = 0.;
+    //ROOTFINDER(check_status, eob_dyn_LSO_s(dyn, &(dyn->rLSO), &pphiLSO));
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
@@ -324,7 +295,37 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
   }  
 
-  if (VERBOSE) PRFORMi("rstop",EOBPars->ode_stop_radius);
+ /* Change size when using PA dynamics */
+  if (use_postadiab_dyn) {
+    size = EOBPars->postadiabatic_dynamics_size; 
+    double rmin = EOBPars->postadiabatic_dynamics_rmin;
+    if(use_tidal) rmin = 14.; //EOBPars->postadiabatic_dynamics_rmin;//SB: use EOBPar do not hardcode
+    size = floor(fabs(r0 - rmin)/POSTADIABATIC_DR) + 1;
+    
+    /* If initial radius is too close to PA limit then skip PA and go directly to ODE */
+    if (size - 1 < POSTADIABATIC_NSTEP_MIN) {
+        size = chunk;
+        use_postadiab_dyn = 0;
+    }
+    EOBPars->size = size;
+  }
+
+  /* Allocating memory for dynamics and waveform */
+  Dynamics_push (&dyn, size); 
+  Waveform_lm_alloc (&hlm, size, "hlm"); 
+  Waveform_lm_t_alloc (&hlm_t); 
+
+  /** Set r.h.s. fun pointer */
+  int (*p_eob_dyn_rhs)();
+  if (use_spins) p_eob_dyn_rhs = &eob_dyn_rhs_s;
+  else           p_eob_dyn_rhs = &eob_dyn_rhs;
+
+  /** NQC data */  
+  NQCdata_alloc (&NQC); 
+  eob_nqc_setcoefs(NQC);
+  
+  
+
   /* Iteration index */
   int iter = 0;  
   int pasize = 0;
@@ -514,13 +515,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   while (!(dyn->ode_stop)) {
     if (VERBOSE) printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r); 
     iter++;
-
+   
     if (ode_tstep == ODE_TSTEP_UNIFORM) {
       /* Uniform timestepping  */
       dyn->ti = dyn->t + dyn->dt;
       GSLSTATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
     } 
-    
+ 
     if (ode_tstep == ODE_TSTEP_ADAPTIVE) {
       /* Adaptive timestepping */
       if ( dyn->ode_stop_MOmgpeak == true ) {
@@ -556,14 +557,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
     eob_wav_hlm(dyn, hlm_t); 
-
+    
     /** Check for failures ... */
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
       dyn->MOmg = dyn->Omg;
     }
-	
+	  
     if (dyn->ode_stop_MOmgpeak == true) {
       /* ... if after the Omega_orb peak, stop integration */
       if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
@@ -572,7 +573,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	dyn->ode_stop = true;
 	break; /* (while) stop */
       }
-
+  
       if (dyn->MOmg > dyn->MOmg_prev) {
 	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
 	iter--; /* do count this iter! */
@@ -583,7 +584,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	dyn->MOmg_prev = dyn->MOmg;
     } 
     }
-
+  
     /* ... if before the Omega_orb peak, this is an actual error */
     if (GSLSTATUS != GSL_SUCCESS) {
       printf("GSL Error = %d", GSLSTATUS);
@@ -657,8 +658,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	dyn->t_stop = dyn->t + 2.;
 	
 	if (EOBPars->use_flm == USEFLM_HM) {
-	  dyn->dt     = 0.1;
-	  dyn->t_stop = dyn->t + 10.;
+	  dyn->dt     = MIN(dyn->dt, 0.1); // 0.1; 
+	  dyn->t_stop = dyn->t + 3.; 
 	}
 	
 	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
@@ -810,8 +811,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         
         if(default_choice==DEFAULT_PARS_BHNS){
           eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm, bhns);
-        }else
-        {
+        }else{
           eob_wav_hlmNQC_find_a1a2a3_mrg_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
         }
 

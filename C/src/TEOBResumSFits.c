@@ -349,18 +349,18 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   }
 
   /* Amplitude */
-  a110= 0.84982859;
-  a111= -1.56559930;
-  a120= 0.16117790;
-  a121= 9.33760797;
-  a210= 0.25201404;
-  a211= -0.23030721;
-  a220= -0.84813795;
-  a221= 1.00121004;
-  b110= 4.69829530;
-  b111= -1.67331235;
-  b120= -17.6052060;
-  b121= 12.3618798;
+  a110= -33.2692870;
+  a111= -31.2267504;
+  a120= 455.887446;
+  a121= 149.272912;
+  a210= 12.0349277;
+  a211= 13.5804238;
+  a220= 12.6416938;
+  a221= -55.8464602;
+  b110= 10.7944670;
+  b111= 6.69955952;
+  b120= -37.0043974;
+  b121= -10.0108654;
 
   a11 = a110*abh + a111;
   a12 = a120*abh + a121;
@@ -377,6 +377,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
+    //A_tmp[k] = Ap*A_tmp[k];
     omg_tmp[k] = Op*omg_tmp[k];
     domg_tmp[k] = dOp*domg_tmp[k];    
   }
