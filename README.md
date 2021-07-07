@@ -45,11 +45,18 @@ $ cd $TEOBRESUMS
 $ make -f Makefile.TEOBResumS
 ```
 
-Alternatively, you can build a python module using [disutil](https://docs.python.org/3/library/distutils.html) and the following script
+Alternatively, you can build a python module using [disutil](https://docs.python.org/3/library/distutils.html) and the following script  
 ```
 $ cd /PATH/TO/teobresums/Python/
 $ python TEOBResumSWrap_setup.py build_ext --inplace
 ```
+to build the module under the teobresums/Python directory, or  
+```
+$ cd /PATH/TO/teobresums/Python/
+$ python TEOBResumSWrap_setup.py install
+```
+to build it in your environment.  
+
 We strongly advise MacBook users to use anaconda when building the Python module.
 
 If you run in compilation errors, you may need to export the following variables:

@@ -2769,11 +2769,21 @@ double eob_approxLR(const double nu)
   return r0*x + r1;
 }
 
-/** Compute optimized timestep after merger */
+/** Compute optimized timestep after Omega_peak */
 double get_mrg_timestep(double q, double chi1, double chi2)
 {
   double dt = 0.1;
   // ...
   return dt;
+}
+
+/** Compute optimized shift to stop integration after Omega_peak */
+double get_mrg_timestop(double q, double chi1, double chi2)
+{
+  double tstop = 2.0;
+  if (EOBPars->use_flm == USEFLM_HM) {
+    tstop = 10.;
+  }
+  return tstop;
 }
 
