@@ -22,21 +22,95 @@
 
 /** BHNS Functions section */
 
-void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag)
+void tidal_disruption_cases(double q, double af, double chi1, bool *flag, double lambda)
 {
   /** Filter tidal disruption cases */
-  double crit = Mf/M; // from Frank's bh remnant fits
+  //double crit = Mf; // from Frank's bh remnant fits Mdot/M
 
-  if(crit<0.962){*flag = true;}
+  //if(crit<0.962){*flag = true;}
+
+  // Using alpha QNM fits
+  double nu = q/((1+q)*(1+q));
+  double af2 = pow(af,2);
+  double af3 = pow(af,3);
+
+  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
+  double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
+  double alpha_bbh = 0.0889623157 * (alpha1_c/alpha1_d);
+
+  const double a110= 0.08540533;
+  const double a111= 0.05952267;
+  const double a120= -0.38077744;
+  const double a121= -0.20439610;
+  const double a210= 9.9329e-06;
+  const double a211= 4.8199e-05;
+  const double a220= -2.9158e-05;
+  const double a221= -1.9268e-04;
+  const double b110= 0.21840792;
+  const double b111= 0.48995965;
+  const double b120= -0.92644561;
+  const double b121= -1.14839419;
+
+  double a11 = a110*chi1 + a111;
+  double a12 = a120*chi1 + a121;
+  double a21 = a210*chi1 + a211;
+  double a22 = a220*chi1 + a221;
+  double b11 = b110*chi1 + b111;
+  double b12 = b120*chi1 + b121;
+
+  double a1 = a11*nu + a12*nu*nu;
+  double a2 = a21*nu + a22*nu*nu;
+  double b1 = b11*nu + b12*nu*nu;
+
+  double Ap = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
+
+  if(Ap<0.6){*flag = true;}
   
 }
 
-void bhns_criterion(double q, double Mf, double M, double chi1, bool *flag)
+void bhns_criterion(double q, double af, double chi1, bool *flag, double lambda)
 {
   /** Filter bhns from bbh-like cases */
-  double crit = Mf/M; // from Frank's bh remnant fits
+  //double crit = Mf; // from Frank's bh remnant fits
 
-  if(crit<0.99){*flag = true;}
+  //if(crit<0.99){*flag = true;}
+
+  // Using alpha QNM fits
+  double nu = q/((1+q)*(1+q));
+  double af2 = pow(af,2);
+  double af3 = pow(af,3);
+
+  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
+  double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
+  double alpha_bbh = 0.0889623157 * (alpha1_c/alpha1_d);
+
+  const double a110= 0.08540533;
+  const double a111= 0.05952267;
+  const double a120= -0.38077744;
+  const double a121= -0.20439610;
+  const double a210= 9.9329e-06;
+  const double a211= 4.8199e-05;
+  const double a220= -2.9158e-05;
+  const double a221= -1.9268e-04;
+  const double b110= 0.21840792;
+  const double b111= 0.48995965;
+  const double b120= -0.92644561;
+  const double b121= -1.14839419;
+
+  double a11 = a110*chi1 + a111;
+  double a12 = a120*chi1 + a121;
+  double a21 = a210*chi1 + a211;
+  double a22 = a220*chi1 + a221;
+  double b11 = b110*chi1 + b111;
+  double b12 = b120*chi1 + b121;
+
+  double a1 = a11*nu + a12*nu*nu;
+  double a2 = a21*nu + a22*nu*nu;
+  double b1 = b11*nu + b12*nu*nu;
+
+  double Ap = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
+
+  if(Ap<0.9){*flag = true;}
   
 }
 
@@ -290,18 +364,18 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
 
   /** BHNS fits **/
   /* Omega */
-  double a110= -17.3861968;
-  double a111= 11.3669050;
-  double a120= 73.3942566;
-  double a121= -38.1972221;
-  double a210= -0.34513592;
-  double a211= 0.15214546;
-  double a220= 1.75142407;
-  double a221= -0.54256559;
-  double b110= -6.35277856;
-  double b111= 7.39254413;
-  double b120= 31.2642253;
-  double b121= -25.2548982;
+  double a110= -19.9414087;
+  double a111= 13.1200163;
+  double a120= 89.2822682;
+  double a121= -47.6274971;
+  double a210= -0.76193307;
+  double a211= 0.53986878;
+  double a220= 3.77186063;
+  double a221= -2.27599065;
+  double b110= -6.45566126;
+  double b111= 8.07868516;
+  double b120= 32.8762563;
+  double b121= -28.4009472;
 
   double a11 = a110*abh + a111;
   a12 = a120*abh + a121;
@@ -317,18 +391,18 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
   
   /* derivative omega */
-  a110= -43452.8811;
-  a111= -5061.98738;
-  a120= 427338.774;
-  a121= 33102.7777;
-  a210= 106552.867;
-  a211= -48004.1790;
-  a220= -447312.090;
-  a221= 206532.721;
-  b110= 242.280414;
-  b111= -7.72125729;
-  b120= -782.357520;
-  b121= 99.3301567;
+  a110= -43.3948773;
+  a111= 19.4754326;
+  a120= -19.4880614;
+  a121= 176.727522;
+  a210= -8.56409617;
+  a211= 4.21499880;
+  a220= 37.6477599;
+  a221= -17.2740573;
+  b110= -11.8157762;
+  b111= 16.3301125;
+  b120= 56.3647280;
+  b121= -53.1915941;
 
   a11 = a110*abh + a111;
   a12 = a120*abh + a121;
@@ -347,37 +421,9 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
     dOp=1.;
     Op =1.;
   }
-
-  /* Amplitude */
-  a110= -33.2692870;
-  a111= -31.2267504;
-  a120= 455.887446;
-  a121= 149.272912;
-  a210= 12.0349277;
-  a211= 13.5804238;
-  a220= 12.6416938;
-  a221= -55.8464602;
-  b110= 10.7944670;
-  b111= 6.69955952;
-  b120= -37.0043974;
-  b121= -10.0108654;
-
-  a11 = a110*abh + a111;
-  a12 = a120*abh + a121;
-  a21 = a210*abh + a211;
-  a22 = a220*abh + a221;
-  b11 = b110*abh + b111;
-  b12 = b120*abh + b121;
-
-  a1 = a11*nu + a12*nu*nu;
-  a2 = a21*nu + a22*nu*nu;
-  b1 = b11*nu + b12*nu*nu;
-
-  double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
   
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
-    //A_tmp[k] = Ap*A_tmp[k];
     omg_tmp[k] = Op*omg_tmp[k];
     domg_tmp[k] = dOp*domg_tmp[k];    
   }
@@ -1274,14 +1320,18 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   double p1 = p11*nu + p12*nu*nu;  double q1 = q11*nu + q12*nu*nu;
   double p2 = p21*nu + p22*nu*nu;  double q2 = q21*nu + q22*nu*nu;
   double p3 = p31*nu + p32*nu*nu;  double q3 = q31*nu + q32*nu*nu;
-  
-  double mbh;
-  double abh;
 
-  mbh = m_bh * ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p3*p3*lambda)*(1 + p3*p3*lambda)) );
-  abh = a_bh * ( (1 + q1*lambda + q2*lambda*lambda) / ((1 + q3*q3*lambda)*(1 + q3*q3*lambda)) );
+  double m_fit = ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p3*p3*lambda)*(1 + p3*p3*lambda)) );
+  double a_fit = ( (1 + q1*lambda + q2*lambda*lambda) / ((1 + q3*q3*lambda)*(1 + q3*q3*lambda)) );
 
-  *mass = mbh;
+  double mbh = m_bh * m_fit;
+  double abh = a_bh * a_fit;
+
+  //Adjusting for high Lambda - low nu interval where there is no data,
+  //assuming these cases are BBH-like
+  //if (nu<0.1){mbh = 1.;}
+
+  *mass = mbh; // Mf/M
   *spin = abh;
 }
 
@@ -3940,11 +3990,26 @@ double eob_approxLR(const double nu)
   return r0*x + r1;
 }
 
-/** Compute optimized timestep after merger */
+/** Compute optimized timestep after Omega_peak */
 double get_mrg_timestep(double q, double chi1, double chi2)
 {
   double dt = 0.1;
   // ...
   return dt;
+}
+
+/** Compute optimized shift to stop integration after Omega_peak */
+double get_mrg_timestop(double q, double chi1, double chi2, bool td_case)
+{
+  double tstop = 2.0;
+  if (EOBPars->use_flm == USEFLM_HM) {
+    if(td_case == true){ // for BHNS tidally disrupted cases (no ringdown)
+      tstop = 3.;
+    }else{
+      tstop = 10.;
+    }
+    
+  }
+  return tstop;
 }
 

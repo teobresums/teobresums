@@ -3418,6 +3418,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   const double Mbh  = dyn->Mbhf;
   const double abh  = dyn->abhf;
   const double kt2 = EOBPars->kapT2;
+  const double lambda = EOBPars->LambdaBl2;
 
     
   double *t       = hlm_mrg->time;
@@ -3986,7 +3987,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   bool td_case=false, *td;
   td = &td_case; // tidal disruption cases flag
 
-  tidal_disruption_cases(q, Mbh, M, chi1, td);
+  tidal_disruption_cases(q, abh, chi1, td, EOBPars->LambdaBl2);
 
   if(td_case==true){if (VERBOSE) PRSECTN("td_case=true");}
   

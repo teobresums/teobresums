@@ -650,8 +650,8 @@ void errorexits(char *file, int line, const char *s, const char *t);
 #define errorexits(s,t) errorexits(__FILE__, __LINE__, (s), (t))
 
 /* TEOBResumSFits.c */
-void tidal_disruption_cases(double q, double Mf, double M, double chi1, bool *flag);
-void bhns_criterion(double q, double Mf, double M, double chi1, bool *flag);
+void tidal_disruption_cases(double q, double Mf, double chi1, bool *flag, double lambda);
+void bhns_criterion(double q, double Mf, double chi1, bool *flag, double lambda);
 void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp, double abh, double kt2, bool *bhns);
 void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double lambda, double nu, double chi1);
 void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t);
@@ -706,6 +706,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);
+double get_mrg_timestop(double q, double chi1, double chi2, bool td_case);
 
 /* TEOBResumSDynamics.c */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *params);

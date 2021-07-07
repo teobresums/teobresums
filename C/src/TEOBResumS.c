@@ -217,8 +217,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
-      tidal_disruption_cases(q, dyn->Mbhf, M, chi1, td);
-      bhns_criterion(q, dyn->Mbhf, M, chi1, bhns);
+      tidal_disruption_cases(q, dyn->abhf, chi1, td, EOBPars->LambdaBl2);
+      bhns_criterion(q, dyn->abhf, chi1, bhns, EOBPars->LambdaBl2);
+
+      if(td_case==false){use_tidal = 0.;}
+      if(bhns_case==false){
+        default_choice=DEFAULT_PARS_BBH;
+        if (VERBOSE) PRSECTN("BBH-like case");
+      }
+
     }else{
       /** from BBH */
       HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
@@ -234,13 +241,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->Mbhf = dyn->Mbhf;
     EOBPars->abhf = dyn->abhf; 
   }
-  if(td_case==false){
-    use_tidal = 0.;
-  }
-  if(bhns_case==false){
-    default_choice=DEFAULT_PARS_BBH;
-    if (VERBOSE) PRSECTN("BBH-like case");
-  }
+  
   
   if (VERBOSE) PRFORMi("usetidal",use_tidal);
 
@@ -508,7 +509,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Set optimized dt around merger */
   const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
-  
+  const double deltat_tuned_mrg = get_mrg_timestop(q, chi1, chi2, td_case);
+    
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
   int GSLSTATUS = OK;
@@ -652,16 +654,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (dyn->MOmg < dyn->MOmg_prev) {
 	/* This is the first step after the peak
 	   Set things for uniform tstep evolution */
-	dyn->tMOmgpeak = dyn->t; // = dyn->t-0.5*dyn->dt;
+	dyn->tMOmgpeak = dyn->t; 
 	dyn->ode_stop_MOmgpeak = true;
+	
 	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
-	dyn->t_stop = dyn->t + 2.;
-	
-	if (EOBPars->use_flm == USEFLM_HM) {
-	  dyn->dt     = MIN(dyn->dt, 0.1); // 0.1; 
-	  dyn->t_stop = dyn->t + 3.; 
-	}
-	
+	dyn->t_stop = dyn->t + deltat_tuned_mrg;
+		
 	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
       } else {
 	/* Peak not reached, update the max */
@@ -711,7 +709,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Dynamics_output(dyn);
 #endif
 
-  if (!(default_choice==DEFAULT_PARS_BNS) && (td_case==false)) {
+  if (!(use_tidal)) {
   //if (!(default_choice==DEFAULT_PARS_BNS)) {
     
     /* ********************************************************
@@ -813,11 +811,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
           eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm, bhns);
         }else{
           eob_wav_hlmNQC_find_a1a2a3_mrg_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
-        }
-
-        if(bhns_case==false){
-          default_choice=DEFAULT_PARS_BBH;
-          if (VERBOSE) PRSECTN("BBH-like case");
         }
         
         strcat(hlm_mrg->name,"_nqc");
