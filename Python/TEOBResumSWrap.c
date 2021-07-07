@@ -328,11 +328,33 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     arg_out = (int) PyLong_AsLong(PyDict_GetItemString(dict, "arg_out"));
   }
   
+  /* build the dynamics dictionary */
+  PyObject* dyndict  = PyDict_New(); /*dyn dictionary */
+  npy_intp dims_dyn[1];
+  dims_dyn[0] = dynf->size;
+
+  /*time */
+  double *pdt;
+  PyArrayObject *pdto = (PyArrayObject *) PyArray_SimpleNew(1,dims_dyn,NPY_DOUBLE);
+  pdt = pyvector_to_Carrayptrs(pdto);
+  memcpy(pdt, dynf->time, dynf->size *sizeof(double));
+  PyDict_SetItemString(dyndict, "t", pdto); 
+  Py_DECREF(pdto);
+
+  /* other variables */
+  for(int v=0; v <EOB_DYNAMICS_NVARS; v++){
+    double *pv;
+    PyArrayObject *pvo = (PyArrayObject *) PyArray_SimpleNew(1,dims_dyn,NPY_DOUBLE);
+    pv = pyvector_to_Carrayptrs(pvo);
+    memcpy(pv, dynf->data[v], dynf->size *sizeof(double));
+    PyDict_SetItemString(dyndict, eob_var[v], pvo); 
+    Py_DECREF(pvo);
+  }
+
   if(EOBPars->domain==DOMAIN_TD){
     
     double *pt, *php, *phc; /*t, h+ and hx */
     PyObject* hlmdict  = PyDict_New(); /*hlm dictionary */
-    PyObject* dyndict  = PyDict_New(); /*dyn dictionary */
 
     npy_intp dims[1];
     dims[0] = hpc->size;
@@ -377,28 +399,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
       }
     }
 
-    /* build the dynamics dictionary */
-    npy_intp dims_dyn[1];
-    dims_dyn[0] = dynf->size;
-
-    /*time */
-    double *pdt;
-    PyArrayObject *pdto = (PyArrayObject *) PyArray_SimpleNew(1,dims_dyn,NPY_DOUBLE);
-    pdt = pyvector_to_Carrayptrs(pdto);
-    memcpy(pdt, dynf->time, dynf->size *sizeof(double));
-    PyDict_SetItemString(dyndict, "t", pdto); 
-    Py_DECREF(pdto);
-
-    /* other variables */
-    for(int v=0; v <EOB_DYNAMICS_NVARS; v++){
-      double *pv;
-      PyArrayObject *pvo = (PyArrayObject *) PyArray_SimpleNew(1,dims_dyn,NPY_DOUBLE);
-      pv = pyvector_to_Carrayptrs(pvo);
-      memcpy(pv, dynf->data[v], dynf->size *sizeof(double));
-      PyDict_SetItemString(dyndict, eob_var[v], pvo); 
-      Py_DECREF(pvo);
-    }
-
     /* build the final object */
     PyObject *ret;
     if (arg_out == 0){
@@ -430,7 +430,8 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   } else {
 
     double *pf, *phpr, *phpi, *phcr, *phci; /*FD: f,  Re and Im of h+, hx */
-    PyObject* hflmdict = PyDict_New();      /* hlm dictionary */
+    PyObject* hflmdict = PyDict_New();      /* hlm FD dictionary */
+    PyObject* htlmdict = PyDict_New();      /* hlm TD dictionary */
 
     npy_intp dims[1];
     dims[0] = hfpc->size;
@@ -457,7 +458,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     memcpy(phcr, hfpc->creal, hfpc->size * sizeof(double)); //Re hx
     memcpy(phci, hfpc->cimag, hfpc->size * sizeof(double)); //Im hx
     
-    /*build hlm dictionary */ 
+    /*build hflm dictionary */ 
     for(int k=0; k<KMAX; k++){
       if(hfmodes->kmask[k]){
         double *pAhflm, *pphflm;
@@ -480,12 +481,45 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
       }
     }
 
+    /*build htlm dictionary */
+    dims[0] = hmodes->size;
+    for(int k=0; k<KMAX; k++){
+      if(hmodes->kmask[k]){
+        double *pAhlm, *pphlm;
+        PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+        pAhlm = pyvector_to_Carrayptrs(pAhlmo);
+        pphlm = pyvector_to_Carrayptrs(pphlmo);
+        memcpy(pAhlm, hmodes->ampli[k], hmodes->size * sizeof(double));
+        memcpy(pphlm, hmodes->phase[k], hmodes->size * sizeof(double));
+        /* build dictionary entry*/
+        PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
+        char kst[12];
+        sprintf(kst, "%i", k);
+        /* populate the dictionary */
+        PyDict_SetItemString(htlmdict, kst, obj); 
+        /* free */
+        Py_DECREF(pAhlmo);
+        Py_DECREF(pphlmo);
+        Py_DECREF(obj);
+      }
+    }
+    /* add time to htlm */
+    double *pt;
+    PyArrayObject *pto = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+    pt = pyvector_to_Carrayptrs(pto);
+    memcpy(pt, hmodes->time, hmodes->size * sizeof(double));
+    PyObject *obj = Py_BuildValue("O", pto);
+    PyDict_SetItemString(htlmdict,"t", obj);
+    Py_DECREF(obj);
+    Py_DECREF(pto);
+
     /* build the final object */
     PyObject *ret;
     if (arg_out == 0){
       ret = Py_BuildValue("OOOOO", pfo, phprealo, phpimago, phcrealo, phcimago);
     } else if (arg_out == 1){
-      ret = Py_BuildValue("OOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict);
+      ret = Py_BuildValue("OOOOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict, htlmdict, dyndict);
     } else {
       printf("ERROR: arg_out has to be equal to 0 or 1");
       ret = NULL;
@@ -506,6 +540,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Py_DECREF(phcrealo);
     Py_DECREF(phcimago);
     Py_DECREF(hflmdict);
+    Py_DECREF(htlmdict);
+    Py_DECREF(dyndict);
+
     return ret;
   }
 }
