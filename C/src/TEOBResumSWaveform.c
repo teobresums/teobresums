@@ -3902,6 +3902,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   const double X2    = dyn->X2;
   const double aK    = dyn->a1+dyn->a2;
   const double M = EOBPars->M;
+  int use_tidal = EOBPars->use_tidal;
 	
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
@@ -3984,15 +3985,10 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
    * BHNS only part
    **/
   double Apeak[KMAX], alpha2[KMAX];
-  bool td_case=false, *td;
-  td = &td_case; // tidal disruption cases flag
-
-  tidal_disruption_cases(q, abh, chi1, td, EOBPars->LambdaBl2);
-
-  if(td_case==true){if (VERBOSE) PRSECTN("td_case=true");}
+  
   
   /** Postpeak coefficients calculation */   
-   if(td_case==false){
+   if(!(use_tidal)){
      if (VERBOSE) PRSECTN("No tidal disruption cases");
     QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 	     a1, a2, a3, a4, b1, b2, b3, b4, 
@@ -4040,7 +4036,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
       
       /* Calculate Deltaphi */
       t0 = t_lm[k][index_rng] - tmatch[k];
-      if(td_case==true){
+      if(use_tidal){
         eob_wav_ringdown_template_td(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, alpha2[k], Apeak[k]);
       }else{
         eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
@@ -4051,7 +4047,7 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
       for (int j = index_rng-1; j < size ; j++ ) {
 	
 	      tm = t_lm[k][j] - tmatch[k];
-	      if(td_case==true){
+	      if(use_tidal){
           eob_wav_ringdown_template_td(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, alpha2[k], Apeak[k]);
         }else{
           eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);

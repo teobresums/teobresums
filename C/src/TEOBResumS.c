@@ -203,8 +203,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   int size = chunk; /* note: size can vary */
 
  
-  bool td_case=false, *td, bhns_case=false, *bhns;
-  td = &td_case; // tidal disruption cases flag
+  bool bhns_case=false, *bhns;
   bhns = &bhns_case; // bhns (Type III case)
 
   /** Final BH */
@@ -217,10 +216,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
-      tidal_disruption_cases(q, dyn->abhf, chi1, td, EOBPars->LambdaBl2);
-      bhns_criterion(q, dyn->abhf, chi1, bhns, EOBPars->LambdaBl2);
-
-      if(td_case==false){use_tidal = 0.;}
+      tidal_disruption_cases(q, dyn->abhf, chi1, bhns, EOBPars->LambdaBl2);
+      use_tidal = EOBPars->use_tidal;
       if(bhns_case==false){
         default_choice=DEFAULT_PARS_BBH;
         if (VERBOSE) PRSECTN("BBH-like case");
@@ -241,7 +238,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->Mbhf = dyn->Mbhf;
     EOBPars->abhf = dyn->abhf; 
   }
-  
   
   if (VERBOSE) PRFORMi("usetidal",use_tidal);
 
@@ -509,7 +505,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Set optimized dt around merger */
   const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
-  const double deltat_tuned_mrg = get_mrg_timestop(q, chi1, chi2, td_case);
+  const double deltat_tuned_mrg = get_mrg_timestop(q, chi1, chi2);
     
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
@@ -794,7 +790,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     
     
-    if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) && (td_case==false)) {
+    if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
       
       /** BBH : compute and add NQC */
       
@@ -872,18 +868,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->size = size;
     
     /* Ringdown attachment for BBH & BHNS */
-    if(default_choice==DEFAULT_PARS_BHNS){ // Need M value for tidal disruption criteria in BHNS cases
-      EOBPars->M=M;
+    if (VERBOSE) PRSECTN("Ringdown");
+    if(default_choice==DEFAULT_PARS_BHNS){
       eob_wav_ringdown_bhns(dyn, hlm);
     }else{
       eob_wav_ringdown_HM(dyn, hlm);
     }
     
-    
-    
-    if (EOBPars->use_geometric_units) {
-      EOBPars->M=1.;
-    }
 
     #if (DEBUG) 
   // Output wave and dynamics 
