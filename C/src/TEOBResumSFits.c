@@ -64,53 +64,8 @@ void tidal_disruption_cases(double q, double af, double chi1, bool *flag, double
 
   double Ap = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
 
-  if(Ap<0.6){*flag = true;}
-  
-}
-
-void bhns_criterion(double q, double af, double chi1, bool *flag, double lambda)
-{
-  /** Filter bhns from bbh-like cases */
-  //double crit = Mf; // from Frank's bh remnant fits
-
-  //if(crit<0.99){*flag = true;}
-
-  // Using alpha QNM fits
-  double nu = q/((1+q)*(1+q));
-  double af2 = pow(af,2);
-  double af3 = pow(af,3);
-
-  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
-  double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
-  double alpha_bbh = 0.0889623157 * (alpha1_c/alpha1_d);
-
-  const double a110= 0.08540533;
-  const double a111= 0.05952267;
-  const double a120= -0.38077744;
-  const double a121= -0.20439610;
-  const double a210= 9.9329e-06;
-  const double a211= 4.8199e-05;
-  const double a220= -2.9158e-05;
-  const double a221= -1.9268e-04;
-  const double b110= 0.21840792;
-  const double b111= 0.48995965;
-  const double b120= -0.92644561;
-  const double b121= -1.14839419;
-
-  double a11 = a110*chi1 + a111;
-  double a12 = a120*chi1 + a121;
-  double a21 = a210*chi1 + a211;
-  double a22 = a220*chi1 + a221;
-  double b11 = b110*chi1 + b111;
-  double b12 = b120*chi1 + b121;
-
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
-
-  double Ap = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
-
-  if(Ap<0.9){*flag = true;}
+  if(Ap>0.6){EOBPars->use_tidal = 0.;} // for Type I use_tidal != 0
+  if(Ap<0.9){*flag = true;} // Type III cases
   
 }
 
@@ -513,58 +468,6 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
   omega1[1] = Op*omega_bbh;
   alpha21[1] = alpha2[1] - alpha1[1];
   alpha1[1] = alpha2[1];
-}
-
-
-/** Fits of Kerr BH QNM complex frequencies for a (M_bh, a_bh) of the remnant BH (for l=2,m=2)
- * Berti et al: arxiv:0512160
- * Nagar et al: arxiv:1904.09550
- */
-
-void kerr_bh_freq(double *omega1, double *omega2, double a_bh, double Mbh, double k2t)
-{
-  /** Mbh*omega_{lmn} = F_{lmn} = f1 + f2( 1 - j )^f3  : dimensionless frequency of nth overtone */
-  double f10[KMAX], f20[KMAX], f30[KMAX], f11[KMAX], f21[KMAX], f31[KMAX];
-
-  /** l=2  m=2 **/
-  /** n=0 fundamental overtone */
-  f10[1] = 1.5251; 
-  f20[1] = -1.1568;
-  f30[1] = 0.1292;
-  /** n=1 first overtone */
-  f11[1] = 1.3673;
-  f21[1] = -1.0260;
-  f31[1] = 0.1628;
-  
-  int mode = 1;
-  
-  *omega1 = (f10[mode] + f20[mode]*pow(1. - a_bh, f30[mode]));
-  *omega2 = (f11[mode] + f21[mode]*pow(1 - a_bh, f31[mode])); 
-
-}
-
-void kerr_bh_qnm(double *alpha1, double *alpha2, double a_bh, double *omega1, double *omega2, double k2t)
-{
-  /** 0.5*omega_{lmn}*(1/alpha_n) = Q_{lmn} = q1 + q2( 1 - j )^q3  : inverse damping time of nth overtone */
-  double q10[KMAX], q20[KMAX], q30[KMAX], q11[KMAX], q21[KMAX], q31[KMAX];
-
-  /** l=2  m=2 **/
-  /** n=0 fundamental overtone */
-  q10[1] = 0.7; 
-  q20[1] = 1.4187;
-  q30[1] = -0.4990;
-  /** n=1 first overtone */
-  q11[1] = 0.1;
-  q21[1] = 0.5436;
-  q31[1] = -0.4731;
-
-  int mode = 1;
-
-  double Q1 = q10[mode] + q20[mode]*pow(1. - a_bh, q30[mode]);
-  double Q2 = q11[mode] + q21[mode]*pow(1. - a_bh, q31[mode]);
-
-  *alpha1 = *omega1 / (2. * Q1);
-  *alpha2 = *omega2 / (2. * Q2);
 }
 
 void peak_bhns(double nu, double lambda, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak)
@@ -1297,18 +1200,18 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   double nu      = q/((1.+q)*(1.+q));
 
      /** Mass Parameters                             Spin Parameters */                
-  const double p110 = -0.00149184983303879;    const double q110 = -0.005806649906608269; 
-  const double p111 = 0.002379097606139772;    const double q111 = 0.0080478216453302;
-  const double p120 = 0.0022364047165374427;   const double q120 = 0.025417446510092936;
-  const double p121 = 0.012865296874803454;    const double q121 = 0.02304350955931102;
-  const double p210 = 2.2260126905452596e-07;  const double q210 = -7.885609729416046e-07;
-  const double p211 = -9.90313586841387e-07;   const double q211 = -2.7419535067447896e-06;
-  const double p220 = -1.913951684400866e-06;  const double q220 = 6.824530257266093e-06;
-  const double p221 = 1.0173536685638278e-05;  const double q221 = 4.115495276575295e-05;
-  const double p310 = -0.01734245059913986;    const double q310 = -0.02896820746099147;
-  const double p311 = 0.13922802156359232;     const double q311 = 0.2520378980622243;
-  const double p320 = 0.05039262787904267;     const double q320 = 0.14409587180221356;
-  const double p321 = -0.14439512702586282;    const double q321 = -0.4226678233866285;
+  const double p110 = 0.008270153575372058;    const double q110 = -0.005806649906608269; 
+  const double p111 = 0.03023441789407721;    const double q111 = 0.0080478216453302;
+  const double p120 = -0.009060968313209477;   const double q120 = 0.025417446510092936;
+  const double p121 = 0.009494115842467465;    const double q121 = 0.02304350955931102;
+  const double p210 = -1.0096357035633808e-07;  const double q210 = -7.885609729416046e-07;
+  const double p211 = 1.9646035657421295e-06;   const double q211 = -2.7419535067447896e-06;
+  const double p220 = 0.00010412175504981773;  const double q220 = 6.824530257266093e-06;
+  const double p221 = 0.00022787243413793448;  const double q221 = 4.115495276575295e-05;
+  const double p310 = 0.003496494935708257;    const double q310 = -0.02896820746099147;
+  const double p311 = 0.015633634360363493;     const double q311 = 0.2520378980622243;
+  const double p320 = 0.;     const double q320 = 0.14409587180221356;
+  const double p321 = 0.;    const double q321 = -0.4226678233866285;
 
   double p11 = p110*a + p111;      double q11 = q110*a + q111;
   double p12 = p120*a + p121;      double q12 = q120*a + q121;
@@ -1321,15 +1224,12 @@ void eob_bhns_fit(double a, double q, double *mass, double *spin, double lambda,
   double p2 = p21*nu + p22*nu*nu;  double q2 = q21*nu + q22*nu*nu;
   double p3 = p31*nu + p32*nu*nu;  double q3 = q31*nu + q32*nu*nu;
 
-  double m_fit = ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p3*p3*lambda)*(1 + p3*p3*lambda)) );
+  //double m_fit = ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p3*p3*lambda)*(1 + p3*p3*lambda)) ); //original fits Frank 2020
+  double m_fit = ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p31*nu*lambda)*(1 + p31*nu*lambda))  ); //latest fits 14.07.2021
   double a_fit = ( (1 + q1*lambda + q2*lambda*lambda) / ((1 + q3*q3*lambda)*(1 + q3*q3*lambda)) );
 
   double mbh = m_bh * m_fit;
   double abh = a_bh * a_fit;
-
-  //Adjusting for high Lambda - low nu interval where there is no data,
-  //assuming these cases are BBH-like
-  //if (nu<0.1){mbh = 1.;}
 
   *mass = mbh; // Mf/M
   *spin = abh;
@@ -3999,11 +3899,11 @@ double get_mrg_timestep(double q, double chi1, double chi2)
 }
 
 /** Compute optimized shift to stop integration after Omega_peak */
-double get_mrg_timestop(double q, double chi1, double chi2, bool td_case)
+double get_mrg_timestop(double q, double chi1, double chi2)
 {
   double tstop = 2.0;
   if (EOBPars->use_flm == USEFLM_HM) {
-    if(td_case == true){ // for BHNS tidally disrupted cases (no ringdown)
+    if(EOBPars->use_tidal){ // for BHNS tidally disrupted cases (no ringdown)
       tstop = 3.;
     }else{
       tstop = 10.;
