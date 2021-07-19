@@ -170,6 +170,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const int use_tidal = EOBPars->use_tidal;
   int store_dynamics = EOBPars->output_dynamics; 
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
+  if ( ecc != 0. )  store_dynamics = 1; /* Eccentric waveform computation needs dynamical variables (sigmoid) */
   if ((ecc != 0. ) || (r_hyp != 0.)) EOBPars->postadiabatic_dynamics = 0;
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
@@ -738,10 +739,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
 
       for (int k = 0; k < KMAX; k++) {
-	if((hlm->kmask[k])){
-	  hlm->ampli[k][i] = hlm_t->ampli[k];
-	  hlm->phase[k][i] = hlm_t->phase[k]; 
-	}
+        if((hlm->kmask[k])){
+          hlm->ampli[k][i] = hlm_t->ampli[k];
+          hlm->phase[k][i] = hlm_t->phase[k]; 
+        }
       }
     }
   }
