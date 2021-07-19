@@ -472,6 +472,8 @@ typedef struct tagDynamicsSpin
   double t, dt;
   double t_stop;  // stopping time, if >0
   double omg_stop; // stopping frequency Momega
+  double omg_backward;  //omega which divides backward from forward spin evolution
+  double time_backward; //time  which divides backward from forward spin evolution
   gsl_spline *spline[EOB_EVOLVE_SPIN_NVARS];
   gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];
 } DynamicsSpin;
@@ -813,7 +815,7 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 			       int continue_integration);
 
 /* TEOBResumSPostAdiabatic.c */
-int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0);
+int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0, DynamicsSpin *spin);
 
 /* TEOBResumSInitialCondition.c */
 void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);

@@ -1888,7 +1888,9 @@ void DynamicsSpin_alloc (DynamicsSpin **dyn, int size)
 
   }
   (*dyn)->omg_stop=-1; // set from EOBPars or by NR merger
-  (*dyn)->t_stop=-1; // use Momg as stopping criterion, if not otherwise specified. 
+  (*dyn)->t_stop=-1; // use Momg as stopping criterion, if not otherwise specified.
+  (*dyn)->time_backward=0;
+  (*dyn)->omg_backward= 0; 
 }
 
 void DynamicsSpin_push (DynamicsSpin **dyn, int size)

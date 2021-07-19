@@ -1587,10 +1587,12 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   int status;
   int GSLSTATUS = OK;
   int breakit = 0; // flag to break while allowing for one more step
-  int eps = 1;
-  if (dyn->dt<0)
-    eps = -1;
-
+  int eps    = 1;
+  int deltap = 0 ;
+  if (dyn->dt<0){
+    eps    = -1;
+    deltap =  1;
+  }
   /* PN/EOB flux auxiliary flags/variables */
   double omg0eob=-1;
   double omgeobmax=100;
@@ -1711,7 +1713,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     /** Update alpha and beta angles */
     dyn->y[EOB_EVOLVE_SPIN_alp]  = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						     dyn->y[EOB_EVOLVE_SPIN_Ly],
-						     dyn->y[EOB_EVOLVE_SPIN_Lz]);
+						     dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
     dyn->y[EOB_EVOLVE_SPIN_bet]  = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
@@ -1788,7 +1790,7 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   // Alloc new dynamics
   DynamicsSpin *spindyn_tmp = NULL;
   DynamicsSpin_alloc(&spindyn_tmp, 10);
-  EOBPars->spin_odes_dt = - EOBPars->spin_odes_dt/10;
+  EOBPars->spin_odes_dt = -EOBPars->spin_odes_dt/10;
   spindyn_tmp->omg_stop = omg0;
   spindyn_tmp->t_stop = -100000.;
   //eob_spin_dyn(spindyn_tmp, EOBPars->initial_frequency/time_units_factor(EOBPars->M));
@@ -1840,20 +1842,28 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   
   /*join at t0*/
   DynamicsSpin_join(spindyn_tmp, dyn, dyn->time[Nint]);
-  // FIXME: improve below
+
   /*copy in dyn*/
   DynamicsSpin_push(&dyn, spindyn_tmp->size);
   for (int i = 0; i < spindyn_tmp->size; i++) 
-    dyn->time[i] = spindyn_tmp->time[i]; 
+    dyn->time[i] = spindyn_tmp->time[i] - spindyn_tmp->time[0]; //start dynamics at t=0
+  
+  dyn->time_backward = - spindyn_tmp->time[0];             // keep track of when forward integration starts (time)
+  dyn->omg_backward  = dyn->data[EOB_EVOLVE_SPIN_Momg][0]; // keep track of when forward integration starts (omega)
+  //printf("omg_back = %.10f\n", dyn->omg_backward);
 
   for (int v = 0; v < EOB_EVOLVE_SPIN_NVARS; v++) {
     for (int i = 0; i < spindyn_tmp->size; i++) {
       dyn->data[v][i] = spindyn_tmp->data[v][i];
     }
   }
-  for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-    gsl_spline_init (dyn->spline[v], dyn->time, dyn->data[v], dyn->size);  
-
+  if (EOBPars->spin_interp_domain == 0){
+    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+      gsl_spline_init (dyn->spline[v], dyn->time, dyn->data[v], dyn->size);  
+  } else {
+    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+      gsl_spline_init (dyn->spline[v], dyn->data[EOB_EVOLVE_SPIN_Momg], dyn->data[v], dyn->size); 
+  }
   /*free*/ 
   DynamicsSpin_free(spindyn_tmp);
   return OK;
@@ -1965,7 +1975,7 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double var,
   const int smax = dyn->size-1;
   double SA[IN3], SB[IN3], Lh[IN3];
   int interp = 1;
-  
+  //printf("spindyn_t0=%.10f, spindyn tmax = %.10f\n", dyn->time[0], dyn->time[smax]);
   if(interp_domain == 0){ //interpolate in time
     double time = var;
     if (time >= dyn->time[smax]){

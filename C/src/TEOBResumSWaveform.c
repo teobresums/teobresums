@@ -4075,8 +4075,8 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   
   /* choose whether to use MOmega (from the dynamics) or MOmega_22 for the interpolation */
   int map_from_22 = 1;
-  spin->data[EOB_EVOLVE_SPIN_alp][0] = alpha_initial_condition(EOBPars);
-  spin->data[EOB_EVOLVE_SPIN_gam][0] = 1.0*spin->data[EOB_EVOLVE_SPIN_alp][0];
+  spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1]; //alpha_initial_condition(EOBPars);
+  spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_alp][0];
   /* First, unwrap alpha and gamma */
   unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
   unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
@@ -4122,10 +4122,13 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   //   printf("%.17f\n", spin->data[EOB_EVOLVE_SPIN_Momg][i]);
 
   /* first interpolation: angles(omega_PN)->angles(omega_EOB) */
+  if (VERBOSE) printf("First interpolation: angles(omega_PN)->angles(omega_EOB)\n");
+  // printf("omg_eob0=%.10f, omg_spin0=%.10f\n", omega[0], spin->data[EOB_EVOLVE_SPIN_Momg][0]);
   interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_alp], spin->size, omega, size_tmp, alpha_tmp);
   interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_bet], spin->size, omega, size_tmp, beta_tmp);
   interp_spline_omp(spin->data[EOB_EVOLVE_SPIN_Momg], spin->data[EOB_EVOLVE_SPIN_gam], spin->size, omega, size_tmp, gamma_tmp);
 
+  if (VERBOSE) printf("Second interpolation: omega_EOB->t_EOB up to omega peak\n");
   if(!map_from_22){
     /* map omega_dyn_EOB->t_EOB up to the peak of the EOB dynamics */
     tM_idx = find_point_bisection(dyn->time[omg_jmax], hlm->size, hlm->time, 1);
@@ -4138,10 +4141,15 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
     interp_spline_omp(hlm->time, alpha_tmp, size_tmp, hlm->time, tM_idx+1, alpha);
     interp_spline_omp(hlm->time, beta_tmp,  size_tmp, hlm->time, tM_idx+1, beta);  
     interp_spline_omp(hlm->time, gamma_tmp, size_tmp, hlm->time, tM_idx+1, gamma); 
-    /* free */
-    free(omega);
   }
 
+  if (VERBOSE) printf("Correct for backward/forward integration\n");
+  for(int i =0; i<tM_idx+1;i++){
+    if(omega[i] <  spin->omg_backward){
+      alpha[i] = alpha[i] - Pi;
+      beta[i]  = -beta[i]; 
+    }
+  }
   /* Now, prolong the angles based on user request */
   if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_CONSTANT) {
     //for t > tM_idx, fix the values to the last
@@ -4223,6 +4231,7 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   free(alpha_tmp);
   free(beta_tmp);
   free(gamma_tmp);
+  if (map_from_22) free(omega);
 }
 
 void prolong_euler_angles_FD(DynamicsSpin *spin, WaveformFD_lm *hlm)
