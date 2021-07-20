@@ -803,7 +803,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
         /*eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);*/
         
-        if(default_choice==DEFAULT_PARS_BHNS){
+        if((default_choice==DEFAULT_PARS_BHNS)){ 
           eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm, bhns);
         }else{
           eob_wav_hlmNQC_find_a1a2a3_mrg_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
