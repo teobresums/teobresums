@@ -880,37 +880,36 @@ double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz)
 double alpha_initial_condition(EOBParameters *eobp)
 {
   double q 	   = eobp->q;
-  double f0 	 = EOBPars->initial_frequency;
-  double chi1x = EOBPars->chi1x;
-  double chi1y = EOBPars->chi1y;
-  double chi1z = EOBPars->chi1z;
-  double chi2x = EOBPars->chi2x;
-  double chi2y = EOBPars->chi2y;
-  double chi2z = EOBPars->chi2z;
+  double f0 	 = eobp->initial_frequency;
+  double chi1x = eobp->chi1x;
+  double chi1y = eobp->chi1y;
+  double chi1z = eobp->chi1z;
+  double chi2x = eobp->chi2x;
+  double chi2y = eobp->chi2y;
+  double chi2z = eobp->chi2z;
 
   /*Convert f0 to v used here */
   double v = cbrt(Pi*f0);
-  if (!(EOBPars->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(EOBPars->M));
+  if (!(eobp->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(eobp->M));
 
-  /*Introduce temporary variables to make things more readable: 
-    q^2, 1+q, and (1+q)^2 come up often, so label them */
-  double oq, oq2, qq, angle_x, angle_y;
-  oq = 1. + q;
-  qq = q * q;
-  oq2= oq*oq;
+  /* precompute some quantities and coefficients*/
 
-  double v2 = v*v;
-  double v3 = v2*v;
-  double v4 = v3*v;
-  double v5 = v4*v;
+  double alpha_x_NLO, alpha_y_NLO;
+  double oq  = 1.+q;
+  double oq2 = oq*oq;
 
-  angle_x = (pow(q, -70) * v5 * pow(1 + pow(q, -2), -32) * pow(1 + pow(q, -1), -6) * (-(qq * oq2 * v2 * ((1 + 4 * q) * (12 * chi1y * (3 + 4 * q) * (1 + qq) * oq2 + chi1y * oq * (27 + 15 * q + 98 * qq + 14 * pow(q, 3) + 72 * pow(q, 4)) * v2 - 12 * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * pow(1 + qq, 2)) + (4 + q) * (12 * chi2y * (4 + 3 * q) * (1 + qq) * oq2 + chi2y * (oq) * (72 + 14 * q + 98 * qq + 15 * pow(q, 3) + 27 * pow(q, 4)) * v2 - 12 * (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * pow(1 + qq, 2))) * pow(1 + qq, 29)) + 4 * chi2y * q * (72 + 14 * q + 98 * qq + 15 * pow(q, 3) + 27 * pow(q, 4)) * pow(oq, 3) * v2 * pow(1 + qq, 30) + 4 * chi1y * qq * (27 + 15 * q + 98 * qq + 14 * pow(q, 3) + 72 * pow(q, 4)) * pow(oq, 3) * v2 * pow(1 + qq, 30) + 48 * chi2y * q * (4 + 3 * q) * pow(oq, 4) * pow(1 + qq, 31) + 48 * chi1y * (3 + 4 * q) * qq * pow(oq, 4) * pow(1 + qq, 31) + 4 * q * (28 * chi2z + 27 * (chi1z + chi2z) * q + 28 * chi1z * qq) * (-(q * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * (1 + qq)) - (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * (1 + qq) + chi2y * (4 + 3 * q) * oq2 + chi1y * q * (3 + 4 * q) * oq2) * v3 * pow(1 + qq, 31) - 48 * q * (3 * chi2y * chi2z + 2 * chi1z * chi2y * q + chi1y * chi2z * q) * v * oq2 * pow(1 + qq, 32) - 48 * (chi1z * chi2y + 2 * chi1y * chi2z + 3 * chi1y * chi1z * q) * v * qq * oq2 * pow(1 + qq, 32) - chi1y * qq * pow(oq, 3) * v4 * (2 * (oq)*pow(q, 3) * pow(1 + qq, 29) + 315 * (oq)*qq * pow(1 + qq, 30) - 18 * q * (oq)*pow(1 + qq, 31) - 81 * (oq)*pow(1 + qq, 32) - 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + qq, 31) + 27 * pow(1 + qq, 32))) - chi2y * pow(oq, 3) * v4 * (2 * (oq)*pow(q, 3) * pow(1 + qq, 29) + 315 * (oq)*qq * pow(1 + qq, 30) - 18 * q * (oq)*pow(1 + qq, 31) - 81 * (oq)*pow(1 + qq, 32) + 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + qq, 31) + 27 * pow(1 + qq, 32)))) *
-              pow(1 + ((9 + q + 9 * qq) * v2 * pow(1 + qq, -1)) / 6. + (v4 * (81 + qq * pow(1 + qq, -2) - 57 * q * pow(1 + qq, -1))) / 24., -1)) /
-             96.;
-  angle_y = -(pow(q, -70) * v5 * pow(1 + pow(q, -2), -32) * pow(1 + pow(q, -1), -6) * (-(qq * oq2 * v2 * ((1 + 4 * q) * (12 * chi1x * (3 + 4 * q) * (1 + qq) * oq2 + chi1x * (oq) * (27 + 15 * q + 98 * qq + 14 * pow(q, 3) + 72 * pow(q, 4)) * v2 - 12 * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * pow(1 + qq, 2)) + (4 + q) * (12 * chi2x * (4 + 3 * q) * (1 + qq) * oq2 + chi2x * (oq) * (72 + 14 * q + 98 * qq + 15 * pow(q, 3) + 27 * pow(q, 4)) * v2 - 12 * (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * pow(1 + qq, 2))) * pow(1 + qq, 29)) + 4 * chi2x * q * (72 + 14 * q + 98 * qq + 15 * pow(q, 3) + 27 * pow(q, 4)) * pow(oq, 3) * v2 * pow(1 + qq, 30) + 4 * chi1x * qq * (27 + 15 * q + 98 * qq + 14 * pow(q, 3) + 72 * pow(q, 4)) * pow(oq, 3) * v2 * pow(1 + qq, 30) + 48 * chi2x * q * (4 + 3 * q) * pow(oq, 4) * pow(1 + qq, 31) + 48 * chi1x * (3 + 4 * q) * qq * pow(oq, 4) * pow(1 + qq, 31) + 4 * q * (28 * chi2z + 27 * (chi1z + chi2z) * q + 28 * chi1z * qq) * (-(q * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * (1 + qq)) - (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * (1 + qq) + chi2x * (4 + 3 * q) * oq2 + chi1x * q * (3 + 4 * q) * oq2) * v3 * pow(1 + qq, 31) - 48 * q * (3 * chi2x * chi2z + 2 * chi1z * chi2x * q + chi1x * chi2z * q) * v * oq2 * pow(1 + qq, 32) - 48 * (chi1z * chi2x + 2 * chi1x * chi2z + 3 * chi1x * chi1z * q) * v * qq * oq2 * pow(1 + qq, 32) - chi1x * qq * pow(oq, 3) * v4 * (2 * (oq)*pow(q, 3) * pow(1 + qq, 29) + 315 * (oq)*qq * pow(1 + qq, 30) - 18 * q * (oq)*pow(1 + qq, 31) - 81 * (oq)*pow(1 + qq, 32) - 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + qq, 31) + 27 * pow(1 + qq, 32))) - chi2x * pow(oq, 3) * v4 * (2 * (oq)*pow(q, 3) * pow(1 + qq, 29) + 315 * (oq)*qq * pow(1 + qq, 30) - 18 * q * (oq)*pow(1 + qq, 31) - 81 * (oq)*pow(1 + qq, 32) + 3 * (1 - q) * (5 * pow(q, 32) - 156 * q * pow(1 + qq, 31) + 27 * pow(1 + qq, 32)))) *
-               pow(1 + ((9 + q + 9 * qq) * v2 * pow(1 + qq, -1)) / 6. + (v4 * (81 + qq * pow(1 + qq, -2) - 57 * q * pow(1 + qq, -1))) / 24., -1)) /
-             96.;
-  return atan2(angle_y, angle_x);
+  double c1 = nu*oq2*(4.+3.*q);
+  double c2 = nu*oq2*(3.+4.*q)*q;
+  double c3 = -3.*q*(chi1z + q*chi2z);
+
+  alpha_y_NLO   = -c1*chi1x-c2*chi2x-c3*(chi1x+chi2x*q)*v;
+  alpha_x_NLO   =  c1*chi1y+c2*chi2y+c3*(chi1y+chi2y*q)*v;
+
+  /* the NNLO expressions below need further optimization*/
+  //alpha_x_NNLO = 0.25*oonu*ooq4* (nu*pow(q,4.)*(48.*chi2y + (45.*chi2y - 9.*chi1y*nu - 49.*chi2y*nu)*v2) + pow(q,2.)*(120.*(chi1y + chi2y)*nu - 36.*(chi1z*chi2y + chi1y*chi2z)*v - 1.*(chi1y + chi2y)*(-27. + nu*(-15. + 154.*nu))*v2) + q*(12.*(11.*chi1y + 3.*chi2y)*nu - 36.*chi1y*chi1z*v + (chi1y*(27. + 2.*(30. - 73.*nu)*nu) - 66.*chi2y*nu2)*v2) + pow(q,3.)*(9.*chi2y*v*(-4.*chi2z + 3.*v) - 2.*(33.*chi1y + 73.*chi2y)*nu2*v2 + 12.*nu*(3.*chi1y + 11.*chi2y + 5.*chi2y*v2)) + nu*(-9.*chi2y*nu*v2 + chi1y*(48. + (45. - 49.*nu)*v2)))*v6* pow(6. + (9. + nu)*v2,-1.);
+  //alpha_y_NNLO = 0.25*oonu*ooq4* (6.*chi2x*nu*q*(-6. + 11.*nu*v2) + nu*pow(q,4.)*(-48.*chi2x + (-45.*chi2x + 9.*chi1x*nu + 49.*chi2x*nu)*v2) + chi1x*q*(-132.*nu + 36.*chi1z*v + (-27. + 2.*nu*(-30. + 73.*nu))*v2) + pow(q,2.)*(-120.*(chi1x + chi2x)*nu + 36.*(chi1z*chi2x + chi1x*chi2z)*v + (chi1x + chi2x)*(-27. + nu*(-15. + 154.*nu))*v2) + pow(q,3.)*(9.*chi2x*(4.*chi2z - 3.*v)*v + 2.*(33.*chi1x + 73.*chi2x)*nu2*v2 - 12.*nu*(3.*chi1x + 11.*chi2x + 5.*chi2x*v2)) + nu*(9.*chi2x*nu*v2 + chi1x*(-48. + (-45. + 49.*nu)*v2)))*v6*pow(6. + (9. + nu)*v2,-1.);
+  return atan2(alpha_y_NLO, alpha_x_NLO);
+
 }
 
 /** Compute beta from Lhat */
