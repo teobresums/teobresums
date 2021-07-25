@@ -928,17 +928,15 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   (void)(t); /* avoid unused parameter warning */
   DynamicsSpin *dyn = d;  
 
-  const double q = EOBPars->q; // Assume q = MA/MB >=1 //CHECKME paper convention!
-  const double nu = EOBPars->nu; 
+  const double q   = EOBPars->q; // Assume q = MA/MB >=1
+  const double nu  = EOBPars->nu; 
   const double nu2 = nu*nu;
   const double nu3 = nu2*nu;
   const double nu4 = nu3*nu;
   const double nu5 = nu4*nu;
 
-  const double M = 1.; 
-  const double M2 = SQ(M);
-  const double MA = M*nu_to_X1(nu); 
-  const double MB = M - MA;
+  const double MA = nu_to_X1(nu); 
+  const double MB = 1. - MA;
   const double dm = MA - MB; 
   const double ma_o_mb = MA/MB;
   const double mb_o_ma = MB/MA;
@@ -964,7 +962,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 
   const double omg = y[EOB_EVOLVE_SPIN_Momg]; // M omega
   const double lnomg = log(omg);
-  const double v = pow(omg/M, oothree); // division by M !
+  const double v  = pow(omg, oothree); // division by M !
   const double v2 = v*v;
   const double v3 = v2*v;
   const double v4 = v3*v;
@@ -995,48 +993,71 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   vect_dot3(qSAB, Lh, &qSABLh);
   vect_dot3(SABq, Lh, &SABqLh);
   
+  /* compute the mass-dep. coefficients at first call only */
+  static double v5_cA, v5_cB, v7_cA, v7_cB, v9_cA, v9_cB;
+  static double csA, csB, csAL, csBL, csANL, csBNL;
+  static double L2PN_v2, L2PN_v4;
+
+  if (EOBPars->firstcall[FIRSTCALL_SPINDYN]){
+    EOBPars->firstcall[FIRSTCALL_SPINDYN] = 0;
+
+    v5_cA = nu*(2+1.5/q);
+    v5_cB = nu*(2+1.5*q);
+    v7_cA = 0.5625 + 1.25*nu - 0.04166666666666666*nu2 + dm*(-0.5625+0.625*nu);
+    v7_cB = 0.5625 + 1.25*nu - 0.04166666666666666*nu2 - dm*(-0.5625+0.625*nu);
+    v9_cA = 0.84375 + 0.1875*nu - 3.28125*nu2 - 0.02083333333333*nu3
+			      + dm*(-0.84375+4.875*nu-0.15625*nu2);
+    v9_cB = 0.84375 + 0.1875*nu - 3.28125*nu2 - 0.02083333333333*nu3
+			      - dm*(-0.84375+4.875*nu-0.15625*nu2);
+
+    csA  = -0.25*(3.+1./MA);
+    csB  = -0.25*(3.+1./MB);
+    csAL = -0.08333333333333333*(1.+27./MA);
+    csBL = -0.08333333333333333*(1.+27./MB);
+    csANL= 0.0625*(-31.+7/MA) + 0.0208333333333333*nu*(9. + 22/MA);
+    csBNL= 0.0625*(-31.+7/MB) + 0.0208333333333333*nu*(9. + 22/MB);
+
+    L2PN_v2 = 1.5+0.1666666666666667*nu;
+    L2PN_v4 = 3.375 - 2.375*nu + 0.04166666666666666*nu2;
+  }
+
+  /* NLO */
+  /* 
   for(int a=Ix; a<IN3; a++) 
-    OmgA[a] = (v5*nu*(2+1.5/q) - 1.5*v6*qSABLh)*Lh[a] + 0.5*v6*SB[a];
+  OmgA[a] = (v5*v5_cA - 1.5*v6*qSABLh)*Lh[a] + 0.5*v6*SB[a];
   for(int a=Ix; a<IN3; a++) 
-    OmgB[a] = (v5*nu*(2+1.5*q) - 1.5*v6*SABqLh)*Lh[a] + 0.5*v6*SA[a];
+  OmgB[a] = (v5*v5_cB - 1.5*v6*SABqLh)*Lh[a] + 0.5*v6*SA[a];
   
-  // vect_cross3(OmgA, SA, Omg_x_SA);
-  // vect_cross3(OmgB, SB, Omg_x_SB);
+  vect_cross3(OmgA, SA, Omg_x_SA);
+  vect_cross3(OmgB, SB, Omg_x_SB);
   
-  // dy[EOB_EVOLVE_SPIN_SxA] += Omg_x_SA[Ix];
-  // dy[EOB_EVOLVE_SPIN_SyA] += Omg_x_SA[Iy];
-  // dy[EOB_EVOLVE_SPIN_SzA] += Omg_x_SA[Iz];
+  dy[EOB_EVOLVE_SPIN_SxA] += Omg_x_SA[Ix];
+  dy[EOB_EVOLVE_SPIN_SyA] += Omg_x_SA[Iy];
+  dy[EOB_EVOLVE_SPIN_SzA] += Omg_x_SA[Iz];
   
-  // dy[EOB_EVOLVE_SPIN_SxB] += Omg_x_SB[Ix];
-  // dy[EOB_EVOLVE_SPIN_SyB] += Omg_x_SB[Iy];
-  // dy[EOB_EVOLVE_SPIN_SzB] += Omg_x_SB[Iz];
+  dy[EOB_EVOLVE_SPIN_SxB] += Omg_x_SB[Ix];
+  dy[EOB_EVOLVE_SPIN_SyB] += Omg_x_SB[Iy];
+  dy[EOB_EVOLVE_SPIN_SzB] += Omg_x_SB[Iz];
   
-  // const double v_o_nu = v/nu;
-  // dy[EOB_EVOLVE_SPIN_Lx] += -(v_o_nu) * ( Omg_x_SA[Ix] + Omg_x_SB[Ix] );
-  // dy[EOB_EVOLVE_SPIN_Ly] += -(v_o_nu) * ( Omg_x_SA[Iy] + Omg_x_SB[Iy] );
-  // dy[EOB_EVOLVE_SPIN_Lz] += -(v_o_nu) * ( Omg_x_SA[Iz] + Omg_x_SB[Iz] );  
-  
+  const double v_o_nu = v/nu;
+  dy[EOB_EVOLVE_SPIN_Lx] += -(v_o_nu) * ( Omg_x_SA[Ix] + Omg_x_SB[Ix] );
+  dy[EOB_EVOLVE_SPIN_Ly] += -(v_o_nu) * ( Omg_x_SA[Iy] + Omg_x_SB[Iy] );
+  dy[EOB_EVOLVE_SPIN_Lz] += -(v_o_nu) * ( Omg_x_SA[Iz] + Omg_x_SB[Iz] );  
+  */
+
   
   /* N4LO */
-  
   double OmgANLO[IN3],  OmgBNLO[IN3],  OmgANNLO[IN3],  OmgBNNLO[IN3],  OmgAN4LO[IN3],  OmgBN4LO[IN3];
   double SdotANLO[IN3], SdotBNLO[IN3], SdotANNLO[IN3], SdotBNNLO[IN3], SdotAN4LO[IN3], SdotBN4LO[IN3];
   double LNdotN4LO[IN3];
 
-  const double cv7A = v7*( 0.5625 + 1.25*nu - 0.04166666666666666*nu2 + dm*(-0.5625+0.625*nu) );
-  const double cv7B = v7*( 0.5625 + 1.25*nu - 0.04166666666666666*nu2 - dm*(-0.5625+0.625*nu) );
-  const double cv9A = v9*( 0.84375 + 0.1875*nu - 3.28125*nu2 - 0.02083333333333*nu3
-			  + dm*(-0.84375+4.875*nu-0.15625*nu2) );
-  const double cv9B = v9*( 0.84375 + 0.1875*nu - 3.28125*nu2 - 0.02083333333333*nu3
-			  - dm*(-0.84375+4.875*nu-0.15625*nu2) );
-
   for(int a=Ix; a <IN3; a++){
-    OmgANLO[a] = (v5*nu*(2+1.5/q) - 1.5*v6*qSABLh)*Lh[a] + 0.5*v6*SB[a];
-    OmgBNLO[a] = (v5*nu*(2+1.5*q) - 1.5*v6*SABqLh)*Lh[a] + 0.5*v6*SA[a];
-    OmgANNLO[a]= OmgANLO[a]  + cv7A*Lh[a];
-    OmgBNNLO[a]= OmgBNLO[a]  + cv7B*Lh[a];
-    OmgAN4LO[a]= OmgANNLO[a] + cv9A*Lh[a];
-    OmgBN4LO[a]= OmgBNNLO[a] + cv9B*Lh[a];
+    OmgANLO[a] = (v5*v5_cA  - 1.5*v6*qSABLh)*Lh[a] + 0.5*v6*SB[a];
+    OmgBNLO[a] = (v5*v5_cB  - 1.5*v6*SABqLh)*Lh[a] + 0.5*v6*SA[a];
+    OmgANNLO[a]= OmgANLO[a]  + v7*v7_cA*Lh[a];
+    OmgBNNLO[a]= OmgBNLO[a]  + v7*v7_cB*Lh[a];
+    OmgAN4LO[a]= OmgANNLO[a] + v9*v9_cA*Lh[a];
+    OmgBN4LO[a]= OmgBNNLO[a] + v9*v9_cB*Lh[a];
   }  
 
   vect_cross3(OmgANLO,  SA, SdotANLO);
@@ -1054,13 +1075,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_SPIN_SzB] = SdotBN4LO[Iz];
 
   // Lhdot
-  const double csA = -0.25*(3.+M/MA);
-  const double csB = -0.25*(3.+M/MB);
-  const double csAL = -0.08333333333333333*(1.+27.*M/MA);
-  const double csBL = -0.08333333333333333*(1.+27.*M/MB);
-  //const double csANL= 0.0625*(-31.+7*M/MA) + 0.0208333333333333*nu*(9. + 22* M/MA)
-  //const double csBNL= 0.0625*(-31.+7*M/MB) + 0.0208333333333333*nu*(9. + 22* M/MB)
-  const double L2PN = 1 + v2*(1.5+0.1666666666666667*nu) + v4*(3.375 - 2.375*nu + 0.04166666666666666*nu2);
+  const double L2PN = 1. + v2*L2PN_v2 + v4*L2PN_v4;
   const double v_o_nu = v/nu;
 
   double SALh, SBLh;
@@ -1108,6 +1123,65 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     
   /* dot omg (Rad.React.) */
   if(EOBPars->spin_flx == SPIN_FLX_PN) {
+    
+    static double beta3A, beta3B, beta5A, beta5B, beta6A, beta6B, beta7A, beta7B, beta8A, beta8B;
+    static double b6, b8, b9, b10, b11;
+    static double a0, a2, a4_nosigma, a5_nobeta, a6_nobeta, a7_nobeta, a8_nobeta, a9, a10, a11;
+    static double sigma4_SASB, sigma4_SALh_SBLh, sigma4_SA2, sigma4_SALh2, sigma4_SB2, sigma4_SBLh2;
+    
+    if (EOBPars->firstcall[FIRSTCALL_PNMOMG]){
+      EOBPars->firstcall[FIRSTCALL_PNMOMG] = 0;
+
+      sigma4_SASB      = 247./(48*nu);
+      sigma4_SALh_SBLh = - 721./(48.*nu);
+      sigma4_SA2       = 233./(96*SQ(MA));
+      sigma4_SALh2     = -719./(96*SQ(MA));
+      sigma4_SB2       = 233./(96*SQ(MB));
+      sigma4_SBLh2     = - 719./(96*SQ(MB));
+
+      beta3A = 113./12 + 25./4*mb_o_ma;
+      beta3B = 113./12 + 25./4*ma_o_mb; 
+      beta5A = (31319./1008-1159./24*nu) + mb_o_ma*( 809./84 - 281./8*nu);
+      beta5B = (31319./1008-1159./24*nu) + ma_o_mb*( 809./84 - 281./8*nu); 
+      beta6A = Pi * (75./2+151./6*mb_o_ma);
+      beta6B = Pi * (75./2+151./6*ma_o_mb);
+      beta7A = (130325./756 - 796069./2016*nu+100019./864*nu2)+ mb_o_ma*(1195759./18144-257023./1008*nu+2903./32*nu2);
+      beta7B = (130325./756 - 796069./2016*nu+100019./864*nu2)+ ma_o_mb*(1195759./18144-257023./1008*nu+2903./32*nu2);
+      beta8A = Pi*(76927./504 -220055./672*nu) + mb_o_ma*(1665./28-50483./224*nu);
+      beta8B = Pi*(76927./504 -220055./672*nu) + ma_o_mb*(1665./28-50483./224*nu);
+
+      b6  = -1712./315;  
+      b8  = - 856./315*nu + 124741./4410;  
+      b9  = - 6848./105* Pi;  
+      b10 = 3090781./26460*nu -  2354./945*nu2 - 11821184./1964655;  
+      b11 = 311233./5880*Pi - 3424./315*Pi*nu;
+
+      a0 = 96./5*nu;
+
+      a2 = -743./336-11./4*nu;
+
+      a4_nosigma = 34103./18144 + 13661./2016*nu + 59./18*nu2;
+
+      a5_nobeta  = -4159./672*Pi - 189./8*Pi*nu;
+
+      a6_nobeta  = 16447322263./139708800 + 16./3*Pi2 - 856./105*log(16.) - 1712./105*EulerGamma
+                   + nu *( 451./48*Pi2- 56198689./217728) + nu2*541./896 - nu3*5605./2592;
+
+      a7_nobeta  = - 4415./4032*Pi + 358675./6048*Pi*nu +91495./1512*Pi*nu2;
+
+      a8_nobeta  = 3971984677513./25427001600 + 127751./1470*Log2  - 47385./1568*Log3 + 124741./4410*EulerGamma -361./126*Pi2 + 82651980013./838252800*nu - 1712./315*nu*Log2
+                   - 856./315*EulerGamma*nu  - 31495./8064*Pi2*nu + 54732199./93312*nu2- 3157./144*Pi2*nu2  - 18927373./435456*nu3 -95./3888*nu4;
+
+      a9 =  343801320119./745113600*Pi- 13696./105*Pi*Log2 -  6848./105*Pi*EulerGamma - 51438847./48384*Pi*nu + 205./6*Pi3*nu + 42680611./145152*Pi*nu2  +  9731./1344*Pi*nu3;
+
+      a10= 29619150939541789./36248733480960  -107638990./392931*Log2 + 616005./3136*Log3 - 11821184./1964655*EulerGamma - 21512./1701*Pi2 - 884576519037433./228843014400*nu 
+          + 2105111./8820*nu*Log2 - 15795./3136*nu*Log3 + 3090781./26460*EulerGamma*nu+ 14555455./217728*Pi2*nu  + 1175999369413./914457600*nu2 - 4708./945*nu2*Log2
+          - 126809./3024*Pi2*nu2 - 2354./945*EulerGamma*nu2 - 9007327699./11757312*nu3 + 9799./384*Pi2*nu3 + 51439207./1741824*nu4 - 34613./186624*nu5;
+      
+      a11= 91347297344213./81366405120*Pi+ 5069891./17640*Pi*Log2- 142155./784*Pi*Log3  + 311233./5880*Pi*EulerGamma - 1903651780081./4470681600*Pi*nu- 6848./315*Pi*nu*Log2
+      - 3424./315*Pi*EulerGamma*nu - 26035./16128*Pi3*nu + 1760705531./290304*Pi*nu2 - 112955./576*Pi3*nu2 - 7030123./13608*Pi*nu3 + 49187./6048*Pi*nu4;  
+    }
+
     /* PN omega_dot, taken from: 
        https://arxiv.org/abs/1307.4418 , App.A */
 
@@ -1124,67 +1198,35 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     for (int i=0; i<12; i++) b[i] = 0;
     for (int i=0; i<9; i++) beta[i]= 0;
     
-    //TODO: precompted spin independent coefs as first call       
-    // sgima, beta, a_3-8 are spin-dependend, precompute the fractions
+    // precompted spin independent coefs as first call
         
-    double sigma4 = ( 247./48*SAdotSB - 721./48*SAdotLh*SBdotLh )/(nu*SQ(M2))
-      + (233./96*SA2 - 719./96*SQ(SAdotLh))/(M2*SQ(MA))
-      + (233./96*SB2 - 719./96*SQ(SBdotLh))/(M2*SQ(MB)); 
+    double sigma4 = sigma4_SASB*SAdotSB + sigma4_SALh_SBLh*SAdotLh*SBdotLh 
+                  + sigma4_SA2*SA2 + sigma4_SALh2*SQ(SAdotLh)
+                  + sigma4_SB2*SB2 + sigma4_SBLh2*SQ(SBdotLh);
     
+    beta[3] = beta3A*SAdotLh + beta3B*SBdotLh; 
+    beta[5] = beta5A*SAdotLh + beta5B*SBdotLh; 
+    beta[6] = beta6A*SAdotLh + beta6B*SBdotLh; 
+    beta[7] = beta7A*SAdotLh + beta7B*SBdotLh;
+    beta[8] = beta8A*SAdotLh + beta8B*SBdotLh;
     
-    beta[3] = (113./12 + 25./4*mb_o_ma)*SAdotLh/M2
-      + (113./12 + 25./4*ma_o_mb)*SBdotLh/M2; 
+    b[6]  = b6;  
+    b[8]  = b8;  
+    b[9]  = b9;  
+    b[10] = b10;  
+    b[11] = b11;
 
-    beta[5] = ((31319./1008-1159./24*nu) + mb_o_ma*( 809./84 - 281./8*nu))*SAdotLh/M2
-      + ((31319./1008-1159./24*nu) + ma_o_mb*( 809./84 - 281./8*nu))*SBdotLh/M2; 
-
-    beta[6] = Pi/M2 * (75./2+151./6*mb_o_ma)*SAdotLh
-      + Pi/M2 * (75./2+151./6*ma_o_mb)*SBdotLh; 
-
-    beta[7] = ((130325./756 - 796069./2016*nu+100019./864*nu2)+ mb_o_ma*(1195759./18144-257023./1008*nu+2903./32*nu2))*SAdotLh/M2 
-      + ((130325./756 - 796069./2016*nu+100019./864*nu2)+ ma_o_mb*(1195759./18144-257023./1008*nu+2903./32*nu2))*SBdotLh/M2;
-    
-    beta[8] = Pi/M2*((76927./504 -220055./672*nu) + mb_o_ma*(1665./28-50483./224*nu))*SAdotLh
-      + Pi/M2*((76927./504 -220055./672*nu) + ma_o_mb*(1665./28-50483./224*nu))*SBdotLh;
-
-    
-    b[6] = -1712./315;  
-
-    b[8] = - 856./315*nu + 124741./4410;  
-
-    b[9] = - 6848./105* Pi;  
-
-    b[10] = 3090781./26460*nu -  2354./945*nu2 - 11821184./1964655;  
-
-    b[11] = 311233./5880*Pi - 3424./315*Pi*nu;
-
-    
-    a[0] = 96./5*nu;
-
-    a[2] = -743./336-11./4*nu;
-
+    a[0] = a0;
+    a[2] = a2;
     a[3] = 4*Pi-beta[3];
-
-    a[4] = 34103./18144 + 13661./2016*nu + 59./18*nu2 - sigma4;
-
-    a[5] = -4159./672*Pi - 189./8*Pi*nu - beta[5];
-
-    a[6] = 16447322263./139708800 + 16./3*Pi2 - 856./105*log(16.) - 1712./105*EulerGamma - beta[6]
-      + nu *( 451./48*Pi2- 56198689./217728) + nu2*541./896 - nu3*5605./2592;
-
-    a[7] = - 4415./4032*Pi + 358675./6048*Pi*nu +91495./1512*Pi*nu2 - beta[7];
-
-    a[8] = 3971984677513./25427001600 + 127751./1470*Log2  - 47385./1568*Log3 + 124741./4410*EulerGamma -361./126*Pi2 + 82651980013./838252800*nu - 1712./315*nu*Log2
-      - 856./315*EulerGamma*nu  - 31495./8064*Pi2*nu + 54732199./93312*nu2- 3157./144*Pi2*nu2  - 18927373./435456*nu3 -95./3888*nu4 -beta[8];
-
-    a[9] = 343801320119./745113600*Pi- 13696./105*Pi*Log2 -  6848./105*Pi*EulerGamma - 51438847./48384*Pi*nu + 205./6*Pi3*nu + 42680611./145152*Pi*nu2  +  9731./1344*Pi*nu3;
-
-    a[10] = 29619150939541789./36248733480960  -107638990./392931*Log2 + 616005./3136*Log3 - 11821184./1964655*EulerGamma - 21512./1701*Pi2 - 884576519037433./228843014400*nu 
-      + 2105111./8820*nu*Log2 - 15795./3136*nu*Log3 + 3090781./26460*EulerGamma*nu+ 14555455./217728*Pi2*nu  + 1175999369413./914457600*nu2 - 4708./945*nu2*Log2
-      - 126809./3024*Pi2*nu2 - 2354./945*EulerGamma*nu2 - 9007327699./11757312*nu3 + 9799./384*Pi2*nu3 + 51439207./1741824*nu4 - 34613./186624*nu5;
-
-    a[11] =  91347297344213./81366405120*Pi+ 5069891./17640*Pi*Log2- 142155./784*Pi*Log3  + 311233./5880*Pi*EulerGamma - 1903651780081./4470681600*Pi*nu- 6848./315*Pi*nu*Log2
-      - 3424./315*Pi*EulerGamma*nu - 26035./16128*Pi3*nu + 1760705531./290304*Pi*nu2 - 112955./576*Pi3*nu2 - 7030123./13608*Pi*nu3 + 49187./6048*Pi*nu4;  
+    a[4] = a4_nosigma - sigma4;
+    a[5] = a5_nobeta  - beta[5];
+    a[6] = a6_nobeta  - beta[6];
+    a[7] = a7_nobeta  - beta[7];
+    a[8] = a8_nobeta  - beta[8];
+    a[9] = a9;
+    a[10]= a10;
+    a[11]= a11;
     
     // Eq.(A1) of https://arxiv.org/abs/1307.4418 for Momega
     dy[EOB_EVOLVE_SPIN_Momg] = 0.;
@@ -1369,6 +1411,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     double uc3      = uc2*uc;
     double uc4      = uc3*uc;
     double dAuc2_dr = uc2*(dA-2*A*uc*drc_dr);
+    
     // Quadratic equation a*x^2+b*x+c=0 
     double a_coeff = SQ(dAuc2_dr)  - 4*A*uc2*SQ(dG_dr);
     double b_coeff = 2*dA*dAuc2_dr - 4*A*SQ(dG_dr);
@@ -1396,7 +1439,6 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20);
 
     /* Compute dj_circ/dr */
-
     double c10,c20,c30;
     double cs10,cs20,cs30,cs40;
     c10 =  5./16.*nu;
@@ -1450,7 +1492,6 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     double dc_dr = 2*dA*d2A;
 
     // dj_dr
-
     double djdr_p_num = a_coeff*(-db_dr + 0.5/sqrt(Delta)*(2.*b_coeff*db_dr-4.*(da_dr*c_coeff+a_coeff*dc_dr)) )-da_dr*(-b_coeff + sqrt(Delta));
     double djdr_p     = djdr_p_num/(4.*SQ(a_coeff)*j);
 
