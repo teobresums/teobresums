@@ -213,13 +213,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
        /** Final BH from BHNS */
       if (VERBOSE) PRSECTN("entered BHNS mode");
       
+      
       double m_bh = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       double a_bh = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
       eob_bhns_fit(chi1, q, &(dyn->Mbhf), &(dyn->abhf), EOBPars->LambdaBl2, m_bh, a_bh);
       tidal_disruption_cases(q, dyn->abhf, chi1, bhns, EOBPars->LambdaBl2);
       use_tidal = EOBPars->use_tidal;
+      
       if(bhns_case==false){
         default_choice=DEFAULT_PARS_BBH;
+        dyn->use_tidal = use_tidal;
         if (VERBOSE) PRSECTN("BBH-like case");
       }
 
@@ -335,7 +338,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
      */
 
     if (VERBOSE) PRSECTN("Post-adiabatic dynamics");
-
+    if (VERBOSE) PRFORMi("usetidal",use_tidal);
     /** Calculate dynamics */
     eob_dyn_Npostadiabatic(dyn, r0); 
 
