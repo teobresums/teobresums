@@ -894,21 +894,31 @@ double alpha_initial_condition(EOBParameters *eobp)
   if (!(eobp->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(eobp->M));
 
   /* precompute some quantities and coefficients*/
-
-  double alpha_x_NLO, alpha_y_NLO;
+  double alpha_x_LO, alpha_y_LO, alpha_x_NLO, alpha_y_NLO;
+  // double alpha_x_NNLO, alpha_y_NNLO;
+  double q2  = q*q;
   double oq  = 1.+q;
   double oq2 = oq*oq;
 
-  double c1 = nu*oq2*(4.+3.*q);
-  double c2 = nu*oq2*(3.+4.*q)*q;
-  double c3 = -3.*q*(chi1z + q*chi2z);
+  /* Leading order coeff is 0.5/(1+q)^2, we divide al coeffs by it */
+  double c1_LO   = (4.+3.*q);
+  double c2_LO   = (3.+4.*q)*q;
+  double c1_NLO  = -3.*q*(chi1z + q*chi2z);
+  //double c1_NNLO = 0.5*nu*(19. + 23.*q + 6*q2);
+  //double c2_NNLO = 0.5*nu*(6   + 23.*q + 19.*q2);
 
-  alpha_y_NLO   = -c1*chi1x-c2*chi2x-c3*(chi1x+chi2x*q)*v;
-  alpha_x_NLO   =  c1*chi1y+c2*chi2y+c3*(chi1y+chi2y*q)*v;
+  //v6
+  alpha_y_LO    = -c1_LO*chi1x-c2_LO*chi2x;
+  alpha_x_LO    =  c1_LO*chi1y+c2_LO*chi2y;
 
-  /* the NNLO expressions below need further optimization*/
-  //alpha_x_NNLO = 0.25*oonu*ooq4* (nu*pow(q,4.)*(48.*chi2y + (45.*chi2y - 9.*chi1y*nu - 49.*chi2y*nu)*v2) + pow(q,2.)*(120.*(chi1y + chi2y)*nu - 36.*(chi1z*chi2y + chi1y*chi2z)*v - 1.*(chi1y + chi2y)*(-27. + nu*(-15. + 154.*nu))*v2) + q*(12.*(11.*chi1y + 3.*chi2y)*nu - 36.*chi1y*chi1z*v + (chi1y*(27. + 2.*(30. - 73.*nu)*nu) - 66.*chi2y*nu2)*v2) + pow(q,3.)*(9.*chi2y*v*(-4.*chi2z + 3.*v) - 2.*(33.*chi1y + 73.*chi2y)*nu2*v2 + 12.*nu*(3.*chi1y + 11.*chi2y + 5.*chi2y*v2)) + nu*(-9.*chi2y*nu*v2 + chi1y*(48. + (45. - 49.*nu)*v2)))*v6* pow(6. + (9. + nu)*v2,-1.);
-  //alpha_y_NNLO = 0.25*oonu*ooq4* (6.*chi2x*nu*q*(-6. + 11.*nu*v2) + nu*pow(q,4.)*(-48.*chi2x + (-45.*chi2x + 9.*chi1x*nu + 49.*chi2x*nu)*v2) + chi1x*q*(-132.*nu + 36.*chi1z*v + (-27. + 2.*nu*(-30. + 73.*nu))*v2) + pow(q,2.)*(-120.*(chi1x + chi2x)*nu + 36.*(chi1z*chi2x + chi1x*chi2z)*v + (chi1x + chi2x)*(-27. + nu*(-15. + 154.*nu))*v2) + pow(q,3.)*(9.*chi2x*(4.*chi2z - 3.*v)*v + 2.*(33.*chi1x + 73.*chi2x)*nu2*v2 - 12.*nu*(3.*chi1x + 11.*chi2x + 5.*chi2x*v2)) + nu*(9.*chi2x*nu*v2 + chi1x*(-48. + (-45. + 49.*nu)*v2)))*v6*pow(6. + (9. + nu)*v2,-1.);
+  //v7
+  alpha_y_NLO   =  alpha_y_LO-c1_NLO*(chi1x+chi2x*q)*v;
+  alpha_x_NLO   =  alpha_x_LO+c1_NLO*(chi1y+chi2y*q)*v;
+
+  //v8
+  //alpha_y_NNLO  =  alpha_y_NLO+(c1_NNLO*chi1x+c2_NNLO*chi2y)*v2;
+  //alhpa_x_NNLO  =  alpha_y_NLO+(c1_NNLO*chi1y+c2_NNLO*chi2y)*v2;
+
   return atan2(alpha_y_NLO, alpha_x_NLO);
 
 }
@@ -1198,7 +1208,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     for (int i=0; i<12; i++) b[i] = 0;
     for (int i=0; i<9; i++) beta[i]= 0;
     
-    // precompted spin independent coefs as first call
+    // precomputed spin independent coefs as first call
         
     double sigma4 = sigma4_SASB*SAdotSB + sigma4_SALh_SBLh*SAdotLh*SBdotLh 
                   + sigma4_SA2*SA2 + sigma4_SALh2*SQ(SAdotLh)
