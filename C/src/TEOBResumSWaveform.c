@@ -4820,6 +4820,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
   const double C_Q1 = dyn->C_Q1;  
   const double C_Q2 = dyn->C_Q2;  
   const int usetidal = dyn->use_tidal;
+  const int bhns_td = EOBPars->use_tidal;
   const int usespins = dyn->use_spins;
   const int usespeedytail = EOBPars->use_speedytail;
   const double X12 = X1-X2; /* sqrt(1-4nu) */
@@ -4861,7 +4862,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     double vphi3 = gsl_pow_int(rw*Omega,3); 
     hNewt.ampli[0] = ChlmNewt_ampli[0] * vphi3;
     hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3;
-    hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; 
+    if(bhns_td) hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; //only for Type I (td cases) of BHNS and all BNS
     double p4_vphi5 = (2.*nu-1) * gsl_pow_int(rw*Omega,5); 
     hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5;
     hNewt.ampli[7]  = ChlmNewt_ampli[7]  * p4_vphi5; 
