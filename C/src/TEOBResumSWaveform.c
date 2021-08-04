@@ -4461,6 +4461,7 @@ void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, dou
 
   psi[0] = amp * exp(-sigmar*x); /* amplitude */
   psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
+  
 }
 void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
 {

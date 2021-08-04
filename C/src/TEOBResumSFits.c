@@ -348,23 +348,50 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
 
 void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double lambda, double nu, double chi1)
 {
+  double alpha_bbh[KMAX],omega_bbh[KMAX];
+
   /** QNM fits for the tidal disruption cases in BHNS */
   for (int k=0; k<KMAX; k++) {
-    alpha21[k] = alpha1[k] = alpha2[k] = omega1[k] = omega2[k]= 0.;
+    alpha21[k] = alpha1[k] = alpha2[k] = alpha_bbh[k] = omega1[k] = omega2[k]= omega_bbh[k] = 0.;
   }
 
   // BBH fits
   double af2 = pow(af,2);
   double af3 = pow(af,3);
+
+    /* l = 2, m = 1*/
+  omega_bbh[0]  = +0.373672*(1 - 0.79546*af - 0.1908*af2 + 0.11460*af3)/(1 - 0.96337*af - 0.1495*af2 + 0.19522*af3);
+  alpha_bbh[0]  = +0.0889623*(1 - 1.31253*af - 0.21033*af2 + 0.52502*af3)/(1 - 1.30041*af - 0.1566*af2 + 0.46204*af3);
+  alpha21[0] = +0.184952*(1 - 1.1329*af - 0.3520*af2 + 0.4924*af3)/(1 - 1.10334*af - 0.3037*af2 + 0.4262*af3);
   
     /* l = 2, m = 2*/
   double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
   double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
-  double alpha_bbh = 0.0889623157 * (alpha1_c/alpha1_d);
+  alpha_bbh[1] = 0.0889623157 * (alpha1_c/alpha1_d);
   
   double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
   double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
-  double omega_bbh =  0.3736716844*(omega1_c/omega1_d);
+  omega_bbh[1] =  0.3736716844*(omega1_c/omega1_d);
+  
+  /* l = 3, m = 2*/
+  omega_bbh[3]  = +0.599443*(1 - 0.251*af - 0.891*af2 + 0.2706*af3)/(1 - 0.475*af - 0.911*af2 + 0.4609*af3);
+  alpha_bbh[3]  = +0.0927030*(1 - 1.58277*af + 0.2783*af2 + 0.30503*af3)/(1 - 1.56797*af + 0.3290*af2 + 0.24155*af3);
+  alpha21[3] = +0.188595*(1 - 1.5212*af + 0.1563*af2 + 0.3652*af3)/(1 - 1.4968*af + 0.1968*af2 + 0.3021*af3);
+  
+  /* l = 3, m = 3*/
+  omega_bbh[4]  = +0.599443*(1 - 1.84922*af + 0.9294*af2 - 0.07613*af3)/(1 - 2.18719*af + 1.4903*af2 - 0.3014*af3);
+  alpha_bbh[4]  = +0.0927030*(1 - 1.8310*af + 0.7568*af2 + 0.0745*af3)/(1 - 1.8098*af + 0.7926*af2 + 0.0196*af3);
+  alpha21[4] = +0.188595*(1 - 1.8011*af + 0.7046*af2 + 0.0968*af3)/(1 - 1.7653*af + 0.7176*af2 + 0.0504*af3);
+  
+  /* l = 4, m = 4*/
+  omega_bbh[8]  = +0.809178*(1 - 1.83156*af + 0.9016*af2 - 0.06579*af3)/(1 - 2.17745*af + 1.4753*af2 - 0.2961*af3);
+  alpha_bbh[8]  = +0.0941640*(1 - 1.8662*af + 0.8248*af2 + 0.0417*af3)/(1 - 1.8514*af + 0.8736*af2 - 0.0198*af3);
+  alpha21[8] = +0.190170*(1 - 1.8546*af + 0.8041*af2 + 0.0507*af3)/(1 - 1.8315*af + 0.8391*af2 - 0.0051*af3);
+
+  /* l = 5, m = 5*/
+  omega_bbh[13]  = +1.012295*(1 - 1.5659*af + 0.5783*af2)/(1 - 1.9149*af + 1.0668*af2 - 0.14663*af3);
+  alpha_bbh[13]  = +0.0948705*(1 - 1.8845*af + 0.8585*af2 + 0.0263*af3)/(1 - 1.8740*af + 0.9147*af2 - 0.0384*af3);
+  alpha21[13] = +0.190947*(1 - 1.8780*af + 0.8467*af2 + 0.0315*af3)/(1 - 1.8619*af + 0.8936*af2 - 0.0293*af3);
   //
 
 
@@ -424,10 +451,17 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
 
   double Op = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
 
-  alpha2[1] = Ap*alpha_bbh;
-  omega1[1] = Op*omega_bbh;
-  alpha21[1] = alpha2[1] - alpha1[1];
-  alpha1[1] = alpha2[1];
+  for (int k=0; k<KMAX; k++) {
+    alpha2[k] = Ap*alpha_bbh[k];
+    omega1[k] = Op*omega_bbh[k]; 
+    if(k==1){
+      alpha21[k] = alpha2[k] - alpha1[k];
+    } 
+    alpha1[k] = alpha2[k];
+  }
+
+  
+  
 }
 
 void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak)
@@ -508,35 +542,41 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     double Aorb, Aspin, scale, Amax1, Amax2, num_A, denom_A;
 
     /* l=2, m=1 */
-    a1Omg     = -0.563075;
-    a2Omg     = 3.28677;
-    b1Omg     = 0.179639;
-    b2Omg     = -0.302122;
-    c11Omg    = -1.20684;
-    c21Omg    = 0.425645;
+    if((chi1==0)&&(chi2==0)&&(X12==0)){
+      ap_bbh[0]    = ATP[0]*X12*(1+9.0912*nu+3.9331*nu2)/(1+11.108*nu);
+      op_bbh[0]  = omgTP[0]*(1-0.060432*nu+1.9995*nu2)/(1+0.23248*nu);
+      PRFORMd("X12",X12); 
+    }else{
+      a1Omg     = -0.563075;
+      a2Omg     = 3.28677;
+      b1Omg     = 0.179639;
+      b2Omg     = -0.302122;
+      c11Omg    = -1.20684;
+      c21Omg    = 0.425645;
 	
-    omgOrb    = omgTP[0]*(1 + a1Omg*nu + a2Omg*nu2);
-    b1        = b1Omg + c11Omg*nu;
-    b2        = b2Omg + c21Omg*nu;
-    omgS      = 1 + b1*Shat + b2*Shat2;
-    op_bbh[0] = omgOrb*omgS;
+      omgOrb    = omgTP[0]*(1 + a1Omg*nu + a2Omg*nu2);
+      b1        = b1Omg + c11Omg*nu;
+      b2        = b2Omg + c21Omg*nu;
+      omgS      = 1 + b1*Shat + b2*Shat2;
+      op_bbh[0] = omgOrb*omgS;
 
-    b1    = +0.891139;
-    b2 	  = -5.191702;
-    b3 	  = +3.480139;
-    b4 	  = +10.237782;
-    b5 	  = -13.867475; 
-    b6 	  = +10.525510;
+      b1    = +0.891139;
+      b2 	  = -5.191702;
+      b3 	  = +3.480139;
+      b4 	  = +10.237782;
+      b5 	  = -13.867475; 
+      b6 	  = +10.525510;
 
-    if (DEQUAL(nu,0.25,1e-9)) {
-      double S_bar21 = - fabs(Sbar);
-      Aspin = ((-0.4281863 + b1*nu + b2*nu2)*S_bar21 + (-0.335659 + b3*nu + b4*nu2)*S_bar21*S_bar21)/(1 + (+0.828923 + b5*nu + b6*nu2)*S_bar21);
-    } else {
-      Aspin = ((-0.4281863 + b1*nu + b2*nu2)*Sbar + (-0.335659 + b3*nu + b4*nu2)*Sbar2)/(1 + (+0.828923 + b5*nu + b6*nu2)*Sbar);
+      if (DEQUAL(nu,0.25,1e-9)) {
+        double S_bar21 = - fabs(Sbar);
+        Aspin = ((-0.4281863 + b1*nu + b2*nu2)*S_bar21 + (-0.335659 + b3*nu + b4*nu2)*S_bar21*S_bar21)/(1 + (+0.828923 + b5*nu + b6*nu2)*S_bar21);
+      } else {
+        Aspin = ((-0.4281863 + b1*nu + b2*nu2)*Sbar + (-0.335659 + b3*nu + b4*nu2)*Sbar2)/(1 + (+0.828923 + b5*nu + b6*nu2)*Sbar);
+      }
+      Aorb    = ATP[0]*X12*(1 + 3.3362232268*nu + 3.4708521429*nu2)/(1 + 4.7623643259*nu);
+      ap_bbh[0] = Aorb + Aspin;
     }
-    Aorb    = ATP[0]*X12*(1 + 3.3362232268*nu + 3.4708521429*nu2)/(1 + 4.7623643259*nu);
-    ap_bbh[0] = Aorb + Aspin;
-
+    
     /* l=2, m=2 */
     c2 = -0.122735;
     c1 = 0.0857478;
@@ -557,7 +597,11 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     ap_bbh[1] = Aorb*scale*(num_A/denom_A);
 
     /* l=3, m=2 */
-    a1Omg            = -9.13525;
+    if((chi1==0)&&(chi2==0)&&(X12==0)){
+      ap_bbh[3]    = ATP[3]*(1-3*nu)*(1 - 6.142*nu + 11.372*nu2)/(1 - 3.6448*nu);
+      op_bbh[3]  = omgTP[3]*(1 - 9.0214*nu + 21.078*nu2)/(1 - 8.6636*nu + 19.493*nu2);
+    }else{
+      a1Omg            = -9.13525;
     a2Omg            = 21.488;
     a3Omg     = -8.81384;
     a4Omg     = 20.0595; 
@@ -598,46 +642,54 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     Aorb    = ATP[3]*(1-3*nu)*(1 + a1*nu + a2*nu2)/(1 + a3*nu);
     Aspin   = (1 + b1*aK)/(1 + b2*aK);
     ap_bbh[3] = Aorb*scale*Aspin; 
+    }
+    
 
     /* l=3, m=3 */
-    a1Omg     = 1.08224;
-    a2Omg     = 2.59333;
-    b1Omg     = -0.406161;
-    b2Omg     = -0.0647944;
-    b3Omg     = -0.748126;
-    c1Omg     = 0.85777;
-    c2Omg     = -0.70066;
-    c5Omg     = 2.97025;
-    c6Omg     = -3.96242;
-    b1Omg     = (b1Omg + c1Omg*nu)/(1 + c2Omg*nu);
-    b3Omg     = (b3Omg + c5Omg*nu)/(1 + c6Omg*nu);
+    if((chi1==0)&&(chi2==0)&&(X12==0)){
+      ap_bbh[4]    = ATP[4]*X12*(1 + 0.098379*nu + 3.8179*nu2);
+      op_bbh[4]  = omgTP[4]*(1 + 1.1054*nu + 2.2957*nu2);
+    }else{
+      a1Omg     = 1.08224;
+      a2Omg     = 2.59333;
+      b1Omg     = -0.406161;
+      b2Omg     = -0.0647944;
+      b3Omg     = -0.748126;
+      c1Omg     = 0.85777;
+      c2Omg     = -0.70066;
+      c5Omg     = 2.97025;
+      c6Omg     = -3.96242;
+      b1Omg     = (b1Omg + c1Omg*nu)/(1 + c2Omg*nu);
+      b3Omg     = (b3Omg + c5Omg*nu)/(1 + c6Omg*nu);
 
-    omgorb    = 1 + a1Omg*nu + a2Omg*nu2;
-    omgspin   = (1 + b1Omg*Shat + b2Omg*Shat2)/(1 + b3Omg*Shat);
-    op_bbh[4] = omgTP[4]*omgorb*omgspin;
+      omgorb    = 1 + a1Omg*nu + a2Omg*nu2;
+      omgspin   = (1 + b1Omg*Shat + b2Omg*Shat2)/(1 + b3Omg*Shat);
+      op_bbh[4] = omgTP[4]*omgorb*omgspin;
 
-    a1Amp   = -0.22523;
-    a2Amp   = 3.0569;
-    a3Amp   = -0.396851; 
-    b1Amp   = 0.100069;
-    b2Amp   = -0.455859;
-    c1Amp   = -0.401156;
-    c2Amp   = -0.141551;
-    c3Amp   = -15.4949; 
-    c4Amp   = 1.84962;
-    c5Amp   = -2.03512;
-    c6Amp   = -4.92334;
-    b1Amp   = (b1Amp + c1Amp*nu)/(1 + c2Amp*nu + c3Amp*nu2);
-    b2Amp   = (b2Amp + c4Amp*nu)/(1 + c5Amp*nu + c6Amp*nu2);
+      a1Amp   = -0.22523;
+      a2Amp   = 3.0569;
+      a3Amp   = -0.396851; 
+      b1Amp   = 0.100069;
+      b2Amp   = -0.455859;
+      c1Amp   = -0.401156;
+      c2Amp   = -0.141551;
+      c3Amp   = -15.4949; 
+      c4Amp   = 1.84962;
+      c5Amp   = -2.03512;
+      c6Amp   = -4.92334;
+      b1Amp   = (b1Amp + c1Amp*nu)/(1 + c2Amp*nu + c3Amp*nu2);
+      b2Amp   = (b2Amp + c4Amp*nu)/(1 + c5Amp*nu + c6Amp*nu2);
 
-    if (DEQUAL(nu,0.25,1e-9)) {
-      double a12_33 = fabs(a12c);
-      Aspin   = (b1Amp*a12_33)/(1 + b2Amp*a12_33);
-    } else {
-      Aspin   = (b1Amp*a12c)/(1 + b2Amp*a12c);
+      if (DEQUAL(nu,0.25,1e-9)) {
+        double a12_33 = fabs(a12c);
+        Aspin   = (b1Amp*a12_33)/(1 + b2Amp*a12_33);
+      } else {
+        Aspin   = (b1Amp*a12c)/(1 + b2Amp*a12c);
+      }
+      Aorb    = (1 + a1Amp*nu + a2Amp*nu2)/(1 + a3Amp*nu);
+      ap_bbh[4] = ATP[4]*X12*Aorb + Aspin;
     }
-    Aorb    = (1 + a1Amp*nu + a2Amp*nu2)/(1 + a3Amp*nu);
-    ap_bbh[4] = ATP[4]*X12*Aorb + Aspin;
+    
 
     /* l=4, m=4 */
     n1Omg     = -0.964614;
@@ -702,7 +754,11 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     ap_bbh[8] = ATP[8]*Aorb*Aspin*scale;
 
     /* l=5, m=5 */
-    b1 	       = +1.487294;
+    if((chi1==0)&&(chi2==0)&&(X12==0)){
+      ap_bbh[13]   = ATP[13]*X12*(1 - 2*nu)*(1 - 0.29628*nu + 6.4207*nu2);
+      op_bbh[13] = omgTP[13]*(1 - 2.8918*nu - 3.2012*nu2)/(1 - 3.773*nu);
+    }else{
+      b1 	       = +1.487294;
     b2 	       = -2.058537;
     b3         = +1.454248;
     b4         = -1.301284;
@@ -718,6 +774,8 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     Aorb     = ATP[13]*sqrt(1-4*nu)*(1-2*nu)*(1 - 0.29628*nu + 6.4207*nu2);
     Aspin    = (0.04360530/(1 + b1*nu + b2*nu2)*a12c)/(1 - 0.5769451/(1+b3*nu+b4*nu2)*a12c);
     ap_bbh[13] = Aorb + Aspin;
+    }
+    
   //
 
   /* Amplitude peak */
@@ -773,7 +831,7 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     Apeak[k] = Ap*ap_bbh[k];
     Opeak[k] = Op*op_bbh[k];
   }
-
+  
   if(VERBOSE) PRFORMd("A22_peak",Apeak[1]);
   if(VERBOSE) PRFORMd("omega22_peak",Opeak[1]);
 }
@@ -853,6 +911,7 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
     b2 = 1.587606;
     b3 = -1.555325;
     c3A[k33] = -0.41455 + 1.3225*nu + (b1 + b2*X12 + b3*X12_2)*a12;
+    c3A[k32] = c3A[k33];
 
     /* l=4, m=4 */
     b1 = -9.614738;
@@ -886,6 +945,7 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
     b2 = 5.983525; 
     b3 = -5.881900;
     c3phi[k33] = 3.0611 - 6.1597*nu;
+    c3phi[k32] = c3phi[k33];
 
     /* l=4, m=4 */
     b1 = 7.911653;
@@ -917,6 +977,8 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
     b2 = 12.043300; 
     b3 = -6.524665;
     c4phi[k33] = 1.789 - 5.6684*nu;
+    c4phi[k32] = c4phi[k33];
+
 
     /* l=4, m=4 */
     b1 = 11.746452;
