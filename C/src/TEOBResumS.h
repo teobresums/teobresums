@@ -710,6 +710,7 @@ void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);
 double pph_lso_orbital(const double nu);
+double pph_lso_spin(const double nu, const double a0);
 double horizon_radius(const double nu);
 
 /* TEOBResumSDynamics.c */

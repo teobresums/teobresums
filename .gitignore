@@ -4,6 +4,7 @@ Makefile
 aclocal.m4
 ar-lib
 autom4te.cache/
+C/TEOBResumS.x
 compile
 config.guess
 config.log
@@ -17,9 +18,8 @@ ltmain.sh
 m4/
 missing
 opt/
-python/build/
-python/pyTEOBResumS.cpp
-python/pyTEOBResumS.so
+Python/EOBRun_module.so
+Python/build/
 src/.deps/
 src/.libs/
 src/Makefile

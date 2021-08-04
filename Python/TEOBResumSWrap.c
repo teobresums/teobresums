@@ -558,6 +558,20 @@ static PyObject* pph_lso_orbital_py(PyObject* self, PyObject* args)
   return ret;
 }
 
+static PyObject* pph_lso_spin_py(PyObject* self, PyObject* args)
+{
+  double nu, a0, p_lso;
+
+  if (!PyArg_ParseTuple(args, "dd", &nu, &a0))
+    return NULL;
+
+  p_lso = pph_lso_spin(nu, a0);
+
+  PyObject *ret;
+  ret = Py_BuildValue("d", p_lso);
+  return ret;
+}
+
 static PyObject* eob_j0_circ(PyObject *self, PyObject *args)
 {
   double r, q, chi1, chi2;
@@ -740,7 +754,8 @@ static PyMethodDef EOBRunMethods[] = {
   {"EOBRunPy", EOBRunPy, METH_VARARGS, "Generate a time or frequency domain TEOBResumS waveform"},
   {"eob_metric_A5PNlog_py", eob_metric_A5PNlog_py, METH_VARARGS, "Compute the A(r) metric potential"},
   {"eob_c3_fit_HM_py", eob_c3_fit_HM_py, METH_VARARGS, "Fit to compute the c3 for nonspinning BBH"},
-  {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso"},
+  {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso in the non-spinning case"},
+  {"pph_lso_spin_py", pph_lso_spin_py, METH_VARARGS, "Fit to compute pphi_lso in the spinning case (|chi|<0.5)"},
   {"eob_ham_s_py", eob_ham_s_py, METH_VARARGS, "Compute the spinning EOB hamiltonian for BBH systems"},
   {"eob_j0_circ", eob_j0_circ, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
   {"eob_metricAB_py", eob_metricAB_py, METH_VARARGS, "Compute the metric potentials"},

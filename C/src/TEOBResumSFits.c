@@ -2758,6 +2758,38 @@ double pph_lso_orbital(const double nu)
   return 3.46343 - 0.774482*nu -0.69200*nu*nu; 
 } 
 
+/** p_phi LSO for the spinning case; calibrated in the regime |chi|<0.5, arbitrary nu. Residuals up to 1% */
+double pph_lso_spin(const double nu, const double a0)
+{
+  /** Schwarzschild limit */
+  double Y_0 = sqrt(12);
+
+  double b_nu_1  =  9.767215568147924 ; 
+  double b_nu_2  = -6.519453488314084 ; 
+  double c_nu_1  =  9.999832399778665 ; 
+  double c_nu_2  = -3.924142989771926 ; 
+  double b_chi_1 = -2.5829502974100746; 
+  double b_chi_2 =  1.1894184903673561; 
+  double c_chi_1 = -2.298897170468296 ; 
+  double c_chi_2 =  0.6259081961126761;
+
+  double nu2 = nu * nu ;
+  double a02 = a0 * a0 ;
+
+  double expansion_num_nu  = 1. +  b_nu_1  * nu + b_nu_2  * nu2 ;
+  double expansion_den_nu  = 1. +  c_nu_1  * nu + c_nu_2  * nu2 ; 
+  double expansion_num_chi = 1. +  b_chi_1 * a0 + b_chi_2 * a02 ; 
+  double expansion_den_chi = 1. +  c_chi_1 * a0 + c_chi_2 * a02 ;
+
+  double nu_pade  = expansion_num_nu  / expansion_den_nu ;
+  double chi_pade = expansion_num_chi / expansion_den_chi ;
+
+  double fit_model = Y_0 * nu_pade * chi_pade ;
+  
+  return fit_model; 
+} 
+
+
 /** Horizon radius, Nagar fit 13/07/20 */
 double horizon_radius(const double nu)
 {
