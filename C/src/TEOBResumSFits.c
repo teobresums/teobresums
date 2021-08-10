@@ -425,18 +425,18 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
 
   // Frequency
 
-  const double c110 = 0.50000000; 
-  const double c111 = 1.4336e+08; 
-  const double c120 = 0.50000000; 
-  const double c121 = -6.1792e+08; 
-  const double c210 = 221452.634; 
-  const double c211 = -78106.4165;
-  const double c220 = -958373.808;
-  const double c221 = 378164.361; 
-  const double d110 = 183.897933; 
-  const double d111 = 20.9473022;
-  const double d120 = -760.934329;
-  const double d121 = 88.7743324; 
+  const double c110 = -21886.6904; 
+  const double c111 = 32671.7651; 
+  const double c120 = 69276.4427; 
+  const double c121 = -104816.638; 
+  const double c210 = 109.213126; 
+  const double c211 = -73.4308665;
+  const double c220 = -484.535259;
+  const double c221 = 373.904119; 
+  const double d110 = 28.8600443; 
+  const double d111 = -8.14222943;
+  const double d120 = -126.930553;
+  const double d121 = 73.1681672; 
 
   a11 = c110*chi1 + c111;
   a12 = c120*chi1 + c121;
@@ -545,7 +545,7 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     if((chi1==0)&&(chi2==0)&&(X12==0)){
       ap_bbh[0]    = ATP[0]*X12*(1+9.0912*nu+3.9331*nu2)/(1+11.108*nu);
       op_bbh[0]  = omgTP[0]*(1-0.060432*nu+1.9995*nu2)/(1+0.23248*nu);
-      PRFORMd("X12",X12); 
+      
     }else{
       a1Omg     = -0.563075;
       a2Omg     = 3.28677;
