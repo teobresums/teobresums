@@ -926,6 +926,11 @@ double alpha_initial_condition(EOBParameters *eobp)
 /** Compute beta from Lhat */
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz)
 {
+  /* possible numerical errors give Lhz = 1.000....X > 1., get around the issue */
+  if (Lhz > 1)
+    Lhz = 1.;
+  if (Lhz < -1)
+    Lhz = -1.;
   return acos(Lhz);
 }
 
@@ -1638,13 +1643,16 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   int status;
   int GSLSTATUS = OK;
   int breakit = 0; // flag to break while allowing for one more step
-  int eps    = 1;
-  int deltap = 0 ;
+  
+  /* quantities to handle backward integration */
+  int eps     = 1;
+  int deltap  = 0 ;
   if (dyn->dt<0){
     eps    = -1;
     deltap =  1;
   }
-  /* PN/EOB flux auxiliary flags/variables */
+
+  /* PN/ Exact-EOB flux auxiliary flags/variables */
   double omg0eob=-1;
   double omgeobmax=100;
   double tshift=0;
@@ -1660,6 +1668,9 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   int map_from_22 = 1; //use the 22 phase rather than the orbital phase
 
   if(EOBPars->spin_flx==SPIN_FLX_EOB){
+    /* set spin_flx*/
+    spin_flx = SPIN_FLX_EOB;
+
     /* choose which omega_eob to use: orbital or omega22*/
     if(map_from_22){
       double *omg22_eob;
@@ -1675,13 +1686,13 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       time_eob   = eobdyn->time;
       size_eob   = eobdyn->size;
     }
+
     /* alloc */
     omg_sp = gsl_spline_alloc (gsl_interp_cspline, size_eob);
     acc    = gsl_interp_accel_alloc ();
 
-    /* compute spline for Momega_eob and compute Momega(t=0) */
+    /* compute spline for Momega_eob, compute Momega(t=0) and find the maximum value */
     gsl_spline_init (omg_sp, time_eob, omega_eob, size_eob);    
-    spin_flx = SPIN_FLX_EOB;
     
     dN = 5; //skip the first dN points, omega might be decreasing because of numerical errors
     for(int i=0; i < size_eob; i++) {
@@ -1694,6 +1705,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     gsl_interp_accel_reset(acc);
 
     /* two possible cases: omega0_pn < omega_start_eob or viceversa. */  
+    
     if(dyn->y[EOB_EVOLVE_SPIN_Momg] < omega_eob[dN]){
 
     /* case 1, use PN up to omega_start_EOB */
@@ -1702,7 +1714,8 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
 
     } else {
 
-    /* case 2, omega_start_eob > omega0_pn */
+    /* case 2, omega_start_eob < omega0_pn */
+    
       if (dyn->y[EOB_EVOLVE_SPIN_Momg] > omgeobmax){
         
         /* if omega0_PN > omega_finEOB use PN integration... */
@@ -1738,7 +1751,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   }
 
   while (1) {
-    if (VERBOSE) printf("iter %09d, t=%.f, momg= %.17f, alpha=%.6f\n", iter, dyn->t, dyn->y[EOB_EVOLVE_SPIN_Momg], dyn->y[EOB_EVOLVE_SPIN_alp]); 
+    if (VERBOSE) printf("iter %09d | t=%.f | momg= %.17f | alpha=%.6f | beta=%.6f | Lhz=%.20f\n", iter, dyn->t, dyn->y[EOB_EVOLVE_SPIN_Momg], dyn->y[EOB_EVOLVE_SPIN_alp], dyn->y[EOB_EVOLVE_SPIN_bet], dyn->y[EOB_EVOLVE_SPIN_Lz]); 
     iter++;
 
     //GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);//uniform
