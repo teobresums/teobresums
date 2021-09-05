@@ -42,8 +42,7 @@ GNU General Public License for more details.
 To build an executable, check compiler and compilation options in `Makefile.TEOBResumS` and then:
 
 ```
-$ export TEOBRESUMS=/PATH/TO/teobresums/C/
-$ cd $TEOBRESUMS
+$ cd /PATH/TO/teobresums/C/
 $ make -f Makefile.TEOBResumS
 ```
 
@@ -84,8 +83,8 @@ Example parfiles can be found in the directory `$TEOBRESUMS/C/par/`.
 
 Example scripts for using the python module can be instead found in '$TEOBRESUMS/Python/Examples/`.
 
-If you have [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS` python module is available in '$TEOBRESUMS/pycbc/` and should be automatically detected by `PyCBC`; 
-see '$TEOBRESUMS/pycbc/test.py`.
+If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS` python module is available in `$TEOBRESUMS/pycbc/` and should be automatically detected by `PyCBC`; 
+see `$TEOBRESUMS/pycbc/test.py`.
 
 ## References
 
