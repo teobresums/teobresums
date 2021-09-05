@@ -67,21 +67,22 @@ We strongly advise users to use [anaconda](https://www.anaconda.com/products/ind
 If you run in compilation errors, you may need to export the following variables:
 
 ```
-$ export C_INCLUDE_PATH=PATH/TO/libconfig/include
-$ export LIBRARY_PATH=$LIBRARY_PATH:PATH/TO/libconfig/lib
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:PATH/TO/libconfig/lib
+$ export C_INCLUDE_PATH=/PATH/TO/libconfig/include
+$ export LIBRARY_PATH=$LIBRARY_PATH:/PATH/TO/libconfig/lib
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/PATH/TO/libconfig/lib
 ```
 
 ## Usage
 
 ```
+$ export TEOBRESUMS=/PATH/TO/teobresums/C/ # required in v1, not later
 $ cd $TEOBRESUMS
 $ ./TEOBResumS.x <parfile>
 ```
 
 Example parfiles can be found in the directory `$TEOBRESUMS/C/par/`.
 
-Example scripts for using the python module can be instead found in '$TEOBRESUMS/Python/Examples/`.
+Example scripts for using the python module can be instead found in `$TEOBRESUMS/Python/Examples/`.
 
 If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS` python module is available in `$TEOBRESUMS/pycbc/` and should be automatically detected by `PyCBC`; 
 see `$TEOBRESUMS/pycbc/test.py`.
