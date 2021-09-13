@@ -219,7 +219,8 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
   gsl_spline_init (spline, t, y, n);    
   for (int k = 0; k < ni; k++) {
-    yi[k] = gsl_spline_eval (spline, ti[k], acc);
+    yi[k] = gsl_spline_eval (spline, *(ti + k), acc);
+    /* yi[k] = gsl_spline_eval (spline, ti[k], acc); */
   }
   gsl_spline_free (spline);
   gsl_interp_accel_free (acc);
@@ -242,23 +243,17 @@ void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, dou
   gsl_interp_accel_free (acc);
 }
 
-/* An OpenMP version. We keep two versions because we might want to introduce the 
-   thread-parallelism at different levels */
-/*
-  Notes for SIMD
-  * SIMD Functions need to be declared, see e.g.
-    P.25 https://info.ornl.gov/sites/publications/files/Pub69214.pdf
-  * How does it work with GSL? Is wrapper enough?
-  * 'uniform' means 'arg does not change'
-  * 'linear' means 'arg will be increased between each successive call fo the fun'
-  GSL pointers:
-  https://github.com/ampl/gsl/blob/master/interpolation/spline.c#L118
-  https://github.com/ampl/gsl/blob/master/interpolation/interp.c#L140
+/* An OpenMP SIMD version - experimental
+ * SIMD Functions need to be enabled, see e.g.
+ * P.25 https://info.ornl.gov/sites/publications/files/Pub69214.pdf
+ * GSL pointers:
+ * https://github.com/ampl/gsl/blob/master/interpolation/spline.c#L118
+ * https://github.com/ampl/gsl/blob/master/interpolation/interp.c#L140
 */
-#pragma omp declare simd uniform(x) linear(i: 1)
-double gsl_spline_eval_omp(const gsl_spline * spline, double *x, gsl_interp_accel * acc, int i)
+#pragma omp declare simd uniform(_spline) linear(_x) // linear(_acc) ?
+double gsl_spline_eval_simd_enabled(const gsl_spline * _spline, double * _x, gsl_interp_accel * _acc)
 {
-  return gsl_spline_eval(spline, x[i], acc);
+  return gsl_spline_eval(_spline, *_x, _acc);
 }
 
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi)
@@ -270,8 +265,10 @@ void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
   gsl_spline_init (spline, t, y, n);    
 #pragma omp simd 
-  for (int k = 0; k < ni; k++) 
-    yi[k] = gsl_spline_eval_omp (spline, ti, acc, k);
+  for (int k = 0; k < ni; k++) {
+    /* yi[k] = gsl_spline_eval_simd_enabled(spline, ti + k, NULL); */ // bsearch, 2x slower
+    yi[k] = gsl_spline_eval_simd_enabled(spline, ti + k, acc);
+  }
   gsl_spline_free (spline);
   gsl_interp_accel_free (acc);
 #ifdef _OPENMP  
@@ -982,8 +979,8 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
     h->time[i] = i*dt + t0;
   
   /* Interp real/imag*/
-  interp_spline_omp(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
-  interp_spline_omp(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
+  interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
+  interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
 
   /* Compute phase and amplitude */
   /* Waveform_rmap(h, 1, 1); */ /* unwrap */
@@ -1025,8 +1022,8 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
     h->time[i] = i*dt + t0;
 
   /* Interp phase and amplitude */
-  interp_spline_omp(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
-  interp_spline_omp(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
+  interp_spline(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
+  interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
   
   /* Compute Real/Imag */
   Waveform_rmap (h, 0, 0); /* do not unwrap */
@@ -1168,8 +1165,8 @@ void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const
     h->freq[i] = i*df + f0;
 
   /* Interp phase and amplitude */
-  interp_spline_omp(h_aux->freq, h_aux->ampli, h_aux->size, h->freq, size, h->ampli);
-  interp_spline_omp(h_aux->freq, h_aux->phase, h_aux->size, h->freq, size, h->phase);
+  interp_spline(h_aux->freq, h_aux->ampli, h_aux->size, h->freq, size, h->ampli);
+  interp_spline(h_aux->freq, h_aux->phase, h_aux->size, h->freq, size, h->phase);
   
   /* Free aux memory */
   WaveformFD_free (h_aux);
@@ -1285,10 +1282,10 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   /* Interp */
   for (int k = 0; k < KMAX; k++) 
     if (hlm->kmask[k])
-      interp_spline_omp(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
+      interp_spline(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
   for (int k = 0; k < KMAX; k++)
     if (hlm->kmask[k]) 
-      interp_spline_omp(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
+      interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
   
   /* Free aux memory */
   Waveform_lm_free (hlm_aux);
@@ -1556,13 +1553,13 @@ void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f
   /* Interp */
   for (int k = 0; k < KMAX; k++){
     if (hlm->kmask[k]){
-      //interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+      /* interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]); */
       interp_spline_checklim(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
     }
   }
   for (int k = 0; k < KMAX; k++){
     if (hlm->kmask[k]) {
-      //interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+      /* interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]); */
       interp_spline_checklim(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
     }
   }
@@ -1613,13 +1610,13 @@ void WaveformFD_lm_interp_ap_freqs (WaveformFD_lm *hlm, const char *name)
   /* Interp */
   for (int k = 0; k < KMAX; k++){
     if (hlm->kmask[k]){
-      //interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+      /* interp_spline(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]); */
       interp_spline_checklim(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
     }
   }
   for (int k = 0; k < KMAX; k++){
     if (hlm->kmask[k]) {
-      //interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+      /* interp_spline(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]); */
       interp_spline_checklim(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
     }
   }
@@ -1762,7 +1759,7 @@ void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const doub
   
   /* Interp */
   for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
-    interp_spline_omp(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
+    interp_spline(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
 
   /* Free aux memory */
   Dynamics_free (dyn_aux);
