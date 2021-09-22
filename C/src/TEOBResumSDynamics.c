@@ -951,7 +951,9 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   const double nu5 = nu4*nu;
 
   const double MA = nu_to_X1(nu); 
+  const double MA4= SQ(MA)*SQ(MA);
   const double MB = 1. - MA;
+  const double MB4= SQ(MB)*SQ(MB);
   const double dm = MA - MB; 
   const double ma_o_mb = MA/MB;
   const double mb_o_ma = MB/MA;
@@ -1141,7 +1143,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     
     static double beta3A, beta3B, beta5A, beta5B, beta6A, beta6B, beta7A, beta7B, beta8A, beta8B;
     static double b6, b8, b9, b10, b11;
-    static double a0, a2, a4_nosigma, a5_nobeta, a6_nobeta, a7_nobeta, a8_nobeta, a9, a10, a11;
+    static double a0, a2, a4_nosigma, a5_nobeta, a6_nobeta, a7_nobeta, a8_nobeta, a9, a10, a11, a10_tidal, a12_tidal;
     static double sigma4_SASB, sigma4_SALh_SBLh, sigma4_SA2, sigma4_SALh2, sigma4_SB2, sigma4_SBLh2;
     
     if (EOBPars->firstcall[FIRSTCALL_PNMOMG]){
@@ -1172,29 +1174,27 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
       b11 = 311233./5880*Pi - 3424./315*Pi*nu;
 
       a0 = 96./5*nu;
-
       a2 = -743./336-11./4*nu;
-
       a4_nosigma = 34103./18144 + 13661./2016*nu + 59./18*nu2;
-
       a5_nobeta  = -4159./672*Pi - 189./8*Pi*nu;
-
       a6_nobeta  = 16447322263./139708800 + 16./3*Pi2 - 856./105*log(16.) - 1712./105*EulerGamma
                    + nu *( 451./48*Pi2- 56198689./217728) + nu2*541./896 - nu3*5605./2592;
-
       a7_nobeta  = - 4415./4032*Pi + 358675./6048*Pi*nu +91495./1512*Pi*nu2;
-
       a8_nobeta  = 3971984677513./25427001600 + 127751./1470*Log2  - 47385./1568*Log3 + 124741./4410*EulerGamma -361./126*Pi2 + 82651980013./838252800*nu - 1712./315*nu*Log2
                    - 856./315*EulerGamma*nu  - 31495./8064*Pi2*nu + 54732199./93312*nu2- 3157./144*Pi2*nu2  - 18927373./435456*nu3 -95./3888*nu4;
-
       a9 =  343801320119./745113600*Pi- 13696./105*Pi*Log2 -  6848./105*Pi*EulerGamma - 51438847./48384*Pi*nu + 205./6*Pi3*nu + 42680611./145152*Pi*nu2  +  9731./1344*Pi*nu3;
-
       a10= 29619150939541789./36248733480960  -107638990./392931*Log2 + 616005./3136*Log3 - 11821184./1964655*EulerGamma - 21512./1701*Pi2 - 884576519037433./228843014400*nu 
           + 2105111./8820*nu*Log2 - 15795./3136*nu*Log3 + 3090781./26460*EulerGamma*nu+ 14555455./217728*Pi2*nu  + 1175999369413./914457600*nu2 - 4708./945*nu2*Log2
           - 126809./3024*Pi2*nu2 - 2354./945*EulerGamma*nu2 - 9007327699./11757312*nu3 + 9799./384*Pi2*nu3 + 51439207./1741824*nu4 - 34613./186624*nu5;
-      
       a11= 91347297344213./81366405120*Pi+ 5069891./17640*Pi*Log2- 142155./784*Pi*Log3  + 311233./5880*Pi*EulerGamma - 1903651780081./4470681600*Pi*nu- 6848./315*Pi*nu*Log2
       - 3424./315*Pi*EulerGamma*nu - 26035./16128*Pi3*nu + 1760705531./290304*Pi*nu2 - 112955./576*Pi3*nu2 - 7030123./13608*Pi*nu3 + 49187./6048*Pi*nu4;  
+
+      /* Tidal terms from  Eq. A21 of 
+        https://arxiv.org/pdf/1402.5156.pdf */
+
+      a10_tidal = 6.*MA4*(12. - 11.*MA)*EOBPars->LambdaAl2 + 6.*MB4*(12. - 11.*MB)*EOBPars->LambdaBl2;
+      a12_tidal = MA4*(4421./56. - 12263./56.*MA + 1893./4.*MA*MA - 661./2.*MA*MA*MA)*EOBPars->LambdaAl2 + MB4*(4421./56. - 12263./56.*MB + 1893./4.*MB*MB - 661./2.*MB*MB*MB)*EOBPars->LambdaBl2;
+
     }
 
     /* PN omega_dot, taken from: 
@@ -1248,6 +1248,11 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     for (int i=2; i<8; i++)
       dy[EOB_EVOLVE_SPIN_Momg] += (a[i] + b[i]*lnomg)*pow(omg,(double)i*oothree);
     dy[EOB_EVOLVE_SPIN_Momg] += 1.;  
+    
+    // Add LO 5PN tidal term if BNS evolution
+    if(EOBPars->use_tidal){
+      dy[EOB_EVOLVE_SPIN_Momg]+= a10_tidal*pow(omg, 10.*oothree);
+    }
     dy[EOB_EVOLVE_SPIN_Momg] *= a[0]*pow(omg, eleven_o_three); // LO
 
   } else if (EOBPars->spin_flx == SPIN_FLX_EOB_HYBRIDv1){
@@ -1762,16 +1767,22 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       printf("GSL Error = %d", GSLSTATUS);
       return ERROR_ODEINT;
     }
-
-    if (dyn->y[EOB_EVOLVE_SPIN_Momg] < 0.)
+    if ( fabs(dyn->y[EOB_EVOLVE_SPIN_Momg] - dyn->data[EOB_EVOLVE_SPIN_Momg][i0+iter-1]) < 1e-9 && iter < 10){
+      iter--;
+      continue;
+    }
+    if (dyn->y[EOB_EVOLVE_SPIN_Momg] < 0.){
+      if (VERBOSE) printf("Stop: Momg < 0.\n");
       break;
-
+    }
     if (EOBPars->spin_flx != SPIN_FLX_EOB && dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] - dyn->data[EOB_EVOLVE_SPIN_Momg][i0+iter-1] < 1e-15) ){
       iter--; //don't count this iteration
+      if (VERBOSE) printf("Stop: Forward integration, Momg reached a plateau.\n");
       break;
     }
     if (EOBPars->spin_flx == SPIN_FLX_EOB && dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] > omgeobmax) ){
       iter--; //don't count this iteration
+      if (VERBOSE) printf("Stop: Forward integration, EOB flux, Momg > max(Momg_eob).\n");
       break;
     }
     /** Update alpha and beta angles */
@@ -1795,6 +1806,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
 
     if(EOBPars->spin_flx==SPIN_FLX_EOB && dyn->t-tshift > time_eob[size_eob-1]){
       iter--;
+      if (VERBOSE) printf("Stop: Forward integration, EOB flux, t_spindyn > max(t_eob).\n");
       break;
     }
 
@@ -1809,6 +1821,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       dyn->size = size;
       DynamicsSpin_push (&dyn, size);
     }
+    
     dyn->time[iter]  = dyn->t; 
     for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
       dyn->data[v][i0+iter]  = dyn->y[v];   
@@ -1817,17 +1830,21 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     if (breakit)
       break;
     if ((dyn->omg_stop>0.) && (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop) && dyn->dt > 0.){
+      if (VERBOSE) printf("Stop: Forward integration, Momg > Momg_stop.\n");
       break;
     }
     if (iter>1 && dyn->dt > 0 && dyn->y[EOB_EVOLVE_SPIN_Momg] < dyn->data[EOB_EVOLVE_SPIN_Momg][i0+iter-1]){
       iter--;
+      if (VERBOSE) printf("Stop: Forward integration, Reached maximum of Momg.\n");
       break;
     }
     if ((dyn->t_stop>0.) && (dyn->t > dyn->t_stop)){
+      if (VERBOSE) printf("Stop: t_spindyn > t_stop.\n");
       break;
     }
     if (dyn->dt < 0. && (dyn->y[EOB_EVOLVE_SPIN_Momg] < dyn->omg_stop)){
       breakit = 1; //break at next iteration
+      if (VERBOSE) printf("Backward integration. Momg < Momg_stop. Stop at next iteration.\n");
     }
   } /* end time iteration */
 
