@@ -1133,7 +1133,7 @@ void eob_set_params(int default_choice, int firstcall)
 
   const double M =  EOBPars->M;
   const double fmin = EOBPars->initial_frequency;
-  const double q =  EOBPars->q;
+  double q =  EOBPars->q;
 
   /* Check: if q is closer to 1 than 1e-8, then q=1 to avoid floating points issues */
   if (DEQUAL(q, 1., 1e-8)){
