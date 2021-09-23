@@ -342,11 +342,21 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   eobp->initial_frequency = par_get_d("initial_frequency"); // initial GW frequency
   
   eobp->LambdaAl2 = par_get_d("LambdaAl2"); // Tidal gravitoelectric parameter Lambda for star A ell=2
-  eobp->LambdaBl2 = par_get_d("LambdaBl2");
   eobp->LambdaAl3 = par_get_d("LambdaAl3"); 
-  eobp->LambdaBl3 = par_get_d("LambdaBl3"); 
   eobp->LambdaAl4 = par_get_d("LambdaAl4"); 
+  eobp->LambdaAl5 = par_get_d("LambdaAl5"); 
+  eobp->LambdaAl6 = par_get_d("LambdaAl6"); 
+  eobp->LambdaAl7 = par_get_d("LambdaAl7"); 
+  eobp->LambdaAl8 = par_get_d("LambdaAl8"); 
+
+  eobp->LambdaBl2 = par_get_d("LambdaBl2");
+  eobp->LambdaBl3 = par_get_d("LambdaBl3"); 
   eobp->LambdaBl4 = par_get_d("LambdaBl4"); 
+  eobp->LambdaBl5 = par_get_d("LambdaBl5"); 
+  eobp->LambdaBl6 = par_get_d("LambdaBl6"); 
+  eobp->LambdaBl7 = par_get_d("LambdaBl7"); 
+  eobp->LambdaBl8 = par_get_d("LambdaBl8"); 
+
   eobp->SigmaAl2 = par_get_d("SigmaAl2"); // Tidal gravitomagnetic parameter Sigma for star A ell=2
   eobp->SigmaBl2 = par_get_d("SigmaBl2");
   eobp->pGSF_tidal = par_get_d("pGSF_tidal");// p-power in GSF tidal potential model
@@ -605,11 +615,21 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_d("initial_frequency", EOBPars->initial_frequency); // initial GW frequency
   
   par_add_d("LambdaAl2", EOBPars->LambdaAl2); // Tidal gravitoelectric parameter Lambda for star A ell=2
-  par_add_d("LambdaBl2",EOBPars->LambdaBl2);
-  par_add_d("LambdaAl3",EOBPars->LambdaAl3); 
+  par_add_d("LambdaAl3", EOBPars->LambdaAl3); 
   par_add_d("LambdaAl4", EOBPars->LambdaAl4); 
+  par_add_d("LambdaAl5", EOBPars->LambdaAl5); 
+  par_add_d("LambdaAl6", EOBPars->LambdaAl6); 
+  par_add_d("LambdaAl7", EOBPars->LambdaAl7); 
+  par_add_d("LambdaAl8", EOBPars->LambdaAl8); 
+  
+  par_add_d("LambdaBl2", EOBPars->LambdaBl2);
   par_add_d("LambdaBl3", EOBPars->LambdaBl3); 
   par_add_d("LambdaBl4", EOBPars->LambdaBl4); 
+  par_add_d("LambdaBl4", EOBPars->LambdaBl5); 
+  par_add_d("LambdaBl4", EOBPars->LambdaBl6); 
+  par_add_d("LambdaBl4", EOBPars->LambdaBl7); 
+  par_add_d("LambdaBl4", EOBPars->LambdaBl8); 
+
   par_add_d("SigmaAl2", EOBPars->SigmaAl2); // Tidal gravitomagnetic parameter Sigma for star A ell=2
   par_add_d("SigmaBl2", EOBPars->SigmaBl2);
   par_add_d("pGSF_tidal", EOBPars->pGSF_tidal);// p-power in GSF tidal potential model
@@ -708,10 +728,19 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_d("kappaAl2",  EOBPars->kapA2); // gravitoelectric kappa star A
   par_add_d("kappaAl3",  EOBPars->kapA3); //
   par_add_d("kappaAl4",  EOBPars->kapA4); //
+  par_add_d("kappaAl5",  EOBPars->kapA5); //
+  par_add_d("kappaAl6",  EOBPars->kapA6); //
+  par_add_d("kappaAl7",  EOBPars->kapA7); //
+  par_add_d("kappaAl8",  EOBPars->kapA8); //
+
   par_add_d("kappaBl2",  EOBPars->kapB2); //
   par_add_d("kappaBl3",  EOBPars->kapB3); //
   par_add_d("kappaBl4",  EOBPars->kapB4); //
-  
+  par_add_d("kappaBl5",  EOBPars->kapB5); //
+  par_add_d("kappaBl6",  EOBPars->kapB6); //
+  par_add_d("kappaBl7",  EOBPars->kapB7); //
+  par_add_d("kappaBl8",  EOBPars->kapB8); //
+
   par_add_d("kappajAl2",  EOBPars->japA2); // gravitomagnetic kappa star A
   par_add_d("kappajBl2",  EOBPars->japB2);
   par_add_d("kappajTl2",  EOBPars->japT2);
@@ -763,11 +792,22 @@ void par_db_default ()
   par_add_d("initial_frequency", 0.004); // initial GW frequency
   
   par_add_d("LambdaAl2", 0.); // Tidal gravitoelectric parameter Lambda for star A ell=2
-  par_add_d("LambdaBl2",0.);
   par_add_d("LambdaAl3",0.); 
   par_add_d("LambdaAl4", 0.); 
+  par_add_d("LambdaAl4", 0.); 
+  par_add_d("LambdaAl5", 0.); 
+  par_add_d("LambdaAl6", 0.); 
+  par_add_d("LambdaAl7", 0.); 
+  par_add_d("LambdaAl8", 0.); 
+
+  par_add_d("LambdaBl2",0.);
   par_add_d("LambdaBl3", 0.); 
   par_add_d("LambdaBl4", 0.); 
+  par_add_d("LambdaBl5", 0.); 
+  par_add_d("LambdaBl6", 0.); 
+  par_add_d("LambdaBl7", 0.); 
+  par_add_d("LambdaBl8", 0.); 
+
   par_add_d("SigmaAl2", 0.); // Tidal gravitomagnetic parameter Sigma for star A ell=2
   par_add_d("SigmaBl2", 0.);
   par_add_d("pGSF_tidal", 4.0);// p-power in GSF tidal potential model
@@ -865,10 +905,19 @@ void par_db_default ()
   par_add_d("kappaAl2", 0.); // gravitoelectric kappa star A
   par_add_d("kappaAl3", 0.); //
   par_add_d("kappaAl4", 0.); //
+  par_add_d("kappaAl5", 0.); //
+  par_add_d("kappaAl6", 0.); //
+  par_add_d("kappaAl7", 0.); //
+  par_add_d("kappaAl8", 0.); //
+
   par_add_d("kappaBl2", 0.); //
   par_add_d("kappaBl3", 0.); //
   par_add_d("kappaBl4", 0.); //
-  
+  par_add_d("kappaBl5", 0.); //
+  par_add_d("kappaBl6", 0.); //
+  par_add_d("kappaBl7", 0.); //
+  par_add_d("kappaBl8", 0.); //
+
   par_add_d("kappajAl2", 0.); // gravitomagnetic kappa star A
   par_add_d("kappajBl2", 0.);
   par_add_d("kappajTl2", 0.);
@@ -876,6 +925,11 @@ void par_db_default ()
   par_add_d("kappaTl2", 0.); //
   par_add_d("kappaTl3", 0.); //
   par_add_d("kappaTl4", 0.); //
+  par_add_d("kappaTl5", 0.); //
+  par_add_d("kappaTl6", 0.); //
+  par_add_d("kappaTl7", 0.); //
+  par_add_d("kappaTl8", 0.); //
+
   par_add_d("bar_alph2_1", 0.); //
   par_add_d("bar_alph2_2", 0.); //
   par_add_d("bar_alph3_1", 0.); //
