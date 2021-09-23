@@ -300,6 +300,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
     eobp->pGSF_tidal = 4.0;
     eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+    eobp->lambda_ell_max = 4;
 
     eobp->centrifugal_radius = CENTRAD_NNLO;
     eobp->use_flm = USEFLM_SSNLO;
@@ -386,6 +387,7 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
 			par_get_s("tides_gravitomagnetic"), tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
   }
   eobp->use_lambda234_fits = par_get_i("use_lambda234_fits"); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+  eobp->lambda_ell_max = par_get_i("lambda_ell_max");
   eobp->use_geometric_units = par_get_i("use_geometric_units"); // use geometric units for I/O ?
   eobp->use_speedytail = par_get_i("use_speedytail"); // use special routine to speed up tail computation ?
   eobp->dt_merger_interp = par_get_d("dt_merger_interp"); // dt for interpolating merger waveform and NQC/ringdown attachment
@@ -643,6 +645,8 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_s("tides_gravitomagnetic", tides_gravitomagnetic_opt[EOBPars->use_tidal_gravitomagnetic]);
   
   par_add_b("use_lambda234_fits", EOBPars->use_lambda234_fits); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+  par_add_i("lambda_ell_max", EOBPars->lambda_ell_max);
+  
   par_add_b("use_geometric_units", EOBPars->use_geometric_units); // use geometric units for I/O ?
   par_add_b("use_speedytail", EOBPars->use_speedytail); // use special routine to speed up tail computation ?
   
@@ -820,6 +824,7 @@ void par_db_default ()
   par_add_s("tides", "no");
   par_add_s("tides_gravitomagnetic","no");
   par_add_b("use_lambda234_fits", 0); // use Yagi fit to obtain tidal parameters Lambda_3,4 from Lambda_2 ?
+   par_add_i("lambda_ell_max", 4); 
   par_add_b("use_geometric_units", 1); // use geometric units for I/O ?
   par_add_b("use_speedytail", 0); // use special routine to speed up tail computation ?
   
@@ -1228,18 +1233,46 @@ void eob_set_params(int default_choice, int firstcall)
     EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
     EOBPars->LambdaBl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 4);
   } else if (EOBPars->use_lambda234_fits == Lambda2345678_fits_GODZIEBA20) {
-    EOBPars->LambdaAl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 3);
-    EOBPars->LambdaBl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 3);
-    EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
-    EOBPars->LambdaBl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 4);
-    EOBPars->LambdaAl5 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 5);
-    EOBPars->LambdaBl5 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 5);
-    EOBPars->LambdaAl6 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 6);
-    EOBPars->LambdaBl6 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 6);
-    EOBPars->LambdaAl7 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 7);
-    EOBPars->LambdaBl7 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 7);
-    EOBPars->LambdaAl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 8);
-    EOBPars->LambdaBl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 8);
+    if (VERBOSE) printf("# lambda_ell_max = %d\n", EOBPars->lambda_ell_max);
+    switch(EOBPars->lambda_ell_max)
+    {
+      case 8:
+          EOBPars->LambdaAl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 8);
+          EOBPars->LambdaBl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 8);
+#if __GNUC__ >= 7 && !defined __INTEL_COMPILER
+            __attribute__ ((fallthrough));
+#endif
+      case 7:
+          EOBPars->LambdaAl7 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 7);
+          EOBPars->LambdaBl7 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 7);
+#if __GNUC__ >= 7 && !defined __INTEL_COMPILER
+            __attribute__ ((fallthrough));
+#endif
+      case 6:
+          EOBPars->LambdaAl6 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 6);
+          EOBPars->LambdaBl6 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 6);
+#if __GNUC__ >= 7 && !defined __INTEL_COMPILER
+            __attribute__ ((fallthrough));
+#endif
+      case 5:
+          EOBPars->LambdaAl5 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 5);
+          EOBPars->LambdaBl5 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 5);
+#if __GNUC__ >= 7 && !defined __INTEL_COMPILER
+            __attribute__ ((fallthrough));
+#endif
+      case 4:
+          EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
+          EOBPars->LambdaBl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 4);
+#if __GNUC__ >= 7 && !defined __INTEL_COMPILER
+            __attribute__ ((fallthrough));
+#endif
+      case 3:
+          EOBPars->LambdaAl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 3);
+          EOBPars->LambdaBl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 3);
+          break;
+      default:
+          errorexit("ERROR: lambda_ell_max must be between 3 and 8.\n");
+    }
   }
 
 #if(USEGRAVITOMAGNETICTERMS)
@@ -1280,8 +1313,12 @@ void eob_set_params(int default_choice, int firstcall)
 
   if (usetidal) {
     if (!(EOBPars->kapT2 > 0.)) errorexit("kappaT2 must be >0");
-    if (!(EOBPars->kapT3 > 0.)) errorexit("kappaT3 must be >0");
-    if (!(EOBPars->kapT4 > 0.)) errorexit("kappaT4 must be >0");
+    if (!(EOBPars->kapT3 > 0.) && VERBOSE) printf("WARNING: kappaT3 = %.2f\n", EOBPars->kapT3);
+    if (!(EOBPars->kapT4 > 0.) && VERBOSE) printf("WARNING: kappaT4 = %.2f\n", EOBPars->kapT4);
+    if (!(EOBPars->kapT5 > 0.) && VERBOSE) printf("WARNING: kappaT5 = %.2f\n", EOBPars->kapT5);
+    if (!(EOBPars->kapT6 > 0.) && VERBOSE) printf("WARNING: kappaT6 = %.2f\n", EOBPars->kapT6);
+    if (!(EOBPars->kapT7 > 0.) && VERBOSE) printf("WARNING: kappaT7 = %.2f\n", EOBPars->kapT7);
+    if (!(EOBPars->kapT8 > 0.) && VERBOSE) printf("WARNING: kappaT8 = %.2f\n", EOBPars->kapT8);
   } 
 
   /* Tidal coefficients cons dynamics
@@ -1289,8 +1326,13 @@ void eob_set_params(int default_choice, int firstcall)
   if(usetidal){
     EOBPars->bar_alph2_1 = (5./2.*XA*EOBPars->kapA2 + 5./2.*XB*EOBPars->kapB2)/EOBPars->kapT2;
     EOBPars->bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*EOBPars->kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*EOBPars->kapB2)/EOBPars->kapT2;
-    EOBPars->bar_alph3_1 = ((-2.+15./2.*XA)*EOBPars->kapA3 + (-2.+15./2.*XB)*EOBPars->kapB3)/EOBPars->kapT3;
-    EOBPars->bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*EOBPars->kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*EOBPars->kapB3)/EOBPars->kapT3;
+
+    /* If kappaT_3 is not zero compute bar_alph3 */  
+    if (EOBPars->kapT3 > 0){
+      EOBPars->bar_alph3_1 = ((-2.+15./2.*XA)*EOBPars->kapA3 + (-2.+15./2.*XB)*EOBPars->kapB3)/EOBPars->kapT3;
+      EOBPars->bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*EOBPars->kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*EOBPars->kapB3)/EOBPars->kapT3;
+    }
+  
   /* Gravitomagnetic term, see Eq.(6.27) of Bini-Damour-Faye 2012 */
     EOBPars->bar_alph2j_1 = ( EOBPars->japA2*(1. + (11./6.)*XA + XA*XA) + EOBPars->japB2*(1. + (11./6.)*XB + XB*XB) )/EOBPars->japT2;
   }

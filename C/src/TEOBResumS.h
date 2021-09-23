@@ -481,6 +481,7 @@ typedef struct tagEOBParameters
   
   int use_tidal, use_spins, use_tidal_gravitomagnetic;
   int use_lambda234_fits;
+  int lambda_ell_max;
   int use_geometric_units;
   int use_speedytail;
 
