@@ -1138,8 +1138,8 @@ void eob_set_params(int default_choice, int firstcall)
   /* Check: if q is closer to 1 than 1e-8, then q=1 to avoid floating points issues */
   if (DEQUAL(q, 1., 1e-8)){
     if(VERBOSE) printf("WARNING: manually fixing q = 1\n");
-    q       = 1.;
-    eobp->q = 1.;
+    q          = 1.;
+    EOBPars->q = 1.;
   }
 
   EOBPars->nu = q_to_nu(q);
