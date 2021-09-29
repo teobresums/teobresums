@@ -625,10 +625,10 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_d("LambdaBl2", EOBPars->LambdaBl2);
   par_add_d("LambdaBl3", EOBPars->LambdaBl3); 
   par_add_d("LambdaBl4", EOBPars->LambdaBl4); 
-  par_add_d("LambdaBl4", EOBPars->LambdaBl5); 
-  par_add_d("LambdaBl4", EOBPars->LambdaBl6); 
-  par_add_d("LambdaBl4", EOBPars->LambdaBl7); 
-  par_add_d("LambdaBl4", EOBPars->LambdaBl8); 
+  par_add_d("LambdaBl5", EOBPars->LambdaBl5); 
+  par_add_d("LambdaBl6", EOBPars->LambdaBl6); 
+  par_add_d("LambdaBl7", EOBPars->LambdaBl7); 
+  par_add_d("LambdaBl8", EOBPars->LambdaBl8); 
 
   par_add_d("SigmaAl2", EOBPars->SigmaAl2); // Tidal gravitomagnetic parameter Sigma for star A ell=2
   par_add_d("SigmaBl2", EOBPars->SigmaBl2);
