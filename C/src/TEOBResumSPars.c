@@ -770,14 +770,8 @@ void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
     }
     
     if (STREQUAL(key,"use_mode_lm")) {
-      int *klm;
-      eobp->use_mode_lm_size = str2iarray(val, &klm);
-      
-      free(eobp->use_mode_lm);      
-      eobp->use_mode_lm = malloc ( eobp->use_mode_lm_size * sizeof(int) );
-      memcpy(eobp->use_mode_lm, klm, eobp->use_mode_lm_size * sizeof(int));
-
-      free(klm);
+      free(eobp->use_mode_lm);
+      eobp->use_mode_lm_size = str2iarray(val, &eobp->use_mode_lm);
     }
 
     if (STREQUAL(key,"centrifugal_radius")) {
@@ -938,15 +932,8 @@ void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
       eobp->output_multipoles = par_get_b(val); //FIXME: use YESNO2INT(val);
     }
     if (STREQUAL(key,"output_lm")) {
-      
-      int *olm;
-      eobp->output_lm_size = str2iarray(val, &olm);
-      
       free(eobp->output_lm);
-      eobp->output_lm = malloc ( eobp->output_lm_size * sizeof(int) );
-      memcpy(eobp->output_lm, olm, eobp->output_lm_size * sizeof(int));
-      
-      free(olm);
+      eobp->output_lm_size = str2iarray(val, &eobp->output_lm);
     }
     if (STREQUAL(key,"output_dynamics")) {
       eobp->output_dynamics = par_get_b(val);//FIXME: use YESNO2INT(val);
