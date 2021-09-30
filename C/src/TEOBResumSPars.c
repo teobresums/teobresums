@@ -721,24 +721,26 @@ void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
     if (STREQUAL(key,"tides")) {     
       val = string_trim(val);
       for (eobp->use_tidal=0; eobp->use_tidal<=TIDES_NOPT; eobp->use_tidal++) {
+	if (eobp->use_tidal == TIDES_NOPT) {
+	  eobp->use_tidal = TIDES_OFF;
+	  if (VERBOSE) printf("tides '%s' undefined, set to '%s'\n",
+			      val,tides_opt[eobp->use_tidal]);
+	  break;
+	}
 	if (STREQUAL(val,tides_opt[eobp->use_tidal])) break;
-      }
-      if (eobp->use_tidal == TIDES_NOPT) {
-	eobp->use_tidal = TIDES_OFF;
-	if (VERBOSE) printf("tides '%s' undefined, set to '%s'\n",
-			    val,tides_opt[eobp->use_tidal]);
       }
     }
     
     if (STREQUAL(key,"tides_gravitomagnetic")) {
       val = string_trim(val);
       for (eobp->use_tidal_gravitomagnetic=0; eobp->use_tidal_gravitomagnetic<=TIDES_GM_NOPT; eobp->use_tidal_gravitomagnetic++) {
+	if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
+	  eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+	  if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
+			      val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
+	  break;
+	}
 	if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
-      }
-      if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
-	eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
-	if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
-			    val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
       }
     }
     
@@ -777,24 +779,26 @@ void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
     if (STREQUAL(key,"centrifugal_radius")) {
       val = string_trim(val);
       for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
+	if (eobp->centrifugal_radius == CENTRAD_NOPT) {
+	  eobp->centrifugal_radius = CENTRAD_NLO;
+	  if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
+			      val, centrifugal_radius_opt[eobp->centrifugal_radius]);
+	  break;
+	}
 	if (STREQUAL(val, centrifugal_radius_opt[eobp->centrifugal_radius])) break;
-      }
-      if (eobp->centrifugal_radius == CENTRAD_NOPT) {
-	eobp->centrifugal_radius = CENTRAD_NLO;
-	if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
-			    val, centrifugal_radius_opt[eobp->centrifugal_radius]);
       }
     }
 
     if (STREQUAL(key,"use_flm")) {
       val = string_trim(val);
       for (eobp->use_flm=0; eobp->use_flm<=USEFLM_NOPT; eobp->use_flm++) {
-	if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
-      }
-      if (eobp->use_flm == USEFLM_NOPT) {
+	if (eobp->use_flm == USEFLM_NOPT) {
 	eobp->use_flm = USEFLM_HM;
 	if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
 			    val, use_flm_opt[eobp->use_flm]);
+	break;
+	}
+	if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
       }
     }
     
@@ -828,24 +832,26 @@ void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
     if (STREQUAL(key,"nqc_coefs_flx")) {
       val = string_trim(val);
       for (eobp->nqc_coefs_flx=0; eobp->nqc_coefs_flx<=NQC_FLX_NOPT; eobp->nqc_coefs_flx++) {
+	if (eobp->nqc_coefs_flx == NQC_FLX_NOPT) {
+	  eobp->nqc_coefs_flx = NQC_FLX_NONE;
+	  if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
+			      val, nqc_flx_opt[eobp->nqc_coefs_flx]);
+	  break;
+	}
 	if (STREQUAL(val, nqc_flx_opt[eobp->nqc_coefs_flx])) break;
-      }
-      if (eobp->nqc_coefs_flx == NQC_FLX_NOPT) {
-	eobp->nqc_coefs_flx = NQC_FLX_NONE;
-	if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
-			    val, nqc_flx_opt[eobp->nqc_coefs_flx]);
       }
     }
 
     if (STREQUAL(key,"nqc_coefs_hlm")) {
       val = string_trim(val);
       for (eobp->nqc_coefs_hlm=0; eobp->nqc_coefs_hlm<=NQC_HLM_NOPT; eobp->nqc_coefs_hlm++) {
+	if (eobp->nqc_coefs_hlm == NQC_HLM_NOPT) {
+	  eobp->nqc_coefs_hlm = NQC_HLM_NONE;
+	  if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
+			      val, nqc_hlm_opt[eobp->nqc_coefs_hlm]);
+	  break;
+	}
 	if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
-      }
-      if (eobp->nqc_coefs_hlm == NQC_HLM_NOPT) {
-	eobp->nqc_coefs_hlm = NQC_HLM_NONE;
-	if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
-			    val, nqc_hlm_opt[eobp->nqc_coefs_hlm]);
       }
     }
 
@@ -894,12 +900,13 @@ void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
     if (STREQUAL(key,"ode_timestep")) {
       val = string_trim(val);
       for (eobp->ode_timestep=0; eobp->ode_timestep<=ODE_TSTEP_NOPT; eobp->ode_timestep++) {
+	if (eobp->ode_timestep==ODE_TSTEP_NOPT) {
+	  eobp->ode_timestep = ODE_TSTEP_ADAPTIVE;
+	  if (VERBOSE) printf("ode_timestep '%s' undefined, set to default %s\n",
+			      val, ode_tstep_opt[eobp->ode_timestep]);
+	  break;
+	}
 	if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
-      }
-      if (eobp->ode_timestep==ODE_TSTEP_NOPT) {
-	eobp->ode_timestep = ODE_TSTEP_ADAPTIVE;
-	if (VERBOSE) printf("ode_timestep '%s' undefined, set to default %s\n",
-			    val, ode_tstep_opt[eobp->ode_timestep]);
       }
     }
 
