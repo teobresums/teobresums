@@ -792,20 +792,6 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
   if (dbg_unwrap_proxy) DBGSTOP;
 }
 
-/** This routine sets a 0/1 mask for the multipolar linear index */
-void set_multipolar_idx_mask_old(int *kmask, int n)
-{
-  int m, k,j;
-  for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
-  int *idx = par_get_arrayi("use_mode_lm", &m);
-  if (m==0) return;
-  if (m==1 && idx[0]==-1) return;
-  for (k = 0; k<n; k++)
-    for (j = 0; j<m; j++)
-      if (idx[j] == k) kmask[k] = 1;
-  free(idx);
-}
-
 /** This routine sets a 0/1 mask for the multipolar linear index 
     work for any parameter and can specify default all on/off */
 void set_multipolar_idx_mask (int *kmask, int n, const int *idx, int m, int on)
@@ -2241,7 +2227,177 @@ int system_mkdir(const char *name)
   char s[STRLEN];
   sprintf(s,"mkdir -p %s",name);
   return system(s);
-  /* if (system(s)) errorexit("Error during system call to make directory.");  */
+}
+
+/** checks for blank string */
+int is_blank(const char *line) 
+{
+  const char accept[]=" \t\r\n"; 
+  return (strspn(line, accept) == strlen(line));
+}
+
+/** remove white spaces from string */
+void remove_white_spaces(char *str)
+{
+  int i = 0, j = 0;
+  while (str[i]) {
+    if (str[i] != ' ')
+      str[j++] = str[i];
+    i++;
+  }
+  str[j] = '\0';
+}
+
+/** cut string to the first delimiter */
+void remove_comments(char *line, const char *delimiters)
+{
+  int sz = strcspn(line,delimiters);
+  char *newline = (char *) calloc(sizeof(char), sz+1);
+  strncpy(newline,line,sz);
+  newline[sz] = '\0';
+  strcpy(line, newline);
+  free(newline);
+}
+
+/** get rid of trailing and leading whitespace */
+char *trim(char *str)
+{
+  char *start = str;
+  char *end = str + strlen(str);  
+  while(*start && isspace(*start))
+    start++;
+  while(end > start && isspace(*(end - 1)))
+    end--;
+  *end = '\0';
+  return start;
+}
+
+/** check start & end */
+int startswith(const char *str, const char *beg)
+{
+  return (strncmp(beg, str, strlen(beg)) == 0);
+}
+int endswith(const char *str, const char *end)
+{
+  return (strncmp(str+strlen(str)-strlen(end), end, strlen(end)) == 0);
+}
+
+/** get key value separated by a '=' */
+int getkv(char *line, char **key, char **val) 
+{
+  char *ptr = strchr(line,'=');
+  if (ptr == NULL)
+    return 1;
+  *ptr++ = '\0';
+  *key = trim(line);
+  *val = trim(ptr);
+  return 0;
+}
+
+/** identify string in parfile */
+int is_string(const char *str)
+{
+  if (startswith(str,"\"") && endswith(str,"\""))
+    return 1;
+  return 0;
+}
+char *string_trim(char *str)
+{
+  char *start = str;
+  char *end = str + strlen(str);  
+  if (is_string(str)) {
+    start++;
+    end--;
+    *end = '\0';
+    return start;
+  }
+  return NULL;
+}
+
+/* Helpers conversion str to type */
+int par_get_i (char *val)
+{
+  return atoi(val);
+}
+int par_get_b (char *val)
+{
+  return atoi(val)?1:0;
+}
+double par_get_d (char *val)
+{
+  return atof(val);
+}
+int par_get_s (char * dest, char *src)
+{
+  if (is_string(src)) {    
+    strncpy(dest, src+1, strlen(src)-2);
+    return 0;
+  }
+  return 1;
+}
+
+/** return number of entries in a string according to "delimiters" */ 
+const char * ARRAY_DELIMITER[] = { "[", ",", "]" };
+int noentries(const char *string)
+{
+  int n = 0;
+  char *s, *t; 
+  int len = strlen(string);
+  
+  if (! ((strncmp(ARRAY_DELIMITER[0], string, 1) == 0) &&
+	 (strncmp(string+len-1, ARRAY_DELIMITER[2], 1) == 0)) ) {
+    /* printf(" %c...%c\n",string[0],string[len-1]);  */
+    errorexit("Parsing string for array: must start with [ and end with ].");
+  }
+
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  while (t != NULL) {
+    n++;
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+  }
+  free(s);
+  return n;
+}
+
+/** convert a string to an array of int (alloc mem) */
+int str2iarray(const char *string, int **a)
+{
+  char *s, *t;
+  int n = noentries(string);
+  (*a) = (int *) malloc (n * sizeof(int));
+  if (!(*a)) errorexit(eob_error_msg[ERROR_OUTOFMEM]);
+  const int len = strlen(string);
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  int j = 0;
+  while ((t != NULL) && (j<n)) {
+    (*a)[j] = atoi(t);     
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+    j++;
+  }
+  free(s);  
+  return n;
+}
+
+/** convert a string to an array of double (alloc mem) */
+int str2darray(const char *string, double **a)
+{
+  char *s, *t;
+  int n = noentries(string);
+  (*a) = (double*) malloc (n * sizeof(double));
+  if (!(*a)) errorexit(eob_error_msg[ERROR_OUTOFMEM]);
+  const int len = strlen(string);
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  int j = 0;
+  while ((t != NULL) && (j<n)) {
+    (*a)[j] = atof(t);
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+    j++;
+  }
+  free(s);  
+  return n;
 }
 
 /** Date and time */

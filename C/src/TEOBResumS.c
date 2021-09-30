@@ -63,31 +63,30 @@ int main (int argc, char* argv[])
   EOBParameters_defaults (dc, EOBPars);
   
   if (argv[1]!=NULL) {
-    /* Deal with input parfile if necessary 
-       (Kepr for backward compatibility) */
-    par_db_init ();
-    par_db_from_EOBPar (EOBPars);
-    par_file_parse_merge (argv[1]);
-    par_db_screen (VERBOSE);
-    EOBParameters_set_from_db (EOBPars);
-    const int output = EOBPars->output_dynamics + EOBPars->output_multipoles + EOBPars->output_hpc + EOBPars->output_nqc;    
-    if (output) {
-      if (system_mkdir(EOBPars->output_dir)) {
-	printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
-	return ERROR_MKDIR;
-      }
-      par_db_write_file("params.txt");
-    }
-    par_db_free();    
+    /* Deal with input parfile */
+    EOBParameterse_parse_file (argv[1], EOBPars);
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
   }
   
+  const int output = EOBPars->output_dynamics
+    + EOBPars->output_multipoles
+    + EOBPars->output_hpc
+    + EOBPars->output_nqc;  
+  
+  if (output) {
+    if (system_mkdir(EOBPars->output_dir)) {
+      printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
+      return ERROR_MKDIR;
+    }
+    /* EOBParameters_tofile(EOBPars,"params.txt"); */ //TODO
+  }
+    
   /* Set all firstcalls = 1 */
   for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
   }
-
+  
   /* set domain */
   eob_set_params(dc, fc); 
   

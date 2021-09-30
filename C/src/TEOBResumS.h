@@ -32,11 +32,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <libconfig.h> /* library to manage parameters */
 #include <complex.h>
 #include <math.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf.h>
@@ -125,8 +125,8 @@
 #define PRFORMd(s,x) {printf("%-40s = %.16e\n", s,x);} /* Print double */
 #define PRFORMi(s,x) {printf("%-40s = %d\n", s,x);} /* Print int */
 #define PRWARN(s) {printf("# WARNING: %s\n",s);} 
-//#define INT2YESNO(i)((i)?"yes":"no")
-#define YESNO2INT(s)((strcmp(s,"no")==0)?0:1)
+//#define INT2YESNO(i)((i)?"yes":"no")//TODO
+#define YESNO2INT(s)((strcmp(s,"yes")==0)?1:0)
 /* helpers for debug */
 #define DBGPR(s) printf("DEBUG: %s\n",s);
 #define DBGSTOP errorexit("DEBUG: STOP");
@@ -288,7 +288,7 @@ enum{
   ROOT_ERRORS
 };
 static const char* const root_errors[] = {"none","root is not bracketed.","root finder did not converged.","root finder failed."};
-//#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} 
+/* #define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} */
 #define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { printf("%s\n",root_errors[(i)]); }}
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
@@ -561,39 +561,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	   int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
-void par_db_init ();
-void par_db_free ();
-void par_db_default_fromfile ();
-void par_db_default ();
-void par_db_from_EOBPar (EOBParameters *EOBPars);
-void par_file_parse (const char *fname);
-void par_file_parse_merge (const char *fname);
-void par_db_write_file (const char *fname);
-void par_db_screen (const int pr);
-void par_add_i (const char *key, int val);
-void par_add_b (const char *key, int val);
-void par_add_d (const char *key, double val);
-void par_add_s (const char *key, const char *val);
-void par_add_arrayi (const char *key, int *a, int size);
-void par_add_arrayd (const char *key, double *a, int size);
-void par_set_i(const char *key, int val);
-void par_set_b(const char *key, int val);
-void par_set_d(const char *key, double val);
-void par_set_s(const char *key, const char *val);
-void par_set_arrayi (const char *key, int *array, int n);
-void par_set_arrayd (const char *key, double *array, int n);
-int par_get_i(const char *key);
-int par_get_b(const char *key);
-double par_get_d(const char *key);
-const char * par_get_s(const char *key);
-int * par_get_arrayi(const char *key, int *n);
-double * par_get_arrayd(const char *key, int *n);
-void eob_set_params_old(char *s, int n);
 void eob_set_params(int default_choice, int firstcall);
 void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);
 void EOBParameters_defaults (int choose, EOBParameters *eobp);
-void EOBParameters_set_from_db (EOBParameters *eobp);
+void EOBParameterse_parse_file(char *fname, EOBParameters *eobp);
 
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);
@@ -680,6 +652,20 @@ double time_units_factor(double M);
 double time_units_conversion(double M, double t);
 double radius0(double M, double fHz);
 int system_mkdir(const char *name);
+int is_blank(const char *line);
+void remove_white_spaces(char *str);
+void remove_comments(char *line, const char *delimiters);
+char *trim(char *str);
+int getkv(char *line, char **key, char **val);
+int is_string(const char *str);
+char *string_trim(char *str);
+int par_get_i (char *val);
+int par_get_b (char *val);
+double par_get_d (char *val);
+int par_get_s (char * dest, char *src);
+int noentries(const char *string);
+int str2iarray(const char *string, int **a);
+int str2darray(const char *string, double **a);
 void print_date_time();
 void errorexit(char *file, int line, const char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
