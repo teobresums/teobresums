@@ -149,8 +149,7 @@
 #define EulerGamma (0.5772156649015328606065121)
 #define EulerGamma_Log2 (1.27036284546147817002374) /** EulerGamma + Log2 */
 #define TEOB_LAMBDA_TOL (1.0)   /* Minimum tidal Lambda_2 value */
-#define POSTADIABATIC_DR (0.1) /* PA step dr = 0.1 */
-#define TEOB_R0_THRESHOLD (14) /* PA minimum tolerated radius */
+#define TEOB_R0_THRESHOLD (14)  /* PA minimum tolerated radius */
 #define POSTADIABATIC_NSTEP_MIN (10) /* Minimum requires PA steps, any less than this, the code switches off PA */
 
 /** Simple/generic error handler */
@@ -492,6 +491,7 @@ typedef struct tagEOBParameters
   int postadiabatic_dynamics, postadiabatic_dynamics_stop;
   int postadiabatic_dynamics_N;
   int postadiabatic_dynamics_size;
+  double postadiabatic_dynamics_dr;
   double postadiabatic_dynamics_rmin;
 
   int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}

@@ -52,7 +52,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
   const int size = dyn->size; // PA clause in main.c sets dyn->size= PA size overwriting PA par files
   double rmin = EOBPars->postadiabatic_dynamics_rmin; 
   //if(usetidal) rmin = EOBPars->postadiabatic_dynamics_rmin;   
-  const double dr = POSTADIABATIC_DR; //(r0 - rmin)/(size-1); /* Uniform grid spacing */
+  const double dr = EOBPars->postadiabatic_dynamics_dr; //(r0 - rmin)/(size-1); /* Uniform grid spacing */
 
 
   if (VERBOSE) {

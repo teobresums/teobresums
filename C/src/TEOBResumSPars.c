@@ -161,10 +161,12 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   /* EOB Settings */
   
   eobp->postadiabatic_dynamics=1;
-  eobp->postadiabatic_dynamics_N=8; // post-adiabatic order
+  eobp->postadiabatic_dynamics_N=8;      // post-adiabatic order
   eobp->postadiabatic_dynamics_size=800; // grid size 
   eobp->postadiabatic_dynamics_rmin=14.; // minimum radius (end of PA dynamics)
-  eobp->postadiabatic_dynamics_stop=0; // stop after post-adiabatic dynamics 
+  eobp->postadiabatic_dynamics_stop=0;   // stop after post-adiabatic dynamics 
+  eobp->postadiabatic_dynamics_dr=0.1;            // PA step dr = 0.1 
+
 
   eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
@@ -400,10 +402,11 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
   memcpy(eobp->use_mode_lm, klm, eobp->use_mode_lm_size * sizeof(int));
   free(klm);
 
-  eobp->postadiabatic_dynamics = YESNO2INT(par_get_s("postadiabatic_dynamics")); //CHECK THIS MACRO ITS NEW... no=0, else yes=1
-  eobp->postadiabatic_dynamics_N = par_get_i("postadiabatic_dynamics_N"); // post-adiabatic order
+  eobp->postadiabatic_dynamics      = YESNO2INT(par_get_s("postadiabatic_dynamics")); //CHECK THIS MACRO ITS NEW... no=0, else yes=1
+  eobp->postadiabatic_dynamics_N    = par_get_i("postadiabatic_dynamics_N"); // post-adiabatic order
   eobp->postadiabatic_dynamics_size = par_get_i("postadiabatic_dynamics_size"); // grid size 
   eobp->postadiabatic_dynamics_rmin = par_get_d("postadiabatic_dynamics_rmin"); // minimum radius (end of PA dynamics)
+  eobp->postadiabatic_dynamics_dr   = par_get_d("postadiabatic_dynamics_dr"); // minimum radius (end of PA dynamics)
   //eobp->postadiabatic_dynamics_rmin_BNS = par_get_d("postadiabatic_dynamics_rmin_BNS"); // minimum radius (end of PA dynamics)
   eobp->postadiabatic_dynamics_stop = YESNO2INT(par_get_s("postadiabatic_dynamics_stop")); // stop after post-adiabatic dynamics //FIXME: make bool
 
@@ -657,6 +660,7 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_i("postadiabatic_dynamics_N", EOBPars->postadiabatic_dynamics_N); // post-adiabatic order
   par_add_i("postadiabatic_dynamics_size", EOBPars->postadiabatic_dynamics_size); // grid size 
   par_add_d("postadiabatic_dynamics_rmin",EOBPars->postadiabatic_dynamics_rmin); // minimum radius (end of PA dynamics)
+  par_add_d("postadiabatic_dynamics_dr",EOBPars->postadiabatic_dynamics_dr); // postadiabatic dr
   par_add_d("postadiabatic_dynamics_rmin_BNS",EOBPars->postadiabatic_dynamics_rmin); // minimum radius (end of PA dynamics)
   par_add_s("postadiabatic_dynamics_stop",int2YESNO[EOBPars->postadiabatic_dynamics_stop]); // stop after post-adiabatic dynamics //FIXME: make bool
 
@@ -834,6 +838,7 @@ void par_db_default ()
   par_add_i("postadiabatic_dynamics_N", 8); // post-adiabatic order
   par_add_i("postadiabatic_dynamics_size", 1000); // grid size 
   par_add_d("postadiabatic_dynamics_rmin", 14.); // minimum radius (end of PA dynamics)
+  par_add_d("postadiabatic_dynamics_dr", 0.1); // minimum radius (end of PA dynamics)
   par_add_d("postadiabatic_dynamics_rmin_BNS", 14.); // minimum radius (end of PA dynamics for BNS) //FIXME:this should be removed, use only above.
   par_add_s("postadiabatic_dynamics_stop","yes"); // stop after post-adiabatic dynamics //FIXME: make bool
 
