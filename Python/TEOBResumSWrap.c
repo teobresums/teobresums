@@ -128,7 +128,10 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin") != NULL ) {
     EOBPars->postadiabatic_dynamics_rmin = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin"));
   }
-
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_dr") != NULL ) {
+    EOBPars->postadiabatic_dynamics_dr = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_dr"));
+  }
+  
   /* rc and flm */
   if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 
     EOBPars->centrifugal_radius = (int) PyLong_AsLong(PyDict_GetItemString(dict, "centrifugal_radius"));
