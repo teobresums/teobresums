@@ -125,7 +125,7 @@
 #define PRFORMd(s,x) {printf("%-40s = %.16e\n", s,x);} /* Print double */
 #define PRFORMi(s,x) {printf("%-40s = %d\n", s,x);} /* Print int */
 #define PRWARN(s) {printf("# WARNING: %s\n",s);} 
-//#define INT2YESNO(i)((i)?"yes":"no")//TODO
+#define INT2YESNO(i)((i)?"yes":"no")
 #define YESNO2INT(s)((strcmp(s,"yes")==0)?1:0)
 /* helpers for debug */
 #define DBGPR(s) printf("DEBUG: %s\n",s);
@@ -565,7 +565,8 @@ void eob_set_params(int default_choice, int firstcall);
 void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);
 void EOBParameters_defaults (int choose, EOBParameters *eobp);
-void EOBParameterse_parse_file(char *fname, EOBParameters *eobp);
+void EOBParameters_parse_file(char *fname, EOBParameters *eobp);
+void EOBParameters_tofile(EOBParameters *eobp,char *fname);
 
 /* TEOBResumSUtil.c */
 double q_to_nu(const double q);

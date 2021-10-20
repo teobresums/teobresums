@@ -64,7 +64,7 @@ int main (int argc, char* argv[])
   
   if (argv[1]!=NULL) {
     /* Deal with input parfile */
-    EOBParameterse_parse_file (argv[1], EOBPars);
+    EOBParameters_parse_file (argv[1], EOBPars);
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
   }
@@ -79,7 +79,6 @@ int main (int argc, char* argv[])
       printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
       return ERROR_MKDIR;
     }
-    /* EOBParameters_tofile(EOBPars,"params.txt"); */ //TODO
   }
     
   /* Set all firstcalls = 1 */
@@ -89,7 +88,8 @@ int main (int argc, char* argv[])
   
   /* set domain */
   eob_set_params(dc, fc); 
-  
+  if (output) EOBParameters_tofile(EOBPars,"params.txt");
+
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
 		      &hmodes, &hfmodes,&dynf,

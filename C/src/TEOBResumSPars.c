@@ -627,7 +627,7 @@ void eob_set_params(int default_choice, int firstcall)
 
 
 /* Parse an input parfile */
-void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
+void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
 {
   const char DELIMITERS_FOR_COMMENTS[] = "#";
   char line[2*STRLEN];
@@ -857,11 +857,11 @@ void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
 
     if (STREQUAL(key,"nqc_coefs_flx_file")) {      
       if (par_get_s(eobp->nqc_coefs_flx_file, val))
-	errorexit("Error converting input string");
+	      errorexit("Error converting input string");
     }
     if (STREQUAL(key,"nqc_coefs_hlm_file")) {
       if (par_get_s(eobp->nqc_coefs_hlm_file, val))
-	errorexit("Error converting input string");
+	      errorexit("Error converting input string");
     }
 
     /* Post-adiabatic */
@@ -964,7 +964,99 @@ void EOBParameterse_parse_file(char *fname, EOBParameters *eobp)
 
 void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 {
-  //TODO dump everything to a file for reproducibility
+  //Dump everything to a file for reproducibility
+  FILE *f = fopen(fname, "w");
+  
+  fprintf(f,"%s = %d\n", "use_geometric_units", eobp->use_geometric_units);
+
+  /* intrinsic parameters */
+  fprintf(f,"%s = %.10f\n", "M", eobp->M);
+  fprintf(f,"%s = %.10f\n", "q", eobp->q);
+  fprintf(f,"%s = %.10f\n", "chi1", eobp->chi1);
+  fprintf(f,"%s = %.10f\n", "chi2", eobp->chi2);
+  fprintf(f,"%s = %.10f\n", "distance", eobp->distance);
+  fprintf(f,"%s = %.10f\n", "inclination", eobp->inclination);
+  fprintf(f,"%s = %.10f\n", "coalescence_angle", eobp->coalescence_angle);
+  fprintf(f,"%s = %.10f\n", "polarization", eobp->polarization);
+  fprintf(f,"%s = %.10f\n", "r0", eobp->r0);
+  fprintf(f,"%s = %.10f\n", "initial_frequency", eobp->initial_frequency);
+  fprintf(f,"%s = %.10f\n", "LambdaAl2", eobp->LambdaAl2);
+  fprintf(f,"%s = %.10f\n", "LambdaBl2", eobp->LambdaBl2);
+  fprintf(f,"%s = %.10f\n", "LambdaAl3", eobp->LambdaAl3);
+  fprintf(f,"%s = %.10f\n", "LambdaBl3", eobp->LambdaBl3);
+  fprintf(f,"%s = %.10f\n", "LambdaAl4", eobp->LambdaAl4);
+  fprintf(f,"%s = %.10f\n", "LambdaBl4", eobp->LambdaBl4);
+  fprintf(f,"%s = %.10f\n", "SigmaAl2", eobp->SigmaAl2);
+  fprintf(f,"%s = %.10f\n", "SigmaBl2", eobp->SigmaBl2);
+
+  /* EOB Settings */
+
+  fprintf(f,"%s = %d\n", "use_spins", eobp->use_spins);
+  fprintf(f,"%s = \"%s\"\n", "tides", tides_opt[eobp->use_tidal]);
+  fprintf(f,"%s = \"%s\"\n", "tides_gravitomagnetic", tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
+  fprintf(f,"%s = %.10f\n", "pGSF_tidal", eobp->pGSF_tidal);
+  fprintf(f,"%s = %d\n", "use_lambda234_fits", eobp->use_lambda234_fits);
+  fprintf(f,"%s = %d\n", "use_tidal_fmode_model", eobp->use_tidal_fmode_model);
+  fprintf(f,"%s = %d\n", "use_speedytail", eobp->use_speedytail);
+  fprintf(f,"%s = %.10f\n", "dt_merger_interp", eobp->dt_merger_interp);
+  fprintf(f,"%s = %.10f\n", "dt_interp", eobp->dt_interp);
+  fprintf(f,"%s = %.10f\n", "srate_interp", eobp->srate_interp);
+  fprintf(f,"%s = %d\n", "interp_uniform_grid", eobp->interp_uniform_grid);
+
+  fprintf(f,"%s = [", "use_mode_lm");
+  for(int i=0; i<eobp->use_mode_lm_size-1;i++)
+    fprintf(f,"%d,", eobp->use_mode_lm[i]);
+  fprintf(f,"%d]\n", eobp->use_mode_lm[eobp->use_mode_lm_size-1]);
+
+  fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
+  fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
+  fprintf(f,"%s = %d\n", "compute_LR", eobp->compute_LR);
+  fprintf(f,"%s = %d\n", "compute_LR_guess", eobp->compute_LR_guess);
+  fprintf(f,"%s = %d\n", "compute_LSO", eobp->compute_LSO);
+  fprintf(f,"%s = %d\n", "compute_LSO_guess", eobp->compute_LSO_guess);
+
+  /* NQC */
+  fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);
+  fprintf(f,"%s = \"%s\"\n", "nqc_coefs_flx", nqc_flx_opt[eobp->nqc_coefs_flx]);
+  fprintf(f,"%s = \"%s\"\n", "nqc_coefs_hlm", nqc_hlm_opt[eobp->nqc_coefs_flx]);
+  fprintf(f,"%s = \"%s\"\n", "nqc_coefs_flx_file", eobp->nqc_coefs_flx_file);
+  fprintf(f,"%s = \"%s\"\n", "nqc_coefs_hlm_file", eobp->nqc_coefs_hlm_file);
+
+  /* Post-adiabatic */
+  fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics", INT2YESNO(eobp->postadiabatic_dynamics));
+  fprintf(f,"%s = %d\n", "postadiabatic_dynamics_N", eobp->postadiabatic_dynamics_N);
+  fprintf(f,"%s = %d\n", "postadiabatic_dynamics_size", eobp->postadiabatic_dynamics_size);
+  fprintf(f,"%s = %.10f\n", "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
+  fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_stop", INT2YESNO(eobp->postadiabatic_dynamics_stop));
+
+  /* Evolution settings */
+  fprintf(f,"%s = %.10f\n", "srate", eobp->srate);
+  fprintf(f,"%s = %.10f\n", "dt", eobp->dt);
+  fprintf(f,"%s = %d\n", "size", eobp->size);
+  fprintf(f,"%s = %d\n", "ringdown_extend_array", eobp->ringdown_extend_array);
+  fprintf(f,"%s = \"%s\"\n", "ode_timestep", ode_tstep_opt[eobp->ode_timestep]);
+  fprintf(f,"%s = %E\n", "ode_abstol", eobp->ode_abstol);
+  fprintf(f,"%s = %E\n", "ode_reltol", eobp->ode_reltol);
+  fprintf(f,"%s = %.10f\n", "ode_tmax", eobp->ode_tmax);
+  fprintf(f,"%s = %d\n", "ode_stop_at_radius", eobp->ode_stop_radius);
+  fprintf(f,"%s = %d\n", "ode_stop_afterNdt", eobp->ode_stop_afterNdt);
+
+  /* Output */
+  fprintf(f,"%s = \"%s\"\n", "output_dir", eobp->output_dir);
+  fprintf(f,"%s = %d\n", "output_hpc", eobp->output_hpc);
+  fprintf(f,"%s = %d\n", "output_multipoles", eobp->output_multipoles);
+
+  fprintf(f,"%s = [", "output_lm");
+  for(int i=0; i<eobp->output_lm_size-1;i++)
+    fprintf(f,"%d,", eobp->output_lm[i]);
+  fprintf(f,"%d]\n", eobp->output_lm[eobp->output_lm_size-1]);
+
+  fprintf(f,"%s = %d\n", "output_dynamics", eobp->output_dynamics);
+  fprintf(f,"%s = %d\n", "output_nqc", eobp->output_nqc);
+  fprintf(f,"%s = %d\n", "output_nqc_coefs", eobp->output_nqc_coefs);
+  fprintf(f,"%s = %d\n", "output_ringdown", eobp->output_nqc_coefs);
+  
+  fclose(f);
 }
 
 
