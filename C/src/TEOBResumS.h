@@ -226,6 +226,7 @@ enum{
   Lambda2345678_fits_GODZIEBA20,
   Lambda234_fits_NOPT
 };
+static const char* const use_lambda234_fits_opt[] = {"no","YAGI13","GODZIEBA20_ell4", "GODZIEBA20_ell8", "undefined"};
 
 /** List of options for tidal potential */
 enum{

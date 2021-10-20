@@ -644,7 +644,6 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     if (getkv(line,&key,&val)) continue; 
 
     //TODO:
-    // - make a uniform choice for "yes"/"no", 1/0 (the former)
     // - make a uniform choice for 'method selection', now we use a mixture of integers or strings
     //   the former choice (e.g. tides) would be better
 
@@ -652,7 +651,7 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     //DBGSTOP;
     
     if (STREQUAL(key,"use_geometric_units")) {    
-      eobp->use_geometric_units = par_get_b(val);//FIXME: use YESNO2INT(val);
+      eobp->use_geometric_units = YESNO2INT(string_trim(val));
     }
     
     /* Binary parameters */
@@ -747,22 +746,33 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     if (STREQUAL(key,"pGSF_tidal")) {
       eobp->pGSF_tidal = par_get_d(val);
     }
+
     if (STREQUAL(key,"use_lambda234_fits")) {
-      eobp->use_lambda234_fits = par_get_i(val); //FIXME: use this to switch between fits?! => take from str comparisons
+      val = string_trim(val);
+      for (eobp->use_lambda234_fits=0; eobp->use_lambda234_fits<=Lambda234_fits_NOPT; eobp->use_lambda234_fits++) {
+	      if (eobp->use_lambda234_fits == Lambda234_fits_NOPT) {
+	        eobp->centrifugal_radius = Lambda234_fits_YAGI13;
+	        if (VERBOSE) printf("use_lambda234_fits '%s' undefined, set to '%s'\n",
+			    val, use_lambda234_fits_opt[eobp->use_lambda234_fits]);
+	      break;
+	      }
+	      if (STREQUAL(val, use_lambda234_fits_opt[eobp->use_lambda234_fits])) break;
+      }
     }
+
     if (STREQUAL(key,"use_tidal_fmode_model")) {
-      eobp->use_tidal_fmode_model = par_get_b(val); //FIXME: YESNO2INT(string_trim(val));
+      eobp->use_tidal_fmode_model = YESNO2INT(string_trim(val));
     }
     
     if (STREQUAL(key,"use_speedytail")) {    
-      eobp->use_speedytail = par_get_b(val);//FIXME: use YESNO2INT(string_trim(val));
+      eobp->use_speedytail = YESNO2INT(string_trim(val));
     }    
     if (STREQUAL(key,"dt_merger_interp")) {    
       eobp->dt_merger_interp = par_get_d(val);
     }
 
     if (STREQUAL(key,"interp_uniform_grid")) {    
-      eobp->interp_uniform_grid = par_get_i(val); //FIXME: take from str comparisons
+      eobp->interp_uniform_grid = YESNO2INT(string_trim(val)); //FIXME: take from str comparisons // RG: made yes/no, for now
     }
     if (STREQUAL(key,"dt_interp")) {    
       eobp->dt_interp = par_get_d(val);
@@ -803,10 +813,10 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     }
     
     if (STREQUAL(key,"compute_LR")) {
-      eobp->compute_LR = par_get_b(val);//FIXME: use YESNO2INT(string_trim(val));
+      eobp->compute_LR = YESNO2INT(string_trim(val));
     }
     if (STREQUAL(key,"compute_LSO")) {    
-      eobp->compute_LSO = par_get_b(val); //FIXME: use YESNO2INT(string_trim(val));
+      eobp->compute_LSO = YESNO2INT(string_trim(val));
     }
     if (STREQUAL(key,"compute_LR_guess")) {    
       eobp->compute_LR_guess = par_get_d(val);
@@ -879,7 +889,7 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
       eobp->postadiabatic_dynamics_rmin = par_get_d(val);
     }
     if (STREQUAL(key,"postadiabatic_dynamics_stop")) {
-      eobp->postadiabatic_dynamics_stop = YESNO2INT(string_trim(val)); //CHECK
+      eobp->postadiabatic_dynamics_stop = YESNO2INT(string_trim(val));
     }
     
     /* Evolution settings */
@@ -933,26 +943,26 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
       	errorexit("Error converting input string");
     }
     if (STREQUAL(key,"output_hpc")) {
-      eobp->output_hpc = par_get_b(val);//FIXME: use YESNO2INT(val);
+      eobp->output_hpc = YESNO2INT(string_trim(val));
     }
     if (STREQUAL(key,"output_multipoles")) {
-      eobp->output_multipoles = par_get_b(val); //FIXME: use YESNO2INT(val);
+      eobp->output_multipoles = YESNO2INT(string_trim(val));
     }
     if (STREQUAL(key,"output_lm")) {
       free(eobp->output_lm);
       eobp->output_lm_size = str2iarray(val, &eobp->output_lm);
     }
     if (STREQUAL(key,"output_dynamics")) {
-      eobp->output_dynamics = par_get_b(val);//FIXME: use YESNO2INT(val);
+      eobp->output_dynamics = YESNO2INT(string_trim(val));
     }
     if (STREQUAL(key,"output_nqc")) {
-      eobp->output_nqc = par_get_b(val); //FIXME: use YESNO2INT(val);
+      eobp->output_nqc = YESNO2INT(string_trim(val));
     }
     if (STREQUAL(key,"output_nqc_coefs")) {
-      eobp->output_nqc_coefs = par_get_b(val); //FIXME: use YESNO2INT(val);
+      eobp->output_nqc_coefs = YESNO2INT(string_trim(val));
     }
     if (STREQUAL(key,"output_ringdown")) {
-      eobp->output_ringdown = par_get_b(val); //FIXME: use YESNO2INT(val);
+      eobp->output_ringdown = YESNO2INT(string_trim(val));
     }
            
 
@@ -967,7 +977,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   //Dump everything to a file for reproducibility
   FILE *f = fopen(fname, "w");
   
-  fprintf(f,"%s = %d\n", "use_geometric_units", eobp->use_geometric_units);
+  fprintf(f,"%s = \"%s\"\n", "use_geometric_units", INT2YESNO(eobp->use_geometric_units));
 
   /* intrinsic parameters */
   fprintf(f,"%s = %.10f\n", "M", eobp->M);
@@ -991,17 +1001,17 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 
   /* EOB Settings */
 
-  fprintf(f,"%s = %d\n", "use_spins", eobp->use_spins);
+  fprintf(f,"%s = %d\n"    , "use_spins", eobp->use_spins);
   fprintf(f,"%s = \"%s\"\n", "tides", tides_opt[eobp->use_tidal]);
   fprintf(f,"%s = \"%s\"\n", "tides_gravitomagnetic", tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
-  fprintf(f,"%s = %.10f\n", "pGSF_tidal", eobp->pGSF_tidal);
-  fprintf(f,"%s = %d\n", "use_lambda234_fits", eobp->use_lambda234_fits);
-  fprintf(f,"%s = %d\n", "use_tidal_fmode_model", eobp->use_tidal_fmode_model);
-  fprintf(f,"%s = %d\n", "use_speedytail", eobp->use_speedytail);
-  fprintf(f,"%s = %.10f\n", "dt_merger_interp", eobp->dt_merger_interp);
-  fprintf(f,"%s = %.10f\n", "dt_interp", eobp->dt_interp);
-  fprintf(f,"%s = %.10f\n", "srate_interp", eobp->srate_interp);
-  fprintf(f,"%s = %d\n", "interp_uniform_grid", eobp->interp_uniform_grid);
+  fprintf(f,"%s = %.10f\n" , "pGSF_tidal", eobp->pGSF_tidal);
+  fprintf(f,"%s = \"%s\"\n", "use_lambda234_fits", use_lambda234_fits_opt[eobp->use_lambda234_fits]);
+  fprintf(f,"%s = \"%s\"\n", "use_tidal_fmode_model", INT2YESNO(eobp->use_tidal_fmode_model));
+  fprintf(f,"%s = \"%s\"\n", "use_speedytail", INT2YESNO(eobp->use_speedytail));
+  fprintf(f,"%s = %.10f\n" , "dt_merger_interp", eobp->dt_merger_interp);
+  fprintf(f,"%s = %.10f\n" , "dt_interp", eobp->dt_interp);
+  fprintf(f,"%s = %.10f\n" , "srate_interp", eobp->srate_interp);
+  fprintf(f,"%s = \"%s\"\n", "interp_uniform_grid", INT2YESNO(eobp->interp_uniform_grid));
 
   fprintf(f,"%s = [", "use_mode_lm");
   for(int i=0; i<eobp->use_mode_lm_size-1;i++)
@@ -1010,10 +1020,10 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
-  fprintf(f,"%s = %d\n", "compute_LR", eobp->compute_LR);
-  fprintf(f,"%s = %d\n", "compute_LR_guess", eobp->compute_LR_guess);
-  fprintf(f,"%s = %d\n", "compute_LSO", eobp->compute_LSO);
-  fprintf(f,"%s = %d\n", "compute_LSO_guess", eobp->compute_LSO_guess);
+  fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
+  fprintf(f,"%s = %d\n"    , "compute_LR_guess", eobp->compute_LR_guess);
+  fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));
+  fprintf(f,"%s = %d\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
 
   /* NQC */
   fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);
@@ -1024,37 +1034,37 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 
   /* Post-adiabatic */
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics", INT2YESNO(eobp->postadiabatic_dynamics));
-  fprintf(f,"%s = %d\n", "postadiabatic_dynamics_N", eobp->postadiabatic_dynamics_N);
-  fprintf(f,"%s = %d\n", "postadiabatic_dynamics_size", eobp->postadiabatic_dynamics_size);
-  fprintf(f,"%s = %.10f\n", "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
+  fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_N", eobp->postadiabatic_dynamics_N);
+  fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_size", eobp->postadiabatic_dynamics_size);
+  fprintf(f,"%s = %.10f\n" , "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_stop", INT2YESNO(eobp->postadiabatic_dynamics_stop));
 
   /* Evolution settings */
-  fprintf(f,"%s = %.10f\n", "srate", eobp->srate);
-  fprintf(f,"%s = %.10f\n", "dt", eobp->dt);
-  fprintf(f,"%s = %d\n", "size", eobp->size);
-  fprintf(f,"%s = %d\n", "ringdown_extend_array", eobp->ringdown_extend_array);
+  fprintf(f,"%s = %.10f\n" , "srate", eobp->srate);
+  fprintf(f,"%s = %.10f\n" , "dt", eobp->dt);
+  fprintf(f,"%s = %d\n"    , "size", eobp->size);
+  fprintf(f,"%s = %d\n"    , "ringdown_extend_array", eobp->ringdown_extend_array);
   fprintf(f,"%s = \"%s\"\n", "ode_timestep", ode_tstep_opt[eobp->ode_timestep]);
-  fprintf(f,"%s = %E\n", "ode_abstol", eobp->ode_abstol);
-  fprintf(f,"%s = %E\n", "ode_reltol", eobp->ode_reltol);
-  fprintf(f,"%s = %.10f\n", "ode_tmax", eobp->ode_tmax);
-  fprintf(f,"%s = %d\n", "ode_stop_at_radius", eobp->ode_stop_radius);
-  fprintf(f,"%s = %d\n", "ode_stop_afterNdt", eobp->ode_stop_afterNdt);
+  fprintf(f,"%s = %E\n"    , "ode_abstol", eobp->ode_abstol);
+  fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
+  fprintf(f,"%s = %.10f\n" , "ode_tmax", eobp->ode_tmax);
+  fprintf(f,"%s = %d\n"    , "ode_stop_at_radius", eobp->ode_stop_radius);
+  fprintf(f,"%s = %d\n"    , "ode_stop_afterNdt", eobp->ode_stop_afterNdt);
 
   /* Output */
   fprintf(f,"%s = \"%s\"\n", "output_dir", eobp->output_dir);
-  fprintf(f,"%s = %d\n", "output_hpc", eobp->output_hpc);
-  fprintf(f,"%s = %d\n", "output_multipoles", eobp->output_multipoles);
+  fprintf(f,"%s = \"%s\"\n", "output_hpc", INT2YESNO(eobp->output_hpc));
+  fprintf(f,"%s = \"%s\"\n", "output_multipoles", INT2YESNO(eobp->output_multipoles));
 
   fprintf(f,"%s = [", "output_lm");
   for(int i=0; i<eobp->output_lm_size-1;i++)
     fprintf(f,"%d,", eobp->output_lm[i]);
   fprintf(f,"%d]\n", eobp->output_lm[eobp->output_lm_size-1]);
 
-  fprintf(f,"%s = %d\n", "output_dynamics", eobp->output_dynamics);
-  fprintf(f,"%s = %d\n", "output_nqc", eobp->output_nqc);
-  fprintf(f,"%s = %d\n", "output_nqc_coefs", eobp->output_nqc_coefs);
-  fprintf(f,"%s = %d\n", "output_ringdown", eobp->output_nqc_coefs);
+  fprintf(f,"%s = \"%s\"\n", "output_dynamics", INT2YESNO(eobp->output_dynamics));
+  fprintf(f,"%s = \"%s\"\n", "output_nqc", INT2YESNO(eobp->output_nqc));
+  fprintf(f,"%s = \"%s\"\n", "output_nqc_coefs", INT2YESNO(eobp->output_nqc_coefs));
+  fprintf(f,"%s = \"%s\"\n", "output_ringdown", INT2YESNO(eobp->output_ringdown));
   
   fclose(f);
 }
