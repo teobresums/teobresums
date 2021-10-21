@@ -205,7 +205,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_postadiab_dyn) {
     size = EOBPars->postadiabatic_dynamics_size; 
     double rmin = EOBPars->postadiabatic_dynamics_rmin;
-    if(use_tidal) rmin = 14.; //EOBPars->postadiabatic_dynamics_rmin;//SB: use EOBPar do not hardcode
     size = floor(fabs(r0 - rmin)/EOBPars->postadiabatic_dynamics_dr) + 1;
     
     /* If initial radius is too close to PA limit then skip PA and go directly to ODE */
