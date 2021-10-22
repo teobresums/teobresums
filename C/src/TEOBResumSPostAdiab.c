@@ -26,26 +26,26 @@
 int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0)
 {
   /* Unpack values */
-  const double nu    = dyn->nu;
-  const double S     = dyn->S;
-  const double Sstar = dyn->Sstar;
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
-  const double c3    = dyn->cN3LO;
-  const double aK2   = dyn->aK2;
-  const double a1    = dyn->a1;
-  const double a2    = dyn->a2;
-  const double C_Q1  = dyn->C_Q1;
-  const double C_Q2  = dyn->C_Q2;
-  const double C_Oct1 = dyn->C_Oct1;
-  const double C_Oct2 = dyn->C_Oct2;
-  const double C_Hex1 = dyn->C_Hex1;
-  const double C_Hex2 = dyn->C_Hex2;
+  const double nu    = EOBPars->nu;
+  const double S     = EOBPars->S;
+  const double Sstar = EOBPars->Sstar;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double c3    = EOBPars->cN3LO;
+  const double aK2   = EOBPars->aK2;
+  const double a1    = EOBPars->a1;
+  const double a2    = EOBPars->a2;
+  const double C_Q1  = EOBPars->C_Q1;
+  const double C_Q2  = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
   const double z3    = 2.0*nu*(4.0-3.0*nu);
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
+  const int usetidal = EOBPars->use_tidal;
+  const int usespins = EOBPars->use_spins;
 
  /* Parameters for post adiabatic dynamics */
   const int Npa = EOBPars->postadiabatic_dynamics_N;    

@@ -116,12 +116,12 @@ double eob_nqc_dtfit(const double chi, const double chi0)
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
-  const double nu   = dyn->nu;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double aK   = dyn->a1 + dyn->a2;
+  const double nu   = EOBPars->nu;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double aK   = EOBPars->a1 + EOBPars->a2;
 
   const double nu2  = SQ(nu);
   const double nu3  = nu2*nu;
@@ -283,12 +283,12 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
-  const double nu   = dyn->nu;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double aK   = dyn->a1 + dyn->a2;
+  const double nu   = EOBPars->nu;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double aK   = EOBPars->a1 + EOBPars->a2;
 
   const double nu2  = SQ(nu);
   const double nu3  = nu2*nu;
@@ -594,18 +594,18 @@ double eob_nqc_timeshift(double nu, double chi1)
 void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
 {
   
-  const double nu    = dyn->nu;
+  const double nu    = EOBPars->nu;
   const double nu2   = SQ(nu);
   const double nu3   = nu2*nu;
   const double nu4   = SQ(nu2);
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
   const double X12   = X1 - X2;
   const double X12_2 = SQ(X12);
   const double X12_3 = X12_2*X12;
 
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
   const double aK    = X1*chi1 + X2*chi2;
   const double aK2   = SQ(aK);
   const double a12   = X1*chi1 - X2*chi2;

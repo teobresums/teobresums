@@ -2680,15 +2680,15 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
 #define use_fmode_22amplitude_correction (1)
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 {
-  const double nu       = EOBPars->nu; //dyn->nu; 
-  const double XA       = EOBPars->X1; //dyn->X1;
-  const double XB       = EOBPars->X2; //dyn->X2;
+  const double nu       = EOBPars->nu;  
+  const double XA       = EOBPars->X1;
+  const double XB       = EOBPars->X2;
 
-  double khatA_2 = 0.5*EOBPars->kapA2; //EOBPars->khatA2; // dyn->khatA2; 
-  double khatB_2 = 0.5*EOBPars->kapA2; //EOBPars->khatB2; //dyn->khatB2;
-  const double kapA2j   = EOBPars->kapA2j; //dyn->kapA2j;
-  const double kapB2j   = EOBPars->kapB2j; //dyn->kapB2j;
-  const double kapT2j   = EOBPars->kapT2j; //dyn->kapT2j;
+  double khatA_2 = 0.5*EOBPars->kapA2; 
+  double khatB_2 = 0.5*EOBPars->kapB2; 
+  const double kapA2j   = EOBPars->kapA2j;
+  const double kapB2j   = EOBPars->kapB2j;
+  const double kapT2j   = EOBPars->kapT2j;
   
 #if (use_fmode_22amplitude_correction)
   if (EOBPars->use_tidal_fmode_model) {

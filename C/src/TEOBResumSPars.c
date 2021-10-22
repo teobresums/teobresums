@@ -362,7 +362,7 @@ void eob_set_params(int default_choice, int firstcall)
   EOBPars->a2 = XB*chi2;
   EOBPars->aK = EOBPars->a1 +  EOBPars->a2;
   EOBPars->aK2 = SQ(EOBPars->aK);   
-  EOBPars->S = EOBPars->S1 +  EOBPars->S2;            /* in the EMRL this becomes the spin of the BH */
+  EOBPars->S = EOBPars->S1 +  EOBPars->S2;             /* in the EMRL this becomes the spin of the BH */
   EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;  /* in the EMRL this becomes the spin of the particle */
 
   const int usespins = EOBPars->use_spins;
@@ -404,24 +404,6 @@ void eob_set_params(int default_choice, int firstcall)
 #endif
     
     /* Tidal coupling constants */
-#if (0)
-    // OLD temporarily kept for debugging purposes, TODEL
-    EOBPars->kapA2 = 3.      * EOBPars->LambdaAl2 * XA*XA*XA*XA*XA / q;
-    EOBPars->kapA3 = 15.     * EOBPars->LambdaAl3 * XA*XA*XA*XA*XA*XA*XA / q;
-    EOBPars->kapA4 = 105.    * EOBPars->LambdaAl4 * XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
-    EOBPars->kapA5 = 945.    * EOBPars->LambdaAl5 * XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
-    EOBPars->kapA6 = 10395.  * EOBPars->LambdaAl6 * XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
-    EOBPars->kapA7 = 135135. * EOBPars->LambdaAl7 * XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
-    EOBPars->kapA8 = 2027025.* EOBPars->LambdaAl8 * XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA*XA / q;
-    
-    EOBPars->kapB2 = 3.      * EOBPars->LambdaBl2 * XB*XB*XB*XB*XB * q;
-    EOBPars->kapB3 = 15.     * EOBPars->LambdaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
-    EOBPars->kapB4 = 105.    * EOBPars->LambdaBl4 * XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
-    EOBPars->kapB5 = 945.    * EOBPars->LambdaBl5 * XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
-    EOBPars->kapB6 = 10395.  * EOBPars->LambdaBl6 * XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
-    EOBPars->kapB7 = 135135. * EOBPars->LambdaBl7 * XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
-    EOBPars->kapB8 = 2027025.* EOBPars->LambdaBl8 * XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB*XB * q;
-#else
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl2,EOBPars->LambdaBl2, 2,  &(EOBPars->kapA2), &(EOBPars->kapB2));
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl3,EOBPars->LambdaBl3, 3,  &(EOBPars->kapA3), &(EOBPars->kapB3));
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl4,EOBPars->LambdaBl4, 4,  &(EOBPars->kapA4), &(EOBPars->kapB4));
@@ -429,7 +411,6 @@ void eob_set_params(int default_choice, int firstcall)
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl6,EOBPars->LambdaBl6, 6,  &(EOBPars->kapA6), &(EOBPars->kapB6));
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl7,EOBPars->LambdaBl7, 7,  &(EOBPars->kapA7), &(EOBPars->kapB7));
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl8,EOBPars->LambdaBl8, 8,  &(EOBPars->kapA8), &(EOBPars->kapB8));
-#endif
     
     /* gravitomagnetic tidal coupling constants el = 2 only */
     EOBPars->japA2 = 24.   * EOBPars->SigmaAl2 * XA*XA*XA*XA*XA / q;
@@ -458,9 +439,6 @@ void eob_set_params(int default_choice, int firstcall)
     /* Gravitomagnetic term, see Eq.(6.27) of Bini-Damour-Faye 2012 */
     EOBPars->bar_alph2j_1 = ( EOBPars->japA2*(1. + (11./6.)*XA + XA*XA) + EOBPars->japB2*(1. + (11./6.)*XB + XB*XB) )/EOBPars->japT2;
     
-    /* Tidal coefficients for the amplitude */
-    EOBPars->khatA2  = 3./2. * EOBPars->LambdaAl2 * XB/XA * gsl_pow_int(XA,5);//TODO check&remove, not needed anymore
-    EOBPars->khatB2  = 3./2. * EOBPars->LambdaBl2 * XA/XB * gsl_pow_int(XB,5);//TODO check&remove, not needed anymore
     
     /* Self-spin coefficients */
     EOBPars->C_Q1   = 1.;
@@ -666,7 +644,7 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
       eobp->chi1 = par_get_d(val);
     }
     if (STREQUAL(key,"chi2")) {
-      eobp->chi1 = par_get_d(val);
+      eobp->chi2 = par_get_d(val);
     }
     if (STREQUAL(key,"distance")) {
       eobp->distance = par_get_d(val);
@@ -751,7 +729,7 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
       val = string_trim(val);
       for (eobp->use_lambda234_fits=0; eobp->use_lambda234_fits<=Lambda234_fits_NOPT; eobp->use_lambda234_fits++) {
 	      if (eobp->use_lambda234_fits == Lambda234_fits_NOPT) {
-	        eobp->centrifugal_radius = Lambda234_fits_YAGI13;
+	        eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
 	        if (VERBOSE) printf("use_lambda234_fits '%s' undefined, set to '%s'\n",
 			    val, use_lambda234_fits_opt[eobp->use_lambda234_fits]);
 	      break;
@@ -980,37 +958,94 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "use_geometric_units", INT2YESNO(eobp->use_geometric_units));
 
   /* intrinsic parameters */
-  fprintf(f,"%s = %.10f\n", "M", eobp->M);
-  fprintf(f,"%s = %.10f\n", "q", eobp->q);
-  fprintf(f,"%s = %.10f\n", "chi1", eobp->chi1);
-  fprintf(f,"%s = %.10f\n", "chi2", eobp->chi2);
-  fprintf(f,"%s = %.10f\n", "distance", eobp->distance);
-  fprintf(f,"%s = %.10f\n", "inclination", eobp->inclination);
-  fprintf(f,"%s = %.10f\n", "coalescence_angle", eobp->coalescence_angle);
-  fprintf(f,"%s = %.10f\n", "polarization", eobp->polarization);
-  fprintf(f,"%s = %.10f\n", "r0", eobp->r0);
-  fprintf(f,"%s = %.10f\n", "initial_frequency", eobp->initial_frequency);
-  fprintf(f,"%s = %.10f\n", "LambdaAl2", eobp->LambdaAl2);
-  fprintf(f,"%s = %.10f\n", "LambdaBl2", eobp->LambdaBl2);
-  fprintf(f,"%s = %.10f\n", "LambdaAl3", eobp->LambdaAl3);
-  fprintf(f,"%s = %.10f\n", "LambdaBl3", eobp->LambdaBl3);
-  fprintf(f,"%s = %.10f\n", "LambdaAl4", eobp->LambdaAl4);
-  fprintf(f,"%s = %.10f\n", "LambdaBl4", eobp->LambdaBl4);
-  fprintf(f,"%s = %.10f\n", "SigmaAl2", eobp->SigmaAl2);
-  fprintf(f,"%s = %.10f\n", "SigmaBl2", eobp->SigmaBl2);
+  fprintf(f,"%s = %.16f\n", "M", eobp->M);
+  fprintf(f,"%s = %.16f\n", "q", eobp->q);
+  fprintf(f,"%s = %.16f\n", "chi1", eobp->chi1);
+  fprintf(f,"%s = %.16f\n", "chi2", eobp->chi2);
+  fprintf(f,"%s = %.16f\n", "distance", eobp->distance);
+  fprintf(f,"%s = %.16f\n", "inclination", eobp->inclination);
+  fprintf(f,"%s = %.16f\n", "coalescence_angle", eobp->coalescence_angle);
+  fprintf(f,"%s = %.16f\n", "polarization", eobp->polarization);
+  fprintf(f,"%s = %.16f\n", "r0", eobp->r0);
+  fprintf(f,"%s = %.16f\n", "initial_frequency", eobp->initial_frequency);
+  fprintf(f,"%s = %.16f\n", "LambdaAl2", eobp->LambdaAl2);
+  fprintf(f,"%s = %.16f\n", "LambdaBl2", eobp->LambdaBl2);
+  fprintf(f,"%s = %.16f\n", "LambdaAl3", eobp->LambdaAl3);
+  fprintf(f,"%s = %.16f\n", "LambdaBl3", eobp->LambdaBl3);
+  fprintf(f,"%s = %.16f\n", "LambdaAl4", eobp->LambdaAl4);
+  fprintf(f,"%s = %.16f\n", "LambdaBl4", eobp->LambdaBl4);
+  fprintf(f,"%s = %.16f\n", "SigmaAl2", eobp->SigmaAl2);
+  fprintf(f,"%s = %.16f\n", "SigmaBl2", eobp->SigmaBl2);
+
+  /* Derived parameters */
+  fprintf(f,"%s = %.16f\n", "nu", eobp->nu);
+  fprintf(f,"%s = %.16f\n", "X1", eobp->X1);
+  fprintf(f,"%s = %.16f\n", "X2", eobp->X2);
+  fprintf(f,"%s = %.16f\n", "S2", eobp->S1);
+  fprintf(f,"%s = %.16f\n", "S2", eobp->S2);
+  fprintf(f,"%s = %.16f\n", "S",  eobp->S);
+  fprintf(f,"%s = %.16f\n", "Sstar",  eobp->Sstar);
+  fprintf(f,"%s = %.16f\n", "a1",  eobp->a1);
+  fprintf(f,"%s = %.16f\n", "a2",  eobp->a2);
+  fprintf(f,"%s = %.16f\n", "aK",  eobp->aK);
+  fprintf(f,"%s = %.16f\n", "aK2", eobp->aK2);
+  fprintf(f,"%s = %.16f\n", "C_Q1", eobp->C_Q1);
+  fprintf(f,"%s = %.16f\n", "C_Q2", eobp->C_Q2);
+  fprintf(f,"%s = %.16f\n", "C_Oct1", eobp->C_Oct1);
+  fprintf(f,"%s = %.16f\n", "C_Oct2", eobp->C_Oct2);
+  fprintf(f,"%s = %.16f\n", "C_Hex1", eobp->C_Hex1);
+  fprintf(f,"%s = %.16f\n", "C_Hex2", eobp->C_Hex2);
+  fprintf(f,"%s = %.16f\n", "a6c", eobp->a6c);
+  fprintf(f,"%s = %.16f\n", "cN3LO", eobp->cN3LO);
+
+  fprintf(f,"%s = %.16f\n","kappaAl2",  eobp->kapA2); // gravitoelectric kappa star A
+  fprintf(f,"%s = %.16f\n","kappaAl3",  eobp->kapA3); //
+  fprintf(f,"%s = %.16f\n","kappaAl4",  eobp->kapA4); //
+  fprintf(f,"%s = %.16f\n","kappaAl5",  eobp->kapA5); //
+  fprintf(f,"%s = %.16f\n","kappaAl6",  eobp->kapA6); //
+  fprintf(f,"%s = %.16f\n","kappaAl7",  eobp->kapA7); //
+  fprintf(f,"%s = %.16f\n","kappaAl8",  eobp->kapA8); //
+
+  fprintf(f,"%s = %.16f\n","kappaBl2",  eobp->kapB2); //
+  fprintf(f,"%s = %.16f\n","kappaBl3",  eobp->kapB3); //
+  fprintf(f,"%s = %.16f\n","kappaBl4",  eobp->kapB4); //
+  fprintf(f,"%s = %.16f\n","kappaBl5",  eobp->kapB5); //
+  fprintf(f,"%s = %.16f\n","kappaBl6",  eobp->kapB6); //
+  fprintf(f,"%s = %.16f\n","kappaBl7",  eobp->kapB7); //
+  fprintf(f,"%s = %.16f\n","kappaBl8",  eobp->kapB8); //
+
+  fprintf(f,"%s = %.16f\n","kappajAl2",  eobp->japA2); // gravitomagnetic kappa star A
+  fprintf(f,"%s = %.16f\n","kappajBl2",  eobp->japB2);
+  fprintf(f,"%s = %.16f\n","kappajTl2",  eobp->japT2);
+  
+  fprintf(f,"%s = %.16f\n","kappaTl2",  eobp->kapT2); //
+  fprintf(f,"%s = %.16f\n","kappaTl3",  eobp->kapT3); //
+  fprintf(f,"%s = %.16f\n","kappaTl4",  eobp->kapT4); //
+  fprintf(f,"%s = %.16f\n","bar_alph2_1", eobp->bar_alph2_1); //
+  fprintf(f,"%s = %.16f\n","bar_alph2_2", eobp->bar_alph2_2); //
+  fprintf(f,"%s = %.16f\n","bar_alph3_1", eobp->bar_alph3_1); //
+  fprintf(f,"%s = %.16f\n","bar_alph3_2", eobp->bar_alph3_2); //
+  fprintf(f,"%s = %.16f\n","bar_alph2j_1", eobp->bar_alph2j_1); //
+  fprintf(f,"%s = %.16f\n","khatAl2",  eobp->khatA2); //
+  fprintf(f,"%s = %.16f\n","khatBl2",  eobp->khatB2); //
+  fprintf(f,"%s = %.16f\n","rLR_tidal",  eobp->rLR_tidal); // radius of light-ring for NNLO tidal model
+  
+  fprintf(f,"%s = %.16f\n","BH_final_mass",  eobp->Mbhf); // final BH mass
+  fprintf(f,"%s = %.16f\n","BH_final_spin",  eobp->abhf); 
+
 
   /* EOB Settings */
 
   fprintf(f,"%s = %d\n"    , "use_spins", eobp->use_spins);
   fprintf(f,"%s = \"%s\"\n", "tides", tides_opt[eobp->use_tidal]);
   fprintf(f,"%s = \"%s\"\n", "tides_gravitomagnetic", tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
-  fprintf(f,"%s = %.10f\n" , "pGSF_tidal", eobp->pGSF_tidal);
+  fprintf(f,"%s = %.16f\n" , "pGSF_tidal", eobp->pGSF_tidal);
   fprintf(f,"%s = \"%s\"\n", "use_lambda234_fits", use_lambda234_fits_opt[eobp->use_lambda234_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_tidal_fmode_model", INT2YESNO(eobp->use_tidal_fmode_model));
   fprintf(f,"%s = \"%s\"\n", "use_speedytail", INT2YESNO(eobp->use_speedytail));
-  fprintf(f,"%s = %.10f\n" , "dt_merger_interp", eobp->dt_merger_interp);
-  fprintf(f,"%s = %.10f\n" , "dt_interp", eobp->dt_interp);
-  fprintf(f,"%s = %.10f\n" , "srate_interp", eobp->srate_interp);
+  fprintf(f,"%s = %.16f\n" , "dt_merger_interp", eobp->dt_merger_interp);
+  fprintf(f,"%s = %.16f\n" , "dt_interp", eobp->dt_interp);
+  fprintf(f,"%s = %.16f\n" , "srate_interp", eobp->srate_interp);
   fprintf(f,"%s = \"%s\"\n", "interp_uniform_grid", INT2YESNO(eobp->interp_uniform_grid));
 
   fprintf(f,"%s = [", "use_mode_lm");
@@ -1036,18 +1071,18 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics", INT2YESNO(eobp->postadiabatic_dynamics));
   fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_N", eobp->postadiabatic_dynamics_N);
   fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_size", eobp->postadiabatic_dynamics_size);
-  fprintf(f,"%s = %.10f\n" , "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
+  fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_stop", INT2YESNO(eobp->postadiabatic_dynamics_stop));
 
   /* Evolution settings */
-  fprintf(f,"%s = %.10f\n" , "srate", eobp->srate);
-  fprintf(f,"%s = %.10f\n" , "dt", eobp->dt);
+  fprintf(f,"%s = %.16f\n" , "srate", eobp->srate);
+  fprintf(f,"%s = %.16f\n" , "dt", eobp->dt);
   fprintf(f,"%s = %d\n"    , "size", eobp->size);
   fprintf(f,"%s = %d\n"    , "ringdown_extend_array", eobp->ringdown_extend_array);
   fprintf(f,"%s = \"%s\"\n", "ode_timestep", ode_tstep_opt[eobp->ode_timestep]);
   fprintf(f,"%s = %E\n"    , "ode_abstol", eobp->ode_abstol);
   fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
-  fprintf(f,"%s = %.10f\n" , "ode_tmax", eobp->ode_tmax);
+  fprintf(f,"%s = %.16f\n" , "ode_tmax", eobp->ode_tmax);
   fprintf(f,"%s = %d\n"    , "ode_stop_at_radius", eobp->ode_stop_radius);
   fprintf(f,"%s = %d\n"    , "ode_stop_afterNdt", eobp->ode_stop_afterNdt);
 

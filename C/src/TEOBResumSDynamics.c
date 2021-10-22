@@ -27,7 +27,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
 
-  const double nu = dyn->nu;  
+  const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);
 
   /** Unpack y */ 
@@ -152,8 +152,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
 
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
+  const int usetidal = EOBPars->use_tidal;
+  const int usespins = EOBPars->use_spins;
   
   /* Shorthands */
   const double r      = y[EOB_EVOLVE_RAD];
@@ -886,7 +886,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   double x, x_lo, x_hi;
     
   /* Set interval to search root */
-  if (dyn->use_tidal) {
+  if (EOBPars->use_tidal) {
     /* Tides are always temporarily set as = NNLO to compute LR, 
        But we may want to define different searches intervals */
     const int tides = EOBPars->use_tidal;
@@ -977,7 +977,7 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
   double x;
   double x_lo = 4.5; // 4.532648e+00 nu= 1/4
   double x_hi = 6.2; // 6 nu=0 
-  if (dyn->use_tidal) x_hi = 36.; 
+  if (EOBPars->use_tidal) x_hi = 36.; 
   
   gsl_root_fsolver *s;
   gsl_function F;
@@ -1026,25 +1026,25 @@ int eob_dyn_fLSO_s (const gsl_vector *x, void * params, gsl_vector *f) {
   double r    = gsl_vector_get(x,0);
   double pphi = gsl_vector_get(x,1);
 
-  const double nu    = dyn->nu;
-  const double S     = dyn->S;
-  const double Sstar = dyn->Sstar;
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
-  const double c3    = dyn->cN3LO;
-  const double aK2   = dyn->aK2;
-  const double a1    = dyn->a1;
-  const double a2    = dyn->a2;
-  const double C_Q1  = dyn->C_Q1;
-  const double C_Q2  = dyn->C_Q2;
-  const double C_Oct1 = dyn->C_Oct1;
-  const double C_Oct2 = dyn->C_Oct2;
-  const double C_Hex1 = dyn->C_Hex1;
-  const double C_Hex2 = dyn->C_Hex2;
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
+  const double nu    = EOBPars->nu;
+  const double S     = EOBPars->S;
+  const double Sstar = EOBPars->Sstar;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double c3    = EOBPars->cN3LO;
+  const double aK2   = EOBPars->aK2;
+  const double a1    = EOBPars->a1;
+  const double a2    = EOBPars->a2;
+  const double C_Q1  = EOBPars->C_Q1;
+  const double C_Q2  = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
+  const int usetidal = EOBPars->use_tidal;
+  const int usespins = EOBPars->use_spins;
    
   double A, B, dA, d2A, dB;
   eob_metric_s(r, dyn, &A, &B, &dA, &d2A, &dB);

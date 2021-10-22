@@ -454,22 +454,6 @@ typedef struct tagDynamics
   double *time;
   double *data[EOB_DYNAMICS_NVARS];
   
-  /* key parameters for quick access */
-  // TODO: REMOVE THEM FROM HERE, use only those in EOBParameters!
-  double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK2, a6c, cN3LO;
-  double rLR, rLSO;
-  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8;
-  double kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8;
-  double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;
-  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2;
-  double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; //FIXME: these coefficients should be set at first call of metric routine (consistently with other PN coefs), and not used here
-  double kapA2j, kapB2j, kapT2j;
-  double rLR_tidal, pGSF_tidal;
-  double Mbhf, abhf; /* final BH */  
-  int use_tidal, use_spins, use_tidal_gravitomagnetic;
-  
 } Dynamics;
 
 /** Parameter data type */
