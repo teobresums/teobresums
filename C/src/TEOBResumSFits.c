@@ -116,12 +116,12 @@ double eob_nqc_dtfit(const double chi, const double chi0)
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
-  const double nu   = dyn->nu;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double aK   = dyn->a1 + dyn->a2;
+  const double nu   = EOBPars->nu;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double aK   = EOBPars->a1 + EOBPars->a2;
 
   const double nu2  = SQ(nu);
   const double nu3  = nu2*nu;
@@ -283,12 +283,12 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
-  const double nu   = dyn->nu;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double aK   = dyn->a1 + dyn->a2;
+  const double nu   = EOBPars->nu;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double aK   = EOBPars->a1 + EOBPars->a2;
 
   const double nu2  = SQ(nu);
   const double nu3  = nu2*nu;
@@ -594,18 +594,18 @@ double eob_nqc_timeshift(double nu, double chi1)
 void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
 {
   
-  const double nu    = dyn->nu;
+  const double nu    = EOBPars->nu;
   const double nu2   = SQ(nu);
   const double nu3   = nu2*nu;
   const double nu4   = SQ(nu2);
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
   const double X12   = X1 - X2;
   const double X12_2 = SQ(X12);
   const double X12_3 = X12_2*X12;
 
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
   const double aK    = X1*chi1 + X2*chi2;
   const double aK2   = SQ(aK);
   const double a12   = X1*chi1 - X2*chi2;
@@ -1173,20 +1173,60 @@ double get_a2_fit_22(double nu, double chi1, double chi2)
   return res;
 }
 
-/** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
+/** Yunes-Yagi logQ-vs-log(lambda) fit 
+    Table I of https://arxiv.org/abs/1303.1528 
     here x = log(lambda) and the output is the log of the coefficient
     that describes the quadrupole deformation due to spin. */
-double logQ(double x)
+void YagiYunes13_fit_logQ_coefs(double *c)
 {
-  const double ai = 0.194;
-  const double bi = 0.0936;
-  const double ci = 0.0474;
-  const double di = -4.21e-3;
-  const double ei = 1.23e-4;
+  c[0] = 0.194;
+  c[1] = 0.0936;
+  c[2] = 0.0474;
+  c[3] = -4.21e-3;
+  c[4] = 1.23e-4;
+}
+
+double YagiYunes13_fit_logQ(double x)
+{
+  /*
+    const double ai = 0.194;
+    const double bi = 0.0936;
+    const double ci = 0.0474;
+    const double di = -4.21e-3;
+    const double ei = 1.23e-4;
+    const double x2 = x*x;
+    const double x3 = x*x2;
+    const double x4 = x*x3;
+    return ai + bi*x + ci*x2 + di*x3 + ei*x4;
+  */
+  double c[5];
+  YagiYunes13_fit_logQ_coefs(c);
   const double x2 = x*x;
   const double x3 = x*x2;
   const double x4 = x*x3;
-  return ai + bi*x + ci*x2 + di*x3 + ei*x4;
+  return( c[4]*x4 + c[3]*x3 + c[2]*x2 + c[1]*x + c[0] );
+}
+
+void YagiYunes13_fit_logQ_drvts(double Lam, double Lam_u, double Lam_uu,
+				double *Q, double *Q_u, double *Q_uu)
+{
+  double c[5];
+  YagiYunes13_fit_logQ_coefs(c);
+  const double div_Lam = 1./Lam;
+  const double x = log(Lam);
+  const double x_u = Lam_u * div_Lam;
+  const double x_uu = ( -SQ(Lam_u) + Lam * Lam_uu ) * SQ(div_Lam);
+  const double x2 = x*x;
+  const double x3 = x*x2;
+  const double x4 = x*x3;
+  const double logQ = c[4]*x4 + c[3]*x3 + c[2]*x2 + c[1]*x + c[0];
+  const double logQ_x = 4*c[4]*x3 + 3*c[3]*x2 + 2*c[2]*x + c[1];  
+  const double logQ_xx = 12*c[4]*x2 + 6*c[3]*x + 2*c[2];  
+  const double logQ_u = logQ_x * x_u;
+  const double logQ_uu = logQ_xx * SQ(x_u) + logQ_x * x_uu;    
+  *Q = exp(logQ);
+  *Q_u = *Q * logQ_u;
+  *Q_uu = *Q * ( SQ(logQ_u) + logQ_uu );
 }
 
 /** Yagi 2013 fits for NS multipolar
@@ -1246,12 +1286,10 @@ double Yagi13_fit_barsigmalambda(double barlam2)
    Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
 double Yagi14_fit_Coct(double C_Q)
 {
-  double A0  = -0.925;
-  double B1  =  1.98;
-  double nu1 =  0.273;
-
-  double cubrootCoct = A0 + B1*pow(C_Q,nu1);
-
+  const double A0  = -0.925;
+  const double B1  =  1.98;
+  const double nu1 =  0.273;
+  const double cubrootCoct = A0 + B1*pow(C_Q,nu1);
   return cubrootCoct*cubrootCoct*cubrootCoct;
 }
 
@@ -1259,12 +1297,10 @@ double Yagi14_fit_Coct(double C_Q)
    Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
 double Yagi14_fit_Chex(double C_Q)
 {
-  double A0  = -0.413;
-  double B1  =  1.5;
-  double nu1 =  0.466;
-
-  double fourthrootChex = A0 + B1*pow(C_Q,nu1);
-
+  const double A0  = -0.413;
+  const double B1  =  1.5;
+  const double nu1 =  0.466;
+  const double fourthrootChex = A0 + B1*pow(C_Q,nu1);
   return SQ(SQ(fourthrootChex));
 }
 
@@ -1273,7 +1309,6 @@ double JFAPG_fit_Sigma_Irrotational(double barlam2)
   if (barlam2<=0.) return 0.;
   double lnx = log(barlam2);
   double coeffs[6];
- 
   coeffs[5] = -2.03;
   coeffs[4] =  0.487;
   coeffs[3] =  9.69e-3;
@@ -1281,8 +1316,7 @@ double JFAPG_fit_Sigma_Irrotational(double barlam2)
   coeffs[1] = -9.37e-5;
   coeffs[0] =  2.24e-6;
   double lny = coeffs[0]*lnx*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx*lnx+coeffs[2]*lnx*lnx*lnx+coeffs[3]*lnx*lnx+coeffs[4]*lnx+coeffs[5];
-
-  return -1.0*exp(lny);
+  return - exp(lny);
 }
 
 double JFAPG_fit_Sigma_Static(double barlam2)
@@ -1290,7 +1324,6 @@ double JFAPG_fit_Sigma_Static(double barlam2)
   if (barlam2<=0.) return 0.;
   double lnx = log(barlam2);
   double coeffs[6];
- 
   coeffs[5] = -2.66;
   coeffs[4] =  0.786;
   coeffs[3] =  -0.01;
@@ -1298,7 +1331,6 @@ double JFAPG_fit_Sigma_Static(double barlam2)
   coeffs[1] = -6.37e-5;
   coeffs[0] =  1.18e-6;
   double lny = coeffs[0]*lnx*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx*lnx+coeffs[2]*lnx*lnx*lnx+coeffs[3]*lnx*lnx+coeffs[4]*lnx+coeffs[5];
-
   return exp(lny);
 }
 
@@ -2787,3 +2819,219 @@ double get_mrg_timestop(double q, double chi1, double chi2)
   return tstop;
 }
 
+/** Effective Love number for the f-mode resonance model
+    Eq.(6.51) of https://arxiv.org/abs/1608.01907
+    Eq.(11) of https://arxiv.org/abs/1702.02053
+    This routine computes the dressing factor for the star ell-th Love number
+*/
+double fmode_resonance_dress_Love(double nu,
+				  double r, // orbital radius
+				  double bomgf, // = mA omega_f
+				  int ell, 
+				  double *dtides, double *dtides_u)
+{
+  if (ell<2 || ell>4) errorexit("f-mode model only for l=2,3,4");
+  double a[5] = {0, 0, 1./4., 3./8., 29./64.}; // a_ell, ell = (0), (1), 2, 3, 4
+  double b[5] = {0, 0, 3./4., 5./8., 35./64.}; // b_ell
+  const double five_o_three = 1.66666666666666666; // = 5./3.;
+  const double one_o_six = 0.166666666666666666; // = 1./6.;
+  const int emm = ell;
+  const double Omega = pow(r, -1.5);
+  const double Omg1 = 0.375; // = 3./8.;
+  double x = bomgf/(emm*Omega);
+  double x_u = - 1.5*r*x;
+  double x2 = SQ(x);
+  double x5_3 = pow(x, five_o_three);
+  const double eps = 256./5. * nu * pow(bomgf/emm,five_o_three);
+  if (eps<=0.) errorexit("epsilon<=0"); 
+  const double div_sqrt_eps = 1.0/sqrt(eps);
+  /* Arguments of various functions */
+  const double that = 1.6 * div_sqrt_eps * (1. - x5_3);
+  const double that_u = - 2.6666666666666665 * div_sqrt_eps * x5_3/x * x_u;
+  const double arg = Omg1 * SQ(that);// cos/sin arg
+  const double arg_u = 0.75 * that * that_u;
+  if (arg<=0.) errorexit("arg<=0"); 
+  const double argfresnel = 0.61237243569579447*that;//sqrt(arg); 
+  const double nrmfresnel = sqrt(Pi/(2.*Omg1));    
+  /* Resonant term */
+  const double x1 = x - 1.;
+  double rterm = 0;
+  double rterm_u = 0;
+  if(fabs(x1)<1e-2) {
+    /* Taylor expansion near x1 */
+    double c0[5]  = {-0.0833333333333333,
+		     -0.1157407407407407,
+		     -0.006944444444444445,
+		     0.01122256515775034,
+		     -0.007120198902606311};
+    double c1[5] = {-0.1157407407407407,
+		    -0.01388888888888889,
+		    0.03366769547325102,
+		    -0.02848079561042524,
+		    0.01919764200071127};
+    const double x12 = x1*x1;
+    const double x13 = x1*x12;
+    const double x14 = x1*x13;
+    rterm = c0[4]*x14 + c0[3]*x13 + c0[2]*x12 + c0[1]*x1 + c0[0];
+    rterm_u = c1[4]*x14 + c1[3]*x13 + c1[2]*x12 + c1[1]*x1 + c1[0];
+    rterm_u *= x_u;
+  }
+  else {
+    /* Full formula */
+    const double rt1 = 1./(x2 - 1.);
+    const double rt2 = 1./(1. - x5_3);
+    rterm   = x2*( rt1 + 5*one_o_six*rt2 );
+    rterm_u = 2.*x*x_u*( -SQ(rt1) + 5*one_o_six*(1. - one_o_six*x5_3)*SQ(rt2) );
+  }
+  /* Fresnel term */
+  const double FS = Fresnel_Sine_Integral(argfresnel);  
+  const double FC = Fresnel_Cosine_Integral(argfresnel);
+  const double FS1 = nrmfresnel*(0.5 + FS); 
+  const double FC1 = nrmfresnel*(0.5 + FC);
+  const double cosa = cos(arg);
+  const double sina = sin(arg);
+  const double fterm = div_sqrt_eps * x2 * (cosa*FS1 - sina*FC1);
+  const double fterm_u = div_sqrt_eps * ( 2*x*x_u*(cosa*FS1 - sina*FC1) - x2*arg_u*(sina*FS1 + cosa*FC1) );
+  /* Dressing factors */ 
+  *dtides   = a[ell] + b[ell]*(rterm + fterm);
+  *dtides_u = b[ell]*(rterm_u + fterm_u);
+
+#if (0)//(DEBUG)
+  printf("DEBUG(f-mode) Omega = %.6e x = %.6e x1 = %.6e\n",Omega,x,x1);
+  printf("DEBUG(f-mode) alpha = %.6e alpha_u = %.6e\n",*dtides,*dtides_u);  
+  printf("DEBUG(f-mode) that = %.6e\n",that);
+  printf("DEBUG(f-mode) sqrt(eps) = %.6e\n",sqrt(eps));
+  printf("DEBUG(f-mode) rt1 = %.6e rt2 = %.6e\n",rt1, rt2);
+  printf("DEBUG(f-mode) r = %.6e r_u = %.6e\n",rterm, rterm_u);
+  printf("DEBUG(f-mode) arg = %.6e\n",arg);
+  printf("DEBUG(f-mode) cos = %.6e sin = %.6e\n",cosa,sina);  
+  printf("DEBUG(f-mode) argfresnel = %.6e\n",argfresnel);  
+  printf("DEBUG(f-mode) FS1 = %.6e FC1 = %.6e\n",FS1,FC1);
+  printf("DEBUG(f-mode) f = %.6e f_u = %.6e\n",fterm, fterm_u);
+#endif
+  
+}
+
+/** Routine to update dressing factors for f-mode resonance model
+ * Only apply to gravitoelectric ell=2,3,4 
+ */
+#define enforce_alpha_min (1) /* enforce min(alpha)=1 */
+void fmode_resonance_dressing_factors(double r, Dynamics *dyn)
+{
+  if (!(EOBPars->use_tidal_fmode_model)) return;
+
+  const double nu = EOBPars->nu;
+  const int lmax = 4;
+  
+  for (int l=2; l<=lmax; l++) {
+    if (EOBPars->bomgfA[l]<0. || EOBPars->bomgfB[l]<0.)
+      errorexit("f-mode frequency cannot be negative");
+    dyn->dress_tides_fmode_A[l] = dyn->dress_tides_fmode_B[l] = 1;
+    dyn->dress_tides_fmode_A_u[l] = dyn->dress_tides_fmode_B_u[l] = 0;
+  }
+  
+  /* Compute the dressing factors */
+  if (EOBPars->LambdaAl2>0.) {
+    for (int l=2; l<=lmax; l++) {
+      fmode_resonance_dress_Love(nu, r, EOBPars->bomgfA[l], l,
+				 &(dyn->dress_tides_fmode_A[l]),
+				 &(dyn->dress_tides_fmode_A_u[l]));
+      /* if (dyn->dress_tides_fmode_A[l]<=0.) errorexit("Dressing A factor<0"); */
+#if(enforce_alpha_min)
+      if (dyn->dress_tides_fmode_A[l]<1) {
+	dyn->dress_tides_fmode_A[l] = 1;
+      	dyn->dress_tides_fmode_A_u[l] = 0;
+      }
+#endif
+    }
+  }
+  
+  if (EOBPars->LambdaBl2>0.) {
+    for (int l=2; l<=lmax; l++) {
+      fmode_resonance_dress_Love(nu, r, EOBPars->bomgfB[l], l,
+				 &(dyn->dress_tides_fmode_B[l]),
+				 &(dyn->dress_tides_fmode_B_u[l]));
+      /* if (dyn->dress_tides_fmode_B[l]<=0.) errorexit("Dressing B factor<0"); */
+#if(enforce_alpha_min)
+      if (dyn->dress_tides_fmode_B[l]<1) {
+      	dyn->dress_tides_fmode_B[l] = 1;
+	dyn->dress_tides_fmode_B_u[l] = 0;
+      }
+#endif
+    }
+  }
+  
+#if(DEBUG)
+  if (EOBPars->output_dynamics) {
+    const double Omega = pow(r, -1.5);
+    FILE* fp;
+    char fname[STRLEN];
+    strcpy(fname,EOBPars->output_dir);
+    strcat(fname,"/fmode_dressingfact.txt");
+    if( access( fname, F_OK ) == 0 ) {
+      if ((fp = fopen(fname, "a+")) == NULL)
+	errorexits("error opening file",fname);
+    } else {
+      if ((fp = fopen(fname, "a+")) == NULL)
+	errorexits("error opening file",fname);
+      fprintf(fp, "# bomgfA = (%.6e %.6e %.6e) bomgfB = (%.6e %.6e %.6e)\n",
+	      EOBPars->bomgfA[2],EOBPars->bomgfA[3],EOBPars->bomgfA[4],
+	      EOBPars->bomgfB[2],EOBPars->bomgfB[3],EOBPars->bomgfB[4]);
+      fprintf(fp, "# Omg alphaA2 alphaA3 alphaA4 alphaB2 alphaB3 alphaB4\n");
+    }  
+    fprintf(fp, "%.6e %.6e %.6e %.6e %.6e %.6e %.6e\n", Omega,
+	    dyn->dress_tides_fmode_A[2],dyn->dress_tides_fmode_A[3],dyn->dress_tides_fmode_A[4],
+	    dyn->dress_tides_fmode_B[2],dyn->dress_tides_fmode_B[3],dyn->dress_tides_fmode_B[4]);
+    fclose(fp);
+  }
+#endif
+  
+}
+ 
+/* Routine to update the quadrupole, octupole, hexapole 
+   using the dressed Lambdas */
+void fmode_resonance_dress_QOH(Dynamics *dyn)
+{
+  /* Dress the Lambda's */
+  const double LamA2 = EOBPars->LambdaAl2 * dyn->dress_tides_fmode_A[2];
+  const double LamB2 = EOBPars->LambdaBl2 * dyn->dress_tides_fmode_B[2];
+  
+  const double LamA2_u = EOBPars->LambdaAl2 * dyn->dress_tides_fmode_A_u[2];
+  const double LamB2_u = EOBPars->LambdaBl2 * dyn->dress_tides_fmode_B_u[2];
+  
+  const double LamA2_uu = 0;
+  const double LamB2_uu = 0;
+
+  /* Compute the QOH */
+  double C_QA = 1;
+  double C_QA_u = 0;
+  double C_QA_uu = 0;
+  if (LamA2>0) 
+    YagiYunes13_fit_logQ_drvts(LamA2,LamA2_u,LamA2_uu, &C_QA, &C_QA_u, &C_QA_uu);
+
+  dyn->dressed_C_Q1 = C_QA;
+  dyn->dressed_C_Q1_u = C_QA_u;
+  dyn->dressed_C_Q1_uu = C_QA_uu;
+
+  double C_QB = 1;
+  double C_QB_u = 0;
+  double C_QB_uu = 0;  
+  if (LamB2>0)
+    YagiYunes13_fit_logQ_drvts(LamB2,LamB2_u,LamB2_uu, &C_QB, &C_QB_u, &C_QB_uu);
+
+  dyn->dressed_C_Q2 = C_QB;
+  dyn->dressed_C_Q2_u = C_QB_u;
+  dyn->dressed_C_Q2_uu = C_QB_uu;
+
+  //TODO use other fits for OH ...
+  dyn->dressed_C_Oct1 = EOBPars->C_Oct1;
+  dyn->dressed_C_Oct2 = EOBPars->C_Oct2;
+  dyn->dressed_C_Hex1 = EOBPars->C_Hex1; 
+  dyn->dressed_C_Hex2 = EOBPars->C_Hex2;
+
+  dyn->dressed_C_Oct1_u = dyn->dressed_C_Oct1_uu = 0;
+  dyn->dressed_C_Oct2_u = dyn->dressed_C_Oct2_uu = 0;
+  dyn->dressed_C_Hex1_u = dyn->dressed_C_Hex1_uu = 0;
+  dyn->dressed_C_Hex2_u = dyn->dressed_C_Hex2_uu = 0;
+  
+}

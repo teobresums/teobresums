@@ -6,7 +6,7 @@
 # everything is given geometric units and binary mass-rescaled 
 #
 
-use_geometric_units = 1
+use_geometric_units = "yes"
 
 #
 # Binary properties
@@ -29,7 +29,7 @@ LambdaAl4 = 0.
 LambdaBl2 = 390.608866261215 # SLy mB = 1.35*Msun
 LambdaBl3 = 709.518721258149
 LambdaBl4 = 1245.540991372862
-use_lambda234_fits = 1
+use_lambda234_fits = "YAGI13"
 
 centrifugal_radius = "NLO" 
 use_flm = "SSLO"
@@ -39,10 +39,10 @@ use_flm = "SSLO"
 #
 
 output_dir = "./bhns_q3_s02s005_10Hz/"
-output_hpc = 1 # switch this off to test performances!!!
-output_multipoles = 1
+output_hpc = "yes" # switch this off to test performances!!!
+output_multipoles = "yes"
 output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13]
-output_dynamics = 0
+output_dynamics = "no"
 
 #
 # Setup
@@ -51,12 +51,12 @@ output_dynamics = 0
 size = 200 # size of the arrays (chunks, dynamically extended)
 ode_timestep = "adaptive"
 ode_stop_at_radius = 4.5 # this should be safe, but depends on Lambda
-compute_LR = 0 # calculate LR ?
-compute_LSO = 0 # calculate LSO ?
+compute_LR = "no" # calculate LR ?
+compute_LSO = "no" # calculate LSO ?
 
 # interpolate on uniform grid?
 #interp_uniform_grid = 0 # no 
-interp_uniform_grid = 1 # yes, only h+,hx
+interp_uniform_grid = "yes" # yes, only h+,hx
 #interp_uniform_grid = 2 # yes, all modes
 
 dt_interp = 9.1790293835 # interpolation spacing, delta_t/M  = 4096 Hz

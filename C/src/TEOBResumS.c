@@ -63,34 +63,33 @@ int main (int argc, char* argv[])
   EOBParameters_defaults (dc, EOBPars);
   
   if (argv[1]!=NULL) {
-    /* Deal with input parfile if necessary 
-       (Kepr for backward compatibility) */
-    par_db_init ();
-    par_db_from_EOBPar (EOBPars);
-    par_file_parse_merge (argv[1]);
-    par_db_screen (VERBOSE);
-    EOBParameters_set_from_db (EOBPars);
-    const int output = EOBPars->output_dynamics + EOBPars->output_multipoles + EOBPars->output_hpc + EOBPars->output_nqc;    
-    if (output) {
-      if (system_mkdir(EOBPars->output_dir)) {
-	printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
-	return ERROR_MKDIR;
-      }
-      par_db_write_file("params.txt");
-    }
-    par_db_free();    
+    /* Deal with input parfile */
+    EOBParameters_parse_file (argv[1], EOBPars);
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
     if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
   }
   
+  const int output = EOBPars->output_dynamics
+    + EOBPars->output_multipoles
+    + EOBPars->output_hpc
+    + EOBPars->output_nqc;  
+  
+  if (output) {
+    if (system_mkdir(EOBPars->output_dir)) {
+      printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
+      return ERROR_MKDIR;
+    }
+  }
+    
   /* Set all firstcalls = 1 */
   for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
   }
-
+  
   /* set domain */
   eob_set_params(dc, fc); 
-  
+  if (output) EOBParameters_tofile(EOBPars,"params.txt");
+
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
 		      &hmodes, &hfmodes,&dynf,
@@ -228,43 +227,43 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** NQC data */  
   NQCdata_alloc (&NQC); 
   eob_nqc_setcoefs(NQC);
-
+  
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
-
     /* Compute rLR_tidal for NNLO potential and without spin part */
-    dyn->use_tidal = TIDES_NNLO; 
-    dyn->use_spins = 0;
-    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal)));
+    int tidal_tmp = EOBPars->use_tidal;
+    int spins_tmp = EOBPars->use_spins;
+    EOBPars->use_tidal = TIDES_NNLO; 
+    EOBPars->use_spins = 0;
+    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR_tidal)));
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
-    EOBPars->rLR_tidal = dyn->rLR_tidal;
     double LambdaAl2  = EOBPars->LambdaAl2;
     if( fabs(LambdaAl2) < TEOB_LAMBDA_TOL ) LambdaAl2 = 0.0;
     double LambdaBl2 = EOBPars->LambdaBl2;
     if( fabs(LambdaBl2) < TEOB_LAMBDA_TOL ) LambdaBl2 = 0.0;
     double q = EOBPars->q;
-
     /* Reset options */
-    dyn->use_tidal = EOBPars->use_tidal;
-    dyn->use_spins = EOBPars->use_spins;
-    if (VERBOSE) PRFORMd("rLR_tidal",dyn->rLR_tidal); 
+    EOBPars->use_tidal = tidal_tmp;
+    EOBPars->use_spins = spins_tmp;
+    if (VERBOSE) PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
+    /* Set ODE stop to LR */
+    EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
   if (EOBPars->compute_LR && !(use_tidal)) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
-    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
+    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR)));
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
-    EOBPars->rLR = dyn->rLR;
-    if (VERBOSE) PRFORMd("rLR",dyn->rLR);
+    if (VERBOSE) PRFORMd("rLR",EOBPars->rLR);
   }
   if (EOBPars->compute_LSO) {
-    ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
+    ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(EOBPars->rLSO)));
     //Spin version
     //TODO: Decide what to do when LSO does not exist (large alignes spins) 
     //double pphiLSO = 0.;
@@ -273,25 +272,24 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
-    EOBPars->rLSO = dyn->rLSO;
-    if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
+    if (VERBOSE) PRFORMd("rLSO",EOBPars->rLSO);
   }   
 
   /** Final BH */
-  if (!(dyn->use_tidal)) {
+  if (!(EOBPars->use_tidal)) {
     /* HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf)); */
-    dyn->Mbhf = JimenezFortezaRemnantMass(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
-    dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+    EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
     if (VERBOSE) {
       PRSECTN("Final black hole");
-      /* PRFORMd("BH_final_mass[Healy]",dyn->Mbhf);  */
-      /* PRFORMd("BH_final_spin[Healy]",dyn->abhf); */
-      PRFORMd("BH_final_mass[JimenezForteza]",dyn->Mbhf); 
-      PRFORMd("BH_final_spin[JimenezForteza]",dyn->abhf);
+      PRFORMd("BH_final_mass[JimenezForteza]",EOBPars->Mbhf); 
+      PRFORMd("BH_final_spin[JimenezForteza]",EOBPars->abhf);
     }
-    EOBPars->Mbhf = dyn->Mbhf;
-    EOBPars->abhf = dyn->abhf;
   }
+
+  /** Compute the dressing factors for the f-mode resonances at r0 */
+  if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model))
+    fmode_resonance_dressing_factors(r0, dyn);  
 
   /* Iteration index */
   int iter = 0;  
@@ -329,7 +327,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
       
       if (dyn->time[size-1] > EOBPars->ode_tmax)
-	EOBPars->postadiabatic_dynamics_stop = 1;
+	      EOBPars->postadiabatic_dynamics_stop = 1;
      }
 
     dyn->store = dyn->noflx = 0;
@@ -432,11 +430,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Initialize ODE system solver */
   dyn->t_stop = EOBPars->ode_tmax * time_unit_fact;
-  EOBPars->ode_tmax = dyn->t_stop;
+  EOBPars->ode_tmax      = dyn->t_stop;
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
-  const double rstop   = EOBPars->ode_stop_radius; 
+  const double rstop = EOBPars->ode_stop_radius;
   if (rstop>0.) {
     dyn->ode_stop_radius   = true;
   }
@@ -505,7 +503,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
-      if (dyn->r > dyn->rLSO) { 
+      if (dyn->r > EOBPars->rLSO) { 
 	GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
       } else {
 	/* ... uniform afterwards */
@@ -695,7 +693,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	Recall that parameters are NOT stored into these auxiliary vars */
     
     if (merger_interp) {
-
+      
       /** Extract the waveform and dynamics around merger */
       const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
       const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
@@ -806,7 +804,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       Waveform_lm_free (hlm_nqc);
       
-    } // NQC_HLM_COMPUTE
+    }  /* NQC_HLM_COMPUTE */
 
     
     /** BBH : add Ringdown */

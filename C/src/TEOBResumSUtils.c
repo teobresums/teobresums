@@ -37,6 +37,17 @@ double nu_to_X1(const double nu)
   return 0.5*(1.+sqrt(1.-4.*nu));
 }
 
+/** Compute tidal coupling constants from tidal polarizability parameters */
+double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell,
+			     double *kapA, double *kapB)
+{
+  if (ell<2) errorexit("ell must be >2");
+  double f2lm1 = doublefact(2*ell-1);
+  int p = 2*ell + 1;
+  *kapA = f2lm1 * LamA * pow(XA,p) / q;
+  *kapB = f2lm1 * LamB * pow(XB,p) * q;
+}
+
 /** Eulerlog function (constants are defined in header) */
 static const double Logm[] = {0.,Log1,Log2,Log3,Log4,Log5,Log6,Log7};
 double Eulerlog(const double x,const int m)
@@ -425,85 +436,6 @@ double find_max_grid (double *x, double *f)
   return xmax;
 }
 
-/** Factorial */
-static const double f35[] = {1.,
-			     1.,
-			     2.,
-			     6.,
-			     24.,
-			     120.,
-			     720.,
-			     5040.,
-			     40320.,
-			     362880.,
-			     3628800., 
-			     39916800.,
-			     479001600.,
-			     6227020800.,
-			     87178291200.,
-			     1307674368000.,
-			     20922789888000.,
-			     355687428096000.,
-			     6402373705728000.,
-			     121645100408832000.,
-			     2432902008176640000.,
-			     51090942171709440000.,
-			     1124000727777607680000.,
-			     25852016738884976640000.,
-			     620448401733239439360000.,
-			     15511210043330985984000000.,
-			     403291461126605635584000000.,
-			     10888869450418352160768000000.,
-			     304888344611713860501504000000.,
-			     8841761993739701954543616000000.,
-			     265252859812191058636308480000000.,
-			     8222838654177922817725562880000000.,
-			     263130836933693530167218012160000000.,
-			     8683317618811886495518194401280000000.,
-			     295232799039604140847618609643520000000.,
-			     10333147966386144929666651337523200000000.};
-double fact(int n)
-{
-  if (n < 0){
-    errorexit(" computing a negative factorial.\n");
-  } else if (n <= 35){
-    return f35[n];
-  } else {
-    return n*fact(n-1);
-  }
-}
-
-/** Wigner d-function */
-double wigner_d_function(int l, int m, int s, double i)
-{
-  const double costheta = cos(i*0.5);
-  const double sintheta = sin(i*0.5);
-  const double norm = sqrt( (fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s)) );
-  const int ki = MAX( 0  , m-s );
-  const int kf = MIN( l+m, l-s );
-  double dWig = 0.;  
-  double div;
-  for (int k = ki; k <= kf; k++ ) {
-    div = 1.0/( fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) );
-    dWig += div*( pow(-1.,k) * pow(costheta,2*l+m-s-2*k) * pow(sintheta,2*k+s-m) );
-  }
-  return (norm * dWig);
-}
-
-/** Spin-weighted spherical harmonic 
-    Ref: https://arxiv.org/pdf/0709.0093.pdf */
-int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
-{
-  if ((l<0) || (m<-l) || (m>l)) {
-    errorexit(" wrong (l,m) inside spinspharmY\n");
-  }
-  double c = pow(-1.,-s) * sqrt( (2.*l+1.)/(4.*M_PI) );
-  double dWigner = c * wigner_d_function(l,m,-s,i);
-  *rY = cos((double)(m)*phi) * dWigner;
-  *iY = sin((double)(m)*phi) * dWigner;
-  return OK;
-}
-
 /** (h+, hx) polarizations from the multipolar waveform */
 void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
 {  
@@ -858,20 +790,6 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
 
   free(n);
   if (dbg_unwrap_proxy) DBGSTOP;
-}
-
-/** This routine sets a 0/1 mask for the multipolar linear index */
-void set_multipolar_idx_mask_old(int *kmask, int n)
-{
-  int m, k,j;
-  for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
-  int *idx = par_get_arrayi("use_mode_lm", &m);
-  if (m==0) return;
-  if (m==1 && idx[0]==-1) return;
-  for (k = 0; k<n; k++)
-    for (j = 0; j<m; j++)
-      if (idx[j] == k) kmask[k] = 1;
-  free(idx);
 }
 
 /** This routine sets a 0/1 mask for the multipolar linear index 
@@ -1917,74 +1835,18 @@ void Dynamics_free (Dynamics *dyn)
 
 /** Sync some quick access parameters in dyn with parameter database 
     to be used carefully */
+// TODO: remove redundant parameters already present in EOBPars and use directly the latter!
 void Dynamics_set_params (Dynamics *dyn)
 {
   dyn->store = 0;
   dyn->size  = EOBPars->size;
-  dyn->M     = EOBPars->M;
-  dyn->nu    = EOBPars->nu;
-  dyn->q     = EOBPars->q;
-  dyn->X1    = EOBPars->X1;  
-  dyn->X2    = EOBPars->X2;
-  dyn->chi1  = EOBPars->chi1;
-  dyn->chi2  = EOBPars->chi2;
-  dyn->S1    = EOBPars->S1;
-  dyn->S2    = EOBPars->S2;
-  dyn->S     = EOBPars->S;
-  dyn->Sstar = EOBPars->Sstar;
-  dyn->a1    = EOBPars->a1;
-  dyn->a2    = EOBPars->a2; 
-  dyn->aK2   = EOBPars->aK2; 
-  dyn->C_Q1  = EOBPars->C_Q1;
-  dyn->C_Q2  = EOBPars->C_Q2;
-  dyn->C_Oct1 = EOBPars->C_Oct1;
-  dyn->C_Oct2 = EOBPars->C_Oct2;
-  dyn->C_Hex1 = EOBPars->C_Hex1;
-  dyn->C_Hex2 = EOBPars->C_Hex2;
-  dyn->a6c   = EOBPars->a6c;
-  dyn->cN3LO = EOBPars->cN3LO;
-  dyn->rLR   = EOBPars->rLR;
-  dyn->rLR_tidal = EOBPars->rLR_tidal;
-  dyn->rLSO  = EOBPars->rLSO;
-  dyn->kapA2 = EOBPars->kapA2;
-  dyn->kapA3 = EOBPars->kapA3;
-  dyn->kapA4 = EOBPars->kapA4;
-  dyn->kapA5 = EOBPars->kapA5;
-  dyn->kapA6 = EOBPars->kapA6;
-  dyn->kapA7 = EOBPars->kapA7;
-  dyn->kapA8 = EOBPars->kapA8;
-  dyn->kapB2 = EOBPars->kapB2;
-  dyn->kapB3 = EOBPars->kapB3;
-  dyn->kapB4 = EOBPars->kapB4;
-  dyn->kapB5 = EOBPars->kapB5;
-  dyn->kapB6 = EOBPars->kapB6;
-  dyn->kapB7 = EOBPars->kapB7;
-  dyn->kapB8 = EOBPars->kapB8;
-  dyn->kapT2 = EOBPars->kapT2;
-  dyn->kapT3 = EOBPars->kapT3;
-  dyn->kapT4 = EOBPars->kapT4;
-  dyn->kapT5 = EOBPars->kapT5;
-  dyn->kapT6 = EOBPars->kapT6;
-  dyn->kapT7 = EOBPars->kapT7;
-  dyn->kapT8 = EOBPars->kapT8;
-  dyn->khatA2 = EOBPars->khatA2;
-  dyn->khatB2 = EOBPars->khatB2;
-  dyn->kapA2j = EOBPars->japA2;
-  dyn->kapB2j = EOBPars->japB2;
-  dyn->kapT2j = EOBPars->japT2;
-  dyn->bar_alph2_1 = EOBPars->bar_alph2_1;
-  dyn->bar_alph2_2 = EOBPars->bar_alph2_2;
-  dyn->bar_alph3_1 = EOBPars->bar_alph3_1;
-  dyn->bar_alph3_2 = EOBPars->bar_alph3_2;
-  dyn->bar_alph2j_1 = EOBPars->bar_alph2j_1;
-  dyn->pGSF_tidal = EOBPars->pGSF_tidal;
-  dyn->Mbhf = EOBPars->Mbhf;
-  dyn->abhf = EOBPars->abhf;
-  dyn->use_tidal = EOBPars->use_tidal;
-  dyn->use_tidal_gravitomagnetic = EOBPars->use_tidal_gravitomagnetic;
-  dyn->use_spins = EOBPars->use_spins;
   dyn->dt        = EOBPars->dt;
   dyn->t_stop    = EOBPars->ode_tmax;
+  for (int l=2; l<6; l++) {
+    dyn->dress_tides_fmode_A[l] = dyn->dress_tides_fmode_B[l] = 1;
+    dyn->dress_tides_fmode_A_u[l] = dyn->dress_tides_fmode_B_u[l] = 0;
+  }
+
 }
 
 /** NQC data */
@@ -2303,7 +2165,177 @@ int system_mkdir(const char *name)
   char s[STRLEN];
   sprintf(s,"mkdir -p %s",name);
   return system(s);
-  /* if (system(s)) errorexit("Error during system call to make directory.");  */
+}
+
+/** checks for blank string */
+int is_blank(const char *line) 
+{
+  const char accept[]=" \t\r\n"; 
+  return (strspn(line, accept) == strlen(line));
+}
+
+/** remove white spaces from string */
+void remove_white_spaces(char *str)
+{
+  int i = 0, j = 0;
+  while (str[i]) {
+    if (str[i] != ' ')
+      str[j++] = str[i];
+    i++;
+  }
+  str[j] = '\0';
+}
+
+/** cut string to the first delimiter */
+void remove_comments(char *line, const char *delimiters)
+{
+  int sz = strcspn(line,delimiters);
+  char *newline = (char *) calloc(sizeof(char), sz+1);
+  strncpy(newline,line,sz);
+  newline[sz] = '\0';
+  strcpy(line, newline);
+  free(newline);
+}
+
+/** get rid of trailing and leading whitespace */
+char *trim(char *str)
+{
+  char *start = str;
+  char *end = str + strlen(str);  
+  while(*start && isspace(*start))
+    start++;
+  while(end > start && isspace(*(end - 1)))
+    end--;
+  *end = '\0';
+  return start;
+}
+
+/** check start & end */
+int startswith(const char *str, const char *beg)
+{
+  return (strncmp(beg, str, strlen(beg)) == 0);
+}
+int endswith(const char *str, const char *end)
+{
+  return (strncmp(str+strlen(str)-strlen(end), end, strlen(end)) == 0);
+}
+
+/** get key value separated by a '=' */
+int getkv(char *line, char **key, char **val) 
+{
+  char *ptr = strchr(line,'=');
+  if (ptr == NULL)
+    return 1;
+  *ptr++ = '\0';
+  *key = trim(line);
+  *val = trim(ptr);
+  return 0;
+}
+
+/** identify string in parfile */
+int is_string(const char *str)
+{
+  if (startswith(str,"\"") && endswith(str,"\""))
+    return 1;
+  return 0;
+}
+char *string_trim(char *str)
+{
+  char *start = str;
+  char *end = str + strlen(str);  
+  if (is_string(str)) {
+    start++;
+    end--;
+    *end = '\0';
+    return start;
+  }
+  return NULL;
+}
+
+/* Helpers conversion str to type */
+int par_get_i (char *val)
+{
+  return atoi(val);
+}
+int par_get_b (char *val)
+{
+  return atoi(val)?1:0;
+}
+double par_get_d (char *val)
+{
+  return atof(val);
+}
+int par_get_s (char * dest, char *src)
+{
+  if (is_string(src)) {    
+    strncpy(dest, src+1, strlen(src)-2);
+    return 0;
+  }
+  return 1;
+}
+
+/** return number of entries in a string according to "delimiters" */ 
+const char * ARRAY_DELIMITER[] = { "[", ",", "]" };
+int noentries(const char *string)
+{
+  int n = 0;
+  char *s, *t; 
+  int len = strlen(string);
+  
+  if (! ((strncmp(ARRAY_DELIMITER[0], string, 1) == 0) &&
+	 (strncmp(string+len-1, ARRAY_DELIMITER[2], 1) == 0)) ) {
+    /* printf(" %c...%c\n",string[0],string[len-1]);  */
+    errorexit("Parsing string for array: must start with [ and end with ].");
+  }
+
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  while (t != NULL) {
+    n++;
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+  }
+  free(s);
+  return n;
+}
+
+/** convert a string to an array of int (alloc mem) */
+int str2iarray(const char *string, int **a)
+{
+  char *s, *t;
+  int n = noentries(string);
+  (*a) = (int *) malloc (n * sizeof(int));
+  if (!(*a)) errorexit(eob_error_msg[ERROR_OUTOFMEM]);
+  const int len = strlen(string);
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  int j = 0;
+  while ((t != NULL) && (j<n)) {
+    (*a)[j] = atoi(t);     
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+    j++;
+  }
+  free(s);  
+  return n;
+}
+
+/** convert a string to an array of double (alloc mem) */
+int str2darray(const char *string, double **a)
+{
+  char *s, *t;
+  int n = noentries(string);
+  (*a) = (double*) malloc (n * sizeof(double));
+  if (!(*a)) errorexit(eob_error_msg[ERROR_OUTOFMEM]);
+  const int len = strlen(string);
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  int j = 0;
+  while ((t != NULL) && (j<n)) {
+    (*a)[j] = atof(t);
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+    j++;
+  }
+  free(s);  
+  return n;
 }
 
 /** Date and time */
