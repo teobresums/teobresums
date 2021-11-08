@@ -56,6 +56,16 @@
     (there is an extern in the header) */
 EOBParameters *EOBPars;
 
+/** Global vars for function pointers
+    (extern in the header) */
+funcptr eob_wav_hlmNewt;
+funcptr eob_wav_flm;
+funcptr eob_wav_flm_s;
+funcptr eob_wav_deltalm;
+funcptr eob_wav_hlmNQC_find_a1a2a3_mrg;
+funcptr eob_wav_ringdown;
+funcptr eob_dyn_s_get_rc;
+
 void EOBParameters_alloc (EOBParameters **eobp)
 {
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
