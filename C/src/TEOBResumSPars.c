@@ -71,7 +71,7 @@ void EOBParameters_alloc (EOBParameters **eobp)
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
   if (eobp == NULL)
     errorexit("Out of memory");
-  /* the arrays below are already allocated in EOBParameters_defaults */
+  /* the arrays below are allocated in EOBParameters_defaults */
   /* (*eobp)->use_mode_lm_size = 1;  */
   /* (*eobp)->use_mode_lm = malloc ( 1 * sizeof(int) ); */
   /* (*eobp)->use_mode_lm [0] = -1; */
@@ -128,6 +128,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->pGSF_tidal = 4.0;// p-power in GSF tidal potential model
 
   eobp->use_spins=1; // use spins ?
+  eobp->project_spins=1;
 
   /* options */
 
@@ -169,7 +170,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
 
   eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  eobp->use_flm=USEFLM_SSLO; // "SSLO", "SSNLO", "HM"
+  eobp->use_flm=USEFLM_HM; // "SSLO", "SSNLO", "HM"
   
   eobp->compute_LR=0; // calculate LR ?
   eobp->compute_LSO=0; // calculate LSO ?
@@ -183,8 +184,9 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   strcpy(eobp->nqc_coefs_hlm_file,"");
 
   /* Output */
+  
   strcpy(eobp->output_dir, "./data");  // output dir
-  eobp->output_hpc= 1; // output h+,hx
+  eobp->output_hpc= 0; // output h+,hx
   eobp->output_multipoles= 0; // output multipoles
   eobp->output_dynamics=0; // output dynamics
   eobp->output_nqc=0; // output NQC waveform
@@ -197,7 +199,6 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   memcpy(eobp->output_lm, klm, eobp->output_lm_size * sizeof(int));
   
   /* Evolution settings */
-
   eobp->srate=4096.; // sampling rate, used if input is given in physical unit, reset based on tstep otherwise
   eobp->dt=0.5; // timestep, used if input is given in geometric unit, reset based on srate otherwise
   eobp->size=500; // size of the arrays (chunks, dynamically extended)
@@ -205,17 +206,31 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
-  eobp->ode_tmax=2e8; // max integration time
-  eobp->ode_stop_radius=1.; // stop ODE integration at this radius (if > 0)
-  eobp->ode_stop_afterNdt=4; // stop ODE N iters after the Omega peak
+  eobp->ode_tmax=1e9; // max integration time
+  eobp->ode_stop_radius  =1.; // stop ODE integration at this radius (if > 0)
+  eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
+
+  /* Spin dynamics */
   
+  eobp->spin_dyn_size      = 500;// size for spin dynamics arrays
+  eobp->spin_odes_omg_stop = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
+  eobp->spin_odes_t_stop   = -1;
+  eobp->spin_odes_dt       = 1;  // timestep for spin dynamics
+  eobp->spin_interp_domain = 1;  // FD or TD interpolation
+  eobp->chi1x = eobp->chi1y = eobp->chi1z = 0.;
+  eobp->chi2x = eobp->chi2y = eobp->chi2z = 0.;
+  eobp->spin_flx             = SPIN_FLX_PN;
+  eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
+
   /* OMP settings */
+
   eobp->openmp_threads=1; // OpenMP threads
   eobp->openmp_timeron=0; // OpenMP timers
 
-
+   
   /* following pars are set later by the code */
 
+  
   eobp->nu= 0. ; // symmetric mass ratio
   eobp->X1= 0. ; // mass ratio M1/M
   eobp->X2= 0. ; // mass ratio M2/M
@@ -364,20 +379,23 @@ void eob_set_params(int default_choice, int firstcall)
   const double XA = EOBPars->X1; /* tidal part used different notation, used here for simplicity */
   const double XB = EOBPars->X2;
   
-  const double chi1 = EOBPars->chi1;
-  const double chi2 = EOBPars->chi2;
-  EOBPars->S1 = SQ(XA) * chi1;
-  EOBPars->S2 = SQ(XB) * chi2;
-  EOBPars->a1 = XA*chi1;
-  EOBPars->a2 = XB*chi2;
-  EOBPars->aK = EOBPars->a1 +  EOBPars->a2;
-  EOBPars->aK2 = SQ(EOBPars->aK);   
-  EOBPars->S = EOBPars->S1 +  EOBPars->S2;             /* in the EMRL this becomes the spin of the BH */
-  EOBPars->Sstar = XB* EOBPars->a1 + XA* EOBPars->a2;  /* in the EMRL this becomes the spin of the particle */
-
   const int usespins = EOBPars->use_spins;
   const int usetidal = EOBPars->use_tidal;
   const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
+
+  /* Spin parameters */
+  if (usespins==MODE_SPINS_GENERIC) {
+    EOBPars->chi1 = EOBPars->chi1z;
+    EOBPars->chi2 = EOBPars->chi2z;
+  }
+
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  set_spin_vars(XA,XB, EOBPars->chi1,EOBPars->chi2, 
+		&EOBPars->S1, &EOBPars->S2,
+		&EOBPars->a1, &EOBPars->a2,
+		&EOBPars->aK, &EOBPars->aK2,
+		&EOBPars->S, &EOBPars->Sstar);
 
   if (usetidal) {
     
@@ -500,15 +518,15 @@ void eob_set_params(int default_choice, int firstcall)
   // NOTE: The defaults are different from v0.0 and v1.0
   if (EOBPars->nqc == NQC_AUTO) {
     if (usetidal) {
-      EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-      EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
+        EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+        EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
       if (usespins) {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+        EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002;
+        EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
       } else {
-	EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN_201602;
-	EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602;
+        EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_NOSPIN_201602;
+        EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602;
       }
     }
   } 
@@ -653,8 +671,26 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     if (STREQUAL(key,"chi1")) {
       eobp->chi1 = par_get_d(val);
     }
+    if (STREQUAL(key,"chi1x")) {
+      eobp->chi1x = par_get_d(val);
+    }
+    if (STREQUAL(key,"chi1y")) {
+      eobp->chi1y = par_get_d(val);
+    }
+    if (STREQUAL(key,"chi1z")) {
+      eobp->chi1z = par_get_d(val);
+    }
     if (STREQUAL(key,"chi2")) {
       eobp->chi2 = par_get_d(val);
+    }
+    if (STREQUAL(key,"chi2x")) {
+      eobp->chi2x = par_get_d(val);
+    }
+    if (STREQUAL(key,"chi2y")) {
+      eobp->chi2y = par_get_d(val);
+    }
+    if (STREQUAL(key,"chi2z")) {
+      eobp->chi2z = par_get_d(val);
     }
     if (STREQUAL(key,"distance")) {
       eobp->distance = par_get_d(val);
@@ -704,17 +740,17 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     if (STREQUAL(key,"use_spins")) {
       eobp->use_spins = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
     }
-    
+
     if (STREQUAL(key,"tides")) {     
       val = string_trim(val);
       for (eobp->use_tidal=0; eobp->use_tidal<=TIDES_NOPT; eobp->use_tidal++) {
-	if (eobp->use_tidal == TIDES_NOPT) {
-	  eobp->use_tidal = TIDES_OFF;
-	  if (VERBOSE) printf("tides '%s' undefined, set to '%s'\n",
+	      if (eobp->use_tidal == TIDES_NOPT) {
+	        eobp->use_tidal = TIDES_OFF;
+	          if (VERBOSE) printf("tides '%s' undefined, set to '%s'\n",
 			      val,tides_opt[eobp->use_tidal]);
-	  break;
-	}
-	if (STREQUAL(val,tides_opt[eobp->use_tidal])) break;
+	          break;
+	      }
+	    if (STREQUAL(val,tides_opt[eobp->use_tidal])) break;
       }
     }
     
@@ -813,16 +849,57 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
       eobp->compute_LSO_guess = par_get_d(val);
     }
     
+    /* Precession settings */
+
+    if (STREQUAL(key,"spin_flx")) {     
+      val = string_trim(val);
+      for (eobp->spin_flx=0; eobp->spin_flx<=SPIN_FLX_NOPT; eobp->spin_flx++) {
+        if (eobp->spin_flx == SPIN_FLX_NOPT) {
+          eobp->spin_flx = SPIN_FLX_PN;
+          if (VERBOSE) printf("spin flux '%s' undefined, set to '%s'\n",
+          val,spin_flx_opt[eobp->spin_flx]);
+          break;
+        }
+      if (STREQUAL(val,spin_flx_opt[eobp->spin_flx])) break;
+      }
+    }    
+
+    if (STREQUAL(key,"ringdown_eulerangles")) {     
+      val = string_trim(val);
+      for (eobp->ringdown_eulerangles=0; eobp->ringdown_eulerangles<=RD_EULERANGLES_NOPT; eobp->ringdown_eulerangles++) {
+        if (eobp->ringdown_eulerangles == RD_EULERANGLES_NOPT) {
+          eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
+          if (VERBOSE) printf("ringdown euler angles '%s' undefined, set to '%s'\n",
+          val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles]);
+          break;
+        }
+      if (STREQUAL(val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles])) break;
+      }
+    }   
+
+    if (STREQUAL(key,"spin_dyn_size")) {
+      eobp->spin_dyn_size = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+    }
+    if (STREQUAL(key,"spin_odes_omg_stop")) {
+      eobp->spin_odes_omg_stop = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+    }
+    if (STREQUAL(key,"spin_odes_t_stop")) {
+      eobp->spin_odes_t_stop = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+    }
+    if (STREQUAL(key,"spin_odes_dt")) {
+      eobp->spin_odes_dt = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+    }
+
     /* NQC */
     
     if (STREQUAL(key,"nqc")) {
       val = string_trim(val);
       for (eobp->nqc=0; eobp->nqc<=NQC_NOPT; eobp->nqc++) {
-	if (STREQUAL(val,nqc_opt[eobp->nqc])) break;
+	      if (STREQUAL(val,nqc_opt[eobp->nqc])) break;
       }
       if (eobp->nqc == NQC_NOPT) {
-	eobp->nqc = NQC_AUTO;
-	if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
+	      eobp->nqc = NQC_AUTO;
+	      if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
 			    val, nqc_opt[eobp->nqc]);
       }
     }
@@ -952,7 +1029,20 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     if (STREQUAL(key,"output_ringdown")) {
       eobp->output_ringdown = YESNO2INT(string_trim(val));
     }
-           
+
+    /* FD */
+    if (STREQUAL(key,"domain")) {
+      eobp->domain = par_get_i(val);
+    }
+    if (STREQUAL(key,"time_shift_FD")) {
+      eobp->time_shift_FD = par_get_i(val);
+    }      
+    if (STREQUAL(key,"df")) {
+      eobp->df = par_get_d(val);
+    }     
+    // if (STREQUAL(key,"interp_freqs")) {
+    //   eobp->df = par_get_i(val);
+    // }   
 
   } // while/fgets
   fclose(fp);
@@ -1043,7 +1133,6 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","BH_final_mass",  eobp->Mbhf); // final BH mass
   fprintf(f,"%s = %.16f\n","BH_final_spin",  eobp->abhf); 
 
-
   /* EOB Settings */
 
   fprintf(f,"%s = %d\n"    , "use_spins", eobp->use_spins);
@@ -1113,7 +1202,6 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   
   fclose(f);
 }
-
 
 #if (DEBUG_THIS_FILE)
 

@@ -30,7 +30,7 @@ pyprofit_ext = Extension('EOBRun_module',
                          sources = eob_sources,
                          include_dirs = incdirs,
                          libraries = libs,
-                         extra_compile_args=["-w", "-std=c99"] #"-DDEBUG", "-DVERBOSE", "-fcommon"
+                         extra_compile_args=["-w", "-std=c99", "-DDEBUG=0", "-DVERBOSE=0"]#, "-fcommon"
                        )
 
 setup(  name='TEOBResumSPy',
