@@ -499,7 +499,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
   //       &EOBPars->aK, &EOBPars->aK2,
   //       &EOBPars->S, &EOBPars->Sstar);
   // }
-  printf("final r, omg, chis =%.10f %.10f %.10f %.10f\n", dyn->r, dyn->Omg, EOBPars->chi1, EOBPars->chi2);
 
   /* Free memory */
   for (int v=0; v < nv; v++)
