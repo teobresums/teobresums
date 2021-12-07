@@ -780,31 +780,42 @@ void unwrap(double *p, const int size)
   }
 }
 
-/* Slightly modified unwrap function for HM phases */
+/* Modified unwrap function for HM phases */
 void unwrap_HM(double *p, const int size)
 {
   if (size < 1) return;
+  
   int j;
-  double dphi, corr, curr, prev;
+  double delta, dphi, corr, curr, prev;
+
   dphi = 0.;
   corr = 0.;
   
-  prev = *p;  
+  prev  = p[0];
+  delta = p[1]-p[0];
+  
   for (j = 1; j < size; j++){
-    p++;
-    curr = *p;
-    
-    if(curr < prev - Pi) 
+    // Setting current data point
+    p[j] += corr;
+    curr = p[j];
+
+    // Check if decreasing too much - adding 2Pi
+    if((curr < prev - Pi) && (curr - prev < delta - Pi))
       dphi = TwoPi;
-    if(curr > prev + Pi)
+
+    // Check if increasing too much - removing 2Pi
+    if((curr > prev + TwoPi) && (curr - prev > delta + Pi))
       dphi = -TwoPi;
 
+    // Adding corrections
     corr += dphi;
-    *p += corr;    
+    p[j] += dphi;
 
-    prev = curr;
-    dphi = 0.0;    
-  } 
+    // Resetting for next iteration
+    prev = p[j];
+    delta = p[j]-p[j-1];
+    dphi = 0.0;
+  }
   
 }
 
