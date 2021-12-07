@@ -1114,10 +1114,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (EOBPars->domain == DOMAIN_TD) {
 	      Waveform_lm_output (hlm); 
 	      Waveform_lm_output_reim (hlm);
-	      if (use_spins == MODE_SPINS_GENERIC)
+	      if (use_spins == MODE_SPINS_GENERIC){
 	        Waveform_lm_output (hTlm);
         	Waveform_lm_output (hTlm_neg);
-          Waveform_lm_output (hTl0);  
+            Waveform_lm_output (hTl0);
+          }
       } else {
 	      WaveformFD_lm_output (hflm);
 	      if (use_spins == MODE_SPINS_GENERIC)
