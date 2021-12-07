@@ -29,8 +29,8 @@ CFLAGS +=-g  # Debug
 #CFLAGS +=-pg # Debug & Profile
 #CFLAGS +=-O3  # Optimized
 
-CFLAGS += -DDEBUG=1 # 1/0 to turn on/off debug mode
-CFLAGS += -DVERBOSE=1 # 1/0 to turn on/off verbose mode
+CFLAGS += -DDEBUG=0 # 1/0 to turn on/off debug mode
+CFLAGS += -DVERBOSE=0 # 1/0 to turn on/off verbose mode
 
 #CFLAGS += -fcommon # gcc 10
 #CFLAGS += -fopenmp # OpenMP
