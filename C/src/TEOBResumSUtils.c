@@ -1133,11 +1133,13 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
 
 void Waveform_lm_output (Waveform_lm *wav)
 {
+  int kmask[KMAX];
+  set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
   char fname[STRLEN*2];
   const int n = wav->size;
   
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
+    if (kmask[k]) {      
       sprintf(fname,"%s/%s_l%01d_m%01d.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
 
       FILE* fp;
@@ -1153,11 +1155,13 @@ void Waveform_lm_output (Waveform_lm *wav)
 
 void Waveform_lm_output_reim (Waveform_lm *wav)
 {
+  int kmask[KMAX];
+  set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
   char fname[STRLEN*2];
   double re,im;
   const int n = wav->size;
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
+    if (kmask[k]) {
       sprintf(fname,"%s/%s_l%01d_m%01d_reim.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
@@ -1436,7 +1440,7 @@ void WaveformFD_lm_output_reim (WaveformFD_lm *wav)
   double re,im;
   const int n = wav->size;
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
+    if (kmask[k]) {
       sprintf(fname,"%s/FD_%s_l%01d_m%01d_reim.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
