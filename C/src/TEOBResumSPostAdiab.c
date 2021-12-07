@@ -214,7 +214,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
                 &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
                 &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu)       */
                 &Heff_orb_vec[i],
-                &dHeff_dr,        /* drvt Heff,r      */
+                NULL,             /* drvt Heff,r      */
                 NULL,             /* drvt Heff,prstar */
                 &dHeff_dpphi,     /* drvt Heff,pphi   */
                 &d2Heff_dprstar20,
@@ -227,7 +227,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
       eob_ham(nu, dyn->r, dyn->pphi, dyn->prstar, A_vec[i], dA_vec[i],
               &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
               &Heff_orb_vec[i], /* effective EOB Hamiltonian (divided by mu). */
-              &dHeff_dr,        /* drvt Heff,r      */
+              NULL,             /* drvt Heff,r      */
               NULL,             /* drvt Heff,prstar */
               &dHeff_dpphi);    /* drvt Heff,pphi   */
       
@@ -245,7 +245,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     dyn->Omg_orb = (dyn->pphi*A_vec[i]*uc2_vec[i])/(E_vec[i]*Heff_orb_vec[i]);
     
     /** ddotr */
-    dyn->ddotr   = -A_vec[i]/B_vec[i]*dHeff_dr*d2Heff_dprstar20;
+    dyn->ddotr   = 0.;
     
     dyn->data[EOB_RAD][i]    = dyn->r;
     dyn->data[EOB_PPHI][i]   = dyn->pphi;

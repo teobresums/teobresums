@@ -798,12 +798,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
  END_ODE_EVOLUTION:;
   
-  /** Unwrap phase for higher modes.
-      Skip PA phases: they can jump 2Pi by construction */
+  /** Unwrap phase for higher modes */
   if (EOBPars->use_flm == USEFLM_HM) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
-	unwrap_HM(&hlm->phase[k][pasize],size-pasize);
+	unwrap_HM(hlm->phase[k],size);
       }
     }
   }
