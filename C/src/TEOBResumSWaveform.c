@@ -4309,6 +4309,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     }
 
   }
+
+   if((nu==0.25)&&(chi1==0)&&(chi2==0)){// TODO: problematic cases where X12=0 and messes up the fits
+     ai[0][0] = ai[1][0];
+     ai[0][1] = ai[1][1];
+     ai[4][0] = ai[1][0];
+     ai[4][1] = ai[1][1];
+     ai[13][0] = ai[1][0];
+     ai[13][1] = ai[1][1];
+   }
   
   if (VERBOSE){
     printf("NQC coefficients for 22 mode:\n");

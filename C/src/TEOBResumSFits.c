@@ -105,6 +105,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   double p1[2], p2[2], p3[2], p4[2]; 
   double pn0[2], pd1[2], ppdomg1[2], ppdomg2[2], pdA1[2],pdA2[2],pdA3[2],pdA4[2];
 
+
   /* l=2, m=2 */	
     p1[0]      =  0.04680896;
     p1[1]      = -0.00632114;
@@ -149,6 +150,12 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
     c_pdomg1   =  ppdomg1[0]*nu + ppdomg1[1];
     c_pdomg2   =  ppdomg2[0]*nu + ppdomg2[1];
     domg_tmp[1] =  c_pdomg1*aK   + c_pdomg2;
+
+  /* l=2, m=1 */
+  A_tmp[0] = A_tmp[1];
+  dA_tmp[0] = dA_tmp[1];
+  omg_tmp[0] = omg_tmp[1];
+  domg_tmp[0] = domg_tmp[1];
   
   /* l=3, m=1 */
   A_tmp[2]    = 0.00520201*X12*(1 - 4.9441*nu + 8.9339*nu2);
@@ -545,8 +552,8 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     double Aorb, Aspin, scale, Amax1, Amax2, num_A, denom_A;
 
     /* l=2, m=1 */
-    if((chi1==0)&&(chi2==0)&&(X12==0)){
-      ap_bbh[0]    = ATP[0]*X12*(1+9.0912*nu+3.9331*nu2)/(1+11.108*nu);
+    if((chi1==0)&&(chi2==0)){
+      ap_bbh[0] = ATP[0]*X12*(1+9.0912*nu+3.9331*nu2)/(1+11.108*nu);
       op_bbh[0]  = omgTP[0]*(1-0.060432*nu+1.9995*nu2)/(1+0.23248*nu);
       
     }else{
@@ -831,9 +838,15 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
 
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
-    Apeak[k] = Ap*ap_bbh[k];
-    Opeak[k] = Op*op_bbh[k];
+      Apeak[k] = Ap*ap_bbh[k];
+      Opeak[k] = Op*op_bbh[k];    
   }
+
+  if((X12==0)&&(chi1==0)&&(chi2==0)){ // TODO: problematic cases where X12=0 and messes up the fits
+      Apeak[0] = 0.01;
+      Apeak[4] = 0.01;
+      Apeak[13] = 0.001;
+    }
   
   if(VERBOSE) PRFORMd("A22_peak",Apeak[1]);
   if(VERBOSE) PRFORMd("omega22_peak",Opeak[1]);

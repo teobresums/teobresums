@@ -708,8 +708,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Dynamics_output(dyn);
 #endif
 
-  if (!(use_tidal)) {
-  //if (!(default_choice==DEFAULT_PARS_BNS)) {
+  //if (!(use_tidal)) {
+  if (!(default_choice==DEFAULT_PARS_BNS)) {
     
     /* ********************************************************
      * Following is for BBH : NQC & Ringdown (for BHNS as well)
