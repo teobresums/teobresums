@@ -35,7 +35,9 @@ use_flm = "SSNLO"
 output_dir = "./GW170817/" # output dir
 output_hpc = "yes" # switch this off to test performances!!!
 output_multipoles = "no" # output multipoles
-output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30] # indexes of multipoles to output
+use_mode_lm = [ 1 ]
+output_lm = [ 1 ]
+#output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30] # indexes of multipoles to output
 output_dynamics = "no" # output dynamics
 
 

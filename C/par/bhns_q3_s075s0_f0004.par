@@ -41,6 +41,7 @@ use_flm = "SSLO"
 output_dir = "./bhns_q3_s02s005_10Hz/"
 output_hpc = "yes" # switch this off to test performances!!!
 output_multipoles = "yes"
+use_mode_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13]
 output_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13]
 output_dynamics = "no"
 
