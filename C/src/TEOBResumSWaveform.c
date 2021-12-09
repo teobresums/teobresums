@@ -5616,6 +5616,10 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     tmpsrate = tmpsrate/conv; //FIXME: this must be transformed in geom units 
     tmpf0    = tmpf0/conv;
     tmpdf    = tmpdf/conv;
+    if (EOBPars->interp_freqs){
+      for (int i=0; i < EOBPars->freqs_size; i++)
+        EOBPars->freqs[i] = EOBPars->freqs[i]/conv;
+    }
   }
   const double half_srate_interp = tmpsrate;
   const double f0 = tmpf0;
@@ -5703,7 +5707,10 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
 
   
   /* Interpolate each mode */
-  WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
+  if (EOBPars->interp_freqs)
+    WaveformFD_lm_interp_ap_freqs(FDlm, "");
+  else
+    WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
 
   /* Correct Fmin > f0 */
   for (int k = 0; k < KMAX; k++ ) {
