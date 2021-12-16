@@ -219,6 +219,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "ode_stop_afterNdt") != NULL ) { 
     EOBPars->ode_stop_afterNdt = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ode_stop_afterNdt"));
   }
+  if ( PyDict_GetItemString(dict, "ode_stop_after_peak") != NULL ) { 
+    EOBPars->ode_stop_after_peak = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ode_stop_after_peak"));
+  }
 
   /* FD */
   if ( PyDict_GetItemString(dict, "domain") != NULL ) { 

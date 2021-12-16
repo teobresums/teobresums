@@ -585,6 +585,7 @@ typedef struct tagEOBParameters
   double ode_abstol, ode_reltol;
   double ode_tmax;
   int ode_stop_afterNdt;
+  int ode_stop_after_peak;
   int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
   int project_spins, ringdown_eulerangles;
   int spin_flx;

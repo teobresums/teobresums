@@ -209,6 +209,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->ode_tmax=1e9; // max integration time
   eobp->ode_stop_radius  =1.; // stop ODE integration at this radius (if > 0)
   eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
+  eobp->ode_stop_after_peak=0;
 
   /* Spin dynamics */
   

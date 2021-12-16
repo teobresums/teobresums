@@ -767,8 +767,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         dyn->ode_stop_MOmgpeak = true;
 
         dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
-        dyn->t_stop = dyn->t + deltat_tuned_mrg;;
-		
+        dyn->t_stop = dyn->t + deltat_tuned_mrg;
+        
+        if(EOBPars->ode_stop_after_peak){
+          dyn->ode_stop = true;
+          iter--;
+        }
       	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
       } else {
         /* Peak not reached, update the max */
