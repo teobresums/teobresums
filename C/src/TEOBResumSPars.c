@@ -65,6 +65,7 @@ void (*eob_wav_deltalm)();
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 void (*eob_wav_ringdown)();
 void (*eob_dyn_s_get_rc)();
+int (*p_eob_spin_dyn_rhs)();
 
 void EOBParameters_alloc (EOBParameters **eobp)
 {

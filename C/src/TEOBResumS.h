@@ -845,7 +845,7 @@ int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO);
 double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz);
 double alpha_initial_condition(EOBParameters *eobp); 
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz);
-int (*p_eob_spin_dyn_rhs)(); // ptr to r.h.s. for spins routine
+extern int (*p_eob_spin_dyn_rhs)(); // ptr to r.h.s. for spins routine
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_PN_abc(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d);
