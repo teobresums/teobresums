@@ -103,8 +103,11 @@ int main (int argc, char* argv[])
   
   /* set domain */
   eob_set_params(dc, fc); 
-  if (output) EOBParameters_tofile(EOBPars,"params.txt");
-
+  if (output){
+    char outpar[STRLEN];
+    strcpy(outpar,EOBPars->output_dir);
+    EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
+  }
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
 		      &hmodes, &hfmodes,&dynf,
