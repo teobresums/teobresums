@@ -651,6 +651,8 @@ void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);
 void EOBParameters_defaults (int choose, EOBParameters *eobp);
 void EOBParameters_parse_file(char *fname, EOBParameters *eobp);
+void EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv);
+void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val);
 void EOBParameters_tofile(EOBParameters *eobp,char *fname);
 
 /* TEOBResumSUtil.c */

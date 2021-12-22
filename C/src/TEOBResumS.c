@@ -78,12 +78,16 @@ int main (int argc, char* argv[])
   EOBParameters_defaults (dc, EOBPars);
   
   if (argv[1]!=NULL) {
-    /* Deal with input parfile */
-    EOBParameters_parse_file (argv[1], EOBPars);
+    /* Deal with input parfile or command line arguments */
+    EOBParameters_parse_commandline(EOBPars,argc, argv);
     /* RG: if input parfile specifies BNS runs, change default_choice */ 
-    if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
+    if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1){
+      dc = DEFAULT_PARS_BNS;
+      EOBParameters_defaults(dc, EOBPars);
+      EOBParameters_parse_commandline(EOBPars,argc, argv);
+    }
   }
-  
+
   const int output = EOBPars->output_dynamics
     + EOBPars->output_multipoles
     + EOBPars->output_hpc

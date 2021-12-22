@@ -633,6 +633,75 @@ void eob_set_params(int default_choice, int firstcall)
 
 }
 
+void EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
+{
+  optind=1; //in order to parse twice, this needs to be 1
+  char args[] = "hg:o:R:M:q:X:x:Y:y:Z:z:L:l:f:d:i:T:S:F:p:";
+  int opt;
+  while((opt=getopt(argc, argv, args)) != -1){
+    switch(opt){
+      case 'h':
+        printf("Generate a TEOBResumS waveform.\n Example usage:\n \
+        ./TEOBResumS -M [total mass] -q [mass ratio] -Z [chi1] -z [chi2] -L [lambda1] -l [lambda2] -d [distance] -i [inclination] -f [initial frequency] -o [output:yes/no] -g [geometric_units:yes/no]\n\
+        or\n \
+        ./TEOBResumS -p [parfile_name]\n");
+        break;
+      case 'g':
+        eobp->use_geometric_units = YESNO2INT(optarg);
+        break;
+      case 'o':
+        eobp->output_hpc = YESNO2INT(optarg);
+      case 'R':
+        eobp->srate_interp = par_get_d(optarg);
+        break;
+      case 'M':
+        eobp->M = par_get_d(optarg);
+        break;
+      case 'q':
+        eobp->q = par_get_d(optarg);
+        break;
+      case 'X':
+        printf("TODO\n");
+        break;
+      case 'x':
+        printf("TODO\n");
+        break;
+      case 'Y':
+        printf("TODO\n");
+        break;
+      case 'y':
+        printf("TODO\n");
+        break;
+      case 'Z':
+        eobp->chi1 = par_get_d(optarg);
+        break;
+      case 'z':
+        eobp->chi2 = par_get_d(optarg);
+        break;
+      case 'L':
+        eobp->LambdaAl2 = par_get_d(optarg);
+        break;
+      case 'l':
+        eobp->LambdaBl2 = par_get_d(optarg);
+        break;
+      case 'f':
+        eobp->initial_frequency = par_get_d(optarg);
+        break;
+      case 'd':
+        eobp->distance = par_get_d(optarg);
+        break;
+      case 'i':
+        eobp->inclination = par_get_d(optarg);
+        break;
+      case 'p':
+        EOBParameters_parse_file(optarg, eobp);
+        break;
+      default:
+        errorexit("No option specified, for more information run\n\
+        ./TEOBResumS -h\n");
+    }
+  }
+}
 
 /* Parse an input parfile */
 void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
@@ -651,406 +720,400 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     remove_white_spaces(line);
     if (getkv(line,&key,&val)) continue; 
 
-    //TODO:
-    // - make a uniform choice for 'method selection', now we use a mixture of integers or strings
-    //   the former choice (e.g. tides) would be better
-
-    //printf("\t |%s| = |%s|\n",key,val);
-    //DBGSTOP;
-    
-    if (STREQUAL(key,"use_geometric_units")) {    
-      eobp->use_geometric_units = YESNO2INT(string_trim(val));
-    }
-    
-    /* Binary parameters */
-    
-    if (STREQUAL(key,"M")) {
-      eobp->M = atof(val); 
-    }
-    if (STREQUAL(key,"q")) {
-      eobp->q = par_get_d(val); 
-    }
-    if (STREQUAL(key,"chi1")) {
-      eobp->chi1 = par_get_d(val);
-    }
-    if (STREQUAL(key,"chi1x")) {
-      eobp->chi1x = par_get_d(val);
-    }
-    if (STREQUAL(key,"chi1y")) {
-      eobp->chi1y = par_get_d(val);
-    }
-    if (STREQUAL(key,"chi1z")) {
-      eobp->chi1z = par_get_d(val);
-    }
-    if (STREQUAL(key,"chi2")) {
-      eobp->chi2 = par_get_d(val);
-    }
-    if (STREQUAL(key,"chi2x")) {
-      eobp->chi2x = par_get_d(val);
-    }
-    if (STREQUAL(key,"chi2y")) {
-      eobp->chi2y = par_get_d(val);
-    }
-    if (STREQUAL(key,"chi2z")) {
-      eobp->chi2z = par_get_d(val);
-    }
-    if (STREQUAL(key,"distance")) {
-      eobp->distance = par_get_d(val);
-    }
-    if (STREQUAL(key,"inclination")) {
-      eobp->inclination = par_get_d(val);
-    }
-    if (STREQUAL(key,"coalescence_angle")) {
-      eobp->coalescence_angle = par_get_d(val);
-    }
-    if (STREQUAL(key,"polarisation")) {
-      eobp->polarization = par_get_d(val);
-    }
-    if (STREQUAL(key,"r0")) {
-      eobp->r0 = par_get_d(val);
-    }
-    if (STREQUAL(key,"initial_frequency")) {
-      eobp->initial_frequency = par_get_d(val);
-    }
-    if (STREQUAL(key,"LambdaAl2")) {
-      eobp->LambdaAl2 = par_get_d(val);
-    }
-    if (STREQUAL(key,"LambdaBl2")) {
-      eobp->LambdaBl2 = par_get_d(val);
-    }
-    if (STREQUAL(key,"LambdaAl3")) {
-      eobp->LambdaAl3 = par_get_d(val);
-    }
-    if (STREQUAL(key,"LambdaBl3")) {
-      eobp->LambdaBl3 = par_get_d(val);
-    }
-    if (STREQUAL(key,"LambdaAl4")) {
-      eobp->LambdaAl4 = par_get_d(val);
-    }
-    if (STREQUAL(key,"LambdaBl4")) {
-      eobp->LambdaBl4 = par_get_d(val);
-    }
-    if (STREQUAL(key,"SigmaAl2")) {
-      eobp->SigmaAl2 = par_get_d(val);
-    }
-    if (STREQUAL(key,"SigmaBl2")) {
-      eobp->SigmaBl2 = par_get_d(val);
-    }
-
-    /* EOB Settings */
-
-    if (STREQUAL(key,"use_spins")) {
-      eobp->use_spins = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
-    }
-
-    if (STREQUAL(key,"tides")) {     
-      val = string_trim(val);
-      for (eobp->use_tidal=0; eobp->use_tidal<=TIDES_NOPT; eobp->use_tidal++) {
-	      if (eobp->use_tidal == TIDES_NOPT) {
-	        eobp->use_tidal = TIDES_OFF;
-	          if (VERBOSE) printf("tides '%s' undefined, set to '%s'\n",
-			      val,tides_opt[eobp->use_tidal]);
-	          break;
-	      }
-	    if (STREQUAL(val,tides_opt[eobp->use_tidal])) break;
-      }
-    }
-    
-    if (STREQUAL(key,"tides_gravitomagnetic")) {
-      val = string_trim(val);
-      for (eobp->use_tidal_gravitomagnetic=0; eobp->use_tidal_gravitomagnetic<=TIDES_GM_NOPT; eobp->use_tidal_gravitomagnetic++) {
-	if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
-	  eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
-	  if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
-			      val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
-	  break;
-	}
-	if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
-      }
-    }
-    
-    if (STREQUAL(key,"pGSF_tidal")) {
-      eobp->pGSF_tidal = par_get_d(val);
-    }
-
-    if (STREQUAL(key,"use_lambda234_fits")) {
-      val = string_trim(val);
-      for (eobp->use_lambda234_fits=0; eobp->use_lambda234_fits<=Lambda234_fits_NOPT; eobp->use_lambda234_fits++) {
-	      if (eobp->use_lambda234_fits == Lambda234_fits_NOPT) {
-	        eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
-	        if (VERBOSE) printf("use_lambda234_fits '%s' undefined, set to '%s'\n",
-			    val, use_lambda234_fits_opt[eobp->use_lambda234_fits]);
-	      break;
-	      }
-	      if (STREQUAL(val, use_lambda234_fits_opt[eobp->use_lambda234_fits])) break;
-      }
-    }
-
-    if (STREQUAL(key,"use_tidal_fmode_model")) {
-      eobp->use_tidal_fmode_model = YESNO2INT(string_trim(val));
-    }
-    
-    if (STREQUAL(key,"use_speedytail")) {    
-      eobp->use_speedytail = YESNO2INT(string_trim(val));
-    }    
-    if (STREQUAL(key,"dt_merger_interp")) {    
-      eobp->dt_merger_interp = par_get_d(val);
-    }
-
-    if (STREQUAL(key,"interp_uniform_grid")) {    
-      eobp->interp_uniform_grid = YESNO2INT(string_trim(val)); //FIXME: take from str comparisons // RG: made yes/no, for now
-    }
-    if (STREQUAL(key,"dt_interp")) {    
-      eobp->dt_interp = par_get_d(val);
-    }
-    if (STREQUAL(key,"srate_interp")) {    
-      eobp->srate_interp = par_get_d(val);
-    }
-    
-    if (STREQUAL(key,"use_mode_lm")) {
-      free(eobp->use_mode_lm);
-      eobp->use_mode_lm_size = str2iarray(val, &eobp->use_mode_lm);
-    }
-
-    if (STREQUAL(key,"centrifugal_radius")) {
-      val = string_trim(val);
-      for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
-	if (eobp->centrifugal_radius == CENTRAD_NOPT) {
-	  eobp->centrifugal_radius = CENTRAD_NLO;
-	  if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
-			      val, centrifugal_radius_opt[eobp->centrifugal_radius]);
-	  break;
-	}
-	if (STREQUAL(val, centrifugal_radius_opt[eobp->centrifugal_radius])) break;
-      }
-    }
-
-    if (STREQUAL(key,"use_flm")) {
-      val = string_trim(val);
-      for (eobp->use_flm=0; eobp->use_flm<=USEFLM_NOPT; eobp->use_flm++) {
-	if (eobp->use_flm == USEFLM_NOPT) {
-	eobp->use_flm = USEFLM_HM;
-	if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
-			    val, use_flm_opt[eobp->use_flm]);
-	break;
-	}
-	if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
-      }
-    }
-    
-    if (STREQUAL(key,"compute_LR")) {
-      eobp->compute_LR = YESNO2INT(string_trim(val));
-    }
-    if (STREQUAL(key,"compute_LSO")) {    
-      eobp->compute_LSO = YESNO2INT(string_trim(val));
-    }
-    if (STREQUAL(key,"compute_LR_guess")) {    
-      eobp->compute_LR_guess = par_get_d(val);
-    }
-    if (STREQUAL(key,"compute_LSO_guess")) {    
-      eobp->compute_LSO_guess = par_get_d(val);
-    }
-    
-    /* Precession settings */
-
-    if (STREQUAL(key,"spin_flx")) {     
-      val = string_trim(val);
-      for (eobp->spin_flx=0; eobp->spin_flx<=SPIN_FLX_NOPT; eobp->spin_flx++) {
-        if (eobp->spin_flx == SPIN_FLX_NOPT) {
-          eobp->spin_flx = SPIN_FLX_PN;
-          if (VERBOSE) printf("spin flux '%s' undefined, set to '%s'\n",
-          val,spin_flx_opt[eobp->spin_flx]);
-          break;
-        }
-      if (STREQUAL(val,spin_flx_opt[eobp->spin_flx])) break;
-      }
-    }    
-
-    if (STREQUAL(key,"ringdown_eulerangles")) {     
-      val = string_trim(val);
-      for (eobp->ringdown_eulerangles=0; eobp->ringdown_eulerangles<=RD_EULERANGLES_NOPT; eobp->ringdown_eulerangles++) {
-        if (eobp->ringdown_eulerangles == RD_EULERANGLES_NOPT) {
-          eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
-          if (VERBOSE) printf("ringdown euler angles '%s' undefined, set to '%s'\n",
-          val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles]);
-          break;
-        }
-      if (STREQUAL(val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles])) break;
-      }
-    }   
-
-    if (STREQUAL(key,"spin_dyn_size")) {
-      eobp->spin_dyn_size = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
-    }
-    if (STREQUAL(key,"spin_odes_omg_stop")) {
-      eobp->spin_odes_omg_stop = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
-    }
-    if (STREQUAL(key,"spin_odes_t_stop")) {
-      eobp->spin_odes_t_stop = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
-    }
-    if (STREQUAL(key,"spin_odes_dt")) {
-      eobp->spin_odes_dt = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
-    }
-
-    /* NQC */
-    
-    if (STREQUAL(key,"nqc")) {
-      val = string_trim(val);
-      for (eobp->nqc=0; eobp->nqc<=NQC_NOPT; eobp->nqc++) {
-	      if (STREQUAL(val,nqc_opt[eobp->nqc])) break;
-      }
-      if (eobp->nqc == NQC_NOPT) {
-	      eobp->nqc = NQC_AUTO;
-	      if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
-			    val, nqc_opt[eobp->nqc]);
-      }
-    }
-
-    if (STREQUAL(key,"nqc_coefs_flx")) {
-      val = string_trim(val);
-      for (eobp->nqc_coefs_flx=0; eobp->nqc_coefs_flx<=NQC_FLX_NOPT; eobp->nqc_coefs_flx++) {
-	if (eobp->nqc_coefs_flx == NQC_FLX_NOPT) {
-	  eobp->nqc_coefs_flx = NQC_FLX_NONE;
-	  if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
-			      val, nqc_flx_opt[eobp->nqc_coefs_flx]);
-	  break;
-	}
-	if (STREQUAL(val, nqc_flx_opt[eobp->nqc_coefs_flx])) break;
-      }
-    }
-
-    if (STREQUAL(key,"nqc_coefs_hlm")) {
-      val = string_trim(val);
-      for (eobp->nqc_coefs_hlm=0; eobp->nqc_coefs_hlm<=NQC_HLM_NOPT; eobp->nqc_coefs_hlm++) {
-	if (eobp->nqc_coefs_hlm == NQC_HLM_NOPT) {
-	  eobp->nqc_coefs_hlm = NQC_HLM_NONE;
-	  if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
-			      val, nqc_hlm_opt[eobp->nqc_coefs_hlm]);
-	  break;
-	}
-	if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
-      }
-    }
-
-    if (STREQUAL(key,"nqc_coefs_flx_file")) {      
-      if (par_get_s(eobp->nqc_coefs_flx_file, val))
-	      errorexit("Error converting input string");
-    }
-    if (STREQUAL(key,"nqc_coefs_hlm_file")) {
-      if (par_get_s(eobp->nqc_coefs_hlm_file, val))
-	      errorexit("Error converting input string");
-    }
-
-    /* Post-adiabatic */
-    
-    if (STREQUAL(key,"postadiabatic_dynamics")) {    
-      eobp->postadiabatic_dynamics = YESNO2INT(string_trim(val));
-    }
-    if (STREQUAL(key,"postadiabatic_dynamics_N")) {      
-      eobp->postadiabatic_dynamics_N = par_get_i(val);
-    }
-    if (STREQUAL(key,"postadiabatic_dynamics_size")) {      
-      eobp->postadiabatic_dynamics_size = par_get_i(val);
-    }
-    if (STREQUAL(key,"postadiabatic_dynamics_rmin")) {
-      eobp->postadiabatic_dynamics_rmin = par_get_d(val);
-    }
-    if (STREQUAL(key,"postadiabatic_dynamics_stop")) {
-      eobp->postadiabatic_dynamics_stop = YESNO2INT(string_trim(val));
-    }
-    
-    /* Evolution settings */
-
-    if (STREQUAL(key,"srate")) {
-      eobp->srate = par_get_d(val);
-    }
-    if (STREQUAL(key,"dt")) {
-      eobp->dt = par_get_d(val);
-    }
-    if (STREQUAL(key,"size")) {
-      eobp->size = par_get_i(val);
-    }
-    if (STREQUAL(key,"ringdown_extend_array")) {
-      eobp->ringdown_extend_array = par_get_i(val);
-    }
-
-    if (STREQUAL(key,"ode_timestep")) {
-      val = string_trim(val);
-      for (eobp->ode_timestep=0; eobp->ode_timestep<=ODE_TSTEP_NOPT; eobp->ode_timestep++) {
-	if (eobp->ode_timestep==ODE_TSTEP_NOPT) {
-	  eobp->ode_timestep = ODE_TSTEP_ADAPTIVE;
-	  if (VERBOSE) printf("ode_timestep '%s' undefined, set to default %s\n",
-			      val, ode_tstep_opt[eobp->ode_timestep]);
-	  break;
-	}
-	if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
-      }
-    }
-
-    if (STREQUAL(key,"ode_abstol")) {
-      eobp->ode_abstol = par_get_d(val);
-    }
-    if (STREQUAL(key,"ode_reltol")) {
-      eobp->ode_reltol = par_get_d(val);
-    }
-    if (STREQUAL(key,"ode_tmax")) {
-      eobp->ode_tmax = par_get_d(val);
-    }
-    if (STREQUAL(key,"ode_stop_at_radius")) {
-      eobp->ode_stop_radius = par_get_d(val);
-    }
-    if (STREQUAL(key,"ode_stop_afterNdt")) {
-      eobp->ode_stop_afterNdt = par_get_i(val);
-    }
-    
-    /* Output */
-    
-    if (STREQUAL(key,"output_dir")) {
-      if (par_get_s(eobp->output_dir, val))
-      	errorexit("Error converting input string");
-    }
-    if (STREQUAL(key,"output_hpc")) {
-      eobp->output_hpc = YESNO2INT(string_trim(val));
-    }
-    if (STREQUAL(key,"output_multipoles")) {
-      eobp->output_multipoles = YESNO2INT(string_trim(val));
-    }
-    if (STREQUAL(key,"output_lm")) {
-      free(eobp->output_lm);
-      eobp->output_lm_size = str2iarray(val, &eobp->output_lm);
-    }
-    if (STREQUAL(key,"output_dynamics")) {
-      eobp->output_dynamics = YESNO2INT(string_trim(val));
-    }
-    if (STREQUAL(key,"output_nqc")) {
-      eobp->output_nqc = YESNO2INT(string_trim(val));
-    }
-    if (STREQUAL(key,"output_nqc_coefs")) {
-      eobp->output_nqc_coefs = YESNO2INT(string_trim(val));
-    }
-    if (STREQUAL(key,"output_ringdown")) {
-      eobp->output_ringdown = YESNO2INT(string_trim(val));
-    }
-
-    /* FD */
-    if (STREQUAL(key,"domain")) {
-      eobp->domain = par_get_i(val);
-    }
-    if (STREQUAL(key,"time_shift_FD")) {
-      eobp->time_shift_FD = par_get_i(val);
-    }      
-    if (STREQUAL(key,"df")) {
-      eobp->df = par_get_d(val);
-    }     
-    // if (STREQUAL(key,"interp_freqs")) {
-    //   eobp->df = par_get_i(val);
-    // }   
+    EOBParameters_set_key_val(eobp, key, val);
 
   } // while/fgets
   fclose(fp);
   
 }
 
+void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
+{
+
+  if (STREQUAL(key,"use_geometric_units")) {    
+    eobp->use_geometric_units = YESNO2INT(string_trim(val));
+  } 
+  /* Binary parameters */
+  
+  if (STREQUAL(key,"M")) {
+    eobp->M = atof(val); 
+  }
+  if (STREQUAL(key,"q")) {
+    eobp->q = par_get_d(val); 
+  }
+  if (STREQUAL(key,"chi1")) {
+    eobp->chi1 = par_get_d(val);
+  }
+  if (STREQUAL(key,"chi1x")) {
+    eobp->chi1x = par_get_d(val);
+  }
+  if (STREQUAL(key,"chi1y")) {
+    eobp->chi1y = par_get_d(val);
+  }
+  if (STREQUAL(key,"chi1z")) {
+    eobp->chi1z = par_get_d(val);
+  }
+  if (STREQUAL(key,"chi2")) {
+    eobp->chi2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"chi2x")) {
+    eobp->chi2x = par_get_d(val);
+  }
+  if (STREQUAL(key,"chi2y")) {
+    eobp->chi2y = par_get_d(val);
+  }
+  if (STREQUAL(key,"chi2z")) {
+    eobp->chi2z = par_get_d(val);
+  }
+  if (STREQUAL(key,"distance")) {
+    eobp->distance = par_get_d(val);
+  }
+  if (STREQUAL(key,"inclination")) {
+    eobp->inclination = par_get_d(val);
+  }
+  if (STREQUAL(key,"coalescence_angle")) {
+    eobp->coalescence_angle = par_get_d(val);
+  }
+  if (STREQUAL(key,"polarisation")) {
+    eobp->polarization = par_get_d(val);
+  }
+  if (STREQUAL(key,"r0")) {
+    eobp->r0 = par_get_d(val);
+  }
+  if (STREQUAL(key,"initial_frequency")) {
+    eobp->initial_frequency = par_get_d(val);
+  }
+  if (STREQUAL(key,"LambdaAl2")) {
+    eobp->LambdaAl2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"LambdaBl2")) {
+    eobp->LambdaBl2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"LambdaAl3")) {
+    eobp->LambdaAl3 = par_get_d(val);
+  }
+  if (STREQUAL(key,"LambdaBl3")) {
+    eobp->LambdaBl3 = par_get_d(val);
+  }
+  if (STREQUAL(key,"LambdaAl4")) {
+    eobp->LambdaAl4 = par_get_d(val);
+  }
+  if (STREQUAL(key,"LambdaBl4")) {
+    eobp->LambdaBl4 = par_get_d(val);
+  }
+  if (STREQUAL(key,"SigmaAl2")) {
+    eobp->SigmaAl2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"SigmaBl2")) {
+    eobp->SigmaBl2 = par_get_d(val);
+  }
+
+  /* EOB Settings */
+
+  if (STREQUAL(key,"use_spins")) {
+    eobp->use_spins = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+  }
+
+  if (STREQUAL(key,"tides")) {     
+    val = string_trim(val);
+    for (eobp->use_tidal=0; eobp->use_tidal<=TIDES_NOPT; eobp->use_tidal++) {
+      if (eobp->use_tidal == TIDES_NOPT) {
+        eobp->use_tidal = TIDES_OFF;
+          if (VERBOSE) printf("tides '%s' undefined, set to '%s'\n",
+          val,tides_opt[eobp->use_tidal]);
+          break;
+      }
+    if (STREQUAL(val,tides_opt[eobp->use_tidal])) break;
+    }
+  }
+  
+  if (STREQUAL(key,"tides_gravitomagnetic")) {
+    val = string_trim(val);
+    for (eobp->use_tidal_gravitomagnetic=0; eobp->use_tidal_gravitomagnetic<=TIDES_GM_NOPT; eobp->use_tidal_gravitomagnetic++) {
+if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
+  eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+  if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
+          val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
+  break;
+}
+if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
+    }
+  }
+  
+  if (STREQUAL(key,"pGSF_tidal")) {
+    eobp->pGSF_tidal = par_get_d(val);
+  }
+
+  if (STREQUAL(key,"use_lambda234_fits")) {
+    val = string_trim(val);
+    for (eobp->use_lambda234_fits=0; eobp->use_lambda234_fits<=Lambda234_fits_NOPT; eobp->use_lambda234_fits++) {
+      if (eobp->use_lambda234_fits == Lambda234_fits_NOPT) {
+        eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+        if (VERBOSE) printf("use_lambda234_fits '%s' undefined, set to '%s'\n",
+        val, use_lambda234_fits_opt[eobp->use_lambda234_fits]);
+      break;
+      }
+      if (STREQUAL(val, use_lambda234_fits_opt[eobp->use_lambda234_fits])) break;
+    }
+  }
+
+  if (STREQUAL(key,"use_tidal_fmode_model")) {
+    eobp->use_tidal_fmode_model = YESNO2INT(string_trim(val));
+  }
+  
+  if (STREQUAL(key,"use_speedytail")) {    
+    eobp->use_speedytail = YESNO2INT(string_trim(val));
+  }    
+  if (STREQUAL(key,"dt_merger_interp")) {    
+    eobp->dt_merger_interp = par_get_d(val);
+  }
+
+  if (STREQUAL(key,"interp_uniform_grid")) {    
+    eobp->interp_uniform_grid = YESNO2INT(string_trim(val)); //FIXME: take from str comparisons // RG: made yes/no, for now
+  }
+  if (STREQUAL(key,"dt_interp")) {    
+    eobp->dt_interp = par_get_d(val);
+  }
+  if (STREQUAL(key,"srate_interp")) {    
+    eobp->srate_interp = par_get_d(val);
+  }
+  
+  if (STREQUAL(key,"use_mode_lm")) {
+    free(eobp->use_mode_lm);
+    eobp->use_mode_lm_size = str2iarray(val, &eobp->use_mode_lm);
+  }
+
+  if (STREQUAL(key,"centrifugal_radius")) {
+    val = string_trim(val);
+    for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
+if (eobp->centrifugal_radius == CENTRAD_NOPT) {
+  eobp->centrifugal_radius = CENTRAD_NLO;
+  if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
+          val, centrifugal_radius_opt[eobp->centrifugal_radius]);
+  break;
+}
+if (STREQUAL(val, centrifugal_radius_opt[eobp->centrifugal_radius])) break;
+    }
+  }
+
+  if (STREQUAL(key,"use_flm")) {
+    val = string_trim(val);
+    for (eobp->use_flm=0; eobp->use_flm<=USEFLM_NOPT; eobp->use_flm++) {
+if (eobp->use_flm == USEFLM_NOPT) {
+eobp->use_flm = USEFLM_HM;
+if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
+        val, use_flm_opt[eobp->use_flm]);
+break;
+}
+if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
+    }
+  }
+  
+  if (STREQUAL(key,"compute_LR")) {
+    eobp->compute_LR = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"compute_LSO")) {    
+    eobp->compute_LSO = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"compute_LR_guess")) {    
+    eobp->compute_LR_guess = par_get_d(val);
+  }
+  if (STREQUAL(key,"compute_LSO_guess")) {    
+    eobp->compute_LSO_guess = par_get_d(val);
+  }
+  
+  /* Precession settings */
+
+  if (STREQUAL(key,"spin_flx")) {     
+    val = string_trim(val);
+    for (eobp->spin_flx=0; eobp->spin_flx<=SPIN_FLX_NOPT; eobp->spin_flx++) {
+      if (eobp->spin_flx == SPIN_FLX_NOPT) {
+        eobp->spin_flx = SPIN_FLX_PN;
+        if (VERBOSE) printf("spin flux '%s' undefined, set to '%s'\n",
+        val,spin_flx_opt[eobp->spin_flx]);
+        break;
+      }
+    if (STREQUAL(val,spin_flx_opt[eobp->spin_flx])) break;
+    }
+  }    
+
+  if (STREQUAL(key,"ringdown_eulerangles")) {     
+    val = string_trim(val);
+    for (eobp->ringdown_eulerangles=0; eobp->ringdown_eulerangles<=RD_EULERANGLES_NOPT; eobp->ringdown_eulerangles++) {
+      if (eobp->ringdown_eulerangles == RD_EULERANGLES_NOPT) {
+        eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
+        if (VERBOSE) printf("ringdown euler angles '%s' undefined, set to '%s'\n",
+        val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles]);
+        break;
+      }
+    if (STREQUAL(val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles])) break;
+    }
+  }   
+
+  if (STREQUAL(key,"spin_dyn_size")) {
+    eobp->spin_dyn_size = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+  }
+  if (STREQUAL(key,"spin_odes_omg_stop")) {
+    eobp->spin_odes_omg_stop = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+  }
+  if (STREQUAL(key,"spin_odes_t_stop")) {
+    eobp->spin_odes_t_stop = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+  }
+  if (STREQUAL(key,"spin_odes_dt")) {
+    eobp->spin_odes_dt = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
+  }
+
+  /* NQC */
+  
+  if (STREQUAL(key,"nqc")) {
+    val = string_trim(val);
+    for (eobp->nqc=0; eobp->nqc<=NQC_NOPT; eobp->nqc++) {
+      if (STREQUAL(val,nqc_opt[eobp->nqc])) break;
+    }
+    if (eobp->nqc == NQC_NOPT) {
+      eobp->nqc = NQC_AUTO;
+      if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
+        val, nqc_opt[eobp->nqc]);
+    }
+  }
+
+  if (STREQUAL(key,"nqc_coefs_flx")) {
+    val = string_trim(val);
+    for (eobp->nqc_coefs_flx=0; eobp->nqc_coefs_flx<=NQC_FLX_NOPT; eobp->nqc_coefs_flx++) {
+if (eobp->nqc_coefs_flx == NQC_FLX_NOPT) {
+  eobp->nqc_coefs_flx = NQC_FLX_NONE;
+  if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
+          val, nqc_flx_opt[eobp->nqc_coefs_flx]);
+  break;
+}
+if (STREQUAL(val, nqc_flx_opt[eobp->nqc_coefs_flx])) break;
+    }
+  }
+
+  if (STREQUAL(key,"nqc_coefs_hlm")) {
+    val = string_trim(val);
+    for (eobp->nqc_coefs_hlm=0; eobp->nqc_coefs_hlm<=NQC_HLM_NOPT; eobp->nqc_coefs_hlm++) {
+if (eobp->nqc_coefs_hlm == NQC_HLM_NOPT) {
+  eobp->nqc_coefs_hlm = NQC_HLM_NONE;
+  if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
+          val, nqc_hlm_opt[eobp->nqc_coefs_hlm]);
+  break;
+}
+if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
+    }
+  }
+
+  if (STREQUAL(key,"nqc_coefs_flx_file")) {      
+    if (par_get_s(eobp->nqc_coefs_flx_file, val))
+      errorexit("Error converting input string");
+  }
+  if (STREQUAL(key,"nqc_coefs_hlm_file")) {
+    if (par_get_s(eobp->nqc_coefs_hlm_file, val))
+      errorexit("Error converting input string");
+  }
+
+  /* Post-adiabatic */
+  
+  if (STREQUAL(key,"postadiabatic_dynamics")) {    
+    eobp->postadiabatic_dynamics = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_N")) {      
+    eobp->postadiabatic_dynamics_N = par_get_i(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_size")) {      
+    eobp->postadiabatic_dynamics_size = par_get_i(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_rmin")) {
+    eobp->postadiabatic_dynamics_rmin = par_get_d(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_stop")) {
+    eobp->postadiabatic_dynamics_stop = YESNO2INT(string_trim(val));
+  }
+  
+  /* Evolution settings */
+
+  if (STREQUAL(key,"srate")) {
+    eobp->srate = par_get_d(val);
+  }
+  if (STREQUAL(key,"dt")) {
+    eobp->dt = par_get_d(val);
+  }
+  if (STREQUAL(key,"size")) {
+    eobp->size = par_get_i(val);
+  }
+  if (STREQUAL(key,"ringdown_extend_array")) {
+    eobp->ringdown_extend_array = par_get_i(val);
+  }
+
+  if (STREQUAL(key,"ode_timestep")) {
+    val = string_trim(val);
+    for (eobp->ode_timestep=0; eobp->ode_timestep<=ODE_TSTEP_NOPT; eobp->ode_timestep++) {
+if (eobp->ode_timestep==ODE_TSTEP_NOPT) {
+  eobp->ode_timestep = ODE_TSTEP_ADAPTIVE;
+  if (VERBOSE) printf("ode_timestep '%s' undefined, set to default %s\n",
+          val, ode_tstep_opt[eobp->ode_timestep]);
+  break;
+}
+if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
+    }
+  }
+
+  if (STREQUAL(key,"ode_abstol")) {
+    eobp->ode_abstol = par_get_d(val);
+  }
+  if (STREQUAL(key,"ode_reltol")) {
+    eobp->ode_reltol = par_get_d(val);
+  }
+  if (STREQUAL(key,"ode_tmax")) {
+    eobp->ode_tmax = par_get_d(val);
+  }
+  if (STREQUAL(key,"ode_stop_at_radius")) {
+    eobp->ode_stop_radius = par_get_d(val);
+  }
+  if (STREQUAL(key,"ode_stop_afterNdt")) {
+    eobp->ode_stop_afterNdt = par_get_i(val);
+  }
+  
+  /* Output */
+  
+  if (STREQUAL(key,"output_dir")) {
+    if (par_get_s(eobp->output_dir, val))
+      errorexit("Error converting input string");
+  }
+  if (STREQUAL(key,"output_hpc")) {
+    eobp->output_hpc = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"output_multipoles")) {
+    eobp->output_multipoles = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"output_lm")) {
+    free(eobp->output_lm);
+    eobp->output_lm_size = str2iarray(val, &eobp->output_lm);
+  }
+  if (STREQUAL(key,"output_dynamics")) {
+    eobp->output_dynamics = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"output_nqc")) {
+    eobp->output_nqc = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"output_nqc_coefs")) {
+    eobp->output_nqc_coefs = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"output_ringdown")) {
+    eobp->output_ringdown = YESNO2INT(string_trim(val));
+  }
+
+  /* FD */
+  if (STREQUAL(key,"domain")) {
+    eobp->domain = par_get_i(val);
+  }
+  if (STREQUAL(key,"time_shift_FD")) {
+    eobp->time_shift_FD = par_get_i(val);
+  }      
+  if (STREQUAL(key,"df")) {
+    eobp->df = par_get_d(val);
+   } 
+}
 
 void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 {
