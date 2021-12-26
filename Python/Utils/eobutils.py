@@ -18,7 +18,7 @@ def run(parfile):
     * It assumes you have compiled the EOB C code and the exe is
       $TEOBRESUMS/TEOBResumS.x
     """
-    x = "$TEOBRESUMS/TEOBResumS.x " + parfile
+    x = "$TEOBRESUMS/TEOBResumS.x -p " + parfile
     return subprocess.call(x, shell=True)
 
 def run_exception(parfile, rm_file=0):
@@ -33,7 +33,7 @@ def run_exception(parfile, rm_file=0):
     * Return timing info
     * Optionally delete the parfile of run if successful 
     """
-    x = "echo $TEOBRESUMS/TEOBResumS.x '"+parfile+"'; time $TEOBRESUMS/TEOBResumS.x " + parfile
+    x = "echo $TEOBRESUMS/TEOBResumS.x -p '"+parfile+"'; time $TEOBRESUMS/TEOBResumS.x -p " + parfile
     try:
         p = subprocess.check_output(x, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
     except subprocess.CalledProcessError as e:
