@@ -307,13 +307,13 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
   
   /* Choose the default for the binary type */
-  
+  eobp->binary = BINARY_BBH;
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
   eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF ; // index for gravitomagnetic tide
   eobp->use_tidal_fmode_model = 0; // do not 
   
-  if (choose == DEFAULT_PARS_BBH) {
-
+  if (choose == BINARY_BBH) {
+    eobp->binary=BINARY_BBH;
     eobp->centrifugal_radius = CENTRAD_NLO;
     eobp->use_flm = USEFLM_HM;
     eobp->use_tidal = TIDES_OFF;
@@ -323,8 +323,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
     eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
      
-  } else if (choose == DEFAULT_PARS_BNS) {
-
+  } else if (choose == BINARY_BNS) {
+    eobp->binary=BINARY_BNS;
     eobp->use_tidal = TIDES_TEOBRESUM3;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
     eobp->pGSF_tidal = 4.0;
@@ -339,7 +339,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   }
 
   /*
-  else if (choose == DEFAULT_PARS_BHNS) {
+  else if (choose == BINARY_BHNS) {
      
     //Still to be decided & set I guess?
     //Let's have a BH with m = 5 and a NS with m = 1.4
@@ -375,6 +375,18 @@ void eob_set_params(int default_choice, int firstcall)
     EOBPars->q = 1.;
   }
 
+  /* Check: if in-plane components of spins are < 1e4, then spin aligned, else spin precessing */
+  /* Note: the "NOSPIN" option is deprecated, and currently never used */
+
+  double chip_1 = sqrt(SQ(EOBPars->chi1x) + SQ(EOBPars->chi1y));
+  double chip_2 = sqrt(SQ(EOBPars->chi2x) + SQ(EOBPars->chi2y));
+  if (chip_1 + chip_2 > 1e-4){
+    EOBPars->use_spins = MODE_SPINS_GENERIC;
+    if (EOBPars->domain == DOMAIN_TD)
+      EOBPars->interp_uniform_grid = 1; // for TD twist we require interpolation
+  } else
+    EOBPars->use_spins = MODE_SPINS_ALIGNED;
+
   EOBPars->nu = q_to_nu(q);
   EOBPars->X1 = nu_to_X1(EOBPars->nu);
   EOBPars->X2 = 1. -  EOBPars->X1;
@@ -399,7 +411,7 @@ void eob_set_params(int default_choice, int firstcall)
 		&EOBPars->aK, &EOBPars->aK2,
 		&EOBPars->S, &EOBPars->Sstar);
 
-  if (usetidal) {
+  if (EOBPars->binary == BINARY_BNS) {
     
     /* Set the tidal parameters */
     
@@ -519,7 +531,7 @@ void eob_set_params(int default_choice, int firstcall)
   /* Default settings for NQC */
   // NOTE: The defaults are different from v0.0 and v1.0
   if (EOBPars->nqc == NQC_AUTO) {
-    if (usetidal) {
+    if (EOBPars->binary == BINARY_BNS) {
         EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
         EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
@@ -633,26 +645,28 @@ void eob_set_params(int default_choice, int firstcall)
 
 }
 
-void EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
+int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
 {
   optind=1; //in order to parse twice, this needs to be 1
+
+  /*always leave the "p:" last to have parfiles overwrite input*/
   char args[] = "hg:o:R:M:q:X:x:Y:y:Z:z:L:l:f:d:i:T:S:F:p:";
   int opt;
   while((opt=getopt(argc, argv, args)) != -1){
     switch(opt){
       case 'h':
-        printf("Generate a TEOBResumS waveform.\n Example usage:\n \
-        ./TEOBResumS -M [total mass] -q [mass ratio] -Z [chi1] -z [chi2] -L [lambda1] -l [lambda2] -d [distance] -i [inclination] -f [initial frequency] -o [output:yes/no] -g [geometric_units:yes/no]\n\
-        or\n \
-        ./TEOBResumS -p [parfile_name]\n");
+        PRSECTN(TEOBResumS_Info);
+        printf(TEOBResumS_Usage);
         break;
       case 'g':
         eobp->use_geometric_units = YESNO2INT(optarg);
         break;
       case 'o':
         eobp->output_hpc = YESNO2INT(optarg);
+        break;
       case 'R':
         eobp->srate_interp = par_get_d(optarg);
+        eobp->interp_uniform_grid = 1;
         break;
       case 'M':
         eobp->M = par_get_d(optarg);
@@ -661,28 +675,52 @@ void EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->q = par_get_d(optarg);
         break;
       case 'X':
-        printf("TODO\n");
+        eobp->chi1x = par_get_d(optarg);
         break;
       case 'x':
-        printf("TODO\n");
+        eobp->chi2x = par_get_d(optarg);
         break;
       case 'Y':
-        printf("TODO\n");
+        eobp->chi1y = par_get_d(optarg);
         break;
       case 'y':
-        printf("TODO\n");
+        eobp->chi2y = par_get_d(optarg);
         break;
       case 'Z':
         eobp->chi1 = par_get_d(optarg);
+        eobp->chi1z = par_get_d(optarg);
         break;
       case 'z':
         eobp->chi2 = par_get_d(optarg);
+        eobp->chi2z = par_get_d(optarg);
         break;
       case 'L':
         eobp->LambdaAl2 = par_get_d(optarg);
+        /*set the defaults for BNS to avoid having to re-parse command line*/
+        eobp->use_tidal = TIDES_TEOBRESUM3;
+        eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
+        eobp->pGSF_tidal = 4.0;
+        eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+
+        eobp->centrifugal_radius = CENTRAD_NNLO;
+        eobp->use_flm = USEFLM_SSNLO;
+        eobp->nqc = NQC_NO; 
+        eobp->nqc_coefs_flx = NQC_FLX_NONE;
+        eobp->nqc_coefs_hlm = NQC_HLM_NONE;
         break;
       case 'l':
         eobp->LambdaBl2 = par_get_d(optarg);
+        /*set the defaults for BNS to avoid having to re-parse command line*/
+        eobp->use_tidal = TIDES_TEOBRESUM3;
+        eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
+        eobp->pGSF_tidal = 4.0;
+        eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+
+        eobp->centrifugal_radius = CENTRAD_NNLO;
+        eobp->use_flm = USEFLM_SSNLO;
+        eobp->nqc = NQC_NO;
+        eobp->nqc_coefs_flx = NQC_FLX_NONE;
+        eobp->nqc_coefs_hlm = NQC_HLM_NONE;
         break;
       case 'f':
         eobp->initial_frequency = par_get_d(optarg);
@@ -697,10 +735,15 @@ void EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         EOBParameters_parse_file(optarg, eobp);
         break;
       default:
-        errorexit("No option specified, for more information run\n\
+        errorexit("Invalid option specified, for more information run\n\
         ./TEOBResumS -h\n");
     }
   }
+  if (eobp->LambdaAl2 > 1. && eobp->LambdaBl2 > 1.)
+    eobp->binary = BINARY_BNS;
+  else 
+    eobp->binary = BINARY_BBH;
+  return eobp->binary;
 }
 
 /* Parse an input parfile */

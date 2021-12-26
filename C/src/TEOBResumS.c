@@ -71,7 +71,7 @@ int main (int argc, char* argv[])
   WaveformFD_lm *hfTmodes = NULL; /* twisted modes */
   
   int fc = 1; /* firstcall, set to 1 for now */
-  int dc = DEFAULT_PARS_BBH; /* default_choice, set to BBH */
+  int dc = BINARY_BBH; /* default_choice, set to BBH */
   
   /* Init parameters & set defaults */
   EOBParameters_alloc( &EOBPars );
@@ -79,13 +79,7 @@ int main (int argc, char* argv[])
   
   if (argv[1]!=NULL) {
     /* Deal with input parfile or command line arguments */
-    EOBParameters_parse_commandline(EOBPars,argc, argv);
-    /* RG: if input parfile specifies BNS runs, change default_choice */ 
-    if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1){
-      dc = DEFAULT_PARS_BNS;
-      EOBParameters_defaults(dc, EOBPars);
-      EOBParameters_parse_commandline(EOBPars,argc, argv);
-    }
+    dc = EOBParameters_parse_commandline(EOBPars,argc, argv);
   }
 
   const int output = EOBPars->output_dynamics
@@ -351,7 +345,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }   
 
   /** Final BH */
-  if (!(EOBPars->use_tidal)) {
+  if (!(EOBPars->binary == BINARY_BNS)) {
     EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
     EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
 

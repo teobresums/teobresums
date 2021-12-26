@@ -92,7 +92,26 @@
 
 /** Macros */
 #define TEOBResumS_Info "TEOBResumS code (c) 2017-2020"
-#define TEOBResumS_Usage(x) {printf("%sUSAGE:\t%s <parfile>\n", TEOBResumS_Info, x);}
+#define TEOBResumS_Usage "COMMAND LINE USAGE:\n\
+./TEOBResumS.x [options] or  ./TEOBResumS.x -p [parfile_name]\n\n\
+Options:\n\
+  -M [total mass]\n\
+  -q [mass ratio]\n\
+  -Z [chi1z]\n\
+  -z [chi2z]\n\
+  -X [chi1x]\n\
+  -x [chi2x]\n\
+  -Y [chi1y]\n\
+  -y [chi2y]\n\
+  -L [lambda1]\n\
+  -l [lambda2]\n\
+  -d [distance]\n\
+  -i [inclination]\n\
+  -f [initial frequency]\n\
+  -R [sampling rate]\n\
+  -o [output:yes/no]\n\
+  -g [geometric_units:yes/no]\n\n\
+Note: if a parfile is specified together with other options, the latter are overwritten by the parfile.\n"
 
 #define STRLEN 1024 /** Standard string length */
  
@@ -213,12 +232,12 @@ static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmeg
 #define KMAX (35) /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
-/** List for default parameter options */
+/** List for binary type */
 enum{
-  DEFAULT_PARS_BBH,
-  DEFAULT_PARS_BNS,
-  DEFAULT_PARS_BHNS,
-  DEFAULT_PARS_NOPT
+  BINARY_BBH,
+  BINARY_BNS,
+  BINARY_BHNS,
+  BINARY_NOPT
 };
 
 /** List for fits Lambda_ell(Lambda2) */
@@ -563,15 +582,15 @@ typedef struct tagEOBParameters
 
   double bomgfA[6], bomgfB[6]; // f-mode frequencies star A,B (ell=2,3,4; indexes 0,1 not used)
   
-  int use_lambda234_fits;
-  int use_tidal_fmode_model;
-
   /* options/settings */
+  int binary; // binary type (BBH, BNS, BHNS)
   int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM"
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  
   int use_geometric_units;
   int use_speedytail;
+  int use_lambda234_fits;
+  int use_tidal_fmode_model;
   
   double dt_merger_interp, dt_interp, srate_interp;
   int interp_uniform_grid;
@@ -651,7 +670,7 @@ void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);
 void EOBParameters_defaults (int choose, EOBParameters *eobp);
 void EOBParameters_parse_file(char *fname, EOBParameters *eobp);
-void EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv);
+int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv);
 void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val);
 void EOBParameters_tofile(EOBParameters *eobp,char *fname);
 
