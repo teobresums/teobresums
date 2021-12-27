@@ -2,11 +2,15 @@
 
 ## Compilation & Usage
 
-See the [README](../README.md) or the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/Home)
+See the main [README](../README.md) or the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/Home)
 
 ## Brief introduction for developers
 
 ### Parameters
+
+In v3.0 GIOTTO
+
+ * Simplified handling of EOBParameters and interface
 
 In v2.0
 
