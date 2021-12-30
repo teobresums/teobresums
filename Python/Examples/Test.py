@@ -51,14 +51,13 @@ if __name__ == "__main__":
         'use_mode_lm'        : k,      #List of modes to use/output through EOBRunPy
         'output_lm'          : k,      #List of modes to print on file
         'srate_interp'       : 4096.,  #srate at which to interpolate. Default = 4096.
-        'use_geometric_units': 0,      #output quantities in geometric units. Default = 1
-        'df'                 : 0.01,   #df for FD interpolation
+        'use_geometric_units': "no",   #output quantities in geometric units. Default = "yes"
         'initial_frequency'  : 20.,    #in Hz if use_geometric_units = 0, else in geometric units
-        'interp_uniform_grid': 2       #interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+        'interp_uniform_grid': "yes"   #interpolate mode by mode on a uniform grid. Default = "no" (no interpolation)
     }
 
     # Run the WF generator (TD)
-    t, hp, hcm, hlm = EOBRun_module.EOBRunPy(pars)
+    t, hp, hcm, hlm, dyn = EOBRun_module.EOBRunPy(pars)
 
     # Plot h+
     plt.plot(t, hp)
@@ -73,6 +72,6 @@ if __name__ == "__main__":
     # To test for leaks, uncomment below
     # print('Memory test')
     # for i in range(100):
-    #     t, hp, hcm, hlm = EOBRun_module.EOBRunPy(pars)
+    #     t, hp, hcm, hlm, dyn = EOBRun_module.EOBRunPy(pars)
     #     print(memory_usage_psutil(),memory_usage_resource())
 

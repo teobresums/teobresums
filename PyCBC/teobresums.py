@@ -32,11 +32,11 @@ def teobresums_pars_update(par, domain):
     flow = par['f_lower'] 
     if DOMAIN['TD'] == domain:
         srate     = 1./par['delta_t']
-        interp    = BIT['yes']   # interpolate on grid with given dt
+        interp    = "yes"   # interpolate on grid with given dt
     elif DOMAIN['FD'] == domain:
         df        = par['delta_f']
         par['df'] = df
-        interp    = BIT['no']    # no interpolation needed
+        interp    = "no"    # no interpolation needed
         srate     = 4096. # default
         if par['delta_t'] is not None:
             srate = 1./par['delta_t']
@@ -54,6 +54,16 @@ def teobresums_pars_update(par, domain):
     inclination = get_par('inclination', par)
     coa_phase   = get_par('coa_phase', par)
     ecc         = get_par('eccentricity', par)
+    
+    spin1x = spin1y = spin2x = spin2y = 0.
+    if par['spin1x'] is not None:
+        spin1x = par['spin1x']
+    if par['spin1y'] is not None:
+        spin1y = par['spin1y']
+    if par['spin2x'] is not None:
+        spin2x = par['spin2x']
+    if par['spin2y'] is not None:
+        spin2y = par['spin2y']
 
     if par['mode_array'] is None:
         k = modes_to_k([(2,2)])
@@ -71,10 +81,8 @@ def teobresums_pars_update(par, domain):
         q = 1./q
 
     # Always use physical units
-    par['use_geometric_units'] = BIT['no']
+    par['use_geometric_units'] = "no"
     
-
-
     # Set TEOBResumS parameters
     # Below we list all possible parameters as a reference for an 
     # advanced used, though they are set to None and removed before
@@ -89,6 +97,14 @@ def teobresums_pars_update(par, domain):
         'Lambda2' : lambda2,     
         'chi1' : spin1z,
         'chi2' : spin2z,
+        #
+        'chi1x': spin1x,
+        'chi1y': spin1y,
+        'chi1z': spin1z,
+        'chi1x': spin2x,
+        'chi1y': spin2y,
+        'chi1z': spin2z,
+        #
         'distance' : distance, 
         'inclination' : inclination,
         'coalescence_angle' : coa_phase, # reference angle/phase at coalescence
@@ -100,7 +116,6 @@ def teobresums_pars_update(par, domain):
         'interp_uniform_grid': interp, # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
         'arg_out' : BIT['no'], # return modes hlm/hflm. Default = 0 (no)
         #
-        'use_spins' : BIT['yes'], # always on by default
         'ringdown_extend_array' : None,
         'centrifugal_radius' : None,
         'use_flm' : None,
@@ -113,10 +128,10 @@ def teobresums_pars_update(par, domain):
         'use_tidal_gravitomagnetic' : None, # Gravitomagnetic tides model, BBH default = TIDES_GM_OFF, BNS default = TIDES_GM_PN
         'pGSF_tidal' : None, # default = 4.0
         #
-        'output_hpc' : BIT['no'],
+        'output_hpc' : "no",
         'output_lm' : [-1], 
-        'output_multipoles' : BIT['no'],
-        'output_dynamics' : BIT['no'],
+        'output_multipoles' : "no",
+        'output_dynamics' : "no",
         #
         'compute_LR' : None,
         'compute_LR_guess' : None,
