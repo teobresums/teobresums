@@ -1156,30 +1156,10 @@ double alpha_initial_condition(EOBParameters *eobp)
   if (!(eobp->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(eobp->M));
 
   /* precompute some quantities and coefficients*/
-  double alpha_x_LO, alpha_y_LO, alpha_x_NLO, alpha_y_NLO;
-  // double alpha_x_NNLO, alpha_y_NNLO;
-  double q2  = q*q;
-  double oq  = 1.+q;
-  double oq2 = oq*oq;
+  double alpha_x_NLO, alpha_y_NLO;
 
-  /* Leading order coeff is 0.5/(1+q)^2, we divide al coeffs by it */
-  double c1_LO   = (4.+3.*q);
-  double c2_LO   = (3.+4.*q)*q;
-  double c1_NLO  = -3.*q*(chi1z + q*chi2z);
-  //double c1_NNLO = 0.5*nu*(19. + 23.*q + 6*q2);
-  //double c2_NNLO = 0.5*nu*(6   + 23.*q + 19.*q2);
-
-  //v6
-  alpha_y_LO    = -c1_LO*chi1x-c2_LO*chi2x;
-  alpha_x_LO    =  c1_LO*chi1y+c2_LO*chi2y;
-
-  //v7
-  alpha_y_NLO   =  alpha_y_LO-c1_NLO*(chi1x+chi2x*q)*v;
-  alpha_x_NLO   =  alpha_x_LO+c1_NLO*(chi1y+chi2y*q)*v;
-
-  //v8
-  //alpha_y_NNLO  =  alpha_y_NLO+(c1_NNLO*chi1x+c2_NNLO*chi2y)*v2;
-  //alhpa_x_NNLO  =  alpha_y_NLO+(c1_NNLO*chi1y+c2_NNLO*chi2y)*v2;
+  alpha_x_NLO =  -3.*q*(chi1y + chi2y*q)*(chi1z + chi2z*q)*v + q*(chi1y*(4. + 3.*q) + chi2y*q*(3. + 4.*q));
+  alpha_y_NLO =  +3.*q*(chi1x + chi2x*q)*(chi1z + chi2z*q)*v - q*(chi1x*(4. + 3.*q) + chi2x*q*(3. + 4.*q));
 
   return atan2(alpha_y_NLO, alpha_x_NLO);
 
@@ -2193,7 +2173,6 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   
   dyn->time_backward = - spindyn_tmp->time[0];             // keep track of when forward integration starts (time)
   dyn->omg_backward  = dyn->data[EOB_EVOLVE_SPIN_Momg][0]; // keep track of when forward integration starts (omega)
-  //printf("omg_back = %.10f\n", dyn->omg_backward);
 
   for (int v = 0; v < EOB_EVOLVE_SPIN_NVARS; v++) {
     for (int i = 0; i < spindyn_tmp->size; i++) {
@@ -2240,7 +2219,7 @@ int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double o
   dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *M22;
   dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *M22;
   dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *M22;
-  dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; //FIXME Lh t=0 ?
+  dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; 
   dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
   dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;
   dyn->y[EOB_EVOLVE_SPIN_alp] = alpha_initial_condition(EOBPars); 
@@ -2253,7 +2232,7 @@ int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double o
   if(!EOBPars->use_geometric_units)
     time_unit_fact = time_units_factor(EOBPars->M);
 
-  dyn->y[EOB_EVOLVE_SPIN_Momg] = omg0;//Pi * EOBPars->initial_frequency/time_unit_fact; 
+  dyn->y[EOB_EVOLVE_SPIN_Momg] = omg0;
   
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     dyn->data[v][0] = dyn->y[v];

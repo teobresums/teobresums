@@ -93,7 +93,7 @@
 /** Macros */
 #define TEOBResumS_Info "TEOBResumS code (c) 2017-2020"
 #define TEOBResumS_Usage "COMMAND LINE USAGE:\n\
-./TEOBResumS.x [options] or  ./TEOBResumS.x -p [parfile_name]\n\n\
+./TEOBResumS.x [options] or ./TEOBResumS.x -p [parfile_name]\n\n\
 Options:\n\
   -M [total mass]\n\
   -q [mass ratio]\n\
@@ -715,6 +715,7 @@ double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
 void unwrap(double *p, const int size);
 void unwrap_HM(double *p, const int size);
+void unwrap_euler(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void rmap (double *re, double *im, double *p, double *a, const int mode);
 void set_multipolar_idx_mask_old(int *kmask, int n);

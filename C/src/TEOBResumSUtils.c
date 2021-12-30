@@ -819,6 +819,44 @@ void unwrap_HM(double *p, const int size)
   
 }
 
+/* unwrap function for euler angles */
+void unwrap_euler(double *p, const int size)
+{
+  if (size < 1) return;
+  
+  int j;
+  double delta, dphi, corr, curr, prev;
+
+  dphi = 0.;
+  corr = 0.;
+  
+  prev  = p[0];
+  delta = p[1]-p[0];
+  
+  for (j = 1; j < size; j++){
+    // Setting current data point
+    p[j] += corr;
+    curr = p[j];
+
+    // Check if decreasing too much - adding 2Pi
+    if((curr < prev - Pi) && (curr - prev < delta - Pi))
+      dphi = TwoPi;
+
+    // Check if increasing too much - removing 2Pi
+    if((curr > prev + Pi) && (curr - prev > delta + Pi))
+      dphi = -TwoPi;
+
+    // Adding corrections
+    corr += dphi;
+    p[j] += dphi;
+
+    // Resetting for next iteration
+    prev = p[j];
+    delta = p[j]-p[j-1];
+    dphi = 0.0;
+  }
+}
+
 #define dbg_unwrap_proxy (0)  /* stops after routine, use: ./TEOBResumS.x test.par > out */ 
 /* Unwrap unsign number of cycles from reference phase as proxy */
 void unwrap_proxy(double *p, double *r, const int size, const int shift0)

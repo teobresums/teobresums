@@ -5125,8 +5125,8 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1]; //alpha_initial_condition(EOBPars);
   spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_alp][0];
   /* First, unwrap alpha and gamma */
-  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
-  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
+  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
+  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
   double *omega;
   int size_omega;
   if(map_from_22){

@@ -652,15 +652,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
               NULL, NULL, NULL, 
               EOBPars->spin_interp_domain);
       } else {
-
         eob_spin_dyn_Sproj_interp(dyn->spins, dyn->Omg, &SA, &SB, NULL, 
               NULL, NULL, NULL, 
               EOBPars->spin_interp_domain);
-
-        // eob_spin_dyn_Sproj_interp(dyn->spins, hlm_t->phase[1]/2., &SA, &SB, NULL, 
-        //       NULL, NULL, NULL, 
-        //       EOBPars->spin_interp_domain);
-
       }
       const double XA = EOBPars->X1;
       const double XB = EOBPars->X2;
@@ -831,8 +825,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       errorexit("problem during spin dynamics");
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
     spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
-    // for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-    //   gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);
     
     if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0])
       eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
@@ -976,8 +968,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         errorexit("problem during spin dynamics");
       spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
       spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
-      // for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-      //   gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size);
       
       if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0])
         eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
@@ -1015,7 +1005,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 #if (DEBUG) 
     if (EOBPars->output_multipoles) {
       strcat(hlm->name,"_ringdown");
-      /* Waveform_lm_output (hlm); */ /* output goes later */
     }
 #endif
       
@@ -1041,7 +1030,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     M *= MSUN_S;
     EOBPars->tc*= M;   
   } 
-  const double phi = Pi/2.0 - EOBPars->coalescence_angle; 
+  const double phi  = Pi/2.0 - EOBPars->coalescence_angle; 
   const double iota = EOBPars->inclination;
 
   /** Computation of (h+,hx) */
