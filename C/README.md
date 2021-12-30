@@ -11,6 +11,8 @@ See the main [README](../README.md) or the [Wiki](https://bitbucket.org/eob_ihes
 In v3.0 GIOTTO
 
  * Simplified handling of EOBParameters and interface
+ * Many 0/1 options have now become "yes"/"no". Similarly, in place of enums we use the respective string. 
+   For example, `use_lambda234_fits = 1` has become `use_lambda234_fits = "YAGI13"`
 
 In v2.0
 
