@@ -2,7 +2,7 @@
 
 # Add a parfile in the list below to run in in the benchmark
 # All these parfile are and should be kept in ../C/par/
-FILES=bbh_q1_s0s0_10Hz.par bbh_q1_s0s0_10Hz_postadiab.par bbh_q1_s0s0_M10_10Hz_postadiab.par bbh_q3_s08s-02_15Hz_postadiab.par bbh_q3_s08s-02_M12_15Hz.par bbh_q3_s08s-02_M12_15Hz_postadiab.par bns_q1_s01s01_20Hz.par bns_q1_s01s01_20Hz_postadiab.par bns_q1_s0s0_10Hz.par bns_q1_s0s0_10Hz_postadiab.par bns_q1_s0s0_M2.7_10Hz.par 
+FILES=GW150914.par GW170817.par bbh_q1_s0s0_10Hz.par bbh_q3_s-099s-099_10Hz.par bbh_q5_s09s-04_HM.par bhns_q3_s075s0_f0004.par bns_q1_s-01s-01_10Hz.par
 
 # do not touch below here
 

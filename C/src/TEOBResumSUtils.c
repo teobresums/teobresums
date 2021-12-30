@@ -37,6 +37,33 @@ double nu_to_X1(const double nu)
   return 0.5*(1.+sqrt(1.-4.*nu));
 }
 
+/** Compute tidal coupling constants from tidal polarizability parameters */
+double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell,
+			     double *kapA, double *kapB)
+{
+  if (ell<2) errorexit("ell must be >2");
+  double f2lm1 = doublefact(2*ell-1);
+  int p = 2*ell + 1;
+  *kapA = f2lm1 * LamA * pow(XA,p) / q;
+  *kapB = f2lm1 * LamB * pow(XB,p) * q;
+}
+
+/** Set spins vars */
+void set_spin_vars(double X1, double X2, double chi1, double chi2,
+		   double *S1, double *S2, double *a1, double *a2,
+		   double *aK, double *aK2,
+		   double *S, double *Sstar)
+{
+  *S1 = SQ(X1) * chi1;
+  *S2 = SQ(X2) * chi2;
+  *a1 = X1 * chi1;
+  *a2 = X2 * chi2;
+  *aK = (*a1) +  (*a2);
+  *aK2 = SQ((*aK));   
+  *S = (*S1) +  (*S2);           
+  *Sstar = X2 * (*a1) + X1 * (*a2);
+}
+
 /** Eulerlog function (constants are defined in header) */
 static const double Logm[] = {0.,Log1,Log2,Log3,Log4,Log5,Log6,Log7};
 double Eulerlog(const double x,const int m)
@@ -47,6 +74,288 @@ double Eulerlog(const double x,const int m)
   return EulerGamma_Log2 + logm + 0.5*log(x);
 }
 
+double Pade32(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+
+  double cden = SQ(a[3]) - a[2]*a[4];
+
+  double n1 = a[1]*SQ(a[3]) - a[1]*a[2]*a[4] - a[3]*a[4] + a[2]*a[5];
+  double n2 = a[2]*SQ(a[3]) - SQ(a[2])*a[4] - a[1]*a[3]*a[4] + SQ(a[4]) + a[1]*a[2]*a[5] - a[3]*a[5];
+  double n3 = SQ(a[3])*a[3] - 2.*a[2]*a[3]*a[4] + a[1]*SQ(a[4]) + SQ(a[2])*a[5] - a[1]*a[3]*a[5];
+
+  double d1 = - a[3]*a[4] + a[2]*a[5];
+  double d2 = SQ(a[4]) - a[3]*a[5];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3)/(cden + d1*x + d2*x2);
+
+  return pade;
+}
+
+double Pade23(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+
+  double cden = SQ(a[2])*a[2] - 2.*a[1]*a[2]*a[3] + SQ(a[3]) + SQ(a[1])*a[4] - a[2]*a[4];
+
+  double n1 = a[1]*SQ(a[2])*a[2] - 2.*SQ(a[1])*a[2]*a[3] - SQ(a[2])*a[3] + 2.*a[1]*SQ(a[3]) + SQ(a[1])*a[1]*a[4] - a[3]*a[4] - SQ(a[1])*a[5] + a[2]*a[5];
+  double n2 = SQ(SQ(a[2])) - 3.*a[1]*SQ(a[2])*a[3] + SQ(a[1])*SQ(a[3]) + 2.*a[2]*SQ(a[3]) + 2.*SQ(a[1])*a[2]*a[4] - 2.*SQ(a[2])*a[4] - 2.*a[1]*a[3]*a[4] + SQ(a[4]) - SQ(a[1])*a[1]*a[5] + 2.*a[1]*a[2]*a[5] - a[3]*a[5];
+
+  double d1 = -SQ(a[2])*a[3] + a[1]*SQ(a[3]) + a[1]*a[2]*a[4] - a[3]*a[4] - SQ(a[1])*a[5] + a[2]*a[5];
+  double d2 = a[2]*SQ(a[3]) - SQ(a[2])*a[4] - a[1]*a[3]*a[4] + SQ(a[4]) + a[1]*a[2]*a[5] - a[3]*a[5];
+  double d3 = -SQ(a[3])*a[3] + 2.*a[2]*a[3]*a[4] - a[1]*SQ(a[4]) - SQ(a[2])*a[5] + a[1]*a[3]*a[5];
+    
+  double pade = (cden + n1*x + n2*x2)/(cden + d1*x + d2*x2 +d3*x3);
+
+  return pade;
+}
+
+double Pade51(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+  double x4 = x3*x;
+  double x5 = x4*x;
+
+  double cden = a[5];
+
+  double n1 = a[1]*a[5] -      a[6];
+  double n2 = a[2]*a[5] - a[1]*a[6];
+  double n3 = a[3]*a[5] - a[2]*a[6];
+  double n4 = a[4]*a[5] - a[3]*a[6];
+  double n5 = a[5]*a[5] - a[4]*a[6];
+
+  double d1 = - a[6];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3 + n4*x4 + n5*x5)/(cden + d1*x);
+
+  return pade;
+}
+
+double Pade42(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+  double x4 = x3*x;
+
+  double cden = SQ(a[4]) - a[3]*a[5];
+
+  double n1 = a[1]*SQ(a[4]) - a[1]*a[3]*a[5] - a[4]*a[5] + a[3]*a[6];
+  double n2 = a[2]*SQ(a[4]) - a[2]*a[3]*a[5] - a[1]*a[4]*a[5] + SQ(a[5]) + a[1]*a[3]*a[6] - a[4]*a[6];
+  double n3 = a[3]*SQ(a[4]) - SQ(a[3])*a[5] - a[2]*a[4]*a[5] + a[1]*SQ(a[5]) + a[2]*a[3]*a[6] - a[1]*a[4]*a[6];
+  double n4 = SQ(a[4])*a[4] - 2*a[3]*a[4]*a[5] + a[2]*SQ(a[5]) + SQ(a[3])*a[6] - a[2]*a[4]*a[6];
+  
+  double d1 = - a[4]*a[5] + a[3]*a[6];
+  double d2 = SQ(a[5]) - a[4]*a[6];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3 + n4*x4)/(cden + d1*x + d2*x2);
+
+  return pade;
+}
+
+double Pade33(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+
+  double cden = SQ(a[3])*a[3] - 2.*a[2]*a[3]*a[4] + a[1]*SQ(a[4]) + SQ(a[2])*a[5] - a[1]*a[3]*a[5];
+
+  double n1 = a[1]*a[3]*SQ(a[3]) - 2.*a[1]*a[2]*a[3]*a[4] - SQ(a[3])*a[4] + SQ(a[1])*SQ(a[4]) + a[2]*SQ(a[4]) + a[1]*SQ(a[2])*a[5] - SQ(a[1])*a[3]*a[5] + a[2]*a[3]*a[5] - a[1]*a[4]*a[5] - SQ(a[2])*a[6] + a[1]*a[3]*a[6];
+  double n2 = a[2]*a[3]*SQ(a[3]) - 2.*SQ(a[2])*a[3]*a[4] - a[1]*SQ(a[3])*a[4] + 2.*a[1]*a[2]*SQ(a[4]) + a[3]*SQ(a[4]) + a[2]*SQ(a[2])*a[5] - SQ(a[3])*a[5] - SQ(a[1])*a[4]*a[5] - a[2]*a[4]*a[5] + a[1]*SQ(a[5]) - a[1]*SQ(a[2])*a[6] + SQ(a[1])*a[3]*a[6] + a[2]*a[3]*a[6] - a[1]*a[4]*a[6];
+  double n3 = SQ(SQ(a[3])) -3.*a[2]*SQ(a[3])*a[4] + SQ(a[2])*SQ(a[4]) + 2.*a[1]*a[3]*SQ(a[4]) - a[4]*SQ(a[4]) + 2.*SQ(a[2])*a[3]*a[5] - 2.*a[1]*SQ(a[3])*a[5] - 2.*a[1]*a[2]*a[4]*a[5] + 2.*a[3]*a[4]*a[5] + SQ(a[1])*SQ(a[5]) - a[2]*SQ(a[5]) - a[2]*SQ(a[2])*a[6] + 2.*a[1]*a[2]*a[3]*a[6] - SQ(a[3])*a[6] - SQ(a[1])*a[4]*a[6] + a[2]*a[4]*a[6];
+  
+  double d1 = -SQ(a[3])*a[4] + a[2]*SQ(a[4]) + a[2]*a[3]*a[5] - a[1]*a[4]*a[5] - SQ(a[2])*a[6] + a[1]*a[3]*a[6];
+  double d2 = a[3]*SQ(a[4]) - SQ(a[3])*a[5] - a[2]*a[4]*a[5] + a[1]*SQ(a[5]) + a[2]*a[3]*a[6] - a[1]*a[4]*a[6];
+  double d3 = -SQ(a[4])*a[4] + 2.*a[3]*a[4]*a[5] - a[2]*SQ(a[5]) - SQ(a[3])*a[6] + a[2]*a[4]*a[6];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3)/(cden + d1*x + d2*x2 + d3*x3);
+
+  return pade;
+}
+
+double Pade15(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+  double x4 = x3*x;
+  double x5 = x4*x;
+
+  double cden = SQ(SQ(a[1]))*a[1] - 4.*SQ(a[1])*a[1]*a[2] + 3.*a[1]*SQ(a[2]) + 3.*SQ(a[1])*a[3] - 2.*a[2]*a[3] - 2.*a[1]*a[4] + a[5];
+
+  double n1 = SQ(SQ(a[1]))*SQ(a[1]) - 5.*SQ(SQ(a[1]))*a[2] + 6.*SQ(a[1])*SQ(a[2]) - SQ(a[2])*a[2] + 4.*SQ(a[1])*a[1]*a[3] - 6.*a[1]*a[2]*a[3] + SQ(a[3]) - 3.*SQ(a[1])*a[4] + 2.*a[2]*a[4] + 2.*a[1]*a[5] - a[6];
+
+  double d1 = -SQ(SQ(a[1]))*a[2] + 3.*SQ(a[1])*SQ(a[2]) - SQ(a[2])*a[2] + SQ(a[1])*a[1]*a[3] - 4.*a[1]*a[2]*a[3] + SQ(a[3]) - SQ(a[1])*a[4] + 2.*a[2]*a[4] + a[1]*a[5] - a[6];  
+  double d2 = SQ(a[1])*a[1]*SQ(a[2]) - 2.*a[1]*SQ(a[2])*a[2] - SQ(SQ(a[1]))*a[3] + SQ(a[1])*a[2]*a[3] + 2.*SQ(a[2])*a[3] - a[1]*SQ(a[3]) + SQ(a[1])*a[1]*a[4] - SQ(a[1])*a[5] - a[2]*a[5] + a[1]*a[6];  
+  double d3 = -SQ(a[1])*SQ(a[2])*a[2] + SQ(SQ(a[2])) + 2.*SQ(a[1])*a[1]*a[2]*a[3] - a[1]*SQ(a[2])*a[3] - 2.*SQ(a[1])*SQ(a[3]) +  a[2]*SQ(a[3]) - SQ(SQ(a[1]))*a[4] + SQ(a[1])*a[2]*a[4] - 2.*SQ(a[2])*a[4] + 2.*a[1]*a[3]*a[4] + SQ(a[1])*a[1]*a[5] - a[3]*a[5] - SQ(a[1])*a[6] + a[2]*a[6];  
+  double d4 = a[1]*SQ(SQ(a[2])) - 3.*SQ(a[1])*SQ(a[2])*a[3] - SQ(a[2])*a[2]*a[3] + SQ(a[1])*a[1]*SQ(a[3]) + 4.*a[1]*a[2]*SQ(a[3]) - SQ(a[3])*a[3] + 2.*SQ(a[1])*a[1]*a[2]*a[4] - a[1]*SQ(a[2])*a[4] - 4.*SQ(a[1])*a[3]*a[4] + 2.*a[1]*SQ(a[4]) - SQ(SQ(a[1]))*a[5] + SQ(a[1])*a[2]*a[5] + SQ(a[2])*a[5] - a[4]*a[5] + SQ(a[1])*a[1]*a[6] - 2.*a[1]*a[2]*a[6] + a[3]*a[6];  
+  double d5 = -SQ(SQ(a[2]))*a[2] + 4.*a[1]*SQ(a[2])*a[2]*a[3] - 3.*SQ(a[1])*a[2]*SQ(a[3]) - 3.*SQ(a[2])*SQ(a[3]) + 2.*a[1]*SQ(a[3])*a[3] - 3.*SQ(a[1])*SQ(a[2])*a[4] + 3.*SQ(a[2])*a[2]*a[4] + 2.*SQ(a[1])*a[1]*a[3]*a[4] + 2.*a[1]*a[2]*a[3]*a[4] - SQ(a[3])*a[4] - SQ(a[1])*SQ(a[4]) - 2.*a[2]*SQ(a[4]) + 2.*SQ(a[1])*a[1]*a[2]*a[5] - 4.*a[1]*SQ(a[2])*a[5] - 2.*SQ(a[1])*a[3]*a[5] + 4.*a[2]*a[3]*a[5] + 2.*a[1]*a[4]*a[5] - SQ(a[5]) - SQ(SQ(a[1]))*a[6] + 3.*SQ(a[1])*a[2]*a[6] - SQ(a[2])*a[6] - 2.*a[1]*a[3]*a[6] + a[4]*a[6];
+
+  double pade = (cden + n1*x)/(cden + d1*x + d2*x2 + d3*x3 + d4*x4 + d5*x5);
+
+  return pade;
+}
+
+double Pade62(double x, double *a){
+  double x2 = x*x;
+  double x3 = x2*x;
+  double x4 = x3*x;	
+  double x5 = x4*x;
+  double x6 = x5*x;
+
+  double cden = SQ(a[6]) - a[5]*a[7];
+
+  double n1 = a[1]*SQ(a[6]) - a[1]*a[5]*a[7] - a[6]*a[7] + a[5]*a[8];
+  double n2 = a[2]*SQ(a[6]) - a[2]*a[5]*a[7] - a[1]*a[6]*a[7] + SQ(a[7]) + a[1]*a[5]*a[8] - a[6]*a[8];
+  double n3 = a[3]*SQ(a[6]) - a[3]*a[5]*a[7] - a[2]*a[6]*a[7] + a[1]*SQ(a[7]) + a[2]*a[5]*a[8] - a[1]*a[6]*a[8];
+  double n4 = a[4]*SQ(a[6]) - a[4]*a[5]*a[7] - a[3]*a[6]*a[7] + a[2]*SQ(a[7]) + a[3]*a[5]*a[8] - a[2]*a[6]*a[8];
+  double n5 = a[5]*SQ(a[6]) - SQ(a[5])*a[7] - a[4]*a[6]*a[7] + a[3]*SQ(a[7]) + a[4]*a[5]*a[8] - a[3]*a[6]*a[8];
+  double n6 = a[6]*SQ(a[6]) - 2.*a[5]*a[6]*a[7] + a[4]*SQ(a[7]) + SQ(a[5])*a[8] - a[4]*a[6]*a[8];
+
+  double d1 = -a[6]*a[7] + a[5]*a[8];
+  double d2 = SQ(a[7]) - a[6]*a[8];
+
+  double pade = (cden + n1*x + n2*x2 + n3*x3 + n4*x4 + n5*x5 + n6*x6)/(cden + d1*x + d2*x2);
+
+  return pade;
+}
+
+double Taylorseries(double x, double *a, int N){
+  double xn[N+1];
+  xn[0] = 1.;
+  for (int n=1; n<N+1; n++) {	
+    xn[n] = xn[n-1]*x;
+  }
+  
+  double sum = 0.;
+#if (1)
+  sum = a[0];
+  for (int n=1; n<N+1; n++) {	
+    sum += a[n]*xn[n];
+  }
+#else  
+  sum = a[N]*xn[N];
+  for (int n=N-1; n-- > 1;) {
+    sum += a[n]*xn[n];
+  } 
+  sum rholm[k] += a[0];
+#endif
+
+  return sum;
+}
+
+/** vector scalar product */
+void vect_dot(double ax, double ay, double az,
+	      double bx, double by, double bz,
+	      double *s)
+{
+  *s = ax*bx + ay*by + az*bz;
+}
+
+void vect_dot3(double *a, double *b, 
+	       double *s)
+{
+  *s = a[Ix]*b[Ix] + a[Iy]*b[Iy] + a[Iz]*b[Iz];
+}
+
+/** vector curl product */
+void vect_cross(double ax, double ay, double az,
+		double bx, double by, double bz,
+		double *cx, double *cy, double *cz)
+{
+  *cx = ay*bz - az*by;
+  *cy = az*bx - ax*bz;
+  *cz = ax*by - ay*bx;
+}
+
+void vect_cross3(double *a, double *b, 
+		 double *c)
+{
+  c[Ix] = a[Iy]*b[Iz] - a[Iz]*b[Iy];
+  c[Iy] = a[Iz]*b[Ix] - a[Ix]*b[Iz];
+  c[Iz] = a[Ix]*b[Iy] - a[Iy]*b[Ix];
+}
+
+/** vector rotation about an axis */
+void vect_rotate(int axis, double angle, double *vx_p, double *vy_p, double *vz_p)
+{
+  double tmp1, tmp2;
+  const double ca = cos(angle);
+  const double sa = sin(angle);
+
+  double vx = *vx_p;
+  double vy = *vy_p;
+  double vz = *vz_p;  
+
+  if (axis==3) {
+    // z-axis
+    tmp1 = vx * ca - vy * sa;	    
+    tmp2 = vx * sa + vy * ca;
+    vx = tmp1;
+    vy = tmp2;
+  } else if (axis==2) {
+    // y-axis
+    tmp1 = vx * ca + vz * sa;
+    tmp2 = - vx * sa + vz * ca;
+    vx = tmp1;
+    vz = tmp2;
+  } else if (axis==1) {
+    // x-axis
+    tmp1 = vy * ca - vz * sa;
+    tmp2 = vy * sa + vz * ca;
+    vy = tmp1;
+    vz = tmp2;
+  } else
+    errorexit("unkown rotation axis");
+  
+  *vx_p = vx;
+  *vy_p = vy;
+  *vz_p = vz;  
+}
+
+void vect_rotate3(int axis, double angle, double *v)
+{
+  double tmp1, tmp2;
+  const double ca = cos(angle);
+  const double sa = sin(angle);
+
+  double vx = v[Ix];
+  double vy = v[Iy];
+  double vz = v[Iz];  
+
+  if (axis==3) {
+    // z-axis
+    tmp1 = vx * ca - vy * sa;	    
+    tmp2 = vx * sa + vy * ca;
+    vx = tmp1;
+    vy = tmp2;
+  } else if (axis==2) {
+    // y-axis
+    tmp1 = vx * ca + vz * sa;
+    tmp2 = - vx * sa + vz * ca;
+    vx = tmp1;
+    vz = tmp2;
+  } else if (axis==1) {
+    // x-axis
+    tmp1 = vy * ca - vz * sa;
+    tmp2 = vy * sa + vz * ca;
+    vy = tmp1;
+    vz = tmp2;
+  } else
+    errorexit("unkown rotation axis");
+  
+  v[Ix] = vx;
+  v[Iy] = vy;
+  v[Iz] = vz;  
+}
+
+/** Spline interpolation with GSL routines at single point */
+double interp_spline_pt(double *t, double *y, int n, double ti)
+{
+  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+  gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
+  gsl_spline_init (spline, t, y, n);    
+  double yi = gsl_spline_eval (spline, ti, acc);
+  gsl_spline_free (spline);
+  gsl_interp_accel_free (acc);
+  return yi;
+}
+
 /** Spline interpolation with GSL routines */
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
@@ -54,7 +363,8 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
   gsl_spline_init (spline, t, y, n);    
   for (int k = 0; k < ni; k++) {
-    yi[k] = gsl_spline_eval (spline, ti[k], acc);
+    yi[k] = gsl_spline_eval (spline, *(ti + k), acc);
+    /* yi[k] = gsl_spline_eval (spline, ti[k], acc); */
   }
   gsl_spline_free (spline);
   gsl_interp_accel_free (acc);
@@ -77,24 +387,17 @@ void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, dou
   gsl_interp_accel_free (acc);
 }
 
-
-/* An OpenMP version. We keep two versions because we might want to introduce the 
-   thread-parallelism at different levels */
-/*
-  Notes for SIMD
-  * SIMD Functions need to be declared, see e.g.
-    P.25 https://info.ornl.gov/sites/publications/files/Pub69214.pdf
-  * How does it work with GSL? Is wrapper enough?
-  * 'uniform' means 'arg does not change'
-  * 'linear' means 'arg will be increased between each successive call fo the fun'
-  GSL pointers:
-  https://github.com/ampl/gsl/blob/master/interpolation/spline.c#L118
-  https://github.com/ampl/gsl/blob/master/interpolation/interp.c#L140
+/* An OpenMP SIMD version - experimental
+ * SIMD Functions need to be enabled, see e.g.
+ * P.25 https://info.ornl.gov/sites/publications/files/Pub69214.pdf
+ * GSL pointers:
+ * https://github.com/ampl/gsl/blob/master/interpolation/spline.c#L118
+ * https://github.com/ampl/gsl/blob/master/interpolation/interp.c#L140
 */
-#pragma omp declare simd uniform(x) linear(i: 1)
-double gsl_spline_eval_omp(const gsl_spline * spline, double *x, gsl_interp_accel * acc, int i)
+#pragma omp declare simd uniform(_spline) linear(_x) // linear(_acc) ?
+double gsl_spline_eval_simd_enabled(const gsl_spline * _spline, double * _x, gsl_interp_accel * _acc)
 {
-  return gsl_spline_eval(spline, x[i], acc);
+  return gsl_spline_eval(_spline, *_x, _acc);
 }
 
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi)
@@ -106,8 +409,10 @@ void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
   gsl_spline_init (spline, t, y, n);    
 #pragma omp simd 
-  for (int k = 0; k < ni; k++) 
-    yi[k] = gsl_spline_eval_omp (spline, ti, acc, k);
+  for (int k = 0; k < ni; k++) {
+    /* yi[k] = gsl_spline_eval_simd_enabled(spline, ti + k, NULL); */ // bsearch, 2x slower
+    yi[k] = gsl_spline_eval_simd_enabled(spline, ti + k, acc);
+  }
   gsl_spline_free (spline);
   gsl_interp_accel_free (acc);
 #ifdef _OPENMP  
@@ -262,160 +567,6 @@ double find_max_grid (double *x, double *f)
   double xmax = x[i] - d1f/d2f;
 
   return xmax;
-}
-
-/** Factorial */
-static const double f35[] = {1.,
-			     1.,
-			     2.,
-			     6.,
-			     24.,
-			     120.,
-			     720.,
-			     5040.,
-			     40320.,
-			     362880.,
-			     3628800., 
-			     39916800.,
-			     479001600.,
-			     6227020800.,
-			     87178291200.,
-			     1307674368000.,
-			     20922789888000.,
-			     355687428096000.,
-			     6402373705728000.,
-			     121645100408832000.,
-			     2432902008176640000.,
-			     51090942171709440000.,
-			     1124000727777607680000.,
-			     25852016738884976640000.,
-			     620448401733239439360000.,
-			     15511210043330985984000000.,
-			     403291461126605635584000000.,
-			     10888869450418352160768000000.,
-			     304888344611713860501504000000.,
-			     8841761993739701954543616000000.,
-			     265252859812191058636308480000000.,
-			     8222838654177922817725562880000000.,
-			     263130836933693530167218012160000000.,
-			     8683317618811886495518194401280000000.,
-			     295232799039604140847618609643520000000.,
-			     10333147966386144929666651337523200000000.};
-double fact(int n)
-{
-  if (n < 0){
-    errorexit(" computing a negative factorial.\n");
-  } else if (n <= 35){
-    return f35[n];
-  } else {
-    return n*fact(n-1);
-  }
-}
-
-/** Wigner d-function */
-double wigner_d_function(int l, int m, int s, double i)
-{
-  const double costheta = cos(i*0.5);
-  const double sintheta = sin(i*0.5);
-  const double norm = sqrt( (fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s)) );
-  const int ki = MAX( 0  , m-s );
-  const int kf = MIN( l+m, l-s );
-  double dWig = 0.;  
-  double div;
-  for (int k = ki; k <= kf; k++ ) {
-    div = 1.0/( fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) );
-    dWig += div*( pow(-1.,k) * pow(costheta,2*l+m-s-2*k) * pow(sintheta,2*k+s-m) );
-  }
-  return (norm * dWig);
-}
-
-/** Spin-weighted spherical harmonic 
-    Ref: https://arxiv.org/pdf/0709.0093.pdf */
-int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
-{
-  if ((l<0) || (m<-l) || (m>l)) {
-    errorexit(" wrong (l,m) inside spinspharmY\n");
-  }
-  double c = pow(-1.,-s) * sqrt( (2.*l+1.)/(4.*M_PI) );
-  double dWigner = c * wigner_d_function(l,m,-s,i);
-  *rY = cos((double)(m)*phi) * dWigner;
-  *iY = sin((double)(m)*phi) * dWigner;
-  return OK;
-}
-
-/** (h+, hx) polarizations from the multipolar waveform */
-void compute_hpc(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
-{  
-#ifdef _OPENMP
-  if (USETIMERS) openmp_timer_start("compute_hpc");
-#endif
-#pragma omp parallel 
-  {
-    double Y_real[KMAX], Y_imag[KMAX];
-    static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
-    double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
-    double Aki, cosPhi, sinPhi;
-    double sumr, sumi;
-    int activemode[KMAX];
-    double Msun = M;
-    set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
-    if (!(EOBPars->use_geometric_units)) Msun = M/MSUN_S;
-#if (DEBUG)
-    printf("h+,x: nu = %e M = %e D = %e Mpc phi = %e iota = %e prefactor = %e\n",
-	   nu,Msun,distance,phi,iota,amplitude_prefactor);
-#endif
-    
-    /* Precompute Ylm */
-    for (int k = 0; k < KMAX; k++ ) {
-      if (!activemode[k]) continue;
-      spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
-      /* add m<0 modes */
-      if ( (mneg) && (MINDEX[k]!=0) )
-	spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
-      }
-      
-    /* Sum up  hlm * Ylm 
-     * Note because EOB code defines phase>0, 
-     * but the convention is h_lm = A_lm Exp[-I phi_lm] we have
-     * h_{l,m>=0} = A_lm ( cos(phi_lm) - I*sin(phi_lm) ) for m>0 and
-     * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
-     * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
-     */
-#pragma omp for
-    for (int i = 0; i < hlm->size; i++) {
-        hpc->time[i] = hlm->time[i]*M; 
-        sumr = sumi = 0.;
-	
-        /* Loop over modes */
-        for (int k = 0; k < KMAX; k++ ) {
-	  if (!activemode[k]) continue;
-	  Aki  = amplitude_prefactor * hlm->ampli[k][i];
-	  cosPhi = cos( hlm->phase[k][i] );
-	  sinPhi = sin( hlm->phase[k][i] );
-	  sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
-	  sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
-          
-	  /* add m<0 modes */
-	  if ( (mneg) && (MINDEX[k]!=0) ) { 
-	    /* H_{l-m} = (-)^l H^{*}_{lm} */
-	    if (LINDEX[k] % 2) {
-	      sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
-	      sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	    }
-	    else { 
-	      sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
-	      sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	    }
-	  }    
-        }
-        /* h = h+ - i hx */
-        hpc->real[i] = sumr;
-        hpc->imag[i] = -sumi;
-    }
-  }
-#ifdef _OPENMP
-  if (USETIMERS) openmp_timer_stop("compute_hpc");
-#endif
 }
 
 /** 4th order centered stencil first derivative, uniform grids */
@@ -629,32 +780,81 @@ void unwrap(double *p, const int size)
   }
 }
 
-/* Slightly modified unwrap function for HM phases */
+/* Modified unwrap function for HM phases */
 void unwrap_HM(double *p, const int size)
 {
   if (size < 1) return;
+  
   int j;
-  double dphi, corr, curr, prev;
+  double delta, dphi, corr, curr, prev;
+
   dphi = 0.;
   corr = 0.;
   
-  prev = *p;  
+  prev  = p[0];
+  delta = p[1]-p[0];
+  
   for (j = 1; j < size; j++){
-    p++;
-    curr = *p;
-    
-    if(curr < prev - Pi) 
+    // Setting current data point
+    p[j] += corr;
+    curr = p[j];
+
+    // Check if decreasing too much - adding 2Pi
+    if((curr < prev - Pi) && (curr - prev < delta - Pi))
       dphi = TwoPi;
-    if(curr > prev + TwoPi)
+
+    // Check if increasing too much - removing 2Pi
+    if((curr > prev + TwoPi) && (curr - prev > delta + Pi))
       dphi = -TwoPi;
 
+    // Adding corrections
     corr += dphi;
-    *p += corr;    
+    p[j] += dphi;
 
-    prev = curr;
-    dphi = 0.0;    
-  } 
+    // Resetting for next iteration
+    prev = p[j];
+    delta = p[j]-p[j-1];
+    dphi = 0.0;
+  }
   
+}
+
+/* unwrap function for euler angles */
+void unwrap_euler(double *p, const int size)
+{
+  if (size < 1) return;
+  
+  int j;
+  double delta, dphi, corr, curr, prev;
+
+  dphi = 0.;
+  corr = 0.;
+  
+  prev  = p[0];
+  delta = p[1]-p[0];
+  
+  for (j = 1; j < size; j++){
+    // Setting current data point
+    p[j] += corr;
+    curr = p[j];
+
+    // Check if decreasing too much - adding 2Pi
+    if((curr < prev - Pi) && (curr - prev < delta - Pi))
+      dphi = TwoPi;
+
+    // Check if increasing too much - removing 2Pi
+    if((curr > prev + Pi) && (curr - prev > delta + Pi))
+      dphi = -TwoPi;
+
+    // Adding corrections
+    corr += dphi;
+    p[j] += dphi;
+
+    // Resetting for next iteration
+    prev = p[j];
+    delta = p[j]-p[j-1];
+    dphi = 0.0;
+  }
 }
 
 #define dbg_unwrap_proxy (0)  /* stops after routine, use: ./TEOBResumS.x test.par > out */ 
@@ -699,18 +899,20 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
   if (dbg_unwrap_proxy) DBGSTOP;
 }
 
-/** This routine sets a 0/1 mask for the multipolar linear index */
-void set_multipolar_idx_mask_old(int *kmask, int n)
+/* Compute real/imag <-> amplitude/phase */
+void rmap (double *re, double *im, double *p, double *a, const int mode)
 {
-  int m, k,j;
-  for (k = 0; k<n; k++) kmask[k] = 0; /* all off */
-  int *idx = par_get_arrayi("use_mode_lm", &m);
-  if (m==0) return;
-  if (m==1 && idx[0]==-1) return;
-  for (k = 0; k<n; k++)
-    for (j = 0; j<m; j++)
-      if (idx[j] == k) kmask[k] = 1;
-  free(idx);
+  /* h =  A exp( -i phi) */
+  if (mode) {
+    /** (Re, Im) -> (Amplitude, phase) */
+    *a = sqrt( SQ((*re)) + SQ((*im)) );
+    *p = Pi - atan2((*im), (*re)); /* exp(- i phi) => Pi  */
+    //TODO: unwrap?
+  } else {
+    /** (Amplitude, phase) -> (Re, Im) */
+    *re = + (*a) * cos((*p));  
+    *im = - (*a) * sin((*p));  
+  }
 }
 
 /** This routine sets a 0/1 mask for the multipolar linear index 
@@ -818,8 +1020,8 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
     h->time[i] = i*dt + t0;
   
   /* Interp real/imag*/
-  interp_spline_omp(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
-  interp_spline_omp(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
+  interp_spline(h_aux->time, h_aux->real, h_aux->size, h->time, size, h->real);
+  interp_spline(h_aux->time, h_aux->imag, h_aux->size, h->time, size, h->imag);
 
   /* Compute phase and amplitude */
   /* Waveform_rmap(h, 1, 1); */ /* unwrap */
@@ -861,8 +1063,8 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
     h->time[i] = i*dt + t0;
 
   /* Interp phase and amplitude */
-  interp_spline_omp(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
-  interp_spline_omp(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
+  interp_spline(h_aux->time, h_aux->ampli, h_aux->size, h->time, size, h->ampli);
+  interp_spline(h_aux->time, h_aux->phase, h_aux->size, h->time, size, h->phase);
   
   /* Compute Real/Imag */
   Waveform_rmap (h, 0, 0); /* do not unwrap */
@@ -1004,8 +1206,8 @@ void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const
     h->freq[i] = i*df + f0;
 
   /* Interp phase and amplitude */
-  interp_spline_omp(h_aux->freq, h_aux->ampli, h_aux->size, h->freq, size, h->ampli);
-  interp_spline_omp(h_aux->freq, h_aux->phase, h_aux->size, h->freq, size, h->phase);
+  interp_spline(h_aux->freq, h_aux->ampli, h_aux->size, h->freq, size, h->ampli);
+  interp_spline(h_aux->freq, h_aux->phase, h_aux->size, h->freq, size, h->phase);
   
   /* Free aux memory */
   WaveformFD_free (h_aux);
@@ -1121,10 +1323,10 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   /* Interp */
   for (int k = 0; k < KMAX; k++) 
     if (hlm->kmask[k])
-      interp_spline_omp(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
+      interp_spline(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
   for (int k = 0; k < KMAX; k++)
     if (hlm->kmask[k]) 
-      interp_spline_omp(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
+      interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
   
   /* Free aux memory */
   Waveform_lm_free (hlm_aux);
@@ -1132,11 +1334,13 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
 
 void Waveform_lm_output (Waveform_lm *wav)
 {
+  int kmask[KMAX];
+  set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
   char fname[STRLEN*2];
   const int n = wav->size;
   
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {      
+    if (kmask[k]) {      
       sprintf(fname,"%s/%s_l%01d_m%01d.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
@@ -1151,11 +1355,13 @@ void Waveform_lm_output (Waveform_lm *wav)
 
 void Waveform_lm_output_reim (Waveform_lm *wav)
 {
+  int kmask[KMAX];
+  set_multipolar_idx_mask(kmask, KMAX, EOBPars->output_lm, EOBPars->output_lm_size, 0);  
   char fname[STRLEN*2];
   double re,im;
   const int n = wav->size;
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
+    if (kmask[k]) {
       sprintf(fname,"%s/%s_l%01d_m%01d_reim.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
@@ -1392,19 +1598,79 @@ void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f
   /* Interp */
   for (int k = 0; k < KMAX; k++){
     if (hlm->kmask[k]){
-      //interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+      /* interp_spline_omp(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]); */
       interp_spline_checklim(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
     }
   }
   for (int k = 0; k < KMAX; k++){
     if (hlm->kmask[k]) {
-      //interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+      /* interp_spline_omp(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]); */
       interp_spline_checklim(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
     }
   }
   /* Free aux memory */
   WaveformFD_lm_free (hlm_aux);
 }
+
+void WaveformFD_lm_interp_ap_freqs (WaveformFD_lm *hlm, const char *name)
+{
+  /* Alloc and init aux memory */  
+  WaveformFD_lm *hlm_aux;
+  int size = EOBPars->freqs_size;
+  const int oldsize = hlm->size;
+  WaveformFD_lm_alloc(&hlm_aux, oldsize, "");
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->kmask[k]) {  
+      memcpy(hlm_aux->ampli[k], hlm->ampli[k], oldsize * sizeof(double));
+      memcpy(hlm_aux->phase[k], hlm->phase[k], oldsize * sizeof(double));
+      memcpy(hlm_aux->F[k], hlm->F[k], oldsize * sizeof(double));
+      //memcpy(hlm_aux->Fdot[k], hlm->Fdot[k], oldsize * sizeof(double));
+    }
+  }
+
+  /* Realloc arrays */
+  hlm->size = size;
+  if (strcmp(name, "")) strcpy(hlm->name, name);
+  if (hlm->freq) free(hlm->freq); 
+  hlm->freq = malloc ( size * sizeof(double) );
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->kmask[k]) {  
+      if (hlm->ampli[k]) free(hlm->ampli[k]);
+      if (hlm->phase[k]) free(hlm->phase[k]);
+      if (hlm->F[k]) free(hlm->F[k]);
+      if (hlm->Fdot[k]) free(hlm->Fdot[k]);
+      
+      hlm->ampli[k] = malloc ( size * sizeof(double) );
+      hlm->phase[k] = malloc ( size * sizeof(double) );
+      hlm->F[k] = NULL; // this info is lost in the interp.
+      hlm->Fdot[k] = NULL;// this info is lost in the interp.
+    } 
+  }
+
+  /* Fill new freq array */
+#pragma omp simd
+  for (int i = 0; i < size; i++) 
+    hlm->freq[i] = EOBPars->freqs[i];
+  
+  /* Interp */
+  for (int k = 0; k < KMAX; k++){
+    if (hlm->kmask[k]){
+      /* interp_spline(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]); */
+      interp_spline_checklim(hlm_aux->F[k], hlm_aux->ampli[k], hlm_aux->size, hlm->freq, size, hlm->ampli[k]);
+    }
+  }
+  for (int k = 0; k < KMAX; k++){
+    if (hlm->kmask[k]) {
+      /* interp_spline(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]); */
+      interp_spline_checklim(hlm_aux->F[k], hlm_aux->phase[k], hlm_aux->size, hlm->freq, size, hlm->phase[k]);
+    }
+  }
+  /* Free aux memory */
+  WaveformFD_lm_free (hlm_aux);
+
+}
+
+
 
 void WaveformFD_lm_output (WaveformFD_lm *wav)
 {
@@ -1434,7 +1700,7 @@ void WaveformFD_lm_output_reim (WaveformFD_lm *wav)
   double re,im;
   const int n = wav->size;
   for (int k=0; k<KMAX; k++) {
-    if (wav->kmask[k]) {
+    if (kmask[k]) {
       sprintf(fname,"%s/FD_%s_l%01d_m%01d_reim.txt",EOBPars->output_dir,wav->name,LINDEX[k],MINDEX[k]);
       FILE* fp;
       if ((fp = fopen(fname, "w+")) == NULL)
@@ -1494,6 +1760,7 @@ void Dynamics_alloc (Dynamics **dyn, int size, const char *name)
     (*dyn)->data[v] = malloc ( size * sizeof(double) );
     memset((*dyn)->data[v], 0, size*sizeof(double));
   }
+  (*dyn)->spins = NULL;
 }
 
 void Dynamics_push (Dynamics **dyn, int size)
@@ -1538,7 +1805,7 @@ void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const doub
   
   /* Interp */
   for (int k = 0; k < EOB_DYNAMICS_NVARS; k++) 
-    interp_spline_omp(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
+    interp_spline(dyn_aux->time, dyn_aux->data[k], dyn_aux->size, dyn->time, size, dyn->data[k]);
 
   /* Free aux memory */
   Dynamics_free (dyn_aux);
@@ -1691,7 +1958,144 @@ void Dynamics_free (Dynamics *dyn)
   if (dyn->time) free(dyn->time);
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
     if (dyn->data[v]) free(dyn->data[v]);
+  if (dyn->spins) dyn->spins = NULL;
   free(dyn);
+}
+
+/** Spin dynamics */
+void DynamicsSpin_alloc (DynamicsSpin **dyn, int size)
+{
+  *dyn = (DynamicsSpin *) calloc(1, sizeof(DynamicsSpin)); 
+  if (dyn == NULL) errorexit("Out of memory");
+  (*dyn)->size = size; 
+  (*dyn)->time = malloc (size * sizeof(double));
+  memset((*dyn)->time, 0, size*sizeof(double));
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++) {
+    (*dyn)->data[v] = malloc (size * sizeof(double));  
+    memset((*dyn)->data[v], 0, size*sizeof(double));
+    (*dyn)->spline[v] = gsl_spline_alloc (gsl_interp_cspline, size);
+    (*dyn)->accel[v]  = gsl_interp_accel_alloc();
+
+  }
+  (*dyn)->omg_stop=-1; // set from EOBPars or by NR merger
+  (*dyn)->t_stop=-1; // use Momg as stopping criterion, if not otherwise specified.
+  (*dyn)->time_backward=0;
+  (*dyn)->omg_backward= 0; 
+}
+
+void DynamicsSpin_push (DynamicsSpin **dyn, int size)
+{
+  const int n  = (*dyn)->size;
+  const int dn = size - (*dyn)->size;
+  (*dyn)->time = realloc ( (*dyn)->time, size * sizeof(double) );
+  for (int v = 0; v < EOB_EVOLVE_SPIN_NVARS; v++) {
+    (*dyn)->data[v] = realloc ( (*dyn)->data[v], size * sizeof(double) );
+    if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
+    gsl_spline_free ((*dyn)->spline[v]);
+    (*dyn)->spline[v] = gsl_spline_alloc (gsl_interp_cspline, size);
+    gsl_interp_accel_free((*dyn)->accel[v]);
+    (*dyn)->accel[v]  = gsl_interp_accel_alloc();
+  }
+  (*dyn)->size = size; 
+}
+
+void DynamicsSpin_free (DynamicsSpin *dyn)
+{
+  if (!dyn) return;
+  if (dyn->time) free(dyn->time);
+  if (dyn->data)
+    for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++){
+      if (dyn->data[v]) free(dyn->data[v]);
+      gsl_spline_free (dyn->spline[v]);
+      gsl_interp_accel_free(dyn->accel[v]);
+    }
+  free(dyn);
+}
+
+void DynamicsSpin_output (DynamicsSpin *dyn)
+{  
+  char fname[STRLEN*2];
+  const int n = dyn->size;
+  sprintf(fname,"%s/dynspin.txt",EOBPars->output_dir);
+  FILE* fp;
+  if ((fp = fopen(fname, "w+")) == NULL) errorexits("error opening file",fname);
+  fprintf(fp, "# t "); 
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    fprintf(fp, " %s",  eob_prec_var[v]); 
+  fprintf(fp, "\n"); 
+  for (int i = 0; i < n; i++) {
+    fprintf(fp, "%.9e", dyn->time[i]);
+    for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+      fprintf(fp, " %.16e", dyn->data[v][i]); 
+    fprintf(fp, "\n");
+  }
+  fclose(fp);
+}
+
+
+/* Join two dynamics time series at t = to */
+void DynamicsSpin_join (DynamicsSpin *dyna, DynamicsSpin *dynb, double to)
+{
+  /* Time arrays are suppose to be ordered as
+     dyna->time:  x x x x x x x x x 
+     dynb->time:       o o o o o o o o o 
+     to        :                |
+     But they do not need to overlap or be uniformly spaced.
+     Note to can be 
+     to > dyna->time[hlma->size-1] => extend the dynamics data
+     to < dynb->time[0]            => join the whole b dynamics
+     Following checks enforce the above structure, if possible.
+  */
+  if (dyna->time[0] > dynb->time[0]) {
+    SWAPTRS( dyna, dynb );
+    if ((DEBUG) || (VERBOSE)) PRWARN("Swapped dynamics while joining.");
+  }
+  if (to > dynb->time[dynb->size-1]) {
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Dynamics not joined.");
+    return;
+  }
+  if (to <= dyna->time[0]) {
+    /* Nothing to join */
+    if ((DEBUG) || (VERBOSE)) PRWARN("Joining time outside range. Dynamics not joined.");
+    return;
+  }
+
+  /* Find indexes of closest elements to to */
+  const int ioa = find_point_bisection(to, dyna->size, dyna->time, 1);
+  int iob = find_point_bisection(to, dynb->size, dynb->time, 1);
+  if ( DEQUAL(dyna->time[ioa], dynb->time[iob], 1e-10) ) iob++;
+  
+  /* Calculate the new size */
+  const int Nb = dynb->size - iob;
+  const int N  = ioa + Nb;
+
+  /* Resize a */
+  DynamicsSpin_push (&dyna, N);
+
+  /* Copy the relevant part of b into a */
+#pragma omp simd
+  for (int i = 0; i < Nb; i++) 
+    dyna->time[ioa + i] = dynb->time[iob + i]; 
+  
+  for (int v = 0; v < EOB_EVOLVE_SPIN_NVARS; v++) {
+#pragma omp simd
+    for (int i = 0; i < Nb; i++) {
+      dyna->data[v][ioa + i] = dynb->data[v][iob + i];
+    }
+ }
+  for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+    gsl_spline_init (dyna->spline[v], dyna->time, dyna->data[v], dyna->size);   
+
+  
+
+#if (0)
+  printf("Dynamics (a) i = %d time[i] = %.6e \n",ioa, dyna->time[ioa]);
+  printf("Dynamics (b) i = %d time[i] = %.6e \n",iob, dynb->time[iob]);
+  printf("Total size (a)+(b) = %d + %d = %d (%d)\n",Nb, iob, N, dyna->size);
+  printf("%.6e - %.6e = %.6e\n",dyna->time[dyna->size-1], dynb->time[dynb->size-1],dyna->time[dyna->size-1]-dynb->time[dynb->size-1]);
+#endif 
+    
 }
 
 /** Sync some quick access parameters in dyn with parameter database 
@@ -1700,58 +2104,13 @@ void Dynamics_set_params (Dynamics *dyn)
 {
   dyn->store = 0;
   dyn->size  = EOBPars->size;
-  dyn->M     = EOBPars->M;
-  dyn->nu    = EOBPars->nu;
-  dyn->q     = EOBPars->q;
-  dyn->X1    = EOBPars->X1;  
-  dyn->X2    = EOBPars->X2;
-  dyn->chi1  = EOBPars->chi1;
-  dyn->chi2  = EOBPars->chi2;
-  dyn->S1    = EOBPars->S1;
-  dyn->S2    = EOBPars->S2;
-  dyn->S     = EOBPars->S;
-  dyn->Sstar = EOBPars->Sstar;
-  dyn->a1    = EOBPars->a1;
-  dyn->a2    = EOBPars->a2; 
-  dyn->aK2   = EOBPars->aK2; 
-  dyn->C_Q1  = EOBPars->C_Q1;
-  dyn->C_Q2  = EOBPars->C_Q2;
-  dyn->C_Oct1 = EOBPars->C_Oct1;
-  dyn->C_Oct2 = EOBPars->C_Oct2;
-  dyn->C_Hex1 = EOBPars->C_Hex1;
-  dyn->C_Hex2 = EOBPars->C_Hex2;
-  dyn->a6c   = EOBPars->a6c;
-  dyn->cN3LO = EOBPars->cN3LO;
-  dyn->rLR   = EOBPars->rLR;
-  dyn->rLR_tidal = EOBPars->rLR_tidal;
-  dyn->rLSO  = EOBPars->rLSO;
-  dyn->kapA2 = EOBPars->kapA2;
-  dyn->kapA3 = EOBPars->kapA3;
-  dyn->kapA4 = EOBPars->kapA4;
-  dyn->kapB2 = EOBPars->kapB2;
-  dyn->kapB3 = EOBPars->kapB3;
-  dyn->kapB4 = EOBPars->kapB4;
-  dyn->kapT2 = EOBPars->kapT2;
-  dyn->kapT3 = EOBPars->kapT3;
-  dyn->kapT4 = EOBPars->kapT4;
-  dyn->khatA2 = EOBPars->khatA2;
-  dyn->khatB2 = EOBPars->khatB2;
-  dyn->kapA2j = EOBPars->japA2;
-  dyn->kapB2j = EOBPars->japB2;
-  dyn->kapT2j = EOBPars->japT2;
-  dyn->bar_alph2_1 = EOBPars->bar_alph2_1;
-  dyn->bar_alph2_2 = EOBPars->bar_alph2_2;
-  dyn->bar_alph3_1 = EOBPars->bar_alph3_1;
-  dyn->bar_alph3_2 = EOBPars->bar_alph3_2;
-  dyn->bar_alph2j_1 = EOBPars->bar_alph2j_1;
-  dyn->pGSF_tidal = EOBPars->pGSF_tidal;
-  dyn->Mbhf = EOBPars->Mbhf;
-  dyn->abhf = EOBPars->abhf;
-  dyn->use_tidal = EOBPars->use_tidal;
-  dyn->use_tidal_gravitomagnetic = EOBPars->use_tidal_gravitomagnetic;
-  dyn->use_spins = EOBPars->use_spins;
   dyn->dt        = EOBPars->dt;
   dyn->t_stop    = EOBPars->ode_tmax;
+  for (int l=2; l<6; l++) {
+    dyn->dress_tides_fmode_A[l] = dyn->dress_tides_fmode_B[l] = 1;
+    dyn->dress_tides_fmode_A_u[l] = dyn->dress_tides_fmode_B_u[l] = 0;
+  }
+
 }
 
 /** NQC data */
@@ -1774,245 +2133,6 @@ void NQCdata_free (NQCdata *nqc)
   if (nqc->flx) free (nqc->flx);
   if (nqc->hlm) free (nqc->hlm);
   if (nqc)      free (nqc);
-}
-
-/** Stationary Phase Approximation of multipolar wvf */
-void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
-{
-  const int size = TDlm->size;
-  double tmpf0 = EOBPars->initial_frequency;  
-  double tmpdf = EOBPars->df;
-  double tmpsrate = EOBPars->srate_interp/2.;
-  /* Determine the size of output frequency array */
-  const int interp_size = get_uniform_size(tmpsrate,tmpf0,tmpdf);
-
-  /* if necessary, transform f0, df and srate_interp to geom units */
-  if (!(EOBPars->use_geometric_units)){
-    double Msun = EOBPars->M;
-    double conv = time_units_factor(Msun);
-    tmpsrate = tmpsrate/conv; //FIXME: this must be transformed in geom units 
-    tmpf0    = tmpf0/conv;
-    tmpdf    = tmpdf/conv;
-  }
-  const double half_srate_interp = tmpsrate;
-  const double f0 = tmpf0;
-  const double df = tmpdf;
-  int nmin[KMAX]; // Fmin > f0 index
-
-  const double Pio4 = Pi/4.;
-  int *activemode = TDlm->kmask;
-  
-  /* For each active mode... */
-  for (int k = 0; k < KMAX; k++ ) {
-    if (!activemode[k]) continue;
-    
-    /* Compute frequencies */
-    /* D0_x_2(phaset, time, size, *F);  
-       D0_x_2(*F, time, size, Fdot); */
-    D0_x_4(TDlm->phase[k], TDlm->time, size, FDlm->F[k]);
-    D0_x_4(FDlm->F[k], TDlm->time, size, FDlm->Fdot[k]);
-    
-    for (int i=0; i < size; i++){
-      FDlm->F[k][i]     = FDlm->F[k][i]/(TwoPi);
-      FDlm->Fdot[k][i]  = FDlm->Fdot[k][i]/(TwoPi);
-      FDlm->phase[k][i] = (TwoPi * FDlm->F[k][i] * TDlm->time[i] - TDlm->phase[k][i]- Pio4);
-      FDlm->ampli[k][i] = TDlm->ampli[k][i]/sqrt(fabs(FDlm->Fdot[k][i])); 
-    }
-
-    /* Track multipoles w\ Fmin > f0 */
-    nmin[k] = (FDlm->F[k][0]>f0)?(1):(0);
-
-    /* Get last index until Fdot is monotonically increasing (for attachment) */
-    int n = 1;
-    while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1] && n<size) n++;
-    //while(FDlm->ampli[k][n] < FDlm->ampli[k][n-1] && n<size) n++;
-    //nmax[k] = n; 
-
-    /* Prolong the waveform, if necessary  
-       - Fill the points between Fmax and half_srate_interp such that 
-         FDlm->F[k][n] > half_srate_interp (strictly larger)
-	 for later interp;
-       - The amplitude is expected to behave as 1./f asymptotically 
-         (see eg 3.31a of arXiv:gr-qc/0001023);
-       - For the phase, we express it as phi(f) = (a + b*f);
-    */
-    if (FDlm->F[k][n] < half_srate_interp) { 
-      const int n1 = n-1;
-      double Fn1 = FDlm->F[k][n-1];
-      double An1 = FDlm->ampli[k][n-1];
-      double pn1 =  FDlm->phase[k][n-1];
-      //double c = 0.;
-      double b = TwoPi * TDlm->time[n-1];
-      double dfk = (half_srate_interp - FDlm->F[k][n1])/(size-n-1); // one point more
-      for (int i=n; i < size; i++){
-        FDlm->F[k][i] = Fn1 + (i-n1)*dfk;
-        FDlm->ampli[k][i] = An1/pow((FDlm->F[k][i]),20./6)*pow(Fn1,20./6);  // \approx 1/f
-        //FDlm->ampli[k][i] = An1/(FDlm->F[k][i])*Fn1; 
-        //FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1))/(1 + c*(FDlm->F[k][i] - Fn1));
-        FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1));
-      }
-    } else{
-      /*update values with index >= n to assure F is formally increasing (for interpolation).
-        Note that we do not care about frequencies higher than srate_interp/2, so
-        we can fill F however we want. We also fill A, to avoid inf which may appear
-        and would mess up the spline 
-      */
-      double Fn1 = FDlm->F[k][n-1];
-      const int n1 = n-1;
-      for (int i=n; i < size; i++){
-        FDlm->F[k][i] = Fn1 + (i-n1);
-        FDlm->ampli[k][i] = FDlm->ampli[k][n1];
-      }
-    }
-
-    /* Absolute min/max */
-    //Fmin = MIN(Fmin,FDlm->F[k][0]);
-    //Fmax = MIN(Fmax,FDlm->F[k][n]);
-  }
-
-  
-  /* Interpolate each mode */
-  WaveformFD_lm_interp_ap (FDlm, interp_size, f0, df, "");
-
-  /* Correct Fmin > f0 */
-  for (int k = 0; k < KMAX; k++ ) {
-    if (!activemode[k]) continue;
-    if (nmin[k]) {
-      /* f0 < Fmin , the interpolation returned 0s at those points
-	 -> fill points with linear extrapolation starting from innermost */
-      int i0 = 0;
-      while(FDlm->ampli[k][i0]==0. && i0<size) i0++;
-      for (int i = i0-1; i>=0; i--){
-        FDlm->ampli[k][i] = 2*FDlm->ampli[k][i+1] - FDlm->ampli[k][i+2]; //TODO: check sign!
-        FDlm->phase[k][i] = 2*FDlm->phase[k][i+1] - FDlm->phase[k][i+2]; 
-      }
-    }
-  }
-
-}
-
-/** (h+, hx) polarizations from the multipolar waveform, FD, all active modes (interpolate after SPA, needed to correctly add modes together) */
-void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc)
-{  
-#ifdef _OPENMP
-  if (USETIMERS) openmp_timer_start("compute_hpc_FD");
-#endif
-  
-  double Y_real[KMAX] = {0};
-  double Y_imag[KMAX] = {0};
-  double Y_real_mneg[KMAX] = {0};
-  double Y_imag_mneg[KMAX] = {0};
-  static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
-  double conv=1.;
-  double sumr=0., sumi=0.;
-  double sumpr=0., sumpi=0., sumcr=0., sumci=0.;
-  
-  int *activemode = hflm->kmask;
-  
-  double Msun = M;
-  if (!(EOBPars->use_geometric_units)) {
-    Msun = M/MSUN_S;
-    conv = time_units_factor(Msun);
-    for (int i = 0; i < hflm->size; i++)
-	    hflm->freq[i] = hflm->freq[i]*conv; //CHECKME!
-  }
-  
-    /* Precompute Ylm */
-  for (int k = 0; k < KMAX; k++ ) {
-    if (!activemode[k]) continue;
-    spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
-    /* add m<0 modes */
-    if ( (mneg) && (MINDEX[k]!=0) ) 
-      spinsphericalharm(&Y_real_mneg[k], &Y_imag_mneg[k], -2, LINDEX[k], -MINDEX[k], phi, iota); 
-  }
-  
-  /* Sum up  hlm * Ylm 
-   * Note because EOB code defines phase>0, 
-   * but the convention is h_lm = A_lm Exp[-I phi_lm] we have
-   * h_{l,m>=0} = A_lm ( cos(phi_lm) - I*sin(phi_lm) ) for m>0 and
-   * h_{l,m<0}  = (-)^l A_l|m| ( cos(phi_l|m|) + I*sin(phi_l|m|) ) for m<0 below
-   * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
-   */
-#if (0)
-  
-  //SB: Taken from TD (?) to be checked
-  
-  for (int i = 0; i < hflm->size; i++) {
-    hpc->freq[i] = hflm->freq[i]*M; 
-    sumr = sumi = 0.;
-    
-    /* Loop over modes */
-    for (int k = 0; k < KMAX; k++ ) {
-      if (!activemode[k]) continue;
-      double Aki  = amplitude_prefactor * hflm->ampli[k][i];
-      double cosPhi = cos( hflm->phase[k][i] );
-      double sinPhi = sin( hflm->phase[k][i] );
-      sumr += Aki*(cosPhi*Y_real[k] + sinPhi*Y_imag[k]);
-      sumi += Aki*(cosPhi*Y_imag[k] - sinPhi*Y_real[k]); 
-      
-      /* add m<0 modes */
-      if ( (mneg) && (MINDEX[k]!=0) ) { 
-	/* H_{l-m} = (-)^l H^{*}_{lm} */
-	if (LINDEX[k] % 2) {
-	  sumr -= Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]); 
-	  sumi -= Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	}
-	else { 
-	  sumr += Aki*(cosPhi*Y_real_mneg[k] - sinPhi*Y_imag_mneg[k]);
-	  sumi += Aki*(cosPhi*Y_imag_mneg[k] + sinPhi*Y_real_mneg[k]); 
-	}
-      }    
-    }
-
-    /* h = h+ - i hx */
-    hpc->real[i] = sumr;
-    hpc->imag[i] = -sumi;
-  }
-  
-  /* Compute amplitude & Phase */
-  //Waveform_rmap(hpc,1,1); // with unwrap
-  Waveform_rmap(hpc,1,0); // without
-  
-#else
-  
-  const double pm3 = 3.*Pi/2.;
-  for (int i = 0; i < hflm->size; i++) {
-    hpc->freq[i] = hflm->freq[i]; 
-    sumpr = sumpi = sumcr = sumci = 0.;
-    
-    for (int k=0; k< KMAX; k++){
-      if (!activemode[k]) continue;
-      double Aki  = 0.5*amplitude_prefactor * hflm->ampli[k][i];
-      double cosPhi = cos( hflm->phase[k][i] );
-      double sinPhi = sin( hflm->phase[k][i] );
-      double cosPhipm3 = cos( hflm->phase[k][i] + pm3 );
-      double sinPhipm3 = sin( hflm->phase[k][i] + pm3 );
-      
-      /* H_{l-m} = (-)^l H^{*}_{lm} */
-      if (LINDEX[k] % 2) {
-        sumpr +=  Aki * (cosPhi*(Y_real[k] - Y_real_mneg[k]) + sinPhi* (Y_imag[k] + Y_imag_mneg[k]));
-        sumpi +=  Aki * (cosPhi*(-Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
-        sumcr += -Aki * (cosPhipm3*(Y_real[k] + Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] - Y_imag_mneg[k]));
-        sumci += -Aki * (-cosPhipm3*(Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
-      } else {
-        sumpr +=  Aki * (cosPhi* (Y_real[k] + Y_real_mneg[k]) + sinPhi* (Y_imag[k] - Y_imag_mneg[k]));
-        sumpi +=  Aki * (cosPhi* (-Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
-        sumcr += -Aki * (cosPhipm3* (Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
-        sumci += -Aki * (-cosPhipm3*(Y_imag[k] + Y_imag_mneg[k]) + sinPhipm3* (Y_real[k] - Y_real_mneg[k]));
-      }
-      
-      hpc->preal[i] = sumpr; 
-      hpc->pimag[i] = sumpi;
-      hpc->creal[i] = sumcr;
-      hpc->cimag[i] = sumci;	  
-    }
-  }
-    
-#endif
-    
-#ifdef _OPENMP
-    if (USETIMERS) openmp_timer_stop("compute_hpc_FD");
-#endif
 }
   
 /** Perform a time shift in FD */
@@ -2064,7 +2184,177 @@ int system_mkdir(const char *name)
   char s[STRLEN];
   sprintf(s,"mkdir -p %s",name);
   return system(s);
-  /* if (system(s)) errorexit("Error during system call to make directory.");  */
+}
+
+/** checks for blank string */
+int is_blank(const char *line) 
+{
+  const char accept[]=" \t\r\n"; 
+  return (strspn(line, accept) == strlen(line));
+}
+
+/** remove white spaces from string */
+void remove_white_spaces(char *str)
+{
+  int i = 0, j = 0;
+  while (str[i]) {
+    if (str[i] != ' ')
+      str[j++] = str[i];
+    i++;
+  }
+  str[j] = '\0';
+}
+
+/** cut string to the first delimiter */
+void remove_comments(char *line, const char *delimiters)
+{
+  int sz = strcspn(line,delimiters);
+  char *newline = (char *) calloc(sizeof(char), sz+1);
+  strncpy(newline,line,sz);
+  newline[sz] = '\0';
+  strcpy(line, newline);
+  free(newline);
+}
+
+/** get rid of trailing and leading whitespace */
+char *trim(char *str)
+{
+  char *start = str;
+  char *end = str + strlen(str);  
+  while(*start && isspace(*start))
+    start++;
+  while(end > start && isspace(*(end - 1)))
+    end--;
+  *end = '\0';
+  return start;
+}
+
+/** check start & end */
+int startswith(const char *str, const char *beg)
+{
+  return (strncmp(beg, str, strlen(beg)) == 0);
+}
+int endswith(const char *str, const char *end)
+{
+  return (strncmp(str+strlen(str)-strlen(end), end, strlen(end)) == 0);
+}
+
+/** get key value separated by a '=' */
+int getkv(char *line, char **key, char **val) 
+{
+  char *ptr = strchr(line,'=');
+  if (ptr == NULL)
+    return 1;
+  *ptr++ = '\0';
+  *key = trim(line);
+  *val = trim(ptr);
+  return 0;
+}
+
+/** identify string in parfile */
+int is_string(const char *str)
+{
+  if (startswith(str,"\"") && endswith(str,"\""))
+    return 1;
+  return 0;
+}
+char *string_trim(char *str)
+{
+  char *start = str;
+  char *end = str + strlen(str);  
+  if (is_string(str)) {
+    start++;
+    end--;
+    *end = '\0';
+    return start;
+  }
+  return NULL;
+}
+
+/* Helpers conversion str to type */
+int par_get_i (char *val)
+{
+  return atoi(val);
+}
+int par_get_b (char *val)
+{
+  return atoi(val)?1:0;
+}
+double par_get_d (char *val)
+{
+  return atof(val);
+}
+int par_get_s (char * dest, char *src)
+{
+  if (is_string(src)) {    
+    strncpy(dest, src+1, strlen(src)-2);
+    return 0;
+  }
+  return 1;
+}
+
+/** return number of entries in a string according to "delimiters" */ 
+const char * ARRAY_DELIMITER[] = { "[", ",", "]" };
+int noentries(const char *string)
+{
+  int n = 0;
+  char *s, *t; 
+  int len = strlen(string);
+  
+  if (! ((strncmp(ARRAY_DELIMITER[0], string, 1) == 0) &&
+	 (strncmp(string+len-1, ARRAY_DELIMITER[2], 1) == 0)) ) {
+    /* printf(" %c...%c\n",string[0],string[len-1]);  */
+    errorexit("Parsing string for array: must start with [ and end with ].");
+  }
+
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  while (t != NULL) {
+    n++;
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+  }
+  free(s);
+  return n;
+}
+
+/** convert a string to an array of int (alloc mem) */
+int str2iarray(const char *string, int **a)
+{
+  char *s, *t;
+  int n = noentries(string);
+  (*a) = (int *) malloc (n * sizeof(int));
+  if (!(*a)) errorexit(eob_error_msg[ERROR_OUTOFMEM]);
+  const int len = strlen(string);
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  int j = 0;
+  while ((t != NULL) && (j<n)) {
+    (*a)[j] = atoi(t);     
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+    j++;
+  }
+  free(s);  
+  return n;
+}
+
+/** convert a string to an array of double (alloc mem) */
+int str2darray(const char *string, double **a)
+{
+  char *s, *t;
+  int n = noentries(string);
+  (*a) = (double*) malloc (n * sizeof(double));
+  if (!(*a)) errorexit(eob_error_msg[ERROR_OUTOFMEM]);
+  const int len = strlen(string);
+  s = strndup(string+1,len-2);
+  t = strtok(s,ARRAY_DELIMITER[1]);
+  int j = 0;
+  while ((t != NULL) && (j<n)) {
+    (*a)[j] = atof(t);
+    t = strtok(NULL,ARRAY_DELIMITER[1]);
+    j++;
+  }
+  free(s);  
+  return n;
 }
 
 /** Date and time */

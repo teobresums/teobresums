@@ -112,16 +112,33 @@ double eob_nqc_dtfit(const double chi, const double chi0)
   return dtnqc;
 }
 
+/** Fit of GW frequency of NR merger */
+double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2)
+{
+  const double nu2 = SQ(nu);
+  const double X12 = sqrt(1-4*nu);
+  const double a1  = X1*chi1;
+  const double a2  = X2*chi2;
+  const double a0  = a1+a2;
+  const double a12 = a1-a2;
+  const double Shat = 0.5*(a0 + X12*a12);
+  const double Shat2 = SQ(Shat);
+  const double b[4] = {0.066045, -0.23876, 0.76819, -0.9201};
+  return( 0.273356*(1+0.84074*nu+1.6976*nu2)*
+	  (1+((-0.42311+b[0]*X12)/(1+b[1]*X12))*Shat
+	   +((-0.066699))*Shat2)/(1+((-0.83053+b[2]*X12)/(1+b[3]*X12))*Shat) );
+}
+
 /** Fits for NR point used to determine NQC corrections */
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
-  const double nu   = dyn->nu;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double aK   = dyn->a1 + dyn->a2;
+  const double nu   = EOBPars->nu;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double aK   = EOBPars->a1 + EOBPars->a2;
 
   const double nu2  = SQ(nu);
   const double nu3  = nu2*nu;
@@ -230,7 +247,7 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
        ringdown also outside the "calibration" domain, notably for
        large-mass ratios (though q<=20) and large (negative) spins
        Updated, 28/09/2017 */
-    
+
     a0_omg_tmp    = -0.1460961247;
     a1_omg_tmp    =  0.0998056;
     a2_omg_tmp    = -0.118098;
@@ -283,12 +300,12 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
-  const double nu   = dyn->nu;
-  const double X1   = dyn->X1;
-  const double X2   = dyn->X2;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double aK   = dyn->a1 + dyn->a2;
+  const double nu   = EOBPars->nu;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double aK   = EOBPars->a1 + EOBPars->a2;
 
   const double nu2  = SQ(nu);
   const double nu3  = nu2*nu;
@@ -594,18 +611,18 @@ double eob_nqc_timeshift(double nu, double chi1)
 void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
 {
   
-  const double nu    = dyn->nu;
+  const double nu    = EOBPars->nu;
   const double nu2   = SQ(nu);
   const double nu3   = nu2*nu;
   const double nu4   = SQ(nu2);
-  const double X1    = dyn->X1;
-  const double X2    = dyn->X2;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
   const double X12   = X1 - X2;
   const double X12_2 = SQ(X12);
   const double X12_3 = X12_2*X12;
 
-  const double chi1  = dyn->chi1;
-  const double chi2  = dyn->chi2;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
   const double aK    = X1*chi1 + X2*chi2;
   const double aK2   = SQ(aK);
   const double a12   = X1*chi1 - X2*chi2;
@@ -640,7 +657,8 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
     Dt_lm[6]  = Dt_lm_TP[6]*(1 - 3.8284*nu - 12.399*nu2);
     Dt_lm[7]  = Dt_lm_TP[7]*(1 - 11.345*nu + 38.813*nu2)/(1 - 7.5049*nu + 22.399*nu2);
     Dt_lm[8]  = Dt_lm_TP[8]*(1 - 8.4686*nu + 18.006*nu2)/(1 - 6.7964*nu + 11.368*nu2);
-    Dt_lm[13] = Dt_lm_TP[13]*(1 - 12.198*nu + 40.327*nu2)/(1 - 11.501*nu + 39.431*nu2);
+    //Dt_lm[13] = Dt_lm_TP[13]*(1 - 12.198*nu + 40.327*nu2)/(1 - 11.501*nu + 39.431*nu2);
+    Dt_lm[13] = Dt_lm_TP[13]*(1 - 91.4401*nu +2548.5975*nu2 -11086.4884*nu3 + 27137.0063*nu4)/(1 - 67.156*nu + 1773.5942*nu2);
     
   } else {
     
@@ -778,7 +796,8 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
     Dt_lm[5]  = Dt_lm_TP[5]*(1 - 9.6225*nu + 38.451*nu2)/(1 - 7.7998*nu + 32.405*nu2);	
 
     /* (l = 5, m = 5) */
-    Dt_lm[13] = Dt_lm_TP[13]*(1 - 12.198*nu + 40.327*nu2)/(1 - 11.501*nu + 39.431*nu2);
+    //Dt_lm[13] = Dt_lm_TP[13]*(1 - 12.198*nu + 40.327*nu2)/(1 - 11.501*nu + 39.431*nu2);
+    Dt_lm[13] = Dt_lm_TP[13]*(1 - 91.4401*nu +2548.5975*nu2 -11086.4884*nu3 + 27137.0063*nu4)/(1 - 67.156*nu + 1773.5942*nu2);
   }
 
 }
@@ -1173,20 +1192,60 @@ double get_a2_fit_22(double nu, double chi1, double chi2)
   return res;
 }
 
-/** logQ-vs-log(lambda) fit of Table I of Yunes-Yagi
+/** Yunes-Yagi logQ-vs-log(lambda) fit 
+    Table I of https://arxiv.org/abs/1303.1528 
     here x = log(lambda) and the output is the log of the coefficient
     that describes the quadrupole deformation due to spin. */
-double logQ(double x)
+void YagiYunes13_fit_logQ_coefs(double *c)
 {
-  const double ai = 0.194;
-  const double bi = 0.0936;
-  const double ci = 0.0474;
-  const double di = -4.21e-3;
-  const double ei = 1.23e-4;
+  c[0] = 0.194;
+  c[1] = 0.0936;
+  c[2] = 0.0474;
+  c[3] = -4.21e-3;
+  c[4] = 1.23e-4;
+}
+
+double YagiYunes13_fit_logQ(double x)
+{
+  /*
+    const double ai = 0.194;
+    const double bi = 0.0936;
+    const double ci = 0.0474;
+    const double di = -4.21e-3;
+    const double ei = 1.23e-4;
+    const double x2 = x*x;
+    const double x3 = x*x2;
+    const double x4 = x*x3;
+    return ai + bi*x + ci*x2 + di*x3 + ei*x4;
+  */
+  double c[5];
+  YagiYunes13_fit_logQ_coefs(c);
   const double x2 = x*x;
   const double x3 = x*x2;
   const double x4 = x*x3;
-  return ai + bi*x + ci*x2 + di*x3 + ei*x4;
+  return( c[4]*x4 + c[3]*x3 + c[2]*x2 + c[1]*x + c[0] );
+}
+
+void YagiYunes13_fit_logQ_drvts(double Lam, double Lam_u, double Lam_uu,
+				double *Q, double *Q_u, double *Q_uu)
+{
+  double c[5];
+  YagiYunes13_fit_logQ_coefs(c);
+  const double div_Lam = 1./Lam;
+  const double x = log(Lam);
+  const double x_u = Lam_u * div_Lam;
+  const double x_uu = ( -SQ(Lam_u) + Lam * Lam_uu ) * SQ(div_Lam);
+  const double x2 = x*x;
+  const double x3 = x*x2;
+  const double x4 = x*x3;
+  const double logQ = c[4]*x4 + c[3]*x3 + c[2]*x2 + c[1]*x + c[0];
+  const double logQ_x = 4*c[4]*x3 + 3*c[3]*x2 + 2*c[2]*x + c[1];  
+  const double logQ_xx = 12*c[4]*x2 + 6*c[3]*x + 2*c[2];  
+  const double logQ_u = logQ_x * x_u;
+  const double logQ_uu = logQ_xx * SQ(x_u) + logQ_x * x_uu;    
+  *Q = exp(logQ);
+  *Q_u = *Q * logQ_u;
+  *Q_uu = *Q * ( SQ(logQ_u) + logQ_uu );
 }
 
 /** Yagi 2013 fits for NS multipolar
@@ -1246,12 +1305,10 @@ double Yagi13_fit_barsigmalambda(double barlam2)
    Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
 double Yagi14_fit_Coct(double C_Q)
 {
-  double A0  = -0.925;
-  double B1  =  1.98;
-  double nu1 =  0.273;
-
-  double cubrootCoct = A0 + B1*pow(C_Q,nu1);
-
+  const double A0  = -0.925;
+  const double B1  =  1.98;
+  const double nu1 =  0.273;
+  const double cubrootCoct = A0 + B1*pow(C_Q,nu1);
   return cubrootCoct*cubrootCoct*cubrootCoct;
 }
 
@@ -1259,12 +1316,10 @@ double Yagi14_fit_Coct(double C_Q)
    Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
 double Yagi14_fit_Chex(double C_Q)
 {
-  double A0  = -0.413;
-  double B1  =  1.5;
-  double nu1 =  0.466;
-
-  double fourthrootChex = A0 + B1*pow(C_Q,nu1);
-
+  const double A0  = -0.413;
+  const double B1  =  1.5;
+  const double nu1 =  0.466;
+  const double fourthrootChex = A0 + B1*pow(C_Q,nu1);
   return SQ(SQ(fourthrootChex));
 }
 
@@ -1273,7 +1328,6 @@ double JFAPG_fit_Sigma_Irrotational(double barlam2)
   if (barlam2<=0.) return 0.;
   double lnx = log(barlam2);
   double coeffs[6];
- 
   coeffs[5] = -2.03;
   coeffs[4] =  0.487;
   coeffs[3] =  9.69e-3;
@@ -1281,8 +1335,7 @@ double JFAPG_fit_Sigma_Irrotational(double barlam2)
   coeffs[1] = -9.37e-5;
   coeffs[0] =  2.24e-6;
   double lny = coeffs[0]*lnx*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx*lnx+coeffs[2]*lnx*lnx*lnx+coeffs[3]*lnx*lnx+coeffs[4]*lnx+coeffs[5];
-
-  return -1.0*exp(lny);
+  return - exp(lny);
 }
 
 double JFAPG_fit_Sigma_Static(double barlam2)
@@ -1290,7 +1343,6 @@ double JFAPG_fit_Sigma_Static(double barlam2)
   if (barlam2<=0.) return 0.;
   double lnx = log(barlam2);
   double coeffs[6];
- 
   coeffs[5] = -2.66;
   coeffs[4] =  0.786;
   coeffs[3] =  -0.01;
@@ -1298,14 +1350,13 @@ double JFAPG_fit_Sigma_Static(double barlam2)
   coeffs[1] = -6.37e-5;
   coeffs[0] =  1.18e-6;
   double lny = coeffs[0]*lnx*lnx*lnx*lnx*lnx+coeffs[1]*lnx*lnx*lnx*lnx+coeffs[2]*lnx*lnx*lnx+coeffs[3]*lnx*lnx+coeffs[4]*lnx+coeffs[5];
-
   return exp(lny);
 }
 
 /** Godzieba 2020 fits for NS multipolar
     $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
-    Eq.(4); Tab.I; https://arxiv.org/abs/2012.12151 
-*/
+    Eq.(4); Tab.I; https://journals.aps.org/prd/pdf/10.1103/PhysRevD.103.063036 
+-*/
 double  Godzieba20_fit_barlamdel(double barlam2, int ell)
 {  
   if (barlam2<=0.) return 0.;
@@ -1313,17 +1364,38 @@ double  Godzieba20_fit_barlamdel(double barlam2, int ell)
   double *coef;
   double c23[7] = {-1.052, 1.165, 6.369e-3, 5.058e-3, -7.268e-4,
 		     3.749e-5, -6.803e-8};
-  double c24[7] = {-2.262, 1.383, 1.662e-4, 1.225e-2, -1.752e-3,
-		     9.667e-5, -1.886-6};
-  switch (ell) {
-    case 3:
+  double c24[7] = {-2.262, 1.383, 1.662e-3, 1.225e-2, -1.752e-3,
+		     9.667e-5, -1.886e-6};
+  double c25[7] = {-4.511, 2.382, -0.3182, 0.08999, -0.01142,
+		     6.896e-4, -1.606e-05};
+  double c26[7] = {-7.662, 4.949, -1.644,  0.4715, -0.06856,
+		     0.004986, -1.44e-04};
+  double c27[7] = {-13.07, 9.799, -4.197, 1.242, -0.1966,
+         0.016,  -0.0005265};
+  double c28[7] = {-26.49, 30.03, -18.38, 6.54 , -1.291,
+         0.1346, -0.005795};
+  switch(ell)
+  {
+    case(3):
       coef = c23;
       break;
-    case 4:
+    case(4):
       coef = c24;
       break;
+    case(5):
+      coef = c25;
+      break;
+    case(6):
+      coef = c26;
+      break;
+    case(7):
+      coef = c27;
+      break;
+    case(8):
+      coef = c28;
+      break;
     default:
-      errorexit("Godzieba fits are for ell=3,4.");
+      errorexit("Godzieba fits are for ell=3,4,5,6,7,8.");
       break;
   }
   double lny = coef[0];
@@ -1333,6 +1405,44 @@ double  Godzieba20_fit_barlamdel(double barlam2, int ell)
     lnxp *= lnx;
   }
   return exp(lny);
+}
+
+/** Chang+ 2014 fits for f-mode frequency vs Lambda
+    Eq.(3.5) and Tab.I of https://arxiv.org/abs/1408.3789
+-*/
+double Chang14_fit_omegaf(double lam, int ell)
+{  
+  if (lam<=0.) return 0.;
+  double lnx = log(lam);
+  double *coef;
+  double a2[5] = {+1.820*1e-1, -6.836*1e-3, -4.196*1e-3, +5.215*1e-4, -1.857*1e-5};
+  double a3[5] = {+2.245*1e-1, -1.500*1e-2, -1.412*1e-3, +1.832*1e-4, -5.561*1e-6};
+  double a4[5] = {+2.501*1e-1, -1.646*1e-2, -5.897*1e-4, +8.695*1e-5, -2.368*1e-6};
+  double a5[5] = {+2.681*1e-1, -1.638*1e-2, -2.497*1e-4, +4.712*1e-5, -1.166*1e-6};
+  switch(ell) {
+    case(2):
+      coef = a2;
+      break;
+    case(3):
+      coef = a3;
+      break;
+    case(4):
+      coef = a4;
+      break;
+    case(5):
+      coef = a5;
+      break;
+    default:
+      errorexit("Chang fits are for ell=2,3,4,5");
+      break;
+  }
+  double y = coef[0];
+  double lnxp = lnx;
+  for (int i=1; i<=4; i++) {
+    y += lnxp * coef[i];
+    lnxp *= lnx;
+  }
+  return y;
 }
 
 /** Mass and angular momentum of the final black hole
@@ -1441,8 +1551,8 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
     
   }
 
-  *mass = Mbh;
-  *spin = abh;
+  if (mass) *mass = Mbh;
+  if (spin) *spin = abh;
 }
 
 /** Final mass fit of Jimenez-Forteza et al. (arxiv 1611.00332) */
@@ -1586,6 +1696,50 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
   double Lorb_uneq_mass  = A1*Dchi + A2*Dchi*Dchi + A3*S*Dchi;
   
   return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
+}
+
+double PrecessingRemnantSpin(Dynamics *dyn)
+{
+  /*
+  eq. 20 of https://arxiv.org/pdf/1611.00332.pdf
+  */
+
+  double SAmrg[3];
+  double SBmrg[3];
+  double Lhmrg[3];
+  double Sperp[3];
+  double SApar, SBpar, sqSperp;
+
+  double omgmrg = eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
+  
+  /*find merger*/
+  //FIXME: this is a rough estimate
+  int imrg = find_point_bisection(omgmrg, dyn->spins->size, dyn->spins->data[EOB_EVOLVE_SPIN_Momg], 1);
+
+  SAmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_SxA][imrg];
+  SAmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_SyA][imrg];
+  SAmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_SzA][imrg];
+
+  SBmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_SxB][imrg];
+  SBmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_SyB][imrg];
+  SBmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_SzB][imrg];
+
+  Lhmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_Lx][imrg];
+  Lhmrg[1] = dyn->spins->data[EOB_EVOLVE_SPIN_Ly][imrg];
+  Lhmrg[2] = dyn->spins->data[EOB_EVOLVE_SPIN_Lz][imrg];
+
+  vect_dot3(SAmrg, Lhmrg, &SApar);  
+  vect_dot3(SBmrg, Lhmrg, &SBpar); 
+  //HealyBBHFitRemnant(SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2), EOBPars->q, &(EOBPars->Mbhf), NULL);
+  EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2));
+  for(int i=0; i < IN3; i++)
+    Sperp[i] = (SAmrg[i] - SApar*Lhmrg[i]) + (SBmrg[i] - SBpar*Lhmrg[i]);
+
+  vect_dot3(Sperp, Sperp, &sqSperp);
+  double sqMbhf = SQ(EOBPars->Mbhf);
+  
+  return sqrt(SQ(EOBPars->abhf) + sqSperp/SQ(sqMbhf));
+
 }
 
 /** QNM fits for the 22 mode for spinning systems */
@@ -2413,7 +2567,8 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b3 = +12.777090;
     b4 = -42.548247;
 
-    Aorb     = ATP[13]*sqrt(1-4*nu)*(1-2*nu)*(1 - 0.29628*nu + 6.4207*nu2);
+    //Aorb     = ATP[13]*sqrt(1-4*nu)*(1-2*nu)*(1 - 0.29628*nu + 6.4207*nu2);
+    Aorb     = ATP[13]*sqrt(1-4*nu)*(1-2*nu)*(11.2008774621215608 *nu2 -0.9750925916632546 *nu + 1);
     Aspin    = (0.04360530/(1 + b1*nu + b2*nu2)*a12)/(1 - 0.5769451/(1+b3*nu+b4*nu2)*a12);
     Amrg[13] = Aorb + Aspin;
 
@@ -2450,8 +2605,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b4 = -0.585373;
     b5 = -12.631409;
     b6 = +19.271346;
-    c3A[k55] = b1 + b2*nu + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
-    
+    //c3A[k55] = b1 + b2*nu + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
+    c3A[k55] = 9.1187519178640084 *nu +  -0.5970347579708830 + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
+
     // c3phi
     /* (l=2, m=2)*/
     b1 = -1.323643;
@@ -2487,8 +2643,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b4 = +4.873750;
     b5 = -14.629684;
     b6 = +19.696954;
-    c3phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
-	    
+    //c3phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+	  c3phi[k55] = 373.312597*nu2 -59.69284 *nu+ 4.226238 + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+
     // c4phi
     /* (l=2, m=2)*/
     b1 = 0.779683;
@@ -2520,8 +2677,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b4 = -3.870998;
     b5 = -25.992190;
     b6 = +36.882645;
-    c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
-	
+    //c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+	  c4phi[k55] = 14.9111373110275380 *nu  +  1.3639723340485870+ (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+
     // These fits are taken from the testparticle limit and approximate the spinning case
     /* (l=3, m=1)*/
     if (DEQUAL(nu,0.25,1e-9)){
@@ -2710,7 +2868,7 @@ double eob_approxLR(const double nu)
   return r0*x + r1;
 }
 
-/** Compute optimized timestep after merger */
+/** Compute optimized timestep after Omega_peak */
 double get_mrg_timestep(double q, double chi1, double chi2)
 {
   double dt = 0.1;
@@ -2718,3 +2876,229 @@ double get_mrg_timestep(double q, double chi1, double chi2)
   return dt;
 }
 
+/** Compute optimized shift to stop integration after Omega_peak */
+double get_mrg_timestop(double q, double chi1, double chi2)
+{
+  double tstop = 2.0;
+  if (EOBPars->use_flm == USEFLM_HM) {
+    tstop = 10.;
+  }
+  return tstop;
+}
+
+/** Effective Love number for the f-mode resonance model
+    Eq.(6.51) of https://arxiv.org/abs/1608.01907
+    Eq.(11) of https://arxiv.org/abs/1702.02053
+    This routine computes the dressing factor for the star ell-th Love number
+*/
+double fmode_resonance_dress_Love(double nu,
+				  double r, // orbital radius
+				  double bomgf, // = mA omega_f
+				  int ell, 
+				  double *dtides, double *dtides_u)
+{
+  if (ell<2 || ell>4) errorexit("f-mode model only for l=2,3,4");
+  double a[5] = {0, 0, 1./4., 3./8., 29./64.}; // a_ell, ell = (0), (1), 2, 3, 4
+  double b[5] = {0, 0, 3./4., 5./8., 35./64.}; // b_ell
+  const double five_o_three = 1.66666666666666666; // = 5./3.;
+  const double one_o_six = 0.166666666666666666; // = 1./6.;
+  const int emm = ell;
+  const double Omega = pow(r, -1.5);
+  const double Omg1 = 0.375; // = 3./8.;
+  double x = bomgf/(emm*Omega);
+  double x_u = - 1.5*r*x;
+  double x2 = SQ(x);
+  double x5_3 = pow(x, five_o_three);
+  const double eps = 256./5. * nu * pow(bomgf/emm,five_o_three);
+  if (eps<=0.) errorexit("epsilon<=0"); 
+  const double div_sqrt_eps = 1.0/sqrt(eps);
+  /* Arguments of various functions */
+  const double that = 1.6 * div_sqrt_eps * (1. - x5_3);
+  const double that_u = - 2.6666666666666665 * div_sqrt_eps * x5_3/x * x_u;
+  const double arg = Omg1 * SQ(that);// cos/sin arg
+  const double arg_u = 0.75 * that * that_u;
+  if (arg<=0.) errorexit("arg<=0"); 
+  const double argfresnel = 0.61237243569579447*that;//sqrt(arg); 
+  const double nrmfresnel = sqrt(Pi/(2.*Omg1));    
+  /* Resonant term */
+  const double x1 = x - 1.;
+  double rterm = 0;
+  double rterm_u = 0;
+  if(fabs(x1)<1e-2) {
+    /* Taylor expansion near x1 */
+    double c0[5]  = {-0.0833333333333333,
+		     -0.1157407407407407,
+		     -0.006944444444444445,
+		     0.01122256515775034,
+		     -0.007120198902606311};
+    double c1[5] = {-0.1157407407407407,
+		    -0.01388888888888889,
+		    0.03366769547325102,
+		    -0.02848079561042524,
+		    0.01919764200071127};
+    const double x12 = x1*x1;
+    const double x13 = x1*x12;
+    const double x14 = x1*x13;
+    rterm = c0[4]*x14 + c0[3]*x13 + c0[2]*x12 + c0[1]*x1 + c0[0];
+    rterm_u = c1[4]*x14 + c1[3]*x13 + c1[2]*x12 + c1[1]*x1 + c1[0];
+    rterm_u *= x_u;
+  }
+  else {
+    /* Full formula */
+    const double rt1 = 1./(x2 - 1.);
+    const double rt2 = 1./(1. - x5_3);
+    rterm   = x2*( rt1 + 5*one_o_six*rt2 );
+    rterm_u = 2.*x*x_u*( -SQ(rt1) + 5*one_o_six*(1. - one_o_six*x5_3)*SQ(rt2) );
+  }
+  /* Fresnel term */
+  const double FS = Fresnel_Sine_Integral(argfresnel);  
+  const double FC = Fresnel_Cosine_Integral(argfresnel);
+  const double FS1 = nrmfresnel*(0.5 + FS); 
+  const double FC1 = nrmfresnel*(0.5 + FC);
+  const double cosa = cos(arg);
+  const double sina = sin(arg);
+  const double fterm = div_sqrt_eps * x2 * (cosa*FS1 - sina*FC1);
+  const double fterm_u = div_sqrt_eps * ( 2*x*x_u*(cosa*FS1 - sina*FC1) - x2*arg_u*(sina*FS1 + cosa*FC1) );
+  /* Dressing factors */ 
+  *dtides   = a[ell] + b[ell]*(rterm + fterm);
+  *dtides_u = b[ell]*(rterm_u + fterm_u);
+
+#if (0)//(DEBUG)
+  printf("DEBUG(f-mode) Omega = %.6e x = %.6e x1 = %.6e\n",Omega,x,x1);
+  printf("DEBUG(f-mode) alpha = %.6e alpha_u = %.6e\n",*dtides,*dtides_u);  
+  printf("DEBUG(f-mode) that = %.6e\n",that);
+  printf("DEBUG(f-mode) sqrt(eps) = %.6e\n",sqrt(eps));
+  printf("DEBUG(f-mode) rt1 = %.6e rt2 = %.6e\n",rt1, rt2);
+  printf("DEBUG(f-mode) r = %.6e r_u = %.6e\n",rterm, rterm_u);
+  printf("DEBUG(f-mode) arg = %.6e\n",arg);
+  printf("DEBUG(f-mode) cos = %.6e sin = %.6e\n",cosa,sina);  
+  printf("DEBUG(f-mode) argfresnel = %.6e\n",argfresnel);  
+  printf("DEBUG(f-mode) FS1 = %.6e FC1 = %.6e\n",FS1,FC1);
+  printf("DEBUG(f-mode) f = %.6e f_u = %.6e\n",fterm, fterm_u);
+#endif
+  
+}
+
+/** Routine to update dressing factors for f-mode resonance model
+ * Only apply to gravitoelectric ell=2,3,4 
+ */
+#define enforce_alpha_min (1) /* enforce min(alpha)=1 */
+void fmode_resonance_dressing_factors(double r, Dynamics *dyn)
+{
+  if (!(EOBPars->use_tidal_fmode_model)) return;
+
+  const double nu = EOBPars->nu;
+  const int lmax = 4;
+  
+  for (int l=2; l<=lmax; l++) {
+    if (EOBPars->bomgfA[l]<0. || EOBPars->bomgfB[l]<0.)
+      errorexit("f-mode frequency cannot be negative");
+    dyn->dress_tides_fmode_A[l] = dyn->dress_tides_fmode_B[l] = 1;
+    dyn->dress_tides_fmode_A_u[l] = dyn->dress_tides_fmode_B_u[l] = 0;
+  }
+  
+  /* Compute the dressing factors */
+  if (EOBPars->LambdaAl2>0.) {
+    for (int l=2; l<=lmax; l++) {
+      fmode_resonance_dress_Love(nu, r, EOBPars->bomgfA[l], l,
+				 &(dyn->dress_tides_fmode_A[l]),
+				 &(dyn->dress_tides_fmode_A_u[l]));
+      /* if (dyn->dress_tides_fmode_A[l]<=0.) errorexit("Dressing A factor<0"); */
+#if(enforce_alpha_min)
+      if (dyn->dress_tides_fmode_A[l]<1) {
+	dyn->dress_tides_fmode_A[l] = 1;
+      	dyn->dress_tides_fmode_A_u[l] = 0;
+      }
+#endif
+    }
+  }
+  
+  if (EOBPars->LambdaBl2>0.) {
+    for (int l=2; l<=lmax; l++) {
+      fmode_resonance_dress_Love(nu, r, EOBPars->bomgfB[l], l,
+				 &(dyn->dress_tides_fmode_B[l]),
+				 &(dyn->dress_tides_fmode_B_u[l]));
+      /* if (dyn->dress_tides_fmode_B[l]<=0.) errorexit("Dressing B factor<0"); */
+#if(enforce_alpha_min)
+      if (dyn->dress_tides_fmode_B[l]<1) {
+      	dyn->dress_tides_fmode_B[l] = 1;
+	dyn->dress_tides_fmode_B_u[l] = 0;
+      }
+#endif
+    }
+  }
+  
+#if(DEBUG)
+  if (EOBPars->output_dynamics) {
+    const double Omega = pow(r, -1.5);
+    FILE* fp;
+    char fname[STRLEN];
+    strcpy(fname,EOBPars->output_dir);
+    strcat(fname,"/fmode_dressingfact.txt");
+    if( access( fname, F_OK ) == 0 ) {
+      if ((fp = fopen(fname, "a+")) == NULL)
+	errorexits("error opening file",fname);
+    } else {
+      if ((fp = fopen(fname, "a+")) == NULL)
+	errorexits("error opening file",fname);
+      fprintf(fp, "# bomgfA = (%.6e %.6e %.6e) bomgfB = (%.6e %.6e %.6e)\n",
+	      EOBPars->bomgfA[2],EOBPars->bomgfA[3],EOBPars->bomgfA[4],
+	      EOBPars->bomgfB[2],EOBPars->bomgfB[3],EOBPars->bomgfB[4]);
+      fprintf(fp, "# Omg alphaA2 alphaA3 alphaA4 alphaB2 alphaB3 alphaB4\n");
+    }  
+    fprintf(fp, "%.6e %.6e %.6e %.6e %.6e %.6e %.6e\n", Omega,
+	    dyn->dress_tides_fmode_A[2],dyn->dress_tides_fmode_A[3],dyn->dress_tides_fmode_A[4],
+	    dyn->dress_tides_fmode_B[2],dyn->dress_tides_fmode_B[3],dyn->dress_tides_fmode_B[4]);
+    fclose(fp);
+  }
+#endif
+  
+}
+ 
+/* Routine to update the quadrupole, octupole, hexapole 
+   using the dressed Lambdas */
+void fmode_resonance_dress_QOH(Dynamics *dyn)
+{
+  /* Dress the Lambda's */
+  const double LamA2 = EOBPars->LambdaAl2 * dyn->dress_tides_fmode_A[2];
+  const double LamB2 = EOBPars->LambdaBl2 * dyn->dress_tides_fmode_B[2];
+  
+  const double LamA2_u = EOBPars->LambdaAl2 * dyn->dress_tides_fmode_A_u[2];
+  const double LamB2_u = EOBPars->LambdaBl2 * dyn->dress_tides_fmode_B_u[2];
+  
+  const double LamA2_uu = 0;
+  const double LamB2_uu = 0;
+
+  /* Compute the QOH */
+  double C_QA = 1;
+  double C_QA_u = 0;
+  double C_QA_uu = 0;
+  if (LamA2>0) 
+    YagiYunes13_fit_logQ_drvts(LamA2,LamA2_u,LamA2_uu, &C_QA, &C_QA_u, &C_QA_uu);
+
+  dyn->dressed_C_Q1 = C_QA;
+  dyn->dressed_C_Q1_u = C_QA_u;
+  dyn->dressed_C_Q1_uu = C_QA_uu;
+
+  double C_QB = 1;
+  double C_QB_u = 0;
+  double C_QB_uu = 0;  
+  if (LamB2>0)
+    YagiYunes13_fit_logQ_drvts(LamB2,LamB2_u,LamB2_uu, &C_QB, &C_QB_u, &C_QB_uu);
+
+  dyn->dressed_C_Q2 = C_QB;
+  dyn->dressed_C_Q2_u = C_QB_u;
+  dyn->dressed_C_Q2_uu = C_QB_uu;
+
+  //TODO use other fits for OH ...
+  dyn->dressed_C_Oct1 = EOBPars->C_Oct1;
+  dyn->dressed_C_Oct2 = EOBPars->C_Oct2;
+  dyn->dressed_C_Hex1 = EOBPars->C_Hex1; 
+  dyn->dressed_C_Hex2 = EOBPars->C_Hex2;
+
+  dyn->dressed_C_Oct1_u = dyn->dressed_C_Oct1_uu = 0;
+  dyn->dressed_C_Oct2_u = dyn->dressed_C_Oct2_uu = 0;
+  dyn->dressed_C_Hex1_u = dyn->dressed_C_Hex1_uu = 0;
+  dyn->dressed_C_Hex2_u = dyn->dressed_C_Hex2_uu = 0;
+  
+}

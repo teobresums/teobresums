@@ -1,7 +1,54 @@
+Version 3.0 08-11-2021
+======================
+
+## What's changed since v2.0
+
+* Improved handling of the parameters:
+	- always employ the EOBPars structure to access parameters throughout the code (with only a few relevant exceptions)
+	- libconfig abandoned, added custom I/O routines to read from parfiles and/or dump the current parameters to a file. 
+* Implemented the f-mode model of arxiv 1602.00599 and following
+* Added a plugin for PyCBC
+
+### Detailed changelog:
+
+	* C/src/TEOBResumS.c:
+	- Condition for computing rLR for BNS
+	- ODE rstop is set to 1.01*r_LR when tides are on
+
+	* C/src/TEOBResumSPars.c:
+	- libconfig abandoned, added custom I/O routines to read from parfiles and/or dump the current parameters to a file. 
+	
+	* C/src/TEOBResumSFits.c:
+	- modified and renamed routine with YagiYunes logQ fits
+	- added Chang fits
+	- add routine for computation of dressing factors
+
+	* C/src/TEOBResumSUtils.c:
+	- added function for double factorial and tidal parameters
+	- moved Wigner d function to C/src/SpecialFuns.c 
+
+	* C/src/TEOBResumSMetric.c:
+	- added routine for Btidal metric
+	- cleaned routine for Atidal metric
+	- added f-mode corrections to metric and derivatives
+
+	* C/src/TEOBResumSWaveform.c:
+	- added f-mode tidal correction to (2,2) amplitude
+
+	* C/src/TEOBResumSDynamics.c:
+	- added computation of r_LSO for spinning case
+
+	* Add C/src/SpecialFuns.c
+
+	* C/par/: updated the parfiles
+
+	* Added PyCBC plugin under teobresums/PyCBC/
+	
+
 Version 2.0 27-01-2021
 ======================
 
-# What's changed since v1.1
+## What's changed since v1.1
 
 	* C/src/TEOBResumS.c:
 	- Main now calls EOBRun function
@@ -41,14 +88,15 @@ Version 2.0 27-01-2021
 	* Removed C++ and parameter_estimation directories
 
 	* README.md: updated to v2.0
-	
+
+	* Minor improvements and bugfixes throughout the code
 	
 	
 
 Version 1.1 07-01-2020
 ======================
 
-# What's changed since v1.0
+## What's changed since v1.0
 
 	* C/src/TEOBResumS.c:
 	(main): Parameter conventions are consistent with LALSimulation.

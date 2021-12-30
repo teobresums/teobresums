@@ -201,20 +201,20 @@ double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Hef
 /** Flux calculation for spinning systems */
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
-  const double nu = dyn->nu;
-  const double chi1 = dyn->chi1;
-  const double chi2 = dyn->chi2;
-  const double X1 = dyn->X1;
-  const double X2 = dyn->X2;
-  const double a1 = dyn->a1;
-  const double a2 = dyn->a2;
-  const double C_Q1 = dyn->C_Q1;
-  const double C_Q2 = dyn->C_Q2;
+  const double nu = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double X1 = EOBPars->X1;
+  const double X2 = EOBPars->X2;
+  const double a1 = EOBPars->a1;
+  const double a2 = EOBPars->a2;
+  const double C_Q1 = EOBPars->C_Q1;
+  const double C_Q2 = EOBPars->C_Q2;
   const double X12  = X1-X2; /* sqrt(1-4nu) */
   const double X12sq = SQ(X12); /* (1-4nu) */
 
-  const int usetidal = dyn->use_tidal;
-  const int usespins = dyn->use_spins;
+  const int usetidal = EOBPars->use_tidal;
+  const int usespins = EOBPars->use_spins;
   
   double prefact[] = {
     jhat, Heff,

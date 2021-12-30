@@ -37,6 +37,17 @@ const int MINDEX[KMAX] = {
     1,2,3,4,5,6,
     1,2,3,4,5,6,7,
     1,2,3,4,5,6,7,8};
+const int KINDEX[9][9] = {  // l (m = 1 ...l)
+  {-1,-1,-1,-1,-1,-1,-1,-1},// 0 
+  {-1,-1,-1,-1,-1,-1,-1,-1},// 1 
+  { 0, 1,-1,-1,-1,-1,-1,-1},// 2 (1 2)
+  { 2, 3, 4,-1,-1,-1,-1,-1},// 3 (1 2 3)
+  { 5, 6, 7, 8,-1,-1,-1,-1},// 4 (1 2 3 4)
+  { 9,10,11,12,13,-1,-1,-1},// 5 (1 2 3 4 5)
+  {14,15,16,17,18,19,-1,-1},// 6 (1 ... 6)
+  {20,21,22,23,24,25,26,-1},// 7 (1 ... 7)
+  {27,28,29,30,31,32,33,34},// 8 (1 ... 8)
+};
 
 /** Global var for NQC coefficient */
 NQCdata *NQC;
@@ -49,56 +60,68 @@ int main (int argc, char* argv[])
   
   Waveform *hpc = NULL; /* TD wvf */
   Waveform_lm *hmodes = NULL; /* modes */
-
+  Waveform_lm *hTmodes = NULL; /* twisted modes, m>0*/
+  Waveform_lm *hTmmodes = NULL; /* twisted modes, m<0 */
+  
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
 
+  Dynamics *dynf = NULL;
+
+  WaveformFD_lm *hfTmodes = NULL; /* twisted modes */
+  
   int fc = 1; /* firstcall, set to 1 for now */
-  int dc = DEFAULT_PARS_BBH; /* default_choice, set to BBH */
+  int dc = BINARY_BBH; /* default_choice, set to BBH */
   
   /* Init parameters & set defaults */
   EOBParameters_alloc( &EOBPars );
   EOBParameters_defaults (dc, EOBPars);
   
   if (argv[1]!=NULL) {
-    /* Deal with input parfile if necessary 
-       (Kepr for backward compatibility) */
-    par_db_init ();
-    par_db_from_EOBPar (EOBPars);
-    par_file_parse_merge (argv[1]);
-    par_db_screen (VERBOSE);
-    EOBParameters_set_from_db (EOBPars);
-    const int output = EOBPars->output_dynamics + EOBPars->output_multipoles + EOBPars->output_hpc + EOBPars->output_nqc;    
-    if (output) {
-      if (system_mkdir(EOBPars->output_dir)) {
-	printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
-	return ERROR_MKDIR;
-      }
-      par_db_write_file("params.txt");
-    }
-    par_db_free();    
-    /* RG: if input parfile specifies BNS runs, change default_choice */ 
-    if (EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 >1) dc = DEFAULT_PARS_BNS;
+    /* Deal with input parfile or command line arguments */
+    dc = EOBParameters_parse_commandline(EOBPars,argc, argv);
   }
+
+  const int output = EOBPars->output_dynamics
+    + EOBPars->output_multipoles
+    + EOBPars->output_hpc
+    + EOBPars->output_nqc;  
   
+  if (output) {
+    if (system_mkdir(EOBPars->output_dir)) {
+      printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
+      return ERROR_MKDIR;
+    }
+  }
+    
   /* Set all firstcalls = 1 */
   for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
   }
-
+  
   /* set domain */
   eob_set_params(dc, fc); 
-  
+  if (output){
+    char outpar[STRLEN];
+    strcpy(outpar,EOBPars->output_dir);
+    EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
+  }
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
-		      &hmodes, &hfmodes, 
+		      &hmodes, &hfmodes,&dynf,
+		      &hTmodes, &hTmmodes,
+          &hfTmodes,
 		      dc, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
 
   Waveform_free (hpc);
   WaveformFD_free (hfpc);
   Waveform_lm_free (hmodes);
+  Waveform_lm_free (hTmodes);
+  Waveform_lm_free (hTmmodes);
   WaveformFD_lm_free (hfmodes);
+  Dynamics_free (dynf);
+  WaveformFD_lm_free (hfTmodes);
 
   EOBParameters_free (EOBPars);
   return status;
@@ -110,7 +133,9 @@ int main (int argc, char* argv[])
  */    
 
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
-	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, 
+	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, Dynamics **dynf,
+	   Waveform_lm **hTmodes,  Waveform_lm **hTmmodes,
+     WaveformFD_lm **hfTmodes,
 	   int default_choice, int firstcall)
 {
 
@@ -151,14 +176,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   
   /** Set useful pars/vars */
-  const double q    = EOBPars->q;
-  const double nu   = EOBPars->nu;
-  const double chi1 = EOBPars->chi1;
-  const double chi2 = EOBPars->chi2;
+  const double q      = EOBPars->q;
+  const double nu     = EOBPars->nu;
+  const double chi1   = EOBPars->chi1;
+  const double chi2   = EOBPars->chi2;
   const int use_spins = EOBPars->use_spins;
   const int use_tidal = EOBPars->use_tidal;
-  int store_dynamics = EOBPars->output_dynamics; 
+  int store_dynamics  = EOBPars->output_dynamics; 
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
+  if (use_spins == MODE_SPINS_GENERIC) store_dynamics = 1; /* Precession needs dynamical variables */
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
@@ -169,9 +195,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   /** Alloc memory for dynamics and multipolar waveform */
-  Dynamics *dyn = NULL;
-  Waveform_lm *hlm = NULL; /* h_lm */ 
-  WaveformFD_lm *hflm = NULL; /* hf_lm (FD) */ 
+  Dynamics *dyn         = NULL;
+  DynamicsSpin *spindyn = NULL;
+
+  Waveform_lm *hlm    = NULL; /* h_lm */ 
+  WaveformFD_lm *hflm = NULL; /* hf_lm (FD) */
+  
+  Waveform_lm *hTlm     = NULL; /* h_lm twisted */
+  Waveform_lm *hTlm_neg = NULL; /* h_lm twisted */
+  Waveform_lm *hTl0     = NULL;
+
+  WaveformFD_lm *hfTlm = NULL; /* h_lm twisted (FD) */
   
   Waveform_lm_t *hlm_t = NULL;
   Waveform_lm *hlm_nqc = NULL; /* NQC */
@@ -179,11 +213,24 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Dynamics *dyn_mrg = NULL;
   double ytmp[EOB_EVOLVE_NVARS], dytmp[EOB_EVOLVE_NVARS], ttmp; /* Additional buffer for post-Omegapeak ev */
 
-  /* Set quick-access parameters dyn (be careful here) */
+  /* Alloc dynamics, 
+     Set quick-access parameters dyn (be careful here) */
   Dynamics_alloc (&dyn, 0, "dyn"); 
-  Dynamics_set_params(dyn); 
+  //Dynamics_set_params(dyn); //TODO: REMOVE always use EOBPars
   dyn->store = dyn->noflx = 0; /* Default: do not store vars, flux on */
+  dyn->dt = EOBPars->dt;
+  dyn->t_stop = EOBPars->ode_tmax;
 
+  /* Alloc spin dynamics, if needed */
+  if (use_spins == MODE_SPINS_GENERIC) {   
+    
+    DynamicsSpin_alloc (&spindyn, EOBPars->spin_dyn_size); 
+    
+    /* Set up a reference to spin dynamics in the dynamics structure */
+    dyn->spins = spindyn;
+    
+  }
+  
   /** Compute initial radius */
   const double f0 = EOBPars->initial_frequency/time_unit_fact;
   double r0 = eob_dyn_r0_Kepler(f0);
@@ -202,8 +249,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_postadiab_dyn) {
     size = EOBPars->postadiabatic_dynamics_size; 
     double rmin = EOBPars->postadiabatic_dynamics_rmin;
-    if(use_tidal) rmin = 14.; //EOBPars->postadiabatic_dynamics_rmin;//SB: use EOBPar do not hardcode
-    size = floor(fabs(r0 - rmin)/POSTADIABATIC_DR) + 1;
+    size = floor(fabs(r0 - rmin)/EOBPars->postadiabatic_dynamics_dr) + 1;
     
     /* If initial radius is too close to PA limit then skip PA and go directly to ODE */
     if (size - 1 < POSTADIABATIC_NSTEP_MIN) {
@@ -218,6 +264,27 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_alloc (&hlm, size, "hlm"); 
   Waveform_lm_t_alloc (&hlm_t); 
 
+ /** Integrate spin dynamics before EOB dyn if projecting */
+  if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
+    int tmp_nqc = EOBPars->nqc_coefs_flx;
+    EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+    if (eob_spin_dyn(spindyn, NULL, NULL, Pi * EOBPars->initial_frequency/time_unit_fact))
+      errorexit("problem during spin dynamics");
+    EOBPars->nqc_coefs_flx = tmp_nqc;
+
+    spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
+    spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
+
+    if (EOBPars->spin_interp_domain == 0){
+      if (VERBOSE) printf("Compute splines in t\n");
+      for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+        gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size); 
+    } else {
+      if (VERBOSE) printf("Compute splines in Momg\n");
+      for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
+        gsl_spline_init (spindyn->spline[v], spindyn->data[EOB_EVOLVE_SPIN_Momg], spindyn->data[v], spindyn->size); 
+    }  
+  }
   /** Set r.h.s. fun pointer */
   int (*p_eob_dyn_rhs)();
   if (use_spins) p_eob_dyn_rhs = &eob_dyn_rhs_s;
@@ -226,68 +293,79 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** NQC data */  
   NQCdata_alloc (&NQC); 
   eob_nqc_setcoefs(NQC);
-
+  
   /** Compute light-ring and LSO (if needed) */
   int check_status;
   if (use_tidal) {
-
     /* Compute rLR_tidal for NNLO potential and without spin part */
-    dyn->use_tidal = TIDES_NNLO; 
-    dyn->use_spins = 0;
-    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR_tidal)));
+    int tidal_tmp      = EOBPars->use_tidal;
+    int spins_tmp      = EOBPars->use_spins;
+    int use_fmode_tmp  = EOBPars->use_tidal_fmode_model;
+    EOBPars->use_tidal = TIDES_NNLO; 
+    EOBPars->use_spins = 0;
+    EOBPars->use_tidal_fmode_model = 0;
+    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR_tidal)));
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
-    EOBPars->rLR_tidal = dyn->rLR_tidal;
     double LambdaAl2  = EOBPars->LambdaAl2;
     if( fabs(LambdaAl2) < TEOB_LAMBDA_TOL ) LambdaAl2 = 0.0;
     double LambdaBl2 = EOBPars->LambdaBl2;
     if( fabs(LambdaBl2) < TEOB_LAMBDA_TOL ) LambdaBl2 = 0.0;
     double q = EOBPars->q;
-
     /* Reset options */
-    dyn->use_tidal = EOBPars->use_tidal;
-    dyn->use_spins = EOBPars->use_spins;
-    if (VERBOSE) PRFORMd("rLR_tidal",dyn->rLR_tidal); 
+    EOBPars->use_tidal = tidal_tmp;
+    EOBPars->use_spins = spins_tmp;
+    EOBPars->use_tidal_fmode_model = use_fmode_tmp;
+    if (VERBOSE) PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
+    /* Set ODE stop to LR */
+    EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
-  if (EOBPars->compute_LR) {
+  if (EOBPars->compute_LR && !(use_tidal)) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
-    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(dyn->rLR)));
+    ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR)));
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
-    EOBPars->rLR = dyn->rLR;
-    if (VERBOSE) PRFORMd("rLR",dyn->rLR);
+    if (VERBOSE) PRFORMd("rLR",EOBPars->rLR);
   }
   if (EOBPars->compute_LSO) {
-    //TODO: LSO COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
-    ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(dyn->rLSO)));
+    ROOTFINDER(check_status, eob_dyn_adiabLSO(dyn, &(EOBPars->rLSO)));
+    //Spin version
+    //TODO: Decide what to do when LSO does not exist (large alignes spins) 
+    //double pphiLSO = 0.;
+    //ROOTFINDER(check_status, eob_dyn_LSO_s(dyn, &(dyn->rLSO), &pphiLSO));
     if (check_status) {
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
-    EOBPars->rLSO = dyn->rLSO;
-    if (VERBOSE) PRFORMd("rLSO",dyn->rLSO);
+    if (VERBOSE) PRFORMd("rLSO",EOBPars->rLSO);
   }   
 
   /** Final BH */
-  if (!(dyn->use_tidal)) {
-    HealyBBHFitRemnant(chi1, chi2, q, &(dyn->Mbhf), &(dyn->abhf));
-    dyn->abhf = JimenezFortezaRemnantSpin(dyn->nu, dyn->X1, dyn->X2, chi1, chi2);
+  if (!(EOBPars->binary == BINARY_BNS)) {
+    EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {   
+      // (4.17) of https://arxiv.org/abs/2004.06503 
+      EOBPars->abhf = PrecessingRemnantSpin(dyn);
+    }
     if (VERBOSE) {
       PRSECTN("Final black hole");
-      PRFORMd("BH_final_mass[Healy]",dyn->Mbhf); 
-      PRFORMd("BH_final_spin[Healy]",dyn->abhf);
-      PRFORMd("BH_final_spin[JimenezForteza]",dyn->abhf);
+      PRFORMd("BH_final_mass[JimenezForteza]",EOBPars->Mbhf); 
+      PRFORMd("BH_final_spin[JimenezForteza]",EOBPars->abhf);
     }
-    EOBPars->Mbhf = dyn->Mbhf;
-    EOBPars->abhf = dyn->abhf;
   }
 
+  /** Compute the dressing factors for the f-mode resonances at r0 */
+  if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model))
+    fmode_resonance_dressing_factors(r0, dyn);  
+
   /* Iteration index */
-  int iter = 0;  
+  int iter   = 0;  
   int pasize = 0;
   
   if (use_postadiab_dyn) {
@@ -299,8 +377,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     if (VERBOSE) PRSECTN("Post-adiabatic dynamics");
 
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins){
+      if(pow(r0+0.1, -1.5) < spindyn->data[EOB_EVOLVE_SPIN_Momg][0]){
+        if (VERBOSE) printf("integrate backwards\n");
+        eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, pow(r0+0.1, -1.5));
+      }
+    }
+
+
     /** Calculate dynamics */
-    eob_dyn_Npostadiabatic(dyn, r0); 
+    eob_dyn_Npostadiabatic(dyn, r0, spindyn); 
+
     /** Calculate waveform */
     for (int i = 0; i < size; i++) 
       hlm->time[i] = dyn->time[i];
@@ -312,6 +399,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];
       dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i]; 
       dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
+      
+      if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins){
+        double SA, SB;
+        eob_spin_dyn_Sproj_interp(spindyn, dyn->data[EOB_MOMG][i], &SA, &SB, NULL, NULL, NULL, NULL, 1);
+        EOBPars->chi1 = SA/SQ(EOBPars->X1);
+        EOBPars->chi2 = SB/SQ(EOBPars->X2);
+        set_spin_vars(EOBPars->X1,EOBPars->X2,EOBPars->chi1,EOBPars->chi2,&EOBPars->S1, &EOBPars->S2,&EOBPars->a1, &EOBPars->a2,&EOBPars->aK, &EOBPars->aK2,&EOBPars->S, &EOBPars->Sstar);
+      }
       p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
       eob_wav_hlm(dyn, hlm_t); 
       for (int k = 0; k < KMAX; k++) {
@@ -320,7 +415,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	        hlm->phase[k][i] = hlm_t->phase[k]; 
         }
       }
-    }
+      
+      if (dyn->time[size-1] > EOBPars->ode_tmax)
+	      EOBPars->postadiabatic_dynamics_stop = 1;
+     }
 
     dyn->store = dyn->noflx = 0;
     
@@ -386,9 +484,30 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
       dyn->data[EOB_E0][0]     = dyn->E;
     }
+
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins){
+      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0]){
+        eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, dyn->data[EOB_MOMG][0]);
+        }
+      /* if we are projecting the spins, we also need to update the initial chi1z and chi2z to be consistent*/
+      double SA, SB; // projections of the spin parallel to hatL
+      if (EOBPars->spin_interp_domain == 0)
+        eob_spin_dyn_Sproj_interp(spindyn, 0., &SA, &SB, NULL, NULL, NULL, NULL, EOBPars->spin_interp_domain);
+      else 
+        eob_spin_dyn_Sproj_interp(spindyn, dyn->data[EOB_MOMG][0], &SA, &SB, NULL, NULL, NULL, NULL, EOBPars->spin_interp_domain);
+      double XA = EOBPars->X1;
+      double XB = EOBPars->X2;
+      EOBPars->chi1 = SA /SQ(XA);
+      EOBPars->chi2 = SB /SQ(XB);
+      set_spin_vars(XA,XB,EOBPars->chi1,EOBPars->chi2, 
+      &EOBPars->S1, &EOBPars->S2,
+      &EOBPars->a1, &EOBPars->a2,
+      &EOBPars->aK, &EOBPars->aK2,
+      &EOBPars->S, &EOBPars->Sstar);
+    }    
     
     /** Waveform computation at t = 0 
-	Needs a r.h.s. evaluation for some vars (no flux) */
+	  Needs a r.h.s. evaluation for some vars (no flux) */
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
@@ -415,6 +534,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       PRFORMd(eob_id_var[i], dyn->y0[i]);
   }
 
+
   /* *****************************************
    * ODE Evolution
    * *****************************************
@@ -422,11 +542,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /** Initialize ODE system solver */
   dyn->t_stop = EOBPars->ode_tmax * time_unit_fact;
-  EOBPars->ode_tmax = dyn->t_stop;
+  EOBPars->ode_tmax      = dyn->t_stop;
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;
   dyn->ode_stop_radius   = false;
-  const double rstop   = EOBPars->ode_stop_radius; 
+  const double rstop     = EOBPars->ode_stop_radius; 
   if (rstop>0.) {
     dyn->ode_stop_radius   = true;
   }
@@ -467,7 +587,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Set optimized dt around merger */
   const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
-  
+  const double deltat_tuned_mrg = get_mrg_timestop(q, chi1, chi2);
+    
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
   int GSLSTATUS = OK;
@@ -484,23 +605,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (ode_tstep == ODE_TSTEP_ADAPTIVE) {
       /* Adaptive timestepping */
       if ( dyn->ode_stop_MOmgpeak == true ) {
-	/* if we are after the peak, slow down and fix the last steps ! */
-	//GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
-	dyn->ti = dyn->t + dyn->dt;
-	GSLSTATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
+        /* if we are after the peak, slow down and fix the last steps ! */
+        //GSLSTATUS = gsl_odeiv2_evolve_apply_fixed_step (e, c, s, &sys, &dyn->t, dyn->dt, dyn->y);
+        dyn->ti = dyn->t + dyn->dt;
+        GSLSTATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
       } else
-	GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
+      	GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
     }
     
     if (ode_tstep == ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO) {
       /* Adaptive timestepping until LSO ... */
-      if (dyn->r > dyn->rLSO) { 
-	GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
+      if (dyn->r > EOBPars->rLSO) { 
+	      GSLSTATUS = gsl_odeiv2_evolve_apply (e, c, s, &sys, &dyn->t, dyn->t_stop, &dyn->dt, dyn->y);
       } else {
-	/* ... uniform afterwards */
-	dyn->dt = dt_tuned_mrg;
-	dyn->ti = dyn->t + dyn->dt;
-	GSLSTATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
+        /* ... uniform afterwards */
+        dyn->dt = dt_tuned_mrg;
+        dyn->ti = dyn->t + dyn->dt;
+        GSLSTATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
       }
     }
     
@@ -511,37 +632,63 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->pphi   = dyn->y[EOB_EVOLVE_PPHI];
     
     /** Waveform computation 
-	Needs a r.h.s. evaluation for some vars (but no flux) */
+	  Needs a r.h.s. evaluation for some vars (but no flux) */
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
     eob_wav_hlm(dyn, hlm_t); 
 
-    /** Check for failures ... */
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
     } else {
       dyn->MOmg = dyn->Omg;
     }
+
+    /* Update spins parallel to L, if required */
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
+      double SA, SB; // projections of the spin parallel to hatL
+      if(EOBPars->spin_interp_domain==0){
+        eob_spin_dyn_Sproj_interp(dyn->spins, dyn->t, &SA, &SB, NULL, 
+              NULL, NULL, NULL, 
+              EOBPars->spin_interp_domain);
+      } else {
+        eob_spin_dyn_Sproj_interp(dyn->spins, dyn->Omg, &SA, &SB, NULL, 
+              NULL, NULL, NULL, 
+              EOBPars->spin_interp_domain);
+      }
+      const double XA = EOBPars->X1;
+      const double XB = EOBPars->X2;
+      
+      EOBPars->chi1 = SA /SQ(XA);
+      EOBPars->chi2 = SB /SQ(XB);
+      
+      set_spin_vars(XA,XB,EOBPars->chi1,EOBPars->chi2, 
+        &EOBPars->S1, &EOBPars->S2,
+        &EOBPars->a1, &EOBPars->a2,
+        &EOBPars->aK, &EOBPars->aK2,
+        &EOBPars->S, &EOBPars->Sstar);
+    }
 	
+    /** Check for failures ... */
+
     if (dyn->ode_stop_MOmgpeak == true) {
       /* ... if after the Omega_orb peak, stop integration */
       if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
-	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
-	iter--; /* do count this iter! */
-	dyn->ode_stop = true;
-	break; /* (while) stop */
+        if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
+        iter--; /* do count this iter! */
+        dyn->ode_stop = true;
+        break; /* (while) stop */
       }
 
       if (dyn->MOmg > dyn->MOmg_prev) {
-	if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
-	iter--; /* do count this iter! */
-	dyn->ode_stop = true;
-	break; /* (while) stop */
+        if (VERBOSE) printf("Stop: Peak of Omega reached; 2M not reached.\n");
+        iter--; /* do count this iter! */
+        dyn->ode_stop = true;
+        break; /* (while) stop */
       } else {
-	/* Mininum not reached, update the max */
-	dyn->MOmg_prev = dyn->MOmg;
-    } 
+	      /* Mininum not reached, update the max */
+	      dyn->MOmg_prev = dyn->MOmg;
+      } 
     }
 
     /* ... if before the Omega_orb peak, this is an actual error */
@@ -553,7 +700,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     
     /** Checking whether the dynamics produces NaN values
-	this can happen if radius r becomes too small */
+	  this can happen if radius r becomes too small */
     if (!(isfinite(dyn->r))) {
       printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);	
       /* errorexit("ODE solver returned NaN radius.\n"); */
@@ -605,31 +752,31 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
 
     /** Check when to break the computation
-	find peak of omega curve and continue for 2M */
+	  find peak of omega curve and continue for 2M */
     if (dyn->ode_stop_MOmgpeak == false) {
       /* Before the Omega_orb peak */      
       if (dyn->MOmg < dyn->MOmg_prev) {
-	/* This is the first step after the peak
-	   Set things for uniform tstep evolution */
-	dyn->tMOmgpeak = dyn->t; // = dyn->t-0.5*dyn->dt;
-	dyn->ode_stop_MOmgpeak = true;
-	dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
-	dyn->t_stop = dyn->t + 2.;
-	
-	if (EOBPars->use_flm == USEFLM_HM) {
-	  dyn->dt     = 0.1;
-	  dyn->t_stop = dyn->t + 10.;
-	}
-	
-	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
+	    /* This is the first step after the peak
+	    Set things for uniform tstep evolution */
+        dyn->tMOmgpeak = dyn->t;
+        dyn->ode_stop_MOmgpeak = true;
+
+        dyn->dt = MIN(dyn->dt, dt_tuned_mrg); 
+        dyn->t_stop = dyn->t + deltat_tuned_mrg;
+        
+        if(EOBPars->ode_stop_after_peak){
+          dyn->ode_stop = true;
+          iter--;
+        }
+      	if (VERBOSE) printf("Peak of Omega reached, doing extra steps with h = %e\n",dyn->dt);
       } else {
-	/* Peak not reached, update the max */
-	dyn->MOmg_prev = dyn->MOmg;
+        /* Peak not reached, update the max */
+        dyn->MOmg_prev = dyn->MOmg;
       }      
     } else {
       if (dyn->t >= dyn->t_stop) {
-	if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
-	dyn->ode_stop = true;
+	      if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
+	      dyn->ode_stop = true;
       }
     }
   
@@ -650,12 +797,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
  END_ODE_EVOLUTION:;
   
-  /** Unwrap phase for higher modes.
-      Skip PA phases: they can jump 2Pi by construction */
+  /** Unwrap phase for higher modes */
   if (EOBPars->use_flm == USEFLM_HM) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
-	unwrap_HM(&hlm->phase[k][pasize],size-pasize);
+	unwrap_HM(hlm->phase[k],size);
       }
     }
   }
@@ -666,11 +812,25 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     strcat(hlm->name,"_insplunge");
     Waveform_lm_output (hlm);
   }
-  if (EOBPars->output_dynamics)
+  if (EOBPars->output_dynamics) {
     Dynamics_output(dyn);
+  }
 #endif
   
-  if (!(use_tidal)) {
+  /** Precessing BNS + EOB flux: 
+    TODO: integrate the PN dynamics with the *exact* EOB flux and compute the final state 
+  */
+  if(use_tidal && use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
+    if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->initial_frequency/time_unit_fact))
+      errorexit("problem during spin dynamics");
+    spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
+    spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
+    
+    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0])
+      eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
+  }
+
+  if (!(use_tidal) && (dyn->ode_stop_MOmgpeak)) {
     
     /* *****************************************
      * Following is for BBH : NQC & Ringdown
@@ -684,11 +844,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM)) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
 
     /** NQC and ringdown attachment is done around merger 
-	using auxiliary variables defined around [tmin,tmax] 
-	Recall that parameters are NOT stored into these auxiliary vars */
+    using auxiliary variables defined around [tmin,tmax] 
+    Recall that parameters are NOT stored into these auxiliary vars */
     
     if (merger_interp) {
-
+      
       /** Extract the waveform and dynamics around merger */
       const double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
       const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
@@ -701,8 +861,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       int index_pk = dyn->size-1;
       double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
       for (int j = dyn->size-2; j-- ; ) {
-	if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
-	  break;
+	      if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
+	        break;
         index_pk = j;
         Omega_pk = dyn->data[EOB_OMGORB][j]; 
       }
@@ -713,31 +873,31 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       /** Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
       if (EOBPars->use_flm == USEFLM_HM) {
-	dt_merger_interp = 0.5;
+	      dt_merger_interp = 0.5;
       } else {
-	dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
+	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
       }
       double tstart_mrg = tOmg_pk - 8.;
       while (tstart_mrg < hlm_mrg->time[0]) /** Make sure it does not exrapolate */
-	tstart_mrg += dt_merger_interp;
+	      tstart_mrg += dt_merger_interp;
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
       
       if (VERBOSE) {
-	PRSECTN("Interpolation of merger to uniform grid");
-	PRFORMi("interpolation_grid_size",size_mrg);
-	PRFORMd("interpolation_grid_dt",dt_merger_interp);
-	PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
-	PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
+        PRSECTN("Interpolation of merger to uniform grid");
+        PRFORMi("interpolation_grid_size",size_mrg);
+        PRFORMd("interpolation_grid_dt",dt_merger_interp);
+        PRFORMd("interpolation_grid_t0",hlm_mrg->time[0]);
+        PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
       }
 
 #if (DEBUG) 
       // Output post-interpolation wave and dynamics 
       if(EOBPars->output_multipoles) {
-	Waveform_lm_output (hlm_mrg);
-	Waveform_lm_output_reim (hlm_mrg);
+        Waveform_lm_output (hlm_mrg);
+        Waveform_lm_output_reim (hlm_mrg);
       }
       if (EOBPars->output_dynamics) 
-	Dynamics_output(dyn_mrg);
+	      Dynamics_output(dyn_mrg);
 #endif
       
       /**  Interpolate mrg on uniform grid */
@@ -761,7 +921,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (merger_interp) { 
 	
         /* Compute NQC only around merger, 
-	   add to both merger and full waveform */
+	      add to both merger and full waveform */
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
         /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
         eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
@@ -773,35 +933,49 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         size = hlm->size;
         EOBPars->size = size;
 
-	/* Free the *_mrg buffers 
-	   Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
-	Waveform_lm_free(hlm_mrg);
-	Dynamics_free(dyn_mrg);
+        /* Free the *_mrg buffers 
+          Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
+        Waveform_lm_free(hlm_mrg);
+        Dynamics_free(dyn_mrg);
 	
       } else {
 	
         /* Compute NQC and add them to full waveform */
         Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
         eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
-	
       }
       
-      strcat(hlm->name,"_nqc");      
-
 #if (DEBUG) 
       if (EOBPars->output_nqc)  {
-     	Waveform_lm_output (hlm_nqc);
-     	Waveform_lm_output (hlm_mrg);
+     	  Waveform_lm_output (hlm_nqc);
+     	  Waveform_lm_output (hlm_mrg);
       }
-      if (EOBPars->output_multipoles) 
-     	Waveform_lm_output (hlm);
+      if (EOBPars->output_multipoles) {
+	      strcat(hlm->name,"_nqc");      
+	      Waveform_lm_output (hlm);
+      }
 #endif
       
       Waveform_lm_free (hlm_nqc);
       
-    } // NQC_HLM_COMPUTE
+    }  /* NQC_HLM_COMPUTE */
 
-    
+    /** Precessing BBH + EOB flux: 
+        TODO: before ringdown, integrate the PN dynamics with the EOB flux and compute the final state 
+     */
+    if(use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
+      if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->initial_frequency/time_unit_fact))
+        errorexit("problem during spin dynamics");
+      spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
+      spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
+      
+      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0])
+        eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
+
+      /* final state */
+      EOBPars->abhf = PrecessingRemnantSpin(dyn); 
+    }
+
     /** BBH : add Ringdown */
     
     if (VERBOSE) PRSECTN("Ringdown");
@@ -829,14 +1003,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   } /* End of BBH section */
 
 #if (DEBUG) 
-  // Output wave and dynamics 
-  if(EOBPars->output_multipoles) {
-    strcat(hlm->name,"_ringdown");
-    Waveform_lm_output (hlm);
-    Waveform_lm_output_reim (hlm);
-  }
+    if (EOBPars->output_multipoles) {
+      strcat(hlm->name,"_ringdown");
+    }
 #endif
-  
+      
   /* *****************************************
    * Compute h+, hx 
    * *****************************************
@@ -859,7 +1030,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     M *= MSUN_S;
     EOBPars->tc*= M;   
   } 
-  const double phi = Pi/2.0 - EOBPars->coalescence_angle; 
+  const double phi  = Pi/2.0 - EOBPars->coalescence_angle; 
   const double iota = EOBPars->inclination;
 
   /** Computation of (h+,hx) */
@@ -880,7 +1051,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     Waveform_alloc (hpc, size, "waveform");   
   
     /* h+, hx */  
-    compute_hpc(hlm, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+    if (use_spins == MODE_SPINS_GENERIC){
+      if (VERBOSE) PRSECTN("Twisting");
+      Waveform_lm_alloc (&hTlm, size, "hTlm"); 
+      Waveform_lm_alloc (&hTlm_neg, size, "hTlm_neg"); 
+      Waveform_lm_alloc (&hTl0, size, "hTl0"); 
+      twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm, hTlm_neg, hTl0);
+      compute_hpc(hTlm, hTlm_neg, hTl0, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
+    } else
+      compute_hpc(hlm, NULL, NULL, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
   } else {
     
@@ -890,6 +1069,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     WaveformFD_lm_alloc (&hflm, size, "hflm");
     
     /** Calculate the SPA for the multipolar waveform */
+    if (VERBOSE) PRSECTN("SPA");
     SPA(hlm, hflm);
     
     /* The SPA performs an interpolation, 
@@ -898,13 +1078,18 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /** Alloc memory for (h+,hx) */
     WaveformFD_alloc (hfpc, size, "waveform");   
-        
+
     /* h+, hx */  
-    compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, *hfpc);
+    if (use_spins == MODE_SPINS_GENERIC){
+      
+      if (VERBOSE) PRSECTN("Twist");
+      twist_hlm_FD(hflm, dyn->spins, M, amplitude_prefactor, phi, iota, *hfpc); //this also computes hpc
+    } else {
+      compute_hpc_FD(hflm, nu, M, distance, amplitude_prefactor, phi, iota, *hfpc);
+    }
 
     /* time-shift the FD waveforms */
     if(EOBPars->time_shift_FD) time_shift_FD(*hfpc, EOBPars->tc);
-    
   }
 
   /* *****************************************
@@ -913,22 +1098,41 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   if (output) {
+    // hpc
     if (EOBPars->output_hpc)
       if (EOBPars->domain == DOMAIN_TD) Waveform_output (*hpc); 
       else                              WaveformFD_output (*hfpc); 
-    if (EOBPars->output_multipoles) Waveform_lm_output (hlm); 
-    if (EOBPars->output_multipoles) Waveform_lm_output_reim (hlm);
-    //if (EOBPars->output_multipoles_fd) WaveformFD_lm_output (hflm);  //TODO: add this parameter
+    // modes
+    if (EOBPars->output_multipoles) {
+      if (EOBPars->domain == DOMAIN_TD) {
+	      Waveform_lm_output (hlm); 
+	      Waveform_lm_output_reim (hlm);
+	      if (use_spins == MODE_SPINS_GENERIC){
+	        Waveform_lm_output (hTlm);
+        	Waveform_lm_output (hTlm_neg);
+            Waveform_lm_output (hTl0);
+          }
+      } else {
+	      WaveformFD_lm_output (hflm);
+	      if (use_spins == MODE_SPINS_GENERIC)
+	        WaveformFD_lm_output (hfTlm);
+      }
+    }
+    // dynamics
     if (EOBPars->output_dynamics) {
       if (EOBPars->interp_uniform_grid) {
-	/* Interp to uniform grid the dynamics, rem the dyn size can be different from wf size */
-	const double dt_interp_dyn = EOBPars->dt_interp;
-	const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
-	Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
+    /* Interp to uniform grid the dynamics, 
+      rem the dyn size can be different from wf size */
+	      const double dt_interp_dyn = EOBPars->dt_interp;
+	      const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
+	      Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
       }
       Dynamics_output(dyn);
+      if (use_spins == MODE_SPINS_GENERIC)
+	      DynamicsSpin_output (spindyn);
     }
   }
+
 
   /* *****************************************
    * Finalize 
@@ -950,17 +1154,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
   
-  *hmodes = hlm; /* do not free these! */
+  *hmodes = hlm;   /* do not free these! */
   *hfmodes = hflm; /* do not free these! */
-  
+  *hTmodes = hTlm; /* do not free these! */
+  *hTmmodes = hTlm_neg; /* do not free these! */
+  *hfTmodes = hfTlm; /* do not free these! */
+  *dynf = dyn;     /* do not free these! */
+
 #ifdef _OPENMP
   openmp_free(); 
 #endif
   
   /** Free memory */
-  Dynamics_free (dyn);
-  /* Waveform_lm_free (hlm); */
-  /* WaveformFD_lm_free (hflm); */
+  /* Dynamics_free (dyn);       */
+  if (use_spins == MODE_SPINS_GENERIC)
+    DynamicsSpin_free (spindyn);  
+    Waveform_lm_free(hTl0);
+
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
 

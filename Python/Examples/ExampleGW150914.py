@@ -31,12 +31,12 @@ pars = {
     'arg_out'            : 1,      # Output hlm/hflm. Default = 0
     'use_mode_lm'        : k,      # List of modes to use/output through EOBRunPy
     'srate_interp'       : 4096.,  # srate at which to interpolate. Default = 4096.
-    'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
-    'initial_frequency'  : 35.,    # in Hz if use_geometric_units = 0, else in geometric units
-    'interp_uniform_grid': 1,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+    'use_geometric_units': "no",   # Output quantities in geometric units. Default = "yes"
+    'initial_frequency'  : 35.,    # in Hz if use_geometric_units = "no", else in geometric units
+    'interp_uniform_grid': "yes",  # Interpolate mode by mode on a uniform grid. Default = "no" (no interpolation)
     'distance'           : Deff,
     'inclination'        : iota,
-    'output_hpc'         : 0
+    'output_hpc'         : "no",
 }
 
 # Run the WF generator
