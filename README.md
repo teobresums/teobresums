@@ -86,7 +86,7 @@ Main reference
 
 Please contact Sebastiano Bernuzzi and Alessandro Nagar if you wish to be included in the list of developers.
 
-A short description of the code can be found in [here](C/src/README.md). Please, take a moment to understand the data structures and how the parameters are managed.
+A short description of the code can be found in [here](C/README.md). Please, take a moment to understand the data structures and how the parameters are managed.
 
 Since June 2018 the repository is managed (roughly) following a `master`/`development` workflow, see e.g. the description [here](https://bitbucket.org/eob_ihes/teobresums/wiki/EOB-repo-usage).
 
