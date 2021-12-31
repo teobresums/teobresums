@@ -8,7 +8,7 @@ Code versions are tagged on master. Code versions used in scientific
 papers are tagged with the arXiv number.
 
 For detailed release notes of the most recent version see the
-[`CHANGES file`](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
+[`CHANGES` file](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
 
  * [![C version](https://img.shields.io/badge/TEOBResumS-v3.0%20GIOTTO-green)]() Quasi-circular precessing and non-precessing models for BBH and BNS with higher modes, including EOB-SPA.
  * [![C version](https://img.shields.io/badge/TEOBResumS-v2.0-orange)](https://bitbucket.org/eob_ihes/teobresums/src/v2.0/C/) Quasi-circular non-precessing models for BBH and BNS with higher modes.
@@ -17,13 +17,13 @@ For detailed release notes of the most recent version see the
 
 ## Authors 
 
-See the [`AUTHORS file`](https://bitbucket.org/eob_ihes/teobresums/src/master/AUTHORS).
+See the [`AUTHORS` file](https://bitbucket.org/eob_ihes/teobresums/src/master/AUTHORS).
 
 ## License
 
 TEOBResumS is a free software distributed under the terms of the GNU General Public License as published by the Free Software Foundation.
 
-See the [`LICENSE file`](https://bitbucket.org/eob_ihes/teobresums/src/master/LICENSE).
+See the [`LICENSE` file](https://bitbucket.org/eob_ihes/teobresums/src/master/LICENSE).
 
 ## Pre-requisites
 
@@ -88,7 +88,7 @@ Please contact Sebastiano Bernuzzi and Alessandro Nagar if you wish to be includ
 
 A short description of the code can be found in [here](C/README.md). Please, take a moment to understand the data structures and how the parameters are managed.
 
-Since June 2018 the repository is managed (roughly) following a `master`/`development` workflow, see e.g. the description [here](https://bitbucket.org/eob_ihes/teobresums/wiki/EOB-repo-usage).
+See [here](https://bitbucket.org/eob_ihes/teobresums/wiki/EOB-repo-usage) for a description of the workflow of this repo.
 
 If you want to start a new branch or development make sure to
 
