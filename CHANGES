@@ -1,5 +1,5 @@
-Version 3.0 08-11-2021
-======================
+Version 3.0 GIOTTO 31-12-2021
+=============================
 
 ## What's changed since v2.0
 
@@ -7,6 +7,7 @@ Version 3.0 08-11-2021
 	- always employ the EOBPars structure to access parameters throughout the code (with only a few relevant exceptions)
 	- libconfig abandoned, added custom I/O routines to read from parfiles and/or dump the current parameters to a file. 
 * Implemented the f-mode model of arxiv 1602.00599 and following
+* Implemented precession, see arxiv 2005.05338 and arxiv 2111.03675
 * Added a plugin for PyCBC
 
 ### Detailed changelog:
@@ -14,6 +15,7 @@ Version 3.0 08-11-2021
 	* C/src/TEOBResumS.c:
 	- Condition for computing rLR for BNS
 	- ODE rstop is set to 1.01*r_LR when tides are on
+	- Integrate the spin dynamics before/after the EOB dynamics
 
 	* C/src/TEOBResumSPars.c:
 	- libconfig abandoned, added custom I/O routines to read from parfiles and/or dump the current parameters to a file. 
@@ -21,11 +23,12 @@ Version 3.0 08-11-2021
 	* C/src/TEOBResumSFits.c:
 	- modified and renamed routine with YagiYunes logQ fits
 	- added Chang fits
-	- add routine for computation of dressing factors
-
+	- added routine for computation of dressing factors
+	- added routine to compute the final BH spin for a precessing system
+	
 	* C/src/TEOBResumSUtils.c:
 	- added function for double factorial and tidal parameters
-	- moved Wigner d function to C/src/SpecialFuns.c 
+	- moved Wigner d function and Spherical harmonics to C/src/SpecialFuns.c
 
 	* C/src/TEOBResumSMetric.c:
 	- added routine for Btidal metric
@@ -34,12 +37,16 @@ Version 3.0 08-11-2021
 
 	* C/src/TEOBResumSWaveform.c:
 	- added f-mode tidal correction to (2,2) amplitude
+	- added routines to perform the Twist of spin aligned into precessing waveforms (TD and FD)
+	- added routines to prolong the euler angles beyond merger and interpolate them in time/frequency
 
 	* C/src/TEOBResumSDynamics.c:
 	- added computation of r_LSO for spinning case
+	- added spin-dynamics PN rhs and driver to compute the evolution
+	- added function to project spins onto EOB dynamics
 
 	* Add C/src/SpecialFuns.c
-
+	
 	* C/par/: updated the parfiles
 
 	* Added PyCBC plugin under teobresums/PyCBC/
