@@ -5,6 +5,6 @@ SHELL=/bin/bash
 
 all: 
 	@echo "Building python module for TEOBResumS ..."
-	python TEOBResumSWrap_setup.py build_ext --inplace
+	python setup.py build_ext --inplace
 
 # DO NOT DELETE

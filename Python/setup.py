@@ -1,7 +1,7 @@
 """
 Setup script for TEOBResumSWrap.c based on distutils
 Compile with 
-$ python TEOBResumSWrap_setup.py build_ext --inplace
+$ python setup.py build_ext --inplace
 """
 
 from distutils.core import setup, Extension

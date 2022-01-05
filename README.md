@@ -45,14 +45,14 @@ Alternatively, to build the python module under the `teobresums/Python` director
 
 ```
 $ cd /PATH/TO/teobresums/Python/
-$ python TEOBResumSWrap_setup.py build_ext --inplace
+$ python setup.py build_ext --inplace
 ```
 
 To build the module in your current environment do:
 
 ```
 $ cd /PATH/TO/teobresums/Python/
-$ python TEOBResumSWrap_setup.py install
+$ python setup.py install
 ```
 
 We strongly advise users to use [anaconda](https://www.anaconda.com/products/individual-d).
