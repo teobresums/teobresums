@@ -5,15 +5,13 @@ To start, checkout the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/bro
 ## Code versions
 
 Code versions are tagged on master. Code versions used in scientific
-papers are tagged with the arXiv number.
+papers are tagged with the arXiv number. 
 
 For detailed release notes of the most recent version see the
 [`CHANGES` file](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
 
- * [![C version](https://img.shields.io/badge/TEOBResumS-v3.0%20GIOTTO-green)]() Quasi-circular precessing and non-precessing models for BBH and BNS with higher modes, including EOB-SPA.
- * [![C version](https://img.shields.io/badge/TEOBResumS-v2.0-orange)](https://bitbucket.org/eob_ihes/teobresums/src/v2.0/C/) Quasi-circular non-precessing models for BBH and BNS with higher modes.
- * [![C version](https://img.shields.io/badge/TEOBResumS-v1.1-orange)](https://bitbucket.org/eob_ihes/teobresums/src/v1.1/C/) Quasi-circular non-precessing models for BBH and BNS, including post-adiabatic method and higher modes for BNS. This version was ported in [LAL](https://git.ligo.org/lscsoft/lalsuite) and the LAL implementation is reviewed by LVC.
- * [![C++ version](https://img.shields.io/badge/TEOBResumS-C%2B%2B%20v0.1-red)](https://bitbucket.org/eob_ihes/teobresums/src/v1.1/C++/) C++ implementation abandoned in June 2018 and code development is frozen. `v0.0` was reviewed by LVC. Review was concluded on 11.04.2018. The review's final statement can be found [here](https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/TEOBResumS/FinalReviewStatement). The reviewed version is tagged as `LVC-review-end `.
+### Latest version  
+[![C version](https://img.shields.io/badge/TEOBResumS-v3.0%20GIOTTO-green)](https://bitbucket.org/eob_ihes/teobresums/src/v3.0_GIOTTO/) Quasi-circular precessing and non-precessing models for BBH and BNS with higher modes, including EOB-SPA.
 
 ## Authors 
 
