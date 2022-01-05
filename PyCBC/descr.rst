@@ -28,8 +28,8 @@ Clone the ``TEOBResumS`` repo::
 
 Compile the code and setup the ``python`` module::
 
-  cd teobresums/Python/ # check options in TEOBResumSWrap_setup.py
-  python TEOBResumSWrap_setup.py build_ext --inplace # see also the Makefile
+  cd teobresums/Python/ # check options in setup.py
+  python setup.py build_ext --inplace # see also the Makefile
 
 ``PyCBC`` should now automatically detect the package and make the waveform available for use.
 
@@ -69,9 +69,9 @@ There is a set of required parameters:
 :param mode_array: list of modes to be used, 
 :type mode_array: list ot tuples (l,m), optional. Example: [(2,1),(2,2),(3,2)]
 
-By default ``TEOBResumS`` employs: FIXME
+By default ``TEOBResumS`` employs:
 
- * Post-adiabatic dynamics + ODE solution below a minimum radius (20)
+ * Post-adiabatic dynamics + ODE solution below a minimum radius (14)
  * 2,2 mode
  * Nonprecessing spins
  * Tides (if input tidal parameters are positive)

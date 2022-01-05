@@ -5,15 +5,13 @@ To start, checkout the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/bro
 ## Code versions
 
 Code versions are tagged on master. Code versions used in scientific
-papers are tagged with the arXiv number.
+papers are tagged with the arXiv number. 
 
 For detailed release notes of the most recent version see the
 [`CHANGES` file](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
 
- * [![C version](https://img.shields.io/badge/TEOBResumS-v3.0%20GIOTTO-green)]() Quasi-circular precessing and non-precessing models for BBH and BNS with higher modes, including EOB-SPA.
- * [![C version](https://img.shields.io/badge/TEOBResumS-v2.0-orange)](https://bitbucket.org/eob_ihes/teobresums/src/v2.0/C/) Quasi-circular non-precessing models for BBH and BNS with higher modes.
- * [![C version](https://img.shields.io/badge/TEOBResumS-v1.1-orange)](https://bitbucket.org/eob_ihes/teobresums/src/v1.1/C/) Quasi-circular non-precessing models for BBH and BNS, including post-adiabatic method and higher modes for BNS. This version was ported in [LAL](https://git.ligo.org/lscsoft/lalsuite) and the LAL implementation is reviewed by LVC.
- * [![C++ version](https://img.shields.io/badge/TEOBResumS-C%2B%2B%20v0.1-red)](https://bitbucket.org/eob_ihes/teobresums/src/v1.1/C++/) C++ implementation abandoned in June 2018 and code development is frozen. `v0.0` was reviewed by LVC. Review was concluded on 11.04.2018. The review's final statement can be found [here](https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/TEOBResumS/FinalReviewStatement). The reviewed version is tagged as `LVC-review-end `.
+### Latest version  
+[![C version](https://img.shields.io/badge/TEOBResumS-v3.0%20GIOTTO-green)](https://bitbucket.org/eob_ihes/teobresums/src/v3.0_GIOTTO/) Quasi-circular precessing and non-precessing models for BBH and BNS with higher modes, including EOB-SPA.
 
 ## Authors 
 
@@ -45,14 +43,14 @@ Alternatively, to build the python module under the `teobresums/Python` director
 
 ```
 $ cd /PATH/TO/teobresums/Python/
-$ python TEOBResumSWrap_setup.py build_ext --inplace
+$ python setup.py build_ext --inplace
 ```
 
 To build the module in your current environment do:
 
 ```
 $ cd /PATH/TO/teobresums/Python/
-$ python TEOBResumSWrap_setup.py install
+$ python setup.py install
 ```
 
 We strongly advise users to use [anaconda](https://www.anaconda.com/products/individual-d).
@@ -74,12 +72,16 @@ If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS
 see `PyCBC/test.py`.
 
 ## References
+Main references:
 
-Main reference
-
+ * Riemenschneider et al (2021) [Assessment of consistent next-to-quasicircular corrections and postadiabatic approximation in effective-one-body multipolar waveforms for binary black hole coalescences](https://inspirehep.net/literature/1858441)
+ * Nagar et al (2020) [Multipolar effective one body waveform model for spin-aligned black hole binaries](https://inspirehep.net/literature/1777194)
+ * Nagar et al (2019) [Multipolar effective one body model for nonspinning black hole binaries](https://inspirehep.net/literature/1730540)
  * Nagar et al (2018) [Time-domain effective-one-body gravitational waveforms for coalescing compact binaries with nonprecessing spins, tides and self-spin effects](https://inspirehep.net/record/1676430)
-
-**please cite the above reference** when using the code. Please, see
+ * Nagar et al (2015) [Energetics and phasing of nonprecessing spinning coalescing black hole binaries](https://inspirehep.net/literature/1380155) 
+ * Damour et al (2014) [New effective-one-body description of coalescing nonprecessing spinning black-hole binaries](https://inspirehep.net/literature/1303216)
+ 
+**please cite the above references** when using the code. Please, see
   also the complete list of [references on the Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/References) and cite papers according to what you use.
 
 ## Developers
