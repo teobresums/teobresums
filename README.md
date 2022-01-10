@@ -72,12 +72,16 @@ If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS
 see `PyCBC/test.py`.
 
 ## References
+Main references:
 
-Main reference
-
+ * Riemenschneider et al (2021) [Assessment of consistent next-to-quasicircular corrections and postadiabatic approximation in effective-one-body multipolar waveforms for binary black hole coalescences](https://inspirehep.net/literature/1858441)
+ * Nagar et al (2020) [Multipolar effective one body waveform model for spin-aligned black hole binaries](https://inspirehep.net/literature/1777194)
+ * Nagar et al (2019) [Multipolar effective one body model for nonspinning black hole binaries](https://inspirehep.net/literature/1730540)
  * Nagar et al (2018) [Time-domain effective-one-body gravitational waveforms for coalescing compact binaries with nonprecessing spins, tides and self-spin effects](https://inspirehep.net/record/1676430)
-
-**please cite the above reference** when using the code. Please, see
+ * Nagar et al (2015) [Energetics and phasing of nonprecessing spinning coalescing black hole binaries](https://inspirehep.net/literature/1380155) 
+ * Damour et al (2014) [New effective-one-body description of coalescing nonprecessing spinning black-hole binaries](https://inspirehep.net/literature/1303216)
+ 
+**please cite the above references** when using the code. Please, see
   also the complete list of [references on the Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/References) and cite papers according to what you use.
 
 ## Developers
