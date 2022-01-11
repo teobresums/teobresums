@@ -1,21 +1,16 @@
 # makefile to compile and run benchmark
-
-# Add a parfile in the list below to run in in the benchmark
-# All these parfile are and should be kept in ../C/par/
-FILES=GW150914.par GW170817.par bbh_q1_s0s0_10Hz.par bbh_q3_s-099s-099_10Hz.par bbh_q5_s09s-04_HM.par bhns_q3_s075s0_f0004.par bns_q1_s-01s-01_10Hz.par
+# uses parfiles in Python/Utils/parfiles.json
 
 # do not touch below here
 
 TOP=$(shell pwd)
-SRC=$(abspath ../C/)
-RUN=$(abspath ./Run.sh)
-PAR=$(abspath ../C/par/)
-MAKEFILE=$(SRC)/Makefile.TEOBResumS
+SRC=$(abspath ../../C/)
+UT=$(abspath ../)
+MAKEFILE=$(SRC)/Makefile
 NOW:=$(shell date +'%y%m%d')
 GIT:=$(shell git rev-list HEAD | wc -l)
 
 WORKDIR=$(TOP)/bench_$(GIT)/$(NOW)
-PARFILES=$(patsubst %,$(PAR)/%,$(FILES))
 
 all: build run
 
@@ -32,12 +27,12 @@ $(WORKDIR):
 	git log --format="%H" -n 1 > git_status.txt 
 
 run: $(WORKDIR)
-	export TEOBRESUMS=$(SRC)&&\
-	echo $$TEOBRESUM &&\
+	export TEOBRESUMS=$(WORKDIR)&&\
 	cd $(WORKDIR) &&\
-	cp $(PARFILES) . &&\
-	cp $(RUN) . &&\
-	./Run.sh
+	cp $(UT)/eobutils.py . && cp $(UT)/parfile.py . && cp $(UT)/parfiles.json . &&\
+	cp $(TOP)/benchmark.py . &&\
+	python3 benchmark.py &&\
+	rm *.py
 
 clean: 
 	cd $(WORKDIR) && rm *.x

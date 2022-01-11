@@ -22,13 +22,13 @@ PLEASE USE THIS BENCHMARK, it is easy and can save you/us lots of time.
 
 ## What to run?
 
-Parfiles for several relevant test cases are collected in the dir
+Parfiles for several relevant test cases are collected in
 
 ```
-$ ../C/par/
+$ ../parfiles.json
 ```
 
-Those parfiles can be added in the list `FILES` at the beginning of the makefile in this directory.  
+Adding parfiles there (under `examples`) automatically adds them to the benchmark.  
  
 ## How to run
 

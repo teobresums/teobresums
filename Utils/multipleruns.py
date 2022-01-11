@@ -29,7 +29,7 @@ parser.add_option('--plot_hlm', action='store_true', default=False, help='Plot t
 (opts,args) = parser.parse_args()
 
 # Example usage:
-# python3 GenerateParfile.py --fname GW150914.par --path ./ --gen_pars --run --multiprocess --nproc 2 --plot_wf
+# python3 multipleruns.py --fname GW150914.par --path ./ --gen_pars --run --multiprocess --nproc 2 --plot_wf
 
 if __name__ == '__main__':
 
