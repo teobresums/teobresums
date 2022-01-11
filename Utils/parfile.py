@@ -173,7 +173,7 @@ class Parfile():
 
 if __name__ == "__main__":
 
-    if (0):
+    if (1):
         # Generate all the example parfiles also present under C/par
         with open("./parfiles.json", "r") as f:
             data = json.load(f)
