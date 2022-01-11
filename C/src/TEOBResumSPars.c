@@ -411,7 +411,7 @@ void eob_set_params(int default_choice, int firstcall)
 		&EOBPars->aK, &EOBPars->aK2,
 		&EOBPars->S, &EOBPars->Sstar);
 
-  if (EOBPars->binary == BINARY_BNS) {
+  if (usetidal) {
     
     /* Set the tidal parameters */
     
