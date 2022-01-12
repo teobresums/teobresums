@@ -5624,23 +5624,16 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
   const double half_srate_interp = tmpsrate;
   const double f0 = tmpf0;
   const double df = tmpdf;
-  //double Fmin=0., Fmax=0.;
-  //int nmax[KMAX]; // Fmax index
   int nmin[KMAX]; // Fmin > f0 index
 
   const double Pio4 = Pi/4.;
   int *activemode = TDlm->kmask;
-  //int activemode[KMAX];
-  //set_multipolar_idx_mask (activemode, KMAX, 
-  //EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
   
   /* For each active mode... */
   for (int k = 0; k < KMAX; k++ ) {
     if (!activemode[k]) continue;
     
     /* Compute frequencies */
-    /* D0_x_2(phaset, time, size, *F);  
-       D0_x_2(*F, time, size, Fdot); */
     D0_x_4(TDlm->phase[k], TDlm->time, size, FDlm->F[k]);
     D0_x_4(FDlm->F[k], TDlm->time, size, FDlm->Fdot[k]);
     
@@ -5655,21 +5648,13 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     nmin[k] = (FDlm->F[k][0]>f0)?(1):(0);
 
     /* Get last index until Fdot is monotonically increasing (for attachment) */
-    //int i_aux = 0;
-    //while(FDlm->Fdot[i_aux+1] > FDlm->Fdot[i_aux]) i_aux++;
-    //*newsize = i_aux +1; // i_axu = n
-    //SB: I changed the logic above to avoid overflow of the array Fdot.
-    //    please check n is correctly set (could be offset of 1...)
     int n = 1;
     while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1] && n<size) n++;
-    //nmax[k] = n; 
-
     /* Prolong the waveform, if necessary  
        - Fill the points between Fmax and half_srate_interp such that 
          FDlm->F[k][n] > half_srate_interp (strictly larger)
 	 for later interp;
-       - The amplitude is expected to behave as 1./f asymptotically 
-         (see eg 3.31a of arXiv:gr-qc/0001023);
+       - The amplitude behaves as ~ f^{-10/3}
        - For the phase, we express it as phi(f) = (a + b*f);
     */
     if (FDlm->F[k][n] < half_srate_interp) { 
@@ -5677,13 +5662,11 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
       double Fn1 = FDlm->F[k][n-1];
       double An1 = FDlm->ampli[k][n-1];
       double pn1 =  FDlm->phase[k][n-1];
-      //double c = 0.;
       double b = TwoPi * TDlm->time[n-1];
       double dfk = (half_srate_interp - FDlm->F[k][n1])/(size-n-1); // one point more
       for (int i=n; i < size; i++){
         FDlm->F[k][i] = Fn1 + (i-n1)*dfk;
-        FDlm->ampli[k][i] = An1/(FDlm->F[k][i])*Fn1;  // \approx 1/f
-        //FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1))/(1 + c*(FDlm->F[k][i] - Fn1));
+        FDlm->ampli[k][i] = An1/pow((FDlm->F[k][i]),10./3)*pow(Fn1,10./3);
         FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1));
       }
     } else{
@@ -5699,10 +5682,6 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
         FDlm->ampli[k][i] = FDlm->ampli[k][n1];
       }
     }
-
-    /* Absolute min/max */
-    //Fmin = MIN(Fmin,FDlm->F[k][0]);
-    //Fmax = MIN(Fmax,FDlm->F[k][n]);
   }
 
   
