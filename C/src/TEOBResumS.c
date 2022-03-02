@@ -76,12 +76,14 @@ int main (int argc, char* argv[])
   /* Init parameters & set defaults */
   EOBParameters_alloc( &EOBPars );
   EOBParameters_defaults (dc, EOBPars);
+
+  
   
   if (argv[1]!=NULL) {
     /* Deal with input parfile or command line arguments */
     dc = EOBParameters_parse_commandline(EOBPars,argc, argv);
   }
-
+  
   const int output = EOBPars->output_dynamics
     + EOBPars->output_multipoles
     + EOBPars->output_hpc
@@ -181,14 +183,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const double chi1   = EOBPars->chi1;
   const double chi2   = EOBPars->chi2;
   const int use_spins = EOBPars->use_spins;
-  const int use_tidal = EOBPars->use_tidal;
+  int use_tidal = EOBPars->use_tidal;
   int store_dynamics  = EOBPars->output_dynamics; 
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
   if (use_spins == MODE_SPINS_GENERIC) store_dynamics = 1; /* Precession needs dynamical variables */
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
-  
+
   /* *****************************************
    * Set Memory & do preliminary computations
    * *****************************************
@@ -294,9 +296,42 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   NQCdata_alloc (&NQC); 
   eob_nqc_setcoefs(NQC);
   
-  /** Compute light-ring and LSO (if needed) */
+
+  /** Final BH */
+  if (!(EOBPars->binary == BINARY_BNS)) {
+    EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+
+    if (EOBPars->binary == BINARY_BHNS){
+      if (VERBOSE) PRSECTN("BHNS mode");
+      eob_bhns_fit(chi1, nu, &(EOBPars->Mbhf), &(EOBPars->abhf), EOBPars->LambdaBl2, EOBPars->Mbhf, EOBPars->abhf);
+      bhns_cases(nu, EOBPars->abhf, chi1, EOBPars->LambdaBl2, &(EOBPars->binary), &(EOBPars->use_tidal));
+  
+      if(EOBPars->binary == BINARY_BBH){
+        if (VERBOSE) PRSECTN("BHNS Type II");
+        use_tidal = 0;
+      }else if(EOBPars->binary == BINARY_BHNS){
+        if (VERBOSE) PRSECTN("BHNS Type III");
+        use_tidal = 0;
+      }else if(EOBPars->binary == BINARY_BHNS_TD){
+        if (VERBOSE) PRSECTN("BHNS Type I");
+        }
+    }
+
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {   
+      // (4.17) of https://arxiv.org/abs/2004.06503 
+      EOBPars->abhf = PrecessingRemnantSpin(dyn);
+    }
+    if (VERBOSE) {
+      PRSECTN("Final black hole");
+      PRFORMd("BH_final_mass",EOBPars->Mbhf); 
+      PRFORMd("BH_final_spin",EOBPars->abhf);
+    }
+  }
+/** Compute light-ring and LSO (if needed) */
   int check_status;
-  if (use_tidal) {
+  //if (EOBPars->binary == BINARY_BNS) {
+  if (use_tidal) { 
     /* Compute rLR_tidal for NNLO potential and without spin part */
     int tidal_tmp      = EOBPars->use_tidal;
     int spins_tmp      = EOBPars->use_spins;
@@ -322,7 +357,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
-  if (EOBPars->compute_LR && !(use_tidal)) {
+  if (EOBPars->compute_LR) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR)));
     if (check_status) {
@@ -343,23 +378,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     if (VERBOSE) PRFORMd("rLSO",EOBPars->rLSO);
   }   
-
-  /** Final BH */
-  if (!(EOBPars->binary == BINARY_BNS)) {
-    EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-
-    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {   
-      // (4.17) of https://arxiv.org/abs/2004.06503 
-      EOBPars->abhf = PrecessingRemnantSpin(dyn);
-    }
-    if (VERBOSE) {
-      PRSECTN("Final black hole");
-      PRFORMd("BH_final_mass[JimenezForteza]",EOBPars->Mbhf); 
-      PRFORMd("BH_final_spin[JimenezForteza]",EOBPars->abhf);
-    }
-  }
-
   /** Compute the dressing factors for the f-mode resonances at r0 */
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model))
     fmode_resonance_dressing_factors(r0, dyn);  
@@ -383,7 +401,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, pow(r0+0.1, -1.5));
       }
     }
-
 
     /** Calculate dynamics */
     eob_dyn_Npostadiabatic(dyn, r0, spindyn); 
@@ -588,7 +605,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Set optimized dt around merger */
   const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
   const double deltat_tuned_mrg = get_mrg_timestop(q, chi1, chi2);
-    
+  
   /** Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
   int GSLSTATUS = OK;
@@ -810,7 +827,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   // Output wave and dynamics 
   if(EOBPars->output_multipoles) {
     strcat(hlm->name,"_insplunge");
-    Waveform_lm_output (hlm);
+    Waveform_lm_output_reim (hlm);
   }
   if (EOBPars->output_dynamics) {
     Dynamics_output(dyn);
@@ -829,11 +846,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0])
       eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
   }
-
-  if (!(use_tidal) && (dyn->ode_stop_MOmgpeak)) {
+  
+  if (!(EOBPars->binary == BINARY_BNS) && (dyn->ode_stop_MOmgpeak)) {
     
     /* *****************************************
-     * Following is for BBH : NQC & Ringdown
+     * Following is for BBH and BHNS: NQC & Ringdown
      * *****************************************
      */
     
@@ -912,7 +929,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } /* End of merger interp */
     
     
-    if (EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) {
+    if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
       
       /** BBH : compute and add NQC */
 
@@ -924,7 +941,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	      add to both merger and full waveform */
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
         /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
-        eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        
+        if(EOBPars->binary==BINARY_BBH){ 
+          eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        }else{
+          eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        }
+        
+
         strcat(hlm_mrg->name,"_nqc");
 	
         /* Join merger to full waveform */
@@ -952,7 +976,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
       if (EOBPars->output_multipoles) {
 	      strcat(hlm->name,"_nqc");      
-	      Waveform_lm_output (hlm);
+	      Waveform_lm_output_reim (hlm);
       }
 #endif
       
@@ -998,7 +1022,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->size = size;
     
     /* Ringdown attachment */
-    eob_wav_ringdown(dyn, hlm);
+    if(EOBPars->binary==BINARY_BBH){
+      eob_wav_ringdown(dyn, hlm);
+    }else{
+      eob_wav_ringdown_bhns(dyn, hlm);
+    }
     
   } /* End of BBH section */
 

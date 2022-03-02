@@ -237,6 +237,7 @@ enum{
   BINARY_BBH,
   BINARY_BNS,
   BINARY_BHNS,
+  BINARY_BHNS_TD,
   BINARY_NOPT
 };
 
@@ -841,6 +842,22 @@ double get_mrg_timestop(double q, double chi1, double chi2);
 double fmode_resonance_dress_Love(double nu, double r, double bomgf, int ell, double *dtides, double *dtides_u);
 void fmode_resonance_dressing_factors(double r, Dynamics *dyn);
 void fmode_resonance_dress_QOH(Dynamics *dyn);
+void eob_bhns_fit(double a, double nu, double *mass, double *spin, double lambda, double m_bh, double a_bh);
+void bhns_cases(double nu, double af, double chi1, double lambda, int *binary, int *usetidal);
+void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
+			double Mbh, double abh,  
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
+			double *sigmar, double *sigmai);
+void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
+                    double *sigmar, double *sigmai, double nu, double chi1, double chi2, double X1, double X2, double aK, double Mbh, double abh,
+                    double *Apeak, double *alpha2);
+void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak);
+void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double lambda, double nu, double chi1);
+void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp, double abh, double kt2);
+void eob_nqc_point_test(double Mbh, double c1A, double c2A, double c3A, double c4A, 
+			    double c1phi, double c2phi, double c3phi, double c4phi,
+			    double alpha1, double omega1,
+			    double *A_tmp, double *dA_tmp, double *d2A_tmp, double *omg_tmp, double *domg_tmp, double *d2omg_tmp);
 
 /* TEOBResumSDynamics.c */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *params);
@@ -952,6 +969,12 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
 void time_shift_FD(WaveformFD *hpc, double tc);
+void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+				       Dynamics *dyn, Waveform_lm *hlm, bool *bhns);
+void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+				       Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double alpha2, double Amrg);
+void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm);
 
 /* SpecialFuns.c */
 double fact(int n);

@@ -350,7 +350,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
 
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BNS;
-  //if(EOBPars->LambdaAl2 < 1. && EOBPars->LambdaBl2 > 1.) default_choice = DEFAULT_PARS_BHNS;
+  if(EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BHNS;
   EOBParameters_defaults (default_choice, EOBPars);  
 
   /* Read the dictionary in EOBPars */
