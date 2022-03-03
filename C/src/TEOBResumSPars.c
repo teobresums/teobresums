@@ -336,20 +336,20 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->nqc_coefs_flx = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
     eobp->nqc_coefs_hlm = NQC_HLM_NONE;
 
+  } else if (choose == BINARY_BHNS) {
+    eobp->binary=BINARY_BHNS;
+    eobp->centrifugal_radius = CENTRAD_NLO;
+    eobp->use_flm = USEFLM_HM;
+    eobp->nqc = NQC_AUTO; // {"no", "auto", "manual"}                                                                                                                                                                                         
+    eobp->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}                                                                                                                        
+    eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}                                                                                                                      
+
+    eobp->use_tidal = TIDES_TEOBRESUM;
+    eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;//TIDES_GM_PN;
+    eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+
   }
 
-  /*
-  else if (choose == BINARY_BHNS) {
-     
-    //Still to be decided & set I guess?
-    //Let's have a BH with m = 5 and a NS with m = 1.4
-    eobp->M = 6.4;
-    eobp->q = 3.6;
-    eobp->chi1 = 0.;
-    eobp->chi2 = 0.;
-    eobp->use_spins = 0;
-  }
-  */
 
   else errorexit("unknown default parameter choice.");
 
@@ -604,7 +604,7 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm_s    = &eob_wav_flm_s_HM;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_HM;
+    eob_wav_ringdown = &eob_wav_ringdown_HM; 
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
@@ -741,7 +741,9 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
   }
   if (eobp->LambdaAl2 > 1. && eobp->LambdaBl2 > 1.)
     eobp->binary = BINARY_BNS;
-  else 
+  else if (eobp->LambdaAl2 == 0. && eobp->LambdaBl2 > 1.)
+    eobp->binary = BINARY_BHNS;
+  else
     eobp->binary = BINARY_BBH;
   return eobp->binary;
 }
