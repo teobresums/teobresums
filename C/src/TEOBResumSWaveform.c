@@ -5944,6 +5944,7 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
 /** BHNS NQC **/
 
 // NQC model with double derivatives for BHNS, TEST
+// may be needed later when more NR data are available
 void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm, bool *bhns)
 {

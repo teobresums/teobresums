@@ -357,7 +357,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
-  if (EOBPars->compute_LR) {
+  if (EOBPars->compute_LR && !(use_tidal)) {
     //TODO: LR COMPUTATION IS CORRECT ONLY FOR NOSPIN. IMPLEMENT SPIN VERSION IN eob_dyn_adiabLSO()
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR)));
     if (check_status) {
@@ -381,6 +381,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** Compute the dressing factors for the f-mode resonances at r0 */
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model))
     fmode_resonance_dressing_factors(r0, dyn);  
+
+  /** Update function pointers if necessary for BHNS**/
+  update_params(EOBPars->binary);
 
   /* Iteration index */
   int iter   = 0;  
@@ -941,12 +944,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	      add to both merger and full waveform */
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
         /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
-        
-        if(EOBPars->binary==BINARY_BBH){ 
-          eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
-        }else{
-          eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
-        }
+  
+        eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
         
 
         strcat(hlm_mrg->name,"_nqc");
@@ -1022,11 +1021,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->size = size;
     
     /* Ringdown attachment */
-    if(EOBPars->binary==BINARY_BBH){
       eob_wav_ringdown(dyn, hlm);
-    }else{
-      eob_wav_ringdown_bhns(dyn, hlm);
-    }
     
   } /* End of BBH section */
 
