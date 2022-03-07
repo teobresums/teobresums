@@ -151,7 +151,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
       
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
-
+  
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
   
@@ -1045,7 +1045,7 @@ int eob_dyn_fLSO_s (const gsl_vector *x, void * params, gsl_vector *f) {
   const double C_Hex2 = EOBPars->C_Hex2;
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
-   
+  
   double A, B, dA, d2A, dB;
   eob_metric_s(r, dyn, &A, &B, &dA, &d2A, &dB);
    
