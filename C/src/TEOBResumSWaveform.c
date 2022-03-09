@@ -509,8 +509,8 @@ void eob_wav_hlmNewt_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double vphi9 = vphi*vphi8;
 
   /* Defining sigmoid function to switch off Newtonian factor near the end of the evolution */
-  double t0      = tOmg_pk - 100.;
-  double alpha   = 0.02;
+  double t0      = tOmg_pk - EOBPars->delta_t0_sigmoid_Newt;
+  double alpha   = EOBPars->alpha_sigmoid_Newt;
   double sigmoid = 1./(1. + exp(alpha*(t - t0)));
     
   /* Eccentric variables */  
@@ -2592,8 +2592,8 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
       double t0 = tNQC - 30.;
       double alpha = 0.09;
     */
-    double t0 = tNQC - 100.;
-    double alpha = 0.02;
+    double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+    double alpha = EOBPars->alpha_sigmoid_NQC;
     double *sigmoid;
     sigmoid = (double*) calloc (size, sizeof(double));
    
@@ -3053,8 +3053,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       double t0 = tNQC - 30.;
       double alpha = 0.09;
     */
-    double t0 = tNQC - 100.;
-    double alpha = 0.02;
+    double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+    double alpha =EOBPars->alpha_sigmoid_NQC;
     double *sigmoid;
     sigmoid = (double*) calloc (size, sizeof(double));
 
@@ -3181,8 +3181,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       double t0 = tNQC - 30.;
       double alpha = 0.09;
     */
-    double t0 = tNQC - 100.;
-    double alpha = 0.02;
+    double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+    double alpha =EOBPars->alpha_sigmoid_NQC;
     double *sigmoid;
     sigmoid = (double*) calloc (fullsize, sizeof(double));
     
@@ -3527,8 +3527,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       double t0 = tNQC - 30.;
       double alpha = 0.09;
     */
-    double t0 = tNQC - 100.;
-    double alpha = 0.02;
+    double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+    double alpha =EOBPars->alpha_sigmoid_NQC;
     double *sigmoid;
     sigmoid = (double*) calloc (size, sizeof(double));
 
@@ -3593,8 +3593,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       double t0 = tNQC - 30.;
       double alpha = 0.09;
     */
-    double t0 = tNQC - 100.;
-    double alpha = 0.02;
+    double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+    double alpha =EOBPars->alpha_sigmoid_NQC;
     double *sigmoid;
     sigmoid = (double*) calloc (fullsize, sizeof(double));
     

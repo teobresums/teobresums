@@ -92,7 +92,18 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "compute_ringdown") != NULL ) { 
     EOBPars->compute_ringdown = (int) PyLong_AsLong(PyDict_GetItemString(dict, "compute_ringdown"));
   }
-
+  if ( PyDict_GetItemString(dict, "alpha_sigmoid_Newt") != NULL ) { 
+    EOBPars->alpha_sigmoid_Newt = PyFloat_AsDouble(PyDict_GetItemString(dict, "alpha_sigmoid_Newt"));
+  }  
+  if ( PyDict_GetItemString(dict, "delta_t0_sigmoid_Newt") != NULL ) { 
+    EOBPars->delta_t0_sigmoid_Newt = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_t0_sigmoid_Newt"));
+  }
+  if ( PyDict_GetItemString(dict, "alpha_sigmoid_NQC") != NULL ) { 
+    EOBPars->alpha_sigmoid_NQC = PyFloat_AsDouble(PyDict_GetItemString(dict, "alpha_sigmoid_NQC"));
+  }  
+  if ( PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC") != NULL ) { 
+    EOBPars->delta_t0_sigmoid_NQC = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC"));
+  }
   /* Extrinsic */
   if ( PyDict_GetItemString(dict, "distance") != NULL ) {
     EOBPars->distance = PyFloat_AsDouble(PyDict_GetItemString(dict, "distance"));

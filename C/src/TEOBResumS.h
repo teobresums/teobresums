@@ -530,6 +530,11 @@ typedef struct tagEOBParameters
 
   int firstcall[NFIRSTCALL];
 
+  /* sigmoid parameters */
+  double delta_t0_sigmoid_NQC, alpha_sigmoid_NQC;  
+  double delta_t0_sigmoid_Newt, alpha_sigmoid_Newt;
+
+
   int domain; //Time or frequency domain
   double df;  //frequency interp df
   double tc;  //coalescence time
