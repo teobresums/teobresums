@@ -1,0 +1,53 @@
+image: atlassian/default-image:3
+
+pipelines:
+    branches:
+        '{master,feature/*}':
+            - step:
+                name: Build C & Run
+                script:
+                - apt-get update -y
+                - apt-get install -y libconfig-dev libgsl-dev
+                - cd C && make #build C
+                - ./TEOBResumS.x -p par/GW150914.par
+                - ./TEOBResumS.x -p par/GW170817.par
+                condition:
+                    changesets:
+                        includePaths:
+                        - "C/src/*"
+
+            - step:
+                name: Build EOBRunPy
+                script:
+                - apt-get update -y
+                - apt-get install -y libconfig-dev libgsl-dev python3-pip
+                - pip3 install --upgrade pip
+                - pip3 install numpy
+                - cd Python && python3 setup.py install
+                condition:
+                    changesets:
+                        includePaths:
+                        - "C/src/*"
+                        - "Python/TEOBResumSWrap.c"
+
+            - step:
+                name: Memory Check
+                trigger: manual
+                script:
+                - apt-get update -y
+                - apt-get install -y libconfig-dev libgsl-dev valgrind
+                - cd C && make
+                - valgrind ./TEOBResumS.x -p par/GW150914.par
+                
+            - step:
+                name: Run Benchmarks
+                trigger: manual
+                script:
+                - export HOME=$PWD
+                - apt-get update -y
+                - apt-get install -y libconfig-dev libgsl-dev python3-pip
+                - pip3 install --upgrade pip
+                - pip3 install numpy
+                - cd C && make #build C
+                - export TEOBRESUMS=$PWD
+                - cd $HOME/Utils/Benchmark && make
