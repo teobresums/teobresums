@@ -11,7 +11,7 @@ For detailed release notes of the most recent version see the
 [`CHANGES` file](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
 
 ### Latest version  
-[![C version](https://img.shields.io/badge/TEOBResumS-v3.0%20GIOTTO-green)](https://bitbucket.org/eob_ihes/teobresums/src/v3.0_GIOTTO/) Quasi-circular precessing and non-precessing models for BBH and BNS with higher modes, including EOB-SPA.
+[![C version](https://img.shields.io/badge/TEOBResumS-v3.0%20GIOTTO-green)](https://bitbucket.org/eob_ihes/teobresums/src/v3.0_GIOTTO/) Quasi-circular precessing and non-precessing models for BBH, BNS and BHNS with higher modes, including EOB-SPA.
 
 ## Authors 
 
