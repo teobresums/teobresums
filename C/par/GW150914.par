@@ -25,7 +25,7 @@ initial_frequency = 35. # in units of Hz
 #
 
 output_dir = "./GW150914/" # output dir
-output_hpc = "yes" # switch this off to test performances!!!
+output_hpc = "yes" # switch this off to test performances!!
 output_multipoles = "no" # output multipoles
 use_mode_lm = [ 1 ]
 output_lm = [ 1 ]
