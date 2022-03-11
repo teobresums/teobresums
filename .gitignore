@@ -34,3 +34,5 @@ src/stamp-h1
 *.o
 *.DS_Store
 ../.DS_Store
+Python/__pycache__
+Python/EOBRun_module.cpython-*.so
