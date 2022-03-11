@@ -20,6 +20,9 @@ opt/
 python/build/
 python/pyTEOBResumS.cpp
 python/pyTEOBResumS.so
+C/TEOBResumS.x
+Python/EOBRun_module*.so
+Python/build/
 src/.deps/
 src/.libs/
 src/Makefile

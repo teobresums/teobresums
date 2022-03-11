@@ -32,7 +32,7 @@ See the [`LICENSE` file](https://bitbucket.org/eob_ihes/teobresums/src/master/LI
 
 `TEOBResumS` can be built as an executable or a python module using [disutil](https://docs.python.org/3/library/distutils.html).
 
-To build the executable, check the compiler and compilation options in `C/Makefile` and then:
+To build the executable, check the compiler and compilation options in [`C/Makefile` file](https://bitbucket.org/eob_ihes/teobresums/src/master/C/Makefile) and then:
 
 ```
 $ cd /PATH/TO/teobresums/C/
