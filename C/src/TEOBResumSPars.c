@@ -658,7 +658,7 @@ void update_params(int binary)
     if(binary==BINARY_BBH){
       eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
       eob_wav_ringdown = &eob_wav_ringdown_HM; 
-    }else if(binary==BINARY_BHNS){
+    }else { // for BHNS cases I & III
       eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
       eob_wav_ringdown = &eob_wav_ringdown_bhns;
     }
