@@ -54,7 +54,7 @@ pars = {
     'use_mode_lm'        : k,      # List of modes to use/output through EOBRunPy
 
     # Output parameters
-    'arg_out'            : 1,      # Request multipoles and dynamics as output of the function call
+    'arg_out'            : 1,      # Request multipoles and dynamics as output of the function call. Default is 0. Allowed values: [0,1].
 }
 
 # Run the WF generator
