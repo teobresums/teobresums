@@ -97,3 +97,9 @@ If you want to start a new branch or development make sure to
  * Talk to us 
  * Run the benchmark *before* applying any change 
  * Run the benchmark *after* you applied your changes and before pushing them; compare and make sure you did not break anything.
+
+## Contact
+
+You can get in contact with TEOBResumS developers and fellow users through our mailing list. To subscribe please click on the badge below.
+
+[![Mailing List](https://img.shields.io/badge/mailing%20list-join-informational)](https://lserv.uni-jena.de/mailman/listinfo/teobresums)
