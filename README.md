@@ -100,4 +100,6 @@ If you want to start a new branch or development make sure to
 
 ## Contact
 
-You can reach us by sending an email to [teobresums@listserv.uni-jena.de](mailto:teobresums@listserv.uni-jena.de).
+You can get in contact with TEOBResumS developers and fellow users through our mailing list. To subscribe please click on the badge below.
+
+[![Mailing List](https://img.shields.io/badge/mailing%20list-join-informational)](https://lserv.uni-jena.de/mailman/listinfo/teobresums)
