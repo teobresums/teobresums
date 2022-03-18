@@ -97,3 +97,7 @@ If you want to start a new branch or development make sure to
  * Talk to us 
  * Run the benchmark *before* applying any change 
  * Run the benchmark *after* you applied your changes and before pushing them; compare and make sure you did not break anything.
+
+## Contact
+
+You can reach us by sending an email to [teobresums@listserv.uni-jena.de](mailto:teobresums@listserv.uni-jena.de).
