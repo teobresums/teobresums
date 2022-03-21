@@ -1,5 +1,9 @@
 # parfile for BBH (5,0.9,-0.4) from 10 Hz (M = 15*Msun)
 # builds on default options
+#
+# Note: the (l,m) = (3,1),(4,1) modes are inspiral only, and do not have a 
+# merger-ringdown completion. See 
+# https://bitbucket.org/eob_ihes/teobresums/wiki/Conventions,%20parameters%20and%20output
 
 #
 # use geometric units for I/O
