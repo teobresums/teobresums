@@ -767,6 +767,7 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
   clm[26][3] = (17.255875091408523 - 3.6042232277526396*el7)*PMTERMS_eps;
     
   /** rho_lm */
+  /*
   const double x2  = x*x;
   const double x3  = x*x2;
   const double x4  = x*x3;
@@ -774,7 +775,7 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
   const double xn[] = {1.,x,x2,x3,x4,x5};
 
   for (int k=0; k<KMAX; k++) {
-    /* Note: the two sums give different result */
+    // Note: the two sums give different result
 #if (1)
     rholm[k] = clm[k][0];
     for (int n=1; n<6; n++) {
@@ -787,6 +788,10 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
     } 
     rholm[k] += clm[k][0]; 
 #endif
+  }
+  */
+  for (int k=0; k<KMAX; k++) {
+    rholm[k] = Taylorseries(x,clm[k],6);
   }
 
   /** Amplitudes */
