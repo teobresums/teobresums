@@ -93,8 +93,8 @@ def teobresums_pars_update(par, domain):
         'domain' : domain, # 0 = TD, 1 = FD 
         'M' : m1+m2,
         'q' : q,
-        'Lambda1' : lambda1,
-        'Lambda2' : lambda2,     
+        'LambdaAl2' : lambda1,
+        'LambdaBl2' : lambda2,     
         'chi1' : spin1z,
         'chi2' : spin2z,
         #
