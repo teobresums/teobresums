@@ -93,6 +93,32 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->ringdown_extend_array = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ringdown_extend_array"));
   }
 
+  /* Adiabatic tidal ell>2 parameters */
+  if ( PyDict_GetItemString(dict, "LambdaAl3") != NULL )
+    EOBPars->LambdaAl3 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl3"));
+  if ( PyDict_GetItemString(dict, "LambdaBl3") != NULL )
+    EOBPars->LambdaBl3 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl3"));
+  if ( PyDict_GetItemString(dict, "LambdaAl4") != NULL )
+    EOBPars->LambdaAl4 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl4"));
+  if ( PyDict_GetItemString(dict, "LambdaBl4") != NULL )
+    EOBPars->LambdaBl4 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl4"));
+  if ( PyDict_GetItemString(dict, "LambdaAl5") != NULL )
+    EOBPars->LambdaAl5 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl5"));
+  if ( PyDict_GetItemString(dict, "LambdaBl5") != NULL )
+    EOBPars->LambdaBl5 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl5"));
+  if ( PyDict_GetItemString(dict, "LambdaAl6") != NULL )
+    EOBPars->LambdaAl6 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl6"));
+  if ( PyDict_GetItemString(dict, "LambdaBl6") != NULL )
+    EOBPars->LambdaBl6 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl6"));
+  if ( PyDict_GetItemString(dict, "LambdaAl7") != NULL )
+    EOBPars->LambdaAl7 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl7"));
+  if ( PyDict_GetItemString(dict, "LambdaBl7") != NULL )
+    EOBPars->LambdaBl7 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl7"));
+  if ( PyDict_GetItemString(dict, "LambdaAl8") != NULL )
+    EOBPars->LambdaAl8 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl8"));
+  if ( PyDict_GetItemString(dict, "LambdaBl8") != NULL )
+    EOBPars->LambdaBl8 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl8"));
+
   /* Extrinsic */
   if ( PyDict_GetItemString(dict, "distance") != NULL ) {
     EOBPars->distance = PyFloat_AsDouble(PyDict_GetItemString(dict, "distance"));
@@ -348,6 +374,13 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl2"));
   if ( PyDict_GetItemString(dict, "LambdaBl2") != NULL )
     EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl2"));
+  
+  /* Add a warning for users */
+  if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
+    errorexit("ERROR: 'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
+  if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
+    errorexit("ERROR: 'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
+  
 
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BNS;
   if(EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BHNS;
@@ -412,7 +445,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
   }
 
-  /* Run */
   eob_set_params(default_choice, fc);
 
   /* Overwrite spin-spin parameters, if required */
@@ -435,6 +467,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
   }
 
+  /* Run */
   int status = EOBRun(&hpc,    &hfpc, 
                       &hmodes, &hfmodes, &dynf,
                       &hTmodes, &hTmmodes,
