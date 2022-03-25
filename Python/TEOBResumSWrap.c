@@ -447,7 +447,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   /* return modes? */
   int arg_out = 0; 
   if ( PyDict_GetItemString(dict, "arg_out") != NULL ) { 
-    arg_out = (int) PyLong_AsLong(PyDict_GetItemString(dict, "arg_out"));
+    arg_out = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "arg_out")));
   }
   
   /* build the dynamics dictionary */
@@ -551,7 +551,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     } else if (arg_out == 1){
       ret = Py_BuildValue("OOOOO", pto, phpo, phco, hlmdict, dyndict);
     } else {
-      printf("ERROR: arg_out has to be equal to 0 or 1");
+      printf("ERROR: arg_out has to be equal to 'yes' or 'no' ");
       ret = NULL;
     }
     /* Free C memory */
@@ -668,7 +668,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     } else if (arg_out == 1){
       ret = Py_BuildValue("OOOOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict, htlmdict, dyndict);
     } else {
-      printf("ERROR: arg_out has to be equal to 0 or 1");
+      printf("ERROR: arg_out has to be equal to 'yes' or 'no'");
       ret = NULL;
     }
 

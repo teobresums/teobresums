@@ -28,7 +28,8 @@ iota = 150./360.*np.pi # radiants
 # Use 22 mode only
 k = modes_to_k([[2,2]])
 
-TEOBResumS_domain = {'TD':0, 'FD':1}
+TEOBResumS_domain = {'TD':0,  'FD':1}
+YESNO2INT         = {'yes':1, 'no':0}
 domain = 'TD'
 seglen = 8.0 #s
 
@@ -54,11 +55,11 @@ pars = {
     'use_mode_lm'        : k,      # List of modes to use/output through EOBRunPy
 
     # Output parameters
-    'arg_out'            : 1,      # Request multipoles and dynamics as output of the function call. Default is 0. Allowed values: [0,1].
+    'arg_out'            : "yes",      # Request multipoles and dynamics as output of the function call. Default is "no". Allowed values: ["no","yes"].
 }
 
 # Run the WF generator
-if pars['arg_out']:
+if YESNO2INT[pars['arg_out']]:
     t, hp, hc, hlm, dyn = EOBRun_module.EOBRunPy(pars)
 else:
     t, hp, hc           = EOBRun_module.EOBRunPy(pars)
@@ -77,7 +78,7 @@ plt.xlabel(r'$t-t_{\rm mrg}$ $[s]$')
 plt.legend()
 plt.savefig('h_TD.png')
 
-if pars['arg_out']:
+if YESNO2INT[pars['arg_out']]:
 
     # t/M, geometric units
     t *= 1./((M1+M2)*GMo) 
@@ -104,7 +105,7 @@ if pars['arg_out']:
 pars['domain'] = TEOBResumS_domain['FD']
 pars['df']     = 1.0/seglen
 
-if pars['arg_out']:
+if YESNO2INT[pars['arg_out']]:
     f, hp_re, hp_im, hc_re, hc_im, hflm, htlm, dyn = EOBRun_module.EOBRunPy(pars)
 else:
     f, hp_re, hp_im, hc_re, hc_im                  = EOBRun_module.EOBRunPy(pars)
