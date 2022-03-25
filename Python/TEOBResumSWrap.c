@@ -377,9 +377,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   
   /* Add a warning for users */
   if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
-    errorexit("ERROR: 'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
+    errorexit("'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
   if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
-    errorexit("ERROR: 'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
+    errorexit("'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
   
 
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BNS;
