@@ -344,10 +344,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   /* alloc EOBPars and set defaults based on Lambdas */
   EOBParameters_alloc ( &EOBPars ); 
 
-  if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
-    EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
-  if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
-    EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+  if ( PyDict_GetItemString(dict, "LambdaAl2") != NULL )
+    EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl2"));
+  if ( PyDict_GetItemString(dict, "LambdaBl2") != NULL )
+    EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl2"));
 
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BNS;
   if(EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BHNS;
@@ -360,10 +360,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   EOBPars->q = PyFloat_AsDouble(PyDict_GetItemString(dict, "q"));
 
   /* Tides*/
-  if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
-    EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda1"));
-  if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
-    EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "Lambda2"));
+  if ( PyDict_GetItemString(dict, "LambdaAl2") != NULL )
+    EOBPars->LambdaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl2"));
+  if ( PyDict_GetItemString(dict, "LambdaBl2") != NULL )
+    EOBPars->LambdaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl2"));
   
   /* Spins*/
   if (PyDict_GetItemString(dict, "chi1x") != NULL )
