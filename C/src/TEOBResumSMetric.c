@@ -82,12 +82,12 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
   
   /* Numerator and denominator of the Pade */
   double Num = 1 + N1*u;
-  double Den = 1 + D1*u + D2*u2 + D3*u3 + D4*u4 + D5*u5;
+  double Den = 1 + u*(D1 + u*(D2 + u*(D3 + u*(D4 + D5*u))));
   *A = Num/Den;
     
   /* First derivative */
   double dNum  = dN1*u + N1;
-  double dDen  = D1 + u*(dD1 + 2*D2) + u2*(dD2 + 3*D3) + u3*(dD3 + 4*D4) + u4*(dD4 + 5*D5) + dD5*u5;
+  double dDen  = D1 + u*((dD1 + 2*D2) + u*((dD2 + 3*D3) + u*((dD3 + 4*D4) + u*((dD4 + 5*D5) + dD5*u))));
   
   /* Derivative of A function with respect to u */
   double prefactor = (*A)/(Num*Den);
@@ -110,7 +110,7 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
     
     /* Second derivative of numerator and denominator */
     double d2Num = 2.*dN1 + d2N1*u;
-    double d2Den = 2.*(D2 + dD1) + u*(6.*D3 + 4.*dD2 + d2D1) + u2*(12.*D4 + 6.*dD3 + d2D2) + u3*(20.*D5 + 8.*dD4 + d2D3) + u4*(10.*dD5 + d2D4) + u5*d2D5;
+    double d2Den = 2.*(D2 + dD1) + u*((6.*D3 + 4.*dD2 + d2D1) + u*((12.*D4 + 6.*dD3 + d2D2) + u*((20.*D5 + 8.*dD4 + d2D3) + u*((10.*dD5 + d2D4) + u*d2D5))));
     
     /* Second derivative with respect of u */
     double d2A_u = prefactor*(2.*dDen*dDen*(*A) - 2.*dNum*dDen + Den*d2Num - d2Den*Num);
@@ -231,10 +231,10 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     const double cB21 = 2.5*XB;
     const double cA22 = (3.+XA/8.+ 337./28.*XA*XA);
     const double cB22 = (3.+XB/8.+ 337./28.*XB*XB);
-    const double cA31 = (-2.+15./2.*XA);
-    const double cB31 = (-2.+15./2.*XB);
-    const double cA32 = (8./3.-311./24.*XA+110./3.*XA*XA);
-    const double cB32 = (8./3.-311./24.*XB+110./3.*XB*XB);
+    const double cA31 = (-2.+7.5*XA);
+    const double cB31 = (-2.+7.5*XB);
+    const double cA32 = (2.6666666666666667 - 12.958333333333333*XA + 36.666666666666667*XA*XA);
+    const double cB32 = (2.6666666666666667 - 12.958333333333333*XB + 36.666666666666667*XB*XB);
     
     bar_alph2_1 = bar_alph( cA21, kapA2, cB21, kapB2, kapT2 );
     bar_alph2_2 = bar_alph( cA22, kapA2, cB22, kapB2, kapT2 );
@@ -267,17 +267,17 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   double u5   = u4*u;
   double u6   = u5*u;
   double u7   = u6*u;
-  double u10  = u5*u5;
-  double u12  = u6*u6;
-  double u14  = u7*u7;
-  double u16  = u10*u6;
-  double u18  = u12*u6;
-  double u8   = u5*u3;
+  double u8   = u7*u;
   double u9   = u8*u;
+  double u10  = u9*u;
   double u11  = u10*u;
+  double u12  = u11*u;
   double u13  = u12*u;
+  double u14  = u13*u;
   double u15  = u14*u;
+  double u16  = u15*u;
   double u17  = u16*u;
+  double u18  = u17*u;
   double logu = log(u);
   double oom3u  = 1./(1.-rLR*u);
 
@@ -404,23 +404,23 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     const double n1  =  0.8400636422; 
     const double d2  =  17.7324036;	
 
-    double Acub   = 5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
-    double dAcub  = 5./2.*     (1. -2*(c1+c2)*u + 3*c1*c2*u2);
+    double Acub   = 2.5* u * (1. -  (c1+c2)*u +   c1*c2*u2);
+    double dAcub  = 2.5*     (1. -2*(c1+c2)*u + 3*c1*c2*u2);
     double d2Acub = 5    *     (   -  (c1+c2)   + 3*c1*c2*u);
     double Den    = 1./(1. + d2*u2);
     double f23    = (1. + n1*u)*Den;
     double df23   = (n1 - 2*d2*u - n1*d2*u2)*(Den*Den);
     double A1SF   = Acub*f23;
     double dA1SF  = dAcub*f23 + Acub*df23;
-    double A2SF   = 337./28.*u2;
-    double dA2SF  = 674./28.*u;
+    double A2SF   = 12.03571428571428*u2;
+    double dA2SF  = 24.07142857142857*u;
     
     double f0     = 1 + 3*u2*oom3u;
-    double f1     = A1SF *pow(oom3u,7./2.);
+    double f1     = A1SF *pow(oom3u,3.5);
     double f2     = A2SF *pow(oom3u,p); 
     
-    double df0    = 3*u*(2.-rLR*u)*(oom3u*oom3u);
-    double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
+    double df0    = 3.*u*(2.-rLR*u)*(oom3u*oom3u);
+    double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,4.5);
     double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
 
     /** Gravito-electric tides for el = 2, 4; el = 3 added below as a GSF series */
@@ -456,8 +456,15 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     /* 1SF -- el = 3+, i.e.,  even parity terms */
     double Denom3    = 1./(1. + C5*u2);
     double A3tilde   = 7.5*u*( 1 + C1*u + C2*u2 + C3*u3 )*( 1 + C4*u + C6*u2 )*Denom3;
-    double dA3tilde  = 7.5*( 1 + 3*C2*u2 + 3*C6*u2 + 4*C3*u3 + 5*C2*C6*u4 + 6*C3*C6*u5 + C1*u*(2 + 3*C4*u + 4*C6*u2) + C4*u*(2 + 4*C2*u2 + 5*C3*u3) )*Denom3 + ( -15.*C5*u2*(1. + C4*u + C6*u2)*(1. + C1*u + C2*u2 + C3*u3) )*Denom3*Denom3;
-    double d2A3tilde = 15.*( C1*(1 + 3*C4*u - 3*C5*pow(u,2) + 6*C6*pow(u,2) - C4*C5*pow(u,3) + 3*C5*C6*pow(u,4) + pow(C5,2)*C6*pow(u,6)) + C4*(1 - 3*C5*pow(u,2) + 10*C3*pow(u,3) +  9*C3*C5*pow(u,5) + 3*C3*pow(C5,2)*pow(u,7) +  C2*pow(u,2)*(6 + 3*C5*pow(u,2) + pow(C5,2)*pow(u,4))) + u*(3*(C6 + 2*C3*u + 5*C3*C6*pow(u,3)) + C5*(-3 - C6*pow(u,2) + 3*C3*pow(u,3) +17*C3*C6*pow(u,5)) + pow(C5,2)*(pow(u,2) + C3*pow(u,5) + 6*C3*C6*pow(u,7)) + C2*(3 + 10*C6*pow(u,2) + 3*pow(C5,2)*C6*pow(u,6) + C5*pow(u,2)*(-1 + 9*C6*pow(u,2)))) )*Denom3*Denom3*Denom3;
+    /* double dA3tilde  = 7.5*( 1 + 3*C2*u2 + 3*C6*u2 + 4*C3*u3 + 5*C2*C6*u4 + 6*C3*C6*u5 + C1*u*(2 + 3*C4*u + 4*C6*u2) + C4*u*(2 + 4*C2*u2 + 5*C3*u3) )*Denom3 + ( -15.*C5*u2*(1. + C4*u + C6*u2)*(1. + C1*u + C2*u2 + C3*u3) )*Denom3*Denom3; */
+    double dA3tilde = Denom3*(7.5 + u*((15.*C1 + 15.*C4) + u*((22.5*C2 + 22.5*C1*C4 + 22.5*C6) + u*((30.*C3 + 30.*C2*C4 + 30.*C1*C6) + u*((37.5*C3*C4 + 37.5*C2*C6) + 45.*C3*C6*u))))
+			     + Denom3*u2*C5*(-15. + u*((-15.*C1 - 15.*C4) + u*((-15.*C2 - 15.*C1*C4 - 15.*C6) + u*((-15.*C3 - 15.*C2*C4 - 15.*C1*C6) + u*((-15.*C3*C4 - 15.*C2*C6) - 15.*C3*C6*u))))));
+    /* double d2A3tilde = 15.*( C1*(1 + 3*C4*u - 3*C5*pow(u,2) + 6*C6*pow(u,2) - C4*C5*pow(u,3) + 3*C5*C6*pow(u,4) + pow(C5,2)*C6*pow(u,6)) + C4*(1 - 3*C5*pow(u,2) + 10*C3*pow(u,3) +  9*C3*C5*pow(u,5) + 3*C3*pow(C5,2)*pow(u,7) +  C2*pow(u,2)*(6 + 3*C5*pow(u,2) + pow(C5,2)*pow(u,4))) + u*(3*(C6 + 2*C3*u + 5*C3*C6*pow(u,3)) + C5*(-3 - C6*pow(u,2) + 3*C3*pow(u,3) +17*C3*C6*pow(u,5)) + pow(C5,2)*(pow(u,2) + C3*pow(u,5) + 6*C3*C6*pow(u,7)) + C2*(3 + 10*C6*pow(u,2) + 3*pow(C5,2)*C6*pow(u,6) + C5*pow(u,2)*(-1 + 9*C6*pow(u,2)))) )*Denom3*Denom3*Denom3; */
+    double d2A3tilde = Denom3*(15.*C1 + 15.*C4 + u*((45.*C2 + 45.*C1*C4 + 45.*C6) + u*((90.*C3 + 90.*C2*C4 + 90.*C1*C6) + u*((150.*C3*C4 + 150.*C2*C6) + 225.*C3*C6*u)))
+			       + Denom3*C5*u*(-45. + u*((-75.*C1 - 75.*C4) + u*((-105.*C2 - 105.*C1*C4 - 105.*C6) + u*(-135.*C3 - 135.*C2*C4 - 135.*C1*C6) + u*((-165.*C3*C4 - 165.*C2*C6) - 195.*C3*C6*u))) +
+					   Denom3*u3*C5*C5*(60. + u*((60.*C1 + 60.*C4) + u*((60.*C2 + 60.*C1*C4 + 60.*C6) + u*((60.*C3 + 60.*C2*C4 + 60.*C1*C6) + 
+																		 u*((60.*C3*C4 + 60.*C2*C6) + 60.*C3*C6*u)))))));
+    
     double A3hat1GSFfit = A3tilde*pow(oom3u, 3.5);
     double dA3hat1GSFfit = 3.5*rLR*A3tilde*pow(oom3u, 4.5) + dA3tilde*pow(oom3u, 3.5);
     double d2A3hat1GSFfit = 15.75*rLR*rLR*A3tilde*pow(oom3u, 5.5) + 7.0*rLR*dA3tilde*pow(oom3u, 4.5) + d2A3tilde*pow(oom3u, 3.5);
@@ -539,8 +546,8 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     /* 1SF -- el = 2 gravitomagnetic terms */
     double Denomj = 1./(1. + d2j*u2);
     double Ahat1GSFfitj = elsix*u*(1. - a1j*u)*(1. - a2j*u)*(1. + n1j*u)*Denomj*pow(oom3u, 3.5);
-    double dAhat1GSFfitj = 0.5*elsix * Denomj * Denomj * (2 + 4*n1j*u + 5*rLR*u - 2*d2j*pow(u,2) + 3*n1j*rLR*pow(u,2) + 9*d2j*rLR*pow(u,3) + 7*d2j*n1j*rLR*pow(u,4) -    a2j*u*(4 + rLR*u*(3 + 7*d2j*pow(u,2)) + n1j*u*(6 + 2*d2j*pow(u,2) + rLR*(u + 5*d2j*pow(u,3)))) + a1j*u*(-4 - 3*rLR*u - 7*d2j*rLR*pow(u,3) - n1j*u*(6 + rLR*u + 2*d2j*pow(u,2) + 5*d2j*rLR*pow(u,3)) + a2j*u*(6 + rLR*u + 2*d2j*pow(u,2) + 5*d2j*rLR*pow(u,3) + n1j*u*(8 - rLR*u + 4*d2j*pow(u,2) + 3*d2j*rLR*pow(u,3)))) ) * pow(oom3u, 4.5);
-    double d2Ahat1GSFfitj = 0.25*elsix * Denomj * Denomj * Denomj * ( 8*(1 + n1j*u)*pow(-1 + rLR*u,2)*pow(1 + d2j*pow(u,2),2)*(-a2j + a1j*(-1 + 3*a2j*u)) +    4*(1 - rLR*u)*(1 + d2j*pow(u,2))*(1 - 2*a2j*u + a1j*u*(-2 + 3*a2j*u))*(-4*d2j*u + rLR*(7 + 11*d2j*pow(u,2)) + n1j*(2 - 2*d2j*pow(u,2) + rLR*u*(5 + 9*d2j*pow(u,2)))) + u*(-1 + a1j*u)*(-1 + a2j*u)*(7*rLR*(9*rLR + n1j*(4 + 5*rLR*u)) + 2*d2j*(-4 - 20*rLR*u + 87*pow(rLR,2)*pow(u,2) +3*n1j*u*(-4 + 8*rLR*u + 17*pow(rLR,2)*pow(u,2))) + pow(d2j,2)*pow(u,2)*(24 - 104*rLR*u + 143*pow(rLR,2)*pow(u,2) + n1j*u*(8 - 44*rLR*u + 99*pow(rLR,2)*pow(u,2)))) ) * pow(oom3u, 5.5); 
+    double dAhat1GSFfitj = 0.5*elsix * Denomj * Denomj * (2 + 4*n1j*u + 5*rLR*u - 2*d2j*u2 + 3*n1j*rLR*u2 + 9*d2j*rLR*u3 + 7*d2j*n1j*rLR*u4 -    a2j*u*(4 + rLR*u*(3 + 7*d2j*u2) + n1j*u*(6 + 2*d2j*u2 + rLR*(u + 5*d2j*u3))) + a1j*u*(-4 - 3*rLR*u - 7*d2j*rLR*u3 - n1j*u*(6 + rLR*u + 2*d2j*u2 + 5*d2j*rLR*u3) + a2j*u*(6 + rLR*u + 2*d2j*u2 + 5*d2j*rLR*u3 + n1j*u*(8 - rLR*u + 4*d2j*u2 + 3*d2j*rLR*u3))) ) * pow(oom3u, 4.5);
+    double d2Ahat1GSFfitj = 0.25*elsix * Denomj * Denomj * Denomj * ( 8*(1 + n1j*u)*(-1 + rLR*u)*(-1 + rLR*u)*(1 + d2j*u2)*(1 + d2j*u2)*(-a2j + a1j*(-1 + 3*a2j*u)) +    4*(1 - rLR*u)*(1 + d2j*u2)*(1 - 2*a2j*u + a1j*u*(-2 + 3*a2j*u))*(-4*d2j*u + rLR*(7 + 11*d2j*u2) + n1j*(2 - 2*d2j*u2 + rLR*u*(5 + 9*d2j*u2))) + u*(-1 + a1j*u)*(-1 + a2j*u)*(7*rLR*(9*rLR + n1j*(4 + 5*rLR*u)) + 2*d2j*(-4 - 20*rLR*u + 87*rLR*rLR*u2 +3*n1j*u*(-4 + 8*rLR*u + 17*rLR*rLR*u2)) + d2j*d2j*u2*(24 - 104*rLR*u + 143*rLR*rLR*u2 + n1j*u*(8 - 44*rLR*u + 99*rLR*rLR*u2))) ) * pow(oom3u, 5.5); 
     
     /* 2SF -- el = 2 gravitomagnetic terms */
     double Ahat2GSFj    =  u*pow(oom3u,p);

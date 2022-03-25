@@ -71,8 +71,8 @@ void eob_wav_hlmNewt_v1(double r,
 			Waveform_lm_t *hlmNewt)
 {
   /** Shorthands */
-  double nu2   = nu*nu;
-  double nu3   = nu*nu2;
+  /* double nu2   = nu*nu; */
+  /* double nu3   = nu*nu2; */
   
   double vphi  = r*Omega;
   double vphi2 = vphi*vphi;
@@ -88,11 +88,11 @@ void eob_wav_hlmNewt_v1(double r,
   const double p1 = 1.;
   const double p2 = sqrt(1.-4.*nu); 
   const double p3 = (3.*nu-1.);
-  const double p4 = (2.*nu-1.)*sqrt(1.-4.*nu);
-  const double p5 = 1.-5.*nu+5.*nu2;
-  const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
-  const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
-  const double p8 = (4.*nu3 - 10.*nu2 + 6.*nu -1.)*sqrt(1.-4.*nu);
+  const double p4 = (2.*nu-1.)*p2;
+  const double p5 = 1.+ nu*(-5.+5.*nu);
+  const double p6 = (1. + nu*(-4. + nu*3.))*p2;
+  const double p7 = ((7.*nu - 14.)*nu + 7.)*nu -1.;
+  const double p8 = (((4.*nu - 10.)*nu + 6.)*nu -1.)*p2;
     
   const double phix2 = 2. * phi;
   const double phix3 = 3. * phi;
@@ -148,8 +148,8 @@ void eob_wav_hlmNewt_HM(double r,
 			Waveform_lm_t *hlmNewt)
 {
   /** Shorthands */
-  double nu2   = nu*nu;
-  double nu3   = nu*nu2;
+  /* double nu2   = nu*nu; */
+  /* double nu3   = nu*nu2; */
 
   double vOmg  = pow(fabs(Omega),1./3.);
   double vOmg2 = vOmg*vOmg;
@@ -168,14 +168,15 @@ void eob_wav_hlmNewt_HM(double r,
   double vphi9 = vphi*vphi8;
 
   /** Polynomials in nu */
+  const double sqrt1m4nu = sqrt(1.-4.*nu);
   const double p1 = 1.;
   const double p2 = 1.;//sqrt(1.-4.*nu); 
   const double p3 = (3.*nu-1.);
   const double p4 = (2.*nu-1.);//*sqrt(1.-4.*nu);
-  const double p5 = 1.-5.*nu+5.*nu2;
-  const double p6 = (1.-4.*nu+3.*nu2)*sqrt(1.-4.*nu);
-  const double p7 = 7.*nu3 - 14.*nu2 + 7.*nu -1.;
-  const double p8 = (4.*nu3 - 10.*nu2 + 6.*nu -1.)*sqrt(1.-4.*nu);
+  const double p5 = 1.+nu*(-5. + nu*5);
+  const double p6 = (1.+nu*(-4.+ nu*3))*sqrt1m4nu;
+  const double p7 = ((7.*nu - 14.)*nu + 7.)*nu -1.;
+  const double p8 = (((4.*nu - 10.)*nu + 6.)*nu -1. )*sqrt1m4nu;
     
   const double phix2 = 2. * phi;
   const double phix3 = 3. * phi;
@@ -286,13 +287,13 @@ void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
 /** Alternative implementation of the phase of the tail factor */
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
 {
-  double x;
-  double x2;
-  double x3;
-  double x4;
-  double x5;
-  double tlm_ang;
-  double num_ang;
+  /* double x; */
+  /* double x2; */
+  /* double x3; */
+  /* double x4; */
+  /* double x5; */
+  /* double tlm_ang; */
+  /* double num_ang; */
   
   /** Fit coefficients*/
   const double b1[] = {
@@ -320,16 +321,16 @@ void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
 			2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997, 2.015641477955609997,
 			2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997, 2.140641477955609997};
   
-  double k;
   for (int i=0; i<KMAX; i++) {
-    k  = MINDEX[i] * Omega;
-    x  = k * Hreal; /* hathatk */
-    x2 = x * x;
-    x3 = x2 * x;
-    x4 = x3 * x;
-    x5 = x4 * x;      
-    num_ang   = 1. + b1[i]*x2 + b2[i]*x3 + b3[i]*x4 + b4[i]*x5; 
-    tlm_ang   = (- 2. * psi[i] * x * num_ang) + 2.*x* log(2. * k * bphys);
+    double k  = MINDEX[i] * Omega;
+    double x  = k * Hreal; /* hathatk */
+    double x2 = x * x;
+    /* x3 = x2 * x; */
+    /* x4 = x3 * x; */
+    /* x5 = x4 * x;       */
+    /* num_ang   = 1. + b1[i]*x2 + b2[i]*x3 + b3[i]*x4 + b4[i]*x5;  */
+    double num_ang   = 1. + x2*(b1[i] + x*(b2[i] + x*(b3[i] + x*b4[i])));
+    double tlm_ang   = (- 2. * psi[i] * x * num_ang) + 2.*x* log(2. * k * bphys);
     tlm->ampli[i] = Tlm_real[i];
     tlm->phase[i] = tlm_ang;
   }
@@ -376,8 +377,8 @@ void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm)
   den        = 5992.*Pi*sqrt_y + 2456.*nu*(28.+493.*nu* y);
   dlm[0] = delta21LO*num/den;
   /* Pade(2,2) approximant */
-  num        = (808920.*nu*Pi*sqrt(y) + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
-  den        = (808920.*nu*Pi*sqrt(y) + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
+  num        = (808920.*nu*Pi*sqrt_y + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
+  den        = (808920.*nu*Pi*sqrt_y + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
   dlm[1] = delta22LO*num/den;
   
   /* l=3 */
@@ -417,14 +418,14 @@ void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm)
   double y32    = Hreal*Omega;
   
   /** Leading order contributions*/
-  double delta22LO = 7./3.   * y32;
-  double delta21LO = 2./3.   * y32;
-  double delta33LO = 13./10. * y32;
-  double delta32LO = (10. + 33.*nu)/(15.*(1. - 3.*nu))*y32;        
-  double delta31LO = 13./30. * y32;
-  double delta42LO = 7.*(1. + 6.*nu)/(15.*(1. - 3.*nu))*y32;
-  double delta43LO = (486. + 4961.*nu)/(810.*(1. - 2.*nu))*y32;
-  double delta44LO = (112. + 219.*nu)/(120.*(1. - 3.*nu))*y32;
+  double delta22LO = 2.333333333333333 * y32;
+  double delta21LO = 0.6666666666666667 * y32;
+  double delta33LO = 1.3 * y32;
+  double delta32LO = (0.6666666666666667 + 2.2*nu)/(1. - 3.*nu)*y32;        
+  double delta31LO = 0.4333333333333333 * y32;
+  double delta42LO = 0.4666666666666667*(1. + 6.*nu)/(1. - 3.*nu)*y32;
+  double delta43LO = (0.6 + 6.12469135802469*nu)/(1. - 2.*nu)*y32;
+  double delta44LO = (0.9333333333333333 + 1.825*nu)/(1. - 3.*nu)*y32;
 	  
   /** Init phase */
 #pragma omp simd
@@ -438,12 +439,12 @@ void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm)
 
   /* l=2 */
   /* Pade(2,1) approximant */
-  num        = 856*Pi*sqrt_y + 2625*nu*(4.-75.*nu*y);
-  den        = 856*Pi*sqrt_y + 10500*nu;
+  num        = 856.*Pi*sqrt_y + 2625.*nu*(4.-75.*nu*y);
+  den        = 856.*Pi*sqrt_y + 10500.*nu;
   dlm[0] = delta21LO*num/den;
   /* Pade(2,2) approximant */
-  num        = (808920.*nu*Pi*sqrt(y) + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
-  den        = (808920.*nu*Pi*sqrt(y) + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
+  num        = (808920.*nu*Pi*sqrt_y + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
+  den        = (808920.*nu*Pi*sqrt_y + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. + 40404.*nu)*y));
   dlm[1] = delta22LO*num/den;
 	  
   /* l=3 */
@@ -452,36 +453,36 @@ void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm)
   den        = num + 18207.*nu2*y;
   dlm[2] = delta31LO*num/den;
   /* Pade(0,2) approximant */
-  den   = 1. + (260./7.)/(10. + 33.*nu)*(-1. + 3.*nu)*Pi*y32
-    +(8./1323.)/SQ((10. + 33.*nu))*(558110. + 167433.*nu -5525289.*nu2
-				    +146250.*Pi2 - 1393470.*nu*Pi2 + 2864160.*nu2*Pi2)*y3;
-  dlm[3] = delta32LO/den; 
+  den   = 1. + 37.14285714285714/(10. + 33.*nu)*(-1. + 3.*nu)*Pi*y32
+    +(3374.81481481481 + 1012.444444444444*nu -33410.666666666667*nu2
+				    +884.353741496598*Pi2 -8426.12244897959*nu*Pi2 +17319.1836734693*nu2*Pi2)/SQ((10. + 33.*nu))*y3;
+  dlm[3] = delta32LO/den;
   /* Pade(1,2) approximant */
-  num        = 1.  + 94770.*Pi/(566279.*nu)*sqrt_y;
-  den        = num + 80897.* nu/3159.*y;
-	
-	
+  num        = 1.  + 0.1673556674360165*Pi/nu*sqrt_y;
+  den        = num + 25.60842038619816* nu*y;
   dlm[4] = delta33LO*num/den;
 	  
   /* l=4 */
-  dlm[5] =   (2.+507.*nu)/(10.*(1.-2.*nu))*y32   + 1571./3465.*Pi*y3;
+  dlm[5] =   (0.2+50.7*nu)/(1.-2.*nu)*y32   + 0.453391053391053*Pi*y3;
   /* Pade(0,2) approximant */
-  den = 1. + (6284./1617.)*(-1. + 3.*nu)/(1. + 6.*nu)*Pi*y32 +
-    1./21789075.*(-1. + 3.*nu)/SQ(1. + 6.*nu)*
-    (-858240537. -5149443222.*nu - 216169600.*Pi2 + 1664631600.*nu*Pi2)*y3;
+  den = 1. + 3.886209029066171*(-1. + 3.*nu)/(1. + 6.*nu)*Pi*y32 +
+    (-1. + 3.*nu)/SQ(1. + 6.*nu)*
+    (-39.3885714285714 - 236.3314285714285*nu - 9.92100857884054*Pi2 + 76.397534085315*nu*Pi2)*y3;
   dlm[6] =  delta42LO/den;
   /* Pade(0,2) approximant */
-  den = 1. + 254502./77./(486. + 4961.*nu)*(-1. + 2.*nu)*Pi*y32
-    + 27./59290./SQ(486. + 4961.*nu)*(53627484834. + 440164685191.*nu - 1094839309718.*nu2 + 16934563080.*Pi2 -153861917640.*nu*Pi2 + 239985582960.*nu2*Pi2)*y3;
+  den = 1. + 3305.22077922077/(486. + 4961.*nu)*(-1. + 2.*nu)*Pi*y32
+    + (24421354.2 + 200446053.3*nu - 498577523.40000004*nu2 + 
+ 7711809.8019902175*Pi2 - 70066988.97419463*nu *Pi2 + 
+ 109286738.7404284*nu2*Pi2)/SQ(486. + 4961.*nu)*y3;
   dlm[7] =  delta43LO/den;
   /* Pade(0,2) approximant */
-  den = 1. + 201088./231.*(-1. + 3.*nu)/(112. + 219.*nu)*Pi*y32
-    + 64./444675.*(-1. + 3.*nu)/SQ(112. + 219.*nu)*
-    (-13731848592. -26850668229.*nu -3458713600.*Pi2 + 19327698800.*nu*Pi2)*y3;
+  den = 1. + 870.510822510822*(-1. + 3.*nu)/(112. + 219.*nu)*Pi*y32
+    + (-1. + 3.*nu)/SQ(112. + 219.*nu)*
+    (-1976360.96 - 3864491.52*nu - 497796.526451903*Pi2 + 2781745.596671726*nu*Pi2)*y3;
   dlm[8] =  delta44LO/den;
 	  
   /* l=5 */
-  dlm[13] = (96875. + 857528.*nu)/(131250.*(1.-2.*nu))*y32;
+  dlm[13] = (0.73809523809523 + 6.533546666666667*nu)/(1.-2.*nu)*y32;
   
 }
 
@@ -767,6 +768,7 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
   clm[26][3] = (17.255875091408523 - 3.6042232277526396*el7)*PMTERMS_eps;
     
   /** rho_lm */
+  /*
   const double x2  = x*x;
   const double x3  = x*x2;
   const double x4  = x*x3;
@@ -774,7 +776,7 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
   const double xn[] = {1.,x,x2,x3,x4,x5};
 
   for (int k=0; k<KMAX; k++) {
-    /* Note: the two sums give different result */
+    // Note: the two sums give different result
 #if (1)
     rholm[k] = clm[k][0];
     for (int n=1; n<6; n++) {
@@ -787,6 +789,10 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
     } 
     rholm[k] += clm[k][0]; 
 #endif
+  }
+  */
+  for (int k=0; k<KMAX; k++) {
+    rholm[k] = Taylorseries(x,clm[k],5);
   }
 
   /** Amplitudes */
@@ -1634,15 +1640,15 @@ void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, 
   eob_wav_flm(x,nu, rholm, flm);
 
   /** Spin corrections */
-  double rho22S;
-  double rho32S;
-  double rho44S;
-  double rho42S;
-  double f21S;
-  double f33S;
-  double f31S;
-  double f43S;
-  double f41S;
+  /* double rho22S; */
+  /* double rho32S; */
+  /* double rho44S; */
+  /* double rho42S; */
+  /* double f21S; */
+  /* double f33S; */
+  /* double f31S; */
+  /* double f43S; */
+  /* double f41S; */
       
   const double a0      = a1+a2;
   const double a12     = a1-a2;
@@ -1653,13 +1659,16 @@ void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, 
   const double v  = sqrt(x);
   const double v2 = x;
   const double v3 = v*v2;
-  const double v4 = v3*v;
-  const double v5 = v4*v;
+  /* const double v4 = v3*v; */
+  /* const double v5 = v4*v; */
      
   /** l=m=2 multipole */
   /* spin-orbit */
-  const double cSO_lo    = (-0.5*a0 - a12X12/6.);
-  const double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12;
+  /* const double cSO_lo    = (-0.5*a0 - a12X12/6.); */
+  /* const double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12; */
+  const double cSO_lo    = (-0.5*a0 - a12X12*0.16666666666666666);
+  const double cSO_nlo   = (-0.8253968253968254 -0.037698412698412696*nu)*a0
+    - (0.7936507936507936 + 0.4146825396825397*nu)*a12X12;
   
   /* SPIN-SPIN contribution */
   double cSS_lo;
@@ -1681,19 +1690,22 @@ void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, 
   }
 
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
-  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 ;
-    
+  /* rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 ; */
+  const double rho22S = v3*(cSO_lo + v*(cSS_lo + v*cSO_nlo));
+  
   /** l>=3, m=even: multipoles rewritten in compact and self-explanatory form */
-  rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
-  rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
-  rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
+  const double rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
+  /* rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3; */
+  /* rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3; */
+  const double rho44S = (-0.6333333333333333*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
+  const double rho42S = (-0.03333333333333333*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
   
   /** l>=2, m=odd: multipoles rewritten in compact and self-explanatory form */
-  f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3;
-  f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3;
-  f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3;
-  f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v;
-  f41S = f43S;
+  const double f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3;
+  const double f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3;
+  const double f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3;
+  const double f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v;
+  const double f41S = f43S;
     
   /** Amplitudes (correct with spin terms) */
   flm[0] = gsl_pow_int(rholm[0], 2);
@@ -1739,19 +1751,18 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
 {
 
   /** Orbital part */
-  //double rholm_orb[KMAX], flm_orb[KMAX];
   eob_wav_flm(x,nu, rholm, flm);
 
   /** Spin corrections */
-  double rho22S;
-  double rho32S;
-  double rho44S;
-  double rho42S;
-  double f21S;
-  double f33S;
-  double f31S;
-  double f43S;
-  double f41S;
+  /* double rho22S; */
+  /* double rho32S; */
+  /* double rho44S; */
+  /* double rho42S; */
+  /* double f21S; */
+  /* double f33S; */
+  /* double f31S; */
+  /* double f43S; */
+  /* double f41S; */
       
   const double a0      = a1+a2;
   const double a12     = a1-a2;
@@ -1762,10 +1773,10 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
   const double v  = sqrt(x);
   const double v2 = x;
   const double v3 = v2*v;
-  const double v4 = v3*v;
-  const double v5 = v4*v;
-  const double v6 = v5*v;
-  const double v7 = v6*v;
+  /* const double v4 = v3*v; */
+  /* const double v5 = v4*v; */
+  /* const double v6 = v5*v; */
+  /* const double v7 = v6*v; */
      
   /** l=m=2 multipole */
   /* spin-orbit */
@@ -1797,24 +1808,32 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
   }
     
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
-  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5;
-
+  /* rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5; */
+  const double rho22S = v3*(cSO_lo + v*(cSS_lo + v*(cSO_nlo + v*cSS_nlo)));
+  
   // Adding NLO SS term w.r.t. eob_wav_flm_s_SSLO
-  rho22S += cSS_nlo*v6;
+  /* rho22S += cSS_nlo*v6; */
 
   /** l>=3, m=even: multipoles rewritten in compact and self-explanatory form */
-  rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
-  rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
-  rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
+  const double rho32S = (a0-a12X12)/(3.*(1.-3.*nu))*v;
+  /* rho44S = (-19./30.*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3; */
+  /* rho42S = ( -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3; */
+  const double rho44S = (-0.6333333333333333*a0 -  (1.-21.*nu)/(30.-90.*nu)*a12X12)*v3;
+  const double rho42S = (-0.03333333333333333*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12)*v3;
   
   /** l>=2, m=odd*/
   /* spin-orbit */
-  f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3;
-  f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3;
-  f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3;
-  f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v;
-  f41S = f43S;
-  
+  /* f21S = -1.5*a12*v + ((110./21. + 79./84.*nu)*a12 - 13./84.*a0X12)*v3; */
+  /* f33S = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12)*v3; */
+  /* f31S = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12)*v3; */
+  /* f43S = (( 5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu)*v; */
+  /* f41S = f43S; */
+  const double c21SO_lo = -1.5*a12;
+  const double c21SO_nlo = ((5.238095238095238 + 0.9404761904761905*nu)*a12 - 0.15476190476190477*a0X12);
+  const double C33SO = ((-0.25 + 2.5*nu)*a12 - 1.75*a0X12);
+  const double C31SO = ((-2.25 + 6.5*nu)*a12 + 0.25*a0X12);
+  const double C43SO = ((5. -10.*nu)*a12 - 5.*a0X12)/(-4.+8.*nu);
+    
   /* SPIN-SPIN contribution */
   double c21SS_lo;
   double c33SS_lo;
@@ -1840,10 +1859,15 @@ void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1,
   }
 
   // Adding LO SS term w.r.t. eob_wav_flm_s_SSLO
-  f21S += c21SS_lo*v4;
-  f33S += c33SS_lo*v4;
-  f31S += c31SS_lo*v4;
-  
+  /* f21S += c21SS_lo*v4; */
+  /* f33S += c33SS_lo*v4; */
+  /* f31S += c31SS_lo*v4; */
+  const double f21S = v*(c21SO_lo + v2*(c21SO_nlo + v*c21SS_lo));
+  const double f33S = v3*(C33SO + v*c33SS_lo);
+  const double f31S = v3*(C31SO + v*c31SS_lo);
+  const double f43S = v*C43SO;
+  const double f41S = f43S;
+    
   /** Amplitudes (correct with spin terms) */
   flm[0] = gsl_pow_int(rholm[0], 2);
   flm[0] = (X12*flm[0] + f21S);
@@ -1890,18 +1914,18 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
   eob_wav_flm(x,nu, rholm, flm);
 
   /** Spin corrections */
-  double rho22S;
-  double rho32S;
-  double rho44S;
-  double rho42S;
-  double f21S;
-  double f33S;
-  double f31S;
-  double f43S;
-  double f41S;
-  double f55S;
+  /* double rho22S; */
+  /* double rho32S; */
+  /* double rho44S; */
+  /* double rho42S; */
+  /* double f21S; */
+  /* double f33S; */
+  /* double f31S; */
+  /* double f43S; */
+  /* double f41S; */
+  /* double f55S; */
 
-  double nu2 = nu*nu;
+  const double nu2 = nu*nu;
 
   const double el1 = Eulerlog(x,1);
   const double el2 = Eulerlog(x,2);
@@ -1920,21 +1944,22 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
   const double v  = sqrt(x);
   const double v2 = x;
   const double v3 = v2*v;
-  const double v4 = v3*v;
-  const double v5 = v4*v;
-  const double v6 = v5*v;
-  const double v7 = v6*v;
-  const double v8 = v7*v;
-  const double v9 = v8*v;
+  /* const double v4 = v3*v; */
+  /* const double v5 = v4*v; */
+  /* const double v6 = v5*v; */
+  /* const double v7 = v6*v; */
+  /* const double v8 = v7*v; */
+  /* const double v9 = v8*v; */
 
-  double logx = log(x);
+  const double logx = log(x);
      
   /** l=m=2 multipole */
   /* spin-orbit */
-  const double cSO_lo    = (-0.5*a0 - a12X12/6.);
-  const double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12;
-  const double cSO_nnlo  = (32873./21168 + 477563./42336.*nu + 147421./84672.*nu*nu)*a0 - (23687./63504 - 171791./127008.*nu + 50803./254016.*nu*nu)*a12X12; // Not used for the moment
-
+  const double cSO_lo    = (-0.5*a0 - a12X12*0.16666666666666666);
+  const double cSO_nlo   = (-0.8253968253968254 -0.037698412698412696*nu)*a0 - (0.7936507936507936 + 0.4146825396825397*nu)*a12X12;
+  const double cSO_nnlo  = 1.552957294028722*a0 - 0.373000125976316*a12X12 + 
+    11.28030517762660*a0*nu + 1.352599836230788*a12X12*nu + 
+    1.74108323885109*a0*nu2 - 0.199999212648022*a12X12*nu2; // Not used for the moment
   
   /* SPIN-SPIN contribution */
   double cSS_lo = 0.;
@@ -1952,79 +1977,89 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
     */
 #else
     cSS_lo  = 0.5*(C_Q1*a1*a1 + 2.*a1*a2 + C_Q2*a2*a2);
-    cSS_nlo = (-85./63. + 383./252.*nu)*a1*a2 + (-2./3. - 5./18.*nu)*(a1*a1 + a2*a2) + (1./7. + 27./56.*nu)*(C_Q1*a1*a1 + C_Q2*a2*a2) + 2./9.*X12*(a1*a1 - a2*a2) + 55./84.*X12*(C_Q1*a1*a1 - C_Q2*a2*a2);
+    cSS_nlo = (-1.34920634920634 + 1.519841269841269*nu)*a1*a2 + (-0.6666666666666667 - 0.277777777777778*nu)*(a1*a1 + a2*a2) + (0.1428571428571428 + 0.482142857142857*nu)*(C_Q1*a1*a1 + C_Q2*a2*a2) + 0.222222222222222*X12*(a1*a1 - a2*a2) + 0.654761904761904*X12*(C_Q1*a1*a1 - C_Q2*a2*a2);
 #endif
   } else {
     cSS_lo  = 0.5*a0*a0;
-    cSS_nlo = 1./504.*(2.*(19. - 70.*nu)*a12*a12 + (-302. + 243.*nu)*a0*a0 + 442.*X12*a0*a12);
+    cSS_nlo = -0.599206349206349*a0*a0 + 0.0753968253968253*a12*a12 + 0.482142857142857*a0*a0*nu - 0.2777777777777778*a12*a12*nu + 0.87698412698412*a0*a12*X12;
   }
   
   /* New cubic-in-spin term */
-  double cS3_lo = (7./12.*a0 - 0.25*X12*a12)*a0*a0;
+  const double cS3_lo = (0.583333333333333*a0 - 0.25*X12*a12)*a0*a0;
   
   /* rho_22^S: Eq. (80) of Damour & Nagar, PRD 90, 044018 (2014) */
-  rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 + cSS_nlo*v6 + cS3_lo*v7; //+ cSO_nnlo*v7;
+  /* rho22S = cSO_lo*v3 + cSS_lo*v4 + cSO_nlo*v5 + cSS_nlo*v6 + cS3_lo*v7; //+ cSO_nnlo*v7; */
+  const double rho22S = v3*(cSO_lo + v*(cSS_lo + v*(cSO_nlo + v*(cSS_nlo + v*cS3_lo))));
   
   /* l=3, m=2 */
   /* spin-orbit coefficients */
-  double c32_SO_lo   = 0.;
-  double c32_SO_nlo  = 0.;
-  double c32_SO_nnlo = 0.;
-  c32_SO_lo   = (a0-a12X12)/(3.*(1.-3.*nu));
-  c32_SO_nlo  = (-(0.884567901234568 - 3.41358024691358*nu + 2.4598765432098766*nu2)*a0 + (1.10679012345679 - 2.635802469135802*nu - 1.8734567901234567*nu2)*X12*a12)/SQ(1-3*nu);
-  c32_SO_nnlo = -1.335993162073409*a0 - 0.9586570436879079*a12*X12;
+  /* double c32_SO_lo   = 0.; */
+  /* double c32_SO_nlo  = 0.; */
+  /* double c32_SO_nnlo = 0.; */
+  const double c32_SO_lo   = (a0-a12X12)/(3.*(1.-3.*nu));
+  const double c32_SO_nlo  = (-(0.884567901234568 - 3.41358024691358*nu + 2.4598765432098766*nu2)*a0 + (1.10679012345679 - 2.635802469135802*nu - 1.8734567901234567*nu2)*X12*a12)/SQ(1-3*nu);
+  const double c32_SO_nnlo = -1.335993162073409*a0 - 0.9586570436879079*a12*X12;
   
-  rho32S = c32_SO_lo*v + c32_SO_nlo*v3 + c32_SO_nnlo*v5;
+  /* rho32S = c32_SO_lo*v + c32_SO_nlo*v3 + c32_SO_nnlo*v5; */
+  const double rho32S = v*(c32_SO_lo + v2*(c32_SO_nlo + v2*c32_SO_nnlo));
   
   /* l=4, m=4 */
   /* spin-orbit coefficients */
-  double c44_SO_lo   = 0.;
-  double c44_SO_nlo  = 0.;
-  double c44_SO_nnlo = 0.;
-  c44_SO_lo   = -19./30.*a0 - (1. - 21.*nu)/(30. - 90.*nu)*a12*X12;
-  c44_SO_nlo  = -199./550.*a0 - 491./550.*a12*X12;
-  c44_SO_nnlo = 1.9942241584173401*a0 + 0.012143034995307722*a12*X12;
+  /* double c44_SO_lo   = 0.; */
+  /* double c44_SO_nlo  = 0.; */
+  /* double c44_SO_nnlo = 0.; */
+  const double c44_SO_lo   = -0.633333333333333*a0 - (1. - 21.*nu)/(30. - 90.*nu)*a12*X12;
+  const double c44_SO_nlo  = -0.3618181818181818*a0 - 0.8927272727272727*a12*X12;
+  const double c44_SO_nnlo = 1.9942241584173401*a0 + 0.012143034995307722*a12*X12;
   
-  rho44S = c44_SO_lo*v3 + c44_SO_nlo*v5 + c44_SO_nnlo*v7;
+  /* rho44S = c44_SO_lo*v3 + c44_SO_nlo*v5 + c44_SO_nnlo*v7; */
+  const double rho44S = v3*(c44_SO_lo + v2*(c44_SO_nlo + v2*c44_SO_nnlo));
   
   /* l=4, m=2 */
   /* spin-orbit coefficients */
-  double c42_SO_lo   = 0.;
-  double c42_SO_nlo  = 0.;
-  double c42_SO_nnlo = 0.;
-  double c42_SO_n3lo = 0.;
-  c42_SO_lo   = -1./30.*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12;
-  c42_SO_nlo  = -219./550.*a0 + 92./275.*a12*X12;
-  c42_SO_nnlo = -1.245162901492446947*a0 + 0.6414503261889625526*a12*X12;
-  c42_SO_n3lo = -(2.6105076622404808654 + 0.16912938912938912939*logx)*a0 + -(1.3519220653268411505 - 0.10290524290524290524*logx)*X12*a12;
+  /* double c42_SO_lo   = 0.; */
+  /* double c42_SO_nlo  = 0.; */
+  /* double c42_SO_nnlo = 0.; */
+  /* double c42_SO_n3lo = 0.; */
+  const double c42_SO_lo   = -0.0333333333333333*a0 - (19.-39.*nu)/(30.-90.*nu)*a12X12;
+  const double c42_SO_nlo  = -0.398181818181818*a0 + 0.3345454545454545*a12*X12;
+  const double c42_SO_nnlo = -1.245162901492446947*a0 + 0.6414503261889625526*a12*X12;
+  const double c42_SO_n3lo = -(2.6105076622404808654 + 0.16912938912938912939*logx)*a0 + -(1.3519220653268411505 - 0.10290524290524290524*logx)*X12*a12;
   
-  rho42S = c42_SO_lo*v3 + c42_SO_nlo*v5 + c42_SO_nnlo*v7 + c42_SO_n3lo*v9;
+  /* rho42S = c42_SO_lo*v3 + c42_SO_nlo*v5 + c42_SO_nnlo*v7 + c42_SO_n3lo*v9; */
+  const double rho42S = v3*(c42_SO_lo + v2*(c42_SO_nlo + v2*(c42_SO_nnlo + v2*c42_SO_n3lo)));
   
   /** l>=2, m=odd*/
-  double if210s = 1. + 13./84.*a0*v3 - 1./8.*(3.*a1+a2)*(a1+3.*a2)*v4 + a0*(14705./7056. - 12743./7056.*nu)*v5;
-  double if211s = 1. - 9./4.*a0*v3 + (349./252. + 74./63.*nu)*v2 + (65969./31752. + 89477./31752.*nu + 46967./31752.*nu2 - 0.5*a0*a0)*v4;
-  f21S = X12/if210s - 1.5*v*a12/if211s;
+  /* double if210s = 1. + 13./84.*a0*v3 - 1./8.*(3.*a1+a2)*(a1+3.*a2)*v4 + a0*(14705./7056. - 12743./7056.*nu)*v5; */
+  /* double if211s = 1. - 9./4.*a0*v3 + (349./252. + 74./63.*nu)*v2 + (65969./31752. + 89477./31752.*nu + 46967./31752.*nu2 - 0.5*a0*a0)*v4; */
+  const double if210s = 1. + v3*(0.15476190476190477*a0 +v*(-0.125*(3.*a1+a2)*(a1+3.*a2) + v*a0*(2.0840419501133787 - 1.8059807256235827*nu)));
+  const double if211s = 1. + v2*((1.3849206349206349 + 1.1746031746031746*nu) + v*((-2.25*a0) + v*(2.0776329050138576 + 2.8179957168052407*nu + 1.4791824137062233*nu2 - 0.5*a0*a0)));
+  const double f21S = X12/if210s - 1.5*v*a12/if211s;
 
-  
-  double if330s = 1. + 7./4.*a0*v3 - 1.5*a0*a0*v4 + + 1./60.*a0*(211. - 127.*nu)*v5;
-  double f331s = (10.*nu -1. + (-169. + 671.*nu + 182.*nu2)/15.*x);
-  f33S = X12/if330s + 0.25*a12*v3*f331s;
+  /* double if330s = 1. + 7./4.*a0*v3 - 1.5*a0*a0*v4 + + 1./60.*a0*(211. - 127.*nu)*v5; */
+  /* double f331s = (10.*nu -1. + (-169. + 671.*nu + 182.*nu2)/15.*x); */
+  const double if330s = 1. + v3*(1.75*a0 +v*(-1.5*a0*a0 + v*a0*(3.5166666666666667 - 2.1166666666666667*nu)));
+  const double f331s = (-1. + 10.*nu + (-11.266666666666667 + 44.73333333333333*nu + 12.13333333333333*nu2)*x);
+  const double f33S = X12/if330s + 0.25*a12*v3*f331s;
 
-  double if310s = 1. - 0.25*a0*v3 - 1.5*a0*a0*v4 + 1./36.*a0*(13. - 449.*nu)*v5;
-  double f311s  = 26.*nu - 9. - 16.*a0*v + (9. - 95.*nu + 66.*nu2)/9.*v2;
-  f31S = X12/if310s + 0.25*a12*v3*f311s;
+  /* double if310s = 1. - 0.25*a0*v3 - 1.5*a0*a0*v4 + 1./36.*a0*(13. - 449.*nu)*v5; */
+  /* double f311s  = 26.*nu - 9. - 16.*a0*v + (9. - 95.*nu + 66.*nu2)/9.*v2; */
+  const double if310s = 1. +v3*(-0.25*a0 +v*(-1.5*a0*a0 + v*a0*(0.361111111111111 - 12.47222222222222*nu)));
+  const double f311s  = 26.*nu - 9. + v*(-16.*a0 + v*(1. - 10.55555555555555*nu + 7.33333333333333*nu2));
+  const double f31S = X12/if310s + 0.25*a12*v3*f311s;
 
-  double f430s = 1. - 1.25/(2.*nu - 1.)*a0*v;
-  double f431s = 1.;            
-  f43S = X12*f430s - 1.25*a12*v*f431s;
+  const double f430s = 1. - 1.25/(2.*nu - 1.)*a0*v;
+  const double f431s = 1.;            
+  const double f43S = X12*f430s - 1.25*a12*v*f431s;
 
-  double f410s = 1. - 1.25/(2.*nu - 1.)*a0*v;
-  double f411s = 1.;
-  f41S   = X12*f410s - 1.25*a12*v*f411s;
+  const double f410s = 1. - 1.25/(2.*nu - 1.)*a0*v;
+  const double f411s = 1.;
+  const double f41S   = X12*f410s - 1.25*a12*v*f411s;
 
-  double if550s = 1. + 10./3.*a0*v3 - 2.5*a0*a0*v4;
-  double f551s  = 1.;
-  f55S   = X12/if550s + 10.*nu*(1. - 3.*nu)/(3. - 6.*nu)*a12*v3*f551s;
+  /* double if550s = 1. + 10./3.*a0*v3 - 2.5*a0*a0*v4; */
+  const double if550s = 1. + v3*(3.333333333333333*a0 - 2.5*a0*a0*v); 
+  const double f551s  = 1.;
+  const double f55S   = X12/if550s + 10.*nu*(1. - 3.*nu)/(3. - 6.*nu)*a12*v3*f551s;
 	    
   /** Amplitudes (correct with spin terms) */
   flm[0] = gsl_pow_int(rholm[0], 2);
@@ -2052,6 +2087,7 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
 
   flm[13] = gsl_pow_int(rholm[13], 5);
   flm[13] = flm[13]*f55S;
+  
 }
 
 /** Resummed amplitudes for a particle orbiting around Kerr 
