@@ -47,8 +47,8 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
 {
   
   /** Shorthands*/
-  const double nu2 = nu*nu;
-  const double nu3 = nu2*nu;
+  /* const double nu2 = nu*nu; */
+  /* const double nu3 = nu2*nu; */
   const double x5  = x*x*x*x*x;
   const double x6  = x*x5;
   const double x7  = x*x6;
@@ -59,12 +59,12 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
   const double x12 = x*x11;
   
   const double sp2 = 1.-4.*nu;
-  const double sp4 = (1-4*nu)*SQ((1-2*nu));
-  const double sp3 = (1.-3.*nu)*(1.-3.*nu);
-  const double sp5 = (1.-5.*nu+5.*nu2)*(1.-5.*nu+5.*nu2);
-  const double sp6 = (1-4*nu)*(3*nu2-4*nu +1)*(3*nu2-4*nu +1);
-  const double sp7 = (1 - 7*nu + 14*nu2 - 7*nu3)*(1 - 7*nu + 14*nu2 - 7*nu3);
-  const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
+  const double sp4 = sp2 * SQ((1-2*nu));
+  const double sp3 = SQ((1.-3.*nu));
+  const double sp5 = SQ((1. + nu*(-5. + 5.*nu)));
+  const double sp6 = sp2 * SQ(((3*nu -4)*nu +1));
+  const double sp7 = SQ((1 + nu*(- 7 + nu*(14 - nu*7))));
+  const double sp8 = sp2 * SQ((1 + nu*(- 6 + nu*(10 - nu*4))));
 
   double spx[] = {
     sp2 * x6, x5, 
@@ -73,7 +73,7 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
     sp4 * x8, sp5 * x9, sp4 * x8, sp5 * x9, sp4 * x8, 
     sp6 * x10, sp5 * x9, sp6 * x10, sp5 * x9, sp6 * x10, sp5 * x9, 
     sp6 * x10, sp7 * x11, sp6 * x10, sp7 * x11, sp6 * x10, sp7 * x11, sp6 * x10,
-    sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1) * x11
+    sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, SQ(((7*nu-14)*nu+7)*nu-1) * x11
   };
 
   /** Newtonian partial fluxes*/
@@ -111,41 +111,52 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
   double FlmH[2];
   
   /** Shorthands */
-  double nu2 = nu*nu;
-  double nu3 = nu*nu2;
-  double x2  = x*x;
-  double x3  = x*x2;
-  double x4  = x*x3;
-  double x5  = x*x4;
-  double x9  = x4*x5;
-  double x10 = x*x9;
+  /* double nu2 = nu*nu; */
+  /* double nu3 = nu*nu2; */
+  /* double x2  = x*x; */
+  /* double x3  = x*x2; */
+  /* double x4  = x*x3; */
+  /* double x5  = x*x4; */
+  /* double x9  = x4*x5; */
+  /* double x10 = x*x9; */
     
   /** The Newtonian asymptotic contribution */
-  const double FNewt22 = 32./5.*x5;
+  /* const double FNewt22 = 32./5.*x5; */
   
   /** Compute leading-order part (nu-dependent) */
-  FlmHLO[1] = 32./5.*(1-4*nu+2*nu2)*x9;
-  FlmHLO[0] = 32./5.*(1-4*nu+2*nu2)*x10;
-    
+  /* FlmHLO[1] = 32./5.*(1- 4*nu+2*nu2)*x9; */
+  /* FlmHLO[0] = 32./5.*(1- 4*nu+2*nu2)*x10; */
+  
+  /* FlmHLO[1] = FNewt22*(1 - nu*(4 - nu*2))*x4; */
+  /* FlmHLO[0] = FlmHLO[1]*x; */
+
+  /* normalized to FNewt22 already here */
+  FlmHLO[1] = (1 - nu*(4 - nu*2))*gsl_pow_int(x,4);  
+  FlmHLO[0] = FlmHLO[1]*x;
+
   /** Compute rho_lm */
   double c1[2];
   double c2[2];
   double c3[2];
   double c4[2];
-    
+  
   c1[0] = 0.58121;
   c2[0] = 1.01059;
   c3[0] = 7.955729;
   c4[0] = 1.650228;
   
-  c1[1] = (4.-21.*nu + 27.*nu2 - 8.*nu3)/(4.*(1.-4.*nu+2.*nu2));
+  /* c1[1] = (4.-21.*nu + 27.*nu2 - 8.*nu3)/(4.*(1.-4.*nu+2.*nu2)); */
+  c1[1] = (4. + nu*(-21. + nu*(27. - nu*8.)))/(4.*(1.+nu*(-4. + nu*2.)));
   c2[1] =  4.78752;
   c3[1] = 26.760136;
   c4[1] = 43.861478;
     
-  rhoHlm[1] = 1. + c1[1]*x + c2[1]*x2 + c3[1]*x3 + c4[1]*x4;
-  rhoHlm[0] = 1. + c1[0]*x + c2[0]*x2 + c3[0]*x3 + c4[0]*x4;
-    
+  /* rhoHlm[1] = 1. + c1[1]*x + c2[1]*x2 + c3[1]*x3 + c4[1]*x4; */
+  /* rhoHlm[0] = 1. + c1[0]*x + c2[0]*x2 + c3[0]*x3 + c4[0]*x4; */
+
+  rhoHlm[1] = 1. + x*(c1[1] + x*(c2[1] + x*(c3[1] + x*c4[1])));
+  rhoHlm[0] = 1. + x*(c1[0] + x*(c2[0] + x*(c3[0] + x*c4[0]))); 
+  
   /** Compute horizon multipolar flux (only l=2) */
   const double Heff2 = Heff*Heff;
   const double jhat2 = jhat*jhat;
@@ -154,7 +165,8 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
   FlmH[0] = FlmHLO[0] * jhat2 * gsl_pow_int(rhoHlm[0],4);
     
   /** Sum over multipoles and normalize to the 22 Newtonian multipole */
-  double hatFH = (FlmH[0]+FlmH[1])/FNewt22;
+  /* double hatFH = (FlmH[0]+FlmH[1])/FNewt22; */
+  double hatFH = FlmH[0]+FlmH[1];
   
   return hatFH;
 }
