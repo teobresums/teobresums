@@ -185,8 +185,8 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
   double cv8[2];
   
   /** Coefficients of the v^5 term (Alvi leading order) */
-  cv5[0] = -1./4.*chi1*(1.+3.*chi1*chi1)*X1*X1*X1;
-  cv5[1] = -1./4.*chi2*(1.+3.*chi2*chi2)*X2*X2*X2;
+  cv5[0] = -0.25*chi1*(1.+3.*chi1*chi1)*X1*X1*X1;
+  cv5[1] = -0.25*chi2*(1.+3.*chi2*chi2)*X2*X2*X2;
   
   /** Coefficients of the v^8=x^4 term */
   cv8[0] = 0.5*(1.+sqrt(1.-chi1*chi1))*(1.+3.*chi1*chi1)*X1*X1*X1*X1;

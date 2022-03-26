@@ -74,7 +74,7 @@ double Eulerlog(const double x,const int m)
   return EulerGamma_Log2 + logm + 0.5*log(x);
 }
 
-double Pade32(double x, double *a){
+inline double Pade32(double x, double *a){
   /* double x2 = x*x; */
   /* double x3 = x2*x; */
 
@@ -93,7 +93,7 @@ double Pade32(double x, double *a){
   return pade;
 }
 
-double Pade23(double x, double *a){
+inline double Pade23(double x, double *a){
   /* double x2 = x*x; */
   /* double x3 = x2*x; */
 
@@ -112,7 +112,7 @@ double Pade23(double x, double *a){
   return pade;
 }
 
-double Pade51(double x, double *a){
+inline double Pade51(double x, double *a){
   /* double x2 = x*x; */
   /* double x3 = x2*x; */
   /* double x4 = x3*x; */
@@ -134,7 +134,7 @@ double Pade51(double x, double *a){
   return pade;
 }
 
-double Pade42(double x, double *a){
+inline double Pade42(double x, double *a){
   /* double x2 = x*x; */
   /* double x3 = x2*x; */
   /* double x4 = x3*x; */
@@ -155,7 +155,7 @@ double Pade42(double x, double *a){
   return pade;
 }
 
-double Pade33(double x, double *a){
+inline double Pade33(double x, double *a){
   /* double x2 = x*x; */
   /* double x3 = x2*x; */
 
@@ -175,7 +175,7 @@ double Pade33(double x, double *a){
   return pade;
 }
 
-double Pade15(double x, double *a){
+inline double Pade15(double x, double *a){
   /* double x2 = x*x; */
   /* double x3 = x2*x; */
   /* double x4 = x3*x; */
@@ -197,7 +197,7 @@ double Pade15(double x, double *a){
   return pade;
 }
 
-double Pade62(double x, double *a){
+inline double Pade62(double x, double *a){
   /* double x2 = x*x; */
   /* double x3 = x2*x; */
   /* double x4 = x3*x;	 */
@@ -249,7 +249,7 @@ double Taylorseries(double x, double *a, int N){
 */
 
 /** polynomial evaluation */
-double Taylorseries(double x, double *a, int N){
+inline double Taylorseries(double x, double *a, int N){
   double sum = a[N];
   for (int n=N-1; n-- > 0;) {
     sum *= x;
