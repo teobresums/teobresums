@@ -136,7 +136,7 @@ double eob_c3_fit_ecc(double nu, double a1, double a2)
  const double p3 = -1085.35; //-61.6306; (for different functional form: nu*a0^2)
  
   const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
-    + p1*nu*X12*a0 + p2*nu2*(a1 - a2) + p3*nu2*X12*a02; //p3*nu*X12*a02;
+    + p1*nu*X12*a0 + p2*nu2*(a1 - a2) + p3*nu2*X12*a0; //p3*nu*X12*a02;
   
   return c3;
 }
