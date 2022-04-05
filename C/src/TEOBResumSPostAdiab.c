@@ -34,15 +34,15 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
   const double X1    = EOBPars->X1;
   const double X2    = EOBPars->X2;
   const double c3    = EOBPars->cN3LO;
-  double aK2   = EOBPars->aK2;
-  double a1    = EOBPars->a1;
-  double a2    = EOBPars->a2;
-  const double C_Q1  = EOBPars->C_Q1;
-  const double C_Q2  = EOBPars->C_Q2;
-  const double C_Oct1 = EOBPars->C_Oct1;
-  const double C_Oct2 = EOBPars->C_Oct2;
-  const double C_Hex1 = EOBPars->C_Hex1;
-  const double C_Hex2 = EOBPars->C_Hex2;
+  double aK2    = EOBPars->aK2;
+  double a1     = EOBPars->a1;
+  double a2     = EOBPars->a2;
+  double C_Q1   = EOBPars->C_Q1;
+  double C_Q2   = EOBPars->C_Q2;
+  double C_Oct1 = EOBPars->C_Oct1;
+  double C_Oct2 = EOBPars->C_Oct2;
+  double C_Hex1 = EOBPars->C_Hex1;
+  double C_Hex2 = EOBPars->C_Hex2;
   const double z3    = 2.0*nu*(4.0-3.0*nu);
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
@@ -130,11 +130,29 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
           &EOBPars->S, &EOBPars->Sstar);  
     }
 
+    /** Update the dressing factors for the f-mode resonances */
+    if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)){
+      fmode_resonance_dressing_factors(dyn->r, dyn);
+      fmode_resonance_dress_QOH(dyn);
+      C_Q1   = dyn->dressed_C_Q1;
+      C_Q2   = dyn->dressed_C_Q2;
+      C_Oct1 = dyn->dressed_C_Oct1;
+      C_Oct2 = dyn->dressed_C_Oct2;
+      C_Hex1 = dyn->dressed_C_Hex1;
+      C_Hex2 = dyn->dressed_C_Hex2;
+    }
+
     /** Computing metric functions and centrifugal radius */
     if(usespins){ 
       
       eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
       eob_dyn_s_get_rc(dyn->r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
+      
+      if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
+        /* Add derivative terms to rc' and rc'' from f-mode resonances u-dependent terms */
+        eob_dyn_s_rc_add_QOH_drvts(dyn, rc_vec[i], dyn->r, EOBPars->a1, EOBPars->a2, &drc_dr_vec[i], &pl_hold);
+      }
+      
       eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], pl_hold, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
       
       G                         = ggm[2] *EOBPars->S+ggm[3] *EOBPars->Sstar;    // tildeG = GS*S+GSs*Ss
@@ -291,8 +309,21 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
       dyn->ddotr   = dyn->data[EOB_DDOTR][i];
       dyn->prstar  = dyn->data[EOB_PRSTAR][i];
       dyn->Omg_orb = dyn->data[EOB_OMGORB][i];
-      if (usespins == MODE_SPINS_GENERIC && EOBPars->project_spins){
 
+      /* Update the dressing factors for the f-mode resonances */
+      if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)){
+        fmode_resonance_dressing_factors(dyn->r, dyn);
+        fmode_resonance_dress_QOH(dyn);
+        C_Q1 = dyn->dressed_C_Q1;
+        C_Q2 = dyn->dressed_C_Q2;
+        C_Oct1 = dyn->dressed_C_Oct1;
+        C_Oct2 = dyn->dressed_C_Oct2;
+        C_Hex1 = dyn->dressed_C_Hex1;
+        C_Hex2 = dyn->dressed_C_Hex2;
+      }
+
+      /* Update the spins for precession */
+      if (usespins == MODE_SPINS_GENERIC && EOBPars->project_spins){
         chi1         = chi1_grid[i];
         chi2         = chi2_grid[i];
         set_spin_vars(X1,X2,chi1,chi2,&pl_hold,&pl_hold,&a1,&a2,&pl_hold,&aK2,&S,&Sstar);
@@ -455,6 +486,26 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
       dyn->data[EOB_PRSTAR][i] = dyn->prstar;
       dyn->data[EOB_OMGORB][i] = dyn->Omg_orb;
       //printf("%.10f, %.10f, %.10f, %.10f, \n", dyn->pphi, dyn->Omg, dyn->r, dyn->Omg);
+
+      /* FIXME: fmode_resonance_dressing_factors internally assumes 
+         that omega = r^{-3/2}. 
+         Currently, since we use r, there is no recomputing to do. 
+         In principle, we should substitute r with omega!
+      */
+      /* Re-assigning tidal parameters */
+      /*
+      if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)){
+        fmode_resonance_dressing_factors(dyn->r, dyn);
+        fmode_resonance_dress_QOH(dyn);
+        C_Q1 = dyn->dressed_C_Q1;
+        C_Q2 = dyn->dressed_C_Q2;
+        C_Oct1 = dyn->dressed_C_Oct1;
+        C_Oct2 = dyn->dressed_C_Oct2;
+        C_Hex1 = dyn->dressed_C_Hex1;
+        C_Hex2 = dyn->dressed_C_Hex2;
+      }
+      */
+
       if (usespins == MODE_SPINS_GENERIC && EOBPars->project_spins){
         /* Updating spins */
         eob_spin_dyn_Sproj_interp(spin, dyn->Omg, &SApara, &SBpara, NULL, NULL, NULL, NULL, 1);
