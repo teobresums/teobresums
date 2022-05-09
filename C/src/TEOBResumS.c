@@ -202,7 +202,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   double r0;
   if (r_hyp != 0.) {
     r0 = r_hyp;
-  } else if (ecc > 1e-4) {
+  } else if (ecc != 0.) {
     r0 = eob_dyn_r0_ecc(f0, dyn);
   } else {
     r0 = eob_dyn_r0_Kepler(f0);
@@ -398,8 +398,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	status = 1;
 	goto EXIT_POINT;
       }
-    } else if (ecc > 1e-4) {
-      eob_dyn_ic_ecc(r0, dyn, dyn->y0);
+    } else if (ecc !=0) {
+      eob_dyn_ic_ecc_PA(r0, dyn, dyn->y0);
     } else if (use_spins) {
       eob_dyn_ic_s(r0, dyn, dyn->y0);
     } else {

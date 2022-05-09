@@ -351,8 +351,8 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   DG  = G1 - G2;
 
   /* Angular momentum and energy */
-  j02   = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
-  j0    = sqrt(j02);
+  j02       = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
+  j0        = sqrt(j02);
   Heff_orb1 = sqrt(A1*(1. + j02/SQ(rc1)));
   Heff1     = Heff_orb1 + j0*G1;
   H1        = sqrt(1. + 2.*nu*(Heff1 - 1.))/nu;
@@ -369,6 +369,211 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j0;
   y_init[EOB_ID_E0]     = H1*nu;
   y_init[EOB_ID_OMGJ]   = omg_orb1;
+  
+}
+
+/** Compute the conservative angular momentum of an elliptic orbit
+    from Energy conservation
+**/
+double eob_dyn_ecc_j0(double r0, Dynamics *dyn)
+{
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double S1   = EOBPars->S1;
+  const double S2   = EOBPars->S2;
+  const double c3   = EOBPars->cN3LO;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double a1   = EOBPars->a1;
+  const double a2   = EOBPars->a2;
+  const double aK2  = EOBPars->aK2;
+  const double ecc    = EOBPars->ecc;
+  const double C_Q1   = EOBPars->C_Q1;
+  const double C_Q2   = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
+  const double S     = S1 + S2;        
+  const double Sstar = X2*a1 + X1*a2;  
+  const double z3 = 2.0*nu*(4.0-3.0*nu);
+
+  const int usespins = EOBPars->use_spins;
+  const int usetidal = EOBPars->use_tidal;  
+
+  double r1, A1, rc1, B1, ggm1[26], G1;
+  double r2, A2, rc2, B2, ggm2[26], G2;
+  double pl_hold, A12, B12, DA, DB, DG;
+  double j0, j02, Heff_orb1, Heff1, H1, dHeff1_dj0, omg_orb1;
+
+  r1 = r0/(1-ecc); // apastron
+  r2 = r0/(1+ecc); // periastron
+
+  /* Computing metric, centrifugal radius and ggm functions*/
+  if(usespins) {
+    eob_metric_s(r1, dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold, &pl_hold);
+    
+    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
+    G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
+
+    eob_metric_s(r2, dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
+    
+    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
+    G2     = ggm2[2]*S + ggm2[3]*Sstar;    
+  } else {
+    eob_metric(r1 ,dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    rc1 = r1;   //Nonspinning case: rc = r; G = 0;  
+    G1  = 0.0;
+
+    eob_metric(r2 ,dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    rc2 = r2;
+    G2  = 0.0;
+  }
+  B1 = A1/SQ(rc1);
+  B2 = A2/SQ(rc2);
+
+  A12 = A1 + A2;
+  DA  = A1 - A2;
+  B12 = B1 + B2;
+  DB  = B1 - B2;
+  DG  = G1 - G2;
+
+  /* Angular momentum */
+  j02       = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
+  j0        = sqrt(j02);
+
+  return j0;
+
+}
+
+/** Initial conditions calculation for eccentric systems */
+void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
+{
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  const double S1   = EOBPars->S1;
+  const double S2   = EOBPars->S2;
+  const double c3   = EOBPars->cN3LO;
+  const double X1   = EOBPars->X1;
+  const double X2   = EOBPars->X2;
+  const double a1   = EOBPars->a1;
+  const double a2   = EOBPars->a2;
+  const double aK2  = EOBPars->aK2;
+  const double ecc    = EOBPars->ecc;
+  const double C_Q1   = EOBPars->C_Q1;
+  const double C_Q2   = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
+  const double S      = S1 + S2;        
+  const double Sstar  = X2*a1 + X1*a2;  
+  const double z3     = 2.0*nu*(4.0-3.0*nu);
+  
+  /*----------------*/
+  /* 1. compute j0  */
+  /*----------------*/
+
+  double r1 = r0/(1-ecc);
+  double r2 = r0/(1+ecc);
+  double j0 = eob_dyn_ecc_j0(r0, dyn);
+  
+  if (DEBUG) printf("0PA:\np0 = %.8f\npph0 = %.8f\nr0 = %.8f\n", r0, j0, r1);
+
+  /*----------------------*/
+  /* 2. compute pr* != 0  */
+  /*----------------------*/
+
+  /** Build a small grid */ 
+#define N (6) 
+  double dpph_dr[2*N], p[2*N], r[2*N], pph[2*N]; 
+  const double dr = 1e-4;   /* do not change this */
+  for (int i=0; i< 2*N; i++) {
+    p[i]   = r0+(i-N+1)*dr; /** grid of semilatus rectum */
+    r[i]   = p[i]/(1.-ecc); /** grid of r = p/(1-e) */
+    pph[i] = eob_dyn_ecc_j0(p[i], dyn);
+  }
+
+  /* dpph_dr by finite diff. */
+  D0(pph, dr, 2*N, dpph_dr);
+  int idx = N-1;
+
+  double E0, Omega_j;
+  double Fphi, Ctmp, prstar, pr;
+  double rc, drc_dr, d2rc_dr2;
+  double A,B,dA,d2A,dB, sqrtAbyB, pl_hold;
+  double pphorb, uc, uc2, psic, r_omg, v_phi, jhat, x, Omg;
+  double H0eff, H0, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
+  double ggm0[26], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
+  double C0;
+  double Gtilde, dGtilde_dr, duc_dr;
+
+  eob_metric_s(r[idx], dyn, &A,&B,&dA,&d2A,&dB,&pl_hold);
+  eob_dyn_s_get_rc(r[idx], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, dyn->use_tidal, &rc, &drc_dr, &d2rc_dr2);    
+  sqrtAbyB = sqrt(A/B);
+  uc  = 1./rc;
+  uc2 = uc*uc;
+  /* Orbital effective Hamiltonian */
+  Horbeff0 = sqrt(A*(1. + SQ(pph[idx])*uc2));
+  /* Compute gyro-gravitomagnetic coupling functions */
+  eob_dyn_s_GS(r[idx], rc, drc_dr, 0.0, aK2, 0, pph[idx], nu, chi1, chi2, X1, X2, c3, ggm0);
+  GS_0                   = ggm0[2];
+  GSs_0                  = ggm0[3];
+  dGS_dr_0               = ggm0[6];
+  dGSs_dr_0              = ggm0[7];
+  dGSs_dpph_0            = ggm0[9];
+  dGS_dprstarbyprstar_0  = ggm0[10];
+  dGSs_dprstarbyprstar_0 = ggm0[11];
+  /* Final effective Hamiltonian */
+  Heff0 = (GS_0*S + GSs_0*Sstar)*pph[idx] + Horbeff0;
+
+  /* Real Hamiltonian: beware that this is NOT divided by nu */
+  H0     = sqrt( 1. + 2.*nu*(Heff0 - 1.));
+  one_H0 = 1./H0;
+
+  /* Get gyro-gravitomagnetic (derivative) functions */
+  dHeff_dprstarbyprstar = pph[idx]*(dGS_dprstarbyprstar_0*S + dGSs_dprstarbyprstar_0*Sstar) + 1./Horbeff0;
+
+  C0         = sqrtAbyB*one_H0*dHeff_dprstarbyprstar;
+  if (DEBUG) printf("sqrtAbyB = %.8f\none_H0 = %.8f\ndHeff_dprstarbyprstar = %.8f\nC0 = %.8f\n", sqrtAbyB,one_H0,dHeff_dprstarbyprstar,C0);
+
+  /* Orbital frequency at apastron */
+  dHeff_dpph = GS_0*S + (GSs_0 + pph[idx]*dGSs_dpph_0)*Sstar + pph[idx]*A*uc2/Horbeff0;
+  Omg        = one_H0*dHeff_dpph;
+
+  /* Flux */ 
+  Gtilde     =  GS_0*S     + GSs_0*Sstar;
+  dGtilde_dr =  dGS_dr_0*S + dGSs_dr_0*Sstar;
+  duc_dr     = -uc2*drc_dr;
+  psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/(SQ(pph[idx])) + A*uc2)/A)/(-0.5*dA);
+  r_omg      =  pow((pow(rc*rc*rc*psic,-1./2)+Gtilde)*one_H0,-2./3.);
+  v_phi      =  r_omg*Omg;
+  x          =  v_phi*v_phi;
+  jhat       =  pph[idx]/(r_omg*v_phi);  /* Newton-normalized angular momentum */
+
+  //Fphi    = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[idx], 0.0, 0.0, dyn);
+  eob_flx_Flux_ecc(x, Omg, r_omg, H0, Heff0, jhat, r[idx], 0.0, pph[idx], 0.0, 0.0, &Fphi, &pl_hold, dyn);
+  prstar  = Fphi/(dpph_dr[idx]*C0);
+  pr      = prstar/sqrtAbyB; 
+
+  E0      = H0;
+  Omega_j = Omg;
+
+  if (DEBUG) printf("\n1PA:\np0 = %.8f\npph0 = %.8f\nFphi = %.8f\npr0 = %.8f\npr*0 = %.8f\nE0 = %.8f\nomega0 = %.8f\n", r0, j0, Fphi, pr, prstar, E0, Omg);
+
+  // Update ICs
+  y_init[EOB_ID_RAD]    = r1;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = pph[idx];
+  y_init[EOB_ID_PRSTAR] = prstar;
+  y_init[EOB_ID_PR]     = pr;
+  y_init[EOB_ID_J]      = j0;
+  y_init[EOB_ID_E0]     = E0;
+  y_init[EOB_ID_OMGJ]   = Omega_j;
   
 }
 
