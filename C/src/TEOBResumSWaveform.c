@@ -2045,7 +2045,7 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
   /* double if310s = 1. - 0.25*a0*v3 - 1.5*a0*a0*v4 + 1./36.*a0*(13. - 449.*nu)*v5; */
   /* double f311s  = 26.*nu - 9. - 16.*a0*v + (9. - 95.*nu + 66.*nu2)/9.*v2; */
   const double if310s = 1. +v3*(-0.25*a0 +v*(-1.5*a0*a0 + v*a0*(0.361111111111111 - 12.47222222222222*nu)));
-  const double f311s  = 26.*nu - 9. - 16.*a0*v + (1. - 10.55555555555555*nu + 7.33333333333333*nu2)*v2;
+  const double f311s  = 26.*nu - 9. + v*(-16.*a0 + v*(1. - 10.55555555555555*nu + 7.33333333333333*nu2));
   const double f31S = X12/if310s + 0.25*a12*v3*f311s;
 
   const double f430s = 1. - 1.25/(2.*nu - 1.)*a0*v;
