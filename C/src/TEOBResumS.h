@@ -91,7 +91,7 @@
 #endif
 
 /** Macros */
-#define TEOBResumS_Info "TEOBResumS code (c) 2017-2020"
+#define TEOBResumS_Info "TEOBResumS code (c) 2017-2022"
 #define TEOBResumS_Usage "COMMAND LINE USAGE:\n\
 ./TEOBResumS.x [options] or ./TEOBResumS.x -p [parfile_name]\n\n\
 Options:\n\

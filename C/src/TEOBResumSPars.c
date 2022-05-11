@@ -675,8 +675,9 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
   while((opt=getopt(argc, argv, args)) != -1){
     switch(opt){
       case 'h':
-        PRSECTN(TEOBResumS_Info);
+        if (!VERBOSE) PRSECTN(TEOBResumS_Info);
         printf(TEOBResumS_Usage);
+        exit(0);
         break;
       case 'g':
         eobp->use_geometric_units = YESNO2INT(optarg);
