@@ -251,7 +251,7 @@ double Taylorseries(double x, double *a, int N){
 /** polynomial evaluation */
 double Taylorseries(double x, double *a, int N){
   double sum = a[N];
-  for (int n=N-1; n-- > 0;) {
+  for (int n=N-1; n>=0; n--) {
     sum *= x;
     sum += a[n];
   } 
