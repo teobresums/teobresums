@@ -1900,16 +1900,16 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
       
   if (!(usespins)) {
 
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
-    modeon[0] = 1;
+    modeon[0]  = 1;
+    modeon[1]  = 1;
+    modeon[2]  = 1;
+    modeon[3]  = 1;
+    modeon[4]  = 1;
+    modeon[5]  = 1;
+    modeon[6]  = 1;
+    modeon[7]  = 1;
+    modeon[8]  = 1;
+    modeon[13] = 1;
     
     // Non spinning peak fits
     /* (l=2, m=1)*/
