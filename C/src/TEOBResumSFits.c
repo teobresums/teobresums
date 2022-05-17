@@ -1748,7 +1748,7 @@ double PrecessingRemnantSpin(Dynamics *dyn)
 /** QNM fits for the 22 mode for spinning systems */
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 		     double Mbh, double abh,  
-		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+		     double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 		     double *sigmar, double *sigmai)
 {
 
@@ -1781,8 +1781,8 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   for (int k=0; k<KMAX; k++) {
     modeon[k] = 0; /* off */
     sigmar[k] = sigmai[k] = 0.;
-    a1[k] = a2[k] = a3[k] = a4[k] = 0.;
-    b1[k] = b2[k] = b3[k] = b4[k] = 0.;
+    ca1[k] = ca2[k] = ca3[k] = ca4[k] = 0.;
+    cb1[k] = cb2[k] = cb3[k] = cb4[k] = 0.;
   }
 
   if (!(usespins)) {
@@ -1927,14 +1927,14 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     if (modeon[k]) {
       c2A[k] = 0.5*alpha21[k];
       double cosh_c3A = cosh(c3A[k]);  
-      a1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
-      a2[k] = c2A[k];
-      a3[k] = c3A[k];
-      a4[k] = Amrg[k] - a1[k] * tanh(c3A[k]);
-      b2[k] = alpha21[k];
-      b3[k] = c3phi[k];
-      b4[k] = c4phi[k];
-      b1[k] = Domg[k] * (1+c3phi[k]+c4phi[k]) / (b2[k]*(c3phi[k] + 2.*c4phi[k]));
+      ca1[k] = Amrg[k] * alpha1[k] * cosh_c3A * cosh_c3A / c2A[k];
+      ca2[k] = c2A[k];
+      ca3[k] = c3A[k];
+      ca4[k] = Amrg[k] - ca1[k] * tanh(c3A[k]);
+      cb2[k] = alpha21[k];
+      cb3[k] = c3phi[k];
+      cb4[k] = c4phi[k];
+      cb1[k] = Domg[k] * (1+c3phi[k]+c4phi[k]) / (cb2[k]*(c3phi[k] + 2.*c4phi[k]));
     }
   }
   
@@ -1943,7 +1943,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
 /** QNM fits for higher modes - arXiv:2001.09082 */
 void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 			double Mbh, double abh,  
-			double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 			double *sigmar, double *sigmai)
 {
   const double a12   = X1*chi1 - X2*chi2;
@@ -1985,8 +1985,8 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   for (int k=0; k<KMAX; k++) {
     modeon[k] = 0; /* off */
     sigmar[k] = sigmai[k] = 0.;
-    a1[k] = a2[k] = a3[k] = a4[k] = 0.;
-    b1[k] = b2[k] = b3[k] = b4[k] = 0.;
+    ca1[k] = ca2[k] = ca3[k] = ca4[k] = 0.;
+    cb1[k] = cb2[k] = cb3[k] = cb4[k] = 0.;
   }
   
   /* Defining the test-particle data used in the fits of the peak. */
@@ -2776,14 +2776,14 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     if (modeon[k]) {
       c2A[k] = 0.5*alpha21[k];
       double cosh_c3A= cosh(c3A[k]);  
-      a1[k] = Amrg[k]*alpha1[k]*cosh_c3A*cosh_c3A/c2A[k];
-      a2[k] = c2A[k];
-      a3[k] = c3A[k];
-      a4[k] = Amrg[k] - a1[k]*tanh(c3A[k]);
-      b2[k] = alpha21[k];
-      b3[k] = c3phi[k];
-      b4[k] = c4phi[k];
-      b1[k] = Domg[k]*(1+c3phi[k]+c4phi[k])/(b2[k]*(c3phi[k] + 2*c4phi[k]));
+      ca1[k] = Amrg[k]*alpha1[k]*cosh_c3A*cosh_c3A/c2A[k];
+      ca2[k] = c2A[k];
+      ca3[k] = c3A[k];
+      ca4[k] = Amrg[k] - ca1[k]*tanh(c3A[k]);
+      cb2[k] = alpha21[k];
+      cb3[k] = c3phi[k];
+      cb4[k] = c4phi[k];
+      cb1[k] = Domg[k]*(1+c3phi[k]+c4phi[k])/(cb2[k]*(c3phi[k] + 2*c4phi[k]));
     }
   }
   

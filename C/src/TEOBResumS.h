@@ -830,11 +830,11 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
 double PrecessingRemnantSpin(Dynamics *dyn);
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK,
 		     double Mbh, double abh,  
-		     double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+		     double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 		     double *sigmar, double *sigmai);
 void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi2, double aK,
 			double Mbh, double abh,  
-			double *a1, double *a2, double *a3, double *a4, double *b1, double *b2, double *b3, double *b4, 
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 			double *sigmar, double *sigmai);
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
