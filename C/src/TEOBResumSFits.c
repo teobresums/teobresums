@@ -2454,10 +2454,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 
     //Aorb     = ATP[13]*sqrt(1-4*nu)*(1-2*nu)*(1 - 0.29628*nu + 6.4207*nu2);
     //Aorb     = ATP[13]*sqrt(1-4*nu)*(1-2*nu)*(11.2008774621215608 *nu2 -0.9750925916632546 *nu + 1);
-    //Aspin    = (0.04360530/(1 + b1*nu + b2*nu2)*a12)/(1 - 0.5769451/(1+b3*nu+b4*nu2)*a12);
     Aorb     = ATP[13]*sqrt(1-4*nu)*(1-2*nu)*(9.9813227734275785*nu2 -0.6458814376485329*nu + 0.9823996027545479);
-    //Amrg[13] = Aorb + Aspin;
-    Amrg[13] = Aorb;
+    Aspin    = (0.04360530/(1 + b1*nu + b2*nu2)*a12)/(1 - 0.5769451/(1+b3*nu+b4*nu2)*a12);
+    Amrg[13] = Aorb + Aspin;
       
     // c3A
     /* (l=2, m=2)*/
@@ -2494,7 +2493,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b6 = +19.271346;
     //c3A[k55] = b1 + b2*nu + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
     //c3A[k55] = 9.1187519178640084 *nu +  -0.5970347579708830 + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
-    c3A[k55] = 9.1187519178640084*nu  - 0.5970347579708830;
+    c3A[k55] = 9.1187519178640084*nu  - 0.5970347579708830 + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
     
     // c3phi
     /* (l=2, m=2)*/
@@ -2533,7 +2532,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b6 = +19.696954;
     //c3phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
     //c3phi[k55] = 373.312597*nu2 -59.69284 *nu+ 4.226238 + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
-    c3phi[k55] = 373.3125969012880319*nu2 - 59.6928356312470854*nu + 4.2262379605181648;
+    c3phi[k55] = 373.3125969012880319*nu2 - 59.6928356312470854*nu + 4.2262379605181648 + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
     
     // c4phi
     /* (l=2, m=2)*/
@@ -2568,7 +2567,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     b6 = +36.882645;
     //c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
     //c4phi[k55] = 14.9111373110275380 *nu  +  1.3639723340485870+ (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
-    c4phi[k55] = 14.9111373110275380*nu + 1.3639723340485870;
+    c4phi[k55] = 14.9111373110275380*nu + 1.3639723340485870 + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
     
     // These fits are taken from the testparticle limit and approximate the spinning case
     /* (l=3, m=1)*/
