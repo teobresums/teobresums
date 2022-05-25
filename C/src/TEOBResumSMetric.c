@@ -738,13 +738,19 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
 
   /* D potential and derivative with respect to r */
   double Dp = 1.0 + 6.*nu*uc2 - 2.*(3.0*nu-26.0)*nu*uc3; // Pade' resummation of D
-  double D  = 1./Dp;
-  double dD = 6.*uc2*(2.*nu*uc-(3.*nu-26.)*nu*uc2)*D*D;
+  double dDp_duc   = 6.*nu*(2.*uc - (3.0*nu-26.0)*uc2);
+  
+  double D        = 1./Dp;
+  double dD_duc   = -SQ(D)*dDp_duc;
+
+  double dD  = -uc2*drc*dD_duc;
 
   /* B potential and derivative with respect to r */
-  *B   = r*r*uc2*D/(*A);
-  *dB  = (dD*(*A) - D*(*dA))/((*A)*(*A));
-
+  double fact   = r*r*uc2;
+  double dfact  = 2.*r*uc2 - 2.*r*r*uc3*drc;
+  
+  *B   = fact*D/(*A);
+  *dB  = (*B)*(dfact/fact + dD/D - (*dA)/(*A));
 }
 
 
