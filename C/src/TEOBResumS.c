@@ -62,7 +62,8 @@ int main (int argc, char* argv[])
   Waveform_lm *hmodes = NULL; /* modes */
   Waveform_lm *hTmodes = NULL; /* twisted modes, m>0*/
   Waveform_lm *hTmmodes = NULL; /* twisted modes, m<0 */
-  
+  Waveform_lm *hT0modes = NULL; /* twisted modes, m<0 */
+
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
 
@@ -111,7 +112,7 @@ int main (int argc, char* argv[])
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
   int status = EOBRun(&hpc, &hfpc, 
 		      &hmodes, &hfmodes,&dynf,
-		      &hTmodes, &hTmmodes,
+		      &hTmodes, &hTmmodes, &hT0modes,
           &hfTmodes,
 		      dc, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
@@ -121,6 +122,7 @@ int main (int argc, char* argv[])
   Waveform_lm_free (hmodes);
   Waveform_lm_free (hTmodes);
   Waveform_lm_free (hTmmodes);
+  Waveform_lm_free (hT0modes);
   WaveformFD_lm_free (hfmodes);
   Dynamics_free (dynf);
   WaveformFD_lm_free (hfTmodes);
@@ -136,7 +138,7 @@ int main (int argc, char* argv[])
 
 int EOBRun(Waveform **hpc, WaveformFD **hfpc, 
 	   Waveform_lm **hmodes, WaveformFD_lm **hfmodes, Dynamics **dynf,
-	   Waveform_lm **hTmodes,  Waveform_lm **hTmmodes,
+	   Waveform_lm **hTmodes,  Waveform_lm **hTmmodes, Waveform_lm **hT0modes,
      WaveformFD_lm **hfTmodes,
 	   int default_choice, int firstcall)
 {
@@ -1181,6 +1183,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   *hfmodes = hflm; /* do not free these! */
   *hTmodes = hTlm; /* do not free these! */
   *hTmmodes = hTlm_neg; /* do not free these! */
+  *hT0modes = hTl0;
   *hfTmodes = hfTlm; /* do not free these! */
   *dynf = dyn;     /* do not free these! */
 
@@ -1192,7 +1195,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Dynamics_free (dyn);       */
   if (use_spins == MODE_SPINS_GENERIC)
     DynamicsSpin_free (spindyn);  
-    Waveform_lm_free(hTl0);
 
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);

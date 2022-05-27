@@ -570,7 +570,14 @@ void eob_set_params(int default_choice, int firstcall)
        reset sample rate using dt
     */
     if (VERBOSE) printf("Assume geometric units for pars values\n");
-    EOBPars->r0 = pow(fmin*Pi, -2./3.);
+    
+    /* set r0 based on fmin if it is not specified, else set fmin according to r0 */
+    if (EOBPars->r0 == 0.){
+      EOBPars->r0 = pow(fmin*Pi, -2./3.);    
+    } else {
+      EOBPars->initial_frequency = pow(EOBPars->r0, -1.5)/Pi;
+    }
+    
     EOBPars->srate = 1./dt;
     EOBPars->distance = 1.;
     EOBPars->M = 1.;
@@ -580,12 +587,19 @@ void eob_set_params(int default_choice, int firstcall)
        compute r0 from the initial GW frequency in Hz 
     */
     if (VERBOSE) printf("Assume physical units for pars values\n");
+    
+    /* set r0 based on fmin if it is not specified, else set fmin according to r0 */
+    if (EOBPars->r0 == 0.){
+      EOBPars->r0 = radius0(M, fmin);
+    } else {
+      EOBPars->initial_frequency = pow(EOBPars->r0, -1.5)/(Pi*M*MSUN_S);
+    }
+    
     /* Set interpolation dt */
     dt = 1./EOBPars->srate_interp;
     dt = time_units_conversion(M, dt);
     EOBPars->dt_interp = dt;
     /* Set dt */
-    EOBPars->r0 = radius0(M, fmin);
     dt = 1./EOBPars->srate;
     dt = time_units_conversion(M, dt);
     EOBPars->dt = dt;
