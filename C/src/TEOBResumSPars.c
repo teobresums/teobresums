@@ -151,6 +151,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   /* EOB Settings */
   
   eobp->ecc_freq=ECCFREQ_AVERAGE; // "PERIASTRON", "AVERAGE", "APASTRON"
+  eobp->ecc_ics =ECCICS_1PA; // "0PA", "1PA"
 
   eobp->postadiabatic_dynamics=1;
   eobp->postadiabatic_dynamics_N=8; // post-adiabatic order
@@ -270,7 +271,6 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   
   eobp->use_tidal= TIDES_OFF ; // index for tidal modus
   eobp->use_tidal_gravitomagnetic= TIDES_GM_OFF ; // index for gravitomagnetic tide
-  eobp->ecc_freq = ECCFREQ_AVERAGE;
     
   if (choose == DEFAULT_PARS_BBH) {
 
@@ -410,6 +410,17 @@ void EOBParameters_set_from_db (EOBParameters *eobp)
     eobp->ecc_freq = ECCFREQ_AVERAGE;
     if (VERBOSE) printf("ecc_freq '%s' undefined, set to '%s'\n",
 			par_get_s("ecc_freq"), ecc_freq_opt[eobp->ecc_freq]);
+  }
+
+  for (eobp->ecc_ics=0; eobp->ecc_ics<ECCICS_NOPT; eobp->ecc_ics++) {
+    if (STREQUAL(par_get_s("ecc_ics"), ecc_ics_opt[eobp->ecc_ics])) {
+      break;
+    }
+  }
+  if (eobp->ecc_ics == ECCICS_NOPT) {
+    eobp->ecc_ics = ECCICS_1PA;
+    if (VERBOSE) printf("ecc_ics '%s' undefined, set to '%s'\n",
+			par_get_s("ecc_ics"), ecc_ics_opt[eobp->ecc_ics]);
   }
 
   for (eobp->use_flm=0; eobp->use_flm<USEFLM_NOPT; eobp->use_flm++) {
@@ -651,6 +662,7 @@ void par_db_from_EOBPar (EOBParameters *EOBPars)
   par_add_s("postadiabatic_dynamics_stop",int2YESNO[EOBPars->postadiabatic_dynamics_stop]); // stop after post-adiabatic dynamics //FIXME: make bool
 
   par_add_s("ecc_freq", ecc_freq_opt[EOBPars->ecc_freq]); // "PERIASTRON", "AVERAGE", "APASTRON"
+  par_add_s("ecc_ics", ecc_ics_opt[EOBPars->ecc_ics]); // "0PA", "1PA"
   par_add_s("centrifugal_radius", centrifugal_radius_opt[EOBPars->centrifugal_radius]); // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   par_add_s("use_flm", use_flm_opt[EOBPars->use_flm]); // "SSLO", "SSNLO", "HM"
   par_add_b("compute_LR", EOBPars->compute_LR); // calculate LR ?
@@ -808,6 +820,7 @@ void par_db_default ()
   par_add_arrayi("use_mode_lm", indexeslm, 1); // indexes of multipoles to use in h+,hx (if [-1], use all)
 
   par_add_s("ecc_freq", "average"); // "apastron", "average", "periastron"
+  par_add_s("ecc_ics", "1PA"); // "0PA", "1PA"
 
   par_add_s("postadiabatic_dynamics", "no");
   par_add_i("postadiabatic_dynamics_N", 8); // post-adiabatic order

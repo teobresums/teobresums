@@ -266,6 +266,14 @@ enum{
 };
 static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron"};
 
+/** List of options for eccentric initial conditions */
+enum{
+  ECCICS_0PA,
+  ECCICS_1PA,
+  ECCICS_NOPT
+};
+static const char* const ecc_ics_opt[] = {"0PA", "1PA", "undefined"};
+
 /** List of options for flm amplitudes */
 enum{
   USEFLM_SSLO,
@@ -496,7 +504,7 @@ typedef struct tagEOBParameters
 
   int *use_mode_lm, use_mode_lm_size;
 
-  int ecc_freq;
+  int ecc_freq, ecc_ics;
   
   int postadiabatic_dynamics, postadiabatic_dynamics_stop;
   int postadiabatic_dynamics_N;

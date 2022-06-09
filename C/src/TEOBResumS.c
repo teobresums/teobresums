@@ -201,10 +201,20 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const double f0 = EOBPars->initial_frequency/time_unit_fact;
   double r0;
   if (r_hyp != 0.) {
+    // hyp case
     r0 = r_hyp;
   } else if (ecc != 0.) {
-    r0 = eob_dyn_r0_ecc(f0, dyn);
+    // eccentric case
+    if(EOBPars->ecc_ics == ECCICS_1PA)
+      r0 = eob_dyn_r0_ecc(f0, dyn);
+    else if (EOBPars->ecc_ics == ECCICS_0PA){
+      if(ecc > 1e-4)
+        r0 = eob_dyn_r0_ecc(f0, dyn);
+      else
+        r0 = eob_dyn_r0_Kepler(f0);  // fall back to QC radius
+    }
   } else {
+    // QC case
     r0 = eob_dyn_r0_Kepler(f0);
   }
   //r0 = eob_dyn_r0_eob(f0, dyn); /* TODO: Radius from EOB equations. This is what should be used. */
@@ -392,17 +402,31 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /** Compute the initial conditions */
     if (r_hyp != 0.) {
-      //SB 08/2020 workaround 
-      //FIXME!!!!
+      // hyp case
+      // SB 08/2020 workaround 
+      // FIXME!!!!
       if (eob_dyn_ic_hyp(r_hyp, H_hyp, j_hyp, dyn, dyn->y0)) {
-	status = 1;
-	goto EXIT_POINT;
+	      status = 1;
+	      goto EXIT_POINT;
       }
+
     } else if (ecc !=0) {
-      eob_dyn_ic_ecc_PA(r0, dyn, dyn->y0);
+      // eccentric case
+      if(EOBPars->ecc_ics == ECCICS_1PA)
+        eob_dyn_ic_ecc_PA(r0, dyn, dyn->y0);   // 1PA ICs
+      else if (EOBPars->ecc_ics == ECCICS_0PA){
+        if(ecc > 1e-4)
+          eob_dyn_ic_ecc(r0, dyn, dyn->y0);    // adiabatic ICs
+        else
+          eob_dyn_ic_s(r0, dyn, dyn->y0);      // Quasi-circular ICs ("nospin" option is deprecated)
+      } else
+        errorexit("Unrecognized eccentric_ic flag.\n");
+
     } else if (use_spins) {
+      // quasi-circular ICs with spins
       eob_dyn_ic_s(r0, dyn, dyn->y0);
     } else {
+      // quasi-circular ICs without spins (deprecated)
       eob_dyn_ic(r0, dyn, dyn->y0);
     }
     
@@ -866,11 +890,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       /* For hyperbolic orbits, find time when r = 10 */
       if (r_hyp != 0.) {
-	for (int j = dyn->size-1; j-- ; ) {
-	  tmin = dyn->time[j];
-	  if (dyn->data[EOB_RAD][j] > 10.)
-	    break;
-	}
+	      for (int j = dyn->size-1; j-- ; ) {
+	        tmin = dyn->time[j];
+	        if (dyn->data[EOB_RAD][j] > 10.)
+	          break;
+  	    }
       }
       
       /* The following routines alloc memory for the *_mrg ptrs */
@@ -939,8 +963,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	
 	/* Free the *_mrg buffers 
 	   Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
-	Waveform_lm_free(hlm_mrg);
-	Dynamics_free(dyn_mrg);
+      Waveform_lm_free(hlm_mrg);
+      Dynamics_free(dyn_mrg);
 	
       } else {
 	
@@ -954,11 +978,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
 #if (DEBUG) 
       if (EOBPars->output_nqc)  {
-     	Waveform_lm_output (hlm_nqc);
-     	Waveform_lm_output (hlm_mrg);
+        Waveform_lm_output (hlm_nqc);
+        Waveform_lm_output (hlm_mrg);
       }
       if (EOBPars->output_multipoles) 
-     	Waveform_lm_output (hlm);
+     	  Waveform_lm_output (hlm);
 #endif
       
       Waveform_lm_free (hlm_nqc);
@@ -975,7 +999,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       const int size_ringdown = EOBPars->ringdown_extend_array;    
       double dt_rngdn = dt;
       if (merger_interp)
-	dt_rngdn = EOBPars->dt_merger_interp; 
+	      dt_rngdn = EOBPars->dt_merger_interp; 
       
 #if (DEBUG) 
       printf("Push memory for ringdown (%d + %d):",size,EOBPars->ringdown_extend_array);
