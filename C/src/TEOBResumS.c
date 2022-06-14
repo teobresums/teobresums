@@ -842,7 +842,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /** Precessing BNS + EOB flux: 
     TODO: integrate the PN dynamics with the *exact* EOB flux and compute the final state 
   */
-  if(use_tidal && use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
+  if(EOBPars->binary == BINARY_BNS && use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
     if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->initial_frequency/time_unit_fact))
       errorexit("problem during spin dynamics");
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
