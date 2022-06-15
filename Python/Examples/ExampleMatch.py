@@ -52,16 +52,16 @@ if __name__ == "__main__":
     pars = {
         'M'                  : M1+M2,
         'q'                  : M1/M2,
-        'Lambda1'            : 0.,
-        'Lambda2'            : 0.,     
+        'LambdaAl2'          : 0.,
+        'LambdaBl2'          : 0.,     
         'chi1'               : 0.,
         'chi2'               : 0.,
         'domain'             : 0,      # TD
         'use_mode_lm'        : k,      # List of modes to use/output through EOBRunPy
         'srate_interp'       : 4096.,  # srate at which to interpolate. Default = 4096.
-        'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
+        'use_geometric_units': "no",  # Output quantities in geometric units. Default = 1
         'initial_frequency'  : 35.,    # in Hz if use_geometric_units = 0, else in geometric units
-        'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+        'interp_uniform_grid': "yes",  # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
         'distance': Deff,
         'inclination':iota,
         
