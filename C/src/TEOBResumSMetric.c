@@ -394,7 +394,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       dA_u -= kapT3_u*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
       dA_u -= kapT3*u8*(bar_alph3_1_u*u + bar_alph3_2_u*u2);
       
-      dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
+      dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) + kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
     }
     
   } else if (EOBPars->use_tidal==TIDES_TEOBRESUM3) { 
@@ -506,9 +506,9 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       /* Adding missing derivative terms from ell=4,3,2 */
       dA_u -= kapT4_u*u10;
       
-      dA_u -= kapA3_u*u8*A3hatA - kapB3_u*u8*A3hatB;
+      dA_u -= kapA3_u*u8*A3hatA + kapB3_u*u8*A3hatB;
       
-      dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
+      dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) + kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
     }
     
   } // EOBPars->use_tidal

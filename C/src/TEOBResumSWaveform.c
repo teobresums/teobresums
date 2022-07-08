@@ -5111,7 +5111,7 @@ void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, d
 double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, double XB)
 {
   const double Omega2 = gsl_pow_int(x,3);
-  const double y2 = Omega2/SQ(bomgf);
+  const double y2 = SQ(bomgf)/Omega2;
   return ( y2 * (-1. + alpha*( 1 + 6.*XB/y2 ) )/( 3.*(1. + 2*XB) ) ); 
   /* return ( (-1. + alpha)*SQ(bomgf) + 6.*alpha*XB*Omega2 )/( (1. + 2*XB)*(3.*Omega2) ); */
 }
