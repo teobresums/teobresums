@@ -7,7 +7,7 @@ pipelines:
                 name: Build C & Run
                 script:
                 - apt-get update -y
-                - apt-get install -y libconfig-dev libgsl-dev
+                - apt-get install -y libgsl-dev
                 - cd C && make #build C
                 - ./TEOBResumS.x -p par/GW150914.par
                 - ./TEOBResumS.x -p par/GW170817.par
@@ -20,7 +20,7 @@ pipelines:
                 name: Build EOBRunPy
                 script:
                 - apt-get update -y
-                - apt-get install -y libconfig-dev libgsl-dev python3-pip
+                - apt-get install -y libgsl-dev python3-pip
                 - pip3 install --upgrade pip
                 - pip3 install numpy
                 - cd Python && python3 setup.py install
@@ -35,7 +35,7 @@ pipelines:
                 trigger: manual
                 script:
                 - apt-get update -y
-                - apt-get install -y libconfig-dev libgsl-dev valgrind
+                - apt-get install -y libgsl-dev valgrind
                 - cd C && make
                 - valgrind ./TEOBResumS.x -p par/GW150914.par
                 
@@ -45,9 +45,23 @@ pipelines:
                 script:
                 - export HOME=$PWD
                 - apt-get update -y
-                - apt-get install -y libconfig-dev libgsl-dev python3-pip
+                - apt-get install -y libgsl-dev python3-pip
                 - pip3 install --upgrade pip
                 - pip3 install numpy
                 - cd C && make #build C
                 - export TEOBRESUMS=$PWD
                 - cd $HOME/Utils/Benchmark && make
+
+            - step:
+                name: 'Deploy to Test'
+                deployment: test
+                trigger: manual
+                script:
+                - cd Python
+                - apt-get update -y
+                - apt-get install -y libgsl-dev python3-pip python3.8-venv
+                - pip3 install --upgrade pip
+                - pip3 install build
+                - python3 -m build
+                - python3 -m pip install --upgrade twine
+                # upload to (Test) PyPi
