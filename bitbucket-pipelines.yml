@@ -6,11 +6,11 @@ pipelines:
             - step:
                 name: Build C & Run
                 script:
-                - apt-get update -y
-                - apt-get install -y libgsl-dev
-                - cd C && make #build C
-                - ./TEOBResumS.x -p par/GW150914.par
-                - ./TEOBResumS.x -p par/GW170817.par
+                  - apt-get update -y
+                  - apt-get install -y libgsl-dev
+                  - cd C && make #build C
+                  - ./TEOBResumS.x -p par/GW150914.par
+                  - ./TEOBResumS.x -p par/GW170817.par
                 condition:
                     changesets:
                         includePaths:
@@ -19,11 +19,11 @@ pipelines:
             - step:
                 name: Build EOBRunPy
                 script:
-                - apt-get update -y
-                - apt-get install -y libgsl-dev python3-pip
-                - pip3 install --upgrade pip
-                - pip3 install numpy
-                - cd Python && python3 setup.py install
+                  - apt-get update -y
+                  - apt-get install -y libgsl-dev python3-pip
+                  - pip3 install --upgrade pip
+                  - pip3 install numpy
+                  - cd Python && python3 setup.py install
                 condition:
                     changesets:
                         includePaths:
@@ -34,34 +34,34 @@ pipelines:
                 name: Memory Check
                 trigger: manual
                 script:
-                - apt-get update -y
-                - apt-get install -y libgsl-dev valgrind
-                - cd C && make
-                - valgrind ./TEOBResumS.x -p par/GW150914.par
+                  - apt-get update -y
+                  - apt-get install -y libgsl-dev valgrind
+                  - cd C && make
+                  - valgrind ./TEOBResumS.x -p par/GW150914.par
                 
             - step:
                 name: Run Benchmarks
                 trigger: manual
                 script:
-                - export HOME=$PWD
-                - apt-get update -y
-                - apt-get install -y libgsl-dev python3-pip
-                - pip3 install --upgrade pip
-                - pip3 install numpy
-                - cd C && make #build C
-                - export TEOBRESUMS=$PWD
-                - cd $HOME/Utils/Benchmark && make
+                  - export HOME=$PWD
+                  - apt-get update -y
+                  - apt-get install -y libgsl-dev python3-pip
+                  - pip3 install --upgrade pip
+                  - pip3 install numpy
+                  - cd C && make #build C
+                  - export TEOBRESUMS=$PWD
+                  - cd $HOME/Utils/Benchmark && make
 
             - step:
                 name: 'Deploy to Test'
                 deployment: test
                 trigger: manual
                 script:
-                - cd Python
-                - apt-get update -y
-                - apt-get install -y libgsl-dev python3-pip python3.8-venv
-                - pip3 install --upgrade pip
-                - pip3 install build
-                - python3 -m build
-                - python3 -m pip install --upgrade twine
-                - python3 -m twine upload --repository testpypi dist/*.tar.gz -u $PYPI_USERNAME -p $PYPI_PASSWORD
+                  - cd Python
+                  - apt-get update -y
+                  - apt-get install -y libgsl-dev python3-pip python3.8-venv
+                  - pip3 install --upgrade pip
+                  - pip3 install build
+                  - python3 -m build
+                  - python3 -m pip install --upgrade twine
+                  - python3 -m twine upload --repository testpypi dist/*.tar.gz -u $PYPI_USERNAME -p $PYPI_PASSWORD
