@@ -9,6 +9,12 @@ To install the python TEOBResumS extension run
 pip install TEOBResumSPy
 ```
 
+Note: to install from Test PyPI, use 
+```
+pip install --extra-index-url https://testpypi.python.org/pypi TEOBResumSPy
+```
+instead
+
 ### From source
 
 If you want to build the extension from source, do

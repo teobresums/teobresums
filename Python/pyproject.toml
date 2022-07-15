@@ -7,14 +7,8 @@ py-modules = []
 
 [project]
 name="TEOBResumSPy"
-version='3.0.4'
-authors =[
-            {name="S. Akcay"},
-            {name="S. Bernuzzi"},
-            {name="R. Gamba", email="rossella.gamba@uni-jena.de"}, 
-            {name="A. Nagar"}, 
-            {name="P. Rettegno"},
-          ]
+version = '3.0.5'
+authors =[{name="The TEOBResumS team", email="rossella.gamba@uni-jena.de"}]
 description='Python wrapper of TEOBResumS, an Effective-One-Body model for generic coalescing binaries'
 classifiers = [
          "Programming Language :: Python :: 3",

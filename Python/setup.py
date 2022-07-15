@@ -5,8 +5,13 @@ $ python setup.py build_ext --inplace
 """
 
 from distutils.core import setup, Extension
-import numpy; import glob; import os; import shutil
+import numpy; import glob; import os; import re
 
+# Read version from pyproject.toml
+ini = open('pyproject.toml').read()
+vrs = r"^version = ['\"]([^'\"]*)['\"]"
+mo  = re.search(vrs, ini, re.M)
+version = mo.group(1)
 
 # Our module
 eob_sources = ['TEOBResumSWrap.c']
@@ -40,8 +45,8 @@ pyprofit_ext = Extension('EOBRun_module',
                        )
 
 setup(  name='TEOBResumSPy',
-        version='3.0.4',
+        version=version,
         description='Python wrapper of TEOBResumS, an Effective-One-Body model for generic coalescing binaries',
-        author = 'S. Akcay, S. Bernuzzi, R. Gamba, A. Nagar, P. Rettegno ',
+        author = 'The TEOBResumS team',
         url = 'https://bitbucket.org/eob_ihes/teobresums/src/master/',
         ext_modules=[pyprofit_ext],)

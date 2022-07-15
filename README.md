@@ -49,6 +49,13 @@ $ python setup.py build_ext --inplace
 To build the module in your current environment do:
 
 ```
+$ pip install TEOBResumSPy
+```
+
+or
+
+
+```
 $ cd /PATH/TO/teobresums/Python/
 $ python setup.py install
 ```
