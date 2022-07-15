@@ -7,7 +7,7 @@ py-modules = []
 
 [project]
 name="TEOBResumSPy"
-version='3.0.3'
+version='3.0.4'
 authors =[
             {name="S. Akcay"},
             {name="S. Bernuzzi"},

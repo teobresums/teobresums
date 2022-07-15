@@ -40,7 +40,7 @@ pyprofit_ext = Extension('EOBRun_module',
                        )
 
 setup(  name='TEOBResumSPy',
-        version='3.0.3',
+        version='3.0.4',
         description='Python wrapper of TEOBResumS, an Effective-One-Body model for generic coalescing binaries',
         author = 'S. Akcay, S. Bernuzzi, R. Gamba, A. Nagar, P. Rettegno ',
         url = 'https://bitbucket.org/eob_ihes/teobresums/src/master/',

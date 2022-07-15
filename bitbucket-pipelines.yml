@@ -64,4 +64,4 @@ pipelines:
                 - pip3 install build
                 - python3 -m build
                 - python3 -m pip install --upgrade twine
-                # upload to (Test) PyPi
+                - python3 -m twine upload --repository testpypi dist/*.tar.gz -u $PYPI_USERNAME -p $PYPI_PASSWORD
