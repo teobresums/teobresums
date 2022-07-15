@@ -12,7 +12,7 @@ authors =[{name="The TEOBResumS team", email="rossella.gamba@uni-jena.de"}]
 description='Python wrapper of TEOBResumS, an Effective-One-Body model for generic coalescing binaries'
 classifiers = [
          "Programming Language :: Python :: 3",
-         "License :: OSI Approved :: MIT License",
+         "License :: OSI Approved :: GNU General Public License v3",
          "Operating System :: OS Independent",
 ]
 readme="PyREADME.md"
@@ -21,5 +21,5 @@ readme="PyREADME.md"
 "Homepage"="https://bitbucket.org/eob_ihes/teobresums/src/master/"
 "Bug Tracker"="https://bitbucket.org/eob_ihes/teobresums/issues?status=new&status=open"
 "Wiki"="https://bitbucket.org/eob_ihes/teobresums/wiki/Conventions,%20parameters%20and%20output"
-"Mailing List"="https://lserv.uni-jena.de/mailman/listinfo/teobresums"
+"Mailing List"="https://bitbucket.org/eob_ihes/teobresums/wiki/Home"
 
