@@ -6,7 +6,7 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
-#include "../C/src/TEOBResumS.h"
+#include "lib/TEOBResumS.h"
 
 /*
  * Utilities

@@ -1,0 +1,3 @@
+include lib/TEOBResumS.h
+include lib/*c
+include PyREADME.md
