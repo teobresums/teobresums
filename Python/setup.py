@@ -40,9 +40,11 @@ pyprofit_ext = Extension('EOBRun_module',
                          extra_compile_args=["-w", "-std=c99", "-DDEBUG=0", "-DVERBOSE=0"]#, "-fcommon"
                        )
 
-setup(  name='TEOBResumSPy',
+setup(  name='teobresums',
         version=version,
         description='TEOBResumS: Effective-One-Body model for generic compact binary coalescences',
         author = 'The TEOBResumS team',
         url = 'https://bitbucket.org/eob_ihes/teobresums/src/master/',
-        ext_modules=[pyprofit_ext],)
+        ext_modules=[pyprofit_ext],
+        install_requires=['setuptools>42', 'numpy>=1.18.0'],
+    )

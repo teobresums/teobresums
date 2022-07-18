@@ -65,3 +65,17 @@ pipelines:
                   - python3 -m build
                   - python3 -m pip install --upgrade twine
                   - python3 -m twine upload --repository testpypi dist/*.tar.gz -u $PYPI_USERNAME -p $PYPI_PASSWORD
+
+            - step:
+                name: 'Deploy to Production'
+                deployment: production
+                trigger: manual
+                script:
+                  - cd Python
+                  - apt-get update -y
+                  - apt-get install -y libgsl-dev python3-pip python3.8-venv
+                  - pip3 install --upgrade pip
+                  - pip3 install build
+                  - python3 -m build
+                  - python3 -m pip install --upgrade twine
+                  - python3 -m twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD
