@@ -2,16 +2,16 @@
 
 
 ## Installation
-### pip
+### PyPI
 To install the python TEOBResumS extension run
 
 ```
-pip install TEOBResumSPy
+pip install teobresums
 ```
 
 Note: to install from Test PyPI, use 
 ```
-pip install --extra-index-url https://testpypi.python.org/pypi TEOBResumSPy
+pip install --extra-index-url https://testpypi.python.org/pypi teobresums
 ```
 instead
 

@@ -58,6 +58,19 @@ $ make
 
 ## Usage
 
+### Python extension
+
+```
+$ python
+>>> import EOBRun_module
+```
+
+Example scripts for using the python module can be found in `Python/Examples/`.
+
+If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS` python module is available in `PyCBC/` and should be automatically detected by `PyCBC`; 
+see `PyCBC/test.py`.
+
+### C executable
 Run the executable:
 
 ```
@@ -66,11 +79,6 @@ $ ./TEOBResumS.x -p <parfile>
 ```
 
 Example parfiles can be found in the directory `C/par/`.
-
-Example scripts for using the python module can be instead found in `Python/Examples/`.
-
-If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS` python module is available in `PyCBC/` and should be automatically detected by `PyCBC`; 
-see `PyCBC/test.py`.
 
 ## References
 Main references:
