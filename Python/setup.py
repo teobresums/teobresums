@@ -17,12 +17,8 @@ version = mo.group(1)
 eob_sources = ['TEOBResumSWrap.c']
 
 # Sources
-if not os.path.isdir('lib'):
-  print("linking ../C/src into lib")
-  os.symlink('../C/src', 'lib')
-
-if not os.path.exists("PyREADME.md"):
-  os.symlink("../README.md", "PyREADME.md")
+if not os.path.isdir('lib')         : os.symlink('../C/src', 'lib')
+if not os.path.exists("PyREADME.md"): os.symlink("../README.md", "PyREADME.md")
 
 eob_sources += glob.glob('lib/*.c')
 
@@ -46,7 +42,7 @@ pyprofit_ext = Extension('EOBRun_module',
 
 setup(  name='TEOBResumSPy',
         version=version,
-        description='Python wrapper of TEOBResumS, an Effective-One-Body model for generic coalescing binaries',
+        description='TEOBResumS: Effective-One-Body model for generic compact binary coalescences',
         author = 'The TEOBResumS team',
         url = 'https://bitbucket.org/eob_ihes/teobresums/src/master/',
         ext_modules=[pyprofit_ext],)
