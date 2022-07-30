@@ -891,7 +891,7 @@ void eob_nqc_point_test(double Mbh, double c1A, double c2A, double c3A, double c
 double horizon_radius(const double nu);
 
 /* TEOBResumSDynamics.c */
-int (*p_eob_dyn_rhs)();
+extern int (*p_eob_dyn_rhs)(); /* defined in TEOBResumSPars.c */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *params);
 void eob_ham(double nu, double r, double pph, double prstar, double A, double dA,
 	     double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
@@ -918,7 +918,7 @@ int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO);
 double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz);
 double alpha_initial_condition(EOBParameters *eobp); 
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz);
-extern int (*p_eob_spin_dyn_rhs)(); // ptr to r.h.s. for spins routine
+extern int (*p_eob_spin_dyn_rhs)(); /* defined in TEOBResumSPars.c */
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_PN_abc(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d);
@@ -935,7 +935,7 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0, DynamicsSpin *spin);
 
 /* TEOBResumSInitialCondition.c */
-void (*eob_dyn_ic) ();
+extern void (*eob_dyn_ic)(); /* defined in TEOBResumSPars.c*/
 void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[]);
@@ -945,7 +945,7 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn);
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
 double eob_dyn_DHeff0(double x, void *params);
 double eob_dyn_r0_Kepler (double f0);
-double (*eob_dyn_r0_eob) ();
+extern double (*eob_dyn_r0_eob)(); /* defined in TEOBResumSPars.c*/
 double eob_dyn_r0_circ (double f0, Dynamics *dyn);
 double eob_dyn_r0_ecc (double f0, Dynamics *dyn);
 double eob_dyn_Omegaorb0(double r, void *params);
@@ -974,36 +974,36 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
 double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
-void (*eob_wav_hlm)();
+extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm);
 void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm);
 void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm);
-extern void (*eob_wav_deltalm)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_wav_deltalm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_hlmNewt_ecc(Dynamics *dyn,Waveform_lm_t *hlmNewt);
 void eob_wav_hlmNewt_ecc_sigmoid(Dynamics *dyn,Waveform_lm_t *hlmNewt);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
-extern void (*eob_wav_hlmNewt)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_wav_hlmNewt)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNewt_v1(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
-extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_Kerr(double x,double nu, double *rholm, double *flm);
-extern void (*eob_wav_flm_s)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_wav_flm_s)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
-void (*eob_wav_hlmNQC_find_a1a2a3)();
+extern void (*eob_wav_hlmNQC_find_a1a2a3)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
-extern void (*eob_wav_hlmNQC_find_a1a2a3_mrg)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_wav_hlmNQC_find_a1a2a3_mrg)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
@@ -1013,7 +1013,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
-extern void (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c */
 void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, double XB);

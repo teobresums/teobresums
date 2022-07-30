@@ -59,12 +59,17 @@ EOBParameters *EOBPars;
 /** Global vars for function pointers
     (extern in the header) */
 void (*eob_wav_hlmNewt)();
+void (*eob_wav_hlm)();
 void (*eob_wav_flm)();
 void (*eob_wav_flm_s)();
 void (*eob_wav_deltalm)();
+void (*eob_wav_hlmNQC_find_a1a2a3)();
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 void (*eob_wav_ringdown)();
 void (*eob_dyn_s_get_rc)();
+void (*eob_dyn_ic)();
+double (*eob_dyn_r0_eob)();
+int (*p_eob_dyn_rhs)();
 int (*p_eob_spin_dyn_rhs)();
 
 void EOBParameters_alloc (EOBParameters **eobp)
