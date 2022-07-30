@@ -29,6 +29,24 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "initial_frequency") != NULL ) { 
     EOBPars->initial_frequency = PyFloat_AsDouble(PyDict_GetItemString(dict, "initial_frequency"));
   }
+  if ( PyDict_GetItemString(dict, "ecc_freq") != NULL ) { 
+    EOBPars->ecc_freq = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ecc_freq"));
+  }
+  if ( PyDict_GetItemString(dict, "ecc_ics") != NULL ) { 
+    EOBPars->ecc_ics = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ecc_ics"));
+  }
+  if ( PyDict_GetItemString(dict, "ecc") != NULL ) {
+    EOBPars->ecc = PyFloat_AsDouble(PyDict_GetItemString(dict, "ecc"));
+  }
+  if ( PyDict_GetItemString(dict, "r_hyp") != NULL ) {
+    EOBPars->r_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "r_hyp"));
+  }
+  if ( PyDict_GetItemString(dict, "H_hyp") != NULL ) {
+    EOBPars->H_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "H_hyp"));
+  }
+  if ( PyDict_GetItemString(dict, "j_hyp") != NULL ) {
+    EOBPars->j_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "j_hyp"));
+  }
   if ( PyDict_GetItemString(dict, "use_geometric_units") != NULL ) { 
     EOBPars->use_geometric_units = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_geometric_units")));
   }
@@ -92,7 +110,22 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "ringdown_extend_array") != NULL ) { 
     EOBPars->ringdown_extend_array = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ringdown_extend_array"));
   }
-
+  if ( PyDict_GetItemString(dict, "compute_ringdown") != NULL ) { 
+    EOBPars->compute_ringdown = (int) PyLong_AsLong(PyDict_GetItemString(dict, "compute_ringdown"));
+  }
+  if ( PyDict_GetItemString(dict, "alpha_sigmoid_Newt") != NULL ) { 
+    EOBPars->alpha_sigmoid_Newt = PyFloat_AsDouble(PyDict_GetItemString(dict, "alpha_sigmoid_Newt"));
+  }  
+  if ( PyDict_GetItemString(dict, "delta_t0_sigmoid_Newt") != NULL ) { 
+    EOBPars->delta_t0_sigmoid_Newt = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_t0_sigmoid_Newt"));
+  }
+  if ( PyDict_GetItemString(dict, "alpha_sigmoid_NQC") != NULL ) { 
+    EOBPars->alpha_sigmoid_NQC = PyFloat_AsDouble(PyDict_GetItemString(dict, "alpha_sigmoid_NQC"));
+  }  
+  if ( PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC") != NULL ) { 
+    EOBPars->delta_t0_sigmoid_NQC = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC"));
+  }
+  
   /* Adiabatic tidal ell>2 parameters */
   if ( PyDict_GetItemString(dict, "LambdaAl3") != NULL )
     EOBPars->LambdaAl3 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaAl3"));

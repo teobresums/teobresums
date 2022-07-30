@@ -625,7 +625,7 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 
 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
-void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
+void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B)
 {
   const double nu    = EOBPars->nu;
   const double u     = 1./r;
@@ -661,21 +661,25 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   *d2A = 2.*dAtmp_u*u3 + d2Atmp_u*u4;
 
   /* D potential and derivative with respect to r */
-  const double Dp  = 1.0 + 6.*nu*u2 - 2.*(3.0*nu-26.0)*nu*u3; // Pade' resummation of D
-  const double D   = 1./Dp;
-  const double dD  = 6.*u2*(2.*nu*u-(3.*nu-26.)*nu*u2)*D*D;
-
-  /* B potential and derivative with respect to r */
-  Btmp    += D/(Atmp);
-  dBtmp_r += (dD*(Atmp) - D*(*dA))/((Atmp)*(Atmp));
-
-  *B  = Btmp;
-  *dB = dBtmp_r;
+  double Dp = 1.0 + 6.*nu*u2 - 2.*(3.0*nu-26.0)*nu*u3; // Pade' resummation of D
+  double dDp_du   = 6.*nu*(2.*u - (3.0*nu-26.0)*u2);
+  double d2Dp_du2 = 12.*nu*(1. - (3.0*nu-26.0)*u);
   
+  double D        = 1./Dp;
+  double dD_du   = -SQ(D)*dDp_du;
+  double d2D_du2 = 2.*SQ(D)*D*SQ(dDp_du) - SQ(D)*d2Dp_du2;
+
+  double dD  = -u2*dD_du;
+  double d2D = 2.*u3*dD_du + u4*d2D_du2;
+  
+  /* B potential and derivative with respect to r */
+  *B   = D/(*A);
+  *dB  = (*B)*(dD/D - (*dA)/(*A));
+  *d2B = SQ(*dB)/(*B) + (*B)*(d2D/D - SQ(dD/D) - (*d2A)/(*A) + SQ((*dA)/(*A)));
 }
  
 /** EOB Metric potentials A(r), B(r), and their derivatives, spin version */
-void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
+void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B)
 {
 
   const double nu    = EOBPars->nu;
@@ -739,18 +743,23 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   /* D potential and derivative with respect to r */
   double Dp = 1.0 + 6.*nu*uc2 - 2.*(3.0*nu-26.0)*nu*uc3; // Pade' resummation of D
   double dDp_duc   = 6.*nu*(2.*uc - (3.0*nu-26.0)*uc2);
+  double d2Dp_duc2 = 12.*nu*(1. - (3.0*nu-26.0)*uc);
   
   double D        = 1./Dp;
   double dD_duc   = -SQ(D)*dDp_duc;
+  double d2D_duc2 = 2.*SQ(D)*D*SQ(dDp_duc) - SQ(D)*d2Dp_duc2;
 
   double dD  = -uc2*drc*dD_duc;
-
+  double d2D = (2.*uc3*SQ(drc) - uc2*d2rc)*dD_duc + SQ(uc2*drc)*d2D_duc2;
+  
   /* B potential and derivative with respect to r */
   double fact   = r*r*uc2;
   double dfact  = 2.*r*uc2 - 2.*r*r*uc3*drc;
+  double d2fact = 2.*uc2 - 8.*r*uc3*drc + 6.*r*r*uc4*SQ(drc) - 2.*r*r*uc3*d2rc;
   
   *B   = fact*D/(*A);
   *dB  = (*B)*(dfact/fact + dD/D - (*dA)/(*A));
+  *d2B = SQ(*dB)/(*B) + (*B)*(d2fact/fact - SQ(dfact/fact) + d2D/D - SQ(dD/D)
+			 - (*d2A)/(*A) + SQ((*dA)/(*A)));
+  
 }
-
-

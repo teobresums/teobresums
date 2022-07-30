@@ -105,13 +105,13 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
   double *dphi_dr_vec            = buffer[19];
   double *dt_dr_vec              = buffer[20];
   
-  double ggm[16]; 
+  double ggm[26]; 
   double a_coeff, b_coeff, c_coeff, Delta, sol_p, sol_m, j02, uc, u2, prstar2, dHeff_dpphi, dHeff_dprstar, dHeff_dr, dHeff_dprstarbyprstar, d2Heff_dprstar20,
     H, G, pl_hold, x, jhat, psi, r_omg, v_phi, Fphi, dr_dtbyprstar, prstar4, Heff_orb_f, Heff_f, E_f;
+
   /* 
    * Compute circular dynamics 
    */
-  
   for (int i = 0; i < size; i++) {
     
     /* Current radius */
@@ -133,7 +133,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     /** Computing metric functions and centrifugal radius */
     if(usespins){ 
       
-      eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
+      eob_metric_s(dyn->r,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold, &pl_hold);
       eob_dyn_s_get_rc(dyn->r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
       eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], pl_hold, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
       
@@ -144,7 +144,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     
     } else {
       
-      eob_metric(dyn->r ,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold);
+      eob_metric(dyn->r ,dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold, &pl_hold);
       
       rc_vec[i]                 = dyn->r; //Nonspinning case: rc = r
       drc_dr_vec[i]             = 1;  
@@ -266,7 +266,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
 
   /** Computing angular momentum derivative */
   D0(dyn->data[EOB_PPHI],-dr, size, dpphi_dr_vec); /* dJ0/dr */
-  
+
   /*
    * Post-Adiabatic dynamics 
   */
@@ -507,5 +507,6 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     free(chi1_grid);
     free(chi2_grid);
   }
+
   return OK;
 }

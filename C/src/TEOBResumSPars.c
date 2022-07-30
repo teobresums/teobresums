@@ -100,6 +100,12 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
   eobp->chi1 = 0.;
   eobp->chi2 = 0.;
+
+  eobp->ecc = 0.;
+
+  eobp->r_hyp = 0.;
+  eobp->H_hyp = 0.;
+  eobp->j_hyp = 0.;
   
   eobp->distance = 1.;
   eobp->inclination = 0.;
@@ -161,6 +167,9 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   memcpy(eobp->freqs, fr, eobp->freqs_size * sizeof(double));
 
   /* EOB Settings */
+
+  eobp->ecc_freq=ECCFREQ_AVERAGE; // "PERIASTRON", "AVERAGE", "APASTRON"
+  eobp->ecc_ics =ECCICS_1PA; // "0PA", "1PA"
   
   eobp->postadiabatic_dynamics=1;
   eobp->postadiabatic_dynamics_N=8;      // post-adiabatic order
@@ -178,12 +187,20 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->compute_LR_guess=3.;
   eobp->compute_LSO_guess=6.;
 
+  eobp->compute_ringdown=1; // Calculate and add ringdown?
+    
   eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
   eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
   eobp->nqc_coefs_hlm=NQC_HLM_NONE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
   strcpy(eobp->nqc_coefs_flx_file,"");
   strcpy(eobp->nqc_coefs_hlm_file,"");
 
+  /* Set default sigmoid parameters */
+  eobp->delta_t0_sigmoid_Newt = 100.;
+  eobp->delta_t0_sigmoid_NQC  = 100.;
+  eobp->alpha_sigmoid_Newt    = 0.02;
+  eobp->alpha_sigmoid_NQC     = 0.02;
+  
   /* Output */
   
   strcpy(eobp->output_dir, "./data");  // output dir
@@ -530,12 +547,18 @@ void eob_set_params(int default_choice, int firstcall)
   
   /* Default settings for NQC */
   // NOTE: The defaults are different from v0.0 and v1.0
+  double ecc = EOBPars->ecc;
+  double r_hyp = EOBPars->r_hyp;
   if (EOBPars->nqc == NQC_AUTO) {
     if (EOBPars->binary == BINARY_BNS) {
         EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
         EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
-      if (usespins) {
+      if ((ecc != 0.) || (r_hyp != 0.)) {
+        EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+        EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+	
+      } else if (usespins) {
         EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002;
         EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
       } else {
@@ -547,7 +570,10 @@ void eob_set_params(int default_choice, int firstcall)
   
   /** Set more as needed ... */
   EOBPars->a6c = 0.;
-  if (EOBPars->use_flm == USEFLM_HM) {
+  if ((ecc != 0.) || (r_hyp != 0.)) {
+    /* Eccentric */
+    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);    
+  } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
   } else {
@@ -556,7 +582,9 @@ void eob_set_params(int default_choice, int firstcall)
   
   EOBPars->cN3LO = 0.;
   if (usetidal) EOBPars->cN3LO = 0.0;
-  else if (EOBPars->use_flm == USEFLM_HM) {
+  else if ((ecc != 0.) || (r_hyp != 0.)) {
+    EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+  } else if (EOBPars->use_flm == USEFLM_HM) {
     EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
   } else {
     EOBPars->cN3LO = eob_c3_fit_global(EOBPars->nu,EOBPars->a1,EOBPars->a2);
@@ -611,13 +639,12 @@ void eob_set_params(int default_choice, int firstcall)
 
   /* Function pointers */
   
-  /** Set f_lm fun pointer */
+  /** Set waveform fun pointers */
   if (EOBPars->use_flm == USEFLM_HM) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
     eob_wav_flm      = &eob_wav_flm_HM;
     eob_wav_flm_s    = &eob_wav_flm_s_HM;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
     eob_wav_ringdown = &eob_wav_ringdown_HM; 
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
@@ -625,14 +652,12 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm      = &eob_wav_flm_v1;
     eob_wav_flm_s    = &eob_wav_flm_s_SSLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
   } else if (EOBPars->use_flm == USEFLM_SSNLO) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
     eob_wav_flm      = &eob_wav_flm_v1;
     eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
@@ -642,6 +667,21 @@ void eob_set_params(int default_choice, int firstcall)
     */
   } else errorexit("unknown option for use_flm");
 
+  /** Set hlm and NQC fun pointers */
+  if ((ecc != 0.) || (r_hyp != 0.)) {
+    eob_wav_hlm = &eob_wav_hlm_ecc;
+    eob_wav_hlmNQC_find_a1a2a3 = &eob_wav_hlmNQC_find_a1a2a3_ecc;
+    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_ecc;
+  } else  {
+    eob_wav_hlm = &eob_wav_hlm_circ;
+    eob_wav_hlmNQC_find_a1a2a3 = &eob_wav_hlmNQC_find_a1a2a3_circ;
+    if (EOBPars->use_flm == USEFLM_HM) {
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
+    } else {
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
+    }
+  }
+  
   /** Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
@@ -657,6 +697,54 @@ void eob_set_params(int default_choice, int firstcall)
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
   } else errorexit("unknown option for centrifugal_radius");
 
+  /** Set r0 fun pointer */
+  if (ecc != 0.) {
+    // eccentric case
+    if(EOBPars->ecc_ics == ECCICS_1PA)
+      eob_dyn_r0_eob = &eob_dyn_r0_ecc;
+    else if (EOBPars->ecc_ics == ECCICS_0PA){
+      if(ecc > 1e-4)
+        eob_dyn_r0_eob = &eob_dyn_r0_ecc;
+      else
+        eob_dyn_r0_eob = &eob_dyn_r0_circ;  // fall back to quasi-circular radius
+    }
+  } else {
+    // quasi-circular case
+    eob_dyn_r0_eob = &eob_dyn_r0_circ;
+  }
+
+  /** Set rhs fun pointer */
+  if ((ecc != 0.) || (r_hyp != 0.)) {
+    p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
+  } else if (usespins) {
+    p_eob_dyn_rhs = &eob_dyn_rhs_s;
+  } else {
+    p_eob_dyn_rhs = &eob_dyn_rhs;
+  }
+
+  /** Set initial conditions fun pointer */
+  if (r_hyp != 0.) {
+    // hyp case
+    eob_dyn_ic = &eob_dyn_ic_hyp;
+  } else if (ecc !=0) {
+    // eccentric case
+    if(EOBPars->ecc_ics == ECCICS_1PA)
+      eob_dyn_ic = &eob_dyn_ic_ecc_PA;   // 1PA ICs
+    else if (EOBPars->ecc_ics == ECCICS_0PA){
+      if(ecc > 1e-4)
+	eob_dyn_ic = &eob_dyn_ic_ecc;    // adiabatic ICs
+      else
+	eob_dyn_ic = &eob_dyn_ic_circ_s; // Quasi-circular ICs ("nospin" option is deprecated)
+    } else
+      errorexit("Unrecognized eccentric_ic flag.\n");
+  } else if (usespins) {
+    // quasi-circular ICs with spins
+    eob_dyn_ic = &eob_dyn_ic_circ_s;
+  } else {
+    // quasi-circular ICs without spins (deprecated)
+    eob_dyn_ic = &eob_dyn_ic_circ;
+  }
+      
 }
 
 void update_params(int binary)
@@ -845,6 +933,18 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"chi2z")) {
     eobp->chi2z = par_get_d(val);
   }
+  if (STREQUAL(key,"ecc")) {
+    eobp->ecc = par_get_d(val);
+  }
+  if (STREQUAL(key,"r_hyp")) {
+    eobp->r_hyp = par_get_d(val);
+  }
+  if (STREQUAL(key,"H_hyp")) {
+    eobp->H_hyp = par_get_d(val);
+  }
+  if (STREQUAL(key,"j_hyp")) {
+    eobp->j_hyp = par_get_d(val);
+  }
   if (STREQUAL(key,"distance")) {
     eobp->distance = par_get_d(val);
   }
@@ -966,26 +1066,52 @@ if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) b
   if (STREQUAL(key,"centrifugal_radius")) {
     val = string_trim(val);
     for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
-if (eobp->centrifugal_radius == CENTRAD_NOPT) {
-  eobp->centrifugal_radius = CENTRAD_NLO;
-  if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
-          val, centrifugal_radius_opt[eobp->centrifugal_radius]);
-  break;
-}
-if (STREQUAL(val, centrifugal_radius_opt[eobp->centrifugal_radius])) break;
+      if (eobp->centrifugal_radius == CENTRAD_NOPT) {
+	eobp->centrifugal_radius = CENTRAD_NLO;
+	if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
+			    val, centrifugal_radius_opt[eobp->centrifugal_radius]);
+	break;
+      }
+      if (STREQUAL(val, centrifugal_radius_opt[eobp->centrifugal_radius])) break;
     }
   }
 
+  if (STREQUAL(key,"ecc_freq")) {
+    val = string_trim(val);
+    for (eobp->ecc_freq=0; eobp->ecc_freq<=ECCFREQ_NOPT; eobp->ecc_freq++) {
+      if (eobp->ecc_freq == ECCFREQ_NOPT) {
+	eobp->ecc_freq = ECCFREQ_AVERAGE;
+	if (VERBOSE) printf("ecc_freq '%s' undefined, set to '%s'\n",
+			    val, ecc_freq_opt[eobp->ecc_freq]);
+	break;
+      }
+      if (STREQUAL(val, ecc_freq_opt[eobp->ecc_freq])) break;
+    }
+  }
+
+    if (STREQUAL(key,"ecc_ics")) {
+    val = string_trim(val);
+    for (eobp->ecc_ics=0; eobp->ecc_ics<=ECCICS_NOPT; eobp->ecc_ics++) {
+      if (eobp->ecc_ics == ECCICS_NOPT) {
+	eobp->ecc_ics = ECCICS_1PA;
+	if (VERBOSE) printf("ecc_ics '%s' undefined, set to '%s'\n",
+			    val, ecc_ics_opt[eobp->ecc_ics]);
+	break;
+      }
+      if (STREQUAL(val, ecc_ics_opt[eobp->ecc_ics])) break;
+    }
+  }
+    
   if (STREQUAL(key,"use_flm")) {
     val = string_trim(val);
     for (eobp->use_flm=0; eobp->use_flm<=USEFLM_NOPT; eobp->use_flm++) {
-if (eobp->use_flm == USEFLM_NOPT) {
-eobp->use_flm = USEFLM_HM;
-if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
-        val, use_flm_opt[eobp->use_flm]);
-break;
-}
-if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
+      if (eobp->use_flm == USEFLM_NOPT) {
+	eobp->use_flm = USEFLM_HM;
+	if (VERBOSE) printf("use_flm '%s' undefined, set to '%s'\n",
+			    val, use_flm_opt[eobp->use_flm]);
+	break;
+      }
+      if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
     }
   }
   
@@ -1001,7 +1127,11 @@ if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
   if (STREQUAL(key,"compute_LSO_guess")) {    
     eobp->compute_LSO_guess = par_get_d(val);
   }
-  
+
+  if (STREQUAL(key,"compute_ringdown")) {    
+    eobp->compute_ringdown = par_get_d(val);
+  }
+    
   /* Precession settings */
 
   if (STREQUAL(key,"spin_flx")) {     
@@ -1109,7 +1239,7 @@ if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
   if (STREQUAL(key,"postadiabatic_dynamics_stop")) {
     eobp->postadiabatic_dynamics_stop = YESNO2INT(string_trim(val));
   }
-  
+
   /* Evolution settings */
 
   if (STREQUAL(key,"srate")) {
@@ -1207,6 +1337,10 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "q", eobp->q);
   fprintf(f,"%s = %.16f\n", "chi1", eobp->chi1);
   fprintf(f,"%s = %.16f\n", "chi2", eobp->chi2);
+  fprintf(f,"%s = %.16f\n", "ecc", eobp->ecc);
+  fprintf(f,"%s = %.16f\n", "r_hyp", eobp->r_hyp);
+  fprintf(f,"%s = %.16f\n", "H_hyp", eobp->H_hyp);
+  fprintf(f,"%s = %.16f\n", "j_hyp", eobp->j_hyp);
   fprintf(f,"%s = %.16f\n", "distance", eobp->distance);
   fprintf(f,"%s = %.16f\n", "inclination", eobp->inclination);
   fprintf(f,"%s = %.16f\n", "coalescence_angle", eobp->coalescence_angle);
@@ -1298,12 +1432,16 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%d]\n", eobp->use_mode_lm[eobp->use_mode_lm_size-1]);
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
+  fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
+  fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_freq_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
   fprintf(f,"%s = %d\n"    , "compute_LR_guess", eobp->compute_LR_guess);
   fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));
   fprintf(f,"%s = %d\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
 
+  fprintf(f,"%s = %d\n"    , "compute_ringdown", eobp->compute_ringdown);
+  
   /* NQC */
   fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);
   fprintf(f,"%s = \"%s\"\n", "nqc_coefs_flx", nqc_flx_opt[eobp->nqc_coefs_flx]);
