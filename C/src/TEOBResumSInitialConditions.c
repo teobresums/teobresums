@@ -604,7 +604,6 @@ void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   // eob_metric(r0 ,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
   eob_metric(r0, 1., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &Q, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   // since prstar = 1., the Q returned here should be equivalent to Q/(prstar4), which equals z3*u2 for Q3PN
-  // (but does (1.)^4 equal 1., computing it numerically?)
   
   // a = z3*A*u2;
   a = A*Q;
