@@ -71,6 +71,9 @@ void (*eob_dyn_ic)();
 double (*eob_dyn_r0_eob)();
 int (*p_eob_dyn_rhs)();
 int (*p_eob_spin_dyn_rhs)();
+void (*eob_metric_Apotential)();
+void (*eob_metric_Dpotential)();
+void (*eob_metric_Qpotential)();
 
 void EOBParameters_alloc (EOBParameters **eobp)
 {
@@ -183,6 +186,9 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->postadiabatic_dynamics_stop=0;   // stop after post-adiabatic dynamics 
   eobp->postadiabatic_dynamics_dr=0.1;            // PA step dr = 0.1 
 
+  eobp->A_pot=A_5PNlog; 
+  eobp->D_pot=D_3PN;
+  eobp->Q_pot=Q_3PN; 
 
   eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   eobp->use_flm=USEFLM_HM; // "SSLO", "SSNLO", "HM"
@@ -686,6 +692,25 @@ void eob_set_params(int default_choice, int firstcall)
       eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     }
   }
+
+  /** Set metric potentials function pointers */
+  if (EOBPars->A_pot == A_5PNlog) {
+    eob_metric_Apotential = &eob_metric_A5PNlog;
+  } else if (EOBPars->A_pot == A_GSF) {
+    eob_metric_Apotential = &eob_metric_AGSF;
+  } else errorexit("unknown option for A potential");
+
+  if (EOBPars->D_pot == D_3PN) {
+    eob_metric_Dpotential = &eob_metric_D3PN;
+  } else if (EOBPars->D_pot == D_GSF) {
+    eob_metric_Dpotential = &eob_metric_DGSF;
+  } else errorexit("unknown option for D potential");
+
+  if (EOBPars->Q_pot == Q_3PN) {
+    eob_metric_Qpotential = &eob_metric_Q3PN;
+  } else if (EOBPars->Q_pot == Q_GSF) {
+    eob_metric_Qpotential = &eob_metric_QGSF;
+  } else errorexit("unknown option for Q potential");
   
   /** Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
