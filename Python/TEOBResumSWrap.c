@@ -277,6 +277,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "output_ringdown") != NULL ) { 
     EOBPars->output_ringdown = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "output_ringdown")));
   }
+  if ( PyDict_GetItemString(dict, "output_dir") != NULL ) {
+    strcpy(EOBPars->output_dir, PyUnicode_AsUTF8(PyDict_GetItemString(dict, "output_dir")));
+  }
 
   /* ODE */
 
