@@ -722,7 +722,7 @@ double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double
 
     r2dot = dsqrtAbyB_dr*oosqrtAbyB*rdot2 
           + sqrtAbyB*(oneby_EHeff_orb*(-oneby_EHeff_orb*EHeff_orbdot)*(prstar + 0.5*A*dQ_dprstar)
-          + 0.5*oneby_EHeff_orb*(rdot*(dA*dQ + A*ddQ_drdprstar) + prstardot*(2. + A*d2Q_dprstar2))
+          + 0.5*oneby_EHeff_orb*(rdot*(dA*dQ_dprstar + A*ddQ_drdprstar) + prstardot*(2. + A*d2Q_dprstar2))
           + oneby_E*(pphi*(rdot*d2G_dr_dprstar + prstardot*d2G_dprstar2) + dG_dprstar*(Fphi - pphi*Edot*oneby_E)));
     
     
@@ -824,10 +824,18 @@ double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double
     double D1 = 2.*rdot*r2dot*oosqrtAbyB*dsqrtAbyB_dr + rdot2*rdot*(-SQ(dsqrtAbyB_dr)*(B/A) + oosqrtAbyB*d2sqrtAbyB_d2r);
     double D2 = comb1*rdot*oosqrtAbyB*dsqrtAbyB_dr + sqrtAbyB*(comb5*oneby_EHeff_orb*(2.*SQ(comb4) - EHeff_orb2dot*oneby_EHeff_orb) 
                 + oneby_EHeff_orb*comb4*(prstardot*(1. + 0.5*A*d2Q_dprstar2) + 0.5*rdot*(dA*dQ_dprstar + A*ddQ_drdprstar)));
+
+    // double D3 = rdot*dsqrtAbyB_dr*comb2*oosqrtAbyB - EHeff_orbdot*oneby_EHeff_orb*comb2 
+    //             + 0.5*sqrtAbyB*oneby_EHeff_orb*(r2dot*(dA*dQ_dprstar + A*ddQ_drdprstar) 
+    //             + rdot*(rdot*d2A*dQ_dprstar + dA*(rdot*ddQ_drdprstar + prstardot*d2Q_dprstar2) + 
+    //             rdot*dA*ddQ_drdprstar + A*(rdot*d3Q_dr2dprstar + prstar*d3Q_drdprstar2)) + prstar2dot*(2. + A*d2Q_dprstar2) 
+    //             + prstardot*(rdot*dA*d2Q_dprstar2 + A*rdot*d3Q_drdprstar2 + A*prstardot*d3Q_dprstar3));
+
     double D3 = rdot*dsqrtAbyB_dr*comb2*oosqrtAbyB - EHeff_orbdot*oneby_EHeff_orb*comb2 
-                + 0.5*sqrtAbyB*oneby_EHeff_orb*(r2dot*(dA*dQ + A*ddQ_drdprstar) + rdot*(rdot*d2A*dQ + dA*(rdot*d2Q + prstardot*ddQ_drdprstar) + 
-                rdot*dA*ddQ_drdprstar + A*(rdot*d3Q_dr2dprstar + prstar*d3Q_drdprstar2)) + prstar2dot*(2. + A*d2Q_dprstar2) 
-                + prstardot*(rdot*dA*d2Q_dprstar2 + A*rdot*d3Q_drdprstar2 + A*prstardot*d3Q_dprstar3));
+                + 0.5*sqrtAbyB*oneby_EHeff_orb*(r2dot*(dA*dQ_dprstar + A*ddQ_drdprstar) 
+                + rdot2*(d2A*dQ_dprstar + 2.*dA*ddQ_drdprstar + A*d3Q_dr2dprstar)
+                + 2.*rdot*prstardot*(d2Q_dprstar2*dA + A*d3Q_drdprstar2)
+                + SQ(prstardot)*A*d3Q_dprstar3 + prstar2dot*(2. + A*d2Q_dprstar2));
     
     double D4 = rdot*dsqrtAbyB_dr*comb3*oosqrtAbyB - Edot*comb3*oneby_E 
                 + sqrtAbyB*oneby_E*(d2G_dr_dprstar*(2.*Fphi*rdot + pphi*r2dot - rdot*pphi*Edot*oneby_E)
