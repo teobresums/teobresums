@@ -129,44 +129,86 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
 {
 
   /* shortcuts */
-  double u     = 1./r;
-  double u2    = u*u;
-  double u3    = u*u2;
-  double u4    = u2*u2;
-  double u5    = u4*u;
-  double u6    = u5*u;
-  double u7    = u6*u;
-  double logu  = log(u);
-  double logu2 = logu*logu;
+  double u       = 1./r;
+  double u2      = u*u;
+  double u3      = u*u2;
+  double u4      = u2*u2;
+  double u5      = u4*u;
+  double u6      = u5*u;
+  double u7      = u6*u;
+  double logu    = log(u);
+  double logu2   = logu*logu;
+  double onebyu  = r;
+  double onebyu2 = r*r;
 
   /* The a function is factorized into two pieces:
   integer and tail part (semi-integer powers of u) */
 
   /* Integer part */
   double ResumInt, dResumInt, d2ResumInt;
-  double coeffs_int[6];
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
 
-  // Coefficients of the Taylor-expanded function, to be fed to the Padé
-  coeffs_int[0] =  9.843951347218796;
-  coeffs_int[1] =  16.29867029491112 + 6.4*logu;
-  coeffs_int[2] = -64.26554415558926 - 30.15238095238095*logu;
-  coeffs_int[3] =  309.0094399882301 - 20.58977072310406*logu;
-  coeffs_int[4] =  969.247628430881 + 457.2474034136427*logu - 26.08761904761905*logu2;
-  coeffs_int[5] = -5268.885414280484 - 356.236938531493*logu + 110.4765532879819*logu2;
+  // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
 
-  Pade33_forGSF(coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+  double k1  =  9.843951347218796;
+  double k2a =  16.29867029491112;
+  double k2b =  6.4;
+  double k3a = -64.26554415558926;
+  double k3b = -30.15238095238095;
+  double k4a =  309.0094399882301;
+  double k4b = -20.58977072310406;
+  double k5a =  969.247628430881;
+  double k5b =  457.2474034136427;
+  double k5c = -26.08761904761905;
+  double k6a = -5268.885414280484;
+  double k6b = -356.236938531493;
+  double k6c =  110.4765532879819;
+
+  coeffs_int[0] =  k1;
+  coeffs_int[1] =  k2a + k2b*logu;
+  coeffs_int[2] =  k3a + k3b*logu;
+  coeffs_int[3] =  k4a + k4b*logu;
+  coeffs_int[4] =  k5a + k5b*logu + k5c*logu2;
+  coeffs_int[5] =  k6a + k6b*logu + k6c*logu2;
+
+  Dcoeffs_int[0] =  k2b*onebyu;
+  Dcoeffs_int[1] =  k3b*onebyu;
+  Dcoeffs_int[2] =  k4b*onebyu;
+  Dcoeffs_int[3] =  k5b*onebyu + 2.*k5c*logu*onebyu;
+  Dcoeffs_int[4] =  k6b*onebyu + 2.*k6c*logu*onebyu;
+
+  D2coeffs_int[0] = -k2b*onebyu2;
+  D2coeffs_int[1] = -k3b*onebyu2;
+  D2coeffs_int[2] = -k4b*onebyu2;
+  D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
+  D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
 
   /* Tail part */
   double ResumTail, dResumTail, d2ResumTail;
-  double coeffs_tail[4];
+  double coeffs_tail[4], Dcoeffs_tail[2], D2coeffs_tail[2];
 
+  double j1  =  40.97833617482458;
+  double j2  = -601.9566375425603;
+  double j3a =  5160.094217567668;
+  double j3b = -262.2613515188773;
+  double j4a = -33044.17255491994;
+  double j4b =  7335.733860726202;
+ 
   // Coefficients of the Taylor-expanded function, to be fed to the Padé
-  coeffs_tail[0] =  40.97833617482458;
-  coeffs_tail[1] = -601.9566375425603;
-  coeffs_tail[2] =  5160.094217567668 - 262.2613515188773*logu;
-  coeffs_tail[3] = -33044.17255491994 + 7335.733860726202*logu;
+  coeffs_tail[0] = j1;
+  coeffs_tail[1] = j2;
+  coeffs_tail[2] = j3a + j3b*logu;
+  coeffs_tail[3] = j4a + j4b*logu;
 
-  Pade76v1_forGSF(coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
+  Dcoeffs_tail[0] = j3b*onebyu;
+  Dcoeffs_tail[1] = j4b*onebyu;
+
+  D2coeffs_tail[0] = -j3b*onebyu2;
+  D2coeffs_tail[1] = -j4b*onebyu2;
+
+  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
 
   /* a1SF function purely analytical + derivatives wrt to u */
   double a1SF_tmp     = ResumInt*ResumTail;
@@ -236,35 +278,78 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
   double u15by2 = sqrt(u11*u4);
   double logu   = log(u);
   double logu2  = logu*logu;
+  double onebyu  = r;
+  double onebyu2 = r*r;
 
   /* The d function is factorized into two pieces:
   integer and tail part (semi-integer powers of u) */
 
   /* Integer part */
   double ResumInt, dResumInt, d2ResumInt;
-  double coeffs_int[6];
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
 
-  // Coefficients of the Taylor-expanded function, to be fed to the Padé
-  coeffs_int[0] =  8.666666666666667;
-  coeffs_int[1] =  36.92866519869136 + 6.577777777777778*logu;
-  coeffs_int[2] = -79.89813242312009 - 33.80952380952381*logu;
-  coeffs_int[3] =  777.9303456579357 - 118.6962962962963*logu;
-  coeffs_int[4] =  5757.134871176116 + 1884.740681815503*logu - 115.9449735449735*logu2;
-  coeffs_int[5] = -42331.4249981053 - 3615.490356674048*logu + 879.6352532123961*logu2;
+  // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
 
-  Pade33_forGSF(coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+  double k1  =  8.666666666666667;
+  double k2a =  36.92866519869136;
+  double k2b =  6.577777777777778;
+  double k3a = -79.89813242312009;
+  double k3b = -33.80952380952381;
+  double k4a =  777.9303456579357;
+  double k4b = -118.6962962962963;
+  double k5a =  5757.134871176116;
+  double k5b =  1884.740681815503;
+  double k5c = -115.9449735449735;
+  double k6a = -42331.4249981053;
+  double k6b = -3615.490356674048;
+  double k6c =  879.6352532123961;
+
+  coeffs_int[0] =  k1;
+  coeffs_int[1] =  k2a + k2b*logu;
+  coeffs_int[2] =  k3a + k3b*logu;
+  coeffs_int[3] =  k4a + k4b*logu;
+  coeffs_int[4] =  k5a + k5b*logu + k5c*logu2;
+  coeffs_int[5] =  k6a + k6b*logu + k6c*logu2;
+
+  Dcoeffs_int[0] =  k2b*onebyu;
+  Dcoeffs_int[1] =  k3b*onebyu;
+  Dcoeffs_int[2] =  k4b*onebyu;
+  Dcoeffs_int[3] =  k5b*onebyu + 2.*k5c*logu*onebyu;
+  Dcoeffs_int[4] =  k6b*onebyu + 2.*k6c*logu*onebyu;
+
+  D2coeffs_int[0] = -k2b*onebyu2;
+  D2coeffs_int[1] = -k3b*onebyu2;
+  D2coeffs_int[2] = -k4b*onebyu2;
+  D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
+  D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
 
   /* Tail part */
   double ResumTail, dResumTail, d2ResumTail;
-  double coeffs_tail[4];
+  double coeffs_tail[4], Dcoeffs_tail[2], D2coeffs_tail[2];
+ 
+  // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
 
-  // Coefficients of the Taylor-expanded function, to be fed to the Padé
-  coeffs_tail[0] =  88.07496559797366;
-  coeffs_tail[1] = -1395.220274500357;
-  coeffs_tail[2] =  8663.505746839271 - 579.3375514888934*logu;
-  coeffs_tail[3] =  29169.61933412867 + 14219.676593263639*logu;
+  double j1  =  88.07496559797366;
+  double j2  = -1395.220274500357;
+  double j3a =  8663.505746839271;
+  double j3b = -579.3375514888934;
+  double j4a =  29169.61933412867;
+  double j4b =  14219.676593263639;
 
-  Pade76v1_forGSF(coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
+  coeffs_tail[0] =  j1;
+  coeffs_tail[1] =  j2;
+  coeffs_tail[2] =  j3a + j3b*logu;
+  coeffs_tail[3] =  j4a + j4b*logu;
+
+  Dcoeffs_tail[0] = j3b*onebyu;
+  Dcoeffs_tail[1] = j4b*onebyu;
+
+  D2coeffs_tail[0] = -j3b*onebyu2;
+  D2coeffs_tail[1] = -j4b*onebyu2;
+
+  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
 
   /* a1SF function purely analytical + derivatives wrt to u */
   double d1SF_tmp     = ResumInt*ResumTail;
@@ -347,6 +432,8 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
   double u15by2  = sqrt(u5*u5*u5);
   double logu    = log(u);
   double logu2   = logu*logu;
+  double onebyu  = r;
+  double onebyu2 = r*r;
   double prstar2 = prstar*prstar;
   double prstar3 = prstar2*prstar;
   double prstar4 = prstar2*prstar2;
@@ -356,30 +443,77 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 
   /* Integer part */
   double ResumInt, dResumInt, d2ResumInt;
-  double coeffs_int[6];
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
 
-  // Coefficients of the Taylor-expanded function, to be fed to the Padé
-  coeffs_int[0] =  3.588880535619494;
-  coeffs_int[1] = -12.14327341036888 + 6.461904761904762*logu;
-  coeffs_int[2] = -13.57177599359104 - 122.5626984126984*logu;
-  coeffs_int[3] =  5849.419891636204 + 1690.691389474068*logu - 80.70857142857143*logu2;
-  coeffs_int[4] = -89749.62943631351 - 8625.740422940584*logu + 1436.31537414966*logu2;
-  coeffs_int[5] =  445969.7971893991 - 70286.9426913128*logu  - 5402.297846034037*logu2;
+  // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
 
-  Pade33_forGSF(coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+  double k1  =  3.588880535619494;
+  double k2a = -12.14327341036888;
+  double k2b =  6.461904761904762;
+  double k3a = -13.57177599359104;
+  double k3b = -122.5626984126984;
+  double k4a =  5849.419891636204;
+  double k4b =  1690.691389474068;
+  double k4c = -80.70857142857143;
+  double k5a = -89749.62943631351;
+  double k5b = -8625.740422940584;
+  double k5c =  1436.31537414966;
+  double k6a =  445969.7971893991;
+  double k6b = -70286.9426913128;
+  double k6c = -5402.297846034037;
+
+  coeffs_int[0] =  k1;
+  coeffs_int[1] =  k2a + k2b*logu;
+  coeffs_int[2] =  k3a + k3b*logu;
+  coeffs_int[3] =  k4a + k4b*logu + k4c*logu2;
+  coeffs_int[4] =  k5a + k5b*logu + k5c*logu2;
+  coeffs_int[5] =  k6a + k6b*logu + k6c*logu2;
+
+  Dcoeffs_int[0] =  k2b*onebyu;
+  Dcoeffs_int[1] =  k3b*onebyu;
+  Dcoeffs_int[2] =  k4b*onebyu + 2.*k4c*logu*onebyu;
+  Dcoeffs_int[3] =  k5b*onebyu + 2.*k5c*logu*onebyu;
+  Dcoeffs_int[4] =  k6b*onebyu + 2.*k6c*logu*onebyu;
+
+  D2coeffs_int[0] = -k2b*onebyu2;
+  D2coeffs_int[1] = -k3b*onebyu2;
+  D2coeffs_int[2] = -k4b*onebyu2 + k4c*(2.*onebyu2 - 2.*logu*onebyu2);
+  D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
+  D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
 
   /* Tail part */
   double ResumTail, dResumTail, d2ResumTail;
-  double coeffs_tail[5];
+  double coeffs_tail[5], Dcoeffs_tail[3], D2coeffs_tail[3];
 
   // Coefficients of the Taylor-expanded function, to be fed to the Padé
-  coeffs_tail[0] =  18.43046912376822;
-  coeffs_tail[1] = -397.3442276527582;
-  coeffs_tail[2] =  2180.644722347771   - 119.09593619501652*logu;
-  coeffs_tail[3] =  64484.07468368325   + 650.5464012653043*logu;
-  coeffs_tail[4] = -1.366299312664882e6 - 5839.988023296008*logu + 2257.0834309598104*logu2;
 
-  Pade76v2_forGSF(coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
+  double j1  =  18.43046912376822;
+  double j2  = -397.3442276527582;
+  double j3a =  2180.644722347771;
+  double j3b = -119.09593619501652;
+  double j4a =  64484.07468368325;
+  double j4b =  650.5464012653043;
+  double j5a = -1.366299312664882e6;
+  double j5b = -5839.988023296008;
+  double j5c =  2257.0834309598104;
+
+  coeffs_tail[0] =  j1;
+  coeffs_tail[1] =  j2;
+  coeffs_tail[2] =  j3a + j3b*logu;
+  coeffs_tail[3] =  j4a + j4b*logu;
+  coeffs_tail[4] =  j5a + j5b*logu + j5c*logu2;
+
+  Dcoeffs_tail[0] = j3b*onebyu;
+  Dcoeffs_tail[1] = j4b*onebyu;
+  Dcoeffs_tail[2] = j5b*onebyu + 2.*j5c*logu*onebyu;
+
+  D2coeffs_tail[0] = -j3b*onebyu2;
+  D2coeffs_tail[1] = -j4b*onebyu2;
+  D2coeffs_tail[2] = -j5b*onebyu2 + j5c*(2.*onebyu2 - 2.*logu*onebyu2);
+  
+  Pade76v2_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
 
   double dIntTail = dResumInt*ResumTail + ResumInt*dResumTail;
 
