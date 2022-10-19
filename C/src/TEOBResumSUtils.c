@@ -417,11 +417,11 @@ void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], do
   double D2d3 = D2n3;
 
   double Num   = n0 + n1*u + n2*u2 + n3*u3 + n7by2*u7by2;
-  double dNum  = n1 + 2*n2*u + Dn2*u2 + 3*n3*u2 + Dn3*u3 + 0.5*(7*n7by2*u5by2);
-  double d2Num = 2*n2 + 4*Dn2*u + 6*n3*u + D2n2*u2 + 6*Dn3*u2 + D2n3*u3 + 0.25*(35*n7by2*u3by2);
+  double dNum  = n1 + 2.*n2*u + Dn2*u2 + 3.*n3*u2 + Dn3*u3 + 0.5*(7.*n7by2*u5by2);
+  double d2Num = 2.*n2 + 4.*Dn2*u + 6.*n3*u + D2n2*u2 + 6.*Dn3*u2 + D2n3*u3 + 0.25*(35.*n7by2*u3by2);
   double Den   = d0 + d1*u + d2*u2 + d3*u3;
-  double dDen  = d1 + 2*d2*u + 3*d3*u2 + Dd2*u2 + Dd3*u3;
-  double d2Den = 2*d2 + 6*d3*u + 4*Dd2*u + D2d2*u2 + 6*Dd3*u2 + D2d3*u3;
+  double dDen  = d1 + 2.*d2*u + 3.*d3*u2 + Dd2*u2 + Dd3*u3;
+  double d2Den = 2.*d2 + 6.*d3*u + 4*Dd2*u + D2d2*u2 + 6.*Dd3*u2 + D2d3*u3;
 
   double dNumDen = dNum*Den - Num*dDen; // (Num*Den)'
   double Den2    = Den*Den;
@@ -479,25 +479,25 @@ void Pade76v2_forGSF(double coeffs[5], double Dcoeffs[3], double D2coeffs[3], do
   double dc4to2 = dc4*dc4;
 
   // Coefficients of the numerator + derivatives
-  double n0      =  c2to3 - 2*c1*c2*c3 + c1to2*c4;
-  double Dn0     = -2*c1*c2*dc3 + c1to2*dc4;
-  double D2n0    = -2*c1*c2*d2c3 + c1to2*d2c4;
+  double n0      =  c2to3 - 2.*c1*c2*c3 + c1to2*c4;
+  double Dn0     = -2.*c1*c2*dc3 + c1to2*dc4;
+  double D2n0    = -2.*c1*c2*d2c3 + c1to2*d2c4;
   double n1      = -c2to2*c3 + c1*c2*c4 + c1*(c3to2 - c1*c5);
-  double Dn1     = -c2to2*dc3 + c1*c2*dc4 + c1*(2*c3*dc3 - c1*dc5);
-  double D2n1    = -c2to2*d2c3 + c1*c2*d2c4 + c1*(2*c3*d2c3 - c1*d2c5 + 2*dc3to2);
+  double Dn1     = -c2to2*dc3 + c1*c2*dc4 + c1*(2.*c3*dc3 - c1*dc5);
+  double D2n1    = -c2to2*d2c3 + c1*c2*d2c4 + c1*(2.*c3*d2c3 - c1*d2c5 + 2.*dc3to2);
   double n2      = -c2to2*c4 - c1*c3*c4 + c2*(c3to2 + c1*c5);
-  double Dn2     = -c1*c4*dc3 - c2to2*dc4 - c1*c3*dc4 + c2*(2*c3*dc3 + c1*dc5);
-  double D2n2    = -c1*c4*d2c3 - c2to2*d2c4 - c1*c3*d2c4 + c2*(2*c3*d2c3 + c1*d2c5 + 2*dc3to2) - 2*c1*dc3*dc4;
-  double n5by2   =  c1*(c2to3 - 2*c1*c2*c3 + c1to2*c4);
-  double Dn5by2  =  c1*(-2*c1*c2*dc3 + c1to2*dc4);
-  double D2n5by2 =  c1*(-2*c1*c2*d2c3 + c1to2*d2c4);
+  double Dn2     = -c1*c4*dc3 - c2to2*dc4 - c1*c3*dc4 + c2*(2.*c3*dc3 + c1*dc5);
+  double D2n2    = -c1*c4*d2c3 - c2to2*d2c4 - c1*c3*d2c4 + c2*(2.*c3*d2c3 + c1*d2c5 + 2.*dc3to2) - 2.*c1*dc3*dc4;
+  double n5by2   =  c1*(c2to3 - 2.*c1*c2*c3 + c1to2*c4);
+  double Dn5by2  =  c1*(-2.*c1*c2*dc3 + c1to2*dc4);
+  double D2n5by2 =  c1*(-2.*c1*c2*d2c3 + c1to2*d2c4);
   double n3      = -c3to3 - c1*c4to2 - c2to2*c5 + c3*(2*c2*c4 + c1*c5);
-  double Dn3     = -3*c3to2*dc3 + (2*c2*c4 + c1*c5)*dc3 - 2*c1*c4*dc4 - c2to2*dc5 + c3*(2*c2*dc4 + c1*dc5);
-  double D2n3    = -3*c3to2*d2c3 + (2*c2*c4 + c1*c5)*d2c3 - 2*c1*c4*d2c4 - c2to2*d2c5 + c3*(2*c2*d2c4 + c1*d2c5) 
-                   -6*c3*dc3to2 - 2*c1*dc4to2 + 2*dc3*(2*c2*dc4 + c1*dc5);
-  double n7by2   = c2to4 - 3*c1*c2to2*c3 + 2*c1to2*c2*c4 + c1to2*(c3to2 - c1*c5);
-  double Dn7by2  = -3*c1*c2to2*dc3 + 2*c1to2*c2*dc4 + c1to2*(2*c3*dc3 - c1*dc5);
-  double D2n7by2 = -3*c1*c2to2*d2c3 + 2*c1to2*c2*d2c4 + c1to2*(2*c3*d2c3 - c1*d2c5) + 2*dc3to2;
+  double Dn3     = -3.*c3to2*dc3 + (2.*c2*c4 + c1*c5)*dc3 - 2.*c1*c4*dc4 - c2to2*dc5 + c3*(2.*c2*dc4 + c1*dc5);
+  double D2n3    = -3.*c3to2*d2c3 + (2.*c2*c4 + c1*c5)*d2c3 - 2.*c1*c4*d2c4 - c2to2*d2c5 + c3*(2.*c2*d2c4 + c1*d2c5) 
+                   -6.*c3*dc3to2 - 2.*c1*dc4to2 + 2.*dc3*(2.*c2*dc4 + c1*dc5);
+  double n7by2   = c2to4 - 3.*c1*c2to2*c3 + 2.*c1to2*c2*c4 + c1to2*(c3to2 - c1*c5);
+  double Dn7by2  = -3.*c1*c2to2*dc3 + 2.*c1to2*c2*dc4 + c1to2*(2.*c3*dc3 - c1*dc5);
+  double D2n7by2 = -3.*c1*c2to2*d2c3 + 2.*c1to2*c2*d2c4 + c1to2*(2.*c3*d2c3 - c1*d2c5 + 2.*dc3to2);
 
   // Coefficients of the denominator + derivatives
   double d0   = n0;
@@ -514,12 +514,13 @@ void Pade76v2_forGSF(double coeffs[5], double Dcoeffs[3], double D2coeffs[3], do
   double D2d3 = D2n3;
 
   double Num   = n0 + n1*u + n2*u2 + n3*u3 + n5by2*u5by2 + n7by2*u7by2;
-  double dNum  = Dn0 + n1 + Dn1*u + 2*n2*u + Dn2*u2 + 3*n3*u2 + Dn3*u3 + (5*n5by2*u3by2)/2. + (7*n7by2*u5by2)/2.;
-  double d2Num = D2n0 + 2*Dn1 + 2*n2 + (15*n5by2*sqrtu)/4. + D2n1*u + 4*Dn2*u + 6*n3*u + D2n2*u2 
-               + 6*Dn3*u2 + D2n3*u3 + (35*n7by2*u3by2)/4.;
+  double dNum  = Dn0 + n1 + Dn1*u + 2.*n2*u + Dn2*u2 + 3.*n3*u2 + Dn3*u3 + 0.5*(5.*n5by2*u3by2) 
+               + Dn5by2*u5by2 + 0.5*(7.*n7by2*u5by2) + Dn7by2*u7by2;
+  double d2Num = D2n0 + 2.*Dn1 + 2.*n2 + 0.25*(15.*n5by2*sqrtu) + D2n1*u + 4.*Dn2*u + 6.*n3*u + D2n2*u2 
+               + 6.*Dn3*u2 + D2n3*u3 + 5.*Dn5by2*u3by2 + 0.25*(35.*n7by2*u3by2) + D2n5by2*u5by2 + 7.*Dn7by2*u5by2 + D2n7by2*u7by2;
   double Den   = d0 + d1*u + d2*u2 + d3*u3;
-  double dDen  = d1 + Dd0 + 2*d2*u + Dd1*u + 3*d3*u2 + Dd2*u2 + Dd3*u3;
-  double d2Den = 2*d2 + D2d0 + 2*Dd1 + D2d1*u + 6*d3*u + 4*Dd2*u + D2d2*u2 + 6*Dd3*u2 + D2d3*u3;
+  double dDen  = d1 + Dd0 + 2.*d2*u + Dd1*u + 3.*d3*u2 + Dd2*u2 + Dd3*u3;
+  double d2Den = 2.*d2 + D2d0 + 2.*Dd1 + D2d1*u + 6.*d3*u + 4.*Dd2*u + D2d2*u2 + 6.*Dd3*u2 + D2d3*u3;
 
   double dNumDen = dNum*Den - Num*dDen; // (Num*Den)'
   double Den2    = Den*Den;
