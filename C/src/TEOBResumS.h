@@ -600,7 +600,8 @@ typedef struct tagEOBParameters
 
   /**@{*/
   /** NR-informed conservative variables */
-  double a6c, cN3LO;         
+  double a6c, cN3LO;
+  doube alpha_tidal;         
   /**@}*/ 
 
   double r0;                    /**< Initial radial separation */
@@ -854,6 +855,9 @@ double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
 double eob_c3_fit_HM_2023(double nu, double a1, double a2);
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
+void nr_mrg_fit_momg_bns(double *omg_mrg);
+void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg);
+double Breschi22_nr_mrg_fits_bns_template(double LamT, double dLam, double chieff, double X12, double *C, int thrs);
 void eob_nqc_point(double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM_peak22(double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
@@ -1015,6 +1019,8 @@ extern void (*eob_wav_hlmNQC_find_a1a2a3_mrg)(); /* defined in TEOBResumSPars.c*
 void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+				       Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_hlmNQC_find_a1a2a3_mrg_22_BNS(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_hlmNQC(double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);

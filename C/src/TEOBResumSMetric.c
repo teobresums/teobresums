@@ -620,6 +620,7 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
     kapT2_u = kapA2_u + kapB2_u;    
   }
 
+  /* electric LO coefficient, 1PN */
   const double cnu = (8. - 15.*nu);
   const double tmp = kapT2*cnu; 
   const double tmp_u = kapT2_u*cnu;
@@ -629,6 +630,14 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
   dB_u  = 6*tmp*u5 + tmp_u*u6;
   d2B_u = 30*tmp*u4; 
   
+  /* magnetic LO coefficient */
+#if(USEGRAVITOMAGNETICTERMS)
+  double jT2 = EOBPars->japT2;
+  B    += 5.*jT2*u6;
+  dB_u += jT2*30.*u5;
+  d2B_u += 120.*jT2*u4;
+#endif
+  /* Total */
   *BT   = B;
   *dBT  = dB_u;
   if (d2BT != NULL) *d2BT = d2B_u;
@@ -733,7 +742,13 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
 
   /* A potential and derivative with respect to u */  
   double Aorb, dAorb_u, d2Aorb_u;
+  double Btmp=0., dBtmp_r=0.;
   eob_metric_A5PNlog(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u);
+
+  double uc  = 1./rc;
+  double uc2 = uc*uc;
+  double uc3 = uc2*uc;
+  double uc4 = uc2*uc2;
 
   /* Add here tides if needed */
   if (usetidal) {
@@ -744,16 +759,13 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
     dAorb_u  += dAT_u;
     d2Aorb_u += d2AT_u;
 #if (USEBTIDALPOTENTIAL)
-    /* eob_metric_Btidal(rc, dyn, &BT, &dBT_u, &d2BT_u); */
+    eob_metric_Btidal(rc, dyn, &BT, &dBT_u, &d2BT_u);
+    Btmp    += BT;
+    dBtmp_r += -dBT_u*uc2*drc;
 #endif    
   }
 
   /* A potential and derivative with respect to r */  
-  double uc  = 1./rc;
-  double uc2 = uc*uc;
-  double uc3 = uc2*uc;
-  double uc4 = uc2*uc2;
-
   double dAorb  = -dAorb_u*uc2*drc;
   double d2Aorb = 2.*dAorb_u*uc3*SQ(drc) + d2Aorb_u*uc4*SQ(drc) - uc2*dAorb_u*d2rc;
 
@@ -782,8 +794,10 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   double fact   = r*r*uc2;
   double dfact  = 2.*r*uc2 - 2.*r*r*uc3*drc;
   
-  *B   = fact*D/(*A);
-  *dB  = (*B)*(dfact/fact + dD/D - (*dA)/(*A));
+  Btmp    += fact*D/(*A);
+  dBtmp_r += (*B)*(dfact/fact + dD/D - (*dA)/(*A));
+  *B  = Btmp;
+  *dB = dBtmp_r;
 }
 
 

@@ -87,6 +87,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "pGSF_tidal") != NULL ) { 
     EOBPars->pGSF_tidal = PyFloat_AsDouble(PyDict_GetItemString(dict, "pGSF_tidal"));
   }
+  if ( PyDict_GetItemString(dict, "alpha_tidal") != NULL ) { 
+    EOBPars->alpha_tidal = PyFloat_AsDouble(PyDict_GetItemString(dict, "alpha_tidal"));
+  }
   if ( PyDict_GetItemString(dict, "dt_merger_interp") != NULL ) { 
     EOBPars->dt_merger_interp = PyFloat_AsDouble(PyDict_GetItemString(dict, "dt_merger_interp"));
   }
@@ -281,6 +284,9 @@ int SetOptionalVariables(PyObject* dict){
       if (EOBPars->nqc_coefs_hlm == NQC_HLM_NOPT) EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
       if (STREQUAL(val,nqc_hlm_opt[EOBPars->nqc_coefs_hlm])) break;
     }     
+  }
+  if ( PyDict_GetItemString(dict, "nqc_coefs_flx_file") != NULL ) { 
+    strcpy(EOBPars->nqc_coefs_flx_file,PyUnicode_AsUTF8(PyDict_GetItemString(dict, "nqc_coefs_flx_file")));
   }
 
   /* LR and LSO */

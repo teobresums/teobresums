@@ -405,6 +405,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
+    /* multiply rLR by alpha_tidal */
+    PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
+    EOBPars->rLR_tidal = EOBPars->alpha_tidal*EOBPars->rLR_tidal;
+    PRFORMd("rLR_tidal*alpha_tidal",EOBPars->rLR_tidal);
+
     double LambdaAl2  = EOBPars->LambdaAl2;
     if( fabs(LambdaAl2) < TEOB_LAMBDA_TOL ) LambdaAl2 = 0.0;
     double LambdaBl2 = EOBPars->LambdaBl2;
@@ -901,11 +906,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
   }
   
-  if (!(EOBPars->binary == BINARY_BNS) && (dyn->ode_stop_MOmgpeak)) {
+  if (dyn->ode_stop_MOmgpeak) {
     
-    /* *****************************************
-     * Following is for BBH and BHNS: NQC & Ringdown
-     * *****************************************
+    /* ****************************
+     * Following is NQC & Ringdown
+     * ****************************
      */
     
     /* This is a BBH run.
@@ -985,7 +990,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
       
-      /* BBH : compute and add NQC */
+      /* Compute and add NQC */
 
       if (VERBOSE) PRSECTN("NQC Calculation");
       
@@ -1007,8 +1012,22 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         size = hlm->size;
         EOBPars->size = size;
 
-        /* Free the *_mrg buffers 
-	      Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
+        if (EOBPars->binary == BINARY_BNS){
+          /* For BNS, the NQC might cause increase in A after merger (max of A22). 
+            Resize the waveforms
+          */
+          int idx_stop=0;
+          for (idx_stop=0; idx_stop < size; idx_stop++){
+            if (hlm->ampli[1][size-2-idx_stop] >= hlm->ampli[1][size-1-idx_stop])
+              break;
+          }
+          if(idx_stop == size) idx_stop = 0;
+          size = size - idx_stop;
+          Waveform_lm_push(&hlm, size);
+        }
+
+        /* Free the *_mrg buffers
+	   Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
         Waveform_lm_free(hlm_mrg);
         Dynamics_free(dyn_mrg);
 	
@@ -1049,31 +1068,33 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       EOBPars->abhf = PrecessingRemnantSpin(dyn); 
     }
 
-    /* BBH : add Ringdown */
+    /* BBH and BHNS : add Ringdown */
+    if (!(EOBPars->binary == BINARY_BNS)){
     
-    if (VERBOSE) PRSECTN("Ringdown");
-    
-    /* Extend arrays */    
-    const int size_ringdown = EOBPars->ringdown_extend_array;    
-    double dt_rngdn = dt;
-    if (merger_interp)
-      dt_rngdn = EOBPars->dt_merger_interp; 
-    
-#if (DEBUG) 
-    printf("Push memory for ringdown (%d + %d):",size,EOBPars->ringdown_extend_array);
-    printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt_rngdn,dt_rngdn*size_ringdown,hlm->time[size-1]+dt_rngdn*size_ringdown);
-#endif
+      if (VERBOSE) PRSECTN("Ringdown");
+      
+      /* Extend arrays */    
+      const int size_ringdown = EOBPars->ringdown_extend_array;    
+      double dt_rngdn = dt;
+      if (merger_interp)
+        dt_rngdn = EOBPars->dt_merger_interp; 
+      
+  #if (DEBUG) 
+      printf("Push memory for ringdown (%d + %d):",size,EOBPars->ringdown_extend_array);
+      printf(" tend = %e + %d * %e (%e) = %e\n",hlm->time[size-1],size_ringdown,dt_rngdn,dt_rngdn*size_ringdown,hlm->time[size-1]+dt_rngdn*size_ringdown);
+  #endif
 
-    Waveform_lm_push (&hlm, (size+size_ringdown));
-    for (int i = size; i < (size+size_ringdown); i++) 
-      hlm->time[i] = hlm->time[i-1] + dt_rngdn;
-    size += size_ringdown;
-    EOBPars->size = size;
+      Waveform_lm_push (&hlm, (size+size_ringdown));
+      for (int i = size; i < (size+size_ringdown); i++) 
+        hlm->time[i] = hlm->time[i-1] + dt_rngdn;
+      size += size_ringdown;
+      EOBPars->size = size;
+      
+      /* Ringdown attachment */
+        eob_wav_ringdown(dyn, hlm);
+    }  
     
-    /* Ringdown attachment */
-    eob_wav_ringdown(dyn, hlm);
-    
-  } /* End of BBH section */
+  } /* End of NQC and Ringdown section */
 
 #if (DEBUG) 
   if (EOBPars->output_multipoles) {
