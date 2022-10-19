@@ -127,6 +127,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->SigmaBl2  = 0.;
   eobp->use_lambda234_fits = Lambda234_fits_NO;
   eobp->pGSF_tidal = 4.0;// p-power in GSF tidal potential model
+  eobp->alpha_tidal = 1.;// alpha coefficient to modify the tidal rLR
 
   eobp->use_spins=1; // use spins ?
   eobp->project_spins=1;
@@ -155,7 +156,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->df = 1.;
   
   eobp->interp_freqs=0;
-  double fr[] = {30.};      //indexes of multipoles to use
+  double fr[] = {30.};      //indexes of frequencies to use
   eobp->freqs_size = 1;
   eobp->freqs = malloc (eobp->freqs_size * sizeof(double));
   memcpy(eobp->freqs, fr, eobp->freqs_size * sizeof(double));
@@ -328,13 +329,14 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_tidal = TIDES_TEOBRESUM3;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
     eobp->pGSF_tidal = 4.0;
+    eobp->alpha_tidal = 1.;
     eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
 
     eobp->centrifugal_radius = CENTRAD_NNLO;
     eobp->use_flm = USEFLM_SSNLO;
     eobp->nqc = NQC_NO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_flx = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
-    eobp->nqc_coefs_hlm = NQC_HLM_NONE;
+    eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE;
 
   } else if (choose == BINARY_BHNS) {
     eobp->binary=BINARY_BHNS;
@@ -457,7 +459,7 @@ void eob_set_params(int default_choice, int firstcall)
     /* gravitomagnetic tidal coupling constants el = 2 only */
     EOBPars->japA2 = 24.   * EOBPars->SigmaAl2 * XA*XA*XA*XA*XA / q;
     EOBPars->japB2 = 24.   * EOBPars->SigmaBl2 * XB*XB*XB*XB*XB * q;
-    
+
     EOBPars->kapT2 = EOBPars->kapA2 + EOBPars->kapB2;
     EOBPars->kapT3 = EOBPars->kapA3 + EOBPars->kapB3;
     EOBPars->kapT4 = EOBPars->kapA4 + EOBPars->kapB4;
@@ -533,7 +535,7 @@ void eob_set_params(int default_choice, int firstcall)
   if (EOBPars->nqc == NQC_AUTO) {
     if (EOBPars->binary == BINARY_BNS) {
         EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-        EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
+        EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
     } else {
       if (usespins) {
         EOBPars->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002;
@@ -625,15 +627,17 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm      = &eob_wav_flm_v1;
     eob_wav_flm_s    = &eob_wav_flm_s_SSLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
+    if (EOBPars->binary == BINARY_BNS) eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22_BNS;
+    else                               eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
   } else if (EOBPars->use_flm == USEFLM_SSNLO) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
     eob_wav_flm      = &eob_wav_flm_v1;
     eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
+    if (EOBPars->binary == BINARY_BNS) eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22_BNS;
+    else                               eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
@@ -735,6 +739,7 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->use_tidal = TIDES_TEOBRESUM3;
         eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
         eobp->pGSF_tidal = 4.0;
+        eobp->alpha_tidal = 1.;
         eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
 
         eobp->centrifugal_radius = CENTRAD_NNLO;
@@ -749,6 +754,7 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->use_tidal = TIDES_TEOBRESUM3;
         eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
         eobp->pGSF_tidal = 4.0;
+        eobp->alpha_tidal = 1.;
         eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
 
         eobp->centrifugal_radius = CENTRAD_NNLO;
@@ -922,6 +928,10 @@ if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) b
   
   if (STREQUAL(key,"pGSF_tidal")) {
     eobp->pGSF_tidal = par_get_d(val);
+  }
+
+  if (STREQUAL(key,"alpha_tidal")) {
+    eobp->alpha_tidal = par_get_d(val);
   }
 
   if (STREQUAL(key,"use_lambda234_fits")) {
@@ -1128,13 +1138,13 @@ if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
   if (STREQUAL(key,"ode_timestep")) {
     val = string_trim(val);
     for (eobp->ode_timestep=0; eobp->ode_timestep<=ODE_TSTEP_NOPT; eobp->ode_timestep++) {
-if (eobp->ode_timestep==ODE_TSTEP_NOPT) {
-  eobp->ode_timestep = ODE_TSTEP_ADAPTIVE;
-  if (VERBOSE) printf("ode_timestep '%s' undefined, set to default %s\n",
-          val, ode_tstep_opt[eobp->ode_timestep]);
-  break;
-}
-if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
+      if (eobp->ode_timestep==ODE_TSTEP_NOPT) {
+        eobp->ode_timestep = ODE_TSTEP_ADAPTIVE;
+        if (VERBOSE) printf("ode_timestep '%s' undefined, set to default %s\n",
+                val, ode_tstep_opt[eobp->ode_timestep]);
+        break;
+      }
+      if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     }
   }
 
@@ -1284,6 +1294,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "tides", tides_opt[eobp->use_tidal]);
   fprintf(f,"%s = \"%s\"\n", "tides_gravitomagnetic", tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
   fprintf(f,"%s = %.16f\n" , "pGSF_tidal", eobp->pGSF_tidal);
+  fprintf(f,"%s = %.16f\n" , "alpha_tidal", eobp->alpha_tidal);
   fprintf(f,"%s = \"%s\"\n", "use_lambda234_fits", use_lambda234_fits_opt[eobp->use_lambda234_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_tidal_fmode_model", INT2YESNO(eobp->use_tidal_fmode_model));
   fprintf(f,"%s = \"%s\"\n", "use_speedytail", INT2YESNO(eobp->use_speedytail));

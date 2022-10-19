@@ -1448,6 +1448,96 @@ double Chang14_fit_omegaf(double lam, int ell)
   return y;
 }
 
+void nr_mrg_fit_momg_bns(double *omg_mrg)
+{
+  double kappa2T = EOBPars->kapT2;
+  if (kappa2T > 500.) kappa2T = 500.;
+  *omg_mrg =  0.3596*(1. + 0.024384*kappa2T - 0.000017167*kappa2T*kappa2T)/(1. + 0.068865*kappa2T);
+}
+
+void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg)
+{
+  double q    = EOBPars->q;
+  double nu   = EOBPars->nu;
+  double ooq  = 1./q;
+
+  double kapA = EOBPars->kapA2;
+  double kapB = EOBPars->kapB2;
+
+  double XA   = EOBPars->X1;
+  double XB   = EOBPars->X2;
+  double XAB  = XA - XB;
+
+  double LamT = 16./39.*(kapA*q*(1.+12.*ooq) + kapB*ooq*(1.+12.*q));
+  double dlam = ((1690./1319.*nu - 4843./1319.)*(kapA/XB-kapB/XA) + (6162./1319.*XAB)*(kapA/XB+kapB/XA))/3.;
+
+  double a0   = EOBPars->aK;
+
+  //printf("%.10f %.10f, %.10f %.10f\n", LamT, dlam, XAB, a0);
+
+  /* Merger Amplitude */
+  double C_Amrg[14]   = {      -4.688308030677957 ,  16929.294579486428   ,
+                                0.0775373766260463,  4.696893573416992e-05,    -1.2371936265171986, -0.0012930644279764137,
+                                41163.05215414393 ,  39648.94266832759    ,    34894.66152431571  ,        47532.559449692,
+                                59595.20692491913 ,  31959.048298842925   ,    58517.580374209254 ,      37276.80848225365};
+
+  double C_fmrg[14] = {         1268.9526688832184,      4399.615903106789,
+                                0.0320179583177276,   1.16188880450384e-05,      1376.719486584435,      1.343851091566992,
+                            -0.0015579091874009323,   0.000321145804146936, -0.0007718719688255781,-0.00018252634688449757,
+                                -1.227930237748257,     -1.189124138027239,    -1.2314000315577138,    -1.3586230384982187};
+
+  double C_dfmrg[14] ={      0.0033215556577333807,      8.007733818827841,
+                                 53.40024620363712,-2.2285384530112475e-05,     113.20016243224902,     0.5263489040136915,
+                            -0.0025125037952244095,    -0.1889895973480728,    0.01798511102792604,  -0.003035850067814497,
+                               -3.2248838339574295,    -11.859787671692294,     -7.371458483465706,     1.3832439018220908};
+  
+  *A_mrg   = Breschi22_nr_mrg_fits_bns_template(LamT, dlam, a0, XAB, C_Amrg, 100.);
+  *A_mrg   = *A_mrg/(sqrt(24.)*nu);
+  *dA_mrg  = 0.;
+   d2A_mrg = NULL;
+  *omg_mrg = Breschi22_nr_mrg_fits_bns_template(LamT, dlam, a0, XAB, C_fmrg,  100.);
+  *omg_mrg = *omg_mrg*TwoPi;
+  *domg_mrg= Breschi22_nr_mrg_fits_bns_template(LamT, dlam, a0, XAB, C_dfmrg, 100.);
+  *domg_mrg= *domg_mrg*TwoPi;
+
+  return;
+}
+
+double Breschi22_nr_mrg_fits_bns_template(double LamT, double dLam, double chieff, double X12, double *C, int thrs)
+{
+  /* Unpack C */
+  const double Q0  = C[0];
+  const double cx  = C[1];
+  const double n1  = C[2]; 
+  const double n2  = C[3];
+  const double d1  = C[4];
+  const double d2  = C[5];
+  const double n1_l= C[6];
+  const double n2_l= C[7];
+  const double d1_l= C[8];
+  const double d2_l= C[9];
+  const double n1_c= C[10];
+  const double n2_c= C[11];
+  const double d1_c= C[12];
+  const double d2_c= C[13];
+
+  const double xi = LamT + cx*X12;
+  const double _n1 = n1 * ( 1. + n1_l * dLam + n1_c * chieff );
+  const double _n2 = n2 * ( 1. + n2_l * dLam + n2_c * chieff );
+  const double _d1 = d1 * ( 1. + d1_l * dLam + d1_c * chieff );
+  const double _d2 = d2 * ( 1. + d2_l * dLam + d2_c * chieff );
+
+  if (xi < thrs){
+    double num = 1.+ _n1 * thrs + _n2 * thrs*thrs;
+    double den = 1.+ _d1 * thrs + _d2 * thrs*thrs;
+    double dnm = (_n1-_d1)+ 2.*(_n2-_d2) * thrs + (_n2*_d1-_d2*_n1) *thrs*thrs;
+    return Q0 * (num/den + dnm*(xi - thrs)/(den*den));
+  } else {
+    return Q0 * (1.+ _n1 * xi + _n2 * xi*xi) / (1.+ _d1 * xi + _d2 * xi*xi);
+  }
+
+}
+
 /** Mass and angular momentum of the final black hole
   Healey, Lousto and Zochlower (HLZ),
   arXiv: 1406.7295, published as PRD 90, 104004 (2014)
