@@ -300,6 +300,14 @@ enum{
 };
 static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "Kerr"};
 
+/** List of options for GS and GS* PN order */
+enum{
+  EOBDYNGS_C3NLO,
+  EOBDYNGS_PNN4LO,
+  EOBDYNGS_NOPT
+};
+static const char* const GS_GSs_opt[] = {"C3NLO", "PNN4LO", "undefined"};
+
 /** List of options for ODE timestepping */
 enum{
   ODE_TSTEP_UNIFORM,                       /**< uniform timestep */
@@ -601,7 +609,7 @@ typedef struct tagEOBParameters
   /**@{*/
   /** NR-informed conservative variables */
   double a6c, cN3LO;
-  doube alpha_tidal;         
+  double alpha_tidal;         
   /**@}*/ 
 
   double r0;                    /**< Initial radial separation */
@@ -621,6 +629,7 @@ typedef struct tagEOBParameters
   /* options/settings */
   int binary;                                           /**< binary type (BBH, BNS, BHNS) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
+  int GS_GSs;                                           /**< Gs and GSs order */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
@@ -927,6 +936,7 @@ void eob_ham(double nu, double r, double pph, double prstar, double A, double dA
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
+void eob_dyn_s_GS_old(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 
 extern void (*eob_dyn_s_get_rc)(); /* defined in TEOBResumSPars.c*/
 void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);

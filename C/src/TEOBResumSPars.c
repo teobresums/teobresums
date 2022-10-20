@@ -340,7 +340,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
   eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF ; // index for gravitomagnetic tide
   eobp->use_tidal_fmode_model = 0; // do not 
-  
+
   if (choose == BINARY_BBH) {
     eobp->binary=BINARY_BBH;
     eobp->centrifugal_radius = CENTRAD_NLO;
@@ -353,6 +353,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->nqc = NQC_AUTO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
     eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
+    eobp->GS_GSs = EOBDYNGS_C3NLO;
 
   } else if (choose == BINARY_BNS) {
     eobp->binary=BINARY_BNS;
@@ -369,6 +370,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->nqc = NQC_NO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_flx = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
     eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE;
+    eobp->GS_GSs = EOBDYNGS_PNN4LO;
 
   } else if (choose == BINARY_BHNS) {
     eobp->binary=BINARY_BHNS;
@@ -383,7 +385,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_tidal = TIDES_TEOBRESUM;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;//TIDES_GM_PN;
     eobp->use_lambdaell_fits = Lambda234_fits_YAGI13;
-
+    eobp->GS_GSs = EOBDYNGS_C3NLO;
   }
 
 
@@ -1161,16 +1163,29 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"centrifugal_radius")) {
     val = string_trim(val);
     for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
-if (eobp->centrifugal_radius == CENTRAD_NOPT) {
-  eobp->centrifugal_radius = CENTRAD_NLO;
-  if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
-          val, centrifugal_radius_opt[eobp->centrifugal_radius]);
-  break;
-}
-if (STREQUAL(val, centrifugal_radius_opt[eobp->centrifugal_radius])) break;
+      if (eobp->centrifugal_radius == CENTRAD_NOPT) {
+        eobp->centrifugal_radius = CENTRAD_NLO;
+        if (VERBOSE) printf("centrifugal_radius '%s' undefined, set to '%s'\n",
+                val, centrifugal_radius_opt[eobp->centrifugal_radius]);
+        break;
+      }
+      if (STREQUAL(val, centrifugal_radius_opt[eobp->centrifugal_radius])) break;
     }
   }
 
+  if (STREQUAL(key,"GS_GSs")) {
+    val = string_trim(val);
+    for (eobp->GS_GSs=0; eobp->GS_GSs<=EOBDYNGS_NOPT; eobp->GS_GSs++) {
+      if (eobp->GS_GSs == EOBDYNGS_NOPT) {
+        eobp->GS_GSs = EOBDYNGS_C3NLO;
+        if (VERBOSE) printf("GS, GSs* '%s' undefined, set to '%s'\n",
+                val, GS_GSs_opt[eobp->GS_GSs]);
+        break;
+      }
+      if (STREQUAL(val, GS_GSs_opt[eobp->GS_GSs])) break;
+    }
+  }
+  
   if (STREQUAL(key,"use_flm")) {
     val = string_trim(val);
     for (eobp->use_flm=0; eobp->use_flm<=USEFLM_NOPT; eobp->use_flm++) {
@@ -1525,6 +1540,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
+  fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", GS_GSs_opt[eobp->GS_GSs]);
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
   fprintf(f,"%s = %.16f\n"    , "compute_LR_guess", eobp->compute_LR_guess);
   fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));
