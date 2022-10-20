@@ -488,18 +488,18 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   double GSs = GSs0*hGSs; 
   
   /* Get derivatives of gyro-gravitomagnetic functions */
-  double dhGS_dprstar  = -2.*prstar*hGS*hGS *( c02 +  c12*uc + 2.*c04*prstar2 
+  double dhGS_dprstarSQ  = -hGS*hGS *( c02 +  c12*uc + 2.*c04*prstar2 
                                             + 3.*c06*prstar4 + 2.*c14*uc*prstar2 + c22*uc2
                                             + 4.*c08*prstar6 + 3.*c16*uc*prstar4 + 2*c24*uc2*prstar2 + c32*uc3
                                             + c32log*uc3*loguc);
 
-  double dhGSs_dprstar = -2.*prstar*hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2
+  double dhGSs_dprstarSQ = -hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2
                                             + 3.*cs06*prstar4 + 2.*cs14*uc*prstar2 + cs22*uc2
                                             + 4.*cs08*prstar6 + 3.*cs16*uc*prstar4 + 2.*cs24*uc2*prstar4 + cs32*uc3
                                             + cs32log*uc3*loguc);
   
-  double dGS_dprstar  = GS0 *dhGS_dprstar; 
-  double dGSs_dprstar = GSs0*dhGSs_dprstar + dGSs0_dprstar*hGSs; 
+  double dGS_dprstar  = 2.*prstar*GS0 *dhGS_dprstarSQ; 
+  double dGSs_dprstar = 2.*prstar*GSs0*dhGSs_dprstarSQ + dGSs0_dprstar*hGSs; 
   
   /* derivatives of hat{G} with respect to uc */
   double dhGS_duc  = -SQ(hGS)*(c10 + 2.*c20*uc  + 3.*c30*uc2 + c12*prstar2
@@ -544,12 +544,12 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   double dGS_dpph  = 0.; 
   double dGSs_dpph = dGSs0_dpph*hGSs;    
   
-  // TODO: check the meaning of the two terms below & correct if necessary
   /* For initial data: compute the two ratios of ggm.dG_dprstar/prstar for GS and GSs */
-  const double dGS_dprstarbyprstar  = -2.*GS0*hGS*hGS *( c02  +  c12*uc +  2.*c04*prstar2);
-  const double dGSs_dprstarbyprstar = -2.*GSs0*hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2);
+  const double dGS_dprstarbyprstar  = 2.*GS0 *dhGS_dprstarSQ;
+  const double dGSs_dprstarbyprstar = 2.*GSs0*dhGSs_dprstarSQ;
   
   /* For NQC: Second derivatives neglecting all pr_star^2 terms */
+  /* FIXME: add N3LO, N4LO */
   const double d2GS_dprstar20  =  GS0*(-2.*hGS*hGS *( c02 +  c12*uc +  2.*c04*prstar2));
   const double d2GSs_dprstar20 =  GSs0*(-2.*hGSs*hGSs*(cs02 + cs12*uc + 2.*cs04*prstar2));
   
