@@ -19,23 +19,23 @@ use_geometric_units = "yes"
 q = 1000. # mass ratio
 
 use_spins = 1
-chi1 = 0.9 # dimensionless spin 1 z-component 
-chi2 = -0.4 # dimensionless spin 2 z-component 
+chi1 = 0.0 # dimensionless spin 1 z-component 
+chi2 = 0.0 # dimensionless spin 2 z-component 
 
-initial_frequency = 0.000001 # initial GW freq of 10 Hz for M = 15 M_sun
+initial_frequency = 0.00001 # initial GW freq of 
 
 #
 # Output dir, output modes 
 #
 
 output_dir = "./bbh_q1000_s09s-04_HM/"
-output_hpc = "yes" # switch this off to test performances!!!
-output_multipoles = "no"
+output_hpc = "no" # switch this off to test performances!!!
+output_multipoles = "yes"
 output_lm   = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
 use_mode_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
 output_dynamics = "yes"
 use_flm = "HM"
-A_pot = "PN"
+A_pot = "GSF"
 D_pot = "GSF"
 Q_pot = "GSF"
 #
@@ -44,8 +44,8 @@ Q_pot = "GSF"
 
 size = 200 # size of the arrays (chunks, dynamically extended)
 ode_timestep = "adaptive"
-compute_LR = "yes" # calculate LR ?
-compute_LSO = "yes" # calculate LSO ?
+compute_LR = "no" # calculate LR ?
+compute_LSO = "no" # calculate LSO ?
 ode_stop_at_radius = 5. # rLR = 1.81...
 ode_tmax = 100000000000000000000
 # interpolate on uniform grid?
