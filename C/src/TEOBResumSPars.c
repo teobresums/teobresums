@@ -1144,7 +1144,46 @@ if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) b
       if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
     }
   }
+
+  if (STREQUAL(key,"A_pot")) {
+    val = string_trim(val);
+    for (eobp->A_pot=0; eobp->A_pot<=A_NOPT;  eobp->A_pot++) {
+      if (eobp->A_pot == A_NOPT) {
+        eobp->A_pot = A_5PNlog;
+        if (VERBOSE) printf("A_pot '%s' undefined, set to '%s'\n",
+        val, A_opt[eobp->A_pot]);
+        break;
+      }
+      if (STREQUAL(val, A_opt[eobp->A_pot])) break;
+    }
+  }
+
+  if (STREQUAL(key,"D_pot")) {
+    val = string_trim(val);
+    for (eobp->D_pot=0; eobp->D_pot<=A_NOPT;  eobp->D_pot++) {
+      if (eobp->D_pot == D_NOPT) {
+        eobp->D_pot = D_3PN;
+        if (VERBOSE) printf("D_pot '%s' undefined, set to '%s'\n",
+        val, D_opt[eobp->D_pot]);
+        break;
+      }
+      if (STREQUAL(val, D_opt[eobp->D_pot])) break;
+    }
+  }
   
+  if (STREQUAL(key,"Q_pot")) {
+    val = string_trim(val);
+    for (eobp->Q_pot=0; eobp->Q_pot<=Q_NOPT;  eobp->Q_pot++) {
+      if (eobp->Q_pot == Q_NOPT) {
+        eobp->Q_pot = Q_3PN;
+        if (VERBOSE) printf("Q_pot '%s' undefined, set to '%s'\n",
+        val, Q_opt[eobp->Q_pot]);
+        break;
+      }
+      if (STREQUAL(val, Q_opt[eobp->Q_pot])) break;
+    }
+  }
+
   if (STREQUAL(key,"compute_LR")) {
     eobp->compute_LR = YESNO2INT(string_trim(val));
   }
@@ -1455,6 +1494,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n" , "dt_interp", eobp->dt_interp);
   fprintf(f,"%s = %.16f\n" , "srate_interp", eobp->srate_interp);
   fprintf(f,"%s = \"%s\"\n", "interp_uniform_grid", INT2YESNO(eobp->interp_uniform_grid));
+  fprintf(f,"%s = \"%s\"\n", "A_pot", A_opt[eobp->A_pot]);
+  fprintf(f,"%s = \"%s\"\n", "D_pot", D_opt[eobp->D_pot]);
+  fprintf(f,"%s = \"%s\"\n", "Q_pot", Q_opt[eobp->Q_pot]);
 
   fprintf(f,"%s = [", "use_mode_lm");
   for(int i=0; i<eobp->use_mode_lm_size-1;i++)
