@@ -403,7 +403,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) + kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
     }
     
-  } else if (EOBPars->use_tidal==TIDES_TEOBRESUM3) { 
+  } else if (EOBPars->use_tidal==TIDES_TEOBRESUM3 || EOBPars->use_tidal==TIDES_TEOBRESUM3NR) { 
 
     const double c1  =  8.533515908;  
     const double c2  = 3.043093411;
@@ -680,9 +680,11 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
     dAtmp_u  += dAT_u;
     d2Atmp_u += d2AT_u;
 #if (USEBTIDALPOTENTIAL)
-    eob_metric_Btidal(r, dyn, &BT, &dBT_u, &d2BT_u);
-    Btmp     += BT;
-    dBtmp_r  += -dBT_u*u2; 
+    if (EOBPars->use_tidal == TIDES_TEOBRESUM3NR){
+      eob_metric_Btidal(r, dyn, &BT, &dBT_u, &d2BT_u);
+      Btmp     += BT;
+      dBtmp_r  += -dBT_u*u2; 
+    }
 #endif
   }
 

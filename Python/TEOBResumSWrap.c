@@ -521,6 +521,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   eob_set_params(default_choice, fc);
 
   /* Overwrite spin-spin parameters, if required */
+  if ( PyDict_GetItemString(dict, "alpha_tidal") != NULL ) { 
+    EOBPars->alpha_tidal = PyFloat_AsDouble(PyDict_GetItemString(dict, "alpha_tidal"));
+  }
   if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
     EOBPars->C_Q1 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Q1"));
   }  

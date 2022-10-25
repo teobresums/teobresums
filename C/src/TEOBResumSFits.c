@@ -1847,6 +1847,23 @@ void nr_mrg_fit_momg_bns(double *omg_mrg)
 }
 
 /**
+ * Function: eob_alpha_fit
+ * -----------------------
+ *  Fit of alpha_tidal from Gamba2023 arxiv:2307.15125
+ *  
+ *  @param[in] kappaT : tidal deformability
+ * 
+ *  @return alpha_tidal
+ */
+double eob_alpha_fit(double kappaT)
+{
+  double a1f = 0.0630641650;
+  double a2f = 0.0573176149;
+  double alp = a1f*kappaT/(1. + a2f*kappaT);
+  return alp;
+}
+
+/**
  * Function: Breschi22_nr_mrg_fits_bns
  * -----------------------------------
  *  Fits for the merger Amplitude, its first and second derivatives, and the merger frequency

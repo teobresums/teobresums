@@ -406,10 +406,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       goto EXIT_POINT;
     }
     /* multiply rLR by alpha_tidal */
-    PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
-    EOBPars->rLR_tidal = EOBPars->alpha_tidal*EOBPars->rLR_tidal;
-    PRFORMd("rLR_tidal*alpha_tidal",EOBPars->rLR_tidal);
-
     double LambdaAl2  = EOBPars->LambdaAl2;
     if( fabs(LambdaAl2) < TEOB_LAMBDA_TOL ) LambdaAl2 = 0.0;
     double LambdaBl2 = EOBPars->LambdaBl2;
@@ -419,7 +415,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->use_tidal = tidal_tmp;
     EOBPars->use_spins = spins_tmp;
     EOBPars->use_tidal_fmode_model = use_fmode_tmp;
-    if (VERBOSE) PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
+    if (VERBOSE) printf("rLR_tidal, alpha %.5f, %.5f\n",EOBPars->rLR_tidal, EOBPars->alpha_tidal);
+    EOBPars->rLR_tidal = EOBPars->alpha_tidal*EOBPars->rLR_tidal;
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
