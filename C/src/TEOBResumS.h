@@ -257,10 +257,11 @@ enum{
   TIDES_NNLO, 
   TIDES_TEOBRESUM,
   TIDES_TEOBRESUM3,
+  TIDES_TEOBRESUM3NR,
   TIDES_TEOBRESUM_BHNS,
   TIDES_NOPT
 };
-static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM", "TEOBRESUM3", "TEOBRESUM_BHNS","undefined"};
+static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3NR","TEOBRESUM_BHNS","undefined"};
 
 /** List of options for the gravitomagnetic tidal potential */
 enum{
@@ -810,7 +811,7 @@ double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void nr_mrg_fit_momg_bns(double *omg_mrg);
 void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg);
 double Breschi22_nr_mrg_fits_bns_template(double LamT, double dLam, double chieff, double X12, double *C, int thrs);
-
+double eob_alpha_fit(double kappaT);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 

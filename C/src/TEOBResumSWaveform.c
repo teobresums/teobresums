@@ -2716,17 +2716,13 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   // m = 1
   hA[0]     = 3 * khatA_2 * (3-4*XA);
   hB[0]     = 3 * khatB_2 * (3-4*XB);
-  betaA1[0] = (15. + 203.*XA - 130.*XA*XA - 220.*XA*XA*XA)/(126. - 168.*XA);
-  betaB1[0] = (15. + 203.*XB - 130.*XB*XB - 220.*XB*XB*XB)/(126. - 168.*XB);
 
   // m = 2
   hA[1]     = 2 * khatA_2 *(XA/XB+3);
   hB[1]     = 2 * khatB_2 *(XB/XA+3);
   betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
   betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
-  betaA2[1] = (-16366. +153638.*XA -347284.*XA*XA +363195.*XA*XA*XA -728217.*XA*XA*XA*XA +805952.*XA*XA*XA*XA*XA -414911.*XA*XA*XA*XA*XA*XA +111970*XA*XA*XA*XA*XA*XA*XA)/(10584.*XA*(-3.+2*XA));
-  betaB2[1] = (-16366. +153638.*XB -347284.*XB*XB +363195.*XB*XB*XB -728217.*XB*XB*XB*XB +805952.*XB*XB*XB*XB*XB -414911.*XB*XB*XB*XB*XB*XB +111970*XB*XB*XB*XB*XB*XB*XB)/(10584.*XB*(-3.+2*XB));
-
+  
   /** l=3 */  
   // m = 1
   hA[2] = 12 * khatA_2 * XB;
@@ -2744,15 +2740,20 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   betaA1[4] = ( (XA-3.)*(10.*XA*XA - 25.*XA+ 14.) )/(12.*(1.-XA));
   betaB1[4] = ( (XB-3.)*(10.*XB*XB - 25.*XB+ 14.) )/(12.*(1.-XB));
   
-  /** l=4 */
+  /* add corrections */
+  if (EOBPars->use_tidal == TIDES_TEOBRESUM3NR){
+    /** l=2 */
+    betaA1[0] = (15. + 203.*XA - 130.*XA*XA - 220.*XA*XA*XA)/(126. - 168.*XA);
+    betaB1[0] = (15. + 203.*XB - 130.*XB*XB - 220.*XB*XB*XB)/(126. - 168.*XB);
+    betaA2[1] = (-16366. +153638.*XA -347284.*XA*XA +363195.*XA*XA*XA -728217.*XA*XA*XA*XA +805952.*XA*XA*XA*XA*XA -414911.*XA*XA*XA*XA*XA*XA +111970*XA*XA*XA*XA*XA*XA*XA)/(10584.*XA*(-3.+2*XA));
+    betaB2[1] = (-16366. +153638.*XB -347284.*XB*XB +363195.*XB*XB*XB -728217.*XB*XB*XB*XB +805952.*XB*XB*XB*XB*XB -414911.*XB*XB*XB*XB*XB*XB +111970*XB*XB*XB*XB*XB*XB*XB)/(10584.*XB*(-3.+2*XB));
   
-  // m = 2
-  hA[6] = 2*3584.*khatA_2*(5 - 9*XA + 6*XA*XA);
-  hB[6] = 2*3584.*khatB_2*(5 - 9*XB + 6*XB*XB);
-  
-  // m = 4
-  hA[8] = 4*khatA_2*(5 - 9*XA + 6*XA*XA);
-  hB[8] = 4*khatB_2*(5 - 9*XA + 6*XA*XA);
+    /** l=4 */
+    hA[6] = 2*3584.*khatA_2*(5 - 9*XA + 6*XA*XA);
+    hB[6] = 2*3584.*khatB_2*(5 - 9*XB + 6*XB*XB);
+    hA[8] = 4*khatA_2*(5 - 9*XA + 6*XA*XA);
+    hB[8] = 4*khatB_2*(5 - 9*XB + 6*XB*XB);
+  }
 
   /** l=2 */
   /* (2,1) */

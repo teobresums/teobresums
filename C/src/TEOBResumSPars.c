@@ -294,6 +294,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->khatA2= 0. ; //
   eobp->khatB2= 0. ; //
   eobp->rLR_tidal= 0. ; // radius of light-ring for NNLO tidal model
+  eobp->alpha_tidal = 1.;
 
   // f-mode frequencies
   for (int l=0; l<6; l++) {
@@ -327,10 +328,9 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
   } else if (choose == BINARY_BNS) {
     eobp->binary=BINARY_BNS;
-    eobp->use_tidal = TIDES_TEOBRESUM3;
+    eobp->use_tidal = TIDES_TEOBRESUM3NR;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
-    eobp->pGSF_tidal = 4.0;
-    eobp->alpha_tidal = 1.;
+    eobp->pGSF_tidal = 4.5;
     eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
 
     eobp->centrifugal_radius = CENTRAD_NNLO;
@@ -515,21 +515,26 @@ void eob_set_params(int default_choice, int firstcall)
       double LamBl[] = {0,0,EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4};
       
       for (int l=2; l<=lmax; l++) {
-	if (LamAl[l] > 0) {
-	  EOBPars->bomgfA[l] = Chang14_fit_omegaf(LamAl[l], l);	 
-	  if (EOBPars->bomgfA[l]<=0.)
-	    errorexit("f-mode frequency of star A cannot be zero or negative");
-	  EOBPars->bomgfA[l] /= XA;
-	}
-	if (LamBl[l] > 0) {
-	  EOBPars->bomgfB[l] = Chang14_fit_omegaf(LamBl[l], l);
-	  if (EOBPars->bomgfB[l]<=0.)
-	    errorexit("f-mode frequency of star B cannot be zero or negative");
-	  EOBPars->bomgfB[l] /= XB;
-	}
+        if (LamAl[l] > 0) {
+          EOBPars->bomgfA[l] = Chang14_fit_omegaf(LamAl[l], l);	 
+          if (EOBPars->bomgfA[l]<=0.)
+            errorexit("f-mode frequency of star A cannot be zero or negative");
+          EOBPars->bomgfA[l] /= XA;
+        }
+        if (LamBl[l] > 0) {
+          EOBPars->bomgfB[l] = Chang14_fit_omegaf(LamBl[l], l);
+          if (EOBPars->bomgfB[l]<=0.)
+            errorexit("f-mode frequency of star B cannot be zero or negative");
+          EOBPars->bomgfB[l] /= XB;
+        }
       } 
       
     }  /* EOBPars->use_tidal_fmode_model */
+
+    /* NR information in the metric*/
+    if(usetidal == TIDES_TEOBRESUM3NR) {
+      EOBPars->alpha_tidal = eob_alpha_fit(EOBPars->kapT2);
+    }
 
   }  /* use_tidal */
   
@@ -558,7 +563,7 @@ void eob_set_params(int default_choice, int firstcall)
   } else {
     EOBPars->a6c = eob_a6c_fit(EOBPars->nu);
   }
-  
+
   EOBPars->cN3LO = 0.;
   if (usetidal) EOBPars->cN3LO = 0.0;
   else if (EOBPars->use_flm == USEFLM_HM) {

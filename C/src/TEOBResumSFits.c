@@ -1455,6 +1455,18 @@ void nr_mrg_fit_momg_bns(double *omg_mrg)
   *omg_mrg =  0.3596*(1. + 0.024384*kappa2T - 0.000017167*kappa2T*kappa2T)/(1. + 0.068865*kappa2T);
 }
 
+
+/**
+Fit to alpha_tidal from Gamba2022
+*/
+double eob_alpha_fit(double kappaT)
+{
+  double a1f = 0.0630641650;
+  double a2f = 0.0573176149;
+  double alp = a1f*kappaT/(1. + a2f*kappaT);
+  return alp;
+}
+
 void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg)
 {
   double q    = EOBPars->q;
