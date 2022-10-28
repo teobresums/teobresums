@@ -492,9 +492,10 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   /** Build a small grid */ 
 #define N (6) 
   double dpph_dr[2*N], p[2*N], r[2*N], pph[2*N]; 
-  const double dr = 1e-4;   /* do not change this */
+  const double dp = 1e-4;   /* do not change this */
+  const double dr = dp/(1. - ecc);
   for (int i=0; i< 2*N; i++) {
-    p[i]   = r0+(i-N+1)*dr; /** grid of semilatus rectum */
+    p[i]   = r0+(i-N+1)*dp; /** grid of semilatus rectum */
     r[i]   = p[i]/(1.-ecc); /** grid of r = p/(1-e) */
     pph[i] = eob_dyn_ecc_j0(p[i], dyn);
   }
