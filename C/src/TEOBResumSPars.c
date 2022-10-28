@@ -1207,6 +1207,12 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "q", eobp->q);
   fprintf(f,"%s = %.16f\n", "chi1", eobp->chi1);
   fprintf(f,"%s = %.16f\n", "chi2", eobp->chi2);
+  fprintf(f,"%s = %.16f\n", "chi1x", eobp->chi1x);
+  fprintf(f,"%s = %.16f\n", "chi1y", eobp->chi1y);
+  fprintf(f,"%s = %.16f\n", "chi1z", eobp->chi1z);
+  fprintf(f,"%s = %.16f\n", "chi2x", eobp->chi2x);
+  fprintf(f,"%s = %.16f\n", "chi2y", eobp->chi2y);
+  fprintf(f,"%s = %.16f\n", "chi2z", eobp->chi2z);
   fprintf(f,"%s = %.16f\n", "distance", eobp->distance);
   fprintf(f,"%s = %.16f\n", "inclination", eobp->inclination);
   fprintf(f,"%s = %.16f\n", "coalescence_angle", eobp->coalescence_angle);
