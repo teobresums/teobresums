@@ -471,6 +471,14 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
   }
 
+  /* Overwrite a6c and cN3LO, if required */
+  if ( PyDict_GetItemString(dict, "a6c") != NULL ) { 
+    EOBPars->a6c = PyFloat_AsDouble(PyDict_GetItemString(dict, "a6c"));
+  }   
+  if ( PyDict_GetItemString(dict, "cN3LO") != NULL ) { 
+    EOBPars->cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "cN3LO"));
+  }   
+
   /* Run */
   int status = EOBRun(&hpc,    &hfpc, 
                       &hmodes, &hfmodes, &dynf,
