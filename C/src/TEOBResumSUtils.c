@@ -936,6 +936,23 @@ int get_uniform_size(const double tN, const double t0, const double dt)
   return ((int)((tN - t0)/dt + 1)); 
 }
 
+/** Intersection of two int arrays */
+int intersect_int (int *a, int size_a, int *b, int size_b, int *result)
+{
+  int k = 0;
+  
+  for (int i = 0; i < size_a; i++){
+    for (int j = 0; j < size_b; j++){
+      if (a[i]==b[j]){
+	result[k] = a[i];
+	k++;
+      }
+    }
+  }
+  
+  return k;
+}
+
 /* Alloc/Free data type routines */
 
 /** Waveform (complex) */

@@ -216,7 +216,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm *hlm_mrg = NULL; /* merger chunk */
   Dynamics *dyn_mrg = NULL;
   double ytmp[EOB_EVOLVE_NVARS], dytmp[EOB_EVOLVE_NVARS], ttmp; /* Additional buffer for post-Omegapeak ev */
-
+  
   /* Alloc dynamics, 
      Set quick-access parameters dyn (be careful here) */
   Dynamics_alloc (&dyn, 0, "dyn"); 
@@ -264,6 +264,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
 
   /* Allocating memory for dynamics and waveform */
+  // Check NQC_lm array does not contain inactive modes
+  int use_nqc_tmp[KMAX];
+  EOBPars->use_mode_lm_nqc_size = intersect_int(EOBPars->use_mode_lm,EOBPars->use_mode_lm_size,
+						EOBPars->use_mode_lm_nqc,EOBPars->use_mode_lm_nqc_size,
+						use_nqc_tmp);
+  
+  for(int i = 0; i < EOBPars->use_mode_lm_nqc_size; i++)
+    EOBPars->use_mode_lm_nqc[i] = use_nqc_tmp[i];
+  
   Dynamics_push (&dyn, size); 
   Waveform_lm_alloc (&hlm, size, "hlm"); 
   Waveform_lm_t_alloc (&hlm_t); 
