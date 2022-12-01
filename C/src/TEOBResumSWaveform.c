@@ -2822,8 +2822,8 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   
   double P[2], M[4];
   double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
-  double ai[KMAX][2];
-  double bi[KMAX][2];
+  double ai[KMAX][2] = {0.};
+  double bi[KMAX][2] = {0.};
   
   const int size = h->size;
   for (int i = 0; i < size; i++) {
@@ -3102,14 +3102,11 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
-    if(h->kmask[k]) {  
+    if(h->kmask_nqc[k]) {  
       
       if (EOBPars->use_flm == USEFLM_HM) {
 	jmax = j_NQC[k];
       }
-      
-      ai[k][0] = ai[k][1] = 0.;
-      bi[k][0] = bi[k][1] = 0.;
       
       /* Computation of ai coefficients at Omega peak */
       P[0]     = max_A[k]  - p1tmp[k][jmax];
@@ -3171,7 +3168,7 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   
   /** Multiply waveform to NQC */
   for (int k=0; k<KMAX; k++) {
-    if(h->kmask[k]){    
+    if(h->kmask_nqc[k]){    
       for (int j=0; j<size; j++) {
 	h->ampli[k][j] *= hnqc->ampli[k][j];
 	h->phase[k][j] -= hnqc->phase[k][j];
@@ -3191,9 +3188,11 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
 	    EOBPars->LambdaAl2, EOBPars->LambdaAl3,EOBPars->LambdaAl4,
 	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
     for (int k=0; k<KMAX; k++) {
-      fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-	      ai[k][0], ai[k][1], 
-	      bi[k][0], bi[k][1]);
+      if(h->kmask[k]){
+	fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
+		ai[k][0], ai[k][1], 
+		bi[k][0], bi[k][1]);
+      }
     }  
     fclose(fp);  
   }
@@ -3253,8 +3252,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   
   double P[2], M[4];   
   double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
-  double ai[KMAX][2];
-  double bi[KMAX][2];
+  double ai[KMAX][2] = {0.};
+  double bi[KMAX][2] = {0.};
   
   const int size = hlm_mrg->size;
   for (int i = 0; i < size; i++) {
@@ -3510,13 +3509,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
+    if(hlm_mrg->kmask_nqc[k]){
 
       jmax = j_NQC[k];
       
-      ai[k][0] = ai[k][1] = 0.;
-      bi[k][0] = bi[k][1] = 0.;
-
       /* Computation of ai coefficients at Omega peak */
       P[0]     = max_A[k]  - p1tmp[k][jmax];
       P[1]     = max_dA[k] - p2tmp[k][jmax];
@@ -3554,6 +3550,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
         bi[k][0] = (M[3]*P[0] - M[1]*P[1])*oodetM;
         bi[k][1] = (M[0]*P[1] - M[2]*P[0])*oodetM;
       }
+      
     }
 
   }
@@ -3568,7 +3565,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
+    if(hlm_mrg->kmask_nqc[k]){
       for (int j=0; j<size; j++) {
         hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
         hnqc->phase[k][j] =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
@@ -3579,7 +3576,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   /** Multiply merger waveform to NQC */
   for (int k=0; k<KMAX; k++) {
     for (int j=0; j<size; j++) {
-      if(hlm_mrg->kmask[k]){
+      if(hlm_mrg->kmask_nqc[k]){
         hlm_mrg->ampli[k][j] *= hnqc->ampli[k][j];
         hlm_mrg->phase[k][j] -= hnqc->phase[k][j];
       }
@@ -3643,7 +3640,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
   
   for (int k=0; k<KMAX; k++) {
-    if(hlm->kmask[k]){
+    if(hlm->kmask_nqc[k]){
       for (int j=0; j<fullsize; j++) {
         hlm->ampli[k][j] *= (1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j]);
         hlm->phase[k][j] -= (bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j]);
@@ -6273,7 +6270,7 @@ void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_
   double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
+    if(hlm_mrg->kmask_nqc[k]){
 
       jmax = j_NQC[k];
       
@@ -6450,7 +6447,7 @@ void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_
   }
   
   for (int k=0; k<KMAX; k++) {
-    if(hlm->kmask[k]){
+    if(hlm->kmask_nqc[k]){
       for (int j=0; j<fullsize; j++) {
         hlm->ampli[k][j] *= (1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j] + ai[k][2]*n3[k][j]);
         hlm->phase[k][j] -= (bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j] + bi[k][2]*n6[k][j]);
@@ -6549,8 +6546,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   
   double P[2], M[4];   
   double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX], max_d2A[KMAX], max_d2omg[KMAX];
-  double ai[KMAX][2];
-  double bi[KMAX][2];
+  double ai[KMAX][2] = {0.};
+  double bi[KMAX][2] = {0.};
   
   const int size = hlm_mrg->size;
   for (int i = 0; i < size; i++) {
@@ -6807,13 +6804,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
+    if(hlm_mrg->kmask_nqc[k]){
 
       jmax = j_NQC[k];
       
-      ai[k][0] = ai[k][1] = 0.;
-      bi[k][0] = bi[k][1] = 0.;
-
       /* Computation of ai coefficients at Omega peak */
       P[0]     = max_A[k]  - p1tmp[k][jmax];
       P[1]     = max_dA[k] - p2tmp[k][jmax];
@@ -6885,7 +6879,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   /** Multiply merger waveform to NQC */
   for (int k=0; k<KMAX; k++) {
     for (int j=0; j<size; j++) {
-      if(hlm_mrg->kmask[k]){
+      if(hlm_mrg->kmask_nqc[k]){
         hlm_mrg->ampli[k][j] *= hnqc->ampli[k][j];
         hlm_mrg->phase[k][j] -= hnqc->phase[k][j];
       }
@@ -6949,7 +6943,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   }
   
   for (int k=0; k<KMAX; k++) {
-    if(hlm->kmask[k]){
+    if(hlm->kmask_nqc[k]){
       for (int j=0; j<fullsize; j++) {
         hlm->ampli[k][j] *= (1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j]);
         hlm->phase[k][j] -= (bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j]);

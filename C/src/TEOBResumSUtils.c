@@ -1256,6 +1256,7 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
     errorexit("Out of memory");
   (*wav)->size = size; 
   set_multipolar_idx_mask((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0);
+  set_multipolar_idx_mask((*wav)->kmask_nqc, KMAX, EOBPars->use_mode_lm_nqc, EOBPars->use_mode_lm_nqc_size, 0);
   (*wav)->time = malloc ( size * sizeof(double) );
   memset((*wav)->time, 0, size*sizeof(double));
   for (int k=0; k<KMAX; k++) {
@@ -1738,6 +1739,7 @@ void Waveform_lm_t_alloc (Waveform_lm_t **wav)
   (*wav)->time = 0.;
   (*wav)->freq = 0.;
   set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0); 
+    set_multipolar_idx_mask ((*wav)->kmask_nqc, KMAX, EOBPars->use_mode_lm_nqc, EOBPars->use_mode_lm_nqc_size, 0); 
 }
 
 void Waveform_lm_t_free (Waveform_lm_t *wav)

@@ -473,6 +473,7 @@ typedef struct tagWaveform_lm
   double *phase[KMAX]; /* phase */
   char name[STRLEN];
   int kmask[KMAX]; /* mask for multipoles */
+  int kmask_nqc[KMAX]; /* mask for NQCs */
 }  Waveform_lm;
 
 /** Multipolar FD waveform data type */
@@ -496,6 +497,7 @@ typedef struct tagWaveform_lm_t
   double ampli[KMAX]; /* amplitude */
   double phase[KMAX]; /* phase */
   int kmask[KMAX]; /* mask for multipoles */
+  int kmask_nqc[KMAX]; /* mask for NQCs */
 }  Waveform_lm_t;
 
 /** Data type for spin dynamics */
@@ -597,7 +599,8 @@ typedef struct tagEOBParameters
   int interp_uniform_grid;
 
   int *use_mode_lm, use_mode_lm_size;
-
+  int *use_mode_lm_nqc, use_mode_lm_nqc_size; // multipoles to attach NQCs
+                                              // TODO: add as user input
 
   int size;
   int ode_timestep;
@@ -632,7 +635,7 @@ typedef struct tagEOBParameters
   /* NQC */
   int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
-  
+
   /* output */
   char output_dir[STRLEN];
   int output_hpc, output_multipoles, output_dynamics, output_nqc, output_nqc_coefs, output_ringdown;

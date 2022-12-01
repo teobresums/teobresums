@@ -2151,7 +2151,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     modeon[3]  = 1;
     modeon[4]  = 1;
     modeon[5]  = 0;
-    modeon[6]  = 1;
+    modeon[6]  = 0; //TODO: reinstate with input NQC_lm flags from user
     modeon[7]  = 1;
     modeon[8]  = 1;
     modeon[13] = 1;

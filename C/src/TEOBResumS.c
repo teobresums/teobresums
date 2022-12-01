@@ -1030,6 +1030,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 #if (DEBUG) 
     if (EOBPars->output_multipoles) {
       strcat(hlm->name,"_ringdown");
+      Waveform_lm_output (hlm);
+      Waveform_lm_output_reim (hlm);
     }
 #endif
       
