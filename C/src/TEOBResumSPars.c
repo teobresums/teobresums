@@ -150,8 +150,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
 
   // TODO: intersect with use_mode_lm so to compute NQCs only for active modes
-  int hlm_nqc[] = {0,1,3,4,7,8,13};      //indexes of multipoles to use
-  eobp->use_mode_lm_nqc_size = 7;
+  int hlm_nqc[] = {0,1,3,4,6,7,8,13};      //indexes of multipoles to use
+  eobp->use_mode_lm_nqc_size = 8;
   eobp->use_mode_lm_nqc = malloc (eobp->use_mode_lm_nqc_size * sizeof(int) );
   memcpy(eobp->use_mode_lm_nqc, hlm_nqc, eobp->use_mode_lm_nqc_size * sizeof(int));
   

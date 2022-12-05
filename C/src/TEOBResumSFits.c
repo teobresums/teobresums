@@ -970,7 +970,7 @@ void eob_nqc_setcoefs_spin202002(NQCcoefs *nqc)
   double X2   = 1.-X1;
   double Shat_norm = (X1*X1*chi1 + X2*X2*chi2)/(X1*X1 + X2*X2);
 
-  if (nu < 0.0025) {
+  if (nu < 0.025) {
     a1fit = 0.;
     a2fit = 0.;
   } else if ((nu < 0.09) && (Shat_norm > 0.83)) {
@@ -2151,7 +2151,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     modeon[3]  = 1;
     modeon[4]  = 1;
     modeon[5]  = 0;
-    modeon[6]  = 0; //TODO: reinstate with input NQC_lm flags from user
+    modeon[6]  = 1;
     modeon[7]  = 1;
     modeon[8]  = 1;
     modeon[13] = 1;
