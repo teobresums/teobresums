@@ -162,9 +162,9 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double kapT7 = EOBPars->kapT7;
   const double kapT8 = EOBPars->kapT8;
   
-  const double kapA2j = EOBPars->kapA2j;
-  const double kapB2j = EOBPars->kapB2j;
-  const double kapT2j = EOBPars->kapT2j;  
+  const double kapA2j = EOBPars->japA2;
+  const double kapB2j = EOBPars->japB2;
+  const double kapT2j = EOBPars->japT2;  
   
   const double p = EOBPars->pGSF_tidal;
   

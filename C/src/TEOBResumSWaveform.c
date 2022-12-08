@@ -2686,9 +2686,9 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 
   double khatA_2 = 0.5*EOBPars->kapA2; 
   double khatB_2 = 0.5*EOBPars->kapB2; 
-  const double kapA2j   = EOBPars->kapA2j;
-  const double kapB2j   = EOBPars->kapB2j;
-  const double kapT2j   = EOBPars->kapT2j;
+  const double kapA2j   = EOBPars->japA2;
+  const double kapB2j   = EOBPars->japB2;
+  const double kapT2j   = EOBPars->japT2;
   
 #if (use_fmode_22amplitude_correction)
   if (EOBPars->use_tidal_fmode_model) {
