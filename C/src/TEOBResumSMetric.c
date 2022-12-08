@@ -514,8 +514,6 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   } // EOBPars->use_tidal
 
 
-#if(USEGRAVITOMAGNETICTERMS)
-
   if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_PN) {
 
     /* PN series for the (2-) tidal potential */
@@ -570,8 +568,6 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     }
     
   } // EOBPars->use_tidal_gravitomagnetic
-
-#endif
     
   *AT   = A;
   *dAT  = dA_u;

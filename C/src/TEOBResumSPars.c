@@ -446,12 +446,12 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->LambdaAl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 8);
       EOBPars->LambdaBl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 8);
     }
-    
-#if(USEGRAVITOMAGNETICTERMS)
-    EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
-    EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
-#endif
-    
+
+    if(EOBPars->use_tidal_gravitomagnetic){
+      EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
+      EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
+    }
+
     /* Tidal coupling constants */
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl2,EOBPars->LambdaBl2, 2,  &(EOBPars->kapA2), &(EOBPars->kapB2));
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl3,EOBPars->LambdaBl3, 3,  &(EOBPars->kapA3), &(EOBPars->kapB3));
@@ -917,13 +917,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"tides_gravitomagnetic")) {
     val = string_trim(val);
     for (eobp->use_tidal_gravitomagnetic=0; eobp->use_tidal_gravitomagnetic<=TIDES_GM_NOPT; eobp->use_tidal_gravitomagnetic++) {
-if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
-  eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
-  if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
-          val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
-  break;
-}
-if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
+      if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
+        eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+        if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n", val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
+        break;
+      }
+      if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
     }
   }
   

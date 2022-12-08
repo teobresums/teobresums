@@ -74,10 +74,6 @@
 #define EXCLUDESPINSPINTIDES (0) /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
-#ifndef USEGRAVITOMAGNETICTERMS
-#define USEGRAVITOMAGNETICTERMS (1) /* use gravitomagnetic terms in tidal potential and waveform */
-#endif
-
 #ifndef USEBTIDALPOTENTIAL
 #define USEBTIDALPOTENTIAL (1) /* add B LO tidal potential */
 #endif

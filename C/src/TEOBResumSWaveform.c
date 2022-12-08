@@ -2746,8 +2746,6 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   hTidallm[3] = 8.*( khatA_2*(1. -2.*XB + 3.*XB*XB) +khatB_2*(1. -2.*XA + 3.*XA*XA) )*x5/(1.-3.*nu);
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
-
-#if(USEGRAVITOMAGNETICTERMS)
   
   if ( (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_GSF) || (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_PN) ) {
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
@@ -2758,8 +2756,6 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
     hTidallm[3] += fourthird*kapT2j*x5/(1.-3.*nu);
     hTidallm[4] += 0.5*( kapA2j*(4. - 9.*XB) - kapB2j*(4. - 9.*XA) )*x6;
   }
-
-#endif
 
   /* OLD STUFF 
    // l=2 
