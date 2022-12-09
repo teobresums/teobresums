@@ -1467,7 +1467,8 @@ double eob_alpha_fit(double kappaT)
   return alp;
 }
 
-void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg)
+/* Old template and coefficients for merger quantities, to remove*/
+void Breschi22_nr_mrg_fits_bns_old(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg)
 {
   double q    = EOBPars->q;
   double nu   = EOBPars->nu;
@@ -1485,8 +1486,6 @@ void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, d
 
   double a0   = EOBPars->aK;
 
-  //printf("%.10f %.10f, %.10f %.10f\n", LamT, dlam, XAB, a0);
-
   /* Merger Amplitude */
   double C_Amrg[14]   = {      -4.688308030677957 ,  16929.294579486428   ,
                                 0.0775373766260463,  4.696893573416992e-05,    -1.2371936265171986, -0.0012930644279764137,
@@ -1503,35 +1502,29 @@ void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, d
                             -0.0025125037952244095,    -0.1889895973480728,    0.01798511102792604,  -0.003035850067814497,
                                -3.2248838339574295,    -11.859787671692294,     -7.371458483465706,     1.3832439018220908};
   
-  *A_mrg   = Breschi22_nr_mrg_fits_bns_template(LamT, dlam, a0, XAB, C_Amrg, 100.);
+  *A_mrg   = Breschi22_nr_mrg_fits_bns_template_old(LamT, dlam, a0, XAB, C_Amrg, 100.);
   *A_mrg   = *A_mrg/(sqrt(24.)*nu);
   *dA_mrg  = 0.;
    d2A_mrg = NULL;
-  *omg_mrg = Breschi22_nr_mrg_fits_bns_template(LamT, dlam, a0, XAB, C_fmrg,  100.);
+  *omg_mrg = Breschi22_nr_mrg_fits_bns_template_old(LamT, dlam, a0, XAB, C_fmrg,  100.);
   *omg_mrg = *omg_mrg*TwoPi;
-  *domg_mrg= Breschi22_nr_mrg_fits_bns_template(LamT, dlam, a0, XAB, C_dfmrg, 100.);
+  *domg_mrg= Breschi22_nr_mrg_fits_bns_template_old(LamT, dlam, a0, XAB, C_dfmrg, 100.);
   *domg_mrg= *domg_mrg*TwoPi;
 
   return;
 }
 
-double Breschi22_nr_mrg_fits_bns_template(double LamT, double dLam, double chieff, double X12, double *C, int thrs)
+double Breschi22_nr_mrg_fits_bns_template_old(double LamT, double dLam, double chieff, double X12, double *C, int thrs)
 {
   /* Unpack C */
   const double Q0  = C[0];
   const double cx  = C[1];
-  const double n1  = C[2]; 
-  const double n2  = C[3];
-  const double d1  = C[4];
-  const double d2  = C[5];
-  const double n1_l= C[6];
-  const double n2_l= C[7];
-  const double d1_l= C[8];
-  const double d2_l= C[9];
-  const double n1_c= C[10];
-  const double n2_c= C[11];
-  const double d1_c= C[12];
-  const double d2_c= C[13];
+  const double n1  = C[2];   const double n2  = C[3];
+  const double d1  = C[4];   const double d2  = C[5];
+  const double n1_l= C[6];   const double n2_l= C[7];
+  const double d1_l= C[8];   const double d2_l= C[9];
+  const double n1_c= C[10];  const double n2_c= C[11];
+  const double d1_c= C[12];  const double d2_c= C[13];
 
   const double xi = LamT + cx*X12;
   const double _n1 = n1 * ( 1. + n1_l * dLam + n1_c * chieff );
@@ -1548,6 +1541,83 @@ double Breschi22_nr_mrg_fits_bns_template(double LamT, double dLam, double chief
     return Q0 * (1.+ _n1 * xi + _n2 * xi*xi) / (1.+ _d1 * xi + _d2 * xi*xi);
   }
 
+}
+
+void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg)
+{
+  /* Extract parameters */
+  const double kapT2 = EOBPars->kapT2;
+  const double nu    = EOBPars->nu;
+  const double XA    = EOBPars->X1;
+  const double XB    = EOBPars->X2;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double aK    = EOBPars->aK;
+
+  /* Compute auxiliary parameters */
+  const double XAB   = XA - XB;
+  const double a12   = XA*chi1 - XB*chi2;
+  const double Shat  = 0.5*(aK + a12*XAB);
+
+  /* Merger Amplitude and frequency, from  2205.09112 */
+  double C_Amrg[12]   = {0.39475762, -1.13292325, -0.02991597, -2.59318042,
+                         0.03901957425837708, 5.184564561045753e-05, 0.06032721528620493, 0.00013795694839938442,
+                         10.410256292591564,54.513466134598985,10.826296683028199,54.53588176973234};
+
+  double C_fmrg[12]   = {0.22754806, 0.92330138, 0.59374838, -1.99378496,
+                         0.03445340731627873, 5.5799962023491245e-06, 0.08404652974611324, 0.00011328992320789428,
+                         13.828175998146255, 517.4149218303298, 12.74661916436829, 139.76057108600236};
+
+  /* Frequency derivative at merger, from ... */
+  double C_dfmrg[14]  = { 0.00744217, -1.79881866, 0.35550959, -7.16735727, 
+                         0.03136357820264242, 0, 0.17137434918358982, 0.0005740521292441672, 
+                        -6.814353265745642, 1.0, 5.165102636043236, -1.0332557734992585};
+  
+  /* RWZ rescaled A*/
+  *A_mrg   = Breschi22_nr_mrg_fits_bns_template(kapT2, Shat, XAB, C_Amrg);
+  *A_mrg   = *A_mrg/(sqrt(24.)*nu);
+  *dA_mrg  = 0.;
+   d2A_mrg = NULL;
+
+  /* Compute omega = 2 Pi f, rescale the fits by nu*/
+  *omg_mrg = Breschi22_nr_mrg_fits_bns_template(kapT2, Shat, XAB, C_fmrg);
+  *omg_mrg = *omg_mrg*TwoPi*nu;
+
+  *domg_mrg= Breschi22_nr_mrg_fits_bns_template(kapT2, Shat, XAB, C_dfmrg);
+  *domg_mrg= *domg_mrg*TwoPi*nu;
+
+#if(DEBUG)
+  PRFORMd("BNS NR merger fits");
+  printf("\tA_mrg    = %.2f\n", *A_mrg);
+  printf("\tomg_mrg  = %.2f\n", *omg_mrg);
+  printf("\tdomg_mrg = %.2f\n", *domg_mrg);
+#endif
+
+  return;
+}
+
+double Breschi22_nr_mrg_fits_bns_template(double kapT2, double Shat, double X12, double *C)
+{
+  /* Auxiliary variables*/
+  double X = SQ(X12);
+
+  /* Unpack C*/
+  const double a0  = C[0];  const double a1  = C[1];
+  const double b0  = C[2];  const double b1  = C[3];
+  const double n1  = C[4];  const double n2  = C[5];
+  const double d1  = C[6];  const double d2  = C[7];
+  const double q1  = C[8];  const double q2  = C[9];
+  const double q3  = C[10]; const double q4  = C[11];
+
+  // compute fit
+  double p1s = b0 * (1. + b1 * X);
+  double _n1 = n1 * (1. + q1 * X);
+  double _n2 = n2 * (1. + q2 * X);
+  double _d1 = d1 * (1. + q3 * X);
+  double _d2 = d2 * (1. + q4 * X);
+  double _up = (1.+ _n1 * kapT2 + _n2 * kapT2*kapT2);
+  double _lo = (1.+ _d1 * kapT2 + _d2 * kapT2*kapT2);
+  return a0 * (1. + a1*X) * (1. + p1s*Shat) *  _up / _lo;
 }
 
 /** Mass and angular momentum of the final black hole
