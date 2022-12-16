@@ -370,10 +370,16 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
       Modhhatlm[4] *= X12;
     }
     /* Add tidal amplitudes */
-    for (int k = 0; k < KMAX; k++) { 
-      Modhhatlm[k] += MTlm[k] * hlmTidal[k]; 
+    if (usetidal == TIDES_TEOBRESUM3NR){
+      for (int k = 0; k < KMAX; k++) { 
+        Modhhatlm[k] += hlmTidal[k] * hlmNQC[k]; 
+      }
+    } else {
+      for (int k = 0; k < KMAX; k++) { 
+        Modhhatlm[k] += MTlm[k] * hlmTidal[k]; 
+      }
     }
-  }
+  } // usetidal
 
   /* Total multipolar flux */
   for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k];

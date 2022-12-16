@@ -5362,24 +5362,7 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
     hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
   }
-  
-  /** NQC */
-  if (!(EOBPars->nqc_coefs_hlm == NQC_HLM_NONE) &&
-      !(EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
 
-    /* Add NQC correction */    
-    Waveform_lm_t hNQC; 
-    eob_wav_hlmNQC(r,prstar,Omega,ddotr, NQC->hlm, &hNQC); 
-    const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
-    for (int k = 0; k < maxk; k++) {
-      if (NQC->hlm->activemode[k]) {
-	hlm->ampli[k] *= hNQC.ampli[k];
-	hlm->phase[k] -= hNQC.phase[k];
-      }
-    }
-    
-  }
-  
   if (usetidal) {   
     /** Tidal contribution */
     double hlmtidal[KMAX];
@@ -5396,11 +5379,35 @@ void eob_wav_hlm(Dynamics *dyn, Waveform_lm_t *hlm)
       hlm->ampli[13] *= X12;
     }
     /* Add tidal contribution to waveform */
-    for (int k = 0; k < KMAX; k++) {
-      hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
+    if(usetidal == TIDES_TEOBRESUM3NR){
+      /* Gamba+22 does not propagate the tail factor */
+      for (int k = 0; k < KMAX; k++) {
+        hlm->ampli[k] += (hNewt.ampli[k] * hlmtidal[k]);
+      }
+    } else {
+      for (int k = 0; k < KMAX; k++) {
+        hlm->ampli[k] += (hNewt.ampli[k] * tlm.ampli[k] * hlmtidal[k]);
+      }
     }
-  }
+
+  } // usetidal
   
+  /** NQC */
+  if (!(EOBPars->nqc_coefs_hlm == NQC_HLM_NONE) &&
+      !(EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
+
+    /* Add NQC correction */    
+    Waveform_lm_t hNQC; 
+    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, NQC->hlm, &hNQC); 
+    const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
+    for (int k = 0; k < maxk; k++) {
+      if (NQC->hlm->activemode[k]) {
+        hlm->ampli[k] *= hNQC.ampli[k];
+        hlm->phase[k] -= hNQC.phase[k];
+      }
+    }
+    
+  }  
 }
 
 /** Old flux routines */
