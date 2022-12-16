@@ -811,8 +811,6 @@ double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void nr_mrg_fit_momg_bns(double *omg_mrg);
 void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg);
 double Breschi22_nr_mrg_fits_bns_template(double kapT2, double Shat, double XAB, double *C);
-void Breschi22_nr_mrg_fits_bns_old(double *A_mrg, double *dA_mrg, double *d2A_mrg, double *omg_mrg, double *domg_mrg);
-double Breschi22_nr_mrg_fits_bns_template_old(double LamT, double dLam, double chieff, double X12, double *C, int thrs);
 double eob_alpha_fit(double kappaT);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
