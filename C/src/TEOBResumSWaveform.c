@@ -4376,7 +4376,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22_BNS(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   max_omg[k22]  = omg_tmp;
   max_domg[k22] = domg_tmp;
 
-  if (1) {
+  if (VERBOSE) {
     printf("NR values for NQC determination:\n");
     PRFORMd("A22_mrg",max_A[1]);
     PRFORMd("dA22_mrg",max_dA[1]);
