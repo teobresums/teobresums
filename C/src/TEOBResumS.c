@@ -155,7 +155,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   /** Do any output ? */
-  const int output = EOBPars->output_dynamics + EOBPars->output_multipoles + EOBPars->output_hpc + EOBPars->output_nqc;    
+  const int output = EOBPars->output_dynamics + EOBPars->output_multipoles + EOBPars->output_hpc + EOBPars->output_nqc + EOBPars->output_nqc_coefs;    
   if (output) {
     /* Make output dir */
     if (system_mkdir(EOBPars->output_dir)) {
