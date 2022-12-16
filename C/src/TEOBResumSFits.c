@@ -1990,7 +1990,7 @@ void Breschi22_nr_mrg_fits_bns(double *A_mrg, double *dA_mrg, double *d2A_mrg, d
   *domg_mrg= *domg_mrg*TwoPi*nu;
 
 #if(DEBUG)
-  PRFORMd("BNS NR merger fits");
+  PRSECTN("BNS NR merger fits");
   printf("\tA_mrg    = %.2f\n", *A_mrg);
   printf("\tomg_mrg  = %.2f\n", *omg_mrg);
   printf("\tdomg_mrg = %.2f\n", *domg_mrg);
