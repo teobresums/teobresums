@@ -801,6 +801,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->ode_stop = true;
     }
 
+    /** Stop integration at large radii (if rstop >= 0) */ 
+    if ((dyn->ode_stop_radius) && (dyn->r > 5.*r0) ) {
+      if (VERBOSE) printf("Stop: maximum radius reached.\n");
+      dyn->ode_stop = true;
+    }
+
     /** Check when to break the computation
 	find peak of omega curve and continue for 2M */
     if ((dyn->ode_stop_MOmgpeak == false) && (ecc == 0.) && (r_hyp == 0.)) {
