@@ -107,6 +107,12 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC") != NULL ) { 
     EOBPars->delta_t0_sigmoid_NQC = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC"));
   }
+  if ( PyDict_GetItemString(dict, "abhf") != NULL ) { 
+    EOBPars->abhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "abhf"));
+  }
+  if ( PyDict_GetItemString(dict, "Mbhf") != NULL ) { 
+    EOBPars->Mbhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "Mbhf"));
+  }
   /* Extrinsic */
   if ( PyDict_GetItemString(dict, "distance") != NULL ) {
     EOBPars->distance = PyFloat_AsDouble(PyDict_GetItemString(dict, "distance"));

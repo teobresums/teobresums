@@ -263,8 +263,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->khatB2= 0. ; //
   eobp->rLR_tidal= 0. ; // radius of light-ring for NNLO tidal model
   
-  eobp->Mbhf= 0. ; // final BH mass
-  eobp->abhf= 0. ; // final BH spin
+  eobp->Mbhf= -1. ; // final BH mass, initialized to unphysical value
+  eobp->abhf= -2. ; // final BH spin, initialized to unphysical value
   
   eobp->rLR= 0. ; // radius of light-ring
   eobp->rLSO= 0. ; // radius of last stable orbit 
