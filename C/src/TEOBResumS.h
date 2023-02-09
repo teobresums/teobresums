@@ -605,7 +605,8 @@ typedef struct tagEOBParameters
   double ode_tmax;
   int ode_stop_afterNdt;
   int ode_stop_after_peak;
-  int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
+  int ode_stop, ode_stop_MOmgpeak;
+  double ode_stop_radius; // note: this is *different* in meaning from dyn->ode_stop_radius!
   int project_spins, ringdown_eulerangles;
   int spin_flx;
 

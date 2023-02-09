@@ -3281,7 +3281,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
 
   // c3A
     /* l=2, m=1 */
-    c3A[21]   = (0.23882 - 2.2982*nu + 5.7022*nu2)/(1 - 7.7463*nu + 27.266*nu2);
+    c3A[k21]   = (0.23882 - 2.2982*nu + 5.7022*nu2)/(1 - 7.7463*nu + 27.266*nu2);
     
     /* l=2, m=2 */
     b1 =  0.0169543;
