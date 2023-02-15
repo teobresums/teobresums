@@ -720,6 +720,7 @@ void unwrap_HM(double *p, const int size);
 void unwrap_euler(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void rmap (double *re, double *im, double *p, double *a, const int mode);
+void rmap_twist (double *re, double *im, double *p, double *a, const int mode);
 void set_multipolar_idx_mask_old(int *kmask, int n);
 void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);
 int get_uniform_size(const double tf, const double t0, const double dt);

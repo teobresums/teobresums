@@ -371,9 +371,20 @@ void eob_set_params(int default_choice, int firstcall)
   
   /* Set intrinsic parameters as given by user */
   
-  const double M =  EOBPars->M;
+  const double M    =  EOBPars->M;
   const double fmin = EOBPars->initial_frequency;
-  double q =  EOBPars->q;
+  double q          =  EOBPars->q;
+
+  if(q < 1.){
+    q  =  1./q;
+    EOBPars->q = q;
+    SWAPTRS(EOBPars->chi1z, EOBPars->chi2z);
+    SWAPTRS(EOBPars->chi1x, EOBPars->chi2x);
+    SWAPTRS(EOBPars->chi1y, EOBPars->chi2y);
+    SWAPTRS(EOBPars->chi1,  EOBPars->chi2);
+    SWAPTRS(EOBPars->LambdaAl2, EOBPars->LambdaBl2);
+    if (VERBOSE) printf("WARNING: q<1, swapping bodies!\n");
+  }
 
   /* Check: if q is closer to 1 than 1e-8, then q=1 to avoid floating points issues */
   if (DEQUAL(q, 1., 1e-8)){

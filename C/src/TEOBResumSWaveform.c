@@ -5201,8 +5201,9 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   if (VERBOSE) printf("Correct for backward/forward integration\n");
   for(int i =0; i<tM_idx+1;i++){
     if(omega[i] <  spin->omg_backward){
-      alpha[i] = alpha[i] - Pi;
+      alpha[i] =  alpha[i] - Pi;
       beta[i]  = -beta[i]; 
+      gamma[i] =  gamma[i] - Pi;
     }
   }
   /* Now, prolong the angles based on user request */
@@ -5377,12 +5378,11 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
           // d^l_{m,s}(angle)
           //Checked by SA on April 2021
           double dl_mn = wigner_d_function(ell, n,emm, -beta[i]);
-          //double dl_mn = wigner_d_function_opt(ell, n,emm, -beta[i]);
 
           // hlm modes are given as phase/amplitude
           // but here we need real/imag
           double real=0, imag=0;
-          rmap(&real,&imag, &(hlm->phase[j][i]), &(hlm->ampli[j][i]), 0);
+          rmap_twist(&real,&imag, &(hlm->phase[j][i]), &(hlm->ampli[j][i]), 0);
 
           // Here we need to deal with m<0 modes
           // H_{l-m} = (-)^l H^{*}_{lm}
@@ -5404,11 +5404,11 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
         
         // Re-map back into phase/ampli
         if(q==0)  // m>0 
-          rmap(&hTlm_real,&hTlm_imag, &(hTlm->phase[k][i]), &(hTlm->ampli[k][i]), 1);
+          rmap_twist(&hTlm_real,&hTlm_imag, &(hTlm->phase[k][i]), &(hTlm->ampli[k][i]), 1);
         if(q==1)  // m<0
-          rmap(&hTlm_real,&hTlm_imag, &(hTlm_neg->phase[k][i]), &(hTlm_neg->ampli[k][i]), 1);
+          rmap_twist(&hTlm_real,&hTlm_imag, &(hTlm_neg->phase[k][i]), &(hTlm_neg->ampli[k][i]), 1);
         if(q==2){ // m=0
-          rmap(&hTlm_real,&hTlm_imag, &(hTl0->phase[k][i]), &(hTl0->ampli[k][i]), 1);
+          rmap_twist(&hTlm_real,&hTlm_imag, &(hTl0->phase[k][i]), &(hTl0->ampli[k][i]), 1);
           zero_flag = 0; //avoid re-computation of m=0 for fixed l
         }
       }// i (times)
@@ -5918,7 +5918,7 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
    * We now agree with, e.g., LALSimSphHarmMode.c: 64-74
    */
   
-  const double pm3 = 3.*Pi/2.;
+  const double pm = Pi/2.;
   for (int i = 0; i < hflm->size; i++) {
     hpc->freq[i] = hflm->freq[i]; 
     sumpr = sumpi = sumcr = sumci = 0.;
@@ -5928,20 +5928,20 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
       double Aki  = 0.5*amplitude_prefactor * hflm->ampli[k][i];
       double cosPhi = cos( hflm->phase[k][i] );
       double sinPhi = sin( hflm->phase[k][i] );
-      double cosPhipm3 = cos( hflm->phase[k][i] + pm3 );
-      double sinPhipm3 = sin( hflm->phase[k][i] + pm3 );
+      double cosPhipm = cos( hflm->phase[k][i] + pm );
+      double sinPhipm = sin( hflm->phase[k][i] + pm );
       
       /* H_{l-m} = (-)^l H^{*}_{lm} */
       if (LINDEX[k] % 2) {
-        sumpr +=  Aki * (cosPhi*(Y_real[k] - Y_real_mneg[k]) + sinPhi* (Y_imag[k] + Y_imag_mneg[k]));
-        sumpi +=  Aki * (cosPhi*(-Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
-        sumcr += -Aki * (cosPhipm3*(Y_real[k] + Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] - Y_imag_mneg[k]));
-        sumci += -Aki * (-cosPhipm3*(Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
+        sumpr +=  Aki * (cosPhi*(Y_real[k] - Y_real_mneg[k]) - sinPhi* (Y_imag[k] + Y_imag_mneg[k]));
+        sumpi += -Aki * (cosPhi*(Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
+        sumcr +=  Aki * (cosPhipm* (Y_real[k] + Y_real_mneg[k]) - sinPhipm* (Y_imag[k] - Y_imag_mneg[k]));
+        sumci +=  Aki * (cosPhipm* (Y_imag[k] - Y_imag_mneg[k]) + sinPhipm* (Y_real[k] + Y_real_mneg[k]));
       } else {
-        sumpr +=  Aki * (cosPhi* (Y_real[k] + Y_real_mneg[k]) + sinPhi* (Y_imag[k] - Y_imag_mneg[k]));
-        sumpi +=  Aki * (cosPhi* (-Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
-        sumcr += -Aki * (cosPhipm3* (Y_real[k] - Y_real_mneg[k]) + sinPhipm3* (Y_imag[k] + Y_imag_mneg[k]));
-        sumci += -Aki * (-cosPhipm3*(Y_imag[k] + Y_imag_mneg[k]) + sinPhipm3* (Y_real[k] - Y_real_mneg[k]));
+        sumpr +=  Aki * (cosPhi* (Y_real[k] + Y_real_mneg[k]) - sinPhi* (Y_imag[k] - Y_imag_mneg[k]));
+        sumpi += -Aki * (cosPhi* (Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
+        sumcr +=  Aki * (cosPhipm* (Y_real[k] - Y_real_mneg[k]) - sinPhipm* (Y_imag[k] + Y_imag_mneg[k]));
+        sumci +=  Aki * (cosPhipm* (Y_imag[k] + Y_imag_mneg[k]) + sinPhipm* (Y_real[k] - Y_real_mneg[k]));
       }
       
       hpc->preal[i] = sumpr; 

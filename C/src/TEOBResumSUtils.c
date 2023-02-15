@@ -915,6 +915,21 @@ void rmap (double *re, double *im, double *p, double *a, const int mode)
   }
 }
 
+/* Compute real/imag <-> amplitude/phase */
+void rmap_twist (double *re, double *im, double *p, double *a, const int mode)
+{
+  /* h =  A exp( -i phi) */
+  if (mode) {
+    /** (Re, Im) -> (Amplitude, phase) */
+    *a = sqrt( SQ((*re)) + SQ((*im)) );
+    *p = - atan2((*im), (*re)); /* exp(- i phi) => Pi  */
+  } else {
+    /** (Amplitude, phase) -> (Re, Im) */
+    *re = + (*a) * cos((*p));  
+    *im = - (*a) * sin((*p));  
+  }
+}
+
 /** This routine sets a 0/1 mask for the multipolar linear index 
     work for any parameter and can specify default all on/off */
 void set_multipolar_idx_mask (int *kmask, int n, const int *idx, int m, int on)
