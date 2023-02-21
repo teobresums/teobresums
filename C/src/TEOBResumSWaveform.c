@@ -5685,6 +5685,73 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
   
 }
 
+/** Generic routine for NQC with sigmoid */
+void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, double tOmg_pk, NQCcoefs *nqc, 
+		    Waveform_lm_t *hlmnqc)
+{      
+  const int maxk = MIN(KMAX, nqc->maxk+1);
+  
+  /* Multipoles with special treatment */
+  const int k22 = 1;
+
+  /* Shorthand */
+  const double n0 = (prstar/(r*Omega))*(prstar/(r*Omega));
+  const double n1 = ddotr/(r*Omega*Omega);
+  const double n2 = n0*SQ(prstar);
+  const double n3 = prstar/(r*Omega);
+  const double n4 = n3*cbrt(Omega*Omega);
+  const double n5 = n4*SQ(prstar);
+  
+  const double n4_k = n3*SQ((r*Omega)); 
+  const double n5_k = n4*SQ(prstar);
+
+  /* time shift */
+  double chi1 = EOBPars->chi1;
+  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
+  double tNQC = tOmg_pk - DeltaT_nqc;
+
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
+  /*
+    Old configuration used for arXiv:2001.11736
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+  */
+  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+  double alpha = EOBPars->alpha_sigmoid_NQC;
+  double sigmoid = 1./(1. + exp(-alpha*(t - t0)));
+
+  /** n functions */
+  for (int k = 0; k < maxk; k++) {
+    if (nqc->activemode[k]) {
+      nqc->n[k][0] = n0*sigmoid;
+      nqc->n[k][1] = n1*sigmoid;
+      nqc->n[k][2] = n2*sigmoid;
+      nqc->n[k][3] = n3*sigmoid;
+      nqc->n[k][4] = n4*sigmoid;
+      nqc->n[k][5] = n5*sigmoid;
+    }
+  }
+
+  /** Change special multipoles */
+  int k = k22;
+  nqc->n[k][4] = n4_k*sigmoid;
+  nqc->n[k][5] = n5_k*sigmoid;
+  
+  /** NQC wave factor */
+  for (int k = 0; k < KMAX; k++) {
+    hlmnqc->ampli[k] = 1.;
+    hlmnqc->phase[k] = 0.;
+  }
+  
+  for (int k = 0; k < maxk; k++) {
+    if (nqc->activemode[k]) {
+      hlmnqc->ampli[k] += nqc->a1[k]*nqc->n[k][0] + nqc->a2[k]*nqc->n[k][1] + nqc->a3[k]*nqc->n[k][2]; 
+      hlmnqc->phase[k] += nqc->b1[k]*nqc->n[k][3] + nqc->b2[k]*nqc->n[k][4] + nqc->b3[k]*nqc->n[k][5]; 
+    }
+  }
+  
+}
+
 /** Ringdown waveform template */
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi)
 {  
@@ -6312,6 +6379,7 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
     Waveform_lm_t hNQC; 
     eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, NQC->hlm, &hNQC); 
     const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
+    
     for (int k = 0; k < maxk; k++) {
       if (NQC->hlm->activemode[k]) {
 	hlm->ampli[k] *= hNQC.ampli[k];
@@ -6427,10 +6495,12 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
   if (!(EOBPars->nqc_coefs_hlm == NQC_HLM_NONE) &&
       !(EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
 
-    /* Add NQC correction */    
-    Waveform_lm_t hNQC; 
-    eob_wav_hlmNQC(nu,r,prstar,Omega,ddotr, NQC->hlm, &hNQC); 
+    /* Add NQC correction */
+    Waveform_lm_t hNQC;
+    double tOmg_pk = dyn->tOmg_pk;
+    eob_wav_hlmNQC_ecc_sigmoid(nu,r,prstar,Omega,ddotr, t, tOmg_pk, NQC->hlm, &hNQC); 
     const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
+  
     for (int k = 0; k < maxk; k++) {
       if (NQC->hlm->activemode[k]) {
 	hlm->ampli[k] *= hNQC.ampli[k];

@@ -776,7 +776,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         hlm->phase[k][iter] = hlm_t->phase[k]; 
       }
     }
-      
+    
     if (store_dynamics) {
       dyn->time[iter]             = dyn->t; 
       dyn->data[EOB_RAD][iter]    = dyn->r;
@@ -865,28 +865,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   double tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
 
   dyn->tOmg_pk = tOmg_pk;
-
-  /** Over-writing waveform in the eccentric case - adding sigmoid */
-  if ((ecc != 0) && (r_hyp == 0.)) {
-      
-    for (int i = 0; i < size; i++) {
-      dyn->store = 1;
-      dyn->t = dyn->time[i];
-      dyn->y[EOB_EVOLVE_PHI] = dyn->data[EOB_PHI][i];
-      dyn->y[EOB_EVOLVE_RAD] = dyn->data[EOB_RAD][i];
-      dyn->y[EOB_EVOLVE_PPHI] = dyn->data[EOB_PPHI][i];
-      dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
-      eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
-      
-      eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
-      for (int k = 0; k < KMAX; k++) {
-	if((hlm->kmask[k])){
-	  hlm->ampli[k][i] = hlm_t->ampli[k];
-	  hlm->phase[k][i] = hlm_t->phase[k]; 
-	}
-      }
-    }
-  }
   
  END_ODE_EVOLUTION:;
   
@@ -1004,10 +982,32 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } /* End of merger interp */
     
     
+    /** Over-writing waveform in the eccentric case - adding sigmoid */
+    if ((EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && ((ecc != 0) || (r_hyp != 0.))) {
+    
+      for (int i = 0; i < size; i++) {
+	dyn->store = 1;
+	dyn->t = dyn->time[i];
+	dyn->y[EOB_EVOLVE_PHI] = dyn->data[EOB_PHI][i];
+	dyn->y[EOB_EVOLVE_RAD] = dyn->data[EOB_RAD][i];
+	dyn->y[EOB_EVOLVE_PPHI] = dyn->data[EOB_PPHI][i];
+	dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
+	eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
+      
+	eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
+	for (int k = 0; k < KMAX; k++) {
+	  if((hlm->kmask[k])){
+	    hlm->ampli[k][i] = hlm_t->ampli[k];
+	    hlm->phase[k][i] = hlm_t->phase[k]; 
+	  }
+	}
+      }
+    }
+    
     if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
       
       /** BBH : compute and add NQC */
-
+    
       if (VERBOSE) PRSECTN("NQC Calculation");
       
       if (merger_interp) { 

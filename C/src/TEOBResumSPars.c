@@ -757,19 +757,12 @@ void update_params(int binary)
   /* Updated function pointers */
   
   /** Set f_lm fun pointer */
-  if (EOBPars->use_flm == USEFLM_HM) {
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
-    eob_wav_flm      = &eob_wav_flm_HM;
-    eob_wav_flm_s    = &eob_wav_flm_s_HM;
-    eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    if(binary==BINARY_BBH){
-      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
-      eob_wav_ringdown = &eob_wav_ringdown_HM; 
-    }else { // for BHNS cases I & III
-      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
-      eob_wav_ringdown = &eob_wav_ringdown_bhns;
-    }
+  // TODO: BHNS + ecc 
+  if(binary==BINARY_BHNS || binary == BINARY_BHNS_TD){
+    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
+    eob_wav_ringdown = &eob_wav_ringdown_bhns;
   }
+
 }
 
 int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
