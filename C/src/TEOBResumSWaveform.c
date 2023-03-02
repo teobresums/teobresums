@@ -5368,8 +5368,10 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
         // ... do the twist (sum up on m')
         double sumr = 0;
         double sumi = 0;
-        for (int n = -ell; n <= ell; n++) {
-          if (n==0) continue; // skip m=0 modes
+        for (int n = 1; n <= ell; n++) {
+        // Uncomment below for previous summation
+        // for (int n = -ell; n <= ell; n++) {
+        //   if (n==0) continue; // skip m=0 modes
           int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
           if (!activemode[j]) continue;  
           double cosng = cos( n * gamma[i] );
@@ -5378,6 +5380,7 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
           // d^l_{m,s}(angle)
           //Checked by SA on April 2021
           double dl_mn = wigner_d_function(ell, n,emm, -beta[i]);
+          double dl_mnn= wigner_d_function(ell,-n,emm, -beta[i]);
 
           // hlm modes are given as phase/amplitude
           // but here we need real/imag
@@ -5386,16 +5389,27 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
 
           // Here we need to deal with m<0 modes
           // H_{l-m} = (-)^l H^{*}_{lm}
-          double hln_real, hln_imag;
-          if (n<0) {
-            hln_real =   eps * real;
-            hln_imag = - eps * imag;	  
-          } else {
-            hln_real = real;
-            hln_imag = imag;
-          }
-          sumr += dl_mn*(cosng * hln_real - sinng * hln_imag);
-          sumi += dl_mn*(sinng * hln_real + cosng * hln_imag);
+          double hln_real_n, hln_imag_n;
+          hln_real_n =   eps * real;
+          hln_imag_n = - eps * imag;	  
+          double hln_real_p, hln_imag_p;
+          hln_real_p = real;
+          hln_imag_p = imag;
+
+          sumr += dl_mn*(cosng * hln_real_p - sinng * hln_imag_p) + dl_mnn*(cosng * hln_real_n + sinng * hln_imag_n);
+          sumi += dl_mn*(sinng * hln_real_p + cosng * hln_imag_p) + dl_mnn*(-sinng* hln_real_n + cosng * hln_imag_n);
+
+          // Previous summation, less efficient
+          // double hln_real, hln_imag;
+          // if (n<0) {
+          //   hln_real =   eps * real;
+          //   hln_imag = - eps * imag;	  
+          // } else {
+          //   hln_real = real;
+          //   hln_imag = imag;
+          // }
+          // sumr += dl_mn*(cosng * hln_real - sinng * hln_imag);
+          // sumi += dl_mn*(sinng * hln_real + cosng * hln_imag);
     
         } // n (m')
 
@@ -5783,6 +5797,7 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
 
   double f022 = hlm->freq[0];
   double omg0 = frequencies[0];
+  double omgM = frequencies[spin->size-1];
   /* Loop over frequencies */
   for(int i=0; i<size;i++){
     double hpr = 0.;
@@ -5799,21 +5814,20 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
       int emm = MINDEX[k];
       int ell = LINDEX[k];
       double f0lm = f022/2.*emm;
-
-      if(f < f0lm) 
-        continue;      
       double omg  = 2.*Pi*f/emm;
-    
+
+      if(f < f0lm || omg > omgM){ 
+        continue;
+      }    
+      
       /* avoid interpolation error (due to small numerical differences) */
       if(k == 1 && f == f0lm) 
         omg = omg0;
-
       double alph = gsl_spline_eval(alpha, omg, acc_al); //evaluate spline
       double bet  = gsl_spline_eval(beta , omg, acc_bt); //evaluate spline
       double gam  = gsl_spline_eval(gamma, omg, acc_gm); //evaluate spline
       double cosmg = cos(-emm * gam);
       double sinmg = sin(-emm * gam);
-
       double eps = pow (-1., ell);
       double sumpr = 0.;
       double sumpi = 0.;
@@ -5934,12 +5948,12 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
       /* H_{l-m} = (-)^l H^{*}_{lm} */
       if (LINDEX[k] % 2) {
         sumpr +=  Aki * (cosPhi*(Y_real[k] - Y_real_mneg[k]) - sinPhi* (Y_imag[k] + Y_imag_mneg[k]));
-        sumpi += -Aki * (cosPhi*(Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
+        sumpi +=  Aki * (cosPhi*(Y_imag[k] + Y_imag_mneg[k]) + sinPhi* (Y_real[k] - Y_real_mneg[k]));
         sumcr +=  Aki * (cosPhipm* (Y_real[k] + Y_real_mneg[k]) - sinPhipm* (Y_imag[k] - Y_imag_mneg[k]));
         sumci +=  Aki * (cosPhipm* (Y_imag[k] - Y_imag_mneg[k]) + sinPhipm* (Y_real[k] + Y_real_mneg[k]));
       } else {
         sumpr +=  Aki * (cosPhi* (Y_real[k] + Y_real_mneg[k]) - sinPhi* (Y_imag[k] - Y_imag_mneg[k]));
-        sumpi += -Aki * (cosPhi* (Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
+        sumpi +=  Aki * (cosPhi* (Y_imag[k] - Y_imag_mneg[k]) + sinPhi* (Y_real[k] + Y_real_mneg[k]));
         sumcr +=  Aki * (cosPhipm* (Y_real[k] - Y_real_mneg[k]) - sinPhipm* (Y_imag[k] + Y_imag_mneg[k]));
         sumci +=  Aki * (cosPhipm* (Y_imag[k] + Y_imag_mneg[k]) + sinPhipm* (Y_real[k] - Y_real_mneg[k]));
       }

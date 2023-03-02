@@ -1393,7 +1393,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     dy[EOB_EVOLVE_SPIN_gam] = 0.;
   else
     dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * (Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] - Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
-    
+
   /* dot omg (Rad.React.) */
   if(EOBPars->spin_flx == SPIN_FLX_PN) {
     
@@ -2043,8 +2043,8 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     }
     /** Update alpha and beta angles */
     dyn->y[EOB_EVOLVE_SPIN_alp]  = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
-						     dyn->y[EOB_EVOLVE_SPIN_Ly],
-						     dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
+			          dyn->y[EOB_EVOLVE_SPIN_Ly],
+			          dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
     dyn->y[EOB_EVOLVE_SPIN_bet]  = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
@@ -2227,15 +2227,15 @@ int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double o
   double m2 = 1 - m1;
   const double M12 = SQ(m1);
   const double M22 = SQ(m2);  
-  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *M12; 
-  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y *M12;
-  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z *M12;
-  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *M22;
-  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *M22;
-  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *M22;
-  dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; 
-  dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
-  dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;
+  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x*M12; 
+  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y*M12;
+  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z*M12;
+  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x*M22;
+  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y*M22;
+  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z*M22;
+  dyn->y[EOB_EVOLVE_SPIN_Lx]  = 0; 
+  dyn->y[EOB_EVOLVE_SPIN_Ly]  = 0;
+  dyn->y[EOB_EVOLVE_SPIN_Lz]  = 1.;
   dyn->y[EOB_EVOLVE_SPIN_alp] = alpha_initial_condition(EOBPars); 
   dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],

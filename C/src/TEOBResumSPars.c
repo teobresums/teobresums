@@ -376,14 +376,25 @@ void eob_set_params(int default_choice, int firstcall)
   double q          =  EOBPars->q;
 
   if(q < 1.){
+    /* Ensure that the swap is performed correctly 
+       According to LAL conventions, if m1<->m2 the x axis is flipped.
+       Therefore, the waveform has to remain identical when:
+        - label_1<->label_2;
+        - coalescence_angle -> coalescence_angle + Pi;
+        - In plane spins are rotated by Pi
+       Here we enforce this convention.
+    */
     q  =  1./q;
     EOBPars->q = q;
     SWAPTRS(EOBPars->chi1z, EOBPars->chi2z);
     SWAPTRS(EOBPars->chi1x, EOBPars->chi2x);
     SWAPTRS(EOBPars->chi1y, EOBPars->chi2y);
     SWAPTRS(EOBPars->chi1,  EOBPars->chi2);
+    EOBPars->chi1x *= -1; EOBPars->chi2x *= -1;
+    EOBPars->chi1y *= -1; EOBPars->chi2y *= -1;
     SWAPTRS(EOBPars->LambdaAl2, EOBPars->LambdaBl2);
     if (VERBOSE) printf("WARNING: q<1, swapping bodies!\n");
+    EOBPars->coalescence_angle -= Pi;
   }
 
   /* Check: if q is closer to 1 than 1e-8, then q=1 to avoid floating points issues */
