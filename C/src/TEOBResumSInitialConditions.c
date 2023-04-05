@@ -46,7 +46,7 @@ void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardr[2*N];
 
-  double A, B, d2A, dB, pl_hold;
+  double A, B, Q, d2A, dB, pl_hold;
   double r2, r3, j3;
   double H0eff, H0, psi, r_omega, v_phi, jhat, x, dprstardt;
   
@@ -56,7 +56,7 @@ void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
     r3   = r2*r[i];
     
     /** Compute metric  */
-    eob_metric(r[i], dyn, &A, &B, &dA[i], &d2A, &dB, &pl_hold);
+    eob_metric(r[i], 0., dyn, &A, &B, &dA[i], &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     
     //printf("%d %.16e %.16e %.16e\n",i,r[i],A,dA[i]);
 
@@ -93,7 +93,9 @@ void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
   
   int i = N-1;
   dprstardt = dprstardr[i] * Fphi[i]/djdr[i];
-  pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt - z3*gsl_pow_int(prstar[i],4)/j2[i]);
+  // compute Q after having evaluated pr_star
+  eob_metric(r[i], prstar[i], dyn, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt - (Q*r2)/j2[i]);
   //printf("%d %.16e %.16e %.16e %.16e %.16e %.16e\n",i,r[i],Fphi[i],djdr[i],dprstardr[i],dprstardt,pph[i]);
   //printf("%d %.16e %.16e %.16e %.16e %.16e %.16e\n",i,r[i],Fphi[i],djdr[i],dprstardr[i],dprstardt,pph[i]);
 
@@ -142,7 +144,7 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N];
   double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N]; //, drc[2*N];
-  double A[2*N],B[2*N],d2A[2*N],dB, sqrtAbyB, pl_hold;
+  double A[2*N],B[2*N],d2A[2*N],dB, sqrtAbyB, Q, pl_hold;
   double pphorb, uc, uc2, psic, r_omg, v_phi, jhat, x, Omg;
   double H0eff, H0, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
   double ggm0[26], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
@@ -154,7 +156,7 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
     r[i] = r0+(i-N+1)*dr;
 
     /** Compute metric  */
-    eob_metric_s(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB,&pl_hold);
+    eob_metric_s(r[i], 0., dyn, &A[i], &B[i], &dA[i], &d2A[i], &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     
     /** Compute minimum of Heff0 using bisection method */
     pphorb = r[i]/sqrt(r[i]-3.);
@@ -257,12 +259,15 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
   Heff     = (GS*S + GSs*Ss)*pph[i] + Horbeff;  
   
   /* Total EOB energy */
-  H        = sqrt( 1. + 2.*nu*(Heff - 1.));     
+  H        = sqrt( 1. + 2.*nu*(Heff - 1.));  
+
+  // compute Q with prstar value
+  eob_metric_s(r[i], prstar[i], dyn, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);     
   
   /* Setting up second order equation for the orbital angular momentum */       
   a = -sqrtAbyB*uc2/(2.*H*Horbeff)*(dA[i]  - 2.*A[i]*uc*drc_dr[i]);                       
   b = -sqrtAbyB/H*(dGS_dr*S + dGSs_dr*Ss); 
-  c = -dpi1dt - sqrtAbyB/(2.*H*Horbeff)*(dA[i] + z3*prstar4*uc2*(dA[i] - 2.*A[i]*uc*drc_dr[i]));
+  c = -dpi1dt - sqrtAbyB/(2.*H*Horbeff)*(dA[i] + Q*(dA[i] - 2.*A[i]*uc*drc_dr[i]));
   
   /* Fill out the array of the post-circular angular momentum */ 
   pph[i] = 0.5*(-b + sqrt(b*b-4*a*c))/a;      
@@ -305,7 +310,6 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   const double C_Hex2 = EOBPars -> C_Hex2;
   const double S = S1 + S2;
   const double Sstar = X2*a1 + X1*a2;
-  const double z3 = 2.0*nu*(4.0 - 3.0*nu);
 
   const int usetidal = EOBPars -> use_tidal;
   const int usespins = EOBPars -> use_spins;
@@ -320,23 +324,23 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
 
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
-    eob_metric_s(r1, dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold, &pl_hold);
     
     eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
-    eob_metric_s(r2, dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
     eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
-    eob_metric(r1 ,dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc1 = r1;   //Nonspinning case: rc = r; G = 0;  
     G1  = 0.0;
 
-    eob_metric(r2 ,dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc2 = r2;
     G2  = 0.0;
   }
@@ -396,7 +400,6 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn)
   const double C_Hex2 = EOBPars->C_Hex2;
   const double S     = S1 + S2;        
   const double Sstar = X2*a1 + X1*a2;  
-  const double z3 = 2.0*nu*(4.0-3.0*nu);
 
   const int usespins = EOBPars->use_spins;
   const int usetidal = EOBPars->use_tidal;  
@@ -411,23 +414,23 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn)
 
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
-    eob_metric_s(r1, dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold, &pl_hold);
     
     eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
-    eob_metric_s(r2, dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
     eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
-    eob_metric(r1 ,dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc1 = r1;   //Nonspinning case: rc = r; G = 0;  
     G1  = 0.0;
 
-    eob_metric(r2 ,dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc2 = r2;
     G2  = 0.0;
   }
@@ -471,7 +474,6 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   const double C_Hex2 = EOBPars->C_Hex2;
   const double S      = S1 + S2;        
   const double Sstar  = X2*a1 + X1*a2;  
-  const double z3     = 2.0*nu*(4.0-3.0*nu);
 
   const int use_tidal = EOBPars->use_tidal;
   
@@ -514,7 +516,7 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   double C0;
   double Gtilde, dGtilde_dr, duc_dr;
 
-  eob_metric_s(r[idx], dyn, &A,&B,&dA,&d2A,&dB,&pl_hold);
+  eob_metric_s(r[idx], 0., dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   eob_dyn_s_get_rc(r[idx], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, use_tidal, &rc, &drc_dr, &d2rc_dr2);    
   sqrtAbyB = sqrt(A/B);
   uc  = 1./rc;
@@ -588,11 +590,10 @@ void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   const double nu   = EOBPars->nu;
   const double X1   = EOBPars->X1;
   const double X2   = EOBPars->X2;
-  const double z3 = 2.0*nu*(4.0-3.0*nu);
   
   const int usetidal = EOBPars->use_tidal;
 
-  double A, B, dA, Heff, H0, E0, Omg0, dHeff0_dpphi, pl_hold;
+  double A, B, Q, dA, dQ, dQ_dprstar, Heff, H0, E0, Omg0, dHeff0_dpphi, pl_hold;
   double pr0, prstar0, u, u2, a, b, c, Delta;
 
   u  = 1./r0;
@@ -601,9 +602,12 @@ void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   Heff = 1./(2.*nu)*(SQ(H_ADM) - 1.) + 1.;
 
   /* Computing metric */
-  eob_metric(r0 ,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
+  // eob_metric(r0 ,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric(r0, 1., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &Q, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  // since prstar = 1., the Q returned here should be equivalent to Q/(prstar4), which equals z3*u2 for Q3PN
   
-  a = z3*A*u2;
+  // a = z3*A*u2;
+  a = A*Q;
   b = 1;
   c = A*(1. + SQ(j_ADM*u)) - SQ(Heff);
 
@@ -618,7 +622,10 @@ void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   }
   pr0 = prstar0*sqrt(B/A);
 
-  eob_ham(nu, r0, j_ADM, prstar0, A, dA, &H0, &pl_hold, NULL, NULL, &dHeff0_dpphi);
+  // compute Q & derivatives with new value of prstar0
+  eob_metric(r0, prstar0, dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+
+  eob_ham(nu, r0, j_ADM, prstar0, A, dA, Q, dQ, dQ_dprstar, &H0, &pl_hold, NULL, NULL, &dHeff0_dpphi);
   E0 = nu*H0;
   Omg0 = dHeff0_dpphi/E0;
   
@@ -801,13 +808,13 @@ double eob_dyn_Omegaorb0(double r, void *params)
 
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
-    eob_metric_s(r,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
     eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
     dG_dr = ggm[6]*S + ggm[7]*Sstar;
   } else {
-    eob_metric(r ,dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc     = r;   //Nonspinning case: rc = r; G = 0;
     drc_dr = 1.;  
     G      = 0.;
@@ -938,23 +945,23 @@ double eob_dyn_Omegaecc0(double r, void *params)
 
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
-    eob_metric_s(r1, dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold);
     
     eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
-    eob_metric_s(r2, dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
     eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
-    eob_metric(r1 ,dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc1 = r1;   //Nonspinning case: rc = r; G = 0;  
     G1  = 0.0;
 
-    eob_metric(r2 ,dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc2 = r2;
     G2  = 0.0;
   }

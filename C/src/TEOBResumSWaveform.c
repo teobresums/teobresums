@@ -6063,7 +6063,7 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     if(hlm->kmask[k]){
       idx[k] = size-1;
       for (int j = size-1; j-- ; ) {  
-	if (t[j] < tmrg[k]*Mbh) {
+	if ( (t[j] < tmrg[k]*Mbh) || (fabs(t[j] - tmrg[k]*Mbh)<1.e-8) ) {
 	  break;
 	}
 	idx[k] = j;

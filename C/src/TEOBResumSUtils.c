@@ -215,6 +215,323 @@ double Pade62(double x, double *a){
   return pade;
 }
 
+void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], double u, double *P, double *DP, double *D2P)
+{
+  // Padé 3,3 of f[u] = 1 + c1 u + c2[u] u^2 + c3[u] u^3 + c4[u] u^4 + c5[u] u^5 + c6[u] u^6 
+  // (functional form of the integer part of a1SF, d1SF, q1SF)
+  // + notice that c1 does *not* depend on u so it has no derivatives.
+
+  double u2 = u*u;
+  double u3 = u2*u;
+  double u4 = u3*u;
+
+  // Coefficients of the Taylor-expanded function + derivatives (except from c1, they are functions of log(u))
+  double c1 = coeffs[0];
+  double c2 = coeffs[1];
+  double c3 = coeffs[2];
+  double c4 = coeffs[3];
+  double c5 = coeffs[4];
+  double c6 = coeffs[5];
+
+  double dc2 = Dcoeffs[0];
+  double dc3 = Dcoeffs[1];
+  double dc4 = Dcoeffs[2];
+  double dc5 = Dcoeffs[3];
+  double dc6 = Dcoeffs[4];
+
+  double d2c2 = D2coeffs[0];
+  double d2c3 = D2coeffs[1];
+  double d2c4 = D2coeffs[2];
+  double d2c5 = D2coeffs[3];
+  double d2c6 = D2coeffs[4];
+
+  // Powers of the coefficients
+  double c1to2 = c1*c1;
+  double c2to2 = c2*c2;
+  double c2to3 = c2to2*c2;
+  double c3to2 = c3*c3;
+  double c3to3 = c3to2*c3;
+  double c3to4 = c3to3*c3;
+  double c4to2 = c4*c4;
+  double c4to3 = c4to2*c4;
+  double c5to2 = c5*c5;
+  // Powers of the derivatives
+  double dc2to2 = dc2*dc2;
+  double dc3to2 = dc3*dc3;
+  double dc4to2 = dc4*dc4;
+  double dc5to2 = dc5*dc5;
+
+  // Coefficients of the numerator + derivatives
+  double n0   = c3to3 - 2.*c2*c3*c4 + c1*c4to2 + c2to2*c5 - c1*c3*c5;
+  double Dn0  = - 2.*c3*c4*dc2 + 2.*c2*c5*dc2 + 3.*c3to2*dc3 - 2.*c2*c4*dc3 - c1*c5*dc3 - 2.*c2*c3*dc4 + 2.*c1*c4*dc4 
+                + c2to2*dc5 - c1*c3*dc5;
+  double D2n0 = - 2.*c3*c4*d2c2 + 2.*c2*c5*d2c2 + 3.*c3to2*d2c3 - 2.*c2*c4*d2c3 - c1*c5*d2c3 - 2.*c2*c3*d2c4 + 2.*c1*c4*d2c4 
+                + c2to2*d2c5 - c1*c3*d2c5 + 2.*c5*dc2to2 - 4.*c4*dc2*dc3 + 6.*c3*dc3to2 - 4.*c3*dc2*dc4 - 4.*c2*dc3*dc4 
+                + 2.*c1*dc4to2 + 4.*c2*dc2*dc5 - 2.*c1*dc3*dc5;
+  double n1   = c1*c3to3 - 2.*c1*c2*c3*c4 - c3to2*c4 + c1to2*c4to2 + c2*c4to2 + c1*c2to2*c5 - c1to2*c3*c5 + c2*c3*c5 
+                - c1*c4*c5 - c2to2*c6 + c1*c3*c6;
+  double Dn1  = - 2.*c1*c3*c4*dc2 + c4to2*dc2 + 2.*c1*c2*c5*dc2 + c3*c5*dc2 - 2.*c2*c6*dc2 + 3.*c1*c3to2*dc3 - 2.*c1*c2*c4*dc3 
+                - 2.*c3*c4*dc3 - c1to2*c5*dc3 + c2*c5*dc3 + c1*c6*dc3 - 2.*c1*c2*c3*dc4 - c3to2*dc4 + 2.*c1to2*c4*dc4 
+                + 2.*c2*c4*dc4 - c1*c5*dc4 + c1*c2to2*dc5 - c1to2*c3*dc5 + c2*c3*dc5 - c1*c4*dc5 - c2to2*dc6 + c1*c3*dc6;
+  double D2n1 = - 2.*c1*c3*c4*d2c2 + c4to2*d2c2 + 2.*c1*c2*c5*d2c2 + c3*c5*d2c2 - 2.*c2*c6*d2c2 + 3.*c1*c3to2*d2c3 
+                - 2.*c1*c2*c4*d2c3 - 2.*c3*c4*d2c3 - c1to2*c5*d2c3 + c2*c5*d2c3 + c1*c6*d2c3 - 2.*c1*c2*c3*d2c4 
+                - c3to2*d2c4 + 2.*c1to2*c4*d2c4 + 2.*c2*c4*d2c4 - c1*c5*d2c4 + c1*c2to2*d2c5 - c1to2*c3*d2c5 
+                + c2*c3*d2c5 - c1*c4*d2c5 - c2to2*d2c6 + c1*c3*d2c6 + 2.*c1*c5*dc2to2 - 2.*c6*dc2to2 - 4.*c1*c4*dc2*dc3 
+                + 2.*c5*dc2*dc3 + 6.*c1*c3*dc3to2 - 2.*c4*dc3to2 - 4.*c1*c3*dc2*dc4 + 4.*c4*dc2*dc4 - 4.*c1*c2*dc3*dc4 
+                - 4.*c3*dc3*dc4 + 2.*c1to2*dc4to2 + 2.*c2*dc4to2 + 4.*c1*c2*dc2*dc5 + 2.*c3*dc2*dc5 - 2.*c1to2*dc3*dc5 
+                + 2.*c2*dc3*dc5 - 2.*c1*dc4*dc5 - 4.*c2*dc2*dc6 + 2.*c1*dc3*dc6;
+  double n2   = c2*c3to3 - 2.*c2to2*c3*c4 - c1*c3to2*c4 + 2.*c1*c2*c4to2 + c3*c4to2 + c2to3*c5 - c3to2*c5 - c1to2*c4*c5 
+                - c2*c4*c5 + c1*c5to2 - c1*c2to2*c6 + c1to2*c3*c6 + c2*c3*c6 - c1*c4*c6;
+  double Dn2  = c3to3*dc2 - 4.*c2*c3*c4*dc2 + 2.*c1*c4to2*dc2 + 3.*c2to2*c5*dc2 - c4*c5*dc2 - 2.*c1*c2*c6*dc2 + c3*c6*dc2 
+                + 3.*c2*c3to2*dc3 - 2.*c2to2*c4*dc3 - 2.*c1*c3*c4*dc3 + c4to2*dc3 - 2.*c3*c5*dc3 + c1to2*c6*dc3 + c2*c6*dc3 
+                - 2.*c2to2*c3*dc4 - c1*c3to2*dc4 + 4.*c1*c2*c4*dc4 + 2.*c3*c4*dc4 - c1to2*c5*dc4 - c2*c5*dc4 - c1*c6*dc4 
+                + c2to3*dc5 - c3to2*dc5 - c1to2*c4*dc5 - c2*c4*dc5 + 2.*c1*c5*dc5 - c1*c2to2*dc6 + c1to2*c3*dc6 + c2*c3*dc6 
+                - c1*c4*dc6;
+  double D2n2 = c3to3*d2c2 - 4.*c2*c3*c4*d2c2 + 2.*c1*c4to2*d2c2 + 3.*c2to2*c5*d2c2 - c4*c5*d2c2 - 2.*c1*c2*c6*d2c2 + c3*c6*d2c2 
+                + 3.*c2*c3to2*d2c3 - 2.*c2to2*c4*d2c3 - 2.*c1*c3*c4*d2c3 + c4to2*d2c3 - 2.*c3*c5*d2c3 + c1to2*c6*d2c3 + c2*c6*d2c3 
+                - 2.*c2to2*c3*d2c4 - c1*c3to2*d2c4 + 4.*c1*c2*c4*d2c4 + 2.*c3*c4*d2c4 - c1to2*c5*d2c4 - c2*c5*d2c4 - c1*c6*d2c4 
+                + c2to3*d2c5 - c3to2*d2c5 - c1to2*c4*d2c5 - c2*c4*d2c5 + 2.*c1*c5*d2c5 - c1*c2to2*d2c6 + c1to2*c3*d2c6 
+                + c2*c3*d2c6 - c1*c4*d2c6 - 4.*c3*c4*dc2to2 + 6.*c2*c5*dc2to2 - 2.*c1*c6*dc2to2 + 6.*c3to2*dc2*dc3 - 8.*c2*c4*dc2*dc3 
+                + 2.*c6*dc2*dc3 + 6.*c2*c3*dc3to2 - 2.*c1*c4*dc3to2 - 2.*c5*dc3to2 - 8.*c2*c3*dc2*dc4 + 8.*c1*c4*dc2*dc4 - 2.*c5*dc2*dc4 
+                - 4.*c2to2*dc3*dc4 - 4.*c1*c3*dc3*dc4 + 4.*c4*dc3*dc4 + 4.*c1*c2*dc4to2 + 2.*c3*dc4to2 + 6.*c2to2*dc2*dc5 - 2.*c4*dc2*dc5 
+                - 4.*c3*dc3*dc5 - 2.*c1to2*dc4*dc5 - 2.*c2*dc4*dc5 + 2.*c1*dc5to2 - 4.*c1*c2*dc2*dc6 + 2.*c3*dc2*dc6 + 2.*c1to2*dc3*dc6 
+                + 2.*c2*dc3*dc6 - 2.*c1*dc4*dc6;
+  double n3   = c3to4 - 3.*c2*c3to2*c4 + c2to2*c4to2 + 2.*c1*c3*c4to2 - c4to3 + 2.*c2to2*c3*c5 - 2.*c1*c3to2*c5 - 2.*c1*c2*c4*c5 
+                + 2.*c3*c4*c5 + c1to2*c5to2 - c2*c5to2 - c2to3*c6 + 2.*c1*c2*c3*c6 - c3to2*c6 - c1to2*c4*c6 + c2*c4*c6;
+  double Dn3  = - 3.*c3to2*c4*dc2 + 2.*c2*c4to2*dc2 + 4.*c2*c3*c5*dc2 - 2.*c1*c4*c5*dc2 - c5to2*dc2 - 3.*c2to2*c6*dc2 + 2.*c1*c3*c6*dc2 
+                + c4*c6*dc2 + 4.*c3to3*dc3 - 6.*c2*c3*c4*dc3 + 2.*c1*c4to2*dc3 + 2.*c2to2*c5*dc3 - 4.*c1*c3*c5*dc3 + 2.*c4*c5*dc3 
+                + 2.*c1*c2*c6*dc3 - 2.*c3*c6*dc3 - 3.*c2*c3to2*dc4 + 2.*c2to2*c4*dc4 + 4.*c1*c3*c4*dc4 - 3.*c4to2*dc4 - 2.*c1*c2*c5*dc4 
+                + 2.*c3*c5*dc4 - c1to2*c6*dc4 + c2*c6*dc4 + 2.*c2to2*c3*dc5 - 2.*c1*c3to2*dc5 - 2.*c1*c2*c4*dc5 + 2.*c3*c4*dc5 
+                + 2.*c1to2*c5*dc5 - 2.*c2*c5*dc5 - c2to3*dc6 + 2.*c1*c2*c3*dc6 - c3to2*dc6 - c1to2*c4*dc6 + c2*c4*dc6;
+  double D2n3 = - 3.*c3to2*c4*d2c2 + 2.*c2*c4to2*d2c2 + 4.*c2*c3*c5*d2c2 - 2.*c1*c4*c5*d2c2 - c5to2*d2c2 - 3.*c2to2*c6*d2c2 
+                + 2.*c1*c3*c6*d2c2 + c4*c6*d2c2 + 4.*c3to3*d2c3 - 6.*c2*c3*c4*d2c3 + 2.*c1*c4to2*d2c3 + 2.*c2to2*c5*d2c3 
+                - 4.*c1*c3*c5*d2c3 + 2.*c4*c5*d2c3 + 2.*c1*c2*c6*d2c3 - 2.*c3*c6*d2c3 - 3.*c2*c3to2*d2c4 + 2.*c2to2*c4*d2c4 
+                + 4.*c1*c3*c4*d2c4 - 3.*c4to2*d2c4 - 2.*c1*c2*c5*d2c4 + 2.*c3*c5*d2c4 - c1to2*c6*d2c4 + c2*c6*d2c4 + 2.*c2to2*c3*d2c5 
+                - 2.*c1*c3to2*d2c5 - 2.*c1*c2*c4*d2c5 + 2.*c3*c4*d2c5 + 2.*c1to2*c5*d2c5 - 2.*c2*c5*d2c5 - c2to3*d2c6 + 2.*c1*c2*c3*d2c6 
+                - c3to2*d2c6 - c1to2*c4*d2c6 + c2*c4*d2c6 + 2.*c4to2*dc2to2 + 4.*c3*c5*dc2to2 - 6.*c2*c6*dc2to2 - 12*c3*c4*dc2*dc3 
+                + 8.*c2*c5*dc2*dc3 + 4.*c1*c6*dc2*dc3 + 12*c3to2*dc3to2 - 6.*c2*c4*dc3to2 - 4.*c1*c5*dc3to2 - 2.*c6*dc3to2 
+                - 6.*c3to2*dc2*dc4 + 8.*c2*c4*dc2*dc4 - 4.*c1*c5*dc2*dc4 + 2.*c6*dc2*dc4 - 12*c2*c3*dc3*dc4 + 8.*c1*c4*dc3*dc4 
+                + 4.*c5*dc3*dc4 + 2.*c2to2*dc4to2 + 4.*c1*c3*dc4to2 - 6.*c4*dc4to2 + 8.*c2*c3*dc2*dc5 - 4.*c1*c4*dc2*dc5 - 4.*c5*dc2*dc5 
+                + 4.*c2to2*dc3*dc5 - 8.*c1*c3*dc3*dc5 + 4.*c4*dc3*dc5 - 4.*c1*c2*dc4*dc5 + 4.*c3*dc4*dc5 + 2.*c1to2*dc5to2 - 2.*c2*dc5to2 
+                - 6.*c2to2*dc2*dc6 + 4.*c1*c3*dc2*dc6 + 2.*c4*dc2*dc6 + 4.*c1*c2*dc3*dc6 - 4.*c3*dc3*dc6 - 2.*c1to2*dc4*dc6 + 2.*c2*dc4*dc6;
+
+  // Coefficients of the denominator + derivatives
+  double d0   = c3to3 - 2.*c2*c3*c4 + c1*c4to2 + c2to2*c5 - c1*c3*c5;
+  double Dd0  = - 2.*c3*c4*dc2 + 2.*c2*c5*dc2 + 3.*c3to2*dc3 - 2.*c2*c4*dc3 - c1*c5*dc3 - 2.*c2*c3*dc4 + 2.*c1*c4*dc4 + c2to2*dc5 
+                - c1*c3*dc5;
+  double D2d0 = - 2.*c3*c4*d2c2 + 2.*c2*c5*d2c2 + 3.*c3to2*d2c3 - 2.*c2*c4*d2c3 - c1*c5*d2c3 - 2.*c2*c3*d2c4 + 2.*c1*c4*d2c4 
+                + c2to2*d2c5 - c1*c3*d2c5 + 2.*c5*dc2to2 - 4.*c4*dc2*dc3 + 6.*c3*dc3to2 - 4.*c3*dc2*dc4 - 4.*c2*dc3*dc4 
+                + 2.*c1*dc4to2 + 4.*c2*dc2*dc5 - 2.*c1*dc3*dc5;
+  double d1   = - c3to2*c4 + c2*c4to2 + c2*c3*c5 - c1*c4*c5 - c2to2*c6 + c1*c3*c6;
+  double Dd1  = c4to2*dc2 + c3*c5*dc2 - 2.*c2*c6*dc2 - 2.*c3*c4*dc3 + c2*c5*dc3 + c1*c6*dc3 - c3to2*dc4 + 2.*c2*c4*dc4 
+                - c1*c5*dc4 + c2*c3*dc5 - c1*c4*dc5 - c2to2*dc6 + c1*c3*dc6;
+  double D2d1 = c4to2*d2c2 + c3*c5*d2c2 - 2.*c2*c6*d2c2 - 2.*c3*c4*d2c3 + c2*c5*d2c3 + c1*c6*d2c3 - c3to2*d2c4 + 2.*c2*c4*d2c4 
+                - c1*c5*d2c4 + c2*c3*d2c5 - c1*c4*d2c5 - c2to2*d2c6 + c1*c3*d2c6 - 2.*c6*dc2to2 + 2.*c5*dc2*dc3 - 2.*c4*dc3to2 
+                + 4.*c4*dc2*dc4 - 4.*c3*dc3*dc4 + 2.*c2*dc4to2 + 2.*c3*dc2*dc5 + 2.*c2*dc3*dc5 - 2.*c1*dc4*dc5 - 4.*c2*dc2*dc6 + 2.*c1*dc3*dc6;
+  double d2   = c3*c4to2 - c3to2*c5 - c2*c4*c5 + c1*c5to2 + c2*c3*c6 - c1*c4*c6;
+  double Dd2  = - c4*c5*dc2 + c3*c6*dc2 + c4to2*dc3 - 2.*c3*c5*dc3 + c2*c6*dc3 + 2.*c3*c4*dc4 - c2*c5*dc4 - c1*c6*dc4 - c3to2*dc5 
+                - c2*c4*dc5 + 2.*c1*c5*dc5 + c2*c3*dc6 - c1*c4*dc6;
+  double D2d2 = - c4*c5*d2c2 + c3*c6*d2c2 + c4to2*d2c3 - 2.*c3*c5*d2c3 + c2*c6*d2c3 + 2.*c3*c4*d2c4 - c2*c5*d2c4 - c1*c6*d2c4 
+                - c3to2*d2c5 - c2*c4*d2c5 + 2.*c1*c5*d2c5 + c2*c3*d2c6 - c1*c4*d2c6 + 2.*c6*dc2*dc3 - 2.*c5*dc3to2 - 2.*c5*dc2*dc4 
+                + 4.*c4*dc3*dc4 + 2.*c3*dc4to2 - 2.*c4*dc2*dc5 - 4.*c3*dc3*dc5 - 2.*c2*dc4*dc5 + 2.*c1*dc5to2 + 2.*c3*dc2*dc6 
+                + 2.*c2*dc3*dc6 - 2.*c1*dc4*dc6;
+  double d3   = - c4to3 + 2.*c3*c4*c5 - c2*c5to2 - c3to2*c6 + c2*c4*c6;
+  double Dd3  = - c5to2*dc2 + c4*c6*dc2 + 2.*c4*c5*dc3 - 2.*c3*c6*dc3 - 3.*c4to2*dc4 + 2.*c3*c5*dc4 + c2*c6*dc4 + 2.*c3*c4*dc5 
+                - 2.*c2*c5*dc5 - c3to2*dc6 + c2*c4*dc6;
+  double D2d3 = - c5to2*d2c2 + c4*c6*d2c2 + 2.*c4*c5*d2c3 - 2.*c3*c6*d2c3 - 3.*c4to2*d2c4 + 2.*c3*c5*d2c4 + c2*c6*d2c4 + 2.*c3*c4*d2c5 
+                - 2.*c2*c5*d2c5 - c3to2*d2c6 + c2*c4*d2c6 - 2.*c6*dc3to2 + 2.*c6*dc2*dc4 + 4.*c5*dc3*dc4 - 6.*c4*dc4to2 - 4.*c5*dc2*dc5 
+                + 4.*c4*dc3*dc5 + 4.*c3*dc4*dc5 - 2.*c2*dc5to2 + 2.*c4*dc2*dc6 - 4.*c3*dc3*dc6 + 2.*c2*dc4*dc6;
+
+  double Num   = n0 + n1*u + n2*u2 + n3*u3;
+  double dNum  = Dn0 + n1 + Dn1*u + 2.*n2*u + Dn2*u2 + 3.*n3*u2 + Dn3*u3;
+  double d2Num = D2n0 + 2.*Dn1 + 2.*n2 + D2n1*u + 4.*Dn2*u + 6.*n3*u + D2n2*u2 + 6.*Dn3*u2 + D2n3*u3;
+  double Den   = d0 + d1*u + d2*u2 + d3*u3;
+  double dDen  = d1 + Dd0 + 2.*d2*u + Dd1*u + 3.*d3*u2 + Dd2*u2 + Dd3*u3;
+  double d2Den = 2.*d2 + D2d0 + 2.*Dd1 + D2d1*u + 6.*d3*u + 4.*Dd2*u + D2d2*u2 + 6.*Dd3*u2 + D2d3*u3;
+
+  double dNumDen = dNum*Den - Num*dDen; 
+  double Den2    = Den*Den;
+  double Den3    = Den2*Den;
+
+  *P   = Num/Den;
+  *DP  = dNumDen/Den2;
+  *D2P = (Den*(d2Num*Den - Num*d2Den) - 2.*dDen*dNumDen)/Den3;
+
+}
+
+void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], double u, double *P, double *DP, double *D2P)
+{
+
+  // Padé 7,6 of f[v] = 1 + c1 v^7 + c2 v^9 + c3[v] v^11 + c4[v] v^13  (where v = sqrt(u))
+  // (functional form of the tail part of a1SF & d1SF)
+  // + notice that c1 and c2 do *not* depend on u so they have no derivatives.
+  
+  double u2    = u*u;
+  double u3    = u2*u;
+  double u4    = u3*u;
+  double u5    = u4*u;
+  double u6    = u5*u;
+  double u3by2 = sqrt(u3);
+  double u5by2 = sqrt(u5);
+  double u7by2 = sqrt(u6*u);
+
+  // Coefficients of the Taylor-expanded function + derivatives of c3, c4
+
+  double c1 = coeffs[0];
+  double c2 = coeffs[1];
+  double c3 = coeffs[2];
+  double c4 = coeffs[3];
+
+  double dc3 = Dcoeffs[0];
+  double dc4 = Dcoeffs[1];
+
+  double d2c3 = D2coeffs[0];
+  double d2c4 = D2coeffs[1];
+
+  // Powers
+  double c1to2 = c1*c1;
+  double c1to3 = c1to2*c1;
+  double c1to4 = c1to3*c1;
+  double c2to2 = c2*c2;
+  double c2to3 = c2to2*c2;
+
+  // Coefficients of the numerator + derivatives
+  double n0    =  c1to3;
+  double n1    = -c1to2*c2;
+  double n2    =  c1*c2to2 - c1to2*c3;
+  double Dn2   = -c1to2*dc3;
+  double D2n2  = -c1to2*d2c3;
+  double n3    = -c2to3 + 2*c1*c2*c3 - c1to2*c4;
+  double Dn3   =  2*c1*c2*dc3 - c1to2*dc4;
+  double D2n3  =  2*c1*c2*d2c3 - c1to2*d2c4;
+  double n7by2 =  c1to4;
+
+  // Coefficients of the denominator + derivatives
+  double d0   = n0;
+  double d1   = n1;
+  double d2   = n2;
+  double Dd2  = Dn2;
+  double D2d2 = D2n2;
+  double d3   = n3;
+  double Dd3  = Dn3;
+  double D2d3 = D2n3;
+
+  double Num   = n0 + n1*u + n2*u2 + n3*u3 + n7by2*u7by2;
+  double dNum  = n1 + 2.*n2*u + Dn2*u2 + 3.*n3*u2 + Dn3*u3 + 0.5*(7.*n7by2*u5by2);
+  double d2Num = 2.*n2 + 4.*Dn2*u + 6.*n3*u + D2n2*u2 + 6.*Dn3*u2 + D2n3*u3 + 0.25*(35.*n7by2*u3by2);
+  double Den   = d0 + d1*u + d2*u2 + d3*u3;
+  double dDen  = d1 + 2.*d2*u + 3.*d3*u2 + Dd2*u2 + Dd3*u3;
+  double d2Den = 2.*d2 + 6.*d3*u + 4*Dd2*u + D2d2*u2 + 6.*Dd3*u2 + D2d3*u3;
+
+  double dNumDen = dNum*Den - Num*dDen; // (Num*Den)'
+  double Den2    = Den*Den;
+  double Den3    = Den2*Den;
+
+  *P   = Num/Den;
+  *DP  = dNumDen/Den2;
+  *D2P = (Den*(d2Num*Den - Num*d2Den) - 2.*dDen*dNumDen)/Den3;
+
+}
+
+void Pade76v2_forGSF(double coeffs[5], double Dcoeffs[3], double D2coeffs[3], double u, double *P, double *DP, double *D2P)
+{
+
+  // Padé 7,6 of f[v] = 1 + c1 v^5 + c2 v^7 + c3[v] v^9 + c4[v] v^11 + c5[v] v^13  (where v = sqrt(u))
+  // (functional form of the tail part of q1SF)
+  // + notice that c1 and c2 do *not* depend on u so they have no derivatives.
+
+  double sqrtu = sqrt(u);
+  double u2    = u*u;
+  double u3    = u2*u;
+  double u4    = u3*u;
+  double u5    = u4*u;
+  double u6    = u5*u;
+  double u3by2 = sqrt(u3);
+  double u5by2 = sqrt(u5);
+  double u7by2 = sqrt(u6*u);
+
+  // Coefficients of the Taylor-expanded function + derivatives of c3, c4, c5
+  double c1 = coeffs[0];
+  double c2 = coeffs[1];
+  double c3 = coeffs[2];
+  double c4 = coeffs[3];
+  double c5 = coeffs[4];
+
+  double dc3 = Dcoeffs[0];
+  double dc4 = Dcoeffs[1];
+  double dc5 = Dcoeffs[2];
+
+  double d2c3 = D2coeffs[0];
+  double d2c4 = D2coeffs[1];
+  double d2c5 = D2coeffs[2];
+
+  // Powers of the coefficients
+  double c1to2 = c1*c1;
+  double c2to2 = c2*c2;
+  double c2to3 = c2to2*c2;
+  double c2to4 = c2to3*c2;
+  double c3to2 = c3*c3;
+  double c3to3 = c3to2*c3;
+  double c4to2 = c4*c4;
+
+  // Powers of the derivatives
+  double dc3to2 = dc3*dc3;
+  double dc4to2 = dc4*dc4;
+
+  // Coefficients of the numerator + derivatives
+  double n0      =  c2to3 - 2.*c1*c2*c3 + c1to2*c4;
+  double Dn0     = -2.*c1*c2*dc3 + c1to2*dc4;
+  double D2n0    = -2.*c1*c2*d2c3 + c1to2*d2c4;
+  double n1      = -c2to2*c3 + c1*c2*c4 + c1*(c3to2 - c1*c5);
+  double Dn1     = -c2to2*dc3 + c1*c2*dc4 + c1*(2.*c3*dc3 - c1*dc5);
+  double D2n1    = -c2to2*d2c3 + c1*c2*d2c4 + c1*(2.*c3*d2c3 - c1*d2c5 + 2.*dc3to2);
+  double n2      = -c2to2*c4 - c1*c3*c4 + c2*(c3to2 + c1*c5);
+  double Dn2     = -c1*c4*dc3 - c2to2*dc4 - c1*c3*dc4 + c2*(2.*c3*dc3 + c1*dc5);
+  double D2n2    = -c1*c4*d2c3 - c2to2*d2c4 - c1*c3*d2c4 + c2*(2.*c3*d2c3 + c1*d2c5 + 2.*dc3to2) - 2.*c1*dc3*dc4;
+  double n5by2   =  c1*(c2to3 - 2.*c1*c2*c3 + c1to2*c4);
+  double Dn5by2  =  c1*(-2.*c1*c2*dc3 + c1to2*dc4);
+  double D2n5by2 =  c1*(-2.*c1*c2*d2c3 + c1to2*d2c4);
+  double n3      = -c3to3 - c1*c4to2 - c2to2*c5 + c3*(2*c2*c4 + c1*c5);
+  double Dn3     = -3.*c3to2*dc3 + (2.*c2*c4 + c1*c5)*dc3 - 2.*c1*c4*dc4 - c2to2*dc5 + c3*(2.*c2*dc4 + c1*dc5);
+  double D2n3    = -3.*c3to2*d2c3 + (2.*c2*c4 + c1*c5)*d2c3 - 2.*c1*c4*d2c4 - c2to2*d2c5 + c3*(2.*c2*d2c4 + c1*d2c5) 
+                   -6.*c3*dc3to2 - 2.*c1*dc4to2 + 2.*dc3*(2.*c2*dc4 + c1*dc5);
+  double n7by2   = c2to4 - 3.*c1*c2to2*c3 + 2.*c1to2*c2*c4 + c1to2*(c3to2 - c1*c5);
+  double Dn7by2  = -3.*c1*c2to2*dc3 + 2.*c1to2*c2*dc4 + c1to2*(2.*c3*dc3 - c1*dc5);
+  double D2n7by2 = -3.*c1*c2to2*d2c3 + 2.*c1to2*c2*d2c4 + c1to2*(2.*c3*d2c3 - c1*d2c5 + 2.*dc3to2);
+
+  // Coefficients of the denominator + derivatives
+  double d0   = n0;
+  double Dd0  = Dn0;
+  double D2d0 = D2n0;
+  double d1   = n1;
+  double Dd1  = Dn1;
+  double D2d1 = D2n1;
+  double d2   = n2;
+  double Dd2  = Dn2;
+  double D2d2 = D2n2;
+  double d3   = n3;
+  double Dd3  = Dn3;
+  double D2d3 = D2n3;
+
+  double Num   = n0 + n1*u + n2*u2 + n3*u3 + n5by2*u5by2 + n7by2*u7by2;
+  double dNum  = Dn0 + n1 + Dn1*u + 2.*n2*u + Dn2*u2 + 3.*n3*u2 + Dn3*u3 + 0.5*(5.*n5by2*u3by2) 
+               + Dn5by2*u5by2 + 0.5*(7.*n7by2*u5by2) + Dn7by2*u7by2;
+  double d2Num = D2n0 + 2.*Dn1 + 2.*n2 + 0.25*(15.*n5by2*sqrtu) + D2n1*u + 4.*Dn2*u + 6.*n3*u + D2n2*u2 
+               + 6.*Dn3*u2 + D2n3*u3 + 5.*Dn5by2*u3by2 + 0.25*(35.*n7by2*u3by2) + D2n5by2*u5by2 + 7.*Dn7by2*u5by2 + D2n7by2*u7by2;
+  double Den   = d0 + d1*u + d2*u2 + d3*u3;
+  double dDen  = d1 + Dd0 + 2.*d2*u + Dd1*u + 3.*d3*u2 + Dd2*u2 + Dd3*u3;
+  double d2Den = 2.*d2 + D2d0 + 2.*Dd1 + D2d1*u + 6.*d3*u + 4.*Dd2*u + D2d2*u2 + 6.*Dd3*u2 + D2d3*u3;
+
+  double dNumDen = dNum*Den - Num*dDen; // (Num*Den)'
+  double Den2    = Den*Den;
+  double Den3    = Den2*Den;
+
+  *P   = Num/Den;
+  *DP  = dNumDen/Den2;
+  *D2P = (Den*(d2Num*Den - Num*d2Den) - 2.*dDen*dNumDen)/Den3;
+
+}
+
 double Taylorseries(double x, double *a, int N){
   double xn[N+1];
   xn[0] = 1.;

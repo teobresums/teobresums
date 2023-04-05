@@ -251,6 +251,30 @@ enum{
 };
 static const char* const use_lambda234_fits_opt[] = {"no","YAGI13","GODZIEBA20_ell4", "GODZIEBA20_ell8", "undefined"};
 
+/** List of options for orbital A potential */
+enum{
+  A_5PNlog,
+  A_GSF,
+  A_NOPT
+};
+static const char* const A_opt[] = {"PN", "GSF", "undefined"};
+
+/** List of options for orbital D potential */
+enum{
+  D_3PN,
+  D_GSF,
+  D_NOPT
+};
+static const char* const D_opt[] = {"PN", "GSF", "undefined"};
+
+/** List of options for orbital Q potential */
+enum{
+  Q_3PN,
+  Q_GSF,
+  Q_NOPT
+};
+static const char* const Q_opt[] = {"PN", "GSF", "undefined"};
+
 /** List of options for tidal potential */
 enum{
   TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
@@ -609,6 +633,7 @@ typedef struct tagEOBParameters
   int binary; // binary type (BBH, BNS, BHNS)
   int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM"
+  int A_pot, D_pot, Q_pot;
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  
   int use_geometric_units;
   int use_speedytail;
@@ -716,6 +741,9 @@ double Pade42(double x, double *a);
 double Pade33(double x, double *a);
 double Pade15(double x, double *a);
 double Pade62(double x, double *a);
+void Pade33_forGSF(double coeffs[6], double Dcoeffs[6], double D2coeffs[6], double u, double *P, double *DP, double *D2P);
+void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], double u, double *P, double *DP, double *D2P);
+void Pade76v2_forGSF(double coeffs[5], double Dcoeffs[3], double D2coeffs[3], double u, double *P, double *DP, double *D2P);
 double Taylorseries(double x, double *a, int N);
 void vect_dot(double ax, double ay, double az, double bx, double by, double bz, double *s);
 void vect_dot3(double *a, double *b, double *s);
@@ -893,11 +921,12 @@ double horizon_radius(const double nu);
 /* TEOBResumSDynamics.c */
 extern int (*p_eob_dyn_rhs)(); /* defined in TEOBResumSPars.c */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *params);
-void eob_ham(double nu, double r, double pph, double prstar, double A, double dA,
-	     double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
+void eob_ham(double nu, double r, double pphi, double prstar, double A, double dA, double Q, double dQ, double dQ_dprstar,
+	           double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *params);
-void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
+void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double Q, double dQ, double dQ_dprstar, double d2Q, double d2Q_dprstar2,
+               double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 
 extern void (*eob_dyn_s_get_rc)(); /* defined in TEOBResumSPars.c*/
@@ -954,11 +983,23 @@ double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 
 /* TEOBResumSMetric.c */
+extern void (*eob_metric_Apotential)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_metric_Dpotential)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_metric_Qpotential)(); /* defined in TEOBResumSPars.c*/
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
+void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A);
+void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
+void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
-void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B);
-void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B);
+void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
+void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                  double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                  double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
 
 /* TEOBResumSFlux.c */
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);

@@ -123,6 +123,429 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
   }
 }
 
+/** EOB Metric A function GSF-informed */
+
+void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
+{
+
+  /* shortcuts */
+  double u       = 1./r;
+  double u2      = u*u;
+  double u3      = u*u2;
+  double u4      = u2*u2;
+  double u5      = u4*u;
+  double u6      = u5*u;
+  double u7      = u6*u;
+  double logu    = log(u);
+  double logu2   = logu*logu;
+  double onebyu  = r;
+  double onebyu2 = r*r;
+
+  /* The a function is factorized into two pieces:
+  integer and tail part (semi-integer powers of u) */
+
+  /* Integer part */
+  double ResumInt, dResumInt, d2ResumInt;
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
+
+  // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
+
+  double k1  =  9.843951347218796;
+  double k2a =  16.29867029491112;
+  double k2b =  6.4;
+  double k3a = -64.26554415558926;
+  double k3b = -30.15238095238095;
+  double k4a =  309.0094399882301;
+  double k4b = -20.58977072310406;
+  double k5a =  969.247628430881;
+  double k5b =  457.2474034136427;
+  double k5c = -26.08761904761905;
+  double k6a = -5268.885414280484;
+  double k6b = -356.236938531493;
+  double k6c =  110.4765532879819;
+
+  coeffs_int[0] =  k1;
+  coeffs_int[1] =  k2a + k2b*logu;
+  coeffs_int[2] =  k3a + k3b*logu;
+  coeffs_int[3] =  k4a + k4b*logu;
+  coeffs_int[4] =  k5a + k5b*logu + k5c*logu2;
+  coeffs_int[5] =  k6a + k6b*logu + k6c*logu2;
+
+  Dcoeffs_int[0] =  k2b*onebyu;
+  Dcoeffs_int[1] =  k3b*onebyu;
+  Dcoeffs_int[2] =  k4b*onebyu;
+  Dcoeffs_int[3] =  k5b*onebyu + 2.*k5c*logu*onebyu;
+  Dcoeffs_int[4] =  k6b*onebyu + 2.*k6c*logu*onebyu;
+
+  D2coeffs_int[0] = -k2b*onebyu2;
+  D2coeffs_int[1] = -k3b*onebyu2;
+  D2coeffs_int[2] = -k4b*onebyu2;
+  D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
+  D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+
+  /* Tail part */
+  double ResumTail, dResumTail, d2ResumTail;
+  double coeffs_tail[4], Dcoeffs_tail[2], D2coeffs_tail[2];
+
+  double j1  =  40.97833617482458;
+  double j2  = -601.9566375425603;
+  double j3a =  5160.094217567668;
+  double j3b = -262.2613515188773;
+  double j4a = -33044.17255491994;
+  double j4b =  7335.733860726202;
+ 
+  // Coefficients of the Taylor-expanded function, to be fed to the Padé
+  coeffs_tail[0] = j1;
+  coeffs_tail[1] = j2;
+  coeffs_tail[2] = j3a + j3b*logu;
+  coeffs_tail[3] = j4a + j4b*logu;
+
+  Dcoeffs_tail[0] = j3b*onebyu;
+  Dcoeffs_tail[1] = j4b*onebyu;
+
+  D2coeffs_tail[0] = -j3b*onebyu2;
+  D2coeffs_tail[1] = -j4b*onebyu2;
+
+  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
+
+  /* a1SF function purely analytical + derivatives wrt to u */
+  double a1SF_tmp     = ResumInt*ResumTail;
+  double da1SF_u_tmp  = dResumInt*ResumTail + ResumInt*dResumTail; 
+  double d2a1SF_u_tmp = d2ResumInt*ResumTail + 2*dResumInt*dResumTail + ResumInt*d2ResumTail;
+
+  /* GSF-informed correction and improved functions */
+  double f1SF     = 1 + (963.4328658734496 + (811.3827589325526 - 205.25579381038455*logu)*logu)*u7;
+  double df1SF_u  = (7555.4128200467 + (5269.167724907099 - 1436.7905566726918*logu)*logu)*u6; 
+  double d2f1SF_u = (50601.6446451873 + (28741.42523609721 - 8620.743340036151*logu)*logu)*u5;
+
+  double a1SF     = a1SF_tmp*f1SF;
+  double da1SF_u  = da1SF_u_tmp*f1SF + a1SF_tmp*df1SF_u;
+  double d2a1SF_u = d2a1SF_u_tmp*f1SF + 2.*df1SF_u*da1SF_u_tmp + d2f1SF_u*a1SF_tmp;
+
+  /* Schwarzschild Hamiltonian & derivatives */
+  double Hschw     = (1. - 2.*u)/sqrt(1. - 3.*u);
+  double dHschw_u  = -2./sqrt(1. - 3.*u) + (3.*(1. - 2.*u))/(2.*pow(1. - 3.*u, 1.5));
+  double d2Hschw_u = -6./pow(1. - 3.*u, 1.5) + (27.*(1. - 2.*u))/(4.*pow(1. - 3.*u, 2.5));
+
+  /* A potential and derivatives wrt to u */
+  *A   = 1. - 2.*u + 2.*nu*u3*Hschw*a1SF;
+  *dA  = -2. + 6.*nu*u2*a1SF*Hschw + 2.*nu*u3*dHschw_u*a1SF + 2.*nu*u3*Hschw*da1SF_u;
+  *d2A = da1SF_u*(12.*u2*nu*Hschw + 2.*nu*u3*dHschw_u) + 2.*nu*u3*Hschw*d2a1SF_u + 2.*nu*u3*dHschw_u*da1SF_u + 
+         a1SF*(12.*nu*u*Hschw + 12.*nu*u2*dHschw_u + 2.*nu*u3*d2Hschw_u);
+
+}
+
+/** EOB Metric D function at 3PN, resummed */
+
+void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D)
+{
+
+  /* shortcuts */
+  double u  = 1./r;
+  double u2 = u*u;
+  double u3 = u2*u;
+
+  double Dp       = 1.0 + 6.*nu*u2 - 2.*(3.*nu-26.)*nu*u3; // Pade' resummation of D
+  double dDp_du   = 6.*nu*u*(2. - (3.*nu-26.)*u);
+  double d2Dp_du2 = 12.*nu*(1. - (3.*nu-26.)*u);
+  double D_tmp    = 1./Dp;
+  
+  /* derivatives wrt to u */
+  *D   = D_tmp;
+  *dD  = -SQ(D_tmp)*dDp_du;
+  *d2D = 2.*SQ(D_tmp)*D_tmp*SQ(dDp_du) - SQ(D_tmp)*d2Dp_du2;
+
+}
+
+/** EOB Metric D function GSF-informed */
+
+void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
+{
+
+  /* shortcuts */
+  double u      = 1./r;
+  double u2     = u*u;
+  double u3     = u*u2;
+  double u4     = u2*u2;
+  double u5     = u4*u;
+  double u6     = u5*u;
+  double u7     = u6*u;
+  double u11    = u5*u6;
+  double u11by2 = sqrt(u11);
+  double u13by2 = sqrt(u11*u2);
+  double u15by2 = sqrt(u11*u4);
+  double logu   = log(u);
+  double logu2  = logu*logu;
+  double onebyu  = r;
+  double onebyu2 = r*r;
+
+  /* The d function is factorized into two pieces:
+  integer and tail part (semi-integer powers of u) */
+
+  /* Integer part */
+  double ResumInt, dResumInt, d2ResumInt;
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
+
+  // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
+
+  double k1  =  8.666666666666667;
+  double k2a =  36.92866519869136;
+  double k2b =  6.577777777777778;
+  double k3a = -79.89813242312009;
+  double k3b = -33.80952380952381;
+  double k4a =  777.9303456579357;
+  double k4b = -118.6962962962963;
+  double k5a =  5757.134871176116;
+  double k5b =  1884.740681815503;
+  double k5c = -115.9449735449735;
+  double k6a = -42331.4249981053;
+  double k6b = -3615.490356674048;
+  double k6c =  879.6352532123961;
+
+  coeffs_int[0] =  k1;
+  coeffs_int[1] =  k2a + k2b*logu;
+  coeffs_int[2] =  k3a + k3b*logu;
+  coeffs_int[3] =  k4a + k4b*logu;
+  coeffs_int[4] =  k5a + k5b*logu + k5c*logu2;
+  coeffs_int[5] =  k6a + k6b*logu + k6c*logu2;
+
+  Dcoeffs_int[0] =  k2b*onebyu;
+  Dcoeffs_int[1] =  k3b*onebyu;
+  Dcoeffs_int[2] =  k4b*onebyu;
+  Dcoeffs_int[3] =  k5b*onebyu + 2.*k5c*logu*onebyu;
+  Dcoeffs_int[4] =  k6b*onebyu + 2.*k6c*logu*onebyu;
+
+  D2coeffs_int[0] = -k2b*onebyu2;
+  D2coeffs_int[1] = -k3b*onebyu2;
+  D2coeffs_int[2] = -k4b*onebyu2;
+  D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
+  D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+
+  /* Tail part */
+  double ResumTail, dResumTail, d2ResumTail;
+  double coeffs_tail[4], Dcoeffs_tail[2], D2coeffs_tail[2];
+ 
+  // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
+
+  double j1  =  88.07496559797366;
+  double j2  = -1395.220274500357;
+  double j3a =  8663.505746839271;
+  double j3b = -579.3375514888934;
+  double j4a =  29169.61933412867;
+  double j4b =  14219.676593263639;
+
+  coeffs_tail[0] =  j1;
+  coeffs_tail[1] =  j2;
+  coeffs_tail[2] =  j3a + j3b*logu;
+  coeffs_tail[3] =  j4a + j4b*logu;
+
+  Dcoeffs_tail[0] = j3b*onebyu;
+  Dcoeffs_tail[1] = j4b*onebyu;
+
+  D2coeffs_tail[0] = -j3b*onebyu2;
+  D2coeffs_tail[1] = -j4b*onebyu2;
+
+  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
+
+  /* a1SF function purely analytical + derivatives wrt to u */
+  double d1SF_tmp     = ResumInt*ResumTail;
+  double Dd1SF_u_tmp  = dResumInt*ResumTail + ResumInt*dResumTail; 
+  double D2d1SF_u_tmp = d2ResumInt*ResumTail + 2*dResumInt*dResumTail + ResumInt*d2ResumTail;
+
+  /* GSF-informed correction and improved function */
+
+  double f1SF     = 1.*(1. + (-9.898639062741917e6 + 2.6012818800187605e6*logu)*u15by2 + 
+                    (1.0018072583960408e7 + 2.6340749138477915e6*logu + 198577.79085898417*logu2)*u7);
+  double df1SF_u  = 1.*(2.6012818800187605e6*u13by2 + 
+                    7.5*(-9.898639062741917e6 + 2.6012818800187605e6*logu)*u13by2 + 
+                    7.*(1.0018072583960408e7 + 2.6340749138477915e6*logu + 198577.79085898417*logu2)*u6 + 
+                    (2.6340749138477915e6/u + (397155.58171796834*logu)/u)*u7);
+  double d2f1SF_u = 1.*(3.641794632026264e7*u11by2 + 48.75*(-9.898639062741917e6 + 2.6012818800187605e6*logu)*u11by2 + 
+                    42.*(1.0018072583960408e7 + 2.6340749138477915e6*logu + 198577.79085898417*logu2)*u5 + 
+                    14.*(2.6340749138477915e6/u + (397155.58171796834*logu)/u)*u6 + 
+                    (-2.236919332129823e6/u2 - (397155.58171796834*logu)/u2)*u7);
+
+  double d1SF     = d1SF_tmp*f1SF;
+  double Dd1SF_u  = Dd1SF_u_tmp*f1SF + d1SF_tmp*df1SF_u;
+  double D2d1SF_u = D2d1SF_u_tmp*f1SF + 2.*df1SF_u*Dd1SF_u_tmp + d2f1SF_u*d1SF_tmp;
+
+  /* D potential and derivatives wrt u */
+  double barD   = 1. + 6.*nu*u2*d1SF;
+  double barD2  = barD*barD;
+  double barD3  = barD2*barD;
+  *D            = 1./barD;
+
+  double DbarD  = nu*(12.*u*d1SF + 6.*u2*Dd1SF_u);
+  *dD           = - DbarD/barD2;
+
+  double D2barD = nu*(12.*d1SF + 24.*u*Dd1SF_u + 6.*u2*D2d1SF_u);
+  *d2D          = 2.*(DbarD*DbarD)/barD3 - D2barD/barD2;
+  
+}
+
+/** EOB Metric Q function at 3PN */
+
+void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
+                     double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+  const double z3 = 2.*nu*(4. - 3.*nu);
+  double u  = 1./r;
+  double u2 = u*u;
+  double u3 = u2*u;
+  double u4 = u3*u;
+  double prstar2 = prstar*prstar;
+  double prstar3 = prstar2*prstar;
+  double prstar4 = prstar2*prstar2;
+
+  *Q              =  z3*u2*prstar4;
+  *dQ_du          =  2.*z3*u*prstar4;
+  *dQ_dprstar     =  4.*z3*u2*prstar3;
+  *d2Q_du2        =  2.*z3*prstar4;
+  *ddQ_drdprstar  = -8.*z3*u3*prstar3;
+  *d2Q_dprstar2   =  12.*z3*u2*prstar2;
+  *d3Q_dr2dprstar =  24.*z3*u4*prstar3;
+  *d3Q_drdprstar2 = -24.*z3*u3*prstar2;
+  *d3Q_dprstar3   =  24.*z3*u2*prstar;
+
+}
+
+/** EOB Metric Q function GSF-informed */
+
+void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
+                     double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+
+  double u       = 1./r;
+  double u2      = u*u;
+  double u3      = u*u2;
+  double u4      = u2*u2;
+  double u5      = u4*u;
+  double u6      = u5*u;
+  double u7      = u6*u;
+  double sqrtu   = sqrt(u);
+  double u15by2  = sqrt(u5*u5*u5);
+  double logu    = log(u);
+  double logu2   = logu*logu;
+  double onebyu  = r;
+  double onebyu2 = r*r;
+  double prstar2 = prstar*prstar;
+  double prstar3 = prstar2*prstar;
+  double prstar4 = prstar2*prstar2;
+
+  /* The q function is factorized into two pieces:
+  integer and tail part (semi-integer powers of u) */
+
+  /* Integer part */
+  double ResumInt, dResumInt, d2ResumInt;
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
+
+  // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
+
+  double k1  =  3.588880535619494;
+  double k2a = -12.14327341036888;
+  double k2b =  6.461904761904762;
+  double k3a = -13.57177599359104;
+  double k3b = -122.5626984126984;
+  double k4a =  5849.419891636204;
+  double k4b =  1690.691389474068;
+  double k4c = -80.70857142857143;
+  double k5a = -89749.62943631351;
+  double k5b = -8625.740422940584;
+  double k5c =  1436.31537414966;
+  double k6a =  445969.7971893991;
+  double k6b = -70286.9426913128;
+  double k6c = -5402.297846034037;
+
+  coeffs_int[0] =  k1;
+  coeffs_int[1] =  k2a + k2b*logu;
+  coeffs_int[2] =  k3a + k3b*logu;
+  coeffs_int[3] =  k4a + k4b*logu + k4c*logu2;
+  coeffs_int[4] =  k5a + k5b*logu + k5c*logu2;
+  coeffs_int[5] =  k6a + k6b*logu + k6c*logu2;
+
+  Dcoeffs_int[0] =  k2b*onebyu;
+  Dcoeffs_int[1] =  k3b*onebyu;
+  Dcoeffs_int[2] =  k4b*onebyu + 2.*k4c*logu*onebyu;
+  Dcoeffs_int[3] =  k5b*onebyu + 2.*k5c*logu*onebyu;
+  Dcoeffs_int[4] =  k6b*onebyu + 2.*k6c*logu*onebyu;
+
+  D2coeffs_int[0] = -k2b*onebyu2;
+  D2coeffs_int[1] = -k3b*onebyu2;
+  D2coeffs_int[2] = -k4b*onebyu2 + k4c*(2.*onebyu2 - 2.*logu*onebyu2);
+  D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
+  D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+
+  /* Tail part */
+  double ResumTail, dResumTail, d2ResumTail;
+  double coeffs_tail[5], Dcoeffs_tail[3], D2coeffs_tail[3];
+
+  // Coefficients of the Taylor-expanded function, to be fed to the Padé
+
+  double j1  =  18.43046912376822;
+  double j2  = -397.3442276527582;
+  double j3a =  2180.644722347771;
+  double j3b = -119.09593619501652;
+  double j4a =  64484.07468368325;
+  double j4b =  650.5464012653043;
+  double j5a = -1.366299312664882e6;
+  double j5b = -5839.988023296008;
+  double j5c =  2257.0834309598104;
+
+  coeffs_tail[0] =  j1;
+  coeffs_tail[1] =  j2;
+  coeffs_tail[2] =  j3a + j3b*logu;
+  coeffs_tail[3] =  j4a + j4b*logu;
+  coeffs_tail[4] =  j5a + j5b*logu + j5c*logu2;
+
+  Dcoeffs_tail[0] = j3b*onebyu;
+  Dcoeffs_tail[1] = j4b*onebyu;
+  Dcoeffs_tail[2] = j5b*onebyu + 2.*j5c*logu*onebyu;
+
+  D2coeffs_tail[0] = -j3b*onebyu2;
+  D2coeffs_tail[1] = -j4b*onebyu2;
+  D2coeffs_tail[2] = -j5b*onebyu2 + j5c*(2.*onebyu2 - 2.*logu*onebyu2);
+  
+  Pade76v2_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
+
+  double dIntTail = dResumInt*ResumTail + ResumInt*dResumTail;
+
+  /* q1SF function purely analytical + derivatives wrt to u */
+  double q1SF_tmp     = 8.*u2*ResumInt*ResumTail;
+  double dq1SF_u_tmp  = 16.*u*ResumInt*ResumTail + 8.*u2*dIntTail;
+  double d2q1SF_u_tmp = 16.*ResumInt*ResumTail + 32.*u*dIntTail + 8.*u2*(d2ResumInt*ResumTail + 2*dResumInt*dResumTail + ResumInt*d2ResumTail);
+
+  /* GSF-informed correction and improved functions */
+
+  double f1SF     = 1.*(1. + (6.473498944710975e9 - 1.6413472171574914e9*logu)*u15by2 + (-6.555554279481237e9 - 1.7756296887290301e9*logu - 1.4618867042954516e8*logu2)*u7);
+  double df1SF_u  = (-4.766450964509769e10 + logu*(-1.2721785161962301e10 - 1.0233206930068161e9*logu - 1.2310104128681187e10*sqrtu) + 4.690989486817482e10*sqrtu)*u6;
+  double d2f1SF_u = (-2.987088430325484e11 + logu*(-7.837735235778743e10 - 6.139924158040897e9*logu - 8.001567683642772e10*sqrtu) + 2.926042125144552e11*sqrtu)*u5;
+
+  double q1SF     = q1SF_tmp*f1SF;
+  double dq1SF_u  = dq1SF_u_tmp*f1SF + q1SF_tmp*df1SF_u;
+  double d2q1SF_u = d2q1SF_u_tmp*f1SF + 2.*df1SF_u*dq1SF_u_tmp + d2f1SF_u*q1SF_tmp;
+
+  /* complete Q function and derivatives */
+
+  *Q              =  nu*q1SF*prstar4;
+  *dQ_du          =  nu*dq1SF_u*prstar4;
+  *dQ_dprstar     =  4.*nu*q1SF*prstar3;
+  *d2Q_du2        =  nu*d2q1SF_u*prstar4;
+  *ddQ_drdprstar  = -4.*u2*nu*dq1SF_u*prstar3;
+  *d2Q_dprstar2   =  12.*nu*q1SF*prstar2;
+  *d3Q_dr2dprstar =  4.*u3*nu*(2.*dq1SF_u + u*d2q1SF_u)*prstar3;
+  *d3Q_drdprstar2 = -12.*nu*u2*dq1SF_u*prstar2;
+  *d3Q_dprstar3   =  24.*nu*q1SF*prstar;
+
+}
+
 /** Tidal potential, three version implemented: 
     1. TEOB NNLO, Bernuzzi+ 1205.3403
     2. TEOBResum, Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 
@@ -625,7 +1048,9 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 
 
 /** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
-void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B)
+void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
   const double nu    = EOBPars->nu;
   const double u     = 1./r;
@@ -635,10 +1060,13 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   const double u6    = u2*u4;
 
   double Atmp=0., dAtmp_u=0., d2Atmp_u=0.;
-  double Btmp=0., dBtmp_r=0.;
+  double D=0., dD_u=0., d2D_u=0.;
+  double Btmp=0., dBtmp_r=0., d2Btmp_r=0.;
+  double Qtmp=0., dQtmp_du=0., dQtmp_dprstar=0., d2Qtmp_du2=0., ddQtmp_drdprstar=0., d2Qtmp_dprstar2=0.,
+         d3Qtmp_dr2dprstar= 0., d3Qtmp_drdprstar2=0., d3Qtmp_dprstar3=0.;
 
   /* A potential and derivative with respect to u */  
-  eob_metric_A5PNlog(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u);
+  eob_metric_Apotential(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u);
 
   /* Add here tides if needed */
   if (EOBPars->use_tidal) {
@@ -661,25 +1089,37 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
   *d2A = 2.*dAtmp_u*u3 + d2Atmp_u*u4;
 
   /* D potential and derivative with respect to r */
-  double Dp = 1.0 + 6.*nu*u2 - 2.*(3.0*nu-26.0)*nu*u3; // Pade' resummation of D
-  double dDp_du   = 6.*nu*(2.*u - (3.0*nu-26.0)*u2);
-  double d2Dp_du2 = 12.*nu*(1. - (3.0*nu-26.0)*u);
-  
-  double D        = 1./Dp;
-  double dD_du   = -SQ(D)*dDp_du;
-  double d2D_du2 = 2.*SQ(D)*D*SQ(dDp_du) - SQ(D)*d2Dp_du2;
+  eob_metric_Dpotential(r, nu, &D, &dD_u, &d2D_u); // this gives dD wtr to u
+  double dD  = - u2*dD_u; // derivative wrt to r
+  double d2D = 2.*dD_u*u3 + d2D_u*u4;
 
-  double dD  = -u2*dD_du;
-  double d2D = 2.*u3*dD_du + u4*d2D_du2;
-  
   /* B potential and derivative with respect to r */
-  *B   = D/(*A);
-  *dB  = (*B)*(dD/D - (*dA)/(*A));
-  *d2B = SQ(*dB)/(*B) + (*B)*(d2D/D - SQ(dD/D) - (*d2A)/(*A) + SQ((*dA)/(*A)));
+  Btmp     = D/(Atmp);
+  dBtmp_r  = (Btmp)*(dD/D - (*dA)/(*A));
+  d2Btmp_r = SQ(dBtmp_r)/(Btmp) + (Btmp)*(d2D/D - SQ(dD/D) - (*d2A)/(*A) + SQ((*dA)/(*A)));
+
+  *B   = Btmp;
+  *dB  = dBtmp_r;
+  *d2B = d2Btmp_r;
+
+  /* Q potential and derivatives */
+  eob_metric_Qpotential(r, prstar, nu, &Qtmp, &dQtmp_du, &dQtmp_dprstar, &d2Qtmp_du2, &ddQtmp_drdprstar, &d2Qtmp_dprstar2, &d3Qtmp_dr2dprstar, &d3Qtmp_drdprstar2, &d3Qtmp_dprstar3);
+  *Q              = Qtmp;
+  *dQ             = -u2*dQtmp_du; // derivative wrt to r
+  *dQ_dprstar     = dQtmp_dprstar;
+  *d2Q            = u3*(2.*dQtmp_du + u*d2Qtmp_du2); // derivative wrt to r
+  *ddQ_drdprstar  = ddQtmp_drdprstar;
+  *d2Q_dprstar2   = d2Qtmp_dprstar2;
+  *d3Q_dr2dprstar = d3Qtmp_dr2dprstar;
+  *d3Q_drdprstar2 = d3Qtmp_drdprstar2;
+  *d3Q_dprstar3   = d3Qtmp_dprstar3;
+
 }
  
 /** EOB Metric potentials A(r), B(r), and their derivatives, spin version */
-void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B)
+void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                  double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                  double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
 
   const double nu    = EOBPars->nu;
@@ -704,7 +1144,7 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
 
   /* A potential and derivative with respect to u */  
   double Aorb, dAorb_u, d2Aorb_u;
-  eob_metric_A5PNlog(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u);
+  eob_metric_Apotential(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u);
 
   /* Add here tides if needed */
   if (usetidal) {
@@ -741,17 +1181,13 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   //*d2A = d2Aorb*(1.+2.*uc)/(1.+2.*u) + 4.*dAorb*( u2*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) - uc2/(1.+2.*u)*drc) + Aorb*(-4.*u3*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) + 8.*u4*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)*(1.+2.*u))+4.*uc3/(1.+2.*u)*drc*drc - 2.*uc2/(1.+2.*u)*d2rc - 8.*u2*uc2/SQ(1.+2.*u)*drc); /* expanded *correct* form */
 
   /* D potential and derivative with respect to r */
-  double Dp = 1.0 + 6.*nu*uc2 - 2.*(3.0*nu-26.0)*nu*uc3; // Pade' resummation of D
-  double dDp_duc   = 6.*nu*(2.*uc - (3.0*nu-26.0)*uc2);
-  double d2Dp_duc2 = 12.*nu*(1. - (3.0*nu-26.0)*uc);
-  
-  double D        = 1./Dp;
-  double dD_duc   = -SQ(D)*dDp_duc;
-  double d2D_duc2 = 2.*SQ(D)*D*SQ(dDp_duc) - SQ(D)*d2Dp_duc2;
+  double D=0., dD_uc=0., d2D_uc=0.;
+  eob_metric_Dpotential(rc, nu, &D, &dD_uc, &d2D_uc); // this gives dD wtr to uc
 
-  double dD  = -uc2*drc*dD_duc;
-  double d2D = (2.*uc3*SQ(drc) - uc2*d2rc)*dD_duc + SQ(uc2*drc)*d2D_duc2;
-  
+  // derivatives wrt to r
+  double dD  = -uc2*drc*dD_uc; 
+  double d2D = (2.*uc3*SQ(drc) - uc2*d2rc)*dD_uc + SQ(uc2*drc)*d2D_uc;
+
   /* B potential and derivative with respect to r */
   double fact   = r*r*uc2;
   double dfact  = 2.*r*uc2 - 2.*r*r*uc3*drc;
@@ -761,5 +1197,20 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
   *dB  = (*B)*(dfact/fact + dD/D - (*dA)/(*A));
   *d2B = SQ(*dB)/(*B) + (*B)*(d2fact/fact - SQ(dfact/fact) + d2D/D - SQ(dD/D)
 			 - (*d2A)/(*A) + SQ((*dA)/(*A)));
+
+  /* Q potential and derivatives */
+  double Qtmp=0., dQtmp_duc=0., dQtmp_dprstar=0.,  d2Qtmp_duc2=0., ddQtmp_drcdprstar=0., d2Qtmp_dprstar2=0.,
+         d3Qtmp_drc2dprstar=0., d3Qtmp_drcdprstar2=0., d3Qtmp_dprstar3=0.;
+  eob_metric_Qpotential(rc, prstar, nu, &Qtmp, &dQtmp_duc, &dQtmp_dprstar, &d2Qtmp_duc2, &ddQtmp_drcdprstar, &d2Qtmp_dprstar2,
+                        &d3Qtmp_drc2dprstar, &d3Qtmp_drcdprstar2, &d3Qtmp_dprstar3);
+  *Q              = Qtmp;
+  *dQ             = - uc2*drc*dQtmp_duc; // derivative wrt to r
+  *dQ_dprstar     = dQtmp_dprstar;
+  *d2Q            = uc2*(-d2rc*dQtmp_duc + SQ(drc)*(2.*uc*dQtmp_duc + uc2*d2Qtmp_duc2)); // derivative wrt to r
+  *ddQ_drdprstar  = drc*ddQtmp_drcdprstar;
+  *d2Q_dprstar2   = d2Qtmp_dprstar2;
+  *d3Q_dr2dprstar = d2rc*ddQtmp_drcdprstar + SQ(drc)*d3Qtmp_drc2dprstar;
+  *d3Q_drdprstar2 = drc*d3Qtmp_drcdprstar2;
+  *d3Q_dprstar3   = d3Qtmp_dprstar3;
   
 }
