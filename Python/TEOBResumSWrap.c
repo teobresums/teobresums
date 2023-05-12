@@ -876,7 +876,7 @@ static PyObject* pph_lso_spin_py(PyObject* self, PyObject* args)
   return ret;
 }
 
-static PyObject* eob_j0_circ(PyObject *self, PyObject *args)
+static PyObject* eob_j0_circ_py(PyObject *self, PyObject *args)
 {
   double r, q, chi1, chi2;
   double rc, drc_dr, d2rc_dr2;
@@ -915,7 +915,8 @@ static PyObject* eob_j0_circ(PyObject *self, PyObject *args)
   printf("S = %f, Sstar=%f\n", S, Sstar);
   /** Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper 
 	(which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). */
-  eob_metric_s(r, dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric_s(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold,
+              &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
   eob_dyn_s_GS(r, rc, drc_dr, 0.0, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, EOBPars->X1, EOBPars->X2, EOBPars->cN3LO, ggm);
 
@@ -934,10 +935,9 @@ static PyObject* eob_j0_circ(PyObject *self, PyObject *args)
   double  duc_dr   = -uc2*drc_dr;
   double  dAuc2_dr = uc2*(dA-2*A*uc*drc_dr);
 
-  double a_coeff = SQ(dAuc2_dr) - 4*A*uc2*SQ(dG_dr);  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
+  double a_coeff = SQ(dAuc2_dr) - 4*A*uc2*SQ(dG_dr); /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
   double b_coeff = 2*dA*dAuc2_dr- 4*A*SQ(dG_dr);     /* Second coefficient of the quadratic equation */
-  double c_coeff = SQ(dA);                                                 /* Third coefficient of the quadratic equation */
-  //printf("a = %f\n b = %f\n c = %f\n", a_coeff, b_coeff, c_coeff );
+  double c_coeff = SQ(dA);                           /* Third coefficient of the quadratic equation */
 
  /* Delta of the quadratic equation */
   double Delta = SQ(b_coeff) - 4*a_coeff*c_coeff; 
@@ -967,6 +967,7 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   double rc, drc_dr, d2rc_dr2;
   double A, dA, d2A;
   double B, dB, pl_hold;
+  double Q, dQ, dQ_dprstar, d2Q_dprstar2;
   double H;              /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
   double Heff;           /* effective EOB Hamiltonian (divided by mu) */
   double Heff_orb;
@@ -1001,10 +1002,11 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   Dynamics_set_params(dyn); 
   /* Compute rc and A */
   eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
-  eob_metric_s(r, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold);
+  eob_metric_s(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
 
   /* Compute H */
-  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, pphi, prstar, EOBPars->S, EOBPars->Sstar, EOBPars->chi1, EOBPars->chi2, EOBPars->X1, EOBPars->X2, EOBPars->aK2, EOBPars->cN3LO, A, dA, d2A, &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20,  &d2Heff_dr2);
+  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, pphi, prstar, EOBPars->S, EOBPars->Sstar, EOBPars->chi1, EOBPars->chi2, EOBPars->X1, EOBPars->X2, EOBPars->aK2, EOBPars->cN3LO, A, dA, d2A, Q, dQ, dQ_dprstar, 0., d2Q_dprstar2, 
+            &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, &pl_hold);
   /* Free */ 
   EOBParameters_free (EOBPars);
   Dynamics_free(dyn);
@@ -1042,7 +1044,7 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
   Dynamics_alloc (&dyn, 0, "dyn"); 
   Dynamics_set_params(dyn); 
   
-  eob_metric_s(r, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric_s(r, 0, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
   /* Free */ 
   EOBParameters_free (EOBPars);
@@ -1061,7 +1063,7 @@ static PyMethodDef EOBRunMethods[] = {
   {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso in the non-spinning case"},
   {"pph_lso_spin_py", pph_lso_spin_py, METH_VARARGS, "Fit to compute pphi_lso in the spinning case (|chi|<0.5)"},
   {"eob_ham_s_py", eob_ham_s_py, METH_VARARGS, "Compute the spinning EOB hamiltonian for BBH systems"},
-  {"eob_j0_circ", eob_j0_circ, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
+  {"eob_j0_circ_py", eob_j0_circ_py, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
   {"eob_metricAB_py", eob_metricAB_py, METH_VARARGS, "Compute the metric potentials"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
