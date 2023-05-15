@@ -581,7 +581,6 @@ void eob_set_params(int default_choice, int firstcall)
   
   /** Set more as needed ... */
   EOBPars->a6c = 0.;
-  printf("Use 6c fits %d\n",EOBPars->use_a6c_fits);
   switch(EOBPars->use_a6c_fits)
   {
     case(a6c_fits_HM_2023):
