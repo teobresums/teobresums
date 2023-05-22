@@ -30,7 +30,7 @@ libs = ['gsl', 'gslcblas', 'm']
 
 # copy src files to this repo
 
-pyprofit_ext = Extension('EOBRun_module_opt',
+pyprofit_ext = Extension('EOBRun_module',
                          depends=glob.glob('lib/*.h'),
                          language='c99',
                          define_macros = [('HAVE_GSL',1)],
@@ -40,7 +40,7 @@ pyprofit_ext = Extension('EOBRun_module_opt',
                          extra_compile_args=["-w", "-std=c99", "-DDEBUG=0", "-DVERBOSE=0"]#, "-fcommon"
                        )
 
-setup(  name='teobresums_opt',
+setup(  name='teobresums',
         version=version,
         description='TEOBResumS: Effective-One-Body model for generic compact binary coalescences',
         author = 'The TEOBResumS team',
