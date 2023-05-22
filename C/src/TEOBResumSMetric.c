@@ -162,9 +162,9 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   const double kapT7 = EOBPars->kapT7;
   const double kapT8 = EOBPars->kapT8;
   
-  const double kapA2j = EOBPars->kapA2j;
-  const double kapB2j = EOBPars->kapB2j;
-  const double kapT2j = EOBPars->kapT2j;  
+  const double kapA2j = EOBPars->japA2;
+  const double kapB2j = EOBPars->japB2;
+  const double kapT2j = EOBPars->japT2;  
   
   const double p = EOBPars->pGSF_tidal;
   
@@ -394,7 +394,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       dA_u -= kapT3_u*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
       dA_u -= kapT3*u8*(bar_alph3_1_u*u + bar_alph3_2_u*u2);
       
-      dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
+      dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) + kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
     }
     
   } else if (EOBPars->use_tidal==TIDES_TEOBRESUM3) { 
@@ -513,15 +513,13 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
       /* Adding missing derivative terms from ell=4,3,2 */
       dA_u -= kapT4_u*u10;
       
-      dA_u -= kapA3_u*u8*A3hatA - kapB3_u*u8*A3hatB;
+      dA_u -= kapA3_u*u8*A3hatA + kapB3_u*u8*A3hatB;
       
-      dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
+      dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) + kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
     }
     
   } // EOBPars->use_tidal
 
-
-#if(USEGRAVITOMAGNETICTERMS)
 
   if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_PN) {
 
@@ -577,8 +575,6 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     }
     
   } // EOBPars->use_tidal_gravitomagnetic
-
-#endif
     
   *AT   = A;
   *dAT  = dA_u;
@@ -745,13 +741,19 @@ void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, dou
 
   /* D potential and derivative with respect to r */
   double Dp = 1.0 + 6.*nu*uc2 - 2.*(3.0*nu-26.0)*nu*uc3; // Pade' resummation of D
-  double D  = 1./Dp;
-  double dD = 6.*uc2*(2.*nu*uc-(3.*nu-26.)*nu*uc2)*D*D;
+  double dDp_duc   = 6.*nu*(2.*uc - (3.0*nu-26.0)*uc2);
+  
+  double D        = 1./Dp;
+  double dD_duc   = -SQ(D)*dDp_duc;
+
+  double dD  = -uc2*drc*dD_duc;
 
   /* B potential and derivative with respect to r */
-  *B   = r*r*uc2*D/(*A);
-  *dB  = (dD*(*A) - D*(*dA))/((*A)*(*A));
-
+  double fact   = r*r*uc2;
+  double dfact  = 2.*r*uc2 - 2.*r*r*uc3*drc;
+  
+  *B   = fact*D/(*A);
+  *dB  = (*B)*(dfact/fact + dD/D - (*dA)/(*A));
 }
 
 

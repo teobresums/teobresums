@@ -114,7 +114,7 @@ def teobresums_pars_update(par, domain):
         #
         'use_geometric_units': 1,  # I/O units output: 1 = geometric, 0 = physical
         'interp_uniform_grid': interp, # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
-        'arg_out' : BIT['no'], # return modes hlm/hflm. Default = 0 (no)
+        'arg_out' : "no", # return modes hlm/hflm. Default = 0 (no)
         #
         'ringdown_extend_array' : None,
         'centrifugal_radius' : None,

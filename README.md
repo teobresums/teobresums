@@ -11,7 +11,8 @@ For detailed release notes of the most recent version see the
 [`CHANGES` file](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
 
 ### Latest version  
-[![C version](https://img.shields.io/badge/TEOBResumS-v3.0%20GIOTTO-green)](https://bitbucket.org/eob_ihes/teobresums/src/v3.0_GIOTTO/) Quasi-circular precessing and non-precessing models for BBH, BNS and BHNS with higher modes, including EOB-SPA.
+[![C version](https://img.shields.io/badge/TEOBResumS-v4.1.4--GIOTTO-green)](https://bitbucket.org/eob_ihes/teobresums/src/v4.1.4-GIOTTO/)   
+Quasi-circular precessing and non-precessing models for BBH, BNS and BHNS with higher modes, including EOB-SPA.
 
 ## Authors 
 
@@ -28,35 +29,48 @@ See the [`LICENSE` file](https://bitbucket.org/eob_ihes/teobresums/src/master/LI
  * C compiler (e.g. GCC)
  * [GSL library](https://www.gnu.org/software/gsl/)
 
-## Compilation
+## Installation
 
 `TEOBResumS` can be built as an executable or a python module using [disutil](https://docs.python.org/3/library/distutils.html).
 
-To build the executable, check the compiler and compilation options in [`C/Makefile` file](https://bitbucket.org/eob_ihes/teobresums/src/master/C/Makefile) and then:
-
+### PyPI
 ```
-$ cd /PATH/TO/teobresums/C/
-$ make
+$ pip install teobresums
 ```
 
-Alternatively, to build the python module under the `teobresums/Python` directory do:
-
+### From source
 ```
-$ cd /PATH/TO/teobresums/Python/
-$ python setup.py build_ext --inplace
-```
-
-To build the module in your current environment do:
-
-```
-$ cd /PATH/TO/teobresums/Python/
+$ git clone https://bitbucket.org/eob_ihes/teobresums.git
+$ cd teobresums/Python/
 $ python setup.py install
 ```
 
 We strongly advise users to use [anaconda](https://www.anaconda.com/products/individual-d).
 
+### C executable
+To build the executable, check the compiler and compilation options in [`C/Makefile` file](https://bitbucket.org/eob_ihes/teobresums/src/master/C/Makefile) and then:
+
+```
+$ git clone https://bitbucket.org/eob_ihes/teobresums.git
+$ cd teobresums/C/
+$ make
+```
+
 ## Usage
 
+### Python extension
+
+```
+$ python
+>>> import EOBRun_module
+```
+
+Example scripts for using the python module can be found in `Python/Examples/`.
+
+If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS` python module is available in `PyCBC/` and should be automatically detected by `PyCBC`; 
+see `PyCBC/test.py`.
+
+### C executable
 Run the executable:
 
 ```
@@ -65,11 +79,6 @@ $ ./TEOBResumS.x -p <parfile>
 ```
 
 Example parfiles can be found in the directory `C/par/`.
-
-Example scripts for using the python module can be instead found in `Python/Examples/`.
-
-If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS` python module is available in `PyCBC/` and should be automatically detected by `PyCBC`; 
-see `PyCBC/test.py`.
 
 ## References
 Main references:

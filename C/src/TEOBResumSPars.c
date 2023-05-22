@@ -85,6 +85,7 @@ void EOBParameters_free (EOBParameters *eobp)
 {
   if (!eobp) return;
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
+  if (eobp->use_mode_lm_nqc) free (eobp->use_mode_lm_nqc);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
   free(eobp);
@@ -129,7 +130,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->pGSF_tidal = 4.0;// p-power in GSF tidal potential model
 
   eobp->use_spins=1; // use spins ?
-  eobp->project_spins=1;
+  eobp->project_spins=0;
 
   /* options */
 
@@ -148,6 +149,12 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_mode_lm = malloc (eobp->use_mode_lm_size * sizeof(int) );
   memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
 
+  // TODO: intersect with use_mode_lm so to compute NQCs only for active modes
+  int hlm_nqc[] = {0,1,3,4,6,7,8,13};      //indexes of multipoles to use
+  eobp->use_mode_lm_nqc_size = 8;
+  eobp->use_mode_lm_nqc = malloc (eobp->use_mode_lm_nqc_size * sizeof(int) );
+  memcpy(eobp->use_mode_lm_nqc, hlm_nqc, eobp->use_mode_lm_nqc_size * sizeof(int));
+  
   /* FD options */
   
   eobp->tc = 0;
@@ -207,7 +214,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
-  eobp->ode_tmax=1e9; // max integration time
+  eobp->ode_tmax=1e12; // max integration time
   eobp->ode_stop_radius  =1.; // stop ODE integration at this radius (if > 0)
   eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
   eobp->ode_stop_after_peak=0;
@@ -364,9 +371,31 @@ void eob_set_params(int default_choice, int firstcall)
   
   /* Set intrinsic parameters as given by user */
   
-  const double M =  EOBPars->M;
+  const double M    =  EOBPars->M;
   const double fmin = EOBPars->initial_frequency;
-  double q =  EOBPars->q;
+  double q          =  EOBPars->q;
+
+  if(q < 1.){
+    /* Ensure that the swap is performed correctly 
+       According to LAL conventions, if m1<->m2 the x axis is flipped.
+       Therefore, the waveform has to remain identical when:
+        - label_1<->label_2;
+        - coalescence_angle -> coalescence_angle + Pi;
+        - In plane spins are rotated by Pi
+       Here we enforce this convention.
+    */
+    q  =  1./q;
+    EOBPars->q = q;
+    SWAPTRS(EOBPars->chi1z, EOBPars->chi2z);
+    SWAPTRS(EOBPars->chi1x, EOBPars->chi2x);
+    SWAPTRS(EOBPars->chi1y, EOBPars->chi2y);
+    SWAPTRS(EOBPars->chi1,  EOBPars->chi2);
+    EOBPars->chi1x *= -1; EOBPars->chi2x *= -1;
+    EOBPars->chi1y *= -1; EOBPars->chi2y *= -1;
+    SWAPTRS(EOBPars->LambdaAl2, EOBPars->LambdaBl2);
+    if (VERBOSE) printf("WARNING: q<1, swapping bodies!\n");
+    EOBPars->coalescence_angle -= Pi;
+  }
 
   /* Check: if q is closer to 1 than 1e-8, then q=1 to avoid floating points issues */
   if (DEQUAL(q, 1., 1e-8)){
@@ -439,12 +468,12 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->LambdaAl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 8);
       EOBPars->LambdaBl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 8);
     }
-    
-#if(USEGRAVITOMAGNETICTERMS)
-    EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
-    EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
-#endif
-    
+
+    if(EOBPars->use_tidal_gravitomagnetic){
+      EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
+      EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
+    }
+
     /* Tidal coupling constants */
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl2,EOBPars->LambdaBl2, 2,  &(EOBPars->kapA2), &(EOBPars->kapB2));
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl3,EOBPars->LambdaBl3, 3,  &(EOBPars->kapA3), &(EOBPars->kapB3));
@@ -570,7 +599,14 @@ void eob_set_params(int default_choice, int firstcall)
        reset sample rate using dt
     */
     if (VERBOSE) printf("Assume geometric units for pars values\n");
-    EOBPars->r0 = pow(fmin*Pi, -2./3.);
+    
+    /* set r0 based on fmin if it is not specified, else set fmin according to r0 */
+    if (EOBPars->r0 == 0.){
+      EOBPars->r0 = pow(fmin*Pi, -2./3.);    
+    } else {
+      EOBPars->initial_frequency = pow(EOBPars->r0, -1.5)/Pi;
+    }
+    
     EOBPars->srate = 1./dt;
     EOBPars->distance = 1.;
     EOBPars->M = 1.;
@@ -580,12 +616,19 @@ void eob_set_params(int default_choice, int firstcall)
        compute r0 from the initial GW frequency in Hz 
     */
     if (VERBOSE) printf("Assume physical units for pars values\n");
+    
+    /* set r0 based on fmin if it is not specified, else set fmin according to r0 */
+    if (EOBPars->r0 == 0.){
+      EOBPars->r0 = radius0(M, fmin);
+    } else {
+      EOBPars->initial_frequency = pow(EOBPars->r0, -1.5)/(Pi*M*MSUN_S);
+    }
+    
     /* Set interpolation dt */
     dt = 1./EOBPars->srate_interp;
     dt = time_units_conversion(M, dt);
     EOBPars->dt_interp = dt;
     /* Set dt */
-    EOBPars->r0 = radius0(M, fmin);
     dt = 1./EOBPars->srate;
     dt = time_units_conversion(M, dt);
     EOBPars->dt = dt;
@@ -896,13 +939,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"tides_gravitomagnetic")) {
     val = string_trim(val);
     for (eobp->use_tidal_gravitomagnetic=0; eobp->use_tidal_gravitomagnetic<=TIDES_GM_NOPT; eobp->use_tidal_gravitomagnetic++) {
-if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
-  eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
-  if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
-          val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
-  break;
-}
-if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
+      if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
+        eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+        if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n", val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
+        break;
+      }
+      if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
     }
   }
   
@@ -1193,6 +1235,12 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "q", eobp->q);
   fprintf(f,"%s = %.16f\n", "chi1", eobp->chi1);
   fprintf(f,"%s = %.16f\n", "chi2", eobp->chi2);
+  fprintf(f,"%s = %.16f\n", "chi1x", eobp->chi1x);
+  fprintf(f,"%s = %.16f\n", "chi1y", eobp->chi1y);
+  fprintf(f,"%s = %.16f\n", "chi1z", eobp->chi1z);
+  fprintf(f,"%s = %.16f\n", "chi2x", eobp->chi2x);
+  fprintf(f,"%s = %.16f\n", "chi2y", eobp->chi2y);
+  fprintf(f,"%s = %.16f\n", "chi2z", eobp->chi2z);
   fprintf(f,"%s = %.16f\n", "distance", eobp->distance);
   fprintf(f,"%s = %.16f\n", "inclination", eobp->inclination);
   fprintf(f,"%s = %.16f\n", "coalescence_angle", eobp->coalescence_angle);
@@ -1313,7 +1361,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %E\n"    , "ode_abstol", eobp->ode_abstol);
   fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
   fprintf(f,"%s = %.16f\n" , "ode_tmax", eobp->ode_tmax);
-  fprintf(f,"%s = %d\n"    , "ode_stop_at_radius", eobp->ode_stop_radius);
+  fprintf(f,"%s = %f\n"    , "ode_stop_at_radius", eobp->ode_stop_radius);
   fprintf(f,"%s = %d\n"    , "ode_stop_afterNdt", eobp->ode_stop_afterNdt);
 
   /* Output */

@@ -44,10 +44,10 @@ if __name__ == "__main__":
         'q'                  : 1.2,
         'chi1'               : 0.,
         'chi2'               : 0.,
-        'Lambda1'            : 0.,
-        'Lambda2'            : 0.,     
+        'LambdaAl2'          : 0.,
+        'LambdaBl2'          : 0.,     
         'domain'             : 0,      #Set 1 for FD. Default = 0
-        'arg_out'            : 1,      #Output hlm/hflm. Default = 0
+        'arg_out'            : "yes",      #Output hlm/hflm. Default = 0
         'use_mode_lm'        : k,      #List of modes to use/output through EOBRunPy
         'output_lm'          : k,      #List of modes to print on file
         'srate_interp'       : 4096.,  #srate at which to interpolate. Default = 4096.

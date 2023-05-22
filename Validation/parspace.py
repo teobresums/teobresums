@@ -73,7 +73,7 @@ def Plot2D(x, y, z=None, labels=[None,None], savef=0):
 
     print("...plot "+labels[0]+'-'+labels[1])
     fig = plt.figure()
-    plt.scatter(x, y, c=z)
+    plt.scatter(x, y, c=z, marker='.')
     plt.xlabel(labels[0])
     plt.ylabel(labels[1])
 
@@ -94,8 +94,11 @@ def PlotParspace(f, tides="no",precessing="no"):
     Plot2D(nu, M, labels=[r'$\nu$', r'$M$'], savef=1)
 
     if(tides=='yes'):
-        lam1 = pars['Lambda1']
-        lam2 = pars['Lambda2']
+        try:
+            lam1 = pars['LambdaAl2']
+        except ValueError:
+            lam1 = 0.
+        lam2 = pars['LambdaBl2']
         lamt = compute_lambda_tilde(m1, m2, lam1, lam2)
         dlam = compute_delta_lambda(m1, m2, lam1, lam2)
         Plot2D(nu, lamt, labels=[r"$\nu$", r"$\tilde\Lambda$"], savef=1)
@@ -195,8 +198,8 @@ def CreateDict(M, q, chi1, chi2, l1, l2, iota, f0, srate, df, interp, domain, mo
     'chi2x'              : chi2x,
     'chi2y'              : chi2y,
     'chi2z'              : chi2z,
-    'Lambda1'            : l1,
-    'Lambda2'            : l2,
+    'LambdaAl2'            : l1,
+    'LambdaBl2'            : l2,
     'distance'           : 1.,
     'initial_frequency'  : f0,
     'use_geometric_units': "no",
@@ -208,7 +211,7 @@ def CreateDict(M, q, chi1, chi2, l1, l2, iota, f0, srate, df, interp, domain, mo
     'output_lm'          : modes,
     'output_hpc'         : "no",
     'output_multipoles'  : "no", 
-    'arg_out'            : 0,
+    'arg_out'            : "no",
     'output_dynamics'    : "no",
     'use_spins'          : 2,
     'project_spins'      : "no",
@@ -312,6 +315,58 @@ def TestParspaceBNS(precessing):
             if(init_err):
                 init_err=0
 
+def TestParspaceBHNS(precessing):
+    """
+    Generate 1e4 precessing waveforms with parameters within standard BHNS bounds
+    """
+
+    modes = [[2,1], [2,2], [3,2], [3,3], [4,4]] #[[2,2]]
+
+    k = modes_to_k(modes)
+
+    Mmin, Mmax = 3, 40
+    qmin, qmax = 1, 10
+
+    lambda_min = 3
+    lambda_max = 5000
+
+    chi_min    = 1e-3
+    chi_max    = 0.99
+
+    N = 10000 # generate 1e4 waveforms
+
+    f0    = 20. # initial frequency
+    srate = 2048
+
+    ### DO NOT CHANGE BELOW UNLESS YOU KNOW WHAT YOU ARE DOING ###
+
+    print("...generate the parspace")
+    rand_pars = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=[lambda_min, lambda_max], precessing=precessing, N=N)
+
+    # start generating waveforms
+
+    init_ok  = 1
+    init_err = 1
+    print("...run")
+    for m, qi, c1x, c1y, c1z, c2x, c2y, c2z, l2 in zip(rand_pars['M'], rand_pars['q'], rand_pars['chi1x'], rand_pars['chi1y'], rand_pars['chi1y'], rand_pars['chi2x'], rand_pars['chi2y'], rand_pars['chi2z'], rand_pars['lambda2']):
+        
+        par = CreateDict(m, qi, [c1x, c1y, c1z], [c2x, c2y, c2z], 0, l2, np.pi/3, f0, srate, 0., "yes", 0, k)
+        
+        try:
+            t, hp, hc = EOB.EOBRunPy(par)
+
+            # remove keys that must not be written (this is a dumb way..)
+            for lbl in ['LambdaAl2','distance','initial_frequency','use_geometric_units','interp_uniform_grid','domain','srate_interp','inclination','use_mode_lm','output_lm','output_hpc','output_multipoles','arg_out','output_dynamics','use_spins']:
+                par.pop(lbl)
+            write_dict_to_txt("ParPrecBHNS_HM.txt", par, init_ok)
+            if(init_ok):
+                init_ok=0
+    
+        except Exception:
+            write_dict_to_txt("ErrorsParBHNS.txt", par, init_err)
+            if(init_err):
+                init_err=0
+
 def PlotPrecWF():
     """
     Plot one example BBH precessing waveform
@@ -347,6 +402,11 @@ if __name__ == "__main__":
         print("...done")
 
     if 0:
+        print("##### Generate the BHNS precessing parameter space #####")
+        TestParspaceBHNS(1)
+        print("...done")
+
+    if 0:
         print("##### Plot the BBH precessing parameter space #####")
         PlotParspace("ParPrecBBH.txt", precessing="yes")
         print("...done")
@@ -355,6 +415,12 @@ if __name__ == "__main__":
         print("##### Plot the BNS precessing parameter space #####")
         PlotParspace("ParPrecBNS.txt", tides="yes", precessing="yes")
         print("...done")
+    
+    if 0:
+        print("##### Plot the BHNS precessing parameter space #####")
+        PlotParspace("ParPrecBHNS.txt", tides="yes", precessing="yes")
+        print("...done")
+
     if 0:
         print('##### Plot Prec WF #####')
         PlotPrecWF()

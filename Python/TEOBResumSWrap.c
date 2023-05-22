@@ -6,7 +6,7 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
-#include "../C/src/TEOBResumS.h"
+#include "lib/TEOBResumS.h"
 
 /*
  * Utilities
@@ -277,6 +277,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "output_ringdown") != NULL ) { 
     EOBPars->output_ringdown = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "output_ringdown")));
   }
+  if ( PyDict_GetItemString(dict, "output_dir") != NULL ) {
+    strcpy(EOBPars->output_dir, PyUnicode_AsUTF8(PyDict_GetItemString(dict, "output_dir")));
+  }
 
   /* ODE */
 
@@ -357,6 +360,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   Waveform_lm *hmodes = NULL; /* modes */
   Waveform_lm *hTmodes = NULL; /* twisted modes */
   Waveform_lm *hTmmodes = NULL; /*twisted modes, m<0 */
+  Waveform_lm *hT0modes = NULL; /*twisted modes, m<0 */
 
   WaveformFD *hfpc = NULL; /* FD wvf */
   WaveformFD_lm *hfmodes = NULL; /* modes */
@@ -467,10 +471,18 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->C_Hex2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "C_Hex2"));
   }
 
+  /* Overwrite a6c and cN3LO, if required */
+  if ( PyDict_GetItemString(dict, "a6c") != NULL ) { 
+    EOBPars->a6c = PyFloat_AsDouble(PyDict_GetItemString(dict, "a6c"));
+  }   
+  if ( PyDict_GetItemString(dict, "cN3LO") != NULL ) { 
+    EOBPars->cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "cN3LO"));
+  }   
+
   /* Run */
   int status = EOBRun(&hpc,    &hfpc, 
                       &hmodes, &hfmodes, &dynf,
-                      &hTmodes, &hTmmodes,
+                      &hTmodes, &hTmmodes, &hT0modes,
                       &hfTmodes,
                       default_choice, fc);
 
@@ -555,7 +567,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
         }
       }
     } else {
+
+      int addzero = 1;
       for(int k=0; k<KMAX; k++){
+        /* Add m > 0 */
         if(hTmodes->kmask[k]){
           double *pAhlm, *pphlm;
           PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
@@ -575,6 +590,49 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
           Py_DECREF(pphlmo);
           Py_DECREF(obj);
         }
+        /* Add also the m<0 modes to the dictionary */
+        if(hTmmodes->kmask[k]){
+          double *pAhlm, *pphlm;
+          PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          pAhlm = pyvector_to_Carrayptrs(pAhlmo);
+          pphlm = pyvector_to_Carrayptrs(pphlmo);
+          memcpy(pAhlm, hTmmodes->ampli[k], hTmmodes->size * sizeof(double));
+          memcpy(pphlm, hTmmodes->phase[k], hTmmodes->size * sizeof(double));
+          /* build dictionary entry*/
+          PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
+          char kst[12];
+          sprintf(kst, "-%i", k);
+          /* populate the dictionary */
+          PyDict_SetItemString(hlmdict, kst, obj); 
+          /* free */
+          Py_DECREF(pAhlmo);
+          Py_DECREF(pphlmo);
+          Py_DECREF(obj);
+        } 
+        /* Finally, add the m=0 ones */  
+        if(hT0modes->kmask[k] && addzero){
+          /* do the thing */
+          double *pAhlm, *pphlm;
+          PyArrayObject *pAhlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          PyArrayObject *pphlmo = (PyArrayObject *) PyArray_SimpleNew(1,dims,NPY_DOUBLE);
+          pAhlm = pyvector_to_Carrayptrs(pAhlmo);
+          pphlm = pyvector_to_Carrayptrs(pphlmo);
+          memcpy(pAhlm, hT0modes->ampli[k], hT0modes->size * sizeof(double));
+          memcpy(pphlm, hT0modes->phase[k], hT0modes->size * sizeof(double));
+          /* build dictionary entry*/
+          PyObject *obj = Py_BuildValue("O:O", pAhlmo, pphlmo);
+          char kst[12];
+          sprintf(kst, "%i0", LINDEX[k]);
+          /* populate the dictionary */
+          PyDict_SetItemString(hlmdict, kst, obj); 
+          /* free */
+          Py_DECREF(pAhlmo);
+          Py_DECREF(pphlmo);
+          Py_DECREF(obj);
+          addzero = 0;
+        }
+        if(LINDEX[k+1]-LINDEX[k]) addzero = 1;
       }
     }
     /* build the final object */
@@ -593,6 +651,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Waveform_lm_free(hmodes);    
     Waveform_lm_free (hTmodes);
     Waveform_lm_free (hTmmodes);
+    Waveform_lm_free (hT0modes);
     WaveformFD_lm_free(hfmodes);  
     WaveformFD_lm_free (hfTmodes);
     EOBParameters_free (EOBPars);
@@ -710,6 +769,8 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     WaveformFD_free (hfpc); 
     Waveform_lm_free(hmodes); 
     Waveform_lm_free (hTmodes);
+    Waveform_lm_free (hTmmodes);
+    Waveform_lm_free (hT0modes);
     WaveformFD_lm_free(hfmodes);
     WaveformFD_lm_free (hfTmodes);
     EOBParameters_free (EOBPars);
@@ -741,13 +802,13 @@ static PyMethodDef EOBRunMethods[] = {
 /* Python version 3*/
 static struct PyModuleDef cModPyDem = {
   PyModuleDef_HEAD_INIT,
-  "EOBRun_module", "Some documentation",
+  "EOBRun_module_opt", "Some documentation",
   -1,
   EOBRunMethods
 };
 
 PyMODINIT_FUNC
-PyInit_EOBRun_module(void)
+PyInit_EOBRun_module_opt(void)
 {
   PyObject *module;
   module = PyModule_Create(&cModPyDem);
@@ -762,11 +823,11 @@ PyInit_EOBRun_module(void)
 /* module initialization */
 /* Python version 2 */
 PyMODINIT_FUNC
-initEOBRun_module(void)
+initEOBRun_module_opt(void)
 {
   //(void) Py_InitModule("EOBRunTD_module", EOBRunTDMethods);
   PyObject *module;
-  module = Py_InitModule("EOBRun_module", EOBRunMethods);
+  module = Py_InitModule("EOBRun_module_opt", EOBRunMethods);
   if(module==NULL) return;
   import_array();  /* IMPORTANT: this must be called */
   return;
