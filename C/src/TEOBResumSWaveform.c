@@ -438,8 +438,8 @@ void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm)
 
   /* l=2 */
   /* Pade(2,1) approximant */
-  num        = 5992.*Pi*sqrt_y + 2465.*nu*(28.-493.*nu* y);
-  den        = 69020.*nu + 5992.*Pi*sqrt_y;
+  num        = 856*Pi*sqrt_y + 2625*nu*(4.-75.*nu*y);
+  den        = 856*Pi*sqrt_y + 10500*nu;
   dlm[0] = delta21LO*num/den;
   /* Pade(2,2) approximant */
   num        = (808920.*nu*Pi*sqrt(y) + 137388.*Pi2*y + 35.*nu2*(136080. + (154975. - 1359276.*nu)*y));
