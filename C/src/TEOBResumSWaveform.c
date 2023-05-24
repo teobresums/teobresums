@@ -2870,15 +2870,23 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   if (EOBPars->use_flm == USEFLM_HM) {
     
     /* Higher modes */
-    /* 21, 32, 42, 43 and 44 extracted from postpeak */
-    int K_HM[5] = {0,3,6,7,8};
+    /* Choosing modes using kpostpeak array */
+    int kpostpeak_size = EOBPars->kpostpeak_size;  
+    int *kpostpeak    = EOBPars->kpostpeak;
+    /* old option: 21, 32, 42, 43 and 44 extracted from postpeak */
+    // int kpostpeak_size = 5;
+    // int kpostpeak[kpostpeak_size] = {0,3,6,7,8};
 	
     QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		       c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
 		       alpha1, omega1);
-	    
-    for (int j=0; j<5; j++) {
-      int k = K_HM[j];
+    
+    /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
+    eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
+
+    // Over-writing fits using postpeak quantities for modes in kpostpeak
+    for (int j=0; j<kpostpeak_size; j++) {
+      int k = kpostpeak[j];
       
       /* Normalizing c1A and c4A */
       int l = LINDEX[k];
@@ -2894,9 +2902,6 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
       max_omg[k]  = omg_tmp;
       max_domg[k] = domg_tmp;
     }
-    
-    /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-    eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
 	    
   } else {
     
@@ -3312,15 +3317,23 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 
   /* Higher modes */
-  /* 21, 32, 42, 43 and 44 extracted from postpeak */
-  int K_HM[5] = {0,3,6,7,8};
+  /* Choosing modes using kpostpeak array */
+  int kpostpeak_size = EOBPars->kpostpeak_size;  
+  int *kpostpeak    = EOBPars->kpostpeak;
+  /* old option: 21, 32, 42, 43 and 44 extracted from postpeak */
+  // int kpostpeak_size = 5;
+  // int kpostpeak[kpostpeak_size] = {0,3,6,7,8};
 
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
 		     alpha1, omega1);
   
-  for (int j=0; j<5; j++) {
-    int k = K_HM[j];
+  /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
+  eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
+
+  // Over-writing fits using postpeak quantities for modes in kpostpeak
+  for (int j=0; j<kpostpeak_size; j++) {
+    int k = kpostpeak[j];
     
     /* Normalizing c1A and c4A */
     int l = LINDEX[k];
@@ -3337,8 +3350,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     max_domg[k] = domg_tmp;
   }
   
-  /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-  eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
+
 	    
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
@@ -6075,16 +6087,23 @@ void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_
   }
 
   /* Higher modes */
-  /* 21, 32, 42, 43 and 44 extracted from postpeak */
-  //int K_HM[5] = {0,3,6,7,8};
-  int K_HM[5] = {0,3,4,8,13};
+    /* Choosing modes using kpostpeak array */
+    int kpostpeak_size = EOBPars->kpostpeak_size;  
+    int *kpostpeak    = EOBPars->kpostpeak;
+    /* old option: 21, 32, 42, 43 and 44 extracted from postpeak */
+    // int kpostpeak_size = 5;
+    // int kpostpeak[kpostpeak_size] = {0,3,6,7,8};
 
-  QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-		     c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
-		     alpha1, omega1);
+    QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+			    c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
+			    alpha1, omega1);
+
+    /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
+    eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg, abh, kt2);
   
-  for (int j=0; j<5; j++) {
-    int k = K_HM[j];
+    // Over-writing fits using postpeak quantities for modes in kpostpeak
+    for (int j=0; j<kpostpeak_size; j++) {
+    int k = kpostpeak[j];
     
     /* Normalizing c1A and c4A */
     int l = LINDEX[k];
@@ -6101,11 +6120,7 @@ void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_
     max_omg[k]  = omg_tmp;
     max_domg[k] = domg_tmp;
     max_d2omg[k]= d2omg_tmp;
-
   }
-
-  /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-  eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg, abh, kt2);
   // ADD NR VALUES HERE 
   //max_A[1] = 0.2587316655521445;
   //max_dA[1] = -0.0010616881225840463;
@@ -6645,16 +6660,23 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   }
 
   /* Higher modes */
-  /* 21, 32, 42, 43 and 44 extracted from postpeak */
-  //int K_HM[5] = {0,3,6,7,8};
-  int K_HM[5] = {0,3,4,8,13};
+  /* Choosing modes using kpostpeak array */
+  int kpostpeak_size = EOBPars->kpostpeak_size;  
+  int *kpostpeak    = EOBPars->kpostpeak;
+  /* old option: 21, 32, 42, 43 and 44 extracted from postpeak */
+  // int kpostpeak_size = 5;
+  // int kpostpeak[kpostpeak_size] = {0,3,6,7,8};
 
   QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-		     c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
-		     alpha1, omega1);
+			  c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
+			  alpha1, omega1);
+
+  /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
+  eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg, abh, kt2);
   
-  for (int j=0; j<5; j++) {
-    int k = K_HM[j];
+  // Over-writing fits using postpeak quantities for modes in kpostpeak
+  for (int j=0; j<kpostpeak_size; j++) {
+    int k = kpostpeak[j];
     
     /* Normalizing c1A and c4A */
     int l = LINDEX[k];
@@ -6670,9 +6692,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     max_omg[k]  = omg_tmp;
     max_domg[k] = domg_tmp;
   }
-
-  /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-  eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg, abh, kt2);
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");

@@ -86,6 +86,7 @@ void EOBParameters_free (EOBParameters *eobp)
   if (!eobp) return;
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
   if (eobp->use_mode_lm_nqc) free (eobp->use_mode_lm_nqc);
+  if (eobp->kpostpeak) free (eobp->kpostpeak);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
   free(eobp);
@@ -154,6 +155,11 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_mode_lm_nqc_size = 8;
   eobp->use_mode_lm_nqc = malloc (eobp->use_mode_lm_nqc_size * sizeof(int) );
   memcpy(eobp->use_mode_lm_nqc, hlm_nqc, eobp->use_mode_lm_nqc_size * sizeof(int));
+
+  int kpostpeak[] = {0,1,3,6,7,8};      //indexes of multipoles to use
+  eobp->kpostpeak_size = 6;
+  eobp->kpostpeak = malloc (eobp->kpostpeak_size * sizeof(int) );
+  memcpy(eobp->kpostpeak, kpostpeak, eobp->kpostpeak_size * sizeof(int));
   
   /* FD options */
   
@@ -1058,6 +1064,11 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     eobp->use_mode_lm_size = str2iarray(val, &eobp->use_mode_lm);
   }
 
+  if (STREQUAL(key,"kpostpeak")) {
+    free(eobp->kpostpeak);
+    eobp->kpostpeak_size = str2iarray(val, &eobp->kpostpeak);
+  }
+    
   if (STREQUAL(key,"centrifugal_radius")) {
     val = string_trim(val);
     for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
@@ -1400,6 +1411,11 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d,", eobp->use_mode_lm[i]);
   fprintf(f,"%d]\n", eobp->use_mode_lm[eobp->use_mode_lm_size-1]);
 
+  fprintf(f,"%s = [", "kpostpeak");
+  for(int i=0; i<eobp->kpostpeak_size-1;i++)
+    fprintf(f,"%d,", eobp->kpostpeak[i]);
+  fprintf(f,"%d]\n", eobp->kpostpeak[eobp->kpostpeak_size-1]);
+  
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));

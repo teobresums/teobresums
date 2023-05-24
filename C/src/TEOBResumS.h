@@ -621,6 +621,7 @@ typedef struct tagEOBParameters
   int *use_mode_lm, use_mode_lm_size;
   int *use_mode_lm_nqc, use_mode_lm_nqc_size; // multipoles to attach NQCs
                                               // TODO: add as user input
+  int *kpostpeak, kpostpeak_size;
 
   int size;
   int ode_timestep;
