@@ -32,7 +32,7 @@
     
     a5 \equiv a5_GSF = +23.50190(5) \approx +23.5
     
-    and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu)).*(1-1.5e-5/((0.26-nu)^2)
+    and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu))*(1-1.5e-5/((0.26-nu)^2)
     as obtained from comparison with the Caltech-Cornell-CITA numerical data.
    These values are used as default. */
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
@@ -237,6 +237,97 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
 
 }
 
+
+/*
+  EOB Metric A function 5PN log resummed with (3, 3) Pade 
+  (Pade coefficients already computed in matlab)
+*/
+void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A)
+{
+
+  /* shortcuts */
+  double nu2 = nu*nu;
+  double pi2 = Pi*Pi;
+  double pi4 = pi2*pi2;
+  double pi6 = pi4*pi2;
+  double ln2  = log(2);
+  double ln3  = log(3);
+
+  double a5c0       = -4237/60 + 2275/512*pi2 + 256/5*log(2) + 128/5*EulerGamma;
+  double a5c1       = -221/6   + 41/32*pi2;
+  double a5         =  a5c0 + nu*a5c1;
+  double a6         =  EOBPars->a6c;
+
+  double u       = 1./r;
+  double u2      = u*u;
+  double u3      = u*u2;
+  double u4      = u2*u2;
+  double logu    = log(u);
+
+  double a5tot = a5  + 64/5*logu;
+  double a6tot = a6  + (-7004/105 - 144/5*nu)*logu;
+
+
+
+  /*----------------------------------------------------------
+   preliminary: coefficients of the Pade and its derivatives
+  ----------------------------------------------------------*/
+  double N0     = -1737228288  + 3538944*a5tot + 7077888*nu + 142073856*pi2 - 2904768*pi4;
+  double N1     = -27216576512 - 3538944*a6tot + 3338735616*pi2 - 136524096*pi4 + 1860867*pi6 + a5tot*(110886912 - 4534272*pi2);
+  double D0     =  N0;
+  double D1     = -18432*(192*a6tot + 6016*nu - 246*nu*pi2 + a5tot*(-3008 + 123*pi2));
+  double D2     = -192*(9216*a5tot*a5tot + 18432*a5tot*nu + (-3008 + 123*pi2)*(96*a6tot + nu*(3008 - 123*pi2)));
+  double D3     =  nu*(-3538944*a6tot - 36864*a5tot*(-3008 + 123*pi2) + pow(-3008 + 123*pi2,3));
+
+  /*1st derivatives of the above coefficients entering danu/du*/
+  double dN0 = 226492416./(5*u);
+  double dN1 = (-7077888*(-8186 - 504*nu + 287*pi2))/(35.*u);
+  double dD0 = dN0;
+  double dD1 = (-1179648*(-4*(7015 + 756*nu) + 861*pi2))/(35.*u);
+  double dD2 = (-24576*(4128768*logu + 5*(64512*a5 + 64*(82297 + 36540*nu) - 123*(1751 + 756*nu)*pi2)))/(175.*u);
+  double dD3 = (-7077888*nu*(-8186 - 504*nu + 287*pi2))/(35.*u);
+
+  /* 2nd derivatives of the coefficients */
+  double d2N0 = -226492416./(5.*u2);
+  double d2N1 = -(-7077888*(-8186 - 504*nu + 287*pi2))/(35.*u2);
+  double d2D0 = d2N0;
+  double d2D1 = -(-1179648*(-4*(7015 + 756*nu) + 861*pi2))/(35.*u2);
+  double d2D2 = -(-24576*(22206272 + 322560*a5 + 4128768*logu + 11692800*nu - 1076865*pi2 - 464940*nu*pi2))/(175.*u2);
+  double d2D3 = -(-7077888*nu*(-8186 - 504*nu + 287*pi2))/(35.*u2);
+
+  /* the small a(u,nu) function*/
+  double Num  = N0 + N1*u;
+  double Den  = D0 + D1*u + D2*u2 + D3*u3;
+  double anu  = Num/Den;
+
+  /* derivative of anu with respect to u*/
+  double dNum    = dN0 + N1 + u*dN1;
+  double dDen    = dD0 + D1 + u*dD1 + 2.*u*D2 + u2*dD2 + 3*u2*D3 + u3*dD3;
+  double danu_du = anu*(dNum/Num - dDen/Den);
+
+  /* second derivative of anu with respect to u*/
+  double d2Num = d2N0 + 2*dN1 + u*d2N1;
+  double d2Den = u3*d2D3 + u2*(d2D2+6*dD3) + u*(d2D1 + 4*dD2 + 6*D3) + d2D0 + 2*dD1 + 2*D2;
+  double d2anu_du2 = anu/(Num*Den)*(2.*dDen*dDen*anu - 2.*dNum*dDen + Den*d2Num - d2Den*Num);
+
+  /* derivatives of A with respect to u */
+  double dA_du  = -2 + 6*nu*u2*anu + 2*nu*u3*danu_du;
+  double d2A_du = 12*nu*u*anu + 12*nu*u2*danu_du + 2*nu*u3*d2anu_du2;
+
+  /* the A function and its derivatives with respect to r */
+  /*
+  *dA  =  -u2*dA_du;
+  *d2A =   u4*d2A_du + 2*u3*dA_du;
+  */
+
+  /* the A function and its derivatives with respect to r */
+  
+  *A   =  1-2*u + 2*nu*u3*anu;
+  *dA  =  dA_du;
+  *d2A =  d2A_du;
+}
+
+
 /** EOB Metric D function at 3PN, resummed */
 
 void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D)
@@ -386,6 +477,143 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
   *d2D          = 2.*(DbarD*DbarD)/barD3 - D2barD/barD2;
   
 }
+
+
+/*
+  EOB metric D potential rewritten with (2, 3) Pade 
+  (Pade coefficients already computed in matlab)
+*/
+void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
+{
+
+  /* shortcuts */
+  double nu2 = nu*nu;
+  double pi2 = Pi*Pi;
+  double pi4 = pi2*pi2;
+  double pi6 = pi4*pi2;
+  double ln2  = log(2);
+  double ln3  = log(3);
+
+  double a5c0       = -4237/60 + 2275/512*pi2 + 256/5*log(2) + 128/5*EulerGamma;
+  double a5c1       = -221/6   + 41/32*pi2;
+  double a5         =  a5c0 + nu*a5c1;
+
+  double u       = 1./r;
+  double u2      = u*u;
+  double u3      = u*u2;
+  double u4      = u2*u2;
+  double logu    = log(u);
+
+
+  /*----------------------------------------------------------
+   preliminary: coefficients of the Pade and its derivatives
+  ----------------------------------------------------------*/
+
+  //double d5nu2 = d5nu2_fit; // only analytically uncalculated 5PN coefficient set to zero        
+  double d5nu2 = 0;         
+  double d2    = -6*nu;
+  double d3    = -52*nu+6*nu2;
+  double c1    = 533/45 - 1184/15*EulerGamma + 23761/1536*pi2 +6496/15*ln2 - 2916/5*ln3;
+  double c2    = 296 - 123/16*pi2;
+  double d4c   = c1 + nu*c2;
+  double d4log = -592/15;
+  double d4    = nu*(d4c + d4log*log(u));
+  
+  // its derivative
+  double Dd4   = nu*d4log/u;
+  double D2d4  = -nu*d4log/u2;
+  double d5c   = (-294464/175)+(2840/7)*EulerGamma+(-120648/35)*ln2+(19683/7)* \
+                  ln3+((-2216/105)-d5nu2+(6784/15)*EulerGamma+(326656/21)* \
+                  ln2+(-58320/7)*ln3)*nu+(63707/512)*pi2+nu2*((-1285/3)+(205/16) \
+                  *pi2);
+  double d5log = (1420/7)+(3392/15)*nu;
+  double d5    = nu*(d5c + d5log*log(u));
+  double Dd5   = nu*d5log/u;
+  double D2d5  = -nu*d5log/u2;
+
+
+  /* for usefulness
+  define here all the numerous powers of quantities */
+  double d2_2 = d2*d2;
+  double d2_3 = d2_2*d2;
+  double d3_2 = d3*d3;
+  double d3_3 = d3_2*d3;
+  double d3_4 = d3_2*d3_2;
+  double d4_2 = d4*d4;
+  double Dd4_2 = Dd4_2*Dd4_2;
+  double factor  = (d3_2-d2*d4);
+  double _1_factor   = 1/(d3_2-d2*d4);
+  double _1_factor2  = _1_factor*_1_factor;
+  double _1_factor3  = _1_factor2*_1_factor;
+
+
+
+  double N1   = _1_factor*(-d3*d4+d2*d5);
+  double N2   = -_1_factor*(-d2*d3_2+d2_2*d4-d4_2+d3*d5);
+  double N3   = _1_factor*(d3_3+(-2)*d2*d3*d4+d2_2*d5);
+  double dN1  = _1_factor2*((-d3_3+d2_2*d5)*Dd4+d2*( \
+                d3_2-d2*d4)*Dd5);
+ 
+  double dN2  = _1_factor2*(-d2*d4_2*Dd4+d3*d4*(2.*d3* \
+                Dd4+d2*Dd5)-d3*(d2*d5*Dd4+d3_2*Dd5));
+  double dN3  = d2*_1_factor2*((-d3_3+d2_2*d5)*Dd4+d2* \
+                (d3_2-d2*d4)*Dd5);
+
+  double d2N1 = _1_factor3*(-(d3_2-d2*d4)*(d2* \
+                D2d5*(-d3_2+d2*d4)+D2d4*(d3_3-d2_2*d5))+2. \
+                *(-d2*d3_3+d2_3*d5)*Dd4_2+2.*d2_2*(d3_2-d2*d4)* \
+                Dd4*Dd5);
+
+  double d2N2 = _1_factor3*(-(d3_2-d2*d4)*(D2d5* \
+                d3_3-d3*(d2*D2d5+2.*D2d4*d3)*d4+d2*D2d4*d4_2+d2* \
+                D2d4*d3*d5)+2.*(d3_4-d2_2*d3*d5)*Dd4_2+2.*d2*d3*(( \
+                -1)*d3_2+d2*d4)*Dd4*Dd5);
+
+  double d2N3 = d2*_1_factor3*(-(d3_2-d2*d4)*(d2* \
+                D2d5*(-d3_2+d2*d4)+D2d4*(d3_3-d2_2*d5))+2. \
+                *(-d2*d3_3+d2_3*d5)*Dd4_2+2.*d2_2*(d3_2-d2*d4)* \
+                Dd4*Dd5);
+
+  double D1   = _1_factor*(-d3*d4+d2*d5);
+  double D2   = -_1_factor*(-d4_2+d3*d5);
+  double dD1  = _1_factor2*((-d3_3+d2_2*d5)*Dd4+d2 \
+                *(d3_2-d2*d4)*Dd5);
+
+  double dD2  = _1_factor2*(d2*(d4_2-d3*d5)*Dd4+(- \
+                d3_2+d2*d4)*((-2)*d4*Dd4+d3*Dd5));
+
+  double d2D1 = _1_factor3*(-(d3_2-d2*d4)*(d2* \
+                D2d5*(-d3_2+d2*d4)+D2d4*(d3_3-d2_2*d5))+2.* \
+                (-d2*d3_3+d2_3*d5)*Dd4_2+2.*d2_2*(d3_2-d2*d4)* \
+                Dd4*Dd5);
+
+  double d2D2 = _1_factor3*(-(d3_2-d2*d4)*(D2d5* \
+                d3_3-d3*(d2*D2d5+2.*D2d4*d3)*d4+d2*D2d4*d4_2+d2* \
+                D2d4*d3*d5)+2.*(d3_4-d2_2*d3*d5)*Dd4_2+2.*d2*d3*(( \
+                -1)*d3_2+d2*d4)*Dd4*Dd5);
+
+
+  double Num = 1 + N1*u + N2*u2 + N3*u3;
+  double Den = 1 + D1*u + d2*u2;
+
+  double dNum =  N1 +u*dN1 + 2*N2*u + dN2*u2 + 3*N3*u2 + dN3*u3;
+  double dDen =  D1 +u*dD1 + 2*d2*u + dD2*u2;
+  double d2Num = 2*dN1 +u*d2N1 + 2*N2  + 4*dN2*u + d2N2*u2 + 6*N3*u + 6*dN3*u2 + d2N3*u3;
+  double d2Den = 2*dD1 +u*d2D1 + 2*D2  + 4*dD2*u + d2D2*u2;
+   
+  /* Finally, the D function and its derivative with respect to r */
+  /*
+  *dD   = -u2*(dNum*Den - Num*dDen)/(Den*Den);
+  *d2D  = -2*u*(*dD) + u4*( (d2Num*Den-Num*d2Den)/(Den*Den)\
+              -2.*dDen*(dNum*Den-Num*dDen)/(Den*Den*Den));
+  */
+
+  /* Output the D function and its derivative with respect to u */
+  *D    =  Num/Den;
+  *dD   = (dNum*Den - Num*dDen)/(Den*Den);
+  *d2D  = (d2Num*Den-Num*d2Den)/(Den*Den)\
+            -2.*dDen*(dNum*Den-Num*dDen)/(Den*Den*Den);
+ }
 
 /** EOB Metric Q function at 3PN */
 
@@ -545,6 +773,109 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
   *d3Q_dprstar3   =  24.*nu*q1SF*prstar;
 
 }
+
+
+/* EOB Metric Q function at 5PN */
+
+void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
+                     double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
+                     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+
+  /* shortcuts */
+  double pi2     = Pi*Pi;
+  double nu2     = nu*nu;
+  double nu3     = nu2*nu;
+  double nu4     = nu3*nu;
+
+  double prstar2 = prstar*prstar;
+  double prstar3 = prstar2*prstar;
+  double prstar4 = prstar2*prstar2;
+  double prstar6 = prstar4*prstar2;
+  double prstar8 = prstar4*prstar4;
+
+  double u     = 1./r;
+  double u2    = u*u;
+  double u3    = u2*u;
+  double u4    = u3*u;
+  double du_dr = -u2;
+
+  double z3  = 2.0*nu*(4.0-3.0*nu);
+  double q42 = z3;
+
+
+  double q62    = -2.783007636952232489*nu - 5.4*nu2 + 6.*nu3;
+  double q43    = 92.711044284955949757*nu - 131.*nu2 + 10.*nu3;
+
+  double q44loc = 453.70625272357658631*nu - 1081.8908931907688518*nu2 + \
+                  602.31854041656388904*nu3;
+  double q63loc = -21.096091643426789868*nu - 78.6*nu2 + 188.*nu3 - 14.*nu4;
+  double q82loc = 6/7*nu + 18/7*nu2 + 24/7*nu3 - 6*nu4;
+
+  double q82    = -1.5175121231629802709e6*nu + 3.3384202338272640486*nu2 + \
+                  3.4285714285714285714*nu3 - 6.*nu4;
+  double q63    = -217866.45869782848474*nu - 89.529832736260960467*nu2 + 188.*nu3 - 14.*nu4;
+  double q44c   = 602.31854041656388904*nu3 + -1796.1366049802412531*nu2 + \
+                  452.54216699669657073*nu;
+  double q44log = 51.695238095238095238*nu - 118.4*nu2;
+  double q44    = q44c + q44log*log(u);
+
+
+
+
+  /* Q potential and all its derivatives */
+
+
+  *Q = q42*u2*prstar4 + q43*u3*prstar4 + q62*u2*prstar6 \
+      + q44loc*u4*prstar4 + q63loc*u3*prstar6 + q82loc*u2*prstar8;
+  
+  *dQ_du = 2.*q42*u*prstar4 + 3.*q43*u2*prstar4 + 2.*q62*u*prstar6 \
+      + 4.*q44loc*u3*prstar4 + 3.*q63loc*u2*prstar6 + 2.*q82loc*u*prstar8;
+  
+  double dQ_dprstar2 = 2.*q42*u2*prstar2 + 2.*q43*u3*prstar2 + 3.*q62*u2*prstar4 \
+              + 2.*q44loc*u4*prstar2 + 3.*q63loc*u3*prstar4 + 4.*q82loc*u2*prstar6;
+  
+  double d2Q_dudprstar2 = 4.*q42*u*prstar2 + 6.*q43*u2*prstar2 + 6.*q62*u*prstar4 \
+              + 8.*q44loc*u3*prstar2 + 9.*q63loc*u2*prstar4 + 8.*q82loc*u*prstar6;   
+
+  *d2Q_du2 = 2*q42 * prstar4 + 2* q62 * prstar6 + 6* q43 *prstar4 * u  \
+            + 2* q82loc * prstar8 + 6* q63loc * prstar6 * u + 12 * q44loc * prstar4 * u2;               
+
+  
+  double d2Q_dprstar22 = 2.*q42*u2 + 2.*q43*u3 + 6.*q62*u2*prstar2 \
+                + 2.*q44loc*u4 + 6.*q63loc*u3*prstar2 + 12.*q82loc*u2*prstar4; 
+
+  
+  double d3Q_dprstar23 = 6.*q62*u2+ 6.*q63loc*u3 + 24.*q82loc*u2*prstar2; 
+  
+
+  double d3Q_du2dprstar2 = 4* q42 * prstar2 + 6*q62*prstar4 + 12*q43*prstar2*u \
+            + 8* q82loc *prstar6 + 18*q63loc*prstar4*u + 24 * q44loc * prstar2 * u2; 
+
+  double d3Q_dudprstar22 = 4.*q42*u + 6.*q43*u2 + 12.*q62*u*prstar2 \
+              + 8.*q44loc*u3 + 18.*q63loc*u2*prstar2 + 24.*q82loc*u*prstar4;  
+
+
+
+  /* We also translate derivatives from prstar2 to prstar
+     and some from u to r as needed for output*/
+
+
+    *d2Q_drdprstar   = -2*prstar*u2*d2Q_dudprstar2;
+
+    *d3Q_dr2dprstar  = 4*prstar*u3*d2Q_dudprstar2 + 2*u4*prstar*d3Q_du2dprstar2;
+
+    *d3Q_drdprstar2  = -2*u2*d2Q_dudprstar2 - 4*prstar2*u2*d3Q_dudprstar22;
+
+    *dQ_dprstar   = 2.*prstar*dQ_dprstar2;
+
+    *d2Q_dprstar2 = 2.*dQ_dprstar2 + 4.*prstar2*d2Q_dprstar22;
+
+    *d3Q_dprstar3 = 12.*prstar*d2Q_dprstar22 + 8.*prstar3*d3Q_dprstar23;
+
+}
+
+
 
 /** Tidal potential, three version implemented: 
     1. TEOB NNLO, Bernuzzi+ 1205.3403

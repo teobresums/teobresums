@@ -467,9 +467,11 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   /** Compute circular Fphi */
   *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
-    
+  
+
   /** Compute eccentric Fr */
   *Fr = eob_flx_Fr_ecc_BD(r, pr_star, pphi, dyn);
+
   // Using circular radial flux. Full non-cicular below
   // *Fr = eob_flx_Fr_ecc(r, pr_star, pphi, dyn);
   
