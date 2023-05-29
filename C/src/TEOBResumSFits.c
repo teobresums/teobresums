@@ -114,7 +114,7 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
   return c3;
 }
 
-/* Table X of arXiv: */
+/* Table IV of arXiv:2304.09662 */
 double eob_c3_fit_HM_2023(double nu, double a1, double a2)
 {
   const double nu2 = nu*nu;

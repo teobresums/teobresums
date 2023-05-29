@@ -43,6 +43,7 @@ PARKEYS = {
     'coalescence_angle': ['Reference coalescence phase', 'float', 0 ],
     'use_mode_lm': ['List of modes to use', 'int list', "[1]" ],
     'output_lm': ['List of modes to output', 'int list', "[1]" ],
+    'kpostpeak': ['List of modes for which NQCs are extracted from the pospeak template', 'int list', "[0,3,6,7,8]"] ,
     #
     'postadiabatic_dynamics': ['Turn on/off the postadiabatic approximation', 'str', "yes" ],
     'postadiabatic_dynamics_N': ['Use the N-th order PA (default=8)', 'int', 8 ],
