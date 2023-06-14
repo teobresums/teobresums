@@ -254,7 +254,7 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   double ln2  = log(2);
   double ln3  = log(3);
 
-  double a5c0       = -4237/60 + 2275/512*pi2 + 256/5*log(2) + 128/5*EulerGamma;
+  double a5c0       = -4237/60 + 2275/512*pi2 + 256/5*ln2 + 128/5*EulerGamma;
   double a5c1       = -221/6   + 41/32*pi2;
   double a5         =  a5c0 + nu*a5c1;
   double a6         =  EOBPars->a6c;
@@ -276,16 +276,18 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   double N0     = -1737228288  + 3538944*a5tot + 7077888*nu + 142073856*pi2 - 2904768*pi4;
   double N1     = -27216576512 - 3538944*a6tot + 3338735616*pi2 - 136524096*pi4 + 1860867*pi6 + a5tot*(110886912 - 4534272*pi2);
   double D0     =  N0;
-  double D1     = -18432*(192*a6tot + 6016*nu - 246*nu*pi2 + a5tot*(-3008 + 123*pi2));
+  double D1     = -18432*(192*a6tot + nu*(6016 - 246*pi2) + a5tot*(-3008 + 123*pi2));
+
   double D2     = -192*(9216*a5tot*a5tot + 18432*a5tot*nu + (-3008 + 123*pi2)*(96*a6tot + nu*(3008 - 123*pi2)));
-  double D3     =  nu*(-3538944*a6tot - 36864*a5tot*(-3008 + 123*pi2) + pow(-3008 + 123*pi2,3));
+  double D3     =  nu*(-3538944*a6tot - 36864*a5tot*(-3008 + 123*pi2) + (-3008 + 123*pi2)*SQ(-3008 + 123*pi2) );
 
   /*1st derivatives of the above coefficients entering danu/du*/
   double dN0 = 226492416./(5*u);
   double dN1 = (-7077888*(-8186 - 504*nu + 287*pi2))/(35.*u);
   double dD0 = dN0;
   double dD1 = (-1179648*(-4*(7015 + 756*nu) + 861*pi2))/(35.*u);
-  double dD2 = (-24576*(4128768*logu + 5*(64512*a5 + 64*(82297 + 36540*nu) - 123*(1751 + 756*nu)*pi2)))/(175.*u);
+  double dD2 = (-24576*(4128768*logu + 5*(64512*a5 + 64*(82297 + 36540*nu) \
+                -123*(1751 + 756*nu)*pi2)))/(175.*u);
   double dD3 = (-7077888*nu*(-8186 - 504*nu + 287*pi2))/(35.*u);
 
   /* 2nd derivatives of the coefficients */
@@ -293,7 +295,8 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   double d2N1 = -(-7077888*(-8186 - 504*nu + 287*pi2))/(35.*u2);
   double d2D0 = d2N0;
   double d2D1 = -(-1179648*(-4*(7015 + 756*nu) + 861*pi2))/(35.*u2);
-  double d2D2 = -(-24576*(22206272 + 322560*a5 + 4128768*logu + 11692800*nu - 1076865*pi2 - 464940*nu*pi2))/(175.*u2);
+  double d2D2 = -(-24576*(22206272 + 322560*a5 + 4128768*logu - 1076865*pi2 \
+                + nu*(11692800 - 464940*pi2) ))/(175.*u2);
   double d2D3 = -(-7077888*nu*(-8186 - 504*nu + 287*pi2))/(35.*u2);
 
   /* the small a(u,nu) function*/
@@ -321,8 +324,7 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   *d2A =   u4*d2A_du + 2*u3*dA_du;
   */
 
-  /* the A function and its derivatives with respect to r */
-  
+  /* output derivatives with respect to u */
   *A   =  1-2*u + 2*nu*u3*anu;
   *dA  =  dA_du;
   *d2A =  d2A_du;
@@ -512,17 +514,17 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
   double c2    = 296 - 123/16*pi2;
   double d4c   = c1 + nu*c2;
   double d4log = -592/15;
-  double d4    = nu*(d4c + d4log*log(u));
+  double d4    = nu*(d4c + d4log*logu);
   // its derivative
   double Dd4   = nu*d4log/u;
   double D2d4  = -nu*d4log/u2;
 
   double d5c   = (-294464/175) + (2840/7)*EulerGamma + (-120648/35)*ln2 + (19683/7)* \
-          ln3 + ((-2216/105) + (-1)*d5nu2 + (6784/15)*EulerGamma + (326656/21)* \
-          ln2 + (-58320/7)*ln3)*nu + (63707/512)*pi2 + nu2*((-1285/3) + (205/16) \
-          *pi2);
+                ln3 + ((-2216/105) + (-1)*d5nu2 + (6784/15)*EulerGamma + (326656/21)* \
+                ln2 + (-58320/7)*ln3)*nu + (63707/512)*pi2 + nu2*((-1285/3) + (205/16) \
+                *pi2);
   double d5log = (1420/7) + (3392/15)*nu;
-  double d5    = nu*(d5c  +  d5log*log(u));
+  double d5    = nu*(d5c  +  d5log*logu);
   double Dd5   = nu*d5log/u;
   double D2d5  = -nu*d5log/u2;
   
@@ -547,41 +549,41 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
   double N3   = factor*(d3_3 + (-2)*d2*d3*d4 + d2_2*d5);
 
   double dN1  = factor2*(((-1)*d3_3 + d2_2*d5)*Dd4 + d2*( \
-      d3_2 + (-1)*d2*d4)*Dd5);
+                d3_2 + (-1)*d2*d4)*Dd5);
   double dN2  = factor2*((-1)*d2*d4_2*Dd4 + d3*d4*(2.*d3* \
-      Dd4 + d2*Dd5) + (-1)*d3*(d2*d5*Dd4 + d3_2*Dd5));
+                Dd4 + d2*Dd5) + (-1)*d3*(d2*d5*Dd4 + d3_2*Dd5));
   double dN3  = d2*factor2*(((-1)*d3_3 + d2_2*d5)*Dd4 + d2* \
-      (d3_2 + (-1)*d2*d4)*Dd5);
+                (d3_2 + (-1)*d2*d4)*Dd5);
 
   double d2N1 = factor3*((-1)*(d3_2 + (-1)*d2*d4)*(d2* \
-      D2d5*((-1)*d3_2 + d2*d4) + D2d4*(d3_3 + (-1)*d2_2*d5)) + 2.*((-1) \
-      *d2*d3_3 + d2_3*d5)*Dd4_2 + 2.*d2_2*(d3_2 + (-1)*d2*d4)* \
-      Dd4*Dd5);
+                D2d5*((-1)*d3_2 + d2*d4) + D2d4*(d3_3 + (-1)*d2_2*d5)) + 2.*((-1) \
+                *d2*d3_3 + d2_3*d5)*Dd4_2 + 2.*d2_2*(d3_2 + (-1)*d2*d4)* \
+                Dd4*Dd5);
   double d2N2 = factor3*((-1)*(d3_2 + (-1)*d2*d4)*(D2d5* \
-      d3_3 + (-1)*d3*(d2*D2d5 + 2.*D2d4*d3)*d4 + d2*D2d4*d4_2 + d2* \
-      D2d4*d3*d5) + 2.*(d3_4 + (-1)*d2_2*d3*d5)*Dd4_2 + 2.*d2*d3*(( \
-      -1)*d3_2 + d2*d4)*Dd4*Dd5);
+                d3_3 + (-1)*d3*(d2*D2d5 + 2.*D2d4*d3)*d4 + d2*D2d4*d4_2 + d2* \
+                D2d4*d3*d5) + 2.*(d3_4 + (-1)*d2_2*d3*d5)*Dd4_2 + 2.*d2*d3*(( \
+                -1)*d3_2 + d2*d4)*Dd4*Dd5);
   double d2N3 = d2*factor3*((-1)*(d3_2 + (-1)*d2*d4)*(d2* \
-      D2d5*((-1)*d3_2 + d2*d4) + D2d4*(d3_3 + (-1)*d2_2*d5)) + 2.*((-1) \
-      *d2*d3_3 + d2_3*d5)*Dd4_2 + 2.*d2_2*(d3_2 + (-1)*d2*d4)* \
-      Dd4*Dd5);
+                D2d5*((-1)*d3_2 + d2*d4) + D2d4*(d3_3 + (-1)*d2_2*d5)) + 2.*((-1) \
+                *d2*d3_3 + d2_3*d5)*Dd4_2 + 2.*d2_2*(d3_2 + (-1)*d2*d4)* \
+                Dd4*Dd5);
 
   double D1   = factor*((-1)*d3*d4 + d2*d5);
   double D2   = -factor*((-1)*d4_2 + d3*d5);
 
   double dD1  = factor2*(((-1)*d3_3 + d2_2*d5)*Dd4 + d2*( \
-      d3_2 + (-1)*d2*d4)*Dd5);
+                d3_2 + (-1)*d2*d4)*Dd5);
   double dD2  = factor2*(d2*(d4_2 + (-1)*d3*d5)*Dd4 + ((-1)* \
-      d3_2 + d2*d4)*((-2)*d4*Dd4 + d3*Dd5));
+                d3_2 + d2*d4)*((-2)*d4*Dd4 + d3*Dd5));
 
   double d2D1 = factor3*((-1)*(d3_2 + (-1)*d2*d4)*(d2* \
-      D2d5*((-1)*d3_2 + d2*d4) + D2d4*(d3_3 + (-1)*d2_2*d5)) + 2.*((-1) \
-      *d2*d3_3 + d2_3*d5)*Dd4_2 + 2.*d2_2*(d3_2 + (-1)*d2*d4)* \
-      Dd4*Dd5);
+                D2d5*((-1)*d3_2 + d2*d4) + D2d4*(d3_3 + (-1)*d2_2*d5)) + 2.*((-1) \
+                *d2*d3_3 + d2_3*d5)*Dd4_2 + 2.*d2_2*(d3_2 + (-1)*d2*d4)* \
+                Dd4*Dd5);
   double d2D2 = factor3*((-1)*(d3_2 + (-1)*d2*d4)*(D2d5* \
-      d3_3 + (-1)*d3*(d2*D2d5 + 2.*D2d4*d3)*d4 + d2*D2d4*d4_2 + d2* \
-      D2d4*d3*d5) + 2.*(d3_4 + (-1)*d2_2*d3*d5)*Dd4_2 + 2.*d2*d3*(( \
-      -1)*d3_2 + d2*d4)*Dd4*Dd5);
+                d3_3 + (-1)*d3*(d2*D2d5 + 2.*D2d4*d3)*d4 + d2*D2d4*d4_2 + d2* \
+                D2d4*d3*d5) + 2.*(d3_4 + (-1)*d2_2*d3*d5)*Dd4_2 + 2.*d2*d3*(( \
+                -1)*d3_2 + d2*d4)*Dd4*Dd5);
   
   double Num = 1 + N1*u + N2*u2 + N3*u3;
   double Den = 1 + D1*u + D2*u2;
@@ -600,7 +602,7 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
   *D   =  Num/Den;
   *dD  = (dNum*Den - Num*dDen)/(Den*Den);
   *d2D = (d2Num*Den - Num*d2Den)/(Den*Den)\
-      -2.*dDen*(dNum*Den - Num*dDen)/(Den*Den*Den);
+        -2.*dDen*(dNum*Den - Num*dDen)/(Den*Den*Den);
 
 }
 
@@ -816,35 +818,34 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 
   /* Q potential and all its derivatives */
 
+  *Q = u2*prstar4*( q42 + q43*u + q44loc*u2 \
+       + prstar2*( q62 + q63loc*u + q82loc*prstar2 ));
+  
+  *dQ_du = u*prstar4*( 2.*q42 + 3.*q43*u + 4.*q44loc*u2 \
+          + prstar2*( 2.*q62 + 3.*q63loc*u + 2.*q82loc*prstar2 ));
+  
+  double dQ_dprstar2 = u2*prstar2*( 2.*q42 + 2.*q43*u + 2.*q44loc*u2 \
+                      + prstar2*( 3.*q62 + 3.*q63loc*u + 4.*q82loc*prstar2 ));
+  
+  double d2Q_dudprstar2 = u*prstar2*( 4.*q42 + 6.*q43*u + 8.*q44loc*u2 \
+                      + prstar2*(6.*q62 + 9.*q63loc*u + 8.*q82loc*prstar2 ));   
 
-  *Q = q42*u2*prstar4 + q43*u3*prstar4 + q62*u2*prstar6 \
-      + q44loc*u4*prstar4 + q63loc*u3*prstar6 + q82loc*u2*prstar8;
-  
-  *dQ_du = 2.*q42*u*prstar4 + 3.*q43*u2*prstar4 + 2.*q62*u*prstar6 \
-      + 4.*q44loc*u3*prstar4 + 3.*q63loc*u2*prstar6 + 2.*q82loc*u*prstar8;
-  
-  double dQ_dprstar2 = 2.*q42*u2*prstar2 + 2.*q43*u3*prstar2 + 3.*q62*u2*prstar4 \
-              + 2.*q44loc*u4*prstar2 + 3.*q63loc*u3*prstar4 + 4.*q82loc*u2*prstar6;
-  
-  double d2Q_dudprstar2 = 4.*q42*u*prstar2 + 6.*q43*u2*prstar2 + 6.*q62*u*prstar4 \
-              + 8.*q44loc*u3*prstar2 + 9.*q63loc*u2*prstar4 + 8.*q82loc*u*prstar6;   
-
-  *d2Q_du2 = 2*q42 * prstar4 + 2* q62 * prstar6 + 6* q43 *prstar4 * u  \
-            + 2* q82loc * prstar8 + 6* q63loc * prstar6 * u + 12 * q44loc * prstar4 * u2;               
+  *d2Q_du2 = prstar4*( 2.*q42 + 6.*q43*u + 12.*q44loc*u2  \
+            + prstar2*( 2.* q62 + 2.*q82loc*prstar2 + 6.*q63loc*u ));               
 
   
-  double d2Q_dprstar22 = 2.*q42*u2 + 2.*q43*u3 + 6.*q62*u2*prstar2 \
-                + 2.*q44loc*u4 + 6.*q63loc*u3*prstar2 + 12.*q82loc*u2*prstar4; 
+  double d2Q_dprstar22 = 2.*q42*u2 + 2.*q43*u3 + 2.*q44loc*u4 \ 
+                      + prstar2*( 6.*q62*u2 + 6.*q63loc*u3 + 12.*q82loc*u2*prstar2 ); 
 
   
   double d3Q_dprstar23 = 6.*q62*u2+ 6.*q63loc*u3 + 24.*q82loc*u2*prstar2; 
   
 
-  double d3Q_du2dprstar2 = 4* q42 * prstar2 + 6*q62*prstar4 + 12*q43*prstar2*u \
-            + 8* q82loc *prstar6 + 18*q63loc*prstar4*u + 24 * q44loc * prstar2 * u2; 
+  double d3Q_du2dprstar2 = prstar2*( 4.*q42 + 12.*q43*u + 24.*q44loc*u2 \
+                        + prstar2*( 6.*q62+ 8.*q82loc*prstar2 + 18.*q63loc*u )); 
 
-  double d3Q_dudprstar22 = 4.*q42*u + 6.*q43*u2 + 12.*q62*u*prstar2 \
-              + 8.*q44loc*u3 + 18.*q63loc*u2*prstar2 + 24.*q82loc*u*prstar4;  
+  double d3Q_dudprstar22 = 4.*q42*u + 6.*q43*u2 + 8.*q44loc*u3 \
+                          + prstar2*( 12.*q62*u + 18.*q63loc*u2 + 24.*q82loc*u*prstar2);  
 
 
 
@@ -854,7 +855,7 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 
     *d2Q_drdprstar   = -2*prstar*u2*d2Q_dudprstar2;
 
-    *d3Q_dr2dprstar  = 4*prstar*u3*d2Q_dudprstar2 + 2*u4*prstar*d3Q_du2dprstar2;
+    *d3Q_dr2dprstar  = prstar*( 4*u3*d2Q_dudprstar2 + 2*u4*d3Q_du2dprstar2 );
 
     *d3Q_drdprstar2  = -2*u2*d2Q_dudprstar2 - 4*prstar2*u2*d3Q_dudprstar22;
 
@@ -862,7 +863,7 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 
     *d2Q_dprstar2 = 2.*dQ_dprstar2 + 4.*prstar2*d2Q_dprstar22;
 
-    *d3Q_dprstar3 = 12.*prstar*d2Q_dprstar22 + 8.*prstar3*d3Q_dprstar23;
+    *d3Q_dprstar3 = prstar*( 12.*d2Q_dprstar22 + 8.*prstar2*d3Q_dprstar23 );
 
 }
 
