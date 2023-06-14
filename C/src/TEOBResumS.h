@@ -854,6 +854,7 @@ void errorexits(char *file, int line, const char *s, const char *t);
 double eob_a6c_fit(double nu);
 double eob_a6c_fit_HM(double nu);
 double eob_a6c_fit_ecc(double nu);
+double eob_a6c_fit_next(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
 double eob_c3_fit_ecc(double nu, double a1, double a2);

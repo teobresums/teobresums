@@ -581,9 +581,12 @@ void eob_set_params(int default_choice, int firstcall)
   
   /** Set more as needed ... */
   EOBPars->a6c = 0.;
-  if ((ecc != 0.) || (r_hyp != 0.)) {
+  if (EOBPars->A_pot == A_5PNlogP33) {
+    /* new  fits */
+    EOBPars->a6c = eob_a6c_fit_next(EOBPars->nu);
+  } else if ((ecc != 0.) || (r_hyp != 0.)) {
     /* Eccentric */
-    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);    
+    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
   } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
