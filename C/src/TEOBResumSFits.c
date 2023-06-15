@@ -57,13 +57,12 @@ double eob_a6c_fit_ecc(double nu)
 /** Fit of a6c from 2108.02043 */
 double eob_a6c_fit_next(double nu)
 {
-  double nu2 = nu*nu;
   
   const double n0 = -4.6416;
   const double n1 = -503.57;
   const double n2 = 599.96;
     
-  return (n0 + n1*nu + n2*nu2);
+  return n0 + nu*(n1 + n2*nu);
 }
 
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
