@@ -834,7 +834,7 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
             + prstar2*( 2.* q62 + 2.*q82loc*prstar2 + 6.*q63loc*u ));               
 
   
-  double d2Q_dprstar22 = 2.*q42*u2 + 2.*q43*u3 + 2.*q44loc*u4 \ 
+  double d2Q_dprstar22 = 2.*q42*u2 + 2.*q43*u3 + 2.*q44loc*u4 \
                       + prstar2*( 6.*q62*u2 + 6.*q63loc*u3 + 12.*q82loc*u2*prstar2 ); 
 
   
