@@ -581,9 +581,12 @@ void eob_set_params(int default_choice, int firstcall)
   
   /** Set more as needed ... */
   EOBPars->a6c = 0.;
-  if ((ecc != 0.) || (r_hyp != 0.)) {
+  if (EOBPars->A_pot == A_5PNlogP33) {
+    /* new  fits */
+    EOBPars->a6c = eob_a6c_fit_next(EOBPars->nu);
+  } else if ((ecc != 0.) || (r_hyp != 0.)) {
     /* Eccentric */
-    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);    
+    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
   } else if (EOBPars->use_flm == USEFLM_HM) {
     /* Higher modes */
     EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
@@ -698,18 +701,25 @@ void eob_set_params(int default_choice, int firstcall)
     eob_metric_Apotential = &eob_metric_A5PNlog;
   } else if (EOBPars->A_pot == A_GSF) {
     eob_metric_Apotential = &eob_metric_AGSF;
-  } else errorexit("unknown option for A potential");
+  } else if (EOBPars->A_pot == A_5PNlogP33) {
+    eob_metric_Apotential = &eob_metric_A5PNlogP33;
+  }
+  else errorexit("unknown option for A potential");
 
   if (EOBPars->D_pot == D_3PN) {
     eob_metric_Dpotential = &eob_metric_D3PN;
   } else if (EOBPars->D_pot == D_GSF) {
     eob_metric_Dpotential = &eob_metric_DGSF;
-  } else errorexit("unknown option for D potential");
+  } else if (EOBPars->D_pot == D_5PNP32) {
+    eob_metric_Dpotential = &eob_metric_D5PNP32;
+  }else errorexit("unknown option for D potential");
 
   if (EOBPars->Q_pot == Q_3PN) {
     eob_metric_Qpotential = &eob_metric_Q3PN;
   } else if (EOBPars->Q_pot == Q_GSF) {
     eob_metric_Qpotential = &eob_metric_QGSF;
+  } else if (EOBPars->Q_pot == Q_5PNloc) {
+    eob_metric_Qpotential = &eob_metric_Q5PNloc;
   } else errorexit("unknown option for Q potential");
   
   /** Set rc fun pointer */
@@ -1498,7 +1508,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
-  fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_freq_opt[eobp->ecc_ics]);  
+  fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
   fprintf(f,"%s = %d\n"    , "compute_LR_guess", eobp->compute_LR_guess);

@@ -1,0 +1,61 @@
+# parfile for BBH q=1 nospin run from 10 Hz
+# builds on default options
+
+#
+# use geometric units for I/O
+# everything is given geometric units and binary mass-rescaled 
+#
+
+use_geometric_units = "yes"
+
+#
+# Binary properties
+#
+
+q = 1. # mass ratio
+
+ecc = 0.002
+
+use_spins = 1
+chi1 = 0.0 # dimensionless spin 1 z-component 
+chi2 = 0.0 # dimensionless spin 2 z-component 
+
+initial_frequency = 0.000492549094700 # initial GW freq of 10 Hz for M = 10 M_sun
+
+A_pot = "5PNlogP33"
+D_pot = "5PNP32"
+Q_pot = "5PNloc"
+
+postadiabatic_dynamics = "no"
+#
+# Output dir, output modes 
+#
+
+output_dir = "./bbh_q1_s0s0_10Hz_5PNpot/"
+output_hpc = "yes" # switch this off to test performances!!!
+output_multipoles = "no"
+use_mode_lm = [ 1 ] # Use only (2,2) mode for BBH h_{+,x}, this will be updated
+output_dynamics = "no"
+
+#
+# Setup
+#
+
+size = 200 # size of the arrays (chunks, dynamically extended)
+ode_timestep = "adaptive"
+ode_stop_at_radius = 1. # rLR = 1.81...
+
+# interpolate on uniform grid?
+interp_uniform_grid = "yes" # yes, only h+,hx on a grid of dt_interp
+
+dt_interp = 4.95667594616 # interpolation spacing, M/delta_t  = 4096 Hz for M = 10 M_sun
+
+
+
+
+
+
+
+
+
+

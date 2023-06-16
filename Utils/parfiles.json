@@ -83,6 +83,28 @@
         "dt_interp":                4.95667594616
     },
     {
+        "name":                     "bbh_q1_s0s0_10Hz_5PNpot",
+        "use_geometric_units":      "yes",
+        "q" :                       1.0,
+        "use_spins":                1,
+        "chi1":                     0.0,
+        "chi2":                     0.0,  
+        "initial_frequency":        0.000492549094700,
+        "output_dir":               "\"./bbh_q1_s0s0_10Hz_5PNpot/\"",
+        "output_hpc":               "yes",
+        "output_multipoles":        "no",
+        "use_mode_lm":              [ 1 ],
+        "output_lm":                [ 1 ],
+        "output_dynamics":          "no",
+        "size":                     200,
+        "ode_timestep":             "adaptive",
+        "ode_stop_at_radius":       1.0,
+        "compute_LR":               "no",
+        "compute_LSO":              "no",
+        "interp_uniform_grid":      "yes",
+        "dt_interp":                4.95667594616
+    },
+    {
         "name":                     "bbh_q3_s-099s-099_10Hz",
         "use_geometric_units":      "yes",
         "q" :                       3.0,

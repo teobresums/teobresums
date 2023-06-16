@@ -54,6 +54,17 @@ double eob_a6c_fit_ecc(double nu)
   return (n0 + n1*nu + n2*nu2)*exp(n3*nu);
 }
 
+/** Fit of a6c from 2108.02043 */
+double eob_a6c_fit_next(double nu)
+{
+  
+  const double n0 = -4.6416;
+  const double n1 = -503.57;
+  const double n2 = 599.96;
+    
+  return n0 + nu*(n1 + n2*nu);
+}
+
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
     Note: c3 = 0 with tides*/
 double eob_c3_fit_global(double nu, double a1, double a2)

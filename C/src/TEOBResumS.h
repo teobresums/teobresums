@@ -255,25 +255,28 @@ static const char* const use_lambda234_fits_opt[] = {"no","YAGI13","GODZIEBA20_e
 enum{
   A_5PNlog,
   A_GSF,
+  A_5PNlogP33,
   A_NOPT
 };
-static const char* const A_opt[] = {"PN", "GSF", "undefined"};
+static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "undefined"};
 
 /** List of options for orbital D potential */
 enum{
   D_3PN,
   D_GSF,
+  D_5PNP32,
   D_NOPT
 };
-static const char* const D_opt[] = {"PN", "GSF", "undefined"};
+static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "undefined"};
 
 /** List of options for orbital Q potential */
 enum{
   Q_3PN,
   Q_GSF,
+  Q_5PNloc,
   Q_NOPT
 };
-static const char* const Q_opt[] = {"PN", "GSF", "undefined"};
+static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "undefined"};
 
 /** List of options for tidal potential */
 enum{
@@ -851,6 +854,7 @@ void errorexits(char *file, int line, const char *s, const char *t);
 double eob_a6c_fit(double nu);
 double eob_a6c_fit_HM(double nu);
 double eob_a6c_fit_ecc(double nu);
+double eob_a6c_fit_next(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
 double eob_c3_fit_ecc(double nu, double a1, double a2);
@@ -988,10 +992,13 @@ extern void (*eob_metric_Dpotential)(); /* defined in TEOBResumSPars.c*/
 extern void (*eob_metric_Qpotential)(); /* defined in TEOBResumSPars.c*/
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A);
+void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
+void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
