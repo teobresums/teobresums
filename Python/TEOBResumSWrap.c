@@ -59,6 +59,22 @@ int SetOptionalVariables(PyObject* dict){
       if (STREQUAL(val,use_lambda234_fits_opt[EOBPars->use_lambda234_fits])) break;
     }    
   }
+  if ( PyDict_GetItemString(dict, "use_a6c_fits") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_a6c_fits"));
+    for(EOBPars->use_a6c_fits=0; EOBPars->use_a6c_fits<=a6c_fits_NOPT; EOBPars->use_a6c_fits++){
+      if (EOBPars->use_a6c_fits == a6c_fits_NOPT) EOBPars->use_a6c_fits = a6c_fits_HM;
+      if (STREQUAL(val,use_a6c_fits_opt[EOBPars->use_a6c_fits])) break;
+    }    
+  }
+  if ( PyDict_GetItemString(dict, "use_cN3LO_fits") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_cN3LO_fits"));
+    for(EOBPars->use_cN3LO_fits=0; EOBPars->use_cN3LO_fits<=cN3LO_fits_NOPT; EOBPars->use_cN3LO_fits++){
+      if (EOBPars->use_cN3LO_fits == cN3LO_fits_NOPT) EOBPars->use_cN3LO_fits = cN3LO_fits_HM_2023_432;
+      if (STREQUAL(val,use_cN3LO_fits_opt[EOBPars->use_cN3LO_fits])) break;
+    }    
+  }
   if ( PyDict_GetItemString(dict, "use_tidal_fmode_model") != NULL ) { 
     EOBPars->use_tidal_fmode_model =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_tidal_fmode_model")));
   }
@@ -153,6 +169,18 @@ int SetOptionalVariables(PyObject* dict){
     for (int i = 0; i < EOBPars->output_lm_size; i++){
       PyObject *item = PyList_GetItem(tmp, i);
       EOBPars->output_lm[i] = (int) PyLong_AsLong(item); 
+    }
+  }
+
+  /* k postpeak */
+  if ( PyDict_GetItemString(dict, "kpostpeak") != NULL ) {
+    if (EOBPars->kpostpeak) free(EOBPars->kpostpeak);
+    PyListObject *tmp = PyDict_GetItemString(dict, "kpostpeak");
+    EOBPars->kpostpeak_size = PyObject_Length(tmp);
+    EOBPars->kpostpeak = malloc ( EOBPars->kpostpeak_size * sizeof(int) );
+    for (int i = 0; i < EOBPars->kpostpeak_size; i++){
+      PyObject *item = PyList_GetItem(tmp, i);
+      EOBPars->kpostpeak[i] = (int) PyLong_AsLong(item); 
     }
   }
 

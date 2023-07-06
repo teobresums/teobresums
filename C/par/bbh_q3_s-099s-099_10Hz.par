@@ -29,6 +29,8 @@ output_hpc = "yes" # switch this off to test performances!!!
 output_multipoles = "no"
 use_mode_lm = [ 1 ] # Use only (2,2) mode for BBH h_{+,x}, this will be updated
 output_dynamics = "no"
+use_a6c_fits = "HM"
+use_cN3LO_fits = "HM"
 
 #
 # Setup

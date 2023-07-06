@@ -41,6 +41,21 @@ double eob_a6c_fit_HM(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
+/** Fit of a6c, Tab. II of arXiv:2304.09662 */
+double eob_a6c_fit_HM_2023(double nu)
+{
+  const double nu2 = nu*nu;
+  const double nu3 = nu2*nu;
+
+  const double n0 = 46.5524;
+  const double n1 =-24.2516;
+  const double n2 = 120.9594;
+  const double n3 = -167.2242;
+  const double d1 =-3.3998;
+  
+  return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
+}
+
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
     Note: c3 = 0 with tides*/
 double eob_c3_fit_global(double nu, double a1, double a2)
@@ -97,6 +112,52 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
     + p1*nu*X12*a0 + p2*nu2*(a1 - a2);
   
   return c3;
+}
+
+/* Table IV of arXiv:2304.09662 */
+double eob_c3_fit_HM_2023(double nu, double a1, double a2)
+{
+  const double nu2 = nu*nu;
+  const double X12 = sqrt(1.-4.*nu);
+  const double a0  = a1+a2;
+  const double a02 = a0*a0;
+  const double a03 = a02*a0;
+  const double a04 = a03*a0;
+  double *coeff_eq, *coeff_neq;
+
+  double coeff_eq_420[6]  = {43.872788,-1.849495, 1.011208, -0.086453, -0.038378, -0.888154};
+  double coeff_eq_431[6]  = {42.195044,-2.010717, 1.258034, -0.129593, -0.106295, -0.966525};
+  
+  double coeff_neq_420[6] = {26.553,    -8.65836,  0,        -84.7473,   24.0418,   0};
+  double coeff_neq_430[6] = {16.695689, 2.025017, -6.600956, -53.146114, 34.097885, -101.003721};
+  double coeff_neq_431[6] = {20.99561492580911, 1.5806110388013492, -10.428048396877976, -61.19803748038313, 37.11341346539421, -37.668146004322274};
+  double coeff_neq_432[6] = {18.80033140113715, 0.6175269833645626, -10.397710332484472, -47.16963298818921, 33.4449328928248,  -32.51572099183539};
+
+  switch(EOBPars->use_cN3LO_fits)
+  {
+    case(cN3LO_fits_HM_2023_420):
+      coeff_eq  = coeff_eq_420;
+      coeff_neq = coeff_neq_420;
+      break;
+    case(cN3LO_fits_HM_2023_430):
+      coeff_eq  = coeff_eq_420;
+      coeff_neq = coeff_neq_430;
+      break;
+    case(cN3LO_fits_HM_2023_431):
+      coeff_eq  = coeff_eq_431;
+      coeff_neq = coeff_neq_431;
+      break;
+    case(cN3LO_fits_HM_2023_432):
+      coeff_eq  = coeff_eq_431;
+      coeff_neq = coeff_neq_431;
+  }
+
+  double c3_eq  = coeff_eq[0]*(1 + coeff_eq[1]*a0 + coeff_eq[2]*a02 
+                                 + coeff_eq[3]*a03 + coeff_eq[4]*a04)/(1 + coeff_eq[5]*a0);
+  double c3_neq = coeff_neq[0]*a0*X12    + coeff_neq[1]*a02*X12       + coeff_neq[2]*a03*X12 
+                + coeff_neq[3]*a0*nu*X12 + coeff_neq[4]*(a1 - a2)*nu2 + coeff_neq[5]*SQ(a1 - a2)*nu2;
+
+  return c3_eq + c3_neq;
 }
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
