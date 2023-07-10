@@ -16,28 +16,29 @@ use_geometric_units = "yes"
 # Binary properties
 #
 
-q = 1000. # mass ratio
+q = 50000. # mass ratio
 
 use_spins = 1
 chi1 = 0.0 # dimensionless spin 1 z-component 
 chi2 = 0.0 # dimensionless spin 2 z-component 
 
-initial_frequency = 0.00001 # initial GW freq of 
-
+#initial_frequency = 0.000072 # initial GW freq of 
+r0 = 21.0
 #
 # Output dir, output modes 
 #
 
 output_dir = "./bbh_q1000_s09s-04_HM/"
 output_hpc = "no" # switch this off to test performances!!!
-output_multipoles = "yes"
+output_multipoles = "no"
 output_lm   = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
 use_mode_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
-output_dynamics = "yes"
+output_dynamics = "no"
 use_flm = "HM"
 A_pot = "GSF"
 D_pot = "GSF"
 Q_pot = "GSF"
+postadiabatic_dynamics_rmin = 8.0
 #
 # Setup
 #

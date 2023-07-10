@@ -32,14 +32,16 @@ static const double CNlm[35] = {
   1./8.174459284992e13, 32./3.4493884425e10, 177147./3.96428032e10, 4194304./1.5679038375e10, 30517578125./8.00296713216e11, 51018336./1.04229125e8, 4747561509943./4.083146496e11, 274877906944./1688511825.
 };
 */
-static const double CNlm[35] = {
+static const double CNlm[54] = {
   0.17777777777777778, 6.4, 
   0.0007936507936507937, 0.5079365079365079, 8.678571428571429, 
   2.2675736961451248e-05, 0.008062484252960444, 1.0414285714285714, 14.447971781305114, 
   5.010421677088344e-08, 0.0006384836014465644, 0.03106534090909091, 1.9614216236438458, 25.688197074915823, 
   8.898517797026696e-10, 4.464920289836115e-06, 0.003830520129221428, 0.08778390483440988, 3.584607999290539, 46.98226573426573, 
   1.0695333890657086e-12, 2.3656367312710969e-07, 4.972309783123969e-05, 0.013643024456211269, 0.21542115380351798, 6.472046810332524, 87.1329124642076, 
-  1.2233225038333268e-14, 9.27700678929842e-10, 4.468579053461083e-06, 0.0002675102834551229, 0.03813282951314997, 0.4894825318738884, 11.627213264559293, 162.79300083906728
+  1.2233225038333268e-14, 9.27700678929842e-10, 4.468579053461083e-06, 0.0002675102834551229, 0.03813282951314997, 0.4894825318738884, 11.627213264559293, 162.79300083906728,
+  1./109728845674905600,128/3805293886875, 177147/5321402777600, 67108864/2049004400625, 762939453125/751987893436416, 204073344/2186104375, 1628413597910449/1534669170278400, 17592186044416/843707694375, 205891132094649/674204876800,
+  7.176081169626815e-20, 128/1518312260863125,1594323/735210636160000,2147483648/5722869290945625,19073486328125/126059803844502528,918330048/290751881875, 11398895185373143/54047249118720000, 2251799813685248/1009918110166875,16677181699666569/446134008320000, 48828125000000/85045735593
 };
 
 /** Newtonian partial fluxes */
@@ -49,6 +51,8 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
   /** Shorthands*/
   const double nu2 = nu*nu;
   const double nu3 = nu2*nu;
+  const double nu4 = nu3*nu;
+
   const double x5  = x*x*x*x*x;
   const double x6  = x*x5;
   const double x7  = x*x6;
@@ -57,7 +61,9 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
   const double x10 = x*x9;
   const double x11 = x*x10;
   const double x12 = x*x11;
-  
+  const double x13 = x*x12;
+  const double x14 = x*x13;
+
   const double sp2 = 1.-4.*nu;
   const double sp4 = (1-4*nu)*SQ((1-2*nu));
   const double sp3 = (1.-3.*nu)*(1.-3.*nu);
@@ -66,6 +72,10 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
   const double sp7 = (1 - 7*nu + 14*nu2 - 7*nu3)*(1 - 7*nu + 14*nu2 - 7*nu3);
   const double sp8 = (1 - 4*nu)*(1 - 6*nu + 10*nu2 - 4*nu3)*(1 - 6*nu + 10*nu2 - 4*nu3);
 
+  const double sp9  = (1. -4*nu)*SQ(1 - 6*nu + 10*nu2 - 4*nu3);
+  const double sp10 = SQ(1. -9*nu + 9*nu4 + 27*nu2 -30*nu3);
+  const double sp11 = (1. -4*nu)*SQ(1 -8*nu + 5*nu4 +21*nu2 -20*nu3);
+  
   double spx[] = {
     sp2 * x6, x5, 
     sp2 * x6, sp3 * x7, sp2 * x6, 
@@ -73,7 +83,9 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
     sp4 * x8, sp5 * x9, sp4 * x8, sp5 * x9, sp4 * x8, 
     sp6 * x10, sp5 * x9, sp6 * x10, sp5 * x9, sp6 * x10, sp5 * x9, 
     sp6 * x10, sp7 * x11, sp6 * x10, sp7 * x11, sp6 * x10, sp7 * x11, sp6 * x10,
-    sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1) * x11
+    sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1) * x11,
+    sp9 * x12, sp10* x13, sp9 * x12, sp10* x13, sp9 * x12, sp10* x13, sp9 * x12, sp10 * x13 , sp9 * x12,
+    sp11* x14, sp10* x13, sp11* x14, sp10* x13, sp11* x14, sp10* x13, sp11* x14, sp10 * x13, sp11 * x14, sp10 * x13
   };
 
   /** Newtonian partial fluxes*/
@@ -232,6 +244,12 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   /** Newtonian flux */
   eob_flx_FlmNewt(x, nu, FNewtlm);
 
+  /* Remove useless modes when not using the 22PN flux*/
+  // TODO: add also elsewhere
+  if(EOBPars->use_flm != USEFLM_22PN){
+    for(int k=36; k<KMAX; k++) FNewtlm[k] = 0;
+  }
+
   /* Correct amplitudes for specific multipoles and cases */
   if (usespins) {
     /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
@@ -353,14 +371,16 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   const int usespins = EOBPars -> use_spins;
   
   double prefact[] = {
-		      jhat, Heff,
+		jhat, Heff,
     Heff, jhat, Heff,
     jhat, Heff, jhat, Heff,
     Heff, jhat, Heff, jhat, Heff,
     jhat, Heff, jhat, Heff, jhat, Heff,
     Heff, jhat, Heff, jhat, Heff, jhat, Heff,
-    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
-  
+    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff,
+    Heff, jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
+
   double FNewt22, sum_k=0.;
   double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double Modhhatlm[KMAX];

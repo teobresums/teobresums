@@ -229,7 +229,7 @@ enum{
 };
 static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E"};
 
-#define KMAX (35) /** Multipolar linear index, max value */
+#define KMAX (54)       /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
 /** List for binary type */
@@ -333,10 +333,11 @@ enum{
   USEFLM_SSNLO,
   USEFLM_SSNNLO,
   USEFLM_HM,
+  USEFLM_22PN,
   USEFLM_KERR,
   USEFLM_NOPT
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "Kerr"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "22PN", "Kerr"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -412,7 +413,7 @@ static const char* const root_errors[] = {"none","root is not bracketed.","root 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */
 extern const int MINDEX[KMAX]; /* defined in TEOBResumS.c */
-extern const int KINDEX[9][9]; /* defined in TEOBResumS.c */ //FIXME: hardcoded for KMAX=35
+extern const int KINDEX[11][11]; /* defined in TEOBResumS.c */ //FIXME: hardcoded for KMAX=35
 
 /** Multipolar coefficients for NQC waveform */
 typedef struct tagNQCcoefs
@@ -1041,6 +1042,7 @@ extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_Kerr(double x,double nu, double *rholm, double *flm);
 extern void (*eob_wav_flm_s)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);

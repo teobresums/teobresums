@@ -482,6 +482,9 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
           &EOBPars->aK, &EOBPars->aK2,
           &EOBPars->S, &EOBPars->Sstar);
       }
+
+      if (VERBOSE)  printf("n%.d | iter %09d | r = %.9e | Omg = %.9e\n", n, i, dyn->r, dyn->Omg); 
+
     } // END R-GRID FOR
     
     /* Computing derivatives of the momenta */

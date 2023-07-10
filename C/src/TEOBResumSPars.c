@@ -679,6 +679,12 @@ void eob_set_params(int default_choice, int firstcall)
       eob_wav_flm     = &eob_wav_flm_v1;
       eob_wav_flm_s   = &eob_wav_flm_s_SSNNLO;
     */
+  } else if (EOBPars->use_flm == USEFLM_22PN){
+    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
+    eob_wav_flm      = &eob_wav_flm_22PN;
+    eob_wav_flm_s    = &eob_wav_flm_s_HM;
+    eob_wav_deltalm  = &eob_wav_deltalm_HM;
+    eob_wav_ringdown = &eob_wav_ringdown_HM;     
   } else errorexit("unknown option for use_flm");
 
   /** Set hlm and NQC fun pointers */
