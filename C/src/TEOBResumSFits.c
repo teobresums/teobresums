@@ -608,6 +608,45 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
 	  
 }
 
+/** Fits for NR point used to determine NQC corrections 
+    Here the NQC point is assumed to be the peak of the 22 mode
+    From Pompili et. al. XXXX.YYYY
+    FIXME: these need to be rewritten properly, via e.g. some matrix summation
+    TODO: Currently, only 21 is available. Implement also the other fits!
+*/
+void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
+{
+
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+
+  const double nu2  = SQ(nu);
+  const double nu3  = nu2*nu;
+  const double delta = sqrt(1-4.*nu);
+
+  const double chi_S = (chi1+chi2)/2;
+  const double chi_A = (chi1-chi2)/2;
+
+  const double chi   = chi_S + chi_A*delta/(1.-2.*nu);
+  const double chisq = chi*chi;
+  const double chi3  = chisq*chi;
+  const double chi4  = chi3*chi;
+  const double chi_21A      = delta*chi_S/(1-1.3*nu) + chi_A;
+  const double chi_21A2     = SQ(chi_21A);
+  const double chi_21A3     = chi_21A2*chi_21A;
+  const double chi_21D      = delta*chi_S/(1-2.*nu)  + chi_A;
+
+  /* l=2, m=1 */
+  A_tmp[0]    = fabs(-0.033175*chi_21A3*delta + 0.086356*chi_21A2*delta*nu - 0.049897*chi_21A2*delta + 0.012706*chi_21A*delta + 0.168668*chi_21A*nu - 0.285597*chi_21A + 1.067921*delta*nu2 - 0.189346*delta*nu + 0.431426*delta);
+  A_tmp[0]    = A_tmp[0]/sqrt(24);
+  dA_tmp[0]   = chi_21D*delta*(0.023534*nu - 0.008064) + delta*(0.006743 - 0.0297*nu) + 0.008256*abs( (chi_21D - delta*(5.471011*nu2 + 1.235589*nu + 0.815482)) );
+  dA_tmp[0]    = dA_tmp[0]/sqrt(24);
+  omg_tmp[0]  = 0.01009*chi3 - 0.077343*chisq*nu + 0.02411*chisq + 0.168854*chi*nu2 - 0.159382*chi*nu + 0.047635*chi + 1.965157*nu3 - 0.53085*nu2 + 0.237904*nu + 0.176526;
+  domg_tmp[0] = 0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
+
+}
+
 /** This function computes the NQC functioning points by evaluating the post-peak template and its dervatives*/
 void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
@@ -2849,6 +2888,81 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   }
   
 }
+
+/* Global fits of the ringdown coefficients from the 
+   Pompili et. al. paper, arXiv:XXXX.YYYY
+*/
+void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
+      double *sigmar, double *sigmai)
+{
+
+  int knqcpeak22_size = EOBPars->knqcpeak22_size;  
+  int *knqcpeak22     = EOBPars->knqcpeak22;
+
+  const double delta = sqrt(1-4.*nu);
+  const double nu2   = SQ(nu);
+  const double nu3   = nu2*nu;
+  const double nu4   = nu3*nu;
+  const double chi_S = (chi1+chi2)/2.;
+  const double chi_A = (chi1-chi2)/2.;
+
+  const double chi       = chi_S + chi_A*delta/(1.-2.*nu);
+  const double chisq     = chi*chi;
+  const double chi3      = chisq*chi;
+  const double chi4      = chi3*chi;
+  const double chi_21A   = delta*chi_S/(1-1.3*nu) + chi_A;
+  const double chi_21A2  = SQ(chi_21A);
+  const double chi_21A3  = chi_21A2*chi_21A;
+  const double chi_21D   = delta*chi_S/(1-2.*nu)  + chi_A;
+
+  double A[KMAX], dA[KMAX], omg[KMAX], domg[KMAX];
+  double c1f, c2f, d1f, d2f, c1c, c2c, d1c;
+  
+  /* Compute A, dA, omg, domg */
+  eob_nqc_point_HM_peak22(NULL, A, dA, omg, domg);
+  for(int j=0; j<knqcpeak22_size; j++){
+    int k = knqcpeak22[j];
+
+    /* The QNM frequencies need rescaling */
+    sigmar[k] /= Mbh;
+    sigmai[k] /= Mbh;
+
+    /* Fits */
+    switch(k)
+    {
+      case(0):
+        c1f = 0.173462*chi2*nu - 0.028873*chi2 + 0.197467*chi*nu2 - 0.026139*chi - 2.934735*nu3 + 1.009106*nu2 - 0.112721*nu + 0.099889;
+        c2f = 0.183489*chi3 + 0.10573*chi2 - 20.792825*chi*nu2 + 6.867746*chi*nu - 0.484948*chi - 54.917585*nu3 + 16.466312*nu2 + 0.426316*nu - 0.92208;
+        d1f = 0.018467*chi4 + 0.398621*chi3*nu - 0.050499*chi3 - 0.877201*chi2*nu2 + 0.414553*chi2*nu - 0.068277*chi2 - 10.648526*chi*nu3 + 4.104918*chi*nu2 - 0.723576*chi*nu + 0.039227*chi + 42.715534*nu4 - 18.280603*nu3 + 2.236592*nu2 - 0.048094*nu + 0.16335;
+        d2f = exp(0.814085*chi3 - 1.197363*chi2*nu + 0.560622*chi2 + 6.44667*chi*nu2 - 5.630563*chi*nu + 0.949586*chi + 91.269183*nu3 - 27.329751*nu2 + 1.101262*nu + 1.040761);
+        break;
+      default:
+        errorexit("Ringdown coefficients only implemented for l=2, m=1 at the moment");
+    }
+
+    /* Correct normalization of A, dA */
+    int l = LINDEX[k];
+    A[k] *= sqrt((l+2)*(l+1)*l*(l-1));
+    dA[k]*= sqrt((l+2)*(l+1)*l*(l-1));
+
+    /* Constrained coefficients*/
+    c1c = (dA[k]  + sigmar[k]*A[k])*cosh(c2f)*cosh(c2f)/c1f;
+    c2c =  A[k]   - (dA[k] + sigmar[k]*A[k])*cosh(c2f)*sinh(c2f)/c1f;
+    d1c = (omg[k] - sigmai[k])*(1+d2f)/(d1f*d2f);
+
+    /* Finalize*/
+    ca1[k] = c1c;
+    ca2[k] = c1f;
+    ca3[k] = c2f;
+    ca4[k] = c2c;
+    cb1[k] = -d1c;
+    cb2[k] = d1f;
+    cb3[k] = d2f;
+    cb4[k] = 0.;
+  }
+}
+
 
 /** Fits of the ringdown QNM coefs */
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1)

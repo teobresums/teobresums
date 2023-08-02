@@ -621,7 +621,8 @@ typedef struct tagEOBParameters
   int *use_mode_lm, use_mode_lm_size;
   int *use_mode_lm_nqc, use_mode_lm_nqc_size; // multipoles to attach NQCs
                                               // TODO: add as user input
-  int *kpostpeak, kpostpeak_size;
+  int *kpostpeak, kpostpeak_size;             // multipoles where NQCs are extracted at t_peak_lm + 2 from the RD template
+  int *knqcpeak22, knqcpeak22_size;           // multipoles where NQCs are extracted at t_peak_22  from global fits
 
   int size;
   int ode_timestep;
@@ -829,6 +830,7 @@ double eob_c3_fit_HM_2023(double nu, double a1, double a2);
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
+void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
@@ -865,6 +867,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 			double Mbh, double abh,  
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 			double *sigmar, double *sigmai);
+void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
+      double *sigmar, double *sigmai);
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);

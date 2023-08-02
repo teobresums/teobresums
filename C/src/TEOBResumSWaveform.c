@@ -3315,23 +3315,21 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
+  
+  /* 31, 33, 41 and 55 fitted directly + 44 dA */
+  eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
+  
+  /* 21 fitted directly at tpeak_22*/
+  eob_nqc_point_HM_peak22(dyn, max_A, max_dA, max_omg, max_domg);
 
-  /* Higher modes */
-  /* Choosing modes using kpostpeak array */
+  /* Over-writing fits using postpeak quantities for modes in kpostpeak */
   int kpostpeak_size = EOBPars->kpostpeak_size;  
-  int *kpostpeak    = EOBPars->kpostpeak;
-  /* old option: 21, 32, 42, 43 and 44 extracted from postpeak */
-  // int kpostpeak_size = 5;
-  // int kpostpeak[kpostpeak_size] = {0,3,6,7,8};
+  int *kpostpeak     = EOBPars->kpostpeak;
 
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
 		     alpha1, omega1);
-  
-  /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-  eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
 
-  // Over-writing fits using postpeak quantities for modes in kpostpeak
   for (int j=0; j<kpostpeak_size; j++) {
     int k = kpostpeak[j];
     
@@ -3350,8 +3348,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     max_domg[k] = domg_tmp;
   }
   
-
-	    
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
     PRFORMd("A22_mrg",max_A[1]);
@@ -3462,23 +3458,30 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
 
+  /* Usually, the NQC match point is at tmrg_lm + 2
+   * except for modes in knqcpeak22 where it is at tmrg22
+  */
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
   eob_nqc_deltat_lm(dyn, dtmrg);
   
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){
       tmrg[k]  = tmrg[1] + dtmrg[k];
       t_NQC[k] = tmrg[k] + 2.;
-      
+
+      if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
+
       j_NQC[k] = size-1;
       for (int j=size-2; j>=0; j--) {
-	if(t[j] < t_NQC[k]) {
-	  break;
-	}
-	j_NQC[k] = j;
+	      if(t[j] < t_NQC[k]) {
+	        break;
+	      }
+	      j_NQC[k] = j;
       } 
     }
   }
-  
+
   /** Solve the linear systems */
   
   /* Regge-Wheeler-Zerilli normalized amplitude. 
@@ -4526,22 +4529,27 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
   
   /* The following values are the difference between the time of the peak of
-     the 22 waveform and the other modes. */
-  eob_nqc_deltat_lm(dyn, dtmrg);	  
+     the 22 waveform and the other modes. 
+     For modes in knqcpeak22 we impose tmrg[k] = tmrg[1], to attach the ringdown there
+  */
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+  eob_nqc_deltat_lm(dyn, dtmrg);
   for (int k=0; k<KMAX; k++) {
     tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
+    if (modesatpeak22[k]) tmrg[k] = tmrgA22;
   }	  
-    
+
   /** Postmerger-Ringdown matching time */
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
     if(hlm->kmask[k]){
       idx[k] = size-1;
       for (int j = size-1; j-- ; ) {  
-	if (t[j] < tmrg[k]*Mbh) {
-	  break;
-	}
-	idx[k] = j;
+	      if (t[j] < tmrg[k]*Mbh) {
+	        break;
+	      }
+	      idx[k] = j;
       }
       tmatch[k] = (t[idx[k]])*ooMbh;	    
     }
@@ -4555,48 +4563,58 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     a1, a2, a3, a4, b1, b2, b3, b4, 
 		     sigma[0],sigma[1]);
-    
+  
+  /* Overwrite the modes attached at the peak */
+  QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,
+                                a1, a2, a3, a4, b1, b2, b3, b4,
+                                sigma[0], sigma[1]
+                              );
   /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
   for (int k=0; k<KMAX; k++) {
     t_lm[k] =  malloc ( size * sizeof(double) );
     for (int j = 0; j < size; j++ ) {  
-      t_lm[k][j] = t[j] * ooMbh;
+      t_lm[k][j] = t[j] * ooMbh;   // CHECKME
     }
   }
 	  
   /** Compute Ringdown waveform for t>=tmatch */
   double t0, tm, psi[2];
   double Deltaphi[KMAX];
-  int n0 = 2/dt*ooMbh;
+  int n0 = 2/dt*ooMbh; // CHECKME: I think this is to get the t + 2, we need to remove it for the modes in modesatpeak22
   int index_rng;
 	  
   for (int k = 0; k < KMAX; k++) {
+    double fact = 1.; // this is set to 1/Mbh below for the modes attached at the peak of the (2,2)
     if(hlm->kmask[k]){
 
       /* Ringdown attachment index */      
       index_rng = idx[k]+n0;
+      if (modesatpeak22[k]){
+          index_rng = idx[k];
+          fact      = ooMbh;
+      }
       if (index_rng > dynsize -1) index_rng = dynsize - 1;
       
       /* Calculate Deltaphi */
-      t0 = t_lm[k][index_rng] - tmatch[k];
-	
+      t0  = t_lm[k][index_rng] - tmatch[k];
+      t0 /= fact;
       eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
       
       /* Compute and attach ringdown */
       for (int j = index_rng-1; j < size ; j++ ) {
+        tm = t_lm[k][j] - tmatch[k];
+        tm /= fact;
+
+        eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+        hlm->phase[k][j] = psi[1] - Deltaphi[k];
+        hlm->ampli[k][j] = psi[0];
 	
-	tm = t_lm[k][j] - tmatch[k];
-	
-	eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
-	hlm->phase[k][j] = psi[1] - Deltaphi[k];
-	hlm->ampli[k][j] = psi[0];
-	
-	if(nNegAmp[k]==1) {
-	  hlm->ampli[k][j] = -hlm->ampli[k][j];
-	}
+        if(nNegAmp[k]==1) {
+          hlm->ampli[k][j] = -hlm->ampli[k][j];
+        }
       }
     }
   } 
