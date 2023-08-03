@@ -66,6 +66,8 @@ void (*eob_wav_deltalm)();
 void (*eob_wav_hlmNQC_find_a1a2a3)();
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 void (*eob_wav_ringdown)();
+double (*eob_flx_HorizonFlux)();
+double (*eob_flx_HorizonFlux_s)();
 void (*eob_dyn_s_get_rc)();
 void (*eob_dyn_ic)();
 double (*eob_dyn_r0_eob)();
@@ -655,24 +657,30 @@ void eob_set_params(int default_choice, int firstcall)
   
   /** Set waveform fun pointers */
   if (EOBPars->use_flm == USEFLM_HM) {
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
-    eob_wav_flm      = &eob_wav_flm_HM;
-    eob_wav_flm_s    = &eob_wav_flm_s_HM;
-    eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_HM; 
+    eob_wav_hlmNewt       = &eob_wav_hlmNewt_HM;
+    eob_wav_flm           = &eob_wav_flm_HM;
+    eob_wav_flm_s         = &eob_wav_flm_s_HM;
+    eob_wav_deltalm       = &eob_wav_deltalm_HM;
+    eob_wav_ringdown      = &eob_wav_ringdown_HM; 
+    eob_flx_HorizonFlux   = &eob_flx_HorizonFlux_v1;
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_v1;
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
-    eob_wav_flm      = &eob_wav_flm_v1;
-    eob_wav_flm_s    = &eob_wav_flm_s_SSLO;
-    eob_wav_deltalm  = &eob_wav_deltalm_v1;
-    eob_wav_ringdown = &eob_wav_ringdown_v1;
+    eob_wav_hlmNewt       = &eob_wav_hlmNewt_v1;
+    eob_wav_flm           = &eob_wav_flm_v1;
+    eob_wav_flm_s         = &eob_wav_flm_s_SSLO;
+    eob_wav_deltalm       = &eob_wav_deltalm_v1;
+    eob_wav_ringdown      = &eob_wav_ringdown_v1;
+    eob_flx_HorizonFlux   = &eob_flx_HorizonFlux_v1;
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_v1;
   } else if (EOBPars->use_flm == USEFLM_SSNLO) {
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
-    eob_wav_flm      = &eob_wav_flm_v1;
-    eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
-    eob_wav_deltalm  = &eob_wav_deltalm_v1;
-    eob_wav_ringdown = &eob_wav_ringdown_v1;
+    eob_wav_hlmNewt       = &eob_wav_hlmNewt_v1;
+    eob_wav_flm           = &eob_wav_flm_v1;
+    eob_wav_flm_s         = &eob_wav_flm_s_SSNLO;
+    eob_wav_deltalm       = &eob_wav_deltalm_v1;
+    eob_wav_ringdown      = &eob_wav_ringdown_v1;
+    eob_flx_HorizonFlux   = &eob_flx_HorizonFlux_v1;
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_v1;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
@@ -680,11 +688,13 @@ void eob_set_params(int default_choice, int firstcall)
       eob_wav_flm_s   = &eob_wav_flm_s_SSNNLO;
     */
   } else if (EOBPars->use_flm == USEFLM_22PN){
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
-    eob_wav_flm      = &eob_wav_flm_22PN;
-    eob_wav_flm_s    = &eob_wav_flm_s_HM;
-    eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_HM;     
+    eob_wav_hlmNewt       = &eob_wav_hlmNewt_HM;
+    eob_wav_flm           = &eob_wav_flm_22PN;
+    eob_wav_flm_s         = &eob_wav_flm_s_HM;
+    eob_wav_deltalm       = &eob_wav_deltalm_HM;
+    eob_wav_ringdown      = &eob_wav_ringdown_HM;
+    eob_flx_HorizonFlux   = &eob_flx_HorizonFlux_v1;
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_gsf;
   } else errorexit("unknown option for use_flm");
 
   /** Set hlm and NQC fun pointers */

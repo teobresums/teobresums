@@ -116,7 +116,7 @@ void eob_flx_Tlm(const double w, double *MTlm)
  * Nagar & Akcay, PRD 85, 044025 (2012)
  * Bernuzzi, Nagar & Zenginoglu, PRD 86, 104038 (2012)
  */
-double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
+double eob_flx_HorizonFlux_v1(double x, double Heff, double jhat, double nu)
 {
   double rhoHlm[2]; /* only 21,22 multipoles -> k=0,1 */
   double FlmHLO[2];
@@ -172,7 +172,7 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
 }
 
 /** Compute horizon-absorbed fluxes. spin case. */
-double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+double eob_flx_HorizonFlux_s_v1(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
 {
     
   double x2 = x*x;
@@ -201,6 +201,21 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
     
   return hatFH;
 }
+
+/** Horizon flux for GSF, from Albertini et. al. XXXX.YYYY : 
+    * 10PN for 22 +  nu-dependence @1PN
+    * 15PN for 21
+    * 6PN for l = 3
+    * expanded fit for 44, 42
+    * 12PN for 43, 41 
+*/
+double eob_flx_HorizonFlux_s_gsf(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+{
+  // Dummy function
+  double hatF = 0.;
+  return hatF;
+}
+
 
 /** Flux calculation for Newton-Normalized energy flux 
     Use the DIN resummation procedure. 
