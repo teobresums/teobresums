@@ -617,6 +617,9 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
 void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
+  int knqcpeak22_size = EOBPars->knqcpeak22_size;  
+  int *knqcpeak22     = EOBPars->knqcpeak22;
+
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
@@ -632,19 +635,52 @@ void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, doubl
   const double chisq = chi*chi;
   const double chi3  = chisq*chi;
   const double chi4  = chi3*chi;
-  const double chi_21A      = delta*chi_S/(1-1.3*nu) + chi_A;
-  const double chi_21A2     = SQ(chi_21A);
-  const double chi_21A3     = chi_21A2*chi_21A;
-  const double chi_21D      = delta*chi_S/(1-2.*nu)  + chi_A;
+  const double chi_21A  = delta*chi_S/(1-1.3*nu) + chi_A;
+  const double chi_21A2 = SQ(chi_21A);
+  const double chi_21A3 = chi_21A2*chi_21A;
+  const double chi_21D  = delta*chi_S/(1-2.*nu)  + chi_A;
+  const double chi_33   = chi_S*delta+chi_A;
+  const double chi_44A  = (1 - 5.*nu)*chi_S + chi_A*delta;
+  const double chi_44D  = (1 - 7.*nu)*chi_S + chi_A*delta;
 
-  /* l=2, m=1 */
-  A_tmp[0]    = fabs(-0.033175*chi_21A3*delta + 0.086356*chi_21A2*delta*nu - 0.049897*chi_21A2*delta + 0.012706*chi_21A*delta + 0.168668*chi_21A*nu - 0.285597*chi_21A + 1.067921*delta*nu2 - 0.189346*delta*nu + 0.431426*delta);
-  A_tmp[0]    = A_tmp[0]/sqrt(24);
-  dA_tmp[0]   = chi_21D*delta*(0.023534*nu - 0.008064) + delta*(0.006743 - 0.0297*nu) + 0.008256*abs( (chi_21D - delta*(5.471011*nu2 + 1.235589*nu + 0.815482)) );
-  dA_tmp[0]    = dA_tmp[0]/sqrt(24);
-  omg_tmp[0]  = 0.01009*chi3 - 0.077343*chisq*nu + 0.02411*chisq + 0.168854*chi*nu2 - 0.159382*chi*nu + 0.047635*chi + 1.965157*nu3 - 0.53085*nu2 + 0.237904*nu + 0.176526;
-  domg_tmp[0] = 0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
 
+  for(int j=0; j<knqcpeak22_size; j++){
+    int k = knqcpeak22[j];
+    switch(k)
+    {
+      case(-1):
+        if (VERBOSE) printf("eob_nqc_point_HM_peak22: no modes selected in knqcpeak22\n");
+        break;
+      case(0):
+        /* l=2, m=1 */
+        A_tmp[0]    = fabs(-0.033175*chi_21A3*delta + 0.086356*chi_21A2*delta*nu - 0.049897*chi_21A2*delta + 0.012706*chi_21A*delta + 0.168668*chi_21A*nu - 0.285597*chi_21A + 1.067921*delta*nu2 - 0.189346*delta*nu + 0.431426*delta);
+        dA_tmp[0]   = chi_21D*delta*(0.023534*nu - 0.008064) + delta*(0.006743 - 0.0297*nu) + 0.008256*abs( (chi_21D - delta*(5.471011*nu2 + 1.235589*nu + 0.815482)) );
+        omg_tmp[0]  = 0.01009*chi3 - 0.077343*chisq*nu + 0.02411*chisq + 0.168854*chi*nu2 - 0.159382*chi*nu + 0.047635*chi + 1.965157*nu3 - 0.53085*nu2 + 0.237904*nu + 0.176526;
+        domg_tmp[0] = 0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
+        break;
+      case(4):
+        /* l=3, m=3 */
+        A_tmp[4]    = fabs(- 0.088371*SQ(chi_33)*delta*nu + 0.036258*SQ(chi_33)*delta + 1.057731*chi_33*nu2 - 0.466709*chi_33*nu + 0.099543*chi_33 + 1.96267*delta*nu2 + 0.027833*delta*nu + 0.558808*delta);
+        dA_tmp[4]   = SQ(chi_33)*delta*(0.004941*nu - 0.002094) + 0.001781*sqrt(fabs( (SQ(chi_33) + chi_33*delta*(39.247538*nu - 2.986889) + SQ(delta)*(85.173306*nu + 4.637906)) ));
+        omg_tmp[4]  = 0.045141*chi3 - 0.346675*chisq*nu + 0.119419*chisq + 0.745924*chi*nu2 - 0.478915*chi*nu + 0.17467*chi - 8.887163*nu3 + 4.226831*nu2 + 0.427167;
+        domg_tmp[4] = 0.001697*chi3 + 0.016231*chisq*nu - 0.003985*chisq - 0.154378*chi*nu2 + 0.050618*chi*nu - 0.002721*chi - 0.255402*nu3 + 0.08663*nu2 + 0.027405*nu + 0.009736;
+        break;
+      case(8):
+        /* l=4, m=4 */
+        A_tmp[8]    = fabs( 0.031483*SQ(chi_44A) - 0.180165*chi_44A*nu + 0.063931*chi_44A + 6.239418*nu3 - 1.947473*nu2 - 0.615307*nu + 0.262533 );
+        dA_tmp[8]   = -0.001251*SQ(chi_44D)*chi_44D + 0.006387*SQ(chi_44D)*nu - 0.001223*SQ(chi_44D) - 0.034308*chi_44D*nu2 + 0.014373*chi_44D*nu - 0.000681*chi_44D + 1.134679*nu3 - 0.417056*nu2 + 0.024004*nu + 0.003498;
+        omg_tmp[8]  = 0.042529*chi3 - 0.415864*chisq*nu + 0.155222*chisq + 0.768712*chi*nu2 - 0.592568*chi*nu + 0.244508*chi - 13.651335*nu3 + 5.490329*nu2 + 0.574041;
+        domg_tmp[8] = 0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
+        break;
+      default:
+        errorexit("A,dA,omg,domg fits only implemented for (2,1), (3,3) and (4,4) at the moment");
+    }
+    /* Normalize A and dA */
+    int l       = LINDEX[k];
+    double fact = sqrt((l+2)*(l+1)*l*(l-1));
+    A_tmp[k]    = A_tmp[k]/fact;
+    dA_tmp[k]   = dA_tmp[k]/fact;
+  }
 }
 
 /** This function computes the NQC functioning points by evaluating the post-peak template and its dervatives*/
@@ -2931,14 +2967,29 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
     /* Fits */
     switch(k)
     {
+      case(-1):
+        if (VERBOSE) printf("QNMHybridFitCab_HM_Pompili23: no modes selected in knqcpeak22\n");
+        break;
       case(0):
-        c1f = 0.173462*chi2*nu - 0.028873*chi2 + 0.197467*chi*nu2 - 0.026139*chi - 2.934735*nu3 + 1.009106*nu2 - 0.112721*nu + 0.099889;
-        c2f = 0.183489*chi3 + 0.10573*chi2 - 20.792825*chi*nu2 + 6.867746*chi*nu - 0.484948*chi - 54.917585*nu3 + 16.466312*nu2 + 0.426316*nu - 0.92208;
-        d1f = 0.018467*chi4 + 0.398621*chi3*nu - 0.050499*chi3 - 0.877201*chi2*nu2 + 0.414553*chi2*nu - 0.068277*chi2 - 10.648526*chi*nu3 + 4.104918*chi*nu2 - 0.723576*chi*nu + 0.039227*chi + 42.715534*nu4 - 18.280603*nu3 + 2.236592*nu2 - 0.048094*nu + 0.16335;
-        d2f = exp(0.814085*chi3 - 1.197363*chi2*nu + 0.560622*chi2 + 6.44667*chi*nu2 - 5.630563*chi*nu + 0.949586*chi + 91.269183*nu3 - 27.329751*nu2 + 1.101262*nu + 1.040761);
+        c1f = 0.173462*chisq*nu - 0.028873*chisq + 0.197467*chi*nu2 - 0.026139*chi - 2.934735*nu3 + 1.009106*nu2 - 0.112721*nu + 0.099889;
+        c2f = 0.183489*chi3 + 0.10573*chisq - 20.792825*chi*nu2 + 6.867746*chi*nu - 0.484948*chi - 54.917585*nu3 + 16.466312*nu2 + 0.426316*nu - 0.92208;
+        d1f = 0.018467*chi4 + 0.398621*chi3*nu - 0.050499*chi3 - 0.877201*chisq*nu2 + 0.414553*chisq*nu - 0.068277*chisq - 10.648526*chi*nu3 + 4.104918*chi*nu2 - 0.723576*chi*nu + 0.039227*chi + 42.715534*nu4 - 18.280603*nu3 + 2.236592*nu2 - 0.048094*nu + 0.16335;
+        d2f = exp(0.814085*chi3 - 1.197363*chisq*nu + 0.560622*chisq + 6.44667*chi*nu2 - 5.630563*chi*nu + 0.949586*chi + 91.269183*nu3 - 27.329751*nu2 + 1.101262*nu + 1.040761);
+        break;
+      case(4):
+        c1f = -0.00956*chi3 + 0.029459*chisq*nu - 0.020264*chisq - 0.494524*chi*nu2 + 0.169463*chi*nu - 0.026285*chi - 5.847417*nu3 + 1.957462*nu2 - 0.171682*nu + 0.093539;
+        c2f = -0.057346*chi3 + 0.237107*chisq*nu - 0.094285*chisq - 4.250609*chi*nu2 + 1.763105*chi*nu - 0.315826*chi + 14.801916*nu3 - 7.060581*nu2 + 1.158627*nu - 0.646888;
+        d1f = -0.016524*chi3 + 0.221466*chisq*nu - 0.066323*chisq + 0.678442*chi*nu2 - 0.261264*chi*nu + 0.006664*chi + 2.316434*nu3 - 2.192227*nu2 + 0.424582*nu + 0.161577;
+        d2f = exp(0.275999*chi3 - 1.830695*chisq*nu + 0.512734*chisq + 29.072515*chi*nu2 - 10.581319*chi*nu + 1.310643*chi + 324.310223*nu3 - 124.681881*nu2 + 13.200426*nu + 0.410855);
+        break;
+      case(8):
+        c1f = 4.519504*chi*nu2 - 1.489036*chi*nu + 0.068403*chi - 1656.065439*nu4 + 817.835726*nu3 - 127.055379*nu2 + 6.921968*nu + 0.009386;
+        c2f = 0.964861*chi3*nu - 0.185226*chi3 - 12.647814*chisq*nu2 + 5.264969*chisq*nu - 0.539721*chisq - 254.719552*chi*nu3 + 105.698791*chi*nu2 - 12.107281*chi*nu + 0.2244*chi - 393.727702*nu4 + 145.32788*nu3 - 15.556222*nu2 + 1.592449*nu - 0.677664;
+        d1f = -0.020644*chi3 + 0.494221*chisq*nu - 0.127074*chisq + 4.297985*chi*nu2 - 1.284386*chi*nu + 0.062684*chi - 44.280815*nu3 + 11.021482*nu2 - 0.162943*nu + 0.166018;
+        d2f = exp(37.735116*chi*nu2 - 12.516669*chi*nu + 1.309868*chi - 528.368915*nu3 + 155.115196*nu2 - 6.612448*nu + 0.787726);
         break;
       default:
-        errorexit("Ringdown coefficients only implemented for l=2, m=1 at the moment");
+        errorexit("Ringdown fits only implemented for (2,1), (3,3) and (4,4) at the moment");
     }
 
     /* Correct normalization of A, dA */

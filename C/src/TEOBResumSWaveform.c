@@ -2883,6 +2883,9 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
     
     /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
     eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
+    
+    /* 21 fitted directly at tpeak_22*/
+    eob_nqc_point_HM_peak22(dyn, max_A, max_dA, max_omg, max_domg);
 
     // Over-writing fits using postpeak quantities for modes in kpostpeak
     for (int j=0; j<kpostpeak_size; j++) {
@@ -3040,21 +3043,23 @@ void eob_wav_hlmNQC_find_a1a2a3(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc
   int    j_NQC[KMAX];
 
   if (EOBPars->use_flm == USEFLM_HM) {
-    
+    int modesatpeak22[KMAX]; 
+    set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
     eob_nqc_deltat_lm(dyn, dtmrg);
     
     for (int k=0; k<KMAX; k++) {   
       if(h->kmask_nqc[k]) {
-	tmrg[k]  = tmrg[1] + dtmrg[k];
-	t_NQC[k] = tmrg[k] + 2.;
-	
-	j_NQC[k] = size-1;
-	for (int j=size-2; j>=0; j--) {
-	  if(t[j] < t_NQC[k]) {
-	    break;
-	  }
-	  j_NQC[k] = j;
-	}
+        tmrg[k]  = tmrg[1] + dtmrg[k];
+        t_NQC[k] = tmrg[k] + 2.;
+        if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
+
+        j_NQC[k] = size-1;
+        for (int j=size-2; j>=0; j--) {
+          if(t[j] < t_NQC[k]) {
+            break;
+          }
+          j_NQC[k] = j;
+        }
       }
     }
   }
@@ -3459,12 +3464,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   int    j_NQC[KMAX];
 
   /* Usually, the NQC match point is at tmrg_lm + 2
-   * except for modes in knqcpeak22 where it is at tmrg22
+   * except for modes in knqcpeak22 where it is at tmrg_22
   */
   int modesatpeak22[KMAX]; 
   set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
   eob_nqc_deltat_lm(dyn, dtmrg);
-  
+
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){
       tmrg[k]  = tmrg[1] + dtmrg[k];
@@ -3478,7 +3483,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 	        break;
 	      }
 	      j_NQC[k] = j;
-      } 
+      }
     }
   }
 
@@ -3643,13 +3648,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){   
       for (int j=0; j<fullsize; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
+        pr_star2 = SQ(pr_star[j]);
+        r2       = SQ(r[j]);
+        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
+        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
+        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
+        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
+        n5[k][j]  = n4[k][j]*r2*w2;           /* (pr*)*(r Omg) */
       }
     }
   }
@@ -3694,8 +3699,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     for (int k=0; k<KMAX; k++) {
       if(hlm->kmask_nqc[k]){
         fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-		ai[k][0], ai[k][1], 
-		bi[k][0], bi[k][1]);
+        ai[k][0], ai[k][1], 
+        bi[k][0], bi[k][1]);
       }
     }  
     fclose(fp);  
@@ -3836,7 +3841,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     n2[k22][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
     //n3[k22][j]  = n1[k22][j]*pr_star2;
     n4[k22][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-    n5[k22][j]  = n4[k22][j]*r2*w2;              /* (pr*)*(r Omg) */
+    n5[k22][j]  = n4[k22][j]*r2*w2;         /* (pr*)*(r Omg) */
     //n6[k22][j]  = n5[k22][j]*pr_star2;
   }
   
