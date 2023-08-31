@@ -202,18 +202,356 @@ double eob_flx_HorizonFlux_s_v1(double x, double Heff, double jhat, double nu, d
   return hatFH;
 }
 
-/** Horizon flux for GSF, from Albertini et. al. XXXX.YYYY : 
+/** Horizon flux for large-mass-ratio nonspinning binaries, from Albertini et. al. XXXX.YYYY : 
     * 10PN for 22 +  nu-dependence @1PN
     * 15PN for 21
     * 6PN for l = 3
     * expanded fit for 44, 42
     * 12PN for 43, 41 
+    * note: right now this is used whenever usespins = 1, 
+    *       see line 697 in TEOBREsumSPars.c and lines 697, 834 below. 
 */
-double eob_flx_HorizonFlux_s_gsf(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu)
 {
-  // Dummy function
-  double hatF = 0.;
-  return hatF;
+  double rhoHlm[9]; /* all l = 2, 3, 4 multipoles */
+  double FlmHLO[9];
+  double FlmH[9];
+
+  /** Coefficients */
+  static double clm[KMAX][31]; // up to v^30 = x^15
+  
+  /** Shorthands */
+  double nu2 = nu*nu;
+  double nu3 = nu*nu2;
+  double x2  = x*x;
+  double x3  = x*x2;
+  double x4  = x*x3;
+  double x5  = x*x4;
+  double x6  = x*x5;
+  double x7  = x*x6;
+  double x8  = x*x7;
+  double x9  = x4*x5;
+  double x10 = x*x9;
+  double x11 = x*x10;
+  double x12 = x*x11;
+
+  double v     = sqrt(x);
+  double v5    = x2*v;
+  double logv  = log(v);
+  double logv2 = logv*logv;
+  double logv3 = logv2*logv;
+  double logv4 = logv3*logv;
+  double logv5 = logv4*logv;
+    
+  /** all Flm's below are already normalized by the 22 Newtonian contribution 32/5 x^5 */
+  
+  /** Compute leading-order part */
+
+  /* l = 2, m = 1, 2 */
+  FlmHLO[0] = (1-4*nu+2*nu2)*x5;
+  FlmHLO[1] = (1-4*nu+2*nu2)*x4;
+  /* l = 3, m = 1,2,3 */
+  FlmHLO[2] = x6/56;
+  FlmHLO[3] = 20*x7/63;
+  FlmHLO[4] = 15*x6/56;
+  /* l = 4, m = 1,2,3,4 */
+  FlmHLO[5] = 5*x9/392;
+  FlmHLO[6] = 5*x8/441;
+  FlmHLO[7] = 5*x9/56;
+  FlmHLO[8] = 5*x8/63;
+    
+  /* coefficients */
+
+  /* l = 2, m = 1, 15PN */
+
+  clm[0][2] = 0.5833333333333333;
+  clm[0][4] = 0.8864087301587302;
+  clm[0][6] = 6.424901605857512 - 2.038095238095238*logv;
+  clm[0][8] = 1.766752931390268 - 1.011111111111111*logv;
+  clm[0][10] = 1.493961606813823 - 2.284892290249433*logv;
+  clm[0][11] = 0.2845717789918374;
+  clm[0][12] = -21.22122135102325 - 16.00071023614146*logv + 2.076916099773243*logv2;
+  clm[0][13] = -0.7408111353861827;
+  clm[0][14] = -36.25765093154207 - 1.658502033614163*logv + 0.4868783068783069*logv2;
+  clm[0][15] = -0.1117709908353889;
+  clm[0][16] = -74.76369738861186 - 12.86351094951647*logv + 3.774864035561314*logv2;
+  clm[0][17] = 10.24798928556675 - 1.739953162978663*logv;
+  clm[0][18] = 80.2948593563905 + 11.72133394983377*logv + 19.31505055832595*logv2 - 1.41098427095706*logv3;
+  clm[0][19] = -21.55623759955979 + 4.377759326613204*logv;
+  clm[0][20] = -45.88843267104524 + 87.39972915380464*logv - 8.93059977671359*logv2 + 0.776920466952213*logv3;
+  clm[0][21] = -10.12322702932126 + 1.57537040488682*logv;
+  clm[0][22] = -258.1760297892015 + 114.3521460900903*logv + 40.14180948157476*logv2 - 5.458835408086137*logv3;
+  clm[0][23] = 138.6110729577363 - 66.5680325952109*logv + 5.31928538396334*logv2;
+  clm[0][24] = -2420.325524199674 - 253.6114020959027*logv + 35.55678286318115*logv2 - 15.51782914742528*logv3 + 0.7189300809162163*logv4;
+  clm[0][25] = -192.8106387836869 + 130.6238544076524*logv - 12.61012313876668*logv2;
+  clm[0][26] = -2168.284353993513 + 190.0643165235938*logv - 177.0158212116286*logv2 + 32.36280845602777*logv3 - 2.089040601166981*logv4;
+  clm[0][27] = -255.3688794224337 + 114.5643448447081*logv - 9.293481075122995*logv2;
+  clm[0][28] = -4961.74781462676 + 690.4179508849885*logv + 26.12151060568234*logv2 - 81.62655350372286*logv3 + 7.068836828458563*logv4;
+  clm[0][29] = 1042.935504712336 - 989.9896542581077*logv + 217.7114930804913*logv2 - 10.84121021112528*logv3;
+  clm[0][30] = 18238.62622224579 + 4516.381214052836*logv + 601.4830290647311*logv2 - 103.8909274572888*logv3 + 10.30113915972032*logv4 - 0.2930495948877529*logv5;
+  
+  /* l = 2, m = 2, 10PN + nu-dependence */
+
+  clm[1][2] = (4.-21.*nu + 27.*nu2 - 8.*nu3)/(4.*(1.-4.*nu+2.*nu2));
+  clm[1][4] = 3.988095238095238;
+  clm[1][6] = 24.0571791747528 - 8.152380952380952*logv;
+  clm[1][8] = 13.8551086308806 - 25.21904761904762*logv;
+  clm[1][10] = 199.4078081876445 + 19.50022675736961*logv;
+  clm[1][11] = -54.63778156643277;
+  clm[1][12] = -582.8750735738636 - 178.5327822715866*logv + 33.23065759637188*logv2;
+  clm[1][13] = 280.8970416802098;
+  clm[1][14] = -1450.143031531191 - 1495.235015255883*logv + 311.4985941043084*logv2;
+  clm[1][15] = -605.2296742617768;
+  clm[1][16] = 9097.201294081323 + 555.1423370953789*logv - 861.1631918799266*logv2;
+  clm[1][17] = -6911.484312430366 + 1336.284029167613*logv;
+  clm[1][18] = -12313.69173035653 + 12628.97695598026*logv + 1163.917137711289*logv2 - 90.30299334125184*logv3;
+  clm[1][19] = 44262.15268434681 - 9667.39349272306*logv;
+  clm[1][20] = -65287.57081431632 - 36282.34512006451*logv + 23510.50238485977*logv2 - 2547.894737357377*logv3;
+
+  /* l = 3, m = 1, 6PN */
+
+  clm[2][2] = 1.611111111111111;
+  clm[2][4] = 2.936728395061728;
+  clm[2][6] = 9.213370934931813 - 0.8253968253968254*logv;
+  clm[2][8] = 14.94079355370311 - 1.329805996472663*logv;
+  clm[2][10] = 26.60058633678188 - 2.426788163825201*logv;
+  clm[2][12] = 31.93969752137537 - 8.018297216743535*logv + 0.3406399596875787*logv2;
+
+  /* l = 3, m = 2, 6PN */
+
+  clm[3][2] = 0.8333333333333333;
+  clm[3][4] = 1.483333333333333;
+  clm[3][6] = 17.55939758125838 - 3.301587301587302*logv;
+  clm[3][8] = 11.64342254747321 - 2.751322751322751*logv;
+  clm[3][10] = 19.44076190460366 - 4.355555555555556*logv;
+  clm[3][12] = -236.1045311517952 - 67.71250784926367*logv + 5.45023935500126*logv2;
+
+  /* l = 3, m = 3, 6PN */
+
+  clm[4][2] = 1.166666666666667;
+  clm[4][4] = 2.941666666666667;
+  clm[4][6] = 40.34914499874845 - 7.428571428571429*logv;
+  clm[4][8] = 37.52373649525303 - 8.666666666666667*logv;
+  clm[4][10] = 96.14382900245816 - 40.36666666666667*logv;
+  clm[4][12] = -951.7147490236113 - 226.4706695003768*logv + 27.59183673469388*logv2;
+
+  /* l = 4, m = 1, 12PN */
+
+  clm[5][2] = 0.905952380952381;
+  clm[5][4] = 1.161867849412492;
+  clm[5][6] = 4.612151514725207 - 0.4533910533910534*logv;
+  clm[5][8] = 4.45556947830768 - 0.4107507043221329*logv;
+  clm[5][10] = 5.834974681453181 - 0.5267804881463277*logv;
+  clm[5][12] = -4.740283887597416 - 2.217714990413922*logv + 0.1027817236475245*logv2;
+  clm[5][14] = -1.814306997067652 - 2.134979998756876*logv + 0.09311534725686447*logv2;
+  clm[5][15] = 0.00001435495089480142;
+  clm[5][16] = -0.9449359329927948 - 2.792242657110017*logv + 0.1194187802132584*logv2;
+  clm[5][17] = -0.0001044819818753333;
+  clm[5][18] = 125.6261721611818 + 1.482428667619591*logv + 0.5314289759267583*logv2 - 0.01553343798463309*logv3;
+  clm[5][19] = 0.000289431462887703;
+  clm[5][20] = 121.5062731879449 + 0.181893489347434*logv + 0.5101627503844811*logv2 - 0.01407255512655451*logv3;
+  clm[5][21] = 0.00003121019888384675 - 0.0000325420315378543*logv;
+  clm[5][22] = 160.9063446509957 - 0.4011059612661441*logv + 0.6658805688470822*logv2 - 0.01804780218518797*logv3;
+  clm[5][23] = -0.002642735277528471 + 0.0002368559791142116*logv;
+  clm[5][24] = -1231.945263533703 - 56.81545345841274*logv - 0.1766899297640938*logv2 - 0.08463609444026904*logv3 + 0.00176068045265935*logv4;
+
+  /* l = 4, m = 2, fit */
+
+  double c1_42 = 1.43458;
+  double c2_42 = 2.43232; 
+  double c3_42 = 21.927986;
+  double c4_42 = 10.419841;
+
+  /* l = 4, m = 3, 12PN */
+
+  clm[7][2] = 0.9535714285714286;
+  clm[7][4] = 1.824282815398887;
+  clm[7][6] = 29.8155597518837 - 4.080519480519481*logv;
+  clm[7][8] = 24.58827566143869 - 3.891066790352505*logv;
+  clm[7][10] = 45.98465156318206 - 7.444021566212081*logv;
+  clm[7][12] = -981.9795394240014 - 130.7295482586175*logv + 8.325319615449486*logv2;
+  clm[7][14] = -1084.478016966415 - 119.5234645513736*logv + 7.938786919017902*logv2;
+  clm[7][15] = 2.542936486161387;
+  clm[7][16] = -2008.92091650133 - 182.489551074673*logv + 15.18773750716777*logv2;
+  clm[7][17] = -20.10488518653115;
+  clm[7][18] = 88175.52617148325 + 3763.412721296057*logv + 275.5071020190452*logv2 - 11.32387629079753*logv3;
+  clm[7][19] = 50.98457538841343;
+  clm[7][20] = 85964.76478144973 + 3085.616876555689*logv + 359.8075763923598*logv2 - 10.79812489158193*logv3;
+  clm[7][21] = 569.8165299459041 - 51.88250934752649*logv;
+  clm[7][22] = 174421.7810462703 + 9919.505601789107*logv + 167.0685138147112*logv2 - 20.65795292100481*logv3;
+  clm[7][23] = -4644.864041137085 + 410.1918782862395*logv;
+  clm[7][24] = -9.31707434047562e6 - 347717.7619463258*logv - 8166.42545545039*logv2 - 320.6274444799858*logv3 + 11.551824449898*logv4;
+
+  /* l = 4, m = 4, fit */
+
+  double c1_44 = 1.15290;
+  double c2_44 = 4.59627;
+  double c3_44 = 55.268737;
+  double c4_44 = 13.255971;
+
+  /** Compute rho_lm */
+  
+  rhoHlm[0] = Taylorseries(v,clm[0],30);
+  rhoHlm[1] = Taylorseries(v,clm[1],20);
+  rhoHlm[2] = Taylorseries(v,clm[2],12);
+  rhoHlm[3] = Taylorseries(v,clm[3],12);
+  rhoHlm[4] = Taylorseries(v,clm[4],12);
+  rhoHlm[5] = Taylorseries(v,clm[5],24);
+  rhoHlm[6] = 1. + c1_42*x + c2_42*x2 + c3_42*x3 + c4_42*x4;
+  rhoHlm[7] = Taylorseries(v,clm[7],24);
+  rhoHlm[8] = 1. + c1_44*x + c2_44*x2 + c3_44*x3 + c4_44*x4;
+    
+  /** Compute horizon multipolar flux (l = 2, 3, 4) */
+  const double Heff2 = Heff*Heff;
+  const double jhat2 = jhat*jhat;
+  
+  /* l = 2, m = 1,2 */
+  FlmH[0] = FlmHLO[0] * jhat2 * gsl_pow_int(rhoHlm[0],4);
+  FlmH[1] = FlmHLO[1] * Heff2 * gsl_pow_int(rhoHlm[1],4);
+  /* l = 3, m = 1,2,3 */
+  FlmH[2] = FlmHLO[2] * Heff2 * gsl_pow_int(rhoHlm[2],6);
+  FlmH[3] = FlmHLO[3] * jhat2 * gsl_pow_int(rhoHlm[3],6);
+  FlmH[4] = FlmHLO[4] * Heff2 * gsl_pow_int(rhoHlm[4],6);
+  /* l = 4, m = 1,2,3,4 */
+  FlmH[5] = FlmHLO[5] * jhat2 * gsl_pow_int(rhoHlm[5],8);
+  FlmH[6] = FlmHLO[6] * Heff2 * gsl_pow_int(rhoHlm[6],8);
+  FlmH[7] = FlmHLO[7] * jhat2 * gsl_pow_int(rhoHlm[7],8);
+  FlmH[8] = FlmHLO[8] * Heff2 * gsl_pow_int(rhoHlm[8],8);
+    
+  /** Sum over multipoles */
+  double hatFH = 0.;
+
+  for(int i = 0; i < 9; i++)
+  {
+    hatFH = hatFH + FlmH[i];
+  }
+  
+  return hatFH;
+}
+
+/** Horizon flux for large-mass-ratio spinning binaries
+ * work in progress, so still only LO contribution for l = 2;
+ * also this is *not* used anywhere in the code yet since usespins = 1 
+ * for nonspinning configurations as well and this is not consistent with 
+ * the nonspin function for lmr. Will be updated soon
+ */
+double eob_flx_HorizonFlux_s_lmr(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+{
+  /* only l = 2 for now */
+  double FlmHLO[2];
+  double FlmH[2];
+  
+  /** Shorthands */
+  double nu2 = nu*nu;
+  double nu3 = nu*nu2;
+  double x2  = x*x;
+  double x3  = x*x2;
+  double x4  = x*x3;
+  double x5  = x*x4;
+  /*
+  double x6  = x*x5;
+  double x7  = x*x6;
+  double x8  = x*x7;
+  double x9  = x4*x5;
+  double x10 = x*x9;
+  double x11 = x*x10;
+  double x12 = x*x11;
+  */
+
+  double v     = sqrt(x);
+  double v5    = x2*v;
+  /*
+  double logv  = log(v);
+  double logv2 = logv*logv;
+  double logv3 = logv2*logv;
+  double logv4 = logv3*logv;
+  double logv5 = logv4*logv;
+  */
+    
+  /** all Flm's below are already normalized by the 22 Newtonian contribution 32/5 x^5 */
+  
+  /** Compute leading-order part (nu-dependent) */
+
+  /* mass ratios X_i = m_i/M */
+  const double X1to3 = X1*X1*X1;
+  const double X1to4 = X1to3*X1;
+  const double X2to3 = X2*X2*X2;
+  const double X2to4 = X2to3*X2;
+
+  /* l = 2, m = 1 */
+
+  FlmHLO[0] = (1-4*nu+2*nu2)*x5;
+
+  /* l = 2, m = 2 */
+
+  // squared spins
+  double chi1s = chi1*chi1;
+  double chi2s = chi2*chi2;
+
+  // coefficients of the v^5 term (Alvi leading order)
+  double cv5[2];
+  cv5[0] = -0.25*chi1*(1. + 3.*chi1s)*X1to3;
+  cv5[1] = -0.25*chi2*(1. + 3.*chi2s)*X2to3;
+    
+  // coefficients of the v^8 = x^4 term
+  double cv8[2];
+  cv8[0] = 0.5*(1 + sqrt(1. - chi1s))*(1. + 3.*chi1s)*X1to4;
+  cv8[1] = 0.5*(1 + sqrt(1. - chi2s))*(1. + 3.*chi2s)*X2to4;
+    
+  double FH_LOl2m2S = (cv5[0] + cv5[1])*v5;
+  double FH_LOl2m2  = (cv8[0] + cv8[1])*x4;
+
+  FlmHLO[1] = FH_LOl2m2 + FH_LOl2m2S;
+  
+  // nonspin limit: FlmHLO[1] = (1-4*nu+2*nu2)*x4;
+
+  /** other multipoles */
+
+  /* 
+  FlmHLO[2] = x6/56;
+  FlmHLO[3] = 20*x7/63;
+  FlmHLO[4] = 15*x6/56;
+  
+  FlmHLO[5] = 5*x9/392;
+  FlmHLO[6] = 5*x8/441;
+  FlmHLO[7] = 5*x9/56;
+  FlmHLO[8] = 5*x8/63;
+  */
+  
+    
+  /** Compute horizon multipolar flux (only l = 2 for now) */
+
+  FlmH[0] = FlmHLO[0];
+  FlmH[1] = FlmHLO[1];
+  
+  /**
+  
+  const double Heff2 = Heff*Heff;
+  const double jhat2 = jhat*jhat;
+
+  FlmH[0] = FlmHLO[0] * jhat2 * gsl_pow_int(rhoHlm[0],4);
+  FlmH[1] = FlmHLO[1] * Heff2 * gsl_pow_int(rhoHlm[1],4);
+  
+  FlmH[2] = FlmHLO[2] * Heff2 * gsl_pow_int(rhoHlm[2],6);
+  FlmH[3] = FlmHLO[3] * jhat2 * gsl_pow_int(rhoHlm[3],6);
+  FlmH[4] = FlmHLO[4] * Heff2 * gsl_pow_int(rhoHlm[4],6);
+ 
+  FlmH[5] = FlmHLO[5] * jhat2 * gsl_pow_int(rhoHlm[5],8);
+  FlmH[6] = FlmHLO[6] * Heff2 * gsl_pow_int(rhoHlm[6],8);
+  FlmH[7] = FlmHLO[7] * jhat2 * gsl_pow_int(rhoHlm[7],8);
+  FlmH[8] = FlmHLO[8] * Heff2 * gsl_pow_int(rhoHlm[8],8);
+
+  */
+    
+  /** Sum over multipoles */
+  double hatFH = 0.;
+
+  for(int i = 0; i < 2; i++)
+  {
+    hatFH = hatFH + FlmH[i];
+  }
+  
+  return hatFH;
 }
 
 

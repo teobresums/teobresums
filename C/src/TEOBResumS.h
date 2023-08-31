@@ -1021,9 +1021,10 @@ void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 extern double (*eob_flx_HorizonFlux)(); /* defined in TEOBResumSPars.c */
 double eob_flx_HorizonFlux_v1(double x, double Heff, double jhat, double nu);
+double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu);
 extern double (*eob_flx_HorizonFlux_s)(); /* defined in TEOBResumSPars.c */
 double eob_flx_HorizonFlux_s_v1(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
-double eob_flx_HorizonFlux_s_gsf(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_lmr(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */

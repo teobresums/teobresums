@@ -1,4 +1,4 @@
-# parfile for BBH (1000,0,0) from 10 Hz (M = 15*Msun)
+# parfile for BBH (50000,0,0) from 10 Hz (M = 15*Msun)
 # builds on default options
 #
 # Note: the (l,m) = (3,1),(4,1) modes are inspiral only, and do not have a 
@@ -16,7 +16,7 @@ use_geometric_units = "yes"
 # Binary properties
 #
 
-q = 1000. # mass ratio
+q = 50000. # mass ratio
 
 use_spins = 1
 chi1 = 0.0 # dimensionless spin 1 z-component 
@@ -30,8 +30,9 @@ initial_frequency = 0.0033
 # Output dir, output modes 
 #
 
-output_dir = "./bbh_q1000_s0s0/"
+output_dir = "./bbh_q50000_s0s0/"
 output_hpc = "no" # switch this off to test performances!!!
+# just 22 mode:
 output_multipoles = "yes"
 output_lm   = [ 1 ]
 use_mode_lm = [ 1 ]
@@ -49,7 +50,7 @@ size = 200 # size of the arrays (chunks, dynamically extended)
 ode_timestep = "adaptive"
 compute_LR = "no" # calculate LR ?
 compute_LSO = "no" # calculate LSO ?
-ode_stop_at_radius = 5. # rLR = 1.81...
+ode_stop_at_radius = 5. 
 ode_tmax = 100000000000000000000
 # interpolate on uniform grid?
 interp_uniform_grid = "no" # yes, only h+,hx on a grid of dt_interp
