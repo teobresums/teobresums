@@ -87,6 +87,7 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
   if (eobp->use_mode_lm_nqc) free (eobp->use_mode_lm_nqc);
   if (eobp->kpostpeak) free (eobp->kpostpeak);
+  if (eobp->knqcpeak22) free (eobp->knqcpeak22);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
   free(eobp);
@@ -156,11 +157,16 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_mode_lm_nqc = malloc (eobp->use_mode_lm_nqc_size * sizeof(int) );
   memcpy(eobp->use_mode_lm_nqc, hlm_nqc, eobp->use_mode_lm_nqc_size * sizeof(int));
 
-  int kpostpeak[] = {0,1,3,6,7,8};      //indexes of multipoles to use
-  eobp->kpostpeak_size = 6;
+  int kpostpeak[] = {1,3,6,7,8};      //indexes of multipoles to use
+  eobp->kpostpeak_size = 5;
   eobp->kpostpeak = malloc (eobp->kpostpeak_size * sizeof(int) );
   memcpy(eobp->kpostpeak, kpostpeak, eobp->kpostpeak_size * sizeof(int));
   
+  int knqcpeak22[]      = {0};      //indexes of multipoles to use
+  eobp->knqcpeak22_size = 1;
+  eobp->knqcpeak22      = malloc (eobp->knqcpeak22_size * sizeof(int) );
+  memcpy(eobp->knqcpeak22, knqcpeak22, eobp->knqcpeak22_size * sizeof(int));
+
   /* FD options */
   
   eobp->tc = 0;
@@ -1068,7 +1074,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     free(eobp->kpostpeak);
     eobp->kpostpeak_size = str2iarray(val, &eobp->kpostpeak);
   }
-    
+
+  if (STREQUAL(key,"knqcpeak22")) {
+    free(eobp->knqcpeak22);
+    eobp->knqcpeak22_size = str2iarray(val, &eobp->knqcpeak22);
+  }
+
   if (STREQUAL(key,"centrifugal_radius")) {
     val = string_trim(val);
     for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
@@ -1416,6 +1427,11 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d,", eobp->kpostpeak[i]);
   fprintf(f,"%d]\n", eobp->kpostpeak[eobp->kpostpeak_size-1]);
   
+  fprintf(f,"%s = [", "knqcpeak22");
+  for(int i=0; i<eobp->knqcpeak22_size-1;i++)
+    fprintf(f,"%d,", eobp->knqcpeak22[i]);
+  fprintf(f,"%d]\n", eobp->knqcpeak22[eobp->knqcpeak22_size-1]);
+
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));

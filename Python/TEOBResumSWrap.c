@@ -183,6 +183,18 @@ int SetOptionalVariables(PyObject* dict){
       EOBPars->kpostpeak[i] = (int) PyLong_AsLong(item); 
     }
   }
+  
+  /* k nqc peak22 */
+  if ( PyDict_GetItemString(dict, "knqcpeak22") != NULL ) {
+    if (EOBPars->knqcpeak22) free(EOBPars->knqcpeak22);
+    PyListObject *tmp = PyDict_GetItemString(dict, "knqcpeak22");
+    EOBPars->knqcpeak22_size = PyObject_Length(tmp);
+    EOBPars->knqcpeak22 = malloc ( EOBPars->knqcpeak22_size * sizeof(int) );
+    for (int i = 0; i < EOBPars->knqcpeak22_size; i++){
+      PyObject *item = PyList_GetItem(tmp, i);
+      EOBPars->knqcpeak22[i] = (int) PyLong_AsLong(item); 
+    }
+  }
 
   /* Post Adiabatic Dynamics */
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics") != NULL ) { 
