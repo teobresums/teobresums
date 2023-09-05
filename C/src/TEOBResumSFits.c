@@ -610,9 +610,7 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
 
 /** Fits for NR point used to determine NQC corrections 
     Here the NQC point is assumed to be the peak of the 22 mode
-    From Pompili et. al. XXXX.YYYY
-    FIXME: these need to be rewritten properly, via e.g. some matrix summation
-    TODO: Currently, only 21 is available. Implement also the other fits!
+    From Pompili et. al. arXiv:2303.18039
 */
 void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
@@ -673,7 +671,7 @@ void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, doubl
         domg_tmp[8] = 0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
         break;
       default:
-        errorexit("A,dA,omg,domg fits only implemented for (2,1), (3,3) and (4,4) at the moment");
+        errorexit("A,dA,omg,domg fits only implemented for (2,1), (3,3) and (4,4) at the moment.");
     }
     /* Normalize A and dA */
     int l       = LINDEX[k];
@@ -2926,7 +2924,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 }
 
 /* Global fits of the ringdown coefficients from the 
-   Pompili et. al. paper, arXiv:XXXX.YYYY
+   Pompili et. al. paper, arXiv:2303.18039
 */
 void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
