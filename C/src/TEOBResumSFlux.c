@@ -211,7 +211,7 @@ double eob_flx_HorizonFlux_s_v1(double x, double Heff, double jhat, double nu, d
     * note: right now this is used whenever usespins = 1, 
     *       see line 697 in TEOBREsumSPars.c and lines 697, 834 below. 
 */
-double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu)
+double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
 {
   double rhoHlm[9]; /* all l = 2, 3, 4 multipoles */
   double FlmHLO[9];
@@ -219,6 +219,8 @@ double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu)
 
   /** Coefficients */
   static double clm[KMAX][31]; // up to v^30 = x^15
+  for (int k=0; k<KMAX; k++) clm[k][0] = 1.;
+  for (int k=0; k<KMAX; k++) for (int n=1; n<31; n++) clm[k][n] = 0.;
   
   /** Shorthands */
   double nu2 = nu*nu;
