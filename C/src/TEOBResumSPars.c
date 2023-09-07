@@ -422,7 +422,13 @@ void eob_set_params(int default_choice, int firstcall)
     EOBPars->q = 1.;
   }
 
-  /* Check: if in-plane components of spins are < 1e4, then spin aligned, else spin precessing */
+  /* Spin parameters */
+  if (EOBPars->use_spins==MODE_SPINS_GENERIC) {
+    EOBPars->chi1 = EOBPars->chi1z;
+    EOBPars->chi2 = EOBPars->chi2z;
+  }
+
+  /* Check: if in-plane components of spins are < 1e-4, then spin aligned, else spin precessing */
   /* Note: the "NOSPIN" option is deprecated, and currently never used */
 
   double chip_1 = sqrt(SQ(EOBPars->chi1x) + SQ(EOBPars->chi1y));
@@ -443,12 +449,6 @@ void eob_set_params(int default_choice, int firstcall)
   const int usespins = EOBPars->use_spins;
   const int usetidal = EOBPars->use_tidal;
   const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
-
-  /* Spin parameters */
-  if (usespins==MODE_SPINS_GENERIC) {
-    EOBPars->chi1 = EOBPars->chi1z;
-    EOBPars->chi2 = EOBPars->chi2z;
-  }
 
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
