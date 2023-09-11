@@ -125,6 +125,32 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC") != NULL ) { 
     EOBPars->delta_t0_sigmoid_NQC = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC"));
   }
+
+  /* Metric potentials */
+  if ( PyDict_GetItemString(dict, "A_pot") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "A_pot"));
+    for(EOBPars->A_pot=0; EOBPars->A_pot<=A_NOPT; EOBPars->A_pot++){
+      if (EOBPars->A_pot == A_NOPT) EOBPars->A_pot = A_5PNlog;
+      if (STREQUAL(val,A_opt[EOBPars->A_pot])) break;
+    }    
+  }  
+  if ( PyDict_GetItemString(dict, "D_pot") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "D_pot"));
+    for(EOBPars->D_pot=0; EOBPars->D_pot<=D_NOPT; EOBPars->D_pot++){
+      if (EOBPars->D_pot == D_NOPT) EOBPars->D_pot = D_3PN;
+      if (STREQUAL(val,D_opt[EOBPars->D_pot])) break;
+    }    
+  }
+  if ( PyDict_GetItemString(dict, "Q_pot") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "Q_pot"));
+    for(EOBPars->Q_pot=0; EOBPars->Q_pot<=D_NOPT; EOBPars->Q_pot++){
+      if (EOBPars->Q_pot == D_NOPT) EOBPars->Q_pot = D_3PN;
+      if (STREQUAL(val,Q_opt[EOBPars->Q_pot])) break;
+    }    
+  }  
   
   /* Adiabatic tidal ell>2 parameters */
   if ( PyDict_GetItemString(dict, "LambdaAl3") != NULL )
