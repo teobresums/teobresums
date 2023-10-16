@@ -198,6 +198,18 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
+
+  /** ST parameters */
+  if(EOBPars->use_scalartensor){
+    set_st_vars(EOBPars->st_alpha1, EOBPars->st_alpha2, EOBPars->st_beta1,
+		EOBPars->st_beta2, EOBPars->st_dbeta1, EOBPars->st_dbeta2,
+		EOBPars->st_d2beta1, EOBPars->st_d2beta2, EOBPars->st_alpha0,
+		&EOBPars->st_betaA, &EOBPars->st_betaB, &EOBPars->st_deltaA, &EOBPars->st_deltaB,
+		&EOBPars->st_chiA, &EOBPars->st_chiB, &EOBPars->st_kappaA, &EOBPars->st_kappaB,
+		&EOBPars->st_gammaAB, &EOBPars->st_alphaAB, &EOBPars->st_deltaP, &EOBPars->st_deltaM,
+		&EOBPars->st_betaP, &EOBPars->st_betaM, &EOBPars->st_chiP, &EOBPars->st_chiM,
+		&EOBPars->st_kappaP, &EOBPars->st_kappaM);
+  }
   
   /* *****************************************
    * Set Memory & do preliminary computations

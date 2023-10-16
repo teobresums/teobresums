@@ -322,6 +322,36 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->khatB2= 0. ; //
   eobp->rLR_tidal= 0. ; // radius of light-ring for NNLO tidal model
 
+  eobp->use_scalartensor = 0;
+  eobp->st_alpha1 = 0.;
+  eobp->st_alpha2 = 0.;
+  eobp->st_beta1 = 0.;
+  eobp->st_beta2 = 0.;
+  eobp->st_dbeta1 = 0.;
+  eobp->st_dbeta2 = 0.;
+  eobp->st_d2beta1 = 0.;
+  eobp->st_d2beta2 = 0.;
+  eobp->st_alpha0 = 0.;
+  eobp->st_betaA = 0.;
+  eobp->st_betaB = 0.;
+  eobp->st_deltaA = 0.;
+  eobp->st_deltaB = 0.;
+  eobp->st_chiA = 0.;
+  eobp->st_chiB = 0.;
+  eobp->st_kappaA = 0.;
+  eobp->st_kappaB = 0.;
+  eobp->st_gammaAB = 0.;
+  eobp->st_alphaAB = 0.;
+  eobp->st_deltaP = 0.;
+  eobp->st_deltaM = 0.;
+  eobp->st_betaP = 0.;
+  eobp->st_betaM = 0.;
+  eobp->st_chiP = 0.;
+  eobp->st_chiM = 0.;
+  eobp->st_kappaP = 0.;
+  eobp->st_kappaM = 0.;
+  eobp->st_mphi = 0.;
+  
   // f-mode frequencies
   for (int l=0; l<6; l++) {
     eobp->bomgfA[l] = eobp->bomgfB[l] = 0.;
@@ -697,7 +727,9 @@ void eob_set_params(int default_choice, int firstcall)
   }
 
   /** Set metric potentials function pointers */
-  if (EOBPars->A_pot == A_5PNlog) {
+  if (EOBPars->use_scalartensor){
+    eob_metric_Apotential = &eob_metric_A5PNlogST;
+  } else if (EOBPars->A_pot == A_5PNlog) {
     eob_metric_Apotential = &eob_metric_A5PNlog;
   } else if (EOBPars->A_pot == A_GSF) {
     eob_metric_Apotential = &eob_metric_AGSF;
@@ -706,7 +738,9 @@ void eob_set_params(int default_choice, int firstcall)
   }
   else errorexit("unknown option for A potential");
 
-  if (EOBPars->D_pot == D_3PN) {
+  if (EOBPars->use_scalartensor){
+    eob_metric_Dpotential = &eob_metric_D3PNST;
+  } else if (EOBPars->D_pot == D_3PN) {
     eob_metric_Dpotential = &eob_metric_D3PN;
   } else if (EOBPars->D_pot == D_GSF) {
     eob_metric_Dpotential = &eob_metric_DGSF;
@@ -714,7 +748,9 @@ void eob_set_params(int default_choice, int firstcall)
     eob_metric_Dpotential = &eob_metric_D5PNP32;
   }else errorexit("unknown option for D potential");
 
-  if (EOBPars->Q_pot == Q_3PN) {
+  if (EOBPars->use_scalartensor){
+    eob_metric_Qpotential = &eob_metric_Q3PNST;
+  } else if (EOBPars->Q_pot == Q_3PN) {
     eob_metric_Qpotential = &eob_metric_Q3PN;
   } else if (EOBPars->Q_pot == Q_GSF) {
     eob_metric_Qpotential = &eob_metric_QGSF;
@@ -1021,6 +1057,37 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     eobp->SigmaBl2 = par_get_d(val);
   }
 
+  if (STREQUAL(key,"st_alpha1")) {
+    eobp->st_alpha1 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_alpha2")) {
+    eobp->st_alpha2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_beta1")) {
+    eobp->st_beta1 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_beta2")) {
+    eobp->st_beta2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_dbeta1")) {
+    eobp->st_dbeta1 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_dbeta2")) {
+    eobp->st_dbeta2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_d2beta1")) {
+    eobp->st_d2beta1 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_d2beta2")) {
+    eobp->st_d2beta2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_alpha0")) {
+    eobp->st_alpha0 = par_get_d(val);
+  }
+  if (STREQUAL(key,"st_mphi")) {
+    eobp->st_mphi = par_get_d(val);
+  }
+ 
   /* EOB Settings */
 
   if (STREQUAL(key,"use_spins")) {
@@ -1072,6 +1139,10 @@ if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) b
 
   if (STREQUAL(key,"use_tidal_fmode_model")) {
     eobp->use_tidal_fmode_model = YESNO2INT(string_trim(val));
+  }
+
+  if (STREQUAL(key,"use_scalartensor")) {
+    eobp->use_scalartensor = YESNO2INT(string_trim(val));
   }
   
   if (STREQUAL(key,"use_speedytail")) {    
@@ -1480,7 +1551,18 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","khatAl2",  eobp->khatA2); //
   fprintf(f,"%s = %.16f\n","khatBl2",  eobp->khatB2); //
   fprintf(f,"%s = %.16f\n","rLR_tidal",  eobp->rLR_tidal); // radius of light-ring for NNLO tidal model
-  
+
+  fprintf(f,"%s = %.16f\n","st_alpha1",  eobp->st_alpha1);
+  fprintf(f,"%s = %.16f\n","st_alpha2",  eobp->st_alpha2);
+  fprintf(f,"%s = %.16f\n","st_alpha0",  eobp->st_alpha0);
+  fprintf(f,"%s = %.16f\n","st_beta1",  eobp->st_beta1);
+  fprintf(f,"%s = %.16f\n","st_beta2",  eobp->st_beta2);
+  fprintf(f,"%s = %.16f\n","st_dbeta1",  eobp->st_dbeta1);
+  fprintf(f,"%s = %.16f\n","st_dbeta2",  eobp->st_dbeta2);
+  fprintf(f,"%s = %.16f\n","st_d2beta1",  eobp->st_d2beta1);
+  fprintf(f,"%s = %.16f\n","st_d2beta2",  eobp->st_d2beta2);
+  fprintf(f,"%s = %.16f\n","st_mphi",  eobp->st_mphi);
+ 
   fprintf(f,"%s = %.16f\n","BH_final_mass",  eobp->Mbhf); // final BH mass
   fprintf(f,"%s = %.16f\n","BH_final_spin",  eobp->abhf); 
 
@@ -1492,6 +1574,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n" , "pGSF_tidal", eobp->pGSF_tidal);
   fprintf(f,"%s = \"%s\"\n", "use_lambda234_fits", use_lambda234_fits_opt[eobp->use_lambda234_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_tidal_fmode_model", INT2YESNO(eobp->use_tidal_fmode_model));
+  fprintf(f,"%s = %d\n"    , "use_scalartensor", eobp->use_scalartensor);
   fprintf(f,"%s = \"%s\"\n", "use_speedytail", INT2YESNO(eobp->use_speedytail));
   fprintf(f,"%s = %.16f\n" , "dt_merger_interp", eobp->dt_merger_interp);
   fprintf(f,"%s = %.16f\n" , "dt_interp", eobp->dt_interp);

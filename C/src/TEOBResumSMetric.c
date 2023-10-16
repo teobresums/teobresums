@@ -330,6 +330,258 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   *d2A =  d2A_du;
 }
 
+/* EOB Metric potential A with 3PN Scalar-Tensor correction */
+
+void eob_metric_A5PNlogST(double r, double nu, double *A, double *dA, double *d2A)
+{
+
+  /* shortcuts */
+  double nu2 = nu*nu;
+  double nu3 = nu*nu2;
+  double nu4 = nu2*nu2;
+  double pi2 = Pi*Pi;
+  double pi4 = pi2*pi2;
+  double u    = 1./r;
+  double u2   = u*u;
+  double u3   = u*u2;
+  double u4   = u2*u2;
+  double u5   = u4*u;
+  double u6   = u5*u;
+  double u7   = u6*u;
+  double u10  = u5*u5;
+  double u8   = u5*u3;
+  double u9   = u8*u;
+  double logu = log(u);
+
+  double a5c0 = -4237./60. + 2275./512.*pi2 + 256./5.*Log2 + 128./5.*EulerGamma;
+  double a5c1 = -221./6.   + 41./32.*pi2;
+  double a5c   =  a5c0 + nu*a5c1;
+  double a6c   =  EOBPars->a6c;
+  
+  /* ST parameters */
+  const double XAB = sqrt(1.-4.*nu);
+  double alphaAB  = EOBPars->st_alphaAB;
+  double betaA    = EOBPars->st_betaA;
+  double betaB    = EOBPars->st_betaB;
+  double gammaAB  = EOBPars->st_gammaAB;
+  double deltaP   = EOBPars->st_deltaP;
+  double deltaM   = EOBPars->st_deltaM;
+  double betaP    = EOBPars->st_betaP;
+  double betaM    = EOBPars->st_betaM;
+  double chiP     = EOBPars->st_chiP;
+  double chiM     = EOBPars->st_chiM;
+  double kappaP   = EOBPars->st_kappaP;
+  double kappaM   = EOBPars->st_kappaM;
+  double gammaAB2 = gammaAB*gammaAB;
+  double gammaAB3 = gammaAB2*gammaAB;
+  double zeta = 0.;
+  if (gammaAB != 0.) zeta = -8.*betaA*betaB/gammaAB;
+  
+  double betabar  = - XAB*betaM + betaP;
+  double kappabar = - XAB*kappaM + kappaP;
+  double chibar   = - XAB*chiM + chiP;
+  double deltabar =  XAB*deltaM + deltaP;
+
+  /* 4PN and 5PN coefficients including all known log terms */
+  double a5tot  = a5c  + 64./5.*logu;
+  double a5log  = 64./5.;
+  double a6tot  = a6c  + (-7004./105. - 144./5.*nu)*logu;
+  double a6log  = (-7004./105. -144./5.*nu);
+  double a5tot2 = a5tot*a5tot;
+  
+  /* ST correction in A up to 3PN */
+  double a2st    = 2.*(betabar - gammaAB);
+  double a3st    = 1./12.*(-20.*gammaAB - 35.*gammaAB2 - 24.*betabar*(1-2.*gammaAB)+4.*(deltabar + 4.*chibar) + nu*(-72*betaP + 4.*gammaAB*(10. + gammaAB) - 32.*chiP + 16.*deltaP - 24.*zeta));
+  double a4stc   = 0.;
+  if (gammaAB != 0.)
+    a4stc = - 2.*gammaAB - 13./2.*gammaAB2 - 5.*gammaAB3 + (-7./6.*(2. + gammaAB)*(2. + gammaAB) + 9.*gammaAB2)*betabar + 4.*gammaAB*chibar + 2./3.*kappabar + 2./3.*(1.+2.*gammaAB)*deltabar
+    + 6.*(betaP*betaP + betaM*betaM) - 12.*XAB*betaM*betaP + 2./3.*(betaM*(deltaM + XAB*deltaP)-deltabar*betaP) + nu*(11./(4.*alphaAB)*(2.+gammaAB)*gammaAB - deltabar*gammaAB/(alphaAB*(2.+gammaAB))
+    + 32./gammaAB2*betabar*(betaP*betaP-betaM*betaM) + 4./gammaAB*(betaM*(-4*chiM +4.*XAB*chiP + 4./3.*(2.*deltaM-XAB*deltaP)) + betaP*(4./3.*(2.*deltaP - XAB*deltaM) +4.*chibar))+gammaAB*(581./18.
+    - 75./64.*pi2 - 8.*zeta - 32./3.*betabar - 20.*betaP + 1./2.*deltabar + (4./3.+7./32.*pi2)*deltaP - 8.*chiP) + gammaAB2*(239./18. - 5./32.*pi2 - 2./3.*betabar) + gammaAB3*(-3./8. + 7./128.*pi2)
+    + 3.*zeta - 6.*(betaP*betaP + betaM*betaM) - 5./3.*betabar + 3./2.*XAB*betaM - 12.*XAB*betaM*betaP - 8./3.*(deltaP*betabar + betaM*deltaM) - deltaP*(92./9. -7./16.*pi2) + 1./3.*XAB*deltaM
+    - 2./3.*kappabar - 4./3.*kappaP - 4.*chibar) - 4.*nu2*betaM*betaM;
+
+  double a4stlog =  8./3.*nu*(2.*deltaP + gammaAB*(2.+gammaAB)/2.);
+  double a4sttot = a4stc + a4stlog*logu;
+  double a2st2   = a2st*a2st; 
+  double a2st3   = a2st2*a2st;
+  double a2st4   = a2st2*a2st2;
+  double a2st5   = a2st4*a2st;
+  double a3st2   = a3st*a3st;
+  double a3st3   = a3st2*a3st;
+  double a3st4   = a3st2*a3st2;
+  double a4st2   = a4sttot*a4sttot;
+  double a4st3   = a4st2*a4sttot;
+  double a4st4   = a4st2*a4st2;
+  double a4stlog2 = a4stlog*a4stlog;
+
+  /* ST informed coefficients of the Padeed function */
+  double N1 =(-3072. + 3840.*a2st - 1152.*a2st2 + 48.*a2st3 + 1536.*a3st - 576.*a2st*a3st - 48.*a3st2 + 576.*a4sttot - 96.*a2st*a4sttot + 21120.*nu - 4160.*a2st*nu - 192.*a3st*nu 
+              + 192.*a5tot*nu + 48.*a6tot*nu - 738.*Pi*Pi*nu + 123.*a2st*Pi*Pi*nu - 192.*nu2)/(2.*(768. - 768.*a2st + 144.*a2st2 - 288.*a3st + 48.*a2st*a3st - 96.*a4sttot - 3584.*nu
+              + 96.*a2st*nu - 24.*a5tot*nu + 123.*pi2*nu));
+  double D1 = (768.*a2st - 576.*a2st2 + 48.*a2st3 + 384.*a3st - 384.*a2st*a3st - 48.*a3st2 + 192.*a4sttot - 96.*a2st*a4sttot + 6784.*nu - 3776.*a2st*nu - 192.*a3st*nu + 96.*a5tot*nu 
+               + 48.*a6tot*nu - 246.*pi2*nu + 123.*a2st*pi2*nu - 192.*nu2)/(2.*(768. - 768.*a2st + 144*a2st2 - 288.*a3st + 48.*a2st*a3st - 96.*a4sttot - 3584.*nu + 96.*a2st*nu
+               - 24.*a5tot*nu + 123.*pi2*nu));
+  double D2 = (2.*(-96.*a2st2+ 48.*a2st3 - 192.*a3st + 48.*a2st*a3st + 24.*a2st2*a3st + 24.*a3st2 - 96.*a4sttot - 3392.*nu + 96.*a2st*nu + 48.*a2st2*nu + 96.*a3st*nu - 48.*a5tot*nu           
+               - 12.*a2st*a5tot*nu - 24.*a6tot*nu + 123.*pi2*nu + 96.*nu2))/(768. - 768.*a2st + 144*a2st2 - 288.*a3st + 48.*a2st*a3st - 96.*a4sttot - 3584.*nu + 96.*a2st*nu 
+               - 24.*a5tot*nu + 123.*pi2*nu);
+  double D3 = (192.*a2st3 - 48.*a2st4 + 768.*a2st*a3st - 96.*a2st2*a3st + 384.*a3st2 - 48.*a2st*a3st2 + 768.*a4sttot - 192.*a2st*a4sttot + 96.*a2st2*a4sttot + 192.*a3st*a4sttot + 24064*nu
+               - 4480.*a2st*nu + 2816.*a2st2*nu + 7552.*a3st*nu - 192.*a2st*a3st*nu + 384.*a4sttot*nu + 384.*a5tot*nu + 48.*a3st*a5tot*nu + 192.*a6tot*nu - 48.*a2st*a6tot*nu 
+               - 984.*pi2*nu + 246.*a2st*pi2*nu - 123.*a2st2*pi2*nu - 246.*a3st*pi2*nu + 13568.*nu2 - 192.*a2st*nu2 + 96.*a5tot*nu2 - 492.*pi2*nu2)/
+               (2.*(768. - 768.*a2st + 144*a2st2 - 288.*a3st + 48.*a2st*a3st - 96.*a4sttot - 3584.*nu + 96.*a2st*nu - 24.*a5tot*nu + 123.*pi2*nu));
+  double D4 = (4608.*a2st4 + 27648.*a2st2*a3st + 2304.*a2st3*a3st + 18432.*a3st2 + 18432.*a2st*a3st2+ 2304*a3st3 + 36864.*a2st*a4sttot - 4608.*a2st2*a4sttot + 36864.*a3st*a4sttot 
+               + 9216.*a4st2 + 1155072.*nu*a2st - 89088.*nu*a2st2 + 4608.*a2st3*nu + 1228800.*a3st*nu + 73728.*a2st*a3st*nu + 13824.*a3st2*nu + 651264.*a4sttot*nu + 36864.*a5tot*nu
+               - 9216.*a2st*a5tot*nu - 2304.*a2st2*a5tot*nu + 2304.*a4sttot*a5tot*nu + 18432.*a6tot*nu - 9216.*a2st*a6tot*nu - 2304.*a3st*a6tot*nu - 47232.*a2st*pi2*nu 
+               + 5904.*a2st2*pi2*nu - 47232.*a3st*pi2*nu - 23616.*a4sttot*pi2*nu + 11431936.*nu2 + 73728.*a2st*nu2 + 27648.*a3st*nu2 + 72192.*a5tot*nu2 - 4608.*a6tot*nu2 
+               - 834432.*Pi*Pi*nu2 - 2952.*a5tot*Pi*Pi*nu2 + 15129.*Pi*Pi*Pi*Pi*nu2 + 18432*nu3)/(96.*(768. - 768.*a2st + 144*a2st2 - 288.*a3st + 48.*a2st*a3st - 96.*a4sttot 
+               - 3584.*nu + 96.*a2st*nu - 24.*a5tot*nu + 123.*Pi*Pi*nu));
+  double D5 = (4608.*a2st5 + 36864.*a2st3*a3st + 55296.*a2st*a3st2 + 13824.*a2st2*a3st2 + 18432.*a3st3 + 55296.*a2st2*a4sttot - 13824.*a2st3*a4sttot + 73728.*a3st*a4sttot 
+               + 18432.*a2st*a3st*a4sttot + 4608.*a3st2*a4sttot + 18432.*a4st2 + 9216.*a2st*a4st2 + 1732608.*a2st2*nu - 359424.*a2st3*nu + 2310144.*a3st*nu + 798720.*a2st*a3st*nu 
+               + 55296.*a2st2*a3st*nu + 254976.*a3st2*nu+ 1302528.*a4sttot*nu + 614400.*a2st*a4sttot*nu + 18432.*a3st*a4sttot*nu + 73728.*a2st*a5tot*nu - 36864.*a2st2*a5tot*nu 
+               + 36864.*a3st*a5tot*nu - 18432.*a2st*a3st*a5tot*nu + 18432.*a4sttot*a5tot*nu + 73728.*a6tot*nu - 55296.*a2st*a6tot*nu + 4608.*a2st2*a6tot*nu - 18432.*a3st*a6tot*nu 
+               - 4608.*a4sttot*a6tot*nu - 70848.*a2st2*pi2*nu + 17712.*a2st3*pi2*nu - 94464.*a3st*pi2*nu - 23616.*a2st*a3st*pi2*nu - 5904.*a3st2*pi2*nu - 47232.*a4sttot*pi2*nu 
+               - 23616.*a2st*a4sttot*pi2*nu + 22716416.*nu2 + 10424320.*a2st*nu2 + 55296.*a2st2*nu2 + 798720.*a3st*nu2 + 18432.*a4sttot*nu2 + 651264.*a5tot*nu2 - 36864.*a2st*a5tot*nu2 
+               + 4608.*a5tot2*nu2 - 181248.*a6tot*nu2 - 1668864.*pi2*nu2 - 787200.*a2st*pi2*nu2 - 23616.*a3st*pi2*nu2 - 23616.*a5tot*nu2*pi2 + 5904.*a6tot*pi2*nu2  + 30258.*pi4*nu2      
+               + 15129.*a2st*pi4*nu2 + 724992.*nu3 - 23616.*pi2*nu3)/(192.*(768. - 768.*a2st + 144*a2st2 - 288.*a3st + 48.*a2st*a3st - 96.*a4sttot - 3584.*nu + 96.*a2st*nu - 24.*a5tot*nu 
+               + 123.*pi2*nu));
+
+  /* First derivatives */
+  double dN1 = (-12.*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4*nu2 + 4.*a3st*(1. + nu))) 
+                + nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. 
+                + 192.*a3st + 96.*a4stc + 3392.*nu - 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/
+               (u*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+  double dD1 = (-12.*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4*nu2 + 4.*a3st*(1. + nu)))       
+                + nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. 
+                + 192.*a3st + 96.*a4stc + 3392.*nu - 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/
+               (u*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+  double dD2 = (24.*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4.*nu2 + 4.*a3st*(1 + nu)))       
+                + nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. 
+                + 192.*a3st + 96.*a4stc + 3392.*nu - 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4 + nu))))))/
+               (u*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+  double dD3 = (12.*(-4. + a2st)*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4.*nu2 + 4.*a3st*(1 + nu)))  
+                + nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304.
+                + 192.*a3st + 96.*a4stc + 3392.*nu - 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/
+               (u*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu+ 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+  double dD4 = ((768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu) - 24.*(4.*a4stlog + a5log*nu)*logu)*(1536.*a3st*a4stlog 
+                + 768.*a4stc*a4stlog + 27136.*a4stlog*nu + 96.*a4stlog*a5c*nu + 1536.*a5log*nu + 96.*a4stc*a5log*nu + 768.*a6log*nu - 96.*a3st*a6log*nu - 984.*a4stlog*pi2*nu 
+                + 3008.*a5log*nu2 - 192.*a6log*nu2 - 123.*a5log*pi2*nu2 - 96.*a2st2*(2.*a4stlog + a5log*nu) + 384.*a2st*(4.*a4stlog - (a5log + a6log)*nu) + 192.*a4stlog*(4.*a4stlog 
+                + a5log*nu)*logu) + (4.*a4stlog + a5log*nu)*(4608.*a2st4 + 27648.*a2st2*a3st + 2304.*a2st3*a3st + 18432.*a3st2 + 18432.*a2st*a3st2 + 2304.*a3st3 + 1155072.*a2st*nu
+                - 89088.*a2st2*nu + 4608.*a2st3*nu + 1228800.*a3st*nu + 73728.*a2st*a3st*nu + 13824.*a3st2*nu - 47232.*a2st*pi2*nu + 5904.*a2st2*pi2*nu - 47232.*a3st*pi2*nu 
+                + 11431936.*nu2 + 73728.*a2st*nu2 + 27648.*a3st*nu2 - 834432.*pi2*nu2 + 15129.*pi4*nu2 + 18432.*nu3 + (36864.*a2st - 4608.*a2st2 + 36864.*a3st + 651264.*nu 
+                - 23616.*pi2*nu)*(a4stc + a4stlog*logu) + 9216.*gsl_pow_int(a4stc + a4stlog*logu,2) + (36864.*nu - 9216.*a2st*nu - 2304.*a2st2*nu + 72192.*nu2 - 2952.*pi2*nu2)*(a5c 
+                + a5log*logu) + 2304.*nu*(a4stc + a4stlog*logu)*(a5c + a5log*logu) + (18432.*nu - 9216.*a2st*nu - 2304.*a3st*nu - 4608.*nu2)*(a6c + a6log*logu)))/(4.*u*gsl_pow_int(-768.  
+                - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+  double dD5 = (2.*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu) - 24.*(4.*a4stlog  
+               + a5log*nu)*logu)*(-288.*a2st3*a4stlog + 1536.*a3st*a4stlog + 96.*a3st2*a4stlog + 768.*a4stc*a4stlog + 27136.*a4stlog*nu + 384.*a3st*a4stlog*nu + 384.*a4stlog*a5c*nu 
+               + 768.*a3st*a5log*nu + 384.*a4stc*a5log*nu - 96.*a4stlog*a6c*nu + 1536.*a6log*nu - 384.*a3st*a6log*nu - 96.*a4stc*a6log*nu - 984.*a4stlog*pi2*nu + 384.*a4stlog*nu2 
+               + 13568.*a5log*nu2 + 192.*a5c*a5log*nu2 - 3776.*a6log*nu2 - 492.*a5log*pi2*nu2 + 123.*a6log*pi2*nu2 + 96.*a2st2*(12*a4stlog + (-8*a5log + a6log)*nu) 
+               + 4*a2st*(96*a4stc*a4stlog + a4stlog*(3200. - 123.*pi2)*nu - 96.*(3.*a6log + 2.*a5log*(-2. + nu))*nu + 96.*a3st*(a4stlog - a5log*nu)) + 192.*(2.*(2. + a2st)*a4stlog2 
+               + a4stlog*(4*a5log - a6log)*nu + a5log*a5log*nu2)*logu) + (4*a4stlog + a5log*nu)*(4608.*a2st5 + 36864.*a2st3*a3st + 55296.*a2st*a3st2 + 13824.*a2st2*a3st2 + 18432.*a3st3 
+               + 1732608.*a2st2*nu - 359424.*a2st3*nu + 2310144.*a3st*nu + 798720.*a2st*a3st*nu + 55296.*a2st2*nu*a3st + 254976.*a3st2*nu - 70848.*a2st2*pi2*nu + 17712.*a2st3*pi2*nu  
+               - 94464.*a3st*pi2*nu - 23616.*a2st*a3st*pi2*nu - 5904.*a3st2*pi2*nu + 22716416*nu2 + 10424320.*a2st*nu2 + 55296.*nu2*a2st2 + 798720.*a3st*nu2 - 1668864.*pi2*nu2 
+               - 787200.*a2st*pi2*nu2 - 23616.*a3st*pi2*nu2 + 30258.*pi4*nu2 + 15129.*a2st*pi4*nu2 + 724992.*nu3 - 23616.*pi2*nu3 + (55296.*a2st2- 13824.*a2st3 + 73728.*a3st 
+               + 18432.*a2st*a3st + 4608.*a3st2 + 1302528.*nu + 614400.*a2st*nu +  18432.*a3st*nu - 47232.*pi2*nu - 23616.*a2st*pi2*nu + 18432.*nu2)*(a4stc + a4stlog*logu)
+               + (18432. + 9216.*a2st)*gsl_pow_int(a4stc + a4stlog*logu,2) + (73728.*a2st*nu - 36864.*a2st2*nu + 36864.*nu*a3st - 18432.*a2st*a3st*nu + 651264.*nu2 - 36864.*a2st*nu2 
+               - 23616.*pi2*nu2)*(a5c + a5log*logu) + 18432.*nu*(a4stc + a4stlog*logu)*(a5c + a5log*logu) + 4608.*nu2*gsl_pow_int(a5c + a5log*logu,2) + (73728.*nu - 55296.*a2st*nu   
+               + 4608.*a2st2*nu - 18432.*a3st*nu - 181248.*nu2 + 5904.*pi2*nu2)*(a6c + a6log*logu) - 4608.*nu*(a4stc + a4stlog*logu)*(a6c + a6log*logu)))/(8.*u*gsl_pow_int(-768. 
+               - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));  
+
+  /* Numerator and denominator of the Pade */
+  double Num = 1 + N1*u;
+  double Den = 1 + D1*u - D2*u2 + D3*u3 + D4*u4 + D5*u5;
+  *A = Num/Den;
+    
+  /* First derivative */
+  double dNum  = dN1*u + N1;
+  double dDen  = D1 + u*(dD1 - 2*D2) + u2*(-dD2 + 3*D3) + u3*(dD3 + 4*D4) + u4*(dD4 + 5*D5) + dD5*u5;
+  
+  /* Derivative of A function with respect to u */
+  double prefactor = (*A)/(Num*Den);
+  double dA_u      = prefactor*(dNum*Den - dDen*Num);
+
+  /* Derivative of A with respect to r */
+  /* *dA = -u2*dA_u; */
+
+  *dA = dA_u;
+
+  
+  if (d2A != NULL) {
+    
+    /* Second derivatives of Pade coefficients */ 
+    double d2N1 = (576.*(4.*a4stlog + a5log*nu)*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4.*nu2 + 4.*a3st*(1. + nu))) 
++ nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. + 192.*a3st + 96.*a4stc + 3392.*nu 
+- 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu 
+- 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,3)) + (12.*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu
+ + 4.*nu2 + 4.*a3st*(1. + nu))) + nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. + 192.*a3st 
++ 96.*a4stc + 3392.*nu - 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+   double d2D1 = (576.*(4.*a4stlog + a5log*nu)*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4.*nu2 + 4.*a3st*(1. + nu))) 
++ nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. + 192.*a3st + 96.*a4stc + 3392.*nu 
+- 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu 
+- 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,3)) + (12.*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu
+ + 4.*nu2 + 4.*a3st*(1. + nu))) + nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. + 192.*a3st 
++ 96.*a4stc + 3392.*nu - 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+    double d2D2 = (-1152.*(4.*a4stlog + a5log*nu)*(96.*a4stlog*(4*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4*nu2 + 4.*a3st*(1. + nu))) 
++ nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. + 192.*a3st + 96.*a4stc + 3392*nu 
+- 123*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu
+ - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,3)) - (24.*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4.*nu2 + 4.*a3st*(1 + nu))) + nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. + 192.*a3st 
++ 96.*a4stc + 3392.*nu - 123.*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc 
++ 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+    double d2D3 = (-576.*(-4. + a2st)*(4.*a4stlog + a5log*nu)*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4*nu2 + 4*a3st*(1 + nu))) 
++ nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. + 192.*a3st + 96.*a4stc + 3392.*nu - 123*pi2*nu) 
++ 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu 
+- 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,3)) - (12.*(-4. + a2st)*(96.*a4stlog*(4.*a2st3 + 2.*a2st2*(a3st + 2.*(-5. + nu)) + a2st*(64. - a5c*nu) + 2.*(-32. + a3st2 - (-8. + a5c + a6c)*nu + 4.*nu2 + 4.*a3st*(1. + nu))) + nu*(-2.*a6log*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu)) + a5log*(-48.*a2st3 + a2st*(2304. + 192.*a3st + 96.*a4stc + 3392.*nu - 123*pi2*nu) + 2.*(-1536. + 24.*a3st2 + 96.*a4stc + 3776.*nu - 24.*a6c*nu - 123.*pi2*nu + 96.*nu2 + 96.*a3st*(4. + nu))))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2));
+    double d2D4 = -0.25*(192.*a4stlog*(4.*a4stlog + a5log*nu)*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog 
++ a5log*nu)*logu,2) + 48.*(4.*a4stlog + a5log*nu)*((768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu) - 24.*(4.*a4stlog 
++ a5log*nu)*logu)*(1536.*a3st*a4stlog + 768.*a4stc*a4stlog + 27136.*a4stlog*nu + 96.*a4stlog*a5c*nu + 1536.*a5log*nu + 96.*a4stc*a5log*nu + 768.*a6log*nu - 96.*a3st*a6log*nu - 984.*a4stlog*pi2*nu + 3008.*a5log*nu2 
+- 192.*a6log*nu2 - 123.*a5log*pi2*nu2 - 96.*a2st2*(2.*a4stlog + a5log*nu) + 384.*a2st*(4.*a4stlog - (a5log + a6log)*nu) + 192.*a4stlog*(4.*a4stlog + a5log*nu)*logu) + (4.*a4stlog + a5log*nu)*(4608.*a2st4 
++ 27648.*a2st2*a3st + 2304.*a2st3*a3st + 18432.*a3st2 + 18432.*a2st*a3st2 + 2304.*a3st3 + 1155072.*a2st*nu - 89088.*a2st2*nu + 4608.*a2st3*nu + 1228800.*a3st*nu + 73728.*a2st*a3st*nu + 13824.*a3st2*nu 
+- 47232.*a2st*pi2*nu + 5904.*a2st2*pi2*nu - 47232.*a3st*pi2*nu + 11431936.*nu2 + 73728.*a2st*nu2 + 27648.*a3st*nu2 - 834432.*pi2*nu2 + 15129.*pi4*nu2 + 18432.*nu3 + 36864.*a2st*(a4stc + a4stlog*logu) 
+- 4608.*a2st2*(a4stc + a4stlog*logu) + 36864.*a3st*(a4stc + a4stlog*logu) + 651264.*nu*(a4stc + a4stlog*logu) - 23616.*pi2*nu*(a4stc + a4stlog*logu) + 9216.*gsl_pow_int(a4stc + a4stlog*logu,2) + 36864.*nu*(a5c 
++ a5log*logu) - 9216.*a2st*nu*(a5c + a5log*logu) - 2304.*a2st2*nu*(a5c + a5log*logu) + 72192.*nu2*(a5c + a5log*logu) - 2952.*pi2*nu2*(a5c + a5log*logu) + 2304.*nu*(a4stc + a4stlog*logu)*(a5c + a5log*logu) 
++ 18432.*nu*(a6c + a6log*logu) - 9216.*a2st*nu*(a6c + a6log*logu) - 2304.*a3st*nu*(a6c + a6log*logu) - 4608.*nu2*(a6c + a6log*logu))) + (-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu 
+- 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu)*((768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu) - 24.*(4.*a4stlog + a5log*nu)*logu)*(1536.*a3st*a4stlog + 768.*a4stc*a4stlog + 27136.*a4stlog*nu + 96.*a4stlog*a5c*nu + 1536.*a5log*nu + 96.*a4stc*a5log*nu + 768.*a6log*nu - 96.*a3st*a6log*nu - 984.*a4stlog*pi2*nu + 3008.*a5log*nu2 
+- 192.*a6log*nu2 - 123.*a5log*pi2*nu2 - 96.*a2st2*(2.*a4stlog + a5log*nu) + 384.*a2st*(4.*a4stlog - (a5log + a6log)*nu) + 192.*a4stlog*(4.*a4stlog + a5log*nu)*logu) + (4.*a4stlog + a5log*nu)*(4608.*a2st4 
++ 27648.*a2st2*a3st + 2304.*a2st3*a3st + 18432.*a3st2 + 18432.*a2st*a3st2 + 2304.*a3st3 + 1155072.*a2st*nu - 89088.*a2st2*nu + 4608.*a2st3*nu + 1228800.*a3st*nu + 73728.*a2st*a3st*nu + 13824.*a3st2*nu 
+- 47232.*a2st*pi2*nu + 5904.*a2st2*pi2*nu - 47232.*a3st*pi2*nu + 11431936.*nu2 + 73728.*a2st*nu2 + 27648.*a3st*nu2 - 834432.*pi2*nu2 + 15129.*pi4*nu2 + 18432.*nu3 + 36864.*a2st*(a4stc + a4stlog*logu) 
+- 4608.*a2st2*(a4stc + a4stlog*logu) + 36864.*a3st*(a4stc + a4stlog*logu) + 651264.*nu*(a4stc + a4stlog*logu) - 23616.*pi2*nu*(a4stc + a4stlog*logu) + 9216.*gsl_pow_int(a4stc + a4stlog*logu,2) + 36864.*nu*(a5c 
++ a5log*logu) - 9216.*a2st*nu*(a5c + a5log*logu) - 2304.*a2st2*nu*(a5c + a5log*logu) + 72192.*nu2*(a5c + a5log*logu) - 2952.*pi2*nu2*(a5c + a5log*logu) + 2304.*nu*(a4stc + a4stlog*logu)*(a5c + a5log*logu)      
++ 18432.*nu*(a6c + a6log*logu) - 9216.*a2st*nu*(a6c + a6log*logu) - 2304.*a3st*nu*(a6c + a6log*logu) - 4608.*nu2*(a6c + a6log*logu))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,3));
+    double d2D5 = -0.125*(384.*(2.*(2. + a2st)*a4stlog*a4stlog + a4stlog*(4.*a5log - a6log)*nu + a5log*a5log*nu2)*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu 
+- 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,2) + 48.*(4.*a4stlog + a5log*nu)*(2.*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu) - 24.*(4.*a4stlog + a5log*nu)*logu)*(-288.*a2st3*a4stlog + 1536.*a3st*a4stlog + 96.*a3st2*a4stlog + 768.*a4stc*a4stlog + 27136.*a4stlog*nu + 384.*a3st*a4stlog*nu + 384.*a4stlog*a5c*nu + 768.*a3st*a5log*nu 
++ 384.*a4stc*a5log*nu - 96.*a4stlog*a6c*nu + 1536.*a6log*nu - 384.*a3st*a6log*nu - 96.*a4stc*a6log*nu - 984.*a4stlog*pi2*nu + 384.*a4stlog*nu2 + 13568.*a5log*nu2 + 192.*a5c*a5log*nu2 - 3776.*a6log*nu2 - 492.*a5log*pi2*nu2 + 123.*a6log*pi2*nu2 + 96.*a2st2*(12.*a4stlog + (-8.*a5log + a6log)*nu) + 4.*a2st*(96.*a4stc*a4stlog + a4stlog*(3200. - 123*pi2)*nu - 96.*(3.*a6log + 2.*a5log*(-2. + nu))*nu + 96.*a3st*(a4stlog 
+- a5log*nu)) + 192.*(2.*(2. + a2st)*a4stlog*a4stlog + a4stlog*(4.*a5log - a6log)*nu + a5log*a5log*nu2)*logu) + (4.*a4stlog + a5log*nu)*(4608.*a2st5 + 36864.*a2st3*a3st + 55296.*a2st*a3st2 + 13824.*a2st2*a3st2 
++ 18432.*a3st3 + 1732608.*a2st2*nu - 359424.*a2st3*nu + 2310144.*a3st*nu + 798720.*a2st*a3st*nu + 55296.*a2st2*a3st*nu + 254976.*a3st2*nu - 70848.*a2st2*pi2*nu + 17712.*a2st3*pi2*nu - 94464.*a3st*pi2*nu 
+- 23616.*a2st*a3st*pi2*nu - 5904.*a3st2*pi2*nu + 22716416.*nu2 + 10424320.*a2st*nu2 + 55296.*a2st2*nu2 + 798720.*a3st*nu2 - 1668864.*pi2*nu2 - 787200.*a2st*pi2*nu2 - 23616.*a3st*pi2*nu2 + 30258.*pi4*nu2 
++ 15129.*a2st*pi4*nu2 + 724992.*nu3 - 23616.*pi2*nu3 + ( 55296.*a2st2 - 13824.*a2st3+ 73728.*a3st + 18432.*a2st*a3st + 4608.*a3st2 + 1302528.*nu+ 614400.*a2st*nu + 18432.*a3st*nu - 47232.*pi2*nu
+- 23616.*a2st*pi2*nu + 18432.*nu2)*(a4stc + a4stlog*logu) + (18432.+ 9216.*a2st)*gsl_pow_int(a4stc + a4stlog*logu,2) + (73728.*a2st*nu - 36864.*a2st2*nu +  36864.*a3st*nu - 18432.*a2st*a3st*nu + 651264.*nu2 
+- 36864.*a2st*nu2  - 23616.*pi2*nu2)*(a5c + a5log*logu) + 18432.*nu*(a4stc + a4stlog*logu)*(a5c + a5log*logu) + 4608.*nu2*gsl_pow_int(a5c + a5log*logu,2) + (73728.*nu - 55296.*a2st*nu + 4608.*a2st2*nu 
+- 18432.*a3st*nu - 181248.*nu2 + 5904.*pi2*nu2)*(a6c + a6log*logu)- 4608.*nu*(a4stc + a4stlog*logu)*(a6c + a6log*logu))) + (-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu 
+- 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu)*(2.*(768. + 144.*a2st2 - 288.*a3st - 96.*a4stc - 3584.*nu - 24.*a5c*nu + 123.*pi2*nu + 48.*a2st*(-16. + a3st + 2.*nu) - 24.*(4.*a4stlog 
++ a5log*nu)*logu)*(-288.*a2st3*a4stlog + 1536.*a3st*a4stlog + 96.*a3st2*a4stlog + 768.*a4stc*a4stlog + 27136.*a4stlog*nu + 384.*a3st*a4stlog*nu + 384.*a4stlog*a5c*nu + 768.*a3st*a5log*nu + 384.*a4stc*a5log*nu 
+- 96.*a4stlog*a6c*nu + 1536.*a6log*nu - 384.*a3st*a6log*nu - 96.*a4stc*a6log*nu - 984.*a4stlog*pi2*nu + 384.*a4stlog*nu2 + 13568.*a5log*nu2 + 192.*a5c*a5log*nu2 - 3776.*a6log*nu2 - 492.*a5log*pi2*nu2 
++ 123.*a6log*pi2*nu2 + 96.*a2st2*(12.*a4stlog + (-8.*a5log + a6log)*nu) + 4.*a2st*(96.*a4stc*a4stlog + a4stlog*(3200. - 123.*pi2)*nu - 96.*(3.*a6log + 2.*a5log*(-2. + nu))*nu + 96.*a3st*(a4stlog - a5log*nu)) 
++ 192.*(2.*(2. + a2st)*a4stlog*a4stlog + a4stlog*(4.*a5log - a6log)*nu + a5log*a5log*nu2)*logu) + (4.*a4stlog + a5log*nu)*(4608.*a2st5 + 36864.*a2st3*a3st + 55296.*a2st*a3st2 + 13824.*a2st2*a3st2 
++ 18432.*a3st3 + 1732608.*a2st2*nu - 359424.*a2st3*nu + 2310144.*a3st*nu + 798720.*a2st*a3st*nu + 55296.*a2st2*a3st*nu + 254976.*a3st2*nu - 70848.*a2st2*pi2*nu + 17712.*a2st3*pi2*nu - 94464.*a3st*pi2*nu 
+- 23616.*a2st*a3st*pi2*nu - 5904.*a3st2*pi2*nu + 22716416.*nu2 + 10424320.*a2st*nu2 + 55296.*a2st2*nu2 + 798720.*a3st*nu2 - 1668864.*pi2*nu2 - 787200.*a2st*pi2*nu2 - 23616.*a3st*pi2*nu2 + 30258.*pi4*nu2 
++ 15129.*a2st*pi4*nu2 + 724992.*nu3 - 23616.*pi2*nu3 + (55296.*a2st2 - 13824.*a2st3 + 73728.*a3st + 18432.*a2st*a3st + 4608.*a3st2 + 1302528.*nu + 614400.*a2st*nu + 18432.*a3st*nu  - 47232.*pi2*nu 
+- 23616.*a2st*pi2*nu + 18432.*nu2)*(a4stc + a4stlog*logu) + (18432. + 9216.*a2st)*gsl_pow_int(a4stc + a4stlog*logu,2) + (73728.*a2st*nu - 36864.*a2st2*nu + 36864.*a3st*nu - 18432.*a2st*a3st*nu 
++ 651264.*nu2 - 36864.*a2st*nu2 - 23616.*pi2*nu2)*(a5c + a5log*logu) + 18432.*nu*(a4stc + a4stlog*logu)*(a5c + a5log*logu) + 4608.*nu2*gsl_pow_int(a5c + a5log*logu,2) + (73728.*nu - 55296.*a2st*nu 
++ 4608.*a2st2*nu - 18432.*a3st*nu - 181248.*nu2 + 5904*pi2*nu2)*(a6c + a6log*logu) - 4608.*nu*(a4stc + a4stlog*logu)*(a6c + a6log*logu))))/(u2*gsl_pow_int(-768. - 144.*a2st2 + 288.*a3st + 96.*a4stc + 3584.*nu + 24.*a5c*nu - 123.*pi2*nu - 48.*a2st*(-16. + a3st + 2.*nu) + 24.*(4.*a4stlog + a5log*nu)*logu,3));
+    
+    /* Second derivative of numerator and denominator */
+    double d2Num = 2.*dN1 + d2N1*u;
+    double d2Den = 2.*(-D2 + dD1) + u*(6.*D3 - 4.*dD2 + d2D1) + u2*(12.*D4 + 6.*dD3 - d2D2) + u3*(20.*D5 + 8.*dD4 + d2D3) + u4*(10.*dD5 + d2D4) + u5*d2D5;
+    
+    /* Second derivative with respect of u */
+    double d2A_u = prefactor*(2.*dDen*dDen*(*A) - 2.*dNum*dDen + Den*d2Num - d2Den*Num);
+
+    *d2A = d2A_u;
+    
+    /* Second derivative with respect of r */
+    /* *d2A = u4*d2A_u + 2.*u3*dA_u; */
+    
+  }
+}
 
 /** EOB Metric D function at 3PN, resummed */
 
@@ -606,6 +858,60 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
 
 }
 
+/* EOB Metric D function at 3PN, resummed in Scalar-Tensor Theory with Padé (0,3) */
+
+void eob_metric_D3PNST(double r, double nu, double *D, double *dD, double *d2D)
+{
+
+  /* shortcuts */
+  double u  = 1./r;
+  double u2 = u*u;
+  double u3 = u2*u;
+  
+  /* ST parameters */
+  const double XAB = sqrt(1.-4.*nu);
+  double betaA    = EOBPars->st_betaA;
+  double betaB    = EOBPars->st_betaB;
+  double gammaAB  = EOBPars->st_gammaAB;
+  double deltaP   = EOBPars->st_deltaP;
+  double deltaM   = EOBPars->st_deltaM;
+  double betaP    = EOBPars->st_betaP;
+  double betaM    = EOBPars->st_betaM;
+  double chiP     = EOBPars->st_chiP;
+  double chiM     = EOBPars->st_chiM;
+  double kappaP   = EOBPars->st_kappaP;
+  double kappaM   = EOBPars->st_kappaM;
+  double gammaAB2 = gammaAB*gammaAB;
+  double gammaAB3 = gammaAB2*gammaAB;
+  double zeta = 0.;
+  if (gammaAB != 0.) zeta = -8.*betaA*betaB/gammaAB;
+  
+  double betabar  = - XAB*betaM + betaP;
+  double kappabar = - XAB*kappaM + kappaP;
+  double chibar   = - XAB*chiM + chiP;
+  double deltabar =  XAB*deltaM + deltaP;
+  
+
+  /* ST corrections at 2PN and 3PN */
+  double dcSTLO  = - 6.*betabar - 3.*gammaAB - 3./4.*gammaAB2 + deltabar - 2.*betabar*nu + 4.*gammaAB*nu;
+  double dcSTNLO = - 16.*betabar - 16./3.*gammaAB - 6.*betabar*gammaAB - 13./3.*gammaAB2 - 3./4.*gammaAB3 + 8./3.*deltabar + gammaAB*deltabar               
+                   - 16./3.*chibar + nu*(12*betabar + 57./2.*betaM*XAB + 6.*betaP + 173./3.*gammaAB - 10.*betabar*gammaAB + 2.*XAB*gammaAB*betaM   
+                   + 77./3.*gammaAB2 + 3.*gammaAB3 - 2.*deltabar - 22./3.*deltaP - 4.*gammaAB*deltaP + 4.*XAB*chiM +20./3.*chiP + 9.*zeta)
+                   + nu*nu*(18.*betaP - 10*gammaAB - gammaAB2 - 4.*deltaP + 8.*chiP + 6.*zeta);
+
+ 
+  double Dp       = 1.0 - 2.*u*gammaAB + 6.*nu*u2 + dcSTLO*u2 - 2.*(3.*nu-26.)*nu*u3 + dcSTNLO*u3; // Pade' resummation of D.   /*(WORK IN PROGRESS)*/
+  double dDp_du   = - 2.*gammaAB + 6.*nu*u*(2. - (3.*nu-26.)*u) + 2.*u*dcSTLO + 3.*u2*dcSTNLO;
+  double d2Dp_du2 = 12.*nu*(1. - (3.*nu-26.)*u) + 2.*dcSTLO + 6.*u*dcSTNLO;
+  double D_tmp    = 1./Dp;
+  
+
+  /* derivatives wrt to u */
+  *D   = D_tmp;
+  *dD  = -SQ(D_tmp)*dDp_du;
+  *d2D = 2.*SQ(D_tmp)*D_tmp*SQ(dDp_du) - SQ(D_tmp)*d2Dp_du2;
+  
+}
 
 /** EOB Metric Q function at 3PN */
 
@@ -767,8 +1073,7 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 }
 
 
-/* EOB Metric Q function at 5PN, only local part 
-  (2108.02043 and refs. therein)*/
+/* EOB Metric Q function at 5PN, only local part */
 
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                      double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
@@ -796,7 +1101,6 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
   double z3  = 2.0*nu*(4.0-3.0*nu);
   double q42 = z3;
 
-
   double q62    = -2.783007636952232489*nu - 5.4*nu2 + 6.*nu3;
   double q43    = 92.711044284955949757*nu - 131.*nu2 + 10.*nu3;
 
@@ -813,9 +1117,6 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
   double q44log = 51.695238095238095238*nu - 118.4*nu2;
   double q44    = q44c + q44log*log(u);
 
-
-
-
   /* Q potential and all its derivatives */
 
   *Q = u2*prstar4*( q42 + q43*u + q44loc*u2 \
@@ -831,27 +1132,20 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
                       + prstar2*(6.*q62 + 9.*q63loc*u + 8.*q82loc*prstar2 ));   
 
   *d2Q_du2 = prstar4*( 2.*q42 + 6.*q43*u + 12.*q44loc*u2  \
-            + prstar2*( 2.* q62 + 2.*q82loc*prstar2 + 6.*q63loc*u ));               
-
+            + prstar2*( 2.* q62 + 2.*q82loc*prstar2 + 6.*q63loc*u ));
   
   double d2Q_dprstar22 = 2.*q42*u2 + 2.*q43*u3 + 2.*q44loc*u4 \
                       + prstar2*( 6.*q62*u2 + 6.*q63loc*u3 + 12.*q82loc*u2*prstar2 ); 
 
-  
   double d3Q_dprstar23 = 6.*q62*u2+ 6.*q63loc*u3 + 24.*q82loc*u2*prstar2; 
   
-
   double d3Q_du2dprstar2 = prstar2*( 4.*q42 + 12.*q43*u + 24.*q44loc*u2 \
                         + prstar2*( 6.*q62+ 8.*q82loc*prstar2 + 18.*q63loc*u )); 
-
   double d3Q_dudprstar22 = 4.*q42*u + 6.*q43*u2 + 8.*q44loc*u3 \
                           + prstar2*( 12.*q62*u + 18.*q63loc*u2 + 24.*q82loc*u*prstar2);  
 
-
-
   /* We also translate derivatives from prstar2 to prstar
      and some from u to r as needed for output*/
-
 
     *d2Q_drdprstar   = -2*prstar*u2*d2Q_dudprstar2;
 
@@ -867,7 +1161,48 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 
 }
 
+/* EOB Metric Q Function at 3PN in Scalar-Tensor Theories */
 
+void eob_metric_Q3PNST(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
+                     double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+  const double z3 = 2.*nu*(4. - 3.*nu);
+  double u  = 1./r;
+  double u2 = u*u;
+  double u3 = u2*u;
+  double u4 = u3*u;
+  double prstar2 = prstar*prstar;
+  double prstar3 = prstar2*prstar;
+  double prstar4 = prstar2*prstar2;
+  
+  /* ST parameters */
+  const double XAB = sqrt(1.-4.*nu);
+  double gammaAB  = EOBPars->st_gammaAB;
+  double deltaP   = EOBPars->st_deltaP;
+  double deltaM   = EOBPars->st_deltaM;
+  double betaP    = EOBPars->st_betaP;
+  double betaM    = EOBPars->st_betaM;
+  double gammaAB2 = gammaAB*gammaAB;
+  
+  double betabar  = - XAB*betaM + betaP;
+  double deltabar =  XAB*deltaM + deltaP;
+ 
+  /* ST correction in Q at 3PN */
+  double nucST  = 26./3.*gammaAB + 5./2.*gammaAB2 + 2./3.*(betabar - deltabar);
+  double nu2cST = - 4.*gammaAB + 2*betabar;
+
+  *Q              =  z3*u2*prstar4 + nu*nucST*u2*prstar4 + nu*nu*nu2cST*u2*prstar4 ;
+  *dQ_du          =  2.*z3*u*prstar4 + 2.*nu*nucST*u*prstar4 + 2.*nu*nu*nu2cST*u*prstar4;
+  *dQ_dprstar     =  4.*z3*u2*prstar3 + 4.*nu*nucST*u2*prstar3 + 4.*nu*nu*nu2cST*u2*prstar3;
+  *d2Q_du2        =  2.*z3*prstar4 + 2.*nu*nucST*prstar4 + 2.*nu*nu*nu2cST*prstar4;
+  *ddQ_drdprstar  = -8.*z3*u3*prstar3 - 8.*nu*nucST*u3*prstar3 - 8.*nu*nu*nu2cST*u3*prstar3;
+  *d2Q_dprstar2   =  12.*z3*u2*prstar2 + 12.*nu*nucST*u2*prstar2 + 12.*nu*nu*nu2cST*u2*prstar2;
+  *d3Q_dr2dprstar =  24.*z3*u4*prstar3 + 24.*nu*nucST*u4*prstar3 + 24.*nu*nu*nu2cST*u4*prstar3;
+  *d3Q_drdprstar2 = -24.*z3*u3*prstar2 - 24.*nu*nucST*u3*prstar2 - 24.*nu*nu*nu2cST*u3*prstar2;
+  *d3Q_dprstar3   =  24.*z3*u2*prstar + 24.*nu*nucST*u2*prstar + 24.*nu*nu*nu2cST*u2*prstar;
+  
+}
 
 /** Tidal potential, three version implemented: 
     1. TEOB NNLO, Bernuzzi+ 1205.3403

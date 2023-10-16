@@ -64,6 +64,38 @@ void set_spin_vars(double X1, double X2, double chi1, double chi2,
   *Sstar = X2 * (*a1) + X1 * (*a2);
 }
 
+/** Set ST parameters */
+void set_st_vars(double alpha1, double alpha2, double beta1,
+                 double beta2, double dbeta1, double dbeta2,
+                 double d2beta1, double d2beta2, double alpha0,
+                 double *betaA, double *betaB, double *deltaA, double *deltaB,
+                 double *chiA, double *chiB, double *kappaA, double *kappaB,
+                 double *gammaAB, double *alphaAB, double *deltaP, double *deltaM,
+                 double *betaP, double *betaM, double *chiP, double *chiM,
+		 double *kappaP, double *kappaM)
+{
+  double den = (1. + alpha1*alpha2);
+  *betaA     = 0.5*(beta1*alpha2*alpha2)/SQ(den);
+  *betaB     = 0.5*(beta2*alpha1*alpha1)/SQ(den);
+  *deltaA    = (alpha1*alpha1)/SQ(den);
+  *deltaB    = (alpha2*alpha2)/SQ(den);
+  *chiA      = -0.25*(dbeta1*alpha2*SQ(alpha2))/(SQ(den)*(den));
+  *chiB      = -0.25*(dbeta2*alpha1*SQ(alpha1))/(SQ(den)*(den));
+  *kappaA    = 0.125*d2beta1*SQ(SQ(alpha2))/SQ(SQ(den));
+  *kappaB    = 0.125*d2beta2*SQ(SQ(alpha1))/SQ(SQ(den));
+  *gammaAB   = -(2.*alpha1*alpha2)/(den);
+  *alphaAB   = (den)/(1. + alpha0*alpha0);
+
+  *deltaP   = 0.5*((*deltaA) + (*deltaB));
+  *deltaM   = 0.5*((*deltaA) - (*deltaB));
+  *betaP    = 0.5*((*betaA) + (*betaB));
+  *betaM    = 0.5*((*betaA) - (*betaB));
+  *chiP     = 0.5*((*chiA) + (*chiB));
+  *chiM     = 0.5*((*chiA) - (*chiB));
+  *kappaP   = 0.5*((*kappaA) + (*kappaB));
+  *kappaM   = 0.5*((*kappaA) - (*kappaB));
+}
+
 /** Eulerlog function (constants are defined in header) */
 static const double Logm[] = {0.,Log1,Log2,Log3,Log4,Log5,Log6,Log7};
 double Eulerlog(const double x,const int m)

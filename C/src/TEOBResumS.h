@@ -631,6 +631,13 @@ typedef struct tagEOBParameters
   double kapA2j, kapB2j, kapT2j;
 
   double bomgfA[6], bomgfB[6]; // f-mode frequencies star A,B (ell=2,3,4; indexes 0,1 not used)
+
+  /* scalar-tensor parameters */
+  double st_alpha1, st_alpha2, st_beta1, st_beta2, st_dbeta1, st_dbeta2,
+    st_d2beta1, st_d2beta2, st_alpha0, st_betaA, st_betaB, st_deltaA, st_deltaB,
+    st_chiA, st_chiB, st_kappaA, st_kappaB, st_gammaAB, st_alphaAB,
+    st_deltaP, st_deltaM, st_betaP, st_betaM, st_chiP, st_chiM, st_kappaP, st_kappaM;
+  double st_mphi;
   
   /* options/settings */
   int binary; // binary type (BBH, BNS, BHNS)
@@ -642,6 +649,7 @@ typedef struct tagEOBParameters
   int use_speedytail;
   int use_lambda234_fits;
   int use_tidal_fmode_model;
+  int use_scalartensor;
   
   double dt_merger_interp, dt_interp, srate_interp;
   int interp_uniform_grid;
@@ -736,6 +744,14 @@ double q_to_nu(const double q);
 double nu_to_X1(const double nu);
 double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell, double *kapA, double *kapB);
 void set_spin_vars(double X1, double X2, double chi1, double chi2, double *S1, double *S2, double *a1, double *a2, double *aK, double *aK2, double *S, double *Sstar);
+void set_st_vars(double alpha1, double alpha2, double beta1,
+                 double beta2, double dbeta1, double dbeta2,
+                 double d2beta1, double d2beta2, double alpha0,
+                 double *betaA, double *betaB, double *deltaA, double *deltaB,
+                 double *chiA, double *chiB, double *kappaA, double *kappaB,
+		 double *gammaAB, double *alphaAB, double *deltaP, double *deltaM,
+		 double *betaP, double *betaM, double *chiP, double *chiM,
+		 double *kappaP, double *kappaM);
 double Eulerlog(const double x,const int m);
 double Pade32(double x, double *a);
 double Pade23(double x, double *a);
@@ -993,12 +1009,15 @@ extern void (*eob_metric_Qpotential)(); /* defined in TEOBResumSPars.c*/
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A);
+void eob_metric_A5PNlogST(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_D3PNST(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
+void eob_metric_Q3PNST(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,

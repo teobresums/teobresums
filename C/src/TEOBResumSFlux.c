@@ -215,6 +215,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
+  const int use_scalartensor = EOBPars->use_scalartensor;
   
   double prefact[] = {
     jhat, Heff,
@@ -330,8 +331,31 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     hatf += hatFH;
   }
 
-  /* return Fphi */  
-  return (-32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf);  
+  /* return Fphi */
+  double Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+
+  /** Scalar tensor terms */
+  if(use_scalartensor){
+    double alpha1 = EOBPars->st_alpha1;
+    double alpha2 = EOBPars->st_alpha2;
+    double mphi = EOBPars->st_mphi;
+ 
+    double st_fact = 1.+alpha1*alpha2;
+    
+    Fphi *= 1./st_fact;
+ 
+    if (Omega > mphi){
+      double mphi_fact = sqrt(1-SQ(mphi/Omega));
+      Fphi += -1./3.*nu/st_fact*SQ(alpha2-alpha1)*SQ(mphi_fact)*mphi_fact*gsl_pow_int(r_omega,5) * gsl_pow_int(Omega,5);
+    }
+ 
+    if (2.*Omega > mphi){
+      double mphi_fact2 = sqrt(1-0.25*SQ(mphi/Omega));
+      Fphi += -16./15.*nu/st_fact*SQ(alpha2*X1+alpha1*X2)*SQ(SQ(mphi_fact2))*mphi_fact2*gsl_pow_int(r_omega,4)*gsl_pow_int(Omega,5);
+    }
+  }
+ 
+  return Fphi;
 }
 
 /** Flux calculation for eccentric systems */

@@ -3231,6 +3231,88 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   
 }
 
+/** factorized ST waveform correction */
+void eob_wav_hatflm_ST(Dynamics *dyn, Waveform_lm_t *hlm)
+{
+
+  const double nu       = EOBPars->nu;
+  const double nu2      = nu*nu;
+  const double X1       = EOBPars->X1;  
+  const double X2       = EOBPars->X2;
+  const double X12      = X1-X2; /* sqrt(1-4nu) */
+  const double Omega    = dyn->Omg;
+  const double rw       = dyn->r_omega;
+  
+  /* ST parameters */
+  const double XAB = sqrt(1.-4.*nu);
+  double alphaA   = EOBPars->st_alpha1;
+  double alphaB   = EOBPars->st_alpha2;
+  double alphaAB  = EOBPars->st_alphaAB;
+  double betaA    = EOBPars->st_betaA;
+  double betaB    = EOBPars->st_betaB;
+  double gammaAB  = EOBPars->st_gammaAB;
+  double deltaP   = EOBPars->st_deltaP;
+  double deltaM   = EOBPars->st_deltaM;
+  double betaP    = EOBPars->st_betaP;
+  double betaM    = EOBPars->st_betaM;
+  double chiP     = EOBPars->st_chiP;
+  double chiM     = EOBPars->st_chiM;
+  
+  double betabar  = - X12*betaM + betaP;
+  double chibar   = - X12*chiM + chiP;
+  double deltabar =  X12*deltaM + deltaP;
+
+  double x   = SQ(rw*Omega);
+  double x2  = SQ(x);
+  double x32 = sqrt(x*x2);
+
+  for (int k = 0; k < KMAX; k++) {
+    hlm->ampli[k] = 1.;
+    hlm->phase[k] = 0;
+  }
+  
+  //double Zab = 1. - 0.5*alphaAB*(gammaAB+2.);
+  double ZabSp2 = 0.25*SQ(alphaA+alphaB)/(1.+alphaA*alphaB); /* = \zeta*Splus^2 */
+  double ZabSm2 = 0.25*SQ(alphaA-alphaB)/(1.+alphaA*alphaB); /* = \zeta*Sminus^2 */
+  double zetafact = 0.;
+  if (X12 != 0.) zetafact = 0.25*(SQ(alphaA)-SQ(alphaB))/(1.+alphaA*alphaB)/X12; /* = \zeta*Sminus*Splus/X12 */
+  double betafact = 0.;
+  if (gammaAB != 0.) betafact = betaA*betaB/gammaAB;
+
+  /* ST 2PN corrections from arxiv:1607.01420, factorized */
+
+  // 22
+  double h22x  = -0.666666666666667*(gammaAB + 2.*betabar);
+  double h22x2 = 0.333333333333333*(- 5.238095238095238*gammaAB
+  + 1.25*SQ(gammaAB) - 4.809523809523809*betabar - 4.*SQ(betabar)
+  + deltabar -4.*chibar + nu*(- 7.9523809523809526*gammaAB - SQ(gammaAB)
+  - 2.9047619047619047*betabar + 18.*betaP + 8.*chiP - 4.*deltaP - 48.*betafact));
+  hlm->ampli[1] += h22x*x + Pi*gammaAB*x32 + h22x2*x2;
+  hlm->phase[1] += (0.16666666666666667*gammaAB + 1.5*nu*ZabSp2)*x32;
+
+  // 21
+  hlm->ampli[0] += (0.5*gammaAB - 2.*betabar)*x + 0.5*Pi*gammaAB*x32;
+  hlm->phase[0] += gammaAB*(0.25 + log(2)) + 1.3333333333333333*nu*(ZabSm2 + zetafact);
+
+  // 33
+  hlm->ampli[4] += -(gammaAB + 2.*betabar)*x + 1.5*Pi*gammaAB*x32;
+  hlm->phase[4] += 3.*gammaAB*(0.7 - log(3) + log(2)) + 0.8888888888888889*nu*(ZabSm2 - zetafact);
+
+  // 32
+  hlm->ampli[3] += -2.6666666666666667*betabar*x;
+
+  // 31
+  hlm->ampli[2] += -(gammaAB + 2.*betabar)*x + 0.5*Pi*gammaAB*x32;
+  hlm->phase[2] += gammaAB*(0.75 + log(2)) + 2.6666666666666667*(5.*ZabSm2 - zetafact);
+
+  // 44
+  hlm->ampli[8] += -1.3333333333333333*(gammaAB + 2.*betabar)*x;
+  
+  // 42
+  hlm->ampli[6] += -1.3333333333333333*(gammaAB + 2.*betabar)*x;
+  
+}
+
 /** Computes the factors and the coefficients that build the  
     NQC corrections to the waveform in the eccentric case */
 void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
