@@ -1069,7 +1069,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (EOBPars->interp_uniform_grid) {
       /* Interp to uniform grid the multipoles before hpc computation */
       const double dt_interp = EOBPars->dt_interp;
-      const int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp);
+      const long int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp);
       Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");  
       size = size_interp;
     }
