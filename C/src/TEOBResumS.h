@@ -247,6 +247,27 @@ enum{
 };
 static const char* const use_lambda234_fits_opt[] = {"no","YAGI13","GODZIEBA20_ell4", "GODZIEBA20_ell8", "undefined"};
 
+enum{
+  a6c_fits_NO,
+  a6c_fits_V0,
+  a6c_fits_HM,
+  a6c_fits_HM_2023,
+  a6c_fits_NOPT
+};
+static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "undefined"};
+
+enum{
+  cN3LO_fits_NO,
+  cN3LO_fits_V0,
+  cN3LO_fits_HM,
+  cN3LO_fits_HM_2023_420,
+  cN3LO_fits_HM_2023_430,
+  cN3LO_fits_HM_2023_431,
+  cN3LO_fits_HM_2023_432,
+  cN3LO_fits_NOPT
+};
+static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "undefined"};
+
 /** List of options for tidal potential */
 enum{
   TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
@@ -559,7 +580,8 @@ typedef struct tagEOBParameters
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
   double chi1x,chi1y,chi1z;
   double chi2x,chi2y,chi2z;
-  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
+  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2;  
+  double a6c, cN3LO;
   double r0, initial_frequency;  
   double distance, inclination, polarization, coalescence_angle;
   
@@ -590,6 +612,8 @@ typedef struct tagEOBParameters
   int use_speedytail;
   int use_lambda234_fits;
   int use_tidal_fmode_model;
+  int use_a6c_fits;
+  int use_cN3LO_fits;
   
   double dt_merger_interp, dt_interp, srate_interp;
   int interp_uniform_grid;
@@ -598,6 +622,8 @@ typedef struct tagEOBParameters
   int *use_mode_lm_inertial, use_mode_lm_inertial_size;
   int *use_mode_lm_nqc, use_mode_lm_nqc_size; // multipoles to attach NQCs
                                               // TODO: add as user input
+  int *kpostpeak, kpostpeak_size;             // multipoles where NQCs are extracted at t_peak_lm + 2 from the RD template
+  int *knqcpeak22, knqcpeak22_size;           // multipoles where NQCs are extracted at t_peak_22  from global fits
 
   int size;
   int ode_timestep;
@@ -798,11 +824,14 @@ void errorexits(char *file, int line, const char *s, const char *t);
 /* TEOBResumSFits.c */
 double eob_a6c_fit(double nu);
 double eob_a6c_fit_HM(double nu);
+double eob_a6c_fit_HM_2023(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
+double eob_c3_fit_HM_2023(double nu, double a1, double a2);
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
+void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
@@ -839,6 +868,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 			double Mbh, double abh,  
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 			double *sigmar, double *sigmai);
+void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
+      double *sigmar, double *sigmai);
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);

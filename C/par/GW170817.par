@@ -26,7 +26,8 @@ use_lambda234_fits = "YAGI13"
 
 centrifugal_radius = "NNLO" 
 use_flm = "SSNLO"
-
+use_a6c_fits = "v0"
+use_cN3LO_fits = "no"
 
 #
 # Output dir, output modes 

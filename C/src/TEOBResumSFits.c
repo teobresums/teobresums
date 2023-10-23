@@ -41,6 +41,21 @@ double eob_a6c_fit_HM(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
+/** Fit of a6c, Tab. II of arXiv:2304.09662 */
+double eob_a6c_fit_HM_2023(double nu)
+{
+  const double nu2 = nu*nu;
+  const double nu3 = nu2*nu;
+
+  const double n0 = 46.5524;
+  const double n1 =-24.2516;
+  const double n2 = 120.9594;
+  const double n3 = -167.2242;
+  const double d1 =-3.3998;
+  
+  return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
+}
+
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
     Note: c3 = 0 with tides*/
 double eob_c3_fit_global(double nu, double a1, double a2)
@@ -97,6 +112,52 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
     + p1*nu*X12*a0 + p2*nu2*(a1 - a2);
   
   return c3;
+}
+
+/* Table IV of arXiv:2304.09662 */
+double eob_c3_fit_HM_2023(double nu, double a1, double a2)
+{
+  const double nu2 = nu*nu;
+  const double X12 = sqrt(1.-4.*nu);
+  const double a0  = a1+a2;
+  const double a02 = a0*a0;
+  const double a03 = a02*a0;
+  const double a04 = a03*a0;
+  double *coeff_eq, *coeff_neq;
+
+  double coeff_eq_420[6]  = {43.872788,-1.849495, 1.011208, -0.086453, -0.038378, -0.888154};
+  double coeff_eq_431[6]  = {42.195044,-2.010717, 1.258034, -0.129593, -0.106295, -0.966525};
+  
+  double coeff_neq_420[6] = {26.553,    -8.65836,  0,        -84.7473,   24.0418,   0};
+  double coeff_neq_430[6] = {16.695689, 2.025017, -6.600956, -53.146114, 34.097885, -101.003721};
+  double coeff_neq_431[6] = {20.99561492580911, 1.5806110388013492, -10.428048396877976, -61.19803748038313, 37.11341346539421, -37.668146004322274};
+  double coeff_neq_432[6] = {18.80033140113715, 0.6175269833645626, -10.397710332484472, -47.16963298818921, 33.4449328928248,  -32.51572099183539};
+
+  switch(EOBPars->use_cN3LO_fits)
+  {
+    case(cN3LO_fits_HM_2023_420):
+      coeff_eq  = coeff_eq_420;
+      coeff_neq = coeff_neq_420;
+      break;
+    case(cN3LO_fits_HM_2023_430):
+      coeff_eq  = coeff_eq_420;
+      coeff_neq = coeff_neq_430;
+      break;
+    case(cN3LO_fits_HM_2023_431):
+      coeff_eq  = coeff_eq_431;
+      coeff_neq = coeff_neq_431;
+      break;
+    case(cN3LO_fits_HM_2023_432):
+      coeff_eq  = coeff_eq_431;
+      coeff_neq = coeff_neq_431;
+  }
+
+  double c3_eq  = coeff_eq[0]*(1 + coeff_eq[1]*a0 + coeff_eq[2]*a02 
+                                 + coeff_eq[3]*a03 + coeff_eq[4]*a04)/(1 + coeff_eq[5]*a0);
+  double c3_neq = coeff_neq[0]*a0*X12    + coeff_neq[1]*a02*X12       + coeff_neq[2]*a03*X12 
+                + coeff_neq[3]*a0*nu*X12 + coeff_neq[4]*(a1 - a2)*nu2 + coeff_neq[5]*SQ(a1 - a2)*nu2;
+
+  return c3_eq + c3_neq;
 }
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
@@ -545,6 +606,79 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
 	  
   domg_tmp[13] =  0.0178326*(1 + 3.1304*nu) + (b1_domg_tmp + b2_domg_tmp*nu)*Shat + (b3_domg_tmp + b4_domg_tmp*nu)*Shat2;
 	  
+}
+
+/** Fits for NR point used to determine NQC corrections 
+    Here the NQC point is assumed to be the peak of the 22 mode
+    From Pompili et. al. arXiv:2303.18039
+*/
+void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
+{
+
+  int knqcpeak22_size = EOBPars->knqcpeak22_size;  
+  int *knqcpeak22     = EOBPars->knqcpeak22;
+
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+
+  const double nu2  = SQ(nu);
+  const double nu3  = nu2*nu;
+  const double delta = sqrt(1-4.*nu);
+
+  const double chi_S = (chi1+chi2)/2;
+  const double chi_A = (chi1-chi2)/2;
+
+  const double chi   = chi_S + chi_A*delta/(1.-2.*nu);
+  const double chisq = chi*chi;
+  const double chi3  = chisq*chi;
+  const double chi4  = chi3*chi;
+  const double chi_21A  = delta*chi_S/(1-1.3*nu) + chi_A;
+  const double chi_21A2 = SQ(chi_21A);
+  const double chi_21A3 = chi_21A2*chi_21A;
+  const double chi_21D  = delta*chi_S/(1-2.*nu)  + chi_A;
+  const double chi_33   = chi_S*delta+chi_A;
+  const double chi_44A  = (1 - 5.*nu)*chi_S + chi_A*delta;
+  const double chi_44D  = (1 - 7.*nu)*chi_S + chi_A*delta;
+
+
+  for(int j=0; j<knqcpeak22_size; j++){
+    int k = knqcpeak22[j];
+    switch(k)
+    {
+      case(-1):
+        if (VERBOSE) printf("eob_nqc_point_HM_peak22: no modes selected in knqcpeak22\n");
+        break;
+      case(0):
+        /* l=2, m=1 */
+        A_tmp[0]    = fabs(-0.033175*chi_21A3*delta + 0.086356*chi_21A2*delta*nu - 0.049897*chi_21A2*delta + 0.012706*chi_21A*delta + 0.168668*chi_21A*nu - 0.285597*chi_21A + 1.067921*delta*nu2 - 0.189346*delta*nu + 0.431426*delta);
+        dA_tmp[0]   = chi_21D*delta*(0.023534*nu - 0.008064) + delta*(0.006743 - 0.0297*nu) + 0.008256*abs( (chi_21D - delta*(5.471011*nu2 + 1.235589*nu + 0.815482)) );
+        omg_tmp[0]  = 0.01009*chi3 - 0.077343*chisq*nu + 0.02411*chisq + 0.168854*chi*nu2 - 0.159382*chi*nu + 0.047635*chi + 1.965157*nu3 - 0.53085*nu2 + 0.237904*nu + 0.176526;
+        domg_tmp[0] = 0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
+        break;
+      case(4):
+        /* l=3, m=3 */
+        A_tmp[4]    = fabs(- 0.088371*SQ(chi_33)*delta*nu + 0.036258*SQ(chi_33)*delta + 1.057731*chi_33*nu2 - 0.466709*chi_33*nu + 0.099543*chi_33 + 1.96267*delta*nu2 + 0.027833*delta*nu + 0.558808*delta);
+        dA_tmp[4]   = SQ(chi_33)*delta*(0.004941*nu - 0.002094) + 0.001781*sqrt(fabs( (SQ(chi_33) + chi_33*delta*(39.247538*nu - 2.986889) + SQ(delta)*(85.173306*nu + 4.637906)) ));
+        omg_tmp[4]  = 0.045141*chi3 - 0.346675*chisq*nu + 0.119419*chisq + 0.745924*chi*nu2 - 0.478915*chi*nu + 0.17467*chi - 8.887163*nu3 + 4.226831*nu2 + 0.427167;
+        domg_tmp[4] = 0.001697*chi3 + 0.016231*chisq*nu - 0.003985*chisq - 0.154378*chi*nu2 + 0.050618*chi*nu - 0.002721*chi - 0.255402*nu3 + 0.08663*nu2 + 0.027405*nu + 0.009736;
+        break;
+      case(8):
+        /* l=4, m=4 */
+        A_tmp[8]    = fabs( 0.031483*SQ(chi_44A) - 0.180165*chi_44A*nu + 0.063931*chi_44A + 6.239418*nu3 - 1.947473*nu2 - 0.615307*nu + 0.262533 );
+        dA_tmp[8]   = -0.001251*SQ(chi_44D)*chi_44D + 0.006387*SQ(chi_44D)*nu - 0.001223*SQ(chi_44D) - 0.034308*chi_44D*nu2 + 0.014373*chi_44D*nu - 0.000681*chi_44D + 1.134679*nu3 - 0.417056*nu2 + 0.024004*nu + 0.003498;
+        omg_tmp[8]  = 0.042529*chi3 - 0.415864*chisq*nu + 0.155222*chisq + 0.768712*chi*nu2 - 0.592568*chi*nu + 0.244508*chi - 13.651335*nu3 + 5.490329*nu2 + 0.574041;
+        domg_tmp[8] = 0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
+        break;
+      default:
+        errorexit("A,dA,omg,domg fits only implemented for (2,1), (3,3) and (4,4) at the moment.");
+    }
+    /* Normalize A and dA */
+    int l       = LINDEX[k];
+    double fact = sqrt((l+2)*(l+1)*l*(l-1));
+    A_tmp[k]    = A_tmp[k]/fact;
+    dA_tmp[k]   = dA_tmp[k]/fact;
+  }
 }
 
 /** This function computes the NQC functioning points by evaluating the post-peak template and its dervatives*/
@@ -2788,6 +2922,96 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   }
   
 }
+
+/* Global fits of the ringdown coefficients from the 
+   Pompili et. al. paper, arXiv:2303.18039
+*/
+void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
+      double *sigmar, double *sigmai)
+{
+
+  int knqcpeak22_size = EOBPars->knqcpeak22_size;  
+  int *knqcpeak22     = EOBPars->knqcpeak22;
+
+  const double delta = sqrt(1-4.*nu);
+  const double nu2   = SQ(nu);
+  const double nu3   = nu2*nu;
+  const double nu4   = nu3*nu;
+  const double chi_S = (chi1+chi2)/2.;
+  const double chi_A = (chi1-chi2)/2.;
+
+  const double chi       = chi_S + chi_A*delta/(1.-2.*nu);
+  const double chisq     = chi*chi;
+  const double chi3      = chisq*chi;
+  const double chi4      = chi3*chi;
+  const double chi_21A   = delta*chi_S/(1-1.3*nu) + chi_A;
+  const double chi_21A2  = SQ(chi_21A);
+  const double chi_21A3  = chi_21A2*chi_21A;
+  const double chi_21D   = delta*chi_S/(1-2.*nu)  + chi_A;
+
+  double A[KMAX], dA[KMAX], omg[KMAX], domg[KMAX];
+  double c1f, c2f, d1f, d2f, c1c, c2c, d1c;
+  
+  /* Compute A, dA, omg, domg */
+  eob_nqc_point_HM_peak22(NULL, A, dA, omg, domg);
+  for(int j=0; j<knqcpeak22_size; j++){
+    int k = knqcpeak22[j];
+
+    /* The QNM frequencies need rescaling */
+    sigmar[k] /= Mbh;
+    sigmai[k] /= Mbh;
+
+    /* Fits */
+    switch(k)
+    {
+      case(-1):
+        if (VERBOSE) printf("QNMHybridFitCab_HM_Pompili23: no modes selected in knqcpeak22\n");
+        break;
+      case(0):
+        c1f = 0.173462*chisq*nu - 0.028873*chisq + 0.197467*chi*nu2 - 0.026139*chi - 2.934735*nu3 + 1.009106*nu2 - 0.112721*nu + 0.099889;
+        c2f = 0.183489*chi3 + 0.10573*chisq - 20.792825*chi*nu2 + 6.867746*chi*nu - 0.484948*chi - 54.917585*nu3 + 16.466312*nu2 + 0.426316*nu - 0.92208;
+        d1f = 0.018467*chi4 + 0.398621*chi3*nu - 0.050499*chi3 - 0.877201*chisq*nu2 + 0.414553*chisq*nu - 0.068277*chisq - 10.648526*chi*nu3 + 4.104918*chi*nu2 - 0.723576*chi*nu + 0.039227*chi + 42.715534*nu4 - 18.280603*nu3 + 2.236592*nu2 - 0.048094*nu + 0.16335;
+        d2f = exp(0.814085*chi3 - 1.197363*chisq*nu + 0.560622*chisq + 6.44667*chi*nu2 - 5.630563*chi*nu + 0.949586*chi + 91.269183*nu3 - 27.329751*nu2 + 1.101262*nu + 1.040761);
+        break;
+      case(4):
+        c1f = -0.00956*chi3 + 0.029459*chisq*nu - 0.020264*chisq - 0.494524*chi*nu2 + 0.169463*chi*nu - 0.026285*chi - 5.847417*nu3 + 1.957462*nu2 - 0.171682*nu + 0.093539;
+        c2f = -0.057346*chi3 + 0.237107*chisq*nu - 0.094285*chisq - 4.250609*chi*nu2 + 1.763105*chi*nu - 0.315826*chi + 14.801916*nu3 - 7.060581*nu2 + 1.158627*nu - 0.646888;
+        d1f = -0.016524*chi3 + 0.221466*chisq*nu - 0.066323*chisq + 0.678442*chi*nu2 - 0.261264*chi*nu + 0.006664*chi + 2.316434*nu3 - 2.192227*nu2 + 0.424582*nu + 0.161577;
+        d2f = exp(0.275999*chi3 - 1.830695*chisq*nu + 0.512734*chisq + 29.072515*chi*nu2 - 10.581319*chi*nu + 1.310643*chi + 324.310223*nu3 - 124.681881*nu2 + 13.200426*nu + 0.410855);
+        break;
+      case(8):
+        c1f = 4.519504*chi*nu2 - 1.489036*chi*nu + 0.068403*chi - 1656.065439*nu4 + 817.835726*nu3 - 127.055379*nu2 + 6.921968*nu + 0.009386;
+        c2f = 0.964861*chi3*nu - 0.185226*chi3 - 12.647814*chisq*nu2 + 5.264969*chisq*nu - 0.539721*chisq - 254.719552*chi*nu3 + 105.698791*chi*nu2 - 12.107281*chi*nu + 0.2244*chi - 393.727702*nu4 + 145.32788*nu3 - 15.556222*nu2 + 1.592449*nu - 0.677664;
+        d1f = -0.020644*chi3 + 0.494221*chisq*nu - 0.127074*chisq + 4.297985*chi*nu2 - 1.284386*chi*nu + 0.062684*chi - 44.280815*nu3 + 11.021482*nu2 - 0.162943*nu + 0.166018;
+        d2f = exp(37.735116*chi*nu2 - 12.516669*chi*nu + 1.309868*chi - 528.368915*nu3 + 155.115196*nu2 - 6.612448*nu + 0.787726);
+        break;
+      default:
+        errorexit("Ringdown fits only implemented for (2,1), (3,3) and (4,4) at the moment");
+    }
+
+    /* Correct normalization of A, dA */
+    int l = LINDEX[k];
+    A[k] *= sqrt((l+2)*(l+1)*l*(l-1));
+    dA[k]*= sqrt((l+2)*(l+1)*l*(l-1));
+
+    /* Constrained coefficients*/
+    c1c = (dA[k]  + sigmar[k]*A[k])*cosh(c2f)*cosh(c2f)/c1f;
+    c2c =  A[k]   - (dA[k] + sigmar[k]*A[k])*cosh(c2f)*sinh(c2f)/c1f;
+    d1c = (omg[k] - sigmai[k])*(1+d2f)/(d1f*d2f);
+
+    /* Finalize*/
+    ca1[k] = c1c;
+    ca2[k] = c1f;
+    ca3[k] = c2f;
+    ca4[k] = c2c;
+    cb1[k] = -d1c;
+    cb2[k] = d1f;
+    cb3[k] = d2f;
+    cb4[k] = 0.;
+  }
+}
+
 
 /** Fits of the ringdown QNM coefs */
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1)

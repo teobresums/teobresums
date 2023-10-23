@@ -905,9 +905,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       /** Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
       if (EOBPars->use_flm == USEFLM_HM) {
-	dt_merger_interp = 0.5;
+	      dt_merger_interp = 0.5;
       } else {
-	dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
+	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
       }
       double tstart_mrg = tOmg_pk - 8.;
       while (tstart_mrg < hlm_mrg->time[0]) /** Make sure it does not exrapolate */

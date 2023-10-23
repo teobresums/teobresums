@@ -24,6 +24,8 @@ PARKEYS = {
     'use_spins': ['0 = nonspinning (deprecated), 1 = spin-aligned, 2 =precessing spins', 'int', 1 ],
     'tides': ['Tidal model (NNLO, TEOBRESUM, TEOBRESUM3)', 'str', "TEOBRESUM" ],
     'tides_gravitomagnetic': ['Use gravitomagnetic tidal coefficients', 'str', "no" ],
+    'use_a6c_fits': ['Use fits for a6c', 'str', "HM"],
+    'use_cN3LO_fits' : ['Use fits for cN3LO', "HM"],
     'use_fmode': ['Use the fmode resonance model', 'str', "no" ],
     'use_lambda234_fits': ['Use quasi-universal relations to fit Lambda4,5,6,7,8 (YAGI13, GODZIEBA20)', 'str', "YAGI13" ],
     'use_speedytail': ['Speed up the computation of the tail factor in h_lm and F_lm', 'str', "no" ],
@@ -41,6 +43,7 @@ PARKEYS = {
     'coalescence_angle': ['Reference coalescence phase', 'float', 0 ],
     'use_mode_lm': ['List of modes to use', 'int list', "[1]" ],
     'output_lm': ['List of modes to output', 'int list', "[1]" ],
+    'kpostpeak': ['List of modes for which NQCs are extracted from the pospeak template', 'int list', "[0,3,6,7,8]"] ,
     #
     'postadiabatic_dynamics': ['Turn on/off the postadiabatic approximation', 'str', "yes" ],
     'postadiabatic_dynamics_N': ['Use the N-th order PA (default=8)', 'int', 8 ],
