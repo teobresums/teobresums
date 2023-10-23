@@ -274,7 +274,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->use_mode_lm_nqc[i] = use_nqc_tmp[i];
   
   Dynamics_push (&dyn, size); 
-  Waveform_lm_alloc (&hlm, size, "hlm"); 
+  Waveform_lm_alloc (&hlm, size, "hlm", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size); 
   Waveform_lm_t_alloc (&hlm_t); 
 
   /** Integrate spin dynamics before EOB dyn if projecting */
@@ -954,7 +954,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	
         /* Compute NQC only around merger, 
 	   add to both merger and full waveform */
-        Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc"); 
+        Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size); 
         /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
   
         eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
@@ -976,7 +976,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       } else {
 	
         /* Compute NQC and add them to full waveform */
-        Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc"); 
+        Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size); 
         eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
       }
       
@@ -1091,9 +1091,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* h+, hx */  
     if (use_spins == MODE_SPINS_GENERIC){
       if (VERBOSE) PRSECTN("Twisting");
-      Waveform_lm_alloc (&hTlm, size, "hTlm"); 
-      Waveform_lm_alloc (&hTlm_neg, size, "hTlm_neg"); 
-      Waveform_lm_alloc (&hTl0, size, "hTl0"); 
+      Waveform_lm_alloc (&hTlm, size, "hTlm",EOBPars->use_mode_lm_inertial,EOBPars->use_mode_lm_inertial_size); 
+      Waveform_lm_alloc (&hTlm_neg, size, "hTlm_neg",EOBPars->use_mode_lm_inertial,EOBPars->use_mode_lm_inertial_size); 
+      Waveform_lm_alloc (&hTl0, size, "hTl0",EOBPars->use_mode_lm_inertial,EOBPars->use_mode_lm_inertial_size); 
       twist_hlm_TD(dyn, hlm, dyn->spins, 1, hTlm, hTlm_neg, hTl0);
       compute_hpc(hTlm, hTlm_neg, hTl0, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
     } else
@@ -1109,7 +1109,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /** Calculate the SPA for the multipolar waveform */
     if (VERBOSE) PRSECTN("SPA");
     SPA(hlm, hflm);
-    
     /* The SPA performs an interpolation, 
        need to update the size */
     size = hflm->size;
@@ -1184,7 +1183,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       //SB: the size here needs to be fixed to the required sampling frequency.
       //    if not, the code jumps here and size is still the one from default...
       Waveform_alloc (hpc, size, "waveform");
-      Waveform_lm_alloc (hmodes, size, "hlm");
+      Waveform_lm_alloc (hmodes, size, "hlm", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
     } else  {                             
       const int interp_fd_size = get_uniform_size(EOBPars->initial_frequency, EOBPars->initial_frequency, EOBPars->df);
       WaveformFD_alloc (hfpc, interp_fd_size, "waveform_fd");

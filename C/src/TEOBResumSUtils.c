@@ -1281,13 +1281,13 @@ void WaveformFD_free (WaveformFD *wav)
 }
 
 /** Multipolar waveform (complex) */
-void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name, int *use_mode_lm, int use_mode_lm_size)
 {
   *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->size = size; 
-  set_multipolar_idx_mask((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0);
+  set_multipolar_idx_mask((*wav)->kmask, KMAX, use_mode_lm, use_mode_lm_size, 0);
   set_multipolar_idx_mask((*wav)->kmask_nqc, KMAX, EOBPars->use_mode_lm_nqc, EOBPars->use_mode_lm_nqc_size, 0);
   (*wav)->time = malloc ( size * sizeof(double) );
   memset((*wav)->time, 0, size*sizeof(double));
@@ -1325,7 +1325,7 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   /* Alloc and init aux memory */  
   Waveform_lm *hlm_aux;
   const int oldsize = hlm->size;
-  Waveform_lm_alloc(&hlm_aux, oldsize, "");
+  Waveform_lm_alloc(&hlm_aux, oldsize, "", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
   memcpy(hlm_aux->time, hlm->time, oldsize * sizeof(double));
   for (int k = 0; k < KMAX; k++) {
     if (hlm->kmask[k]){
@@ -1439,7 +1439,7 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
 #endif
   
   /* Alloc output waveform b */
-  Waveform_lm_alloc (hlmb, N, name);
+  Waveform_lm_alloc (hlmb, N, name, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
   /* TODO: Parameters are not copied in the new wf !*/
   
   /* Copy the relevant part of a into b */

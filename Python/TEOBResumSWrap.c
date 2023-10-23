@@ -145,6 +145,29 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if (PyDict_GetItemString(dict, "use_mode_lm_inertial") != NULL) {
+    if (EOBPars->use_mode_lm_inertial) free(EOBPars->use_mode_lm_inertial);
+    PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm_inertial");
+    EOBPars->use_mode_lm_inertial_size = PyObject_Length(tmp);
+    EOBPars->use_mode_lm_inertial = malloc ( EOBPars->use_mode_lm_inertial_size * sizeof(int) );
+    for (int i = 0; i < EOBPars->use_mode_lm_inertial_size; i++){
+      PyObject *item = PyList_GetItem(tmp, i);
+      EOBPars->use_mode_lm_inertial[i] = (int) PyLong_AsLong(item); 
+    }     
+  } else if (PyDict_GetItemString(dict, "use_mode_lm") != NULL) {
+    /* use_mode_lm_inertial is not specified, but use_mode_lm is: use the latter
+       to set the former as a default behavior
+    */
+    if (EOBPars->use_mode_lm_inertial) free(EOBPars->use_mode_lm_inertial);
+    PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm");
+    EOBPars->use_mode_lm_inertial_size = PyObject_Length(tmp);
+    EOBPars->use_mode_lm_inertial = malloc ( EOBPars->use_mode_lm_inertial_size * sizeof(int) );
+    for (int i = 0; i < EOBPars->use_mode_lm_inertial_size; i++){
+      PyObject *item = PyList_GetItem(tmp, i);
+      EOBPars->use_mode_lm_inertial[i] = (int) PyLong_AsLong(item); 
+    }       
+  }
+
   if ( PyDict_GetItemString(dict, "output_lm") != NULL ) {
     if (EOBPars->output_lm) free(EOBPars->output_lm);
     PyListObject *tmp = PyDict_GetItemString(dict, "output_lm");

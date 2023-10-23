@@ -5324,8 +5324,12 @@ void prolong_euler_angles_FD(DynamicsSpin *spin, WaveformFD_lm *hlm)
 void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc,
 		  Waveform_lm *hTlm, Waveform_lm *hTlm_neg, Waveform_lm *hTl0)
 {  
-  const int size = hlm->size;
-  int *activemode = hlm->kmask;
+
+  int activemode[KMAX], activemode_inertial[KMAX];
+  set_multipolar_idx_mask (activemode_inertial, KMAX, EOBPars->use_mode_lm_inertial, EOBPars->use_mode_lm_inertial_size, 1);
+  set_multipolar_idx_mask (activemode,          KMAX, EOBPars->use_mode_lm,          EOBPars->use_mode_lm_size, 1);
+
+  const int size  = hlm->size;
   double *alpha, *beta, *gamma;
   alpha = malloc ( size * sizeof(double) );
   beta  = malloc ( size * sizeof(double) );
@@ -5351,8 +5355,8 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
   int zero_flag = 1;
   /* Loop over modes */
   for (int k = 0; k < KMAX; k++ ) {
-    /* compute all twisted modes */
-    if (!activemode[k]) continue;  
+    /* compute twisted inertial modes */
+    if (!activemode_inertial[k]) continue;  
     
     int ell = LINDEX[k];
 
@@ -5373,7 +5377,7 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
         // for (int n = -ell; n <= ell; n++) {
         //   if (n==0) continue; // skip m=0 modes
           int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
-          if (!activemode[j]) continue;  
+          if (!activemode[j]) continue;  // skip if co-precessing mode is not available
           double cosng = cos( n * gamma[i] );
           double sinng = sin( n * gamma[i] );
     
@@ -5531,8 +5535,8 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, Waveform_lm *hl0, doubl
     if (hlm_neg == NULL) mneg =1;
     double Y_real_mneg[KMAX], Y_imag_mneg[KMAX];
     /* m=0*/
-    int mzero = 1;
-    int zero_flag=1;
+    int mzero     = 1;
+    int zero_flag = 1;
     if (hl0 == NULL){
       mzero =0;
       zero_flag = 0;
@@ -5543,7 +5547,7 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, Waveform_lm *hl0, doubl
     double sumr, sumi;
     int activemode[KMAX];
     double Msun = M;
-    set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 1);
+    set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm_inertial, EOBPars->use_mode_lm_inertial_size, 1);
     if (!(EOBPars->use_geometric_units)) Msun = M/MSUN_S;
 #if (DEBUG)
     printf("h+,x: nu = %e M = %e D = %e Mpc phi = %e iota = %e prefactor = %e\n",
@@ -5748,6 +5752,8 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
   
   const int size = hlm->size;
   int *activemode = hlm->kmask;
+  int activemode_inertial[KMAX];
+  set_multipolar_idx_mask (activemode_inertial, KMAX, EOBPars->use_mode_lm_inertial, EOBPars->use_mode_lm_inertial_size, 1);
   /* initialize the splines for angles */
   gsl_spline *alpha;
   gsl_spline *beta;
@@ -5788,7 +5794,7 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
   
   static const int mneg = 1; /* m>0 modes only, add m<0 modes afterwards */
   for (int k = 0; k < KMAX; k++ ) {
-    if (!activemode[k]) continue;
+    if (!activemode_inertial[k]) continue;
     spinsphericalharm(&Y_real[k], &Y_imag[k], -2, LINDEX[k], MINDEX[k], phi, iota);
     /* add m<0 modes */
     if ( (mneg) && (MINDEX[k]!=0) ) 
@@ -5828,38 +5834,40 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
       double gam  = gsl_spline_eval(gamma, omg, acc_gm); //evaluate spline
       double cosmg = cos(-emm * gam);
       double sinmg = sin(-emm * gam);
-      double eps = pow (-1., ell);
+      double eps   = pow (-1., ell);
       double sumpr = 0.;
       double sumpi = 0.;
       double sumcr = 0.;
       double sumci = 0.;
       /* loop over n */
       for(int n=-ell; n<=ell; n++){
-        if(n==0)
-          continue;
-        int j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
+        int j = 0;
+        if(n!=0){
+          j = KINDEX[ell][abs(n)-1]; // map to linear index (ell,n) -> j
+          if(!activemode_inertial[j]) continue;
+        }
         double cosma = cos(n * alph);
         double sinma = sin(n * alph);
         double dl_mn = wigner_d_function(ell, emm, n, -bet); //CHECKME
-        double dl_mnn= wigner_d_function(ell, emm,-n, -bet);
-        if(n>0){
-          double rAlm  = cosma *Y_real[j] + sinma*Y_imag[j];
-          double iAlm  = cosma *Y_imag[j] - sinma*Y_real[j]; 
-          double check = rAlm*rAlm+iAlm*iAlm;
-          double check2=Y_real[j]*Y_real[j] + Y_imag[j]*Y_imag[j];
-          //printf("%d %.5f %.5f %.5f %.5f \n",j, Y_real[j], Y_imag[j], check, check2);
-          sumpr += rAlm*(dl_mn + eps*dl_mnn);
-          sumpi += iAlm*(dl_mn - eps*dl_mnn);
-          sumcr += rAlm*(dl_mn - eps*dl_mnn); 
-          sumci += iAlm*(dl_mn + eps*dl_mnn); 
+        double dl_mnn= wigner_d_function(ell,-emm, n, -bet);
+        
+        double rAlm=0;double iAlm=0;
+        if (n==0) {
+          double Y_real_0, Y_imag_0;
+          spinsphericalharm(&Y_real_0, &Y_imag_0, -2, ell, 0, phi, iota);
+          rAlm  = cosma *Y_real_0 + sinma*Y_imag_0;
+          iAlm  = cosma *Y_imag_0 - sinma*Y_real_0; 
+        } else if(n>0) {
+          rAlm  = cosma *Y_real[j] + sinma*Y_imag[j];
+          iAlm  = cosma *Y_imag[j] - sinma*Y_real[j]; 
         } else {
-          double rAlm = cosma *Y_real_mneg[j] + sinma*Y_imag_mneg[j];
-          double iAlm = cosma *Y_imag_mneg[j] - sinma*Y_real_mneg[j]; 
-          sumpr += rAlm*(dl_mn + eps*dl_mnn);
-          sumpi += iAlm*(dl_mn - eps*dl_mnn);
-          sumcr += rAlm*(dl_mn - eps*dl_mnn);
-          sumci += iAlm*(dl_mn + eps*dl_mnn);
+          rAlm = cosma *Y_real_mneg[j] + sinma*Y_imag_mneg[j];
+          iAlm = cosma *Y_imag_mneg[j] - sinma*Y_real_mneg[j]; 
         }
+        sumpr += rAlm*(dl_mn + eps*dl_mnn);
+        sumpi += iAlm*(dl_mn - eps*dl_mnn);
+        sumcr += rAlm*(dl_mn - eps*dl_mnn); 
+        sumci += iAlm*(dl_mn + eps*dl_mnn); 
       }
       /* Add stuff to compute h+, hx */
       double Amplm = hlm->ampli[k][i];

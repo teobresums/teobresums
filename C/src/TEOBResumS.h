@@ -595,6 +595,7 @@ typedef struct tagEOBParameters
   int interp_uniform_grid;
 
   int *use_mode_lm, use_mode_lm_size;
+  int *use_mode_lm_inertial, use_mode_lm_inertial_size;
   int *use_mode_lm_nqc, use_mode_lm_nqc_size; // multipoles to attach NQCs
                                               // TODO: add as user input
 
@@ -732,7 +733,7 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
 void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name);
 void Waveform_output (Waveform *wav);
 void Waveform_free (Waveform *wav);
-void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name, int *use_mode_lm, int use_mode_lm_size);
 void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_output_reim (Waveform_lm *wav);
