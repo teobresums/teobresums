@@ -750,7 +750,7 @@ void rmap (double *re, double *im, double *p, double *a, const int mode);
 void rmap_twist (double *re, double *im, double *p, double *a, const int mode);
 void set_multipolar_idx_mask_old(int *kmask, int n);
 void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);
-int get_uniform_size(const double tf, const double t0, const double dt);
+long int get_uniform_size(const double tf, const double t0, const double dt);
 int intersect_int (int *a, int size_a, int *b, int size_b, int *result);
 void Waveform_alloc (Waveform **wav, const int size, const char *name);
 void Waveform_push (Waveform **wav, int size);

@@ -946,7 +946,7 @@ void set_multipolar_idx_mask (int *kmask, int n, const int *idx, int m, int on)
 }
 
 /** Compute size of a uniform grid t0:dt:tf */
-int get_uniform_size(const double tN, const double t0, const double dt)
+long int get_uniform_size(const double tN, const double t0, const double dt)
 {
   return ((long int)((tN - t0)/dt + 1)); 
 }
