@@ -298,6 +298,14 @@ enum{
 };
 static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","undefined"};
 
+/** List of options for the GS and GSs spin-orbit gyro-gravitomagnetic terms */
+enum{
+  USEGSGSS_DJS,
+  USEGSGSS_ADJS,
+  USEGSGSS_NOPT
+};
+static const char* const use_gsgss_opt[] = {"DJS", "ADJS", "undefined"};
+
 /** List of options for centrifugal radius */
 enum{
   CENTRAD_LO,
@@ -638,7 +646,7 @@ typedef struct tagEOBParameters
   int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
   int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM"
   int A_pot, D_pot, Q_pot;
-  int use_tidal, use_spins, use_tidal_gravitomagnetic;  
+  int use_tidal, use_spins, use_tidal_gravitomagnetic, use_GS_GSs;
   int use_geometric_units;
   int use_speedytail;
   int use_lambda234_fits;
@@ -932,7 +940,10 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *params);
 void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double Q, double dQ, double dQ_dprstar, double d2Q, double d2Q_dprstar2,
                double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
-void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
+
+extern void (*eob_dyn_s_GS)(); /* defined in TEOBResumSPars.c*/
+void eob_dyn_s_GS_DJS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]);
+void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]);
 
 extern void (*eob_dyn_s_get_rc)(); /* defined in TEOBResumSPars.c*/
 void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);

@@ -69,6 +69,7 @@ void (*eob_wav_ringdown)();
 double (*eob_flx_HorizonFlux)();
 double (*eob_flx_HorizonFlux_s)();
 void (*eob_dyn_s_get_rc)();
+void (*eob_dyn_s_GS)();
 void (*eob_dyn_ic)();
 double (*eob_dyn_r0_eob)();
 int (*p_eob_dyn_rhs)();
@@ -193,7 +194,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->Q_pot=Q_3PN; 
 
   eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  eobp->use_flm=USEFLM_HM; // "SSLO", "SSNLO", "HM"
+  eobp->use_flm   = USEFLM_HM; // "SSLO", "SSNLO", "HM"
+  eobp->use_GS_GSs= USEGSGSS_DJS; // DJS, ADJS
   
   eobp->compute_LR=0; // calculate LR ?
   eobp->compute_LSO=0; // calculate LSO ?
@@ -738,6 +740,13 @@ void eob_set_params(int default_choice, int firstcall)
     eob_metric_Qpotential = &eob_metric_Q5PNloc;
   } else errorexit("unknown option for Q potential");
   
+  /** Set GS fun pointer */
+  if (EOBPars->use_GS_GSs == USEGSGSS_DJS ) {
+    eob_dyn_s_GS = &eob_dyn_s_GS_DJS;
+  } else if (EOBPars->use_GS_GSs == USEGSGSS_ADJS) {
+    eob_dyn_s_GS = &eob_dyn_s_GS_ADJS;
+  } else errorexit("unknown option for GS and GSs");
+  
   /** Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
@@ -1200,6 +1209,19 @@ if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) b
         break;
       }
       if (STREQUAL(val, Q_opt[eobp->Q_pot])) break;
+    }
+  }
+
+    if (STREQUAL(key,"use_GS_GSs")) {
+    val = string_trim(val);
+    for (eobp->use_GS_GSs=0; eobp->use_GS_GSs<=USEGSGSS_NOPT;  eobp->use_GS_GSs++) {
+      if (eobp->use_GS_GSs == USEGSGSS_NOPT) {
+        eobp->use_GS_GSs = USEGSGSS_DJS;
+        if (VERBOSE) printf("use_GS_GSs '%s' undefined, set to '%s'\n",
+        val, use_gsgss_opt[eobp->use_GS_GSs]);
+        break;
+      }
+      if (STREQUAL(val, use_gsgss_opt[eobp->use_GS_GSs])) break;
     }
   }
 

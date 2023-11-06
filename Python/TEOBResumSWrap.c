@@ -146,10 +146,18 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "Q_pot") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "Q_pot"));
-    for(EOBPars->Q_pot=0; EOBPars->Q_pot<=D_NOPT; EOBPars->Q_pot++){
+    for(EOBPars->Q_pot=0; EOBPars->Q_pot<=Q_NOPT; EOBPars->Q_pot++){
       if (EOBPars->Q_pot == D_NOPT) EOBPars->Q_pot = D_3PN;
       if (STREQUAL(val,Q_opt[EOBPars->Q_pot])) break;
     }    
+  }
+    if ( PyDict_GetItemString(dict, "use_GS_GSs") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_GS_GSs"));
+    for(EOBPars->use_GS_GSs=0; EOBPars->use_GS_GSs<=USEGSGSS_NOPT; EOBPars->use_GS_GSs++){
+      if (EOBPars->use_GS_GSs == USEGSGSS_NOPT) EOBPars->use_GS_GSs = USEGSGSS_DJS;
+      if (STREQUAL(val,use_GS_GSs[EOBPars->use_GS_GSs])) break;
+    }
   }  
   
   /* Adiabatic tidal ell>2 parameters */

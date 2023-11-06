@@ -181,7 +181,7 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
     Horbeff0 = sqrt(A[i]*(1. + SQ(pph[i])*uc2));
     
     /* Compute gyro-gravitomagnetic coupling functions */
-    eob_dyn_s_GS(r[i], rc[i], drc_dr[i], 0., aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
+    eob_dyn_s_GS(r[i], rc[i], drc_dr[i], 0.0, aK2, 0.0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
     GS_0                   = ggm0[2];
     GSs_0                  = ggm0[3];
     dGS_dr_0               = ggm0[6];
@@ -249,7 +249,7 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
   
   /* Still circular, no pr* dependence here */
   Horbeff  = sqrt(A[i]*(1. + SQ(pph[i])*uc2)); 
-  eob_dyn_s_GS(r[i], rc[i], drc_dr[i], 0., aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
+  eob_dyn_s_GS(r[i], rc[i], drc_dr[i], 0., aK2, 0., pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
   GS      = ggm0[2];
   GSs     = ggm0[3];
   dGS_dr  = ggm0[6];
@@ -524,7 +524,7 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   /* Orbital effective Hamiltonian */
   Horbeff0 = sqrt(A*(1. + SQ(pph[idx])*uc2));
   /* Compute gyro-gravitomagnetic coupling functions */
-  eob_dyn_s_GS(r[idx], rc, drc_dr, 0.0, aK2, 0, pph[idx], nu, chi1, chi2, X1, X2, c3, ggm0);
+  eob_dyn_s_GS(r[idx], rc, drc_dr, 0.0, aK2, 0.0, pph[idx], nu, chi1, chi2, X1, X2, c3, ggm0);
   GS_0                   = ggm0[2];
   GSs_0                  = ggm0[3];
   dGS_dr_0               = ggm0[6];

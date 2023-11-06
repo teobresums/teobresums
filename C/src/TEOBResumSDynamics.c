@@ -519,13 +519,10 @@ void eob_ham_s(double nu,
     the CN3LO parameter is hard-coded in this routine 
     ggm is the output structure. */
 
-void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
-	  double *ggm)
+void eob_dyn_s_GS_DJS(double r, double rc, double drc_dr, double d2rc_dr2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[])
 {
-  
   static double c10,c20,c30,c02,c12,c04;
   static double cs10,cs20,cs30,cs40,cs02,cs12,cs04;
-
   /* Compute the nu-dep. coefficient at first call only */
   //static int firstcall = 1;  
   if (EOBPars->firstcall[FIRSTCALL_EOBDYNSGS]) {
@@ -703,33 +700,50 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   double d3GSs_dr2_dprstar = 2*uc3*SQ(drc_dr)*d2GSs_duc_dprstar - uc2*d2rc_dr2*d2GSs_duc_dprstar
     + uc4*SQ(drc_dr)*d3GSs_duc2_dprstar;
   
-  ggm[0]=hGS;
-  ggm[1]=hGSs;
-  ggm[2]=GS;
-  ggm[3]=GSs;
-  ggm[4]=dGS_dprstar;
-  ggm[5]=dGSs_dprstar;
-  ggm[6]=dGS_dr;
-  ggm[7]=dGSs_dr;
-  ggm[8]=dGS_dpph;
-  ggm[9]=dGSs_dpph;
-  ggm[10]=dGS_dprstarbyprstar;
-  ggm[11]=dGSs_dprstarbyprstar;
-  ggm[12]=d2GS_dprstar20;
-  ggm[13]=d2GSs_dprstar20;
-  ggm[14]=d2GS_dr2;
-  ggm[15]=d2GSs_dr2;
-  ggm[16]=d2GS_dprstar2;
-  ggm[17]=d2GSs_dprstar2;
-  ggm[18]=d2GS_dr_dprstar;
-  ggm[19]=d2GSs_dr_dprstar;
-  ggm[20]=d3GS_dprstar3;
-  ggm[21]=d3GSs_dprstar3;
-  ggm[22]=d3GS_dr2_dprstar;
-  ggm[23]=d3GSs_dr2_dprstar;
-  ggm[24]=d3GS_dr_dprstar2;
-  ggm[25]=d3GSs_dr_dprstar2;
-    
+  ggm[0]  = hGS;
+  ggm[1]  = hGSs;
+  ggm[2]  = GS;
+  ggm[3]  = GSs;
+  ggm[4]  = dGS_dprstar;
+  ggm[5]  = dGSs_dprstar;
+  ggm[6]  = dGS_dr;
+  ggm[7]  = dGSs_dr;
+  ggm[8]  = dGS_dpph;
+  ggm[9]  = dGSs_dpph;
+  ggm[10] = dGS_dprstarbyprstar;
+  ggm[11] = dGSs_dprstarbyprstar;
+  ggm[12] = d2GS_dprstar20;
+  ggm[13] = d2GSs_dprstar20;
+  ggm[14] = d2GS_dr2;
+  ggm[15] = d2GSs_dr2;
+  ggm[16] = d2GS_dprstar2;
+  ggm[17] = d2GSs_dprstar2;
+  ggm[18] = d2GS_dr_dprstar;
+  ggm[19] = d2GSs_dr_dprstar;
+  ggm[20] = d3GS_dprstar3;
+  ggm[21] = d3GSs_dprstar3;
+  ggm[22] = d3GS_dr2_dprstar;
+  ggm[23] = d3GSs_dr2_dprstar;
+  ggm[24] = d3GS_dr_dprstar2;
+  ggm[25] = d3GSs_dr_dprstar2;
+
+}
+
+
+/** Computes the gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.
+    in the anti-DJS gauge up to next-to-next-to-next-to leading order (N3LO).
+    See Placidi+2023
+
+    r      => BL radius
+    aK2    => squared Kerr parameter
+    prstar => r* conjugate momentum
+    nu     => symmetric mass ratio
+    the CN3LO parameter is hard-coded in this routine 
+    ggm is the output structure. */
+
+void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm)
+{
+  /* dummy function */
 }
 
 
