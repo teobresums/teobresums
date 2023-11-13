@@ -74,6 +74,28 @@ double Eulerlog(const double x,const int m)
   return EulerGamma_Log2 + logm + 0.5*log(x);
 }
 
+double Pade02(double x, double *a){
+  double x2  = x*x;
+  double d1  = -a[1];
+  double d2  = SQ(a[1]) - a[2];
+  double den = (1. + d1*x + d2*x2);
+  return 1./den;
+}
+
+double Pade22(double x, double *a){
+  double x2 = x*x;
+
+  double cden =  a[1]*a[3]-SQ(a[2]);
+  double n1   = -a[1]*SQ(a[2]) + SQ(a[1])*a[3]+a[2]*a[3] - a[1]*a[4];
+  double n2   = -SQ(a[2])*a[2]+2*a[1]*a[2]*a[3]-SQ(a[3])-SQ(a[1])*a[4]+a[2]*a[4];
+  double d1   =  a[2]*a[3] - a[1]*a[4];
+  double d2   = -SQ(a[3]) + a[2]*a[4];
+
+  double pade = (cden + n1*x + n2*x2)/(cden + d1*x + d2*x2);
+  
+  return pade;
+}
+
 double Pade32(double x, double *a){
   double x2 = x*x;
   double x3 = x2*x;

@@ -251,7 +251,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     r0 = eob_dyn_r0_eob(f0,dyn);
   }
   //double r0 = eob_dyn_r0_Kepler(f0); /* Kepler radius: no longer used */
-  
   /* If f_min is too high fall back to a minimum acceptable initial radius */
   if ((ecc == 0.) && (r0 < TEOB_R0_THRESHOLD)) r0 = TEOB_R0_THRESHOLD;
 
@@ -714,10 +713,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /** Check for failures ... */
     if ((ecc != 0.) || (r_hyp != 0.)) {
       if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
-	if (VERBOSE) printf("Stop: Orbit crossed event horizon.\n");
-	iter--; /* do count this iter! */
-	dyn->ode_stop = true;
-	break; /* (while) stop */
+	      if (VERBOSE) printf("Stop: Orbit crossed event horizon.\n");
+        iter--; /* do count this iter! */
+        dyn->ode_stop = true;
+        break; /* (while) stop */
       }
     }
     
@@ -736,8 +735,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         dyn->ode_stop = true;
         break; /* (while) stop */
       } else {
-	/* Mininum not reached, update the max */
-	dyn->MOmg_prev = dyn->MOmg;
+        /* Mininum not reached, update the max */
+        dyn->MOmg_prev = dyn->MOmg;
       } 
     }
 
@@ -750,7 +749,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     
     /** Checking whether the dynamics produces NaN values
-	this can happen if radius r becomes too small */
+	  this can happen if radius r becomes too small */
     if (!(isfinite(dyn->r))) {
       printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);	
       /* errorexit("ODE solver returned NaN radius.\n"); */
@@ -808,7 +807,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
 
     /** Check when to break the computation
-	find peak of omega curve and continue for 2M */
+	  find peak of omega curve and continue for 2M */
     if ((dyn->ode_stop_MOmgpeak == false) && (ecc == 0.) && (r_hyp == 0.)) {
       /* Before the Omega_orb peak */      
       if (dyn->MOmg < dyn->MOmg_prev) {
@@ -831,8 +830,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }      
     } else {
       if (dyn->t >= dyn->t_stop) {
-	if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
-	dyn->ode_stop = true;
+	      if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
+	      dyn->ode_stop = true;
       }
     }
   
@@ -867,12 +866,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->tOmg_pk = tOmg_pk;
   
  END_ODE_EVOLUTION:;
-  
+ 
   /** Unwrap phase for higher modes */
-  if ((EOBPars->use_flm == USEFLM_HM) || (ecc != 0.)) {
+  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (ecc != 0.)) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
-	unwrap_HM(hlm->phase[k],size);
+	      unwrap_HM(hlm->phase[k],size);
       }
     }
   }
@@ -902,20 +901,41 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
   }
 
-  if (!(EOBPars->binary == BINARY_BNS) && (dyn->r < 3.)) {
-    //if (!(EOBPars->binary == BINARY_BNS) && (dyn->ode_stop_MOmgpeak)) {
-    //old condition does not work for eccentric systems
+  if (!(EOBPars->binary == BINARY_BNS) && (dyn->data[EOB_RAD][size-1] < 3.)) {
     
     /* *****************************************
-     * Following is for BBH and BHNS: NQC & Ringdown
+     * Following is for merging BBH and BHNS: NQC & Ringdown
      * *****************************************
      */
+    
+    /** Over-writing waveform in the eccentric case - adding sigmoid */
+    if ((EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && ((ecc != 0) || (r_hyp != 0.))) {
+   
+      for (int i = 0; i < size; i++) {
+        dyn->store = 1;
+        dyn->t = dyn->time[i];
+        dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];
+        dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
+        dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
+        dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
+        eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
+      
+        eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
+        for (int k = 0; k < KMAX; k++) {
+          if((hlm->kmask[k])){
+            hlm->ampli[k][i] = hlm_t->ampli[k];
+            hlm->phase[k][i] = hlm_t->phase[k]; 
+          }
+        }
+      }
+    }
+
     
     /* This is a BBH run.
        NQC and ringdown attachment currently assume uniform grids.
        Do we need to interpolate ? */
     int merger_interp = 1; /* In general, yes ... */
-    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM)) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
+    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM) && (EOBPars->use_flm != USEFLM_HM_4PN22)) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
 
     /** NQC and ringdown attachment is done around merger 
 	using auxiliary variables defined around [tmin,tmax] 
@@ -924,17 +944,22 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (merger_interp) {
       
       /** Extract the waveform and dynamics around merger */
+      // FIXME : 20M might be too little
       double tmin = hlm->time[size-1] - 20; /* Use last 20M points */
       const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
 
-      /* For hyperbolic orbits, find time when r = 10 */
-      if (r_hyp != 0.) {
-	for (int j = dyn->size-1; j-- ; ) {
-	  tmin = dyn->time[j];
-	  if (dyn->data[EOB_RAD][j] > 10.)
-	    break;
-	}
+      /* For hyperbolic or eccentric orbits, find time when r = 10 */
+      if (r_hyp != 0. || ecc != 0.) {
+	      for (int j = dyn->size-1; j-- ; ) {
+          tmin = dyn->time[j];
+          if (dyn->data[EOB_RAD][j] > 10.)
+	          break;
+	      }
       }
+
+      // Check that the time interval chosen contains the peak of Omega
+      if (dyn->tOmg_pk < tmin || dyn->tOmg_pk > tmax)
+        errorexit("The peak orbital frequency is not contained in the NQC/RD attachment region.");
       
       /* The following routines alloc memory for the *_mrg ptrs */
       Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
@@ -942,14 +967,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       /** Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
-      if (EOBPars->use_flm == USEFLM_HM) {
-	dt_merger_interp = 0.5;
+      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22)) {
+	      dt_merger_interp = 0.5;
       } else {
-	dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
+	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
       }
       double tstart_mrg = dyn->tOmg_pk - 8.;
-      while (tstart_mrg < hlm_mrg->time[0]) /** Make sure it does not exrapolate */
-	tstart_mrg += dt_merger_interp;
+      while (tstart_mrg < hlm_mrg->time[0]) /** Make sure it does not extrapolate */
+	      tstart_mrg += dt_merger_interp;
       const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
       
       if (VERBOSE) {
@@ -982,28 +1007,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } /* End of merger interp */
     
     
-    /** Over-writing waveform in the eccentric case - adding sigmoid */
-    if ((EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && ((ecc != 0) || (r_hyp != 0.))) {
-    
-      for (int i = 0; i < size; i++) {
-	dyn->store = 1;
-	dyn->t = dyn->time[i];
-	dyn->y[EOB_EVOLVE_PHI] = dyn->data[EOB_PHI][i];
-	dyn->y[EOB_EVOLVE_RAD] = dyn->data[EOB_RAD][i];
-	dyn->y[EOB_EVOLVE_PPHI] = dyn->data[EOB_PPHI][i];
-	dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
-	eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
-      
-	eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
-	for (int k = 0; k < KMAX; k++) {
-	  if((hlm->kmask[k])){
-	    hlm->ampli[k][i] = hlm_t->ampli[k];
-	    hlm->phase[k][i] = hlm_t->phase[k]; 
-	  }
-	}
-      }
-    }
-    
     if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
       
       /** BBH : compute and add NQC */
@@ -1029,7 +1032,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         EOBPars->size = size;
 
         /* Free the *_mrg buffers 
-	   Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
+	      Note these were allocated in the *_extract() calls if 'merger_interp = 1'  */
         Waveform_lm_free(hlm_mrg);
         Dynamics_free(dyn_mrg);
 	

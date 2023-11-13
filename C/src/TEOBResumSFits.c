@@ -54,7 +54,9 @@ double eob_a6c_fit_ecc(double nu)
   return (n0 + n1*nu + n2*nu2)*exp(n3*nu);
 }
 
-/** Fit of a6c from 2108.02043 */
+/** Fit of a6c from 2108.02043 
+    Currently not interfaced
+*/
 double eob_a6c_fit_next(double nu)
 {
   
@@ -63,6 +65,20 @@ double eob_a6c_fit_next(double nu)
   const double n2 = 599.96;
     
   return n0 + nu*(n1 + n2*nu);
+}
+
+
+/** New fit for a6c obtained using the 4PN term 
+    in the rho22 with P(2,2) resummation 
+*/
+double eob_a6c_fit_ecc_P33_4PNh22(double nu)
+{
+  const double p1 = -1544;
+  const double p2 =  693.93;
+  const double p3 = -366.83;
+  const double p4 = -27.61;
+  const double a6 = p4 + nu*(p3 + nu*(p2 + nu*p1));
+  return a6;
 }
 
 /** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
@@ -150,6 +166,41 @@ double eob_c3_fit_ecc(double nu, double a1, double a2)
     + p1*nu*X12*a0 + p2*nu2*(a1 - a2) + p3*nu2*X12*a0; //p3*nu*X12*a02;
   
   return c3;
+}
+
+/** New fit for c3 obtained using the 4PN term 
+    in the rho22 with P(2,2) resummation 
+*/
+double eob_c3_fit_ecc_P33_4PNh22(double nu, double a1, double a2)
+{
+  const double nu2 = nu*nu;
+  const double X12 = sqrt(1.-4.*nu);
+  const double a0  = a1+a2;
+  const double a02 = a0*a0;
+  const double a03 = a02*a0;
+  const double a04 = a03*a0;
+
+  /* Equal mass part */
+  const double p0 =  38.625208;
+  const double n1 = -0.105187;
+  const double n2 = -0.758427;
+  const double n3 =  0.183613;
+  const double n4 =  0.057817;
+  const double d1 =  0.905420;
+  const double c3_eq = p0*(1. + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1.+ d1*a0);
+
+
+  /* Unequal mass, unequal-spin part */
+  const double c1 =  23.0579594801987;
+  const double c2 =  12.544546974770155;
+  const double c3 = -0.015710117458387414;
+  const double c4 = -119.25957682313306;
+  const double c5 =  64.47094882671716;
+  const double c6 =  54.65682440916807;
+
+  const double c3_neq = c1*a0*X12 + c2*a02*X12 + c3*a03*X12 + c4*a0*nu*X12 + c5*(a1 - a2)*nu2 + c6*SQ((a1 - a2))*nu2;
+
+  return c3_eq + c3_neq;
 }
 
 /** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */

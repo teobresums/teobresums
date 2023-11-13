@@ -74,6 +74,7 @@ int (*p_eob_spin_dyn_rhs)();
 void (*eob_metric_Apotential)();
 void (*eob_metric_Dpotential)();
 void (*eob_metric_Qpotential)();
+double (*eob_flx_Fr)();
 
 void EOBParameters_alloc (EOBParameters **eobp)
 {
@@ -93,6 +94,7 @@ void EOBParameters_free (EOBParameters *eobp)
 {
   if (!eobp) return;
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
+  if (eobp->kpostpeak) free (eobp->kpostpeak);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
   free(eobp);
@@ -162,6 +164,11 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_mode_lm = malloc (eobp->use_mode_lm_size * sizeof(int) );
   memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
 
+  int kpostpeak[] = {0,1,3,6,7,8};      //indexes of multipoles to use
+  eobp->kpostpeak_size = 6;
+  eobp->kpostpeak = malloc (eobp->kpostpeak_size * sizeof(int) );
+  memcpy(eobp->kpostpeak, kpostpeak, eobp->kpostpeak_size * sizeof(int));
+  
   /* FD options */
   
   eobp->tc = 0;
@@ -209,8 +216,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   /* Set default sigmoid parameters */
   eobp->delta_t0_sigmoid_Newt = 100.;
   eobp->delta_t0_sigmoid_NQC  = 100.;
-  eobp->alpha_sigmoid_Newt    = 0.02;
-  eobp->alpha_sigmoid_NQC     = 0.02;
+  eobp->alpha_sigmoid_Newt    = 0.06;
+  eobp->alpha_sigmoid_NQC     = 0.06;
   
   /* Output */
   
@@ -236,7 +243,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
   eobp->ode_tmax=1e9; // max integration time
-  eobp->ode_stop_radius  =1.; // stop ODE integration at this radius (if > 0)
+  eobp->ode_stop_radius  =2.; // stop ODE integration at this radius (if > 0)
   eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
   eobp->ode_stop_after_peak=0;
 
@@ -583,7 +590,7 @@ void eob_set_params(int default_choice, int firstcall)
   EOBPars->a6c = 0.;
   if (EOBPars->A_pot == A_5PNlogP33) {
     /* new  fits */
-    EOBPars->a6c = eob_a6c_fit_next(EOBPars->nu);
+    EOBPars->a6c = eob_a6c_fit_ecc_P33_4PNh22(EOBPars->nu);
   } else if ((ecc != 0.) || (r_hyp != 0.)) {
     /* Eccentric */
     EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
@@ -593,10 +600,13 @@ void eob_set_params(int default_choice, int firstcall)
   } else {
     EOBPars->a6c = eob_a6c_fit(EOBPars->nu);
   }
-  
+
   EOBPars->cN3LO = 0.;
   if (usetidal) EOBPars->cN3LO = 0.0;
-  else if ((ecc != 0.) || (r_hyp != 0.)) {
+  else if (EOBPars->A_pot == A_5PNlogP33) {
+    /* new  fits */
+    EOBPars->cN3LO = eob_c3_fit_ecc_P33_4PNh22(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+  } else if ((ecc != 0.) || (r_hyp != 0.)) {
     EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
   } else if (EOBPars->use_flm == USEFLM_HM) {
     EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
@@ -648,18 +658,28 @@ void eob_set_params(int default_choice, int firstcall)
     if (VERBOSE) PRFORMd("dt",EOBPars->dt);
     if (VERBOSE)
       if (EOBPars->interp_uniform_grid)
-	PRFORMd("dt_interp",EOBPars->dt_interp);
+	      PRFORMd("dt_interp",EOBPars->dt_interp);
   }
 
   /* Function pointers */
   
   /** Set waveform fun pointers */
-  if (EOBPars->use_flm == USEFLM_HM) {
+  if (EOBPars->use_flm == USEFLM_HM_4PN22) {
+    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
+    eob_wav_flm      = &eob_wav_flm_HM_4PN22;
+    eob_wav_flm_s    = &eob_wav_flm_s_HM_4PN22;
+    eob_wav_deltalm  = &eob_wav_deltalm_HM;
+    eob_wav_ringdown = &eob_wav_ringdown_HM; 
+    eob_flx_Fr       = &eob_flx_Fr_ecc_next;
+  } 
+  else if (EOBPars->use_flm == USEFLM_HM) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
     eob_wav_flm      = &eob_wav_flm_HM;
     eob_wav_flm_s    = &eob_wav_flm_s_HM;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
     eob_wav_ringdown = &eob_wav_ringdown_HM; 
+    eob_flx_Fr       = &eob_flx_Fr_ecc_BD;
+
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
@@ -667,12 +687,14 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_flm_s    = &eob_wav_flm_s_SSLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
+    eob_flx_Fr       = &eob_flx_Fr_ecc_BD;
   } else if (EOBPars->use_flm == USEFLM_SSNLO) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
     eob_wav_flm      = &eob_wav_flm_v1;
     eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
+    eob_flx_Fr       = &eob_flx_Fr_ecc_BD;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
@@ -689,7 +711,7 @@ void eob_set_params(int default_choice, int firstcall)
   } else  {
     eob_wav_hlm = &eob_wav_hlm_circ;
     eob_wav_hlmNQC_find_a1a2a3 = &eob_wav_hlmNQC_find_a1a2a3_circ;
-    if (EOBPars->use_flm == USEFLM_HM) {
+    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22) {
       eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_HM;
     } else {
       eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
@@ -1096,6 +1118,11 @@ if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) b
     eobp->use_mode_lm_size = str2iarray(val, &eobp->use_mode_lm);
   }
 
+  if (STREQUAL(key,"kpostpeak")) {
+    free(eobp->kpostpeak);
+    eobp->kpostpeak_size = str2iarray(val, &eobp->kpostpeak);
+  }
+    
   if (STREQUAL(key,"centrifugal_radius")) {
     val = string_trim(val);
     for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
@@ -1506,6 +1533,11 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d,", eobp->use_mode_lm[i]);
   fprintf(f,"%d]\n", eobp->use_mode_lm[eobp->use_mode_lm_size-1]);
 
+  fprintf(f,"%s = [", "kpostpeak");
+  for(int i=0; i<eobp->kpostpeak_size-1;i++)
+    fprintf(f,"%d,", eobp->kpostpeak[i]);
+  fprintf(f,"%d]\n", eobp->kpostpeak[eobp->kpostpeak_size-1]);
+  
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
@@ -1540,7 +1572,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %E\n"    , "ode_abstol", eobp->ode_abstol);
   fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
   fprintf(f,"%s = %.16f\n" , "ode_tmax", eobp->ode_tmax);
-  fprintf(f,"%s = %d\n"    , "ode_stop_at_radius", eobp->ode_stop_radius);
+  fprintf(f,"%s = %f\n"    , "ode_stop_at_radius", eobp->ode_stop_radius);
   fprintf(f,"%s = %d\n"    , "ode_stop_afterNdt", eobp->ode_stop_afterNdt);
 
   /* Output */

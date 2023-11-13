@@ -245,7 +245,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
     
     /* Correcting (5,5) for Higher Modes */
-    if (EOBPars->use_flm == USEFLM_HM ){
+    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22){
       FNewtlm[13] = CNlm[13] * sp4x8;
     }
     
@@ -381,7 +381,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
     FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
     
     /* Correcting (5,5) for Higher Modes */
-    if (EOBPars->use_flm == USEFLM_HM ){
+    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 ){
       FNewtlm[13] = CNlm[13] * sp4x8;
     }
     
@@ -467,13 +467,9 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   /** Compute circular Fphi */
   *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
-  
 
   /** Compute eccentric Fr */
-  *Fr = eob_flx_Fr_ecc_BD(r, pr_star, pphi, dyn);
-
-  // Using circular radial flux. Full non-cicular below
-  // *Fr = eob_flx_Fr_ecc(r, pr_star, pphi, dyn);
+  *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, *Fphi);
   
   /** Compute non-circular Fphi */
   double Fphi_NC[KMAX];
@@ -490,12 +486,15 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   hatf += hatFH;
 
-  /** Compute circular Fphi */
+  /** Compute non-circular Fphi */
   *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+  
+  /** Re-compute Fr using the generic Fphi */
+  *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, *Fphi);
 }
 
 /** Radial flux calculation for eccentric systems */
-double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn)
+double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
 {
   const double nu = EOBPars->nu;
   double nu2 = nu*nu;
@@ -550,7 +549,7 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn)
 
 /** Radial flux calculation for eccentric systems 
     Circular expression from Bini-Damour inverse-resummed */
-double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn)
+double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
 {
   const double nu = EOBPars->nu;
   double nu2 = nu*nu;
@@ -568,35 +567,64 @@ double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn)
   return nu*32./3.*u4*prstar*if2;
 }
 
+
+/** Radial flux calculation for eccentric systems 
+    Eq. 6 of arXiv:2304.09662
+*/
+double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
+{
+  const double nu = EOBPars->nu;
+  const double nu2 = nu*nu;
+
+  const double u  = 1/r;
+  const double u2 = u*u;
+
+  double c1 = 5317./1680 - 227./140*nu;
+  double c2 = 1296935./1016064 - 274793./70560*nu + 753./560*nu2;
+  double a[]  = {1., c1, c2};
+  double hatf_prstar = Pade02(u, a);
+  const double Frstar = -5./3.*prstar/pphi*Fphi*hatf_prstar;
+  
+  /* Eq. 6 of the paper above gives Fr*. 
+     Compute the conversion from Fr to Fr*
+  */
+  double A, B, pl_hold;
+  eob_metric_s(r, prstar, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  const double sqrtAbyB = sqrt(A/B);
+  
+  /* return Fr */
+  return Frstar/sqrtAbyB;
+}
+
 /** Non-circular flux for eccentric systems */
 double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fr, Dynamics *dyn)
 {  
-  const double nu = EOBPars -> nu;
-  const double chi1 = EOBPars -> chi1;
-  const double chi2 = EOBPars -> chi2;
-  const double aK2 = EOBPars -> aK2;
-  const double X1 = EOBPars -> X1;
-  const double X2 = EOBPars -> X2;
-  const double a1 = EOBPars -> a1;
-  const double a2 = EOBPars -> a2;
-  const double S1 = EOBPars -> S1;
-  const double S2 = EOBPars -> S2;
-  const double S = S1 + S2;
-  const double Sstar = X2*a1 + X1*a2;
-  const double C_Q1 = EOBPars -> C_Q1;
-  const double C_Q2 = EOBPars -> C_Q2;
+  const double nu     = EOBPars -> nu;
+  const double chi1   = EOBPars -> chi1;
+  const double chi2   = EOBPars -> chi2;
+  const double aK2    = EOBPars -> aK2;
+  const double X1     = EOBPars -> X1;
+  const double X2     = EOBPars -> X2;
+  const double a1     = EOBPars -> a1;
+  const double a2     = EOBPars -> a2;
+  const double S1     = EOBPars -> S1;
+  const double S2     = EOBPars -> S2;
+  const double S      = S1 + S2;
+  const double Sstar  = X2*a1 + X1*a2;
+  const double C_Q1   = EOBPars -> C_Q1;
+  const double C_Q2   = EOBPars -> C_Q2;
   const double C_Oct1 = EOBPars -> C_Oct1;
   const double C_Oct2 = EOBPars -> C_Oct2;
   const double C_Hex1 = EOBPars -> C_Hex1;
   const double C_Hex2 = EOBPars -> C_Hex2;
-  const double X12 = X1 - X2; /* sqrt (1 - 4 nu)*/
-  const double X12sq = SQ (X12); /* (1 - 4 nu)*/
-  const double c3 = EOBPars -> cN3LO;
+  const double X12    = X1 - X2; /* sqrt (1 - 4 nu)*/
+  const double X12sq  = SQ (X12); /* (1 - 4 nu)*/
+  const double c3     = EOBPars -> cN3LO;
 
-  const int usetidal = EOBPars -> use_tidal;
-  const int usespins = EOBPars -> use_spins;
+  const int usetidal  = EOBPars -> use_tidal;
+  const int usespins  = EOBPars -> use_spins;
 
-  double pphi2 = pphi*pphi;
+  double pphi2   = pphi*pphi;
   double prstar2 = prstar*prstar;
   double prstar3 = prstar2*prstar;
   double prstar4 = prstar3*prstar;
