@@ -619,6 +619,7 @@ typedef struct tagEOBParameters
   int interp_uniform_grid;
 
   int *use_mode_lm, use_mode_lm_size;
+  int *use_mode_lm_inertial, use_mode_lm_inertial_size;
   int *use_mode_lm_nqc, use_mode_lm_nqc_size; // multipoles to attach NQCs
                                               // TODO: add as user input
   int *kpostpeak, kpostpeak_size;             // multipoles where NQCs are extracted at t_peak_lm + 2 from the RD template
@@ -749,7 +750,7 @@ void rmap (double *re, double *im, double *p, double *a, const int mode);
 void rmap_twist (double *re, double *im, double *p, double *a, const int mode);
 void set_multipolar_idx_mask_old(int *kmask, int n);
 void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);
-int get_uniform_size(const double tf, const double t0, const double dt);
+long int get_uniform_size(const double tf, const double t0, const double dt);
 int intersect_int (int *a, int size_a, int *b, int size_b, int *result);
 void Waveform_alloc (Waveform **wav, const int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
@@ -758,7 +759,7 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
 void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name);
 void Waveform_output (Waveform *wav);
 void Waveform_free (Waveform *wav);
-void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name, int *use_mode_lm, int use_mode_lm_size);
 void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_output_reim (Waveform_lm *wav);

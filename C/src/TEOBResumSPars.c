@@ -85,6 +85,7 @@ void EOBParameters_free (EOBParameters *eobp)
 {
   if (!eobp) return;
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
+  if (eobp->use_mode_lm_inertial) free (eobp->use_mode_lm_inertial);
   if (eobp->use_mode_lm_nqc) free (eobp->use_mode_lm_nqc);
   if (eobp->kpostpeak) free (eobp->kpostpeak);
   if (eobp->knqcpeak22) free (eobp->knqcpeak22);
@@ -150,6 +151,13 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_mode_lm_size = 1;
   eobp->use_mode_lm = malloc (eobp->use_mode_lm_size * sizeof(int) );
   memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
+
+
+  /* Modes to use in the intertial frame to compute hpc */
+  int hlm_inertial[] = {1};
+  eobp->use_mode_lm_inertial_size = 1;
+  eobp->use_mode_lm_inertial = malloc (eobp->use_mode_lm_inertial_size * sizeof(int) );
+  memcpy(eobp->use_mode_lm_inertial, hlm_inertial, eobp->use_mode_lm_inertial_size * sizeof(int));
 
   // TODO: intersect with use_mode_lm so to compute NQCs only for active modes
   int hlm_nqc[] = {0,1,3,4,6,7,8,13};      //indexes of multipoles to use
@@ -1068,7 +1076,16 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"use_mode_lm")) {
     free(eobp->use_mode_lm);
     eobp->use_mode_lm_size = str2iarray(val, &eobp->use_mode_lm);
-  }
+    /* Over-write use_mode_lm_inertial to use_mode_lm (default behavior if
+    use_mode_lm_inertial is not specified) */
+    free(eobp->use_mode_lm_inertial);
+    eobp->use_mode_lm_inertial_size = str2iarray(val, &eobp->use_mode_lm_inertial);
+  }  
+
+  if (STREQUAL(key,"use_mode_lm_inertial")) {
+    free(eobp->use_mode_lm_inertial);
+    eobp->use_mode_lm_inertial_size = str2iarray(val, &eobp->use_mode_lm_inertial);
+  }  
 
   if (STREQUAL(key,"kpostpeak")) {
     free(eobp->kpostpeak);
@@ -1422,6 +1439,10 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d,", eobp->use_mode_lm[i]);
   fprintf(f,"%d]\n", eobp->use_mode_lm[eobp->use_mode_lm_size-1]);
 
+  fprintf(f,"%s = [", "use_mode_lm_inertial");
+  for(int i=0; i<eobp->use_mode_lm_inertial_size-1;i++)
+    fprintf(f,"%d,", eobp->use_mode_lm_inertial[i]);
+  fprintf(f,"%d]\n", eobp->use_mode_lm_inertial[eobp->use_mode_lm_inertial_size-1]);
   fprintf(f,"%s = [", "kpostpeak");
   for(int i=0; i<eobp->kpostpeak_size-1;i++)
     fprintf(f,"%d,", eobp->kpostpeak[i]);
