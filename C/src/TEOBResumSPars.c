@@ -430,12 +430,7 @@ void eob_set_params(int default_choice, int firstcall)
     EOBPars->q = 1.;
   }
 
-  /* Spin parameters */
-  if (EOBPars->use_spins==MODE_SPINS_GENERIC) {
-    EOBPars->chi1 = EOBPars->chi1z;
-    EOBPars->chi2 = EOBPars->chi2z;
-  }
-
+  
   /* Check: if in-plane components of spins are < 1e-4, then spin aligned, else spin precessing */
   /* Note: the "NOSPIN" option is deprecated, and currently never used */
 
@@ -443,10 +438,22 @@ void eob_set_params(int default_choice, int firstcall)
   double chip_2 = sqrt(SQ(EOBPars->chi2x) + SQ(EOBPars->chi2y));
   if (chip_1 + chip_2 > 1e-4){
     EOBPars->use_spins = MODE_SPINS_GENERIC;
+    EOBPars->chi1 = EOBPars->chi1z;
+    EOBPars->chi2 = EOBPars->chi2z;
     if (EOBPars->domain == DOMAIN_TD)
       EOBPars->interp_uniform_grid = 1; // for TD twist we require interpolation
-  } else
+  } else {
+    if (DUNEQUAL(EOBPars->chi1z, EOBPars->chi1, 1e-8) || DUNEQUAL(EOBPars->chi2z, EOBPars->chi2, 1e-8)){
+      /* User specified only chi_{12} or chi_{12}z. The unspecified value is 0 by default. 
+         Two possibilities:
+         * chi_iz nonzero, chi_i zero   : spin aligned limit of precessing --> overwrite EOBPars->chi{12}
+         * chi_iz zero,    chi_i nonzero: spin aligned                     --> do not overwrite EOBPars->chi{12}
+      */
+      if DISZERO(EOBPars->chi1, 1e-8) EOBPars->chi1 = EOBPars->chi1z;
+      if DISZERO(EOBPars->chi2, 1e-8) EOBPars->chi2 = EOBPars->chi2z;
+    }
     EOBPars->use_spins = MODE_SPINS_ALIGNED;
+  }
 
   EOBPars->nu = q_to_nu(q);
   EOBPars->X1 = nu_to_X1(EOBPars->nu);

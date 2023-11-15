@@ -6,6 +6,7 @@
 
 
 import numpy as np; import EOBRun_module as EOB; 
+import matplotlib.pyplot as plt 
 
 def compute_lambda_tilde(m1, m2 ,l1 , l2):
     """ Compute Lambda Tilde from masses and tides components
@@ -69,7 +70,6 @@ def Plot2D(x, y, z=None, labels=[None,None], savef=0):
     """
     Make a 2D plot of x vs y
     """
-    import matplotlib.pyplot as plt
 
     print("...plot "+labels[0]+'-'+labels[1])
     fig = plt.figure()
@@ -179,7 +179,7 @@ def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, precessing=0, N=1
 
     return params
 
-def CreateDict(M, q, chi1, chi2, l1, l2, iota, f0, srate, df, interp, domain, modes):
+def CreateDict(M, q, chi1, chi2, l1, l2, iota, f0, srate, df, interp, domain, modes, coa=0, argout="no"):
     """
     Create the dictionary of parameters for EOBRunPy
     """
@@ -190,20 +190,20 @@ def CreateDict(M, q, chi1, chi2, l1, l2, iota, f0, srate, df, interp, domain, mo
     pardic = {
     'M'                  : M,
     'q'                  : q,
-    'chi1'               : chi1z,
-    'chi2'               : chi2z,
     'chi1x'              : chi1x,
     'chi1y'              : chi1y,
     'chi1z'              : chi1z,
     'chi2x'              : chi2x,
     'chi2y'              : chi2y,
     'chi2z'              : chi2z,
-    'LambdaAl2'            : l1,
-    'LambdaBl2'            : l2,
+    'LambdaAl2'          : l1,
+    'LambdaBl2'          : l2,
     'distance'           : 1.,
     'initial_frequency'  : f0,
     'use_geometric_units': "no",
+    'coalescence_angle'  : coa,
     'interp_uniform_grid': interp,
+    'df'                 : df,
     'domain'             : domain,
     'srate_interp'       : srate,
     'inclination'        : iota,
@@ -211,10 +211,10 @@ def CreateDict(M, q, chi1, chi2, l1, l2, iota, f0, srate, df, interp, domain, mo
     'output_lm'          : modes,
     'output_hpc'         : "no",
     'output_multipoles'  : "no", 
-    'arg_out'            : "no",
+    'arg_out'            : argout,
     'output_dynamics'    : "no",
-    'use_spins'          : 2,
     'project_spins'      : "no",
+    'time_shift_FD'      : "no",
     }
     return pardic
 
@@ -379,13 +379,114 @@ def PlotPrecWF():
 
     t, hp, hc = EOB.EOBRunPy(par)
     
-    import matplotlib.pyplot as plt 
     fig = plt.figure()
     plt.plot(t, hp)
     plt.plot(t, hc)
     plt.xlabel('t')
     fig.savefig('h_test.png')
     
+def PlotAlignedSpinLimit():
+    """
+    Plot a precessing wf in the aligned spins limit and compare it with an aligned spins one
+    """
+    M = 60
+    q = 6
+    
+    # above the 1e-4 threshold 
+    chiA = [0.0002, 0.,   0.]
+    chiB = [0.000,  0., -0.1]
+
+    # blow the 1e-4 threshold
+    chiAt = [0.000001, 0., 0.0]
+    chiBt = [0.000,    0.,-0.1]
+
+    # aligned
+    chiAa = [0., 0.,  0.0]
+    chiBa = [0., 0., -0.1]
+
+    par_p = CreateDict(M, q, chiA,  chiB,  0, 0, np.pi/3, 20., 4096., 0., "yes", 0, [0,1,2,3,4,5,6,7,8,13], argout="no")
+    par_t = CreateDict(M, q, chiAt, chiBt, 0, 0, np.pi/3, 20., 4096., 0., "yes", 0, [0,1,2,3,4,5,6,7,8,13], argout="no")    
+    par_a = CreateDict(M, q, chiAa, chiBa, 0, 0, np.pi/3, 20., 4096., 0., "yes", 0, [0,1,2,3,4,5,6,7,8,13], argout="no")
+
+    fig = plt.figure()
+    for pp in [par_a, par_p, par_t]:
+        t,hp,hc = EOB.EOBRunPy(pp)
+        plt.plot(t, hc)
+
+    plt.xlabel('t')
+    plt.show()
+
+def PlotSPAWF():
+    """
+    Plot one example BNS+SPA precessing waveform, compare with the TD
+    """
+    from pycbc.types.frequencyseries import FrequencySeries
+
+    M = 2.7
+    q = 1
+    nu= q/(1+q)**2
+    chiA  = [0.0, 0., 0.5]
+    chiB  = [0.0, 0., 0.1]
+    f0    = 20.
+    df    = 1./(128*2)
+    # parameter dictionaries
+    part     = CreateDict(M, q, chiA, chiB, 400, 400, np.pi/2.5, f0, 4096., 0., "yes",  0, [1], coa=np.pi/4, argout="yes")
+    parf     = CreateDict(M, q, chiA, chiB, 400, 400, np.pi/2.5, f0, 4096., df, "yes" , 1, [1], coa=np.pi/4, argout="yes")
+    
+    # Gen TD wf
+    t,hpt,hct,hlm,_= EOB.EOBRunPy(part)
+    # Gen FD wf
+    f_spa, rhpf, ihpf, rhcf,ihcf,_,_,_= EOB.EOBRunPy(parf)
+    hf = rhpf - 1j*ihpf
+    hfc= rhcf - 1j*ihcf
+    
+    # ifft
+    N = int(f0/(f_spa[1]-f_spa[0]))
+    hf_spa_tmp  = np.pad(hf,  (N,0), mode='constant')
+    hfc_spa_tmp = np.pad(hfc, (N,0), mode='constant')
+    hf_spa_FD   = FrequencySeries(hf_spa_tmp, delta_f=f_spa[1]-f_spa[0])
+    hfc_spa_FD  = FrequencySeries(hfc_spa_tmp, delta_f=f_spa[1]-f_spa[0])
+    hf_spa_TD   = hf_spa_FD.to_timeseries()
+    hfc_spa_TD  = hfc_spa_FD.to_timeseries()
+    # plot
+    plt.plot(t, np.sqrt(hpt**2+hct**2), color='k')
+    plt.plot(hf_spa_TD.sample_times, np.sqrt(hf_spa_TD**2+hfc_spa_TD**2), linestyle='--', color='r', label=r'TEOBResumSPA')    
+    plt.xlabel('t [s]')
+    plt.ylabel('$A$')
+    plt.legend()
+    plt.show()
+
+def SwapPrecWF():
+    """
+    Test the swapping of components when q<1.
+    --------------------------------------------------
+    According to LAL conventions, if m1<->m2 the x axis is flipped.
+    Therefore, the waveform has to remain identical when:
+        - label_1<->label_2;
+        - coalescence_angle -> coalescence_angle + Pi;
+        - In plane spins are rotated by Pi
+    """
+    M    = 100
+    q    = 2.
+    chiA     = [ 0.8,  0.,  0. ]
+    chiA_rot = [-0.8,  0.,  0. ]
+    chiB     = [  0.,-0.7, -0.1]
+    chiB_rot = [  0., 0.7, -0.1]
+    phi_ref  = np.pi/4
+
+    par     = CreateDict(M, q,    chiA,     chiB,     0, 0, np.pi/3, 20., 4096., 0, "yes", 0, [0,1], coa=phi_ref, argout="yes")
+    par_rot = CreateDict(M, 1./q, chiB_rot, chiA_rot, 0, 0, np.pi/3, 20., 4096., 0, "yes", 0, [0,1], coa=phi_ref+np.pi, argout="yes")
+
+    t1, hp1,_,_,_ = EOB.EOBRunPy(par)
+    t2, hp2,_,_,_ = EOB.EOBRunPy(par_rot)
+
+    plt.plot(t1, hp1, color='r', label=r'$m_1 > m_2$', linewidth=2)
+    plt.plot(t2, hp2, color='royalblue', linestyle='--', linewidth=2, label=r'$m_2 > m_1$')
+    plt.grid()
+    plt.xlabel(r'$t$ [s]')
+    plt.ylabel(r'$h_+$')
+    plt.legend()
+    plt.show()
 
 if __name__ == "__main__":
 
@@ -424,4 +525,19 @@ if __name__ == "__main__":
     if 0:
         print('##### Plot Prec WF #####')
         PlotPrecWF()
+        print("...done")
+
+    if 1:
+        print('##### Test the spin aligned limit')
+        PlotAlignedSpinLimit()
+        print('...done')
+
+    if 1:
+        print('##### Plot a FD SPA WF, compare to TD #####')
+        PlotSPAWF()
+        print("...done")
+
+    if 1:
+        print("##### Test Swap #####")
+        SwapPrecWF()
         print("...done")
