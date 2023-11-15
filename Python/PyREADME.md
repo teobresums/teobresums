@@ -1,31 +1,13 @@
 # TEOBResumS: Effective-one-body model for compact binary waveforms
 
-To start, checkout the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/browse/).
-
-## Code versions
-
-Code versions are tagged on master. Code versions used in scientific
-papers are tagged with the arXiv number. 
-
-For detailed release notes of the most recent version see the
-[`CHANGES` file](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
-
-## Authors 
-
-See the [`AUTHORS` file](https://bitbucket.org/eob_ihes/teobresums/src/master/AUTHORS).
-
-## License
-
-TEOBResumS is a free software distributed under the terms of the GNU General Public License as published by the Free Software Foundation.
-
-See the [`LICENSE` file](https://bitbucket.org/eob_ihes/teobresums/src/master/LICENSE).
-
 ## Pre-requisites
 
  * C compiler (e.g. GCC)
  * [GSL library](https://www.gnu.org/software/gsl/)
 
 ## Usage
+
+To start, checkout the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/browse/).
 
 ### Python extension
 
@@ -34,20 +16,11 @@ $ python
 >>> import EOBRun_module
 ```
 
-Example scripts for using the python module can be found in `Python/Examples/`.
+Example scripts for using the python module can be found in `Python/Examples/` [here](https://bitbucket.org/eob_ihes/teobresums/src/master/Python/Examples/).
 
-If you have a [PyCBC](https://pycbc.org/) installation, a plugin for `TEOBResumS` python module is available in `PyCBC/` and should be automatically detected by `PyCBC`; 
-see `PyCBC/test.py`.
+## References
 
-### C executable
-Run the executable:
-
-```
-$ cd /PATH/TO/teobresums/C/
-$ ./TEOBResumS.x -p <parfile>
-```
-
-Example parfiles can be found in the directory `C/par/`.
+Please, consult the complete list of [references on the Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/References) and cite papers according to what you use.
 
 ## Developers
 

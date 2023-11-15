@@ -78,4 +78,4 @@ pipelines:
                   - pip3 install build
                   - python3 -m build
                   - python3 -m pip install --upgrade twine
-                  - python3 -m twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD
+                  - python3 -m twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD dist/*.tar.gz

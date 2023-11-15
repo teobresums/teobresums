@@ -7,9 +7,9 @@ py-modules = []
 
 [project]
 name="teobresums"
-version = '0.0.2'
-authors =[{name="The TEOBResumS team", email="rossella.gamba@uni-jena.de"}]
-description='TEOBResumS: Effective-One-Body model for generic compact binary coalescences'
+version = '4.4.1'
+authors =[{name="The TEOBResumS team", email="rgamba@berkeley.edu"}]
+description='TEOBResumS: Effective-One-Body model for compact binary coalescences'
 classifiers = [
          "Programming Language :: Python :: 3",
          "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

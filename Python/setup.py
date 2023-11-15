@@ -18,7 +18,6 @@ eob_sources = ['TEOBResumSWrap.c']
 
 # Sources
 if not os.path.isdir('lib')         : os.symlink('../C/src', 'lib')
-if not os.path.exists("PyREADME.md"): os.symlink("../README.md", "PyREADME.md")
 
 eob_sources += glob.glob('lib/*.c')
 
@@ -46,5 +45,4 @@ setup(  name='teobresums',
         author = 'The TEOBResumS team',
         url = 'https://bitbucket.org/eob_ihes/teobresums/src/master/',
         ext_modules=[pyprofit_ext],
-        install_requires=['setuptools>42', 'numpy>=1.18.0'],
     )
