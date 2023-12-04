@@ -74,10 +74,6 @@
 #define EXCLUDESPINSPINTIDES (0) /* use tidally deformed centr. radius with self-spin and tides by default */
 #endif
 
-#ifndef USEGRAVITOMAGNETICTERMS
-#define USEGRAVITOMAGNETICTERMS (1) /* use gravitomagnetic terms in tidal potential and waveform */
-#endif
-
 #ifndef USEBTIDALPOTENTIAL
 #define USEBTIDALPOTENTIAL (1) /* add B LO tidal potential */
 #endif
@@ -277,6 +273,30 @@ enum{
   Q_NOPT
 };
 static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "undefined"};
+enum{
+  a6c_fits_NO,
+  a6c_fits_V0,
+  a6c_fits_HM,
+  a6c_fits_HM_2023,
+  a6c_fits_ecc,
+  a6c_fits_P33_HM4PN22,
+  a6c_fits_NOPT
+};
+static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "ecc", "HM4PN22", "undefined"};
+
+enum{
+  cN3LO_fits_NO,
+  cN3LO_fits_V0,
+  cN3LO_fits_HM,
+  cN3LO_fits_HM_2023_420,
+  cN3LO_fits_HM_2023_430,
+  cN3LO_fits_HM_2023_431,
+  cN3LO_fits_HM_2023_432,
+  cN3LO_fits_ecc,
+  cN3LO_fits_P33_HM4PN22,
+  cN3LO_fits_NOPT
+};
+static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "undefined"};
 
 /** List of options for tidal potential */
 enum{
@@ -519,6 +539,7 @@ typedef struct tagWaveform_lm
   double *phase[KMAX]; /* phase */
   char name[STRLEN];
   int kmask[KMAX]; /* mask for multipoles */
+  int kmask_nqc[KMAX]; /* mask for NQCs */
 }  Waveform_lm;
 
 /** Multipolar FD waveform data type */
@@ -531,6 +552,7 @@ typedef struct tagWaveformFD_lm
   double *F[KMAX], *Fdot[KMAX]; /* Freq, and drvts for SPA */
   char name[STRLEN];
   int kmask[KMAX]; /* mask for multipoles */
+  int kmask_nqc[KMAX]; /* mask for NQCs */
 }  WaveformFD_lm;
 
 
@@ -542,6 +564,7 @@ typedef struct tagWaveform_lm_t
   double ampli[KMAX]; /* amplitude */
   double phase[KMAX]; /* phase */
   int kmask[KMAX]; /* mask for multipoles */
+  int kmask_nqc[KMAX]; /* mask for multipoles */
 }  Waveform_lm_t;
 
 /** Data type for spin dynamics */
@@ -609,7 +632,8 @@ typedef struct tagEOBParameters
   double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
   double chi1x,chi1y,chi1z;
   double chi2x,chi2y,chi2z;
-  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
+  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2;
+  double a6c, cN3LO;
   double ecc, r_hyp, H_hyp, j_hyp;
   double r0, initial_frequency;  
   double distance, inclination, polarization, coalescence_angle;
@@ -644,12 +668,17 @@ typedef struct tagEOBParameters
   int use_speedytail;
   int use_lambda234_fits;
   int use_tidal_fmode_model;
+  int use_a6c_fits;
+  int use_cN3LO_fits;
   
   double dt_merger_interp, dt_interp, srate_interp;
   int interp_uniform_grid;
 
   int *use_mode_lm, use_mode_lm_size;
-  int *kpostpeak, kpostpeak_size;
+  int *use_mode_lm_inertial, use_mode_lm_inertial_size;
+  int *use_mode_lm_nqc, use_mode_lm_nqc_size; // multipoles to attach NQCs
+  int *kpostpeak, kpostpeak_size;             // multipoles where NQCs are extracted at t_peak_lm + 2 from the RD template
+  int *knqcpeak22, knqcpeak22_size;           // multipoles where NQCs are extracted at t_peak_22  from global fits
 
   int ecc_freq, ecc_ics;
   
@@ -660,8 +689,8 @@ typedef struct tagEOBParameters
   double ode_tmax;
   int ode_stop_afterNdt;
   int ode_stop_after_peak;
-  int ode_stop, ode_stop_MOmgpeak; 
-  double ode_stop_radius;
+  int ode_stop, ode_stop_MOmgpeak;
+  double ode_stop_radius; // note: this is *different* in meaning from dyn->ode_stop_radius!
   int project_spins, ringdown_eulerangles;
   int spin_flx;
 
@@ -728,14 +757,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 void eob_set_params(int default_choice, int firstcall);
 void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);
-void EOBParameters_defaults (int choose, EOBParameters *eobp);
+void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp);
 void EOBParameters_parse_file(char *fname, EOBParameters *eobp);
 int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv);
 void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val);
 void EOBParameters_tofile(EOBParameters *eobp,char *fname);
 void update_params(int binary);
 
-/* TEOBResumSUtil.c */
+/* TEOBResumSUtils.c */
 double q_to_nu(const double q);
 double nu_to_X1(const double nu);
 double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell, double *kapA, double *kapB);
@@ -784,9 +813,11 @@ void unwrap_HM(double *p, const int size);
 void unwrap_euler(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void rmap (double *re, double *im, double *p, double *a, const int mode);
+void rmap_twist (double *re, double *im, double *p, double *a, const int mode);
 void set_multipolar_idx_mask_old(int *kmask, int n);
 void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);
-int get_uniform_size(const double tf, const double t0, const double dt);
+long int get_uniform_size(const double tf, const double t0, const double dt);
+int intersect_int (int *a, int size_a, int *b, int size_b, int *result);
 void Waveform_alloc (Waveform **wav, const int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
 void Waveform_rmap (Waveform *h, const int mode, const int unw);
@@ -794,7 +825,7 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
 void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name);
 void Waveform_output (Waveform *wav);
 void Waveform_free (Waveform *wav);
-void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name, int *use_mode_lm, int use_mode_lm_size);
 void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_output_reim (Waveform_lm *wav);
@@ -859,16 +890,19 @@ void errorexits(char *file, int line, const char *s, const char *t);
 /* TEOBResumSFits.c */
 double eob_a6c_fit(double nu);
 double eob_a6c_fit_HM(double nu);
+double eob_a6c_fit_HM_2023(double nu);
 double eob_a6c_fit_ecc(double nu);
 double eob_a6c_fit_next(double nu);
 double eob_a6c_fit_ecc_P33_4PNh22(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
+double eob_c3_fit_HM_2023(double nu, double a1, double a2);
 double eob_c3_fit_ecc(double nu, double a1, double a2);
 double eob_c3_fit_ecc_P33_4PNh22(double nu, double a1, double a2);
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
+void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
@@ -905,6 +939,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 			double Mbh, double abh,  
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 			double *sigmar, double *sigmai);
+void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
+      double *sigmar, double *sigmai);
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);

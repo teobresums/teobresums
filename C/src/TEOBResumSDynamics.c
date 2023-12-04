@@ -43,7 +43,14 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   /** Compute EOB Metric */
   double A, B, Q, dA, d2A, dB, dQ, dQ_dprstar, ddQ_drdprstar, d2Q_dprstar2, pl_hold;
   eob_metric(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &ddQ_drdprstar, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
-  
+
+  /** Failsafe to avoid event horizon crossing */
+  if (A < 1e-6){
+    A = fabs(A);
+    B = fabs(B);
+    dyn->ode_stop = true;
+  }
+
   /** Compute Hamiltonian */
   double H, Heff, dHeff_dr,dHeff_dprstar;
   eob_ham(nu, r, pphi, prstar, A, dA, Q, dQ, dQ_dprstar, &H, &Heff, &dHeff_dr, &dHeff_dprstar, NULL);
@@ -199,6 +206,13 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
   eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
   
+  /** Failsafe to avoid event horizon crossing */
+  if (A < 1e-6){
+    A = fabs(A);
+    B = fabs(B);
+    dyn->ode_stop = true;
+  }
+
   /* Compute centrifugal radius */
   double rc, drc_dr, d2rc_dr2;
   eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, 
@@ -1693,7 +1707,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     dy[EOB_EVOLVE_SPIN_gam] = 0.;
   else
     dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * (Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] - Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
-    
+
   /* dot omg (Rad.React.) */
   if(EOBPars->spin_flx == SPIN_FLX_PN) {
     
@@ -2343,8 +2357,8 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     }
     /** Update alpha and beta angles */
     dyn->y[EOB_EVOLVE_SPIN_alp]  = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
-						     dyn->y[EOB_EVOLVE_SPIN_Ly],
-						     dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
+			          dyn->y[EOB_EVOLVE_SPIN_Ly],
+			          dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
     dyn->y[EOB_EVOLVE_SPIN_bet]  = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
@@ -2428,8 +2442,8 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   DynamicsSpin *spindyn_tmp = NULL;
   DynamicsSpin_alloc(&spindyn_tmp, 10);
   EOBPars->spin_odes_dt = -EOBPars->spin_odes_dt/10;
-  spindyn_tmp->omg_stop = omg0;
-  spindyn_tmp->t_stop = -100000.;
+  spindyn_tmp->omg_stop = 0.99*omg0; // slightly below omg0, to avoid interpolation issues at the edges
+  spindyn_tmp->t_stop = -1000000.;
   //eob_spin_dyn(spindyn_tmp, EOBPars->initial_frequency/time_units_factor(EOBPars->M));
   int Nint = 0;
   dyn->t = 0.;
@@ -2527,15 +2541,15 @@ int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double o
   double m2 = 1 - m1;
   const double M12 = SQ(m1);
   const double M22 = SQ(m2);  
-  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x *M12; 
-  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y *M12;
-  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z *M12;
-  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x *M22;
-  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y *M22;
-  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z *M22;
-  dyn->y[EOB_EVOLVE_SPIN_Lx] = 0; 
-  dyn->y[EOB_EVOLVE_SPIN_Ly] = 0;
-  dyn->y[EOB_EVOLVE_SPIN_Lz] = 1.;
+  dyn->y[EOB_EVOLVE_SPIN_SxA] = EOBPars->chi1x*M12; 
+  dyn->y[EOB_EVOLVE_SPIN_SyA] = EOBPars->chi1y*M12;
+  dyn->y[EOB_EVOLVE_SPIN_SzA] = EOBPars->chi1z*M12;
+  dyn->y[EOB_EVOLVE_SPIN_SxB] = EOBPars->chi2x*M22;
+  dyn->y[EOB_EVOLVE_SPIN_SyB] = EOBPars->chi2y*M22;
+  dyn->y[EOB_EVOLVE_SPIN_SzB] = EOBPars->chi2z*M22;
+  dyn->y[EOB_EVOLVE_SPIN_Lx]  = 0; 
+  dyn->y[EOB_EVOLVE_SPIN_Ly]  = 0;
+  dyn->y[EOB_EVOLVE_SPIN_Lz]  = 1.;
   dyn->y[EOB_EVOLVE_SPIN_alp] = alpha_initial_condition(EOBPars); 
   dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],

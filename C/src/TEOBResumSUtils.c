@@ -1254,6 +1254,21 @@ void rmap (double *re, double *im, double *p, double *a, const int mode)
   }
 }
 
+/* Compute real/imag <-> amplitude/phase */
+void rmap_twist (double *re, double *im, double *p, double *a, const int mode)
+{
+  /* h =  A exp( -i phi) */
+  if (mode) {
+    /** (Re, Im) -> (Amplitude, phase) */
+    *a = sqrt( SQ((*re)) + SQ((*im)) );
+    *p = - atan2((*im), (*re)); /* exp(- i phi) => Pi  */
+  } else {
+    /** (Amplitude, phase) -> (Re, Im) */
+    *re = + (*a) * cos((*p));  
+    *im = - (*a) * sin((*p));  
+  }
+}
+
 /** This routine sets a 0/1 mask for the multipolar linear index 
     work for any parameter and can specify default all on/off */
 void set_multipolar_idx_mask (int *kmask, int n, const int *idx, int m, int on)
@@ -1270,9 +1285,25 @@ void set_multipolar_idx_mask (int *kmask, int n, const int *idx, int m, int on)
 }
 
 /** Compute size of a uniform grid t0:dt:tf */
-int get_uniform_size(const double tN, const double t0, const double dt)
+long int get_uniform_size(const double tN, const double t0, const double dt)
 {
   return ((long int)((tN - t0)/dt + 1)); 
+}
+
+/** Intersection of two int arrays */
+
+int intersect_int (int *a, int size_a, int *b, int size_b, int *result)
+{
+  int k = 0;
+  for (int i = 0; i < size_a; i++){
+    for (int j = 0; j < size_b; j++){
+      if (a[i]==b[j]){
+	      result[k] = a[i];
+	      k++;
+      }
+    }
+  }
+  return k;
 }
 
 /* Alloc/Free data type routines */
@@ -1588,13 +1619,14 @@ void WaveformFD_free (WaveformFD *wav)
 }
 
 /** Multipolar waveform (complex) */
-void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name, int *use_mode_lm, int use_mode_lm_size)
 {
   *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->size = size; 
-  set_multipolar_idx_mask((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0);
+  set_multipolar_idx_mask((*wav)->kmask,     KMAX, use_mode_lm, use_mode_lm_size, 0);
+  set_multipolar_idx_mask((*wav)->kmask_nqc, KMAX, EOBPars->use_mode_lm_nqc, EOBPars->use_mode_lm_nqc_size, 0);
   (*wav)->time = malloc ( size * sizeof(double) );
   memset((*wav)->time, 0, size*sizeof(double));
   for (int k=0; k<KMAX; k++) {
@@ -1631,7 +1663,7 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   /* Alloc and init aux memory */  
   Waveform_lm *hlm_aux;
   const int oldsize = hlm->size;
-  Waveform_lm_alloc(&hlm_aux, oldsize, "");
+  Waveform_lm_alloc(&hlm_aux, oldsize, "", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
   memcpy(hlm_aux->time, hlm->time, oldsize * sizeof(double));
   for (int k = 0; k < KMAX; k++) {
     if (hlm->kmask[k]){
@@ -1745,7 +1777,7 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
 #endif
   
   /* Alloc output waveform b */
-  Waveform_lm_alloc (hlmb, N, name);
+  Waveform_lm_alloc (hlmb, N, name, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
   /* TODO: Parameters are not copied in the new wf !*/
   
   /* Copy the relevant part of a into b */
@@ -2077,6 +2109,7 @@ void Waveform_lm_t_alloc (Waveform_lm_t **wav)
   (*wav)->time = 0.;
   (*wav)->freq = 0.;
   set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0); 
+  set_multipolar_idx_mask ((*wav)->kmask_nqc, KMAX, EOBPars->use_mode_lm_nqc, EOBPars->use_mode_lm_nqc_size, 0);
 }
 
 void Waveform_lm_t_free (Waveform_lm_t *wav)

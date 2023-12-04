@@ -94,14 +94,17 @@ void EOBParameters_free (EOBParameters *eobp)
 {
   if (!eobp) return;
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
+  if (eobp->use_mode_lm_inertial) free (eobp->use_mode_lm_inertial);
+  if (eobp->use_mode_lm_nqc) free (eobp->use_mode_lm_nqc);
   if (eobp->kpostpeak) free (eobp->kpostpeak);
+  if (eobp->knqcpeak22) free (eobp->knqcpeak22);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
   free(eobp);
 }
 
 /* Following default parameters should match those for production runs */
-void EOBParameters_defaults (int choose, EOBParameters *eobp)
+void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
 {
   eobp->domain = DOMAIN_TD;
   
@@ -145,7 +148,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->pGSF_tidal = 4.0;// p-power in GSF tidal potential model
 
   eobp->use_spins=1; // use spins ?
-  eobp->project_spins=1;
+  eobp->project_spins=0;
 
   /* options */
 
@@ -164,11 +167,29 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->use_mode_lm = malloc (eobp->use_mode_lm_size * sizeof(int) );
   memcpy(eobp->use_mode_lm, hlm, eobp->use_mode_lm_size * sizeof(int));
 
-  int kpostpeak[] = {0,1,3,6,7,8};      //indexes of multipoles to use
-  eobp->kpostpeak_size = 6;
+
+  /* Modes to use in the intertial frame to compute hpc */
+  int hlm_inertial[] = {1};
+  eobp->use_mode_lm_inertial_size = 1;
+  eobp->use_mode_lm_inertial = malloc (eobp->use_mode_lm_inertial_size * sizeof(int) );
+  memcpy(eobp->use_mode_lm_inertial, hlm_inertial, eobp->use_mode_lm_inertial_size * sizeof(int));
+
+  // TODO: intersect with use_mode_lm so to compute NQCs only for active modes
+  int hlm_nqc[] = {0,1,3,4,6,7,8,13};      //indexes of multipoles to use
+  eobp->use_mode_lm_nqc_size = 8;
+  eobp->use_mode_lm_nqc = malloc (eobp->use_mode_lm_nqc_size * sizeof(int) );
+  memcpy(eobp->use_mode_lm_nqc, hlm_nqc, eobp->use_mode_lm_nqc_size * sizeof(int));
+
+  int kpostpeak[] = {1,3,6,7,8};      //indexes of multipoles to use
+  eobp->kpostpeak_size = 5;
   eobp->kpostpeak = malloc (eobp->kpostpeak_size * sizeof(int) );
   memcpy(eobp->kpostpeak, kpostpeak, eobp->kpostpeak_size * sizeof(int));
   
+  int knqcpeak22[]      = {0};      //indexes of multipoles to use
+  eobp->knqcpeak22_size = 1;
+  eobp->knqcpeak22      = malloc (eobp->knqcpeak22_size * sizeof(int) );
+  memcpy(eobp->knqcpeak22, knqcpeak22, eobp->knqcpeak22_size * sizeof(int));
+
   /* FD options */
   
   eobp->tc = 0;
@@ -242,8 +263,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
-  eobp->ode_tmax=1e9; // max integration time
   eobp->ode_stop_radius  =2.; // stop ODE integration at this radius (if > 0)
+  eobp->ode_tmax=1e12; // max integration time
   eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
   eobp->ode_stop_after_peak=0;
 
@@ -342,51 +363,73 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
   
   /* Choose the default for the binary type */
-  eobp->binary = BINARY_BBH;
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
   eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF ; // index for gravitomagnetic tide
   eobp->use_tidal_fmode_model = 0; // do not 
   
-  if (choose == BINARY_BBH) {
-    eobp->binary=BINARY_BBH;
-    eobp->centrifugal_radius = CENTRAD_NLO;
-    eobp->use_flm = USEFLM_HM;
-    eobp->use_tidal = TIDES_OFF;
+  if (binary == BINARY_BBH) {
+
+    eobp->binary                    = BINARY_BBH;
+    eobp->use_tidal                 = TIDES_OFF;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+    eobp->centrifugal_radius        = CENTRAD_NLO;
+    eobp->nqc                       = NQC_AUTO; // {"no", "auto", "manual"}
+    eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
 
-    eobp->nqc = NQC_AUTO; // {"no", "auto", "manual"}
-    eobp->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
-    eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
-     
-  } else if (choose == BINARY_BNS) {
+    if (orbit == 0) {  
+      // quasi-circular BBH defaults
+      eobp->use_flm        = USEFLM_HM;
+      eobp->use_a6c_fits   = a6c_fits_HM_2023;
+      eobp->use_cN3LO_fits = cN3LO_fits_HM_2023_432;
+      eobp->nqc_coefs_flx  = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
+      eobp->A_pot          = A_5PNlog; 
+      eobp->D_pot          = D_3PN;
+      eobp->Q_pot          = Q_3PN; 
+    } else if (orbit == 1) {
+      // generic-orbit BBH defaults
+      eobp->use_flm        = USEFLM_HM_4PN22;
+      eobp->use_a6c_fits   = a6c_fits_P33_HM4PN22;
+      eobp->use_cN3LO_fits = cN3LO_fits_P33_HM4PN22;
+      eobp->nqc_coefs_flx  = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
+      eobp->A_pot          = A_5PNlogP33; 
+      eobp->D_pot          = D_5PNP32;
+      eobp->Q_pot          = Q_5PNloc; 
+    } else {
+      errorexit("Unknown orbit kind specified.");
+    }
+
+  } else if (binary == BINARY_BNS) {
+    
     eobp->binary=BINARY_BNS;
-    eobp->use_tidal = TIDES_TEOBRESUM3;
+    eobp->use_tidal                 = TIDES_TEOBRESUM3;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
-    eobp->pGSF_tidal = 4.0;
-    eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+    eobp->pGSF_tidal                = 4.0;
+    eobp->use_lambda234_fits        = Lambda234_fits_YAGI13;
+    eobp->use_a6c_fits              = a6c_fits_V0;
+    eobp->use_cN3LO_fits            = cN3LO_fits_NO;
 
-    eobp->centrifugal_radius = CENTRAD_NNLO;
-    eobp->use_flm = USEFLM_SSNLO;
-    eobp->nqc = NQC_NO; // {"no", "auto", "manual"}
-    eobp->nqc_coefs_flx = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
-    eobp->nqc_coefs_hlm = NQC_HLM_NONE;
+    eobp->centrifugal_radius        = CENTRAD_NNLO;
+    eobp->use_flm                   = USEFLM_SSNLO;
+    eobp->nqc                       = NQC_NO; // {"no", "auto", "manual"}
+    eobp->nqc_coefs_flx             = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
+    eobp->nqc_coefs_hlm             = NQC_HLM_NONE;
 
-  } else if (choose == BINARY_BHNS) {
-    eobp->binary=BINARY_BHNS;
-    eobp->centrifugal_radius = CENTRAD_NLO;
-    eobp->use_flm = USEFLM_HM;
-    eobp->nqc = NQC_AUTO; // {"no", "auto", "manual"}                                                                                                                                                                                         
-    eobp->nqc_coefs_flx = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}                                                                                                                        
-    eobp->nqc_coefs_hlm = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}                                                                                                                      
+  } else if (binary == BINARY_BHNS) {
 
-    eobp->use_tidal = TIDES_TEOBRESUM;
+    eobp->binary                    = BINARY_BHNS;
+    eobp->centrifugal_radius        = CENTRAD_NLO;
+    eobp->use_flm                   = USEFLM_HM;
+    eobp->nqc                       = NQC_AUTO; // {"no", "auto", "manual"}                                                                                                                                                                                         
+    eobp->nqc_coefs_flx             = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}                                                                                                                        
+    eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}                                                                                                                      
+    eobp->use_a6c_fits              = a6c_fits_HM_2023;
+    eobp->use_cN3LO_fits            = cN3LO_fits_HM_2023_432; 
+    eobp->use_tidal                 = TIDES_TEOBRESUM;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;//TIDES_GM_PN;
-    eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
-
+    eobp->use_lambda234_fits        = Lambda234_fits_YAGI13;
   }
 
-
-  else errorexit("unknown default parameter choice.");
+  else errorexit("Unknown default parameter choice.");
 
 }
 
@@ -399,9 +442,31 @@ void eob_set_params(int default_choice, int firstcall)
   
   /* Set intrinsic parameters as given by user */
   
-  const double M =  EOBPars->M;
-  const double fmin = EOBPars->initial_frequency;
-  double q =  EOBPars->q;
+  const double M    =  EOBPars->M;
+  const double fmin =  EOBPars->initial_frequency;
+  double q          =  EOBPars->q;
+
+  if(q < 1.){
+    /* Ensure that the swap is performed correctly 
+       According to LAL conventions, if m1<->m2 the x axis is flipped.
+       Therefore, the waveform has to remain identical when:
+        - label_1<->label_2;
+        - coalescence_angle -> coalescence_angle + Pi;
+        - In plane spins are rotated by Pi
+       Here we enforce this convention.
+    */
+    q  =  1./q;
+    EOBPars->q = q;
+    SWAPTRS(EOBPars->chi1z, EOBPars->chi2z);
+    SWAPTRS(EOBPars->chi1x, EOBPars->chi2x);
+    SWAPTRS(EOBPars->chi1y, EOBPars->chi2y);
+    SWAPTRS(EOBPars->chi1,  EOBPars->chi2);
+    EOBPars->chi1x *= -1; EOBPars->chi2x *= -1;
+    EOBPars->chi1y *= -1; EOBPars->chi2y *= -1;
+    SWAPTRS(EOBPars->LambdaAl2, EOBPars->LambdaBl2);
+    if (VERBOSE) printf("WARNING: q<1, swapping bodies!\n");
+    EOBPars->coalescence_angle -= Pi;
+  }
 
   /* Check: if q is closer to 1 than 1e-8, then q=1 to avoid floating points issues */
   if (DEQUAL(q, 1., 1e-8)){
@@ -417,10 +482,22 @@ void eob_set_params(int default_choice, int firstcall)
   double chip_2 = sqrt(SQ(EOBPars->chi2x) + SQ(EOBPars->chi2y));
   if (chip_1 + chip_2 > 1e-4){
     EOBPars->use_spins = MODE_SPINS_GENERIC;
+    EOBPars->chi1 = EOBPars->chi1z;
+    EOBPars->chi2 = EOBPars->chi2z;
     if (EOBPars->domain == DOMAIN_TD)
       EOBPars->interp_uniform_grid = 1; // for TD twist we require interpolation
-  } else
+  } else {
+    if (DUNEQUAL(EOBPars->chi1z, EOBPars->chi1, 1e-8) || DUNEQUAL(EOBPars->chi2z, EOBPars->chi2, 1e-8)){
+      /* User specified only chi_{12} or chi_{12}z. The unspecified value is 0 by default. 
+         Two possibilities:
+         * chi_iz nonzero, chi_i zero   : spin aligned limit of precessing --> overwrite EOBPars->chi{12}
+         * chi_iz zero,    chi_i nonzero: spin aligned                     --> do not overwrite EOBPars->chi{12}
+      */
+      if DISZERO(EOBPars->chi1, 1e-8) EOBPars->chi1 = EOBPars->chi1z;
+      if DISZERO(EOBPars->chi2, 1e-8) EOBPars->chi2 = EOBPars->chi2z;
+    }
     EOBPars->use_spins = MODE_SPINS_ALIGNED;
+  }
 
   EOBPars->nu = q_to_nu(q);
   EOBPars->X1 = nu_to_X1(EOBPars->nu);
@@ -428,8 +505,8 @@ void eob_set_params(int default_choice, int firstcall)
   const double XA = EOBPars->X1; /* tidal part used different notation, used here for simplicity */
   const double XB = EOBPars->X2;
   
-  const int usespins = EOBPars->use_spins;
-  const int usetidal = EOBPars->use_tidal;
+  const int usespins   = EOBPars->use_spins;
+  const int usetidal   = EOBPars->use_tidal;
   const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
 
   /* Spin parameters */
@@ -474,12 +551,11 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->LambdaAl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 8);
       EOBPars->LambdaBl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 8);
     }
-    
-#if(USEGRAVITOMAGNETICTERMS)
-    EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
-    EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
-#endif
-    
+    if(EOBPars->use_tidal_gravitomagnetic){
+      EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
+      EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
+    }
+
     /* Tidal coupling constants */
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl2,EOBPars->LambdaBl2, 2,  &(EOBPars->kapA2), &(EOBPars->kapB2));
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl3,EOBPars->LambdaBl3, 3,  &(EOBPars->kapA3), &(EOBPars->kapB3));
@@ -545,18 +621,18 @@ void eob_set_params(int default_choice, int firstcall)
       double LamBl[] = {0,0,EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4};
       
       for (int l=2; l<=lmax; l++) {
-	if (LamAl[l] > 0) {
-	  EOBPars->bomgfA[l] = Chang14_fit_omegaf(LamAl[l], l);	 
-	  if (EOBPars->bomgfA[l]<=0.)
-	    errorexit("f-mode frequency of star A cannot be zero or negative");
-	  EOBPars->bomgfA[l] /= XA;
-	}
-	if (LamBl[l] > 0) {
-	  EOBPars->bomgfB[l] = Chang14_fit_omegaf(LamBl[l], l);
-	  if (EOBPars->bomgfB[l]<=0.)
-	    errorexit("f-mode frequency of star B cannot be zero or negative");
-	  EOBPars->bomgfB[l] /= XB;
-	}
+	      if (LamAl[l] > 0) {
+	        EOBPars->bomgfA[l] = Chang14_fit_omegaf(LamAl[l], l);	 
+	        if (EOBPars->bomgfA[l]<=0.)
+	          errorexit("f-mode frequency of star A cannot be zero or negative");
+	        EOBPars->bomgfA[l] /= XA;
+	      }
+	      if (LamBl[l] > 0) {
+	        EOBPars->bomgfB[l] = Chang14_fit_omegaf(LamBl[l], l);
+	        if (EOBPars->bomgfB[l]<=0.)
+	          errorexit("f-mode frequency of star B cannot be zero or negative");
+	        EOBPars->bomgfB[l] /= XB;
+	      }
       } 
       
     }  /* EOBPars->use_tidal_fmode_model */
@@ -565,7 +641,7 @@ void eob_set_params(int default_choice, int firstcall)
   
   /* Default settings for NQC */
   // NOTE: The defaults are different from v0.0 and v1.0
-  double ecc = EOBPars->ecc;
+  double ecc   = EOBPars->ecc;
   double r_hyp = EOBPars->r_hyp;
   if (EOBPars->nqc == NQC_AUTO) {
     if (EOBPars->binary == BINARY_BNS) {
@@ -587,31 +663,74 @@ void eob_set_params(int default_choice, int firstcall)
   } 
   
   /** Set more as needed ... */
+
   EOBPars->a6c = 0.;
-  if (EOBPars->A_pot == A_5PNlogP33) {
-    /* new  fits */
-    EOBPars->a6c = eob_a6c_fit_ecc_P33_4PNh22(EOBPars->nu);
-  } else if ((ecc != 0.) || (r_hyp != 0.)) {
-    /* Eccentric */
-    EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
-  } else if (EOBPars->use_flm == USEFLM_HM) {
-    /* Higher modes */
-    EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
-  } else {
-    EOBPars->a6c = eob_a6c_fit(EOBPars->nu);
+  switch(EOBPars->use_a6c_fits)
+  {
+    case(a6c_fits_P33_HM4PN22):
+      if(EOBPars->use_flm != USEFLM_HM_4PN22)
+        errorexit("a6c_fits_HM should be used with USEFLM_HM_4PN22\n");
+      EOBPars->a6c = eob_a6c_fit_ecc_P33_4PNh22(EOBPars->nu);
+      break;
+    case(a6c_fits_ecc):
+      if ((ecc != 0.) || (r_hyp != 0.))
+        errorexit("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
+      EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
+      break;
+    case(a6c_fits_HM_2023):
+      if (EOBPars->use_flm != USEFLM_HM)
+        errorexit("a6c_fits_HM should be used with USEFLM_HM\n.");
+      EOBPars->a6c = eob_a6c_fit_HM_2023(EOBPars->nu);
+      break;
+    case(a6c_fits_HM):
+      if (EOBPars->use_flm != USEFLM_HM)
+        errorexit("a6c_fits_HM should be used with USEFLM_HM\n.");
+      EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
+      break;
+    case(a6c_fits_V0):
+      EOBPars->a6c = eob_a6c_fit(EOBPars->nu);
+      break;
+    case(a6c_fits_NO):
+      break;
+    default:
+      if (VERBOSE) printf("WARINING: No option specified for a6c.\n");
+      break; 
   }
 
   EOBPars->cN3LO = 0.;
-  if (usetidal) EOBPars->cN3LO = 0.0;
-  else if (EOBPars->A_pot == A_5PNlogP33) {
-    /* new  fits */
-    EOBPars->cN3LO = eob_c3_fit_ecc_P33_4PNh22(EOBPars->nu,EOBPars->a1,EOBPars->a2);
-  } else if ((ecc != 0.) || (r_hyp != 0.)) {
-    EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
-  } else if (EOBPars->use_flm == USEFLM_HM) {
-    EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
-  } else {
-    EOBPars->cN3LO = eob_c3_fit_global(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+  switch(EOBPars->use_cN3LO_fits)
+  {
+    case(cN3LO_fits_P33_HM4PN22):
+      if(EOBPars->use_flm != USEFLM_HM_4PN22)
+        errorexit("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
+      EOBPars->cN3LO = eob_c3_fit_ecc_P33_4PNh22(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+      break;
+    case(cN3LO_fits_ecc):
+      if((ecc != 0.) || (r_hyp != 0.))
+        errorexit("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
+      EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+      break;
+    case(cN3LO_fits_HM_2023_432):
+    case(cN3LO_fits_HM_2023_431):
+    case(cN3LO_fits_HM_2023_430):
+    case(cN3LO_fits_HM_2023_420):
+      if (EOBPars->use_flm != USEFLM_HM)
+        errorexit("cN3LO_fits_HM_2023 should be used with USEFLM_HM\n.");
+      EOBPars->cN3LO = eob_c3_fit_HM_2023(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+      break;
+    case(cN3LO_fits_HM):
+      if (EOBPars->use_flm != USEFLM_HM)
+        errorexit("cN3LO_fits_HM should be used with USEFLM_HM\n.");
+      EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+      break;
+    case(cN3LO_fits_V0):
+      EOBPars->cN3LO = eob_c3_fit_global(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+      break;
+    case(cN3LO_fits_NO):
+      break;
+    default:
+      if (VERBOSE) printf("WARINING: No option specified for cN3LO.\n");
+      break; 
   }
 
   double dt = EOBPars->dt;
@@ -794,9 +913,9 @@ void eob_set_params(int default_choice, int firstcall)
       eob_dyn_ic = &eob_dyn_ic_ecc_PA;   // 1PA ICs
     else if (EOBPars->ecc_ics == ECCICS_0PA){
       if(ecc > 1e-4)
-	eob_dyn_ic = &eob_dyn_ic_ecc;    // adiabatic ICs
+	      eob_dyn_ic = &eob_dyn_ic_ecc;    // adiabatic ICs
       else
-	eob_dyn_ic = &eob_dyn_ic_circ_s; // Quasi-circular ICs ("nospin" option is deprecated)
+	      eob_dyn_ic = &eob_dyn_ic_circ_s; // Quasi-circular ICs ("nospin" option is deprecated)
     } else
       errorexit("Unrecognized eccentric_ic flag.\n");
   } else if (usespins) {
@@ -879,7 +998,8 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
         eobp->pGSF_tidal = 4.0;
         eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
-
+        eobp->use_a6c_fits = a6c_fits_V0;
+        eobp->use_cN3LO_fits = cN3LO_fits_NO;
         eobp->centrifugal_radius = CENTRAD_NNLO;
         eobp->use_flm = USEFLM_SSNLO;
         eobp->nqc = NQC_NO; 
@@ -893,7 +1013,8 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
         eobp->pGSF_tidal = 4.0;
         eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
-
+        eobp->use_a6c_fits   = a6c_fits_V0;
+        eobp->use_cN3LO_fits = cN3LO_fits_NO;
         eobp->centrifugal_radius = CENTRAD_NNLO;
         eobp->use_flm = USEFLM_SSNLO;
         eobp->nqc = NQC_NO;
@@ -1065,13 +1186,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"tides_gravitomagnetic")) {
     val = string_trim(val);
     for (eobp->use_tidal_gravitomagnetic=0; eobp->use_tidal_gravitomagnetic<=TIDES_GM_NOPT; eobp->use_tidal_gravitomagnetic++) {
-if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
-  eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
-  if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n",
-          val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
-  break;
-}
-if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
+      if (eobp->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
+        eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+        if (VERBOSE) printf("tides GM '%s' undefined, set to '%s'\n", val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
+        break;
+      }
+      if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) break;
     }
   }
   
@@ -1089,6 +1209,32 @@ if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) b
       break;
       }
       if (STREQUAL(val, use_lambda234_fits_opt[eobp->use_lambda234_fits])) break;
+    }
+  }
+
+  if (STREQUAL(key,"use_a6c_fits")) {
+    val = string_trim(val);
+    for (eobp->use_a6c_fits=0; eobp->use_a6c_fits<=a6c_fits_NOPT; eobp->use_a6c_fits++) {
+      if (eobp->use_a6c_fits == a6c_fits_NOPT) {
+        eobp->use_a6c_fits = a6c_fits_HM;
+        if (VERBOSE) printf("use_a6c_fits '%s' undefined, set to '%s'\n",
+        val, use_a6c_fits_opt[eobp->use_a6c_fits]);
+      break;
+      }
+      if (STREQUAL(val, use_a6c_fits_opt[eobp->use_a6c_fits])) break;
+    }
+  }
+
+  if (STREQUAL(key,"use_cN3LO_fits")) {
+    val = string_trim(val);
+    for (eobp->use_cN3LO_fits=0; eobp->use_cN3LO_fits<=cN3LO_fits_NOPT; eobp->use_cN3LO_fits++) {
+      if (eobp->use_cN3LO_fits == cN3LO_fits_NOPT) {
+        eobp->use_cN3LO_fits = cN3LO_fits_HM_2023_432;
+        if (VERBOSE) printf("use_cN3LO_fits '%s' undefined, set to '%s'\n",
+        val, use_cN3LO_fits_opt[eobp->use_cN3LO_fits]);
+      break;
+      }
+      if (STREQUAL(val, use_cN3LO_fits_opt[eobp->use_cN3LO_fits])) break;
     }
   }
 
@@ -1116,13 +1262,27 @@ if (STREQUAL(val, tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic])) b
   if (STREQUAL(key,"use_mode_lm")) {
     free(eobp->use_mode_lm);
     eobp->use_mode_lm_size = str2iarray(val, &eobp->use_mode_lm);
-  }
+    /* Over-write use_mode_lm_inertial to use_mode_lm (default behavior if
+    use_mode_lm_inertial is not specified) */
+    free(eobp->use_mode_lm_inertial);
+    eobp->use_mode_lm_inertial_size = str2iarray(val, &eobp->use_mode_lm_inertial);
+  }  
+
+  if (STREQUAL(key,"use_mode_lm_inertial")) {
+    free(eobp->use_mode_lm_inertial);
+    eobp->use_mode_lm_inertial_size = str2iarray(val, &eobp->use_mode_lm_inertial);
+  }  
 
   if (STREQUAL(key,"kpostpeak")) {
     free(eobp->kpostpeak);
     eobp->kpostpeak_size = str2iarray(val, &eobp->kpostpeak);
   }
-    
+
+  if (STREQUAL(key,"knqcpeak22")) {
+    free(eobp->knqcpeak22);
+    eobp->knqcpeak22_size = str2iarray(val, &eobp->knqcpeak22);
+  }
+
   if (STREQUAL(key,"centrifugal_radius")) {
     val = string_trim(val);
     for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
@@ -1436,6 +1596,12 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "q", eobp->q);
   fprintf(f,"%s = %.16f\n", "chi1", eobp->chi1);
   fprintf(f,"%s = %.16f\n", "chi2", eobp->chi2);
+  fprintf(f,"%s = %.16f\n", "chi1x", eobp->chi1x);
+  fprintf(f,"%s = %.16f\n", "chi1y", eobp->chi1y);
+  fprintf(f,"%s = %.16f\n", "chi1z", eobp->chi1z);
+  fprintf(f,"%s = %.16f\n", "chi2x", eobp->chi2x);
+  fprintf(f,"%s = %.16f\n", "chi2y", eobp->chi2y);
+  fprintf(f,"%s = %.16f\n", "chi2z", eobp->chi2z);
   fprintf(f,"%s = %.16f\n", "ecc", eobp->ecc);
   fprintf(f,"%s = %.16f\n", "r_hyp", eobp->r_hyp);
   fprintf(f,"%s = %.16f\n", "H_hyp", eobp->H_hyp);
@@ -1518,6 +1684,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "tides_gravitomagnetic", tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
   fprintf(f,"%s = %.16f\n" , "pGSF_tidal", eobp->pGSF_tidal);
   fprintf(f,"%s = \"%s\"\n", "use_lambda234_fits", use_lambda234_fits_opt[eobp->use_lambda234_fits]);
+  fprintf(f,"%s = \"%s\"\n", "use_a6c_fits_opt", use_a6c_fits_opt[eobp->use_a6c_fits]);
+  fprintf(f,"%s = \"%s\"\n", "use_cN3LO_fits_opt", use_cN3LO_fits_opt[eobp->use_cN3LO_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_tidal_fmode_model", INT2YESNO(eobp->use_tidal_fmode_model));
   fprintf(f,"%s = \"%s\"\n", "use_speedytail", INT2YESNO(eobp->use_speedytail));
   fprintf(f,"%s = %.16f\n" , "dt_merger_interp", eobp->dt_merger_interp);
@@ -1533,11 +1701,21 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d,", eobp->use_mode_lm[i]);
   fprintf(f,"%d]\n", eobp->use_mode_lm[eobp->use_mode_lm_size-1]);
 
+  fprintf(f,"%s = [", "use_mode_lm_inertial");
+  for(int i=0; i<eobp->use_mode_lm_inertial_size-1;i++)
+    fprintf(f,"%d,", eobp->use_mode_lm_inertial[i]);
+  fprintf(f,"%d]\n", eobp->use_mode_lm_inertial[eobp->use_mode_lm_inertial_size-1]);
+
   fprintf(f,"%s = [", "kpostpeak");
   for(int i=0; i<eobp->kpostpeak_size-1;i++)
     fprintf(f,"%d,", eobp->kpostpeak[i]);
   fprintf(f,"%d]\n", eobp->kpostpeak[eobp->kpostpeak_size-1]);
   
+  fprintf(f,"%s = [", "knqcpeak22");
+  for(int i=0; i<eobp->knqcpeak22_size-1;i++)
+    fprintf(f,"%d,", eobp->knqcpeak22[i]);
+  fprintf(f,"%d]\n", eobp->knqcpeak22[eobp->knqcpeak22_size-1]);
+
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
