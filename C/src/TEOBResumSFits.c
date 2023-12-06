@@ -1,32 +1,44 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
+/**  \file TEOBResumSFits.c
+ *   \brief Various fits employed throughout the code
+ * 
+ *   This file contains all of the fits employed throughout the code,
+ *   grouped depending on their purpose.
+ * 
+ *   Note that may of the functions are not employed in the current
+ *   version of the code, but are kept for historical reasons and backwards
+ *   compatibility.
  */
 
 #include "TEOBResumS.h"
 
-/** Fit of a6c, TEOBResumS paper Nagar et al. (2018) */
+/** \defgroup a6cfits a6c fits
+ *  Various fits of the pseudo-5PN NR-informed parameter a6c
+ *  @{
+ */
+
+/**
+ *  Function: eob_a6c_fit
+ *  ---------------
+ *   Fit of a6c from TEOBResumS paper Nagar et al. (2018) 
+ *   
+ *   @param[in] nu: symmetric mass ratio
+ *
+ *   @return   a6c
+ */
 double eob_a6c_fit(double nu)
 {
   return 3097.3*nu*nu - 1330.6*nu + 81.38;
 }
 
-/** Fit of a6c, higher multipoles: arXiv:2001.09082 */
+/**
+ *  Function: eob_a6c_fit_HM
+ *  ---------------
+ *   Fit of a6c from higher multipoles paper: arXiv:2001.09082
+ *   
+ *   @param[in] nu: symmetric mass ratio
+ *
+ *   @return  a6c
+ */
 double eob_a6c_fit_HM(double nu)
 {
   double nu2 = nu*nu;
@@ -41,7 +53,15 @@ double eob_a6c_fit_HM(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
-/** Fit of a6c, Tab. II of arXiv:2304.09662 */
+/**
+ *  Function: eob_a6c_fit_HM
+ *  ---------------
+ *   Fit of a6c from Tab. II of arXiv:2304.09662 
+ *   
+ *   @param[in] nu: symmetric mass ratio
+ *
+ *   @return  a6c
+ */
 double eob_a6c_fit_HM_2023(double nu)
 {
   const double nu2 = nu*nu;
@@ -56,8 +76,26 @@ double eob_a6c_fit_HM_2023(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
-/** Fit of c3, TEOBResumS paper Nagar et al. (2018) 
-    Note: c3 = 0 with tides*/
+/** @} */ // end of a6cfits
+
+
+/** \defgroup c3fits cN3LO fits
+ *  Various fits of the spin-orbit N3LO NR-informed parameter cN3LO
+ *  @{
+ */
+
+/**
+ *  Function: eob_c3_fit_global
+ *  ---------------
+ *   Fit of c3, TEOBResumS paper Nagar et al. (2018)
+ *   Note: c3 = 0 with tides
+ *
+ *    @param[in] nu: symmetric mass ratio
+ *    @param[in] a1: spin of body 1
+ *    @param[in] a2: spin of body 2
+ *
+ *   @return  cN3LO
+ */
 double eob_c3_fit_global(double nu, double a1, double a2)
 {  
   const double nu2 = nu*nu;
@@ -84,8 +122,17 @@ double eob_c3_fit_global(double nu, double a1, double a2)
   return c3_eq + c3_uneq;
 }
 
-/** Fit of c3, HM paper: arXiv:2001.09082
-    Note: c3 = 0 with tides*/
+/**
+ *  Function: eob_c3_fit_HM
+ *  ---------------
+ *   Fit of c3, HM paper: arXiv:2001.09082
+ *   Note: c3 = 0 with tides
+ *    @param[in] nu: symmetric mass ratio
+ *    @param[in] a1: spin of body 1
+ *    @param[in] a2: spin of body 2
+ *
+ *   @return  cN3LO
+ */
 double eob_c3_fit_HM(double nu, double a1, double a2)
 {  
   const double nu2 = nu*nu;
@@ -96,16 +143,16 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
   const double a04 = a03*a0;
   
   /* Equal-mass, equal-spin coefficients */
-  const double p0 =  45.235903;//46.323097;
-  const double n1 =  -1.688708;//-1.418623;
-  const double n2 =   0.787959;//0.457118;
-  const double n3 =  -0.018080;//0.000435;
-  const double n4 =   -0.001906;//0.097791;
-  const double d1 =  -0.751479;//-0.519003;
+  const double p0 =  45.235903;
+  const double n1 =  -1.688708;
+  const double n2 =   0.787959;
+  const double n3 =  -0.018080;
+  const double n4 =   -0.001906;
+  const double d1 =  -0.751479;
 		  
   /* Other coefficients */
-  const double p1 =  47.3756;// 46.2914;
-  const double p2 = -36.1964;//-103.0997;
+  const double p1 =  47.3756;
+  const double p2 = -36.1964;
 	
   
   const double c3 = p0*(1 + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1 + d1*a0)
@@ -114,7 +161,17 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
   return c3;
 }
 
-/* Table IV of arXiv:2304.09662 */
+/**
+ *  Function: eob_c3_fit_HM_2023
+ *  ---------------
+ *   Fit of c3, Table IV of arXiv:2304.09662
+ *   Note: c3 = 0 with tides
+ *    @param[in] nu: symmetric mass ratio
+ *    @param[in] a1: spin of body 1
+ *    @param[in] a2: spin of body 2
+ *
+ *   @return  cN3LO
+ */
 double eob_c3_fit_HM_2023(double nu, double a1, double a2)
 {
   const double nu2 = nu*nu;
@@ -159,8 +216,19 @@ double eob_c3_fit_HM_2023(double nu, double a1, double a2)
 
   return c3_eq + c3_neq;
 }
+/** @} */ // end of c3fits
 
-/** Function providing a fit of Deltat_NQC vs chi, via a simple rational function. */
+
+/**
+ *  Function: eob_nqc_dtfit
+ *  -----------------------
+ *   Function providing a fit of Deltat_NQC vs chi, via a simple rational function. 
+ *   
+ *    @param[in] chi : 
+ *    @param[in] chi0: 
+ *
+ *   @return  dtnqc
+ */
 double eob_nqc_dtfit(const double chi, const double chi0)
 {
   const double n1 = -16.06288206;
@@ -173,7 +241,19 @@ double eob_nqc_dtfit(const double chi, const double chi0)
   return dtnqc;
 }
 
-/** Fit of GW frequency of NR merger */
+/**
+ *  Function: eob_nqc_dtfit
+ *  -----------------------
+ *   Fit of GW frequency of NR merger. 
+ *   
+ *    @param[in] nu   : symmetric mass ratio
+ *    @param[in] X1   : mass fraction of body 1
+ *    @param[in] X2   : mass fraction of body 2
+ *    @param[in] chi1 : dimensionless spin of body 1
+ *    @param[in] chi2 : dimensionless spin of body 2
+ *
+ *   @return  dtnqc
+ */
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2)
 {
   const double nu2 = SQ(nu);
@@ -190,8 +270,30 @@ double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2)
 	   +((-0.066699))*Shat2)/(1+((-0.83053+b[2]*X12)/(1+b[3]*X12))*Shat) );
 }
 
-/** Fits for NR point used to determine NQC corrections */
-void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
+/** \defgroup nqcpoint NQC point
+ *  Various functions to compute (A, dA, omg, domg) at the NR point 
+ *  used to determine NQC corrections.
+ *  Depending on the function, this point is assumed to be 2M after the 
+ *  peak of the corresponding multipole,\f$ t^{NQC}_{lm} = t^{peak}_{lm} +2\f$,
+ *  or at the peak of the 22 mode
+ *
+ *  @{
+ */
+
+/** 
+ *  Function: eob_nqc_point
+ *  -----------------------
+ *   Fits for the NR point used to determine (2,2) NQC corrections, from 
+ *   https://arxiv.org/abs/1806.01772 (Table X)
+ *   https://arxiv.org/abs/1703.06814 (Table II)
+ *   
+ *   @param[out]  A_tmp   : RWZ-normalized Amplitude at the NQC point 
+ *   @param[out]  dA_tmp  : first time derivative of the RWZ-normalized amplitude at the NQC point 
+ *   @param[out]  omg_tmp : omega at the NQC point 
+ *   @param[out]  domg_tmp: first time derivative of the frequency at the NQC point 
+ *
+ */
+void eob_nqc_point(double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
   const double nu   = EOBPars->nu;
@@ -356,9 +458,19 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
 
 }
 
-/** Fits for NR point used to determine NQC corrections 
-    New fits for higher modes paper: arXiv:2001.09082 */
-void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
+/** 
+ *  Function: eob_nqc_point_HM
+ *  -----------------------
+ *   Fits for the NR point used to determine NQC corrections, from 
+ *   https://arxiv.org/abs/2001.09082 (App C)
+ *   
+ *   @param[out]  A_tmp   : RWZ-normalized Amplitude at the NQC point 
+ *   @param[out]  dA_tmp  : first time derivative of the RWZ-normalized amplitude at the NQC point 
+ *   @param[out]  omg_tmp : omega at the NQC point 
+ *   @param[out]  domg_tmp: first time derivative of the frequency at the NQC point 
+ *
+ */
+void eob_nqc_point_HM(double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
   const double nu   = EOBPars->nu;
@@ -608,11 +720,20 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
 	  
 }
 
-/** Fits for NR point used to determine NQC corrections 
-    Here the NQC point is assumed to be the peak of the 22 mode
-    From Pompili et. al. arXiv:2303.18039
-*/
-void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
+/** 
+ *  Function: eob_nqc_point_HM_peak22
+ *  ---------------------------------
+ *   Fits for the NR point used to determine NQC corrections, available for 21,33,44
+ *   Here the NQC point is assumed to be the peak of the 22 mode.
+ *   From Pompili et. al. arXiv:2303.18039
+ *   
+ *   @param[out]  A_tmp   : RWZ-normalized Amplitude at the NQC point 
+ *   @param[out]  dA_tmp  : first time derivative of the RWZ-normalized amplitude at the NQC point 
+ *   @param[out]  omg_tmp : omega at the NQC point 
+ *   @param[out]  domg_tmp: first time derivative of the frequency at the NQC point 
+ *
+ */
+void eob_nqc_point_HM_peak22(double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
 
   int knqcpeak22_size = EOBPars->knqcpeak22_size;  
@@ -681,7 +802,21 @@ void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, doubl
   }
 }
 
-/** This function computes the NQC functioning points by evaluating the post-peak template and its dervatives*/
+/** 
+ *  Function: eob_nqc_point_postpeak
+ *  --------------------------------
+ *   This function computes the NQC functioning points by evaluating 
+ *   the post-peak template and its dervatives.
+ *   
+ *   @param[in]  Mbh     : Mass of the final BH
+ *   @param[in]  c1A, c2A,c3A,c4A,c1phi.c2phi,c3phi,c4phi : postpeak template parameters
+ *   @param[in]  alpha1,omega1 : QNM frequency and inverse damping time 
+ *   @param[out] A_tmp   : RWZ-normalized Amplitude at the NQC point 
+ *   @param[out] dA_tmp  : first time derivative of the RWZ-normalized amplitude at the NQC point 
+ *   @param[out] omg_tmp : omega at the NQC point 
+ *   @param[out] domg_tmp: first time derivative of the frequency at the NQC point 
+ *
+ */
 void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
@@ -713,25 +848,24 @@ void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, doub
   domg_tmp_d2 = 1 + c4phi*x2 + c3phi*x;
   *domg_tmp   = -(domg_tmp_n1/domg_tmp_d1 - domg_tmp_n2/domg_tmp_d2)/Mbh2;
 }
+/** @} */ // end of nqcpoint
 
-/** Time-shift for NQC */
+/** 
+ *  Function: eob_nqc_point_postpeak
+ *  --------------------------------
+ *   This function computes the time-shift for (2,2) tNQC with respect
+ *   to the peak of the EOB pure orbital frequency, from
+ *   https://arxiv.org/abs/1806.01772
+ *   
+ *   @param[in] nu   : symmmetric mass ratio
+ *   @param[in] chi1 : dimensionless spin of body 1
+ *
+ *   @return DeltaT_nqc
+ */
 double eob_nqc_timeshift(double nu, double chi1)
 {
 
-  double DeltaT_nqc = 1.0;  
-  
-  /* Additional time-shift only needed ONLY for large, negative, spins.
-     This change from 1.0 to 4.0 eliminates unphysical features in the
-     frequency related to the imperfect behavior of the NQC functions */
-
-  /* Old Delta_T NQC
-  if ((chi1 <-0.85) && (nu <= 14./225.)) {
-    DeltaT_nqc = 4.0;
-  } else {
-    DeltaT_nqc = 1.0; // standard choice inspired by test-particle results
-  }  
-  */
-
+  double DeltaT_nqc = 1.0;    
   /* New Delta_T NQC determined in TEOBResumS paper (arXiv:1806.01772) */
   if (((chi1 < -0.9) && (nu < 8./81.)) || ((chi1 < -0.8) && (nu < 11./144.))) {
     DeltaT_nqc = 4.0;
@@ -742,7 +876,16 @@ double eob_nqc_timeshift(double nu, double chi1)
   return DeltaT_nqc;  
 }
 
-void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
+/** 
+ *  Function: eob_nqc_deltat_lm
+ *  ---------------------------
+ *   This function computes the time-shift of the peak of the modes w.r.t
+ *   the (2,2) mode, as defined in Eq. 3.50 of https://arxiv.org/1904.09550
+ *   
+ *   @param[out] Dt_lm : KMAX dimensional array of time-shifts 
+ *
+ */
+void eob_nqc_deltat_lm(double *Dt_lm)
 {
   
   const double nu    = EOBPars->nu;
@@ -791,8 +934,6 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
     Dt_lm[6]  = Dt_lm_TP[6]*(1 - 3.8284*nu - 12.399*nu2);
     Dt_lm[7]  = Dt_lm_TP[7]*(1 - 11.345*nu + 38.813*nu2)/(1 - 7.5049*nu + 22.399*nu2);
     Dt_lm[8]  = Dt_lm_TP[8]*(1 - 8.4686*nu + 18.006*nu2)/(1 - 6.7964*nu + 11.368*nu2);
-    //Dt_lm[13] = Dt_lm_TP[13]*(1 - 12.198*nu + 40.327*nu2)/(1 - 11.501*nu + 39.431*nu2);
-    //Dt_lm[13] = Dt_lm_TP[13]*(1 - 91.4401*nu +2548.5975*nu2 -11086.4884*nu3 + 27137.0063*nu4)/(1 - 67.156*nu + 1773.5942*nu2);
     Dt_lm[13] = Dt_lm_TP[13]*(1 - 91.2039*nu + 2556.5123*nu2 - 11325.217*nu3 + 27767.2164*nu4)/(1 - 66.0362*nu + 1762.4169*nu2);
     
   } else {
@@ -931,15 +1072,21 @@ void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
     Dt_lm[5]  = Dt_lm_TP[5]*(1 - 9.6225*nu + 38.451*nu2)/(1 - 7.7998*nu + 32.405*nu2);	
 
     /* (l = 5, m = 5) */
-    //Dt_lm[13] = Dt_lm_TP[13]*(1 - 12.198*nu + 40.327*nu2)/(1 - 11.501*nu + 39.431*nu2);
-    //Dt_lm[13] = Dt_lm_TP[13]*(1 - 91.4401*nu +2548.5975*nu2 -11086.4884*nu3 + 27137.0063*nu4)/(1 - 67.156*nu + 1773.5942*nu2);
     Dt_lm[13] = Dt_lm_TP[13]*(1 - 91.2039*nu + 2556.5123*nu2 - 11325.217*nu3 + 27767.2164*nu4)/(1 - 66.0362*nu + 1762.4169*nu2);
 
   }
 
 }
 
-/** Set NQC coefficients */
+/** 
+ *  Function: eob_nqc_setcoefs
+ *  --------------------------
+ *   This function sets the waveform and flux NQC coefficients according
+ *   to the flags NQC_FLX_* and NQC_HLM_*
+ *
+ *   @param[out] nqc   : NQC coefficients
+ *
+ */
 void eob_nqc_setcoefs(NQCdata *nqc)
 {
   nqc->flx->add = 1;
@@ -991,9 +1138,17 @@ void eob_nqc_setcoefs(NQCdata *nqc)
   
 }
 
-/** Set NQC coefficients 
-    NR fits for nonspinning case 2016/02/09 
-    Hardcoded in eob_wav_hlmNQC_nospin201602() */
+
+/** 
+ *  Function: eob_nqc_setcoefs_nospin201602
+ *  ---------------------------------------
+ *  Set NQC coefficients. NR fits for nonspinning case 2016/02/09 
+ *  Hardcoded in eob_wav_hlmNQC_nospin201602()
+ *  https://arxiv.org/pdf/1703.06814.pdf
+ *
+ *   @param[in] nqc   : NQC coefficients
+ *
+ */
 void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc)
 {
 
@@ -1041,8 +1196,15 @@ void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc)
 
 }
 
-/** Set NQC coefficients from file */
-//TODO: how portable is 'getline'
+/** 
+ *  Function: eob_nqc_setcoefs_fromfile
+ *  -----------------------------------
+ *  Set NQC coefficients from file 
+ *
+ *   @param[out] nqc  : NQC coefficients
+ *   @param[in] fname : file name from which to read NQCs
+ *
+ */
 void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname)
 {
   FILE *fp;
@@ -1085,9 +1247,15 @@ void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname)
   nqc->maxk = maxk;
 }
 
-
-/** Set NQC coefficients 
-    NR fits for nonspinning case 2020/02 */
+/** 
+ *  Function: eob_nqc_setcoefs_spin202002
+ *  -------------------------------------
+ *  Set NQC coefficients. NR fits for spinning case 2020/02
+ *  https://arxiv.org/pdf/2104.07533.pdf
+ *
+ *   @param[out] nqc   : NQC coefficients
+ *
+ */
 void eob_nqc_setcoefs_spin202002(NQCcoefs *nqc)
 {
   const int k22 = 1;
@@ -1128,7 +1296,19 @@ void eob_nqc_setcoefs_spin202002(NQCcoefs *nqc)
   nqc->maxk = k22;
   
 }
-	
+
+/** 
+ *  Function: get_a1_fit_22
+ *  -----------------------
+ *  Compute the a1 coefficient for the (2,2) mode.
+ *  Fit from https://arxiv.org/pdf/2104.07533.pdf
+ *
+ *   @param[in] nu   : symmetric mass ratio
+ *   @param[in] chi1 : dimensionless spin of body 1
+ *   @param[in] chi2 : dimensionless spin of body 2
+ *
+ *   @return a1
+ */
 double get_a1_fit_22(double nu, double chi1, double chi2)
 {
   const int usespins = EOBPars->use_spins;
@@ -1140,19 +1320,6 @@ double get_a1_fit_22(double nu, double chi1, double chi2)
   double Shat = (X1*X1*chi1 + X2*X2*chi2);
   double Shat_norm = (X1*X1*chi1 + X2*X2*chi2)/(X1*X1 + X2*X2);
    
-  /* Dirty fixes to avoid poles */
-  /*
-  if (nu < 0.03)
-    nu = 0.03;
-  if ((nu < 0.1) && (Shat_norm > 0.84)){
-    Shat_norm = 0.84;
-  }
-  if ((nu < 0.13) && (Shat_norm > 0.87)){
-    Shat_norm = 0.99;
-    nu = 0.12;
-  }
-  */
-  
   if (!(usespins)) 
     {
       double a1_q1 = 0.070974;
@@ -1217,17 +1384,22 @@ double get_a1_fit_22(double nu, double chi1, double chi2)
       double a1_spin  =  (1.-2.287721*(1.+c1*xnu)/(1.+c2*xnu)*Shat_norm-0.598451*(1.+c3*xnu)/(1.+c4*xnu)*Shat_norm*Shat_norm+0.766069*(1.+c5*xnu)/(1.+c6*xnu)*Shat_norm*Shat_norm*Shat_norm+1.857169*(1.+c7*xnu)/(1.+c8*xnu)*Shat_norm*Shat_norm*Shat_norm*Shat_norm)/(1.-2.035234*(1.+c9*xnu)/(1.+c10*xnu)*Shat_norm+0.836427*(1.+c11*xnu)/(1.+c12*xnu)*Shat_norm*Shat_norm+0.297476*(1.+c13*xnu)/(1.+c14*xnu)*Shat_norm*Shat_norm*Shat_norm);
       res  = a1_nospin*a1_spin;
     }
-
-  /*
-  if (res > 100.) 
-    res = 100.;
-  else if (res < -100.)
-    res = -100.;
-  */
   
   return res;
 }
-	
+
+/** 
+ *  Function: get_a2_fit_22
+ *  -----------------------
+ *  Compute the a2 coefficient for the (2,2) mode.
+ *  Fit from https://arxiv.org/pdf/2104.07533.pdf
+ *
+ *   @param[in] nu   : symmetric mass ratio
+ *   @param[in] chi1 : dimensionless spin of body 1
+ *   @param[in] chi2 : dimensionless spin of body 2
+ *
+ *   @return a2
+ */
 double get_a2_fit_22(double nu, double chi1, double chi2)
 {
   const int usespins = EOBPars->use_spins;
@@ -1238,16 +1410,6 @@ double get_a2_fit_22(double nu, double chi1, double chi2)
   double X2   = 1.-X1;
   double Shat = (X1*X1*chi1 + X2*X2*chi2);
   double Shat_norm = (X1*X1*chi1 + X2*X2*chi2)/(X1*X1 + X2*X2);
-  
-  /* Dirty fixes to avoid poles */  
-  /*
-  if (nu < 0.02)
-    nu = 0.02;
-  if ((nu < 0.1) && (Shat_norm > 0.8)) {
-    Shat_norm = 0.99;
-    nu = 0.05;
-  }
-  */
   
   if (!(usespins)) 
     {
@@ -1318,21 +1480,22 @@ double get_a2_fit_22(double nu, double chi1, double chi2)
 	
       res      = a2_nospin*a2_spin;
     }
-
-  /*
-  if (res > 100.) 
-    res = 100.;
-  else if (res < -100.)
-    res = -100.;
-  */
   
   return res;
 }
 
-/** Yunes-Yagi logQ-vs-log(lambda) fit 
-    Table I of https://arxiv.org/abs/1303.1528 
-    here x = log(lambda) and the output is the log of the coefficient
-    that describes the quadrupole deformation due to spin. */
+/** 
+ *  Function: YagiYunes13_fit_logQ_coefs
+ *  ------------------------------------
+ *  This function sets the coefficients for the 
+ *  Yunes-Yagi logQ-vs-log(lambda) fit 
+ *  Table I of https://arxiv.org/abs/1303.1528 
+ *  Here x = log(lambda) and the output is the log of the coefficient
+ *  that describes the quadrupole deformation due to spin.
+ *
+ *   @param[out] c   : coefficients
+ *
+ */
 void YagiYunes13_fit_logQ_coefs(double *c)
 {
   c[0] = 0.194;
@@ -1342,19 +1505,20 @@ void YagiYunes13_fit_logQ_coefs(double *c)
   c[4] = 1.23e-4;
 }
 
+/** 
+ *  Function: YagiYunes13_fit_logQ
+ *  ------------------------------------
+ *  Yunes-Yagi logQ-vs-log(lambda) fit 
+ *  Table I of https://arxiv.org/abs/1303.1528 
+ *  Here x = log(lambda) and the output is the log of the coefficient
+ *  that describes the quadrupole deformation due to spin.
+ *
+ *   @param[in] x   : log(Lambda2)
+ *
+ *   @return logQ
+ */
 double YagiYunes13_fit_logQ(double x)
 {
-  /*
-    const double ai = 0.194;
-    const double bi = 0.0936;
-    const double ci = 0.0474;
-    const double di = -4.21e-3;
-    const double ei = 1.23e-4;
-    const double x2 = x*x;
-    const double x3 = x*x2;
-    const double x4 = x*x3;
-    return ai + bi*x + ci*x2 + di*x3 + ei*x4;
-  */
   double c[5];
   YagiYunes13_fit_logQ_coefs(c);
   const double x2 = x*x;
@@ -1363,6 +1527,24 @@ double YagiYunes13_fit_logQ(double x)
   return( c[4]*x4 + c[3]*x3 + c[2]*x2 + c[1]*x + c[0] );
 }
 
+/** 
+ *  Function: YagiYunes13_fit_logQ_drvts
+ *  ------------------------------------
+ *  Compute Yunes-Yagi logQ-vs-log(lambda) fit, as well as 
+ *  first and second derivatives of Q w.r.t. u
+ *  Table I of https://arxiv.org/abs/1303.1528 
+ *  Here x = log(lambda) and the output is the log of the coefficient
+ *  that describes the quadrupole deformation due to spin and its first
+ *  and second derivatives.
+ *
+ *   @param[in] Lam    : Lambda_2
+ *   @param[in] Lam_u  : dLam/du   (dyn tides)
+ *   @param[in] Lam_uu : d2Lam/d2u (dyn tides)
+ *   @param[out] Q      : Quadrupole deformation
+ *   @param[out] Q_u    : first derivative of Q
+ *   @param[out] Q_uu   : second derivative of Q
+ *
+ */
 void YagiYunes13_fit_logQ_drvts(double Lam, double Lam_u, double Lam_uu,
 				double *Q, double *Q_u, double *Q_uu)
 {
@@ -1385,9 +1567,18 @@ void YagiYunes13_fit_logQ_drvts(double Lam, double Lam_u, double Lam_uu,
   *Q_uu = *Q * ( SQ(logQ_u) + logQ_uu );
 }
 
-/** Yagi 2013 fits for NS multipolar
-    $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
-    Eq.(9,10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.0872 */
+/** 
+ *  Function: Yagi13_fit_barlamdel
+ *  ------------------------------
+ *  Yagi 2013 fits for NS multipolar
+ *  $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
+ *  Eq.(9,10),(61); Tab.I; Fig.8 http://arxiv.org/abs/1311.087
+ *
+ *   @param[in] barlam2 : Lambda_2
+ *   @param[in] ell     : multipolar index
+ *
+ *   @return Lambda_ell
+ */
 double Yagi13_fit_barlamdel(double barlam2, int ell)
 {
   if (barlam2<=0.) return 0.;
@@ -1412,10 +1603,18 @@ double Yagi13_fit_barlamdel(double barlam2, int ell)
   return exp(lny);
 }
 
-/** Yagi 2013 fits for NS multipolar
-    $\bar{\sigma_2}( \bar{\lambda}_2 )$
-    Eq.(9,11),(61); Tab.I; Fig.9 http://arxiv.org/abs/1311.0872 
-    See also later erratum */
+/** 
+ *  Function: Yagi13_fit_barsigmalambda
+ *  -----------------------------------
+ *   Yagi 2013 fits for NS multipolar
+ *   $\bar{\sigma_2}( \bar{\lambda}_2 )$
+ *   Eq.(9,11),(61); Tab.I; Fig.9 http://arxiv.org/abs/1311.0872 
+ *   See also later erratum
+ *
+ *   @param[in] barlam2 : Lambda_2
+ *
+ *   @return Sigma_2
+ */
 double Yagi13_fit_barsigmalambda(double barlam2)
 {
   if (barlam2<=0.) return 0.;
@@ -1438,8 +1637,16 @@ double Yagi13_fit_barsigmalambda(double barlam2)
   return -1.0*exp(lny);
 }
 
-/* Yagi et al. fits for C_Oct
-   Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
+/** 
+ *  Function: Yagi14_fit_Coct
+ *  -------------------------
+ *  Yagi et al. fits for octupolar spin-induced multipole C_Oct
+ *  Eq. (90) and Table I of https://arxiv.org/abs/1403.6243
+ *
+ *   @param[in] C_Q : Quadrupolar spin-induced parameter
+ *
+ *   @return C_Oct
+ */
 double Yagi14_fit_Coct(double C_Q)
 {
   const double A0  = -0.925;
@@ -1449,8 +1656,16 @@ double Yagi14_fit_Coct(double C_Q)
   return cubrootCoct*cubrootCoct*cubrootCoct;
 }
 
-/* Yagi et al. fits for C_Hex
-   Eq. (90) and Table I of https://arxiv.org/abs/1403.6243 */
+/** 
+ *  Function: Yagi14_fit_Chex
+ *  -------------------------
+ *  Yagi et al. fits for hexapolar spin-induced multipole C_Hex
+ *  Eq. (90) and Table I of https://arxiv.org/abs/1403.6243
+ *
+ *   @param[in] C_Q : Quadrupolar spin-induced parameter
+ *
+ *   @return C_Hex
+ */
 double Yagi14_fit_Chex(double C_Q)
 {
   const double A0  = -0.413;
@@ -1460,6 +1675,15 @@ double Yagi14_fit_Chex(double C_Q)
   return SQ(SQ(fourthrootChex));
 }
 
+/** 
+ *  Function: JFAPG_fit_Sigma_Irrotational
+ *  --------------------------------------
+ *  
+ *
+ *   @param barlam2 : Lambda_2
+ *
+ *   @return Sigma_2
+ */
 double JFAPG_fit_Sigma_Irrotational(double barlam2)
 {
   if (barlam2<=0.) return 0.;
@@ -1475,6 +1699,15 @@ double JFAPG_fit_Sigma_Irrotational(double barlam2)
   return - exp(lny);
 }
 
+/** 
+ *  Function: JFAPG_fit_Sigma_Static
+ *  --------------------------------
+ *  
+ *
+ *   @param barlam2 : Lambda_2
+ *
+ *   @return Sigma_2
+ */
 double JFAPG_fit_Sigma_Static(double barlam2)
 {
   if (barlam2<=0.) return 0.;
@@ -1490,10 +1723,18 @@ double JFAPG_fit_Sigma_Static(double barlam2)
   return exp(lny);
 }
 
-/** Godzieba 2020 fits for NS multipolar
-    $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
-    Eq.(4); Tab.I; https://journals.aps.org/prd/pdf/10.1103/PhysRevD.103.063036 
--*/
+/** 
+ *  Function: Godzieba20_fit_barlamdel
+ *  ----------------------------------
+ *  Godzieba 2020 fits for NS multipolar
+ *  $\bar{\lambda}_\ell$ = 2 k_\ell/(C^{2\ell+1} (2\ell-1)!!)$
+ *  Eq.(4); Tab.I; https://journals.aps.org/prd/pdf/10.1103/PhysRevD.103.063036 
+ *
+ *   @param[in] barlam2 : Lambda_2
+ *   @param[in] ell     : multipolar index (9>ell>2)
+ *
+ *   @return Lambda_ell
+ */
 double  Godzieba20_fit_barlamdel(double barlam2, int ell)
 {  
   if (barlam2<=0.) return 0.;
@@ -1544,9 +1785,17 @@ double  Godzieba20_fit_barlamdel(double barlam2, int ell)
   return exp(lny);
 }
 
-/** Chang+ 2014 fits for f-mode frequency vs Lambda
-    Eq.(3.5) and Tab.I of https://arxiv.org/abs/1408.3789
--*/
+/** 
+ *  Function: Godzieba20_fit_barlamdel
+ *  ----------------------------------
+ *  Chang+ 2014 fits for f-mode frequency vs Lambda
+ *  Eq.(3.5) and Tab.I of https://arxiv.org/abs/1408.3789
+ *
+ *   @param[in] lam  : Lambda_2
+ *   @param[in] ell  : multipolar index (6>ell>1)
+ *
+ *   @return omegaf_ell
+ */
 double Chang14_fit_omegaf(double lam, int ell)
 {  
   if (lam<=0.) return 0.;
@@ -1582,23 +1831,35 @@ double Chang14_fit_omegaf(double lam, int ell)
   return y;
 }
 
-/** Mass and angular momentum of the final black hole
-  Healey, Lousto and Zochlower (HLZ),
-  arXiv: 1406.7295, published as PRD 90, 104004 (2014)
-  WARNING: the formula uses the convention that M2 > M1, so that
-  chi2 should refer to the black hole with the largest
-  mass. In the EOB code, this is given by chi1, since
-  in EOB code we use the convention that M1 > M2
-  
-  Here it is q=M2/M1, with M2>M1
-  
-  Improved with (Eisco, Jisco) + iterative procedure 23/02/2016
-  parameters (TABLE VI)
-*/
+/** 
+ *  Function: HealyBBHFitRemnant
+ *  ----------------------------
+ *  Chang+ 2014 fits for f-mode frequency vs Lambda
+ *  Mass and angular momentum of the final black hole
+ *  Healey, Lousto and Zochlower (HLZ),
+ *  arXiv: 1406.7295, published as PRD 90, 104004 (2014)
+ *  WARNING: the formula uses the convention that M2 > M1, so that
+ *  chi2 should refer to the black hole with the largest
+ *  mass. In the EOB code, this is given by chi1, since
+ *  in EOB code we use the convention that M1 > M2
+ *  
+ *  Here it is q=M2/M1, with M2>M1
+ *  
+ *  Improved with (Eisco, Jisco) + iterative procedure 23/02/2016
+ *  parameters (TABLE VI)
+ *
+ *   
+ *   @param[in] chi1  : spin of body 1
+ *   @param[in] chi2  : spin of body 2
+ *   @param[in] q     : mass ratio, m2/m1 > 1
+ *   @param[out] mass  : remnant mass 
+ *   @param[out] spin  : remanant spin 
+ *
+ */
 void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double *spin)
 {
        
-  /** Final mass:                    Angular momentum: */
+  /* Final mass:                     Angular momentum: */
   
   double M0  =  0.951507;            double L0  =  0.686710;
   double K1  = -0.051379;            double L1  =  0.613247;
@@ -1620,14 +1881,14 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
   double K4h = -0.004091;            double L4h =  0.001629;
   double K4i =  0.078441;            double L4i = -0.066693;
       
-  /** Parameters */
+  /* Parameters */
   double nu      = q/((1.+q)*(1.+q));
   
-  /** Masses: convention here is that m2>m1 */
+  /* Masses: convention here is that m2>m1 */
   double X2      = 0.5*(1.+sqrt(1.-4*nu));
   double X1      = 1.-X2;
   
-  /** Spin variables */
+  /* Spin variables */
   double s1      = X1*X1*chi1;
   double s2      = X2*X2*chi2;
   double S       = s1 + s2;
@@ -1639,14 +1900,14 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
   double Delta3  = Delta*Delta2;
   double Delta4  = Delta2*Delta2;
   
-  /** Mass ratio variables */
+  /* Mass ratio variables */
   double deltam  = -sqrt(1-4*nu); // X1 - X2
   double deltam2 =  deltam*deltam;
   double deltam3 =  deltam*deltam2;
   double deltam4 =  deltam*deltam3;
   double deltam6 =  deltam2*deltam4;
   
-  /** Initialize the angular momentum */
+  /* Initialize the angular momentum */
   double a0 = s1 + s2;
   int a0_sign = 0.;
   
@@ -1658,7 +1919,7 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
     a0_sign=-1;
   }
   
-  /** Set-up an interative procedure to compute properly the "isco" quantities */
+  /* Set-up an interative procedure to compute properly the "isco" quantities */
   double a2;
   double Z1;
   double Z2;
@@ -1679,7 +1940,7 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
     Eisco  = (1 - 2.*uisco + a0*sqrt(uisco*uisco*uisco))/sqrt(1-3*uisco + 2*a0*sqrt(uisco*uisco*uisco));
     Jisco  = 2./(sqrt(3.*risco))*(3.*sqrt(risco)-2.*a0);
     
-    /** Dimensionless spin: J/Mbh^2 */
+    /* Dimensionless spin: J/Mbh^2 */
     abh = (4*nu)*(4*nu)*(L0 + L1*S + L2a*Delta*deltam + L2b*S2 + L2c*Delta2 + L2d*deltam2 + L3a*Delta*S*deltam + L3b*S*Delta2 + L3c*S3 + L3d*S*deltam2 + L4a*Delta*S2*deltam + L4b*Delta3*deltam + L4c*Delta4 + L4d*S4 + L4e*Delta2*S2 + L4f*deltam4 + L4g*Delta*deltam3 + L4h*Delta2*deltam2 + L4i*S2*deltam2) + S*(1+8*nu)*deltam4 + nu*Jisco*deltam6;
     
     Mbh = (4*nu)*(4*nu)*(M0 + K1*S + K2a*Delta*deltam + K2b*S2 + K2c*Delta2 + K2d*deltam2 + K3a*Delta*S*deltam + K3b*S*Delta2 + K3c*S3 + K3d*S*deltam2 + K4a*Delta*S2*deltam + K4b*Delta3*deltam + K4c*Delta4 + K4d*S4 + K4e*Delta2*S2 + K4f*deltam4 + K4g*Delta*deltam3 + K4h*Delta2*deltam2 + K4i*S2*deltam2) + (1 + nu*(Eisco + 11))*deltam6;
@@ -1692,7 +1953,19 @@ void HealyBBHFitRemnant(double chi1,double chi2, double q, double *mass, double 
   if (spin) *spin = abh;
 }
 
-/** Final mass fit of Jimenez-Forteza et al. (arxiv 1611.00332) */
+/** 
+ *  Function: JimenezFortezaRemnantMass
+ *  ----------------------------
+ *  Final mass fit of Jimenez-Forteza et al. (arxiv 1611.00332)
+ *
+ *   @param[in] nu    : symmetric mass ratio
+ *   @param[in] X1    : mass fraction of body 1
+ *   @param[in] X2    : mass fraction of body 2
+ *   @param[in] chi1  : spin of body 1
+ *   @param[in] chi2  : spin of body 2
+ *
+ *   @return Mbh, mass of the remnant BH
+ */
 double JimenezFortezaRemnantMass(double nu, double X1, double X2, double chi1, double chi2)
 {
   const double xnu     = sqrt(1.0-4.0*nu);
@@ -1708,69 +1981,81 @@ double JimenezFortezaRemnantMass(double nu, double X1, double X2, double chi1, d
   double nu3 = nu2*nu;
   double nu4 = nu3*nu;
 	  
-  /** Coeffcients taken from Table VII, page 13: */ 
+  /* Coeffcients taken from Table VII, page 13: */ 
   const double a2      = 0.5610;
   const double a3      = -0.847;
   const double a4      = 3.145;
 	
-  /** The functional form is taken from eq. (21), page 14. */
+  /* The functional form is taken from eq. (21), page 14. */
   double E_rad_spin_zero = a4*nu4 + a3*nu3 + a2*nu2 + (1-2.*sqrt(2)/3.)*nu;
 	
-  /** Coeffcients taken from Table VIII, page 13: */
+  /* Coeffcients taken from Table VIII, page 13: */
   const double b1      = -0.209;
   const double b2      = -0.197;
   const double b3      = -0.159;
   const double b5      = 2.985;
 	 
-  /** Coeffcients taken from Table IX, page 14: */
+  /* Coeffcients taken from Table IX, page 14: */
   const double f20     = 4.27;
   const double f30     = 31.09;
   const double f50     = 1.56735;
   const double f10     = -0.574752*f20 - 0.280958*f30 + 64.6408*f50 - 88.3165; //1.81
 	
-  /** Coeffcients taken from Table X, page 17: */
+  /* Coeffcients taken from Table X, page 17: */
   const double f11     = 15.7;
   const double f21     = 0.;
   const double f31     = -243.6;
   const double f51     = -0.58;
 	  
-  /** Coeffcients evaluated from eq.(24), page 15: */
+  /* Coeffcients evaluated from eq.(24), page 15: */
   const double f12     = 16. - 16.*f10 - 4.*f11;
   const double f22     = 16. - 16.*f20 - 4.*f21;
   const double f32     = 16. - 16.*f30 - 4.*f31;
   const double f52     = 16. - 16.*f50 - 4.*f51;
 	
-  /** this transformation is given in eq. (9), page 7: */
+  /* this transformation is given in eq. (9), page 7: */
   const double b1tot      = b1*(f10 + f11*nu + f12*nu2);
   const double b2tot      = b2*(f20 + f21*nu + f22*nu2);
   const double b3tot      = b3*(f30 + f31*nu + f32*nu2);
   const double b5tot      = b5*(f50 + f51*nu + f52*nu2);
 	  
-  /** The functional form is taken from eq. (22), page 14: */
+  /* The functional form is taken from eq. (22), page 14: */
   double E_rad_eq_spin = 0.0484161*(0.128*b3tot*S3 + 0.211*b2tot*S2 + 0.346*b1tot*S + 1)/(1 - 0.212*b5tot*S);
 	
   double E_rad_eq = 0.0484161;
 	  
-  /** These values are taken from Table IV, page 10: */
+  /* These values are taken from Table IV, page 10: */
   const double d10     = -0.098;
   const double d11     = -3.23;
   const double d20     = 0.0112;
   const double d30     = -0.0198;
   const double d31     = -4.92;
 	  
-  /** The functional form is taken from eq. (27a-c), page 10: */
+  /* The functional form is taken from eq. (27a-c), page 10: */
   const double A1      = d10*sqrt(1 - 4.*nu)*nu2*(d11*nu + 1);
   const double A2      = d20*nu3;
   const double A3      = d30*sqrt(1-4.*nu)*nu*(d31*nu+1);
 	  
-  /** The functional form is taken from eq. (15), page 9: */
+  /* The functional form is taken from eq. (15), page 9: */
   double E_rad_uneq_mass = A1*Dchi + A2*Dchi2 + A3*S*Dchi; 
 	
   return 1 - (E_rad_spin_zero*E_rad_eq_spin/E_rad_eq + E_rad_uneq_mass);
 }
 
-/** Final spin fit of */
-double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2)
+/** 
+ *  Function: JimenezFortezaRemnantSpin
+ *  -----------------------------------
+ *  Final spin fit of Jimenez-Forteza et al. (arxiv 1611.00332)
+ *
+ *   @param[in] nu    : symmetric mass ratio
+ *   @param[in] X1    : mass fraction of body 1
+ *   @param[in] X2    : mass fraction of body 2
+ *   @param[in] chi1  : spin of body 1
+ *   @param[in] chi2  : spin of body 2
+ *
+ *   @return abh, spin of the remnant BH
+ */
+ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, double chi2)
 {
 
   const double xnu     = sqrt(1.0-4.0*nu);
@@ -1780,66 +2065,73 @@ double JimenezFortezaRemnantSpin(double nu, double X1, double X2, double chi1, d
   const double a3      = -9.49;
   const double a5      = 2.513;
   
-  /** The functional form is taken from eq. (7), page 5. */
+  /* The functional form is taken from eq. (7), page 5. */
   double Lorb_spin_zero  = (1.3*a3*nu*nu*nu + 5.24*a2*nu*nu + 2.*sqrt(3)*nu)/(2.88*a5*nu + 1);
   
-  /** Coeffcients taken from Table II, page 6: */
+  /* Coeffcients taken from Table II, page 6: */
   double b1      = 1.00096;
   double b2      = 0.788;
   double b3      = 0.654;
   double b5      = 0.840;
   
-  /** These values are taken from Table III, page 7: */
+  /* These values are taken from Table III, page 7: */
   double f21     = 8.774;
   double f31     = 22.83;
   double f50     = 1.8805;
   double f11     = 0.345225*f21 + 0.0321306*f31 - 3.66556*f50 + 7.5397;
   
-  /** These values are taken from Table IV, page 10 */
+  /* These values are taken from Table IV, page 10 */
   double f12     = 0.512;
   double f22     = -32.1;
   double f32     = -154;
   double f51     = -4.77;
   
-  /** The following quantities were taken from the relation given in eq. (11), */
-  /** page 7: fi3 = 64 - 64.*fi0 - 16.*fi1 - 4.*fi2; */
+  /* The following quantities were taken from the relation given in eq. (11), */
+  /* page 7: fi3 = 64 - 64.*fi0 - 16.*fi1 - 4.*fi2; */
   double f13     = 64 - 16.*f11 - 4.*f12;
   double f23     = 64 - 16.*f21 - 4.*f22;
   double f33     = 64 - 16.*f31 - 4.*f32;
   double f53     = 64 - 64.*f50 - 16.*f51;
   
-  /** this transformation is given in eq. (9), page (7) */
+  /* this transformation is given in eq. (9), page (7) */
   double b1t     = b1*(f11*nu + f12*nu*nu + f13*nu*nu*nu);
   double b2t     = b2*(f21*nu + f22*nu*nu + f23*nu*nu*nu);
   double b3t     = b3*(f31*nu + f32*nu*nu + f33*nu*nu*nu);
   double b5t     = b5*(f50 + f51*nu + f53*nu*nu*nu);
   
-  /** The functional form is taken from eq. (8), page 6. */
+  /* The functional form is taken from eq. (8), page 6. */
   double Lorb_eq_spin  = (0.00954*b3t*S*S*S + 0.0851*b2t*S*S - 0.194*b1t*S)/(1 - 0.579*b5t*S);
   
-  /** These values are taken from Table IV, page 10: */
+  /* These values are taken from Table IV, page 10: */
   double d10     = 0.322;
   double d11     = 9.33;
   double d20     = -0.0598;
   double d30     = 2.32;
   double d31     = -3.26;
   
-  /** The functional form is taken from eq. (19a-c), page 10.*/
+  /* The functional form is taken from eq. (19a-c), page 10.*/
   double A1      = d10*xnu*nu*nu*(d11*nu+1);
   double A2      = d20*nu*nu*nu;
   double A3      = d30*xnu*nu*nu*nu*(d31*nu+1);
   
-  /** The functional form is taken from eq. (15), page 9. */
+  /* The functional form is taken from eq. (15), page 9. */
   double Lorb_uneq_mass  = A1*Dchi + A2*Dchi*Dchi + A3*S*Dchi;
   
   return X1*X1*chi1+X2*X2*chi2 + Lorb_spin_zero + Lorb_eq_spin + Lorb_uneq_mass;
 }
 
+/** 
+ *  Function: PrecessingRemnantSpin
+ *  -------------------------------
+ *  Final spin fit of precessing BH, eq. 20 of 
+ *  https://arxiv.org/pdf/1611.00332.pdf
+ *
+ *   @param[in] dyn   : EOB dynamics
+ *
+ *   @return abh, spin of the remnant BH
+ */
 double PrecessingRemnantSpin(Dynamics *dyn)
 {
-  /*
-  eq. 20 of https://arxiv.org/pdf/1611.00332.pdf
-  */
 
   double SAmrg[3];
   double SBmrg[3];
@@ -1849,8 +2141,7 @@ double PrecessingRemnantSpin(Dynamics *dyn)
 
   double omgmrg = eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
   
-  /*find merger*/
-  //FIXME: this is a rough estimate
+  /* find merger */
   int imrg = find_point_bisection(omgmrg, dyn->spins->size, dyn->spins->data[EOB_EVOLVE_SPIN_Momg], 1);
 
   SAmrg[0] = dyn->spins->data[EOB_EVOLVE_SPIN_SxA][imrg];
@@ -1867,7 +2158,6 @@ double PrecessingRemnantSpin(Dynamics *dyn)
 
   vect_dot3(SAmrg, Lhmrg, &SApar);  
   vect_dot3(SBmrg, Lhmrg, &SBpar); 
-  //HealyBBHFitRemnant(SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2), EOBPars->q, &(EOBPars->Mbhf), NULL);
   EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2));
   for(int i=0; i < IN3; i++)
     Sperp[i] = (SAmrg[i] - SApar*Lhmrg[i]) + (SBmrg[i] - SBpar*Lhmrg[i]);
@@ -1879,7 +2169,26 @@ double PrecessingRemnantSpin(Dynamics *dyn)
 
 }
 
-/** QNM fits for the 22 mode for spinning systems */
+/** 
+ *  Function: QNMHybridFitCab
+ *  -------------------------
+ *  Compute QNM fits for the 22 mode for spinning systems
+ *  and the postpeak template parameters
+ *  From TODO: add reference
+ *
+ *   
+ *   @param[in] nu                              : symmetric mass ratio
+ *   @param[in] X1                              : mass fraction of body 1
+ *   @param[in] X2                              : mass fraction of body 2
+ *   @param[in] chi1                            : dimensionless spin of body 1
+ *   @param[in] chi2                            : dimensionless spin of body 2
+ *   @param[in] aK                              : a1 + a2
+ *   @param[in] Mbh                             : final mass of the remnant BH
+ *   @param[in] abh                             : final spin of the remnant BH
+ *   @param[out] ca1,ca2,ca3,ca4,cb1,cb2,cb3,cb4 : phenomenological parameters of the postpeak template
+ *   @param[out] sigmar,sigmai                   : real and imaginary QNM frequency
+ *
+ */
 void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 		     double Mbh, double abh,  
 		     double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
@@ -1925,7 +2234,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     modeon[k22]=1;
     modeon[k33]=1;
     
-    /** Last updates: 05/09/2017 from CoM extrapolated SXS data */
+    /* Last updates: 05/09/2017 from CoM extrapolated SXS data */
     
     // l=2 -------------------------------------------------------------------
     
@@ -1982,7 +2291,7 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
 
     modeon[k22]=1;
     
-    /** Setting up coefficients from the phenomenological description of the ringdown.
+    /* Setting up coefficients from the phenomenological description of the ringdown.
 	For notation: Damour&Nagar, PRD 90 (2015), 024054 and Del Pozzo & Nagar, PRD 95 (2017), 124034
 	Current global fits are new. See Nagar+ 2017 (in preparation) for a global performance
 	and Riemenschneider& Nagar (2017) in preparation for the description of the fits */
@@ -2074,7 +2383,25 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
   
 }
 
-/** QNM fits for higher modes - arXiv:2001.09082 */
+/** 
+ *  Function: QNMHybridFitCab_HM
+ *  ----------------------------
+ *  Compute QNM fits for HMs for spinning systems
+ *  and the postpeak template parameters
+ *  From arXiv:2001.09082 
+ *
+ *   @param[in] nu                               : symmetric mass ratio
+ *   @param[in] X1                               : mass fraction of body 1
+ *   @param[in] X2                               : mass fraction of body 2
+ *   @param[in] chi1                             : dimensionless spin of body 1
+ *   @param[in] chi2                             : dimensionless spin of body 2
+ *   @param[in] aK                               : a1 + a2
+ *   @param[in] Mbh                              : final mass of the remnant BH
+ *   @param[in] abh                              : final spin of the remnant BH
+ *   @param[out] ca1,ca2,ca3,ca4,cb1,cb2,cb3,cb4 : phenomenological parameters of the postpeak template
+ *   @param[out] sigmar,sigmai                   : real and imaginary part of QNM frequency
+ *
+ */
 void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 			double Mbh, double abh,  
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
@@ -2923,10 +3250,24 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   
 }
 
-/* Global fits of the ringdown coefficients from the 
-   Pompili et. al. paper, arXiv:2303.18039
-*/
-void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
+/** 
+ *  Function: QNMHybridFitCab_HM_Pompili23
+ *  ----------------------------
+ *  Global fits of the ringdown coefficients from the 
+ *  Pompili et. al. paper, arXiv:2303.18039.
+ *  Note: only available for (2,1), (3,3), (4,4)
+ *
+ *   @param[in] nu                              : symmetric mass ratio
+ *   @param[in] X1                              : mass fraction of body 1
+ *   @param[in] X2                              : mass fraction of body 2
+ *   @param[in] chi1                            : dimensionless spin of body 1
+ *   @param[in] chi2                            : dimensionless spin of body 2
+ *   @param[in] Mbh                             : final mass of the remnant BH
+ *   @param[out] ca1,ca2,ca3,ca4,cb1,cb2,cb3,cb4 : phenomenological parameters of the postpeak template
+ *   @param[in] sigmar,sigmai                   : real and imaginary QNM frequency
+ *
+ */
+void QNMHybridFitCab_HM_Pompili23(double nu, double chi1, double chi2, double Mbh, 
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
       double *sigmar, double *sigmai)
 {
@@ -2954,7 +3295,7 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   double c1f, c2f, d1f, d2f, c1c, c2c, d1c;
   
   /* Compute A, dA, omg, domg */
-  eob_nqc_point_HM_peak22(NULL, A, dA, omg, domg);
+  eob_nqc_point_HM_peak22(A, dA, omg, domg);
   for(int j=0; j<knqcpeak22_size; j++){
     int k = knqcpeak22[j];
 
@@ -3014,6 +3355,19 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
 
 
 /** Fits of the ringdown QNM coefs */
+
+/** 
+ *  Function: QNM_coefs
+ *  -------------------
+ *  Fits of the ringdown QNM coefs, from
+ *  TODO: add reference
+ *
+ *   @param[in]  af      : spin of the final BH
+ *   @param[out] alpha21 : difference between the inverse damping times of first overtone and fundamental mode
+ *   @param[out] alpha1  : real part of the fundamental QNM frequency (damping time)
+ *   @param[out] omega1  : imaginary part of the fundamental QNM frequency
+ *
+ */
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1)
 {
 
@@ -3093,25 +3447,53 @@ void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1)
   
 }
 
-/** Light-ring approximation, vacuum nonspinning case */
+/** 
+ *  Function: eob_approxLR
+ *  ----------------------
+ *  Light-ring approximation, vacuum nonspinning case
+ *
+ *   @param[in] nu      : symmetric mass ratio
+ *
+ *   @return approximate estimate for r_LR
+ */
 double eob_approxLR(const double nu) 
 {
   const double x = 1.-4.*nu;
-  const double r0 = 1.818461553848201e+00; // x=0 (q=1)
-  const double r1 = 1.821043720041472e+00; // x=1 (3M)
+  const double r0 = 1.818461553848201e+00;
+  const double r1 = 1.821043720041472e+00;
   return r0*x + r1;
 }
 
-/** Compute optimized timestep after Omega_peak */
-double get_mrg_timestep(double q, double chi1, double chi2)
+/** 
+ *  Function: get_mrg_timestep
+ *  --------------------------
+ *  Compute optimized timestep after Omega_peak
+ *
+ *   @param[in] q      : mass ratio
+ *   @param[in] chi1   : dimensionless spin of body 1
+ *   @param[in] chi2   : dimensionless spin of body 2
+ *
+ *   @return dt to be used for merger interpolation
+ */
+double get_mrg_timestep(double UNUSED(q), double UNUSED(chi1), double UNUSED(chi2))
 {
   double dt = 0.1;
   // ...
   return dt;
 }
 
-/** Compute optimized shift to stop integration after Omega_peak */
-double get_mrg_timestop(double q, double chi1, double chi2)
+/** 
+ *  Function: get_mrg_timestop
+ *  --------------------------
+ *  Compute optimized shift to stop integration after Omega_peak
+ *
+ *   @param[in] q      : mass ratio
+ *   @param[in] chi1   : dimensionless spin of body 1
+ *   @param[in] chi2   : dimensionless spin of body 2
+ *
+ *   @return time interval beyind tOmg_pk after which integration is stopped
+ */
+double get_mrg_timestop(double UNUSED(q), double UNUSED(chi1), double UNUSED(chi2))
 { 
   double tstop = 2.0;
   if (EOBPars->use_flm == USEFLM_HM) {
@@ -3125,13 +3507,24 @@ double get_mrg_timestop(double q, double chi1, double chi2)
   return tstop;
 }
 
-/** Effective Love number for the f-mode resonance model
-    Eq.(6.51) of https://arxiv.org/abs/1608.01907
-    Eq.(11) of https://arxiv.org/abs/1702.02053
-    This routine computes the dressing factor for the star ell-th Love number
-*/
-double fmode_resonance_dress_Love(double nu,
-				  double r, // orbital radius
+/** 
+ *  Function: fmode_resonance_dress_Love
+ *  ------------------------------------
+ *   Effective Love number for the f-mode resonance model  
+ *   Eq.(6.51) of https://arxiv.org/abs/1608.01907  
+ *   Eq.(11)   of https://arxiv.org/abs/1702.02053  
+ *   This routine computes the dressing factor for the star ell-th Love number
+ *
+ *   @param[in] nu        : mass ratio
+ *   @param[in] r         : orbital separation
+ *   @param[in] bomgf     : mA omega_f
+ *   @param[in] ell       : multipolar index
+ *   @param[out] dtides   : array of dressing factors
+ *   @param[out] dtides_u : array of first derivative of dressing factors w.r.t. 1/r
+ *   
+ */
+void fmode_resonance_dress_Love(double nu,
+				  double r,
 				  double bomgf, // = mA omega_f
 				  int ell, 
 				  double *dtides, double *dtides_u)
@@ -3218,8 +3611,17 @@ double fmode_resonance_dress_Love(double nu,
   
 }
 
-/** Routine to update dressing factors for f-mode resonance model
- * Only apply to gravitoelectric ell=2,3,4 
+/** 
+ *  Function: fmode_resonance_dressing_factors
+ *  ------------------------------------------
+ *   Routine to update dressing factors for f-mode resonance model
+ *   Only apply to gravitoelectric ell=2,3,4
+ *   Note: if enforce_alpha_min is 1, the minimum value of the dressing
+ *   factors is floored to 1.
+ *  
+ *   @param[in] r        : orbital separation
+ *   @param[in] dyn      : EOB dynamics
+ *   
  */
 #define enforce_alpha_min (1) /* enforce min(alpha)=1 */
 void fmode_resonance_dressing_factors(double r, Dynamics *dyn)
@@ -3294,8 +3696,15 @@ void fmode_resonance_dressing_factors(double r, Dynamics *dyn)
   
 }
  
-/* Routine to update the quadrupole, octupole, hexapole 
-   using the dressed Lambdas */
+/** 
+ *  Function: fmode_resonance_dress_QOH
+ *  ------------------------------------
+ *   \details Routine to update the quadrupole, octupole, hexapole 
+ *   using the dressed Lambdas
+ *  
+ *   @param[in] dyn      : EOB dynamics
+ *   
+ */
 void fmode_resonance_dress_QOH(Dynamics *dyn)
 {
   /* Dress the Lambda's */
@@ -3342,26 +3751,40 @@ void fmode_resonance_dress_QOH(Dynamics *dyn)
   
 }
 
-/** BHNS Section **/
-
-/** Fits of BH remnant from BHNS - Frank's paper (2020) */
+/** 
+ *  Function: eob_bhns_fit
+ *  ----------------------
+ *   \details Fits of BH remnant from BHNS CBC.
+ *   From 
+ *   https://arxiv.org/abs/1903.11622 
+ *   https://arxiv.org/abs/2212.03909
+ *  
+ *   @param[in]  a      : spin of the BH
+ *   @param[in]  nu     : symmetric mass ratio
+ *   @param[out] mass   : mass of the remnant
+ *   @param[out] spin   : spin of the remnant
+ *   @param[in]  lambda : tidal parameter of the NS
+ *   @param[in]  m_bh   : mass of the BBH remnant with same masses
+ *   @param[in]  a_bh   : spin of the BBH remnant with same masses
+ *    
+ */
 void eob_bhns_fit(double a, double nu, double *mass, double *spin, double lambda, double m_bh, double a_bh)
 {
-  /** m_bh & a_bh are the remnant mass & spin of Jimenez et al. fits (2017) */
+  /* m_bh & a_bh are the remnant mass & spin of Jimenez et al. fits (2017) */
 
-     /** Mass Parameters                             Spin Parameters */
-  const double p110 = 0.008270153575372058;    const double q110 = -0.005806649906608269;
-  const double p111 = 0.03023441789407721;    const double q111 = 0.0080478216453302;
-  const double p120 = -0.009060968313209477;   const double q120 = 0.025417446510092936;
-  const double p121 = 0.009494115842467465;    const double q121 = 0.02304350955931102;
+     /* Mass Parameters                             Spin Parameters */
+  const double p110 = 0.008270153575372058;     const double q110 = -0.005806649906608269;
+  const double p111 = 0.03023441789407721;      const double q111 = 0.0080478216453302;
+  const double p120 = -0.009060968313209477;    const double q120 = 0.025417446510092936;
+  const double p121 = 0.009494115842467465;     const double q121 = 0.02304350955931102;
   const double p210 = -1.0096357035633808e-07;  const double q210 = -7.885609729416046e-07;
   const double p211 = 1.9646035657421295e-06;   const double q211 = -2.7419535067447896e-06;
-  const double p220 = 0.00010412175504981773;  const double q220 = 6.824530257266093e-06;
-  const double p221 = 0.00022787243413793448;  const double q221 = 4.115495276575295e-05;
-  const double p310 = 0.003496494935708257;    const double q310 = -0.02896820746099147;
+  const double p220 = 0.00010412175504981773;   const double q220 = 6.824530257266093e-06;
+  const double p221 = 0.00022787243413793448;   const double q221 = 4.115495276575295e-05;
+  const double p310 = 0.003496494935708257;     const double q310 = -0.02896820746099147;
   const double p311 = 0.015633634360363493;     const double q311 = 0.2520378980622243;
-  const double p320 = 0.;     const double q320 = 0.14409587180221356;
-  const double p321 = 0.;    const double q321 = -0.4226678233866285;
+  const double p320 = 0.;                       const double q320 = 0.14409587180221356;
+  const double p321 = 0.;                       const double q321 = -0.4226678233866285;
 
   double p11 = p110*a + p111;      double q11 = q110*a + q111;
   double p12 = p120*a + p121;      double q12 = q120*a + q121;
@@ -3381,13 +3804,26 @@ void eob_bhns_fit(double a, double nu, double *mass, double *spin, double lambda
   double mbh = m_bh * m_fit;
   double abh = a_bh * a_fit;
 
-  *mass = mbh; // Mf/M                                                                                                                                                                                                                        
+  *mass = mbh;                                                                                                                                                                                                                   
   *spin = abh;
 }
 
+/** 
+ *  Function: bhns_cases
+ *  ----------------------
+ *   \details  Filter tidal disruption cases.
+ *   From https://arxiv.org/abs/2212.03909
+ *  
+ *   @param[in]  nu        : symmetric mass ratio
+ *   @param[in]  af        : 
+ *   @param[in]  chi1      : dimensionless spin of body 1
+ *   @param[in]  lambda    : tidal parameter of the NS
+ *   @param[out] binary    : type of system
+ *   @param[out] usetidal  : tidal model
+ *    
+ */
 void bhns_cases(double nu, double af, double chi1, double lambda, int *binary, int *usetidal)
 {
-  /** Filter tidal disruption cases */
   //double crit = Mf; // from Frank's bh remnant fits Mdot/M
 
   // Using alpha QNM fits
@@ -3438,6 +3874,25 @@ void bhns_cases(double nu, double af, double chi1, double lambda, int *binary, i
     
 }
 
+/** 
+ *  Function: QNMHybridFitCab_BHNS_HM
+ *  ---------------------------------
+ *  Compute QNM fits for HMs for BHNS systems
+ *  and the postpeak template parameters
+ *  From Gonzalez+2022
+ *
+ *   @param[in] nu                               : symmetric mass ratio
+ *   @param[in] X1                               : mass fraction of body 1
+ *   @param[in] X2                               : mass fraction of body 2
+ *   @param[in] chi1                             : dimensionless spin of body 1
+ *   @param[in] chi2                             : dimensionless spin of body 2
+ *   @param[in] aK                               : a1 + a2
+ *   @param[in] Mbh                              : final mass of the remnant BH
+ *   @param[in] abh                              : final spin of the remnant BH
+ *   @param[out] ca1,ca2,ca3,ca4,cb1,cb2,cb3,cb4 : phenomenological parameters of the postpeak template
+ *   @param[out] sigmar,sigmai                   : real and imaginary part of QNM frequency
+ *
+ */
 void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, double chi2, double aK, 
 			double Mbh, double abh,  
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
@@ -3637,6 +4092,28 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
   
 }
 
+/** 
+ *  Function: postpeak_coef
+ *  -----------------------
+ *   TODO: add description
+ *   From Gonzalez+2022
+ *
+ *   @param[out] ca1,ca2,ca3,ca4,cb1,cb2,cb3,cb4 : phenomenological parameters of the postpeak template
+ *   @param[in] nu                               : symmetric mass ratio
+ *   @param[in] X1                               : mass fraction of body 1
+ *   @param[in] X2                               : mass fraction of body 2
+ *   @param[in] chi1                             : dimensionless spin of body 1
+ *   @param[in] chi2                             : dimensionless spin of body 2
+ *   @param[in] X1                               : dimensionless spin of body 2
+ *   @param[in] X2                               : dimensionless spin of body 2
+ *   @param[in] aK                               : a1 + a2
+ *   @param[in] Mbh                              : final mass of the remnant BH
+ *   @param[in] abh                              : final spin of the remnant BH
+ *   @param[in] Apeak                            : dimensionless spin of body 2
+ *   @param[in] alpha2                           : dimensionless spin of body 2
+ *   @param[out] sigmar,sigmai                   : real and imaginary part of QNM frequency
+ *
+ */
 void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
                     double *sigmar, double *sigmai, double nu, double chi1, double chi2, double X1, double X2, double aK, double Mbh, double abh,
                     double *Apeak, double *alpha2)
@@ -3688,7 +4165,7 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
   double alpha1[KMAX], omega1[KMAX], omega2[KMAX], alpha21[KMAX];
   QNM_bhns_td(abh, alpha1, alpha2, omega1, omega2, alpha21, lambda, nu, chi1);
 
-  /** l=2, m=2 **/
+  /* l=2, m=2 **/
   //a3[1] = -0.56187 + 0.75497*nu;
   //b3[1] = ( 4.4414 - 63.107*nu + 296.64*nu*nu ) / ( 1. - 13.299*nu + 69.129*nu*nu );
   //b4[1] = ( 7.1508 - 109.47*nu ) / ( 1. + 556.34*nu + 287.42*nu*nu );
@@ -3796,12 +4273,12 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
     c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
 	    
 
-  /** from Nagar et al arxiv:2001.09082**/
+  /* from Nagar et al arxiv:2001.09082 */
   for (int k=0; k<KMAX; k++) {
     sigmar[k] = alpha1[k];
     sigmai[k] = omega1[k];
     Domega[k] = omega1[k]-Mbh*Opeak[k];     
-    /** These are the same for all modes given the constraints
+    /* These are the same for all modes given the constraints
      * for physically correct behaviour of the fits */
       c2A[k] = 0.5*alpha21[k];
       double cosh_c3A= cosh(c3A[k]);  
@@ -3816,11 +4293,24 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
   }
 }
 
+/** 
+ *  Function: peak_bhns
+ *  -----------------------
+ *   A^{peak}_{22} amplitude and omega^{peak}_{22} frequency at tpeak (\dot{A}(tpeak)=0) 
+ *   ap_bbh and op_bbh is for BBH from the function QNMHybridFitCab_HM in ..Fits.c
+ *   From Gonzalez+2022
+ *
+ *   @param[in] nu                               : symmetric mass ratio
+ *   @param[in] kt2                              : tildekappa_2, system tidal parameter
+ *   @param[in] chi1                             : dimensionless spin of body 1
+ *   @param[in] X1                               : mass fraction of body 1
+ *   @param[in] X2                               : mass fraction of body 2
+ *   @param[in] abh                              : final spin of the remnant BH
+ *   @param[out] Apeak                           : Peak amplitude
+ *   @param[out] Opeak                           : Omega at the peak of amplitude
+ */
 void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak)
 {
-  /** A^{peak}_{22} amplitude and omega^{peak}_{22} frequency at tpeak (\dot{A}(tpeak)=0) 
-   * ap_bbh and op_bbh is for BBH from the function QNMHybridFitCab_HM in ..Fits.c */
-
    double op_bbh[KMAX], ap_bbh[KMAX];
   for (int k=0; k<KMAX; k++) {
     Apeak[k] = Opeak[k] = op_bbh[k] = ap_bbh[k] = 0.;
@@ -4194,6 +4684,22 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
   if(VERBOSE) PRFORMd("omega22_peak",Opeak[1]);
 }
 
+/** 
+ *  Function: QNM_bhns_td
+ *  -----------------------
+ *   QNMs for tidally disrupted BHNS 
+ *   From Gonzalez+2022
+ *
+ *   @param[in] af                               : spin of the remnant BH
+ *   @param[in] alpha1                           : real part of the complex QNM frequency for the fundamental mode                                                                    
+ *   @param[in] alpha2                           : real part of the complex QNM frequency for the first overtone                                                                    
+ *   @param[in] omega1                           : imaginary part of the complex QNM frequency for the fundamental mode
+ *   @param[in] omega2                           : imaginary part of the complex QNM frequency for the first overtone
+ *   @param[in] alpha21                          : final spin of the remnant BH
+ *   @param[out] lambda                          : Quadrupolar tidal parameter of the NS
+ *   @param[out] nu                              : Symmetric mass ratio
+ *   @param[out] chi1                            : dimensionless spin of the BH
+ */
 void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double lambda, double nu, double chi1)
 {
   double alpha_bbh[KMAX],omega_bbh[KMAX];
@@ -4310,7 +4816,22 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
  
 }
 
-void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp, double abh, double kt2)
+/** 
+ *  Function: eob_nqc_point_BHNS_HM
+ *  -------------------------------
+ *   Fits for the NR point used to determine NQC corrections for BHNSs, from 
+ *   Gonzalez et al 2022
+ *   
+ *   @param[in]   dyn      : EOB dynamics
+ *   @param[out]  A_tmp    : RWZ-normalized Amplitude at the NQC point 
+ *   @param[out]  dA_tmp   : first time derivative of the RWZ-normalized amplitude at the NQC point 
+ *   @param[out]  omg_tmp  : omega at the NQC point 
+ *   @param[out]  domg_tmp : first time derivative of the frequency at the NQC point 
+ *   @param[in]   abh      : spin of the final BH
+ *   @param[in]   kt2      : tidal parameter of the binary
+ *
+ */
+void eob_nqc_point_BHNS_HM(double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp, double kt2)
 {
   /** BHNS fits just for omega^NQC and domega^NQC, and amplitude. With BBH from arxiv:2001.09082 **/
   const double nu   = EOBPars->nu;
@@ -4595,51 +5116,3 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   }
 	  
 }
-
-void eob_nqc_point_test(double Mbh, double c1A, double c2A, double c3A, double c4A, 
-			    double c1phi, double c2phi, double c3phi, double c4phi,
-			    double alpha1, double omega1,
-			    double *A_tmp, double *dA_tmp, double *d2A_tmp, double *omg_tmp, double *domg_tmp, double *d2omg_tmp)
-{
-  
-  double tau, Mbh2, x, x2, dA_tmp1, dA_tmp2, omg_tmp1, omg_tmp2, domg_tmp_n1,domg_tmp_n2,domg_tmp_d1,domg_tmp_d2;
-
-  /* the time variable in the post-peak template is given in units of Mbh*/
-  tau  = 2./Mbh;
-  Mbh2 = SQ(Mbh);
-  
-  *A_tmp = exp(-alpha1*tau)*(c1A*tanh(c2A*tau + c3A) + c4A);
-  
-  double fact = cosh(c3A+ c2A*tau);
-  dA_tmp1     = c1A*c2A*exp(-alpha1*tau)/(fact*fact);
-  dA_tmp2     = -alpha1*exp(-alpha1*tau)*(c4A + c1A*tanh(c3A+ c2A*tau));
-  *dA_tmp     = (dA_tmp1 + dA_tmp2)/Mbh;
-
-  double fact2 = 1.0/cosh(c2A*tau+c3A);
-  double d2A_tmp1 = -c1A*c2A*exp(-alpha1*tau)*(fact2*fact2)*(alpha1+2*c2A*tanh(c2A*tau+c3A));
-  double d2A_tmp2 = alpha1*alpha1*exp(-alpha1*tau)*(c1A*tanh(c2A*tau+c3A)+c4A);
-  double d2A_tmp3 = -alpha1*exp(-alpha1*tau)*c1A*c2A * (fact*fact);
-  *d2A_tmp = (d2A_tmp1 + d2A_tmp2 + d2A_tmp3)/Mbh2;
-  
-  x        = exp(-c2phi*tau);
-  x2       = x*x;
-  omg_tmp1 = c1phi*(-2.*c2phi*c4phi*exp(-2.*c2phi*tau) - c2phi*c3phi*x);
-  omg_tmp2 = 1 + c4phi*exp(-2.*c2phi*tau) + c3phi*x;
-  *omg_tmp = (omg_tmp1/omg_tmp2)/Mbh + omega1/Mbh2;
-	  
-  domg_tmp_n1 = c1phi*SQ(-2.*c2phi*c4phi*x2 - c2phi*c3phi*x);
-  domg_tmp_d1 = SQ(1 + c4phi*x2 + c3phi*x);
-  domg_tmp_n2 = c1phi*(4.*SQ(c2phi)*c4phi*x2 + SQ(c2phi)*c3phi*x);
-  domg_tmp_d2 = 1 + c4phi*x2 + c3phi*x;
-  *domg_tmp   = -(domg_tmp_n1/domg_tmp_d1 - domg_tmp_n2/domg_tmp_d2)/Mbh2;
-
-  double d2omg_tmp1 = (-c2phi*c3phi*x-8*c2phi*c4phi*x2) / (1+c3phi*x+c4phi*x2);
-  double d2omg_tmp2 = (-1)*(c3phi*x+4*c4phi*x2)*(-c2phi*c3phi*x-2*c4phi*c2phi*x2) / ((1+c3phi*x+c4phi*x2)*(1+c3phi*x+c4phi*x2));
-  double d2omg_tmp3 = 2*(c3phi*x+2*c4phi*x2) / (1+c3phi*x+c4phi*x2);
-  double d2omg_tmp4 = (-c2phi*c3phi*x-4*c2phi*c4phi*x2) / (1+c3phi*x+c4phi*x2);
-  double d2omg_tmp5 = (-1)*(c3phi*x+2*c4phi*x2)*(-c2phi*c3phi*x-2*c4phi*c2phi*x2);
-  double d2omg_tmp6 = d2omg_tmp4 + d2omg_tmp5;
-  *d2omg_tmp = c1phi*c2phi*c2phi*( (d2omg_tmp1+d2omg_tmp2) - d2omg_tmp3*d2omg_tmp6 ) / (Mbh2*Mbh);
-}
-
-/** End of BHNS Section **/

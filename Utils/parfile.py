@@ -27,7 +27,7 @@ PARKEYS = {
     'use_a6c_fits': ['Use fits for a6c', 'str', "HM"],
     'use_cN3LO_fits' : ['Use fits for cN3LO', "HM"],
     'use_fmode': ['Use the fmode resonance model', 'str', "no" ],
-    'use_lambda234_fits': ['Use quasi-universal relations to fit Lambda4,5,6,7,8 (YAGI13, GODZIEBA20)', 'str', "YAGI13" ],
+    'use_lambdaell_fits': ['Use quasi-universal relations to fit Lambda4,5,6,7,8 (YAGI13, GODZIEBA20)', 'str', "YAGI13" ],
     'use_speedytail': ['Speed up the computation of the tail factor in h_lm and F_lm', 'str', "no" ],
     'pGSF_tidal': ['GSF p-exponent (default=4)', 'float', 4. ],
     'dt_merger_interp': ['dt used for the interpolation of the merger dynamics, after the peak of Omega', 'float', 0.1 ],

@@ -51,12 +51,12 @@ int SetOptionalVariables(PyObject* dict){
       if (STREQUAL(val,tides_gravitomagnetic_opt[EOBPars->use_tidal_gravitomagnetic])) break;
     }  
   }
-  if ( PyDict_GetItemString(dict, "use_lambda234_fits") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "use_lambdaell_fits") != NULL ) { 
     char* val;
-    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_lambda234_fits"));
-    for(EOBPars->use_lambda234_fits=0; EOBPars->use_lambda234_fits<=Lambda234_fits_NOPT; EOBPars->use_lambda234_fits++){
-      if (EOBPars->use_lambda234_fits == Lambda234_fits_NOPT) EOBPars->use_lambda234_fits = Lambda234_fits_YAGI13;
-      if (STREQUAL(val,use_lambda234_fits_opt[EOBPars->use_lambda234_fits])) break;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_lambdaell_fits"));
+    for(EOBPars->use_lambdaell_fits=0; EOBPars->use_lambdaell_fits<=Lambda234_fits_NOPT; EOBPars->use_lambdaell_fits++){
+      if (EOBPars->use_lambdaell_fits == Lambda234_fits_NOPT) EOBPars->use_lambdaell_fits = Lambda234_fits_YAGI13;
+      if (STREQUAL(val,use_lambdaell_fits_opt[EOBPars->use_lambdaell_fits])) break;
     }    
   }
   if ( PyDict_GetItemString(dict, "use_a6c_fits") != NULL ) { 

@@ -1,41 +1,19 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
- */
-
-/**
- * @file TEOBResumPars.h
- * @brief Parameter manager
- *
- * Parameters are managed using the type EOBParameters.
+/** \file TEOBResumSPars.c
+ *  \brief Parameter manager  
+ * 
+ * Parameters are managed using the type EOBParameters.  
  * 
  * To add a parameter:
- * - add the relative variable in the EOBParameters structure
- * - add its default value in EOBParameters_defaults() (if taken as input) ...
- * - ... or in eob_set_params() (if computed from other input parameters)
- * - (if taken as input) make sure it is parsed by EOBParameterse_parse_file()
- *   and in the analogue routine of the python wrapper
+ *  * add the relative variable in the EOBParameters structure
+ *  * add its default value in EOBParameters_defaults() (if taken as input) ...
+ *  * ... or in eob_set_params() (if computed from other input parameters)
+ *  * (if taken as input) make sure it is parsed by EOBParameterse_parse_file()
+ *    and in the analogue routine of the python wrapper
  *
- * History
- * - SB 09/2021 simplified the logic, added minimal custum routines to handle parfile input. Removed libconfig use.
- * - SB 11/2019 Added the par structure type EOBParameters and routines to work with it.
- * - v0.0 and v1.0 worked only with the parameter db and the parfile, using libconfig wrappers.
- *
+ * History:
+ *  * SB 09/2021 simplified the logic, added minimal custum routines to handle parfile input. Removed libconfig use.
+ *  * SB 11/2019 Added the par structure type EOBParameters and routines to work with it.
+ *  * v0.0 and v1.0 worked only with the parameter db and the parfile, using libconfig wrappers.
  */
 
 #include "TEOBResumS.h"
@@ -67,6 +45,14 @@ void (*eob_wav_ringdown)();
 void (*eob_dyn_s_get_rc)();
 int (*p_eob_spin_dyn_rhs)();
 
+
+/**
+ * Function: EOBParameters_alloc
+ * -----------------------------
+ *   Allocate memory for EOBParameters structure
+ * 
+ *   @param[in,out] eobp: pointer to EOBParameters structure
+*/
 void EOBParameters_alloc (EOBParameters **eobp)
 {
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
@@ -81,6 +67,13 @@ void EOBParameters_alloc (EOBParameters **eobp)
   /* (*eobp)->output_lm [0] = -1; */
 } 
 
+/** 
+ * Function: EOBParameters_free
+ * ----------------------------
+ *   Free memory for EOBParameters structure
+ * 
+ *   @param[in,out] eobp: pointer to EOBParameters structure
+*/
 void EOBParameters_free (EOBParameters *eobp)
 {
   if (!eobp) return;
@@ -94,7 +87,15 @@ void EOBParameters_free (EOBParameters *eobp)
   free(eobp);
 }
 
-/* Following default parameters should match those for production runs */
+/**
+ * Function: EOBParameters_defaults
+ * --------------------------------
+ *   Set default values for EOBParameters.  
+ *   Defaults should match parameters for prod runs
+ * 
+ *   @param[in] choose: default choice for binary type
+ *   @param[in,out] eobp: pointer to EOBParameters structure
+*/
 void EOBParameters_defaults (int choose, EOBParameters *eobp)
 {
   eobp->domain = DOMAIN_TD;
@@ -129,7 +130,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->LambdaBl8 = 0.; 
   eobp->SigmaAl2  = 0.; // Tidal gravitomagnetic parameter Sigma for star A ell=2
   eobp->SigmaBl2  = 0.;
-  eobp->use_lambda234_fits = Lambda234_fits_NO;
+  eobp->use_lambdaell_fits = Lambda234_fits_NO;
   eobp->pGSF_tidal = 4.0;// p-power in GSF tidal potential model
 
   eobp->use_spins=1; // use spins ?
@@ -357,7 +358,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
     eobp->use_tidal = TIDES_TEOBRESUM3;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
     eobp->pGSF_tidal = 4.0;
-    eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+    eobp->use_lambdaell_fits = Lambda234_fits_YAGI13;
     eobp->use_a6c_fits   = a6c_fits_V0;
     eobp->use_cN3LO_fits = cN3LO_fits_NO;
 
@@ -379,7 +380,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
 
     eobp->use_tidal = TIDES_TEOBRESUM;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;//TIDES_GM_PN;
-    eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+    eobp->use_lambdaell_fits = Lambda234_fits_YAGI13;
 
   }
 
@@ -392,7 +393,16 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
  * main routine to set parameters for the run
  */
 
-void eob_set_params(int default_choice, int firstcall)
+/**
+ * Function: eob_set_params
+ * ------------------------
+ *   Set parameters for the run depending on the defaults
+ *   and the user-input parameters that overwrite the defaults
+ * 
+ *   @param[in] default_choice: default choice for binary type
+ *   @param[in] firstcall: flag to indicate if this is the first call
+ */
+void eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
 {
   
   /* Set intrinsic parameters as given by user */
@@ -477,17 +487,17 @@ void eob_set_params(int default_choice, int firstcall)
     
     /* Set the tidal parameters */
     
-    if (EOBPars->use_lambda234_fits == Lambda234_fits_YAGI13) {
+    if (EOBPars->use_lambdaell_fits == Lambda234_fits_YAGI13) {
       EOBPars->LambdaAl3 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 3);
       EOBPars->LambdaBl3 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 3);
       EOBPars->LambdaAl4 = Yagi13_fit_barlamdel(EOBPars->LambdaAl2, 4);
       EOBPars->LambdaBl4 = Yagi13_fit_barlamdel(EOBPars->LambdaBl2, 4);
-    } else if (EOBPars->use_lambda234_fits == Lambda234_fits_GODZIEBA20) {
+    } else if (EOBPars->use_lambdaell_fits == Lambda234_fits_GODZIEBA20) {
       EOBPars->LambdaAl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 3);
       EOBPars->LambdaBl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 3);
       EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
       EOBPars->LambdaBl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 4);
-    } else if (EOBPars->use_lambda234_fits == Lambda2345678_fits_GODZIEBA20) {
+    } else if (EOBPars->use_lambdaell_fits == Lambda2345678_fits_GODZIEBA20) {
       EOBPars->LambdaAl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 3);
       EOBPars->LambdaBl3 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 3);
       EOBPars->LambdaAl4 = Godzieba20_fit_barlamdel(EOBPars->LambdaAl2, 4);
@@ -754,6 +764,15 @@ void eob_set_params(int default_choice, int firstcall)
 
 }
 
+/**
+ * Function: update_params
+ * ------------------------
+ *   Update function pointers in case of a
+ *   BHNS system
+ *   FIXME: check if this is really needed...
+ * 
+ *   @param[in] binary: binary type
+*/
 void update_params(int binary)
 {
   /* Updated function pointers */
@@ -774,6 +793,16 @@ void update_params(int binary)
   }
 }
 
+/**
+ * Function: EOBParameters_parse_commandline
+ * -----------------------------------------
+ *   Parse the command line arguments
+ *   and set the parameters accordingly
+ *   
+ *   @param[in] eobp: pointer to EOBParameters struct
+ *   @param[in] argc: number of command line arguments
+ *   @param[in] argv: array of command line arguments
+*/
 int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
 {
   optind=1; //in order to parse twice, this needs to be 1
@@ -830,7 +859,7 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->use_tidal = TIDES_TEOBRESUM3;
         eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
         eobp->pGSF_tidal = 4.0;
-        eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+        eobp->use_lambdaell_fits = Lambda234_fits_YAGI13;
         eobp->use_a6c_fits = a6c_fits_V0;
         eobp->use_cN3LO_fits = cN3LO_fits_NO;
         eobp->centrifugal_radius = CENTRAD_NNLO;
@@ -845,7 +874,7 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->use_tidal = TIDES_TEOBRESUM3;
         eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
         eobp->pGSF_tidal = 4.0;
-        eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+        eobp->use_lambdaell_fits = Lambda234_fits_YAGI13;
         eobp->use_a6c_fits   = a6c_fits_V0;
         eobp->use_cN3LO_fits = cN3LO_fits_NO;
         eobp->centrifugal_radius = CENTRAD_NNLO;
@@ -880,7 +909,14 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
   return eobp->binary;
 }
 
-/* Parse an input parfile */
+/**
+ * Function: EOBParameters_parse_file
+ * ----------------------------------
+ *   Parse an input parfile
+ * 
+ *   @param[in] fname: name of the parfile
+ *   @param[in] eobp: pointer to EOBParameters struct
+*/
 void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
 {
   const char DELIMITERS_FOR_COMMENTS[] = "#";
@@ -904,6 +940,15 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
   
 }
 
+/**
+ * Function: EOBParameters_set_key_val
+ * -----------------------------------
+ *   Set the value of a parameter "key" to "val"
+ * 
+ *   @param[in] eobp: pointer to EOBParameters struct
+ *   @param[in] key: name of the parameter
+ *   @param[in] val: value of the parameter
+*/
 void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
 {
 
@@ -1020,16 +1065,16 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     eobp->pGSF_tidal = par_get_d(val);
   }
 
-  if (STREQUAL(key,"use_lambda234_fits")) {
+  if (STREQUAL(key,"use_lambdaell_fits")) {
     val = string_trim(val);
-    for (eobp->use_lambda234_fits=0; eobp->use_lambda234_fits<=Lambda234_fits_NOPT; eobp->use_lambda234_fits++) {
-      if (eobp->use_lambda234_fits == Lambda234_fits_NOPT) {
-        eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
-        if (VERBOSE) printf("use_lambda234_fits '%s' undefined, set to '%s'\n",
-        val, use_lambda234_fits_opt[eobp->use_lambda234_fits]);
+    for (eobp->use_lambdaell_fits=0; eobp->use_lambdaell_fits<=Lambda234_fits_NOPT; eobp->use_lambdaell_fits++) {
+      if (eobp->use_lambdaell_fits == Lambda234_fits_NOPT) {
+        eobp->use_lambdaell_fits = Lambda234_fits_YAGI13;
+        if (VERBOSE) printf("use_lambdaell_fits '%s' undefined, set to '%s'\n",
+        val, use_lambdaell_fits_opt[eobp->use_lambdaell_fits]);
       break;
       }
-      if (STREQUAL(val, use_lambda234_fits_opt[eobp->use_lambda234_fits])) break;
+      if (STREQUAL(val, use_lambdaell_fits_opt[eobp->use_lambdaell_fits])) break;
     }
   }
 
@@ -1336,6 +1381,14 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
    } 
 }
 
+/**
+ * Function: EOBParameters_tofile
+ * ------------------------------
+ *   Dump the parameters to a file
+ * 
+ *   @param[in] eobp: pointer to EOBParameters struct
+ *   @param[in] fname: name of the file
+*/
 void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 {
   //Dump everything to a file for reproducibility
@@ -1431,7 +1484,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "tides", tides_opt[eobp->use_tidal]);
   fprintf(f,"%s = \"%s\"\n", "tides_gravitomagnetic", tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
   fprintf(f,"%s = %.16f\n" , "pGSF_tidal", eobp->pGSF_tidal);
-  fprintf(f,"%s = \"%s\"\n", "use_lambda234_fits", use_lambda234_fits_opt[eobp->use_lambda234_fits]);
+  fprintf(f,"%s = \"%s\"\n", "use_lambdaell_fits", use_lambdaell_fits_opt[eobp->use_lambdaell_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_a6c_fits_opt", use_a6c_fits_opt[eobp->use_a6c_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_cN3LO_fits_opt", use_cN3LO_fits_opt[eobp->use_cN3LO_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_tidal_fmode_model", INT2YESNO(eobp->use_tidal_fmode_model));
@@ -1463,9 +1516,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
-  fprintf(f,"%s = %d\n"    , "compute_LR_guess", eobp->compute_LR_guess);
+  fprintf(f,"%s = %.16f\n"    , "compute_LR_guess", eobp->compute_LR_guess);
   fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));
-  fprintf(f,"%s = %d\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
+  fprintf(f,"%s = %.16f\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
 
   /* NQC */
   fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);

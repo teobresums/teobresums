@@ -1,48 +1,38 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
+/** \file TEOBResumSInitialConditions.c
+ *  \brief Initial conditions for the TEOBResumS model
+ * 
+ *  This file contains the routines employed to compute the EOB initial coditions
+ *  according to the user's choice of initial frequency or initial separation
+ *  and the intrinsic parameters of the source.
  */
 
 #include "TEOBResumS.h"
 
-/** Initial conditions calculation for non-spinning systems */
-/* Post-post-circular initial data at separation r0
-   r0       => relative separation
-   pph0     => post-post-circular angular momentum
-   pr       => post-circular radial momentum
-   pprstar0 => post-circular r*-conjugate radial momentum
-   j0       => circular angular momentum
-   
-   Three-step procedure
-   1. Compute j0                         =>           circular ID, j!=0, pr =0
-   2. From j0, compute pr*               =>      post circular ID, j!=0, pr !=0
-   3. From pr* and j0, re-compute pph0   => post-post-circular ID, pph0!=j!=0, pr !=0
+/**
+ * Function: eob_dyn_ic
+ * --------------------
+ *   Initial conditions calculation for non-spinning systems
+ *   Post-post-circular initial data at separation r0
+ *   
+ *   Three-step procedure
+ *    1. Compute j0                         =>           circular ID, j!=0, pr =0
+ *    2. From j0, compute pr*               =>      post circular ID, j!=0, pr !=0
+ *    3. From pr* and j0, re-compute pph0   => post-post-circular ID, pph0!=j!=0, pr !=0
+ * 
+ *   @param[in] r0:  initial separation
+ *   @param[in] dyn: Dynamics
+ *   @param[out] y_init: initial data
 */
 void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
 {
   const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);    
 
-  /** Build a small grid */
+  /* Build a small grid */
 #define N (6)
   const double dr = 1e-10;
     
-  double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /** j:angular momentum */
+  double r[2*N], dA[2*N], j[2*N], j2[2*N], djdr[2*N]; /* j:angular momentum */
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N], dprstardr[2*N];
 
@@ -55,48 +45,45 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     r2   = SQ(r[i]);
     r3   = r2*r[i];
     
-    /** Compute metric  */
+    /* Compute metric  */
     eob_metric(r[i], dyn, &A, &B, &dA[i], &d2A, &dB);
     
     //printf("%d %.16e %.16e %.16e\n",i,r[i],A,dA[i]);
 
-    /** Angular momentum for circular orbit: circular ID  */
+    /* Angular momentum for circular orbit: circular ID  */
     j2[i]   =  r3*dA[i]/(2.*A-r[i]*dA[i]);
     j[i]    =  sqrt(j2[i]);
     j3      =  j2[i]*j[i];
     djdr[i] = -j3/r3*( 2.0 - 3.0*A/(r[i]*dA[i]) - A*d2A/(dA[i]*dA[i]) );
     
-    /** For circular orbit at r0=r(N)  */
-    H0eff      = sqrt(A*(1.0 + j2[i]/r2));                     /** effective Hamiltonian H_0^eff  */
-    E0[i]      = sqrt(1.0 + 2.0*nu*(H0eff - 1.0) );            /** real Hamiltonian      H_0  */
-    H0         = E0[i]/nu;                                     /** H_0/nu  */
-    Omega_j[i] = A*j[i]/(nu*r2*H0*H0eff);                      /** Orbital frequency (from Hamilton's equation)  */
-    psi        = 2.*(1.0 + 2.0*nu*(H0eff - 1.0))/(r2*dA[i]);   /** correction factor to the radius  */
-    r_omega    = r[i]*cbrt(psi);                               /** EOB-corrected radius  */
-    v_phi      = Omega_j[i]*r_omega;                           /** "corrected" azimuthal velocity such that Kepler's law is satisfied, r_omg^3 Omg_i^2 = 1  */
+    /* For circular orbit at r0=r(N)  */
+    H0eff      = sqrt(A*(1.0 + j2[i]/r2));                     /* effective Hamiltonian H_0^eff  */
+    E0[i]      = sqrt(1.0 + 2.0*nu*(H0eff - 1.0) );            /* real Hamiltonian      H_0  */
+    H0         = E0[i]/nu;                                     /* H_0/nu  */
+    Omega_j[i] = A*j[i]/(nu*r2*H0*H0eff);                      /* Orbital frequency (from Hamilton's equation)  */
+    psi        = 2.*(1.0 + 2.0*nu*(H0eff - 1.0))/(r2*dA[i]);   /* correction factor to the radius  */
+    r_omega    = r[i]*cbrt(psi);                               /* EOB-corrected radius  */
+    v_phi      = Omega_j[i]*r_omega;                           /* "corrected" azimuthal velocity such that Kepler's law is satisfied, r_omg^3 Omg_i^2 = 1  */
     x          = v_phi * v_phi;
-    jhat       = j[i]/(r_omega*v_phi);                         /** Newton-normalized angular momentum  */
+    jhat       = j[i]/(r_omega*v_phi);                         /* Newton-normalized angular momentum  */
 
     Fphi[i] = eob_flx_Flux(x,Omega_j[i],r_omega,E0[i],H0eff,jhat,r[i], 0,0,dyn); 
 
-    /** Radial momentum conjugate to r*: post-circular ID  */
+    /* Radial momentum conjugate to r*: post-circular ID  */
     Ctmp[i]   = sqrt(B/A)*nu*H0*H0eff;
     prstar[i] = Ctmp[i]*Fphi[i]/djdr[i];
     
-    /** Radial momentum conjugate to r  */
+    /* Radial momentum conjugate to r  */
     pr[i] = prstar[i]*sqrt(B/A);
     
   }
     
-  /** prstar by finite diff. */
+  /* prstar by finite diff. */
   D0(prstar, dr, 2*N, dprstardr);
   
   int i = N-1;
   dprstardt = dprstardr[i] * Fphi[i]/djdr[i];
   pph[i] = j[i]*sqrt(1. + 2.*Ctmp[i]/dA[i]*dprstardt - z3*gsl_pow_int(prstar[i],4)/j2[i]);
-  //printf("%d %.16e %.16e %.16e %.16e %.16e %.16e\n",i,r[i],Fphi[i],djdr[i],dprstardr[i],dprstardt,pph[i]);
-  //printf("%d %.16e %.16e %.16e %.16e %.16e %.16e\n",i,r[i],Fphi[i],djdr[i],dprstardr[i],dprstardt,pph[i]);
-
 
   y_init[EOB_ID_RAD]    = r[N-1];
   y_init[EOB_ID_PHI]    = 0.;
@@ -109,7 +96,21 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     
 }
 
-/** Initial conditions calculation for spinning systems */
+/**
+ * Function: eob_dyn_ic_s
+ * ----------------------
+ *   Initial conditions calculation for spinning systems
+ *   Post-post-circular initial data at separation r0
+ *   
+ *   Three-step procedure
+ *    1. Compute j0                         =>           circular ID, j!=0, pr =0
+ *    2. From j0, compute pr*               =>      post circular ID, j!=0, pr !=0
+ *    3. From pr* and j0, re-compute pph0   => post-post-circular ID, pph0!=j!=0, pr !=0
+ * 
+ *   @param[in] r0:  initial separation
+ *   @param[in] dyn: Dynamics
+ *   @param[out] y_init: initial data
+*/
 void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 {
   const double nu   = EOBPars->nu;
@@ -134,11 +135,11 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   const double Ss = X2*a1 + X1*a2;  
   const double z3 = 2.0*nu*(4.0-3.0*nu);
 
-  /** Build a small grid */
+  /* Build a small grid */
 #define N (6)
   const double dr = 1e-4; /* do not change this */
 
-  double r[2*N], dA[2*N], j[2*N]; /** j:angular momentum */
+  double r[2*N], dA[2*N], j[2*N]; /* j:angular momentum */
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N];
   double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N]; //, drc[2*N];
@@ -153,17 +154,17 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   for (i = 0; i < 2*N; i++) {
     r[i] = r0+(i-N+1)*dr;
 
-    /** Compute metric  */
+    /* Compute metric  */
     eob_metric_s(r[i], dyn, &A[i],&B[i],&dA[i],&d2A[i],&dB);
     
-    /** Compute minimum of Heff0 using bisection method */
+    /* Compute minimum of Heff0 using bisection method */
     pphorb = r[i]/sqrt(r[i]-3.);
     eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, EOBPars->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
     pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
 
   }
 
-  /** Post-circular initial conditions */
+  /* Post-circular initial conditions */
   
   /* pph by finite diff. */
   double dpph_dr[2*N]; 
@@ -226,7 +227,7 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   
 #if (POSTPOSTCIRCULAR)  
   
-  /** Post-post-circular initial data */
+  /* Post-post-circular initial data */
   
   double dpi1bydj, dprstardr[2*N],djdr[2*N];
   D0(prstar, dr, 2*N, dprstardr); 
@@ -282,11 +283,25 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   
 }
 
-/** Function for root finder: Derivative of the effective Hamiltonian */
+/**
+ * Struct: DHeff0_tmp_params
+ * -------------------------
+ *  Auxiliary structure for the root finder
+ * 
+*/
 struct DHeff0_tmp_params {
   double rorb, A, dA, rc, drc_dr, ak2, S, Ss, nu, chi1, chi2, X1, X2, c3;
 };
 
+/**
+  * Function: eob_dyn_DHeff0
+  * ------------------------
+  *   Derivative of the effective Hamiltonian
+  * 
+  *   @param[in] x:  p_phi
+  *   @param[in] params:  parameters
+  *   @return dHeff_dr
+  */
 double eob_dyn_DHeff0(double x, void *params)
 {
   
@@ -324,7 +339,28 @@ double eob_dyn_DHeff0(double x, void *params)
   return dHeff_dr;
 }
 
-/** Root finder: Compute minimum of Heff0 */
+/**
+  * Function: eob_dyn_bisecHeff0_s
+  * ------------------------------
+  *   Root finder: Compute minimum of Heff0
+  * 
+  *   @param[in] nu:  symmetric mass ratio
+  *   @param[in] chi1:  dimensionless spin of body 1
+  *   @param[in] chi2:  dimensionless spin of body 2
+  *   @param[in] X1:  mass fraction of body 1
+  *   @param[in] X2:  mass fraction of body 2
+  *   @param[in] c3:  N3LO coefficient
+  *   @param[in] pph:  orbital angular momentum
+  *   @param[in] rorb:  orbital separation
+  *   @param[in] A:  A potential
+  *   @param[in] dA:  dA/dr
+  *   @param[in] rc:  centrifugal radius
+  *   @param[in] drc_dr:  drc/dr
+  *   @param[in] ak2:  kerr spin parameter squared
+  *   @param[in] S:  S1 + S2 total spin
+  *   @param[in] Ss:  X1*a2 + X2*a1, Sstar
+  *   @return rorb
+*/
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3,
 			    double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss)
 {
@@ -363,14 +399,29 @@ double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, doub
   return r;
 }
 
-/** Initial radius from initial frequency using Kepler's law */
+/**
+  * Function: eob_dyn_r0_Kepler
+  * ----------------------------
+  *   Initial radius from initial frequency using Kepler's law
+  * 
+  *   @param[in] f0:  initial frequency
+  *   @return r0
+*/
 double eob_dyn_r0_Kepler (double f0)
 {
   const double omg_orb0 = Pi*f0; // =2*Pi*(f_orb0/2)
   return pow(omg_orb0, -2./3.);
 }
 
-/** Initial radius from initial frequency using EOB circular dynamics */
+/**
+  * Function: eob_dyn_r0_eob
+  * ----------------------------
+  *   Initial radius from initial frequency using EOB circular dynamics
+  * 
+  *   @param[in] f0:  initial frequency
+  *   @param[in] dyn:  Dynamics
+  *   @return r0
+*/
 double eob_dyn_r0_eob (double f0, Dynamics *dyn)
 {
   const double omg_orb0 = Pi*f0;
@@ -378,12 +429,26 @@ double eob_dyn_r0_eob (double f0, Dynamics *dyn)
   return eob_dyn_bisecOmegaorb0(dyn,omg_orb0,r0_kepl);
 }
 
-/** Function for root finder: omega = omega_circ */
+/**
+  * Struct: Omegaorb0_tmp_params
+  * ----------------------------
+  *  Auxiliary structure for the root finder
+  * 
+*/
 struct Omegaorb0_tmp_params {
   double omg_orb0;
   Dynamics *dyn;
 };
 
+/**
+  * Function: eob_dyn_Omegaorb0
+  * ----------------------------
+  *   Root finder helper function: compute omg_orb - omg_orb0
+  * 
+  *   @param[in] r:  separation
+  *   @param[in] params:  parameters
+  *   @return omg_orb - omg_orb0
+*/
 double eob_dyn_Omegaorb0(double r, void *params)
 {
  
@@ -481,7 +546,16 @@ double eob_dyn_Omegaorb0(double r, void *params)
   return (omg_orb - omg_orb0);
 }
 
-/** Root finder: Compute r0 such that omg_orb = omg_orb0 */
+/**
+  * Function: eob_dyn_bisecOmegaorb0
+  * ---------------------------------
+  *   Root finder: Compute r0 such that omg_orb = omg_orb0
+  * 
+  *   @param[in] dyn:  Dynamics
+  *   @param[in] omg_orb0:  initial orbital frequency
+  *   @param[in] r0_kepl:  initial radius from Kepler's law
+  *   @return r0
+*/
 double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl)
 {
 #define max_iter (200)

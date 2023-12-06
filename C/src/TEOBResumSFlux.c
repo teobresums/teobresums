@@ -1,21 +1,8 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
+/** \file TEOBResumSFlux.c      
+ *  \brief Compute the flux for the TEOBResumS model
+ * 
+ *  This file contains the routines required for the computation of the radiation reaction
+ *  for the TEOBResumS rhs
  */
 
 #include "TEOBResumS.h"
@@ -42,11 +29,20 @@ static const double CNlm[35] = {
   1.2233225038333268e-14, 9.27700678929842e-10, 4.468579053461083e-06, 0.0002675102834551229, 0.03813282951314997, 0.4894825318738884, 11.627213264559293, 162.79300083906728
 };
 
-/** Newtonian partial fluxes */
+
+/**
+ * Function: eob_flx_FlmNewt
+ * -------------------------
+ *   Compute the Newtonian partial fluxes
+ * 
+ *   @param[in] x   :  frequency parameter (v_phi^2)
+ *   @param[in] nu  :  symmetric mass ratio
+ *   @param[out] Nlm:  Newtonian partial fluxes
+ */
 void eob_flx_FlmNewt(double x, double nu, double *Nlm)
 {
   
-  /** Shorthands*/
+  /* Shorthands*/
   const double nu2 = nu*nu;
   const double nu3 = nu2*nu;
   const double x5  = x*x*x*x*x;
@@ -76,14 +72,21 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm)
     sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1) * x11
   };
 
-  /** Newtonian partial fluxes*/
+  /* Newtonian partial fluxes*/
   for (int k = 0; k < KMAX; k++) {
     Nlm[k] = CNlm[k] * spx[k];
   }
   
 }
 
-/** Tail term (modulus) */
+/**
+  * Function: eob_flx_Tlm
+  * ---------------------
+  *   Compute the modulus of the tail term
+  * 
+  *   @param[in] w    :  E*Omega
+  *   @param[out] MTlm:  modulus of the tail term
+  */
 void eob_flx_Tlm(const double w, double *MTlm)
 {
   double hhatk, x2, y, prod, fl;
@@ -100,17 +103,26 @@ void eob_flx_Tlm(const double w, double *MTlm)
   }
 }
 
-/** Compute horizon-absorbed fluxes. no spin case.
- * Nagar & Akcay, PRD 85, 044025 (2012)
- * Bernuzzi, Nagar & Zenginoglu, PRD 86, 104038 (2012)
- */
+/**
+  * Function: eob_flx_HorizonFlux
+  * -----------------------------
+  *   Compute the horizon-absorbed fluxes
+  *   Nagar & Akcay, PRD 85, 044025 (2012)
+  *   Bernuzzi, Nagar & Zenginoglu, PRD 86, 104038 (2012)
+  * 
+  *   @param[in] x   :  frequency parameter, v_phi^2
+  *   @param[in] Heff:  effective Hamiltonian
+  *   @param[in] jhat:  angular momentum
+  *   @param[in] nu  :  symmetric mass ratio
+  *   @param[out] hatFH:  horizon-absorbed fluxes
+  */
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
 {
   double rhoHlm[2]; /* only 21,22 multipoles -> k=0,1 */
   double FlmHLO[2];
   double FlmH[2];
   
-  /** Shorthands */
+  /* Shorthands */
   double nu2 = nu*nu;
   double nu3 = nu*nu2;
   double x2  = x*x;
@@ -120,14 +132,14 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
   double x9  = x4*x5;
   double x10 = x*x9;
     
-  /** The Newtonian asymptotic contribution */
+  /* The Newtonian asymptotic contribution */
   const double FNewt22 = 32./5.*x5;
   
-  /** Compute leading-order part (nu-dependent) */
+  /* Compute leading-order part (nu-dependent) */
   FlmHLO[1] = 32./5.*(1-4*nu+2*nu2)*x9;
   FlmHLO[0] = 32./5.*(1-4*nu+2*nu2)*x10;
     
-  /** Compute rho_lm */
+  /* Compute rho_lm */
   double c1[2];
   double c2[2];
   double c3[2];
@@ -146,21 +158,37 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
   rhoHlm[1] = 1. + c1[1]*x + c2[1]*x2 + c3[1]*x3 + c4[1]*x4;
   rhoHlm[0] = 1. + c1[0]*x + c2[0]*x2 + c3[0]*x3 + c4[0]*x4;
     
-  /** Compute horizon multipolar flux (only l=2) */
+  /* Compute horizon multipolar flux (only l=2) */
   const double Heff2 = Heff*Heff;
   const double jhat2 = jhat*jhat;
   
   FlmH[1] = FlmHLO[1] * Heff2 * gsl_pow_int(rhoHlm[1],4);
   FlmH[0] = FlmHLO[0] * jhat2 * gsl_pow_int(rhoHlm[0],4);
     
-  /** Sum over multipoles and normalize to the 22 Newtonian multipole */
+  /* Sum over multipoles and normalize to the 22 Newtonian multipole */
   double hatFH = (FlmH[0]+FlmH[1])/FNewt22;
   
   return hatFH;
 }
 
 /** Compute horizon-absorbed fluxes. spin case. */
-double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+
+/**
+  * Function: eob_flx_HorizonFlux_s
+  * -------------------------------
+  *   Compute the horizon-absorbed fluxes, spin case
+  * 
+  *   @param[in] x   :  frequency parameter, v_phi^2
+  *   @param[in] Heff:  effective Hamiltonian
+  *   @param[in] jhat:  angular momentum
+  *   @param[in] nu  :  symmetric mass ratio
+  *   @param[in] X1  :  mass fraction of body 1
+  *   @param[in] X2  :  mass fraction of body 2
+  *   @param[in] chi1:  dimensionless spin 1
+  *   @param[in] chi2:  dimensionless spin 2
+  *   @param[out] hatFH:  horizon-absorbed fluxes
+  */
+double eob_flx_HorizonFlux_s(double x, double UNUSED(Heff), double UNUSED(jhat), double UNUSED(nu), double X1, double X2, double chi1, double chi2)
 {
     
   double x2 = x*x;
@@ -172,11 +200,11 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
   double cv5[2];
   double cv8[2];
   
-  /** Coefficients of the v^5 term (Alvi leading order) */
+  /* Coefficients of the v^5 term (Alvi leading order) */
   cv5[0] = -1./4.*chi1*(1.+3.*chi1*chi1)*X1*X1*X1;
   cv5[1] = -1./4.*chi2*(1.+3.*chi2*chi2)*X2*X2*X2;
   
-  /** Coefficients of the v^8=x^4 term */
+  /* Coefficients of the v^8=x^4 term */
   cv8[0] = 0.5*(1.+sqrt(1.-chi1*chi1))*(1.+3.*chi1*chi1)*X1*X1*X1*X1;
   cv8[1] = 0.5*(1.+sqrt(1.-chi2*chi2))*(1.+3.*chi2*chi2)*X2*X2*X2*X2;
   
@@ -184,21 +212,55 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
   double FH22   = (cv8[0]+cv8[1])*x4;
   double FH21   =  0.0;
   
-  /** Newton-normalized horizon flux: use only l=2 fluxes */
+  /* Newton-normalized horizon flux: use only l=2 fluxes */
   double hatFH  = FH22_S + FH22 + FH21;
     
   return hatFH;
 }
 
-/** Flux calculation for Newton-Normalized energy flux 
-    Use the DIN resummation procedure. 
-    Add non-QC and non-K corrections to (2,2) partial flux. */
+/**
+ * Function: eob_flx_Flux
+ * ----------------------
+ *   Flux calculation for Newton-Normalized energy flux 
+ *   Use the DIN resummation procedure. 
+ *   Add non-QC and non-K corrections to (2,2) partial flux.
+ * 
+ *   @param[in] x      :   frequency parameter, v_phi^2
+ *   @param[in] Omega  :  orbital frequency
+ *   @param[in] r_omega: r*psi^(1./3) (from generalized Kepler's law) 
+ *   @param[in] E      :  energy
+ *   @param[in] Heff   :  effective Hamiltonian
+ *   @param[in] jhat   :  angular momentum
+ *   @param[in] r      :  radial separation
+ *   @param[in] pr_star:  (tortoise) radial momentum
+ *   @param[in] ddotr  :  radial acceleration
+ *   @param[in] dyn    :  dynamics structure
+ * 
+ *   @return[out] Fphi:  energy flux
+ */
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
   return eob_flx_Flux_s(x, Omega, r_omega, E, Heff, jhat, r, pr_star, ddotr,dyn);
 }
 
-/** Flux calculation for spinning systems */
+/**
+ * Function: eob_flx_Flux_s
+ * ------------------------
+ *   Flux calculation for spinning systems
+ * 
+ *   @param[in] x   :  frequency parameter
+ *   @param[in] Omega:  orbital frequency
+ *   @param[in] r_omega:
+ *   @param[in] E:  energy 
+ *   @param[in] Heff:  effective Hamiltonian
+ *   @param[in] jhat:  angular momentum
+ *   @param[in] r:  radial separation
+ *   @param[in] pr_star:  (tortoise) radial momentum
+ *   @param[in] ddotr:  radial acceleration
+ *   @param[in] dyn:  dynamics structure
+ * 
+ *   @return[out] Fphi:  energy flux
+*/
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
   const double nu = EOBPars->nu;
@@ -229,7 +291,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double Modhhatlm[KMAX];  
 
-  /** Newtonian flux */
+  /* Newtonian flux */
   eob_flx_FlmNewt(x, nu, FNewtlm);
 
   /* Correct amplitudes for specific multipoles and cases */
@@ -259,10 +321,10 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     }
   }
 
-  /** Tail term */
+  /* Tail term */
   eob_flx_Tlm(E*Omega, MTlm);
 
-  /** Amplitudes */
+  /* Amplitudes */
   if (usespins) {
     /* eob_wav_flm_s_old(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm); */
     eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
@@ -273,14 +335,14 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   
   FNewt22 = FNewtlm[1];
 
-  /** NQC correction to the modulus of the (l,m) waveform */  
+  /* NQC correction to the modulus of the (l,m) waveform */  
   for (int k = 0; k < KMAX; k++) hlmNQC[k] = 1.; /* no NQC */
   
   if (!(EOBPars->nqc_coefs_flx == NQC_FLX_NONE)) {
     
     Waveform_lm_t hNQC;
     /* eob_wav_hlmNQC_nospin201602(nu,r,pr_star,Omega,ddotr, &hNQC); */ 
-    eob_wav_hlmNQC(nu,r,pr_star,Omega,ddotr, NQC->flx, &hNQC);
+    eob_wav_hlmNQC(r,pr_star,Omega,ddotr, NQC->flx, &hNQC);
     const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
     /*
       for (int k = 0; k < maxk; k++) {
@@ -293,13 +355,13 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     hlmNQC[1] = hNQC.ampli[1]; 
   } 
   
-  /** Compute modulus of hhat_lm (with NQC) */  
+  /* Compute modulus of hhat_lm (with NQC) */  
   for (int k = 0; k < KMAX; k++) { 
     Modhhatlm[k] = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k];
   }
 
   if (usetidal) {
-    /** Tidal amplitudes */
+    /* Tidal amplitudes */
     eob_wav_hlmTidal(x,dyn, hlmTidal);
     if (!(usespins)) {
       /* Correct normalization of (2,1) (3,1), (3,3) point-mass amplitudes */
@@ -313,13 +375,13 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     }
   }
 
-  /** Total multipolar flux */
+  /* Total multipolar flux */
   for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k];
   
-  /** Normalize to the 22 Newtonian multipole */
+  /* Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
     
-  /** Horizon flux */ 
+  /* Horizon flux */ 
   if (!(usetidal)) {
     double hatFH;
     if (usespins) {

@@ -1,20 +1,8 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
+/** \file TEOBResumSPostAdiab.c
+ *  \brief Post-adiabatic dynamics
+ * 
+ *  This file contains the function to evolve the post-adiabatic dynamics
+ *  of the EOB system in both the aligned- and precessing- spins case.
  *
  */
 #include <string.h>
@@ -23,6 +11,18 @@
 #define nv (21) /* temp arrays */
 
 /** Post-adiabatic dynamics */
+
+/**
+ * Function: eob_dyn_Npostadiabatic
+ * -------------------------------
+ *   Computes the post-adiabatic dynamics of the EOB system.
+ *   If the system is spin precessing and EOBPars->project_spins is set to 1,
+ *   the spins are projected on the orbital angular momentum at each iteration.
+ * 
+ *   @param[in]  dyn  : EOB Dynamics structure
+ *   @param[in]  r0   : Initial separation
+ *   @param[in]  spin : DynamicsSpins structure
+*/
 int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
 {
   /* Unpack values */

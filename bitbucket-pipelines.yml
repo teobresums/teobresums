@@ -31,6 +31,18 @@ pipelines:
                         - "Python/TEOBResumSWrap.c"
 
             - step:
+                name: Build documentation
+                script:
+                 - apt-get update -y
+                 - apt-get -y install doxygen
+                 - cp README.md C/src/.
+                 - cd C/doxygen && doxygen teob_doc.cfg
+                 - tar -cvf doc.tar html/*
+                 - curl -X POST "https://${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"doc.tar"
+                artifacts:
+                 - C/doxygen/html/**
+
+            - step:
                 name: Memory Check
                 trigger: manual
                 script:

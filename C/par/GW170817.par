@@ -22,7 +22,7 @@ tides = "TEOBRESUM"
 tides_gravitomagnetic = "no"
 LambdaAl2 = 100. # WFF1
 LambdaBl2 = 300. # WFF1
-use_lambda234_fits = "YAGI13"
+use_lambdaell_fits = "YAGI13"
 
 centrifugal_radius = "NNLO" 
 use_flm = "SSNLO"

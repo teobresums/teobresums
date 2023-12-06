@@ -1,40 +1,37 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
+/** \file TEOBResumSMetric.c
+ *  \brief TEOBResumS metric functions
+ * 
+ *  This file contains the functions that compute the EOB metric potentials
+ *  A,D,Q and their derivatives.
  */
 
 #include "TEOBResumS.h"
 
-/** EOB Metric A function 5PN log 
-    This function computes the Pade' (1,5) resummed A function (with its
-    derivatives) starting from the 5PN-expanded version of the A function
-    including 4PN and 5PN log terms.
-    This represents the current, stable, most accurate implementation of
-    the EOB effective potential
-    
-    Coefficients a5 and a6 are the nonlog contributions to the 4PN and 5PN terms.
-    In practice, a5 is fixed to its GSF value computed in Akcay et al,
-    
-    a5 \equiv a5_GSF = +23.50190(5) \approx +23.5
-    
-    and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu)).*(1-1.5e-5/((0.26-nu)^2)
-    as obtained from comparison with the Caltech-Cornell-CITA numerical data.
-   These values are used as default. */
+/**
+ *  Function : eob_metric_A5PNlog
+ *  ---------------
+ *   EOB Metric A function 5PN log  
+ *   This function computes the Pade' (1,5) resummed A function (with its
+ *   derivatives) starting from the 5PN-expanded version of the A function
+ *   including 4PN and 5PN log terms.
+ *   This represents the current, stable, most accurate implementation of
+ *   the EOB effective potential
+ *   
+ *   Coefficients a5 and a6 are the nonlog contributions to the 4PN and 5PN terms.
+ *   In practice, a5 is fixed to its GSF value computed in Akcay et al,
+ *   
+ *   \f$a^5 \equiv a^5_{GSF} = +23.50190(5) \approx +23.5 \f$
+ *   
+ *   and \f$a^6 \equiv a^6(\nu) = (-110.5 + 129*(1-4*\nu)).*(1-1.5\times 10^{-5}/((0.26-\nu)^2)\f$
+ *   as obtained from comparison with the Caltech-Cornell-CITA numerical data.
+ *  These values are used as default.
+ *
+ *    @param[in]  r    : radial separation  
+ *    @param[in]  nu   : symmetric mass ratio 
+ *    @param[out] A    : A potential evaluated at r  
+ *    @param[out] dA   : dA/du,   with u=1/r  
+ *    @param[out] d2A  : d2A/du2, with u=1/r   
+ */   
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
 {
 
@@ -123,20 +120,29 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
   }
 }
 
-/** Tidal potential, three version implemented: 
-    1. TEOB NNLO, Bernuzzi+ 1205.3403
-    2. TEOBResum, Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 
-    3. TEOBResum3, Akcay+ 1812.02744
-    f-mode resonance model from Hinderer&Steinhoff can be added to all three.
-*/
-
-/* Macro for the bar_alpha coefs */
+/** Macro for the bar_alpha coefs */
 #define bar_alph(cA,kapA,cB,kapB,kap)( ((cA)*(kapA)+(cB)*(kapB))/(kap) )
 
+/**
+ *  Function : eob_metric_Atidal
+ *  ---------------
+ *   Tidal potential, three version implemented: 
+ *   1. TEOB NNLO, Bernuzzi+ 1205.3403
+ *   2. TEOBResum, Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 
+ *   3. TEOBResum3, Akcay+ 1812.02744
+ *   
+ *   f-mode resonance model from Hinderer&Steinhoff can be added to all three.
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] AT    : tidal A potential evaluated at r  
+ *   @param[out] dAT   : tidal dA/du,   with u=1/r  
+ *   @param[out] d2AT  : tidal d2A/du2, with u=1/r 
+ */ 
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
 {
   
-  double A, dA_u, d2A_u, dA, d2A;
+  double A, dA_u, d2A_u;
 
   const double elsix = 1.833333333333333333333;  // 11/6
   const double eightthird = 2.6666666666666666667; // 8/3
@@ -423,7 +429,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
     double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
 
-    /** Gravito-electric tides for el = 2, 4; el = 3 added below as a GSF series */
+    /* Gravito-electric tides for el = 2, 4; el = 3 added below as a GSF series */
     double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*u6*( f0 + XB*f1 + XB*XB*f2 );
     double AT4    = - kapT4*u10;
     double AT5    = - kapT5*u12;
@@ -438,7 +444,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     double dAT7  = - kapT7*16.*u15;
     double dAT8  = - kapT8*18.*u17;
 
-    /** el = 3+, i.e.,  even parity tidal potential **/
+    /* el = 3+, i.e.,  even parity tidal potential */
 
     /* 1GSF fitting parameters */
     const double C1 = -3.6820949997216643;
@@ -526,7 +532,7 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     
   } else if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_GSF) {
 
-    /** GSF series for the (2-) tidal potential */
+    /* GSF series for the (2-) tidal potential */
     const double a1j =  0.728591192;
     const double a2j =  3.100367557;	
     const double n1j = -15.04421708;
@@ -575,9 +581,18 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 }
 
-
-/** Tidal B potential
-    Vines, Flanagan 1PN term */
+/**
+ *  Function : eob_metric_Btidal
+ *  ---------------
+ *   Tidal B potential
+ *   Vines, Flanagan 1PN term
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] BT    : tidal B potential evaluated at r  
+ *   @param[out] dBT   : tidal dB/du,   with u=1/r  
+ *   @param[out] d2BT  : tidal d2B/du2, with u=1/r 
+ */ 
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
 {
   const double nu = EOBPars->nu;
@@ -619,8 +634,19 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
   if (d2BT != NULL) *d2BT = d2B_u;
 }
 
-
-/** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
+/**
+ *  Function : eob_metric
+ *  ---------------------
+ *   EOB Metric potentials A(r), B(r), and their derivatives, no spin version
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] A     : A potential evaluated at r  
+ *   @param[out] B     : B potential evaluated at r    
+ *   @param[out] dA    : dA/dr
+ *   @param[out] d2A   : d2A/dr2
+ *   @param[out] dB    : dB/dr 
+ */ 
 void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
   const double nu    = EOBPars->nu;
@@ -667,10 +693,21 @@ void eob_metric(double r, Dynamics *dyn, double *A, double *B, double *dA, doubl
 
   *B  = Btmp;
   *dB = dBtmp_r;
-  
 }
  
-/** EOB Metric potentials A(r), B(r), and their derivatives, spin version */
+/**
+ *  Function : eob_metric_s
+ *  ---------------------
+ *   EOB Metric potentials A(r), B(r), and their derivatives, spin version
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] A     : A potential evaluated at r  
+ *   @param[out] B     : B potential evaluated at r    
+ *   @param[out] dA    : dA/dr
+ *   @param[out] d2A   : d2A/dr2
+ *   @param[out] dB    : dB/dr 
+ */ 
 void eob_metric_s(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB)
 {
 

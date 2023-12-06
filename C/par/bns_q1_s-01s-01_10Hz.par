@@ -28,7 +28,7 @@ LambdaAl3 = 709.518721258149
 LambdaBl3 = 709.518721258149
 LambdaAl4 = 1245.540991372862
 LambdaBl4 = 1245.540991372862
-use_lambda234_fits = "YAGI13"
+use_lambdaell_fits = "YAGI13"
 
 centrifugal_radius = "NNLO" 
 use_flm = "SSNLO"
