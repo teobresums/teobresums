@@ -1,26 +1,26 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
+/** \file TEOBResumSDynamics.c
+ *  \brief Implementation of the EOB and spins dynamics
+ *  
+ *  This file contains the implementation of the EOB and spins dynamics,
+ *  as well as routines to compute the EOB hamiltonian and the gyro-gravitomagnetic
+ *  functions.  
  */
 
 #include "TEOBResumS.h"
 
-/** r.h.s. of EOB Hamiltonian dynamics, no spins version */ 
+/**
+ * Function: eob_dyn_rhs
+ * ---------------------
+ *   Computes the r.h.s. of the EOB Hamiltonian dynamics, no
+ *   spins version
+ * 
+ *  @param[in]  t     : time
+ *  @param[in]  y     : EOB variables
+ *  @param[out] dy    : r.h.s. of EOB variables
+ *  @param[in]  d     : dummy pointer to Dynamics
+ * 
+ *  @return GSL_SUCCESS
+*/
 int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 {
   
@@ -30,33 +30,33 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);
 
-  /** Unpack y */ 
+  /* Unpack y */ 
   const double phi    = y[EOB_EVOLVE_PHI];
   const double r      = y[EOB_EVOLVE_RAD];
   const double pphi   = y[EOB_EVOLVE_PPHI];
   const double prstar = y[EOB_EVOLVE_PRSTAR];
   
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model))
-    /** Update the dressing factors for the f-mode resonances */
+    /* Update the dressing factors for the f-mode resonances */
     fmode_resonance_dressing_factors(r, dyn);
   
-  /** Compute EOB Metric */
+  /* Compute EOB Metric */
   double A, B, Q, dA, d2A, dB, dQ, dQ_dprstar, ddQ_drdprstar, d2Q_dprstar2, pl_hold;
   eob_metric(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &ddQ_drdprstar, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
 
-  /** Failsafe to avoid event horizon crossing */
+  /* Failsafe to avoid event horizon crossing */
   if (A < 1e-6){
     A = fabs(A);
     B = fabs(B);
     dyn->ode_stop = true;
   }
 
-  /** Compute Hamiltonian */
+  /* Compute Hamiltonian */
   double H, Heff, dHeff_dr,dHeff_dprstar;
   eob_ham(nu, r, pphi, prstar, A, dA, Q, dQ, dQ_dprstar, &H, &Heff, &dHeff_dr, &dHeff_dprstar, NULL);
   double E = nu*H;
 
-  /** Shorthands */
+  /* Shorthands */
   const double u  = 1./r;
   const double u2 = u*u;
   const double u3 = u2*u;
@@ -68,16 +68,16 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   const double divHE    = 1./(Heff*E);
   const double Omega    = A*pphi*u2*divHE;
 
-  /** d\phi/dt */
+  /* d\phi/dt */
   dy[EOB_EVOLVE_PHI] = Omega;
   
-  /** dr/dt (conservative part of) */
+  /* dr/dt (conservative part of) */
   dy[EOB_EVOLVE_RAD] = sqrtAbyB*dHeff_dprstar/E;
   
-  /** dp_{r*}/dt (conservative part of) */
+  /* dp_{r*}/dt (conservative part of) */
   dy[EOB_EVOLVE_PRSTAR] = - sqrtAbyB*dHeff_dr/E;       
   
-  /** Compute flux */
+  /* Compute flux */
   const double sqrtW = sqrt(A*(1. + pphi2*u2));
   const double psi   = 2.*(1.0 + 2.0*nu*(sqrtW - 1.0))/(SQ(r)*dA);
   /*const double psi = 2.*(1.0 + 2.0*nu*(Heff - 1.0))/(r2*dA); */
@@ -94,7 +94,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   /* Approximate ddot(r) without Flux */
   const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
   
-  /** Compute flux and dp_{\phi}/dt */
+  /* Compute flux and dp_{\phi}/dt */
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
 
@@ -126,15 +126,36 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 
 }
 
-/* EOB nonspinning Hamiltonian */
-void eob_ham(double nu, double r, double pphi, double prstar, double A, double dA,
+/**
+  * Function: eob_ham
+  * -----------------
+  *   Computes the EOB nonspinning Hamiltonian
+  * 
+  *  @param[in]  nu            : symmetric mass ratio
+  *  @param[in]  r             : radial separation
+  *  @param[in]  pphi          : orbital angular momentum
+  *  @param[in]  prstar        : (tortoise) radial momentum
+  *  @param[in]  A             : A radial potential
+  *  @param[in]  dA            : drvt A,r
+  *  @param[in]  Q             : Q potential
+  *  @param[in]  dQ            : drvt Q,r
+  *  @param[in]  dQ_dprstar    : drvt Q,prstar
+  *  @param[out] H             : real EOB Hamiltonian divided by mu=m1m2/(m1+m2)
+  *  @param[out] Heff          : effective EOB Hamiltonian (divided by mu)
+  *  @param[out] dHeff_dr      : drvt Heff,r
+  *  @param[out] dHeff_dprstar : drvt Heff,prstar
+  *  @param[out] dHeff_dpphi   : drvt Heff,pphi
+  * 
+  */
+ void eob_ham(double nu, double r, double pphi, double prstar, 
+             double A, double dA,
              double Q, double dQ, double dQ_dprstar,
-	     double *H, /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
-	     double *Heff, /* effective EOB Hamiltonian (divided by mu) */
-	     double *dHeff_dr, /* drvt Heff,r */
-	     double *dHeff_dprstar, /* drvt Heff,prstar */
-	     double *dHeff_dpphi /* drvt Heff,pphi */
-	     )
+	           double *H, 
+	           double *Heff, 
+	           double *dHeff_dr, 
+	           double *dHeff_dprstar,
+	           double *dHeff_dpphi
+	          )
 {
 
   const double pphi2 = SQ(pphi);
@@ -153,7 +174,18 @@ void eob_ham(double nu, double r, double pphi, double prstar, double A, double d
   if (dHeff_dpphi != NULL)   *dHeff_dpphi   = A*pphi*u2/(*Heff);
 }
 
-/** r.h.s. of EOB Hamiltonian dynamics, spins version */
+/**
+ * Function: eob_dyn_rhs_s
+ * -----------------------
+ *   Computes the r.h.s. of the EOB Hamiltonian dynamics, spins version
+ * 
+ *  @param[in]  t     : time
+ *  @param[in]  y     : EOB variables
+ *  @param[out] dy    : r.h.s. of EOB variables
+ *  @param[in]  d     : dummy pointer to Dynamics
+ * 
+ *  @return GSL_SUCCESS
+ */
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 {
       
@@ -190,7 +222,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   double C_Hex2 = EOBPars->C_Hex2;
 
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
-    /** Update the dressing factors for the f-mode resonances */
+    /* Update the dressing factors for the f-mode resonances */
     fmode_resonance_dressing_factors(r, dyn);
     /* Update the QOH */
     fmode_resonance_dress_QOH(dyn);
@@ -202,11 +234,11 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     C_Hex2 = dyn->dressed_C_Hex2;
   }
   
-  /** Compute Metric */
+  /* Compute Metric */
   double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
   eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
   
-  /** Failsafe to avoid event horizon crossing */
+  /* Failsafe to avoid event horizon crossing */
   if (A < 1e-6){
     A = fabs(A);
     B = fabs(B);
@@ -279,7 +311,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double x          = v_phi*v_phi;
   const double jhat       = pphi/(r_omg*v_phi);
 
-  /** Compute flux and dp_{\phi}/dt */
+  /* Compute flux and dp_{\phi}/dt */
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
 
@@ -310,7 +342,18 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   return GSL_SUCCESS;
 }
 
-/** r.h.s. of EOB Hamiltonian dynamics, eccentric version */
+/**
+ * Function: eob_dyn_rhs_ecc
+ * -------------------------
+ *   Computes the r.h.s. of the EOB Hamiltonian dynamics, eccentric version
+ * 
+ *  @param[in]  t     : time
+ *  @param[in]  y     : EOB variables
+ *  @param[out] dy    : r.h.s. of EOB variables
+ *  @param[in]  d     : dummy pointer to Dynamics
+ * 
+ *  @return GSL_SUCCESS
+*/
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
 {
   
@@ -346,7 +389,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   double C_Hex2 = EOBPars->C_Hex2;
 
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
-    /** Update the dressing factors for the f-mode resonances */
+    /* Update the dressing factors for the f-mode resonances */
     fmode_resonance_dressing_factors(r, dyn);
     /* Update the QOH */
     fmode_resonance_dress_QOH(dyn);
@@ -358,7 +401,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     C_Hex2 = dyn->dressed_C_Hex2;
   }
   
-  /** Compute Metric */
+  /* Compute Metric */
   double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
   eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
   
@@ -406,7 +449,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   const double x     = v_phi*v_phi;
   const double jhat  = pphi/(r_omg*v_phi);
   
-  /** Compute fluxes and dp_{\phi}/dt */
+  /* Compute fluxes and dp_{\phi}/dt */
   double Fphi = 0.;
   double Fr   = 0.;
   eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, &Fphi, &Fr, dyn);
@@ -445,7 +488,44 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   return GSL_SUCCESS;
 }
 
-/* EOB spinning Hamiltonian */
+/**
+ * Function: eob_ham_s
+ * ------------------
+ *   Computes the EOB spinning Hamiltonian
+ * 
+ *  @param[in]  nu            : symmetric mass ratio
+ *  @param[in]  r             : radial separation
+ *  @param[in]  rc            : centrifugal radius
+ *  @param[in]  drc_dr        : drvt rc,r
+ *  @param[in]  d2rc_dr2      : drvt drc,r
+ *  @param[in]  pphi          : orbital angular momentum
+ *  @param[in]  prstar        : (tortoise) radial momentum
+ *  @param[in]  S             : S1 + S2
+ *  @param[in]  Sstar         : X2*a1 + X1*a2
+ *  @param[in]  chi1          : dimensionless spin of body 1
+ *  @param[in]  chi2          : dimensionless spin of body 2
+ *  @param[in]  X1            : mass fraction of body 1
+ *  @param[in]  X2            : mass fraction of body 2
+ *  @param[in]  aK2           : Kerr spin parameter squared (a1 + a2)^2
+ *  @param[in]  c3            : CN3LO parameter
+ *  @param[in]  A             : A radial potential
+ *  @param[in]  dA            : drvt A,r
+ *  @param[in]  d2A           : drvt dA,r
+ *  @param[in]  Q             : Q potential
+ *  @param[in]  dQ            : drvt Q,r
+ *  @param[in]  dQ_dprstar    : drvt Q,prstar
+ *  @param[in]  d2Q           : 2nd derivative of Q wrt to r
+ *  @param[in]  d2Q_dprstar2  : 2nd derivative of Q wrt to pr_star
+ *  @param[out] H             : real EOB Hamiltonian divided by mu=m1m2/(m1+m2)
+ *  @param[out] Heff          : effective EOB Hamiltonian (divided by mu)
+ *  @param[out] Heff_orb      : effective EOB Hamiltonian for the orbital part (divided by mu)
+ *  @param[out] dHeff_dr      : drvt Heff,r
+ *  @param[out] dHeff_dprstar : drvt Heff,prstar
+ *  @param[out] dHeff_dpphi   : drvt Heff,pphi
+ *  @param[out] d2Heff_dprstar20 : 2nd derivative of Heff wrt to pr_star neglecting all pr_star^2 terms
+ *  @param[out] d2Heff_dr2    : drvt Heff, d2r
+ * 
+ */
 void eob_ham_s(double nu,
                double r,
                double rc,
@@ -525,14 +605,27 @@ void eob_ham_s(double nu,
 }
 
 
-/** Computes the gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.
-    r      => BL radius
-    aK2    => squared Kerr parameter
-    prstar => r* conjugate momentum
-    nu     => symmetric mass ratio
-    the CN3LO parameter is hard-coded in this routine 
-    ggm is the output structure. */
-
+/**
+ * Function: eob_dyn_s_GS
+ * ----------------------
+ *   Computes the gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.
+ * 
+ *  @param[in]  r             : radial separation
+ *  @param[in]  rc            : centrifugal radius
+ *  @param[in]  drc_dr        : drvt rc,r
+ *  @param[in]  d2rc_dr2      : drvt drc,r
+ *  @param[in]  aK2           : squared Kerr paramete
+ *  @param[in]  prstar        : (tortoise) radial momentum
+ *  @param[in]  pphi          : orbital angular momentum
+ *  @param[in]  nu            : symmetric mass ratio
+ *  @param[in]  chi1          : dimensionless spin of body 1
+ *  @param[in]  chi2          : dimensionless spin of body 2
+ *  @param[in]  X1            : mass fraction of body 1
+ *  @param[in]  X2            : mass fraction of body 2
+ *  @param[in]  cN3LO         : CN3LO parameter
+ *  @param[out] ggm           : gyrp-gravitomagnetic functions, output structure
+ *
+ */
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
 	  double *ggm)
 {
@@ -747,17 +840,32 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
 }
 
 
-/** Define radius rc that includes of LO spin-square coupling.  */
-/* 
-   The S1*S2 term coincides with the BBH one, no effect of structure.
-   The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
-   deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
-   the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
-   
-   The implementation uses the I-Love-Q fits of Table I of Yunes-Yagi
-   paper, PRD 88, 023009, the bar{Q}(bar{\lambda)^{tid}) relation, line 3 of the table. 
-   The dimensionless bar{\lambda} love number is related to our apsidal constant as lambda = 2/3 k2/(C^5) so that both quantities have to appear here.  
-*/
+/**
+ * Function: eob_dyn_s_get_rc_LO
+ * -----------------------------
+ *   Computes the radius rc that includes of LO spin-square coupling.
+ *   The S1*S2 term coincides with the BBH one, no effect of structure.
+ *   The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
+ *   deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
+ *   the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
+ *    
+ *  @param[in]  r             : radial separation
+ *  @param[in]  nu            : symmetric mass ratio
+ *  @param[in]  at1           : spin of body 1
+ *  @param[in]  at2           : spin of body 2
+ *  @param[in]  aK2           : kerr parameter squared
+ *  @param[in]  C_Q1          : spin-induced quadrupole of body 1
+ *  @param[in]  C_Q2          : spin-induced quadrupole of body 2
+ *  @param[in]  C_Oct1        : spin-induced octupole of body 1
+ *  @param[in]  C_Oct2        : spin-induced octupole of body 2
+ *  @param[in]  C_Hex1        : spin-induced hexadecapole of body 1
+ *  @param[in]  C_Hex2        : soin-induced hexadecapole of body 2
+ *  @param[in]  usetidal      : tidal flag
+ *  @param[out] rc            : centrifugal radius
+ *  @param[out] drc_dr        : drvt rc,r
+ *  @param[out] d2rc_dr2      : drvt drc,r
+ * 
+ */
 void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
@@ -813,7 +921,32 @@ void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2,
   
 }
 
-/* Tidal rc with NLO coefficient that depends on C_Qi */
+/**
+  * Function: eob_dyn_s_get_rc_NLO
+  * ------------------------------
+  *   Computes the radius rc that includes of NLO spin-square coupling.
+  *   The S1*S2 term coincides with the BBH one, no effect of structure.
+  *   The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
+  *   deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
+  *   the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
+  *    
+  *  @param[in]  r             : radial separation
+  *  @param[in]  nu            : symmetric mass ratio
+  *  @param[in]  at1           : spin of body 1
+  *  @param[in]  at2           : spin of body 2
+  *  @param[in]  aK2           : kerr parameter squared
+  *  @param[in]  C_Q1          : spin-induced quadrupole of body 1
+  *  @param[in]  C_Q2          : spin-induced quadrupole of body 2
+  *  @param[in]  C_Oct1        : spin-induced octupole of body 1
+  *  @param[in]  C_Oct2        : spin-induced octupole of body 2
+  *  @param[in]  C_Hex1        : spin-induced hexadecapole of body 1
+  *  @param[in]  C_Hex2        : soin-induced hexadecapole of body 2
+  *  @param[in]  usetidal      : tidal flag
+  *  @param[out] rc            : centrifugal radius
+  *  @param[out] drc_dr        : drvt rc,r
+  *  @param[out] d2rc_dr2      : drvt drc,r
+  *
+*/
 void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
@@ -853,7 +986,32 @@ void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2
   
 }
 
-/* Tidal rc with NNLO coefficient that depends on C_Qi */
+/**
+ * Function: eob_dyn_s_get_rc_NNLO
+ * --------------------------------
+ *   Computes the radius rc that includes of NNLO spin-square coupling.
+ *   The S1*S2 term coincides with the BBH one, no effect of structure.
+ *   The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
+ *   deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
+ *   the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
+ *    
+ *  @param[in]  r             : radial separation
+ *  @param[in]  nu            : symmetric mass ratio
+ *  @param[in]  at1           : spin of body 1
+ *  @param[in]  at2           : spin of body 2
+ *  @param[in]  aK2           : kerr parameter squared
+ *  @param[in]  C_Q1          : spin-induced quadrupole of body 1
+ *  @param[in]  C_Q2          : spin-induced quadrupole of body 2
+ *  @param[in]  C_Oct1        : spin-induced octupole of body 1
+ *  @param[in]  C_Oct2        : spin-induced octupole of body 2
+ *  @param[in]  C_Hex1        : spin-induced hexadecapole of body 1
+ *  @param[in]  C_Hex2        : soin-induced hexadecapole of body 2
+ *  @param[in]  usetidal      : tidal flag
+ *  @param[out] rc            : centrifugal radius
+ *  @param[out] drc_dr        : drvt rc,r
+ *  @param[out] d2rc_dr2      : drvt drc,r
+ * 
+ */
 void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 			   double *rc, double *drc_dr, double *d2rc_dr2)
 {
@@ -914,7 +1072,33 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
   
 }
 
-/* tidal rc @ NNLO with the addition of the LO spin^4 coefficient that depends on C_Q, C_Oct and C_Hex */
+/**
+ * Function: eob_dyn_s_get_rc_NNLO_S4
+ * -----------------------------------
+ *   Computes the radius rc that includes NNLO spin-square coupling,
+ *   with the addition of the LO spin^4 coefficient that depends on C_Q, C_Oct and C_Hex.
+ *   The S1*S2 term coincides with the BBH one, no effect of structure.
+ *   The self-spin couplings, S1*S1 and S2*S2 get a EOS-dependent coefficient, CQ, that describe the quadrupole
+ *   deformation due to spin. Notation of Levi-Steinhoff, JCAP 1412 (2014), no.12, 003. Notation analogous to
+ *   the parameter a of Poisson, PRD 57, (1998) 5287-5290 or C_ES^2 in Porto & Rothstein, PRD 78 (2008), 044013
+ *    
+ *  @param[in]  r             : radial separation
+ *  @param[in]  nu            : symmetric mass ratio
+ *  @param[in]  at1           : spin of body 1, chi1* X1
+ *  @param[in]  at2           : spin of body 2, chi2* X2
+ *  @param[in]  aK2           : kerr parameter squared
+ *  @param[in]  C_Q1          : spin-induced quadrupole of body 1
+ *  @param[in]  C_Q2          : spin-induced quadrupole of body 2
+ *  @param[in]  C_Oct1        : spin-induced octupole of body 1
+ *  @param[in]  C_Oct2        : spin-induced octupole of body 2
+ *  @param[in]  C_Hex1        : spin-induced hexadecapole of body 1
+ *  @param[in]  C_Hex2        : soin-induced hexadecapole of body 2
+ *  @param[in]  usetidal      : tidal flag
+ *  @param[out] rc            : centrifugal radius
+ *  @param[out] drc_dr        : drvt rc,r
+ *  @param[out] d2rc_dr2      : drvt drc,r
+ * 
+ */
 void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2)
 {
 
@@ -978,7 +1162,28 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
   
 }
 
-/* Non-spinning case -- rc = r */
+/**
+  * Function: eob_dyn_s_get_rc_NOSPIN
+  * ---------------------------------
+  *   Non-spinning case -- rc = r
+  *    
+  *  @param[in]  r             : radial separation
+  *  @param[in]  nu            : symmetric mass ratio
+  *  @param[in]  at1           : spin of body 1,  chi1* X1
+  *  @param[in]  at2           : spin of body 2, chi2* X2
+  *  @param[in]  aK2           : kerr parameter squared
+  *  @param[in]  C_Q1          : spin-induced quadrupole of body 1
+  *  @param[in]  C_Q2          : spin-induced quadrupole of body 2
+  *  @param[in]  C_Oct1        : spin-induced octupole of body 1
+  *  @param[in]  C_Oct2        : spin-induced octupole of body 2
+  *  @param[in]  C_Hex1        : spin-induced hexadecapole of body 1
+  *  @param[in]  C_Hex2        : soin-induced hexadecapole of body 2
+  *  @param[in]  usetidal      : tidal flag
+  *  @param[out] rc            : centrifugal radius
+  *  @param[out] drc_dr        : drvt rc,r
+  *  @param[out] d2rc_dr2      : drvt drc,r
+  *
+*/
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
@@ -987,7 +1192,28 @@ void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double 
     *d2rc_dr2 = 0.;
 }
 
-/* LO case with C_Q1 = 0 for tidal part*/
+/**
+  * Function: eob_dyn_s_get_rc_NOTIDES
+  * -------------------------------------
+  *   LO case with C_Q1 = 0 for tidal part
+  *    
+  *  @param[in]  r             : radial separation
+  *  @param[in]  nu            : symmetric mass ratio
+  *  @param[in]  at1           : spin of body 1
+  *  @param[in]  at2           : spin of body 2
+  *  @param[in]  aK2           : kerr parameter squared
+  *  @param[in]  C_Q1          : spin-induced quadrupole of body 1
+  *  @param[in]  C_Q2          : spin-induced quadrupole of body 2
+  *  @param[in]  C_Oct1        : spin-induced octupole of body 1
+  *  @param[in]  C_Oct2        : spin-induced octupole of body 2
+  *  @param[in]  C_Hex1        : spin-induced hexadecapole of body 1
+  *  @param[in]  C_Hex2        : soin-induced hexadecapole of body 2
+  *  @param[in]  usetidal      : tidal flag
+  *  @param[out] rc            : centrifugal radius
+  *  @param[out] drc_dr        : drvt rc,r
+  *  @param[out] d2rc_dr2      : drvt drc,r
+  * 
+  */
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2)
 {
@@ -1019,24 +1245,34 @@ void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double
   
 }
 
-/** This routine implements the additional terms in the derivatives of rc
- * that arise if the quadrupole, octupole and hexapole coefficients varies with u.
- * In particular, the coefficients
- * a02, delta_a2, delta_a2_nnlo, delta_a4_lo
- * in the definition of rc
- * r_c^2   =  r^2 + a02 (1 + 2 u) + delta_a2 u + (delta_a2_nnlo + delta_a4_lo) u^2 
- * all become functions of u(r), and terms proportional top them need to be added to 
- * drc_dr, d2rc_dr2  
+/**
+ * Function: eob_dyn_s_rc_add_QOH_drvts
+ * ------------------------------------
+ *   This routine implements the additional terms in the derivatives of rc
+ *   that arise if the quadrupole, octupole and hexapole coefficients varies with u.
+ *   In particular, the coefficients
+ *   a02, delta_a2, delta_a2_nnlo, delta_a4_lo
+ *   in the definition of rc
+ *   r_c^2   =  r^2 + a02 (1 + 2 u) + delta_a2 u + (delta_a2_nnlo + delta_a4_lo) u^2 
+ *   all become functions of u(r), and terms proportional top them need to be added to 
+ *   drc_dr, d2rc_dr2  
+ *  
+ *   This is needed only if the f-mode resonance model is included. 
+ *   More or less terms are needed depending on the option for rc:
+ *   CENTRAD_LO, CENTRAD_NLO, CENTRAD_NNLO, CENTRAD_NNLOS4, CENTRAD_NOSPIN, CENTRAD_NOTIDES, ...
  *
- * This is needed only if the f-mode resonance model is included. 
- * More or less terms are needed depending on the option for rc:
- * CENTRAD_LO, CENTRAD_NLO, CENTRAD_NNLO, CENTRAD_NNLOS4, CENTRAD_NOSPIN, CENTRAD_NOTIDES, ...
- *
- * NOTE: 2nd drvts are not used in the dynamics (but only LSO computation)
+ *   @note 2nd drvts are not used in the dynamics (but only LSO computation)
  *       Not yet implemented for the dressing factors, and also not below here.
  *       1st drvts of Oct_i and Hex_i are also omitted for simplicity.
  * 
- */
+ *   @param[in]  dyn           : dynamics structure
+ *   @param[in]  rc            : centrifugal radius
+ *   @param[in]  r             : radial separation
+ *   @param[in]  at1           : spin of body 1
+ *   @param[in]  at2           : spin of body 2
+ *   @param[out] drc_dr        : drvt rc,r
+ *   @param[out] d2rc_dr2      : drvt drc,r
+*/
 void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
 				double at1, double at2, 
 				double *drc_dr, double *d2rc_dr2)
@@ -1116,6 +1352,19 @@ void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
 }
 
 // function to evaluate r_omega
+/**
+  * Function: eob_dyn_get_romg
+  * ---------------------------
+  *   Compute r_omega
+  * 
+  *  @param[in]  r             : radial separation
+  *  @param[in]  prstar        : radial momentum
+  *  @param[in]  pphi          : orbital angular momentum
+  *  @param[in]  dyn           : dynamics structure
+  *  
+  *  @return r_omg         : r_omega
+  *
+*/
 double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
 {
   /* Unpack values */
@@ -1141,7 +1390,7 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
   
   const double pphi2  = pphi*pphi;
   
-  /** Compute Metric, centrifugal radius and Hamiltonan */
+  /* Compute Metric, centrifugal radius and Hamiltonan */
   double A, dA, rc, drc_dr, pl_hold;
 
   if (usespins) {
@@ -1189,8 +1438,17 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
   return r_omg;
 }
 
-/** Root function to compute light-ring */
-//TODO: THIS IS FOR NOSPIN
+/**
+ * Function: eob_dyn_fLR
+ * ---------------------
+ *  Root function to compute light-ring
+ *  @note This is for the non-spinning case
+ * 
+ *  @param[in]  r             : radial separation
+ *  @param[in]  params        : dummy parameter
+ * 
+ *  @return     fLR(r) = 0
+*/
 double eob_dyn_fLR(double r, void  *params)
 {
   Dynamics *dyn = params;     
@@ -1203,7 +1461,20 @@ double eob_dyn_fLR(double r, void  *params)
   return A + 0.5 * u * dA_u;
 }
 
-/** Root finder for adiabatic light-ring */
+/**
+  * Function: eob_dyn_adiabLR
+  * -------------------------
+  *  Root finder for adiabatic light-ring
+  *  Look for r in [1.8, 5.6] for BHNS, [2.1, 5.9] for BNS
+  *  and [1.8, 3.1] for BBH
+  * 
+  *  @note This is for the non-spinning case
+  * 
+  *  @param[in]  dyn           : dynamics structure
+  *  @param[out] rLR           : light-ring radius
+  * 
+  *  @return     status        : GSL status
+*/
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
 {
   int status;
@@ -1220,7 +1491,6 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
     const int tides = EOBPars->use_tidal;
     if (tides == TIDES_TEOBRESUM_BHNS) {
       /* BHNS */
-      //FIXME best interval
       x_lo = 1.8; 
       x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
     } else {
@@ -1276,8 +1546,17 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   return status;
 }
 
-/** Root function to compute LSO */
-//TODO: THIS IS FOR NOSPIN
+/**
+ * Function: eob_dyn_fLSO
+ * ----------------------
+ *  Root function to compute LSO
+ *  @note This is for the non-spinning case
+ * 
+ *  @param[in]  r             : radial separation
+ *  @param[in]  params        : dummy parameter
+ * 
+ *  @return     fLSO(r) = 0
+*/
 double eob_dyn_fLSO(double r, void  *params)
 {
   Dynamics *dyn = params;    
@@ -1294,7 +1573,20 @@ double eob_dyn_fLSO(double r, void  *params)
   return ( dA_u*d2B - d2A_u*(dB) );
 }
 
-/** Root finder for adiabatic LSO */
+/**
+  * Function: eob_dyn_adiabLSO
+  * --------------------------
+  *  Root finder for adiabatic LSO
+  *  Look for r in [4.5, 6.2] for BBH, [4.5, 36] for if
+  *  tides are included
+  * 
+  *  @note This is for the non-spinning case
+  * 
+  *  @param[in]  dyn           : dynamics structure
+  *  @param[out] rLSO          : LSO radius
+  * 
+  *  @return     status        : GSL status
+*/
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
 {
   int status;
@@ -1347,7 +1639,17 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
   return status;
 }
 
-/** Root function to compute LSO */
+/**
+ * Function: eob_dyn_fLSO_s
+ * ------------------------
+ *  Root function to compute LSO in spinning case
+ * 
+ *  @param[in]  x             : vector of variables (r, pphi)
+ *  @param[in]  params        : dynamics structure
+ *  @param[out] f             : vector of functions (dHeff_dr, d2Heff_dr2)
+ * 
+ *  @return     GSL_SUCCESS
+*/
 int eob_dyn_fLSO_s (const gsl_vector *x, void * params, gsl_vector *f) {
 
   Dynamics *dyn = params;
@@ -1392,7 +1694,17 @@ int eob_dyn_fLSO_s (const gsl_vector *x, void * params, gsl_vector *f) {
   return GSL_SUCCESS;
 }
 
-/** Root finder for LSO in spinning case */
+/**
+ * Function: eob_dyn_LSO_s
+ * -----------------------
+ *  Root finder for LSO in spinning case
+ *   
+ *  @param[in]  dyn           : dynamics structure
+ *  @param[out] rLSO          : LSO radius
+ *  @param[out] pphiLSO       : LSO pphi
+ * 
+ *  @return     status        : GSL status
+*/
 int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO)
 {
   const gsl_multiroot_fsolver_type *T;
@@ -1457,16 +1769,33 @@ int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO)
   return status;
 }
 
-
-/** spin dynamics */
-
-
-/** Compute alpha from Lhat */
+/**
+ * Function: eob_spin_dyn_alpha
+ * ----------------------------
+ *   Compute alpha from Lhat
+ * 
+ *   @param[in]  Lhx           : x-component of hatL
+ *   @param[in]  Lhy           : y-component of hatL
+ *   @param[in]  Lhz           : z-component of hatL
+ * 
+ *   @return     alpha         : alpha euler angle
+*/
 double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz)
 {
   return atan2(Lhy,Lhx);
 }
 
+/**
+ * Function: alpha_initial_condition
+ * ---------------------------------
+ *   Compute the alpha initial condition by
+ *   evaluating the lim t-->0 of alpha(t) at NLO.
+ *   See Eq. A5 of https://arxiv.org/2111.03675
+ *
+ *   @param[in]  eobp         : eob parameters
+ * 
+ *   @return    alpha0        : initial alpha   
+*/
 double alpha_initial_condition(EOBParameters *eobp)
 {
   double q 	   = eobp->q;
@@ -1493,7 +1822,17 @@ double alpha_initial_condition(EOBParameters *eobp)
 
 }
 
-/** Compute beta from Lhat */
+/**
+ * Function: eob_spin_dyn_beta
+ * ---------------------------
+ *   Compute beta from Lhat
+ * 
+ *   @param[in]  Lhx           : x-component of hatL
+ *   @param[in]  Lhy           : y-component of hatL
+ *   @param[in]  Lhz           : z-component of hatL
+ * 
+ *   @return     beta          : beta euler angle
+*/
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz)
 {
   /* possible numerical errors give Lhz = 1.000....X > 1., get around the issue */
@@ -1504,9 +1843,19 @@ double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz)
   return acos(Lhz);
 }
 
-/** r.h.s. of the PN precessing equations 
-    https://arxiv.org/abs/1307.4418
-    https://arxiv.org/abs/1703.03967
+/**
+  * Function: eob_spin_dyn_rhs_PN
+  * -----------------------------
+  *   Compute the r.h.s. of the PN precessing equations
+  *   https://arxiv.org/abs/1307.4418
+  *   https://arxiv.org/abs/1703.03967
+  * 
+  *   @param[in]  t             : time
+  *   @param[in]  y             : vector of variables
+  *   @param[out] dy            : vector of derivatives
+  *   @param[in]  d             : dynamics structure
+  * 
+  *   @return     status        : GSL status
 */
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 {
@@ -1533,7 +1882,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   const double oothree = 0.3333333333333333; // 1/3
   const double eleven_o_three = 3.6666666666666665; // 11/3
 
-  /** Unpack y */ 
+  /* Unpack y */ 
   double SA[IN3], SB[IN3], Lh[IN3]; 
   SA[Ix] = y[EOB_EVOLVE_SPIN_SxA];
   SA[Iy] = y[EOB_EVOLVE_SPIN_SyA];
@@ -1559,7 +1908,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   const double v8 = v7*v;
   const double v9 = v8*v;
   const double v10= v9*v;
-  /** rhs */
+  /* rhs */
 
   /* spins and Lhat */
   
@@ -1883,9 +2232,9 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     double ooj8      = ooj4*ooj4; double ooj9      = ooj8*ooj;
     double ooj10     = ooj5*ooj5;
 
-    /** u(j), https://arxiv.org/pdf/1812.07923.pdf 
+    /* u(j), https://arxiv.org/pdf/1812.07923.pdf 
         Eq. (12),(17) and (18)
-    **/
+    */
     double delta_a2_nlo  = -33./8.*a0*a0+3*aCq-0.125*(1+4*nu)*aAB*aAB+X12*(0.25*a0*aAB+EOBPars->C_Q1*a1*a1-EOBPars->C_Q2*a2*a2);
     double delta_a2_nnlo = -(4419./224+1263/224.*nu)*a0*a0+(387/28-207/28*nu)*aCq
                            + (11./32 -127/32*nu+3./8.*nu2)*aAB*aAB
@@ -1904,7 +2253,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     const double u  = u_orb+u_so+u_ss;
     const double r  = 1./u;
 
-    /** Compute Metric */
+    /* Compute Metric */
     double A, B, dA, d2A, dB, pl_hold;
     eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   
@@ -2149,30 +2498,19 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   return GSL_SUCCESS;
 }
 
-/** r.h.s. of the PN precessing equations for the angle */ 
-int eob_spin_dyn_rhs_PN_abc(double t, const double y[], double dy[], void *d)
-{
-
-  //TODO
-  // SB: This is a better approach, just evolve alpha, beta, gamma and omega
-  //     Not sure why we did not do this from the beginning ...
-  
-  return GSL_SUCCESS;
-}
-
-/** r.h.s. of the EOB precessing equations */ 
-int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d)
-{
-
-  //TODO
-  
-  return GSL_SUCCESS;
-}
-
-
-/** Precessing dynamics ODE integration 
-    The initial data are those stored in dyn->y 
-    integration starts at dyn->t */
+/**
+ * Function: eob_spin_dyn_integrate
+ * --------------------------------
+ *   Integrate the spin-precession dynamics
+ *   The initial data are those stored in dyn->y
+ *   integration starts at dyn->t
+ * 
+ *   @param[out] dyn: the spin-precession dynamics
+ *   @param[in]  eobdyn: the EOB dynamics
+ *   @param[in]  hlm: the waveform
+ * 
+ *   @return GSL_SUCCESS if all goes well
+*/
 int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm)
 {
   const int chunk = dyn->size;
@@ -2355,7 +2693,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       if (VERBOSE) printf("Stop: Forward integration, EOB flux, Momg > max(Momg_eob).\n");
       break;
     }
-    /** Update alpha and beta angles */
+    /* Update alpha and beta angles */
     dyn->y[EOB_EVOLVE_SPIN_alp]  = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
 			          dyn->y[EOB_EVOLVE_SPIN_Ly],
 			          dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
@@ -2363,7 +2701,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
   
-    /** If going from PN to EOB exact flx (see case 1 above), compute the timeshift */
+    /* If going from PN to EOB exact flx (see case 1 above), compute the timeshift */
     if(EOBPars->spin_flx == SPIN_FLX_PN && spin_flx== SPIN_FLX_EOB && (dyn->y[EOB_EVOLVE_SPIN_Momg] >= omega_eob[dN])){
 
       gsl_spline *teob = gsl_spline_alloc (gsl_interp_cspline,  omg_jmax+1-dN);
@@ -2385,7 +2723,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       dyn->y[EOB_EVOLVE_SPIN_Momg] = gsl_spline_eval(omg_sp, dyn->t-tshift, acc); //evaluate spline
     }
 
-    /** Update size and push arrays (if needed) */
+    /* Update size and push arrays (if needed) */
     if (iter==size) {
       size += chunk;
       dyn->size = size;
@@ -2396,7 +2734,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
       dyn->data[v][i0+iter]  = dyn->y[v];   
 
-    /** Stop integration */
+    /* Stop integration */
     if (breakit)
       break;
     if ((dyn->omg_stop>0.) && (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop) && dyn->dt > 0.){
@@ -2418,13 +2756,13 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     }
   } /* end time iteration */
 
-  /** Resize to actual size */
+  /* Resize to actual size */
   size = i0 + iter + 1;
   DynamicsSpin_push (&dyn, size);
   
   gsl_spline_free(omg_sp);
   gsl_interp_accel_free(acc);
-  /** Free ODE system solver */
+  /* Free ODE system solver */
   gsl_odeiv2_evolve_free (e);
   gsl_odeiv2_control_free (c);
   gsl_odeiv2_step_free (s);
@@ -2436,6 +2774,21 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   return OK;
 }
 
+/**
+  * Function: eob_spin_dyn_integrate_backwards
+  * ------------------------------------------
+  *   Integrate the spin-precession dynamics backwards in time
+  *   to omg0  
+  *   The initial data are those stored in dyn->y
+  *   integration starts at dyn->t
+  * 
+  *   @param[out] dyn: the spin-precession dynamics
+  *   @param[in]  eobdyn: the EOB dynamics
+  *   @param[in]  hlm: the waveform
+  *   @param[in]  omg0: the frequency to which we want to integrate
+  * 
+  *   @return GSL_SUCCESS if all goes well
+*/
 int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0)
 {
   // Alloc new dynamics
@@ -2519,7 +2872,20 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   return OK;
 }
 
-/** Precessing dynamics main driver routine */
+/**
+  * Function: eob_spin_dyn
+  * ----------------------
+  *   Main driver routine for the spin-precession dynamics
+  *   The initial data are those stored in dyn->y
+  *   integration starts at dyn->t
+  * 
+  *   @param[out] dyn: the spin-precession dynamics
+  *   @param[in]  eobdyn: the EOB dynamics
+  *   @param[in]  hlm: the waveform
+  *   @param[in]  omg0: the initial frequency
+  * 
+  *   @return GSL_SUCCESS if all goes well
+*/
 int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0)
 {
   const int chunk = dyn->size;
@@ -2570,7 +2936,22 @@ int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double o
   
 }
 
-/** Helper routine to interpolate Euler angles at given time */
+/**
+  * Function: eob_spin_dyn_abc_interp
+  * ---------------------------------
+  *   Helper routine to interpolate Euler angles at given time
+  * 
+  *   @param[in]  dyn: the spin-precession dynamics
+  *   @param[in]  eobdyn: the EOB dynamics
+  *   @param[in]  hlm: the waveform
+  *   @param[in]  time: the time at which we want to interpolate
+  *   @param[out] alpha_p: the alpha angle
+  *   @param[out] beta_p: the beta angle
+  *   @param[out] gamma_p: the gamma angle
+  *   @param[in]  continue_integration: flag to continue integration if time > tmax
+  * 
+  *   @return GSL_SUCCESS if all goes well
+*/
 void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double time,
 			     double *alpha_p, double *beta_p, double *gamma_p,
 			     int continue_integration)
@@ -2616,7 +2997,24 @@ void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *h
   *gamma_p = gamma;
 }
 
-/** Helper routine to interpolate spins parallel/perpendicular to orbital ang. mom. at given time */
+/**
+  * Function: eob_spin_dyn_Sproj_interp
+  * -----------------------------------
+  *   Helper routine to interpolate spins parallel/perpendicular to orbital ang. mom. 
+  *   at given time or frequency
+  * 
+  *   @param[in]   dyn: the spin-precession dynamics
+  *   @param[in]   var: the time or the frequency at which we want to interpolate
+  *   @param[out]  SApara: the spin of body A parallel to orbital ang. mom.
+  *   @param[out]  SBpara: the spin of body B parallel to orbital ang. mom.
+  *   @param[out]  Spara: the total spin parallel to orbital ang. mom.
+  *   @param[out]  SAperp: the spin of body A perpendicular to orbital ang. mom.
+  *   @param[out]  SBperp: the spin of body B perpendicular to orbital ang. mom.
+  *   @param[out]  Sperp: the total spin perpendicular to orbital ang. mom.
+  *   @param[in]   interp_domain: flag to interpolate in time or in frequency
+  * 
+  *   @return GSL_SUCCESS if all goes well
+*/
 void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double var,
 			       double *SApara, double *SBpara, double *Spara,
 			       double *SAperp, double *SBperp, double *Sperp, // these are 3-vectors

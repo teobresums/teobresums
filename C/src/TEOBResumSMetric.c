@@ -1,40 +1,38 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
+/** \file TEOBResumSMetric.c
+ *  \brief TEOBResumS metric functions
+ * 
+ *  This file contains the functions that compute the EOB metric potentials
+ *  A,D,Q and their derivatives.
  */
+
 
 #include "TEOBResumS.h"
 
-/** EOB Metric A function 5PN log 
-    This function computes the Pade' (1,5) resummed A function (with its
-    derivatives) starting from the 5PN-expanded version of the A function
-    including 4PN and 5PN log terms.
-    This represents the current, stable, most accurate implementation of
-    the EOB effective potential
-    
-    Coefficients a5 and a6 are the nonlog contributions to the 4PN and 5PN terms.
-    In practice, a5 is fixed to its GSF value computed in Akcay et al,
-    
-    a5 \equiv a5_GSF = +23.50190(5) \approx +23.5
-    
-    and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu))*(1-1.5e-5/((0.26-nu)^2)
-    as obtained from comparison with the Caltech-Cornell-CITA numerical data.
-   These values are used as default. */
+/**
+ *  Function : eob_metric_A5PNlog
+ *  ---------------
+ *   EOB Metric A function 5PN log  
+ *   This function computes the Pade' (1,5) resummed A function (with its
+ *   derivatives) starting from the 5PN-expanded version of the A function
+ *   including 4PN and 5PN log terms.
+ *   This represents the current, stable, most accurate implementation of
+ *   the EOB effective potential
+ *   
+ *   Coefficients a5 and a6 are the nonlog contributions to the 4PN and 5PN terms.
+ *   In practice, a5 is fixed to its GSF value computed in Akcay et al,
+ *   
+ *   \f$a^5 \equiv a^5_{GSF} = +23.50190(5) \approx +23.5 \f$
+ *   
+ *   and \f$a^6 \equiv a^6(\nu) = (-110.5 + 129*(1-4*\nu)).*(1-1.5\times 10^{-5}/((0.26-\nu)^2)\f$
+ *   as obtained from comparison with the Caltech-Cornell-CITA numerical data.
+ *  These values are used as default.
+ *
+ *    @param[in]  r    : radial separation  
+ *    @param[in]  nu   : symmetric mass ratio 
+ *    @param[out] A    : A potential evaluated at r  
+ *    @param[out] dA   : dA/du,   with u=1/r  
+ *    @param[out] d2A  : d2A/du2, with u=1/r   
+ */
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
 {
 
@@ -123,8 +121,17 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
   }
 }
 
-/** EOB Metric A function GSF-informed */
-
+/**
+ *  Function : eob_metric_A5PNlog
+ *  ---------------
+ *   EOB Metric A function GSF-informed  
+ *
+ *    @param[in]  r    : radial separation  
+ *    @param[in]  nu   : symmetric mass ratio 
+ *    @param[out] A    : A potential evaluated at r  
+ *    @param[out] dA   : dA/du,   with u=1/r  
+ *    @param[out] d2A  : d2A/du2, with u=1/r   
+ */
 void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
 {
 
@@ -237,12 +244,18 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
 
 }
 
-
-/*
-  EOB Metric A function 5PN log resummed with (3, 3) Pade 
-  (Pade coefficients already computed in matlab)
-  (2108.02043 and refs. therein)
-*/
+/**
+ *  Function : eob_metric_A5PNlogP33
+ *  --------------------------------
+ *    EOB Metric A function 5PN log resummed with (3, 3) Pade 
+ *    See 2108.02043 and refs. therein
+ *
+ *    @param[in]  r    : radial separation  
+ *    @param[in]  nu   : symmetric mass ratio 
+ *    @param[out] A    : A potential evaluated at r  
+ *    @param[out] dA   : dA/du,   with u=1/r  
+ *    @param[out] d2A  : d2A/du2, with u=1/r   
+ */
 void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A)
 {
 
@@ -333,6 +346,18 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
 
 /** EOB Metric D function at 3PN, resummed */
 
+
+/**
+ *  Function : eob_metric_D3PN
+ *  --------------------------
+ *    EOB Metric D function @3PN resummed with Pade 03
+ *
+ *    @param[in]  r    : radial separation  
+ *    @param[in]  nu   : symmetric mass ratio 
+ *    @param[out] D    : D potential evaluated at r  
+ *    @param[out] dD   : dD/du,   with u=1/r  
+ *    @param[out] d2D  : d2D/du2, with u=1/r   
+ */
 void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D)
 {
 
@@ -353,8 +378,17 @@ void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D)
 
 }
 
-/** EOB Metric D function GSF-informed */
-
+/**
+ *  Function : eob_metric_DGSF
+ *  --------------------------
+ *    EOB Metric D function GSF-informed
+ * 
+ *    @param[in]  r    : radial separation  
+ *    @param[in]  nu   : symmetric mass ratio 
+ *    @param[out] D    : D potential evaluated at r  
+ *    @param[out] dD   : dD/du,   with u=1/r  
+ *    @param[out] d2D  : d2D/du2, with u=1/r   
+ */
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
 {
 
@@ -487,6 +521,19 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
   (Pade coefficients already computed in matlab)
   (2108.02043 and refs. therein)
 */
+
+/**
+ *  Function : eob_metric_DGSF
+ *  --------------------------
+ *    EOB metric D potential rewritten with (3, 2) Pade 
+ *    2108.02043 and refs. therein
+ * 
+ *    @param[in]  r    : radial separation  
+ *    @param[in]  nu   : symmetric mass ratio 
+ *    @param[out] D    : D potential evaluated at r  
+ *    @param[out] dD   : dD/du,   with u=1/r  
+ *    @param[out] d2D  : d2D/du2, with u=1/r   
+ */
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
 {
 
@@ -606,9 +653,23 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
 
 }
 
-
-/** EOB Metric Q function at 3PN */
-
+/**
+  *  Function : eob_metric_Q3PN
+  *  --------------------------
+  *    EOB Metric Q function @3PN
+  *
+  *    @param[in]  r    : radial separation  
+  *    @param[in]  nu   : symmetric mass ratio 
+  *    @param[out] Q    : Q potential evaluated at r  
+  *    @param[out] dQ   : dQ/du,   with u=1/r  
+  *    @param[out] dQ_dprstar  : dQ/dprstar
+  *    @param[out] d2Q_du2   : d2Q/du2, with u=1/r
+  *    @param[out] ddQ_drdprstar : d2Q/drdprstar
+  *    @param[out] d2Q_dprstar2  : d2Q/dprstar^2
+  *    @param[out] d3Q_dr2dprstar : d3Q/dr^2dprstar
+  *    @param[out] d3Q_drdprstar2 : d3Q/drdprstar^2
+  *    @param[out] d3Q_dprstar3   : d3Q/dprstar^3
+*/
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                      double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2,
                      double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
@@ -634,8 +695,23 @@ void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_d
 
 }
 
-/** EOB Metric Q function GSF-informed */
-
+/**
+  *  Function : eob_metric_Q3PN
+  *  --------------------------
+  *     EOB Metric Q function GSF-informed
+  *
+  *    @param[in]  r    : radial separation  
+  *    @param[in]  nu   : symmetric mass ratio 
+  *    @param[out] Q    : Q potential evaluated at r  
+  *    @param[out] dQ   : dQ/du,   with u=1/r  
+  *    @param[out] dQ_dprstar  : dQ/dprstar
+  *    @param[out] d2Q_du2   : d2Q/du2, with u=1/r
+  *    @param[out] ddQ_drdprstar : d2Q/drdprstar
+  *    @param[out] d2Q_dprstar2  : d2Q/dprstar^2
+  *    @param[out] d3Q_dr2dprstar : d3Q/dr^2dprstar
+  *    @param[out] d3Q_drdprstar2 : d3Q/drdprstar^2
+  *    @param[out] d3Q_dprstar3   : d3Q/dprstar^3
+*/
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                      double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2,
                      double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
@@ -766,10 +842,23 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 
 }
 
-
-/* EOB Metric Q function at 5PN, only local part 
-  (2108.02043 and refs. therein)*/
-
+/**
+  *  Function : eob_metric_Q3PN
+  *  --------------------------
+  *    EOB Metric Q function at 5PN, only local part 
+  *    2108.02043 and refs. therein
+  *    @param[in]  r    : radial separation  
+  *    @param[in]  nu   : symmetric mass ratio 
+  *    @param[out] Q    : Q potential evaluated at r  
+  *    @param[out] dQ   : dQ/du,   with u=1/r  
+  *    @param[out] dQ_dprstar  : dQ/dprstar
+  *    @param[out] d2Q_du2   : d2Q/du2, with u=1/r
+  *    @param[out] ddQ_drdprstar : d2Q/drdprstar
+  *    @param[out] d2Q_dprstar2  : d2Q/dprstar^2
+  *    @param[out] d3Q_dr2dprstar : d3Q/dr^2dprstar
+  *    @param[out] d3Q_drdprstar2 : d3Q/drdprstar^2
+  *    @param[out] d3Q_dprstar3   : d3Q/dprstar^3
+*/
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                      double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
                      double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
@@ -867,18 +956,25 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 
 }
 
-
-
-/** Tidal potential, three version implemented: 
-    1. TEOB NNLO, Bernuzzi+ 1205.3403
-    2. TEOBResum, Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 
-    3. TEOBResum3, Akcay+ 1812.02744
-    f-mode resonance model from Hinderer&Steinhoff can be added to all three.
-*/
-
 /* Macro for the bar_alpha coefs */
 #define bar_alph(cA,kapA,cB,kapB,kap)( ((cA)*(kapA)+(cB)*(kapB))/(kap) )
 
+/**
+ *  Function : eob_metric_Atidal
+ *  ---------------
+ *   Tidal potential, three version implemented: 
+ *   1. TEOB NNLO, Bernuzzi+ 1205.3403
+ *   2. TEOBResum, Bini&Damour, 1409.6933, Bernuzzi+ 1412.4553 
+ *   3. TEOBResum3, Akcay+ 1812.02744
+ *   
+ *   f-mode resonance model from Hinderer&Steinhoff can be added to all three.
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] AT    : tidal A potential evaluated at r  
+ *   @param[out] dAT   : tidal dA/du,   with u=1/r  
+ *   @param[out] d2AT  : tidal d2A/du2, with u=1/r 
+ */ 
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
 {
   
@@ -1321,9 +1417,18 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
 
 }
 
-
-/** Tidal B potential
-    Vines, Flanagan 1PN term */
+/**
+ *  Function : eob_metric_Btidal
+ *  ---------------
+ *   Tidal B potential
+ *   Vines, Flanagan 1PN term
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] BT    : tidal B potential evaluated at r  
+ *   @param[out] dBT   : tidal dB/du,   with u=1/r  
+ *   @param[out] d2BT  : tidal d2B/du2, with u=1/r 
+ */ 
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
 {
   const double nu = EOBPars->nu;
@@ -1366,7 +1471,29 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 }
 
 
-/** EOB Metric potentials A(r), B(r), and their derivatives, no spin version */
+/**
+ *  Function : eob_metric
+ *  ---------------------
+ *   EOB Metric potentials A(r), B(r), and their derivatives, no spin version
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] A     : A potential evaluated at r  
+ *   @param[out] B     : B potential evaluated at r    
+ *   @param[out] dA    : dA/dr
+ *   @param[out] d2A   : d2A/dr2
+ *   @param[out] dB    : dB/dr 
+ *   @param[out] d2B   : d2B/dr2
+ *   @param[out] Q     : Q potential evaluated at r
+ *   @param[out] dQ    : dQ/dr
+ *   @param[out] dQ_dprstar : dQ/dprstar
+ *   @param[out] d2Q   : d2Q/dr2
+ *   @param[out] ddQ_drdprstar : ddQ/drdprstar
+ *   @param[out] d2Q_dprstar2 : d2Q/dprstar2
+ *   @param[out] d3Q_dr2dprstar : d3Q/dr2dprstar
+ *   @param[out] d3Q_drdprstar2 : d3Q/drdprstar2
+ *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
+ */ 
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                 double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                 double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
@@ -1435,8 +1562,30 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
 
 }
  
-/** EOB Metric potentials A(r), B(r), and their derivatives, spin version */
-void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+/**
+ *  Function : eob_metric_s
+ *  ---------------------
+ *   EOB Metric potentials A(r), B(r), and their derivatives, spin version
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] A     : A potential evaluated at r  
+ *   @param[out] B     : B potential evaluated at r    
+ *   @param[out] dA    : dA/dr
+ *   @param[out] d2A   : d2A/dr2
+ *   @param[out] dB    : dB/dr 
+ *   @param[out] d2B   : d2B/dr2
+ *   @param[out] Q     : Q potential evaluated at r
+ *   @param[out] dQ    : dQ/dr
+ *   @param[out] dQ_dprstar : dQ/dprstar
+ *   @param[out] d2Q   : d2Q/dr2
+ *   @param[out] ddQ_drdprstar : ddQ/drdprstar
+ *   @param[out] d2Q_dprstar2 : d2Q/dprstar2
+ *   @param[out] d3Q_dr2dprstar : d3Q/dr2dprstar
+ *   @param[out] d3Q_drdprstar2 : d3Q/drdprstar2
+ *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
+ */
+ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
@@ -1530,5 +1679,4 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
   *d3Q_dr2dprstar = d2rc*ddQtmp_drcdprstar + SQ(drc)*d3Qtmp_drc2dprstar;
   *d3Q_drdprstar2 = drc*d3Qtmp_drcdprstar2;
   *d3Q_dprstar3   = d3Qtmp_dprstar3;
-  
 }
