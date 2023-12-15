@@ -1,14 +1,15 @@
-/**
- * This file implements special math functions 
- *
+/** \file SpecialFuns.c
+ * This file implements special math functions.  
+ * Note: Fresnel integrals adapted from 
+ * http://www.mymathlib.com/functions/fresnel_sin_cos_integrals.html  
  */
 
 #include "TEOBResumS.h"
 
-#define DEBUG_THIS_FILE (0) /* = 1 to compile and debug various routines in this file */
+#define DEBUG_THIS_FILE (0) /** = 1 to compile and debug various routines in this file */
 
 
-/** Factorial */
+/** Helper for factorial */
 static const double f35[] = {1.,
 			     1.,
 			     2.,
@@ -45,7 +46,16 @@ static const double f35[] = {1.,
 			     8683317618811886495518194401280000000.,
 			     295232799039604140847618609643520000000.,
 			     10333147966386144929666651337523200000000.};
-double fact(int n)
+/**
+ *  fact
+ *  ----------------
+ *    Compute the factorial of an integer n.
+ *    
+ *    @param[in] n : integer number > 0
+ *
+ *    @return The factorial of n, n!
+ */
+ double fact(int n)
 {
   if (n < 0){
     errorexit(" computing a negative factorial.\n");
@@ -57,7 +67,7 @@ double fact(int n)
 }
 
 
-/** Double factorial */
+/** Helper for double factorial */
 static const double ff35[] = {1,
 			      1,
 			      2,
@@ -95,6 +105,15 @@ static const double ff35[] = {1,
 			      4.662066257539891e+19,
 			      2.2164309547669976e+20};
 
+/**
+ *  doublefact
+ *  ---------------------
+ *    Compute the double-factorial of an integer n.
+ *    
+ *    @param[in] n : integer number > 0
+ *
+ *    @return The double factorial of n, n!!
+ */
 double doublefact(int n)
 {
   if (n < 0){
@@ -107,8 +126,22 @@ double doublefact(int n)
 }
 
 
-/** Wigner d-function */
-double wigner_d_function(int l, int m, int s, double i)
+/**
+ *  wigner_d_function
+ *  ---------------------
+ *    Compute the wigner d function \f$ d^l_{m,s}(i) \f$ following
+ *    (II.8) of Ref. https://arxiv.org/pdf/0709.0093.pdf
+ *    
+ *    
+ *    @param[in] l : upper index
+ *    @param[in] m : first lower index
+ *    @param[in] s : second lower index
+ *    @param[in] i : argument of the wigner d function
+ *
+ *    @return  
+ *    \f$ d^l_{m,s}(i) \f$
+ */
+ double wigner_d_function(int l, int m, int s, double i)
 {
   const double costheta = cos(i*0.5);
   const double sintheta = sin(i*0.5);
@@ -125,8 +158,24 @@ double wigner_d_function(int l, int m, int s, double i)
 }
 
 
-/** Spin-weighted spherical harmonic 
-    Ref: https://arxiv.org/pdf/0709.0093.pdf */
+/**
+ *  Spin-weighted spherical harmonic 
+ *  ---------------------
+ *    Compute the spin-weighted spherical harmonics 
+ *    \f${-s}^{}Y {}_{lm}(\phi, i)\f$ follwing (II.7) of Ref. https://arxiv.org/pdf/0709.0093.pdf
+ *    
+ *    
+ *    @param[out]  rY  : real part of sYlm
+ *    @param[out]  iY  : imaginary part of sYlm
+ *    @param[in]  s   : spin index
+ *    @param[in]  l   : multipolar index l
+ *    @param[in]  m   : multipolar index m
+ *    @param[in]  phi : polar angle
+ *    @param[in]  i   : azimuthal angle
+ *    
+ *    @return  zero, if the computation was successful
+ *    
+ */
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i)
 {
   if ((l<0) || (m<-l) || (m>l)) {
@@ -140,16 +189,7 @@ int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, d
 }
 
 
-/** Fresnel integrals
-    Adapted from http://www.mymathlib.com/functions/fresnel_sin_cos_integrals.html 
-*/
-
-////////////////////////////////////////////////////////////////////////////////
-// File: fresnel_sine_integral.c                                              //
-// Routine(s):                                                                //
-//    Fresnel_Sine_Integral                                                   //
-//    xFresnel_Sine_Integral                                                  //
-////////////////////////////////////////////////////////////////////////////////
+// Fresnel Integrals
 
 double      Fresnel_Sine_Integral( double x );
 long double xFresnel_Sine_Integral( long double x );
@@ -179,63 +219,35 @@ long double xChebyshev_Tn_Series(long double x,
 static long double const sqrt_2pi = 2.506628274631000502415765284811045253006L;
 #define NUM_ASYMPTOTIC_TERMS 35
 
-////////////////////////////////////////////////////////////////////////////////
-//  Note:                                                                     //
-//     There are several different definitions of what is called the          //
-//     Fresnel sine integral.  The definition of the Fresnel sine integral,   //
-//     S(x) programmed below is the integral from 0 to x of the integrand     //
-//                          sqrt(2/pi) sin(t^2) dt.                           //
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-// double Fresnel_Sine_Integral( double x )                                   //
-//                                                                            //
-//  Description:                                                              //
-//     The Fresnel sine integral, S(x), is the integral with integrand        //
-//                          sqrt(2/pi) sin(t^2) dt                            //
-//     where the integral extends from 0 to x.                                //
-//                                                                            //
-//  Arguments:                                                                //
-//     double  x  The argument of the Fresnel sine integral S().              //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel sine integral S evaluated at x.               //
-//                                                                            //
-//  Example:                                                                  //
-//     double y, x;                                                           //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Fresnel_Sine_Integral( x );                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Fresnel_Sine_Integral
+ *  ---------------------
+ *    Compute the Fresnel sine integral, S(x).
+ *    S(x) is the integral with integrand sqrt(2/pi) sin(t^2) dt 
+ *    where the integral extends from 0 to x.
+ *    
+ *    
+ *    @param[in]  x : the argument of the Fresnel sine integral S().
+ *
+ *    @return  The value of the Fresnel sine integral S evaluated at x.
+ */
 double Fresnel_Sine_Integral( double x )
 {
    return (double) xFresnel_Sine_Integral( (long double) x);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// long double xFresnel_Sine_Integral( long double x )                        //
-//                                                                            //
-//  Description:                                                              //
-//     The Fresnel sine integral, S(x), is the integral with integrand        //
-//                          sqrt(2/pi) sin(t^2) dt                            //
-//     where the integral extends from 0 to x.                                //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel sine integral S().         //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel sine integral S evaluated at x.               //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = xFresnel_Sine_Integral( x );                                       //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  xFresnel_Sine_Integral
+ *  ----------------------
+ *    Compute the Fresnel sine integral, S(x).
+ *    S(x) is the integral with integrand sqrt(2/pi) sin(t^2) dt 
+ *    where the integral extends from 0 to x.
+ *    
+ *    
+ *    @param[in]  x : the argument of the Fresnel sine integral S().
+ *
+ *    @return  The value of the Fresnel sine integral S evaluated at x.
+ */
 long double xFresnel_Sine_Integral( long double x )
 {
    long double f;
@@ -252,30 +264,18 @@ long double xFresnel_Sine_Integral( long double x )
    return ( x < 0.0L) ? -s : s;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Power_Series_S( long double x )                         //
-//                                                                            //
-//  Description:                                                              //
-//     The power series representation for the Fresnel sine integral, S(x),   //
-//      is                                                                    //
-//               x^3 sqrt(2/pi) Sum (-x^4)^j / [(4j+3) (2j+1)!]               //
-//     where the sum extends over j = 0, ,,,.                                 //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x                                                         //
-//                The argument of the Fresnel sine integral S().              //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel sine integral S evaluated at x.               //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Power_Series_S( x );                                               //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Power Series S
+ *  ----------------------
+ *    Compute the power series representation for the Fresnel sine integral, S(x):                                                               
+ *    \f$ x^3 \sqrt(2/\pi) \sum (-x^4)^j / [(4j+3) (2j+1)!] \f$
+ *    where the sum extends over j = 0, ,,,.   
+ *    
+ *    
+ *    @param[in]  x : the argument of the Fresnel sine integral S().
+ *
+ *    @return  The value of the Fresnel sine integral S evaluated at x.
+ */
 static long double Power_Series_S( long double x )
 { 
    long double x2 = x * x;
@@ -304,68 +304,37 @@ static long double Power_Series_S( long double x )
    return x3 * sqrt_2_o_pi * Sn;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// File: fresnel_auxiliary_sine_integral.c                                    //
-// Routine(s):                                                                //
-//    Fresnel_Auxiliary_Sine_Integral                                         //
-//    xFresnel_Auxiliary_Sine_Integral                                        //
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-// double Fresnel_Auxiliary_Sine_Integral( double x )                         //
-//                                                                            //
-//  Description:                                                              //
-//     The Fresnel auxiliary sine integral, g(x), is the integral from 0 to   //
-//     infinity of the integrand                                              //
-//                     sqrt(2/pi) exp(-2xt) sin(t^2) dt                       //
-//     where x >= 0.                                                          //
-//                                                                            //
-//  Arguments:                                                                //
-//     double  x  The argument of the Fresnel auxiliary sine integral g()     //
-//                where x >= 0.                                               //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary sine integral g evaluated at        //
-//     x >= 0.                                                                //
-//                                                                            //
-//  Example:                                                                  //
-//     double y, x;                                                           //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Fresnel_Auxiliary_Sine_Integral( x );                              //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Fresnel_Auxiliary_Sine_Integral
+ *  -------------------------------
+ *    The Fresnel auxiliary sine integral, g(x), is the integral from 0 to 
+ *    infinity of the integrand                                            
+ *                 \f$ sqrt(2/pi) exp(-2xt) sin(t^2) dt \f$ 
+ *    where x >= 0.                                                                    
+ *    
+ *    
+ *    @param[in]  x : The argument of the Fresnel auxiliary sine integral g(), where x >= 0. 
+ * 
+ *    @return  The value of the Fresnel auxiliary sine integral g evaluated at x >= 0.
+ */
 double Fresnel_Auxiliary_Sine_Integral( double x )
 {
    return (double) xFresnel_Auxiliary_Sine_Integral((long double) x);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// long double xFresnel_Auxiliary_Sine_Integral( double x )                   //
-//                                                                            //
-//  Description:                                                              //
-//     The Fresnel auxiliary sine integral, g(x), is the integral from 0 to   //
-//     infinity of the integrand                                              //
-//                     sqrt(2/pi) exp(-2xt) sin(t^2) dt                       //
-//     where x >= 0.                                                          //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary sine integral    //
-//                     g() where x >= 0.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary sine integral g evaluated at        //
-//     x >= 0.                                                                //
-//                                                                            //
-//  Example:                                                                  //
-//     double y, x;                                                           //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = xFresnel_Auxiliary_Sine_Integral( x );                             //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  xFresnel_Auxiliary_Sine_Integral
+ *  --------------------------------
+ *    The Fresnel auxiliary sine integral, g(x), is the integral from 0 to 
+ *    infinity of the integrand                                            
+ *                 \f$ sqrt(2/pi) exp(-2xt) sin(t^2) dt \f$ 
+ *    where x >= 0.                                                                    
+ *    
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary sine integral g(), where x >= 0. 
+ * 
+ *    @return  The value of the Fresnel auxiliary sine integral g evaluated at x >= 0.
+ */
 long double xFresnel_Auxiliary_Sine_Integral( long double x )
 {
    if (x == 0.0L) return 0.5L;
@@ -376,29 +345,18 @@ long double xFresnel_Auxiliary_Sine_Integral( long double x )
    return Asymptotic_Series_S( x );
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Chebyshev_Expansion_0_1( long double x )                //
-//                                                                            //
-//  Description:                                                              //
-//     Evaluate the Fresnel auxiliary sine integral, g(x), on the interval    //
-//     0 < x <= 1 using the Chebyshev interpolation formula.                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary sine integral    //
-//                     where 0 < x <= 1.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary sine integral g evaluated at        //
-//     x where 0 < x <= 1.                                                    //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Chebyshev_Expansion_0_1(x);                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Chebyshev_Expansion_0_1_S
+ *  -------------------------
+ *     Evaluate the Fresnel auxiliary sine integral, g(x), on the interval
+ *     0 < x <= 1 using the Chebyshev interpolation formula.              
+ *     
+ *    
+ *    @param[in]  x : The argument of the Fresnel auxiliary sine integral where 0 < x <= 1.
+ * 
+ *    @return  The value of the Fresnel auxiliary sine integral g evaluated at x where 
+ *             0 < x <= 1.
+ */
 static long double Chebyshev_Expansion_0_1_S( long double x )
 { 
    static long double const c[] = {
@@ -422,29 +380,18 @@ static long double Chebyshev_Expansion_0_1_S( long double x )
    return xChebyshev_Tn_Series( (x - midpoint) / scale, c, degree );
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Chebyshev_Expansion_1_3( long double x )                //
-//                                                                            //
-//  Description:                                                              //
-//     Evaluate the Fresnel auxiliary sine integral, g(x), on the interval    //
-//     1 < x <= 3 using the Chebyshev interpolation formula.                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary sine integral    //
-//                     where 1 < x <= 3.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary sine integral g evaluated at        //
-//     x where 1 < x <= 3.                                                    //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Chebyshev_Expansion_1_3(x);                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Chebyshev_Expansion_1_3_S
+ *  -------------------------
+ *     Evaluate the Fresnel auxiliary sine integral, g(x), on the interval
+ *     1 < x <= 3 using the Chebyshev interpolation formula.              
+ *     
+ *    
+ *    @param[in]  x : The argument of the Fresnel auxiliary sine integral where 1 < x <= 3.
+ * 
+ *    @return The value of the Fresnel auxiliary sine integral g evaluated at x where 
+ *            1 < x <= 3.
+ */
 static long double Chebyshev_Expansion_1_3_S( long double x )
 { 
    static long double const c[] = {
@@ -470,29 +417,19 @@ static long double Chebyshev_Expansion_1_3_S( long double x )
    return xChebyshev_Tn_Series( (x - midpoint), c, degree );
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Chebyshev_Expansion_3_5( long double x )                //
-//                                                                            //
-//  Description:                                                              //
-//     Evaluate the Fresnel auxiliary sine integral, g(x), on the interval    //
-//     3 < x <= 5 using the Chebyshev interpolation formula.                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary sine integral    //
-//                     where 3 < x <= 5.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary sine integral g evaluated at        //
-//     x where 3 < x <= 5.                                                    //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Chebyshev_Expansion_3_5(x);                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Chebyshev_Expansion_3_5_S
+ *  -------------------------
+ *     Evaluate the Fresnel auxiliary sine integral, g(x), on the interval
+ *     3 < x <= 5 using the Chebyshev interpolation formula.              
+ *     
+ *    
+ *    @param[in]  x : The argument of the Fresnel auxiliary sine integral where 3 < x <= 5.
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary sine integral g evaluated at x where 
+ *    3 < x <= 5.
+ */
 static long double Chebyshev_Expansion_3_5_S( long double x )
 { 
    static long double const c[] = {
@@ -516,29 +453,19 @@ static long double Chebyshev_Expansion_3_5_S( long double x )
    return xChebyshev_Tn_Series( (x - midpoint), c, degree );
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Chebyshev_Expansion_5_7( long double x )                //
-//                                                                            //
-//  Description:                                                              //
-//     Evaluate the Fresnel auxiliary sine integral, g(x), on the interval    //
-//     5 < x <= 7 using the Chebyshev interpolation formula.                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary sine integral    //
-//                     where 5 < x <= 7.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary sine integral g evaluated at        //
-//     x where 5 < x <= 7.                                                    //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Chebyshev_Expansion_5_7(x);                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Chebyshev_Expansion_5_7_S
+ *  -------------------------
+ *     Evaluate the Fresnel auxiliary sine integral, g(x), on the interval
+ *     5 < x <= 7 using the Chebyshev interpolation formula.              
+ *     
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary sine integral where 5 < x <= 7.
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary sine integral g evaluated at x where 
+ *    5 < x <= 7.
+ */
 static long double Chebyshev_Expansion_5_7_S( long double x )
 { 
    static long double const c[] = {
@@ -562,31 +489,21 @@ static long double Chebyshev_Expansion_5_7_S( long double x )
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Asymptotic_Series( long double x )                      //
-//                                                                            //
-//  Description:                                                              //
-//     For a large argument x, the auxiliary Fresnel sine integral, g(x),     //
-//     can be expressed as the asymptotic series                              //
-//      g(x) ~ 1/(x^3 * sqrt(8pi))[1 - 15/4x^4 + 945/16x^8 + ... +            //
-//                                                (4j+1)!!/(-4x^4)^j + ... ]  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary sine integral    //
-//                     where x > 7.                                           //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary sine integral g evaluated at        //
-//     x where x > 7.                                                         //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Asymptotic_Series( x );                                            //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Asymptotic_Series_S
+ *  -------------------
+ *     For a large argument x, the auxiliary Fresnel sine integral, g(x), can 
+ *     be expressed as the asymptotic series                            
+ *     \f$ g(x) ~ 1/(x^3 * sqrt(8pi))[1 - 15/4x^4 + 945/16x^8 + ... +          
+ *                                         (4j+1)!!/(-4x^4)^j + ... ] \f$
+ *     
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary sine integral where x > 7.
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary sine integral g evaluated at x where 
+ *    x > 7
+ */
 static long double Asymptotic_Series_S( long double x )
 {
    long double x2 = x * x;
@@ -618,68 +535,39 @@ static long double Asymptotic_Series_S( long double x )
    return g / (x2 + x2);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// File: fresnel_auxiliary_cosine_integral.c                                  //
-// Routine(s):                                                                //
-//    Fresnel_Auxiliary_Cosine_Integral                                       //
-//    xFresnel_Auxiliary_Cosine_Integral                                      //
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-// double Fresnel_Auxiliary_Cosine_Integral( double x )                       //
-//                                                                            //
-//  Description:                                                              //
-//     The Fresnel auxiliary cosine integral, f(x), is the integral from 0 to //
-//     infinity of the integrand                                              //
-//                     sqrt(2/pi) exp(-2xt) cos(t^2) dt                       //
-//     where x >= 0.                                                          //
-//                                                                            //
-//  Arguments:                                                                //
-//     double  x  The argument of the Fresnel auxiliary cosine integral f()   //
-//                where x >= 0.                                               //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary cosine integral f evaluated at      //
-//     x >= 0.                                                                //
-//                                                                            //
-//  Example:                                                                  //
-//     double y, x;                                                           //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Fresnel_Auxiliary_Cosine_Integral( x );                            //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Fresnel_Auxiliary_Cosine_Integral
+ *  ---------------------------------
+ *    The Fresnel auxiliary cosine integral, f(x), is the integral from 0 to 
+ *    infinity of the integrand                                            
+ *                 \f$ sqrt(2/pi) exp(-2xt) cosin(t^2) dt \f$ 
+ *    where x >= 0.                                                                    
+ *    
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary cosine integral f(), where x >= 0. 
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary cosine integral f evaluated at x >= 0.
+ */
 double Fresnel_Auxiliary_Cosine_Integral( double x )
 {
    return (double) xFresnel_Auxiliary_Cosine_Integral((long double) x);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// long double xFresnel_Auxiliary_Cosine_Integral( double x )                 //
-//                                                                            //
-//  Description:                                                              //
-//     The Fresnel auxiliary cosine integral, f(x), is the integral from 0 to //
-//     infinity of the integrand                                              //
-//                     sqrt(2/pi) exp(-2xt) cos(t^2) dt                       //
-//     where x >= 0.                                                          //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary cosine integral  //
-//                     f() where x >= 0.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary cosine integral f evaluated at      //
-//     x >= 0.                                                                //
-//                                                                            //
-//  Example:                                                                  //
-//     double y, x;                                                           //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = xFresnel_Auxiliary_Cosine_Integral( x );                           //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  xFresnel_Auxiliary_Cosine_Integral
+ *  ----------------------------------
+ *    The Fresnel auxiliary cosine integral, f(x), is the integral from 0 to 
+ *    infinity of the integrand                                            
+ *                 \f$ sqrt(2/pi) exp(-2xt) cosin(t^2) dt \f$ 
+ *    where x >= 0.                                                                    
+ *    
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary cosine integral f(), where x >= 0. 
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary cosine integral f evaluated at x >= 0.
+ */
 long double xFresnel_Auxiliary_Cosine_Integral( long double x )
 {
    if (x == 0.0L) return 0.5L;
@@ -690,29 +578,19 @@ long double xFresnel_Auxiliary_Cosine_Integral( long double x )
    return Asymptotic_Series_C( x );
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Chebyshev_Expansion_0_1( long double x )                //
-//                                                                            //
-//  Description:                                                              //
-//     Evaluate the Fresnel auxiliary cosine integral, f(x), on the interval  //
-//     0 < x <= 1 using the Chebyshev interpolation formula.                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary cosine integral  //
-//                     where 0 < x <= 1.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary cosine integral f evaluated at      //
-//     x where 0 < x <= 1.                                                    //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Chebyshev_Expansion_0_1(x);                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Chebyshev_Expansion_0_1_C
+ *  -------------------------
+ *     Evaluate the Fresnel auxiliary cosine integral, f(x), on the interval
+ *     0 < x <= 1 using the Chebyshev interpolation formula.              
+ *     
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary cosine integral where 0 < x <= 1.
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary cosine integral f evaluated at x where 
+ *    0 < x <= 1.
+ */
 static long double Chebyshev_Expansion_0_1_C( long double x )
 { 
    static long double const c[] = {
@@ -736,29 +614,19 @@ static long double Chebyshev_Expansion_0_1_C( long double x )
    return xChebyshev_Tn_Series( (x - midpoint) / scale, c, degree );
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Chebyshev_Expansion_1_3( long double x )                //
-//                                                                            //
-//  Description:                                                              //
-//     Evaluate the Fresnel auxiliary cosine integral, f(x), on the interval  //
-//     1 < x <= 3 using the Chebyshev interpolation formula.                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary cosine integral  //
-//                     where 1 < x <= 3.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary cosine integral f evaluated at      //
-//     x where 1 < x <= 3.                                                    //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Chebyshev_Expansion_1_3(x);                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Chebyshev_Expansion_1_3_C
+ *  -------------------------
+ *     Evaluate the Fresnel auxiliary cosine integral, f(x), on the interval
+ *     1 < x <= 3 using the Chebyshev interpolation formula.              
+ *     
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary cosine integral where 1 < x <= 3.
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary cosine integral f evaluated at x where 
+ *    1 < x <= 3.
+ */
 static long double Chebyshev_Expansion_1_3_C( long double x )
 { 
    static long double const c[] = {
@@ -784,29 +652,19 @@ static long double Chebyshev_Expansion_1_3_C( long double x )
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Chebyshev_Expansion_3_5( long double x )                //
-//                                                                            //
-//  Description:                                                              //
-//     Evaluate the Fresnel auxiliary cosine integral, g(x), on the interval  //
-//     3 < x <= 5 using the Chebyshev interpolation formula.                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary cosine integral  //
-//                     where 3 < x <= 5.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary cosine integral f evaluated at      //
-//     x where 3 < x <= 5.                                                    //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Chebyshev_Expansion_3_5(x);                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Chebyshev_Expansion_3_5_C
+ *  -------------------------
+ *     Evaluate the Fresnel auxiliary cosine integral, f(x), on the interval
+ *     3 < x <= 5 using the Chebyshev interpolation formula.              
+ *     
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary cosine integral where 3 < x <= 5.
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary cosine integral f evaluated at x where 
+ *    3 < x <= 5.
+ */
 static long double Chebyshev_Expansion_3_5_C( long double x )
 { 
    static long double const c[] = {
@@ -829,29 +687,19 @@ static long double Chebyshev_Expansion_3_5_C( long double x )
    return xChebyshev_Tn_Series( (x - midpoint), c, degree );
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Chebyshev_Expansion_5_7( long double x )                //
-//                                                                            //
-//  Description:                                                              //
-//     Evaluate the Fresnel auxiliary cosine integral, g(x), on the interval  //
-//     5 < x <= 7 using the Chebyshev interpolation formula.                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary cosine integral  //
-//                     where 5 < x <= 7.                                      //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary cosine integral f evaluated at      //
-//     x where 5 < x <= 7.                                                    //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Chebyshev_Expansion_5_7(x);                                        //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Chebyshev_Expansion_5_7_C
+ *  -------------------------
+ *     Evaluate the Fresnel auxiliary cosine integral, f(x), on the interval
+ *     5 < x <= 7 using the Chebyshev interpolation formula.              
+ *     
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary cosine integral where 5 < x <= 7.
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary cosine integral f evaluated at x where 
+ *    5 < x <= 7.
+ */
 static long double Chebyshev_Expansion_5_7_C( long double x )
 { 
    static long double const c[] = {
@@ -874,31 +722,21 @@ static long double Chebyshev_Expansion_5_7_C( long double x )
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Asymptotic_Series( long double x )                      //
-//                                                                            //
-//  Description:                                                              //
-//     For a large argument x, the auxiliary Fresnel cosine integral, f(x),   //
-//     can be expressed as the asymptotic series                              //
-//      f(x) ~ 1/(x*sqrt(2pi))[1 - 3/4x^4 + 105/16x^8 + ... +                 //
-//                                                (4j-1)!!/(-4x^4)^j + ... ]  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel auxiliary cosine integral  //
-//                     where x > 7.                                           //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel auxiliary cosine integral f evaluated at      //
-//     x where x > 7.                                                         //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Asymptotic_Series( x );                                            //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Asymptotic_Series_C
+ *  -------------------
+ *     For a large argument x, the auxiliary Fresnel cosine integral, f(x), can 
+ *     be expressed as the asymptotic series                            
+ *     \f$ g(x) ~ 1/(x*sqrt(2pi))[1 - 3/4x^4 + 105/16x^8 + ... +            
+ *                                         (4j-1)!!/(-4x^4)^j + ... ] \f$
+ *     
+ *    
+ *    @param[in] x : The argument of the Fresnel auxiliary cosine integral where x > 7.
+ * 
+ *    @return  
+ *    The value of the Fresnel auxiliary cosine integral f evaluated at x where 
+ *    x > 7
+ */
 static long double Asymptotic_Series_C( long double x )
 {
    long double x2 = x * x;
@@ -930,50 +768,30 @@ static long double Asymptotic_Series_C( long double x )
    return f / (x * sqrt_2pi);   
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// File: xchebyshev_Tn_series.c                                               //
-// Routine(s):                                                                //
-//    xChebyshev_Tn_Series                                                    //
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-// long double xChebyshev_Tn_Series(long double x, long double a[],int degree)//
-//                                                                            //
-//  Description:                                                              //
-//     This routine uses Clenshaw's recursion algorithm to evaluate a given   //
-//     polynomial p(x) expressed as a linear combination of Chebyshev         //
-//     polynomials of the first kind, Tn, at a point x,                       //
-//       p(x) = a[0] + a[1]*T[1](x) + a[2]*T[2](x) + ... + a[deg]*T[deg](x).  //
-//                                                                            //
-//     Clenshaw's recursion formula applied to Chebyshev polynomials of the   //
-//     first kind is:                                                         //
-//     Set y[degree + 2] = 0, y[degree + 1] = 0, then for k = degree, ..., 1  //
-//     set y[k] = 2 * x * y[k+1] - y[k+2] + a[k].  Finally                    //
-//     set y[0] = x * y[1] - y[2] + a[0].  Then p(x) = y[0].                  //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double x                                                          //
-//        The point at which to evaluate the polynomial.                      //
-//     long double a[]                                                        //
-//        The coefficients of the expansion in terms of Chebyshev polynomials,//
-//        i.e. a[k] is the coefficient of T[k](x).  Note that in the calling  //
-//        routine a must be defined double a[N] where N >= degree + 1.        //
-//     int    degree                                                          //
-//        The degree of the polynomial p(x).                                  //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the polynomial at x.                                      //
-//     If degree is negative, then 0.0 is returned.                           //
-//                                                                            //
-//  Example:                                                                  //
-//     long double x, a[N], p;                                                //
-//     int    deg = N - 1;                                                    //
-//                                                                            //
-//     ( code to initialize x, and a[i] i = 0, ... , a[deg] )                 //
-//                                                                            //
-//     p = xChebyshev_Tn_Series(x, a, deg);                                   //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  xChebyshev_Tn_Series
+ *  -------------------
+ *    This routine uses Clenshaw's recursion algorithm to evaluate a given  
+ *    polynomial p(x) expressed as a linear combination of Chebyshev        
+ *    polynomials of the first kind, Tn, at a point x,                      
+ *      \f$ p(x) = a[0] + a[1]*T[1](x) + a[2]*T[2](x) + ... + a[deg]*T[deg](x). \f$
+ *                                                                          
+ *    Clenshaw's recursion formula applied to Chebyshev polynomials of the  
+ *    first kind is:                                                        
+ *    Set y[degree + 2] = 0, y[degree + 1] = 0, then for k = degree, ..., 1 
+ *    set y[k] = 2 * x * y[k+1] - y[k+2] + a[k].  Finally                   
+ *    set y[0] = x * y[1] - y[2] + a[0].  Then p(x) = y[0]. 
+ *     
+ *    
+ *    @param[in] x       : The point at which to evaluate the polynomial.                      
+ *    @param[in] a[]    : The coefficients of the expansion in terms of Chebyshev polynomials,
+ *               i.e. a[k] is the coefficient of T[k](x).  Note that in the calling  
+ *               routine a must be defined double a[N] where N >= degree + 1.        
+ *    @param[in] degree : The degree of the polynomial p(x).   
+ * 
+ *    @return  
+ *    The value of the polynomial at x. If degree is negative, then 0.0 is returned.       
+ */
 long double xChebyshev_Tn_Series(long double x, const long double a[], int degree)
 {
    long double yp2 = 0.0L;
@@ -996,75 +814,41 @@ long double xChebyshev_Tn_Series(long double x, const long double a[], int degre
    return x * yp1 - yp2 + a[0];
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// File: fresnel_cosine_integral.c                                            //
-// Routine(s):                                                                //
-//    Fresnel_Cosine_Integral                                                 //
-//    xFresnel_Cosine_Integral                                                //
-////////////////////////////////////////////////////////////////////////////////
-
 double Fresnel_Cosine_Integral( double x );
 long double xFresnel_Cosine_Integral( long double x );
 static long double Power_Series_C( long double x );
 
-////////////////////////////////////////////////////////////////////////////////
-//  Note:                                                                     //
-//     There are several different definitions of what is called the          //
-//     Fresnel cosine integral.  The definition of the Fresnel cosine         //
-//     integral, C(x) programmed below is the integral from 0 to x of the     //
-//     integrand                                                              //
-//                          sqrt(2/pi) cos(t^2) dt.                           //
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-// double Fresnel_Cosine_Integral( double x )                                 //
-//                                                                            //
-//  Description:                                                              //
-//     The Fresnel cosine integral, C(x), is the integral with integrand      //
-//                          sqrt(2/pi) cos(t^2) dt                            //
-//     where the integral extends from 0 to x.                                //
-//                                                                            //
-//  Arguments:                                                                //
-//     double  x  The argument of the Fresnel cosine integral C().            //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel cosine integral C evaluated at x.             //
-//                                                                            //
-//  Example:                                                                  //
-//     double y, x;                                                           //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Fresnel_Cosine_Integral( x );                                      //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Fresnel_Cosine_Integral
+ *  ---------------------
+ *    Compute the Fresnel cosine integral, C(x).
+ *    C(x) is the integral with integrand sqrt(2/pi) cos(t^2) dt   
+ *    where the integral extends from 0 to x.
+ *    
+ *    
+ *    @param[in] x : the argument of the Fresnel cosine integral C().
+ *
+ *    @return  
+ *    the value of the Fresnel cosine integral C evaluated at x.
+ */
 double Fresnel_Cosine_Integral( double x )
 {
    return (double) xFresnel_Cosine_Integral( (long double) x);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// long double xFresnel_Cosine_Integral( long double x )                      //
-//                                                                            //
-//  Description:                                                              //
-//     The Fresnel cosine integral, C(x), is the integral with integrand      //
-//                          sqrt(2/pi) cos(t^2) dt                            //
-//     where the integral extends from 0 to x.                                //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x  The argument of the Fresnel cosine integral C().       //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel cosine integral C evaluated at x.             //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = xFresnel_Cosine_Integral( x );                                     //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  xFresnel_Cosine_Integral
+ *  ---------------------
+ *    Compute the Fresnel cosine integral, C(x).
+ *    C(x) is the integral with integrand sqrt(2/pi) cos(t^2) dt   
+ *    where the integral extends from 0 to x.
+ *    
+ *    
+ *    @param[in] x  : the argument of the Fresnel cosine integral C().
+ *
+ *    @return  
+ *    the value of the Fresnel cosine integral C evaluated at x.
+ */
 long double xFresnel_Cosine_Integral( long double x )
 {
    long double f;
@@ -1081,30 +865,19 @@ long double xFresnel_Cosine_Integral( long double x )
    return ( x < 0.0L) ? -c : c;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// static long double Power_Series_C( long double x )                         //
-//                                                                            //
-//  Description:                                                              //
-//     The power series representation for the Fresnel cosine integral, C(x), //
-//      is                                                                    //
-//                 x sqrt(2/pi) Sum (-x^4)^j / [(4j+1) (2j)!]                 //
-//     where the sum extends over j = 0, ,,,.                                 //
-//                                                                            //
-//  Arguments:                                                                //
-//     long double  x                                                         //
-//                The argument of the Fresnel cosine integral C().            //
-//                                                                            //
-//  Return Value:                                                             //
-//     The value of the Fresnel cosine integral C evaluated at x.             //
-//                                                                            //
-//  Example:                                                                  //
-//     long double y, x;                                                      //
-//                                                                            //
-//     ( code to initialize x )                                               //
-//                                                                            //
-//     y = Power_Series_C( x );                                               //
-////////////////////////////////////////////////////////////////////////////////
-
+/**
+ *  Power Series C
+ *  ----------------------
+ *    Compute the power series representation for the Fresnel cosine integral, C(x):                                                               
+ *    \f$ x sqrt(2/pi) Sum (-x^4)^j / [(4j+1) (2j)!] \f$
+ *    where the sum extends over j = 0, ,,,.   
+ *    
+ *    
+ *    @param[in] x  : the argument of the Fresnel sine integral C().
+ *
+ *    @return  
+ *    the value of the Fresnel sine integral C evaluated at x.
+ */
 static long double Power_Series_C( long double x )
 { 
    long double x2 = x * x;
@@ -1133,24 +906,20 @@ static long double Power_Series_C( long double x )
 }
 
 
-
-
-
-
-
-
 #if (DEBUG_THIS_FILE)
-
-/* test 
-   gcc SpecialFuns.c -lm -o specfuns.x 
-   ./specfun.x  
-   # gnuplot
-   #     p 'test_Fresnel1.txt' u 1:2 w l t "Fresnel Sine", 'test_Fresnel1.txt' u 1:3 w l t 'Fresnel Cosine"
-   # compare to mathematica output (need rescaling)
-*/
 
 #include <stdio.h>
 
+/** 
+ *  main
+ *  ----
+ *    Test Fresnel Sine and Cosine functions via:
+ *       $ gcc SpecialFuns.c -lm -o specfuns.x 
+ *       $ ./specfun.x  
+ *       # gnuplot
+ *       #     p 'test_Fresnel1.txt' u 1:2 w l t "Fresnel Sine", 'test_Fresnel1.txt' u 1:3 w l t 'Fresnel Cosine"
+ *       # compare to mathematica output (need rescaling)
+ */
 int main (int argc, char* argv[])
 {
   FILE *fp;

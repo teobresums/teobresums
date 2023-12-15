@@ -7,21 +7,21 @@ SHELL=/bin/bash
 # names and dirs 
 #
 
-NAME=check
+NAME=unit_tests
 EXE=$(NAME).x
 BASE=$(shell /bin/pwd)
-SRC=../C/src/TEOBResumSUtils.c\
- ../C/src/TEOBResumSPars.c\
- ../C/src/TEOBResumSDynamics.c\
- ../C/src/TEOBResumSFits.c\
- ../C/src/TEOBResumSFlux.c\
- ../C/src/TEOBResumSInitialConditions.c\
- ../C/src/TEOBResumSMetric.c\
- ../C/src/TEOBResumSOMP.c\
- ../C/src/TEOBResumSPostAdiab.c\
- ../C/src/TEOBResumSWaveform.c\
- ../C/src/SpecialFuns.c\
- check_derivatives.c
+SRC=../../../C/src/TEOBResumSUtils.c\
+ ../../../C/src/TEOBResumSPars.c\
+ ../../../C/src/TEOBResumSDynamics.c\
+ ../../../C/src/TEOBResumSFits.c\
+ ../../../C/src/TEOBResumSFlux.c\
+ ../../../C/src/TEOBResumSInitialConditions.c\
+ ../../../C/src/TEOBResumSMetric.c\
+ ../../../C/src/TEOBResumSOMP.c\
+ ../../../C/src/TEOBResumSPostAdiab.c\
+ ../../../C/src/TEOBResumSWaveform.c\
+ ../../../C/src/SpecialFuns.c\
+ unit_tests.c
 
 #
 # compilation options
@@ -35,8 +35,8 @@ CFLAGS +=-g  # Debug
 #CFLAGS +=-pg # Debug & Profile
 #CFLAGS +=-O3  # Optimized
 
-CFLAGS += -DDEBUG=1 # 1/0 to turn on/off debug mode
-CFLAGS += -DVERBOSE=1 # 1/0 to turn on/off verbose mode
+CFLAGS += -DDEBUG=0 # 1/0 to turn on/off debug mode
+CFLAGS += -DVERBOSE=0 # 1/0 to turn on/off verbose mode
 
 #CFLAGS += -fopenmp # OpenMP
 #CFLAGS += -DUSETIMERS=0 # OpenMP timers, note they need OpenMP

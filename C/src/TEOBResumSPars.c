@@ -1,41 +1,19 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
- */
-
-/**
- * @file TEOBResumPars.h
- * @brief Parameter manager
- *
- * Parameters are managed using the type EOBParameters.
+/** \file TEOBResumSPars.c
+ *  \brief Parameter manager  
+ * 
+ * Parameters are managed using the type EOBParameters.  
  * 
  * To add a parameter:
- * - add the relative variable in the EOBParameters structure
- * - add its default value in EOBParameters_defaults() (if taken as input) ...
- * - ... or in eob_set_params() (if computed from other input parameters)
- * - (if taken as input) make sure it is parsed by EOBParameterse_parse_file()
- *   and in the analogue routine of the python wrapper
+ *  * add the relative variable in the EOBParameters structure
+ *  * add its default value in EOBParameters_defaults() (if taken as input) ...
+ *  * ... or in eob_set_params() (if computed from other input parameters)
+ *  * (if taken as input) make sure it is parsed by EOBParameterse_parse_file()
+ *    and in the analogue routine of the python wrapper
  *
- * History
- * - SB 09/2021 simplified the logic, added minimal custum routines to handle parfile input. Removed libconfig use.
- * - SB 11/2019 Added the par structure type EOBParameters and routines to work with it.
- * - v0.0 and v1.0 worked only with the parameter db and the parfile, using libconfig wrappers.
- *
+ * History:
+ *  * SB 09/2021 simplified the logic, added minimal custum routines to handle parfile input. Removed libconfig use.
+ *  * SB 11/2019 Added the par structure type EOBParameters and routines to work with it.
+ *  * v0.0 and v1.0 worked only with the parameter db and the parfile, using libconfig wrappers.
  */
 
 #include "TEOBResumS.h"
@@ -52,12 +30,16 @@
  * routines to work with EOBParameters
  */
 
-/** Global var for EOB parameters 
-    (there is an extern in the header) */
+/** 
+  * Global var for EOB parameters 
+  * (there is an extern in the header) 
+  */
 EOBParameters *EOBPars;
 
-/** Global vars for function pointers
-    (extern in the header) */
+/**
+  * Global vars for function pointers
+  *  (extern in the header) 
+  */
 void (*eob_wav_hlmNewt)();
 void (*eob_wav_hlm)();
 void (*eob_wav_flm)();
@@ -76,6 +58,13 @@ void (*eob_metric_Dpotential)();
 void (*eob_metric_Qpotential)();
 double (*eob_flx_Fr)();
 
+/**
+ * Function: EOBParameters_alloc
+ * -----------------------------
+ *   Allocate memory for EOBParameters structure
+ * 
+ *   @param[in,out] eobp: pointer to EOBParameters structure
+*/
 void EOBParameters_alloc (EOBParameters **eobp)
 {
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
@@ -90,6 +79,13 @@ void EOBParameters_alloc (EOBParameters **eobp)
   /* (*eobp)->output_lm [0] = -1; */
 } 
 
+/** 
+ * Function: EOBParameters_free
+ * ----------------------------
+ *   Free memory for EOBParameters structure
+ * 
+ *   @param[in,out] eobp: pointer to EOBParameters structure
+*/
 void EOBParameters_free (EOBParameters *eobp)
 {
   if (!eobp) return;
@@ -103,7 +99,16 @@ void EOBParameters_free (EOBParameters *eobp)
   free(eobp);
 }
 
-/* Following default parameters should match those for production runs */
+/**
+ * Function: EOBParameters_defaults
+ * --------------------------------
+ *   Set default values for EOBParameters.  
+ *   Defaults should match parameters for prod runs
+ * 
+ *   @param[in] choose: default choice for binary type
+ *   @param[in] orbit: default choice for orbit type (quasi-circ or generic)
+ *   @param[in,out] eobp: pointer to EOBParameters structure
+*/
 void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
 {
   eobp->domain = DOMAIN_TD;
@@ -433,10 +438,16 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
 
 }
 
-/*
- * main routine to set parameters for the run
+/**
+ * Function: eob_set_params
+ * ------------------------
+ *   Main routine to set parameters for the run.
+ *   Set parameters depending on the defaults
+ *   and the user-input parameters that overwrite the defaults
+ * 
+ *   @param[in] default_choice: default choice for binary type
+ *   @param[in] firstcall: flag to indicate if this is the first call
  */
-
 void eob_set_params(int default_choice, int firstcall)
 {
   
@@ -822,7 +833,7 @@ void eob_set_params(int default_choice, int firstcall)
     */
   } else errorexit("unknown option for use_flm");
 
-  /** Set hlm and NQC fun pointers */
+  /* Set hlm and NQC fun pointers */
   if ((ecc != 0.) || (r_hyp != 0.)) {
     eob_wav_hlm = &eob_wav_hlm_ecc;
     eob_wav_hlmNQC_find_a1a2a3 = &eob_wav_hlmNQC_find_a1a2a3_ecc;
@@ -837,7 +848,7 @@ void eob_set_params(int default_choice, int firstcall)
     }
   }
 
-  /** Set metric potentials function pointers */
+  /* Set metric potentials function pointers */
   if (EOBPars->A_pot == A_5PNlog) {
     eob_metric_Apotential = &eob_metric_A5PNlog;
   } else if (EOBPars->A_pot == A_GSF) {
@@ -863,7 +874,7 @@ void eob_set_params(int default_choice, int firstcall)
     eob_metric_Qpotential = &eob_metric_Q5PNloc;
   } else errorexit("unknown option for Q potential");
   
-  /** Set rc fun pointer */
+  /* Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
   } else if (EOBPars->centrifugal_radius == CENTRAD_NLO) {
@@ -878,7 +889,7 @@ void eob_set_params(int default_choice, int firstcall)
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
   } else errorexit("unknown option for centrifugal_radius");
 
-  /** Set r0 fun pointer */
+  /* Set r0 fun pointer */
   if (ecc != 0.) {
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_1PA)
@@ -903,7 +914,7 @@ void eob_set_params(int default_choice, int firstcall)
     p_eob_dyn_rhs = &eob_dyn_rhs;
   }
 
-  /** Set initial conditions fun pointer */
+  /* Set initial conditions fun pointer */
   if (r_hyp != 0.) {
     // hyp case
     eob_dyn_ic = &eob_dyn_ic_hyp;
@@ -928,6 +939,15 @@ void eob_set_params(int default_choice, int firstcall)
       
 }
 
+/**
+ * Function: update_params
+ * ------------------------
+ *   Update function pointers in case of a
+ *   BHNS system
+ *   FIXME: check if this is really needed...
+ * 
+ *   @param[in] binary: binary type
+*/
 void update_params(int binary)
 {
   /* Updated function pointers */
@@ -941,6 +961,16 @@ void update_params(int binary)
 
 }
 
+/**
+ * Function: EOBParameters_parse_commandline
+ * -----------------------------------------
+ *   Parse the command line arguments
+ *   and set the parameters accordingly
+ *   
+ *   @param[in] eobp: pointer to EOBParameters struct
+ *   @param[in] argc: number of command line arguments
+ *   @param[in] argv: array of command line arguments
+*/
 int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
 {
   optind=1; //in order to parse twice, this needs to be 1
@@ -1047,7 +1077,14 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
   return eobp->binary;
 }
 
-/* Parse an input parfile */
+/**
+ * Function: EOBParameters_parse_file
+ * ----------------------------------
+ *   Parse an input parfile
+ * 
+ *   @param[in] fname: name of the parfile
+ *   @param[in] eobp: pointer to EOBParameters struct
+*/
 void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
 {
   const char DELIMITERS_FOR_COMMENTS[] = "#";
@@ -1071,6 +1108,15 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
   
 }
 
+/**
+ * Function: EOBParameters_set_key_val
+ * -----------------------------------
+ *   Set the value of a parameter "key" to "val"
+ * 
+ *   @param[in] eobp: pointer to EOBParameters struct
+ *   @param[in] key: name of the parameter
+ *   @param[in] val: value of the parameter
+*/
 void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
 {
 
@@ -1584,6 +1630,14 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
    } 
 }
 
+/**
+ * Function: EOBParameters_tofile
+ * ------------------------------
+ *   Dump the parameters to a file
+ * 
+ *   @param[in] eobp: pointer to EOBParameters struct
+ *   @param[in] fname: name of the file
+*/
 void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 {
   //Dump everything to a file for reproducibility
@@ -1721,9 +1775,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
-  fprintf(f,"%s = %d\n"    , "compute_LR_guess", eobp->compute_LR_guess);
+  fprintf(f,"%s = %.16f\n"    , "compute_LR_guess", eobp->compute_LR_guess);
   fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));
-  fprintf(f,"%s = %d\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
+  fprintf(f,"%s = %.16f\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
 
   fprintf(f,"%s = %d\n"    , "compute_ringdown", eobp->compute_ringdown);
   
