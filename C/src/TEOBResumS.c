@@ -121,6 +121,15 @@ int main (int argc, char* argv[])
   /* Properly reset the default & re-read the parameters */
   if ( (EOBPars->ecc !=0) || (EOBPars->r_hyp !=0) )
     orbit = 1; 
+
+  if (EOBPars->use_mode_lm)          free (EOBPars->use_mode_lm);
+  if (EOBPars->use_mode_lm_inertial) free (EOBPars->use_mode_lm_inertial);
+  if (EOBPars->use_mode_lm_nqc)      free (EOBPars->use_mode_lm_nqc);
+  if (EOBPars->kpostpeak)            free (EOBPars->kpostpeak);
+  if (EOBPars->knqcpeak22)           free (EOBPars->knqcpeak22);
+  if (EOBPars->output_lm)            free (EOBPars->output_lm);
+  if (EOBPars->freqs)                free (EOBPars->freqs);
+
   EOBParameters_defaults (dc, orbit, EOBPars);
   if (argv[1]!=NULL) {
     EOBParameters_parse_commandline(EOBPars,argc,argv);
@@ -922,16 +931,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Find peak of Omega */
   int index_pk = dyn->size-1;
   double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
-  for (int j = dyn->size-2; j-- ; ) {
+  for (int j = dyn->size-2; j>0; j--) {
     if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
       break;
     index_pk = j;
     Omega_pk = dyn->data[EOB_OMGORB][j]; 
   }
-  double *t_ptr     = &dyn->time[index_pk-2];
-  double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-2];
-  double tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
 
+  double tOmg_pk;
+  if (dyn->size-1 - index_pk < 2) {
+    /* If peak is too close to the end, 
+       use the point itself */
+    tOmg_pk = dyn->time[index_pk];
+  } else {
+    double *t_ptr     = &dyn->time[index_pk-2];
+    double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-2];
+    tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
+  }
   dyn->tOmg_pk = tOmg_pk;
   
  END_ODE_EVOLUTION:;
@@ -1018,7 +1034,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
       /* For hyperbolic or eccentric orbits, find time when r = 10 */
       if (r_hyp != 0. || ecc != 0.) {
-	      for (int j = dyn->size-1; j-- ; ) {
+	      for (int j = dyn->size-1; j>0; j--) {
           tmin = dyn->time[j];
           if (dyn->data[EOB_RAD][j] > 10.)
 	          break;
@@ -1031,7 +1047,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       /* The following routines alloc memory for the *_mrg ptrs */
       Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
-      Dynamics_extract (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
+      Dynamics_extract    (dyn, tmin, tmax, &dyn_mrg, "dyn_mrg");
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
@@ -1043,7 +1059,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       double tstart_mrg = dyn->tOmg_pk - 8.;
       while (tstart_mrg < hlm_mrg->time[0]) /** Make sure it does not extrapolate */
 	      tstart_mrg += dt_merger_interp;
-      const int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
+      const long int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
       
       if (VERBOSE) {
         PRSECTN("Interpolation of merger to uniform grid");
