@@ -254,3 +254,28 @@ def test_same_wf(pars):
         _, hp1, hc1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2)
         assert np.allclose(hp0, hp1, atol=1e-15, rtol=1e-15)
         assert np.allclose(hc0, hc1, atol=1e-15, rtol=1e-15)
+
+def test_phiref_meaning():
+    """
+    Test that the meaning of the reference phase phi_ref is 
+    correct
+    """
+
+    phi_r = [np.pi/4, np.pi/27]
+    beta  = [] 
+
+    for phi in phi_r:
+        t, hp, hc = utils.gen_wf(40., 20., 0.5, -0.1, 0, 0, additional_pars={'coalescence_angle': phi,
+                                                                       'inclination' : 0.,
+                                                                       'use_mode_lm' : [1]})
+        this_beta = np.unwrap(np.angle(hp - 1j*hc))
+        beta.append(this_beta)
+
+    q0 = np.mod(-2.*(phi_r[0]-phi_r[1]),2.*np.pi)
+    q1 = np.mod(beta[0][0]-beta[1][0],2.*np.pi)
+    assert q0 == q1
+    
+
+    
+
+
