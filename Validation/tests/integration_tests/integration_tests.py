@@ -10,6 +10,11 @@ import pytest
 import sys; import numpy as np
 import utilities as utils
 params = {
+
+        # test the same waveform is always the same (if not passed can point to leaks)
+        'test_same_wf':     [ (40., 20., 0.8, 0.5, 0., 0.),   #BBH
+                             (1.7, 1., 0.2, 0.1, 400, 1500.), #BNS
+                             (6., 1.4, 0.8, 0.1, 0., 1500.)], #BHNS
         # test the PA approximation (add as required)
         'test_PA_phasing': [ ((2., 1.4, 0.1, 0.1,   1000, 1000), 5e-3),
                              ((2., 1.4, 0.99, 0.99, 10,   5000), 5e-3)],
@@ -234,3 +239,18 @@ def test_phase_shifts_lm(pars, eps, modes):
         if not np.allclose(hc_0, hc_p, atol=eps, rtol=eps):
             assert False
     assert True
+
+@pytest.mark.parametrize("pars", params['test_same_wf'])
+def test_same_wf(pars):
+    """
+    Test that a waveform generated 10 times is always the same
+    (this can flag e.g. leaks or non-allocated memory being 
+    accessed)
+    """
+    mass1, mass2, s1z, s2z, lam1, lam2 = pars
+    _, hp0, hc0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2)
+    
+    for _ in range(10):
+        _, hp1, hc1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2)
+        assert np.allclose(hp0, hp1, atol=1e-15, rtol=1e-15)
+        assert np.allclose(hc0, hc1, atol=1e-15, rtol=1e-15)
