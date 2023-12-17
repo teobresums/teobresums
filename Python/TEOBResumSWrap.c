@@ -492,6 +492,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.)  default_choice = BINARY_BNS;
   if(EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BHNS;
+  if(EOBPars->LambdaAl2 > 0. && EOBPars->LambdaBl2 == 0.) default_choice = BINARY_BHNS;
   if(EOBPars->ecc !=0 || EOBPars->r_hyp !=0)              orbit = 1; 
   EOBParameters_defaults (default_choice, orbit, EOBPars);  
 
@@ -546,12 +547,6 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
       }
     }
 
-  if (output){
-    char outpar[STRLEN];
-    strcpy(outpar,EOBPars->output_dir);
-    EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
-  }
-
   eob_set_params(default_choice, fc);
 
   /* Overwrite spin-spin parameters, if required */
@@ -581,6 +576,12 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "cN3LO") != NULL ) { 
     EOBPars->cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "cN3LO"));
   }   
+
+  if (output){
+    char outpar[STRLEN];
+    strcpy(outpar,EOBPars->output_dir);
+    EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
+  }
 
   /* Run */
   int status = EOBRun(&hpc,    &hfpc, 

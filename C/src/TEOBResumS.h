@@ -767,7 +767,6 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp);
 int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv);
 void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val);
 void EOBParameters_tofile(EOBParameters *eobp,char *fname);
-void update_params(int binary);
 
 /* TEOBResumSUtils.c */
 double q_to_nu(const double q);
