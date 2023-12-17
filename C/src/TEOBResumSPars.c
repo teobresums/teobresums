@@ -518,7 +518,7 @@ void eob_set_params(int default_choice, int firstcall)
   
   const int usespins   = EOBPars->use_spins;
   const int usetidal   = EOBPars->use_tidal;
-  const int usetidalGM =  EOBPars->use_tidal_gravitomagnetic;
+  const int usetidalGM = EOBPars->use_tidal_gravitomagnetic;
 
   /* Spin parameters */
   if (usespins==MODE_SPINS_GENERIC) {
@@ -650,6 +650,27 @@ void eob_set_params(int default_choice, int firstcall)
 
   }  /* use_tidal */
   
+    /* Final BH */
+    EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+
+    if (EOBPars->binary == BINARY_BHNS){
+      if (VERBOSE) PRSECTN("BHNS mode");
+      // these fits assume that the BH is the heavier object
+      eob_bhns_fit(chi1, EOBPars->nu, &(EOBPars->Mbhf), &(EOBPars->abhf), EOBPars->LambdaBl2, EOBPars->Mbhf, EOBPars->abhf);
+      bhns_cases(EOBPars->nu, EOBPars->abhf, chi1, EOBPars->LambdaBl2, &(EOBPars->binary), &(EOBPars->use_tidal));
+  
+      if(EOBPars->binary == BINARY_BBH){
+        if (VERBOSE) PRSECTN("BHNS Type II");
+        EOBPars->use_tidal = 0;
+      }else if(EOBPars->binary == BINARY_BHNS){
+        if (VERBOSE) PRSECTN("BHNS Type III");
+        EOBPars->use_tidal = 0;
+      }else if(EOBPars->binary == BINARY_BHNS_TD){
+        if (VERBOSE) PRSECTN("BHNS Type I");
+      }
+    }
+
   /* Default settings for NQC */
   // NOTE: The defaults are different from v0.0 and v1.0
   double ecc   = EOBPars->ecc;
@@ -847,6 +868,11 @@ void eob_set_params(int default_choice, int firstcall)
       eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     }
   }
+  // Overwrite some quantities if we are in a BHNS case
+  if(EOBPars->binary==BINARY_BHNS || EOBPars->binary == BINARY_BHNS_TD){
+    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
+    eob_wav_ringdown = &eob_wav_ringdown_bhns;
+  }
 
   /* Set metric potentials function pointers */
   if (EOBPars->A_pot == A_5PNlog) {
@@ -935,30 +961,7 @@ void eob_set_params(int default_choice, int firstcall)
   } else {
     // quasi-circular ICs without spins (deprecated)
     eob_dyn_ic = &eob_dyn_ic_circ;
-  }
-      
-}
-
-/**
- * Function: update_params
- * ------------------------
- *   Update function pointers in case of a
- *   BHNS system
- *   FIXME: check if this is really needed...
- * 
- *   @param[in] binary: binary type
-*/
-void update_params(int binary)
-{
-  /* Updated function pointers */
-  
-  /** Set f_lm fun pointer */
-  // TODO: BHNS + ecc 
-  if(binary==BINARY_BHNS || binary == BINARY_BHNS_TD){
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_bhns;
-  }
-
+  }   
 }
 
 /**

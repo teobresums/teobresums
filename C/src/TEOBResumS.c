@@ -386,24 +386,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Final BH */
   if (!(EOBPars->binary == BINARY_BNS)) {
-    EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-
-    if (EOBPars->binary == BINARY_BHNS){
-      if (VERBOSE) PRSECTN("BHNS mode");
-      eob_bhns_fit(chi1, nu, &(EOBPars->Mbhf), &(EOBPars->abhf), EOBPars->LambdaBl2, EOBPars->Mbhf, EOBPars->abhf);
-      bhns_cases(nu, EOBPars->abhf, chi1, EOBPars->LambdaBl2, &(EOBPars->binary), &(EOBPars->use_tidal));
-  
-      if(EOBPars->binary == BINARY_BBH){
-        if (VERBOSE) PRSECTN("BHNS Type II");
-        use_tidal = 0;
-      }else if(EOBPars->binary == BINARY_BHNS){
-        if (VERBOSE) PRSECTN("BHNS Type III");
-        use_tidal = 0;
-      }else if(EOBPars->binary == BINARY_BHNS_TD){
-        if (VERBOSE) PRSECTN("BHNS Type I");
-      }
-    }
+    // The aligned-spins Mbhf and abhf are computed in eob_set_params() inside
+    // TEOBResumSPars.c. Here, we just update the values if the binary is precessing.
 
     if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {   
       // (4.17) of https://arxiv.org/abs/2004.06503 
@@ -468,9 +452,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Compute the dressing factors for the f-mode resonances at r0 */
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model))
     fmode_resonance_dressing_factors(r0, dyn);  
-
-  /* Update function pointers if necessary for BHNS**/
-  if (ecc == 0.) update_params(EOBPars->binary);
 
   /* Iteration index */
   int iter   = 0;  

@@ -488,6 +488,36 @@ def SwapPrecWF():
     plt.legend()
     plt.show()
 
+def TestTetradConventions():
+    """
+    Test tetrad conventions by plotting phase differences between 22 and higher
+    modes during the inspiral
+    """
+    import utilities as ut
+
+    modes = [0, 1, 3, 4, 7, 8, 13]
+    par   = CreateDict(100, 1.5, [0.,0., 0.], [0., 0., 0.], 0, 0, 0., 20., 4096., 0, "yes", 0, modes, coa=0, argout="yes")
+
+    t,_,_,hlm,_ = EOB.EOBRunPy(par)
+
+    # Extract h22 and remove from modes list
+    phi22 = -1*hlm['1'][1]
+    modes.remove(1)
+
+    # plot
+    fig, ax = plt.subplots(len(modes), 1, sharex=True)
+    for i, k in enumerate(modes):
+        emm   = ut.k_to_emm(k)
+        ell   = ut.k_to_ell(k)
+        philm = -1*hlm[str(k)][1] 
+        diff  = np.mod((2.*philm-float(emm)*phi22),2.*np.pi)
+        ax[i].plot(t, diff)
+        ax[i].set_ylabel(f"({ell},{emm})")
+    
+    ax[-1].set_xlabel('t [s]')
+    fig.suptitle(r'$2\phi_{lm}-m\phi_{22}$')
+    plt.show()
+
 if __name__ == "__main__":
 
     # run some tests
@@ -527,17 +557,22 @@ if __name__ == "__main__":
         PlotPrecWF()
         print("...done")
 
-    if 1:
+    if 0:
         print('##### Test the spin aligned limit')
         PlotAlignedSpinLimit()
         print('...done')
 
-    if 1:
+    if 0:
         print('##### Plot a FD SPA WF, compare to TD #####')
         PlotSPAWF()
         print("...done")
 
-    if 1:
+    if 0:
         print("##### Test Swap #####")
         SwapPrecWF()
+        print("...done")
+    
+    if 1:
+        print("##### Test Tetrad conventions #####")
+        TestTetradConventions()
         print("...done")
