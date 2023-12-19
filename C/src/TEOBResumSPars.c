@@ -185,13 +185,13 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
   eobp->use_mode_lm_nqc = malloc (eobp->use_mode_lm_nqc_size * sizeof(int) );
   memcpy(eobp->use_mode_lm_nqc, hlm_nqc, eobp->use_mode_lm_nqc_size * sizeof(int));
 
-  int kpostpeak[] = {1,3,6,7,8};      //indexes of multipoles to use
-  eobp->kpostpeak_size = 5;
+  int kpostpeak[] = {1,3,6,7};      //indexes of multipoles to use
+  eobp->kpostpeak_size = 4;
   eobp->kpostpeak = malloc (eobp->kpostpeak_size * sizeof(int) );
   memcpy(eobp->kpostpeak, kpostpeak, eobp->kpostpeak_size * sizeof(int));
   
-  int knqcpeak22[]      = {0};      //indexes of multipoles to use
-  eobp->knqcpeak22_size = 1;
+  int knqcpeak22[]      = {0, 4, 8};      //indexes of multipoles to use
+  eobp->knqcpeak22_size = 3;
   eobp->knqcpeak22      = malloc (eobp->knqcpeak22_size * sizeof(int) );
   memcpy(eobp->knqcpeak22, knqcpeak22, eobp->knqcpeak22_size * sizeof(int));
 
