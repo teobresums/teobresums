@@ -865,6 +865,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->ode_stop = true;
     }
 
+    /* Stop integration if r is unchanged */
+    double r_prev = dyn->data[EOB_RAD][iter-1];
+    if (dyn->r == r_prev && !dyn->noflx) {
+      if (VERBOSE) printf("Stop: radius unchanged.\n");
+      dyn->ode_stop = true;
+    }
+
     /* Check when to break the computation
 	  find peak of omega curve and continue for 2M */
     if ((dyn->ode_stop_MOmgpeak == false) && (ecc == 0.) && (r_hyp == 0.)) {

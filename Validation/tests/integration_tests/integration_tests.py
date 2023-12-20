@@ -65,8 +65,8 @@ def test_PA_phasing(pars, out):
     consistent with one another
     """
     mass1, mass2, s1z, s2z, lam1, lam2 = pars
-    _, hp_pa0, hc_pa0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, additional_pars={'use_postadiabatic_dynamics':"no"})
-    _, hp_pa1, hc_pa1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, additional_pars={'use_postadiabatic_dynamics':"yes"})
+    _, hp_pa0, hc_pa0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, additional_pars={'use_postadiabatic_dynamics':"no"}, return_zero=False)
+    _, hp_pa1, hc_pa1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, additional_pars={'use_postadiabatic_dynamics':"yes"}, return_zero=False)
     phase_pa0 = np.unwrap(np.angle(hp_pa0 - 1j*hc_pa0))
     phase_pa1 = np.unwrap(np.angle(hp_pa1 - 1j*hc_pa1))
 
@@ -82,9 +82,9 @@ def test_gen_wf(pars, out):
     """
     m1, m2, s1z, s2z, l1, l2 = pars
     if m1+m2 > 100:
-        result = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars={'initial_frequency':5})
+        result = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars={'initial_frequency':5},return_zero=False)
     else:
-        result = utils.gen_wf(m1, m2, s1z, s2z, l1, l2)
+        result = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False)
     assert len(result) == out
 
 @pytest.mark.parametrize("pars", params['test_swap'])
@@ -98,8 +98,8 @@ def test_swap(pars):
         - In plane spins are rotated by Pi
     """
     m1, m2, s1z, s2z, l1, l2 = pars
-    _,_,h1 = utils.gen_wf(m1, m2, s1z, s2z, l1, l2)
-    _,_,h2 = utils.gen_wf(m2, m1, s2z, s1z, l2, l1, additional_pars={'coa': np.pi})
+    _,_,h1 = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False)
+    _,_,h2 = utils.gen_wf(m2, m1, s2z, s1z, l2, l1, additional_pars={'coa': np.pi}, return_zero=False)
     assert np.allclose(h1, h2, atol=1e-15, rtol=1e-15)
 
 @pytest.mark.parametrize("pars, ref, tst", params['test_distance'])
@@ -111,10 +111,10 @@ def test_distance_scaling(pars, ref, tst):
     reference_distance = ref
     test_distance      = tst
 
-    _,hp_ref,hc_ref = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars={'distance':reference_distance}) 
+    _,hp_ref,hc_ref = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars={'distance':reference_distance}, return_zero=False) 
     A_ref = np.sqrt(hp_ref**2+hc_ref**2)
     for dis in test_distance:
-        _,hp_tst,hc_tst = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars={'distance':dis})
+        _,hp_tst,hc_tst = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars={'distance':dis}, return_zero=False)
         A_tst = np.sqrt(hp_tst**2+hc_tst**2)
         scale_factor = dis/reference_distance
         if not np.allclose(A_ref/A_ref[1], scale_factor*A_tst/A_ref[1], atol=1e-15, rtol=1e-15): 
@@ -126,8 +126,8 @@ def test_srate_change():
     """
     Test that waveforms are unmodified when changing the sampling rate
     """
-    t1,_, h1 = utils.gen_wf(1.4, 1.4, 0, 0, 400, 400,  additional_pars={'srate':8192.})
-    t2,_, h2 = utils.gen_wf(1.4, 1.4, 0, 0, 400, 400,  additional_pars={'srate':4096.})
+    t1,_, h1 = utils.gen_wf(1.4, 1.4, 0, 0, 400, 400,  additional_pars={'srate':8192.}, return_zero=False)
+    t2,_, h2 = utils.gen_wf(1.4, 1.4, 0, 0, 400, 400,  additional_pars={'srate':4096.}, return_zero=False)
     h2_int   = np.interp(t2, t1, h1)
     assert np.allclose(h2, h2_int, atol=1e-15, rtol=1e-15)
 
@@ -142,9 +142,10 @@ def test_parameters_perturb(pars, ref, N, tst):
     threshold                = ref
     epsilon                  = tst
 
-    t_ref,hp_ref,hc_ref = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, 
+    t_ref,hp_ref,hc_ref = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False,
                           additional_pars={'use_geometric_units':"yes",
-                                           'initial_frequency':0.001}
+                                           'initial_frequency':0.001
+                                           }
                             )
     A_ref = np.sqrt(hp_ref**2+hc_ref**2)
     for eps in epsilon:
@@ -152,9 +153,9 @@ def test_parameters_perturb(pars, ref, N, tst):
             m1e, m2e,= m1  + np.random.uniform(0,1)*eps,  m2 + np.random.uniform(0,1)*eps
             s1e, s2e = s1z + np.random.uniform(0,1)*eps, s2z + np.random.uniform(0,1)*eps
             l2e      = l2  + np.random.uniform(0,1)*eps
-            t_tst,hp_tst,hc_tst = utils.gen_wf(m1e, m2e, s1e, s2e, l1, l2e,
+            t_tst,hp_tst,hc_tst = utils.gen_wf(m1e, m2e, s1e, s2e, l1, l2e, return_zero=False,
                                 additional_pars={'use_geometric_units':"yes",
-                                'initial_frequency':0.001}
+                                'initial_frequency':0.001},
                                 )
             A_tst = np.sqrt(hp_tst**2+hc_tst**2)
             if not np.allclose(max(A_ref), max(A_tst), atol=threshold, rtol=threshold): 
@@ -173,15 +174,19 @@ def test_polariz_reconstruction(pars, eps):
     modes dictionary hlm
     """
     m1, m2, s1z, s2z, l1, l2 = pars
+    iota = np.random.uniform(0, 2*np.pi)
+    phi  = np.random.uniform(0, 2*np.pi)
     modes = [0,1,5,8,13]
-    t,hp,hc,hlm,_ = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, 
+    t,hp,hc,hlm,_ = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False,
                                 additional_pars={'arg_out':"yes",
                                                  'use_mode_lm': modes,
                                                  'use_geometric_units':'yes',
                                                  'initial_frequency':0.001,
+                                                 'coalescence_angle':phi,
+                                                 'inclination': iota,
                                                  }
                                 )
-    hp_rec, hc_rec = utils.compute_hphc(hlm, modes=modes)
+    hp_rec, hc_rec = utils.compute_hphc(hlm, phi=phi, i=iota, modes=modes)
     if not np.allclose(hp, hp_rec, atol=eps, rtol=eps):
         assert False
     if not np.allclose(hc, hc_rec, atol=eps, rtol=eps): 
@@ -196,13 +201,13 @@ def test_phase_shifts_22(pars, eps, phis):
     """
     m1, m2, s1z, s2z, l1, l2 = pars
     modes = [1]
-    t,hp,hc= utils.gen_wf(m1, m2, s1z, s2z, l1, l2,
+    t,hp,hc= utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False,
                                 additional_pars={
                                                  'use_mode_lm': modes,
                                                  }
                                 )
     for phi in phis:
-        _,hp_p,hc_p = utils.gen_wf(m1, m2, s1z, s2z, l1, l2,
+        _,hp_p,hc_p = utils.gen_wf(m1, m2, s1z, s2z, l1, l2,return_zero=False,
                                 additional_pars={
                                                  'use_mode_lm': modes,
                                                  'coalescence_angle':phi
@@ -221,7 +226,7 @@ def test_phase_shifts_lm(pars, eps, modes):
     multiples of 2*np.pi/emm leave the waveform unchanged.
     """
     m1, m2, s1z, s2z, l1, l2 = pars    
-    t,hp,hc,hlm,_= utils.gen_wf(m1, m2, s1z, s2z, l1, l2,
+    t,hp,hc,hlm,_= utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False,
                                 additional_pars={
                                                  'use_mode_lm': modes,
                                                  'arg_out':'yes'
@@ -248,10 +253,10 @@ def test_same_wf(pars):
     accessed)
     """
     mass1, mass2, s1z, s2z, lam1, lam2 = pars
-    _, hp0, hc0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2)
+    _, hp0, hc0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, return_zero=False)
     
     for _ in range(10):
-        _, hp1, hc1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2)
+        _, hp1, hc1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, return_zero=False)
         assert np.allclose(hp0, hp1, atol=1e-15, rtol=1e-15)
         assert np.allclose(hc0, hc1, atol=1e-15, rtol=1e-15)
 
@@ -265,7 +270,7 @@ def test_phiref_meaning():
     beta  = [] 
 
     for phi in phi_r:
-        t, hp, hc = utils.gen_wf(40., 20., 0.5, -0.1, 0, 0, additional_pars={'coalescence_angle': phi,
+        t, hp, hc = utils.gen_wf(40., 20., 0.5, -0.1, 0, 0, return_zero=False, additional_pars={'coalescence_angle': phi,
                                                                        'inclination' : 0.,
                                                                        'use_mode_lm' : [1]})
         this_beta = np.unwrap(np.angle(hp - 1j*hc))

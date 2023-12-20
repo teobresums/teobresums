@@ -69,7 +69,7 @@ def CreateDict( M=1.0, q=1.0,
     }
     return pardic
 
-def gen_wf(m1, m2, s1z, s2z, lam1, lam2, additional_pars={}):
+def gen_wf(m1, m2, s1z, s2z, lam1, lam2, additional_pars={}, return_zero=True):
     """
     Wrapper to EOBRunPy
     ---
@@ -85,7 +85,12 @@ def gen_wf(m1, m2, s1z, s2z, lam1, lam2, additional_pars={}):
     """
     par = CreateDict(M=m1+m2, q=m1/m2, chi1=[0,0,s1z], chi2=[0,0,s2z], lambda1=lam1, lambda2=lam2)
     pp = {**par, **additional_pars}
-    return EOB.EOBRunPy(pp)
+    result = EOB.EOBRunPy(pp)
+    if(return_zero):
+        del(result)
+        return 0
+    else:
+        return result
 
 def spinsphericalharm(s, l, m, phi, i):
     """
@@ -156,6 +161,13 @@ def k_to_emm(k):
     1,2,3,4,5,6,7,\
     1,2,3,4,5,6,7,8]
     return MINDEX[k]
+
+
+def modes_to_k(modes):
+    """
+    Map multipolar (l,m) -> linear index k
+    """
+    return [int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes]
 
 if __name__ == '__main__':
 

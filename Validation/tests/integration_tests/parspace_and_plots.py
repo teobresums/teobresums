@@ -4,9 +4,9 @@
 #
 # RG, 12/21
 
-
 import numpy as np; import EOBRun_module as EOB; 
 import matplotlib.pyplot as plt 
+import utilities as utils
 
 def compute_lambda_tilde(m1, m2 ,l1 , l2):
     """ Compute Lambda Tilde from masses and tides components
@@ -120,16 +120,11 @@ def write_dict_to_txt(file, dic, initialize):
                 f.write(k)
                 f.write(" ")
             f.write("\n")
-        for k in dic.keys():
-            f.write(str(dic[k]))
-            f.write(" ")
-        f.write("\n")
-
-def modes_to_k(modes):
-    """
-    Map multipolar (l,m) -> linear index k
-    """
-    return [int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes]
+        else:
+            for k in dic.keys():
+                f.write(str(dic[k]))
+                f.write(" ")
+            f.write("\n")
 
 def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, precessing=0, N=100):
     """
@@ -137,8 +132,9 @@ def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, precessing=0, N=1
     """
     M    = np.random.uniform(Mint[0], Mint[1], N)
     q    = np.random.uniform(qint[0], qint[1], N)
-    
-    params = {'M': M, 'q':q}
+    m1   = q*M/(1. + q)
+    m2   =   M/(1.+ q)
+    params = {'M': M, 'q':q, 'm1':m1, 'm2':m2 }
 
     if(chi_int is not None):
         chi1 = np.random.uniform(chi_int[0], chi_int[1], N)
@@ -150,7 +146,7 @@ def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, precessing=0, N=1
         lambda1 =  np.random.uniform(lambda_int[0], lambda_int[1], N)
         lambda2 =  np.random.uniform(lambda_int[0], lambda_int[1], N)
 
-        params['lambda1'] = lambda1; params['lambda2'] = lambda2
+        params['LambdaAl2'] = lambda1; params['LambdaBl2'] = lambda2
 
     if(precessing):
         cos_theta1 = np.random.uniform(-1., 1., N)
@@ -179,193 +175,109 @@ def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, precessing=0, N=1
 
     return params
 
-def CreateDict(M, q, chi1, chi2, l1, l2, iota, f0, srate, df, interp, domain, modes, coa=0, argout="no"):
-    """
-    Create the dictionary of parameters for EOBRunPy
-    """
-
-    chi1x, chi1y, chi1z = chi1
-    chi2x, chi2y, chi2z = chi2
-
-    pardic = {
-    'M'                  : M,
-    'q'                  : q,
-    'chi1x'              : chi1x,
-    'chi1y'              : chi1y,
-    'chi1z'              : chi1z,
-    'chi2x'              : chi2x,
-    'chi2y'              : chi2y,
-    'chi2z'              : chi2z,
-    'LambdaAl2'          : l1,
-    'LambdaBl2'          : l2,
-    'distance'           : 1.,
-    'initial_frequency'  : f0,
-    'use_geometric_units': "no",
-    'coalescence_angle'  : coa,
-    'interp_uniform_grid': interp,
-    'df'                 : df,
-    'domain'             : domain,
-    'srate_interp'       : srate,
-    'inclination'        : iota,
-    'use_mode_lm'        : modes,      # List of modes to use/output through EOBRunPy
-    'output_lm'          : modes,
-    'output_hpc'         : "no",
-    'output_multipoles'  : "no", 
-    'arg_out'            : argout,
-    'output_dynamics'    : "no",
-    'project_spins'      : "no",
-    'time_shift_FD'      : "no",
-    }
-    return pardic
-
 def TestParspaceBBH(precessing):
     """
     Generate 1e4 precessing waveforms with parameters within standard BBH bounds
     """
+    import multiprocessing; import tqdm
+
     modes = [[2,1], [2,2], [3,1], [3,2], [3,3], [4,1], [4,2], [4,3], [4,4]]
+    k = utils.modes_to_k(modes)
 
-    k = modes_to_k(modes)
-
-    Mmin, Mmax = 20, 300
+    Mmin, Mmax = 20, 100
     qmin, qmax = 1, 10
-
     chi_min    = 1e-3
     chi_max    = 0.99
 
     N = 10000 # generate 1e4 waveforms
 
-    f0    = 11. # initial frequency
-    srate = 4096.
-
-    ### DO NOT CHANGE BELOW UNLESS YOU KNOW WHAT YOU ARE DOING ###
-
     print("...generate the parspace")
-    rand_pars = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=None, precessing=precessing, N=N)
+    pp    = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=None, precessing=precessing, N=N)
+    write_dict_to_txt("ParBBH.txt", pp, 1) # write keys to file
 
-    # start generating waveforms
-
-    init_ok  = 1
-    init_err = 1
     print("...run")
-    for m, qi, c1x, c1y, c1z, c2x, c2y, c2z in zip(rand_pars['M'], rand_pars['q'], rand_pars['chi1x'], rand_pars['chi1y'], rand_pars['chi1y'], rand_pars['chi2x'], rand_pars['chi2y'], rand_pars['chi2z']):
-        
-        par = CreateDict(m, qi, [c1x, c1y, c1z], [c2x, c2y, c2z], 0., .0, np.pi/3, f0, srate, 0., "yes", 0, k)
-        try:
-            t, hp, hc = EOB.EOBRunPy(par)
-            # remove keys that must not be written (this is a dumb way..)
-            for lbl in ['distance','initial_frequency','use_geometric_units','interp_uniform_grid','domain','srate_interp','inclination','use_mode_lm','output_lm','output_hpc','output_multipoles','arg_out','output_dynamics','use_spins']:
-                par.pop(lbl)
-            write_dict_to_txt("ParBBH.txt", par, init_ok)
-            if(init_ok):
-                init_ok=0
-    
-        except Exception:
-            write_dict_to_txt("ErrorsParBBH.txt", par, init_err)
-            if(init_err):
-                init_err=0
+    with multiprocessing.Pool() as p:
+        for j in tqdm.tqdm(
+                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'ecc':1e-8, 'use_mode_lm':k}))]
+                                           for i in range(N)]
+                            ):
+            j[1].get()
+            this_par = {}
+            for key in pp.keys():
+                this_par[key] = pp[key][j[0]]
+            write_dict_to_txt("ParBBH.txt", this_par, 0)
 
 def TestParspaceBNS(precessing):
     """
     Generate 1e4 precessing waveforms with parameters within standard BNS bounds
     """
+    import multiprocessing; import tqdm
+    import utilities as utils
 
     modes = [[2,2]]
-
-    k = modes_to_k(modes)
+    k = utils.modes_to_k(modes)
 
     Mmin, Mmax = 1.5, 3.4
     qmin, qmax = 1, 2
-
     lambda_min = 3
     lambda_max = 5000
-
     chi_min    = 1e-3
     chi_max    = 0.6
 
-    N = 1000 # generate 1e4 waveforms
-
-    f0    = 20. # initial frequency
-    srate = 2048
-
-    ### DO NOT CHANGE BELOW UNLESS YOU KNOW WHAT YOU ARE DOING ###
+    N          = 10000 # generate 1e4 waveforms
 
     print("...generate the parspace")
-    rand_pars = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=[lambda_min, lambda_max], precessing=precessing, N=N)
+    pp = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=[lambda_min, lambda_max], precessing=precessing, N=N)
+    write_dict_to_txt("ParBNS.txt", pp, 1) # write keys to file
 
     # start generating waveforms
-
-    init_ok  = 1
-    init_err = 1
     print("...run")
-    for m, qi, c1x, c1y, c1z, c2x, c2y, c2z, l1, l2 in zip(rand_pars['M'], rand_pars['q'], rand_pars['chi1x'], rand_pars['chi1y'], rand_pars['chi1y'], rand_pars['chi2x'], rand_pars['chi2y'], rand_pars['chi2z'], rand_pars['lambda1'], rand_pars['lambda2']):
-        
-        par = CreateDict(m, qi, [c1x, c1y, c1z], [c2x, c2y, c2z], l1, l2, np.pi/3, f0, srate, 0., "yes", 0, k)
-        try:
-            t, hp, hc = EOB.EOBRunPy(par)
-
-            # remove keys that must not be written (this is a dumb way..)
-            for lbl in ['distance','initial_frequency','use_geometric_units','interp_uniform_grid','domain','srate_interp','inclination','use_mode_lm','output_lm','output_hpc','output_multipoles','arg_out','output_dynamics','use_spins']:
-                par.pop(lbl)
-            write_dict_to_txt("ParBNS.txt", par, init_ok)
-            if(init_ok):
-                init_ok=0
-    
-        except Exception:
-            write_dict_to_txt("ErrorsParBNS.txt", par, init_err)
-            if(init_err):
-                init_err=0
+    with multiprocessing.Pool() as p:
+        for j in tqdm.tqdm(
+                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], pp['LambdaAl2'][i], pp['LambdaBl2'][i],{'ecc':1e-8, 'use_mode_lm':k}, True))]
+                                           for i in range(N)]
+                            ):
+            j[1].get()
+            this_par = {}
+            for key in pp.keys():
+                this_par[key] = pp[key][j[0]]
+            write_dict_to_txt("ParBNS.txt", this_par, 0)
 
 def TestParspaceBHNS(precessing):
     """
     Generate 1e4 precessing waveforms with parameters within standard BHNS bounds
     """
+    import multiprocessing; import tqdm
+    import utilities as utils
 
-    modes = [[2,1], [2,2], [3,2], [3,3], [4,4]] #[[2,2]]
-
-    k = modes_to_k(modes)
+    modes = [[2,1], [2,2], [3,2], [3,3], [4,4]]
+    k = utils.modes_to_k(modes)
 
     Mmin, Mmax = 3, 40
     qmin, qmax = 1, 10
-
     lambda_min = 3
     lambda_max = 5000
-
     chi_min    = 1e-3
     chi_max    = 0.99
 
     N = 10000 # generate 1e4 waveforms
 
-    f0    = 20. # initial frequency
-    srate = 2048
-
-    ### DO NOT CHANGE BELOW UNLESS YOU KNOW WHAT YOU ARE DOING ###
-
     print("...generate the parspace")
-    rand_pars = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=[lambda_min, lambda_max], precessing=precessing, N=N)
+    pp = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=[lambda_min, lambda_max], precessing=precessing, N=N)
+    write_dict_to_txt("ParBHNS.txt", pp, 1) # write keys to file
 
     # start generating waveforms
-
-    init_ok  = 1
-    init_err = 1
     print("...run")
-    for m, qi, c1x, c1y, c1z, c2x, c2y, c2z, l2 in zip(rand_pars['M'], rand_pars['q'], rand_pars['chi1x'], rand_pars['chi1y'], rand_pars['chi1y'], rand_pars['chi2x'], rand_pars['chi2y'], rand_pars['chi2z'], rand_pars['lambda2']):
-        
-        par = CreateDict(m, qi, [c1x, c1y, c1z], [c2x, c2y, c2z], 0, l2, np.pi/3, f0, srate, 0., "yes", 0, k)
-        
-        try:
-            t, hp, hc = EOB.EOBRunPy(par)
-
-            # remove keys that must not be written (this is a dumb way..)
-            for lbl in ['LambdaAl2','distance','initial_frequency','use_geometric_units','interp_uniform_grid','domain','srate_interp','inclination','use_mode_lm','output_lm','output_hpc','output_multipoles','arg_out','output_dynamics','use_spins']:
-                par.pop(lbl)
-            write_dict_to_txt("ParPrecBHNS_HM.txt", par, init_ok)
-            if(init_ok):
-                init_ok=0
-    
-        except Exception:
-            write_dict_to_txt("ErrorsParBHNS.txt", par, init_err)
-            if(init_err):
-                init_err=0
+    with multiprocessing.Pool() as p:
+        for j in tqdm.tqdm(
+                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., pp['LambdaBl2'][i],{'ecc':1e-8, 'use_mode_lm':k}))]
+                                           for i in range(N)]
+                            ):
+            j[1].get()
+            this_par = {}
+            for key in pp.keys():
+                this_par[key] = pp[key][j[0]]
+            write_dict_to_txt("ParBHNS.txt", this_par, 0)
 
 def PlotPrecWF():
     """
@@ -375,8 +287,7 @@ def PlotPrecWF():
     q = 1.1
     chiA = [0.8, 0., 0.]
     chiB = [0., -0.7, -0.1]
-    par = CreateDict(M, q, chiA, chiB, 0, 0, np.pi/3, 11., 4096., 0., "yes", 0, [0,1,2,3,4,5,6,7,8])
-
+    par = utils.CreateDict(M, q, chiA, chiB, lambda1=0, lambda2=0, iota=np.pi/3, f0=11., srate=4096., coa=0., interp="yes", domain=0, modes=[0,1,2,3,4,5,6,7,8])
     t, hp, hc = EOB.EOBRunPy(par)
     
     fig = plt.figure()
@@ -404,9 +315,9 @@ def PlotAlignedSpinLimit():
     chiAa = [0., 0.,  0.0]
     chiBa = [0., 0., -0.1]
 
-    par_p = CreateDict(M, q, chiA,  chiB,  0, 0, np.pi/3, 20., 4096., 0., "yes", 0, [0,1,2,3,4,5,6,7,8,13], argout="no")
-    par_t = CreateDict(M, q, chiAt, chiBt, 0, 0, np.pi/3, 20., 4096., 0., "yes", 0, [0,1,2,3,4,5,6,7,8,13], argout="no")    
-    par_a = CreateDict(M, q, chiAa, chiBa, 0, 0, np.pi/3, 20., 4096., 0., "yes", 0, [0,1,2,3,4,5,6,7,8,13], argout="no")
+    par_p = utils.CreateDict(M, q, chiA,  chiB,  lambda1=0, lambda2=0, iota=np.pi/3, f0=20., srate=4096., coa=0., interp="yes", domain=0, modes=[0,1,2,3,4,5,6,7,8,13], argout="no")
+    par_t = utils.CreateDict(M, q, chiAt, chiBt, lambda1=0, lambda2=0, iota=np.pi/3, f0=20., srate=4096., coa=0., interp="yes", domain=0, modes=[0,1,2,3,4,5,6,7,8,13], argout="no")    
+    par_a = utils.CreateDict(M, q, chiAa, chiBa, lambda1=0, lambda2=0, iota=np.pi/3, f0=20., srate=4096., coa=0., interp="yes", domain=0, modes=[0,1,2,3,4,5,6,7,8,13], argout="no")
 
     fig = plt.figure()
     for pp in [par_a, par_p, par_t]:
@@ -430,8 +341,8 @@ def PlotSPAWF():
     f0    = 20.
     df    = 1./(128*2)
     # parameter dictionaries
-    part     = CreateDict(M, q, chiA, chiB, 400, 400, np.pi/2.5, f0, 4096., 0., "yes",  0, [1], coa=np.pi/4, argout="yes")
-    parf     = CreateDict(M, q, chiA, chiB, 400, 400, np.pi/2.5, f0, 4096., df, "yes" , 1, [1], coa=np.pi/4, argout="yes")
+    part     = utils.CreateDict(M, q, chiA, chiB, lambda1=400, lambda2=400, iota=np.pi/2.5, f0=f0, srate=4096., df=0., interp="yes",  domain=0,  modes=[1], coa=np.pi/4, argout="yes")
+    parf     = utils.CreateDict(M, q, chiA, chiB, lambda1=400, lambda2=400, iota=np.pi/2.5, f0=f0, srate=4096., df=df, interp="yes" ,  domain=1, modes=[1], coa=np.pi/4, argout="yes")
     
     # Gen TD wf
     t,hpt,hct,hlm,_= EOB.EOBRunPy(part)
@@ -474,8 +385,8 @@ def SwapPrecWF():
     chiB_rot = [  0., 0.7, -0.1]
     phi_ref  = np.pi/4
 
-    par     = CreateDict(M, q,    chiA,     chiB,     0, 0, np.pi/3, 20., 4096., 0, "yes", 0, [0,1], coa=phi_ref, argout="yes")
-    par_rot = CreateDict(M, 1./q, chiB_rot, chiA_rot, 0, 0, np.pi/3, 20., 4096., 0, "yes", 0, [0,1], coa=phi_ref+np.pi, argout="yes")
+    par     = utils.CreateDict(M, q,    chiA,     chiB,     lambda1=0, lambda2=0, iota=np.pi/3, f0=20., srate=4096., df=0, interp="yes", domain=0, modes=[0,1], coa=phi_ref, argout="yes")
+    par_rot = utils.CreateDict(M, 1./q, chiB_rot, chiA_rot, lambda1=0, lambda2=0, iota=np.pi/3, f0=20., srate=4096., df=0, interp="yes", domain=0, modes=[0,1], coa=phi_ref+np.pi, argout="yes")
 
     t1, hp1,_,_,_ = EOB.EOBRunPy(par)
     t2, hp2,_,_,_ = EOB.EOBRunPy(par_rot)
@@ -496,7 +407,7 @@ def TestTetradConventions():
     import utilities as ut
 
     modes = [0, 1, 3, 4, 7, 8, 13]
-    par   = CreateDict(100, 1.5, [0.,0., 0.], [0., 0., 0.], 0, 0, 0., 20., 4096., 0, "yes", 0, modes, coa=0, argout="yes")
+    par   = utils.CreateDict(100, 1.5, [0.,0., 0.], [0., 0., 0.], lambda1=0, lambda2=0, iota=0., f0=20., srate=4096., df=0, interp="yes", domain=0, modes=modes, coa=0, argout="yes")
 
     t,_,_,hlm,_ = EOB.EOBRunPy(par)
 
@@ -523,33 +434,33 @@ if __name__ == "__main__":
     # run some tests
 
     if 0:
-        print("##### Generate the BBH precessing parameter space #####")
-        TestParspaceBBH(1)
+        print("##### Generate the BBH parameter space #####")
+        TestParspaceBBH(0)
         print("...done")
 
     if 0:
-        print("##### Generate the BNS precessing parameter space #####")
-        TestParspaceBNS(1)
+        print("##### Generate the BNS parameter space #####")
+        TestParspaceBNS(0)
         print("...done")
 
     if 0:
-        print("##### Generate the BHNS precessing parameter space #####")
-        TestParspaceBHNS(1)
+        print("##### Generate the BHNS parameter space #####")
+        TestParspaceBHNS(0)
         print("...done")
 
     if 0:
-        print("##### Plot the BBH precessing parameter space #####")
-        PlotParspace("ParPrecBBH.txt", precessing="yes")
+        print("##### Plot the BBH parameter space #####")
+        PlotParspace("ParBBH.txt", precessing="no")
         print("...done")
 
     if 0:
-        print("##### Plot the BNS precessing parameter space #####")
-        PlotParspace("ParPrecBNS.txt", tides="yes", precessing="yes")
+        print("##### Plot the BNS parameter space #####")
+        PlotParspace("ParBNS.txt", tides="yes", precessing="no")
         print("...done")
     
     if 0:
-        print("##### Plot the BHNS precessing parameter space #####")
-        PlotParspace("ParPrecBHNS.txt", tides="yes", precessing="yes")
+        print("##### Plot the BHNS parameter space #####")
+        PlotParspace("ParBHNS.txt", tides="yes", precessing="no")
         print("...done")
 
     if 0:
@@ -572,7 +483,7 @@ if __name__ == "__main__":
         SwapPrecWF()
         print("...done")
     
-    if 1:
+    if 0:
         print("##### Test Tetrad conventions #####")
         TestTetradConventions()
         print("...done")
