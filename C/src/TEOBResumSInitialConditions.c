@@ -960,8 +960,8 @@ double eob_dyn_Omegaorb0(double r, void *params)
       
     Delta = SQ(b_coeff) - 4*a_coeff*c_coeff;
       
-    if (S==0 && Sstar==0)  
-      Delta=0;             // dG_dr=0 -> Set Delta=0 to avoid num. errors          
+    if (Delta<0.)  
+      Delta=0;             // dG_dr=0 -> Set Delta=0 to avoid num. errorsss
       
     sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); 
     sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff);
