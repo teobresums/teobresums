@@ -4114,6 +4114,8 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   
   }
 
+  eob_nqc_point_user(max_A, max_dA, max_omg, max_domg);
+
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
     PRFORMd("A22_mrg",max_A[1]);
@@ -4613,6 +4615,8 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   
   }
 
+  eob_nqc_point_user(max_A, max_dA, max_omg, max_domg);
+
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
     PRFORMd("A22_mrg",max_A[1]);
@@ -5053,6 +5057,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     max_domg[k] = domg_tmp;
     
   }
+
+  // check for user input
+  eob_nqc_point_user(max_A, max_dA, max_omg, max_domg);
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
@@ -5646,6 +5653,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     max_domg[k] = domg_tmp;
   }
   
+  eob_nqc_point_user(max_A, max_dA, max_omg, max_domg);
+
+
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
     PRFORMd("A22_mrg",max_A[1]);
@@ -6115,6 +6125,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   max_dA[k22]   = dA_tmp;
   max_omg[k22]  = omg_tmp;
   max_domg[k22] = domg_tmp;
+
+  eob_nqc_point_user(max_A, max_dA, max_omg, max_domg);
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
@@ -8974,6 +8986,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     max_omg[k]  = omg_tmp;
     max_domg[k] = domg_tmp;
   }
+
+  eob_nqc_point_user(max_A, max_dA, max_omg, max_domg);
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");

@@ -595,7 +595,9 @@ void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp
  *  Function: eob_nqc_point_HM
  *  -----------------------
  *   Fits for the NR point used to determine NQC corrections, from 
- *   https://arxiv.org/abs/2001.09082 (App C)
+ *   https://arxiv.org/abs/2001.09082 (App C).
+ *   If the user inputs values of A, dA, Omg, dOmg, the function will overwrite
+ *   the fits with the user values. 
  *   
  *   @param[in, out]  A_tmp   : RWZ-normalized Amplitude at the NQC point 
  *   @param[in, out]  dA_tmp  : first time derivative of the RWZ-normalized amplitude at the NQC point 
@@ -850,7 +852,7 @@ void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_
   b4_domg_tmp = +0.2250689;
 	  
   domg_tmp[13] =  0.0178326*(1 + 3.1304*nu) + (b1_domg_tmp + b2_domg_tmp*nu)*Shat + (b3_domg_tmp + b4_domg_tmp*nu)*Shat2;
-	  
+
 }
 
 /** 
@@ -981,6 +983,40 @@ void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, doub
   domg_tmp_d2 = 1 + c4phi*x2 + c3phi*x;
   *domg_tmp   = -(domg_tmp_n1/domg_tmp_d1 - domg_tmp_n2/domg_tmp_d2)/Mbh2;
 }
+
+/** 
+ *  Function: eob_nqc_point_user
+ *  ----------------------------
+ *   Values of A, dA, omg, domg at the NQC point, read from user input
+ *   
+ *   @param[in, out]  A_tmp   : RWZ-normalized Amplitude at the NQC point 
+ *   @param[in, out]  dA_tmp  : first time derivative of the RWZ-normalized amplitude at the NQC point 
+ *   @param[in, out]  omg_tmp : omega at the NQC point 
+ *   @param[in, out]  domg_tmp: first time derivative of the frequency at the NQC point 
+ *
+ */
+void eob_nqc_point_user(
+  double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
+{
+  // All user inputs are default to < 0 or > 100
+  for (int k=0; k<KMAX; k++) {
+    if (EOBPars->Alm_nqc[k] > 0.)
+      A_tmp[k] = EOBPars->Alm_nqc[k];
+    if (EOBPars->dAlm_nqc[k] < 100.)
+      dA_tmp[k] = EOBPars->dAlm_nqc[k];
+    if (EOBPars->Omglm_nqc[k] > 0.)
+      omg_tmp[k] = EOBPars->Omglm_nqc[k];
+    if (EOBPars->dOmglm_nqc[k] < 100.)
+      domg_tmp[k] = EOBPars->dOmglm_nqc[k];
+    
+    // store the used vals in EOBPars for output
+    EOBPars->Alm_nqc[k]    = A_tmp[k];
+    EOBPars->dAlm_nqc[k]   = dA_tmp[k];
+    EOBPars->Omglm_nqc[k]  = omg_tmp[k];
+    EOBPars->dOmglm_nqc[k] = domg_tmp[k];
+  }
+}
+
 /** @} */ // end of nqcpoint
 
 /** 

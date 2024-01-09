@@ -11,7 +11,7 @@
  *    and in the analogue routine of the python wrapper
  *
  * History:
- *  * SB 09/2021 simplified the logic, added minimal custum routines to handle parfile input. Removed libconfig use.
+ *  * SB 09/2021 simplified the logic, added minimal custom routines to handle parfile input. Removed libconfig use.
  *  * SB 11/2019 Added the par structure type EOBParameters and routines to work with it.
  *  * v0.0 and v1.0 worked only with the parameter db and the parfile, using libconfig wrappers.
  */
@@ -70,13 +70,7 @@ void EOBParameters_alloc (EOBParameters **eobp)
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
   if (eobp == NULL)
     errorexit("Out of memory");
-  /* the arrays below are allocated in EOBParameters_defaults */
-  /* (*eobp)->use_mode_lm_size = 1;  */
-  /* (*eobp)->use_mode_lm = malloc ( 1 * sizeof(int) ); */
-  /* (*eobp)->use_mode_lm [0] = -1; */
-  /* (*eobp)->output_lm_size = 1; */
-  /* (*eobp)->output_lm = malloc ( 1 * sizeof(int) ); */
-  /* (*eobp)->output_lm [0] = -1; */
+  /* other arrays are allocated in EOBParameters_defaults */
 } 
 
 /** 
@@ -96,6 +90,13 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->knqcpeak22) free (eobp->knqcpeak22);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
+  // NR informed quantities for merger/ringdown
+  if (eobp->Alm_mrg) free (eobp->Alm_mrg);
+  if (eobp->Omglm_mrg) free (eobp->Omglm_mrg);
+  if (eobp->Alm_nqc) free (eobp->Alm_nqc);
+  if (eobp->Omglm_nqc) free (eobp->Omglm_nqc);
+  if (eobp->dAlm_nqc) free (eobp->dAlm_nqc);
+  if (eobp->dOmglm_nqc) free (eobp->dOmglm_nqc);
   free(eobp);
 }
 
@@ -245,6 +246,22 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
   eobp->alpha_sigmoid_Newt    = 0.06;
   eobp->alpha_sigmoid_NQC     = 0.06;
   
+  /* Initialize NR-informed parameters for user input */
+  eobp->Alm_mrg    = malloc (KMAX * sizeof(double) );
+  eobp->Omglm_mrg  = malloc (KMAX * sizeof(double) );
+  eobp->Alm_nqc    = malloc (KMAX * sizeof(double) );
+  eobp->Omglm_nqc  = malloc (KMAX * sizeof(double) );
+  eobp->dAlm_nqc   = malloc (KMAX * sizeof(double) );
+  eobp->dOmglm_nqc = malloc (KMAX * sizeof(double) );
+  for (int k=0; k<KMAX; k++){
+    eobp->Alm_mrg[k]    = -1.;
+    eobp->Omglm_mrg[k]  = -1.;
+    eobp->Alm_nqc[k]    = -1.;
+    eobp->Omglm_nqc[k]  = -1.;
+    eobp->dAlm_nqc[k]   = 100.;
+    eobp->dOmglm_nqc[k] = 100.;
+  }
+
   /* Output */
   
   strcpy(eobp->output_dir, "./data");  // output dir

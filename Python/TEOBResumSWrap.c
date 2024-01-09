@@ -252,6 +252,56 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  /* NR parameters (input, if specified they override internal fits)*/
+  // NQC fits, Alm
+  if ( PyDict_GetItemString(dict, "Alm_nqc") != NULL ) {
+    if (EOBPars->Alm_nqc) free(EOBPars->Alm_mrg);
+    PyListObject *tmp = PyDict_GetItemString(dict, "Alm_nqc");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->Alm_nqc = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->Alm_nqc[k] = PyFloat_AsDouble(item); 
+    }
+  }
+  // NQC fits, dAlm
+  if ( PyDict_GetItemString(dict, "dAlm_nqc") != NULL ) {
+    if (EOBPars->dAlm_nqc) free(EOBPars->Alm_mrg);
+    PyListObject *tmp = PyDict_GetItemString(dict, "dAlm_nqc");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->dAlm_nqc = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->dAlm_nqc[k] = PyFloat_AsDouble(item); 
+    }
+  }
+  // NQC fits, Omglm
+  if ( PyDict_GetItemString(dict, "Omglm_nqc") != NULL ) {
+    if (EOBPars->Omglm_nqc) free(EOBPars->Omglm_nqc);
+    PyListObject *tmp = PyDict_GetItemString(dict, "Omglm_nqc");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->Omglm_nqc = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->Omglm_nqc[k] = PyFloat_AsDouble(item); 
+    }
+  }
+  // NQC fits, dOmglm
+  if ( PyDict_GetItemString(dict, "dOmglm_nqc") != NULL ) {
+    if (EOBPars->dOmglm_nqc) free(EOBPars->Omglm_nqc);
+    PyListObject *tmp = PyDict_GetItemString(dict, "dOmglm_nqc");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->dOmglm_nqc = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->dOmglm_nqc[k] = PyFloat_AsDouble(item); 
+    }
+  }
+
   /* Post Adiabatic Dynamics */
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics") != NULL ) { 
     EOBPars->postadiabatic_dynamics =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "postadiabatic_dynamics")));

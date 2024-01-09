@@ -637,9 +637,12 @@ typedef struct tagEOBParameters
   /**@}*/
 
   /**@{*/
-  /** NR-informed conservative variables */
-  double a6c, cN3LO;         
-  /**@}*/ 
+  /** NR-informed parameters */
+  double a6c, cN3LO;             // conservative variables
+  double *Alm_mrg, *Omglm_mrg;   // merger quantities
+  double *Alm_nqc, *dAlm_nqc, *Omglm_nqc, *dOmglm_nqc; // NQC point fits  
+  /**@}*/
+
 
   double r0;                    /**< Initial radial separation */
   double initial_frequency;     /**< initial frequency */
@@ -911,6 +914,7 @@ void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, doub
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
 			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
+void eob_nqc_point_user(double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 double eob_nqc_dtfit(const double chi, const double chi0);
 double eob_nqc_timeshift(double nu, double chi1);
 void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm);
