@@ -301,6 +301,12 @@ int SetOptionalVariables(PyObject* dict){
       EOBPars->dOmglm_nqc[k] = PyFloat_AsDouble(item); 
     }
   }
+  if ( PyDict_GetItemString(dict, "Mbhf") != NULL ) {
+    EOBPars->Mbhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "Mbhf"));
+  }
+  if ( PyDict_GetItemString(dict, "abhf") != NULL ) {
+    EOBPars->abhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "abhf"));
+  }
 
   /* Post Adiabatic Dynamics */
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics") != NULL ) { 

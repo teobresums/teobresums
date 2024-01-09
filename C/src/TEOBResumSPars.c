@@ -377,8 +377,8 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
     eobp->bomgfA[l] = eobp->bomgfB[l] = 0.;
   }
 	  
-  eobp->Mbhf= 0. ; // final BH mass
-  eobp->abhf= 0. ; // final BH spin
+  eobp->Mbhf= -1. ; // final BH mass, initialized to unphysical value
+  eobp->abhf= -2. ; // final BH spin, initialized to unphysical value
   
   eobp->rLR= 0. ; // radius of light-ring
   eobp->rLSO= 0. ; // radius of last stable orbit 
@@ -668,14 +668,21 @@ void eob_set_params(int default_choice, int firstcall)
   }  /* use_tidal */
   
     /* Final BH */
-    EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-
+    double Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+    double abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
     if (EOBPars->binary == BINARY_BHNS){
       if (VERBOSE) PRSECTN("BHNS mode");
       // these fits assume that the BH is the heavier object
-      eob_bhns_fit(chi1, EOBPars->nu, &(EOBPars->Mbhf), &(EOBPars->abhf), EOBPars->LambdaBl2, EOBPars->Mbhf, EOBPars->abhf);
-      bhns_cases(EOBPars->nu, EOBPars->abhf, chi1, EOBPars->LambdaBl2, &(EOBPars->binary), &(EOBPars->use_tidal));
+      eob_bhns_fit(chi1, EOBPars->nu, &Mbhf, &abhf, EOBPars->LambdaBl2, Mbhf, abhf);
+    }
+    /* If (EOBPars->Mbhf, EOBPars->abhf) are user-specified (hence have physical values before this assigment),
+       do not use the fits. */
+    if (EOBPars->Mbhf <  0.) EOBPars->Mbhf = Mbhf;
+    if (EOBPars->abhf < -1.) EOBPars->abhf = Mbhf;
+
+    /* Choose the BHNS kind based on properties of the final BH*/
+    if (EOBPars->binary == BINARY_BHNS){
+      bhns_cases(EOBPars->nu, abhf, chi1, EOBPars->LambdaBl2, &(EOBPars->binary), &(EOBPars->use_tidal));
   
       if(EOBPars->binary == BINARY_BBH){
         if (VERBOSE) PRSECTN("BHNS Type II");
