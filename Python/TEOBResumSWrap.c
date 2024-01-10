@@ -301,6 +301,42 @@ int SetOptionalVariables(PyObject* dict){
       EOBPars->dOmglm_nqc[k] = PyFloat_AsDouble(item); 
     }
   }
+  // Merger fits, c3A
+  if ( PyDict_GetItemString(dict, "c3A") != NULL ) {
+    if (EOBPars->c3A) free(EOBPars->c3A);
+    PyListObject *tmp = PyDict_GetItemString(dict, "c3A");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->c3A = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->c3A[k] = PyFloat_AsDouble(item); 
+    }
+  }
+  // Merger fits, c3phi
+  if ( PyDict_GetItemString(dict, "c3phi") != NULL ) {
+    if (EOBPars->c3phi) free(EOBPars->c3phi);
+    PyListObject *tmp = PyDict_GetItemString(dict, "c3phi");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->c3phi = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->c3phi[k] = PyFloat_AsDouble(item); 
+    }
+  }
+  // Merger fits, c4phi
+  if ( PyDict_GetItemString(dict, "c4phi") != NULL ) {
+    if (EOBPars->c4phi) free(EOBPars->c4phi);
+    PyListObject *tmp = PyDict_GetItemString(dict, "c4phi");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->c4phi = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->c4phi[k] = PyFloat_AsDouble(item); 
+    }
+  }
   if ( PyDict_GetItemString(dict, "Mbhf") != NULL ) {
     EOBPars->Mbhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "Mbhf"));
   }
@@ -678,6 +714,35 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Py_DECREF(pvo);
   }
 
+  /* build the params dictionary */
+  PyObject* pardict  = PyDict_New();
+  npy_intp dims_par[1];
+  dims_par[0] = KMAX;
+  double *nrpars[]   = {EOBPars->Alm_mrg, EOBPars->Omglm_mrg, 
+                        EOBPars->c3A, EOBPars->c3phi, EOBPars->c4phi, 
+                        EOBPars->Alm_nqc, EOBPars->dAlm_nqc, EOBPars->Omglm_nqc, EOBPars->dOmglm_nqc
+                       };
+  char   *names[]    = {"Alm_mrg", "Omglm_mrg", 
+                        "c3A", "c3phi", "c4phi", 
+                        "Alm_nqc", "dAlm_nqc", "Omglm_nqc", "dOmglm_nqc"
+                       };
+  for (int i=0; i<9; i++){
+    double *p;
+    PyArrayObject *po = (PyArrayObject *) PyArray_SimpleNew(1,dims_par,NPY_DOUBLE);
+    p = pyvector_to_Carrayptrs(po);
+    memcpy(p, nrpars[i], KMAX *sizeof(double));
+    PyDict_SetItemString(pardict, names[i], po);
+    Py_DECREF(po);
+  }
+  /* Remnant BH & conservative parameters */
+  double scalarnrpars[]    = {EOBPars->Mbhf, EOBPars->abhf, EOBPars->a6c, EOBPars->cN3LO};
+  char   *namesscalarnr[]  = {"Mbhf", "abhf", "a6c", "cN3LO"};
+  for (int i=0; i<4; i++){
+    PyObject *obj = Py_BuildValue("d", scalarnrpars[i]);
+    PyDict_SetItemString(pardict, namesscalarnr[i], obj);
+    Py_DECREF(obj);
+  }
+
   if(EOBPars->domain==DOMAIN_TD){
     
     double *pt, *php, *phc; /*t, h+ and hx */
@@ -800,7 +865,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     if (arg_out == 0){
       ret = Py_BuildValue("OOO", pto, phpo, phco);
     } else if (arg_out == 1){
-      ret = Py_BuildValue("OOOOO", pto, phpo, phco, hlmdict, dyndict);
+      ret = Py_BuildValue("OOOOOO", pto, phpo, phco, hlmdict, dyndict, pardict);
     } else {
       printf("ERROR: arg_out has to be equal to 'yes' or 'no' ");
       ret = NULL;
@@ -823,6 +888,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Py_DECREF(phco);
     Py_DECREF(hlmdict);
     Py_DECREF(dyndict);
+    Py_DECREF(pardict);
 
     return ret;  
 
@@ -918,7 +984,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     if (arg_out == 0){
       ret = Py_BuildValue("OOOOO", pfo, phprealo, phpimago, phcrealo, phcimago);
     } else if (arg_out == 1){
-      ret = Py_BuildValue("OOOOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict, htlmdict, dyndict);
+      ret = Py_BuildValue("OOOOOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict, htlmdict, dyndict, pardict);
     } else {
       printf("ERROR: arg_out has to be equal to 'yes' or 'no'");
       ret = NULL;
@@ -945,6 +1011,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Py_DECREF(hflmdict);
     Py_DECREF(htlmdict);
     Py_DECREF(dyndict);
+    Py_DECREF(pardict);
 
     return ret;
   }

@@ -640,6 +640,7 @@ typedef struct tagEOBParameters
   /** NR-informed parameters */
   double a6c, cN3LO;             // conservative variables
   double *Alm_mrg, *Omglm_mrg;   // merger quantities
+  double *c3phi, *c4phi, *c3A;   // Ringdown parameters
   double *Alm_nqc, *dAlm_nqc, *Omglm_nqc, *dOmglm_nqc; // NQC point fits  
   /**@}*/
 

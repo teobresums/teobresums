@@ -97,6 +97,9 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->Omglm_nqc) free (eobp->Omglm_nqc);
   if (eobp->dAlm_nqc) free (eobp->dAlm_nqc);
   if (eobp->dOmglm_nqc) free (eobp->dOmglm_nqc);
+  if (eobp->c3A) free (eobp->c3A);
+  if (eobp->c3phi) free (eobp->c3phi);
+  if (eobp->c4phi) free (eobp->c4phi);
   free(eobp);
 }
 
@@ -253,6 +256,9 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
   eobp->Omglm_nqc  = malloc (KMAX * sizeof(double) );
   eobp->dAlm_nqc   = malloc (KMAX * sizeof(double) );
   eobp->dOmglm_nqc = malloc (KMAX * sizeof(double) );
+  eobp->c3A        = malloc (KMAX * sizeof(double) );
+  eobp->c3phi      = malloc (KMAX * sizeof(double) );
+  eobp->c4phi      = malloc (KMAX * sizeof(double) );
   for (int k=0; k<KMAX; k++){
     eobp->Alm_mrg[k]    = -1.;
     eobp->Omglm_mrg[k]  = -1.;
@@ -260,6 +266,9 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
     eobp->Omglm_nqc[k]  = -1.;
     eobp->dAlm_nqc[k]   = 100.;
     eobp->dOmglm_nqc[k] = 100.;
+    eobp->c3A[k]        = 1e6;
+    eobp->c3phi[k]      = 1e6;
+    eobp->c4phi[k]      = 1e6;
   }
 
   /* Output */

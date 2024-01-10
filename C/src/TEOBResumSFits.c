@@ -3396,8 +3396,44 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX];
   QNM_coefs(af, alpha21, alpha1, omega1);
   
+  // skip the modes that are attached at the peak of the 22 mode
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);      
+
+  // Overwrite the fits if they are user-input & save the used vals in EOBPars for output 
   for (int k=0; k<KMAX; k++) {
-    if (modeon[k]) {
+    if (modeon[k] && !modesatpeak22[k]) {
+      if (EOBPars->Alm_mrg[k] > 0 && Amrg[k] != EOBPars->Alm_mrg[k]){
+        if(DEBUG) printf("Overwriting A_mrg k=%d. Old val: %.10f, New val: %.10f\n", k, Amrg[k], EOBPars->Alm_mrg[k]);
+        Amrg[k] = EOBPars->Alm_mrg[k];
+      }
+      if (EOBPars->Omglm_mrg[k] > 0 && omgmrg[k] != EOBPars->Omglm_mrg[k]){
+        if(DEBUG) printf("Overwriting Omg_mrg k=%d. Old val: %.10f, New val: %.10f\n", k, omgmrg[k], EOBPars->Omglm_mrg[k]);
+        omgmrg[k] = EOBPars->Omglm_mrg[k];
+      }
+      if (EOBPars->c3phi[k]<1e5 && c3phi[k] != EOBPars->c3phi[k]){
+        if(DEBUG) printf("Overwriting c3phi k=%d. Old val: %.10f, New val: %.10f\n", k, c3phi[k], EOBPars->c3phi[k]);
+        c3phi[k] = EOBPars->c3phi[k];
+      }
+      if (EOBPars->c4phi[k]<1e5 && c4phi[k] != EOBPars->c4phi[k]){
+        if(DEBUG) printf("Overwriting c4phi k=%d. Old val: %.10f, New val: %.10f\n", k, c4phi[k], EOBPars->c4phi[k]);
+        c4phi[k] = EOBPars->c4phi[k];
+      }
+      if (EOBPars->c3A[k]<1e5 && c3A[k] != EOBPars->c3A[k]){
+        if(DEBUG) printf("Overwriting c3A k=%d. Old val: %.10f, New val: %.10f\n", k, c3A[k], EOBPars->c3A[k]);
+        c3A[k] = EOBPars->c3A[k];
+      }
+      // store the used vals in EOBPars for output
+      EOBPars->Alm_mrg[k]   = Amrg[k];
+      EOBPars->Omglm_mrg[k] = omgmrg[k];
+      EOBPars->c3A[k]       = c3A[k];
+      EOBPars->c3phi[k]     = c3phi[k];
+      EOBPars->c4phi[k]     = c4phi[k];
+    }
+  }
+
+  for (int k=0; k<KMAX; k++) {
+    if (modeon[k] && !modesatpeak22[k]) {
       sigmar[k] = alpha1[k];
       sigmai[k] = omega1[k];
       Domg[k] 	= omega1[k] - Mbh*omgmrg[k];
@@ -3405,7 +3441,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   }
   
   for (int k=0; k<KMAX; k++) {
-    if (modeon[k]) {
+    if (modeon[k] && !modesatpeak22[k]) {
       c2A[k] = 0.5*alpha21[k];
       double cosh_c3A= cosh(c3A[k]);  
       ca1[k] = Amrg[k]*alpha1[k]*cosh_c3A*cosh_c3A/c2A[k];
@@ -3506,6 +3542,32 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
     int l = LINDEX[k];
     A[k] *= sqrt((l+2)*(l+1)*l*(l-1));
     dA[k]*= sqrt((l+2)*(l+1)*l*(l-1));
+
+    // Overwrite the fits if they are user-input & save the used vals in EOBPars for output 
+    if (EOBPars->Alm_mrg[k] > 0){
+      if(DEBUG) printf("Overwriting A_mrg k=%d. Old val: %.10f, New val: %.10f\n", k, A[k], EOBPars->Alm_mrg[k]);
+      A[k] = EOBPars->Alm_mrg[k];
+    }
+    if (EOBPars->Omglm_mrg[k] > 0){
+      if(DEBUG) printf("Overwriting Omg_mrg k=%d. Old val: %.10f, New val: %.10f\n", k, omg[k], EOBPars->Omglm_mrg[k]);
+      omg[k] = EOBPars->Omglm_mrg[k];
+    }
+    if (EOBPars->c3phi[k]<1e5){
+      d2f = EOBPars->c3phi[k];
+    }
+    if (EOBPars->c4phi[k]<1e5){
+      if (DUNEQUAL(EOBPars->c4phi[k],0., 1e-9)) 
+        errorexit("c4phi has to be zero when k is in knqcpeak22");
+    }
+    if (EOBPars->c3A[k]<1e5){
+      c2f = EOBPars->c3A[k];
+    }
+    // store the used vals in EOBPars for output
+    EOBPars->Alm_mrg[k]   = A[k];
+    EOBPars->Omglm_mrg[k] = omg[k];
+    EOBPars->c3A[k]       = c2f;
+    EOBPars->c3phi[k]     = d2f;
+    EOBPars->c4phi[k]     = 0.;
 
     /* Constrained coefficients*/
     c1c = (dA[k]  + sigmar[k]*A[k])*cosh(c2f)*cosh(c2f)/c1f;
