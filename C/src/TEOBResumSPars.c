@@ -1246,6 +1246,14 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     eobp->SigmaBl2 = par_get_d(val);
   }
 
+  /* User-defined final state */
+  if (STREQUAL(key,"Mbhf")) {
+    eobp->Mbhf = par_get_d(val);
+  }
+  if (STREQUAL(key,"abhf")) {
+    eobp->abhf = par_get_d(val);
+  }
+
   /* EOB Settings */
 
   if (STREQUAL(key,"use_spins")) {
@@ -1731,6 +1739,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "C_Hex2", eobp->C_Hex2);
   fprintf(f,"%s = %.16f\n", "a6c", eobp->a6c);
   fprintf(f,"%s = %.16f\n", "cN3LO", eobp->cN3LO);
+  fprintf(f,"%s = %.16f\n", "Mbhf", eobp->Mbhf); // final BH mass
+  fprintf(f,"%s = %.16f\n", "abhf", eobp->abhf); // final BH spin
 
   fprintf(f,"%s = %.16f\n","kappaAl2",  eobp->kapA2); // gravitoelectric kappa star A
   fprintf(f,"%s = %.16f\n","kappaAl3",  eobp->kapA3); //
