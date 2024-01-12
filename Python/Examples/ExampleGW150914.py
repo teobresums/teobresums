@@ -50,7 +50,7 @@ pars = {
     'domain'             : TEOBResumS_domain[domain],
     'interp_uniform_grid': "yes",  # Interpolate the output waveform a uniform grid, mode by mode
     'srate_interp'       : 4096.,  # srate at which to interpolate, fixes f_max in 'FD' too
-
+    'ecc'                : 1e-8,   # We set eccentricity to 1e-8 (negliglble) to employ DALI rather than GIOTTO 
     # Modes
     'use_mode_lm'        : k,      # List of modes to use/output through EOBRunPy
 
