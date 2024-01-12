@@ -971,6 +971,7 @@ void eob_nqc_point_test(double Mbh, double c1A, double c2A, double c3A, double c
 			    double *A_tmp, double *dA_tmp, double *d2A_tmp, double *omg_tmp, double *domg_tmp, double *d2omg_tmp);
 double horizon_radius(const double nu);
 double pph_lso_orbital(const double nu);
+double pph_lso_spin(const double nu, const double a0);
 
 /* TEOBResumSDynamics.c */
 extern int (*p_eob_dyn_rhs)(); /* defined in TEOBResumSPars.c */
