@@ -253,9 +253,33 @@ int SetOptionalVariables(PyObject* dict){
   }
 
   /* NR parameters (input, if specified they override internal fits)*/
+  // mrg fits, Alm
+  if ( PyDict_GetItemString(dict, "Alm_mrg") != NULL ) {
+    if (EOBPars->Alm_mrg) free(EOBPars->Alm_mrg);
+    PyListObject *tmp = PyDict_GetItemString(dict, "Alm_mrg");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->Alm_mrg = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->Alm_mrg[k] = PyFloat_AsDouble(item); 
+    }
+  }
+  // Omglm
+  if ( PyDict_GetItemString(dict, "Omglm_mrg") != NULL ) {
+    if (EOBPars->Omglm_mrg) free(EOBPars->Omglm_mrg);
+    PyListObject *tmp = PyDict_GetItemString(dict, "Omglm_mrg");
+    if (PyObject_Length(tmp) < KMAX)
+      errorexit("The list needs to have KMAX elements.");
+    EOBPars->Omglm_mrg = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->Omglm_mrg[k] = PyFloat_AsDouble(item); 
+    }
+  }
   // NQC fits, Alm
   if ( PyDict_GetItemString(dict, "Alm_nqc") != NULL ) {
-    if (EOBPars->Alm_nqc) free(EOBPars->Alm_mrg);
+    if (EOBPars->Alm_nqc) free(EOBPars->Alm_nqc);
     PyListObject *tmp = PyDict_GetItemString(dict, "Alm_nqc");
     if (PyObject_Length(tmp) < KMAX)
       errorexit("The list needs to have KMAX elements.");
@@ -267,7 +291,7 @@ int SetOptionalVariables(PyObject* dict){
   }
   // NQC fits, dAlm
   if ( PyDict_GetItemString(dict, "dAlm_nqc") != NULL ) {
-    if (EOBPars->dAlm_nqc) free(EOBPars->Alm_mrg);
+    if (EOBPars->dAlm_nqc) free(EOBPars->dAlm_nqc);
     PyListObject *tmp = PyDict_GetItemString(dict, "dAlm_nqc");
     if (PyObject_Length(tmp) < KMAX)
       errorexit("The list needs to have KMAX elements.");
@@ -291,7 +315,7 @@ int SetOptionalVariables(PyObject* dict){
   }
   // NQC fits, dOmglm
   if ( PyDict_GetItemString(dict, "dOmglm_nqc") != NULL ) {
-    if (EOBPars->dOmglm_nqc) free(EOBPars->Omglm_nqc);
+    if (EOBPars->dOmglm_nqc) free(EOBPars->dOmglm_nqc);
     PyListObject *tmp = PyDict_GetItemString(dict, "dOmglm_nqc");
     if (PyObject_Length(tmp) < KMAX)
       errorexit("The list needs to have KMAX elements.");
@@ -722,7 +746,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
                         EOBPars->c3A, EOBPars->c3phi, EOBPars->c4phi, 
                         EOBPars->Alm_nqc, EOBPars->dAlm_nqc, EOBPars->Omglm_nqc, EOBPars->dOmglm_nqc
                        };
-  char   *names[]    = {"Alm_mrg", "Omglm_mrg", 
+  char   *names[]    = {"Alm_mrg", "Omglm_mrg",
                         "c3A", "c3phi", "c4phi", 
                         "Alm_nqc", "dAlm_nqc", "Omglm_nqc", "dOmglm_nqc"
                        };
