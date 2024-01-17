@@ -687,7 +687,7 @@ void eob_set_params(int default_choice, int firstcall)
     /* If (EOBPars->Mbhf, EOBPars->abhf) are user-specified (hence have physical values before this assigment),
        do not use the fits. */
     if (EOBPars->Mbhf <  0.) EOBPars->Mbhf = Mbhf;
-    if (EOBPars->abhf < -1.) EOBPars->abhf = Mbhf;
+    if (EOBPars->abhf < -1.) EOBPars->abhf = abhf;
 
     /* Choose the BHNS kind based on properties of the final BH*/
     if (EOBPars->binary == BINARY_BHNS){
