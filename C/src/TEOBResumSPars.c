@@ -120,6 +120,7 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
   eobp->chi2 = 0.;
 
   eobp->ecc = 0.;
+  eobp->anomaly = Pi;
 
   eobp->r_hyp = 0.;
   eobp->H_hyp = 0.;
@@ -210,7 +211,7 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
   /* EOB Settings */
 
   eobp->ecc_freq=ECCFREQ_AVERAGE; // "PERIASTRON", "AVERAGE", "APASTRON"
-  eobp->ecc_ics =ECCICS_1PA; // "0PA", "1PA"
+  eobp->ecc_ics =ECCICS_MA; // "0PA", "1PA"
   
   eobp->postadiabatic_dynamics=1;
   eobp->postadiabatic_dynamics_N=8;      // post-adiabatic order
@@ -918,7 +919,7 @@ void eob_set_params(int default_choice, int firstcall)
   /* Set r0 fun pointer */
   if (ecc != 0.) {
     // eccentric case
-    if(EOBPars->ecc_ics == ECCICS_1PA)
+    if(EOBPars->ecc_ics == ECCICS_1PA || EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_r0_eob = &eob_dyn_r0_ecc;
     else if (EOBPars->ecc_ics == ECCICS_0PA){
       if(ecc > 1e-4)
@@ -930,7 +931,7 @@ void eob_set_params(int default_choice, int firstcall)
     // quasi-circular case
     eob_dyn_r0_eob = &eob_dyn_r0_circ;
   }
-
+  
   /** Set rhs fun pointer */
   if ((ecc != 0.) || (r_hyp != 0.)) {
     p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
@@ -946,7 +947,9 @@ void eob_set_params(int default_choice, int firstcall)
     eob_dyn_ic = &eob_dyn_ic_hyp;
   } else if (ecc !=0) {
     // eccentric case
-    if(EOBPars->ecc_ics == ECCICS_1PA)
+    if(EOBPars->ecc_ics == ECCICS_MA)
+      eob_dyn_ic = &eob_dyn_ic_ecc_ma;   // ICs with anomaly (adiabatic)
+    else if(EOBPars->ecc_ics == ECCICS_1PA)
       eob_dyn_ic = &eob_dyn_ic_ecc_PA;   // 1PA ICs
     else if (EOBPars->ecc_ics == ECCICS_0PA){
       if(ecc > 1e-4)
@@ -961,7 +964,8 @@ void eob_set_params(int default_choice, int firstcall)
   } else {
     // quasi-circular ICs without spins (deprecated)
     eob_dyn_ic = &eob_dyn_ic_circ;
-  }   
+  }
+
 }
 
 /**
@@ -1160,6 +1164,9 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   }
   if (STREQUAL(key,"ecc")) {
     eobp->ecc = par_get_d(val);
+  }
+  if (STREQUAL(key,"anomaly")) {
+    eobp->anomaly = par_get_d(val);
   }
   if (STREQUAL(key,"r_hyp")) {
     eobp->r_hyp = par_get_d(val);
@@ -1660,6 +1667,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "chi2y", eobp->chi2y);
   fprintf(f,"%s = %.16f\n", "chi2z", eobp->chi2z);
   fprintf(f,"%s = %.16f\n", "ecc", eobp->ecc);
+  fprintf(f,"%s = %.16f\n", "anomaly", eobp->anomaly);
   fprintf(f,"%s = %.16f\n", "r_hyp", eobp->r_hyp);
   fprintf(f,"%s = %.16f\n", "H_hyp", eobp->H_hyp);
   fprintf(f,"%s = %.16f\n", "j_hyp", eobp->j_hyp);

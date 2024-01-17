@@ -614,6 +614,79 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   
 }
 
+/** Initial conditions calculation for eccentric systems */
+void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
+{
+  
+  const double f0 = EOBPars -> f0;
+  const double nu = EOBPars -> nu;
+  const double chi1 = EOBPars -> chi1;
+  const double chi2 = EOBPars -> chi2;
+  const double S1 = EOBPars -> S1;
+  const double S2 = EOBPars -> S2;
+  const double c3 = EOBPars -> cN3LO;
+  const double X1 = EOBPars -> X1;
+  const double X2 = EOBPars -> X2;
+  const double a1 = EOBPars -> a1;
+  const double a2 = EOBPars -> a2;
+  const double aK2 = EOBPars -> aK2;
+  const double C_Q1 = EOBPars -> C_Q1;
+  const double C_Q2 = EOBPars -> C_Q2;
+  const double C_Oct1 = EOBPars -> C_Oct1;
+  const double C_Oct2 = EOBPars -> C_Oct2;
+  const double C_Hex1 = EOBPars -> C_Hex1;
+  const double C_Hex2 = EOBPars -> C_Hex2;
+  const double S = S1 + S2;
+  const double Sstar = X2*a1 + X1*a2;
+  const double ecc = EOBPars -> ecc;
+  const double zeta = EOBPars -> anomaly;
+
+  const int usetidal = EOBPars -> use_tidal;
+  const int usespins = EOBPars -> use_spins;
+
+  const double omg_orb0 = Pi*f0;
+  double j0    = eob_dyn_ecc_j0(r0_kepl, dyn); // initial guess for j0
+  double pr0PN = 0.01;// = ecc/j0*sin(zeta+1.);
+  
+  double r0, pr0abs;
+  eob_dyn_rootfind_rpr(dyn, &r0, &pr0abs, omg_orb0, r0_kepl, pr0PN);
+  j0           = eob_dyn_ecc_j0(r0, dyn);      // Update j0
+
+  double pr0 = pr0abs;
+  if(fmod(zeta,2.*Pi) >= Pi)
+    pr0 = -pr0abs;
+      
+  double rma, rcma, Ama, Bma, Qma, Hma;
+  double pl_hold, omg_orb, dHeffma_dj0;
+  
+  rma = r0/(1.+ecc*cos(zeta));
+
+  /* Computing metric, centrifugal radius and ggm functions*/
+  if(usespins) {
+    eob_metric_s(rma, pr0, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(rma, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rcma, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(rma, pr0, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+
+  /* Energy */
+  eob_ham_s(nu, rma, rcma, 0, 0, j0, pr0, S, Sstar, chi1, chi2, X1, X2, aK2, c3, Ama, 0., 0., Qma, 0., 0., 0., 0.,
+	    &Hma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeffma_dj0, &pl_hold, &pl_hold);
+
+  /* Orbital frequency */
+  omg_orb   = dHeffma_dj0/nu/Hma;
+  
+  y_init[EOB_ID_RAD]    = rma;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = j0;
+  y_init[EOB_ID_PRSTAR] = pr0;
+  y_init[EOB_ID_PR]     = pr0*sqrt(Bma/Ama);
+  y_init[EOB_ID_J]      = j0;
+  y_init[EOB_ID_E0]     = Hma*nu;
+  y_init[EOB_ID_OMGJ]   = omg_orb;
+  
+}
+
 /**
  * Function: eob_dyn_ic_hyp
  * ------------------------
@@ -1132,8 +1205,8 @@ double eob_dyn_Omegaecc0(double r, void *params)
   /* Orbital frequency */
   dHeff1_dj0 = G1 + j0*A1/(Heff_orb1*SQ(rc1));
   dHeff2_dj0 = G2 + j0*A2/(Heff_orb2*SQ(rc2));
-  omg_orb1    = dHeff1_dj0/nu/H1;
-  omg_orb2    = dHeff2_dj0/nu/H2;
+  omg_orb1   = dHeff1_dj0/nu/H1;
+  omg_orb2   = dHeff2_dj0/nu/H2;
 
   if (EOBPars->ecc_freq == ECCFREQ_APASTRON) {
     /* apastron frequency */
@@ -1192,4 +1265,229 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
   gsl_root_fsolver_free (s);
   
   return r0;
+}
+
+/** 
+ * Function: eob_dyn_rootfind_rpr
+ * ------------------------------
+ * 
+ *  Root finder for initial conitions (r, pr) in eccentric case
+ *  
+ *  @param[in]    dyn:  Dynamics
+ *  @param[in,out] r0:  semilatus rectum
+ *  @param[in,out] pr0:  prstar
+ *  @param[in]    omg_orb0:  initial orbital frequency
+ *  @param[in]    rKepl:  initial estimate of the semilatus rectum
+ *  @param[in]    pr0PN:  initial estimate of prstar
+ * 
+ *  @return status
+ */
+int eob_dyn_rootfind_rpr(Dynamics *dyn, double *r0, double *pr0, double omg_orb0, double rKepl, double pr0PN)
+{
+  const gsl_multiroot_fsolver_type *T;
+  gsl_multiroot_fsolver *s;
+
+  int status;
+  size_t i, iter = 0;
+  
+  const size_t n = 2;
+
+  struct  Omegaorb0_tmp_params params = {omg_orb0,dyn};
+  
+  gsl_multiroot_function f = {&eob_dyn_rpr, n, &params};
+
+  double x_init[2] = {rKepl, pr0PN};
+  gsl_vector *x = gsl_vector_alloc(n);
+
+  gsl_vector_set (x, 0, x_init[0]);
+  gsl_vector_set (x, 1, x_init[1]);
+
+  T = gsl_multiroot_fsolver_hybrids;
+  s = gsl_multiroot_fsolver_alloc (T, 2);
+  gsl_multiroot_fsolver_set (s, &f, x);
+
+  const int max_it    = 200;
+  const double epsrel = 1e-10;
+  
+  do
+    {
+      iter++;
+      status = gsl_multiroot_fsolver_iterate(s);
+      
+      if (status) break;
+
+      status = gsl_multiroot_test_residual (s->f, epsrel);
+    }
+  while (status == GSL_CONTINUE && iter < max_it);
+
+  double x0 = gsl_vector_get(s->x,0);
+  double x1 = gsl_vector_get(s->x,1);
+  
+  *r0 = 0.;
+  if (isfinite(x0)) *r0 = fabs(x0);
+  
+  *pr0 = 0.;
+  if (isfinite(x1)) *pr0 = fabs(x1);
+  
+  gsl_multiroot_fsolver_free (s);
+  gsl_vector_free (x);
+  
+  //if (status == ???) {
+  //  return ROOT_ERRORS_BRACKET;
+  //}
+  if (status == GSL_SUCCESS) {
+    return ROOT_ERRORS_NO;
+  } 
+  if (iter >= max_it) {
+    return ROOT_ERRORS_MAXITS;
+  }
+  if (status != GSL_SUCCESS) {
+    return ROOT_ERRORS_NOSUCC;
+  }
+  
+  return status;
+}
+
+/** 
+ * Function: eob_dyn_rpr
+ * ---------------------
+ * 
+ *  Root function to compute r0 and pr0, uses GSL multiroot
+ *  solves the system:
+ *    - E(apastron, pr=0) - E(r=r0/(1+ecc*cos(anomaly)), pr=pr0) = 0;
+ *    - Omega(r=r0/(1+ecc*cos(anomaly)), pr=pr0) - Omg0 = 0;
+ * 
+ *   @param[in] x     :  (r0, pr0)
+ *   @param[in] params:  parameters to be passed to the function
+ *   @param[in,out] f :  system of equations  
+ *   @return status
+ */
+int eob_dyn_rpr(const gsl_vector *x, void * params, gsl_vector *f)
+{
+
+  /* Unpack parameters */  
+  struct Omegaecc0_tmp_params *p
+    = (struct Omegaecc0_tmp_params *) params;
+  double   omg_orb0 = p->omg_orb0;
+  Dynamics *dyn     = p->dyn;
+  
+  double r0  = fabs(gsl_vector_get(x,0)); //semilatus rectum
+  double pr0 = fabs(gsl_vector_get(x,1));
+
+  const double nu     = EOBPars -> nu;
+  const double X1     = EOBPars -> X1;
+  const double X2     = EOBPars -> X2;
+  const double chi1   = EOBPars -> chi1;
+  const double chi2   = EOBPars -> chi2;
+  const double a1     = EOBPars -> a1;
+  const double a2     = EOBPars -> a2;
+  const double aK2    = EOBPars -> aK2;
+  const double S      = EOBPars -> S;
+  const double Sstar  = EOBPars -> Sstar;
+  const double c3     = EOBPars -> cN3LO;
+  const double C_Q1   = EOBPars -> C_Q1;
+  const double C_Q2   = EOBPars -> C_Q2;
+  const double C_Oct1 = EOBPars -> C_Oct1;
+  const double C_Oct2 = EOBPars -> C_Oct2;
+  const double C_Hex1 = EOBPars -> C_Hex1;
+  const double C_Hex2 = EOBPars -> C_Hex2;
+  const double ecc    = EOBPars -> ecc;
+  const double zeta   = EOBPars -> anomaly;
+
+  const int usetidal  = EOBPars -> use_tidal;
+  const int usespins  = EOBPars -> use_spins;
+
+  double r1, A1, B1, rc1, G1, ggm1[26];
+  double r2, A2, B2, rc2, G2, ggm2[26];
+  double rma, rcma, Ama, Bma, Qma;
+  
+  double pl_hold, A12, B12, DA, DB, DG, j0, j02, omg_orb;
+  
+  double Heff_orb1, Heff_orb2, Heff1, Heff2, H1, H2, dHeff1_dj0, dHeff2_dj0, omg_orb1, omg_orb2;
+  double Hma, dHeffma_dj0;
+  
+  r1  = r0/(1.-ecc);
+  r2  = r0/(1.+ecc);
+  rma = r0/(1.+ecc*cos(zeta));
+
+  /* Computing metric, centrifugal radius and ggm functions*/
+  if(usespins) {
+    eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold);
+    
+    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
+    G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
+
+    eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
+    
+    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
+    G2     = ggm2[2]*S + ggm2[3]*Sstar;
+
+    eob_metric_s(rma, pr0, dyn, &Ama, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(rma, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rcma, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    rc1 = r1;   //Nonspinning case: rc = r; G = 0;  
+    G1  = 0.0;
+
+    eob_metric(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    rc2 = r2;
+    G2  = 0.0;
+
+    eob_metric(rma, pr0, dyn, &Ama, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+  B1 = A1/SQ(rc1);
+  B2 = A2/SQ(rc2);
+  
+  A12 = A1 + A2;
+  DA  = A1 - A2;
+  B12 = B1 + B2;
+  DB  = B1 - B2;
+  DG  = G1 - G2;
+  
+  /* Angular momentum */
+  j02   = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
+  j0    = sqrt(j02);
+
+    /* Energy */
+  Heff_orb1 = sqrt(A1*(1. + j02/SQ(rc1)));
+  Heff_orb2 = sqrt(A2*(1. + j02/SQ(rc2)));
+  Heff1     = Heff_orb1 + j0*G1;
+  Heff2     = Heff_orb2 + j0*G2;
+  H1        = sqrt(1. + 2.*nu*(Heff1 - 1.))/nu;
+  H2        = sqrt(1. + 2.*nu*(Heff2 - 1.))/nu;
+  
+  /* Energy at point specified by anomaly */
+  eob_ham_s(nu, rma, rcma, 0, 0, j0, pr0, S, Sstar, chi1, chi2, X1, X2, aK2, c3, Ama, 0., 0., Qma, 0., 0., 0., 0.,
+	    &Hma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeffma_dj0, &pl_hold, &pl_hold);
+  
+  /* Orbital frequency */
+  dHeff1_dj0 = G1 + j0*A1/(Heff_orb1*SQ(rc1));
+  dHeff2_dj0 = G2 + j0*A2/(Heff_orb2*SQ(rc2));
+  omg_orb1   = dHeff1_dj0/nu/H1;
+  omg_orb2   = dHeff2_dj0/nu/H2;
+
+  if (EOBPars->ecc_freq == ECCFREQ_APASTRON) {
+    /* apastron frequency */
+    omg_orb = omg_orb1;
+  } else if (EOBPars->ecc_freq == ECCFREQ_PERIASTRON) {
+    /* periastron frequency */
+    omg_orb = omg_orb2;
+  } else {
+    /* secular (average) frequency */
+    omg_orb = 0.5*(omg_orb1+omg_orb2);
+  }
+
+  /* Orbital frequency at point specified by anomaly */
+  //omg_orb   = dHeffma_dj0/nu/Hma;
+
+  double eq1 = Hma - H1;
+  double eq2 = omg_orb - omg_orb0;
+    
+  gsl_vector_set (f, 0, eq1);
+  gsl_vector_set (f, 1, eq2);
+  
+  return GSL_SUCCESS;
+
 }

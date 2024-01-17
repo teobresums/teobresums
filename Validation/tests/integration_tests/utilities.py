@@ -6,6 +6,7 @@ import EOBRun_module as EOB
 def CreateDict( M=1.0, q=1.0,
                 chi1=[0,0,0], chi2=[0,0,0],
                 lambda1=0, lambda2=0,
+                ecc=0., anomaly=np.pi,
                 iota=0, distance=1.,
                 f0=20., srate=4096*2., df=0.05,
                 interp='yes', domain=0,
@@ -66,6 +67,8 @@ def CreateDict( M=1.0, q=1.0,
         'output_multipoles'  : "no", 
         'output_dynamics'    : "no",
         'time_shift_FD'      : "no",
+        'ecc'                : ecc,
+        'anomaly'            : anomaly
     }
     return pardic
 

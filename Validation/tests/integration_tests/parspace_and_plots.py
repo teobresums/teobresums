@@ -429,6 +429,41 @@ def TestTetradConventions():
     fig.suptitle(r'$2\phi_{lm}-m\phi_{22}$')
     plt.show()
 
+def TestAnomaly():
+    """
+    Check the variation of the waveform with the anomaly
+    """
+    import utilities as ut
+    modes = [1]
+    par   = utils.CreateDict(60, 1.5, [0.,0., 0.], [0., 0., 0.], lambda1=0, lambda2=0, iota=0., 
+                             f0=20., srate=4096., df=0, interp="yes", domain=0, modes=modes, coa=0, argout="yes",
+                             ecc=0.3)
+
+    n         = 30
+    anomalies = np.linspace(0., 2*np.pi, n)
+    colors    = plt.cm.magma(np.linspace(0,1,n))
+
+    fig, ax = plt.subplots()
+    for z,c in zip(anomalies, colors):
+        par['anomaly'] = z
+        
+        t,_,_,hlm,dyn  = EOB.EOBRunPy(par)
+        # plot waveform
+        ax.plot(t, hlm['1'][0], c=c)
+    
+    for z in [0., np.pi]:
+        par['anomaly'] = z
+        t,_,_,hlm,dyn  = EOB.EOBRunPy(par)
+        ax.plot(t, hlm['1'][0], c='k', linewidth=2, 
+                linestyle='--',
+                label=f'$z = {z}')
+        
+    ax.set_xlabel('$t [s]$')
+    ax.set_ylabel(r'$h_{22}/\nu$')
+    plt.show()
+
+
+
 if __name__ == "__main__":
 
     # run some tests
@@ -486,4 +521,8 @@ if __name__ == "__main__":
     if 0:
         print("##### Test Tetrad conventions #####")
         TestTetradConventions()
+        print("...done")
+    if 1:
+        print('##### Test True Anomaly #####')
+        TestAnomaly()
         print("...done")

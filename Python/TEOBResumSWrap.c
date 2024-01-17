@@ -38,6 +38,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "ecc") != NULL ) {
     EOBPars->ecc = PyFloat_AsDouble(PyDict_GetItemString(dict, "ecc"));
   }
+  if ( PyDict_GetItemString(dict, "anomaly") != NULL ) {
+    EOBPars->anomaly = PyFloat_AsDouble(PyDict_GetItemString(dict, "anomaly"));
+  }
   if ( PyDict_GetItemString(dict, "r_hyp") != NULL ) {
     EOBPars->r_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "r_hyp"));
   }

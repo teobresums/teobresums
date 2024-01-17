@@ -48,13 +48,14 @@ Dynamics *dyn;
 * List tests below
 */
 int test_metric_derivatives(double q, double chi1, double chi2);
+int test_ecc_ICs(double q, double chi1, double chi2, double ecc, double f0);
 
 static char *
 test_metric(void)
 { 
-  double q[3]    = {1., 1.,  2., 10.};
-  double chi1[3] = {0., 0.1, 0.9, 0.};
-  double chi2[3] = {0., -0.3, 0., -0.5};
+  double q[3]    = {1., 1.,  2.};
+  double chi1[3] = {0., 0.1, 0.9};
+  double chi2[3] = {0., -0.3, 0.};
   
   for(int i=0; i<3;i++)
 	  mt_assert("Test metric function", test_metric_derivatives(q[i],chi1[i],chi2[i]) == 0
@@ -63,9 +64,17 @@ test_metric(void)
 }
 
 static char *
-test_fits(void)
+test_ICs(void)
 { 
-  // TODO: test fits vs known values, loop over enum
+  double q[4]    = {1.     ,   1.,  2., 10.};
+  double chi1[4] = {0.01   ,  0.1, 0.9, 0.};
+  double chi2[4] = {0.001  , -0.3,  0., -0.5};
+  double ecc[4]  = {0.00001,  0.1, 0.9, 0.001};
+  double f0      = 0.001;
+
+  for(int i=0; i<4;i++)
+	  mt_assert("Test eccentric ICs", test_ecc_ICs(q[i],chi1[i],chi2[i], ecc[i], f0) == 0
+             );
 	return NULL;
 }
 
@@ -74,8 +83,58 @@ run_tests()
 {
 	mt_init(2);
 	mt_run_test("Testing metric", test_metric);
-	mt_run_test("Testing a6c fits", test_fits);
+	mt_run_test("Testing ICs", test_ICs);
+
 	return NULL;
+}
+
+/**
+ * Function: test_ecc_ICs
+ * ----------------------
+ * 
+ *   Routine to test the initial conditions for the
+ *   eccentric code. Compare the "generic" mean-anomaly function 
+ *   with anomaly = pi to the 0PA function.
+ * 
+ *   @param[in] q : mass ratio
+ *   @param[in] chi1: dimensionless spin of body 1
+ *   @param[in] chi2: dimensionless spin of body 2
+ *   @param[in] ecc: eccentricity
+ *   @param[in] f0: initial frequency
+ * 
+ *   @return 0 or 1 depending on whether test passed
+*/
+int test_ecc_ICs(double q, double chi1, double chi2, double ecc, double f0)
+{ 
+  //reset relevant parameters
+  Dynamics *dyn_0PA;
+  Dynamics *dyn_ma;
+  Dynamics_alloc (&dyn_0PA, 0, "dyn"); 
+  Dynamics_alloc (&dyn_ma, 0, "dyn");
+  EOBParameters_defaults(BINARY_BBH, 1, EOBPars);
+  EOBPars->q    = q;
+  EOBPars->chi1 = chi1;
+  EOBPars->chi2 = chi2;
+  EOBPars->ecc  = ecc;
+  EOBPars->f0   = f0;
+  eob_set_params(BINARY_BBH, 1);
+  Dynamics_set_params(dyn_0PA);
+  Dynamics_set_params(dyn_ma);
+
+  double r0_ecc = eob_dyn_r0_ecc(f0, dyn_0PA);
+
+  eob_dyn_ic_ecc(r0_ecc, dyn_0PA, dyn_0PA->y0);
+  eob_dyn_ic_ecc_ma(r0_ecc, dyn_ma, dyn_ma->y0);
+
+  for(int v=0; v< EOB_DYNAMICS_NVARS; v++){
+    if (fabs(dyn_0PA->y0[v] - dyn_ma->y0[v]) > 1e-4){
+        printf("Error in ICs for %s %lf %lf\n", eob_id_var[v], dyn_0PA->y0[v], dyn_ma->y0[v]);
+      	return 1;
+    }
+  }
+  Dynamics_free(dyn_ma);
+  Dynamics_free(dyn_0PA);
+  return 0;
 }
 
 /**

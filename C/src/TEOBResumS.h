@@ -321,9 +321,10 @@ static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron"};
 enum{
   ECCICS_0PA,      /**< Adiabatic ICs */
   ECCICS_1PA,      /**< 1PA ICs */
+  ECCICS_MA,       /**< Anomaly ICs */
   ECCICS_NOPT      /**< number of eccentric initial conditions options */
 };
-static const char* const ecc_ics_opt[] = {"0PA", "1PA", "undefined"};
+static const char* const ecc_ics_opt[] = {"0PA", "1PA", "MA", "undefined"};
 
 /** List of options for flm amplitudes */
 enum{
@@ -643,6 +644,7 @@ typedef struct tagEOBParameters
 
   double r0;                    /**< Initial radial separation */
   double initial_frequency;     /**< initial frequency */
+  double f0;                    /**< initial frequency in geom units */
   double distance;              /**< distance */
   double inclination;           /**< inclination */
   double polarization;          /**< polarization */
@@ -653,7 +655,7 @@ typedef struct tagEOBParameters
   int compute_LSO;              /**< Flag to compute the LSO */
   double compute_LR_guess;      /**< Guess for the LR */
   double compute_LSO_guess;     /**< Guess for the LSO */
-  double ecc, r_hyp, H_hyp, j_hyp;
+  double ecc, anomaly, r_hyp, H_hyp, j_hyp;
   int ecc_freq, ecc_ics;
   double alpha_sigmoid_NQC, delta_t0_sigmoid_NQC;
   double alpha_sigmoid_Newt, delta_t0_sigmoid_Newt;
@@ -1023,6 +1025,7 @@ extern void (*eob_dyn_ic)(); /* defined in TEOBResumSPars.c*/
 void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[]);
+void eob_dyn_ic_ecc_ma(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[]);
 double eob_dyn_ecc_j0(double r0, Dynamics *dyn);
@@ -1036,6 +1039,9 @@ double eob_dyn_Omegaorb0(double r, void *params);
 double eob_dyn_Omegaecc0(double r, void *params);
 double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl);
+int eob_dyn_rpr(const gsl_vector *x, void * params, gsl_vector *f);
+int eob_dyn_rootfind_rpr(Dynamics *dyn, double *r0, double *pr0, double omg_orb0, double rKepl, double pr0PN);
+
 
 /* TEOBResumSMetric.c */
 extern void (*eob_metric_Apotential)(); /* defined in TEOBResumSPars.c*/
