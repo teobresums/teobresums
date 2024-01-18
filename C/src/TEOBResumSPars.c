@@ -489,7 +489,6 @@ void eob_set_params(int default_choice, int firstcall)
 
   /* Check: if in-plane components of spins are < 1e4, then spin aligned, else spin precessing */
   /* Note: the "NOSPIN" option is deprecated, and currently never used */
-
   double chip_1 = sqrt(SQ(EOBPars->chi1x) + SQ(EOBPars->chi1y));
   double chip_2 = sqrt(SQ(EOBPars->chi2x) + SQ(EOBPars->chi2y));
   if (chip_1 + chip_2 > 1e-4){
@@ -510,6 +509,11 @@ void eob_set_params(int default_choice, int firstcall)
     }
     EOBPars->use_spins = MODE_SPINS_ALIGNED;
   }
+
+  /* Check: if precession and eccentricity are both specified, throw an error */
+  if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
+    errorexit("ERROR: Precession and eccentricity are not compatible. Please set one of them to zero.");
+
 
   EOBPars->nu = q_to_nu(q);
   EOBPars->X1 = nu_to_X1(EOBPars->nu);
