@@ -1242,12 +1242,28 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
   int iter = 0;
   const gsl_root_fsolver_type *T;
   gsl_root_fsolver *s;  
+  gsl_function F;
+
   double r0;
   double x_lo = 0.5*r0_kepl, x_hi = 1.5*r0_kepl;
-  gsl_function F;
-  
+  if (x_lo < 3.)  x_lo = 3.;
+  if (x_hi < 10.) x_hi = 10.;
   struct  Omegaecc0_tmp_params p = {omg_orb0,dyn};
   
+  /* Check that the bisection points straddle 0*/
+  /* if they do not, slowly decrease x_lo */
+  double f_xlo = eob_dyn_Omegaecc0(x_lo, &p);
+  double f_xhi = eob_dyn_Omegaecc0(x_hi, &p);
+  int  iter_r0 = 0;
+  if (VERBOSE) PRSECTN("Bisection for eccentric initial conditions\n");
+  while(f_xlo*f_xhi > 0. && iter_r0 < max_iter){
+    x_lo  *= 0.99;
+    f_xlo  = eob_dyn_Omegaecc0(x_lo, &p);
+    iter_r0++;
+    if (DEBUG) printf("\t iter %d: f(x_lo) = %e, x_lo = %e\n",iter_r0, f_xlo,x_lo);
+  }
+  if (VERBOSE) printf("f(x_lo) = %e, f(x_hi) = %e\n",f_xlo,f_xhi);
+
   F.function = &eob_dyn_Omegaecc0;
   F.params = &p;
   T = gsl_root_fsolver_bisection;
