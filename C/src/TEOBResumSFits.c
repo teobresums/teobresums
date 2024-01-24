@@ -98,12 +98,7 @@ double eob_a6c_fit_next(double nu)
  */
 double eob_a6c_fit_ecc_P33_4PNh22(double nu)
 {
-  const double p1 = -1544;
-  const double p2 =  693.93;
-  const double p3 = -366.83;
-  const double p4 = -27.61;
-  const double a6 = p4 + nu*(p3 + nu*(p2 + nu*p1));
-  return a6;
+  return -32.5953 - 269.4331*nu;
 }
 
 /**
