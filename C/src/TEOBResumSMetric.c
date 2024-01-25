@@ -1493,12 +1493,12 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
 
-  const double nu    = EOBPars->nu;
-  const double a1    = EOBPars->a1;
-  const double a2    = EOBPars->a2;
-  const double aK2   = EOBPars->aK2;
-  const double C_Q1  = EOBPars->C_Q1;
-  const double C_Q2  = EOBPars->C_Q2;
+  const double nu     = EOBPars->nu;
+  const double a1     = EOBPars->a1;
+  const double a2     = EOBPars->a2;
+  const double aK2    = EOBPars->aK2;
+  const double C_Q1   = EOBPars->C_Q1;
+  const double C_Q2   = EOBPars->C_Q2;
   const double C_Oct1 = EOBPars->C_Oct1;
   const double C_Oct2 = EOBPars->C_Oct2;
   const double C_Hex1 = EOBPars->C_Hex1;
@@ -1510,8 +1510,8 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
   const double u3  = u2*u;
   const double u4  = u2*u2;
   
-  double rc, drc, d2rc;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc, NULL);
+  double rc, drc, d2rc, d3rc;
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc, &d3rc);
 
   /* A potential and derivative with respect to u */  
   double Aorb, dAorb_u, d2Aorb_u;
