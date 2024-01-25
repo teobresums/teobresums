@@ -984,7 +984,7 @@ double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double
   double sqA,sqB;
   double ggm[26], G, dG_dr, dG_dprstar,d2G_dr2, d2G_dr_dprstar, d2G_dprstar2,
     d3G_dr2_dprstar, d3G_dr_dprstar2, d3G_dprstar3;
-  double  rc, drc_dr, d2rc_dr2, uc, uc2, uc3, uc4;
+  double  rc, drc_dr, d2rc_dr2, d3rc_dr3, uc, uc2, uc3, uc4;
   double H, Heff, Heff_orb, E, dHeff_dr, dHeff_dprstar, dHeff_dpphi, d2Heff_dr2, EHeff_orb;
   double Adot, prstardot, sqrtAbyBdot, dAbyrc2, d2Abyrc2, Omgdot_0, Heffdot, HSOdot, Edot,
     Heff_orbdot, EHeff_orbdot, Omgdot, Omg2dot, r2dot, r3dot, EHeff_orb2dot,
@@ -996,8 +996,8 @@ double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
     eob_metric_s(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &d2B, &Q, &dQ, &dQ_dprstar, &d2Q, &ddQ_drdprstar, &d2Q_dprstar2, &d3Q_dr2dprstar, &d3Q_drdprstar2, &d3Q_dprstar3);
-    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2);
-    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2, &d3rc_dr3);
+    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
     dG_dr           = ggm[6]*S   + ggm[7]*Sstar;
     dG_dprstar      = ggm[4]  *S + ggm[5]  *Sstar;
@@ -1039,7 +1039,7 @@ double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double
 
   /** Circular Hamiltonians, ref: arXiv: 1406.6913 */
   if(usespins) {
-    eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, Q, dQ, dQ_dprstar, d2Q, d2Q_dprstar2, &H, &Heff, &Heff_orb, &dHeff_dr, NULL, &dHeff_dpphi, NULL, NULL);
+    eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, d3rc_dr3, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, Q, dQ, dQ_dprstar, d2Q, d2Q_dprstar2, &H, &Heff, &Heff_orb, &dHeff_dr, NULL, &dHeff_dpphi, NULL, NULL);
     E = nu*H;
   } else {
     eob_ham(nu, r, pphi, prstar, A, dA, Q, dQ, dQ_dprstar,

@@ -261,6 +261,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* If f_min is too high fall back to a minimum acceptable initial radius */
   if ((ecc == 0.) && (r0 < TEOB_R0_THRESHOLD)) r0 = TEOB_R0_THRESHOLD;
 
+  r0 = 17.56;
+
   /* Saving initial radius */
   EOBPars->r0 = r0;
   
@@ -511,6 +513,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->Omg     = dyn->y0[EOB_ID_OMGJ];
     dyn->ddotr   = 0.; 
     dyn->prstar  = dyn->y0[EOB_ID_PRSTAR];
+    printf("prstar=%.16f, pphi=%.16f\n", dyn->prstar, dyn->pphi);
+    getchar();
     dyn->E       = dyn->y0[EOB_ID_E0];
     dyn->Omg_orb = 0.;//FIXME 
     dyn->y[EOB_EVOLVE_RAD]    = dyn->r;

@@ -215,7 +215,7 @@ double Pade62(double x, double *a){
   return pade;
 }
 
-void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], double u, double *P, double *DP, double *D2P)
+void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], double D3coeffs[5], double u, double *P, double *DP, double *D2P, double *D3P)
 {
   // Padé 3,3 of f[u] = 1 + c1 u + c2[u] u^2 + c3[u] u^3 + c4[u] u^4 + c5[u] u^5 + c6[u] u^6 
   // (functional form of the integer part of a1SF, d1SF, q1SF)
@@ -245,6 +245,12 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
   double d2c5 = D2coeffs[3];
   double d2c6 = D2coeffs[4];
 
+  double d3c2 = D3coeffs[0];
+  double d3c3 = D3coeffs[1];
+  double d3c4 = D3coeffs[2];
+  double d3c5 = D3coeffs[3];
+  double d3c6 = D3coeffs[4];
+
   // Powers of the coefficients
   double c1to2 = c1*c1;
   double c2to2 = c2*c2;
@@ -257,8 +263,11 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
   double c5to2 = c5*c5;
   // Powers of the derivatives
   double dc2to2 = dc2*dc2;
+  double dc2to3 = dc2to2*dc2;
   double dc3to2 = dc3*dc3;
+  double dc3to3 = dc3to2*dc3;
   double dc4to2 = dc4*dc4;
+  double dc4to3 = dc4to2*dc4;
   double dc5to2 = dc5*dc5;
 
   // Coefficients of the numerator + derivatives
@@ -268,6 +277,10 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
   double D2n0 = - 2.*c3*c4*d2c2 + 2.*c2*c5*d2c2 + 3.*c3to2*d2c3 - 2.*c2*c4*d2c3 - c1*c5*d2c3 - 2.*c2*c3*d2c4 + 2.*c1*c4*d2c4 
                 + c2to2*d2c5 - c1*c3*d2c5 + 2.*c5*dc2to2 - 4.*c4*dc2*dc3 + 6.*c3*dc3to2 - 4.*c3*dc2*dc4 - 4.*c2*dc3*dc4 
                 + 2.*c1*dc4to2 + 4.*c2*dc2*dc5 - 2.*c1*dc3*dc5;
+  double D3n0 = -2*c3*c4*d3c2 + 2*c2*c5*d3c2 + 3*c3to2*d3c3 - 2*c2*c4*d3c3 - c1*c5*d3c3 - 2*c2*c3*d3c4 + 2*c1*c4*d3c4 
+                + c2to2*d3c5 - c1*c3*d3c5 + 6*c5*d2c2*dc2 - 6*c4*d2c3*dc2 - 6*c3*d2c4*dc2 + 6*c2*d2c5*dc2 - 6*c4*d2c2*dc3 
+                + 18*c3*d2c3*dc3 - 6*c2*d2c4*dc3 - 3*c1*d2c5*dc3 + 6*dc3to3 - 6*c3*d2c2*dc4 - 6*c2*d2c3*dc4 + 6*c1*d2c4*dc4 
+                - 12*dc2*dc3*dc4 + 6*c2*d2c2*dc5 - 3*c1*d2c3*dc5 + 6*dc2to2*dc5;
   double n1   = c1*c3to3 - 2.*c1*c2*c3*c4 - c3to2*c4 + c1to2*c4to2 + c2*c4to2 + c1*c2to2*c5 - c1to2*c3*c5 + c2*c3*c5 
                 - c1*c4*c5 - c2to2*c6 + c1*c3*c6;
   double Dn1  = - 2.*c1*c3*c4*dc2 + c4to2*dc2 + 2.*c1*c2*c5*dc2 + c3*c5*dc2 - 2.*c2*c6*dc2 + 3.*c1*c3to2*dc3 - 2.*c1*c2*c4*dc3 
@@ -280,6 +293,16 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
                 + 2.*c5*dc2*dc3 + 6.*c1*c3*dc3to2 - 2.*c4*dc3to2 - 4.*c1*c3*dc2*dc4 + 4.*c4*dc2*dc4 - 4.*c1*c2*dc3*dc4 
                 - 4.*c3*dc3*dc4 + 2.*c1to2*dc4to2 + 2.*c2*dc4to2 + 4.*c1*c2*dc2*dc5 + 2.*c3*dc2*dc5 - 2.*c1to2*dc3*dc5 
                 + 2.*c2*dc3*dc5 - 2.*c1*dc4*dc5 - 4.*c2*dc2*dc6 + 2.*c1*dc3*dc6;
+  double D3n1 = -2*c1*c3*c4*d3c2 + c4to2*d3c2 + 2*c1*c2*c5*d3c2 + c3*c5*d3c2 - 2*c2*c6*d3c2 + 3*c1*c3to2*d3c3 - 2*c1*c2*c4*d3c3 
+                - 2*c3*c4*d3c3 - c1to2*c5*d3c3 + c2*c5*d3c3 + c1*c6*d3c3 - 2*c1*c2*c3*d3c4 - c3to2*d3c4 + 2*c1to2*c4*d3c4 
+                + 2*c2*c4*d3c4 - c1*c5*d3c4 + c1*c2to2*d3c5 - c1to2*c3*d3c5 + c2*c3*d3c5 - c1*c4*d3c5 - c2to2*d3c6 + c1*c3*d3c6 
+                + 6*c1*c5*d2c2*dc2 - 6*c6*d2c2*dc2 - 6*c1*c4*d2c3*dc2 + 3*c5*d2c3*dc2 - 6*c1*c3*d2c4*dc2 + 6*c4*d2c4*dc2 
+                + 6*c1*c2*d2c5*dc2 + 3*c3*d2c5*dc2 - 6*c2*d2c6*dc2 - 6*c1*c4*d2c2*dc3 + 3*c5*d2c2*dc3 + 18*c1*c3*d2c3*dc3 
+                - 6*c4*d2c3*dc3 - 6*c1*c2*d2c4*dc3 - 6*c3*d2c4*dc3 - 3*c1to2*d2c5*dc3 + 3*c2*d2c5*dc3 + 3*c1*d2c6*dc3 
+                + 6*c1*dc3to3 - 6*c1*c3*d2c2*dc4 + 6*c4*d2c2*dc4 - 6*c1*c2*d2c3*dc4 - 6*c3*d2c3*dc4 + 6*c1to2*d2c4*dc4 
+                + 6*c2*d2c4*dc4 - 3*c1*d2c5*dc4 - 12*c1*dc2*dc3*dc4 - 6*dc3to2*dc4 + 6*dc2*dc4to2 + 6*c1*c2*d2c2*dc5 
+                + 3*c3*d2c2*dc5 - 3*c1to2*d2c3*dc5 + 3*c2*d2c3*dc5 - 3*c1*d2c4*dc5 + 6*c1*dc2to2*dc5 + 6*dc2*dc3*dc5 
+                - 6*c2*d2c2*dc6 + 3*c1*d2c3*dc6 - 6*dc2to2*dc6;
   double n2   = c2*c3to3 - 2.*c2to2*c3*c4 - c1*c3to2*c4 + 2.*c1*c2*c4to2 + c3*c4to2 + c2to3*c5 - c3to2*c5 - c1to2*c4*c5 
                 - c2*c4*c5 + c1*c5to2 - c1*c2to2*c6 + c1to2*c3*c6 + c2*c3*c6 - c1*c4*c6;
   double Dn2  = c3to3*dc2 - 4.*c2*c3*c4*dc2 + 2.*c1*c4to2*dc2 + 3.*c2to2*c5*dc2 - c4*c5*dc2 - 2.*c1*c2*c6*dc2 + c3*c6*dc2 
@@ -296,6 +319,21 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
                 - 4.*c2to2*dc3*dc4 - 4.*c1*c3*dc3*dc4 + 4.*c4*dc3*dc4 + 4.*c1*c2*dc4to2 + 2.*c3*dc4to2 + 6.*c2to2*dc2*dc5 - 2.*c4*dc2*dc5 
                 - 4.*c3*dc3*dc5 - 2.*c1to2*dc4*dc5 - 2.*c2*dc4*dc5 + 2.*c1*dc5to2 - 4.*c1*c2*dc2*dc6 + 2.*c3*dc2*dc6 + 2.*c1to2*dc3*dc6 
                 + 2.*c2*dc3*dc6 - 2.*c1*dc4*dc6;
+  double D3n2 = c3to3*d3c2 - 4*c2*c3*c4*d3c2 + 2*c1*c4to2*d3c2 + 3*c2to2*c5*d3c2 - c4*c5*d3c2 - 2*c1*c2*c6*d3c2 + c3*c6*d3c2 
+                + 3*c2*c3to2*d3c3 - 2*c2to2*c4*d3c3 - 2*c1*c3*c4*d3c3 + c4to2*d3c3 - 2*c3*c5*d3c3 + c1to2*c6*d3c3 + c2*c6*d3c3 
+                - 2*c2to2*c3*d3c4 - c1*c3to2*d3c4 + 4*c1*c2*c4*d3c4 + 2*c3*c4*d3c4 - c1to2*c5*d3c4 - c2*c5*d3c4 - c1*c6*d3c4 
+                + c2to3*d3c5 - c3to2*d3c5 - c1to2*c4*d3c5 - c2*c4*d3c5 + 2*c1*c5*d3c5 - c1*c2to2*d3c6 + c1to2*c3*d3c6 + c2*c3*d3c6 
+                - c1*c4*d3c6 - 12*c3*c4*d2c2*dc2 + 18*c2*c5*d2c2*dc2 - 6*c1*c6*d2c2*dc2 + 9*c3to2*d2c3*dc2 - 12*c2*c4*d2c3*dc2 
+                + 3*c6*d2c3*dc2 - 12*c2*c3*d2c4*dc2 + 12*c1*c4*d2c4*dc2 - 3*c5*d2c4*dc2 + 9*c2to2*d2c5*dc2 - 3*c4*d2c5*dc2 
+                - 6*c1*c2*d2c6*dc2 + 3*c3*d2c6*dc2 + 6*c5*dc2to3 + 9*c3to2*d2c2*dc3 - 12*c2*c4*d2c2*dc3 + 3*c6*d2c2*dc3 
+                + 18*c2*c3*d2c3*dc3 - 6*c1*c4*d2c3*dc3 - 6*c5*d2c3*dc3 - 6*c2to2*d2c4*dc3 - 6*c1*c3*d2c4*dc3 + 6*c4*d2c4*dc3 
+                - 6*c3*d2c5*dc3 + 3*c1to2*d2c6*dc3 + 3*c2*d2c6*dc3 - 12*c4*dc2to2*dc3 + 18*c3*dc2*dc3to2 + 6*c2*dc3to3 
+                - 12*c2*c3*d2c2*dc4 + 12*c1*c4*d2c2*dc4 - 3*c5*d2c2*dc4 - 6*c2to2*d2c3*dc4 - 6*c1*c3*d2c3*dc4 + 6*c4*d2c3*dc4 
+                + 12*c1*c2*d2c4*dc4 + 6*c3*d2c4*dc4 - 3*c1to2*d2c5*dc4 - 3*c2*d2c5*dc4 - 3*c1*d2c6*dc4 - 12*c3*dc2to2*dc4 
+                - 24*c2*dc2*dc3*dc4 - 6*c1*dc3to2*dc4 + 12*c1*dc2*dc4to2 + 6*dc3*dc4to2 + 9*c2to2*d2c2*dc5 - 3*c4*d2c2*dc5 
+                - 6*c3*d2c3*dc5 - 3*c1to2*d2c4*dc5 - 3*c2*d2c4*dc5 + 6*c1*d2c5*dc5 + 18*c2*dc2to2*dc5 - 6*dc3to2*dc5 
+                - 6*dc2*dc4*dc5 - 6*c1*c2*d2c2*dc6 + 3*c3*d2c2*dc6 + 3*c1to2*d2c3*dc6 + 3*c2*d2c3*dc6 - 3*c1*d2c4*dc6 
+                - 6*c1*dc2to2*dc6 + 6*dc2*dc3*dc6;
   double n3   = c3to4 - 3.*c2*c3to2*c4 + c2to2*c4to2 + 2.*c1*c3*c4to2 - c4to3 + 2.*c2to2*c3*c5 - 2.*c1*c3to2*c5 - 2.*c1*c2*c4*c5 
                 + 2.*c3*c4*c5 + c1to2*c5to2 - c2*c5to2 - c2to3*c6 + 2.*c1*c2*c3*c6 - c3to2*c6 - c1to2*c4*c6 + c2*c4*c6;
   double Dn3  = - 3.*c3to2*c4*dc2 + 2.*c2*c4to2*dc2 + 4.*c2*c3*c5*dc2 - 2.*c1*c4*c5*dc2 - c5to2*dc2 - 3.*c2to2*c6*dc2 + 2.*c1*c3*c6*dc2 
@@ -314,6 +352,23 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
                 + 4.*c5*dc3*dc4 + 2.*c2to2*dc4to2 + 4.*c1*c3*dc4to2 - 6.*c4*dc4to2 + 8.*c2*c3*dc2*dc5 - 4.*c1*c4*dc2*dc5 - 4.*c5*dc2*dc5 
                 + 4.*c2to2*dc3*dc5 - 8.*c1*c3*dc3*dc5 + 4.*c4*dc3*dc5 - 4.*c1*c2*dc4*dc5 + 4.*c3*dc4*dc5 + 2.*c1to2*dc5to2 - 2.*c2*dc5to2 
                 - 6.*c2to2*dc2*dc6 + 4.*c1*c3*dc2*dc6 + 2.*c4*dc2*dc6 + 4.*c1*c2*dc3*dc6 - 4.*c3*dc3*dc6 - 2.*c1to2*dc4*dc6 + 2.*c2*dc4*dc6;
+  double D3n3 = -3*c3to2*c4*d3c2 + 2*c2*c4to2*d3c2 + 4*c2*c3*c5*d3c2 - 2*c1*c4*c5*d3c2 - c5to2*d3c2 - 3*c2to2*c6*d3c2 + 2*c1*c3*c6*d3c2 
+                + c4*c6*d3c2 + 4*c3to3*d3c3 - 6*c2*c3*c4*d3c3 + 2*c1*c4to2*d3c3 + 2*c2to2*c5*d3c3 - 4*c1*c3*c5*d3c3 + 2*c4*c5*d3c3 
+                + 2*c1*c2*c6*d3c3 - 2*c3*c6*d3c3 - 3*c2*c3to2*d3c4 + 2*c2to2*c4*d3c4 + 4*c1*c3*c4*d3c4 - 3*c4to2*d3c4 - 2*c1*c2*c5*d3c4 
+                + 2*c3*c5*d3c4 - c1to2*c6*d3c4 + c2*c6*d3c4 + 2*c2to2*c3*d3c5 - 2*c1*c3to2*d3c5 - 2*c1*c2*c4*d3c5 + 2*c3*c4*d3c5 
+                + 2*c1to2*c5*d3c5 - 2*c2*c5*d3c5 - c2to3*d3c6 + 2*c1*c2*c3*d3c6 - c3to2*d3c6 - c1to2*c4*d3c6 + c2*c4*d3c6 + 6*c4to2*d2c2*dc2 
+                + 12*c3*c5*d2c2*dc2 - 18*c2*c6*d2c2*dc2 - 18*c3*c4*d2c3*dc2 + 12*c2*c5*d2c3*dc2 + 6*c1*c6*d2c3*dc2 - 9*c3to2*d2c4*dc2 
+                + 12*c2*c4*d2c4*dc2 - 6*c1*c5*d2c4*dc2 + 3*c6*d2c4*dc2 + 12*c2*c3*d2c5*dc2 - 6*c1*c4*d2c5*dc2 - 6*c5*d2c5*dc2 - 9*c2to2*d2c6*dc2 
+                + 6*c1*c3*d2c6*dc2 + 3*c4*d2c6*dc2 - 6*c6*dc2to3 - 18*c3*c4*d2c2*dc3 + 12*c2*c5*d2c2*dc3 + 6*c1*c6*d2c2*dc3 + 36*c3to2*d2c3*dc3 
+                - 18*c2*c4*d2c3*dc3 - 12*c1*c5*d2c3*dc3 - 6*c6*d2c3*dc3 - 18*c2*c3*d2c4*dc3 + 12*c1*c4*d2c4*dc3 + 6*c5*d2c4*dc3 
+                + 6*c2to2*d2c5*dc3 - 12*c1*c3*d2c5*dc3 + 6*c4*d2c5*dc3 + 6*c1*c2*d2c6*dc3 - 6*c3*d2c6*dc3 + 12*c5*dc2to2*dc3 - 18*c4*dc2*dc3to2 
+                + 24*c3*dc3to3 - 9*c3to2*d2c2*dc4 + 12*c2*c4*d2c2*dc4 - 6*c1*c5*d2c2*dc4 + 3*c6*d2c2*dc4 - 18*c2*c3*d2c3*dc4 + 12*c1*c4*d2c3*dc4 
+                + 6*c5*d2c3*dc4 + 6*c2to2*d2c4*dc4 + 12*c1*c3*d2c4*dc4 - 18*c4*d2c4*dc4 - 6*c1*c2*d2c5*dc4 + 6*c3*d2c5*dc4 - 3*c1to2*d2c6*dc4 
+                + 3*c2*d2c6*dc4 + 12*c4*dc2to2*dc4 - 36*c3*dc2*dc3*dc4 - 18*c2*dc3to2*dc4 + 12*c2*dc2*dc4to2 + 12*c1*dc3*dc4to2 - 6*dc4to3 
+                + 12*c2*c3*d2c2*dc5 - 6*c1*c4*d2c2*dc5 - 6*c5*d2c2*dc5 + 6*c2to2*d2c3*dc5 - 12*c1*c3*d2c3*dc5 + 6*c4*d2c3*dc5 - 6*c1*c2*d2c4*dc5 
+                + 6*c3*d2c4*dc5 + 6*c1to2*d2c5*dc5 - 6*c2*d2c5*dc5 + 12*c3*dc2to2*dc5 + 24*c2*dc2*dc3*dc5 - 12*c1*dc3to2*dc5 - 12*c1*dc2*dc4*dc5 
+                + 12*dc3*dc4*dc5 - 6*dc2*dc5to2 - 9*c2to2*d2c2*dc6 + 6*c1*c3*d2c2*dc6 + 3*c4*d2c2*dc6 + 6*c1*c2*d2c3*dc6 - 6*c3*d2c3*dc6 
+                - 3*c1to2*d2c4*dc6 + 3*c2*d2c4*dc6 - 18*c2*dc2to2*dc6 + 12*c1*dc2*dc3*dc6 - 6*dc3to2*dc6 + 6*dc2*dc4*dc6;
 
   // Coefficients of the denominator + derivatives
   double d0   = c3to3 - 2.*c2*c3*c4 + c1*c4to2 + c2to2*c5 - c1*c3*c5;
@@ -322,12 +377,21 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
   double D2d0 = - 2.*c3*c4*d2c2 + 2.*c2*c5*d2c2 + 3.*c3to2*d2c3 - 2.*c2*c4*d2c3 - c1*c5*d2c3 - 2.*c2*c3*d2c4 + 2.*c1*c4*d2c4 
                 + c2to2*d2c5 - c1*c3*d2c5 + 2.*c5*dc2to2 - 4.*c4*dc2*dc3 + 6.*c3*dc3to2 - 4.*c3*dc2*dc4 - 4.*c2*dc3*dc4 
                 + 2.*c1*dc4to2 + 4.*c2*dc2*dc5 - 2.*c1*dc3*dc5;
+  double D3d0 = -2*c3*c4*d3c2 + 2*c2*c5*d3c2 + 3*c3to2*d3c3 - 2*c2*c4*d3c3 - c1*c5*d3c3 - 2*c2*c3*d3c4 + 2*c1*c4*d3c4 
+                + c2to2*d3c5 - c1*c3*d3c5 + 6*c5*d2c2*dc2 - 6*c4*d2c3*dc2 - 6*c3*d2c4*dc2 + 6*c2*d2c5*dc2 - 6*c4*d2c2*dc3 
+                + 18*c3*d2c3*dc3 - 6*c2*d2c4*dc3 - 3*c1*d2c5*dc3 + 6*dc3to3 - 6*c3*d2c2*dc4 - 6*c2*d2c3*dc4 + 6*c1*d2c4*dc4 
+                - 12*dc2*dc3*dc4 + 6*c2*d2c2*dc5 - 3*c1*d2c3*dc5 + 6*dc2to2*dc5;
   double d1   = - c3to2*c4 + c2*c4to2 + c2*c3*c5 - c1*c4*c5 - c2to2*c6 + c1*c3*c6;
   double Dd1  = c4to2*dc2 + c3*c5*dc2 - 2.*c2*c6*dc2 - 2.*c3*c4*dc3 + c2*c5*dc3 + c1*c6*dc3 - c3to2*dc4 + 2.*c2*c4*dc4 
                 - c1*c5*dc4 + c2*c3*dc5 - c1*c4*dc5 - c2to2*dc6 + c1*c3*dc6;
   double D2d1 = c4to2*d2c2 + c3*c5*d2c2 - 2.*c2*c6*d2c2 - 2.*c3*c4*d2c3 + c2*c5*d2c3 + c1*c6*d2c3 - c3to2*d2c4 + 2.*c2*c4*d2c4 
                 - c1*c5*d2c4 + c2*c3*d2c5 - c1*c4*d2c5 - c2to2*d2c6 + c1*c3*d2c6 - 2.*c6*dc2to2 + 2.*c5*dc2*dc3 - 2.*c4*dc3to2 
                 + 4.*c4*dc2*dc4 - 4.*c3*dc3*dc4 + 2.*c2*dc4to2 + 2.*c3*dc2*dc5 + 2.*c2*dc3*dc5 - 2.*c1*dc4*dc5 - 4.*c2*dc2*dc6 + 2.*c1*dc3*dc6;
+  double D3d1 = c4to2*d3c2 + c3*c5*d3c2 - 2*c2*c6*d3c2 - 2*c3*c4*d3c3 + c2*c5*d3c3 + c1*c6*d3c3 - c3to2*d3c4 + 2*c2*c4*d3c4 
+                - c1*c5*d3c4 + c2*c3*d3c5 - c1*c4*d3c5 - c2to2*d3c6 + c1*c3*d3c6 - 6*c6*d2c2*dc2 + 3*c5*d2c3*dc2 + 6*c4*d2c4*dc2 
+                + 3*c3*d2c5*dc2 - 6*c2*d2c6*dc2 + 3*c5*d2c2*dc3 - 6*c4*d2c3*dc3 - 6*c3*d2c4*dc3 + 3*c2*d2c5*dc3 + 3*c1*d2c6*dc3 
+                + 6*c4*d2c2*dc4 - 6*c3*d2c3*dc4 + 6*c2*d2c4*dc4 - 3*c1*d2c5*dc4 - 6*dc3to2*dc4 + 6*dc2*dc4to2 + 3*c3*d2c2*dc5 
+                + 3*c2*d2c3*dc5 - 3*c1*d2c4*dc5 + 6*dc2*dc3*dc5 - 6*c2*d2c2*dc6 + 3*c1*d2c3*dc6 - 6*dc2to2*dc6;
   double d2   = c3*c4to2 - c3to2*c5 - c2*c4*c5 + c1*c5to2 + c2*c3*c6 - c1*c4*c6;
   double Dd2  = - c4*c5*dc2 + c3*c6*dc2 + c4to2*dc3 - 2.*c3*c5*dc3 + c2*c6*dc3 + 2.*c3*c4*dc4 - c2*c5*dc4 - c1*c6*dc4 - c3to2*dc5 
                 - c2*c4*dc5 + 2.*c1*c5*dc5 + c2*c3*dc6 - c1*c4*dc6;
@@ -335,31 +399,45 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
                 - c3to2*d2c5 - c2*c4*d2c5 + 2.*c1*c5*d2c5 + c2*c3*d2c6 - c1*c4*d2c6 + 2.*c6*dc2*dc3 - 2.*c5*dc3to2 - 2.*c5*dc2*dc4 
                 + 4.*c4*dc3*dc4 + 2.*c3*dc4to2 - 2.*c4*dc2*dc5 - 4.*c3*dc3*dc5 - 2.*c2*dc4*dc5 + 2.*c1*dc5to2 + 2.*c3*dc2*dc6 
                 + 2.*c2*dc3*dc6 - 2.*c1*dc4*dc6;
+  double D3d2 = -c4*c5*d3c2 + c3*c6*d3c2 + c4to2*d3c3 - 2*c3*c5*d3c3 + c2*c6*d3c3 + 2*c3*c4*d3c4 - c2*c5*d3c4 - c1*c6*d3c4 
+                - c3to2*d3c5 - c2*c4*d3c5 + 2*c1*c5*d3c5 + c2*c3*d3c6 - c1*c4*d3c6 + 3*c6*d2c3*dc2 - 3*c5*d2c4*dc2 - 3*c4*d2c5*dc2 
+                + 3*c3*d2c6*dc2 + 3*c6*d2c2*dc3 - 6*c5*d2c3*dc3 + 6*c4*d2c4*dc3 - 6*c3*d2c5*dc3 + 3*c2*d2c6*dc3 - 3*c5*d2c2*dc4 
+                + 6*c4*d2c3*dc4 + 6*c3*d2c4*dc4 - 3*c2*d2c5*dc4 - 3*c1*d2c6*dc4 + 6*dc3*dc4to2 - 3*c4*d2c2*dc5 - 6*c3*d2c3*dc5 - 3*c2*d2c4*dc5 
+                + 6*c1*d2c5*dc5 - 6*dc3to2*dc5 - 6*dc2*dc4*dc5 + 3*c3*d2c2*dc6 + 3*c2*d2c3*dc6 - 3*c1*d2c4*dc6 + 6*dc2*dc3*dc6;
   double d3   = - c4to3 + 2.*c3*c4*c5 - c2*c5to2 - c3to2*c6 + c2*c4*c6;
   double Dd3  = - c5to2*dc2 + c4*c6*dc2 + 2.*c4*c5*dc3 - 2.*c3*c6*dc3 - 3.*c4to2*dc4 + 2.*c3*c5*dc4 + c2*c6*dc4 + 2.*c3*c4*dc5 
                 - 2.*c2*c5*dc5 - c3to2*dc6 + c2*c4*dc6;
   double D2d3 = - c5to2*d2c2 + c4*c6*d2c2 + 2.*c4*c5*d2c3 - 2.*c3*c6*d2c3 - 3.*c4to2*d2c4 + 2.*c3*c5*d2c4 + c2*c6*d2c4 + 2.*c3*c4*d2c5 
                 - 2.*c2*c5*d2c5 - c3to2*d2c6 + c2*c4*d2c6 - 2.*c6*dc3to2 + 2.*c6*dc2*dc4 + 4.*c5*dc3*dc4 - 6.*c4*dc4to2 - 4.*c5*dc2*dc5 
                 + 4.*c4*dc3*dc5 + 4.*c3*dc4*dc5 - 2.*c2*dc5to2 + 2.*c4*dc2*dc6 - 4.*c3*dc3*dc6 + 2.*c2*dc4*dc6;
+  double D3d3 = -c5to2*d3c2 + c4*c6*d3c2 + 2*c4*c5*d3c3 - 2*c3*c6*d3c3 - 3*c4to2*d3c4 + 2*c3*c5*d3c4 + c2*c6*d3c4 + 2*c3*c4*d3c5 
+                - 2*c2*c5*d3c5 - c3to2*d3c6 + c2*c4*d3c6 + 3*c6*d2c4*dc2 - 6*c5*d2c5*dc2 + 3*c4*d2c6*dc2 - 6*c6*d2c3*dc3 + 6*c5*d2c4*dc3 
+                + 6*c4*d2c5*dc3 - 6*c3*d2c6*dc3 + 3*c6*d2c2*dc4 + 6*c5*d2c3*dc4 - 18*c4*d2c4*dc4 + 6*c3*d2c5*dc4 + 3*c2*d2c6*dc4 - 6*dc4to3 
+                - 6*c5*d2c2*dc5 + 6*c4*d2c3*dc5 + 6*c3*d2c4*dc5 - 6*c2*d2c5*dc5 + 12*dc3*dc4*dc5 - 6*dc2*dc5to2 + 3*c4*d2c2*dc6 - 6*c3*d2c3*dc6 
+                + 3*c2*d2c4*dc6 - 6*dc3to2*dc6 + 6*dc2*dc4*dc6;
 
   double Num   = n0 + n1*u + n2*u2 + n3*u3;
   double dNum  = Dn0 + n1 + Dn1*u + 2.*n2*u + Dn2*u2 + 3.*n3*u2 + Dn3*u3;
   double d2Num = D2n0 + 2.*Dn1 + 2.*n2 + D2n1*u + 4.*Dn2*u + 6.*n3*u + D2n2*u2 + 6.*Dn3*u2 + D2n3*u3;
+  double d3Num = 3*D2n1 + D3n0 + 6*Dn2 + 6*n3 + 6*D2n2*u + D3n1*u + 18*Dn3*u + 9*D2n3*u2 + D3n2*u2 + D3n3*u3;
   double Den   = d0 + d1*u + d2*u2 + d3*u3;
   double dDen  = d1 + Dd0 + 2.*d2*u + Dd1*u + 3.*d3*u2 + Dd2*u2 + Dd3*u3;
   double d2Den = 2.*d2 + D2d0 + 2.*Dd1 + D2d1*u + 6.*d3*u + 4.*Dd2*u + D2d2*u2 + 6.*Dd3*u2 + D2d3*u3;
+  double d3Den = 3*D2d0 + 6*d3 + D3d0 + 6*Dd2 + 6*D2d2*u + D3d0*u + 18*Dd3*u + 9*D2d2*u2 + D3d2*u2 + D3d2*u3;
 
   double dNumDen = dNum*Den - Num*dDen; 
   double Den2    = Den*Den;
   double Den3    = Den2*Den;
+  double Den4    = Den3*Den;
 
   *P   = Num/Den;
   *DP  = dNumDen/Den2;
   *D2P = (Den*(d2Num*Den - Num*d2Den) - 2.*dDen*dNumDen)/Den3;
+  *D3P = (-Num*(6*dDen*(dDen*dDen - Den*d2Den) + Den2*d3Den) + Den*(dDen*(6.*dDen*dNum - 3.*Den*d2Num) + Den*(-3*dNum*d2Den + Den*d3Num)))/Den4;
 
 }
 
-void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], double u, double *P, double *DP, double *D2P)
+void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], double D3coeffs[2], double u, double *P, double *DP, double *D2P, double *D3P)
 {
 
   // Padé 7,6 of f[v] = 1 + c1 v^7 + c2 v^9 + c3[v] v^11 + c4[v] v^13  (where v = sqrt(u))
@@ -371,9 +449,10 @@ void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], do
   double u4    = u3*u;
   double u5    = u4*u;
   double u6    = u5*u;
-  double u3by2 = sqrt(u3);
-  double u5by2 = sqrt(u5);
-  double u7by2 = sqrt(u6*u);
+  double sqrtu = sqrt(u);
+  double u3by2 = u*sqrt(u); 
+  double u5by2 = u*u3by2; 
+  double u7by2 = u*u5by2; 
 
   // Coefficients of the Taylor-expanded function + derivatives of c3, c4
 
@@ -388,6 +467,9 @@ void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], do
   double d2c3 = D2coeffs[0];
   double d2c4 = D2coeffs[1];
 
+  double d3c3 = D3coeffs[0];
+  double d3c4 = D3coeffs[1];
+
   // Powers
   double c1to2 = c1*c1;
   double c1to3 = c1to2*c1;
@@ -401,9 +483,11 @@ void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], do
   double n2    =  c1*c2to2 - c1to2*c3;
   double Dn2   = -c1to2*dc3;
   double D2n2  = -c1to2*d2c3;
+  double D3n2  = -c1to2*d3c3;
   double n3    = -c2to3 + 2*c1*c2*c3 - c1to2*c4;
   double Dn3   =  2*c1*c2*dc3 - c1to2*dc4;
   double D2n3  =  2*c1*c2*d2c3 - c1to2*d2c4;
+  double D3n3  =  2*c1*c2*d3c3 - c1to2*d3c4;
   double n7by2 =  c1to4;
 
   // Coefficients of the denominator + derivatives
@@ -412,24 +496,30 @@ void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], do
   double d2   = n2;
   double Dd2  = Dn2;
   double D2d2 = D2n2;
+  double D3d2 = D3n2;
   double d3   = n3;
   double Dd3  = Dn3;
   double D2d3 = D2n3;
+  double D3d3 = D3n3;
 
   double Num   = n0 + n1*u + n2*u2 + n3*u3 + n7by2*u7by2;
   double dNum  = n1 + 2.*n2*u + Dn2*u2 + 3.*n3*u2 + Dn3*u3 + 0.5*(7.*n7by2*u5by2);
   double d2Num = 2.*n2 + 4.*Dn2*u + 6.*n3*u + D2n2*u2 + 6.*Dn3*u2 + D2n3*u3 + 0.25*(35.*n7by2*u3by2);
+  double d3Num = 6*Dn2 + 6*n3 + (105*n7by2*sqrtu)/8. + 6*D2n2*u + 18*Dn3*u + 9*D2n3*u2 + D3n2*u2 + D3n3*u3;
   double Den   = d0 + d1*u + d2*u2 + d3*u3;
   double dDen  = d1 + 2.*d2*u + 3.*d3*u2 + Dd2*u2 + Dd3*u3;
   double d2Den = 2.*d2 + 6.*d3*u + 4*Dd2*u + D2d2*u2 + 6.*Dd3*u2 + D2d3*u3;
+  double d3Den = 6*d3 + 6*Dd2 + 6*D2d2*u + 18*Dd3*u + 9*D2d3*u2 + D3d2*u2 + D3d3*u3;
 
   double dNumDen = dNum*Den - Num*dDen; // (Num*Den)'
   double Den2    = Den*Den;
   double Den3    = Den2*Den;
+  double Den4    = Den3*Den;
 
   *P   = Num/Den;
   *DP  = dNumDen/Den2;
   *D2P = (Den*(d2Num*Den - Num*d2Den) - 2.*dDen*dNumDen)/Den3;
+  *D3P = (-Num*(6*dDen*(dDen*dDen - Den*d2Den) + Den2*d3Den) + Den*(dDen*(6.*dDen*dNum - 3.*Den*d2Num) + Den*(-3*dNum*d2Den + Den*d3Num)))/Den4;
 
 }
 

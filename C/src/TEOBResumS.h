@@ -753,8 +753,8 @@ double Pade42(double x, double *a);
 double Pade33(double x, double *a);
 double Pade15(double x, double *a);
 double Pade62(double x, double *a);
-void Pade33_forGSF(double coeffs[6], double Dcoeffs[6], double D2coeffs[6], double u, double *P, double *DP, double *D2P);
-void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], double u, double *P, double *DP, double *D2P);
+void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], double D3coeffs[5], double u, double *P, double *DP, double *D2P, double *D3P);
+void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], double D3coeffs[2], double u, double *P, double *DP, double *D2P, double *D3P);
 void Pade76v2_forGSF(double coeffs[5], double Dcoeffs[3], double D2coeffs[3], double u, double *P, double *DP, double *D2P);
 double Taylorseries(double x, double *a, int N);
 void vect_dot(double ax, double ay, double az, double bx, double by, double bz, double *s);
@@ -938,20 +938,22 @@ void eob_ham(double nu, double r, double pphi, double prstar, double A, double d
 	           double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *params);
-void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double Q, double dQ, double dQ_dprstar, double d2Q, double d2Q_dprstar2,
+void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double d3rc_dr3, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double Q, double dQ, double dQ_dprstar, double d2Q, double d2Q_dprstar2,
                double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
 
 extern void (*eob_dyn_s_GS)(); /* defined in TEOBResumSPars.c*/
-void eob_dyn_s_GS_DJS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]);
-void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]);
+void eob_dyn_s_GS_DJS(double r, double rc, double drc_dr, double d2rc_rd2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]);
+void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_rd2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]);
+void eob_GSsKerr(double r, double rc, double drc_dr, double d2rc_dr2, double d3rc_dr3, double aK2, double A, double dA, double d2A, double d3A, double B, double dB, double d2B, double pph, double prstar, double nu, 
+                 double *GSs, double *dGSs_dr, double *dGSs_dpph, double *dGSs_dprstar, double *dGSs_dprstarbyprstar, double *d2GSs_dr2, double *d2GSs_dprstar2, double *d2GSs_drdprstar, double *d3GSs_dprstar3, double *d3GSs_dr2dprstar, double *d3GSs_drdprstar2); 
 
 extern void (*eob_dyn_s_get_rc)(); /* defined in TEOBResumSPars.c*/
-void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
-void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_LO(double r, double nu, double at1, double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2, double *d3rc_dr3);
+void eob_dyn_s_get_rc_NLO(double r, double nu, double at1, double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2, double *d3rc_dr3);
+void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1, double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2, double *d3rc_dr3);
+void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1, double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2, double *d3rc_dr3);
+void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1, double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2, double *d3rc_dr3);
+void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1, double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2, double *d3rc_dr3);
 void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double u, double at1, double at2, double *drc_dr, double *d2rc_dr2);
 double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn);
 double eob_dyn_fLR(double r, void * params);
@@ -1002,9 +1004,9 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 extern void (*eob_metric_Apotential)(); /* defined in TEOBResumSPars.c*/
 extern void (*eob_metric_Dpotential)(); /* defined in TEOBResumSPars.c*/
 extern void (*eob_metric_Qpotential)(); /* defined in TEOBResumSPars.c*/
-void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
-void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A);
-void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A);
+void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A, double *d3A);
+void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A, double *d3A);
+void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A, double *d3A);
 void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);

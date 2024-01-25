@@ -35,7 +35,7 @@
     and a6 \equiv a6(nu) = (-110.5 + 129*(1-4*nu))*(1-1.5e-5/((0.26-nu)^2)
     as obtained from comparison with the Caltech-Cornell-CITA numerical data.
    These values are used as default. */
-void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
+void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A, double *d3A)
 {
 
   /* shortcuts */
@@ -121,11 +121,21 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
     /* *d2A = u4*d2A_u + 2.*u3*dA_u; */
     
   }
+
+  if (d3A != NULL){
+
+    *d3A = 0.; 
+    /* only defined for AGSF since it is needed for the higher order derivatives of GSs_Kerr, 
+    that is used as prefactor for GS* only when the code is running for large mass ratios. */
+
+  }
+  
+
 }
 
 /** EOB Metric A function GSF-informed */
 
-void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
+void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A, double *d3A)
 {
 
   /* shortcuts */
@@ -140,13 +150,14 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
   double logu2   = logu*logu;
   double onebyu  = r;
   double onebyu2 = r*r;
+  double onebyu3 = onebyu2*r;
 
   /* The a function is factorized into two pieces:
   integer and tail part (semi-integer powers of u) */
 
   /* Integer part */
-  double ResumInt, dResumInt, d2ResumInt;
-  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
+  double ResumInt, dResumInt, d2ResumInt, d3ResumInt;
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5], D3coeffs_int[5];
 
   // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
 
@@ -183,11 +194,17 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
   D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
   D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
 
-  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+  D3coeffs_int[0] = 2.*k2b*onebyu3;
+  D3coeffs_int[1] = 2.*k3b*onebyu3;
+  D3coeffs_int[2] = 2.*k4b*onebyu3;
+  D3coeffs_int[3] = 2.*k5b*onebyu3 + k5c*(-6.*onebyu3 + 4.*logu*onebyu3);
+  D3coeffs_int[4] = 2.*k6b*onebyu3 + k6c*(-6.*onebyu3 + 4.*logu*onebyu3);
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, D3coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt, &d3ResumInt);
 
   /* Tail part */
-  double ResumTail, dResumTail, d2ResumTail;
-  double coeffs_tail[4], Dcoeffs_tail[2], D2coeffs_tail[2];
+  double ResumTail, dResumTail, d2ResumTail, d3ResumTail;
+  double coeffs_tail[4], Dcoeffs_tail[2], D2coeffs_tail[2], D3coeffs_tail[2];
 
   double j1  =  40.97833617482458;
   double j2  = -601.9566375425603;
@@ -208,32 +225,52 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
   D2coeffs_tail[0] = -j3b*onebyu2;
   D2coeffs_tail[1] = -j4b*onebyu2;
 
-  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
+  D3coeffs_tail[0] = 2.*j3b*onebyu3;
+  D3coeffs_tail[1] = 2.*j4b*onebyu3;
+
+  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, D3coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail, &d3ResumTail);
 
   /* a1SF function purely analytical + derivatives wrt to u */
   double a1SF_tmp     = ResumInt*ResumTail;
   double da1SF_u_tmp  = dResumInt*ResumTail + ResumInt*dResumTail; 
   double d2a1SF_u_tmp = d2ResumInt*ResumTail + 2*dResumInt*dResumTail + ResumInt*d2ResumTail;
+  double d3a1SF_u_tmp = d3ResumInt*ResumTail + 3.*d2ResumInt*dResumTail + 3.*dResumInt*d2ResumTail + ResumInt*d3ResumTail; 
 
   /* GSF-informed correction and improved functions */
   double f1SF     = 1 + (963.4328658734496 + (811.3827589325526 - 205.25579381038455*logu)*logu)*u7;
   double df1SF_u  = (7555.4128200467 + (5269.167724907099 - 1436.7905566726918*logu)*logu)*u6; 
   double d2f1SF_u = (50601.6446451873 + (28741.42523609721 - 8620.743340036151*logu)*logu)*u5;
+  double d3f1SF_u = (281749.6484620337 + (126465.63950041376 - 43103.716700180754*logu)*logu)*u4; 
 
   double a1SF     = a1SF_tmp*f1SF;
   double da1SF_u  = da1SF_u_tmp*f1SF + a1SF_tmp*df1SF_u;
   double d2a1SF_u = d2a1SF_u_tmp*f1SF + 2.*df1SF_u*da1SF_u_tmp + d2f1SF_u*a1SF_tmp;
+  double d3a1SF_u = d3a1SF_u_tmp*f1SF + 3.*d2f1SF_u*da1SF_u_tmp + 3.*df1SF_u*d2a1SF_u_tmp + d3f1SF_u*a1SF_tmp;
 
   /* Schwarzschild Hamiltonian & derivatives */
-  double Hschw     = (1. - 2.*u)/sqrt(1. - 3.*u);
-  double dHschw_u  = -2./sqrt(1. - 3.*u) + (3.*(1. - 2.*u))/(2.*pow(1. - 3.*u, 1.5));
-  double d2Hschw_u = -6./pow(1. - 3.*u, 1.5) + (27.*(1. - 2.*u))/(4.*pow(1. - 3.*u, 2.5));
+  double sqrt1m3u  = sqrt(1. - 3.*u);
+  double sqrt1m3u3 = (1. - 3.*u)*sqrt1m3u; // (1 - 3u)^3/2
+  double sqrt1m3u5 = (1. - 3.*u)*sqrt1m3u3; // (1 - 3u)^5/2
+  double Hschw     = (1. - 3.*u)/sqrt1m3u;
+  double dHschw_u  = -2./sqrt1m3u + (3.*(1. - 2.*u))/(2.*sqrt1m3u3);
+  double d2Hschw_u = -6./sqrt1m3u3 + (27.*(1. - 2.*u))/(4.*sqrt1m3u5);
+  double d3Hschw_u = -81/(2.*sqrt1m3u5) + (405*(1 - 2*u))/(8.*sqrt1m3u5*(1 - 3.*u)); 
 
   /* A potential and derivatives wrt to u */
+  double dHa  = dHschw_u*a1SF + Hschw*da1SF_u; // d(Hschw*a1SF)/du
+  double d2Ha = d2Hschw_u*a1SF + 2.*dHschw_u*da1SF_u + Hschw*d2a1SF_u;
+  double d3Ha = d3Hschw_u*a1SF + 3.*d2Hschw_u*da1SF_u + 3.*dHschw_u*d2a1SF_u + Hschw*d3a1SF_u;
   *A   = 1. - 2.*u + 2.*nu*u3*Hschw*a1SF;
-  *dA  = -2. + 6.*nu*u2*a1SF*Hschw + 2.*nu*u3*dHschw_u*a1SF + 2.*nu*u3*Hschw*da1SF_u;
-  *d2A = da1SF_u*(12.*u2*nu*Hschw + 2.*nu*u3*dHschw_u) + 2.*nu*u3*Hschw*d2a1SF_u + 2.*nu*u3*dHschw_u*da1SF_u + 
-         a1SF*(12.*nu*u*Hschw + 12.*nu*u2*dHschw_u + 2.*nu*u3*d2Hschw_u);
+  *dA  = -2. + 6.*nu*u2*a1SF*Hschw + 2.*nu*u3*dHa;
+  *d2A = 2.*nu*u*(6.*a1SF*Hschw + 6.*u*dHa + u2*d2Ha);
+  *d3A = 2.*nu*(6.*a1SF*Hschw + u*(18.*dHa + 9.*u*d2Ha + u2*d3Ha)); 
+
+  /* *d2A = da1SF_u*(12.*u2*nu*Hschw + 2.*nu*u3*dHschw_u) + 2.*nu*u3*Hschw*d2a1SF_u + 2.*nu*u3*dHschw_u*da1SF_u + 
+            a1SF*(12.*nu*u*Hschw + 12.*nu*u2*dHschw_u + 2.*nu*u3*d2Hschw_u); */
+
+  // debug
+  printf("A=%.16f, dA=%.16f, d2A=%.16f, d3A=%.16f\n", *A, *dA, *d2A, *d3A);
+  getchar();
 
 }
 
@@ -243,7 +280,7 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
   (Pade coefficients already computed in matlab)
   (2108.02043 and refs. therein)
 */
-void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A)
+void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A, double *d3A)
 {
 
   /* shortcuts */
@@ -328,6 +365,11 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   *A   =  1-2*u + 2*nu*u3*anu;
   *dA  =  dA_du;
   *d2A =  d2A_du;
+
+  *d3A = 0.; 
+  /* only defined for AGSF since it is needed for the higher order derivatives of GSs_Kerr, 
+  that is used as prefactor for GS* only when the code is running for large mass ratios. */
+
 }
 
 
@@ -380,7 +422,7 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
 
   /* Integer part */
   double ResumInt, dResumInt, d2ResumInt;
-  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5], D3coeffs_int[5];
 
   // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
 
@@ -417,11 +459,13 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
   D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
   D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
 
-  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+  for (int k=0; k<5; k++) D3coeffs_int[k] = 0.; // third derivative not needed here
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, D3coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt, NULL);
 
   /* Tail part */
   double ResumTail, dResumTail, d2ResumTail;
-  double coeffs_tail[4], Dcoeffs_tail[2], D2coeffs_tail[2];
+  double coeffs_tail[4], Dcoeffs_tail[2], D2coeffs_tail[2], D3coeffs_tail[2];
  
   // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
 
@@ -443,7 +487,9 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
   D2coeffs_tail[0] = -j3b*onebyu2;
   D2coeffs_tail[1] = -j4b*onebyu2;
 
-  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail);
+  for (int k=0; k<2; k++) D3coeffs_tail[k] = 0.; // third derivative not needed here
+
+  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, D3coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail, NULL);
 
   /* a1SF function purely analytical + derivatives wrt to u */
   double d1SF_tmp     = ResumInt*ResumTail;
@@ -663,7 +709,7 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 
   /* Integer part */
   double ResumInt, dResumInt, d2ResumInt;
-  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5];
+  double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5], D3coeffs_int[5];
 
   // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
 
@@ -701,7 +747,9 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
   D2coeffs_int[3] = -k5b*onebyu2 + k5c*(2.*onebyu2 - 2.*logu*onebyu2);
   D2coeffs_int[4] = -k6b*onebyu2 + k6c*(2.*onebyu2 - 2.*logu*onebyu2);
 
-  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt);
+  for (int k=0; k<5; k++) D3coeffs_int[k] = 0.; // third derivative not needed here
+
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, D3coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt, NULL);
 
   /* Tail part */
   double ResumTail, dResumTail, d2ResumTail;
@@ -1389,7 +1437,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
          d3Qtmp_dr2dprstar= 0., d3Qtmp_drdprstar2=0., d3Qtmp_dprstar3=0.;
 
   /* A potential and derivative with respect to u */  
-  eob_metric_Apotential(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u);
+  eob_metric_Apotential(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u, NULL);
 
   /* Add here tides if needed */
   if (EOBPars->use_tidal) {
@@ -1463,11 +1511,11 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
   const double u4  = u2*u2;
   
   double rc, drc, d2rc;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc);
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc, NULL);
 
   /* A potential and derivative with respect to u */  
   double Aorb, dAorb_u, d2Aorb_u;
-  eob_metric_Apotential(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u);
+  eob_metric_Apotential(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u, NULL);
 
   /* Add here tides if needed */
   if (usetidal) {

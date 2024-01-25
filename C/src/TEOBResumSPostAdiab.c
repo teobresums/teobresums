@@ -137,8 +137,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     if(usespins){ 
       
       eob_metric_s(dyn->r, 0., dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold, &pl_hold, &Q_vec[i], &dQ_vec[i], &dQdprstar_vec[i], &pl_hold, &pl_hold, &d2Qdprstar2_vec[i], &pl_hold, &pl_hold, &pl_hold);
-      eob_dyn_s_get_rc(dyn->r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
-      eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], pl_hold, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+      eob_dyn_s_get_rc(dyn->r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold, &pl_hold);
+      eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], 0.0, 0.0, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
       
       G                         = ggm[2] *EOBPars->S+ggm[3] *EOBPars->Sstar;    // tildeG = GS*S+GSs*Ss
       dG_dr_vec[i]              = ggm[6] *EOBPars->S+ggm[7] *EOBPars->Sstar;
@@ -213,7 +213,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     /** Circular Hamiltonians, ref: arXiv: 1406.6913 */
     if(usespins) {
       
-      eob_ham_s(nu, dyn->r, rc_vec[i], drc_dr_vec[i], 0., dyn->pphi, dyn->prstar, EOBPars->S, EOBPars->Sstar, chi1, chi2, X1, X2, EOBPars->aK2, c3, A_vec[i], dA_vec[i], 0., Q_vec[i], dQ_vec[i], dQdprstar_vec[i], 0., d2Qdprstar2_vec[i],
+      eob_ham_s(nu, dyn->r, rc_vec[i], drc_dr_vec[i], 0., 0., dyn->pphi, dyn->prstar, EOBPars->S, EOBPars->Sstar, chi1, chi2, X1, X2, EOBPars->aK2, c3, A_vec[i], dA_vec[i], 0., Q_vec[i], dQ_vec[i], dQdprstar_vec[i], 0., d2Qdprstar2_vec[i],
                 &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
                 &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu)       */
                 &Heff_orb_vec[i],
@@ -308,8 +308,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
           &EOBPars->S, &EOBPars->Sstar);
 
         /* recompute rc and related quantities*/
-        eob_dyn_s_get_rc(dyn->r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
-        eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], pl_hold, EOBPars->aK2, dyn->prstar, dyn->pphi, nu, chi1, chi2, X1, X2, c3, ggm);
+        eob_dyn_s_get_rc(dyn->r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold, &pl_hold);
+        eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], 0.0, 0.0, EOBPars->aK2, dyn->prstar, dyn->pphi, nu, chi1, chi2, X1, X2, c3, ggm);
       
         G                         = ggm[2] *EOBPars->S+ggm[3] *EOBPars->Sstar;    // tildeG = GS*S+GSs*Ss
         dG_dr_vec[i]              = ggm[6] *EOBPars->S+ggm[7] *EOBPars->Sstar;
@@ -386,7 +386,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
         */
  
         /** New GGM functions */
-        eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], pl_hold, EOBPars->aK2, dyn->prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+        eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], 0.0, 0.0, EOBPars->aK2, dyn->prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
         
         dG_dr_vec[i]              = ggm[6] *EOBPars->S+ggm[7] *EOBPars->Sstar;
         dG_dprstar_vec[i]         = ggm[4] *EOBPars->S+ggm[5] *EOBPars->Sstar;
@@ -418,7 +418,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
       /** New Hamiltonians */
       if(usespins) {
         
-        eob_ham_s(nu, dyn->r, rc_vec[i], drc_dr_vec[i], 0., dyn->pphi, dyn->prstar, EOBPars->S, EOBPars->Sstar, chi1, chi2, X1, X2, EOBPars->aK2, c3, A_vec[i], dA_vec[i], 0., Q_vec[i], dQ_vec[i], dQdprstar_vec[i], 0., d2Qdprstar2_vec[i],
+        eob_ham_s(nu, dyn->r, rc_vec[i], drc_dr_vec[i], 0., 0., dyn->pphi, dyn->prstar, EOBPars->S, EOBPars->Sstar, chi1, chi2, X1, X2, EOBPars->aK2, c3, A_vec[i], dA_vec[i], 0., Q_vec[i], dQ_vec[i], dQdprstar_vec[i], 0., d2Qdprstar2_vec[i],
                   &H,               /* real EOB Hamiltonian divided by mu=m1m2/(m1+m2) */
                   &Heff_vec[i],     /* effective EOB Hamiltonian (divided by mu). Heff coincides with Heff_orb for the non-spinning case */
                   &Heff_orb_vec[i],
