@@ -106,12 +106,14 @@ void EOBParameters_free (EOBParameters *eobp)
  *   Defaults should match parameters for prod runs
  * 
  *   @param[in] choose: default choice for binary type
- *   @param[in] orbit: default choice for orbit type (quasi-circ or generic)
+ *   @param[in] model: default choice for model (Giotto or Dalì)
  *   @param[in,out] eobp: pointer to EOBParameters structure
 */
-void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
+void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 {
   eobp->domain = DOMAIN_TD;
+
+  eobp->model = model;
   
   eobp->M = 1.;
   eobp->q = 1.;
@@ -164,8 +166,8 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
 
   eobp->dt_merger_interp = 0.5;
 
-  eobp->interp_uniform_grid = 0; //INTERP_UNIFORM_GRID_HPC;
-  eobp->dt_interp = 0.5;
+  eobp->interp_uniform_grid = 0;
+  eobp->dt_interp    = 0.5;
   eobp->srate_interp = 4096.;
 
   int hlm[] = {1};      //indexes of multipoles to use
@@ -381,8 +383,8 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
     eobp->centrifugal_radius        = CENTRAD_NLO;
     eobp->nqc                       = NQC_AUTO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
-
-    if (orbit == 0) {  
+    
+    if (model == MODEL_GIOTTO) {  
       // quasi-circular BBH defaults
       eobp->use_flm        = USEFLM_HM;
       eobp->use_a6c_fits   = a6c_fits_HM_2023;
@@ -391,7 +393,7 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
       eobp->A_pot          = A_5PNlog; 
       eobp->D_pot          = D_3PN;
       eobp->Q_pot          = Q_3PN; 
-    } else if (orbit == 1) {
+    } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
       eobp->use_flm        = USEFLM_HM_4PN22;
       eobp->use_a6c_fits   = a6c_fits_P33_HM4PN22;
@@ -401,7 +403,7 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
       eobp->D_pot          = D_5PNP32;
       eobp->Q_pot          = Q_5PNloc; 
     } else {
-      errorexit("Unknown orbit kind specified.");
+      errorexit("Unknown BBH model specified.");
     }
 
   } else if (binary == BINARY_BNS) {
@@ -434,8 +436,7 @@ void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp)
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;//TIDES_GM_PN;
     eobp->use_lambda234_fits        = Lambda234_fits_YAGI13;
   }
-
-  else errorexit("Unknown default parameter choice.");
+  else errorexit("Unknown default binary parameter choice.");
 
 }
 
@@ -514,7 +515,16 @@ void eob_set_params(int default_choice, int firstcall)
   if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
     errorexit("ERROR: Precession and eccentricity are not compatible. Please set one of them to zero.");
 
+  /* Check: if eccentricity is not between 0 and 1, throw an error */
+  if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0))
+    errorexit("ERROR: Eccentricity must be >= 0 and < 1.");
 
+  /* Check: if spin variables exceed 1, throw an error */
+  double chitot1 = sqrt(SQ(EOBPars->chi1x)+SQ(EOBPars->chi1y)+SQ(EOBPars->chi1z));
+  double chitot2 = sqrt(SQ(EOBPars->chi2x)+SQ(EOBPars->chi2y)+SQ(EOBPars->chi2z));
+  if ((chitot1 > 1.0) || (chitot2 > 1.0))
+    errorexit("ERROR: Spin magnitudes must not exceed 1.");
+  
   EOBPars->nu = q_to_nu(q);
   EOBPars->X1 = nu_to_X1(EOBPars->nu);
   EOBPars->X2 = 1. -  EOBPars->X1;
@@ -680,12 +690,15 @@ void eob_set_params(int default_choice, int firstcall)
   // NOTE: The defaults are different from v0.0 and v1.0
   double ecc   = EOBPars->ecc;
   double r_hyp = EOBPars->r_hyp;
+  if ((ecc != 0.) || (r_hyp != 0.))
+    EOBPars->model = MODEL_DALI;
+
   if (EOBPars->nqc == NQC_AUTO) {
     if (EOBPars->binary == BINARY_BNS) {
         EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
         EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
     } else {
-      if ((ecc != 0.) || (r_hyp != 0.)) {
+      if (EOBPars->model == MODEL_DALI) {
         EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
         EOBPars->nqc_coefs_hlm = NQC_HLM_COMPUTE;
 	
@@ -710,7 +723,7 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->a6c = eob_a6c_fit_ecc_P33_4PNh22(EOBPars->nu);
       break;
     case(a6c_fits_ecc):
-      if ((ecc != 0.) || (r_hyp != 0.))
+      if (EOBPars->model == MODEL_DALI)
         errorexit("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
       EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
       break;
@@ -743,7 +756,7 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_4PNh22(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_ecc):
-      if((ecc != 0.) || (r_hyp != 0.))
+      if(EOBPars->model == MODEL_DALI)
         errorexit("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
       EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
@@ -860,7 +873,7 @@ void eob_set_params(int default_choice, int firstcall)
   } else errorexit("unknown option for use_flm");
 
   /* Set hlm and NQC fun pointers */
-  if ((ecc != 0.) || (r_hyp != 0.)) {
+  if (EOBPars->model == MODEL_DALI) {
     eob_wav_hlm = &eob_wav_hlm_ecc;
     eob_wav_hlmNQC_find_a1a2a3 = &eob_wav_hlmNQC_find_a1a2a3_ecc;
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_ecc;
@@ -937,7 +950,7 @@ void eob_set_params(int default_choice, int firstcall)
   }
   
   /** Set rhs fun pointer */
-  if ((ecc != 0.) || (r_hyp != 0.)) {
+  if (EOBPars->model == MODEL_DALI) {
     p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
   } else if (usespins) {
     p_eob_dyn_rhs = &eob_dyn_rhs_s;
@@ -949,7 +962,7 @@ void eob_set_params(int default_choice, int firstcall)
   if (r_hyp != 0.) {
     // hyp case
     eob_dyn_ic = &eob_dyn_ic_hyp;
-  } else if (ecc !=0) {
+  } else if (ecc != 0.) {
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_ic = &eob_dyn_ic_ecc_ma;   // ICs with anomaly (adiabatic)
@@ -1133,7 +1146,19 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
 
   if (STREQUAL(key,"use_geometric_units")) {    
     eobp->use_geometric_units = YESNO2INT(string_trim(val));
-  } 
+  }
+  if (STREQUAL(key,"model")) {
+    val = string_trim(val);
+    for (eobp->model=0; eobp->model<=MODEL_NOPT; eobp->model++) {
+      if (eobp->model == MODEL_NOPT) {
+        eobp->model = MODEL_DALI;
+          if (VERBOSE) printf("model '%s' undefined, set to '%s'\n",
+          val,model_opt[eobp->model]);
+          break;
+      }
+    if (STREQUAL(val,model_opt[eobp->model])) break;
+    }
+  }
   /* Binary parameters */
   
   if (STREQUAL(key,"M")) {
@@ -1747,7 +1772,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","BH_final_spin",  eobp->abhf); 
 
   /* EOB Settings */
-
+  fprintf(f,"%s = \"%s\"\n", "model", model_opt[eobp->model]);
   fprintf(f,"%s = %d\n"    , "use_spins", eobp->use_spins);
   fprintf(f,"%s = \"%s\"\n", "tides", tides_opt[eobp->use_tidal]);
   fprintf(f,"%s = \"%s\"\n", "tides_gravitomagnetic", tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);

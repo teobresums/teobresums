@@ -108,10 +108,10 @@ int main (int argc, char* argv[])
   
   int fc    = 1;          /* firstcall, set to 1 for now */
   int dc    = BINARY_BBH; /* default_choice, set to BBH */
-  int orbit = 0;          /* default_choice, set to quasi-circular */
+  int model = MODEL_DALI; /* default_choice, set to Dalì */
   /* Init parameters & set defaults */
   EOBParameters_alloc( &EOBPars );
-  EOBParameters_defaults (dc, orbit, EOBPars);
+  EOBParameters_defaults (dc, model, EOBPars);
 
   if (argv[1]!=NULL) {
     /* Deal with input parfile or command line arguments */
@@ -119,9 +119,9 @@ int main (int argc, char* argv[])
   }
 
   /* Properly reset the default & re-read the parameters */
-  if ( (EOBPars->ecc !=0) || (EOBPars->r_hyp !=0) )
-    orbit = 1; 
-
+  if ((EOBPars->ecc != 0.) || (EOBPars->r_hyp != 0.))
+    EOBPars->model = MODEL_DALI;
+    
   if (EOBPars->use_mode_lm)          free (EOBPars->use_mode_lm);
   if (EOBPars->use_mode_lm_inertial) free (EOBPars->use_mode_lm_inertial);
   if (EOBPars->use_mode_lm_nqc)      free (EOBPars->use_mode_lm_nqc);
@@ -130,7 +130,7 @@ int main (int argc, char* argv[])
   if (EOBPars->output_lm)            free (EOBPars->output_lm);
   if (EOBPars->freqs)                free (EOBPars->freqs);
 
-  EOBParameters_defaults (dc, orbit, EOBPars);
+  EOBParameters_defaults (dc, EOBPars->model, EOBPars);
   if (argv[1]!=NULL) {
     EOBParameters_parse_commandline(EOBPars,argc,argv);
   }
@@ -148,7 +148,7 @@ int main (int argc, char* argv[])
   }
     
   /* Set all firstcalls = 1 */
-  for (int k=0; k < NFIRSTCALL; k++){ 
+  for (int k=0; k < NFIRSTCALL; k++){
     EOBPars->firstcall[k] = 1;
   }
   
@@ -262,7 +262,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (!(use_tidal)) store_dynamics = 1; /* NQC determination need dynamical variables */
   if (use_spins == MODE_SPINS_GENERIC) store_dynamics = 1; /* Precession needs dynamical variables */
   if (ecc != 0.)  store_dynamics = 1; /* Eccentric waveform computation needs dynamical variables (sigmoid) */
-  if ((ecc != 0.) || (r_hyp != 0.)) EOBPars->postadiabatic_dynamics = 0;
+  if (EOBPars->model == MODEL_DALI) EOBPars->postadiabatic_dynamics = 0;
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
@@ -321,7 +321,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   //double r0 = eob_dyn_r0_Kepler(f0); /* Kepler radius: no longer used */
   /* If f_min is too high fall back to a minimum acceptable initial radius */
-  if ((ecc == 0.) && (r0 < TEOB_R0_THRESHOLD)) r0 = TEOB_R0_THRESHOLD;
+  if ((EOBPars->model == MODEL_GIOTTO) && (r0 < TEOB_R0_THRESHOLD)) r0 = TEOB_R0_THRESHOLD;
 
   /* Saving initial radius */
   EOBPars->r0 = r0;
@@ -644,7 +644,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->ode_stop_radius   = false;
   double rstop     = EOBPars->ode_stop_radius;
   /* Avoiding useless computations for hyperbolic cases */
-  if ((r_hyp != 0.) || (ecc != 0.)) {
+  if (EOBPars->model == MODEL_DALI) {
     double r_hor = horizon_radius(EOBPars->nu)+0.2;
     rstop = MAX(rstop,r_hor);
   }
@@ -771,7 +771,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
 	
     /* Check for failures ... */
-    if ((ecc != 0.) || (r_hyp != 0.)) {
+    if (EOBPars->model == MODEL_DALI) {
       if ( (GSLSTATUS != GSL_SUCCESS) || (!isfinite(dyn->y[EOB_EVOLVE_RAD])) ) {
 	      if (VERBOSE) printf("Stop: Orbit crossed event horizon.\n");
         iter--; /* do count this iter! */
@@ -982,7 +982,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
      */
     
     /* Over-writing waveform in the eccentric case - adding sigmoid */
-    if ((EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && ((ecc != 0) || (r_hyp != 0.))) {
+    if ((EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && (EOBPars->model == MODEL_DALI)) {
    
       for (int i = 0; i < size; i++) {
         dyn->store = 1;
@@ -1022,14 +1022,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       const double tmax = hlm->time[size-1] +  2*dt; /* Make sure to use or get last point */
 
       /* For hyperbolic or eccentric orbits, find time when r = 10 */
-      if (r_hyp != 0. || ecc != 0.) {
+      if (EOBPars->model == MODEL_DALI) {
 	      for (int j = dyn->size-1; j>0; j--) {
           tmin = dyn->time[j];
           if (dyn->data[EOB_RAD][j] > 10.)
 	          break;
 	      }
       }
-
+      
       // Check that the time interval chosen contains the peak of Omega
       if (dyn->tOmg_pk < tmin || dyn->tOmg_pk > tmax)
         errorexit("The peak orbital frequency is not contained in the NQC/RD attachment region.");
@@ -1188,7 +1188,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Set tc */
   /* Note: tc (=merger time) is correct for BNS, not for BBH */
   EOBPars->tc = hlm->time[size-1];
-
 
   /** Scale to physical units (if necessary) */
   const double distance = EOBPars->distance;

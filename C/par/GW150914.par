@@ -16,6 +16,7 @@ use_spins = 1 # use spins ?
 chi1 = 0. # dimensionless spin 1 z-component 
 chi2 = 0. # dimensionless spin 2 z-component 
 use_flm ="HM"
+model = "Giotto"
 
 initial_frequency = 35. # in units of Hz
 

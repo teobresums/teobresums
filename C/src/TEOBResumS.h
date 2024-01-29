@@ -483,6 +483,13 @@ enum {
   DOMAIN_FD,                   /**< frequency domain */
 };
 
+enum {
+  MODEL_DALI,                   /**< Dalì (eccentric) model */
+  MODEL_GIOTTO,                 /**< Giotto (quasi-circ) model */
+  MODEL_NOPT,                   /**< number of options for model */
+};
+static const char* const model_opt[] = {"Dali", "Giotto", "undefined"};
+
 /** Waveform data type */
 typedef struct tagWaveform
 {
@@ -664,6 +671,7 @@ typedef struct tagEOBParameters
   
   /* options/settings */
   int binary;                                           /**< binary type (BBH, BNS, BHNS) */
+  int model;                                            /**< model (Dalì, Giotto) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */

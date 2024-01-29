@@ -469,9 +469,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   int fc             = 1;          /* firstcalls, set to 1*/
   int default_choice = BINARY_BBH; /* default_choice, set to BBH */
-  int orbit          = 0;          /* default choice, set to quasi-circular */
+  int model          = MODEL_DALI; /* default choice, set to quasi-circular */
   
-  /* alloc EOBPars and set defaults based on Lambdas and ecc/r_hyp */
+  /* alloc EOBPars and set defaults based on Lambdas and model, ecc/r_hyp */
   EOBParameters_alloc ( &EOBPars ); 
 
   if ( PyDict_GetItemString(dict, "LambdaAl2") != NULL )
@@ -486,7 +486,17 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "r_hyp") != NULL )
     EOBPars->r_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "r_hyp"));
   else EOBPars->r_hyp = 0.;
-  
+  if ( PyDict_GetItemString(dict, "model") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "model"));
+    for(EOBPars->model=0; EOBPars->model<=MODEL_NOPT; EOBPars->model++){
+      if (EOBPars->model == MODEL_NOPT) EOBPars->model = MODEL_DALI;
+      if (STREQUAL(val,model_opt[EOBPars->model])) break;
+    }
+  } else EOBPars->model = MODEL_DALI;
+
+  model = EOBPars->model;
+
   /* Add a warning for users */
   if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
     errorexit("'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
@@ -496,8 +506,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.)  default_choice = BINARY_BNS;
   if(EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BHNS;
   if(EOBPars->LambdaAl2 > 0. && EOBPars->LambdaBl2 == 0.) default_choice = BINARY_BHNS;
-  if(EOBPars->ecc !=0 || EOBPars->r_hyp !=0)              orbit = 1; 
-  EOBParameters_defaults (default_choice, orbit, EOBPars);  
+  if(EOBPars->ecc !=0 || EOBPars->r_hyp !=0) model = MODEL_DALI; 
+
+  EOBParameters_defaults (default_choice, model, EOBPars);  
 
   /* Read the dictionary in EOBPars */
   EOBPars->M = PyFloat_AsDouble(PyDict_GetItemString(dict, "M"));

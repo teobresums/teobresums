@@ -17,6 +17,7 @@ q = 3. # mass ratio
 use_spins = 1
 chi1 = 0.2 # dimensionless spin 1 z-component 
 chi2 = 0.05 # dimensionless spin 2 z-component 
+model =	"Giotto"
 
 initial_frequency = 0.00026597651 # initial GW freq = 10 Hz
 

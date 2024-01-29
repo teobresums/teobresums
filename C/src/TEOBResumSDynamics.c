@@ -404,6 +404,13 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   /* Compute Metric */
   double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
   eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
+
+  /* Failsafe to avoid event horizon crossing */
+  if (A < 1e-6){
+    A = fabs(A);
+    B = fabs(B);
+    dyn->ode_stop = true;
+  }
   
   /* Compute centrifugal radius */
   double rc, drc_dr, d2rc_dr2;
