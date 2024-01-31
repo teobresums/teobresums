@@ -159,10 +159,9 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
     /* Compute metric  */
     eob_metric_s(r[i], 0., dyn, &A[i], &B[i], &dA[i], &d2A[i], &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     
-    /* Compute minimum of Heff0 using bisection method */
-    pphorb = r[i]/sqrt(r[i]-3.);
+    /* Compute initial adiabatic angular momentum  */
     eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, EOBPars->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
-    pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
+    pph[i] = eob_dyn_j0(r[i], dyn);
 
   }
 
@@ -356,18 +355,11 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
     rc2 = r2;
     G2  = 0.0;
   }
-  B1 = A1/SQ(rc1);
-  B2 = A2/SQ(rc2);
+  /* Adiabatic angular momentum */
+  j0  = eob_dyn_j0(r0, dyn);
+  j02 = SQ(j0);
 
-  A12 = A1 + A2;
-  DA  = A1 - A2;
-  B12 = B1 + B2;
-  DB  = B1 - B2;
-  DG  = G1 - G2;
-
-  /* Angular momentum and energy */
-  j02       = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
-  j0        = sqrt(j02);
+  /* Adiabatic energy */
   Heff_orb1 = sqrt(A1*(1. + j02/SQ(rc1)));
   Heff1     = Heff_orb1 + j0*G1;
   H1        = sqrt(1. + 2.*nu*(Heff1 - 1.))/nu;
@@ -384,14 +376,41 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j0;
   y_init[EOB_ID_E0]     = H1*nu;
   y_init[EOB_ID_OMGJ]   = omg_orb1;
-  
+
+}
+
+
+/**
+ * Function: eob_dyn_j0
+ * ------------------------
+ *    Compute the conservative angular momentum j0 for a 
+ *    given initial semilatus rectum r0. Discriminate from 
+ *    circular and eccentric orbits att ecc=1e-10, where
+ *    the eob_dyn_ecc_j0 function becomes unstable.
+ * 
+ *    @param[in] r0:  semilatus rectum
+ *    @param[in] dyn: Dynamics
+ * 
+ *    @return j0: angular momentum
+*/
+double eob_dyn_j0(double r0, Dynamics *dyn)
+{
+  const double ecc    = EOBPars->ecc;
+  double j0;
+
+  if(ecc > 1e-10){
+    j0 = eob_dyn_ecc_j0(r0, dyn);
+  } else {
+    j0 = eob_dyn_circ_j0(r0, dyn);
+  }
+  return j0;
 }
 
 /**
  * Function: eob_dyn_ecc_j0
  * ------------------------
  *    Compute the conservative angular momentum of an elliptic orbit
- *    from Energy conservation
+ *    from Energy conservation at periastron and apastron
  * 
  *    @param[in] r0:  initial separation
  *    @param[in] dyn: Dynamics
@@ -471,7 +490,96 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn)
 
 }
 
-/** Initial conditions calculation for eccentric systems */
+/**
+ * Function: eob_dyn_circ_j0
+ * -------------------------
+ *    Compute the conservative angular momentum of an circular orbit
+ *    from analytically solving dH_dr = 0
+ * 
+ *    @param[in] r0:  initial separation
+ *    @param[in] dyn: Dynamics
+ * 
+ *    @return j0: circular angular momentum
+*/
+double eob_dyn_circ_j0(double r0, Dynamics *dyn)
+{
+  const double nu    = EOBPars->nu;
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double a1    = EOBPars->a1;
+  const double a2    = EOBPars->a2;
+  const double aK2   = EOBPars->aK2;
+  const double S     = EOBPars->S;
+  const double Sstar = EOBPars->Sstar;
+  const double c3    = EOBPars->cN3LO;
+  const double C_Q1  = EOBPars->C_Q1;
+  const double C_Q2  = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
+
+  const int usetidal = EOBPars->use_tidal;  
+  const int usespins = EOBPars->use_spins;
+
+  double A,B,dA,rc,drc_dr,G,dG_dr,uc,uc2,dAuc2_dr,j02,j0,H,Heff,Heff_orb,dHeff_dj0,omg_orb;
+  double pl_hold,a_coeff,b_coeff,c_coeff,Delta,sol_p,sol_m;
+  double ggm[26];
+
+  /* Computing metric, centrifugal radius and ggm functions*/
+  if(usespins) {
+    eob_metric_s(r0, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(r0, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
+    eob_dyn_s_GS(r0, rc, drc_dr, 0., aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+    G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
+    dG_dr = ggm[6]*S + ggm[7]*Sstar;
+  } else {
+    eob_metric(r0, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    rc     = r0;   //Nonspinning case: rc = r; G = 0;
+    drc_dr = 1.;  
+    G      = 0.;
+    dG_dr  = 0.;
+  }
+
+  /* Auxiliary variables*/
+  uc       = 1./rc;
+  uc2      = uc*uc;
+  dAuc2_dr = uc2*(dA-2*A*uc*drc_dr);
+
+  /* Circular angular momentum */
+  if (usespins) {
+
+    // Quadratic equation a*x^2+b*x+c=0 
+    a_coeff = SQ(dAuc2_dr)  - 4*A*uc2*SQ(dG_dr);
+    b_coeff = 2*dA*dAuc2_dr - 4*A*SQ(dG_dr);
+    c_coeff = SQ(dA);
+      
+    Delta = SQ(b_coeff) - 4*a_coeff*c_coeff;
+      
+    if (Delta<0.)  
+      Delta=0;             // dG_dr=0 -> Set Delta=0 to avoid num. errors
+      
+    sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); 
+    sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff);
+      
+    if (dG_dr > 0)
+      j02 = sol_p;
+    else
+      j02 = sol_m;
+
+  } else {
+    // Linear equation a*x+b=0
+    a_coeff = dAuc2_dr;
+    b_coeff = dA;    
+    j02 = -b_coeff/a_coeff;    
+  }
+  
+  j0 = sqrt(j02);
+  return j0;
+
+}
 
 /**
  * Function: eob_dyn_ic_ecc_PA
@@ -517,7 +625,7 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
 
   double r1 = r0/(1-ecc);
   double r2 = r0/(1+ecc);
-  double j0 = eob_dyn_ecc_j0(r0, dyn);
+  double j0 = eob_dyn_j0(r0, dyn);
   
   if (DEBUG) printf("0PA:\np0 = %.8f\npph0 = %.8f\nr0 = %.8f\n", r0, j0, r1);
 
@@ -526,14 +634,14 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   /*----------------------*/
 
   /** Build a small grid */ 
-#define N (6) 
+#define N (6)
   double dpph_dr[2*N], p[2*N], r[2*N], pph[2*N]; 
   const double dp = 1e-4;   /* do not change this */
   const double dr = dp/(1. - ecc);
   for (int i=0; i< 2*N; i++) {
     p[i]   = r0+(i-N+1)*dp; /* grid of semilatus rectum */
     r[i]   = p[i]/(1.-ecc); /* grid of r = p/(1-e) */
-    pph[i] = eob_dyn_ecc_j0(p[i], dyn);
+    pph[i] = eob_dyn_j0(p[i], dyn);
   }
 
   /* dpph_dr by finite diff. */
@@ -645,12 +753,12 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
   const int usespins = EOBPars -> use_spins;
 
   const double omg_orb0 = Pi*f0;
-  double j0    = eob_dyn_ecc_j0(r0_kepl, dyn); // initial guess for j0
+  double j0    = eob_dyn_j0(r0_kepl, dyn); // initial guess for j0
   double pr0PN = 0.01;// = ecc/j0*sin(zeta+1.);
   
   double r0, pr0abs;
   eob_dyn_rootfind_rpr(dyn, &r0, &pr0abs, omg_orb0, r0_kepl, pr0PN);
-  j0           = eob_dyn_ecc_j0(r0, dyn);      // Update j0
+  j0           = eob_dyn_j0(r0, dyn);      // Update j0
 
   double pr0 = pr0abs;
   if(fmod(zeta,2.*Pi) >= Pi)
@@ -675,7 +783,7 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
 
   /* Orbital frequency */
   omg_orb   = dHeffma_dj0/nu/Hma;
-  
+
   y_init[EOB_ID_RAD]    = rma;
   y_init[EOB_ID_PHI]    = 0.;
   y_init[EOB_ID_PPHI]   = j0;
@@ -944,7 +1052,7 @@ double eob_dyn_r0_ecc (double f0, Dynamics *dyn)
     /* secular (average) frequency */
     r0 = r0_kepl;
   }
-  
+
   return eob_dyn_bisecOmegaecc0(dyn,omg_orb0,r0);
 }
 
@@ -1009,50 +1117,20 @@ double eob_dyn_Omegaorb0(double r, void *params)
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
     eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
-    dG_dr = ggm[6]*S + ggm[7]*Sstar;
   } else {
     eob_metric(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc     = r;   //Nonspinning case: rc = r; G = 0;
-    drc_dr = 1.;  
     G      = 0.;
-    dG_dr  = 0.;
   }
 
   /* Auxiliary variables*/
   uc       = 1./rc;
   uc2      = uc*uc;
-  dAuc2_dr = uc2*(dA-2*A*uc*drc_dr);
 
   /* Circular angular momentum */
-  if (usespins) {
-
-    // Quadratic equation a*x^2+b*x+c=0 
-    a_coeff = SQ(dAuc2_dr)  - 4*A*uc2*SQ(dG_dr);
-    b_coeff = 2*dA*dAuc2_dr - 4*A*SQ(dG_dr);
-    c_coeff = SQ(dA);
-      
-    Delta = SQ(b_coeff) - 4*a_coeff*c_coeff;
-      
-    if (Delta<0.)  
-      Delta=0;             // dG_dr=0 -> Set Delta=0 to avoid num. errors
-      
-    sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); 
-    sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff);
-      
-    if (dG_dr > 0)
-      j02 = sol_p;
-    else
-      j02 = sol_m;
-
-  } else {
-    // Linear equation a*x+b=0
-    a_coeff = dAuc2_dr;
-    b_coeff = dA;    
-    j02 = -b_coeff/a_coeff;    
-  }
-  
-  j0 = sqrt(j02);
-  
+  j0  = eob_dyn_j0(r, dyn);
+  j02 = SQ(j0);
+    
   /* Circular Hamiltonians */
   Heff_orb = sqrt(A*(1+j02*uc2));
   Heff     = Heff_orb + j0*G;
@@ -1181,18 +1259,10 @@ double eob_dyn_Omegaecc0(double r, void *params)
     rc2 = r2;
     G2  = 0.0;
   }
-  B1 = A1/SQ(rc1);
-  B2 = A2/SQ(rc2);
-  
-  A12 = A1 + A2;
-  DA  = A1 - A2;
-  B12 = B1 + B2;
-  DB  = B1 - B2;
-  DG  = G1 - G2;
-  
-  /* Angular momentum */
-  j02   = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
-  j0    = sqrt(j02);
+
+  /* Adiabatic angular momentum */
+  j0  = eob_dyn_j0(r, dyn);
+  j02 = SQ(j0);
 
   /* Energy */
   Heff_orb1 = sqrt(A1*(1. + j02/SQ(rc1)));
@@ -1450,23 +1520,15 @@ int eob_dyn_rpr(const gsl_vector *x, void * params, gsl_vector *f)
     eob_metric(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc2 = r2;
     G2  = 0.0;
-
     eob_metric(rma, pr0, dyn, &Ama, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   }
-  B1 = A1/SQ(rc1);
-  B2 = A2/SQ(rc2);
-  
-  A12 = A1 + A2;
-  DA  = A1 - A2;
-  B12 = B1 + B2;
-  DB  = B1 - B2;
-  DG  = G1 - G2;
-  
-  /* Angular momentum */
-  j02   = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
-  j0    = sqrt(j02);
 
-    /* Energy */
+  /* Adiabatic angular momentum */
+  j0  = eob_dyn_j0(r0, dyn);
+  j02 = SQ(j0);
+  
+
+  /* Energy */
   Heff_orb1 = sqrt(A1*(1. + j02/SQ(rc1)));
   Heff_orb2 = sqrt(A2*(1. + j02/SQ(rc2)));
   Heff1     = Heff_orb1 + j0*G1;

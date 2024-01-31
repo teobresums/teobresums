@@ -934,7 +934,7 @@ void eob_set_params(int default_choice, int firstcall)
   } else errorexit("unknown option for centrifugal_radius");
 
   /* Set r0 fun pointer */
-  if (ecc != 0.) {
+  if (EOBPars->model == MODEL_DALI) {
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_1PA || EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_r0_eob = &eob_dyn_r0_ecc;
@@ -962,7 +962,7 @@ void eob_set_params(int default_choice, int firstcall)
   if (r_hyp != 0.) {
     // hyp case
     eob_dyn_ic = &eob_dyn_ic_hyp;
-  } else if (ecc != 0.) {
+  } else if (EOBPars->model == MODEL_DALI) {
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_ic = &eob_dyn_ic_ecc_ma;   // ICs with anomaly (adiabatic)
