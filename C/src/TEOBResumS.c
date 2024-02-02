@@ -860,8 +860,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->ode_stop = true;
     }
 
-    /* If it could be a scattering, stop integration at large radii (if rstop >= 0) */
-    if ((dyn->ode_stop_radius) && (dyn->r > 5.*r0) && r_hyp != 0.) {
+    /* If it could be a scattering (E > 1.), stop integration at large radii (if rstop >= 0) */
+    if ((dyn->ode_stop_radius) && (dyn->r > 5.*r0) && r_hyp != 0. && dyn->E > 1.) {
       if (VERBOSE) printf("Stop: maximum radius reached.\n");
       dyn->ode_stop = true;
     }
