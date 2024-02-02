@@ -251,7 +251,7 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A, do
   double sqrt1m3u  = sqrt(1. - 3.*u);
   double sqrt1m3u3 = (1. - 3.*u)*sqrt1m3u; // (1 - 3u)^3/2
   double sqrt1m3u5 = (1. - 3.*u)*sqrt1m3u3; // (1 - 3u)^5/2
-  double Hschw     = (1. - 3.*u)/sqrt1m3u;
+  double Hschw     = (1. - 2.*u)/sqrt1m3u;
   double dHschw_u  = -2./sqrt1m3u + (3.*(1. - 2.*u))/(2.*sqrt1m3u3);
   double d2Hschw_u = -6./sqrt1m3u3 + (27.*(1. - 2.*u))/(4.*sqrt1m3u5);
   double d3Hschw_u = -81/(2.*sqrt1m3u5) + (405*(1 - 2*u))/(8.*sqrt1m3u5*(1 - 3.*u)); 
@@ -262,15 +262,19 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A, do
   double d3Ha = d3Hschw_u*a1SF + 3.*d2Hschw_u*da1SF_u + 3.*dHschw_u*d2a1SF_u + Hschw*d3a1SF_u;
   *A   = 1. - 2.*u + 2.*nu*u3*Hschw*a1SF;
   *dA  = -2. + 6.*nu*u2*a1SF*Hschw + 2.*nu*u3*dHa;
-  *d2A = 2.*nu*u*(6.*a1SF*Hschw + 6.*u*dHa + u2*d2Ha);
-  *d3A = 2.*nu*(6.*a1SF*Hschw + u*(18.*dHa + 9.*u*d2Ha + u2*d3Ha)); 
 
-  /* *d2A = da1SF_u*(12.*u2*nu*Hschw + 2.*nu*u3*dHschw_u) + 2.*nu*u3*Hschw*d2a1SF_u + 2.*nu*u3*dHschw_u*da1SF_u + 
-            a1SF*(12.*nu*u*Hschw + 12.*nu*u2*dHschw_u + 2.*nu*u3*d2Hschw_u); */
+  if (d2A != NULL){
 
-  // debug
-  printf("A=%.16f, dA=%.16f, d2A=%.16f, d3A=%.16f\n", *A, *dA, *d2A, *d3A);
-  getchar();
+    *d2A = 2.*nu*u*(6.*a1SF*Hschw + 6.*u*dHa + u2*d2Ha);
+
+  }
+
+  if (d3A != NULL){
+
+    *d3A = 2.*nu*(6.*a1SF*Hschw + u*(18.*dHa + 9.*u*d2Ha + u2*d3Ha)); 
+
+  }
+  
 
 }
 
@@ -355,20 +359,23 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   double dA_du  = -2 + 6*nu*u2*anu + 2*nu*u3*danu_du;
   double d2A_du = 12*nu*u*anu + 12*nu*u2*danu_du + 2*nu*u3*d2anu_du2;
 
-  /* the A function and its derivatives with respect to r */
-  /*
-  *dA  =  -u2*dA_du;
-  *d2A =   u4*d2A_du + 2*u3*dA_du;
-  */
-
   /* output derivatives with respect to u */
   *A   =  1-2*u + 2*nu*u3*anu;
   *dA  =  dA_du;
-  *d2A =  d2A_du;
 
-  *d3A = 0.; 
-  /* only defined for AGSF since it is needed for the higher order derivatives of GSs_Kerr, 
-  that is used as prefactor for GS* only when the code is running for large mass ratios. */
+  if (d2A != NULL){
+
+    *d2A =  d2A_du;
+
+  }
+
+  if (d3A != NULL){
+
+    *d3A = 0.; 
+    /* only defined for AGSF since it is needed for the higher order derivatives of GSs_Kerr, 
+    that is used as prefactor for GS* only when the code is running for large mass ratios. */
+
+  }
 
 }
 
@@ -421,7 +428,7 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
   integer and tail part (semi-integer powers of u) */
 
   /* Integer part */
-  double ResumInt, dResumInt, d2ResumInt;
+  double ResumInt, dResumInt, d2ResumInt, pl_hold;
   double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5], D3coeffs_int[5];
 
   // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
@@ -461,7 +468,7 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
 
   for (int k=0; k<5; k++) D3coeffs_int[k] = 0.; // third derivative not needed here
 
-  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, D3coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt, NULL);
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, D3coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt, &pl_hold);
 
   /* Tail part */
   double ResumTail, dResumTail, d2ResumTail;
@@ -489,7 +496,7 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
 
   for (int k=0; k<2; k++) D3coeffs_tail[k] = 0.; // third derivative not needed here
 
-  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, D3coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail, NULL);
+  Pade76v1_forGSF(coeffs_tail, Dcoeffs_tail, D2coeffs_tail, D3coeffs_tail, u, &ResumTail, &dResumTail, &d2ResumTail, &pl_hold);
 
   /* a1SF function purely analytical + derivatives wrt to u */
   double d1SF_tmp     = ResumInt*ResumTail;
@@ -708,7 +715,7 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
   integer and tail part (semi-integer powers of u) */
 
   /* Integer part */
-  double ResumInt, dResumInt, d2ResumInt;
+  double ResumInt, dResumInt, d2ResumInt, pl_hold;
   double coeffs_int[6], Dcoeffs_int[5], D2coeffs_int[5], D3coeffs_int[5];
 
   // Coefficients of the Taylor-expanded function (+ derivatives), to be fed to the Padé
@@ -749,7 +756,7 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 
   for (int k=0; k<5; k++) D3coeffs_int[k] = 0.; // third derivative not needed here
 
-  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, D3coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt, NULL);
+  Pade33_forGSF(coeffs_int, Dcoeffs_int, D2coeffs_int, D3coeffs_int, u, &ResumInt, &dResumInt, &d2ResumInt, &pl_hold);
 
   /* Tail part */
   double ResumTail, dResumTail, d2ResumTail;
@@ -1430,14 +1437,14 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   const double u4    = u2*u2;
   const double u6    = u2*u4;
 
-  double Atmp=0., dAtmp_u=0., d2Atmp_u=0.;
+  double Atmp=0., dAtmp_u=0., d2Atmp_u=0., pl_hold;
   double D=0., dD_u=0., d2D_u=0.;
   double Btmp=0., dBtmp_r=0., d2Btmp_r=0.;
   double Qtmp=0., dQtmp_du=0., dQtmp_dprstar=0., d2Qtmp_du2=0., ddQtmp_drdprstar=0., d2Qtmp_dprstar2=0.,
          d3Qtmp_dr2dprstar= 0., d3Qtmp_drdprstar2=0., d3Qtmp_dprstar3=0.;
 
   /* A potential and derivative with respect to u */  
-  eob_metric_Apotential(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u, NULL);
+  eob_metric_Apotential(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u, &pl_hold);
 
   /* Add here tides if needed */
   if (EOBPars->use_tidal) {
@@ -1510,12 +1517,12 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
   const double u3  = u2*u;
   const double u4  = u2*u2;
   
-  double rc, drc, d2rc;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc, NULL);
+  double rc, drc, d2rc, d3rc, pl_hold;
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc, &pl_hold);
 
   /* A potential and derivative with respect to u */  
   double Aorb, dAorb_u, d2Aorb_u;
-  eob_metric_Apotential(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u, NULL);
+  eob_metric_Apotential(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u, &pl_hold);
 
   /* Add here tides if needed */
   if (usetidal) {

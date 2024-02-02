@@ -423,7 +423,7 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
   double Den   = d0 + d1*u + d2*u2 + d3*u3;
   double dDen  = d1 + Dd0 + 2.*d2*u + Dd1*u + 3.*d3*u2 + Dd2*u2 + Dd3*u3;
   double d2Den = 2.*d2 + D2d0 + 2.*Dd1 + D2d1*u + 6.*d3*u + 4.*Dd2*u + D2d2*u2 + 6.*Dd3*u2 + D2d3*u3;
-  double d3Den = 3*D2d0 + 6*d3 + D3d0 + 6*Dd2 + 6*D2d2*u + D3d0*u + 18*Dd3*u + 9*D2d2*u2 + D3d2*u2 + D3d2*u3;
+  double d3Den = 3*D2d1 + 6*d3 + D3d0 + 6*Dd2 + 6*D2d2*u + D3d1*u + 18*Dd3*u + 9*D2d3*u2 + D3d2*u2 + D3d3*u3;
 
   double dNumDen = dNum*Den - Num*dDen; 
   double Den2    = Den*Den;

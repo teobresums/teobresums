@@ -261,7 +261,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* If f_min is too high fall back to a minimum acceptable initial radius */
   if ((ecc == 0.) && (r0 < TEOB_R0_THRESHOLD)) r0 = TEOB_R0_THRESHOLD;
 
-  r0 = 17.56;
 
   /* Saving initial radius */
   EOBPars->r0 = r0;

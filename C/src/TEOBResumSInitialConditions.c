@@ -143,7 +143,7 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
   double r[2*N], dA[2*N], j[2*N]; /** j:angular momentum */
   double E0[2*N], Omega_j[2*N];
   double Fphi[2*N], Ctmp[2*N], prstar[2*N], pr[2*N], pph[2*N];
-  double rc[2*N], drc_dr[2*N]; //, d2rc_dr2[2*N]; //, drc[2*N];
+  double rc[2*N], drc_dr[2*N], d2rc_dr2[2*N], d3rc_dr3[2*N]; //, drc[2*N];
   double A[2*N],B[2*N],d2A[2*N],dB, sqrtAbyB, Q, pl_hold;
   double pphorb, uc, uc2, psic, r_omg, v_phi, jhat, x, Omg;
   double H0eff, H0, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
@@ -160,7 +160,7 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
     
     /** Compute minimum of Heff0 using bisection method */
     pphorb = r[i]/sqrt(r[i]-3.);
-    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, EOBPars->use_tidal, &rc[i], &drc_dr[i], NULL, NULL); // &d2rc_dr2[i]);
+    eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, EOBPars->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i], &d3rc_dr3[i]); //NULL, NULL); 
     pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
 
   }
@@ -810,7 +810,7 @@ double eob_dyn_Omegaorb0(double r, void *params)
   if(usespins) {
     eob_metric_s(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold, &pl_hold);
-    eob_dyn_s_GS(r, rc, drc_dr, 0., 0., aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+    eob_dyn_s_GS(r, rc, drc_dr, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
     dG_dr = ggm[6]*S + ggm[7]*Sstar;
   } else {
@@ -870,7 +870,7 @@ double eob_dyn_Omegaorb0(double r, void *params)
 }
 
 /** Root finder: Compute r0 such that omg_orb = omg_orb0 */
-double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl)
+double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0, double r0_kepl)
 {
 #define max_iter (200)
 #define tolerance (1e-14)
