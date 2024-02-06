@@ -864,8 +864,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->ode_stop = true;
     }
 
-    /* If it could be a scattering, stop integration at large radii (if rstop >= 0) */
-    if ((dyn->ode_stop_radius) && (dyn->r > 5.*r0) && r_hyp != 0.) {
+    /* If it could be a scattering (E > 1.), stop integration at large radii (if rstop >= 0) */
+    if ((dyn->ode_stop_radius) && (dyn->r > 5.*r0) && r_hyp != 0. && dyn->E > 1.) {
       if (VERBOSE) printf("Stop: maximum radius reached.\n");
       dyn->ode_stop = true;
     }
@@ -879,7 +879,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /* Check when to break the computation
 	  find peak of omega curve and continue for 2M */
-    if ((dyn->ode_stop_MOmgpeak == false) && (ecc == 0.) && (r_hyp == 0.)) {
+    if ((dyn->ode_stop_MOmgpeak == false) && (EOBPars->model != MODEL_DALI)) {
       /* Before the Omega_orb peak */      
       if (dyn->MOmg < dyn->MOmg_prev) {
 	/* This is the first step after the peak
@@ -980,9 +980,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   if (!(EOBPars->binary == BINARY_BNS) && (dyn->data[EOB_RAD][size-1] < 3.)) {
     
-    /* *****************************************
+    /* ******************************************************
      * Following is for merging BBH and BHNS: NQC & Ringdown
-     * *****************************************
+     * ******************************************************
      */
     
     /* Over-writing waveform in the eccentric case - adding sigmoid */
