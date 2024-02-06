@@ -310,7 +310,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   
   /* Compute initial radius */
-  const double f0 = EOBPars->initial_frequency/time_unit_fact;
+  double f0 = EOBPars->initial_frequency/time_unit_fact;
+  if (f0 > 0.0125+0.03*(EOBPars->nu)){
+    f0 = 0.0125+0.03*EOBPars->nu;
+    printf("Initial frequency too low. Set f0 to %.2e \n",f0);
+  }
   EOBPars->f0 = f0;
   double r0;
   if (r_hyp != 0.) {

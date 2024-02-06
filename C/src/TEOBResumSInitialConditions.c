@@ -1245,7 +1245,7 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
   gsl_function F;
 
   double r0;
-  double x_lo = 0.5*r0_kepl, x_hi = 1.5*r0_kepl;
+  double x_lo = 0.5*r0_kepl, x_hi = 2.*r0_kepl;
   if (x_lo < 3.)  x_lo = 3.;
   if (x_hi < 10.) x_hi = 10.;
   struct  Omegaecc0_tmp_params p = {omg_orb0,dyn};
