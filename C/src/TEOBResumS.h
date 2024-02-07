@@ -313,9 +313,10 @@ enum{
   ECCFREQ_PERIASTRON,     /**< Initial frequency specified at periastron */
   ECCFREQ_AVERAGE,        /**< Initial frequency specified at average between r+ and r- */
   ECCFREQ_APASTRON,       /**< Initial frequency specified at apastron */
+  ECCFREQ_ORBAVGD,        /**< Initial orbit-averaged frequency  */
   ECCFREQ_NOPT            /**< number of eccentric initial frequency options */
 };
-static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron"};
+static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron", "orbitaveraged"};
 
 /** List of options for eccentric initial conditions */
 enum{
@@ -1041,6 +1042,7 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn);
 double eob_dyn_circ_j0(double r0, Dynamics *dyn);
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
 double eob_dyn_DHeff0(double x, void *params);
+double eob_dyn_omg_from_omgbar(double omgbar, double zeta, double ecc);
 double eob_dyn_r0_Kepler (double f0);
 extern double (*eob_dyn_r0_eob)(); /* defined in TEOBResumSPars.c*/
 double eob_dyn_r0_circ (double f0, Dynamics *dyn);
