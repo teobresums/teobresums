@@ -3068,7 +3068,75 @@ void NQCdata_free (NQCdata *nqc)
   if (nqc)      free (nqc);
 }
   
-/** Perform a time shift in FD */
+
+/**
+ * Function: time_shift_mrg_to_0
+ * -----------------------------
+ *   Find the time shift to move the merger to t=0
+ *   Define "merger" as the last peak of
+ *   Q = sqrt(A); A = sum_{ell, emm} |A_{ell,emm}|^2
+ * 
+ *   @param[in,out] hlm: pointer to coprecessing hlm  
+ */
+double time_shift_mrg_to_0(Waveform_lm *hlm)
+{
+  int i, imrg;
+  double Q, Qmrg;
+  Qmrg  = 0;
+  imrg  = 0;
+
+#if(0)
+  /* Scan the entire waveform */
+  for (i=0; i<hlm->size; i++){
+    Q = 0.;
+    for (int k=0; k<KMAX; k++){
+      if (hlm->kmask[k]) 
+        Q += hlm->ampli[k][i]*hlm->ampli[k][i];
+
+    if (Q > Qmrg){
+      Qmrg = Q;
+      imrg = i;
+    }
+  }
+
+#endif(0)
+
+  /* Start looking for the last peak from the end */
+  Qmrg  = 0.;
+  imrg  = hlm->size-1;
+  for (i=hlm->size-1; i>0; i--){
+    Q = 0.;
+    for (int k=0; k<KMAX; k++){
+      if (hlm->kmask[k]) 
+        Q += hlm->ampli[k][i]*hlm->ampli[k][i];
+    }
+    if (Q < Qmrg){
+      imrg = i;
+      Qmrg = Q;
+      break;
+    } else {
+      Qmrg = Q;
+    }
+  }
+  return hlm->time[imrg];
+
+}
+
+/**
+ * Function: time_shift_TD
+ * ------------------------
+ *  Time shift the waveform polarizations
+ * 
+ *   @param[in,out] t: pointer to Waveform->t or Waveformlm->t
+ *   @param[in] tc: time shift
+*/
+void time_shift_TD(double *t, double tc, int size)
+{
+  for(int i=0; i<size; i++){
+    t[i] -= tc;
+  }
+}
+
 
 /**
  * Function: time_shift_FD

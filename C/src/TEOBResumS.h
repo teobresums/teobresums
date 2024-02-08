@@ -698,6 +698,7 @@ typedef struct tagEOBParameters
   int domain;                /**< Time or frequency domain */
   double tc;                 /**< Coalescence time */
   int time_shift_FD;         /**< Time shift FD waveform to have merger at t=0 */
+  int time_shift_TD;         /**< Time shift TD waveform to have merger at t=0 */
   double df;                 /**< Frequency step */
   int interp_freqs;          /**< Flag to interpolate on a user-given frequency array */
   double *freqs;             /**< Frequency array */
@@ -1031,6 +1032,8 @@ void compute_hpc(Waveform_lm *hlm,Waveform_lm *hlm_neg, Waveform_lm *hl0, double
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
+double time_shift_mrg_to_0(Waveform_lm *hlm);
+void time_shift_TD(double *t, double tc, int size);
 void time_shift_FD(WaveformFD *hpc, double tc);
 void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);

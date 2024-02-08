@@ -180,8 +180,8 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   
   eobp->tc = 0;
   eobp->time_shift_FD=1;
+  eobp->time_shift_TD=1;
   eobp->df = 1.;
-  
   eobp->interp_freqs=0;
   double fr[] = {30.};      //indexes of multipoles to use
   eobp->freqs_size = 1;
