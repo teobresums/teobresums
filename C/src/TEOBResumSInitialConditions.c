@@ -160,8 +160,9 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
     eob_metric_s(r[i], 0., dyn, &A[i], &B[i], &dA[i], &d2A[i], &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     
     /* Compute initial adiabatic angular momentum  */
+    pphorb = r[i]/sqrt(r[i]-3.);
     eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, EOBPars->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
-    pph[i] = eob_dyn_j0(r[i], dyn);
+    pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
 
   }
 
