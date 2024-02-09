@@ -394,7 +394,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict,"time_shift_FD") != NULL ) { 
     EOBPars->time_shift_FD = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "time_shift_FD")));
   }
-
+  if ( PyDict_GetItemString(dict,"time_shift_TD") != NULL ) { 
+    EOBPars->time_shift_TD = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "time_shift_TD")));
+  }
   if ( PyDict_GetItemString(dict,"interp_freqs") != NULL ) {
     EOBPars->interp_freqs = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "interp_freqs")));
   }
