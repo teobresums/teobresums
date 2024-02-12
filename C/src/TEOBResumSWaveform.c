@@ -6605,10 +6605,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
 
   if((nu==0.25)&&(chi1==0)&&(chi2==0)){
     // Problematic cases where X12=0 and mess up the fits
-     ai[0][0] = ai[1][0];
-     ai[0][1] = ai[1][1];
-     ai[4][0] = ai[1][0];
-     ai[4][1] = ai[1][1];
+     ai[0][0]  = ai[1][0];
+     ai[0][1]  = ai[1][1];
+     ai[4][0]  = ai[1][0];
+     ai[4][1]  = ai[1][1];
      ai[13][0] = ai[1][0];
      ai[13][1] = ai[1][1];
    }
@@ -6664,6 +6664,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   }
 
   const int fullsize = hlm->size;
+  
+  for (int k=0; k<KMAX; k++) {
+    if(hlm_mrg->kmask[k]){
+      n1[k] = (double*) calloc (fullsize,sizeof(double));
+      n2[k] = (double*) calloc (fullsize,sizeof(double));
+      n4[k] = (double*) calloc (fullsize,sizeof(double));
+      n5[k] = (double*) calloc (fullsize,sizeof(double));
+    }
+  }
   
   eob_set_nqc_basis_HM(hlm_mrg->kmask, hlm->time, r, w, pr_star, ddotr, fullsize, n1, n2, n4, n5, NULL, NULL, NULL, NULL);
   

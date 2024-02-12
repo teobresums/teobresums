@@ -1132,6 +1132,11 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     use_mode_lm_inertial is not specified) */
     free(eobp->use_mode_lm_inertial);
     eobp->use_mode_lm_inertial_size = str2iarray(val, &eobp->use_mode_lm_inertial);
+  }
+
+  if (STREQUAL(key,"use_mode_lm_nqc")) {
+    free(eobp->use_mode_lm_nqc);
+    eobp->use_mode_lm_nqc_size = str2iarray(val, &eobp->use_mode_lm_nqc);
   }  
 
   if (STREQUAL(key,"use_mode_lm_inertial")) {
