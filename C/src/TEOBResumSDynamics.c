@@ -749,15 +749,7 @@ void eob_dyn_s_GS_DJS(double r, double rc, double drc_dr, double d2rc_dr2, doubl
 
 void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[])
 {
-  r        = 17.56;
-  rc       = 17.57;
-  drc_dr   = 0.998;
-  d2rc_dr2 = 0.0018;
-  d3rc_dr3 = 0.00027;
-  prstar   = 2.296;
-  pph      = 1.0923;
 
-  
   static double c_u, c_u2, c_u3, c_p2, c_p2u, c_p2u2, c_p4, c_p4u, c_p6;
   static double cs_u, cs_u2, cs_u2pr2, cs_u3, dcsu3_du, d2csu3_du2, cs_p2, cs_p2u, cs_p2upr2, cs_p2u2, cs_p4, cs_p4u, cs_p6;
   double u = 1./r; 
@@ -878,18 +870,22 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
               &GSs0, &dGSs0_dr, &dGSs0_dpph, &dGSs0_dprstar, &dGSs0_dprstarbyprstar, &d2GSs0_dr2, &d2GSs0_dprstar2, &d2GSs0_drdprstar, &d3GSs0_dprstar3, &d3GSs0_dr2dprstar, &d3GSs0_drdprstar2);
 
   /* defining p2 = pr2 + u2 pph2, where pr2 = (B/A)*prstar2 */     
-  double pr2           = (B/A)*prstar2;
-  double dBbyAdu       = (dBdu*A - dAtmp_u*B)/(A*A);
-  double dpr2du        = prstar2*dBbyAdu;
-  double dpr2dprstar   = 2.*prstar*(B/A);
-  double dpr2dprstar2  = dpr2dprstar*dpr2dprstar;
-  double dpr2dprstar3  = dpr2dprstar2*dpr2dprstar;
-  double d2pr2dprstar2 = 2.*(B/A);
-  double d2pr2du2      = -2.*dAtmp_u*dpr2du/A + prstar2*(d2Bdu2*A - d2Atmp_u*B)/(A*A);
-  double pph2          = pph*pph;
-  double p2            = pr2 + pph2*u2;
-  double p4            = p2*p2;
-  double p6            = p4*p2;
+  double pr2              = (B/A)*prstar2;
+  double dBbyAdu          = (dBdu*A - dAtmp_u*B)/(A*A);
+  double dpr2_du          = prstar2*dBbyAdu;
+  double dpr2_du2         = dpr2_du*dpr2_du;
+  double dpr2_dprstar     = 2.*prstar*(B/A);
+  double dpr2_dprstar2    = dpr2_dprstar*dpr2_dprstar;
+  double dpr2_dprstar3    = dpr2_dprstar2*dpr2_dprstar;
+  double d2pr2_dprstar2   = 2.*(B/A);
+  double d2pr2_du2        = -2.*dAtmp_u*dpr2_du/A + prstar2*(d2Bdu2*A - d2Atmp_u*B)/(A*A);
+  double d2pr2_dudprstar  = 2.*prstar*dBbyAdu;
+  double d3pr2_du2dprstar = -2.*dAtmp_u*d2pr2_dudprstar/A + 2.*prstar*(d2Bdu2*A - d2Atmp_u*B)/(A*A);
+  double d3pr2_dudprstar2 = 2.*dBbyAdu;
+  double pph2             = pph*pph;
+  double p2               = pr2 + pph2*u2;
+  double p4               = p2*p2;
+  double p6               = p4*p2;
 
   /* derivatives of p2 */
   double dp2_dprstar         = 2.*prstar*(B/A);
@@ -899,8 +895,9 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
   double d2p2_dprstar2       = 2.*(B/A);
   // double d3p2_dprstar3       = 0.;
   double dp2_dpph            = 2.*pph*u2;
-  double dp2_du              = dpr2du + 2.*pph2*u;
-  double d2p2_du2            = d2pr2du2 + 2.*pph2;
+  double dp2_du              = dpr2_du + 2.*pph2*u;
+  double dp2_du2             = dp2_du*dp2_du;
+  double d2p2_du2            = d2pr2_du2 + 2.*pph2;
   double d2p2_dudprstar      = 2.*prstar*dBbyAdu;
   double d3p2_du2dprstar     = 2.*prstar*(-2.*dAtmp_u*((dBdu*A - dAtmp_u*B)/A) + (d2Bdu2*A - d2Atmp_u*B))/(A*A);
   double d3p2_dudprstar2     = 2.*dBbyAdu;
@@ -989,28 +986,38 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
   double d3DenhGSs_du2dpr2 = 2.*cs_u2pr2;
   
   /* mixed derivatives, first wrt to u and second wrt to p2 */
-  double d3DenhGS_dudp22  = 2.*c_p4u;
-  double d3DenhGSs_dudp22 = 2.*cs_p4u;
-  double d3DenhGSs_dudpr2dp2 = cs_p2upr2;
+  double d3DenhGS_dudp22     = 2.*c_p4u;
+  double d3DenhGSs_dudp22    = 2.*cs_p4u;
+  double d3DenhGSs_dudp2dpr2 = cs_p2upr2;
+
+  /* third order mixed derivatives involving pr2 (all zero) */
+  double d3DenhGSs_dp2dpr22 = 0.;
+  double d3DenhGSs_dp22dpr2 = 0.;
+  double d3DenhGSs_dudpr22  = 0.;
 
   /* Derivatives of the residuals hGS, hGSs */
 
-  double DenhGS2  = DenhGS*DenhGS;
-  double DenhGSs2 = DenhGSs*DenhGSs;
-  double DenhGS3  = DenhGS2*DenhGS;
-  double DenhGSs3 = DenhGSs2*DenhGSs;
+  double DenhGS2      = DenhGS*DenhGS;
+  double onebyDenhGS2 = hGS*hGS;
+  double onebyDenhGS3 = onebyDenhGS2*hGS;
+  double onebyDenhGS4 = onebyDenhGS3*hGS;
+
+  double DenhGSs2      = DenhGSs*DenhGSs;
+  double onebyDenhGSs2 = hGSs*hGSs;
+  double onebyDenhGSs3 = onebyDenhGSs2*hGSs;
+  double onebyDenhGSs4 = onebyDenhGSs3*hGSs;
  
   /* wrt to u */
-  // useful pieces
-  double pS         = (dDenhGS_du  + dDenhGS_dp2*dp2_du); // total derivative dDenhGS/du 
-  double pSs        = (dDenhGSs_du + dDenhGSs_dp2*dp2_du + dDenhGSs_dpr2*dpr2du);
-  double dpSdu      = (d2DenhGS_du2 + 2.*d2DenhGS_dudp2*dp2_du + dDenhGS_dp2*d2p2_du2 + (dp2_du*dp2_du)*d2DenhGS_dp22); 
-  double dpSsdu     = d2DenhGSs_du2 + 2.*d2DenhGSs_dudp2*dp2_du + 2.*d2DenhGSs_dudpr2*dpr2du + 2.*d2DenhGSs_dp2dpr2*dp2_du*dpr2du + dDenhGSs_dp2*d2p2_du2 + (dp2_du*dp2_du)*d2DenhGSs_dp22 + dDenhGSs_dpr2*d2pr2du2 + (dpr2du*dpr2du)*d2DenhGSs_dpr22;  
+  // total detivatives of the denominators wrt to u (this is why capital D is used)
+  double DDenhGS_Du    = (dDenhGS_du  + dDenhGS_dp2*dp2_du); 
+  double DDenhGSs_Du   = (dDenhGSs_du + dDenhGSs_dp2*dp2_du + dDenhGSs_dpr2*dpr2_du);
+  double D2DenhGS_Du2  = (d2DenhGS_du2 + 2.*d2DenhGS_dudp2*dp2_du + (dp2_du*dp2_du)*d2DenhGS_dp22 + dDenhGS_dp2*d2p2_du2); 
+  double D2DenhGSs_Du2 = d2DenhGSs_du2 + 2.*d2DenhGSs_dudp2*dp2_du + 2.*d2DenhGSs_dudpr2*dpr2_du + 2.*d2DenhGSs_dp2dpr2*dp2_du*dpr2_du + dDenhGSs_dp2*d2p2_du2 + (dp2_du*dp2_du)*d2DenhGSs_dp22 + dDenhGSs_dpr2*d2pr2_du2 + (dpr2_du*dpr2_du)*d2DenhGSs_dpr22;  
   // derivatives
-  double dhGS_du    = -pS/DenhGS2;
-  double dhGSs_du   = -pSs/DenhGSs2;
-  double d2hGS_du2  = 2.*(dhGS_du*dhGS_du)*DenhGS - dpSdu/DenhGS2;
-  double d2hGSs_du2 = 2.*(dhGSs_du*dhGSs_du)*DenhGSs - dpSsdu/DenhGSs2;
+  double dhGS_du    = -DDenhGS_Du*onebyDenhGS2;
+  double dhGSs_du   = -DDenhGSs_Du*onebyDenhGSs2;
+  double d2hGS_du2  = 2.*(dhGS_du*dhGS_du)*DenhGS - D2DenhGS_Du2*onebyDenhGS2;
+  double d2hGSs_du2 = 2.*(dhGSs_du*dhGSs_du)*DenhGSs - D2DenhGSs_Du2*onebyDenhGSs2;
   
   /* wrt to r */
   double dhGS_dr    = -u2*dhGS_du;
@@ -1019,53 +1026,60 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
   double d2hGSs_dr2 = u3*(2.*dhGSs_du + u*d2hGSs_du2);
 
   /* wrt to pph */
-  double dhGS_dpph  = -(dDenhGS_dp2*dp2_dpph)/DenhGS2;
-  double dhGSs_dpph = -(dDenhGSs_dp2*dp2_dpph)/DenhGSs2;       
+  double dhGS_dpph  = -(dDenhGS_dp2*dp2_dpph)*onebyDenhGS2;
+  double dhGSs_dpph = -(dDenhGSs_dp2*dp2_dpph)*onebyDenhGSs2;       
         
   /* wrt to prstar */
   double dDenhGS_dprstar       =  dDenhGS_dp2*dp2_dprstar;
-  double dDenhGSs_dprstar      =  dDenhGSs_dp2*dp2_dprstar + dDenhGSs_dpr2*dpr2dprstar;
+  double dDenhGSs_dprstar      =  dDenhGSs_dp2*dp2_dprstar + dDenhGSs_dpr2*dpr2_dprstar;
   double d2DenhGS_dprstar2     =  d2p2_dprstar2*dDenhGS_dp2 + dp2_dprstar2*d2DenhGS_dp22;
-  double d2DenhGSs_dprstar2    =  d2DenhGSs_dp22*dp2_dprstar2 + d2DenhGSs_dpr22*dpr2dprstar2 + 2.*d2DenhGSs_dp2dpr2*dpr2dprstar*dp2_dprstar + d2p2_dprstar2*dDenhGSs_dp2 + d2pr2dprstar2*dDenhGSs_dpr2;
+  double d2DenhGSs_dprstar2    =  d2DenhGSs_dp22*dp2_dprstar2 + d2DenhGSs_dpr22*dpr2_dprstar2 + 2.*d2DenhGSs_dp2dpr2*dpr2_dprstar*dp2_dprstar + d2p2_dprstar2*dDenhGSs_dp2 + d2pr2_dprstar2*dDenhGSs_dpr2;
   double d3DenhGS_dprstar3     =  3.*dp2_dprstar*d2p2_dprstar2*d2DenhGS_dp22 + dp2_dprstar2*dp2_dprstar*d3DenhGS_dp23;
-  double d3DenhGSs_dprstar3    =  3.*d2DenhGSs_dp22*d2p2_dprstar2*dp2_dprstar + 3.*d2DenhGSs_dp2dpr2*d2pr2dprstar2*dp2_dprstar + d3DenhGSs_dp23*dp2_dprstar3 + 3.*(d2DenhGSs_dp2dpr2*d2p2_dprstar2 + d2DenhGSs_dpr22*d2pr2dprstar2)*dpr2dprstar + d3DenhGSs_dpr23*dpr2dprstar3;
-  double dhGS_dprstar          = -(dDenhGS_dprstar)/DenhGS2; // N = -(dDenhGS_dp2*dp2_dprstar), D = DenhGS^2
-  double dhGSs_dprstar         = -(dDenhGSs_dprstar)/DenhGSs2; // N = - (dDenhGSs_dp2*dp2_dprstar + dDenhGSs_dpr2*dpr2dprstar) !!!
+  double d3DenhGSs_dprstar3    =  3.*d2DenhGSs_dp22*d2p2_dprstar2*dp2_dprstar + 3.*d2DenhGSs_dp2dpr2*d2pr2_dprstar2*dp2_dprstar + d3DenhGSs_dp23*dp2_dprstar3 + 3.*(d2DenhGSs_dp2dpr2*d2p2_dprstar2 + d2DenhGSs_dpr22*d2pr2_dprstar2)*dpr2_dprstar + d3DenhGSs_dpr23*dpr2_dprstar3;
+  double dhGS_dprstar          = -(dDenhGS_dprstar)*onebyDenhGS2; 
+  double dhGSs_dprstar         = -(dDenhGSs_dprstar)*onebyDenhGSs2; 
   double dhGS_dprstarbyprstar  =  dhGS_dprstar/prstar;  
   double dhGSs_dprstarbyprstar =  dhGSs_dprstar/prstar;  
 
-  /* derivatives of the num and den of the first derivarive */
-  double DdhGS_dprstarN   = - d2DenhGS_dprstar2; // dN_dprstar
-  double DdhGSs_dprstarN  = - d2DenhGSs_dprstar2; 
-  double D2dhGS_dprstarN  = - d3DenhGS_dprstar3; // d2N_dprstar2 (d3p2_dprstar3 = 0)
-  double D2dhGSs_dprstarN = - d3DenhGSs_dprstar3; 
-  double DdhGS_dprstarD   = 2.*DenhGS*dDenhGS_dprstar; // dD_dprstar
-  double DdhGSs_dprstarD  = 2.*DenhGSs*dDenhGSs_dprstar;
-  double D2hGS_dprstarD   = 2.*(dDenhGS_dprstar*dDenhGS_dprstar + DenhGS*d2DenhGS_dprstar2); // d2D_dprstar2
-  double D2hGSs_dprstarD  = 2.*(dDenhGSs_dprstar*dDenhGSs_dprstar + DenhGSs*d2DenhGSs_dprstar2);
+  double dDenhGS2_dprstar    = 2.*DenhGS*dDenhGS_dprstar; // d(DenhGS^2)/dprstar
+  double dDenhGSs2_dprstar   = 2.*DenhGSs*dDenhGSs_dprstar; // d(DenhGSs^2)/dprstar
+  double d2DenhGS2_dprstar2  = 2.*(dDenhGS_dprstar*dDenhGS_dprstar + DenhGS*d2DenhGS_dprstar2); // d2(DenhGS^2)/dprstar2
+  double d2DenhGSs2_dprstar2 = 2.*(dDenhGSs_dprstar*dDenhGSs_dprstar + DenhGSs*d2DenhGSs_dprstar2); // d2(DenhGSs^2)/dprstar2
 
-  double d2hGS_dprstar2  = (DdhGS_dprstarN - DdhGS_dprstarD*dhGS_dprstar)/DenhGS2;
-  double d2hGSs_dprstar2 = (DdhGSs_dprstarN - DdhGSs_dprstarD*dhGSs_dprstar)/DenhGSs2;
-  double d3hGS_dprstar3  = (D2dhGS_dprstarN*DenhGS2 - (-dDenhGS_dprstar)*D2hGS_dprstarD)/(DenhGS3*DenhGS) - (2.*DdhGS_dprstarD*d2hGS_dprstar2)/DenhGS2;
-  double d3hGSs_dprstar3 = (D2dhGSs_dprstarN*DenhGSs2 - (-dDenhGSs_dprstar)*D2hGSs_dprstarD)/(DenhGSs3*DenhGSs) - (2.*DdhGSs_dprstarD*d2hGSs_dprstar2)/DenhGSs2;
+  double d2hGS_dprstar2  = (-d2DenhGS_dprstar2 - dDenhGS2_dprstar*dhGS_dprstar)*onebyDenhGS2;
+  double d2hGSs_dprstar2 = (-d2DenhGSs_dprstar2 - dDenhGSs2_dprstar*dhGSs_dprstar)*onebyDenhGSs2;
+  double d3hGS_dprstar3  = ((-d3DenhGS_dprstar3)*DenhGS2 - (-dDenhGS_dprstar)*d2DenhGS2_dprstar2)*onebyDenhGS4 - (2.*dDenhGS2_dprstar*d2hGS_dprstar2)*onebyDenhGS2;
+  double d3hGSs_dprstar3 = ((-d3DenhGSs_dprstar3)*DenhGSs2 - (-dDenhGSs_dprstar)*d2DenhGSs2_dprstar2)*onebyDenhGSs4 - (2.*dDenhGSs2_dprstar*d2hGSs_dprstar2)*onebyDenhGSs2;
 
   /* mixed derivatives */
-  // useful pieces
-  double dpSdudprstar              = d3p2_du2dprstar*dDenhGS_dp2 + d2DenhGS_dp22*d2p2_du2*dp2_dprstar + d3DenhGS_du2dp2*dp2_dprstar + 2*d3DenhGS_dudp22*dp2_dprstar*dp2_du + d3DenhGS_dp23*dp2_dprstar*(dp2_du*dp2_du) + 2.*d2DenhGS_dudp2*d2p2_dudprstar + 2.*d2DenhGS_dp22*dp2_du*d2p2_dudprstar;
-  double dpSsdudprstar             = d3p2_du2dprstar*dDenhGSs_dp2 + d2DenhGSs_dp22*d2p2_du2*dp2_dprstar + d3DenhGSs_du2dp2*dp2_dprstar + 2*d3DenhGSs_dudp22*dp2_dprstar*dp2_du + d3DenhGSs_dp23*dp2_dprstar*(dp2_du*dp2_du) + 2.*d2DenhGSs_dudp2*d2p2_dudprstar + 2.*d2DenhGSs_dp22*dp2_du*d2p2_dudprstar;
-  double p2S                       = d2DenhGS_dudp2 + d2DenhGS_dp22*dp2_du; 
-  double p2Ss                      = d2DenhGSs_dudp2 + d2DenhGSs_dp22*dp2_du; 
-  double D2dhGS_dprstarNDprstarDu  = -(d3p2_dudprstar2*dDenhGS_dp2 + d2p2_dprstar2*p2S + 2.*dp2_dprstar*d2p2_dudprstar*d2DenhGS_dp22 + dp2_dprstar2*(d3DenhGS_dudp22 + d3DenhGS_dp23*dp2_du)); // d2N_dudprstar, 2nd derivative wrt to u and prstar of the numerator of dhGS_dprstar
-  double D2dhGSs_dprstarNDprstarDu = -(d3p2_dudprstar2*dDenhGSs_dp2 + d2p2_dprstar2*p2Ss + 2.*dp2_dprstar*d2p2_dudprstar*d2DenhGSs_dp22 + dp2_dprstar2*(d3DenhGSs_dudp22 + d3DenhGSs_dp23*dp2_du));
-  double D2dhGS_dprstarDDprstarDu  = 2.*(pS*dDenhGS_dprstar + DenhGS*(d2p2_dudprstar*dDenhGS_dp2 + dp2_dprstar*p2S)); // d2D_dudprstar, 2nd derivative wrt to u and prstar of the denominator of dhGS_dprstar
-  double D2dhGSs_dprstarDDprstarDu = 2.*(pS*dDenhGS_dprstar + DenhGS*(d2p2_dudprstar*dDenhGS_dp2 + dp2_dprstar*p2S));
-  // derivatives
-  double d2hGS_dudprstar   = (2.*dp2_dprstar*dDenhGS_dp2*dDenhGS_du)/DenhGS3 - (dp2_dprstar*d2DenhGS_dudp2)/DenhGS2;
-  double d2hGSs_dudprstar  = (2.*(dDenhGS_du + dDenhGS_dp2*dp2_du)*dp2_dprstar*dDenhGSs_dp2)/DenhGSs3 - (d2p2_dudprstar*dDenhGS_dp2 + dp2_dprstar*d2DenhGS_dudp2)/DenhGSs2;
-  double d3hGS_du2dprstar  =  2.*(2.*dhGS_du*d2hGS_dudprstar*DenhGS + (dhGS_du*dhGS_du)*dDenhGS_dprstar) - (-2.*dDenhGS_dprstar*dpSdu/DenhGS3 + dpSdudprstar/DenhGS2);
-  double d3hGSs_du2dprstar =  2.*(2.*dhGSs_du*d2hGSs_dudprstar*DenhGSs + (dhGSs_du*dhGSs_du)*dDenhGSs_dprstar) - (-2.*dDenhGSs_dprstar*dpSsdu/DenhGSs3 + dpSsdudprstar/DenhGSs2);
-  double d3hGS_dudprstar2  = -2.*pS*d2hGS_dprstar2/DenhGS + (D2dhGS_dprstarNDprstarDu - D2dhGS_dprstarDDprstarDu*dhGS_dprstar - DdhGS_dprstarD*d2hGS_dudprstar)/DenhGS2;
-  double d3hGSs_dudprstar2 = -2.*pSs*d2hGSs_dprstar2/DenhGSs + (D2dhGSs_dprstarNDprstarDu - D2dhGSs_dprstarDDprstarDu*dhGSs_dprstar - DdhGSs_dprstarD*d2hGSs_dudprstar)/DenhGSs2;
+
+  // u, prstar
+  double d2DenhGS_dudprstar   = d2p2_dudprstar*dDenhGS_dp2 + dp2_dprstar*(d2DenhGS_dudp2 + d2DenhGS_dp22*dp2_du);
+  double d2DenhGSs_dudprstar  = d2p2_dudprstar*dDenhGSs_dp2 + d2pr2_dudprstar*dDenhGSs_dpr2 + dp2_dprstar*(d2DenhGSs_dudp2 + d2DenhGSs_dp22*dp2_du + d2DenhGSs_dp2dpr2*dpr2_du) + dpr2_dprstar*(d2DenhGSs_dudpr2 + d2DenhGSs_dp2dpr2*dp2_du + d2DenhGSs_dpr22*dpr2_du);
+  // u2, prstar
+  double d3DenhGS_du2dprstar  = d3p2_du2dprstar*dDenhGS_dp2 + d2DenhGS_dp22*d2p2_du2*dp2_dprstar + d3DenhGS_du2dp2*dp2_dprstar + 2*d3DenhGS_dudp22*dp2_dprstar*dp2_du + d3DenhGS_dp23*dp2_dprstar*(dp2_du*dp2_du) + 2.*d2DenhGS_dudp2*d2p2_dudprstar + 2.*d2DenhGS_dp22*dp2_du*d2p2_dudprstar;
+  double d3DenhGSs_du2dprstar = d3p2_du2dprstar*dDenhGSs_dp2 + d3pr2_du2dprstar*dDenhGSs_dpr2 + 
+                                2.*d2p2_dudprstar*(d2DenhGSs_dudp2 + d2DenhGSs_dp22*dp2_du + d2DenhGSs_dp2dpr2*dpr2_du) + 
+                                2.*d2pr2_dudprstar*(d2DenhGSs_dudpr2 + d2DenhGSs_dp2dpr2*dp2_du + d2DenhGSs_dpr22*dpr2_du) + 
+                                dp2_dprstar*(d2DenhGSs_dp22*d2p2_du2 + d2DenhGSs_dp2dpr2*d2pr2_du2 + d3DenhGSs_du2dp2 + 2.*d3DenhGSs_dudp22*dp2_du + d3DenhGSs_dp23*dp2_du2 + 2.*(d3DenhGSs_dudp2dpr2 + d3DenhGSs_dp22dpr2*dp2_du)*dpr2_du + d3DenhGSs_dp2dpr22*dpr2_du2) + 
+                                dpr2_dprstar*(d2DenhGSs_dp2dpr2*d2p2_du2 + d2DenhGSs_dpr22*d2pr2_du2 + d3DenhGSs_du2dpr2 + 2.*d3DenhGSs_dudp2dpr2*dp2_du + d3DenhGSs_dp22dpr2*dp2_du2 + 2.*(d3DenhGSs_dudpr22 + d3DenhGSs_dp2dpr22*dp2_du)*dpr2_du + d3DenhGSs_dpr23*dpr2_du2);
+  // u, prstar2
+  double d3DenhGS_dudprstar2  = d2DenhGS_dudp2*d2p2_dprstar2 + d3p2_dudprstar2*dDenhGS_dp2 + 2.*d2DenhGS_dp22*d2p2_dudprstar*dp2_dprstar + d3DenhGS_dudp22*dp2_dprstar2 + d2DenhGS_dp22*d2p2_dprstar2*dp2_du + d3DenhGS_dp23*dp2_dprstar2*dp2_du;
+  double d3DenhGSs_dudprstar2 = d2DenhGSs_dudp2*d2p2_dprstar2 + d2DenhGSs_dudpr2*d2pr2_dprstar2 + d3p2_dudprstar2*dDenhGSs_dp2 + d3pr2_dudprstar2*dDenhGSs_dpr2 + 
+                                dp2_dprstar*(2.*d2DenhGSs_dp22*d2p2_dudprstar + 2.*d2DenhGSs_dp2dpr2*d2pr2_dudprstar + d3DenhGSs_dudp22*dp2_dprstar) + 
+                                d2DenhGSs_dp22*d2p2_dprstar2*dp2_du + d2DenhGSs_dp2dpr2*d2pr2_dprstar2*dp2_du + d3DenhGSs_dp23*dp2_dprstar2*dp2_du + 
+                                2.*d2DenhGSs_dp2dpr2*d2p2_dudprstar*dpr2_dprstar + 2.*d2DenhGSs_dpr22*d2pr2_dudprstar*dpr2_dprstar + 2.*d3DenhGSs_dudp2dpr2*dp2_dprstar*dpr2_dprstar + 2.*d3DenhGSs_dp22dpr2*dp2_dprstar*dp2_du*dpr2_dprstar + 
+                                d3DenhGSs_dudpr22*dpr2_dprstar2 + d3DenhGSs_dp2dpr22*dp2_du*dpr2_dprstar2 + 
+                                (d2DenhGSs_dp2dpr2*d2p2_dprstar2 + d2DenhGSs_dpr22*d2pr2_dprstar2 + d3DenhGSs_dp22dpr2*dp2_dprstar2 + 2.*d3DenhGSs_dp2dpr22*dp2_dprstar*dpr2_dprstar + d3DenhGSs_dpr23*dpr2_dprstar2)*dpr2_du;
+
+  // derivatives of the hatted functions
+  double d2hGS_dudprstar   =  2.*DDenhGS_Du*dDenhGS_dprstar*onebyDenhGS3 - d2DenhGS_dudprstar*onebyDenhGS2;
+  double d2hGSs_dudprstar  =  2.*DDenhGSs_Du*dDenhGSs_dprstar*onebyDenhGSs3 - d2DenhGSs_dudprstar*onebyDenhGSs2;
+  double d3hGS_du2dprstar  = -6.*(DDenhGS_Du*DDenhGS_Du)*dDenhGS_dprstar*onebyDenhGS4 + 2.*(D2DenhGS_Du2*dDenhGS_dprstar + 2.*DDenhGS_Du*d2DenhGS_dudprstar)*onebyDenhGS3 - d3DenhGS_du2dprstar*onebyDenhGS2;
+  double d3hGSs_du2dprstar = -6.*(DDenhGSs_Du*DDenhGSs_Du)*dDenhGSs_dprstar*onebyDenhGSs4 + 2.*(D2DenhGSs_Du2*dDenhGSs_dprstar + 2.*DDenhGSs_Du*d2DenhGSs_dudprstar)*onebyDenhGSs3 - d3DenhGSs_du2dprstar*onebyDenhGSs2;
+  double d3hGS_dudprstar2  = -6.*DDenhGS_Du*(dDenhGS_dprstar*dDenhGS_dprstar)*onebyDenhGS4 + 2.*(DDenhGS_Du*d2DenhGS_dprstar2 + 2.*dDenhGS_dprstar*d2DenhGS_dudprstar)*onebyDenhGS3 - d3DenhGS_dudprstar2*onebyDenhGS2;
+  double d3hGSs_dudprstar2 = -6.*DDenhGSs_Du*(dDenhGSs_dprstar*dDenhGSs_dprstar)*onebyDenhGSs4 + 2.*(DDenhGSs_Du*d2DenhGSs_dprstar2 + 2.*dDenhGSs_dprstar*d2DenhGSs_dudprstar)*onebyDenhGSs3 - d3DenhGSs_dudprstar2*onebyDenhGSs2;
+
   // switching to r
   double d2hGS_dr_dprstar   = -u2*d2hGS_dudprstar;
   double d2hGSs_dr_dprstar  = -u2*d2hGSs_dudprstar;
@@ -1088,8 +1102,8 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
   
   /* For NQC: Second derivatives neglecting all pr_star^2 terms */
   // FIXME: here it is including everything
-  double d2GS_dprstar20  =  d2GS_dprstar2; //GS0*d2hGS_dprstar2;
-  double d2GSs_dprstar20 =  d2GSs_dprstar2; //GSs0*d2hGSs_dprstar2 + d2GSs0_dprstar2*hGSs + 2*dGSs0_dprstar*dhGSs_dprstar;
+  double d2GS_dprstar20  =  d2GS_dprstar2; 
+  double d2GSs_dprstar20 =  d2GSs_dprstar2; 
 
   /* Derivative of Gs and Gs* with respect to r */
   double dGS_dr    = dGS0_dr*hGS + GS0*dhGS_dr;
@@ -1105,7 +1119,7 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
   double d2GS_dr_dprstar   = dGS0_dr*dhGS_dprstar + GS0*d2hGS_dr_dprstar;
   double d2GSs_dr_dprstar  = GSs0*d2hGSs_dr_dprstar + dGSs0_dr*dhGSs_dprstar + dGSs0_dprstar*dhGSs_dr + d2GSs0_drdprstar*hGSs;
   double d3GS_dr2_dprstar  = d2GS0_dr2*dhGS_dprstar + dGS0_dr*d2hGS_dr_dprstar + dGS0_dr*d2hGS_dr_dprstar + GS0*d3hGS_dr2_dprstar;
-  double d3GSs_dr2_dprstar = GSs0*d3hGSs_dr2_dprstar + 2.*dGSs0_dr*d2hGSs_dr_dprstar + dGSs0_dprstar*d2hGSs_dr2 + d2GSs0_dr2*dhGSs_dprstar + 2.*d2GSs0_drdprstar*dhGSs_dr + d3GSs0_dr2dprstar*hGSs;
+  double d3GSs_dr2_dprstar = d2hGSs_dr2*dGSs0_dprstar + 2.*d2hGSs_dr_dprstar*dGSs0_dr + d2GSs0_dr2*dhGSs_dprstar + 2.*d2GSs0_drdprstar*dhGSs_dr + d3hGSs_dr2_dprstar*GSs0 + d3GSs0_dr2dprstar*hGSs;
   double d3GS_dr_dprstar2  = dGS0_dr*d2hGS_dprstar2 + GS0*d3hGS_dr_dprstar2;
   double d3GSs_dr_dprstar2 = GSs0*d3hGSs_dr_dprstar2 + 2.*dGSs0_dprstar*d2hGSs_dr_dprstar + dGSs0_dr*d2hGSs_dprstar2 + 2.*d2GSs0_drdprstar*dhGSs_dprstar + d2GSs0_dprstar2*dhGSs_dr  + d3GSs0_drdprstar2*hGSs;
   
@@ -1137,12 +1151,16 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
   ggm[25] = d3GSs_dr_dprstar2;
 
   // debug
-  printf("r = %.16f, rc = %.16f, nu = %.16f, chi1 = %.16f, chi2 = %.16f, prstar = %.16f, pphi = %.16f\n", r, rc, nu, chi1, chi2, prstar, pph);
-  printf("hGS = %.16f, hGSs = %.16f, GS = %.16f, GSs = %.16f\n", hGS, hGSs, GS, GSs);
-  printf("dGS_dprstar = %.16f, dGSs_dprstar = %.16f, dGS_dr = %.16f, dGSs_dr = %.16f, dGS_dpph = %.16f, dGSs_dpph = %.16f, dGS_dprstarbyprstar = %.16f, dGSs_dprstarbyprstar = %.16f\n", dGS_dprstar, dGSs_dprstar, dGS_dr, dGSs_dr, dGS_dpph, dGSs_dpph, dGS_dprstarbyprstar, dGSs_dprstarbyprstar);
-  printf("d2GS_dr2 = %.16f, d2GSs_dr2 = %.16f, d2GS_dprstar2 = %.16f, d2GSs_dprstar2 = %.16f, d2GS_dr_dprstar = %.16f, d2GSs_dr_dprstar = %.16f\n", d2GS_dr2, d2GSs_dr2, d2GS_dprstar2, d2GSs_dprstar2, d2GS_dr_dprstar, d2GSs_dr_dprstar);
-  printf("d3GS_dprstar3 = %.16f, d3GSs_dprstar3 = %.16f, d3GS_dr2_dprstar = %.16f, d3GSs_dr2_dprstar = %.16f, d3GS_dr_dprstar2 = %.16f, d3GSs_dr_dprstar2 = %.16f\n", d3GS_dprstar3, d3GSs_dprstar3, d3GS_dr2_dprstar, d3GSs_dr2_dprstar, d3GS_dr_dprstar2, d3GSs_dr_dprstar2);
-  getchar();
+  if(d2rc_dr2 > 1e-16)
+  {
+    printf("r = %.16f, rc = %.16f, nu = %.16f, chi1 = %.16f, chi2 = %.16f, prstar = %.16f, pphi = %.16f\n", r, rc, nu, chi1, chi2, prstar, pph);
+    printf("hGS = %.16f, hGSs = %.16f, GS = %.16f, GSs = %.16f\n", hGS, hGSs, GS, GSs);
+    printf("dGS_dprstar = %.16f, dGSs_dprstar = %.16f, dGS_dr = %.16f, dGSs_dr = %.16f, dGS_dpph = %.16f, dGSs_dpph = %.16f, dGS_dprstarbyprstar = %.16f, dGSs_dprstarbyprstar = %.16f\n", dGS_dprstar, dGSs_dprstar, dGS_dr, dGSs_dr, dGS_dpph, dGSs_dpph, dGS_dprstarbyprstar, dGSs_dprstarbyprstar);
+    printf("d2GS_dr2 = %.16f, d2GSs_dr2 = %.16f, d2GS_dprstar2 = %.16f, d2GSs_dprstar2 = %.16f, d2GS_dr_dprstar = %.16f, d2GSs_dr_dprstar = %.16f\n", d2GS_dr2, d2GSs_dr2, d2GS_dprstar2, d2GSs_dprstar2, d2GS_dr_dprstar, d2GSs_dr_dprstar);
+    printf("d3GS_dprstar3 = %.16f, d3GSs_dprstar3 = %.16f, d3GS_dr2_dprstar = %.16f, d3GSs_dr2_dprstar = %.16f, d3GS_dr_dprstar2 = %.16f, d3GSs_dr_dprstar2 = %.16f\n", d3GS_dprstar3, d3GSs_dprstar3, d3GS_dr2_dprstar, d3GSs_dr2_dprstar, d3GS_dr_dprstar2, d3GSs_dr_dprstar2);
+    getchar();
+  }
+  
 
 
 }
@@ -1301,13 +1319,17 @@ void eob_GSsKerr(double r, double rc, double drc_dr, double d2rc_dr2, double d3r
   *d3GSs_drdprstar2        = d3GSs1_drdprstar2 + d3GSs2_drdprstar2;
 
   // debug
-  /*printf("--- Kerr ---\n");
-  printf("r = %.16f, rc = %.16f, drc_dr = %.16f, d2rc_dr2 = %.16f, d3rc_dr3 = %.16f, aK2 = %.16f, A = %.16f, dA = %.16f, d2A = %.16f, d3A = %.16f, B = %.16f, dB = %.16f, d2B = %.16f, pph = %.16f, prstar = %.16f, nu = %.16f, \n", r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, A, dA, d2A, d3A, B, dB, d2B, pph, prstar, nu);
-  printf("GSs_Kerr = %.16f\n", *GSs);
-  printf("dGSs_dprstar = %.16f, dGSs_dr = %.16f, dGSs_dpph = %.16f, dGSs_dprstarbyprstar = %.16f\n", *dGSs_dprstar, *dGSs_dr, *dGSs_dpph, *dGSs_dprstarbyprstar);
-  printf("d2GSs_dr2 = %.16f, d2GSs_dprstar2 = %.16f, d2GSs_dr_dprstar = %.16f\n", *d2GSs_dr2, *d2GSs_dprstar2, *d2GSs_drdprstar);
-  printf("d3GSs_dprstar3 = %.16f, d3GSs_dr2_dprstar = %.16f, d3GSs_dr_dprstar2 = %.16f\n", *d3GSs_dprstar3, *d3GSs_dr2dprstar, *d3GSs_drdprstar2);
-  getchar();*/
+  if(d2rc_dr2 > 1e-16)
+  {
+    printf("--- Kerr ---\n");
+    printf("r = %.16f, rc = %.16f, drc_dr = %.16f, d2rc_dr2 = %.16f, d3rc_dr3 = %.16f, aK2 = %.16f, A = %.16f, dA = %.16f, d2A = %.16f, d3A = %.16f, B = %.16f, dB = %.16f, d2B = %.16f, pph = %.16f, prstar = %.16f, nu = %.16f, \n", r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, A, dA, d2A, d3A, B, dB, d2B, pph, prstar, nu);
+  }
+  
+  //printf("GSs_Kerr = %.16f\n", *GSs);
+  //printf("dGSs_dprstar = %.16f, dGSs_dr = %.16f, dGSs_dpph = %.16f, dGSs_dprstarbyprstar = %.16f\n", *dGSs_dprstar, *dGSs_dr, *dGSs_dpph, *dGSs_dprstarbyprstar);
+  //printf("d2GSs_dr2 = %.16f, d2GSs_dprstar2 = %.16f, d2GSs_dr_dprstar = %.16f\n", *d2GSs_dr2, *d2GSs_dprstar2, *d2GSs_drdprstar);
+  //printf("d3GSs_dprstar3 = %.16f, d3GSs_dr2_dprstar = %.16f, d3GSs_dr_dprstar2 = %.16f\n", *d3GSs_dprstar3, *d3GSs_dr2dprstar, *d3GSs_drdprstar2);
+  //getchar();
 
 }
 
