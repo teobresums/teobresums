@@ -762,8 +762,8 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
     double nu2   = nu*nu;
     double nu3   = nu2*nu;
     double pi2   = Pi*Pi;
-    double log2  = log(2);
-    double log3  = log(3);
+    double log2  = log(2.);
+    double log3  = log(3.);
 
         /* Below are the coefficients for the inverse resummed residuals hatGS, hatGSstar
         found factoring out the spinning particle function with GSstar0
@@ -870,22 +870,23 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
               &GSs0, &dGSs0_dr, &dGSs0_dpph, &dGSs0_dprstar, &dGSs0_dprstarbyprstar, &d2GSs0_dr2, &d2GSs0_dprstar2, &d2GSs0_drdprstar, &d3GSs0_dprstar3, &d3GSs0_dr2dprstar, &d3GSs0_drdprstar2);
 
   /* defining p2 = pr2 + u2 pph2, where pr2 = (B/A)*prstar2 */     
-  double pr2              = (B/A)*prstar2;
-  double dBbyAdu          = (dBdu*A - dAtmp_u*B)/(A*A);
-  double dpr2_du          = prstar2*dBbyAdu;
-  double dpr2_du2         = dpr2_du*dpr2_du;
-  double dpr2_dprstar     = 2.*prstar*(B/A);
-  double dpr2_dprstar2    = dpr2_dprstar*dpr2_dprstar;
-  double dpr2_dprstar3    = dpr2_dprstar2*dpr2_dprstar;
-  double d2pr2_dprstar2   = 2.*(B/A);
-  double d2pr2_du2        = -2.*dAtmp_u*dpr2_du/A + prstar2*(d2Bdu2*A - d2Atmp_u*B)/(A*A);
-  double d2pr2_dudprstar  = 2.*prstar*dBbyAdu;
-  double d3pr2_du2dprstar = -2.*dAtmp_u*d2pr2_dudprstar/A + 2.*prstar*(d2Bdu2*A - d2Atmp_u*B)/(A*A);
-  double d3pr2_dudprstar2 = 2.*dBbyAdu;
-  double pph2             = pph*pph;
-  double p2               = pr2 + pph2*u2;
-  double p4               = p2*p2;
-  double p6               = p4*p2;
+  double pr2                  = (B/A)*prstar2;
+  double dBbyAdu              = (dBdu*A - dAtmp_u*B)/(A*A);
+  double dpr2_du              = prstar2*dBbyAdu;
+  double dpr2_du2             = dpr2_du*dpr2_du;
+  double dpr2_dprstar         = 2.*prstar*(B/A);
+  double dpr2_dprstar2        = dpr2_dprstar*dpr2_dprstar;
+  double dpr2_dprstar3        = dpr2_dprstar2*dpr2_dprstar;
+  double d2pr2_dprstar2       = 2.*(B/A);
+  double dpr2_dprstarbyprstar = d2pr2_dprstar2;
+  double d2pr2_du2            = -2.*dAtmp_u*dpr2_du/A + prstar2*(d2Bdu2*A - d2Atmp_u*B)/(A*A);
+  double d2pr2_dudprstar      = 2.*prstar*dBbyAdu;
+  double d3pr2_du2dprstar     = -2.*dAtmp_u*d2pr2_dudprstar/A + 2.*prstar*(d2Bdu2*A - d2Atmp_u*B)/(A*A);
+  double d3pr2_dudprstar2     = 2.*dBbyAdu;
+  double pph2                 = pph*pph;
+  double p2                   = pr2 + pph2*u2;
+  double p4                   = p2*p2;
+  double p6                   = p4*p2;
 
   /* derivatives of p2 */
   double dp2_dprstar         = 2.*prstar*(B/A);
@@ -1038,8 +1039,8 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
   double d3DenhGSs_dprstar3    =  3.*d2DenhGSs_dp22*d2p2_dprstar2*dp2_dprstar + 3.*d2DenhGSs_dp2dpr2*d2pr2_dprstar2*dp2_dprstar + d3DenhGSs_dp23*dp2_dprstar3 + 3.*(d2DenhGSs_dp2dpr2*d2p2_dprstar2 + d2DenhGSs_dpr22*d2pr2_dprstar2)*dpr2_dprstar + d3DenhGSs_dpr23*dpr2_dprstar3;
   double dhGS_dprstar          = -(dDenhGS_dprstar)*onebyDenhGS2; 
   double dhGSs_dprstar         = -(dDenhGSs_dprstar)*onebyDenhGSs2; 
-  double dhGS_dprstarbyprstar  =  dhGS_dprstar/prstar;  
-  double dhGSs_dprstarbyprstar =  dhGSs_dprstar/prstar;  
+  double dhGS_dprstarbyprstar  = -(dDenhGS_dp2*dp2_dprstarbyprstar)*onebyDenhGS2; //dhGS_dprstar/prstar;  
+  double dhGSs_dprstarbyprstar = -(dDenhGSs_dp2*dp2_dprstarbyprstar + dDenhGSs_dpr2*dpr2_dprstarbyprstar)*onebyDenhGSs2; //dhGSs_dprstar/prstar;  
 
   double dDenhGS2_dprstar    = 2.*DenhGS*dDenhGS_dprstar; // d(DenhGS^2)/dprstar
   double dDenhGSs2_dprstar   = 2.*DenhGSs*dDenhGSs_dprstar; // d(DenhGSs^2)/dprstar
@@ -1196,33 +1197,34 @@ void eob_GSsKerr(double r, double rc, double drc_dr, double d2rc_dr2, double d3r
   /* splitting GSs in two parts, GSs1 and GSs2 for the derivatives */
 
   // utils: derivatives of pieces
-  double ducdr             = -uc2*drc_dr;
-  double d2ucdr2           = -uc*(2.*ducdr*drc_dr + uc*d2rc_dr2);
-  double dQ_dpph           =  2.*pph*uc2;    
-  double dQ_dprstar        =  2.*prstar/A;   
-  double d2Q_dprstar2      =  2./A;           
-  double dQ_dr             = -prstar2*dA/A2 + 2.*pph2*uc*ducdr; // -2.*pph2*uc3*drc_dr - dA/(A*A)*prstar2;  
-  double d2Q_dr2           =  prstar2*(2.*dA2 - A*d2A)/(A2*A) + 2.*pph2*(ducdr*ducdr + uc*d2ucdr2);
-  double d2Q_drdprstar     = -2.*prstar*dA/A2;
-  double d3Qdprstar3       =  0.;
-  double d3Qdr2dprstar     =  2.*prstar*(2.*dA2 - A*d2A)/(A2*A);
-  double d3Qdrdprstar2     = -2.*dA/A2;
-  double dsqrtA            = dA/(2.*sqrtA); // d(sqrtA)/dr
-  double d2sqrtA           = (d2A - dA*dA/(2.*A))/(2.*sqrtA); // d2(sqrtA)/dr2
-  double dsqrtQdr          = dQ_dr/(2.*sqrtQ); 
-  double d2sqrtQdr2        = (d2Q_dr2 - dQ_dr*dQ_dr/(2.*Q))/(2.*sqrtQ); 
-  double dsqrtQdpph        = dQ_dpph/(2.*sqrtQ);
-  double dsqrtQdprstar     = dQ_dprstar/(2.*sqrtQ); 
-  double dsqrtQdprstar2    = dsqrtQdprstar*dsqrtQdprstar;
-  double d2sqrtQdprstar2   = (d2Q_dprstar2 - (dQ_dprstar*dQ_dprstar)/(2.*Q))/(2.*sqrtQ); 
-  double d2sqrtQdrdprstar  = (d2Q_drdprstar - dQ_dr*dQ_dprstar/(2.*Q))/(2.*sqrtQ); 
-  double d3sqrtQdprstar3   = (3.*(dQ_dprstar*dQ_dprstar*dQ_dprstar)/(4.*Q*Q) - 3.*(dQ_dprstar*d2Q_dprstar2)/(2.*Q) + d3Qdprstar3)/(2.*sqrtQ); 
-  double d3sqrtQdr2dprstar = (3.*(dQ_dprstar*dQ_dr*dQ_dr)/(4.*Q*Q) - (dQ_dr*d2Q_drdprstar)/Q - (dQ_dprstar*d2Q_dr2)/(2.*Q) + d3Qdr2dprstar)/(2.*sqrtQ);  
-  double d3sqrtQdrdprstar2 = (3.*(dQ_dprstar*dQ_dprstar*dQ_dr)/(4.*Q*Q) - (dQ_dprstar*d2Q_drdprstar)/Q - (dQ_dr*d2Q_dprstar2)/(2.*Q) + d3Qdrdprstar2)/(2.*sqrtQ);
-  double dNablaA           = one_sqrtB*(-0.5*dB/B*dA + d2A);        
-  double dNablarc          = one_sqrtB*(-0.5*dB/B*drc_dr + d2rc_dr2);   
-  double d2NablaA          = one_sqrtB*(-dB*d2A/B + dA*(3.*dB*dB/(2.*B) - d2B)/(2.*B) + d3A); 
-  double d2Nablarc         = one_sqrtB*(-dB*d2rc_dr2/B + drc_dr*(3.*dB*dB/(2.*B) - d2B)/(2.*B) + d3rc_dr3); 
+  double ducdr                 = -uc2*drc_dr;
+  double d2ucdr2               = -uc*(2.*ducdr*drc_dr + uc*d2rc_dr2);
+  double dQ_dpph               =  2.*pph*uc2;    
+  double dQ_dprstar            =  2.*prstar/A;   
+  double d2Q_dprstar2          =  2./A;           
+  double dQ_dr                 = -prstar2*dA/A2 + 2.*pph2*uc*ducdr; // -2.*pph2*uc3*drc_dr - dA/(A*A)*prstar2;  
+  double d2Q_dr2               =  prstar2*(2.*dA2 - A*d2A)/(A2*A) + 2.*pph2*(ducdr*ducdr + uc*d2ucdr2);
+  double d2Q_drdprstar         = -2.*prstar*dA/A2;
+  double d3Qdprstar3           =  0.;
+  double d3Qdr2dprstar         =  2.*prstar*(2.*dA2 - A*d2A)/(A2*A);
+  double d3Qdrdprstar2         = -2.*dA/A2;
+  double dsqrtA                = dA/(2.*sqrtA); // d(sqrtA)/dr
+  double d2sqrtA               = (d2A - dA*dA/(2.*A))/(2.*sqrtA); // d2(sqrtA)/dr2
+  double dsqrtQdr              = dQ_dr/(2.*sqrtQ); 
+  double d2sqrtQdr2            = (d2Q_dr2 - dQ_dr*dQ_dr/(2.*Q))/(2.*sqrtQ); 
+  double dsqrtQdpph            = dQ_dpph/(2.*sqrtQ);
+  double dsqrtQdprstar         = dQ_dprstar/(2.*sqrtQ); 
+  double dsqrtQdprstarbyprstar = 1./(A*sqrtQ); 
+  double dsqrtQdprstar2        = dsqrtQdprstar*dsqrtQdprstar;
+  double d2sqrtQdprstar2       = (d2Q_dprstar2 - (dQ_dprstar*dQ_dprstar)/(2.*Q))/(2.*sqrtQ); 
+  double d2sqrtQdrdprstar      = (d2Q_drdprstar - dQ_dr*dQ_dprstar/(2.*Q))/(2.*sqrtQ); 
+  double d3sqrtQdprstar3       = (3.*(dQ_dprstar*dQ_dprstar*dQ_dprstar)/(4.*Q*Q) - 3.*(dQ_dprstar*d2Q_dprstar2)/(2.*Q) + d3Qdprstar3)/(2.*sqrtQ); 
+  double d3sqrtQdr2dprstar     = (3.*(dQ_dprstar*dQ_dr*dQ_dr)/(4.*Q*Q) - (dQ_dr*d2Q_drdprstar)/Q - (dQ_dprstar*d2Q_dr2)/(2.*Q) + d3Qdr2dprstar)/(2.*sqrtQ);  
+  double d3sqrtQdrdprstar2     = (3.*(dQ_dprstar*dQ_dprstar*dQ_dr)/(4.*Q*Q) - (dQ_dprstar*d2Q_drdprstar)/Q - (dQ_dr*d2Q_dprstar2)/(2.*Q) + d3Qdrdprstar2)/(2.*sqrtQ);
+  double dNablaA               = one_sqrtB*(-0.5*dB/B*dA + d2A);        
+  double dNablarc              = one_sqrtB*(-0.5*dB/B*drc_dr + d2rc_dr2);   
+  double d2NablaA              = one_sqrtB*(-dB*d2A/B + dA*(3.*dB*dB/(2.*B) - d2B)/(2.*B) + d3A); 
+  double d2Nablarc             = one_sqrtB*(-dB*d2rc_dr2/B + drc_dr*(3.*dB*dB/(2.*B) - d2B)/(2.*B) + d3rc_dr3); 
 
 
   // numerator of the derivative of the first piece
@@ -1270,7 +1272,10 @@ void eob_GSsKerr(double r, double rc, double drc_dr, double d2rc_dr2, double d3r
   double dGSs1_dprstar  = -p1*dsqrtQdprstar/sqrtQp12;
   double dGSs2_dprstar  = -p2*dsqrtQdprstar/Q;
   *dGSs_dprstar         = dGSs1_dprstar + dGSs2_dprstar;
-  *dGSs_dprstarbyprstar = (*dGSs_dprstar)/prstar;
+  // divided by prstar
+  double dGSs1_dprstarbyprstar = -p1*dsqrtQdprstarbyprstar/sqrtQp12;
+  double dGSs2_dprstarbyprstar = -p2*dsqrtQdprstarbyprstar/Q;
+  *dGSs_dprstarbyprstar        = dGSs1_dprstarbyprstar + dGSs2_dprstarbyprstar;
 
   // second derivatives
   double d2GSs1_dprstar2 = p1*(2.*dsqrtQdprstar2/sqrtQp1 - d2sqrtQdprstar2)/sqrtQp12;
