@@ -752,19 +752,19 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
 
   static double c_u, c_u2, c_u3, c_p2, c_p2u, c_p2u2, c_p4, c_p4u, c_p6;
   static double cs_u, cs_u2, cs_u2pr2, cs_u3, dcsu3_du, d2csu3_du2, cs_p2, cs_p2u, cs_p2upr2, cs_p2u2, cs_p4, cs_p4u, cs_p6;
-  double u = 1./r; 
+  double u     = 1./r; 
+  double logu  = log(u);
+  double nu2   = nu*nu;
+  double nu3   = nu2*nu;
+  double pi2   = Pi*Pi;
+  double log2  = log(2.);
+  double log3  = log(3.);
 
   /* Compute the nu-dep. coefficient at first call only */
   //static int firstcall = 1;  
   if (EOBPars->firstcall[FIRSTCALL_EOBDYNSGS]) {
     EOBPars->firstcall[FIRSTCALL_EOBDYNSGS] = 0;  
    
-    double nu2   = nu*nu;
-    double nu3   = nu2*nu;
-    double pi2   = Pi*Pi;
-    double log2  = log(2.);
-    double log3  = log(3.);
-
         /* Below are the coefficients for the inverse resummed residuals hatGS, hatGSstar
         found factoring out the spinning particle function with GSstar0
         using the EOB potentials and not just the test-mass ones */
@@ -789,11 +789,6 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
         cs_u       = (-2.)*nu;
         cs_u2      = (9./4.)*nu2 + nu*(-121./12.);
         cs_u2pr2   = nu*(-17./6.);
-        cs_u3      = nu2*((398./5.) + (-41./16.)*pi2) + nu*((4328./135.) + 
-                     (-1184./45.)*EulerGamma + (6496./45.)*log2 + 
-                     (-972./5.)*log3+(25729./4608.)*pi2+(-592./45.)*log(u));
-        dcsu3_du   = (-592./45.)*nu/u;
-        d2csu3_du2 = -dcsu3_du/u;
         // p2
         cs_p2     = (1./2.)*nu;
         cs_p2u    = (13./12.)*nu + (-3./4.)*nu2;
@@ -806,9 +801,16 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
         cs_p6   = (1./16.)*nu+(1./16.)*nu2+(1./16.)*nu3;
   }
 
-  double u2 = u*u;
-  double u3 = u2*u;
-  double u4 = u3*u;
+  // compute coefs with radial dependence (have to be re-evaluated at every call!)
+  cs_u3      = nu2*((398./5.) + (-41./16.)*pi2) + nu*((4328./135.) + 
+               (-1184./45.)*EulerGamma + (6496./45.)*log2 + 
+               (-972./5.)*log3+(25729./4608.)*pi2+(-592./45.)*log(u));
+  dcsu3_du   = (-592./45.)*nu/u;
+  d2csu3_du2 = -dcsu3_du/u;
+
+  double u2      = u*u;
+  double u3      = u2*u;
+  double u4      = u3*u;
   double uc      = 1./rc;
   double uc2     = uc*uc;
   double uc3     = uc2*uc;
@@ -1151,19 +1153,6 @@ void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_dr2, doub
   ggm[24] = d3GS_dr_dprstar2;
   ggm[25] = d3GSs_dr_dprstar2;
 
-  // debug
-  if(d2rc_dr2 > 1e-16)
-  {
-    printf("r = %.16f, rc = %.16f, nu = %.16f, chi1 = %.16f, chi2 = %.16f, prstar = %.16f, pphi = %.16f\n", r, rc, nu, chi1, chi2, prstar, pph);
-    printf("hGS = %.16f, hGSs = %.16f, GS = %.16f, GSs = %.16f\n", hGS, hGSs, GS, GSs);
-    printf("dGS_dprstar = %.16f, dGSs_dprstar = %.16f, dGS_dr = %.16f, dGSs_dr = %.16f, dGS_dpph = %.16f, dGSs_dpph = %.16f, dGS_dprstarbyprstar = %.16f, dGSs_dprstarbyprstar = %.16f\n", dGS_dprstar, dGSs_dprstar, dGS_dr, dGSs_dr, dGS_dpph, dGSs_dpph, dGS_dprstarbyprstar, dGSs_dprstarbyprstar);
-    printf("d2GS_dr2 = %.16f, d2GSs_dr2 = %.16f, d2GS_dprstar2 = %.16f, d2GSs_dprstar2 = %.16f, d2GS_dr_dprstar = %.16f, d2GSs_dr_dprstar = %.16f\n", d2GS_dr2, d2GSs_dr2, d2GS_dprstar2, d2GSs_dprstar2, d2GS_dr_dprstar, d2GSs_dr_dprstar);
-    printf("d3GS_dprstar3 = %.16f, d3GSs_dprstar3 = %.16f, d3GS_dr2_dprstar = %.16f, d3GSs_dr2_dprstar = %.16f, d3GS_dr_dprstar2 = %.16f, d3GSs_dr_dprstar2 = %.16f\n", d3GS_dprstar3, d3GSs_dprstar3, d3GS_dr2_dprstar, d3GSs_dr2_dprstar, d3GS_dr_dprstar2, d3GSs_dr_dprstar2);
-    getchar();
-  }
-  
-
-
 }
 
 /** GS* of a spinning particle on Kerr, needed for antiDJS representation of GS*.
@@ -1322,19 +1311,6 @@ void eob_GSsKerr(double r, double rc, double drc_dr, double d2rc_dr2, double d3r
   double d3GSs1_drdprstar2 = dp1dr*d2GSs1_dprstar2/p1 + p1*dq1dprstar;
   double d3GSs2_drdprstar2 = dp2dr*d2GSs2_dprstar2/p2 + p2*dq2dprstar;
   *d3GSs_drdprstar2        = d3GSs1_drdprstar2 + d3GSs2_drdprstar2;
-
-  // debug
-  if(d2rc_dr2 > 1e-16)
-  {
-    printf("--- Kerr ---\n");
-    printf("r = %.16f, rc = %.16f, drc_dr = %.16f, d2rc_dr2 = %.16f, d3rc_dr3 = %.16f, aK2 = %.16f, A = %.16f, dA = %.16f, d2A = %.16f, d3A = %.16f, B = %.16f, dB = %.16f, d2B = %.16f, pph = %.16f, prstar = %.16f, nu = %.16f, \n", r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, A, dA, d2A, d3A, B, dB, d2B, pph, prstar, nu);
-  }
-  
-  //printf("GSs_Kerr = %.16f\n", *GSs);
-  //printf("dGSs_dprstar = %.16f, dGSs_dr = %.16f, dGSs_dpph = %.16f, dGSs_dprstarbyprstar = %.16f\n", *dGSs_dprstar, *dGSs_dr, *dGSs_dpph, *dGSs_dprstarbyprstar);
-  //printf("d2GSs_dr2 = %.16f, d2GSs_dprstar2 = %.16f, d2GSs_dr_dprstar = %.16f\n", *d2GSs_dr2, *d2GSs_dprstar2, *d2GSs_drdprstar);
-  //printf("d3GSs_dprstar3 = %.16f, d3GSs_dr2_dprstar = %.16f, d3GSs_dr_dprstar2 = %.16f\n", *d3GSs_dprstar3, *d3GSs_dr2dprstar, *d3GSs_drdprstar2);
-  //getchar();
 
 }
 
