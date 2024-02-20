@@ -517,7 +517,7 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   double Gtilde, dGtilde_dr, duc_dr;
 
   eob_metric_s(r[idx], 0., dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
-  eob_dyn_s_get_rc(r[idx], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, use_tidal, &rc, &drc_dr, NULL, NULL);    
+  eob_dyn_s_get_rc(r[idx], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, use_tidal, &rc, &drc_dr, &pl_hold, &pl_hold);    
   sqrtAbyB = sqrt(A/B);
   uc  = 1./rc;
   uc2 = uc*uc;
