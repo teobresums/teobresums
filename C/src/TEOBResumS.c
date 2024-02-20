@@ -1214,6 +1214,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /* TIME DOMAIN */
     
+    /* Find the time shift to have merger at 0*/
+    if(EOBPars->time_shift_TD) 
+      EOBPars->tc = time_shift_mrg_to_0(hlm);
+
     if (EOBPars->interp_uniform_grid) {
       /* Interp to uniform grid the multipoles before hpc computation */
       const double dt_interp = EOBPars->dt_interp;
@@ -1236,6 +1240,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     } else
       compute_hpc(hlm, NULL, NULL, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
+    /* time-shift the TD waveforms */
+    if(EOBPars->time_shift_TD) time_shift_TD((*hpc)->time, EOBPars->tc/time_unit_fact, (*hpc)->size);
+
   } else {
     
     /* FREQUENCY DOMAIN */

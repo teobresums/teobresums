@@ -160,8 +160,9 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
     eob_metric_s(r[i], 0., dyn, &A[i], &B[i], &dA[i], &d2A[i], &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     
     /* Compute initial adiabatic angular momentum  */
+    pphorb = r[i]/sqrt(r[i]-3.);
     eob_dyn_s_get_rc(r[i], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, EOBPars->use_tidal, &rc[i], &drc_dr[i], &d2rc_dr2[i]);
-    pph[i] = eob_dyn_j0(r[i], dyn);
+    pph[i] = eob_dyn_bisecHeff0_s(nu,chi1,chi2,X1,X2,c3, pphorb,r[i],A[i],dA[i],rc[i],drc_dr[i],aK2,S,Ss);
 
   }
 
@@ -752,11 +753,22 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
   const int usetidal = EOBPars -> use_tidal;
   const int usespins = EOBPars -> use_spins;
 
-  const double omg_orb0 = Pi*f0;
   double j0    = eob_dyn_j0(r0_kepl, dyn); // initial guess for j0
   double pr0PN = 0.01;// = ecc/j0*sin(zeta+1.);
   
   double r0, pr0abs;
+
+  double omg_orb0 = Pi*f0;
+  if (EOBPars->ecc_freq == ECCFREQ_ORBAVGD){
+    /* Assume that the user gave as input the orbit averaged 
+    frequency. Transform it into an average frequency between apastron
+    and periastron and overwrite omg_orb0 */
+    if (DEBUG) printf("Orbit-averaged ICs:\nomg_bar = %.8f\n ", omg_orb0);
+    double omg_orb0_p = eob_dyn_omg_from_omgbar(omg_orb0, 0., ecc);
+    double omg_orb0_m = eob_dyn_omg_from_omgbar(omg_orb0, Pi, ecc);
+    omg_orb0 = 0.5*(omg_orb0_p + omg_orb0_m);
+    if (DEBUG) printf("omg_orb0 = %.8f\n ", omg_orb0);
+  }
   eob_dyn_rootfind_rpr(dyn, &r0, &pr0abs, omg_orb0, r0_kepl, pr0PN);
   j0           = eob_dyn_j0(r0, dyn);      // Update j0
 
@@ -978,6 +990,27 @@ double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, doub
 }
 
 /**
+ *  Function: eob_dyn_omg_from_omgbar()
+ *  -----------------------------------
+ *  Compute the instantaneous frequency from
+ *  the orbit averaged frequency at a specific
+ *  point in the orbit.
+ *  Eq. (16) of arXiv 2309.15528, newtonian level
+ * 
+ *  @param[in] omgbar: orbit-averaged frequency
+ *  @param[in] zeta  : true anomaly
+ *  @param[in] ecc   : eccentricity
+ * 
+ *  @return omg: instantaneous frequency
+ */
+double eob_dyn_omg_from_omgbar(double omgbar, double zeta, double ecc)
+{
+  double fact1 = (ecc*cos(zeta)+1.);
+  double den   = pow((1.-ecc*ecc), 3./2);
+  return omgbar*fact1*fact1/den;
+}
+
+/**
   * Function: eob_dyn_r0_Kepler
   * ----------------------------
   *   Initial radius from initial frequency using Kepler's law
@@ -1050,6 +1083,7 @@ double eob_dyn_r0_ecc (double f0, Dynamics *dyn)
     r0 = r0_kepl*(1+ecc);
   } else {
     /* secular (average) frequency */
+    /* use it for both ECCFREQ_AVERAGE and ECCFREQ_ORBAVGD*/
     r0 = r0_kepl;
   }
 

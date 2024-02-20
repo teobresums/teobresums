@@ -313,9 +313,10 @@ enum{
   ECCFREQ_PERIASTRON,     /**< Initial frequency specified at periastron */
   ECCFREQ_AVERAGE,        /**< Initial frequency specified at average between r+ and r- */
   ECCFREQ_APASTRON,       /**< Initial frequency specified at apastron */
+  ECCFREQ_ORBAVGD,        /**< Initial orbit-averaged frequency  */
   ECCFREQ_NOPT            /**< number of eccentric initial frequency options */
 };
-static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron"};
+static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron", "orbitaveraged"};
 
 /** List of options for eccentric initial conditions */
 enum{
@@ -751,6 +752,7 @@ typedef struct tagEOBParameters
   int domain;                /**< Time or frequency domain */
   double tc;                 /**< Coalescence time */
   int time_shift_FD;         /**< Time shift FD waveform to have merger at t=0 */
+  int time_shift_TD;         /**< Time shift TD waveform to have merger at t=0 */
   double df;                 /**< Frequency step */
   int interp_freqs;          /**< Flag to interpolate on a user-given frequency array */
   double *freqs;             /**< Frequency array */
@@ -1041,6 +1043,7 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn);
 double eob_dyn_circ_j0(double r0, Dynamics *dyn);
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
 double eob_dyn_DHeff0(double x, void *params);
+double eob_dyn_omg_from_omgbar(double omgbar, double zeta, double ecc);
 double eob_dyn_r0_Kepler (double f0);
 extern double (*eob_dyn_r0_eob)(); /* defined in TEOBResumSPars.c*/
 double eob_dyn_r0_circ (double f0, Dynamics *dyn);
@@ -1145,6 +1148,8 @@ void compute_hpc(Waveform_lm *hlm,Waveform_lm *hlm_neg, Waveform_lm *hl0, double
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
+double time_shift_mrg_to_0(Waveform_lm *hlm);
+void time_shift_TD(double *t, double tc, int size);
 void time_shift_FD(WaveformFD *hpc, double tc);
 void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm, bool *bhns);

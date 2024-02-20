@@ -202,8 +202,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   
   eobp->tc = 0;
   eobp->time_shift_FD=1;
+  eobp->time_shift_TD=1;
   eobp->df = 1.;
-  
   eobp->interp_freqs=0;
   double fr[] = {30.};      //indexes of multipoles to use
   eobp->freqs_size = 1;
@@ -212,7 +212,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
   /* EOB Settings */
 
-  eobp->ecc_freq=ECCFREQ_AVERAGE; // "PERIASTRON", "AVERAGE", "APASTRON"
+  eobp->ecc_freq=ECCFREQ_ORBAVGD; // "PERIASTRON", "AVERAGE", "APASTRON"
   eobp->ecc_ics =ECCICS_MA; // "0PA", "1PA"
   
   eobp->postadiabatic_dynamics=1;
@@ -1385,10 +1385,10 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     val = string_trim(val);
     for (eobp->ecc_freq=0; eobp->ecc_freq<=ECCFREQ_NOPT; eobp->ecc_freq++) {
       if (eobp->ecc_freq == ECCFREQ_NOPT) {
-	eobp->ecc_freq = ECCFREQ_AVERAGE;
-	if (VERBOSE) printf("ecc_freq '%s' undefined, set to '%s'\n",
+	    eobp->ecc_freq = ECCFREQ_ORBAVGD;
+	    if (VERBOSE) printf("ecc_freq '%s' undefined, set to '%s'\n",
 			    val, ecc_freq_opt[eobp->ecc_freq]);
-	break;
+	        break;
       }
       if (STREQUAL(val, ecc_freq_opt[eobp->ecc_freq])) break;
     }
