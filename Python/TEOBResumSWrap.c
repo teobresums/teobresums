@@ -164,6 +164,17 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_mode_lm_nqc") != NULL ) {
+    if (EOBPars->use_mode_lm_nqc) free(EOBPars->use_mode_lm_nqc);
+    PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm_nqc");
+    EOBPars->use_mode_lm_nqc_size = PyObject_Length(tmp);
+    EOBPars->use_mode_lm_nqc = malloc ( EOBPars->use_mode_lm_nqc_size * sizeof(int) );
+    for (int i = 0; i < EOBPars->use_mode_lm_nqc_size; i++){
+      PyObject *item = PyList_GetItem(tmp, i);
+      EOBPars->use_mode_lm_nqc[i] = (int) PyLong_AsLong(item); 
+    }
+  }
+
   if (PyDict_GetItemString(dict, "use_mode_lm_inertial") != NULL) {
     if (EOBPars->use_mode_lm_inertial) free(EOBPars->use_mode_lm_inertial);
     PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm_inertial");
