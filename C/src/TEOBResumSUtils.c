@@ -3098,8 +3098,7 @@ double time_shift_mrg_to_0(Waveform_lm *hlm)
       imrg = i;
     }
   }
-
-#endif(0)
+#endif
 
   /* Start looking for the last peak from the end */
   Qmrg  = 0.;
