@@ -513,7 +513,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if (output) {
       if (system_mkdir(EOBPars->output_dir)) {
         printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
-        return ERROR_MKDIR;
+        return NULL;
       }
     }
 
