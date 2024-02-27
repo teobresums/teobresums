@@ -10026,7 +10026,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
 }
 
 /** BHNS ringdown model*/ 
-/*
+
 /** Ringdown waveform template for tidal disruption cases */
 void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double alpha2, double Amrg)
 {  

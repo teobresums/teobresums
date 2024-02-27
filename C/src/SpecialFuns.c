@@ -51,9 +51,8 @@ double fact(int n)
     errorexit(" computing a negative factorial.\n");
   } else if (n <= 35){
     return f35[n];
-  } else {
-    return n*fact(n-1);
-  }
+  } 
+  return n*fact(n-1);
 }
 
 
@@ -101,9 +100,8 @@ double doublefact(int n)
     errorexit(" computing a negative factorial2.\n");
   } else if (n <= 35){
     return ff35[n];
-  } else {
-    return n*doublefact(n-2);
   }
+  return n*doublefact(n-2);
 }
 
 

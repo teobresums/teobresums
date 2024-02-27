@@ -1011,7 +1011,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
     }
     
-    if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
+    if (EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE) {
       
       /** BBH : compute and add NQC */
     
@@ -1203,8 +1203,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (output) {
     // hpc
     if (EOBPars->output_hpc)
+    {
       if (EOBPars->domain == DOMAIN_TD) Waveform_output (*hpc); 
       else                              WaveformFD_output (*hfpc); 
+    }
     // modes
     if (EOBPars->output_multipoles) {
       if (EOBPars->domain == DOMAIN_TD) {

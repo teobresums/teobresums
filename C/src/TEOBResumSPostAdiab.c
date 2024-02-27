@@ -150,7 +150,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
       eob_metric(dyn->r, 0., dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold, &pl_hold, &Q_vec[i], &dQ_vec[i], &dQdprstar_vec[i], &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
       
       rc_vec[i]                 = dyn->r; //Nonspinning case: rc = r
-      drc_dr_vec[i]             = 1;  
+      drc_dr_vec[i]             = 1.;  
 
       G                         = 0.0;
       dG_dr_vec[i]              = 0.0;
@@ -170,7 +170,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     uc              = 1./rc_vec[i];
     uc2_vec[i]      = uc*uc;
     duc_dr_vec[i]   = -uc2_vec[i]*drc_dr_vec[i];
-    dAuc2_dr_vec[i] = uc2_vec[i]*(dA_vec[i]-2*A_vec[i]*uc*drc_dr_vec[i]);
+    dAuc2_dr_vec[i] = uc2_vec[i]*(dA_vec[i]-2.*A_vec[i]*uc*drc_dr_vec[i]);
     
     /** Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper 
 	  (which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). 
@@ -178,20 +178,20 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
                                                                                    
     if (usespins) {
       
-      a_coeff = SQ(dAuc2_dr_vec[i]) - 4*A_vec[i]*uc2_vec[i]*SQ(dG_dr_vec[i]);  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
-      b_coeff = 2*dA_vec[i]*dAuc2_dr_vec[i] - 4*A_vec[i]*SQ(dG_dr_vec[i]);     /* Second coefficient of the quadratic equation */
+      a_coeff = SQ(dAuc2_dr_vec[i]) - 4.*A_vec[i]*uc2_vec[i]*SQ(dG_dr_vec[i]);  /* First coefficient of the quadratic equation a*x^2+b*x+c=0 */
+      b_coeff = 2.*dA_vec[i]*dAuc2_dr_vec[i] - 4.*A_vec[i]*SQ(dG_dr_vec[i]);     /* Second coefficient of the quadratic equation */
       c_coeff = SQ(dA_vec[i]);                                                 /* Third coefficient of the quadratic equation */
 
       /* Delta of the quadratic equation */
-      Delta = SQ(b_coeff) - 4*a_coeff*c_coeff; 
+      Delta = SQ(b_coeff) - 4.*a_coeff*c_coeff; 
       if (Delta<0)  
 	   /* If the spins are very small, 
 	   numerical fluctuations sometimes make Delta negative (e.g. -1e-30). 
 	   Setting it to 0 by hand */
           Delta=0.;                                              
       
-      sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); /* Plus  solution of the quadratic equation */
-      sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff); /* Minus solution of the quadratic equation */
+      sol_p   = (-b_coeff + sqrt(Delta))/(2.*a_coeff); /* Plus  solution of the quadratic equation */
+      sol_m   = (-b_coeff - sqrt(Delta))/(2.*a_coeff); /* Minus solution of the quadratic equation */
       
       /* dGdr sign determines choice of solution */
       if (dG_dr0_vec[i] > 0) j02 = sol_p;
@@ -221,7 +221,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
                 NULL,             /* drvt Heff,prstar */
                 &dHeff_dpphi,     /* drvt Heff,pphi   */
                 &d2Heff_dprstar20,
-		NULL);
+		            NULL);
       
       E_vec[i] = nu*H;
       
@@ -234,7 +234,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
               NULL,             /* drvt Heff,prstar */
               &dHeff_dpphi);    /* drvt Heff,pphi   */
       
-      d2Heff_dprstar20 = 1/Heff_orb_vec[i];
+      d2Heff_dprstar20 = 1./Heff_orb_vec[i];
       
       Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
       E_vec[i] = nu*H;
@@ -323,7 +323,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
         uc              = 1./rc_vec[i];
         uc2_vec[i]      = uc*uc;
         duc_dr_vec[i]   = -uc2_vec[i]*drc_dr_vec[i];
-        dAuc2_dr_vec[i] = uc2_vec[i]*(dA_vec[i]-2*A_vec[i]*uc*drc_dr_vec[i]);
+        dAuc2_dr_vec[i] = uc2_vec[i]*(dA_vec[i]-2.*A_vec[i]*uc*drc_dr_vec[i]);
       }
 
       if (parity)  {
@@ -341,7 +341,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
           /* Variables for which Kepler's law is still valid */
           Heff_orb_f = sqrt(A_vec[i]*(1.0 + SQ(dyn->pphi)*uc2_vec[i]));
           Heff_f     = G0_vec[i]*dyn->pphi + Heff_orb_f;
-          E_f        = sqrt(1 + 2*nu*(Heff_f - 1));
+          E_f        = sqrt(1. + 2.*nu*(Heff_f - 1.));
           psi        = fabs((duc_dr_vec[i] + dG_dr0_vec[i]*rc_vec[i]*sqrt(A_vec[i]/(SQ(dyn->pphi)) + A_vec[i]*uc2_vec[i])/A_vec[i])/(-0.5*dA_vec[i]));
           // FIXME: Different from Matlab code.
           //        Added absolute value to avoid NaN
@@ -374,12 +374,12 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
 
         /** Calculating prstar */
         if (n < 2) {
-          dHeff_dprstarbyprstar = dyn->pphi*dG_dprstarbyprstar_vec[i] + 1./Heff_orb_vec[i];	
+          dHeff_dprstarbyprstar = dyn->pphi*dG_dprstarbyprstar_vec[i] + 1./Heff_orb_vec[i]; 
         } else {
           dHeff_dprstarbyprstar = dyn->pphi*dG_dprstarbyprstar_vec[i] + (1. + 0.5*A_vec[i]*dQdprstar_vec[i]/(dyn->prstar))/Heff_orb_vec[i];	
         }
         dr_dtbyprstar         = sqrtAbyB_vec[i]/(E_vec[i])*dHeff_dprstarbyprstar;
-        dyn->prstar           = Fphi/dpphi_dr_vec[i]/dr_dtbyprstar; 
+        dyn->prstar           = Fphi/(dpphi_dr_vec[i]*dr_dtbyprstar); // Fphi/dpphi_dr_vec[i]/dr_dtbyprstar; 
     
         /** Note: p_phi does not change at odd orders 
             Computing first PA using the approximation detailed above A19 of TEOBResumS paper and Hamilton's equations.   
@@ -400,12 +400,12 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     
         prstar4 = SQ(SQ(dyn->prstar));
         a_coeff = dAuc2_dr_vec[i];                   /* coefficients of the quadratic equation a*x^2+b*x+c=0 */
-        b_coeff = 2*Heff_orb_vec[i]*(dG_dr_vec[i] + dG_dprstar_vec[i]*dprstar_dr_vec[i]);
+        b_coeff = 2.*Heff_orb_vec[i]*(dG_dr_vec[i] + dG_dprstar_vec[i]*dprstar_dr_vec[i]);
         c_coeff = dA_vec[i] + 2.*dprstar_dr_vec[i]*(dyn->prstar + 0.5*A_vec[i]*dQdprstar_vec[i]) + dA_vec[i]*Q_vec[i] + A_vec[i]*dQ_vec[i];
-        Delta   = SQ(b_coeff) - 4*a_coeff*c_coeff;   /* Delta of the quadratic equation */
+        Delta   = SQ(b_coeff) - 4.*a_coeff*c_coeff;   /* Delta of the quadratic equation */
               
         /* sol_p = (-b_coeff + sqrt(Delta))/(2*a_coeff); */  /* Plus solution - Unphysical */
-        sol_m = (-b_coeff - sqrt(Delta))/(2*a_coeff);  /* Minus solution of the quadratic equation */
+        sol_m = (-b_coeff - sqrt(Delta))/(2.*a_coeff);  /* Minus solution of the quadratic equation */
         dyn->pphi = sol_m;                             
         
         /** Note: prstar and G functions do not change at even orders 
@@ -426,7 +426,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
                   &dHeff_dprstar,   /* drvt Heff,prstar */
                   &dHeff_dpphi,     /* drvt Heff,pphi   */
                   &d2Heff_dprstar20,
-		  NULL);
+		              NULL);
         
         E_vec[i] = nu*H;
         
@@ -441,7 +441,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
         
         u2      = 1./((dyn->r)*(dyn->r));
         prstar2 = (dyn->prstar)*(dyn->prstar);
-        d2Heff_dprstar20 = d2Heff_dprstar20 = 0.5*(2. + A_vec[i]*d2Qdprstar2_vec[i])/Heff_orb_vec[i];
+        d2Heff_dprstar20 = 0.5*(2. + A_vec[i]*d2Qdprstar2_vec[i])/Heff_orb_vec[i];
         
         Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
         E_vec[i] = nu*H;
@@ -468,7 +468,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
       dyn->data[EOB_DDOTR][i]  = dyn->ddotr;
       dyn->data[EOB_PRSTAR][i] = dyn->prstar;
       dyn->data[EOB_OMGORB][i] = dyn->Omg_orb;
-      //printf("%.10f, %.10f, %.10f, %.10f, \n", dyn->pphi, dyn->Omg, dyn->r, dyn->Omg);
+      // printf("%.10f, %.10f, %.10f, %.10f, \n", dyn->pphi, dyn->Omg, dyn->r, dyn->Omg);
       if (usespins == MODE_SPINS_GENERIC && EOBPars->project_spins){
         /* Updating spins */
         eob_spin_dyn_Sproj_interp(spin, dyn->Omg, &SApara, &SBpara, NULL, NULL, NULL, NULL, 1);

@@ -2959,7 +2959,7 @@ double get_mrg_timestop(double q, double chi1, double chi2)
     Eq.(11) of https://arxiv.org/abs/1702.02053
     This routine computes the dressing factor for the star ell-th Love number
 */
-double fmode_resonance_dress_Love(double nu,
+void fmode_resonance_dress_Love(double nu,
 				  double r, // orbital radius
 				  double bomgf, // = mA omega_f
 				  int ell, 

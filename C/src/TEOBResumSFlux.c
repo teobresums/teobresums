@@ -211,7 +211,7 @@ double eob_flx_HorizonFlux_s_v1(double x, double Heff, double jhat, double nu, d
     * note: right now this is used whenever usespins = 1, 
     *       see line 697 in TEOBREsumSPars.c and lines 697, 834 below. 
 */
-double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu)
 {
   double rhoHlm[9]; /* all l = 2, 3, 4 multipoles */
   double FlmHLO[9];
@@ -439,52 +439,55 @@ double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu, do
  */
 double eob_flx_HorizonFlux_s_lmr(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
 {
-  /* only l = 2 for now */
+
+  return eob_flx_HorizonFlux_lmr(x, Heff, jhat, nu);
+  // note: the spin version is still under development, currently using same as nonspin
+  
+  /*
+ 
+  // only l = 2 for now 
   double FlmHLO[2];
   double FlmH[2];
   
-  /** Shorthands */
+  // Shorthands 
   double nu2 = nu*nu;
   double nu3 = nu*nu2;
   double x2  = x*x;
   double x3  = x*x2;
   double x4  = x*x3;
   double x5  = x*x4;
-  /*
-  double x6  = x*x5;
-  double x7  = x*x6;
-  double x8  = x*x7;
-  double x9  = x4*x5;
-  double x10 = x*x9;
-  double x11 = x*x10;
-  double x12 = x*x11;
-  */
+  
+  // double x6  = x*x5;
+  // double x7  = x*x6;
+  // double x8  = x*x7;
+  // double x9  = x4*x5;
+  // double x10 = x*x9;
+  // double x11 = x*x10;
+  // double x12 = x*x11;
 
   double v     = sqrt(x);
   double v5    = x2*v;
-  /*
-  double logv  = log(v);
-  double logv2 = logv*logv;
-  double logv3 = logv2*logv;
-  double logv4 = logv3*logv;
-  double logv5 = logv4*logv;
-  */
+  // double logv  = log(v);
+  // double logv2 = logv*logv;
+  // double logv3 = logv2*logv;
+  // double logv4 = logv3*logv;
+  // double logv5 = logv4*logv;
     
-  /** all Flm's below are already normalized by the 22 Newtonian contribution 32/5 x^5 */
+  // all Flm's below are already normalized by the 22 Newtonian contribution 32/5 x^5 
   
-  /** Compute leading-order part (nu-dependent) */
+  // Compute leading-order part (nu-dependent) 
 
-  /* mass ratios X_i = m_i/M */
+  // mass ratios X_i = m_i/M 
   const double X1to3 = X1*X1*X1;
   const double X1to4 = X1to3*X1;
   const double X2to3 = X2*X2*X2;
   const double X2to4 = X2to3*X2;
 
-  /* l = 2, m = 1 */
+  // l = 2, m = 1 
 
   FlmHLO[0] = (1-4*nu+2*nu2)*x5;
 
-  /* l = 2, m = 2 */
+  // l = 2, m = 2 
 
   // squared spins
   double chi1s = chi1*chi1;
@@ -507,45 +510,38 @@ double eob_flx_HorizonFlux_s_lmr(double x, double Heff, double jhat, double nu, 
   
   // nonspin limit: FlmHLO[1] = (1-4*nu+2*nu2)*x4;
 
-  /** other multipoles */
+  // other multipoles 
 
-  /* 
-  FlmHLO[2] = x6/56;
-  FlmHLO[3] = 20*x7/63;
-  FlmHLO[4] = 15*x6/56;
+  // FlmHLO[2] = x6/56;
+  // FlmHLO[3] = 20*x7/63;
+  // FlmHLO[4] = 15*x6/56;
   
-  FlmHLO[5] = 5*x9/392;
-  FlmHLO[6] = 5*x8/441;
-  FlmHLO[7] = 5*x9/56;
-  FlmHLO[8] = 5*x8/63;
-  */
+  // FlmHLO[5] = 5*x9/392;
+  // FlmHLO[6] = 5*x8/441;
+  // FlmHLO[7] = 5*x9/56;
+  // FlmHLO[8] = 5*x8/63;
   
-    
-  /** Compute horizon multipolar flux (only l = 2 for now) */
+  // Compute horizon multipolar flux (only l = 2 for now) 
 
   FlmH[0] = FlmHLO[0];
   FlmH[1] = FlmHLO[1];
-  
-  /**
-  
-  const double Heff2 = Heff*Heff;
-  const double jhat2 = jhat*jhat;
-
-  FlmH[0] = FlmHLO[0] * jhat2 * gsl_pow_int(rhoHlm[0],4);
-  FlmH[1] = FlmHLO[1] * Heff2 * gsl_pow_int(rhoHlm[1],4);
-  
-  FlmH[2] = FlmHLO[2] * Heff2 * gsl_pow_int(rhoHlm[2],6);
-  FlmH[3] = FlmHLO[3] * jhat2 * gsl_pow_int(rhoHlm[3],6);
-  FlmH[4] = FlmHLO[4] * Heff2 * gsl_pow_int(rhoHlm[4],6);
- 
-  FlmH[5] = FlmHLO[5] * jhat2 * gsl_pow_int(rhoHlm[5],8);
-  FlmH[6] = FlmHLO[6] * Heff2 * gsl_pow_int(rhoHlm[6],8);
-  FlmH[7] = FlmHLO[7] * jhat2 * gsl_pow_int(rhoHlm[7],8);
-  FlmH[8] = FlmHLO[8] * Heff2 * gsl_pow_int(rhoHlm[8],8);
-
-  */
     
-  /** Sum over multipoles */
+  // const double Heff2 = Heff*Heff;
+  // const double jhat2 = jhat*jhat;
+
+  // FlmH[0] = FlmHLO[0] * jhat2 * gsl_pow_int(rhoHlm[0],4);
+  // FlmH[1] = FlmHLO[1] * Heff2 * gsl_pow_int(rhoHlm[1],4);
+
+  // FlmH[2] = FlmHLO[2] * Heff2 * gsl_pow_int(rhoHlm[2],6);
+  // FlmH[3] = FlmHLO[3] * jhat2 * gsl_pow_int(rhoHlm[3],6);
+  // FlmH[4] = FlmHLO[4] * Heff2 * gsl_pow_int(rhoHlm[4],6);
+
+  // FlmH[5] = FlmHLO[5] * jhat2 * gsl_pow_int(rhoHlm[5],8);
+  // FlmH[6] = FlmHLO[6] * Heff2 * gsl_pow_int(rhoHlm[6],8);
+  // FlmH[7] = FlmHLO[7] * jhat2 * gsl_pow_int(rhoHlm[7],8);
+  // FlmH[8] = FlmHLO[8] * Heff2 * gsl_pow_int(rhoHlm[8],8);
+    
+  // Sum over multipoles 
   double hatFH = 0.;
 
   for(int i = 0; i < 2; i++)
@@ -554,6 +550,9 @@ double eob_flx_HorizonFlux_s_lmr(double x, double Heff, double jhat, double nu, 
   }
   
   return hatFH;
+
+  */
+
 }
 
 
@@ -590,7 +589,9 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     Heff, jhat, Heff, jhat, Heff,
     jhat, Heff, jhat, Heff, jhat, Heff,
     Heff, jhat, Heff, jhat, Heff, jhat, Heff,
-    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
+    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff,
+    Heff, jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff,
+    jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};  
   
   double FNewt22, sum_k=0.; 
   double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];

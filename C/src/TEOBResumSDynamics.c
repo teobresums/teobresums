@@ -463,11 +463,11 @@ void eob_ham_s(double nu,
                double *dHeff_dprstar, /* drvt Heff,prstar */
                double *dHeff_dpphi,    /* drvt Heff,pphi */
                double *d2Heff_dprstar20,
-	       double *d2Heff_dr2
+	             double *d2Heff_dr2
                )
 {
     /* Shorthands */
-    const double pphi2    = SQ(pphi);
+    const double pphi2   = SQ(pphi);
     const double prstar2 = SQ(prstar);
     const double prstar3 = prstar2*prstar;
     const double prstar4 = prstar2*prstar2;

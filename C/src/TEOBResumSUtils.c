@@ -38,7 +38,7 @@ double nu_to_X1(const double nu)
 }
 
 /** Compute tidal coupling constants from tidal polarizability parameters */
-double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell,
+void tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell,
 			     double *kapA, double *kapB)
 {
   if (ell<2) errorexit("ell must be >2");
@@ -2411,10 +2411,12 @@ void DynamicsSpin_free (DynamicsSpin *dyn)
   if (!dyn) return;
   if (dyn->time) free(dyn->time);
   if (dyn->data)
+    {
     for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++){
       if (dyn->data[v]) free(dyn->data[v]);
       gsl_spline_free (dyn->spline[v]);
       gsl_interp_accel_free(dyn->accel[v]);
+    }
     }
   free(dyn);
 }
