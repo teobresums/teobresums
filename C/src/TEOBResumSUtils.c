@@ -23,6 +23,9 @@ double q_to_nu(const double q)
   double nu = 0;
   if (q>0.)
     nu = q/((q+1.)*(q+1.));
+  if (nu > 0.25)
+    nu = 0.25;
+  
   return nu;
 }
 
