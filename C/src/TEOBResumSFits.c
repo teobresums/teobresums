@@ -53,7 +53,15 @@ double eob_a6c_fit_HM(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
-/** Fit of a6c, all in one paper: arXiv:2101.08624 */
+/**
+ *  Function: eob_a6c_fit_ecc
+ *  ------------------------
+ *   Fit of a6c from arXiv:2101.08624
+ *   
+ *   @param[in] nu: symmetric mass ratio
+ *
+ *   @return  a6c
+ */
 double eob_a6c_fit_ecc(double nu)
 {
   double nu2 = nu*nu;
@@ -88,9 +96,10 @@ double eob_a6c_fit_next(double nu)
 
 /**
  *  Function: eob_a6c_fit_ecc_P33_4PNh22
- *  ---------------
+ *  ------------------------------------
  *   New fit for a6c obtained using the 4PN term
- *   in the rho22 with P(2,2) resummation 
+ *   in the rho22 with P(2,2) resummation.
+ *   Eq. (34) of arXiv:2404.05288
  *   
  *   @param[in] nu: symmetric mass ratio
  *
@@ -102,8 +111,8 @@ double eob_a6c_fit_ecc_P33_4PNh22(double nu)
 }
 
 /**
- *  Function: eob_a6c_fit_HM
- *  ---------------
+ *  Function: eob_a6c_fit_HM_2023
+ *  -----------------------------
  *   Fit of a6c from Tab. II of arXiv:2304.09662 
  *   
  *   @param[in] nu: symmetric mass ratio
@@ -133,7 +142,7 @@ double eob_a6c_fit_HM_2023(double nu)
 
 /**
  *  Function: eob_c3_fit_global
- *  ---------------
+ *  ---------------------------
  *   Fit of c3, TEOBResumS paper Nagar et al. (2018)
  *   Note: c3 = 0 with tides
  *
@@ -171,7 +180,7 @@ double eob_c3_fit_global(double nu, double a1, double a2)
 
 /**
  *  Function: eob_c3_fit_HM
- *  ---------------
+ *  -----------------------
  *   Fit of c3, HM paper: arXiv:2001.09082
  *   Note: c3 = 0 with tides
  *    @param[in] nu: symmetric mass ratio
@@ -210,7 +219,7 @@ double eob_c3_fit_HM(double nu, double a1, double a2)
 
 /**
  *  Function: eob_c3_fit_ecc
- *  ---------------
+ *  ------------------------
  *   Fit of c3, all in one paper: arXiv:2101.08624
  *   Note: c3 = 0 with tides
  *   @param[in] nu: symmetric mass ratio
@@ -249,10 +258,12 @@ double eob_c3_fit_ecc(double nu, double a1, double a2)
 
 /**
  *  Function: eob_c3_fit_ecc_P33_4PNh22
- *  ---------------
+ *  -----------------------------------
  *   New fit for c3 obtained using the 4PN term
  *   in the rho22 with P(2,2) resummation 
  *   Note: c3 = 0 with tides
+ *   From Tab. III of arXiv:2404.0528
+ *
  *   @param[in] nu: symmetric mass ratio
  *   @param[in] a1: spin of body 1
  *   @param[in] a2: spin of body 2
@@ -291,7 +302,7 @@ double eob_c3_fit_ecc_P33_4PNh22(double nu, double a1, double a2)
 
 /**
  *  Function: eob_c3_fit_HM_2023
- *  ---------------
+ *  ----------------------------
  *   Fit of c3, Table IV of arXiv:2304.09662
  *   Note: c3 = 0 with tides
  *    @param[in] nu: symmetric mass ratio
