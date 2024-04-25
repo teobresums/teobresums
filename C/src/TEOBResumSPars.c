@@ -512,8 +512,8 @@ void eob_set_params(int default_choice, int firstcall)
   }
 
   /* Check: if precession and eccentricity are both specified, throw an error */
-  if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
-    errorexit("ERROR: Precession and eccentricity are not compatible. Please set one of them to zero.");
+  // if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
+  //  errorexit("ERROR: Precession and eccentricity are not compatible. Please set one of them to zero.");
 
   /* Check: if eccentricity is not between 0 and 1, throw an error */
   if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0))
