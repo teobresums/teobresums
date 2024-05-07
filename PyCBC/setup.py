@@ -7,7 +7,7 @@ setup.py file for TEOBResumS pycbc waveform plugin package
 from setuptools import Extension, setup, Command
 from setuptools import find_packages
 
-NAME = 'teobresums'
+NAME = 'teobresums-pycbc'
 VERSION = 'v2'
 
 setup (
