@@ -310,11 +310,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   
   /* Compute initial radius */
+  /* Compute initial radius */
   double f0 = EOBPars->initial_frequency/time_unit_fact;
   if (f0 > 0.0125+0.03*(EOBPars->nu)){
     f0 = 0.0125+0.03*EOBPars->nu;
-    printf("Initial frequency too low. Set f0 to %.2e \n",f0);
+    printf("Initial frequency too high. Set f0 to %.2e \n",f0);
   }
+  
   EOBPars->f0 = f0;
   double r0;
   if (r_hyp != 0.) {
@@ -324,6 +326,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     r0 = eob_dyn_r0_eob(f0,dyn);
   }
   //double r0 = eob_dyn_r0_Kepler(f0); /* Kepler radius: no longer used */
+    
   /* If f_min is too high fall back to a minimum acceptable initial radius */
   if ((EOBPars->model == MODEL_GIOTTO) && (r0 < TEOB_R0_THRESHOLD)) r0 = TEOB_R0_THRESHOLD;
 
@@ -552,7 +555,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /* Compute the initial conditions */
     eob_dyn_ic(r0, dyn, dyn->y0);
-
+      
     /* check that hyperbolic orbits ic work */
     // TODO: check if this workaround is needed  
     if ((r_hyp != 0.) && (dyn->y0[EOB_ID_PRSTAR] == 0.)) {

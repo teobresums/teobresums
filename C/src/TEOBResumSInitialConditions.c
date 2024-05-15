@@ -763,10 +763,14 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
     /* Assume that the user gave as input the orbit averaged 
     frequency. Transform it into an average frequency between apastron
     and periastron and overwrite omg_orb0 */
-    if (DEBUG) printf("Orbit-averaged ICs:\nomg_bar = %.8f\n ", omg_orb0);
+    if (DEBUG) printf("Orbit-averaged ICs:\nomg_bar = %.8f\n", omg_orb0);
     double omg_orb0_p = eob_dyn_omg_from_omgbar(omg_orb0, 0., ecc);
     double omg_orb0_m = eob_dyn_omg_from_omgbar(omg_orb0, Pi, ecc);
     omg_orb0 = 0.5*(omg_orb0_p + omg_orb0_m);
+    if (omg_orb0 > 0.02){
+        omg_orb0 = 0.02;
+        printf("Initial frequency too high. Set mean orbital frequency to %.2e \n",omg_orb0);
+    }
     if (DEBUG) printf("omg_orb0 = %.8f\n ", omg_orb0);
   }
   eob_dyn_rootfind_rpr(dyn, &r0, &pr0abs, omg_orb0, r0_kepl, pr0PN);
@@ -780,7 +784,7 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
   double pl_hold, omg_orb, dHeffma_dj0;
   
   rma = r0/(1.+ecc*cos(zeta));
-
+    
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
     eob_metric_s(rma, pr0, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
