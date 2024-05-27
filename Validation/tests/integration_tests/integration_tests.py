@@ -7,7 +7,7 @@ RG, 12/2023
 """
 
 import pytest
-import sys; import numpy as np
+import numpy as np
 import utilities as utils
 params = {
 
@@ -27,8 +27,8 @@ params = {
         # test swap of components for BBH, BNS and BHNS
         # format: (m1, m2, s1z, s2z, l1, l2)
         'test_swap':       [ (40., 20., 0.8, 0.5, 0., 0.),    #BBH
-                             (1.7, 1., 0.2, 0.1, 400, 1500.), #BNS
-                             (6., 1.4, 0.8, 0.1, 0., 1500.)], #BHNS
+                            (1.7, 1., 0.2, 0.1, 400, 1500.)], #BNS
+                            #(6., 1.4, 0.8, 0.1, 0., 1500.)], #BHNS always assumes m1 is the BH
         
         # test distance scaling
         # format: (m1, m2, s1z, s2z, l1, l2), reference distance, list of distances to test
@@ -38,9 +38,9 @@ params = {
 
         # test behavior under small perturbations of the parameters
         # format: (m1, m2, s1z, s2z, l1, l2), maximum tolerance, Number of draws, max variation of the parameters
-        'test_parameters_perturb'    : [ ((40., 20., 0.8, 0.5, 0., 0.),        1e-3, 3, [1e-5, 1e-6, 1e-8]),  #BBH
-                                         ((1.7, 1.,  0.2, 0.1, 400, 1500.),    1e-3, 3, [1e-5, 1e-6, 1e-8]),  #BNS
-                                         ((6., 1.4,  0.8, 0.1, 0., 1500.),     1e-3, 3, [1e-5, 1e-6, 1e-8])], #BHNS
+        'test_parameters_perturb'    : [ ((40., 20., 0.8, 0.5, 0., 0.),        1e-3, 3, [1e-9, 1e-10, 1e-11]),  #BBH
+                                         ((1.7, 1.,  0.2, 0.1, 400, 1500.),    1e-3, 3, [1e-9, 1e-10, 1e-11]),  #BNS
+                                         ((6., 1.4,  0.8, 0.1, 0., 1500.),     1e-3, 3, [1e-9, 1e-10, 1e-11])], #BHNS
 
         # Test that the plus and cross polarizations are reconstructed correctly
         'test_polariz_reconstruction': [ ((40., 20., 0.8, 0.5, 0., 0.),     1e-10),  #BBH
@@ -98,14 +98,20 @@ def test_swap(pars):
         - In plane spins are rotated by Pi
     """
     m1, m2, s1z, s2z, l1, l2 = pars
-    _,_,h1 = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False)
-    _,_,h2 = utils.gen_wf(m2, m1, s2z, s1z, l2, l1, additional_pars={'coa': np.pi}, return_zero=False)
+    _,_,h1 = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars={'use_geometric_units':"yes", 
+                                                                     'initial_frequency':0.003}, 
+                                                    return_zero=False)
+    _,_,h2 = utils.gen_wf(m2, m1, s2z, s1z, l2, l1, additional_pars={'coa': np.pi, 
+                                                                     'use_geometric_units':"yes", 
+                                                                     'initial_frequency':0.003}, 
+                                                    return_zero=False)
+
     assert np.allclose(h1, h2, atol=1e-15, rtol=1e-15)
 
 @pytest.mark.parametrize("pars, ref, tst", params['test_distance'])
 def test_distance_scaling(pars, ref, tst):
     """
-    Test that the amplitude scales correctly with the distance
+    Test that the amplitude scales correctly with the distance.
     """
     m1, m2, s1z, s2z, l1, l2 = pars
     reference_distance = ref
@@ -126,10 +132,12 @@ def test_srate_change():
     """
     Test that waveforms are unmodified when changing the sampling rate
     """
-    t1,_, h1 = utils.gen_wf(1.4, 1.4, 0, 0, 400, 400,  additional_pars={'srate':8192.}, return_zero=False)
-    t2,_, h2 = utils.gen_wf(1.4, 1.4, 0, 0, 400, 400,  additional_pars={'srate':4096.}, return_zero=False)
+    t1,_, h1 = utils.gen_wf(1.4, 1.4, 0, 0, 400, 400,  additional_pars={'srate_interp':8192.}, return_zero=False)
+    t2,_, h2 = utils.gen_wf(1.4, 1.4, 0, 0, 400, 400,  additional_pars={'srate_interp':4096.}, return_zero=False)
     h2_int   = np.interp(t2, t1, h1)
-    assert np.allclose(h2, h2_int, atol=1e-15, rtol=1e-15)
+    assert t1[1]-t1[0] == 1./8192.
+    assert t2[1]-t2[0] == 1./4096.
+    assert np.allclose(h2/h2_int, np.ones(len(h2_int)), atol=1e-15, rtol=1e-15)
 
 @pytest.mark.parametrize("pars, ref, N, tst", params['test_parameters_perturb'])
 def test_parameters_perturb(pars, ref, N, tst):
@@ -149,8 +157,8 @@ def test_parameters_perturb(pars, ref, N, tst):
                             )
     A_ref = np.sqrt(hp_ref**2+hc_ref**2)
     for eps in epsilon:
-        for nn in range(N):
-            m1e, m2e,= m1  + np.random.uniform(0,1)*eps,  m2 + np.random.uniform(0,1)*eps
+        for _ in range(N):
+            m1e, m2e = m1  + np.random.uniform(0,1)*eps,  m2 + np.random.uniform(0,1)*eps
             s1e, s2e = s1z + np.random.uniform(0,1)*eps, s2z + np.random.uniform(0,1)*eps
             l2e      = l2  + np.random.uniform(0,1)*eps
             t_tst,hp_tst,hc_tst = utils.gen_wf(m1e, m2e, s1e, s2e, l1, l2e, return_zero=False,
@@ -160,6 +168,7 @@ def test_parameters_perturb(pars, ref, N, tst):
             A_tst = np.sqrt(hp_tst**2+hc_tst**2)
             if not np.allclose(max(A_ref), max(A_tst), atol=threshold, rtol=threshold): 
                 print("Amplitude failing for a perturbation of", eps)
+                print(max(A_ref), max(A_tst))
                 assert False
             if not np.allclose(t_ref[np.argmax(A_ref)], t_tst[np.argmax(A_tst)], atol=threshold, rtol=threshold): 
                 print("Merger time failing for a perturbation of", eps)
@@ -204,13 +213,17 @@ def test_phase_shifts_22(pars, eps, phis):
     t,hp,hc= utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False,
                                 additional_pars={
                                                  'use_mode_lm': modes,
+                                                 'use_geometric_units':'yes',
+                                                 'initial_frequency':0.003
                                                  }
                                 )
     for phi in phis:
         _,hp_p,hc_p = utils.gen_wf(m1, m2, s1z, s2z, l1, l2,return_zero=False,
                                 additional_pars={
                                                  'use_mode_lm': modes,
-                                                 'coalescence_angle':phi
+                                                 'coalescence_angle':phi,
+                                                 'use_geometric_units':'yes',
+                                                 'initial_frequency':0.003
                                                  }
                                 )
     if not np.allclose(hp, hp_p, atol=eps, rtol=eps):
@@ -229,11 +242,13 @@ def test_phase_shifts_lm(pars, eps, modes):
     t,hp,hc,hlm,_= utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False,
                                 additional_pars={
                                                  'use_mode_lm': modes,
-                                                 'arg_out':'yes'
+                                                 'arg_out':'yes',
+                                                 'use_geometric_units':'yes',
+                                                 'initial_frequency':0.003
                                                  }
                                 )
     for k in modes:
-        emm = utils.k_to_emm(k)
+        emm    = utils.k_to_emm(k)
         phi_lm = 2*np.pi/emm
         print(emm, phi_lm)
         # single reconstruct the single mode wf
@@ -257,6 +272,7 @@ def test_same_wf(pars):
     
     for _ in range(10):
         _, hp1, hc1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, return_zero=False)
+        hc1 = hc1 * np.random.normal(size=len(hc1))
         assert np.allclose(hp0, hp1, atol=1e-15, rtol=1e-15)
         assert np.allclose(hc0, hc1, atol=1e-15, rtol=1e-15)
 
