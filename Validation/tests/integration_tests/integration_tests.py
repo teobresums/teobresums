@@ -268,11 +268,20 @@ def test_same_wf(pars):
     accessed)
     """
     mass1, mass2, s1z, s2z, lam1, lam2 = pars
-    _, hp0, hc0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, return_zero=False)
-    
+    _, hp0, hc0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, return_zero=False,
+                                    additional_pars={
+                                                 'use_geometric_units':'yes',
+                                                 'initial_frequency':0.003
+                                                 }
+                                    )
     for _ in range(10):
-        _, hp1, hc1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, return_zero=False)
-        hc1 = hc1 * np.random.normal(size=len(hc1))
+        _, hp1, hc1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, return_zero=False, 
+                                   additional_pars={
+                                                 'use_geometric_units':'yes',
+                                                 'initial_frequency':0.003
+                                                 }
+                                    )
+        
         assert np.allclose(hp0, hp1, atol=1e-15, rtol=1e-15)
         assert np.allclose(hc0, hc1, atol=1e-15, rtol=1e-15)
 
