@@ -202,7 +202,6 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   
   eobp->tc = 0;
   eobp->time_shift_FD=1;
-  eobp->time_shift_TD=1;
   eobp->df = 1.;
   eobp->interp_freqs=0;
   double fr[] = {30.};      //indexes of multipoles to use
@@ -210,9 +209,13 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->freqs = malloc (eobp->freqs_size * sizeof(double));
   memcpy(eobp->freqs, fr, eobp->freqs_size * sizeof(double));
 
+  /* Conventions */
+  eobp->time_shift_TD=1;
+  eobp->lal_tetrad_conventions=1;
+
   /* EOB Settings */
 
-  eobp->ecc_freq=ECCFREQ_ORBAVGD; // "PERIASTRON", "AVERAGE", "APASTRON"
+  eobp->ecc_freq=ECCFREQ_ORBAVGD; // "PERIASTRON", "AVERAGE", "APASTRON", "ORBAVGD"
   eobp->ecc_ics =ECCICS_MA; // "0PA", "1PA"
   
   eobp->postadiabatic_dynamics=1;
@@ -1666,7 +1669,15 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   }      
   if (STREQUAL(key,"df")) {
     eobp->df = par_get_d(val);
-   } 
+   }
+
+  /* Conventions */ 
+  if (STREQUAL(key,"time_shift_TD")) {
+    eobp->time_shift_TD = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"lal_tetrad_conventions")) {
+    eobp->lal_tetrad_conventions = YESNO2INT(string_trim(val));
+  } 
 }
 
 /**
@@ -1862,6 +1873,10 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "output_nqc_coefs", INT2YESNO(eobp->output_nqc_coefs));
   fprintf(f,"%s = \"%s\"\n", "output_ringdown", INT2YESNO(eobp->output_ringdown));
   
+  /* Conventions */
+  fprintf(f,"%s = \"%s\"\n", "time_shift_TD", INT2YESNO(eobp->time_shift_TD));
+  fprintf(f,"%s = \"%s\"\n", "lal_tetrad_conventions", INT2YESNO(eobp->lal_tetrad_conventions));
+
   fclose(f);
 }
 

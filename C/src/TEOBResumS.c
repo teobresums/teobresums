@@ -1213,12 +1213,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Computation of (h+,hx) */
   
-  if (EOBPars->domain == DOMAIN_TD) { 
+  if (EOBPars->domain == DOMAIN_TD) {
 
     /* TIME DOMAIN */
     
     /* Find the time shift to have merger at 0*/
-    if(EOBPars->time_shift_TD) 
+    if(EOBPars->time_shift_TD)
       EOBPars->tc = time_shift_mrg_to_0(hlm);
 
     if (EOBPars->interp_uniform_grid) {
@@ -1244,8 +1244,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       compute_hpc(hlm, NULL, NULL, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
     /* time-shift the TD waveforms */
-    if(EOBPars->time_shift_TD) time_shift_TD((*hpc)->time, EOBPars->tc/time_unit_fact, (*hpc)->size);
+    if(EOBPars->time_shift_TD) 
+      time_shift_TD((*hpc)->time, EOBPars->tc/time_unit_fact, (*hpc)->size);
 
+    /* Enforce the LAL tetrad convention: hlm --> -1*hlm, 
+       implying that h_{+,x} -->-1*h_{+,x} 
+    */
+    if (EOBPars->lal_tetrad_conventions){
+      lal_tetrad_conventions(*hpc);
+    }
   } else {
     
     /* FREQUENCY DOMAIN */

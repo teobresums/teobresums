@@ -3411,6 +3411,24 @@ void NQCdata_free (NQCdata *nqc)
   
 
 /**
+ * Function: lal_tetrad_conventions
+ * --------------------------------
+ *   Enforce the LALSimulation tetrad conventions.
+ *   With respect to SXS, hlm->-1*hlm.
+ *   This implies that the +,x polarizations are mapped in
+ *   -1*(h+,hx)
+ *
+ *   @param[in,out] hpc: pointer to the +,x polarizations
+*/
+void lal_tetrad_conventions(Waveform *hpc)
+{
+  for(int i=0; i<hpc->size; i++){
+    hpc->real[i] *= -1.;
+    hpc->imag[i] *= -1.;
+  }
+}
+
+/**
  * Function: time_shift_mrg_to_0
  * -----------------------------
  *   Find the time shift to move the merger to t=0
@@ -3418,7 +3436,7 @@ void NQCdata_free (NQCdata *nqc)
  *   Q = sqrt(A); A = sum_{ell, emm} |A_{ell,emm}|^2
  * 
  *   @param[in,out] hlm: pointer to coprecessing hlm  
- */
+*/
 double time_shift_mrg_to_0(Waveform_lm *hlm)
 {
   int i, imrg;

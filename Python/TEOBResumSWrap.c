@@ -419,9 +419,6 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict,"time_shift_FD") != NULL ) { 
     EOBPars->time_shift_FD = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "time_shift_FD")));
   }
-  if ( PyDict_GetItemString(dict,"time_shift_TD") != NULL ) { 
-    EOBPars->time_shift_TD = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "time_shift_TD")));
-  }
   if ( PyDict_GetItemString(dict,"interp_freqs") != NULL ) {
     EOBPars->interp_freqs = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "interp_freqs")));
   }
@@ -434,6 +431,14 @@ int SetOptionalVariables(PyObject* dict){
       PyObject *item = PyList_GetItem(tmp, i);
       EOBPars->freqs[i] = PyFloat_AsDouble(item);
     }
+  }
+
+  /* Conventions */
+  if ( PyDict_GetItemString(dict,"time_shift_TD") != NULL ) { 
+    EOBPars->time_shift_TD = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "time_shift_TD")));
+  }
+  if ( PyDict_GetItemString(dict,"lal_tetrad_conventions") != NULL ) { 
+    EOBPars->lal_tetrad_conventions = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "lal_tetrad_conventions")));
   }
 
   return OK;

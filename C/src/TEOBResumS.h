@@ -745,6 +745,7 @@ typedef struct tagEOBParameters
   /**@}*/
 
   /* msc */
+  int lal_tetrad_conventions;/**< Use the LALSimulation Tetrad convention */
   int openmp_threads;        /**< Number of OpenMP threads */
   int openmp_timeron;        /**< Flag to switch on/off OpenMP timers */
   int firstcall[NFIRSTCALL]; /**< Flag to check if first call to functions */
@@ -834,6 +835,7 @@ void set_multipolar_idx_mask_old(int *kmask, int n);
 void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);
 long int get_uniform_size(const double tf, const double t0, const double dt);
 int intersect_int (int *a, int size_a, int *b, int size_b, int *result);
+void lal_tetrad_conventions(Waveform *hpc);
 void Waveform_alloc (Waveform **wav, const int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
 void Waveform_rmap (Waveform *h, const int mode, const int unw);
