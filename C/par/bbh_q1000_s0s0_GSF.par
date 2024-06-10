@@ -21,6 +21,7 @@ q = 1000. # mass ratio
 use_spins = 1
 chi1 = 0.0 # dimensionless spin 1 z-component 
 chi2 = 0.0 # dimensionless spin 2 z-component 
+model =	"Giotto"
 
 # initial GW freq for r0 = 21.0
 # f22 = 2*(r0)^(-3/2) / (2*pi)

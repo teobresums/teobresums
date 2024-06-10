@@ -37,6 +37,11 @@ output_lm   = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
 use_mode_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
 output_dynamics = "yes"
 use_flm = "HM"
+use_a6c_fits = "HM"
+use_cN3LO_fits = "HM"
+A_pot = "PN"
+D_pot = "PN"
+Q_pot = "PN"
 
 #
 # Setup

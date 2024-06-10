@@ -54,6 +54,10 @@ def teobresums_pars_update(par, domain):
     inclination = get_par('inclination', par)
     coa_phase   = get_par('coa_phase', par)
     ecc         = get_par('eccentricity', par)
+    # NOTE: In teob `anomaly` is actually not the mean anomaly, but the true one
+    #       since the parameters are linked with one another by Kepler Equation, 
+    #       and have similar physical meanings we use one in place of the other 
+    anomaly     = get_par('mean_per_ano', par)
     
     spin1x = spin1y = spin2x = spin2y = 0.
     if par['spin1x'] is not None:
@@ -105,41 +109,41 @@ def teobresums_pars_update(par, domain):
         'chi1y': spin2y,
         'chi1z': spin2z,
         #
-        'distance' : distance, 
-        'inclination' : inclination,
-        'coalescence_angle' : coa_phase, # reference angle/phase at coalescence
-        'srate_interp' : srate, # in Hz, srate at which to interpolate output
-        'initial_frequency' : flow,  # in Hz if use_geometric_units = 0, else in geometric units
-        'use_mode_lm' : k, # List of wvf modes to use
+        'distance'           : distance, 
+        'inclination'        : inclination,
+        'coalescence_angle'  : coa_phase, # reference angle/phase at coalescence
+        'srate_interp'       : srate, # in Hz, srate at which to interpolate output
+        'initial_frequency'  : flow,  # in Hz if use_geometric_units = 0, else in geometric units
+        'use_mode_lm'        : k, # List of wvf modes to use
         #
         'use_geometric_units': 1,  # I/O units output: 1 = geometric, 0 = physical
         'interp_uniform_grid': interp, # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
-        'arg_out' : BIT['no'], # return modes hlm/hflm. Default = 0 (no)
+        'arg_out'            : "no", # return modes hlm/hflm. Default = 0 (no)
         #
         'ringdown_extend_array' : None,
-        'centrifugal_radius' : None,
-        'use_flm' : None,
-        'nqc' : None,
-        'nqc_coefs_flx' : None,
-        'nqc_coefs_hlm' : None,
-        'use_speedytail' : None,
+        'centrifugal_radius'    : None,
+        'use_flm'               : None,
+        'nqc'                   : None,
+        'nqc_coefs_flx'         : None,
+        'nqc_coefs_hlm'         : None,
+        'use_speedytail'        : None,
         #
-        'use_tidal' : None, # Tidal model, BBH default = TIDES_OFF, BNS default = TIDES_TEOBRESUM3 (see USETIDAL)
+        'use_tidal'             : None, # Tidal model, BBH default = TIDES_OFF, BNS default = TIDES_TEOBRESUM3 (see USETIDAL)
         'use_tidal_gravitomagnetic' : None, # Gravitomagnetic tides model, BBH default = TIDES_GM_OFF, BNS default = TIDES_GM_PN
-        'pGSF_tidal' : None, # default = 4.0
+        'pGSF_tidal'            : None, # default = 4.0
         #
-        'output_hpc' : "no",
-        'output_lm' : [-1], 
+        'output_hpc'        : "no",
+        'output_lm'         : [-1], 
         'output_multipoles' : "no",
-        'output_dynamics' : "no",
+        'output_dynamics'   : "no",
         #
-        'compute_LR' : None,
-        'compute_LR_guess' : None,
-        'compute_LSO' : None,
+        'compute_LR'        : None,
+        'compute_LR_guess'  : None,
+        'compute_LSO'       : None,
         'compute_LSO_guess' : None, 
         #
-        'postadiabatic_dynamics' : None,
-        'postadiabatic_dynamics_N' : None,
+        'postadiabatic_dynamics'      : None,
+        'postadiabatic_dynamics_N'    : None,
         'postadiabatic_dynamics_size' : None,
         'postadiabatic_dynamics_stop' : None,
         'postadiabatic_dynamics_rmin' : None,
@@ -158,7 +162,8 @@ def teobresums_pars_update(par, domain):
         'ode_stop_radius' : None,
         'ode_stop_afterNdt' : None,
         #
-        'ecc': ecc, #this actually affects the evolution *only* if on teobresums-eccentric branch
+        'ecc'     : ecc, #this actually affects the evolution *only* if on teobresums-eccentric branch
+        'anomaly' : anomaly
     }
     
     # Remove unset parameters (use internal defaults)
@@ -190,7 +195,7 @@ def teobresums_td(**par):
     # Note that by convention, the time at 0 is a fiducial reference.
     # For CBC waveforms, this would be set to where the merger occurs
 
-    offset = - np.argmax(abs(wf))* dt
+    offset = t[0]
     wf     = TimeSeries(wf, delta_t=dt, epoch=offset)
     return wf.real(), wf.imag()
 

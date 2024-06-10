@@ -1,29 +1,7 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
- *
- */
-
-/**
- * @file TEOBResumS..h
- * @brief Header file of the TEOBResumS C code
+/** \file TEOBResumS.h
+ *  \brief Header file of the TEOBResumS C code
  *
  * This file contains all the macros, typdef, and routine prototype.
- * Doxygen documentation should go here.
  *
  */
 
@@ -72,10 +50,6 @@
 
 #ifndef EXCLUDESPINSPINTIDES
 #define EXCLUDESPINSPINTIDES (0) /* use tidally deformed centr. radius with self-spin and tides by default */
-#endif
-
-#ifndef USEGRAVITOMAGNETICTERMS
-#define USEGRAVITOMAGNETICTERMS (1) /* use gravitomagnetic terms in tidal potential and waveform */
 #endif
 
 #ifndef USEBTIDALPOTENTIAL
@@ -177,13 +151,13 @@ enum{Ix, Iy, Iz, IN3};
 
 /** Simple/generic error handler */
 #define ERROR (1) /** generic error int */
-enum{OK,
-     ERROR_OUTOFMEM,
-     ERROR_FILEOPEN,
-     ERROR_MKDIR,
-     ERROR_ROOTFINDER,
-     ERROR_ODEINT,
-     NERROR
+enum{OK,                /**< No error */
+     ERROR_OUTOFMEM,    /**< Out of memory */
+     ERROR_FILEOPEN,    /**< Error opening file */
+     ERROR_MKDIR,       /**< Error while making directory */
+     ERROR_ROOTFINDER,  /**< Root finder failed */
+     ERROR_ODEINT,      /**< ODE solver failed */
+     NERROR             /**< Number of errors */
 };
 static const char* eob_error_msg[] = {
   "ok",
@@ -193,39 +167,39 @@ static const char* eob_error_msg[] = {
 
 /** Index list of EOB evolved variables */
 enum{
-  EOB_EVOLVE_RAD, 
-  EOB_EVOLVE_PHI,
-  EOB_EVOLVE_PRSTAR,
-  EOB_EVOLVE_PPHI,
-  EOB_EVOLVE_NVARS
+  EOB_EVOLVE_RAD,          /**< index of r */
+  EOB_EVOLVE_PHI,          /**< index of phi */
+  EOB_EVOLVE_PRSTAR,       /**< index of Prstar */
+  EOB_EVOLVE_PPHI,         /**< index of Pphi */
+  EOB_EVOLVE_NVARS         /**< number of EOB evolved variables */
 };
 static const char* eob_evolve_var[] = {"r","phi","Prstar","Pphi"};
 
 /** Index list of EOB variables for initial data */
 enum{
-  EOB_ID_RAD,
-  EOB_ID_PHI,
-  EOB_ID_PPHI,
-  EOB_ID_PRSTAR,
-  EOB_ID_PR,
-  EOB_ID_J,
-  EOB_ID_E0,
-  EOB_ID_OMGJ,
-  EOB_ID_NVARS
+  EOB_ID_RAD,          /**< index of r */
+  EOB_ID_PHI,          /**< index of phi */
+  EOB_ID_PPHI,         /**< index of Pphi */
+  EOB_ID_PRSTAR,       /**< index of Prstar */
+  EOB_ID_PR,           /**< index of Pr */
+  EOB_ID_J,            /**< index of j */
+  EOB_ID_E0,           /**< index of E0 */
+  EOB_ID_OMGJ,         /**< index of Omega */
+  EOB_ID_NVARS         /**< number of EOB variables for initial data */
 };
 static const char* eob_id_var[] = {"r","phi","Pphi","Prstar","Pr","j","E0","Omega"};
 
 /** Index list of EOB dynamical variables (to be stored in arrays) */ 
 enum{
-  EOB_RAD, 
-  EOB_PHI,
-  EOB_PPHI,
-  EOB_MOMG,
-  EOB_DDOTR,
-  EOB_PRSTAR,
-  EOB_OMGORB,
-  EOB_E0,
-  EOB_DYNAMICS_NVARS
+  EOB_RAD,               /**< index of r */
+  EOB_PHI,               /**< index of phi */
+  EOB_PPHI,              /**< index of Pphi */
+  EOB_MOMG,              /**< index of M Omega */
+  EOB_DDOTR,             /**< index of ddotr */
+  EOB_PRSTAR,            /**< index of Prstar */
+  EOB_OMGORB,            /**< index of pure orbital frequency Omega orb */
+  EOB_E0,                /**< index of E0 */
+  EOB_DYNAMICS_NVARS     /**< number of EOB dynamical variables */
 };
 static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E"};
 
@@ -234,67 +208,91 @@ static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmeg
 
 /** List for binary type */
 enum{
-  BINARY_BBH,
-  BINARY_BNS,
-  BINARY_BHNS,
-  BINARY_BHNS_TD,
-  BINARY_NOPT
+  BINARY_BBH,            /**< binary black hole */
+  BINARY_BNS,            /**< binary neutron star */
+  BINARY_BHNS,           /**< black hole-neutron star */
+  BINARY_BHNS_TD,        /**< black hole-neutron star, tidal disruption */
+  BINARY_NOPT            /**< number of binary types */
 };
 
 /** List for fits Lambda_ell(Lambda2) */
 enum{
-  Lambda234_fits_NO,
-  Lambda234_fits_YAGI13,
-  Lambda234_fits_GODZIEBA20,
-  Lambda2345678_fits_GODZIEBA20,
-  Lambda234_fits_NOPT
+  Lambda234_fits_NO,                /**< no fits */
+  Lambda234_fits_YAGI13,            /**< Yagi et al. 2013, ell < 5 */
+  Lambda234_fits_GODZIEBA20,        /**< Godzieba et al. 2020, ell < 5 */
+  Lambda2345678_fits_GODZIEBA20,    /**< Godzieba et al. 2020, ell < 9 */
+  Lambda234_fits_NOPT               /**< number of fits */
 };
 static const char* const use_lambda234_fits_opt[] = {"no","YAGI13","GODZIEBA20_ell4", "GODZIEBA20_ell8", "undefined"};
 
 /** List of options for orbital A potential */
 enum{
-  A_5PNlog,
-  A_GSF,
-  A_5PNlogP33,
-  A_NOPT
+  A_5PNlog,        /**< 5PNlog resummed with P15 */
+  A_GSF,           /**< GSF A, Pade' resummed */
+  A_5PNlogP33,     /**< 5PNlog resummed with P33 */
+  A_NOPT           /**< number of options */
 };
 static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "undefined"};
 
 /** List of options for orbital D potential */
 enum{
-  D_3PN,
-  D_GSF,
-  D_5PNP32,
-  D_NOPT
+  D_3PN,          /**< 3PN, Pade' resummed */
+  D_GSF,          /**< GSF D, Pade' resummed */
+  D_5PNP32,       /**< 5PN, Pade' resummed with P32*/ 
+  D_NOPT          /**< number of options */
 };
 static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "undefined"};
 
 /** List of options for orbital Q potential */
 enum{
-  Q_3PN,
-  Q_GSF,
-  Q_5PNloc,
-  Q_NOPT
+  Q_3PN,          /**< 3PN, Taylor exp */
+  Q_GSF,          /**< GSF Q, Pade' resummed */
+  Q_5PNloc,       /**< 5PN local, Taylor exp */
+  Q_NOPT          /**< number of options */
 };
 static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "undefined"};
+enum{
+  a6c_fits_NO,                /**< no fits */
+  a6c_fits_V0,                /**< V0 fits, Nagar et al 2018 */
+  a6c_fits_HM,                /**< HM fits, Nagar et al 2020 */
+  a6c_fits_HM_2023,           /**< HM fits, Nagar et al 2023 */
+  a6c_fits_ecc,               /**< ecc fits, Nagar et al TODO add ref */
+  a6c_fits_P33_HM4PN22,       /**< ecc fits, Nagar et al in prep */
+  a6c_fits_NOPT               /**< number of fits */
+};
+static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "ecc", "HM4PN22", "undefined"};
+
+enum{
+  cN3LO_fits_NO,              /**< no fits */
+  cN3LO_fits_V0,              /**< V0 fits, Nagar et al 2018 */
+  cN3LO_fits_HM,              /**< HM fits, Nagar et al 2020 */
+  cN3LO_fits_HM_2023_420,     /**< HM fits, Nagar et al 2023, v420 */
+  cN3LO_fits_HM_2023_430,     /**< HM fits, Nagar et al 2023, v430 */
+  cN3LO_fits_HM_2023_431,     /**< HM fits, Nagar et al 2023, v431 */
+  cN3LO_fits_HM_2023_432,     /**< HM fits, Nagar et al 2023, v432 */
+  cN3LO_fits_ecc,             /**< ecc fits, Nagar et al TODO add ref */
+  cN3LO_fits_P33_HM4PN22,     /**< ecc fits, Nagar et al in prep */
+  cN3LO_fits_NOPT             /**< number of fits */
+};
+static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "undefined"};
 
 /** List of options for tidal potential */
 enum{
-  TIDES_OFF,  /* = 0 , keep first to allow syntax: if(use_tidal) { ... */
-  TIDES_NNLO, 
-  TIDES_TEOBRESUM,
-  TIDES_TEOBRESUM3,
-  TIDES_TEOBRESUM_BHNS,
-  TIDES_NOPT
+  TIDES_OFF,               /**< no tides , keep first to allow syntax: if(use_tidal) { ... */
+  TIDES_NNLO,              /**< NNLO PN tides */
+  TIDES_TEOBRESUM,         /**< TEOBResum tides */
+  TIDES_TEOBRESUM3,        /**< TEOBResum3 tides, Akcay et al 2018 */
+  TIDES_TEOBRESUM_BHNS,    /**< TEOBResum BHNS tides */
+  TIDES_NOPT               /**< number of tides options */
 };
 static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM", "TEOBRESUM3", "TEOBRESUM_BHNS","undefined"};
 
 /** List of options for the gravitomagnetic tidal potential */
 enum{
-  TIDES_GM_OFF, /* = 0 , keep first to allow syntax: if(use_tidal_gravitomagnetic) { ... */
-  TIDES_GM_PN, 
-  TIDES_GM_GSF,
-  TIDES_GM_NOPT
+  TIDES_GM_OFF,            /**< no GM tides, keep first to allow syntax: if(use_tidal_gravitomagnetic) { ... */
+  TIDES_GM_PN,             /**< PN GM tides */
+  TIDES_GM_GSF,            /**< GSF GM tides */
+  TIDES_GM_NOPT            /**< number of GM tides options */
 };
 static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","undefined"};
 
@@ -308,79 +306,82 @@ static const char* const use_gsgss_opt[] = {"DJS", "ADJS", "undefined"};
 
 /** List of options for centrifugal radius */
 enum{
-  CENTRAD_LO,
-  CENTRAD_NLO,
-  CENTRAD_NNLO,
-  CENTRAD_NNLOS4,
-  CENTRAD_NOSPIN,
-  CENTRAD_NOTIDES,
-  CENTRAD_NOPT
+  CENTRAD_LO,             /**< LO centrifugal radius */
+  CENTRAD_NLO,            /**< NLO centrifugal radius */
+  CENTRAD_NNLO,           /**< NNLO centrifugal radius */
+  CENTRAD_NNLOS4,         /**< NNLO centrifugal radius with spin^4 */
+  CENTRAD_NOSPIN,         /**< No spin in centrifugal radius */
+  CENTRAD_NOTIDES,        /**< No tides in centrifugal radius */
+  CENTRAD_NOPT            /**< number of centrifugal radius options */
 };
 static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS4", "NOSPIN", "NOTIDES"};
 
 /** List of options for eccentric initial frequency */
 enum{
-  ECCFREQ_PERIASTRON,
-  ECCFREQ_AVERAGE,
-  ECCFREQ_APASTRON,
-  ECCFREQ_NOPT
+  ECCFREQ_PERIASTRON,     /**< Initial frequency specified at periastron */
+  ECCFREQ_AVERAGE,        /**< Initial frequency specified at average between r+ and r- */
+  ECCFREQ_APASTRON,       /**< Initial frequency specified at apastron */
+  ECCFREQ_ORBAVGD,        /**< Initial orbit-averaged frequency  */
+  ECCFREQ_NOPT            /**< number of eccentric initial frequency options */
 };
-static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron"};
+static const char* const ecc_freq_opt[] = {"periastron", "average", "apastron", "orbitaveraged"};
 
 /** List of options for eccentric initial conditions */
 enum{
-  ECCICS_0PA,
-  ECCICS_1PA,
-  ECCICS_NOPT
+  ECCICS_0PA,      /**< Adiabatic ICs */
+  ECCICS_1PA,      /**< 1PA ICs */
+  ECCICS_MA,       /**< Anomaly ICs */
+  ECCICS_NOPT      /**< number of eccentric initial conditions options */
 };
-static const char* const ecc_ics_opt[] = {"0PA", "1PA", "undefined"};
+static const char* const ecc_ics_opt[] = {"0PA", "1PA", "MA", "undefined"};
 
 /** List of options for flm amplitudes */
 enum{
-  USEFLM_SSLO,
-  USEFLM_SSNLO,
-  USEFLM_SSNNLO,
-  USEFLM_HM,
-  USEFLM_22PN,
-  USEFLM_KERR,
-  USEFLM_NOPT
+  USEFLM_SSLO,            /**< SSLO amplitudes */
+  USEFLM_SSNLO,           /**< SSNLO amplitudes */
+  USEFLM_SSNNLO,          /**< SSNNLO amplitudes */
+  USEFLM_HM,              /**< HM amplitudes */
+  USEFLM_HM_4PN22,        /**< HM amplitudes with 4PN in 22 */
+  USEFLM_KERR,            /**< Kerr amplitudes */
+  USEFLM_22PN,            /**< amplitudes ar t 22PN */
+  USEFLM_NOPT             /**< number of flm amplitudes options */
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "22PN", "Kerr"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "Kerr", "22PN"};
 
 /** List of options for ODE timestepping */
 enum{
-  ODE_TSTEP_UNIFORM, 
-  ODE_TSTEP_ADAPTIVE,
-  ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO,
-  ODE_TSTEP_NOPT
+  ODE_TSTEP_UNIFORM,                       /**< uniform timestep */
+  ODE_TSTEP_ADAPTIVE,                      /**< adaptive timestep */
+  ODE_TSTEP_ADAPTIVE_UNIFORM_AFTER_LSO,    /**< adaptive timestep, uniform after LSO */
+  ODE_TSTEP_NOPT                           /**< number of ODE timestepping options */
 };
 static const char* const ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
 
 /** List of options for 'usespin' parameter */
 enum{
-  MODE_SPINs_NOSPIN,
-  MODE_SPINS_ALIGNED,
-  MODE_SPINS_GENERIC,
-  MODE_SPINS_NOPT,
+MODE_SPINS_NOSPIN,                       /**< no spin, deprecated */     
+  MODE_SPINS_ALIGNED,                    /**< aligned spin */
+  MODE_SPINS_GENERIC,                    /**< Precessing spin */
+  MODE_SPINS_NOPT,                       /**< number of 'usespin' options */
 };
 static const char* const mode_spin_opt[] = {"nospin","aligned","generic","undefined"};
 
 /** List for precesing vars indexes */
 enum{
-  EOB_EVOLVE_SPIN_SxA,
-  EOB_EVOLVE_SPIN_SyA,
-  EOB_EVOLVE_SPIN_SzA,
-  EOB_EVOLVE_SPIN_SxB,
-  EOB_EVOLVE_SPIN_SyB,
-  EOB_EVOLVE_SPIN_SzB,
-  EOB_EVOLVE_SPIN_Lx,
-  EOB_EVOLVE_SPIN_Ly,
-  EOB_EVOLVE_SPIN_Lz,
-  EOB_EVOLVE_SPIN_alp,
-  EOB_EVOLVE_SPIN_bet,
-  EOB_EVOLVE_SPIN_gam,
-  EOB_EVOLVE_SPIN_Momg,
-  EOB_EVOLVE_SPIN_NVARS,
+  EOB_EVOLVE_SPIN_SxA,                     /**< index of Sx for body 1 */
+  EOB_EVOLVE_SPIN_SyA,                     /**< index of Sy for body 1 */
+  EOB_EVOLVE_SPIN_SzA,                     /**< index of Sz for body 1 */
+  EOB_EVOLVE_SPIN_SxB,                     /**< index of Sx for body 2 */
+  EOB_EVOLVE_SPIN_SyB,                     /**< index of Sy for body 2 */
+  EOB_EVOLVE_SPIN_SzB,                     /**< index of Sz for body 2 */
+  EOB_EVOLVE_SPIN_Lx,                      /**< index of Lx */
+  EOB_EVOLVE_SPIN_Ly,                      /**< index of Ly */
+  EOB_EVOLVE_SPIN_Lz,                      /**< index of Lz */
+  EOB_EVOLVE_SPIN_alp,                     /**< index of alpha euler angle */
+  EOB_EVOLVE_SPIN_bet,                     /**< index of beta euler angle */
+  EOB_EVOLVE_SPIN_gam,                     /**< index of gamma euler angle */
+  EOB_EVOLVE_SPIN_Momg,                    /**< index of M Omega */
+  EOB_EVOLVE_SPIN_NVARS,                   /**< number of precessing variables */
 };
 static const char* eob_prec_var[] = {
   "SxA","SyA","SzA",
@@ -389,30 +390,31 @@ static const char* eob_prec_var[] = {
   "alpha","beta","gamma",
   "Momega"};
 
+/** List of options for beyond-merger euler angles extension */
 enum{
-  RD_EULERANGLES_CONSTANT,
-  RD_EULERANGLES_QNMs,
-  RD_EULERANGLES_NOPT,
+  RD_EULERANGLES_CONSTANT,            /**< constant euler angles */
+  RD_EULERANGLES_QNMs,                /**< QNMs euler angles */
+  RD_EULERANGLES_NOPT,                /**< number of beyond-merger euler angles extension options */
 };
 static const char* ringdown_eulerangles_opt[] = {"constant", "QNMs", "undefined"};
 
-/** PN omegadot for spin dynamics */
+/** Omegadot for spin dynamics */
 enum{
-  SPIN_FLX_PN,
-  SPIN_FLX_EOB,
-  SPIN_FLX_EOB_HYBRIDv1,
-  SPIN_FLX_EOB_HYBRIDv2,
-  SPIN_FLX_NOPT,
+  SPIN_FLX_PN,              /**< PN Omegadot */
+  SPIN_FLX_EOB,             /**< EOB Omegadot */
+  SPIN_FLX_EOB_HYBRIDv1,    /**< EOB+PN Omegadot, hybrid, v1 */
+  SPIN_FLX_EOB_HYBRIDv2,    /**< EOB+PN Omegadot, hybrid, v2 */
+  SPIN_FLX_NOPT,            /**< number of Omegadot options */
 };
 static const char* spin_flx_opt[] = {"PN", "EOB", "HYBv1","HYBv2","undefined"};
 
 /** Error handler for root finders */
 enum{ 
-  ROOT_ERRORS_NO,
-  ROOT_ERRORS_BRACKET,
-  ROOT_ERRORS_MAXITS,
-  ROOT_ERRORS_NOSUCC,
-  ROOT_ERRORS
+  ROOT_ERRORS_NO,            /**< no error */
+  ROOT_ERRORS_BRACKET,       /**< root is not bracketed */
+  ROOT_ERRORS_MAXITS,        /**< root finder did not converge */
+  ROOT_ERRORS_NOSUCC,        /**< root finder failed */
+  ROOT_ERRORS                /**< number of root finder errors */
 };
 static const char* const root_errors[] = {"none","root is not bracketed.","root finder did not converged.","root finder failed."};
 /* #define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} */
@@ -426,145 +428,155 @@ extern const int KINDEX[11][11]; /* defined in TEOBResumS.c */ //FIXME: hardcode
 /** Multipolar coefficients for NQC waveform */
 typedef struct tagNQCcoefs
 {
-  double a1[KMAX];
-  double a2[KMAX];
-  double a3[KMAX];
-  double b1[KMAX];
-  double b2[KMAX];
-  double b3[KMAX];
+  double a1[KMAX];       /**< array of a1 amplitude coefficient */
+  double a2[KMAX];       /**< array of a2 amplitude coefficient */
+  double a3[KMAX];       /**< array of a3 amplitude coefficient */
+  double b1[KMAX];       /**< array of b1 phase coefficient */
+  double b2[KMAX];       /**< array of b2 phase coefficient */
+  double b3[KMAX];       /**< array of b3 phase coefficient */
   double n[KMAX][6];
-  int activemode[KMAX]; /* mask for modes with nonzero NQC */
-  int maxk; /* index of maximum active mode */
-  int add; /* flag */
+  int activemode[KMAX];  /**< mask for modes with nonzero NQC */
+  int maxk;              /**< index of maximum active mode */
+  int add;               /**< flag */
 } NQCcoefs;
 
 /** NQC data for flux and waveform */
 typedef struct tagNQCdata
 {
-  NQCcoefs *flx;
-  NQCcoefs *hlm;
+  NQCcoefs *flx;     /**< NQC coefficients for flux */
+  NQCcoefs *hlm;     /**< NQC coefficients for waveform */
 } NQCdata;
 
 extern NQCdata *NQC; /* defined in TEOBResumS.c */
 
 enum{
-  NQC_NO,
-  NQC_AUTO,
-  NQC_MANUAL,
-  NQC_NOPT
+  NQC_NO,               /**< NQCs off */
+  NQC_AUTO,             /**< NQCs automatically set */
+  NQC_MANUAL,           /**< NQCs manually set */
+  NQC_NOPT              /**< number of NQC options */
 };
 static const char* const nqc_opt[] = {"no", "auto", "manual"};
 
 enum{
-  NQC_FLX_NONE,
-  NQC_FLX_NRFIT_NOSPIN_201602,
-  NQC_FLX_NRFIT_SPIN_202002,
-  NQC_FLX_FROMFILE,
-  NQC_FLX_NOPT
+  NQC_FLX_NONE,                    /**< no NQCs */
+  NQC_FLX_NRFIT_NOSPIN_201602,     /**< NQCs from NRfit, no spin  */
+  NQC_FLX_NRFIT_SPIN_202002,       /**< NQCs from NRfit, spin  */
+  NQC_FLX_FROMFILE,                /**< NQCs from file (iterative method)*/
+  NQC_FLX_NOPT                     /**< number of NQC options */
 };
 static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile"};
 
 enum{
-  NQC_HLM_NONE,
-  NQC_HLM_NRFIT_NOSPIN_201602,
-  NQC_HLM_NRFIT_SPIN_202002,
-  NQC_HLM_FROMFILE,
-  NQC_HLM_COMPUTE,
-  NQC_HLM_NOPT
+  NQC_HLM_NONE,                    /**< no NQCs */
+  NQC_HLM_NRFIT_NOSPIN_201602,     /**< NQCs from NRfit, no spin  */
+  NQC_HLM_NRFIT_SPIN_202002,       /**< NQCs from NRfit, spin  */
+  NQC_HLM_FROMFILE,                /**< NQCs from file (iterative method) */
+  NQC_HLM_COMPUTE,                 /**< NQCs computed during merger attachment */
+  NQC_HLM_NOPT                     /**< number of NQC options */
 };
 static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile", "compute"};
 
 enum { 
-  FIRSTCALL_EOBWAVFLMV1, 
-  FIRSTCALL_EOBWAVFLMHM, 
-  FIRSTCALL_EOBWAVFLMKERR, 
-  FIRSTCALL_EOBWAVFLMKERRS, 
-  FIRSTCALL_EOBDYNSGS, 
-  FIRSTCALL_SPINDYN,
-  FIRSTCALL_PNMOMG,
-  NFIRSTCALL
+  FIRSTCALL_EOBWAVFLMV1,          /**< first call to eob_wav_flm_v1 */
+  FIRSTCALL_EOBWAVFLMHM,          /**< first call to eob_wav_flm_HM */
+  FIRSTCALL_EOBWAVFLMHM4PN22,     /**< first call to eob_wav_flm_HM_4PN22 */
+  FIRSTCALL_EOBWAVFLMKERR,        /**< first call to eob_wav_flm_Kerr */
+  FIRSTCALL_EOBWAVFLMKERRS,       /**< first call to eob_wav_flm_s_Kerr */ 
+  FIRSTCALL_EOBDYNSGS,            /**< first call to eob_dyn_s_gs */
+  FIRSTCALL_SPINDYN,              /**< first call to spin_dyn */
+  FIRSTCALL_PNMOMG,               /**< first call to PN omega in spin dyn rhs */
+  NFIRSTCALL                      /**< number of firstcalls */
 };
 
 enum {
-  DOMAIN_TD,
-  DOMAIN_FD_22,
-  DOMAIN_FD_HM,
+  DOMAIN_TD,                   /**< time domain */
+  DOMAIN_FD,                   /**< frequency domain */
 };
+
+enum {
+  MODEL_DALI,                   /**< Dalì (eccentric) model */
+  MODEL_GIOTTO,                 /**< Giotto (quasi-circ) model */
+  MODEL_NOPT,                   /**< number of options for model */
+};
+static const char* const model_opt[] = {"Dali", "Giotto", "undefined"};
 
 /** Waveform data type */
 typedef struct tagWaveform
 {
-  int size;
-  double *time;
-  double *real; 
-  double *imag; 
-  double *ampli;
-  double *phase;  
-  char name[STRLEN];
+  int size;          /**< size of arrays */
+  double *time;      /**< time array */
+  double *real;      /**< real part */
+  double *imag;      /**< imaginary part */
+  double *ampli;     /**< amplitude */
+  double *phase;     /**< phase */
+  char name[STRLEN]; /**< name of waveform */
 }  Waveform;
 
 /** FD Waveform data type */
 typedef struct tagWaveformFD
 {
-  int size;
-  double *freq;
-  double *preal; 
-  double *pimag; 
-  double *creal; 
-  double *cimag; 
-  double *ampli;
-  double *phase;  
-  char name[STRLEN];
+  int size;           /**< size of arrays */
+  double *freq;       /**< frequency array */
+  double *preal;      /**< real part of plus polarization */
+  double *pimag;      /**< imaginary part of plus polarization */
+  double *creal;      /**< real part of cross polarization */
+  double *cimag;      /**< imaginary part of cross polarization */
+  double *ampli;      /**< amplitude */
+  double *phase;      /**< phase */
+  char name[STRLEN];  /**< name of waveform */
 }  WaveformFD;
 
 /** Multipolar waveform data type */
 typedef struct tagWaveform_lm
 {
-  int size;
-  double *time;
-  double *ampli[KMAX]; /* amplitude */
-  double *phase[KMAX]; /* phase */
-  char name[STRLEN];
-  int kmask[KMAX]; /* mask for multipoles */
+  int size;              /**< size of arrays */
+  double *time;          /**< time array */
+  double *ampli[KMAX];   /**< amplitude */
+  double *phase[KMAX];   /**< phase */
+  char name[STRLEN];     /**< name of waveform */
+  int kmask[KMAX];       /**< mask for multipoles */
+  int kmask_nqc[KMAX];   /**< mask for NQCs */
 }  Waveform_lm;
 
 /** Multipolar FD waveform data type */
 typedef struct tagWaveformFD_lm
 {
   int size;
-  double *freq; /* uniform frequency array */
-  double *ampli[KMAX]; /* amplitude */
-  double *phase[KMAX]; /* phase */
-  double *F[KMAX], *Fdot[KMAX]; /* Freq, and drvts for SPA */
-  char name[STRLEN];
-  int kmask[KMAX]; /* mask for multipoles */
+  double *freq;                  /**< frequency array */
+  double *ampli[KMAX];           /**< amplitude */
+  double *phase[KMAX];           /**< phase */
+  double *F[KMAX], *Fdot[KMAX];  /**< Freq, and drvts for SPA */
+  char name[STRLEN];             /**< name of waveform */
+  int kmask[KMAX];               /**< mask for multipoles */
+  int kmask_nqc[KMAX];           /**< mask for NQCs */
 }  WaveformFD_lm;
 
 
 /** Multipolar waveform at given time or frequency, comes at handy */
 typedef struct tagWaveform_lm_t
 {
-  double time;
-  double freq;
-  double ampli[KMAX]; /* amplitude */
-  double phase[KMAX]; /* phase */
-  int kmask[KMAX]; /* mask for multipoles */
+  double time;         /**< time */
+  double freq;         /**< frequency */
+  double ampli[KMAX];  /**< amplitude */
+  double phase[KMAX];  /**< phase */
+  int kmask[KMAX];     /**< mask for multipoles */
+  int kmask_nqc[KMAX]; /**< mask for NQCs */
 }  Waveform_lm_t;
 
 /** Data type for spin dynamics */
 typedef struct tagDynamicsSpin
 {
-  int size;
-  double *time;
-  double *data[EOB_EVOLVE_SPIN_NVARS]; 
-  double y[EOB_EVOLVE_SPIN_NVARS], dy[EOB_EVOLVE_SPIN_NVARS];
-  double t, dt;
-  double t_stop;  // stopping time, if >0
-  double omg_stop; // stopping frequency Momega
-  double omg_backward;  //omega which divides backward from forward spin evolution
-  double time_backward; //time  which divides backward from forward spin evolution
-  gsl_spline *spline[EOB_EVOLVE_SPIN_NVARS];
-  gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];
+  int size;                                                    /**< size of arrays */
+  double *time;                                                /**< time array */
+  double *data[EOB_EVOLVE_SPIN_NVARS];                         /**< spin dynamics data array */
+  double y[EOB_EVOLVE_SPIN_NVARS], dy[EOB_EVOLVE_SPIN_NVARS];  /**< spin eqns dynamics variables and rhs */
+  double t, dt;                                                /**< current time and timestep */
+  double t_stop;                                               /**< stopping time, if >0 */
+  double omg_stop;                                             /**< stopping frequency Momega */
+  double omg_backward;                                         /**< omega which divides backward from forward spin evolution */
+  double time_backward;                                        /**< time  which divides backward from forward spin evolution */
+  gsl_spline *spline[EOB_EVOLVE_SPIN_NVARS];                   /**< splines for spin dynamics */
+  gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];              /**< accelerators for spin dynamics */
 } DynamicsSpin;
 
 /** Dynamics data type */
@@ -578,144 +590,183 @@ typedef struct tagDynamics
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
   double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot;
   double tOmg_pk;
-  double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;
-  double A,dA,d2A, B,dB;
-  double MOmg, MOmg_prev, tMOmgpeak;
-  double dress_tides_fmode_A[6], dress_tides_fmode_B[6]; // dressing factors for f-mode 
-  double dress_tides_fmode_A_u[6], dress_tides_fmode_B_u[6]; // dressing factors for f-mode, drvts wrt u
-  double dressed_C_Q1, dressed_C_Q1_u, dressed_C_Q1_uu;
-  double dressed_C_Q2, dressed_C_Q2_u, dressed_C_Q2_uu;
-  double dressed_C_Oct1, dressed_C_Oct1_u, dressed_C_Oct1_uu;
-  double dressed_C_Oct2, dressed_C_Oct2_u, dressed_C_Oct2_uu;
-  double dressed_C_Hex1, dressed_C_Hex1_u, dressed_C_Hex1_uu;
-  double dressed_C_Hex2, dressed_C_Hex2_u, dressed_C_Hex2_uu;
+  double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;     /**< current Hamiltonian, angular momentum and derived variables */
+  double A,dA,d2A, B,dB;                                      /**< current A,B and derived variables */
+  double MOmg, MOmg_prev, tMOmgpeak;                          /**< current M Omega and previous value, time of the Omega peak */
+  double dress_tides_fmode_A[6], dress_tides_fmode_B[6];      /**< dressing factors for adiabatic tidal pars  */
+  double dress_tides_fmode_A_u[6], dress_tides_fmode_B_u[6];  /**< dressing factors for adiabatic tidal pars, drvts wrt u   */
+  double dressed_C_Q1, dressed_C_Q1_u, dressed_C_Q1_uu;       /**< dressing factors for spin-induced quadrupole and drvts   */
+  double dressed_C_Q2, dressed_C_Q2_u, dressed_C_Q2_uu;       /**< dressing factors for spin-induced quadrupole and drvts   */
+  double dressed_C_Oct1, dressed_C_Oct1_u, dressed_C_Oct1_uu; /**< dressing factors for spin-induced octupole and drvts   */
+  double dressed_C_Oct2, dressed_C_Oct2_u, dressed_C_Oct2_uu; /**< dressing factors for spin-induced octupole and drvts   */
+  double dressed_C_Hex1, dressed_C_Hex1_u, dressed_C_Hex1_uu; /**< dressing factors for spin-induced hexadecapole and drvts   */
+  double dressed_C_Hex2, dressed_C_Hex2_u, dressed_C_Hex2_uu; /**< dressing factors for spin-induced hexadecapole and drvts   */
   
   /* stuff for ODE solver */
-  double y[EOB_EVOLVE_NVARS]; /* rhs storage */
-  double dy[EOB_EVOLVE_NVARS];
-  double y0[EOB_ID_NVARS]; /* ID storage */
-  double dt, t_stop, ti;
-  int ode_timestep;
-  bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
+  double y[EOB_EVOLVE_NVARS];   /**< rhs storage */
+  double dy[EOB_EVOLVE_NVARS];  /**< rhs storage */
+  double y0[EOB_ID_NVARS];      /**< ID storage */
+  double dt, t_stop, ti;        /**< timestep, stopping time, current time */
+  int ode_timestep;             /**< ODE timestep type */
+  bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;  /**< flag to stop ode, stop after Omgpeak, stop after radius */
 
   /* arrays */
   int size;
-  double *time;
-  double *data[EOB_DYNAMICS_NVARS];
+  double *time;                        /**< time array */
+  double *data[EOB_DYNAMICS_NVARS];    /**< dynamics data array */
 
-  /* ptr to reference spin dynamics */
-  DynamicsSpin *spins; /* do not allocate mem to this one! */
+  DynamicsSpin *spins;  /**< Ptr to reference spin dynamics, do not allocate mem to this one */
+
   
 } Dynamics;
 
 /** Parameter data type */
 typedef struct tagEOBParameters
 {
-  /* binary parameters */
-  double M, nu, q, X1, X2;
-  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
-  double chi1x,chi1y,chi1z;
-  double chi2x,chi2y,chi2z;
-  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, a6c, cN3LO;
-  double ecc, r_hyp, H_hyp, j_hyp;
-  double r0, initial_frequency;  
-  double distance, inclination, polarization, coalescence_angle;
-  
-  double rLR, rLSO;
-  double rLR_tidal, pGSF_tidal;
-  int compute_LR, compute_LSO, compute_LR_guess, compute_LSO_guess;
 
+/* binary parameters */
+  
+  /**@{*/
+  /** Mass parameters */
+  double M, nu, q, X1, X2;                            
+  /**@}*/ 
+
+  /**@{*/
+  /** Spin parameters */
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
+  double chi1x,chi1y,chi1z;     /* Spin components (body 1) */                   
+  double chi2x,chi2y,chi2z;     /* Spin components (body 2) */       
+  /**@}*/ 
+
+  /**@{*/
+  /** Tidal parameters */
+  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2;                            /* Spin-induced multipoles*/
+  double LambdaAl2,LambdaAl3,LambdaAl4,LambdaAl5,LambdaAl6,LambdaAl7,LambdaAl8; /* Multipolar electric adiabatic tidal parameters (body 1)*/
+  double LambdaBl2,LambdaBl3,LambdaBl4,LambdaBl5,LambdaBl6,LambdaBl7,LambdaBl8; /* Multipolar electric adiabatic tidal parameters (body 2)*/
+  double SigmaAl2,SigmaBl2;                                                     /* ell = 2 magnetic adiabatic tidal parameters*/
+  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8;                             /* EOB Multipolar electric adiabatic tidal parameters (body 1)*/
+  double kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8;                             /* EOB Multipolar electric adiabatic tidal parameters (body 2)*/
+  double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;                             /* EOB Multipolar electric effective adiabatic tidal parameters */
+  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;               /* EOB Multipolar magnetic adiabatic tidal parameters */
+  double khatA2,khatB2;                                                         //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
+  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1;      /* Tidal parameters combinations entering the EOB A potential*/
+  double rLR_tidal, pGSF_tidal;                                                 /* Tidal light ring and GSF exponent */
+  double bomgfA[6], bomgfB[6];                                                  /* f-mode frequencies star A,B (ell=2,3,4; indexes 0,1 not used) */
+  /**@}*/
+
+  /**@{*/
+  /** NR-informed conservative variables */
+  double a6c, cN3LO;         
+  /**@}*/ 
+
+  double r0;                    /**< Initial radial separation */
+  double initial_frequency;     /**< initial frequency */
+  double f0;                    /**< initial frequency in geom units */
+  double distance;              /**< distance */
+  double inclination;           /**< inclination */
+  double polarization;          /**< polarization */
+  double coalescence_angle;     /**< coalescence angle */
+  double rLR;                   /**< Location of the light ring */ 
+  double rLSO;                  /**< Location of the LSO */
+  int compute_LR;               /**< Flag to compute the LR */
+  int compute_LSO;              /**< Flag to compute the LSO */
+  double compute_LR_guess;      /**< Guess for the LR */
+  double compute_LSO_guess;     /**< Guess for the LSO */
+  double ecc, anomaly, r_hyp, H_hyp, j_hyp;
+  int ecc_freq, ecc_ics;
+  double alpha_sigmoid_NQC, delta_t0_sigmoid_NQC;
+  double alpha_sigmoid_Newt, delta_t0_sigmoid_Newt;
+  int A_pot, D_pot, Q_pot;
   int compute_ringdown;
   
-  double LambdaAl2,LambdaAl3,LambdaAl4,LambdaAl5,LambdaAl6,LambdaAl7,LambdaAl8;
-  double LambdaBl2,LambdaBl3,LambdaBl4,LambdaBl5,LambdaBl6,LambdaBl7,LambdaBl8;
-  double SigmaAl2,SigmaBl2;
-  double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8;
-  double kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8;
-  double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;
-  double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;
-  
-  double khatA2,khatB2; //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1; 
-  double kapA2j, kapB2j, kapT2j;
-
-  double bomgfA[6], bomgfB[6]; // f-mode frequencies star A,B (ell=2,3,4; indexes 0,1 not used)
-  
   /* options/settings */
-  int binary; // binary type (BBH, BNS, BHNS)
-  int centrifugal_radius; // NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
-  int use_flm; //NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM"
-  int A_pot, D_pot, Q_pot;
-  int use_tidal, use_spins, use_tidal_gravitomagnetic, use_GS_GSs;
-  int use_geometric_units;
-  int use_speedytail;
-  int use_lambda234_fits;
-  int use_tidal_fmode_model;
+  int binary;                                           /**< binary type (BBH, BNS, BHNS) */
+  int model;                                            /**< model (Dalì, Giotto) */
+  int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
+  int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
+  int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
+  int use_GS_GSs;                                       /**> Flag for gyro-gravitomagnetic functions */
+  int use_geometric_units;                              /**< Flag for geometric vs SI units */
+  int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
+  int use_lambda234_fits;                               /**< Flag for fits Lambda_ell(Lambda2) */
+  int use_tidal_fmode_model;                            /**< Flag for f-mode tidal model */
+  int use_a6c_fits;                                     /**< Flag for fits a6c */
+  int use_cN3LO_fits;                                   /**< Flag for fits cN3LO */
   
-  double dt_merger_interp, dt_interp, srate_interp;
-  int interp_uniform_grid;
+  double dt_merger_interp;                              /**< timestep for merger interpolation */ 
+  double dt_interp;                                     /**< timestep for interpolation */
+  double srate_interp;                                  /**< sampling rate for interpolation */
+  int interp_uniform_grid;                              /**< Flag for uniform grid interpolation (yes/no) */
 
-  int *use_mode_lm, use_mode_lm_size;
+  int *use_mode_lm, use_mode_lm_size;                   /**< Co-precessing modes array and size of co-precessing modes array*/
+  int *use_mode_lm_inertial, use_mode_lm_inertial_size; /**< Inertial modes assay and size of Inertial modes assay*/
+  int *use_mode_lm_nqc, use_mode_lm_nqc_size;           /**< multipoles to attach NQCs */
+  int *kpostpeak, kpostpeak_size;                       /**< multipoles where NQCs are extracted at t_peak_lm + 2 from the RD template */
+  int *knqcpeak22, knqcpeak22_size;                     /**< multipoles where NQCs are extracted at t_peak_22  from global fits */
 
-  int ecc_freq, ecc_ics;
-  
-  int size;
-  int ode_timestep;
-  double srate, dt;
-  double ode_abstol, ode_reltol;
-  double ode_tmax;
-  int ode_stop_afterNdt;
-  int ode_stop_after_peak;
-  int ode_stop, ode_stop_MOmgpeak, ode_stop_radius;
-  int project_spins, ringdown_eulerangles;
-  int spin_flx;
+  int size;                                             /**< size of arrays */
+  int ode_timestep;                                     /**< ODE timestep type */
+  double srate;                                         /**< sampling rate */
+  double dt;                                            /**< timestep */
+  double ode_abstol;                                    /**< ODE solver absolute tolerance */
+  double ode_reltol;                                    /**< ODE solver relative tolerance */
+  double ode_tmax;                                      /**< ODE solver max time */
+  int ode_stop_afterNdt;                                /**< Number of steps to take after peal of omega */
+  int ode_stop_after_peak;                              /**< Flag to check if solver is after the peak (yes/no) */
+  int ode_stop;                                         /**< Flag to stop ODE solver (yes/no) */
+  int ode_stop_MOmgpeak;                                /**< Flag to stop ODE solver after MOmg peak (yes/no) */
+  double ode_stop_radius;                               /**< Radius to stop ODE solver,note: this is *different* in meaning from dyn->ode_stop_radius! */
 
   /* post-adiabatic */
-  int postadiabatic_dynamics, postadiabatic_dynamics_stop;
-  int postadiabatic_dynamics_N;
-  int postadiabatic_dynamics_size;
-  double postadiabatic_dynamics_dr;
-  double postadiabatic_dynamics_rmin;
+  int postadiabatic_dynamics;                           /**< Flag to switch on/off post-adiabatic dynamics */
+  int postadiabatic_dynamics_stop;                      /**< Flag to stop post-adiabatic dynamics */
+  int postadiabatic_dynamics_N;                         /**< Number of PA iterations to take (default=8)*/
+  int postadiabatic_dynamics_size;                      /**< Size of PA arrays */
+  double postadiabatic_dynamics_dr;                     /**< Radial step for PA */
+  double postadiabatic_dynamics_rmin;                   /**< Minimum radius to reach for PA (default=14)*/
 
   /* spin dynamics */
-  int spin_dyn_size;
-  double spin_odes_omg_stop, spin_odes_t_stop;
-  double spin_odes_dt;
-  int spin_interp_domain;
-  
+  int spin_dyn_size;                                    /**< Size of spin dynamics arrays */
+  double spin_odes_omg_stop, spin_odes_t_stop;          /**< Stopping frequency and time for spin dynamics */
+  double spin_odes_dt;                                  /**< Timestep for spin dynamics */
+  int spin_interp_domain;                               /**< Domain for spin dynamics interpolation (time/frequency) */
+  int project_spins;                                    /**< Flag to project spins during EOB dynamics (yes/no) */
+  int ringdown_eulerangles;                             /**< Flag to choose which beyond-merger euler angles extension to employ */
+  int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */
+
   /* final state */
-  double Mbhf, abhf; // final BH 
+  double Mbhf; /**< Final BH mass */
+  double abhf; /**< Final BH spin */
 
   /* waveform */
-  int ringdown_extend_array;
+  int ringdown_extend_array; /**< Extend ringdown array */
 
-  /* NQC */
+  /**@{*/
+  /** NQC variables and options*/
   int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
-  
-  /* output */
+  /**@}*/
+
+  /**@{*/
+  /** output options*/
   char output_dir[STRLEN];
   int output_hpc, output_multipoles, output_dynamics, output_nqc, output_nqc_coefs, output_ringdown;
   int *output_lm, output_lm_size; 
+  /**@}*/
 
   /* msc */
-  int openmp_threads, openmp_timeron;
-  int firstcall[NFIRSTCALL];
+  int openmp_threads;        /**< Number of OpenMP threads */
+  int openmp_timeron;        /**< Flag to switch on/off OpenMP timers */
+  int firstcall[NFIRSTCALL]; /**< Flag to check if first call to functions */
 
-  /* sigmoid parameters */
-  double delta_t0_sigmoid_NQC, alpha_sigmoid_NQC;  
-  double delta_t0_sigmoid_Newt, alpha_sigmoid_Newt;
-  
-  int domain;           //Time or frequency domain
-  double tc;            //coalescence time
-  int time_shift_FD;
-
-  double df;            //frequency interp df
-
-  int interp_freqs;
-  double *freqs; //array of frequencies for interpolation
-  int freqs_size;
-
+  int domain;                /**< Time or frequency domain */
+  double tc;                 /**< Coalescence time */
+  int time_shift_FD;         /**< Time shift FD waveform to have merger at t=0 */
+  int time_shift_TD;         /**< Time shift TD waveform to have merger at t=0 */
+  double df;                 /**< Frequency step */
+  int interp_freqs;          /**< Flag to interpolate on a user-given frequency array */
+  double *freqs;             /**< Frequency array */
+  int freqs_size;            /**< Size of frequency array */
 } EOBParameters;
 
 extern EOBParameters *EOBPars; /* defined in TEOBResumSPars.c */ 
@@ -733,20 +784,21 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 void eob_set_params(int default_choice, int firstcall);
 void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);
-void EOBParameters_defaults (int choose, EOBParameters *eobp);
+void EOBParameters_defaults (int binary, int orbit, EOBParameters *eobp);
 void EOBParameters_parse_file(char *fname, EOBParameters *eobp);
 int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv);
 void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val);
 void EOBParameters_tofile(EOBParameters *eobp,char *fname);
-void update_params(int binary);
 
-/* TEOBResumSUtil.c */
+/* TEOBResumSUtils.c */
 double q_to_nu(const double q);
 double nu_to_X1(const double nu);
 void tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell, double *kapA, double *kapB);
 void set_spin_vars(double X1, double X2, double chi1, double chi2, double *S1, double *S2, double *a1, double *a2, double *aK, double *aK2, double *S, double *Sstar);
 double Eulerlog(const double x,const int m);
+double Pade02(double x, double *a);
 double Pade32(double x, double *a);
+double Pade22(double x, double *a);
 double Pade23(double x, double *a);
 double Pade51(double x, double *a);
 double Pade42(double x, double *a);
@@ -787,9 +839,11 @@ void unwrap_HM(double *p, const int size);
 void unwrap_euler(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void rmap (double *re, double *im, double *p, double *a, const int mode);
+void rmap_twist (double *re, double *im, double *p, double *a, const int mode);
 void set_multipolar_idx_mask_old(int *kmask, int n);
 void set_multipolar_idx_mask(int *kmask, int n, const int *idx, int m, int on);
-int get_uniform_size(const double tf, const double t0, const double dt);
+long int get_uniform_size(const double tf, const double t0, const double dt);
+int intersect_int (int *a, int size_a, int *b, int size_b, int *result);
 void Waveform_alloc (Waveform **wav, const int size, const char *name);
 void Waveform_push (Waveform **wav, int size);
 void Waveform_rmap (Waveform *h, const int mode, const int unw);
@@ -797,7 +851,7 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
 void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name);
 void Waveform_output (Waveform *wav);
 void Waveform_free (Waveform *wav);
-void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name);
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name, int *use_mode_lm, int use_mode_lm_size);
 void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_output_reim (Waveform_lm *wav);
@@ -862,14 +916,19 @@ void errorexits(char *file, int line, const char *s, const char *t);
 /* TEOBResumSFits.c */
 double eob_a6c_fit(double nu);
 double eob_a6c_fit_HM(double nu);
+double eob_a6c_fit_HM_2023(double nu);
 double eob_a6c_fit_ecc(double nu);
 double eob_a6c_fit_next(double nu);
+double eob_a6c_fit_ecc_P33_4PNh22(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
+double eob_c3_fit_HM_2023(double nu, double a1, double a2);
 double eob_c3_fit_ecc(double nu, double a1, double a2);
+double eob_c3_fit_ecc_P33_4PNh22(double nu, double a1, double a2);
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
+void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
@@ -906,6 +965,9 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 			double Mbh, double abh,  
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 			double *sigmar, double *sigmai);
+void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
+			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
+      double *sigmar, double *sigmai);
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);
@@ -930,6 +992,8 @@ void eob_nqc_point_test(double Mbh, double c1A, double c2A, double c3A, double c
 			    double alpha1, double omega1,
 			    double *A_tmp, double *dA_tmp, double *d2A_tmp, double *omg_tmp, double *domg_tmp, double *d2omg_tmp);
 double horizon_radius(const double nu);
+double pph_lso_orbital(const double nu);
+double pph_lso_spin(const double nu, const double a0);
 
 /* TEOBResumSDynamics.c */
 extern int (*p_eob_dyn_rhs)(double t, const double y[], double dy[], void *params); /* defined in TEOBResumSPars.c */
@@ -941,9 +1005,9 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *params);
 void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double d3rc_dr3, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double Q, double dQ, double dQ_dprstar, double d2Q, double d2Q_dprstar2,
                double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
 
-extern void (*eob_dyn_s_GS)(double r, double rc, double drc_dr, double d2rc_rd2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]); /* defined in TEOBResumSPars.c*/
-void eob_dyn_s_GS_DJS(double r, double rc, double drc_dr, double d2rc_rd2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]);
-void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_rd2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double ggm[]);
+extern void (*eob_dyn_s_GS)(double r, double rc, double drc_dr, double d2rc_rd2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm); /* defined in TEOBResumSPars.c*/
+void eob_dyn_s_GS_DJS(double r, double rc, double drc_dr, double d2rc_rd2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
+void eob_dyn_s_GS_ADJS(double r, double rc, double drc_dr, double d2rc_rd2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
 void eob_GSsKerr(double r, double rc, double drc_dr, double d2rc_dr2, double d3rc_dr3, double aK2, double A, double dA, double d2A, double d3A, double B, double dB, double d2B, double pph, double prstar, double nu, 
                  double *GSs, double *dGSs_dr, double *dGSs_dpph, double *dGSs_dprstar, double *dGSs_dprstarbyprstar, double *d2GSs_dr2, double *d2GSs_dprstar2, double *d2GSs_drdprstar, double *d3GSs_dprstar3, double *d3GSs_dr2dprstar, double *d3GSs_drdprstar2); 
 
@@ -986,11 +1050,15 @@ extern void (*eob_dyn_ic)(double r0, Dynamics *dyn, double y_init[]); /* defined
 void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[]);
+void eob_dyn_ic_ecc_ma(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[]);
+double eob_dyn_j0(double r0, Dynamics *dyn);
 double eob_dyn_ecc_j0(double r0, Dynamics *dyn);
+double eob_dyn_circ_j0(double r0, Dynamics *dyn);
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
 double eob_dyn_DHeff0(double x, void *params);
+double eob_dyn_omg_from_omgbar(double omgbar, double zeta, double ecc);
 double eob_dyn_r0_Kepler (double f0);
 extern double (*eob_dyn_r0_eob)(double f0, Dynamics *dyn); /* defined in TEOBResumSPars.c*/
 double eob_dyn_r0_circ (double f0, Dynamics *dyn);
@@ -999,6 +1067,9 @@ double eob_dyn_Omegaorb0(double r, void *params);
 double eob_dyn_Omegaecc0(double r, void *params);
 double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl);
+int eob_dyn_rpr(const gsl_vector *x, void * params, gsl_vector *f);
+int eob_dyn_rootfind_rpr(Dynamics *dyn, double *r0, double *pr0, double omg_orb0, double rKepl, double pr0PN);
+
 
 /* TEOBResumSMetric.c */
 extern void (*eob_metric_Apotential)(double r, double nu, double *A, double *dA, double *d2A, double *d3A); /* defined in TEOBResumSPars.c*/
@@ -1023,12 +1094,14 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
 
 /* TEOBResumSFlux.c */
+extern double (*eob_flx_Fr)(); /* defined in TEOBResumSPars.c*/
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn);
 double eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double ddotr, double Fphi, double Fr, Dynamics *dyn);
-double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn);
-double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
+double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
+double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
 double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
@@ -1060,12 +1133,14 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_HM_4PN22(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_Kerr(double x,double nu, double *rholm, double *flm);
 extern void (*eob_wav_flm_s)(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
+void eob_wav_flm_s_HM_4PN22(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 extern void (*eob_wav_hlmNQC_find_a1a2a3)(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
@@ -1092,8 +1167,11 @@ void twist_hlm_FD(WaveformFD_lm *hlm, DynamicsSpin *spin, double M, double ampli
 void compute_hpc_old(Waveform_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 void compute_hpc(Waveform_lm *hlm,Waveform_lm *hlm_neg, Waveform_lm *hl0, double nu, double M, double distance, double amplitude_prefactor, double psi, double iota, Waveform *hpc);
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
+void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm);
 void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm);
 void compute_hpc_FD(WaveformFD_lm *hlm, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, WaveformFD *hpc);
+double time_shift_mrg_to_0(Waveform_lm *hlm);
+void time_shift_TD(double *t, double tc, int size);
 void time_shift_FD(WaveformFD *hpc, double tc);
 void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm, bool *bhns);

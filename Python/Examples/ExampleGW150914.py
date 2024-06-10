@@ -50,10 +50,9 @@ pars = {
     'domain'             : TEOBResumS_domain[domain],
     'interp_uniform_grid': "yes",  # Interpolate the output waveform a uniform grid, mode by mode
     'srate_interp'       : 4096.,  # srate at which to interpolate, fixes f_max in 'FD' too
-
     # Modes
     'use_mode_lm'        : k,      # List of modes to use/output through EOBRunPy
-
+    'model'              : "Giotto",
     # Output parameters
     'arg_out'            : "yes",      # Request multipoles and dynamics as output of the function call. Default is "no". Allowed values: ["no","yes"].
 }

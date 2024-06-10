@@ -17,6 +17,7 @@ q = 3. # mass ratio
 use_spins = 1
 chi1 = 0.2 # dimensionless spin 1 z-component 
 chi2 = 0.05 # dimensionless spin 2 z-component 
+model =	"Giotto"
 
 initial_frequency = 0.00026597651 # initial GW freq = 10 Hz
 
@@ -33,6 +34,8 @@ use_lambda234_fits = "YAGI13"
 
 centrifugal_radius = "NLO" 
 use_flm = "SSLO"
+use_a6c_fits = "v0"
+use_cN3LO_fits = "no"
 
 #
 # Output dir, output modes 

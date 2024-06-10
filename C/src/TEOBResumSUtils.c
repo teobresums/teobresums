@@ -1,35 +1,43 @@
-/**
- * This file is part of TEOBResumS
- *
- * Copyright (C) 2017-2018 See AUTHORS file
- *
- * TEOBResumS is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * TEOBResumS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see http://www.gnu.org/licenses/.       
+/** \file TEOBResumSUtils.c
+ *  \brief Useful functions for TEOBResumS
+ * 
+ *  This file contains useful functions for TEOBResumS, as well as 
+ *  the functions to alloc/free/push/interpolate many of the structures
+ *  employed in the code.
  *
  */
 
 #include "TEOBResumS.h"
 
-/** Return symm mass ratio from q */
+/**
+ * Function: q_to_nu
+ * -----------------
+ * Return symm mass ratio from q
+ * 
+ * @param[in] q: mass ratio
+ * 
+ * @return nu: symm mass ratio 
+ */
 double q_to_nu(const double q)
 {
   double nu = 0;
   if (q>0.)
     nu = q/((q+1.)*(q+1.));
+  if (nu > 0.25)
+    nu = 0.25;
+  
   return nu;
 }
 
-/** Return mass ratio M1/M from nu */
+/**
+ * Function: nu_to_X1
+ * -----------------
+ * Return mass fraction M1/M from nu
+ * 
+ * @param[in] nu: symm mass ratio
+ * 
+ * @return X1: mass ratio 
+ */
 double nu_to_X1(const double nu)
 {
   if ( (nu<0.) || (nu>0.25) )
@@ -37,7 +45,20 @@ double nu_to_X1(const double nu)
   return 0.5*(1.+sqrt(1.-4.*nu));
 }
 
-/** Compute tidal coupling constants from tidal polarizability parameters */
+/**
+ * Function: tidal_kappa_of_Lambda
+ * -------------------------------
+ * Return tidal coupling constants from tidal polarizability parameters
+ * 
+ * @param[in] q    : mass ratio
+ * @param[in] XA   : mass fraction M1/M
+ * @param[in] XB   : mass fraction M2/M
+ * @param[in] LamA : tidal polarizability parameter of star A
+ * @param[in] LamB : tidal polarizability parameter of star B
+ * @param[in] ell  : multipole index
+ * @param[out] kapA: tidal coupling constant of star A
+ * @param[out] kapB: tidal coupling constant of star B
+*/
 void tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell,
 			     double *kapA, double *kapB)
 {
@@ -48,7 +69,24 @@ void tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double L
   *kapB = f2lm1 * LamB * pow(XB,p) * q;
 }
 
-/** Set spins vars */
+/**
+  * Function: set_spin_vars
+  * -----------------------
+  * Set spin variables
+  * 
+  * @param[in] X1   : mass fraction M1/M
+  * @param[in] X2   : mass fraction M2/M
+  * @param[in] chi1 : dimensionless spin of body 1
+  * @param[in] chi2 : dimensionless spin of body 2
+  * @param[out] S1  : spin of body 1
+  * @param[out] S2  : spin of body 2
+  * @param[out] a1  : X1*chi1
+  * @param[out] a2  : X2*chi2
+  * @param[out] aK  : X1*chi1 + X2*chi2
+  * @param[out] aK2 : (X1*chi1 + X2*chi2)^2
+  * @param[out] S   : S1 + S2
+  * @param[out] Sstar : X2*a1 + X1*a2
+*/
 void set_spin_vars(double X1, double X2, double chi1, double chi2,
 		   double *S1, double *S2, double *a1, double *a2,
 		   double *aK, double *aK2,
@@ -66,6 +104,16 @@ void set_spin_vars(double X1, double X2, double chi1, double chi2,
 
 /** Eulerlog function (constants are defined in header) */
 static const double Logm[] = {0.,Log1,Log2,Log3,Log4,Log5,Log6,Log7};
+/**
+ * Function: Eulerlog
+ * ------------------
+ * Return Eulerlog function
+ * 
+ * @param[in] x: argument
+ * @param[in] m: integer
+ * 
+ * @return Eulerlog(x,m): Eulerlog function
+*/
 double Eulerlog(const double x,const int m)
 {
   double logm = 0.;
@@ -74,6 +122,58 @@ double Eulerlog(const double x,const int m)
   return EulerGamma_Log2 + logm + 0.5*log(x);
 }
 
+/**
+ * Function: Pade02
+ * ----------------
+ * Return Pade02 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade02(x,a): Pade02 function
+*/
+double Pade02(double x, double *a){
+  double x2  = x*x;
+  double d1  = -a[1];
+  double d2  = SQ(a[1]) - a[2];
+  double den = (1. + d1*x + d2*x2);
+  return 1./den;
+}
+
+/**
+ * Function: Pade22
+ * ----------------
+ * Return Pade22 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade22(x,a): Pade22 function
+*/
+double Pade22(double x, double *a){
+  double x2 = x*x;
+
+  double cden =  a[1]*a[3]-SQ(a[2]);
+  double n1   = -a[1]*SQ(a[2]) + SQ(a[1])*a[3]+a[2]*a[3] - a[1]*a[4];
+  double n2   = -SQ(a[2])*a[2]+2*a[1]*a[2]*a[3]-SQ(a[3])-SQ(a[1])*a[4]+a[2]*a[4];
+  double d1   =  a[2]*a[3] - a[1]*a[4];
+  double d2   = -SQ(a[3]) + a[2]*a[4];
+
+  double pade = (cden + n1*x + n2*x2)/(cden + d1*x + d2*x2);
+  
+  return pade;
+}
+
+/**
+ * Function: Pade32
+ * ----------------
+ * Return Pade32 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade32(x,a): Pade32 function
+*/
 double Pade32(double x, double *a){
   double x2 = x*x;
   double x3 = x2*x;
@@ -92,6 +192,16 @@ double Pade32(double x, double *a){
   return pade;
 }
 
+/**
+ * Function: Pade23
+ * ----------------
+ * Return Pade23 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade23(x,a): Pade23 function
+*/
 double Pade23(double x, double *a){
   double x2 = x*x;
   double x3 = x2*x;
@@ -110,6 +220,16 @@ double Pade23(double x, double *a){
   return pade;
 }
 
+/**
+ * Function: Pade51
+ * ----------------
+ * Return Pade51 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade51(x,a): Pade51 function
+ */
 double Pade51(double x, double *a){
   double x2 = x*x;
   double x3 = x2*x;
@@ -131,6 +251,16 @@ double Pade51(double x, double *a){
   return pade;
 }
 
+/**
+ * Function: Pade42
+ * ----------------
+ * Return Pade42 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade42(x,a): Pade42 function
+ */
 double Pade42(double x, double *a){
   double x2 = x*x;
   double x3 = x2*x;
@@ -151,6 +281,16 @@ double Pade42(double x, double *a){
   return pade;
 }
 
+/**
+ * Function: Pade33
+ * ----------------
+ * Return Pade33 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade33(x,a): Pade33 function
+ */
 double Pade33(double x, double *a){
   double x2 = x*x;
   double x3 = x2*x;
@@ -170,6 +310,16 @@ double Pade33(double x, double *a){
   return pade;
 }
 
+/**
+ * Function: Pade15
+ * ----------------
+ * Return Pade15 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade15(x,a): Pade15 function
+ */
 double Pade15(double x, double *a){
   double x2 = x*x;
   double x3 = x2*x;
@@ -191,6 +341,16 @@ double Pade15(double x, double *a){
   return pade;
 }
 
+/**
+ * Function: Pade62
+ * ----------------
+ * Return Pade62 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade62(x,a): Pade62 function
+ */
 double Pade62(double x, double *a){
   double x2 = x*x;
   double x3 = x2*x;
@@ -215,6 +375,22 @@ double Pade62(double x, double *a){
   return pade;
 }
 
+/**
+ * Function: Pade33_forGSF
+ * ----------------
+ * Return Pade33_forGSF function
+ * 
+ * @param[in] coeffs: coefficients
+ * @param[in] Dcoeffs: derivatives of coefficients
+ * @param[in] D2coeffs: second derivatives of coefficients
+ * @param[in] D3coeffs: third derivatives of coefficients
+ * @param[in] u: argument
+ * @param[out] P: Pade33_forGSF function
+ * @param[out] DP: derivative of Pade33_forGSF function
+ * @param[out] D2P: second derivative of Pade33_forGSF function
+ * @param[out] D3P: third derivative of Pade33_forGSF function
+ * 
+ */
 void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], double D3coeffs[5], double u, double *P, double *DP, double *D2P, double *D3P)
 {
   // Padé 3,3 of f[u] = 1 + c1 u + c2[u] u^2 + c3[u] u^3 + c4[u] u^4 + c5[u] u^5 + c6[u] u^6 
@@ -437,13 +613,25 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[5], double D2coeffs[5], doub
 
 }
 
+/**
+  * Function: Pade33_forGSF function
+  * --------------------------------
+  *   Padé 7,6 of f[v] = 1 + c1 v^7 + c2 v^9 + c3[v] v^11 + c4[v] v^13  (where v = sqrt(u))
+  *   (functional form of the tail part of a1SF & d1SF)
+  *   + notice that c1 and c2 do *not* depend on u so they have no derivatives.
+  * 
+  *    @param[in] coeffs: coefficients of the Taylor-expanded function + derivatives (except from c1, they are functions of log(u))
+  *    @param[in] Dcoeffs: derivatives of the Taylor-expanded function + derivatives (except from c1, they are functions of log(u))
+  *    @param[in] D2coeffs: second derivatives of the Taylor-expanded function + derivatives (except from c1, they are functions of log(u))
+  *    @param[in] D3coeffs: third derivatives of the Taylor-expanded function + derivatives (except from c1, they are functions of log(u))
+  *    @param[in] u: argument
+  *    @param[out] P: Pade33_forGSF function
+  *    @param[out] DP: derivative of Pade33_forGSF function
+  *    @param[out] D2P: second derivative of Pade33_forGSF function
+  *    @param[out] D3P: third derivative of Pade33_forGSF function
+  */
 void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], double D3coeffs[2], double u, double *P, double *DP, double *D2P, double *D3P)
-{
-
-  // Padé 7,6 of f[v] = 1 + c1 v^7 + c2 v^9 + c3[v] v^11 + c4[v] v^13  (where v = sqrt(u))
-  // (functional form of the tail part of a1SF & d1SF)
-  // + notice that c1 and c2 do *not* depend on u so they have no derivatives.
-  
+{ 
   double u2    = u*u;
   double u3    = u2*u;
   double u4    = u3*u;
@@ -453,8 +641,6 @@ void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], do
   double u3by2 = u*sqrt(u); 
   double u5by2 = u*u3by2; 
   double u7by2 = u*u5by2; 
-
-  // Coefficients of the Taylor-expanded function + derivatives of c3, c4
 
   double c1 = coeffs[0];
   double c2 = coeffs[1];
@@ -523,13 +709,24 @@ void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], do
 
 }
 
+/**
+ * Function: Pade76v2_forGSF function
+ * ----------------------------------
+ *   Padé 7,6 of f[v] = 1 + c1 v^5 + c2 v^7 + c3[v] v^9 + c4[v] v^11 + c5[v] v^13  (where v = sqrt(u))
+ *   (functional form of the tail part of q1SF)
+ *   + notice that c1 and c2 do *not* depend on u so they have no derivatives.
+ *    
+ *   @param[in] coeffs: coefficients
+ *   @param[in] Dcoeffs: derivatives of the coefficients
+ *   @param[in] D2coeffs: second derivatives of the coefficients
+ *   @param[in] u: argument
+ *   @param[out] P: Pade76v2_forGSF function
+ *   @param[out] DP: derivative of Pade76v2_forGSF function
+ *   @param[out] D2P: second derivative of Pade76v2_forGSF function
+ *   
+*/
 void Pade76v2_forGSF(double coeffs[5], double Dcoeffs[3], double D2coeffs[3], double u, double *P, double *DP, double *D2P)
 {
-
-  // Padé 7,6 of f[v] = 1 + c1 v^5 + c2 v^7 + c3[v] v^9 + c4[v] v^11 + c5[v] v^13  (where v = sqrt(u))
-  // (functional form of the tail part of q1SF)
-  // + notice that c1 and c2 do *not* depend on u so they have no derivatives.
-
   double sqrtu = sqrt(u);
   double u2    = u*u;
   double u3    = u2*u;
@@ -622,6 +819,17 @@ void Pade76v2_forGSF(double coeffs[5], double Dcoeffs[3], double D2coeffs[3], do
 
 }
 
+/**
+ * Function: Taylorseries
+ * ----------------------
+ *   Return Taylor series
+ * 
+ *   @param[in] x: argument
+ *   @param[in] a: array of coefficients
+ *   @param[in] N: order of the series
+ * 
+ *   @return Taylorseries(x,a,N): Taylor series
+*/
 double Taylorseries(double x, double *a, int N){
   double xn[N+1];
   xn[0] = 1.;
@@ -646,7 +854,20 @@ double Taylorseries(double x, double *a, int N){
   return sum;
 }
 
-/** vector scalar product */
+/**
+ * Function: vect_dot
+ * ------------------
+ * Return vector scalar product
+ * 
+ * @param[in] ax: x component of vector a
+ * @param[in] ay: y component of vector a
+ * @param[in] az: z component of vector a
+ * @param[in] bx: x component of vector b
+ * @param[in] by: y component of vector b
+ * @param[in] bz: z component of vector b
+ * 
+ * @return s: vector scalar product
+ */
 void vect_dot(double ax, double ay, double az,
 	      double bx, double by, double bz,
 	      double *s)
@@ -654,13 +875,37 @@ void vect_dot(double ax, double ay, double az,
   *s = ax*bx + ay*by + az*bz;
 }
 
+/**
+ * Function: vect_dot3
+ * -------------------
+ * Return vector scalar product for 3d vectors
+ * 
+ * @param[in] a: vector a
+ * @param[in] b: vector b
+ * 
+ * @return s: vector scalar product
+*/
 void vect_dot3(double *a, double *b, 
 	       double *s)
 {
   *s = a[Ix]*b[Ix] + a[Iy]*b[Iy] + a[Iz]*b[Iz];
 }
 
-/** vector curl product */
+/**
+ * Function: vect_cross
+ * --------------------
+ * Return vector cross product
+ * 
+ * @param[in] ax: x component of vector a
+ * @param[in] ay: y component of vector a
+ * @param[in] az: z component of vector a
+ * @param[in] bx: x component of vector b
+ * @param[in] by: y component of vector b
+ * @param[in] bz: z component of vector b
+ * @param[out] cx: x component of vector c
+ * @param[out] cy: y component of vector c
+ * @param[out] cz: z component of vector c
+*/
 void vect_cross(double ax, double ay, double az,
 		double bx, double by, double bz,
 		double *cx, double *cy, double *cz)
@@ -670,6 +915,15 @@ void vect_cross(double ax, double ay, double az,
   *cz = ax*by - ay*bx;
 }
 
+/**
+ * Function: vect_cross3
+ * ---------------------
+ * Return vector cross product for 3d vectors
+ * 
+ * @param[in] a: vector a
+ * @param[in] b: vector b
+ * @param[out] c: vector c
+*/
 void vect_cross3(double *a, double *b, 
 		 double *c)
 {
@@ -678,7 +932,17 @@ void vect_cross3(double *a, double *b,
   c[Iz] = a[Ix]*b[Iy] - a[Iy]*b[Ix];
 }
 
-/** vector rotation about an axis */
+/**
+ * Function: vect_rotate
+ * ---------------------
+ * Rotate vector about an axis
+ * 
+ * @param[in] axis: axis of rotation
+ * @param[in] angle: angle of rotation
+ * @param[in,out] vx_p: x component of vector
+ * @param[in,out] vy_p: y component of vector
+ * @param[in,out] vz_p: z component of vector
+*/
 void vect_rotate(int axis, double angle, double *vx_p, double *vy_p, double *vz_p)
 {
   double tmp1, tmp2;
@@ -715,6 +979,15 @@ void vect_rotate(int axis, double angle, double *vx_p, double *vy_p, double *vz_
   *vz_p = vz;  
 }
 
+/**
+ * Function: vect_rotate3
+ * ----------------------
+ * Rotate 3d vector about an axis
+ * 
+ * @param[in] axis: axis of rotation
+ * @param[in] angle: angle of rotation
+ * @param[in,out] v: vector
+*/
 void vect_rotate3(int axis, double angle, double *v)
 {
   double tmp1, tmp2;
@@ -751,7 +1024,18 @@ void vect_rotate3(int axis, double angle, double *v)
   v[Iz] = vz;  
 }
 
-/** Spline interpolation with GSL routines at single point */
+/**
+ * Function: interp_spline_pt
+ * --------------------------
+ *   Spline interpolation with GSL routines at single point
+ *   
+ *   @param[in] t: array of x values
+ *   @param[in] y: array of y values
+ *   @param[in] n: number of points
+ *   @param[in] ti: x value to interpolate
+ * 
+ *   @return yi: interpolated value
+*/
 double interp_spline_pt(double *t, double *y, int n, double ti)
 {
   gsl_interp_accel *acc = gsl_interp_accel_alloc ();
@@ -763,7 +1047,18 @@ double interp_spline_pt(double *t, double *y, int n, double ti)
   return yi;
 }
 
-/** Spline interpolation with GSL routines */
+/**
+  * Function: interp_spline
+  * -----------------------
+  *   Spline interpolation with GSL routines
+  *   
+  *   @param[in] t: array of x values
+  *   @param[in] y: array of y values
+  *   @param[in] n: number of points
+  *   @param[in] ti: array of x values to interpolate
+  *   @param[in] ni: number of points to interpolate
+  *   @param[out] yi: array of interpolated values
+*/
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
   gsl_interp_accel *acc = gsl_interp_accel_alloc ();
@@ -777,8 +1072,19 @@ void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi)
   gsl_interp_accel_free (acc);
 }
 
-/** Spline interpolation with GSL routines 
-    Check limits and set to zero points outside interp range */
+/**
+  * Function: interp_spline_checklim
+  * --------------------------------
+  *   Spline interpolation with GSL routines
+  *   Check limits and set to zero points outside interp range
+  *   
+  *   @param[in] t: array of x values
+  *   @param[in] y: array of y values
+  *   @param[in] n: number of points
+  *   @param[in] ti: array of x values to interpolate
+  *   @param[in] ni: number of points to interpolate
+  *   @param[out] yi: array of interpolated values
+*/
 void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, double *yi)
 {
   const double ta = t[0];
@@ -827,7 +1133,18 @@ void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *
 #endif
 }
  
-/** Find nearest point index in 1d array */
+/**
+  * Function: find_point_bisection
+  * ------------------------------
+  *   Find nearest point index in 1d array
+  *   
+  *   @param[in] x: value to find
+  *   @param[in] n: number of points
+  *   @param[in] xp: array of x values
+  *   @param[in] o: offset
+  * 
+  *   @return i: index of nearest point
+*/
 int find_point_bisection(double x, int n, double *xp, int o)
 {
   int i0 = o-1, i1 = n-o;
@@ -844,9 +1161,20 @@ int find_point_bisection(double x, int n, double *xp, int o)
   return i0-o+1;
 }
 
-/** Barycentric Lagrange interpolation at xx with n points of f(x), 
-    equivalent to standard Lagrangian interpolation */   
 #define tiny 1e-12
+/**
+  * Function: baryc_f
+  * -----------------
+  *   Barycentric Lagrange interpolation at xx with n points of f(x), 
+  *   equivalent to standard Lagrangian interpolation
+  *   
+  *   @param[in] xx: x value to interpolate
+  *   @param[in] n: number of points
+  *   @param[in] f: array of y values
+  *   @param[in] x: array of x values
+  * 
+  *   @return f(xx): interpolated value
+*/
 double baryc_f(double xx, int n, double *f, double *x)
 {
   double omega[n];
@@ -872,8 +1200,16 @@ double baryc_f(double xx, int n, double *f, double *x)
   return( num/den );
 }
 
-/** Barycentric Lagrange interpolation at xx with n points of f(x), 
-    compute weights */
+/**
+ * Function: baryc_weights
+ * -----------------------
+ *   Barycentric Lagrange interpolation at xx with n points of f(x), 
+ *   compute weights
+ *   
+ *   @param[in] n: number of points
+ *   @param[in] x: array of x values
+ *   @param[out] omega: array of weights
+ */
 void baryc_weights(int n, double *x, double *omega)
 {  
   double o;
@@ -889,8 +1225,20 @@ void baryc_weights(int n, double *x, double *omega)
   }
 }
 
-/** Barycentric Lagrange interpolation at xx with n points of f(x), 
-    use precomputed weights */
+/**
+ * Function: baryc_f_weights
+ * -------------------------
+ *   Barycentric Lagrange interpolation at xx with n points of f(x), 
+ *   use precomputed weights
+ *   
+ *   @param[in] xx: x value to interpolate
+ *   @param[in] n: number of points
+ *   @param[in] f: array of y values
+ *   @param[in] x: array of x values
+ *   @param[in] omega: array of weights
+ * 
+ *   @return f(xx): interpolated value
+ */
 double baryc_f_weights(double xx, int n, double *f, double *x, double *omega)
 {
   int i;
@@ -906,7 +1254,19 @@ double baryc_f_weights(double xx, int n, double *f, double *x, double *omega)
   return( num/den );
 }
 
-/** 1d Lagrangian barycentric interpolation */
+/**
+ * Function: interp1d
+ * ------------------
+ *   1d Lagrangian barycentric interpolation
+ *   
+ *   @param[in] order: order of interpolation
+ *   @param[in] xx: x value to interpolate
+ *   @param[in] nx: number of points
+ *   @param[in] f: array of y values
+ *   @param[in] x: array of x values
+ * 
+ *   @return f(xx): interpolated value
+ */
 double interp1d (const int order, double xx, int nx, double *f, double *x)
 {
   double ff;
@@ -917,7 +1277,19 @@ double interp1d (const int order, double xx, int nx, double *f, double *x)
   return( ff );
 }
 
-/** Find max location by poynomial interpolation around x0 (uniform grid) */
+/**
+ * Function: find_max
+ * ------------------
+ *   Find max location by poynomial interpolation around x0 (uniform grid)
+ *   
+ *   @param[in] n: number of points
+ *   @param[in] dx: grid spacing
+ *   @param[in] x0: centre of grid
+ *   @param[in] f: array of y values
+ *   @param[out] fmax: interpolated value at max
+ * 
+ *   @return xmax: max location
+*/
 double find_max (const int n, double dx, double x0, double *f, double *fmax)
 {
   const int i = (n-1)/2; /* To centre the grid for n = N, e.g., n=7, i-3 = 0. */
@@ -956,7 +1328,18 @@ double find_max (const int n, double dx, double x0, double *f, double *fmax)
   return xmax;
 }
 
-/** Find max location around x0 using 5 points (non-uniform grid) */
+/**
+ * Function: find_max_grid
+ * -------------------
+ *   Find max location around x0 using 5 points (non-uniform grid)
+ *   
+ *   @param[in] x: array of x values
+ *   @param[in] f: array of y values
+ *   @param[in] x0: centre of grid
+ *   @param[out] fmax: interpolated value at max
+ * 
+ *   @return xmax: max location
+ */
 double find_max_grid (double *x, double *f)
 {
   const int i = 2; /* centre the grid around third point */
@@ -976,7 +1359,18 @@ double find_max_grid (double *x, double *f)
   return xmax;
 }
 
-/** 4th order centered stencil first derivative, uniform grids */
+/**
+ * Function: D0
+ * ------------
+ *   4th order centered stencil first derivative, uniform grids
+ *   
+ *   @param[in]  f: array of y values
+ *   @param[in]  dx: grid spacing
+ *   @param[in]  n: number of points
+ *   @param[out] df: array of derivatives
+ * 
+ *   @return OK: exit code
+ */
 int D0(double *f, double dx, int n, double *df)
 {
   const double oo12dx  = 1./(12*dx);
@@ -995,7 +1389,18 @@ int D0(double *f, double dx, int n, double *df)
   return OK;
 }
 
-/** 4th order centered stencil second derivative, uniform grids */
+/**
+ * Function: D2
+ * ------------
+ *   4th order centered stencil second derivative, uniform grids
+ *   
+ *   @param[in]  f: array of y values
+ *   @param[in]  dx: grid spacing
+ *   @param[in]  n: number of points
+ *   @param[out] d2f: array of derivatives
+ * 
+ *   @return OK: exit code
+ */
 int D2(double *f, double dx, int n, double *d2f)
 {
   const double oo12dx2  = 1./(dx*dx*12);
@@ -1014,7 +1419,18 @@ int D2(double *f, double dx, int n, double *d2f)
   return OK;
 }
 
-/** 2nd order centered stencil first derivative, nonuniform grids */
+/**
+ * Function: D0_x_2
+ * ----------------
+ *   2nd order centered stencil first derivative, nonuniform grids
+ *   
+ *   @param[in]  f: array of y values
+ *   @param[in]  x: array of x values
+ *   @param[in]  n: number of points
+ *   @param[out] df: array of derivatives
+ * 
+ *   @return OK: exit code
+ */
 int D0_x_2(double *f, double *x, int n, double *df)
 {
   int i;
@@ -1028,8 +1444,20 @@ int D0_x_2(double *f, double *x, int n, double *df)
   return OK;
 }
 
-/** 4th order first derivative, nonuniform grid */
-/** FIXME: can be further optimized! */
+/**
+ * Function: D0_x_4
+ * ----------------
+ *   4th order centered stencil first derivative, nonuniform grids
+ *   Based on Lagrange polynomial
+ *   @note: can be further optimized
+ * 
+ *   @param[in]  f: array of y values
+ *   @param[in]  x: array of x values
+ *   @param[in]  n: number of points
+ *   @param[out] df: array of derivatives
+ * 
+ *   @return OK: exit code
+ */
 int D0_x_4(double *f, double *x, int n, double *df)
 {
   double *ix = x;
@@ -1052,6 +1480,21 @@ int D0_x_4(double *f, double *x, int n, double *df)
   return OK;
 }
 
+/**
+ * Function: d4
+ * ------------
+ *   Helper function for D0_x_4 
+ *   By definition, we consider the polynomials l_j(x) such that
+ *   p(x)    = \sum_j y_j \, l_j(x), 
+ *   hence the derivative at x_i will be
+ *   p'(x_i) = \sum_j y_j \, l'_j(x_i) 
+ *   
+ *   @param[in] x: array of x values
+ *   @param[in] y: array of y values
+ *   @param[in] i: index in [0,4]
+ *   
+ *   @return dy_i: derivative of y at x[i]
+*/
 double d4(double *x, double *y, int i)
 {
   double dy_i =0.; 
@@ -1064,6 +1507,18 @@ double d4(double *x, double *y, int i)
   return dy_i;
 }
 
+/**
+ * Function: l_deriv
+ * -----------------
+ *   Compute the derivative of the interpolating
+ *   polynomial j at x[i]
+ * 
+ *  @param[in] x: array of x values
+ *  @param[in] i: position of x at which l_j is evaluated
+ *  @param[in] j: index of l_j
+ * 
+ *  @return ld_ji: derivative of l_j at x[i]
+*/
 double l_deriv(double *x,int i,int j)
 {
   double xi = *(x +i);
@@ -1099,7 +1554,18 @@ double l_deriv(double *x,int i,int j)
   return ld_ji;
 }
 
-/** Trapezoidal rule */
+/**
+  * Function: cumtrapz
+  * ------------------
+  *   Trapezoidal rule
+  *   
+  *   @param[in] f: array of y values
+  *   @param[in] x: array of x values
+  *   @param[in] n: number of points
+  *   @param[out] sum: array of cumulative sums
+  * 
+  *   @return sum[n-1]: total integral
+*/
 double cumtrapz(double *f, double *x, const int n, double *sum)
 {
   sum[0] = 0.;
@@ -1113,7 +1579,18 @@ double cumtrapz(double *f, double *x, const int n, double *sum)
   return sum[n-1];
 }
 
-/** Third-order polynomial integration */
+/**
+  * Function: cumint3
+  * -----------------
+  *   Third-order polynomial integration
+  *   
+  *   @param[in] f: array of y values
+  *   @param[in] x: array of x values
+  *   @param[in] n: number of points
+  *   @param[out] sum: array of cumulative sums
+  * 
+  *   @return sum[n-1]: total integral
+*/
 double cumint3(double *f, double *x, const int n, double *sum)
 {
   double xe[n+2], fe[n+2];
@@ -1157,7 +1634,14 @@ double cumint3(double *f, double *x, const int n, double *sum)
   return sum[n-1];
 }
 
-/* Simple unwrap for phase angles */ // Do NOT mess with it
+/**
+ * Function: unwrap
+ * ----------------
+ *   Unwrap phase angles
+ *   
+ *   @param[in,out] p: array of phase angles
+ *   @param[in] size: number of points
+*/
 void unwrap(double *p, const int size)
 {
  if (size < 1) return;
@@ -1187,7 +1671,14 @@ void unwrap(double *p, const int size)
   }
 }
 
-/* Modified unwrap function for HM phases */
+/**
+ * Function: unwrap_HM
+ * -------------------
+ *    Modified unwrap function for HM phases
+ *   
+ *   @param[in,out] p: array of phase angles
+ *   @param[in] size: number of points
+*/
 void unwrap_HM(double *p, const int size)
 {
   if (size < 1) return;
@@ -1226,7 +1717,14 @@ void unwrap_HM(double *p, const int size)
   
 }
 
-/* unwrap function for euler angles */
+/**
+ * Function: unwrap_euler
+ * ----------------------
+ *   Unwrap function for euler angles
+ *   
+ *   @param[in,out] p: array of euler angles
+ *   @param[in] size: number of points
+*/
 void unwrap_euler(double *p, const int size)
 {
   if (size < 1) return;
@@ -1265,7 +1763,16 @@ void unwrap_euler(double *p, const int size)
 }
 
 #define dbg_unwrap_proxy (0)  /* stops after routine, use: ./TEOBResumS.x test.par > out */ 
-/* Unwrap unsign number of cycles from reference phase as proxy */
+/**
+ * Function: unwrap_proxy
+ * ----------------------
+ *   Unwrap using number of cycles from reference phase as proxy
+ *   
+ *   @param[in,out] p: array of phase angles
+ *   @param[in] r: array of reference phase angles
+ *   @param[in] size: number of points
+ *   @param[in] shift0: shift phase to r[0]
+*/
 void unwrap_proxy(double *p, double *r, const int size, const int shift0)
 {
   if (size < 1) return;
@@ -1306,7 +1813,18 @@ void unwrap_proxy(double *p, double *r, const int size, const int shift0)
   if (dbg_unwrap_proxy) DBGSTOP;
 }
 
-/* Compute real/imag <-> amplitude/phase */
+/**
+  * Function: rmap
+  * --------------
+  *   Compute real/imag <-> amplitude/phase
+  *   
+  *   @param[in,out] re: array of real values
+  *   @param[in,out] im: array of imag values
+  *   @param[in,out] p: array of phase angles
+  *   @param[in,out] a: array of amplitudes
+  *   @param[in] mode: 0: (Re, Im) -> (Amplitude, phase)
+  *                    1: (Amplitude, phase) -> (Re, Im)
+*/
 void rmap (double *re, double *im, double *p, double *a, const int mode)
 {
   /* h =  A exp( -i phi) */
@@ -1322,8 +1840,47 @@ void rmap (double *re, double *im, double *p, double *a, const int mode)
   }
 }
 
-/** This routine sets a 0/1 mask for the multipolar linear index 
-    work for any parameter and can specify default all on/off */
+/**
+  * Function: rmap_twist
+  * --------------------
+  *   Compute real/imag <-> amplitude/phase
+  *   for twisted waveforms. 
+  *   @note: `rmap` added a "Pi" shift, hence we add a new function
+  *   
+  *   @param[in,out] re: array of real values
+  *   @param[in,out] im: array of imag values
+  *   @param[in,out] p: array of phase angles
+  *   @param[in,out] a: array of amplitudes
+  *   @param[in] mode: 0: (Re, Im) -> (Amplitude, phase)
+  *                    1: (Amplitude, phase) -> (Re, Im)
+*/
+void rmap_twist (double *re, double *im, double *p, double *a, const int mode)
+{
+  /* h =  A exp( -i phi) */
+  if (mode) {
+    /** (Re, Im) -> (Amplitude, phase) */
+    *a = sqrt( SQ((*re)) + SQ((*im)) );
+    *p = - atan2((*im), (*re)); /* exp(- i phi) => Pi  */
+  } else {
+    /** (Amplitude, phase) -> (Re, Im) */
+    *re = + (*a) * cos((*p));  
+    *im = - (*a) * sin((*p));  
+  }
+}
+
+/**
+  * Function: set_multipolar_idx_mask
+  * ---------------------------------
+  *   This routine sets a 0/1 mask for the multipolar linear index 
+  *   work for any parameter and can specify default all on/off
+  *   
+  *   @param[in,out] kmask: array of 0/1 mask
+  *   @param[in] n: number of points
+  *   @param[in] idx: array of indices
+  *   @param[in] m: number of indices
+  *   @param[in] on: 0: all off
+  *                  1: all on
+*/
 void set_multipolar_idx_mask (int *kmask, int n, const int *idx, int m, int on)
 {
   int k,j;
@@ -1337,16 +1894,58 @@ void set_multipolar_idx_mask (int *kmask, int n, const int *idx, int m, int on)
       if (idx[j] == k) kmask[k] = 1; 
 }
 
-/** Compute size of a uniform grid t0:dt:tf */
-int get_uniform_size(const double tN, const double t0, const double dt)
+/**
+ * Function: get_uniform_size
+ * --------------------------
+ *   Compute size of a uniform grid t0:dt:tf
+ *   
+ *   @param[in] tN: final time
+ *   @param[in] t0: initial time
+ *   @param[in] dt: time step
+ * 
+ *   @return size: number of points
+*/
+long int get_uniform_size(const double tN, const double t0, const double dt)
 {
-  return ((int)((tN - t0)/dt + 1)); 
+  return ((long int)((tN - t0)/dt + 1)); 
 }
 
-/* Alloc/Free data type routines */
+/**
+ * Function: intersect_int
+ * -----------------------
+ *   Intersection of two int arrays
+ *   
+ *   @param[in] a: array of int
+ *   @param[in] size_a: size of a
+ *   @param[in] b: array of int
+ *   @param[in] size_b: size of b
+ *   @param[out] result: array of int
+ * 
+ *   @return k: size of result
+*/
+int intersect_int (int *a, int size_a, int *b, int size_b, int *result)
+{
+  int k = 0;
+  for (int i = 0; i < size_a; i++){
+    for (int j = 0; j < size_b; j++){
+      if (a[i]==b[j]){
+	      result[k] = a[i];
+	      k++;
+      }
+    }
+  }
+  return k;
+}
 
-/** Waveform (complex) */
-void Waveform_alloc (Waveform **wav, const int size, const char *name)
+/**
+ * Function: Waveform_alloc
+ * ------------------------
+ *  Alloc memory for Waveform
+ * 
+ * @param[in,out] wav: pointer to Waveform
+ * @param[in] size: number of points
+ * @param[in] name: name of waveform
+*/void Waveform_alloc (Waveform **wav, const int size, const char *name)
 {
   *wav = (Waveform *) calloc(1, sizeof(Waveform)); 
   if (wav == NULL)
@@ -1364,6 +1963,14 @@ void Waveform_alloc (Waveform **wav, const int size, const char *name)
   strcpy((*wav)->name,name);
 }
 
+/**
+ * Function: Waveform_push
+ * -----------------------
+ * Realloc memory for Waveform changing size
+ * 
+ * @param[in,out] wav: pointer to Waveform
+ * @param[in] size: new number of points
+*/
 void Waveform_push (Waveform **wav, int size)
 {
   if ((*wav)->real)  (*wav)->real  = realloc ( (*wav)->real,  size * sizeof(double) );
@@ -1376,7 +1983,17 @@ void Waveform_push (Waveform **wav, int size)
   (*wav)->size = size; 
 }
 
-/* Compute real/imag <-> amplitude/phase */
+/**
+ * Function: Waveform_rmap
+ * -----------------------
+ *   Compute real/imag <-> amplitude/phase
+ *   
+ *   @param[in,out] h: pointer to Waveform
+ *   @param[in] mode: 1: (Re, Im) -> (Amplitude, phase)
+ *                    0: (Amplitude, phase) -> (Re, Im)
+ *   @param[in] unw: 0: do not unwrap
+ *                   1: unwrap
+*/
 void Waveform_rmap (Waveform *h, const int mode, const int unw)
 {
   const int size = h->size;
@@ -1390,7 +2007,7 @@ void Waveform_rmap (Waveform *h, const int mode, const int unw)
       h->phase[i] = Pi - atan2(h->imag[i], h->real[i]); /* exp(- i phi) => Pi  */
     if (unw) unwrap(h->phase, h->size); 
   } else {
-    /** (Amplitude, phase) -> (Re, Im) */
+    /* (Amplitude, phase) -> (Re, Im) */
     /* h =  A exp( -i phi) */
 #pragma omp simd
     for (int i = 0; i < size; i++) 
@@ -1401,6 +2018,17 @@ void Waveform_rmap (Waveform *h, const int mode, const int unw)
   }
 }
 
+/**
+ * Function: Waveform_interp
+ * -------------------------
+ *   Interpolate Real/imag waveform to new time array
+ * 
+ *   @param[in,out] h: pointer to Waveform
+ *   @param[in] size: new number of points
+ *   @param[in] t0: initial time
+ *   @param[in] dt: time step
+ *   @param[in] name: name of waveform
+*/
 void Waveform_interp (Waveform *h, const int size, const double t0, const double dt, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -1438,6 +2066,17 @@ void Waveform_interp (Waveform *h, const int size, const double t0, const double
   Waveform_free (h_aux);
 }
 
+/**
+  * Function: Waveform_interp_ap
+  * ----------------------------
+  *   Interpolate amplitude/phase waveform to new time array
+  * 
+  *   @param[in,out] h: pointer to Waveform
+  *   @param[in] size: new number of points
+  *   @param[in] t0: initial time
+  *   @param[in] dt: time step
+  *   @param[in] name: name of waveform
+  */
 void Waveform_interp_ap (Waveform *h, const int size, const double t0, const double dt, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -1480,6 +2119,14 @@ void Waveform_interp_ap (Waveform *h, const int size, const double t0, const dou
   Waveform_free (h_aux);
 }
 
+/**
+ * Function: Waveform_output
+ * -------------------------
+ *   Output Waveform to file
+ *   The output file is named as: output_dir/wav->name.txt
+ * 
+ *   @param[in] wav: pointer to Waveform
+*/
 void Waveform_output (Waveform *wav)
 {
   FILE* fp;
@@ -1502,6 +2149,13 @@ void Waveform_output (Waveform *wav)
   fclose(fp);
 }
 
+/**
+ * Function: Waveform_free
+ * ------------------------
+ *   Free memory for Waveform
+ * 
+ *   @param[in,out] wav: pointer to Waveform
+*/
 void Waveform_free (Waveform *wav)
 {
   if (!wav) return;
@@ -1513,7 +2167,15 @@ void Waveform_free (Waveform *wav)
   free(wav);
 }
 
-/** WaveformFD (complex) */
+/**
+  * Function: WaveformFD_alloc
+  * ---------------------------
+  *  Alloc memory for WaveformFD
+  * 
+  * @param[in,out] wav: pointer to WaveformFD
+  * @param[in] size: number of points
+  * @param[in] name: name of waveform
+*/
 void WaveformFD_alloc (WaveformFD **wav, const int size, const char *name)
 {
   *wav = (WaveformFD *) calloc(1, sizeof(WaveformFD)); 
@@ -1536,6 +2198,14 @@ void WaveformFD_alloc (WaveformFD **wav, const int size, const char *name)
   strcpy((*wav)->name,name);
 }
 
+/**
+ * Function: WaveformFD_push:
+ * --------------------------
+ *   Realloc memory for WaveformFD changing size
+ * 
+ *   @param[in,out] wav: pointer to WaveformFD
+ *   @param[in] size: new number of points
+*/
 void WaveformFD_push (WaveformFD **wav, int size)
 {
   if ((*wav)->preal)  (*wav)->preal  = realloc ( (*wav)->preal,  size * sizeof(double) );
@@ -1550,7 +2220,17 @@ void WaveformFD_push (WaveformFD **wav, int size)
   (*wav)->size = size; 
 }
 
-/* Compute real/imag <-> amplitude/phase */
+/**
+ * Function: WaveformFD_rmap
+ * -------------------------
+ *   Compute real/imag <-> amplitude/phase
+ *   
+ *   @param[in,out] h: pointer to WaveformFD
+ *   @param[in] mode: 1: (Re, Im) -> (Amplitude, phase)
+ *                    0: (Amplitude, phase) -> (Re, Im)
+ *   @param[in] unw: 0: do not unwrap
+ *                   1: unwrap
+*/
 void WaveformFD_rmap (WaveformFD *h, const int mode, const int unw)
 {
   const int size = h->size;
@@ -1575,6 +2255,17 @@ void WaveformFD_rmap (WaveformFD *h, const int mode, const int unw)
   }
 }
 
+/**
+ * Function: WaveformFD_interp_ap
+ * ------------------------------
+ *   Interpolate amp/phase waveform to new time array
+ * 
+ *   @param[in,out] h: pointer to WaveformFD
+ *   @param[in] size: new number of points
+ *   @param[in] f0: initial frequency
+ *   @param[in] df: frequency step
+ *   @param[in] name: name of waveform
+*/
 void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const double df, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -1620,6 +2311,14 @@ void WaveformFD_interp_ap (WaveformFD *h, const int size, const double f0, const
   WaveformFD_free (h_aux);
 }
 
+/**
+ * Function: WaveformFD_output
+ * ---------------------------
+ *   Output WaveformFD to file
+ *   The output file is named as: output_dir/wav->name.txt
+ * 
+ *   @param[in] wav: pointer to WaveformFD
+*/
 void WaveformFD_output (WaveformFD *wav)
 {
   FILE* fp;
@@ -1642,6 +2341,13 @@ void WaveformFD_output (WaveformFD *wav)
   fclose(fp);
 }
 
+/**
+ * Function: WaveformFD_free
+ * --------------------------
+ *   Free memory for WaveformFD
+ * 
+ *   @param[in,out] wav: pointer to WaveformFD
+*/
 void WaveformFD_free (WaveformFD *wav)
 {
   if (!wav) return;
@@ -1655,14 +2361,25 @@ void WaveformFD_free (WaveformFD *wav)
   free(wav);
 }
 
-/** Multipolar waveform (complex) */
-void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
+/**
+  * Function: Waveform_lm_alloc
+  * ---------------------------
+  *  Alloc memory for Waveform_lm
+  * 
+  * @param[in,out] wav: pointer to Waveform_lm
+  * @param[in] size: number of points
+  * @param[in] name: name of waveform
+  * @param[in] use_mode_lm: array of multipolar indices
+  * @param[in] use_mode_lm_size: size of use_mode_lm
+*/
+void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name, int *use_mode_lm, int use_mode_lm_size)
 {
   *wav = (Waveform_lm *) calloc(1, sizeof(Waveform_lm)); 
   if (wav == NULL)
     errorexit("Out of memory");
   (*wav)->size = size; 
-  set_multipolar_idx_mask((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0);
+  set_multipolar_idx_mask((*wav)->kmask,     KMAX, use_mode_lm, use_mode_lm_size, 0);
+  set_multipolar_idx_mask((*wav)->kmask_nqc, KMAX, EOBPars->use_mode_lm_nqc, EOBPars->use_mode_lm_nqc_size, 0);
   (*wav)->time = malloc ( size * sizeof(double) );
   memset((*wav)->time, 0, size*sizeof(double));
   for (int k=0; k<KMAX; k++) {
@@ -1676,6 +2393,14 @@ void Waveform_lm_alloc (Waveform_lm **wav, int size, const char *name)
   }
 }
 
+/**
+ * Function: Waveform_lm_push
+ * --------------------------
+ *   Realloc memory for Waveform_lm changing size
+ * 
+ *   @param[in,out] wav: pointer to Waveform_lm
+ *   @param[in] size: new number of points
+*/
 void Waveform_lm_push (Waveform_lm **wav, int size)
 {
   const int n  = (*wav)->size;
@@ -1693,13 +2418,23 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
   (*wav)->size = size;
 }
 
-/* Interp on uniform time array and overwrite a multipolar waveform */
+/**
+ * Function: Waveform_lm_interp
+ * ----------------------------
+ *   Interpolate multipolar waveform to new time array
+ * 
+ *   @param[in,out] hlm: pointer to Waveform_lm
+ *   @param[in] size: new number of points
+ *   @param[in] t0: initial time
+ *   @param[in] dt: time step
+ *   @param[in] name: name of waveform
+*/
 void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name)
 {
   /* Alloc and init aux memory */  
   Waveform_lm *hlm_aux;
   const int oldsize = hlm->size;
-  Waveform_lm_alloc(&hlm_aux, oldsize, "");
+  Waveform_lm_alloc(&hlm_aux, oldsize, "", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
   memcpy(hlm_aux->time, hlm->time, oldsize * sizeof(double));
   for (int k = 0; k < KMAX; k++) {
     if (hlm->kmask[k]){
@@ -1739,6 +2474,14 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   Waveform_lm_free (hlm_aux);
 }
 
+/**
+ * Function: Waveform_lm_output
+ * ----------------------------
+ *   Output multipolar Waveform to file
+ *   The output file is named as: output_dir/wav->name_l%d_m%d.txt
+ *   
+ *   @param[in] wav: pointer to Waveform_lm
+*/
 void Waveform_lm_output (Waveform_lm *wav)
 {
   int kmask[KMAX];
@@ -1759,7 +2502,14 @@ void Waveform_lm_output (Waveform_lm *wav)
     }
   }
 }
-
+/**
+ * Function: Waveform_lm_output_reim
+ * ---------------------------------
+ *   Output multipolar Waveform to file as real/imag
+ *   The output file is named as: output_dir/wav->name_l%d_m%d_reim.txt
+ *   
+ *   @param[in] wav: pointer to Waveform_lm
+*/
 void Waveform_lm_output_reim (Waveform_lm *wav)
 {
   int kmask[KMAX];
@@ -1783,7 +2533,17 @@ void Waveform_lm_output_reim (Waveform_lm *wav)
   }
 }
 
-/* Extract a multipolar waveforms at times t >= to and t < tn, Alloc a new Waveform_lm var */
+/**
+  * Function: Waveform_lm_extract
+  * -----------------------------
+  *   Extract a multipolar waveforms at times t >= to and t < tn, Alloc a new Waveform_lm var
+  * 
+  *   @param[in] hlma: pointer to Waveform_lm
+  *   @param[in] to: initial time
+  *   @param[in] tn: final time
+  *   @param[in,out] hlmb: pointer to Waveform_lm
+  *   @param[in] name: name of waveform
+*/
 void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, Waveform_lm **hlmb, const char *name)
 {
   /* Check limits */
@@ -1813,7 +2573,7 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
 #endif
   
   /* Alloc output waveform b */
-  Waveform_lm_alloc (hlmb, N, name);
+  Waveform_lm_alloc (hlmb, N, name, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
   /* TODO: Parameters are not copied in the new wf !*/
   
   /* Copy the relevant part of a into b */
@@ -1832,19 +2592,27 @@ void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, W
   
 }
 
-/* Join two multipolar waveforms at t = to */
+/**
+  * Function: Waveform_lm_join
+  * --------------------------
+  *   Join two multipolar waveforms at t = to
+  * 
+  *   @note Time arrays are supposed to be ordered as
+  *   hlma->time:  x x x x x x x x x 
+  *   hlmb->time:       o o o o o o o o o 
+  *   to        :                |
+  *   But they do not need to overlap or be uniformly spaced.
+  *   to can be 
+  *   to > hlma->time[hlma->size-1] => extend the a waveform
+  *   to < hlmb->time[0]            => join the whole b waveform
+  *   A number of checks enforce the above structure, if possible.
+  * 
+  *   @param[in,out] hlma: pointer to Waveform_lm
+  *   @param[in,out] hlmb: pointer to Waveform_lm
+  *   @param[in] to: time to join
+*/
 void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
 {
-  /* Time arrays are suppose to be ordered as
-     hlma->time:  x x x x x x x x x 
-     hlmb->time:       o o o o o o o o o 
-     to        :                |
-     But they do not need to overlap or be uniformly spaced.
-     Note to can be 
-     to > hlma->time[hlma->size-1] => extend the a waveform
-     to < hlmb->time[0]            => join the whole b waveform
-     Following checks enforce the above structure, if possible.
-  */
   if (hlma->time[0] > hlmb->time[0]) {
     SWAPTRS( hlma, hlmb );
     if ((DEBUG) || (VERBOSE)) PRWARN("Swapped waveforms while joining.");
@@ -1899,6 +2667,13 @@ void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to)
   
 }
 
+/**
+ * Function: Waveform_lm_free
+ * ---------------------------
+ *   Free memory for Waveform_lm
+ * 
+ *   @param[in,out] wav: pointer to Waveform_lm
+*/
 void Waveform_lm_free (Waveform_lm *wav)
 {
   if (!wav) return;
@@ -1912,7 +2687,15 @@ void Waveform_lm_free (Waveform_lm *wav)
   free(wav);
 }
 
-/** Multipolar waveform (complex) */
+/**
+  * Function: WaveformFD_lm_alloc
+  * ------------------------------
+  *  Alloc memory for WaveformFD_lm
+  * 
+  * @param[in,out] wav: pointer to WaveformFD_lm
+  * @param[in] size: number of points
+  * @param[in] name: name of waveform
+*/
 void WaveformFD_lm_alloc (WaveformFD_lm **wav, int size, const char *name)
 {
   *wav = (WaveformFD_lm *) calloc(1, sizeof(WaveformFD_lm)); 
@@ -1937,6 +2720,14 @@ void WaveformFD_lm_alloc (WaveformFD_lm **wav, int size, const char *name)
   }
 }
 
+/**
+ * Function: WaveformFD_lm_push
+ * -----------------------------
+ *   Realloc memory for WaveformFD_lm changing size
+ * 
+ *   @param[in,out] wav: pointer to WaveformFD_lm
+ *   @param[in] size: new number of points
+*/
 void WaveformFD_lm_push (WaveformFD_lm **wav, int size)
 {
   const int n  = (*wav)->size;
@@ -1958,11 +2749,20 @@ void WaveformFD_lm_push (WaveformFD_lm **wav, int size)
   (*wav)->size = size;
 }
 
-/* Interp on uniform freq array and overwrite a multipolar waveform 
-   Notes 
-   - each mode has its own frequency array hlm->F[k]
-   - the uniform array is stored in hlm->freq 
-   - use interp_spline_checklim() and set to zero points outside interp range */
+/**
+ * Function: WaveformFD_lm_interp_ap
+ * ---------------------------------
+ *   Interpolate amp/phase waveform to new freq array
+ *   @note each mode has its own frequency array hlm->F[k]
+ *   @note the uniform array is stored in hlm->freq
+ *   @note use interp_spline_checklim() and set to zero points outside interp range
+ * 
+ *   @param[in,out] hlm: pointer to WaveformFD_lm
+ *   @param[in] size: new number of points
+ *   @param[in] f0: initial frequency
+ *   @param[in] df: frequency step
+ *   @param[in] name: name of waveform
+*/
 void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f0, const double df, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -2019,6 +2819,17 @@ void WaveformFD_lm_interp_ap (WaveformFD_lm *hlm, const int size, const double f
   WaveformFD_lm_free (hlm_aux);
 }
 
+/**
+ * Function: WaveformFD_lm_interp_ap_freqs
+ * ---------------------------------------
+ *   Interpolate amp/phase waveform to new freq array
+ *   @note each mode has its own frequency array hlm->F[k]
+ *   @note the uniform array is stored in hlm->freq
+ *   @note use interp_spline_checklim() and set to zero points outside interp range
+ * 
+ *   @param[in,out] hlm: pointer to WaveformFD_lm
+ *   @param[in] name: name of waveform
+*/
 void WaveformFD_lm_interp_ap_freqs (WaveformFD_lm *hlm, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -2077,8 +2888,14 @@ void WaveformFD_lm_interp_ap_freqs (WaveformFD_lm *hlm, const char *name)
 
 }
 
-
-
+/**
+ * Function: WaveformFD_lm_output
+ * ------------------------------
+ *  Output multipolar Waveform to file
+ *  The output file is named as: output_dir/FD_wav->name_l%d_m%d.txt
+ * 
+ *  @param[in] wav: pointer to WaveformFD_lm
+*/
 void WaveformFD_lm_output (WaveformFD_lm *wav)
 {
   int kmask[KMAX];
@@ -2099,6 +2916,14 @@ void WaveformFD_lm_output (WaveformFD_lm *wav)
   }
 }
 
+/**
+ * Function: WaveformFD_lm_output_reim
+ * -----------------------------------
+ *   Output multipolar Waveform to file as real/imag
+ *   The output file is named as: output_dir/FD_wav->name_l%d_m%d_reim.txt
+ *   
+ *   @param[in] wav: pointer to WaveformFD_lm
+*/
 void WaveformFD_lm_output_reim (WaveformFD_lm *wav)
 {
   int kmask[KMAX];
@@ -2122,6 +2947,13 @@ void WaveformFD_lm_output_reim (WaveformFD_lm *wav)
   }
 }
 
+/**
+ * Function: WaveformFD_lm_free
+ * ----------------------------
+ *  Free memory for WaveformFD_lm
+ * 
+ *  @param[in,out] wav: pointer to WaveformFD_lm
+*/
 void WaveformFD_lm_free (WaveformFD_lm *wav)
 {
   if (!wav) return;
@@ -2137,7 +2969,13 @@ void WaveformFD_lm_free (WaveformFD_lm *wav)
   free(wav);
 }
 
-/** Multipolar waveform at time point (complex) */
+/**
+ * Function: Waveform_lm_t_alloc
+ * -----------------------------
+ *   Alloc memory for Waveform_lm_t (waveform at time point)
+ * 
+ *   @param[in,out] wav: pointer to Waveform_lm_t
+*/
 void Waveform_lm_t_alloc (Waveform_lm_t **wav)
 {
   *wav = (Waveform_lm_t *) calloc(1, sizeof(Waveform_lm_t)); 
@@ -2145,15 +2983,31 @@ void Waveform_lm_t_alloc (Waveform_lm_t **wav)
   (*wav)->time = 0.;
   (*wav)->freq = 0.;
   set_multipolar_idx_mask ((*wav)->kmask, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0); 
+  set_multipolar_idx_mask ((*wav)->kmask_nqc, KMAX, EOBPars->use_mode_lm_nqc, EOBPars->use_mode_lm_nqc_size, 0);
 }
 
+/**
+ * Function: Waveform_lm_t_free
+ * ----------------------------
+ *   Free memory for Waveform_lm_t
+ * 
+ *   @param[in,out] wav: pointer to Waveform_lm_t
+*/
 void Waveform_lm_t_free (Waveform_lm_t *wav)
 {
   if (!wav) return;
   free(wav);
 }
 
-/** Dynamics */
+/**
+ * Function: Dynamics_alloc
+ * ------------------------
+ *   Alloc memory for Dynamics
+ * 
+ *   @param[in,out] dyn: pointer to Dynamics
+ *   @param[in] size: number of points
+ *   @param[in] name: name of waveform
+*/
 void Dynamics_alloc (Dynamics **dyn, int size, const char *name)
 {
   (*dyn) = (Dynamics *) calloc(1, sizeof(Dynamics)); 
@@ -2170,6 +3024,14 @@ void Dynamics_alloc (Dynamics **dyn, int size, const char *name)
   (*dyn)->spins = NULL;
 }
 
+/**
+ * Function: Dynamics_push
+ * -----------------------
+ *   Realloc memory for Dynamics changing size
+ * 
+ *   @param[in,out] dyn: pointer to Dynamics
+ *   @param[in] size: new number of points
+*/
 void Dynamics_push (Dynamics **dyn, int size)
 {
   const int n  = (*dyn)->size;
@@ -2183,7 +3045,17 @@ void Dynamics_push (Dynamics **dyn, int size)
   (*dyn)->size = size; 
 }
 
-/* Interp and overwrite a multipolar waveform */
+/**
+ * Function: Dynamics_interp
+ * -------------------------
+ *   Interp and overwrite the EOB dynamics
+ * 
+ *   @param[in,out] dyn: pointer to Dynamics
+ *   @param[in] size: new number of points
+ *   @param[in] t0: initial time
+ *   @param[in] dt: time step
+ *   @param[in] name: name of dynamics
+*/
 void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const double dt, const char *name)
 {
   /* Alloc and init aux memory */  
@@ -2218,6 +3090,14 @@ void Dynamics_interp (Dynamics *dyn, const int size, const double t0, const doub
   Dynamics_free (dyn_aux);
 }
 
+/**
+ * Function: Dynamics_output
+ * -------------------------
+ *   Output Dynamics to file
+ *   The output file is named as: output_dir/dyn->name.txt
+ * 
+ *   @param[in] dyn: pointer to Dynamics
+*/
 void Dynamics_output (Dynamics *dyn)
 {
   FILE* fp; 
@@ -2241,7 +3121,17 @@ void Dynamics_output (Dynamics *dyn)
   fclose(fp);
 }
 
-/* Extract Dynamics at times t >= to and t < tn, Alloc a new Dynamics var */
+/**
+ * Function: Dynamics_extract
+ * --------------------------
+ *   Extract Dynamics at times t >= to and t < tn, Alloc a new Dynamics var
+ * 
+ *   @param[in] dyna: pointer to Dynamics
+ *   @param[in] to: initial time
+ *   @param[in] tn: final time
+ *   @param[in,out] dynb: pointer to Dynamics
+ *   @param[in] name: name of dynamics
+*/
 void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamics **dynb, const char *name)
 {
   /* Check limits */
@@ -2298,19 +3188,27 @@ void Dynamics_extract (Dynamics *dyna, const double to, const double tn, Dynamic
   
 }
 
-/* Join two dynamics time series at t = to */
+/**
+  * Function: Dynamics_join
+  * -----------------------
+  *   Join two dynamics time series at t = to
+  * 
+  *   @note Time arrays are suppose to be ordered as
+  *   dyna->time:  x x x x x x x x x 
+  *   dynb->time:       o o o o o o o o o 
+  *   to        :                |
+  *   But they do not need to overlap or be uniformly spaced.
+  *   Note to can be 
+  *   to > dyna->time[dyna->size-1] => extend the dynamics data
+  *   to < dynb->time[0]            => join the whole b dynamics
+  *   Following checks enforce the above structure, if possible.
+  * 
+  *   @param[in,out] dyna: pointer to Dynamics
+  *   @param[in,out] dynb: pointer to Dynamics
+  *   @param[in] to: time to join
+*/
 void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to)
 {
-  /* Time arrays are suppose to be ordered as
-     dyna->time:  x x x x x x x x x 
-     dynb->time:       o o o o o o o o o 
-     to        :                |
-     But they do not need to overlap or be uniformly spaced.
-     Note to can be 
-     to > dyna->time[hlma->size-1] => extend the dynamics data
-     to < dynb->time[0]            => join the whole b dynamics
-     Following checks enforce the above structure, if possible.
-  */
   if (dyna->time[0] > dynb->time[0]) {
     SWAPTRS( dyna, dynb );
     if ((DEBUG) || (VERBOSE)) PRWARN("Swapped dynamics while joining.");
@@ -2359,6 +3257,13 @@ void Dynamics_join (Dynamics *dyna, Dynamics *dynb, double to)
     
 }
 
+/**
+ * Function: Dynamics_free
+ * -----------------------
+ *   Free memory for Dynamics
+ * 
+ *   @param[in,out] dyn: pointer to Dynamics
+*/
 void Dynamics_free (Dynamics *dyn)
 {
   if (!dyn) return;
@@ -2369,7 +3274,13 @@ void Dynamics_free (Dynamics *dyn)
   free(dyn);
 }
 
-/** Spin dynamics */
+/**
+ * Function: DynamicsSpin_alloc
+ * ----------------------------
+ *   Alloc memory for DynamicsSpin
+ *  
+ *   @param[in,out] dyn: pointer to DynamicsSpin
+*/
 void DynamicsSpin_alloc (DynamicsSpin **dyn, int size)
 {
   *dyn = (DynamicsSpin *) calloc(1, sizeof(DynamicsSpin)); 
@@ -2390,6 +3301,14 @@ void DynamicsSpin_alloc (DynamicsSpin **dyn, int size)
   (*dyn)->omg_backward= 0; 
 }
 
+/**
+ * Function: DynamicsSpin_push
+ * ---------------------------
+ *  Realloc memory for DynamicsSpin changing size
+ * 
+ *  @param[in,out] dyn: pointer to DynamicsSpin
+ *  @param[in] size: new number of points
+*/
 void DynamicsSpin_push (DynamicsSpin **dyn, int size)
 {
   const int n  = (*dyn)->size;
@@ -2406,6 +3325,13 @@ void DynamicsSpin_push (DynamicsSpin **dyn, int size)
   (*dyn)->size = size; 
 }
 
+/**
+ * Function: DynamicsSpin_free
+ * ---------------------------
+ *   Free memory for DynamicsSpin
+ * 
+ *   @param[in,out] dyn: pointer to DynamicsSpin
+*/
 void DynamicsSpin_free (DynamicsSpin *dyn)
 {
   if (!dyn) return;
@@ -2421,6 +3347,14 @@ void DynamicsSpin_free (DynamicsSpin *dyn)
   free(dyn);
 }
 
+/**
+ * Function: DynamicsSpin_output
+ * -----------------------------
+ *   Output DynamicsSpin to file
+ *   The output file is named as: output_dir/dynspin.txt
+ * 
+ *   @param[in] dyn: pointer to DynamicsSpin
+*/
 void DynamicsSpin_output (DynamicsSpin *dyn)
 {  
   char fname[STRLEN*2];
@@ -2442,19 +3376,27 @@ void DynamicsSpin_output (DynamicsSpin *dyn)
 }
 
 
-/* Join two dynamics time series at t = to */
+/**
+ * Function: DynamicsSpin_join
+ * ---------------------------
+ *   Join two dynamics time series at t = to
+ * 
+ *   @note Time arrays are suppose to be ordered as
+ *   dyna->time:  x x x x x x x x x 
+ *   dynb->time:       o o o o o o o o o 
+ *   to        :                |
+ *   But they do not need to overlap or be uniformly spaced.
+ *   Note to can be 
+ *   to > dyna->time[dyna->size-1] => extend the dynamics data
+ *   to < dynb->time[0]            => join the whole b dynamics
+ *   Following checks enforce the above structure, if possible.
+ * 
+ *   @param[in,out] dyna: pointer to DynamicsSpin
+ *   @param[in,out] dynb: pointer to DynamicsSpin
+ *   @param[in] to: time to join
+*/
 void DynamicsSpin_join (DynamicsSpin *dyna, DynamicsSpin *dynb, double to)
 {
-  /* Time arrays are suppose to be ordered as
-     dyna->time:  x x x x x x x x x 
-     dynb->time:       o o o o o o o o o 
-     to        :                |
-     But they do not need to overlap or be uniformly spaced.
-     Note to can be 
-     to > dyna->time[hlma->size-1] => extend the dynamics data
-     to < dynb->time[0]            => join the whole b dynamics
-     Following checks enforce the above structure, if possible.
-  */
   if (dyna->time[0] > dynb->time[0]) {
     SWAPTRS( dyna, dynb );
     if ((DEBUG) || (VERBOSE)) PRWARN("Swapped dynamics while joining.");
@@ -2507,8 +3449,14 @@ void DynamicsSpin_join (DynamicsSpin *dyna, DynamicsSpin *dynb, double to)
     
 }
 
-/** Sync some quick access parameters in dyn with parameter database 
-    to be used carefully */
+/**
+ * Function: DynamicsSpin_set_params
+ * ---------------------------------
+ *   Sync some quick access parameters in dyn with parameter database
+ *   @note to be used carefully
+ * 
+ *   @param[in,out] dyn: pointer to Dynamics
+*/
 void Dynamics_set_params (Dynamics *dyn)
 {
   dyn->store = 0;
@@ -2522,7 +3470,13 @@ void Dynamics_set_params (Dynamics *dyn)
 
 }
 
-/** NQC data */
+/**
+ * Function: NQCdata_alloc
+ * -----------------------
+ *   Alloc memory for NQCdata
+ * 
+ *   @param[in,out] nqc: pointer to NQCdata
+*/
 void NQCdata_alloc (NQCdata **nqc)
 {
   *nqc = (NQCdata *) calloc(1, sizeof(NQCdata));
@@ -2536,6 +3490,13 @@ void NQCdata_alloc (NQCdata **nqc)
     errorexit("Out of memory");
 }
 
+/**
+ * Function: NQCdata_free
+ * ----------------------
+ *   Free memory for NQCdata
+ * 
+ *   @param[in,out] nqc: pointer to NQCdata
+*/
 void NQCdata_free (NQCdata *nqc)
 {
   if (!nqc) return;
@@ -2544,7 +3505,83 @@ void NQCdata_free (NQCdata *nqc)
   if (nqc)      free (nqc);
 }
   
-/** Perform a time shift in FD */
+
+/**
+ * Function: time_shift_mrg_to_0
+ * -----------------------------
+ *   Find the time shift to move the merger to t=0
+ *   Define "merger" as the last peak of
+ *   Q = sqrt(A); A = sum_{ell, emm} |A_{ell,emm}|^2
+ * 
+ *   @param[in,out] hlm: pointer to coprecessing hlm  
+ */
+double time_shift_mrg_to_0(Waveform_lm *hlm)
+{
+  int i, imrg;
+  double Q, Qmrg;
+  Qmrg  = 0;
+  imrg  = 0;
+
+#if(0)
+  /* Scan the entire waveform */
+  for (i=0; i<hlm->size; i++){
+    Q = 0.;
+    for (int k=0; k<KMAX; k++){
+      if (hlm->kmask[k]) 
+        Q += hlm->ampli[k][i]*hlm->ampli[k][i];
+
+    if (Q > Qmrg){
+      Qmrg = Q;
+      imrg = i;
+    }
+  }
+#endif
+
+  /* Start looking for the last peak from the end */
+  Qmrg  = 0.;
+  imrg  = hlm->size-1;
+  for (i=hlm->size-1; i>0; i--){
+    Q = 0.;
+    for (int k=0; k<KMAX; k++){
+      if (hlm->kmask[k]) 
+        Q += hlm->ampli[k][i]*hlm->ampli[k][i];
+    }
+    if (Q < Qmrg){
+      imrg = i;
+      Qmrg = Q;
+      break;
+    } else {
+      Qmrg = Q;
+    }
+  }
+  return hlm->time[imrg];
+
+}
+
+/**
+ * Function: time_shift_TD
+ * ------------------------
+ *  Time shift the waveform polarizations
+ * 
+ *   @param[in,out] t: pointer to Waveform->t or Waveformlm->t
+ *   @param[in] tc: time shift
+*/
+void time_shift_TD(double *t, double tc, int size)
+{
+  for(int i=0; i<size; i++){
+    t[i] -= tc;
+  }
+}
+
+
+/**
+ * Function: time_shift_FD
+ * -----------------------
+ *   Perform a time shift in FD
+ * 
+ *   @param[in,out] hpc: pointer to WaveformFD
+ *   @param[in] tc: time shift
+*/
 void time_shift_FD(WaveformFD *hpc, double tc){
 
   double ts = -tc;
@@ -2569,25 +3606,56 @@ void time_shift_FD(WaveformFD *hpc, double tc){
   }
 }
 
-/** Convert time in sec to dimensionless and mass-rescaled units */
+/**
+  * Function: time_units_factor
+  * ---------------------------
+  *   Convert time in sec to dimensionless and mass-rescaled units
+  * 
+  *   @param[in] M: mass
+  *   @return conversion factor
+  */
 double time_units_factor(double M)
 {
   return 1./(M*MSUN_S);
 }
-
+/**
+ * 
+  * Function: time_units_conversion
+  * -------------------------------
+  *   Convert time in sec to dimensionless and mass-rescaled units
+  * 
+  *   @param[in] M: mass
+  *   @param[in] t: time in sec
+  *   @return time in dimensionless and mass-rescaled units
+  */
 double time_units_conversion(double M, double t)
 {
   return t/(M*MSUN_S);
 }
 
-/** Convert frequency in Hz to dimensionless radius */
+/**
+  * Function: radius0
+  * -----------------
+  *   Convert frequency in Hz to dimensionless radius using Kepler law
+  * 
+  *   @param[in] M: mass
+  *   @param[in] fHz: frequency in Hz
+  *   @return dimensionless radius
+  */
 double radius0(double M, double fHz)
 {
   double x = (M*fHz*MSUN_S*2.*Pi)/2.;
   return cbrt(1/(x*x));
 }
 
-/** Make dir */
+/**
+  * Function: system_mkdir
+  * ----------------------
+  *   Make dir
+  * 
+  *   @param[in] name: name of dir
+  *   @return 0 if success
+*/
 int system_mkdir(const char *name)
 {
   char s[STRLEN];
@@ -2595,14 +3663,27 @@ int system_mkdir(const char *name)
   return system(s);
 }
 
-/** checks for blank string */
+/**
+  * Function: is_blank
+  * ------------------
+  *   Check if string is blank
+  * 
+  *   @param[in] line: string
+  *   @return 1 if blank
+*/
 int is_blank(const char *line) 
 {
   const char accept[]=" \t\r\n"; 
   return (strspn(line, accept) == strlen(line));
 }
 
-/** remove white spaces from string */
+/**
+  * Function: remove_white_spaces
+  * -----------------------------
+  *   Remove white spaces from string
+  * 
+  *   @param[in,out] str: string
+*/
 void remove_white_spaces(char *str)
 {
   int i = 0, j = 0;
@@ -2614,7 +3695,14 @@ void remove_white_spaces(char *str)
   str[j] = '\0';
 }
 
-/** cut string to the first delimiter */
+/**
+  * Function: remove_comments
+  * --------------------
+  *   Cut string to the first delimiter
+  * 
+  *   @param[in,out] line  : string
+  *   @param[in] delimiters: delimiter
+*/
 void remove_comments(char *line, const char *delimiters)
 {
   int sz = strcspn(line,delimiters);
@@ -2625,7 +3713,14 @@ void remove_comments(char *line, const char *delimiters)
   free(newline);
 }
 
-/** get rid of trailing and leading whitespace */
+/**
+  * Function: trim
+  * --------------
+  *   Get rid of trailing and leading whitespace
+  * 
+  *   @param[in,out] str: string
+  *   @return pointer to beginning of string
+*/
 char *trim(char *str)
 {
   char *start = str;
@@ -2638,17 +3733,46 @@ char *trim(char *str)
   return start;
 }
 
-/** check start & end */
+/**
+ * Function: startswith
+ * --------------------
+ *  Check if string starts with beg
+ * 
+ *  @param[in] str: string
+ *  @param[in] beg: beginning of string
+ * 
+ *  @return 1 if true
+*/
 int startswith(const char *str, const char *beg)
 {
   return (strncmp(beg, str, strlen(beg)) == 0);
 }
+/**
+ * Function: endswith
+ * ------------------
+ *  Check if string ends with end
+ * 
+ *  @param[in] str: string
+ *  @param[in] end: end of string
+ * 
+ *  @return 1 if true
+*/
 int endswith(const char *str, const char *end)
 {
   return (strncmp(str+strlen(str)-strlen(end), end, strlen(end)) == 0);
 }
 
-/** get key value separated by a '=' */
+/**
+ * Function: getkv
+ * ---------------
+ *  Get key value separated by a '='
+ * 
+ *  @param[in] line: string
+ *  @param[in,out] key: key
+ *  @param[in,out] val: value
+ * 
+ *  @return 0 if success
+*/
 int getkv(char *line, char **key, char **val) 
 {
   char *ptr = strchr(line,'=');
@@ -2660,13 +3784,31 @@ int getkv(char *line, char **key, char **val)
   return 0;
 }
 
-/** identify string in parfile */
+/**
+ * Function: is_string
+ * -------------------
+ *   Identify string in parfile
+ * 
+ *   @param[in] str: string
+ * 
+ *   @return 1 if true
+*/
 int is_string(const char *str)
 {
   if (startswith(str,"\"") && endswith(str,"\""))
     return 1;
   return 0;
 }
+
+/**
+ * Function: string_trim
+ * ---------------------
+ *   Trim string
+ * 
+ *   @param[in] str: string
+ * 
+ *   @return pointer to beginning of string
+*/
 char *string_trim(char *str)
 {
   char *start = str;
@@ -2681,18 +3823,57 @@ char *string_trim(char *str)
 }
 
 /* Helpers conversion str to type */
+
+/**
+ * Function: par_get_i
+ * -------------------
+ *   Convert string to int
+ * 
+ *   @param[in] val: string
+ * 
+ *   @return int
+*/
 int par_get_i (char *val)
 {
   return atoi(val);
 }
+
+/**
+ * Function: par_get_b
+ * -------------------
+ *   Convert string to bool
+ * 
+ *   @param[in] val: string
+ * 
+ *   @return bool
+*/
 int par_get_b (char *val)
 {
   return atoi(val)?1:0;
 }
+/**
+ * Function: par_get_d
+ * -------------------
+ *   Convert string to double
+ * 
+ *   @param[in] val: string
+ * 
+ *   @return double
+*/
 double par_get_d (char *val)
 {
   return atof(val);
 }
+/**
+  * Function: par_get_s
+  * -------------------
+  *   Copy string
+  * 
+  *   @param[in,out] dest: destination
+  *   @param[in] src: source
+  * 
+  *   @return 0 if successful, 1 src is not a string
+  */
 int par_get_s (char * dest, char *src)
 {
   if (is_string(src)) {    
@@ -2704,6 +3885,15 @@ int par_get_s (char * dest, char *src)
 
 /** return number of entries in a string according to "delimiters" */ 
 const char * ARRAY_DELIMITER[] = { "[", ",", "]" };
+/**
+ * Function: noentries
+ * -------------------
+ *   Return number of entries in a string according to "delimiters"
+ * 
+ *   @param[in] string: string
+ * 
+ *   @return number of entries
+*/
 int noentries(const char *string)
 {
   int n = 0;
@@ -2726,7 +3916,16 @@ int noentries(const char *string)
   return n;
 }
 
-/** convert a string to an array of int (alloc mem) */
+/**
+ * Function: str2iarray
+ * --------------------
+ *   Convert a string to an array of int (alloc mem)
+ * 
+ *   @param[in] string: string
+ *   @param[in,out] a: pointer to array
+ * 
+ *   @return number of entries
+*/
 int str2iarray(const char *string, int **a)
 {
   char *s, *t;
@@ -2746,7 +3945,16 @@ int str2iarray(const char *string, int **a)
   return n;
 }
 
-/** convert a string to an array of double (alloc mem) */
+/**
+ * Function: str2darray
+ * --------------------
+ *   Convert a string to an array of double (alloc mem)
+ * 
+ *   @param[in] string: string
+ *   @param[in,out] a: pointer to array
+ * 
+ *   @return number of entries
+*/
 int str2darray(const char *string, double **a)
 {
   char *s, *t;
@@ -2766,7 +3974,11 @@ int str2darray(const char *string, double **a)
   return n;
 }
 
-/** Date and time */
+/**
+ * Function: print_date_time
+ * -------------------------
+ *   Print date and time
+*/
 void print_date_time() 
 {
   time_t rawtime;
@@ -2779,7 +3991,15 @@ void print_date_time()
 /** Errorexit routines */
 #undef errorexit
 #undef errorexits
-
+/**
+ * Function: errorexit
+ * -------------------
+ *   Print error message and exit
+ * 
+ *   @param[in] file: file name
+ *   @param[in] line: line number
+ *   @param[in] s: error message
+*/
 void errorexit(char *file, int line, const char *s) 
 {
   fprintf(stderr, "Error: %s  ", s);
@@ -2789,6 +4009,16 @@ void errorexit(char *file, int line, const char *s)
   exit(ERROR);
 }
 
+/**
+ * Function: errorexits
+ * --------------------
+ *   Print error message and exit
+ * 
+ *   @param[in] file: file name
+ *   @param[in] line: line number
+ *   @param[in] s: error message
+ *   @param[in] t: error message
+*/
 void errorexits(char *file, int line, const char *s, const char *t)
 {
   fprintf(stderr, "Error: ");

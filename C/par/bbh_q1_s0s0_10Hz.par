@@ -16,7 +16,8 @@ q = 1. # mass ratio
 
 use_spins = 0
 chi1 = 0.0 # dimensionless spin 1 z-component 
-chi2 = 0.0 # dimensionless spin 2 z-component 
+chi2 = 0.0 # dimensionless spin 2 z-component
+model =	"Giotto"
 
 initial_frequency = 0.000492549094700 # initial GW freq of 10 Hz for M = 10 M_sun
 
@@ -30,6 +31,8 @@ output_multipoles = "no"
 output_lm = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34 ]
 use_mode_lm = [ 1 ] # Use only (2,2) mode for BBH h_{+,x}, this will be updated
 output_dynamics = "no"
+use_a6c_fits = "HM"
+use_cN3LO_fits = "HM"
 
 #
 # Setup
