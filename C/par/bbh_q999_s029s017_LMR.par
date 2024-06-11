@@ -40,6 +40,8 @@ use_flm = "22PN"
 A_pot = "GSF"
 D_pot = "GSF"
 Q_pot = "GSF"
+use_a6c_fits = "no"
+use_cN3LO_fits = "no"
 use_GS_GSs = "ADJS"
 compute_ringdown = "no"
 
@@ -63,7 +65,7 @@ dt_interp = 1000 # M/delta_t = 4096 Hz for M=15*Msun
 
 
 
-
+time_shift_TD = 0
 
 
 

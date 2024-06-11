@@ -51,7 +51,7 @@ interp_uniform_grid = "yes" # yes, only h+,hx on a grid of dt_interp
 dt_interp = 4.95667594616 # interpolation spacing, M/delta_t  = 4096 Hz for M = 10 M_sun
 
 
-
+time_shift_TD = 0
 
 
 

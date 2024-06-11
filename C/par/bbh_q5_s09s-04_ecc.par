@@ -37,8 +37,8 @@ output_lm   = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
 use_mode_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
 output_dynamics = "yes"
 use_flm = "HM"
-use_a6c_fits = "HM"
-use_cN3LO_fits = "HM"
+use_a6c_fits = "ecc"
+use_cN3LO_fits = "ecc"
 A_pot = "PN"
 D_pot = "PN"
 Q_pot = "PN"
@@ -62,7 +62,7 @@ dt_interp = 3.3044505781 # M/delta_t = 4096 Hz for M=15*Msun
 
 
 
-
+time_shift_TD = 0
 
 
 
