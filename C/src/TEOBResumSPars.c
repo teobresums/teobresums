@@ -836,6 +836,10 @@ void eob_set_params(int default_choice, int firstcall)
 
   /* Function pointers */
   
+    // Horizon flux option is the same for all except for USEFLM_22PN
+    eob_flx_HorizonFlux   = &eob_flx_HorizonFlux_v1;
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_v1;
+
   /** Set waveform fun pointers */
   if (EOBPars->use_flm == USEFLM_HM_4PN22) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
@@ -1698,7 +1702,11 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   }      
   if (STREQUAL(key,"df")) {
     eobp->df = par_get_d(val);
-   } 
+   }
+  if (STREQUAL(key,"time_shift_TD")) {
+    eobp->time_shift_TD = par_get_i(val);
+  }      
+
 }
 
 /**
