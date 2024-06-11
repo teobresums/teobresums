@@ -727,7 +727,7 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->a6c = eob_a6c_fit_ecc_P33_4PNh22(EOBPars->nu);
       break;
     case(a6c_fits_ecc):
-      if (EOBPars->model == MODEL_DALI)
+      if (EOBPars->model != MODEL_DALI)
         errorexit("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
       EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
       break;
@@ -760,7 +760,7 @@ void eob_set_params(int default_choice, int firstcall)
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_4PNh22(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_ecc):
-      if(EOBPars->model == MODEL_DALI)
+      if(EOBPars->model != MODEL_DALI)
         errorexit("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
       EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
