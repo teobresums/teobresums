@@ -166,7 +166,7 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "Q_pot"));
     for(EOBPars->Q_pot=0; EOBPars->Q_pot<=Q_NOPT; EOBPars->Q_pot++){
-      if (EOBPars->Q_pot == D_NOPT) EOBPars->Q_pot = D_3PN;
+      if (EOBPars->Q_pot == Q_NOPT) EOBPars->Q_pot = Q_3PN;
       if (STREQUAL(val,Q_opt[EOBPars->Q_pot])) break;
     }    
   }

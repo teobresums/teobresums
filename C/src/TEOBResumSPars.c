@@ -1454,7 +1454,7 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
 
   if (STREQUAL(key,"D_pot")) {
     val = string_trim(val);
-    for (eobp->D_pot=0; eobp->D_pot<=A_NOPT;  eobp->D_pot++) {
+    for (eobp->D_pot=0; eobp->D_pot<=D_NOPT;  eobp->D_pot++) {
       if (eobp->D_pot == D_NOPT) {
         eobp->D_pot = D_3PN;
         if (VERBOSE) printf("D_pot '%s' undefined, set to '%s'\n",
