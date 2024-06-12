@@ -214,20 +214,20 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double aK2   = EOBPars->aK2;
   const double a1    = EOBPars->a1;
   const double a2    = EOBPars->a2;
-  double C_Q1  = EOBPars->C_Q1;
-  double C_Q2  = EOBPars->C_Q2;
-  double C_Oct1 = EOBPars->C_Oct1;
-  double C_Oct2 = EOBPars->C_Oct2;
-  double C_Hex1 = EOBPars->C_Hex1;
-  double C_Hex2 = EOBPars->C_Hex2;
+  double C_Q1        = EOBPars->C_Q1;
+  double C_Q2        = EOBPars->C_Q2;
+  double C_Oct1      = EOBPars->C_Oct1;
+  double C_Oct2      = EOBPars->C_Oct2;
+  double C_Hex1      = EOBPars->C_Hex1;
+  double C_Hex2      = EOBPars->C_Hex2;
 
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
     /* Update the dressing factors for the f-mode resonances */
     fmode_resonance_dressing_factors(r, dyn);
     /* Update the QOH */
     fmode_resonance_dress_QOH(dyn);
-    C_Q1 = dyn->dressed_C_Q1;
-    C_Q2 = dyn->dressed_C_Q2;
+    C_Q1   = dyn->dressed_C_Q1;
+    C_Q2   = dyn->dressed_C_Q2;
     C_Oct1 = dyn->dressed_C_Oct1;
     C_Oct2 = dyn->dressed_C_Oct2;
     C_Hex1 = dyn->dressed_C_Hex1;

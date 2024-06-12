@@ -973,9 +973,9 @@ void eob_set_params(int default_choice, int firstcall)
   }
   
   /** Set rhs fun pointer */
-  if (EOBPars->model == MODEL_DALI) {
+  if (EOBPars->model == MODEL_DALI && ecc != 0.) {
     p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
-  } else if (usespins) {
+  } else if (usespins && ecc == 0.) {
     p_eob_dyn_rhs = &eob_dyn_rhs_s;
   } else {
     p_eob_dyn_rhs = &eob_dyn_rhs;
