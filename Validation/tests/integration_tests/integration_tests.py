@@ -196,9 +196,12 @@ def test_polariz_reconstruction(pars, eps):
                                                  }
                                 )
     hp_rec, hc_rec = utils.compute_hphc(hlm, phi=phi, i=iota, modes=modes)
-    if not np.allclose(hp, hp_rec, atol=eps, rtol=eps):
+
+    # because of the `LVK` tetrad convention, we need to multiply by -1 
+    # the reconstructed polarizations
+    if not np.allclose(hp, -1*hp_rec, atol=eps, rtol=eps):
         assert False
-    if not np.allclose(hc, hc_rec, atol=eps, rtol=eps): 
+    if not np.allclose(hc, -1*hc_rec, atol=eps, rtol=eps): 
         assert False
     assert True
 
