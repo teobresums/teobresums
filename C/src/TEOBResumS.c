@@ -302,13 +302,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Alloc spin dynamics, if needed */
   if (use_spins == MODE_SPINS_GENERIC) {   
     
-    DynamicsSpin_alloc (&spindyn, EOBPars->spin_dyn_size); 
+    DynamicsSpin_alloc(&spindyn, EOBPars->spin_dyn_size); 
     
     /* Set up a reference to spin dynamics in the dynamics structure */
     dyn->spins = spindyn;
     
   }
-  
+
   /* Compute initial radius */
   double f0 = EOBPars->initial_frequency/time_unit_fact;
   if (f0 > 0.0125+0.03*(EOBPars->nu)){
@@ -966,9 +966,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
 #endif
   
-  /* Precessing BNS + EOB flux: 
-  */
-  if(EOBPars->binary == BINARY_BNS && use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
+  /* Precessing BNS (or BBH with no RD) + EOB flux: */
+  if( (EOBPars->binary == BINARY_BNS || dyn->data[EOB_RAD][size-1] > 3.) && use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
     if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->initial_frequency/time_unit_fact))
       errorexit("problem during spin dynamics");
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
