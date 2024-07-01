@@ -253,7 +253,7 @@ void eob_wav_hlmNewt_HM(double r,
     hlmNewt->ampli[k] = ChlmNewt_ampli[k] * Alm[k];
   }
 
-  /* Correcting phase in case of negative freuqency */
+  /* Correcting phase in case of negative frequency */
   if (Omega < 0.) {
     hlmNewt->phase[2]  += Pi; 
     hlmNewt->phase[3]  += 2./3.*Pi; 
@@ -275,7 +275,7 @@ void eob_wav_hlmNewt_HM(double r,
  *   See: https://arxiv.org/abs/2001.11736 
  *   
  *   @param[in]  dyn    : Dynamics structure
- *   @param[out] hlmNewt: Newtonia prefactor of multipolar waveform
+ *   @param[out] hlmNewt: Newtonian prefactor of multipolar waveform
  */
 void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
 {
@@ -3401,6 +3401,7 @@ void eob_wav_flm_HM_4PN22(double x,double nu, double *rholm, double *flm)
     EOBPars->firstcall[FIRSTCALL_EOBWAVFLMHM4PN22] = 0;
     
     for (int k=0; k<KMAX; k++) clm[k][0] = 1.;
+    for (int k=35; k<KMAX; k++) clm[k][0] = 0.;
     for (int k=0; k<KMAX; k++) for (int n=1; n<7; n++) clm[k][n] = 0.;
 
     /** (2,1) */
@@ -3734,7 +3735,7 @@ void eob_wav_flm_HM_4PN22(double x,double nu, double *rholm, double *flm)
     rholm[k] = Taylorseries(x,clm[k],6);
   }
   
-  if (kmaxTaylor+kmaxPade32+kmaxPade22+kmaxPade42+kmaxPade51 != KMAX) {
+  if (kmaxTaylor+kmaxPade32+kmaxPade22+kmaxPade42+kmaxPade51+19 != KMAX) {
     errorexit("Wrong function: not all multipoles are written.\n");
   }
   
@@ -3782,7 +3783,7 @@ void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, 
 
   /** Orbital part */
   //double rholm_orb[KMAX], flm_orb[KMAX];
-  eob_wav_flm(x,nu, rholm, flm);
+  eob_wav_flm(x, nu, rholm, flm);
 
   /** Spin corrections */
   double rho22S;

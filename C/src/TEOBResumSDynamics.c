@@ -1551,8 +1551,6 @@ void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2,
 void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, 
 		      double *rc, double *drc_dr, double *d2rc_dr2, double *d3rc_dr3)
 {
-
-  // printf("hello from eob_dyn_s_get_rc_NLO\n");
   double u   = 1./r;
   double u2  = u*u;
   double u3  = u*u2;

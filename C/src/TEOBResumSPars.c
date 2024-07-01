@@ -889,6 +889,7 @@ void eob_set_params(int default_choice, int firstcall)
     eob_wav_ringdown      = &eob_wav_ringdown_HM;
     eob_flx_HorizonFlux   = &eob_flx_HorizonFlux_lmr;
     eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_lmr;
+    eob_flx_Fr            = &eob_flx_Fr_ecc_next;
   } else errorexit("unknown option for use_flm");
 
   /* Set hlm and NQC fun pointers */
