@@ -9011,8 +9011,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
 			  c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
 			  alpha1, omega1);
 
-  /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-  eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg, abh, kt2);
+  /* 21, 22, 32, 33 and 44 fitted directly */
+  eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg);
   
   // Over-writing fits using postpeak quantities for modes in kpostpeak
   for (int j=0; j<kpostpeak_size; j++) {
@@ -9068,7 +9068,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
-    /* l=3 & l=4 */
+    /* l=2,m=2 */
+    // FIXME: add a function specific for this RR!
+    if(hlm_mrg->kmask_nqc[1] && EOBPars->use_flm == USEFLM_HM_4PN22) {
+      n2[1][j] = SQ(pr_star[j])*n1[1][j];
+    }
+    /* l=3, l=4 & l=5 */
     for (int k=2; k<14; k++) {
       if(hlm_mrg->kmask_nqc[k]){
 	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
@@ -9140,12 +9145,19 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
 
-  eob_nqc_deltat_lm(dyn, dtmrg);
+  /* Usually, the NQC match point is at tmrg_lm + 2
+   * except for modes in knqcpeak22 where it is at tmrg_22
+  */
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+  eob_nqc_deltat_lm(dtmrg);
   
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){
       tmrg[k]  = tmrg[1] + dtmrg[k];
       t_NQC[k] = tmrg[k] + 2.;
+
+      if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
       
       j_NQC[k] = size-1;
       for (int j=size-2; j>=0; j--) {
@@ -9504,24 +9516,29 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
   
   /* The following values are the difference between the time of the peak of
-     the 22 waveform and the other modes. */
-  eob_nqc_deltat_lm(dyn, dtmrg);	  
+     the 22 waveform and the other modes. 
+     For modes in knqcpeak22 we impose tmrg[k] = tmrg[1], to attach the ringdown there
+  */
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+  eob_nqc_deltat_lm(dtmrg);
   for (int k=0; k<KMAX; k++) {
     tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
+    if (modesatpeak22[k]) tmrg[k] = tmrgA22;
   }	  
-    
+
   /** Postmerger-Ringdown matching time */
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
     if(hlm->kmask[k]){
       int j  = size-1;
       idx[k] = size-1;
-      for (j = size-1; j-- ; ) {  
-	      if (t[j] * ooMbh < tmrg[k]) {
+      for (j = size-1; j>0; j--) {  
+	      if ( (t[j] < tmrg[k]*Mbh) || (fabs(t[j] - tmrg[k]*Mbh)<1.e-8) ) {
 	        break;
 	      }
       }
-	    idx[k]    = j;
+      idx[k]    = j;
       tmatch[k] = (t[idx[k]])*ooMbh;	    
     }
   }
@@ -9547,6 +9564,17 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
      if (VERBOSE) PRSECTN("Tidal disruption cases");
      postpeak_coef(a1, a2, a3, a4, b1, b2, b3, b4, sigma[0],sigma[1], nu, chi1, chi2, X1, X2, aK, Mbh, abh, Apeak, alpha2);
    }
+
+  if (q>3 && chi1>0.85){
+    if (VERBOSE) PRSECTN("Region outside of Pompili's fits validity");
+  }else{
+     /* Overwrite the modes attached at the peak, effectively just for (2,1),(3,3),(4,4) */
+  QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,
+                                a1, a2, a3, a4, b1, b2, b3, b4,
+                                sigma[0], sigma[1]
+                              );
+  }
+  
   
   if (VERBOSE) PRFORMd("a1", a1[1] );
   if (VERBOSE) PRFORMd("a2", a2[1] );
@@ -9560,7 +9588,6 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   * end of BHNS only part
   **/
 
-  
  /** Define a time vector for each multipole, scale by mass
       Ringdown of each multipole has its own starting time */
   double *t_lm[KMAX];
@@ -9578,14 +9605,20 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   int index_rng;
 	  
   for (int k = 0; k < KMAX; k++) {
+    double fact = 1.; // this is set to 1/Mbh below for the modes attached at the peak of the (2,2)
     if(hlm->kmask[k]){
 
       /* Ringdown attachment index */      
       index_rng = idx[k]+n0;
+      if (modesatpeak22[k]){
+          index_rng = idx[k];
+          fact      = ooMbh;
+      }
       if (index_rng > dynsize -1) index_rng = dynsize - 1;
       
       /* Calculate Deltaphi */
       t0 = t_lm[k][index_rng] - tmatch[k];
+      t0 /= fact;
       if(binary == BINARY_BHNS_TD){
         eob_wav_ringdown_template_td(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, alpha2[k], Apeak[k]);
       }else{
@@ -9595,8 +9628,8 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
      
       /* Compute and attach ringdown */
       for (int j = index_rng-1; j < size ; j++ ) {
-	
 	      tm = t_lm[k][j] - tmatch[k];
+        tm /= fact;
 	      if(binary == BINARY_BHNS_TD){
           eob_wav_ringdown_template_td(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[1][k], psi, alpha2[k], Apeak[k]);
         }else{

@@ -927,8 +927,10 @@ void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, doub
 			    double alpha1, double omega1,
 			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 double eob_nqc_dtfit(const double chi, const double chi0);
-double eob_nqc_timeshift(double nu, double chi1);
-void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm);
+extern void (*eob_nqc_deltat_lm)(); /* defined in TEOBResumSPars.c*/
+void eob_nqc_deltat_lm_bbh(double *Dt_lm);
+extern double (*eob_nqc_timeshift)(); /* defined in TEOBResumSPars.c*/
+double eob_nqc_timeshift_bbh(double nu, double chi1);
 void eob_nqc_setcoefs(NQCdata *nqc);
 void eob_nqc_setcoefs_nospin201602(NQCcoefs *nqc);
 void eob_nqc_setcoefs_fromfile(NQCcoefs *nqc, const char *fname);
@@ -979,7 +981,7 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
                     double *Apeak, double *alpha2);
 void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak);
 void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double lambda, double nu, double chi1);
-void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp, double abh, double kt2);
+void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_test(double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
@@ -987,6 +989,8 @@ void eob_nqc_point_test(double Mbh, double c1A, double c2A, double c3A, double c
 double horizon_radius(const double nu);
 double pph_lso_orbital(const double nu);
 double pph_lso_spin(const double nu, const double a0);
+double eob_nqc_timeshift_bhns(double nu, double chi1);
+void eob_nqc_deltat_lm_bhns(double *Dt_lm);
 
 /* TEOBResumSDynamics.c */
 extern int (*p_eob_dyn_rhs)(); /* defined in TEOBResumSPars.c */
