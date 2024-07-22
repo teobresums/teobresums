@@ -749,6 +749,7 @@ typedef struct tagEOBParameters
   int openmp_threads;        /**< Number of OpenMP threads */
   int openmp_timeron;        /**< Flag to switch on/off OpenMP timers */
   int firstcall[NFIRSTCALL]; /**< Flag to check if first call to functions */
+  int errors_to_warnings;    /**< Flag to change some errors to warnings */
 
   int domain;                /**< Time or frequency domain */
   double tc;                 /**< Coalescence time */

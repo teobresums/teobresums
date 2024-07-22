@@ -296,6 +296,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->openmp_threads=1; // OpenMP threads
   eobp->openmp_timeron=0; // OpenMP timers
 
+  /* Errors and warnings */
+  eobp->errors_to_warnings=0; //False
    
   /* following pars are set later by the code */
 
@@ -1677,7 +1679,10 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   }
   if (STREQUAL(key,"lal_tetrad_conventions")) {
     eobp->lal_tetrad_conventions = YESNO2INT(string_trim(val));
-  } 
+  }
+  if (STREQUAL(key,"errors_to_warning")) {
+    eobp->errors_to_warnings = YESNO2INT(string_trim(val));
+  }
 }
 
 /**
@@ -1877,6 +1882,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "time_shift_TD", INT2YESNO(eobp->time_shift_TD));
   fprintf(f,"%s = \"%s\"\n", "lal_tetrad_conventions", INT2YESNO(eobp->lal_tetrad_conventions));
 
+  fprintf(f,"%s = \"%s\"\n", "errors_to_warnings", INT2YESNO(eobp->errors_to_warnings));
   fclose(f);
 }
 

@@ -441,6 +441,11 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->lal_tetrad_conventions = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "lal_tetrad_conventions")));
   }
 
+  /* Errors to warnings */
+  if PyDict_GetItemString(dict, "errors_to_warnings") != NULL ) { 
+    EOBPars->errors_to_warnings = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "errors_to_warnings")));
+  }
+
   return OK;
 }
 
