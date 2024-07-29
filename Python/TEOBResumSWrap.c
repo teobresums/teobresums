@@ -442,7 +442,7 @@ int SetOptionalVariables(PyObject* dict){
   }
 
   /* Errors to warnings */
-  if PyDict_GetItemString(dict, "errors_to_warnings") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "errors_to_warnings") != NULL ) { 
     EOBPars->errors_to_warnings = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "errors_to_warnings")));
   }
 
