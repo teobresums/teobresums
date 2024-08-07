@@ -7884,6 +7884,58 @@ double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, doub
 
 
 /**
+ * Function: prolong_euler_angles_TD
+ * ---------------------------------
+ *   Time domain routine to interpolate and prolong the Euler angles computed from the
+ *   dynamics beyond merger.
+ *   The prolongation is done by:
+ *   (1) identifying the end of the dynamics (merger time) by finding the maximum 
+         of the co-precessing A_{22};
+ *   (2) interpolating the Euler angles on the waveform time grid via spline;
+ *   (3) fixing the values to the last value beyond merger
+ *  
+ *   @param[out]  alpha   : alpha euler angle
+ *   @param[out]  beta    : beta euler angle
+ *   @param[out]  gamma   : gamma euler angle
+ *   @param[in]   dyn     : EOB dynamics
+ *   @param[in]   spin    : spin dynamics
+ *   @param[in]   hlm     : multipolar waveform
+ *
+*/
+void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm){
+
+  /* First, unwrap alpha and gamma */
+  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
+  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
+
+  /* Determine merger time (as maximum of the co-precessing A_{22}) */
+  int jmax = 0;
+  for(int i=1; i<hlm->size; i++){
+    if(hlm->ampli[1][i]>hlm->ampli[1][jmax]) jmax = i;
+  }
+
+  double tmax_wav = hlm->time[jmax];
+
+  /* Find the corresponding time in the spin dynamics */
+  const int tmax_dyn_idx = find_point_bisection(tmax_wav, spin->size, spin->time, 1);
+  const int tmax_wav_idx = find_point_bisection(spin->time[tmax_dyn_idx], hlm->size, hlm->time, 1);
+
+  /* Interpolation */
+  interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_alp], spin->size, hlm->time, tmax_wav_idx, alpha);
+  interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_bet], spin->size, hlm->time, tmax_wav_idx, beta);  
+  interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_gam], spin->size, hlm->time, tmax_wav_idx, gamma); 
+
+  /* Now, prolong the angles based on user request 
+     for t > tM_idx, fix the values to the last  */
+  for(int j=tmax_wav_idx; j < hlm->size; j++){
+    alpha[j] = alpha[tmax_wav_idx-1];
+    beta[j]  = beta[tmax_wav_idx-1];
+    gamma[j] = gamma[tmax_wav_idx-1];
+  }
+}
+
+
+/**
  * Function: prolong_euler_angles
  * ------------------------------
  *   Time domain routine to prolong the Euler angles computed from the 
@@ -8131,7 +8183,11 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
   gamma = malloc ( size * sizeof(double) );
   
   /* Euler angles */
-  prolong_euler_angles(alpha, beta, gamma, dyn, spin, hlm);
+  if (EOBPars->model == MODEL_GIOTTO)
+    prolong_euler_angles(alpha, beta, gamma, dyn, spin, hlm);
+  else
+    prolong_euler_angles_TD(alpha, beta, gamma, dyn, spin, hlm);
+  
 #if (DEBUG)    
     /*output angles */
     char fname[STRLEN*2];

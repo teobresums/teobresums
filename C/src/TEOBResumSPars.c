@@ -516,9 +516,12 @@ void eob_set_params(int default_choice, int firstcall)
     EOBPars->use_spins = MODE_SPINS_ALIGNED;
   }
 
-  /* Check: if precession and eccentricity are both specified, throw an error */
+  /* If precession and eccentricity are both specified, use EOB flux */
   if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
-    errorexit("ERROR: Precession and eccentricity are not compatible. Please set one of them to zero.");
+   if (VERBOSE){
+      printf("Setting spin_flux to EOB\n"); EOBPars->spin_flx = SPIN_FLX_EOB;
+      printf("Setting interpolation domain to TD\n"); EOBPars->domain = 0;
+   }
 
   /* Check: if eccentricity is not between 0 and 1, throw an error */
   if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0))
@@ -1508,7 +1511,9 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     if (STREQUAL(val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles])) break;
     }
   }   
-
+  if (STREQUAL(key, "spin_interp_domain")) {
+    eobp->spin_interp_domain = par_get_i(val); 
+  }
   if (STREQUAL(key,"spin_dyn_size")) {
     eobp->spin_dyn_size = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
   }
