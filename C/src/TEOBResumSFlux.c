@@ -552,7 +552,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   double Fphi_lo  = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5);
   double Fphi_inf = Fphi_lo * hatf;
   double Fphi_H   = Fphi_lo * hatFH;
-  // *Fphi           = Fphi_inf + Fphi_H;
+  *Fphi           = Fphi_inf + Fphi_H;
 
   /* Compute Fr using the infinity Fphi */
   *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, Fphi_inf);
