@@ -569,8 +569,6 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   hatf = sum_k/(FNewt22);
 
-  hatf += hatFH;
-
   /* Compute non-circular Fphi, infinity */
   *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
   
