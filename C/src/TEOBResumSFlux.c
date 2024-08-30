@@ -545,7 +545,6 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
     } else {
       hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
     }
-    // hatf += hatFH;
   }
 
   /* Compute circular, asymptotic and horizon Fphi separately, then sum */
@@ -570,7 +569,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   hatf = sum_k/(FNewt22);
 
   /* Compute non-circular Fphi, infinity */
-  *Fphi = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+  *Fphi = Fphi_lo * hatf;
   
   /* Re-compute Fr using the generic Fphi */
   *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, *Fphi);
@@ -892,7 +891,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
     // derivatives of A*(1 + pphi2*u2 + Q) wrt dr2, drdprstar, drdpphi
     double der1 = d2A*(1. + pphi2*uc2 + Q) + 2.*dA*(-2.*uc3*pphi2*drc_dr + dQ) + A*(d2Q + 6.*pphi2*uc4*SQ(drc_dr) - 2.*pphi2*uc3*d2rc_dr2);
     double der2 = dA*dQ_dprstar + A*ddQ_drdprstar;
-    double der3 = 2.*dA*pphi*uc2 - 4.*A*pphi*uc3;
+    double der3 = 2.*dA*pphi*uc2 - 4.*A*pphi*uc3*drc_dr;
 
     prstar2dot = dsqrtAbyB_dr*oosqrtAbyB*rdot*prstardot 
              + 0.5*sqrtAbyB*oneby_EHeff_orb*(oneby_EHeff_orb*EHeff_orbdot*(dA*(1. + pphi2*uc2 + Q) + A*(dQ - 2.*uc3*pphi2*drc_dr))
