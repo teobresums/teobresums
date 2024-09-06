@@ -80,7 +80,7 @@ def Plot2D(x, y, z=None, labels=[None,None], savef=0):
     if(savef):
         fig.savefig(labels[0]+'_'+labels[1]+'.png')
 
-def PlotParspace(f, tides="no",precessing="no"):
+def PlotParspace(f, tides="no",precessing="no", eccentric="no", hyperbolic="no"):
     """
     Plot the output of TestParBBH or TestParBNS
     """
@@ -109,6 +109,15 @@ def PlotParspace(f, tides="no",precessing="no"):
         cp  = list(map(compute_chi_prec, m1, m2, c1x,c1y, c2x, c2y))
         Plot2D(nu, cp, labels=[r"$\nu$", r"$\chi_{\rm prec}$"], savef=1)
 
+    if(hyperbolic=='yes'):
+        E0 = pars['E0']
+        L0 = pars['L0']
+        Plot2D(L0, E0, labels=[r'$E_0$', r'$L_0$'], savef=1)
+
+    if(eccentric=='yes'):
+        ecc = pars['ecc']
+        Plot2D(nu, ecc, labels=[r'$\nu$', r'$e_0$'], savef=1)
+
 def write_dict_to_txt(file, dic, initialize):
     """
     Write a dictionary to a .txt
@@ -126,7 +135,7 @@ def write_dict_to_txt(file, dic, initialize):
                 f.write(" ")
             f.write("\n")
 
-def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, precessing=0, N=100):
+def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, ecc_int=None, omg_int=None, E0_int=None, L0_int=None, precessing=0, N=100):
     """
     Generate randomly N combinations of binary parameters
     """
@@ -147,6 +156,26 @@ def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, precessing=0, N=1
         lambda2 =  np.random.uniform(lambda_int[0], lambda_int[1], N)
 
         params['LambdaAl2'] = lambda1; params['LambdaBl2'] = lambda2
+
+    if(ecc_int is not None):
+        ecc = np.random.uniform(ecc_int[0], ecc_int[1], N)
+
+        params['ecc'] = ecc
+
+    if(omg_int is not None):
+        omg = np.random.uniform(omg_int[0], omg_int[1], N)
+
+        params['omg'] = omg
+    
+    if(E0_int is not None):
+        E0 = np.random.uniform(E0_int[0], E0_int[1], N)
+
+        params['E0'] = E0
+
+    if(L0_int is not None):
+        L0 = np.random.uniform(L0_int[0], L0_int[1], N)
+
+        params['L0'] = L0
 
     if(precessing):
         cos_theta1 = np.random.uniform(-1., 1., N)
@@ -175,7 +204,7 @@ def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, precessing=0, N=1
 
     return params
 
-def TestParspaceBBH(precessing):
+def TestParspaceBBH(precessing, eccentric):
     """
     Generate 1e4 precessing waveforms with parameters within standard BBH bounds
     """
@@ -190,6 +219,21 @@ def TestParspaceBBH(precessing):
     chi_max    = 0.99
 
     N = 10000 # generate 1e4 waveforms
+
+    if eccentric:
+        if precessing:
+            outfile = "ParBBH_eccprec.txt"
+        else:
+            outfile = "ParBBH_ecc.txt"
+    elif precessing:
+        outfile = "ParBBH_prec.txt"
+    else:
+        outfile = "ParBBH.txt"
+
+    if(eccentric):
+        ecc_int = [1.e-5, 0.9]
+    else:
+        ecc_int = None
 
     print("...generate the parspace")
     pp    = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=None, precessing=precessing, N=N)
@@ -206,6 +250,42 @@ def TestParspaceBBH(precessing):
             for key in pp.keys():
                 this_par[key] = pp[key][j[0]]
             write_dict_to_txt("ParBBH.txt", this_par, 0)
+
+def TestParspaceHyp(precessing):
+    """
+    Generate 1e4 (precessing) hyperbolic waveforms with parameters within standard BBH bounds
+    """
+    import multiprocessing; import tqdm
+
+    modes = [[2,1], [2,2], [3,1], [3,2], [3,3], [4,1], [4,2], [4,3], [4,4]]
+    k = utils.modes_to_k(modes)
+
+    Mmin, Mmax = 20, 100
+    qmin, qmax = 1, 10
+    chi_min    = 1e-3
+    chi_max    = 0.99
+    r0         = 3000.
+
+    N = 10000 # generate 1e4 waveforms
+
+    E0_int = [1.001, 1.1]
+    L0_int = [2., 10.]
+
+    print("...generate the parspace")
+    pp    = gen_random_pars([Mmin, Mmax], [qmin,qmax], chi_int=[chi_min, chi_max], lambda_int=None, E0_int=E0_int, L0_int=L0_int, precessing=precessing, N=N)
+    write_dict_to_txt("ParHyp.txt", pp, 1) # write keys to file
+
+    print("...run")
+    with multiprocessing.Pool() as p:
+        for j in tqdm.tqdm(
+                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'H_hyp':pp['E0'][i], 'j_hyp':pp['L0'][i], 'r_hyp':r0, 'use_mode_lm':k}))]
+                                           for i in range(N)]
+                            ):
+            j[1].get()
+            this_par = {}
+            for key in pp.keys():
+                this_par[key] = pp[key][j[0]]
+            write_dict_to_txt("ParHyp.txt", this_par, 0)
 
 def TestParspaceBNS(precessing):
     """
@@ -435,7 +515,7 @@ def TestAnomaly():
     """
     import utilities as ut
     modes = [1]
-    par   = utils.CreateDict(60, 1.5, [0.,0., 0.], [0., 0., 0.], lambda1=0, lambda2=0, iota=0., 
+    par   = utils.CreateDict(60, 1.5, [0., 0., 0.], [0., 0., 0.], lambda1=0, lambda2=0, iota=0., 
                              f0=20., srate=4096., df=0, interp="yes", domain=0, modes=modes, coa=0, argout="yes",
                              ecc=0.3)
 
@@ -468,7 +548,7 @@ if __name__ == "__main__":
 
     # run some tests
 
-    if 0:
+    if 1:
         print("##### Generate the BBH parameter space #####")
         TestParspaceBBH(0)
         print("...done")
@@ -483,9 +563,19 @@ if __name__ == "__main__":
         TestParspaceBHNS(0)
         print("...done")
 
-    if 0:
+    if 1:
         print("##### Plot the BBH parameter space #####")
         PlotParspace("ParBBH.txt", precessing="no")
+        print("...done")
+
+    if 0:
+        print("##### Plot the BBH eccentric parameter space #####")
+        PlotParspace("ParBBH_ecc.txt", precessing="no", eccentric="yes")
+        print("...done")
+
+    if 0:
+        print("##### Plot the hyp parameter space #####")
+        PlotParspace("ParHyp.txt", precessing="no", hyperbolic="yes")
         print("...done")
 
     if 0:
@@ -522,7 +612,7 @@ if __name__ == "__main__":
         print("##### Test Tetrad conventions #####")
         TestTetradConventions()
         print("...done")
-    if 1:
+    if 0:
         print('##### Test True Anomaly #####')
         TestAnomaly()
         print("...done")
