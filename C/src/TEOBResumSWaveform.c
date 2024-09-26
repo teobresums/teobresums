@@ -6657,8 +6657,9 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
  * 
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
+ *   @return         : 0 if successful
  */
-void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
+int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 {
 
   const double Mbh   = EOBPars->Mbhf;
@@ -6879,6 +6880,8 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
     free(t_lm[k]);
   }
   
+  return 0;
+
 }
 	
 /** 
@@ -6889,8 +6892,9 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
  * 
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
+ *   @return         : 0 if successful
 */
-void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
+int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 {
   
   const double Mbh   = EOBPars->Mbhf;
@@ -6953,6 +6957,10 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /* nonspinning case */
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
+  if (tmrgA22 < 0.0) {
+    printf("ERROR: the A22 peak time is negative, dynamics is too short\n");
+    return 1;
+  }
   
   /* The following values are the difference between the time of the peak of
      the 22 waveform and the other modes. 
@@ -7028,12 +7036,15 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
       t0  = t_lm[k][index_rng] - tmatch[k];
       t0 /= fact;
       eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
+      
       Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
       
       /* Compute and attach ringdown */
       for (int j = index_rng-1; j < size ; j++ ) {
-        tm = t_lm[k][j] - tmatch[k];
+        tm  = t_lm[k][j] - tmatch[k];
         tm /= fact;
+
+        //printf("j =%d, k=%d, tlm_k_rd = %.8e, tm = %.8e\n", j,k, t_lm[k][j], tm);
 
         eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
         hlm->phase[k][j] = psi[1] - Deltaphi[k];
@@ -7051,6 +7062,8 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     free(t_lm[k]);
   }
   
+  return 0;
+
 }
 
 /** 
@@ -9436,8 +9449,9 @@ void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, dou
  * 
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
+ *   @return         : 0 if successful
  */
-void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
+int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
 {
   if (VERBOSE) PRSECTN("entered BHNS ringdown model");
   const double Mbh   = EOBPars->Mbhf;
@@ -9617,5 +9631,6 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     free(t_lm[k]);
   }
   
+  return 0;
   
 }

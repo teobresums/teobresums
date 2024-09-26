@@ -22,9 +22,12 @@
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
 {
+
+  int status = 0;
   const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);    
 
@@ -96,7 +99,8 @@ void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j[N-1];
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
-    
+  
+  return status;
 }
 /**
  * Function: eob_dyn_ic_circ_s
@@ -112,9 +116,11 @@ void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
 {
+  int status = 0;
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
@@ -285,7 +291,7 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j[N-1];
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
-  
+  return status;
 }
 
 /** Initial conditions calculation for eccentric systems */
@@ -299,9 +305,13 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
 {
+
+  int status = 0;
+
   const double nu = EOBPars -> nu;
   const double chi1 = EOBPars -> chi1;
   const double chi2 = EOBPars -> chi2;
@@ -377,6 +387,8 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j0;
   y_init[EOB_ID_E0]     = H1*nu;
   y_init[EOB_ID_OMGJ]   = omg_orb1;
+
+  return status;
 
 }
 
@@ -594,9 +606,12 @@ double eob_dyn_circ_j0(double r0, Dynamics *dyn)
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
 {
+
+  int status = 0;
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
@@ -721,6 +736,8 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0;
   y_init[EOB_ID_OMGJ]   = Omega_j;
   
+  return status;
+
 }
 
 /**
@@ -734,10 +751,13 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
  *   @param[in] r0_kepl:  initial estimate of semilatus rectum
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
 {
   
+  int status = 0;
+
   const double f0 = EOBPars -> f0;
   const double nu = EOBPars -> nu;
   const double chi1 = EOBPars -> chi1;
@@ -822,6 +842,7 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = Hma*nu;
   y_init[EOB_ID_OMGJ]   = omg_orb;
   
+  return status;
 }
 
 
@@ -836,10 +857,11 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
  *   @param[in] r0_kepl:  initial estimate of semilatus rectum
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
 {
-
+  int status = 0;
   const double f0 = EOBPars -> f0;
   const double nu = EOBPars -> nu;
   const double chi1 = EOBPars -> chi1;
@@ -887,7 +909,9 @@ void eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
     }
   }
   r0 = eob_dyn_bisecOmegaecc0(dyn, omg_orb0, r0_kepl);
-  j0 = eob_dyn_j0(r0, dyn);      // Update j0
+  if (r0 < 0.) return 1;    // Bisection failed
+
+  j0 = eob_dyn_j0(r0, dyn); // Update j0
       
   double rma, rap, rper, rcap, Aap, Bap, Qap, Hap;
   double pl_hold, omg_orb, dHeffap_dj0;
@@ -915,6 +939,7 @@ void eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
       pr0abs = 0.;
   else 
       pr0abs = eob_dyn_bisecHam0(dyn, pr0PN, j0, Hap, rma);
+      if (pr0abs < 0.) return 1; // Bisection failed
 
   double pr0 = pr0abs;
   if(fmod(zeta,2.*Pi) >= Pi)
@@ -938,7 +963,7 @@ void eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
   double check = Hma/Hap;
   if (fabs(Hma/Hap - 1.) > 1e-5){
     if (DEBUG) printf("Hma/Hap - 1 = %.3e\n", fabs(Hma/Hap - 1.));
-    errorexit("Initial and apastron energy are inconsistent in initial conditions");
+    return 1;
   }
 
   /* Orbital frequency */
@@ -953,6 +978,8 @@ void eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = Hma*nu;
   y_init[EOB_ID_OMGJ]   = omg_orb;
   
+  return status;
+
 }
 
 /**
@@ -963,9 +990,11 @@ void eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
 {
+  int status = 0;
   const double H_ADM = EOBPars->H_hyp;
   const double j_ADM = EOBPars->j_hyp;  
   
@@ -1007,7 +1036,7 @@ void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   eob_metric(r0, prstar0, dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
   eob_ham(nu, r0, j_ADM, prstar0, A, dA, Q, dQ, dQ_dprstar, &H0, &pl_hold, NULL, NULL, &dHeff0_dpphi);
-  E0 = nu*H0;
+  E0   = nu*H0;
   Omg0 = dHeff0_dpphi/E0;
   
   y_init[EOB_ID_RAD]    = r0;
@@ -1019,6 +1048,7 @@ void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0;
   y_init[EOB_ID_OMGJ]   = Omg0;
 
+  return status;
 }
 
 /**
@@ -1590,6 +1620,12 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
   }
   if (VERBOSE) printf("f(x_lo) = %e, f(x_hi) = %e\n",f_xlo,f_xhi);
 
+  // Did we find a bracketing interval? If not, fail and return a negative number
+  if (f_xlo*f_xhi > 0. || isnan(f_xlo)){
+    printf("ERROR: eob_dyn_bisecOmegaecc0, could not find a bracketing interval\n");
+    return -1.;
+  }
+
   F.function = &eob_dyn_Omegaecc0;
   F.params = &p;
   T = gsl_root_fsolver_bisection;
@@ -1649,7 +1685,11 @@ double eob_dyn_bisecHam0(Dynamics *dyn, double pr0PN, double j0, double Hap, dou
     if (DEBUG) printf("\t iter %d: f(x_hi) = %e, x_hi = %e\n", iter_pr0, f_xhi, x_hi);
   }
   if (VERBOSE) printf("f(x_lo) = %e, f(x_hi) = %e\n",f_xlo,f_xhi);
-
+  if (f_xlo*f_xhi > 0.){
+    // print an error, the bisection will fail. Return a negative number
+    printf("ERROR: eob_dyn_bisecHam0, could not find a bracketing interval\n");
+    return -1.;
+  }
   F.function = &eob_dyn_Ham0;
   F.params = &p;
   T = gsl_root_fsolver_bisection;
