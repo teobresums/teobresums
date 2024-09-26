@@ -310,16 +310,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
 
   /* Compute initial radius */
-  /* Compute initial radius */
   double f0 = EOBPars->initial_frequency/time_unit_fact;
-  if (f0 > 0.0125+0.03*(EOBPars->nu)){
-    f0 = 0.0125+0.03*EOBPars->nu;
-    if (EOBPars->errors_to_warnings){
-      printf("Initial frequency too high. Set f0 to %.2e \n.",f0);
-    } else{
-      errorexit("Initial frequency too high. This error can be turned into a warning with errors_to_warnings=yes");
-    }
-  }
   
   EOBPars->f0 = f0;
   double r0;

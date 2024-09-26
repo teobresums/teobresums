@@ -1039,6 +1039,7 @@ void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_ecc_ma(double r0, Dynamics *dyn, double y_init[]);
+void eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[]);
 void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[]);
 double eob_dyn_j0(double r0, Dynamics *dyn);
@@ -1053,8 +1054,10 @@ double eob_dyn_r0_circ (double f0, Dynamics *dyn);
 double eob_dyn_r0_ecc (double f0, Dynamics *dyn);
 double eob_dyn_Omegaorb0(double r, void *params);
 double eob_dyn_Omegaecc0(double r, void *params);
+double eob_dyn_Ham0(double pr, void *params);
 double eob_dyn_bisecOmegaorb0(Dynamics *dyn, double omg_orb0,double r0_kepl);
 double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl);
+double eob_dyn_bisecHam0(Dynamics *dyn, double pr0PN, double j0, double Hap, double rma);
 int eob_dyn_rpr(const gsl_vector *x, void * params, gsl_vector *f);
 int eob_dyn_rootfind_rpr(Dynamics *dyn, double *r0, double *pr0, double omg_orb0, double rKepl, double pr0PN);
 

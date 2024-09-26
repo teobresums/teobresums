@@ -290,7 +290,33 @@ int SetOptionalVariables(PyObject* dict){
     for(EOBPars->use_flm=0; EOBPars->use_flm<=USEFLM_NOPT; EOBPars->use_flm++){
       if (EOBPars->use_flm == USEFLM_NOPT) EOBPars->use_flm = USEFLM_HM;
       if (STREQUAL(val,use_flm_opt[EOBPars->use_flm])) break;
-    }     
+    }
+  }
+
+  /* Metric potentials */
+  if ( PyDict_GetItemString(dict, "A_pot") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "A_pot"));
+    for(EOBPars->A_pot=0; EOBPars->A_pot<=A_NOPT; EOBPars->A_pot++){
+      if (EOBPars->A_pot == A_NOPT) EOBPars->A_pot = A_5PNlog;
+      if (STREQUAL(val,A_opt[EOBPars->A_pot])) break;
+    }    
+  }  
+  if ( PyDict_GetItemString(dict, "D_pot") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "D_pot"));
+    for(EOBPars->D_pot=0; EOBPars->D_pot<=D_NOPT; EOBPars->D_pot++){
+      if (EOBPars->D_pot == D_NOPT) EOBPars->D_pot = D_3PN;
+      if (STREQUAL(val,D_opt[EOBPars->D_pot])) break;
+    }    
+  }
+  if ( PyDict_GetItemString(dict, "Q_pot") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "Q_pot"));
+    for(EOBPars->Q_pot=0; EOBPars->Q_pot<=Q_NOPT; EOBPars->Q_pot++){
+      if (EOBPars->Q_pot == Q_NOPT) EOBPars->Q_pot = Q_3PN;
+      if (STREQUAL(val,Q_opt[EOBPars->Q_pot])) break;
+    }    
   }
 
   /* NQC */
@@ -984,6 +1010,32 @@ static PyObject* pph_lso_spin_py(PyObject* self, PyObject* args)
   return ret;
 }
 
+static PyObject* eob_dyn_j0_py(PyObject *self, PyObject *args)
+{
+  double p0, q, chi1, chi2, ecc;
+  if (!PyArg_ParseTuple(args, "ddddd", &p0, &q, &chi1, &chi2, &ecc))
+    return NULL;
+
+  Dynamics *dyn;
+  EOBParameters_alloc ( &EOBPars ); 
+  EOBParameters_defaults (BINARY_BBH, 0, EOBPars);
+  EOBPars->chi1 = chi1;
+  EOBPars->chi2 = chi2;
+  EOBPars->q    = q;
+  EOBPars->ecc  = ecc;
+  eob_set_params(BINARY_BBH, 1);
+  Dynamics_alloc (&dyn, 0, "dyn"); 
+  Dynamics_set_params(dyn);
+
+  double j0 = eob_dyn_j0(p0, dyn);
+  EOBParameters_free (EOBPars);
+  Dynamics_free(dyn);
+
+  PyObject *ret;
+  ret = Py_BuildValue("d", j0);
+  return ret;
+}
+
 static PyObject* eob_j0_circ_py(PyObject *self, PyObject *args)
 {
   double r, q, chi1, chi2;
@@ -1172,6 +1224,7 @@ static PyMethodDef EOBRunMethods[] = {
   {"pph_lso_spin_py", pph_lso_spin_py, METH_VARARGS, "Fit to compute pphi_lso in the spinning case (|chi|<0.5)"},
   {"eob_ham_s_py", eob_ham_s_py, METH_VARARGS, "Compute the spinning EOB hamiltonian for BBH systems"},
   {"eob_j0_circ_py", eob_j0_circ_py, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
+  {"eob_dyn_j0_py", eob_dyn_j0_py, METH_VARARGS, "Compute the (generic) value of j corresponding to an initial semilatus rectum r"},
   {"eob_metricAB_py", eob_metricAB_py, METH_VARARGS, "Compute the metric potentials"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
