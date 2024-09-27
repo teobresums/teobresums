@@ -128,7 +128,7 @@ def PlotParspace(f, tides="no",precessing="no", eccentric="no", hyperbolic="no")
     if(hyperbolic=='yes'):
         E0 = pars['E0']
         L0 = pars['L0']
-        Plot2D(L0, E0, labels=[r'$E_0$', r'$L_0$'], savef=1)
+        Plot2D(L0, E0, labels=[r'$L_0$', r'$E_0$'], savef=1)
 
     if(eccentric=='yes'):
         ecc = pars['ecc']
@@ -252,7 +252,7 @@ def TestParspaceBBH(precessing, eccentric):
         outfile = "ParBBH.txt"
 
     if(eccentric):
-        ecc_int = [0.45, 0.5]
+        ecc_int = [1.e-5, 0.7]
         anomaly_int = [0., 2*np.pi]
     else:
         ecc_int = None
@@ -263,16 +263,28 @@ def TestParspaceBBH(precessing, eccentric):
     write_dict_to_txt(outfile, pp, 1) # write keys to file
 
     print("...run")
-    with multiprocessing.Pool() as p:
-        for j in tqdm.tqdm(
-                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'ecc':pp['ecc'][i], 'use_mode_lm':k, 'anomaly': pp['anomaly'][i]}))]
-                                           for i in range(N)]
-                            ):
-            j[1].get()
-            this_par = {}
-            for key in pp.keys():
-                this_par[key] = pp[key][j[0]]
-            write_dict_to_txt(outfile, this_par, 0)
+    if(eccentric):
+        with multiprocessing.Pool() as p:
+            for j in tqdm.tqdm(
+                                [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'ecc':pp['ecc'][i], 'use_mode_lm':k, 'anomaly': pp['anomaly'][i]}))]
+                                               for i in range(N)]
+                                ):
+                j[1].get()
+                this_par = {}
+                for key in pp.keys():
+                    this_par[key] = pp[key][j[0]]
+                write_dict_to_txt(outfile, this_par, 0)
+    else:
+        with multiprocessing.Pool() as p:
+            for j in tqdm.tqdm(
+                                [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'use_mode_lm':k}))]
+                                               for i in range(N)]
+                                ):
+                j[1].get()
+                this_par = {}
+                for key in pp.keys():
+                    this_par[key] = pp[key][j[0]]
+                write_dict_to_txt(outfile, this_par, 0)
 
 def TestParspaceHyp(precessing):
     """
@@ -285,7 +297,7 @@ def TestParspaceHyp(precessing):
 
     Mmin, Mmax = 20, 100
     qmin, qmax = 1, 10
-    chi_min    = 1e-3
+    chi_min    = -0.99
     chi_max    = 0.99
     r0         = 3000.
 
@@ -886,6 +898,11 @@ if __name__ == "__main__":
         print("...done")
 
     if 0:
+        print("##### Generate the hyperbolic BBH parameter space #####")
+        TestParspaceHyp(0)
+        print("...done")
+
+    if 0:
         print("##### Generate the BNS parameter space #####")
         TestParspaceBNS(0)
         print("...done")
@@ -900,7 +917,7 @@ if __name__ == "__main__":
         PlotParspace("ParBBH.txt", precessing="no")
         print("...done")
 
-    if 0:
+    if 1:
         print("##### Plot the BBH eccentric parameter space #####")
         PlotParspace("ParBBH_ecc.txt", precessing="no", eccentric="yes")
         print("...done")
