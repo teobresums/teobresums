@@ -900,7 +900,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
              + sqrtAbyB*Frdot;
     
     HSO2dot = pphi2dot*G + 2.*Fphi*(dG_dr*rdot + dG_dprstar*prstardot)
-      + pphi*(d2G_dr2*rdot + dG_dr*r2dot + 2.*d2G_dr_dprstar*rdot*prstardot
+      + pphi*(d2G_dr2*rdot2 + dG_dr*r2dot + 2.*d2G_dr_dprstar*rdot*prstardot
 	      + d2G_dprstar2*SQ(prstardot) + dG_dprstar*prstar2dot);
     
     Heff_orb2dot  = Heff2dot - HSO2dot;
