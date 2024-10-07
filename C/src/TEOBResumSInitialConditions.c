@@ -982,6 +982,218 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
 
 }
 
+
+/**
+ * Function: eob_dyn_ic_ecc_ma_split_pa
+ * ---------------------------------
+ *   Initial conditions calculation for eccentric systems
+ *   Performs two one-dimensional root-finding steps to find the correct
+ *   initial data. Determines j0 first, then pr*0.
+ *   Includes 1PA correction to pr*0
+ *
+ *   @param[in] r0_kepl:  initial estimate of semilatus rectum
+ *   @param[in] dyn: Dynamics
+ *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
+*/
+int eob_dyn_ic_ecc_ma_split_pa(double r0_kepl, Dynamics *dyn, double y_init[])
+{
+  int status = 0;
+  const double f0 = EOBPars -> f0;
+  const double nu = EOBPars -> nu;
+  const double chi1 = EOBPars -> chi1;
+  const double chi2 = EOBPars -> chi2;
+  const double S1 = EOBPars -> S1;
+  const double S2 = EOBPars -> S2;
+  const double c3 = EOBPars -> cN3LO;
+  const double X1 = EOBPars -> X1;
+  const double X2 = EOBPars -> X2;
+  const double a1 = EOBPars -> a1;
+  const double a2 = EOBPars -> a2;
+  const double aK2 = EOBPars -> aK2;
+  const double C_Q1 = EOBPars -> C_Q1;
+  const double C_Q2 = EOBPars -> C_Q2;
+  const double C_Oct1 = EOBPars -> C_Oct1;
+  const double C_Oct2 = EOBPars -> C_Oct2;
+  const double C_Hex1 = EOBPars -> C_Hex1;
+  const double C_Hex2 = EOBPars -> C_Hex2;
+  const double S = S1 + S2;
+  const double Sstar = X2*a1 + X1*a2;
+  const double ecc = EOBPars -> ecc;
+  const double zeta = EOBPars -> anomaly;
+
+  const int usetidal = EOBPars -> use_tidal;
+  const int usespins = EOBPars -> use_spins;
+
+  double j0    = eob_dyn_j0(r0_kepl, dyn); // initial guess for j0
+  double pr0PN = fabs(ecc/j0*sin(zeta));   // consider positive pr for bisection; correct sign later
+  
+  double r0, pr0abs;
+
+  double omg_orb0 = Pi*f0;
+  if (EOBPars->ecc_freq == ECCFREQ_ORBAVGD){
+    /* Assume that the user gave as input the orbit averaged 
+    frequency. Transform it into an average frequency between apastron
+    and periastron and overwrite omg_orb0 */
+    if (DEBUG) printf("Orbit-averaged ICs:\nomg_bar = %.8f\n", omg_orb0);
+    double omg_orb0_p = eob_dyn_omg_from_omgbar(omg_orb0, 0., ecc);
+    double omg_orb0_m = eob_dyn_omg_from_omgbar(omg_orb0, Pi, ecc);
+    omg_orb0 = 0.5*(omg_orb0_p + omg_orb0_m);
+    if (DEBUG) {
+      printf("omg_orb0  = %.8f\n",  omg_orb0);
+      printf("omg_orb_p = %.8f\n", omg_orb0_p);
+      printf("omg_orb_m = %.8f\n", omg_orb0_m);
+    }
+  }
+  r0 = eob_dyn_bisecOmegaecc0(dyn, omg_orb0, r0_kepl);
+  if (r0 < 0.) return 1;    // Bisection failed
+
+  j0 = eob_dyn_j0(r0, dyn); // Update j0
+      
+  double rma, rap, rper, rcap, Aap, Bap, Qap, Hap;
+  double pl_hold, omg_orb, dHeffap_dj0;
+  
+  rap  = r0/(1.-ecc);
+  rper = r0/(1.+ecc);
+  if (DEBUG) printf("Periastron and apastron radii: %.3f %.3f\n", rper, rap);
+  if (DEBUG) printf("Initial j0: %.3f\n", j0);
+  rma  = r0/(1.+ecc*cos(zeta));
+    
+  /* Computing metric, centrifugal radius and ggm functions at apastron*/
+  if(usespins) {
+    eob_metric_s(rap, 0., dyn, &Aap, &Bap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(rap, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rcap, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(rap, 0., dyn, &Aap, &Bap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+
+  /* Energy */
+  eob_ham_s(nu, rap, rcap, 0, 0, j0, 0., S, Sstar, chi1, chi2, X1, X2, aK2, c3, Aap, 0., 0., Qap, 0., 0., 0., 0.,
+	    &Hap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeffap_dj0, &pl_hold, &pl_hold);
+
+  /* Unless zeta = 0, pi, solve for pr0 */
+  if (DEQUAL(zeta, 0., 1e-10) || DEQUAL(zeta, Pi, 1e-10))
+      pr0abs = 0.;
+  else 
+      pr0abs = eob_dyn_bisecHam0(dyn, pr0PN, j0, Hap, rma);
+      if (pr0abs < 0.) return 1; // Bisection failed
+
+  double pr0 = pr0abs;
+  if(fmod(zeta,2.*Pi) >= Pi)
+    pr0 = -pr0abs;
+
+  /** Find 1PA correction to prs0 */
+  /** Build a small grid */ 
+#define N (6)
+  double dpph_dr[2*N], p[2*N], r[2*N], pph[2*N]; 
+  const double dp = 1e-4;   /* do not change this */
+  const double dr = dp/(1.+ecc*cos(zeta));
+  for (int i=0; i< 2*N; i++) {
+    p[i]   = r0+(i-N+1)*dp; /* grid of semilatus rectum */
+    r[i]   = p[i]/(1.+ecc*cos(zeta)); /* grid of r = p/(1-e) */
+    pph[i] = eob_dyn_j0(p[i], dyn);
+  }
+
+  /* dpph_dr by finite diff. */
+  D0(pph, dr, 2*N, dpph_dr);
+  int idx = N-1;
+
+  double E0, Omega_j;
+  double Fphi, Ctmp, dprs, pr;
+  double rc, drc_dr, d2rc_dr2;
+  double A,B,dA,d2A,dB, sqrtAbyB;
+  double pphorb, uc, uc2, psic, r_omg, v_phi, jhat, x, Omg;
+  double H0eff, H0, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
+  double ggm0[26], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
+  double C0;
+  double Gtilde, dGtilde_dr, duc_dr;
+
+  eob_metric_s(r[idx], 0., dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  eob_dyn_s_get_rc(r[idx], nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2);    
+  sqrtAbyB = sqrt(A/B);
+  uc  = 1./rc;
+  uc2 = uc*uc;
+  /* Orbital effective Hamiltonian */
+  Horbeff0 = sqrt(SQ(pr0) + A*(1. + SQ(pph[idx])*uc2));
+  /* Compute gyro-gravitomagnetic coupling functions */
+  eob_dyn_s_GS(r[idx], rc, drc_dr, 0.0, aK2, pr0, pph[idx], nu, chi1, chi2, X1, X2, c3, ggm0);
+  GS_0                   = ggm0[2];
+  GSs_0                  = ggm0[3];
+  dGS_dr_0               = ggm0[6];
+  dGSs_dr_0              = ggm0[7];
+  dGSs_dpph_0            = ggm0[9];
+  dGS_dprstarbyprstar_0  = ggm0[10];
+  dGSs_dprstarbyprstar_0 = ggm0[11];
+  /* Final effective Hamiltonian */
+  Heff0 = (GS_0*S + GSs_0*Sstar)*pph[idx] + Horbeff0;
+
+  /* Real Hamiltonian: beware that this is NOT divided by nu */
+  H0     = sqrt( 1. + 2.*nu*(Heff0 - 1.));
+  one_H0 = 1./H0;
+
+  /* Get gyro-gravitomagnetic (derivative) functions */
+  dHeff_dprstarbyprstar = pph[idx]*(dGS_dprstarbyprstar_0*S + dGSs_dprstarbyprstar_0*Sstar) + 1./Horbeff0;
+
+  C0         = sqrtAbyB*one_H0*dHeff_dprstarbyprstar;
+  if (DEBUG) printf("sqrtAbyB = %.8f\none_H0 = %.8f\ndHeff_dprstarbyprstar = %.8f\nC0 = %.8f\n", sqrtAbyB,one_H0,dHeff_dprstarbyprstar,C0);
+
+  /* Orbital frequency at apastron */
+  dHeff_dpph = GS_0*S + (GSs_0 + pph[idx]*dGSs_dpph_0)*Sstar + pph[idx]*A*uc2/Horbeff0;
+  Omg        = one_H0*dHeff_dpph;
+
+  /* Flux */ 
+  Gtilde     =  GS_0*S     + GSs_0*Sstar;
+  dGtilde_dr =  dGS_dr_0*S + dGSs_dr_0*Sstar;
+  duc_dr     = -uc2*drc_dr;
+  psic       = (duc_dr + dGtilde_dr*rc*sqrt(A/(SQ(pph[idx])) + A*uc2)/A)/(-0.5*dA);
+  r_omg      =  pow((pow(rc*rc*rc*psic,-1./2)+Gtilde)*one_H0,-2./3.);
+  v_phi      =  r_omg*Omg;
+  x          =  v_phi*v_phi;
+  jhat       =  pph[idx]/(r_omg*v_phi);  /* Newton-normalized angular momentum */
+
+  eob_flx_Flux_ecc(x, Omg, r_omg, H0, Heff0, jhat, r[idx], pr0, pph[idx], 0.0, 0.0, &Fphi, &pl_hold, dyn);
+  dprs      = Fphi/(dpph_dr[idx]*C0);
+
+  pr0 += dprs;
+  if (DEBUG) printf("prstar0 = %.8f\n", pr0);
+
+  /* Recomputing metric, r at r(zeta) */
+  double rcma, Ama, Bma, Qma, Hma;
+  double dHeffma_dj0;
+
+  if(usespins) {
+    eob_metric_s(rma, pr0, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(rma, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rcma, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(rma, pr0, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+
+  eob_ham_s(nu, rma, rcma, 0, 0, j0, pr0, S, Sstar, chi1, chi2, X1, X2, aK2, c3, Ama, 0., 0., Qma, 0., 0., 0., 0.,
+	    &Hma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeffma_dj0, &pl_hold, &pl_hold);
+
+  /* Check that the pr0 found is truly a solution */
+  double check = Hma/Hap;
+  if (fabs(Hma/Hap - 1.) > 1e-5){
+    if (DEBUG) printf("Hma/Hap - 1 = %.3e\n", fabs(Hma/Hap - 1.));
+    return 1;
+  }
+
+  /* Orbital frequency */
+  omg_orb   = dHeffma_dj0/nu/Hma;
+
+  y_init[EOB_ID_RAD]    = rma;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = j0;
+  y_init[EOB_ID_PRSTAR] = pr0;
+  y_init[EOB_ID_PR]     = pr0*sqrt(Bma/Ama);
+  y_init[EOB_ID_J]      = j0;
+  y_init[EOB_ID_E0]     = Hma*nu;
+  y_init[EOB_ID_OMGJ]   = omg_orb;
+  
+  return status;
+
+}
+
 /**
  * Function: eob_dyn_ic_hyp
  * ------------------------

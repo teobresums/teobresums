@@ -1019,7 +1019,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->model == MODEL_DALI) {
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_MA)
-      eob_dyn_ic = &eob_dyn_ic_ecc_ma_split;   // ICs with anomaly (adiabatic)
+      eob_dyn_ic = &eob_dyn_ic_ecc_ma_split_pa;   // ICs with anomaly (adiabatic)
     else if(EOBPars->ecc_ics == ECCICS_1PA)
       eob_dyn_ic = &eob_dyn_ic_ecc_PA;   // 1PA ICs
     else if (EOBPars->ecc_ics == ECCICS_0PA){
