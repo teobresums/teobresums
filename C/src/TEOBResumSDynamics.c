@@ -2736,7 +2736,7 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   DynamicsSpin_alloc(&spindyn_tmp, 10);
   EOBPars->spin_odes_dt = -EOBPars->spin_odes_dt/10;
   spindyn_tmp->omg_stop = 0.99*omg0; // slightly below omg0, to avoid interpolation issues at the edges
-  spindyn_tmp->t_stop = -1000000.;
+  spindyn_tmp->t_stop   = -1e15;
   //eob_spin_dyn(spindyn_tmp, EOBPars->initial_frequency/time_units_factor(EOBPars->M));
   int Nint = 0;
   dyn->t = 0.;
