@@ -1248,6 +1248,21 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       WaveformFD_alloc (hfpc, interp_fd_size, "waveform_fd");
       WaveformFD_lm_alloc (hfmodes, interp_fd_size, "hlm_fd");
     }
+
+    /* 
+       Print the intrinsic parameters that caused the error
+       Note that we do not enclose this in a VERBOSE macro, we always
+       want this to print to output
+    */
+    printf("Failed configuration:\n");
+    printf("--------------------------------\n");
+    printf("\t q = %.2f\n", q);
+    printf("\t M = %.2f\n", M);
+    printf("\t chi1 = [%.2f , %.2f , %.2f]\n", EOBPars->chi1x, EOBPars->chi1y, EOBPars->chi1z);
+    printf("\t chi2 = [%.2f , %.2f , %.2f]\n", EOBPars->chi2x, EOBPars->chi2y, EOBPars->chi2z);
+    printf("\t LambdaAl2 = %.2f\n", EOBPars->LambdaAl2);
+    printf("\t LambdaBl2 = %.2f\n", EOBPars->LambdaBl2);
+    printf("\t f0 = %.2f\n", EOBPars->initial_frequency);
   }
   
   *hmodes = hlm;         /* do not free these! */
