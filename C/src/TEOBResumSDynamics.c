@@ -1166,7 +1166,15 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   gsl_function F;
   F.function = &eob_dyn_fLR;
   F.params = dyn;
-  //T = gsl_root_fsolver_bisection;
+  
+  /* Check that the interval brackets zero */
+  double f_lo = eob_dyn_fLR(x_lo, dyn);
+  double f_hi = eob_dyn_fLR(x_hi, dyn);
+  if (f_lo*f_hi > 0) {
+    printf("ERROR: no zero in interval for eob_dyn_adiabLR\n");
+    return ROOT_ERRORS_BRACKET;
+  }
+  
   T = gsl_root_fsolver_brent;
   s = gsl_root_fsolver_alloc (T);
   gsl_root_fsolver_set (s, &F, x_lo, x_hi);
@@ -1186,9 +1194,6 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   *rLR = 0.;
   if (isfinite(x)) *rLR = x;
 
-  //if (status == ???) {
-  //  return ROOT_ERRORS_BRACKET;
-  //}
   if (status == GSL_SUCCESS) {
     return ROOT_ERRORS_NO;
   } 

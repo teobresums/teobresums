@@ -514,7 +514,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     + EOBPars->output_nqc; 
   if (output) {
       if (system_mkdir(EOBPars->output_dir)) {
-        printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
+        PyErr_SetString(PyExc_SystemError, eob_error_msg[ERROR_MKDIR]);
         return NULL;
       }
     }
@@ -525,7 +525,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
   }
 
-  eob_set_params(default_choice, fc);
+  if(eob_set_params(default_choice, fc)) {
+    PyErr_SetString(PyExc_ValueError, eob_error_msg[ERROR_SET_PARAMS]);
+    return NULL;
+  }
 
   /* Overwrite spin-spin parameters, if required */
   if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
@@ -561,8 +564,11 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
                       &hTmodes, &hTmmodes, &hT0modes,
                       &hfTmodes,
                       default_choice, fc);
-
-  if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
+  if (status) {
+    PyErr_SetString(PyExc_RuntimeError, eob_error_msg[status]);
+    return NULL;
+  }
+  
   /*  Construct the output arrays */
 
   /* return modes? */
@@ -718,7 +724,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     } else if (arg_out == 1){
       ret = Py_BuildValue("OOOOO", pto, phpo, phco, hlmdict, dyndict);
     } else {
-      printf("ERROR: arg_out has to be equal to 'yes' or 'no' ");
+      PyErr_SetString(PyExc_ValueError, "`arg_out` has to be equal to yes or no ");
       ret = NULL;
     }
     /* Free C memory */
@@ -836,7 +842,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     } else if (arg_out == 1){
       ret = Py_BuildValue("OOOOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict, htlmdict, dyndict);
     } else {
-      printf("ERROR: arg_out has to be equal to 'yes' or 'no'");
+      PyErr_SetString(PyExc_ValueError, "`arg_out` has to be equal to yes or no\m");
       ret = NULL;
     }
 
