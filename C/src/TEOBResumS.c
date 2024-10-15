@@ -413,11 +413,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
-    double LambdaAl2  = EOBPars->LambdaAl2;
-    if( fabs(LambdaAl2) < TEOB_LAMBDA_TOL ) LambdaAl2 = 0.0;
-    double LambdaBl2 = EOBPars->LambdaBl2;
-    if( fabs(LambdaBl2) < TEOB_LAMBDA_TOL ) LambdaBl2 = 0.0;
-    double q = EOBPars->q;
     /* Reset options */
     EOBPars->use_tidal = tidal_tmp;
     EOBPars->use_spins = spins_tmp;
@@ -426,6 +421,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
+  
   if (EOBPars->compute_LR && !(use_tidal)) {
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR)));
     if (check_status) {
