@@ -41,8 +41,8 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
     fmode_resonance_dressing_factors(r, dyn);
   
   /* Compute EOB Metric */
-  double A, B, Q, dA, d2A, dB, dQ, dQ_dprstar, ddQ_drdprstar, d2Q_dprstar2, pl_hold;
-  eob_metric(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &ddQ_drdprstar, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
+  double A, B, Q, dA, d2A, d3A, dB, dQ, dQ_dprstar, ddQ_drdprstar, d2Q_dprstar2, pl_hold;
+  eob_metric(r, prstar, dyn, &A, &B, &dA, &d2A, &d3A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &ddQ_drdprstar, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
 
   /* Failsafe to avoid event horizon crossing */
   if (A < 1e-6){
@@ -113,6 +113,7 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
     dyn->A = A;
     dyn->dA = dA;
     dyn->d2A = d2A;
+    dyn->d3A = d3A;
     dyn->B = B;
     dyn->dB = dB;
     dyn->psi = psi;
@@ -235,8 +236,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   }
   
   /* Compute Metric */
-  double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
-  eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
+  double A, B, dA, d2A, d3A,dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
+  eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &d3A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   
   /* Failsafe to avoid event horizon crossing */
   if (A < 1e-6){
@@ -246,9 +247,9 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   }
 
   /* Compute centrifugal radius */
-  double rc, drc_dr, d2rc_dr2;
+  double rc, drc_dr, d2rc_dr2, d3rc_dr3;
   eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, 
-       &rc, &drc_dr, &d2rc_dr2);
+       &rc, &drc_dr, &d2rc_dr2, &d3rc_dr3);
   
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
     /* Add derivative terms to rc' and rc'' from f-mode resonances u-dependent terms */
@@ -262,7 +263,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   
   /* Compute Hamiltonian */
   double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi, d2Heff_dr2;
-  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, Q, dQ, dQ_dprstar, 0., d2Q_dprstar2,
+  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, d3rc_dr3, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, d3A, Q, dQ, dQ_dprstar, 0., d2Q_dprstar2,
 	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, &pl_hold);
   // 0. is d2Q which only enters d2Heff_dr2, not needed here
   
@@ -290,7 +291,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
      Compute same quantities with prstar=0. This to obtain psi.
      Procedure consistent with the nonspinning case. */
   double ggm0[26];
-  eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
+  eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
   
   const double GS_0       = ggm0[2];
   const double GSs_0      = ggm0[3];
@@ -330,6 +331,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     dyn->A = A;
     dyn->dA = dA;
     dyn->d2A = d2A;
+    dyn->d3A = d3A;
     dyn->B = B;
     dyn->dB = dB;
     //    dyn->psi = psi;
@@ -402,8 +404,8 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   }
   
   /* Compute Metric */
-  double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
-  eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
+  double A, B, dA, d2A, d3A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
+  eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &d3A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
 
   /* Failsafe to avoid event horizon crossing */
   if (A < 1e-6){
@@ -413,7 +415,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   }
   
   /* Compute centrifugal radius */
-  double rc, drc_dr, d2rc_dr2;
+  double rc, drc_dr, d2rc_dr2, d3rc_dr3;
   eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, 
        &rc, &drc_dr, &d2rc_dr2);
   
@@ -429,7 +431,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   
   /* Compute Hamiltonian */
   double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi, d2Heff_dr2;
-  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, Q, dQ, dQ_dprstar, 0., d2Q_dprstar2, 
+  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, d3rc_dr3, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, d3A, Q, dQ, dQ_dprstar, 0., d2Q_dprstar2, 
 	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, &pl_hold);
   // 0. is d2Q which only enters d2Heff_dr2, not needed here
 
@@ -483,6 +485,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->A = A;
     dyn->dA = dA;
     dyn->d2A = d2A;
+    dyn->d3A = d3A;
     dyn->B = B;
     dyn->dB = dB;
     //    dyn->psi = psi;
@@ -505,6 +508,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
  *  @param[in]  rc            : centrifugal radius
  *  @param[in]  drc_dr        : drvt rc,r
  *  @param[in]  d2rc_dr2      : drvt drc,r
+ *  @param[in]  d3rc_dr3      : drvt d2rc,r 
  *  @param[in]  pphi          : orbital angular momentum
  *  @param[in]  prstar        : (tortoise) radial momentum
  *  @param[in]  S             : S1 + S2
@@ -518,6 +522,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
  *  @param[in]  A             : A radial potential
  *  @param[in]  dA            : drvt A,r
  *  @param[in]  d2A           : drvt dA,r
+ *  @param[in]  d3A           : drvt d2A,r
  *  @param[in]  Q             : Q potential
  *  @param[in]  dQ            : drvt Q,r
  *  @param[in]  dQ_dprstar    : drvt Q,prstar
@@ -538,6 +543,7 @@ void eob_ham_s(double nu,
                double rc,
                double drc_dr,
 	             double d2rc_dr2,
+               double d3rc_dr3,
                double pphi,
                double prstar,
                double S,
@@ -551,6 +557,7 @@ void eob_ham_s(double nu,
                double A,
                double dA,
 	             double d2A,
+               double d3A,
                double Q,
                double dQ,
                double dQ_dprstar,
@@ -578,7 +585,7 @@ void eob_ham_s(double nu,
     
     /* Compute spin-related functions*/
     double ggm[26];
-    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, pphi, nu, chi1, chi2, X1, X2, c3, ggm);
+    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, prstar, pphi, nu, chi1, chi2, X1, X2, c3, ggm);
     const double GS              = ggm[2];
     const double GSs             = ggm[3];
     const double dGS_dprstar     = ggm[4];
@@ -590,6 +597,7 @@ void eob_ham_s(double nu,
     const double d2GSs_dprstar20 = ggm[13];
     const double d2GS_dr2        = ggm[14];
     const double d2GSs_dr2       = ggm[15];
+    
     
     /* Compute Hamiltonian and its derivatives */
     *Heff_orb         = sqrt( prstar2+A*(1. + pphi2*uc2 +  Q) );
@@ -621,6 +629,7 @@ void eob_ham_s(double nu,
  *  @param[in]  rc            : centrifugal radius
  *  @param[in]  drc_dr        : drvt rc,r
  *  @param[in]  d2rc_dr2      : drvt drc,r
+ *  @param[in]  d3rc_dr3      : drvt d2rc,r
  *  @param[in]  aK2           : squared Kerr paramete
  *  @param[in]  prstar        : (tortoise) radial momentum
  *  @param[in]  pphi          : orbital angular momentum
@@ -633,10 +642,10 @@ void eob_ham_s(double nu,
  *  @param[out] ggm           : gyrp-gravitomagnetic functions, output structure
  *
  */
-void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
+void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double d3rc_dr3, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
 	  double *ggm)
 {
-  
+
   static double c10,c20,c30,c02,c12,c04;
   static double cs10,cs20,cs30,cs40,cs02,cs12,cs04;
 
@@ -678,10 +687,14 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   double dGS0_duc   = 2.*u2/drc_dr + 4.*u*uc;
   double d2GS0_duc2 = 4.*u3/(uc2*SQ(drc_dr))
     + 2.*u2*d2rc_dr2/(uc2*SQ(drc_dr)*drc_dr) + 4.*u2/(uc*drc_dr) + 4.*u;
+
+  double d3GS0_duc3 = (6*SQ(d2rc_dr2)*SQ(u))/(SQ(drc_dr)*SQ(drc_dr)*drc_dr*SQ(uc)*SQ(uc)) - (2*d3rc_dr3*SQ(u))/(SQ(drc_dr)*SQ(drc_dr)*SQ(uc)*SQ(uc)) 
+    + (12*d2rc_dr2*SQ(u)*u)/(SQ(drc_dr)*SQ(drc_dr)*SQ(uc)*SQ(uc)) + (12*SQ(u)*SQ(u))/(SQ(drc_dr)*drc_dr*SQ(uc)*SQ(uc));
   
   double GSs0          =  3./2.*uc3;
   double dGSs0_duc     =  9./2.*uc2;
   double d2GSs0_duc2   =  9.*uc;
+  double d3GSs0_duc3   =  9.;
   double dGSs0_dprstar =  0.0;
   double dGSs0_dpph    =  0.0;
   
@@ -754,7 +767,26 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
 					   *SQ(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3)
 					   + 2.*(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)*(2.*cs20 + 6.*cs30*uc + 12.*cs40*uc2)
 					   + 8.*cs12*prstar*(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3));
+
+  /* third derivative of  hat{G} with respect to uc^3 */
+  double d3hGS_duc3 = -(6.*SQ(c10 + c12*SQ(prstar) + 2*c20*uc + 3*c30*SQ(uc))*(c10 + c12*SQ(prstar) + 2*c20*uc + 3*c30*SQ(uc)))
+             *1./(SQ(1. + c02*SQ(prstar) + c04*SQ(prstar)*SQ(prstar) + c10*uc + c12*SQ(prstar)*uc + c20*SQ(uc)+ c30*SQ(uc)*uc))
+             *1./(SQ(1. + c02*SQ(prstar) + c04*SQ(prstar)*SQ(prstar) + c10*uc + c12*SQ(prstar)*uc + c20*SQ(uc)+ c30*SQ(uc)*uc))
+             + (6.*(2*c20 + 6*c30*uc)*(c10 + c12*SQ(prstar) + 2*c20*uc + 3*c30*SQ(uc)))
+             *1./(SQ(1. + c02*SQ(prstar) + c04*SQ(prstar)*SQ(prstar) + c10*uc + c12*SQ(prstar)*uc + c20*SQ(uc) + c30*SQ(uc)*uc))
+             *1./(1. + c02*SQ(prstar) + c04*SQ(prstar)*SQ(prstar) + c10*uc + c12*SQ(prstar)*uc + c20*SQ(uc) + c30*SQ(uc)*uc)
+             - (6.*c30)/(SQ(1. + c02*SQ(prstar) + c04*SQ(prstar)*SQ(prstar) + c10*uc + c12*SQ(prstar)*uc + c20*SQ(uc) + c30*SQ(uc)*uc));
   
+  double d3hGSs_duc3 = -(6.*SQ(cs10 + cs12*SQ(prstar) + 2*cs20*uc + 3*cs30*SQ(uc) + 4*cs40*SQ(uc)*uc)) 
+             *(cs10 + cs12*SQ(prstar) + 2*cs20*uc + 3*cs30*SQ(uc) + 4*cs40*SQ(uc)*uc)
+             *1./(SQ(1. + cs02*SQ(prstar) + cs04*SQ(prstar)*SQ(prstar)+ cs10*uc + cs12*SQ(prstar)*uc + cs20*SQ(uc) + cs30*SQ(uc)*uc + cs40*SQ(uc)*SQ(uc)))
+             *1./(SQ(1. + cs02*SQ(prstar) + cs04*SQ(prstar)*SQ(prstar)+ cs10*uc + cs12*SQ(prstar)*uc + cs20*SQ(uc) + cs30*SQ(uc)*uc + cs40*SQ(uc)*SQ(uc)))
+             + (6.*(2*cs20 + 6*cs30*uc + 12*cs40*SQ(uc))*(cs10 + cs12*SQ(prstar) + 2*cs20*uc + 3*cs30*SQ(uc) + 4*cs40*SQ(uc)*uc))
+             *1./(SQ(1. + cs02*SQ(prstar) + cs04*SQ(prstar)*SQ(prstar) + cs10*uc + cs12*SQ(prstar)*uc + cs20*SQ(uc) + cs30*SQ(uc)*uc + cs40*SQ(uc)*SQ(uc)))
+             *1./(1. + cs02*SQ(prstar) + cs04*SQ(prstar)*SQ(prstar) + cs10*uc + cs12*SQ(prstar)*uc + cs20*SQ(uc) + cs30*SQ(uc)*uc + cs40*SQ(uc)*SQ(uc))
+             -(1.*(6*cs30 + 24*cs40*uc))/(SQ(1. + cs02*SQ(prstar) + cs04*SQ(prstar)*SQ(prstar) + cs10*uc + cs12*SQ(prstar)*uc + cs20*SQ(uc) + cs30*SQ(uc)*uc + cs40*SQ(uc)*SQ(uc)));
+
+
   /* derivatives of G with respect to uc */
   double dGS_duc  =  dGS0_duc*hGS  +  GS0*dhGS_duc;
   double dGSs_duc = dGSs0_duc*hGSs + GSs0*dhGSs_duc;
@@ -811,12 +843,32 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   double d3GS_duc2_dprstar  = d2GS0_duc2*dhGS_dprstar + 2.*dGS0_duc*d2hGS_duc_dprstar + GS0*d3hGS_duc2_dprstar;
   double d3GSs_duc2_dprstar = d2GSs0_duc2*dhGSs_dprstar + 2.*dGSs0_duc*d2hGSs_duc_dprstar + GSs0*d3hGSs_duc2_dprstar;
 
+
+  /*Third derivatives with respect to uc^3*/
+  double d3GS_duc3 =d3GS0_duc3*hGS + d2GS0_duc2*dhGS_duc+ 2.*d2GS0_duc2*dhGS_duc + 2.*dGS0_duc*d2hGS_duc2
+    + dGS0_duc*d2hGS_duc2 + GS0*d3hGS_duc3;
+  double d3GSs_duc3 =d3GSs0_duc3*hGSs + d2GSs0_duc2*dhGSs_duc+ 2.*d2GSs0_duc2*dhGSs_duc + 2.*dGSs0_duc*d2hGSs_duc2
+    + dGSs0_duc*d2hGSs_duc2 + GSs0*d3hGSs_duc3;
+
+
   /* Third derivatives with respect to prstar/r^2 */
   double d3GS_dr2_dprstar  = 2*uc3*SQ(drc_dr)*d2GS_duc_dprstar - uc2*d2rc_dr2*d2GS_duc_dprstar
     + uc4*SQ(drc_dr)*d3GS_duc2_dprstar;
   double d3GSs_dr2_dprstar = 2*uc3*SQ(drc_dr)*d2GSs_duc_dprstar - uc2*d2rc_dr2*d2GSs_duc_dprstar
     + uc4*SQ(drc_dr)*d3GSs_duc2_dprstar;
-  
+
+  /* Third derivatives with respect to r^3 */
+  double d3GS_dr3 = (-6*SQ(uc)*SQ(uc)*SQ(drc_dr)*drc_dr*dGS_duc + 4*SQ(uc)*uc*drc_dr*d2rc_dr2*dGS_duc 
+    - 2*SQ(uc)*uc*SQ(drc_dr)*drc_dr*SQ(uc)*d2GS_duc2+ 2*SQ(uc)*uc*drc_dr*d2rc_dr2*dGS_duc - SQ(uc)*d3rc_dr3*dGS_duc 
+    + SQ(uc)*SQ(uc)*drc_dr*d2rc_dr2*d2GSs_duc2- 4*SQ(uc)*SQ(uc)*uc*SQ(drc_dr)*drc_dr*d2GS_duc2 
+    + 2*SQ(uc)*SQ(uc)*drc_dr*d2rc_dr2*d2GS_duc2 - SQ(uc)*SQ(uc)*SQ(uc)*SQ(drc_dr)*drc_dr* d3GS_duc3);
+
+  double d3GSs_dr3 = (-6*SQ(uc)*SQ(uc)*SQ(drc_dr)*drc_dr*dGSs_duc + 4*SQ(uc)*uc*drc_dr*d2rc_dr2*dGSs_duc 
+    - 2*SQ(uc)*uc*SQ(drc_dr)*drc_dr*SQ(uc)*d2GSs_duc2+ 2*SQ(uc)*uc*drc_dr*d2rc_dr2*dGSs_duc - SQ(uc)*d3rc_dr3*dGSs_duc 
+    + SQ(uc)*SQ(uc)*drc_dr*d2rc_dr2*d2GSs_duc2- 4*SQ(uc)*SQ(uc)*uc*SQ(drc_dr)*drc_dr*d2GSs_duc2 
+    + 2*SQ(uc)*SQ(uc)*drc_dr*d2rc_dr2*d2GSs_duc2 - SQ(uc)*SQ(uc)*SQ(uc)*SQ(drc_dr)*drc_dr* d3GSs_duc3);
+
+
   ggm[0]=hGS;
   ggm[1]=hGSs;
   ggm[2]=GS;
@@ -843,6 +895,8 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   ggm[23]=d3GSs_dr2_dprstar;
   ggm[24]=d3GS_dr_dprstar2;
   ggm[25]=d3GSs_dr_dprstar2;
+  ggm[26]=d3GS_dr3;
+  ggm[27]=d3GSs_dr3;
     
 }
 
@@ -1398,14 +1452,14 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
   const double pphi2  = pphi*pphi;
   
   /* Compute Metric, centrifugal radius and Hamiltonan */
-  double A, dA, rc, drc_dr, pl_hold;
+  double A, dA, rc, drc_dr, d2rc_dr2, d3rc_dr3, pl_hold;
 
   if (usespins) {
-    eob_metric_s(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
   } else {
-    eob_metric(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
     rc = r;
     drc_dr = 1.;
@@ -1420,7 +1474,7 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
   double psic, r_omg;
   if (usespins) {
     double ggm0[26];
-    eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
+    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
   
     const double GS_0       = ggm0[2];
     const double GSs_0      = ggm0[3];
@@ -1462,7 +1516,7 @@ double eob_dyn_fLR(double r, void  *params)
   double A, dA, pl_hold;
   //if (EOBPars->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
   //else
-  eob_metric(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   double u = 1./r;
   double dA_u = (-dA)*SQ(r);
   return A + 0.5 * u * dA_u;
@@ -1570,7 +1624,7 @@ double eob_dyn_fLSO(double r, void  *params)
   double A,B,dA,d2A,dB,pl_hold;
   //if (EOBPars->use_spins) eob_metric_s(r, dyn, &A,&B,&dA,&d2A,&dB);
   //else                
-  eob_metric (r, 0., dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric (r, 0., dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   double u = 1./r;
   double u2  = SQ(u);
   double dA_u = (-dA)*SQ(r);
@@ -1683,16 +1737,16 @@ int eob_dyn_fLSO_s (const gsl_vector *x, void * params, gsl_vector *f) {
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
   
-  double A, B, dA, d2A, dB, pl_hold;
-  eob_metric_s(r, 0., dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold); 
+  double A, B, dA, d2A, d3A, dB, pl_hold;
+  eob_metric_s(r, 0., dyn, &A, &B, &dA, &d2A, &d3A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold); 
 
   /* Compute centrifugal radius */
-  double rc, drc_dr, d2rc_dr2;
+  double rc, drc_dr, d2rc_dr2, d3rc_dr3;
   eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2, &pl_hold, &pl_hold, &pl_hold);
    
   /* Compute Hamiltonian */
   double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi, d2Heff_dr2;
-  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, pphi, 0., S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, 0., 0., 0., 0., 0., 
+  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, d3rc_dr3, pphi, 0., S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, d3A, 0., 0., 0., 0., 0., 
 	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, &d2Heff_dr2);
    
   gsl_vector_set (f, 0, dHeff_dr);
@@ -2261,11 +2315,11 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     const double r  = 1./u;
 
     /* Compute Metric */
-    double A, B, dA, d2A, dB, pl_hold;
-    eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    double A, B, dA, d2A, d3A, dB, pl_hold;
+    eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &d3A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   
     /* Compute centrifugal radius */
-    double rc, drc_dr, d2rc_dr;
+    double rc, drc_dr, d2rc_dr, d3rc_dr3;
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr);
     const double uc     = 1./rc;
     const double uc2    = uc*uc;
@@ -2273,7 +2327,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 
     /* Compute Hamiltonian */
     double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi;
-    eob_ham_s(nu, r, rc, drc_dr, d2rc_dr, 1./ooj, 0., S, Sstar, c1, c2, X1, X2, aK2, EOBPars->cN3LO, A, dA, d2A, 0., 0., 0., 0., 0.,
+    eob_ham_s(nu, r, rc, drc_dr, d2rc_dr, d3rc_dr3, 1./ooj, 0., S, Sstar, c1, c2, X1, X2, aK2, EOBPars->cN3LO, A, dA, d2A, d3A, 0., 0., 0., 0., 0.,
 	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, NULL);
 
     /* EOB Flux */
@@ -2340,10 +2394,10 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 
     /* Compute j(u) on circular orbits */
     double ggm[26]; 
-    double A, B, dA, d2A, dB, pl_hold, rc, drc_dr, d2rc_dr;
-    eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    double A, B, dA, d2A, d3A, dB, pl_hold, rc, drc_dr, d2rc_dr, d3rc_dr3;
+    eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &d3A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr);
-    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr, aK2, 0.0, 0.0, nu, c1, c2, X1, X2, EOBPars->cN3LO, ggm);
+    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr, d3rc_dr3, aK2, 0.0, 0.0, nu, c1, c2, X1, X2, EOBPars->cN3LO, ggm);
 
     double GS     = ggm[2];
     double GSs    = ggm[3];  
@@ -2381,7 +2435,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 
     //Compute hamiltonian and derivatives
     double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi;
-    eob_ham_s(nu, r, rc, drc_dr, d2rc_dr, j, 0., S, Sstar, c1, c2, X1, X2, aK2, EOBPars->cN3LO, A, dA, d2A, 0., 0., 0., 0., 0.,
+    eob_ham_s(nu, r, rc, drc_dr, d2rc_dr, d3rc_dr3, j, 0., S, Sstar, c1, c2, X1, X2, aK2, EOBPars->cN3LO, A, dA, d2A, d3A, 0., 0., 0., 0., 0.,
 	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, NULL);
 
     /* Compute dj_circ/dr */
