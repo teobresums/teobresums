@@ -586,7 +586,7 @@ typedef struct tagDynamics
   double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot;
   double tOmg_pk;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;     /**< current Hamiltonian, angular momentum and derived variables */
-  double A,dA,d2A, B,dB;                                      /**< current A,B and derived variables */
+  double A,dA,d2A, d3A, B,dB;                                      /**< current A,B and derived variables */
   double MOmg, MOmg_prev, tMOmgpeak;                          /**< current M Omega and previous value, time of the Omega peak */
   double dress_tides_fmode_A[6], dress_tides_fmode_B[6];      /**< dressing factors for adiabatic tidal pars  */
   double dress_tides_fmode_A_u[6], dress_tides_fmode_B_u[6];  /**< dressing factors for adiabatic tidal pars, drvts wrt u   */
@@ -1072,13 +1072,13 @@ extern void (*eob_metric_Dpotential)(); /* defined in TEOBResumSPars.c*/
 extern void (*eob_metric_Qpotential)(); /* defined in TEOBResumSPars.c*/
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A);
-void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A);
+void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A, double *d3A);
 void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
-void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
+void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3, double *d3Q);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *d3A, double *dB, double *d2B,

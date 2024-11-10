@@ -256,7 +256,7 @@ void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A)
  *    @param[out] dA   : dA/du,   with u=1/r  
  *    @param[out] d2A  : d2A/du2, with u=1/r   
  */
-void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A)
+void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A, double *d3A)
 {
 
   /* shortcuts */
@@ -306,11 +306,16 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   /* 2nd derivatives of the coefficients */
   double d2N0 = -226492416./(5.*u2);
   double d2N1 = -(-7077888*(-8186 - 504*nu + 287*pi2))/(35.*u2);
+  double d3N1 = -((404451.0*(-8186 - 504*nu + 287*pi2))/(SQ(u)*u));
   double d2D0 = d2N0;
+  double d3D0 = 90597000/(SQ(u)*u);
   double d2D1 = -(-1179648*(-4*(7015 + 756*nu) + 861*pi2))/(35.*u2);
+  double d3D1 = -((67408.5*(-4*(7015 + 756*nu) + 861*pi2))/(SQ(u)*u));
   double d2D2 = -(-24576*(22206272 + 322560*a5 + 4128768*logu - 1076865*pi2 \
                 + nu*(11692800 - 464940*pi2) ))/(175.*u2);
+  double d3D2 = 579821000.0/(SQ(u)*u) - (280.869*(22206272 + 322560*a5 + nu*(11692800 - 464940*pi2) - 1076865*pi2 + 4128768*logu))/(SQ(u)*u);            
   double d2D3 = -(-7077888*nu*(-8186 - 504*nu + 287*pi2))/(35.*u2);
+  double d3D3 = -((404451.*nu*(-8186 - 504*nu + 287*pi2))/(SQ(u)*u));
 
   /* the small a(u,nu) function*/
   double Num  = N0 + N1*u;
@@ -327,9 +332,16 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   double d2Den = u3*d2D3 + u2*(d2D2+6*dD3) + u*(d2D1 + 4*dD2 + 6*D3) + d2D0 + 2*dD1 + 2*D2;
   double d2anu_du2 = anu/(Num*Den)*(2.*dDen*dDen*anu - 2.*dNum*dDen + Den*d2Num - d2Den*Num);
 
+  /* third derivative of anu with respect to u*/
+  double d3Num = 3*d2N1 + d3N1 + d3N1*u;
+  double d3Den = 3*d2D1 + 6*D3 + d3D0 + 6*dD2 + 6*d2D2*u + d3D1*u + 18*dD3*u + 9*d2D3*SQ(u) + d3D2*SQ(u) + d3D3*SQ(u)*u;
+  double d3anu_du3 = -((3*d2Num*dDen)/SQ(Den)) + d3Num/Den + (6*SQ(dDen)*dNum)/(SQ(Den)*Den) - (3*d2Den*dNum)/SQ(Den) - (6*SQ(dDen)*dDen*Num)/(SQ(Den)*SQ(Den))
+         + (6*d2Den*dDen*Num)/(SQ(Den)*Den) - (d3Den*Num)/SQ(Den);
+
   /* derivatives of A with respect to u */
   double dA_du  = -2 + 6*nu*u2*anu + 2*nu*u3*danu_du;
   double d2A_du = 12*nu*u*anu + 12*nu*u2*danu_du + 2*nu*u3*d2anu_du2;
+  double d3A_du = 12*nu*anu + 6*nu*SQ(u)*d2anu_du2 + 24*nu*u*danu_du + 12*nu*u*danu_du + 2*nu*SQ(u)*u*d3anu_du3+ 12*nu*SQ(u)*d2anu_du2;
 
   /* the A function and its derivatives with respect to r */
   /*
@@ -341,6 +353,7 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   *A   =  1-2*u + 2*nu*u3*anu;
   *dA  =  dA_du;
   *d2A =  d2A_du;
+  *d3A =  d3A_du;
 }
 
 
@@ -845,7 +858,8 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 /**
   *  Function : eob_metric_Q3PN
   *  --------------------------
-  *    EOB Metric Q function at 5PN, only local part 
+  *    EOB Metric Q function at 5
+  * PN, only local part 
   *    2108.02043 and refs. therein
   *    @param[in]  r    : radial separation  
   *    @param[in]  nu   : symmetric mass ratio 
@@ -861,7 +875,7 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 */
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                      double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
-                     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+                     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3, double *d3Q)
 {
 
   /* shortcuts */
@@ -953,6 +967,11 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
     *d2Q_dprstar2 = 2.*dQ_dprstar2 + 4.*prstar2*d2Q_dprstar22;
 
     *d3Q_dprstar3 = prstar*( 12.*d2Q_dprstar22 + 8.*prstar2*d3Q_dprstar23 );
+
+
+    *d3Q =18*prstar4*SQ(u)*SQ(u)*(-q43*SQ(u) - prstar2*q63loc*SQ(u) - 2*q44loc*SQ(u)*u) - 6*prstar4 *SQ(u)*u*(2*q43 *SQ(u)*u + 2*prstar2*q63loc*SQ(u)*u + 6*q44loc*SQ(u)*SQ(u)) 
+          + prstar4*SQ(u)*(-6.*q43*SQ(u)*SQ(u) - 6.*prstar2*q63loc*SQ(u)*SQ(u) - 24.*q44loc *SQ(u)*SQ(u)*u) - 24.*prstar4*SQ(u)*SQ(u)*u*(q42 + q43*u + q44loc*SQ(u) 
+          + prstar2*(q62 + prstar2*q82loc + q63loc*u));
 
 }
 
@@ -1482,6 +1501,7 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
  *   @param[out] B     : B potential evaluated at r    
  *   @param[out] dA    : dA/dr
  *   @param[out] d2A   : d2A/dr2
+ *   @param[out] d3A   : d3A/dr3
  *   @param[out] dB    : dB/dr 
  *   @param[out] d2B   : d2B/dr2
  *   @param[out] Q     : Q potential evaluated at r
@@ -1490,12 +1510,14 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
  *   @param[out] d2Q   : d2Q/dr2
  *   @param[out] ddQ_drdprstar : ddQ/drdprstar
  *   @param[out] d2Q_dprstar2 : d2Q/dprstar2
+ *   @param[out] d3Q   : d3Q/dr3
  *   @param[out] d3Q_dr2dprstar : d3Q/dr2dprstar
  *   @param[out] d3Q_drdprstar2 : d3Q/drdprstar2
  *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
+ *   @param[out] d3Q : d3Q/dr3
  */ 
-void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
-                double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *d3A, double *dB, double *d2B,
+                double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q,
                 double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
   const double nu    = EOBPars->nu;
@@ -1503,16 +1525,17 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   const double u2    = u*u;
   const double u3    = u2*u;
   const double u4    = u2*u2;
+  const double u5    = u4*u;
   const double u6    = u2*u4;
 
-  double Atmp=0., dAtmp_u=0., d2Atmp_u=0.;
+  double Atmp=0., dAtmp_u=0., d2Atmp_u=0., d3Atmp_u=0.;
   double D=0., dD_u=0., d2D_u=0.;
   double Btmp=0., dBtmp_r=0., d2Btmp_r=0.;
-  double Qtmp=0., dQtmp_du=0., dQtmp_dprstar=0., d2Qtmp_du2=0., ddQtmp_drdprstar=0., d2Qtmp_dprstar2=0.,
-         d3Qtmp_dr2dprstar= 0., d3Qtmp_drdprstar2=0., d3Qtmp_dprstar3=0.;
+  double Qtmp=0., dQtmp_du=0., dQtmp_dprstar=0., d2Qtmp_du2=0., ddQtmp_drdprstar=0., d2Qtmp_dprstar2=0., d3Qtmp_du3=0.,
+         d3Qtmp_dr2dprstar= 0., d3Qtmp_drdprstar2=0., d3Qtmp_dprstar3=0., d3Qtmp=0.;
 
   /* A potential and derivative with respect to u */  
-  eob_metric_Apotential(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u);
+  eob_metric_Apotential(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u, &d3Atmp_u);
 
   /* Add here tides if needed */
   if (EOBPars->use_tidal) {
@@ -1533,6 +1556,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   *A   = Atmp;
   *dA  = -dAtmp_u*u2;
   *d2A = 2.*dAtmp_u*u3 + d2Atmp_u*u4;
+  *d3A = -6.*dAtmp_u*u4-2.*d2Atmp_u*u5-4*d2Atmp_u*u5-2.*d3Atmp_u*u6;
 
   /* D potential and derivative with respect to r */
   eob_metric_Dpotential(r, nu, &D, &dD_u, &d2D_u); // this gives dD wtr to u
@@ -1549,13 +1573,14 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   *d2B = d2Btmp_r;
 
   /* Q potential and derivatives */
-  eob_metric_Qpotential(r, prstar, nu, &Qtmp, &dQtmp_du, &dQtmp_dprstar, &d2Qtmp_du2, &ddQtmp_drdprstar, &d2Qtmp_dprstar2, &d3Qtmp_dr2dprstar, &d3Qtmp_drdprstar2, &d3Qtmp_dprstar3);
+  eob_metric_Qpotential(r, prstar, nu, &Qtmp, &dQtmp_du, &dQtmp_dprstar, &d2Qtmp_du2, &ddQtmp_drdprstar, &d2Qtmp_dprstar2, &d3Qtmp_dr2dprstar, &d3Qtmp_drdprstar2, &d3Qtmp_dprstar3, &d3Qtmp);
   *Q              = Qtmp;
   *dQ             = -u2*dQtmp_du; // derivative wrt to r
   *dQ_dprstar     = dQtmp_dprstar;
   *d2Q            = u3*(2.*dQtmp_du + u*d2Qtmp_du2); // derivative wrt to r
   *ddQ_drdprstar  = ddQtmp_drdprstar;
   *d2Q_dprstar2   = d2Qtmp_dprstar2;
+  *d3Q            = d3Qtmp;
   *d3Q_dr2dprstar = d3Qtmp_dr2dprstar;
   *d3Q_drdprstar2 = d3Qtmp_drdprstar2;
   *d3Q_dprstar3   = d3Qtmp_dprstar3;
@@ -1573,6 +1598,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
  *   @param[out] B     : B potential evaluated at r    
  *   @param[out] dA    : dA/dr
  *   @param[out] d2A   : d2A/dr2
+ *   @param[out] d3A   : d3A/dr2
  *   @param[out] dB    : dB/dr 
  *   @param[out] d2B   : d2B/dr2
  *   @param[out] Q     : Q potential evaluated at r
@@ -1584,6 +1610,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
  *   @param[out] d3Q_dr2dprstar : d3Q/dr2dprstar
  *   @param[out] d3Q_drdprstar2 : d3Q/drdprstar2
  *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
+ *   @param[out] d3Q : d3Q/dr3
  */
  void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *d3A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
@@ -1607,12 +1634,12 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   const double u3  = u2*u;
   const double u4  = u2*u2;
   
-  double rc, drc, d2rc;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc);
+  double rc, drc, d2rc, d3rc;
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc, &d2rc, &d3rc);
 
   /* A potential and derivative with respect to u */  
-  double Aorb, dAorb_u, d2Aorb_u;
-  eob_metric_Apotential(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u);
+  double Aorb, dAorb_u, d2Aorb_u, d3Aorb_u;
+  eob_metric_Apotential(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u, &d3Aorb_u);
 
   /* Add here tides if needed */
   if (usetidal) {
@@ -1635,18 +1662,27 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
 
   double dAorb  = -dAorb_u*uc2*drc;
   double d2Aorb = 2.*dAorb_u*uc3*SQ(drc) + d2Aorb_u*uc4*SQ(drc) - uc2*dAorb_u*d2rc;
+  double d3Aorb = -SQ(uc)*(d3rc*dAorb_u + 2*d2Aorb_u*(d2rc - 2*SQ(drc)*uc) + drc*(d3Aorb_u - 4*d2rc*dAorb_u*uc - 2*dAorb_u*SQ(drc)*uc 
+                  + 6*dAorb_u*SQ(drc)*SQ(uc)));
 
   /* Correct A for spin */
   double AKerr_Multipole   = (1.+2.*uc)/(1.+2.*u);
   double dAKerr_Multipole  = -2.*uc2/(1.+2.*u)*drc + 2.*u2*(1.+2.*uc)/SQ(1.+2.*u);
   double d2AKerr_Multipole = -2.*uc2/(1.+2.*u)*d2rc - 8.*u2*uc2/SQ(1.+2.*u)*drc + 4.*uc3/(1.+2.*u)*SQ(drc) - 4.*u3*(1+2.*uc)/SQ(1.+2.*u) + 8.*u4*(1.+2.*uc)/SQ(1.+2.*u)/(1.+2.*u);
+  double d3AKerr_Multipole = (32.*drc*SQ(u)*SQ(uc))/(SQ((1.+2.*u))*(1.+2.*u)) - (16.*drc*SQ(u)*SQ(u)*SQ(uc))/(SQ((1.+ 2.*u))*(1.+ 2.*u))+(4.*d2rc*SQ(uc))/SQ((1.+ 2.*u)) 
+                             - (16.*drc*u*SQ(uc))/SQ((1.+ 2.*u)) - (8.*d2rc*SQ(u)*SQ(uc))/SQ((1.+ 2.*u)) + (8.*drc*SQ(u)*u*SQ(uc))/SQ((1.+ 2.*u)) - (2.*d3rc*SQ(uc))/(1. + 2.*u) 
+                             - (8.*SQ(drc)*SQ(uc)*uc)/SQ((1.+ 2.*u)) + (16.*SQ(drc)*SQ(u)*SQ(uc)*uc)/SQ((1.+ 2.*u)) + (12.*d2rc*drc*SQ(uc)*uc)/(1.+ 2.*u) 
+                             - (12.*SQ(drc)*drc*SQ(uc)*SQ(uc))/(1.+ 2.*u) + (16.*SQ(u)*u*(1 + 2.*uc))/(SQ((1.+ 2.*u))*(1. + 2.*u)) - (12.*SQ(u)*(1 + 2.*uc))/SQ((1. + 2.*u))
+                             - (48.*SQ(u)*SQ(u)*(1.+ 2.*uc))/SQ((1.+ 2.*u))*SQ((1.+ 2.*u)) + (32.*SQ(u)*u*(1.+ 2.*uc))/(SQ(1.+ 2.*u)*(1.+ 2.*u));
+
   double fss = 1.;
   
   *A   = Aorb*AKerr_Multipole*fss;
   *dA  = dAorb*AKerr_Multipole + Aorb*dAKerr_Multipole;
   *d2A = d2Aorb*AKerr_Multipole + 2.*dAorb*dAKerr_Multipole + Aorb*d2AKerr_Multipole;
-  //*d2A = d2Aorb*(1.+2.*uc)/(1.+2.*u) + 4.*dAorb*( u2*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) - uc2/(1.+2.*u)*drc) + Aorb*(-4.*u3*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)) + 8.*u4*(1.+2.*uc)/((1.+2.*u)*(1.+2.*u)*(1.+2.*u))+4.*uc3/(1.+2.*u)*drc*drc - 2.*uc2/(1.+2.*u)*d2rc - 8.*u2*uc2/SQ(1.+2.*u)*drc); /* expanded *correct* form */
-
+  *d3A = d3Aorb*AKerr_Multipole + d2Aorb*dAKerr_Multipole + 2.*d2Aorb*dAKerr_Multipole + 2.*dAorb*d2AKerr_Multipole + dAorb*d2AKerr_Multipole + Aorb*d3AKerr_Multipole;
+  
+  
   /* D potential and derivative with respect to r */
   double D=0., dD_uc=0., d2D_uc=0.;
   eob_metric_Dpotential(rc, nu, &D, &dD_uc, &d2D_uc); // this gives dD wtr to uc
@@ -1667,9 +1703,9 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
 
   /* Q potential and derivatives */
   double Qtmp=0., dQtmp_duc=0., dQtmp_dprstar=0.,  d2Qtmp_duc2=0., ddQtmp_drcdprstar=0., d2Qtmp_dprstar2=0.,
-         d3Qtmp_drc2dprstar=0., d3Qtmp_drcdprstar2=0., d3Qtmp_dprstar3=0.;
+         d3Qtmp_drc2dprstar=0., d3Qtmp_drcdprstar2=0., d3Qtmp_dprstar3=0., d3Qtmp=0.;
   eob_metric_Qpotential(rc, prstar, nu, &Qtmp, &dQtmp_duc, &dQtmp_dprstar, &d2Qtmp_duc2, &ddQtmp_drcdprstar, &d2Qtmp_dprstar2,
-                        &d3Qtmp_drc2dprstar, &d3Qtmp_drcdprstar2, &d3Qtmp_dprstar3);
+                        &d3Qtmp_drc2dprstar, &d3Qtmp_drcdprstar2, &d3Qtmp_dprstar3, &d3Qtmp);
   *Q              = Qtmp;
   *dQ             = - uc2*drc*dQtmp_duc; // derivative wrt to r
   *dQ_dprstar     = dQtmp_dprstar;
@@ -1679,4 +1715,5 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   *d3Q_dr2dprstar = d2rc*ddQtmp_drcdprstar + SQ(drc)*d3Qtmp_drc2dprstar;
   *d3Q_drdprstar2 = drc*d3Qtmp_drcdprstar2;
   *d3Q_dprstar3   = d3Qtmp_dprstar3;
+  *d3Q            = d3Qtmp;
 }
