@@ -1169,7 +1169,7 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   Dynamics_set_params(dyn); 
   /* Compute rc and A */
   eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
-  eob_metric_s(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric_s(r, prstar, dyn, &A, &B, &dA, &d2A, &pl_hold, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
   /* Compute H */
   eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, d3rc_dr3, pphi, prstar, EOBPars->S, EOBPars->Sstar, EOBPars->chi1, EOBPars->chi2, EOBPars->X1, EOBPars->X2, EOBPars->aK2, EOBPars->cN3LO, A, dA, d2A, d3A, Q, dQ, dQ_dprstar, 0., d2Q_dprstar2, 
