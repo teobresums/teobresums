@@ -985,7 +985,7 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
 /**
  * Function: eob_dyn_ic_hyp
  * ------------------------
- *   Initial conditions calculation for hyperbolic systems
+ *   Initial conditions calculation for hyperbolic systems, nonspinning
  * 
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
@@ -1047,6 +1047,88 @@ int eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = 0.;
   y_init[EOB_ID_E0]     = E0;
   y_init[EOB_ID_OMGJ]   = Omg0;
+
+  return status;
+}
+
+
+/**
+ * Function: eob_dyn_ic_hyp_s
+ * --------------------------
+ *   Initial conditions calculation for hyperbolic systems, spinning
+ *   The inversion requires a bisection
+ * 
+ *   @param[in] r0:  initial separation
+ *   @param[in] dyn: Dynamics
+ *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
+*/
+int eob_dyn_ic_hyp_s(double r0, Dynamics *dyn, double y_init[])
+{
+  int status = 0;
+  const double H_ADM = EOBPars->H_hyp;
+  const double j_ADM = EOBPars->j_hyp;  
+  
+  const double nu     = EOBPars->nu;
+  const double X1     = EOBPars->X1;
+  const double X2     = EOBPars->X2;
+  const double chi1   = EOBPars -> chi1;
+  const double chi2   = EOBPars -> chi2;
+  const double S1     = EOBPars -> S1;
+  const double S2     = EOBPars -> S2;
+  const double c3     = EOBPars -> cN3LO;
+  const double a1     = EOBPars -> a1;
+  const double a2     = EOBPars -> a2;
+  const double aK2    = EOBPars -> aK2;
+  const double C_Q1   = EOBPars -> C_Q1;
+  const double C_Q2   = EOBPars -> C_Q2;
+  const double C_Oct1 = EOBPars -> C_Oct1;
+  const double C_Oct2 = EOBPars -> C_Oct2;
+  const double C_Hex1 = EOBPars -> C_Hex1;
+  const double C_Hex2 = EOBPars -> C_Hex2;
+  const double S      = S1 + S2;
+  const double Sstar  = X2*a1 + X1*a2;
+  
+  const int usetidal  = EOBPars->use_tidal;
+  const int usespins  = EOBPars->use_spins;
+
+  double pr0_guess = 0.15;
+  int pr0_sign     = -1; // Sign of pr, for now assume always < 0
+
+  double pr0abs, H0, dHeff0_dj0, A0, B0, Q0, rc0, pr0, omg_orb, pl_hold;
+
+  /* Invert H(r, prstar, j) - H0_target = 0*/
+  pr0abs = eob_dyn_bisecHam0(dyn, pr0_guess, j_ADM, H_ADM/nu, r0);
+  pr0 = pr0_sign*pr0abs;
+
+  if(usespins) {
+    eob_metric_s(r0, pr0, dyn, &A0, &B0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(r0, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc0, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(r0, pr0, dyn, &A0, &B0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+
+  eob_ham_s(nu, r0, rc0, 0, 0, j_ADM, pr0, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A0, 0., 0., Q0, 0., 0., 0., 0.,
+	    &H0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeff0_dj0, &pl_hold, &pl_hold);
+
+  /* Check that the pr0 found is truly a solution */
+  double check = fabs(H0*nu/H_ADM -1.);
+  if (check > 1e-5){
+    if (DEBUG) printf("|H0/H_ADM - 1| = %.3e > 1e-5\n", check);
+    return 1;
+  }
+
+  /* Orbital frequency */
+  omg_orb   = dHeff0_dj0/nu/H0;
+
+  y_init[EOB_ID_RAD]    = r0;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = j_ADM;
+  y_init[EOB_ID_PRSTAR] = pr0;
+  y_init[EOB_ID_PR]     = pr0*sqrt(B0/A0);
+  y_init[EOB_ID_J]      = j_ADM;
+  y_init[EOB_ID_E0]     = H0*nu;
+  y_init[EOB_ID_OMGJ]   = omg_orb;
 
   return status;
 }

@@ -1046,6 +1046,7 @@ int eob_dyn_ic_ecc_ma(double r0, Dynamics *dyn, double y_init[]);
 int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[]);
 int eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[]);
 int eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[]);
+int eob_dyn_ic_hyp_s(double r0, Dynamics *dyn, double y_init[]);
 double eob_dyn_j0(double r0, Dynamics *dyn);
 double eob_dyn_ecc_j0(double r0, Dynamics *dyn);
 double eob_dyn_circ_j0(double r0, Dynamics *dyn);

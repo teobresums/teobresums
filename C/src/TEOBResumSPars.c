@@ -1015,7 +1015,7 @@ int eob_set_params(int default_choice, int firstcall)
   /* Set initial conditions fun pointer */
   if (r_hyp != 0.) {
     // hyp case
-    eob_dyn_ic = &eob_dyn_ic_hyp;
+    eob_dyn_ic = &eob_dyn_ic_hyp_s;
   } else if (EOBPars->model == MODEL_DALI) {
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_MA)
