@@ -1093,7 +1093,7 @@ int eob_dyn_ic_hyp_s(double r0, Dynamics *dyn, double y_init[])
   const int usespins  = EOBPars->use_spins;
 
   double pr0_guess = 0.15;
-  int pr0_sign     = -1; // Sign of pr, for now assume always < 0
+  int pr0_sign     = EOBPars->prs_sign_hyp;
 
   double pr0abs, H0, dHeff0_dj0, A0, B0, Q0, rc0, pr0, omg_orb, pl_hold;
 
