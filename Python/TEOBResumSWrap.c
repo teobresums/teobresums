@@ -50,6 +50,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "j_hyp") != NULL ) {
     EOBPars->j_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "j_hyp"));
   }
+  if ( PyDict_GetItemString(dict, "prs_sign_hyp") != NULL ) {
+    EOBPars->prs_sign_hyp = (int) PyLong_AsLong(PyDict_GetItemString(dict, "prs_sign_hyp"));
+  }
   if ( PyDict_GetItemString(dict, "use_geometric_units") != NULL ) { 
     EOBPars->use_geometric_units = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_geometric_units")));
   }

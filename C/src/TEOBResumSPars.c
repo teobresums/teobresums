@@ -127,7 +127,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->r_hyp = 0.;
   eobp->H_hyp = 0.;
   eobp->j_hyp = 0.;
-  
+  eobp->prs_sign_hyp = -1;
   eobp->distance = 1.;
   eobp->inclination = 0.;
   eobp->coalescence_angle = 0.;
@@ -1015,7 +1015,7 @@ int eob_set_params(int default_choice, int firstcall)
   /* Set initial conditions fun pointer */
   if (r_hyp != 0.) {
     // hyp case
-    eob_dyn_ic = &eob_dyn_ic_hyp;
+    eob_dyn_ic = &eob_dyn_ic_hyp_s;
   } else if (EOBPars->model == MODEL_DALI) {
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_MA)
@@ -1263,6 +1263,9 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   }
   if (STREQUAL(key,"j_hyp")) {
     eobp->j_hyp = par_get_d(val);
+  }
+  if (STREQUAL(key, "prs_sign_hyp")) {
+    eobp->prs_sign_hyp = par_get_i(val);
   }
   if (STREQUAL(key,"distance")) {
     eobp->distance = par_get_d(val);
@@ -1771,6 +1774,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "r_hyp", eobp->r_hyp);
   fprintf(f,"%s = %.16f\n", "H_hyp", eobp->H_hyp);
   fprintf(f,"%s = %.16f\n", "j_hyp", eobp->j_hyp);
+  fprintf(f,"%s = %d   \n", "prs_sign_hyp", eobp->prs_sign_hyp);
   fprintf(f,"%s = %.16f\n", "distance", eobp->distance);
   fprintf(f,"%s = %.16f\n", "inclination", eobp->inclination);
   fprintf(f,"%s = %.16f\n", "coalescence_angle", eobp->coalescence_angle);

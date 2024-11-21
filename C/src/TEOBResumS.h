@@ -668,6 +668,7 @@ typedef struct tagEOBParameters
   double compute_LR_guess;      /**< Guess for the LR */
   double compute_LSO_guess;     /**< Guess for the LSO */
   double ecc, anomaly, r_hyp, H_hyp, j_hyp;
+  int prs_sign_hyp;             /**< Sign of the radial momentum for hyp-like ICs */
   int ecc_freq, ecc_ics;
   double alpha_sigmoid_NQC, delta_t0_sigmoid_NQC;
   double alpha_sigmoid_Newt, delta_t0_sigmoid_Newt;
@@ -1046,6 +1047,7 @@ int eob_dyn_ic_ecc_ma(double r0, Dynamics *dyn, double y_init[]);
 int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[]);
 int eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[]);
 int eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[]);
+int eob_dyn_ic_hyp_s(double r0, Dynamics *dyn, double y_init[]);
 double eob_dyn_j0(double r0, Dynamics *dyn);
 double eob_dyn_ecc_j0(double r0, Dynamics *dyn);
 double eob_dyn_circ_j0(double r0, Dynamics *dyn);
