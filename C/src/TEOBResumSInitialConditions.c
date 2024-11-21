@@ -1092,14 +1092,17 @@ int eob_dyn_ic_hyp_s(double r0, Dynamics *dyn, double y_init[])
   const int usetidal  = EOBPars->use_tidal;
   const int usespins  = EOBPars->use_spins;
 
-  double pr0_guess = 0.15;
   int pr0_sign     = EOBPars->prs_sign_hyp;
 
-  double pr0abs, H0, dHeff0_dj0, A0, B0, Q0, rc0, pr0, omg_orb, pl_hold;
+  double pr0abs, H0, dHeff0_dj0, A0, B0, Q0, rc0, pr0, omg_orb, A_guess, pl_hold;
+
+  double Heff_in   = 1./(2.*nu)*(SQ(H_ADM) - 1.) + 1.;
+  eob_metric_Apotential(r0, nu, &A_guess, &pl_hold, &pl_hold);
+  double pr0_guess = sqrt(SQ(Heff_in) - A_guess*(1. + SQ(j_ADM/r0)));
 
   /* Invert H(r, prstar, j) - H0_target = 0*/
   pr0abs = eob_dyn_bisecHam0(dyn, pr0_guess, j_ADM, H_ADM/nu, r0);
-  pr0 = pr0_sign*pr0abs;
+  pr0    = pr0_sign*pr0abs;
 
   if(usespins) {
     eob_metric_s(r0, pr0, dyn, &A0, &B0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
