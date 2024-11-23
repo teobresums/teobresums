@@ -784,7 +784,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
   double A, dA, d2A, d3A, B, dB, d2B, Q, dQ, dQ_dprstar, d2Q, d2Q_dprstar2, ddQ_drdprstar, d3Q, d3Q_dr2dprstar, d3Q_drdprstar2, d3Q_dprstar3;
   double sqrtAbyB, oosqrtAbyB, dsqrtAbyB_dr, d2sqrtAbyB_d2r, fact;
   double sqA,sqB;
-  double ggm[26], G, dG_dr, dG_dprstar,d2G_dr2, d3G_dr3, d2G_dr_dprstar, d2G_dprstar2,
+  double ggm[28], G, dG_dr, dG_dprstar,d2G_dr2, d3G_dr3, d2G_dr_dprstar, d2G_dprstar2,
     d3G_dr2_dprstar, d3G_dr_dprstar2, d3G_dprstar3;
   double  rc, drc_dr, d2rc_dr2, d3rc_dr3, uc, uc2, uc3, uc4, uc5;
   double H, Heff, Heff_orb, E, dHeff_dr, dHeff_dprstar, dHeff_dpphi, d2Heff_dr2, EHeff_orb;
@@ -1029,6 +1029,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
 
     
     hatflm_NC[1] = Fphi_NewtPref(r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot, Omg3dot);
+    /*hatflm_NC[2] = Fphi_NewtPref21(r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot, Omg3dot);*/
     sum_k = 0.;
     for (int k = 0; k < KMAX; k++) sum_k += Flm[k] * hatflm_NC[k];
     sum_k = sum_k/FlmNewt[1];
@@ -1036,6 +1037,8 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
     Fphi  = Fphi_lo * sum_k;
     Fr    = eob_flx_Fr(r, prstar, pphi, dyn, Fphi);
     Fphi  = Fphi + Fphi_H;
+    printf("%f pref22 \n", hatflm_NC[1]);
+    printf("%f pref21 \n", hatflm_NC[2]);
   } // end iteration
   
   /* Saving useful variables */
@@ -1046,8 +1049,9 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
   dyn->r5dot = 0.;
   dyn->Omegadot  = Omgdot;
   dyn->Omega2dot = Omg2dot;
-  dyn->Omega3dot = 0.;
+  dyn->Omega3dot = Omg3dot;
   dyn->Omega4dot = 0.;
+  
 }
 
 /* Generic Newtonian prefactor */
@@ -1091,4 +1095,40 @@ double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3d
               - 0.25*Omg2dot*invOmg3                + 3.0*rdot*Omgdot*u*invOmg3;
   
   return FphiNewtNC;
+}
+
+double Fphi_NewtPref21(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot, double Omg3dot)
+{
+  double u, u2, u3, u4;
+  /*double Omg2, Omg3, Omg4, Omg5;*/
+  double invOmg,invOmg2,invOmg3,invOmg4,invOmg5;
+  double rdot2, rdot3, rdot4;
+  double FphiNewtNC21;
+  
+  u  = 1./r;
+  u2 = u*u;
+  u3 = u2*u;
+  u4 = u3*u;
+
+  invOmg  = 1./Omg;
+  invOmg2 = invOmg*invOmg;
+  invOmg3 = invOmg*invOmg2;
+  invOmg4 = invOmg*invOmg3;
+  invOmg5 = invOmg*invOmg4;
+
+  rdot2 = SQ(rdot);
+  rdot3 = rdot2*rdot;
+  rdot4 = rdot2*rdot2;
+
+
+  FphiNewtNC21  =  1. + (27.*SQ(r2dot)*SQ(u))/(SQ(Omg)*SQ(Omg)) - (18.*rdot*r3dot*SQ(u))/(SQ(Omg)*SQ(Omg)) 
+                + (72.*SQ(rdot)*SQ(rdot)*SQ(u)*SQ(u))/(SQ(Omg)*SQ(Omg)) - (12.*r2dot*u)/SQ(Omg) + (30.*SQ(rdot)*SQ(u))/SQ(Omg)
+                - (9.*r3dot*u*Omgdot)/(SQ(Omg)*SQ(Omg)*Omg) + (27. *rdot*r2dot*SQ(u)*Omgdot)/(SQ(Omg)*SQ(Omg)*Omg) + (144.*SQ(rdot)*rdot*SQ(u)*u*Omgdot)/(SQ(Omg)*SQ(Omg)*Omg) 
+                + (30.*rdot*u*Omgdot)/(SQ(Omg)*Omg) - (18.*r2dot*u*SQ(Omgdot))/(SQ(Omg)*SQ(Omg)*SQ(Omg)) + (126.*SQ(rdot)*SQ(u)*SQ(Omgdot))/(SQ(Omg)*SQ(Omg)*SQ(Omg)) + (15*SQ(Omgdot))/(SQ(Omg)*SQ(Omg))
+                + (18. *rdot*u*SQ(Omgdot)*SQ(Omgdot)*Omgdot)/(SQ(Omg)*SQ(Omg)*SQ(Omg)*Omg) + (21.*r2dot*u*Omg2dot)/(SQ(Omg)*SQ(Omg)*Omg) - (12.*SQ(rdot)*SQ(u)*Omg2dot)/(SQ(Omg)*SQ(Omg)*Omg) 
+                - (5*Omg2dot)/(SQ(Omg)*Omg)+ (24.*rdot*u*Omgdot*Omg2dot)/(SQ(Omg)*SQ(Omg)*SQ(Omg)) + (3*SQ(Omgdot)*Omg2dot)/(SQ(Omg)*SQ(Omg)*SQ(Omg)*Omg) + (4*SQ(Omg2dot))/(SQ(Omg)*SQ(Omg)*SQ(Omg)) 
+                - (6.*rdot*u*Omg3dot)/(SQ(Omg)*SQ(Omg)*Omg) - (3*Omgdot*Omg3dot)/(SQ(Omg)*SQ(Omg)*SQ(Omg));
+  
+  return FphiNewtNC21;
+
 }

@@ -154,7 +154,7 @@ int eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
   double A[2*N],B[2*N],d2A[2*N], dB, sqrtAbyB, Q, pl_hold;
   double pphorb, uc, uc2, psic, r_omg, v_phi, jhat, x, Omg;
   double H0eff, H0, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
-  double ggm0[26], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
+  double ggm0[28], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
   double C0;
   double Gtilde, dGtilde_dr, duc_dr;
 
@@ -336,8 +336,8 @@ int eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   const int usetidal = EOBPars -> use_tidal;
   const int usespins = EOBPars -> use_spins;
 
-  double r1, A1, rc1, B1, ggm1[26], G1;
-  double r2, A2, rc2, B2, ggm2[26], G2;
+  double r1, A1, rc1, B1, ggm1[28], G1;
+  double r2, A2, rc2, B2, ggm2[28], G2;
   double pl_hold, A12, B12, DA, DB, DG;
   double j0, j02, Heff_orb1, Heff1, H1, dHeff1_dj0, omg_orb1;
   
@@ -410,9 +410,10 @@ double eob_dyn_j0(double r0, Dynamics *dyn)
 {
   const double ecc    = EOBPars->ecc;
   double j0;
-
+  
   if(ecc > 1e-10){
     j0 = eob_dyn_ecc_j0(r0, dyn);
+    printf("%f \n", j0);
   } else {
     j0 = eob_dyn_circ_j0(r0, dyn);
   }
@@ -456,8 +457,8 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn)
   const int usespins = EOBPars->use_spins;
   const int usetidal = EOBPars->use_tidal;  
 
-  double r1, A1, rc1, B1, ggm1[26], G1;
-  double r2, A2, rc2, B2, ggm2[26], G2;
+  double r1, A1, rc1, B1, ggm1[28], G1;
+  double r2, A2, rc2, B2, ggm2[28], G2;
   double pl_hold, A12, B12, DA, DB, DG;
   double j0, j02, Heff_orb1, Heff1, H1, dHeff1_dj0, omg_orb1;
 
@@ -469,14 +470,17 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn)
     eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold, &pl_hold);
     
+
     eob_dyn_s_GS(r1, rc1, 0.0, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
+
 
     eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
     eob_dyn_s_GS(r2, rc2, 0.0, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
+
   } else {
     eob_metric(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     rc1 = r1;   //Nonspinning case: rc = r; G = 0;  
@@ -494,11 +498,12 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn)
   B12 = B1 + B2;
   DB  = B1 - B2;
   DG  = G1 - G2;
+  
 
   /* Angular momentum */
   j02       = (A12*SQ(DG) - DA*DB + DG*sqrt(4.*A1*A2*SQ(DG) + 2.*DA*(B12*DA - A12*DB)))/(SQ(DB) - 2.*B12*SQ(DG) + SQ(SQ(DG)));
   j0        = sqrt(j02);
-
+  
   return j0;
 
 }
@@ -670,7 +675,7 @@ int eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   double A,B,dA,d2A,dB, sqrtAbyB, pl_hold;
   double pphorb, uc, uc2, psic, r_omg, v_phi, jhat, x, Omg;
   double H0eff, H0, Horbeff0, Heff0, one_H0, dHeff_dprstarbyprstar, dHeff_dpph, Heff, H, Horbeff;
-  double ggm0[26], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
+  double ggm0[28], GS_0, GSs_0, dGS_dr_0, dGSs_dr_0, dGSs_dpph_0, dGS_dprstarbyprstar_0, dGSs_dprstarbyprstar_0, GS, GSs, dGS_dr, dGSs_dr;
   double C0;
   double Gtilde, dGtilde_dr, duc_dr;
 
@@ -929,10 +934,12 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
   } else {
     eob_metric(rap, 0., dyn, &Aap, &Bap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   }
+  
 
   /* Energy */
   eob_ham_s(nu, rap, rcap, 0, 0, 0, j0, 0., S, Sstar, chi1, chi2, X1, X2, aK2, c3, Aap, 0., 0., 0., Qap, 0., 0., 0., 0.,
 	    &Hap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeffap_dj0, &pl_hold, &pl_hold);
+
 
   /* Unless zeta = 0, pi, solve for pr0 */
   if (DEQUAL(zeta, 0., 1e-10) || DEQUAL(zeta, Pi, 1e-10))
@@ -955,9 +962,10 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
   } else {
     eob_metric(rma, pr0, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   }
-
+  
   eob_ham_s(nu, rma, rcma, 0, 0, 0, j0, pr0, S, Sstar, chi1, chi2, X1, X2, aK2, c3, Ama, 0., 0., 0., Qma, 0., 0., 0., 0., 
 	    &Hma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeffma_dj0, &pl_hold, &pl_hold);
+
 
   /* Check that the pr0 found is truly a solution */
   double check = Hma/Hap;
@@ -965,10 +973,10 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
     if (DEBUG) printf("Hma/Hap - 1 = %.3e\n", fabs(Hma/Hap - 1.));
     return 1;
   }
-
+  
   /* Orbital frequency */
   omg_orb   = dHeffma_dj0/nu/Hma;
-
+  
   y_init[EOB_ID_RAD]    = rma;
   y_init[EOB_ID_PHI]    = 0.;
   y_init[EOB_ID_PPHI]   = j0;
@@ -979,6 +987,8 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_OMGJ]   = omg_orb;
   
   return status;
+  printf("%f \n", status);
+
 
 }
 
@@ -1091,7 +1101,7 @@ double eob_dyn_DHeff0(double x, void *params)
   double X2     = p->X2;
   double c3     = p->c3;
 
-  double ggm0[26];
+  double ggm0[28];
   eob_dyn_s_GS(rorb, rc, drc_dr, 0., 0., ak2, 0., x, nu, chi1, chi2, X1, X2, c3, ggm0);
   double dGS_dr  = ggm0[6];
   double dGSs_dr = ggm0[7];
@@ -1440,14 +1450,15 @@ double eob_dyn_Omegaecc0(double r, void *params)
   const int usetidal = EOBPars -> use_tidal;
   const int usespins = EOBPars -> use_spins;
 
-  double r1, A1, B1, rc1, G1, ggm1[26];
-  double r2, A2, B2, rc2, G2, ggm2[26];
+  double r1, A1, B1, rc1, G1, ggm1[28];
+  double r2, A2, B2, rc2, G2, ggm2[28];
   
   double pl_hold, A12, B12, DA, DB, DG, j0, j02, omg_orb;
   double Heff_orb1, Heff_orb2, Heff1, Heff2, H1, H2, dHeff1_dj0, dHeff2_dj0, omg_orb1, omg_orb2;
   
   r1 = r/(1-ecc);
   r2 = r/(1+ecc);
+
 
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
@@ -1459,7 +1470,7 @@ double eob_dyn_Omegaecc0(double r, void *params)
 
     eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
-    
+
     eob_dyn_s_GS(r2, rc2, 0.0, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
@@ -1471,11 +1482,11 @@ double eob_dyn_Omegaecc0(double r, void *params)
     rc2 = r2;
     G2  = 0.0;
   }
-
+    
   /* Adiabatic angular momentum */
   j0  = eob_dyn_j0(r, dyn);
   j02 = SQ(j0);
-
+  
   /* Energy */
   Heff_orb1 = sqrt(A1*(1. + j02/SQ(rc1)));
   Heff_orb2 = sqrt(A2*(1. + j02/SQ(rc2)));
@@ -1641,7 +1652,6 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
   }
   while (status == GSL_CONTINUE && iter < max_iter);
   gsl_root_fsolver_free (s);
-  
   return r0;
 }
 
@@ -1839,8 +1849,8 @@ int eob_dyn_rpr(const gsl_vector *x, void * params, gsl_vector *f)
   const int usetidal  = EOBPars -> use_tidal;
   const int usespins  = EOBPars -> use_spins;
 
-  double r1, A1, B1, rc1, G1, ggm1[26];
-  double r2, A2, B2, rc2, G2, ggm2[26];
+  double r1, A1, B1, rc1, G1, ggm1[28];
+  double r2, A2, B2, rc2, G2, ggm2[28];
   double rma, rcma, Ama, Bma, Qma;
   
   double pl_hold, A12, B12, DA, DB, DG, j0, j02, omg_orb;
