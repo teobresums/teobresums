@@ -544,7 +544,7 @@ double eob_dyn_circ_j0(double r0, Dynamics *dyn)
 
   double A,B,dA,rc,drc_dr,G,dG_dr,uc,uc2,dAuc2_dr,j02,j0,H,Heff,Heff_orb,dHeff_dj0,omg_orb;
   double pl_hold,a_coeff,b_coeff,c_coeff,Delta,sol_p,sol_m;
-  double ggm[26];
+  double ggm[28];
 
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
@@ -987,7 +987,6 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_OMGJ]   = omg_orb;
   
   return status;
-  printf("%f \n", status);
 
 
 }
@@ -1331,7 +1330,7 @@ double eob_dyn_Omegaorb0(double r, void *params)
 
   double A,B,dA,rc,drc_dr,G,dG_dr,uc,uc2,dAuc2_dr,j02,j0,H,Heff,Heff_orb,dHeff_dj0,omg_orb;
   double pl_hold,a_coeff,b_coeff,c_coeff,Delta,sol_p,sol_m;
-  double ggm[26];
+  double ggm[28];
 
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
