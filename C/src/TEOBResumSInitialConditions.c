@@ -413,7 +413,7 @@ double eob_dyn_j0(double r0, Dynamics *dyn)
   
   if(ecc > 1e-10){
     j0 = eob_dyn_ecc_j0(r0, dyn);
-    printf("%f \n", j0);
+  
   } else {
     j0 = eob_dyn_circ_j0(r0, dyn);
   }

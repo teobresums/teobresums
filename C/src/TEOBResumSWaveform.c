@@ -8446,7 +8446,8 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, Waveform_lm *hl0, doubl
     int activemode[KMAX];
     double Msun = M;
     set_multipolar_idx_mask (activemode, KMAX, EOBPars->use_mode_lm_inertial, EOBPars->use_mode_lm_inertial_size, 1);
-    if (!(EOBPars->use_geometric_units)) Msun = M/MSUN_S;
+    if (!(EOBPars->use_geometric_units)) Msun = M/MSUN_S;   
+
 #if (DEBUG)
     printf("h+,x: nu = %e M = %e D = %e Mpc phi = %e iota = %e prefactor = %e\n",
 	   nu,Msun,distance,phi,iota,amplitude_prefactor);

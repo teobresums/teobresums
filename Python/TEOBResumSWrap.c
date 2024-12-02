@@ -53,6 +53,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "use_geometric_units") != NULL ) { 
     EOBPars->use_geometric_units = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_geometric_units")));
   }
+  if ( PyDict_GetItemString(dict, "use_flx_21_pref") != NULL ) { 
+    EOBPars->use_flx_21_pref = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flx_21_pref")));
+  }
   if ( PyDict_GetItemString(dict, "use_spins") != NULL ) { 
     EOBPars->use_spins = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_spins"));
   }
@@ -219,6 +222,7 @@ int SetOptionalVariables(PyObject* dict){
       EOBPars->use_mode_lm_inertial[i] = (int) PyLong_AsLong(item); 
     }       
   }
+
 
   if ( PyDict_GetItemString(dict, "output_lm") != NULL ) {
     if (EOBPars->output_lm) free(EOBPars->output_lm);

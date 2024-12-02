@@ -290,7 +290,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   /* Compute here the new r_omg radius
      Compute same quantities with prstar=0. This to obtain psi.
      Procedure consistent with the nonspinning case. */
-  double ggm0[26];
+  double ggm0[28];
   eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
   
   const double GS_0       = ggm0[2];
@@ -584,7 +584,7 @@ void eob_ham_s(double nu,
     const double uc4 = uc3*uc;
     
     /* Compute spin-related functions*/
-    double ggm[26];
+    double ggm[28];
     eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, prstar, pphi, nu, chi1, chi2, X1, X2, c3, ggm);
     const double GS              = ggm[2];
     const double GSs             = ggm[3];
@@ -598,11 +598,11 @@ void eob_ham_s(double nu,
     const double d2GS_dr2        = ggm[14];
     const double d2GSs_dr2       = ggm[15];
     
-    
     /* Compute Hamiltonian and its derivatives */
     *Heff_orb         = sqrt( prstar2+A*(1. + pphi2*uc2 +  Q) );
     *Heff             = *Heff_orb + (GS*S + GSs*Sstar)*pphi;
     *H                = sqrt( 1. + 2.*nu*(*Heff - 1.) )/nu;
+
     
     double ooHeff_orb          = 1./(*Heff_orb);
     double dHefforb_dr         = 0.5*ooHeff_orb*(A*(-2.*pphi2*uc3*drc_dr + dQ) + dA*(1. + pphi2*uc2 + Q));
@@ -616,6 +616,7 @@ void eob_ham_s(double nu,
     if (d2Heff_dprstar20 != NULL) *d2Heff_dprstar20 = d2Hefforb_dprstar20 + pphi*(d2GS_dprstar20*S + d2GSs_dprstar20*Sstar); /* second derivative of Heff wrt to pr_star neglecting all pr_star^2 terms */
     if (dHeff_dpphi != NULL)      *dHeff_dpphi      = GS*S + (GSs + pphi*dGSs_dpphi)*Sstar + pphi*A*uc2*ooHeff_orb;
     if (d2Heff_dr2 != NULL)       *d2Heff_dr2       = d2Hefforb_dr2 + pphi*(d2GS_dr2*S + d2GSs_dr2*Sstar);
+
 
 }
 
@@ -1473,7 +1474,7 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
      Procedure consistent with the nonspinning case. */
   double psic, r_omg;
   if (usespins) {
-    double ggm0[26];
+    double ggm0[28];
     eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, d3rc_dr3, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
   
     const double GS_0       = ggm0[2];
@@ -2393,9 +2394,11 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     double u3= u2*u;
 
     /* Compute j(u) on circular orbits */
-    double ggm[26]; 
+    double ggm[28]; 
     double A, B, dA, d2A, d3A, dB, pl_hold, rc, drc_dr, d2rc_dr, d3rc_dr3;
+
     eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &d3A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+ 
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr);
     eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr, d3rc_dr3, aK2, 0.0, 0.0, nu, c1, c2, X1, X2, EOBPars->cN3LO, ggm);
 
@@ -2785,6 +2788,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
 */
 int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0)
 {
+
   // Alloc new dynamics
   DynamicsSpin *spindyn_tmp = NULL;
   DynamicsSpin_alloc(&spindyn_tmp, 10);

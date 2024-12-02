@@ -686,6 +686,7 @@ typedef struct tagEOBParameters
   int use_tidal_fmode_model;                            /**< Flag for f-mode tidal model */
   int use_a6c_fits;                                     /**< Flag for fits a6c */
   int use_cN3LO_fits;                                   /**< Flag for fits cN3LO */
+  int use_flx_21_pref;                                  /**< Flag for 21 prefactor in Fphi */
   
   double dt_merger_interp;                              /**< timestep for merger interpolation */ 
   double dt_interp;                                     /**< timestep for interpolation */
@@ -1098,6 +1099,7 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, doubl
 double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
 double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
 double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot, double Omg3dot);
+double Fphi_NewtPref21(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot, double Omg3dot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);

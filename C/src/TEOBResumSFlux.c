@@ -1026,19 +1026,27 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
        + Fphi*(-dAbyrc2*SQ(oneby_EHeff_orb)*rdot + 2*A*EHeff_orbdot*SQ(oneby_EHeff_orb)*oneby_EHeff_orb*uc2) + EHeff_orbdot*(2*dAbyrc2*SQ(oneby_EHeff_orb)*oneby_EHeff_orb*pphi*rdot 
        + 2*A*Fphi*SQ(oneby_EHeff_orb)*oneby_EHeff_orb*uc2 - 6*A*EHeff_orbdot*SQ(oneby_EHeff_orb)*SQ(oneby_EHeff_orb)*pphi*uc2));
 
-
-    
+    double hatf21;
     hatflm_NC[1] = Fphi_NewtPref(r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot, Omg3dot);
-    /*hatflm_NC[2] = Fphi_NewtPref21(r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot, Omg3dot);*/
+    hatf21 = Fphi_NewtPref21(r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot, Omg3dot);
+  
+    if ((EOBPars->use_flx_21_pref)) hatflm_NC[0] =Fphi_NewtPref21(r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot, Omg3dot);    
+    
     sum_k = 0.;
     for (int k = 0; k < KMAX; k++) sum_k += Flm[k] * hatflm_NC[k];
     sum_k = sum_k/FlmNewt[1];
+   
+
+    FILE *f;
+     f = fopen("prefactors.txt", "a");
+     fprintf(f, "%.10f %.10f %.10f %.10f %.10f \n",  hatflm_NC[1], hatflm_NC[2], sum_k, sum_k*FlmNewt[1], FlmNewt[1]);
+   
+     fclose(f);
+  
 
     Fphi  = Fphi_lo * sum_k;
     Fr    = eob_flx_Fr(r, prstar, pphi, dyn, Fphi);
     Fphi  = Fphi + Fphi_H;
-    printf("%f pref22 \n", hatflm_NC[1]);
-    printf("%f pref21 \n", hatflm_NC[2]);
   } // end iteration
   
   /* Saving useful variables */
@@ -1130,5 +1138,6 @@ double Fphi_NewtPref21(double r, double Omg, double rdot, double r2dot, double r
                 - (6.*rdot*u*Omg3dot)/(SQ(Omg)*SQ(Omg)*Omg) - (3*Omgdot*Omg3dot)/(SQ(Omg)*SQ(Omg)*SQ(Omg));
   
   return FphiNewtNC21;
+
 
 }
