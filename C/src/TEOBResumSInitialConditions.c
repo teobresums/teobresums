@@ -1763,6 +1763,10 @@ double eob_dyn_bisecHam0(Dynamics *dyn, double pr0PN, double j0, double Hap, dou
   double f_xhi = eob_dyn_Ham0(x_hi, &p);
   int  iter_pr0 = 0;
   if (VERBOSE) PRSECTN("Bisection for pr in eccentric initial conditions\n");
+  /* Check the extrema */
+  if (fabs(f_xlo) < tolerance) return x_lo;
+  if (fabs(f_xhi) < tolerance) return x_hi;
+
   while(f_xlo*f_xhi > 0. && iter_pr0 < max_iter){
     x_hi  *= 1.01;
     f_xhi  = eob_dyn_Ham0(x_hi, &p);
