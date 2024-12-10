@@ -1759,10 +1759,6 @@ double eob_dyn_bisecHam0(Dynamics *dyn, double pr0PN, double j0, double Hap, dou
   double pr0;
   double x_lo = 0., x_hi = 2.*pr0PN;
   
-  /* Check that pr0PN is not too large */
-  printf("pr0PN = %e\n",pr0PN);
-  if (EOBPars->nu*2*pr0PN > 1) x_hi = 1.;
-
   struct  Ham0_tmp_params p = {rma, j0, Hap, dyn};
   
   /* Check that the bisection points straddle 0*/
