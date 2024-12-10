@@ -1096,9 +1096,12 @@ int eob_dyn_ic_hyp_s(double r0, Dynamics *dyn, double y_init[])
 
   double pr0abs, H0, dHeff0_dj0, A0, B0, Q0, rc0, pr0, omg_orb, A_guess, pl_hold;
 
+  /* First guess for pr0. In case it is unphysical (pr^2 < 0), set it to 0.5 */
   double Heff_in   = 1./(2.*nu)*(SQ(H_ADM) - 1.) + 1.;
   eob_metric_Apotential(r0, nu, &A_guess, &pl_hold, &pl_hold);
-  double pr0_guess = sqrt(SQ(Heff_in) - A_guess*(1. + SQ(j_ADM/r0)));
+  double pr0_guess = SQ(Heff_in) - A_guess*(1. + SQ(j_ADM/r0));
+  if(pr0_guess < 0.) pr0_guess = 0.5;
+  pr0_guess = sqrt(pr0_guess);
 
   /* Invert H(r, prstar, j) - H0_target = 0*/
   pr0abs = eob_dyn_bisecHam0(dyn, pr0_guess, j_ADM, H_ADM/nu, r0);
@@ -1755,6 +1758,11 @@ double eob_dyn_bisecHam0(Dynamics *dyn, double pr0PN, double j0, double Hap, dou
 
   double pr0;
   double x_lo = 0., x_hi = 2.*pr0PN;
+  
+  /* Check that pr0PN is not too large */
+  printf("pr0PN = %e\n",pr0PN);
+  if (EOBPars->nu*2*pr0PN > 1) x_hi = 1.;
+
   struct  Ham0_tmp_params p = {rma, j0, Hap, dyn};
   
   /* Check that the bisection points straddle 0*/
