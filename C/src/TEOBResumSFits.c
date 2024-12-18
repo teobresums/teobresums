@@ -6306,7 +6306,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   if (Ap[1]>1.){Ap[1]=1.;}
 
   /* l = 3, m = 3 */
-	c113 = -86.20386287795816;
+  c113 = -86.20386287795816;
   c112 = -10.699331077074865;
   c111 = 17.246970292171067;
   c110 = 5.102406475415944;
@@ -6502,6 +6502,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   b3 = b32*nu*nu;
 
   dAp[4] = ( 1 + (b1*lambda + b2*lambda*lambda ) ) / ( (1 + lambda*b3*b3 )*(1 + lambda*b3*b3 ) );
+  if (dAp[4]<0.){dAp[4]=Ap[4];}
 
   /* l = 4, m = 4 */
   b112 = 13904.899442924849;

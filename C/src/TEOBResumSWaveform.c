@@ -9274,7 +9274,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
      ai[13][1] = ai[1][1];
    }
   
-  if (VERBOSE){
+ if(chi1>0.65){ //TODO: nqc fits for HMS are unstable for high spin
+  ai[4][0] = ai[3][0];
+  ai[4][1] = ai[3][1];
+  bi[4][0] = bi[3][0];
+  bi[4][1] = bi[3][1];
+  ai[8][0] = ai[3][0];
+  ai[8][1] = ai[3][1];
+  bi[8][0] = bi[3][0];
+  bi[8][1] = bi[3][1];}
+   
+   if (VERBOSE){
     printf("NQC coefficients for 22 mode:\n");
     PRFORMd("a1",ai[1][0]);
     PRFORMd("a2",ai[1][1]);
