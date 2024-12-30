@@ -2,7 +2,7 @@
 
 ## Compilation & Usage
 
-See the main [README](../README.md) or the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/Home)
+See the main [README](../README.md) or the [Wiki](https://bitbucket.org/teobresums/teobresums/wiki/Home)
 
 ## Brief introduction for developers
 
