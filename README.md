@@ -1,6 +1,6 @@
 # TEOBResumS: Effective-one-body model for compact binary waveforms
 
-To start, checkout the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/browse/).
+To start, checkout the [Wiki](https://bitbucket.org/teobresums/teobresums/wiki/browse/).
 
 ## Code versions
 
@@ -8,17 +8,17 @@ Code versions are tagged on master. Code versions used in scientific
 papers are tagged with the arXiv number. 
 
 For detailed release notes of the most recent version see the
-[`CHANGES` file](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
+[`CHANGES` file](https://bitbucket.org/teobresums/teobresums/src/GIOTTO/CHANGES). 
 
 ## Authors 
 
-See the [`AUTHORS` file](https://bitbucket.org/eob_ihes/teobresums/src/master/AUTHORS).
+See the [`AUTHORS` file](https://bitbucket.org/teobresums/teobresums/src/GIOTTO/AUTHORS).
 
 ## License
 
 TEOBResumS is a free software distributed under the terms of the GNU General Public License as published by the Free Software Foundation.
 
-See the [`LICENSE` file](https://bitbucket.org/eob_ihes/teobresums/src/master/LICENSE).
+See the [`LICENSE` file](https://bitbucket.org/teobresums/teobresums/src/GIOTTO/LICENSE).
 
 ## Pre-requisites
 
@@ -55,7 +55,7 @@ Please contact Sebastiano Bernuzzi and Alessandro Nagar if you wish to be includ
 
 A short description of the code can be found in [here](C/README.md). Please, take a moment to understand the data structures and how the parameters are managed.
 
-See [here](https://bitbucket.org/eob_ihes/teobresums/wiki/EOB-repo-usage) for a description of the workflow of this repo.
+See [here](https://bitbucket.org/teobresums/teobresums/wiki/EOB-repo-usage) for a description of the workflow of this repo.
 
 If you want to start a new branch or development make sure to
 
