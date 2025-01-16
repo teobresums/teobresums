@@ -2658,9 +2658,10 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       break;
     }
 
-    if(spin_flx==SPIN_FLX_EOB && (dyn->y[EOB_EVOLVE_SPIN_Momg] >= omega_eob[0])){
+    if(spin_flx==SPIN_FLX_EOB){
+      // evaluate spline
       EOBPars->spin_flx = spin_flx;
-      dyn->y[EOB_EVOLVE_SPIN_Momg] = gsl_spline_eval(omg_sp, dyn->t, acc); //evaluate spline
+      dyn->y[EOB_EVOLVE_SPIN_Momg] = gsl_spline_eval(omg_sp, dyn->t, acc); 
     }
 
     /* Update size and push arrays (if needed) */
