@@ -159,20 +159,24 @@ enum{Ix, Iy, Iz, IN3};
 #define POSTADIABATIC_NSTEP_MIN (10) /* Minimum requires PA steps, any less than this, the code switches off PA */
 
 /** Simple/generic error handler */
-#define ERROR (1) /** generic error int */
-enum{OK,                /**< No error */
-     ERROR_OUTOFMEM,    /**< Out of memory */
-     ERROR_FILEOPEN,    /**< Error opening file */
-     ERROR_MKDIR,       /**< Error while making directory */
-     ERROR_ROOTFINDER,  /**< Root finder failed */
-     ERROR_ODEINT,      /**< ODE solver failed */
-     NERROR             /**< Number of errors */
+#define ERROR (1)               /** generic error int */
+enum{OK,                        /**< No error */
+     ERROR_OUTOFMEM,            /**< Out of memory */
+     ERROR_FILEOPEN,            /**< Error opening file */
+     ERROR_MKDIR,               /**< Error while making directory */
+     ERROR_ROOTFINDER,          /**< Root finder failed */
+     ERROR_ODEINT,              /**< ODE solver failed */
+     ERROR_INITIAL_CONDITIONS, /**< Initial conditions failed */
+     ERROR_SET_PARAMS,         /**< Error setting parameters */
+     ERROR_RINGDOWN,           /**< Ringdown failed */
+     NERROR                    /**< Number of errors */
 };
 static const char* eob_error_msg[] = {
   "ok",
   "out of memory", "error opening file", "error while making directory",
-  "root finder failed.", "ODE solver failed."
-};
+  "root finder failed.", "ODE solver failed.", "initial conditions failed.",
+  "error setting parameters.", "ringdown failed."
+  };
 
 /** Index list of EOB evolved variables */
 enum{
@@ -718,7 +722,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	   int default_choice, int firstcall);
 
 /* TEOBResumSPars.c */
-void eob_set_params(int default_choice, int firstcall);
+int eob_set_params(int default_choice, int firstcall);
 void EOBParameters_alloc (EOBParameters **eobp);
 void EOBParameters_free (EOBParameters *eobp);
 void EOBParameters_defaults (int choose, EOBParameters *eobp);
@@ -957,8 +961,8 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0, DynamicsSpin *spin);
 
 /* TEOBResumSInitialCondition.c */
-void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);
-void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[]);
+int eob_dyn_ic(double r0, Dynamics *dyn, double y_init[]);
+int eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[]);
 double eob_dyn_bisecHeff0_s(double nu, double chi1, double chi2, double X1, double X2, double c3, double pph, double rorb, double A, double dA, double rc, double drc_dr, double ak2, double S, double Ss);
 double eob_dyn_DHeff0(double x, void *params);
 double eob_dyn_r0_Kepler (double f0);
@@ -1020,9 +1024,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 void eob_wav_hlmNQC(double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
-extern void (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c*/
-void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
-void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
+extern int (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c*/
+int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
+int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, double XB);
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, Waveform_lm *hTlm, Waveform_lm *hTlm_neg, Waveform_lm *hTl0);
@@ -1038,7 +1042,7 @@ void time_shift_FD(WaveformFD *hpc, double tc);
 void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double alpha2, double Amrg);
-void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm);
+int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm);
 
 /* SpecialFuns.c */
 double fact(int n);

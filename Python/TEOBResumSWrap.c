@@ -152,7 +152,7 @@ int SetOptionalVariables(PyObject* dict){
   /* Modes */
   if ( PyDict_GetItemString(dict, "use_mode_lm") != NULL ) {
     if (EOBPars->use_mode_lm) free(EOBPars->use_mode_lm);
-    PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm");
+    PyObject *tmp = PyDict_GetItemString(dict, "use_mode_lm");
     EOBPars->use_mode_lm_size = PyObject_Length(tmp);
     EOBPars->use_mode_lm = malloc ( EOBPars->use_mode_lm_size * sizeof(int) );
     for (int i = 0; i < EOBPars->use_mode_lm_size; i++){
@@ -163,7 +163,7 @@ int SetOptionalVariables(PyObject* dict){
 
   if ( PyDict_GetItemString(dict, "use_mode_lm_nqc") != NULL ) {
     if (EOBPars->use_mode_lm_nqc) free(EOBPars->use_mode_lm_nqc);
-    PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm_nqc");
+    PyObject *tmp = PyDict_GetItemString(dict, "use_mode_lm_nqc");
     EOBPars->use_mode_lm_nqc_size = PyObject_Length(tmp);
     EOBPars->use_mode_lm_nqc = malloc ( EOBPars->use_mode_lm_nqc_size * sizeof(int) );
     for (int i = 0; i < EOBPars->use_mode_lm_nqc_size; i++){
@@ -174,7 +174,7 @@ int SetOptionalVariables(PyObject* dict){
 
   if (PyDict_GetItemString(dict, "use_mode_lm_inertial") != NULL) {
     if (EOBPars->use_mode_lm_inertial) free(EOBPars->use_mode_lm_inertial);
-    PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm_inertial");
+    PyObject *tmp = PyDict_GetItemString(dict, "use_mode_lm_inertial");
     EOBPars->use_mode_lm_inertial_size = PyObject_Length(tmp);
     EOBPars->use_mode_lm_inertial = malloc ( EOBPars->use_mode_lm_inertial_size * sizeof(int) );
     for (int i = 0; i < EOBPars->use_mode_lm_inertial_size; i++){
@@ -186,7 +186,7 @@ int SetOptionalVariables(PyObject* dict){
        to set the former as a default behavior
     */
     if (EOBPars->use_mode_lm_inertial) free(EOBPars->use_mode_lm_inertial);
-    PyListObject *tmp = PyDict_GetItemString(dict, "use_mode_lm");
+    PyObject *tmp = PyDict_GetItemString(dict, "use_mode_lm");
     EOBPars->use_mode_lm_inertial_size = PyObject_Length(tmp);
     EOBPars->use_mode_lm_inertial = malloc ( EOBPars->use_mode_lm_inertial_size * sizeof(int) );
     for (int i = 0; i < EOBPars->use_mode_lm_inertial_size; i++){
@@ -197,7 +197,7 @@ int SetOptionalVariables(PyObject* dict){
 
   if ( PyDict_GetItemString(dict, "output_lm") != NULL ) {
     if (EOBPars->output_lm) free(EOBPars->output_lm);
-    PyListObject *tmp = PyDict_GetItemString(dict, "output_lm");
+    PyObject *tmp = PyDict_GetItemString(dict, "output_lm");
     EOBPars->output_lm_size = PyObject_Length(tmp);
     EOBPars->output_lm = malloc ( EOBPars->output_lm_size * sizeof(int) );
     for (int i = 0; i < EOBPars->output_lm_size; i++){
@@ -209,7 +209,7 @@ int SetOptionalVariables(PyObject* dict){
   /* k postpeak */
   if ( PyDict_GetItemString(dict, "kpostpeak") != NULL ) {
     if (EOBPars->kpostpeak) free(EOBPars->kpostpeak);
-    PyListObject *tmp = PyDict_GetItemString(dict, "kpostpeak");
+    PyObject *tmp = PyDict_GetItemString(dict, "kpostpeak");
     EOBPars->kpostpeak_size = PyObject_Length(tmp);
     EOBPars->kpostpeak = malloc ( EOBPars->kpostpeak_size * sizeof(int) );
     for (int i = 0; i < EOBPars->kpostpeak_size; i++){
@@ -221,7 +221,7 @@ int SetOptionalVariables(PyObject* dict){
   /* k nqc peak22 */
   if ( PyDict_GetItemString(dict, "knqcpeak22") != NULL ) {
     if (EOBPars->knqcpeak22) free(EOBPars->knqcpeak22);
-    PyListObject *tmp = PyDict_GetItemString(dict, "knqcpeak22");
+    PyObject *tmp = PyDict_GetItemString(dict, "knqcpeak22");
     EOBPars->knqcpeak22_size = PyObject_Length(tmp);
     EOBPars->knqcpeak22 = malloc ( EOBPars->knqcpeak22_size * sizeof(int) );
     for (int i = 0; i < EOBPars->knqcpeak22_size; i++){
@@ -402,7 +402,7 @@ int SetOptionalVariables(PyObject* dict){
   }
   if ( PyDict_GetItemString(dict, "freqs") != NULL ) {
     if (EOBPars->freqs) free(EOBPars->freqs);
-    PyListObject *tmp = PyDict_GetItemString(dict, "freqs");
+    PyObject *tmp = PyDict_GetItemString(dict, "freqs");
     EOBPars->freqs_size = PyObject_Length(tmp);
     EOBPars->freqs = malloc ( EOBPars->freqs_size * sizeof(double) );
     for (int i = 0; i < EOBPars->freqs_size; i++){
@@ -514,7 +514,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     + EOBPars->output_nqc; 
   if (output) {
       if (system_mkdir(EOBPars->output_dir)) {
-        printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
+        PyErr_SetString(PyExc_SystemError, eob_error_msg[ERROR_MKDIR]);
         return NULL;
       }
     }
@@ -525,7 +525,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
   }
 
-  eob_set_params(default_choice, fc);
+  if(eob_set_params(default_choice, fc)) {
+    PyErr_SetString(PyExc_ValueError, eob_error_msg[ERROR_SET_PARAMS]);
+    return NULL;
+  }
 
   /* Overwrite spin-spin parameters, if required */
   if ( PyDict_GetItemString(dict, "C_Q1") != NULL ) { 
@@ -561,8 +564,11 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
                       &hTmodes, &hTmmodes, &hT0modes,
                       &hfTmodes,
                       default_choice, fc);
-
-  if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);  
+  if (status) {
+    PyErr_SetString(PyExc_RuntimeError, eob_error_msg[status]);
+    return NULL;
+  }
+  
   /*  Construct the output arrays */
 
   /* return modes? */
@@ -581,7 +587,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   PyArrayObject *pdto = (PyArrayObject *) PyArray_SimpleNew(1,dims_dyn,NPY_DOUBLE);
   pdt = pyvector_to_Carrayptrs(pdto);
   memcpy(pdt, dynf->time, dynf->size *sizeof(double));
-  PyDict_SetItemString(dyndict, "t", pdto); 
+  PyDict_SetItemString(dyndict, "t", (PyObject*) pdto); 
   Py_DECREF(pdto);
 
   /* other variables */
@@ -590,7 +596,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     PyArrayObject *pvo = (PyArrayObject *) PyArray_SimpleNew(1,dims_dyn,NPY_DOUBLE);
     pv = pyvector_to_Carrayptrs(pvo);
     memcpy(pv, dynf->data[v], dynf->size *sizeof(double));
-    PyDict_SetItemString(dyndict, eob_var[v], pvo); 
+    PyDict_SetItemString(dyndict, eob_var[v], (PyObject*) pvo); 
     Py_DECREF(pvo);
   }
 
@@ -718,7 +724,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     } else if (arg_out == 1){
       ret = Py_BuildValue("OOOOO", pto, phpo, phco, hlmdict, dyndict);
     } else {
-      printf("ERROR: arg_out has to be equal to 'yes' or 'no' ");
+      PyErr_SetString(PyExc_ValueError, "`arg_out` has to be equal to yes or no ");
       ret = NULL;
     }
     /* Free C memory */
@@ -836,7 +842,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     } else if (arg_out == 1){
       ret = Py_BuildValue("OOOOOOOO", pfo, phprealo, phpimago, phcrealo, phcimago, hflmdict, htlmdict, dyndict);
     } else {
-      printf("ERROR: arg_out has to be equal to 'yes' or 'no'");
+      PyErr_SetString(PyExc_ValueError, "`arg_out` has to be equal to yes or no\m");
       ret = NULL;
     }
 

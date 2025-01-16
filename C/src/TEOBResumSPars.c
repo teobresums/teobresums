@@ -41,7 +41,7 @@ void (*eob_wav_flm)();
 void (*eob_wav_flm_s)();
 void (*eob_wav_deltalm)();
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
-void (*eob_wav_ringdown)();
+int (*eob_wav_ringdown)();
 void (*eob_dyn_s_get_rc)();
 int (*p_eob_spin_dyn_rhs)();
 
@@ -402,7 +402,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
  *   @param[in] default_choice: default choice for binary type
  *   @param[in] firstcall: flag to indicate if this is the first call
  */
-void eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
+int eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
 {
   
   /* Set intrinsic parameters as given by user */
@@ -539,9 +539,18 @@ void eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
     
     EOBPars->japT2 = EOBPars->japA2 + EOBPars->japB2;
     
-    if (!(EOBPars->kapT2 > 0.)) errorexit("kappaT2 must be >0");
-    if (!(EOBPars->kapT3 > 0.)) errorexit("kappaT3 must be >0");
-    if (!(EOBPars->kapT4 > 0.)) errorexit("kappaT4 must be >0");
+    if (!(EOBPars->kapT2 > 0.)) {
+      printf("ERROR: kappaT2 must be >0\n");
+      return 1;
+    }
+    if (!(EOBPars->kapT3 > 0.)) {
+      printf("ERROR: kappaT3 must be >0\n");
+      return 1;
+    }
+    if (!(EOBPars->kapT4 > 0.)) {
+      printf("ERROR: kappaT4 must be >0\n");
+      return 1;
+    }
     
     /* Tidal coefficients cons dynamics
        \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
@@ -581,21 +590,24 @@ void eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
       double LamBl[] = {0,0,EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4};
       
       for (int l=2; l<=lmax; l++) {
-	if (LamAl[l] > 0) {
-	  EOBPars->bomgfA[l] = Chang14_fit_omegaf(LamAl[l], l);	 
-	  if (EOBPars->bomgfA[l]<=0.)
-	    errorexit("f-mode frequency of star A cannot be zero or negative");
-	  EOBPars->bomgfA[l] /= XA;
-	}
-	if (LamBl[l] > 0) {
-	  EOBPars->bomgfB[l] = Chang14_fit_omegaf(LamBl[l], l);
-	  if (EOBPars->bomgfB[l]<=0.)
-	    errorexit("f-mode frequency of star B cannot be zero or negative");
-	  EOBPars->bomgfB[l] /= XB;
-	}
+        if (LamAl[l] > 0) {
+          EOBPars->bomgfA[l] = Chang14_fit_omegaf(LamAl[l], l);	 
+          if (EOBPars->bomgfA[l]<=0.){
+            printf("ERROR: f-mode frequency of star A cannot be zero or negative\n");
+            return 1;
+          }
+          EOBPars->bomgfA[l] /= XA;
+        }
+        if (LamBl[l] > 0) {
+          EOBPars->bomgfB[l] = Chang14_fit_omegaf(LamBl[l], l);
+          if (EOBPars->bomgfB[l]<=0.){
+            printf("ERROR: f-mode frequency of star A cannot be zero or negative\n");
+            return 1;
+          }
+          EOBPars->bomgfB[l] /= XB;
+        }
       } 
-      
-    }  /* EOBPars->use_tidal_fmode_model */
+    } /* EOBPars->use_tidal_fmode_model */
 
   }  /* use_tidal */
   
@@ -621,14 +633,18 @@ void eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
   switch(EOBPars->use_a6c_fits)
   {
     case(a6c_fits_HM_2023):
-      if (EOBPars->use_flm != USEFLM_HM)
-        errorexit("a6c_fits_HM should be used with USEFLM_HM\n.");
+      if (EOBPars->use_flm != USEFLM_HM) {
+        printf("ERROR: a6c_fits_HM should be used with USEFLM_HM\n.");
+        return 1;
+      }
       EOBPars->a6c = eob_a6c_fit_HM_2023(EOBPars->nu);
       break;
     case(a6c_fits_HM):
       // check compatibility with FLM
-      if (EOBPars->use_flm != USEFLM_HM)
-        errorexit("a6c_fits_HM should be used with USEFLM_HM\n.");
+      if (EOBPars->use_flm != USEFLM_HM) {
+        printf("a6c_fits_HM should be used with USEFLM_HM\n.");
+        return 1;
+      }
       EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
       break;
     case(a6c_fits_V0):
@@ -648,13 +664,17 @@ void eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
     case(cN3LO_fits_HM_2023_431):
     case(cN3LO_fits_HM_2023_430):
     case(cN3LO_fits_HM_2023_420):
-      if (EOBPars->use_flm != USEFLM_HM)
-        errorexit("cN3LO_fits_HM_2023 should be used with USEFLM_HM\n.");
+      if (EOBPars->use_flm != USEFLM_HM) {
+        printf("cN3LO_fits_HM_2023 should be used with USEFLM_HM\n.");
+        return 1;
+      }
       EOBPars->cN3LO = eob_c3_fit_HM_2023(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_HM):
-      if (EOBPars->use_flm != USEFLM_HM)
-        errorexit("cN3LO_fits_HM should be used with USEFLM_HM\n.");
+      if (EOBPars->use_flm != USEFLM_HM) {
+        printf("cN3LO_fits_HM should be used with USEFLM_HM\n.");
+        return 1;
+      }
       EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_V0):
@@ -745,8 +765,10 @@ void eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
       eob_wav_flm     = &eob_wav_flm_v1;
       eob_wav_flm_s   = &eob_wav_flm_s_SSNNLO;
     */
-  } else errorexit("unknown option for use_flm");
-
+  } else {
+    printf("ERROR: Unknown option for use_flm\n");
+    return 1;
+  }
   /** Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
@@ -760,8 +782,12 @@ void eob_set_params(int UNUSED(default_choice), int UNUSED(firstcall))
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOSPIN;
   } else if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
-  } else errorexit("unknown option for centrifugal_radius");
+  } else {
+    printf("ERROR: unknown option for centrifugal_radius\n");
+  }
 
+  return OK;
+  
 }
 
 /**

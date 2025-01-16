@@ -137,20 +137,28 @@ int main (int argc, char* argv[])
     EOBPars->firstcall[k] = 1;
   }
   
+  int status = OK;
   /* set domain */
-  eob_set_params(dc, fc); 
+  if (eob_set_params(dc, fc)) {
+    printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_SET_PARAMS]);
+    status = ERROR_SET_PARAMS;
+    goto EXIT_POINT_MAIN;
+  }
+
   if (output){
     char outpar[STRLEN];
     strcpy(outpar,EOBPars->output_dir);
     EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
   }
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
-  int status = EOBRun(&hpc, &hfpc, 
+  status = EOBRun(&hpc, &hfpc, 
 		      &hmodes, &hfmodes,&dynf,
 		      &hTmodes, &hTmmodes, &hT0modes,
 		      &hfTmodes,
 		      dc, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
+
+EXIT_POINT_MAIN:;
 
   Waveform_free (hpc);
   WaveformFD_free (hfpc);
@@ -405,11 +413,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       status = ERROR_ROOTFINDER;
       goto EXIT_POINT;
     }
-    double LambdaAl2  = EOBPars->LambdaAl2;
-    if( fabs(LambdaAl2) < TEOB_LAMBDA_TOL ) LambdaAl2 = 0.0;
-    double LambdaBl2 = EOBPars->LambdaBl2;
-    if( fabs(LambdaBl2) < TEOB_LAMBDA_TOL ) LambdaBl2 = 0.0;
-    double q = EOBPars->q;
     /* Reset options */
     EOBPars->use_tidal = tidal_tmp;
     EOBPars->use_spins = spins_tmp;
@@ -418,6 +421,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
+  
   if (EOBPars->compute_LR && !(use_tidal)) {
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR)));
     if (check_status) {
@@ -532,9 +536,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
      */
 
     /* Compute the initial conditions */
-    if (use_spins) eob_dyn_ic_s(r0, dyn, dyn->y0);
-    else           eob_dyn_ic(r0, dyn, dyn->y0);
-    
+    if (use_spins) {
+      if (eob_dyn_ic_s(r0, dyn, dyn->y0)) status = ERROR_INITIAL_CONDITIONS;
+    } else {
+      if(eob_dyn_ic(r0, dyn, dyn->y0)) status = ERROR_INITIAL_CONDITIONS;
+    }
+    if (status) goto EXIT_POINT;
+
     /* Set arrays with initial conditions */
     dyn->t       = 0.;
     dyn->r       = dyn->y0[EOB_ID_RAD];
@@ -1071,8 +1079,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->size = size;
     
     /* Ringdown attachment */
-    eob_wav_ringdown(dyn, hlm);
-    
+    if (eob_wav_ringdown(dyn, hlm)){
+      printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_RINGDOWN]);
+      status = ERROR_RINGDOWN;
+      goto EXIT_POINT;
+    }
   } /* End of BBH section */
 
 #if (DEBUG) 
@@ -1226,12 +1237,28 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       //SB: the size here needs to be fixed to the required sampling frequency.
       //    if not, the code jumps here and size is still the one from default...
       Waveform_alloc (hpc, size, "waveform");
-      Waveform_lm_alloc (hmodes, size, "hlm", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
+      Waveform_lm_free (hlm);
+      Waveform_lm_alloc (&hlm, size, "hlm", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size);
     } else  {                             
       const int interp_fd_size = get_uniform_size(EOBPars->initial_frequency, EOBPars->initial_frequency, EOBPars->df);
       WaveformFD_alloc (hfpc, interp_fd_size, "waveform_fd");
       WaveformFD_lm_alloc (hfmodes, interp_fd_size, "hlm_fd");
     }
+
+    /* 
+       Print the intrinsic parameters that caused the error
+       Note that we do not enclose this in a VERBOSE macro, we always
+       want this to print to output
+    */
+    printf("Failed configuration:\n");
+    printf("--------------------------------\n");
+    printf("\t q = %.2f\n", q);
+    printf("\t M = %.2f\n", M);
+    printf("\t chi1 = [%.2f , %.2f , %.2f]\n", EOBPars->chi1x, EOBPars->chi1y, EOBPars->chi1z);
+    printf("\t chi2 = [%.2f , %.2f , %.2f]\n", EOBPars->chi2x, EOBPars->chi2y, EOBPars->chi2z);
+    printf("\t LambdaAl2 = %.2f\n", EOBPars->LambdaAl2);
+    printf("\t LambdaBl2 = %.2f\n", EOBPars->LambdaBl2);
+    printf("\t f0 = %.2f\n", EOBPars->initial_frequency);
   }
   
   *hmodes = hlm;         /* do not free these! */
@@ -1253,6 +1280,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
 
-  return OK;
+  return status;
 }
 

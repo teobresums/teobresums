@@ -22,9 +22,11 @@
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful, 1 if error
 */
-void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
 {
+  int status = OK;
   const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);    
 
@@ -48,8 +50,6 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
     /* Compute metric  */
     eob_metric(r[i], dyn, &A, &B, &dA[i], &d2A, &dB);
     
-    //printf("%d %.16e %.16e %.16e\n",i,r[i],A,dA[i]);
-
     /* Angular momentum for circular orbit: circular ID  */
     j2[i]   =  r3*dA[i]/(2.*A-r[i]*dA[i]);
     j[i]    =  sqrt(j2[i]);
@@ -94,6 +94,7 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
     
+  return status;
 }
 
 /**
@@ -110,9 +111,11 @@ void eob_dyn_ic(double r0, Dynamics *dyn, double y_init[])
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful, 1 if error
 */
-void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
 {
+  int status = OK;
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
@@ -281,6 +284,8 @@ void eob_dyn_ic_s(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
   
+  return status;
+
 }
 
 /**

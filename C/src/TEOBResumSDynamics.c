@@ -1120,7 +1120,7 @@ double eob_dyn_fLR(double r, void  *params)
   * Function: eob_dyn_adiabLR
   * -------------------------
   *  Root finder for adiabatic light-ring
-  *  Look for r in [1.8, 5.6] for BHNS, [2.1, 5.9] for BNS
+  *  Look for r in [1.8, 5.6] for BHNS, [1.8, 5.9] for BNS
   *  and [1.8, 3.1] for BBH
   * 
   *  @note This is for the non-spinning case
@@ -1151,7 +1151,7 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
       x_hi = 5.6; // nu~1/4 kappaT2 ~ 600
     } else {
       /* BNS */
-      x_lo = 2.1; // nu~1/4 kappaT2 ~ 12  
+      x_lo = 1.8; // nu~1/4 kappaT2 -> 0
       x_hi = 5.9; // nu~1/4 kappaT2 ~ 600 
     }
   } else {
@@ -1165,8 +1165,27 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   gsl_root_fsolver *s;
   gsl_function F;
   F.function = &eob_dyn_fLR;
-  F.params = dyn;
-  //T = gsl_root_fsolver_bisection;
+  F.params   = dyn;
+  
+  /* Iterative procedure to find the bracket */
+  double f_lo = eob_dyn_fLR(x_lo, dyn);
+  double f_hi = eob_dyn_fLR(x_hi, dyn);
+  if (f_lo*f_hi > 0) {
+    printf("Iterative procedure to find the bracket\n");
+    for (int itr = 0; itr < 100; itr++) {
+      x_lo *= 0.99;
+      f_lo = eob_dyn_fLR(x_lo, dyn);
+      if (f_lo*f_hi < 0) break;
+    }
+  }
+
+  /* Check that the interval brackets zero */
+  if (f_lo*f_hi > 0) {
+    printf("ERROR: no zero in interval for eob_dyn_adiabLR\n");
+    printf("f_lo = %e, f_hi = %e\n", f_lo, f_hi);
+    return ROOT_ERRORS_BRACKET;
+  }
+  
   T = gsl_root_fsolver_brent;
   s = gsl_root_fsolver_alloc (T);
   gsl_root_fsolver_set (s, &F, x_lo, x_hi);
@@ -1186,9 +1205,6 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   *rLR = 0.;
   if (isfinite(x)) *rLR = x;
 
-  //if (status == ???) {
-  //  return ROOT_ERRORS_BRACKET;
-  //}
   if (status == GSL_SUCCESS) {
     return ROOT_ERRORS_NO;
   } 

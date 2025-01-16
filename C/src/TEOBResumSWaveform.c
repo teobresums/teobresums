@@ -4477,7 +4477,7 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
  */
-void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
+int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 {
 
   const double Mbh   = EOBPars->Mbhf;
@@ -4697,6 +4697,8 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
     free(t_lm[k]);
   }
   
+  return OK;
+
 }
 
 /** 
@@ -4707,8 +4709,9 @@ void eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
  * 
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
+ *   @return         :  OK if successful
 */
-void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
+int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 {
   
   const double Mbh   = EOBPars->Mbhf;
@@ -4770,6 +4773,10 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /* nonspinning case */
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
+  if (tmrgA22 < 0.0) {
+    printf("ERROR: the A22 peak time is negative, dynamics is too short\n");
+    return 1;
+  }
   
   /* The following values are the difference between the time of the peak of
      the 22 waveform and the other modes. 
@@ -4866,7 +4873,8 @@ void eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);
   }
-  
+
+  return OK;
 }
 
 /** 
@@ -6735,8 +6743,9 @@ void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, dou
  * 
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
+ *   @return         : OK if successful
  */
-void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
+int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
 {
   if (VERBOSE) PRSECTN("entered BHNS ringdown model");
   const double Mbh   = EOBPars->Mbhf;
@@ -6914,5 +6923,6 @@ void eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     free(t_lm[k]);
   }
   
+  return OK;
   
 }
