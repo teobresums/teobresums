@@ -968,7 +968,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
  END_ODE_EVOLUTION:;
  
   /* Unwrap phase for higher modes */
-  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (ecc != 0.)) {
+  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3) || (ecc != 0.)) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
 	      unwrap_HM(hlm->phase[k],size);
@@ -1033,7 +1033,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
        NQC and ringdown attachment currently assume uniform grids.
        Do we need to interpolate ? */
     int merger_interp = 1; /* In general, yes ... */
-    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM) && (EOBPars->use_flm != USEFLM_HM_4PN22)) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
+    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM) 
+                                          && (EOBPars->use_flm != USEFLM_HM_4PN22)
+                                          && (EOBPars->use_flm != USEFLM_HM_6PN3p3)) 
+      merger_interp = 0; /* ... except if merger is covered by uniform tstep */
 
     /* NQC and ringdown attachment is done around merger 
 	using auxiliary variables defined around [tmin,tmax] 
@@ -1065,7 +1068,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
-      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22)) {
+      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3)) {
 	      dt_merger_interp = 0.5;
       } else {
 	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);

@@ -305,7 +305,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
     
     /* Correcting (5,5) for Higher Modes */
-    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22){
+    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3){
       FNewtlm[13] = CNlm[13] * sp4x8;
     }
     
@@ -461,7 +461,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
     FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
     
     /* Correcting (5,5) for Higher Modes */
-    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 ){
+    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3){
       FNewtlm[13] = CNlm[13] * sp4x8;
     }
     
@@ -704,7 +704,7 @@ double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, 
   const double nu = EOBPars->nu;
   const double nu2 = nu*nu;
 
-  const double u  = 1/r;
+  const double u  = 1./r;
   const double u2 = u*u;
 
   double c1 = 5317./1680 - 227./140*nu;
@@ -900,8 +900,8 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
              + sqrtAbyB*Frdot;
     
     HSO2dot = pphi2dot*G + 2.*Fphi*(dG_dr*rdot + dG_dprstar*prstardot)
-      + pphi*(d2G_dr2*rdot + dG_dr*r2dot + 2.*d2G_dr_dprstar*rdot*prstardot
-	      + d2G_dprstar2*SQ(prstardot) + dG_dprstar*prstar2dot);
+            + pphi*(d2G_dr2*rdot2 + dG_dr*r2dot + 2.*d2G_dr_dprstar*rdot*prstardot
+	          + d2G_dprstar2*SQ(prstardot) + dG_dprstar*prstar2dot);
     
     Heff_orb2dot  = Heff2dot - HSO2dot;
     EHeff_orb2dot = E2dot*Heff_orb + 2.*Edot*Heff_orbdot + E*Heff_orb2dot;

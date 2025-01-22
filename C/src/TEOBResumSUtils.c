@@ -141,6 +141,47 @@ double Pade02(double x, double *a){
 }
 
 /**
+ * Function: Pade21
+ * ----------------
+ * Return Pade21 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade21(x,a): Pade21 function
+*/
+double Pade21(double x, double *a){
+  double x2  = x*x;
+  double n1  = (a[1]*a[2]-a[3]);
+  double n2  = (SQ(a[2]) - a[1]*a[3]);
+  double d1  = a[3];
+  double num = (a[2] + n1*x + n2*x2);
+  double den = (a[2] - d1*x);
+  return num/den;
+}
+
+/**
+ * Function: Pade12
+ * ----------------
+ * Return Pade12 function
+ * 
+ * @param[in] x: argument
+ * @param[in] a: array of coefficients
+ * 
+ * @return Pade12(x,a): Pade12 function
+*/
+double Pade12(double x, double *a){
+  double x2   = x*x;
+  double fact = (SQ(a[1])-a[2]);
+  double n1   = (SQ(a[1])*a[1]-2.*a[1]*a[2]+a[3]);
+  double d1   = (-a[1]*a[2]+a[3]);
+  double d2   = (SQ(a[2]) - a[1]*a[3]);
+  double num  = (fact + n1*x);
+  double den  = (fact + d1*x + d2*x2);
+  return num/den;
+}
+
+/**
  * Function: Pade22
  * ----------------
  * Return Pade22 function
