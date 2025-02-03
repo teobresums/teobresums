@@ -599,7 +599,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (VERBOSE) printf("WARNING: Initial separation < 10\n");
     }
 
-    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins){
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins && EOBPars->model==MODEL_GIOTTO){
       if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0]){
         eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, dyn->data[EOB_MOMG][0]);
       }
@@ -995,7 +995,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
     spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
     
-    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB)
+    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI)
       eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
   }
 
@@ -1167,9 +1167,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
       spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
       
-      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB)
+      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI){
         eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
-
+      }
       /* final state */
       EOBPars->abhf = PrecessingRemnantSpin(dyn); 
     }

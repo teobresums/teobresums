@@ -285,10 +285,10 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->spin_odes_omg_stop   = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
   eobp->spin_odes_t_stop     = -1;
   eobp->spin_odes_dt         = 1;  // timestep for spin dynamics
-  eobp->spin_interp_domain   = 1;  // FD or TD interpolation
+  eobp->spin_interp_domain   = 0;  // FD or TD interpolation
   eobp->chi1x = eobp->chi1y  = eobp->chi1z = 0.;
   eobp->chi2x = eobp->chi2y  = eobp->chi2z = 0.;
-  eobp->spin_flx             = SPIN_FLX_PN;
+  eobp->spin_flx             = SPIN_FLX_EOB;
   eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
 
   /* OMP settings */
@@ -518,12 +518,13 @@ int eob_set_params(int default_choice, int firstcall)
   }
 
   /* If precession and eccentricity are both specified, use EOB flux */
-  if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
-   if (VERBOSE){
-      printf("Setting spin_flux to EOB\n"); EOBPars->spin_flx = SPIN_FLX_EOB;
-      printf("Setting interpolation domain to TD\n"); EOBPars->domain = 0;
-   }
-
+  // if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0)){
+  //  if (VERBOSE){
+  //     printf("Setting spin_flux to EOB\n"); EOBPars->spin_flx = SPIN_FLX_EOB;
+  //     printf("Setting interpolation domain to TD\n"); EOBPars->spin_interp_domain = 0;
+  //  }
+  // }
+  
   /* Check: if eccentricity is not between 0 and 1, throw an error */
   if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0)){
     printf("ERROR: Eccentricity must be >= 0 and < 1.\n");
@@ -1569,7 +1570,7 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     val = string_trim(val);
     for (eobp->spin_flx=0; eobp->spin_flx<=SPIN_FLX_NOPT; eobp->spin_flx++) {
       if (eobp->spin_flx == SPIN_FLX_NOPT) {
-        eobp->spin_flx = SPIN_FLX_PN;
+        eobp->spin_flx = SPIN_FLX_EOB;
         if (VERBOSE) printf("spin flux '%s' undefined, set to '%s'\n",
         val,spin_flx_opt[eobp->spin_flx]);
         break;

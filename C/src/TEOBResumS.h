@@ -800,6 +800,7 @@ double nu_to_X1(const double nu);
 double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double LamB, int ell, double *kapA, double *kapB);
 void set_spin_vars(double X1, double X2, double chi1, double chi2, double *S1, double *S2, double *a1, double *a2, double *aK, double *aK2, double *S, double *Sstar);
 double Eulerlog(const double x,const int m);
+double orbit_averaged_x_3PN(double E, double pphi);
 double Pade02(double x, double *a);
 double Pade21(double x, double *a);
 double Pade12(double x, double *a);

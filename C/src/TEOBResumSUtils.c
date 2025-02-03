@@ -123,6 +123,47 @@ double Eulerlog(const double x,const int m)
 }
 
 /**
+  * Function: orbit_averaged_x_3PN
+  * -------------------------------
+  * Return gauge invariant orbit-avg PN parameter
+  * Eq. 541 of Blanchet
+  *
+  * @param[in] E: EOB energy
+  * @param[in] pphi: EOB angular momentum
+  *
+  * @return x: gauge invariant orbit-avg PN parameter
+*/
+double orbit_averaged_x_3PN(double E, double pphi){
+  
+  double nu = EOBPars->nu;
+  double eps = -2*(E-1)/nu;
+  double j   = eps*pphi*pphi;
+
+  // powers
+  double eps2 = eps*eps;
+  double eps3 = eps2*eps;
+  double j2   = j*j;
+  double j3   = j2*j;
+  double sqj  = sqrt(j);
+  double j32  = j*sqj;
+  double nu2  = nu*nu;
+  double nu3  = nu2*nu;
+  double x = eps * (1 
+        + eps * (-5.0/4.0 + 1.0/12.0 * nu + 2.0/j)
+        + eps2 * (5.0/2.0 + 5.0/24.0 * nu + 1.0/18.0 * nu2
+        + (1.0/sqj) * (-5.0 + 2.0 * nu) + (1.0/j) * (5.0 + 7.0/6.0 * nu) + (1.0/j2) * (33.0/2.0 - 5.0 * nu))
+        + eps3 * (-235.0/48.0 - (25.0/24.0) * nu - (25.0/576.0) * nu2 + (35.0/1296.0) * nu3
+            + (1.0/j) * (35.0/4.0 - 5.0/3.0 * nu + 25.0/36.0 * nu2)
+            + (1.0/sqj) * (145.0/8.0 - 235.0/24.0 * nu + 29.0/12.0 * nu2)
+            + (1.0/j32) * (-45.0 + (472.0/9.0 - 41.0/96.0 * Pi * Pi) * nu - 5.0 * nu2)
+            + (1.0/j2) * (-565.0/8.0 + (1903.0/24.0 - 41.0/64.0 * Pi * Pi) * nu - 95.0/12.0 * nu2)
+            + (1.0/j3) * (529.0/3.0 + (-610.0/3.0 + 205.0/64.0 * Pi * Pi) * nu + 35.0/4.0 * nu2)
+        )
+    );
+  return pow(x, 3./2);
+}
+
+/**
  * Function: Pade02
  * ----------------
  * Return Pade02 function
