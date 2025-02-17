@@ -1159,7 +1159,7 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
 {
   
-  double A, dA_u, d2A_u, dA, d2A;
+  double A=0., dA_u=0., d2A_u=0., dA=0., d2A=0.;
 
   const double elsix = 1.833333333333333333333;  // 11/6
   const double eightthird = 2.6666666666666666667; // 8/3
@@ -1697,8 +1697,8 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
 
   /* Add here tides if needed */
   if (EOBPars->use_tidal) {
-    double AT, dAT_u, d2AT_u;
-    double BT, dBT_u, d2BT_u;
+    double AT=0., dAT_u=0., d2AT_u=0.;
+    double BT=0., dBT_u=0., d2BT_u=0.;
     eob_metric_Atidal(r, dyn, &AT, &dAT_u, &d2AT_u);
     Atmp     += AT;
     dAtmp_u  += dAT_u;
