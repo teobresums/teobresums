@@ -413,7 +413,7 @@ int SetOptionalVariables(PyObject* dict){
 
   if ( PyDict_GetItemString(dict, "ode_timestep") != NULL ) { 
     char* val;
-    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ringdown_eulerangles"));
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_timestep"));
     for(EOBPars->ode_timestep=0; EOBPars->ode_timestep<=ODE_TSTEP_NOPT; EOBPars->ode_timestep++){
       if (EOBPars->ode_timestep == ODE_TSTEP_NOPT) EOBPars->ode_timestep = ODE_TSTEP_ADAPTIVE;
       if (STREQUAL(val,ode_tstep_opt[EOBPars->ode_timestep])) break;
