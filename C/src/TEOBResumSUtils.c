@@ -135,19 +135,30 @@ double Eulerlog(const double x,const int m)
 */
 double orbit_averaged_x_3PN(double E, double pphi){
   
-  double nu = EOBPars->nu;
-  double eps = -2*(E-1)/nu;
-  double j   = eps*pphi*pphi;
+  double nu   = EOBPars->nu;
+  double chi1 = EOBPars->chi1;
+  double chi2 = EOBPars->chi2;
+  double eps  = -2*(E-1)/nu;
+  double j    = eps*pphi*pphi;
 
   // powers
-  double eps2 = eps*eps;
-  double eps3 = eps2*eps;
-  double j2   = j*j;
-  double j3   = j2*j;
-  double sqj  = sqrt(j);
-  double j32  = j*sqj;
-  double nu2  = nu*nu;
-  double nu3  = nu2*nu;
+  double eps2  = eps*eps;
+  double eps3  = eps2*eps;
+  double eps4  = eps3*eps;
+  double sqe   = sqrt(eps);
+  double eps52 = sqe*eps2;
+  double eps72 = eps52*eps;
+  double j2    = j*j;
+  double j3    = j2*j;
+  double sqj   = sqrt(j);
+  double j32   = j*sqj;
+  double j52   = j32*j;
+  double nu2   = nu*nu;
+  double nu3   = nu2*nu;
+  double delta = sqrt(1. - 4.*nu);
+  double chiA  = 0.5*(chi1 - chi2);
+  double chiS  = 0.5*(chi1 + chi2);
+
   double x = eps * (1 
         + eps * (-5.0/4.0 + 1.0/12.0 * nu + 2.0/j)
         + eps2 * (5.0/2.0 + 5.0/24.0 * nu + 1.0/18.0 * nu2
@@ -160,6 +171,16 @@ double orbit_averaged_x_3PN(double E, double pphi){
             + (1.0/j3) * (529.0/3.0 + (-610.0/3.0 + 205.0/64.0 * Pi * Pi) * nu + 35.0/4.0 * nu2)
         )
     );
+// Add the spin terms
+x += eps52 * ((-96. * delta * chiA - 96. * chiS) / 36.0 + (4. * nu * chiS) / 3.0) / j32
+   + eps3  * (-4. * nu * chiA * chiA + (36. * chiA * chiA + 72. * delta * chiA * chiS + 36. * chiS * chiS) / 36.0) / j2
+   + eps72 * ((1.0/36) * (-1920. * delta * chiA - 1920. * chiS - nu * (-252. * delta * chiA - 1716. * chiS) - 72. * nu2 * chiS) / j52
+           + (4. * nu2 * chiS) / 3.0 + (1.0/36) * (288. * delta * chiA + 288. * chiS - nu * (96. * delta * chiA + 384. * chiS)) / j
+           + (13. * nu2 * chiS) / 9.0 + (1.0/36) * (408. * delta * chiA + 408. * chiS - nu * (104. * delta * chiA + 452. * chiS)) / j32)
+   + eps4  * ((-(1.0/36) * nu * (-1104. * chiA * chiA - 432. * delta * chiA * chiS - 384. * chiS * chiS) + (1.0/36) * (-264. * chiA * chiA - 528. * delta * chiA * chiS - 264. * chiS * chiS) - (1.0/36) * nu2 * (144. * chiA * chiA + 96. * chiS * chiS)) / j32
+           + (-(1.0/36) * nu * (-1839. * chiA * chiA - 654. * delta * chiA * chiS - 579. * chiS * chiS) + (1.0/36) * (-441. * chiA * chiA - 882. * delta * chiA * chiS - 441. * chiS * chiS) - (1.0/36) * nu2 * (228. * chiA * chiA + 144. * chiS * chiS)) / j2
+           + (-(1.0/36) * nu2 * (-360. * chiA * chiA - 704. * chiS * chiS) + (1.0/36) * (2484. * chiA * chiA - 64. * delta * delta * chiA * chiA + 4840. * delta * chiA * chiS + 2420. * chiS * chiS) - (1.0/36) * nu * (10116. * chiA * chiA + 2816. * delta * chiA * chiS + 2636. * chiS * chiS)) / j3);
+
   return pow(x, 3./2);
 }
 
