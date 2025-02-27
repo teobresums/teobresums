@@ -133,6 +133,22 @@ double eob_a6c_fit_HM_2023(double nu)
   return n0*(1 + n1*nu + n2*nu2 + n3*nu3)/(1 + d1*nu);
 }
 
+/**
+ *  Function: eob_a6c_fit_ecc_P33_newlogs
+ *  ------------------------------------
+ *   New fit for a6c obtained using the new resummation
+ *   scheme for the log terms
+ *   Eq. (34) of arXiv:2407.04762
+ *   
+ *   @param[in] nu: symmetric mass ratio
+ *
+ *   @return  a6c
+ */
+double eob_a6c_fit_ecc_P33_newlogs(double nu)
+{
+  return 34.85 + nu*(-318.26 + nu*208.19);
+}
+
 /** @} */ // end of a6cfits
 
 /** \defgroup c3fits cN3LO fits
@@ -353,6 +369,50 @@ double eob_c3_fit_HM_2023(double nu, double a1, double a2)
   double c3_neq = coeff_neq[0]*a0*X12    + coeff_neq[1]*a02*X12       + coeff_neq[2]*a03*X12 
                 + coeff_neq[3]*a0*nu*X12 + coeff_neq[4]*(a1 - a2)*nu2 + coeff_neq[5]*SQ(a1 - a2)*nu2;
 
+  return c3_eq + c3_neq;
+}
+
+/**
+ *  Function: eob_c3_fit_ecc_P33_newlogs
+ *  -----------------------------------
+ *   New fit for c3 obtained using the new
+ *   resummation scheme for the log terms.
+ *   Note: c3 = 0 with tides
+ *   From Tab. II of arXiv:2407.04762
+ *
+ *   @param[in] nu: symmetric mass ratio
+ *   @param[in] a1: spin of body 1
+ *   @param[in] a2: spin of body 2
+ *
+ *   @return  cN3LO
+ */
+double eob_c3_fit_ecc_P33_newlogs(double nu, double a1, double a2)
+{
+  const double nu2 = nu*nu;
+  const double X12 = sqrt(1.-4.*nu);
+  const double a0  = a1+a2;
+  const double a02 = a0*a0;
+  const double a03 = a02*a0;
+  const double a04 = a03*a0;
+
+  /* Equal mass part */
+  const double p0 =  43.588561;
+  const double n1 = -1.623117;
+  const double n2 =  0.912729;
+  const double n3 = -0.103066;
+  const double n4 = -0.076885;
+  const double d1 = -0.653058;
+  const double c3_eq = p0*(1. + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1.+ d1*a0);
+
+  /* Unequal mass, unequal-spin part */
+  const double c1 =  12.020173836641153;
+  const double c2 = -2.7102976036661226;
+  const double c3 = -0.35955651905612807;
+  const double c4 = -36.64350436933381;
+  const double c5 =  34.80670732430782;
+  const double c6 = -85.97333184971158;
+
+  const double c3_neq = c1*a0*X12 + c2*a02*X12 + c3*a03*X12 + c4*a0*nu*X12 + c5*(a1 - a2)*nu2 + c6*SQ((a1 - a2))*nu2;
   return c3_eq + c3_neq;
 }
 /** @} */ // end of c3fits

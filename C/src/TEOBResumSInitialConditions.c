@@ -22,9 +22,12 @@
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
 {
+
+  int status = 0;
   const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);    
 
@@ -96,7 +99,8 @@ void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j[N-1];
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
-    
+  
+  return status;
 }
 /**
  * Function: eob_dyn_ic_circ_s
@@ -112,9 +116,11 @@ void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
 {
+  int status = 0;
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
@@ -285,7 +291,7 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j[N-1];
   y_init[EOB_ID_E0]     = E0[N-1];
   y_init[EOB_ID_OMGJ]   = Omega_j[N-1];
-  
+  return status;
 }
 
 /** Initial conditions calculation for eccentric systems */
@@ -299,9 +305,13 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
 {
+
+  int status = 0;
+
   const double nu = EOBPars -> nu;
   const double chi1 = EOBPars -> chi1;
   const double chi2 = EOBPars -> chi2;
@@ -377,6 +387,8 @@ void eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_J]      = j0;
   y_init[EOB_ID_E0]     = H1*nu;
   y_init[EOB_ID_OMGJ]   = omg_orb1;
+
+  return status;
 
 }
 
@@ -594,9 +606,12 @@ double eob_dyn_circ_j0(double r0, Dynamics *dyn)
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
 {
+
+  int status = 0;
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
@@ -721,12 +736,28 @@ void eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0;
   y_init[EOB_ID_OMGJ]   = Omega_j;
   
+  return status;
+
 }
 
-/** Initial conditions calculation for eccentric systems */
-void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
+/**
+ * Function: eob_dyn_ic_ecc_ma
+ * ---------------------------
+ *   Initial conditions calculation for eccentric systems
+ *   Adiabatic level, computes pr*0 != 0 at a specified anomaly.
+ *   Performs a bidimensional root-finding to find the correct
+ *   initial data.
+ *
+ *   @param[in] r0_kepl:  initial estimate of semilatus rectum
+ *   @param[in] dyn: Dynamics
+ *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
+*/
+int eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
 {
   
+  int status = 0;
+
   const double f0 = EOBPars -> f0;
   const double nu = EOBPars -> nu;
   const double chi1 = EOBPars -> chi1;
@@ -767,14 +798,16 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
     double omg_orb0_p = eob_dyn_omg_from_omgbar(omg_orb0, 0., ecc);
     double omg_orb0_m = eob_dyn_omg_from_omgbar(omg_orb0, Pi, ecc);
     omg_orb0 = 0.5*(omg_orb0_p + omg_orb0_m);
-    if (omg_orb0 > 0.02){
-        omg_orb0 = 0.02;
-        printf("Initial frequency too high. Set mean orbital frequency to %.2e \n",omg_orb0);
-    }
-    if (DEBUG) printf("omg_orb0 = %.8f\n ", omg_orb0);
+    if (DEBUG) {
+      printf("omg_orb0  = %.8f\n",  omg_orb0);
+      printf("omg_orb_p = %.8f\n", omg_orb0_p);
+      printf("omg_orb_m = %.8f\n", omg_orb0_m);
+    }  
   }
   eob_dyn_rootfind_rpr(dyn, &r0, &pr0abs, omg_orb0, r0_kepl, pr0PN);
-  j0           = eob_dyn_j0(r0, dyn);      // Update j0
+  j0  = eob_dyn_j0(r0, dyn);      // Update j0
+
+  if (DEBUG) printf("Initial j0: %.3f\nInitial r0: %.3f\n", j0, r0);
 
   double pr0 = pr0abs;
   if(fmod(zeta,2.*Pi) >= Pi)
@@ -809,19 +842,159 @@ void eob_dyn_ic_ecc_ma(double r0_kepl, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = Hma*nu;
   y_init[EOB_ID_OMGJ]   = omg_orb;
   
+  return status;
+}
+
+
+/**
+ * Function: eob_dyn_ic_ecc_ma_split
+ * ---------------------------------
+ *   Initial conditions calculation for eccentric systems
+ *   Adiabatic level, computes pr*0 != 0 at a specified anomaly.
+ *   Performs two one-dimensional root-finding steps to find the correct
+ *   initial data. Determines j0 first, then pr*0.
+ *
+ *   @param[in] r0_kepl:  initial estimate of semilatus rectum
+ *   @param[in] dyn: Dynamics
+ *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
+*/
+int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
+{
+  int status = 0;
+  const double f0 = EOBPars -> f0;
+  const double nu = EOBPars -> nu;
+  const double chi1 = EOBPars -> chi1;
+  const double chi2 = EOBPars -> chi2;
+  const double S1 = EOBPars -> S1;
+  const double S2 = EOBPars -> S2;
+  const double c3 = EOBPars -> cN3LO;
+  const double X1 = EOBPars -> X1;
+  const double X2 = EOBPars -> X2;
+  const double a1 = EOBPars -> a1;
+  const double a2 = EOBPars -> a2;
+  const double aK2 = EOBPars -> aK2;
+  const double C_Q1 = EOBPars -> C_Q1;
+  const double C_Q2 = EOBPars -> C_Q2;
+  const double C_Oct1 = EOBPars -> C_Oct1;
+  const double C_Oct2 = EOBPars -> C_Oct2;
+  const double C_Hex1 = EOBPars -> C_Hex1;
+  const double C_Hex2 = EOBPars -> C_Hex2;
+  const double S = S1 + S2;
+  const double Sstar = X2*a1 + X1*a2;
+  const double ecc = EOBPars -> ecc;
+  const double zeta = EOBPars -> anomaly;
+
+  const int usetidal = EOBPars -> use_tidal;
+  const int usespins = EOBPars -> use_spins;
+
+  double j0    = eob_dyn_j0(r0_kepl, dyn); // initial guess for j0
+  double pr0PN = fabs(ecc/j0*sin(zeta));   // consider positive pr for bisection; correct sign later
+  
+  double r0, pr0abs;
+
+  double omg_orb0 = Pi*f0;
+  if (EOBPars->ecc_freq == ECCFREQ_ORBAVGD){
+    /* Assume that the user gave as input the orbit averaged 
+    frequency. Transform it into an average frequency between apastron
+    and periastron and overwrite omg_orb0 */
+    if (DEBUG) printf("Orbit-averaged ICs:\nomg_bar = %.8f\n", omg_orb0);
+    double omg_orb0_p = eob_dyn_omg_from_omgbar(omg_orb0, 0., ecc);
+    double omg_orb0_m = eob_dyn_omg_from_omgbar(omg_orb0, Pi, ecc);
+    omg_orb0 = 0.5*(omg_orb0_p + omg_orb0_m);
+    if (DEBUG) {
+      printf("omg_orb0  = %.8f\n",  omg_orb0);
+      printf("omg_orb_p = %.8f\n", omg_orb0_p);
+      printf("omg_orb_m = %.8f\n", omg_orb0_m);
+    }
+  }
+  r0 = eob_dyn_bisecOmegaecc0(dyn, omg_orb0, r0_kepl);
+  if (r0 < 0.) return 1;    // Bisection failed
+
+  j0 = eob_dyn_j0(r0, dyn); // Update j0
+      
+  double rma, rap, rper, rcap, Aap, Bap, Qap, Hap;
+  double pl_hold, omg_orb, dHeffap_dj0;
+  
+  rap  = r0/(1.-ecc);
+  rper = r0/(1.+ecc);
+  if (DEBUG) printf("Periastron and apastron radii: %.3f %.3f\n", rper, rap);
+  if (DEBUG) printf("Initial j0: %.3f\n", j0);
+  rma  = r0/(1.+ecc*cos(zeta));
+    
+  /* Computing metric, centrifugal radius and ggm functions at apastron*/
+  if(usespins) {
+    eob_metric_s(rap, 0., dyn, &Aap, &Bap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(rap, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rcap, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(rap, 0., dyn, &Aap, &Bap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+
+  /* Energy */
+  eob_ham_s(nu, rap, rcap, 0, 0, j0, 0., S, Sstar, chi1, chi2, X1, X2, aK2, c3, Aap, 0., 0., Qap, 0., 0., 0., 0.,
+	    &Hap, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeffap_dj0, &pl_hold, &pl_hold);
+
+  /* Unless zeta = 0, pi, solve for pr0 */
+  if (DEQUAL(zeta, 0., 1e-10) || DEQUAL(zeta, Pi, 1e-10))
+      pr0abs = 0.;
+  else 
+      pr0abs = eob_dyn_bisecHam0(dyn, pr0PN, j0, Hap, rma);
+      if (pr0abs < 0.) return 1; // Bisection failed
+
+  double pr0 = pr0abs;
+  if(fmod(zeta,2.*Pi) >= Pi)
+    pr0 = -pr0abs;
+
+  /* Recomputing metric, r at r(zeta) */
+  double rcma, Ama, Bma, Qma, Hma;
+  double dHeffma_dj0;
+
+  if(usespins) {
+    eob_metric_s(rma, pr0, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(rma, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rcma, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(rma, pr0, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+
+  eob_ham_s(nu, rma, rcma, 0, 0, j0, pr0, S, Sstar, chi1, chi2, X1, X2, aK2, c3, Ama, 0., 0., Qma, 0., 0., 0., 0.,
+	    &Hma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeffma_dj0, &pl_hold, &pl_hold);
+
+  /* Check that the pr0 found is truly a solution */
+  double check = Hma/Hap;
+  if (fabs(Hma/Hap - 1.) > 1e-5){
+    if (DEBUG) printf("Hma/Hap - 1 = %.3e\n", fabs(Hma/Hap - 1.));
+    return 1;
+  }
+
+  /* Orbital frequency */
+  omg_orb   = dHeffma_dj0/nu/Hma;
+
+  y_init[EOB_ID_RAD]    = rma;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = j0;
+  y_init[EOB_ID_PRSTAR] = pr0;
+  y_init[EOB_ID_PR]     = pr0*sqrt(Bma/Ama);
+  y_init[EOB_ID_J]      = j0;
+  y_init[EOB_ID_E0]     = Hma*nu;
+  y_init[EOB_ID_OMGJ]   = omg_orb;
+  
+  return status;
+
 }
 
 /**
  * Function: eob_dyn_ic_hyp
  * ------------------------
- *   Initial conditions calculation for hyperbolic systems
+ *   Initial conditions calculation for hyperbolic systems, nonspinning
  * 
  *   @param[in] r0:  initial separation
  *   @param[in] dyn: Dynamics
  *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
 */
-void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
+int eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
 {
+  int status = 0;
   const double H_ADM = EOBPars->H_hyp;
   const double j_ADM = EOBPars->j_hyp;  
   
@@ -863,7 +1036,7 @@ void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   eob_metric(r0, prstar0, dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
   eob_ham(nu, r0, j_ADM, prstar0, A, dA, Q, dQ, dQ_dprstar, &H0, &pl_hold, NULL, NULL, &dHeff0_dpphi);
-  E0 = nu*H0;
+  E0   = nu*H0;
   Omg0 = dHeff0_dpphi/E0;
   
   y_init[EOB_ID_RAD]    = r0;
@@ -875,6 +1048,95 @@ void eob_dyn_ic_hyp(double r0, Dynamics *dyn, double y_init[])
   y_init[EOB_ID_E0]     = E0;
   y_init[EOB_ID_OMGJ]   = Omg0;
 
+  return status;
+}
+
+
+/**
+ * Function: eob_dyn_ic_hyp_s
+ * --------------------------
+ *   Initial conditions calculation for hyperbolic systems, spinning
+ *   The inversion requires a bisection
+ * 
+ *   @param[in] r0:  initial separation
+ *   @param[in] dyn: Dynamics
+ *   @param[out] y_init: initial data
+ *   @return status: 0 if successful
+*/
+int eob_dyn_ic_hyp_s(double r0, Dynamics *dyn, double y_init[])
+{
+  int status = 0;
+  const double H_ADM = EOBPars->H_hyp;
+  const double j_ADM = EOBPars->j_hyp;  
+  
+  const double nu     = EOBPars->nu;
+  const double X1     = EOBPars->X1;
+  const double X2     = EOBPars->X2;
+  const double chi1   = EOBPars -> chi1;
+  const double chi2   = EOBPars -> chi2;
+  const double S1     = EOBPars -> S1;
+  const double S2     = EOBPars -> S2;
+  const double c3     = EOBPars -> cN3LO;
+  const double a1     = EOBPars -> a1;
+  const double a2     = EOBPars -> a2;
+  const double aK2    = EOBPars -> aK2;
+  const double C_Q1   = EOBPars -> C_Q1;
+  const double C_Q2   = EOBPars -> C_Q2;
+  const double C_Oct1 = EOBPars -> C_Oct1;
+  const double C_Oct2 = EOBPars -> C_Oct2;
+  const double C_Hex1 = EOBPars -> C_Hex1;
+  const double C_Hex2 = EOBPars -> C_Hex2;
+  const double S      = S1 + S2;
+  const double Sstar  = X2*a1 + X1*a2;
+  
+  const int usetidal  = EOBPars->use_tidal;
+  const int usespins  = EOBPars->use_spins;
+
+  int pr0_sign     = EOBPars->prs_sign_hyp;
+
+  double pr0abs, H0, dHeff0_dj0, A0, B0, Q0, rc0, pr0, omg_orb, A_guess, pl_hold;
+
+  /* First guess for pr0. In case it is unphysical (pr^2 < 0), set it to 0.5 */
+  double Heff_in   = 1./(2.*nu)*(SQ(H_ADM) - 1.) + 1.;
+  eob_metric_Apotential(r0, nu, &A_guess, &pl_hold, &pl_hold);
+  double pr0_guess = SQ(Heff_in) - A_guess*(1. + SQ(j_ADM/r0));
+  if(pr0_guess < 0.) pr0_guess = 0.5;
+  pr0_guess = sqrt(pr0_guess);
+
+  /* Invert H(r, prstar, j) - H0_target = 0*/
+  pr0abs = eob_dyn_bisecHam0(dyn, pr0_guess, j_ADM, H_ADM/nu, r0);
+  pr0    = pr0_sign*pr0abs;
+
+  if(usespins) {
+    eob_metric_s(r0, pr0, dyn, &A0, &B0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(r0, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc0, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(r0, pr0, dyn, &A0, &B0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+
+  eob_ham_s(nu, r0, rc0, 0, 0, j_ADM, pr0, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A0, 0., 0., Q0, 0., 0., 0., 0.,
+	    &H0, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &dHeff0_dj0, &pl_hold, &pl_hold);
+
+  /* Check that the pr0 found is truly a solution */
+  double check = fabs(H0*nu/H_ADM -1.);
+  if (check > 1e-5){
+    if (DEBUG) printf("|H0/H_ADM - 1| = %.3e > 1e-5\n", check);
+    return 1;
+  }
+
+  /* Orbital frequency */
+  omg_orb   = dHeff0_dj0/nu/H0;
+
+  y_init[EOB_ID_RAD]    = r0;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = j_ADM;
+  y_init[EOB_ID_PRSTAR] = pr0;
+  y_init[EOB_ID_PR]     = pr0*sqrt(B0/A0);
+  y_init[EOB_ID_J]      = j_ADM;
+  y_init[EOB_ID_E0]     = H0*nu;
+  y_init[EOB_ID_OMGJ]   = omg_orb;
+
+  return status;
 }
 
 /**
@@ -1332,6 +1594,79 @@ double eob_dyn_Omegaecc0(double r, void *params)
 }
 
 /**
+  * Struct: Ham0_tmp_params
+  * ----------------------------
+  *  Auxiliary structure for the root finder, 
+  *  eccentric case
+  * 
+*/
+struct Ham0_tmp_params {
+  double rma;
+  double j0;
+  double Hap;
+  Dynamics *dyn;
+};
+
+/**
+  * Function: eob_dyn_Ham0
+  * ----------------------------
+  *   Root finder helper function: compute H(pr) - H(apastron)
+  *   Eccentric version
+  * 
+  *   @param[in] pr:  radial momentum
+  *   @param[in] params:  parameters
+  *   @return H(pr) - H(apastron)
+*/
+double eob_dyn_Ham0(double pr, void *params)
+{
+  /* Unpack parameters */  
+  struct Ham0_tmp_params *p
+    = (struct Ham0_tmp_params *) params;
+  double   rma  = p->rma;
+  double   j0   = p->j0;
+  double   Hap  = p->Hap;
+  Dynamics *dyn = p->dyn;
+
+  const double nu = EOBPars -> nu;
+  const double X1 = EOBPars -> X1;
+  const double X2 = EOBPars -> X2;
+  const double chi1 = EOBPars -> chi1;
+  const double chi2 = EOBPars -> chi2;
+  const double a1 = EOBPars -> a1;
+  const double a2 = EOBPars -> a2;
+  const double aK2 = EOBPars -> aK2;
+  const double S = EOBPars -> S;
+  const double Sstar = EOBPars -> Sstar;
+  const double c3 = EOBPars -> cN3LO;
+  const double C_Q1 = EOBPars -> C_Q1;
+  const double C_Q2 = EOBPars -> C_Q2;
+  const double C_Oct1 = EOBPars -> C_Oct1;
+  const double C_Oct2 = EOBPars -> C_Oct2;
+  const double C_Hex1 = EOBPars -> C_Hex1;
+  const double C_Hex2 = EOBPars -> C_Hex2;
+
+  const int usetidal = EOBPars -> use_tidal;
+  const int usespins = EOBPars -> use_spins;
+  
+  double pl_hold, Ama, Bma, Qma, rcma, Hma;
+
+  /* Computing metric, centrifugal radius and ggm functions*/
+  if(usespins) {
+    eob_metric_s(rma, pr, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(rma, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rcma, &pl_hold, &pl_hold);
+  } else {
+    eob_metric(rma, pr, dyn, &Ama, &Bma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+
+  /* Computing energy at rma = r(zeta) */
+  eob_ham_s(nu, rma, rcma, 0, 0, j0, pr, S, Sstar, chi1, chi2, X1, X2, aK2, c3, Ama, 0., 0., Qma, 0., 0., 0., 0.,
+	    &Hma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  
+  /* Subtraction of apastron energy */
+  return (Hma - Hap);
+}
+
+/**
   * Function: eob_dyn_bisecOmegaecc0
   * ---------------------------------
   *   Root finder: Compute eccentric p such that omg_orb = omg_orb0
@@ -1364,6 +1699,7 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
   double f_xhi = eob_dyn_Omegaecc0(x_hi, &p);
   int  iter_r0 = 0;
   if (VERBOSE) PRSECTN("Bisection for eccentric initial conditions\n");
+  if (VERBOSE) printf("initial f(x_lo) = %e, f(x_hi) = %e\n",f_xlo,f_xhi);
   while(f_xlo*f_xhi > 0. && iter_r0 < max_iter){
     x_lo  *= 0.99;
     f_xlo  = eob_dyn_Omegaecc0(x_lo, &p);
@@ -1371,6 +1707,12 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
     if (DEBUG) printf("\t iter %d: f(x_lo) = %e, x_lo = %e\n",iter_r0, f_xlo,x_lo);
   }
   if (VERBOSE) printf("f(x_lo) = %e, f(x_hi) = %e\n",f_xlo,f_xhi);
+
+  // Did we find a bracketing interval? If not, fail and return a negative number
+  if (f_xlo*f_xhi > 0. || isnan(f_xlo)){
+    printf("ERROR: eob_dyn_bisecOmegaecc0, could not find a bracketing interval\n");
+    return -1.;
+  }
 
   F.function = &eob_dyn_Omegaecc0;
   F.params = &p;
@@ -1389,6 +1731,75 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
   gsl_root_fsolver_free (s);
   
   return r0;
+}
+
+/**
+  * Function: eob_dyn_bisecHam0
+  * ---------------------------------
+  *   Root finder: Compute pr0 such that energy at r(zeta) = energy at apastron
+  * 
+  *   @param[in] dyn:   Dynamics
+  *   @param[in] pr0PN: initial guess for pr0
+  *   @param[in] j0:    angular momentum
+  *   @param[in] Hap:   energy at apastron
+  *   @param[in] rma:   desired initial separation r(zeta)
+  *   @return r0
+*/
+double eob_dyn_bisecHam0(Dynamics *dyn, double pr0PN, double j0, double Hap, double rma)
+{
+#define max_iter (200)
+#define tolerance (1e-14)
+
+  int status;
+  int iter = 0;
+  const gsl_root_fsolver_type *T;
+  gsl_root_fsolver *s;  
+  gsl_function F;
+
+  double pr0;
+  double x_lo = 0., x_hi = 2.*pr0PN;
+  
+  struct  Ham0_tmp_params p = {rma, j0, Hap, dyn};
+  
+  /* Check that the bisection points straddle 0*/
+  /* if they do not, slowly increase x_hi */
+  double f_xlo = eob_dyn_Ham0(x_lo, &p);
+  double f_xhi = eob_dyn_Ham0(x_hi, &p);
+  int  iter_pr0 = 0;
+  if (VERBOSE) PRSECTN("Bisection for pr in eccentric initial conditions\n");
+  /* Check the extrema */
+  if (fabs(f_xlo) < tolerance) return x_lo;
+  if (fabs(f_xhi) < tolerance) return x_hi;
+
+  while(f_xlo*f_xhi > 0. && iter_pr0 < max_iter){
+    x_hi  *= 1.01;
+    f_xhi  = eob_dyn_Ham0(x_hi, &p);
+    iter_pr0++;
+    if (DEBUG) printf("\t iter %d: f(x_hi) = %e, x_hi = %e\n", iter_pr0, f_xhi, x_hi);
+  }
+  if (VERBOSE) printf("f(x_lo) = %e, f(x_hi) = %e\n",f_xlo,f_xhi);
+  if (f_xlo*f_xhi > 0.){
+    // print an error, the bisection will fail. Return a negative number
+    printf("ERROR: eob_dyn_bisecHam0, could not find a bracketing interval\n");
+    return -1.;
+  }
+  F.function = &eob_dyn_Ham0;
+  F.params = &p;
+  T = gsl_root_fsolver_bisection;
+  s = gsl_root_fsolver_alloc (T);
+  gsl_root_fsolver_set (s, &F, x_lo, x_hi);
+  do {
+    iter++;
+    status = gsl_root_fsolver_iterate (s);
+    pr0    = gsl_root_fsolver_root (s);
+    x_lo   = gsl_root_fsolver_x_lower (s);
+    x_hi   = gsl_root_fsolver_x_upper (s);
+    status = gsl_root_test_interval (x_lo, x_hi, 0, tolerance);
+  }
+  while (status == GSL_CONTINUE && iter < max_iter);
+  gsl_root_fsolver_free (s);
+  
+  return pr0;
 }
 
 /** 

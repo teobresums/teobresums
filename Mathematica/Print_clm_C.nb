@@ -1,0 +1,407 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     14979,        399]
+NotebookOptionsPosition[     13553,        367]
+NotebookOutlinePosition[     13950,        383]
+CellTagsIndexPosition[     13907,        380]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Print coefficients of \[Rho]lm (orb) functions to json", "Title",
+ CellChangeTimes->{{3.9460301604343863`*^9, 
+  3.946030174595573*^9}},ExpressionUUID->"aca8b506-2e1b-4751-8f79-\
+1810de0f2734"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"SetDirectory", "[", 
+   RowBox[{"NotebookDirectory", "[", "]"}], "]"}], ";"}]], "Input",
+ CellChangeTimes->{{3.946026861480541*^9, 3.946026897028851*^9}},
+ CellLabel->"In[23]:=",ExpressionUUID->"b9c5f4a1-9618-497f-b6ac-331788765481"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"<<", "Rholm_orb_6PN.m"}], ";"}]], "Input",
+ CellChangeTimes->{{3.946026899398563*^9, 3.946026907214381*^9}},
+ CellLabel->"In[24]:=",ExpressionUUID->"41a30f64-f812-4ca4-a0a0-b2a5d1d00ba2"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"rulenu", " ", "=", " ", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{
+      SuperscriptBox["nu", "2"], "\[Rule]", " ", "nu2"}], ",", 
+     RowBox[{
+      SuperscriptBox["nu", "3"], "\[Rule]", " ", "nu3"}], ",", 
+     RowBox[{
+      SuperscriptBox["nu", "4"], "\[Rule]", " ", "nu4"}], ",", 
+     RowBox[{
+      SuperscriptBox["nu", "5"], "\[Rule]", "nu5"}], ",", 
+     RowBox[{
+      SuperscriptBox["nu", "6"], "\[Rule]", "nu6"}], ",", 
+     RowBox[{
+      SuperscriptBox["nu", "7"], "\[Rule]", " ", "nu7"}]}], "}"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"rulex", " ", "=", " ", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{
+      SuperscriptBox["x", "6"], "->", "x6"}], ",", 
+     RowBox[{
+      SuperscriptBox["x", "5"], "->", "x5"}], ",", 
+     RowBox[{
+      SuperscriptBox["x", "4"], "\[Rule]", " ", "x4"}], ",", 
+     RowBox[{
+      SuperscriptBox["x", "3"], "\[Rule]", " ", "x3"}], ",", 
+     RowBox[{
+      SuperscriptBox["x", "2"], "\[Rule]", " ", "x2"}], ",", 
+     RowBox[{
+      SuperscriptBox[
+       RowBox[{"Log", "[", "x", "]"}], "4"], "\[Rule]", " ", "log4x"}], ",", 
+     RowBox[{
+      SuperscriptBox[
+       RowBox[{"Log", "[", "x", "]"}], "3"], "\[Rule]", " ", "log3x"}], ",", 
+     RowBox[{
+      SuperscriptBox[
+       RowBox[{"Log", "[", "x", "]"}], "2"], "\[Rule]", " ", "log2x"}], ",", 
+     RowBox[{
+      RowBox[{"Log", "[", "x", "]"}], "\[Rule]", " ", "logx"}]}], "}"}]}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.702060245344905*^9, 3.702060250746284*^9}, {
+  3.9217432412949305`*^9, 3.921743261882045*^9}},
+ CellLabel->"In[28]:=",ExpressionUUID->"4d474e51-dd9f-41fe-8440-893b06387391"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"SeparateLogs", "[", 
+   RowBox[{"l_", ",", "m_"}], "]"}], ":=", "\[IndentingNewLine]", 
+  RowBox[{"CompoundExpression", "[", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Rational\[Rho]Orb6PN", "=", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Symbol", "[", 
+        RowBox[{"\"\<\[Rho]\>\"", "<>", 
+         RowBox[{"ToString", "[", "l", "]"}], "<>", 
+         RowBox[{"ToString", "[", "m", "]"}], "<>", "\"\<Orb6PN\>\""}], "]"}],
+        "[", 
+       RowBox[{"x", ",", "\[Nu]"}], "]"}], "/.", 
+      RowBox[{
+       RowBox[{"Log", "[", "x", "]"}], "->", "0"}]}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"Irrational\[Rho]Orb6PN", "=", 
+     RowBox[{"Simplify", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Symbol", "[", 
+         RowBox[{"\"\<\[Rho]\>\"", "<>", 
+          RowBox[{"ToString", "[", "l", "]"}], "<>", 
+          RowBox[{"ToString", "[", "m", "]"}], "<>", "\"\<Orb6PN\>\""}], 
+         "]"}], "[", 
+        RowBox[{"x", ",", "\[Nu]"}], "]"}], "-", "Rational\[Rho]Orb6PN"}], 
+      "]"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Coeff6PNLog1", "=", 
+     RowBox[{"Coefficient", "[", 
+      RowBox[{
+       RowBox[{"Coefficient", "[", 
+        RowBox[{"Irrational\[Rho]Orb6PN", ",", 
+         RowBox[{"Log", "[", "x", "]"}]}], "]"}], ",", 
+       SuperscriptBox["x", "3"]}], "]"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Log1\[Rho]Orb6PN", "=", 
+     RowBox[{
+      RowBox[{"Simplify", "[", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Symbol", "[", 
+            RowBox[{"\"\<\[Rho]\>\"", "<>", 
+             RowBox[{"ToString", "[", "l", "]"}], "<>", 
+             RowBox[{"ToString", "[", "m", "]"}], "<>", "\"\<Orb6PN\>\""}], 
+            "]"}], "[", 
+           RowBox[{"x", ",", "\[Nu]"}], "]"}], "-", "Rational\[Rho]Orb6PN"}], 
+         ")"}], "/", 
+        RowBox[{"(", 
+         RowBox[{
+          SuperscriptBox["x", "3"], 
+          RowBox[{"Log", "[", "x", "]"}], " ", "Coeff6PNLog1"}], ")"}]}], 
+       "]"}], "/.", 
+      RowBox[{
+       RowBox[{"Log", "[", "x", "]"}], "\[Rule]", "0"}]}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"Coeff6PNLog2", "=", 
+     RowBox[{"Coefficient", "[", 
+      RowBox[{
+       RowBox[{"Coefficient", "[", 
+        RowBox[{"Irrational\[Rho]Orb6PN", ",", 
+         SuperscriptBox[
+          RowBox[{"Log", "[", "x", "]"}], "2"]}], "]"}], ",", 
+       SuperscriptBox["x", "6"]}], "]"}]}], ";"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.946027415801301*^9, 3.9460274281772327`*^9}, {
+  3.946027480222589*^9, 3.946027612709425*^9}, {3.946027646867436*^9, 
+  3.946027709665444*^9}, {3.946027750413911*^9, 3.94602788930653*^9}, {
+  3.946028198792405*^9, 3.946028239874105*^9}},
+ CellLabel->"In[31]:=",ExpressionUUID->"13587c9a-0498-4f76-89ed-249ded8889e1"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"PrintClm", "[", 
+   RowBox[{"l_", ",", " ", "m_"}], "]"}], " ", ":=", " ", "\n", " ", 
+  RowBox[{"(", 
+   RowBox[{"CompoundExpression", "[", " ", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"SeparateLogs", "[", 
+      RowBox[{"l", ",", "m"}], "]"}], ";", "\n", "  ", 
+     RowBox[{"clm", " ", "=", " ", 
+      RowBox[{
+       RowBox[{"CoefficientList", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"Rational\[Rho]Orb6PN", "/.", 
+           RowBox[{"\[Nu]", "\[Rule]", "nu"}]}], "/.", "rulenu"}], ",", "x"}],
+         "]"}], "[", 
+       RowBox[{"[", 
+        RowBox[{"2", ";;"}], "]"}], "]"}]}], ";", "\n", "  ", 
+     RowBox[{"clmLog1", "=", 
+      RowBox[{
+       RowBox[{"CoefficientList", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"Log1\[Rho]Orb6PN", "/.", 
+           RowBox[{"\[Nu]", "\[Rule]", "nu"}]}], "/.", "rulenu"}], ",", "x"}],
+         "]"}], "[", 
+       RowBox[{"[", 
+        RowBox[{"2", " ", ";;"}], "]"}], "]"}]}], ";", "\n", "  ", 
+     RowBox[{"Export", "[", 
+      RowBox[{
+       RowBox[{"ToString", "@", 
+        RowBox[{"StringForm", "[", "\[IndentingNewLine]", "   ", 
+         RowBox[{
+         "\"\</Users/apple/Documents/EOB/throwaway/teobresumsmatlab/\
+Mathematica/Resumming_rho_orb/New_resumming_with_rational_pade/clm````.json\>\
+\"", ",", " ", "l", ",", " ", "m"}], "]"}]}], ",", " ", "\[IndentingNewLine]", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"\"\<clm\>\"", " ", "\[Rule]", 
+          RowBox[{"Table", "[", 
+           RowBox[{
+            RowBox[{"ToString", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"N", "[", 
+                RowBox[{"clm", "[", 
+                 RowBox[{"[", "k", "]"}], "]"}], "]"}], "//", "Simplify"}], 
+              ",", " ", "InputForm"}], "]"}], ",", " ", 
+            RowBox[{"{", 
+             RowBox[{"k", ",", " ", "1", ",", " ", 
+              RowBox[{"Length", "[", "clm", "]"}]}], "}"}]}], "]"}]}], ",", 
+         "\n", "       ", 
+         RowBox[{"\"\<prelLog1\>\"", " ", "->", 
+          RowBox[{"ToString", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"N", "[", "Coeff6PNLog1", "]"}], "//", "Simplify"}], ",",
+             " ", "InputForm"}], "]"}]}], ",", "\n", "       ", 
+         RowBox[{"\"\<clmLog1\>\"", " ", "\[Rule]", 
+          RowBox[{"Table", "[", 
+           RowBox[{
+            RowBox[{"ToString", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"N", "[", 
+                RowBox[{"clmLog1", "[", 
+                 RowBox[{"[", "k", "]"}], "]"}], "]"}], "//", "Simplify"}], 
+              ",", " ", "InputForm"}], "]"}], ",", " ", 
+            RowBox[{"{", 
+             RowBox[{"k", ",", " ", "1", ",", 
+              RowBox[{"Length", "[", "clmLog1", "]"}]}], "}"}]}], "]"}]}], 
+         ",", "\n", "       ", 
+         RowBox[{"\"\<clmLog2\>\"", " ", "->", " ", 
+          RowBox[{"ToString", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"N", "[", "Coeff6PNLog2", "]"}], "//", "Simplify"}], ",",
+             " ", "InputForm"}], "]"}]}]}], "}"}]}], "]"}]}], "]"}], 
+   ")"}]}]], "Input",
+ CellChangeTimes->{{3.946027960410964*^9, 3.9460281343142357`*^9}, {
+  3.946028246022249*^9, 3.946028272364706*^9}, {3.946028304557197*^9, 
+  3.946028305413168*^9}},
+ CellLabel->"In[34]:=",ExpressionUUID->"02ddf927-fd10-42af-ae38-8ee1e912a35d"],
+
+Cell[CellGroupData[{
+
+Cell["Print all modes but (2,2)", "Subtitle",
+ CellChangeTimes->{{3.946029160762487*^9, 
+  3.946029163848165*^9}},ExpressionUUID->"e9a2248f-f469-41e7-90f0-\
+b36987b4ffb5"],
+
+Cell[BoxData[
+ RowBox[{"Do", "[", 
+  RowBox[{
+   RowBox[{"Do", "[", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"l", ",", "m"}], "}"}], "\[NotEqual]", 
+        RowBox[{"{", 
+         RowBox[{"2", ",", "2"}], "}"}]}], ",", 
+       RowBox[{"PrintClm", "[", 
+        RowBox[{"l", ",", "m"}], "]"}]}], "]"}], ",", "\[IndentingNewLine]", 
+     RowBox[{"{", 
+      RowBox[{"m", ",", "1", ",", "l"}], "}"}]}], "]"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"l", ",", "2", ",", "8"}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.9460272786879272`*^9, 3.946027290558978*^9}, {
+  3.9460273329130077`*^9, 3.946027366863319*^9}, {3.9460283528137074`*^9, 
+  3.9460283555966063`*^9}, {3.946028460769493*^9, 3.946028529415472*^9}},
+ CellLabel->"In[42]:=",ExpressionUUID->"48e5432a-8321-426a-82d0-20f79dbf4708"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Treat (2,2) separately (2407.04762)", "Subtitle",
+ CellChangeTimes->{{3.946029170151515*^9, 3.946029174834701*^9}, {
+  3.9460294121171722`*^9, 
+  3.9460294282256517`*^9}},ExpressionUUID->"e01e0e37-61c4-4916-85bc-\
+c60787e8a3bc"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"SeparateLogs", "[", 
+   RowBox[{"2", ",", "2"}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"clm", " ", "=", " ", 
+   RowBox[{
+    RowBox[{"CoefficientList", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Rational\[Rho]Orb6PN", "/.", 
+        RowBox[{"\[Nu]", "\[Rule]", "nu"}]}], "/.", "rulenu"}], ",", "x"}], 
+     "]"}], "[", 
+    RowBox[{"[", 
+     RowBox[{"2", ";;", "5"}], "]"}], "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"clmLog1", "=", 
+   RowBox[{
+    RowBox[{"CoefficientList", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Log1\[Rho]Orb6PN", "/.", 
+        RowBox[{"\[Nu]", "\[Rule]", "nu"}]}], "/.", "rulenu"}], ",", "x"}], 
+     "]"}], "[", 
+    RowBox[{"[", 
+     RowBox[{"2", ";;", "2"}], "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Export", "[", 
+  RowBox[{
+  "\"\</Users/apple/Documents/EOB/throwaway/teobresumsmatlab/Mathematica/\
+Resumming_rho_orb/New_resumming_with_rational_pade/clm22.json\>\"", ",", " ", 
+   "\[IndentingNewLine]", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"\"\<clm\>\"", " ", "\[Rule]", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{"ToString", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"N", "[", 
+            RowBox[{"clm", "[", 
+             RowBox[{"[", "k", "]"}], "]"}], "]"}], "//", "Simplify"}], ",", 
+          " ", "InputForm"}], "]"}], ",", " ", 
+        RowBox[{"{", 
+         RowBox[{"k", ",", " ", "1", ",", " ", 
+          RowBox[{"Length", "[", "clm", "]"}]}], "}"}]}], "]"}]}], ",", "\n", 
+     "       ", 
+     RowBox[{"\"\<prelLog1\>\"", " ", "->", 
+      RowBox[{"ToString", "[", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"N", "[", "Coeff6PNLog1", "]"}], "//", "Simplify"}], ",", 
+        " ", "InputForm"}], "]"}]}], ",", "\n", "       ", 
+     RowBox[{"\"\<clmLog1\>\"", " ", "\[Rule]", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{"ToString", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"N", "[", 
+            RowBox[{"clmLog1", "[", 
+             RowBox[{"[", "k", "]"}], "]"}], "]"}], "//", "Simplify"}], ",", 
+          " ", "InputForm"}], "]"}], ",", " ", 
+        RowBox[{"{", 
+         RowBox[{"k", ",", " ", "1", ",", 
+          RowBox[{"Length", "[", "clmLog1", "]"}]}], "}"}]}], "]"}]}]}], 
+    "}"}]}], "]"}]}], "Input",
+ CellChangeTimes->{{3.946029185391633*^9, 3.946029188817122*^9}, {
+   3.946029405149364*^9, 3.9460294053667173`*^9}, 3.946029592997967*^9, {
+   3.946029639812932*^9, 3.946029640289822*^9}},
+ CellLabel->"In[77]:=",ExpressionUUID->"bb5cc864-0600-4838-a7b2-701ff2c07b95"],
+
+Cell[BoxData["\<\"/Users/apple/Documents/EOB/throwaway/teobresumsmatlab/\
+Mathematica/Resumming_rho_orb/New_resumming_with_rational_pade/clm22.json\"\>\
+"], "Output",
+ CellChangeTimes->{3.9460294306835823`*^9, 3.9460296411581306`*^9},
+ CellLabel->"Out[80]=",ExpressionUUID->"63c5c328-8ca6-4571-8c9e-e54c81bdc23b"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{943, 881},
+WindowMargins->{{Automatic, 107}, {Automatic, 4}},
+FrontEndVersion->"12.2 for Mac OS X x86 (64-bit) (December 12, 2020)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"2a8d7617-a526-4fc3-b406-8c837b394a42"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 199, 3, 98, "Title",ExpressionUUID->"aca8b506-2e1b-4751-8f79-1810de0f2734"],
+Cell[782, 27, 268, 5, 30, "Input",ExpressionUUID->"b9c5f4a1-9618-497f-b6ac-331788765481"],
+Cell[1053, 34, 222, 4, 30, "Input",ExpressionUUID->"41a30f64-f812-4ca4-a0a0-b2a5d1d00ba2"],
+Cell[1278, 40, 1670, 46, 79, "Input",ExpressionUUID->"4d474e51-dd9f-41fe-8440-893b06387391"],
+Cell[2951, 88, 2831, 70, 209, "Input",ExpressionUUID->"13587c9a-0498-4f76-89ed-249ded8889e1"],
+Cell[5785, 160, 3418, 83, 283, "Input",ExpressionUUID->"02ddf927-fd10-42af-ae38-8ee1e912a35d"],
+Cell[CellGroupData[{
+Cell[9228, 247, 171, 3, 53, "Subtitle",ExpressionUUID->"e9a2248f-f469-41e7-90f0-b36987b4ffb5"],
+Cell[9402, 252, 882, 21, 73, "Input",ExpressionUUID->"48e5432a-8321-426a-82d0-20f79dbf4708"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10321, 278, 234, 4, 53, "Subtitle",ExpressionUUID->"e01e0e37-61c4-4916-85bc-c60787e8a3bc"],
+Cell[CellGroupData[{
+Cell[10580, 286, 2617, 70, 199, "Input",ExpressionUUID->"bb5cc864-0600-4838-a7b2-701ff2c07b95"],
+Cell[13200, 358, 313, 4, 56, "Output",ExpressionUUID->"63c5c328-8ca6-4571-8c9e-e54c81bdc23b"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+

@@ -152,20 +152,27 @@ int main (int argc, char* argv[])
     EOBPars->firstcall[k] = 1;
   }
   
+  int status = OK;
   /* set domain */
-  eob_set_params(dc, fc); 
+  if (eob_set_params(dc, fc)) {
+    printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_SET_PARAMS]);
+    status = ERROR_SET_PARAMS;
+    goto EXIT_POINT_MAIN;
+  }
   if (output){
     char outpar[STRLEN];
     strcpy(outpar,EOBPars->output_dir);
     EOBParameters_tofile(EOBPars,strcat(outpar,"/params.txt"));
   }
   /* TD hpc, FD hpc, TD modes, FD modes, default_choice, firstcall */
-  int status = EOBRun(&hpc, &hfpc, 
+  status = EOBRun(&hpc, &hfpc, 
 		      &hmodes, &hfmodes,&dynf,
 		      &hTmodes, &hTmmodes, &hT0modes,
 		      &hfTmodes,
 		      dc, fc);
   if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
+
+EXIT_POINT_MAIN:;
 
   Waveform_free (hpc);
   WaveformFD_free (hfpc);
@@ -310,16 +317,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
 
   /* Compute initial radius */
-  /* Compute initial radius */
   double f0 = EOBPars->initial_frequency/time_unit_fact;
-  if (f0 > 0.0125+0.03*(EOBPars->nu)){
-    f0 = 0.0125+0.03*EOBPars->nu;
-    if (EOBPars->errors_to_warnings){
-      printf("Initial frequency too high. Set f0 to %.2e \n.",f0);
-    } else{
-      errorexit("Initial frequency too high. This error can be turned into a warning with errors_to_warnings=yes");
-    }
-  }
   
   EOBPars->f0 = f0;
   double r0;
@@ -558,12 +556,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
      */
 
     /* Compute the initial conditions */
-    eob_dyn_ic(r0, dyn, dyn->y0);
+    if (eob_dyn_ic(r0, dyn, dyn->y0)) {
+      status = ERROR_INITIAL_CONDITIONS;
+      goto EXIT_POINT;
+    }
       
     /* check that hyperbolic orbits ic work */
     // TODO: check if this workaround is needed  
     if ((r_hyp != 0.) && (dyn->y0[EOB_ID_PRSTAR] == 0.)) {
-      status = 1;
+      status = ERROR_INITIAL_CONDITIONS;
       goto EXIT_POINT;
     }
     
@@ -591,6 +592,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_PRSTAR][0] = dyn->prstar;
       dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
       dyn->data[EOB_E0][0]     = dyn->E;
+    }
+
+    /* Check: print warning if initial separation < 10 */
+    if (dyn->r < 10.) {
+      if (VERBOSE) printf("WARNING: Initial separation < 10\n");
     }
 
     if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins){
@@ -924,7 +930,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Update waveform and dynamics size 
       resize to actual size */
   size = iter+1;
-  EOBPars->size = size; 
+  EOBPars->size = size;
+
+  /* Check: is the dynamics long enough? */
+  if (size < 10){
+    // CHECKME: 10 points is somewhat arbitrary
+    printf("ERROR(TEOBResumS): ODE dynamics size < 10\n");
+    status = ERROR_ODEINT;
+    goto EXIT_POINT;
+  }
+
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
 
@@ -953,7 +968,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
  END_ODE_EVOLUTION:;
  
   /* Unwrap phase for higher modes */
-  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (ecc != 0.)) {
+  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3) || (ecc != 0.)) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
 	      unwrap_HM(hlm->phase[k],size);
@@ -1018,7 +1033,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
        NQC and ringdown attachment currently assume uniform grids.
        Do we need to interpolate ? */
     int merger_interp = 1; /* In general, yes ... */
-    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM) && (EOBPars->use_flm != USEFLM_HM_4PN22)) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
+    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM) 
+                                          && (EOBPars->use_flm != USEFLM_HM_4PN22)
+                                          && (EOBPars->use_flm != USEFLM_HM_6PN3p3)) 
+      merger_interp = 0; /* ... except if merger is covered by uniform tstep */
 
     /* NQC and ringdown attachment is done around merger 
 	using auxiliary variables defined around [tmin,tmax] 
@@ -1050,7 +1068,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
-      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22)) {
+      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3)) {
 	      dt_merger_interp = 0.5;
       } else {
 	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
@@ -1178,7 +1196,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->size = size;
     
     /* Ringdown attachment */
-    eob_wav_ringdown(dyn, hlm);
+    if (eob_wav_ringdown(dyn, hlm)){
+      printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_RINGDOWN]);
+      status = ERROR_RINGDOWN;
+      goto EXIT_POINT;
+    }
     
   } /* End of BBH section */
 
@@ -1228,7 +1250,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       /* Interp to uniform grid the multipoles before hpc computation */
       const double dt_interp = EOBPars->dt_interp;
       const long int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
-      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");  
+      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");
       size = size_interp;
     }
 
@@ -1340,7 +1362,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       //SB: the size here needs to be fixed to the required sampling frequency.
       //    if not, the code jumps here and size is still the one from default...
       Waveform_alloc (hpc, size, "waveform");
-      Waveform_lm_alloc (hmodes, size, "hlm", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
+      Waveform_lm_free (hlm);
+      Waveform_lm_alloc (&hlm, size, "hlm", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size);
     } else  {                             
       const int interp_fd_size = get_uniform_size(EOBPars->initial_frequency, EOBPars->initial_frequency, EOBPars->df);
       WaveformFD_alloc (hfpc, interp_fd_size, "waveform_fd");
@@ -1368,6 +1391,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_t_free (hlm_t);
   NQCdata_free (NQC);
 
-  return OK;
+  return status;
 }
 

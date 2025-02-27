@@ -10,9 +10,12 @@ papers are tagged with the arXiv number.
 For detailed release notes of the most recent version see the
 [`CHANGES` file](https://bitbucket.org/eob_ihes/teobresums/src/master/CHANGES). 
 
-### Latest version  
+### Latest versions  
 [![C version](https://img.shields.io/badge/TEOBResumS-v4.1.4--GIOTTO-green)](https://bitbucket.org/eob_ihes/teobresums/src/v4.1.4-GIOTTO/)   
 Quasi-circular precessing and non-precessing models for BBH, BNS and BHNS with higher modes, including EOB-SPA.
+
+[![C version](https://img.shields.io/badge/TEOBResumS-v1.0.0--Dali-green)](https://bitbucket.org/eob_ihes/teobresums/src/v1.0.0-Dali/)   
+Generic-orbits precessing and non-precessing models for BBH, BNS and BHNS with higher modes.
 
 ## Authors 
 
@@ -42,7 +45,7 @@ $ pip install teobresums
 ```
 $ git clone https://bitbucket.org/eob_ihes/teobresums.git
 $ cd teobresums/Python/
-$ python setup.py install
+$ pip install .
 ```
 
 We strongly advise users to use [anaconda](https://www.anaconda.com/products/individual-d).
