@@ -47,7 +47,7 @@ void (*eob_wav_flm_s)();
 void (*eob_wav_deltalm)();
 void (*eob_wav_hlmNQC_find_a1a2a3)();
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
-void (*eob_wav_ringdown)();
+int (*eob_wav_ringdown)();
 double (*eob_nqc_timeshift)();
 void (*eob_nqc_deltat_lm)();
 void (*eob_dyn_s_get_rc)();
