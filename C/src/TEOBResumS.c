@@ -411,8 +411,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   /* Compute light-ring and LSO (if needed) */
   int check_status;
-  //if (EOBPars->binary == BINARY_BNS) {
-  if (use_tidal) { 
+  if (EOBPars->binary == BINARY_BNS) {
+  //if (use_tidal) { 
     /* Compute rLR_tidal for NNLO potential and without spin part */
     int tidal_tmp      = EOBPars->use_tidal;
     int spins_tmp      = EOBPars->use_spins;

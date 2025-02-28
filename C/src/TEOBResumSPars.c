@@ -48,6 +48,8 @@ void (*eob_wav_deltalm)();
 void (*eob_wav_hlmNQC_find_a1a2a3)();
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 int (*eob_wav_ringdown)();
+double (*eob_nqc_timeshift)();
+void (*eob_nqc_deltat_lm)();
 void (*eob_dyn_s_get_rc)();
 int (*eob_dyn_ic)();
 double (*eob_dyn_r0_eob)();
@@ -955,6 +957,11 @@ int eob_set_params(int default_choice, int firstcall)
   if(EOBPars->binary==BINARY_BHNS || EOBPars->binary == BINARY_BHNS_TD){
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
     eob_wav_ringdown = &eob_wav_ringdown_bhns;
+    eob_nqc_timeshift = &eob_nqc_timeshift_bhns;
+    eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bhns;
+  }else{ // For BBH
+    eob_nqc_timeshift = &eob_nqc_timeshift_bbh;
+    eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bbh;
   }
 
   /* Set metric potentials function pointers */
