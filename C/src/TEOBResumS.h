@@ -358,7 +358,7 @@ enum{
   USEFLM_H_NLO,
   USEFLM_H_NNLO,            
   USEFLM_H_NNLO_fact,                    
-  USEFLM_H_NOPT             /**< number of flm amplitudes options */
+  USEFLM_H_NOPT             /**< number of horizon flux options */
 };
 static const char* const use_flm_h_opt[] = {"LO", "NLO", "NNLO", "NNLO_fact", "none"};
 
@@ -701,7 +701,7 @@ typedef struct tagEOBParameters
   int model;                                            /**< model (Dalì, Giotto) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
-  int use_flm_h;                                        /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
+  int use_flm_h;                                        /**< NEW, INDEX FOR  # {"LO", "NLO", "NNLO", "NNLO_fact"} */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
