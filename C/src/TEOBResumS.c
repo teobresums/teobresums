@@ -704,7 +704,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
 
   /* Set optimized dt around merger */
-  const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
+  const double dt_tuned_mrg     = get_mrg_timestep(q, chi1, chi2);
   const double deltat_tuned_mrg = get_mrg_timestop(q, chi1, chi2);
   
   /* Solve ODE */
@@ -854,15 +854,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     
     if (store_dynamics) {
-      dyn->time[iter]             = dyn->t; 
-      dyn->data[EOB_RAD][iter]    = dyn->r;
-      dyn->data[EOB_PHI][iter]    = dyn->phi;
-      dyn->data[EOB_PPHI][iter]   = dyn->pphi;
-      dyn->data[EOB_MOMG][iter]   = dyn->Omg;
-      dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
-      dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
-      dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
-      dyn->data[EOB_E0][iter] 	  = dyn->E;
+      dyn->time[iter]                  = dyn->t; 
+      dyn->data[EOB_RAD][iter]         = dyn->r;
+      dyn->data[EOB_PHI][iter]         = dyn->phi;
+      dyn->data[EOB_PPHI][iter]        = dyn->pphi;
+      dyn->data[EOB_MOMG][iter]        = dyn->Omg;
+      dyn->data[EOB_DDOTR][iter]       = dyn->ddotr;
+      dyn->data[EOB_PRSTAR][iter]      = dyn->prstar;
+      dyn->data[EOB_OMGORB][iter]      = dyn->Omg_orb;
+      dyn->data[EOB_E0][iter] 	       = dyn->E;
+      dyn->data[EOB_FLX_INFTY][iter]   = dyn->flux_inf;
+      dyn->data[EOB_FLX_HORIZON][iter] = dyn->flux_hor;
     }
 
     /* Stop integration if reached max time */    

@@ -205,9 +205,11 @@ enum{
   EOB_PRSTAR,            /**< index of Prstar */
   EOB_OMGORB,            /**< index of pure orbital frequency Omega orb */
   EOB_E0,                /**< index of E0 */
+  EOB_FLX_INFTY,         /**< index of flux at infinity */
+  EOB_FLX_HORIZON,       /**< index of flux at horizon */
   EOB_DYNAMICS_NVARS     /**< number of EOB dynamical variables */
 };
-static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E"};
+static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E", "flux_inf", "flux_hor"};
 
 #define KMAX (35) /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
@@ -601,6 +603,7 @@ typedef struct tagDynamics
   int store; /* store following values? */
   int noflx; /* compute rhs without flux */
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
+  double flux_inf, flux_hor;
   double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot;
   double tOmg_pk;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;     /**< current Hamiltonian, angular momentum and derived variables */

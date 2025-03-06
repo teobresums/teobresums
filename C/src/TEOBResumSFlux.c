@@ -357,8 +357,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
     double sigma2    = sqrt(1. - chi2*chi2);
     double opsigma1  = 1. + sigma1;
     double opsigma2  = 1. + sigma2;
-    double omgH1     = 0.5*X1*chi1/opsigma1;
-    double omgH2     = 0.5*X2*chi2/opsigma2;
+    double omgH1     = 0.5*chi1/X1/opsigma1;
+    double omgH2     = 0.5*chi2/X2/opsigma2;
 
     // digamma
     gsl_sf_result B21, B22, plhold;
@@ -552,9 +552,11 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   /* Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
     
+  dyn->flux_inf = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+
   /* Horizon flux */ 
+  double hatFH = 0;
   if (!(usetidal)) {
-    double hatFH = 0;
     if (usespins) {
       hatFH = eob_flx_HorizonFlux_s(x, r, pr_star, jhat, Heff, jhat, nu, X1, X2, chi1, chi2);
     } else {
@@ -562,6 +564,8 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     }
     hatf += hatFH;
   }
+
+  dyn->flux_hor = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatFH;
 
   /* return Fphi */  
   return (-32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf);  
@@ -724,6 +728,9 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   double Fphi_lo  = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5);
   double Fphi_inf = Fphi_lo * hatf;
   double Fphi_H   = Fphi_lo * hatFH;
+
+  dyn->flux_hor = Fphi_H;
+
   *Fphi           = Fphi_inf + Fphi_H;
 
   /* Compute Fr using the infinity Fphi */
@@ -743,7 +750,8 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   /* Compute non-circular Fphi, infinity */
   *Fphi = Fphi_lo * hatf;
-  
+  dyn->flux_inf = *Fphi;
+
   /* Re-compute Fr using the generic Fphi */
   *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, *Fphi);
 
