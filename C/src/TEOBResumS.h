@@ -27,6 +27,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv2.h>
+#include <gsl/gsl_sf_psi.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -348,6 +349,16 @@ enum{
   USEFLM_NOPT             /**< number of flm amplitudes options */
 };
 static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr"};
+
+/** List of options for horizon flux */
+enum{
+  USEFLM_H_LO,            
+  USEFLM_H_NLO,
+  USEFLM_H_NNLO,            
+  USEFLM_H_NNLO_fact,                    
+  USEFLM_H_NOPT             /**< number of flm amplitudes options */
+};
+static const char* const use_flm_h_opt[] = {"LO", "NLO", "NNLO", "NNLO_fact", "none"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -687,6 +698,7 @@ typedef struct tagEOBParameters
   int model;                                            /**< model (Dalì, Giotto) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
+  int use_flm_h;                                        /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
@@ -1115,8 +1127,13 @@ double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, 
 double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
-double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
-double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+extern double (*eob_flx_HorizonFlux)(); /* defined in TEOBResumSPars.c */
+double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu);
+extern double (*eob_flx_HorizonFlux_s)(); /* defined in TEOBResumSPars.c */
+double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_NLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_NNLO(double x,double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_NNLO_fact(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */

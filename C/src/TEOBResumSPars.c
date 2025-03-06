@@ -57,6 +57,8 @@ void (*eob_metric_Apotential)();
 void (*eob_metric_Dpotential)();
 void (*eob_metric_Qpotential)();
 double (*eob_flx_Fr)();
+double (*eob_flx_HorizonFlux_s)();
+double (*eob_flx_HorizonFlux)();
 
 /**
  * Function: EOBParameters_alloc
@@ -379,7 +381,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
   eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF ; // index for gravitomagnetic tide
   eobp->use_tidal_fmode_model = 0; // do not 
-  
+  eobp->use_flm_h = USEFLM_H_LO; // Default: leading order only
+
   if (binary == BINARY_BBH) {
 
     eobp->binary                    = BINARY_BBH;
@@ -956,6 +959,22 @@ int eob_set_params(int default_choice, int firstcall)
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
     eob_wav_ringdown = &eob_wav_ringdown_bhns;
   }
+
+  /* Set hoizon flux function poiners */
+  if (EOBPars->use_flm_h == USEFLM_H_LO) {
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_LO;
+  } else if (EOBPars->use_flm_h == USEFLM_H_NLO) {
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_NLO;
+  } else if (EOBPars->use_flm_h == USEFLM_H_NNLO) {
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_NNLO;
+  } else if (EOBPars->use_flm_h == USEFLM_H_NNLO_fact) {
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_NNLO_fact;
+  } else {
+    printf("ERROR: Unknown option for Horizon flux\n");
+    return 1;
+  }
+  // usespins = 0 is a legacy option, never really used. We set it here anyways
+  eob_flx_HorizonFlux   = &eob_flx_HorizonFlux_fit;
 
   /* Set metric potentials function pointers */
   if (EOBPars->A_pot == A_5PNlog) {

@@ -115,7 +115,7 @@ void eob_flx_Tlm(const double w, double *MTlm)
   *   
   *   @return hatFH:  horizon-absorbed fluxes
   */
-double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
+double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu)
 {
   double rhoHlm[2]; /* only 21,22 multipoles -> k=0,1 */
   double FlmHLO[2];
@@ -186,7 +186,7 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu)
   * 
   *   @return hatFH:  horizon-absorbed fluxes
   */
-double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
 {
     
   double x2 = x*x;
@@ -212,9 +212,182 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
   
   /** Newton-normalized horizon flux: use only l=2 fluxes */
   double hatFH  = FH22_S + FH22 + FH21;
-    
   return hatFH;
 }
+
+/**
+  * Function: eob_flx_HorizonFlux_s
+  * -------------------------------
+  *   Compute the horizon-absorbed fluxes, spin case
+  * 
+  *   @param[in] x   :  frequency parameter, v_phi^2
+  *   @param[in] Heff:  effective Hamiltonian
+  *   @param[in] jhat:  angular momentum
+  *   @param[in] nu  :  symmetric mass ratio
+  *   @param[in] X1  :  mass fraction of body 1
+  *   @param[in] X2  :  mass fraction of body 2
+  *   @param[in] chi1:  dimensionless spin 1
+  *   @param[in] chi2:  dimensionless spin 2
+  * 
+  *   @return hatFH:  horizon-absorbed fluxes
+  */
+  double eob_flx_HorizonFlux_s_NLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+  {
+
+      double x5 = x*x*x*x*x;
+      double v5 = sqrt(x5);
+
+      double nu2= nu*nu;
+      double r2 = r*r;
+      double r6 = r2*r2*r2;
+      double op3chi1 = 1. + 3*chi1*chi1;
+      double op3chi2 = 1. + 3*chi2*chi2;
+
+      double pr2       = prstar*prstar;
+      double pphor2    = pphi/r2;
+      double pph2or2   = pphor2*pphi;
+
+      double fact_1     = -1./4*X1*X1*X1*chi1/r6/v5;
+      double fact_2     = -1./4*X2*X2*X2*chi2/r6/v5;
+      double dmdt_lo_1  = pphor2*op3chi1; 
+      double dmdt_lo_2  = pphor2*op3chi2; 
+      double dmdt_nlo_1 = pphor2*( 5./4.*pph2or2 + op3chi1*(pph2or2*(3./4 + X1/2.-4*nu) - pr2*(7./2* X1 + 6*nu) - (1 - X1 - 2*nu)*2./r));
+      double dmdt_nlo_2 = pphor2*( 5./4.*pph2or2 + op3chi2*(pph2or2*(3./4 + X2/2.-4*nu) - pr2*(7./2* X2 + 6*nu) - (1 - X2 - 2*nu)*2./r));
+
+      return fact_1*(dmdt_lo_1 + dmdt_nlo_1) + fact_2*(dmdt_lo_2 + dmdt_nlo_2);
+  }
+
+  
+/**
+  * Function: eob_flx_HorizonFlux_s
+  * -------------------------------
+  *   Compute the horizon-absorbed fluxes, spin case
+  * 
+  *   @param[in] x   :  frequency parameter, v_phi^2
+  *   @param[in] Heff:  effective Hamiltonian
+  *   @param[in] jhat:  angular momentum
+  *   @param[in] nu  :  symmetric mass ratio
+  *   @param[in] X1  :  mass fraction of body 1
+  *   @param[in] X2  :  mass fraction of body 2
+  *   @param[in] chi1:  dimensionless spin 1
+  *   @param[in] chi2:  dimensionless spin 2
+  * 
+  *   @return hatFH:  horizon-absorbed fluxes
+  */
+  double eob_flx_HorizonFlux_s_NNLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+  {
+
+    double x5 = x*x*x*x*x;
+    double v5 = sqrt(x5);
+
+    double r2 = r*r;
+    double r6 = r2*r2*r2;
+    double pr2       = prstar*prstar;
+    double pphor2    = pphi/r2;
+    double pph2or2   = pphor2*pphi;
+
+    double op3chi1   = 1. + 3*chi1*chi1;
+    double op3chi2   = 1. + 3*chi2*chi2;
+    double sigma1    = sqrt(1. - chi1*chi1);
+    double sigma2    = sqrt(1. - chi2*chi2);
+    double opsigma1  = 1. + sigma1;
+    double opsigma2  = 1. + sigma2;
+
+    gsl_sf_result B21, B22, plhold;
+    gsl_sf_complex_psi_e(3., 2*chi1/sigma1, &plhold, &B21);
+    gsl_sf_complex_psi_e(3., 2*chi2/sigma2, &plhold, &B22);
+
+    double fact_1     = -1./4*X1*X1*X1*chi1/r6/v5;
+    double fact_2     = -1./4*X2*X2*X2*chi2/r6/v5;
+    double dmdt_lo_1  = pphor2*op3chi1; 
+    double dmdt_lo_2  = pphor2*op3chi2; 
+    double dmdt_nlo_1 = pphor2*( 5./4.*pph2or2 + op3chi1*(pph2or2*(3./4 + X1/2.-4*nu) - pr2*(7./2* X1 + 6*nu) - (1 - X1 - 2*nu)*2./r));
+    double dmdt_nlo_2 = pphor2*( 5./4.*pph2or2 + op3chi2*(pph2or2*(3./4 + X2/2.-4*nu) - pr2*(7./2* X2 + 6*nu) - (1 - X2 - 2*nu)*2./r));
+
+    double dmdt_nnlo_1 = op3chi1*(chi1*(10*X1*pr2+pph2or2/3*(X1+9*nu) + 0.5/r*(4*X1 + nu))
+                                - 2*X1*(4*pph2or2 + 9*pr2)*B21.val 
+                                + chi2*(0.5*pph2or2*(6*nu - 5*X2) + 0.5/r*(4*X2 - 3*nu) - X2*pr2)
+                                - 64./3*X1*pphi*prstar/r - 0.5*X1*chi1*opsigma1*(8.*pph2or2 + 19.*pr2))
+                                - 46.*X1*chi1*pr2*opsigma1 - pph2or2/3.*X1*chi1*(71.+66*sigma1)
+                                - 2.5*X2*chi2*pph2or2;
+
+    double dmdt_nnlo_2 = op3chi2*(chi2*(10*X2*pr2+pph2or2/3*(X2+9*nu) + 0.5/r*(4*X2 + nu))
+                                - 2*X2*(4*pph2or2 + 9*pr2)*B22.val
+                                + chi1*(0.5*pph2or2*(6*nu - 5*X1) + 0.5/r*(4*X1 - 3*nu) - X1*pr2)
+                                - 64./3*X2*pphi*prstar/r - 0.5*X2*chi2*opsigma2*(8.*pph2or2 + 19.*pr2))
+                                - 46.*X2*chi2*pr2*opsigma2 - pph2or2/3.*X2*chi2*(71.+66*sigma2)
+                                - 2.5*X1*chi1*pph2or2;
+
+    return fact_1*(dmdt_lo_1 + dmdt_nlo_1 + dmdt_nnlo_1/r2) + fact_2*(dmdt_lo_2 + dmdt_nlo_2  + dmdt_nnlo_2/r2);
+
+  }
+
+
+/**
+  * Function: eob_flx_HorizonFlux_s
+  * -------------------------------
+  *   Compute the horizon-absorbed fluxes, spin case
+  * 
+  *   @param[in] x   :  frequency parameter, v_phi^2
+  *   @param[in] Heff:  effective Hamiltonian
+  *   @param[in] jhat:  angular momentum
+  *   @param[in] nu  :  symmetric mass ratio
+  *   @param[in] X1  :  mass fraction of body 1
+  *   @param[in] X2  :  mass fraction of body 2
+  *   @param[in] chi1:  dimensionless spin 1
+  *   @param[in] chi2:  dimensionless spin 2
+  * 
+  *   @return hatFH:  horizon-absorbed fluxes
+  */
+  double eob_flx_HorizonFlux_s_NNLO_fact(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+  {
+
+    double x5 = x*x*x*x*x;
+    double v5 = sqrt(x5);
+
+    double r2        = r*r;
+    double r6        = r2*r2*r2;
+    double pr2       = prstar*prstar;
+    double pphor2    = pphi/r2;
+    double pph2or2   = pphor2*pphi;
+
+    double op3chi1   = 1. + 3*chi1*chi1;
+    double op3chi2   = 1. + 3*chi2*chi2;
+    double sigma1    = sqrt(1. - chi1*chi1);
+    double sigma2    = sqrt(1. - chi2*chi2);
+    double opsigma1  = 1. + sigma1;
+    double opsigma2  = 1. + sigma2;
+    double omgH1     = 0.5*X1*chi1/opsigma1;
+    double omgH2     = 0.5*X2*chi2/opsigma2;
+
+    // digamma
+    gsl_sf_result B21, B22, plhold;
+    gsl_sf_complex_psi_e(3., 2*chi1/sigma1, &plhold, &B21);
+    gsl_sf_complex_psi_e(3., 2*chi2/sigma2, &plhold, &B22);
+    
+    double fact_1     = -0.5*X1*X1*X1*X1*opsigma1/r6/v5*(omgH1 - pphor2 - 3*pr2/pphi);
+    double fact_2     = -0.5*X2*X2*X2*X2*opsigma2/r6/v5*(omgH2 - pphor2 - 3*pr2/pphi);
+    double dmdt_lo_1  = pphor2*op3chi1; 
+    double dmdt_lo_2  = pphor2*op3chi2; 
+    double dmdt_nlo_1 = pphor2*(-2./r*op3chi1*(X2-2*nu) - 0.5*pr2*op3chi1*(7.*X1+12.*nu) + pph2or2*(5./4 + op3chi1*(3./4 + 0.5*X1 - 4*nu)));
+    double dmdt_nlo_2 = pphor2*(-2./r*op3chi2*(X1-2*nu) - 0.5*pr2*op3chi2*(7.*X2+12.*nu) + pph2or2*(5./4 + op3chi2*(3./4 + 0.5*X2 - 4*nu)));
+
+    double dmdt_nnlo_1 = op3chi1*(chi1*(10*X1*pr2+pph2or2/3*(X1+9*nu) + 0.5/r*(4*X1 + nu))
+                                - 2*X1*(4*pph2or2 + 9*pr2)*B21.val 
+                                + chi2*(0.5*pph2or2*(6*nu - 5*X2) + 0.5/r*(4*X2 - 3*nu) - X2*pr2)
+                                - 64./3*X1*pphi*prstar/r - 0.5*X1*chi1*opsigma1*(8.*pph2or2 + 19.*pr2))
+                                - 28.*X1*chi1*pr2*opsigma1 - pph2or2/3.*X1*chi1*(53.+48*sigma1)
+                                - 2.5*X2*chi2*pph2or2;
+    double dmdt_nnlo_2 = op3chi2*(chi2*(10*X2*pr2+pph2or2/3*(X2+9*nu) + 0.5/r*(4*X2 + nu))
+                                - 2*X2*(4*pph2or2 + 9*pr2)*B22.val 
+                                + chi1*(0.5*pph2or2*(6*nu - 5*X1) + 0.5/r*(4*X1 - 3*nu) - X1*pr2)
+                                - 64./3*X2*pphi*prstar/r - 0.5*X2*chi2*opsigma2*(8.*pph2or2 + 19.*pr2))
+                                - 28.*X2*chi2*pr2*opsigma2 - pph2or2/3.*X2*chi2*(53.+48*sigma2)
+                                - 2.5*X1*chi1*pph2or2;
+
+    return fact_1*(dmdt_lo_1 + dmdt_nlo_1 + dmdt_nnlo_1/r2) + fact_2*(dmdt_lo_2 + dmdt_nlo_2  + dmdt_nnlo_2/r2);
+
+  }
 
 /**
  * Function: eob_flx_Flux
@@ -381,11 +554,11 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     
   /* Horizon flux */ 
   if (!(usetidal)) {
-    double hatFH;
+    double hatFH = 0;
     if (usespins) {
-      hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+      hatFH = eob_flx_HorizonFlux_s(x, r, pr_star, jhat, Heff, jhat, nu, X1, X2, chi1, chi2);
     } else {
-      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
+      hatFH = eob_flx_HorizonFlux(x, r, pr_star, jhat, Heff, jhat, nu);
     }
     hatf += hatFH;
   }
@@ -541,9 +714,9 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   double hatFH = 0.;
   if (!(usetidal)) {
     if (usespins) {
-      hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+      hatFH = eob_flx_HorizonFlux_s(x, r, pr_star, pphi, Heff, jhat, nu, X1, X2, chi1, chi2);
     } else {
-      hatFH = eob_flx_HorizonFlux(x,Heff,jhat,nu);
+      hatFH = eob_flx_HorizonFlux(x, r, pr_star, pphi, Heff,jhat,nu);
     }
   }
 
