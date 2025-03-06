@@ -173,7 +173,8 @@ double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, d
 /**
   * Function: eob_flx_HorizonFlux_s_LO
   * ----------------------------------
-  *   Compute the horizon-absorbed fluxes, spin case; leading result from Alvi
+  *   Compute the horizon-absorbed fluxes, spin case; 
+  *   leading result from Alvi
   * 
   *   @param[in] x   :  frequency parameter, v_phi^2
   *   @param[in] Heff:  effective Hamiltonian
@@ -219,7 +220,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * Function: eob_flx_HorizonFlux_s_NLO
   * -----------------------------------
   *   Compute the horizon-absorbed fluxes, spin case
-  *   On generic orbit, up to NLO
+  *   On generic orbit, up to NLO.
+  *   Eq. (18a) of Chiaramello, Gamba (arXiv: 2408.15322)
   * 
   *   @param[in] x     :  frequency parameter, v_phi^2
   *   @param[in] r     :  radial coordinate
@@ -267,6 +269,7 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * ------------------------------------
   *   Compute the horizon-absorbed fluxes, spin case
   *   On generic orbits, up to NNLO
+  *   Eq. (18a) of Chiaramello, Gamba (arXiv: 2408.15322)
   * 
   *   @param[in] x     :  frequency parameter, v_phi^2
   *   @param[in] r     :  radial coordinate
@@ -334,7 +337,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * Function: eob_flx_HorizonFlux_s_NNLO_fact
   * -----------------------------------------
   *   Compute the horizon-absorbed fluxes, spin case
-  *   On generic orbits, up to NNLO and using superradiance prefactor
+  *   On generic orbits, up to NNLO and using superradiance prefactor.
+  *   Eq. (22a) of Chiaramello, Gamba (arXiv: 2408.15322)
   * 
   *   @param[in] x     :  frequency parameter, v_phi^2
   *   @param[in] r     :  radial coordinate
