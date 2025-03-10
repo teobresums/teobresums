@@ -217,8 +217,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
 }
 
 /**
-  * Function: eob_flx_HorizonFlux_s_NLO
-  * -----------------------------------
+  * Function: eob_flx_HorizonFlux_s_NLO_energy
+  * ------------------------------------------
   *   Compute the horizon-absorbed flux of energy, spin case
   *   On generic orbit, up to NLO.
   *   Eq. (18a) of Chiaramello, Gamba (arXiv: 2408.15322)
@@ -266,9 +266,9 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
 /**
   * Function: eob_flx_HorizonFlux_s_NLO
   * -----------------------------------
-  *   Compute the horizon-absorbed fluxes, spin case
+  *   Compute the horizon-absorbed flux of angular momentum, spin case
   *   On generic orbit, up to NLO.
-  *   Eq. (18a) of Chiaramello, Gamba (arXiv: 2408.15322)
+  *   Eq. (18b) of Chiaramello, Gamba (arXiv: 2408.15322)
   * 
   *   @param[in] x     :  frequency parameter, v_phi^2
   *   @param[in] r     :  radial coordinate
@@ -311,8 +311,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   }
   
 /**
-  * Function: eob_flx_HorizonFlux_s_NNLO
-  * ------------------------------------
+  * Function: eob_flx_HorizonFlux_s_NNLO_energy
+  * -------------------------------------------
   *   Compute the horizon-absorbed fluxe of energy, spin case
   *   On generic orbits, up to NNLO
   *   Eq. (18a) of Chiaramello, Gamba (arXiv: 2408.15322)
@@ -381,9 +381,9 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   /**
   * Function: eob_flx_HorizonFlux_s_NNLO
   * ------------------------------------
-  *   Compute the horizon-absorbed fluxe of angular momentum, spin case
+  *   Compute the horizon-absorbed flux of angular momentum, spin case
   *   On generic orbits, up to NNLO
-  *   Eq. (18a) of Chiaramello, Gamba (arXiv: 2408.15322)
+  *   Eq. (18b) of Chiaramello, Gamba (arXiv: 2408.15322)
   * 
   *   @param[in] x     :  frequency parameter, v_phi^2
   *   @param[in] r     :  radial coordinate
@@ -441,8 +441,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
  }
 
  /**
-  * Function: eob_flx_HorizonFlux_s_NNLO_fact
-  * -----------------------------------------
+  * Function: eob_flx_HorizonFlux_s_NNLO_fact_energy
+  * ------------------------------------------------
   *   Compute the horizon-absorbed flux of energy, spin case
   *   On generic orbits, up to NNLO and using superradiance prefactor.
   *   Eq. (22a) of Chiaramello, Gamba (arXiv: 2408.15322)
@@ -517,7 +517,7 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * -----------------------------------------
   *   Compute the horizon-absorbed fluxes, spin case
   *   On generic orbits, up to NNLO and using superradiance prefactor.
-  *   Eq. (22a) of Chiaramello, Gamba (arXiv: 2408.15322)
+  *   Eq. (22b) of Chiaramello, Gamba (arXiv: 2408.15322)
   * 
   *   @param[in] x     :  frequency parameter, v_phi^2
   *   @param[in] r     :  radial coordinate
