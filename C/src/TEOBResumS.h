@@ -1135,8 +1135,12 @@ double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, d
 extern double (*eob_flx_HorizonFlux_s)(); /* defined in TEOBResumSPars.c */
 double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 double eob_flx_HorizonFlux_s_NLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
-double eob_flx_HorizonFlux_s_NNLO(double x,double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_NNLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 double eob_flx_HorizonFlux_s_NNLO_fact(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_NLO_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_NNLO_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_s_NNLO_fact_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */
