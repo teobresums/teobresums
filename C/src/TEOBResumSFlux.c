@@ -515,7 +515,7 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
 /**
   * Function: eob_flx_HorizonFlux_s_NNLO_fact
   * -----------------------------------------
-  *   Compute the horizon-absorbed fluxes, spin case
+  *   Compute the horizon-absorbed flux of angular momentum, spin case
   *   On generic orbits, up to NNLO and using superradiance prefactor.
   *   Eq. (22b) of Chiaramello, Gamba (arXiv: 2408.15322)
   * 
