@@ -1275,6 +1275,51 @@ static PyObject* eob_get_rc_py(PyObject *self, PyObject *args)
   return ret;
 }
 
+static PyObject* eob_get_hflx_py(PyObject *self, PyObject *args)
+{
+  double q, chi1, chi2, Fphi_lo;
+  double r, pphi, prstar;
+
+  Dynamics *dyn;
+
+  /* parse the input */
+  if (!PyArg_ParseTuple(args, "ddddddd", &q, &chi1, &chi2, &r, &pphi, &prstar, &Fphi_lo))
+    return NULL;
+  
+  double nu = q_to_nu(q);
+
+  /* Allocate the defaults & set the parameters */
+  EOBParameters_alloc ( &EOBPars ); 
+  EOBParameters_defaults (BINARY_BBH, 0, EOBPars);
+  /* Todo: allow for user choice of flux */
+  EOBPars->use_flm_h = USEFLM_H_NNLO_fact;
+  EOBPars->chi1 = chi1;
+  EOBPars->chi2 = chi2;
+  EOBPars->q    = q;
+
+  eob_set_params(BINARY_BBH, 1);
+  /* set firstcall */
+  for (int k=0; k < NFIRSTCALL; k++){ 
+    EOBPars->firstcall[k] = 1;
+  }
+
+  Dynamics_alloc (&dyn, 0, "dyn"); 
+  Dynamics_set_params(dyn); 
+ 
+  double pl_hold = 1;
+
+  /* todo: evaluate with correct x*/
+  double Flxh = eob_flx_HorizonFlux_s(1., r, prstar, pphi, pl_hold, pl_hold, nu, EOBPars->X1, EOBPars->X2, chi1, chi2, Fphi_lo);
+
+  /* Free */ 
+  EOBParameters_free (EOBPars);
+  Dynamics_free(dyn);
+
+  PyObject *ret;
+  ret = Py_BuildValue("d", Flxh);
+  return ret;
+}
+
 /* Define functions in module */
 static PyMethodDef EOBRunMethods[] = {
   {"EOBRunPy", EOBRunPy, METH_VARARGS, "Generate a time or frequency domain TEOBResumS waveform"},
@@ -1287,6 +1332,7 @@ static PyMethodDef EOBRunMethods[] = {
   {"eob_dyn_j0_py", eob_dyn_j0_py, METH_VARARGS, "Compute the (generic) value of j corresponding to an initial semilatus rectum r"},
   {"eob_metricAB_py", eob_metricAB_py, METH_VARARGS, "Compute the metric potentials"},
   {"eob_get_rc_py", eob_get_rc_py, METH_VARARGS, "Compute the centrifugal radius"},
+  {"eob_get_hflx_py", eob_get_hflx_py, METH_VARARGS, "Compute the flux at the horizon"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
   {NULL, NULL}  /* {NULL, NULL, 0, NULL} */ 

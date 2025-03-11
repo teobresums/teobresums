@@ -115,7 +115,7 @@ void eob_flx_Tlm(const double w, double *MTlm)
   *   
   *   @return hatFH:  horizon-absorbed fluxes
   */
-double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu)
+double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double Fphi_lo)
 {
   double rhoHlm[2]; /* only 21,22 multipoles -> k=0,1 */
   double FlmHLO[2];
@@ -167,7 +167,7 @@ double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, d
   /* Sum over multipoles and normalize to the 22 Newtonian multipole */
   double hatFH = (FlmH[0]+FlmH[1])/FNewt22;
   
-  return hatFH;
+  return Fphi_lo*hatFH;
 }
 
 /**
@@ -187,7 +187,7 @@ double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, d
   * 
   *   @return hatFH:  horizon-absorbed fluxes
   */
-double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
 {
     
   double x2 = x*x;
@@ -213,7 +213,7 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   
   /** Newton-normalized horizon flux: use only l=2 fluxes */
   double hatFH  = FH22_S + FH22 + FH21;
-  return hatFH;
+  return Fphi_lo*hatFH;
 }
 
 /**
@@ -237,11 +237,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * 
   *   @return hatFH:  horizon-absorbed fluxes
   */
- double eob_flx_HorizonFlux_s_NLO_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+ double eob_flx_HorizonFlux_s_NLO_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
  {
-
-     double x5 = x*x*x*x*x;
-     double v5 = sqrt(x5);
 
      double nu2= nu*nu;
      double r2 = r*r;
@@ -253,14 +250,14 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
      double pphor2    = pphi/r2;
      double pph2or2   = pphor2*pphi;
 
-     double fact_1     = -1./4*X1*X1*X1*chi1/r6/v5;
-     double fact_2     = -1./4*X2*X2*X2*chi2/r6/v5;
+     double fact_1     = -1./4*X1*X1*X1*chi1/r6;
+     double fact_2     = -1./4*X2*X2*X2*chi2/r6;
      double dmdt_lo_1  = pphor2*op3chi1;
      double dmdt_lo_2  = pphor2*op3chi2;
      double dmdt_nlo_1 = pphor2*( 5./4.*pph2or2 + op3chi1*(pph2or2*(3./4 + X1/2.-4*nu) - pr2*(7./2* X1 + 6*nu) - (1 - X1 - 2*nu)*2./r));
      double dmdt_nlo_2 = pphor2*( 5./4.*pph2or2 + op3chi2*(pph2or2*(3./4 + X2/2.-4*nu) - pr2*(7./2* X2 + 6*nu) - (1 - X2 - 2*nu)*2./r));
 
-     return fact_1*(dmdt_lo_1 + dmdt_nlo_1) + fact_2*(dmdt_lo_2 + dmdt_nlo_2);
+     return -32./5.*nu*(fact_1*(dmdt_lo_1 + dmdt_nlo_1) + fact_2*(dmdt_lo_2 + dmdt_nlo_2));
  }
 
 /**
@@ -284,11 +281,9 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * 
   *   @return hatFH:  horizon-absorbed fluxes
   */
-  double eob_flx_HorizonFlux_s_NLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+  double eob_flx_HorizonFlux_s_NLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
   {
 
-      double x5 = x*x*x*x*x;
-      double v5 = sqrt(x5);
 
       double nu2= nu*nu;
       double r2 = r*r;
@@ -300,14 +295,14 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
       double pphor2    = pphi/r2;
       double pph2or2   = pphor2*pphi;
 
-      double fact_1     = -1./4*X1*X1*X1*chi1/r6/v5;
-      double fact_2     = -1./4*X2*X2*X2*chi2/r6/v5;
+      double fact_1     = -1./4*X1*X1*X1*chi1/r6;
+      double fact_2     = -1./4*X2*X2*X2*chi2/r6;
       double djdt_lo_1  = op3chi1;
       double djdt_lo_2  = op3chi2;
       double djdt_nlo_1 = 5./4.*pph2or2 + op3chi1*(0.5*pph2or2*(5./2 + X1-5.*nu) - 0.5*pr2*(1. + 5.*X1 + 11.*nu) - (1. - 2.*X1 - 3.*nu)/r);
       double djdt_nlo_2 = 5./4.*pph2or2 + op3chi2*(0.5*pph2or2*(5./2 + X2-5.*nu) - 0.5*pr2*(1. + 5.*X2 + 11.*nu) - (1. - 2.*X2 - 3.*nu)/r);
 
-      return fact_1*(djdt_lo_1 + djdt_nlo_1) + fact_2*(djdt_lo_2 + djdt_nlo_2);
+      return -32./5.*nu*(fact_1*(djdt_lo_1 + djdt_nlo_1) + fact_2*(djdt_lo_2 + djdt_nlo_2));
   }
   
 /**
@@ -331,11 +326,9 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * 
   *   @return hatFH:  horizon-absorbed fluxes
   */
-  double eob_flx_HorizonFlux_s_NNLO_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+  double eob_flx_HorizonFlux_s_NNLO_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
   {
 
-    double x5 = x*x*x*x*x;
-    double v5 = sqrt(x5);
 
     double r2 = r*r;
     double r6 = r2*r2*r2;
@@ -354,8 +347,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
     gsl_sf_complex_psi_e(3., 2*chi1/sigma1, &plhold, &B21);
     gsl_sf_complex_psi_e(3., 2*chi2/sigma2, &plhold, &B22);
 
-    double fact_1     = -1./4*X1*X1*X1/r6/v5;
-    double fact_2     = -1./4*X2*X2*X2/r6/v5;
+    double fact_1     = -1./4*X1*X1*X1/r6;
+    double fact_2     = -1./4*X2*X2*X2/r6;
     double dmdt_lo_1  = pphor2*op3chi1*chi1;
     double dmdt_lo_2  = pphor2*op3chi2*chi2;
     double dmdt_nlo_1 = chi1*pphor2*( 5./4.*pph2or2 + op3chi1*(pph2or2*(3./4 + X1/2.-4*nu) - pr2*(7./2* X1 + 6*nu) - (1 - X1 - 2*nu)*2./r));
@@ -374,7 +367,7 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
                                 - 46.*X2*chi2*pr2*opsigma2 - pph2or2/3.*X2*chi2*(71.+66*sigma2)
                                 - 2.5*X1*chi1*pph2or2)*chi2 - 2.*X2*opsigma2*(pph2or2 + 3.*pr2);
 
-    return fact_1*(dmdt_lo_1 + dmdt_nlo_1 + dmdt_nnlo_1/r2) + fact_2*(dmdt_lo_2 + dmdt_nlo_2  + dmdt_nnlo_2/r2);
+    return -32./5.*nu*(fact_1*(dmdt_lo_1 + dmdt_nlo_1 + dmdt_nnlo_1/r2) + fact_2*(dmdt_lo_2 + dmdt_nlo_2  + dmdt_nnlo_2/r2));
 
   }
 
@@ -399,11 +392,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * 
   *   @return hatFH:  horizon-absorbed fluxes
   */
- double eob_flx_HorizonFlux_s_NNLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+ double eob_flx_HorizonFlux_s_NNLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
  {
-
-   double x5 = x*x*x*x*x;
-   double v5 = sqrt(x5);
 
    double r2 = r*r;
    double r6 = r2*r2*r2;
@@ -422,8 +412,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
    gsl_sf_complex_psi_e(3., 2*chi1/sigma1, &plhold, &B21);
    gsl_sf_complex_psi_e(3., 2*chi2/sigma2, &plhold, &B22);
 
-   double fact_1     = -1./4*X1*X1*X1/r6/v5;
-   double fact_2     = -1./4*X2*X2*X2/r6/v5;
+   double fact_1     = -1./4*X1*X1*X1/r6;
+   double fact_2     = -1./4*X2*X2*X2/r6;
    double djdt_lo_1  = op3chi1*chi1;
    double djdt_lo_2  = op3chi2*chi2;
    double djdt_nlo_1 = chi1*( 5./4.*pph2or2 + op3chi1*(0.5*pph2or2*(5./2 + X1-5.*nu) - 0.5*pr2*(1. + 5.*X1 + 11.*nu) - (1. - 2.*X1 - 3.*nu)/r));
@@ -431,12 +421,14 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
 
    double djdt_nnlo_1 = op3chi1*(chi1*pphi*(-11./3*X1 + 3.*nu - 4.*X1*sigma1) - 16.*X1*r*prstar 
                                + chi2*pphi*(-3.5*X2 + 3.*nu) - 8.*X1*pphi*B21.val
-                               - X1*pphi/3.*(71. + 66.*sigma1)*chi1 - 2.5*X2*chi2*pphi)*chi1 - 2.*X1*pphi*opsigma1;
+                               - X1*pphi/3.*(71. + 66.*sigma1)*chi1 - 2.5*X2*chi2*pphi)*chi1 
+                               - 2.*X1*pphi*opsigma1;
    double djdt_nnlo_2 = op3chi2*(chi2*pphi*(-11./3*X2 + 3.*nu - 4.*X2*sigma2) - 16.*X2*r*prstar 
                                + chi1*pphi*(-3.5*X1 + 3.*nu) - 8.*X2*pphi*B22.val
-                               - X2*pphi/3.*(71. + 66.*sigma2)*chi2 - 2.5*X1*chi1*pphi)*chi2 - 2.*X2*pphi*opsigma2;
+                               - X2*pphi/3.*(71. + 66.*sigma2)*chi2 - 2.5*X1*chi1*pphi)*chi2 
+                               - 2.*X2*pphi*opsigma2;
 
-   return fact_1*(djdt_lo_1 + djdt_nlo_1 + djdt_nnlo_1/r2) + fact_2*(djdt_lo_2 + djdt_nlo_2  + djdt_nnlo_2/r2);
+   return -32./5.*nu*(fact_1*(djdt_lo_1 + djdt_nlo_1 + djdt_nnlo_1/r2) + fact_2*(djdt_lo_2 + djdt_nlo_2  + djdt_nnlo_2/r2));
 
  }
 
@@ -461,11 +453,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * 
   *   @return hatFH:  horizon-absorbed fluxes
   */
- double eob_flx_HorizonFlux_s_NNLO_fact_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+ double eob_flx_HorizonFlux_s_NNLO_fact_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
  {
-
-   double x5 = x*x*x*x*x;
-   double v5 = sqrt(x5);
 
    double r2        = r*r;
    double r6        = r2*r2*r2;
@@ -487,8 +476,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
    gsl_sf_complex_psi_e(3., 2*chi1/sigma1, &plhold, &B21);
    gsl_sf_complex_psi_e(3., 2*chi2/sigma2, &plhold, &B22);
    
-   double fact_1     = -0.5*X1*X1*X1*X1*opsigma1/r6/v5*(omgH1 - pphor2);
-   double fact_2     = -0.5*X2*X2*X2*X2*opsigma2/r6/v5*(omgH2 - pphor2);
+   double fact_1     = -0.5*X1*X1*X1*X1*opsigma1/r6*(omgH1 - pphor2);
+   double fact_2     = -0.5*X2*X2*X2*X2*opsigma2/r6*(omgH2 - pphor2);
    double dmdt_lo_1  = pphor2*op3chi1; 
    double dmdt_lo_2  = pphor2*op3chi2; 
    double dmdt_nlo_1 = pphor2*(-2./r*op3chi1*(X2-2*nu) - 0.5*pr2*op3chi1*(7.*X1+12.*nu) + pph2or2*(5./4 + op3chi1*(3./4 + 0.5*X1 - 4*nu)));
@@ -507,7 +496,7 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
                                - 28.*X2*chi2*pr2*opsigma2 - pph2or2/3.*X2*chi2*(53.+48*sigma2)
                                - 2.5*X1*chi1*pph2or2;
 
-   return fact_1*(dmdt_lo_1 + dmdt_nlo_1 + dmdt_nnlo_1/r2) + fact_2*(dmdt_lo_2 + dmdt_nlo_2  + dmdt_nnlo_2/r2);
+   return -32./5.*nu*(fact_1*(dmdt_lo_1 + dmdt_nlo_1 + dmdt_nnlo_1/r2) + fact_2*(dmdt_lo_2 + dmdt_nlo_2  + dmdt_nnlo_2/r2));
 
  }
 
@@ -533,11 +522,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   * 
   *   @return hatFH:  horizon-absorbed fluxes
   */
-  double eob_flx_HorizonFlux_s_NNLO_fact(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+  double eob_flx_HorizonFlux_s_NNLO_fact(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
   {
-
-    double x5 = x*x*x*x*x;
-    double v5 = sqrt(x5);
 
     double r2        = r*r;
     double r6        = r2*r2*r2;
@@ -559,8 +545,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
     gsl_sf_complex_psi_e(3., 2*chi1/sigma1, &plhold, &B21);
     gsl_sf_complex_psi_e(3., 2*chi2/sigma2, &plhold, &B22);
     
-    double fact_1     = -0.5*X1*X1*X1*X1*opsigma1/r6/v5*(omgH1 - pphor2);
-    double fact_2     = -0.5*X2*X2*X2*X2*opsigma2/r6/v5*(omgH2 - pphor2);
+    double fact_1     = -0.5*X1*X1*X1*X1*opsigma1/r6*(omgH1 - pphor2);
+    double fact_2     = -0.5*X2*X2*X2*X2*opsigma2/r6*(omgH2 - pphor2);
     double djdt_lo_1  = op3chi1;
     double djdt_lo_2  = op3chi2;
     double djdt_nlo_1 = chi1*( 5./4.*pph2or2 + op3chi1*(0.5*pph2or2*(5./2 + X1-5.*nu) - 0.5*pr2*(1. + 5.*X1 + 11.*nu) - (1. - 2.*X1 + 3.*nu)/r));
@@ -571,7 +557,7 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
     double djdt_nnlo_2 = op3chi2*(chi2*pphi*(-11./3.*X2 + 3.*nu - 4.*X2*sigma2) + chi1*pphi*(3.*nu - 3.5*X1) 
                                 - 8.*X2*pphi*B22.val - 16.*X2*r*prstar) - X2*pphi/3.*(53. + 48.*sigma2)*chi2 - 2.5*X1*chi1*pphi;
 
-    return fact_1*(djdt_lo_1 + djdt_nlo_1 + djdt_nnlo_1/r2) + fact_2*(djdt_lo_2 + djdt_nlo_2  + djdt_nnlo_2/r2);
+    return -32./5.*nu*(fact_1*(djdt_lo_1 + djdt_nlo_1 + djdt_nnlo_1/r2) + fact_2*(djdt_lo_2 + djdt_nlo_2  + djdt_nnlo_2/r2));
 
   }
 
@@ -737,24 +723,23 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   
   /* Normalize to the 22 Newtonian multipole */
   double hatf = sum_k/(FNewt22);
-    
-  dyn->flux_inf = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf;
+  double Fphi_lo = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5);
+  dyn->flux_inf = Fphi_lo * hatf;
 
   /* Horizon flux */ 
-  double hatFH = 0;
+  double FH = 0.;
   if (!(usetidal)) {
     if (usespins) {
-      hatFH = eob_flx_HorizonFlux_s(x, r, pr_star, jhat, Heff, jhat, nu, X1, X2, chi1, chi2);
+      FH = eob_flx_HorizonFlux_s(x, r, pr_star, jhat, Heff, jhat, nu, X1, X2, chi1, chi2, Fphi_lo);
     } else {
-      hatFH = eob_flx_HorizonFlux(x, r, pr_star, jhat, Heff, jhat, nu);
+      FH = eob_flx_HorizonFlux(x, r, pr_star, jhat, Heff, jhat, nu, Fphi_lo);
     }
-    hatf += hatFH;
   }
 
-  dyn->flux_hor = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatFH;
+  dyn->flux_hor = FH;
 
   /* return Fphi */  
-  return (-32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5) * hatf);  
+  return Fphi_lo * hatf + FH;  
 }
 
 /**
@@ -898,24 +883,23 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   }
 
   /* Normalize to the 22 Newtonian multipole */
-  double hatf = sum_k/(FNewt22);
+  double hatf     = sum_k/(FNewt22);
+  double Fphi_lo  = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5);
 
   /* Horizon flux */
-  double hatFH = 0.;
+  double Fphi_H = 0.;
   if (!(usetidal)) {
     if (usespins) {
-      hatFH = eob_flx_HorizonFlux_s(x, r, pr_star, pphi, Heff, jhat, nu, X1, X2, chi1, chi2);
+      Fphi_H = eob_flx_HorizonFlux_s(x, r, pr_star, pphi, Heff, jhat, nu, X1, X2, chi1, chi2, Fphi_lo);
     } else {
-      hatFH = eob_flx_HorizonFlux(x, r, pr_star, pphi, Heff,jhat,nu);
+      Fphi_H = eob_flx_HorizonFlux(x, r, pr_star, pphi, Heff,jhat,nu, Fphi_lo);
     }
   }
 
   /* Compute circular, asymptotic and horizon Fphi separately, then sum */
-  double Fphi_lo  = -32./5. * nu * gsl_pow_int(r_omega,4) * gsl_pow_int(Omega,5);
   double Fphi_inf = Fphi_lo * hatf;
-  double Fphi_H   = Fphi_lo * hatFH;
 
-  dyn->flux_hor = Fphi_H;
+  dyn->flux_hor   = Fphi_H;
 
   *Fphi           = Fphi_inf + Fphi_H;
 
