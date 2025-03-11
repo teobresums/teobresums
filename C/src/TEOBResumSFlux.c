@@ -419,12 +419,12 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
    double djdt_nlo_1 = chi1*( 5./4.*pph2or2 + op3chi1*(0.5*pph2or2*(5./2 + X1-5.*nu) - 0.5*pr2*(1. + 5.*X1 + 11.*nu) - (1. - 2.*X1 - 3.*nu)/r));
    double djdt_nlo_2 = chi2*( 5./4.*pph2or2 + op3chi2*(0.5*pph2or2*(5./2 + X2-5.*nu) - 0.5*pr2*(1. + 5.*X2 + 11.*nu) - (1. - 2.*X2 - 3.*nu)/r));
 
-   double djdt_nnlo_1 = op3chi1*(chi1*pphi*(-11./3*X1 + 3.*nu - 4.*X1*sigma1) - 16.*X1*r*prstar 
-                               + chi2*pphi*(-3.5*X2 + 3.*nu) - 8.*X1*pphi*B21.val
+   double djdt_nnlo_1 = (op3chi1*(chi1*pphi*(-11./3*X1 + 3.*nu - 4.*X1*sigma1) - 16.*X1*r*prstar 
+                               + chi2*pphi*(-3.5*X2 + 3.*nu) - 8.*X1*pphi*B21.val)
                                - X1*pphi/3.*(71. + 66.*sigma1)*chi1 - 2.5*X2*chi2*pphi)*chi1 
                                - 2.*X1*pphi*opsigma1;
-   double djdt_nnlo_2 = op3chi2*(chi2*pphi*(-11./3*X2 + 3.*nu - 4.*X2*sigma2) - 16.*X2*r*prstar 
-                               + chi1*pphi*(-3.5*X1 + 3.*nu) - 8.*X2*pphi*B22.val
+   double djdt_nnlo_2 = (op3chi2*(chi2*pphi*(-11./3*X2 + 3.*nu - 4.*X2*sigma2) - 16.*X2*r*prstar 
+                               + chi1*pphi*(-3.5*X1 + 3.*nu) - 8.*X2*pphi*B22.val)
                                - X2*pphi/3.*(71. + 66.*sigma2)*chi2 - 2.5*X1*chi1*pphi)*chi2 
                                - 2.*X2*pphi*opsigma2;
 
@@ -549,8 +549,8 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
     double fact_2     = -0.5*X2*X2*X2*X2*opsigma2/r6*(omgH2 - pphor2);
     double djdt_lo_1  = op3chi1;
     double djdt_lo_2  = op3chi2;
-    double djdt_nlo_1 = chi1*( 5./4.*pph2or2 + op3chi1*(0.5*pph2or2*(5./2 + X1-5.*nu) - 0.5*pr2*(1. + 5.*X1 + 11.*nu) - (1. - 2.*X1 + 3.*nu)/r));
-    double djdt_nlo_2 = chi2*( 5./4.*pph2or2 + op3chi2*(0.5*pph2or2*(5./2 + X2-5.*nu) - 0.5*pr2*(1. + 5.*X2 + 11.*nu) - (1. - 2.*X2 + 3.*nu)/r));
+    double djdt_nlo_1 = 5./4.*pph2or2 + op3chi1*(0.5*pph2or2*(5./2 + X1-5.*nu) - 0.5*pr2*(1. + 5.*X1 + 11.*nu) - (1. - 2.*X1 - 3.*nu)/r);
+    double djdt_nlo_2 = 5./4.*pph2or2 + op3chi2*(0.5*pph2or2*(5./2 + X2-5.*nu) - 0.5*pr2*(1. + 5.*X2 + 11.*nu) - (1. - 2.*X2 - 3.*nu)/r);
 
     double djdt_nnlo_1 = op3chi1*(chi1*pphi*(-11./3.*X1 + 3.*nu - 4.*X1*sigma1) + chi2*pphi*(3.*nu - 3.5*X2) 
                                 - 8.*X1*pphi*B21.val - 16.*X1*r*prstar) - X1*pphi/3.*(53. + 48.*sigma1)*chi1 - 2.5*X2*chi2*pphi;
