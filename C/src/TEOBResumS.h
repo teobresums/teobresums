@@ -354,13 +354,15 @@ static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4P
 
 /** List of options for horizon flux */
 enum{
-  USEFLM_H_LO,            
+  USEFLM_H_LO,
+  USEFLM_H_LO_r,
   USEFLM_H_NLO,
   USEFLM_H_NNLO,            
-  USEFLM_H_NNLO_fact,                    
+  USEFLM_H_NNLO_fact,
+  USEFLM_H_NNLO_fact_mix,                    
   USEFLM_H_NOPT             /**< number of horizon flux options */
 };
-static const char* const use_flm_h_opt[] = {"LO", "NLO", "NNLO", "NNLO_fact", "none"};
+static const char* const use_flm_h_opt[] = {"LO","LO_r","NLO", "NNLO", "NNLO_fact","NNLO_fact_mix", "none"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -751,6 +753,8 @@ typedef struct tagEOBParameters
   int ringdown_eulerangles;                             /**< Flag to choose which beyond-merger euler angles extension to employ */
   int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */
 
+  int backwards;
+
   /* final state */
   double Mbhf; /**< Final BH mass */
   double abhf; /**< Final BH spin */
@@ -1134,9 +1138,11 @@ extern double (*eob_flx_HorizonFlux)(); /* defined in TEOBResumSPars.c */
 double eob_flx_HorizonFlux_fit(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double Fphi_lo);
 extern double (*eob_flx_HorizonFlux_s)(); /* defined in TEOBResumSPars.c */
 double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);
+double eob_flx_HorizonFlux_s_LO_r(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);
 double eob_flx_HorizonFlux_s_NLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);
 double eob_flx_HorizonFlux_s_NNLO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);
 double eob_flx_HorizonFlux_s_NNLO_fact(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);
+double eob_flx_HorizonFlux_s_NNLO_fact_rnewt(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);
 double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);
 double eob_flx_HorizonFlux_s_NLO_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);
 double eob_flx_HorizonFlux_s_NNLO_energy(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo);

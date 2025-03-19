@@ -216,6 +216,27 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
   return Fphi_lo*hatFH;
 }
 
+double eob_flx_HorizonFlux_s_LO_r(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
+{
+    
+  double nu2= nu*nu;
+  double r2 = r*r;
+  double r6 = r2*r2*r2;
+  double op3chi1 = 1. + 3*chi1*chi1;
+  double op3chi2 = 1. + 3*chi2*chi2;
+
+  double pr2       = prstar*prstar;
+  double pphor2    = pphi/r2;
+  double pph2or2   = pphor2*pphi;
+
+  double fact_1     = -1./4*X1*X1*X1*chi1/r6;
+  double fact_2     = -1./4*X2*X2*X2*chi2/r6;
+  double djdt_lo_1  = op3chi1;
+  double djdt_lo_2  = op3chi2;
+
+  return -32./5.*nu*(fact_1*djdt_lo_1 + fact_2*djdt_lo_2);
+}
+
 /**
   * Function: eob_flx_HorizonFlux_s_NLO_energy
   * ------------------------------------------
@@ -559,6 +580,51 @@ double eob_flx_HorizonFlux_s_LO(double x, double r, double prstar, double pphi, 
 
     return -32./5.*nu*(fact_1*(djdt_lo_1 + djdt_nlo_1 + djdt_nnlo_1/r2) + fact_2*(djdt_lo_2 + djdt_nlo_2  + djdt_nnlo_2/r2));
 
+  }
+
+  /**
+  * Function: eob_flx_HorizonFlux_s_NNLO_rnewt
+  * -----------------------------------------
+  *   Compute the horizon-absorbed flux of angular momentum, spin case
+  *   On generic orbits, up to NNLO and using superradiance prefactor.
+  *  Using the PN-expanded x-dependence + Newtonian prefactor.
+  */
+  double eob_flx_HorizonFlux_s_NNLO_fact_rnewt(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
+  {
+    
+    double v = sqrt(x);
+    double r2        = r*r;
+    double r6        = r2*r2*r2;
+    double pr2       = prstar*prstar;
+    double pphor2    = pphi/r2;
+    double pph2or2   = pphor2*pphi;
+
+    double op3chi1   = 1. + 3*chi1*chi1;
+    double op3chi2   = 1. + 3*chi2*chi2;
+    double sigma1    = sqrt(1. - chi1*chi1);
+    double sigma2    = sqrt(1. - chi2*chi2);
+    double opsigma1  = 1. + sigma1;
+    double opsigma2  = 1. + sigma2;
+    double omgH1     = 0.5*chi1/X1/opsigma1;
+    double omgH2     = 0.5*chi2/X2/opsigma2;
+
+    // digamma
+    gsl_sf_result B21, B22, plhold;
+    gsl_sf_complex_psi_e(3., 2*chi1/sigma1, &plhold, &B21);
+    gsl_sf_complex_psi_e(3., 2*chi2/sigma2, &plhold, &B22);
+    
+    double fact_1     = -0.5*X1*X1*X1*X1*opsigma1/r6*(omgH1 - pphor2);
+    double fact_2     = -0.5*X2*X2*X2*X2*opsigma2/r6*(omgH2 - pphor2);
+    double djdt_lo_1  = op3chi1;
+    double djdt_lo_2  = op3chi2;
+    double djdt_nlo_1 = 0.25*(3*(2 + chi1*chi1) + 2*X1*op3chi1*(2 + 3*X1))*v*v;
+    double djdt_nlo_2 = 0.25*(3*(2 + chi2*chi2) + 2*X2*op3chi2*(2 + 3*X2))*v*v;
+
+    double djdt_nnlo_1 = (0.5*(-4.+3*chi1*chi1)*chi2 - 2*X1*op3chi1*(X1*(chi1+chi2)+ 4*B21.val) + X1*(-2./3*(23 + 30.*sigma1)*chi1+(7-12*sigma1)*chi1*chi1*chi1
+                          + 4.*chi2 + 4.5*chi1*chi1*chi2))*v*v*v;
+    double djdt_nnlo_2 = (0.5*(-4.+3*chi2*chi2)*chi1 - 2*X2*op3chi2*(X2*(chi1+chi2)+ 4*B22.val) + X2*(-2./3*(23 + 30.*sigma1)*chi2+(7-12*sigma2)*chi2*chi2*chi2
+                          + 4.*chi1 + 4.5*chi2*chi2*chi1))*v*v*v;
+    return -32./5.*nu*(fact_1*(djdt_lo_1 + djdt_nlo_1 + djdt_nnlo_1) + fact_2*(djdt_lo_2 + djdt_nlo_2  + djdt_nnlo_2));
   }
 
 /**

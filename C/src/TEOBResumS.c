@@ -916,7 +916,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }      
     } else {
       if (dyn->t >= dyn->t_stop) {
-	      if (VERBOSE) printf("Stop: Peak of Omega reached.\n");
+	      if (VERBOSE) printf("Stop: t > t_stop.\n");
 	      dyn->ode_stop = true;
       }
     }

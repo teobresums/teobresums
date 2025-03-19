@@ -445,6 +445,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "ode_stop_after_peak") != NULL ) { 
     EOBPars->ode_stop_after_peak = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_stop_after_peak")));
   }
+  if ( PyDict_GetItemString(dict, "backwards") != NULL ) { 
+    EOBPars->backwards = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "backwards")));
+  }
 
   /* FD */
   if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
