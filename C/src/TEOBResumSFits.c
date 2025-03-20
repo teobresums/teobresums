@@ -1061,7 +1061,7 @@ void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, doub
  *
  *   @return DeltaT_nqc
  */
-double eob_nqc_timeshift(double nu, double chi1)
+double eob_nqc_timeshift_bbh(double nu, double chi1)
 {
 
   double DeltaT_nqc = 1.0;  
@@ -1084,7 +1084,7 @@ double eob_nqc_timeshift(double nu, double chi1)
  *   @param[in, out] Dt_lm : KMAX dimensional array of time-shifts 
  *
  */
-void eob_nqc_deltat_lm(Dynamics *dyn, double *Dt_lm)
+void eob_nqc_deltat_lm_bbh(double *Dt_lm)
 {
   
   const double nu    = EOBPars->nu;
@@ -3496,7 +3496,9 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   double c1f, c2f, d1f, d2f, c1c, c2c, d1c;
   
   /* Compute A, dA, omg, domg */
-  eob_nqc_point_HM_peak22(NULL, A, dA, omg, domg);
+  if (EOBPars->binary==BINARY_BBH){eob_nqc_point_HM_peak22(NULL,A, dA, omg, domg);
+  }else{eob_nqc_point_BHNS_HM(NULL,A, dA, omg, domg);}
+
   for(int j=0; j<knqcpeak22_size; j++){
     int k = knqcpeak22[j];
 
@@ -3583,25 +3585,30 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   alpha21[0] = +0.184952*(1 - 1.1329*af - 0.3520*af2 + 0.4924*af3)/(1 - 1.10334*af - 0.3037*af2 + 0.4262*af3);
   
   /* l = 2, m = 2*/
-  if(binary==BINARY_BBH){
-    omega1[1]  = +0.373672*(1 - 1.5367*af + 0.5503*af2)/(1 - 1.8700*af + 0.9848*af2 - 0.10943*af3);
-    alpha1[1]  = +0.08896*(1 - 1.90036*af + 0.86200*af2 + 0.0384893*af3)/(1 - 1.87933*af + 0.88062*af2);
-    alpha21[1] = +0.184953*(1 - 1.89397*af + 0.88126*af2 + 0.0130256*af3)/(1 - 1.83901*af + 0.84162*af2);
-  }else{ 
-    // for the BHNS model, we use the old fits
-    double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
-    double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
-    omega1[1] =  0.3736716844*(omega1_c/omega1_d);
-	    
-    double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
-    double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
-    alpha1[1] = 0.0889623157 * (alpha1_c/alpha1_d);
-	    
-    double alpha21_c = 0.4764196512*af3 - 0.0593165805*af2 - 1.4168096833*af + 1;
-    double alpha21_d = 0.4385578151*af3 - 0.0763529088*af2 - 1.3595491146*af + 1;
-    alpha21[1] = 0.1849525596*(alpha21_c/alpha21_d); 
-  } 
-    
+  omega1[1]  = +0.373672*(1 - 1.5367*af + 0.5503*af2)/(1 - 1.8700*af + 0.9848*af2 - 0.10943*af3);
+  alpha1[1]  = +0.08896*(1 - 1.90036*af + 0.86200*af2 + 0.0384893*af3)/(1 - 1.87933*af + 0.88062*af2);
+  alpha21[1] = +0.184953*(1 - 1.89397*af + 0.88126*af2 + 0.0130256*af3)/(1 - 1.83901*af + 0.84162*af2);
+
+  /* if(binary==BINARY_BBH){
+   * omega1[1]  = +0.373672*(1 - 1.5367*af + 0.5503*af2)/(1 - 1.8700*af + 0.9848*af2 - 0.10943*af3);
+   * alpha1[1]  = +0.08896*(1 - 1.90036*af + 0.86200*af2 + 0.0384893*af3)/(1 - 1.87933*af + 0.88062*af2);
+   * alpha21[1] = +0.184953*(1 - 1.89397*af + 0.88126*af2 + 0.0130256*af3)/(1 - 1.83901*af + 0.84162*af2);
+   * }else{ 
+   * // for the BHNS model, we use the old fits
+   * double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
+   * double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
+   * omega1[1] =  0.3736716844*(omega1_c/omega1_d);
+   *
+   * double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
+   * double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
+   * alpha1[1] = 0.0889623157 * (alpha1_c/alpha1_d);
+   *	    
+   * double alpha21_c = 0.4764196512*af3 - 0.0593165805*af2 - 1.4168096833*af + 1;
+   * double alpha21_d = 0.4385578151*af3 - 0.0763529088*af2 - 1.3595491146*af + 1;
+   * alpha21[1] = 0.1849525596*(alpha21_c/alpha21_d); 
+   * } 
+   */
+
   /* l = 3, m = 1*/
   omega1[2]  = +0.599443*(1 - 0.70941*af - 0.16975*af2 + 0.08559*af3)/(1 - 0.82174*af - 0.16792*af2 + 0.14524*af3);
   alpha1[2]  = +0.0927030*(1 - 1.2345*af - 0.30447*af2 + 0.5446*af3)/(1 - 1.2263*af - 0.24223*af2 + 0.47738*af3);
@@ -3956,6 +3963,7 @@ void fmode_resonance_dress_QOH(Dynamics *dyn)
  *   From 
  *   https://arxiv.org/abs/1903.11622 
  *   https://arxiv.org/abs/2212.03909
+ *   and updated for Gonzalez+ in prep.
  *  
  *   @param[in]  a      : spin of the BH
  *   @param[in]  nu     : symmetric mass ratio
@@ -3970,34 +3978,81 @@ void eob_bhns_fit(double a, double nu, double *mass, double *spin, double lambda
 {
   /* m_bh & a_bh are the remnant mass & spin of Jimenez et al. fits (2017) */
 
-     /* Mass Parameters                             Spin Parameters */
-  const double p110 = 0.008270153575372058;    const double q110 = -0.005806649906608269;
-  const double p111 = 0.03023441789407721;    const double q111 = 0.0080478216453302;
-  const double p120 = -0.009060968313209477;   const double q120 = 0.025417446510092936;
-  const double p121 = 0.009494115842467465;    const double q121 = 0.02304350955931102;
-  const double p210 = -1.0096357035633808e-07;  const double q210 = -7.885609729416046e-07;
-  const double p211 = 1.9646035657421295e-06;   const double q211 = -2.7419535067447896e-06;
-  const double p220 = 0.00010412175504981773;  const double q220 = 6.824530257266093e-06;
-  const double p221 = 0.00022787243413793448;  const double q221 = 4.115495276575295e-05;
-  const double p310 = 0.003496494935708257;    const double q310 = -0.02896820746099147;
-  const double p311 = 0.015633634360363493;     const double q311 = 0.2520378980622243;
-  const double p320 = 0.;     const double q320 = 0.14409587180221356;
-  const double p321 = 0.;    const double q321 = -0.4226678233866285;
+     /* Mass Parameters */
+  const double p102 = -0.0008738793880464456;
+  const double p101 = 0.0005314645082267707; 
+  const double p100 = 0.00048079143591861327;
+  const double p112 = 0.0034086268737653345; 
+  const double p111 = -0.0006054545388183284;
+  const double p110 = -0.006365039897453894; 
+  const double p122 = -0.006753889323869175; 
+  const double p121 = -0.013585866660743297; 
+  const double p120 = 0.02530645334339657;   
+  const double p212 = -1.7262162415183805e-07;
+  const double p211 = -5.40510452294782e-06;  
+  const double p210 = 4.363002416591192e-05;  
+  const double p222 = 7.737497619529003e-06;  
+  const double p221 = 2.396600803932003e-05;  
+  const double p220 = -2.1980019903488383e-05;
+  const double p0   = 4.0788174743855836e-05;
 
-  double p11 = p110*a + p111;      double q11 = q110*a + q111;
-  double p12 = p120*a + p121;      double q12 = q120*a + q121;
-  double p21 = p210*a + p211;      double q21 = q210*a + q211;
-  double p22 = p220*a + p221;      double q22 = q220*a + q221;
-  double p31 = p310*a + p311;      double q31 = q310*a + q311;
-  double p32 = p320*a + p321;      double q32 = q320*a + q321;
+  double p10 = p102*a*a + p101*a + p100;      
+  double p11 = p112*a*a + p111*a + p110;      
+  double p12 = p122*a*a + p121*a + p120;      
+  double p21 = p212*a*a + p211*a + p210;      
+  double p22 = p222*a*a + p221*a + p220;      
 
-  double p1 = p11*nu + p12*nu*nu;  double q1 = q11*nu + q12*nu*nu;
-  double p2 = p21*nu + p22*nu*nu;  double q2 = q21*nu + q22*nu*nu;
-  double p3 = p31*nu + p32*nu*nu;  double q3 = q31*nu + q32*nu*nu;
+  double p1 = p10*nu + p11*nu*nu + p12*nu*nu*nu;
+  double p2 = p21*nu*nu + p22*nu*nu*nu;         
+                                                                                                              
+  double m_fit = ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p0*nu*nu*lambda*lambda))  );                                                                                                                
 
-  //double m_fit = ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p3*p3*lambda)*(1 + p3*p3*lambda)) ); //original fits Frank 2020                                                                                                               
-  double m_fit = ( (1 + p1*lambda + p2*lambda*lambda) / ((1 + p31*nu*lambda)*(1 + p31*nu*lambda))  ); //latest fits 14.07.2021                                                                                                                
-  double a_fit = ( (1 + q1*lambda + q2*lambda*lambda) / ((1 + q3*q3*lambda)*(1 + q3*q3*lambda)) );
+     /* Spin Parameters */  
+  const double  d112 = 0.0013574322384365632;
+  const double  d111 = 0.004609266720050001;
+  const double  d110 = 0.0009102105324348831;
+  const double  d122 = -0.04975162622644385;
+  const double  d121 = -0.02314136431572672;
+  const double  d120 = -0.024890806466961492;
+  const double  d132 = 0.17502248483357633;
+  const double  d131 = 0.015427669282338003;
+  const double  d130 = 0.12743167707858225;
+  const double  d212 = 2.0730081552909773e-05;
+  const double  d211 = -3.1406807993499036e-05;
+  const double  d210 = 8.094258450191269e-06;
+  const double  d222 = -0.0001652984994487448;
+  const double  d221 = 0.00027540548306762236;
+  const double  d220 = -4.4402028029482014e-05;
+  const double  d232 = 0.0003856401528807317;
+  const double  d231 = -0.0006293995220570712;
+  const double  d230 = 2.1108847630144224e-05;
+  const double  d312 =-1.561477963430114e-08;
+  const double  d311 = 1.7300042605972545e-08;
+  const double  d310 = -3.1476803536094817e-09;
+  const double  d322 = 1.5278874946669358e-07;
+  const double  d321 = -1.6399967561815403e-07;
+  const double  d320 = 2.4337955107824662e-08;
+  const double  d332 = -3.9321543091156496e-07;
+  const double  d331 = 3.977949302502904e-07;
+  const double  d330 = -2.4789449646084726e-08;
+  const double  d41 = 7.867448219972702e-07;
+
+  double  d11 = d112*a*a + d111*a + d110;
+  double  d12 = d122*a*a + d121*a + d120;
+  double  d13 = d132*a*a + d131*a + d130;
+  double  d21 = d212*a*a + d211*a + d210;
+  double  d22 = d222*a*a + d221*a + d220;
+  double  d23 = d232*a*a + d231*a + d230;
+  double  d31 = d312*a*a + d311*a + d310;
+  double  d32 = d322*a*a + d321*a + d320;
+  double  d33 = d332*a*a + d331*a + d330;
+
+  double  d1 = d11*nu + d12*nu*nu + d13*nu*nu*nu;
+  double  d2 = d21*nu + d22*nu*nu + d23*nu*nu*nu;
+  double  d3 = d31*nu + d32*nu*nu + d33*nu*nu*nu;
+  double  d4 = d41*nu;
+
+  double a_fit = ( 1 + lambda*d1 + lambda*lambda*d2  + lambda*lambda*lambda*d3) / ( (1 + lambda*lambda*d4)*(1 + lambda*lambda*d4) );
 
   double mbh = m_bh * m_fit;
   double abh = a_bh * a_fit;
@@ -4010,7 +4065,7 @@ void eob_bhns_fit(double a, double nu, double *mass, double *spin, double lambda
  *  Function: bhns_cases
  *  ----------------------
  *   \details  Filter tidal disruption cases.
- *   From https://arxiv.org/abs/2212.03909
+ *   From https://arxiv.org/abs/2212.03909 and updated for Gonzalez+ in prep.
  *  
  *   @param[in]  nu        : symmetric mass ratio
  *   @param[in]  af        : 
@@ -4022,61 +4077,59 @@ void eob_bhns_fit(double a, double nu, double *mass, double *spin, double lambda
  */
 void bhns_cases(double nu, double af, double chi1, double lambda, int *binary, int *usetidal)
 {
-
-  // Using alpha QNM fits
-  double af2 = pow(af,2);
-  double af3 = pow(af,3);
-
-  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
-  double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
-  double alpha_bbh = 0.0889623157 * (alpha1_c/alpha1_d);
-
-  const double a110= 0.08540533;
-  const double a111= 0.05952267;
-  const double a120= -0.38077744;
-  const double a121= -0.20439610;
-  const double a210= 9.9329e-06;
-  const double a211= 4.8199e-05;
-  const double a220= -2.9158e-05;
-  const double a221= -1.9268e-04;
-  const double b110= 0.21840792;
-  const double b111= 0.48995965;
-  const double b120= -0.92644561;
-  const double b121= -1.14839419;
-
-  double a11 = a110*chi1 + a111;
-  double a12 = a120*chi1 + a121;
-  double a21 = a210*chi1 + a211;
-  double a22 = a220*chi1 + a221;
-  double b11 = b110*chi1 + b111;
-  double b12 = b120*chi1 + b121;
-
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
-
-  double Ap = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
+  /* Amplitude peak 2024 */
+  const double c102 = 0.025960639049437614; 
+  const double c101 = 0.011583003041680442;
+  const double c100 = -0.0016533947810772696;
+  const double c112 = -0.31403656018939863;
+  const double c111 = -0.12825460441414602;
+  const double c110 = 0.13396228694902;
+  const double c122 = 0.8917717620733512;
+  const double c121 = 0.3150355510141175;
+  const double c120 = -0.513304355534311;
+  const double c202 = -1.984228201511826e-05;
+  const double c201 = -2.804785772573806e-06;
+  const double c200 = 8.018661470565014e-06;
+  const double c212 = 0.0002223708961923682;
+  const double c211 = 2.555424239372415e-05;
+  const double c210 = -0.00010025951516653183;
+  const double c222 = -0.0006022803171412016;
+  const double c221 = -5.057203798367972e-05;
+  const double c220 = 0.0002870181683963824;
+  const double c31  = 0.009579950459173342;
+  const double c32  = -0.01899088523426322;
   
-  //if(Ap>0.6){*usetidal = 0.;} // for Type II & III use_tidal = 0
-  //if(Ap<0.9){*flag = true;} // Type I & III cases
+  double p10 = c102*chi1*chi1 + c101*chi1 + c100;
+  double p11 = c112*chi1*chi1 + c111*chi1 + c110;
+  double p12 = c122*chi1*chi1 + c121*chi1 + c120;
+  double p20 = c202*chi1*chi1 + c201*chi1 + c200;
+  double p21 = c212*chi1*chi1 + c211*chi1 + c210;
+  double p22 = c222*chi1*chi1 + c221*chi1 + c220;
 
-  if(Ap<=0.6){
+  double p1 = p10*nu + p11*nu*nu + p12*nu*nu*nu;
+  double p2 = p20*nu + p21*nu*nu + p22*nu*nu*nu;
+  double p3 = c31*nu + c32*nu*nu;
+
+  double Ap =  ( 1 + (p1*lambda + p2*lambda*lambda) ) / ( 1 + lambda*p3  );
+
+  if(Ap<=0.85){
     *binary = BINARY_BHNS_TD; //Type I
-    }else if(Ap<0.9){
+    }else if(Ap<0.99){
       *binary = BINARY_BHNS; //Type III
     }else{
       *binary = BINARY_BBH; //Type II
       *usetidal = 0;
     }
+
     
 }
 
 /** 
  *  Function: QNMHybridFitCab_BHNS_HM
  *  ---------------------------------
- *  Compute QNM fits for HMs for BHNS systems
+ *  \details Compute QNM fits for HMs for BHNS systems
  *  and the postpeak template parameters
- *  From Gonzalez+2022
+ *  From Gonzalez+2022 and updated for Gonzalez+ in prep.
  *
  *   @param[in] nu                               : symmetric mass ratio
  *   @param[in] X1                               : mass fraction of body 1
@@ -4114,7 +4167,6 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
   const double aeff  = aK + 1./3.*a12*X12;
   const double aeff2 = SQ(aeff);
   const double aeff3 = aeff2*aeff;
-  const double kt2 = EOBPars->kapT2;
   const double lambda = EOBPars->LambdaBl2;
   
   double c3A[KMAX], c3phi[KMAX], c4phi[KMAX], Domg[KMAX], Amrg[KMAX], c2A[KMAX], omgmrg[KMAX];
@@ -4153,103 +4205,127 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
     
   // Peak Frequency & Amplitude
     /* Modes: 21, 22, 32, 33, 44, 55 */ 
-    peak_bhns(nu, kt2, chi1, X1, X2, abh, Amrg, omgmrg);
+    peak_bhns(nu, lambda, chi1, X1, X2, abh, Amrg, omgmrg);
 
   // c3A
     /* l=2, m=1 */
     c3A[k21]   = (0.23882 - 2.2982*nu + 5.7022*nu2)/(1 - 7.7463*nu + 27.266*nu2);
     
     /* l=2, m=2 */
-    b1 =  0.0169543;
-    b2 = -0.0799343;
-    b3 = -0.115928;
-    double c3A_nu =  0.8298678603 * nu - 0.5615838975;
-    double c3A_eq =  (b3*X12 + 0.0907476903)*aeff3 + (b2*X12 + 0.0227344099)*aeff2 + (b1*X12 - 0.1994944332)*aeff;
-    c3A[k22]  =  c3A_nu + c3A_eq;
-
-    /* l=3, m=3 */
+    b1 = 0.1659421;
+    b2 = -0.2560047;
+    b3 = -0.9418946;
+    c3A[k22] = -0.5585 + 0.81196*nu + (-0.398576+b1*X12)*Shat + (0.099805+b2*X12)*Shat2 + (0.72125+b3*X12)*Shat3;
+    /*
+      b1 =  0.0169543;
+      b2 = -0.0799343;
+      b3 = -0.115928;
+      double c3A_nu =  0.8298678603 * nu - 0.5615838975;
+      double c3A_eq =  (b3*X12 + 0.0907476903)*aeff3 + (b2*X12 + 0.0227344099)*aeff2 + (b1*X12 - 0.1994944332)*aeff;
+      c3A[k22]            =  c3A_nu + c3A_eq;
+    */
+      
+    /* (l=3, m=3)*/
     b1 = -0.3502608;
     b2 = 1.587606;
     b3 = -1.555325;
     c3A[k33] = -0.41455 + 1.3225*nu + (b1 + b2*X12 + b3*X12_2)*a12;
 
-    /* l=4, m=4 */
+    /* (l=4, m=4)*/
     b1 = -9.614738;
     b2 = 122.461125;
     c3A[k44] = -0.41591 + 3.2099*nu + b1*nu*Shat + b2*nu*Shat2;
 
-    /* l=5, m=5 */
+    /* (l=5, m=5)*/
     b1 = -7.063079;
     b2 = +65.464944;
     b3 = -2.055335;
     b4 = -0.585373;
     b5 = -12.631409;
     b6 = +19.271346;
-    c3A[k55] = b1 + b2*nu + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
+    //c3A[k55] = b1 + b2*nu + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
+    //c3A[k55] = 9.1187519178640084 *nu +  -0.5970347579708830 + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
+    c3A[k55] = 9.1187519178640084*nu  - 0.5970347579708830 + (b3 + b4*X12)*a12 + (b5 + b6*X12)*SQ(a12);
      
   // c3phi
     /* l=2, m=1 */
     c3phi[k21] = (2.6269 - 37.677*nu + 181.61*nu2)/(1 - 16.082*nu + 89.836*nu2);
 
     /* l=2, m=2 */
-    b1 = -0.462321;
-    b2 = -0.904512;
-    b3 =  0.437747;
-    b4 =  1.8275;
-    double c3phi_nu     =  0.4558467286*nu + 3.8883812141;
-    double c3phi_equal  =  (b4*X12 - 2.0575868122)*16*Shat4 +(b3*X12 - 0.5051534498)*8*Shat3 +(b2*X12 + 2.5742292762)*4*Shat2 +(b1*X12 + 2.5599640181)*2*Shat;
-    c3phi[k22]          = c3phi_nu + c3phi_equal;
-
-    /* l=3, m=3 */
+    b1 = -1.323643;
+    b2 = -3.555007;
+    b3 = 7.011267;
+    b4 = 32.737824;
+    c3phi[k22] = 3.8436 + 0.71565*nu + (5.12794 + b1*X12)*Shat + (9.9136 + b2*X12)*Shat2 + (-4.1075 + b3*X12)*Shat3 +(-31.5562 + b4*X12)*Shat4;
+    /*
+      b1 = -0.462321;
+      b2 = -0.904512;
+      b3 =  0.437747;
+      b4 =  1.8275;
+      double c3phi_nu     =  0.4558467286*nu + 3.8883812141;
+      double c3phi_equal  =  (b4*X12 - 2.0575868122)*16*Shat4 +(b3*X12 - 0.5051534498)*8*Shat3 +(b2*X12 + 2.5742292762)*4*Shat2 +(b1*X12 + 2.5599640181)*2*Shat;
+      c3phi[k22]          = c3phi_nu + c3phi_equal;
+    */
+      
+    /* (l=3, m=3)*/
     b1 = -0.634377;
     b2 = 5.983525; 
     b3 = -5.881900;
-    c3phi[k33] = 3.0611 - 6.1597*nu;
+    c3phi[k33] = 3.0611 - 6.1597*nu;// + (b1 + b2*X12 + b3*X12_2)*Shat;
 
-    /* l=4, m=4 */
+    /* (l=4, m=4)*/
     b1 = 7.911653;
     b2 = 21.181688;
-    c3phi[k44] = (3.6662 - 30.072*nu +76.371*nu2)/(1 - 3.5522*nu);
+    c3phi[k44] = (3.6662 - 30.072*nu +76.371*nu2)/(1 - 3.5522*nu);// + (-4.9184 + b1*X12)*Shat + (-15.6772 + b2*X12)*Shat2;
 
-    /* l=5, m=5 */
+    /* (l=5, m=5)*/
     b1 = -1.510167;
     b2 = +30.569461;
     b3 = -2.687133;
     b4 = +4.873750;
     b5 = -14.629684;
     b6 = +19.696954;
-    c3phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+    //c3phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+    //c3phi[k55] = 373.312597*nu2 -59.69284 *nu+ 4.226238 + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+    c3phi[k55] = 373.3125969012880319*nu2 - 59.6928356312470854*nu + 4.2262379605181648 + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
 
   // c4phi
     /* l=2, m=1 */
     c4phi[k21] = (4.355 - 53.763*nu + 188.06*nu2)/(1 - 18.427*nu + 147.16*nu2);
 
     /* l=2, m=2 */
-    b1 = -0.449976;
-    b2 = -0.980913;
-    double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
-    double c4phi_equal  =  (b2*X12 + 3.5695199109)*4*Shat2 + (b1*X12 + 4.1312404030)*2*Shat;
-    c4phi[k22]          =  c4phi_nu + c4phi_equal;
-
-    /* l=3, m=3 */
+    b1 = 0.779683;
+    b2 = -0.069638;
+    c4phi[k22] = 1.4736 + 2.2337*nu + (8.26539 + b1*X12)*Shat + (14.2053 + b2*X12)*Shat2;
+    /*
+      b1 = -0.449976;
+      b2 = -0.980913;
+      double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
+      double c4phi_equal  =  (b2*X12 + 3.5695199109)*4*Shat2 + (b1*X12 + 4.1312404030)*2*Shat;
+      c4phi[k22]          =  c4phi_nu + c4phi_equal;
+    */
+      
+    /* (l=3, m=3)*/
     b1 = -3.877528;
     b2 = 12.043300; 
     b3 = -6.524665;
-    c4phi[k33] = 1.789 - 5.6684*nu;
+    c4phi[k33] = 1.789 - 5.6684*nu;// + (b1 + b2*X12 + b3*X12_2)*Shat;
 
-    /* l=4, m=4 */
+    /* (l=4, m=4)*/
     b1 = 11.746452;
     b2 = 34.922883;
-    c4phi[k44] = 0.21595 + 23.216*nu;
+    c4phi[k44] = 0.21595 + 23.216*nu;// + (-3.4207 + b1*X12)*Shat + (-15.5383 + b2*X12)*Shat2;
 
-    /* l=5, m=5 */
-     b1 = -1.383721;
+    /* (l=5, m=5)*/
+    b1 = -1.383721;
     b2 = +56.871881;
     b3 = +7.198729;
     b4 = -3.870998;
     b5 = -25.992190;
     b6 = +36.882645;
-    c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+    //c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+    //c4phi[k55] = 14.9111373110275380 *nu  +  1.3639723340485870+ (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
+    c4phi[k55] = 14.9111373110275380*nu + 1.3639723340485870 + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
 
   /* (l=3, m=2)*/
     c3A[3]   = (0.1877 - 3.0017*nu + 19.501*nu2)/(1 - 1.8199*nu) - exp(-703.67*(nu - 2./9.)*(nu - 2./9.));
@@ -4292,8 +4368,9 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
 /** 
  *  Function: postpeak_coef
  *  -----------------------
- *   TODO: add description
- *   From Gonzalez+2022
+ *   \details Equivalent to QNMHybridFitCab_BHNS_HM but for tidal
+ *    disruption cases.
+ *   From Gonzalez+2022 and updated for Gonzalez+ in prep.
  *
  *   @param[out] ca1,ca2,ca3,ca4,cb1,cb2,cb3,cb4 : phenomenological parameters of the postpeak template
  *   @param[in] nu                               : symmetric mass ratio
@@ -4335,7 +4412,6 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
   const double aeff2 = SQ(aeff);
   const double aeff3 = aeff2*aeff;
   const double lambda = EOBPars->LambdaBl2;
-  const double kt2 = EOBPars->kapT2;
   
   double c3A[KMAX], c3phi[KMAX], c4phi[KMAX], c2A[KMAX];
 
@@ -4357,7 +4433,7 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
   modeon[1]  = 1;
 
   double Opeak[KMAX], Domega[KMAX];
-  peak_bhns(nu, kt2, chi1, X1, X2, abh, Apeak, Opeak);
+  peak_bhns(nu, lambda, chi1, X1, X2, abh, Apeak, Opeak);
 
   double alpha1[KMAX], omega1[KMAX], omega2[KMAX], alpha21[KMAX];
   QNM_bhns_td(abh, alpha1, alpha2, omega1, omega2, alpha21, lambda, nu, chi1);
@@ -4374,12 +4450,10 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
     c3A[k21]   = (0.23882 - 2.2982*nu + 5.7022*nu2)/(1 - 7.7463*nu + 27.266*nu2);
     
     /* l=2, m=2 */
-    b1 =  0.0169543;
-    b2 = -0.0799343;
-    b3 = -0.115928;
-    double c3A_nu =  0.8298678603 * nu - 0.5615838975;
-    double c3A_eq =  (b3*X12 + 0.0907476903)*aeff3 + (b2*X12 + 0.0227344099)*aeff2 + (b1*X12 - 0.1994944332)*aeff;
-    c3A[k22]  =  c3A_nu + c3A_eq;
+    b1 = 0.1659421;
+    b2 = -0.2560047;
+    b3 = -0.9418946;
+    c3A[k22] = -0.5585 + 0.81196*nu + (-0.398576+b1*X12)*Shat + (0.099805+b2*X12)*Shat2 + (0.72125+b3*X12)*Shat3;
 
     /* l=3, m=3 */
     b1 = -0.3502608;
@@ -4407,13 +4481,11 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
     c3phi[k21] = (2.6269 - 37.677*nu + 181.61*nu2)/(1 - 16.082*nu + 89.836*nu2);
 
     /* l=2, m=2 */
-    b1 = -0.462321;
-    b2 = -0.904512;
-    b3 =  0.437747;
-    b4 =  1.8275;
-    double c3phi_nu     =  0.4558467286*nu + 3.8883812141;
-    double c3phi_equal  =  (b4*X12 - 2.0575868122)*16*Shat4 +(b3*X12 - 0.5051534498)*8*Shat3 +(b2*X12 + 2.5742292762)*4*Shat2 +(b1*X12 + 2.5599640181)*2*Shat;
-    c3phi[k22]          = c3phi_nu + c3phi_equal;
+    b1 = -1.323643;
+    b2 = -3.555007;
+    b3 = 7.011267;
+    b4 = 32.737824;
+    c3phi[k22] = 3.8436 + 0.71565*nu + (5.12794 + b1*X12)*Shat + (9.9136 + b2*X12)*Shat2 + (-4.1075 + b3*X12)*Shat3 +(-31.5562 + b4*X12)*Shat4;
 
     /* l=3, m=3 */
     b1 = -0.634377;
@@ -4441,11 +4513,9 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
     c4phi[k21] = (4.355 - 53.763*nu + 188.06*nu2)/(1 - 18.427*nu + 147.16*nu2);
 
     /* l=2, m=2 */
-    b1 = -0.449976;
-    b2 = -0.980913;
-    double c4phi_nu     =  2.0822327682 * nu + 1.4996868401;
-    double c4phi_equal  =  (b2*X12 + 3.5695199109)*4*Shat2 + (b1*X12 + 4.1312404030)*2*Shat;
-    c4phi[k22]          =  c4phi_nu + c4phi_equal;
+    b1 = 0.779683;
+    b2 = -0.069638;
+    c4phi[k22] = 1.4736 + 2.2337*nu + (8.26539 + b1*X12)*Shat + (14.2053 + b2*X12)*Shat2;
 
     /* l=3, m=3 */
     b1 = -3.877528;
@@ -4468,9 +4538,9 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
     b5 = -25.992190;
     b6 = +36.882645;
     c4phi[k55] = b1 + b2*nu + (b3 + b4*X12)*Shat + (b5 + b6*X12)*Shat2;
-	    
 
-  /** from Nagar et al arxiv:2001.09082**/
+	    
+  /* from Nagar et al arxiv:2001.09082 */
   for (int k=0; k<KMAX; k++) {
     sigmar[k] = alpha1[k];
     sigmai[k] = omega1[k];
@@ -4493,12 +4563,12 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
 /** 
  *  Function: peak_bhns
  *  -----------------------
- *   A^{peak}_{22} amplitude and omega^{peak}_{22} frequency at tpeak (\dot{A}(tpeak)=0) 
+ *   \details ^{peak}_{22} amplitude and omega^{peak}_{22} frequency at tpeak (\dot{A}(tpeak)=0) 
  *   ap_bbh and op_bbh is for BBH from the function QNMHybridFitCab_HM in ..Fits.c
- *   From Gonzalez+2022
+ *   From Gonzalez+2022 and updated for Gonzalez+ in prep.
  *
  *   @param[in] nu                               : symmetric mass ratio
- *   @param[in] kt2                              : tildekappa_2, system tidal parameter
+ *   @param[in] lambda                           : tidal polarizability
  *   @param[in] chi1                             : dimensionless spin of body 1
  *   @param[in] X1                               : mass fraction of body 1
  *   @param[in] X2                               : mass fraction of body 2
@@ -4506,11 +4576,12 @@ void postpeak_coef(double *ca1, double *ca2, double *ca3, double *ca4, double *c
  *   @param[out] Apeak                           : Peak amplitude
  *   @param[out] Opeak                           : Omega at the peak of amplitude
  */
-void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak)
+void peak_bhns(double nu, double lambda, double chi1, double X1, double X2, double abh, double *Apeak, double *Opeak)
 {
-   double op_bbh[KMAX], ap_bbh[KMAX];
+   double op_bbh[KMAX], ap_bbh[KMAX], Ap[KMAX], Op[KMAX];
   for (int k=0; k<KMAX; k++) {
     Apeak[k] = Opeak[k] = op_bbh[k] = ap_bbh[k] = 0.;
+     Ap[k] = Op[k] = 1.;
   }
 
   // BBH fits 
@@ -4703,7 +4774,7 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
 
       omgorb    = 1 + a1Omg*nu + a2Omg*nu2;
       omgspin   = (1 + b1Omg*Shat + b2Omg*Shat2)/(1 + b3Omg*Shat);
-      op_bbh[4] = omgTP[4]*omgorb*omgspin;
+      op_bbh[4] = omgTP[4]*omgorb*omgspin/omgTP[4];
 
       a1Amp   = -0.22523;
       a2Amp   = 3.0569;
@@ -4814,61 +4885,442 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
     Aspin    = (0.04360530/(1 + b1*nu + b2*nu2)*a12c)/(1 - 0.5769451/(1+b3*nu+b4*nu2)*a12c);
     ap_bbh[13] = Aorb + Aspin;
     }
-    
-  //
+
+  /* BHNS Section */
 
   /* Amplitude peak */
-  double a110= -0.81310963; 
-  double a111= 1.02856956;
-  double a120= 3.04419224;
-  double a121= 1.47499715;
-  double a210= -0.05335408;
-  double a211= 0.01359198;
-  double a220= 0.25160138;
-  double a221= 0.14790936;
-  double b110= 0.02646178;
-  double b111= 0.65802460;
+  double c102,c101,c100,c112,c111,c110,c122,c121,c120,c202,c201,c200,c212,c211,c210,c222,c221,c220,c31,c32;
+  double c301,c300,c311,c310,c132,c131,c130,c232,c231,c230,c321,c320;
+  double c113,c123,c213,c223,c313,c312,c323,c322,c411,c410,c421,c420;
+  double c114,c124,c134,c133,c214,c224,c234,c233,c332,c331,c330;
+  double p10,p11,p12,p20,p21,p22,p30,p31,p13,p23,p32,p41,p42,p33;
+  double p1,p2,p3,p4;
+
+  /* l=2, m=1 */
+  c112 = 79.69190135775388;
+  c111 = -63.833579388191794;
+  c110 = 475.62792687058675;
+  c122 = 13717.304556430048;
+  c121 = -16696.974173835133;
+  c120 = 187.6302117256296;
+  c132 = -47483.566270772106;
+  c131 = 55908.56848609845;
+  c130 = -3729.579436870687;
+  c212 = -3.675245190907651;
+  c211 = 4.055153660963919;
+  c210 = -1.810890290356132;
+  c222 = 45.410498599979725;
+  c221 = -41.879957729349584;
+  c220 = 16.088785963718603;
+  c232 = -139.34673532789955;
+  c231 = 113.28977369273983;
+  c230 = -36.645761242568085;
+  c311 = -72.42429070293126;
+  c310 = 44.48560453945776;
+
+  p11 = c112*chi1*chi1 + c111*chi1 + c110;
+  p12 = c122*chi1*chi1 + c121*chi1 + c120;
+  p13 = c132*chi1*chi1 + c131*chi1 + c130;
+  p21 = c212*chi1*chi1 + c211*chi1 + c210;
+  p22 = c222*chi1*chi1 + c221*chi1 + c220;
+  p23 = c232*chi1*chi1 + c231*chi1 + c230;
+  p31 = c311*chi1 + c310;
+
+  p1 = p11*nu + p12*nu*nu + p13*nu*nu*nu;
+  p2 = p21*nu + p22*nu*nu + p23*nu*nu*nu;
+  p3 = p31*nu;
+
+  Ap[0] =  ( 1 + (p1*lambda + p2*lambda*lambda ) ) / ( (1 + lambda*p3*p3 ) );
+  if(Ap[0]<0.0){Ap[0]=1.0;};
+
+  /* l=2, m=2 */
+  c102 = 0.025960639049437614; 
+  c101 = 0.011583003041680442;
+  c100 = -0.0016533947810772696;
+  c112 = -0.31403656018939863;
+  c111 = -0.12825460441414602;
+  c110 = 0.13396228694902;
+  c122 = 0.8917717620733512;
+  c121 = 0.3150355510141175;
+  c120 = -0.513304355534311;
+  c202 = -1.984228201511826e-05;
+  c201 = -2.804785772573806e-06;
+  c200 = 8.018661470565014e-06;
+  c212 = 0.0002223708961923682;
+  c211 = 2.555424239372415e-05;
+  c210 = -0.00010025951516653183;
+  c222 = -0.0006022803171412016;
+  c221 = -5.057203798367972e-05;
+  c220 = 0.0002870181683963824;
+  c31  = 0.009579950459173342;
+  c32  = -0.01899088523426322;
   
-  double a11 = a110*chi1 + a111;
-  double a12 = a120*chi1 + a121;
-  double a21 = a210*chi1 + a211;
-  double a22 = a220*chi1 + a221;
-  double b11 = b110*chi1 + b111;
+  p10 = c102*chi1*chi1 + c101*chi1 + c100;
+  p11 = c112*chi1*chi1 + c111*chi1 + c110;
+  p12 = c122*chi1*chi1 + c121*chi1 + c120;
+  p20 = c202*chi1*chi1 + c201*chi1 + c200;
+  p21 = c212*chi1*chi1 + c211*chi1 + c210;
+  p22 = c222*chi1*chi1 + c221*chi1 + c220;
 
-  a1 = a11*nu + a12*nu*nu;
-  a2 = a21*nu + a22*nu*nu;
-  b1 = b11*nu ;
+  p1 = p10*nu + p11*nu*nu + p12*nu*nu*nu;
+  p2 = p20*nu + p21*nu*nu + p22*nu*nu*nu;
+  p3 = c31*nu + c32*nu*nu;
 
-  double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*kt2)*(1 + b1*kt2) ) );
+  Ap[1] =  ( 1 + (p1*lambda + p2*lambda*lambda) ) / ( 1 + lambda*p3  );
+  if(Ap[1]<0.0){Ap[1]=1.0;};
+
+  /* l=3, m=2 */
+  c112 = 20.16870439462333;
+  c111 = 11.038387003596617;
+  c110 = -4.020843926856486;
+  c122 = -207.72480245938715;
+  c121 = -117.37710746118753;
+  c120 = 40.66818784611969;
+  c132 = 538.5544958151388;
+  c131 = 318.28911903762025;
+  c130 = -99.26273990634219;
+  c212 = -0.016627367594463694;
+  c211 = -0.014305531331241536;
+  c210 = 0.004174534399221245;
+  c222 = 0.15432035038868333;
+  c221 = 0.14118798342477987;
+  c220 = -0.040988466644647094;
+  c232 = -0.3581036182848496;
+  c231 = -0.35040084466576926;
+  c230 = 0.0994625770255457;
+  c312 = 2.05494620204673e-06;
+  c311 = 4.055461359375113e-06;
+  c310 = -6.611853315606744e-07;
+  c322 = -1.0313837453840835e-05;
+  c321 = -3.6352321950711845e-05;
+  c320 = 5.58113544950673e-06;
+  c332 = 2.421279243476082e-06;
+  c331 = 8.114351204003656e-05;
+  c330 = -1.1677202522832645e-05;
+  c411 = -3.317069910114291;
+  c410 = -0.015174553789524594;
+  c421 = 22.36565160345709;
+  c420 = 3.7427983470741455;
+
+  p11 = c112*chi1*chi1 + c111*chi1 + c110;
+  p12 = c122*chi1*chi1 + c121*chi1 + c120;
+  p13 = c132*chi1*chi1 + c131*chi1 + c130;
+  p21 = c212*chi1*chi1 + c211*chi1 + c210;
+  p22 = c222*chi1*chi1 + c221*chi1 + c220;
+  p23 = c232*chi1*chi1 + c231*chi1 + c230;
+  p31 = c312*chi1*chi1 + c311*chi1 + c310;
+  p32 = c322*chi1*chi1 + c321*chi1 + c320;
+  p33 = c332*chi1*chi1 + c331*chi1 + c330;
+
+  p41 = c411*chi1 + c410;
+  p42 = c421*chi1 + c420;
+
+  p1 = p11*nu + p12*nu*nu + p13*nu*nu*nu;
+  p2 = p21*nu + p22*nu*nu + p23*nu*nu*nu;
+  p3 = p31*nu + p32*nu*nu + p33*nu*nu*nu;
+  p4 = p41*nu + p42*nu*nu;
+
+  Ap[3] = ( 1 + (p1*lambda + p2*lambda*lambda + p3*lambda*lambda*lambda ) ) / ( (1 + lambda*p4*p4 ) );
+  if(Ap[3]<0.0){
+    Ap[3]=fabs(Ap[3]);
+    if(Ap[3]>1.0){Ap[3]=1.0;}
+    }
+
+  /* l=3, m=3 */
+  c114 = 98.58316168624746;
+  c113 = 23.34611781664497;
+  c112 = -28.887092039772345;
+  c111 = 1.4659939569547824;
+  c110 = 0.15438882520561592;
+  c124 = -1023.2487147730186;
+  c123 = -248.719272283286;
+  c122 = 299.4472305323695;
+  c121 = -14.353307233157919;
+  c120 = -1.422004596271538;
+  c134 = 2630.326171106412;
+  c133 = 655.8187503615836;
+  c132 = -769.2344295536586;
+  c131 = 34.542048041903065;
+  c130 = 3.243842025932237;
+  c214 = -0.00023145853854142156;
+  c213 = -8.571596581472541e-05;
+  c212 = 7.124381821132649e-05;
+  c211 = 1.3058237396225664e-05;
+  c210 = 6.794241998472768e-07;
+  c224 = 0.0024030529286666346;
+  c223 = 0.0008885012949962715;
+  c222 = -0.0007497610069806854;
+  c221 = -0.000148744547249859;
+  c220 = -6.704977980044648e-06;
+  c234 = -0.006184049610372618;
+  c233 = -0.002273091188747331;
+  c232 = 0.001965296930731387;
+  c231 = 0.0004187367371565314;
+  c230 = 1.9367965673575747e-05;
+  c311 = -0.054311467466514475;
+  c310 = 0.009586523081306567;
+  c321 = 0.2937082050407349;
+  c320 = 0.009847652717538884;
+    
+  p11 = c114*chi1*chi1*chi1*chi1 + c113*chi1*chi1*chi1 + c112*chi1*chi1 + c111*chi1 + c110;
+  p12 = c124*chi1*chi1*chi1*chi1 + c123*chi1*chi1*chi1 + c122*chi1*chi1 + c121*chi1 + c120;
+  p13 = c134*chi1*chi1*chi1*chi1 + c133*chi1*chi1*chi1 + c132*chi1*chi1 + c131*chi1 + c130;
+  p21 = c214*chi1*chi1*chi1*chi1 + c213*chi1*chi1*chi1 + c212*chi1*chi1 + c211*chi1 + c210;
+  p22 = c224*chi1*chi1*chi1*chi1 + c223*chi1*chi1*chi1 + c222*chi1*chi1 + c221*chi1 + c220;
+  p23 = c234*chi1*chi1*chi1*chi1 + c233*chi1*chi1*chi1 + c232*chi1*chi1 + c231*chi1 + c230;
+  p31 = c311*chi1 + c310;
+  p32 = c321*chi1 + c320;
+
+  p1 = p11*nu + p12*nu*nu + p13*nu*nu*nu;
+  p2 = p21*nu + p22*nu*nu + p23*nu*nu*nu;
+  p3 = p31*nu + p32*nu*nu;       
+
+  Ap[4] = ( 1 + (p1*lambda + p2*lambda*lambda*lambda ) ) / ( (1 + lambda*lambda*p3*p3 )*(1 + lambda*lambda*p3*p3 ) );
+  if(Ap[4]>1.0){Ap[4]=1.0;};
+  if(Ap[4]<0.0){
+    Ap[4]=fabs(Ap[4]);
+    if(Ap[4]>1.0){Ap[4]=1.0;}
+    }
+
+  /* l=4, m=4 */
+  c112 = 3543.1799502856747;
+  c111 = 3309.22676314805;
+  c110 = 807.7348298148902;
+  c122 = -40577.17930128383;
+  c121 = -37096.373919250385;
+  c120 = -8622.741990143393;
+  c132 = 118155.67244830148;
+  c131 = 106312.69486816866;
+  c130 = 23776.282112663503;
+  c212 = 0.26110920437332924;
+  c211 = -5.627928587745965;
+  c210 = -2.6550111083017383;
+  c222 = -5.521939460220596;
+  c221 = 56.79132247835583;
+  c220 = 27.525128848923384;
+  c232 = 19.288265323714658;
+  c231 = -143.50684157009792;
+  c230 = -70.87348176416717;
+  c312 = -0.0016458349827221754;
+  c311 = 0.002319476890473154;
+  c310 = 0.0017785039216730385;
+  c322 = 0.019459621840015342;
+  c321 = -0.022402763254381477;
+  c320 = -0.018327149646315592;
+  c332 = -0.055329421236874586;
+  c331 = 0.053749032597984206;
+  c330 = 0.04672079813389738;
+  c411 = -117.4017144826126;
+  c410 = -10.046736035912739;
+  c421 = 739.3626850513566;
+  c420 = 127.27925047272853;
+
+  p11 = c112*chi1*chi1 + c111*chi1 + c110;
+  p12 = c122*chi1*chi1 + c121*chi1 + c120;
+  p13 = c132*chi1*chi1 + c131*chi1 + c130;
+  p21 = c212*chi1*chi1 + c211*chi1 + c210;
+  p22 = c222*chi1*chi1 + c221*chi1 + c220;
+  p23 = c232*chi1*chi1 + c231*chi1 + c230;
+  p31 = c312*chi1*chi1 + c311*chi1 + c310;
+  p32 = c322*chi1*chi1 + c321*chi1 + c320;
+  p33 = c332*chi1*chi1 + c331*chi1 + c330;
+  p41 = c411*chi1 + c410;
+  p42 = c421*chi1 + c420;
+    
+  p1 = p11*nu + p12*nu*nu + p13*nu*nu*nu; 
+  p2 = p21*nu + p22*nu*nu + p23*nu*nu*nu; 
+  p3 = p31*nu + p32*nu*nu + p33*nu*nu*nu; 
+  p4 = p41*nu + p42*nu*nu;
+
+  Ap[8] = ( 1 + (p1*lambda + p2*lambda*lambda + p3*lambda*lambda*lambda ) ) / ( (1 + lambda*p4*p4 ) );
+  if(Ap[8]<0.0){
+    Ap[8]=fabs(Ap[8]);
+    if(Ap[8]>1.0){Ap[8]=1.0;}
+    }
+  if(Ap[8]>1.0){Ap[8]=1.0;};
 
   /* Omega peak */
-  a110= -3.70312833;
-  a111= 2.39550440;
-  a120= 12.2538726;
-  a121= -0.80366536;
-  a210= 0.02073814;
-  a211= -0.05079978;
-  a220= -0.13570448;
-  a221= 0.50407406;
-  b110= -0.03175737;
-  b111= 1.04051247;
+  double d102,d101,d100,d112,d111,d110,d122,d121,d120,d202,d201,d200,d212,d211,d210,d222,d221,d220,d0;
+  double d113,d123,d213,d223,d311,d310,d321,d320,d131,d130,d231,d230,d331,d330,d411,d410,d421,d420;
+  double d10,d11,d12,d20,d21,d22,d31,d32,d13,d23,d33,d41,d42;
+  double d1,d2,d3,d4;
 
-  a11 = a110*chi1 + a111;
-  a12 = a120*chi1 + a121;
-  a21 = a210*chi1 + a211;
-  a22 = a220*chi1 + a221;
-  b11 = b110*chi1 + b111;
+  /* l=2, m=1 */
+  d111 = -15507583.54315245;
+  d110 = 29233984.00747841;
+  d121 = 188051611.3537233;
+  d120 = -303459693.99696875;
+  d131 = -561206949.6722764;
+  d130 = 781093255.9339185;
+  d211 = 65639.32689138538;
+  d210 = -28574.823293025787;
+  d221 = -715381.2300665657;
+  d220 = 202374.5955228343;
+  d231 = 1941160.48875847;
+  d230 = -200599.97864086388;
+  d311 = -80.15396589788257;
+  d310 = 41.83106445091412;
+  d321 = 869.1588059570613;
+  d320 = -413.4870939347111;
+  d331 = -2341.85742662733;
+  d330 = 992.3696507060471;
+  d411 = 35.013368813946784;
+  d410 = -20.89552442415687;
+  d421 = -174.81894201673433;
+  d420 = 230.9684863107324;
+    
+  d11 = d111*chi1 + d110;
+  d12 = d121*chi1 + d120;
+  d13 = d131*chi1 + d130;
+  d21 = d211*chi1 + d210;
+  d22 = d221*chi1 + d220;
+  d23 = d231*chi1 + d230;
+  d31 = d311*chi1 + d310;
+  d32 = d321*chi1 + d320;
+  d33 = d331*chi1 + d330;
+  d41 = d411*chi1 + d410;
+  d42 = d421*chi1 + d420;
 
-  a1 = a11*nu + a12*nu*nu;
-  a2 = a21*nu + a22*nu*nu;
-  b1 = b11*nu;
+  d1 = d11*nu + d12*nu*nu + d13*nu*nu*nu;
+  d2 = d21*nu + d22*nu*nu + d23*nu*nu*nu;
+  d3 = d31*nu + d32*nu*nu + d33*nu*nu*nu;
+  d4 = d41*nu + d42*nu*nu;
 
-  double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*kt2)*(1 + b1*kt2) ) );
+  Op[0] = ( 1 + (d1*lambda + d2*lambda*lambda + d3*lambda*lambda*lambda ) ) / ( (1 + lambda*d4*d4 )*(1 + lambda*d4*d4 ) );
+
+  /* l=2, m=2 */
+  d102 = 0.1107284045072136; 
+  d101 = 0.030700021625216727;
+  d100 = -0.06263403886363417;
+  d112 = -1.4773209090362833;
+  d111 = -0.23044230587158065;
+  d110 = 0.9051355077601556;
+  d122 = 4.438909358861151;
+  d121 = 0.21104611999758255;
+  d120 = -2.455588849559558;
+  d202 = -0.00013138193195963194;
+  d201 = 4.750097996232555e-05;
+  d200 = 3.082799336172893e-05;
+  d212 = 0.0015827056116190592;
+  d211 = -0.0006923427069924896;
+  d210 = -0.0003105308152917312;
+  d222 = -0.00448167876155956;
+  d221 = 0.0021740498780173922;
+  d220 = 0.0009061371427948547;
+  d0  =  0.05098386692906611;
+  
+  d10 = d102*chi1*chi1 + d101*chi1 + d100;
+  d11 = d112*chi1*chi1 + d111*chi1 + d110;
+  d12 = d122*chi1*chi1 + d121*chi1 + d120;
+  d20 = d202*chi1*chi1 + d201*chi1 + d200;
+  d21 = d212*chi1*chi1 + d211*chi1 + d210;
+  d22 = d222*chi1*chi1 + d221*chi1 + d220;
+
+  d1 = d10*nu + d11*nu*nu + d12*nu*nu*nu;
+  d2 = d20*nu + d21*nu*nu + d22*nu*nu*nu;
+
+  Op[1] = ( ( 1 + (d1*lambda + d2*lambda*lambda) ) / ( (1 + lambda*d0*nu*nu)*(1 + lambda*d0*nu*nu) ) );
+  if(Op[1]>1.0){Op[1]=1.0;};
+
+  /* l=3, m=2 */
+  d111 = -0.1855265658329381;
+  d110 = 0.169287918459171;
+  d121 = 0.7992866688623452;
+  d120 = -0.7404661978046917;
+  d211 = 3.50257349367862e-05;
+  d210 = -4.535640993857267e-05;
+  d221 = -0.0001494414775185912;
+  d220 = 0.000199499873753364;
+  d311 = 1.0541708807321233;
+  d310 = -1.197499895272247;
+  d321 = -4.434903355213771;
+  d320 = 4.265315447317003;
+
+  d11 = d111*chi1 + d110;
+  d12 = d121*chi1 + d120;
+  d21 = d211*chi1 + d210;
+  d22 = d221*chi1 + d220;
+  d31 = d311*chi1 + d310;
+  d32 = d321*chi1 + d320;
+
+  d1 = d11*nu + d12*nu*nu;
+  d2 = d21*nu + d22*nu*nu;
+  d3 = d31*nu + d32*nu*nu;
+
+  Op[3] = ( 1 + (d1*lambda + d2*lambda*lambda) ) / ( (1 + lambda*d3*d3 ) );
+  if(Op[3]>1.0){Op[3]=1.0;};
+
+  /* l=3, m=3 */
+  d113 = -0.17571363206227059;
+  d112 = -0.06305375338478839;
+  d111 = 0.03980474337705321;
+  d110 = -0.013248652179259336;
+  d123 = 0.8640147802958323;
+  d122 = 0.3102264177830439;
+  d121 = -0.19421480848909106;
+  d120 = -0.0002218569623679201;
+  d213 = 0.00025611940982543836;
+  d212 = 7.313903139948755e-05;
+  d211 = -4.717653263343681e-05;
+  d210 = 7.759871362428855e-05;
+  d223 = -0.0012519413471327576;
+  d222 = -0.0003946916912993047;
+  d221 = 0.00022067454550573677;
+  d220 = -0.00028520053777508926;
+  d31 = 3.225951474170114e-05;
+  d32 = -0.00011929010217509204;
+
+  d11 = d113*chi1*chi1*chi1 + d112*chi1*chi1 + d111*chi1 + d110;
+  d12 = d123*chi1*chi1*chi1 + d122*chi1*chi1 + d121*chi1 + d120;
+  d21 = d213*chi1*chi1*chi1 + d212*chi1*chi1 + d211*chi1 + d210;
+  d22 = d223*chi1*chi1*chi1 + d222*chi1*chi1 + d221*chi1 + d220;
+
+  d1 = d11*nu + d12*nu*nu; 
+  d2 = d21*nu + d22*nu*nu;
+  d3 = d31*nu + d32*nu*nu;
+
+  Op[4] = ( ( 1 + (d1*lambda + d2*lambda*lambda) ) / ( (1 + lambda*lambda*d3)*(1 + lambda*lambda*d3) ) );
+  if(Op[4]>1.0){Op[4]=1.0;};
+
+  /* l=4, m=4 */
+  d113 = -0.47548874764193955;
+  d112 = -0.027086853803733532;
+  d111 = 0.7404314951799879;
+  d110 = 0.3719543086750542;
+  d123 = 2.163479553205327;
+  d122 = 0.5275643836925328;
+  d121 = -2.7852826426215676;
+  d120 = -1.4670455339066886;
+  d213 = 7.505291321097175e-05;
+  d212 = 9.023386532929272e-05;
+  d211 = -7.837977899026634e-05;
+  d210 = -3.119139005074053e-05;
+  d223 = -0.0005908587238009375;
+  d222 = -0.0008832619825909595;
+  d221 = 8.362591371834694e-05;
+  d220 = 8.203966372546923e-05;
+  d311 = 2.2996565572437153;
+  d310 = 2.4505796489855025;
+  d321 = -6.258030033905745;
+  d320 = -7.485076293892947;   
+
+  d11 = d113*chi1*chi1*chi1 + d112*chi1*chi1 + d111*chi1 + d110;
+  d12 = d123*chi1*chi1*chi1 + d122*chi1*chi1 + d121*chi1 + d120;
+  d21 = d213*chi1*chi1*chi1 + d212*chi1*chi1 + d211*chi1 + d210;
+  d22 = d223*chi1*chi1*chi1 + d222*chi1*chi1 + d221*chi1 + d220;
+  d31 = d311*chi1 + d310;
+  d32 = d321*chi1 + d320;
+    
+  d1 = d11*nu + d12*nu*nu; 
+  d2 = d21*nu + d22*nu*nu;
+  d3 = d31*nu + d32*nu*nu;
+
+  Op[8] = ( 1 + (d1*lambda + d2*lambda*lambda  ) ) / ( (1 + lambda*d3*d3 ) );
 
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
-      Apeak[k] = Ap*ap_bbh[k];
-      Opeak[k] = Op*op_bbh[k];    
+      Apeak[k] = Ap[k]*ap_bbh[k];
+      Opeak[k] = Op[k]*op_bbh[k];    
   }
 
   if((X12==0)&&(chi1==0)&&(chi2==0)){ // TODO: problematic cases where X12=0 and messes up the fits
@@ -4884,8 +5336,8 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
 /** 
  *  Function: QNM_bhns_td
  *  -----------------------
- *   QNMs for tidally disrupted BHNS 
- *   From Gonzalez+2022
+ *   \details QNMs for tidally disrupted BHNS 
+ *   From Gonzalez+2022 and updated for Gonzalez+ in prep.
  *
  *   @param[in] af                               : spin of the remnant BH
  *   @param[in] alpha1                           : real part of the complex QNM frequency for the fundamental mode                                                                    
@@ -4899,11 +5351,12 @@ void peak_bhns(double nu, double kt2, double chi1, double X1, double X2, double 
  */
 void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, double *omega2, double *alpha21, double lambda, double nu, double chi1)
 {
-  double alpha_bbh[KMAX],omega_bbh[KMAX];
+  double alpha_bbh[KMAX],omega_bbh[KMAX],Ap[KMAX],Op[KMAX];
 
   /** QNM fits for the tidal disruption cases in BHNS */
   for (int k=0; k<KMAX; k++) {
     alpha21[k] = alpha1[k] = alpha2[k] = alpha_bbh[k] = omega1[k] = omega2[k]= omega_bbh[k] = 0.;
+    Ap[k] = Op[k] = 1.;
   }
 
   // BBH fits
@@ -4916,13 +5369,16 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
   alpha21[0] = +0.184952*(1 - 1.1329*af - 0.3520*af2 + 0.4924*af3)/(1 - 1.10334*af - 0.3037*af2 + 0.4262*af3);
   
     /* l = 2, m = 2*/
-  double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
+  /* double alpha1_c = 0.1211263886*af3 + 0.7015835813*af2 - 1.8226060896*af + 1;
   double alpha1_d = 0.0811633377*af3 + 0.7201166020*af2 - 1.8002031358*af + 1;
   alpha_bbh[1] = 0.0889623157 * (alpha1_c/alpha1_d);
   
   double omega1_c = -0.0598837831*af3 + 0.8082136788*af2 - 1.7408467418*af + 1;
   double omega1_d = -0.2358960279*af3 + 1.3152369374*af2 - 2.0764065380*af + 1;
-  omega_bbh[1] =  0.3736716844*(omega1_c/omega1_d);
+  omega_bbh[1] =  0.3736716844*(omega1_c/omega1_d); */
+  omega_bbh[1]  = +0.373672*(1 - 1.5367*af + 0.5503*af2)/(1 - 1.8700*af + 0.9848*af2 - 0.10943*af3);
+  alpha_bbh[1]  = +0.08896*(1 - 1.90036*af + 0.86200*af2 + 0.0384893*af3)/(1 - 1.87933*af + 0.88062*af2);
+  alpha21[1] = +0.184953*(1 - 1.89397*af + 0.88126*af2 + 0.0130256*af3)/(1 - 1.83901*af + 0.84162*af2);
   
   /* l = 3, m = 2*/
   omega_bbh[3]  = +0.599443*(1 - 0.251*af - 0.891*af2 + 0.2706*af3)/(1 - 0.475*af - 0.911*af2 + 0.4609*af3);
@@ -4947,77 +5403,384 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
 
 
   // Inverse damping time
+  double c101,c100,c111,c110,c201,c200,c211,c210,c301,c300,c311,c310,c401,c400;
+  double c113,c112,c123,c122,c121,c120,c213,c212,c223,c222,c221,c220;
+  double c132,c131,c130,c231,c232,c230,c322,c321,c320,c332,c331,c330,c411,c410,c421,c420;
+  double c10,c11,c20,c21,c30,c31,c40,c12,c22,c13,c23,c32,c33,c41,c42;
+  double c1,c2,c3,c4;
 
-  const double a110= 0.08540533;
-  const double a111= 0.05952267;
-  const double a120= -0.38077744;
-  const double a121= -0.20439610;
-  const double a210= 9.9329e-06;
-  const double a211= 4.8199e-05;
-  const double a220= -2.9158e-05;
-  const double a221= -1.9268e-04;
-  const double b110= 0.21840792;
-  const double b111= 0.48995965;
-  const double b120= -0.92644561;
-  const double b121= -1.14839419;
+  /* l = 2, m = 1*/
+  c113 = 1.017251288502842;
+  c112 = -0.06623359086717126;
+  c111 = -0.18161663646183168;
+  c110 = -0.04062047724559591;
+  c123 = -4.795790111971402;
+  c122 = 0.6400132907804421;
+  c121 = 1.154845779515909;
+  c120 = 0.2470137810794439;
+  c213 = -0.0006508038132935816;
+  c212 = 0.00020189004480464088;
+  c211 = 4.007524560345456e-05;
+  c210 = -1.4580017533437743e-05;
+  c223 = 0.0035685097544596012;
+  c222 = -0.0003690285105227662;
+  c221 = 5.645560621097093e-05;
+  c220 = 0.00011406588975419034;
+  c311 = 0.832457585187816;
+  c310 = 0.07742292789237941;
+  c321 = -2.3647908436141116;
+  c320 = 0.4852248611895286;
+   
+  c11 = c113*chi1*chi1*chi1 + c112*chi1*chi1 + c111*chi1 + c110;
+  c12 = c123*chi1*chi1*chi1 + c122*chi1*chi1 + c121*chi1 + c120;
+  c21 = c213*chi1*chi1*chi1 + c212*chi1*chi1 + c211*chi1 + c210;
+  c22 = c223*chi1*chi1*chi1 + c222*chi1*chi1 + c221*chi1 + c220;
+  c31 = c311*chi1 + c310;
+  c32 = c321*chi1 + c320;
 
-  double a11 = a110*chi1 + a111;
-  double a12 = a120*chi1 + a121;
-  double a21 = a210*chi1 + a211;
-  double a22 = a220*chi1 + a221;
-  double b11 = b110*chi1 + b111;
-  double b12 = b120*chi1 + b121;
+  c1 = c11*nu + c12*nu*nu; 
+  c2 = c21*nu + c22*nu*nu;
+  c3 = c31*nu + c32*nu*nu;
 
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
+  Ap[0] = ( 1 + (c1*lambda + c2*lambda*lambda  ) ) / ( (1 + lambda*c3*c3 )*(1 + lambda*c3*c3 ) );
+  //if(Ap[0]>1.0){Ap[0]=1.0;}
+  if(Ap[0]<0.0){Ap[0]=1.0;}
 
-  double Ap = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
+  /* l = 2, m = 2*/
+  c101 = 0.070454839545944;
+  c100 = 0.006934183212582287;
+  c111 = -0.28991238536521063;
+  c110 = 0.07310357931603813;
+  c201 = -5.195489438172421e-05;
+  c200 = 4.9944435533574586e-05;
+  c211 = 0.00017505988793666536;
+  c210 = -0.0002454447042581111;
+  c301 = 6.38200707246774e-09;
+  c300 = -1.1341504662808922e-08;
+  c311 = -1.1554624161065344e-08;
+  c310 = 5.2615121720619686e-08;
+  c401 = -0.0025816920977441917;
+  c400 = 0.05188115116342483;
+
+  c10 = c101*chi1 + c100;
+  c11 = c111*chi1 + c110;
+  c20 = c201*chi1 + c200;
+  c21 = c211*chi1 + c210;
+  c30 = c301*chi1 + c300;
+  c31 = c311*chi1 + c310;
+  c40 = c401*chi1 + c400;
+
+  c1 = c10*nu + c11*nu*nu;
+  c2 = c20*nu + c21*nu*nu;
+  c3 = c30*nu + c31*nu*nu;
+
+  Ap[1] = (1 + lambda*c1 + lambda*lambda*c2 + lambda*lambda*lambda*c3 ) / ( 1 + lambda*c40*nu );
+  if(Ap[1]>1.0){Ap[1]=1.0;}
+
+  /* l = 3, m = 2*/
+  c122 = 13.76187812933075;
+  c121 = 11.217068236820518;
+  c120 = -3.9975070427233783;
+  c132 = -61.37639466623299;
+  c131 = -50.96198257968971;
+  c130 = 18.43384336942182;
+  c222 = -0.06616749911912588;
+  c221 = -0.051956237187389;
+  c220 = 0.020803793852828833;
+  c232 = 0.29667798696415937;
+  c231 = 0.23894376648286575;
+  c230 = -0.09583888462419352;
+  c322 = 5.450459709653773e-05;
+  c321 = 4.248357623382005e-05;
+  c320 = -1.6118209299630243e-05;
+  c332 = -0.0002452746197305893;
+  c331 = -0.00019597450119635202;
+  c330 = 7.435022952695207e-05;
+  c411 = 0.24054582587634482;
+  c410 = 0.7681438117400963;
+  c421 = -0.38845884374894185;
+  c420 = -2.9576614516373314;
+
+  c12 = c122*chi1*chi1 + c121*chi1 + c120;
+  c13 = c132*chi1*chi1 + c131*chi1 + c130;
+  c22 = c222*chi1*chi1 + c221*chi1 + c220;
+  c23 = c232*chi1*chi1 + c231*chi1 + c230;
+  c32 = c322*chi1*chi1 + c321*chi1 + c320;
+  c33 = c332*chi1*chi1 + c331*chi1 + c330;
+  c41 = c411*chi1 + c410;
+  c42 = c421*chi1 + c420;
+
+  c1 = c12*nu*nu + c13*nu*nu*nu;
+  c2 = c22*nu*nu + c23*nu*nu*nu;
+  c3 = c32*nu*nu + c33*nu*nu*nu;
+  c4 = c41*nu + c42*nu*nu;
+
+  Ap[3] = ( 1 + (c1*lambda + c2*lambda*lambda + c3*lambda*lambda*lambda) ) / ( (1 + lambda*c4*c4 )*(1 + lambda*c4*c4 ) );
+  if(Ap[3]>1.0){Ap[3]=1.0;}
+  if(Ap[3]<0.0){Ap[3]=1.0;}
+
+  /* l = 3, m = 3*/
+  c113 = 1.5710948456754454;
+  c112 = 0.9146276153180174;
+  c111 = 0.11132698735711116;
+  c110 = -0.033742317650047565;
+  c123 = -7.69280560477062;
+  c122 = -1.676964030989382;
+  c121 = 1.0988217833664355;
+  c120 = 0.36291501890859346;
+  c213 = -0.0016040433566614856;
+  c212 = 9.097724819433372e-05;
+  c211 = 0.0003795563942833713;
+  c210 = 9.331364459422936e-05;
+  c223 = 0.007077732496151121;
+  c222 = -0.0014471026733462629;
+  c221 = -0.002095780509407605;
+  c220 = -0.0004263783108491086;
+  c311 = 2.0781424448527246;
+  c310 = 0.6641727408438288;
+    
+  c11 = c113*chi1*chi1*chi1 + c112*chi1*chi1 + c111*chi1 + c110;
+  c12 = c123*chi1*chi1*chi1 + c122*chi1*chi1 + c121*chi1 + c120;
+  c21 = c213*chi1*chi1*chi1 + c212*chi1*chi1 + c211*chi1 + c210;
+  c22 = c223*chi1*chi1*chi1 + c222*chi1*chi1 + c221*chi1 + c220;
+  c31 = c311*chi1 + c310;
+
+  c1 = c11*nu + c12*nu*nu; 
+  c2 = c21*nu + c22*nu*nu;
+
+  Ap[4] = ( ( 1 + (c1*lambda + c2*lambda*lambda) ) / ( (1 + lambda*c31*c31*nu*nu) ) );
+  if(Ap[4]>1.0){Ap[4]=1.0;}
+
+  /* l = 4, m = 4*/
+  c112 = 11.242961865950528;
+  c111 = -17.389634170001713;
+  c110 = 2.7194273570640384;
+  c122 = -98.4553492936875;
+  c121 = 177.19502092590486;
+  c120 = -26.020314732655766;
+  c132 = 215.09730936215993;
+  c131 = -448.25588490848196;
+  c130 = 61.99122487260588;
+  c212 = 0.08766877382876546;
+  c211 = -0.01207862504552977;
+  c210 = 0.01896684410949216;
+  c222 = -0.8929260852043949;
+  c221 = 0.07249439442967934;
+  c220 = -0.1715098874768106;
+  c232 = 2.2569730153627905;
+  c231 = -0.0749977671495978;
+  c230 = 0.38758152889538017;
+  c311 = -3.439564725617774;
+  c310 = 3.694711197855806;
+  c321 = 17.522114041121114;
+  c320 = -17.079544591334244;
+
+  c11 = c112*chi1*chi1 + c111*chi1 + c110;
+  c12 = c122*chi1*chi1 + c121*chi1 + c120;
+  c13 = c132*chi1*chi1 + c131*chi1 + c130;
+  c21 = c212*chi1*chi1 + c211*chi1 + c210;
+  c22 = c222*chi1*chi1 + c221*chi1 + c220;
+  c23 = c232*chi1*chi1 + c231*chi1 + c230;
+  c31 = c311*chi1 + c310;
+  c32 = c321*chi1 + c320;
+
+  c1 = c11*nu + c12*nu*nu + c13*nu*nu*nu;
+  c2 = c21*nu + c22*nu*nu + c23*nu*nu*nu;
+  c3 = c31*nu + c32*nu*nu;
+
+  Ap[8] = ( 1 + (c1*lambda + c2*lambda*lambda  ) ) / ( (1 + lambda*c3*c3 )*(1 + lambda*c3*c3 ) );
+  if(Ap[8]>1.0){Ap[8]=1.0;}
+  if(Ap[8]<0.0){
+    Ap[8]=fabs(Ap[8]);
+    if(Ap[8]>1.0){Ap[8]=1.0;}
+    }
 
   // Frequency
+  double d101,d100,d111,d110,d201,d200,d211,d210,d301,d300,d311,d310,d401,d400;
+  double d113,d112,d123,d122,d121,d120,d213,d212,d223,d222,d221,d220,d321,d320,d411,d410,d131,d130,d231,d230;
+  double d10,d11,d20,d21,d30,d31,d40,d12,d22,d32,d41,d13,d23;
+  double d1,d2,d3,d4;
 
-  const double c110 = -21886.6904; 
-  const double c111 = 32671.7651; 
-  const double c120 = 69276.4427; 
-  const double c121 = -104816.638; 
-  const double c210 = 109.213126; 
-  const double c211 = -73.4308665;
-  const double c220 = -484.535259;
-  const double c221 = 373.904119; 
-  const double d110 = 28.8600443; 
-  const double d111 = -8.14222943;
-  const double d120 = -126.930553;
-  const double d121 = 73.1681672; 
+  /* l = 2, m = 1*/
+  d113 = 3.333420017262863;
+  d112 = 1.6733100922615411;
+  d111 = 0.6428123126575698;
+  d110 = 0.15345063221041327;
+  d123 = -16.73476556088638;
+  d122 = -9.6165271440306;
+  d121 = -3.9666698955903628;
+  d120 = -0.9188466914621823;
+  d213 = -0.004333646061173743;
+  d212 = -0.006690849241886476;
+  d211 = -0.004053501377389173;
+  d210 = -0.0006315097800444771;
+  d223 = 0.024848664430444187;
+  d222 = 0.03887710063247387;
+  d221 = 0.023247889326064287;
+  d220 = 0.0037972065617504825;
+  d311 = -0.036893725055918904;
+  d310 = -0.007460440219362085;
+  d321 = 0.25839558187126116;
+  d320 = 0.09182425362740411;
 
-  a11 = c110*chi1 + c111;
-  a12 = c120*chi1 + c121;
-  a21 = c210*chi1 + c211;
-  a22 = c220*chi1 + c221;
-  b11 = d110*chi1 + d111;
-  b12 = d120*chi1 + d121;
+  d11 = d113*chi1*chi1*chi1 + d112*chi1*chi1 + d111*chi1 + d110;
+  d12 = d123*chi1*chi1*chi1 + d122*chi1*chi1 + d121*chi1 + d120;
+  d21 = d213*chi1*chi1*chi1 + d212*chi1*chi1 + d211*chi1 + d210;
+  d22 = d223*chi1*chi1*chi1 + d222*chi1*chi1 + d221*chi1 + d220;
+  d31 = d311*chi1 + d310;
+  d32 = d321*chi1 + d320;
 
-  a1 = a11*nu + a12*nu*nu;
-  a2 = a21*nu + a22*nu*nu;
-  b1 = b11*nu + b12*nu*nu;
+  d1 = d11*nu + d12*nu*nu; 
+  d2 = d21*nu + d22*nu*nu;
+  d3 = d31*nu + d32*nu*nu; 
 
-  double Op = ( ( 1 + (a1*lambda + a2*lambda*lambda) ) / ( (1 + b1*b1*lambda)*(1 + b1*b1*lambda) ) );
+  Op[0] =  ( 1 + (d1*lambda + d2*lambda*lambda  ) ) / ( (1 + lambda*lambda*d3*d3 )*(1 + lambda*lambda*d3*d3 ) );
+  if(Op[0]>1.0){Op[0]=1.0;}
+  if(Op[0]<0.0){Op[0]=1.0;}
+
+  /* l = 2, m = 2*/
+  d101 = -1.87204534166561;
+  d100 = 2.2235911158585906;	
+  d111 = 6.587073531924587;
+  d110 = -7.455030280325616;
+  d201 = -8.856884879548845e-05;
+  d200 = -0.00019454696765165838;
+  d211 = 0.0004981829301131264;
+  d210 = 0.002728475621165506;
+  d301 = 0.08686135769230043;
+  d300 = 0.7715191055994437;
+  d311 = -0.2756808384095736;
+  d310 = -0.4740847695179648;
+
+  d10 = d101*chi1 + d100;
+  d11 = d111*chi1 + d110;
+  d20 = d201*chi1 + d200;
+  d21 = d211*chi1 + d210;
+  d30 = d301*chi1 + d300;
+  d31 = d311*chi1 + d310;
+
+  d1 = d10*nu + d11*nu*nu;
+  d2 = d20*nu + d21*nu*nu;
+  d3 = d30*nu + d31*nu*nu;
+
+  Op[1] = ( 1 + lambda*d1 + lambda*lambda*d2 ) / (( 1 + lambda*d3*d3 )*( 1 + lambda*d3*d3 ));
+  if(Op[1]>1.0){Op[1]=1.0;}
+  if(Op[1]<0.0){Op[1]=0.0;}
+
+  /* l = 3, m = 2 */
+  d111 = 0.026527628808116717;
+  d110 = -0.02926417906773356;
+  d121 = -0.15885016325333506;
+  d120 = 0.10134101940210988;
+  d211 = 4.410583198188113e-06;
+  d210 = 5.7505152559658577e-05;
+  d221 = 2.665524286657608e-05;
+  d220 = -0.00023554822250791658;
+  d311 = -2.8273536377662663e-08;
+  d310 = -2.9510126501533417e-08;
+  d321 = 1.2052971451081137e-07;
+  d320 = 1.302175520779655e-07;
+  d411 = 0.5314015395157192;
+  d410 = 0.6120130890466131;
+
+  d11 = d111*chi1 + d110;
+  d12 = d121*chi1 + d120;
+  d21 = d211*chi1 + d210;
+  d22 = d221*chi1 + d220;
+  d31 = d311*chi1 + d310;
+  d32 = d321*chi1 + d320;
+  d41 = d411*chi1 + d410;
+
+  d1 = d11*nu + d12*nu*nu;
+  d2 = d21*nu + d22*nu*nu;
+  d3 = d31*nu + d32*nu*nu;
+  d4 = d41*nu*nu;
+
+  Op[3] = ( 1 + (d1*lambda + d2*lambda*lambda + d3*lambda*lambda*lambda) ) / ( (1 + lambda*d4*d4 ) );
+  if(Op[3]>1.0){Op[3]=1.0;}
+  if(Op[3]<0.0){Op[3]=0.0;}
+
+  /* l = 3, m = 3 */
+  d113 = -0.04221771673205502;
+  d112 = -0.02242685682240473;
+  d111 = 0.028995664124488466;
+  d110 = 0.003520493408631722;
+  d123 = -0.7437282727260565;
+  d122 = -0.20713956840265466;
+  d121 = 0.5106082146377563;
+  d120 = 0.25791618347153406;
+  d213 = 1.1142401781174221e-05;
+  d212 = 4.331182069595073e-06;
+  d211 = -9.533567551600753e-06;
+  d210 = -1.4195826636478271e-06;
+  d223 = -0.00020041720650518658;
+  d222 = 0.001972740713879979;
+  d221 = 0.0025947326664176266;
+  d220 = 0.0007966369219430112;
+  d311 = 0.41309805786920845;
+  d310 = 0.24603136128672057;
+    
+  d11 = d113*chi1*chi1*chi1 + d112*chi1*chi1 + d111*chi1 + d110;
+  d12 = d123*chi1*chi1*chi1 + d122*chi1*chi1 + d121*chi1 + d120;
+  d21 = d213*chi1*chi1*chi1 + d212*chi1*chi1 + d211*chi1 + d210;
+  d22 = d223*chi1*chi1*chi1 + d222*chi1*chi1 + d221*chi1 + d220;
+  d31 = d311*chi1 + d310;
+
+  d1 = d11*nu + d12*nu*nu; 
+  d2 = d21*nu + d22*nu*nu;
+
+  Op[4] = ( ( 1 + (d1*lambda + d2*lambda*lambda) ) / ( (1 + lambda*lambda*(d31*nu*nu)*(d31*nu*nu)) ) );
+  if(Op[4]>1.0){Op[4]=1.0;}
+
+  /* l = 4, m = 4 */
+  d111 = -0.8256636431354363;
+  d110 = -0.369302975353016;
+  d121 = 8.411035539159677;
+  d120 = 3.826674376367923;
+  d131 = -21.3219318080355;
+  d130 = -9.781112688287969;
+  d211 = 0.0008933783780522222;
+  d210 = 0.0004863231203924392;
+  d221 = -0.009256763786840302;
+  d220 = -0.004995621509254127;
+  d231 = 0.023730168002922283;
+  d230 = 0.012722108040021144;
+  d321 = -0.06501172490507952;
+  d320 = 0.6538422755200813;
+
+  d11 = d111*chi1 + d110;
+  d12 = d121*chi1 + d120;
+  d13 = d131*chi1 + d130;
+  d21 = d211*chi1 + d210;
+  d22 = d221*chi1 + d220;
+  d23 = d231*chi1 + d230;
+  d32 = d321*chi1 + d320;
+
+  d1 = d11*nu + d12*nu*nu + d13*nu*nu*nu;
+  d2 = d21*nu + d22*nu*nu + d23*nu*nu*nu;
+  d3 = d32*nu*nu;
+
+  Op[8] = ( 1 + (d1*lambda + d2*lambda*lambda  ) ) / ( (1 + lambda*d3*d3 )*(1 + lambda*d3*d3 ) );
+  if(Op[8]>1.0){Op[8]=1.0;}
+  if(Op[8]<0.0){Op[8]=0.0;}
 
   for (int k=0; k<KMAX; k++) {
-    alpha2[k] = Ap*alpha_bbh[k];
-    omega1[k] = Op*omega_bbh[k]; 
-    if(k==1){
-      alpha21[k] = alpha2[k] - alpha1[k];
-    } 
+      alpha2[k] = Ap[k]*alpha_bbh[k];
+      omega1[k] = Op[k]*omega_bbh[k]; 
+      alpha21[k] = alpha21[k]*Ap[k];
+    
+    
+    if(k==1){alpha21[k] = alpha2[k] - alpha1[k];}
+
     alpha1[k] = alpha2[k];
-  }
- 
+  } 
 }
 
 /** 
  *  Function: eob_nqc_point_BHNS_HM
  *  -------------------------------
- *   Fits for the NR point used to determine NQC corrections for BHNSs, from 
- *   Gonzalez et al 2022
+ *   \details Fits for the NR point used to determine NQC corrections for BHNSs
+ *   From Gonzalez et al 2022 and updated for Gonzalez+ in prep.
  *   
  *   @param[in]   dyn      : EOB dynamics
  *   @param[out]  A_tmp    : RWZ-normalized Amplitude at the NQC point 
@@ -5025,10 +5788,9 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
  *   @param[out]  omg_tmp  : omega at the NQC point 
  *   @param[out]  domg_tmp : first time derivative of the frequency at the NQC point 
  *   @param[in]   abh      : spin of the final BH
- *   @param[in]   kt2      : tidal parameter of the binary
  *
  */
-void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp, double abh, double kt2)
+void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
   /** BHNS fits just for omega^NQC and domega^NQC, and amplitude. With BBH from arxiv:2001.09082 **/
   const double nu   = EOBPars->nu;
@@ -5037,7 +5799,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
   const double aK   = EOBPars->a1 + EOBPars->a2;
-  const double lam = EOBPars->LambdaBl2;
+  const double lambda = EOBPars->LambdaBl2;
 
   const double nu2  = SQ(nu);
   const double nu3  = nu2*nu;
@@ -5111,11 +5873,28 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
     domg_tmp[1] =  c_pdomg1*aK   + c_pdomg2;
 
   /* l=2, m=1 */
-  A_tmp[0] = A_tmp[1];
-  dA_tmp[0] = dA_tmp[1];
-  omg_tmp[0] = omg_tmp[1];
-  domg_tmp[0] = domg_tmp[1];
+  /* BBH Pompili fits */
+  const double delta = sqrt(1-4.*nu);
+  const double chi_S = (chi1+chi2)/2;
+  const double chi_A = (chi1-chi2)/2;
+  const double chi   = chi_S + chi_A*delta/(1.-2.*nu);
+  const double chisq = chi*chi;
+  const double chi3  = chisq*chi;
+  const double chi4  = chi3*chi;
+  const double chi_21A  = delta*chi_S/(1-1.3*nu) + chi_A;
+  const double chi_21A2 = SQ(chi_21A);
+  const double chi_21A3 = chi_21A2*chi_21A;
+  const double chi_21D  = delta*chi_S/(1-2.*nu)  + chi_A;
+  A_tmp[0]    = fabs(-0.033175*chi_21A3*delta + 0.086356*chi_21A2*delta*nu - 0.049897*chi_21A2*delta + 0.012706*chi_21A*delta + 0.168668*chi_21A*nu - 0.285597*chi_21A + 1.067921*delta*nu2 - 0.189346*delta*nu + 0.431426*delta);
+  dA_tmp[0]   = chi_21D*delta*(0.023534*nu - 0.008064) + delta*(0.006743 - 0.0297*nu) + 0.008256*abs( (chi_21D - delta*(5.471011*nu2 + 1.235589*nu + 0.815482)) );
+  omg_tmp[0]  = 0.01009*chi3 - 0.077343*chisq*nu + 0.02411*chisq + 0.168854*chi*nu2 - 0.159382*chi*nu + 0.047635*chi + 1.965157*nu3 - 0.53085*nu2 + 0.237904*nu + 0.176526;
+  domg_tmp[0] = 0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
   
+  int l       = LINDEX[0];
+  double fact = sqrt((l+2)*(l+1)*l*(l-1));
+  A_tmp[0]    = A_tmp[0]/fact;
+  dA_tmp[0]   = dA_tmp[0]/fact;
+
   /* l=3, m=1 */
   A_tmp[2]    = 0.00520201*X12*(1 - 4.9441*nu + 8.9339*nu2);
   dA_tmp[2]   = -0.00043382*(1 - 9.0479*nu + 23.054*nu2)/(1 + 88.626*nu2);
@@ -5123,30 +5902,17 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   domg_tmp[2] = 0.0673118*(1 + 13.318*nu)/(1 + 70.552*nu);
 	  
   /* l=3, m=3 */
-  b1_A_tmp = +0.0067063;
-  b2_A_tmp = +4.814781;
-  b3_A_tmp = +0.0111876;
-  b4_A_tmp = -1.079532;
-  b5_A_tmp = +2.967227;
-  b6_A_tmp = -2.571783;
-	  
-  A_tmp[4] = 0.0512928*X12*(1 + 0.09537*nu + 3.7217*nu2);
-  A_tmp[4] += ( (0.0092449444 + b1_A_tmp*nu)/(1 + b2_A_tmp*nu)*a12 + (-0.000087052+b3_A_tmp*nu)/(1 + b4_A_tmp*nu)*SQ(a12))/(1 + (-0.4796687 + b5_A_tmp*nu)/(1 + b6_A_tmp*nu)*a12);
-	
-  b1_dA_tmp = -0.0004671176;
-  b2_dA_tmp = -4.0270198;
-	  
-  dA_tmp[4] = -0.00039568*(1 + 1.0985*nu - 13.458*nu2);
-  dA_tmp[4] += (0.0001415043*Shat + (+0.0001046803 + b1_dA_tmp*nu)/(1 + b2_dA_tmp*nu)*Shat2)/(1-0.422066*Shat);
-	
-  omg_tmp[4] = 0.476647*(1 + 1.0886*nu + 3.0658*nu2)*(1 + (-0.2362713 - 0.085544*nu)*Shat)/(1 + (-0.5828922 - 0.523365*nu)*Shat);        
-	
-  b1_domg_tmp = -0.00045666;
-  b2_domg_tmp = +0.0290846;
-  b3_domg_tmp = -0.00388909;
-  b4_domg_tmp = +0.0087659;
-	
-  domg_tmp[4] = 0.0110394*(1 + 2.7962*nu) + (b1_domg_tmp+b2_domg_tmp*nu)*Shat + (b3_domg_tmp+b4_domg_tmp*nu)*Shat2;
+  /* BBH Pompili fits */
+  const double chi_33   = chi_S*delta+chi_A;
+  A_tmp[4]    = fabs(- 0.088371*SQ(chi_33)*delta*nu + 0.036258*SQ(chi_33)*delta + 1.057731*chi_33*nu2 - 0.466709*chi_33*nu + 0.099543*chi_33 + 1.96267*delta*nu2 + 0.027833*delta*nu + 0.558808*delta);
+  dA_tmp[4]   = SQ(chi_33)*delta*(0.004941*nu - 0.002094) + 0.001781*sqrt(fabs( (SQ(chi_33) + chi_33*delta*(39.247538*nu - 2.986889) + SQ(delta)*(85.173306*nu + 4.637906)) ));
+  omg_tmp[4]  = 0.045141*chi3 - 0.346675*chisq*nu + 0.119419*chisq + 0.745924*chi*nu2 - 0.478915*chi*nu + 0.17467*chi - 8.887163*nu3 + 4.226831*nu2 + 0.427167;
+  domg_tmp[4] = 0.001697*chi3 + 0.016231*chisq*nu - 0.003985*chisq - 0.154378*chi*nu2 + 0.050618*chi*nu - 0.002721*chi - 0.255402*nu3 + 0.08663*nu2 + 0.027405*nu + 0.009736;
+
+  l       = LINDEX[4];
+  fact = sqrt((l+2)*(l+1)*l*(l-1));
+  A_tmp[4]    = A_tmp[4]/fact;
+  dA_tmp[4]   = dA_tmp[4]/fact;
 	  
   /* l=4, m=1 */
   A_tmp[5]    = 0.00043987*X12*(1-2.*nu)*(1 - 8.4975*nu + 27.31*nu2)/(1 - 1.2002*nu);
@@ -5154,12 +5920,20 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   omg_tmp[5]  = 0.735051*(1 - 8.3628*nu + 20.529*nu2)/(1 - 7.4883*nu + 18.695*nu2);
   domg_tmp[5] = 0.0739078*(1 + 0.99186*nu - 19.435*nu2);
 	
-  /* l=4, m=4 (only dA) */
-  b1_dA_tmp = -0.000152614*(1. -7.63783*nu + 15.8089*nu2)/(1. - 5.88951*nu + 11.1555*nu2);  
-  b2_dA_tmp = (0.0000376236 - 0.0000645958*nu)/(1. - 2.35613*nu);
-  b3_dA_tmp = (-0.819379    - 298.678*nu)     /(1. - 1063.08*nu);
-  dA_tmp[8] = b1_dA_tmp + b2_dA_tmp*Shat/(1. + b3_dA_tmp*Shat);
-		
+  /* l=4, m=4 */
+  /* BBH Pompili fits */
+  const double chi_44A  = (1 - 5.*nu)*chi_S + chi_A*delta;
+  const double chi_44D  = (1 - 7.*nu)*chi_S + chi_A*delta;
+  A_tmp[8]    = fabs( 0.031483*SQ(chi_44A) - 0.180165*chi_44A*nu + 0.063931*chi_44A + 6.239418*nu3 - 1.947473*nu2 - 0.615307*nu + 0.262533 );
+  dA_tmp[8]   = -0.001251*SQ(chi_44D)*chi_44D + 0.006387*SQ(chi_44D)*nu - 0.001223*SQ(chi_44D) - 0.034308*chi_44D*nu2 + 0.014373*chi_44D*nu - 0.000681*chi_44D + 1.134679*nu3 - 0.417056*nu2 + 0.024004*nu + 0.003498;
+  omg_tmp[8]  = 0.042529*chi3 - 0.415864*chisq*nu + 0.155222*chisq + 0.768712*chi*nu2 - 0.592568*chi*nu + 0.244508*chi - 13.651335*nu3 + 5.490329*nu2 + 0.574041;
+  domg_tmp[8] = 0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
+	
+  l       = LINDEX[8];
+  fact = sqrt((l+2)*(l+1)*l*(l-1));
+  A_tmp[8]    = A_tmp[8]/fact;
+  dA_tmp[8]   = dA_tmp[8]/fact;
+
   /* l=5, m=5 */
   b1_A_tmp = -0.0829447;
   b2_A_tmp = +8.434479;
@@ -5188,128 +5962,655 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   domg_tmp[13] =  0.0178326*(1 + 3.1304*nu) + (b1_domg_tmp + b2_domg_tmp*nu)*Shat + (b3_domg_tmp + b4_domg_tmp*nu)*Shat2;
 
   /** BHNS fits **/
+  double Ap[KMAX],Op[KMAX],dAp[KMAX],dOp[KMAX];
+
+  for (int k=0; k<KMAX; k++) {
+    Ap[k] = Op[k] = dAp[k] = dOp[k] = 1.;
+  }
+
   /* Omega */
-  double a110= -1.13450258;//-4.14517490;
-  double a111= -0.52105826;//2.59090563;
-  double a120= 4.90257111;//14.6778446;
-  double a121= 3.03849913;//-1.23132962;
-  double a210= 0.11582820;//0.04445876;
-  double a211= -0.03543851;//-0.06653209;
-  double a220= -0.50986874;//-0.23482422;
-  double a221= 0.16892437;//0.58600809;
-  double b110= 2.58632126;//-0.01485822;
-  double b111= -0.41023648;//1.09778143;
-  double b120= -10.8545425;
-  double b121= 6.17597785;
+  double f102,f101,f100,f112,f111,f110,f122,f121,f120,f202,f201,f200,f212,f211,f210,f222,f221,f220;
+  double f113,f123,f213,f223,f133,f132,f131,f130,f233,f231,f232,f230,f313,f312,f311,f310,f323,f322,f321;
+  double f320,f333,f332,f331,f330,f411,f410;
+  double f10,f11,f12,f20,f21,f22,f13,f23,f31,f32,f33,f41;
+  double f0,f1,f2,f3,f4;
 
-  double a11 = a110*chi1 + a111;
-  a12 = a120*chi1 + a121;
-  double a21 = a210*chi1 + a211;
-  double a22 = a220*chi1 + a221;
-  double b11 = b110*chi1 + b111;
-  double b12 = b120*chi1 + b121;
+  /* l = 2, m = 1 */
+  f113 = 353.17736170387593;
+  f112 = 368.77721952946587;
+  f111 = 39.99806622388038;
+  f110 = 2.520352205338529;
+  f123 = -3848.97211049468;
+  f122 = -3889.276983501113;
+  f121 = -373.68496396133315;
+  f120 = -22.818001440139962;
+  f133 = 10345.905013323933;
+  f132 = 10144.999043641952;
+  f131 = 858.125344517891;
+  f130 = 50.73245981496382;
+  f213 = -0.42947400824171;
+  f212 = -1.5050812191894574;
+  f211 = -0.4600316680456819;
+  f210 = -0.01467825143630204;
+  f223 = 5.06471627790655;
+  f222 = 15.88763644495495;
+  f221 = 4.598576386393477;
+  f220 = 0.13865459323013118;
+  f233 = -14.50183880723711;
+  f232 = -41.37414593942178;
+  f231 = -11.449763631646169;
+  f230 = -0.3140104217877563;
+  f313 = -0.0001845625359841723;
+  f312 = 0.0014207429350569227;
+  f311 = 0.0006607364734238603;
+  f310 = 1.3681280159083329e-05;
+  f323 = 0.0013536760570583132;
+  f322 = -0.014939518176558928;
+  f321 = -0.006692583959047551;
+  f320 = -0.00012986782954713027;
+  f333 = -0.0022679726827504647;
+  f332 = 0.038853528883517646;
+  f331 = 0.0168387350523842;
+  f330 = 0.00029842358066044174;
+  f411 = -0.7140362944053328;
+  f410 = 0.38012978267558917;   
+    
+  f11 = f113*chi1*chi1*chi1 + f112*chi1*chi1 + f111*chi1 + f110;
+  f12 = f123*chi1*chi1*chi1 + f122*chi1*chi1 + f121*chi1 + f120;
+  f13 = f133*chi1*chi1*chi1 + f132*chi1*chi1 + f131*chi1 + f130;
+  f21 = f213*chi1*chi1*chi1 + f212*chi1*chi1 + f211*chi1 + f210;
+  f22 = f223*chi1*chi1*chi1 + f222*chi1*chi1 + f221*chi1 + f220;
+  f23 = f233*chi1*chi1*chi1 + f232*chi1*chi1 + f231*chi1 + f230;
+  f31 = f313*chi1*chi1*chi1 + f312*chi1*chi1 + f311*chi1 + f310;
+  f32 = f323*chi1*chi1*chi1 + f322*chi1*chi1 + f321*chi1 + f320;
+  f33 = f333*chi1*chi1*chi1 + f332*chi1*chi1 + f331*chi1 + f330;
+  f41 = f411*chi1 + f410;    
 
-  double a1 = a11*nu + a12*nu*nu;
-  double a2 = a21*nu + a22*nu*nu;
-  double b1 = b11*nu + b12*nu*nu;
+  f1 = f11*nu + f12*nu*nu + f13*nu*nu*nu;
+  f2 = f21*nu + f22*nu*nu + f23*nu*nu*nu;
+  f3 = f31*nu + f32*nu*nu + f33*nu*nu*nu;
+  f4 = f41*nu; 
 
-  //double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b11*nu*kt2)*(1 + b11*nu*kt2) ) );
-  double Op = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+  Op[0] = ( 1 + (f1*lambda + f2*lambda*lambda + f3*lambda*lambda*lambda ) ) / ( (1 + lambda*f4*f4 )*(1 + lambda*f4*f4 ) );
+  if (Op[0]<0) {Op[0]=1.;}
+
+  /* l = 2, m = 2 */
+  f102 = 0.0027730975740547707; 
+  f101 = -0.0013160726188961565;
+  f100 = 0.04353588700832432;
+  f112 = -0.8370275073634688;
+  f111 = 0.6536801867953376;
+  f110 = 0.3361764212985733;
+  f122 = 3.7510346000111587;
+  f121 = -3.519057364463967;
+  f120 = -0.5788117577224763;
+  f202 = -7.458373443450189e-07;
+  f201 = 7.853120442799991e-07;
+  f200 = 6.100942695272458e-07;
+  f212 = 0.00021701656160855214;
+  f211 = -0.0012948176199725767;
+  f210 = 0.001076170139911975;
+  f222 = -0.0006750422874570453;
+  f221 = 0.00556807427720544;
+  f220 = -0.004130159066577092;
+  f0  =  0.023306095434056148;
+  
+  f10 = f102*chi1*chi1 + f101*chi1 + f100;
+  f11 = f112*chi1*chi1 + f111*chi1 + f110;
+  f12 = f122*chi1*chi1 + f121*chi1 + f120;
+  f20 = f202*chi1*chi1 + f201*chi1 + f200;
+  f21 = f212*chi1*chi1 + f211*chi1 + f210;
+  f22 = f222*chi1*chi1 + f221*chi1 + f220;
+
+  f1 = f10*nu + f11*nu*nu + f12*nu*nu*nu;
+  f2 = f20*nu + f21*nu*nu + f22*nu*nu*nu;
+
+  Op[1] = -1*( ( 1 + (f1*lambda + f2*lambda*lambda) ) / ( (1 + lambda*f0*nu)*(1 + lambda*f0*nu) ) );
+
+  /* l = 3, m = 3 */
+  f113 = -19.588729051102252;
+  f112 = -43.22678085367127;
+  f111 = -27.92748291741765;
+  f110 = -5.466513479762885;
+  f123 = 128.1454115145983;
+  f122 = 265.3361448594152;
+  f121 = 167.97216621019794;
+  f120 = 33.22919845056078;
+  f213 = -0.02463250915949673;
+  f212 = -0.038803444817938;
+  f211 = -0.026023558342637802;
+  f210 = -0.006942576670153899;
+  f223 = 0.17994082791820154;
+  f222 = 0.31139003107962354;
+  f221 = 0.20872506335227003;
+  f220 = 0.051899816703641084;
+  f321 = 6.299581311689821;
+  f320 = 4.7821277096672485;
+    
+  f11 = f113*chi1*chi1*chi1 + f112*chi1*chi1 + f111*chi1 + f110;
+  f12 = f123*chi1*chi1*chi1 + f122*chi1*chi1 + f121*chi1 + f120;
+  f21 = f213*chi1*chi1*chi1 + f212*chi1*chi1 + f211*chi1 + f210;
+  f22 = f223*chi1*chi1*chi1 + f222*chi1*chi1 + f221*chi1 + f220;
+  f32 = f321*chi1 + f320;
+    
+  f1 = f11*nu + f12*nu*nu; 
+  f2 = f21*nu + f22*nu*nu;
+  f3 = f32*nu*nu;
+
+  Op[4] = ( 1 + (f1*lambda + f2*lambda*lambda ) ) / ( (1 + lambda*f3*f3 )*(1 + lambda*f3*f3 ) );
+  if (Op[4]<0) {Op[4]=1.;}
+
+  /* l = 4, m = 4 */
+  f113 = -0.10881642042836596;
+  f112 = -0.15513315145142748;
+  f111 = 0.10299713694482752;
+  f110 = -0.068436178916252;
+  f123 = 0.7197962146049899;
+  f122 = 0.9224408403513145;
+  f121 = -0.6218941042566677;
+  f120 = 0.6079384879824817;
+  f213 = 0.0010700402803381132;
+  f212 = 0.0008737110930575237;
+  f211 = -0.0001569042738746961;
+  f210 = -0.0003180098977010195;
+  f223 = -0.0060384494590680245;
+  f222 = -0.0048973961553262875;
+  f221 = 0.0006454895547057534;
+  f220 = 0.0019251960072054005;
+  f321 = -0.12849210212491663;
+  f320 = 1.7682780795364919;
+    
+  f11 = f113*chi1*chi1*chi1 + f112*chi1*chi1 + f111*chi1 + f110;
+  f12 = f123*chi1*chi1*chi1 + f122*chi1*chi1 + f121*chi1 + f120;
+  f21 = f213*chi1*chi1*chi1 + f212*chi1*chi1 + f211*chi1 + f210;
+  f22 = f223*chi1*chi1*chi1 + f222*chi1*chi1 + f221*chi1 + f220;
+  f32 = f321*chi1 + f320;
+    
+  f1 = f11*nu + f12*nu*nu; 
+  f2 = f21*nu + f22*nu*nu;
+  f3 = f32*nu*nu; 
+
+  Op[8] = ( 1 + (f1*lambda + f2*lambda*lambda ) ) / ( (1 + lambda*f3*f3 )*(1 + lambda*f3*f3 ) );
+  if (Op[8]<0) {Op[8]=1.;}
 
   
   /* derivative omega */
-  a110= -10.1666881;//-10.9816986;
-  a111= 3.09188560;//3.67515891;
-  a120= 16.2933259;//18.3830621;
-  a121= 26.7556682;//23.8941102;
-  a210= 0.04433317;//0.24802993;
-  a211= -0.54327998;//-0.52499202;
-  a220= -0.38812308;//-1.19208074;
-  a221= 2.25541552;//2.18033145;
-  b110= -0.53282251;//-0.47929028;
-  b111= 2.63236115;//2.65243073;
-  b120= 0;
-  b121= 0;
+  double e102,e101,e100,e112,e111,e110,e122,e121,e120,e202,e201,e200,e212,e211,e210,e222,e221,e220;
+  double e113,e123,e213,e223,e311,e310,e321,e320,e313,e312,e323,e322,e421,e420;
+  double e10,e11,e12,e20,e21,e22,e31,e32,e42;
+  double e0,e1,e2,e3,e4;
 
-  a11 = a110*chi1 + a111;
-  a12 = a120*chi1 + a121;
-  a21 = a210*chi1 + a211;
-  a22 = a220*chi1 + a221;
-  b11 = b110*chi1 + b111;
-  b12 = b120*chi1 + b121;
+  /* l = 2, m = 1 */
+  e113 = 109.90379753602357;
+  e112 = 282.7345236349762;
+  e111 = 177.70606252810788;
+  e110 = 30.091199861511928;
+  e123 = 749.4113683426934;
+  e122 =  268.3051253328002;
+  e121 = -175.71115696673235;
+  e120 = -47.81664204077215;
+  e213 = -5.600074527093804;
+  e212 = -3.5152273527724467;
+  e211 = 0.4334580249920891;
+  e210 = 0.3203529758149393;
+  e223 = 26.65854564108471;
+  e222 = 16.965103396559954;
+  e221 = -1.8949788120917779;
+  e220 = -1.5067162366006845;
+  e313 = 181.68764838355855;
+  e312 = 46.48101845933214;
+  e311 = -77.46914070876984;
+  e310 =  -20.618000090591245;
+  e323 = -827.1664409469339;
+  e322 = -198.70098787921546;
+  e321 = 379.24240378523564;
+  e320 = 103.76437073875854;
 
-  a1 = a11*nu + a12*nu*nu;
-  a2 = a21*nu + a22*nu*nu;
-  b1 = b11*nu + b12*nu*nu;
+  e11 = e113*chi1*chi1*chi1 + e112*chi1*chi1 + e111*chi1 + e110;
+  e12 = e123*chi1*chi1*chi1 + e122*chi1*chi1 + e121*chi1 + e120;
+  e21 = e213*chi1*chi1*chi1 + e212*chi1*chi1 + e211*chi1 + e210;
+  e22 = e223*chi1*chi1*chi1 + e222*chi1*chi1 + e221*chi1 + e220;
+  e31 = e313*chi1*chi1*chi1 + e312*chi1*chi1 + e311*chi1 + e310;
+  e32 = e323*chi1*chi1*chi1 + e322*chi1*chi1 + e321*chi1 + e320;
 
-  //double dOp = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b11*nu*kt2)*(1 + b11*nu*kt2) ) );
-  //double dOp = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
-  double dOp = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b11*nu*kt2)*(1 + b11*nu*kt2) ) );
-  if (dOp<0.){
-    //*bhns = false;
-    dOp=1.;
-    Op =1.;
+  e1 = e11*nu + e12*nu*nu;
+  e2 = e21*nu + e22*nu*nu;
+  e3 = e31*nu + e32*nu*nu;
+
+  dOp[0] = ( 1 + (e1*lambda + e2*lambda*lambda  ) ) / ( (1 + lambda*e3*e3 )*(1 + lambda*e3*e3 ) );
+
+  /* l = 2, m = 2 */
+  e102 = -0.0026209606150563616; 
+  e101 = 5.121199315158528e-05;
+  e100 = 0.03580195978164114;
+  e112 = -0.31662958435109995;
+  e111 = -0.5067440136512827;
+  e110 = 0.48032840592888776;
+  e122 = 2.007792466450656;
+  e121 = 1.115530157663557;
+  e120 = -2.3169394297754167;
+  e202 = 3.276112836329881e-07;
+  e201 = 5.226090580513704e-07;
+  e200 = -3.2932886267689516e-07;
+  e212 = 0.0011459688540299546;
+  e211 = -0.001315350180849681;
+  e210 = 0.00024114701127108795;
+  e222 = -0.0052276257814133755;
+  e221 = 0.006309356574634241;
+  e220 = -0.0012963692153788548;
+  e0  =  0.01733398003688234;
+  
+  e10 = e102*chi1*chi1 + e101*chi1 + e100;
+  e11 = e112*chi1*chi1 + e111*chi1 + e110;
+  e12 = e122*chi1*chi1 + e121*chi1 + e120;
+  e20 = e202*chi1*chi1 + e201*chi1 + e200;
+  e21 = e212*chi1*chi1 + e211*chi1 + e210;
+  e22 = e222*chi1*chi1 + e221*chi1 + e220;
+
+  e1 = e10*nu + e11*nu*nu + e12*nu*nu*nu;
+  e2 = e20*nu + e21*nu*nu + e22*nu*nu*nu;
+
+  dOp[1] = ( ( 1 + (e1*lambda + e2*lambda*lambda) ) / ( (1 + lambda*e0*nu)*(1 + lambda*e0*nu) ) );
+
+  if (dOp[1]<0.){
+    dOp[1]=1.;
+    Op[1] =1.;
   }
 
-  /* amplitude */
-  a110= -0.76398122;
-  a111= 0.95760404;
-  a120= 2.43443187;
-  a121= 1.11346679;
-  a210= -0.04517669;
-  a211= 0.00812775;
-  a220= 0.19502087;
-  a221= 0.13476967;
-  b110= -0.00976985;
-  b111= 0.59799088;
+  /* l = 3, m = 3 */
+  e113 = -1592054853.5290756;
+  e112 = 1193131216.0498104;
+  e111 = 39838533.1798002;
+  e110 = -158420220.57876483;
+  e123 = 8991032546.305927;
+  e122 = -6770511898.425056;
+  e121 = -185433414.46684813;
+  e120 = 888834576.8629049;
+  e213 = 7920499.5760512855;
+  e212 = -6043560.756636857;
+  e211 = 95758.20206124203;
+  e210 = 665869.5430042462;
+  e223 = -44608471.17271389;
+  e222 = 33975409.50367452;
+  e221 = -530037.7676815926;
+  e220 = -3770237.4332308765;
+  e313 = -6958.454707644981;
+  e312 = 5179.7378134802575;
+  e311 = -431.5691613088688;
+  e310 = -398.967911171984;
+  e323 = 38203.77095038259;
+  e322 = -27483.22126180374;
+  e321 = 1539.8252232858072;
+  e320 = 2427.971914618684;
+  e421 = -11.410927119363691;
+  e420 = 9.884174594022015;
+    
+  e11 = e113*chi1*chi1*chi1 + e112*chi1*chi1 + e111*chi1 + e110;
+  e12 = e123*chi1*chi1*chi1 + e122*chi1*chi1 + e121*chi1 + e120;
+  e21 = e213*chi1*chi1*chi1 + e212*chi1*chi1 + e211*chi1 + e210;
+  e22 = e223*chi1*chi1*chi1 + e222*chi1*chi1 + e221*chi1 + e220;
+  e31 = e313*chi1*chi1*chi1 + e312*chi1*chi1 + e311*chi1 + e310;
+  e32 = e323*chi1*chi1*chi1 + e322*chi1*chi1 + e321*chi1 + e320;
+  e42 = e421*chi1 + e420;
+    
+  e1 = e11*nu + e12*nu*nu; 
+  e2 = e21*nu + e22*nu*nu;
+  e3 = e31*nu + e32*nu*nu;
+  e4 = e42*nu*nu;
 
-  a11 = a110*chi1 + a111;
-  a12 = a120*chi1 + a121;
-  a21 = a210*chi1 + a211;
-  a22 = a220*chi1 + a221;
-  b11 = b110*chi1 + b111;
-  //b12 = b120*chi1 + b121;
+  dOp[4] = ( 1 + (e1*lambda + e2*lambda*lambda + e3*lambda*lambda*lambda) ) / ( (1 + lambda*lambda*e4*e4 )*(1 + lambda*lambda*e4*e4 ) );
 
-  a1 = a11*nu + a12*nu*nu;
-  a2 = a21*nu + a22*nu*nu;
-  //b1 = b11*nu + b12*nu*nu;
+  /* l = 4, m = 4 */
+  e112 = 179210.69776361363;
+  e111 = -135573.3404546459;
+  e110 = 20893.938274313627;
+  e122 = -564011.9694244653;
+  e121 = 239102.42671224466;
+  e120 = 36894.6182860516;
+  e212 = -286.55834017745804;
+  e211 = 129.8284659110896;
+  e210 = 13.42318091379192;
+  e222 = 1422.0780987349697;
+  e221 = -479.76042078095696;
+  e220 = -157.05526942865345;
+  e321 = -3268.575047986779;
+  e320 = 2250.3024799305063;
+    
+  e11 = e112*chi1*chi1 + e111*chi1 + e110;
+  e12 = e122*chi1*chi1 + e121*chi1 + e120;
+  e21 = e212*chi1*chi1 + e211*chi1 + e210;
+  e22 = e222*chi1*chi1 + e221*chi1 + e220;
+  e32 = e321*chi1 + e320;
+    
+  e1 = e11*nu + e12*nu*nu; 
+  e2 = e21*nu + e22*nu*nu;
+  e3 = e32*nu*nu; 
 
-  double Ap = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b11*nu*kt2)*(1 + b11*nu*kt2) ) );
+  dOp[8] = ( 1 + (e1*lambda + e2*lambda*lambda ) ) / ( (1 + lambda*e3*e3 ) );
 
+  /* Amplitude */
+  double c102,c101,c100,c113,c112,c111,c110,c122,c123,c121,c120,c202,c201,c200,c213,c212,c211,c210,c223,c222,c221,c220;
+  double c132,c131,c130,c232,c231,c230,c311,c310,c133,c233,c321,c320,c312,c322,c411,c410,c421,c420;
+  double c10,c11,c12,c20,c21,c22,c13,c23,c30,c31,c32,c41,c42;
+  double c1,c2,c3,c4;
+
+  /* l = 2, m = 1 */
+  c113 = -93.42972864623421;
+  c112 = -1229.384079825144;
+  c111 = 1070.5956514039542;
+  c110 = -178.81408417308748;
+  c123 = 1866.8412412088521;
+  c122 = 8972.415771021775;
+  c121 = -9543.800468423478;
+  c120 = 2089.7290556140033;
+  c213 = 0.8669677161029467;
+  c212 = 1.3680430387869333;
+  c211 = -1.3923206119416818;
+  c210 = 0.1540730801885621;
+  c223 = -7.058523132126191;
+  c222 = -6.568053356330434;
+  c221 = 8.635081951736485;
+  c220 = -1.28381717345134;
+  c311 = -296.5534943063397;
+  c310 = 175.54999284090823;
+
+  c11 = c113*chi1*chi1*chi1 + c112*chi1*chi1 + c111*chi1 + c110;
+  c12 = c123*chi1*chi1*chi1 + c122*chi1*chi1 + c121*chi1 + c120;
+  c21 = c213*chi1*chi1*chi1 + c212*chi1*chi1 + c211*chi1 + c210;
+  c22 = c223*chi1*chi1*chi1 + c222*chi1*chi1 + c221*chi1 + c220;
+  c31 = c311*chi1 + c310;
+
+  c1 = c11*nu + c12*nu*nu; 
+  c2 = c21*nu + c22*nu*nu;
+  c3 = c31*nu*nu; 
+
+  Ap[0] = ( 1 + (c1*lambda + c2*lambda*lambda ) ) / ( (1 + lambda*c3*c3 ) );
+  if (Ap[0]<0.){Ap[0]=1.;}
+  if (Ap[0]>1.){Ap[0]=1.;}
+
+  /* l = 2, m = 2 */
+  c102 = 0.0009785096527311836; 
+  c101 = 0.0010143191550383841;
+  c100 = 0.06298925167477198;
+  c112 = 0.20384994126329886;
+  c111 = -2.5851799086634304;
+  c110 = 1.7404500991629586;
+  c122 = -0.1315604591952073;
+  c121 = 7.110295022425293;
+  c120 = -3.495497940497986;
+  c202 = -5.034425005770115e-07;
+  c201 = 3.2828002996716215e-07;
+  c200 = 3.34808127112953e-07;
+  c212 = 0.00023990151371606222;
+  c211 = -0.00011455874202441466;
+  c210 = -1.738883897518922e-05;
+  c222 = -0.001185391692557779;
+  c221 = 0.0011437351997991667;
+  c220 = -0.0006164680289672201;
+  c31  = 0.06456023857357258;
+  c32  = 1.1422176143066296;
+  
+  c10 = c102*chi1*chi1 + c101*chi1 + c100;
+  c11 = c112*chi1*chi1 + c111*chi1 + c110;
+  c12 = c122*chi1*chi1 + c121*chi1 + c120;
+  c20 = c202*chi1*chi1 + c201*chi1 + c200;
+  c21 = c212*chi1*chi1 + c211*chi1 + c210;
+  c22 = c222*chi1*chi1 + c221*chi1 + c220;
+
+  c1 = c10*nu + c11*nu*nu + c12*nu*nu*nu;
+  c2 = c20*nu + c21*nu*nu + c22*nu*nu*nu;
+  c3 = c31*nu + c32*nu*nu;
+
+  Ap[1] =  ( 1 + (c1*lambda + c2*lambda*lambda) ) / ( 1 + lambda*c3  );
+  if (Ap[1]<0.){Ap[1]=1.;}
+  if (Ap[1]>1.){Ap[1]=1.;}
+
+  /* l = 3, m = 3 */
+  c113 = -86.20386287795816;
+  c112 = -10.699331077074865;
+  c111 = 17.246970292171067;
+  c110 = 5.102406475415944;
+  c123 = 849.0739042449288;
+  c122 = 88.2894277432953;
+  c121 = -167.72590918207533;
+  c120 = -44.32732463839548;
+  c133 = -2086.682310126456;
+  c132 = -177.3505956893603;
+  c131 = 409.4698953574064;
+  c130 = 96.41556256518713;
+  c213 = 0.03733441603389203;
+  c212 = -0.023131489516298686;
+  c211 = -0.03212617167840329;
+  c210 = 0.016757348842393934;
+  c223 = -0.32630630833371593;
+  c222 = 0.274104930253967;
+  c221 = 0.3217506163567745;
+  c220 = -0.15060952414887815;
+  c233 = 0.7201771670241224;
+  c232 = -0.767024732086749;
+  c231 = -0.7987937160274846;
+  c230 = 0.33851257061927315;
+  c311 = -1.0964469876953258;
+  c310 = 2.414952851569057;
+  c321 = 6.91754931598061;
+  c320 = -9.844527125356167;
+    
+  c11 = c113*chi1*chi1*chi1 + c112*chi1*chi1 + c111*chi1 + c110;
+  c12 = c123*chi1*chi1*chi1 + c122*chi1*chi1 + c121*chi1 + c120;
+  c13 = c133*chi1*chi1*chi1 + c132*chi1*chi1 + c131*chi1 + c130;
+  c21 = c213*chi1*chi1*chi1 + c212*chi1*chi1 + c211*chi1 + c210;
+  c22 = c223*chi1*chi1*chi1 + c222*chi1*chi1 + c221*chi1 + c220;
+  c23 = c233*chi1*chi1*chi1 + c232*chi1*chi1 + c231*chi1 + c230;
+  c31 = c311*chi1 + c310;
+  c32 = c321*chi1 + c320;
+    
+  c1 = c11*nu + c12*nu*nu + c13*nu*nu*nu;
+  c2 = c21*nu + c22*nu*nu + c23*nu*nu*nu;
+  c3 = c31*nu + c32*nu*nu;
+
+  Ap[4] = ( 1 + (c1*lambda + c2*lambda*lambda ) ) / ( (1 + lambda*c3*c3 )*(1 + lambda*c3*c3 ) );
+  if (Ap[4]<0.){Ap[4]=1.;}
+
+  /* l = 4, m = 4 */
+  c112 = -383999414.8996635;
+  c111 = -440539181.38602424;
+  c110 = -110989340.22848652;
+  c122 = 2235094349.7057714;
+  c121 = 2590824770.6686583;
+  c120 = 664021933.0407408;
+  c212 = 2141767.8243446765;
+  c211 = 2393114.3223998966;
+  c210 = 627456.6514837451;
+  c222 = -12511651.64787277;
+  c221 = -14180990.752931684;
+  c220 = -3801120.272961312;
+  c312 = -2873.1756871481566;
+  c311 = -3474.4177866366244;
+  c310 = -1038.9430866381745;
+  c322 = 16977.480734824097;
+  c321 = 20957.257721739938;
+  c320 = 6426.048679948954;
+  c411 = -3.046924825109896;
+  c410 = -1.9714971745008207;
+  c421 = 22.014330706283033;
+  c420 = 14.81026562279348;
+    
+  c11 = c112*chi1*chi1 + c111*chi1 + c110;
+  c12 = c122*chi1*chi1 + c121*chi1 + c120;
+  c21 = c212*chi1*chi1 + c211*chi1 + c210;
+  c22 = c222*chi1*chi1 + c221*chi1 + c220;
+  c31 = c312*chi1*chi1 + c311*chi1 + c310;
+  c32 = c322*chi1*chi1 + c321*chi1 + c320;
+  c41 = c411*chi1 + c410;
+  c42 = c421*chi1 + c420;
+    
+  c1 = c11*nu + c12*nu*nu; 
+  c2 = c21*nu + c22*nu*nu;
+  c3 = c31*nu + c32*nu*nu; 
+  c4 = c41*nu + c42*nu*nu;
+
+  Ap[8] = ( 1 + (c1*lambda + c2*lambda*lambda + c3*lambda*lambda*lambda) ) / ( (1 + lambda*lambda*c4 )*(1 + lambda*lambda*c4 ) );
+  if (Ap[8]<0.){Ap[8]=1.;}
+  if (Ap[8]>1.){Ap[8]=1.;}
+  
   /* derivative amplitude */
-  a110= 13.9833426;//6.16366162;
-  a111=  3.82718022;//20.0054884;
-  a120=  -58.3833150;//-79.1693954;
-  a121=  -11.2910418;//-9.54906343;
-  a210=  0.20546684;//-4.04853057;
-  a211=  0.04017721;//0.53465595;
-  a220=  -0.93252149;//17.2091642;
-  a221=  -0.19883111;//-0.12706636;
-  b110=  8.11227525;//-0.66082002;
-  b111=  6.42747644;//6.26777099;
-  b120=-32.2236022;
-  b121=-18.4991142;
+  double b101,b100,b111,b110,b201,b200,b211,b210,b301,b300,b311,b310,b113,b123,b213,b223;
+  double b112,b122,b121,b120,b132,b131,b130,b212,b222,b221,b220,b232,b231,b230,b133,b233,b321,b320,b312,b322;
+  double b10,b11,b20,b21,b30,b31,b12,b13,b22,b23,b32;
+  double b1,b2,b3;
 
-  a11 = a110*chi1 + a111;
-  a12 = a120*chi1 + a121;
-  a21 = a210*chi1 + a211;
-  a22 = a220*chi1 + a221;
-  b11 = b110*chi1 + b111;
-  b12 = b120*chi1 + b121;
+  /* l = 2, m = 1 */
+  b112 = -368789.825574789;
+  b111 = 333038.7324440759;
+  b110 = -133958.7873246825;
+  b122 = 3690938.226536074;
+  b121 = -3389666.6770304046;
+  b120 = 1371584.2975333077;
+  b132 = -9062348.686131006;
+  b131 = 8510705.839035401;
+  b130 = -3462442.3106556754;
+  b212 = -742.8322268026368;
+  b211 = -168.19680873964367;
+  b210 = 420.00912816902934;
+  b222 = 8927.666668277603;
+  b221 = 988.1724219968736;
+  b220 = -4203.188483558627;
+  b232 = -25826.98653518626;
+  b231 = -1133.0371849440526;
+  b230 = 10545.571404324717;
+  b31  = -9.334649682992511;
+  b30 = 5.349037446237097;
 
-  a1 = a11*nu + a12*nu*nu;
-  a2 = a21*nu + a22*nu*nu;
-  b1 = b11*nu + b12*nu*nu;
+  b11 = b112*chi1*chi1 + b111*chi1 + b110;
+  b12 = b122*chi1*chi1 + b121*chi1 + b120;
+  b13 = b132*chi1*chi1 + b131*chi1 + b130;
+  b21 = b212*chi1*chi1 + b211*chi1 + b210;
+  b22 = b222*chi1*chi1 + b221*chi1 + b220;
+  b23 = b232*chi1*chi1 + b231*chi1 + b230;
 
-  //double dAp = ( ( 1 + (a1*kt2 + a2*kt2*kt2) )  / ( (1 + b11*nu*kt2)*(1 + b11*nu*kt2) ) );
-  double dAp = ( ( 1 + (a1*kt2 + a2*kt2*kt2) ) / ( (1 + b1*b1*kt2)*(1 + b1*b1*kt2) ) );
+  b1 = b11*nu + b12*nu*nu + b13*nu*nu*nu;
+  b2 = b21*nu + b22*nu*nu + b23*nu*nu*nu;
+  b3 = b31*chi1 + b30;
+
+  dAp[0] = ( ( 1 + (b1*lambda + b2*lambda*lambda) ) / ( (1 + lambda*lambda*(b3*nu)*(b3*nu) ) ) );
+
+  /* l = 2, m = 2 */
+  b101 = 0.006692383187572945;
+  b100 = -0.0029099423327064626;	
+  b111 = 0.09298127163261365;
+  b110 = 0.15371784703359265;
+  b201 = -1.8017891913004304e-06;
+  b200 = 8.63563033494384e-07;
+  b211 = 1.1895204934755798e-05;
+  b210 = -2.1308452612548277e-05;
+  b301 = 0.6202485959739941;
+  b300 = 0.18408910774027512;
+  b311 = -1.6022272014694021;
+  b310 = 0.44432056462055053;
+
+  b10 = b101*chi1 + b100;
+  b11 = b111*chi1 + b110;
+  b20 = b201*chi1 + b200;
+  b21 = b211*chi1 + b210;
+  b30 = b301*chi1 + b300;
+  b31 = b311*chi1 + b310;
+
+  b1 = b10*nu + b11*nu*nu;
+  b2 = b20*nu + b21*nu*nu;
+  b3 = b30*nu + b31*nu*nu;
+
+  dAp[1] = -1*( 1 + lambda*b1 + lambda*lambda*b2 ) / (( 1 + lambda*b3*b3 )*( 1 + lambda*b3*b3 ));
+
+  /* l = 3, m = 3 */
+  b113 = -104532308.71274745;
+  b112 = -28052057.502293073;
+  b111 = -10334156.319118189;
+  b110 = 7773885.670298806;
+  b123 = 1129395588.3281617;
+  b122 = 285802735.60785395;
+  b121 = 98375791.70591767;
+  b120 = -78213782.01803419;
+  b133 = -3022996822.7874002;
+  b132 = -717768537.4658437;
+  b131 = -229117863.72980285;
+  b130 = 194180576.92894575;
+  b213 = 119189.0360537401;
+  b212 = 71501.19416486716;
+  b211 = 32974.62770801159;
+  b210 = -20045.02496446706;
+  b223 = -1283346.8875412862;
+  b222 = -739058.2125105071;
+  b221 = -329248.2986502753;
+  b220 = 203540.475443693;
+  b233 = 3416520.679349472;
+  b232 = 1886771.5391024328;
+  b231 = 813712.6677610069;
+  b230 = -511038.39130576607;
+  b321 = -27.251430551104228;
+  b320 = 48.99759965335871;
+    
+  b11 = b113*chi1*chi1*chi1 + b112*chi1*chi1 + b111*chi1 + b110;
+  b12 = b123*chi1*chi1*chi1 + b122*chi1*chi1 + b121*chi1 + b120;
+  b13 = b133*chi1*chi1*chi1 + b132*chi1*chi1 + b131*chi1 + b130;
+  b21 = b213*chi1*chi1*chi1 + b212*chi1*chi1 + b211*chi1 + b210;
+  b22 = b223*chi1*chi1*chi1 + b222*chi1*chi1 + b221*chi1 + b220;
+  b23 = b233*chi1*chi1*chi1 + b232*chi1*chi1 + b231*chi1 + b230;
+  b32 = b321*chi1 + b320;
+    
+  b1 = b11*nu + b12*nu*nu + b13*nu*nu*nu;
+  b2 = b21*nu + b22*nu*nu + b23*nu*nu*nu;
+  b3 = b32*nu*nu;
+
+  dAp[4] = ( 1 + (b1*lambda + b2*lambda*lambda ) ) / ( (1 + lambda*b3*b3 )*(1 + lambda*b3*b3 ) );
+  if (dAp[4]<0.){dAp[4]=Ap[4];}
+
+  /* l = 4, m = 4 */
+  b112 = 13904.899442924849;
+  b111 = 2188.159558986493;
+  b110 = -3428.942380746902;
+  b122 = -203682.21284236634;
+  b121 = -23100.79333975182;
+  b120 = 56591.65825035908;
+  b132 = 651883.3845677918;
+  b131 = 59884.13132225108;
+  b130 = -191074.31755052076;
+  b212 = 170.04957281900852;
+  b211 = 3.7413046389109774;
+  b210 = -59.036266119590664;
+  b222 = -1518.7747992805148;
+  b221 = -41.139279970982884;
+  b220 = 523.3990858776148;
+  b232 = 3378.001071520739;
+  b231 = 113.2252224885313;
+  b230 = -1152.993306319554;
+  b312 = 6.2737580723088335;
+  b311 = 0.3047913280091431;
+  b310 = -2.2403560162621146;
+  b322 = -30.425718021789745;
+  b321 = -1.3870049232772124;
+  b320 = 10.95952129988658;
+     
+  b11 = b112*chi1*chi1 + b111*chi1 + b110;
+  b12 = b122*chi1*chi1 + b121*chi1 + b120;
+  b13 = b132*chi1*chi1 + b131*chi1 + b130;
+  b21 = b212*chi1*chi1 + b211*chi1 + b210;
+  b22 = b222*chi1*chi1 + b221*chi1 + b220;
+  b23 = b232*chi1*chi1 + b231*chi1 + b230;
+  b31 = b312*chi1*chi1 + b311*chi1 + b310;
+  b32 = b322*chi1*chi1 + b321*chi1 + b320;
+    
+  b1 = b11*nu + b12*nu*nu + b13*nu*nu*nu;
+  b2 = b21*nu + b22*nu*nu + b23*nu*nu*nu;
+  b3 = b31*nu + b32*nu*nu;
+
+  dAp[8] = ( 1 + (b1*lambda + b2*lambda*lambda ) ) / ( (1 + lambda*lambda*b3*b3 )*(1 + lambda*lambda*b3*b3 ) );
 
   // Peak values for all modes
   for (int k=0; k<KMAX; k++) {
-    omg_tmp[k] = Op*omg_tmp[k];
-    domg_tmp[k] = dOp*domg_tmp[k];  
-    A_tmp[k] = Ap*A_tmp[k];
-    dA_tmp[k] = dAp*dA_tmp[k];
+    omg_tmp[k] = Op[k]*omg_tmp[k];
+    domg_tmp[k] = dOp[k]*domg_tmp[k];  
+    A_tmp[k] = Ap[k]*A_tmp[k];
+    dA_tmp[k] = dAp[k]*dA_tmp[k];
   }
 	  
 }
@@ -5401,4 +6702,250 @@ double pph_lso_spin(const double nu, const double a0)
 double horizon_radius(const double nu)
 {
   return 2.02156 -6.85222*nu + 13.2842*nu*nu - 72.9496*nu*nu*nu; 
+}
+
+/** 
+ *  Function: eob_nqc_timeshift_bhns
+ *  --------------------------------
+ *  \details This function computes the time-shift for (2,2) tNQC with respect
+ *   to the peak of the EOB pure orbital frequency, from
+ *   https://arxiv.org/abs/1806.01772 and adapted for BHNS cases.
+ *  From Gonzalez+ in prep.
+ *   
+ *   @param[in] nu   : symmmetric mass ratio
+ *   @param[in] chi1 : dimensionless spin of body 1
+ *
+ *   @return DeltaT_nqc
+ */
+double eob_nqc_timeshift_bhns(double nu, double chi1)
+{
+
+  double DeltaT_nqc = 4.0;    
+    
+  return DeltaT_nqc;  
+}
+
+/** 
+ *  Function: eob_nqc_deltat_lm_bhns
+ *  ---------------------------
+ *  \details This function computes the time-shift of the peak of the modes w.r.t
+ *   the (2,2) mode, as defined in Eq. 3.50 of https://arxiv.org/1904.09550
+ *   From Gonzalez+ in prep.
+ *   
+ *   @param[out] Dt_lm : KMAX dimensional array of time-shifts 
+ *
+ */
+void eob_nqc_deltat_lm_bhns(double *Dt_lm)
+{
+  
+  const double nu    = EOBPars->nu;
+  const double nu2   = SQ(nu);
+  const double nu3   = nu2*nu;
+  const double nu4   = SQ(nu2);
+  const double X1    = EOBPars->X1;
+  const double X2    = EOBPars->X2;
+  const double X12   = X1 - X2;
+  const double X12_2 = SQ(X12);
+  const double X12_3 = X12_2*X12;
+
+  const double chi1  = EOBPars->chi1;
+  const double chi2  = EOBPars->chi2;
+  const double aK    = X1*chi1 + X2*chi2;
+  const double aK2   = SQ(aK);
+  const double a12   = X1*chi1 - X2*chi2;
+  const double a12_2 = SQ(a12);
+  const double Shat  = 0.5*(aK + a12*X12);
+  const double Shat2 = SQ(Shat);
+  const double lambda = EOBPars->LambdaBl2;
+  
+  const int usespins = EOBPars->use_spins;  
+
+  double Dt_lm_TP[KMAX], dt_bhns[KMAX];
+  for (int k=0; k<KMAX; k++) {
+    Dt_lm[k] = Dt_lm_TP[k] = 0;
+    dt_bhns[k] = 1.;
+  }
+
+  Dt_lm_TP[0]  = 11.75925;
+  Dt_lm_TP[2]  = 12.9338;
+  Dt_lm_TP[3]  = 9.16665;
+  Dt_lm_TP[4]  = 3.42593;
+  Dt_lm_TP[5]  = 13.1116;
+  Dt_lm_TP[6]  = 11.66665;
+  Dt_lm_TP[7]  = 9.53705;
+  Dt_lm_TP[8]  = 5.27778;
+  Dt_lm_TP[13] = 6.561811;
+
+    
+    double Dt_21_orb, Dt_32_orb, Dt_33_orb, Dt_42_orb, Dt_43_orb, Dt_44_orb;
+    double Dt_32_S, Dt_33_S1, Dt_33_S2, Dt_42_S, Dt_43_S, Dt_44_S;
+    double c11Dtlm, c12Dtlm, c21Dtlm, c22Dtlm, b1Dtlm, b2Dtlm;
+    double a1Dt, a2Dt, a3Dt, a4Dt;
+    double b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15;
+    double n1, n2, d1, d2;
+
+    /* (l = 2, m = 1) */
+    Dt_21_orb	= (Dt_lm_TP[0]*X12_2 + 4*6.6264*nu)*(1-2.0728*nu*X12);
+
+    c11Dtlm   = -1976.13; 
+    c12Dtlm   = 3719.88;
+    c21Dtlm   = -2545.41; 
+    c22Dtlm   = 5277.62;
+    b1Dtlm    = 0.0472289;
+    b2Dtlm    = 0.115583;
+    b1        = (b1Dtlm + c11Dtlm*X12)/(1 + c12Dtlm*X12);
+    b2        = (b2Dtlm + c21Dtlm*X12)/(1 + c22Dtlm*X12);
+    Dt_lm[0]  = (1 + b1*aK + b2*aK2)*Dt_21_orb;
+
+    /* (l = 3, m = 2) */
+    a1Dt      = -11.3497;
+    a2Dt      = 32.9144; 
+    a3Dt      = -8.36579;
+    a4Dt      = 20.1017;
+    Dt_32_orb = Dt_lm_TP[3]*(1 + a1Dt*nu+ a2Dt*nu2)/(1 + a3Dt*nu+ a4Dt*nu2);
+
+   
+      
+      b1 = +2.497188;
+      b2 = -7.532596;
+      b3 = +4.645986;
+      b4 = -3.652524;
+      b5 = +3.398687;
+      b6 = +7.054185;
+      b7 = -12.260185;
+      b8 = +5.724802;
+      b9 = -3.242611;
+      b10 = +2.714232;
+      b11 = +2.614565;
+      b12 = -9.507583;
+      b13 = +7.321586;
+      b14 = -3.937568;
+      b15 = +4.584970;
+      Dt_32_S  = (1 + (+0.15477 + b1*X12 + b2*X12_2 + b3*X12_3)/(1 + b4*X12 + b5*X12_2)*Shat + (-0.755639 + b6*X12 + b7*X12_2 + b8*X12_3)/(1 + b9*X12 + b10*X12_2)*Shat2)/(1 + (+0.21816 + b11*X12 + b12*X12_2 + b13*X12_3)/(1 + b14*X12 + b15*X12_2)*Shat);
+
+  
+
+    Dt_lm[3] = Dt_32_orb*Dt_32_S/Dt_lm_TP[3];
+
+    /* (l = 3, m = 3) */
+    Dt_33_orb = Dt_lm_TP[4]*(1 + 0.183349*nu+ 4.22361*nu2);
+    Dt_33_S1  = 1 + (-0.49791 - 1.9478*nu)/(1 + 13.9828*nu)*Shat + (-0.18754 + 1.25084*nu)/(1 - 3.41811*nu)*Shat2;
+    Dt_33_S2  = 1 + (-1.07291 - 1043.15*nu)/(1 + 1033.85*nu)*Shat;
+    Dt_lm[4]  = Dt_33_orb*Dt_33_S1/Dt_33_S2; 
+
+    /* (l = 4, m = 2) */
+    Dt_42_orb  = Dt_lm_TP[6]*(1 - 9.8446172795*nu + 23.3229430582*nu2)/(1 - 5.7604819848*nu + 7.1217930024*nu2);
+    
+    if (nu < 6./25.) {
+      b1       = 0.;
+      b2       = 0.;
+      b3       = 0.;
+      b4       = 0.;
+    } else {
+      b1       = +24.604717;
+      b2       = -0.808279;
+      b3       = +62.471781;
+      b4       = +48.340961;
+    }
+    Dt_42_S  = (1 + (-1.3002045 + b1*nu)/(1 + b2*nu)*Shat)/(1 + (-0.9494348+b3*nu)/(1+b4*nu)*Shat);
+    Dt_lm[6] = Dt_42_orb*Dt_42_S;
+
+    /* (l = 4, m = 3) */
+    a1Dt      = -11.2377;
+    a2Dt      = 38.3177; 
+    a3Dt      = -7.29734;
+    a4Dt      = 21.4267;
+    Dt_43_orb = Dt_lm_TP[7]*(1 + a1Dt*nu + a2Dt*nu2)/(1 + a3Dt*nu + a4Dt*nu2);
+
+    b1      = +3.215984;
+    b2      = +42.133767;
+    b3      = -9.440398;
+    b4      = +35.160776;
+    b5      = +1.133942;
+    b6      = -10.356311;
+    b7      = -6.701429;
+    b8      = +10.726960;
+    b9      = -6.036207;
+    b10     = +67.730599;
+    b11     = -3.082275;
+    b12     = +11.547917;
+    Dt_43_S = (1 + (-1.371832 + b1*nu + b2*nu2)/(1 + b3*nu + b4*nu2)*Shat +((+0.362375+b5*nu+b6*nu2)/(1+b7*nu+b8*nu2))*Shat2)/(1+((-1.0808402+b9*nu+b10*nu2)/(1+b11*nu+b12*nu2))*Shat);
+    Dt_lm[7] 		= Dt_43_orb*Dt_43_S;
+
+    /* (l = 4, m = 4) */
+    n1        = -8.35574;
+    n2        = 17.5288;
+    d1        = -6.50259;
+    d2        = 10.1575;
+    Dt_44_orb = Dt_lm_TP[8]*(1 + n1*nu + n2*nu2)/(1 + d1*nu + d2*nu2);
+    b1        = 0.00159701 - 2.28656*X12 + 1.66532*X12_2;
+    b2        = -1.14134 - 0.589331*X12 + 0.708784*X12_2;
+    Dt_44_S   = (1 + b1*Shat)/(1 + b2*Shat);
+    Dt_lm[8]  = Dt_44_orb*Dt_44_S;
+
+    // These fits are taken from the testparticle limit and approixmate the spinning case
+    /* (l = 3, m = 1) */
+    Dt_lm[2]  = Dt_lm_TP[2]*(1 - 25.615*nu2)/(1 + 0.88803*nu + 16.292*nu2);
+
+    /* (l = 4, m = 1) */	
+    Dt_lm[5]  = Dt_lm_TP[5]*(1 - 9.6225*nu + 38.451*nu2)/(1 - 7.7998*nu + 32.405*nu2);	
+
+    /* (l = 5, m = 5) */
+    Dt_lm[13] = Dt_lm_TP[13]*(1 - 91.2039*nu + 2556.5123*nu2 - 11325.217*nu3 + 27767.2164*nu4)/(1 - 66.0362*nu + 1762.4169*nu2);
+
+
+    // BHNS section
+    double d113,d112,d111,d110,d123,d122,d121,d120,d213,d212,d211,d210,d223,d222,d221,d220,d311,d310,d321,d320,d411,d410;
+    double d312,d322,d132,d131,d130,d232,d231,d230,d332,d331,d330,d133,d233;
+    double d11,d12,d21,d22,d31,d30,d32,d41,d13,d23,d33;
+    double d3,d4;
+
+    /* (l = 3, m = 2) */
+    d113 = -1.5072839537387006;
+    d112 = -1.471007307099315;
+    d111 = 0.12255034780592934;
+    d110 = 0.2751384354900841;
+    d123 = 14.314520385981604;
+    d122 = 13.520854973779135;
+    d121 = -1.9252417774544774;
+    d120 = -2.9092668321280564;
+    d133 = -32.98083488076057;
+    d132 = -29.470273418624345;
+    d131 = 7.050737575463469;
+    d130 = 7.6697745157484265;
+    d213 = 8.290211271634893e-06;
+    d212 = 1.972060714610703e-05;
+    d211 = 1.3734942172468023e-05;
+    d210 = 2.936349065235699e-06;
+    d223 = -9.92079106433095e-05;
+    d222 = -0.0002326678556004386;
+    d221 = -0.00016130469554140212;
+    d220 = -3.449512968210697e-05;
+    d233 = 0.00029936622381147843;
+    d232 = 0.0006889011279026787;
+    d231 = 0.00047429001025871097;
+    d230 = 0.00010134761352693667;
+    d311 = -0.14220847798371816;
+    d310 = -0.13330070151638176;
+    d321 = 1.0876547994820773;
+    d320 = 0.8943849484295967;
+
+    d11 = d113*chi1*chi1*chi1 + d112*chi1*chi1 + d111*chi1 + d110;
+    d12 = d123*chi1*chi1*chi1 + d122*chi1*chi1 + d121*chi1 + d120;
+    d13 = d133*chi1*chi1*chi1 + d132*chi1*chi1 + d131*chi1 + d130;
+    d21 = d213*chi1*chi1*chi1 + d212*chi1*chi1 + d211*chi1 + d210;
+    d22 = d223*chi1*chi1*chi1 + d222*chi1*chi1 + d221*chi1 + d220;
+    d23 = d233*chi1*chi1*chi1 + d232*chi1*chi1 + d231*chi1 + d230;
+    d31 = d311*chi1 + d310;
+    d32 = d321*chi1 + d320;
+
+    d1 = d11*nu + d12*nu*nu + d13*nu*nu*nu;
+    d2 = d21*nu + d22*nu*nu + d23*nu*nu*nu;
+    d3 = d31*nu + d32*nu*nu;
+
+    dt_bhns[3] = ( 1 + (d1*lambda*lambda + d2*lambda*lambda*lambda*lambda ) ) / ( (1 + lambda*lambda*d3*d3 )*(1 + lambda*lambda*d3*d3 ) ); ///Dt_lm_TP[3];
+    
+    for (int k=0; k<KMAX; k++) {
+      Dt_lm[k] = Dt_lm[k]*dt_bhns[k];
+    } 
 }
