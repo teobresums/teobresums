@@ -301,7 +301,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   /* Errors and warnings */
   eobp->errors_to_warnings=0; //False
   eobp->backwards=0; //False
-   
+  eobp->horizon_evolution=0; //False
   /* following pars are set later by the code */
 
   
@@ -522,7 +522,7 @@ int eob_set_params(int default_choice, int firstcall)
   }
 
   /* If precession and eccentricity are both specified, use EOB flux */
-  if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
+  if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->model == MODEL_DALI))
    if (VERBOSE){
       printf("Setting spin_flux to EOB\n"); EOBPars->spin_flx = SPIN_FLX_EOB;
       printf("Setting interpolation domain to TD\n"); EOBPars->domain = 0;
@@ -1055,7 +1055,10 @@ int eob_set_params(int default_choice, int firstcall)
   
   /** Set rhs fun pointer */
   if (EOBPars->model == MODEL_DALI) {
-    p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
+    if (EOBPars->horizon_evolution)
+      p_eob_dyn_rhs = &eob_dyn_rhs_ecc_horizon;
+    else
+      p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
   } else if (usespins) {
     p_eob_dyn_rhs = &eob_dyn_rhs_s;
   } else {

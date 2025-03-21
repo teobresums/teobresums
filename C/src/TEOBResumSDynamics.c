@@ -236,7 +236,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   
   /* Compute Metric */
   double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
-  eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
   
   /* Failsafe to avoid event horizon crossing */
   if (A < 1e-6){
@@ -315,6 +315,12 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
 
+  /* Do not evolve */
+  dy[EOB_EVOLVE_X1] = 0.;
+  dy[EOB_EVOLVE_X2] = 0.;
+  dy[EOB_EVOLVE_CHI1] = 0.;
+  dy[EOB_EVOLVE_CHI2] = 0.;
+
   if (dyn->store) {
     /* Store values */
     dyn->t = t;
@@ -337,6 +343,10 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
+    dyn->X1 = X1;
+    dyn->X2 = X2;
+    dyn->chi1 = chi1;
+    dyn->chi2 = chi2;
   }
     
   return GSL_SUCCESS;
@@ -405,7 +415,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   
   /* Compute Metric */
   double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
-  eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
 
   /* Failsafe to avoid event horizon crossing */
   if (A < 1e-6){
@@ -453,7 +463,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_PHI] = Omg;
   
   /* Compute here the new r_omg radius */
-  double r_omg       = eob_dyn_get_romg(r, prstar, pphi, dyn);
+  double r_omg       = eob_dyn_get_romg(nu, S, Sstar, chi1, chi2, X1, X2, aK2, a1, a2, r, prstar, pphi, dyn);
   const double v_phi = r_omg*Omg;
   const double x     = v_phi*v_phi;
   const double jhat  = pphi/(r_omg*v_phi);
@@ -461,7 +471,9 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   /* Compute fluxes and dp_{\phi}/dt */
   double Fphi = 0.;
   double Fr   = 0.;
-  eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, &Fphi, &Fr, dyn);
+
+  eob_flx_Flux_ecc(nu, chi1, chi2, X1, X2, a1, a2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2,
+                    x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, &Fphi, &Fr, dyn);
   
   if (dyn->noflx)     dy[EOB_EVOLVE_PPHI] = 0.;
   else                dy[EOB_EVOLVE_PPHI] = Fphi;
@@ -476,6 +488,15 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dy[EOB_EVOLVE_PRSTAR] *= -1.;
     dy[EOB_EVOLVE_PPHI] *= -1.;
   }
+
+  // Print derivatives
+  // printf("%.16f\t%.16f\t%.16f\t%.16f\n", dy[EOB_EVOLVE_RAD], dy[EOB_EVOLVE_PHI], dy[EOB_EVOLVE_PRSTAR], dy[EOB_EVOLVE_PPHI]);
+
+  /* Do not evolve */
+  dy[EOB_EVOLVE_X1]   = 0.;
+  dy[EOB_EVOLVE_X2]   = 0.;
+  dy[EOB_EVOLVE_CHI1] = 0.;
+  dy[EOB_EVOLVE_CHI2] = 0.;
 
   if (dyn->store) {
     /* Store values */
@@ -499,6 +520,194 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
+    dyn->X1    = X1;
+    dyn->X2    = X2;
+    dyn->chi1  = chi1;
+    dyn->chi2  = chi2;
+  }
+    
+  return GSL_SUCCESS;
+}
+
+/**
+ * Function: eob_dyn_rhs_ecc_horizon
+ * ---------------------------------
+ *   Computes the r.h.s. of the EOB Hamiltonian dynamics, eccentric version
+ * 
+ *  @param[in]  t     : time
+ *  @param[in]  y     : EOB variables
+ *  @param[out] dy    : r.h.s. of EOB variables
+ *  @param[in]  d     : dummy pointer to Dynamics
+ * 
+ *  @return GSL_SUCCESS
+*/
+int eob_dyn_rhs_ecc_horizon(double t, const double y[], double dy[], void *d)
+{
+  
+  (void)(t); /* avoid unused parameter warning */
+  Dynamics *dyn = d;
+  
+  const int usetidal = EOBPars->use_tidal;
+  const int usespins = EOBPars->use_spins;
+  
+  /* Shorthands */
+  const double r      = y[EOB_EVOLVE_RAD];
+  const double prstar = y[EOB_EVOLVE_PRSTAR];
+  const double pphi   = y[EOB_EVOLVE_PPHI];
+  const double pphi2  = pphi*pphi;
+  
+  /* Unpack values */
+  const double X1     = y[EOB_EVOLVE_X1];
+  const double X2     = y[EOB_EVOLVE_X2];
+  const double chi1   = y[EOB_EVOLVE_CHI1];
+  const double chi2   = y[EOB_EVOLVE_CHI2];
+
+  //printf("X1=%e, X2=%e, chi1=%e, chi2=%e\n", X1, X2, chi1, chi2);
+
+  const double nu = X1*X2;
+  double S, S1, S2, Sstar, aK, aK2, a1, a2;
+  set_spin_vars(X1,X2,chi1,chi2,&S1, &S2,&a1,&a2,&aK,&aK2,&S,&Sstar);
+
+  double C_Q1   = dyn->C_Q1;
+  double C_Q2   = dyn->C_Q2;
+  double C_Oct1 = dyn->C_Oct1;
+  double C_Oct2 = dyn->C_Oct2;
+  double C_Hex1 = dyn->C_Hex1;
+  double C_Hex2 = dyn->C_Hex2;
+
+  double c3     = EOBPars->cN3LO;
+
+  int backwards = EOBPars->backwards;
+
+  if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
+    /* Update the dressing factors for the f-mode resonances */
+    fmode_resonance_dressing_factors(r, dyn);
+    /* Update the QOH */
+    fmode_resonance_dress_QOH(dyn);
+    C_Q1   = dyn->dressed_C_Q1;
+    C_Q2   = dyn->dressed_C_Q2;
+    C_Oct1 = dyn->dressed_C_Oct1;
+    C_Oct2 = dyn->dressed_C_Oct2;
+    C_Hex1 = dyn->dressed_C_Hex1;
+    C_Hex2 = dyn->dressed_C_Hex2;
+  }
+  
+  /* Compute Metric */
+  double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
+  eob_metric_s(
+              nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2,
+              r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold,
+              &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold
+            );
+
+  /* Failsafe to avoid event horizon crossing */
+  if (A < 1e-6){
+    A = fabs(A);
+    B = fabs(B);
+    dyn->ode_stop = true;
+  }
+  
+  /* Compute centrifugal radius */
+  double rc, drc_dr, d2rc_dr2;
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, 
+       &rc, &drc_dr, &d2rc_dr2);
+  
+  if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
+    /* Add derivative terms to rc' and rc'' from f-mode resonances u-dependent terms */
+    eob_dyn_s_rc_add_QOH_drvts(dyn, rc, r, a1, a2,
+			       &drc_dr, &d2rc_dr2);
+  }
+  
+  const double uc     = 1./rc;
+  const double uc2    = uc*uc;
+  const double uc3    = uc2*uc;
+  
+  /* Compute Hamiltonian */
+  double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi, d2Heff_dr2;
+  eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, pphi, prstar, S, Sstar, chi1, chi2, X1, X2, aK2, c3, A, dA, d2A, Q, dQ, dQ_dprstar, 0., d2Q_dprstar2, 
+	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, &pl_hold);
+  // 0. is d2Q which only enters d2Heff_dr2, not needed here
+
+  /* H follows the same convention of Heff, i.e. it is the energy per unit mass,
+     while E is the real energy.*/
+  double E = nu*H;
+  const double ooH = 1./E;
+    
+  const double sqrtAbyB       = sqrt(A/B);
+  const double dp_rstar_dt_0  = - sqrtAbyB*dHeff_dr*ooH;
+  const double ddotr_dp_rstar = sqrtAbyB*d2Heff_dprstar20*ooH;
+  const double Omg            = dHeff_dpphi*ooH;
+  const double ddotr          = dp_rstar_dt_0*ddotr_dp_rstar; /* approximate ddot(r)_0 without Fphi, order pr_star^2 neglected */
+  
+  /* r evol eqn rhs */
+  dy[EOB_EVOLVE_RAD] = sqrtAbyB*dHeff_dprstar*ooH;
+  
+  /* phi evol eqn rhs */
+  dy[EOB_EVOLVE_PHI] = Omg;
+  
+  /* Compute here the new r_omg radius */
+  double r_omg       = eob_dyn_get_romg(nu, S, Sstar, chi1, chi2, X1, X2, aK2, a1, a2, r, prstar, pphi, dyn);
+  const double v_phi = r_omg*Omg;
+  const double x     = v_phi*v_phi;
+  const double jhat  = pphi/(r_omg*v_phi);
+  
+  /* Compute fluxes and dp_{\phi}/dt */
+  double Fphi = 0.;
+  double Fr   = 0.;
+  eob_flx_Flux_ecc(nu, chi1, chi2, X1, X2, a1, a2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2,
+                    x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, &Fphi, &Fr, dyn
+  );
+  
+  if (dyn->noflx)     dy[EOB_EVOLVE_PPHI] = 0.;
+  else                dy[EOB_EVOLVE_PPHI] = Fphi;
+  
+  /* dp_{r*}/dt */
+  double Frstar = sqrtAbyB*Fr;
+  dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*dHeff_dr*ooH + Frstar;
+  
+  /* Horizon (vary mass fractions and spins) */
+  dy[EOB_EVOLVE_X1]   = 0.;
+  dy[EOB_EVOLVE_X2]   = 0.;
+  dy[EOB_EVOLVE_CHI1] = 0.;
+  dy[EOB_EVOLVE_CHI2] = 0.;
+
+  if (backwards){
+    dy[EOB_EVOLVE_RAD]    *= -1.;
+    dy[EOB_EVOLVE_PHI]    *= -1.;
+    dy[EOB_EVOLVE_PRSTAR] *= -1.;
+    dy[EOB_EVOLVE_PPHI]   *= -1.;
+    dy[EOB_EVOLVE_X1]     *= -1.;
+    dy[EOB_EVOLVE_X2]     *= -1.;
+    dy[EOB_EVOLVE_CHI1]   *= -1.;
+    dy[EOB_EVOLVE_CHI2]   *= -1.;
+  }
+
+  if (dyn->store) {
+    /* Store values */
+    dyn->t       = t;
+    dyn->r       = r;
+    dyn->phi     = y[EOB_EVOLVE_PHI];
+    dyn->pphi    = pphi;
+    dyn->prstar  = prstar;
+    dyn->Omg     = Omg;
+    dyn->Omg_orb = ooH*pphi*A*uc2/Heff_orb;
+    dyn->H       = H;
+    dyn->E       = E;
+    dyn->Heff    = Heff;
+    dyn->A       = A;
+    dyn->dA      = dA;
+    dyn->d2A     = d2A;
+    dyn->B       = B;
+    dyn->dB      = dB;
+    dyn->r_omega = r_omg;
+    dyn->v_phi   = v_phi;
+    dyn->jhat    = jhat;
+    dyn->ddotr   = ddotr;
+    dyn->X1      = X1;
+    dyn->X2      = X2;
+    dyn->chi1    = chi1;
+    dyn->chi2    = chi2;
+    set_spin_vars(X1,X2,chi1,chi2, &dyn->S1, &dyn->S2, &dyn->a1, &dyn->a2,&dyn->aK,&dyn->aK2,&dyn->S,&dyn->Sstar);
   }
     
   return GSL_SUCCESS;
@@ -1381,20 +1590,12 @@ void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
   *  @return r_omg         : r_omega
   *
 */
-double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
+double eob_dyn_get_romg(double nu, double S, double Sstar, double chi1, double chi2,
+                        double X1, double X2, double aK2, double a1, double a2,
+                        double r, double prstar, double pphi, Dynamics *dyn)
 {
   /* Unpack values */
-  const double nu = EOBPars -> nu;
-  const double S = EOBPars -> S;
-  const double Sstar = EOBPars -> Sstar;
-  const double chi1 = EOBPars -> chi1;
-  const double chi2 = EOBPars -> chi2;
-  const double X1 = EOBPars -> X1;
-  const double X2 = EOBPars -> X2;
   const double c3 = EOBPars -> cN3LO;
-  const double aK2 = EOBPars -> aK2;
-  const double a1 = EOBPars -> a1;
-  const double a2 = EOBPars -> a2;
   const double C_Q1 = EOBPars -> C_Q1;
   const double C_Q2 = EOBPars -> C_Q2;
   const double C_Oct1 = EOBPars -> C_Oct1;
@@ -1410,7 +1611,7 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
   double A, dA, rc, drc_dr, pl_hold;
 
   if (usespins) {
-    eob_metric_s(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
   } else {
@@ -1693,7 +1894,7 @@ int eob_dyn_fLSO_s (const gsl_vector *x, void * params, gsl_vector *f) {
   const int usespins = EOBPars->use_spins;
   
   double A, B, dA, d2A, dB, pl_hold;
-  eob_metric_s(r, 0., dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold); 
+  eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, 0., dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold); 
 
   /* Compute centrifugal radius */
   double rc, drc_dr, d2rc_dr2;
@@ -1880,6 +2081,12 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 
   const double q   = EOBPars->q; // Assume q = MA/MB >=1
   const double nu  = EOBPars->nu; 
+  const double C_Q1 = EOBPars->C_Q1;
+  const double C_Q2 = EOBPars->C_Q2;
+  const double C_Oct1 = EOBPars->C_Oct1;
+  const double C_Oct2 = EOBPars->C_Oct2;
+  const double C_Hex1 = EOBPars->C_Hex1;
+  const double C_Hex2 = EOBPars->C_Hex2;
   const double nu2 = nu*nu;
   const double nu3 = nu2*nu;
   const double nu4 = nu3*nu;
@@ -2271,7 +2478,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 
     /* Compute Metric */
     double A, B, dA, d2A, dB, pl_hold;
-    eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   
     /* Compute centrifugal radius */
     double rc, drc_dr, d2rc_dr;
@@ -2350,7 +2557,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     /* Compute j(u) on circular orbits */
     double ggm[26]; 
     double A, B, dA, d2A, dB, pl_hold, rc, drc_dr, d2rc_dr;
-    eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr);
     eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr, aK2, 0.0, 0.0, nu, c1, c2, X1, X2, EOBPars->cN3LO, ggm);
 

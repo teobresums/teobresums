@@ -255,10 +255,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   
   /* Set useful pars/vars */
-  const double q      = EOBPars->q;
-  const double nu     = EOBPars->nu;
-  const double chi1   = EOBPars->chi1;
-  const double chi2   = EOBPars->chi2;
+  double q            = EOBPars->q;
+  double nu           = EOBPars->nu;
+  double chi1         = EOBPars->chi1;
+  double chi2         = EOBPars->chi2;
+  double X1           = nu_to_X1(nu);
+  double X2           = 1. - X1;
+  double S, Sstar, a1, a2, aK, aK2, S1, S2;
+  set_spin_vars(X1, X2, chi1, chi2, &S1, &S2, &a1, &a2, &aK, &aK2, &S, &Sstar);
   const double ecc    = EOBPars->ecc;
   const double r_hyp  = EOBPars->r_hyp;
   const double H_hyp  = EOBPars->H_hyp;
@@ -305,7 +309,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->store = dyn->noflx = 0; /* Default: do not store vars, flux on */
   dyn->dt = EOBPars->dt;
   dyn->t_stop = EOBPars->ode_tmax;
-
   /* Alloc spin dynamics, if needed */
   if (use_spins == MODE_SPINS_GENERIC) {   
     
@@ -507,16 +510,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
       
       p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
-      eob_wav_hlm(dyn, hlm_t);      
+      eob_wav_hlm(dyn, hlm_t, nu, chi1, chi2, a1, a2, X1, X2);   
       for (int k = 0; k < KMAX; k++) {
         if((hlm->kmask[k])){
-	  hlm->ampli[k][i] = hlm_t->ampli[k];
-	  hlm->phase[k][i] = hlm_t->phase[k]; 
+          hlm->ampli[k][i] = hlm_t->ampli[k];
+          hlm->phase[k][i] = hlm_t->phase[k]; 
         }
       }
 
       if (dyn->time[size-1] > EOBPars->ode_tmax)
-	EOBPars->postadiabatic_dynamics_stop = 1;
+	      EOBPars->postadiabatic_dynamics_stop = 1;
     }
 
     dyn->store = dyn->noflx = 0;
@@ -560,7 +563,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       status = ERROR_INITIAL_CONDITIONS;
       goto EXIT_POINT;
     }
-      
+    
+    /* We should set these in every eob_dyn_ic, but for now we keep it here */
+    dyn->y0[EOB_ID_X1]   = EOBPars->X1;
+    dyn->y0[EOB_ID_X2]   = EOBPars->X2;
+    dyn->y0[EOB_ID_CHI1] = EOBPars->chi1;
+    dyn->y0[EOB_ID_CHI2] = EOBPars->chi2;
+
     /* check that hyperbolic orbits ic work */
     // TODO: check if this workaround is needed  
     if ((r_hyp != 0.) && (dyn->y0[EOB_ID_PRSTAR] == 0.)) {
@@ -568,7 +577,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       goto EXIT_POINT;
     }
     
-    /* Se arrays with initial conditions */
+    /* Set arrays with initial conditions */
     dyn->t       = 0.;
     dyn->r       = dyn->y0[EOB_ID_RAD];
     dyn->phi     = 0.;
@@ -582,6 +591,27 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->y[EOB_EVOLVE_PHI]    = dyn->phi;
     dyn->y[EOB_EVOLVE_PRSTAR] = dyn->prstar; 
     dyn->y[EOB_EVOLVE_PPHI]   = dyn->pphi;
+    dyn->X1                   = EOBPars->X1;
+    dyn->X2                   = EOBPars->X2;
+    dyn->chi1                 = EOBPars->chi1;
+    dyn->chi2                 = EOBPars->chi2;
+
+    /* Set other spin vars in the dynamics */
+    set_spin_vars(dyn->X1,dyn->X2,dyn->chi1,dyn->chi2,
+                &dyn->S1, &dyn->S2,
+                &dyn->a1, &dyn->a2,
+                &dyn->aK, &dyn->aK2,
+                &dyn->S,  &dyn->Sstar
+    );
+
+    /* If we also evolve masses and spins, save them here */
+    if (EOBPars->horizon_evolution){
+      dyn->y[EOB_EVOLVE_X1]   = EOBPars->X1;
+      dyn->y[EOB_EVOLVE_X2]   = EOBPars->X2;
+      dyn->y[EOB_EVOLVE_CHI1] = EOBPars->chi1;
+      dyn->y[EOB_EVOLVE_CHI2] = EOBPars->chi2;
+    }
+
     if (store_dynamics) {
       dyn->time[0]             = dyn->t; 
       dyn->data[EOB_RAD][0]    = dyn->r;
@@ -592,6 +622,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_PRSTAR][0] = dyn->prstar;
       dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
       dyn->data[EOB_E0][0]     = dyn->E;
+      if (EOBPars->horizon_evolution){
+        dyn->data[EOB_X1][0]    = EOBPars->X1;
+        dyn->data[EOB_X2][0]    = EOBPars->X2;
+        dyn->data[EOB_CHI1][0]  = EOBPars->chi1;
+        dyn->data[EOB_CHI2][0]  = EOBPars->chi2;
+      }
     }
 
     /* Check: print warning if initial separation < 10 */
@@ -617,15 +653,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 		    &EOBPars->S1, &EOBPars->S2,
 		    &EOBPars->a1, &EOBPars->a2,
 		    &EOBPars->aK, &EOBPars->aK2,
-		    &EOBPars->S, &EOBPars->Sstar);
+		    &EOBPars->S,  &EOBPars->Sstar);
     }    
     
     /* Waveform computation at t = 0 
-	Needs a r.h.s. evaluation for some vars (no flux) */
+	  Needs a r.h.s. evaluation for some vars (no flux) */
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t); 
+    eob_wav_hlm(dyn, hlm_t, nu, chi1, chi2, a1, a2, X1, X2);
     
     /* Append waveform to arrays */
     hlm->time[0] = 0.;
@@ -742,19 +778,36 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         GSLSTATUS = gsl_odeiv2_driver_apply (d, &dyn->t, dyn->ti, dyn->y);
       }
     }
-    
+
     /* Unpack data */
     dyn->r      = dyn->y[EOB_EVOLVE_RAD];
     dyn->phi    = dyn->y[EOB_EVOLVE_PHI];
     dyn->prstar = dyn->y[EOB_EVOLVE_PRSTAR];
     dyn->pphi   = dyn->y[EOB_EVOLVE_PPHI];
-    
+    if (EOBPars->horizon_evolution){
+      dyn->X1     = dyn->y[EOB_EVOLVE_X1];
+      dyn->X2     = dyn->y[EOB_EVOLVE_X2];
+      dyn->chi1   = dyn->y[EOB_EVOLVE_CHI1];
+      dyn->chi2   = dyn->y[EOB_EVOLVE_CHI2];
+      set_spin_vars(dyn->X1,dyn->X2,dyn->chi1,dyn->chi2, 
+        &dyn->S1, &dyn->S2,
+        &dyn->a1, &dyn->a2,
+        &dyn->aK, &dyn->aK2,
+        &dyn->S,  &dyn->Sstar
+      );
+      nu = dyn->X1 * dyn->X2;
+      chi1 = dyn->chi1;
+      chi2 = dyn->chi2;
+      a1 = dyn->a1;     a2 = dyn->a2;
+      X1 = dyn->X1;     X2 = dyn->X2;
+    }
+
     /* Waveform computation 
 	Needs a r.h.s. evaluation for some vars (but no flux) */
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t); 
+    eob_wav_hlm(dyn, hlm_t, nu, chi1, chi2, a1, a2, X1, X2); 
 
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
@@ -785,6 +838,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 		    &EOBPars->a1, &EOBPars->a2,
 		    &EOBPars->aK, &EOBPars->aK2,
 		    &EOBPars->S, &EOBPars->Sstar);
+      
+       chi1 = EOBPars->chi1; chi2 = EOBPars->chi2;
+       a1   = EOBPars->a1;     a2 = EOBPars->a2;
     }
 	
     /* Check for failures ... */
@@ -865,6 +921,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_E0][iter] 	       = dyn->E;
       dyn->data[EOB_FLX_INFTY][iter]   = dyn->flux_inf;
       dyn->data[EOB_FLX_HORIZON][iter] = dyn->flux_hor;
+      if (EOBPars->horizon_evolution){
+        dyn->data[EOB_X1][iter]        = dyn->X1;
+        dyn->data[EOB_X2][iter]        = dyn->X2;
+        dyn->data[EOB_CHI1][iter]      = dyn->chi1;
+        dyn->data[EOB_CHI2][iter]      = dyn->chi2;
+      }
     }
 
     /* Stop integration if reached max time */    
@@ -966,7 +1028,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
   }
   dyn->tOmg_pk = tOmg_pk;
-  
+
  END_ODE_EVOLUTION:;
  
   /* Unwrap phase for higher modes */
@@ -1018,9 +1080,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
         dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
         dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
+
+        if (EOBPars->horizon_evolution){
+          dyn->y[EOB_EVOLVE_X1]   = dyn->data[EOB_X1][i];
+          dyn->y[EOB_EVOLVE_X2]   = dyn->data[EOB_X2][i];
+          dyn->y[EOB_EVOLVE_CHI1] = dyn->data[EOB_CHI1][i];
+          dyn->y[EOB_EVOLVE_CHI2] = dyn->data[EOB_CHI2][i];
+          // Overwrite for wf calculation
+          nu   = dyn->data[EOB_X1][i] * dyn->data[EOB_X2][i];
+          chi1 = dyn->data[EOB_CHI1][i];
+          chi2 = dyn->data[EOB_CHI2][i];
+          a1   = 0.; // Fixme
+          a2   = 0.; // Fixme
+        }
+
         eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
       
-        eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
+        eob_wav_hlm_ecc_sigmoid(dyn, hlm_t, nu, chi1, chi2, a1, a2, X1, X2);
         for (int k = 0; k < KMAX; k++) {
           if((hlm->kmask[k])){
             hlm->ampli[k][i] = hlm_t->ampli[k];
@@ -1108,7 +1184,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       
     } /* End of merger interp */
-    
     
     if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {
       

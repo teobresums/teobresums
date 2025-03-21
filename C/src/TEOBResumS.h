@@ -177,9 +177,13 @@ enum{
   EOB_EVOLVE_PHI,          /**< index of phi */
   EOB_EVOLVE_PRSTAR,       /**< index of Prstar */
   EOB_EVOLVE_PPHI,         /**< index of Pphi */
+  EOB_EVOLVE_X1,            /**< index of X1 */
+  EOB_EVOLVE_X2,            /**< index of X2 */
+  EOB_EVOLVE_CHI1,          /**< index of chi1 */
+  EOB_EVOLVE_CHI2,          /**< index of chi2 */
   EOB_EVOLVE_NVARS         /**< number of EOB evolved variables */
 };
-static const char* eob_evolve_var[] = {"r","phi","Prstar","Pphi"};
+static const char* eob_evolve_var[] = {"r","phi","Prstar","Pphi","X1","X2","chi1","chi2"};
 
 /** Index list of EOB variables for initial data */
 enum{
@@ -191,9 +195,13 @@ enum{
   EOB_ID_J,            /**< index of j */
   EOB_ID_E0,           /**< index of E0 */
   EOB_ID_OMGJ,         /**< index of Omega */
+  EOB_ID_X1,           /**< index of X1 */
+  EOB_ID_X2,           /**< index of X2 */
+  EOB_ID_CHI1,         /**< index of chi1 */
+  EOB_ID_CHI2,         /**< index of chi2 */
   EOB_ID_NVARS         /**< number of EOB variables for initial data */
 };
-static const char* eob_id_var[] = {"r","phi","Pphi","Prstar","Pr","j","E0","Omega"};
+static const char* eob_id_var[] = {"r","phi","Pphi","Prstar","Pr","j","E0","Omega","X1","X2","chi1","chi2"};
 
 /** Index list of EOB dynamical variables (to be stored in arrays) */ 
 enum{
@@ -207,9 +215,13 @@ enum{
   EOB_E0,                /**< index of E0 */
   EOB_FLX_INFTY,         /**< index of flux at infinity */
   EOB_FLX_HORIZON,       /**< index of flux at horizon */
+  EOB_X1,                /**< index of X1 */
+  EOB_X2,                /**< index of X2 */
+  EOB_CHI1,              /**< index of chi1 */
+  EOB_CHI2,              /**< index of chi2 */
   EOB_DYNAMICS_NVARS     /**< number of EOB dynamical variables */
 };
-static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E", "flux_inf", "flux_hor"};
+static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E", "flux_inf", "flux_hor", "X1","X2","chi1","chi2"};
 
 #define KMAX (35) /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
@@ -620,6 +632,19 @@ typedef struct tagDynamics
   double dressed_C_Hex1, dressed_C_Hex1_u, dressed_C_Hex1_uu; /**< dressing factors for spin-induced hexadecapole and drvts   */
   double dressed_C_Hex2, dressed_C_Hex2_u, dressed_C_Hex2_uu; /**< dressing factors for spin-induced hexadecapole and drvts   */
   
+  /**@{*/
+  /** Mass parameters */
+  double M, nu, q, X1, X2;                            
+  /**@}*/ 
+
+  /**@{*/
+  /** Spin parameters */
+  double chi1, chi2, S1,S2, S,Sstar, a1, a2, aK, aK2;
+  double chi1x,chi1y,chi1z;     /* Spin components (body 1) */                   
+  double chi2x,chi2y,chi2z;     /* Spin components (body 2) */
+  double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2;      
+  /**@}*/ 
+
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_NVARS];   /**< rhs storage */
   double dy[EOB_EVOLVE_NVARS];  /**< rhs storage */
@@ -754,7 +779,7 @@ typedef struct tagEOBParameters
   int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */
 
   int backwards;
-
+  int horizon_evolution;                                /**< Flag to evolve horizon (yes/no) */
   /* final state */
   double Mbhf; /**< Final BH mass */
   double abhf; /**< Final BH spin */
@@ -1030,6 +1055,7 @@ void eob_ham(double nu, double r, double pphi, double prstar, double A, double d
 	           double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *params);
+int eob_dyn_rhs_ecc_horizon(double t, const double y[], double dy[], void *params);
 void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double Q, double dQ, double dQ_dprstar, double d2Q, double d2Q_dprstar2,
                double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
@@ -1042,7 +1068,9 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double u, double at1, double at2, double *drc_dr, double *d2rc_dr2);
-double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_dyn_get_romg(double nu, double S, double Sstar, double chi1, double chi2,
+                        double X1, double X2, double aK2, double a1, double a2,
+                        double r, double prstar, double pphi, Dynamics *dyn);
 double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
@@ -1113,24 +1141,28 @@ void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, doub
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
-void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
-void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
+void eob_metric_Atidal(double nu, double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
+void eob_metric_Btidal(double nu, double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                 double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                 double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
-void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
-                  double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
-                  double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
+void eob_metric_s(double nu, double a1, double a2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2,
+  double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+  double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+  double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
 
 /* TEOBResumSFlux.c */
 extern double (*eob_flx_Fr)(); /* defined in TEOBResumSPars.c*/
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
-void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn);
-void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double Fr, Dynamics *dyn, double *hatflm_NC);
-double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
-double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
-double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
+void eob_flx_Flux_ecc(double nu, double chi1, double chi2, double X1, double X2, double a1, double a2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2,
+                      double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn);
+void eob_flx_Fphi_ecc(double nu, double chi1, double chi2, double aK2, double X1, double X2, double a1, double a2, double S1, double S2,
+                      double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2,
+                      double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double Fr, Dynamics *dyn, double *hatflm_NC);
+double eob_flx_Fr_ecc(double nu, double a1, double a2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
+double eob_flx_Fr_ecc_BD(double nu, double a1, double a2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
+double eob_flx_Fr_ecc_next(double nu, double a1, double a2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
 double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
@@ -1150,9 +1182,9 @@ double eob_flx_HorizonFlux_s_NNLO_fact_energy(double x, double r, double prstar,
 
 /* TEOBResumSWaveform.c */
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */
-void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm);
-void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm);
-void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm);
+void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm, double nu, double chi1, double chi2, double a1, double a2, double X1, double X2);
+void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm, double nu, double chi1, double chi2, double a1, double a2, double X1, double X2);
+void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm, double nu, double chi1, double chi2, double a1, double a2, double X1, double X2);
 extern void (*eob_wav_deltalm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm);
@@ -1163,7 +1195,7 @@ void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
 extern void (*eob_wav_hlmNewt)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNewt_v1(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
-void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
+void eob_wav_hlmTidal(double nu, double XA, double XB, double x, Dynamics *dyn, double *hTidallm);
 extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);

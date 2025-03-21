@@ -135,7 +135,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
     /** Computing metric functions and centrifugal radius */
     if(usespins){ 
       
-      eob_metric_s(dyn->r, 0., dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold, &pl_hold, &Q_vec[i], &dQ_vec[i], &dQdprstar_vec[i], &pl_hold, &pl_hold, &d2Qdprstar2_vec[i], &pl_hold, &pl_hold, &pl_hold);
+      eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, dyn->r, 0., dyn, &A_vec[i], &B_vec[i], &dA_vec[i], &pl_hold, &pl_hold, &pl_hold, &Q_vec[i], &dQ_vec[i], &dQdprstar_vec[i], &pl_hold, &pl_hold, &d2Qdprstar2_vec[i], &pl_hold, &pl_hold, &pl_hold);
       eob_dyn_s_get_rc(dyn->r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc_vec[i], &drc_dr_vec[i], &pl_hold);
       eob_dyn_s_GS(dyn->r, rc_vec[i], drc_dr_vec[i], pl_hold, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
       
@@ -366,7 +366,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
 
         /* recomputing Q */
         if(usespins) {
-          eob_metric_s(dyn->r, dyn->prstar, dyn, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q_vec[i], &dQ_vec[i], &dQdprstar_vec[i], &pl_hold, &pl_hold, &d2Qdprstar2_vec[i], &pl_hold, &pl_hold, &pl_hold);
+          eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, dyn->r, dyn->prstar, dyn, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q_vec[i], &dQ_vec[i], &dQdprstar_vec[i], &pl_hold, &pl_hold, &d2Qdprstar2_vec[i], &pl_hold, &pl_hold, &pl_hold);
         } else {
            eob_metric(dyn->r, dyn->prstar, dyn, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q_vec[i], &dQ_vec[i], &dQdprstar_vec[i], &pl_hold, &pl_hold, &d2Qdprstar2_vec[i], &pl_hold, &pl_hold, &pl_hold); 
         }

@@ -4792,14 +4792,10 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
  *   @param[in] dyn: dynamics structure
  *   @param[out] hTidallm: tidal correction to multipolar waveform amplitude
 */
-void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
+void eob_wav_hlmTidal(double nu, double XA, double XB, double x, Dynamics *dyn, double *hTidallm)
 {
-  const double nu       = EOBPars->nu;  
-  const double XA       = EOBPars->X1;
-  const double XB       = EOBPars->X2;
-
-  double khatA_2 = 0.5*EOBPars->kapA2; 
-  double khatB_2 = 0.5*EOBPars->kapB2; 
+  double khatA_2        = 0.5*EOBPars->kapA2; 
+  double khatB_2        = 0.5*EOBPars->kapB2; 
   const double kapA2j   = EOBPars->japA2;
   const double kapB2j   = EOBPars->japB2;
   const double kapT2j   = EOBPars->japT2;
@@ -5851,7 +5847,7 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
 }
 
 /**
- * Function: eob_wav_hlmNQC_find_a1a2a3_mrg_HM
+ * Function: eob_wav_hlmNQC_find_a1a2a3_mrg_ecc
  * -------------------------------------------
  *   Computes the factors and the coefficients that build the
  *   NQC corrections to the waveform in the eccentric case.
@@ -8005,20 +8001,13 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
 */
-void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
+void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm, double nu, double chi1, double chi2, double a1, double a2, double X1, double X2)
 {
   
+  const double C_Q1 = EOBPars->C_Q1;
+  const double C_Q2 = EOBPars->C_Q2;
   const double t   = dyn->t;
   
-  const double nu = EOBPars->nu;  
-  const double chi1 = EOBPars->chi1;  
-  const double chi2 = EOBPars->chi2;  
-  const double a1 = EOBPars->a1;  
-  const double a2 = EOBPars->a2;  
-  const double X1 = EOBPars->X1;  
-  const double X2 = EOBPars->X2;  
-  const double C_Q1 = EOBPars->C_Q1;  
-  const double C_Q2 = EOBPars->C_Q2;  
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
   const int usespeedytail = EOBPars->use_speedytail;
@@ -8143,7 +8132,7 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
   if (usetidal) {   
     /** Tidal contribution */
     double hlmtidal[KMAX];
-    eob_wav_hlmTidal(x, dyn, hlmtidal);
+    eob_wav_hlmTidal(nu, X1, X2, x, dyn, hlmtidal);
     if( !(usespins) ) { 
       /* Correct normalization of point-mass wave for some of the m=odd modes */
       hlm->ampli[0] *= X12;
@@ -8172,29 +8161,22 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
 */
-void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
+void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm, double nu, double chi1, double chi2, double a1, double a2, double X1, double X2)
 {
   
-  const double nu = EOBPars -> nu;
-  const double chi1 = EOBPars -> chi1;
-  const double chi2 = EOBPars -> chi2;
-  const double a1 = EOBPars -> a1;
-  const double a2 = EOBPars -> a2;
-  const double X1 = EOBPars -> X1;
-  const double X2 = EOBPars -> X2;
-  const double C_Q1 = EOBPars -> C_Q1;
-  const double C_Q2 = EOBPars -> C_Q2;
-  const double ecc = EOBPars -> ecc;
-  const double r_hyp = EOBPars -> r_hyp;
-  const int usetidal = EOBPars -> use_tidal;
-  const int usespins = EOBPars -> use_spins;
+  const double C_Q1        = EOBPars -> C_Q1;
+  const double C_Q2        = EOBPars -> C_Q2;
+  const double ecc        = EOBPars -> ecc;
+  const double r_hyp      = EOBPars -> r_hyp;
+  const int usetidal      = EOBPars -> use_tidal;
+  const int usespins      = EOBPars -> use_spins;
   const int usespeedytail = EOBPars -> use_speedytail;
-  const double X12 = X1 - X2; /* sqrt (1 - 4 nu)*/
+  const double X12        = X1 - X2; /* sqrt (1 - 4 nu)*/
 
-  const double t   = dyn->t;
-  const double phi = dyn->phi; 
-  const double r   = dyn->r;
-  const double pph = dyn->pphi;
+  const double t      = dyn->t;
+  const double phi    = dyn->phi; 
+  const double r      = dyn->r;
+  const double pph    = dyn->pphi;
   const double prstar = dyn->prstar;
   const double Omega  = dyn->Omg;
   const double ddotr  = dyn->ddotr;
@@ -8271,7 +8253,7 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   if (usetidal) {   
     /** Tidal contribution */
     double hlmtidal[KMAX];
-    eob_wav_hlmTidal(x, dyn, hlmtidal);
+    eob_wav_hlmTidal(nu, X1, X2, x, dyn, hlmtidal);
     if( !(usespins) ) { 
       /* Correct normalization of point-mass wave for some of the m=odd modes */
       hlm->ampli[0] *= X12;
@@ -8301,19 +8283,11 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
  *   @param[in]  dyn : dynamics
  *   @param[out] hlm : waveform
 */
-void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
+void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm, double nu, double chi1, double chi2, double a1, double a2, double X1, double X2)
 {
   
-  const double nu = EOBPars -> nu;
-  const double chi1 = EOBPars -> chi1;
-  const double chi2 = EOBPars -> chi2;
-  const double a1 = EOBPars -> a1;
-  const double a2 = EOBPars -> a2;
-  const double X1 = EOBPars -> X1;
-  const double X2 = EOBPars -> X2;
   const double C_Q1 = EOBPars -> C_Q1;
   const double C_Q2 = EOBPars -> C_Q2;
-  const double ecc = EOBPars -> ecc;
   const double r_hyp = EOBPars -> r_hyp;
   const int usetidal = EOBPars -> use_tidal;
   const int usespins = EOBPars -> use_spins;
@@ -8401,7 +8375,7 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
   if (usetidal) {   
     /** Tidal contribution */
     double hlmtidal[KMAX];
-    eob_wav_hlmTidal(x, dyn, hlmtidal);
+    eob_wav_hlmTidal(nu, X1, X2, x, dyn, hlmtidal);
     if( !(usespins) ) { 
       /* Correct normalization of point-mass wave for some of the m=odd modes */
       hlm->ampli[0] *= X12;

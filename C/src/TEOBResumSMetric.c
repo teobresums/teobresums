@@ -1156,18 +1156,17 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
  *   @param[out] dAT   : tidal dA/du,   with u=1/r  
  *   @param[out] d2AT  : tidal d2A/du2, with u=1/r 
  */ 
-void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
+void eob_metric_Atidal( double nu, double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
 {
   
+  double XA = 0.5 + 0.5*sqrt(1 - 4.*nu);
+  double XB = 0.5 - 0.5*sqrt(1 - 4.*nu);
   double A=0., dA_u=0., d2A_u=0., dA=0., d2A=0.;
 
   const double elsix = 1.833333333333333333333;  // 11/6
   const double eightthird = 2.6666666666666666667; // 8/3
 
-  const double nu    = EOBPars->nu;
   const double rLR   = EOBPars->rLR_tidal;
-  const double XA    = EOBPars->X1;
-  const double XB    = EOBPars->X2;
 
   double kapA2 = EOBPars->kapA2; 
   double kapA3 = EOBPars->kapA3;
@@ -1610,10 +1609,8 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
  *   @param[out] dBT   : tidal dB/du,   with u=1/r  
  *   @param[out] d2BT  : tidal d2B/du2, with u=1/r 
  */ 
-void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
+void eob_metric_Btidal(double nu, double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
 {
-  const double nu = EOBPars->nu;
-
   const double u  = 1./r;
   const double u2 = u*u;
   const double u4 = u2*u2;
@@ -1699,12 +1696,12 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   if (EOBPars->use_tidal) {
     double AT=0., dAT_u=0., d2AT_u=0.;
     double BT=0., dBT_u=0., d2BT_u=0.;
-    eob_metric_Atidal(r, dyn, &AT, &dAT_u, &d2AT_u);
+    eob_metric_Atidal(nu, r, dyn, &AT, &dAT_u, &d2AT_u);
     Atmp     += AT;
     dAtmp_u  += dAT_u;
     d2Atmp_u += d2AT_u;
 #if (USEBTIDALPOTENTIAL)
-    eob_metric_Btidal(r, dyn, &BT, &dBT_u, &d2BT_u);
+    eob_metric_Btidal(nu, r, dyn, &BT, &dBT_u, &d2BT_u);
     Btmp     += BT;
     dBtmp_r  += -dBT_u*u2; 
 #endif
@@ -1766,21 +1763,12 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
  *   @param[out] d3Q_drdprstar2 : d3Q/drdprstar2
  *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
  */
- void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+ void eob_metric_s(double nu, double a1, double a2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2,
+                  double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
 
-  const double nu    = EOBPars->nu;
-  const double a1    = EOBPars->a1;
-  const double a2    = EOBPars->a2;
-  const double aK2   = EOBPars->aK2;
-  const double C_Q1  = EOBPars->C_Q1;
-  const double C_Q2  = EOBPars->C_Q2;
-  const double C_Oct1 = EOBPars->C_Oct1;
-  const double C_Oct2 = EOBPars->C_Oct2;
-  const double C_Hex1 = EOBPars->C_Hex1;
-  const double C_Hex2 = EOBPars->C_Hex2;
   const int usetidal = EOBPars->use_tidal;
 
   const double u   = 1./r;
@@ -1799,7 +1787,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   if (usetidal) {
     double AT, dAT_u, d2AT_u;
     double BT, dBT_u, d2BT_u;
-    eob_metric_Atidal(rc, dyn, &AT, &dAT_u, &d2AT_u);
+    eob_metric_Atidal(nu, rc, dyn, &AT, &dAT_u, &d2AT_u);
     Aorb     += AT;
     dAorb_u  += dAT_u;
     d2Aorb_u += d2AT_u;

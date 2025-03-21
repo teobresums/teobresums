@@ -771,7 +771,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   if (usetidal) {
     /* Tidal amplitudes */
-    eob_wav_hlmTidal(x,dyn, hlmTidal);
+    eob_wav_hlmTidal(nu, X1, X2, x, dyn, hlmTidal);
     if (!(usespins)) {
       /* Correct normalization of (2,1) (3,1), (3,3) point-mass amplitudes */
       Modhhatlm[0] *= X12;
@@ -814,6 +814,15 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
  *   Flux calculation for eccentric systems
  *   See https://arxiv.org/abs/2001.11736
  * 
+ *   @param[in] nu       :  symmetric mass ratio
+ *   @param[in] chi1     :  dimensionless spin 1
+ *   @param[in] chi2     :  dimensionless spin 2
+ *   @param[in] X1       :  mass fraction of body 1
+ *   @param[in] X2       :  mass fraction of body 2
+ *   @param[in] a1       :  spin parameter of body 1
+ *   @param[in] a2       :  spin parameter of body 2
+ *   @param[in] C_Q1     :  quadrupole moment of body 1
+ *   @param[in] C_Q2     :  quadrupole moment of body 2
  *   @param[in] x        :  frequency parameter
  *   @param[in] Omega    :  orbital frequency
  *   @param[in] r_omega  : r*psi^(1./3) (from generalized Kepler's law) 
@@ -829,18 +838,15 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
  *   @param[in] dyn      :  dynamics structure
  * 
 */
-void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn)
+void eob_flx_Flux_ecc(  double nu, double chi1, double chi2, double X1, double X2, double a1, double a2, 
+                        double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2,
+                        double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn)
 {
-  const double nu = EOBPars -> nu;
-  const double chi1 = EOBPars -> chi1;
-  const double chi2 = EOBPars -> chi2;
-  const double X1 = EOBPars -> X1;
-  const double X2 = EOBPars -> X2;
-  const double a1 = EOBPars -> a1;
-  const double a2 = EOBPars -> a2;
-  const double C_Q1 = EOBPars -> C_Q1;
-  const double C_Q2 = EOBPars -> C_Q2;
-  const double X12 = X1 - X2; /* sqrt (1 - 4 nu)*/
+
+  const double S1    = SQ(X1) * chi1;
+  const double S2    = SQ(X2) * chi2;
+  const double aK2   = SQ(a1 + a2);
+  const double X12   = X1 - X2; /* sqrt (1 - 4 nu)*/
   const double X12sq = SQ (X12); /* (1 - 4 nu)*/
 
   const int usetidal = EOBPars -> use_tidal;
@@ -895,7 +901,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   /* Amplitudes */
   if (usespins) {
     /* eob_wav_flm_s_old(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm); */
-    eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
+    eob_wav_flm_s(x,nu,X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
   } else {
     /* eob_wav_flm_old(x,nu, rholm, flm); */
     eob_wav_flm(x,nu, rholm, flm);
@@ -929,7 +935,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   
   if (usetidal) {
     /* Tidal amplitudes */
-    eob_wav_hlmTidal(x,dyn, hlmTidal);
+    eob_wav_hlmTidal(nu, X1, X2, x,dyn, hlmTidal);
     if (!(usespins)) {
       /* Correct normalization of (2,1) (3,1), (3,3) point-mass amplitudes */
       Modhhatlm[0] *= X12;
@@ -970,14 +976,16 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   *Fphi           = Fphi_inf + Fphi_H;
 
   /* Compute Fr using the infinity Fphi */
-  *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, Fphi_inf);
-  
+  *Fr = eob_flx_Fr(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, pr_star, pphi, dyn, Fphi_inf);
+
   /* Compute non-circular Fphi */
   double Fphi_NC[KMAX];
   for (int k = 0; k < KMAX; k++) Fphi_NC[k] = 1.;
-  eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, Fphi_lo, FNewtlm, Flm, Fphi_H, *Fr, dyn, Fphi_NC);
+  eob_flx_Fphi_ecc(nu, chi1, chi2, aK2, X1, X2, a1, a2, S1, S2,
+                  C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, 
+                  r, pr_star, pphi, Omega, rdot, *Fphi, Fphi_lo, FNewtlm, Flm, Fphi_H, *Fr, dyn, Fphi_NC);
   // To recover old configuration used for arXiv:2001.11736, one should apply this to all multipoles -> for (int k = KMAX; k--;) Fphi_NC[k] = fphi_nc;
-  
+
   /* Adding non-circular corrections and re-compute flux */
   sum_k = 0.;
   for (int k = 0; k < KMAX; k++) sum_k += Flm[k] * Fphi_NC[k];
@@ -989,7 +997,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   dyn->flux_inf = *Fphi;
 
   /* Re-compute Fr using the generic Fphi */
-  *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, *Fphi);
+  *Fr = eob_flx_Fr(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, pr_star, pphi, dyn, *Fphi);
 
   /* Add horizon Fphi */
   *Fphi += Fphi_H;
@@ -1010,9 +1018,10 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   * 
   *   @return[out] Fr     :  radial flux
   */
-double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
+double eob_flx_Fr_ecc(double nu, double a1, double a2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, 
+                      double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
 {
-  const double nu = EOBPars->nu;
+
   double nu2 = nu*nu;
 
   double u  = 1/r;
@@ -1026,7 +1035,7 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, doubl
   double prstar2 = prstar*prstar;
   double prstar4 = prstar2*prstar2;
   
-  double a1, a2, F0PN, F1PN, F2PN;
+  double a10, a20, F0PN, F1PN, F2PN;
   
   F0PN = -8./15. + 56./5.*pphi2*u;
 
@@ -1056,11 +1065,11 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, doubl
     + pphi2*u3*(-29438./315. + 9568./315.*nu - 1752./35.*nu2)
     + prstar2*u3*pphi4*(-628./105. - 1052./105.*nu + 194./7.*nu2);
   
-  a1 = F1PN/F0PN;
-  a2 = F2PN/F0PN;
+  a10 = F1PN/F0PN;
+  a20 = F2PN/F0PN;
   
   /* return Fr */
-  return nu*u4*prstar*F0PN/(1 - a1 + (a1*a1 - a2));
+  return nu*u4*prstar*F0PN/(1 - a10 + (a10*a10 - a20));
 }
 
 /**
@@ -1079,12 +1088,13 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, doubl
   * 
   *   @return[out] Fr     :  radial flux
 */
-double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
+double eob_flx_Fr_ecc_BD(double nu, double a1, double a2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2,
+                          double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
 {
-  const double nu = EOBPars->nu;
+
   double nu2 = nu*nu;
 
-  double u  = 1/r;
+  double u  = 1./r;
   double u2 = u*u;
   double u4 = u2*u2;
 
@@ -1116,9 +1126,10 @@ double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, do
   * 
   *   @return[out] Fr     :  radial flux
 */
-double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
+double eob_flx_Fr_ecc_next(double nu, double a1, double a2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2,
+                            double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
 {
-  const double nu = EOBPars->nu;
+
   const double nu2 = nu*nu;
 
   const double u  = 1./r;
@@ -1134,7 +1145,7 @@ double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, 
      Compute the conversion from Fr to Fr*
   */
   double A, B, pl_hold;
-  eob_metric_s(r, prstar, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, prstar, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   const double sqrtAbyB = sqrt(A/B);
   
   /* return Fr */
@@ -1161,26 +1172,13 @@ double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, 
   * 
   *   @return[out] Fphi   :  angular momentum flux
 */
-void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double Fr, Dynamics *dyn, double *hatflm_NC)
+void eob_flx_Fphi_ecc(double nu, double chi1, double chi2, double aK2, double X1, double X2, double a1, double a2, double S1, double S2,
+                      double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2,
+                      double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double Fr, Dynamics *dyn, double *hatflm_NC)
 {  
-  const double nu     = EOBPars -> nu;
-  const double chi1   = EOBPars -> chi1;
-  const double chi2   = EOBPars -> chi2;
-  const double aK2    = EOBPars -> aK2;
-  const double X1     = EOBPars -> X1;
-  const double X2     = EOBPars -> X2;
-  const double a1     = EOBPars -> a1;
-  const double a2     = EOBPars -> a2;
-  const double S1     = EOBPars -> S1;
-  const double S2     = EOBPars -> S2;
+
   const double S      = S1 + S2;
   const double Sstar  = X2*a1 + X1*a2;
-  const double C_Q1   = EOBPars -> C_Q1;
-  const double C_Q2   = EOBPars -> C_Q2;
-  const double C_Oct1 = EOBPars -> C_Oct1;
-  const double C_Oct2 = EOBPars -> C_Oct2;
-  const double C_Hex1 = EOBPars -> C_Hex1;
-  const double C_Hex2 = EOBPars -> C_Hex2;
   const double X12    = X1 - X2; /* sqrt (1 - 4 nu)*/
   const double X12sq  = SQ (X12); /* (1 - 4 nu)*/
   const double c3     = EOBPars -> cN3LO;
@@ -1212,7 +1210,9 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
   
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
-    eob_metric_s(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &d2B, &Q, &dQ, &dQ_dprstar, &d2Q, &ddQ_drdprstar, &d2Q_dprstar2, &d3Q_dr2dprstar, &d3Q_drdprstar2, &d3Q_dprstar3);
+    eob_metric_s(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, prstar, dyn, 
+                &A, &B, &dA, &d2A, &dB, &d2B, 
+                &Q, &dQ, &dQ_dprstar, &d2Q, &ddQ_drdprstar, &d2Q_dprstar2, &d3Q_dr2dprstar, &d3Q_drdprstar2, &d3Q_dprstar3);
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2);
     eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
@@ -1363,7 +1363,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
     sum_k = sum_k/FlmNewt[1];
 
     Fphi  = Fphi_lo * sum_k;
-    Fr    = eob_flx_Fr(r, prstar, pphi, dyn, Fphi);
+    Fr    = eob_flx_Fr(nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, r, prstar, pphi, dyn, Fphi);
     Fphi  = Fphi + Fphi_H;
   } // end iteration
   
