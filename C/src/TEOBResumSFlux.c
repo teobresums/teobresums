@@ -569,8 +569,42 @@ double eob_flx_HorizonFlux_s_LO_r_i(double x, double r, double prstar, double pp
   /**
   * Function: eob_flx_HorizonFlux_s_NNLO_rnewt
   * -----------------------------------------
-  *   Compute the horizon-absorbed flux of angular momentum, spin case
-  *   On generic orbits, up to NNLO and using superradiance prefactor.
+  *  Compute the horizon-absorbed flux of angular momentum, spin case
+  *  On generic orbits, up to NNLO and using superradiance prefactor.
+  *  Using the PN-expanded x-dependence + Newtonian prefactor.
+  */
+  double eob_flx_HorizonFlux_s_NNLO_fact_rnewt_energy_i(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)
+  {
+    
+    double v         = sqrt(x);
+    double r2        = r*r;
+    double r6        = r2*r2*r2;
+    double pr2       = prstar*prstar;
+    double pphor2    = pphi/r2;
+    double pph2or2   = pphor2*pphi;
+
+    double op3chi1   = 1. + 3*chi1*chi1;
+    double sigma1    = sqrt(1. - chi1*chi1);
+    double opsigma1  = 1. + sigma1;
+    double omgH1     = 0.5*chi1/X1/opsigma1;
+
+    // digamma
+    gsl_sf_result B21, plhold;
+    gsl_sf_complex_psi_e(3., 2*chi1/sigma1, &plhold, &B21);    
+    double fact_1     = -0.5*X1*X1*X1*X1*opsigma1/r6*(omgH1 - pphor2);
+    double djdt_lo_1  = op3chi1;
+    double djdt_nlo_1 = 0.25*(3*(2 + chi1*chi1) + 2*X1*op3chi1*(2 + 3*X1))*v*v;
+
+    double djdt_nnlo_1 = (0.5*(-4.+3*chi1*chi1)*chi2 - 2*X1*op3chi1*(X1*(chi1+chi2)+ 4*B21.val) + X1*(-2./3*(23 + 30.*sigma1)*chi1+(7-12*sigma1)*chi1*chi1*chi1
+                          + 4.*chi2 + 4.5*chi1*chi1*chi2))*v*v*v;
+    return -32./5.*nu*fact_1*(djdt_lo_1 + djdt_nlo_1 + djdt_nnlo_1);
+  }
+
+  /**
+  * Function: eob_flx_HorizonFlux_s_NNLO_rnewt
+  * -----------------------------------------
+  *  Compute the horizon-absorbed flux of angular momentum, spin case
+  *  On generic orbits, up to NNLO and using superradiance prefactor.
   *  Using the PN-expanded x-dependence + Newtonian prefactor.
   */
   double eob_flx_HorizonFlux_s_NNLO_fact_rnewt_i(double x, double r, double prstar, double pphi, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2, double Fphi_lo)

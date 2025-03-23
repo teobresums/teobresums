@@ -58,6 +58,7 @@ void (*eob_metric_Dpotential)();
 void (*eob_metric_Qpotential)();
 double (*eob_flx_Fr)();
 double (*eob_flx_HorizonFlux_s)();
+double (*eob_flx_HorizonFlux_s_energy)();
 double (*eob_flx_HorizonFlux)();
 
 /**
@@ -301,7 +302,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   /* Errors and warnings */
   eobp->errors_to_warnings=0; //False
   eobp->backwards=0; //False
-  eobp->horizon_evolution=0; //False
+  eobp->horizon_evolution=1; //False
   /* following pars are set later by the code */
 
   
@@ -963,17 +964,24 @@ int eob_set_params(int default_choice, int firstcall)
 
   /* Set hoizon flux function poiners */
   if (EOBPars->use_flm_h == USEFLM_H_LO) {
-      eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_LO_i;
+    eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_LO_i;
+    eob_flx_HorizonFlux_s_energy = &eob_flx_HorizonFlux_s_LO_i;
   } else if (EOBPars->use_flm_h == USEFLM_H_LO_r) {
     eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_LO_r_i;
+    eob_flx_HorizonFlux_s_energy = &eob_flx_HorizonFlux_s_LO_r_i;
   } else if (EOBPars->use_flm_h == USEFLM_H_NLO) {
     eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_NLO_i;
+    eob_flx_HorizonFlux_s_energy = &eob_flx_HorizonFlux_s_NLO_energy_i;
   } else if (EOBPars->use_flm_h == USEFLM_H_NNLO) {
     eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_NNLO_i;
+    eob_flx_HorizonFlux_s_energy = &eob_flx_HorizonFlux_s_NNLO_energy_i;
   } else if (EOBPars->use_flm_h == USEFLM_H_NNLO_fact) {
     eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_NNLO_fact_i;
+    eob_flx_HorizonFlux_s_energy = &eob_flx_HorizonFlux_s_NNLO_fact_energy_i;
   } else if (EOBPars->use_flm_h == USEFLM_H_NNLO_fact_mix) {
     eob_flx_HorizonFlux_s = &eob_flx_HorizonFlux_s_NNLO_fact_rnewt_i;
+    // TODO: fix the function below, currently a placeholder
+    eob_flx_HorizonFlux_s_energy = &eob_flx_HorizonFlux_s_NNLO_fact_rnewt_energy_i;
   } else {
     printf("ERROR: Unknown option for Horizon flux\n");
     return 1;
