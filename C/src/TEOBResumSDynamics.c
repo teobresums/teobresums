@@ -669,7 +669,7 @@ int eob_dyn_rhs_ecc_horizon(double t, const double y[], double dy[], void *d)
   double Fphi_lo  = -32./5. * nu * gsl_pow_int(r_omg,4) * gsl_pow_int(Omg,5);
   double dm1      = eob_flx_HorizonFlux_s_energy(x, r, prstar, pphi, Heff, jhat, nu, X1, X2, chi1, chi2, Fphi_lo);
   double dm2      = eob_flx_HorizonFlux_s_energy(x, r, prstar, pphi, Heff, jhat, nu, X2, X1, chi2, chi1, Fphi_lo);
-  double dS1      = eob_flx_HorizonFlux_s(x, r, prstar, pphi, Heff, jhat, nu, X2, X1, chi2, chi1, Fphi_lo);
+  double dS1      = eob_flx_HorizonFlux_s(x, r, prstar, pphi, Heff, jhat, nu, X1, X2, chi1, chi2, Fphi_lo);
   double dS2      = eob_flx_HorizonFlux_s(x, r, prstar, pphi, Heff, jhat, nu, X2, X1, chi2, chi1, Fphi_lo);
 
   dy[EOB_EVOLVE_X1]   = dm1*X2 - dm2;
