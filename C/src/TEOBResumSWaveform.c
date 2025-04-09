@@ -8864,7 +8864,6 @@ void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamic
   /* Find the corresponding time in the spin dynamics */
   const int tmax_dyn_idx = find_point_bisection(tmax_wav, spin->size, spin->time, 1);
   const int tmax_wav_idx = find_point_bisection(spin->time[tmax_dyn_idx], hlm->size, hlm->time, 1);
-
   /* Interpolation */
   interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_alp], spin->size, hlm->time, tmax_wav_idx, alpha);
   interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_bet], spin->size, hlm->time, tmax_wav_idx, beta);  
@@ -8886,24 +8885,24 @@ void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamic
     // dynamics... )
     double SAmrg[3], SBmrg[3], Lmrg[3], Jmrg[3];
 
-    SAmrg[0] = spin->data[EOB_EVOLVE_SPIN_SxA][tmax_wav_idx-1];
-    SAmrg[1] = spin->data[EOB_EVOLVE_SPIN_SyA][tmax_wav_idx-1];
-    SAmrg[2] = spin->data[EOB_EVOLVE_SPIN_SzA][tmax_wav_idx-1];
+    SAmrg[0] = spin->data[EOB_EVOLVE_SPIN_SxA][tmax_dyn_idx-1];
+    SAmrg[1] = spin->data[EOB_EVOLVE_SPIN_SyA][tmax_dyn_idx-1];
+    SAmrg[2] = spin->data[EOB_EVOLVE_SPIN_SzA][tmax_dyn_idx-1];
 
-    SBmrg[0] = spin->data[EOB_EVOLVE_SPIN_SxB][tmax_wav_idx-1];
-    SBmrg[1] = spin->data[EOB_EVOLVE_SPIN_SyB][tmax_wav_idx-1];
-    SBmrg[2] = spin->data[EOB_EVOLVE_SPIN_SzB][tmax_wav_idx-1];
+    SBmrg[0] = spin->data[EOB_EVOLVE_SPIN_SxB][tmax_dyn_idx-1];
+    SBmrg[1] = spin->data[EOB_EVOLVE_SPIN_SyB][tmax_dyn_idx-1];
+    SBmrg[2] = spin->data[EOB_EVOLVE_SPIN_SzB][tmax_dyn_idx-1];
 
     // final L
     double nu    = EOBPars->nu;
     double nu2   = nu*nu;
-    double v2mrg = pow(spin->data[EOB_EVOLVE_SPIN_Momg][tmax_wav_idx-1], 0.6666666666666);
+    double v2mrg = pow(spin->data[EOB_EVOLVE_SPIN_Momg][tmax_dyn_idx-1], 0.6666666666666);
     double v4mrg = v2mrg*v2mrg;
     double vmrg  = sqrt(v2mrg);
     const double L2PN = nu/vmrg*(1 + v2mrg*(1.5+0.1666666666666667*nu) + v4mrg*(3.375 - 2.375*nu + 0.04166666666666666*nu2));
-    Lmrg[0]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Lx][tmax_wav_idx-1];
-    Lmrg[1]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Ly][tmax_wav_idx-1];
-    Lmrg[2]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Lz][tmax_wav_idx-1];
+    Lmrg[0]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Lx][tmax_dyn_idx-1];
+    Lmrg[1]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Ly][tmax_dyn_idx-1];
+    Lmrg[2]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Lz][tmax_dyn_idx-1];
 
     for(int i=0; i<3;i++)
       Jmrg[i] = SAmrg[i]+SBmrg[i]+Lmrg[i];
