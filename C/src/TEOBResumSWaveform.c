@@ -9007,7 +9007,9 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
     for(int i=0; i<dyn->size; i++)
       omg_eob[i] = orbit_averaged_x_3PN(dyn->data[EOB_E0][i], dyn->data[EOB_PPHI][i])/fact;
 
-    omega = omg_eob;
+    omega    = omg_eob;
+    // Set initial value explicitly to avoid interpolation errors
+    omega[0] = EOBPars->f0*Pi;
     size_omega = dyn->size;
   
   }
