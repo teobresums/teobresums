@@ -8859,6 +8859,9 @@ void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamic
 
   double tmax_wav = hlm->time[jmax];
 
+  /* Determine the merger as the maximum of the (pure) orbital frequency*/
+  double tOmg_pk = dyn->tOmg_pk;
+
   /* Find the corresponding time in the spin dynamics */
   const int tmax_dyn_idx = find_point_bisection(tmax_wav, spin->size, spin->time, 1);
   const int tmax_wav_idx = find_point_bisection(spin->time[tmax_dyn_idx], hlm->size, hlm->time, 1);
@@ -8868,12 +8871,80 @@ void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamic
   interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_bet], spin->size, hlm->time, tmax_wav_idx, beta);  
   interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_gam], spin->size, hlm->time, tmax_wav_idx, gamma); 
 
-  /* Now, prolong the angles based on user request 
-     for t > tM_idx, fix the values to the last  */
-  for(int j=tmax_wav_idx; j < hlm->size; j++){
-    alpha[j] = alpha[tmax_wav_idx-1];
-    beta[j]  = beta[tmax_wav_idx-1];
-    gamma[j] = gamma[tmax_wav_idx-1];
+  /* Now, prolong the angles based on user request */
+  if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_CONSTANT) {
+    /* for t > tM_idx, fix the values to the last  */
+    for(int j=tmax_wav_idx; j < hlm->size; j++){
+      alpha[j] = alpha[tmax_wav_idx-1];
+      beta[j]  = beta[tmax_wav_idx-1];
+      gamma[j] = gamma[tmax_wav_idx-1];
+    }
+  } else if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_QNMs){
+    /* use QNM for alpha_dot, and fix beta constant */
+    /* Table VIII or https://arxiv.org/pdf/gr-qc/0512160.pdf */
+
+    // final spin (assume merger ~ t max A22 (which may not be exact for the
+    // dynamics... )
+
+    double SAmrg[3], SBmrg[3], Lmrg[3], Jmrg[3];
+
+    SAmrg[0] = spin->data[EOB_EVOLVE_SPIN_SxA][tmax_dyn_idx-1];
+    SAmrg[1] = spin->data[EOB_EVOLVE_SPIN_SyA][tmax_dyn_idx-1];
+    SAmrg[2] = spin->data[EOB_EVOLVE_SPIN_SzA][tmax_dyn_idx-1];
+
+    SBmrg[0] = spin->data[EOB_EVOLVE_SPIN_SxB][tmax_dyn_idx-1];
+    SBmrg[1] = spin->data[EOB_EVOLVE_SPIN_SyB][tmax_dyn_idx-1];
+    SBmrg[2] = spin->data[EOB_EVOLVE_SPIN_SzB][tmax_dyn_idx-1];
+
+    // final L
+    double nu    = EOBPars->nu;
+    double nu2   = nu*nu;
+    double v2mrg = pow(spin->data[EOB_EVOLVE_SPIN_Momg][tmax_dyn_idx-1], 0.6666666666666);
+    double v4mrg = v2mrg*v2mrg;
+    double vmrg  = sqrt(v2mrg);
+    const double L2PN = nu/vmrg*(1 + v2mrg*(1.5+0.1666666666666667*nu) + v4mrg*(3.375 - 2.375*nu + 0.04166666666666666*nu2));
+    Lmrg[0]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Lx][tmax_dyn_idx-1];
+    Lmrg[1]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Ly][tmax_dyn_idx-1];
+    Lmrg[2]  = L2PN*spin->data[EOB_EVOLVE_SPIN_Lz][tmax_dyn_idx-1];
+    
+    for(int i=0; i<3;i++)
+      Jmrg[i] = SAmrg[i]+SBmrg[i]+Lmrg[i];
+    
+    double adot, JdotL;
+    vect_dot3(Jmrg, Lmrg, &JdotL);
+    
+    if(JdotL>0){
+      /** (l,m,n)=(2,2,0) */
+      double f10 = 1.5251; 
+      double f20 = -1.1568;
+      double f30 = 0.1292;
+      double omega220  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+      /** (l,m,n)=(2,1,0) */
+      f10 = 0.6; 
+      f20 = -0.2339;
+      f30 = 0.4175;
+      double omega210  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+      adot = omega220-omega210;
+    } else {
+      /** (l,m,n)=(2,-2,0) */
+      double f10 = 0.2938; 
+      double f20 = 0.0782;
+      double f30 = 1.3546;
+      double omega2m20  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
+      /** (l,m,n)=(2,-1,0) */
+      f10 = 0.3441; 
+      f20 = 0.0293;
+      f30 = 2.0010;
+      double omega2m10  = (f10 + f20*pow(1. - EOBPars->abhf, f30)); 
+      adot = omega2m10 - omega2m20;
+    }
+
+    for(int j=tmax_wav_idx; j < hlm->size; j++){
+      double dt= hlm->time[j]-hlm->time[tmax_wav_idx-1];
+      beta[j]  = beta[tmax_wav_idx-1];
+      alpha[j] = alpha[tmax_wav_idx-1] + dt*adot;
+      gamma[j] = gamma[tmax_wav_idx-1] + dt*adot*cos(beta[j]);
+    }
   }
 }
 
@@ -8926,7 +8997,7 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   int omg_jmax =0;
   for(int i=0; i < size_omega; i++) {
     omg_jmax = i;
-    if(i >5 && omega[i+1] <= omega[i])
+    if(i > 5 && omega[i+1] <= omega[i])
       break;
     if(omega[i+1] > spin->data[EOB_EVOLVE_SPIN_Momg][spin->size -1])
       break;
@@ -9126,7 +9197,7 @@ void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int inter
   gamma = malloc ( size * sizeof(double) );
   
   /* Euler angles */
-  if (EOBPars->model == MODEL_GIOTTO)
+  if (EOBPars->spin_flx != SPIN_FLX_EOB)
     prolong_euler_angles(alpha, beta, gamma, dyn, spin, hlm);
   else
     prolong_euler_angles_TD(alpha, beta, gamma, dyn, spin, hlm);
