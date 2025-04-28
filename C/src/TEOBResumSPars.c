@@ -1802,6 +1802,11 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   if (STREQUAL(key,"errors_to_warning")) {
     eobp->errors_to_warnings = YESNO2INT(string_trim(val));
   }
+
+  /* Evolve masses, spins with horizon fluxes*/
+  if (STREQUAL(key,"horizon_evolution")) {
+    eobp->horizon_evolution = YESNO2INT(string_trim(val));
+  }
 }
 
 /**

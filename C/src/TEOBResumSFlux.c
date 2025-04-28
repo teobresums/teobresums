@@ -268,10 +268,6 @@ double eob_flx_HorizonFlux_s_LO_r_i(double x, double r, double prstar, double pp
   double r6 = r2*r2*r2;
   double op3chi1 = 1. + 3*chi1*chi1;
 
-  double pr2       = prstar*prstar;
-  double pphor2    = pphi/r2;
-  double pph2or2   = pphor2*pphi;
-
   double fact_1     = -1./4*X1*X1*X1*chi1/r6;
   double djdt_lo_1  = op3chi1;
 

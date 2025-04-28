@@ -56,6 +56,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "use_geometric_units") != NULL ) { 
     EOBPars->use_geometric_units = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_geometric_units")));
   }
+  if ( PyDict_GetItemString(dict, "horizon_evolution") != NULL ) { 
+    EOBPars->horizon_evolution = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "horizon_evolution")));
+  }
   if ( PyDict_GetItemString(dict, "use_spins") != NULL ) { 
     EOBPars->use_spins = (int) PyLong_AsLong(PyDict_GetItemString(dict, "use_spins"));
   }
@@ -1096,7 +1099,8 @@ static PyObject* eob_j0_circ_py(PyObject *self, PyObject *args)
   printf("S = %f, Sstar=%f\n", S, Sstar);
   /** Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper 
 	(which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). */
-  eob_metric_s(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold,
+  eob_metric_s(nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2,
+              r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold,
               &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
   eob_dyn_s_GS(r, rc, drc_dr, 0.0, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, EOBPars->X1, EOBPars->X2, EOBPars->cN3LO, ggm);
@@ -1183,7 +1187,8 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   Dynamics_set_params(dyn); 
   /* Compute rc and A */
   eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
-  eob_metric_s(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric_s(nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2,
+    r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
 
   /* Compute H */
   eob_ham_s(nu, r, rc, drc_dr, d2rc_dr2, pphi, prstar, EOBPars->S, EOBPars->Sstar, EOBPars->chi1, EOBPars->chi2, EOBPars->X1, EOBPars->X2, EOBPars->aK2, EOBPars->cN3LO, A, dA, d2A, Q, dQ, dQ_dprstar, 0., d2Q_dprstar2, 
@@ -1227,7 +1232,8 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
   Dynamics_alloc (&dyn, 0, "dyn"); 
   Dynamics_set_params(dyn); 
   
-  eob_metric_s(r, 0, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  eob_metric_s(nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2,
+    r, 0, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
   /* Free */ 
   EOBParameters_free (EOBPars);
