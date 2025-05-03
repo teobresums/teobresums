@@ -497,6 +497,8 @@ int SetOptionalVariables(PyObject* dict){
       PyObject *item = PyList_GetItem(tmp, k);
       int idx = EOBPars->delta_alphalm0_k[k];
       EOBPars->delta_alphalm0[idx] = PyFloat_AsDouble(item);
+      if (EOBPars->delta_alphalm0[idx] <= -1.)
+        errorexit("Fractional deviations from QNM damping times must be > -1.");
     }
   }
 

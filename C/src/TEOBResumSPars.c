@@ -461,11 +461,11 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->delta_Mbhf = 0.;
   eobp->delta_abhf = 0.;
 
-  /* Initialize arrays of QNM deviations for user input */
+  /* Deviations from QNM frequencies */
   eobp->delta_alphalm0_size = 0;
   eobp->delta_omglm0_size   = 0;
 
-  /* Initialize merger deviations */
+  /* Deviations from merger quantities */
   eobp->delta_Alm_mrg_size   = 0;
   eobp->delta_Omglm_mrg_size = 0;
 
@@ -739,9 +739,10 @@ int eob_set_params(int default_choice, int firstcall)
     /* Apply deviations from final BH mass, spin */
     EOBPars->Mbhf *= 1. + EOBPars->delta_Mbhf;
     EOBPars->abhf *= 1. + EOBPars->delta_abhf;
-    if (fabs(EOBPars->abhf) > 1.) printf("WARNING: Final BH spin changed to be over-extremal; setting it to +-1.\n");
-    if (EOBPars->abhf > 1.)  EOBPars->abhf = 1.;
-    if (EOBPars->abhf < -1.) EOBPars->abhf = -1.;
+    if (fabs(EOBPars->abhf) > 1.) {
+      printf("ERROR: Final BH spin changed to be greater than 1.\n");
+      return 1;
+    }
 
   /* Default settings for NQC */
   // NOTE: The defaults are different from v0.0 and v1.0

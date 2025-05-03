@@ -403,9 +403,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       // (4.17) of https://arxiv.org/abs/2004.06503 
       EOBPars->abhf = PrecessingRemnantSpin(dyn);
       EOBPars->abhf *= 1. + EOBPars->delta_abhf;
-      if (fabs(EOBPars->abhf) > 1.) printf("WARNING: Final BH spin changed to be over-extremal; setting it to +-1.\n");
-      if (EOBPars->abhf > 1.)  EOBPars->abhf = 1.;
-      if (EOBPars->abhf < -1.) EOBPars->abhf = -1.;
+      if (fabs(EOBPars->abhf) > 1.) {
+        printf("ERROR: Final BH spin changed to be greater than 1.\n");
+        status = ERROR_SET_PARAMS;
+        goto EXIT_POINT;
+      }
     }
     if (VERBOSE) {
       PRSECTN("Final black hole");
