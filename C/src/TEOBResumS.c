@@ -402,6 +402,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {   
       // (4.17) of https://arxiv.org/abs/2004.06503 
       EOBPars->abhf = PrecessingRemnantSpin(dyn);
+      EOBPars->abhf *= 1. + EOBPars->delta_abhf;
+      if (fabs(EOBPars->abhf) > 1.) printf("WARNING: Final BH spin changed to be over-extremal; setting it to +-1.\n");
+      if (EOBPars->abhf > 1.)  EOBPars->abhf = 1.;
+      if (EOBPars->abhf < -1.) EOBPars->abhf = -1.;
     }
     if (VERBOSE) {
       PRSECTN("Final black hole");
@@ -1171,7 +1175,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
 
       /* final state */
-      EOBPars->abhf = PrecessingRemnantSpin(dyn); 
+      EOBPars->abhf = PrecessingRemnantSpin(dyn);
+      EOBPars->abhf*= 1. + EOBPars->delta_abhf;
+      if (EOBPars->abhf > 1.)  EOBPars->abhf = 1.;
+      if (EOBPars->abhf < -1.) EOBPars->abhf = -1.;
     }
 
     /* BBH : add Ringdown */

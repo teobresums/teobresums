@@ -3418,6 +3418,12 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     c4phi[13] = (0.45082 - 9.5961*nu + 52.88*nu2)/(1 - 19.808*nu + 99.078*nu2);
     */
   }
+
+  /* Apply deviations from merger amplitude, frequency */
+  if (EOBPars->delta_Alm_mrg_size > 0)
+    Merger_deviations(Amrg, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
+  if (EOBPars->delta_Omglm_mrg_size > 0)
+    Merger_deviations(omgmrg, EOBPars->delta_Omglm_mrg, EOBPars->delta_Omglm_mrg_k, EOBPars->delta_Omglm_mrg_size);
   
   if (DEQUAL(nu,0.25,1e-9) && DEQUAL(chi1,chi2,1e-9)){
     modeon[0] = modeon[2] = modeon[4] = modeon[5] = modeon[7] = modeon[13] = 0;
@@ -3449,6 +3455,27 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     }
   }
   
+}
+
+/**
+ *  Function: Merger_deviations
+ *  ---------------------------
+ *  Apply deviations from merger amplitude and frequency for each mode
+ *
+ *   @param[in] x_mrg                           : Bare merger quantity array
+ *   @param[in] delta_x                         : Fractional deviation array
+ *   @param[in] klm                             : List of modes to deform
+ *   @param[in] Nk                              : Number of modes to deform
+ *
+ */
+void Merger_deviations(double *x_mrg, double *delta_x, int *klm, int Nk)
+{
+  int km;
+
+  for (int k=0; k<Nk; k++) {
+      km = klm[k];
+      x_mrg[km]   = x_mrg[km]*(1. + delta_x[km]);
+  }
 }
 
 /** 
@@ -3498,6 +3525,12 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   /* Compute A, dA, omg, domg */
   if (EOBPars->binary==BINARY_BBH){eob_nqc_point_HM_peak22(NULL,A, dA, omg, domg);
   }else{eob_nqc_point_BHNS_HM(NULL,A, dA, omg, domg);}
+
+  /* Apply deviations from fitted merger quantities here by hand */
+  if (EOBPars->delta_Alm_mrg_size > 0)
+    Merger_deviations(A, EOBPars->delta_Alm_mrg, knqcpeak22, knqcpeak22_size);
+  if (EOBPars->delta_Omglm_mrg_size > 0)
+    Merger_deviations(omg, EOBPars->delta_Omglm_mrg, knqcpeak22, knqcpeak22_size);
 
   for(int j=0; j<knqcpeak22_size; j++){
     int k = knqcpeak22[j];
@@ -3648,7 +3681,41 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   omega1[13]  = +1.012295*(1 - 1.5659*af + 0.5783*af2)/(1 - 1.9149*af + 1.0668*af2 - 0.14663*af3);
   alpha1[13]  = +0.0948705*(1 - 1.8845*af + 0.8585*af2 + 0.0263*af3)/(1 - 1.8740*af + 0.9147*af2 - 0.0384*af3);
   alpha21[13] = +0.190947*(1 - 1.8780*af + 0.8467*af2 + 0.0315*af3)/(1 - 1.8619*af + 0.8936*af2 - 0.0293*af3);
+
+  /* Apply user-input deviations from fitted values of alpha, omega */
+  if (EOBPars->delta_alphalm0_size > 0 || EOBPars->delta_omglm0_size > 0) {
+    if (VERBOSE) printf("Applying user-input deviations from QNM frequencies.\n");
+    QNM_deviations(alpha1, omega1, alpha21);
+  }
   
+}
+
+/**
+ *  Function: QNM_deviations
+ *  ------------------------
+ *  Apply user-input deviations from fitted values of alpha, omega
+ *
+ *   @param[in] alpha1,omega1 : Real and imaginary part of QNM frequency
+ *   @param[in] alpha21       : Difference between real parts (inverse damping times) of first overtone and fundamental QNM
+ *
+ */
+void QNM_deviations(double *alpha1, double *omega1, double *alpha21)
+{
+  int km;
+
+  if (EOBPars->delta_alphalm0_size > 0) {
+    for (int k=0; k<EOBPars->delta_alphalm0_size; k++) {
+      km = EOBPars->delta_alphalm0_k[k];
+      alpha21[km] -= alpha1[km]*EOBPars->delta_alphalm0[km];
+      alpha1[km]   = alpha1[km]*(1. + EOBPars->delta_alphalm0[km]);
+    }
+  }
+  if (EOBPars->delta_omglm0_size > 0) {
+    for (int k=0; k<EOBPars->delta_omglm0_size; k++) {
+      km = EOBPars->delta_omglm0_k[k];
+      omega1[km]   = omega1[km]*(1. + EOBPars->delta_omglm0[km]);
+    }
+  }
 }
 
 /** 

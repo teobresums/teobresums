@@ -5851,8 +5851,8 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
 }
 
 /**
- * Function: eob_wav_hlmNQC_find_a1a2a3_mrg_HM
- * -------------------------------------------
+ * Function: eob_wav_hlmNQC_find_a1a2a3_mrg_ecc
+ * --------------------------------------------
  *   Computes the factors and the coefficients that build the
  *   NQC corrections to the waveform in the eccentric case.
  *   This routine works around merger with dyn_mrg and hlm_mrg and

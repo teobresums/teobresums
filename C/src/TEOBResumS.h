@@ -659,6 +659,8 @@ typedef struct tagEOBParameters
   /**@{*/
   /** NR-informed conservative variables */
   double a6c, cN3LO;         
+  /** Deviations from NR-fitted parameters */
+  double delta_a6c, delta_cN3LO;
   /**@}*/ 
 
   double r0;                    /**< Initial radial separation */
@@ -741,6 +743,19 @@ typedef struct tagEOBParameters
   /* final state */
   double Mbhf; /**< Final BH mass */
   double abhf; /**< Final BH spin */
+
+  /* Deviations from final BH mass, spin */
+  double delta_Mbhf, delta_abhf;
+
+  /* Deviations from fits of QNM frequencies */
+  double *delta_alphalm0, *delta_omglm0;
+  int    *delta_alphalm0_k, delta_alphalm0_size;
+  int    *delta_omglm0_k, delta_omglm0_size;
+
+  /* Deviations from merger amplitude, frequency */
+  double *delta_Alm_mrg, *delta_Omglm_mrg;
+  int    *delta_Alm_mrg_k, delta_Alm_mrg_size;
+  int    *delta_Omglm_mrg_k, delta_Omglm_mrg_size;
 
   /* waveform */
   int ringdown_extend_array; /**< Extend ringdown array */
@@ -1009,6 +1024,8 @@ double pph_lso_orbital(const double nu);
 double pph_lso_spin(const double nu, const double a0);
 double eob_nqc_timeshift_bhns(double nu, double chi1);
 void eob_nqc_deltat_lm_bhns(double *Dt_lm);
+void QNM_deviations(double *alpha1, double *omega1, double *alpha21);
+void Merger_deviations(double *x_mrg, double *delta_x, int *klm, int Nk);
 
 /* TEOBResumSDynamics.c */
 extern int (*p_eob_dyn_rhs)(); /* defined in TEOBResumSPars.c */

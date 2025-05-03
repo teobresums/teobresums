@@ -468,6 +468,108 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  /* Deviation from final BH mass, spin */
+  if ( PyDict_GetItemString(dict, "delta_Mbhf") != NULL) {
+    EOBPars->delta_Mbhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_Mbhf"));
+  }
+  if ( PyDict_GetItemString(dict, "delta_abhf") != NULL) {
+    EOBPars->delta_abhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_abhf"));
+  }
+
+  /* Deviation from QNM frequencies */
+  /* alpha */
+  if ( PyDict_GetItemString(dict, "delta_alphalm0_k") != NULL & PyDict_GetItemString(dict, "delta_alphalm0") != NULL) {
+    if (EOBPars->delta_alphalm0_k) free(EOBPars->delta_alphalm0_k);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_alphalm0_k");
+    EOBPars->delta_alphalm0_size = PyObject_Length(tmp);
+    EOBPars->delta_alphalm0_k    = malloc ( EOBPars->delta_alphalm0_size * sizeof(int) );
+    for (int k = 0; k < EOBPars->delta_alphalm0_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->delta_alphalm0_k[k] = PyLong_AsLong(item);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "delta_alphalm0") != NULL ) {
+    if (EOBPars->delta_alphalm0) free(EOBPars->delta_alphalm0);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_alphalm0");
+    EOBPars->delta_alphalm0 = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++) EOBPars->delta_alphalm0[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_alphalm0_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      int idx = EOBPars->delta_alphalm0_k[k];
+      EOBPars->delta_alphalm0[idx] = PyFloat_AsDouble(item);
+    }
+  }
+
+  /* omega */
+  if ( PyDict_GetItemString(dict, "delta_omglm0_k") != NULL ) {
+    if (EOBPars->delta_omglm0_k) free(EOBPars->delta_omglm0_k);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_omglm0_k");
+    EOBPars->delta_omglm0_size = PyObject_Length(tmp);
+    EOBPars->delta_omglm0_k = malloc ( EOBPars->delta_omglm0_size * sizeof(int) );
+    for (int k = 0; k < EOBPars->delta_omglm0_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->delta_omglm0_k[k] = PyLong_AsLong(item);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "delta_omglm0") != NULL ) {
+    if (EOBPars->delta_omglm0) free(EOBPars->delta_omglm0);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_omglm0");
+    EOBPars->delta_omglm0 = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++) EOBPars->delta_omglm0[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_omglm0_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      int idx = EOBPars->delta_omglm0_k[k];
+      EOBPars->delta_omglm0[idx] = PyFloat_AsDouble(item);
+    }
+  }
+
+  /* Deviation from merger amplitude, frequency */
+  /* Amplitude */
+  if ( PyDict_GetItemString(dict, "delta_Alm_mrg_k") != NULL ) {
+    if (EOBPars->delta_Alm_mrg_k) free(EOBPars->delta_Alm_mrg_k);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_Alm_mrg_k");
+    EOBPars->delta_Alm_mrg_size = PyObject_Length(tmp);
+    EOBPars->delta_Alm_mrg_k = malloc ( EOBPars->delta_Alm_mrg_size * sizeof(int) );
+    for (int k = 0; k < EOBPars->delta_Alm_mrg_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->delta_Alm_mrg_k[k] = PyLong_AsLong(item);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "delta_Alm_mrg") != NULL ) {
+    if (EOBPars->delta_Alm_mrg) free(EOBPars->delta_Alm_mrg);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_Alm_mrg");
+    EOBPars->delta_Alm_mrg = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++) EOBPars->delta_Alm_mrg[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_Alm_mrg_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      int idx = EOBPars->delta_Alm_mrg_k[k];
+      EOBPars->delta_Alm_mrg[idx] = PyFloat_AsDouble(item);
+    }
+  }
+
+  /* Frequency */
+  if ( PyDict_GetItemString(dict, "delta_Omglm_mrg_k") != NULL ) {
+    if (EOBPars->delta_Omglm_mrg_k) free(EOBPars->delta_Omglm_mrg_k);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_Omglm_mrg_k");
+    EOBPars->delta_Omglm_mrg_size = PyObject_Length(tmp);
+    EOBPars->delta_Omglm_mrg_k = malloc ( EOBPars->delta_Omglm_mrg_size * sizeof(int) );
+    for (int k = 0; k < EOBPars->delta_Omglm_mrg_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->delta_Omglm_mrg_k[k] = PyLong_AsLong(item);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "delta_Omglm_mrg") != NULL ) {
+    if (EOBPars->delta_Omglm_mrg) free(EOBPars->delta_Omglm_mrg);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_Omglm_mrg");
+    EOBPars->delta_Omglm_mrg = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++) EOBPars->delta_Omglm_mrg[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_Omglm_mrg_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      int idx = EOBPars->delta_Omglm_mrg_k[k];
+      EOBPars->delta_Omglm_mrg[idx] = PyFloat_AsDouble(item);
+    }
+  }
+
   /* Conventions */
   if ( PyDict_GetItemString(dict,"time_shift_TD") != NULL ) { 
     EOBPars->time_shift_TD = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "time_shift_TD")));
@@ -641,6 +743,17 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     EOBPars->cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "cN3LO"));
   }   
 
+  /* Deviations from NR-fitted inspiral parameters */
+  if ( PyDict_GetItemString(dict, "delta_a6c") != NULL ) {
+    EOBPars->delta_a6c = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_a6c"));
+    EOBPars->a6c = EOBPars->a6c + EOBPars->delta_a6c;
+  }
+  if ( PyDict_GetItemString(dict, "delta_cN3LO") != NULL ) {
+    EOBPars->delta_cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_cN3LO"));
+    EOBPars->cN3LO = EOBPars->cN3LO + EOBPars->delta_cN3LO;
+  }
+
+
   if (output){
     char outpar[STRLEN];
     strcpy(outpar,EOBPars->output_dir);
@@ -689,6 +802,7 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     PyDict_SetItemString(dyndict, eob_var[v], (PyObject*) pvo); 
     Py_DECREF(pvo);
   }
+
 
   if(EOBPars->domain==DOMAIN_TD){
     

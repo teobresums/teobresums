@@ -98,6 +98,14 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->knqcpeak22) free (eobp->knqcpeak22);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
+  if (eobp->delta_alphalm0_k) free(eobp->delta_alphalm0_k);
+  if (eobp->delta_alphalm0) free(eobp->delta_alphalm0);
+  if (eobp->delta_omglm0_k) free(eobp->delta_omglm0_k);
+  if (eobp->delta_omglm0) free(eobp->delta_omglm0);
+  if (eobp->delta_Alm_mrg_k) free(eobp->delta_Alm_mrg_k);
+  if (eobp->delta_Alm_mrg) free(eobp->delta_Alm_mrg);
+  if (eobp->delta_Omglm_mrg_k) free(eobp->delta_Omglm_mrg_k);
+  if (eobp->delta_Omglm_mrg) free(eobp->delta_Omglm_mrg);
   free(eobp);
 }
 
@@ -325,6 +333,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->C_Hex2= 0. ; //
   eobp->a6c= 0. ; //
   eobp->cN3LO= 0. ; //
+  eobp->delta_a6c = 0. ; //
+  eobp->delta_cN3LO = 0. ; //
   
   eobp->kapA2= 0. ; // gravitoelectric kappa star A
   eobp->kapA3= 0. ; //
@@ -446,6 +456,18 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->use_lambda234_fits        = Lambda234_fits_YAGI13;
   }
   else errorexit("Unknown default binary parameter choice.");
+
+  /* Deviations from final BH mass, spin */
+  eobp->delta_Mbhf = 0.;
+  eobp->delta_abhf = 0.;
+
+  /* Initialize arrays of QNM deviations for user input */
+  eobp->delta_alphalm0_size = 0;
+  eobp->delta_omglm0_size   = 0;
+
+  /* Initialize merger deviations */
+  eobp->delta_Alm_mrg_size   = 0;
+  eobp->delta_Omglm_mrg_size = 0;
 
 }
 
@@ -714,6 +736,13 @@ int eob_set_params(int default_choice, int firstcall)
       }
     }
 
+    /* Apply deviations from final BH mass, spin */
+    EOBPars->Mbhf *= 1. + EOBPars->delta_Mbhf;
+    EOBPars->abhf *= 1. + EOBPars->delta_abhf;
+    if (fabs(EOBPars->abhf) > 1.) printf("WARNING: Final BH spin changed to be over-extremal; setting it to +-1.\n");
+    if (EOBPars->abhf > 1.)  EOBPars->abhf = 1.;
+    if (EOBPars->abhf < -1.) EOBPars->abhf = -1.;
+
   /* Default settings for NQC */
   // NOTE: The defaults are different from v0.0 and v1.0
   double ecc   = EOBPars->ecc;
@@ -789,6 +818,8 @@ int eob_set_params(int default_choice, int firstcall)
       if (VERBOSE) printf("WARINING: No option specified for a6c.\n");
       break; 
   }
+  /* Add deviation from fitted value */
+  if (EOBPars->delta_a6c != 0.) EOBPars->a6c += EOBPars->delta_a6c;
 
   EOBPars->cN3LO = 0.;
   switch(EOBPars->use_cN3LO_fits)
@@ -840,6 +871,8 @@ int eob_set_params(int default_choice, int firstcall)
       if (VERBOSE) printf("WARINING: No option specified for cN3LO.\n");
       break; 
   }
+  /* Add deviation from fitted value */
+  if (EOBPars->delta_cN3LO != 0.) EOBPars->cN3LO += EOBPars->delta_cN3LO;
 
   double dt = EOBPars->dt;
   if (EOBPars->use_geometric_units) {
