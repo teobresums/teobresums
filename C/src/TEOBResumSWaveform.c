@@ -5036,12 +5036,13 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   }
 
   /* Apply deviations from NR-informed NQC point quantities */
-  if (VERBOSE & (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0))
+  if (VERBOSE & (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0)) {
     printf("Applying NQC point deviations from NR amplitude, frequency and derivatives.\n");
-  if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(max_A,    EOBPars->delta_Alm_nqc,    EOBPars->delta_Alm_nqc_k,    EOBPars->delta_Alm_nqc_size);
-  if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(max_dA,   EOBPars->delta_dAlm_nqc,   EOBPars->delta_dAlm_nqc_k,   EOBPars->delta_dAlm_nqc_size);
-  if (EOBPars->delta_Omglm_nqc_size > 0)  apply_mode_deviations(max_omg,  EOBPars->delta_Omglm_nqc,  EOBPars->delta_Omglm_nqc_k,  EOBPars->delta_Omglm_nqc_size);
-  if (EOBPars->delta_dOmglm_nqc_size > 0) apply_mode_deviations(max_domg, EOBPars->delta_dOmglm_nqc, EOBPars->delta_dOmglm_nqc_k, EOBPars->delta_dOmglm_nqc_size);
+    if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(max_A,    EOBPars->delta_Alm_nqc,    EOBPars->delta_Alm_nqc_k,    EOBPars->delta_Alm_nqc_size);
+    if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(max_dA,   EOBPars->delta_dAlm_nqc,   EOBPars->delta_dAlm_nqc_k,   EOBPars->delta_dAlm_nqc_size);
+    if (EOBPars->delta_Omglm_nqc_size > 0)  apply_mode_deviations(max_omg,  EOBPars->delta_Omglm_nqc,  EOBPars->delta_Omglm_nqc_k,  EOBPars->delta_Omglm_nqc_size);
+    if (EOBPars->delta_dOmglm_nqc_size > 0) apply_mode_deviations(max_domg, EOBPars->delta_dOmglm_nqc, EOBPars->delta_dOmglm_nqc_k, EOBPars->delta_dOmglm_nqc_size);
+  }
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
@@ -5544,6 +5545,15 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   
   }
 
+  /* Apply deviations from NR-informed NQC point quantities */
+  if (VERBOSE & (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0)) {
+    printf("Applying NQC point deviations from NR amplitude, frequency and derivatives.\n");
+    if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(max_A,    EOBPars->delta_Alm_nqc,    EOBPars->delta_Alm_nqc_k,    EOBPars->delta_Alm_nqc_size);
+    if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(max_dA,   EOBPars->delta_dAlm_nqc,   EOBPars->delta_dAlm_nqc_k,   EOBPars->delta_dAlm_nqc_size);
+    if (EOBPars->delta_Omglm_nqc_size > 0)  apply_mode_deviations(max_omg,  EOBPars->delta_Omglm_nqc,  EOBPars->delta_Omglm_nqc_k,  EOBPars->delta_Omglm_nqc_size);
+    if (EOBPars->delta_dOmglm_nqc_size > 0) apply_mode_deviations(max_domg, EOBPars->delta_dOmglm_nqc, EOBPars->delta_dOmglm_nqc_k, EOBPars->delta_dOmglm_nqc_size);
+  }
+
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
     PRFORMd("A22_mrg",max_A[1]);
@@ -5989,12 +5999,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   }
 
   /* Apply deviations from NR-informed NQC point quantities */
-  if (VERBOSE & (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0))
+  if (VERBOSE & (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0)) {
     printf("Applying NQC point deviations from NR amplitude, frequency and derivatives.\n");
-  if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(max_A,    EOBPars->delta_Alm_nqc,    EOBPars->delta_Alm_nqc_k,    EOBPars->delta_Alm_nqc_size);
-  if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(max_dA,   EOBPars->delta_dAlm_nqc,   EOBPars->delta_dAlm_nqc_k,   EOBPars->delta_dAlm_nqc_size);
-  if (EOBPars->delta_Omglm_nqc_size > 0)  apply_mode_deviations(max_omg,  EOBPars->delta_Omglm_nqc,  EOBPars->delta_Omglm_nqc_k,  EOBPars->delta_Omglm_nqc_size);
-  if (EOBPars->delta_dOmglm_nqc_size > 0) apply_mode_deviations(max_domg, EOBPars->delta_dOmglm_nqc, EOBPars->delta_dOmglm_nqc_k, EOBPars->delta_dOmglm_nqc_size);
+    if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(max_A,    EOBPars->delta_Alm_nqc,    EOBPars->delta_Alm_nqc_k,    EOBPars->delta_Alm_nqc_size);
+    if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(max_dA,   EOBPars->delta_dAlm_nqc,   EOBPars->delta_dAlm_nqc_k,   EOBPars->delta_dAlm_nqc_size);
+    if (EOBPars->delta_Omglm_nqc_size > 0)  apply_mode_deviations(max_omg,  EOBPars->delta_Omglm_nqc,  EOBPars->delta_Omglm_nqc_k,  EOBPars->delta_Omglm_nqc_size);
+    if (EOBPars->delta_dOmglm_nqc_size > 0) apply_mode_deviations(max_domg, EOBPars->delta_dOmglm_nqc, EOBPars->delta_dOmglm_nqc_k, EOBPars->delta_dOmglm_nqc_size);
+  }
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
@@ -6589,6 +6600,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     max_omg[k]  = omg_tmp;
     max_domg[k] = domg_tmp;
   }
+
+  /* Apply deviations from NR-informed NQC point quantities */
+  if (VERBOSE & (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0)) {
+    printf("Applying NQC point deviations from NR amplitude, frequency and derivatives.\n");
+    if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(max_A,    EOBPars->delta_Alm_nqc,    EOBPars->delta_Alm_nqc_k,    EOBPars->delta_Alm_nqc_size);
+    if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(max_dA,   EOBPars->delta_dAlm_nqc,   EOBPars->delta_dAlm_nqc_k,   EOBPars->delta_dAlm_nqc_size);
+    if (EOBPars->delta_Omglm_nqc_size > 0)  apply_mode_deviations(max_omg,  EOBPars->delta_Omglm_nqc,  EOBPars->delta_Omglm_nqc_k,  EOBPars->delta_Omglm_nqc_size);
+    if (EOBPars->delta_dOmglm_nqc_size > 0) apply_mode_deviations(max_domg, EOBPars->delta_dOmglm_nqc, EOBPars->delta_dOmglm_nqc_k, EOBPars->delta_dOmglm_nqc_size);
+  }
   
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
@@ -7061,6 +7081,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   max_dA[k22]   = dA_tmp;
   max_omg[k22]  = omg_tmp;
   max_domg[k22] = domg_tmp;
+
+  /* Apply deviations from NR-informed NQC point quantities */
+  if (VERBOSE & (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0)) {
+    printf("Applying NQC point deviations from NR amplitude, frequency and derivatives.\n");
+    int delta_nqc_k22[1];
+    delta_nqc_k22[0] = 1;
+    if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(max_A,    EOBPars->delta_Alm_nqc,    delta_nqc_k22, 1);
+    if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(max_dA,   EOBPars->delta_dAlm_nqc,   delta_nqc_k22, 1);
+    if (EOBPars->delta_Omglm_nqc_size > 0)  apply_mode_deviations(max_omg,  EOBPars->delta_Omglm_nqc,  delta_nqc_k22, 1);
+    if (EOBPars->delta_dOmglm_nqc_size > 0) apply_mode_deviations(max_domg, EOBPars->delta_dOmglm_nqc, delta_nqc_k22, 1);
+  }
 
   if (VERBOSE) {
     printf("NR values for NQC determination:\n");
@@ -10061,6 +10092,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     max_dA[k]   = dA_tmp;
     max_omg[k]  = omg_tmp;
     max_domg[k] = domg_tmp;
+  }
+
+  /* Apply deviations from NR-informed NQC point quantities */
+  if (VERBOSE & (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0)) {
+    printf("Applying NQC point deviations from NR amplitude, frequency and derivatives.\n");
+    if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(max_A,    EOBPars->delta_Alm_nqc,    EOBPars->delta_Alm_nqc_k,    EOBPars->delta_Alm_nqc_size);
+    if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(max_dA,   EOBPars->delta_dAlm_nqc,   EOBPars->delta_dAlm_nqc_k,   EOBPars->delta_dAlm_nqc_size);
+    if (EOBPars->delta_Omglm_nqc_size > 0)  apply_mode_deviations(max_omg,  EOBPars->delta_Omglm_nqc,  EOBPars->delta_Omglm_nqc_k,  EOBPars->delta_Omglm_nqc_size);
+    if (EOBPars->delta_dOmglm_nqc_size > 0) apply_mode_deviations(max_domg, EOBPars->delta_dOmglm_nqc, EOBPars->delta_dOmglm_nqc_k, EOBPars->delta_dOmglm_nqc_size);
   }
 
   if (VERBOSE) {
