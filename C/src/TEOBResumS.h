@@ -766,6 +766,11 @@ typedef struct tagEOBParameters
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
   /**@}*/
 
+  /* Deviations from NQC point quantities */
+  double *delta_Alm_nqc, *delta_dAlm_nqc, *delta_Omglm_nqc, *delta_dOmglm_nqc;
+  int    *delta_Alm_nqc_k, *delta_dAlm_nqc_k, *delta_Omglm_nqc_k, *delta_dOmglm_nqc_k;
+  int    delta_Alm_nqc_size, delta_dAlm_nqc_size, delta_Omglm_nqc_size, delta_dOmglm_nqc_size;
+
   /**@{*/
   /** output options*/
   char output_dir[STRLEN];
@@ -1025,7 +1030,7 @@ double pph_lso_spin(const double nu, const double a0);
 double eob_nqc_timeshift_bhns(double nu, double chi1);
 void eob_nqc_deltat_lm_bhns(double *Dt_lm);
 void QNM_deviations(double *alpha1, double *omega1, double *alpha21);
-void Merger_deviations(double *x_mrg, double *delta_x, int *klm, int Nk);
+void apply_mode_deviations(double *x_mrg, double *delta_x, int *klm, int Nk);
 
 /* TEOBResumSDynamics.c */
 extern int (*p_eob_dyn_rhs)(); /* defined in TEOBResumSPars.c */

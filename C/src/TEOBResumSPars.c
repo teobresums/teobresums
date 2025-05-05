@@ -106,6 +106,14 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->delta_Alm_mrg) free(eobp->delta_Alm_mrg);
   if (eobp->delta_Omglm_mrg_k) free(eobp->delta_Omglm_mrg_k);
   if (eobp->delta_Omglm_mrg) free(eobp->delta_Omglm_mrg);
+  if (eobp->delta_Alm_nqc_k) free(eobp->delta_Alm_nqc_k);
+  if (eobp->delta_Alm_nqc) free(eobp->delta_Alm_nqc);
+  if (eobp->delta_Omglm_nqc_k) free(eobp->delta_Omglm_nqc_k);
+  if (eobp->delta_Omglm_nqc) free(eobp->delta_Omglm_nqc);
+  if (eobp->delta_dAlm_nqc_k) free(eobp->delta_dAlm_nqc_k);
+  if (eobp->delta_dAlm_nqc) free(eobp->delta_dAlm_nqc);
+  if (eobp->delta_dOmglm_nqc_k) free(eobp->delta_dOmglm_nqc_k);
+  if (eobp->delta_dOmglm_nqc) free(eobp->delta_dOmglm_nqc);
   free(eobp);
 }
 
@@ -468,6 +476,12 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   /* Deviations from merger quantities */
   eobp->delta_Alm_mrg_size   = 0;
   eobp->delta_Omglm_mrg_size = 0;
+
+  /* Deviations from NQC point quantities */
+  eobp->delta_Alm_nqc_size   = 0;
+  eobp->delta_Omglm_nqc_size = 0;
+  eobp->delta_dAlm_nqc_size   = 0;
+  eobp->delta_dOmglm_nqc_size = 0;
 
 }
 
@@ -873,7 +887,8 @@ int eob_set_params(int default_choice, int firstcall)
       break; 
   }
   /* Add deviation from fitted value */
-  if (EOBPars->delta_cN3LO != 0.) EOBPars->cN3LO += EOBPars->delta_cN3LO;
+  if (EOBPars->delta_cN3LO != 0.)
+    EOBPars->cN3LO += EOBPars->delta_cN3LO;
 
   double dt = EOBPars->dt;
   if (EOBPars->use_geometric_units) {

@@ -3420,10 +3420,12 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   }
 
   /* Apply deviations from merger amplitude, frequency */
+  if (VERBOSE & (EOBPars->delta_Alm_mrg_size + EOBPars->delta_Omglm_mrg_size > 0))
+    printf("Applying deviations from NR amplitude, frequency at merger.\n");
   if (EOBPars->delta_Alm_mrg_size > 0)
-    Merger_deviations(Amrg, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
+    apply_mode_deviations(Amrg, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
   if (EOBPars->delta_Omglm_mrg_size > 0)
-    Merger_deviations(omgmrg, EOBPars->delta_Omglm_mrg, EOBPars->delta_Omglm_mrg_k, EOBPars->delta_Omglm_mrg_size);
+    apply_mode_deviations(omgmrg, EOBPars->delta_Omglm_mrg, EOBPars->delta_Omglm_mrg_k, EOBPars->delta_Omglm_mrg_size);
   
   if (DEQUAL(nu,0.25,1e-9) && DEQUAL(chi1,chi2,1e-9)){
     modeon[0] = modeon[2] = modeon[4] = modeon[5] = modeon[7] = modeon[13] = 0;
@@ -3458,17 +3460,17 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 }
 
 /**
- *  Function: Merger_deviations
+ *  Function: apply_mode_deviations
  *  ---------------------------
- *  Apply deviations from merger amplitude and frequency for each mode
+ *  Apply mode-by-mode fractional deviations to merger or NQC point quantities
  *
- *   @param[in] x_mrg                           : Bare merger quantity array
+ *   @param[in] x_mrg                           : Bare array
  *   @param[in] delta_x                         : Fractional deviation array
  *   @param[in] klm                             : List of modes to deform
  *   @param[in] Nk                              : Number of modes to deform
  *
  */
-void Merger_deviations(double *x_mrg, double *delta_x, int *klm, int Nk)
+void apply_mode_deviations(double *x_mrg, double *delta_x, int *klm, int Nk)
 {
   int km;
 
@@ -3528,9 +3530,9 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
 
   /* Apply deviations from fitted merger quantities here by hand */
   if (EOBPars->delta_Alm_mrg_size > 0)
-    Merger_deviations(A, EOBPars->delta_Alm_mrg, knqcpeak22, knqcpeak22_size);
+    apply_mode_deviations(A, EOBPars->delta_Alm_mrg, knqcpeak22, knqcpeak22_size);
   if (EOBPars->delta_Omglm_mrg_size > 0)
-    Merger_deviations(omg, EOBPars->delta_Omglm_mrg, knqcpeak22, knqcpeak22_size);
+    apply_mode_deviations(omg, EOBPars->delta_Omglm_mrg, knqcpeak22, knqcpeak22_size);
 
   for(int j=0; j<knqcpeak22_size; j++){
     int k = knqcpeak22[j];

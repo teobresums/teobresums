@@ -497,8 +497,10 @@ int SetOptionalVariables(PyObject* dict){
       PyObject *item = PyList_GetItem(tmp, k);
       int idx = EOBPars->delta_alphalm0_k[k];
       EOBPars->delta_alphalm0[idx] = PyFloat_AsDouble(item);
-      if (EOBPars->delta_alphalm0[idx] <= -1.)
-        errorexit("Fractional deviations from QNM damping times must be > -1.");
+      if (EOBPars->delta_alphalm0[idx] <= -1.) {
+        PyErr_SetString(PyExc_ValueError, "Fractional deviation from QNM damping time must be > -1.");
+        return NULL;
+      }
     }
   }
 
@@ -569,6 +571,99 @@ int SetOptionalVariables(PyObject* dict){
       PyObject *item = PyList_GetItem(tmp, k);
       int idx = EOBPars->delta_Omglm_mrg_k[k];
       EOBPars->delta_Omglm_mrg[idx] = PyFloat_AsDouble(item);
+    }
+  }
+
+  /* Deviation from NQC point quantities */
+  /* Amplitude */
+  if ( PyDict_GetItemString(dict, "delta_Alm_nqc_k") != NULL ) {
+    if (EOBPars->delta_Alm_nqc_k) free(EOBPars->delta_Alm_nqc_k);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_Alm_nqc_k");
+    EOBPars->delta_Alm_nqc_size = PyObject_Length(tmp);
+    EOBPars->delta_Alm_nqc_k = malloc ( EOBPars->delta_Alm_nqc_size * sizeof(int) );
+    for (int k = 0; k < EOBPars->delta_Alm_nqc_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->delta_Alm_nqc_k[k] = PyLong_AsLong(item);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "delta_Alm_nqc") != NULL ) {
+    if (EOBPars->delta_Alm_nqc) free(EOBPars->delta_Alm_nqc);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_Alm_nqc");
+    EOBPars->delta_Alm_nqc = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++) EOBPars->delta_Alm_nqc[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_Alm_nqc_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      int idx = EOBPars->delta_Alm_nqc_k[k];
+      EOBPars->delta_Alm_nqc[idx] = PyFloat_AsDouble(item);
+    }
+  }
+
+  /* Frequency */
+  if ( PyDict_GetItemString(dict, "delta_Omglm_nqc_k") != NULL ) {
+    if (EOBPars->delta_Omglm_nqc_k) free(EOBPars->delta_Omglm_nqc_k);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_Omglm_nqc_k");
+    EOBPars->delta_Omglm_nqc_size = PyObject_Length(tmp);
+    EOBPars->delta_Omglm_nqc_k = malloc ( EOBPars->delta_Omglm_nqc_size * sizeof(int) );
+    for (int k = 0; k < EOBPars->delta_Omglm_nqc_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->delta_Omglm_nqc_k[k] = PyLong_AsLong(item);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "delta_Omglm_nqc") != NULL ) {
+    if (EOBPars->delta_Omglm_nqc) free(EOBPars->delta_Omglm_nqc);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_Omglm_nqc");
+    EOBPars->delta_Omglm_nqc = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++) EOBPars->delta_Omglm_nqc[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_Omglm_nqc_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      int idx = EOBPars->delta_Omglm_nqc_k[k];
+      EOBPars->delta_Omglm_nqc[idx] = PyFloat_AsDouble(item);
+    }
+  }
+
+  /* Derivative of amplitude */
+  if ( PyDict_GetItemString(dict, "delta_dAlm_nqc_k") != NULL ) {
+    if (EOBPars->delta_dAlm_nqc_k) free(EOBPars->delta_dAlm_nqc_k);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_dAlm_nqc_k");
+    EOBPars->delta_dAlm_nqc_size = PyObject_Length(tmp);
+    EOBPars->delta_dAlm_nqc_k = malloc ( EOBPars->delta_dAlm_nqc_size * sizeof(int) );
+    for (int k = 0; k < EOBPars->delta_dAlm_nqc_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->delta_dAlm_nqc_k[k] = PyLong_AsLong(item);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "delta_dAlm_nqc") != NULL ) {
+    if (EOBPars->delta_dAlm_nqc) free(EOBPars->delta_dAlm_nqc);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_dAlm_nqc");
+    EOBPars->delta_dAlm_nqc = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++) EOBPars->delta_dAlm_nqc[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_dAlm_nqc_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      int idx = EOBPars->delta_dAlm_nqc_k[k];
+      EOBPars->delta_dAlm_nqc[idx] = PyFloat_AsDouble(item);
+    }
+  }
+
+  /* Derivative of frequency */
+  if ( PyDict_GetItemString(dict, "delta_dOmglm_nqc_k") != NULL ) {
+    if (EOBPars->delta_dOmglm_nqc_k) free(EOBPars->delta_dOmglm_nqc_k);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_dOmglm_nqc_k");
+    EOBPars->delta_dOmglm_nqc_size = PyObject_Length(tmp);
+    EOBPars->delta_dOmglm_nqc_k = malloc ( EOBPars->delta_dOmglm_nqc_size * sizeof(int) );
+    for (int k = 0; k < EOBPars->delta_dOmglm_nqc_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      EOBPars->delta_dOmglm_nqc_k[k] = PyLong_AsLong(item);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "delta_dOmglm_nqc") != NULL ) {
+    if (EOBPars->delta_dOmglm_nqc) free(EOBPars->delta_dOmglm_nqc);
+    PyListObject *tmp = PyDict_GetItemString(dict, "delta_dOmglm_nqc");
+    EOBPars->delta_dOmglm_nqc = malloc ( KMAX * sizeof(double) );
+    for (int k = 0; k < KMAX; k++) EOBPars->delta_dOmglm_nqc[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_dOmglm_nqc_size; k++){
+      PyObject *item = PyList_GetItem(tmp, k);
+      int idx = EOBPars->delta_dOmglm_nqc_k[k];
+      EOBPars->delta_dOmglm_nqc[idx] = PyFloat_AsDouble(item);
     }
   }
 
