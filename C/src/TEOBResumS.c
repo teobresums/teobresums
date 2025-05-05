@@ -1179,8 +1179,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       /* final state */
       EOBPars->abhf = PrecessingRemnantSpin(dyn);
       EOBPars->abhf*= 1. + EOBPars->delta_abhf;
-      if (EOBPars->abhf > 1.)  EOBPars->abhf = 1.;
-      if (EOBPars->abhf < -1.) EOBPars->abhf = -1.;
+      if (fabs(EOBPars->abhf) > 1.) {
+        printf("ERROR: Final BH spin changed to be greater than 1.\n");
+        status = ERROR_SET_PARAMS;
+        goto EXIT_POINT;
     }
 
     /* BBH : add Ringdown */
