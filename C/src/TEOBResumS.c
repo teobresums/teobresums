@@ -1183,6 +1183,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         printf("ERROR: Final BH spin changed to be greater than 1.\n");
         status = ERROR_SET_PARAMS;
         goto EXIT_POINT;
+      }
     }
 
     /* BBH : add Ringdown */
