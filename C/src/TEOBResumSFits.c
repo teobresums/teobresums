@@ -2339,6 +2339,7 @@ double PrecessingRemnantSpin(Dynamics *dyn)
   double Lhmrg[3];
   double Sperp[3];
   double SApar, SBpar, sqSperp;
+  double Mbhf;
 
   double omgmrg = eob_mrg_momg(EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2);
   
@@ -2360,11 +2361,12 @@ double PrecessingRemnantSpin(Dynamics *dyn)
   vect_dot3(SAmrg, Lhmrg, &SApar);  
   vect_dot3(SBmrg, Lhmrg, &SBpar); 
   EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2));
+  Mbhf          = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, SApar/SQ(EOBPars->X1), SBpar/SQ(EOBPars->X2));
   for(int i=0; i < IN3; i++)
     Sperp[i] = (SAmrg[i] - SApar*Lhmrg[i]) + (SBmrg[i] - SBpar*Lhmrg[i]);
 
   vect_dot3(Sperp, Sperp, &sqSperp);
-  double sqMbhf = SQ(EOBPars->Mbhf);
+  double sqMbhf = SQ(Mbhf);
   
   return sqrt(SQ(EOBPars->abhf) + sqSperp/SQ(sqMbhf));
 
