@@ -2489,6 +2489,13 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
 
     sigmar[k33] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
     sigmai[k33] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
+
+    /* Apply user-input deviations from merger amplitude */
+    if (EOBPars->delta_Alm_mrg_size > 0)
+      apply_mode_deviations(Amrg, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
+    /* Throw error if deviations from merger or QNM frequencies are in input */
+    if (EOBPars->delta_Omglm_mrg_size + EOBPars->delta_alphalm0_size + EOBPars->delta_omglm0_size > 0)
+      errorexit("Merger frequency and QNM frequency, damping time deviations incompatible with QNMHybridFitCab if usespins == 0.\n");
     
   } else {
 
@@ -2513,6 +2520,10 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     double alpha21_c   =  0.4764196512 * af3 - 0.0593165805 * af2 - 1.4168096833 * af + 1;
     double alpha21_d   =  0.4385578151 * af3 - 0.0763529088 * af2 - 1.3595491146 * af + 1;
     alpha21[k22]       =  0.1849525596 * (alpha21_c/alpha21_d);
+
+    /* Apply QNM deviations */
+    if (EOBPars->delta_alphalm0_size + EOBPars->delta_omglm0_size > 0)
+      QNM_deviations(alpha1, omega1, alpha21);
     
     /* c3A */
     double a_c3A 	=  0.0169543;
@@ -2548,6 +2559,10 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     double omgmx_eq_d   =  (b2_omgmx*X12_2 +b1_omgmx*X12 -0.3484804901) * aeff_omg + 1;
     double omgmx_eq     =  omgmx_eq_c/omgmx_eq_d;
     double omgmx        =  (0.481958619443355 * nu2 + 0.223976694441952 * nu + 0.273813064427363) * omgmx_eq;
+
+    /* Throw error if merger frequency deviation given in input */
+    if (EOBPars->delta_Omglm_mrg_size > 0)
+      errorexit("Merger frequency deviation incompatible with QNMHybridFitCab.\n");
     
     /* the peak of the h22 metric (strain) waveform.*/
     /* Special scaling and independent variables used for the fit. AN& GR 2017*/	
@@ -2560,6 +2575,10 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     
     Amrg[k22]      = A_scaled*(1-0.5*omgmx*aeff);
     Domg[k22]      = omega1[k22] - Mbh*omgmx;
+
+    /* Apply merger amplitude deviation */
+    if (EOBPars->delta_Alm_mrg_size > 0)
+      apply_mode_deviations(Amrg, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
     
     /* renaming real & imaginary part of the QNM complex frequency sigma */
     //sigma[k22][0] = alpha1[k22];
@@ -3711,13 +3730,13 @@ void QNM_deviations(double *alpha1, double *omega1, double *alpha21)
     for (int k=0; k<EOBPars->delta_alphalm0_size; k++) {
       km = EOBPars->delta_alphalm0_k[k];
       alpha21[km] -= alpha1[km]*EOBPars->delta_alphalm0[km];
-      alpha1[km]   = alpha1[km]*(1. + EOBPars->delta_alphalm0[km]);
+      alpha1[km]  += alpha1[km]*EOBPars->delta_alphalm0[km];
     }
   }
   if (EOBPars->delta_omglm0_size > 0) {
     for (int k=0; k<EOBPars->delta_omglm0_size; k++) {
       km = EOBPars->delta_omglm0_k[k];
-      omega1[km]   = omega1[km]*(1. + EOBPars->delta_omglm0[km]);
+      omega1[km]  += omega1[km]*EOBPars->delta_omglm0[km];
     }
   }
 }
