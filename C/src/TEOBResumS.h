@@ -764,6 +764,7 @@ typedef struct tagEOBParameters
   /** NQC variables and options*/
   int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
+  double d_delta_t_nqc;
   /**@}*/
 
   /* Deviations from NQC point quantities */

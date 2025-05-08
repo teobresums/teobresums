@@ -1071,6 +1071,8 @@ double eob_nqc_timeshift_bbh(double nu, double chi1)
   } else {
     DeltaT_nqc = 1.0; // standard choice inspired by test-particle results
   }
+
+  if (EOBPars->d_delta_t_nqc) DeltaT_nqc += EOBPars->d_delta_t_nqc;
     
   return DeltaT_nqc;  
 }
