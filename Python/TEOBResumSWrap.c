@@ -468,6 +468,12 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  /* Parametrized model */
+  /* Shift in delta_t_nqc */
+  if ( PyDict_GetItemString(dict, "d_delta_t_nqc") != NULL) {
+    EOBPars->d_delta_t_nqc = PyFloat_AsDouble(PyDict_GetItemString(dict, "d_delta_t_nqc"));
+  }
+
   /* Deviation from final BH mass, spin */
   if ( PyDict_GetItemString(dict, "delta_Mbhf") != NULL) {
     EOBPars->delta_Mbhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_Mbhf"));
@@ -485,18 +491,12 @@ int SetOptionalVariables(PyObject* dict){
     PyArg_Parse(PyDict_GetItemString(dict, "delta_alphalm0"), "O!", &PyDict_Type, &tmp_dict);
     EOBPars->delta_alphalm0_size = PyDict_Size(tmp_dict);
     EOBPars->delta_alphalm0_k = malloc ( EOBPars->delta_alphalm0_size * sizeof(int));
-    EOBPars->delta_alphalm0   = malloc( KMAX * sizeof(double));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_alphalm0[k] = 0.;
+    EOBPars->delta_alphalm0   = malloc ( EOBPars->delta_alphalm0_size * sizeof(double));
     PyObject *key, *val;
     Py_ssize_t pos = 0;
     while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
-      int idx = PyLong_AsLong(key);
-      EOBPars->delta_alphalm0_k[pos - 1] = idx;
-      EOBPars->delta_alphalm0[idx] = PyFloat_AsDouble(val);
-      if (EOBPars->delta_alphalm0[idx] <= -1.) {
-        PyErr_SetString(PyExc_ValueError, "Fractional deviation from QNM damping time must be > -1.");
-        return NULL;
-      }
+      EOBPars->delta_alphalm0_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_alphalm0[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
@@ -508,14 +508,12 @@ int SetOptionalVariables(PyObject* dict){
     PyArg_Parse(PyDict_GetItemString(dict, "delta_omglm0"), "O!", &PyDict_Type, &tmp_dict);
     EOBPars->delta_omglm0_size = PyDict_Size(tmp_dict);
     EOBPars->delta_omglm0_k = malloc ( EOBPars->delta_omglm0_size * sizeof(int));
-    EOBPars->delta_omglm0   = malloc( KMAX * sizeof(double));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_omglm0[k] = 0.;
+    EOBPars->delta_omglm0   = malloc ( EOBPars->delta_omglm0_size * sizeof(double));
     PyObject *key, *val;
     Py_ssize_t pos = 0;
     while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
-      int idx = PyLong_AsLong(key);
-      EOBPars->delta_omglm0_k[pos - 1] = idx;
-      EOBPars->delta_omglm0[idx] = PyFloat_AsDouble(val);
+      EOBPars->delta_omglm0_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_omglm0[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
@@ -528,14 +526,12 @@ int SetOptionalVariables(PyObject* dict){
     PyArg_Parse(PyDict_GetItemString(dict, "delta_Alm_mrg"), "O!", &PyDict_Type, &tmp_dict);
     EOBPars->delta_Alm_mrg_size = PyDict_Size(tmp_dict);
     EOBPars->delta_Alm_mrg_k = malloc ( EOBPars->delta_Alm_mrg_size * sizeof(int));
-    EOBPars->delta_Alm_mrg   = malloc( KMAX * sizeof(double));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_Alm_mrg[k] = 0.;
+    EOBPars->delta_Alm_mrg   = malloc ( EOBPars->delta_Alm_mrg_size * sizeof(double));
     PyObject *key, *val;
     Py_ssize_t pos = 0;
     while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
-      int idx = PyLong_AsLong(key);
-      EOBPars->delta_Alm_mrg_k[pos - 1] = idx;
-      EOBPars->delta_Alm_mrg[idx] = PyFloat_AsDouble(val);
+      EOBPars->delta_Alm_mrg_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_Alm_mrg[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
@@ -547,14 +543,12 @@ int SetOptionalVariables(PyObject* dict){
     PyArg_Parse(PyDict_GetItemString(dict, "delta_Omglm_mrg"), "O!", &PyDict_Type, &tmp_dict);
     EOBPars->delta_Omglm_mrg_size = PyDict_Size(tmp_dict);
     EOBPars->delta_Omglm_mrg_k = malloc ( EOBPars->delta_Omglm_mrg_size * sizeof(int));
-    EOBPars->delta_Omglm_mrg   = malloc( KMAX * sizeof(double));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_Omglm_mrg[k] = 0.;
+    EOBPars->delta_Omglm_mrg   = malloc ( EOBPars->delta_Omglm_mrg_size * sizeof(double));
     PyObject *key, *val;
     Py_ssize_t pos = 0;
     while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
-      int idx = PyLong_AsLong(key);
-      EOBPars->delta_Omglm_mrg_k[pos - 1] = idx;
-      EOBPars->delta_Omglm_mrg[idx] = PyFloat_AsDouble(val);
+      EOBPars->delta_Omglm_mrg_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_Omglm_mrg[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
@@ -567,14 +561,12 @@ int SetOptionalVariables(PyObject* dict){
     PyArg_Parse(PyDict_GetItemString(dict, "delta_Alm_nqc"), "O!", &PyDict_Type, &tmp_dict);
     EOBPars->delta_Alm_nqc_size = PyDict_Size(tmp_dict);
     EOBPars->delta_Alm_nqc_k = malloc ( EOBPars->delta_Alm_nqc_size * sizeof(int));
-    EOBPars->delta_Alm_nqc   = malloc( KMAX * sizeof(double));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_Alm_nqc[k] = 0.;
+    EOBPars->delta_Alm_nqc   = malloc ( EOBPars->delta_Alm_nqc_size * sizeof(double));
     PyObject *key, *val;
     Py_ssize_t pos = 0;
     while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
-      int idx = PyLong_AsLong(key);
-      EOBPars->delta_Alm_nqc_k[pos - 1] = idx;
-      EOBPars->delta_Alm_nqc[idx] = PyFloat_AsDouble(val);
+      EOBPars->delta_Alm_nqc_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_Alm_nqc[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
@@ -586,14 +578,12 @@ int SetOptionalVariables(PyObject* dict){
     PyArg_Parse(PyDict_GetItemString(dict, "delta_Omglm_nqc"), "O!", &PyDict_Type, &tmp_dict);
     EOBPars->delta_Omglm_nqc_size = PyDict_Size(tmp_dict);
     EOBPars->delta_Omglm_nqc_k = malloc ( EOBPars->delta_Omglm_nqc_size * sizeof(int));
-    EOBPars->delta_Omglm_nqc   = malloc( KMAX * sizeof(double));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_Omglm_nqc[k] = 0.;
+    EOBPars->delta_Omglm_nqc   = malloc ( EOBPars->delta_Omglm_nqc_size * sizeof(double));
     PyObject *key, *val;
     Py_ssize_t pos = 0;
     while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
-      int idx = PyLong_AsLong(key);
-      EOBPars->delta_Omglm_nqc_k[pos - 1] = idx;
-      EOBPars->delta_Omglm_nqc[idx] = PyFloat_AsDouble(val);
+      EOBPars->delta_Omglm_nqc_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_Omglm_nqc[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
@@ -605,14 +595,12 @@ int SetOptionalVariables(PyObject* dict){
     PyArg_Parse(PyDict_GetItemString(dict, "delta_dAlm_nqc"), "O!", &PyDict_Type, &tmp_dict);
     EOBPars->delta_dAlm_nqc_size = PyDict_Size(tmp_dict);
     EOBPars->delta_dAlm_nqc_k = malloc ( EOBPars->delta_dAlm_nqc_size * sizeof(int));
-    EOBPars->delta_dAlm_nqc   = malloc( KMAX * sizeof(double));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_dAlm_nqc[k] = 0.;
+    EOBPars->delta_dAlm_nqc   = malloc ( EOBPars->delta_dAlm_nqc_size * sizeof(double));
     PyObject *key, *val;
     Py_ssize_t pos = 0;
     while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
-      int idx = PyLong_AsLong(key);
-      EOBPars->delta_dAlm_nqc_k[pos - 1] = idx;
-      EOBPars->delta_dAlm_nqc[idx] = PyFloat_AsDouble(val);
+      EOBPars->delta_dAlm_nqc_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_dAlm_nqc[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
@@ -624,14 +612,12 @@ int SetOptionalVariables(PyObject* dict){
     PyArg_Parse(PyDict_GetItemString(dict, "delta_dOmglm_nqc"), "O!", &PyDict_Type, &tmp_dict);
     EOBPars->delta_dOmglm_nqc_size = PyDict_Size(tmp_dict);
     EOBPars->delta_dOmglm_nqc_k = malloc ( EOBPars->delta_dOmglm_nqc_size * sizeof(int));
-    EOBPars->delta_dOmglm_nqc   = malloc( KMAX * sizeof(double));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_dOmglm_nqc[k] = 0.;
+    EOBPars->delta_dOmglm_nqc   = malloc ( EOBPars->delta_dOmglm_nqc_size * sizeof(double));
     PyObject *key, *val;
     Py_ssize_t pos = 0;
     while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
-      int idx = PyLong_AsLong(key);
-      EOBPars->delta_dOmglm_nqc_k[pos - 1] = idx;
-      EOBPars->delta_dOmglm_nqc[idx] = PyFloat_AsDouble(val);
+      EOBPars->delta_dOmglm_nqc_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_dOmglm_nqc[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
