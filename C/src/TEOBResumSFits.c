@@ -5420,6 +5420,14 @@ void peak_bhns(double nu, double lambda, double chi1, double X1, double X2, doub
       Apeak[4] = 0.01;
       Apeak[13] = 0.001;
     }
+
+  /* Apply deviations from merger amplitude, frequency */
+  if (VERBOSE & (EOBPars->delta_Alm_mrg_size + EOBPars->delta_Omglm_mrg_size > 0))
+    printf("Applying deviations from NR amplitude, frequency at merger.\n");
+  if (EOBPars->delta_Alm_mrg_size > 0)
+    apply_mode_deviations(Apeak, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
+  if (EOBPars->delta_Omglm_mrg_size > 0)
+    apply_mode_deviations(Opeak, EOBPars->delta_Omglm_mrg, EOBPars->delta_Omglm_mrg_k, EOBPars->delta_Omglm_mrg_size);
   
   if(VERBOSE) PRFORMd("A22_peak",Apeak[1]);
   if(VERBOSE) PRFORMd("omega22_peak",Opeak[1]);
@@ -5866,6 +5874,12 @@ void QNM_bhns_td(double af, double *alpha1, double *alpha2, double *omega1, doub
 
     alpha1[k] = alpha2[k];
   } 
+
+  /* Apply user-input deviations from fitted values of alpha, omega */
+  if (EOBPars->delta_alphalm0_size > 0 || EOBPars->delta_omglm0_size > 0) {
+    if (VERBOSE) printf("Applying user-input deviations from QNM frequencies.\n");
+    QNM_deviations(alpha1, omega1, alpha21);
+  }
 }
 
 /** 
@@ -6813,6 +6827,8 @@ double eob_nqc_timeshift_bhns(double nu, double chi1)
 {
 
   double DeltaT_nqc = 4.0;    
+
+  if (EOBPars->d_delta_t_nqc) DeltaT_nqc += EOBPars->d_delta_t_nqc;
     
   return DeltaT_nqc;  
 }

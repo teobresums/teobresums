@@ -754,7 +754,7 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->Mbhf *= 1. + EOBPars->delta_Mbhf;
     EOBPars->abhf *= 1. + EOBPars->delta_abhf;
     if (fabs(EOBPars->abhf) > 1.) {
-      printf("ERROR: Final BH spin changed to be greater than 1.\n");
+      printf("ERROR: Final BH spin magnitude changed to be greater than 1.\n");
       return 1;
     }
 
