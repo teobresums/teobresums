@@ -500,6 +500,23 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  /* tau */
+  if ( PyDict_GetItemString(dict, "delta_taulm0") != NULL ) {
+    if (EOBPars->delta_taulm0_k) free(EOBPars->delta_taulm0_k);
+    if (EOBPars->delta_taulm0)   free(EOBPars->delta_taulm0);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_taulm0"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_taulm0_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_taulm0_k = malloc ( EOBPars->delta_taulm0_size * sizeof(int));
+    EOBPars->delta_taulm0   = malloc ( EOBPars->delta_taulm0_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_taulm0_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_taulm0[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
   /* omega */
   if ( PyDict_GetItemString(dict, "delta_omglm0") != NULL ) {
     if (EOBPars->delta_omglm0_k) free(EOBPars->delta_omglm0_k);
@@ -1317,11 +1334,12 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   double dHeff_dpphi;    /* drvt Heff,pphi */
   double d2Heff_dprstar20;
   double d2Heff_dr2;
+  double delta_a6c, delta_cN3LO;
 
   Dynamics *dyn;
 
   /* parse the input */
-  if (!PyArg_ParseTuple(args, "dddddd", &r, &q, &pphi, &prstar, &chi1, &chi2))
+  if (!PyArg_ParseTuple(args, "dddddddd", &r, &q, &pphi, &prstar, &chi1, &chi2, &delta_a6c, &delta_cN3LO))
     return NULL;
   
   double nu = q_to_nu(q);
@@ -1332,6 +1350,8 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   EOBPars->chi1 = chi1;
   EOBPars->chi2 = chi2;
   EOBPars->q    = q;
+  EOBPars->delta_a6c = delta_a6c;
+  EOBPars->delta_cN3LO = delta_cN3LO;
 
   eob_set_params(BINARY_BBH, 1);
   /* set firstcall */
@@ -1360,13 +1380,13 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
 static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
 {
   /* Compute A and B */
-  double r, q, chi1, chi2;
+  double r, q, chi1, chi2, delta_a6c;
   double A, B, pl_hold;
 
   Dynamics *dyn;
 
   /* parse the input */
-  if (!PyArg_ParseTuple(args, "dddd", &r, &q, &chi1, &chi2))
+  if (!PyArg_ParseTuple(args, "ddddd", &r, &q, &chi1, &chi2, &delta_a6c))
     return NULL;
   
   double nu = q_to_nu(q);
@@ -1377,6 +1397,7 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
   EOBPars->q    = q;
   EOBPars->chi1 = chi1;
   EOBPars->chi2 = chi2;
+  EOBPars->delta_a6c = delta_a6c;
 
   eob_set_params(BINARY_BBH, 1);
   /* set firstcall */

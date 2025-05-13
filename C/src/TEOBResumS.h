@@ -748,9 +748,10 @@ typedef struct tagEOBParameters
   double delta_Mbhf, delta_abhf;
 
   /* Deviations from fits of QNM frequencies */
-  double *delta_alphalm0, *delta_omglm0;
+  double *delta_alphalm0, *delta_omglm0, *delta_taulm0;
   int    *delta_alphalm0_k, delta_alphalm0_size;
-  int    *delta_omglm0_k, delta_omglm0_size;
+  int    *delta_taulm0_k,   delta_taulm0_size;
+  int    *delta_omglm0_k,   delta_omglm0_size;
 
   /* Deviations from merger amplitude, frequency */
   double *delta_Alm_mrg, *delta_Omglm_mrg;
