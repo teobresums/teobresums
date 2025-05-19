@@ -950,7 +950,7 @@ int eob_set_params(int default_choice, int firstcall)
     for (int k = 0; k < KMAX; k++) temp[k] = 0.;
     for (int k = 0; k < EOBPars->delta_alphalm0_size; k++) {
       int idx = EOBPars->delta_alphalm0_k[k];
-      if (EOBPars->delta_alphalm0[k] != 0.) {
+      if (DUNEQUAL(EOBPars->delta_alphalm0[k], 0., 1e-9)) {
         temp_k[temp_size] = idx;
         temp[idx]         = EOBPars->delta_alphalm0[k];
         temp_size++;
@@ -962,8 +962,8 @@ int eob_set_params(int default_choice, int firstcall)
     }
     for (int k = 0; k < EOBPars->delta_taulm0_size; k++) {
       int idx = EOBPars->delta_taulm0_k[k];
-      if (EOBPars->delta_taulm0[k] != 0.) {
-        if (temp[idx] != 0.) {
+      if (DUNEQUAL(EOBPars->delta_taulm0[k], 0., 1e-9)) {
+        if (DUNEQUAL(temp[idx], 0., 1e-9)) {
           printf("ERROR: Nonzero deviation from both QNM alpha and tau specified for mode k = %d.\n", idx);
           return 1;
         }
