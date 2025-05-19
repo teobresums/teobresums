@@ -940,46 +940,53 @@ int eob_set_params(int default_choice, int firstcall)
 
   /* Deviations from standard TEOB */
 
-  /* QNM inverse damping time */
-  if (EOBPars->delta_alphalm0_size > 0) {
+  /* QNM (inverse) damping time */
+  if (EOBPars->delta_alphalm0_size + EOBPars->delta_taulm0_size > 0) {
+    int     temp_size, *temp_k;
     double *temp;
-    temp = malloc ( KMAX * sizeof(double));
+    temp   = malloc ( KMAX * sizeof(double));
+    temp_k = malloc ( (EOBPars->delta_alphalm0_size + EOBPars->delta_taulm0_size) * sizeof(int));
+    temp_size = 0;
     for (int k = 0; k < KMAX; k++) temp[k] = 0.;
     for (int k = 0; k < EOBPars->delta_alphalm0_size; k++) {
-      int idx   = EOBPars->delta_alphalm0_k[k];
-      temp[idx] = EOBPars->delta_alphalm0[k];
-      if (temp[idx] <= -1.){
-        printf("ERROR: Fractional deviations from QNM damping times must be > -1.\n");
-        return 1;
+      int idx = EOBPars->delta_alphalm0_k[k];
+      if (EOBPars->delta_alphalm0[k] != 0.) {
+        temp_k[temp_size] = idx;
+        temp[idx]         = EOBPars->delta_alphalm0[k];
+        temp_size++;
+        if (temp[idx] <= -1.) {
+          printf("ERROR: Fractional deviations from QNM damping times must be > -1.\n");
+          return 1;
+        }
+      }
+    }
+    for (int k = 0; k < EOBPars->delta_taulm0_size; k++) {
+      int idx = EOBPars->delta_taulm0_k[k];
+      if (EOBPars->delta_taulm0[k] != 0.) {
+        if (temp[idx] != 0.) {
+          printf("ERROR: Nonzero deviation from both QNM alpha and tau specified for mode k = %d.\n", idx);
+          return 1;
+        }
+        else {
+          temp_k[temp_size] = idx;
+          temp[idx]         = - EOBPars->delta_taulm0[k]/(1. + EOBPars->delta_taulm0[k]);
+          temp_size++;
+        }
+        if (temp[idx] <= -1.) {
+          printf("ERROR: Fractional deviations from QNM damping times must be > -1.\n");
+          return 1;
+        }
       }
     }
     free(EOBPars->delta_alphalm0);
-    EOBPars->delta_alphalm0 = malloc ( KMAX * sizeof(double));
-    memcpy(EOBPars->delta_alphalm0, temp, KMAX * sizeof(double));
-    free(temp);
-  }
-
-  /* QNM damping time */
-  if (EOBPars->delta_taulm0_size > 0) {
-    if (EOBPars->delta_alphalm0_size > 0) {
-      printf("ERROR: specify either only delta_alphalm0, or only delta_taulm0.\n");
-      return 1;
-    }
-    if (EOBPars->delta_alphalm0)   free(EOBPars->delta_alphalm0);
-    if (EOBPars->delta_alphalm0_k) free(EOBPars->delta_alphalm0_k);
-    EOBPars->delta_alphalm0_size = EOBPars->delta_taulm0_size;
+    free(EOBPars->delta_alphalm0_k);
+    EOBPars->delta_alphalm0_size = temp_size;
     EOBPars->delta_alphalm0   = malloc ( KMAX * sizeof(double));
-    EOBPars->delta_alphalm0_k = malloc ( EOBPars->delta_taulm0_size * sizeof(int));
-    memcpy(EOBPars->delta_alphalm0_k, EOBPars->delta_taulm0_k, EOBPars->delta_taulm0_size * sizeof(int));
-    for (int k = 0; k < KMAX; k++) EOBPars->delta_alphalm0[k] = 0.;
-    for (int k = 0; k < EOBPars->delta_alphalm0_size; k++) {
-      int idx   = EOBPars->delta_alphalm0_k[k];
-      EOBPars->delta_alphalm0[idx] = - EOBPars->delta_taulm0[k]/(1. + EOBPars->delta_taulm0[k]);
-      if (EOBPars->delta_alphalm0[idx] <= -1.){
-        printf("ERROR: Fractional deviations from QNM damping times must be > -1.\n");
-        return 1;
-      }
-    }
+    EOBPars->delta_alphalm0_k = malloc ( EOBPars->delta_alphalm0_size * sizeof(int));
+    memcpy(EOBPars->delta_alphalm0,   temp,   KMAX * sizeof(double));
+    memcpy(EOBPars->delta_alphalm0_k, temp_k, EOBPars->delta_alphalm0_size * sizeof(int));
+    free(temp);
+    free(temp_k);
   }
 
   /* QNM frequency */
@@ -2262,13 +2269,11 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
       fprintf(f,"%d,", eobp->delta_taulm0_k[i]);
     fprintf(f,"%d]\n", eobp->delta_taulm0_k[eobp->delta_taulm0_size-1]);
     fprintf(f,"%s = [", "delta_taulm0");
-    for(int i=0; i<eobp->delta_taulm0_size-1;i++){
-      int idx = eobp->delta_taulm0_k[i];
-      fprintf(f,"%f,", eobp->delta_taulm0[idx]);
-    }
-    fprintf(f,"%f]\n", eobp->delta_taulm0[eobp->delta_taulm0_k[eobp->delta_taulm0_size-1]]);
+    for(int i=0; i<eobp->delta_taulm0_size-1;i++)
+      fprintf(f,"%f,", eobp->delta_taulm0[i]);
+    fprintf(f,"%f]\n", eobp->delta_taulm0[eobp->delta_taulm0_size-1]);
   }
-  else if (eobp->delta_alphalm0_size > 0) {
+  if (eobp->delta_alphalm0_size > 0) {
     fprintf(f,"%s = [", "delta_alphalm0_k");
     for(int i=0; i<eobp->delta_alphalm0_size-1;i++)
       fprintf(f,"%d,", eobp->delta_alphalm0_k[i]);
