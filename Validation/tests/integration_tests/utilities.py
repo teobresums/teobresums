@@ -10,7 +10,8 @@ def CreateDict( M=1.0, q=1.0,
                 iota=0, distance=1.,
                 f0=20., srate=4096*2., df=0.05,
                 interp='yes', domain=0,
-                modes=[1], coa=0, argout="no"
+                modes=[1], coa=0, argout="yes",
+                use_geom="no"
                 ):
     """
     Create the dictionary of parameters for EOBRunPy
@@ -55,7 +56,7 @@ def CreateDict( M=1.0, q=1.0,
         'LambdaBl2'          : lambda2,
         'distance'           : distance,
         'initial_frequency'  : f0,
-        'use_geometric_units': "no",
+        'use_geometric_units': use_geom,
         'coalescence_angle'  : coa,
         'interp_uniform_grid': interp,
         'df'                 : df,

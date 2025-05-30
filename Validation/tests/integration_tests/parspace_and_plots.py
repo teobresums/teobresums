@@ -138,14 +138,15 @@ def write_dict_to_txt(file, dic, initialize):
     """
     Write a dictionary to a .txt
     """
-    with open(file, "a") as f:
-        if(initialize):
+    if(initialize):
+        with open(file, "w") as f:
             f.write("# ")
             for k in dic.keys():
                 f.write(k)
                 f.write(" ")
             f.write("\n")
-        else:
+    else:
+        with open(file, "a") as f:
             for k in dic.keys():
                 f.write(str(dic[k]))
                 f.write(" ")
@@ -177,6 +178,8 @@ def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, ecc_int=None, omg
         ecc = np.random.uniform(ecc_int[0], ecc_int[1], N)
 
         params['ecc'] = ecc
+    else:
+        params['ecc'] = np.zeros(N)
 
     if(omg_int is not None):
         omg = np.random.uniform(omg_int[0], omg_int[1], N)
@@ -197,6 +200,8 @@ def gen_random_pars(Mint, qint, chi_int=None, lambda_int=None, ecc_int=None, omg
         anomaly = np.random.uniform(anomaly_int[0], anomaly_int[1], N)
 
         params['anomaly'] = anomaly
+    else:
+        params['anomaly'] = np.zeros(N)
 
     if(precessing):
         cos_theta1 = np.random.uniform(-1., 1., N)
