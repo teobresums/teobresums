@@ -1,0 +1,64 @@
+# parfile to test graceful failure and error catching
+# builds on default options
+
+#
+# use geometric units for I/O
+# everything is given geometric units and binary mass-rescaled 
+#
+
+use_geometric_units = "yes"
+
+#
+# Binary properties
+#
+
+q = 1. # mass ratio
+
+use_spins = 1
+chi1 =  0.5 # dimensionless spin 1 z-component 
+chi2 = -0.4 # dimensionless spin 2 z-component 
+
+initial_frequency = 0.005 # initial GW freq of 10 Hz for M = 15 M_sun
+
+ecc = 2 # this should make the code fail
+
+#
+# Output dir, output modes 
+#
+
+output_hpc = "no" # switch this off to test performances!!!
+output_multipoles = "no"
+output_lm   = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
+use_mode_lm = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 13 ]
+output_dynamics = "no"
+use_flm = "HM"
+use_a6c_fits = "HM"
+use_cN3LO_fits = "HM"
+A_pot = "PN"
+D_pot = "PN"
+Q_pot = "PN"
+
+#
+# Setup
+#
+
+size = 200 # size of the arrays (chunks, dynamically extended)
+ode_timestep = "adaptive"
+compute_LR = "yes" # calculate LR ?
+compute_LSO = "yes" # calculate LSO ?
+ode_stop_at_radius = 1. # rLR = 1.81...
+
+# interpolate on uniform grid?
+#interp_uniform_grid = 0 # no, outputs on a grid of dt = 0.5 
+interp_uniform_grid = "yes" # yes, only h+,hx on a grid of dt_interp
+#interp_uniform_grid = 2 # yes, all modes on a grid of dt_interp
+
+dt_interp = 3.3044505781 # M/delta_t = 4096 Hz for M=15*Msun
+
+
+
+
+
+
+
+
