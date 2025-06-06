@@ -40,7 +40,7 @@ pyprofit_ext = Extension('EOBRun_module',
                          extra_compile_args=["-w", "-std=c99", "-DDEBUG=0", "-DVERBOSE=0"]#, "-fcommon"
                        )
 
-setup(  name='teobresums-lvk',
+setup(  name='teobresums-dali-lvk',
         version=version,
         description='TEOBResumS: Effective-One-Body model for generic compact binary coalescences',
         author = 'The TEOBResumS team',

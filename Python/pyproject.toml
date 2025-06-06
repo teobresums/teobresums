@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 py-modules = []
 
 [project]
-name="teobresums-lvk"
+name="teobresums-dali-lvk"
 version = '0.0.1'
 authors =[{name="The TEOBResumS team", email="rossella.gamba@uni-jena.de"}]
 description='TEOBResumS: Effective-One-Body model for generic compact binary coalescences'
