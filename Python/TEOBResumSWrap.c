@@ -50,9 +50,6 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "j_hyp") != NULL ) {
     EOBPars->j_hyp = PyFloat_AsDouble(PyDict_GetItemString(dict, "j_hyp"));
   }
-  if ( PyDict_GetItemString(dict, "prs_sign_hyp") != NULL ) {
-    EOBPars->prs_sign_hyp = (int) PyLong_AsLong(PyDict_GetItemString(dict, "prs_sign_hyp"));
-  }
   if ( PyDict_GetItemString(dict, "use_geometric_units") != NULL ) { 
     EOBPars->use_geometric_units = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_geometric_units")));
   }
@@ -413,7 +410,7 @@ int SetOptionalVariables(PyObject* dict){
 
   if ( PyDict_GetItemString(dict, "ode_timestep") != NULL ) { 
     char* val;
-    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_timestep"));
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ringdown_eulerangles"));
     for(EOBPars->ode_timestep=0; EOBPars->ode_timestep<=ODE_TSTEP_NOPT; EOBPars->ode_timestep++){
       if (EOBPars->ode_timestep == ODE_TSTEP_NOPT) EOBPars->ode_timestep = ODE_TSTEP_ADAPTIVE;
       if (STREQUAL(val,ode_tstep_opt[EOBPars->ode_timestep])) break;
@@ -436,6 +433,9 @@ int SetOptionalVariables(PyObject* dict){
   }
   if ( PyDict_GetItemString(dict, "ode_stop_after_peak") != NULL ) { 
     EOBPars->ode_stop_after_peak = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_stop_after_peak")));
+  }
+  if ( PyDict_GetItemString(dict, "backwards") != NULL ) { 
+    EOBPars->backwards = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "backwards")));
   }
 
   /* FD */
@@ -468,11 +468,6 @@ int SetOptionalVariables(PyObject* dict){
   }
   if ( PyDict_GetItemString(dict,"lal_tetrad_conventions") != NULL ) { 
     EOBPars->lal_tetrad_conventions = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "lal_tetrad_conventions")));
-  }
-
-  /* Errors to warnings */
-  if ( PyDict_GetItemString(dict, "errors_to_warnings") != NULL ) { 
-    EOBPars->errors_to_warnings = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "errors_to_warnings")));
   }
 
   return OK;
@@ -1189,13 +1184,13 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
 static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
 {
   /* Compute A and B */
-  double r, q, chi1, chi2;
+  double r, q;
   double A, B, pl_hold;
 
   Dynamics *dyn;
 
   /* parse the input */
-  if (!PyArg_ParseTuple(args, "dddd", &r, &q, &chi1, &chi2))
+  if (!PyArg_ParseTuple(args, "dd", &r, &q))
     return NULL;
   
   double nu = q_to_nu(q);
@@ -1204,8 +1199,6 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
   EOBParameters_alloc ( &EOBPars ); 
   EOBParameters_defaults (BINARY_BBH, 0, EOBPars);
   EOBPars->q    = q;
-  EOBPars->chi1 = chi1;
-  EOBPars->chi2 = chi2;
 
   eob_set_params(BINARY_BBH, 1);
   /* set firstcall */
@@ -1227,46 +1220,6 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
   return ret;
 }
 
-static PyObject* eob_get_rc_py(PyObject *self, PyObject *args)
-{
-  double r, q, chi1, chi2;
-  double rc, drc_dr, d2rc_dr2;
-
-  Dynamics *dyn;
-
-  /* parse the input */
-  if (!PyArg_ParseTuple(args, "dddd", &r, &q, &chi1, &chi2))
-    return NULL;
-  
-  double nu = q_to_nu(q);
-
-  /* Allocate the defaults & set the parameters */
-  EOBParameters_alloc ( &EOBPars ); 
-  EOBParameters_defaults (BINARY_BBH, 0, EOBPars);
-  EOBPars->chi1 = chi1;
-  EOBPars->chi2 = chi2;
-  EOBPars->q    = q;
-
-  eob_set_params(BINARY_BBH, 1);
-  /* set firstcall */
-  for (int k=0; k < NFIRSTCALL; k++){ 
-    EOBPars->firstcall[k] = 1;
-  }
-
-  Dynamics_alloc (&dyn, 0, "dyn"); 
-  Dynamics_set_params(dyn); 
-  /* Compute rc and A */
-  eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
-
-  /* Free */ 
-  EOBParameters_free (EOBPars);
-  Dynamics_free(dyn);
-
-  PyObject *ret;
-  ret = Py_BuildValue("ddd", rc, drc_dr, d2rc_dr2);
-  return ret;
-}
-
 /* Define functions in module */
 static PyMethodDef EOBRunMethods[] = {
   {"EOBRunPy", EOBRunPy, METH_VARARGS, "Generate a time or frequency domain TEOBResumS waveform"},
@@ -1278,7 +1231,6 @@ static PyMethodDef EOBRunMethods[] = {
   {"eob_j0_circ_py", eob_j0_circ_py, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
   {"eob_dyn_j0_py", eob_dyn_j0_py, METH_VARARGS, "Compute the (generic) value of j corresponding to an initial semilatus rectum r"},
   {"eob_metricAB_py", eob_metricAB_py, METH_VARARGS, "Compute the metric potentials"},
-  {"eob_get_rc_py", eob_get_rc_py, METH_VARARGS, "Compute the centrifugal radius"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
   {NULL, NULL}  /* {NULL, NULL, 0, NULL} */ 

@@ -10,8 +10,7 @@ def CreateDict( M=1.0, q=1.0,
                 iota=0, distance=1.,
                 f0=20., srate=4096*2., df=0.05,
                 interp='yes', domain=0,
-                modes=[1], coa=0, argout="yes",
-                use_geom="no"
+                modes=[1], coa=0, argout="no"
                 ):
     """
     Create the dictionary of parameters for EOBRunPy
@@ -56,7 +55,7 @@ def CreateDict( M=1.0, q=1.0,
         'LambdaBl2'          : lambda2,
         'distance'           : distance,
         'initial_frequency'  : f0,
-        'use_geometric_units': use_geom,
+        'use_geometric_units': "no",
         'coalescence_angle'  : coa,
         'interp_uniform_grid': interp,
         'df'                 : df,
@@ -92,12 +91,15 @@ def gen_wf(m1, m2, s1z, s2z, lam1, lam2, additional_pars={}, return_zero=True):
     """
     par = CreateDict(M=m1+m2, q=m1/m2, chi1=[0,0,s1z], chi2=[0,0,s2z], lambda1=lam1, lambda2=lam2)
     pp = {**par, **additional_pars}
-    result = EOB.EOBRunPy(pp)
-    if(return_zero):
+    result = 0
+    try:
+       result = EOB.EOBRunPy(pp)
+    except RuntimeError:
+       return -1
+    if return_zero:
         del(result)
         return 0
-    else:
-        return result
+    return result
 
 def spinsphericalharm(s, l, m, phi, i):
     """

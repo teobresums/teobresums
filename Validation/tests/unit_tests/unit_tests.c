@@ -49,7 +49,6 @@ Dynamics *dyn;
 */
 int test_metric_derivatives(double q, double chi1, double chi2);
 int test_ecc_ICs(double q, double chi1, double chi2, double ecc, double f0);
-void test_flms(double q, double chi1, double chi2);
 
 static char *
 test_metric(void)
@@ -80,22 +79,9 @@ test_ICs(void)
 }
 
 static char *
-test_flms_print(void)
-{
-  double q = 4.;
-  double chi1 = 0.1;
-  double chi2 = 0.4;
-
-  test_flms(q, chi1, chi2);
-
-  return NULL;
-}
-
-static char *
 run_tests()
 {
 	mt_init(2);
-  mt_run_test("Testing flms", test_flms_print);
 	mt_run_test("Testing metric", test_metric);
 	mt_run_test("Testing ICs", test_ICs);
 
@@ -230,33 +216,6 @@ int test_metric_derivatives(double q, double chi1, double chi2)
     }
   }
   return err;
-}
-
-
-void test_flms(double q, double chi1, double chi2)
-{
-  /* for an array of x values print out the flms */
-  double dx = 0.001;
-  double rholm[500][KMAX];
-  double flm[500][KMAX];
-  double nu = q/(1+q)/(1+q);
-  for(int i=0; i<500; i++){
-    eob_wav_flm(i*dx, nu, rholm[i], flm[i]);
-  }
-  /* save to file */
-  FILE *f = fopen("flm.dat", "w");
-  fprintf(f, "x ");
-  for(int k=0; k<KMAX; k++){
-    fprintf(f, "rholm%d flm%d ", k, k);
-  }
-  fprintf(f, "\n");
-  for(int i=1; i<200; i++){
-    fprintf(f, "%lf ", i*dx);
-    for(int k=0; k<KMAX; k++){
-      fprintf(f, "%lf %lf ", rholm[i][k], flm[i][k]);
-    }
-    fprintf(f, "\n");
-  }
 }
 
 int main(int argc, char **argv)
