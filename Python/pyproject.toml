@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 py-modules = []
 
 [project]
-name="teobresums"
-version = '0.0.2'
+name="teobresums-lvk"
+version = '0.0.1'
 authors =[{name="The TEOBResumS team", email="rossella.gamba@uni-jena.de"}]
 description='TEOBResumS: Effective-One-Body model for generic compact binary coalescences'
 classifiers = [
@@ -18,8 +18,7 @@ classifiers = [
 readme="PyREADME.md"
 
 [project.urls]
-"Homepage"="https://bitbucket.org/eob_ihes/teobresums/src/master/"
-"Bug Tracker"="https://bitbucket.org/eob_ihes/teobresums/issues?status=new&status=open"
-"Wiki"="https://bitbucket.org/eob_ihes/teobresums/wiki/Home"
+"Homepage"="https://bitbucket.org/teobresums/teobresums/src/GIOTTO/"
+"Bug Tracker"="https://bitbucket.org/teobresums/teobresums/issues?status=new&status=open&status=submitted&is_spam=!spam"
+"Wiki"="https://bitbucket.org/teobresums/teobresums/wiki/Homee"
 "Mailing List"="https://lserv.uni-jena.de/mailman/listinfo/teobresums"
-
