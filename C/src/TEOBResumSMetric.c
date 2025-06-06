@@ -343,91 +343,6 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
   *d2A =  d2A_du;
 }
 
-/**
- *  Function : eob_metric_A5PNlogP33_newlogs
- *  ----------------------------------------
- *    EOB Metric A function 5PN log resummed with (3, 3) Pade
- *    Using new treatment of logs
- *    See 2407.04762 and refs. therein
- *
- *    @param[in]  r    : radial separation  
- *    @param[in]  nu   : symmetric mass ratio 
- *    @param[out] A    : A potential evaluated at r  
- *    @param[out] dA   : dA/du,   with u=1/r  
- *    @param[out] d2A  : d2A/du2, with u=1/r   
- */
-void eob_metric_A5PNlogP33_newlogs(double r, double nu, double *A, double *dA, double *d2A)
-{
-
-  /* shortcuts */
-  double nu2 = nu*nu;
-  double pi2 = Pi*Pi;
-  double pi4 = pi2*pi2;
-  double pi6 = pi4*pi2;
-  double ln2  = log(2);
-  double ln3  = log(3);
-
-  double a5c0       = -4237./60 + 2275./512*pi2 + 256./5*ln2 + 128./5*EulerGamma;
-  double a5c1       = -221./6   + 41./32*pi2;
-  double a5         =  a5c0 + nu*a5c1;
-  double a6         =  EOBPars->a6c;
-
-  double u       = 1./r;
-  double u2      = u*u;
-  double u3      = u*u2;
-  double u4      = u2*u2;
-  double u5      = u2*u3;
-  double logu    = log(u);
-
-  
-
-  /*----------------------------------------------------------
-   preliminary: coefficients of the Pade and its derivatives
-  ----------------------------------------------------------*/
-  double N0     = -1737228288.  + 3538944.*a5 + 7077888.*nu + 142073856.*pi2 - 2904768.*pi4;
-  double N1     = -27216576512. - 3538944.*a6 + 3338735616.*pi2 - 136524096.*pi4 + 1860867.*pi6 + a5*(110886912. - 4534272.*pi2);
-  double D0     =  N0;
-  double D1     = -18432.*(192.*a6 + nu*(6016.- 246.*pi2) + a5*(-3008. + 123.*pi2));
-
-  double D2     = -192.*(9216.*a5*a5 + 18432.*a5*nu + (-3008. + 123.*pi2)*(96.*a6 + nu*(3008. - 123.*pi2)));
-  double D3     =  nu*(-3538944.*a6 - 36864.*a5*(-3008. + 123.*pi2) + (-3008. + 123.*pi2)*SQ(-3008. + 123.*pi2) );
-
-  /* the small a(u,nu) function*/
-  double Num  = N0 + N1*u;
-  double Den  = D0 + D1*u + D2*u2 + D3*u3;
-  double anu  = Num/Den;
-
-  /* derivative of anu with respect to u*/
-  double dNum    = N1;
-  double dDen    = D1 + 2.*u*D2 + 3*u2*D3;
-  double danu_du = anu*(dNum/Num - dDen/Den);
-
-  /* second derivative of anu with respect to u*/
-  double d2Num = 0.;
-  double d2Den = 6.*u*D3 + 2*D2;
-  double d2anu_du2 = anu/(Num*Den)*(2.*dDen*dDen*anu - 2.*dNum*dDen + Den*d2Num - d2Den*Num);
-
-  /* derivatives of A with respect to u */
-  double dA_du  = -2 + 6*nu*u2*anu + 2*nu*u3*danu_du;
-  double d2A_du = 12*nu*u*anu + 12*nu*u2*danu_du + 2*nu*u3*d2anu_du2;
-
-  /* Log part of A */
-  double clog       = -5.211309523809524 - 2.25*nu;
-
-  double flog       = 1.0/(1. - clog*u);
-  double dflog_du   = clog*flog*flog;
-  double d2flog_du2 = 2.0*dflog_du*clog*flog;
-
-  double Alog       = 12.8*flog*u5*logu;
-  double dAlog_du   = 12.8*(dflog_du*u5*logu + 5*u4*flog*logu +flog*u4);
-  double d2Alog_du2 = 12.8*(logu*(d2flog_du2*u5 + 10*dflog_du*u4 + 20*flog*u3)+2*dflog_du*u4 + 9*flog*u3);
-
-  /* output derivatives with respect to u */
-  *A   =  1-2*u + 2*nu*u3*anu + nu*Alog;
-  *dA  =  dA_du + nu*dAlog_du;
-  *d2A =  d2A_du + nu*d2Alog_du2;
-}
-
 
 /** EOB Metric D function at 3PN, resummed */
 
@@ -608,7 +523,7 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D)
 */
 
 /**
- *  Function : eob_metric_D5PNP32
+ *  Function : eob_metric_DGSF
  *  --------------------------
  *    EOB metric D potential rewritten with (3, 2) Pade 
  *    2108.02043 and refs. therein
@@ -735,102 +650,6 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
   *dD  = (dNum*Den - Num*dDen)/(Den*Den);
   *d2D = (d2Num*Den - Num*d2Den)/(Den*Den)\
         -2.*dDen*(dNum*Den - Num*dDen)/(Den*Den*Den);
-
-}
-
-/**
- *  Function : eob_metric_D5PNP32_newlogs
- *  -------------------------------------
- *    EOB metric D potential rewritten with (3, 2) Pade 
- *    2407.04762 and refs. therein
- * 
- *    @param[in]  r    : radial separation  
- *    @param[in]  nu   : symmetric mass ratio 
- *    @param[out] D    : D potential evaluated at r  
- *    @param[out] dD   : dD/du,   with u=1/r  
- *    @param[out] d2D  : d2D/du2, with u=1/r   
- */
-void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, double *d2D)
-{
-
-  /* shortcuts */
-  double nu2 = nu*nu;
-  double pi2 = Pi*Pi;
-  double pi4 = pi2*pi2;
-  double pi6 = pi4*pi2;
-  double ln2  = log(2);
-  double ln3  = log(3);
-
-  double u       = 1./r;
-  double u2      = u*u;
-  double u3      = u*u2;
-  double u4      = u2*u2;
-  double logu    = log(u);
-
-
-  // only analytically uncalculated 5PN coefficient set to zero 
-  double d5nu2 = 0.;        
-  double d2    = -6.*nu;
-  double d3    = -52.*nu + 6.*nu2;
-
-  double c1    = 533./45 - 1184./15*EulerGamma + 23761./1536*pi2  + 6496./15*ln2 - 2916./5*ln3;
-  double c2    = 296. - 123./16*pi2;
-  double d4c   = c1 + nu*c2;
-  double d4log = -592./15;
-  double d4    = nu*d4c;
-
-  double d5c   = (-294464./175) + (2840./7)*EulerGamma + (-120648./35)*ln2 + (19683./7)* \
-                ln3 + ((-2216./105) - d5nu2 + (6784./15)*EulerGamma + (326656./21)* \
-                ln2 + (-58320./7)*ln3)*nu + (63707./512)*pi2 + nu2*((-1285./3) + (205./16) \
-                *pi2);
-  double d5log = (1420./7) + (3392./15)*nu;
-  double d5    = nu*d5c;
-  
-
-  // define powers of coefficients
-  double d2_2 = d2*d2;
-  double d2_3 = d2_2*d2;
-  double d3_2 = d3*d3;
-  double d3_3 = d3_2*d3;
-  double d3_4 = d3_2*d3_2;
-  double d4_2 = d4*d4;
-
-  // we define here this variable to then comfortably 
-  // write powers of it
-  double factor = 1./(d3_2 - d2*d4);
-  double factor2 = factor*factor;
-  double factor3 = factor2*factor;
-
-  double N1   = factor*((-1)*d3*d4 + d2*d5);
-  double N2   = -factor*((-1)*d2*d3_2 + d2_2*d4 + (-1)*d4_2 + d3*d5);
-  double N3   = factor*(d3_3 + (-2)*d2*d3*d4 + d2_2*d5);
-
-  double D1   = factor*((-1)*d3*d4 + d2*d5);
-  double D2   = -factor*((-1)*d4_2 + d3*d5);
-  
-  double Num = 1. + N1*u + N2*u2 + N3*u3;
-  double Den = 1. + D1*u + D2*u2;
-  
-  double dNum =  N1 + 2*N2*u + 3*N3*u2;
-  double dDen =  D1 + 2*D2*u;
-  double d2Num = 2*N2 + 6*N3*u;
-  double d2Den = 2*D2;
-  
-  /* Log part of D */
-  double clog      =  5.139961389961390 + 5.729729729729730*nu;
-  double flog      =  1./(1. + clog*u);
-  double dflog_du  =  -clog*flog*flog;
-  double d2flog_du =  -2.*clog*dflog_du*flog;
-  
-  double Dlog      = -39.46666666666667*flog*u4*logu;
-  double dDlog_du  = -39.46666666666667*(dflog_du*u4*logu + 4*u3*flog*logu +flog*u3);
-  double d2Dlog_du = -39.46666666666667*((d2flog_du*u4 + 8*dflog_du*u3 + 12*u2*flog)*logu + 2*dflog_du*u3 + 7*flog*u2);
-
-  // Output the derivatives in u
-  *D   =  Num/Den + nu*Dlog;
-  *dD  = (dNum*Den - Num*dDen)/(Den*Den) + nu*dDlog_du;
-  *d2D = (d2Num*Den - Num*d2Den)/(Den*Den)\
-        -2.*dDen*(dNum*Den - Num*dDen)/(Den*Den*Den) + nu*d2Dlog_du;
 
 }
 
@@ -1159,7 +978,7 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
 {
   
-  double A=0., dA_u=0., d2A_u=0., dA=0., d2A=0.;
+  double A, dA_u, d2A_u, dA, d2A;
 
   const double elsix = 1.833333333333333333333;  // 11/6
   const double eightthird = 2.6666666666666666667; // 8/3
@@ -1697,8 +1516,8 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
 
   /* Add here tides if needed */
   if (EOBPars->use_tidal) {
-    double AT=0., dAT_u=0., d2AT_u=0.;
-    double BT=0., dBT_u=0., d2BT_u=0.;
+    double AT, dAT_u, d2AT_u;
+    double BT, dBT_u, d2BT_u;
     eob_metric_Atidal(r, dyn, &AT, &dAT_u, &d2AT_u);
     Atmp     += AT;
     dAtmp_u  += dAT_u;

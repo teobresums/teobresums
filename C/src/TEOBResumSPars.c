@@ -48,8 +48,6 @@ void (*eob_wav_deltalm)();
 void (*eob_wav_hlmNQC_find_a1a2a3)();
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 int (*eob_wav_ringdown)();
-double (*eob_nqc_timeshift)();
-void (*eob_nqc_deltat_lm)();
 void (*eob_dyn_s_get_rc)();
 int (*eob_dyn_ic)();
 double (*eob_dyn_r0_eob)();
@@ -129,7 +127,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->r_hyp = 0.;
   eobp->H_hyp = 0.;
   eobp->j_hyp = 0.;
-  eobp->prs_sign_hyp = -1;
+  
   eobp->distance = 1.;
   eobp->inclination = 0.;
   eobp->coalescence_angle = 0.;
@@ -250,7 +248,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   /* Set default sigmoid parameters */
   eobp->delta_t0_sigmoid_Newt = 100.;
   eobp->delta_t0_sigmoid_NQC  = 100.;
-  eobp->alpha_sigmoid_Newt    = 0.15;
+  eobp->alpha_sigmoid_Newt    = 0.06;
   eobp->alpha_sigmoid_NQC     = 0.06;
   
   /* Output */
@@ -276,31 +274,30 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
-  eobp->ode_stop_radius=1.5; // stop ODE integration at this radius (if > 0)
+  eobp->ode_stop_radius  =2.; // stop ODE integration at this radius (if > 0)
   eobp->ode_tmax=1e12; // max integration time
   eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
   eobp->ode_stop_after_peak=0;
 
   /* Spin dynamics */
   
-  eobp->spin_dyn_size        = 500;// size for spin dynamics arrays
-  eobp->spin_odes_omg_stop   = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
-  eobp->spin_odes_t_stop     = -1;
-  eobp->spin_odes_dt         = 1;  // timestep for spin dynamics
-  eobp->spin_interp_domain   = 0;  // FD or TD interpolation
-  eobp->chi1x = eobp->chi1y  = eobp->chi1z = 0.;
-  eobp->chi2x = eobp->chi2y  = eobp->chi2z = 0.;
-  eobp->spin_flx             = SPIN_FLX_EOB; 
+  eobp->spin_dyn_size      = 500;// size for spin dynamics arrays
+  eobp->spin_odes_omg_stop = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
+  eobp->spin_odes_t_stop   = -1;
+  eobp->spin_odes_dt       = 1;  // timestep for spin dynamics
+  eobp->spin_interp_domain = 1;  // FD or TD interpolation
+  eobp->chi1x = eobp->chi1y = eobp->chi1z = 0.;
+  eobp->chi2x = eobp->chi2y = eobp->chi2z = 0.;
+  eobp->spin_flx             = SPIN_FLX_PN;
   eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
 
   /* OMP settings */
 
   eobp->openmp_threads=1; // OpenMP threads
   eobp->openmp_timeron=0; // OpenMP timers
-
-  /* Errors and warnings */
-  eobp->errors_to_warnings=0; //False
    
+  eobp->backwards = 0;
+
   /* following pars are set later by the code */
 
   
@@ -402,12 +399,12 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->Q_pot          = Q_3PN; 
     } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
-      eobp->use_flm        = USEFLM_HM_6PN3p3;
-      eobp->use_a6c_fits   = a6c_fits_P33_newlogs;
-      eobp->use_cN3LO_fits = cN3LO_fits_P33_newlogs;
+      eobp->use_flm        = USEFLM_HM_4PN22;
+      eobp->use_a6c_fits   = a6c_fits_P33_HM4PN22;
+      eobp->use_cN3LO_fits = cN3LO_fits_P33_HM4PN22;
       eobp->nqc_coefs_flx  = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
-      eobp->A_pot          = A_5PNlogP33_newlogs; 
-      eobp->D_pot          = D_5PNP32_newlogs;
+      eobp->A_pot          = A_5PNlogP33; 
+      eobp->D_pot          = D_5PNP32;
       eobp->Q_pot          = Q_5PNloc; 
     } else {
       errorexit("Unknown BBH model specified.");
@@ -519,12 +516,11 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->use_spins = MODE_SPINS_ALIGNED;
   }
 
-  /* If precession and eccentricity are both specified, use EOB flux */
-  // if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
-  //  if (VERBOSE){
-  //     printf("Setting spin_flux to EOB\n"); EOBPars->spin_flx = SPIN_FLX_EOB;
-  //     printf("Setting interpolation domain to TD\n"); EOBPars->domain = 0;
-  //  }
+  /* Check: if precession and eccentricity are both specified, throw an error */
+  if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0)){
+    printf("ERROR: Precession and eccentricity are notcompatible. Please set one of them to zero.\n");
+    return 1;
+  }
 
   /* Check: if eccentricity is not between 0 and 1, throw an error */
   if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0)){
@@ -743,13 +739,6 @@ int eob_set_params(int default_choice, int firstcall)
   EOBPars->a6c = 0.;
   switch(EOBPars->use_a6c_fits)
   {
-    case(a6c_fits_P33_newlogs):
-      if(EOBPars->A_pot != A_5PNlogP33_newlogs){
-        printf("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
-        return 1;
-      }
-      EOBPars->a6c = eob_a6c_fit_ecc_P33_newlogs(EOBPars->nu);
-      break;
     case(a6c_fits_P33_HM4PN22):
       if(EOBPars->use_flm != USEFLM_HM_4PN22){
         printf("a6c_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
@@ -791,13 +780,6 @@ int eob_set_params(int default_choice, int firstcall)
   EOBPars->cN3LO = 0.;
   switch(EOBPars->use_cN3LO_fits)
   {
-    case(cN3LO_fits_P33_newlogs):
-      if(EOBPars->A_pot != A_5PNlogP33_newlogs){
-        printf("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
-        return 1;
-      }
-      EOBPars->cN3LO = eob_c3_fit_ecc_P33_newlogs(EOBPars->nu,EOBPars->a1,EOBPars->a2);
-      break;
     case(cN3LO_fits_P33_HM4PN22):
       if(EOBPars->use_flm != USEFLM_HM_4PN22){
         printf("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
@@ -889,15 +871,7 @@ int eob_set_params(int default_choice, int firstcall)
   /* Function pointers */
   
   /** Set waveform fun pointers */
-  if (EOBPars->use_flm == USEFLM_HM_6PN3p3){
-    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
-    eob_wav_flm      = &eob_wav_flm_HM_6PN3p3;
-    eob_wav_flm_s    = &eob_wav_flm_s_HM_6PN3p3; // oops
-    eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_HM; 
-    eob_flx_Fr       = &eob_flx_Fr_ecc_next;
-  }
-  else if (EOBPars->use_flm == USEFLM_HM_4PN22) {
+  if (EOBPars->use_flm == USEFLM_HM_4PN22) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
     eob_wav_flm      = &eob_wav_flm_HM_4PN22;
     eob_wav_flm_s    = &eob_wav_flm_s_HM_4PN22;
@@ -957,11 +931,6 @@ int eob_set_params(int default_choice, int firstcall)
   if(EOBPars->binary==BINARY_BHNS || EOBPars->binary == BINARY_BHNS_TD){
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
     eob_wav_ringdown = &eob_wav_ringdown_bhns;
-    eob_nqc_timeshift = &eob_nqc_timeshift_bhns;
-    eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bhns;
-  }else{ // For BBH
-    eob_nqc_timeshift = &eob_nqc_timeshift_bbh;
-    eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bbh;
   }
 
   /* Set metric potentials function pointers */
@@ -971,8 +940,6 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Apotential = &eob_metric_AGSF;
   } else if (EOBPars->A_pot == A_5PNlogP33) {
     eob_metric_Apotential = &eob_metric_A5PNlogP33;
-  } else if (EOBPars->A_pot == A_5PNlogP33_newlogs) {
-    eob_metric_Apotential = &eob_metric_A5PNlogP33_newlogs;
   } else {
     printf("ERROR: Unknown option for A potential\n");
     return 1;
@@ -984,8 +951,6 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Dpotential = &eob_metric_DGSF;
   } else if (EOBPars->D_pot == D_5PNP32) {
     eob_metric_Dpotential = &eob_metric_D5PNP32;
-  } else if (EOBPars->D_pot == D_5PNP32_newlogs) {
-    eob_metric_Dpotential = &eob_metric_D5PNP32_newlogs;
   } else {
     printf("ERROR: Unknown option for D potential\n");
     return 1;
@@ -1048,7 +1013,7 @@ int eob_set_params(int default_choice, int firstcall)
   /* Set initial conditions fun pointer */
   if (r_hyp != 0.) {
     // hyp case
-    eob_dyn_ic = &eob_dyn_ic_hyp_s;
+    eob_dyn_ic = &eob_dyn_ic_hyp;
   } else if (EOBPars->model == MODEL_DALI) {
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_MA)
@@ -1296,9 +1261,6 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   }
   if (STREQUAL(key,"j_hyp")) {
     eobp->j_hyp = par_get_d(val);
-  }
-  if (STREQUAL(key, "prs_sign_hyp")) {
-    eobp->prs_sign_hyp = par_get_i(val);
   }
   if (STREQUAL(key,"distance")) {
     eobp->distance = par_get_d(val);
@@ -1576,7 +1538,7 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     val = string_trim(val);
     for (eobp->spin_flx=0; eobp->spin_flx<=SPIN_FLX_NOPT; eobp->spin_flx++) {
       if (eobp->spin_flx == SPIN_FLX_NOPT) {
-        eobp->spin_flx = SPIN_FLX_EOB;
+        eobp->spin_flx = SPIN_FLX_PN;
         if (VERBOSE) printf("spin flux '%s' undefined, set to '%s'\n",
         val,spin_flx_opt[eobp->spin_flx]);
         break;
@@ -1770,10 +1732,7 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   }
   if (STREQUAL(key,"lal_tetrad_conventions")) {
     eobp->lal_tetrad_conventions = YESNO2INT(string_trim(val));
-  }
-  if (STREQUAL(key,"errors_to_warning")) {
-    eobp->errors_to_warnings = YESNO2INT(string_trim(val));
-  }
+  } 
 }
 
 /**
@@ -1807,7 +1766,6 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "r_hyp", eobp->r_hyp);
   fprintf(f,"%s = %.16f\n", "H_hyp", eobp->H_hyp);
   fprintf(f,"%s = %.16f\n", "j_hyp", eobp->j_hyp);
-  fprintf(f,"%s = %d   \n", "prs_sign_hyp", eobp->prs_sign_hyp);
   fprintf(f,"%s = %.16f\n", "distance", eobp->distance);
   fprintf(f,"%s = %.16f\n", "inclination", eobp->inclination);
   fprintf(f,"%s = %.16f\n", "coalescence_angle", eobp->coalescence_angle);
@@ -1974,7 +1932,6 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "time_shift_TD", INT2YESNO(eobp->time_shift_TD));
   fprintf(f,"%s = \"%s\"\n", "lal_tetrad_conventions", INT2YESNO(eobp->lal_tetrad_conventions));
 
-  fprintf(f,"%s = \"%s\"\n", "errors_to_warnings", INT2YESNO(eobp->errors_to_warnings));
   fclose(f);
 }
 

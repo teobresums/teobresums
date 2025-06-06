@@ -371,7 +371,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
     int tmp_nqc = EOBPars->nqc_coefs_flx;
     EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-    if (eob_spin_dyn(spindyn, NULL, NULL, Pi * EOBPars->f0))
+    if (eob_spin_dyn(spindyn, NULL, NULL, Pi * EOBPars->initial_frequency/time_unit_fact))
       errorexit("problem during spin dynamics");
     EOBPars->nqc_coefs_flx = tmp_nqc;
 
@@ -411,8 +411,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
   /* Compute light-ring and LSO (if needed) */
   int check_status;
-  if (EOBPars->binary == BINARY_BNS) {
-  //if (use_tidal) { 
+  //if (EOBPars->binary == BINARY_BNS) {
+  if (use_tidal) { 
     /* Compute rLR_tidal for NNLO potential and without spin part */
     int tidal_tmp      = EOBPars->use_tidal;
     int spins_tmp      = EOBPars->use_spins;
@@ -599,7 +599,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       if (VERBOSE) printf("WARNING: Initial separation < 10\n");
     }
 
-    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins && EOBPars->model == MODEL_GIOTTO){
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins){
       if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0]){
         eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, dyn->data[EOB_MOMG][0]);
       }
@@ -968,7 +968,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
  END_ODE_EVOLUTION:;
  
   /* Unwrap phase for higher modes */
-  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3) || (ecc != 0.)) {
+  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (ecc != 0.)) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
 	      unwrap_HM(hlm->phase[k],size);
@@ -990,12 +990,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /* Precessing BNS (or BBH with no RD) + EOB flux: */
   if( (EOBPars->binary == BINARY_BNS || dyn->data[EOB_RAD][size-1] > 3.) && use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
-    if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0))
+    if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->initial_frequency/time_unit_fact))
       errorexit("problem during spin dynamics");
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
     spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
     
-    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI)
+    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB)
       eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
   }
 
@@ -1033,10 +1033,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
        NQC and ringdown attachment currently assume uniform grids.
        Do we need to interpolate ? */
     int merger_interp = 1; /* In general, yes ... */
-    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM) 
-                                          && (EOBPars->use_flm != USEFLM_HM_4PN22)
-                                          && (EOBPars->use_flm != USEFLM_HM_6PN3p3)) 
-      merger_interp = 0; /* ... except if merger is covered by uniform tstep */
+    if ((ode_tstep != ODE_TSTEP_ADAPTIVE) && (EOBPars->use_flm != USEFLM_HM) && (EOBPars->use_flm != USEFLM_HM_4PN22)) merger_interp = 0; /* ... except if merger is covered by uniform tstep */
 
     /* NQC and ringdown attachment is done around merger 
 	using auxiliary variables defined around [tmin,tmax] 
@@ -1068,7 +1065,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
-      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3)) {
+      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22)) {
 	      dt_merger_interp = 0.5;
       } else {
 	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
@@ -1162,12 +1159,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Precessing BBH + EOB flux: 
     */
     if(use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
-      if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0))
+      if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->initial_frequency/time_unit_fact))
         errorexit("problem during spin dynamics");
       spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
       spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
       
-      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI)
+      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB)
         eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
 
       /* final state */
@@ -1250,7 +1247,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       /* Interp to uniform grid the multipoles before hpc computation */
       const double dt_interp = EOBPars->dt_interp;
       const long int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
-      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");
+      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");  
       size = size_interp;
     }
 
