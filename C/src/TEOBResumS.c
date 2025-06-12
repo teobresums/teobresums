@@ -142,7 +142,7 @@ int main (int argc, char* argv[])
   
   if (output) {
     if (system_mkdir(EOBPars->output_dir)) {
-      printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
+      if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
       return ERROR_MKDIR;
     }
   }
@@ -155,7 +155,7 @@ int main (int argc, char* argv[])
   int status = OK;
   /* set domain */
   if (eob_set_params(dc, fc)) {
-    printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_SET_PARAMS]);
+    if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_SET_PARAMS]);
     status = ERROR_SET_PARAMS;
     goto EXIT_POINT_MAIN;
   }
@@ -170,7 +170,7 @@ int main (int argc, char* argv[])
 		      &hTmodes, &hTmmodes, &hT0modes,
 		      &hfTmodes,
 		      dc, fc);
-  if (status) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
+  if (status & DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
 
 EXIT_POINT_MAIN:;
 
@@ -819,7 +819,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /* ... if before the Omega_orb peak, this is an actual error */
     if (GSLSTATUS != GSL_SUCCESS) {
-      printf("GSL Error = %d", GSLSTATUS);
+      if (DEBUG) printf("GSL Error = %d", GSLSTATUS);
       /* errorexit("ODE solver returned error.\n"); */
       status = ERROR_ODEINT;
       goto EXIT_POINT;
@@ -830,7 +830,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (!(isfinite(dyn->r))) {
       printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);	
       /* errorexit("ODE solver returned NaN radius.\n"); */
-      printf("ODE solver returned NaN radius.\n");
+      if (DEBUG) printf("ODE solver returned NaN radius.\n");
       status = ERROR_ODEINT;
       goto EXIT_POINT;
     }
@@ -935,7 +935,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Check: is the dynamics long enough? */
   if (size < 10){
     // CHECKME: 10 points is somewhat arbitrary
-    printf("ERROR(TEOBResumS): ODE dynamics size < 10\n");
+    if (DEBUG) printf("ERROR(TEOBResumS): ODE dynamics size < 10\n");
     status = ERROR_ODEINT;
     goto EXIT_POINT;
   }
@@ -1197,7 +1197,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Ringdown attachment */
     if (eob_wav_ringdown(dyn, hlm)){
-      printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_RINGDOWN]);
+      if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_RINGDOWN]);
       status = ERROR_RINGDOWN;
       goto EXIT_POINT;
     }

@@ -2626,7 +2626,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
 
     /** Check for failures ... */
     if (GSLSTATUS != GSL_SUCCESS) {
-      printf("GSL Error = %d", GSLSTATUS);
+      if (DEBUG) printf("GSL Error = %d", GSLSTATUS);
       return ERROR_ODEINT;
     }
     if (dyn->y[EOB_EVOLVE_SPIN_Momg] < 0.){

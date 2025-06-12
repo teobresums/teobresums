@@ -1710,7 +1710,7 @@ double eob_dyn_bisecOmegaecc0(Dynamics *dyn, double omg_orb0,double r0_kepl)
 
   // Did we find a bracketing interval? If not, fail and return a negative number
   if (f_xlo*f_xhi > 0. || isnan(f_xlo)){
-    printf("ERROR: eob_dyn_bisecOmegaecc0, could not find a bracketing interval\n");
+    if (DEBUG) printf("ERROR: eob_dyn_bisecOmegaecc0, could not find a bracketing interval\n");
     return -1.;
   }
 
@@ -1780,7 +1780,7 @@ double eob_dyn_bisecHam0(Dynamics *dyn, double pr0PN, double j0, double Hap, dou
   if (VERBOSE) printf("f(x_lo) = %e, f(x_hi) = %e\n",f_xlo,f_xhi);
   if (f_xlo*f_xhi > 0.){
     // print an error, the bisection will fail. Return a negative number
-    printf("ERROR: eob_dyn_bisecHam0, could not find a bracketing interval\n");
+    if (DEBUG) printf("ERROR: eob_dyn_bisecHam0, could not find a bracketing interval\n");
     return -1.;
   }
   F.function = &eob_dyn_Ham0;

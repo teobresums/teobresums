@@ -530,14 +530,14 @@ int eob_set_params(int default_choice, int firstcall)
 
   /* Check: if eccentricity is not between 0 and 1, throw an error */
   if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0)){
-    printf("ERROR: Eccentricity must be >= 0 and < 1.\n");
+    if (DEBUG) printf("ERROR: Eccentricity must be >= 0 and < 1.\n");
     return 1;
   }
   /* Check: if spin variables exceed 1, throw an error */
   double chitot1 = sqrt(SQ(EOBPars->chi1x)+SQ(EOBPars->chi1y)+SQ(EOBPars->chi1z));
   double chitot2 = sqrt(SQ(EOBPars->chi2x)+SQ(EOBPars->chi2y)+SQ(EOBPars->chi2z));
   if ((chitot1 > 1.0) || (chitot2 > 1.0)){
-    printf("ERROR: Spin magnitudes must not exceed 1.\n");
+    if (DEBUG) printf("ERROR: Spin magnitudes must not exceed 1.\n");
     return 1;
   }
   EOBPars->nu = q_to_nu(q);
@@ -621,15 +621,15 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->japT2 = EOBPars->japA2 + EOBPars->japB2;
     
     if (!(EOBPars->kapT2 > 0.)) {
-      printf("ERROR: kappaT2 must be >0\n");
+      if (DEBUG) printf("ERROR: kappaT2 must be >0\n");
       return 1;
     }
     if (!(EOBPars->kapT3 > 0.)) {
-      printf("ERROR: kappaT3 must be >0\n");
+      if (DEBUG) printf("ERROR: kappaT3 must be >0\n");
       return 1;
     }
     if (!(EOBPars->kapT4 > 0.)) {
-      printf("ERROR: kappaT4 must be >0\n");
+      if (DEBUG) printf("ERROR: kappaT4 must be >0\n");
       return 1;
     }
     
@@ -674,7 +674,7 @@ int eob_set_params(int default_choice, int firstcall)
 	      if (LamAl[l] > 0) {
 	        EOBPars->bomgfA[l] = Chang14_fit_omegaf(LamAl[l], l);	 
 	        if (EOBPars->bomgfA[l]<=0.){
-            printf("ERROR: f-mode frequency of star A cannot be zero or negative\n");
+            if (DEBUG) printf("ERROR: f-mode frequency of star A cannot be zero or negative\n");
             return 1;
           }
 	        EOBPars->bomgfA[l] /= XA;
@@ -682,7 +682,7 @@ int eob_set_params(int default_choice, int firstcall)
 	      if (LamBl[l] > 0) {
 	        EOBPars->bomgfB[l] = Chang14_fit_omegaf(LamBl[l], l);
 	        if (EOBPars->bomgfB[l]<=0.){
-            printf("ERROR: f-mode frequency of star B cannot be zero or negative\n");
+            if (DEBUG) printf("ERROR: f-mode frequency of star B cannot be zero or negative\n");
             return 1;
           }
 	        EOBPars->bomgfB[l] /= XB;
@@ -747,35 +747,35 @@ int eob_set_params(int default_choice, int firstcall)
   {
     case(a6c_fits_P33_newlogs):
       if(EOBPars->A_pot != A_5PNlogP33_newlogs){
-        printf("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
+        if (DEBUG) printf("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_ecc_P33_newlogs(EOBPars->nu);
       break;
     case(a6c_fits_P33_HM4PN22):
       if(EOBPars->use_flm != USEFLM_HM_4PN22){
-        printf("a6c_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
+        if (DEBUG) printf("a6c_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_ecc_P33_4PNh22(EOBPars->nu);
       break;
     case(a6c_fits_ecc):
       if (EOBPars->model == MODEL_DALI){
-        printf("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
+        if (DEBUG) printf("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
       break;
     case(a6c_fits_HM_2023):
       if (EOBPars->use_flm != USEFLM_HM){
-        printf("a6c_fits_HM_2023 should be used with USEFLM_HM\n");
+        if (DEBUG) printf("a6c_fits_HM_2023 should be used with USEFLM_HM\n");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_HM_2023(EOBPars->nu);
       break;
     case(a6c_fits_HM):
       if (EOBPars->use_flm != USEFLM_HM){
-        printf("a6c_fits_HM should be used with USEFLM_HM\n");
+        if (DEBUG) printf("a6c_fits_HM should be used with USEFLM_HM\n");
         return 1;
       }     
       EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
@@ -795,21 +795,21 @@ int eob_set_params(int default_choice, int firstcall)
   {
     case(cN3LO_fits_P33_newlogs):
       if(EOBPars->A_pot != A_5PNlogP33_newlogs){
-        printf("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
+        if (DEBUG) printf("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_newlogs(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_P33_HM4PN22):
       if(EOBPars->use_flm != USEFLM_HM_4PN22){
-        printf("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
+        if (DEBUG) printf("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_4PNh22(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_ecc):
       if(EOBPars->model == MODEL_DALI){
-        printf("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
+        if (DEBUG) printf("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
@@ -819,14 +819,14 @@ int eob_set_params(int default_choice, int firstcall)
     case(cN3LO_fits_HM_2023_430):
     case(cN3LO_fits_HM_2023_420):
       if (EOBPars->use_flm != USEFLM_HM){
-        printf("cN3LO_fits_HM_2023 should be used with USEFLM_HM\n");
+        if (DEBUG) printf("cN3LO_fits_HM_2023 should be used with USEFLM_HM\n");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_HM_2023(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_HM):
       if (EOBPars->use_flm != USEFLM_HM){
-        printf("cN3LO_fits_HM should be used with USEFLM_HM\n");
+        if (DEBUG) printf("cN3LO_fits_HM should be used with USEFLM_HM\n");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
@@ -937,7 +937,7 @@ int eob_set_params(int default_choice, int firstcall)
       eob_wav_flm_s   = &eob_wav_flm_s_SSNNLO;
     */
   } else {
-    printf("ERROR: Unknown option for use_flm\n");
+    if (DEBUG) printf("ERROR: Unknown option for use_flm\n");
     return 1;
   }
 
@@ -976,7 +976,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->A_pot == A_5PNlogP33_newlogs) {
     eob_metric_Apotential = &eob_metric_A5PNlogP33_newlogs;
   } else {
-    printf("ERROR: Unknown option for A potential\n");
+    if (DEBUG) printf("ERROR: Unknown option for A potential\n");
     return 1;
   }
 
@@ -989,7 +989,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->D_pot == D_5PNP32_newlogs) {
     eob_metric_Dpotential = &eob_metric_D5PNP32_newlogs;
   } else {
-    printf("ERROR: Unknown option for D potential\n");
+    if (DEBUG) printf("ERROR: Unknown option for D potential\n");
     return 1;
   } 
 
@@ -1000,7 +1000,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->Q_pot == Q_5PNloc) {
     eob_metric_Qpotential = &eob_metric_Q5PNloc;
   } else {
-    printf("ERROR: Unknown option for Q potential\n");
+    if (DEBUG) printf("ERROR: Unknown option for Q potential\n");
     return 1;
   }
   
@@ -1018,7 +1018,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
   } else {
-    printf("ERROR: Unknown option for centrifugal radius\n");
+    if (DEBUG) printf("ERROR: Unknown option for centrifugal radius\n");
     return 1;
   }
 
@@ -1063,7 +1063,7 @@ int eob_set_params(int default_choice, int firstcall)
       else
 	      eob_dyn_ic = &eob_dyn_ic_circ_s; // Quasi-circular ICs ("nospin" option is deprecated)
     } else {
-      printf("ERROR: Unrecognized eccentric_ic flag.\n");
+      if (DEBUG) printf("ERROR: Unrecognized eccentric_ic flag.\n");
       return 1;
     }
   } else if (usespins) {
