@@ -10,7 +10,7 @@ def CreateDict( M=1.0, q=1.0,
                 iota=0, distance=1.,
                 f0=20., srate=4096*2., df=0.05,
                 interp='yes', domain=0,
-                modes=[1], coa=0, argout="yes",
+                modes=[1], coa=0, argout="no",
                 use_geom="no"
                 ):
     """
@@ -92,6 +92,7 @@ def gen_wf(m1, m2, s1z, s2z, lam1, lam2, additional_pars={}, return_zero=True):
     """
     par = CreateDict(M=m1+m2, q=m1/m2, chi1=[0,0,s1z], chi2=[0,0,s2z], lambda1=lam1, lambda2=lam2)
     pp = {**par, **additional_pars}
+    print(pp)
     result = EOB.EOBRunPy(pp)
     if(return_zero):
         del(result)

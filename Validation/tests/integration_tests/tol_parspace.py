@@ -250,6 +250,7 @@ if __name__=='__main__':
                                 chi2=[data['chi2x'][jw], data['chi2y'][jw], data['chi2z'][jw]],
                                 f0=args.f0,
                                 use_geom="no",
+                                argout="yes",
                                 ecc=data['ecc'][jw],
                                 anomaly=data['anomaly'][jw])
             pardic[f'{spinstr}ode_abstol'] = 10**(basetol)

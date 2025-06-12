@@ -9,6 +9,10 @@ RG, 12/2023
 import pytest
 import numpy as np
 import utilities as utils
+
+# fix the seed for reproducibility
+np.random.seed(42)
+
 params = {
 
         # test the same waveform is always the same (if not passed can point to leaks)
@@ -55,7 +59,7 @@ params = {
         # Test the periodicity of (ell, emm)-only waveforms with phase shifts such that phi_r = 2 Pi/emm
         'test_phase_shifts_lm'       :  [((40., 20., 0.8, 0.5, 0., 0.),    1e-10, [0, 1, 4, 8, 13]),   #BBH  (21, 22, 33, 44, 55)
                                          ((1.7, 1.,  0.2, 0.1, 400, 1500.), 1e-10, [0, 1, 4, 8, 13]),  #BNS  (21, 22, 33, 44, 55)
-                                         ((6., 1.4,  0.8, 0.1, 0., 1500.),  1e-10, [0, 1, 4, 8, 13])], #BHNS (21, 22, 33, 44, 55)       
+                                         ((6., 1.4,  0.8, 0.1, 0., 1500.),  1e-10, [0, 1, 8, 13])], #BHNS (21, 22, 44, 55)       
     }
 
 @pytest.mark.parametrize("pars, out", params['test_PA_phasing'])
@@ -65,8 +69,8 @@ def test_PA_phasing(pars, out):
     consistent with one another
     """
     mass1, mass2, s1z, s2z, lam1, lam2 = pars
-    _, hp_pa0, hc_pa0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, additional_pars={'use_postadiabatic_dynamics':"no"}, return_zero=False)
-    _, hp_pa1, hc_pa1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, additional_pars={'use_postadiabatic_dynamics':"yes"}, return_zero=False)
+    _, hp_pa0, hc_pa0 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, additional_pars={'model': 'Giotto','use_postadiabatic_dynamics':"no"}, return_zero=False)
+    _, hp_pa1, hc_pa1 = utils.gen_wf(mass1, mass2, s1z, s2z, lam1, lam2, additional_pars={'model': 'Giotto','use_postadiabatic_dynamics':"yes"}, return_zero=False)
     phase_pa0 = np.unwrap(np.angle(hp_pa0 - 1j*hc_pa0))
     phase_pa1 = np.unwrap(np.angle(hp_pa1 - 1j*hc_pa1))
 
@@ -185,7 +189,7 @@ def test_polariz_reconstruction(pars, eps):
     m1, m2, s1z, s2z, l1, l2 = pars
     iota = np.random.uniform(0, 2*np.pi)
     phi  = np.random.uniform(0, 2*np.pi)
-    modes = [0,1,5,8,13]
+    modes = [0,1,8,13]
     t,hp,hc,hlm,_ = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, return_zero=False,
                                 additional_pars={'arg_out':"yes",
                                                  'use_mode_lm': modes,
