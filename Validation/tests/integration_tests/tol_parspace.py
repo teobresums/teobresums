@@ -48,13 +48,14 @@ match_settings = {'kind'                : 'single-mode',
                   'taper'               : 'sigmoid',
                 }
 
-def run_tols(delta_log_tol, pardic, f0):
+def run_tols(delta_log_tol, pardic, f0, basetol=-13, spindyn=False):
     """
     Generate EOB waveform with default and modified tolerances.
     Compute mismatch, walltime, phase difference.
     Return everything essentially.
     """
-    newdic = pardic.copy()
+    spinstr = 'spin_' if spindyn else ''
+
     newdic = CreateDict(M=pardic['M'],
                         q=pardic['q'],
                         f0=f0,
@@ -63,6 +64,8 @@ def run_tols(delta_log_tol, pardic, f0):
                         use_geom="no",
                         ecc=pardic['ecc'],
                         anomaly=pardic['anomaly'],)
+    newdic[f'{spinstr}ode_abstol'] = 10**(basetol)
+    newdic[f'{spinstr}ode_reltol'] = 10**(basetol + 2)
 
     try:
         clock0 = time.time()
@@ -81,9 +84,9 @@ def run_tols(delta_log_tol, pardic, f0):
             eob0._kind   = 'EOB'
             eob0.domain  = 'Time'
         
-        change_tols = [{'ode_abstol': 10**(-13 + delta_log_tol), 'ode_reltol': 10**(-11)}, 
-                       {'ode_abstol': 10**(-13),                 'ode_reltol': 10**(-11 + delta_log_tol)}, 
-                       {'ode_abstol': 10**(-13 + delta_log_tol), 'ode_reltol': 10**(-11 + delta_log_tol)}]
+        change_tols = [{f'{spinstr}ode_abstol': 10**(basetol + delta_log_tol), f'{spinstr}ode_reltol': 10**(basetol + 2)}, 
+                       {f'{spinstr}ode_abstol': 10**(basetol),                 f'{spinstr}ode_reltol': 10**(basetol + 2 + delta_log_tol)}, 
+                       {f'{spinstr}ode_abstol': 10**(basetol + delta_log_tol), f'{spinstr}ode_reltol': 10**(basetol + 2 + delta_log_tol)}]
         times   = []
         dphis   = []
         matches = []
@@ -144,6 +147,8 @@ if __name__=='__main__':
     parser.add_argument('--anomaly',    type=float, nargs=2, default=[0., 2.*np.pi], help='Anomaly range for the binary.')
     parser.add_argument('--precessing', action='store_true',                         help='Precessing?')
     parser.add_argument('--dlogtol',    type=int,            default=2,              help='Log tolerance increase w.r.t. default.')
+    parser.add_argument('--spindyn',    action='store_true',                         help='Change spin ODE tolerance.')
+    parser.add_argument('--basetol',    type=int,            default=None,           help='Base absolute tolerance (log10). Base relative is 100*abs.')
     parser.add_argument('--nprocs',     type=int,            default=8,              help='Number of processes if running parallel.')
     parser.add_argument('--plot',       action='store_true',                         help='Plot results?')
     parser.add_argument('--file',       type=str,            default=None,           help='Input file')
@@ -160,7 +165,12 @@ if __name__=='__main__':
     else:
         ecc_int     = None
         anomaly_int = None
-    outfile = f"tolerance_N{args.N}_f0{args.f0}_dlogtol{args.dlogtol}_M{args.M[1]}_q{args.q[1]}{f'_ecc{ecc_int[1]}' if ecc_int is not None else ''}{'_prec' if args.precessing else ''}.txt"
+    if args.basetol is None:
+        basetol = -11 if args.spindyn else -13
+    else:
+        basetol = args.basetol
+    spinstr = 'spin_' if args.spindyn else ''
+    outfile = f"tolerance_{spinstr}N{args.N}_f0{args.f0}_dlogtol{args.dlogtol}_M{args.M[1]}_q{args.q[1]}{f'_ecc{ecc_int[1]}' if ecc_int is not None else ''}{'_prec' if args.precessing else ''}.txt"
     
     if args.file is None:
         pars = gen_random_pars(Mint=args.M, qint=args.q, chi_int=args.chi, ecc_int=ecc_int, anomaly_int=anomaly_int, precessing=args.precessing, N=args.N)
@@ -177,7 +187,7 @@ if __name__=='__main__':
             #     thing = p.apply_async(run_tols, (args.dlogtol, pars[jj], args.f0))
             #     outdict = thing.get()
             #     write_dict_to_txt(outfile, outdict, False)
-            for jj in tqdm.tqdm([[ii, p.apply_async(run_tols, (args.dlogtol, pars[ii], args.f0))] for ii in range(args.N)]):
+            for jj in tqdm.tqdm([[ii, p.apply_async(run_tols, (args.dlogtol, pars[ii], args.f0, basetol, args.spindyn))] for ii in range(args.N)]):
                 outdict = jj[1].get()
                 write_dict_to_txt(outfile, outdict, False)
     else:
@@ -242,11 +252,13 @@ if __name__=='__main__':
                                 use_geom="no",
                                 ecc=data['ecc'][jw],
                                 anomaly=data['anomaly'][jw])
+            pardic[f'{spinstr}ode_abstol'] = 10**(basetol)
+            pardic[f'{spinstr}ode_reltol'] = 10**(basetol + 2)
             clock = time.time()
             t0, hp0, hc0, hlm0, dyn0 = EOB.EOBRunPy(pardic)
             t0 = t0 - t0[0]
-            pardic.update({'ode_abstol': 10**(-13 + args.dlogtol),
-                           'ode_reltol': 10**(-11 + args.dlogtol)})
+            pardic.update({'ode_abstol': 10**(basetol + args.dlogtol),
+                           'ode_reltol': 10**(basetol + 2 + args.dlogtol)})
             t,  hp,  hc,  hlm,  dyn  = EOB.EOBRunPy(pardic)
             t = t - t[0]
 
@@ -255,7 +267,7 @@ if __name__=='__main__':
 
                 fig, ax = plt.subplots(2, 1, layout='constrained', figsize=(9,8), sharex=True)
                 ax[0].plot(t0, hlm0['1'][0]*np.cos(hlm0['1'][1]), color='k')
-                ax[0].plot(t,  hlm['1'][0]*np.cos(hlm['1'][1]))
+                ax[0].plot(t,  hlm['1'][0]*np.cos(hlm['1'][1]),   color='orange')
                 ax[1].plot(t0, deltaphi)
                 ax[0].set_ylabel(r'$\Re h_{22}$')
                 ax[1].set_xlabel(r'$t/M$')
@@ -263,7 +275,7 @@ if __name__=='__main__':
             else:
                 fig, ax = plt.subplots(layout='constrained', figsize=(9,6), sharex=True)
                 ax.plot(t0, hlm0['1'][0]*np.cos(hlm0['1'][1]), color='k')
-                ax.plot(t,  hlm['1'][0]*np.cos(hlm['1'][1]))
+                ax.plot(t,  hlm['1'][0]*np.cos(hlm['1'][1]),   color='orange')
                 ax.set_ylabel(r'$\Re h_{22}$')
                 ax.set_xlabel(r'$t/M$')
         plt.show()

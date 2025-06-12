@@ -712,6 +712,8 @@ typedef struct tagEOBParameters
   double dt;                                            /**< timestep */
   double ode_abstol;                                    /**< ODE solver absolute tolerance */
   double ode_reltol;                                    /**< ODE solver relative tolerance */
+  double spin_ode_abstol;                               /**< Spin dynamics ODE solver absolute tolerance */
+  double spin_ode_reltol;                               /**< Spin dynamics ODE solver relative tolerance */
   double ode_tmax;                                      /**< ODE solver max time */
   int ode_stop_afterNdt;                                /**< Number of steps to take after peal of omega */
   int ode_stop_after_peak;                              /**< Flag to check if solver is after the peak (yes/no) */

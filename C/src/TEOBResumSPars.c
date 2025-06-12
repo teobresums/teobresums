@@ -276,6 +276,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
+  eobp->spin_ode_abstol=1e-11; // Spin dynamics ODE solver absolute accuracy
+  eobp->spin_ode_reltol=1e-9;  // Spin dynamics ODE solver relative accuracy
   eobp->ode_stop_radius=1.5; // stop ODE integration at this radius (if > 0)
   eobp->ode_tmax=1e12; // max integration time
   eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
@@ -1714,6 +1716,12 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   if (STREQUAL(key,"ode_reltol")) {
     eobp->ode_reltol = par_get_d(val);
   }
+  if (STREQUAL(key,"spin_ode_abstol")) {
+    eobp->spin_ode_abstol = par_get_d(val);
+  }
+  if (STREQUAL(key,"spin_ode_reltol")) {
+    eobp->spin_ode_reltol = par_get_d(val);
+  }
   if (STREQUAL(key,"ode_tmax")) {
     eobp->ode_tmax = par_get_d(val);
   }
@@ -1951,6 +1959,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "ode_timestep", ode_tstep_opt[eobp->ode_timestep]);
   fprintf(f,"%s = %E\n"    , "ode_abstol", eobp->ode_abstol);
   fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
+  fprintf(f,"%s = %E\n"    , "spin_ode_abstol", eobp->spin_ode_abstol);
+  fprintf(f,"%s = %E\n"    , "spin_ode_reltol", eobp->spin_ode_reltol);
   fprintf(f,"%s = %.16f\n" , "ode_tmax", eobp->ode_tmax);
   fprintf(f,"%s = %f\n"    , "ode_stop_at_radius", eobp->ode_stop_radius);
   fprintf(f,"%s = %d\n"    , "ode_stop_afterNdt", eobp->ode_stop_afterNdt);

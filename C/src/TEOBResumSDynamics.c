@@ -2536,8 +2536,8 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   if (DEBUG) printf("omg_stop = %e\n", dyn->omg_stop);
   
   dyn->dt = EOBPars->spin_odes_dt; 
-  const double ode_abstol = EOBPars->ode_abstol*100;
-  const double ode_reltol = EOBPars->ode_reltol*100;
+  const double ode_abstol = EOBPars->spin_ode_abstol;
+  const double ode_reltol = EOBPars->spin_ode_reltol;
   double tstop;
   if (dyn->dt < 0)
     tstop = MIN(dyn->t_stop, EOBPars->ode_tmax);

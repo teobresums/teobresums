@@ -425,6 +425,12 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "ode_reltol") != NULL ) { 
     EOBPars->ode_reltol = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_reltol"));
   }
+  if ( PyDict_GetItemString(dict, "spin_ode_abstol") != NULL ) { 
+    EOBPars->spin_ode_abstol = PyFloat_AsDouble(PyDict_GetItemString(dict, "spin_ode_abstol"));
+  }
+  if ( PyDict_GetItemString(dict, "spin_ode_reltol") != NULL ) { 
+    EOBPars->spin_ode_reltol = PyFloat_AsDouble(PyDict_GetItemString(dict, "spin_ode_reltol"));
+  }
   if ( PyDict_GetItemString(dict, "ode_tmax") != NULL ) { 
     EOBPars->ode_tmax = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_tmax"));
   }
