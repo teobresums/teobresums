@@ -955,7 +955,7 @@ int eob_set_params(int default_choice, int firstcall)
         temp[idx]         = EOBPars->delta_alphalm0[k];
         temp_size++;
         if (temp[idx] <= -1.) {
-          printf("ERROR: Fractional deviations from QNM damping times must be > -1.\n");
+          if (DEBUG) printf("ERROR: Fractional deviations from QNM damping times must be > -1.\n");
           return 1;
         }
       }
@@ -964,7 +964,7 @@ int eob_set_params(int default_choice, int firstcall)
       int idx = EOBPars->delta_taulm0_k[k];
       if (DUNEQUAL(EOBPars->delta_taulm0[k], 0., 1e-9)) {
         if (DUNEQUAL(temp[idx], 0., 1e-9)) {
-          printf("ERROR: Nonzero deviation from both QNM alpha and tau specified for mode k = %d.\n", idx);
+          if (DEBUG) printf("ERROR: Nonzero deviation from both QNM alpha and tau specified for mode k = %d.\n", idx);
           return 1;
         }
         else {
@@ -973,7 +973,7 @@ int eob_set_params(int default_choice, int firstcall)
           temp_size++;
         }
         if (temp[idx] <= -1.) {
-          printf("ERROR: Fractional deviations from QNM damping times must be > -1.\n");
+          if (DEBUG) printf("ERROR: Fractional deviations from QNM damping times must be > -1.\n");
           return 1;
         }
       }
