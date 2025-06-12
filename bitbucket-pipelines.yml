@@ -2,7 +2,7 @@ image: atlassian/default-image:3
 
 pipelines:
     branches:
-        '{GIOTTO,feature/*}':
+        '{GIOTTO*,Dali*}':
             - step:
                 name: Build C & Run
                 script:
@@ -23,12 +23,22 @@ pipelines:
                   - apt-get install -y libgsl-dev python3-pip
                   - pip3 install --upgrade pip
                   - pip3 install numpy
-                  - cd Python && python3 setup.py install
+                  - cd Python && pip install .
                 condition:
                     changesets:
                         includePaths:
                         - "C/src/*"
                         - "Python/TEOBResumSWrap.c"
+
+            - step:
+                name: Run Tests
+                script:
+                  - apt-get update -y
+                  - apt-get install -y libgsl-dev python3-pip
+                  - pip3 install --upgrade pip
+                  - pip3 install numpy pytest matplotlib
+                  - cd Python && pip install .
+                  - cd ../Validation/tests/integration_tests && pytest -v integration_tests.py
 
             - step:
                 name: Build documentation
