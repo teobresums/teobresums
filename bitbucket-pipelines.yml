@@ -2,7 +2,7 @@ image: atlassian/default-image:3
 
 pipelines:
     branches:
-        '{master,feature/*}':
+        '{GIOTTO*,Dali*}':
             - step:
                 name: Build C & Run
                 script:
@@ -23,12 +23,34 @@ pipelines:
                   - apt-get install -y libgsl-dev python3-pip
                   - pip3 install --upgrade pip
                   - pip3 install numpy
-                  - cd Python && python3 setup.py install
+                  - cd Python && pip install .
                 condition:
                     changesets:
                         includePaths:
                         - "C/src/*"
                         - "Python/TEOBResumSWrap.c"
+
+            - step:
+                name: Run Tests
+                script:
+                  - apt-get update -y
+                  - apt-get install -y libgsl-dev python3-pip
+                  - pip3 install --upgrade pip
+                  - pip3 install numpy pytest matplotlib
+                  - cd Python && pip install .
+                  - cd ../Validation/tests/integration_tests && pytest -v integration_tests.py
+
+            - step:
+                name: Build documentation
+                script:
+                 - apt-get update -y
+                 - apt-get -y install doxygen
+                 - cp README.md C/src/.
+                 - cd C/doxygen && doxygen teob_doc.cfg
+                 - tar -cvf doc-dali.tar html/*
+                 - curl -X POST "https://${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"doc-dali.tar"
+                artifacts:
+                 - C/doxygen/html/**
 
             - step:
                 name: Memory Check
@@ -78,4 +100,4 @@ pipelines:
                   - pip3 install build
                   - python3 -m build
                   - python3 -m pip install --upgrade twine
-                  - python3 -m twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD
+                  - python3 -m twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD dist/*.tar.gz
