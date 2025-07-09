@@ -388,6 +388,8 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   double C_Hex1 = EOBPars->C_Hex1;
   double C_Hex2 = EOBPars->C_Hex2;
 
+  int backwards = EOBPars->backwards;
+
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
     /* Update the dressing factors for the f-mode resonances */
     fmode_resonance_dressing_factors(r, dyn);
@@ -468,6 +470,14 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   double Frstar = sqrtAbyB*Fr;
   dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*dHeff_dr*ooH + Frstar;
   
+   if (backwards) {
+    /* Backward evolution */
+    dy[EOB_EVOLVE_RAD]    *= -1;
+    dy[EOB_EVOLVE_PHI]    *= -1;
+    dy[EOB_EVOLVE_PRSTAR] *= -1;
+    dy[EOB_EVOLVE_PPHI]   *= -1;
+   }
+
   if (dyn->store) {
     /* Store values */
     dyn->t = t;
