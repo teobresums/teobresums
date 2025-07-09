@@ -740,6 +740,8 @@ typedef struct tagEOBParameters
   int ringdown_eulerangles;                             /**< Flag to choose which beyond-merger euler angles extension to employ */
   int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */
 
+  int backwards;                                        /**< Flag to switch on/off backwards dynamics */ 
+
   /* final state */
   double Mbhf; /**< Final BH mass */
   double abhf; /**< Final BH spin */
