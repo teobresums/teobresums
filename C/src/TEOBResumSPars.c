@@ -300,6 +300,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->openmp_threads=1; // OpenMP threads
   eobp->openmp_timeron=0; // OpenMP timers
 
+  eobp->backwards = 0;
+
   /* Errors and warnings */
   eobp->errors_to_warnings=0; //False
    
