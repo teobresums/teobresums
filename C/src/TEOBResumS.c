@@ -273,6 +273,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     use_postadiab_dyn = 0.; 
   } else if (EOBPars->model == MODEL_DALI && ecc == 0.) {
     use_postadiab_dyn = EOBPars->postadiabatic_dynamics; 
+  } else if (EOBPars->model == MODEL_GIOTTO) {
+    use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   }
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;

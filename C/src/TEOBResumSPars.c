@@ -724,6 +724,18 @@ void eob_set_params(int default_choice, int firstcall)
   EOBPars->a6c = 0.;
   switch(EOBPars->use_a6c_fits)
   {
+    case(a6c_fits_P33_newlogs_22PN):
+      if(EOBPars->A_pot != A_5PNlogP33_newlogs){
+        errorexit("a6c_fits_P33_newlogs_22PN should be used with A_5PNlogP33_newlogs\n");
+      }
+      EOBPars->a6c = eob_a6c_fit_P33_newlogs_rholm22PN(EOBPars->nu);
+      break;
+    case(a6c_fits_P33_newlogs):
+      if(EOBPars->A_pot != A_5PNlogP33_newlogs){
+        errorexit("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
+      }
+      EOBPars->a6c = eob_a6c_fit_ecc_P33_newlogs(EOBPars->nu);
+      break;
     case(a6c_fits_P33_HM4PN22):
       if(EOBPars->use_flm != USEFLM_HM_4PN22)
         errorexit("a6c_fits_HM should be used with USEFLM_HM_4PN22\n");
@@ -757,6 +769,12 @@ void eob_set_params(int default_choice, int firstcall)
   EOBPars->cN3LO = 0.;
   switch(EOBPars->use_cN3LO_fits)
   {
+    case(cN3LO_fits_P33_newlogs):
+      if(EOBPars->A_pot != A_5PNlogP33_newlogs){
+        errorexit("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
+      }
+      EOBPars->cN3LO = eob_c3_fit_ecc_P33_newlogs(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+      break;
     case(cN3LO_fits_P33_HM4PN22):
       if(EOBPars->use_flm != USEFLM_HM_4PN22)
         errorexit("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
@@ -919,6 +937,8 @@ void eob_set_params(int default_choice, int firstcall)
     eob_metric_Apotential = &eob_metric_AGSF;
   } else if (EOBPars->A_pot == A_5PNlogP33) {
     eob_metric_Apotential = &eob_metric_A5PNlogP33;
+  } else if (EOBPars->A_pot == A_5PNlogP33_newlogs) {
+    eob_metric_Apotential = &eob_metric_A5PNlogP33_newlogs;
   }
   else errorexit("unknown option for A potential");
 
@@ -928,7 +948,9 @@ void eob_set_params(int default_choice, int firstcall)
     eob_metric_Dpotential = &eob_metric_DGSF;
   } else if (EOBPars->D_pot == D_5PNP32) {
     eob_metric_Dpotential = &eob_metric_D5PNP32;
-  }else errorexit("unknown option for D potential");
+  } else if (EOBPars->D_pot == D_5PNP32_newlogs) {
+    eob_metric_Dpotential = &eob_metric_D5PNP32_newlogs;
+  } else errorexit("unknown option for D potential");
 
   if (EOBPars->Q_pot == Q_3PN) {
     eob_metric_Qpotential = &eob_metric_Q3PN;
@@ -1578,26 +1600,26 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"nqc_coefs_flx")) {
     val = string_trim(val);
     for (eobp->nqc_coefs_flx=0; eobp->nqc_coefs_flx<=NQC_FLX_NOPT; eobp->nqc_coefs_flx++) {
-if (eobp->nqc_coefs_flx == NQC_FLX_NOPT) {
-  eobp->nqc_coefs_flx = NQC_FLX_NONE;
-  if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
-          val, nqc_flx_opt[eobp->nqc_coefs_flx]);
-  break;
-}
-if (STREQUAL(val, nqc_flx_opt[eobp->nqc_coefs_flx])) break;
+      if (eobp->nqc_coefs_flx == NQC_FLX_NOPT) {
+        eobp->nqc_coefs_flx = NQC_FLX_NONE;
+        if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
+                val, nqc_flx_opt[eobp->nqc_coefs_flx]);
+        break;
+      }
+      if (STREQUAL(val, nqc_flx_opt[eobp->nqc_coefs_flx])) break;
     }
   }
 
   if (STREQUAL(key,"nqc_coefs_hlm")) {
     val = string_trim(val);
     for (eobp->nqc_coefs_hlm=0; eobp->nqc_coefs_hlm<=NQC_HLM_NOPT; eobp->nqc_coefs_hlm++) {
-if (eobp->nqc_coefs_hlm == NQC_HLM_NOPT) {
-  eobp->nqc_coefs_hlm = NQC_HLM_NONE;
-  if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
-          val, nqc_hlm_opt[eobp->nqc_coefs_hlm]);
-  break;
-}
-if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
+      if (eobp->nqc_coefs_hlm == NQC_HLM_NOPT) {
+        eobp->nqc_coefs_hlm = NQC_HLM_NONE;
+        if (VERBOSE) printf("nqc '%s' undefined, set to '%s'\n",
+                val, nqc_hlm_opt[eobp->nqc_coefs_hlm]);
+        break;
+      }
+      if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
     }
   }
 
@@ -1872,7 +1894,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   /* NQC */
   fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);
   fprintf(f,"%s = \"%s\"\n", "nqc_coefs_flx", nqc_flx_opt[eobp->nqc_coefs_flx]);
-  fprintf(f,"%s = \"%s\"\n", "nqc_coefs_hlm", nqc_hlm_opt[eobp->nqc_coefs_flx]);
+  fprintf(f,"%s = \"%s\"\n", "nqc_coefs_hlm", nqc_hlm_opt[eobp->nqc_coefs_hlm]);
   fprintf(f,"%s = \"%s\"\n", "nqc_coefs_flx_file", eobp->nqc_coefs_flx_file);
   fprintf(f,"%s = \"%s\"\n", "nqc_coefs_hlm_file", eobp->nqc_coefs_hlm_file);
 

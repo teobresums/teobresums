@@ -230,18 +230,20 @@ enum{
   A_5PNlog,        /**< 5PNlog resummed with P15 */
   A_GSF,           /**< GSF A, Pade' resummed */
   A_5PNlogP33,     /**< 5PNlog resummed with P33 */
+  A_5PNlogP33_newlogs, /**< 5PNlog resummed with P33, separate log resummation */
   A_NOPT           /**< number of options */
 };
-static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "undefined"};
+static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "5PNlogP33_newlogs", "undefined"};
 
 /** List of options for orbital D potential */
 enum{
   D_3PN,          /**< 3PN, Pade' resummed */
   D_GSF,          /**< GSF D, Pade' resummed */
   D_5PNP32,       /**< 5PN, Pade' resummed with P32*/ 
+  D_5PNP32_newlogs, /**< 5PN, Pade' resummed with P32, separate log resummation*/ 
   D_NOPT          /**< number of options */
 };
-static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "undefined"};
+static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "5PNP32_newlogs", "undefined"};
 
 /** List of options for orbital Q potential */
 enum{
@@ -258,9 +260,11 @@ enum{
   a6c_fits_HM_2023,           /**< HM fits, Nagar et al 2023 */
   a6c_fits_ecc,               /**< ecc fits, Nagar et al TODO add ref */
   a6c_fits_P33_HM4PN22,       /**< ecc fits, Nagar et al in prep */
+  a6c_fits_P33_newlogs,       /**< Fit with separate log resummation, 2407.04762 */
+  a6c_fits_P33_newlogs_22PN,  /**< Same as the previous one but with 22PN flux */
   a6c_fits_NOPT               /**< number of fits */
 };
-static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "ecc", "HM4PN22", "undefined"};
+static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "ecc", "HM4PN22", "newlogs", "newlogs22PN", "undefined"};
 
 enum{
   cN3LO_fits_NO,              /**< no fits */
@@ -272,9 +276,10 @@ enum{
   cN3LO_fits_HM_2023_432,     /**< HM fits, Nagar et al 2023, v432 */
   cN3LO_fits_ecc,             /**< ecc fits, Nagar et al TODO add ref */
   cN3LO_fits_P33_HM4PN22,     /**< ecc fits, Nagar et al in prep */
+  cN3LO_fits_P33_newlogs,     /**< Fits with separate log resummation, 2407.04762 */
   cN3LO_fits_NOPT             /**< number of fits */
 };
-static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "undefined"};
+static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "newlogs", "undefined"};
 
 /** List of options for tidal potential */
 enum{
@@ -346,7 +351,7 @@ enum{
   USEFLM_22PN,            /**< amplitudes ar t 22PN */
   USEFLM_NOPT             /**< number of flm amplitudes options */
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "Kerr", "22PN"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "Kerr", "22PN", "undefined"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -455,7 +460,7 @@ enum{
   NQC_MANUAL,           /**< NQCs manually set */
   NQC_NOPT              /**< number of NQC options */
 };
-static const char* const nqc_opt[] = {"no", "auto", "manual"};
+static const char* const nqc_opt[] = {"no", "auto", "manual", "undefined"};
 
 enum{
   NQC_FLX_NONE,                    /**< no NQCs */
@@ -464,7 +469,7 @@ enum{
   NQC_FLX_FROMFILE,                /**< NQCs from file (iterative method)*/
   NQC_FLX_NOPT                     /**< number of NQC options */
 };
-static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile"};
+static const char* const nqc_flx_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile", "undefined"};
 
 enum{
   NQC_HLM_NONE,                    /**< no NQCs */
@@ -474,7 +479,7 @@ enum{
   NQC_HLM_COMPUTE,                 /**< NQCs computed during merger attachment */
   NQC_HLM_NOPT                     /**< number of NQC options */
 };
-static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile", "compute"};
+static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile", "compute", "undefined"};
 
 enum { 
   FIRSTCALL_EOBWAVFLMV1,          /**< first call to eob_wav_flm_v1 */
@@ -920,11 +925,14 @@ double eob_a6c_fit_HM_2023(double nu);
 double eob_a6c_fit_ecc(double nu);
 double eob_a6c_fit_next(double nu);
 double eob_a6c_fit_ecc_P33_4PNh22(double nu);
+double eob_a6c_fit_ecc_P33_newlogs(double nu);
+double eob_a6c_fit_P33_newlogs_rholm22PN(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
 double eob_c3_fit_HM_2023(double nu, double a1, double a2);
 double eob_c3_fit_ecc(double nu, double a1, double a2);
 double eob_c3_fit_ecc_P33_4PNh22(double nu, double a1, double a2);
+double eob_c3_fit_ecc_P33_newlogs(double nu, double a1, double a2);
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
@@ -1078,9 +1086,11 @@ extern void (*eob_metric_Qpotential)(double r, double prstar, double nu, double 
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A, double *d3A);
 void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A, double *d3A);
 void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A, double *d3A);
+void eob_metric_A5PNlogP33_newlogs(double r, double nu, double *A, double *dA, double *d2A, double *d3A);
 void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);

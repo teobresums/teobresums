@@ -26,7 +26,6 @@
 void eob_dyn_ic_circ(double r0, Dynamics *dyn, double y_init[])
 {
   const double nu = EOBPars->nu;
-  const double z3 = 2.0*nu*(4.0-3.0*nu);    
 
   /* Build a small grid */
 #define N (6)
@@ -135,7 +134,6 @@ void eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
 
   const double S  = S1 + S2;        
   const double Ss = X2*a1 + X1*a2;  
-  const double z3 = 2.0*nu*(4.0-3.0*nu);
 
   /* Build a small grid */
 #define N (6)

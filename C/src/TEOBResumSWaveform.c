@@ -4185,32 +4185,53 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
   c42_SO_n3lo = -(2.6105076622404808654 + 0.16912938912938912939*logx)*a0 + -(1.3519220653268411505 - 0.10290524290524290524*logx)*X12*a12;
   
   rho42S = c42_SO_lo*v3 + c42_SO_nlo*v5 + c42_SO_nnlo*v7 + c42_SO_n3lo*v9;
+
+  // f-odd corrections flag
+  int fodd_flag;
+  if (chi1 < 1e-14 && chi2 < 1e-14) { 
+    fodd_flag = 0; // if zero spins, spin corrections for f_modd modes set to 1
+  } else {
+    fodd_flag = 1;
+  } 
   
   /** l>=2, m=odd*/
-  double if210s = 1. + 13./84.*a0*v3 - 1./8.*(3.*a1+a2)*(a1+3.*a2)*v4 + a0*(14705./7056. - 12743./7056.*nu)*v5;
-  double if211s = 1. - 9./4.*a0*v3 + (349./252. + 74./63.*nu)*v2 + (65969./31752. + 89477./31752.*nu + 46967./31752.*nu2 - 0.5*a0*a0)*v4;
-  f21S = X12/if210s - 1.5*v*a12/if211s;
 
-  
-  double if330s = 1. + 7./4.*a0*v3 - 1.5*a0*a0*v4 + + 1./60.*a0*(211. - 127.*nu)*v5;
-  double f331s = (10.*nu -1. + (-169. + 671.*nu + 182.*nu2)/15.*x);
-  f33S = X12/if330s + 0.25*a12*v3*f331s;
+  if (fodd_flag) {
 
-  double if310s = 1. - 0.25*a0*v3 - 1.5*a0*a0*v4 + 1./36.*a0*(13. - 449.*nu)*v5;
-  double f311s  = 26.*nu - 9. - 16.*a0*v + (9. - 95.*nu + 66.*nu2)/9.*v2;
-  f31S = X12/if310s + 0.25*a12*v3*f311s;
+    double if210s = 1. + 13./84.*a0*v3 - 1./8.*(3.*a1+a2)*(a1+3.*a2)*v4 + a0*(14705./7056. - 12743./7056.*nu)*v5;
+    double if211s = 1. - 9./4.*a0*v3 + (349./252. + 74./63.*nu)*v2 + (65969./31752. + 89477./31752.*nu + 46967./31752.*nu2 - 0.5*a0*a0)*v4;
+    f21S = X12/if210s - 1.5*v*a12/if211s;
 
-  double f430s = 1. - 1.25/(2.*nu - 1.)*a0*v;
-  double f431s = 1.;            
-  f43S = X12*f430s - 1.25*a12*v*f431s;
+    double if330s = 1. + 7./4.*a0*v3 - 1.5*a0*a0*v4 + + 1./60.*a0*(211. - 127.*nu)*v5;
+    double f331s = (10.*nu -1. + (-169. + 671.*nu + 182.*nu2)/15.*x);
+    f33S = X12/if330s + 0.25*a12*v3*f331s;
 
-  double f410s = 1. - 1.25/(2.*nu - 1.)*a0*v;
-  double f411s = 1.;
-  f41S   = X12*f410s - 1.25*a12*v*f411s;
+    double if310s = 1. - 0.25*a0*v3 - 1.5*a0*a0*v4 + 1./36.*a0*(13. - 449.*nu)*v5;
+    double f311s  = 26.*nu - 9. - 16.*a0*v + (9. - 95.*nu + 66.*nu2)/9.*v2;
+    f31S = X12/if310s + 0.25*a12*v3*f311s;
 
-  double if550s = 1. + 10./3.*a0*v3 - 2.5*a0*a0*v4;
-  double f551s  = 1.;
-  f55S   = X12/if550s + 10.*nu*(1. - 3.*nu)/(3. - 6.*nu)*a12*v3*f551s;
+    double f430s = 1. - 1.25/(2.*nu - 1.)*a0*v;
+    double f431s = 1.;            
+    f43S = X12*f430s - 1.25*a12*v*f431s;
+
+    double f410s = 1. - 1.25/(2.*nu - 1.)*a0*v;
+    double f411s = 1.;
+    f41S   = X12*f410s - 1.25*a12*v*f411s;
+
+    double if550s = 1. + 10./3.*a0*v3 - 2.5*a0*a0*v4;
+    double f551s  = 1.;
+    f55S   = X12/if550s + 10.*nu*(1. - 3.*nu)/(3. - 6.*nu)*a12*v3*f551s;
+
+  } else {
+
+    f21S = 1.;
+    f33S = 1.; 
+    f31S = 1.;
+    f43S = 1.;
+    f41S = 1.;
+    f55S = 1.;
+
+  }
 	    
   /** Amplitudes (correct with spin terms) */
   flm[0] = gsl_pow_int(rholm[0], 2);
