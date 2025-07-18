@@ -1012,6 +1012,13 @@ int eob_set_params(int default_choice, int firstcall)
     for (int k = 0; k < EOBPars->delta_Alm_mrg_size; k++) {
       int idx   = EOBPars->delta_Alm_mrg_k[k];
       temp[idx] = EOBPars->delta_Alm_mrg[k];
+      if (DEBUG) {
+        int j;
+        for (j = EOBPars->kpostpeak_size - 1; j >= 0; j--)
+          if (idx == EOBPars->kpostpeak[j]) break;
+        if (j < 0)
+          printf("WARNING: add mode %d to kpostpeak when using merger amplitude deviation to ensure plunge-ringdown match.\n", idx);
+      }
     }
     free(EOBPars->delta_Alm_mrg);
     EOBPars->delta_Alm_mrg = malloc ( KMAX * sizeof(double));
@@ -1027,6 +1034,13 @@ int eob_set_params(int default_choice, int firstcall)
     for (int k = 0; k < EOBPars->delta_Omglm_mrg_size; k++) {
       int idx   = EOBPars->delta_Omglm_mrg_k[k];
       temp[idx] = EOBPars->delta_Omglm_mrg[k];
+      if (DEBUG) {
+        int j;
+        for (j = EOBPars->kpostpeak_size - 1; j >= 0; j--)
+          if (idx == EOBPars->kpostpeak[j]) break;
+        if (j < 0)
+          printf("WARNING: add mode %d to kpostpeak when using merger frequency deviation to ensure plunge-ringdown match.\n", idx);
+      }
     }
     free(EOBPars->delta_Omglm_mrg);
     EOBPars->delta_Omglm_mrg = malloc ( KMAX * sizeof(double));

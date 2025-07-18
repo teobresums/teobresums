@@ -1005,8 +1005,9 @@ void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, doubl
  *  Function: eob_nqc_point_postpeak
  *  --------------------------------
  *   This function computes the NQC functioning points by evaluating 
- *   the post-peak template and its dervatives.
+ *   the post-peak template and its derivatives.
  *   
+ *   @param[in]  tau     : Evaluation time (in units of Mbh)
  *   @param[in]  Mbh     : Mass of the final BH
  *   @param[in]  c1A, c2A,c3A,c4A,c1phi.c2phi,c3phi,c4phi : postpeak template parameters
  *   @param[in]  alpha1,omega1 : QNM frequency and inverse damping time 
@@ -1016,16 +1017,15 @@ void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, doubl
  *   @param[in, out] domg_tmp: first time derivative of the frequency at the NQC point 
  *
  */
-void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
+void eob_nqc_point_postpeak(double tau, double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
 			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp)
 {
   
-  double tau, Mbh2, x, x2, dA_tmp1, dA_tmp2, omg_tmp1, omg_tmp2, domg_tmp_n1,domg_tmp_n2,domg_tmp_d1,domg_tmp_d2;
+  double Mbh2, x, x2, dA_tmp1, dA_tmp2, omg_tmp1, omg_tmp2, domg_tmp_n1,domg_tmp_n2,domg_tmp_d1,domg_tmp_d2;
   
-  /* the time variable in the post-peak template is given in units of Mbh*/
-  tau  = 2./Mbh;
+  /* The time variable in the post-peak template is given in units of Mbh */
   Mbh2 = SQ(Mbh);
   
   *A_tmp = exp(-alpha1*tau)*(c1A*tanh(c2A*tau + c3A) + c4A);

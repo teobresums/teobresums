@@ -962,7 +962,7 @@ double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
-void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
+void eob_nqc_point_postpeak(double tau, double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
 			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);

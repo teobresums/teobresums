@@ -4988,6 +4988,10 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
+
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+  double tau_postpeak;
   
   if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
     
@@ -4997,6 +5001,11 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     int *kpostpeak     = EOBPars->kpostpeak;
 
     QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+            c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
+            alpha1, omega1);
+    
+    /* Overwrite with fits at peak of 22 for modes in knqcpeak22 */
+    QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
             c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
             alpha1, omega1);
     
@@ -5014,7 +5023,9 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
       c1A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
       c4A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
       
-      eob_nqc_point_postpeak(Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
+      if (modesatpeak22[k]) tau_postpeak = 0.;
+      else tau_postpeak = 2./Mbh;
+      eob_nqc_point_postpeak(tau_postpeak,Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
             c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
             &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
       
@@ -5192,8 +5203,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   int    j_NQC[KMAX];
 
   if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    int modesatpeak22[KMAX]; 
-    set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);      
     eob_nqc_deltat_lm(dyn, dtmrg);
 
     for (int k=0; k<KMAX; k++) {   
@@ -5498,6 +5507,10 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
     max_omg[k]  = 0.;
     max_domg[k] = 0.;
   }
+
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+  double tau_postpeak;
   
   if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
     /* Higher modes */
@@ -5506,6 +5519,11 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
     int *kpostpeak     = EOBPars->kpostpeak;
 
     QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+            c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
+            alpha1, omega1);
+
+    /* Overwrite with fits at peak of 22 for modes in knqcpeak22 */
+    QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
             c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
             alpha1, omega1);
     
@@ -5524,7 +5542,9 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
       c1A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
       c4A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
       
-      eob_nqc_point_postpeak(Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
+      if (modesatpeak22[k]) tau_postpeak = 0.;
+      else tau_postpeak = 2./Mbh;
+      eob_nqc_point_postpeak(tau_postpeak,Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
             c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
             &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
       
@@ -5681,8 +5701,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   int    j_NQC[KMAX];
 
   if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    int modesatpeak22[KMAX]; 
-    set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
     eob_nqc_deltat_lm(dyn, dtmrg);
     
     for (int k=0; k<KMAX; k++) {   
@@ -5968,14 +5986,23 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   int kpostpeak_size = EOBPars->kpostpeak_size;  
   int *kpostpeak     = EOBPars->kpostpeak;
 
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);  
+  double tau_postpeak;
+
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
+          c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
+          alpha1, omega1);
+  
+  /* Overwrite with fits at peak of 22 for modes in knqcpeak22 */
+  QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
           c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
           alpha1, omega1);
   
   /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
   eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
 
-  /* 21 fitted directly at tpeak_22*/
+  /* 21, 33, 44 fitted directly at tpeak_22*/
   eob_nqc_point_HM_peak22(dyn, max_A, max_dA, max_omg, max_domg);
 
   /* Over-writing fits using postpeak quantities for modes in kpostpeak */
@@ -5987,7 +6014,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     c1A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
     c4A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
     
-    eob_nqc_point_postpeak(Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
+    if (modesatpeak22[k]) tau_postpeak = 0.;
+    else tau_postpeak = 2./Mbh;
+    eob_nqc_point_postpeak(tau_postpeak,Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
           c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
           &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
     
@@ -6142,8 +6171,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
 
-  int modesatpeak22[KMAX]; 
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);  
   eob_nqc_deltat_lm(dyn, dtmrg);
   
   for (int k=0; k<KMAX; k++) {   
@@ -6579,9 +6606,21 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   int kpostpeak_size = EOBPars->kpostpeak_size;  
   int *kpostpeak     = EOBPars->kpostpeak;
 
+  /* Usually, the NQC match point is at tmrg_lm + 2
+   * except for modes in knqcpeak22 where it is at tmrg_22
+  */
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+  double tau_postpeak;
+
   QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 		     c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
 		     alpha1, omega1);
+
+  /* Overwrite with fits at peak of 22 for modes in knqcpeak22 */
+  QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
+         c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
+         alpha1, omega1);
 
   for (int j=0; j<kpostpeak_size; j++) {
     int k = kpostpeak[j];
@@ -6591,7 +6630,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     c1A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
     c4A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
     
-    eob_nqc_point_postpeak(Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
+    if (modesatpeak22[k]) tau_postpeak = 0.;
+    else tau_postpeak = 2./Mbh;
+    eob_nqc_point_postpeak(tau_postpeak,Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
 			   c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
 			   &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
     
@@ -6724,11 +6765,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
 
-  /* Usually, the NQC match point is at tmrg_lm + 2
-   * except for modes in knqcpeak22 where it is at tmrg_22
-  */
-  int modesatpeak22[KMAX]; 
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
   eob_nqc_deltat_lm(dyn, dtmrg);
 
   for (int k=0; k<KMAX; k++) {   
@@ -10068,6 +10104,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   // int kpostpeak_size = 5;
   // int kpostpeak[kpostpeak_size] = {0,3,6,7,8};
 
+  /* Usually, the NQC match point is at tmrg_lm + 2
+   * except for modes in knqcpeak22 where it is at tmrg_22
+  */
+  int modesatpeak22[KMAX]; 
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+  double tau_postpeak;
+
   QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
 			  c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
 			  alpha1, omega1);
@@ -10084,7 +10127,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     c1A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
     c4A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
     
-    eob_nqc_point_postpeak(Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
+    if (modesatpeak22[k]) tau_postpeak = 0.;
+    else tau_postpeak = 2./Mbh;
+    eob_nqc_point_postpeak(tau_postpeak,Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
 			   c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
 			   &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
     
@@ -10215,11 +10260,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
 
-  /* Usually, the NQC match point is at tmrg_lm + 2
-   * except for modes in knqcpeak22 where it is at tmrg_22
-  */
-  int modesatpeak22[KMAX]; 
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
   eob_nqc_deltat_lm(dtmrg);
   
   for (int k=0; k<KMAX; k++) {   
