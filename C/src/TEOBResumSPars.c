@@ -1013,11 +1013,17 @@ void eob_set_params(int default_choice, int firstcall)
     eob_dyn_ic = &eob_dyn_ic_hyp;
   } else if (EOBPars->model == MODEL_DALI) {
     // eccentric case
-    if(EOBPars->ecc_ics == ECCICS_MA)
-      eob_dyn_ic = &eob_dyn_ic_ecc_ma;   // ICs with anomaly (adiabatic)
-    else if(EOBPars->ecc_ics == ECCICS_1PA)
-      eob_dyn_ic = &eob_dyn_ic_ecc_PA;   // 1PA ICs
-    else if (EOBPars->ecc_ics == ECCICS_0PA){
+    if(EOBPars->ecc_ics == ECCICS_MA) {
+      if(ecc > 1e-4)
+        eob_dyn_ic = &eob_dyn_ic_ecc_ma; // ICs with anomaly (adiabatic)
+      else
+        eob_dyn_ic = &eob_dyn_ic_circ_s; // Quasi-circular ICs ("nospin" option is deprecated)
+    } else if(EOBPars->ecc_ics == ECCICS_1PA) {
+      if(ecc > 1e-4)
+        eob_dyn_ic = &eob_dyn_ic_ecc_PA; // 1PA ICs
+      else
+        eob_dyn_ic = &eob_dyn_ic_circ_s; // Quasi-circular ICs ("nospin" option is deprecated)
+    } else if (EOBPars->ecc_ics == ECCICS_0PA) {
       if(ecc > 1e-4)
 	      eob_dyn_ic = &eob_dyn_ic_ecc;    // adiabatic ICs
       else

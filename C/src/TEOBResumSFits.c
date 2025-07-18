@@ -161,8 +161,7 @@ double eob_a6c_fit_HM_2023(double nu)
  */
  double eob_a6c_fit_P33_newlogs_rholm22PN(double nu)
  {
-   return 43.68 + nu*(-474. + nu*483.38);
-   // Temporary, will be changed
+   return 48.55 + nu*(- 459.865 + nu*540.21);
  }
 
 /** @} */ // end of a6cfits

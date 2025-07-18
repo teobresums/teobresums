@@ -419,7 +419,7 @@ void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d
    double a5c0       = -4237./60. + 2275./512.*pi2 + 256./5.*ln2 + 128./5.*EulerGamma;
    double a5c1       = -221./6.   + 41./32.*pi2;
    double a5         =  a5c0 + nu*a5c1;
-   double a6         =  -45.; // EOBPars->a6c;
+   double a6         =  EOBPars->a6c;
  
    double u       = 1./r;
    double u2      = u*u;
