@@ -739,6 +739,8 @@ typedef struct tagEOBParameters
   int project_spins;                                    /**< Flag to project spins during EOB dynamics (yes/no) */
   int ringdown_eulerangles;                             /**< Flag to choose which beyond-merger euler angles extension to employ */
   int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */
+  double cbeta_final;                                   /**< Final value of beta Euler angle */
+  int use_effective_QNMs;                               /**< Use effective QNMs in co-precessing frame (yes/no) */
 
   int backwards;                                        /**< Flag to switch on/off backwards dynamics */ 
 
@@ -920,6 +922,7 @@ void DynamicsSpin_free (DynamicsSpin *dyn);
 void DynamicsSpin_output (DynamicsSpin *dyn);
 void DynamicsSpin_join (DynamicsSpin *dyn, DynamicsSpin *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
+double compute_JdotL(DynamicsSpin *dyn, double tpeak);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
 double time_units_factor(double M);

@@ -312,6 +312,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->chi2x = eobp->chi2y  = eobp->chi2z = 0.;
   eobp->spin_flx             = SPIN_FLX_EOB; 
   eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
+  eobp->cbeta_final          = 1.;
+  eobp->use_effective_QNMs   = 1;
 
   /* OMP settings */
 
@@ -1835,6 +1837,9 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     if (STREQUAL(val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles])) break;
     }
   }   
+  if (STREQUAL(key,"use_effective_QNMs")) {
+    eobp->use_effective_QNMs = YESNO2INT(string_trim(val));
+  }
   if (STREQUAL(key, "spin_interp_domain")) {
     eobp->spin_interp_domain = par_get_i(val); 
   }
@@ -2272,6 +2277,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
 
   fprintf(f,"%s = %d\n"    , "compute_ringdown", eobp->compute_ringdown);
+
+  fprintf(f,"%s = \"%s\"\n", "use_effective_QNMs", INT2YESNO(eobp->use_effective_QNMs));
   
   /* NQC */
   fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);

@@ -447,6 +447,11 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->backwards = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "backwards")));
   }
 
+  /* Precession */
+  if ( PyDict_GetItemString(dict, "use_effective_QNMs") != NULL ) { 
+    EOBPars->use_effective_QNMs = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_effective_QNMs")));
+  }
+
   /* FD */
   if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
     EOBPars->domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "domain"));

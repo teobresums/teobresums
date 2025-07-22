@@ -3712,6 +3712,22 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
     if (VERBOSE) printf("Applying user-input deviations from QNM frequencies.\n");
     QNM_deviations(alpha1, omega1, alpha21);
   }
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->use_effective_QNMs == 1) {
+    // For precessing spins, use effective QNM frequencies estimated by https://arxiv.org/pdf/2301.06558, Eq. (34)
+    if (DEBUG) printf("Using effective QNM frequencies for precessing spins; cos(beta_final) = %.9f\n", EOBPars->cbeta_final);
+    double w21_by_22 = omega1[0]/omega1[1];
+    double cbeta     = fabs(EOBPars->cbeta_final);
+    int m_of_k[KMAX] = {
+      1, 2,
+      1, 2, 3,
+      1, 2, 3, 4,
+      1, 2, 3, 4, 5,
+      1, 2, 3, 4, 5, 6,
+      1, 2, 3, 4, 5, 6, 7,
+      1, 2, 3, 4, 5, 6, 7, 8
+    };
+    for (int k = 0; k < KMAX; k++) omega1[k] *= 1. - m_of_k[k]*(1. - w21_by_22)*(1. - cbeta);
+  }
   
 }
 

@@ -1112,6 +1112,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       
     } /* End of merger interp */
+
+    /* Precessing BBH + EOB flux: 
+    */
+   if(use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
+    if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0))
+      errorexit("problem during spin dynamics");
+    spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
+    spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
+
+    EOBPars->cbeta_final = compute_JdotL(spindyn, dyn->tOmg_pk);
+    
+    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI)
+      eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
+
+    /* final state */
+    EOBPars->abhf = PrecessingRemnantSpin(dyn); 
+  }
     
     
     if ((EOBPars->nqc_coefs_hlm == NQC_HLM_COMPUTE)) {

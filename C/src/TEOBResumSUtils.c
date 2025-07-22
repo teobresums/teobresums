@@ -3416,6 +3416,48 @@ void Dynamics_set_params (Dynamics *dyn)
 }
 
 /**
+ * Function: JdotL
+ * ---------------
+ *   Compute dot product of final (?) orbital and total ang. mom.
+ * 
+ *   @param[in,out] spindyn: pointer to spin dynamics
+*/
+double compute_JdotL (DynamicsSpin *dyn, double tpeak)
+{
+  double SAmrg[3], SBmrg[3], Lmrg[3], Jmrg[3];
+
+  const int tmax_dyn_idx = find_point_bisection(tpeak, dyn->size, dyn->time, 1);
+
+  SAmrg[0] = dyn->data[EOB_EVOLVE_SPIN_SxA][tmax_dyn_idx-1];
+  SAmrg[1] = dyn->data[EOB_EVOLVE_SPIN_SyA][tmax_dyn_idx-1];
+  SAmrg[2] = dyn->data[EOB_EVOLVE_SPIN_SzA][tmax_dyn_idx-1];
+
+  SBmrg[0] = dyn->data[EOB_EVOLVE_SPIN_SxB][tmax_dyn_idx-1];
+  SBmrg[1] = dyn->data[EOB_EVOLVE_SPIN_SyB][tmax_dyn_idx-1];
+  SBmrg[2] = dyn->data[EOB_EVOLVE_SPIN_SzB][tmax_dyn_idx-1];
+
+  // final L
+  double nu    = EOBPars->nu;
+  double nu2   = nu*nu;
+  double v2mrg = pow(dyn->data[EOB_EVOLVE_SPIN_Momg][tmax_dyn_idx-1], 0.6666666666666);
+  double v4mrg = v2mrg*v2mrg;
+  double vmrg  = sqrt(v2mrg);
+  const double L2PN = nu/vmrg*(1 + v2mrg*(1.5+0.1666666666666667*nu) + v4mrg*(3.375 - 2.375*nu + 0.04166666666666666*nu2));
+  Lmrg[0]  = L2PN*dyn->data[EOB_EVOLVE_SPIN_Lx][tmax_dyn_idx-1];
+  Lmrg[1]  = L2PN*dyn->data[EOB_EVOLVE_SPIN_Ly][tmax_dyn_idx-1];
+  Lmrg[2]  = L2PN*dyn->data[EOB_EVOLVE_SPIN_Lz][tmax_dyn_idx-1];
+    
+  for(int i=0; i<3;i++)
+    Jmrg[i] = SAmrg[i] + SBmrg[i] + Lmrg[i];
+  
+  double JdotL, Jnorm;
+  vect_dot3(Jmrg, Jmrg, &Jnorm);
+  Jnorm = sqrt(Jnorm);
+  vect_dot3(Jmrg, Lmrg, &JdotL);
+  return JdotL/(Jnorm * L2PN);
+}
+
+/**
  * Function: NQCdata_alloc
  * -----------------------
  *   Alloc memory for NQCdata
