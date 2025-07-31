@@ -5203,7 +5203,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   int    j_NQC[KMAX];
 
   if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    eob_nqc_deltat_lm(dyn, dtmrg);
+    eob_nqc_deltat_lm(dtmrg);
 
     for (int k=0; k<KMAX; k++) {   
 
@@ -5701,7 +5701,7 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   int    j_NQC[KMAX];
 
   if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    eob_nqc_deltat_lm(dyn, dtmrg);
+    eob_nqc_deltat_lm(dtmrg);
     
     for (int k=0; k<KMAX; k++) {   
       if(h->kmask_nqc[k]) {
@@ -6171,7 +6171,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
 
-  eob_nqc_deltat_lm(dyn, dtmrg);
+  eob_nqc_deltat_lm(dtmrg);
   
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){
@@ -6765,7 +6765,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double t_NQC[KMAX];
   int    j_NQC[KMAX];
 
-  eob_nqc_deltat_lm(dyn, dtmrg);
+  eob_nqc_deltat_lm(dtmrg);
 
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){
@@ -7981,7 +7981,7 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   */
   int modesatpeak22[KMAX]; 
   set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-  eob_nqc_deltat_lm(dyn, dtmrg);
+  eob_nqc_deltat_lm(dtmrg);
   for (int k=0; k<KMAX; k++) {
     tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
     if (modesatpeak22[k]) tmrg[k] = tmrgA22;
