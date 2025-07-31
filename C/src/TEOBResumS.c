@@ -967,11 +967,25 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
        use the point itself */
     tOmg_pk = dyn->time[index_pk];
   } else {
-    double *t_ptr     = &dyn->time[index_pk-2];
-    double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-2];
-    tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
+    if (EOBPars->omg_peak_poly_fit) {
+      if (DEBUG) printf("Finding OmgOrb peak location via polynomial fit of deg. %d.\n", EOBPars->omg_peak_poly_deg);
+      if (EOBPars->omg_peak_fit_npts > dyn->size - index_pk) {
+        if (DEBUG) printf("ERROR(TEOBResumS): points requested for OmgOrb peak fit exceed dynamics array length.\n");
+        status = ERROR_RINGDOWN;
+        goto EXIT_POINT;
+      }
+      double *t_ptr     = &dyn->time[index_pk-EOBPars->omg_peak_fit_npts];
+      double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-EOBPars->omg_peak_fit_npts];
+      tOmg_pk = find_max_grid_poly_fit(t_ptr, Omega_ptr, EOBPars->omg_peak_poly_deg, 2*EOBPars->omg_peak_fit_npts + 1);
+    }
+    else {
+      double *t_ptr     = &dyn->time[index_pk-2];
+      double *Omega_ptr = &dyn->data[EOB_OMGORB][index_pk-2];
+      tOmg_pk    = find_max_grid(t_ptr, Omega_ptr);
+    }
   }
   dyn->tOmg_pk = tOmg_pk;
+  if (DEBUG) printf("Peak OmgOrb time: %.9f\n", dyn->tOmg_pk);
   
  END_ODE_EVOLUTION:;
  
@@ -1082,7 +1096,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
       if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3)) {
-	      dt_merger_interp = 0.5;
+	      dt_merger_interp = EOBPars->dt_merger_interp;
       } else {
 	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
       }

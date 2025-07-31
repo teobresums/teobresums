@@ -267,6 +267,10 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   strcpy(eobp->nqc_coefs_flx_file,"");
   strcpy(eobp->nqc_coefs_hlm_file,"");
 
+  eobp->omg_peak_poly_fit = 1;
+  eobp->omg_peak_poly_deg = 4;
+  eobp->omg_peak_fit_npts = 4;
+
   /* Set default sigmoid parameters */
   eobp->delta_t0_sigmoid_Newt = 100.;
   eobp->delta_t0_sigmoid_NQC  = 100.;
@@ -1754,6 +1758,16 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"srate_interp")) {    
     eobp->srate_interp = par_get_d(val);
   }
+
+  if (STREQUAL(key,"omg_peak_poly_fit")) {
+    eobp->omg_peak_poly_fit = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"omg_peak_poly_deg")) {
+    eobp->omg_peak_poly_deg = par_get_i(val);
+  }
+  if (STREQUAL(key,"omg_peak_fit_npts")) {
+    eobp->omg_peak_fit_npts = par_get_i(val);
+  }
   
   if (STREQUAL(key,"use_mode_lm")) {
     free(eobp->use_mode_lm);
@@ -2317,6 +2331,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n" , "dt_interp", eobp->dt_interp);
   fprintf(f,"%s = %.16f\n" , "srate_interp", eobp->srate_interp);
   fprintf(f,"%s = \"%s\"\n", "interp_uniform_grid", INT2YESNO(eobp->interp_uniform_grid));
+  fprintf(f,"%s = \"%s\"\n", "omg_peak_poly_fit", INT2YESNO(eobp->omg_peak_poly_fit));
+  fprintf(f,"%s = %d\n"    , "omg_peak_poly_deg", eobp->omg_peak_poly_deg);
+  fprintf(f,"%s = %d\n"    , "omg_peak_fit_npts", eobp->omg_peak_fit_npts);
   fprintf(f,"%s = \"%s\"\n", "A_pot", A_opt[eobp->A_pot]);
   fprintf(f,"%s = \"%s\"\n", "D_pot", D_opt[eobp->D_pot]);
   fprintf(f,"%s = \"%s\"\n", "Q_pot", Q_opt[eobp->Q_pot]);

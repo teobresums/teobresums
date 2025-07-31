@@ -27,6 +27,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv2.h>
+#include <gsl/gsl_multifit.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -734,6 +735,9 @@ typedef struct tagEOBParameters
   double srate_interp;                                  /**< sampling rate for interpolation */
   int interp_uniform_grid;                              /**< Flag for uniform grid interpolation (yes/no) */
 
+  int omg_peak_poly_fit;                                /**< Flag for omgorb peak determination via polynomial fit */
+  int omg_peak_poly_deg, omg_peak_fit_npts;             /**< Degree of polynomial fit and number of points (on either side of initial estimate) */
+
   int *use_mode_lm, use_mode_lm_size;                   /**< Co-precessing modes array and size of co-precessing modes array*/
   int *use_mode_lm_inertial, use_mode_lm_inertial_size; /**< Inertial modes assay and size of Inertial modes assay*/
   int *use_mode_lm_nqc, use_mode_lm_nqc_size;           /**< multipoles to attach NQCs */
@@ -891,6 +895,7 @@ double baryc_f_weights(double xx, int n, double *f, double *x, double *omega);
 double interp1d (const int order, double xx, int nx, double *f, double *x);
 double find_max (const int n, double dx, double x0, double *f, double *fmax);
 double find_max_grid (double *x, double *f);
+double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);

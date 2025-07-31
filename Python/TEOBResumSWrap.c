@@ -150,6 +150,15 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "nqc_npars") != NULL ) { 
     EOBPars->nqc_npars = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc_npars"));
   }
+  if ( PyDict_GetItemString(dict, "omg_peak_poly_fit") != NULL ) { 
+    EOBPars->omg_peak_poly_fit =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "omg_peak_poly_fit")));
+  }
+  if ( PyDict_GetItemString(dict, "omg_peak_poly_deg") != NULL ) { 
+    EOBPars->omg_peak_poly_deg = (int) PyLong_AsLong(PyDict_GetItemString(dict, "omg_peak_poly_deg"));
+  }
+  if ( PyDict_GetItemString(dict, "omg_peak_fit_npts") != NULL ) { 
+    EOBPars->omg_peak_fit_npts = (int) PyLong_AsLong(PyDict_GetItemString(dict, "omg_peak_fit_npts"));
+  }
   
   /* Adiabatic tidal ell>2 parameters */
   if ( PyDict_GetItemString(dict, "LambdaAl3") != NULL )

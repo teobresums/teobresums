@@ -1306,6 +1306,142 @@ double find_max_grid (double *x, double *f)
   return xmax;
 }
 
+struct dOmg_interp_coefs {
+  double *c;
+  int     deg;
+};
+
+/**
+ * Function: Derivative of polynomial
+ * ----------------------------------
+ *   Companion function for finding max of omgorb.
+ *   Computes derivative of polynomial given its coefficients.
+ *   
+ *   @param[in] x:      x value
+ *   @param[in] params: coefficients and degree of polynomial
+ * 
+ *   @return der: derivative of polynomial
+ */
+double poly_der (double x, void *params)
+{
+  struct dOmg_interp_coefs *p
+    = (struct dOmg_interp_coefs *) params;
+  
+  double *c   = p->c;
+  int     deg = p->deg;
+
+  double der = c[deg]*deg;
+  for (int k = deg-1; k > 0; k--)
+    der = der*x + k*c[k];
+  
+  return der;
+}
+
+/**
+ * Function: find_max_grid_poly_fit
+ * ---------------------------------
+ *   Find max location around x0 using 9 points (non-uniform grid),
+ *   via least-squares fit to a 4th degree polynomial.
+ *   
+ *   @param[in] x: array of x values
+ *   @param[in] f: array of y values
+ *   @param[in] x0: centre of grid
+ *   @param[out] fmax: interpolated value at max
+ * 
+ *   @return xmax: max location
+ */
+double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid)
+{
+  const size_t n_points = n_grid;
+  const size_t n_coefs  = deg + 1;
+  
+  /* Least-squares fit to polynomial */
+
+  gsl_multifit_linear_workspace *work;
+  work = gsl_multifit_linear_alloc(n_points, n_coefs);
+
+  /* Define and fill observable matrix */
+  gsl_matrix *X;
+  X = gsl_matrix_alloc(n_points, n_coefs);
+  for (int k = 0; k < n_points; k++)
+  {
+    for (int j = 0; j < n_coefs; j++)
+      gsl_matrix_set(X, k, j, gsl_pow_int(x[k], j));
+  }
+
+  /* Define and fill vector of y values */
+  gsl_vector *Y;
+  Y = gsl_vector_alloc(n_points);
+  for (int k = 0; k < n_points; k++)
+    gsl_vector_set(Y, k, f[k]);
+  
+  /* Coefficient vector */
+  gsl_vector *c;
+  c = gsl_vector_alloc(n_coefs);
+
+  /* Covariance matrix */
+  gsl_matrix *cov;
+  cov = gsl_matrix_alloc(n_coefs, n_coefs);
+
+  double chisq;
+
+  /* Perform fit */
+  int status;
+  status = gsl_multifit_linear(X, Y, c, cov, &chisq, work);
+
+  if (DEBUG) {
+    for (int j = 0; j < n_coefs; j++)
+      printf("c[%d] = %.3f\n", j, gsl_vector_get(c, j));
+  }
+  
+  /* Convert to normal array */
+  double *cv;
+  cv = malloc( n_coefs * sizeof(double));
+  for (int j = 0; j < n_coefs; j++)
+    cv[j] = gsl_vector_get(c, j);
+  
+  /* Now solve for peak location */
+  int iter = 0;
+  #define max_iter  (200)
+  #define tolerance (1e-14)
+
+  const gsl_root_fsolver_type *T;
+  gsl_root_fsolver *S;
+
+  double xmax, x_low, x_high;
+  x_low  = x[0];
+  x_high = x[n_points-1];
+
+  T = gsl_root_fsolver_bisection;
+  S = gsl_root_fsolver_alloc(T);
+
+  /* Derivative of polynomial */
+  gsl_function F;
+  struct dOmg_interp_coefs p = {cv, n_coefs - 1};
+  F.function = &poly_der;
+  F.params   = &p;
+  /* Setup root finder and iterate */
+  gsl_root_fsolver_set(S, &F, x[0], x[n_points-1]);
+  do
+  {
+    iter++;
+    status = gsl_root_fsolver_iterate(S);
+    xmax   = gsl_root_fsolver_root(S);
+    x_low  = gsl_root_fsolver_x_lower(S);
+    x_high = gsl_root_fsolver_x_upper(S);
+    status = gsl_root_test_interval(x_low, x_high, 0, tolerance);
+  } while (status == GSL_CONTINUE && iter < max_iter);
+  gsl_root_fsolver_free(S);
+
+  double test = 0.;
+  for (int j = 0; j < n_coefs; j++)
+    test += gsl_vector_get(c, j)*gsl_pow_int(xmax, j);
+  
+  gsl_multifit_linear_free(work);
+  free(cv);
+  return xmax;
+}
+
 /**
  * Function: D0
  * ------------
