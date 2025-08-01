@@ -8967,34 +8967,10 @@ void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamic
     /* use QNM for alpha_dot, and fix beta constant */
     /* Table VIII or https://arxiv.org/pdf/gr-qc/0512160.pdf */
 
-    double JdotL = EOBPars->cbeta_final;
+    double JdotL = EOBPars->cosJL_final;
     double adot;
     
-    if(JdotL>0){
-      /** (l,m,n)=(2,2,0) */
-      double f10 = 1.5251; 
-      double f20 = -1.1568;
-      double f30 = 0.1292;
-      double omega220  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
-      /** (l,m,n)=(2,1,0) */
-      f10 = 0.6; 
-      f20 = -0.2339;
-      f30 = 0.4175;
-      double omega210  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
-      adot = omega220-omega210;
-    } else {
-      /** (l,m,n)=(2,-2,0) */
-      double f10 = 0.2938; 
-      double f20 = 0.0782;
-      double f30 = 1.3546;
-      double omega2m20  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
-      /** (l,m,n)=(2,-1,0) */
-      f10 = 0.3441; 
-      f20 = 0.0293;
-      f30 = 2.0010;
-      double omega2m10  = (f10 + f20*pow(1. - EOBPars->abhf, f30)); 
-      adot = omega2m10 - omega2m20;
-    }
+    adot = post_merger_alpha_dot(EOBPars->abhf, JdotL);
 
     for(int j=tmax_wav_idx; j < hlm->size; j++){
       double dt= hlm->time[j]-hlm->time[tmax_wav_idx-1];
@@ -9140,31 +9116,7 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
     double adot, JdotL;
     vect_dot3(Jmrg, Lmrg, &JdotL);
 
-    if(JdotL>0){
-      /** (l,m,n)=(2,2,0) */
-      double f10 = 1.5251; 
-      double f20 = -1.1568;
-      double f30 = 0.1292;
-      double omega220  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
-      /** (l,m,n)=(2,1,0) */
-      f10 = 0.6; 
-      f20 = -0.2339;
-      f30 = 0.4175;
-      double omega210  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
-      adot = omega220-omega210;
-    } else {
-      /** (l,m,n)=(2,-2,0) */
-      double f10 = 0.2938; 
-      double f20 = 0.0782;
-      double f30 = 1.3546;
-      double omega2m20  = (f10 + f20*pow(1. - EOBPars->abhf, f30));  
-      /** (l,m,n)=(2,-1,0) */
-      f10 = 0.3441; 
-      f20 = 0.0293;
-      f30 = 2.0010;
-      double omega2m10  = (f10 + f20*pow(1. - EOBPars->abhf, f30)); 
-      adot = omega2m10 - omega2m20;
-    }
+    adot = post_merger_alpha_dot(EOBPars->abhf, JdotL);
 
     for(int j=tM_idx+1; j < hlm->size; j++){
       double dt= hlm->time[j]-hlm->time[tM_idx];

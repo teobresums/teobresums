@@ -312,7 +312,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->chi2x = eobp->chi2y  = eobp->chi2z = 0.;
   eobp->spin_flx             = SPIN_FLX_EOB; 
   eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
-  eobp->cbeta_final          = 1.;
+  eobp->cosJL_final          = 1.;
   eobp->use_effective_QNMs   = 1;
 
   /* OMP settings */
