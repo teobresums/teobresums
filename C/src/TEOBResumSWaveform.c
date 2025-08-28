@@ -8915,8 +8915,8 @@ double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, doub
  *   Time domain routine to interpolate and prolong the Euler angles computed from the
  *   dynamics beyond merger.
  *   The prolongation is done by:
- *   (1) identifying the end of the dynamics (merger time) by finding the maximum 
-         of the co-precessing A_{22};
+ *   (1) identifying the end of the dynamics (merger time) by the peak of the pure orbital
+ *       frequency (computation done in main);
  *   (2) interpolating the Euler angles on the waveform time grid via spline;
  *   (3) fixing the values to the last value beyond merger
  *  
@@ -8933,14 +8933,6 @@ void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamic
   /* First, unwrap alpha and gamma */
   unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
   unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
-
-  /* Determine merger time (as maximum of the co-precessing A_{22}) */
-  int jmax = 0;
-  for(int i=1; i<hlm->size; i++){
-    if(hlm->ampli[1][i]>hlm->ampli[1][jmax]) jmax = i;
-  }
-
-  double tmax_wav = hlm->time[jmax];
 
   /* Determine the merger as the maximum of the (pure) orbital frequency*/
   double tOmg_pk = dyn->tOmg_pk;
@@ -8967,10 +8959,10 @@ void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamic
     /* use QNM for alpha_dot, and fix beta constant */
     /* Table VIII or https://arxiv.org/pdf/gr-qc/0512160.pdf */
 
-    double JdotL = EOBPars->cosJL_final;
+    double cosJL = EOBPars->cosJL_final;
     double adot;
     
-    adot = post_merger_alpha_dot(EOBPars->abhf, JdotL);
+    adot = post_merger_alpha_dot(EOBPars->abhf, cosJL);
 
     for(int j=tmax_wav_idx; j < hlm->size; j++){
       double dt= hlm->time[j]-hlm->time[tmax_wav_idx-1];
