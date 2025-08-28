@@ -3459,7 +3459,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->use_effective_QNMs == 1) {
     if (DEBUG) 
       printf("Using effective QNM frequencies for precessing spins; cos(beta_final) = %.9f\n", EOBPars->cosJL_final);
-    prec_effective_QNMs(omega1, abh, fabs(EOBPars->cosJL_final));
+    prec_effective_QNMs(omega1, abh, EOBPars->cosJL_final);
   }
   
   for (int k=0; k<KMAX; k++) {
@@ -3759,23 +3759,26 @@ void QNM_deviations(double *alpha1, double *omega1, double *alpha21)
  *   @param[in]  cosJL_final : merger (cosine of) angle between J and L
  *   @param[out] omega1      : effective QNM frequencies
  *
- */void prec_effective_QNMs(double *omega1, double abhf, double cosJL_final)
+ */
+void prec_effective_QNMs(double *omega1, double abhf, double cosJL_final)
 {
   double alpha_dot = post_merger_alpha_dot(abhf, cosJL_final);
   for (int k = 0; k < KMAX; k++) 
-    omega1[k] -= MINDEX[k]*alpha_dot*(1. - cosJL_final);
+    omega1[k] -= MINDEX[k]*alpha_dot*(1. - fabs(cosJL_final));
 }
 
 /** 
  *  Function: post_merger_alpha_dot
  *  --------------------------------
- *  Post-merger evolution of Euler angle alpha, according to [REF]
+ *  Post-merger evolution of Euler angle alpha.
+ *  Using QNM fits from Table VIII of https://arxiv.org/pdf/gr-qc/0512160.
  *
  *   @param[in]  abhf        : spin of the final BH
  *   @param[in]  cosJL_final : cosine of angle between J and L at merger
  *   @param[out] alphadot    : time derivative of alpha after merger
  *
- */double post_merger_alpha_dot(double abhf, double cosJL_final)
+ */
+double post_merger_alpha_dot(double abhf, double cosJL_final)
 {
   double alphadot;
   double f10, f20, f30;
@@ -4500,7 +4503,7 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
   if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->use_effective_QNMs == 1) {
     if (DEBUG) 
       printf("Using effective QNM frequencies for precessing spins; cos(beta_final) = %.9f\n", EOBPars->cosJL_final);
-    prec_effective_QNMs(omega1, abh, fabs(EOBPars->cosJL_final));
+    prec_effective_QNMs(omega1, abh, EOBPars->cosJL_final);
   }
   
   for (int k=0; k<KMAX; k++) {

@@ -922,7 +922,7 @@ void DynamicsSpin_free (DynamicsSpin *dyn);
 void DynamicsSpin_output (DynamicsSpin *dyn);
 void DynamicsSpin_join (DynamicsSpin *dyn, DynamicsSpin *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
-double compute_JdotL(DynamicsSpin *dyn, double tpeak);
+double compute_cosJL(DynamicsSpin *dyn, double tpeak);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
 double time_units_factor(double M);

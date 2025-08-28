@@ -3416,13 +3416,15 @@ void Dynamics_set_params (Dynamics *dyn)
 }
 
 /**
- * Function: JdotL
+ * Function: compute_cosJL
  * ---------------
- *   Compute dot product of final (?) orbital and total ang. mom.
+ *   Compute cosine of angle between total and orbital angular momentum at merger time.
  * 
- *   @param[in,out] spindyn: pointer to spin dynamics
+ *   @param[in] dyn:   pointer to spin dynamics
+ *   @param[in] tpeak: merger time
+ *   @return           cosine of angle between J and L at merger: 
 */
-double compute_JdotL (DynamicsSpin *dyn, double tpeak)
+double compute_cosJL (DynamicsSpin *dyn, double tpeak)
 {
   double SAmrg[3], SBmrg[3], Lmrg[3], Jmrg[3];
 
