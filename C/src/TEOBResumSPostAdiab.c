@@ -440,7 +440,7 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
         
         u2      = 1./((dyn->r)*(dyn->r));
         prstar2 = (dyn->prstar)*(dyn->prstar);
-        d2Heff_dprstar20 = d2Heff_dprstar20 = 0.5*(2. + A_vec[i]*d2Qdprstar2_vec[i])/Heff_orb_vec[i];
+        d2Heff_dprstar20 = 0.5*(2. + A_vec[i]*d2Qdprstar2_vec[i])/Heff_orb_vec[i];
         
         Heff_vec[i] = Heff_orb_vec[i]; /* Heff coincides with Heff_orb for the non-spinning case */
         E_vec[i] = nu*H;
