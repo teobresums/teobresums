@@ -100,6 +100,8 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->freqs) free(eobp->freqs);
   if (eobp->delta_alphalm0_k) free(eobp->delta_alphalm0_k);
   if (eobp->delta_alphalm0) free(eobp->delta_alphalm0);
+  if (eobp->delta_taulm0_k) free(eobp->delta_taulm0_k);
+  if (eobp->delta_taulm0) free(eobp->delta_taulm0);
   if (eobp->delta_omglm0_k) free(eobp->delta_omglm0_k);
   if (eobp->delta_omglm0) free(eobp->delta_omglm0);
   if (eobp->delta_Alm_mrg_k) free(eobp->delta_Alm_mrg_k);
@@ -2046,7 +2048,7 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     free(eobp->delta_omglm0_k);
     eobp->delta_omglm0_size = str2iarray(val, &eobp->delta_omglm0_k);
   }
-  if (STREQUAL(key, "delta_Omglm_mrg")) {
+  if (STREQUAL(key, "delta_omglm0")) {
     free(eobp->delta_omglm0);
     eobp->delta_omglm0_size = str2darray(val, &eobp->delta_omglm0);
   }
