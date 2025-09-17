@@ -2640,6 +2640,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       return ERROR_ODEINT;
     }
     if (dyn->y[EOB_EVOLVE_SPIN_Momg] < 0.){
+      iter--; //don't count this iteration
       if (VERBOSE) printf("Stop: Momg < 0.\n");
       break;
     }
