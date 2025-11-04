@@ -271,6 +271,15 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     /* eob_wav_flm_old(x,nu, rholm, flm); */
     eob_wav_flm(x,nu, rholm, flm);
   }
+
+  /** Adding scalar-tensor corrections */
+   if(use_scalartensor){
+    for (int k = 0; k < KMAX; k++) {
+      Waveform_lm_t hlm_ST;
+      eob_wav_hatflm_ST(dyn, &hlm_ST);
+      flm[k] *= hlm_ST.ampli[k];
+    }   
+  }
   
   FNewt22 = FNewtlm[1];
 

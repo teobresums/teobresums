@@ -2490,6 +2490,7 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
 
   flm[13] = gsl_pow_int(rholm[13], 5);
   flm[13] = flm[13]*f55S;
+    
 }
 
 /** Resummed amplitudes for a particle orbiting around Kerr 
@@ -6233,6 +6234,7 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
   const int usespeedytail = EOBPars->use_speedytail;
+  const int use_scalartensor = EOBPars->use_scalartensor;
   const double X12 = X1-X2; /* sqrt(1-4nu) */
 
   const double phi = dyn->phi; 
@@ -6332,6 +6334,16 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
   for (int k = 0; k < KMAX; k++) {
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
     hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */
+  }
+
+  /** Adding scalar-tensor corrections */
+   if(use_scalartensor){
+    for (int k = 0; k < KMAX; k++) {
+      Waveform_lm_t hlm_ST;
+      eob_wav_hatflm_ST(dyn, &hlm_ST);
+      hlm->ampli[k] *= hlm_ST.ampli[k];
+      hlm->phase[k] += -hlm_ST.phase[k];      
+    }   
   }
   
   /** NQC */
