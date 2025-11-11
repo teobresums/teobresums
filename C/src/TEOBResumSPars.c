@@ -757,9 +757,13 @@ int eob_set_params(int default_choice, int firstcall)
 
     /* Apply deviations from final BH mass, spin */
     EOBPars->Mbhf *= 1. + EOBPars->delta_Mbhf;
+    if (EOBPars->Mbhf <= 0.) {
+      if (DEBUG) printf("ERROR: Final BH mass changed to be zero or negative.\n");
+      return 1;
+    }
     EOBPars->abhf *= 1. + EOBPars->delta_abhf;
     if (fabs(EOBPars->abhf) > 1.) {
-      printf("ERROR: Final BH spin magnitude changed to be greater than 1.\n");
+      if (DEBUG) printf("ERROR: Final BH spin magnitude changed to be greater than 1.\n");
       return 1;
     }
 
@@ -1016,6 +1020,10 @@ int eob_set_params(int default_choice, int firstcall)
     for (int k = 0; k < EOBPars->delta_Alm_mrg_size; k++) {
       int idx   = EOBPars->delta_Alm_mrg_k[k];
       temp[idx] = EOBPars->delta_Alm_mrg[k];
+      if (EOBPars->delta_Alm_mrg[k] < -1.0) {
+        if (DEBUG) printf("ERROR: Peak amplitude for mode %d changed to negative value.\n", idx);
+        return 1;
+      }
       if (DEBUG) {
         int j;
         for (j = EOBPars->kpostpeak_size - 1; j >= 0; j--)
@@ -1060,6 +1068,10 @@ int eob_set_params(int default_choice, int firstcall)
     for (int k = 0; k < EOBPars->delta_Alm_nqc_size; k++) {
       int idx   = EOBPars->delta_Alm_nqc_k[k];
       temp[idx] = EOBPars->delta_Alm_nqc[k];
+      if (EOBPars->delta_Alm_nqc[k] < -1.0) {
+        if (DEBUG) printf("ERROR: NQC amplitude for mode %d changed to negative value.\n", idx);
+        return 1;
+      }
     }
     free(EOBPars->delta_Alm_nqc);
     EOBPars->delta_Alm_nqc = malloc ( KMAX * sizeof(double));
