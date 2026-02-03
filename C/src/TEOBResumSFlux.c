@@ -670,7 +670,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   if (usespins) {
 
     int sp_flag; 
-    if (chi1 < 1e-14 && chi2 < 1e-14) { 
+    if (fabs(chi1) < 1e-14 && fabs(chi2) < 1e-14) { 
       sp_flag = 0; // if zero spins, do not change the Newtonian prefactors
     } else {
       sp_flag = 1;
