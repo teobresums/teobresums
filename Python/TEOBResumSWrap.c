@@ -1049,8 +1049,8 @@ static PyObject* eob_j0_circ_py(PyObject *self, PyObject *args)
 	(which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). */
   eob_metric_s(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold,
               &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
-  eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
-  eob_dyn_s_GS(r, rc, drc_dr, 0.0, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, EOBPars->X1, EOBPars->X2, EOBPars->cN3LO, ggm);
+  eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2, &pl_hold);
+  eob_dyn_s_GS(r, rc, drc_dr, 0.0, 0.0, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, EOBPars->X1, EOBPars->X2, EOBPars->cN3LO, ggm);
 
   G                  = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss
   dG_dr              = ggm[6] *S+ggm[7] *Sstar;
