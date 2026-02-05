@@ -2228,7 +2228,8 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
 
   double Atmp=0., dAtmp_u=0., d2Atmp_u=0.;
   double D=0., dD_u=0., d2D_u=0.;
-  double Btmp=0., dBtmp_r=0., d2Btmp_r=0.;
+  double Bt=0., dBt_r=0., d2Bt_r=0.;
+  double Borb=0., dBorb_r=0., d2Borb_r=0.;
   double Qtmp=0., dQtmp_du=0., dQtmp_dprstar=0., d2Qtmp_du2=0., ddQtmp_drdprstar=0., d2Qtmp_dprstar2=0.,
          d3Qtmp_dr2dprstar= 0., d3Qtmp_drdprstar2=0., d3Qtmp_dprstar3=0.;
 
@@ -2244,9 +2245,9 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
     dAtmp_u  += dAT_u;
     d2Atmp_u += d2AT_u;
     eob_metric_Btidal(r, dyn, &BT, &dBT_u, &d2BT_u);
-    Btmp     += BT;
-    dBtmp_r  += -dBT_u*u2;
-    d2Btmp_r += 2.*dBT_u*u3 + d2BT_u*u4;
+    Bt     += BT;
+    dBt_r  += -dBT_u*u2;
+    d2Bt_r += 2.*dBT_u*u3 + d2BT_u*u4;
   }
 
   /* A potential and derivative with respect to r */  
@@ -2260,13 +2261,14 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   double d2D = 2.*dD_u*u3 + d2D_u*u4;
 
   /* B potential and derivative with respect to r */
-  Btmp     += D/(Atmp);
-  dBtmp_r  += (Btmp)*(dD/D - (*dA)/(*A));
-  d2Btmp_r += SQ(dBtmp_r)/(Btmp) + (Btmp)*(d2D/D - SQ(dD/D) - (*d2A)/(*A) + SQ((*dA)/(*A)));
-
-  *B   = Btmp;
-  *dB  = dBtmp_r;
-  *d2B = d2Btmp_r;
+  // D/A part
+  Borb     += D/(Atmp);
+  dBorb_r  += (Borb)*(dD/D - (*dA)/(*A));
+  d2Borb_r += SQ(dBorb_r)/(Borb) + (Borb)*(d2D/D - SQ(dD/D) - (*d2A)/(*A) + SQ((*dA)/(*A)));
+  // Add pure tidal part
+  *B   = Bt + Borb;
+  *dB  = dBt_r + dBorb_r; 
+  *d2B = d2Bt_r + d2Borb_r;
 
   /* Q potential and derivatives */
   eob_metric_Qpotential(r, prstar, nu, &Qtmp, &dQtmp_du, &dQtmp_dprstar, &d2Qtmp_du2, &ddQtmp_drdprstar, &d2Qtmp_dprstar2, &d3Qtmp_dr2dprstar, &d3Qtmp_drdprstar2, &d3Qtmp_dprstar3);
@@ -2332,7 +2334,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
 
   /* A potential and derivative with respect to u */  
   double Aorb, dAorb_u, d2Aorb_u;
-  double Btmp=0., dBtmp_r=0., d2Btmp_r=0.;
+  double Bt=0., dBt_r=0., d2Bt_r=0.;
 
   eob_metric_Apotential(rc, nu, &Aorb, &dAorb_u, &d2Aorb_u);
 
@@ -2350,9 +2352,9 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
     dAorb_u  += dAT_u;
     d2Aorb_u += d2AT_u;
     eob_metric_Btidal(rc, dyn, &BT, &dBT_u, &d2BT_u);
-    Btmp    += BT;
-    dBtmp_r += -dBT_u*uc2*drc;
-    d2Btmp_r += (2.*uc3*SQ(drc) - uc2*d2rc)*dBT_u + uc4*SQ(drc)*d2BT_u;
+    Bt    += BT;
+    dBt_r += -dBT_u*uc2*drc;
+    d2Bt_r += (2.*uc3*SQ(drc) - uc2*d2rc)*dBT_u + uc4*SQ(drc)*d2BT_u;
   }
 
   /* A potential and derivative with respect to r */  
@@ -2383,14 +2385,15 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   double dfact  = 2.*r*uc2 - 2.*r*r*uc3*drc;
   double d2fact = 2.*uc2   - 8.*r*uc3*drc + 6.*r*r*uc4*SQ(drc) - 2.*r*r*uc3*d2rc;
   
-  Btmp += fact*D/(*A);
-  dBtmp_r += (*B)*(dfact/fact + dD/D - (*dA)/(*A));
-  d2Btmp_r += SQ(*dB)/(*B) + (*B)*(d2fact/fact - SQ(dfact/fact) + d2D/D - SQ(dD/D)
+  // D/A part
+  *B   = fact*D/(*A);
+  *dB  = (*B)*(dfact/fact + dD/D - (*dA)/(*A));
+  *d2B = SQ(*dB)/(*B) + (*B)*(d2fact/fact - SQ(dfact/fact) + d2D/D - SQ(dD/D)
 			 - (*d2A)/(*A) + SQ((*dA)/(*A)));
-
-  *B   = Btmp;
-  *dB  = dBtmp_r;
-  *d2B = d2Btmp_r;
+  // Add pure tidal part at the end
+  *B   += Bt;
+  *dB  += dBt_r;
+  *d2B += d2Bt_r;
 
   /* Q potential and derivatives */
   double Qtmp=0., dQtmp_duc=0., dQtmp_dprstar=0.,  d2Qtmp_duc2=0., ddQtmp_drcdprstar=0., d2Qtmp_dprstar2=0.,

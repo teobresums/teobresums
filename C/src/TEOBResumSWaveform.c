@@ -4781,8 +4781,10 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
 }
 
 /** Calculate tidal correction to multipolar waveform amplitude
-    Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007 */
+    Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007
+    Gamba et al 22 */
 #define use_fmode_22amplitude_correction (1)
+#define use_2PN_amplitude_corrections (0)
 /**
  * Function: eob_wav_hlmTidal
  * --------------------------
@@ -4816,51 +4818,79 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   const double x5 = gsl_pow_int(x,5);
   const double x6 = gsl_pow_int(x,6);
   
-  double hA[KMAX], hB[KMAX], betaA1[KMAX],betaB1[KMAX];
+  double hA[KMAX], hB[KMAX], betaA1[KMAX],betaB1[KMAX],betaA2[KMAX],betaB2[KMAX];
 
   memset(hTidallm, 0., KMAX*sizeof(double));
   memset(hA, 0., KMAX*sizeof(double));
   memset(hB, 0., KMAX*sizeof(double));
   memset(betaA1, 0., KMAX*sizeof(double));
   memset(betaB1, 0., KMAX*sizeof(double));
+  memset(betaA2, 0., KMAX*sizeof(double));
+  memset(betaB2, 0., KMAX*sizeof(double));
 
   /** l=2 */
-  hA[1]     = 2 * khatA_2 *(XA/XB+3);
-  hB[1]     = 2 * khatB_2 *(XB/XA+3);
-
-  betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
-  betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
-    
+  // m = 1
   hA[0]     = 3 * khatA_2 * (3-4*XA);
   hB[0]     = 3 * khatB_2 * (3-4*XB);
-    
+
+  // m = 2
+  hA[1]     = 2 * khatA_2 *(XA/XB+3);
+  hB[1]     = 2 * khatB_2 *(XB/XA+3);
+  betaA1[1] = (-202. + 560*XA - 340*XA*XA + 45*XA*XA*XA)/(42*(3-2*XA));
+  betaB1[1] = (-202. + 560*XB - 340*XB*XB + 45*XB*XB*XB)/(42*(3-2*XB));
+  
   /** l=3 */  
+  // m = 1
   hA[2] = 12 * khatA_2 * XB;
   hB[2] = 12 * khatB_2 * XA;
-
   betaA1[2] = (-6. -5.*XA +131.*XA*XA -130.*XA*XA*XA)/(36.*(1.-XA));
   betaB1[2] = (-6. -5.*XB +131.*XB*XB -130.*XB*XB*XB)/(36.*(1.-XB));
 
+  // m = 2
+  hA[3] = 8.*khatA_2*(1. -2.*XB + 3.*XB*XB)/(1.-3.*nu);
+  hB[3] = 8.*khatB_2*(1. -2.*XA + 3.*XA*XA)/(1.-3.*nu);
+
+  // m = 3
   hA[4] = hA[2];
   hB[4] = hB[2];
-
   betaA1[4] = ( (XA-3.)*(10.*XA*XA - 25.*XA+ 14.) )/(12.*(1.-XA));
   betaB1[4] = ( (XB-3.)*(10.*XB*XB - 25.*XB+ 14.) )/(12.*(1.-XB));
-  
+
+  //printf("Debug: hA[4]=%g, hB[4]=%g, betaA1[4]=%g, betaB1[4]=%g\n", hA[4], hB[4], betaA1[4], betaB1[4]);
+#if (use_2PN_amplitude_corrections)
+  /* add corrections */
+  /** l=2 */
+  betaA1[0] = (15. + 203.*XA - 130.*XA*XA - 220.*XA*XA*XA)/(126. - 168.*XA);
+  betaB1[0] = (15. + 203.*XB - 130.*XB*XB - 220.*XB*XB*XB)/(126. - 168.*XB);
+  betaA2[1] = (1735. - 577.*XA - 15036*XA*XA + 8198.*XA*XA*XA + 2567*XA*XA*XA*XA - 1096*XA*XA*XA*XA*XA)/(504.*(-3.+2*XA));
+  betaB2[1] = (1735. - 577.*XA - 15036*XA*XA + 8198.*XA*XA*XA + 2567*XA*XA*XA*XA - 1096*XA*XA*XA*XA*XA)/(504.*(-3.+2*XA));
+  /** l=4 */
+  hA[6] = 2*3584.*khatA_2*(5 - 9*XA + 6*XA*XA);
+  hB[6] = 2*3584.*khatB_2*(5 - 9*XB + 6*XB*XB);
+  hA[8] = 4*khatA_2*(5 - 9*XA + 6*XA*XA);
+  hB[8] = 4*khatB_2*(5 - 9*XB + 6*XB*XB);
+#endif
+
   /** l=2 */
   /* (2,1) */
-  hTidallm[0] = ( -hA[0] + hB[0] )*x5;
+  hTidallm[0] = (-hA[0]*(1. + betaA1[0]*x) + hB[0]*(1. + betaB1[0]*x) )*x5;
   /* (2,2) */
-  hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x) + hB[1]*(1. + betaB1[1]*x) )*x5;
+  hTidallm[1] = ( hA[1]*(1. + betaA1[1]*x +  betaA2[1]*x*x) + hB[1]*(1. + betaB1[1]*x + betaB2[1]*x*x) )*x5;
   
   /** l=3 */
   /* (3,1) */
   hTidallm[2] = ( -hA[2]*(1. + betaA1[2]*x) + hB[2]*(1. + betaB1[2]*x) )*x5;
   /* (3,2) */
-  hTidallm[3] = 8.*( khatA_2*(1. -2.*XB + 3.*XB*XB) +khatB_2*(1. -2.*XA + 3.*XA*XA) )*x5/(1.-3.*nu);
+  hTidallm[3] = ( hA[3] + hB[3] )*x5;
   /* (3,3) */
   hTidallm[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
-  
+
+  /**l=4 */
+  /* (4,2) */
+  hTidallm[6] = ( hA[6] + hB[6] )*x5;
+  /* (4,4) */
+  hTidallm[8] = ( hA[8] + hB[8] )*x5;
+
   if ( (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_GSF) || (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_PN) ) {
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
     const double fourthird = 1.3333333333333333333; // 32/24 = 4/3
