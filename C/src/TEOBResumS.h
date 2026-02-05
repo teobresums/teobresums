@@ -285,7 +285,7 @@ enum{
 };
 static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "newlogs", "undefined"};
 
-/** List of options for tidal potential */
+/** List of options for tidal models, this sets the (electric) tidal versions of A, B, Q to use */
 enum{
   TIDES_OFF,               /**< no tides , keep first to allow syntax: if(use_tidal) { ... */
   TIDES_NNLO,              /**< NNLO PN tides */
@@ -1091,6 +1091,9 @@ int eob_dyn_rootfind_rpr(Dynamics *dyn, double *r0, double *pr0, double omg_orb0
 extern void (*eob_metric_Apotential)(); /* defined in TEOBResumSPars.c*/
 extern void (*eob_metric_Dpotential)(); /* defined in TEOBResumSPars.c*/
 extern void (*eob_metric_Qpotential)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_metric_Atidal_electric)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_metric_Btidal_electric)(); /* defined in TEOBResumSPars.c*/
+extern void (*eob_metric_Qtidal_electric)(); /* defined in TEOBResumSPars.c*/
 void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A);
@@ -1103,7 +1106,12 @@ void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_d
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
+void eob_metric_Atidal_electric_NNLO(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
+void eob_metric_Atidal_electric_TEOBResum(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
+void eob_metric_Atidal_electric_TEOBResum3(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
+void eob_metric_Btidal_electric_1PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
+void zero_tidal_potential(double r, Dynamics *dyn, double *PT, double *dPT, double *d2PT);
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                 double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                 double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);

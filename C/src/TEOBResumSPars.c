@@ -58,6 +58,8 @@ int (*p_eob_spin_dyn_rhs)();
 void (*eob_metric_Apotential)();
 void (*eob_metric_Dpotential)();
 void (*eob_metric_Qpotential)();
+void (*eob_metric_Atidal_electric)();
+void (*eob_metric_Btidal_electric)(); /* defined in TEOBResumSPars.c*/
 double (*eob_flx_Fr)();
 
 /**
@@ -1006,6 +1008,28 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
   
+  /* Set electric tidal potential function pointers */
+  if (EOBPars->use_tidal == TIDES_OFF) {
+    eob_metric_Atidal_electric = &zero_tidal_potential;
+    eob_metric_Btidal_electric = &zero_tidal_potential;
+  } else if (EOBPars->use_tidal == TIDES_NNLO) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_NNLO;
+    eob_metric_Btidal_electric = &zero_tidal_potential;
+  } else if (EOBPars->use_tidal == TIDES_TEOBRESUM) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum;
+    eob_metric_Btidal_electric = &zero_tidal_potential;
+  } else if (EOBPars->use_tidal == TIDES_TEOBRESUM3) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum3;
+    eob_metric_Btidal_electric = &zero_tidal_potential;
+  } else if (EOBPars->use_tidal == TIDES_TEOBRESUM_BHNS) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum;
+    eob_metric_Btidal_electric = &zero_tidal_potential;
+  } else {
+    if (DEBUG) printf("ERROR: Unknown option for A, B electric tidal potentials\n");
+    return 1;
+  }
+  
+
   /* Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
