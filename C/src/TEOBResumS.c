@@ -413,11 +413,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   int check_status;
   if (EOBPars->binary == BINARY_BNS) {
   //if (use_tidal) { 
-    /* Compute rLR_tidal for NNLO potential and without spin part */
+    /* Compute rLR_tidal for NNLO potential and without spin part
+       Store original options
+    */
     int tidal_tmp      = EOBPars->use_tidal;
     int spins_tmp      = EOBPars->use_spins;
     int use_fmode_tmp  = EOBPars->use_tidal_fmode_model;
-    EOBPars->use_tidal = TIDES_NNLO; 
+    void (*A_fpt)(double, Dynamics*, double*, double*, double*);
+    A_fpt = eob_metric_Atidal_electric;
+    /* Set options for LR computation */
+    EOBPars->use_tidal = TIDES_NNLO;
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_NNLO;
     EOBPars->use_spins = 0;
     EOBPars->use_tidal_fmode_model = 0;
     ROOTFINDER(check_status, eob_dyn_adiabLR(dyn, &(EOBPars->rLR_tidal)));
@@ -434,6 +440,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->use_tidal = tidal_tmp;
     EOBPars->use_spins = spins_tmp;
     EOBPars->use_tidal_fmode_model = use_fmode_tmp;
+    eob_metric_Atidal_electric = A_fpt;
     if (VERBOSE) PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    

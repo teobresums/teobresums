@@ -4856,7 +4856,6 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
   betaA1[4] = ( (XA-3.)*(10.*XA*XA - 25.*XA+ 14.) )/(12.*(1.-XA));
   betaB1[4] = ( (XB-3.)*(10.*XB*XB - 25.*XB+ 14.) )/(12.*(1.-XB));
 
-  //printf("Debug: hA[4]=%g, hB[4]=%g, betaA1[4]=%g, betaB1[4]=%g\n", hA[4], hB[4], betaA1[4], betaB1[4]);
 #if (use_2PN_amplitude_corrections)
   /* add corrections */
   /** l=2 */
