@@ -2135,6 +2135,73 @@ void eob_metric_Btidal_electric_1PN(double r, Dynamics *dyn, double *BT, double 
   if (d2BT != NULL) *d2BT = d2B_u;
 }
 
+
+void eob_metric_Btidal_electric_1PN_new(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
+{
+  const double nu = EOBPars->nu;
+
+  const double u  = 1./r;
+  const double u2 = u*u;
+  const double u4 = u2*u2;
+  const double u5 = u4*u;
+  const double u6 = u5*u;
+  const double u7 = u5*u2;
+  const double u8 = u4*u4;
+  double logu = log(u);
+
+  const double XA     = EOBPars->X1;
+  const double XB     = EOBPars->X2;
+  const double XA2    = XA*XA;
+  const double XB2    = XB*XB;
+  const double XA3    = XA2*XA;
+  const double XB3    = XB2*XB;
+  const double XA4    = XA2*XA2;
+  const double XB4    = XB2*XB2;
+  
+  double kapA2 = EOBPars->kapA2; 
+  double kapB2 = EOBPars->kapB2;
+  double kapT2 = EOBPars->kapT2;
+  double kapA2_u = kapA2;
+  double kapB2_u = kapB2;
+  double kapT2_u = 0;
+
+  double kapA3 = EOBPars->kapA3; 
+  double kapB3 = EOBPars->kapB3;
+  double kapT3 = EOBPars->kapT3;
+  
+  if (EOBPars->use_tidal_fmode_model) {
+    kapA2 *= dyn->dress_tides_fmode_A[2]; 
+    kapB2 *= dyn->dress_tides_fmode_B[2];
+    kapT2 = kapA2 + kapB2;
+    
+    kapA2_u *= dyn->dress_tides_fmode_A_u[2]; 
+    kapB2_u *= dyn->dress_tides_fmode_B_u[2]; 
+    kapT2_u = kapA2_u + kapB2_u;    
+  }
+
+  const double cnu = (8. - 15.*nu);
+  const double d6_e = kapT2*cnu; 
+  const double tmp_u = kapT2_u*cnu;
+
+  const double d7_e = kapA2 * (39. - XA * 129. / 8. + XA2 * 141. / 4. + XA3 * 105 / 2) + 
+                      kapB2 * (39. - XB * 129. / 8. + XB2 * 141. / 4. + XB3 * 105 / 2);
+
+  const double d8_e = kapA2 * (156. - XA * (13649. / 16. + 315. * Pi * Pi / 256.) + XA2 * (1307153. / 1960. + 315. * Pi * Pi / 256.) - XA3 * 965. / 4. + XA4 * 457.) +
+                      kapB2 * (156. - XB * (13649. / 16. + 315. * Pi * Pi / 256.) + XB2 * (1307153. / 1960. + 315. * Pi * Pi / 256.) - XB3 * 965. / 4. + XB4 * 457.) +
+                      kapT3 * (13. - 28. * nu);
+
+  const double d8ln_e = - 856. / 7. * (XA2 * kapA2 + XB2 * kapB2);
+
+  double B, dB_u, d2B_u;    
+  B     = d6_e*u6 + (2.*d6_e + d7_e)*u7 + (4.*d6_e + 2.*d7_e + d8_e + d8ln_e * logu)*u8; 
+  dB_u  = 6.*d6_e*u5 + tmp_u*u6 + 7.*(2.*d6_e + d7_e)*u6 + 8.*(4.*d6_e + 2.*d7_e + d8_e + d8ln_e * logu)*u7 + d8ln_e*u7;
+  d2B_u = 30.*d6_e*u4 + 42.*(2.*d6_e + d7_e)*u5 + 56.*(4.*d6_e + 2.*d7_e + d8_e + d8ln_e * logu)*u6 + 8.*d8ln_e*u6 + 7.*d8ln_e*u6; 
+  
+  *BT   = B;
+  *dBT  = dB_u;
+  if (d2BT != NULL) *d2BT = d2B_u;
+}
+
 /**
  *  Function : eob_metric_Btidal
  *  ---------------
@@ -2172,6 +2239,114 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
   *dBT  = dB_elec + dB_mag;
   if (d2BT != NULL) *d2BT = d2B_elec + d2B_mag;
 }
+
+
+void eob_metric_Qtidal_electric_new(double r, Dynamics *dyn, double prstar, double nu, double *QT, double *dQT_du, double *dQT_dprstar, 
+                     double *d2QT_du2, double *d2QT_drdprstar, double *d2QT_dprstar2,
+                     double *d3QT_dr2dprstar, double *d3QT_drdprstar2, double *d3QT_dprstar3)
+{
+
+  /* shortcuts */
+  double pi2     = Pi*Pi;
+  double nu2     = nu*nu;
+  double nu3     = nu2*nu;
+  double nu4     = nu3*nu;
+
+  double prstar2 = prstar*prstar;
+  double prstar3 = prstar2*prstar;
+  double prstar4 = prstar2*prstar2;
+  double prstar5 = prstar3*prstar2;
+  double prstar6 = prstar3*prstar3;
+
+  const double u  = 1./r;
+  const double u2 = u*u;
+  const double u3 = u2*u;
+  const double u4 = u2*u2;
+  const double u5 = u4*u;
+  const double u6 = u5*u;
+  const double u7 = u5*u2;
+  double du_dr = -u2;
+
+  const double XA     = EOBPars->X1;
+  const double XB     = EOBPars->X2;
+  const double XA2    = XA*XA;
+  const double XB2    = XB*XB;
+  const double XA3    = XA2*XA;
+  const double XB3    = XB2*XB;
+  const double XA4    = XA2*XA2;
+  const double XB4    = XB2*XB2;
+  const double XA5    = XA3*XA2;
+  const double XB5    = XB3*XB2;
+  
+  double kapA2 = EOBPars->kapA2; 
+  double kapB2 = EOBPars->kapB2;
+  double kapT2 = EOBPars->kapT2;
+  
+  double kapA3 = EOBPars->kapA3; 
+  double kapB3 = EOBPars->kapB3;
+  double kapT3 = EOBPars->kapT3;
+
+  const double q46_e = 5. / 3. * kapT2 * (-21. + 54. * nu - 42. * nu2);
+  const double q66_e = 5. / 3. * kapT2 * (81. - 168. * nu + 126. * nu2);
+  const double q47_e = kapA2 * (-270. + XA * 13901. / 16 - XA2 * 9137. / 8. + XA3 * 2711. / 4 - XA4 * 259 - XA5 * 315) + 
+                       kapB2 * (-270. + XB * 13901. / 16 - XB2 * 9137. / 8. + XB3 * 2711. / 4 - XB4 * 259 - XB5 * 315);
+
+  double Q, dQ_u, d2Q_u, dQ_prstar, d2Q_prstar, d2Q_drprstar, d3Q_drprstar2, d3Q_dr2prstar, d3Q_prstar;
+  
+  Q = prstar4 * (q46_e * u6 + q47_e * u7) + prstar6 * q66_e * u6;
+  dQ_u = prstar4 * (6. * q46_e * u5 + 7. * q47_e * u6) + 6. * prstar6 * q66_e * u5;
+  d2Q_u = prstar4 * (30. * q46_e * u4 + 42. * q47_e * u5) + 30. * prstar6 * q66_e * u4;
+
+  dQ_prstar = 4. * prstar3 * (q46_e * u6 + q47_e * u7) + 6. * prstar5 * q66_e * u6;
+  d2Q_prstar = 12. * prstar2 * (q46_e * u6 + q47_e * u7) + 30. * prstar4 * q66_e * u6;
+  d3Q_prstar = 24. * prstar * (q46_e * u6 + q47_e * u7) + 120. * prstar3 * q66_e * u6;
+
+  d2Q_drprstar = du_dr * (4. * prstar3 * (6. * q46_e * u5 + 7. * q47_e * u6) + 36. * prstar5 * q66_e * u5);
+  d3Q_drprstar2 = du_dr * (12. * prstar2 * (6. * q46_e * u5 + 7. * q47_e * u6) + 180. * prstar4 * q66_e * u5);
+  d3Q_dr2prstar = du_dr * du_dr * (4. * prstar3 * (30. * q46_e * u4 + 42. * q47_e * u5) + 180. * prstar5 * q66_e * u4) +
+                  2 * u3 * (4. * prstar3 * (6. * q46_e * u5 + 7. * q47_e * u6) + 36. * prstar5 * q66_e * u5);
+
+  
+  *QT = Q;
+  *dQT_du = dQ_u;
+  *d2QT_du2 = d2Q_u;
+
+  *dQT_dprstar = dQ_prstar;
+  *d2QT_dprstar2 = d2Q_prstar;
+  *d3QT_dprstar3 = d3Q_prstar;
+
+  *d2QT_drdprstar = d2Q_drprstar;
+  *d3QT_drdprstar2 = d3Q_drprstar2;
+  *d3QT_dr2dprstar = d3Q_dr2prstar;
+
+}
+
+
+void eob_metric_Qtidal(double r, Dynamics *dyn, double prstar, double nu, double *QT, double *dQT_du, double *dQT_dprstar,
+                       double *d2QT_du2, double *d2QT_drdprstar, double *d2QT_dprstar2,
+                       double *d3QT_dr2dprstar, double *d3QT_drdprstar2, double *d3QT_dprstar3)
+{
+  double Q_elec=0., dQ_du_elec=0., d2Q_du2_elec=0.;
+  double dQ_dprstar_elec=0., d2Q_dprstar2_elec=0., d3Q_dprstar3_elec=0.;
+  double d2Q_drdprstar_elec=0., d3Q_dr2dprstar_elec=0., d3Q_drdprstar2_elec=0.;
+
+  eob_metric_Qtidal_electric(r, dyn, prstar, nu, &Q_elec, &dQ_du_elec, &d2Q_du2_elec,
+                             &dQ_dprstar_elec, &d2Q_dprstar2_elec, &d3Q_dprstar3_elec,
+                             &d2Q_drdprstar_elec, &d3Q_dr2dprstar_elec, &d3Q_drdprstar2_elec);
+
+  *QT = Q_elec;
+  *dQT_du = dQ_du_elec;
+  *d2QT_du2 = d2Q_du2_elec;
+
+  *dQT_dprstar = dQ_dprstar_elec;
+  *d2QT_dprstar2 = d2Q_dprstar2_elec;
+  *d3QT_dprstar3 = d3Q_dprstar3_elec;
+
+  *d2QT_drdprstar = d2Q_drdprstar_elec;
+  *d3QT_drdprstar2 = d3Q_drdprstar2_elec;
+  *d3QT_dr2dprstar = d3Q_dr2dprstar_elec;
+}
+
 
 /** 
  *  Function: zero_tidal_potential
@@ -2232,6 +2407,9 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   double Borb=0., dBorb_r=0., d2Borb_r=0.;
   double Qtmp=0., dQtmp_du=0., dQtmp_dprstar=0., d2Qtmp_du2=0., ddQtmp_drdprstar=0., d2Qtmp_dprstar2=0.,
          d3Qtmp_dr2dprstar= 0., d3Qtmp_drdprstar2=0., d3Qtmp_dprstar3=0.;
+  double Qt=0., dQt_du=0., d2Qt_du2=0.;
+  double dQt_dprstar=0., d2Qt_dprstar2=0., d3Qt_dprstar3=0.;
+  double d2Qt_drdprstar=0., d3Qt_dr2dprstar=0., d3Qt_drdprstar2=0.;
 
   /* A potential and derivative with respect to u */  
   eob_metric_Apotential(r, nu, &Atmp, &dAtmp_u, &d2Atmp_u);
@@ -2240,6 +2418,9 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   if (EOBPars->use_tidal) {
     double AT=0., dAT_u=0., d2AT_u=0.;
     double BT=0., dBT_u=0., d2BT_u=0.;
+    double QT=0., dQT_du=0., d2QT_du2=0.;
+    double dQT_dprstar=0., d2QT_dprstar2=0., d3QT_dprstar3=0.;
+    double d2QT_drdprstar=0., d3QT_dr2dprstar=0., d3QT_drdprstar2=0.;
     eob_metric_Atidal(r, dyn, &AT, &dAT_u, &d2AT_u);
     Atmp     += AT;
     dAtmp_u  += dAT_u;
@@ -2248,6 +2429,16 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
     Bt     += BT;
     dBt_r  += -dBT_u*u2;
     d2Bt_r += 2.*dBT_u*u3 + d2BT_u*u4;
+    eob_metric_Qtidal(r, dyn, prstar, nu, &QT, &dQT_du, &d2QT_du2, &dQT_dprstar, &d2QT_dprstar2, &d3QT_dprstar3, &d2QT_drdprstar, &d3QT_dr2dprstar, &d3QT_drdprstar2);
+    Qt += QT;
+    dQt_du += dQT_du;
+    d2Qt_du2 += d2QT_du2;
+    dQt_dprstar += dQT_dprstar;
+    d2Qt_dprstar2 += d2QT_dprstar2;
+    d3Qt_dprstar3 += d3QT_dprstar3;
+    d2Qt_drdprstar += d2QT_drdprstar;
+    d3Qt_drdprstar2 += d3QT_drdprstar2;
+    d3Qt_dr2dprstar += d3QT_dr2dprstar;
   }
 
   /* A potential and derivative with respect to r */  
@@ -2272,15 +2463,15 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
 
   /* Q potential and derivatives */
   eob_metric_Qpotential(r, prstar, nu, &Qtmp, &dQtmp_du, &dQtmp_dprstar, &d2Qtmp_du2, &ddQtmp_drdprstar, &d2Qtmp_dprstar2, &d3Qtmp_dr2dprstar, &d3Qtmp_drdprstar2, &d3Qtmp_dprstar3);
-  *Q              = Qtmp;
-  *dQ             = -u2*dQtmp_du; // derivative wrt to r
-  *dQ_dprstar     = dQtmp_dprstar;
-  *d2Q            = u3*(2.*dQtmp_du + u*d2Qtmp_du2); // derivative wrt to r
-  *ddQ_drdprstar  = ddQtmp_drdprstar;
-  *d2Q_dprstar2   = d2Qtmp_dprstar2;
-  *d3Q_dr2dprstar = d3Qtmp_dr2dprstar;
-  *d3Q_drdprstar2 = d3Qtmp_drdprstar2;
-  *d3Q_dprstar3   = d3Qtmp_dprstar3;
+  *Q              = Qtmp + Qt;
+  *dQ             = -u2*(dQtmp_du + dQt_du); // derivative wrt to r
+  *dQ_dprstar     = dQtmp_dprstar + dQt_dprstar;
+  *d2Q            = u3*(2.*(dQtmp_du + dQt_du) + u*(d2Qtmp_du2 + d2Qt_du2)); // derivative wrt to r
+  *ddQ_drdprstar  = ddQtmp_drdprstar + d2Qt_drdprstar;
+  *d2Q_dprstar2   = d2Qtmp_dprstar2 + d2Qt_dprstar2;
+  *d3Q_dr2dprstar = d3Qtmp_dr2dprstar + d3Qt_dr2dprstar;
+  *d3Q_drdprstar2 = d3Qtmp_drdprstar2 + d3Qt_drdprstar2;
+  *d3Q_dprstar3   = d3Qtmp_dprstar3 + d3Qt_dprstar3;
 
 }
  
