@@ -2136,7 +2136,7 @@ void eob_metric_Btidal_electric_1PN(double r, Dynamics *dyn, double *BT, double 
 }
 
 
-void eob_metric_Btidal_electric_1PN_new(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
+void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
 {
   const double nu = EOBPars->nu;
 
@@ -2241,7 +2241,7 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 }
 
 
-void eob_metric_Qtidal_electric_new(double r, Dynamics *dyn, double prstar, double nu, double *QT, double *dQT_du, double *dQT_dprstar, 
+void eob_metric_Qtidal_electric_3PN(double r, Dynamics *dyn, double prstar, double nu, double *QT, double *dQT_du, double *dQT_dprstar, 
                      double *d2QT_du2, double *d2QT_drdprstar, double *d2QT_dprstar2,
                      double *d3QT_dr2dprstar, double *d3QT_drdprstar2, double *d3QT_dprstar3)
 {

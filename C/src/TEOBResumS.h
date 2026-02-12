@@ -296,7 +296,7 @@ enum{
   TIDES_TEOBRESUM_BHNS,    /**< TEOBResum BHNS tides */
   TIDES_NOPT               /**< number of tides options */
 };
-static const char* const tides_opt[] = {"no","NNLO","TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3_BQ", "NNLO_B", "TEOBRESUM_BHNS","undefined"};
+static const char* const tides_opt[] = {"no", "NNLO", "TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3_BQ", "NNLO_B", "TEOBRESUM_BHNS", "undefined"};
 
 /** List of options for the gravitomagnetic tidal potential */
 enum{
@@ -1113,11 +1113,11 @@ void eob_metric_Atidal_electric_TEOBResum(double r, Dynamics *dyn, double *AT, d
 void eob_metric_Atidal_electric_TEOBResum3(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric_Btidal_electric_1PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
-void eob_metric_Btidal_electric_1PN_new(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
+void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric_Qtidal(double r, Dynamics *dyn, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                        double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
                        double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
-void eob_metric_Qtidal_electric_new(double r, Dynamics *dyn, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
+void eob_metric_Qtidal_electric_3PN(double r, Dynamics *dyn, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                        double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
                        double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
 void zero_tidal_potential(double r, Dynamics *dyn, double *PT, double *dPT, double *d2PT);
