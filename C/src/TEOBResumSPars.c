@@ -62,6 +62,7 @@ void (*eob_metric_Dpotential)();
 void (*eob_metric_Qpotential)();
 void (*eob_metric_Atidal_electric)();
 void (*eob_metric_Btidal_electric)(); /* defined in TEOBResumSPars.c*/
+void (*eob_metric_Qtidal_electric)();
 double (*eob_flx_Fr)();
 double (*eob_flx_hatflm_nc[KMAX])();
 double (*eob_flx_FlmNewt_nc[KMAX])();
@@ -1592,18 +1593,31 @@ int eob_set_params(int default_choice, int firstcall)
   if (EOBPars->use_tidal == TIDES_OFF) {
     eob_metric_Atidal_electric = &zero_tidal_potential;
     eob_metric_Btidal_electric = &zero_tidal_potential;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
   } else if (EOBPars->use_tidal == TIDES_NNLO) {
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_NNLO;
     eob_metric_Btidal_electric = &zero_tidal_potential;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
   } else if (EOBPars->use_tidal == TIDES_TEOBRESUM) {
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum;
     eob_metric_Btidal_electric = &zero_tidal_potential;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
   } else if (EOBPars->use_tidal == TIDES_TEOBRESUM3) {
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum3;
     eob_metric_Btidal_electric = &zero_tidal_potential;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
+  } else if (EOBPars->use_tidal == TIDES_TEOBRESUM3_BQ) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum3;
+    eob_metric_Btidal_electric = &eob_metric_Btidal_electric_1PN_new;
+    eob_metric_Qtidal_electric = &eob_metric_Qtidal_electric_new;
+  } else if (EOBPars->use_tidal == TIDES_NNLO_B) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_NNLO;
+    eob_metric_Btidal_electric = &eob_metric_Btidal_electric_1PN;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
   } else if (EOBPars->use_tidal == TIDES_TEOBRESUM_BHNS) {
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum;
     eob_metric_Btidal_electric = &zero_tidal_potential;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
   } else {
     if (DEBUG) printf("ERROR: Unknown option for A, B electric tidal potentials\n");
     return 1;
