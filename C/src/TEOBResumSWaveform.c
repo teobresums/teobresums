@@ -1314,9 +1314,14 @@ void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm)
 #endif
   }
 
+  // Set all the unused multipoles to zero (ell = 9, 10, only used in the 22PN flux)
+  for (int k=35; k<KMAX; k++) {
+    flm[k] = 0.;
+  }
+
   /* Amplitudes */
 #pragma omp simd
-  for (int k = 0; k < KMAX; k++) {
+  for (int k = 0; k < 35; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
   }
 
@@ -1683,6 +1688,11 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
     int k = kTaylor[i];
     rholm[k] = Taylorseries(x,clm[k],6);
   }
+
+  // Set all the unused multipoles to zero (ell = 9, 10, only used in the 22PN flux)
+  for (int k=35; k<KMAX; k++) {
+    flm[k] = 0.;
+  }
   
   if (kmaxTaylor+kmaxPade32+kmaxPade42+kmaxPade51+19 != KMAX) {
     errorexit("Wrong function: not all multipoles are written.\n");
@@ -1690,7 +1700,7 @@ void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm)
   
   /** Amplitudes */
 #pragma omp simd
-  for (int k = 0; k < KMAX; k++) {
+  for (int k = 0; k < 35; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
   }
 
@@ -3355,13 +3365,18 @@ void eob_wav_flm_Kerr(double x,double nu, double *rholm, double *flm)
     rholm[k] = Pade62(x,clm[k]);
   }
   
-  if (kmaxT4PN+kmaxT6PN+kmaxT8PN+kmaxP23+kmaxP15+kmaxP42+kmaxP33+kmaxP51+kmaxP62 != KMAX) {
+  if (kmaxT4PN+kmaxT6PN+kmaxT8PN+kmaxP23+kmaxP15+kmaxP42+kmaxP33+kmaxP51+kmaxP62+19 != KMAX) {
     errorexit("Wrong function: not all multipoles are written.\n");
+  }
+
+  // Set all the unused multipoles to zero (ell = 9, 10, only used in the 22PN flux)
+  for (int k=35; k<KMAX; k++) {
+    flm[k] = 0.;
   }
   
   /** Amplitudes */
 #pragma omp simd
-  for (int k = 0; k < KMAX; k++) {
+  for (int k = 0; k < 35; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
   }
   
@@ -3738,10 +3753,15 @@ void eob_wav_flm_HM_4PN22(double x,double nu, double *rholm, double *flm)
   if (kmaxTaylor+kmaxPade32+kmaxPade22+kmaxPade42+kmaxPade51+19 != KMAX) {
     errorexit("Wrong function: not all multipoles are written.\n");
   }
+
+  // Set all the unused multipoles to zero (ell = 9, 10, only used in the 22PN flux)
+  for (int k=35; k<KMAX; k++) {
+    flm[k] = 0.;
+  }
   
   /** Amplitudes */
 #pragma omp simd
-  for (int k = 0; k < KMAX; k++) {
+  for (int k = 0; k < 35; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
   }
 
@@ -4073,7 +4093,7 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
 {
   /** Orbital part */
   //double rholm_orb[KMAX], flm_orb[KMAX];
-  eob_wav_flm(x,nu, rholm, flm);
+  eob_wav_flm(x, nu, rholm, flm);
 
   /** Spin corrections */
   double rho22S;
@@ -4188,7 +4208,7 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
 
   // f-odd corrections flag
   int fodd_flag;
-  if (chi1 < 1e-14 && chi2 < 1e-14) { 
+  if (fabs(chi1) < 1e-14 && fabs(chi2) < 1e-14) { 
     fodd_flag = 0; // if zero spins, spin corrections for f_modd modes set to 1
   } else {
     fodd_flag = 1;

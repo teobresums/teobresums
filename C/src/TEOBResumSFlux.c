@@ -77,7 +77,7 @@ static const double CNlm[54] = {
     sp4 * x8, sp5 * x9, sp4 * x8, sp5 * x9, sp4 * x8, 
     sp6 * x10, sp5 * x9, sp6 * x10, sp5 * x9, sp6 * x10, sp5 * x9, 
     sp6 * x10, sp7 * x11, sp6 * x10, sp7 * x11, sp6 * x10, sp7 * x11, sp6 * x10,
-    sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, (7*nu3-14*nu2+7*nu-1)*(7*nu3-14*nu2+7*nu-1) * x11,
+    sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, sp8 * x12, sp7 * x11, //(7.*nu3-14.*nu2+7.*nu-1.)*(7.*nu3-14.*nu2+7.*nu-1.) * x11,
     sp9 * x12, sp10* x13, sp9 * x12, sp10* x13, sp9 * x12, sp10* x13, sp9 * x12, sp10 * x13 , sp9 * x12,
     sp11* x14, sp10* x13, sp11* x14, sp10* x13, sp11* x14, sp10* x13, sp11* x14, sp10 * x13, sp11 * x14, sp10 * x13
   };
@@ -654,7 +654,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};  
   
   double FNewt22, sum_k=0.; 
-  double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
+  double rholm[KMAX] = {0.}, flm[KMAX] = {0.}, FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double Modhhatlm[KMAX];  
 
   /** Newtonian flux */
@@ -663,11 +663,11 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   /* Remove useless modes when not using the 22PN flux*/
   // TODO: add also elsewhere
   if(EOBPars->use_flm != USEFLM_22PN){
-    for(int k=36; k<KMAX; k++) FNewtlm[k] = 0;
+    for(int k=35; k<KMAX; k++) FNewtlm[k] = 0;
   }
 
   /* Correct amplitudes for specific multipoles and cases */
-  if (usespins) {
+  if (usespins) { // usespins is now 1 also when spins are 0
 
     int sp_flag; 
     if (fabs(chi1) < 1e-14 && fabs(chi2) < 1e-14) { 
@@ -683,7 +683,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
       FNewtlm[2] = CNlm[2] * x6; // (3,1) 
       FNewtlm[4] = CNlm[4] * x6; // (3,3) 
       /* Correct (4,1), (4,3)  ( sp4 = (1-2nu)^2 ) */
-      double sp4x8 = SQ((1-2*nu)) * gsl_pow_int(x, 8);
+      double sp4x8 = SQ((1. - 2.*nu)) * gsl_pow_int(x, 8);
       FNewtlm[5]  = CNlm[5] * sp4x8; // (4,1) 
       FNewtlm[7]  = CNlm[7] * sp4x8; // (4,3) 
       
@@ -691,9 +691,17 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
       if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22){
         FNewtlm[13] = CNlm[13] * sp4x8;
       }
+    } else {
+      if (usetidal) {
+        /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+        double x6 = gsl_pow_int(x, 6);
+        FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
+        FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
+        FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
+      }
     }
     
-  } else {
+  } else { // usespins = 0 case, now deprecated
     if (usetidal) {
       /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
       double x6 = gsl_pow_int(x, 6);
@@ -830,30 +838,54 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
     jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
 
   double FNewt22, sum_k=0.;
-  double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
+  double rholm[KMAX] = {0.}, flm[KMAX] = {0.}, FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double Modhhatlm[KMAX];
 
   /** Newtonian flux */
   eob_flx_FlmNewt(x, nu, FNewtlm);
 
+  /* Remove useless modes when not using the 22PN flux*/
+  // TODO: add also elsewhere
+  if(EOBPars->use_flm != USEFLM_22PN){
+    for(int k=35; k<KMAX; k++) FNewtlm[k] = 0;
+  }
+
   /* Correct amplitudes for specific multipoles and cases */
-  if (usespins) {
-    /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
-    double x6 = gsl_pow_int(x, 6);
-    FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
-    FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
-    FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
-    /* Correct (4,1), (4,3)  ( sp4 = (1-2nu)^2 ) */
-    double sp4x8 = SQ((1-2*nu)) * gsl_pow_int(x, 8);
-    FNewtlm[5]  = CNlm[5] * sp4x8; /* (4,1) */
-    FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
-    
-    /* Correcting (5,5) for Higher Modes */
-    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 ){
-      FNewtlm[13] = CNlm[13] * sp4x8;
+  if (usespins) { // usespins is now 1 also when spins are 0
+
+    int sp_flag; 
+    if (fabs(chi1) < 1e-14 && fabs(chi2) < 1e-14) { 
+      sp_flag = 0; // if zero spins, do not change the Newtonian prefactors
+    } else {
+      sp_flag = 1;
+    } 
+
+    if (sp_flag) {
+      /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+      double x6 = gsl_pow_int(x, 6);
+      FNewtlm[0] = CNlm[0] * x6; // (2,1) 
+      FNewtlm[2] = CNlm[2] * x6; // (3,1) 
+      FNewtlm[4] = CNlm[4] * x6; // (3,3) 
+      /* Correct (4,1), (4,3)  ( sp4 = (1-2nu)^2 ) */
+      double sp4x8 = SQ((1. - 2.*nu)) * gsl_pow_int(x, 8);
+      FNewtlm[5]  = CNlm[5] * sp4x8; // (4,1) 
+      FNewtlm[7]  = CNlm[7] * sp4x8; // (4,3) 
+      
+      /* Correcting (5,5) for Higher Modes */
+      if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22){
+        FNewtlm[13] = CNlm[13] * sp4x8;
+      }
+    } else {
+      if (usetidal) {
+        /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+        double x6 = gsl_pow_int(x, 6);
+        FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
+        FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
+        FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
+      }
     }
     
-  } else {
+  } else { // usespins = 0 case, now deprecated
     if (usetidal) {
       /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
       double x6 = gsl_pow_int(x, 6);
