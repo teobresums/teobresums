@@ -292,11 +292,13 @@ enum{
   TIDES_TEOBRESUM,         /**< TEOBResum tides */
   TIDES_TEOBRESUM3,        /**< TEOBResum3 tides, Akcay et al 2018 */
   TIDES_TEOBRESUM3_BQ,
+  TIDES_NNLO_B,
+  TIDES_NNLO_Q,
   TIDES_NNLO_BQ,
   TIDES_TEOBRESUM_BHNS,    /**< TEOBResum BHNS tides */
   TIDES_NOPT               /**< number of tides options */
 };
-static const char* const tides_opt[] = {"no", "NNLO", "TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3_BQ", "NNLO_BQ", "TEOBRESUM_BHNS", "undefined"};
+static const char* const tides_opt[] = {"no", "NNLO", "TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3_BQ", "NNLO_B", "NNLO_Q", "NNLO_BQ", "TEOBRESUM_BHNS", "undefined"};
 
 /** List of options for the gravitomagnetic tidal potential */
 enum{

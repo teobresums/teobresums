@@ -601,7 +601,7 @@ int eob_set_params(int default_choice, int firstcall)
       EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
       EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
     }
-
+ 
     /* Tidal coupling constants */
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl2,EOBPars->LambdaBl2, 2,  &(EOBPars->kapA2), &(EOBPars->kapB2));
     tidal_kappa_of_Lambda(q, XA, XB, EOBPars->LambdaAl3,EOBPars->LambdaBl3, 3,  &(EOBPars->kapA3), &(EOBPars->kapB3));
@@ -1029,6 +1029,14 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->use_tidal == TIDES_TEOBRESUM3_BQ) {
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum3;
     eob_metric_Btidal_electric = &eob_metric_Btidal_electric_3PN;
+    eob_metric_Qtidal_electric = &eob_metric_Qtidal_electric_3PN;
+  } else if (EOBPars->use_tidal == TIDES_NNLO_B) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_NNLO;
+    eob_metric_Btidal_electric = &eob_metric_Btidal_electric_3PN;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
+  } else if (EOBPars->use_tidal == TIDES_NNLO_Q) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_NNLO;
+    eob_metric_Btidal_electric = &zero_tidal_potential;
     eob_metric_Qtidal_electric = &eob_metric_Qtidal_electric_3PN;
   } else if (EOBPars->use_tidal == TIDES_NNLO_BQ) {
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_NNLO;
