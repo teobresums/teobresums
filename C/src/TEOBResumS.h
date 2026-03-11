@@ -655,7 +655,7 @@ typedef struct tagEOBParameters
   double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;                             /* EOB Multipolar electric effective adiabatic tidal parameters */
   double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;               /* EOB Multipolar magnetic adiabatic tidal parameters */
   double khatA2,khatB2;                                                         //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
-  double bar_alph2_1, bar_alph2_2, bar_alph3_1, bar_alph3_2, bar_alph2j_1;      /* Tidal parameters combinations entering the EOB A potential*/
+  double bar_alph2_1, bar_alph2_2, bar_alph2_3, bar_alph3_1, bar_alph3_2, bar_alph2j_1;      /* Tidal parameters combinations entering the EOB A potential*/
   double rLR_tidal, pGSF_tidal;                                                 /* Tidal light ring and GSF exponent */
   double bomgfA[6], bomgfB[6];                                                  /* f-mode frequencies star A,B (ell=2,3,4; indexes 0,1 not used) */
   /**@}*/

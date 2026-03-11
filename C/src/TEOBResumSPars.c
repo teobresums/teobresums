@@ -365,6 +365,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   
   eobp->bar_alph2_1= 0. ; //
   eobp->bar_alph2_2= 0. ; //
+  eobp->bar_alph2_3= 0. ; //
   eobp->bar_alph3_1= 0. ; //
   eobp->bar_alph3_2= 0. ; //
   eobp->bar_alph2j_1= 0. ; //
@@ -642,6 +643,7 @@ int eob_set_params(int default_choice, int firstcall)
        \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
     EOBPars->bar_alph2_1 = (5./2.*XA*EOBPars->kapA2 + 5./2.*XB*EOBPars->kapB2)/EOBPars->kapT2;
     EOBPars->bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*EOBPars->kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*EOBPars->kapB2)/EOBPars->kapT2;
+    EOBPars->bar_alph2_3 = ((9. + XA*(1905.*Pi*Pi/256. - 3487./16.) + XA*XA*(1943967./9800. - 1905.*Pi*Pi/256.) + XA*XA*XA*937./56. + XA*XA*XA*XA*10.)*EOBPars->kapA2 + (9. + XB*(1905.*Pi*Pi/256. - 3487./16.) + XB*XB*(1943967./9800. - 1905.*Pi*Pi/256.) + XB*XB*XB*937./56. + XB*XB*XB*XB*10.)*EOBPars->kapB2)/EOBPars->kapT2;
     EOBPars->bar_alph3_1 = ((-2.+15./2.*XA)*EOBPars->kapA3 + (-2.+15./2.*XB)*EOBPars->kapB3)/EOBPars->kapT3;
     EOBPars->bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*EOBPars->kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*EOBPars->kapB3)/EOBPars->kapT3;
     /* Gravitomagnetic term, see Eq.(6.27) of Bini-Damour-Faye 2012 */
@@ -1925,6 +1927,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","kappaTl4",  eobp->kapT4); //
   fprintf(f,"%s = %.16f\n","bar_alph2_1", eobp->bar_alph2_1); //
   fprintf(f,"%s = %.16f\n","bar_alph2_2", eobp->bar_alph2_2); //
+  fprintf(f,"%s = %.16f\n","bar_alph2_3", eobp->bar_alph2_3); //
   fprintf(f,"%s = %.16f\n","bar_alph3_1", eobp->bar_alph3_1); //
   fprintf(f,"%s = %.16f\n","bar_alph3_2", eobp->bar_alph3_2); //
   fprintf(f,"%s = %.16f\n","bar_alph2j_1", eobp->bar_alph2j_1); //

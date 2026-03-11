@@ -2136,6 +2136,18 @@ void eob_metric_Btidal_electric_1PN(double r, Dynamics *dyn, double *BT, double 
 }
 
 
+/**
+ *  Function : eob_metric_Btidal_electric
+ *  ---------------
+ *   Tidal B potential
+ *   Schulze +, 1PN to 3PN terms electric part
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] BT    : tidal B potential evaluated at r  
+ *   @param[out] dBT   : tidal dB 
+ *   @param[out] d2BT  : tidal d2B
+ */ 
 void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
 {
   const double nu = EOBPars->nu;
@@ -2200,6 +2212,18 @@ void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double 
 }
 
 
+/**
+ *  Function : eob_metric_Btidal_magnetic
+ *  ---------------
+ *   Tidal B potential
+ *   Schulze +, 2PN to 3PN terms magnetic part. 1PN term already computed 
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] BT    : tidal B potential evaluated at r  
+ *   @param[out] dBT   : tidal dB 
+ *   @param[out] d2BT  : tidal d2B
+ */ 
 void eob_metric_Btidal_magnetic_2PN_3PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
 {
   const double nu = EOBPars->nu;
@@ -2286,6 +2310,23 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 }
 
 
+/**
+  *  Function : eob_metric_Qtidal
+  *  --------------------------
+  *    Tidal Q potential
+  *    Schulze +, 1PN to 3PN electric part
+  *    @param[in]  r    : radial separation  
+  *    @param[in]  nu   : symmetric mass ratio 
+  *    @param[out] Q    : Q potential evaluated at r  
+  *    @param[out] dQ   : dQ/du,   with u=1/r  
+  *    @param[out] dQ_dprstar  : dQ/dprstar
+  *    @param[out] d2Q_du2   : d2Q/du2, with u=1/r
+  *    @param[out] ddQ_drdprstar : d2Q/drdprstar
+  *    @param[out] d2Q_dprstar2  : d2Q/dprstar^2
+  *    @param[out] d3Q_dr2dprstar : d3Q/dr^2dprstar
+  *    @param[out] d3Q_drdprstar2 : d3Q/drdprstar^2
+  *    @param[out] d3Q_dprstar3   : d3Q/dprstar^3
+*/
 void eob_metric_Qtidal_electric_3PN(double r, Dynamics *dyn, double prstar, double nu, double *QT, double *dQT_du, double *dQT_dprstar, 
                      double *d2QT_du2, double *d2QT_drdprstar, double *d2QT_dprstar2,
                      double *d3QT_dr2dprstar, double *d3QT_drdprstar2, double *d3QT_dprstar3)
@@ -2364,6 +2405,23 @@ void eob_metric_Qtidal_electric_3PN(double r, Dynamics *dyn, double prstar, doub
 }
 
 
+/**
+  *  Function : eob_metric_Qtidal
+  *  --------------------------
+  *    Tidal Q potential
+  *    Schulze +, 1PN to 3PN magnetic part
+  *    @param[in]  r    : radial separation  
+  *    @param[in]  nu   : symmetric mass ratio 
+  *    @param[out] Q    : Q potential evaluated at r  
+  *    @param[out] dQ   : dQ/du,   with u=1/r  
+  *    @param[out] dQ_dprstar  : dQ/dprstar
+  *    @param[out] d2Q_du2   : d2Q/du2, with u=1/r
+  *    @param[out] ddQ_drdprstar : d2Q/drdprstar
+  *    @param[out] d2Q_dprstar2  : d2Q/dprstar^2
+  *    @param[out] d3Q_dr2dprstar : d3Q/dr^2dprstar
+  *    @param[out] d3Q_drdprstar2 : d3Q/drdprstar^2
+  *    @param[out] d3Q_dprstar3   : d3Q/dprstar^3
+*/
 void eob_metric_Qtidal_magnetic_3PN(double r, Dynamics *dyn, double prstar, double nu, double *QT, double *dQT_du, double *dQT_dprstar, 
                      double *d2QT_du2, double *d2QT_drdprstar, double *d2QT_dprstar2,
                      double *d3QT_dr2dprstar, double *d3QT_drdprstar2, double *d3QT_dprstar3)
@@ -2442,6 +2500,19 @@ void eob_metric_Qtidal_magnetic_3PN(double r, Dynamics *dyn, double prstar, doub
 }
 
 
+/**
+ *  Function : eob_metric_Qtidal
+ *  ---------------
+ *   Tidal Q potential, puts together electric and magnetic contributions.
+ *   The electric part is computed calling eob_metric_Qtidal_electric, set as
+ *   a function pointer depending on the chosen tidal model.
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] BT    : tidal B potential evaluated at r  
+ *   @param[out] dBT   : tidal dB  
+ *   @param[out] d2BT  : tidal d2B
+ */ 
 void eob_metric_Qtidal(double r, Dynamics *dyn, double prstar, double nu, double *QT, double *dQT_du, double *dQT_dprstar,
                        double *d2QT_du2, double *d2QT_drdprstar, double *d2QT_dprstar2,
                        double *d3QT_dr2dprstar, double *d3QT_drdprstar2, double *d3QT_dprstar3)
@@ -2450,21 +2521,31 @@ void eob_metric_Qtidal(double r, Dynamics *dyn, double prstar, double nu, double
   double dQ_dprstar_elec=0., d2Q_dprstar2_elec=0., d3Q_dprstar3_elec=0.;
   double d2Q_drdprstar_elec=0., d3Q_dr2dprstar_elec=0., d3Q_drdprstar2_elec=0.;
 
+  double Q_mag=0., dQ_du_mag=0., d2Q_du2_mag=0.;
+  double dQ_dprstar_mag=0., d2Q_dprstar2_mag=0., d3Q_dprstar3_mag=0.;
+  double d2Q_drdprstar_mag=0., d3Q_dr2dprstar_mag=0., d3Q_drdprstar2_mag=0.;
+
   eob_metric_Qtidal_electric(r, dyn, prstar, nu, &Q_elec, &dQ_du_elec, &d2Q_du2_elec,
                              &dQ_dprstar_elec, &d2Q_dprstar2_elec, &d3Q_dprstar3_elec,
                              &d2Q_drdprstar_elec, &d3Q_dr2dprstar_elec, &d3Q_drdprstar2_elec);
+  
+  if (EOBPars->use_tidal_gravitomagnetic) {
+    eob_metric_Qtidal_magnetic_3PN(r, dyn, prstar, nu, &Q_mag, &dQ_du_mag, &d2Q_du2_mag,
+                             &dQ_dprstar_mag, &d2Q_dprstar2_mag, &d3Q_dprstar3_mag,
+                             &d2Q_drdprstar_mag, &d3Q_dr2dprstar_mag, &d3Q_drdprstar2_mag);
+  }
 
-  *QT = Q_elec;
-  *dQT_du = dQ_du_elec;
-  *d2QT_du2 = d2Q_du2_elec;
+  *QT = Q_elec + Q_mag;
+  *dQT_du = dQ_du_elec + dQ_du_mag;
+  *d2QT_du2 = d2Q_du2_elec + d2Q_du2_mag;
 
-  *dQT_dprstar = dQ_dprstar_elec;
-  *d2QT_dprstar2 = d2Q_dprstar2_elec;
-  *d3QT_dprstar3 = d3Q_dprstar3_elec;
+  *dQT_dprstar = dQ_dprstar_elec + dQ_dprstar_mag;
+  *d2QT_dprstar2 = d2Q_dprstar2_elec + d2Q_dprstar2_mag;
+  *d3QT_dprstar3 = d3Q_dprstar3_elec + d3Q_dprstar3_mag;
 
-  *d2QT_drdprstar = d2Q_drdprstar_elec;
-  *d3QT_drdprstar2 = d3Q_drdprstar2_elec;
-  *d3QT_dr2dprstar = d3Q_dr2dprstar_elec;
+  *d2QT_drdprstar = d2Q_drdprstar_elec + d2Q_drdprstar_mag;
+  *d3QT_drdprstar2 = d3Q_drdprstar2_elec + d3Q_drdprstar2_mag;
+  *d3QT_dr2dprstar = d3Q_dr2dprstar_elec + d3Q_dr2dprstar_mag;
 
 }
 
