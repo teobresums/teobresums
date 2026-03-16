@@ -372,6 +372,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->khatA2= 0. ; //
   eobp->khatB2= 0. ; //
   eobp->rLR_tidal= 0. ; // radius of light-ring for NNLO tidal model
+  eobp->R0_A= 1. ; //
+  eobp->R0_B= 1. ; //
 
   // f-mode frequencies
   for (int l=0; l<6; l++) {
@@ -1048,6 +1050,18 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_N3LO;
     eob_metric_Btidal_electric = &zero_tidal_potential;
     eob_metric_Qtidal_electric = &zero_tidal_potential;
+  } else if (EOBPars->use_tidal == TIDES_N3LO_B) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_N3LO;
+    eob_metric_Btidal_electric = &eob_metric_Btidal_electric_3PN;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
+  } else if (EOBPars->use_tidal == TIDES_N3LO_Q) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_N3LO;
+    eob_metric_Btidal_electric = &zero_tidal_potential;
+    eob_metric_Qtidal_electric = &eob_metric_Qtidal_electric_3PN;
+  } else if (EOBPars->use_tidal == TIDES_N3LO_BQ) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_N3LO;
+    eob_metric_Btidal_electric = &eob_metric_Btidal_electric_3PN;
+    eob_metric_Qtidal_electric = &eob_metric_Qtidal_electric_3PN;
   } else if (EOBPars->use_tidal == TIDES_TEOBRESUM_BHNS) {
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum;
     eob_metric_Btidal_electric = &zero_tidal_potential;

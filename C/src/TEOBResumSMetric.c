@@ -1500,6 +1500,13 @@ void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double
   double logu = log(u);
   double oom3u  = 1./(1.-rLR*u);
 
+  double R0_A   = EOBPars->R0_A;
+  double R0_B   = EOBPars->R0_B;
+  double logu_A = log(u * R0_A);
+  double logu_B = log(u * R0_B);
+  double alph2_3_log_A = - XA*XA*428./35.;
+  double alph2_3_log_B = - XB*XB*428./35.;
+
   A  = - kapT8*u18;
   A -= kapT7*u16;
   A -= kapT6*u14;
@@ -1507,6 +1514,8 @@ void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double
   A -= kapT4*u10;
   A -= kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
   A -= kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3);
+  // Add log terms with scale R0
+  A -= kapA2*u9*alph2_3_log_A*logu_A + kapB2*u9*alph2_3_log_B*logu_B;
   
   dA_u  = -18.*kapT8*u17;
   dA_u -= 16.*kapT7*u15;
@@ -1517,6 +1526,8 @@ void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double
   dA_u -= 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
   dA_u -= kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u + 3.*bar_alph2_3*u2);
   dA_u -= 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3);
+  // Add log terms with scale R0
+  dA_u -= 9.0*(kapA2*u8*alph2_3_log_A*logu_A + kapB2*u8*alph2_3_log_B*logu_B) + kapA2*u8*alph2_3_log_A + kapB2*u8*alph2_3_log_B;
   
   if (d2AT != NULL) {
     d2A_u  = -306.*kapT8*u16;
@@ -1526,6 +1537,8 @@ void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double
     d2A_u -= 90.*kapT4*u8;
     d2A_u -= kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
     d2A_u -= kapT2*(2*bar_alph2_2*u6 + 6.*bar_alph2_3*u7 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u + 3.*bar_alph2_3*u2) + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3));
+    // Add log terms with scale R0
+    d2A_u -= 72.0*(kapA2*u7*alph2_3_log_A*logu_A + kapB2*u7*alph2_3_log_B*logu_B) + 17.*(kapA2*u7*alph2_3_log_A + kapB2*u7*alph2_3_log_B);
   }
 
   if (EOBPars->use_tidal_fmode_model) {
@@ -2384,6 +2397,11 @@ void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double 
   double kapA2_u = kapA2;
   double kapB2_u = kapB2;
   double kapT2_u = 0;
+
+  double R0_A   = EOBPars->R0_A;
+  double R0_B   = EOBPars->R0_B;
+  double logu_A = log(u * R0_A);
+  double logu_B = log(u * R0_B);
   
   if (EOBPars->use_tidal_fmode_model) {
     kapA2 *= dyn->dress_tides_fmode_A[2]; 
@@ -2406,12 +2424,14 @@ void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double 
                       kapB2 * (156. - XB * (13649. / 16. + 315. * Pi * Pi / 256.) + XB2 * (1307153. / 1960. + 315. * Pi * Pi / 256.) - XB3 * 965. / 4. + XB4 * 457.) +
                       kapT3 * (13. - 28. * nu);
 
-  const double d8ln_e = - 856. / 7. * (XA2 * kapA2 + XB2 * kapB2);
+  //const double d8ln_e = - 856. / 7. * (XA2 * kapA2 + XB2 * kapB2);
+  const double d8ln_A = - kapA2 * XA2 * 856. / 7.;
+  const double d8ln_B = - kapB2 * XB2 * 856. / 7.;
 
   double B, dB_u, d2B_u;    
-  B     = d6_e*u6 + (2.*d6_e + d7_e)*u7 + (4.*d6_e + 2.*d7_e + d8_e + d8ln_e * logu)*u8; 
-  dB_u  = 6.*d6_e*u5 + tmp_u*u6 + 7.*(2.*d6_e + d7_e)*u6 + 8.*(4.*d6_e + 2.*d7_e + d8_e + d8ln_e * logu)*u7 + d8ln_e*u7;
-  d2B_u = 30.*d6_e*u4 + 42.*(2.*d6_e + d7_e)*u5 + 56.*(4.*d6_e + 2.*d7_e + d8_e + d8ln_e * logu)*u6 + 8.*d8ln_e*u6 + 7.*d8ln_e*u6; 
+  B     = d6_e*u6 + (2.*d6_e + d7_e)*u7 + (4.*d6_e + 2.*d7_e + d8_e + d8ln_A * logu_A + d8ln_B * logu_B)*u8; 
+  dB_u  = 6.*d6_e*u5 + tmp_u*u6 + 7.*(2.*d6_e + d7_e)*u6 + 8.*(4.*d6_e + 2.*d7_e + d8_e + d8ln_A * logu_A + d8ln_B * logu_B)*u7 + u7*(d8ln_A + d8ln_B);
+  d2B_u = 30.*d6_e*u4 + 42.*(2.*d6_e + d7_e)*u5 + 56.*(4.*d6_e + 2.*d7_e + d8_e + d8ln_A * logu_A + d8ln_B * logu_B)*u6 + 15.*u6*(d8ln_A + d8ln_B); 
   
   *BT   = B;
   *dBT  = dB_u;

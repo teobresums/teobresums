@@ -296,10 +296,13 @@ enum{
   TIDES_NNLO_Q,
   TIDES_NNLO_BQ,
   TIDES_N3LO,
+  TIDES_N3LO_B,
+  TIDES_N3LO_Q,
+  TIDES_N3LO_BQ,
   TIDES_TEOBRESUM_BHNS,    /**< TEOBResum BHNS tides */
   TIDES_NOPT               /**< number of tides options */
 };
-static const char* const tides_opt[] = {"no", "NNLO", "TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3_BQ", "NNLO_B", "NNLO_Q", "NNLO_BQ", "N3LO", "TEOBRESUM_BHNS", "undefined"};
+static const char* const tides_opt[] = {"no", "NNLO", "TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3_BQ", "NNLO_B", "NNLO_Q", "NNLO_BQ", "N3LO", "N3LO_B", "N3LO_Q", "N3LO_BQ", "TEOBRESUM_BHNS", "undefined"};
 
 /** List of options for the gravitomagnetic tidal potential */
 enum{
@@ -658,6 +661,7 @@ typedef struct tagEOBParameters
   double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;               /* EOB Multipolar magnetic adiabatic tidal parameters */
   double khatA2,khatB2;                                                         //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
   double bar_alph2_1, bar_alph2_2, bar_alph2_3, bar_alph3_1, bar_alph3_2, bar_alph2j_1;      /* Tidal parameters combinations entering the EOB A potential*/
+  double R0_A, R0_B;
   double rLR_tidal, pGSF_tidal;                                                 /* Tidal light ring and GSF exponent */
   double bomgfA[6], bomgfB[6];                                                  /* f-mode frequencies star A,B (ell=2,3,4; indexes 0,1 not used) */
   /**@}*/
