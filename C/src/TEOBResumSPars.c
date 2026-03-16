@@ -1412,6 +1412,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"SigmaBl2")) {
     eobp->SigmaBl2 = par_get_d(val);
   }
+  if (STREQUAL(key,"R0_A")) {
+    eobp->R0_A = par_get_d(val);
+  }
+  if (STREQUAL(key,"R0_B")) {
+    eobp->R0_B = par_get_d(val);
+  }
 
   /* EOB Settings */
 
@@ -1952,6 +1958,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","khatAl2",  eobp->khatA2); //
   fprintf(f,"%s = %.16f\n","khatBl2",  eobp->khatB2); //
   fprintf(f,"%s = %.16f\n","rLR_tidal",  eobp->rLR_tidal); // radius of light-ring for NNLO tidal model
+  fprintf(f,"%s = %.16f\n","R0_A",  eobp->R0_A);
+  fprintf(f,"%s = %.16f\n","R0_B",  eobp->R0_B);
   
   fprintf(f,"%s = %.16f\n","BH_final_mass",  eobp->Mbhf); // final BH mass
   fprintf(f,"%s = %.16f\n","BH_final_spin",  eobp->abhf); 
