@@ -1338,6 +1338,213 @@ void eob_metric_Atidal_electric_NNLO(double r, Dynamics *dyn, double *AT, double
 }
 
 
+
+/**
+ *  Function : eob_metric_Atidal_electric_NNLO
+ *  ---------------------------------
+ *   Tidal potential, electric part N3LO, Schulze+
+ *   
+ *   f-mode resonance model from Hinderer&Steinhoff can be added
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] AT    : tidal A potential evaluated at r  
+ *   @param[out] dAT   : tidal dA/du,   with u=1/r  
+ *   @param[out] d2AT  : tidal d2A/du2, with u=1/r 
+ */ 
+void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
+{
+  
+  double A=0., dA_u=0., d2A_u=0., dA=0., d2A=0.;
+
+  const double elsix = 1.833333333333333333333;  // 11/6
+  const double eightthird = 2.6666666666666666667; // 8/3
+
+  const double nu    = EOBPars->nu;
+  const double rLR   = EOBPars->rLR_tidal;
+  const double XA    = EOBPars->X1;
+  const double XB    = EOBPars->X2;
+
+  double kapA2 = EOBPars->kapA2; 
+  double kapA3 = EOBPars->kapA3;
+  double kapA4 = EOBPars->kapA4;
+  
+  double kapB2 = EOBPars->kapB2;  
+  double kapB3 = EOBPars->kapB3;
+  double kapB4 = EOBPars->kapB4;
+  
+  double kapT2 = EOBPars->kapT2;
+  double kapT3 = EOBPars->kapT3;
+  double kapT4 = EOBPars->kapT4;
+  const double kapT5 = EOBPars->kapT5;
+  const double kapT6 = EOBPars->kapT6;
+  const double kapT7 = EOBPars->kapT7;
+  const double kapT8 = EOBPars->kapT8;
+    
+  /* Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, 
+     Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
+  double bar_alph2_1 = EOBPars->bar_alph2_1;
+  double bar_alph2_2 = EOBPars->bar_alph2_2;
+  double bar_alph2_3 = EOBPars->bar_alph2_3;
+  double bar_alph3_1 = EOBPars->bar_alph3_1;
+  double bar_alph3_2 = EOBPars->bar_alph3_2;
+
+  double kapA2_u = kapA2;
+  double kapA3_u = kapA3;
+  double kapA4_u = kapA4;
+  double kapB2_u = kapB2;
+  double kapB3_u = kapB3;
+  double kapB4_u = kapB4;
+  double kapT2_u=0, kapT3_u=0, kapT4_u=0;
+  double bar_alph2_1_u=0, bar_alph2_2_u=0, bar_alph2_3_u=0, bar_alph3_1_u=0, bar_alph3_2_u=0;
+  
+  if (EOBPars->use_tidal_fmode_model) {
+    
+    /* Dress tidal coupling constants for ell=2,3,4, 
+       and recompute coefficients as needed */
+
+     kapA2 *= dyn->dress_tides_fmode_A[2]; 
+     kapA3 *= dyn->dress_tides_fmode_A[3];
+     kapA4 *= dyn->dress_tides_fmode_A[4];
+     
+     kapB2 *= dyn->dress_tides_fmode_B[2];
+     kapB3 *= dyn->dress_tides_fmode_B[3];
+     kapB4 *= dyn->dress_tides_fmode_B[4];
+
+     kapT2 = kapA2 + kapB2;
+     kapT3 = kapA3 + kapB3;
+     kapT4 = kapA4 + kapB4;
+
+     kapA2_u *= dyn->dress_tides_fmode_A_u[2];
+     kapA3_u *= dyn->dress_tides_fmode_A_u[3];
+     kapA4_u *= dyn->dress_tides_fmode_A_u[4];
+
+     kapB2_u *= dyn->dress_tides_fmode_B_u[2];
+     kapB3_u *= dyn->dress_tides_fmode_B_u[3];
+     kapB4_u *= dyn->dress_tides_fmode_B_u[4];
+
+     kapT2_u = kapA2_u + kapB2_u;
+     kapT3_u = kapA3_u + kapB3_u;
+     kapT4_u = kapA4_u + kapB4_u;      
+    
+    /* Tidal coefficients cons dynamics
+       \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) 
+       The structure is always
+       bar_alpha = (cA * kapA + cB * kapB ) / kap
+       hence
+       bar_alpha' =  - bar_alpha kap'/kap + (cA * kapA' + cB * kapB' ) / kap
+    */
+    
+    //const double bar_alph2_1 = (5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
+    //const double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;
+    //const double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;
+    //const double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+
+    const double cA21 = 2.5*XA;
+    const double cB21 = 2.5*XB;
+    const double cA22 = (3.+XA/8.+ 337./28.*XA*XA);
+    const double cB22 = (3.+XB/8.+ 337./28.*XB*XB);
+    const double cA23 = (9. + XA*(1905*Pi*Pi/256. - 3487./16.) + XA*XA*(1943967./9800. - 1905*Pi*Pi/256.) + XA*XA*XA*937./56. + XA*XA*XA*XA*10);
+    const double cB23 = (9. + XB*(1905*Pi*Pi/256. - 3487./16.) + XB*XB*(1943967./9800. - 1905*Pi*Pi/256.) + XB*XB*XB*937./56. + XB*XB*XB*XB*10);
+    const double cA31 = (-2.+15./2.*XA);
+    const double cB31 = (-2.+15./2.*XB);
+    const double cA32 = (8./3.-311./24.*XA+110./3.*XA*XA);
+    const double cB32 = (8./3.-311./24.*XB+110./3.*XB*XB);
+    
+    bar_alph2_1 = bar_alph( cA21, kapA2, cB21, kapB2, kapT2 );
+    bar_alph2_2 = bar_alph( cA22, kapA2, cB22, kapB2, kapT2 );
+    bar_alph2_3 = bar_alph( cA23, kapA2, cB23, kapB2, kapT2 );
+    bar_alph3_1 = bar_alph( cA31, kapA3, cB31, kapB3, kapT3 );
+    bar_alph3_2 = bar_alph( cA32, kapA3, cB32, kapB3, kapT3 );
+    
+    bar_alph2_1_u =
+      - bar_alph2_1 * kapT2_u/kapT2
+      + bar_alph( cA21, kapA2_u, cB21, kapB2_u, kapT2 );      
+    bar_alph2_2_u =
+      - bar_alph2_2 * kapT2_u/kapT2
+      + bar_alph( cA22, kapA2_u, cB22, kapB2_u, kapT2 );
+    bar_alph2_3_u =
+      - bar_alph2_3 * kapT2_u/kapT2
+      + bar_alph( cA23, kapA2_u, cB23, kapB2_u, kapT2 );
+    bar_alph3_1_u =
+      - bar_alph3_1 * kapT3_u/kapT3
+      + bar_alph( cA31, kapA3_u, cB31, kapB3_u, kapT3 );
+    bar_alph3_2_u =
+      - bar_alph3_2 * kapT3_u/kapT3
+      + bar_alph( cA32, kapA3_u, cB32, kapB3_u, kapT3 );    
+  } 
+
+
+  /* shortcuts */
+  double nu2  = nu*nu;
+  double pi2  = Pi*Pi;
+  double pi4  = pi2*pi2;
+  double u    = 1./r;
+  double u2   = u*u;
+  double u3   = u*u2;
+  double u4   = u2*u2;
+  double u5   = u4*u;
+  double u6   = u5*u;
+  double u7   = u6*u;
+  double u10  = u5*u5;
+  double u12  = u6*u6;
+  double u14  = u7*u7;
+  double u16  = u10*u6;
+  double u18  = u12*u6;
+  double u8   = u5*u3;
+  double u9   = u8*u;
+  double u11  = u10*u;
+  double u13  = u12*u;
+  double u15  = u14*u;
+  double u17  = u16*u;
+  double logu = log(u);
+  double oom3u  = 1./(1.-rLR*u);
+
+  A  = - kapT8*u18;
+  A -= kapT7*u16;
+  A -= kapT6*u14;
+  A -= kapT5*u12;
+  A -= kapT4*u10;
+  A -= kapT3*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+  A -= kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3);
+  
+  dA_u  = -18.*kapT8*u17;
+  dA_u -= 16.*kapT7*u15;
+  dA_u -= 14.*kapT6*u13;
+  dA_u -= 12.*kapT5*u11;
+  dA_u -= 10.*kapT4*u9;
+  dA_u -= kapT3*u8*(bar_alph3_1 + 2.*bar_alph3_2*u);
+  dA_u -= 8.*kapT3*u7*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+  dA_u -= kapT2*u6*(bar_alph2_1 + 2.*bar_alph2_2*u + 3.*bar_alph2_3*u2);
+  dA_u -= 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3);
+  
+  if (d2AT != NULL) {
+    d2A_u  = -306.*kapT8*u16;
+    d2A_u -= 240.*kapT7*u14;
+    d2A_u -= 182.*kapT6*u12;
+    d2A_u -= 132.*kapT5*u10;
+    d2A_u -= 90.*kapT4*u8;
+    d2A_u -= kapT3*(2.*bar_alph3_2*u8 + 16.*u7*(bar_alph3_1 + 2*bar_alph3_2*u) + 56.*u6*(1 + bar_alph3_1*u + bar_alph3_2*u2));
+    d2A_u -= kapT2*(2*bar_alph2_2*u6 + 6.*bar_alph2_3*u7 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u + 3.*bar_alph2_3*u2) + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3));
+  }
+
+  if (EOBPars->use_tidal_fmode_model) {
+    /* Adding missing derivative terms from ell=4,3,2 */
+    dA_u -= kapT4_u*u10;
+    
+    dA_u -= kapT3_u*u8*(1. + bar_alph3_1*u + bar_alph3_2*u2);
+    dA_u -= kapT3*u8*(bar_alph3_1_u*u + bar_alph3_2_u*u2);      
+
+    dA_u -= kapT2_u*u6*(1.+ bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3);
+    dA_u -= kapT2*u6*(bar_alph2_1_u*u + bar_alph2_2_u*u2 + bar_alph2_3_u*u3);
+  }    
+    
+  *AT   = A;
+  *dAT  = dA_u;
+  if (d2AT != NULL) *d2AT = d2A_u;
+}
+
+
 /**
  *  Function : eob_metric_Atidal_electric_TEOBResum
  *  ---------------

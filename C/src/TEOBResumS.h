@@ -295,19 +295,21 @@ enum{
   TIDES_NNLO_B,
   TIDES_NNLO_Q,
   TIDES_NNLO_BQ,
+  TIDES_N3LO,
   TIDES_TEOBRESUM_BHNS,    /**< TEOBResum BHNS tides */
   TIDES_NOPT               /**< number of tides options */
 };
-static const char* const tides_opt[] = {"no", "NNLO", "TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3_BQ", "NNLO_B", "NNLO_Q", "NNLO_BQ", "TEOBRESUM_BHNS", "undefined"};
+static const char* const tides_opt[] = {"no", "NNLO", "TEOBRESUM", "TEOBRESUM3", "TEOBRESUM3_BQ", "NNLO_B", "NNLO_Q", "NNLO_BQ", "N3LO", "TEOBRESUM_BHNS", "undefined"};
 
 /** List of options for the gravitomagnetic tidal potential */
 enum{
   TIDES_GM_OFF,            /**< no GM tides, keep first to allow syntax: if(use_tidal_gravitomagnetic) { ... */
   TIDES_GM_PN,             /**< PN GM tides */
   TIDES_GM_GSF,            /**< GSF GM tides */
+  TIDES_GM_N3LO,
   TIDES_GM_NOPT            /**< number of GM tides options */
 };
-static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","undefined"};
+static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","N3LO","undefined"};
 
 /** List of options for centrifugal radius */
 enum{
@@ -1111,6 +1113,7 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Atidal_electric_NNLO(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
+void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Atidal_electric_TEOBResum(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Atidal_electric_TEOBResum3(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
