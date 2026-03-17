@@ -174,6 +174,24 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "LambdaBl8") != NULL )
     EOBPars->LambdaBl8 = PyFloat_AsDouble(PyDict_GetItemString(dict, "LambdaBl8"));
 
+  if ( PyDict_GetItemString(dict, "SigmaAl2") != NULL )
+    EOBPars->SigmaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "SigmaAl2"));
+  if ( PyDict_GetItemString(dict, "SigmaBl2") != NULL )
+    EOBPars->SigmaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "SigmaBl2"));
+
+
+  if ( PyDict_GetItemString(dict, "R0_A") != NULL )
+    EOBPars->R0_A = PyFloat_AsDouble(PyDict_GetItemString(dict, "R0_A"));
+  if ( PyDict_GetItemString(dict, "R0_B") != NULL )
+    EOBPars->R0_B = PyFloat_AsDouble(PyDict_GetItemString(dict, "R0_B"));
+
+  if ( PyDict_GetItemString(dict, "kap_pa_A2") != NULL )
+    EOBPars->kap_pa_A2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "kap_pa_A2"));
+  if ( PyDict_GetItemString(dict, "kap_pa_B2") != NULL )
+    EOBPars->kap_pa_B2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "kap_pa_B2"));
+
+
+
   /* Extrinsic */
   if ( PyDict_GetItemString(dict, "distance") != NULL ) {
     EOBPars->distance = PyFloat_AsDouble(PyDict_GetItemString(dict, "distance"));
