@@ -2610,8 +2610,8 @@ void eob_metric_Qtidal_electric_3PN(double r, Dynamics *dyn, double prstar, doub
 
   const double q46_e = 5. / 3. * kapT2 * (-21. + 54. * nu - 42. * nu2);
   const double q66_e = 5. / 3. * kapT2 * (81. - 168. * nu + 126. * nu2);
-  const double q47_e = kapA2 * (-270. + XA * 13901. / 16 - XA2 * 9137. / 8. + XA3 * 2711. / 4 - XA4 * 259 - XA5 * 315) + 
-                       kapB2 * (-270. + XB * 13901. / 16 - XB2 * 9137. / 8. + XB3 * 2711. / 4 - XB4 * 259 - XB5 * 315);
+  const double q47_e = kapA2 * (-270. + XA * 13901. / 16 - XA2 * 9137. / 8. + XA3 * 2711. / 4. - XA4 * 259. - XA5 * 315.) + 
+                       kapB2 * (-270. + XB * 13901. / 16 - XB2 * 9137. / 8. + XB3 * 2711. / 4. - XB4 * 259. - XB5 * 315.);
 
   double Q, dQ_u, d2Q_u, dQ_prstar, d2Q_prstar, d2Q_drprstar, d3Q_drprstar2, d3Q_dr2prstar, d3Q_prstar;
   
@@ -2626,7 +2626,7 @@ void eob_metric_Qtidal_electric_3PN(double r, Dynamics *dyn, double prstar, doub
   d2Q_drprstar = du_dr * (4. * prstar3 * (6. * q46_e * u5 + 7. * q47_e * u6) + 36. * prstar5 * q66_e * u5);
   d3Q_drprstar2 = du_dr * (12. * prstar2 * (6. * q46_e * u5 + 7. * q47_e * u6) + 180. * prstar4 * q66_e * u5);
   d3Q_dr2prstar = du_dr * du_dr * (4. * prstar3 * (30. * q46_e * u4 + 42. * q47_e * u5) + 180. * prstar5 * q66_e * u4) +
-                  2 * u3 * (4. * prstar3 * (6. * q46_e * u5 + 7. * q47_e * u6) + 36. * prstar5 * q66_e * u5);
+                  2. * u3 * (4. * prstar3 * (6. * q46_e * u5 + 7. * q47_e * u6) + 36. * prstar5 * q66_e * u5);
 
   
   *QT = Q;
@@ -2705,8 +2705,8 @@ void eob_metric_Qtidal_magnetic_3PN(double r, Dynamics *dyn, double prstar, doub
 
   const double q46_m = 5. / 3. * japT2 * (-7. + 20. * nu);
   const double q66_m = 5. / 3. * japT2 * (25. - 70. * nu);
-  const double q47_m = japA2 * (-90. + XA * 1169. / 4 - XA2 * 2285. / 6. + XA3 * 577. / 3 - XA4 * 518. / 3.) +
-                       japB2 * (-90. + XB * 1169. / 4 - XB2 * 2285. / 6. + XB3 * 577. / 3 - XB4 * 518. / 3.);
+  const double q47_m = japA2 * (-90. + XA * 1169. / 4. - XA2 * 2285. / 6. + XA3 * 577. / 3. - XA4 * 518. / 3.) +
+                       japB2 * (-90. + XB * 1169. / 4. - XB2 * 2285. / 6. + XB3 * 577. / 3. - XB4 * 518. / 3.);
 
   double Q, dQ_u, d2Q_u, dQ_prstar, d2Q_prstar, d2Q_drprstar, d3Q_drprstar2, d3Q_dr2prstar, d3Q_prstar;
   
@@ -2721,7 +2721,7 @@ void eob_metric_Qtidal_magnetic_3PN(double r, Dynamics *dyn, double prstar, doub
   d2Q_drprstar = du_dr * (4. * prstar3 * (6. * q46_m * u5 + 7. * q47_m * u6) + 36. * prstar5 * q66_m * u5);
   d3Q_drprstar2 = du_dr * (12. * prstar2 * (6. * q46_m * u5 + 7. * q47_m * u6) + 180. * prstar4 * q66_m * u5);
   d3Q_dr2prstar = du_dr * du_dr * (4. * prstar3 * (30. * q46_m * u4 + 42. * q47_m * u5) + 180. * prstar5 * q66_m * u4) +
-                  2 * u3 * (4. * prstar3 * (6. * q46_m * u5 + 7. * q47_m * u6) + 36. * prstar5 * q66_m * u5);
+                  2. * u3 * (4. * prstar3 * (6. * q46_m * u5 + 7. * q47_m * u6) + 36. * prstar5 * q66_m * u5);
 
   
   *QT = Q;
