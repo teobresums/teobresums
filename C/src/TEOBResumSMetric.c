@@ -1389,6 +1389,9 @@ void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double
   double bar_alph3_1 = EOBPars->bar_alph3_1;
   double bar_alph3_2 = EOBPars->bar_alph3_2;
 
+  double dot_kapA2 = EOBPars->dot_kapA2;
+  double dot_kapB2 = EOBPars->dot_kapB2;
+
   double kapA2_u = kapA2;
   double kapA3_u = kapA3;
   double kapA4_u = kapA4;
@@ -1516,6 +1519,8 @@ void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double
   A -= kapT2*u6*(1. + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3);
   // Add log terms with scale R0
   A -= kapA2*u9*alph2_3_log_A*logu_A + kapB2*u9*alph2_3_log_B*logu_B;
+  // Add Post-Adiabtic term
+  A -= dot_kapA2*u9 + dot_kapB2*u9;
   
   dA_u  = -18.*kapT8*u17;
   dA_u -= 16.*kapT7*u15;
@@ -1528,6 +1533,8 @@ void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double
   dA_u -= 6.*kapT2*u5*(1. + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3);
   // Add log terms with scale R0
   dA_u -= 9.0*(kapA2*u8*alph2_3_log_A*logu_A + kapB2*u8*alph2_3_log_B*logu_B) + kapA2*u8*alph2_3_log_A + kapB2*u8*alph2_3_log_B;
+  // Add Post-Adiabtic term
+  dA_u -= 9.*dot_kapA2*u8 + 9.*dot_kapB2*u8;
   
   if (d2AT != NULL) {
     d2A_u  = -306.*kapT8*u16;
@@ -1539,6 +1546,8 @@ void eob_metric_Atidal_electric_N3LO(double r, Dynamics *dyn, double *AT, double
     d2A_u -= kapT2*(2*bar_alph2_2*u6 + 6.*bar_alph2_3*u7 + 12.*u5*(bar_alph2_1 + 2*bar_alph2_2*u + 3.*bar_alph2_3*u2) + 30.*u4*(1 + bar_alph2_1*u + bar_alph2_2*u2 + bar_alph2_3*u3));
     // Add log terms with scale R0
     d2A_u -= 72.0*(kapA2*u7*alph2_3_log_A*logu_A + kapB2*u7*alph2_3_log_B*logu_B) + 17.*(kapA2*u7*alph2_3_log_A + kapB2*u7*alph2_3_log_B);
+    // Add Post-Adiabtic term
+    d2A_u -= 72.*dot_kapA2*u7 + 72.*dot_kapB2*u7;
   }
 
   if (EOBPars->use_tidal_fmode_model) {
@@ -2398,6 +2407,9 @@ void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double 
   double kapB2_u = kapB2;
   double kapT2_u = 0;
 
+  double dot_kapA2 = EOBPars->dot_kapA2;
+  double dot_kapB2 = EOBPars->dot_kapB2;
+
   double R0_A   = EOBPars->R0_A;
   double R0_B   = EOBPars->R0_B;
   double logu_A = log(u * R0_A);
@@ -2422,7 +2434,7 @@ void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double 
 
   const double d8_e = kapA2 * (156. - XA * (13649. / 16. + 315. * Pi * Pi / 256.) + XA2 * (1307153. / 1960. + 315. * Pi * Pi / 256.) - XA3 * 965. / 4. + XA4 * 457.) +
                       kapB2 * (156. - XB * (13649. / 16. + 315. * Pi * Pi / 256.) + XB2 * (1307153. / 1960. + 315. * Pi * Pi / 256.) - XB3 * 965. / 4. + XB4 * 457.) +
-                      kapT3 * (13. - 28. * nu);
+                      kapT3 * (13. - 28. * nu) + 10. * (dot_kapA2 + dot_kapB2);
 
   //const double d8ln_e = - 856. / 7. * (XA2 * kapA2 + XB2 * kapB2);
   const double d8ln_A = - kapA2 * XA2 * 856. / 7.;

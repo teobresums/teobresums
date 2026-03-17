@@ -662,6 +662,8 @@ typedef struct tagEOBParameters
   double khatA2,khatB2;                                                         //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
   double bar_alph2_1, bar_alph2_2, bar_alph2_3, bar_alph3_1, bar_alph3_2, bar_alph2j_1;      /* Tidal parameters combinations entering the EOB A potential*/
   double R0_A, R0_B;
+  double kap_pa_A2, kap_pa_B2;
+  double dot_kapA2, dot_kapB2;
   double rLR_tidal, pGSF_tidal;                                                 /* Tidal light ring and GSF exponent */
   double bomgfA[6], bomgfB[6];                                                  /* f-mode frequencies star A,B (ell=2,3,4; indexes 0,1 not used) */
   /**@}*/

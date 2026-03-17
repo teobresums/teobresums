@@ -374,6 +374,12 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->rLR_tidal= 0. ; // radius of light-ring for NNLO tidal model
   eobp->R0_A= 1. ; //
   eobp->R0_B= 1. ; //
+  
+  eobp->kap_pa_A2= 0.; //
+  eobp->kap_pa_B2= 0.; //
+
+  eobp->dot_kapA2= 0.; //
+  eobp->dot_kapB2= 0.; //
 
   // f-mode frequencies
   for (int l=0; l<6; l++) {
@@ -650,7 +656,10 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*EOBPars->kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*EOBPars->kapB3)/EOBPars->kapT3;
     /* Gravitomagnetic term, see Eq.(6.27) of Bini-Damour-Faye 2012 */
     EOBPars->bar_alph2j_1 = ( EOBPars->japA2*(1. + (11./6.)*XA + XA*XA) + EOBPars->japB2*(1. + (11./6.)*XB + XB*XB) )/EOBPars->japT2;
-    
+
+    /* Post-Adiabatic terms */
+    EOBPars->dot_kapA2 = 3.*XA*XA*EOBPars->kapA2*EOBPars->kap_pa_A2;
+    EOBPars->dot_kapB2 = 3.*XB*XB*EOBPars->kapB2*EOBPars->kap_pa_B2;
     
     /* Self-spin coefficients */
     EOBPars->C_Q1   = 1.;
@@ -1418,6 +1427,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"R0_B")) {
     eobp->R0_B = par_get_d(val);
   }
+  if (STREQUAL(key,"kap_pa_A2")) {
+    eobp->kap_pa_A2 = par_get_d(val);
+  }
+  if (STREQUAL(key,"kap_pa_B2")) {
+    eobp->kap_pa_B2 = par_get_d(val);
+  }
 
   /* EOB Settings */
 
@@ -1960,6 +1975,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","rLR_tidal",  eobp->rLR_tidal); // radius of light-ring for NNLO tidal model
   fprintf(f,"%s = %.16f\n","R0_A",  eobp->R0_A);
   fprintf(f,"%s = %.16f\n","R0_B",  eobp->R0_B);
+  fprintf(f,"%s = %.16f\n","kap_pa_A2",  eobp->kap_pa_A2);
+  fprintf(f,"%s = %.16f\n","kap_pa_B2",  eobp->kap_pa_B2);
   
   fprintf(f,"%s = %.16f\n","BH_final_mass",  eobp->Mbhf); // final BH mass
   fprintf(f,"%s = %.16f\n","BH_final_spin",  eobp->abhf); 
