@@ -158,6 +158,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->SigmaAl2  = 0.; // Tidal gravitomagnetic parameter Sigma for star A ell=2
   eobp->SigmaBl2  = 0.;
   eobp->use_lambda234_fits = Lambda234_fits_NO;
+  eobp->use_sigma2_fits = Sigma2_fits_NO;
   eobp->pGSF_tidal = 4.0;// p-power in GSF tidal potential model
 
   eobp->use_spins=1; // use spins ?
@@ -436,6 +437,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
     eobp->pGSF_tidal                = 4.0;
     eobp->use_lambda234_fits        = Lambda234_fits_YAGI13;
+    eobp->use_sigma2_fits           = Sigma2_fits_JFAPG;
     eobp->use_a6c_fits              = a6c_fits_V0;
     eobp->use_cN3LO_fits            = cN3LO_fits_NO;
 
@@ -607,8 +609,10 @@ int eob_set_params(int default_choice, int firstcall)
       EOBPars->LambdaBl8 = Godzieba20_fit_barlamdel(EOBPars->LambdaBl2, 8);
     }
     if(EOBPars->use_tidal_gravitomagnetic){
-      EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
-      EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
+      if (EOBPars->use_sigma2_fits == Sigma2_fits_JFAPG){
+        EOBPars->SigmaAl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaAl2);
+        EOBPars->SigmaBl2 = JFAPG_fit_Sigma_Irrotational(EOBPars->LambdaBl2);
+      }
     }
  
     /* Tidal coupling constants */
@@ -1222,6 +1226,7 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
         eobp->pGSF_tidal = 4.0;
         eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+        eobp->use_sigma2_fits = Sigma2_fits_JFAPG;
         eobp->use_a6c_fits = a6c_fits_V0;
         eobp->use_cN3LO_fits = cN3LO_fits_NO;
         eobp->centrifugal_radius = CENTRAD_NNLO;
@@ -1237,6 +1242,7 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         eobp->use_tidal_gravitomagnetic = TIDES_GM_PN;
         eobp->pGSF_tidal = 4.0;
         eobp->use_lambda234_fits = Lambda234_fits_YAGI13;
+        eobp->use_sigma2_fits = Sigma2_fits_JFAPG;
         eobp->use_a6c_fits   = a6c_fits_V0;
         eobp->use_cN3LO_fits = cN3LO_fits_NO;
         eobp->centrifugal_radius = CENTRAD_NNLO;
@@ -1479,6 +1485,19 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
       break;
       }
       if (STREQUAL(val, use_lambda234_fits_opt[eobp->use_lambda234_fits])) break;
+    }
+  }
+
+  if (STREQUAL(key,"use_sigma2_fits")) {
+    val = string_trim(val);
+    for (eobp->use_sigma2_fits=0; eobp->use_sigma2_fits<=Sigma2_fits_NOPT; eobp->use_sigma2_fits++) {
+      if (eobp->use_sigma2_fits == Sigma2_fits_NOPT) {
+        eobp->use_sigma2_fits = Sigma2_fits_JFAPG;
+        if (VERBOSE) printf("use_sigma2_fits '%s' undefined, set to '%s'\n",
+        val, use_sigma2_fits_opt[eobp->use_sigma2_fits]);
+      break;
+      }
+      if (STREQUAL(val, use_sigma2_fits_opt[eobp->use_sigma2_fits])) break;
     }
   }
 
@@ -1988,6 +2007,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "tides_gravitomagnetic", tides_gravitomagnetic_opt[eobp->use_tidal_gravitomagnetic]);
   fprintf(f,"%s = %.16f\n" , "pGSF_tidal", eobp->pGSF_tidal);
   fprintf(f,"%s = \"%s\"\n", "use_lambda234_fits", use_lambda234_fits_opt[eobp->use_lambda234_fits]);
+  fprintf(f,"%s = \"%s\"\n", "use_sigma2_fits", use_sigma2_fits_opt[eobp->use_sigma2_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_a6c_fits_opt", use_a6c_fits_opt[eobp->use_a6c_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_cN3LO_fits_opt", use_cN3LO_fits_opt[eobp->use_cN3LO_fits]);
   fprintf(f,"%s = \"%s\"\n", "use_tidal_fmode_model", INT2YESNO(eobp->use_tidal_fmode_model));

@@ -230,6 +230,14 @@ enum{
 };
 static const char* const use_lambda234_fits_opt[] = {"no","YAGI13","GODZIEBA20_ell4", "GODZIEBA20_ell8", "undefined"};
 
+/** List for fits Sigma_2(Lambda2) */
+enum{
+  Sigma2_fits_NO,                /**< no fits */
+  Sigma2_fits_JFAPG,            /**< Yagi et al. 2013, ell < 5 */
+  Sigma2_fits_NOPT               /**< number of fits */
+};
+static const char* const use_sigma2_fits_opt[] = {"no","JFAPG", "undefined"};
+
 /** List of options for orbital A potential */
 enum{
   A_5PNlog,            /**< 5PNlog resummed with P15 */
@@ -703,6 +711,7 @@ typedef struct tagEOBParameters
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
   int use_lambda234_fits;                               /**< Flag for fits Lambda_ell(Lambda2) */
+  int use_sigma2_fits;                                  /**< Flag for fits Sigma_2(Lambda2) */
   int use_tidal_fmode_model;                            /**< Flag for f-mode tidal model */
   int use_a6c_fits;                                     /**< Flag for fits a6c */
   int use_cN3LO_fits;                                   /**< Flag for fits cN3LO */
