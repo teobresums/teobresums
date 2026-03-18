@@ -1,5 +1,5 @@
-# parfile for BBH (999,0.29,0.17) from 10 Hz (M = 15*Msun)
-# builds on default options
+# parfile for BBH (999,0.29,0.17) 
+# Inspiral-only model, with potentials augmented with GSF results
 #
 # Note: the (l,m) = (3,1),(4,1) modes are inspiral only, and do not have a 
 # merger-ringdown completion. See 
@@ -21,6 +21,7 @@ q = 999. # mass ratio
 use_spins = 1
 chi1 = 0.29 # dimensionless spin 1 z-component 
 chi2 = 0.17 # dimensionless spin 2 z-component 
+model =	"Giotto"
 
 # initial GW frequency
 # f22 = 2*(r0)^(-3/2) / (2*pi)
