@@ -1,0 +1,105 @@
+# parfile for BBH (1000) with eccentricity and precession
+# Large-mass-ratio settings
+#
+# Note: the (l,m) = (3,1),(4,1) modes are inspiral only, and do not have a 
+# merger-ringdown completion. See 
+# https://bitbucket.org/eob_ihes/teobresums/wiki/Conventions,%20parameters%20and%20output
+
+#
+# use geometric units for I/O
+# everything is given geometric units and binary mass-rescaled 
+#
+
+use_geometric_units = "yes"
+
+#
+# Binary properties
+#
+
+q = 1000. # mass ratio
+
+# use_spins = 1
+chi1x = 0.3
+chi1y = 0.6
+chi1z = 0.2
+chi2x = 0.2
+chi2y = 0.5
+chi2z = 0.4
+# z components
+chi1 = 0.2
+chi2 = 0.4
+
+LambdaAl2 = 0.
+LambdaBl2 = 0.
+
+# initial GW freq for r0 = 21.0 is 0.0033
+# f22 = 2*(r0)^(-3/2) / (2*pi)
+# initial_frequency = 0.0175 # omg0 ~ 0.11
+initial_frequency = 0.0071 # for omg0 ~ 0.045 
+
+# eccentricity
+ecc = 0.5
+
+# anomaly
+anomaly = 3.5
+
+distance = 1.
+
+domain = 0
+
+#
+# Output dir, output modes 
+#
+
+output_dir = "./bbh_q1000_LMR_eccprec_mainmodes/"
+output_hpc = "yes" # switch this off to test performances!!!
+output_multipoles = "yes"
+output_lm   = [0, 1, 4, 8] # best modes for ringdown
+use_mode_lm = [0, 1, 4, 8]
+# output_lm   = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,  22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]
+# use_mode_lm = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,  22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]
+output_dynamics = "yes"
+
+# IMR settings
+model =	"Dali"
+use_flm = "22PN"
+A_pot = "5PNlogP33_newlogs"
+D_pot = "5PNP32_newlogs"
+Q_pot = "5PNloc"
+use_a6c_fits = "newlogs22PN"
+use_cN3LO_fits = "newlogs"
+nqc = "manual"
+nqc_coefs_hlm = "compute"
+nqc_coefs_flx = "none" # remove NQCs from the flux
+use_GS_GSs = "ADJS"
+
+postadiabatic_dynamics = "no"
+# postadiabatic_dynamics_rmin = 8.0
+
+# Precession settings (do not touch)
+spin_flx = "EOB"
+spin_interp_domain = 0 
+
+#
+# Setup
+#
+
+size = 200 # size of the arrays (chunks, dynamically extended)
+ode_timestep = "adaptive"
+compute_LR = "no" # calculate LR ?
+compute_LSO = "no" # calculate LSO ?
+ode_tmax = 100000000000000000000
+
+
+# interpolate on uniform grid?
+interp_uniform_grid = "yes" # yes, only h+,hx on a grid of dt_interp
+dt_merger_interp = 0.2
+dt_interp = 0.5 # M/delta_t = 4096 Hz for M=15*Msun
+
+
+time_shift_TD = 0
+
+
+
+
+
