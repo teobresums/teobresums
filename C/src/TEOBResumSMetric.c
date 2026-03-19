@@ -2132,7 +2132,11 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
   
   const double kapA2j = EOBPars->japA2;
   const double kapB2j = EOBPars->japB2;
-  const double kapT2j = EOBPars->japT2;  
+  const double kapT2j = EOBPars->japT2;
+  
+  const double kapA3j = EOBPars->japA3;
+  const double kapB3j = EOBPars->japB3;
+  const double kapT3j = EOBPars->japT3;
   
   const double p = EOBPars->pGSF_tidal;
   
@@ -2257,6 +2261,15 @@ void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double 
     
     if (d2AT != NULL) {
       d2A_u += - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u);
+    }
+
+  } else if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_3PN) {
+    /* 3PN series for the (2-) tidal potential */
+    A    +=-kapT2j*u7*(1. +  bar_alph2j_1*u) -kapT3j*u9;
+    dA_u += -kapT2j*u7*bar_alph2j_1 - 7.*kapT2j*u6*(1. +  bar_alph2j_1*u) -9.*kapT3j*u8;
+    
+    if (d2AT != NULL) {
+      d2A_u += - 14.*kapT2j*u5*(3. + 4.*bar_alph2j_1*u) - 72.*kapT3j*u7;
     }
     
   } else if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_GSF) {
@@ -2455,7 +2468,7 @@ void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double 
  *  Function : eob_metric_Btidal_magnetic
  *  ---------------
  *   Tidal B potential
- *   Schulze +, 2PN to 3PN terms magnetic part. 1PN term already computed 
+ *   Schulze +, 1PN to 3PN terms magnetic part.
  *
  *   @param[in]  r     : radial separation
  *   @param[in]  dyn   : EOB dynamics 
@@ -2463,7 +2476,7 @@ void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double 
  *   @param[out] dBT   : tidal dB 
  *   @param[out] d2BT  : tidal d2B
  */ 
-void eob_metric_Btidal_magnetic_2PN_3PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
+void eob_metric_Btidal_magnetic_3PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT)
 {
   const double nu = EOBPars->nu;
 
@@ -2488,14 +2501,18 @@ void eob_metric_Btidal_magnetic_2PN_3PN(double r, Dynamics *dyn, double *BT, dou
   double japA2 = EOBPars->japA2; 
   double japB2 = EOBPars->japB2;
   double japT2 = EOBPars->japT2;
+  double japA3 = EOBPars->japA3; 
+  double japB3 = EOBPars->japB3;
+  double japT3 = EOBPars->japT3;
 
-  const double d6_m = 0.0;
+  const double d6_m = 5.*japT2;
 
   const double d7_m = japA2 * (13. - XA * 9. + XA2 * 26 ) + 
                       japB2 * (13. - XB * 9. + XB2 * 26 );
 
   const double d8_m = japA2 * (52. - XA * 2495. / 12. + XA2 * 4325. / 18. + XA4 * 121. / 3.) +
-                      japB2 * (52. - XB * 2495. / 12. + XB2 * 4325. / 18. + XB4 * 121. / 3.);
+                      japB2 * (52. - XB * 2495. / 12. + XB2 * 4325. / 18. + XB4 * 121. / 3.) +
+                      japT3 * 7.;
 
   const double d8ln_m = 0.0;
 
@@ -2531,16 +2548,23 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
   eob_metric_Btidal_electric(r, dyn, &B_elec, &dB_elec, &d2B_elec);
 
   if (EOBPars->use_tidal_gravitomagnetic) {
-    // Add here magnetic contributions
-    const double u     = 1./r;
-    const double u2    = u*u;
-    const double u4    = u2*u2;
-    const double u5    = u4*u;
-    const double u6    = u2*u4;
-    double jT2 = EOBPars->japT2;
-    B_mag  += 5.*jT2*u6;
-    dB_mag += jT2*30.*u5;
-    d2B_mag += 120.*jT2*u4;
+
+    if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_3PN){
+      eob_metric_Btidal_magnetic_3PN(r, dyn, &B_mag, &dB_mag, &d2B_mag);
+    }
+
+    else{
+      // Add here magnetic contributions
+      const double u     = 1./r;
+      const double u2    = u*u;
+      const double u4    = u2*u2;
+      const double u5    = u4*u;
+      const double u6    = u2*u4;
+      double jT2 = EOBPars->japT2;
+      B_mag  += 5.*jT2*u6;
+      dB_mag += jT2*30.*u5;
+      d2B_mag += 150.*jT2*u4;
+    }
   }
 
   *BT   = B_elec + B_mag;

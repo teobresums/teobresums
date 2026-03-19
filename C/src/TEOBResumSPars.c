@@ -157,6 +157,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->LambdaBl8 = 0.; 
   eobp->SigmaAl2  = 0.; // Tidal gravitomagnetic parameter Sigma for star A ell=2
   eobp->SigmaBl2  = 0.;
+  eobp->SigmaAl3  = 0.; // Tidal gravitomagnetic parameter Sigma for star A ell=3
+  eobp->SigmaBl3  = 0.;
   eobp->use_lambda234_fits = Lambda234_fits_NO;
   eobp->use_sigma2_fits = Sigma2_fits_NO;
   eobp->pGSF_tidal = 4.0;// p-power in GSF tidal potential model
@@ -355,13 +357,13 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->kapT8= 0. ; //
 
   eobp->japA2= 0. ; // gravitomagnetic kappa star A
-  //eobp->japA3= 0. ; 
+  eobp->japA3= 0. ; 
   //eobp->japA4= 0. ; 
   eobp->japB2= 0. ;
-  //eobp->japB3= 0. ;
+  eobp->japB3= 0. ;
   //eobp->japB4= 0. ;
   eobp->japT2= 0. ;
-  //eobp->japT3= 0. ;
+  eobp->japT3= 0. ;
   //eobp->japT4= 0. ;  
   
   eobp->bar_alph2_1= 0. ; //
@@ -627,6 +629,9 @@ int eob_set_params(int default_choice, int firstcall)
     /* gravitomagnetic tidal coupling constants el = 2 only */
     EOBPars->japA2 = 24.   * EOBPars->SigmaAl2 * XA*XA*XA*XA*XA / q;
     EOBPars->japB2 = 24.   * EOBPars->SigmaBl2 * XB*XB*XB*XB*XB * q;
+    /* gravitomagnetic tidal coupling constants el = 3 from Schulze+ */
+    EOBPars->japA3 = 120.  * EOBPars->SigmaAl3 * XA*XA*XA*XA*XA*XA*XA / q;
+    EOBPars->japB3 = 120.  * EOBPars->SigmaBl3 * XB*XB*XB*XB*XB*XB*XB * q;
     
     EOBPars->kapT2 = EOBPars->kapA2 + EOBPars->kapB2;
     EOBPars->kapT3 = EOBPars->kapA3 + EOBPars->kapB3;
@@ -637,6 +642,7 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->kapT8 = EOBPars->kapA8 + EOBPars->kapB8;
     
     EOBPars->japT2 = EOBPars->japA2 + EOBPars->japB2;
+    EOBPars->japT3 = EOBPars->japA3 + EOBPars->japB3;
     
     if (!(EOBPars->kapT2 > 0.)) {
       if (DEBUG) printf("ERROR: kappaT2 must be >0\n");
@@ -1427,6 +1433,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"SigmaBl2")) {
     eobp->SigmaBl2 = par_get_d(val);
   }
+  if (STREQUAL(key,"SigmaAl3")) {
+    eobp->SigmaAl3 = par_get_d(val);
+  }
+  if (STREQUAL(key,"SigmaBl3")) {
+    eobp->SigmaBl3 = par_get_d(val);
+  }
   if (STREQUAL(key,"R0_A")) {
     eobp->R0_A = par_get_d(val);
   }
@@ -1938,6 +1950,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n", "LambdaBl4", eobp->LambdaBl4);
   fprintf(f,"%s = %.16f\n", "SigmaAl2", eobp->SigmaAl2);
   fprintf(f,"%s = %.16f\n", "SigmaBl2", eobp->SigmaBl2);
+  fprintf(f,"%s = %.16f\n", "SigmaAl3", eobp->SigmaAl3);
+  fprintf(f,"%s = %.16f\n", "SigmaBl3", eobp->SigmaBl3);
 
   /* Derived parameters */
   fprintf(f,"%s = %.16f\n", "nu", eobp->nu);

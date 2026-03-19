@@ -317,10 +317,10 @@ enum{
   TIDES_GM_OFF,            /**< no GM tides, keep first to allow syntax: if(use_tidal_gravitomagnetic) { ... */
   TIDES_GM_PN,             /**< PN GM tides */
   TIDES_GM_GSF,            /**< GSF GM tides */
-  TIDES_GM_N3LO,
+  TIDES_GM_3PN,
   TIDES_GM_NOPT            /**< number of GM tides options */
 };
-static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","N3LO","undefined"};
+static const char* const tides_gravitomagnetic_opt[] = {"no","PN","GSF","3PN","undefined"};
 
 /** List of options for centrifugal radius */
 enum{
@@ -662,7 +662,7 @@ typedef struct tagEOBParameters
   double C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2;                            /* Spin-induced multipoles*/
   double LambdaAl2,LambdaAl3,LambdaAl4,LambdaAl5,LambdaAl6,LambdaAl7,LambdaAl8; /* Multipolar electric adiabatic tidal parameters (body 1)*/
   double LambdaBl2,LambdaBl3,LambdaBl4,LambdaBl5,LambdaBl6,LambdaBl7,LambdaBl8; /* Multipolar electric adiabatic tidal parameters (body 2)*/
-  double SigmaAl2,SigmaBl2;                                                     /* ell = 2 magnetic adiabatic tidal parameters*/
+  double SigmaAl2,SigmaBl2,SigmaAl3,SigmaBl3;                                    /* ell = 2 magnetic adiabatic tidal parameters*/
   double kapA2,kapA3,kapA4,kapA5,kapA6,kapA7,kapA8;                             /* EOB Multipolar electric adiabatic tidal parameters (body 1)*/
   double kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8;                             /* EOB Multipolar electric adiabatic tidal parameters (body 2)*/
   double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;                             /* EOB Multipolar electric effective adiabatic tidal parameters */
@@ -1134,10 +1134,14 @@ void eob_metric_Atidal_electric_TEOBResum3(double r, Dynamics *dyn, double *AT, 
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric_Btidal_electric_1PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric_Btidal_electric_3PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
+void eob_metric_Btidal_magnetic_3PN(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric_Qtidal(double r, Dynamics *dyn, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                        double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
                        double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
 void eob_metric_Qtidal_electric_3PN(double r, Dynamics *dyn, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
+                       double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
+                       double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
+void eob_metric_Qtidal_magnetic_3PN(double r, Dynamics *dyn, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
                        double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
                        double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
 void zero_tidal_potential(double r, Dynamics *dyn, double *PT, double *dPT, double *d2PT);
