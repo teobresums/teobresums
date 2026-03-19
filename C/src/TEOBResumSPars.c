@@ -1993,6 +1993,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","kappajAl2",  eobp->japA2); // gravitomagnetic kappa star A
   fprintf(f,"%s = %.16f\n","kappajBl2",  eobp->japB2);
   fprintf(f,"%s = %.16f\n","kappajTl2",  eobp->japT2);
+  fprintf(f,"%s = %.16f\n","kappajAl3",  eobp->japA3); 
+  fprintf(f,"%s = %.16f\n","kappajBl3",  eobp->japB3);
+  fprintf(f,"%s = %.16f\n","kappajTl3",  eobp->japT3);
   
   fprintf(f,"%s = %.16f\n","kappaTl2",  eobp->kapT2); //
   fprintf(f,"%s = %.16f\n","kappaTl3",  eobp->kapT3); //

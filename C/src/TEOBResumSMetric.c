@@ -2548,23 +2548,7 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
   eob_metric_Btidal_electric(r, dyn, &B_elec, &dB_elec, &d2B_elec);
 
   if (EOBPars->use_tidal_gravitomagnetic) {
-
-    if (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_3PN){
-      eob_metric_Btidal_magnetic_3PN(r, dyn, &B_mag, &dB_mag, &d2B_mag);
-    }
-
-    else{
-      // Add here magnetic contributions
-      const double u     = 1./r;
-      const double u2    = u*u;
-      const double u4    = u2*u2;
-      const double u5    = u4*u;
-      const double u6    = u2*u4;
-      double jT2 = EOBPars->japT2;
-      B_mag  += 5.*jT2*u6;
-      dB_mag += jT2*30.*u5;
-      d2B_mag += 150.*jT2*u4;
-    }
+    eob_metric_Btidal_magnetic_3PN(r, dyn, &B_mag, &dB_mag, &d2B_mag);
   }
 
   *BT   = B_elec + B_mag;
