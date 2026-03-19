@@ -83,6 +83,15 @@ int SetOptionalVariables(PyObject* dict){
       if (STREQUAL(val,use_lambda234_fits_opt[EOBPars->use_lambda234_fits])) break;
     }    
   }
+  if ( PyDict_GetItemString(dict, "use_sigma2_fits") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_sigma2_fits"));
+    for(EOBPars->use_sigma2_fits=0; EOBPars->use_sigma2_fits<=Sigma2_fits_NOPT; EOBPars->use_sigma2_fits++){
+      if (EOBPars->use_sigma2_fits == Sigma2_fits_NOPT) EOBPars->use_sigma2_fits = Sigma2_fits_JFAPG;
+      if (STREQUAL(val,use_sigma2_fits_opt[EOBPars->use_sigma2_fits])) break;
+    }    
+  }
+
   if ( PyDict_GetItemString(dict, "use_a6c_fits") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_a6c_fits"));
@@ -178,6 +187,10 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->SigmaAl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "SigmaAl2"));
   if ( PyDict_GetItemString(dict, "SigmaBl2") != NULL )
     EOBPars->SigmaBl2 = PyFloat_AsDouble(PyDict_GetItemString(dict, "SigmaBl2"));
+  if ( PyDict_GetItemString(dict, "SigmaAl3") != NULL )
+    EOBPars->SigmaAl3 = PyFloat_AsDouble(PyDict_GetItemString(dict, "SigmaAl3"));
+  if ( PyDict_GetItemString(dict, "SigmaBl3") != NULL )
+    EOBPars->SigmaBl3 = PyFloat_AsDouble(PyDict_GetItemString(dict, "SigmaBl3"));
 
 
   if ( PyDict_GetItemString(dict, "R0_A") != NULL )
