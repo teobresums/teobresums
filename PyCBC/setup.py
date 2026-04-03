@@ -23,7 +23,7 @@ setup (
     install_requires = ['pycbc'],
     py_modules = ['teobresums'],
     entry_points = {"pycbc.waveform.td":"teobresums = teobresums:teobresums_td",
-                    "pycbc.waveform.fd":"teobresums = teobresums:teobresums_fd"},
+                    "pycbc.waveform.fd":"teobresums_fd = teobresums:teobresums_fd"},
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
