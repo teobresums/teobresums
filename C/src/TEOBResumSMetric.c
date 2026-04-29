@@ -367,7 +367,7 @@ void eob_metric_A5PNlogST(double r, double nu, double *A, double *dA, double *d2
   double deltabar =  XAB*deltaM + deltaP;
 
   /* Separation variable */
-  double u    = alphaAB./r;
+  double u    = alphaAB/r;
   double u2   = u*u;
   double u3   = u*u2;
   double u4   = u2*u2;
@@ -867,6 +867,7 @@ void eob_metric_D3PNST(double r, double nu, double *D, double *dD, double *d2D)
 
   /* ST parameters */
   const double XAB = sqrt(1.-4.*nu);
+  double alphaAB  = EOBPars->st_alphaAB;
   double betaA    = EOBPars->st_betaA;
   double betaB    = EOBPars->st_betaB;
   double gammaAB  = EOBPars->st_gammaAB;
@@ -889,7 +890,7 @@ void eob_metric_D3PNST(double r, double nu, double *D, double *dD, double *d2D)
   double deltabar =  XAB*deltaM + deltaP;
   
   /* shortcuts */
-  double u  = alphaAB./r;
+  double u  = alphaAB/r;
   double u2 = u*u;
   double u3 = u2*u;  
 
@@ -1171,6 +1172,7 @@ void eob_metric_Q3PNST(double r, double prstar, double nu, double *Q, double *dQ
   
   /* ST parameters */
   const double XAB = sqrt(1.-4.*nu);
+  double alphaAB  = EOBPars->st_alphaAB;
   double gammaAB  = EOBPars->st_gammaAB;
   double deltaP   = EOBPars->st_deltaP;
   double deltaM   = EOBPars->st_deltaM;
@@ -1183,7 +1185,7 @@ void eob_metric_Q3PNST(double r, double prstar, double nu, double *Q, double *dQ
   
   const double z3 = 2.*nu*(4. - 3.*nu);
 
-  double u  = alphaAB./r;
+  double u  = alphaAB/r;
   double u2 = u*u;
   double u3 = u2*u;
   double u4 = u3*u;
