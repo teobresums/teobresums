@@ -267,9 +267,10 @@ enum{
   a6c_fits_ecc,               /**< ecc fits, Nagar et al TODO add ref */
   a6c_fits_P33_HM4PN22,       /**< ecc fits, Nagar et al in prep */
   a6c_fits_P33_newlogs,       /**< Fit with separate log resummation, 2407.04762 */
+  a6c_fits_P33_impqc,         /**< Fit with separate log resummation, 2407.04762, but using P33_impqc instead of P33_newlogs for the A potential */
   a6c_fits_NOPT               /**< number of fits */
 };
-static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "ecc", "HM4PN22", "newlogs", "undefined"};
+static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "ecc", "HM4PN22", "newlogs", "impqc", "undefined"};
 
 enum{
   cN3LO_fits_NO,              /**< no fits */
@@ -282,9 +283,10 @@ enum{
   cN3LO_fits_ecc,             /**< ecc fits, Nagar et al TODO add ref */
   cN3LO_fits_P33_HM4PN22,     /**< ecc fits, Nagar et al in prep */
   cN3LO_fits_P33_newlogs,     /**< Fits with separate log resummation, 2407.04762 */
+  cN3LO_fits_P33_impqc,       /**< Fits with separate log resummation, 2407.04762, but using P33_impqc instead of P33_newlogs for the A potential */
   cN3LO_fits_NOPT             /**< number of fits */
 };
-static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "newlogs", "undefined"};
+static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "newlogs", "impqc", "undefined"};
 
 /** List of options for tidal potential */
 enum{
@@ -955,12 +957,14 @@ double eob_a6c_fit_ecc(double nu);
 double eob_a6c_fit_next(double nu);
 double eob_a6c_fit_ecc_P33_4PNh22(double nu);
 double eob_a6c_fit_ecc_P33_newlogs(double nu);
+double eob_a6c_fit_ecc_P33_impqc(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
 double eob_c3_fit_HM_2023(double nu, double a1, double a2);
 double eob_c3_fit_ecc(double nu, double a1, double a2);
 double eob_c3_fit_ecc_P33_4PNh22(double nu, double a1, double a2);
 double eob_c3_fit_ecc_P33_newlogs(double nu, double a1, double a2);
+double eob_c3_fit_ecc_P33_impqc(double nu, double a1, double a2);
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);

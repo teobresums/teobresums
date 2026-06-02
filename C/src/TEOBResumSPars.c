@@ -426,11 +426,11 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->Q_pot          = Q_3PN; 
     } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
-      eobp->use_flm        = USEFLM_HM_6PN3p3;
-      eobp->use_a6c_fits   = a6c_fits_P33_newlogs;
-      eobp->use_cN3LO_fits = cN3LO_fits_P33_newlogs;
+      eobp->use_flm        = USEFLM_HM_4PN22;
+      eobp->use_a6c_fits   = a6c_fits_P33_impqc;
+      eobp->use_cN3LO_fits = cN3LO_fits_P33_impqc;
       eobp->nqc_coefs_flx  = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
-      eobp->A_pot          = A_5PNlogP33_newlogs; 
+      eobp->A_pot          = A_5PNlogP33; 
       eobp->D_pot          = D_5PNP32_newlogs;
       eobp->Q_pot          = Q_5PNloc; 
     } else {
@@ -798,6 +798,13 @@ int eob_set_params(int default_choice, int firstcall)
   EOBPars->a6c = 0.;
   switch(EOBPars->use_a6c_fits)
   {
+    case(a6c_fits_P33_impqc):
+      if(EOBPars->A_pot != A_5PNlogP33){
+        if (DEBUG) printf("a6c_fits_P33_impqc should be used with A_5PNlogP33\n");
+        return 1;
+      }
+      EOBPars->a6c = eob_a6c_fit_ecc_P33_impqc(EOBPars->nu);
+      break;
     case(a6c_fits_P33_newlogs):
       if(EOBPars->A_pot != A_5PNlogP33_newlogs){
         if (DEBUG) printf("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
@@ -848,6 +855,13 @@ int eob_set_params(int default_choice, int firstcall)
   EOBPars->cN3LO = 0.;
   switch(EOBPars->use_cN3LO_fits)
   {
+    case(cN3LO_fits_P33_impqc):
+      if(EOBPars->A_pot != A_5PNlogP33){
+        if (DEBUG) printf("cN3LO_fits_P33_impqc should be used with A_5PNlogP33\n");
+        return 1;
+      }
+      EOBPars->cN3LO = eob_c3_fit_ecc_P33_impqc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
+      break;
     case(cN3LO_fits_P33_newlogs):
       if(EOBPars->A_pot != A_5PNlogP33_newlogs){
         if (DEBUG) printf("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
