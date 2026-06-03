@@ -6727,7 +6727,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n3[1][j], n4[1][j], n5[1][j], n6[1][j]);
   }
   fclose(fp_dbg);
 #endif    
@@ -6750,7 +6750,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
+    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d_n6[1][j], d2_n4[1][j], d2_n5[1][j], d2_n6[1][j]);  
   }
   fclose(fp_dbg);
 #endif    
@@ -6862,7 +6862,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
 #if (DEBUG)
   fp_dbg = fopen("nqc_amp_func.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%e\t%e\t%e\n", t[j], p1tmp[1][j], p2tmp[1][j]);
+    fprintf(fp_dbg, "%e\t%e\t%e\t%e\n", t[j], p1tmp[1][j], p2tmp[1][j], p3tmp[1][j]);
   }
   fclose(fp_dbg);  
 #endif
