@@ -147,6 +147,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC") != NULL ) { 
     EOBPars->delta_t0_sigmoid_NQC = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_t0_sigmoid_NQC"));
   }
+  if ( PyDict_GetItemString(dict, "nqc_npars") != NULL ) { 
+    EOBPars->nqc_npars = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc_npars"));
+  }
   
   /* Adiabatic tidal ell>2 parameters */
   if ( PyDict_GetItemString(dict, "LambdaAl3") != NULL )

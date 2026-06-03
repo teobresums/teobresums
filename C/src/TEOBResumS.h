@@ -769,6 +769,7 @@ typedef struct tagEOBParameters
   /**@{*/
   /** NQC variables and options*/
   int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
+  int nqc_npars; // Number of parameters for NQC fits, for both amplitude and phase
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
   double d_delta_t_nqc;
   /**@}*/
@@ -973,6 +974,10 @@ void eob_nqc_point_postpeak(double tau, double Mbh, double c1A, double c2A, doub
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
 			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
+void eob_nqc_point_postpeak_d2(double Mbh, double c1A, double c2A, double c3A, double c4A, 
+			    double c1phi, double c2phi, double c3phi, double c4phi,
+			    double alpha1, double omega1,
+			    double *A_tmp, double *dA_tmp, double *d2A_tmp, double *omg_tmp, double *domg_tmp, double *d2omg_tmp);
 double eob_nqc_dtfit(const double chi, const double chi0);
 extern void (*eob_nqc_deltat_lm)(); /* defined in TEOBResumSPars.c*/
 void eob_nqc_deltat_lm_bbh(double *Dt_lm);
@@ -1195,6 +1200,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+				       Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, double tOmg_pk, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);

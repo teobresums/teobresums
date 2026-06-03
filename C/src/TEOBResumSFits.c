@@ -1111,6 +1111,58 @@ void eob_nqc_point_postpeak(double tau, double Mbh, double c1A, double c2A, doub
 /** @} */ // end of nqcpoint
 
 /** 
+ *  Function: eob_nqc_point_postpeak_d2
+ *  -----------------------------------
+ *   This function computes the NQC functioning points by evaluating 
+ *   the post-peak template and its dervatives.
+ *   
+ *   @param[in]  Mbh     : Mass of the final BH
+ *   @param[in]  c1A, c2A,c3A,c4A,c1phi.c2phi,c3phi,c4phi : postpeak template parameters
+ *   @param[in]  alpha1,omega1 : QNM frequency and inverse damping time 
+ *   @param[in, out] A_tmp   : RWZ-normalized Amplitude at the NQC point 
+ *   @param[in, out] dA_tmp  : first time derivative of the RWZ-normalized amplitude at the NQC point 
+ *   @param[in, out] omg_tmp : omega at the NQC point 
+ *   @param[in, out] domg_tmp: first time derivative of the frequency at the NQC point 
+ *
+ */
+void eob_nqc_point_postpeak_d2(double Mbh, double c1A, double c2A, double c3A, double c4A, 
+			    double c1phi, double c2phi, double c3phi, double c4phi,
+			    double alpha1, double omega1,
+			    double *A_tmp, double *dA_tmp, double *d2A_tmp, double *omg_tmp, double *domg_tmp, double *d2omg_tmp)
+{
+  
+  double tau, Mbh2, x, x2, dA_tmp1, dA_tmp2, omg_tmp1, omg_tmp2, domg_tmp_n1,domg_tmp_n2,domg_tmp_d1,domg_tmp_d2;
+  
+  /* the time variable in the post-peak template is given in units of Mbh*/
+  tau  = 2./Mbh;
+  Mbh2 = SQ(Mbh);
+  double expt = exp(-alpha1*tau);
+  double tanht = tanh(c2A*tau + c3A);
+  
+  *A_tmp = expt*(c1A*tanht + c4A);
+  
+  double fact = cosh(c3A+ c2A*tau);
+  dA_tmp1     = c1A*c2A*expt/(fact*fact);
+  dA_tmp2     = -alpha1*expt*(c4A + c1A*tanh(c3A+ c2A*tau));
+  *dA_tmp     = (dA_tmp1 + dA_tmp2)/Mbh;
+  *d2A_tmp    = (alpha1*alpha1*(expt*(c1A*tanht + c4A)) - 2.0*expt*c1A*c2A*(alpha1 - c2A*tanht)/(fact*fact))/Mbh2;
+  
+  x        = exp(-c2phi*tau);
+  x2       = x*x;
+  omg_tmp1 = c1phi*(-2.*c2phi*c4phi*exp(-2.*c2phi*tau) - c2phi*c3phi*x);
+  omg_tmp2 = 1 + c4phi*exp(-2.*c2phi*tau) + c3phi*x;
+  *omg_tmp = (omg_tmp1/omg_tmp2)/Mbh + omega1/Mbh;
+	  
+  domg_tmp_n1 = c1phi*SQ(-2.*c2phi*c4phi*x2 - c2phi*c3phi*x);
+  domg_tmp_d1 = SQ(1 + c4phi*x2 + c3phi*x);
+  domg_tmp_n2 = c1phi*(4.*SQ(c2phi)*c4phi*x2 + SQ(c2phi)*c3phi*x);
+  domg_tmp_d2 = 1 + c4phi*x2 + c3phi*x;
+  *domg_tmp   = -(domg_tmp_n1/domg_tmp_d1 - domg_tmp_n2/domg_tmp_d2)/Mbh2;
+  *d2omg_tmp  = c1phi*c2phi*c2phi*(c3phi + 4.0*c4phi*x + c3phi*c4phi*x2)/(domg_tmp_d1)/Mbh2/Mbh;
+}
+/** @} */ // end of nqcpoint
+
+/** 
  *  Function: eob_nqc_timeshift
  *  ---------------------------
  *   This function computes the time-shift for (2,2) tNQC with respect

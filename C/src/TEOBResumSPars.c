@@ -414,6 +414,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->centrifugal_radius        = CENTRAD_NLO;
     eobp->nqc                       = NQC_AUTO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
+    eobp->nqc_npars                 = 2; // 2 or 3
     
     if (model == MODEL_GIOTTO) {  
       // quasi-circular BBH defaults
@@ -1195,7 +1196,14 @@ int eob_set_params(int default_choice, int firstcall)
   if (EOBPars->model == MODEL_DALI) {
     eob_wav_hlm = &eob_wav_hlm_ecc;
     eob_wav_hlmNQC_find_a1a2a3 = &eob_wav_hlmNQC_find_a1a2a3_ecc;
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_ecc;
+    if (EOBPars->nqc_npars == 2) {
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_ecc;
+    } else if (EOBPars->nqc_npars == 3) {
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2;
+    } else {
+      if (DEBUG) printf("ERROR: Unknown option for nqc_npars\n");
+      return 1;
+    }
   } else  {
     eob_wav_hlm = &eob_wav_hlm_circ;
     eob_wav_hlmNQC_find_a1a2a3 = &eob_wav_hlmNQC_find_a1a2a3_circ;
