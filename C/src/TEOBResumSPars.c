@@ -405,7 +405,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
   eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF ; // index for gravitomagnetic tide
   eobp->use_tidal_fmode_model = 0; // do not 
-  
+  eobp->nqc_npars = 2;
+
   if (binary == BINARY_BBH) {
 
     eobp->binary                    = BINARY_BBH;
@@ -414,7 +415,6 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->centrifugal_radius        = CENTRAD_NLO;
     eobp->nqc                       = NQC_AUTO; // {"no", "auto", "manual"}
     eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin20202", "fromfile"}
-    eobp->nqc_npars                 = 2; // 2 or 3
     
     if (model == MODEL_GIOTTO) {  
       // quasi-circular BBH defaults
