@@ -668,15 +668,6 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
 
   /* Correct amplitudes for specific multipoles and cases */
   if (usespins) { // usespins is now 1 also when spins are 0
-
-    int sp_flag; 
-    if (fabs(chi1) < 1e-14 && fabs(chi2) < 1e-14) { 
-      sp_flag = 0; // if zero spins, do not change the Newtonian prefactors
-    } else {
-      sp_flag = 1;
-    } 
-
-    if (sp_flag) {
       /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
       double x6 = gsl_pow_int(x, 6);
       FNewtlm[0] = CNlm[0] * x6; // (2,1) 
@@ -693,23 +684,13 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
       }
     } else {
       if (usetidal) {
-        /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
+        // Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) 
         double x6 = gsl_pow_int(x, 6);
-        FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
-        FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
-        FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
+        FNewtlm[0] = CNlm[0] * x6; // (2,1) 
+        FNewtlm[2] = CNlm[2] * x6; // (3,1) 
+        FNewtlm[4] = CNlm[4] * x6; // (3,3) 
       }
     }
-    
-  } else { // usespins = 0 case, now deprecated
-    if (usetidal) {
-      /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
-      double x6 = gsl_pow_int(x, 6);
-      FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
-      FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
-      FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
-    }
-  }
 
   /* Tail term */
   eob_flx_Tlm(E*Omega, MTlm);
@@ -852,15 +833,6 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   /* Correct amplitudes for specific multipoles and cases */
   if (usespins) { // usespins is now 1 also when spins are 0
-
-    int sp_flag; 
-    if (fabs(chi1) < 1e-14 && fabs(chi2) < 1e-14) { 
-      sp_flag = 0; // if zero spins, do not change the Newtonian prefactors
-    } else {
-      sp_flag = 1;
-    } 
-
-    if (sp_flag) {
       /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
       double x6 = gsl_pow_int(x, 6);
       FNewtlm[0] = CNlm[0] * x6; // (2,1) 
@@ -884,16 +856,6 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
         FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
       }
     }
-    
-  } else { // usespins = 0 case, now deprecated
-    if (usetidal) {
-      /* Correct (2,1), (3,1) and (3,3) ( sp2 = 1 ) */
-      double x6 = gsl_pow_int(x, 6);
-      FNewtlm[0] = CNlm[0] * x6; /* (2,1) */
-      FNewtlm[2] = CNlm[2] * x6; /* (3,1) */
-      FNewtlm[4] = CNlm[4] * x6; /* (3,3) */
-    }
-  }
 
   /** Tail term */
   eob_flx_Tlm(E*Omega, MTlm);

@@ -399,12 +399,15 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->Q_pot          = Q_3PN; 
     } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
-      eobp->use_flm        = USEFLM_HM_4PN22;
-      eobp->use_a6c_fits   = a6c_fits_P33_HM4PN22;
-      eobp->use_cN3LO_fits = cN3LO_fits_P33_HM4PN22;
+      // These are the defaults for Dalì-LMR, *not* for the standard Dalì.
+      eobp->use_flm        = USEFLM_22PN; // Standard Dalì: USEFLM_HM_4PN22;
+      eobp->use_a6c_fits   = a6c_fits_P33_newlogs_22PN; // Standard Dalì: a6c_fits_P33_HM4PN22;
+      eobp->use_cN3LO_fits = cN3LO_fits_P33_newlogs; // To be updated soon; Standard Dalì: cN3LO_fits_P33_HM4PN22;
+      eobp->nqc            = NQC_MANUAL;
+      eobp->nqc_coefs_hlm  = NQC_HLM_COMPUTE;
       eobp->nqc_coefs_flx  = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
-      eobp->A_pot          = A_5PNlogP33; 
-      eobp->D_pot          = D_5PNP32;
+      eobp->A_pot          = A_5PNlogP33_newlogs; // A_5PNlogP33; 
+      eobp->D_pot          = D_5PNP32_newlogs; // D_5PNP32;
       eobp->Q_pot          = Q_5PNloc; 
     } else {
       errorexit("Unknown BBH model specified.");
