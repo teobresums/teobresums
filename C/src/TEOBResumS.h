@@ -352,6 +352,16 @@ enum{
 };
 static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr"};
 
+/** List of options for flm_nc */
+enum{
+  USEFLM_NC_NO,            /**< No NC corrections to anything */
+  USEFLM_NC_22,            /**< NC corrections to 22 mode only, and only to the Newtonian prefactor */
+  USEFLM_NC_IMPQC,         /**< ImpQC NC corrections to flm amplitudes */
+  USEFLM_NC_NOPT           /**< number of flm_nc amplitudes options */
+};
+static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "undefined"};
+
+
 /** List of options for ODE timestepping */
 enum{
   ODE_TSTEP_UNIFORM,                       /**< uniform timestep */
@@ -692,6 +702,7 @@ typedef struct tagEOBParameters
   int model;                                            /**< model (Dalì, Giotto) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
+  int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
@@ -945,6 +956,7 @@ int noentries(const char *string);
 int str2iarray(const char *string, int **a);
 int str2darray(const char *string, double **a);
 void print_date_time();
+double return_one();
 void errorexit(char *file, int line, const char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
 void errorexits(char *file, int line, const char *s, const char *t);
@@ -1147,6 +1159,8 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
 
 /* TEOBResumSFlux.c */
 extern double (*eob_flx_Fr)(); /* defined in TEOBResumSPars.c*/
+extern double (*eob_flx_hatflm_nc[KMAX])();
+extern double (*eob_flx_FlmNewt_nc[KMAX])();
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn);
@@ -1154,7 +1168,19 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
 double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
 double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc);
-double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, Dynamics *dyn, double Fphi_qc, double prsdot);
+double eob_flx_FlmNewt_nc_22_old(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_FlmNewt_nc_22(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_FlmNewt_nc_21(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_FlmNewt_nc_33(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_FlmNewt_nc_32(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_FlmNewt_nc_31(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_FlmNewt_nc_44(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
+double eob_flx_flm_nc_22(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_21(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_33(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_31(double r, double prstar, double prstardot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);

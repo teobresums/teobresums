@@ -650,7 +650,7 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, doubl
   * Function: eob_flx_Fr_ecc_BD
   * ---------------------------
   *   Radial flux calculation for eccentric systems
-  *   Circular expression from Bini-Damour inverse-resumme
+  *   Circular expression from Bini-Damour inverse-resummed
   *   See https://arxiv.org/abs/1210.2834
   *       https://arxiv.org/abs/2001.11736
   * 
@@ -707,8 +707,12 @@ double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, 
   const double u  = 1./r;
   const double u2 = u*u;
 
-  double c1 = 5317./1680 - 227./140*nu;
-  double c2 = 1296935./1016064 - 274793./70560*nu + 753./560*nu2;
+  //double c1 = 5317./1680 - 227./140*nu;
+  //double c2 = 1296935./1016064 - 274793./70560*nu + 753./560*nu2;
+  // Correct coefficients
+  double c1 = 1957./1680 - 227./140*nu;
+  double c2 = -25672541./5080320 + 165703./70560.*nu + 753./560.*nu2;
+  
   double a[]  = {1., c1, c2};
   double hatf_prstar = Pade02(u, a);
   const double Frstar = -5./3.*prstar/pphi*Fphi*hatf_prstar;
@@ -722,6 +726,100 @@ double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, 
   
   /* return Fr */
   return Frstar/sqrtAbyB;
+}
+
+/**
+  * Function: eob_flx_Fr_ecc_impqc_full
+  * -----------------------------
+  *   Radial flux calculation for eccentric systems
+  *   Fixing a typo in the previous version of the code, plus full expression in BD gauge 
+  * 
+  *   @param[in] r        :  radial separation
+  *   @param[in] pr_star  :  (tortoise) radial momentum
+  *   @param[in] pphi     :  orbital angular momentum
+  *   @param[in] dyn      :  dynamics structure
+  *   @param[in] Fphi     :  angular momentum flux
+  * 
+  *   @return[out] Fr     :  radial flux
+*/
+double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, Dynamics *dyn, double Fphi, double prsdot)
+{
+  double nu = EOBPars->nu;
+  double nu2 = nu*nu;
+
+  double r2 = r * r;
+  double r3 = r2 * r;
+  double r4 = r3 * r;
+  double r5 = r4 * r;
+  double r6 = r5 * r;
+  double r7 = r6 * r;
+  double r8 = r7 * r;
+  double r9 = r8 * r;
+  double r10 = r9 * r;
+
+  double prstar2 = prstar * prstar;
+  double prstar4 = prstar2 * prstar2;
+
+  double prsdot2 = prsdot * prsdot;
+  double prsdot3 = prsdot2 * prsdot;
+  double prsdot4 = prsdot3 * prsdot;
+  double prsdot5 = prsdot4 * prsdot;
+
+// Newtonian contribution
+  double f0 = 1.0 + 0.25 * prstar2 * r + 0.0625 * prstar4 * r2 
+      + prsdot * (0.55 * r2 + 0.0125 * prstar2 * r3 - 0.028125 * prstar4 * r4) 
+      + prsdot2 * (-0.275 * r4 - 0.075 * prstar2 * r5) 
+      + prsdot3 * (0.1375 * r6 + 0.071875 * prstar2 * r7) 
+      - 0.06875 * prsdot4 * r8 + 0.034375 * prsdot5 * r10;
+
+// 1PN
+  double f1 = (-1.5178571428571428 + 2.288095238095238 * nu) * prstar2 
+      + (1.1648809523809525 - 1.6214285714285714 * nu) / r 
+      + (-1.3454241071428572 + 0.8674107142857143 * nu) * prstar4 * r 
+      + prsdot * ((2.9647321428571427 - 1.3625 * nu) * r 
+      + (0.6417410714285714 + 1.2059523809523809 * nu) * prstar2 * r2 
+      + (0.14171316964285716 - 0.009933035714285714 * nu) * prstar4 * r3) 
+      + prsdot2 * ((-1.4866071428571428 + 0.5238095238095238 * nu) * r3 
+      + (-0.86796875 - 0.7486607142857142 * nu) * prstar2 * r4) 
+      + prsdot3 * ((1.1324776785714286 - 0.6760416666666667 * nu) * r5 
+      + (0.9021205357142857 + 0.24010416666666667 * nu) * prstar2 * r6) 
+      + (-0.7608258928571429 + 0.5450892857142857 * nu) * prsdot4 * r7 
+      + (0.4777064732142857 - 0.37607886904761906 * nu) * prsdot5 * r9;
+
+  // 1.5PN
+  double f15 = (1.3625 * prstar2 - 1.325 / r + 0.9334375 * prstar4 * r  
+      + prsdot * (-1.59375 * r + 1.3263020833333334 * prstar2 * r2 + 0.46173177083333333 * prstar4 * r3) 
+      + prsdot2 * (0.371875 * r3 - 0.4298177083333333 * prstar2 * r4) 
+      + prsdot3 * (-0.18359375 * r5 - 0.21380208333333334 * prstar2 * r6)
+      + 0.2498046875 * prsdot4 * r7 - 0.35216796875 * prsdot5 * r9) * M_PI / sqrt(r);
+
+  // 2PN
+  double f2 = (-6.483223497732427 - 4.3551321570294785 * nu + 0.5247236394557823 * nu2) * prstar4 
+      + (-5.053331483056185 + 2.3483985260770974 * nu + 1.3446428571428573 * nu2) / r2 
+      + (-16.105473523321365 + 7.908641581632653 * nu - 6.336968537414966 * nu2) * prstar2 / r 
+      + prsdot * (7.97368782871945 - 12.197115929705216 * nu + 7.585480442176871 * nu2 
+      + (-6.689099222588341 - 15.166263640873016 * nu - 7.027237457482993 * nu2) * prstar2 * r 
+      + (-0.3731170908033352 - 6.749221185870182 * nu - 0.5030514810090703 * nu2) * prstar4 * r2) 
+      + prsdot2 * ((-6.9162761154809145 + 8.336807327097505 * nu + 0.7025687358276644 * nu2) * r2 
+      + (0.055171278580876795 - 0.6395532171201814 * nu - 1.645280612244898 * nu2) * prstar2 * r3) 
+      + prsdot3 * ((4.7562702004991815 - 5.866097115929705 * nu - 0.22435870181405895 * nu2) * r4 
+      + (4.31563323643983 + 0.15075600552721088 * nu - 0.7230513038548753 * nu2) * prstar2 * r5)
+      + (-3.9656034954491055 + 5.564095273526077 * nu - 0.370999858276644 * nu2) * prsdot4 * r6 
+      + (3.0519113738160195 - 4.683648667800454 * nu + 0.7389247626133787 * nu2) * prsdot5 * r8;
+
+  double a2 = f1/f0;
+  double a3 = f15/f0;
+  double a4 = f2/f0;
+  double hatf_prstar = f0 / (1.0 - a2 - a3 + (a2 * a2 - a4));
+  const double Frstar = -5./3.*prstar/pphi*Fphi*hatf_prstar;
+  
+  /* We need to output Fr, not Fr*; compute the conversion from Fr to Fr* */
+  double A, B, pl_hold;
+  eob_metric_s(r, prstar, dyn, &A, &B, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  const double sqrtAbyB = sqrt(A/B);
+  
+  /* return Fr */
+  return Frstar/sqrtAbyB;    
 }
 
 /** Non-circular flux for eccentric systems */
@@ -940,7 +1038,13 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
 
     r3dot = D1 + D2 + D3 + D4; 
     
-    hatflm_NC[1] = Fphi_NewtPref(r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot);
+    // NC corrections to the modes, Newtonian times PN corrections (hatflm)
+    for (int k=0; k < KMAX; k++){
+      hatflm_NC[k] = eob_flx_FlmNewt_nc[k](r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot);
+      hatflm_NC[k] = hatflm_NC[k] * eob_flx_hatflm_nc[k](r, prstar, prstardot);
+      // printf("hatflm_NC[%d] = %e\n", k, hatflm_NC[k]);
+    }
+
     sum_k = 0.;
     for (int k = 0; k < KMAX; k++) sum_k += Flm[k] * hatflm_NC[k];
     sum_k = sum_k/FlmNewt[1];
@@ -962,8 +1066,8 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
   dyn->Omega4dot = 0.;
 }
 
-/* Generic Newtonian prefactor */
-double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
+/* Generic Newtonian prefactors */
+double eob_flx_FlmNewt_nc_22_old(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
 {
   double u, u2, u3, u4;
   /*double Omg2, Omg3, Omg4, Omg5;*/
@@ -1003,4 +1107,593 @@ double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3d
               - 0.25*Omg2dot*invOmg3                + 3.0*rdot*Omgdot*u*invOmg3;
   
   return FphiNewtNC;
+}
+
+/*========================================================================== */
+/*(2,2) Mode (this should in principle be identical to the previous one... is it?)                                                            */
+/*========================================================================== */
+double eob_flx_FlmNewt_nc_22(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
+{
+    const double invOmg  = 1.0 / Omg;
+    const double invOmg2 = invOmg  * invOmg;
+    const double invOmg3 = invOmg2 * invOmg;
+    const double invOmg4 = invOmg3 * invOmg;
+    const double invOmg5 = invOmg4 * invOmg;
+
+    const double u   = 1.0 / r;
+    const double u2  = u   * u;
+    const double u3  = u2  * u;
+    const double u4  = u3  * u;
+
+    const double rdot2 = rdot  * rdot;
+    const double rdot3 = rdot2 * rdot;
+    const double rdot4 = rdot3 * rdot;
+
+    const double r2dot2 = r2dot * r2dot;
+    const double Omgdot2 = Omgdot * Omgdot;
+
+    double FphiNewtNC = 1.0 + invOmg2 * (-2.0 * u * r2dot + 4.0 * u2 * rdot2) 
+        + invOmg3 * (-0.25 * Omg2dot + 3.0 * u * Omgdot * rdot) 
+        + invOmg4 * (0.75 * Omgdot2 + 0.75 * u4 * rdot4 + u2 * (0.75 * r2dot2 - 0.5 * r3dot * rdot)) 
+        + invOmg5 * (u * (0.125 * Omg2dot * r2dot - 0.125 * Omgdot * r3dot) 
+        + 0.75 * u3 * Omgdot * rdot3 + u2 * (0.375 * Omgdot * r2dot * rdot + 0.125 * Omg2dot * rdot2));
+
+    return FphiNewtNC;
+}
+
+/*========================================================================== */
+/* (2,1) Mode                                                                 */
+/*========================================================================== */
+double eob_flx_FlmNewt_nc_21(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
+{
+    const double invOmg  = 1.0 / Omg;
+    const double invOmg2 = invOmg  * invOmg;
+    const double invOmg3 = invOmg2 * invOmg;
+    const double invOmg4 = invOmg3 * invOmg;
+    const double invOmg5 = invOmg4 * invOmg;
+    const double invOmg6 = invOmg5 * invOmg;
+    const double invOmg7 = invOmg6 * invOmg;
+
+    const double u   = 1.0 / r;
+    const double u2  = u   * u;
+    const double u3  = u2  * u;
+    const double u4  = u3  * u;
+
+    const double rdot2 = rdot  * rdot;
+    const double rdot3 = rdot2 * rdot;
+    const double rdot4 = rdot3 * rdot;
+
+    const double r2dot2 = r2dot * r2dot;
+    const double Omgdot2 = Omgdot * Omgdot;
+    const double Omg2dot2 = Omg2dot * Omg2dot;
+    const double Omgdot3 = Omgdot2 * Omgdot;
+
+    double FphiNewtNC = 1.0 + invOmg2 * u * (-12.0 * r2dot + 30.0 * u * rdot2) 
+        + invOmg3 * (-5.0 * Omg2dot + 30.0 * u * Omgdot * rdot) 
+        + invOmg4 * (15.0 * Omgdot2 - 36.0 * u3 * r2dot * rdot2 
+        + 96.0 * u4 * rdot4 + u2 * (27.0 * r2dot2 - 6.0 * r3dot * rdot)) 
+        + invOmg5 * u * (21.0 * Omg2dot * r2dot - 3.0 * Omgdot * r3dot 
+        + 33.0 * u * Omgdot * r2dot * rdot + 132.0 * u2 * Omgdot * rdot3) 
+        + invOmg6 * (4.0 * Omg2dot2 + 114.0 * u2 * Omgdot2 * rdot2 
+        + u * (-6.0 * Omgdot2 * r2dot + 30.0 * Omg2dot * Omgdot * rdot)) 
+        + invOmg7 * (3.0 * Omg2dot * Omgdot2 + 18.0 * u * Omgdot3 * rdot);
+
+    return FphiNewtNC;
+}
+
+/*========================================================================== */
+/*(3,3) Mode                                                                 */
+/*========================================================================== */
+double eob_flx_FlmNewt_nc_33(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
+{
+    const double invOmg  = 1.0 / Omg;
+    const double invOmg2 = invOmg  * invOmg;
+    const double invOmg3 = invOmg2 * invOmg;
+    const double invOmg4 = invOmg3 * invOmg;
+    const double invOmg5 = invOmg4 * invOmg;
+    const double invOmg6 = invOmg5 * invOmg;
+    const double invOmg7 = invOmg6 * invOmg;
+
+    const double u   = 1.0 / r;
+    const double u2  = u   * u;
+    const double u3  = u2  * u;
+    const double u4  = u3  * u;
+    const double u5  = u4  * u;
+    const double u6  = u5  * u;
+    const double u7  = u6  * u;
+
+    const double rdot2 = rdot  * rdot;
+    const double rdot3 = rdot2 * rdot;
+    const double rdot4 = rdot3 * rdot;
+    const double rdot6 = rdot3 * rdot3;
+
+    const double r2dot2 = r2dot  * r2dot;
+    const double r2dot3 = r2dot2 * r2dot;
+    const double r3dot2 = r3dot  * r3dot;
+    const double rdot5   = rdot4   * rdot;
+    
+    const double Omgdot2 = Omgdot  * Omgdot;
+    const double Omg2dot2 = Omg2dot * Omg2dot;
+    const double Omgdot3 = Omgdot2 * Omgdot;
+
+    double FphiNewtNC = 1.0 + 0.037037037037037035 * ( 
+        invOmg2 * (-80.0 * u * r2dot + 162.0 * u2 * rdot2) 
+        + invOmg3 * (-13.0 * Omg2dot + 139.0 * u * Omgdot * rdot) 
+        + invOmg4 * (47.0 * Omgdot2 - 6.0 * u5 * rdot2 - 80.0 * u3 * r2dot * rdot2 
+        + u2 * (59.0 * r2dot2 - 34.0 * r3dot * rdot) + u4 * (2.0 * r2dot + 132.0 * rdot4)) 
+        + invOmg5 * u * (15.88888888888889 * Omg2dot * r2dot - 16.0 * Omgdot * r3dot 
+        + 164.0 * u2 * Omgdot * rdot3 + u * rdot * (Omgdot * r2dot + 2.0 * Omg2dot * rdot)) 
+        + invOmg6 * (1.1111111111111112 * Omg2dot2 + 12.0 * u7 * rdot4 
+        + u * (-7.0 * Omgdot2 * r2dot + 11.555555555555555 * Omg2dot * Omgdot * rdot) 
+        + u3 * (-6.0 * r2dot3 + 7.333333333333333 * r2dot * r3dot * rdot) 
+        + u2 * (1.1111111111111112 * r3dot2 + 78.0 * Omgdot2 * rdot2) 
+        + u4 * (28.0 * r2dot2 * rdot2 - 11.555555555555555 * r3dot * rdot3) 
+        + u5 * (-2.0 * r2dot2 + 6.666666666666667 * r2dot * rdot4) 
+        + u6 * (2.0 * r2dot * rdot2 + 4.444444444444445 * rdot6)) 
+        + invOmg7 * (0.7777777777777778 * Omg2dot * Omgdot2 + 7.0 * u * Omgdot3 * rdot 
+        + u2 * (-0.6666666666666666 * Omg2dot * r2dot2 
+        + 1.5555555555555556 * Omgdot * r2dot * r3dot + 0.2222222222222222 * Omg2dot * r3dot * rdot) 
+        + u3 * (3.3333333333333335 * Omgdot * r2dot2 * rdot 
+        + (5.333333333333333 * Omg2dot * r2dot - 3.5555555555555554 * Omgdot * r3dot) * rdot2) 
+        + u4 * (-0.2222222222222222 * Omg2dot * r2dot + 17.77777777777778 * Omgdot * r2dot * rdot3 
+        + 2.2222222222222223 * Omg2dot * rdot4) 
+        + u5 * (-2.0 * Omgdot * r2dot * rdot + 0.6666666666666666 * Omg2dot * rdot2 
+        + 8.88888888888889 * Omgdot * rdot5) + 6.0 * u6 * Omgdot * rdot3));
+
+    return FphiNewtNC;
+}
+
+/*========================================================================== */
+/*(3,2) Mode                                                                 */
+/*========================================================================== */
+double eob_flx_FlmNewt_nc_32(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
+{
+    const double invOmg  = 1.0 / Omg;
+    const double invOmg2 = invOmg  * invOmg;
+    const double invOmg3 = invOmg2 * invOmg;
+    const double invOmg4 = invOmg3 * invOmg;
+    const double invOmg5 = invOmg4 * invOmg;
+    const double invOmg6 = invOmg5 * invOmg;
+    const double invOmg7 = invOmg6 * invOmg;
+    const double invOmg8 = invOmg7 * invOmg;
+    const double invOmg9 = invOmg8 * invOmg;
+
+    const double u   = 1.0 / r;
+    const double u2  = u   * u;
+    const double u3  = u2  * u;
+    const double u4  = u3  * u;
+    const double u5  = u4  * u;
+    const double u6  = u5  * u;
+    const double u7  = u6  * u;
+    const double u8 = u4 * u4;
+    const double u10 = u4  * u6; 
+    const double u9  = u3  * u6;
+
+    const double rdot2 = rdot  * rdot;
+    const double rdot3 = rdot2 * rdot;
+    const double rdot4 = rdot3 * rdot;
+    const double rdot5 = rdot4 * rdot;
+    const double rdot6 = rdot3 * rdot3;
+
+    const double r2dot2 = r2dot  * r2dot;
+    const double r3dot2 = r3dot  * r3dot;
+
+    const double Omgdot2 = Omgdot  * Omgdot;
+    const double Omgdot3 = Omgdot2 * Omgdot;
+    const double Omgdot4 = Omgdot2 * Omgdot2;
+
+    const double Omg2dot2 = Omg2dot * Omg2dot;
+
+    double FphiNewtNC = 1.0 + 0.0625 * (
+          invOmg2 * (-142.0 * u * r2dot + 336.0 * u2 * rdot2) 
+        + invOmg3 * (-52.0 * Omg2dot + 344.0 * u * Omgdot * rdot) 
+        + invOmg4 * (172.0 * Omgdot2 - 12.0 * u5 * rdot2 - 846.0 * u3 * r2dot * rdot2 
+        + u2 * (324.0 * r2dot2 - 76.0 * r3dot * rdot) + u4 * (4.0 * r2dot + 1340.0 * rdot4)) 
+        + invOmg5 * u * (220.0 * Omg2dot * r2dot - 46.0 * Omgdot * r3dot 
+        + 1988.0 * u2 * Omgdot * rdot3 + u * rdot * (-136.0 * Omgdot * r2dot - 146.0 * Omg2dot * rdot)) 
+        + invOmg6 * (36.0 * Omg2dot2 + 108.0 * u7 * rdot4 + 560.0 * u6 * rdot6 
+        + u * Omgdot * (-153.5 * Omgdot * r2dot + 156.0 * Omg2dot * rdot) 
+        + u3 * r2dot * (-126.0 * r2dot2 + 66.0 * r3dot * rdot) + u2 * (3.0 * r3dot2 + 1712.0 * Omgdot2 * rdot2) 
+        + u4 * rdot2 * (837.0 * r2dot2 - 184.0 * r3dot * rdot) 
+        + u5 * r2dot * (-12.0 * r2dot - 108.0 * rdot4)) 
+        + invOmg7 * (23.0 * Omg2dot * Omgdot2 + 498.0 * u * Omgdot3 * rdot 
+        + 108.0 * u6 * Omgdot * rdot3 + u2 * (-96.0 * Omg2dot * r2dot2 + 8.0 * Omgdot * r2dot * r3dot 
+        + 14.0 * Omg2dot * r3dot * rdot) 
+        + u3 * (198.0 * Omgdot * r2dot2 * rdot + (486.0 * Omg2dot * r2dot - 164.0 * Omgdot * r3dot) * rdot2) 
+        + u4 * (-4.0 * Omg2dot * r2dot + 1420.0 * Omgdot * r2dot * rdot3 + 30.0 * Omg2dot * rdot4) 
+        + u5 * rdot * (-36.0 * Omgdot * r2dot + 12.0 * Omg2dot * rdot + 860.0 * Omgdot * rdot4)) 
+        + invOmg8 * (42.0 * Omgdot4 + u * (-18.0 * Omg2dot2 * r2dot - 5.0 * Omg2dot * Omgdot * r3dot) 
+        + 9.0 * u5 * Omgdot2 * rdot2 + u2 * (72.5 * Omgdot2 * r2dot2 + 
+        (75.0 * Omg2dot * Omgdot * r2dot - 87.0 * Omgdot2 * r3dot) * rdot + 85.0 * Omg2dot2 * rdot2) 
+        + u3 * Omgdot * (389.0 * Omgdot * r2dot * rdot2 + 590.0 * Omg2dot * rdot3) 
+        + u4 * Omgdot2 * (-3.0 * r2dot + 1355.0 * rdot4)) 
+        + invOmg9 * (375.0 * u3 * Omgdot3 * rdot3 
+        + u * (6.5 * Omg2dot * Omgdot2 * r2dot - 7.5 * Omgdot3 * r3dot + 25.0 * Omg2dot2 * Omgdot * rdot) 
+        + u2 * (16.5 * Omgdot3 * r2dot * rdot + 182.5 * Omg2dot * Omgdot2 * rdot2))
+    );
+
+    return FphiNewtNC;
+}
+
+/*========================================================================== */
+/*(3,1) Mode                                                                 */
+/*========================================================================== */
+double eob_flx_FlmNewt_nc_31(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
+{
+    const double invOmg  = 1.0 / Omg;
+    const double invOmg2 = invOmg  * invOmg;
+    const double invOmg3 = invOmg2 * invOmg;
+    const double invOmg4 = invOmg3 * invOmg;
+    const double invOmg5 = invOmg4 * invOmg;
+    const double invOmg6 = invOmg5 * invOmg;
+    const double invOmg7 = invOmg6 * invOmg;
+
+    const double u   = 1.0 / r;
+    const double u2  = u   * u;
+    const double u3  = u2  * u;
+    const double u4  = u3  * u;
+    const double u5  = u4  * u;
+    const double u6  = u5  * u;
+    const double u7  = u6  * u;
+
+    const double rdot2 = rdot  * rdot;
+    const double rdot3 = rdot2 * rdot;
+    const double rdot4 = rdot2 * rdot2;
+
+    const double r2dot2 = r2dot  * r2dot;
+    const double r3dot2 = r3dot  * r3dot;
+
+    const double Omgdot2 = Omgdot  * Omgdot;
+    const double Omgdot3 = Omgdot2 * Omgdot;
+    const double Omg2dot2 = Omg2dot * Omg2dot;
+
+    double FphiNewtNC = 1.0 
+        + invOmg2 * u * (-24.0 * r2dot + 54.0 * u * rdot2) 
+        + invOmg3 * (Omg2dot + 57.0 * u * Omgdot * rdot) 
+        + invOmg4 * (21.0 * Omgdot2 - 18.0 * u5 * rdot2 - 288.0 * u3 * r2dot * rdot2 
+        + u2 * (153.0 * r2dot2 - 102.0 * r3dot * rdot) + u4 * (6.0 * r2dot + 396.0 * rdot4)) 
+        + invOmg5 * (u * (-3.0 * Omg2dot * r2dot - 48.0 * Omgdot * r3dot) 
+        + 300.0 * u3 * Omgdot * rdot3 + u2 * rdot * (-117.0 * Omgdot * r2dot - 90.0 * Omg2dot * rdot)) 
+        + invOmg6 * (-2.0 * Omg2dot2 + 324.0 * u7 * rdot4 + u * Omgdot * (-69.0 * Omgdot * r2dot - 24.0 * Omg2dot * rdot) 
+        + u3 * r2dot * (-162.0 * r2dot2 + 198.0 * r3dot * rdot) + u2 * (30.0 * r3dot2 + 42.0 * Omgdot2 * rdot2) 
+        + u4 * rdot2 * (756.0 * r2dot2 - 312.0 * r3dot * rdot) + u5 * r2dot * (-54.0 * r2dot + 180.0 * rdot4) 
+        + u6 * rdot2 * (54.0 * r2dot + 120.0 * rdot4)) 
+        + invOmg7 * (-3.0 * Omg2dot * Omgdot2 - 27.0 * u * Omgdot3 * rdot + 162.0 * u6 * Omgdot * rdot3 
+        + u2 * (-18.0 * Omg2dot * r2dot2 + 42.0 * Omgdot * r2dot * r3dot + 6.0 * Omg2dot * r3dot * rdot) 
+        + u3 * rdot * (90.0 * Omgdot * r2dot2 + (144.0 * Omg2dot * r2dot - 96.0 * Omgdot * r3dot) * rdot) 
+        + u4 * (-6.0 * Omg2dot * r2dot + 480.0 * Omgdot * r2dot * rdot3 + 60.0 * Omg2dot * rdot4) 
+        + u5 * rdot * (-54.0 * Omgdot * r2dot + 18.0 * Omg2dot * rdot + 240.0 * Omgdot * rdot4));
+
+    return FphiNewtNC;
+}
+
+/*========================================================================== */
+/*(4,4) Mode                                                                 */
+/*========================================================================== */
+double eob_flx_FlmNewt_nc_44(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
+{
+    const double invOmg  = 1.0 / Omg;
+    const double invOmg2 = invOmg  * invOmg;
+    const double invOmg3 = invOmg2 * invOmg;
+    const double invOmg4 = invOmg3 * invOmg;
+    const double invOmg5 = invOmg4 * invOmg;
+    const double invOmg6 = invOmg5 * invOmg;
+    const double invOmg7 = invOmg6 * invOmg;
+    const double invOmg8 = invOmg7 * invOmg;
+    const double invOmg9 = invOmg8 * invOmg;
+
+    const double u   = 1.0 / r;
+    const double u2  = u   * u;
+    const double u3  = u2  * u;
+    const double u4  = u3  * u;
+    const double u5  = u4  * u;
+    const double u6  = u5  * u;
+    const double u7  = u6  * u;
+    const double u8  = u7  * u;
+    const double u9  = u8  * u;
+    const double u10 = u5  * u5;
+
+    const double rdot2 = rdot  * rdot;
+    const double rdot3 = rdot2 * rdot;
+    const double rdot4 = rdot3 * rdot;
+    const double rdot5 = rdot4 * rdot;
+    const double rdot6 = rdot3 * rdot3;
+
+    const double r2dot2 = r2dot  * r2dot;
+    const double r2dot3 = r2dot2 * r2dot;
+    const double r2dot4 = r2dot3 * r2dot;
+    const double r3dot2 = r3dot  * r3dot;
+
+    const double Omgdot2 = Omgdot  * Omgdot;
+    const double Omgdot3 = Omgdot2 * Omgdot;
+    const double Omgdot4 = Omgdot2 * Omgdot2;
+    const double Omg2dot2 = Omg2dot * Omg2dot;
+
+    double FphiNewtNC = 1.0 + 0.000244140625 * ( 
+        invOmg2 * u * (-16032.0 * r2dot + 32768.0 * u * rdot2) 
+        + invOmg3 * (-2880.0 * Omg2dot + 30080.0 * u * Omgdot * rdot) 
+        + invOmg4 * (11456.0 * Omgdot2 - 2112.0 * u5 * rdot2 - 40560.0 * u3 * r2dot * rdot2 
+        + u2 * (18324.5 * r2dot2 - 8192.0 * r3dot * rdot) + u4 * (704.0 * r2dot + 53312.0 * rdot4)) 
+        + invOmg5 * u * (5666.0 * Omg2dot * r2dot - 4648.0 * Omgdot * r3dot + 74816.0 * u2 * Omgdot * rdot3 
+        + u * rdot * (-14900.0 * Omgdot * r2dot - 3264.0 * Omg2dot * rdot)) 
+        + invOmg6 * (434.0 * Omg2dot2 + 6432.0 * u7 * rdot4 
+        + u * Omgdot * (-6448.0 * Omgdot * r2dot + 1928.0 * Omg2dot * rdot) 
+        + u3 * r2dot * (-5817.0 * r2dot2 + 4997.0 * r3dot * rdot) 
+        + u2 * (430.5 * r3dot2 + 46280.0 * Omgdot2 * rdot2) 
+        + u4 * rdot2 * (20842.5 * r2dot2 - 11247.0 * r3dot * rdot) 
+        + u5 * (-1166.0 * r2dot2 + 128.0 * r3dot * rdot - 5127.0 * r2dot * rdot4) 
+        + u6 * rdot2 * (714.0 * r2dot + 13224.0 * rdot4)) 
+        + invOmg7 * (208.0 * Omg2dot * Omgdot2 + 9312.0 * u * Omgdot3 * rdot + 6264.0 * u6 * Omgdot * rdot3 
+        + u2 * (-1737.5 * Omg2dot * r2dot2 + 1934.5 * Omgdot * r2dot * r3dot + 184.5 * Omg2dot * r3dot * rdot) 
+        + u3 * (4732.5 * Omgdot * r2dot2 * rdot + (6150.0 * Omg2dot * r2dot - 9097.0 * Omgdot * r3dot) * rdot2) 
+        + u4 * (-188.0 * Omg2dot * r2dot + 48.0 * Omgdot * r3dot + 15126.0 * Omgdot * r2dot * rdot3 + 1936.0 * Omg2dot * rdot4) 
+        + u5 * (-2328.0 * Omgdot * r2dot * rdot + 564.0 * Omg2dot * rdot2 + 23076.0 * Omgdot * rdot5)) 
+        + invOmg8 * (510.0 * Omgdot4 - 119.0 * u * Omg2dot2 * r2dot + 162.0 * u10 * rdot4 
+        + u2 * (1086.0 * Omgdot2 * r2dot2 + (1253.0 * Omg2dot * r2dot - 2026.0 * Omgdot * r3dot) * Omgdot * rdot + 553.0 * Omg2dot2 * rdot2) 
+        + u3 * (-105.0 * r2dot * r3dot2 + 4320.0 * Omgdot2 * r2dot * rdot2 + 5296.0 * Omg2dot * Omgdot * rdot3) 
+        + u5 * (-7.0 * r3dot2 + (576.0 * Omgdot2 + 108.0 * r2dot3) * rdot2 + 1170.0 * r2dot * r3dot * rdot3) 
+        + u4 * (-192.0 * Omgdot2 * r2dot + 418.5 * r2dot4 - 405.0 * r2dot2 * r3dot * rdot + 426.0 * r3dot2 * rdot2 + 17724.0 * Omgdot2 * rdot4) 
+        + u6 * (174.0 * r2dot3 + 97.0 * r2dot * r3dot * rdot + 3330.0 * r2dot2 * rdot4 - 882.0 * r3dot * rdot5) 
+        + u9 * rdot2 * (-108.0 * r2dot + 1266.0 * rdot4) 
+        + u7 * rdot2 * (-246.0 * r2dot2 - 457.0 * r3dot * rdot + 366.0 * r2dot * rdot4) 
+        + u8 * r2dot2 * (18.0 + 105.0 * r2dot * rdot2 + 90.0 * rdot6)) 
+        + invOmg9 * (804.0 * u8 * Omgdot * rdot5 + u * Omgdot * (85.0 * Omg2dot * Omgdot * r2dot - 85.0 * Omgdot2 * r3dot + 119.0 * Omg2dot2 * rdot) 
+        + u2 * Omgdot2 * rdot * (255.0 * Omgdot * r2dot + 1135.0 * Omg2dot * rdot) 
+        + u3 * (76.5 * Omg2dot * r2dot3 - 73.5 * Omgdot * r2dot2 * r3dot + (-3.0 * Omg2dot * r2dot + 102.0 * Omgdot * r3dot) * r3dot * rdot + 3126.0 * Omgdot3 * rdot3) 
+        + u4 * (238.5 * Omgdot * r2dot3 * rdot + (193.5 * Omg2dot * r2dot + 354.0 * Omgdot * r3dot) * r2dot * rdot2 + 60.0 * Omg2dot * r3dot * rdot3) 
+        + u5 * (17.0 * Omg2dot * r2dot2 + 7.0 * Omgdot * r2dot * r3dot - 7.0 * Omg2dot * r3dot * rdot + 1419.0 * Omgdot * r2dot2 * rdot3 + (651.0 * Omg2dot * r2dot - 189.0 * Omgdot * r3dot) * rdot4) 
+        + u6 * (93.0 * Omgdot * r2dot2 * rdot + (-48.0 * Omg2dot * r2dot - 89.0 * Omgdot * r3dot) * rdot2 + 2019.0 * Omgdot * r2dot * rdot5 + 135.0 * Omg2dot * rdot6) 
+        + u7 * rdot3 * (-207.0 * Omgdot * r2dot + 96.0 * Omg2dot * rdot + 450.0 * Omgdot * rdot4)));
+
+    return FphiNewtNC;
+}
+
+/*========================================================================== */
+/*(4,2) Mode                                                                 */
+/*========================================================================== */
+double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot)
+{
+    const double invOmg  = 1.0 / Omg;
+    const double invOmg2 = invOmg  * invOmg;
+    const double invOmg3 = invOmg2 * invOmg;
+    const double invOmg4 = invOmg3 * invOmg;
+    const double invOmg5 = invOmg4 * invOmg;
+    const double invOmg6 = invOmg5 * invOmg;
+    const double invOmg7 = invOmg6 * invOmg;
+    const double invOmg8 = invOmg7 * invOmg;
+    const double invOmg9 = invOmg8 * invOmg;
+
+    const double u   = 1.0 / r;
+    const double u2  = u   * u;
+    const double u3  = u2  * u;
+    const double u4  = u3  * u;
+    const double u5  = u4  * u;
+    const double u6  = u5  * u;
+    const double u7  = u6  * u;
+    const double u8  = u7  * u;
+    const double u9  = u8  * u;
+    const double u10 = u5  * u5;
+
+    const double rdot2 = rdot  * rdot;
+    const double rdot3 = rdot2 * rdot;
+    const double rdot4 = rdot3 * rdot;
+    const double rdot5 = rdot4 * rdot;
+    const double rdot6 = rdot3 * rdot3;
+    const double rdot8 = rdot4 * rdot4;
+
+    const double r2dot2 = r2dot  * r2dot;
+    const double r2dot3 = r2dot2 * r2dot;
+    const double r2dot4 = r2dot3 * r2dot;
+    const double r3dot2 = r3dot  * r3dot;
+
+    const double Omgdot2 = Omgdot  * Omgdot;
+    const double Omgdot3 = Omgdot2 * Omgdot;
+    const double Omgdot4 = Omgdot2 * Omgdot2;
+    const double Omg2dot2 = Omg2dot * Omg2dot;
+
+    double FphiNewtNC = 1.0 + 0.0625 * (
+        invOmg2 * u * (-234.0 * r2dot + 512.0 * u * rdot2) 
+        + invOmg3 * (-12.0 * Omg2dot + 536.0 * u * Omgdot * rdot) 
+        + invOmg4 * (212.0 * Omgdot2 - 132.0 * u5 * rdot2 - 2544.0 * u3 * r2dot * rdot2 
+        + u2 * (1038.5 * r2dot2 - 548.0 * r3dot * rdot) + u4 * (44.0 * r2dot + 3236.0 * rdot4)) 
+        + invOmg5 * (u * (128.0 * Omg2dot * r2dot - 304.0 * Omgdot * r3dot) + 4124.0 * u3 * Omgdot * rdot3 
+        + u2 * rdot * (-1496.0 * Omgdot * r2dot - 486.0 * Omg2dot * rdot)) 
+        + invOmg6 * (2.0 * Omg2dot2 + 1608.0 * u7 * rdot4 
+        + u * Omgdot * (-638.5 * Omgdot * r2dot - 184.0 * Omg2dot * rdot) 
+        + u3 * r2dot * (-1389.0 * r2dot2 + 1343.0 * r3dot * rdot) 
+        + u2 * (115.5 * r3dot2 + 2024.0 * Omgdot2 * rdot2) 
+        + u4 * rdot2 * (4723.5 * r2dot2 - 2739.0 * r3dot * rdot) 
+        + u5 * (-278.0 * r2dot2 + 32.0 * r3dot * rdot - 1491.0 * r2dot * rdot4) 
+        + u6 * rdot2 * (138.0 * r2dot + 3444.0 * rdot4)) 
+        + invOmg7 * (-11.0 * Omg2dot * Omgdot2 + 222.0 * u * Omgdot3 * rdot + 1404.0 * u6 * Omgdot * rdot3 
+        + u2 * (-297.5 * Omg2dot * r2dot2 + 506.5 * Omgdot * r2dot * r3dot + 130.5 * Omg2dot * r3dot * rdot) 
+        + u3 * (1456.5 * Omgdot * r2dot2 * rdot + (1128.0 * Omg2dot * r2dot - 2089.0 * Omgdot * r3dot) * rdot2) 
+        + u4 * (-20.0 * Omg2dot * r2dot + 12.0 * Omgdot * r3dot + 2694.0 * Omgdot * r2dot * rdot3 + 16.0 * Omg2dot * rdot4) 
+        + u5 * rdot * (-528.0 * Omgdot * r2dot + 60.0 * Omg2dot * rdot + 4836.0 * Omgdot * rdot4)) 
+        + invOmg8 * (6.0 * Omgdot4 + u * Omg2dot * (-17.0 * Omg2dot * r2dot - 3.0 * Omgdot * r3dot) 
+        + 162.0 * u10 * rdot4 
+        + u2 * (409.5 * Omgdot2 * r2dot2 + (170.0 * Omg2dot * r2dot - 415.0 * Omgdot * r3dot) * Omgdot * rdot + 88.0 * Omg2dot2 * rdot2) 
+        + u3 * (-105.0 * r2dot * r3dot2 + 615.0 * Omgdot2 * r2dot * rdot2 + 766.0 * Omg2dot * Omgdot * rdot3) 
+        + u5 * (-7.0 * r3dot2 + (63.0 * Omgdot2 + 108.0 * r2dot3) * rdot2 + 1170.0 * r2dot * r3dot * rdot3) 
+        + u4 * (-21.0 * Omgdot2 * r2dot + 418.5 * r2dot4 - 405.0 * r2dot2 * r3dot * rdot + 426.0 * r3dot2 * rdot2 + 3129.0 * Omgdot2 * rdot4) 
+        + u6 * (174.0 * r2dot3 + 97.0 * r2dot * r3dot * rdot + 3330.0 * r2dot2 * rdot4 - 882.0 * r3dot * rdot5) 
+        + u9 * rdot2 * (-108.0 * r2dot + 1266.0 * rdot4) 
+        + u7 * rdot2 * (-246.0 * r2dot2 - 457.0 * r3dot * rdot + 366.0 * r2dot * rdot4) 
+        + u8 * (18.0 * r2dot2 + 105.0 * r2dot * rdot4 + 90.0 * rdot8)) 
+        + invOmg9 * (804.0 * u8 * Omgdot * rdot5 
+        + u * Omgdot * (11.5 * Omg2dot * Omgdot * r2dot - 8.5 * Omgdot2 * r3dot + 14.0 * Omg2dot2 * rdot) 
+        + u2 * Omgdot2 * rdot * (43.5 * Omgdot * r2dot + 137.5 * Omg2dot * rdot) 
+        + u3 * (76.5 * Omg2dot * r2dot3 - 73.5 * Omgdot * r2dot2 * r3dot + (-3.0 * Omg2dot * r2dot + 102.0 * Omgdot * r3dot) * r3dot * rdot + 381.0 * Omgdot3 * rdot3) 
+        + u4 * (238.5 * Omgdot * r2dot3 * rdot + (193.5 * Omg2dot * r2dot + 354.0 * Omgdot * r3dot) * r2dot * rdot2 + 60.0 * Omg2dot * r3dot * rdot3) 
+        + u5 * (17.0 * Omg2dot * r2dot2 + 7.0 * Omgdot * r2dot * r3dot - 7.0 * Omg2dot * r3dot * rdot + 1419.0 * Omgdot * r2dot2 * rdot3 + (651.0 * Omg2dot * r2dot - 189.0 * Omgdot * r3dot) * rdot4) 
+        + u6 * (93.0 * Omgdot * r2dot2 * rdot + (-48.0 * Omg2dot * r2dot - 89.0 * Omgdot * r3dot) * rdot2 + 2019.0 * Omgdot * r2dot * rdot5 + 135.0 * Omg2dot * rdot6) 
+        + u7 * rdot3 * (-207.0 * Omgdot * r2dot + 96.0 * Omg2dot * rdot + 450.0 * Omgdot * rdot4)) 
+    );
+
+    return FphiNewtNC;
+}
+
+
+/*==================================================================== */
+/*(2,2) MODE PN corrections                                                    */
+/*==================================================================== */
+double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
+
+    const double nu = EOBPars -> nu;
+    const double nu2 = nu * nu;
+    const double r2  = r * r;
+    const double r3  = r2 * r;
+    const double r4  = r3 * r;
+    const double r5  = r4 * r;
+    const double r6  = r5 * r;
+    const double r7  = r6 * r;
+    const double r8  = r7 * r;
+    const double r9  = r8 * r;
+    const double r10 = r9 * r;
+    const double r11 = r10 * r;
+
+    const double prstar2 = prstar  * prstar;
+    const double prstar3 = prstar2 * prstar;
+    const double prstar4 = prstar3 * prstar;
+    const double prstar6 = prstar4 * prstar2;
+
+    const double prsdot2 = prsdot  * prsdot;
+    const double prsdot3 = prsdot2 * prsdot;
+    const double prsdot4 = prsdot3 * prsdot;
+    const double prsdot5 = prsdot4 * prsdot;
+    const double prsdot6 = prsdot5 * prsdot;
+
+    const double f22_1PN = (2.6964285714285716 - 0.4642857142857143 * nu) * prstar2 
+        + (0.6622023809523809 - 0.5803571428571429 * nu) * prstar4 * r 
+        + (0.16555059523809523 - 0.14508928571428573 * nu) * prstar6 * r2 
+        + prsdot * r * (2.2976190476190474 - 0.30952380952380953 * nu 
+        + (1.1607142857142858 - 0.8571428571428571 * nu) * prstar2 * r 
+        + (-0.04092261904761905 + 0.07589285714285714 * nu) * prstar4 * r2) 
+        + prsdot2 * r3 * (0.2976190476190476 - 0.14285714285714285 * nu 
+        + (-0.5059523809523809 + 0.39285714285714285 * nu) * prstar2 * r 
+        + (-0.10602678571428571 + 0.060267857142857144 * nu) * prstar4 * r2) 
+        + prsdot3 * r5 * (-0.1488095238095238 + 0.07142857142857142 * nu 
+        + (0.21577380952380953 - 0.17857142857142858 * nu) * prstar2 * r) 
+        + prsdot4 * r7 * (0.0744047619047619 - 0.03571428571428571 * nu 
+        + (-0.08928571428571429 + 0.08035714285714286 * nu) * prstar2 * r) 
+        + prsdot5 * r9 * (-0.03720238095238095 + 0.017857142857142856 * nu) 
+        + prsdot6 * r11 * (0.018601190476190476 - 0.008928571428571428 * nu);
+
+    const double f22_2PN = (0.6313303099017384 - 5.15239984882842 * nu + 1.028533635676493 * nu2) * prstar2 / r 
+        + (5.323932350718065 + 0.8621267951625095 * nu + 0.31949168556311414 * nu2) * prstar4 
+        + (0.34901738473167043 + 1.2075243291761149 * nu - 0.08792753212396069 * nu2) * prstar6 * r 
+        + prsdot * (19.462915721844293 + 6.640495086923658 * nu - 2.512660619803477 * nu2 
+        + (-1.7667824074074074 - 0.25462962962962965 * nu + 1.460978835978836 * nu2) * prstar2 * r 
+        + (2.817982922335601 - 0.3347328514739229 * nu + 0.061685090702947844 * nu2) * prstar4 * r2) 
+        + prsdot2 * r2 * (14.228670634920634 + 0.8015873015873016 * nu - 2.3333333333333333 * nu2 
+        + (-1.3015518707482994 + 2.5677437641723357 * nu + 0.2128684807256236 * nu2) * prstar2 * r 
+        + (-0.9038362740929705 - 0.37875566893424034 * nu + 0.40072278911564624 * nu2) * prstar4 * r2) 
+        + prsdot3 * r4 * (-0.5165934429327287 + 0.7197656840513983 * nu - 0.002928949357520786 * nu2 
+        + (1.6302585270219199 - 2.389644746787604 * nu + 0.24104780801209372 * nu2) * prstar2 * r) 
+        + prsdot4 * r6 * (0.518713388133031 - 0.596489984882842 * nu + 0.055035903250188964 * nu2 
+        + (-1.1746622260015118 + 1.6294052343159486 * nu - 0.26747921390778534 * nu2) * prstar2 * r) 
+        + prsdot5 * r8 * (-0.38956502739984883 + 0.41654856386999245 * nu - 0.05430366591080877 * nu2) 
+        + prsdot6 * r10 * (0.25988668036659107 - 0.26742606764928195 * nu + 0.040544690098261525 * nu2);
+
+    const double f22_15PN = (-1.875 * prstar2 - 0.609375 * prstar4 * r - 0.24231770833333333 * prstar6 * r2 
+        + prsdot * r * (-1.25 - 0.34375 * prstar2 * r + 0.04296875 * prstar4 * r2) 
+        + prsdot2 * r3 * (0.125 + 0.234375 * prstar2 * r + 0.37890625 * prstar4 * r2) 
+        + prsdot3 * r5 * (-0.041666666666666667 + 0.13671875 * prstar2 * r) 
+        + prsdot4 * r7 * (0.0625 - 0.3323567708333333 * prstar2 * r) 
+        - 0.074609375 * prsdot5 * r9 + 0.07254774305555555 * prsdot6 * r11) / sqrt(r) * M_PI;
+
+    return 1.0 + f22_1PN + f22_15PN + f22_2PN;
+}
+
+/*==================================================================== */
+/*(2,1) MODE                                                           */
+/*==================================================================== */
+double eob_flx_flm_nc_21(double r, double prstar, double prsdot) {
+    const double nu = EOBPars -> nu;
+    const double prstar2 = prstar * prstar;
+
+    const double f21_1PN = (0.21428571428571427 - 0.42857142857142855 * nu) * prstar2 
+        + prsdot * r * (4.642857142857143 + 0.38095238095238093 * nu);
+
+    return 1.0 + f21_1PN;
+}
+
+/*==================================================================== */
+/*(3,3) MODE                                                           */
+/*==================================================================== */
+double eob_flx_flm_nc_33(double r, double prstar, double prsdot) {
+    const double nu = EOBPars -> nu;
+    const double r2 = r * r;
+    const double r3 = r2 * r;
+    const double r5 = r3 * r2;
+    const double r7 = r5 * r2;
+    const double r9 = r7 * r2;
+    const double r11 = r9 * r2;
+
+    const double prstar2 = prstar  * prstar;
+    const double prstar4 = prstar2 * prstar2;
+    const double prstar6 = prstar4 * prstar2;
+
+    const double prsdot2 = prsdot  * prsdot;
+    const double prsdot3 = prsdot2 * prsdot;
+    const double prsdot4 = prsdot3 * prsdot;
+    const double prsdot5 = prsdot4 * prsdot;
+    const double prsdot6 = prsdot5 * prsdot;
+
+    const double f33_1PN = (4.091449474165524 - 0.7288523090992227 * nu) * prstar2 
+        + (0.38950325624105026 - 0.3167689357802654 * nu) * prstar4 * r 
+        + (0.25195551286395695 - 0.2050987654398423 * nu) * prstar6 * r2 
+        + prsdot * r * (3.9670781893004117 - 1.4650205761316872 * nu 
+        + (0.9247743399549526 - 0.584700841673864 * nu) * prstar2 * r 
+        + (0.5468741277645747 - 0.4043296120045938 * nu) * prstar4 * r2) 
+        + prsdot2 * r3 * (0.3682365493065082 - 0.16491388507849414 * nu 
+        + (0.0666113453798258 - 0.07074350680508279 * nu) * prstar2 * r 
+        + (-0.3150000050720085 + 0.26821867957530765 * nu) * prstar4 * r2) 
+        + prsdot3 * r5 * (-0.12453499071392685 + 0.07311441909826302 * nu 
+        + (-0.16334396294667833 + 0.155088514175098253 * nu) * prstar2 * r) 
+        + prsdot4 * r7 * (0.06405247451948778 - 0.04731203568327539 * nu 
+        + (0.1418970418297452 - 0.14408840072128107 * nu) * prstar2 * r) 
+        + prsdot5 * r9 * (-0.045222577270558346 + 0.036976041295534064 * nu) 
+        + prsdot6 * r11 * (0.03644723802353617 - 0.030758819492607913 * nu);
+
+    return 1.0 + f33_1PN;
+}
+
+/*==================================================================== */
+/*(3,1) MODE                                                           */
+/*==================================================================== */
+double eob_flx_flm_nc_31(double r, double prstar, double prsdot) {
+    const double nu = EOBPars -> nu;
+    const double r2 = r * r;
+    const double r3 = r2 * r;
+    const double r5 = r3 * r2;
+    const double r7 = r5 * r2;
+    const double r9 = r7 * r2;
+    const double r11 = r9 * r2;
+
+    const double prstar2 = prstar  * prstar;
+    const double prstar4 = prstar2 * prstar2;
+    const double prstar6 = prstar4 * prstar2;
+
+    const double prsdot2 = prsdot  * prsdot;
+    const double prsdot3 = prsdot2 * prsdot;
+    const double prsdot4 = prsdot3 * prsdot;
+    const double prsdot5 = prsdot4 * prsdot;
+    const double prsdot6 = prsdot5 * prsdot;
+
+    const double f31_1PN = (68.0 + 354.0 * nu) * prstar2 
+        + (-3194.0 - 17240.0 * nu) * prstar4 * r 
+        + (154936.0 + 835960.0 * nu) * prstar6 * r2 
+        + prsdot * r * (-5.333333333333333 - 41.333333333333333 * nu 
+        + (1575.0 + 8370.0 * nu) * prstar2 * r + (-132734.0 - 711080.0 * nu) * prstar4 * r2) 
+        + prsdot2 * r3 * (-89.33333333333333 - 423.3333333333333 * nu 
+        + (27224.0 + 140900.0 * nu) * prstar2 * r + (-3420720.0 - 18075420.0 * nu) * prstar4 * r2) 
+        + prsdot3 * r5 * (-897.6666666666666 - 4226.666666666667 * nu 
+        + (405698.0 + 2063540.0 * nu) * prstar2 * r) 
+        + prsdot4 * r7 * (-9364.333333333334 - 43913.333333333333 * nu 
+        + (5587272.0 + 28066140.0 * nu) * prstar2 * r) 
+        + prsdot5 * r9 * (-99947.66666666667 - 467566.6666666667 * nu) 
+        + prsdot6 * r11 * (-1081064.3333333333 - 5050353.333333333 * nu);
+
+    return 1.0 + f31_1PN;
 }

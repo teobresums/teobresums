@@ -59,6 +59,8 @@ void (*eob_metric_Apotential)();
 void (*eob_metric_Dpotential)();
 void (*eob_metric_Qpotential)();
 double (*eob_flx_Fr)();
+double (*eob_flx_hatflm_nc[KMAX])();
+double (*eob_flx_FlmNewt_nc[KMAX])();
 
 /**
  * Function: EOBParameters_alloc
@@ -296,7 +298,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
   eobp->spin_ode_abstol=1e-11; // Spin dynamics ODE solver absolute accuracy
   eobp->spin_ode_reltol=1e-9;  // Spin dynamics ODE solver relative accuracy
-  eobp->ode_stop_radius=1.5; // stop ODE integration at this radius (if > 0)
+  eobp->ode_stop_radius=1.7; // stop ODE integration at this radius (if > 0)
   eobp->ode_tmax=1e12; // max integration time
   eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
   eobp->ode_stop_after_peak=0;
@@ -434,6 +436,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->A_pot          = A_5PNlogP33; 
       eobp->D_pot          = D_5PNP32_newlogs;
       eobp->Q_pot          = Q_5PNloc; 
+      eobp->use_flm_nc     = USEFLM_NC_IMPQC;
     } else {
       errorexit("Unknown BBH model specified.");
     }
@@ -800,45 +803,45 @@ int eob_set_params(int default_choice, int firstcall)
   switch(EOBPars->use_a6c_fits)
   {
     case(a6c_fits_P33_impqc):
-      if(EOBPars->A_pot != A_5PNlogP33){
-        if (DEBUG) printf("a6c_fits_P33_impqc should be used with A_5PNlogP33\n");
-        return 1;
-      }
+      // if(EOBPars->A_pot != A_5PNlogP33){
+      //   if (DEBUG) printf("a6c_fits_P33_impqc should be used with A_5PNlogP33\n");
+      //   return 1;
+      // }
       EOBPars->a6c = eob_a6c_fit_ecc_P33_impqc(EOBPars->nu);
       break;
     case(a6c_fits_P33_newlogs):
-      if(EOBPars->A_pot != A_5PNlogP33_newlogs){
-        if (DEBUG) printf("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
-        return 1;
-      }
+      // if(EOBPars->A_pot != A_5PNlogP33_newlogs){
+      //   if (DEBUG) printf("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
+      //   return 1;
+      // }
       EOBPars->a6c = eob_a6c_fit_ecc_P33_newlogs(EOBPars->nu);
       break;
     case(a6c_fits_P33_HM4PN22):
-      if(EOBPars->use_flm != USEFLM_HM_4PN22){
-        if (DEBUG) printf("a6c_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
-        return 1;
-      }
+      // if(EOBPars->use_flm != USEFLM_HM_4PN22){
+      //   if (DEBUG) printf("a6c_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
+      //   return 1;
+      // }
       EOBPars->a6c = eob_a6c_fit_ecc_P33_4PNh22(EOBPars->nu);
       break;
     case(a6c_fits_ecc):
-      if (EOBPars->model == MODEL_DALI){
-        if (DEBUG) printf("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
-        return 1;
-      }
+      //if (EOBPars->model == MODEL_DALI){
+      //  if (DEBUG) printf("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
+      //  return 1;
+      //}
       EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
       break;
     case(a6c_fits_HM_2023):
-      if (EOBPars->use_flm != USEFLM_HM){
-        if (DEBUG) printf("a6c_fits_HM_2023 should be used with USEFLM_HM\n");
-        return 1;
-      }
+      //if (EOBPars->use_flm != USEFLM_HM){
+      //  if (DEBUG) printf("a6c_fits_HM_2023 should be used with USEFLM_HM\n");
+      //  return 1;
+      //}
       EOBPars->a6c = eob_a6c_fit_HM_2023(EOBPars->nu);
       break;
     case(a6c_fits_HM):
-      if (EOBPars->use_flm != USEFLM_HM){
-        if (DEBUG) printf("a6c_fits_HM should be used with USEFLM_HM\n");
-        return 1;
-      }     
+      //if (EOBPars->use_flm != USEFLM_HM){
+      //  if (DEBUG) printf("a6c_fits_HM should be used with USEFLM_HM\n");
+      //  return 1;
+      //}     
       EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
       break;
     case(a6c_fits_V0):
@@ -857,31 +860,31 @@ int eob_set_params(int default_choice, int firstcall)
   switch(EOBPars->use_cN3LO_fits)
   {
     case(cN3LO_fits_P33_impqc):
-      if(EOBPars->A_pot != A_5PNlogP33){
-        if (DEBUG) printf("cN3LO_fits_P33_impqc should be used with A_5PNlogP33\n");
-        return 1;
-      }
+      //if(EOBPars->A_pot != A_5PNlogP33){
+      //  if (DEBUG) printf("cN3LO_fits_P33_impqc should be used with A_5PNlogP33\n");
+      //  return 1;
+      //}
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_impqc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_P33_newlogs):
-      if(EOBPars->A_pot != A_5PNlogP33_newlogs){
-        if (DEBUG) printf("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
-        return 1;
-      }
+      //if(EOBPars->A_pot != A_5PNlogP33_newlogs){
+      //  if (DEBUG) printf("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
+      //  return 1;
+      //}
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_newlogs(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_P33_HM4PN22):
-      if(EOBPars->use_flm != USEFLM_HM_4PN22){
-        if (DEBUG) printf("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
-        return 1;
-      }
+      //if(EOBPars->use_flm != USEFLM_HM_4PN22){
+      //  if (DEBUG) printf("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
+      //  return 1;
+      //}
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_4PNh22(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_ecc):
-      if(EOBPars->model == MODEL_DALI){
-        if (DEBUG) printf("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
-        return 1;
-      }
+      //if(EOBPars->model == MODEL_DALI){
+      //  if (DEBUG) printf("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
+      //  return 1;
+      //}
       EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_HM_2023_432):
@@ -895,10 +898,10 @@ int eob_set_params(int default_choice, int firstcall)
       EOBPars->cN3LO = eob_c3_fit_HM_2023(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_HM):
-      if (EOBPars->use_flm != USEFLM_HM){
-        if (DEBUG) printf("cN3LO_fits_HM should be used with USEFLM_HM\n");
-        return 1;
-      }
+      //if (EOBPars->use_flm != USEFLM_HM){
+      //  if (DEBUG) printf("cN3LO_fits_HM should be used with USEFLM_HM\n");
+      //  return 1;
+      //}
       EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_V0):
@@ -1190,6 +1193,38 @@ int eob_set_params(int default_choice, int firstcall)
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_flm\n");
     return 1;
+  }
+
+  // NC corrections to fluxes (newt and flms)
+  for (int k = 0; k < KMAX; k++) {
+    eob_flx_hatflm_nc[k] = &return_one;
+    eob_flx_FlmNewt_nc[k] = &return_one;
+  }
+  switch (EOBPars->use_flm_nc) {
+    case USEFLM_NC_NO:
+      break;
+    case USEFLM_NC_22:
+      eob_flx_FlmNewt_nc[1] = &eob_flx_FlmNewt_nc_22;
+      break;
+    case USEFLM_NC_IMPQC:
+      // Corrections
+      eob_flx_hatflm_nc[0] = &eob_flx_flm_nc_21;
+      eob_flx_hatflm_nc[1] = &eob_flx_flm_nc_22;
+      eob_flx_hatflm_nc[2] = &eob_flx_flm_nc_31;
+      eob_flx_hatflm_nc[4] = &eob_flx_flm_nc_33;
+
+      // Newtonian piece
+      eob_flx_FlmNewt_nc[0] = &eob_flx_FlmNewt_nc_21;
+      eob_flx_FlmNewt_nc[1] = &eob_flx_FlmNewt_nc_22;
+      eob_flx_FlmNewt_nc[2] = &eob_flx_FlmNewt_nc_31;
+      eob_flx_FlmNewt_nc[3] = &eob_flx_FlmNewt_nc_32;
+      eob_flx_FlmNewt_nc[4] = &eob_flx_FlmNewt_nc_33;
+      eob_flx_FlmNewt_nc[6] = &eob_flx_FlmNewt_nc_42;
+      eob_flx_FlmNewt_nc[8] = &eob_flx_FlmNewt_nc_44;
+      break;
+    default:
+      if (DEBUG) printf("ERROR: Unknown option for use_flm_nc\n");
+      return 1;
   }
 
   /* Set hlm and NQC fun pointers */

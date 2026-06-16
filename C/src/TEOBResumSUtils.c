@@ -3951,6 +3951,17 @@ void print_date_time()
   printf("%s", asctime(timeinfo));
 }
 
+/** 
+  * Function: return_one 
+  * --------------------
+  *  Return 1
+  */
+double return_one()
+{
+  return 1.0;
+}
+
+
 /** Errorexit routines */
 #undef errorexit
 #undef errorexits
