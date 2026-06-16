@@ -415,7 +415,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
  *   @param[in] dyn      :  dynamics structure
  * 
 */
-void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double *Fphi, double *Fr, Dynamics *dyn)
+void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn)
 {
   const double nu = EOBPars -> nu;
   const double chi1 = EOBPars -> chi1;
@@ -554,7 +554,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   *Fphi           = Fphi_inf + Fphi_H;
 
   /* Compute Fr using the infinity Fphi */
-  *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, Fphi_inf);
+  *Fr = eob_flx_Fr(r, pr_star, pphi, prsdot, dyn, Fphi_inf);
   
   /* Compute non-circular Fphi */
   double Fphi_NC[KMAX];
@@ -572,7 +572,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   *Fphi = Fphi_lo * hatf;
   
   /* Re-compute Fr using the generic Fphi */
-  *Fr = eob_flx_Fr(r, pr_star, pphi, dyn, *Fphi);
+  *Fr = eob_flx_Fr(r, pr_star, pphi, prsdot, dyn, *Fphi);
 
   /* Add horizon Fphi */
   *Fphi += Fphi_H;
@@ -593,7 +593,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   * 
   *   @return[out] Fr     :  radial flux
   */
-double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
+double eob_flx_Fr_ecc(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
 {
   const double nu = EOBPars->nu;
   double nu2 = nu*nu;
@@ -662,7 +662,7 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, Dynamics *dyn, doubl
   * 
   *   @return[out] Fr     :  radial flux
 */
-double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
+double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
 {
   const double nu = EOBPars->nu;
   double nu2 = nu*nu;
@@ -699,7 +699,7 @@ double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, Dynamics *dyn, do
   * 
   *   @return[out] Fr     :  radial flux
 */
-double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, double Fphi)
+double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
 {
   const double nu = EOBPars->nu;
   const double nu2 = nu*nu;
@@ -742,7 +742,7 @@ double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, Dynamics *dyn, 
   * 
   *   @return[out] Fr     :  radial flux
 */
-double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, Dynamics *dyn, double Fphi, double prsdot)
+double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
 {
   double nu = EOBPars->nu;
   double nu2 = nu*nu;
@@ -1050,7 +1050,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
     sum_k = sum_k/FlmNewt[1];
 
     Fphi  = Fphi_lo * sum_k;
-    Fr    = eob_flx_Fr(r, prstar, pphi, dyn, Fphi);
+    Fr    = eob_flx_Fr(r, prstar, pphi, prstardot, dyn, Fphi);
     Fphi  = Fphi + Fphi_H;
   } // end iteration
   

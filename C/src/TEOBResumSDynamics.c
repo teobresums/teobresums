@@ -461,14 +461,16 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   /* Compute fluxes and dp_{\phi}/dt */
   double Fphi = 0.;
   double Fr   = 0.;
-  eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, &Fphi, &Fr, dyn);
+
+  double prsdot = -sqrtAbyB*dHeff_dr*ooH; 
+  eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, prsdot, &Fphi, &Fr, dyn);
   
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = Fphi;
   
   /* dp_{r*}/dt */
   double Frstar = sqrtAbyB*Fr;
-  dy[EOB_EVOLVE_PRSTAR] = -sqrtAbyB*dHeff_dr*ooH + Frstar;
+  dy[EOB_EVOLVE_PRSTAR] = prsdot + Frstar;
   
    if (backwards) {
     /* Backward evolution */
