@@ -299,6 +299,15 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_flm_nc") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_nc"));
+    for(EOBPars->use_flm_nc=0; EOBPars->use_flm_nc<=USEFLM_NC_NOPT; EOBPars->use_flm_nc++){
+      if (EOBPars->use_flm_nc == USEFLM_NC_NOPT) EOBPars->use_flm_nc = USEFLM_NC_22;
+      if (STREQUAL(val,use_flm_nc_opt[EOBPars->use_flm_nc])) break;
+    }
+  }
+
   /* Metric potentials */
   if ( PyDict_GetItemString(dict, "A_pot") != NULL ) { 
     char* val;
