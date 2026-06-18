@@ -308,6 +308,15 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_Fr") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_Fr"));
+    for(EOBPars->use_Fr=0; EOBPars->use_Fr<=USE_FR_NOPT; EOBPars->use_Fr++){
+      if (EOBPars->use_Fr == USE_FR_NOPT) EOBPars->use_Fr = USE_FR_FULL;
+      if (STREQUAL(val,use_Fr_opt[EOBPars->use_Fr])) break;
+    }
+  }
+
   /* Metric potentials */
   if ( PyDict_GetItemString(dict, "A_pot") != NULL ) { 
     char* val;

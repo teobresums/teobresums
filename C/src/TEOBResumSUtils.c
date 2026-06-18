@@ -3961,6 +3961,16 @@ double return_one()
   return 1.0;
 }
 
+/** 
+  * Function: return_zero 
+  * --------------------
+  *  Return 0
+  */
+double return_zero()
+{
+  return 0.0;
+}
+
 
 /** Errorexit routines */
 #undef errorexit

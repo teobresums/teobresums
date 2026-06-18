@@ -437,6 +437,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->D_pot          = D_5PNP32_newlogs;
       eobp->Q_pot          = Q_5PNloc; 
       eobp->use_flm_nc     = USEFLM_NC_IMPQC;
+      eobp->use_Fr         = USE_FR_NEXT;
     } else {
       errorexit("Unknown BBH model specified.");
     }
@@ -1150,25 +1151,21 @@ int eob_set_params(int default_choice, int firstcall)
     eob_wav_flm      = &eob_wav_flm_HM_6PN3p3;
     eob_wav_flm_s    = &eob_wav_flm_s_HM_6PN3p3;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_HM; 
-    eob_flx_Fr       = &eob_flx_Fr_ecc_next;
+    eob_wav_ringdown = &eob_wav_ringdown_HM;
   }
   else if (EOBPars->use_flm == USEFLM_HM_4PN22) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
     eob_wav_flm      = &eob_wav_flm_HM_4PN22;
     eob_wav_flm_s    = &eob_wav_flm_s_HM_4PN22;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_HM; 
-    eob_flx_Fr       = &eob_flx_Fr_ecc_next;
+    eob_wav_ringdown = &eob_wav_ringdown_HM;
   } 
   else if (EOBPars->use_flm == USEFLM_HM) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
     eob_wav_flm      = &eob_wav_flm_HM;
     eob_wav_flm_s    = &eob_wav_flm_s_HM;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_HM; 
-    eob_flx_Fr       = &eob_flx_Fr_ecc_BD;
-
+    eob_wav_ringdown = &eob_wav_ringdown_HM;
   } else if (EOBPars->use_flm == USEFLM_SSLO) {
     /* eob_wav_flm_s = &eob_wav_flm_s_old; */
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
@@ -1176,14 +1173,12 @@ int eob_set_params(int default_choice, int firstcall)
     eob_wav_flm_s    = &eob_wav_flm_s_SSLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
-    eob_flx_Fr       = &eob_flx_Fr_ecc_BD;
   } else if (EOBPars->use_flm == USEFLM_SSNLO) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
     eob_wav_flm      = &eob_wav_flm_v1;
     eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
-    eob_flx_Fr       = &eob_flx_Fr_ecc_BD;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
@@ -1192,6 +1187,22 @@ int eob_set_params(int default_choice, int firstcall)
     */
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_flm\n");
+    return 1;
+  }
+
+  /** Set Fr fun pointer */
+  if (EOBPars->use_Fr == USE_FR_FULL) {
+    eob_flx_Fr = &eob_flx_Fr_ecc_impqc_full;
+  } else if (EOBPars->use_Fr == USE_FR_NEXT) {
+    eob_flx_Fr = &eob_flx_Fr_ecc_next;
+  } else if (EOBPars->use_Fr == USE_FR_BD) {
+    eob_flx_Fr = &eob_flx_Fr_ecc_BD;
+  } else if (EOBPars->use_Fr == USE_FR_ECC) {
+    eob_flx_Fr = &eob_flx_Fr_ecc;
+  } else if (EOBPars->use_Fr == USE_FR_NO) {
+    eob_flx_Fr = &return_zero;
+  } else {
+    if (DEBUG) printf("ERROR: Unknown option for use_Fr\n");
     return 1;
   }
 

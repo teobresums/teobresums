@@ -361,6 +361,17 @@ enum{
 };
 static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "undefined"};
 
+/** List of options for Fr */
+enum{
+  USE_FR_NO,            /**< No radial flux */
+  USE_FR_ECC,           /**< Resummed, 2PN noncircular Fr */
+  USE_FR_BD,            /**< Resummed, 2PN circular Fr */
+  USE_FR_NEXT,          /**< Resummed, 2PN, Fphi-factorized Fr */
+  USE_FR_FULL,          /**< Resummed, 2PN, Fphi-factorized full noncircular Fr */
+  USE_FR_NOPT           /**< number of Fr options */
+};
+static const char* const use_Fr_opt[] = {"no", "ecc", "BD", "next", "full", "undefined"};
+
 
 /** List of options for ODE timestepping */
 enum{
@@ -703,6 +714,7 @@ typedef struct tagEOBParameters
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
+  int use_Fr;                                           /**< NEW, INDEX FOR  # tbd */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
@@ -957,6 +969,7 @@ int str2iarray(const char *string, int **a);
 int str2darray(const char *string, double **a);
 void print_date_time();
 double return_one();
+double return_zero();
 void errorexit(char *file, int line, const char *s);
 #define errorexit(s) errorexit(__FILE__, __LINE__, (s))
 void errorexits(char *file, int line, const char *s, const char *t);
