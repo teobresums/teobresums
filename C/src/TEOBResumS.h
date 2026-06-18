@@ -714,7 +714,7 @@ typedef struct tagEOBParameters
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
-  int use_Fr;                                           /**< NEW, INDEX FOR  # tbd */
+  int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
