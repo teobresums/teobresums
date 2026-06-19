@@ -1,4 +1,4 @@
-/** \file TEOBResumSMetric.c
+** \file TEOBResumSMetric.c
  *  \brief TEOBResumS metric functions
  * 
  *  This file contains the functions that compute the EOB metric potentials
@@ -1134,6 +1134,112 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
     *d2Q_dprstar2 = 2.*dQ_dprstar2 + 4.*prstar2*d2Q_dprstar22;
 
     *d3Q_dprstar3 = prstar*( 12.*d2Q_dprstar22 + 8.*prstar2*d3Q_dprstar23 );
+
+}
+
+/**
+ *  Function : eob_metric_Q5PN
+ *  --------------------------
+ *    EOB Metric Q function at 5PN, nonlocal part up to e^6
+ *    2108.02043 and refs. therein
+ *    @param[in]  r      : radial separation  
+ *    @param[in]  prstar : radial momentum in tortoise coord. 
+ *    @param[in]  nu     : symmetric mass ratio 
+ *    @param[out] Q      : Q potential  
+ *    @param[out] dQ_du  : dQ/du,   with u=1/r  
+ *    @param[out] dQ_dprstar : dQ/dprstar
+ *    @param[out] d2Q_du2    : d2Q/du2, with u=1/r
+ *    @param[out] ddQ_drdprstar : d2Q/drdprstar
+ *    @param[out] d2Q_dprstar2  : d2Q/dprstar^2
+ *    @param[out] d3Q_dr2dprstar : d3Q/dr^2dprstar
+ *    @param[out] d3Q_drdprstar2 : d3Q/drdprstar^2
+ *    @param[out] d3Q_dprstar3   : d3Q/dprstar^3
+ */
+void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
+			double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
+			double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+
+  /* shortcuts */
+  double pi2     = Pi*Pi;
+  double nu2     = nu*nu;
+  double nu3     = nu2*nu;
+  double nu4     = nu3*nu;
+
+  double prstar2 = prstar*prstar;
+  double prstar3 = prstar2*prstar;
+  double prstar4 = prstar2*prstar2;
+  double prstar6 = prstar4*prstar2;
+  double prstar8 = prstar4*prstar4;
+
+  double u     = 1./r;
+  double u2    = u*u;
+  double u3    = u2*u;
+  double u4    = u3*u;
+  double du_dr = -u2;
+
+  /* 3PN */
+  double z3  = 2.0*nu*(4.0-3.0*nu);
+  double q42 = z3;
+    
+  /* 4PN loc+nonloc */
+  double q62    = -2.783007636952232489*nu - 5.4*nu2 + 6.*nu3;
+  double q43    = 92.711044284955949757*nu - 131.*nu2 + 10.*nu3;
+
+  /* 5PN loc+nonloc */
+  double q82    = 0.8571428571428571*nu + 2.5714285714285716*nu2 + \
+    3.4285714285714285714*nu3 - 6.*nu4;
+  double q63    = -33.97821221707272*nu - 89.529832736260960467*nu2 + 188.*nu3 - 14.*nu4;
+  double q44c   = 602.31854041656388904*nu3 + -1796.1366049802412531*nu2 + \
+    452.54216699669657073*nu;
+  double q44log = 51.695238095238095238*nu - 118.4*nu2;
+  double q44    = q44c + q44log*log(u);
+
+  /* Q potential and all its derivatives */
+  *Q = q42*uc2*prstar4 + q43*uc3*prstar4 + q62*uc2*prstar6 \
+    + q44*uc4*prstar4 + q63*uc3*prstar6 + q82*uc2*prstar8;
+	  
+  *dQ_du = 2.*q42*u*prstar4 + 3.*q43*u2*prstar4 + 2.*q62*u*prstar6 \
+    + 4.*q44*u3*prstar4 + q44log*u3*prstar4 + 3.*q63*u2*prstar6 \
+    + 2.*q82*u*prstar8;
+      
+  double dQ_dprstar2 = 2.*q42*u2*prstar2 + 2.*q43*u3*prstar2 + 3.*q62*u2*prstar4 \
+    + 2.*q44*u4*prstar2 + 3.*q63*u3*prstar4 + 4.*q82*u2*prstar6;
+  
+  double d2Q_dudprstar2 = 4.*q42*u*prstar2 + 6.*q43*u2*prstar2 \
+    + 6.*q62*u*prstar4 + 8.*q44*u3*prstar2 + 9.*q63*u2*prstar4 \
+    + 8.*q82*u*prstar6 + 2.*q44log*u3*prstar2;
+
+  *d2Q_du2 = 2.*q42*prstar4 + 6.*q43*u*prstar4 + 2.*q62*prstar6 \
+    + 12.*q44*u2*prstar4 + 7.*q44log*u2*prstar4 + 6.*q63*u*prstar6 \
+    + 2.*q82*prstar8;
+  
+  double d2Q_dprstar22 = 2.*q42*u2 + 2.*q43*u3 + 6.*q62*u2*prstar2 \
+    + 2.*q44*u4 + 6.*q63*u3*prstar2 + 12.*q82*u2*prstar4;
+    
+  double d3Q_dprstar23 = 6.*q62*u2+ 6.*q63*u3 + 24.*q82*u2*prstar2;
+  
+  double d3Q_du2dprstar2 = 4.*q42*prstar2 + 12.*q43*u*prstar2 \
+    + 6.*q62*prstar4 + 24.*q44*u2*prstar2 + 18.*q63*u*prstar4 \
+    + 8.*q82*prstar6 + 14.*q44log*u2*prstar2;
+
+  double d3Q_dudprstar22 =  4.*q42*u + 6.*q43*u2 + 12.*q62*u*prstar2 \
+    + 8.*q44*u3 + 18.*q63*u2*prstar2 + 24.*q82*u*prstar4 \
+    + 2.*q44log*u3;
+
+  /* We also translate derivatives from prstar2 to prstar
+     and some from u to r as needed for output*/
+  *d2Q_drdprstar   = -2.*prstar*u2*d2Q_dudprstar2;
+
+  *d3Q_dr2dprstar  = prstar*( 4.*u3*d2Q_dudprstar2 + 2.*u4*d3Q_du2dprstar2 );
+
+  *d3Q_drdprstar2  = -2.*u2*d2Q_dudprstar2 - 4.*prstar2*u2*d3Q_dudprstar22;
+
+  *dQ_dprstar   = 2.*prstar*dQ_dprstar2;
+
+  *d2Q_dprstar2 = 2.*dQ_dprstar2 + 4.*prstar2*d2Q_dprstar22;
+
+  *d3Q_dprstar3 = prstar*( 12.*d2Q_dprstar22 + 8.*prstar2*d3Q_dprstar23 );
 
 }
 
