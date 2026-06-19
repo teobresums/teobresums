@@ -1,4 +1,4 @@
-** \file TEOBResumSMetric.c
+/** \file TEOBResumSMetric.c
  *  \brief TEOBResumS metric functions
  * 
  *  This file contains the functions that compute the EOB metric potentials
@@ -1155,9 +1155,9 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
  *    @param[out] d3Q_drdprstar2 : d3Q/drdprstar^2
  *    @param[out] d3Q_dprstar3   : d3Q/dprstar^3
  */
-void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
-			double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
-			double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+void eob_metric_Q5PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, 
+		     double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
+		     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
 
   /* shortcuts */
@@ -1187,24 +1187,26 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
   double q43    = 92.711044284955949757*nu - 131.*nu2 + 10.*nu3;
 
   /* 5PN loc+nonloc */
-  double q82    = 0.8571428571428571*nu + 2.5714285714285716*nu2 + \
-    3.4285714285714285714*nu3 - 6.*nu4;
-  double q63    = -33.97821221707272*nu - 89.529832736260960467*nu2 + 188.*nu3 - 14.*nu4;
-  double q44c   = 602.31854041656388904*nu3 + -1796.1366049802412531*nu2 + \
-    452.54216699669657073*nu;
+  double q82    = 0.8571428571428571*nu + 2.5714285714285716*nu2 \
+    + 3.4285714285714285714*nu3 - 6.*nu4;
+  double q63    = -33.97821221707272*nu - 89.529832736260960467*nu2 \
+    + 188.*nu3 - 14.*nu4;
+  double q44c   = 602.31854041656388904*nu3 + -1796.1366049802412531*nu2 \
+    + 452.54216699669657073*nu;
   double q44log = 51.695238095238095238*nu - 118.4*nu2;
   double q44    = q44c + q44log*log(u);
 
   /* Q potential and all its derivatives */
-  *Q = q42*uc2*prstar4 + q43*uc3*prstar4 + q62*uc2*prstar6 \
-    + q44*uc4*prstar4 + q63*uc3*prstar6 + q82*uc2*prstar8;
+  *Q = q42*u2*prstar4 + q43*u3*prstar4 + q62*u2*prstar6 + q44*u4*prstar4 \
+    + q63*u3*prstar6 + q82*u2*prstar8;
 	  
   *dQ_du = 2.*q42*u*prstar4 + 3.*q43*u2*prstar4 + 2.*q62*u*prstar6 \
     + 4.*q44*u3*prstar4 + q44log*u3*prstar4 + 3.*q63*u2*prstar6 \
     + 2.*q82*u*prstar8;
       
-  double dQ_dprstar2 = 2.*q42*u2*prstar2 + 2.*q43*u3*prstar2 + 3.*q62*u2*prstar4 \
-    + 2.*q44*u4*prstar2 + 3.*q63*u3*prstar4 + 4.*q82*u2*prstar6;
+  double dQ_dprstar2 = 2.*q42*u2*prstar2 + 2.*q43*u3*prstar2 \
+    + 3.*q62*u2*prstar4 + 2.*q44*u4*prstar2 + 3.*q63*u3*prstar4 \
+    + 4.*q82*u2*prstar6;
   
   double d2Q_dudprstar2 = 4.*q42*u*prstar2 + 6.*q43*u2*prstar2 \
     + 6.*q62*u*prstar4 + 8.*q44*u3*prstar2 + 9.*q63*u2*prstar4 \
@@ -1224,11 +1226,10 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
     + 8.*q82*prstar6 + 14.*q44log*u2*prstar2;
 
   double d3Q_dudprstar22 =  4.*q42*u + 6.*q43*u2 + 12.*q62*u*prstar2 \
-    + 8.*q44*u3 + 18.*q63*u2*prstar2 + 24.*q82*u*prstar4 \
-    + 2.*q44log*u3;
+    + 8.*q44*u3 + 18.*q63*u2*prstar2 + 24.*q82*u*prstar4 + 2.*q44log*u3;
 
   /* We also translate derivatives from prstar2 to prstar
-     and some from u to r as needed for output*/
+     and some from u to r as needed for output */
   *d2Q_drdprstar   = -2.*prstar*u2*d2Q_dudprstar2;
 
   *d3Q_dr2dprstar  = prstar*( 4.*u3*d2Q_dudprstar2 + 2.*u4*d3Q_du2dprstar2 );
