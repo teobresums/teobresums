@@ -1438,6 +1438,10 @@ double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid)
     test += gsl_vector_get(c, j)*gsl_pow_int(xmax, j);
   
   gsl_multifit_linear_free(work);
+  gsl_matrix_free(X);
+  gsl_vector_free(c);
+  gsl_vector_free(Y);
+  gsl_matrix_free(cov);
   free(cv);
   return xmax;
 }
