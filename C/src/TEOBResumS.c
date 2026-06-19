@@ -1101,7 +1101,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
       }
       double tstart_mrg = dyn->tOmg_pk - 8.;
-      while (tstart_mrg < hlm_mrg->time[0]) /** Make sure it does not extrapolate */
+      while (tstart_mrg < hlm_mrg->time[0]) /* Make sure it does not extrapolate */
 	      tstart_mrg += dt_merger_interp;
       const long int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
       
@@ -1113,6 +1113,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         PRFORMd("interpolation_grid_tN",hlm_mrg->time[hlm_mrg->size-1]);
       }
 
+      /**  Interpolate mrg on uniform grid */
+      
+      /* Interp Waveform */ 
+      Waveform_lm_interp (hlm_mrg, size_mrg, tstart_mrg, dt_merger_interp, "hlm_mrg_interp");
+      
+      /* Interp Dynamics */
+      Dynamics_interp (dyn_mrg, size_mrg, tstart_mrg, dt_merger_interp, "dyn_mrg_interp");	      
+
 #if (DEBUG) 
       // Output post-interpolation wave and dynamics 
       if(EOBPars->output_multipoles) {
@@ -1120,17 +1128,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         Waveform_lm_output_reim (hlm_mrg);
       }
       if (EOBPars->output_dynamics) 
-	Dynamics_output(dyn_mrg);
-#endif
-      
-      /**  Interpolate mrg on uniform grid */
-      
-      /* Interp Waveform */ 
-      Waveform_lm_interp (hlm_mrg, size_mrg, tstart_mrg, dt_merger_interp, "hlm_mrg_interp");
-      
-      /* Interp Dynamics */
-      Dynamics_interp (dyn_mrg, size_mrg, tstart_mrg, dt_merger_interp, "dyn_mrg_interp");	       
-      
+	    Dynamics_output(dyn_mrg);
+#endif      
       
     } /* End of merger interp */
     
@@ -1173,12 +1172,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
 #if (DEBUG) 
       if (EOBPars->output_nqc)  {
-	Waveform_lm_output (hlm_nqc);
-	Waveform_lm_output (hlm_mrg);
+	      Waveform_lm_output (hlm_nqc);
       }
       if (EOBPars->output_multipoles) {
-	strcat(hlm->name,"_nqc");      
-	Waveform_lm_output_reim (hlm);
+	      strcat(hlm->name,"_nqc");      
+	      Waveform_lm_output (hlm);
+        Waveform_lm_output_reim (hlm);
       }
 #endif
       
