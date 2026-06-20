@@ -1303,6 +1303,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Qpotential = &eob_metric_QGSF;
   } else if (EOBPars->Q_pot == Q_5PNloc) {
     eob_metric_Qpotential = &eob_metric_Q5PNloc;
+  } else if (EOBPars->Q_pot == Q_5PN) {
+    eob_metric_Qpotential = &eob_metric_Q5PN;
   } else {
     if (DEBUG) printf("ERROR: Unknown option for Q potential\n");
     return 1;

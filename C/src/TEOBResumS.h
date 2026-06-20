@@ -256,9 +256,11 @@ enum{
   Q_3PN,          /**< 3PN, Taylor exp */
   Q_GSF,          /**< GSF Q, Pade' resummed */
   Q_5PNloc,       /**< 5PN local, Taylor exp */
+  Q_5PN,          /**< 5PN, Taylor exp */
   Q_NOPT          /**< number of options */
 };
-static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "undefined"};
+static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "5PN", "undefined"};
+
 enum{
   a6c_fits_NO,                /**< no fits */
   a6c_fits_V0,                /**< V0 fits, Nagar et al 2018 */

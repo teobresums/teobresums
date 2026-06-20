@@ -877,7 +877,7 @@ void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_d
 }
 
 /**
-  *  Function : eob_metric_Q3PN
+  *  Function : eob_metric_QGSF
   *  --------------------------
   *     EOB Metric Q function GSF-informed
   *
@@ -1024,7 +1024,7 @@ void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_d
 }
 
 /**
-  *  Function : eob_metric_Q3PN
+  *  Function : eob_metric_Q5PNloc
   *  --------------------------
   *    EOB Metric Q function at 5PN, only local part 
   *    2108.02043 and refs. therein
