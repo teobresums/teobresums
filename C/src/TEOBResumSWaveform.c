@@ -8357,7 +8357,6 @@ int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
-  /* const double dt = par_get_d("dt"); */	
   const double dt = dyn->dt;
   
   /* double *Omega = dyn->data[EOB_MOMG]; */
@@ -8592,7 +8591,6 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
 	
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
-  /* const double dt = par_get_d("dt"); */	
   const double dt = EOBPars->dt_merger_interp;
 	  
   /* double *Omega = dyn->data[EOB_MOMG]; */
@@ -11257,7 +11255,6 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
 	
   const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
-  /* const double dt = par_get_d("dt"); */
   const double dt = EOBPars->dt_merger_interp;
 	  
   /* double *Omega = dyn->data[EOB_MOMG]; */

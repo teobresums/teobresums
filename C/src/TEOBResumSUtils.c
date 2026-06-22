@@ -1340,13 +1340,13 @@ double poly_der (double x, void *params)
 /**
  * Function: find_max_grid_poly_fit
  * ---------------------------------
- *   Find max location around x0 using 9 points (non-uniform grid),
- *   via least-squares fit to a 4th degree polynomial.
+ *   Find location of maximum of f(x) by fitting a polynomial of
+ *   degree deg to n_grid points and finding the root of its derivative.
  *   
  *   @param[in] x: array of x values
  *   @param[in] f: array of y values
- *   @param[in] x0: centre of grid
- *   @param[out] fmax: interpolated value at max
+ *   @param[in] deg: degree of polynomial
+ *   @param[in] n_grid: number of points in grid
  * 
  *   @return xmax: max location
  */
