@@ -46,6 +46,16 @@ LFLAGS=`gsl-config --libs`
 LDLFLAGS=-lgsl -lgslcblas -lm 
 
 #
+# User functions
+#
+#
+#
+ifdef USER_FUNCTIONS
+  CFLAGS += -DUSERFUNCS
+  SRC += user/TEOBResumSUser.c
+endif
+
+#
 # rules
 #
 

@@ -4,6 +4,38 @@
 
 See the main [README](../README.md) or the [Wiki](https://bitbucket.org/eob_ihes/teobresums/wiki/Home)
 
+## User-defined functions
+
+In case you want to use your own metric, radiation reaction etc. create a `user` directory and place a `TEOBResumSUser.c` file in it. The file should a structure like:
+```C
+#include "../src/TEOBResumS.h"
+
+// Declarations
+void A_user(double r, double nu, double *A, double *dA, double *d2A);
+
+// Actual definitions
+void A_user(double r, double nu, double *A, double *dA, double *d2A)
+{
+	// Example: wrapping eob_metric_A5PNlogP33 with a print statement to show that the user-defined function is being called
+	printf("Calling user-defined A function\n");
+	eob_metric_A5PNlogP33(r, nu, A, dA, d2A);
+}
+
+int set_user_pointers()
+{
+	eob_metric_Apotential = &A_user;
+	return OK;
+}
+```
+Compiling the code with
+```
+make USER_FUNCTIONS=1
+```
+will overwrite the TEOB function with the user-defined one.
+
+This interface is convenient for testing and development, but for production functions should be implemented in the main codebase.
+
+
 ## Brief introduction for developers
 
 ### Parameters

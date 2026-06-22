@@ -24,9 +24,22 @@ python setup.py build_ext --inplace
 ```
 or type `make` for a local build, and
 ```
-python setup.py install
+pip install .
 ```
 to install in your entire environment.
+
+Note that macros can be enabled during compilations via environment variables.
+For instance, to run the code in debug or verbose mode, do:
+```
+TEOB_DEBUG=1 TEOB_VERBOSE=1 pip install .
+```
+
+To set user-defined functions, instead, do:
+```
+TEOB_USER_FUNCTIONS=1 pip install .
+```
+
+Additional options can be inspected directly from the setup.py
 
 ## Others
 

@@ -1380,6 +1380,15 @@ int eob_set_params(int default_choice, int firstcall)
     eob_dyn_ic = &eob_dyn_ic_circ;
   }
 
+  // Overwrite defaults if the user provides their own functions
+#if USERFUNCS
+  if (DEBUG) printf("Using user-defined functions\n");
+  if (set_user_pointers()){
+    if (DEBUG) printf("ERROR: set_user_pointers failed\n");
+    return 1;
+  }
+#endif
+
   return OK;
 
 }

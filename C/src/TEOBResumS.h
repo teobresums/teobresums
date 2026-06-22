@@ -64,6 +64,10 @@
 #define DEBUG (0) /* global debug option */ 
 #endif
 
+#ifndef USERFUNCS
+#define USERFUNCS (0)
+#endif
+
 /** Macros */
 #define TEOBResumS_Info "TEOBResumS code (c) 2017-2022"
 #define TEOBResumS_Usage "COMMAND LINE USAGE:\n\
@@ -1279,6 +1283,10 @@ double wigner_d_function(int l, int m, int s, double i);
 int spinsphericalharm(double *rY, double *iY, int s, int l, int m, double phi, double i);
 double Fresnel_Sine_Integral( double x );
 double Fresnel_Cosine_Integral( double x );
+
+#ifdef USERFUNCS
+int set_user_pointers();
+#endif 
 
 #ifdef _OPENMP
 /* TEOBResumSOMP.c */
