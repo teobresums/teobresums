@@ -1,0 +1,55 @@
+# Parfile for GW150914: BBH with m1= 36, m2 = 29, q = 1.24, D = 410 Mpc
+
+
+use_geometric_units = "no" # use geometric units for I/O ?
+
+#
+# Binary properties in physical units
+#
+
+M = 45. # total binary mass in solar masses
+q = 1.24137931034 # mass ratio
+distance = 410.   # distance in megaparsecs
+inclination = 1.308996939
+
+chi1 = 0. # dimensionless spin 1 z-component 
+chi2 = 0. # dimensionless spin 2 z-component 
+
+initial_frequency = 35. # in units of Hz
+
+
+#
+# Output dir, output modes 
+#
+
+output_dir = "./GW150914/" # output dir
+use_mode_lm = [ 0, 1, 4, 8]
+output_lm = [ 1 ]
+#output_dynamics = "yes" # output dynamics
+#use_a6c_fits = "HM"
+#use_cN3LO_fits = "HM"
+
+#
+# Setup
+#
+
+size = 200 # size of the arrays (chunks, dynamically extended)
+ode_timestep = "adaptive" 
+ode_stop_at_radius = 1.5 # stop ODE integration at this radius (if > 0)
+compute_LR = "no" # calculate LR ?
+compute_LSO = "no" # calculate LSO ?
+
+
+# interpolate on uniform grid?
+interp_uniform_grid = "yes" # no, interpolates/outputs on a grid of dt = 0.5 
+#interp_uniform_grid = 1 # yes, only h+,hx on a grid of dt_interp
+srate_interp = 4096.  # interpolation spacing
+
+delta_taulm0_k = [1]
+delta_taulm0 = [0.5]
+delta_a6c = 2
+
+
+
+
+
