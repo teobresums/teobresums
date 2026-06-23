@@ -659,6 +659,8 @@ typedef struct tagEOBParameters
   /**@{*/
   /** NR-informed conservative variables */
   double a6c, cN3LO;         
+  /** Deviations from NR-fitted parameters */
+  double delta_a6c, delta_cN3LO;
   /**@}*/ 
 
   double r0;                    /**< Initial radial separation */
@@ -744,6 +746,20 @@ typedef struct tagEOBParameters
   double Mbhf; /**< Final BH mass */
   double abhf; /**< Final BH spin */
 
+  /* Deviations from final BH mass, spin */
+  double delta_Mbhf, delta_abhf;
+
+  /* Deviations from fits of QNM frequencies */
+  double *delta_alphalm0, *delta_omglm0, *delta_taulm0;
+  int    *delta_alphalm0_k, delta_alphalm0_size;
+  int    *delta_taulm0_k,   delta_taulm0_size;
+  int    *delta_omglm0_k,   delta_omglm0_size;
+
+  /* Deviations from merger amplitude, frequency */
+  double *delta_Alm_mrg, *delta_Omglm_mrg;
+  int    *delta_Alm_mrg_k, delta_Alm_mrg_size;
+  int    *delta_Omglm_mrg_k, delta_Omglm_mrg_size;
+
   /* waveform */
   int ringdown_extend_array; /**< Extend ringdown array */
 
@@ -751,7 +767,13 @@ typedef struct tagEOBParameters
   /** NQC variables and options*/
   int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
+  double d_delta_t_nqc;
   /**@}*/
+
+  /* Deviations from NQC point quantities */
+  double *delta_Alm_nqc, *delta_dAlm_nqc, *delta_Omglm_nqc, *delta_dOmglm_nqc;
+  int    *delta_Alm_nqc_k, *delta_dAlm_nqc_k, *delta_Omglm_nqc_k, *delta_dOmglm_nqc_k;
+  int    delta_Alm_nqc_size, delta_dAlm_nqc_size, delta_Omglm_nqc_size, delta_dOmglm_nqc_size;
 
   /**@{*/
   /** output options*/
@@ -942,7 +964,7 @@ double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
-void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
+void eob_nqc_point_postpeak(double tau, double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
 			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
@@ -1011,6 +1033,8 @@ double pph_lso_orbital(const double nu);
 double pph_lso_spin(const double nu, const double a0);
 double eob_nqc_timeshift_bhns(double nu, double chi1);
 void eob_nqc_deltat_lm_bhns(double *Dt_lm);
+void QNM_deviations(double *alpha1, double *omega1, double *alpha21);
+void apply_mode_deviations(double *x_mrg, double *delta_x, int *klm, int Nk);
 
 /* TEOBResumSDynamics.c */
 extern int (*p_eob_dyn_rhs)(); /* defined in TEOBResumSPars.c */
