@@ -556,12 +556,11 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   /* Compute Fr using the infinity Fphi */
   *Fr = eob_flx_Fr(r, pr_star, pphi, prsdot, dyn, Fphi_inf);
   
-  /* Compute non-circular Fphi */
+  /* Compute non-circular Fphi and Fr */
   double Fphi_NC[KMAX];
   for (int k = 0; k < KMAX; k++) Fphi_NC[k] = 1.;
-  eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, Fphi_lo, FNewtlm, Flm, Fphi_H, *Fr, dyn, Fphi_NC);
-  // To recover old configuration used for arXiv:2001.11736, one should apply this to all multipoles -> for (int k = KMAX; k--;) Fphi_NC[k] = fphi_nc;
-  
+  eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, Fphi_lo, FNewtlm, Flm, Fphi_H, Fr, dyn, Fphi_NC);
+
   /* Adding non-circular corrections and re-compute flux */
   sum_k = 0.;
   for (int k = 0; k < KMAX; k++) sum_k += Flm[k] * Fphi_NC[k];
@@ -570,9 +569,6 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   /* Compute non-circular Fphi, infinity */
   *Fphi = Fphi_lo * hatf;
-  
-  /* Re-compute Fr using the generic Fphi */
-  *Fr = eob_flx_Fr(r, pr_star, pphi, prsdot, dyn, *Fphi);
 
   /* Add horizon Fphi */
   *Fphi += Fphi_H;
@@ -830,6 +826,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   *   Non-circular flux calculation for eccentric systems
   *   obtained via an iterative procedure (two iterations)
   *   See https://arxiv.org/abs/2001.11736
+  *   and App. A of https://arxiv.org/pdf/2407.04762
   * 
   *   @param[in] r        :  radial separation
   *   @param[in] pr_star  :  (tortoise) radial momentum
@@ -837,12 +834,18 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   *   @param[in] Omg      :  orbital frequency
   *   @param[in] rdot     :  radial velocity
   *   @param[in] Fphi     :  angular momentum flux
-  *   @param[in] Fr       :  radial flux
+  *   @param[in] Fphi_lo  :  leading order angular momentum flux
+  *   @param[in] FlmNewt  :  Newtonian multipolar flux
+  *   @param[in] Flm      :  multipolar flux
+  *   @param[in] Fphi_H   :  horizon angular momentum flux
+  *   @param[in] Fr       :  pointer to radial flux
   *   @param[in] dyn      :  dynamics structure
+  *   @param[in] hatflm_NC :  non-circular multipolar flux (empty, to be filled)
   * 
-  *   @return[out] Fphi   :  angular momentum flux
+  *   @return[out] Fr     :  radial flux after iterative procedure
+  *   @return[out] hatflm_NC :  non-circular corrections to the multipolar flux
 */
-void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double Fr, Dynamics *dyn, double *hatflm_NC)
+void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC)
 {  
   const double nu     = EOBPars -> nu;
   const double chi1   = EOBPars -> chi1;
@@ -965,9 +968,9 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
     
     prstardot = - sqrtAbyB/E*(pphi*dG_dr + 1./(2.*Heff_orb)
 			        *(dA*(1. + pphi2*uc2 + Q)
-	            + A*(-2.*uc3*pphi2*drc_dr + dQ))) + sqrtAbyB*Fr;
+	            + A*(-2.*uc3*pphi2*drc_dr + dQ))) + sqrtAbyB* (*Fr);
 
-    Edot = nu*(rdot*Fr + Omg*Fphi);
+    Edot = nu*(rdot* (*Fr) + Omg*Fphi);
     Heffdot  = 1./nu*E*Edot;
     HSOdot   = Fphi*G + pphi*(dG_dr*rdot + dG_dprstar*prstardot);
     Heff_orbdot  = Heffdot - HSOdot;
@@ -983,7 +986,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
           + oneby_E*(pphi*(rdot*d2G_dr_dprstar + prstardot*d2G_dprstar2) + dG_dprstar*(Fphi - pphi*Edot*oneby_E)));
     
     
-    E2dot    = nu*(r2dot*Fr + Omgdot*Fphi);
+    E2dot    = nu*(r2dot* (*Fr) + Omgdot*Fphi);
     Heff2dot = 1./nu*(SQ(Edot) + E*E2dot);
     
     // derivatives of A*(1 + pphi2*u2 + Q) wrt dr2, drdprstar, drdpphi
@@ -1038,11 +1041,10 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
 
     r3dot = D1 + D2 + D3 + D4; 
     
-    // NC corrections to the modes, Newtonian times PN corrections (hatflm)
+    // NC corrections to the modes, Newtonian (FlmNewt_nc) times PN corrections (hatflm_NC)
     for (int k=0; k < KMAX; k++){
       hatflm_NC[k] = eob_flx_FlmNewt_nc[k](r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot);
       hatflm_NC[k] = hatflm_NC[k] * eob_flx_hatflm_nc[k](r, prstar, prstardot);
-      // printf("hatflm_NC[%d] = %e\n", k, hatflm_NC[k]);
     }
 
     sum_k = 0.;
@@ -1050,7 +1052,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
     sum_k = sum_k/FlmNewt[1];
 
     Fphi  = Fphi_lo * sum_k;
-    Fr    = eob_flx_Fr(r, prstar, pphi, prstardot, dyn, Fphi);
+    *Fr    = eob_flx_Fr(r, prstar, pphi, prstardot, dyn, Fphi);
     Fphi  = Fphi + Fphi_H;
   } // end iteration
   

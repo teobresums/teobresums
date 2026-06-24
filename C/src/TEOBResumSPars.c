@@ -1845,6 +1845,19 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
 
+  if (STREQUAL(key,"use_Fr")) {
+    val = string_trim(val);
+    for (eobp->use_Fr=0; eobp->use_Fr<=USE_FR_NOPT; eobp->use_Fr++) {
+      if (eobp->use_Fr == USE_FR_NOPT) {
+        eobp->use_Fr = USE_FR_NEXT;
+        if (VERBOSE) printf("use_Fr '%s' undefined, set to '%s'\n",
+			    val, use_Fr_opt[eobp->use_Fr]);
+        break;
+      }
+      if (STREQUAL(val, use_Fr_opt[eobp->use_Fr])) break;
+    }
+  }
+
   if (STREQUAL(key,"A_pot")) {
     val = string_trim(val);
     for (eobp->A_pot=0; eobp->A_pot<=A_NOPT;  eobp->A_pot++) {
