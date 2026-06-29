@@ -45,6 +45,8 @@ void (*eob_wav_hlm)();
 void (*eob_wav_flm)();
 void (*eob_wav_flm_s)();
 void (*eob_wav_deltalm)();
+void (*eob_wav_deltalm_nc)();
+void (*eob_wav_hathlm_nc)();
 void (*eob_wav_hlmNQC_find_a1a2a3)();
 void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 int (*eob_wav_ringdown)();
@@ -74,13 +76,6 @@ void EOBParameters_alloc (EOBParameters **eobp)
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
   if (eobp == NULL)
     errorexit("Out of memory");
-  /* the arrays below are allocated in EOBParameters_defaults */
-  /* (*eobp)->use_mode_lm_size = 1;  */
-  /* (*eobp)->use_mode_lm = malloc ( 1 * sizeof(int) ); */
-  /* (*eobp)->use_mode_lm [0] = -1; */
-  /* (*eobp)->output_lm_size = 1; */
-  /* (*eobp)->output_lm = malloc ( 1 * sizeof(int) ); */
-  /* (*eobp)->output_lm [0] = -1; */
 } 
 
 /** 
@@ -406,6 +401,11 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->rLR= 0. ; // radius of light-ring
   eobp->rLSO= 0. ; // radius of last stable orbit 
 
+  /* NC options */
+  eobp->use_flm_nc     = USEFLM_NC_22;
+  eobp->use_Fr         = USE_FR_NEXT;
+  eobp->use_hlm_nc     = USEHLM_NC_NO;
+  eobp->use_dlm_nc     = USEDELTALM_NC_NO;
   
   /* Choose the default for the binary type */
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
@@ -430,7 +430,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->nqc_coefs_flx  = NQC_FLX_NRFIT_SPIN_202002; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
       eobp->A_pot          = A_5PNlog; 
       eobp->D_pot          = D_3PN;
-      eobp->Q_pot          = Q_3PN; 
+      eobp->Q_pot          = Q_3PN;
+
     } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
       eobp->use_flm        = USEFLM_HM_4PN22;
@@ -442,6 +443,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->Q_pot          = Q_5PNloc; 
       eobp->use_flm_nc     = USEFLM_NC_IMPQC;
       eobp->use_Fr         = USE_FR_NEXT;
+      eobp->use_hlm_nc     = USEHLM_NC_IMPQC;
+      eobp->use_dlm_nc     = USEDELTALM_NC_IMPQC;
     } else {
       errorexit("Unknown BBH model specified.");
     }
@@ -1242,6 +1245,25 @@ int eob_set_params(int default_choice, int firstcall)
       return 1;
   }
 
+  /* NC corrections to delta and hath*/
+  if (EOBPars->use_dlm_nc == USEDELTALM_NC_NO) {
+    eob_wav_deltalm_nc = &eob_wav_deltalm_nc_no;
+  } else if (EOBPars->use_dlm_nc == USEDELTALM_NC_IMPQC) {
+    eob_wav_deltalm_nc = &eob_wav_deltalm_nc_impqc;
+  } else {
+      if (DEBUG) printf("ERROR: Unknown option for use_dlm_nc\n");
+    return 1;
+  }
+
+  if (EOBPars->use_hlm_nc == USEHLM_NC_NO) {
+    eob_wav_hathlm_nc = &eob_wav_hathlm_nc_no;
+  } else if (EOBPars->use_hlm_nc == USEHLM_NC_IMPQC) {
+    eob_wav_hathlm_nc = &eob_wav_hathlm_nc_impqc;
+  } else {
+      if (DEBUG) printf("ERROR: Unknown option for use_hlm_nc\n");
+    return 1;
+  }
+
   /* Set hlm and NQC fun pointers */
   if (EOBPars->model == MODEL_DALI) {
     eob_wav_hlm = &eob_wav_hlm_ecc;
@@ -1855,6 +1877,32 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
         break;
       }
       if (STREQUAL(val, use_Fr_opt[eobp->use_Fr])) break;
+    }
+  }
+
+  if (STREQUAL(key, "use_hlm_nc")) {
+    val = string_trim(val);
+    for (eobp->use_hlm_nc=0; eobp->use_hlm_nc<=USEHLM_NC_NOPT; eobp->use_hlm_nc++) {
+      if (eobp->use_hlm_nc == USEHLM_NC_NOPT) {
+        eobp->use_hlm_nc = USEHLM_NC_NO;
+        if (VERBOSE) printf("use_hlm_nc '%s' undefined, set to '%s'\n",
+          val, use_hlm_nc_opt[eobp->use_hlm_nc]);
+        break;
+      }
+      if (STREQUAL(val, use_hlm_nc_opt[eobp->use_hlm_nc])) break;
+    }
+  }
+
+  if (STREQUAL(key, "use_dlm_nc")) {
+    val = string_trim(val);
+    for (eobp->use_dlm_nc=0; eobp->use_dlm_nc<=USEDELTALM_NC_NOPT; eobp->use_dlm_nc++) {
+      if (eobp->use_dlm_nc == USEDELTALM_NC_NOPT) {
+        eobp->use_dlm_nc = USEDELTALM_NC_NO;
+        if (VERBOSE) printf("use_dlm_nc '%s' undefined, set to '%s'\n",
+          val, use_dlm_nc_opt[eobp->use_dlm_nc]);
+        break;
+      }
+      if (STREQUAL(val, use_dlm_nc_opt[eobp->use_dlm_nc])) break;
     }
   }
 

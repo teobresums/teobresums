@@ -984,6 +984,441 @@ void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm)
   
 }
 
+/** Function: eob_wav_deltalm_nc_no
+  * ----------------------------
+  *  Residual phase corrections deltalm, non-circular corrections. Set to zero.
+  *  No non-circular corrections are included in this version.
+  *  
+  *  @param[in]  r: orbital separation
+  *  @param[in]  prstar: tortoise radial momentum
+  *  @param[in]  prstardot: time derivative of the tortoise radial momentum
+  *  @param[out] dlm_nc   : residual phase corrections, non-circular
+  */
+void eob_wav_deltalm_nc_no(double r, double prstar, double prsdot, double *dlm)
+{
+  for (int k = 0; k < KMAX; k++) {
+    dlm[k] = 0.;
+  }
+}
+
+/** Function: eob_wav_deltalm_nc_impqc
+  * ----------------------------
+  *  Residual phase corrections delta_{lm} up to l=m=5 for higher modes,
+  *  non-circular corrections. Expanded to 2PN and e^6
+  *  
+  *  @param[in]  r: orbital separation
+  *  @param[in]  prstar: tortoise radial momentum
+  *  @param[in]  prstardot: time derivative of the tortoise radial momentum
+  *  @param[out] dlm_nc   : residual phase corrections, non-circular
+  */
+void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dlm)
+{
+  const double nu = EOBPars->nu;
+  const double nu2 = nu*nu;
+  const double nu3 = nu*nu2;
+
+  const double log_r = log(r);
+  const double inv_sqrt_r = 1.0 / sqrt(r);
+  const double one_minus_3nu = 1.0 - 3.0 * nu;
+
+  const double r2 = r * r;
+  const double r3 = r2 * r;
+  const double r4 = r3 * r;
+  const double r5 = r4 * r;
+  const double r6 = r5 * r;
+  const double r7 = r6 * r;
+  const double r8 = r7 * r;
+  const double r9 = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
+  const double r12 = r11 * r;
+  const double r13 = r12 * r;
+  const double r14 = r13 * r;
+  const double r15 = r14 * r;
+  const double r16 = r15 * r;
+  const double r17 = r16 * r;
+  const double r18 = r17 * r;
+  const double r19 = r18 * r;
+  const double r20 = r19 * r;
+  const double r21 = r19 * r2;
+  const double r22 = r21 * r;
+    
+  const double prstar2 = prstar * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar5 = prstar4 * prstar;
+  const double prstar6 = prstar5 * prstar;
+  const double prstar7 = prstar6 * prstar;
+  const double prstar8 = prstar7 * prstar;
+  const double prstar9 = prstar7 * prstar2;
+  const double prstar10 = prstar9 * prstar;
+  const double prstar11 = prstar9 * prstar2;
+
+  const double prsdot2 = prsdot * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
+  const double prsdot7 = prsdot6 * prsdot;
+  const double prsdot8 = prsdot7 * prsdot;
+  const double prsdot9 = prsdot8 * prsdot;
+  const double prsdot10 = prsdot9 * prsdot;
+  const double prsdot11 = prsdot10 * prsdot;
+
+  // init to 0
+  for (int k = 0; k < KMAX; k++) {
+    dlm[k] = 0.;
+  }
+
+  // (2, 2)
+  const double phi22_1PN = ((1.7857142857142858 - 1.8571428571428572 * nu) * prstar + 
+      (0.05952380952380952 + 0.07142857142857142 * nu) * prstar3 * r + 
+      (-0.44642857142857145 + 0.4642857142857143 * nu) * prstar5 * r2 + 
+      (-0.1441592261904762 + 0.17075892857142858 * nu) * prsdot4 * prstar * r8 + 
+      (0.06045386904761905 - 0.10714285714285714 * nu) * prsdot5 * prstar * r10 + 
+      prsdot * ((0.5952380952380952 - 0.2857142857142857 * nu) * prstar * r2 + 
+      (-0.9226190476190477 + 0.8928571428571429 * nu) * prstar3 * r3 + 
+      (0.26785714285714285 - 0.42857142857142855 * nu) * prstar5 * r4) + 
+      prsdot2 * ((-0.5208333333333334 + 0.375 * nu) * prstar * r4 + 
+      (0.6026785714285714 - 0.7767857142857143 * nu) * prstar3 * r5) + 
+      prsdot3 * ((0.2976190476190476 - 0.26785714285714285 * nu) * prstar * r6 + 
+      (-0.10788690476190477 + 0.3705357142857143 * nu) * prstar3 * r7)) * inv_sqrt_r;
+
+  const double phi22_2PN = ((-1.1910903250188964 + 3.8535525321239605 * nu + 1.3023431594860166 * nu2) * prstar3 + 
+      ((2.9534202569916856 - 1.0366591080876795 * nu - 1.073318216175359 * nu2) * prstar) / r + 
+      (-0.9126747921390779 + 0.8130196523053665 * nu - 0.5049130763416477 * nu2) * prstar5 * r + 
+      (0.7794784580498866 - 1.2631802721088434 * nu + 0.461734693877551 * nu2) * prstar7 * r2 + 
+      (0.2249858276643991 - 0.41241496598639454 * nu + 0.18112244897959184 * nu2) * prstar9 * r3 + 
+      (-0.09300595238095238 + 0.20833333333333334 * nu - 0.11607142857142858 * nu2) * prstar11 * r4 + 
+      (0.00493056109162415 - 0.00952895806760204 * nu + 0.0034378985969387753 * nu2) * prsdot10 * prstar * r19 + 
+      (-0.0011245139331774376 + 0.002532751381802721 * nu - 0.0009566326530612245 * nu2) * prsdot11 * prstar * r21 + 
+      prsdot * ((-1.4392951625094483 + 2.750188964474679 * nu + 1.2384731670445956 * nu2) * prstar * r + 
+      (-1.1133078231292517 + 1.193735827664399 * nu - 0.8149092970521542 * nu2) * prstar3 * r2 + 
+      (3.82807775888133 - 6.769888510959939 * nu + 0.9661753590325018 * nu2) * prstar5 * r3 + 
+      (0.691609977324263 - 1.241921768707483 * nu + 0.6887755102040817 * nu2) * prstar7 * r4 + 
+      (-0.6519274376417233 + 1.4636479591836735 * nu - 0.8048469387755102 * nu2) * prstar9 * r5 + 
+      (0.05580357142857143 - 0.15625 * nu + 0.10714285714285714 * nu2) * prstar11 * r6) + 
+      prsdot2 * ((-2.3341954837490553 + 2.1551398337112624 * nu - 0.243291761148904 * nu2) * prstar * r3 + 
+      (5.118474820483749 - 7.290627362055933 * nu + 1.3086262282690855 * nu2) * prstar3 * r4 + 
+      (0.2705144557823129 + 0.09789540816326531 * nu - 0.07206632653061225 * nu2) * prstar5 * r5 + 
+      (-1.6045741213151927 + 3.410926870748299 * nu - 1.7213010204081634 * nu2) * prstar7 * r6 + 
+      (0.3979326105442177 - 1.1282950680272108 * nu + 0.7605229591836735 * nu2) * prstar9 * r7) + 
+      prsdot3 * ((2.5449203987150417 - 2.732733371126228 * nu + 0.39465230536659107 * nu2) * prstar * r5 + 
+      (-3.9675542091836733 + 6.596991921768708 * nu - 1.1854804421768708 * nu2) * prstar3 * r6 + 
+      (-1.7858028628117915 + 3.381111819727891 * nu - 1.696109693877551 * nu2) * prstar5 * r7 + 
+      (1.0489742772108843 - 2.8303039965986394 * nu + 1.780612244897959 * nu2) * prstar7 * r8 + 
+      (-0.06632210175736962 + 0.2891156462585034 * nu - 0.2763073979591837 * nu2) * prstar9 * r9) + 
+      prsdot4 * ((-1.8132226414871504 + 2.1839716789493577 * nu - 0.43897628495842783 * nu2) * prstar * r7 + 
+      (-0.6260850694444444 + 0.4181857638888889 * nu - 0.014322916666666666 * nu2) * prstar3 * r8 + 
+      (1.2659881660997732 - 3.0470078656462585 * nu + 1.6455676020408163 * nu2) * prstar5 * r9 + 
+      (-0.34381754003684806 + 1.2567761479591837 * nu - 1.0123963647959184 * nu2) * prstar7 * r10) + 
+      prsdot5 * ((1.0362365215183296 - 1.4830699640967497 * nu + 0.3975133456160242 * nu2) * prstar * r9 + 
+      (0.6847563244047619 - 1.43359375 * nu + 0.6741071428571429 * nu2) * prstar3 * r10 + 
+      (-0.5906708386479592 + 1.7634260735544218 * nu - 1.1739477040816326 * nu2) * prstar5 * r11 + 
+      (0.056163415887188206 - 0.25513525722789115 * nu + 0.2965561224489796 * nu2) * prstar7 * r12) + 
+      prsdot6 * ((0.018435108418367346 + 0.058536174886621314 * nu - 0.020886479591836735 * nu2) * prstar * r11 + 
+      (-0.39402968218537415 + 0.9242134353741497 * nu - 0.4680723852040816 * nu2) * prstar3 * r12 + 
+      (0.18206745588860543 - 0.6627172353316326 * nu + 0.5499840561224489 * nu2) * prstar5 * r13) + 
+      prsdot7 * ((-0.09203714037698413 + 0.14067150297619047 * nu - 0.04631696428571429 * nu2) * prstar * r13 + 
+      (0.1671200706845238 - 0.4386393229166667 * nu + 0.2564174107142857 * nu2) * prstar3 * r14 + 
+      (-0.02531367364654195 + 0.11758609693877552 * nu - 0.14568718112244897 * nu2) * prstar5 * r15) + 
+      prsdot8 * ((0.04048250159438776 - 0.0650211256377551 * nu + 0.02188297193877551 * nu2) * prstar * r15 + 
+      (-0.04985921777565193 + 0.15412414965986396 * nu - 0.10751155931122448 * nu2) * prstar3 * r16) + 
+      prsdot9 * ((-0.015397190777352607 + 0.02669769079506803 * nu - 0.009267378826530613 * nu2) * prstar * r17 + 
+      (0.007854297317885487 - 0.03387243569302721 * nu + 0.031050701530612245 * nu2) * prstar3 * r18)) * inv_sqrt_r;
+
+  const double phi22_15log = (1.5 * prstar2 + 1.5 * prstar4 * r - 0.375 * prstar6 * r2 - 
+      0.3046875 * prsdot5 * r9 + 0.234375 * prsdot6 * r11 + 
+      prsdot * (3.0 * r + 2.25 * prstar2 * r2 - 2.25 * prstar4 * r3) + 
+      prsdot2 * (-2.8125 * prstar2 * r4 + 0.5625 * prstar4 * r5) + 
+      prsdot3 * (-0.375 * r5 + 1.96875 * prstar2 * r6) + 
+      prsdot4 * (0.375 * r7 - 0.94921875 * prstar2 * r8));
+
+  const double phi22_15pi = (-0.10416666666666667 * prstar2 - 1.5 / r + 
+      0.3067708333333333 * prstar4 * r + 
+      0.028645833333333332 * prsdot4 * r7 - 
+      0.05807291666666667 * prsdot5 * r9 + 
+      prsdot * (-0.25 * r + 0.46875 * prstar2 * r2 - 0.43359375 * prstar4 * r3) + 
+      prsdot2 * (0.1875 * r3 - 0.5520833333333334 * prstar2 * r4) + 
+      prsdot3 * (-0.03125 * r5 + 0.6284722222222222 * prstar2 * r6));
+
+  const double phi22_15pr = ((-3.091526291371757 + 0.051587301587301584 * nu) * prstar2 + 
+      (-1.5043758872718627 - 0.017857142857142856 * nu) * prstar4 * r + 
+      (0.5089174441563955 - 0.016865079365079364 * nu) * prstar6 * r2 + 
+      (0.23209034100142212 + 0.5138888888888888 * nu) * prsdot5 * r9 + 
+      (-0.14912343540277107 - 0.7571614583333334 * nu) * prsdot6 * r11 + 
+      prsdot * (-3.966481349529265 * r + 
+      (-2.431407978125435 - 0.20634920634920634 * nu) * prstar2 * r2 + 
+      (1.720017878424187 + 0.01488095238095238 * nu) * prstar4 * r3) + 
+      prsdot2 * ((-0.3597894129821668 - 0.051587301587301584 * nu) * r3 + 
+      (1.9039436744556042 + 0.4320436507936508 * nu) * prstar2 * r4 + 
+      (0.17286602685635444 + 0.0662202380952381 * nu) * prstar4 * r5) + 
+      prsdot3 * ((0.5741166706225727 + 0.15476190476190477 * nu) * r5 + 
+      (-0.24202967845485546 - 0.6929563492063492 * nu) * prstar2 * r6) + 
+      prsdot4 * ((-0.3753766389654487 - 0.31101190476190477 * nu) * r7 + 
+      (-0.4540556048232247 + 0.9444134424603174 * nu) * prstar2 * r8));
+
+  const double phi22_15PN = phi22_15pr * inv_sqrt_r + phi22_15pi * prstar * M_PI + phi22_15log * inv_sqrt_r * log_r;
+
+  dlm[1] = phi22_1PN + phi22_2PN + phi22_15PN;
+
+  // (2, 1) 
+  const double phi21_1PN = ((-0.07142857142857142 - 0.8571428571428571 * nu) * prstar + 
+        (-0.03571428571428571 - 0.42857142857142855 * nu) * prsdot * prstar * r2 + 
+        (0.008928571428571428 + 0.10714285714285714 * nu) * prsdot2 * prstar * r4 + 
+        (-0.004464285714285714 - 0.05357142857142857 * nu) * prsdot3 * prstar * r6 + 
+        (0.0027901785714285715 + 0.033482142857142856 * nu) * prsdot4 * prstar * r8 + 
+        (-0.001953125 - 0.0234375 * nu) * prsdot5 * prstar * r10) * inv_sqrt_r;
+
+    const double phi21_15r = (-0.16666666666666666 * prstar2 - 2.0 / r + 
+        0.03958333333333333 * prstar4 * r - 0.3958333333333333 * prsdot2 * prstar2 * r4 + 
+        0.34375 * prsdot4 * r7 - 0.26614583333333336 * prsdot5 * r9 + 
+        prsdot * (0.5 * r + 0.3125 * prstar2 * r2 - 0.0953125 * prstar4 * r3) + 
+        prsdot3 * (-0.3125 * r5 + 0.1996527777777778 * prstar2 * r6));
+
+    const double phi21_15pr = (-3.066189067610974 * prstar2 + 0.18774175233045298 * prstar4 * r + 
+        0.009231277859726106 * prstar6 * r2 - 0.2594780193027759 * prsdot5 * r9 + 
+        0.16613156621133385 * prsdot6 * r11 + 
+        prsdot * (1.5451774444795623 * r + 2.0049189248386483 * prstar2 * r2 + 
+        0.016899792764888844 * prstar4 * r3) + 
+        prsdot2 * (-0.1612222101492442 * r3 - 1.0605142444051125 * prstar2 * r4 - 
+        0.5813328975127661 * prstar4 * r5) + 
+        prsdot3 * (-0.40974976903849836 * r5 - 0.11892848838397185 * prstar2 * r6) + 
+        prsdot4 * (0.4009789986304213 * r7 + 0.7431021486772806 * prstar2 * r8));
+
+    const double phi21_15PN = phi21_15pr * inv_sqrt_r + phi21_15r * prstar * M_PI;
+    
+    dlm[0] = phi21_1PN + phi21_15PN;
+
+
+    // (3, 3)
+    const double phi33_1PN = ((2.9876543209876543 - 2.7160493827160495 * nu) * prstar + 
+        (-0.13702179545800944 + 0.2502667276329828 * nu) * prstar3 * r + 
+        (0.15046637350147993 - 0.09294728859835805 * nu) * prstar5 * r2 + 
+        (0.12711156435991955 - 0.09187243974401674 * nu) * prsdot4 * prstar * r8 + 
+        (-0.12163869704936411 + 0.10312238198700431 * nu) * prsdot5 * prstar * r10 + 
+        prsdot * ((1.0850480109739369 - 0.4993141289437586 * nu) * prstar * r2 + 
+        (0.2723924198546969 - 0.13417670070619317 * nu) * prstar3 * r3 + 
+        (-0.5915392719459398 + 0.5440323782152885 * nu) * prstar5 * r4) + 
+        prsdot2 * ((-0.17470659960371895 + 0.12078951379362902 * nu) * prstar * r4 + 
+        (-0.7005304916255991 + 0.5556190621348371 * nu) * prstar3 * r5) + 
+        prsdot3 * ((-0.08858956121187489 + 0.045047333570424564 * nu) * prstar * r6 + 
+        (0.6941504455705233 - 0.6724050218598532 * nu) * prstar3 * r7)) * inv_sqrt_r;
+
+    const double phi33_15r = (-0.04663923182441701 * prstar2 - 2.2222222222222223 / r - 
+        0.12499386103066945 * prstar4 * r - 0.07344324205321004 * prsdot4 * r7 + 
+        0.13723995378837914 * prsdot5 * r9 + 
+        prsdot * (-0.2716049382716049 * r - 0.13975575369608292 * prstar2 * r2 + 
+        0.6000320134902087 * prstar4 * r3) + 
+        prsdot2 * (0.03292181069958848 * r3 + 0.5348799302274382 * prstar2 * r4) + 
+        prsdot3 * (0.022700426764212772 * r5 - 0.929166804852279 * prstar2 * r6));
+
+    const double phi33_15pr = (-3.945662040826562 * prstar2 + 
+        (-0.29465012191212736 + 0.04099984758420972 * nu) * prstar4 * r + 
+        (-0.476729394911672 - 0.0011403899962554639 * nu) * prstar6 * r2 + 
+        (0.04318277703237072 - 0.32381771918237395 * nu) * prsdot5 * r9 + 
+        (-0.059019700027420186 + 0.6141834300515014 * nu) * prsdot6 * r11 + 
+        prsdot * (-3.755575247067723 * r + 
+        (-0.2736203154117902 + 0.11069958847736626 * nu) * prstar2 * r2 + 
+        (-0.8321770433685742 - 0.15086072583786347 * nu) * prstar4 * r3) + 
+        prsdot2 * (-0.15521396498567697 * r3 + 
+        (-0.5921340819277248 - 0.4243484224965706 * nu) * prstar2 * r4 + 
+        (1.2686318800551817 + 0.33914834854668724 * nu) * prstar4 * r5) + 
+        prsdot3 * ((0.027745542521813604 - 0.03689986282578875 * nu) * r5 + 
+        (0.30484648404672043 + 0.9890161137360497 * nu) * prstar2 * r6) + 
+        prsdot4 * ((0.0008960223103429144 + 0.13734948940710257 * nu) * r7 + 
+        (-0.19868075603153557 - 1.843500066329094 * nu) * prstar2 * r8));
+
+    const double phi33_15log = (2.074074074074074 * prstar2 + 0.0566986739826246 * prstar4 * r + 
+        0.5524677245451518 * prstar6 * r2 + 0.3680896903419194 * prsdot5 * r9 - 
+        0.355235208964871 * prsdot6 * r11 + 
+        prsdot * (3.3333333333333335 * r + 0.07407407407407407 * prstar2 * r2 + 
+        1.6565564192450337 * prstar4 * r3) + 
+        prsdot2 * (-0.4074074074074074 * r3 + 1.2482853223593964 * prstar2 * r4 - 
+        2.4225727785398568 * prstar4 * r5) + 
+        prsdot3 * (0.3405349794238683 * r5 - 1.8792993954173653 * prstar2 * r6) + 
+        prsdot4 * (-0.3673411065386374 * r7 + 2.027770368676862 * prstar2 * r8));
+
+    const double phi33_15PN = phi33_15pr * inv_sqrt_r + phi33_15r * prstar * M_PI + phi33_15log * inv_sqrt_r * log_r;
+    dlm[4] = phi33_1PN + phi33_15PN;
+
+    // (3, 2)
+    const double phi32_1 = (2.063888888888889 - 8.944444444444445 * nu + 5.111111111111111 * nu2 + 
+        (-0.09565972222222222 + 0.5173611111111112 * nu - 0.5277777777777778 * nu2) * prstar2 * r + 
+        (0.0059787326388888885 - 0.03233506944444445 * nu + 0.03298611111111111 * nu2) * prstar4 * r2 + 
+        (0.0005425347222222222 - 0.1345486111111111 * nu + 0.3754340277777778 * nu2) * prsdot4 * r8 + 
+        (-0.014583333333333334 + 0.17887369791666666 * nu - 0.3634440104166667 * nu2) * prsdot5 * r10 + 
+        prsdot * ((0.7722222222222223 - 2.923611111111111 * nu + 0.7152777777777778 * nu2) * r2 + 
+                  (0.0640625 - 0.35546875 * nu + 0.37890625 * nu2) * prstar2 * r3 + 
+                  (-0.009982638888888888 + 0.05455186631944445 * nu - 0.05666775173611111 * nu2) * prstar4 * r4) + 
+        prsdot2 * ((-0.128125 + 0.34375 * nu + 0.28125 * nu2) * r4 + 
+                  (-0.060221354166666664 + 0.3391927083333333 * nu - 0.3704427083333333 * nu2) * prstar2 * r5) + 
+        prsdot3 * ((0.03159722222222222 + 0.021701388888888888 * nu - 0.3706597222222222 * nu2) * r6 + 
+                  (0.06032986111111111 - 0.3431532118055556 * nu + 0.3805881076388889 * nu2) * prstar2 * r7));
+
+    const double phi32_1PN = prstar / (1.0 - 3.0 * nu) * inv_sqrt_r * phi32_1;
+    dlm[3] = phi32_1PN;
+
+    // (3, 1)
+    const double phi31_1PN = ((4.666666666666667 + 14.666666666666666 * nu) * prstar + 
+        (-89.0 - 434.0 * nu) * prstar3 * r + 
+        (2308.0 + 10948.0 * nu) * prstar5 * r2 + 
+        (15101.151041666666 + 79614.13541666667 * nu) * prsdot4 * prstar * r8 + 
+        (107601.5390625 + 563678.9375 * nu) * prsdot5 * prstar * r10 + 
+        prsdot * ((29.666666666666668 + 170.66666666666666 * nu) * prstar * r2 + 
+                  (-1558.5 - 8841.0 * nu) * prstar3 * r3 + 
+                  (62290.0 + 331966.0 * nu) * prstar5 * r4) + 
+        prsdot2 * ((262.75 + 1414.5 * nu) * prstar * r4 + 
+                  (-21431.875 - 120361.75 * nu) * prstar3 * r5) + 
+        prsdot3 * ((2044.0416666666667 + 10881.166666666666 * nu) * prstar * r6 + 
+                  (-244257.3125 - 1.358769125e6 * nu) * prstar3 * r7)) * inv_sqrt_r;
+
+    const double phi31_15r = (-130.66666666666666 * prstar2 + 4.0 / r + 
+        3268.195833333333 * prstar4 * r + 27764.125 * prsdot4 * r7 + 
+        196490.13385416666 * prsdot5 * r9 + 
+        prsdot * (60.5 * r - 2947.1875 * prstar2 * r2 + 106829.1921875 * prstar4 * r3) + 
+        prsdot2 * (493.5 * r3 - 40876.458333333336 * prstar2 * r4) + 
+        prsdot3 * (3797.6875 * r5 - 465963.73784722225 * prstar2 * r6));
+
+    const double phi31_15pr = ((78.56988756353425 + 164.26666666666668 * nu) * prstar2 + 
+        (-1985.3734499998466 - 3852.866666666667 * nu) * prstar4 * r + 
+        (50444.405083403624 + 98150.36666666667 * nu) * prstar6 * r2 + 
+        (-15424.766141059805 + 21787.54861111111 * nu) * prsdot5 * r9 + 
+        (-92548.05944031314 + 129138.42569444445 * nu) * prsdot6 * r11 + 
+        prsdot * ((-13.252475201216209 + 27.377777777777776 * nu) * r + 
+                  (1227.6582705539518 + 452.96666666666664 * nu) * prstar2 * r2 + 
+                  (-50992.6630294921 - 50769.938888888886 * nu) * prstar4 * r3) + 
+        prsdot2 * ((-71.19612516414233 + 68.44444444444444 * nu) * r3 + 
+                  (13104.255235280603 + 1202.65 * nu) * prstar2 * r4 + 
+                  (-822826.1626699022 - 507377.36666666664 * nu) * prstar4 * r5) + 
+        prsdot3 * ((-428.51744498336336 + 668.5666666666667 * nu) * r5 + 
+                  (122560.4075564473 - 24926.881944444445 * nu) * prstar2 * r6) + 
+        prsdot4 * ((-2570.723210976385 + 3468.0833333333335 * nu) * r7 + 
+                  (1.0537336478367136e6 - 396552.7326388889 * nu) * prstar2 * r8));
+
+    const double phi31_15log = (-72.0 * prstar2 + 1692.0 * prstar4 * r - 43092.0 * prstar6 * r2 + 
+        17999.296875 * prsdot5 * r9 + 107986.4296875 * prsdot6 * r11 + 
+        prsdot * (18.0 * r - 1422.0 * prstar2 * r2 + 52830.0 * prstar4 * r3) + 
+        prsdot2 * (81.0 * r3 - 15390.0 * prstar2 * r4 + 901732.5 * prstar4 * r5) + 
+        prsdot3 * (501.75 * r5 - 145406.25 * prstar2 * r6) + 
+        prsdot4 * (2998.125 * r7 - 1.2536465625e6 * prstar2 * r8));
+
+    const double phi31_15PN = phi31_15pr * inv_sqrt_r + phi31_15r * prstar * M_PI + phi31_15log * inv_sqrt_r * log_r;
+    dlm[2] = phi31_1PN + phi31_15PN;
+
+    // (4, 4)
+    const double phi44_05 = (-0.0008138020833333334 * nu * prstar4 * r2 + 0.0005221366882324219 * nu * prstar6 * r3 + 
+        0.005175272623697917 * nu * prsdot * prstar4 * r4 - 0.0160980224609375 * nu * prsdot3 * prstar2 * r7 + 
+        0.0028355916341145835 * nu * prsdot5 * r10 - 0.006275375684102376 * nu * prsdot6 * r12 + 
+        prsdot2 * (0.0048828125 * nu * prstar2 * r5 - 0.013124346733093262 * nu * prstar4 * r6) + 
+        prsdot4 * (-0.0008138020833333334 * nu * r8 + 0.03370165824890137 * nu * prstar2 * r9));
+
+    const double phi44_05PN = 1.0 / one_minus_3nu * inv_sqrt_r * phi44_05;
+
+    const double phi44_1 = (4.133806818181818 - 29.023579545454545 * nu + 60.51988636363637 * nu2 - 31.960227272727273 * nu3 + 
+        (-0.1197418212890625 + 1.0076934814453125 * nu - 2.807281494140625 * nu2 + 2.58563232421875 * nu3) * prstar2 * r + 
+        (0.0024969813498583707 - 0.0019063004038550636 * nu - 0.06209150498563593 * nu2 + 0.13601272214542737 * nu3) * prstar4 * r2 - 
+        8.071462313334147e-7 * nu2 * prstar8 * r4 + 5.178662831895053e-7 * nu2 * prstar10 * r5 - 
+        0.00013142684009734594 * nu2 * prsdot10 * r20 + 0.00014216570794663616 * nu2 * prsdot11 * r22 + 
+        prsdot * ((1.6322509765625 - 10.8386474609375 * nu + 19.97314453125 * nu2 - 6.4423828125 * nu3) * r2 + 
+                  (0.10414307550950484 - 0.6888270963322033 * nu + 1.2572132023898037 * nu2 - 0.3840587789362127 * nu3) * prstar2 * r3 + 
+                  (0.23617408443877305 - 1.6075141895837575 * nu + 3.137735048435967 * nu2 - 1.322277718900957 * nu3) * prstar4 * r4 - 
+                  2.6490953233506944e-6 * nu2 * prstar6 * r5 + 9.872989418605963e-6 * nu2 * prstar8 * r6 - 1.950712658072007e-6 * nu2 * prstar10 * r7) + 
+        prsdot2 * ((-0.27277193936434657 + 1.837883827903054 * nu - 3.5056936090642754 * nu2 + 1.340968738902699 * nu3) * r4 + 
+                   (0.14199305095455864 - 0.9382432514970953 * nu + 1.7082495079799132 * nu2 - 0.5143716362389651 * nu3) * prstar2 * r5 + 
+                   3.1789143880208336e-5 * nu2 * prstar6 * r7 - 3.883189189461215e-5 * nu2 * prstar8 * r8) + 
+        prsdot3 * ((0.14224932247942143 - 0.9481732471422716 * nu + 1.7633340467106213 * nu2 - 0.5971746227957986 * nu3) * r6 + 
+                   (-0.4013934326770885 + 2.749634273156566 * nu - 5.443638208216395 * nu2 + 2.421828848521479 * nu3) * prstar2 * r7 + 
+                   1.854366726345486e-5 * nu2 * prstar4 * r8 - 1.650206589450439e-4 * nu2 * prstar6 * r9 + 6.325214059188511e-5 * nu2 * prstar8 * r10) + 
+        prsdot4 * ((-0.14678481951017272 + 0.9786328819495711 * nu - 1.8209955680438064 * nu2 + 0.6184808933599428 * nu3) * r8 - 
+                   1.3936724927690293e-4 * nu2 * prstar4 * r10 + 4.0297632545439736e-4 * nu2 * prstar6 * r11) + 
+        prsdot5 * ((0.15079859842596555 - 1.0128625240516902 * nu + 1.9179467970838728 * nu2 - 0.7096398322874765 * nu3) * r10 - 
+                   1.854366726345486e-5 * nu2 * prstar2 * r11 + 5.648846531079875e-4 * nu2 * prstar4 * r12 - 4.951536761647427e-4 * nu2 * prstar6 * r13) + 
+        prsdot6 * (1.240107748243544e-4 * nu2 * prstar2 * r13 - 1.131228873418877e-3 * nu2 * prstar4 * r14) + 
+        prsdot7 * (2.6490953233506944e-6 * nu2 * r14 - 4.704595388223727e-4 * nu2 * prstar2 * r15 + 1.2385669487950206e-3 * nu2 * prstar4 * r16) + 
+        prsdot8 * (-1.794348160425822e-5 * nu2 * r16 + 8.806248135644839e-4 * nu2 * prstar2 * r17) + 
+        prsdot9 * (6.922346074134111e-5 * nu2 * r18 - 9.343924272937127e-4 * nu2 * prstar2 * r19));
+
+    const double phi44_1PN = prstar / (one_minus_3nu * one_minus_3nu) * inv_sqrt_r * phi44_1;
+    dlm[8] = phi44_05PN + phi44_1PN;
+
+    // (4, 2)
+    const double phi42_05 = (0.05416666666666667 * nu * prstar2 * r - 0.5096354166666667 * nu * prstar4 * r2 + 
+        2.583154296875 * nu * prstar6 * r3 - 0.26959635416666666 * nu * prsdot5 * r10 - 
+        1.5759602864583333 * nu * prsdot6 * r12 + 
+        prsdot * (-0.365625 * nu * prstar2 * r3 - 0.47701822916666664 * nu * prstar4 * r4) + 
+        prsdot2 * (-0.05416666666666667 * nu * r4 - 0.1015625 * nu * prstar2 * r5 + 2.833740234375 * nu * prstar4 * r6) + 
+        prsdot3 * (0.013541666666666667 * nu * r6 - 1.6434895833333334 * nu * prstar2 * r7) + 
+        prsdot4 * (-0.29609375 * nu * r8 - 0.507861328125 * nu * prstar2 * r9));
+
+    const double phi42_05PN = 1.0 / one_minus_3nu * inv_sqrt_r * phi42_05;
+
+    const double phi42_1 = (5.634090909090909 - 27.697727272727274 * nu + 13.431818181818182 * nu2 + 56.86363636363637 * nu3 + 
+        (-20.4140625 + 60.2578125 * nu + 187.171875 * nu2 - 552.65625 * nu3) * prstar2 * r + 
+        (95.76948686079545 - 257.2852894176136 * nu - 1027.2902107007576 * nu2 + 2811.629083806818 * nu3) * prstar4 * r2 + 
+        0.16632975260416666 * nu2 * prstar6 * r3 - 1.1156613159179687 * nu2 * prstar8 * r4 + 
+        2.9953490352630614 * nu2 * prstar10 * r5 - 2.6898622205522327 * nu2 * prsdot10 * r20 - 
+        4.1609558227327135 * nu2 * prsdot11 * r22 + 
+        prsdot * ((16.982670454545456 - 51.470738636363635 * nu - 147.2215909090909 * nu2 + 446.3693181818182 * nu3) * r2 + 
+                  (-224.11262428977273 + 670.2007990056818 * nu + 2000.97602114899 * nu2 - 5983.712002840909 * nu3) * prstar2 * r3 + 
+                  (1857.2710526899857 - 5526.54043079723 * nu - 16754.942031052713 * nu2 + 49857.83649236506 * nu3) * prstar4 * r4 - 
+                  0.5711528862847223 * nu2 * prstar6 * r5 - 1.9310149765014648 * nu2 * prstar8 * r6 + 
+                  13.148608536720277 * nu2 * prstar10 * r7) + 
+        prsdot2 * ((62.469176136363636 - 177.6674715909091 * nu - 608.3821022727273 * nu2 + 1737.4857954545455 * nu3) * r4 + 
+                   (-1460.4431196732955 + 4219.625523792613 * nu + 13883.654785353536 * nu2 - 40195.449396306816 * nu3) * prstar2 * r5 - 
+                   0.17235297309027778 * nu2 * prstar4 * r6 - 3.077147216796875 * nu2 * prstar6 * r7 + 
+                   4.673703552881877 * nu2 * prstar8 * r8) + 
+        prsdot3 * ((226.31056463068182 - 656.8741654829546 * nu - 2125.923464330808 * nu2 + 6179.270241477273 * nu3) * r6 + 
+                   (-7899.949564985795 + 22828.747398792613 * nu + 75002.12318596117 * nu2 - 217166.73845880682 * nu3) * prstar2 * r7 - 
+                   0.34457505967881946 * nu2 * prstar4 * r8 - 6.580491765340169 * nu2 * prstar6 * r9 + 
+                   35.81166738669078 * nu2 * prstar8 * r10) + 
+        prsdot4 * ((768.0914772727273 - 2223.361700994318 * nu - 7248.225402462122 * nu2 + 21016.428622159092 * nu3) * r8 + 
+                   0.29501790364583336 * nu2 * prstar2 * r9 - 4.158293830023871 * nu2 * prstar4 * r10 - 
+                   5.475750333997938 * nu2 * prstar6 * r11) + 
+        prsdot5 * ((2528.7917513760653 - 7328.4499167702415 * nu - 23808.18061809501 * nu2 + 69103.35291637074 * nu3) * r10 - 
+                   1.0410036892361112 * nu2 * prstar2 * r11 - 7.894708082411024 * nu2 * prstar4 * r12 + 
+                   27.69743237177531 * nu2 * prstar6 * r13) + 
+        prsdot6 * (-0.0938818359375 * nu2 * r12 - 0.9530943467881945 * nu2 * prstar2 * r13 - 15.26011744181315 * nu2 * prstar4 * r14) + 
+        prsdot7 * (0.062330050998263886 * nu2 * r14 - 5.811153708563911 * nu2 * prstar2 * r15 - 4.744922726949056 * nu2 * prstar4 * r16) + 
+        prsdot8 * (-0.5540660942925347 * nu2 * r16 - 9.53687578731113 * nu2 * prstar2 * r17) + 
+        prsdot9 * (-0.7737656360202365 * nu2 * r18 - 14.389245550897387 * nu2 * prstar2 * r19));
+
+    const double phi42_1PN = prstar / (one_minus_3nu * one_minus_3nu) * inv_sqrt_r * phi42_1;
+    dlm[6] = phi42_05PN + phi42_1PN;
+
+    // (5, 5)
+    const double phi55_05 = (-0.0008810666666666667 * nu * prstar6 * r3 - 0.0033333333333333335 * nu * prsdot * prstar4 * r4) + 
+        (0.016354666666666667 * nu * prsdot2 * prstar4 * r6 + 0.006666666666666667 * nu * prsdot3 * prstar2 * r7) + 
+        (-0.02616 * nu * prsdot4 * prstar2 * r9 - 0.0006666666666666666 * nu * prsdot5 * r10) + 
+        (0.0028421333333333333 * nu * prsdot6 * r12);
+
+    const double phi55_05PN = 1.0 / (1.0 - 2.0 * nu) * inv_sqrt_r * phi55_05;
+    dlm[13] = phi55_05PN;
+
+    // (5, 3)
+    const double phi53_05 = (0.08983123244160687 * nu * prstar4 * r2 - 0.28253571494944607 * nu * prstar6 * r3) + 
+        (-0.1517303722158071 * nu * prsdot5 * r10 + 0.19306050542067915 * nu * prsdot6 * r12) + 
+        (prsdot * (0.0850480109739369 * nu * prstar2 * r3 - 0.4537712930562121 * nu * prstar4 * r4) + 
+         prsdot2 * (-0.3445669415795921 * nu * prstar2 * r5 + 0.2739460822941583 * nu * prstar4 * r6)) + 
+        (prsdot3 * (-0.0283493369913123 * nu * r6 + 0.5398549500824155 * nu * prstar2 * r7) + 
+         prsdot4 * (0.053373751742902785 * nu * r8 - 1.299547236294694 * nu * prstar2 * r9));
+
+    const double phi53_05PN = 1.0 / (1.0 - 2.0 * nu) * inv_sqrt_r * phi53_05;
+    dlm[11] = phi53_05PN;
+
+    // (5, 1)
+    const double phi51_05 = (2866.6666666666665 * nu * prstar2 * r - 6.280926666666667e6 * nu * prstar4 * r2) + 
+        (1.3740999238333334e10 * nu * prstar6 * r3 + 3.121649794270833e8 * nu * prsdot5 * r10) + 
+        (1.5148479976098959e10 * nu * prsdot6 * r12 + 
+         prsdot * (57.333333333333336 * nu * r2 + 134319.33333333334 * nu * prstar2 * r3 - 9.055863108333334e8 * nu * prstar4 * r4)) + 
+        (prsdot2 * (2723.3333333333335 * nu * r4 + 299566.0 * nu * prstar2 * r5 - 7.392739945875e10 * nu * prstar4 * r6)) + 
+        (prsdot3 * (132563.5 * nu * r6 - 5.807635845833334e8 * nu * prstar2 * r7)) + 
+        (prsdot4 * (6.43275375e6 * nu * r8 - 7.13079298909375e10 * nu * prstar2 * r9));
+
+    const double phi51_05PN = 1.0 / (1.0 - 2.0 * nu) * inv_sqrt_r * phi51_05;
+    dlm[9] = phi51_05PN;
+}
+
 /**
  * Function: eob_wav_hlm_v1
  * ------------------------
@@ -4778,6 +5213,541 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
     flm[k]    = gsl_pow_int(rholm[k]/rholms[k],LINDEX[k]);
   }
   
+}
+
+/** 
+ * Function: eob_wav_hathlm_nc_no
+ * ---------------------------------
+ *  Computes the noncircular correction factors for the EOB waveform modes.
+ *  Sets all to one, no noncircular corrections are applied.
+ * 
+ *  @param[in] r:  The radial separation between the two bodies.
+ *  @param[in] prstar: The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot: The time derivative of the radial momentum.
+ *  @param[out] hathlm_nc: An array to store the computed noncircular correction factors for each mode.
+ *
+*/
+void eob_wav_hathlm_nc_no(double r, double prstar, double prsdot, double* hathlm_nc)
+{
+  for(int k=0; k<KMAX; k++)
+    hathlm_nc[k] = 1.0;
+}
+
+/** 
+ * Function: eob_wav_hathlm_nc_impqc
+ * ---------------------------------
+ *  Computes the noncircular correction factors for the EOB waveform modes.
+ * 
+ *  @param[in] r:  The radial separation between the two bodies.
+ *  @param[in] prstar: The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot: The time derivative of the radial momentum.
+ *  @param[out] hathlm_nc: An array to store the computed noncircular correction factors for each mode.
+ *
+*/
+#define use_pade_nc (0)
+void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hathlm_nc)
+{
+
+  for(int k=0; k<KMAX; k++)
+    hathlm_nc[k] = 1.0;
+
+  const double nu = EOBPars->nu;
+  const double nu2 = nu * nu;
+  const double nu3 = nu2 * nu;
+  const double logr = log(r);
+  const double inv_sqrt_r = 1.0 / sqrt(r);
+  const double inv_r = 1.0 / r;
+  const double one_minus_2nu = 1.0 - 2.0 * nu;
+  const double one_minus_3nu = 1.0 - 3.0 * nu;
+
+  /* Powers of r */
+  const double r2 = r * r;
+  const double r3 = r2 * r;
+  const double r4 = r3 * r;
+  const double r5 = r4 * r;
+  const double r6 = r5 * r;
+  const double r7 = r6 * r;
+  const double r8 = r7 * r;
+  const double r9 = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
+  const double r12 = r11 * r;
+  const double r13 = r12 * r;
+  const double r14 = r13 * r;
+  const double r15 = r14 * r;
+  const double r16 = r15 * r;
+  const double r17 = r16 * r;
+  const double r18 = r17 * r;
+  const double r19 = r18 * r;
+  const double r20 = r19 * r;
+  const double r21 = r20 * r;
+  const double r22 = r21 * r;
+  const double r23 = r22 * r;
+
+  /* Powers of prstar */
+  const double prstar2 = prstar * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar5 = prstar4 * prstar;
+  const double prstar6 = prstar5 * prstar;
+  const double prstar7 = prstar6 * prstar;
+  const double prstar8 = prstar7 * prstar;
+  const double prstar9 = prstar8 * prstar;
+  const double prstar10 = prstar9 * prstar;
+  const double prstar11 = prstar10 * prstar;
+  const double prstar12 = prstar11 * prstar;
+
+  /* Powers of prsdot */
+  const double prsdot2 = prsdot * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
+  const double prsdot7 = prsdot6 * prsdot;
+  const double prsdot8 = prsdot7 * prsdot;
+  const double prsdot9 = prsdot8 * prsdot;
+  const double prsdot10 = prsdot9 * prsdot;
+  const double prsdot11 = prsdot10 * prsdot;
+  const double prsdot12 = prsdot11 * prsdot;
+
+/* ==================================================================== */
+    /* (2,2) MODE                                                           */
+    /* ==================================================================== */
+    const double h22_1PN = (0.9761904761904762 + 0.07142857142857142 * nu) * prstar2 
+        + (0.47619047619047616 - 0.42857142857142855 * nu) * prstar4 * r 
+        + (-0.20833333333333334 + 0.25 * nu) * prstar6 * r2 
+        + (-0.03720238095238095 + 0.017857142857142856 * nu) * prsdot5 * r9 
+        + (0.018601190476190476 - 0.008928571428571428 * nu) * prsdot6 * r11 
+        + prsdot * ((1.5952380952380953 - 0.6190476190476191 * nu) * r 
+        + (0.7738095238095238 - 0.5714285714285714 * nu) * prstar2 * r2 
+        + (-0.7440476190476191 + 0.8571428571428571 * nu) * prstar4 * r3) 
+        + prsdot2 * ((0.2976190476190476 - 0.14285714285714285 * nu) * r3 
+        + (-0.6845238095238095 + 0.6785714285714286 * nu) * prstar2 * r4 
+        + (0.1636904761904762 - 0.42857142857142855 * nu) * prstar4 * r5) 
+        + prsdot3 * ((-0.1488095238095238 + 0.07142857142857142 * nu) * r5 
+        + (0.34226190476190477 - 0.4642857142857143 * nu) * prstar2 * r6) 
+        + prsdot4 * ((0.0744047619047619 - 0.03571428571428571 * nu) * r7 
+        + (-0.09672619047619048 + 0.25892857142857145 * nu) * prstar2 * r8);
+
+    const double h22_2PN = (0.49966931216931215 + 1.46494708994709 * nu + 0.12632275132275134 * nu2) * prstar4 
+        + ((0.7956349206349206 - 3.7261904761904763 * nu + 0.6428571428571429 * nu2) * prstar2) * inv_r 
+        + (-0.5702239229024944 + 1.6802721088435375 * nu - 0.4192176870748299 * nu2) * prstar6 * r 
+        + (-0.02657312925170068 - 0.004251700680272109 * nu + 0.03316326530612245 * nu2) * prstar8 * r2 
+        + (0.09964923469387756 - 0.2072704081632653 * nu + 0.10778061224489796 * nu2) * prstar10 * r3 
+        + (-0.008714982982125141 + 0.0257686692841199 * nu - 0.01829559948979592 * nu2) * prsdot9 * prstar2 * r17 
+        + (0.0018273351414133361 - 0.006477200255102041 * nu + 0.005739795918367347 * nu2) * prsdot10 * prstar2 * r19 
+        + prsdot * (10.469812925170068 + 2.8378684807256236 * nu - 1.2925170068027212 * nu2 
+        + (-0.9888274754346182 + 1.131708238851096 * nu + 0.259448223733938 * nu2) * prstar2 * r 
+        + (-1.9657147581254724 + 3.777588813303099 * nu - 0.8714096749811036 * nu2) * prstar4 * r2 
+        + (0.1576672335600907 - 0.8715986394557823 * nu + 0.7270408163265306 * nu2) * prstar6 * r3 
+        + (0.42782738095238093 - 0.8333333333333334 * nu + 0.38392857142857145 * nu2) * prstar8 * r4 
+        + (-0.11957908163265306 + 0.3156887755102041 * nu - 0.1989795918367347 * nu2) * prstar10 * r5) 
+        + prsdot2 * ((6.683224678760393 + 0.42280801209372637 * nu - 0.6702569916855631 * nu2) * r2 
+        + (-1.9680650037792895 + 2.567649281934996 * nu - 0.39049508692365836 * nu2) * prstar2 * r3 
+        + (3.7257948318216174 - 6.758952191987906 * nu + 0.9920162509448224 * nu2) * prstar4 * r4 
+        + (0.8534403344671202 - 1.56781462585034 * nu + 0.6396683673469388 * nu2) * prstar6 * r5 
+        + (-0.5161830357142857 + 1.2611607142857142 * nu - 0.7433035714285714 * nu2) * prstar8 * r6 
+        + (0.03587372448979592 - 0.11479591836734694 * nu + 0.09183673469387756 * nu2) * prstar10 * r7) 
+        + prsdot3 * ((-0.7256353930461074 + 0.7279856386999244 * nu + 0.04128873771730915 * nu2) * r4 
+        + (2.79703443877551 - 3.815192743764172 * nu + 0.6364795918367347 * nu2) * prstar2 * r5 
+        + (0.6643282312925171 - 0.5782312925170068 * nu - 0.15051020408163265 * nu2) * prstar4 * r6 
+        + (-0.8348391439909297 + 1.8505527210884354 * nu - 0.9521683673469388 * nu2) * prstar6 * r7 
+        + (0.20959555697278912 - 0.6818664965986394 * nu + 0.5049426020408163 * nu2) * prstar8 * r8) 
+        + prsdot4 * ((0.6232343631897204 - 0.6005999622071051 * nu + 0.032927059712774 * nu2) * r6 
+        + (-1.965230536659108 + 3.1781226379440666 * nu - 0.7087348828420257 * nu2) * prstar2 * r7 
+        + (-0.6612833935657596 + 1.3946906887755102 * nu - 0.6241230867346939 * nu2) * prstar4 * r8 
+        + (0.42522542871315194 - 1.2488042091836735 * nu + 0.8266103316326531 * nu2) * prstar6 * r9 
+        + (-0.02889827806122449 + 0.14548788265306123 * nu - 0.15880102040816327 * nu2) * prstar8 * r10) 
+        + prsdot5 * ((-0.4418255149281935 + 0.41860355253212395 * nu - 0.04324924414210129 * nu2) * r8 
+        + (-0.1328656462585034 + 0.09034863945578231 * nu + 0.04974489795918367 * nu2) * prstar2 * r9 
+        + (0.3721622112386621 - 0.9143813775510204 * nu + 0.49182876275510207 * nu2) * prstar4 * r10 
+        + (-0.13062353847789115 + 0.49053996598639454 * nu - 0.41075414540816324 * nu2) * prstar6 * r11) 
+        + prsdot6 * ((0.018435108418367346 + 0.058536174886621314 * nu - 0.020886479591836735 * nu2) * prstar * r11 
+        + (-0.39402968218537415 + 0.9242134353741497 * nu - 0.4680723852040816 * nu2) * prstar3 * r12 
+        + (0.18206745588860543 - 0.6627172353316326 * nu + 0.5499840561224489 * nu2) * prstar5 * r13) 
+        + prsdot7 * ((-0.07439092173327665 + 0.1679089604591837 * nu - 0.08591757015306123 * nu2) * prstar2 * r13 
+        + (0.051987144141510774 - 0.183371200042517 * nu + 0.14649932238520408 * nu2) * prstar4 * r14) 
+        + prsdot8 * ((0.028383164178757442 - 0.07269723074776786 * nu + 0.043278285435267856 * nu2) * prstar2 * r15 
+        + (-0.0065221808124291385 + 0.033959628773384355 * nu - 0.03970025510204082 * nu2) * prstar4 * r16);
+
+    const double h22_15log = -0.75 * prstar2 - 4.5 * inv_r + 1.125 * prstar4 * r 
+        + 1.21875 * prsdot4 * r7 - 0.796875 * prsdot5 * r9 
+        + prsdot * (-0.75 * r + 3.0 * prstar2 * r2 - 0.5625 * prstar4 * r3) 
+        + prsdot2 * (1.875 * r3 - 2.4375 * prstar2 * r4) 
+        + prsdot3 * (-1.6875 * r5 + 0.75 * prstar2 * r6);
+
+    const double h22_15pi = -0.5 * prstar2 - 0.3125 * prstar4 * r 
+        + 0.17135416666666667 * prstar6 * r2 
+        - 0.06041666666666667 * prsdot5 * r9 
+        + 0.04861111111111111 * prsdot6 * r11 
+        + prsdot * (-1.0 * r - 0.3125 * prstar2 * r2 + 0.5989583333333334 * prstar4 * r3) 
+        + prsdot2 * (0.25 * prstar2 * r4 - 0.6484375 * prstar4 * r5) 
+        + prsdot3 * (-0.020833333333333332 * r5 - 0.2630208333333333 * prstar2 * r6) 
+        + prsdot4 * (0.0625 * r7 + 0.3346354166666667 * prstar2 * r8);
+
+    const double h22_15pr = (0.2049702045998174 + 0.051587301587301584 * nu) * prstar2 
+        + 8.154029808364411 * inv_r 
+        + (-1.2644730396186787 + 0.007936507936507936 * nu) * prstar4 * r 
+        + (-0.3667627333236396 - 0.9761904761904762 * nu) * prsdot4 * r7 
+        + (0.016500668159096676 + 1.3874007936507937 * nu) * prsdot5 * r9 
+        + prsdot * ((0.9876537861020838 + 0.10317460317460317 * nu) * r 
+        + (-2.5822643451565455 - 0.1388888888888889 * nu) * prstar2 * r2 
+        + (0.4401602607831592 - 0.06746031746031746 * nu) * prstar4 * r3) 
+        + prsdot2 * ((-2.173285634640706 - 0.30952380952380953 * nu) * r3 
+        + (0.8534565777918033 + 0.22123015873015872 * nu) * prstar2 * r4) 
+        + prsdot3 * ((1.1740760047364347 + 0.6091269841269841 * nu) * r5 
+        + (0.5579170249111485 - 0.23809523809523808 * nu) * prstar2 * r6);
+
+    const double h22_15PN = h22_15pr * prstar + h22_15pi * inv_sqrt_r * M_PI + h22_15log * prstar * logr;
+
+    if (use_pade_nc) {
+      hathlm_nc[1] = 1.0 / (1.0 - h22_1PN - h22_15PN + (h22_1PN * h22_1PN - h22_2PN));
+    } else {
+      hathlm_nc[1] = 1.0 + h22_1PN + h22_15PN + h22_2PN;
+    }
+
+    /* ==================================================================== */
+    /* (2,1) MODE                                                           */
+    /* ==================================================================== */
+    const double h21_1PN = (0.14285714285714285 + 0.21428571428571427 * nu) * prstar2 
+        + (2.2857142857142856 - 0.23809523809523808 * nu) * prsdot * r;
+
+    const double h21_15r = -0.25 * prstar2 - 0.109375 * prstar4 * r + 0.04609375 * prstar6 * r2 
+        - 0.0515625 * prsdot5 * r9 + 0.02795138888888889 * prsdot6 * r11 
+        + prsdot * (-0.375 * prstar2 * r2 + 0.20572916666666666 * prstar4 * r3) 
+        + prsdot2 * (0.25 * r3 + 0.5625 * prstar2 * r4 - 0.09440104166666667 * prstar4 * r5) 
+        + prsdot3 * (-0.20833333333333334 * r5 - 0.5 * prstar2 * r6) 
+        + prsdot4 * (0.109375 * r7 + 0.3170572916666667 * prstar2 * r8);
+
+    const double h21_15pr = -0.0576881498546129 * prstar2 + 0.061678492418195674 * prstar4 * r 
+        + 0.6712833748078992 * prsdot4 * r7 - 0.2781523882658803 * prsdot5 * r9 
+        + prsdot * (-0.3224444202984884 * r + 0.19268177274489062 * prstar2 * r2 
+        + 0.22783216313109733 * prstar4 * r3) 
+        + prsdot2 * (1.7509086331479011 * r3 + 0.5252372514423769 * prstar2 * r4) 
+        + prsdot3 * (-1.3335257992741845 * r5 - 1.0375821246416308 * prstar2 * r6) 
+        + 6.7325508818985895 * inv_r;
+
+    const double h21_15log = -6.0 * inv_r;
+
+    const double h21_15PN = h21_15r * M_PI * inv_sqrt_r + h21_15pr * prstar + h21_15log * prstar * logr;
+    hathlm_nc[0] = 1.0 + h21_1PN + h21_15PN;
+
+    /* ==================================================================== */
+    /* (3,3) MODE                                                           */
+    /* ==================================================================== */
+    const double h33_1PN = (1.615912208504801 - 0.05486968449931413 * nu) * prstar2 
+        + (0.038882961608155936 - 0.04382800724821758 * nu) * prstar4 * r 
+        + (0.22355612173108377 - 0.1881082649709835 * nu) * prstar6 * r2 
+        + (-0.003296697093374429 + 0.0011741660880511665 * nu) * prsdot5 * r9 
+        + (0.0007325993540832065 - 0.0002609257973447037 * nu) * prsdot6 * r11 
+        + prsdot * ((2.4814814814814814 - 1.1851851851851851 * nu) * r 
+        + (0.3513183965858863 - 0.22709952751105014 * nu) * prstar2 * r2 
+        + (0.603845017603083 - 0.4537625060919274 * nu) * prstar4 * r3) 
+        + prsdot2 * ((0.3004115226337449 - 0.10699588477366255 * nu) * r3 
+        + (0.2976172331453539 - 0.1684702535182645 * nu) * prstar2 * r4 
+        + (-0.7848827788764677 + 0.7558401486608004 * nu) * prstar4 * r5) 
+        + prsdot3 * ((-0.06675811614083219 + 0.02377686328303612 * nu) * r5 
+        + (-0.4285329886102126 + 0.33921357215570497 * nu) * prstar2 * r6) 
+        + prsdot4 * ((0.01483513692018493 - 0.005283747396230249 * nu) * r7 
+        + (0.40174126154695966 - 0.376713292517681 * nu) * prstar2 * r8);
+
+    const double h33_15r = -0.691358024691358 * prstar2 - 0.062302335771985975 * prstar4 * r 
+        - 0.19839469847664182 * prstar6 * r2 - 0.05743807579298549 * prsdot5 * r9 
+        + 0.04809387795399678 * prsdot6 * r11 
+        + prsdot * (-1.1111111111111112 * r - 0.024691358024691357 * prstar2 * r2 
+        - 0.4187942693779742 * prstar4 * r3) 
+        + prsdot2 * (0.13580246913580246 * r3 - 0.15567844078646548 * prstar2 * r4 
+        + 0.9468203843418178 * prstar4 * r5) 
+        + prsdot3 * (-0.1135116598079561 * r5 + 0.3403606009415909 * prstar2 * r6) 
+        + prsdot4 * (0.07904425773510136 * r7 - 0.541934794531519 * prstar2 * r8);
+
+    const double h33_15pr = (-0.47145482430278207 - 0.03689986282578875 * nu) * prstar2 
+        + 10.222501253264294 * inv_r 
+        + (0.14976539232520736 + 0.018246286981998 * nu) * prstar4 * r 
+        + (-0.10703380946142715 + 0.9092131111449813 * nu) * prsdot4 * r7 
+        + (0.129584336442349 - 1.6810373588037053 * nu) * prsdot5 * r9 
+        + prsdot * (1.6736067794353175 * r 
+        + (0.5403267973288166 + 0.20499923792104863 * nu) * prstar2 * r2 
+        + (-1.1095569744356908 - 0.05234677979305323 * nu) * prstar4 * r3) 
+        + prsdot2 * ((-0.5187691371854726 + 0.11069958847736626 * nu) * r3 
+        + (-0.8471621154458262 - 0.5362351606293079 * nu) * prstar2 * r4) 
+        + prsdot3 * ((-0.0049913411639863625 - 0.39769852156683433 * nu) * r5 
+        + (0.8333538080914877 + 1.0599756134735558 * nu) * prstar2 * r6);
+
+    const double h33_15log = -0.13991769547325103 * prstar2 - 6.666666666666667 * inv_r 
+        - 0.49118528679571205 * prstar4 * r - 0.859218615048519 * prsdot4 * r7 
+        + 0.9453843418178123 * prsdot5 * r9 
+        + prsdot * (-0.8148148148148148 * r - 0.9401005944215821 * prstar2 * r2 
+        + 1.543328422157869 * prstar4 * r3) 
+        + prsdot2 * (0.09876543209876543 * r3 + 2.303713864756389 * prstar2 * r4) 
+        + prsdot3 * (0.5889346136259717 * r5 - 2.6629183672317343 * prstar2 * r6);
+
+    const double h33_15PN = h33_15r * M_PI * inv_sqrt_r + h33_15pr * prstar + h33_15log * prstar * logr;
+
+    if (use_pade_nc) {
+        hathlm_nc[4] = 1.0 / (1.0 - h33_1PN - h33_15PN + h33_1PN * h33_1PN);
+    } else {
+        hathlm_nc[4] = 1.0 + h33_1PN + h33_15PN;
+    }
+
+    /* ==================================================================== */
+    /* (3,2) MODE                                                           */
+    /* ==================================================================== */
+    const double h32_1PN = 1.0 / (one_minus_3nu) * ((0.7159722222222222 - 2.236111111111111 * nu + 0.7777777777777778 * nu2) * prstar2 
+        + (-0.023914930555555554 + 0.1293402777777778 * nu - 0.13194444444444445 * nu2) * prstar4 * r 
+        + (0.0014946831597222221 - 0.008083767361111112 * nu + 0.008246527777777778 * nu2) * prstar6 * r2 
+        + (-0.06493055555555556 + 0.3871527777777778 * nu - 0.4600694444444444 * nu2) * prsdot3 * prstar2 * r6 
+        + (0.06493055555555556 - 0.3871527777777778 * nu + 0.4600694444444444 * nu2) * prsdot4 * prstar2 * r8 
+        + prsdot * ((2.9277777777777776 - 8.972222222222221 * nu + 2.4722222222222223 * nu2) * r 
+        + (-0.06493055555555556 + 0.3871527777777778 * nu - 0.4600694444444444 * nu2) * prstar2 * r2 
+        + (0.02797309027777778 - 0.1535373263888889 * nu + 0.1606987847222222 * nu2) * prstar4 * r3) 
+        + prsdot2 * ((0.06493055555555556 - 0.3871527777777778 * nu + 0.4600694444444444 * nu2) * prstar2 * r4 
+        + (-0.03203125 + 0.177734375 * nu - 0.189453125 * nu2) * prstar4 * r5));
+
+    hathlm_nc[3] = 1.0 + h32_1PN;
+
+    /* ==================================================================== */
+    /* (3,1) MODE                                                           */
+    /* ==================================================================== */
+    const double h31_1PN = (18.0 + 88.0 * nu) * prstar2 + (-456.0 - 2172.0 * nu) * prstar4 * r 
+        + (11646.0 + 55260.0 * nu) * prstar6 * r2 + (-3672.0 - 18576.0 * nu) * prsdot5 * r9 
+        + (-22032.0 - 111456.0 * nu) * prsdot6 * r11 
+        + prsdot * ((-0.3333333333333333 - 13.333333333333334 * nu) * r 
+        + (225.0 + 1326.0 * nu) * prstar2 * r2 + (-10100.0 - 55196.0 * nu) * prstar4 * r3) 
+        + prsdot2 * ((-17.0 - 86.0 * nu) * r3 + (2582.0 + 14468.0 * nu) * prstar2 * r4 
+        + (-161638.0 - 897256.0 * nu) * prstar4 * r5) 
+        + prsdot3 * ((-102.0 - 516.0 * nu) * r5 + (24916.0 + 137104.0 * nu) * prstar2 * r6) 
+        + prsdot4 * ((-612.0 - 3096.0 * nu) * r7 + (219308.0 + 1190576.0 * nu) * prstar2 * r8);
+
+    const double h31_15log = -342.0 * prstar2 + 12.0 * inv_r + 8532.0 * prstar4 * r 
+        + 82512.0 * prsdot4 * r7 + 578448.0 * prsdot5 * r9 
+        + prsdot * (198.0 * r - 8856.0 * prstar2 * r2 + 308124.0 * prstar4 * r3) 
+        + prsdot2 * (1512.0 * r3 - 124416.0 * prstar2 * r4) 
+        + prsdot3 * (11448.0 * r5 - 1421712.0 * prstar2 * r6);
+
+    const double h31_15r = 26.75 * prstar2 - 648.484375 * prstar4 * r + 16502.03671875 * prstar6 * r2 
+        - 6459.2859375 * prsdot5 * r9 - 38755.55954861111 * prsdot6 * r11 
+        + prsdot * (-6.0 * r + 455.625 * prstar2 * r2 - 18014.263020833332 * prstar4 * r3) 
+        + prsdot2 * (-29.75 * r3 + 4992.1875 * prstar2 * r4 - 300341.2350260417 * prstar4 * r5) 
+        + prsdot3 * (-179.45833333333334 * r5 + 47523.0625 * prstar2 * r6) 
+        + prsdot4 * (-1076.515625 * r7 + 413439.1529947917 * prstar2 * r8);
+
+    const double h31_15pr = (398.5137717133312 + 779.0333333333333 * nu) * prstar2 
+        + (-9.865101763797178 - 27.377777777777776 * nu) * inv_r 
+        + (-9993.993861385963 - 19432.227777777778 * nu) * prstar4 * r 
+        + (-68887.43153587298 + 54226.572222222225 * nu) * prsdot4 * r7 
+        + (-484735.7168770415 + 429204.68333333335 * nu) * prsdot5 * r9 
+        + prsdot * ((-156.71649095279886 + 82.13333333333334 * nu) * r 
+        + (8188.733878526606 + 6326.733333333334 * nu) * prstar2 * r2 
+        + (-306046.73086769215 - 350798.1722222222 * nu) * prstar4 * r3) 
+        + prsdot2 * ((-1250.9109683456654 + 450.5 * nu) * r3 
+        + (110006.30285610548 + 44202.311111111114 * nu) * prstar2 * r4) 
+        + prsdot3 * ((-9499.24701482791 + 6642.811111111111 * nu) * r5 
+        + (1228974.3459215597 + 142702.11111111112 * nu) * prstar2 * r6);
+
+    const double h31_15PN = h31_15r * M_PI * inv_sqrt_r + h31_15pr * prstar + h31_15log * prstar * logr;
+    hathlm_nc[2] = 1.0 + h31_1PN + h31_15PN;
+
+    /* ==================================================================== */
+    /* (4,4) MODE                                                           */
+    /* ==================================================================== */
+    const double h44_05PN = 1.0 / one_minus_3nu * (-0.0009918212890625 * nu * prstar5 * r2 + 
+        0.012410481770833334 * nu * prsdot2 * prstar3 * r5 - 
+        0.010706583658854166 * nu * prsdot4 * prstar * r8 + 
+        0.02265453338623047 * nu * prsdot5 * prstar * r10 + 
+        prsdot * (-0.0032552083333333335 * nu * prstar3 * r3 + 
+        0.0037360191345214844 * nu * prstar5 * r4) + 
+        prsdot3 * (0.0032552083333333335 * nu * prstar * r6 - 
+        0.027232964833577473 * nu * prstar3 * r7));
+
+    const double h44_1PN = 1.0 / (one_minus_3nu * one_minus_3nu) * ((2.197878196022727 - 13.283709161931819 * nu + 
+        20.610884232954547 * nu2 - 1.6219815340909092 * nu3) * prstar2 + 
+        (0.10550591728904031 - 0.7359335725957697 * nu + 
+        1.5141586823896929 * nu2 - 0.7677336606112394 * nu3) * prstar4 * r + 
+        (-0.01794772052460096 + 0.11635451380332762 * nu - 
+        0.20179019724442201 * nu2 + 0.04276842166754333 * nu3) * prstar6 * r2 + 
+        3.311369154188368e-7 * nu2 * prstar8 * r3 - 
+        4.2491592466831207e-7 * nu2 * prstar10 * r4 + 
+        1.3631336059916066e-7 * nu2 * prstar12 * r5 - 
+        0.000017794402790766777 * nu2 * prsdot11 * r21 + 
+        0.000019690169988311685 * nu2 * prsdot12 * r23 + 
+        prsdot * ((3.3066051136363637 - 21.279663825757577 * nu + 
+        39.33522727272727 * nu2 - 15.767045454545455 * nu3) * r + 
+        (0.40538822520862927 - 2.750014218417081 * nu + 
+        5.3274452903053975 * nu2 - 2.1776899857954546 * nu3) * prstar2 * r2 + 
+        (-0.010787284035574307 + 0.05686913085254756 * nu - 
+        0.03880200602791526 * nu2 - 0.10415949062867598 * nu3) * prstar4 * r3 + 
+        (-4.211647642983331e-6 * nu2 * prstar8 * r5 + 
+        2.702199708437547e-6 * nu2 * prstar10 * r6)) + 
+        prsdot2 * ((0.3099043412642045 - 2.028612171519886 * nu + 
+        3.607510653409091 * nu2 - 0.9324396306818182 * nu3) * r3 + 
+        (-0.07084073261781172 + 0.4695031155239452 * nu - 
+        0.8611582192507657 * nu2 + 0.27064639871770685 * nu3) * prstar2 * r4 + 
+        (0.40130784067600456 - 2.7511058707964944 * nu + 
+        5.45546997376633 * nu2 - 2.4417687823826615 * nu3) * prstar4 * r5 + 
+        (-3.973642985026042e-6 * nu2 * prstar6 * r6 + 
+        0.000026621839626588757 * nu2 * prstar8 * r7 - 
+        6.852702938431321e-6 * nu2 * prstar10 * r8)) + 
+        prsdot3 * ((-0.10539722442626953 + 0.6958608627319336 * nu - 
+        1.2643890380859375 * nu2 + 0.3761444091796875 * nu3) * r5 + 
+        (0.20046891289001162 - 1.3360806735740467 * nu + 
+        2.4840217490087855 * nu2 - 0.8399998328902505 * nu3) * prstar2 * r6 + 
+        0.000038370490074157715 * nu2 * prstar6 * r8 - 
+        0.00007632744048654179 * nu2 * prstar8 * r9) + 
+        prsdot4 * ((0.07469686080108989 - 0.4948056456717578 * nu + 
+        0.9064288356087424 * nu2 - 0.2828509374098344 * nu3) * r7 + 
+        (-0.28750662535048005 + 1.9530410060796632 * nu - 
+        3.7953084738745186 * nu2 + 1.5712352513695473 * nu3) * prstar2 * r8 + 
+        0.000012583202785915799 * nu2 * prstar4 * r9 - 
+        0.0001752467748398582 * nu2 * prstar6 * r10 + 
+        0.00010372111081125013 * nu2 * prstar8 * r11) + 
+        prsdot5 * ((-0.0636487325611101 + 0.4218373515770178 * nu - 
+        0.7737294127317992 * nu2 + 0.24316785315221007 * nu3) * r9 + 
+        (-0.00008512288331985474 * nu2 * prstar4 * r11 + 
+        0.0003871718642282455 * nu2 * prstar6 * r12)) + 
+        prsdot6 * ((0.05565139041474057 - 0.3688581136768996 * nu + 
+        0.6766621873195452 * nu2 - 0.2128510800645348 * nu3) * r11 + 
+        (-3.973642985026042e-6 * nu2 * prstar2 * r12 + 
+        0.00032459453602011007 * nu2 * prstar4 * r13 - 
+        0.0004455888522159057 * nu2 * prstar6 * r14)) + 
+        prsdot7 * (0.000026946266492207844 * nu2 * prstar2 * r14 - 
+        0.0006122221192425867 * nu2 * prstar4 * r15) + 
+        prsdot8 * (3.311369154188368e-7 * nu2 * r15 - 
+        0.00010371538034329812 * nu2 * prstar2 * r16 + 
+        0.0006502610907214527 * nu2 * prstar4 * r17) + 
+        prsdot9 * (-2.307610379325019e-6 * nu2 * r17 + 
+        0.00019658527889987454 * nu2 * prstar2 * r18) + 
+        prsdot10 * (9.127203763152162e-6 * nu2 * r19 - 
+        0.00021149056668908392 * nu2 * prstar2 * r20));
+    
+    hathlm_nc[8] = 1.0 + h44_05PN + h44_1PN;
+
+    /* ==================================================================== */
+    /* (4,2) MODE                                                           */
+    /* ==================================================================== */
+    const double h42_05PN = 1.0 / one_minus_3nu * (0.203125 * nu * prstar3 * r - 
+        1.1595703125 * nu * prstar5 * r2 - 
+        1.2551432291666667 * nu * prsdot4 * prstar * r8 - 
+        2.640266927083333 * nu * prsdot5 * prstar * r10 + 
+        prsdot * (0.10833333333333334 * nu * prstar * r2 - 
+        0.4708333333333333 * nu * prstar3 * r3 - 
+        5.09013671875 * nu * prstar5 * r4) + 
+        prsdot2 * (-0.17604166666666668 * nu * prstar * r4 - 
+        1.4772135416666667 * nu * prstar3 * r5) + 
+        prsdot3 * (0.21979166666666666 * nu * prstar * r6 - 
+        8.279622395833334 * nu * prstar3 * r7));
+
+    const double h42_1PN = 1.0 / (one_minus_3nu * one_minus_3nu) * ((10.48465909090909 - 36.346022727272725 * nu - 
+        63.49431818181818 * nu2 + 234.51136363636363 * nu3) * prstar2 + 
+        (-44.33767755681818 + 124.01196732954546 * nu + 
+        446.85338462752526 * nu2 - 1259.5461647727273 * nu3) * prstar4 * r + 
+        (205.9494074041193 - 535.065840287642 * nu - 
+        2316.1515177162246 * nu2 + 6203.330300071023 * nu3) * prstar6 * r2 + 
+        0.2697849867078993 * nu2 * prstar8 * r3 - 
+        1.316466916402181 * nu2 * prstar10 * r4 + 
+        3.336343060731888 * nu2 * prstar12 * r5 + 
+        0.4248731475406223 * nu2 * prsdot11 * r21 + 
+        1.2418254122469161 * nu2 * prsdot12 * r23 + 
+        prsdot * ((1.0738636363636365 - 13.320075757575758 * nu + 
+        51.72727272727273 * nu2 - 64.29545454545455 * nu3) * r + 
+        (67.38771306818182 - 199.26967329545454 * nu - 
+        614.2926136363636 * nu2 + 1816.8366477272727 * nu3) * prstar2 * r2 + 
+        (-668.9542569247159 + 2007.9970925071023 * nu + 
+        5931.165564630682 * nu2 - 17803.765003551136 * nu3) * prstar4 * r3 + 
+        0.16049696180555556 * nu2 * prstar6 * r4 - 
+        0.7013604058159723 * nu2 * prstar8 * r5 - 
+        1.2322116883595784 * nu2 * prstar10 * r6) + 
+        prsdot2 * ((-6.5599431818181815 + 18.026420454545455 * nu + 
+        67.36363636363636 * nu2 - 187.21022727272728 * nu3) * r3 + 
+        (341.07320667613635 - 973.5299893465909 * nu - 
+        3308.1325505050504 * nu2 + 9477.182173295454 * nu3) * prstar2 * r4 + 
+        (-5422.097810502486 + 15846.895948375355 * nu + 
+        50522.80143589212 * nu2 - 147793.56012517755 * nu3) * prstar4 * r5 + 
+        0.2397430419921875 * nu2 * prstar6 * r6 - 
+        1.5927527978685168 * nu2 * prstar8 * r7 + 
+        7.319988262653351 * nu2 * prstar10 * r8) + 
+        prsdot3 * ((-19.17634943181818 + 56.29751420454546 * nu + 
+        176.11363636363637 * nu2 - 517.2571022727273 * nu3) * r5 + 
+        (1530.5881480823864 - 4414.955672940341 * nu - 
+        14561.976265782829 * nu2 + 42094.711470170456 * nu3) * prstar2 * r6 - 
+        0.03295138888888889 * nu2 * prstar4 * r7 - 
+        0.1150783962673611 * nu2 * prstar6 * r8 - 
+        5.597132927576701 * nu2 * prstar8 * r9) + 
+        prsdot4 * ((-52.986700994318184 + 153.70903764204544 * nu + 
+        497.30260337752526 * nu2 - 1444.6438210227273 * nu3) * r7 + 
+        (6228.217569247159 - 17973.20905983665 * nu - 
+        59174.42801935369 * nu2 + 171120.24476207385 * nu3) * prstar2 * r8 + 
+        0.5694951714409722 * nu2 * prstar4 * r9 - 
+        0.00985897488064236 * nu2 * prstar6 * r10 + 
+        2.703157685995102 * nu2 * prstar8 * r11) + 
+        prsdot5 * ((-147.98460138494318 + 430.29160600142046 * nu + 
+        1383.097277856692 * nu2 - 4026.3342507102275 * nu3) * r9 + 
+        0.18130316840277777 * nu2 * prstar2 * r10 + 
+        0.669615241156684 * nu2 * prstar4 * r11 - 
+        5.111372426350911 * nu2 * prstar6 * r12) + 
+        prsdot6 * ((-412.4454046075994 + 1198.7196699662643 * nu + 
+        3857.9383602134626 * nu2 - 11226.217795632103 * nu3) * r11 + 
+        0.048532240125868056 * nu2 * prstar2 * r12 + 
+        1.4948234515719943 * nu2 * prstar4 * r13 - 
+        5.510095664660136 * nu2 * prstar6 * r14) + 
+        prsdot7 * (0.01059353298611111 * nu2 * r13 + 
+        1.083341064453125 * nu2 * prstar2 * r14 + 
+        0.822460551791721 * nu2 * prstar4 * r15) + 
+        prsdot8 * (0.1255494859483507 * nu2 * r15 + 
+        0.7535118314954969 * nu2 * prstar2 * r16 - 
+        4.336900507211685 * nu2 * prstar4 * r17) + 
+        prsdot9 * (0.058484666612413194 * nu2 * r17 + 
+        2.726991877026028 * nu2 * prstar2 * r18) + 
+        prsdot10 * (0.5029730881585015 * nu2 * r19 + 
+        0.8003692841529846 * nu2 * prstar2 * r20));
+
+    hathlm_nc[6] = 1.0 + h42_05PN + h42_1PN;
+
+    /* ==================================================================== */
+    /* (5,5) MODE                                                           */
+    /* ==================================================================== */
+    const double h55_05PN = 1.0 / one_minus_2nu * (0.0006666666666666666 * nu * prstar5 * r2 + 
+        -0.0055808 * nu * prsdot * prstar5 * r4 - 
+        0.006666666666666667 * nu * prsdot2 * prstar3 * r5 + 
+        0.027232 * nu * prsdot3 * prstar3 * r7 + 
+        0.0033333333333333335 * nu * prsdot4 * prstar * r8 - 
+        0.013425066666666667 * nu * prsdot5 * prstar * r10);
+
+    hathlm_nc[13] = 1.0 + h55_05PN;
+
+    /* ==================================================================== */
+    /* (5,3) MODE                                                           */
+    /* ==================================================================== */
+    const double h53_05PN = 1.0 / one_minus_2nu * (-0.0283493369913123 * nu * prstar3 * r + 
+        0.1732528109787193 * nu * prstar5 * r2 + 
+        0.4332591964437895 * nu * prsdot4 * prstar * r8 - 
+        0.8164551896823746 * nu * prsdot5 * prstar * r10 + 
+        prsdot * (0.28034344358075497 * nu * prstar3 * r3 - 
+        0.4295113723991142 * nu * prstar5 * r4) + 
+        prsdot2 * (0.0850480109739369 * nu * prstar * r4 - 
+        0.5388446079319259 * nu * prstar3 * r5) + 
+        prsdot3 * (-0.20742848218334678 * nu * prstar * r6 + 
+        0.7995793097535746 * nu * prstar3 * r7));
+
+    hathlm_nc[11] = 1.0 + h53_05PN;
+
+    /* ==================================================================== */
+    /* (5,1) MODE                                                           */
+    /* ==================================================================== */
+    const double h51_05PN = 1.0 / one_minus_2nu * (-57.333333333333336 * nu * prstar + 
+        134287.33333333334 * nu * prstar3 * r - 
+        2.937786391666667e8 * nu * prstar5 * r2 + 
+        9.191392728333334e8 * nu * prsdot4 * prstar * r8 + 
+        5.9288995653e10 * nu * prsdot5 * prstar * r10 + 
+        prsdot * (114.66666666666667 * nu * prstar * r2 + 
+        1.2823046e7 * nu * prstar3 * r3 - 
+        5.6660625866666664e10 * nu * prstar5 * r4) + 
+        prsdot2 * (133255.33333333334 * nu * prstar * r4 + 
+        6.38113319e8 * nu * prstar3 * r5) + 
+        prsdot3 * (1.2704468e7 * nu * prstar * r6 + 
+        3.840799161e9 * nu * prstar3 * r7));
+
+    hathlm_nc[9] = 1.0 + h51_05PN;
 }
 
 /** Calculate tidal correction to multipolar waveform amplitude
@@ -8971,16 +9941,19 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   eob_wav_hlmNewt_ecc(dyn, &hNewt);
 
   /** Compute corrections */
-  double rholm[KMAX], flm[KMAX];
+  double rholm[KMAX], flm[KMAX], hathlm_nc[KMAX];
   double x = SQ(rw*Omega);
   if (usespins){
     /* eob_wav_flm_s_old(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); */ 
     eob_wav_flm_s(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
   } else {
     /* eob_wav_flm_old(x, nu, rholm,flm); */
-    eob_wav_flm(x, nu, rholm,flm);
+    eob_wav_flm(x, nu, rholm, flm);
   }
   
+  /* Non-circ correction piece */
+  eob_wav_hathlm_nc(r, prstar, dyn->prsdot, hathlm_nc);
+
   /** Computing the tail */
 #define RTAIL (1.213061319425267e+00)
   const double Hreal = H * nu;
@@ -8992,13 +9965,14 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   }
   
   /** Residual phase corrections delta_{lm} */
-  double dlm[KMAX];
+  double dlm[KMAX], dlm_nc[KMAX];
   eob_wav_deltalm(Hreal, Omega, nu, dlm); 
+  eob_wav_deltalm_nc(r, prstar, dyn->prsdot, dlm_nc);
 
   /** Point-mass h_lm */
   for (int k = 0; k < KMAX; k++) {
-    hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
-    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */    
+    hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k] * hathlm_nc[k];
+    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k] - dlm_nc[k]); /* Minus sign by convention */    
   }
   
   /** NQC */
@@ -9012,8 +9986,8 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
     
     for (int k = 0; k < maxk; k++) {
       if (NQC->hlm->activemode[k]) {
-	hlm->ampli[k] *= hNQC.ampli[k];
-	hlm->phase[k] -= hNQC.phase[k];
+        hlm->ampli[k] *= hNQC.ampli[k];
+        hlm->phase[k] -= hNQC.phase[k];
       }
     }
     
@@ -9044,8 +10018,8 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
 
 
 /** 
- * Function: eob_wav_hlm_ecc
- * -------------------------
+ * Function: eob_wav_hlm_ecc_sigmoid
+ * ---------------------------------
  *   Main routine for factorized EOB waveform,
  *   generic case with sigmoid
  * 
@@ -9100,7 +10074,7 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
   eob_wav_hlmNewt_ecc_sigmoid(dyn, &hNewt);
 
   /** Compute corrections */
-  double rholm[KMAX], flm[KMAX];
+  double rholm[KMAX], flm[KMAX], hathlm_nc[KMAX];
   double x = SQ(rw*Omega);
   if (usespins){
     /* eob_wav_flm_s_old(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); */ 
@@ -9110,6 +10084,9 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
     eob_wav_flm(x, nu, rholm,flm);
   }
   
+  /* Non-circ correction piece */
+  eob_wav_hathlm_nc(r, prstar, dyn->prsdot, hathlm_nc);
+
   /** Computing the tail */
 #define RTAIL (1.213061319425267e+00)
   const double Hreal = H * nu;
@@ -9121,13 +10098,17 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
   }
   
   /** Residual phase corrections delta_{lm} */
-  double dlm[KMAX];
+  double dlm[KMAX], dlm_nc[KMAX];
   eob_wav_deltalm(Hreal, Omega, nu, dlm); 
+
+  // CHECKME: check the sign, I think the matlab uses +
+  // but here we might want -
+  eob_wav_deltalm_nc(r, prstar, dyn->prsdot, dlm_nc);
 
   /** Point-mass h_lm */
   for (int k = 0; k < KMAX; k++) {
-    hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k];
-    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k]); /* Minus sign by convention */    
+    hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k] * hathlm_nc[k];
+    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k] - dlm_nc[k]); /* Minus sign by convention */    
   }
   
   /** NQC */

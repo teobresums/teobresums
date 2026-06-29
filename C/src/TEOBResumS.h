@@ -379,6 +379,21 @@ enum{
 };
 static const char* const use_Fr_opt[] = {"no", "ecc", "BD", "next", "full", "undefined"};
 
+/** List of options for hathlm_nc */
+enum{
+  USEHLM_NC_NO,            /**< No NC corrections to anything */
+  USEHLM_NC_IMPQC,         /**< ImpQC NC corrections to hlm amplitudes */
+  USEHLM_NC_NOPT           /**< number of flm_nc amplitudes options */
+};
+static const char* const use_hlm_nc_opt[] = {"no", "impqc"};
+
+/** List of options for deltalm_nc */
+enum{
+  USEDELTALM_NC_NO,            /**< No NC corrections to anything */
+  USEDELTALM_NC_IMPQC,         /**< ImpQC NC corrections to hlm phase */
+  USEDELTALM_NC_NOPT           /**< number of hlm phase options */
+};
+static const char* const use_dlm_nc_opt[] = {"no", "impqc"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -621,7 +636,7 @@ typedef struct tagDynamics
   int store; /* store following values? */
   int noflx; /* compute rhs without flux */
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
-  double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot;
+  double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot, prsdot;
   double tOmg_pk;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;     /**< current Hamiltonian, angular momentum and derived variables */
   double A,dA,d2A, B,dB;                                      /**< current A,B and derived variables */
@@ -721,6 +736,8 @@ typedef struct tagEOBParameters
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
+  int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
+  int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
@@ -1219,6 +1236,9 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm);
 extern void (*eob_wav_deltalm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm);
+extern void (*eob_wav_deltalm_nc)(); /* defined in TEOBResumSPars.c */
+void eob_wav_deltalm_nc_no(double r, double prstar, double prstardot, double *dlm);
+void eob_wav_deltalm_nc_impqc(double r, double prstar, double prstardot, double *dlm);
 void eob_wav_hlmNewt_ecc(Dynamics *dyn,Waveform_lm_t *hlmNewt);
 void eob_wav_hlmNewt_ecc_sigmoid(Dynamics *dyn,Waveform_lm_t *hlmNewt);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
@@ -1242,6 +1262,9 @@ void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, do
 void eob_wav_flm_s_HM_4PN22(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_HM_6PN3p3(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
+extern void (*eob_wav_hathlm_nc)(); /* defined in TEOBResumSPars.c */
+void eob_wav_hathlm_nc_no(double r, double prstar, double prstardot, double *hathlm_nc);
+void eob_wav_hathlm_nc_impqc(double r, double prstar, double prstardot, double *hathlm_nc);
 extern void (*eob_wav_hlmNQC_find_a1a2a3)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);

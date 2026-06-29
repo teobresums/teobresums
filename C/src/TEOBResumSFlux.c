@@ -1066,6 +1066,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
   dyn->Omega2dot = Omg2dot;
   dyn->Omega3dot = 0.;
   dyn->Omega4dot = 0.;
+  dyn->prsdot = prstardot;
 }
 
 /* Generic Newtonian prefactors */

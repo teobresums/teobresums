@@ -326,6 +326,24 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_hlm_nc") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_hlm_nc"));
+    for(EOBPars->use_hlm_nc=0; EOBPars->use_hlm_nc<=USEHLM_NC_NOPT; EOBPars->use_hlm_nc++){
+      if (EOBPars->use_hlm_nc == USEHLM_NC_NOPT) EOBPars->use_hlm_nc = USEHLM_NC_NO;
+      if (STREQUAL(val,use_hlm_nc_opt[EOBPars->use_hlm_nc])) break;
+    }
+  }
+
+  if ( PyDict_GetItemString(dict, "use_dlm_nc") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_dlm_nc"));
+    for(EOBPars->use_dlm_nc=0; EOBPars->use_dlm_nc<=USEDLM_NC_NOPT; EOBPars->use_dlm_nc++){
+      if (EOBPars->use_dlm_nc == USEDLM_NC_NOPT) EOBPars->use_dlm_nc = USEDLM_NC_NO;
+      if (STREQUAL(val,use_dlm_nc_opt[EOBPars->use_dlm_nc])) break;
+    }
+  }
+
   /* Metric potentials */
   if ( PyDict_GetItemString(dict, "A_pot") != NULL ) { 
     char* val;
