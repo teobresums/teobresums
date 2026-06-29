@@ -338,8 +338,8 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "use_dlm_nc") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_dlm_nc"));
-    for(EOBPars->use_dlm_nc=0; EOBPars->use_dlm_nc<=USEDLM_NC_NOPT; EOBPars->use_dlm_nc++){
-      if (EOBPars->use_dlm_nc == USEDLM_NC_NOPT) EOBPars->use_dlm_nc = USEDLM_NC_NO;
+    for(EOBPars->use_dlm_nc=0; EOBPars->use_dlm_nc<=USEDELTALM_NC_NOPT; EOBPars->use_dlm_nc++){
+      if (EOBPars->use_dlm_nc == USEDELTALM_NC_NOPT) EOBPars->use_dlm_nc = USEDELTALM_NC_NO;
       if (STREQUAL(val,use_dlm_nc_opt[EOBPars->use_dlm_nc])) break;
     }
   }
