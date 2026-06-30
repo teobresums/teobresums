@@ -1158,7 +1158,7 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
       prsdot4 * ((-0.3753766389654487 - 0.31101190476190477 * nu) * r7 + 
       (-0.4540556048232247 + 0.9444134424603174 * nu) * prstar2 * r8));
 
-  const double phi22_15PN = phi22_15pr * inv_sqrt_r + phi22_15pi * prstar * M_PI + phi22_15log * inv_sqrt_r * log_r;
+  const double phi22_15PN = phi22_15pr * inv_sqrt_r + phi22_15pi * prstar * Pi + phi22_15log * inv_sqrt_r * log_r;
 
   dlm[1] = phi22_1PN + phi22_2PN + phi22_15PN;
 
@@ -1186,7 +1186,7 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
         prsdot3 * (-0.40974976903849836 * r5 - 0.11892848838397185 * prstar2 * r6) + 
         prsdot4 * (0.4009789986304213 * r7 + 0.7431021486772806 * prstar2 * r8));
 
-    const double phi21_15PN = phi21_15pr * inv_sqrt_r + phi21_15r * prstar * M_PI;
+    const double phi21_15PN = phi21_15pr * inv_sqrt_r + phi21_15r * prstar * Pi;
     
     dlm[0] = phi21_1PN + phi21_15PN;
 
@@ -1239,7 +1239,7 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
         prsdot3 * (0.3405349794238683 * r5 - 1.8792993954173653 * prstar2 * r6) + 
         prsdot4 * (-0.3673411065386374 * r7 + 2.027770368676862 * prstar2 * r8));
 
-    const double phi33_15PN = phi33_15pr * inv_sqrt_r + phi33_15r * prstar * M_PI + phi33_15log * inv_sqrt_r * log_r;
+    const double phi33_15PN = phi33_15pr * inv_sqrt_r + phi33_15r * prstar * Pi + phi33_15log * inv_sqrt_r * log_r;
     dlm[4] = phi33_1PN + phi33_15PN;
 
     // (3, 2)
@@ -1303,7 +1303,7 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
         prsdot3 * (501.75 * r5 - 145406.25 * prstar2 * r6) + 
         prsdot4 * (2998.125 * r7 - 1.2536465625e6 * prstar2 * r8));
 
-    const double phi31_15PN = phi31_15pr * inv_sqrt_r + phi31_15r * prstar * M_PI + phi31_15log * inv_sqrt_r * log_r;
+    const double phi31_15PN = phi31_15pr * inv_sqrt_r + phi31_15r * prstar * Pi + phi31_15log * inv_sqrt_r * log_r;
     dlm[2] = phi31_1PN + phi31_15PN;
 
     // (4, 4)
@@ -5244,7 +5244,7 @@ void eob_wav_hathlm_nc_no(double r, double prstar, double prsdot, double* hathlm
  *  @param[out] hathlm_nc: An array to store the computed noncircular correction factors for each mode.
  *
 */
-#define use_pade_nc (0)
+#define use_pade_nc (1)
 void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hathlm_nc)
 {
 
@@ -5398,7 +5398,7 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
         + prsdot3 * ((1.1740760047364347 + 0.6091269841269841 * nu) * r5 
         + (0.5579170249111485 - 0.23809523809523808 * nu) * prstar2 * r6);
 
-    const double h22_15PN = h22_15pr * prstar + h22_15pi * inv_sqrt_r * M_PI + h22_15log * prstar * logr;
+    const double h22_15PN = h22_15pr * prstar + h22_15pi * inv_sqrt_r * Pi + h22_15log * prstar * logr;
 
     if (use_pade_nc) {
       hathlm_nc[1] = 1.0 / (1.0 - h22_1PN - h22_15PN + (h22_1PN * h22_1PN - h22_2PN));
@@ -5429,7 +5429,7 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
 
     const double h21_15log = -6.0 * inv_r;
 
-    const double h21_15PN = h21_15r * M_PI * inv_sqrt_r + h21_15pr * prstar + h21_15log * prstar * logr;
+    const double h21_15PN = h21_15r * Pi * inv_sqrt_r + h21_15pr * prstar + h21_15log * prstar * logr;
     hathlm_nc[0] = 1.0 + h21_1PN + h21_15PN;
 
     /* ==================================================================== */
@@ -5482,7 +5482,7 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
         + prsdot2 * (0.09876543209876543 * r3 + 2.303713864756389 * prstar2 * r4) 
         + prsdot3 * (0.5889346136259717 * r5 - 2.6629183672317343 * prstar2 * r6);
 
-    const double h33_15PN = h33_15r * M_PI * inv_sqrt_r + h33_15pr * prstar + h33_15log * prstar * logr;
+    const double h33_15PN = h33_15r * Pi * inv_sqrt_r + h33_15pr * prstar + h33_15log * prstar * logr;
 
     if (use_pade_nc) {
         hathlm_nc[4] = 1.0 / (1.0 - h33_1PN - h33_15PN + h33_1PN * h33_1PN);
@@ -5545,7 +5545,7 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
         + prsdot3 * ((-9499.24701482791 + 6642.811111111111 * nu) * r5 
         + (1228974.3459215597 + 142702.11111111112 * nu) * prstar2 * r6);
 
-    const double h31_15PN = h31_15r * M_PI * inv_sqrt_r + h31_15pr * prstar + h31_15log * prstar * logr;
+    const double h31_15PN = h31_15r * Pi * inv_sqrt_r + h31_15pr * prstar + h31_15log * prstar * logr;
     hathlm_nc[2] = 1.0 + h31_1PN + h31_15PN;
 
     /* ==================================================================== */
