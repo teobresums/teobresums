@@ -1241,6 +1241,7 @@ void eob_wav_deltalm_nc_no(double r, double prstar, double prstardot, double *dl
 void eob_wav_deltalm_nc_impqc(double r, double prstar, double prstardot, double *dlm);
 void eob_wav_hlmNewt_ecc(Dynamics *dyn,Waveform_lm_t *hlmNewt);
 void eob_wav_hlmNewt_ecc_sigmoid(Dynamics *dyn,Waveform_lm_t *hlmNewt);
+void eob_wav_hlmNewt_ecc_fact_sigmoid(Dynamics *dyn, Waveform_lm_t *hlmNewt);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
 extern void (*eob_wav_hlmNewt)(); /* defined in TEOBResumSPars.c */

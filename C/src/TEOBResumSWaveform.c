@@ -10213,7 +10213,7 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   /** Point-mass h_lm */
   for (int k = 0; k < KMAX; k++) {
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k] * hathlm_nc[k];
-    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k] - dlm_nc[k]); /* Minus sign by convention */    
+    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k] + dlm_nc[k]); /* Minus sign by convention */    
   }
   
   /** NQC */
@@ -10349,7 +10349,7 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
   /** Point-mass h_lm */
   for (int k = 0; k < KMAX; k++) {
     hlm->ampli[k] =  hNewt.ampli[k] * flm[k] * source[k] * tlm.ampli[k] * hathlm_nc[k];
-    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k] - dlm_nc[k]); /* Minus sign by convention */    
+    hlm->phase[k] = -( hNewt.phase[k] + tlm.phase[k] + dlm[k] + dlm_nc[k]); /* Minus sign by convention */    
   }
   
   /** NQC */
