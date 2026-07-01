@@ -1151,8 +1151,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       compute_hpc(hlm, NULL, NULL, nu, M, distance, amplitude_prefactor, phi, iota, *hpc);
          
     /* time-shift the TD waveforms */
-    if(EOBPars->time_shift_TD) time_shift_TD((*hpc)->time, EOBPars->tc/time_unit_fact, (*hpc)->size);
-
+    if(EOBPars->time_shift_TD){
+      EOBPars->tc *= 1./time_unit_fact;
+      time_shift_TD((*hpc)->time, EOBPars->tc, (*hpc)->size);
+    }
   } else {
     
     /* FREQUENCY DOMAIN */
@@ -1212,15 +1214,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     // dynamics
     if (EOBPars->output_dynamics) {
       if (EOBPars->interp_uniform_grid) {
-	/* Interp to uniform grid the dynamics, 
-	   rem the dyn size can be different from wf size */
-	const double dt_interp_dyn = EOBPars->dt_interp;
-	const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
-	Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
+	      /* Interp to uniform grid the dynamics, 
+	      rem the dyn size can be different from wf size */
+        const double dt_interp_dyn = EOBPars->dt_interp;
+        const int size_interp_dyn = get_uniform_size(dyn->time[dyn->size-1], dyn->time[0], dt_interp_dyn);
+        Dynamics_interp (dyn, size_interp_dyn, dyn->time[0], dt_interp_dyn, "dyn_interp");  
       }
       Dynamics_output(dyn);
       if (use_spins == MODE_SPINS_GENERIC)
-	DynamicsSpin_output (spindyn);
+        DynamicsSpin_output (spindyn);
     }
   }
 
