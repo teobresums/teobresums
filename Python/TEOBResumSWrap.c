@@ -874,6 +874,8 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     Py_DECREF(pvo);
   }
 
+  // add also tc (a single fload) to the dictionary
+  PyDict_SetItemString(dyndict, "tc", PyFloat_FromDouble(EOBPars->tc));
 
   if(EOBPars->domain==DOMAIN_TD){
     
