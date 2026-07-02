@@ -1342,7 +1342,7 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args, PyObject *kw)
   Dynamics *dyn;
 
   /* parse the input */
-  char* const *kwlist[] = {"r", "q", "pphi", "prstar", "chi1", "chi2", "delta_a6c", "delta_cN3LO", NULL};
+  char* kwlist[] = {"r", "q", "pphi", "prstar", "chi1", "chi2", "delta_a6c", "delta_cN3LO", NULL};
   if (!PyArg_ParseTupleAndKeywords(args, kw, "dddddd|$dd", kwlist, &r, &q, &pphi, &prstar, &chi1, &chi2, &delta_a6c, &delta_cN3LO))
     return NULL;
   
@@ -1390,7 +1390,7 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args, PyObject *kw)
   Dynamics *dyn;
 
   /* parse the input */
-  char* const *kwlist[] = {"r", "q", "chi1", "chi2", "delta_a6c", NULL};
+  char* kwlist[] = {"r", "q", "chi1", "chi2", "delta_a6c", NULL};
   if (!PyArg_ParseTupleAndKeywords(args, kw, "dddd|$d", kwlist, &r, &q, &chi1, &chi2, &delta_a6c))
     return NULL;
   
@@ -1471,10 +1471,10 @@ static PyMethodDef EOBRunMethods[] = {
   {"eob_c3_fit_HM_py", eob_c3_fit_HM_py, METH_VARARGS, "Fit to compute the c3 for nonspinning BBH"},
   {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso in the non-spinning case"},
   {"pph_lso_spin_py", pph_lso_spin_py, METH_VARARGS, "Fit to compute pphi_lso in the spinning case (|chi|<0.5)"},
-  {"eob_ham_s_py", eob_ham_s_py, METH_VARARGS | METH_KEYWORDS, "Compute the spinning EOB hamiltonian for BBH systems"},
+  {"eob_ham_s_py", (PyCFunction) eob_ham_s_py, METH_VARARGS | METH_KEYWORDS, "Compute the spinning EOB hamiltonian for BBH systems"},
   {"eob_j0_circ_py", eob_j0_circ_py, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
   {"eob_dyn_j0_py", eob_dyn_j0_py, METH_VARARGS, "Compute the (generic) value of j corresponding to an initial semilatus rectum r"},
-  {"eob_metricAB_py", eob_metricAB_py, METH_VARARGS | METH_KEYWORDS, "Compute the metric potentials"},
+  {"eob_metricAB_py", (PyCFunction) eob_metricAB_py, METH_VARARGS | METH_KEYWORDS, "Compute the metric potentials"},
   {"eob_get_rc_py", eob_get_rc_py, METH_VARARGS, "Compute the centrifugal radius"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */
