@@ -5641,11 +5641,11 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
 
     const double h22_15PN = h22_15pr * prstar + h22_15pi * inv_sqrt_r * Pi + h22_15log * prstar * logr;
 
-    if (use_pade_nc) {
+#if use_pade_nc
       hathlm_nc[1] = 1.0 / (1.0 - h22_1PN - h22_15PN + (h22_1PN * h22_1PN - h22_2PN));
-    } else {
+#else
       hathlm_nc[1] = 1.0 + h22_1PN + h22_15PN + h22_2PN;
-    }
+#endif
 
     /* ==================================================================== */
     /* (2,1) MODE                                                           */

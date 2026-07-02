@@ -1537,9 +1537,19 @@ double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, do
 }
 
 
-/*==================================================================== */
-/*(2,2) MODE PN corrections                                                    */
-/*==================================================================== */
+/**
+ *  Function: eob_flx_flm_nc_22
+ *  ---------------------------
+ *  Computes the non-circular correction factor for the (2,2) mode of the gravitational
+ *  wave flux in the Effective One Body (EOB) formalismm up to 2PN order.
+ *  Depending on `use_pade_22`, it either resums the series using a Padé approximant or returns the Taylor-expanded form.
+ * 
+ *  @param[in] r The radial separation between the two bodies.
+ *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot The time derivative of the radial momentum.
+ *  @return The non-circular correction factor for the (2,2) mode of the gravitational wave flux.
+ */
+#define use_pade_22 (1)
 double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
 
     const double nu = EOBPars -> nu;
@@ -1605,12 +1615,24 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
         + prsdot4 * r7 * (0.0625 - 0.3323567708333333 * prstar2 * r) 
         - 0.074609375 * prsdot5 * r9 + 0.07254774305555555 * prsdot6 * r11) / sqrt(r) * M_PI;
 
-    return 1.0 + f22_1PN + f22_15PN + f22_2PN;
+#if use_pade_22
+      return 1.0/(1.0 - f22_1PN - f22_15PN + (f22_1PN*f22_1PN-f22_2PN));
+#else
+      return 1.0 + f22_1PN + f22_15PN + f22_2PN;
+#endif
 }
 
-/*==================================================================== */
-/*(2,1) MODE                                                           */
-/*==================================================================== */
+/**
+ * Function: eob_flx_flm_nc_21
+ * ---------------------------
+ * Computes the non-circular correction factor for the (2,1) mode of the gravitational
+ * wave flux in the Effective One Body (EOB) formalismm up to 1PN order.
+ * 
+ *  @param[in] r The radial separation between the two bodies.
+ *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot The time derivative of the radial momentum.
+ *  @return The non-circular correction factor for the (2,1) mode of the gravitational wave flux.
+ */
 double eob_flx_flm_nc_21(double r, double prstar, double prsdot) {
     const double nu = EOBPars -> nu;
     const double prstar2 = prstar * prstar;
@@ -1621,9 +1643,17 @@ double eob_flx_flm_nc_21(double r, double prstar, double prsdot) {
     return 1.0 + f21_1PN;
 }
 
-/*==================================================================== */
-/*(3,3) MODE                                                           */
-/*==================================================================== */
+/**
+ * Function: eob_flx_flm_nc_33
+ * ---------------------------
+ * Computes the non-circular correction factor for the (3,3) mode of the gravitational
+ * wave flux in the Effective One Body (EOB) formalismm up to 1PN order.
+ * 
+ *  @param[in] r The radial separation between the two bodies.
+ *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot The time derivative of the radial momentum.
+ *  @return The non-circular correction factor for the (3,3) mode of the gravitational wave flux.
+ */
 double eob_flx_flm_nc_33(double r, double prstar, double prsdot) {
     const double nu = EOBPars -> nu;
     const double r2 = r * r;
@@ -1662,9 +1692,17 @@ double eob_flx_flm_nc_33(double r, double prstar, double prsdot) {
     return 1.0 + f33_1PN;
 }
 
-/*==================================================================== */
-/*(3,1) MODE                                                           */
-/*==================================================================== */
+/**
+ * Function: eob_flx_flm_nc_31
+ * ---------------------------
+ * Computes the non-circular correction factor for the (3,1) mode of the gravitational
+ * wave flux in the Effective One Body (EOB) formalismm up to 1PN order.
+ * 
+ *  @param[in] r The radial separation between the two bodies.
+ *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot The time derivative of the radial momentum.
+ *  @return The non-circular correction factor for the (3,1) mode of the gravitational wave flux.
+ */
 double eob_flx_flm_nc_31(double r, double prstar, double prsdot) {
     const double nu = EOBPars -> nu;
     const double r2 = r * r;
