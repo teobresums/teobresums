@@ -428,6 +428,203 @@ void eob_metric_A5PNlogP33_newlogs(double r, double nu, double *A, double *dA, d
   *d2A =  d2A_du + nu*d2Alog_du2;
 }
 
+/**
+ * Function: eob_pade2M
+ * --------------------
+ *   Diagonal-ish [2/M] Pade of a Taylor series c[0..M+2]:
+ *   numerator na[0]+na[1] u+na[2] u^2 over denominator 1+b[1] u+...+b[M] u^M.
+ *   Fills b[0..M] (b[0]=1) and na[0..2]. M<=7. Solves the MxM denominator
+ *   system by Gaussian elimination with partial pivoting (helper for ALMR).
+ */
+static void eob_pade2M(int M, const double *c, double *b, double *na)
+{
+  double Mx[7][7], rhs[7];
+  for (int k=1; k<=M; k++) {
+    rhs[k-1] = -c[2+k];
+    for (int j=1; j<=M; j++) {
+      int idx = 2 + k - j;
+      Mx[k-1][j-1] = (idx >= 0 && idx <= M+2) ? c[idx] : 0.0;
+    }
+  }
+  for (int col=0; col<M; col++) {
+    int pmax = col; double vmax = fabs(Mx[col][col]);
+    for (int row=col+1; row<M; row++)
+      if (fabs(Mx[row][col]) > vmax) { vmax = fabs(Mx[row][col]); pmax = row; }
+    if (pmax != col) {
+      for (int cc=0; cc<M; cc++) { double t=Mx[col][cc]; Mx[col][cc]=Mx[pmax][cc]; Mx[pmax][cc]=t; }
+      double tr = rhs[col]; rhs[col] = rhs[pmax]; rhs[pmax] = tr;
+    }
+    for (int row=col+1; row<M; row++) {
+      double f = Mx[row][col]/Mx[col][col];
+      for (int cc=col; cc<M; cc++) Mx[row][cc] -= f*Mx[col][cc];
+      rhs[row] -= f*rhs[col];
+    }
+  }
+  for (int row=M-1; row>=0; row--) {
+    double s = rhs[row];
+    for (int cc=row+1; cc<M; cc++) s -= Mx[row][cc]*b[cc+1];
+    b[row+1] = s/Mx[row][row];
+  }
+  b[0]  = 1.;
+  na[0] = c[0];
+  na[1] = c[1] + b[1]*c[0];
+  na[2] = c[2] + b[1]*c[1] + b[2]*c[0];
+}
+
+/**
+ * Function: eob_metric_ALMR
+ * -------------------------
+ *   A potential for the large-mass-ratio (LMR) model. MONOTONE-DECREASING with
+ *   a single horizon zero (A=0 once), newlogs-consistent. A smooth blend of the
+ *   EMRI-faithful inspiral champion ("A401") into a low-PN skeleton that
+ *   supplies the monotone strong-field shape + the horizon:
+ *
+ *     A(u) = W(u)*A401(u) + (1-W(u))*Askel(u),    W(u) = 1/(1+(u/uw)^pw)
+ *
+ *   - A401 (inspiral champion): Pade[2/7]{integer 1SF} + nu a65c u^(13/2)
+ *     Pade[0/2]{half hat} + nu a5log1SF u^5 ln(u) Pade[0/3]{log hat}
+ *     + nu a8log2 u^8 ln(u)^2  (exploration candidate "401").
+ *   - Askel (strong field + horizon): Pade[2/5] of the 6PN integer A_poly.
+ *     Numerator deg 2 -> single horizon zero; denom deg 5 -> decay; nu->0 gives
+ *     1-2u (Schwarzschild, zero at u=1/2).
+ *   - W(u): smooth decaying weight, ~1 through the inspiral, ->0 past ISCO
+ *     (uw=0.4, pw=12; model choices, tunable in the body).
+ *
+ *   The NR knob is a6c: it enters the integer Taylor coefficient
+ *   ci[6] = nu*a6c, shared by the A401 Pade and the Askel skeleton, so it
+ *   calibrates the strong-field A.  Its analytic first guess is
+ *   a6c1SF + nu*a6c2SF (Porto-Riva 2604.09545 + BDG 2003.11891); at run time
+ *   the NR-calibrated EOBPars->a6c replaces it.  Pades are built at runtime from the integer
+ *   Taylor coefficients via eob_pade2M; the half/log hats are closed-form
+ *   1/D(u). Coefficients transcribed verbatim from the validated Mathematica
+ *   definitions (Mathematica/exploration/AChampion.wl A401 +
+ *   AMonotoneHybrid.wl AMono). First and second u-derivatives are analytic and
+ *   were verified against Mathematica to ~1e-13.
+ *
+ *   @param[in]  r   : radial separation (u = 1/r)
+ *   @param[in]  nu  : symmetric mass ratio
+ *   @param[out] A   : A(u)
+ *   @param[out] dA  : dA/du
+ *   @param[out] d2A : d2A/du2
+ */
+void eob_metric_ALMR(double r, double nu, double *A, double *dA, double *d2A)
+{
+  /* coefficients (AChampion.wl / A401) */
+  const double a3c      =  2.0;
+  const double a4c      =  18.68790269443759260295;
+  const double a5c1SF   =  23.50338924260343623876;
+  const double a5c2SF   = -24.18790269443759260295;
+  // const double a6c1SF   = -134.07179509567553066192;
+  // const double a6c2SF   = -246.84298434650718015;      /* fixed analytic value, nu^2 u^6: FULL = local (Porto-Riva 2604.09545 Eq.6.6, -92.2235) + nonlocal (BDG 2003.11891 Table IV, -154.6195) */
+  const double a7c      =  738.27863765009624407888;
+  const double a8c      =  1771.12540786736312468800;
+  const double a9c      = -10925.31698075046737488861;
+  const double a65c     =  81.95667234964915846473;
+  const double a75c     = -438.11411607004697265452;
+  const double a85c     =  34.01115210028861458197;
+  const double a5log1SF =  12.8;
+  const double a6log1SF = -66.70476190476190476190;
+  const double a6log2SF = -28.8;
+  const double a7log    = -6.22716049382716049383;
+  const double a8log    =  934.07029183610365195115;
+  const double a8log2   = -52.17523809523809523810;
+
+  const double knob = EOBPars->a6c;   /* a6c NR-calibration knob: enters ci[6] = nu*a6c */
+  const double uw   = 0.4, pw = 12.0;    /* window W=1/(1+(u/uw)^pw): model choice, tunable */
+
+  const double nu2 = nu*nu;
+  const double u   = 1./r;
+  const double lnu = log(u);
+
+  /* ===== A401: EMRI-faithful inspiral champion ===== */
+  /* integer Taylor coeffs with knob at a6c */
+  double ci[10];
+  ci[0]=1.;        ci[1]=-2.;       ci[2]=0.;
+  ci[3]=nu*a3c;    ci[4]=nu*a4c;    ci[5]=nu*(a5c1SF + nu*a5c2SF);
+  // ci[6]=nu*a6c1SF + nu2*a6c2SF;   
+  ci[6] = nu*knob;
+  ci[7]=nu*a7c; // + nu2*knob;
+  ci[8]=nu*a8c;    ci[9]=nu*a9c;
+  double b7[8], na7[3];
+  eob_pade2M(7, ci, b7, na7);                /* [2/7] Pade of the integer 1SF part */
+  double Nn   = na7[0] + u*(na7[1] + u*na7[2]);
+  double dNn  = na7[1] + 2.*na7[2]*u;
+  double d2Nn = 2.*na7[2];
+  double Dd   = b7[0]+u*(b7[1]+u*(b7[2]+u*(b7[3]+u*(b7[4]+u*(b7[5]+u*(b7[6]+u*b7[7]))))));
+  double dDd  = b7[1]+u*(2.*b7[2]+u*(3.*b7[3]+u*(4.*b7[4]+u*(5.*b7[5]+u*(6.*b7[6]+u*7.*b7[7])))));
+  double d2Dd = 2.*b7[2]+u*(6.*b7[3]+u*(12.*b7[4]+u*(20.*b7[5]+u*(30.*b7[6]+u*42.*b7[7]))));
+  double P    = Nn/Dd;
+  double dP   = (dNn*Dd - Nn*dDd)/(Dd*Dd);
+  double d2P  = (d2Nn - 2.*dP*dDd - P*d2Dd)/Dd;
+
+  /* half-integer hat: 1/(1 + bh1 u + bh2 u^2) */
+  double s1 = a75c/a65c, s2 = a85c/a65c;
+  double bh1 = -s1, bh2 = s1*s1 - s2;
+  double Dh = 1.+u*(bh1+u*bh2), dDh = bh1+2.*bh2*u, d2Dh = 2.*bh2;
+  double Hh = 1./Dh, dHh = -dDh/(Dh*Dh), d2Hh = (2.*dDh*dDh - Dh*d2Dh)/(Dh*Dh*Dh);
+  /* log hat: 1/(1 + bl1 u + bl2 u^2 + bl3 u^3) */
+  double l1 = (a6log1SF + nu*a6log2SF)/a5log1SF, l2 = a7log/a5log1SF, l3 = a8log/a5log1SF;
+  double bl1 = -l1, bl2 = l1*l1 - l2, bl3 = -l1*l1*l1 + 2.*l1*l2 - l3;
+  double Dl = 1.+u*(bl1+u*(bl2+u*bl3)), dDl = bl1+u*(2.*bl2+3.*bl3*u), d2Dl = 2.*bl2+6.*bl3*u;
+  double Hl = 1./Dl, dHl = -dDl/(Dl*Dl), d2Hl = (2.*dDl*dDl - Dl*d2Dl)/(Dl*Dl*Dl);
+
+  double u2=u*u, u3=u2*u, u4=u3*u, u5=u4*u, u6=u5*u, u7=u6*u;
+  double u45 = sqrt(u4*u4*u);   /* u^(9/2)  */
+  double u55 = u45*u;           /* u^(11/2) */
+  double u65 = u55*u;           /* u^(13/2) */
+  /* T2 = nu a65c u^(13/2) Hh */
+  double K2  = nu*a65c;
+  double T2  = K2*u65*Hh;
+  double dT2 = K2*(6.5*u55*Hh + u65*dHh);
+  double d2T2= K2*(6.5*5.5*u45*Hh + 2.*6.5*u55*dHh + u65*d2Hh);
+  /* T3 = nu a5log1SF u^5 ln(u) Hl */
+  double K3  = nu*a5log1SF;
+  double g   = u5*lnu, dg = 5.*u4*lnu + u4, d2g = 20.*u3*lnu + 9.*u3;
+  double T3  = K3*g*Hl;
+  double dT3 = K3*(dg*Hl + g*dHl);
+  double d2T3= K3*(d2g*Hl + 2.*dg*dHl + g*d2Hl);
+  /* T4 = nu a8log2 u^8 ln(u)^2 */
+  double K4  = nu*a8log2;
+  double hh  = u7*u*lnu*lnu, dh = 8.*u7*lnu*lnu + 2.*u7*lnu, d2h = 56.*u6*lnu*lnu + 30.*u6*lnu + 2.*u6;
+  double T4  = K4*hh, dT4 = K4*dh, d2T4 = K4*d2h;
+
+  double A401   = P   + T2   + T3   + T4;
+  double dA401  = dP  + dT2  + dT3  + dT4;
+  double d2A401 = d2P + d2T2 + d2T3 + d2T4;
+
+  /* ===== skeleton: Pade[2/5] of the integer poly, including the a6c knob ===== */
+  // /*
+  double cs[8];
+  for (int i=0;i<8;i++) cs[i]=ci[i]; // Memo: ci[6] = nu*knob;
+  double b5[6], na5[3];
+  eob_pade2M(5, cs, b5, na5);
+  double Ns   = na5[0] + u*(na5[1] + u*na5[2]);
+  double dNs  = na5[1] + 2.*na5[2]*u;
+  double d2Ns = 2.*na5[2];
+  double Ds   = b5[0]+u*(b5[1]+u*(b5[2]+u*(b5[3]+u*(b5[4]+u*b5[5]))));
+  double dDs  = b5[1]+u*(2.*b5[2]+u*(3.*b5[3]+u*(4.*b5[4]+u*5.*b5[5])));
+  double d2Ds = 2.*b5[2]+u*(6.*b5[3]+u*(12.*b5[4]+u*20.*b5[5]));
+  double Ps   = Ns/Ds;
+  double dPs  = (dNs*Ds - Ns*dDs)/(Ds*Ds);
+  double d2Ps = (d2Ns - 2.*dPs*dDs - Ps*d2Ds)/Ds;
+
+  /* ===== smooth decaying window W(u) = 1/(1+(u/uw)^pw) ===== */
+  double q   = pow(u/uw, pw);
+  double qp  = pw*q/u;               /* dq/du   */
+  double qpp = pw*(pw-1.)*q/(u*u);   /* d2q/du2 */
+  double opq = 1.+q;
+  double W   = 1./opq;
+  double dW  = -qp/(opq*opq);
+  double d2W = (-qpp*opq + 2.*qp*qp)/(opq*opq*opq);
+
+  /* ===== blend: A = Askel + W*(A401 - Askel) ===== */
+  double De = A401 - Ps, dDe = dA401 - dPs, d2De = d2A401 - d2Ps;
+  *A   = Ps   + W*De;
+  *dA  = dPs  + dW*De + W*dDe;
+  *d2A = d2Ps + d2W*De + 2.*dW*dDe + W*d2De;
+
+}
+
 
 /** EOB Metric D function at 3PN, resummed */
 
@@ -768,8 +965,8 @@ void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, doub
   double logu    = log(u);
 
 
-  // only analytically uncalculated 5PN coefficient set to zero 
-  double d5nu2 = 0.;        
+  // 5PN nu^2 coefficient: analytic value (Porto-Riva), = -403259/63 + (306545/512) pi^2 ~ -491.80
+  double d5nu2 = -403259./63. + (306545./512.)*pi2;
   double d2    = -6.*nu;
   double d3    = -52.*nu + 6.*nu2;
 
@@ -1135,6 +1332,75 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 
     *d3Q_dprstar3 = prstar*( 12.*d2Q_dprstar22 + 8.*prstar2*d3Q_dprstar23 );
 
+}
+
+/**
+ *  Function : eob_metric_Q5PNfull
+ *  ------------------------------
+ *    LMR Q potential (fit-free, starred gauge): full-nu 5PN (local+nonlocal,
+ *    f-route), including the prstar^4, prstar^6 AND prstar^8 sectors. Matches
+ *    Qs5PNfullnu[u, prstar, nu] from
+ *    teob-lmr/Mathematica/explorationQ/Qpotentials.wl exactly.
+ *    P4, P6, P8 are the prstar^4, prstar^6, prstar^8 coefficients as functions
+ *    of u and nu (logu = log(u)); the prstar-algebra/derivative conventions
+ *    match eob_metric_Q5PNloc exactly, extended to the prstar^8 sector.
+ *    @param[in]  r, prstar, nu
+ *    @param[out] Q, dQ_du, dQ_dprstar, d2Q_du2, d2Q_drdprstar, d2Q_dprstar2,
+ *                d3Q_dr2dprstar, d3Q_drdprstar2, d3Q_dprstar3
+ */
+void eob_metric_Q5PNfull(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar,
+                     double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
+                     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+  double u    = 1./r;
+  double logu = log(u);
+  double u2 = u*u, u3 = u2*u, u4 = u3*u;
+
+  double prstar2 = prstar*prstar;
+  double prstar4 = prstar2*prstar2;
+  double prstar6 = prstar4*prstar2;
+  double prstar8 = prstar6*prstar2;
+
+  /* prstar^4 sector coefficient P4(u,nu) and its u-derivatives */
+  double P4 = pow(nu,3)*(10.*pow(u,3) + 602.31854041656389*pow(u,4)) + pow(nu,2)*(-6.*pow(u,2) - 131.*pow(u,3) - 1796.1366049802413*pow(u,4) - 118.4*logu*pow(u,4)) + nu*(8.*pow(u,2) + 92.71104428495595*pow(u,3) + 452.54216699669657*pow(u,4) + 51.695238095238095*logu*pow(u,4));
+
+  double dP4 = pow(nu,3)*(30.*pow(u,2) + 2409.2741616662556*pow(u,3)) + pow(nu,2)*(-12.*u - 393.*pow(u,2) - 7302.946419920965*pow(u,3) - 473.6*logu*pow(u,3)) + nu*(16.*u + 278.13313285486785*pow(u,2) + 1861.8639060820244*pow(u,3) + 206.78095238095238*logu*pow(u,3));
+
+  double d2P4 = pow(nu,3)*(60.*u + 7227.8224849987667*pow(u,2)) + pow(nu,2)*(-12. - 786.*u - 22382.439259762895*pow(u,2) - 1420.8*logu*pow(u,2)) + nu*(16. + 556.2662657097357*u + 5792.3726706270255*pow(u,2) + 620.34285714285714*logu*pow(u,2));
+
+  /* prstar^6 sector coefficient P6(u,nu) and its u-derivatives */
+  double P6 = pow(nu,4)*(-14.*pow(u,3)) + pow(nu,3)*(6.*pow(u,2) + 188.*pow(u,3)) + pow(nu,2)*(-5.4*pow(u,2) - 89.52983273626096*pow(u,3)) + nu*(-2.7830076369522325*pow(u,2) - 33.97821221708228*pow(u,3));
+
+  double dP6 = pow(nu,4)*(-42.*pow(u,2)) + pow(nu,3)*(12.*u + 564.*pow(u,2)) + pow(nu,2)*(-10.8*u - 268.58949820878288*pow(u,2)) + nu*(-5.566015273904465*u - 101.93463665124684*pow(u,2));
+
+  double d2P6 = pow(nu,4)*(-84.*u) + pow(nu,3)*(12. + 1128.*u) + pow(nu,2)*(-10.8 - 537.17899641756576*u) + nu*(-5.566015273904465 - 203.86927330249368*u);
+
+  /* prstar^8 sector coefficient P8(u,nu) and its u-derivatives */
+  double P8 = pow(nu,4)*(-6.*pow(u,2)) + pow(nu,3)*(3.4285714285714286*pow(u,2)) + pow(nu,2)*(3.338420233827264*pow(u,2)) + nu*(23841.075463402129*u + 381456.64591404382*pow(u,2));
+
+  double dP8 = pow(nu,4)*(-12.*u) + pow(nu,3)*(6.8571428571428571*u) + pow(nu,2)*(6.6768404676545281*u) + nu*(23841.075463402129 + 762913.29182808763*u);
+
+  double d2P8 = pow(nu,4)*(-12.) + pow(nu,3)*(6.8571428571428571) + pow(nu,2)*(6.6768404676545281) + 762913.29182808763*nu;
+
+  /* Q = prstar^4 P4 + prstar^6 P6, and derivatives (same conventions as Q5PNloc) */
+  // Note: prstar^8 P8 COMMENTED OUT - takes ages to plunge
+  *Q       = prstar4*P4 + prstar6*P6; // + prstar8*P8;
+  *dQ_du   = prstar4*dP4 + prstar6*dP6; // + prstar8*dP8;
+  *d2Q_du2 = prstar4*d2P4 + prstar6*d2P6; // + prstar8*d2P8;
+
+  double dQ_dprstar2     = 2.*prstar2*P4  + 3.*prstar4*P6; //  + 4.*prstar6*P8;     /* dQ/d(prstar^2)   */
+  double d2Q_dprstar22   = 2.*P4          + 6.*prstar2*P6; //  + 12.*prstar4*P8;    /* d2Q/d(prstar^2)^2 */
+  double d3Q_dprstar23   = 6.*P6; //          + 24.*prstar2*P8;                     /* d3Q/d(prstar^2)^3 */
+  double d2Q_dudprstar2  = 2.*prstar2*dP4 + 3.*prstar4*dP6; // + 4.*prstar6*dP8;
+  double d3Q_du2dprstar2 = 2.*prstar2*d2P4 + 3.*prstar4*d2P6; // + 4.*prstar6*d2P8;
+  double d3Q_dudprstar22 = 2.*dP4         + 6.*prstar2*dP6; // + 12.*prstar4*dP8;
+
+  *d2Q_drdprstar  = -2.*prstar*u2*d2Q_dudprstar2;
+  *d3Q_dr2dprstar = prstar*( 4.*u3*d2Q_dudprstar2 + 2.*u4*d3Q_du2dprstar2 );
+  *d3Q_drdprstar2 = -2.*u2*d2Q_dudprstar2 - 4.*prstar2*u2*d3Q_dudprstar22;
+  *dQ_dprstar     = 2.*prstar*dQ_dprstar2;
+  *d2Q_dprstar2   = 2.*dQ_dprstar2 + 4.*prstar2*d2Q_dprstar22;
+  *d3Q_dprstar3   = prstar*( 12.*d2Q_dprstar22 + 8.*prstar2*d3Q_dprstar23 );
 }
 
 /* Macro for the bar_alpha coefs */

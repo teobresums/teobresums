@@ -35,7 +35,9 @@ const int LINDEX[KMAX] = {
   5,5,5,5,5,
   6,6,6,6,6,6,
   7,7,7,7,7,7,7,
-  8,8,8,8,8,8,8,8};
+  8,8,8,8,8,8,8,8,
+  9,9,9,9,9,9,9,9,9,
+  10,10,10,10,10,10,10,10,10,10};
 
 /** 
  * MINDEX
@@ -50,7 +52,9 @@ const int MINDEX[KMAX] = {
   1,2,3,4,5,
   1,2,3,4,5,6,
   1,2,3,4,5,6,7,
-  1,2,3,4,5,6,7,8};
+  1,2,3,4,5,6,7,8,
+  1,2,3,4,5,6,7,8,9,
+  1,2,3,4,5,6,7,8,9,10};
 
 /** 
  * KINDEX
@@ -58,16 +62,18 @@ const int MINDEX[KMAX] = {
  * Global array, given \ell \in [2, 8] and emm \in [1, 8] returns 
  * associated k, defined as external in header. 
  */
-const int KINDEX[9][9] = {  // l (m = 1 ...l)
-  {-1,-1,-1,-1,-1,-1,-1,-1},// 0 
-  {-1,-1,-1,-1,-1,-1,-1,-1},// 1 
-  { 0, 1,-1,-1,-1,-1,-1,-1},// 2 (1 2)
-  { 2, 3, 4,-1,-1,-1,-1,-1},// 3 (1 2 3)
-  { 5, 6, 7, 8,-1,-1,-1,-1},// 4 (1 2 3 4)
-  { 9,10,11,12,13,-1,-1,-1},// 5 (1 2 3 4 5)
-  {14,15,16,17,18,19,-1,-1},// 6 (1 ... 6)
-  {20,21,22,23,24,25,26,-1},// 7 (1 ... 7)
-  {27,28,29,30,31,32,33,34},// 8 (1 ... 8)
+const int KINDEX[11][11] = {      // l  (m = 1 ...l)
+  {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},// 0 
+  {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},// 1 
+  { 0, 1,-1,-1,-1,-1,-1,-1,-1,-1},// 2  (1 2)
+  { 2, 3, 4,-1,-1,-1,-1,-1,-1,-1},// 3  (1 2 3)
+  { 5, 6, 7, 8,-1,-1,-1,-1,-1,-1},// 4  (1 2 3 4)
+  { 9,10,11,12,13,-1,-1,-1,-1,-1},// 5  (1 2 3 4 5)
+  {14,15,16,17,18,19,-1,-1,-1,-1},// 6  (1 ... 6)
+  {20,21,22,23,24,25,26,-1,-1,-1},// 7  (1 ... 7)
+  {27,28,29,30,31,32,33,34,-1,-1},// 8  (1 ... 8)
+  {35,36,37,38,39,40,41,42,43,-1},// 9  (1 ... 9)
+  {44,45,46,47,48,49,50,51,52,53},// 10 (1 ... 10)
 };
 
 /** 
@@ -269,7 +275,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (!(EOBPars->binary == BINARY_BNS)) store_dynamics = 1; /* NQC determination need dynamical variables */
   if (use_spins == MODE_SPINS_GENERIC) store_dynamics = 1; /* Precession needs dynamical variables */
   if (ecc != 0.)  store_dynamics = 1; /* Eccentric waveform computation needs dynamical variables (sigmoid) */
-  if (EOBPars->model == MODEL_DALI) EOBPars->postadiabatic_dynamics = 0;
+  if (EOBPars->model == MODEL_DALI && ecc > 1e-4) EOBPars->postadiabatic_dynamics = 0;
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
@@ -484,7 +490,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
 
     /* Calculate dynamics */
-    eob_dyn_Npostadiabatic(dyn, r0, spindyn); 
+    eob_dyn_Npostadiabatic(dyn, r0, spindyn);
 
     /* Calculate waveform */
     for (int i = 0; i < size; i++) 

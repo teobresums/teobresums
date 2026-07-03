@@ -1,0 +1,59 @@
+# parfile for BBH (100, 0., 0.)
+# builds on default options of the large-mass-ratio (LMR) branch
+#
+# Note: the (l,m) = (3,1),(4,1) modes are inspiral only, and do not have a 
+# merger-ringdown completion. See 
+# https://bitbucket.org/eob_ihes/teobresums/wiki/Conventions,%20parameters%20and%20output
+
+#
+# use geometric units for I/O
+# everything is given geometric units and binary mass-rescaled 
+#
+
+use_geometric_units = "yes"
+
+#
+# Binary properties
+#
+
+q = 100. # mass ratio
+
+chi1 = 0. # dimensionless spin 1 z-component 
+chi2 = 0. # dimensionless spin 2 z-component 
+
+# initial GW frequency
+# Memo: f22 = 2*(r0)^(-3/2) / (2*pi)
+initial_frequency = 0.01 # initial radius ~ 10
+
+#
+# Output dir, output modes 
+#
+
+output_dir = "./bbh_q100_s0s0_LMR/"
+output_hpc = "no" # switch this off to test performances!!!
+output_multipoles = "yes"
+output_lm   = [ 1 ] # only 22
+use_mode_lm = [ 1 ]
+output_dynamics = "no"
+
+# postadiabatic_dynamics = "no" # uncomment to solve the full ODEs
+
+#
+# Setup
+#
+
+size = 200 # size of the arrays (chunks, dynamically extended)
+ode_timestep = "adaptive"
+compute_LR = "no" # calculate LR ?
+compute_LSO = "no" # calculate LSO ?
+ode_tmax = 1000000000000000000000
+
+
+# interpolate on uniform grid?
+interp_uniform_grid = "yes" # yes, only h+,hx on a grid of dt_interp
+
+dt_interp = 0.5 # M/delta_t = 4096 Hz for M=15*Msun
+
+
+
+

@@ -287,6 +287,14 @@ int SetOptionalVariables(PyObject* dict){
       if (STREQUAL(val,centrifugal_radius_opt[EOBPars->centrifugal_radius])) break;
     }     
   }
+  if ( PyDict_GetItemString(dict, "use_hflx") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_hflx"));
+    for(EOBPars->use_hflx=0; EOBPars->use_hflx<=HFLX_NOPT; EOBPars->use_hflx++){
+      if (EOBPars->use_hflx == HFLX_NOPT) EOBPars->use_hflx = HFLX_STD;
+      if (STREQUAL(val,use_hflx_opt[EOBPars->use_hflx])) break;
+    }
+  }
   if ( PyDict_GetItemString(dict, "use_flm") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm"));
@@ -637,10 +645,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   }
 
   /* Overwrite a6c and cN3LO, if required */
-  if ( PyDict_GetItemString(dict, "a6c") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "a6c") != NULL ) {
     EOBPars->a6c = PyFloat_AsDouble(PyDict_GetItemString(dict, "a6c"));
-  }   
-  if ( PyDict_GetItemString(dict, "cN3LO") != NULL ) { 
+  }
+  if ( PyDict_GetItemString(dict, "cN3LO") != NULL ) {
     EOBPars->cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "cN3LO"));
   }   
 

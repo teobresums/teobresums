@@ -208,7 +208,7 @@ enum{
 };
 static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E"};
 
-#define KMAX (35) /** Multipolar linear index, max value */
+#define KMAX (54) /** Multipolar linear index, max value */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
 /** List for binary type */
@@ -236,16 +236,17 @@ enum{
   A_GSF,               /**< GSF A, Pade' resummed */
   A_5PNlogP33,         /**< 5PNlog resummed with P33 */
   A_5PNlogP33_newlogs, /**< 5PNlog resummed with P33, separate log resummation */
+  A_LMR,               /**< LMR: monotone hybrid with a horizon zero (A401 inspiral + Pade[2/5] skeleton), nu^2 u^7 knob */
   A_NOPT               /**< number of options */
 };
-static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "5PNlogP33_newlogs", "undefined"};
+static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "5PNlogP33_newlogs", "LMR", "undefined"};
 
 /** List of options for orbital D potential */
 enum{
   D_3PN,            /**< 3PN, Pade' resummed */
   D_GSF,            /**< GSF D, Pade' resummed */
   D_5PNP32,         /**< 5PN, Pade' resummed with P32*/ 
-  D_5PNP32_newlogs, /**< 5PN, Pade' resummed with P32, separate log resummation*/ 
+  D_5PNP32_newlogs, /**< 5PN, Pade' resummed with P32, separate log resummation*/
   D_NOPT            /**< number of options */
 };
 static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "5PNP32_newlogs", "undefined"};
@@ -255,9 +256,10 @@ enum{
   Q_3PN,          /**< 3PN, Taylor exp */
   Q_GSF,          /**< GSF Q, Pade' resummed */
   Q_5PNloc,       /**< 5PN local, Taylor exp */
+  Q_5PNfull,      /**< LMR: full-nu 5PN local+nonlocal, starred, incl. prstar^8 */
   Q_NOPT          /**< number of options */
 };
-static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "undefined"};
+static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "5PNfull", "undefined"};
 enum{
   a6c_fits_NO,                /**< no fits */
   a6c_fits_V0,                /**< V0 fits, Nagar et al 2018 */
@@ -266,9 +268,10 @@ enum{
   a6c_fits_ecc,               /**< ecc fits, Nagar et al TODO add ref */
   a6c_fits_P33_HM4PN22,       /**< ecc fits, Nagar et al in prep */
   a6c_fits_P33_newlogs,       /**< Fit with separate log resummation, 2407.04762 */
+  a6c_fits_LMR,               /**< LMR fit, for A_LMR+D_5PNP32_newlogs+Q_5PNfull (TODO: tune) */
   a6c_fits_NOPT               /**< number of fits */
 };
-static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "ecc", "HM4PN22", "newlogs", "undefined"};
+static const char* const use_a6c_fits_opt[] = {"no", "v0", "HM", "HM_2023", "ecc", "HM4PN22", "newlogs", "LMR", "undefined"};
 
 enum{
   cN3LO_fits_NO,              /**< no fits */
@@ -281,9 +284,10 @@ enum{
   cN3LO_fits_ecc,             /**< ecc fits, Nagar et al TODO add ref */
   cN3LO_fits_P33_HM4PN22,     /**< ecc fits, Nagar et al in prep */
   cN3LO_fits_P33_newlogs,     /**< Fits with separate log resummation, 2407.04762 */
+  cN3LO_fits_LMR,             /**< LMR fit, for A_LMR+D_5PNP32_newlogs+Q_5PNfull (TODO: tune) */
   cN3LO_fits_NOPT             /**< number of fits */
 };
-static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "newlogs", "undefined"};
+static const char* const use_cN3LO_fits_opt[] = {"no", "v0", "HM", "HM_420", "HM_430", "HM_431", "HM_432", "ecc", "HM4PN22", "newlogs", "LMR", "undefined"};
 
 /** List of options for tidal potential */
 enum{
@@ -345,9 +349,17 @@ enum{
   USEFLM_HM_4PN22,        /**< HM amplitudes with 4PN in 22 */
   USEFLM_HM_6PN3p3,       /**< HM amplitudes with 4PN in 22, 3p3 in the other main modes, New Log Res */
   USEFLM_KERR,            /**< Kerr amplitudes */
+  USEFLM_22PN,            /**< 22PN test-mass flux (l up to 10) */
   USEFLM_NOPT             /**< number of flm amplitudes options */
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr", "22PN"};
+
+enum{
+  HFLX_STD,            /**< standard resummed horizon flux (l=2) */
+  HFLX_LMR,            /**< LMR horizon flux (l=2,3,4, high-PN) */
+  HFLX_NOPT            /**< number of horizon-flux options */
+};
+static const char* const use_hflx_opt[] = {"std", "lmr"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -424,7 +436,7 @@ static const char* const root_errors[] = {"none","root is not bracketed.","root 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */
 extern const int MINDEX[KMAX]; /* defined in TEOBResumS.c */
-extern const int KINDEX[9][9]; /* defined in TEOBResumS.c */ //FIXME: hardcoded for KMAX=35
+extern const int KINDEX[11][11]; /* defined in TEOBResumS.c */
 
 /** Multipolar coefficients for NQC waveform */
 typedef struct tagNQCcoefs
@@ -658,7 +670,7 @@ typedef struct tagEOBParameters
 
   /**@{*/
   /** NR-informed conservative variables */
-  double a6c, cN3LO;         
+  double a6c, cN3LO;
   /**@}*/ 
 
   double r0;                    /**< Initial radial separation */
@@ -687,6 +699,7 @@ typedef struct tagEOBParameters
   int model;                                            /**< model (Dalì, Giotto) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
+  int use_hflx;                                         /**< horizon-flux choice: "std"/"lmr" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
@@ -932,10 +945,12 @@ double eob_a6c_fit_ecc(double nu);
 double eob_a6c_fit_next(double nu);
 double eob_a6c_fit_ecc_P33_4PNh22(double nu);
 double eob_a6c_fit_ecc_P33_newlogs(double nu);
+double eob_a6c_fit_LMR(double nu);
 double eob_c3_fit_global(double nu, double a1, double a2);
 double eob_c3_fit_HM(double nu, double a1, double a2);
 double eob_c3_fit_HM_2023(double nu, double a1, double a2);
 double eob_c3_fit_ecc(double nu, double a1, double a2);
+double eob_c3_fit_LMR(double nu, double a1, double a2);
 double eob_c3_fit_ecc_P33_4PNh22(double nu, double a1, double a2);
 double eob_c3_fit_ecc_P33_newlogs(double nu, double a1, double a2);
 double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
@@ -1095,6 +1110,7 @@ void eob_metric_A5PNlog(double r, double nu, double *A, double *dA, double *d2A)
 void eob_metric_AGSF(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_A5PNlogP33(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_A5PNlogP33_newlogs(double r, double nu, double *A, double *dA, double *d2A);
+void eob_metric_ALMR(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);
@@ -1102,6 +1118,7 @@ void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, doub
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
+void eob_metric_Q5PNfull(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
@@ -1124,7 +1141,9 @@ double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3d
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
+double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu);
 double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_lmr_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */
@@ -1148,6 +1167,7 @@ void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM_4PN22(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM_6PN3p3(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_Kerr(double x,double nu, double *rholm, double *flm);
 extern void (*eob_wav_flm_s)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
