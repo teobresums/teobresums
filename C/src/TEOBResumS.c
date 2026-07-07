@@ -348,10 +348,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_postadiab_dyn) {
     size = EOBPars->postadiabatic_dynamics_size; 
     double rmin = EOBPars->postadiabatic_dynamics_rmin;
-    size = floor(fabs(r0 - rmin)/EOBPars->postadiabatic_dynamics_dr) + 1;
-    
-    /* If initial radius is too close to PA limit then skip PA and go directly to ODE */
-    if (size - 1 < POSTADIABATIC_NSTEP_MIN) {
+    size = floor((r0 - rmin)/EOBPars->postadiabatic_dynamics_dr) + 1;
+
+    /* If initial radius is below or too close to PA limit then skip PA and go directly to ODE */
+    if (r0 <= rmin || size - 1 < POSTADIABATIC_NSTEP_MIN) {
       size = chunk;
       use_postadiab_dyn = 0;
     }
