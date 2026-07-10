@@ -1065,8 +1065,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
       
       // Check that the time interval chosen contains the peak of Omega
-      if (dyn->tOmg_pk < tmin || dyn->tOmg_pk > tmax)
-        errorexit("The peak orbital frequency is not contained in the NQC/RD attachment region.");
+      if (dyn->tOmg_pk < tmin || dyn->tOmg_pk > tmax) {
+        if (DEBUG) printf("The peak orbital frequency is not contained in the NQC/RD attachment region.");
+        status = ERROR_RINGDOWN;
+        goto EXIT_POINT;
+      }
       
       /* The following routines alloc memory for the *_mrg ptrs */
       Waveform_lm_extract (hlm, tmin, tmax, &hlm_mrg, "hlm_mrg");
