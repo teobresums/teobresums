@@ -371,8 +371,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
     int tmp_nqc = EOBPars->nqc_coefs_flx;
     EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-    if (eob_spin_dyn(spindyn, NULL, NULL, Pi * EOBPars->f0))
-      errorexit("problem during spin dynamics");
+    if (eob_spin_dyn(spindyn, NULL, NULL, Pi * EOBPars->f0)) {
+      status = ERROR_SPIN_DYN;
+      goto EXIT_POINT;
+    }
     EOBPars->nqc_coefs_flx = tmp_nqc;
 
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
@@ -404,7 +406,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       EOBPars->abhf = PrecessingRemnantSpin(dyn);
       EOBPars->abhf *= 1. + EOBPars->delta_abhf;
       if (fabs(EOBPars->abhf) > 1.) {
-        printf("ERROR: Final BH spin changed to be greater than 1.\n");
+        if (DEBUG) printf("ERROR: Final BH spin changed to be greater than 1.\n");
         status = ERROR_SET_PARAMS;
         goto EXIT_POINT;
       }
@@ -996,8 +998,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /* Precessing BNS (or BBH with no RD) + EOB flux: */
   if( (EOBPars->binary == BINARY_BNS || dyn->data[EOB_RAD][size-1] > 3.) && use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
-    if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0))
-      errorexit("problem during spin dynamics");
+    if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0)) {
+      status = ERROR_SPIN_DYN;
+      goto EXIT_POINT;
+    }
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
     spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
     
@@ -1171,8 +1175,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Precessing BBH + EOB flux: 
     */
     if(use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
-      if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0))
-        errorexit("problem during spin dynamics");
+      if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0)) {
+        status = ERROR_SPIN_DYN;
+        goto EXIT_POINT;
+      }
       spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
       spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
       

@@ -158,6 +158,7 @@ enum{OK,                       /**< No error */
      ERROR_MKDIR,              /**< Error while making directory */
      ERROR_ROOTFINDER,         /**< Root finder failed */
      ERROR_ODEINT,             /**< ODE solver failed */
+     ERROR_SPIN_DYN,           /**< Spin dynamics failed */
      ERROR_INITIAL_CONDITIONS, /**< Initial conditions failed */
      ERROR_SET_PARAMS,         /**< Error setting parameters */
      ERROR_RINGDOWN,           /**< Ringdown failed */
@@ -166,7 +167,7 @@ enum{OK,                       /**< No error */
 static const char* eob_error_msg[] = {
   "ok",
   "out of memory", "error opening file", "error while making directory",
-  "root finder failed.", "ODE solver failed.", "initial conditions failed.",
+  "root finder failed.", "ODE solver failed.", "Error in spin dynamics.", "initial conditions failed.",
   "error setting parameters.", "ringdown failed."
 };
 
