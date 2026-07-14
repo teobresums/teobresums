@@ -1525,13 +1525,8 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     remove_comments(line, DELIMITERS_FOR_COMMENTS);
     remove_white_spaces(line);
     if (getkv(line,&key,&val)) continue;
-
-    fprintf(stderr, "DBG parse: BEFORE setkv key=[%s] val=[%s]\n", key, val); fflush(stderr);
     EOBParameters_set_key_val(eobp, key, val);
-    fprintf(stderr, "DBG parse: AFTER  setkv key=[%s]\n", key); fflush(stderr);
-
   } // while/fgets
-  fprintf(stderr, "DBG parse: loop finished, closing file\n"); fflush(stderr);
   fclose(fp);
   
 }
