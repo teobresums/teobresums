@@ -813,9 +813,7 @@ double Taylorseries(double x, double *a, int N){
 void overwrite_mode_array(double *v, double *u, int *k, int size)
 {
   for (int i = 0; i < size; i++) {
-    printf("Overwriting mode %d = %f with value %f;\n", k[i], v[k[i]], u[i]);
     v[k[i]] = u[i];
-    printf("New value of mode %d = %f\n", k[i], v[k[i]]);
   }
 }
 
