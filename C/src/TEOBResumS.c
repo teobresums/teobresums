@@ -403,12 +403,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {   
       // (4.17) of https://arxiv.org/abs/2004.06503 
-      EOBPars->abhf = PrecessingRemnantSpin(dyn);
-      EOBPars->abhf *= 1. + EOBPars->delta_abhf;
-      if (fabs(EOBPars->abhf) > 1.) {
-        if (DEBUG) printf("ERROR: Final BH spin changed to be greater than 1.\n");
-        status = ERROR_SET_PARAMS;
-        goto EXIT_POINT;
+      if (EOBPars->use_prec_abhf) {
+        EOBPars->abhf = PrecessingRemnantSpin(dyn);
+        EOBPars->abhf *= 1. + EOBPars->delta_abhf;
+        if (fabs(EOBPars->abhf) > 1.) {
+          if (DEBUG) printf("ERROR: Final BH spin changed to be greater than 1.\n");
+          status = ERROR_SET_PARAMS;
+          goto EXIT_POINT;
+        }
       }
     }
     if (VERBOSE) {
@@ -1199,12 +1201,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
 
       /* final state */
-      EOBPars->abhf = PrecessingRemnantSpin(dyn);
-      EOBPars->abhf*= 1. + EOBPars->delta_abhf;
-      if (fabs(EOBPars->abhf) > 1.) {
-        printf("ERROR: Final BH spin changed to be greater than 1.\n");
-        status = ERROR_SET_PARAMS;
-        goto EXIT_POINT;
+
+      if (EOBPars->use_prec_abhf) {
+        EOBPars->abhf = PrecessingRemnantSpin(dyn);
+        EOBPars->abhf*= 1. + EOBPars->delta_abhf;
+        if (fabs(EOBPars->abhf) > 1.) {
+          printf("ERROR: Final BH spin changed to be greater than 1.\n");
+          status = ERROR_SET_PARAMS;
+          goto EXIT_POINT;
+        }
       }
     }
 

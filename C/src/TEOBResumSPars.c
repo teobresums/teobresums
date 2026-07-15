@@ -399,8 +399,9 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->bomgfA[l] = eobp->bomgfB[l] = 0.;
   }
 	  
-  eobp->Mbhf= 0. ; // final BH mass
-  eobp->abhf= 0. ; // final BH spin
+  eobp->Mbhf= -1. ; // final BH mass
+  eobp->abhf= -2. ; // final BH spin
+  eobp->use_prec_abhf= 1; // use precessing remnant spin by default
   
   eobp->rLR= 0. ; // radius of light-ring
   eobp->rLSO= 0. ; // radius of last stable orbit 
@@ -751,13 +752,28 @@ int eob_set_params(int default_choice, int firstcall)
   }  /* use_tidal */
   
     /* Final BH */
-    EOBPars->Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
-    EOBPars->abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+    double Mbhf = JimenezFortezaRemnantMass(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
+    double abhf = JimenezFortezaRemnantSpin(EOBPars->nu, EOBPars->X1, EOBPars->X2, chi1, chi2);
 
     if (EOBPars->binary == BINARY_BHNS){
       if (VERBOSE) PRSECTN("BHNS mode");
       // these fits assume that the BH is the heavier object
-      eob_bhns_fit(chi1, EOBPars->nu, &(EOBPars->Mbhf), &(EOBPars->abhf), EOBPars->LambdaBl2, EOBPars->Mbhf, EOBPars->abhf);
+      eob_bhns_fit(chi1, EOBPars->nu, &(Mbhf), &(abhf), EOBPars->LambdaBl2, Mbhf, abhf);
+    }
+
+    /* If the remnant mass/spin is set to an unphysical value (as is the default), use the fit */
+    if (EOBPars->Mbhf < 0.)
+      EOBPars->Mbhf = Mbhf;
+
+    if (EOBPars->abhf < -1.)
+      EOBPars->abhf = abhf;
+    else {
+    /* Do not use precessing remnant spin if user specified a value */
+      if (VERBOSE) printf("Switching off precessing remnant spin because user specified a value for abhf\n");
+      EOBPars->use_prec_abhf = 0;
+    }
+    
+    if (EOBPars->binary == BINARY_BHNS){
       bhns_cases(EOBPars->nu, EOBPars->abhf, chi1, EOBPars->LambdaBl2, &(EOBPars->binary), &(EOBPars->use_tidal));
   
       if(EOBPars->binary == BINARY_BBH){
@@ -2041,6 +2057,9 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"spin_odes_dt")) {
     eobp->spin_odes_dt = par_get_d(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
   }
+  if (STREQUAL(key,"use_prec_abhf")) {
+    eobp->use_prec_abhf = YESNO2INT(string_trim(val));
+  }
 
   /* NQC */
   
@@ -2211,6 +2230,12 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   }
 
   /* User-input merger quantities */
+  if (STREQUAL(key, "Mbhf")) {
+    eobp->Mbhf = par_get_d(val);
+  }
+  if (STREQUAL(key, "abhf")) {
+    eobp->abhf = par_get_d(val);
+  }
   if (STREQUAL(key, "Alm_mrg_k")) {
     free(eobp->Alm_mrg_k);
     eobp->Alm_mrg_size = str2iarray(val, &eobp->Alm_mrg_k);
@@ -2484,6 +2509,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
 
   fprintf(f,"%s = %d\n"    , "compute_ringdown", eobp->compute_ringdown);
+  fprintf(f,"%s = \"%s\"\n", "use_prec_abhf", INT2YESNO(eobp->use_prec_abhf));
   
   /* NQC */
   fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);

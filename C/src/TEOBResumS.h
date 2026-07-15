@@ -801,8 +801,9 @@ typedef struct tagEOBParameters
   int backwards;                                        /**< Flag to switch on/off backwards dynamics */ 
 
   /* final state */
-  double Mbhf; /**< Final BH mass */
-  double abhf; /**< Final BH spin */
+  double Mbhf;       /**< Final BH mass */
+  double abhf;       /**< Final BH spin */
+  int use_prec_abhf; /**< Flag to use precessing remnant spin */
 
   /* Deviations from final BH mass, spin */
   double delta_Mbhf, delta_abhf;

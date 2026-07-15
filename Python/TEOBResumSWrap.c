@@ -520,7 +520,19 @@ int SetOptionalVariables(PyObject* dict){
   }
 
   /* User-input merger quantities */
-  /* Peak amplitude of each mode */
+  /* Final mass, spin */
+  if ( PyDict_GetItemString(dict, "Mbhf") != NULL ) {
+    EOBPars->Mbhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "Mbhf"));
+  }
+  if ( PyDict_GetItemString(dict, "abhf") != NULL ) {
+    EOBPars->abhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "abhf"));
+  }
+  if ( PyDict_GetItemString(dict, "use_prec_abhf") != NULL ) { 
+    EOBPars->use_prec_abhf = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_prec_abhf")));
+  }
+
+
+  /* Peak-time amplitude of any mode */
   if ( PyDict_GetItemString(dict, "Alm_mrg") != NULL ) {
     if (EOBPars->Alm_mrg) free(EOBPars->Alm_mrg);
     if (EOBPars->Alm_mrg_k) free(EOBPars->Alm_mrg_k);
@@ -537,7 +549,7 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
-  /* Peak-time frequency of each mode */
+  /* Peak-time frequency of any mode */
   if ( PyDict_GetItemString(dict, "omglm_mrg") != NULL ) {
     if (EOBPars->omglm_mrg) free(EOBPars->omglm_mrg);
     if (EOBPars->omglm_mrg_k) free(EOBPars->omglm_mrg_k);
