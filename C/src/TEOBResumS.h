@@ -709,6 +709,11 @@ typedef struct tagEOBParameters
   double delta_a6c, delta_cN3LO;
   /**@}*/ 
 
+  /** User-input peak quantities */
+  double *Alm_mrg,     *omglm_mrg;
+  int    *Alm_mrg_k,   *omglm_mrg_k;
+  int     Alm_mrg_size, omglm_mrg_size;
+
   double r0;                    /**< Initial radial separation */
   double initial_frequency;     /**< initial frequency */
   double f0;                    /**< initial frequency in geom units */
@@ -895,6 +900,7 @@ void Pade33_forGSF(double coeffs[6], double Dcoeffs[6], double D2coeffs[6], doub
 void Pade76v1_forGSF(double coeffs[4], double Dcoeffs[2], double D2coeffs[2], double u, double *P, double *DP, double *D2P);
 void Pade76v2_forGSF(double coeffs[5], double Dcoeffs[3], double D2coeffs[3], double u, double *P, double *DP, double *D2P);
 double Taylorseries(double x, double *a, int N);
+void overwrite_mode_array(double *v, double *u, int *k, int size);
 void vect_dot(double ax, double ay, double az, double bx, double by, double bz, double *s);
 void vect_dot3(double *a, double *b, double *s);
 void vect_cross(double ax, double ay, double az, double bx, double by, double bz, double *cx, double *cy, double *cz);

@@ -2605,6 +2605,15 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     sigmar[k33] = -0.319703*nu3 - 0.030076*nu2-0.009034*nu + 0.09270;
     sigmai[k33] =  2.957425*nu3 + 0.178146*nu2 + 0.709560*nu + 0.59944;
 
+    /* Overwrite fits of A if values given in input */
+    if (EOBPars->Alm_mrg_size > 0) {
+      if (VERBOSE) printf("Overwriting A_mrg with user-specified values\n");
+      overwrite_mode_array(Amrg, EOBPars->Alm_mrg, EOBPars->Alm_mrg_k, EOBPars->Alm_mrg_size);
+    }
+    if (EOBPars->omglm_mrg_size > 0) {
+      errorexit("Overwriting omglm_mrg is not supported with QNMHybridFitCab.");
+    }
+
     /* Apply user-input deviations from merger amplitude */
     if (EOBPars->delta_Alm_mrg_size > 0)
       apply_mode_deviations(Amrg, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
@@ -2690,6 +2699,15 @@ void QNMHybridFitCab(double nu, double X1, double X2, double chi1, double chi2, 
     
     Amrg[k22]      = A_scaled*(1-0.5*omgmx*aeff);
     Domg[k22]      = omega1[k22] - Mbh*omgmx;
+
+    /* Overwrite fits of A if values given in input */
+    if (EOBPars->Alm_mrg_size > 0) {
+      if (VERBOSE) printf("Overwriting A_mrg with user-specified values\n");
+      overwrite_mode_array(Amrg, EOBPars->Alm_mrg, EOBPars->Alm_mrg_k, EOBPars->Alm_mrg_size);
+    }
+    if (EOBPars->omglm_mrg_size > 0) {
+      errorexit("Overwriting omega_mrg is not supported with QNMHybridFitCab.");
+    }
 
     /* Apply merger amplitude deviation */
     if (EOBPars->delta_Alm_mrg_size > 0)
@@ -3555,6 +3573,14 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
     */
   }
 
+  /* Overwrite fits of A, omg if values given in input */
+  if (VERBOSE & (EOBPars->Alm_mrg_size + EOBPars->omglm_mrg_size > 0))
+    printf("Overwriting A_mrg and omg_mrg with user-specified values\n");
+  if (EOBPars->Alm_mrg_size > 0)
+    overwrite_mode_array(Amrg, EOBPars->Alm_mrg, EOBPars->Alm_mrg_k, EOBPars->Alm_mrg_size);
+  if (EOBPars->omglm_mrg_size > 0)
+    overwrite_mode_array(omgmrg, EOBPars->omglm_mrg, EOBPars->omglm_mrg_k, EOBPars->omglm_mrg_size);
+
   /* Apply deviations from merger amplitude, frequency */
   if (VERBOSE & (EOBPars->delta_Alm_mrg_size + EOBPars->delta_Omglm_mrg_size > 0))
     printf("Applying deviations from NR amplitude, frequency at merger.\n");
@@ -3664,6 +3690,22 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   if (EOBPars->binary==BINARY_BBH){eob_nqc_point_HM_peak22(NULL,A, dA, omg, domg);
   }else{eob_nqc_point_BHNS_HM(NULL,A, dA, omg, domg);}
 
+  /* Correct normalization of A, dA */
+  for (int j=0; j<knqcpeak22_size; j++){
+    int k = knqcpeak22[j];
+    int l = LINDEX[k];
+    A[k] *= sqrt((l+2)*(l+1)*l*(l-1));
+    dA[k]*= sqrt((l+2)*(l+1)*l*(l-1));
+  }
+
+  /* Overwrite fits of A, omg at peak with user input values if given. */
+  if (VERBOSE & (EOBPars->Alm_mrg_size + EOBPars->omglm_mrg_size > 0))
+    printf("Overwriting A_peak and omg_peak with user-specified values\n");
+  if (EOBPars->Alm_mrg_size > 0)
+    overwrite_mode_array(A, EOBPars->Alm_mrg, EOBPars->Alm_mrg_k, EOBPars->Alm_mrg_size);
+  if (EOBPars->omglm_mrg_size > 0)
+    overwrite_mode_array(omg, EOBPars->omglm_mrg, EOBPars->omglm_mrg_k, EOBPars->omglm_mrg_size);
+
   /* Apply deviations from fitted merger quantities here by hand */
   if (EOBPars->delta_Alm_mrg_size > 0)
     apply_mode_deviations(A, EOBPars->delta_Alm_mrg, knqcpeak22, knqcpeak22_size);
@@ -3704,11 +3746,6 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
       default:
         errorexit("Ringdown fits only implemented for (2,1), (3,3) and (4,4) at the moment");
     }
-
-    /* Correct normalization of A, dA */
-    int l = LINDEX[k];
-    A[k] *= sqrt((l+2)*(l+1)*l*(l-1));
-    dA[k]*= sqrt((l+2)*(l+1)*l*(l-1));
 
     /* Constrained coefficients*/
     c1c = (dA[k]  + sigmar[k]*A[k])*cosh(c2f)*cosh(c2f)/c1f;
@@ -5533,6 +5570,14 @@ void peak_bhns(double nu, double lambda, double chi1, double X1, double X2, doub
       Apeak[4] = 0.01;
       Apeak[13] = 0.001;
     }
+
+  /* Overwrite fits of A, omg at peak with user input values if given. */
+  if (VERBOSE & (EOBPars->Alm_mrg_size + EOBPars->omglm_mrg_size > 0))
+    printf("Overwriting Alm_mrg and omglm_mrg with user input values.\n");
+  if (EOBPars->Alm_mrg_size > 0)
+    overwrite_mode_array(Apeak, EOBPars->Alm_mrg, EOBPars->Alm_mrg_k, EOBPars->Alm_mrg_size);
+  if (EOBPars->omglm_mrg_size > 0)
+    overwrite_mode_array(Opeak, EOBPars->omglm_mrg, EOBPars->omglm_mrg_k, EOBPars->omglm_mrg_size);
 
   /* Apply deviations from merger amplitude, frequency */
   if (VERBOSE & (EOBPars->delta_Alm_mrg_size + EOBPars->delta_Omglm_mrg_size > 0))

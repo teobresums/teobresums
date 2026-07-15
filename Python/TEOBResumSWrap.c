@@ -519,6 +519,41 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  /* User-input merger quantities */
+  /* Peak amplitude of each mode */
+  if ( PyDict_GetItemString(dict, "Alm_mrg") != NULL ) {
+    if (EOBPars->Alm_mrg) free(EOBPars->Alm_mrg);
+    if (EOBPars->Alm_mrg_k) free(EOBPars->Alm_mrg_k);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "Alm_mrg"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->Alm_mrg_size = PyDict_Size(tmp_dict);
+    EOBPars->Alm_mrg = malloc ( EOBPars->Alm_mrg_size * sizeof(double) );
+    EOBPars->Alm_mrg_k = malloc ( EOBPars->Alm_mrg_size * sizeof(char*) );
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    while (PyDict_Next(tmp_dict, &pos, &key, &value)) {
+      EOBPars->Alm_mrg_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->Alm_mrg[pos - 1] = PyFloat_AsDouble(value);
+    }
+  }
+
+  /* Peak-time frequency of each mode */
+  if ( PyDict_GetItemString(dict, "omglm_mrg") != NULL ) {
+    if (EOBPars->omglm_mrg) free(EOBPars->omglm_mrg);
+    if (EOBPars->omglm_mrg_k) free(EOBPars->omglm_mrg_k);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "omglm_mrg"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->omglm_mrg_size = PyDict_Size(tmp_dict);
+    EOBPars->omglm_mrg = malloc ( EOBPars->omglm_mrg_size * sizeof(double) );
+    EOBPars->omglm_mrg_k = malloc ( EOBPars->omglm_mrg_size * sizeof(char*) );
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    while (PyDict_Next(tmp_dict, &pos, &key, &value)) {
+      EOBPars->omglm_mrg_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->omglm_mrg[pos - 1] = PyFloat_AsDouble(value);
+    }
+  }
+  
   /* Parametrized model */
   /* Shift in delta_t_nqc */
   if ( PyDict_GetItemString(dict, "d_delta_t_nqc") != NULL) {

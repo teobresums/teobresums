@@ -801,6 +801,24 @@ double Taylorseries(double x, double *a, int N){
   return sum;
 }
 
+/** Function: overwrite_mode_array
+ * -------------------------------
+ * Overwrite mode array with new values for a selection of modes
+ *
+ * @param[in,out] v: mode array
+ * @param[in] u: array of new values
+ * @param[in] k: indices of modes to overwrite
+ * @param[in] size: number of modes to overwrite
+ */
+void overwrite_mode_array(double *v, double *u, int *k, int size)
+{
+  for (int i = 0; i < size; i++) {
+    printf("Overwriting mode %d = %f with value %f;\n", k[i], v[k[i]], u[i]);
+    v[k[i]] = u[i];
+    printf("New value of mode %d = %f\n", k[i], v[k[i]]);
+  }
+}
+
 /**
  * Function: vect_dot
  * ------------------

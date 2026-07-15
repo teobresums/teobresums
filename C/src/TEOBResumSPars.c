@@ -271,6 +271,10 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->delta_t0_sigmoid_NQC  = 100.;
   eobp->alpha_sigmoid_Newt    = 0.15;
   eobp->alpha_sigmoid_NQC     = 0.06;
+
+  /* Peak amplitude, frequency */
+  eobp->Alm_mrg_size = 0;
+  eobp->omglm_mrg_size = 0;
   
   /* Output */
   
@@ -971,6 +975,39 @@ int eob_set_params(int default_choice, int firstcall)
       if (EOBPars->interp_uniform_grid)
 	      PRFORMd("dt_interp",EOBPars->dt_interp);
   }
+
+  /* User-input merger-ringdown quantities */
+
+  /* Peak-time amplitude */
+  if (EOBPars->Alm_mrg_size > 0) {
+    for (int k = 0; k < EOBPars->Alm_mrg_size; k++) {
+      int idx = EOBPars->Alm_mrg_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for Alm_mrg\n", idx);
+        return 1;
+      }
+      if (EOBPars->Alm_mrg[k] <= 0.) {
+        if (DEBUG) printf("ERROR: Invalid amplitude %e for mode %d in Alm_mrg\n", EOBPars->Alm_mrg[idx], idx);
+        return 1;
+      }
+    }
+  }
+
+  /* Peak-time amplitude */
+  if (EOBPars->omglm_mrg_size > 0) {
+    for (int k = 0; k < EOBPars->omglm_mrg_size; k++) {
+      int idx = EOBPars->omglm_mrg_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for omglm_mrg\n", idx);
+        return 1;
+      }
+      if (EOBPars->omglm_mrg[k] <= 0.) {
+        if (DEBUG) printf("ERROR: Invalid amplitude %e for mode %d in omglm_mrg\n", EOBPars->omglm_mrg[idx], idx);
+        return 1;
+      }
+    }
+  }
+
 
   /* Deviations from standard TEOB */
 
@@ -2173,6 +2210,24 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     eobp->errors_to_warnings = YESNO2INT(string_trim(val));
   }
 
+  /* User-input merger quantities */
+  if (STREQUAL(key, "Alm_mrg_k")) {
+    free(eobp->Alm_mrg_k);
+    eobp->Alm_mrg_size = str2iarray(val, &eobp->Alm_mrg_k);
+  }
+  if (STREQUAL(key, "Alm_mrg")) {
+    free(eobp->Alm_mrg);
+    eobp->Alm_mrg_size = str2darray(val, &eobp->Alm_mrg);
+  }
+  if (STREQUAL(key, "omglm_mrg_k")) {
+    free(eobp->omglm_mrg_k);
+    eobp->omglm_mrg_size = str2iarray(val, &eobp->omglm_mrg_k);
+  }
+  if (STREQUAL(key, "omglm_mrg")) {
+    free(eobp->omglm_mrg);
+    eobp->omglm_mrg_size = str2darray(val, &eobp->omglm_mrg);
+  }
+  
   /* Parametrized model: deviations from NR-fitted quantities */
   /* Inspiral */
   if (STREQUAL(key, "delta_a6c")) {
@@ -2444,6 +2499,32 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_stop", INT2YESNO(eobp->postadiabatic_dynamics_stop));
 
+  /* User-input merger quantities */
+  if (eobp->Alm_mrg_size > 0) {
+    fprintf(f,"%s = [", "Alm_mrg_k");
+    for(int i=0; i<eobp->Alm_mrg_size-1;i++)
+      fprintf(f,"%d,", eobp->Alm_mrg_k[i]);
+    fprintf(f,"%d]\n", eobp->Alm_mrg_k[eobp->Alm_mrg_size-1]);
+    fprintf(f,"%s = [", "Alm_mrg");
+    for(int i=0; i<eobp->Alm_mrg_size-1;i++){
+      int idx = eobp->Alm_mrg_k[i];
+      fprintf(f,"%f,", eobp->Alm_mrg[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->Alm_mrg[eobp->Alm_mrg_k[eobp->Alm_mrg_size-1]]);
+  }
+  if (eobp->omglm_mrg_size > 0) {
+    fprintf(f,"%s = [", "omglm_mrg_k");
+    for(int i=0; i<eobp->omglm_mrg_size-1;i++)
+      fprintf(f,"%d,", eobp->omglm_mrg_k[i]);
+    fprintf(f,"%d]\n", eobp->omglm_mrg_k[eobp->omglm_mrg_size-1]);
+    fprintf(f,"%s = [", "omglm_mrg");
+    for(int i=0; i<eobp->omglm_mrg_size-1;i++){
+      int idx = eobp->omglm_mrg_k[i];
+      fprintf(f,"%f,", eobp->omglm_mrg[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->omglm_mrg[eobp->omglm_mrg_k[eobp->omglm_mrg_size-1]]);
+  }
+  
   /* Deviations */
   fprintf(f,"%s = %f\n", "delta_a6c", eobp->delta_a6c);
   fprintf(f,"%s = %f\n", "delta_cN3LO", eobp->delta_cN3LO);
