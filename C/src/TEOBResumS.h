@@ -840,9 +840,9 @@ typedef struct tagEOBParameters
   /**@}*/
 
   /* Deviations from NQC point quantities */
-  double *delta_Alm_nqc, *delta_dAlm_nqc, *delta_omglm_nqc, *delta_domglm_nqc;
-  int    *delta_Alm_nqc_k, *delta_dAlm_nqc_k, *delta_omglm_nqc_k, *delta_domglm_nqc_k;
-  int    delta_Alm_nqc_size, delta_dAlm_nqc_size, delta_omglm_nqc_size, delta_domglm_nqc_size;
+  double *delta_Alm_nqc, *delta_dAlm_nqc, *delta_Omglm_nqc, *delta_dOmglm_nqc;
+  int    *delta_Alm_nqc_k, *delta_dAlm_nqc_k, *delta_Omglm_nqc_k, *delta_dOmglm_nqc_k;
+  int    delta_Alm_nqc_size, delta_dAlm_nqc_size, delta_Omglm_nqc_size, delta_dOmglm_nqc_size;
 
   /**@{*/
   /** output options*/
