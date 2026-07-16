@@ -95,6 +95,22 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->knqcpeak22) free (eobp->knqcpeak22);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
+  if (eobp->Alm_mrg) free(eobp->Alm_mrg);
+  if (eobp->Alm_mrg_k) free(eobp->Alm_mrg_k);
+  if (eobp->omglm_mrg) free(eobp->omglm_mrg);
+  if (eobp->omglm_mrg_k) free(eobp->omglm_mrg_k);
+  if (eobp->Alm_nqc) free(eobp->Alm_nqc);
+  if (eobp->Alm_nqc_k) free(eobp->Alm_nqc_k);
+  if (eobp->dAlm_nqc) free(eobp->dAlm_nqc);
+  if (eobp->dAlm_nqc_k) free(eobp->dAlm_nqc_k);
+  if (eobp->d2Alm_nqc) free(eobp->d2Alm_nqc);
+  if (eobp->d2Alm_nqc_k) free(eobp->d2Alm_nqc_k);
+  if (eobp->omglm_nqc) free(eobp->omglm_nqc);
+  if (eobp->omglm_nqc_k) free(eobp->omglm_nqc_k);
+  if (eobp->domglm_nqc) free(eobp->domglm_nqc);
+  if (eobp->domglm_nqc_k) free(eobp->domglm_nqc_k);
+  if (eobp->d2omglm_nqc) free(eobp->d2omglm_nqc);
+  if (eobp->d2omglm_nqc_k) free(eobp->d2omglm_nqc_k);
   if (eobp->delta_alphalm0_k) free(eobp->delta_alphalm0_k);
   if (eobp->delta_alphalm0) free(eobp->delta_alphalm0);
   if (eobp->delta_taulm0_k) free(eobp->delta_taulm0_k);
@@ -103,16 +119,16 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->delta_omglm0) free(eobp->delta_omglm0);
   if (eobp->delta_Alm_mrg_k) free(eobp->delta_Alm_mrg_k);
   if (eobp->delta_Alm_mrg) free(eobp->delta_Alm_mrg);
-  if (eobp->delta_Omglm_mrg_k) free(eobp->delta_Omglm_mrg_k);
-  if (eobp->delta_Omglm_mrg) free(eobp->delta_Omglm_mrg);
+  if (eobp->delta_omglm_mrg_k) free(eobp->delta_omglm_mrg_k);
+  if (eobp->delta_omglm_mrg) free(eobp->delta_omglm_mrg);
   if (eobp->delta_Alm_nqc_k) free(eobp->delta_Alm_nqc_k);
   if (eobp->delta_Alm_nqc) free(eobp->delta_Alm_nqc);
-  if (eobp->delta_Omglm_nqc_k) free(eobp->delta_Omglm_nqc_k);
-  if (eobp->delta_Omglm_nqc) free(eobp->delta_Omglm_nqc);
+  if (eobp->delta_omglm_nqc_k) free(eobp->delta_omglm_nqc_k);
+  if (eobp->delta_omglm_nqc) free(eobp->delta_omglm_nqc);
   if (eobp->delta_dAlm_nqc_k) free(eobp->delta_dAlm_nqc_k);
   if (eobp->delta_dAlm_nqc) free(eobp->delta_dAlm_nqc);
-  if (eobp->delta_dOmglm_nqc_k) free(eobp->delta_dOmglm_nqc_k);
-  if (eobp->delta_dOmglm_nqc) free(eobp->delta_dOmglm_nqc);
+  if (eobp->delta_domglm_nqc_k) free(eobp->delta_domglm_nqc_k);
+  if (eobp->delta_domglm_nqc) free(eobp->delta_domglm_nqc);
   free(eobp);
 }
 
@@ -275,7 +291,14 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   /* Peak amplitude, frequency */
   eobp->Alm_mrg_size = 0;
   eobp->omglm_mrg_size = 0;
-  
+
+  eobp->Alm_nqc_size = 0;
+  eobp->dAlm_nqc_size = 0;
+  eobp->d2Alm_nqc_size = 0;
+  eobp->omglm_nqc_size = 0;
+  eobp->domglm_nqc_size = 0;
+  eobp->d2omglm_nqc_size = 0;
+
   /* Output */
   
   strcpy(eobp->output_dir, "./data");  // output dir
@@ -497,13 +520,13 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
   /* Deviations from merger quantities */
   eobp->delta_Alm_mrg_size   = 0;
-  eobp->delta_Omglm_mrg_size = 0;
+  eobp->delta_omglm_mrg_size = 0;
 
   /* Deviations from NQC point quantities */
   eobp->delta_Alm_nqc_size   = 0;
-  eobp->delta_Omglm_nqc_size = 0;
+  eobp->delta_omglm_nqc_size = 0;
   eobp->delta_dAlm_nqc_size   = 0;
-  eobp->delta_dOmglm_nqc_size = 0;
+  eobp->delta_domglm_nqc_size = 0;
 
 }
 
@@ -1006,10 +1029,17 @@ int eob_set_params(int default_choice, int firstcall)
         if (DEBUG) printf("ERROR: Invalid amplitude %e for mode %d in Alm_mrg\n", EOBPars->Alm_mrg[idx], idx);
         return 1;
       }
+      if (DEBUG) {
+        int j;
+        for (j = EOBPars->kpostpeak_size - 1; j >= 0; j--)
+          if (idx == EOBPars->kpostpeak[j]) break;
+        if (j < 0)
+          printf("WARNING: add mode %d to kpostpeak when specifying merger amplitude to ensure plunge-ringdown match.\n", idx);
+      }
     }
   }
 
-  /* Peak-time amplitude */
+  /* Peak-time frequency */
   if (EOBPars->omglm_mrg_size > 0) {
     for (int k = 0; k < EOBPars->omglm_mrg_size; k++) {
       int idx = EOBPars->omglm_mrg_k[k];
@@ -1019,6 +1049,91 @@ int eob_set_params(int default_choice, int firstcall)
       }
       if (EOBPars->omglm_mrg[k] <= 0.) {
         if (DEBUG) printf("ERROR: Invalid amplitude %e for mode %d in omglm_mrg\n", EOBPars->omglm_mrg[idx], idx);
+        return 1;
+      }
+      if (DEBUG) {
+        int j;
+        for (j = EOBPars->kpostpeak_size - 1; j >= 0; j--)
+          if (idx == EOBPars->kpostpeak[j]) break;
+        if (j < 0)
+          printf("WARNING: add mode %d to kpostpeak when specifying merger frequency to ensure plunge-ringdown match.\n", idx);
+      }
+    }
+  }
+
+  /* NQC-time amplitude */
+  if (EOBPars->Alm_nqc_size > 0) {
+    for (int k = 0; k < EOBPars->Alm_nqc_size; k++) {
+      int idx = EOBPars->Alm_nqc_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for Alm_nqc\n", idx);
+        return 1;
+      }
+      if (EOBPars->Alm_nqc[k] <= 0.) {
+        if (DEBUG) printf("ERROR: Invalid amplitude %e for mode %d in Alm_nqc\n", EOBPars->Alm_nqc[idx], idx);
+        return 1;
+      }
+    }
+  }
+
+  /* NQC-time dA/dt */
+  if (EOBPars->dAlm_nqc_size > 0) {
+    for (int k = 0; k < EOBPars->dAlm_nqc_size; k++) {
+      int idx = EOBPars->dAlm_nqc_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for dAlm_nqc\n", idx);
+        return 1;
+      }
+    }
+  }
+
+  /* NQC-time d2A/dt2 */
+  if (EOBPars->d2Alm_nqc_size > 0) {
+    if (EOBPars->nqc_npars != 3)
+      if (VERBOSE) printf("WARNING: d2Alm_nqc specified but unused, since nqc_npars != 3\n");
+    for (int k = 0; k < EOBPars->d2Alm_nqc_size; k++) {
+      int idx = EOBPars->d2Alm_nqc_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for d2Alm_nqc\n", idx);
+        return 1;
+      }
+    }
+  }
+
+  /* NQC-time frequency */
+  if (EOBPars->omglm_nqc_size > 0) {
+    for (int k = 0; k < EOBPars->omglm_nqc_size; k++) {
+      int idx = EOBPars->omglm_nqc_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for omglm_nqc\n", idx);
+        return 1;
+      }
+      if (EOBPars->omglm_nqc[k] <= 0.) {
+        if (DEBUG) printf("ERROR: Invalid amplitude %e for mode %d in omglm_nqc\n", EOBPars->omglm_nqc[idx], idx);
+        return 1;
+      }
+    }
+  }
+
+  /* NQC-time dOmg/dt */
+  if (EOBPars->domglm_nqc_size > 0) {
+    for (int k = 0; k < EOBPars->domglm_nqc_size; k++) {
+      int idx = EOBPars->domglm_nqc_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for domglm_nqc\n", idx);
+        return 1;
+      }
+    }
+  }
+
+  /* NQC-time d2Omg/dt2 */
+  if (EOBPars->d2omglm_nqc_size > 0) {
+    if ((EOBPars->nqc_npars != 3))
+      if (VERBOSE) printf("WARNING: d2omglm_nqc specified but unused, since nqc_npars != 3\n");
+    for (int k = 0; k < EOBPars->d2omglm_nqc_size; k++) {
+      int idx = EOBPars->d2omglm_nqc_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for d2omglm_nqc\n", idx);
         return 1;
       }
     }
@@ -1118,13 +1233,13 @@ int eob_set_params(int default_choice, int firstcall)
   }
 
   /* Merger frequency */
-  if (EOBPars->delta_Omglm_mrg_size > 0) {
+  if (EOBPars->delta_omglm_mrg_size > 0) {
     double *temp;
     temp = malloc ( KMAX * sizeof(double));
     for (int k = 0; k < KMAX; k++) temp[k] = 0.;
-    for (int k = 0; k < EOBPars->delta_Omglm_mrg_size; k++) {
-      int idx   = EOBPars->delta_Omglm_mrg_k[k];
-      temp[idx] = EOBPars->delta_Omglm_mrg[k];
+    for (int k = 0; k < EOBPars->delta_omglm_mrg_size; k++) {
+      int idx   = EOBPars->delta_omglm_mrg_k[k];
+      temp[idx] = EOBPars->delta_omglm_mrg[k];
       if (DEBUG) {
         int j;
         for (j = EOBPars->kpostpeak_size - 1; j >= 0; j--)
@@ -1133,9 +1248,9 @@ int eob_set_params(int default_choice, int firstcall)
           printf("WARNING: add mode %d to kpostpeak when using merger frequency deviation to ensure plunge-ringdown match.\n", idx);
       }
     }
-    free(EOBPars->delta_Omglm_mrg);
-    EOBPars->delta_Omglm_mrg = malloc ( KMAX * sizeof(double));
-    memcpy(EOBPars->delta_Omglm_mrg, temp, KMAX * sizeof(double));
+    free(EOBPars->delta_omglm_mrg);
+    EOBPars->delta_omglm_mrg = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_omglm_mrg, temp, KMAX * sizeof(double));
     free(temp);
   }
 
@@ -1159,17 +1274,17 @@ int eob_set_params(int default_choice, int firstcall)
   }
 
   /* NQC point frequency */
-  if (EOBPars->delta_Omglm_nqc_size > 0) {
+  if (EOBPars->delta_omglm_nqc_size > 0) {
     double *temp;
     temp = malloc ( KMAX * sizeof(double));
     for (int k = 0; k < KMAX; k++) temp[k] = 0.;
-    for (int k = 0; k < EOBPars->delta_Omglm_nqc_size; k++) {
-      int idx   = EOBPars->delta_Omglm_nqc_k[k];
-      temp[idx] = EOBPars->delta_Omglm_nqc[k];
+    for (int k = 0; k < EOBPars->delta_omglm_nqc_size; k++) {
+      int idx   = EOBPars->delta_omglm_nqc_k[k];
+      temp[idx] = EOBPars->delta_omglm_nqc[k];
     }
-    free(EOBPars->delta_Omglm_nqc);
-    EOBPars->delta_Omglm_nqc = malloc ( KMAX * sizeof(double));
-    memcpy(EOBPars->delta_Omglm_nqc, temp, KMAX * sizeof(double));
+    free(EOBPars->delta_omglm_nqc);
+    EOBPars->delta_omglm_nqc = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_omglm_nqc, temp, KMAX * sizeof(double));
     free(temp);
   }
 
@@ -1189,17 +1304,17 @@ int eob_set_params(int default_choice, int firstcall)
   }
 
   /* Derivative of frequency at NQC point */
-  if (EOBPars->delta_dOmglm_nqc_size > 0) {
+  if (EOBPars->delta_domglm_nqc_size > 0) {
     double *temp;
     temp = malloc ( KMAX * sizeof(double));
     for (int k = 0; k < KMAX; k++) temp[k] = 0.;
-    for (int k = 0; k < EOBPars->delta_dOmglm_nqc_size; k++) {
-      int idx   = EOBPars->delta_dOmglm_nqc_k[k];
-      temp[idx] = EOBPars->delta_dOmglm_nqc[k];
+    for (int k = 0; k < EOBPars->delta_domglm_nqc_size; k++) {
+      int idx   = EOBPars->delta_domglm_nqc_k[k];
+      temp[idx] = EOBPars->delta_domglm_nqc[k];
     }
-    free(EOBPars->delta_dOmglm_nqc);
-    EOBPars->delta_dOmglm_nqc = malloc ( KMAX * sizeof(double));
-    memcpy(EOBPars->delta_dOmglm_nqc, temp, KMAX * sizeof(double));
+    free(EOBPars->delta_domglm_nqc);
+    EOBPars->delta_domglm_nqc = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_domglm_nqc, temp, KMAX * sizeof(double));
     free(temp);
   }
 
@@ -2252,6 +2367,54 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     free(eobp->omglm_mrg);
     eobp->omglm_mrg_size = str2darray(val, &eobp->omglm_mrg);
   }
+  if (STREQUAL(key, "Alm_nqc_k")) {
+    free(eobp->Alm_nqc_k);
+    eobp->Alm_nqc_size = str2iarray(val, &eobp->Alm_nqc_k);
+  }
+  if (STREQUAL(key, "Alm_nqc")) {
+    free(eobp->Alm_nqc);
+    eobp->Alm_nqc_size = str2darray(val, &eobp->Alm_nqc);
+  }
+  if (STREQUAL(key, "dAlm_nqc_k")) {
+    free(eobp->dAlm_nqc_k);
+    eobp->dAlm_nqc_size = str2iarray(val, &eobp->dAlm_nqc_k);
+  }
+  if (STREQUAL(key, "dAlm_nqc")) {
+    free(eobp->dAlm_nqc);
+    eobp->dAlm_nqc_size = str2darray(val, &eobp->dAlm_nqc);
+  }
+  if (STREQUAL(key, "d2Alm_nqc_k")) {
+    free(eobp->d2Alm_nqc_k);
+    eobp->d2Alm_nqc_size = str2iarray(val, &eobp->d2Alm_nqc_k);
+  }
+  if (STREQUAL(key, "d2Alm_nqc")) {
+    free(eobp->d2Alm_nqc);
+    eobp->d2Alm_nqc_size = str2darray(val, &eobp->d2Alm_nqc);
+  }
+  if (STREQUAL(key, "omglm_nqc_k")) {
+    free(eobp->omglm_nqc_k);
+    eobp->omglm_nqc_size = str2iarray(val, &eobp->omglm_nqc_k);
+  }
+  if (STREQUAL(key, "omglm_nqc")) {
+    free(eobp->omglm_nqc);
+    eobp->omglm_nqc_size = str2darray(val, &eobp->omglm_nqc);
+  }
+  if (STREQUAL(key, "domglm_nqc_k")) {
+    free(eobp->domglm_nqc_k);
+    eobp->domglm_nqc_size = str2iarray(val, &eobp->domglm_nqc_k);
+  }
+  if (STREQUAL(key, "domglm_nqc")) {
+    free(eobp->domglm_nqc);
+    eobp->domglm_nqc_size = str2darray(val, &eobp->domglm_nqc);
+  }
+  if (STREQUAL(key, "d2omglm_nqc_k")) {
+    free(eobp->d2omglm_nqc_k);
+    eobp->d2omglm_nqc_size = str2iarray(val, &eobp->d2omglm_nqc_k);
+  }
+  if (STREQUAL(key, "d2omglm_nqc")) {
+    free(eobp->d2omglm_nqc);
+    eobp->d2omglm_nqc_size = str2darray(val, &eobp->d2omglm_nqc);
+  }
   
   /* Parametrized model: deviations from NR-fitted quantities */
   /* Inspiral */
@@ -2310,13 +2473,13 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     free(eobp->delta_Alm_mrg);
     eobp->delta_Alm_mrg_size = str2darray(val, &eobp->delta_Alm_mrg);
   }
-  if (STREQUAL(key, "delta_Omglm_mrg_k")) {
-    free(eobp->delta_Omglm_mrg_k);
-    eobp->delta_Omglm_mrg_size = str2iarray(val, &eobp->delta_Omglm_mrg_k);
+  if (STREQUAL(key, "delta_omglm_mrg_k")) {
+    free(eobp->delta_omglm_mrg_k);
+    eobp->delta_omglm_mrg_size = str2iarray(val, &eobp->delta_omglm_mrg_k);
   }
-  if (STREQUAL(key, "delta_Omglm_mrg")) {
-    free(eobp->delta_Omglm_mrg);
-    eobp->delta_Omglm_mrg_size = str2darray(val, &eobp->delta_Omglm_mrg);
+  if (STREQUAL(key, "delta_omglm_mrg")) {
+    free(eobp->delta_omglm_mrg);
+    eobp->delta_omglm_mrg_size = str2darray(val, &eobp->delta_omglm_mrg);
   }
 
   /* NQC point */
@@ -2328,13 +2491,13 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     free(eobp->delta_Alm_nqc);
     eobp->delta_Alm_nqc_size = str2darray(val, &eobp->delta_Alm_nqc);
   }
-  if (STREQUAL(key, "delta_Omglm_nqc_k")) {
+  if (STREQUAL(key, "delta_omglm_nqc_k")) {
     free(eobp->delta_Alm_nqc_k);
-    eobp->delta_Omglm_nqc_size = str2iarray(val, &eobp->delta_Omglm_nqc_k);
+    eobp->delta_omglm_nqc_size = str2iarray(val, &eobp->delta_omglm_nqc_k);
   }
-  if (STREQUAL(key, "delta_Omglm_nqc")) {
-    free(eobp->delta_Omglm_nqc);
-    eobp->delta_Omglm_nqc_size = str2darray(val, &eobp->delta_Omglm_nqc);
+  if (STREQUAL(key, "delta_omglm_nqc")) {
+    free(eobp->delta_omglm_nqc);
+    eobp->delta_omglm_nqc_size = str2darray(val, &eobp->delta_omglm_nqc);
   }
   if (STREQUAL(key, "delta_dAlm_nqc_k")) {
     free(eobp->delta_dAlm_nqc_k);
@@ -2344,13 +2507,13 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     free(eobp->delta_dAlm_nqc);
     eobp->delta_dAlm_nqc_size = str2darray(val, &eobp->delta_dAlm_nqc);
   }
-  if (STREQUAL(key, "delta_dOmglm_nqc_k")) {
-    free(eobp->delta_dOmglm_nqc_k);
-    eobp->delta_dOmglm_nqc_size = str2iarray(val, &eobp->delta_dOmglm_nqc_k);
+  if (STREQUAL(key, "delta_domglm_nqc_k")) {
+    free(eobp->delta_domglm_nqc_k);
+    eobp->delta_domglm_nqc_size = str2iarray(val, &eobp->delta_domglm_nqc_k);
   }
-  if (STREQUAL(key, "delta_dOmglm_nqc")) {
-    free(eobp->delta_dOmglm_nqc);
-    eobp->delta_dOmglm_nqc_size = str2darray(val, &eobp->delta_dOmglm_nqc);
+  if (STREQUAL(key, "delta_domglm_nqc")) {
+    free(eobp->delta_domglm_nqc);
+    eobp->delta_domglm_nqc_size = str2darray(val, &eobp->delta_domglm_nqc);
   }
 }
 
@@ -2533,10 +2696,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d]\n", eobp->Alm_mrg_k[eobp->Alm_mrg_size-1]);
     fprintf(f,"%s = [", "Alm_mrg");
     for(int i=0; i<eobp->Alm_mrg_size-1;i++){
-      int idx = eobp->Alm_mrg_k[i];
-      fprintf(f,"%f,", eobp->Alm_mrg[idx]);
+      fprintf(f,"%f,", eobp->Alm_mrg[i]);
     }
-    fprintf(f,"%f]\n", eobp->Alm_mrg[eobp->Alm_mrg_k[eobp->Alm_mrg_size-1]]);
+    fprintf(f,"%f]\n", eobp->Alm_mrg[eobp->Alm_mrg_size-1]);
   }
   if (eobp->omglm_mrg_size > 0) {
     fprintf(f,"%s = [", "omglm_mrg_k");
@@ -2545,10 +2707,80 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d]\n", eobp->omglm_mrg_k[eobp->omglm_mrg_size-1]);
     fprintf(f,"%s = [", "omglm_mrg");
     for(int i=0; i<eobp->omglm_mrg_size-1;i++){
-      int idx = eobp->omglm_mrg_k[i];
-      fprintf(f,"%f,", eobp->omglm_mrg[idx]);
+      fprintf(f,"%f,", eobp->omglm_mrg[i]);
     }
-    fprintf(f,"%f]\n", eobp->omglm_mrg[eobp->omglm_mrg_k[eobp->omglm_mrg_size-1]]);
+    fprintf(f,"%f]\n", eobp->omglm_mrg[eobp->omglm_mrg_size-1]);
+  }
+  if (eobp->Alm_nqc_size > 0) {
+    fprintf(f,"%s = [", "Alm_nqc_k");
+    for(int i=0; i<eobp->Alm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->Alm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->Alm_nqc_k[eobp->Alm_nqc_size-1]);
+    fprintf(f,"%s = [", "Alm_nqc");
+    for(int i=0; i<eobp->Alm_nqc_size-1;i++){
+      fprintf(f,"%f,", eobp->Alm_nqc[i]);
+    }
+    fprintf(f,"%f]\n", eobp->Alm_nqc[eobp->Alm_nqc_size-1]);
+  }
+  if (eobp->dAlm_nqc_size > 0) {
+    fprintf(f,"%s = [", "dAlm_nqc_k");
+    for(int i=0; i<eobp->dAlm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->dAlm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->dAlm_nqc_k[eobp->dAlm_nqc_size-1]);
+    fprintf(f,"%s = [", "dAlm_nqc");
+    for(int i=0; i<eobp->dAlm_nqc_size-1;i++){
+      int idx = eobp->dAlm_nqc_k[i];
+      fprintf(f,"%f,", eobp->dAlm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->dAlm_nqc[eobp->dAlm_nqc_k[eobp->dAlm_nqc_size-1]]);
+  }
+  if (eobp->d2Alm_nqc_size > 0) {
+    fprintf(f,"%s = [", "d2Alm_nqc_k");
+    for(int i=0; i<eobp->d2Alm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->d2Alm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->d2Alm_nqc_k[eobp->d2Alm_nqc_size-1]);
+    fprintf(f,"%s = [", "d2Alm_nqc");
+    for(int i=0; i<eobp->d2Alm_nqc_size-1;i++){
+      int idx = eobp->d2Alm_nqc_k[i];
+      fprintf(f,"%f,", eobp->d2Alm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->d2Alm_nqc[eobp->d2Alm_nqc_k[eobp->d2Alm_nqc_size-1]]);
+  }
+  if (eobp->omglm_nqc_size > 0) {
+    fprintf(f,"%s = [", "omglm_nqc_k");
+    for(int i=0; i<eobp->omglm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->omglm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->omglm_nqc_k[eobp->omglm_nqc_size-1]);
+    fprintf(f,"%s = [", "omglm_nqc");
+    for(int i=0; i<eobp->omglm_nqc_size-1;i++){
+      int idx = eobp->omglm_nqc_k[i];
+      fprintf(f,"%f,", eobp->omglm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->omglm_nqc[eobp->omglm_nqc_k[eobp->omglm_nqc_size-1]]);
+  }
+  if (eobp->domglm_nqc_size > 0) {
+    fprintf(f,"%s = [", "domglm_nqc_k");
+    for(int i=0; i<eobp->domglm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->domglm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->domglm_nqc_k[eobp->domglm_nqc_size-1]);
+    fprintf(f,"%s = [", "domglm_nqc");
+    for(int i=0; i<eobp->domglm_nqc_size-1;i++){
+      int idx = eobp->domglm_nqc_k[i];
+      fprintf(f,"%f,", eobp->domglm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->domglm_nqc[eobp->domglm_nqc_k[eobp->domglm_nqc_size-1]]);
+  }
+  if (eobp->d2omglm_nqc_size > 0) {
+    fprintf(f,"%s = [", "d2omglm_nqc_k");
+    for(int i=0; i<eobp->d2omglm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->d2omglm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->d2omglm_nqc_k[eobp->d2omglm_nqc_size-1]);
+    fprintf(f,"%s = [", "d2omglm_nqc");
+    for(int i=0; i<eobp->d2omglm_nqc_size-1;i++){
+      int idx = eobp->d2omglm_nqc_k[i];
+      fprintf(f,"%f,", eobp->d2omglm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->d2omglm_nqc[eobp->d2omglm_nqc_k[eobp->d2omglm_nqc_size-1]]);
   }
   
   /* Deviations */
@@ -2603,17 +2835,17 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     }
     fprintf(f,"%f]\n", eobp->delta_Alm_mrg[eobp->delta_Alm_mrg_k[eobp->delta_Alm_mrg_size-1]]);
   }
-  if (eobp->delta_Omglm_mrg_size > 0) {
-    fprintf(f,"%s = [", "delta_Omglm_mrg_k");
-    for(int i=0; i<eobp->delta_Omglm_mrg_size-1;i++)
-      fprintf(f,"%d,", eobp->delta_Omglm_mrg_k[i]);
-    fprintf(f,"%d]\n", eobp->delta_Omglm_mrg_k[eobp->delta_Omglm_mrg_size-1]);
-    fprintf(f,"%s = [", "delta_Omglm_mrg");
-    for(int i=0; i<eobp->delta_Omglm_mrg_size-1;i++){
-      int idx = eobp->delta_Omglm_mrg_k[i];
-      fprintf(f,"%f,", eobp->delta_Omglm_mrg[idx]);
+  if (eobp->delta_omglm_mrg_size > 0) {
+    fprintf(f,"%s = [", "delta_omglm_mrg_k");
+    for(int i=0; i<eobp->delta_omglm_mrg_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_omglm_mrg_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_omglm_mrg_k[eobp->delta_omglm_mrg_size-1]);
+    fprintf(f,"%s = [", "delta_omglm_mrg");
+    for(int i=0; i<eobp->delta_omglm_mrg_size-1;i++){
+      int idx = eobp->delta_omglm_mrg_k[i];
+      fprintf(f,"%f,", eobp->delta_omglm_mrg[idx]);
     }
-    fprintf(f,"%f]\n", eobp->delta_Omglm_mrg[eobp->delta_Omglm_mrg_k[eobp->delta_Omglm_mrg_size-1]]);
+    fprintf(f,"%f]\n", eobp->delta_omglm_mrg[eobp->delta_omglm_mrg_k[eobp->delta_omglm_mrg_size-1]]);
   }
   if (eobp->delta_Alm_nqc_size > 0) {
     fprintf(f,"%s = [", "delta_Alm_nqc_k");
@@ -2639,29 +2871,29 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     }
     fprintf(f,"%f]\n", eobp->delta_dAlm_nqc[eobp->delta_dAlm_nqc_k[eobp->delta_dAlm_nqc_size-1]]);
   }
-  if (eobp->delta_Omglm_nqc_size > 0) {
-    fprintf(f,"%s = [", "delta_Omglm_nqc_k");
-    for(int i=0; i<eobp->delta_Omglm_nqc_size-1;i++)
-      fprintf(f,"%d,", eobp->delta_Omglm_nqc_k[i]);
-    fprintf(f,"%d]\n", eobp->delta_Omglm_nqc_k[eobp->delta_Omglm_nqc_size-1]);
-    fprintf(f,"%s = [", "delta_Omglm_nqc");
-    for(int i=0; i<eobp->delta_Omglm_nqc_size-1;i++){
-      int idx = eobp->delta_Omglm_nqc_k[i];
-      fprintf(f,"%f,", eobp->delta_Omglm_nqc[idx]);
+  if (eobp->delta_omglm_nqc_size > 0) {
+    fprintf(f,"%s = [", "delta_omglm_nqc_k");
+    for(int i=0; i<eobp->delta_omglm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_omglm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_omglm_nqc_k[eobp->delta_omglm_nqc_size-1]);
+    fprintf(f,"%s = [", "delta_omglm_nqc");
+    for(int i=0; i<eobp->delta_omglm_nqc_size-1;i++){
+      int idx = eobp->delta_omglm_nqc_k[i];
+      fprintf(f,"%f,", eobp->delta_omglm_nqc[idx]);
     }
-    fprintf(f,"%f]\n", eobp->delta_Omglm_nqc[eobp->delta_Omglm_nqc_k[eobp->delta_Omglm_nqc_size-1]]);
+    fprintf(f,"%f]\n", eobp->delta_omglm_nqc[eobp->delta_omglm_nqc_k[eobp->delta_omglm_nqc_size-1]]);
   }
-  if (eobp->delta_dOmglm_nqc_size > 0) {
-    fprintf(f,"%s = [", "delta_dOmglm_nqc_k");
-    for(int i=0; i<eobp->delta_dOmglm_nqc_size-1;i++)
-      fprintf(f,"%d,", eobp->delta_dOmglm_nqc_k[i]);
-    fprintf(f,"%d]\n", eobp->delta_dOmglm_nqc_k[eobp->delta_dOmglm_nqc_size-1]);
-    fprintf(f,"%s = [", "delta_dOmglm_nqc");
-    for(int i=0; i<eobp->delta_dOmglm_nqc_size-1;i++){
-      int idx = eobp->delta_dOmglm_nqc_k[i];
-      fprintf(f,"%f,", eobp->delta_dOmglm_nqc[idx]);
+  if (eobp->delta_domglm_nqc_size > 0) {
+    fprintf(f,"%s = [", "delta_domglm_nqc_k");
+    for(int i=0; i<eobp->delta_domglm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_domglm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_domglm_nqc_k[eobp->delta_domglm_nqc_size-1]);
+    fprintf(f,"%s = [", "delta_domglm_nqc");
+    for(int i=0; i<eobp->delta_domglm_nqc_size-1;i++){
+      int idx = eobp->delta_domglm_nqc_k[i];
+      fprintf(f,"%f,", eobp->delta_domglm_nqc[idx]);
     }
-    fprintf(f,"%f]\n", eobp->delta_dOmglm_nqc[eobp->delta_dOmglm_nqc_k[eobp->delta_dOmglm_nqc_size-1]]);
+    fprintf(f,"%f]\n", eobp->delta_domglm_nqc[eobp->delta_domglm_nqc_k[eobp->delta_domglm_nqc_size-1]]);
   }
 
   /* Evolution settings */

@@ -714,6 +714,15 @@ typedef struct tagEOBParameters
   int    *Alm_mrg_k,   *omglm_mrg_k;
   int     Alm_mrg_size, omglm_mrg_size;
 
+  /** User-input NQC-time quantities */
+  double *Alm_nqc,     *dAlm_nqc,     *d2Alm_nqc;
+  int    *Alm_nqc_k,   *dAlm_nqc_k,   *d2Alm_nqc_k;
+  int     Alm_nqc_size, dAlm_nqc_size, d2Alm_nqc_size;
+
+  double *omglm_nqc,     *domglm_nqc,     *d2omglm_nqc;
+  int    *omglm_nqc_k,   *domglm_nqc_k,   *d2omglm_nqc_k;
+  int     omglm_nqc_size, domglm_nqc_size, d2omglm_nqc_size;
+
   double r0;                    /**< Initial radial separation */
   double initial_frequency;     /**< initial frequency */
   double f0;                    /**< initial frequency in geom units */
@@ -815,9 +824,9 @@ typedef struct tagEOBParameters
   int    *delta_omglm0_k,   delta_omglm0_size;
 
   /* Deviations from merger amplitude, frequency */
-  double *delta_Alm_mrg, *delta_Omglm_mrg;
+  double *delta_Alm_mrg, *delta_omglm_mrg;
   int    *delta_Alm_mrg_k, delta_Alm_mrg_size;
-  int    *delta_Omglm_mrg_k, delta_Omglm_mrg_size;
+  int    *delta_omglm_mrg_k, delta_omglm_mrg_size;
 
   /* waveform */
   int ringdown_extend_array; /**< Extend ringdown array */
@@ -831,9 +840,9 @@ typedef struct tagEOBParameters
   /**@}*/
 
   /* Deviations from NQC point quantities */
-  double *delta_Alm_nqc, *delta_dAlm_nqc, *delta_Omglm_nqc, *delta_dOmglm_nqc;
-  int    *delta_Alm_nqc_k, *delta_dAlm_nqc_k, *delta_Omglm_nqc_k, *delta_dOmglm_nqc_k;
-  int    delta_Alm_nqc_size, delta_dAlm_nqc_size, delta_Omglm_nqc_size, delta_dOmglm_nqc_size;
+  double *delta_Alm_nqc, *delta_dAlm_nqc, *delta_omglm_nqc, *delta_domglm_nqc;
+  int    *delta_Alm_nqc_k, *delta_dAlm_nqc_k, *delta_omglm_nqc_k, *delta_domglm_nqc_k;
+  int    delta_Alm_nqc_size, delta_dAlm_nqc_size, delta_omglm_nqc_size, delta_domglm_nqc_size;
 
   /**@{*/
   /** output options*/
