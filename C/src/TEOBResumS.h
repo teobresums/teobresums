@@ -728,6 +728,11 @@ typedef struct tagEOBParameters
   int    *c3A_lm_k,   *c3phi_lm_k,   *c4phi_lm_k;
   int     c3A_lm_size, c3phi_lm_size, c4phi_lm_size;
 
+  /** Peak-time delay w.r.t. 22 mode */
+  double *deltat_lm;
+  int    *deltat_lm_k;
+  int     deltat_lm_size;
+
   double r0;                    /**< Initial radial separation */
   double initial_frequency;     /**< initial frequency */
   double f0;                    /**< initial frequency in geom units */

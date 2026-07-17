@@ -117,6 +117,8 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->c3phi_lm_k) free(eobp->c3phi_lm_k);
   if (eobp->c4phi_lm) free(eobp->c4phi_lm);
   if (eobp->c4phi_lm_k) free(eobp->c4phi_lm_k);
+  if (eobp->deltat_lm) free(eobp->deltat_lm);
+  if (eobp->deltat_lm_k) free(eobp->deltat_lm_k);
   if (eobp->delta_alphalm0_k) free(eobp->delta_alphalm0_k);
   if (eobp->delta_alphalm0) free(eobp->delta_alphalm0);
   if (eobp->delta_taulm0_k) free(eobp->delta_taulm0_k);
@@ -310,6 +312,9 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->c3A_lm_size = 0;
   eobp->c3phi_lm_size = 0;
   eobp->c4phi_lm_size = 0;
+
+  /* Peak-time delay w.r.t. 22 mode */
+  eobp->deltat_lm_size = 0;
 
   /* Output */
   
@@ -1147,6 +1152,51 @@ int eob_set_params(int default_choice, int firstcall)
       if (idx < 0 || idx >= KMAX) {
         if (DEBUG) printf("ERROR: Invalid mode index %d for d2omglm_nqc\n", idx);
         return 1;
+      }
+    }
+  }
+
+  /* Ringdown template coefficients */
+  if (EOBPars->c3A_lm_size > 0) {
+    for (int k = 0; k < EOBPars->c3A_lm_size; k++) {
+      int idx = EOBPars->c3A_lm_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for c3A_lm\n", idx);
+        return 1;
+      }
+    }
+  }
+  if (EOBPars->c3phi_lm_size > 0) {
+    for (int k = 0; k < EOBPars->c3phi_lm_size; k++) {
+      int idx = EOBPars->c3phi_lm_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for c3phi_lm\n", idx);
+        return 1;
+      }
+    }
+  }
+  if (EOBPars->c4phi_lm_size > 0) {
+    for (int k = 0; k < EOBPars->c4phi_lm_size; k++) {
+      int idx = EOBPars->c4phi_lm_k[k];
+      if (idx < 0 || idx >= KMAX) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for c4phi_lm\n", idx);
+        return 1;
+      }
+    }
+  }
+
+  /* Peak-time delay w.r.t. 22 */
+  if (EOBPars->deltat_lm_size > 0) {
+    for (int k = 0; k < EOBPars->deltat_lm_size; k++) {
+      int idx = EOBPars->deltat_lm_k[k];
+      if (idx < 0 || idx >= KMAX || idx == 1) {
+        if (DEBUG) printf("ERROR: Invalid mode index %d for deltat_lm; cannot be 1, <0, or >=%d\n", idx, KMAX);
+        return 1;
+      }
+      for (int k = 0; k < EOBPars->knqcpeak22_size; k++) {
+        if (idx == EOBPars->knqcpeak22[k]) {
+          if (VERBOSE) printf("WARNING: Specified deltat_lm value unused for mode %d in knqcpeak22.\n", idx);
+        }
       }
     }
   }
@@ -2454,6 +2504,16 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     eobp->c4phi_lm_size = str2darray(val, &eobp->c4phi_lm);
   }
 
+  /* Peak-time delay w.r.t. 22 mode */
+  if (STREQUAL(key, "deltat_lm_k")) {
+    free(eobp->deltat_lm_k);
+    eobp->deltat_lm_size = str2iarray(val, &eobp->deltat_lm_k);
+  }
+  if (STREQUAL(key, "deltat_lm")) {
+    free(eobp->deltat_lm);
+    eobp->deltat_lm_size = str2darray(val, &eobp->deltat_lm);
+  }
+
   /* Parametrized model: deviations from NR-fitted quantities */
   /* Inspiral */
   if (STREQUAL(key, "delta_a6c")) {
@@ -2848,7 +2908,18 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     }
     fprintf(f,"%f]\n", eobp->c4phi_lm[eobp->c4phi_lm_size-1]);
   }
-  
+  if (eobp->deltat_lm_size > 0) {
+    fprintf(f,"%s = [", "deltat_lm_k");
+    for(int i=0; i<eobp->deltat_lm_size-1;i++)
+      fprintf(f,"%d,", eobp->deltat_lm_k[i]);
+    fprintf(f,"%d]\n", eobp->deltat_lm_k[eobp->deltat_lm_size-1]);
+    fprintf(f,"%s = [", "deltat_lm");
+    for(int i=0; i<eobp->deltat_lm_size-1;i++){
+      fprintf(f,"%f,", eobp->deltat_lm[i]);
+    }
+    fprintf(f,"%f]\n", eobp->deltat_lm[eobp->deltat_lm_size-1]);
+  }
+
   /* Deviations */
   fprintf(f,"%s = %f\n", "delta_a6c", eobp->delta_a6c);
   fprintf(f,"%s = %f\n", "delta_cN3LO", eobp->delta_cN3LO);

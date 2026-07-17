@@ -1394,6 +1394,10 @@ void eob_nqc_deltat_lm_bbh(double *Dt_lm)
 
   }
 
+  if (EOBPars->deltat_lm_size > 0) {
+    if (VERBOSE) printf("Overwriting deltat_lm with user-defined values\n");
+    overwrite_mode_array(Dt_lm, EOBPars->deltat_lm, EOBPars->deltat_lm_k, EOBPars->deltat_lm_size);
+  }
 }
 
 /** 
@@ -7246,4 +7250,8 @@ void eob_nqc_deltat_lm_bhns(double *Dt_lm)
     for (int k=0; k<KMAX; k++) {
       Dt_lm[k] = Dt_lm[k]*dt_bhns[k];
     } 
+  if (EOBPars->deltat_lm_size > 0) {
+    if (VERBOSE) printf("Overwriting deltat_lm with user-defined values\n");
+    overwrite_mode_array(Dt_lm, EOBPars->deltat_lm, EOBPars->deltat_lm_k, EOBPars->deltat_lm_size);
+  }
 }

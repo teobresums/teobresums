@@ -715,6 +715,23 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  /* Peak-time delay w.r.t. 22 */
+  if ( PyDict_GetItemString(dict, "deltat_lm") != NULL ) {
+    if (EOBPars->deltat_lm_k) free(EOBPars->deltat_lm_k);
+    if (EOBPars->deltat_lm)   free(EOBPars->deltat_lm);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "deltat_lm"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->deltat_lm_size = PyDict_Size(tmp_dict);
+    EOBPars->deltat_lm_k = malloc ( EOBPars->deltat_lm_size * sizeof(int));
+    EOBPars->deltat_lm   = malloc ( EOBPars->deltat_lm_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->deltat_lm_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->deltat_lm[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
   /* Parametrized model */
   /* Shift in delta_t_nqc */
   if ( PyDict_GetItemString(dict, "d_delta_t_nqc") != NULL) {
