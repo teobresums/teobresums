@@ -723,6 +723,11 @@ typedef struct tagEOBParameters
   int    *omglm_nqc_k,   *domglm_nqc_k,   *d2omglm_nqc_k;
   int     omglm_nqc_size, domglm_nqc_size, d2omglm_nqc_size;
 
+  /** User-input ringdown template coefficients */
+  double *c3A_lm,     *c3phi_lm,     *c4phi_lm;
+  int    *c3A_lm_k,   *c3phi_lm_k,   *c4phi_lm_k;
+  int     c3A_lm_size, c3phi_lm_size, c4phi_lm_size;
+
   double r0;                    /**< Initial radial separation */
   double initial_frequency;     /**< initial frequency */
   double f0;                    /**< initial frequency in geom units */

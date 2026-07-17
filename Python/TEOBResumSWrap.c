@@ -668,6 +668,53 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  /* Ringdown template coefficients */
+  if ( PyDict_GetItemString(dict, "c3A_lm") != NULL ) {
+    if (EOBPars->c3A_lm) free(EOBPars->c3A_lm);
+    if (EOBPars->c3A_lm_k) free(EOBPars->c3A_lm_k);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "c3A_lm"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->c3A_lm_size = PyDict_Size(tmp_dict);
+    EOBPars->c3A_lm = malloc ( EOBPars->c3A_lm_size * sizeof(double) );
+    EOBPars->c3A_lm_k = malloc ( EOBPars->c3A_lm_size * sizeof(char*) );
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    while (PyDict_Next(tmp_dict, &pos, &key, &value)) {
+      EOBPars->c3A_lm_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->c3A_lm[pos - 1] = PyFloat_AsDouble(value);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "c3phi_lm") != NULL ) {
+    if (EOBPars->c3phi_lm) free(EOBPars->c3phi_lm);
+    if (EOBPars->c3phi_lm_k) free(EOBPars->c3phi_lm_k);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "c3phi_lm"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->c3phi_lm_size = PyDict_Size(tmp_dict);
+    EOBPars->c3phi_lm = malloc ( EOBPars->c3phi_lm_size * sizeof(double) );
+    EOBPars->c3phi_lm_k = malloc ( EOBPars->c3phi_lm_size * sizeof(char*) );
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    while (PyDict_Next(tmp_dict, &pos, &key, &value)) {
+      EOBPars->c3phi_lm_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->c3phi_lm[pos - 1] = PyFloat_AsDouble(value);
+    }
+  }
+  if ( PyDict_GetItemString(dict, "c4phi_lm") != NULL ) {
+    if (EOBPars->c4phi_lm) free(EOBPars->c4phi_lm);
+    if (EOBPars->c4phi_lm_k) free(EOBPars->c4phi_lm_k);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "c4phi_lm"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->c4phi_lm_size = PyDict_Size(tmp_dict);
+    EOBPars->c4phi_lm = malloc ( EOBPars->c4phi_lm_size * sizeof(double) );
+    EOBPars->c4phi_lm_k = malloc ( EOBPars->c4phi_lm_size * sizeof(char*) );
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    while (PyDict_Next(tmp_dict, &pos, &key, &value)) {
+      EOBPars->c4phi_lm_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->c4phi_lm[pos - 1] = PyFloat_AsDouble(value);
+    }
+  }
+
   /* Parametrized model */
   /* Shift in delta_t_nqc */
   if ( PyDict_GetItemString(dict, "d_delta_t_nqc") != NULL) {

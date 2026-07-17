@@ -3603,6 +3603,13 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
       Domg[k] 	= omega1[k] - Mbh*omgmrg[k];
     }
   }
+
+  if (EOBPars->c3A_lm_size + EOBPars->c3phi_lm_size + EOBPars->c4phi_lm_size > 0) {
+    if (VERBOSE) printf("Overwriting c3A, c3phi, c4phi with user-specified values\n");
+  if (EOBPars->c3A_lm_size > 0)   overwrite_mode_array(c3A,   EOBPars->c3A_lm,   EOBPars->c3A_lm_k,   EOBPars->c3A_lm_size);
+  if (EOBPars->c3phi_lm_size > 0) overwrite_mode_array(c3phi, EOBPars->c3phi_lm, EOBPars->c3phi_lm_k, EOBPars->c3phi_lm_size);
+  if (EOBPars->c4phi_lm_size > 0) overwrite_mode_array(c4phi, EOBPars->c4phi_lm, EOBPars->c4phi_lm_k, EOBPars->c4phi_lm_size);
+  }
   
   for (int k=0; k<KMAX; k++) {
     if (modeon[k]) {
@@ -3745,6 +3752,31 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
         break;
       default:
         errorexit("Ringdown fits only implemented for (2,1), (3,3) and (4,4) at the moment");
+    }
+
+    if (EOBPars->c3A_lm_size > 0) {
+      if (VERBOSE) printf("Overwriting ringdown coefficient c3A for mode %d in nqcpeak22.\n", k);
+      for (int i=0; i<EOBPars->c3A_lm_size; i++) {
+        if (EOBPars->c3A_lm_k[i] == k) {
+          c2f = EOBPars->c3A_lm[i];
+        }
+      }
+    }
+    if (EOBPars->c3phi_lm_size > 0) {
+      if (VERBOSE) printf("Overwriting ringdown coefficient c3phi for mode %d in nqcpeak22.\n", k);
+      for (int i=0; i<EOBPars->c3phi_lm_size; i++) {
+        if (EOBPars->c3phi_lm_k[i] == k) {
+          d2f = EOBPars->c3phi_lm[i];
+        }
+      }
+    }
+    if (EOBPars->c4phi_lm_size > 0) {
+      for (int i=0; i<EOBPars->c4phi_lm_size; i++) {
+        if (EOBPars->c4phi_lm_k[i] == k) {
+          if (DUNEQUAL(EOBPars->c4phi_lm[i], 0., 1e-9))
+            errorexit("c4phi_lm must be zero for modes in knqcpeak22.\n");
+        }
+      }
     }
 
     /* Constrained coefficients*/

@@ -111,6 +111,12 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->domglm_nqc_k) free(eobp->domglm_nqc_k);
   if (eobp->d2omglm_nqc) free(eobp->d2omglm_nqc);
   if (eobp->d2omglm_nqc_k) free(eobp->d2omglm_nqc_k);
+  if (eobp->c3A_lm) free(eobp->c3A_lm);
+  if (eobp->c3A_lm_k) free(eobp->c3A_lm_k);
+  if (eobp->c3phi_lm) free(eobp->c3phi_lm);
+  if (eobp->c3phi_lm_k) free(eobp->c3phi_lm_k);
+  if (eobp->c4phi_lm) free(eobp->c4phi_lm);
+  if (eobp->c4phi_lm_k) free(eobp->c4phi_lm_k);
   if (eobp->delta_alphalm0_k) free(eobp->delta_alphalm0_k);
   if (eobp->delta_alphalm0) free(eobp->delta_alphalm0);
   if (eobp->delta_taulm0_k) free(eobp->delta_taulm0_k);
@@ -292,12 +298,18 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->Alm_mrg_size = 0;
   eobp->omglm_mrg_size = 0;
 
+  /* NQC-time quantities */
   eobp->Alm_nqc_size = 0;
   eobp->dAlm_nqc_size = 0;
   eobp->d2Alm_nqc_size = 0;
   eobp->omglm_nqc_size = 0;
   eobp->domglm_nqc_size = 0;
   eobp->d2omglm_nqc_size = 0;
+
+  /* Ringdown template coefficients */
+  eobp->c3A_lm_size = 0;
+  eobp->c3phi_lm_size = 0;
+  eobp->c4phi_lm_size = 0;
 
   /* Output */
   
@@ -2415,7 +2427,33 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     free(eobp->d2omglm_nqc);
     eobp->d2omglm_nqc_size = str2darray(val, &eobp->d2omglm_nqc);
   }
-  
+
+  /* Ringdown template coefficients */
+  if (STREQUAL(key, "c3A_lm_k")) {
+    free(eobp->c3A_lm_k);
+    eobp->c3A_lm_size = str2iarray(val, &eobp->c3A_lm_k);
+  }
+  if (STREQUAL(key, "c3A_lm")) {
+    free(eobp->c3A_lm);
+    eobp->c3A_lm_size = str2darray(val, &eobp->c3A_lm);
+  }
+  if (STREQUAL(key, "c3phi_lm_k")) {
+    free(eobp->c3phi_lm_k);
+    eobp->c3phi_lm_size = str2iarray(val, &eobp->c3phi_lm_k);
+  }
+  if (STREQUAL(key, "c3phi_lm")) {
+    free(eobp->c3phi_lm);
+    eobp->c3phi_lm_size = str2darray(val, &eobp->c3phi_lm);
+  }
+  if (STREQUAL(key, "c4phi_lm_k")) {
+    free(eobp->c4phi_lm_k);
+    eobp->c4phi_lm_size = str2iarray(val, &eobp->c4phi_lm_k);
+  }
+  if (STREQUAL(key, "c4phi_lm")) {
+    free(eobp->c4phi_lm);
+    eobp->c4phi_lm_size = str2darray(val, &eobp->c4phi_lm);
+  }
+
   /* Parametrized model: deviations from NR-fitted quantities */
   /* Inspiral */
   if (STREQUAL(key, "delta_a6c")) {
@@ -2729,10 +2767,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d]\n", eobp->dAlm_nqc_k[eobp->dAlm_nqc_size-1]);
     fprintf(f,"%s = [", "dAlm_nqc");
     for(int i=0; i<eobp->dAlm_nqc_size-1;i++){
-      int idx = eobp->dAlm_nqc_k[i];
-      fprintf(f,"%f,", eobp->dAlm_nqc[idx]);
+      fprintf(f,"%f,", eobp->dAlm_nqc[i]);
     }
-    fprintf(f,"%f]\n", eobp->dAlm_nqc[eobp->dAlm_nqc_k[eobp->dAlm_nqc_size-1]]);
+    fprintf(f,"%f]\n", eobp->dAlm_nqc[eobp->dAlm_nqc_size-1]);
   }
   if (eobp->d2Alm_nqc_size > 0) {
     fprintf(f,"%s = [", "d2Alm_nqc_k");
@@ -2741,10 +2778,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d]\n", eobp->d2Alm_nqc_k[eobp->d2Alm_nqc_size-1]);
     fprintf(f,"%s = [", "d2Alm_nqc");
     for(int i=0; i<eobp->d2Alm_nqc_size-1;i++){
-      int idx = eobp->d2Alm_nqc_k[i];
-      fprintf(f,"%f,", eobp->d2Alm_nqc[idx]);
+      fprintf(f,"%f,", eobp->d2Alm_nqc[i]);
     }
-    fprintf(f,"%f]\n", eobp->d2Alm_nqc[eobp->d2Alm_nqc_k[eobp->d2Alm_nqc_size-1]]);
+    fprintf(f,"%f]\n", eobp->d2Alm_nqc[eobp->d2Alm_nqc_size-1]);
   }
   if (eobp->omglm_nqc_size > 0) {
     fprintf(f,"%s = [", "omglm_nqc_k");
@@ -2753,10 +2789,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d]\n", eobp->omglm_nqc_k[eobp->omglm_nqc_size-1]);
     fprintf(f,"%s = [", "omglm_nqc");
     for(int i=0; i<eobp->omglm_nqc_size-1;i++){
-      int idx = eobp->omglm_nqc_k[i];
-      fprintf(f,"%f,", eobp->omglm_nqc[idx]);
+      fprintf(f,"%f,", eobp->omglm_nqc[i]);
     }
-    fprintf(f,"%f]\n", eobp->omglm_nqc[eobp->omglm_nqc_k[eobp->omglm_nqc_size-1]]);
+    fprintf(f,"%f]\n", eobp->omglm_nqc[eobp->omglm_nqc_size-1]);
   }
   if (eobp->domglm_nqc_size > 0) {
     fprintf(f,"%s = [", "domglm_nqc_k");
@@ -2765,10 +2800,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d]\n", eobp->domglm_nqc_k[eobp->domglm_nqc_size-1]);
     fprintf(f,"%s = [", "domglm_nqc");
     for(int i=0; i<eobp->domglm_nqc_size-1;i++){
-      int idx = eobp->domglm_nqc_k[i];
-      fprintf(f,"%f,", eobp->domglm_nqc[idx]);
+      fprintf(f,"%f,", eobp->domglm_nqc[i]);
     }
-    fprintf(f,"%f]\n", eobp->domglm_nqc[eobp->domglm_nqc_k[eobp->domglm_nqc_size-1]]);
+    fprintf(f,"%f]\n", eobp->domglm_nqc[eobp->domglm_nqc_size-1]);
   }
   if (eobp->d2omglm_nqc_size > 0) {
     fprintf(f,"%s = [", "d2omglm_nqc_k");
@@ -2777,10 +2811,42 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
     fprintf(f,"%d]\n", eobp->d2omglm_nqc_k[eobp->d2omglm_nqc_size-1]);
     fprintf(f,"%s = [", "d2omglm_nqc");
     for(int i=0; i<eobp->d2omglm_nqc_size-1;i++){
-      int idx = eobp->d2omglm_nqc_k[i];
-      fprintf(f,"%f,", eobp->d2omglm_nqc[idx]);
+      fprintf(f,"%f,", eobp->d2omglm_nqc[i]);
     }
-    fprintf(f,"%f]\n", eobp->d2omglm_nqc[eobp->d2omglm_nqc_k[eobp->d2omglm_nqc_size-1]]);
+    fprintf(f,"%f]\n", eobp->d2omglm_nqc[eobp->d2omglm_nqc_size-1]);
+  }
+  if (eobp->c3A_lm_size > 0) {
+    fprintf(f,"%s = [", "c3A_lm_k");
+    for(int i=0; i<eobp->c3A_lm_size-1;i++)
+      fprintf(f,"%d,", eobp->c3A_lm_k[i]);
+    fprintf(f,"%d]\n", eobp->c3A_lm_k[eobp->c3A_lm_size-1]);
+    fprintf(f,"%s = [", "c3A_lm");
+    for(int i=0; i<eobp->c3A_lm_size-1;i++){
+      fprintf(f,"%f,", eobp->c3A_lm[i]);
+    }
+    fprintf(f,"%f]\n", eobp->c3A_lm[eobp->c3A_lm_size-1]);
+  }
+  if (eobp->c3phi_lm_size > 0) {
+    fprintf(f,"%s = [", "c3phi_lm_k");
+    for(int i=0; i<eobp->c3phi_lm_size-1;i++)
+      fprintf(f,"%d,", eobp->c3phi_lm_k[i]);
+    fprintf(f,"%d]\n", eobp->c3phi_lm_k[eobp->c3phi_lm_size-1]);
+    fprintf(f,"%s = [", "c3phi_lm");
+    for(int i=0; i<eobp->c3phi_lm_size-1;i++){
+      fprintf(f,"%f,", eobp->c3phi_lm[i]);
+    }
+    fprintf(f,"%f]\n", eobp->c3phi_lm[eobp->c3phi_lm_size-1]);
+  }
+  if (eobp->c4phi_lm_size > 0) {
+    fprintf(f,"%s = [", "c4phi_lm_k");
+    for(int i=0; i<eobp->c4phi_lm_size-1;i++)
+      fprintf(f,"%d,", eobp->c4phi_lm_k[i]);
+    fprintf(f,"%d]\n", eobp->c4phi_lm_k[eobp->c4phi_lm_size-1]);
+    fprintf(f,"%s = [", "c4phi_lm");
+    for(int i=0; i<eobp->c4phi_lm_size-1;i++){
+      fprintf(f,"%f,", eobp->c4phi_lm[i]);
+    }
+    fprintf(f,"%f]\n", eobp->c4phi_lm[eobp->c4phi_lm_size-1]);
   }
   
   /* Deviations */
