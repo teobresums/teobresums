@@ -11479,11 +11479,12 @@ void compute_hpc_old(Waveform_lm *hlm, double nu, double M, double distance, dou
   *
 */
 void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, Waveform_lm *hl0, double nu, double M, double distance, double amplitude_prefactor, double phi, double iota, Waveform *hpc)
-{  
+{
 #ifdef _OPENMP
   if (USETIMERS) openmp_timer_start("compute_hpc");
 #endif
-#pragma omp parallel 
+  PROF_START(PROF_HPC);
+#pragma omp parallel
   {
     double Y_real[KMAX], Y_imag[KMAX];
     /* m<0 */
@@ -11583,6 +11584,7 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, Waveform_lm *hl0, doubl
         hpc->imag[i] = -sumi;
     }
   }
+  PROF_STOP(PROF_HPC);
 #ifdef _OPENMP
   if (USETIMERS) openmp_timer_stop("compute_hpc");
 #endif

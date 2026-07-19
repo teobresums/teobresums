@@ -80,13 +80,24 @@ clean:
 new: clean $(EXE)
 	@echo "All done"
 
-clearup: clean 
+# Optimized build (-O2, keeps -g). Use for realistic timing / baselines.
+opt: CFLAGS += -O2
+opt: new
+	@echo "Optimized build done"
+
+# Profiling build: -O2 + gprof (-pg) + PROFILING section timers/RHS counters.
+# _POSIX_C_SOURCE guarantees clock_gettime under -std=c99.
+prof: CFLAGS += -O2 -pg -DPROFILING=1 -D_POSIX_C_SOURCE=199309L
+prof: new
+	@echo "Profiling build done"
+
+clearup: clean
 	@echo "Removing dirs and exe ..."
 	@rm -rvf $(OBJ) 
 	@rm -rvf $(LIB) 
 	@rm -rvf $(EXE) 
 	@echo "All done"
 
-.PHONY: all clean new #help
+.PHONY: all clean new opt prof #help
 
 # DO NOT DELETE

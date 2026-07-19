@@ -559,7 +559,9 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   /* Compute non-circular Fphi and Fr */
   double Fphi_NC[KMAX];
   for (int k = 0; k < KMAX; k++) Fphi_NC[k] = 1.;
+  PROF_START(PROF_FPHI_ECC);
   eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, Fphi_lo, FNewtlm, Flm, Fphi_H, Fr, dyn, Fphi_NC);
+  PROF_STOP(PROF_FPHI_ECC);
 
   /* Adding non-circular corrections and re-compute flux */
   sum_k = 0.;
@@ -1041,8 +1043,12 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
 
     r3dot = D1 + D2 + D3 + D4; 
     
-    // NC corrections to the modes, Newtonian (FlmNewt_nc) times PN corrections (hatflm_NC)
-    for (int k=0; k < KMAX; k++){
+    // NC corrections to the modes, Newtonian (FlmNewt_nc) times PN corrections (hatflm_NC).
+    // Only the modes in eob_flx_nc_active_k carry a correction; the rest are
+    // identically 1 (return_one*return_one) and keep the caller's init value of 1,
+    // so skipping them avoids ~4/5 of KMAX no-op function-pointer calls per pass.
+    for (int j = 0; j < eob_flx_nc_active_n; j++){
+      const int k = eob_flx_nc_active_k[j];
       hatflm_NC[k] = eob_flx_FlmNewt_nc[k](r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot);
       hatflm_NC[k] = hatflm_NC[k] * eob_flx_hatflm_nc[k](r, prstar, prstardot);
     }

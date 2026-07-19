@@ -1873,7 +1873,10 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
  *   @param[out] d3Q_drdprstar2 : d3Q/drdprstar2
  *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
  */
- void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+/* Uncached kernel; call only via the eob_metric_s wrapper (below), which
+   memoizes and preserves output-pointer aliasing. Always invoked with distinct,
+   non-aliased locals. */
+static void eob_metric_s_raw(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
@@ -1967,4 +1970,48 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   *d3Q_dr2dprstar = d2rc*ddQtmp_drcdprstar + SQ(drc)*d3Qtmp_drc2dprstar;
   *d3Q_drdprstar2 = drc*d3Qtmp_drcdprstar2;
   *d3Q_dprstar3   = d3Qtmp_dprstar3;
+}
+
+/* Memoizing wrapper around eob_metric_s_raw. The eccentric r.h.s. evaluates the
+   metric several times per step at identical (r,prstar). Cached results are
+   bit-identical (deterministic function of (r,prstar) and run-constant params);
+   disabled for the f-mode dynamical-tides model and when dyn==NULL. Outputs are
+   written through non-aliased locals in the kernel's original order so aliased
+   output pointers are unaffected. */
+void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                  double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                  double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+  const int cacheable = (dyn != NULL) &&
+    !(EOBPars->use_tidal && EOBPars->use_tidal_fmode_model);
+  double o[EOB_METRIC_CACHE_NOUT];
+  int hit = 0;
+
+  if (cacheable) {
+    for (int s = 0; s < EOB_METRIC_CACHE_NSLOTS; s++) {
+      if (dyn->mcache_valid[s] && dyn->mcache_r[s] == r && dyn->mcache_prstar[s] == prstar) {
+        for (int i = 0; i < EOB_METRIC_CACHE_NOUT; i++) o[i] = dyn->mcache_out[s][i];
+        hit = 1;
+        break;
+      }
+    }
+  }
+
+  if (!hit) {
+    eob_metric_s_raw(r, prstar, dyn,
+                     &o[0], &o[1], &o[2], &o[3], &o[4], &o[5], &o[6], &o[7],
+                     &o[8], &o[9], &o[10], &o[11], &o[12], &o[13], &o[14]);
+    if (cacheable) {
+      const int s = dyn->mcache_next;
+      for (int i = 0; i < EOB_METRIC_CACHE_NOUT; i++) dyn->mcache_out[s][i] = o[i];
+      dyn->mcache_r[s]      = r;
+      dyn->mcache_prstar[s] = prstar;
+      dyn->mcache_valid[s]  = 1;
+      dyn->mcache_next      = (s + 1) % EOB_METRIC_CACHE_NSLOTS;
+    }
+  }
+
+  *A = o[0]; *dA = o[2]; *d2A = o[3]; *B = o[1]; *dB = o[4]; *d2B = o[5];
+  *Q = o[6]; *dQ = o[7]; *dQ_dprstar = o[8]; *d2Q = o[9]; *ddQ_drdprstar = o[10];
+  *d2Q_dprstar2 = o[11]; *d3Q_dr2dprstar = o[12]; *d3Q_drdprstar2 = o[13]; *d3Q_dprstar3 = o[14];
 }

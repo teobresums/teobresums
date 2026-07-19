@@ -459,15 +459,26 @@ int SetOptionalVariables(PyObject* dict){
 
   /* ODE */
 
-  if ( PyDict_GetItemString(dict, "ode_timestep") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "ode_timestep") != NULL ) {
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_timestep"));
     for(EOBPars->ode_timestep=0; EOBPars->ode_timestep<=ODE_TSTEP_NOPT; EOBPars->ode_timestep++){
       if (EOBPars->ode_timestep == ODE_TSTEP_NOPT) EOBPars->ode_timestep = ODE_TSTEP_ADAPTIVE;
       if (STREQUAL(val,ode_tstep_opt[EOBPars->ode_timestep])) break;
-    }     
+    }
   }
-  if ( PyDict_GetItemString(dict, "ode_abstol") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "ode_stepper") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_stepper"));
+    for(EOBPars->ode_stepper=0; EOBPars->ode_stepper<=ODE_STEPPER_NOPT; EOBPars->ode_stepper++){
+      if (EOBPars->ode_stepper == ODE_STEPPER_NOPT) EOBPars->ode_stepper = ODE_STEPPER_RKF45;
+      if (STREQUAL(val,ode_stepper_opt[EOBPars->ode_stepper])) break;
+    }
+  }
+  if ( PyDict_GetItemString(dict, "ode_stepper_hmax") != NULL ) {
+    EOBPars->ode_stepper_hmax = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_stepper_hmax"));
+  }
+  if ( PyDict_GetItemString(dict, "ode_abstol") != NULL ) {
     EOBPars->ode_abstol = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_abstol"));
   }
   if ( PyDict_GetItemString(dict, "ode_reltol") != NULL ) { 

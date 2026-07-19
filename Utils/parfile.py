@@ -75,6 +75,8 @@ PARKEYS = {
     'output_ringdown': ['Output the ringdown portion of the waveform', 'str', "no" ],
     #
     'ode_timestep': ['Choose the ODE timestep between adaptive, uniform, adaptive+uniform after LSO', 'str', "adaptive" ],
+    'ode_stepper': ['ODE stepper: rkf45/rk8pd/rkck/msadams/rk4/auto (auto = rk8pd for tidal ecc, msadams for ecc BBH, rkf45 for Giotto)', 'str', "auto" ],
+    'ode_stepper_hmax': ['Max ODE step in geometric units; <=0 means uncapped', 'float', 0.0 ],
     'ode_abstol': ['ODE absolute numerical tolerance', 'float', 1e-11 ],
     'ode_reltol': ['ODE relative numerical tolerance', 'float', 1e-13 ],
     'ode_tmax': ['Time stopping condition for the ODE solver', 'float', 1e7 ],

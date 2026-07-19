@@ -223,7 +223,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 #ifdef _OPENMP
   openmp_init(VERBOSE);
 #endif
-  
+  PROF_INIT();
+
   /* *****************************************
    * Init 
    * *****************************************
@@ -702,16 +703,36 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /* GSL integrator memory */
   gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
-#if (USERK45)
-  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
-  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
-#else
-  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
-  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
-#endif
+  /* Runtime-selectable stepper (par: ode_stepper). "auto" resolves per model:
+     rk8pd for tidal eccentric systems (long, densely sampled -> rk8pd is
+     accurate and fastest), msadams for eccentric BBH (shorter -> msadams keeps
+     mismatch within gate while rk8pd's coarse merger grid would not), rkf45 for
+     quasi-circular Giotto (bit-identical to the historical default). */
+  int ode_stepper_use = EOBPars->ode_stepper;
+  if (ode_stepper_use == ODE_STEPPER_AUTO) {
+    if (EOBPars->model == MODEL_DALI)
+      ode_stepper_use = EOBPars->use_tidal ? ODE_STEPPER_RK8PD : ODE_STEPPER_MSADAMS;
+    else
+      ode_stepper_use = ODE_STEPPER_RKF45;
+  }
+  const gsl_odeiv2_step_type * T;
+  switch (ode_stepper_use) {
+    case ODE_STEPPER_RK8PD:   T = gsl_odeiv2_step_rk8pd;   break;
+    case ODE_STEPPER_RKCK:    T = gsl_odeiv2_step_rkck;    break;
+    case ODE_STEPPER_MSADAMS: T = gsl_odeiv2_step_msadams; break;
+    case ODE_STEPPER_RK4:     T = gsl_odeiv2_step_rk4;     break;
+    case ODE_STEPPER_RKF45:
+    default:                  T = gsl_odeiv2_step_rkf45;   break;
+  }
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, T, dyn->dt, ode_abstol, ode_reltol);
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
+  /* Multistep methods (msadams) carry internal state and require a driver to be
+     associated with the step for the evolve interface. Only attach it for those
+     steppers so the single-step paths (incl. rkf45) are byte-for-byte unchanged. */
+  if (ode_stepper_use == ODE_STEPPER_MSADAMS)
+    gsl_odeiv2_step_set_driver (s, d);
 
   /* Set optimized dt around merger */
   const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
@@ -720,6 +741,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
   int GSLSTATUS = OK;
+  PROF_START(PROF_ODE);
   while (!(dyn->ode_stop)) {
     if (VERBOSE) printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r); 
     iter++;
@@ -753,18 +775,29 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
     }
     
+    /* Cap the proposed next step. High-order steppers (rk8pd) take very large
+       steps for the smooth dynamics, but the waveform is sampled at the accepted
+       steps and then spline-interpolated onto the output grid; too-sparse a grid
+       adds interpolation error near the sharp merger. A moderate hmax densifies
+       the sampling while keeping most of the step-count reduction. */
+    if (EOBPars->ode_stepper_hmax > 0.0 && dyn->dt > EOBPars->ode_stepper_hmax)
+      dyn->dt = EOBPars->ode_stepper_hmax;
+
     /* Unpack data */
     dyn->r      = dyn->y[EOB_EVOLVE_RAD];
     dyn->phi    = dyn->y[EOB_EVOLVE_PHI];
     dyn->prstar = dyn->y[EOB_EVOLVE_PRSTAR];
     dyn->pphi   = dyn->y[EOB_EVOLVE_PPHI];
-    
-    /* Waveform computation 
+
+    /* Waveform computation
 	Needs a r.h.s. evaluation for some vars (but no flux) */
+    PROF_START(PROF_WAVSTORE);
+    PROF_TIC(prof_rhs_store_calls);
     dyn->store = dyn->noflx = 1;
-    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
+    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t); 
+    eob_wav_hlm(dyn, hlm_t);
+    PROF_STOP(PROF_WAVSTORE);
 
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
@@ -847,8 +880,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Update size and push arrays (if needed) */
     if (iter==size) {
-      /* if (DEBUG)  printf("Push memory\n"); */ 
-      size += chunk;
+      /* if (DEBUG)  printf("Push memory\n"); */
+      /* Geometric growth: O(log N) reallocs instead of O(N/chunk). The buffers
+         are trimmed back to the exact length (iter+1) after the loop, so this
+         only affects transient capacity, not the output. */
+      size += (size > chunk) ? size : chunk;
       EOBPars->size = size;
       Waveform_lm_push (&hlm, size);
       Dynamics_push (&dyn, size);
@@ -936,7 +972,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   
   } /* end time iteration */
-  
+  PROF_STOP(PROF_ODE);
+
   /* Free ODE system solver */
   gsl_odeiv2_evolve_free (e);
   gsl_odeiv2_control_free (c);
@@ -1155,7 +1192,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size); 
         /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
   
+        PROF_START(PROF_NQC);
         eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        PROF_STOP(PROF_NQC);
         
 
         strcat(hlm_mrg->name,"_nqc");
@@ -1175,7 +1214,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	
         /* Compute NQC and add them to full waveform */
         Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size); 
+        PROF_START(PROF_NQC);
         eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
+        PROF_STOP(PROF_NQC);
       }
       
 #if (DEBUG) 
@@ -1427,8 +1468,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   *dynf = dyn;          /* do not free these! */
 
 #ifdef _OPENMP
-  openmp_free(); 
+  openmp_free();
 #endif
+  PROF_OUTPUT();
   
   /* Free memory */
   /* Dynamics_free (dyn);       */

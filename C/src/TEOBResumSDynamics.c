@@ -23,9 +23,11 @@
 */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 {
-  
+
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
+  PROF_START(PROF_RHS);
+  PROF_TIC(prof_rhs_calls);
 
   const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);
@@ -121,7 +123,8 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
   }
-  
+
+  PROF_STOP(PROF_RHS);
   return GSL_SUCCESS;
 
 }
@@ -188,10 +191,12 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
  */
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 {
-      
+
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
-  
+  PROF_START(PROF_RHS);
+  PROF_TIC(prof_rhs_calls);
+
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
   
@@ -338,7 +343,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
   }
-    
+
+  PROF_STOP(PROF_RHS);
   return GSL_SUCCESS;
 }
 
@@ -356,10 +362,12 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 */
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
 {
-  
+
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
-  
+  PROF_START(PROF_RHS);
+  PROF_TIC(prof_rhs_calls);
+
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
   
@@ -404,6 +412,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   }
   
   /* Compute Metric */
+  PROF_START(PROF_METRICRC);
   double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
   eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
 
@@ -413,17 +422,18 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     B = fabs(B);
     dyn->ode_stop = true;
   }
-  
+
   /* Compute centrifugal radius */
   double rc, drc_dr, d2rc_dr2;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, 
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal,
        &rc, &drc_dr, &d2rc_dr2);
-  
+
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
     /* Add derivative terms to rc' and rc'' from f-mode resonances u-dependent terms */
     eob_dyn_s_rc_add_QOH_drvts(dyn, rc, r, a1, a2,
 			       &drc_dr, &d2rc_dr2);
   }
+  PROF_STOP(PROF_METRICRC);
   
   const double uc     = 1./rc;
   const double uc2    = uc*uc;
@@ -462,8 +472,10 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   double Fphi = 0.;
   double Fr   = 0.;
 
-  double prsdot = -sqrtAbyB*dHeff_dr*ooH; 
+  double prsdot = -sqrtAbyB*dHeff_dr*ooH;
+  PROF_START(PROF_FLUX);
   eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, prsdot, &Fphi, &Fr, dyn);
+  PROF_STOP(PROF_FLUX);
   
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = Fphi;
@@ -503,7 +515,8 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
   }
-    
+
+  PROF_STOP(PROF_RHS);
   return GSL_SUCCESS;
 }
 
@@ -2678,7 +2691,8 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
 
     /* Update size and push arrays (if needed) */
     if (iter==size) {
-      size += chunk;
+      /* Geometric growth (see note in EOBRun); trimmed to exact length later. */
+      size += (size > chunk) ? size : chunk;
       dyn->size = size;
       DynamicsSpin_push (&dyn, size);
     }

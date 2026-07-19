@@ -1081,17 +1081,19 @@ void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *
 #ifdef _OPENMP
   if (USETIMERS) openmp_timer_start("interp_spline");
 #endif
+  PROF_START(PROF_INTERP);
   gsl_interp_accel *acc = gsl_interp_accel_alloc ();
   gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
-  gsl_spline_init (spline, t, y, n);    
-#pragma omp simd 
+  gsl_spline_init (spline, t, y, n);
+#pragma omp simd
   for (int k = 0; k < ni; k++) {
     /* yi[k] = gsl_spline_eval_simd_enabled(spline, ti + k, NULL); */ // bsearch, 2x slower
     yi[k] = gsl_spline_eval_simd_enabled(spline, ti + k, acc);
   }
   gsl_spline_free (spline);
   gsl_interp_accel_free (acc);
-#ifdef _OPENMP  
+  PROF_STOP(PROF_INTERP);
+#ifdef _OPENMP
   if (USETIMERS) openmp_timer_stop("interp_spline");
 #endif
 }
