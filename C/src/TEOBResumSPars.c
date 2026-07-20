@@ -343,6 +343,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->spin_ode_reltol=1e-9;  // Spin dynamics ODE solver relative accuracy
   eobp->ode_stop_radius=1.7; // stop ODE integration at this radius (if > 0)
   eobp->ode_tmax=1e12; // max integration time
+  eobp->ode_max_iter=1e8; // max number of ODE iterations
   eobp->ode_stop_afterNdt=4;  // stop ODE N iters after the Omega peak
   eobp->ode_stop_after_peak=0;
 
@@ -2345,6 +2346,9 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   if (STREQUAL(key,"spin_ode_reltol")) {
     eobp->spin_ode_reltol = par_get_d(val);
   }
+  if (STREQUAL(key,"ode_max_iter")) {
+    eobp->ode_max_iter = par_get_i(val);
+  }
   if (STREQUAL(key,"ode_tmax")) {
     eobp->ode_tmax = par_get_d(val);
   }
@@ -3047,6 +3051,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
   fprintf(f,"%s = %E\n"    , "spin_ode_abstol", eobp->spin_ode_abstol);
   fprintf(f,"%s = %E\n"    , "spin_ode_reltol", eobp->spin_ode_reltol);
+  fprintf(f,"%s = %d\n"    , "ode_max_iter", eobp->ode_max_iter);
   fprintf(f,"%s = %.16f\n" , "ode_tmax", eobp->ode_tmax);
   fprintf(f,"%s = %f\n"    , "ode_stop_at_radius", eobp->ode_stop_radius);
   fprintf(f,"%s = %d\n"    , "ode_stop_afterNdt", eobp->ode_stop_afterNdt);

@@ -799,6 +799,7 @@ typedef struct tagEOBParameters
   int ode_stop;                                         /**< Flag to stop ODE solver (yes/no) */
   int ode_stop_MOmgpeak;                                /**< Flag to stop ODE solver after MOmg peak (yes/no) */
   double ode_stop_radius;                               /**< Radius to stop ODE solver,note: this is *different* in meaning from dyn->ode_stop_radius! */
+  int ode_max_iter;                                     /**< Maximum number of iterations for ODE solver */
 
   /* post-adiabatic */
   int postadiabatic_dynamics;                           /**< Flag to switch on/off post-adiabatic dynamics */

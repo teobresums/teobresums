@@ -875,6 +875,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_E0][iter] 	  = dyn->E;
     }
 
+    /* Stop integration if max number of iterations reached */
+    if (iter >= EOBPars->ode_max_iter) {
+      if (VERBOSE) printf("Stop: Max number of iterations reached.\n");
+      dyn->ode_stop = true;
+    }
+
     /* Stop integration if reached max time */    
     if (dyn->t > dyn->t_stop) {
       if (VERBOSE) printf("Stop: Max integration time reached.\n");

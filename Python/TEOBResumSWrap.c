@@ -479,6 +479,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "spin_ode_reltol") != NULL ) { 
     EOBPars->spin_ode_reltol = PyFloat_AsDouble(PyDict_GetItemString(dict, "spin_ode_reltol"));
   }
+  if ( PyDict_GetItemString(dict, "ode_max_iter") != NULL ) { 
+    EOBPars->ode_max_iter = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ode_max_iter"));
+  }
   if ( PyDict_GetItemString(dict, "ode_tmax") != NULL ) { 
     EOBPars->ode_tmax = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_tmax"));
   }
