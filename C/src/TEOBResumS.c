@@ -937,7 +937,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /* Stop integration if r is unchanged */
     double r_prev = dyn->data[EOB_RAD][iter-1];
-    if (dyn->r == r_prev && !dyn->noflx) {
+    if (dyn->r == r_prev && !dyn->noflx && iter > 10) {
       if (VERBOSE) printf("Stop: radius unchanged.\n");
       dyn->ode_stop = true;
     }

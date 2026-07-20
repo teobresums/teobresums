@@ -816,6 +816,7 @@ typedef struct tagEOBParameters
   int ode_timestep;                                     /**< ODE timestep type */
   int ode_stepper;                                      /**< ODE stepper (GSL odeiv2 step type) */
   double ode_stepper_hmax;                              /**< max ODE step (geom units); <=0 = uncapped. Densifies waveform sampling for high-order steppers */
+  int use_metric_cache;                                 /**< enable the (r,prstar)-keyed eob_metric_s memoization cache; default yes, bit-identical. Set to no for isolated before/after benchmarking */
   double srate;                                         /**< sampling rate */
   double dt;                                            /**< timestep */
   double ode_abstol;                                    /**< ODE solver absolute tolerance */

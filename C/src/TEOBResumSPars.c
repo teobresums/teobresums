@@ -348,6 +348,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
      explicit ode_stepper to override. */
   eobp->ode_stepper=ODE_STEPPER_AUTO; // "rkf45","rk8pd","rkck","msadams","rk4","auto"
   eobp->ode_stepper_hmax=0.0; // max ODE step (geom units), <=0 = uncapped
+  eobp->use_metric_cache=1; // enable eob_metric_s memoization cache (bit-identical); set to 0 to isolate its effect in benchmarks
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
   eobp->spin_ode_abstol=1e-11; // Spin dynamics ODE solver absolute accuracy
@@ -2370,6 +2371,10 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     eobp->ode_stepper_hmax = par_get_d(val);
   }
 
+  if (STREQUAL(key,"use_metric_cache")) {
+    eobp->use_metric_cache = YESNO2INT(string_trim(val));
+  }
+
   if (STREQUAL(key,"ode_abstol")) {
     eobp->ode_abstol = par_get_d(val);
   }
@@ -3085,6 +3090,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "ode_timestep", ode_tstep_opt[eobp->ode_timestep]);
   fprintf(f,"%s = \"%s\"\n", "ode_stepper", ode_stepper_opt[eobp->ode_stepper]);
   fprintf(f,"%s = %.16e\n" , "ode_stepper_hmax", eobp->ode_stepper_hmax);
+  fprintf(f,"%s = \"%s\"\n", "use_metric_cache", INT2YESNO(eobp->use_metric_cache));
   fprintf(f,"%s = %E\n"    , "ode_abstol", eobp->ode_abstol);
   fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
   fprintf(f,"%s = %E\n"    , "spin_ode_abstol", eobp->spin_ode_abstol);
