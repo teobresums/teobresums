@@ -971,7 +971,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   } else {
     if (EOBPars->omg_peak_poly_fit && !(EOBPars->binary == BINARY_BNS)) {
       if (DEBUG) printf("Finding OmgOrb peak location via polynomial fit of deg. %d.\n", EOBPars->omg_peak_poly_deg);
-      if (EOBPars->omg_peak_fit_npts > dyn->size - index_pk) {
+      if ((EOBPars->omg_peak_fit_npts > index_pk) || (EOBPars->omg_peak_fit_npts >= dyn->size - index_pk)) {
         if (DEBUG) printf("ERROR(TEOBResumS): points requested for OmgOrb peak fit exceed dynamics array length.\n");
         status = ERROR_RINGDOWN;
         goto EXIT_POINT;
