@@ -36,7 +36,7 @@ incdirs = [numpy.get_include(), "lib"]
 
 # Set macros and compiler args based on env variables
 macros = [("HAVE_GSL", 1)]
-extra_compile_args = ["-w", "-std=c99", "-ffast-math"]
+extra_compile_args = ["-w", "-std=c99"]
 
 if DEBUG_MODE:
     print("Compiling in DEBUG mode")
