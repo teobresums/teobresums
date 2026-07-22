@@ -1982,7 +1982,7 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
-  const int cacheable = (dyn != NULL) &&
+  const int cacheable = (dyn != NULL) && EOBPars->use_metric_cache &&
     !(EOBPars->use_tidal && EOBPars->use_tidal_fmode_model);
   double o[EOB_METRIC_CACHE_NOUT];
   int hit = 0;

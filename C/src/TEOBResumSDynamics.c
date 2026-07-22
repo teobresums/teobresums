@@ -427,6 +427,12 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   double rc, drc_dr, d2rc_dr2;
   eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal,
        &rc, &drc_dr, &d2rc_dr2);
+  /* Bare (pre f-mode-resonance-adjustment) values: eob_dyn_get_romg and
+     eob_flx_Fphi_ecc call this exact eob_dyn_s_get_rc (same r, so same
+     result) themselves and never apply the f-mode adjustment below, so pass
+     these through to them instead of letting them re-derive it. */
+  const double drc_dr_bare = drc_dr;
+  const double d2rc_dr2_bare = d2rc_dr2;
 
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
     /* Add derivative terms to rc' and rc'' from f-mode resonances u-dependent terms */
@@ -463,7 +469,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_PHI] = Omg;
   
   /* Compute here the new r_omg radius */
-  double r_omg       = eob_dyn_get_romg(r, prstar, pphi, dyn);
+  double r_omg       = eob_dyn_get_romg(r, prstar, pphi, dyn, rc, drc_dr_bare);
   const double v_phi = r_omg*Omg;
   const double x     = v_phi*v_phi;
   const double jhat  = pphi/(r_omg*v_phi);
@@ -474,7 +480,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
 
   double prsdot = -sqrtAbyB*dHeff_dr*ooH;
   PROF_START(PROF_FLUX);
-  eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, prsdot, &Fphi, &Fr, dyn);
+  eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, prsdot, &Fphi, &Fr, dyn, rc, drc_dr_bare, d2rc_dr2_bare);
   PROF_STOP(PROF_FLUX);
   
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
@@ -1397,7 +1403,7 @@ void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
   *  @return r_omg         : r_omega
   *
 */
-double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
+double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, double rc_in, double drc_dr_in)
 {
   /* Unpack values */
   const double nu = EOBPars -> nu;
@@ -1428,7 +1434,11 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
   if (usespins) {
     eob_metric_s(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
-    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
+    /* rc/drc_dr depend only on r (not prstar), and the caller already
+       computed them for this same r via the identical eob_dyn_s_get_rc call
+       - reuse instead of re-deriving (bit-identical, see caller). */
+    rc = rc_in;
+    drc_dr = drc_dr_in;
   } else {
     eob_metric(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 

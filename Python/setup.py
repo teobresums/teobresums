@@ -36,7 +36,7 @@ incdirs = [numpy.get_include(), "lib"]
 
 # Set macros and compiler args based on env variables
 macros = [("HAVE_GSL", 1)]
-extra_compile_args = ["-w", "-std=c99"]
+extra_compile_args = ["-w", "-std=c99", "-ffast-math"]
 
 if DEBUG_MODE:
     print("Compiling in DEBUG mode")
@@ -82,6 +82,12 @@ pyprofit_ext = Extension(
     include_dirs=incdirs,
     libraries=libs,
     extra_compile_args=extra_compile_args,
+    # Binds calls between functions defined in this module directly, instead
+    # of routing every cross-file call (eob_metric_s, eob_dyn_s_GS, ...) through
+    # the PLT to allow for symbol interposition that never happens for a
+    # single self-contained extension module. ~19% faster in-process on the
+    # M=2 Dali BBH benchmark, bit-identical output (see Utils/Profiling/README.md).
+    extra_link_args=["-Wl,-Bsymbolic-functions"],
 )
 
 setup(

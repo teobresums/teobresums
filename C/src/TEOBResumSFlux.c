@@ -87,17 +87,39 @@ static const double CNlm[35] = {
   */
 void eob_flx_Tlm(const double w, double *MTlm)
 {
-  double hhatk, x2, y, prod, fl;
-  for (int k = 0; k < KMAX; k++) {
-    hhatk = MINDEX[k] * w;
-    x2    = 4.*hhatk*hhatk;
-    prod  = 1.;
-    for (int j=1; j <= LINDEX[k]; j++) {
-      prod *= ( j*j + x2 );
+  /* 1/fact(LINDEX[k])^2 depends only on the fixed LINDEX table, never on w:
+     precompute once instead of re-deriving it (via two fact() calls, since
+     SQ() is a macro) on every single RHS evaluation. */
+  static double invfact2_L[KMAX];
+  static int initialized = 0;
+  if (!initialized) {
+    for (int k = 0; k < KMAX; k++)
+      invfact2_L[k] = 1./SQ(fact(LINDEX[k]));
+    initialized = 1;
+  }
+
+  /* x2 and the tail factor y/(1-exp(-y)) depend only on m = MINDEX[k], which
+     takes 8 distinct values across the 35 modes; and for fixed m the product
+     prod_{j=1..l}(j^2+x2) at l extends the one at l-1 by a single factor.
+     Iterating over m and growing l performs the identical operations on the
+     identical inputs as the per-mode loop (bit-identical output), but does the
+     exp() 8 times instead of 35 and each multiply chain once instead of per mode. */
+  for (int m = 1; m <= 8; m++) {
+    const double hhatk = m * w;
+    const double x2    = 4.*hhatk*hhatk;
+    double y  = 4.*Pi*hhatk;
+    y /= ( 1. - exp(-y) );
+    double prod = 1.;
+    int j = 1;
+    for (int l = 2; l <= 8; l++) {
+      for (; j <= l; j++) {
+        prod *= ( j*j + x2 );
+      }
+      if (m <= l) {
+        const int k = (l*(l-1))/2 + m - 2;
+        MTlm[k] = sqrt( invfact2_L[k] * y * prod );
+      }
     }
-    y  = 4.*Pi*hhatk;
-    y /= ( 1. - exp(-y) ); 
-    MTlm[k] = sqrt( 1./( SQ(fact(LINDEX[k])) ) * y * prod );
   }
 }
 
@@ -415,7 +437,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
  *   @param[in] dyn      :  dynamics structure
  * 
 */
-void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn)
+void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn, double rc_in, double drc_dr_in, double d2rc_dr2_in)
 {
   const double nu = EOBPars -> nu;
   const double chi1 = EOBPars -> chi1;
@@ -560,7 +582,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   double Fphi_NC[KMAX];
   for (int k = 0; k < KMAX; k++) Fphi_NC[k] = 1.;
   PROF_START(PROF_FPHI_ECC);
-  eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, Fphi_lo, FNewtlm, Flm, Fphi_H, Fr, dyn, Fphi_NC);
+  eob_flx_Fphi_ecc(r, pr_star, pphi, Omega, rdot, *Fphi, Fphi_lo, FNewtlm, Flm, Fphi_H, Fr, dyn, Fphi_NC, rc_in, drc_dr_in, d2rc_dr2_in);
   PROF_STOP(PROF_FPHI_ECC);
 
   /* Adding non-circular corrections and re-compute flux */
@@ -847,8 +869,8 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   *   @return[out] Fr     :  radial flux after iterative procedure
   *   @return[out] hatflm_NC :  non-circular corrections to the multipolar flux
 */
-void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC)
-{  
+void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC, double rc_in, double drc_dr_in, double d2rc_dr2_in)
+{
   const double nu     = EOBPars -> nu;
   const double chi1   = EOBPars -> chi1;
   const double chi2   = EOBPars -> chi2;
@@ -899,7 +921,13 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
   /* Computing metric, centrifugal radius and ggm functions*/
   if(usespins) {
     eob_metric_s(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &d2B, &Q, &dQ, &dQ_dprstar, &d2Q, &ddQ_drdprstar, &d2Q_dprstar2, &d3Q_dr2dprstar, &d3Q_drdprstar2, &d3Q_dprstar3);
-    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &d2rc_dr2);
+    /* rc/drc_dr/d2rc_dr2 depend only on r (not prstar), and the caller
+       already computed them for this same r via the identical
+       eob_dyn_s_get_rc call - reuse instead of re-deriving (bit-identical,
+       see caller). */
+    rc = rc_in;
+    drc_dr = drc_dr_in;
+    d2rc_dr2 = d2rc_dr2_in;
     eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
     G = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
     dG_dr           = ggm[6]*S   + ggm[7]*Sstar;

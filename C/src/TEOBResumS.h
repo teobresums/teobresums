@@ -685,6 +685,15 @@ typedef struct tagDynamics
   int ode_timestep;             /**< ODE timestep type */
   bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;  /**< flag to stop ode, stop after Omgpeak, stop after radius */
 
+  /* Optional per-step cache of RHS scalar side effects (H, Heff, jhat,
+     r_omega, rdot, r2dot, r3dot, Omegadot, Omega2dot, prsdot). NULL unless
+     allocated by the Dali+NQC (non-generic-spin) sigmoid waveform overwrite
+     path in EOBRun, which uses it to avoid a second full RHS evaluation per
+     point. Grown/freed in lockstep with data[] by Dynamics_push/_free when
+     allocated; left NULL (no-op) for every other Dynamics instance. */
+  double *wavc_H, *wavc_Heff, *wavc_jhat, *wavc_r_omega, *wavc_Omg, *wavc_ddotr;
+  double *wavc_rdot, *wavc_r2dot, *wavc_r3dot, *wavc_Omegadot, *wavc_Omega2dot, *wavc_prsdot;
+
   /* arrays */
   int size;
   double *time;                        /**< time array */
@@ -1175,7 +1184,7 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double u, double at1, double at2, double *drc_dr, double *d2rc_dr2);
-double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, double rc_in, double drc_dr_in);
 double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
@@ -1264,8 +1273,8 @@ extern int eob_flx_nc_active_k[KMAX]; /* modes with non-trivial nc flux correcti
 extern int eob_flx_nc_active_n;
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
-void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn);
-void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC);
+void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn, double rc_in, double drc_dr_in, double d2rc_dr2_in);
+void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC, double rc_in, double drc_dr_in, double d2rc_dr2_in);
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);

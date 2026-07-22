@@ -3147,7 +3147,22 @@ void Dynamics_push (Dynamics **dyn, int size)
     if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
     /* if (dn>0) memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) ); */
   }
-  (*dyn)->size = size; 
+  /* wavc_* cache: only grown if already allocated (opt-in, see TEOBResumS.h) */
+  if ((*dyn)->wavc_H) {
+    (*dyn)->wavc_H         = realloc((*dyn)->wavc_H,         size * sizeof(double));
+    (*dyn)->wavc_Heff      = realloc((*dyn)->wavc_Heff,      size * sizeof(double));
+    (*dyn)->wavc_jhat      = realloc((*dyn)->wavc_jhat,      size * sizeof(double));
+    (*dyn)->wavc_r_omega   = realloc((*dyn)->wavc_r_omega,   size * sizeof(double));
+    (*dyn)->wavc_Omg       = realloc((*dyn)->wavc_Omg,       size * sizeof(double));
+    (*dyn)->wavc_ddotr     = realloc((*dyn)->wavc_ddotr,     size * sizeof(double));
+    (*dyn)->wavc_rdot      = realloc((*dyn)->wavc_rdot,      size * sizeof(double));
+    (*dyn)->wavc_r2dot     = realloc((*dyn)->wavc_r2dot,     size * sizeof(double));
+    (*dyn)->wavc_r3dot     = realloc((*dyn)->wavc_r3dot,     size * sizeof(double));
+    (*dyn)->wavc_Omegadot  = realloc((*dyn)->wavc_Omegadot,  size * sizeof(double));
+    (*dyn)->wavc_Omega2dot = realloc((*dyn)->wavc_Omega2dot, size * sizeof(double));
+    (*dyn)->wavc_prsdot    = realloc((*dyn)->wavc_prsdot,    size * sizeof(double));
+  }
+  (*dyn)->size = size;
 }
 
 /**
@@ -3375,6 +3390,18 @@ void Dynamics_free (Dynamics *dyn)
   if (dyn->time) free(dyn->time);
   for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
     if (dyn->data[v]) free(dyn->data[v]);
+  if (dyn->wavc_H)         free(dyn->wavc_H);
+  if (dyn->wavc_Heff)      free(dyn->wavc_Heff);
+  if (dyn->wavc_jhat)      free(dyn->wavc_jhat);
+  if (dyn->wavc_r_omega)   free(dyn->wavc_r_omega);
+  if (dyn->wavc_Omg)       free(dyn->wavc_Omg);
+  if (dyn->wavc_ddotr)     free(dyn->wavc_ddotr);
+  if (dyn->wavc_rdot)      free(dyn->wavc_rdot);
+  if (dyn->wavc_r2dot)     free(dyn->wavc_r2dot);
+  if (dyn->wavc_r3dot)     free(dyn->wavc_r3dot);
+  if (dyn->wavc_Omegadot)  free(dyn->wavc_Omegadot);
+  if (dyn->wavc_Omega2dot) free(dyn->wavc_Omega2dot);
+  if (dyn->wavc_prsdot)    free(dyn->wavc_prsdot);
   if (dyn->spins) dyn->spins = NULL;
   free(dyn);
 }

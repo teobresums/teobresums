@@ -85,6 +85,13 @@ opt: CFLAGS += -O2
 opt: new
 	@echo "Optimized build done"
 
+# Optimized build + LTO (cross-TU inlining of small helpers). Opt-in: not the
+# default opt/prof target. Bit-identical to opt; ~5-13% faster on Dali BBH
+# configs with heavy small-helper call volume (see Utils/Profiling/README.md).
+opt-lto: CFLAGS += -O2 -flto
+opt-lto: new
+	@echo "Optimized (+LTO) build done"
+
 # Profiling build: -O2 + gprof (-pg) + PROFILING section timers/RHS counters.
 # _POSIX_C_SOURCE guarantees clock_gettime under -std=c99.
 prof: CFLAGS += -O2 -pg -DPROFILING=1 -D_POSIX_C_SOURCE=199309L
@@ -98,6 +105,6 @@ clearup: clean
 	@rm -rvf $(EXE) 
 	@echo "All done"
 
-.PHONY: all clean new opt prof #help
+.PHONY: all clean new opt opt-lto prof #help
 
 # DO NOT DELETE

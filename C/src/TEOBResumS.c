@@ -364,9 +364,38 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   for(int i = 0; i < EOBPars->use_mode_lm_nqc_size; i++) 
     EOBPars->use_mode_lm_nqc[i] = use_nqc_tmp[i];
 
-  Dynamics_push (&dyn, size); 
-  Waveform_lm_alloc (&hlm, size, "hlm", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size); 
-  Waveform_lm_t_alloc (&hlm_t); 
+  Dynamics_push (&dyn, size);
+  Waveform_lm_alloc (&hlm, size, "hlm", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size);
+  Waveform_lm_t_alloc (&hlm_t);
+
+  /* Dali + NQC (non-generic-spin) runs overwrite the whole waveform with a
+     second, sigmoid-corrected pass after evolution (see the "Over-writing
+     waveform" block below), discarding the evolution-time (pass-1) hlm and
+     re-deriving the same RHS scalar side effects via a second full RHS call
+     per point. Cache them here instead: the evolution-time storage RHS call
+     already computes them (dyn->store=1 runs the same code regardless of
+     dyn->noflx, which only gates dy[EOB_EVOLVE_PPHI] - see eob_dyn_rhs_ecc),
+     so this makes pass 1's waveform (and the second RHS call) redundant.
+     Excluded for generic spins: there EOBPars->chi1/chi2 are mutated per
+     step (see the spin-projection block below), so the pre-existing
+     post-loop RHS call uses end-state spins, not per-step ones - replaying
+     per-step-captured values would silently change that behavior. */
+  const int use_wav_scalar_cache = (EOBPars->model == MODEL_DALI) &&
+    (EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && (use_spins != MODE_SPINS_GENERIC);
+  if (use_wav_scalar_cache) {
+    dyn->wavc_H         = malloc(size * sizeof(double));
+    dyn->wavc_Heff      = malloc(size * sizeof(double));
+    dyn->wavc_jhat      = malloc(size * sizeof(double));
+    dyn->wavc_r_omega   = malloc(size * sizeof(double));
+    dyn->wavc_Omg       = malloc(size * sizeof(double));
+    dyn->wavc_ddotr     = malloc(size * sizeof(double));
+    dyn->wavc_rdot      = malloc(size * sizeof(double));
+    dyn->wavc_r2dot     = malloc(size * sizeof(double));
+    dyn->wavc_r3dot     = malloc(size * sizeof(double));
+    dyn->wavc_Omegadot  = malloc(size * sizeof(double));
+    dyn->wavc_Omega2dot = malloc(size * sizeof(double));
+    dyn->wavc_prsdot    = malloc(size * sizeof(double));
+  }
 
   /* Integrate spin dynamics before EOB dyn if projecting */
   if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
@@ -631,12 +660,30 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 		    &EOBPars->S, &EOBPars->Sstar);
     }    
     
-    /* Waveform computation at t = 0 
+    /* Waveform computation at t = 0
 	Needs a r.h.s. evaluation for some vars (no flux) */
     dyn->store = dyn->noflx = 1;
-    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
+    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t); 
+    if (use_wav_scalar_cache && store_dynamics) {
+      /* i=0 is handled by this separate initial-conditions block, not by the
+         main loop's per-iter store below - populate its cache slot too,
+         since the sigmoid overwrite pass (i=0..size-1) reads it like any
+         other point. */
+      dyn->wavc_H[0]         = dyn->H;
+      dyn->wavc_Heff[0]      = dyn->Heff;
+      dyn->wavc_jhat[0]      = dyn->jhat;
+      dyn->wavc_r_omega[0]   = dyn->r_omega;
+      dyn->wavc_Omg[0]       = dyn->Omg;
+      dyn->wavc_ddotr[0]     = dyn->ddotr;
+      dyn->wavc_rdot[0]      = dyn->rdot;
+      dyn->wavc_r2dot[0]     = dyn->r2dot;
+      dyn->wavc_r3dot[0]     = dyn->r3dot;
+      dyn->wavc_Omegadot[0]  = dyn->Omegadot;
+      dyn->wavc_Omega2dot[0] = dyn->Omega2dot;
+      dyn->wavc_prsdot[0]    = dyn->prsdot;
+    }
+    eob_wav_hlm(dyn, hlm_t);
     
     /* Append waveform to arrays */
     hlm->time[0] = 0.;
@@ -796,7 +843,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t);
+    if (use_wav_scalar_cache) {
+      /* This pass-1 waveform gets unconditionally overwritten by the
+         sigmoid pass below; skip computing it. hlm->time[] is set only
+         here though (eob_wav_hlm's job otherwise), so still set that. */
+      hlm_t->time = dyn->t;
+    } else {
+      eob_wav_hlm(dyn, hlm_t);
+    }
     PROF_STOP(PROF_WAVSTORE);
 
     if (use_spins) {
@@ -909,6 +963,20 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
       dyn->data[EOB_E0][iter] 	  = dyn->E;
+      if (use_wav_scalar_cache) {
+        dyn->wavc_H[iter]         = dyn->H;
+        dyn->wavc_Heff[iter]      = dyn->Heff;
+        dyn->wavc_jhat[iter]      = dyn->jhat;
+        dyn->wavc_r_omega[iter]   = dyn->r_omega;
+        dyn->wavc_Omg[iter]       = dyn->Omg;
+        dyn->wavc_ddotr[iter]     = dyn->ddotr;
+        dyn->wavc_rdot[iter]      = dyn->rdot;
+        dyn->wavc_r2dot[iter]     = dyn->r2dot;
+        dyn->wavc_r3dot[iter]     = dyn->r3dot;
+        dyn->wavc_Omegadot[iter]  = dyn->Omegadot;
+        dyn->wavc_Omega2dot[iter] = dyn->Omega2dot;
+        dyn->wavc_prsdot[iter]    = dyn->prsdot;
+      }
     }
 
     /* Stop integration if max number of iterations reached */
@@ -1085,8 +1153,43 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
         dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
         dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
-        eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
-      
+        if (use_wav_scalar_cache) {
+          /* Same (t,y) point as the evolution-time storage RHS call for this
+             i: restore its already-computed scalar outputs (verified to be
+             exactly what eob_wav_hlm_ecc_sigmoid/eob_wav_hlmNewt_ecc_sigmoid
+             read) instead of re-deriving them via a second full RHS call. */
+          dyn->phi    = dyn->data[EOB_PHI][i];
+          dyn->r      = dyn->data[EOB_RAD][i];
+          dyn->pphi   = dyn->data[EOB_PPHI][i];
+          dyn->prstar = dyn->data[EOB_PRSTAR][i];
+          /* Omg/ddotr come from the wavc_* cache, NOT dyn->data[EOB_MOMG/
+             DDOTR][i]: at i=0 those hold the analytic initial-condition
+             values (set before any RHS call), which differ from the
+             RHS-derived Omg/ddotr that this same RHS call also produced
+             (and that wavc_H[0] etc. come from) - mixing the two gave a
+             visibly wrong (2,2) amplitude at i=0. For i>=1 the two sources
+             are identical anyway (both set from the same evolution-time
+             storage RHS call), so this is a no-op change there. */
+          dyn->Omg    = dyn->wavc_Omg[i];
+          dyn->ddotr  = dyn->wavc_ddotr[i];
+          dyn->H         = dyn->wavc_H[i];
+          dyn->Heff      = dyn->wavc_Heff[i];
+          dyn->jhat      = dyn->wavc_jhat[i];
+          dyn->r_omega   = dyn->wavc_r_omega[i];
+          dyn->rdot      = dyn->wavc_rdot[i];
+          dyn->r2dot     = dyn->wavc_r2dot[i];
+          dyn->r3dot     = dyn->wavc_r3dot[i];
+          dyn->r4dot     = 0.;
+          dyn->r5dot     = 0.;
+          dyn->Omegadot  = dyn->wavc_Omegadot[i];
+          dyn->Omega2dot = dyn->wavc_Omega2dot[i];
+          dyn->Omega3dot = 0.;
+          dyn->Omega4dot = 0.;
+          dyn->prsdot    = dyn->wavc_prsdot[i];
+        } else {
+          eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
+        }
+
         eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
         for (int k = 0; k < KMAX; k++) {
           if((hlm->kmask[k])){
