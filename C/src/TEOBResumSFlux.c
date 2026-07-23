@@ -421,21 +421,28 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
  * ------------------------
  *   Flux calculation for eccentric systems
  *   See https://arxiv.org/abs/2001.11736
- * 
+ *
  *   @param[in] x        :  frequency parameter
  *   @param[in] Omega    :  orbital frequency
- *   @param[in] r_omega  : r*psi^(1./3) (from generalized Kepler's law) 
- *   @param[in] E        :  energy 
+ *   @param[in] r_omega  : r*psi^(1./3) (from generalized Kepler's law)
+ *   @param[in] E        :  energy
  *   @param[in] Heff     :  effective Hamiltonian
  *   @param[in] jhat     :  angular momentum
  *   @param[in] r        :  radial separation
  *   @param[in] pphi     :  orbital angular momentum
  *   @param[in] pr_star  :  (tortoise) radial momentum
+ *   @param[in] rdot     :  radial velocity
  *   @param[in] ddotr    :  radial acceleration
+ *   @param[in] prsdot   :  time derivative of the (tortoise) radial momentum
  *   @param[in,out] Fphi :  angular momentum flux
  *   @param[in,out] Fr   :  radial flux
  *   @param[in] dyn      :  dynamics structure
- * 
+ *   @param[in] rc_in    :  centrifugal radius at r, as already computed by the
+ *                          caller's eob_dyn_s_get_rc call for this same r; passed
+ *                          through to eob_flx_Fphi_ecc to avoid recomputing it there.
+ *   @param[in] drc_dr_in   :  drc/dr at r, companion value to rc_in (same provenance).
+ *   @param[in] d2rc_dr2_in :  d2rc/dr2 at r, companion value to rc_in (same provenance).
+ *
 */
 void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn, double rc_in, double drc_dr_in, double d2rc_dr2_in)
 {
@@ -851,7 +858,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   *   obtained via an iterative procedure (two iterations)
   *   See https://arxiv.org/abs/2001.11736
   *   and App. A of https://arxiv.org/pdf/2407.04762
-  * 
+  *
   *   @param[in] r        :  radial separation
   *   @param[in] pr_star  :  (tortoise) radial momentum
   *   @param[in] pphi     :  orbital angular momentum
@@ -865,7 +872,18 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   *   @param[in] Fr       :  pointer to radial flux
   *   @param[in] dyn      :  dynamics structure
   *   @param[in] hatflm_NC :  non-circular multipolar flux (empty, to be filled)
-  * 
+  *   @param[in] rc_in    :  centrifugal radius at r, as already computed by the
+  *                          caller's (eob_flx_Flux_ecc's, in turn passed down from
+  *                          eob_dyn_rhs_ecc's) eob_dyn_s_get_rc call for this same r;
+  *                          reused here (spinning case only) instead of recomputing
+  *                          it, since rc depends only on r. Ignored when !usespins.
+  *   @param[in] drc_dr_in   :  drc/dr at r, companion value to rc_in (same
+  *                             provenance and reuse rationale). Ignored when
+  *                             !usespins.
+  *   @param[in] d2rc_dr2_in :  d2rc/dr2 at r, companion value to rc_in (same
+  *                             provenance and reuse rationale). Ignored when
+  *                             !usespins.
+  *
   *   @return[out] Fr     :  radial flux after iterative procedure
   *   @return[out] hatflm_NC :  non-circular corrections to the multipolar flux
 */

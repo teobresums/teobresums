@@ -1394,12 +1394,18 @@ void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
   * Function: eob_dyn_get_romg
   * ---------------------------
   *   Compute r_omega
-  * 
+  *
   *  @param[in]  r             : radial separation
   *  @param[in]  prstar        : radial momentum
   *  @param[in]  pphi          : orbital angular momentum
   *  @param[in]  dyn           : dynamics structure
-  *  
+  *  @param[in]  rc_in         : centrifugal radius at r, as already computed by the
+  *                              caller's eob_dyn_s_get_rc call for this same r; reused
+  *                              here (spinning case only) instead of recomputing it,
+  *                              since rc depends only on r. Ignored when !usespins.
+  *  @param[in]  drc_dr_in     : drc/dr at r, companion value to rc_in (same provenance
+  *                              and reuse rationale). Ignored when !usespins.
+  *
   *  @return r_omg         : r_omega
   *
 */

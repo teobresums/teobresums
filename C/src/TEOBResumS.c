@@ -383,18 +383,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const int use_wav_scalar_cache = (EOBPars->model == MODEL_DALI) &&
     (EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && (use_spins != MODE_SPINS_GENERIC);
   if (use_wav_scalar_cache) {
-    dyn->wavc_H         = malloc(size * sizeof(double));
-    dyn->wavc_Heff      = malloc(size * sizeof(double));
-    dyn->wavc_jhat      = malloc(size * sizeof(double));
-    dyn->wavc_r_omega   = malloc(size * sizeof(double));
-    dyn->wavc_Omg       = malloc(size * sizeof(double));
-    dyn->wavc_ddotr     = malloc(size * sizeof(double));
-    dyn->wavc_rdot      = malloc(size * sizeof(double));
-    dyn->wavc_r2dot     = malloc(size * sizeof(double));
-    dyn->wavc_r3dot     = malloc(size * sizeof(double));
-    dyn->wavc_Omegadot  = malloc(size * sizeof(double));
-    dyn->wavc_Omega2dot = malloc(size * sizeof(double));
-    dyn->wavc_prsdot    = malloc(size * sizeof(double));
+    for (int v = 0; v < EOB_WAVC_NVARS; v++)
+      dyn->wavc[v] = malloc(size * sizeof(double));
   }
 
   /* Integrate spin dynamics before EOB dyn if projecting */
@@ -670,18 +660,18 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
          main loop's per-iter store below - populate its cache slot too,
          since the sigmoid overwrite pass (i=0..size-1) reads it like any
          other point. */
-      dyn->wavc_H[0]         = dyn->H;
-      dyn->wavc_Heff[0]      = dyn->Heff;
-      dyn->wavc_jhat[0]      = dyn->jhat;
-      dyn->wavc_r_omega[0]   = dyn->r_omega;
-      dyn->wavc_Omg[0]       = dyn->Omg;
-      dyn->wavc_ddotr[0]     = dyn->ddotr;
-      dyn->wavc_rdot[0]      = dyn->rdot;
-      dyn->wavc_r2dot[0]     = dyn->r2dot;
-      dyn->wavc_r3dot[0]     = dyn->r3dot;
-      dyn->wavc_Omegadot[0]  = dyn->Omegadot;
-      dyn->wavc_Omega2dot[0] = dyn->Omega2dot;
-      dyn->wavc_prsdot[0]    = dyn->prsdot;
+      dyn->wavc[WAVC_H][0]         = dyn->H;
+      dyn->wavc[WAVC_HEFF][0]      = dyn->Heff;
+      dyn->wavc[WAVC_JHAT][0]      = dyn->jhat;
+      dyn->wavc[WAVC_ROMEGA][0]    = dyn->r_omega;
+      dyn->wavc[WAVC_OMG][0]       = dyn->Omg;
+      dyn->wavc[WAVC_DDOTR][0]     = dyn->ddotr;
+      dyn->wavc[WAVC_RDOT][0]      = dyn->rdot;
+      dyn->wavc[WAVC_R2DOT][0]     = dyn->r2dot;
+      dyn->wavc[WAVC_R3DOT][0]     = dyn->r3dot;
+      dyn->wavc[WAVC_OMEGADOT][0]  = dyn->Omegadot;
+      dyn->wavc[WAVC_OMEGA2DOT][0] = dyn->Omega2dot;
+      dyn->wavc[WAVC_PRSDOT][0]    = dyn->prsdot;
     }
     eob_wav_hlm(dyn, hlm_t);
     
@@ -750,18 +740,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /* GSL integrator memory */
   gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
-  /* Runtime-selectable stepper (par: ode_stepper). "auto" resolves per model:
-     rk8pd for tidal eccentric systems (long, densely sampled -> rk8pd is
-     accurate and fastest), msadams for eccentric BBH (shorter -> msadams keeps
-     mismatch within gate while rk8pd's coarse merger grid would not), rkf45 for
-     quasi-circular Giotto (bit-identical to the historical default). */
-  int ode_stepper_use = EOBPars->ode_stepper;
-  if (ode_stepper_use == ODE_STEPPER_AUTO) {
-    if (EOBPars->model == MODEL_DALI)
-      ode_stepper_use = EOBPars->use_tidal ? ODE_STEPPER_RK8PD : ODE_STEPPER_MSADAMS;
-    else
-      ode_stepper_use = ODE_STEPPER_RKF45;
-  }
+  const int ode_stepper_use = EOBPars->ode_stepper;
   const gsl_odeiv2_step_type * T;
   switch (ode_stepper_use) {
     case ODE_STEPPER_RK8PD:   T = gsl_odeiv2_step_rk8pd;   break;
@@ -964,18 +943,18 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
       dyn->data[EOB_E0][iter] 	  = dyn->E;
       if (use_wav_scalar_cache) {
-        dyn->wavc_H[iter]         = dyn->H;
-        dyn->wavc_Heff[iter]      = dyn->Heff;
-        dyn->wavc_jhat[iter]      = dyn->jhat;
-        dyn->wavc_r_omega[iter]   = dyn->r_omega;
-        dyn->wavc_Omg[iter]       = dyn->Omg;
-        dyn->wavc_ddotr[iter]     = dyn->ddotr;
-        dyn->wavc_rdot[iter]      = dyn->rdot;
-        dyn->wavc_r2dot[iter]     = dyn->r2dot;
-        dyn->wavc_r3dot[iter]     = dyn->r3dot;
-        dyn->wavc_Omegadot[iter]  = dyn->Omegadot;
-        dyn->wavc_Omega2dot[iter] = dyn->Omega2dot;
-        dyn->wavc_prsdot[iter]    = dyn->prsdot;
+        dyn->wavc[WAVC_H][iter]         = dyn->H;
+        dyn->wavc[WAVC_HEFF][iter]      = dyn->Heff;
+        dyn->wavc[WAVC_JHAT][iter]      = dyn->jhat;
+        dyn->wavc[WAVC_ROMEGA][iter]    = dyn->r_omega;
+        dyn->wavc[WAVC_OMG][iter]       = dyn->Omg;
+        dyn->wavc[WAVC_DDOTR][iter]     = dyn->ddotr;
+        dyn->wavc[WAVC_RDOT][iter]      = dyn->rdot;
+        dyn->wavc[WAVC_R2DOT][iter]     = dyn->r2dot;
+        dyn->wavc[WAVC_R3DOT][iter]     = dyn->r3dot;
+        dyn->wavc[WAVC_OMEGADOT][iter]  = dyn->Omegadot;
+        dyn->wavc[WAVC_OMEGA2DOT][iter] = dyn->Omega2dot;
+        dyn->wavc[WAVC_PRSDOT][iter]    = dyn->prsdot;
       }
     }
 
@@ -1162,30 +1141,30 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
           dyn->r      = dyn->data[EOB_RAD][i];
           dyn->pphi   = dyn->data[EOB_PPHI][i];
           dyn->prstar = dyn->data[EOB_PRSTAR][i];
-          /* Omg/ddotr come from the wavc_* cache, NOT dyn->data[EOB_MOMG/
+          /* Omg/ddotr come from the wavc[] cache, NOT dyn->data[EOB_MOMG/
              DDOTR][i]: at i=0 those hold the analytic initial-condition
              values (set before any RHS call), which differ from the
              RHS-derived Omg/ddotr that this same RHS call also produced
-             (and that wavc_H[0] etc. come from) - mixing the two gave a
-             visibly wrong (2,2) amplitude at i=0. For i>=1 the two sources
+             (and that wavc[WAVC_H][0] etc. come from) - mixing the two gave
+             a visibly wrong (2,2) amplitude at i=0. For i>=1 the two sources
              are identical anyway (both set from the same evolution-time
              storage RHS call), so this is a no-op change there. */
-          dyn->Omg    = dyn->wavc_Omg[i];
-          dyn->ddotr  = dyn->wavc_ddotr[i];
-          dyn->H         = dyn->wavc_H[i];
-          dyn->Heff      = dyn->wavc_Heff[i];
-          dyn->jhat      = dyn->wavc_jhat[i];
-          dyn->r_omega   = dyn->wavc_r_omega[i];
-          dyn->rdot      = dyn->wavc_rdot[i];
-          dyn->r2dot     = dyn->wavc_r2dot[i];
-          dyn->r3dot     = dyn->wavc_r3dot[i];
+          dyn->Omg    = dyn->wavc[WAVC_OMG][i];
+          dyn->ddotr  = dyn->wavc[WAVC_DDOTR][i];
+          dyn->H         = dyn->wavc[WAVC_H][i];
+          dyn->Heff      = dyn->wavc[WAVC_HEFF][i];
+          dyn->jhat      = dyn->wavc[WAVC_JHAT][i];
+          dyn->r_omega   = dyn->wavc[WAVC_ROMEGA][i];
+          dyn->rdot      = dyn->wavc[WAVC_RDOT][i];
+          dyn->r2dot     = dyn->wavc[WAVC_R2DOT][i];
+          dyn->r3dot     = dyn->wavc[WAVC_R3DOT][i];
           dyn->r4dot     = 0.;
           dyn->r5dot     = 0.;
-          dyn->Omegadot  = dyn->wavc_Omegadot[i];
-          dyn->Omega2dot = dyn->wavc_Omega2dot[i];
+          dyn->Omegadot  = dyn->wavc[WAVC_OMEGADOT][i];
+          dyn->Omega2dot = dyn->wavc[WAVC_OMEGA2DOT][i];
           dyn->Omega3dot = 0.;
           dyn->Omega4dot = 0.;
-          dyn->prsdot    = dyn->wavc_prsdot[i];
+          dyn->prsdot    = dyn->wavc[WAVC_PRSDOT][i];
         } else {
           eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
         }

@@ -415,7 +415,7 @@ enum{
   ODE_STEPPER_RKCK,        /**< explicit embedded Runge-Kutta Cash-Karp 4(5) */
   ODE_STEPPER_MSADAMS,     /**< variable-order, variable-step Adams multistep */
   ODE_STEPPER_RK4,         /**< explicit 4th order (classical) Runge-Kutta */
-  ODE_STEPPER_AUTO,        /**< choose per model at runtime (see EOBRun) */
+  ODE_STEPPER_AUTO,        /**< choose per model, see eob_set_params() */
   ODE_STEPPER_NOPT         /**< number of ODE stepper options */
 };
 static const char* const ode_stepper_opt[] = {"rkf45","rk8pd","rkck","msadams","rk4","auto","undefined"};
@@ -647,6 +647,24 @@ typedef struct tagDynamicsSpin
 #define EOB_METRIC_CACHE_NSLOTS 2
 #define EOB_METRIC_CACHE_NOUT   15
 
+/** Index list of cached RHS scalar side effects (see Dynamics.wavc), indexed
+    and grown/freed the same way as EOB_DYNAMICS_NVARS/data[] above. */
+enum{
+  WAVC_H,
+  WAVC_HEFF,
+  WAVC_JHAT,
+  WAVC_ROMEGA,
+  WAVC_OMG,
+  WAVC_DDOTR,
+  WAVC_RDOT,
+  WAVC_R2DOT,
+  WAVC_R3DOT,
+  WAVC_OMEGADOT,
+  WAVC_OMEGA2DOT,
+  WAVC_PRSDOT,
+  EOB_WAVC_NVARS
+};
+
 /** Dynamics data type */
 typedef struct tagDynamics
 {
@@ -685,14 +703,14 @@ typedef struct tagDynamics
   int ode_timestep;             /**< ODE timestep type */
   bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;  /**< flag to stop ode, stop after Omgpeak, stop after radius */
 
-  /* Optional per-step cache of RHS scalar side effects (H, Heff, jhat,
-     r_omega, rdot, r2dot, r3dot, Omegadot, Omega2dot, prsdot). NULL unless
-     allocated by the Dali+NQC (non-generic-spin) sigmoid waveform overwrite
-     path in EOBRun, which uses it to avoid a second full RHS evaluation per
-     point. Grown/freed in lockstep with data[] by Dynamics_push/_free when
-     allocated; left NULL (no-op) for every other Dynamics instance. */
-  double *wavc_H, *wavc_Heff, *wavc_jhat, *wavc_r_omega, *wavc_Omg, *wavc_ddotr;
-  double *wavc_rdot, *wavc_r2dot, *wavc_r3dot, *wavc_Omegadot, *wavc_Omega2dot, *wavc_prsdot;
+  /* Optional per-step cache of RHS scalar side effects, indexed like
+     data[]/EOB_DYNAMICS_NVARS above (see WAVC_* enum). wavc[0] (and every
+     other slot) is NULL unless allocated by the Dali+NQC (non-generic-spin)
+     sigmoid waveform overwrite path in EOBRun, which uses it to avoid a
+     second full RHS evaluation per point. Grown/freed in lockstep with
+     data[] by Dynamics_push/_free (gated on wavc[0] != NULL) when allocated;
+     left NULL (no-op) for every other Dynamics instance. */
+  double *wavc[EOB_WAVC_NVARS];
 
   /* arrays */
   int size;

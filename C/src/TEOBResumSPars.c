@@ -876,8 +876,19 @@ int eob_set_params(int default_choice, int firstcall)
         EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602;
       }
     }
-  } 
-  
+  }
+
+  /* Runtime-selectable ODE stepper, defaults are chosen based on model/binary type.
+     rk8pd & msadams are 4-6 times faster than rkf45, mismatches within 1e-5-1e-6 or lower.
+     Quasi-circular Giotto keeps old default.
+   */
+  if (EOBPars->ode_stepper == ODE_STEPPER_AUTO) {
+    if (EOBPars->model == MODEL_DALI)
+      EOBPars->ode_stepper = EOBPars->use_tidal ? ODE_STEPPER_RK8PD : ODE_STEPPER_MSADAMS;
+    else
+      EOBPars->ode_stepper = ODE_STEPPER_RKF45;
+  }
+
   /** Set more as needed ... */
 
   EOBPars->a6c = 0.;
