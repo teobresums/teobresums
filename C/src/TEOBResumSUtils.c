@@ -1360,6 +1360,9 @@ double poly_der (double x, void *params)
  * ---------------------------------
  *   Find location of maximum of f(x) by fitting a polynomial of
  *   degree deg to n_grid points and finding the root of its derivative.
+ *   @note: we fit against x shifted by the window's central point (x0) rather
+ *   than the raw x values. This is because if x grows to be very large,
+ *   the fit can become ill-conditioned.
  *   
  *   @param[in] x: array of x values
  *   @param[in] f: array of y values
@@ -1372,7 +1375,8 @@ double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid)
 {
   const size_t n_points = n_grid;
   const size_t n_coefs  = deg + 1;
-  
+  const double x0 = x[n_points/2];
+
   /* Least-squares fit to polynomial */
 
   gsl_multifit_linear_workspace *work;
@@ -1384,7 +1388,7 @@ double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid)
   for (int k = 0; k < n_points; k++)
   {
     for (int j = 0; j < n_coefs; j++)
-      gsl_matrix_set(X, k, j, gsl_pow_int(x[k], j));
+      gsl_matrix_set(X, k, j, gsl_pow_int(x[k]-x0, j));
   }
 
   /* Define and fill vector of y values */
@@ -1427,8 +1431,8 @@ double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid)
   gsl_root_fsolver *S;
 
   double xmax, x_low, x_high;
-  x_low  = x[0];
-  x_high = x[n_points-1];
+  x_low  = x[0]-x0;
+  x_high = x[n_points-1]-x0;
 
   T = gsl_root_fsolver_bisection;
   S = gsl_root_fsolver_alloc(T);
@@ -1438,8 +1442,8 @@ double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid)
   struct dOmg_interp_coefs p = {cv, n_coefs - 1};
   F.function = &poly_der;
   F.params   = &p;
-  /* Setup root finder and iterate */
-  gsl_root_fsolver_set(S, &F, x[0], x[n_points-1]);
+  /* Setup root finder and iterate (shifted coordinates, see x0 above) */
+  gsl_root_fsolver_set(S, &F, x[0]-x0, x[n_points-1]-x0);
   do
   {
     iter++;
@@ -1461,7 +1465,7 @@ double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid)
   gsl_vector_free(Y);
   gsl_matrix_free(cov);
   free(cv);
-  return xmax;
+  return xmax + x0;
 }
 
 /**
