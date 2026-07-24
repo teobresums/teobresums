@@ -468,8 +468,10 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   /* phi evol eqn rhs */
   dy[EOB_EVOLVE_PHI] = Omg;
   
-  /* Compute here the new r_omg radius */
-  double r_omg       = eob_dyn_get_romg(r, prstar, pphi, dyn, rc, drc_dr_bare);
+  /* Compute here the new r_omg radius. A/dA are prstar-independent, so the
+     values just computed above are reused inside (see eob_dyn_get_romg),
+     sparing a redundant metric evaluation at (r,0). */
+  double r_omg       = eob_dyn_get_romg(r, prstar, pphi, dyn, rc, drc_dr_bare, A, dA);
   const double v_phi = r_omg*Omg;
   const double x     = v_phi*v_phi;
   const double jhat  = pphi/(r_omg*v_phi);
@@ -1405,11 +1407,19 @@ void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
   *                              since rc depends only on r. Ignored when !usespins.
   *  @param[in]  drc_dr_in     : drc/dr at r, companion value to rc_in (same provenance
   *                              and reuse rationale). Ignored when !usespins.
+  *  @param[in]  A_in          : A metric potential at r, as already computed by the
+  *                              caller's eob_metric_s call for this same r; reused
+  *                              here (spinning case only) instead of recomputing the
+  *                              whole metric, since A depends only on r (not prstar -
+  *                              only Q does), so the caller's value is bit-identical.
+  *                              Ignored when !usespins.
+  *  @param[in]  dA_in         : dA/dr at r, companion value to A_in (same provenance
+  *                              and reuse rationale). Ignored when !usespins.
   *
   *  @return r_omg         : r_omega
   *
 */
-double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, double rc_in, double drc_dr_in)
+double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, double rc_in, double drc_dr_in, double A_in, double dA_in)
 {
   /* Unpack values */
   const double nu = EOBPars -> nu;
@@ -1438,11 +1448,14 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, dou
   double A, dA, rc, drc_dr, pl_hold;
 
   if (usespins) {
-    eob_metric_s(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
-
-    /* rc/drc_dr depend only on r (not prstar), and the caller already
-       computed them for this same r via the identical eob_dyn_s_get_rc call
-       - reuse instead of re-deriving (bit-identical, see caller). */
+    /* A/dA and rc/drc_dr depend only on r (not prstar), and the caller
+       already computed them for this same r (A/dA via eob_metric_s,
+       rc/drc_dr via eob_dyn_s_get_rc) - reuse instead of re-deriving. This
+       is bit-identical (see caller) and, for A/dA, spares an entire extra
+       metric evaluation per r.h.s. call that the (r,prstar)-keyed metric
+       cache cannot serve, since it would be queried here at (r,0). */
+    A  = A_in;
+    dA = dA_in;
     rc = rc_in;
     drc_dr = drc_dr_in;
   } else {
