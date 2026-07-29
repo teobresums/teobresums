@@ -344,6 +344,10 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_dlm_nc_pade") != NULL ) { 
+    EOBPars->use_dlm_nc_pade =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_dlm_nc_pade")));
+  }
+
   /* Metric potentials */
   if ( PyDict_GetItemString(dict, "A_pot") != NULL ) { 
     char* val;
