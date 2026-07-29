@@ -762,6 +762,7 @@ typedef struct tagEOBParameters
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
+  int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */
   int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */

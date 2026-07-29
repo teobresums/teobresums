@@ -448,10 +448,11 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->rLSO= 0. ; // radius of last stable orbit 
 
   /* NC options */
-  eobp->use_flm_nc     = USEFLM_NC_22;
-  eobp->use_Fr         = USE_FR_NEXT;
-  eobp->use_hlm_nc     = USEHLM_NC_NO;
-  eobp->use_dlm_nc     = USEDELTALM_NC_NO;
+  eobp->use_flm_nc      = USEFLM_NC_22;
+  eobp->use_Fr          = USE_FR_NEXT;
+  eobp->use_hlm_nc      = USEHLM_NC_NO;
+  eobp->use_dlm_nc      = USEDELTALM_NC_NO;
+  eobp->use_dlm_nc_pade = 0;
   
   /* Choose the default for the binary type */
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
