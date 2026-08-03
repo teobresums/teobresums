@@ -248,6 +248,122 @@ double cphf_l3m2_1(double x, double y) {
 
 
 /* ============================================================
+ * ringdown_model="sym_A22" fits (py/generic_q/symbolic_fit.py's RFE-
+ * selected polynomial over (nu, chi_eff, chi_a_delta), NOT global_fit.py's
+ * 2D rational-function ansatz above) -- SAME physical quantities
+ * (hatA0/hatdA0/hatd2A0/omg0/domg0/cAmp/cphf), a different regression
+ * method. Pasted verbatim from gfits_sym/l2m2.c/l3m2.c. See
+ * A22_get_fit_set_sym/QNMHybridFitCab_A22_lm's own ringdown_model==
+ * RINGDOWN_A22_SYM branch for how these get evaluated (nu, chi_eff=a0,
+ * chi_a_delta=0.5*(chi1-chi2)*X12, NOT (x=a0, y=1-X12) like the rational
+ * fits above -- a genuinely different coordinate set, not just a
+ * different formula in the same two).
+ * ============================================================ */
+
+// === BEGIN symbolic_fit: hatA0_l2m2_sym ===
+double hatA0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (11475867777317.0/100000000000000.0)*chi_a_delta*pow(chi_eff, 2) + (223701559794429.0/100000000000000.0)*chi_a_delta*chi_eff*nu - 14500049442243.0/62500000000000.0*chi_a_delta*chi_eff - 59236542883829.0/20000000000000.0*chi_a_delta*pow(nu, 2) + (28708521192709.0/10000000000000.0)*chi_a_delta*nu - 186770565598321.0/1000000000000000.0*chi_a_delta + (50410923780099.0/250000000000000.0)*pow(chi_eff, 3) - 41921578313317.0/25000000000000.0*pow(chi_eff, 2)*nu + (266415630940819.0/500000000000000.0)*pow(chi_eff, 2) + (10720251663467.0/2500000000000.0)*chi_eff*pow(nu, 2) - 141272463026079.0/50000000000000.0*chi_eff*nu + (327652200158733.0/500000000000000.0)*chi_eff - 191731504342607.0/250000000000000.0*pow(nu, 3) + (38641696004323.0/12500000000000.0)*pow(nu, 2) - 37027861650619.0/250000000000000.0*nu + 71977298729263.0/50000000000000.0;
+}
+// === END symbolic_fit: hatA0_l2m2_sym ===
+
+// === BEGIN symbolic_fit: hatdA0_l2m2_sym ===
+double hatdA0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return 0;
+}
+// === END symbolic_fit: hatdA0_l2m2_sym ===
+
+// === BEGIN symbolic_fit: hatd2A0_l2m2_sym ===
+double hatd2A0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (215066028544879.0/250000000000000000.0)*chi_a_delta*pow(chi_eff, 2) + (885525398746557.0/100000000000000000.0)*chi_a_delta*chi_eff*nu - 59163971996023.0/200000000000000000.0*chi_a_delta*chi_eff - 367966940439153.0/10000000000000000.0*chi_a_delta*pow(nu, 2) + (144652393077241.0/10000000000000000.0)*chi_a_delta*nu - 718458253673.0/625000000000000.0*chi_a_delta + (29368187165659.0/125000000000000000.0)*pow(chi_eff, 3) - 397385537653651.0/100000000000000000.0*pow(chi_eff, 2)*nu + (16265260292541.0/12500000000000000.0)*pow(chi_eff, 2) + (6932381926361.0/1250000000000000.0)*chi_eff*pow(nu, 2) - 161033449982559.0/1000000000000000000.0*chi_eff*nu + (28086958620919.0/25000000000000000.0)*chi_eff - 187086988866433.0/5000000000000000.0*pow(nu, 3) + (180431073787773.0/10000000000000000.0)*pow(nu, 2) - 211733619663907.0/25000000000000000.0*nu - 30532412400461.0/12500000000000000.0;
+}
+// === END symbolic_fit: hatd2A0_l2m2_sym ===
+
+// === BEGIN symbolic_fit: omg0_l2m2_sym ===
+double omg0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (305304603131209.0/1000000000000000.0)*chi_a_delta*chi_eff*nu - 104176847519293.0/5000000000000000.0*chi_a_delta*chi_eff + (109423719212683.0/100000000000000.0)*chi_a_delta*pow(nu, 2) + (942111421767801.0/10000000000000000.0)*chi_a_delta*nu + (37830624923889.0/1250000000000000.0)*pow(chi_eff, 3) - 59195498530607.0/250000000000000.0*pow(chi_eff, 2)*nu + (210183203624779.0/2500000000000000.0)*pow(chi_eff, 2) - 166044481056961.0/1000000000000000.0*chi_eff*nu + (52771723279389.0/500000000000000.0)*chi_eff + (2147815884291.0/2000000000000.0)*pow(nu, 3) + (788732590662793.0/10000000000000000.0)*pow(nu, 2) + (13304034564387.0/50000000000000.0)*nu + 33928669961273.0/125000000000000.0;
+}
+// === END symbolic_fit: omg0_l2m2_sym ===
+
+// === BEGIN symbolic_fit: domg0_l2m2_sym ===
+double domg0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return -449229583953509.0/1000000000000000000.0*chi_a_delta*pow(chi_eff, 2) - 205289682229563.0/25000000000000000.0*chi_a_delta*chi_eff*nu + (40206761799119.0/25000000000000000.0)*chi_a_delta*chi_eff + (126933407572733.0/1000000000000000.0)*chi_a_delta*pow(nu, 2) - 8782142538339.0/312500000000000.0*chi_a_delta*nu + (43955077865899.0/20000000000000000.0)*chi_a_delta - 563925327850517.0/1000000000000000000.0*pow(chi_eff, 3) + (100403136953353.0/10000000000000000.0)*pow(chi_eff, 2)*nu - 228432945775727.0/100000000000000000.0*pow(chi_eff, 2) - 132365283472673.0/2500000000000000.0*chi_eff*pow(nu, 2) + (834243891701.0/40000000000000.0)*chi_eff*nu - 12929665133943.0/10000000000000000.0*chi_eff + (112708489500283.0/2000000000000000.0)*pow(nu, 3) - 428773306529481.0/50000000000000000.0*pow(nu, 2) + (6071129755461.0/312500000000000.0)*nu + 295836426011673.0/50000000000000000.0;
+}
+// === END symbolic_fit: domg0_l2m2_sym ===
+
+// === BEGIN symbolic_fit: cAmp_l2m2_0_sym ===
+double cAmp_l2m2_0_sym(double nu, double chi_eff, double chi_a_delta) {
+    return -35385956338497.0/2000000000000000.0*chi_a_delta*pow(chi_eff, 2) - 15613881649523.0/125000000000000.0*chi_a_delta*chi_eff*nu + (400322917263793.0/100000000000000000.0)*chi_a_delta*chi_eff - 285177464914809.0/1000000000000000.0*chi_a_delta*pow(nu, 2) - 55988344699099.0/2500000000000000.0*chi_a_delta*nu + (32645358727789.0/6250000000000000.0)*chi_a_delta - 738261824187677.0/100000000000000000.0*pow(chi_eff, 3) - 994608881773011.0/100000000000000000.0*pow(chi_eff, 2) + (50485178289429.0/2500000000000000.0)*chi_eff*pow(nu, 2) - 192942790881189.0/10000000000000000.0*chi_eff*nu - 61426737530969.0/5000000000000000.0*chi_eff + (671463984149287.0/10000000000000000.0)*pow(nu, 3) - 27117600408507.0/250000000000000.0*pow(nu, 2) + (111398156336961.0/10000000000000000.0)*nu + 160468845219951.0/2000000000000000.0;
+}
+// === END symbolic_fit: cAmp_l2m2_0_sym ===
+
+// === BEGIN symbolic_fit: cAmp_l2m2_1_sym ===
+double cAmp_l2m2_1_sym(double nu, double chi_eff, double chi_a_delta) {
+    return -39028488928591.0/125000000000000.0*chi_a_delta*pow(chi_eff, 2) - 30088202450527.0/10000000000000.0*chi_a_delta*chi_eff*nu + (166644296179071.0/500000000000000.0)*chi_a_delta*chi_eff + (801652693324233.0/100000000000000.0)*chi_a_delta*pow(nu, 2) - 67404225502861.0/25000000000000.0*chi_a_delta*nu + (125588734698723.0/500000000000000.0)*chi_a_delta + (155023331677761.0/100000000000000.0)*pow(chi_eff, 2)*nu - 91982014927093.0/250000000000000.0*pow(chi_eff, 2) - 296570068458921.0/50000000000000.0*chi_eff*pow(nu, 2) + (135793716240731.0/50000000000000.0)*chi_eff*nu - 231346033539763.0/500000000000000.0*chi_eff + (64578551816509.0/10000000000000.0)*pow(nu, 3) - 332252429710779.0/100000000000000.0*pow(nu, 2) + (60976181932623.0/50000000000000.0)*nu - 167141699486987.0/250000000000000.0;
+}
+// === END symbolic_fit: cAmp_l2m2_1_sym ===
+
+// === BEGIN symbolic_fit: cphf_l2m2_0_sym ===
+double cphf_l2m2_0_sym(double nu, double chi_eff, double chi_a_delta) {
+    return -121374326132619.0/10000000000000000.0*chi_a_delta*pow(chi_eff, 2) - 293727195917771.0/1000000000000000.0*chi_a_delta*chi_eff*nu - 107484680611867.0/100000000000000.0*chi_a_delta*pow(nu, 2) + (58730543476031.0/500000000000000.0)*chi_a_delta*nu - 158896361629849.0/10000000000000000.0*pow(chi_eff, 3) + (49554420867239.0/500000000000000.0)*pow(chi_eff, 2)*nu - 230117593068043.0/5000000000000000.0*pow(chi_eff, 2) + (279657604776599.0/1000000000000000.0)*chi_eff*pow(nu, 2) - 213036174897153.0/1000000000000000.0*chi_eff*nu + (145648277377533.0/10000000000000000.0)*chi_eff - 148185032664441.0/100000000000000.0*pow(nu, 3) - 126031113571629.0/1000000000000000.0*pow(nu, 2) + (116144684062969.0/1000000000000000.0)*nu + 31704968664367.0/200000000000000.0;
+}
+// === END symbolic_fit: cphf_l2m2_0_sym ===
+
+// === BEGIN symbolic_fit: cphf_l2m2_1_sym ===
+double cphf_l2m2_1_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (46921296856753.0/20000000000000.0)*chi_a_delta*pow(chi_eff, 2) + (138067906042473.0/10000000000000.0)*chi_a_delta*chi_eff*nu - 72552844725743.0/50000000000000.0*chi_a_delta*chi_eff - 75771283644669.0/1250000000000.0*chi_a_delta*pow(nu, 2) + (4110074609119.0/156250000000.0)*chi_a_delta*nu - 57410052037023.0/25000000000000.0*chi_a_delta - 374177894560441.0/50000000000000.0*pow(chi_eff, 2)*nu + (40048780516227.0/20000000000000.0)*pow(chi_eff, 2) + (2588062909129.0/1250000000000.0)*chi_eff*pow(nu, 2) - 628995390875827.0/100000000000000.0*chi_eff*nu + (44798379146137.0/20000000000000.0)*chi_eff - 246313497149579.0/5000000000000.0*pow(nu, 3) + (189462328732297.0/10000000000000.0)*pow(nu, 2) + 31742520999721.0/20000000000000.0;
+}
+// === END symbolic_fit: cphf_l2m2_1_sym ===
+
+// === BEGIN symbolic_fit: hatA0_l3m2_sym ===
+double hatA0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (300196694850877.0/500000000000000.0)*chi_a_delta*chi_eff*nu - 862262243382849.0/10000000000000000.0*chi_a_delta*chi_eff + (66374791822591.0/20000000000000.0)*chi_a_delta*pow(nu, 2) - 294411662586629.0/500000000000000.0*chi_a_delta*nu + (741983844616899.0/10000000000000000.0)*pow(chi_eff, 3) + (7233343157461.0/200000000000000.0)*pow(chi_eff, 2)*nu + (919171973310813.0/10000000000000000.0)*pow(chi_eff, 2) + (136221934588769.0/250000000000000.0)*chi_eff*pow(nu, 2) - 613085604030441.0/10000000000000000.0*chi_eff*nu + (657478653467703.0/10000000000000000.0)*chi_eff + (787025918787877.0/100000000000000.0)*pow(nu, 3) - 42476312244809.0/25000000000000.0*pow(nu, 2) - 231103430741219.0/500000000000000.0*nu + 39395100570463.0/250000000000000.0;
+}
+// === END symbolic_fit: hatA0_l3m2_sym ===
+
+// === BEGIN symbolic_fit: hatdA0_l3m2_sym ===
+double hatdA0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (194805196759.0/156250000000000.0)*chi_a_delta*pow(chi_eff, 2) + (123020471486753.0/2500000000000000.0)*chi_a_delta*chi_eff*nu - 175721863914451.0/50000000000000000.0*chi_a_delta*chi_eff + (74301890010853.0/125000000000000.0)*chi_a_delta*pow(nu, 2) - 29517562977369.0/250000000000000.0*chi_a_delta*nu + (11884289379431.0/3125000000000000.0)*chi_a_delta + (953319163997189.0/1000000000000000000.0)*pow(chi_eff, 3) + (6426669763343.0/400000000000000.0)*pow(chi_eff, 2)*nu - 171995380669031.0/100000000000000000.0*pow(chi_eff, 2) - 250357876211207.0/5000000000000000.0*chi_eff*pow(nu, 2) + (189001239212369.0/5000000000000000.0)*chi_eff*nu - 478287739201973.0/100000000000000000.0*chi_eff + (123425333416597.0/100000000000000.0)*pow(nu, 3) - 310659715608119.0/1000000000000000.0*pow(nu, 2) - 753738748303363.0/100000000000000000.0*nu + 99721093875727.0/20000000000000000.0;
+}
+// === END symbolic_fit: hatdA0_l3m2_sym ===
+
+// === BEGIN symbolic_fit: hatd2A0_l3m2_sym ===
+double hatd2A0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return -431263475182087.0/1000000000000000000.0*chi_a_delta*pow(chi_eff, 3) + (326769100241141.0/50000000000000000.0)*chi_a_delta*pow(chi_eff, 2)*nu - 5289130253269.0/31250000000000000.0*chi_a_delta*pow(chi_eff, 2) - 27425357983773.0/200000000000000.0*chi_a_delta*chi_eff*pow(nu, 2) + (470630471748651.0/10000000000000000.0)*chi_a_delta*chi_eff*nu - 151754166177667.0/50000000000000000.0*chi_a_delta*chi_eff + (263980178731019.0/1000000000000000.0)*chi_a_delta*pow(nu, 3) - 276512247792639.0/10000000000000000.0*chi_a_delta*pow(nu, 2) - 264613530803591.0/100000000000000000.0*chi_a_delta*nu + (71043199293909.0/500000000000000000.0)*chi_a_delta + (160337474553157.0/1000000000000000000.0)*pow(chi_eff, 4) - 341726703497.0/312500000000000.0*pow(chi_eff, 3)*nu + (166541787127989.0/500000000000000000.0)*pow(chi_eff, 3) - 52107702501331.0/2500000000000000.0*pow(chi_eff, 2)*pow(nu, 2) + (400532604591003.0/100000000000000000.0)*pow(chi_eff, 2)*nu - 194236006676423.0/1000000000000000.0*chi_eff*pow(nu, 3) + (333052063963867.0/5000000000000000.0)*chi_eff*pow(nu, 2) - 20952550620847.0/6250000000000000.0*chi_eff*nu - 605733783934461.0/1000000000000000000.0*chi_eff + (43755006591379.0/2500000000000000.0)*pow(nu, 4) + (4266593229381.0/25000000000000.0)*pow(nu, 3) - 333909149381489.0/10000000000000000.0*pow(nu, 2) - 48831712968041.0/25000000000000000.0*nu + 125968833594659.0/1000000000000000000.0;
+}
+// === END symbolic_fit: hatd2A0_l3m2_sym ===
+
+// === BEGIN symbolic_fit: omg0_l3m2_sym ===
+double omg0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (161727363445477.0/100000000000000.0)*chi_a_delta*chi_eff*nu - 48037523787563.0/250000000000000.0*chi_a_delta*chi_eff + (9054845637911.0/6250000000000.0)*chi_a_delta*pow(nu, 2) - 588438651405333.0/1000000000000000.0*chi_a_delta*nu + (262873826655599.0/5000000000000000.0)*chi_a_delta - 53289883892437.0/500000000000000.0*pow(chi_eff, 2)*nu + (157038765756969.0/2500000000000000.0)*pow(chi_eff, 2) + (89374526451011.0/50000000000000.0)*chi_eff*pow(nu, 2) - 93667997219873.0/200000000000000.0*chi_eff*nu + (452853198904447.0/5000000000000000.0)*chi_eff + (11353318736879.0/1562500000000.0)*pow(nu, 3) - 79507497501257.0/20000000000000.0*pow(nu, 2) + (665194927505217.0/1000000000000000.0)*nu + 159365116417557.0/500000000000000.0;
+}
+// === END symbolic_fit: omg0_l3m2_sym ===
+
+// === BEGIN symbolic_fit: domg0_l3m2_sym ===
+double domg0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (8788441358237.0/2500000000000000.0)*chi_a_delta*pow(chi_eff, 2) + (470610544528533.0/5000000000000000.0)*chi_a_delta*chi_eff*nu - 159437708120529.0/10000000000000000.0*chi_a_delta*chi_eff + (24189163776987.0/20000000000000.0)*chi_a_delta*pow(nu, 2) - 44150286952267.0/125000000000000.0*chi_a_delta*nu + (211902150700251.0/10000000000000000.0)*chi_a_delta - 201210111457549.0/100000000000000000.0*pow(chi_eff, 3) + (387216844904517.0/10000000000000000.0)*pow(chi_eff, 2)*nu - 136452083811171.0/25000000000000000.0*pow(chi_eff, 2) - 234235907055381.0/10000000000000000.0*chi_eff*pow(nu, 2) + (127557724263283.0/10000000000000000.0)*chi_eff*nu - 88586700072557.0/20000000000000000.0*chi_eff + (95500371377817.0/50000000000000.0)*pow(nu, 3) - 795893698825801.0/1000000000000000.0*pow(nu, 2) + (835040943237257.0/10000000000000000.0)*nu + 28393415681153.0/2500000000000000.0;
+}
+// === END symbolic_fit: domg0_l3m2_sym ===
+
+// === BEGIN symbolic_fit: cAmp_l3m2_0_sym ===
+double cAmp_l3m2_0_sym(double nu, double chi_eff, double chi_a_delta) {
+    return -45511440287677.0/62500000000000.0*chi_a_delta*pow(chi_eff, 2) + (66899479242313.0/200000000000000.0)*chi_a_delta*chi_eff + (55348106807777.0/500000000000.0)*chi_a_delta*pow(nu, 2) - 145489259010127.0/5000000000000.0*chi_a_delta*nu + (55206093908847.0/25000000000000.0)*chi_a_delta + (284721961500809.0/1000000000000000.0)*pow(chi_eff, 3) + (16072142582571.0/1000000000000000.0)*pow(chi_eff, 2)*nu - 181329454805631.0/25000000000000.0*chi_eff*pow(nu, 2) + (260228418073829.0/100000000000000.0)*chi_eff*nu - 399178809496149.0/500000000000000.0*chi_eff + (192283539647399.0/10000000000000.0)*pow(nu, 3) - 384504384207927.0/100000000000000.0*pow(nu, 2) + (84954978597913.0/20000000000000.0)*nu - 105039726552947.0/100000000000000.0;
+}
+// === END symbolic_fit: cAmp_l3m2_0_sym ===
+
+// === BEGIN symbolic_fit: cphf_l3m2_0_sym ===
+double cphf_l3m2_0_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (472779423686629.0/1000000000000000.0)*chi_a_delta*chi_eff*nu + (257957256533911.0/100000000000000.0)*chi_a_delta*pow(nu, 2) - 804038421609973.0/1000000000000000.0*pow(chi_eff, 2)*nu - 14261540799249.0/10000000000000.0*chi_eff*pow(nu, 2) - 171799234882597.0/10000000000000.0*pow(nu, 3) + (628359099349.0/78125000000.0)*pow(nu, 2) - 123114295917183.0/200000000000000.0*nu + 7069864718689.0/40000000000000.0;
+}
+// === END symbolic_fit: cphf_l3m2_0_sym ===
+
+// === BEGIN symbolic_fit: cphf_l3m2_1_sym ===
+double cphf_l3m2_1_sym(double nu, double chi_eff, double chi_a_delta) {
+    return (319019443804749.0/10000000000000.0)*chi_a_delta*chi_eff*nu - 17458590506389.0/4000000000000.0*chi_a_delta*chi_eff + (24207823630667.0/100000000000.0)*chi_a_delta*pow(nu, 2) - 19961639556527.0/625000000000.0*chi_a_delta*nu - 461595158493637.0/10000000000000.0*pow(chi_eff, 2)*nu + (553583500097967.0/100000000000000.0)*pow(chi_eff, 2) + (32675902762121.0/2500000000000.0)*chi_eff*pow(nu, 2) - 45375651450677.0/2000000000000.0*chi_eff*nu + (409652051304693.0/100000000000000.0)*chi_eff + (391794409071649.0/500000000000.0)*pow(nu, 3) - 18225891316723.0/100000000000.0*pow(nu, 2) + (120896261815343.0/20000000000000.0)*nu + 10671852044581.0/3125000000000.0;
+}
+// === END symbolic_fit: cphf_l3m2_1_sym ===
+
+
+/* ============================================================
  * Placeholder (nu,spin) global-fit surface -- returns 0 for every
  * mode that doesn't have real fits yet (everything except (2,2),(3,2)).
  * ============================================================ */
@@ -258,6 +374,22 @@ typedef double (*A22_fit2d_t)(double, double);
 typedef struct {
   A22_fit2d_t hatA0, hatdA0, hatd2A0, omg0, domg0, cAmp0, cAmp1, cphf0, cphf1;
 } A22_fit_set_t;
+
+/* sym_A22 counterpart of A22_fit_set_t -- SAME role, but every entry
+   takes (nu, chi_eff, chi_a_delta) instead of (x, y): symbolic_fit.py's
+   RFE-polynomial fits are genuinely N-variable, not just a different
+   formula over the same 2 coordinates the rational fits use, so they
+   need their own function-pointer type/struct, not a cast into
+   A22_fit2d_t (incompatible signatures -- would be undefined behavior
+   through a function pointer). See A22_get_fit_set_sym/
+   QNMHybridFitCab_A22_lm's own ringdown_model==RINGDOWN_A22_SYM branch. */
+typedef double (*A22_fit3d_t)(double, double, double);
+
+typedef struct {
+  A22_fit3d_t hatA0, hatdA0, hatd2A0, omg0, domg0, cAmp0, cAmp1, cphf0, cphf1;
+} A22_fit_set_sym_t;
+
+static double A22_fit_placeholder_sym(double nu, double chi_eff, double chi_a_delta) { return 0.0; }
 
 /**
  * Function: A22_get_fit_set
@@ -322,6 +454,42 @@ static void A22_get_fit_set(int k, A22_fit_set_t *fs)
     fs->omg0  = fs->domg0  = A22_fit_placeholder;
     fs->cAmp0 = fs->cAmp1  = A22_fit_placeholder;
     fs->cphf0 = fs->cphf1  = A22_fit_placeholder;
+  }
+}
+
+/**
+ * Function: A22_get_fit_set_sym
+ * -------------------------------
+ *   ringdown_model="sym_A22" counterpart of A22_get_fit_set: real
+ *   symbolic-regression fits (gfits_sym/l2m2.c/l3m2.c) for (2,2) AND
+ *   (3,2) (both regenerated -- see the module-level comment above the
+ *   fit functions themselves), A22_fit_placeholder_sym (identically 0)
+ *   for every other mode -- same "nothing else needs to change to add a
+ *   mode" contract as A22_get_fit_set. (3,2) uses the SAME
+ *   A22_amp_uses_tanhcosh_A1(k32)==1 shape convention as the rational
+ *   fits (cAmp_l3m2_0_sym is c3 alone, no cAmp1_sym exists for this mode
+ *   either -- gfits_sym/l3m2.c was never asked to fit one, matching
+ *   ext_tanhcosh_A1's single free coefficient).
+ */
+static void A22_get_fit_set_sym(int k, A22_fit_set_sym_t *fs)
+{
+  const int k22 = 1;
+  const int k32 = 3;
+  if (k == k22) {
+    fs->hatA0 = hatA0_l2m2_sym;   fs->hatdA0 = hatdA0_l2m2_sym;   fs->hatd2A0 = hatd2A0_l2m2_sym;
+    fs->omg0  = omg0_l2m2_sym;    fs->domg0  = domg0_l2m2_sym;
+    fs->cAmp0 = cAmp_l2m2_0_sym;  fs->cAmp1  = cAmp_l2m2_1_sym;
+    fs->cphf0 = cphf_l2m2_0_sym;  fs->cphf1  = cphf_l2m2_1_sym;
+  } else if (k == k32) {
+    fs->hatA0 = hatA0_l3m2_sym;   fs->hatdA0 = hatdA0_l3m2_sym;   fs->hatd2A0 = hatd2A0_l3m2_sym;
+    fs->omg0  = omg0_l3m2_sym;    fs->domg0  = domg0_l3m2_sym;
+    fs->cAmp0 = cAmp_l3m2_0_sym;  fs->cAmp1  = A22_fit_placeholder_sym;
+    fs->cphf0 = cphf_l3m2_0_sym;  fs->cphf1  = cphf_l3m2_1_sym;
+  } else {
+    fs->hatA0 = fs->hatdA0 = fs->hatd2A0 = A22_fit_placeholder_sym;
+    fs->omg0  = fs->domg0  = A22_fit_placeholder_sym;
+    fs->cAmp0 = fs->cAmp1  = A22_fit_placeholder_sym;
+    fs->cphf0 = fs->cphf1  = A22_fit_placeholder_sym;
   }
 }
 
@@ -551,12 +719,14 @@ void QNMHybridFitCab_A22_lm(int k, double nu, double X1, double X2, double chi1,
     alpha21_k = alpha21[k];
   }
 
-  A22_fit_set_t fs;
-  A22_get_fit_set(k, &fs);
-
   /* (nu, spin) global-fit surface coordinates -- x=a0, y=1-X12, and Shat
      for the eq. 63 un-normalization -- same formulas
-     QNMHybridFitCab/compute_spin_variables already use */
+     QNMHybridFitCab/compute_spin_variables already use. a0 IS chi_eff
+     (X1*chi1+X2*chi2, the mass-weighted spin average -- same quantity,
+     just this function's own local name for it), and chi_a_delta is
+     py/generic_q/symbolic_fit.py's own (chi1-chi2)/2 * (X1-X2): both
+     individually flip sign under swapping body 1<->2, so their product
+     is swap-INVARIANT -- see symbolic_fit.py's own module docstring. */
   const double a1c  = X1*chi1;
   const double a2c  = X2*chi2;
   const double a0   = a1c + a2c;
@@ -564,22 +734,48 @@ void QNMHybridFitCab_A22_lm(int k, double nu, double X1, double X2, double chi1,
   const double X12  = X1 - X2;
   const double y    = 1.0 - X12;
   const double Shat = 0.5*(a0 + X12*a12);
+  const double chi_a_delta = 0.5*(chi1 - chi2)*X12;
 
-  const double hatA0   = fs.hatA0(a0, y);
-  const double hatdA0  = fs.hatdA0(a0, y);
-  const double hatd2A0 = fs.hatd2A0(a0, y);
-  const double omg0    = fs.omg0(a0, y);
-  const double domg0   = fs.domg0(a0, y);
   /* ext_tanhcosh_A1 (A22_amp_uses_tanhcosh_A1): cA2 is FIXED at
      0.5*alpha21_k, not fit -- this mode's fit surface (cAmp0) then holds
      the sole free coefficient c3 directly, and cAmp1 goes unused.
      Every other mode is untouched: both cA2 (cAmp0) and cA3 (cAmp1)
-     read from the fit surface, exactly as before this option existed. */
+     read from the fit surface, exactly as before this option existed.
+     SAME convention under RINGDOWN_A22_SYM below -- it's a property of
+     which TEMPLATE SHAPE a mode uses, not of which regression method
+     produced the coefficient values. */
   const int use_tanhcosh_A1 = A22_amp_uses_tanhcosh_A1(k);
-  const double cA2 = use_tanhcosh_A1 ? 0.5*alpha21_k : fs.cAmp0(a0, y);
-  const double cA3 = use_tanhcosh_A1 ? fs.cAmp0(a0, y) : fs.cAmp1(a0, y);
-  const double d1f     = fs.cphf0(a0, y);
-  const double d2f     = fs.cphf1(a0, y);
+
+  double hatA0, hatdA0, hatd2A0, omg0, domg0, cA2, cA3, d1f, d2f;
+  if (EOBPars->ringdown_model == RINGDOWN_A22_SYM) {
+    /* symbolic_fit.py's RFE-polynomial surfaces -- (nu, chi_eff=a0,
+       chi_a_delta), NOT (x=a0, y=1-X12) like the rational fits below:
+       a genuinely different coordinate SET, not just a different
+       formula over the same two -- see A22_get_fit_set_sym. */
+    A22_fit_set_sym_t fs;
+    A22_get_fit_set_sym(k, &fs);
+    hatA0   = fs.hatA0(nu, a0, chi_a_delta);
+    hatdA0  = fs.hatdA0(nu, a0, chi_a_delta);
+    hatd2A0 = fs.hatd2A0(nu, a0, chi_a_delta);
+    omg0    = fs.omg0(nu, a0, chi_a_delta);
+    domg0   = fs.domg0(nu, a0, chi_a_delta);
+    cA2 = use_tanhcosh_A1 ? 0.5*alpha21_k : fs.cAmp0(nu, a0, chi_a_delta);
+    cA3 = use_tanhcosh_A1 ? fs.cAmp0(nu, a0, chi_a_delta) : fs.cAmp1(nu, a0, chi_a_delta);
+    d1f = fs.cphf0(nu, a0, chi_a_delta);
+    d2f = fs.cphf1(nu, a0, chi_a_delta);
+  } else {
+    A22_fit_set_t fs;
+    A22_get_fit_set(k, &fs);
+    hatA0   = fs.hatA0(a0, y);
+    hatdA0  = fs.hatdA0(a0, y);
+    hatd2A0 = fs.hatd2A0(a0, y);
+    omg0    = fs.omg0(a0, y);
+    domg0   = fs.domg0(a0, y);
+    cA2 = use_tanhcosh_A1 ? 0.5*alpha21_k : fs.cAmp0(a0, y);
+    cA3 = use_tanhcosh_A1 ? fs.cAmp0(a0, y) : fs.cAmp1(a0, y);
+    d1f = fs.cphf0(a0, y);
+    d2f = fs.cphf1(a0, y);
+  }
 
   const double norm_factor = 1.0 - Shat*omg0;
   const double A0   = hatA0   * norm_factor;

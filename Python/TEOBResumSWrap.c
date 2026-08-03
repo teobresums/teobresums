@@ -322,7 +322,7 @@ int SetOptionalVariables(PyObject* dict){
       if (STREQUAL(val,ringdown_model_opt[k])) break;
     }
     if (k == RINGDOWN_NOPT) {
-      errorexit("Unknown option for ringdown_model (expected \"old\" or \"new_A22\").\n");
+      errorexit("Unknown option for ringdown_model (expected \"old\", \"new_A22\", or \"sym_A22\").\n");
     }
     EOBPars->ringdown_model = k;
   }
