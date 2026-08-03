@@ -363,8 +363,8 @@ static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4P
     which always use eob_wav_ringdown_bhns regardless of this option) */
 enum{
   RINGDOWN_OLD,           /**< Original QNMHybridFitCab-based ringdown + eob_nqc_point-based NQC */
-  RINGDOWN_A22,           /**< New global-(nu,spin)-fit-based ringdown + NQC, single shared attachment point -- (2,1),(2,2),(3,2),(3,3),(4,3),(4,4),(5,5), see TEOBResumSNewRingdown.c */
-  RINGDOWN_A22_SYM,       /**< SAME ringdown+NQC algorithm as RINGDOWN_A22 (dispatches to the identical eob_wav_ringdown_A22/eob_wav_hlmNQC_find_a1a2a3_mrg_A22) -- only (2,2)'s own (nu,spin) fit surface differs, symbolic-regression-based (py/generic_q/symbolic_fit.py, gfits_sym/l2m2.c) instead of the rational-function one RINGDOWN_A22 uses. (3,2) (and everything else) still uses the SAME fits as RINGDOWN_A22 -- no symbolic surface for those yet, see A22_get_fit_set. */
+  RINGDOWN_A22,           /**< New global-(nu,spin)-fit-based ringdown + NQC, single shared attachment point, see TEOBResumSNewRingdown.c */
+  RINGDOWN_A22_SYM,       /**< SAME ringdown+NQC algorithm as RINGDOWN_A22, but with symbolic global fits */
   RINGDOWN_NOPT           /**< number of ringdown model options */
 };
 static const char* const ringdown_model_opt[] = {"old", "new_A22", "sym_A22", "undefined"};
