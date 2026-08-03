@@ -9,11 +9,7 @@
  *  EXACTLY as in the old model's tmrg[k22] (true-(2,2)-amplitude-peak
  *  proxy): the refined (7-point local polynomial) peak of the orbital
  *  frequency Omega_orb, minus eob_nqc_timeshift(nu,chi1), minus an
- *  additional NR-calibrated "-2M" (see eob_A22_find_t0_raw) -- NOT a fresh
- *  peak-search on the (2,2) amplitude array itself (tried that first; it
- *  read uninitialized memory in the ringdown-extended tail of the
- *  waveform array and is unnecessary -- the old model's own
- *  Omega-peak+shift proxy is already the right answer here). ALL modes
+ *  additional NR-calibrated "-2M" (see eob_A22_find_t0_raw). ALL modes
  *  attach at this SAME t0 -- "usual" for this kind of peak-anchored
  *  template, no per-mode dtmrg offset like the old model's HM path.
  *
