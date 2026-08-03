@@ -8498,12 +8498,18 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     }
   }
 
-  /** omega derivatives */
+  /** omega derivatives -- D0(phase)=omg, D2(phase)=domg (direct 2nd-derivative
+      stencil, equivalent to D0(omg) as done in eob_wav_hlmNQC_find_a1a2a3_mrg_22)
+      -- NOT D2(phase) written back into omg[k] a second time (that overwrote
+      the just-computed correct omg with d^2(phase)/dt^2 and left domg[k]
+      permanently zero, corrupting the NQC phase-matching linear solve
+      -- e.g. for (2,2)-only HM runs, producing a genuine, large frequency
+      glitch right at the ringdown attachment). */
   const double dt = t[1]-t[0];
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask_nqc[k]){
       D0(hlm_mrg->phase[k], dt, size, omg[k]);
-      D2(hlm_mrg->phase[k], dt, size, omg[k]);
+      D2(hlm_mrg->phase[k], dt, size, domg[k]);
     }
   }
   
@@ -9639,7 +9645,6 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
  */
 int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 {
-
   const double Mbh   = EOBPars->Mbhf;
   const double abh   = EOBPars->abhf;
   const double nu    = EOBPars->nu;  
@@ -9856,12 +9861,17 @@ int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
   for (int k=0; k<KMAX; k++) {
     free(t_lm[k]);
   }
-  
+
   return 0;
 
 }
-	
-/** 
+
+/* eob_wav_ringdown_A22 (the new multi-mode ringdown-NQC model, user-
+   facing option string "new_A22") is now implemented in
+   TEOBResumSNewRingdown.c, not here -- this file keeps only the
+   original/old ringdown functions. */
+
+/**
  * Function: eob_wav_ringdown_HM
  * -----------------------------
  *   Ringdown calculation and match to the dynamics
@@ -10014,13 +10024,19 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
       eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
       
       Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
-      
-      /* Compute and attach ringdown */
-      for (int j = index_rng-1; j < size ; j++ ) {
+
+      /* Compute and attach ringdown -- start EXACTLY at index_rng (where
+         Deltaphi continuity was just calibrated above), NOT index_rng-1:
+         starting one sample early overwrote a perfectly smooth inspiral
+         sample with a ringdown-template value that has no reason to
+         continue smoothly from the untouched sample at index_rng-2 (only
+         index_rng itself is guaranteed continuous, by construction of
+         Deltaphi), producing a genuine one-sample phase/amplitude
+         discontinuity -- invisible on the waveform itself but a large,
+         spurious spike in any discretely-differentiated frequency. */
+      for (int j = index_rng; j < size ; j++ ) {
         tm  = t_lm[k][j] - tmatch[k];
         tm /= fact;
-
-        //printf("j =%d, k=%d, tlm_k_rd = %.8e, tm = %.8e\n", j,k, t_lm[k][j], tm);
 
         eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], psi);
         hlm->phase[k][j] = psi[1] - Deltaphi[k];

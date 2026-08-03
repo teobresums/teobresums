@@ -308,7 +308,26 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
-  if ( PyDict_GetItemString(dict, "use_flm_nc") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "ringdown_model") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ringdown_model"));
+    /* NOTE: deliberately NOT the "reset-to-default-on-NOPT" loop idiom
+       used by use_flm_nc and others below -- that pattern resets the
+       loop counter back to a valid index once it reaches NOPT instead of
+       ever letting the loop condition go false, so it never terminates
+       on an unrecognized string (verified: hangs indefinitely). Bounded
+       loop + explicit errorexit() instead. */
+    int k;
+    for (k = 0; k < RINGDOWN_NOPT; k++) {
+      if (STREQUAL(val,ringdown_model_opt[k])) break;
+    }
+    if (k == RINGDOWN_NOPT) {
+      errorexit("Unknown option for ringdown_model (expected \"old\" or \"new_A22\").\n");
+    }
+    EOBPars->ringdown_model = k;
+  }
+
+  if ( PyDict_GetItemString(dict, "use_flm_nc") != NULL ) {
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_nc"));
     for(EOBPars->use_flm_nc=0; EOBPars->use_flm_nc<=USEFLM_NC_NOPT; EOBPars->use_flm_nc++){

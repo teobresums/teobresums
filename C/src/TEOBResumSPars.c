@@ -279,7 +279,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->compute_LSO_guess=6.;
 
   eobp->compute_ringdown=1; // Calculate and add ringdown?
-    
+  eobp->ringdown_model=RINGDOWN_OLD; // {"old", "new_A22"} -- BBH only, ignored for BNS/BHNS
+
   eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
   eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
   eobp->nqc_coefs_hlm=NQC_HLM_NONE; // {"compute", "none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
@@ -1428,6 +1429,26 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
 
+  /** Override ringdown fun pointer for the new global-(nu,spin)-fit
+      ringdown-NQC model, BBH only -- the binary!=BBH guard is defensive:
+      the BHNS overwrite block below always has the final say for
+      BHNS/BNS regardless of this option, but keeping the two decisions
+      from ever contradicting each other here avoids relying on ordering
+      alone.
+
+      ringdown_model is independent of use_flm (use_flm picks the inspiral
+      amplitude-PN template, not which modes are active -- that's
+      use_mode_lm). The supported-mode constraint -- (2,1),(2,2),(3,2),
+      (3,3),(4,3),(4,4),(5,5), see TEOBResumSA22.c's own header comment --
+      is enforced directly inside eob_wav_ringdown_A22/
+      eob_wav_hlmNQC_find_a1a2a3_mrg_A22 themselves (they errorexit() if
+      any hlm->kmask[k] outside that set is active), so no use_flm-based
+      proxy check is needed here. */
+  if (EOBPars->ringdown_model == RINGDOWN_A22 &&
+      EOBPars->binary != BINARY_BHNS && EOBPars->binary != BINARY_BHNS_TD) {
+    eob_wav_ringdown = &eob_wav_ringdown_A22;
+  }
+
   /** Set Fr fun pointer */
   if (EOBPars->use_Fr == USE_FR_FULL) {
     eob_flx_Fr = &eob_flx_Fr_ecc_impqc_full;
@@ -1525,6 +1546,14 @@ int eob_set_params(int default_choice, int firstcall)
   }else{ // For BBH
     eob_nqc_timeshift = &eob_nqc_timeshift_bbh;
     eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bbh;
+  }
+
+  /** Override NQC fun pointer for the new (2,2)-only ringdown-NQC model --
+      same guard (BBH only) as the eob_wav_ringdown override; independent
+      of use_flm, see that override's own comment above. */
+  if (EOBPars->ringdown_model == RINGDOWN_A22 &&
+      EOBPars->binary != BINARY_BHNS && EOBPars->binary != BINARY_BHNS_TD) {
+    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_A22;
   }
 
   /* Set metric potentials function pointers */

@@ -359,6 +359,15 @@ enum{
 };
 static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr"};
 
+/** List of options for the ringdown-NQC model (BBH only; ignored for BNS/BHNS,
+    which always use eob_wav_ringdown_bhns regardless of this option) */
+enum{
+  RINGDOWN_OLD,           /**< Original QNMHybridFitCab-based ringdown + eob_nqc_point-based NQC */
+  RINGDOWN_A22,           /**< New global-(nu,spin)-fit-based ringdown + NQC, single shared attachment point -- (2,1),(2,2),(3,2),(3,3),(4,3),(4,4),(5,5), see TEOBResumSA22.c */
+  RINGDOWN_NOPT           /**< number of ringdown model options */
+};
+static const char* const ringdown_model_opt[] = {"old", "new_A22", "undefined"};
+
 /** List of options for flm_nc */
 enum{
   USEFLM_NC_NO,            /**< No NC corrections to anything */
@@ -753,7 +762,8 @@ typedef struct tagEOBParameters
   double alpha_sigmoid_Newt, delta_t0_sigmoid_Newt;
   int A_pot, D_pot, Q_pot;
   int compute_ringdown;
-  
+  int ringdown_model;                                   /**< NEW, INDEX FOR # "old", "new_A22" -- see RINGDOWN_OLD/RINGDOWN_A22 */
+
   /* options/settings */
   int binary;                                           /**< binary type (BBH, BNS, BHNS) */
   int model;                                            /**< model (Dalì, Giotto) */
@@ -1305,6 +1315,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_hlmNQC_find_a1a2a3_mrg_A22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+				       Dynamics *dyn, Waveform_lm *hlm); /**< new (2,2)-only ringdown-NQC model, see TEOBResumSA22.c */
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, double tOmg_pk, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
@@ -1312,6 +1324,35 @@ void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double
 extern int (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c */
 int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
+int eob_wav_ringdown_A22(Dynamics *dyn, Waveform_lm *hlm); /**< new multi-mode ringdown model, see TEOBResumSA22.c */
+void QNMHybridFitCab_A22_lm(int k, double nu, double X1, double X2, double chi1, double chi2, double Mbh, double abh,
+                            double *ca1, double *ca2, double *ca3, double *ca4, double *ca5,
+                            double *cb1, double *cb2, double *cb3,
+                            double *sigmar, double *sigmai,
+                            double *A0_out, double *dA0_out, double *d2A0_out,
+                            double *omg0_out, double *domg0_out,
+                            double *cA2_out, double *cA3_out, double *d1f_out, double *d2f_out);
+void eob_wav_ringdown_template_A22(double x, double ca1, double ca2, double ca3, double ca4, double ca5,
+                                   double cb1, double cb2, double cb3,
+                                   double sigmar, double sigmai, double *psi);
+double eob_A22_find_t0_raw(Dynamics *dyn, double nu, double chi1);
+double hatA0_l2m2(double x, double y);
+double hatdA0_l2m2(double x, double y);
+double hatd2A0_l2m2(double x, double y);
+double omg0_l2m2(double x, double y);
+double domg0_l2m2(double x, double y);
+double cAmp_l2m2_0(double x, double y);
+double cAmp_l2m2_1(double x, double y);
+double cphf_l2m2_0(double x, double y);
+double cphf_l2m2_1(double x, double y);
+double hatA0_3_2(double x, double y);
+double hatdA0_3_2(double x, double y);
+double hatd2A0_3_2(double x, double y);
+double omg0_3_2(double x, double y);
+double domg0_3_2(double x, double y);
+double cAmp_3_2_0(double x, double y);
+double cphf_3_2_0(double x, double y);
+double cphf_3_2_1(double x, double y);
 double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, double XB);
 void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm);
 void twist_hlm_TD(Dynamics *dyn, Waveform_lm *hlm, DynamicsSpin *spin, int interp_spin_abc, Waveform_lm *hTlm, Waveform_lm *hTlm_neg, Waveform_lm *hTl0);
