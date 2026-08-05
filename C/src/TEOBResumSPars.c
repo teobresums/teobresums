@@ -279,7 +279,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->compute_LSO_guess=6.;
 
   eobp->compute_ringdown=1; // Calculate and add ringdown?
-  eobp->ringdown_model=RINGDOWN_OLD; // {"old", "new_A22", "sym_A22"} -- BBH only, ignored for BNS/BHNS
+  eobp->ringdown_model=RINGDOWN_OLD; // {"old", "new_A22"} -- BBH only, ignored for BNS/BHNS
 
   eobp->nqc=NQC_AUTO; // {"no", "auto", "manual"}
   eobp->nqc_coefs_flx=NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin202002", "fromfile"}
@@ -1444,7 +1444,7 @@ int eob_set_params(int default_choice, int firstcall)
       eob_wav_hlmNQC_find_a1a2a3_mrg_A22 themselves (they errorexit() if
       any hlm->kmask[k] outside that set is active), so no use_flm-based
       proxy check is needed here. */
-  if ((EOBPars->ringdown_model == RINGDOWN_A22 || EOBPars->ringdown_model == RINGDOWN_A22_SYM) &&
+  if (EOBPars->ringdown_model == RINGDOWN_A22 &&
       EOBPars->binary != BINARY_BHNS && EOBPars->binary != BINARY_BHNS_TD) {
     eob_wav_ringdown = &eob_wav_ringdown_A22;
   }
@@ -1551,7 +1551,7 @@ int eob_set_params(int default_choice, int firstcall)
   /** Override NQC fun pointer for the new (2,2)-only ringdown-NQC model --
       same guard (BBH only) as the eob_wav_ringdown override; independent
       of use_flm, see that override's own comment above. */
-  if ((EOBPars->ringdown_model == RINGDOWN_A22 || EOBPars->ringdown_model == RINGDOWN_A22_SYM) &&
+  if (EOBPars->ringdown_model == RINGDOWN_A22 &&
       EOBPars->binary != BINARY_BHNS && EOBPars->binary != BINARY_BHNS_TD) {
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_A22;
   }

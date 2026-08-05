@@ -24,112 +24,155 @@
  *  mode(). The (2,1),(2,2),(3,3),(4,4),(5,5) modes need no mixing (l has
  *  no lower partner at fixed m, or m=l is the leading/only term).
  *
- *  PLACEHOLDER STATE (as of this writing): the (nu,spin) global-fit
- *  amplitude/phase template surfaces (hatA0/hatdA0/hatd2A0/omg0/domg0/
- *  cAmp0/cAmp1/cphf0/cphf1) exist for (2,2) (l2m2 functions below) and
- *  (3,2) (l3m2 functions below -- calibrated on the SPHEROIDAL S32
- *  decomposition, NOT the spherical (3,2) mode, see A22_get_fit_set's own
- *  header comment), both from eob_ringdown/py/fitter.py's fit_2d_to_c;
- *  every other mode ((2,1),(3,3),(4,3),(4,4),(5,5)) uses
- *  A22_fit_placeholder (returns 0 -- see A22_get_fit_set), so ITS OWN
- *  postpeak template is identically zero (smoothly faded out by NQC
- *  approaching t0, then exactly 0 for t>=t0) until real fits are
- *  generated and swapped in. The Berti-Klein mixing coefficients (A22_mu)
- *  are real (18 hardcoded (m,l,l') combinations, both signs of m -- see
- *  A22_mu's own header comment), independent of the amplitude/phase
- *  placeholder state above. QNM complex frequencies (sigmar,sigmai) are
- *  NOT placeholder -- Kerr perturbation theory, not part of the (nu,spin)
- *  fits -- (2,2) keeps its own long-validated hardcoded fit (QNM_coefs'
- *  own (2,2) entry is a DIFFERENT, close but not identical fit --
- *  swapping would be a silent regression for the one mode extensively
- *  tested so far); every other mode uses QNM_coefs (already implemented
- *  in this repo, covers exactly this same mode set).
+ *  Only ONE ringdown_model variant of this file's (nu,spin) global-fit
+ *  amplitude/phase template surfaces exists now: "new_A22" (RINGDOWN_A22).
+ *  For every mode except (2,2)/(3,2) every surface is still identically
+ *  zero (A22_fit_placeholder) -- those modes' postpeak template is
+ *  identically zero (smoothly faded out by NQC approaching t0, then
+ *  exactly 0 for t>=t0). (2,2)/(3,2) are populated below by
+ *  eob_ringdown/py/generic_q/symbolic_hierarchical_fit.py's hierarchical
+ *  rational-Stage1/poly-Stage2 fits over (S_hat, nu) -- see each
+ *  function's surrounding BEGIN/END marker and its own header comment
+ *  for the exact command/commit that generated it, and A22_get_fit_set's
+ *  own header comment for the per-mode dispatch. The Berti-Klein mixing
+ *  coefficients (A22_mu) are real (18 hardcoded (m,l,l') combinations,
+ *  both signs of m -- see A22_mu's own header comment), independent of
+ *  the amplitude/phase fit state above. QNM complex frequencies
+ *  (sigmar,sigmai) are NOT part of the (nu,spin) fits -- (2,2) keeps its
+ *  own long-validated hardcoded fit (QNM_coefs' own (2,2) entry is a
+ *  DIFFERENT, close but not identical fit -- swapping would be a silent
+ *  regression for the one mode extensively tested so far); every other
+ *  mode uses QNM_coefs (already implemented in this repo, covers exactly
+ *  this same mode set).
  *
  *  The nine hatA0_l2m2/hatdA0_l2m2/hatd2A0_l2m2/omg0_l2m2/domg0_l2m2/
- *  cAmp_l2m2_0/cAmp_l2m2_1/cphf_l2m2_0/cphf_l2m2_1 functions below are
- *  generated verbatim by eob_ringdown/py/fitter.py's fit_2d_to_c (see
- *  eob_ringdown/py/generic_q/gfits_A22_v1/l2m2.c) -- x=a0, y=1-X12 is
- *  fit_2d's own boundary convention, NOT raw X12.
+ *  cAmp_l2m2_0/cAmp_l2m2_1/cphf_l2m2_0/cphf_l2m2_1 functions below (and
+ *  their l3m2 counterparts) take (S_hat, nu) -- S_hat = 0.5*(a0 +
+ *  X12*a12) is the same combination QNMHybridFitCab_A22_lm's eq. 63
+ *  un-normalization already uses, NOT the older (x=a0, y=1-X12)
+ *  convention.
  */
 
 #include "TEOBResumS.h"
 
 /* === BEGIN fit_2d_to_c: hatA0_l2m2 === */
-double hatA0_l2m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    double y3 = y2*y;
-    return ((1.44959188382681914e+00)*((1.0 + (6.89849337014823316e-01)*((-5.75261729800441213e-01)/(1.0 + 3.61775910818433410e-01*y))*x + (6.89849337014823316e-01)*((-9.37280958978483902e-02)/(1.0 + 9.09090746955315998e-01*y))*x2)/(1.0 + ((-7.71842771502132208e-01)/(1.0 + 6.05283452507252129e-01*y))*x))*(1.0 + (6.89849337014823316e-01)*(-2.48881225900474852e-02 + -5.59213712513535674e-02*x)*y + (6.89849337014823316e-01)*(5.14933452191105534e-01 + -9.42615659347894180e-02*x)*y2 + (6.89849337014823316e-01)*(-3.72149358035482214e-01 + 1.36910594043419293e-01*x)*y3));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=hatA0[(2,2)]
+   form: S_hat: (2,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=9 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity hatA0[(2,2)] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double hatA0_l2m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 0.68984933701482332*(-0.57526172412578069*S_hat - 0.093728090983377033*S_hat2 + 1.4495918838268191)*(-0.268252326142839*nu + 5.0166762034792507*nu2 - 7.9689764483466643*nu3 + 1.4495918838268191)*(-0.3844198182562365*S_hat*nu + 1.6321959712615206*S_hat*nu2 + 0.21204643800584216*S_hat2*nu + 1)/(1 - 0.77184276773164795*S_hat);
 }
 /* === END fit_2d_to_c: hatA0_l2m2 === */
 
 /* === BEGIN fit_2d_to_c: hatd2A0_l2m2 === */
-double hatd2A0_l2m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((-2.43607606729431304e-03)*((1.0 + (-4.10496212916156708e+02)*(2.00729089641414572e-03 + -2.09867228908063551e-03*y)*x + (-4.10496212916156708e+02)*(7.32092049813945337e-04 + -4.41753499064325968e-04*y)*x2)/(1.0 + (-4.38300163515166097e-01 + 2.42984252628984904e-01*y)*x))*((1.0 + (-4.10496212916156708e+02)*(-7.53541473064639738e-03 + -3.17115963318180245e-04*x)*y + (-4.10496212916156708e+02)*(5.41188839082077538e-04 + 4.22940242772500748e-03*x)*y2)/(1.0 + (1.32873215103040798e+00 + 5.33370232445838588e-01*x)*y)));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=hatd2A0[(2,2)]
+   form: S_hat: (2,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 2 term(s) -- n_pars=8 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity hatd2A0[(2,2)] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --z_shift 1
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double hatd2A0_l2m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return -1.0 + 1.002442025026016*(-0.43629318125968647*S_hat + 0.00073209167627906815*S_hat2 + 0.99756392393270565)*(0.032522200795418552*S_hat*nu2 + 0.0016505191253232082*S_hat2*nu + 1)*(-0.0093531839414305699*nu + 0.02699126217732439*nu2 - 0.060031155023105867*nu3 + 0.99756392393270565)/(1 - 0.43830047266329741*S_hat);
 }
 /* === END fit_2d_to_c: hatd2A0_l2m2 === */
 
 /* === BEGIN fit_2d_to_c: hatdA0_l2m2 === */
-double hatdA0_l2m2(double x, double y) {
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=hatdA0[(2,2)]
+   form: trivial constant = 0.000000e+00 (--const)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity hatdA0[(2,2)] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --const 0 --correction additive
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double hatdA0_l2m2(double S_hat, double nu) {
     return 0.0;
 }
 /* === END fit_2d_to_c: hatdA0_l2m2 === */
 
 /* === BEGIN fit_2d_to_c: omg0_l2m2 === */
-double omg0_l2m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((2.73371257534512468e-01)*((1.0 + (3.65802904452657174e+00)*(-1.14304064540043701e-01 + 2.17201793541147964e-01*y)*x + (3.65802904452657174e+00)*(-1.36957589116038052e-02 + 4.12461891885490678e-02*y)*x2)/(1.0 + (-7.44128599675536129e-01 + 8.99849754167902249e-01*y)*x))*((1.0 + (3.65802904452657174e+00)*(-3.21684549917094428e-02)*y + (3.65802904452657174e+00)*(-9.40808316024106944e-02)*y2)/(1.0 + (-5.89639038902594170e-01)*y)));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=omg0[(2,2)]
+   form: S_hat: (2,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=9 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity omg0[(2,2)] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double omg0_l2m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 3.6580290445265717*(-0.11430406180033306*S_hat - 0.013695757086527562*S_hat2 + 0.27337125753451247)*(0.24984406864360634*nu + 0.23193754639573197*nu2 + 0.55142044331259554*nu3 + 0.27337125753451247)*(0.23200852393719604*S_hat*nu + 0.6631668108368578*S_hat*nu2 + 0.11681621404283618*S_hat2*nu + 1)/(1 - 0.74412859020248245*S_hat);
 }
 /* === END fit_2d_to_c: omg0_l2m2 === */
 
 /* === BEGIN fit_2d_to_c: domg0_l2m2 === */
-double domg0_l2m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((6.03664316737079557e-03)*((1.0 + (1.65654979476870551e+02)*(-1.02840941698208762e-03 + 9.31127691979416819e-03*y)*x + (1.65654979476870551e+02)*(-1.87809567547554072e-03 + 4.68493729526423680e-03*y)*x2)/(1.0 + (-4.38021725085685140e-03 + 7.30617208534026896e-01*y)*x))*((1.0 + (1.65654979476870551e+02)*(5.25259082991305897e-03 + 1.41927898992048169e-03*x)*y + (1.65654979476870551e+02)*(-5.40475178495663025e-03 + -1.68772276752119114e-03*x)*y2)/(1.0 + (-4.76190113524564307e-01 + 3.27342166791816602e-01*x)*y)));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=domg0[(2,2)]
+   form: S_hat: (2,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=9 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity domg0[(2,2)] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double domg0_l2m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 165.65497947687055*(-0.0048307362469521215*S_hat - 0.0013881437926676367*S_hat2 + 0.0060366431673707956)*(0.017332890313445828*nu - 0.0071144345082269885*nu2 + 0.084273036673670559*nu3 + 0.0060366431673707956)*(3.9316287575048428*S_hat*nu - 12.783000345899101*S_hat*nu2 + 2.1849277294475815*S_hat2*nu + 1)/(1 - 0.70051646782335475*S_hat);
 }
 /* === END fit_2d_to_c: domg0_l2m2 === */
 
 /* === BEGIN fit_2d_to_c: cAmp_l2m2_0 === */
-double cAmp_l2m2_0(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((7.92857893446788642e-02)*(1.0 + (1.26126006723941799e+01)*(-1.62516034244934819e-02 + -5.32442242893030934e-03*y)*x + (1.26126006723941799e+01)*(-4.83140284311247073e-03 + -8.43758937150740698e-03*y)*x2)*(1.0 + (1.26126006723941799e+01)*(6.49449223018548020e-03 + 1.02578823374962981e-03*x)*y + (1.26126006723941799e+01)*(-1.04777326975056123e-02 + -2.14079556733814003e-03*x)*y2));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=cAmp[(2,2)][0]
+   form: S_hat: (2,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=9 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity cAmp[(2,2)][0] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --testmass_min_spin -0.81 --testmass_max_spin 0.81
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double cAmp_l2m2_0(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 12.612600702478941*(-0.079606482947710763*S_hat + 0.0074080369942292577*S_hat2 + 0.07928578915555895)*(0.022344925579659079*nu - 0.092312466635975143*nu2 - 0.15182258270768312*nu3 + 0.07928578915555895)*(-0.64535873438462577*S_hat*nu - 2.837222433342018*S_hat*nu2 - 1.7941653355332785*S_hat2*nu + 1)/(1 - 0.83333326795150831*S_hat);
 }
 /* === END fit_2d_to_c: cAmp_l2m2_0 === */
 
 /* === BEGIN fit_2d_to_c: cAmp_l2m2_1 === */
-double cAmp_l2m2_1(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((-6.77268917975073714e-01)*((1.0 + (-1.47651837174196743e+00)*(7.30753461689540584e-02 + 2.60491910626122536e-01*y)*x + (-1.47651837174196743e+00)*(-5.49848457011212904e-02 + 5.56214192867383328e-02*y)*x2)/(1.0 + (-6.66666660765624863e-01 + 2.42466943148070657e-01*y)*x))*(1.0 + (-1.47651837174196743e+00)*(5.36950907493955021e-01 + 1.44249988588240036e-01*x)*y + (-1.47651837174196743e+00)*(-3.53423560160593342e-01 + -3.43099440031013725e-01*x)*y2));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=cAmp[(2,2)][1]
+   form: S_hat: (1,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 2 term(s) -- n_pars=7 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity cAmp[(2,2)][1] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --testmass_min_spin -0.71 --testmass_max_spin 0.71
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double cAmp_l2m2_1(double S_hat, double nu) {
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return -1.4765184219636032*(0.17727943319054296*S_hat - 0.67726889493875242)*(-2.689526890597703*S_hat*nu + 11.843179393705007*S_hat*nu2 + 1)*(1.0226616100194572*nu + 0.82660102109746281*nu2 - 6.7426929677702354*nu3 - 0.67726889493875242)/(1 - 0.79088254765182631*S_hat);
 }
 /* === END fit_2d_to_c: cAmp_l2m2_1 === */
 
 /* === BEGIN fit_2d_to_c: cphf_l2m2_0 === */
-double cphf_l2m2_0(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((1.54723813969217444e-01)*((1.0 + (6.46312920000118130e+00)*(-1.25950376953620463e-01 + 7.32170371846544848e-02*y)*x + (6.46312920000118130e+00)*(-3.09648950254924442e-02 + 2.34723288226331255e-02*y)*x2)/(1.0 + (-9.09090821424046291e-01 + 8.25880645553469184e-01*y)*x))*((1.0 + (6.46312920000118130e+00)*(8.76874800717417524e-01)*y + (6.46312920000118130e+00)*(-1.73551445103763885e-01)*y2)/(1.0 + (4.65721911571504599e+00)*y)));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=cphf[(2,2)][0]
+   form: S_hat: (2,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=9 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity cphf[(2,2)][0] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --testmass_min_spin -0.61 --testmass_max_spin 0.71
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double cphf_l2m2_0(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 6.4631072285846107*(-0.11502677028384428*S_hat - 0.030036417988763685*S_hat2 + 0.15472433995482313)*(0.21213304824766038*nu - 0.76190390601232105*nu2 - 0.36306865373742392*nu3 + 0.15472433995482313)*(-0.86340497489552592*S_hat*nu - 3.9406358554398428*S_hat*nu2 - 1.6010657816775014*S_hat2*nu + 1)/(1 - 0.83333331194044391*S_hat);
 }
 /* === END fit_2d_to_c: cphf_l2m2_0 === */
 
 /* === BEGIN fit_2d_to_c: cphf_l2m2_1 === */
-double cphf_l2m2_1(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((1.55047890230702312e+00)*((1.0 + (6.44962016904620739e-01)*(6.56059001787636875e-01 + 9.17559442843698392e-01*y)*x + (6.44962016904620739e-01)*(9.22191005769817718e-01 + -8.15626864654214301e-01*y)*x2)/(1.0 + (-6.66666662114926201e-01 + 1.63373145052067548e+00*y)*x))*(1.0 + (6.44962016904620739e-01)*(1.22911691298600068e+00 + -3.15335366655109473e-01*x)*y + (6.44962016904620739e-01)*(-8.75633452375245924e-01 + 1.08803703408451535e+00*x)*y2));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=cphf[(2,2)][1]
+   form: S_hat: (0,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=7 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity cphf[(2,2)][1] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.1 1.1 --plot_edge 0.1 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --extra_feature --degree1 3 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l2m2.c --testmass_min_spin -0.71 --testmass_max_spin 0.71
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double cphf_l2m2_1(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 1.0*(2.1310613123151168*nu + 5.2842398239418413*nu2 - 33.997453836201416*nu3 + 1.5504959346700746)*(1.4482720890840899*S_hat*nu - 8.964979238144025*S_hat*nu2 - 1.4088840221110517*S_hat2*nu + 1)/(1 - 0.90909089802990861*S_hat);
 }
 /* === END fit_2d_to_c: cphf_l2m2_1 === */
 
 /* The eight hatA0_l3m2/hatdA0_l3m2/hatd2A0_l3m2/omg0_l3m2/domg0_l3m2/
-   cAmp_l3m2_0/cphf_l3m2_0/cphf_l3m2_1 functions below are generated
-   verbatim by eob_ringdown/py/fitter.py's fit_2d_to_c (see
-   eob_ringdown/py/generic_q/gfits_A22_v1/l3m2.c) -- x=a0, y=1-X12, SAME
-   convention as the l2m2 functions above. Naming matches l2m2's own
+   cAmp_l3m2_0/cphf_l3m2_0/cphf_l3m2_1 functions below are filled in
+   verbatim from eob_ringdown/py/generic_q/gfits_symHR/l3m2.c
+   (symbolic_hierarchical_fit.py) -- (S_hat, nu), SAME convention as the
+   l2m2 functions above. Naming matches l2m2's own
    (_l3m2, not the earlier _3_2 -- renamed together with this file's
    switch to fitting A0/dA0/d2A0/omg0/domg0 on the SPHERICAL basis, see
    below, to make the (l,m)-in-the-name convention consistent regardless
@@ -159,208 +202,112 @@ double cphf_l2m2_1(double x, double y) {
    mode's Python fit was redone under A1). */
 
 /* === BEGIN fit_2d_to_c: hatA0_l3m2 === */
-double hatA0_l3m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    double y3 = y2*y;
-    return ((1.60964643045435757e-01)*((1.0 + (6.21254445125398380e+00)*(-6.54242533666669762e-02 + 8.32580754688301561e-02*y)*x + (6.21254445125398380e+00)*(-6.63112809284352976e-03 + 1.49072670789939077e-01*y)*x2)/(1.0 + (-8.24590647113676689e-01 + 5.12643359574348256e-01*y)*x))*(1.0 + (6.21254445125398380e+00)*(-3.15162681727964022e-01 + 4.84628662017182119e-02*x)*y + (6.21254445125398380e+00)*(2.90774191300878726e-01 + 1.89449854137422574e-01*x)*y2 + (6.21254445125398380e+00)*(-7.27890096914212692e-02 + -1.91399744699783769e-01*x)*y3));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=hatA0[(3,2)]
+   form: S_hat: (2,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 2 term(s) -- n_pars=8 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity hatA0[(3,2)] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l3m2.c
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double hatA0_l3m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 6.2125444512539838*(-0.065424253396455342*S_hat - 0.0066311281151675925*S_hat2 + 0.16096464304543576)*(48.818906528916948*S_hat*nu2 + 9.7941696632693223*S_hat2*nu + 1)*(-0.54449910344091179*nu - 0.80581724425099555*nu2 + 5.471770097637398*nu3 + 0.16096464304543576)/(1 - 0.82459064725832165*S_hat);
 }
 /* === END fit_2d_to_c: hatA0_l3m2 === */
 
 /* === BEGIN fit_2d_to_c: hatdA0_l3m2 === */
-//double hatdA0_l3m2(double x, double y) {
-//    double x2 = x*x;
-//    double y2 = y*y;
-//    double y3 = y2*y;
-//    double y4 = y3*y;
-//    return ((5.29198763964656461e-03)*((1.0 + (1.88964916038010045e+02)*(-4.97843368909211149e-03 + 1.25072713348087592e-02*y)*x + (1.88964916038010045e+02)*(-1.92826979812946598e-03 + 7.89802554384371434e-03*y)*x2)/(1.0 + (-1.75314087009973529e-01 + 6.19530584127318873e-01*y)*x))*((1.0 + (1.88964916038010045e+02)*(-2.73502182065837214e-02)*y + (1.88964916038010045e+02)*(5.17578533074357638e-02)*y2 + (1.88964916038010045e+02)*(-4.18013741957152449e-02)*y3 + (1.88964916038010045e+02)*(1.31954666057227700e-02)*y4)/(1.0 + (-2.26436033386185809e+00)*y + (1.59992872154669663e+00)*y2)));
-//}
-//double hatdA0_l3m2(double x, double y) {
-//    double x2 = x*x;
-//    double y2 = y*y;
-//    double y3 = y2*y;
-//    return ((5.29198763964656461e-03)*(1.0 + (1.88964916038010045e+02)*((-4.14460558960919219e-03 + 9.15078608862608493e-03*y)/(1.0 + 3.24181201496521798e-01*y))*x + (1.88964916038010045e+02)*((-2.42275705298551809e-03 + 3.58980437540631012e-02*y)/(1.0 + 6.35768349220929707e+00*y))*x2)*((1.0 + (1.88964916038010045e+02)*(-2.36249478943974904e-02)*y + (1.88964916038010045e+02)*(3.45214300576660721e-02)*y2 + (1.88964916038010045e+02)*(-1.46764600924891714e-02)*y3)/(1.0 + (-1.69949216519579882e+00)*y + (1.16661172704800986e+00)*y2)));
-//}
-double hatdA0_l3m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    double y3 = y2*y;
-    double z_fit = ((1.00529198763964667e+00)*(1.0 + (9.94735870070871719e-01)*(-4.14460558482392279e-03 + -1.35357537331327465e-01*y)*x + (9.94735870070871719e-01)*(-2.42275705175849353e-03 + 2.00286995788515124e-02*y)*x2)*((1.0 + (9.94735870070871719e-01)*(-1.72311644657728746e+00 + 1.69330584831125203e-01*x)*y + (9.94735870070871719e-01)*(1.20112553259372068e+00 + -2.76695531891434754e-01*x)*y2 + (9.94735870070871719e-01)*(-1.46765090011954664e-02 + 1.61082171318875700e-01*x)*y3)/(1.0 + (-1.69949149233591346e+00 + 2.54061921821024453e-02*x)*y + (1.16660407116527964e+00 + -3.65765945228090084e-02*x)*y2)));
-    return (z_fit - (1.00000000000000000e+00)) / (1.00000000000000000e+00);
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=hatdA0[(3,2)]
+   form: S_hat: (3,2)[rational], nu: (3,2)[rational] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=13 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity hatdA0[(3,2)] --stage1_form rational --max_denom_degree 2 --xvar1_bound -1.2 1.2 --plot_edge 0.2 --extra_feature --degree1 3 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l3m2.c --z_shift 1 --stage2_form rational
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double hatdA0_l3m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double S_hat3 = S_hat2*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return -1.0 + 0.99473587007087172*(-1.5888598056419541*S_hat + 0.88254843389594939*S_hat2 - 0.00053391238804543172*S_hat3 + 1.0052919876396467)*(-7.3720045933093177*nu + 14.266434463484824*nu2 - 0.41642928427799497*nu3 + 1.0052919876396467)*(0.013603356983808036*S_hat*nu + 0.089829832848420318*S_hat*nu2 + 0.041940055094494069*S_hat2*nu + 1)/((-1.5767734727211844*S_hat + 0.87513009226409688*S_hat2 + 1)*(-7.3027808059327555*nu + 13.967651474490978*nu2 + 1));
 }
 /* === END fit_2d_to_c: hatdA0_l3m2 === */
 
 /* === BEGIN fit_2d_to_c: hatd2A0_l3m2 === */
-/* NOTE: fit on a shifted/scaled copy of hatd2A0[(3,2)] (z_shift=1,
-   z_scale=1) to avoid an ill-posed fit (data too close to 0); the inverse
-   transform is already applied in the return statement below, so this
-   function returns hatd2A0[(3,2)] itself, not the internal z_fit. */
-double hatd2A0_l3m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    double y3 = y2*y;
-    double z_fit = ((1.00015642634349522e+00)*(1.0 + (9.99843598121878729e-01)*(-4.95491249720662365e-04 + -6.30556636403498266e-02*y)*x + (9.99843598121878729e-01)*(-9.47012598033288613e-05 + 2.79618136564744246e-03*y)*x2)*((1.0 + (9.99843598121878729e-01)*(-1.83872526811808346e+00 + 8.11649710659989726e-02*x)*y + (9.99843598121878729e-01)*(1.46954999309500223e+00 + -1.45364512602376761e-01*x)*y2 + (9.99843598121878729e-01)*(-2.07425511266372351e-03 + 9.27475617460521012e-02*x)*y3)/(1.0 + (-1.83653046648004703e+00 + 1.73755670241115198e-02*x)*y + (1.46528972101176747e+00 + -2.85424704511642972e-02*x)*y2)));
-    return (z_fit - (1.00000000000000000e+00)) / (1.00000000000000000e+00);
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=hatd2A0[(3,2)]
+   form: S_hat: (4,0)[poly], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 2 term(s) -- n_pars=9 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity hatd2A0[(3,2)] --stage1_form rational --max_denom_degree 2 --xvar1_bound -1.2 1.2 --plot_edge 0.18 --extra_feature --degree1 4 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l3m2.c --z_shift 1
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double hatd2A0_l3m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double S_hat3 = S_hat2*S_hat;
+    double S_hat4 = S_hat3*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 0.99984359812187873*(0.007853438523609358*S_hat*nu2 + 0.0030079246678607545*S_hat2*nu + 1)*(-0.0023074842894030652*nu - 0.032469528469679786*nu2 + 0.17270302985707184*nu3 + 1.0001564263434952)*(-0.00059219695302976266*S_hat - 0.00031898151145170415*S_hat2 + 0.00030933367036303083*S_hat3 + 0.00056840969243579455*S_hat4 + 1.0001564263434952) - 1.0;
 }
 /* === END fit_2d_to_c: hatd2A0_l3m2 === */
 
 /* === BEGIN fit_2d_to_c: omg0_l3m2 === */
-double omg0_l3m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    double y3 = y2*y;
-    return ((3.21205789913811046e-01)*((1.0 + (3.11326891171024478e+00)*(-1.97411938162358885e-01)*x + (3.11326891171024478e+00)*(-1.87056859446916440e-02)*x2)/(1.0 + (-8.16563602638818553e-01)*x))*((1.0 + (3.11326891171024478e+00)*(-6.02869704012361951e-01 + -3.14435084500446327e-01*x)*y + (3.11326891171024478e+00)*(6.43477261506784304e-01 + 5.42316072914238168e-02*x)*y2 + (3.11326891171024478e+00)*(2.75154083344231692e-01 + -3.48926105710420487e-01*x)*y3)/(1.0 + (-2.37715535046672555e+00 + -3.38357880336099814e-01*x)*y + (3.17823809715805039e+00 + -1.33946686283112171e+00*x)*y2)));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=omg0[(3,2)]
+   form: S_hat: (2,2)[rational], nu: (3,2)[rational] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=12 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity omg0[(3,2)] --stage1_form rational --max_denom_degree 2 --xvar1_bound -1.2 1.2 --plot_edge 0.18 --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l3m2.c --stage2_form rational --z_min 0.2
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double omg0_l3m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 3.1132689117102448*(-0.2404843121286305*S_hat + 0.0040617857334500976*S_hat2 + 0.32120578991381105)*(-2.1327279694201562*nu + 2.2036261820053653*nu2 + 6.5594255989273007*nu3 + 0.32120578991381105)*(-1.2173113836366352*S_hat*nu + 7.4703926966910457*S_hat*nu2 + 1.0381692739755273*S_hat2*nu + 1)/((-0.95306038483868538*S_hat + 0.099772587193390494*S_hat2 + 1)*(-7.7731956091307328*nu + 16.375702773261402*nu2 + 1));
 }
 /* === END fit_2d_to_c: omg0_l3m2 === */
 
 /* === BEGIN fit_2d_to_c: domg0_l3m2 === */
-double domg0_l3m2(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    double y3 = y2*y;
-    return ((1.13465560786072239e-02)*((1.0 + (8.81324688365483979e+01)*(-1.02113763236537734e-02 + 4.18348992778966571e-03*y)*x + (8.81324688365483979e+01)*(-1.79507043285084779e-03 + 7.63015219370886174e-03*y)*x2)/(1.0 + (-5.63563458762453728e-01 + 3.62730831919867158e-01*y)*x))*((1.0 + (8.81324688365483979e+01)*(-2.55132017697322806e-02)*y + (8.81324688365483979e+01)*(3.37875878419301862e-03)*y2 + (8.81324688365483979e+01)*(2.92914306610257205e-02)*y3)/(1.0 + (-3.29525776151496963e+00)*y + (3.67049811575346085e+00)*y2)));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=domg0[(3,2)]
+   form: S_hat: (3,0)[poly], nu: (3,2)[rational] + Stage3(S_hat,nu): degree<=3, 1 term(s) -- n_pars=9 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity domg0[(3,2)] --stage1_form rational --max_denom_degree 2 --xvar1_bound -1.2 1.2 --plot_edge 0.18 --extra_feature --degree1 3 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l3m2.c --stage2_form rational
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double domg0_l3m2(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double S_hat3 = S_hat2*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 88.132468836548398*(4.3445808927594074*S_hat2*nu + 1)*(-0.003329701447532587*S_hat - 0.0049589040827939246*S_hat2 - 0.0037092095469297322*S_hat3 + 0.011346556078607224)*(-0.065343222578543733*nu - 0.071335119629857502*nu2 + 0.66533651079685729*nu3 + 0.011346556078607224)/(-8.4203661636446903*nu + 18.842288116161441*nu2 + 1);
 }
 /* === END fit_2d_to_c: domg0_l3m2 === */
 
 // === BEGIN fit_2d_to_c: cAmp_l3m2_0 ===
-double cAmp_l3m2_0(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((-1.02973256973294536e+00)*((1.0 + (-9.71125930550437610e-01)*(3.90983156866200221e-01)*x + (-9.71125930550437610e-01)*(5.03877517520369578e-01)*x2)/(1.0 + (-9.99999986707884259e-01)*x))*(1.0 + (-9.71125930550437610e-01)*(1.72993370257658063e+00 + 9.76294902366990069e-02*x)*y + (-9.71125930550437610e-01)*(-7.16354935746834398e-01 + -9.11197388071349534e-01*x)*y2));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=cAmp[(3,2)][0]
+   form: S_hat: (2,0)[poly], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 3 term(s) -- n_pars=8 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity cAmp[(3,2)][0] --stage1_form poly --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.18 --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l3m2.c --stage2_form poly --z_shift 3 --testmass_max_spin 0.71
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double cAmp_l3m2_0(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 0.50754513887376773*(-0.69811897138871548*S_hat - 0.13629748186092369*S_hat2 + 1.9702681070278389)*(2.0386714221188575*nu + 20.07237635830338*nu2 - 54.758835785487193*nu3 + 1.9702681070278389)*(2.4599088538871685*S_hat*nu - 6.4906804048795026*S_hat*nu2 + 1.2142495328002094*S_hat2*nu + 1) - 3.0;
 }
 // === END fit_2d_to_c: cAmp_l3m2_0 ===
 
 /* === BEGIN fit_2d_to_c: cphf_l3m2_0 === */
-double cphf_l3m2_0(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((1.78178382437494953e-01)*((1.0 + (5.61235311669079984e+00)*(-1.51462781177380879e-01 + 3.29078592166769240e-02*y)*x + (5.61235311669079984e+00)*(-2.11022022502822398e-02 + -2.07396649680172074e-01*y)*x2)/(1.0 + (-8.25258729270220592e-01 + -3.45614236769241426e-02*y)*x))*(1.0 + (5.61235311669079984e+00)*(-5.02969109410731294e-02 + -6.45566310047882008e-02*x)*y + (5.61235311669079984e+00)*(1.05199432940434226e-01 + -2.69809169965290474e-01*x)*y2));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=cphf[(3,2)][0]
+   form: S_hat: (2,0)[poly], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 2 term(s) -- n_pars=5 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity cphf[(3,2)][0] --stage1_form poly --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.18 --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l3m2.c --stage2_form poly --z_shift 0. --testmass_min_spin -0.71 --z_min 0.1
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double cphf_l3m2_0(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 5.6123659957521062*(7.7499602732354278*nu3 + 0.17817797355997117)*(-0.019918491582671047*S_hat - 0.031858723694379573*S_hat2 + 0.17817797355997117)*(8.1394536821184484*S_hat*nu2 - 2.279382417187779*S_hat2*nu + 1);
 }
 /* === END fit_2d_to_c: cphf_l3m2_0 === */
 
 /* === BEGIN fit_2d_to_c: cphf_l3m2_1 === */
-double cphf_l3m2_1(double x, double y) {
-    double x2 = x*x;
-    double y2 = y*y;
-    return ((3.72480030488304203e+00)*(1.0 + (2.68470768403086202e-01)*((3.15495293408449440e+00)/(1.0 + -2.32097522319127086e-01*y))*x + (2.68470768403086202e-01)*((3.36531552030830872e+00)/(1.0 + 7.81032063711039104e+00*y))*x2)*(1.0 + (2.68470768403086202e-01)*(-5.44494033947331602e+00 + -2.81073791677560392e+00*x)*y + (2.68470768403086202e-01)*(8.31137712495789138e+00 + -4.68375478882972907e+00*x)*y2));
+/* symbolic_hierarchical_fit.py -- const*Stage1((S_hat))*Stage2(nu)/const + Stage3('S_hat', 'nu'), quantity=cphf[(3,2)][1]
+   form: S_hat: (2,1)[rational], nu: (3,0)[poly] + Stage3(S_hat,nu): degree<=3, 2 term(s) -- n_pars=7 (const anchored, not counted)
+   command: python symbolic_hierarchical_fit.py --json primary/sxs_A22.json --plot_slice --slice_show_1d --quantity cphf[(3,2)][1] --stage1_form rational --max_denom_degree 1 --xvar1_bound -1.2 1.2 --plot_edge 0.18 --extra_feature --degree1 2 --dump_json gfits_symHR/gfits.json --dump_expr gfits_symHR/l3m2.c --stage2_form poly --z_shift 0. --testmass_min_spin -0.71 --z_max 20
+   git commit: 6d71b03138fc290785a0c267e4df500928769f56 (dirty working tree) */
+double cphf_l3m2_1(double S_hat, double nu) {
+    double S_hat2 = S_hat*S_hat;
+    double nu2 = nu*nu;
+    double nu3 = nu2*nu;
+    return 0.26847120814766423*(-0.48716450826830521*S_hat + 2.1606583269971527*S_hat2 + 3.7247942038163777)*(-181.10000037171312*nu2 + 947.47549177880683*nu3 + 3.7247942038163777)*(14.808325265459043*S_hat*nu - 67.587227133800951*S_hat*nu2 + 1)/(1 - 0.83333327215889919*S_hat);
 }
 /* === END fit_2d_to_c: cphf_l3m2_1 === */
-
-
-/* ============================================================
- * ringdown_model="sym_A22" fits (py/generic_q/symbolic_fit.py's RFE-
- * selected polynomial over (nu, chi_eff, chi_a_delta), NOT global_fit.py's
- * 2D rational-function ansatz above) -- SAME physical quantities
- * (hatA0/hatdA0/hatd2A0/omg0/domg0/cAmp/cphf), a different regression
- * method. Pasted verbatim from gfits_sym/l2m2.c/l3m2.c. See
- * A22_get_fit_set_sym/QNMHybridFitCab_A22_lm's own ringdown_model==
- * RINGDOWN_A22_SYM branch for how these get evaluated (nu, chi_eff=a0,
- * chi_a_delta=0.5*(chi1-chi2)*X12, NOT (x=a0, y=1-X12) like the rational
- * fits above -- a genuinely different coordinate set, not just a
- * different formula in the same two).
- * ============================================================ */
-
-// === BEGIN symbolic_fit: hatA0_l2m2_sym ===
-double hatA0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (11475867777317.0/100000000000000.0)*chi_a_delta*pow(chi_eff, 2) + (223701559794429.0/100000000000000.0)*chi_a_delta*chi_eff*nu - 14500049442243.0/62500000000000.0*chi_a_delta*chi_eff - 59236542883829.0/20000000000000.0*chi_a_delta*pow(nu, 2) + (28708521192709.0/10000000000000.0)*chi_a_delta*nu - 186770565598321.0/1000000000000000.0*chi_a_delta + (50410923780099.0/250000000000000.0)*pow(chi_eff, 3) - 41921578313317.0/25000000000000.0*pow(chi_eff, 2)*nu + (266415630940819.0/500000000000000.0)*pow(chi_eff, 2) + (10720251663467.0/2500000000000.0)*chi_eff*pow(nu, 2) - 141272463026079.0/50000000000000.0*chi_eff*nu + (327652200158733.0/500000000000000.0)*chi_eff - 191731504342607.0/250000000000000.0*pow(nu, 3) + (38641696004323.0/12500000000000.0)*pow(nu, 2) - 37027861650619.0/250000000000000.0*nu + 71977298729263.0/50000000000000.0;
-}
-// === END symbolic_fit: hatA0_l2m2_sym ===
-
-// === BEGIN symbolic_fit: hatdA0_l2m2_sym ===
-double hatdA0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return 0;
-}
-// === END symbolic_fit: hatdA0_l2m2_sym ===
-
-// === BEGIN symbolic_fit: hatd2A0_l2m2_sym ===
-double hatd2A0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (215066028544879.0/250000000000000000.0)*chi_a_delta*pow(chi_eff, 2) + (885525398746557.0/100000000000000000.0)*chi_a_delta*chi_eff*nu - 59163971996023.0/200000000000000000.0*chi_a_delta*chi_eff - 367966940439153.0/10000000000000000.0*chi_a_delta*pow(nu, 2) + (144652393077241.0/10000000000000000.0)*chi_a_delta*nu - 718458253673.0/625000000000000.0*chi_a_delta + (29368187165659.0/125000000000000000.0)*pow(chi_eff, 3) - 397385537653651.0/100000000000000000.0*pow(chi_eff, 2)*nu + (16265260292541.0/12500000000000000.0)*pow(chi_eff, 2) + (6932381926361.0/1250000000000000.0)*chi_eff*pow(nu, 2) - 161033449982559.0/1000000000000000000.0*chi_eff*nu + (28086958620919.0/25000000000000000.0)*chi_eff - 187086988866433.0/5000000000000000.0*pow(nu, 3) + (180431073787773.0/10000000000000000.0)*pow(nu, 2) - 211733619663907.0/25000000000000000.0*nu - 30532412400461.0/12500000000000000.0;
-}
-// === END symbolic_fit: hatd2A0_l2m2_sym ===
-
-// === BEGIN symbolic_fit: omg0_l2m2_sym ===
-double omg0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (305304603131209.0/1000000000000000.0)*chi_a_delta*chi_eff*nu - 104176847519293.0/5000000000000000.0*chi_a_delta*chi_eff + (109423719212683.0/100000000000000.0)*chi_a_delta*pow(nu, 2) + (942111421767801.0/10000000000000000.0)*chi_a_delta*nu + (37830624923889.0/1250000000000000.0)*pow(chi_eff, 3) - 59195498530607.0/250000000000000.0*pow(chi_eff, 2)*nu + (210183203624779.0/2500000000000000.0)*pow(chi_eff, 2) - 166044481056961.0/1000000000000000.0*chi_eff*nu + (52771723279389.0/500000000000000.0)*chi_eff + (2147815884291.0/2000000000000.0)*pow(nu, 3) + (788732590662793.0/10000000000000000.0)*pow(nu, 2) + (13304034564387.0/50000000000000.0)*nu + 33928669961273.0/125000000000000.0;
-}
-// === END symbolic_fit: omg0_l2m2_sym ===
-
-// === BEGIN symbolic_fit: domg0_l2m2_sym ===
-double domg0_l2m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return -449229583953509.0/1000000000000000000.0*chi_a_delta*pow(chi_eff, 2) - 205289682229563.0/25000000000000000.0*chi_a_delta*chi_eff*nu + (40206761799119.0/25000000000000000.0)*chi_a_delta*chi_eff + (126933407572733.0/1000000000000000.0)*chi_a_delta*pow(nu, 2) - 8782142538339.0/312500000000000.0*chi_a_delta*nu + (43955077865899.0/20000000000000000.0)*chi_a_delta - 563925327850517.0/1000000000000000000.0*pow(chi_eff, 3) + (100403136953353.0/10000000000000000.0)*pow(chi_eff, 2)*nu - 228432945775727.0/100000000000000000.0*pow(chi_eff, 2) - 132365283472673.0/2500000000000000.0*chi_eff*pow(nu, 2) + (834243891701.0/40000000000000.0)*chi_eff*nu - 12929665133943.0/10000000000000000.0*chi_eff + (112708489500283.0/2000000000000000.0)*pow(nu, 3) - 428773306529481.0/50000000000000000.0*pow(nu, 2) + (6071129755461.0/312500000000000.0)*nu + 295836426011673.0/50000000000000000.0;
-}
-// === END symbolic_fit: domg0_l2m2_sym ===
-
-// === BEGIN symbolic_fit: cAmp_l2m2_0_sym ===
-double cAmp_l2m2_0_sym(double nu, double chi_eff, double chi_a_delta) {
-    return -35385956338497.0/2000000000000000.0*chi_a_delta*pow(chi_eff, 2) - 15613881649523.0/125000000000000.0*chi_a_delta*chi_eff*nu + (400322917263793.0/100000000000000000.0)*chi_a_delta*chi_eff - 285177464914809.0/1000000000000000.0*chi_a_delta*pow(nu, 2) - 55988344699099.0/2500000000000000.0*chi_a_delta*nu + (32645358727789.0/6250000000000000.0)*chi_a_delta - 738261824187677.0/100000000000000000.0*pow(chi_eff, 3) - 994608881773011.0/100000000000000000.0*pow(chi_eff, 2) + (50485178289429.0/2500000000000000.0)*chi_eff*pow(nu, 2) - 192942790881189.0/10000000000000000.0*chi_eff*nu - 61426737530969.0/5000000000000000.0*chi_eff + (671463984149287.0/10000000000000000.0)*pow(nu, 3) - 27117600408507.0/250000000000000.0*pow(nu, 2) + (111398156336961.0/10000000000000000.0)*nu + 160468845219951.0/2000000000000000.0;
-}
-// === END symbolic_fit: cAmp_l2m2_0_sym ===
-
-// === BEGIN symbolic_fit: cAmp_l2m2_1_sym ===
-double cAmp_l2m2_1_sym(double nu, double chi_eff, double chi_a_delta) {
-    return -39028488928591.0/125000000000000.0*chi_a_delta*pow(chi_eff, 2) - 30088202450527.0/10000000000000.0*chi_a_delta*chi_eff*nu + (166644296179071.0/500000000000000.0)*chi_a_delta*chi_eff + (801652693324233.0/100000000000000.0)*chi_a_delta*pow(nu, 2) - 67404225502861.0/25000000000000.0*chi_a_delta*nu + (125588734698723.0/500000000000000.0)*chi_a_delta + (155023331677761.0/100000000000000.0)*pow(chi_eff, 2)*nu - 91982014927093.0/250000000000000.0*pow(chi_eff, 2) - 296570068458921.0/50000000000000.0*chi_eff*pow(nu, 2) + (135793716240731.0/50000000000000.0)*chi_eff*nu - 231346033539763.0/500000000000000.0*chi_eff + (64578551816509.0/10000000000000.0)*pow(nu, 3) - 332252429710779.0/100000000000000.0*pow(nu, 2) + (60976181932623.0/50000000000000.0)*nu - 167141699486987.0/250000000000000.0;
-}
-// === END symbolic_fit: cAmp_l2m2_1_sym ===
-
-// === BEGIN symbolic_fit: cphf_l2m2_0_sym ===
-double cphf_l2m2_0_sym(double nu, double chi_eff, double chi_a_delta) {
-    return -121374326132619.0/10000000000000000.0*chi_a_delta*pow(chi_eff, 2) - 293727195917771.0/1000000000000000.0*chi_a_delta*chi_eff*nu - 107484680611867.0/100000000000000.0*chi_a_delta*pow(nu, 2) + (58730543476031.0/500000000000000.0)*chi_a_delta*nu - 158896361629849.0/10000000000000000.0*pow(chi_eff, 3) + (49554420867239.0/500000000000000.0)*pow(chi_eff, 2)*nu - 230117593068043.0/5000000000000000.0*pow(chi_eff, 2) + (279657604776599.0/1000000000000000.0)*chi_eff*pow(nu, 2) - 213036174897153.0/1000000000000000.0*chi_eff*nu + (145648277377533.0/10000000000000000.0)*chi_eff - 148185032664441.0/100000000000000.0*pow(nu, 3) - 126031113571629.0/1000000000000000.0*pow(nu, 2) + (116144684062969.0/1000000000000000.0)*nu + 31704968664367.0/200000000000000.0;
-}
-// === END symbolic_fit: cphf_l2m2_0_sym ===
-
-// === BEGIN symbolic_fit: cphf_l2m2_1_sym ===
-double cphf_l2m2_1_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (46921296856753.0/20000000000000.0)*chi_a_delta*pow(chi_eff, 2) + (138067906042473.0/10000000000000.0)*chi_a_delta*chi_eff*nu - 72552844725743.0/50000000000000.0*chi_a_delta*chi_eff - 75771283644669.0/1250000000000.0*chi_a_delta*pow(nu, 2) + (4110074609119.0/156250000000.0)*chi_a_delta*nu - 57410052037023.0/25000000000000.0*chi_a_delta - 374177894560441.0/50000000000000.0*pow(chi_eff, 2)*nu + (40048780516227.0/20000000000000.0)*pow(chi_eff, 2) + (2588062909129.0/1250000000000.0)*chi_eff*pow(nu, 2) - 628995390875827.0/100000000000000.0*chi_eff*nu + (44798379146137.0/20000000000000.0)*chi_eff - 246313497149579.0/5000000000000.0*pow(nu, 3) + (189462328732297.0/10000000000000.0)*pow(nu, 2) + 31742520999721.0/20000000000000.0;
-}
-// === END symbolic_fit: cphf_l2m2_1_sym ===
-
-// === BEGIN symbolic_fit: hatA0_l3m2_sym ===
-double hatA0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (300196694850877.0/500000000000000.0)*chi_a_delta*chi_eff*nu - 862262243382849.0/10000000000000000.0*chi_a_delta*chi_eff + (66374791822591.0/20000000000000.0)*chi_a_delta*pow(nu, 2) - 294411662586629.0/500000000000000.0*chi_a_delta*nu + (741983844616899.0/10000000000000000.0)*pow(chi_eff, 3) + (7233343157461.0/200000000000000.0)*pow(chi_eff, 2)*nu + (919171973310813.0/10000000000000000.0)*pow(chi_eff, 2) + (136221934588769.0/250000000000000.0)*chi_eff*pow(nu, 2) - 613085604030441.0/10000000000000000.0*chi_eff*nu + (657478653467703.0/10000000000000000.0)*chi_eff + (787025918787877.0/100000000000000.0)*pow(nu, 3) - 42476312244809.0/25000000000000.0*pow(nu, 2) - 231103430741219.0/500000000000000.0*nu + 39395100570463.0/250000000000000.0;
-}
-// === END symbolic_fit: hatA0_l3m2_sym ===
-
-// === BEGIN symbolic_fit: hatdA0_l3m2_sym ===
-double hatdA0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (194805196759.0/156250000000000.0)*chi_a_delta*pow(chi_eff, 2) + (123020471486753.0/2500000000000000.0)*chi_a_delta*chi_eff*nu - 175721863914451.0/50000000000000000.0*chi_a_delta*chi_eff + (74301890010853.0/125000000000000.0)*chi_a_delta*pow(nu, 2) - 29517562977369.0/250000000000000.0*chi_a_delta*nu + (11884289379431.0/3125000000000000.0)*chi_a_delta + (953319163997189.0/1000000000000000000.0)*pow(chi_eff, 3) + (6426669763343.0/400000000000000.0)*pow(chi_eff, 2)*nu - 171995380669031.0/100000000000000000.0*pow(chi_eff, 2) - 250357876211207.0/5000000000000000.0*chi_eff*pow(nu, 2) + (189001239212369.0/5000000000000000.0)*chi_eff*nu - 478287739201973.0/100000000000000000.0*chi_eff + (123425333416597.0/100000000000000.0)*pow(nu, 3) - 310659715608119.0/1000000000000000.0*pow(nu, 2) - 753738748303363.0/100000000000000000.0*nu + 99721093875727.0/20000000000000000.0;
-}
-// === END symbolic_fit: hatdA0_l3m2_sym ===
-
-// === BEGIN symbolic_fit: hatd2A0_l3m2_sym ===
-double hatd2A0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return -431263475182087.0/1000000000000000000.0*chi_a_delta*pow(chi_eff, 3) + (326769100241141.0/50000000000000000.0)*chi_a_delta*pow(chi_eff, 2)*nu - 5289130253269.0/31250000000000000.0*chi_a_delta*pow(chi_eff, 2) - 27425357983773.0/200000000000000.0*chi_a_delta*chi_eff*pow(nu, 2) + (470630471748651.0/10000000000000000.0)*chi_a_delta*chi_eff*nu - 151754166177667.0/50000000000000000.0*chi_a_delta*chi_eff + (263980178731019.0/1000000000000000.0)*chi_a_delta*pow(nu, 3) - 276512247792639.0/10000000000000000.0*chi_a_delta*pow(nu, 2) - 264613530803591.0/100000000000000000.0*chi_a_delta*nu + (71043199293909.0/500000000000000000.0)*chi_a_delta + (160337474553157.0/1000000000000000000.0)*pow(chi_eff, 4) - 341726703497.0/312500000000000.0*pow(chi_eff, 3)*nu + (166541787127989.0/500000000000000000.0)*pow(chi_eff, 3) - 52107702501331.0/2500000000000000.0*pow(chi_eff, 2)*pow(nu, 2) + (400532604591003.0/100000000000000000.0)*pow(chi_eff, 2)*nu - 194236006676423.0/1000000000000000.0*chi_eff*pow(nu, 3) + (333052063963867.0/5000000000000000.0)*chi_eff*pow(nu, 2) - 20952550620847.0/6250000000000000.0*chi_eff*nu - 605733783934461.0/1000000000000000000.0*chi_eff + (43755006591379.0/2500000000000000.0)*pow(nu, 4) + (4266593229381.0/25000000000000.0)*pow(nu, 3) - 333909149381489.0/10000000000000000.0*pow(nu, 2) - 48831712968041.0/25000000000000000.0*nu + 125968833594659.0/1000000000000000000.0;
-}
-// === END symbolic_fit: hatd2A0_l3m2_sym ===
-
-// === BEGIN symbolic_fit: omg0_l3m2_sym ===
-double omg0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (161727363445477.0/100000000000000.0)*chi_a_delta*chi_eff*nu - 48037523787563.0/250000000000000.0*chi_a_delta*chi_eff + (9054845637911.0/6250000000000.0)*chi_a_delta*pow(nu, 2) - 588438651405333.0/1000000000000000.0*chi_a_delta*nu + (262873826655599.0/5000000000000000.0)*chi_a_delta - 53289883892437.0/500000000000000.0*pow(chi_eff, 2)*nu + (157038765756969.0/2500000000000000.0)*pow(chi_eff, 2) + (89374526451011.0/50000000000000.0)*chi_eff*pow(nu, 2) - 93667997219873.0/200000000000000.0*chi_eff*nu + (452853198904447.0/5000000000000000.0)*chi_eff + (11353318736879.0/1562500000000.0)*pow(nu, 3) - 79507497501257.0/20000000000000.0*pow(nu, 2) + (665194927505217.0/1000000000000000.0)*nu + 159365116417557.0/500000000000000.0;
-}
-// === END symbolic_fit: omg0_l3m2_sym ===
-
-// === BEGIN symbolic_fit: domg0_l3m2_sym ===
-double domg0_l3m2_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (8788441358237.0/2500000000000000.0)*chi_a_delta*pow(chi_eff, 2) + (470610544528533.0/5000000000000000.0)*chi_a_delta*chi_eff*nu - 159437708120529.0/10000000000000000.0*chi_a_delta*chi_eff + (24189163776987.0/20000000000000.0)*chi_a_delta*pow(nu, 2) - 44150286952267.0/125000000000000.0*chi_a_delta*nu + (211902150700251.0/10000000000000000.0)*chi_a_delta - 201210111457549.0/100000000000000000.0*pow(chi_eff, 3) + (387216844904517.0/10000000000000000.0)*pow(chi_eff, 2)*nu - 136452083811171.0/25000000000000000.0*pow(chi_eff, 2) - 234235907055381.0/10000000000000000.0*chi_eff*pow(nu, 2) + (127557724263283.0/10000000000000000.0)*chi_eff*nu - 88586700072557.0/20000000000000000.0*chi_eff + (95500371377817.0/50000000000000.0)*pow(nu, 3) - 795893698825801.0/1000000000000000.0*pow(nu, 2) + (835040943237257.0/10000000000000000.0)*nu + 28393415681153.0/2500000000000000.0;
-}
-// === END symbolic_fit: domg0_l3m2_sym ===
-
-// === BEGIN symbolic_fit: cAmp_l3m2_0_sym ===
-double cAmp_l3m2_0_sym(double nu, double chi_eff, double chi_a_delta) {
-    return -45511440287677.0/62500000000000.0*chi_a_delta*pow(chi_eff, 2) + (66899479242313.0/200000000000000.0)*chi_a_delta*chi_eff + (55348106807777.0/500000000000.0)*chi_a_delta*pow(nu, 2) - 145489259010127.0/5000000000000.0*chi_a_delta*nu + (55206093908847.0/25000000000000.0)*chi_a_delta + (284721961500809.0/1000000000000000.0)*pow(chi_eff, 3) + (16072142582571.0/1000000000000000.0)*pow(chi_eff, 2)*nu - 181329454805631.0/25000000000000.0*chi_eff*pow(nu, 2) + (260228418073829.0/100000000000000.0)*chi_eff*nu - 399178809496149.0/500000000000000.0*chi_eff + (192283539647399.0/10000000000000.0)*pow(nu, 3) - 384504384207927.0/100000000000000.0*pow(nu, 2) + (84954978597913.0/20000000000000.0)*nu - 105039726552947.0/100000000000000.0;
-}
-// === END symbolic_fit: cAmp_l3m2_0_sym ===
-
-// === BEGIN symbolic_fit: cphf_l3m2_0_sym ===
-double cphf_l3m2_0_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (472779423686629.0/1000000000000000.0)*chi_a_delta*chi_eff*nu + (257957256533911.0/100000000000000.0)*chi_a_delta*pow(nu, 2) - 804038421609973.0/1000000000000000.0*pow(chi_eff, 2)*nu - 14261540799249.0/10000000000000.0*chi_eff*pow(nu, 2) - 171799234882597.0/10000000000000.0*pow(nu, 3) + (628359099349.0/78125000000.0)*pow(nu, 2) - 123114295917183.0/200000000000000.0*nu + 7069864718689.0/40000000000000.0;
-}
-// === END symbolic_fit: cphf_l3m2_0_sym ===
-
-// === BEGIN symbolic_fit: cphf_l3m2_1_sym ===
-double cphf_l3m2_1_sym(double nu, double chi_eff, double chi_a_delta) {
-    return (319019443804749.0/10000000000000.0)*chi_a_delta*chi_eff*nu - 17458590506389.0/4000000000000.0*chi_a_delta*chi_eff + (24207823630667.0/100000000000.0)*chi_a_delta*pow(nu, 2) - 19961639556527.0/625000000000.0*chi_a_delta*nu - 461595158493637.0/10000000000000.0*pow(chi_eff, 2)*nu + (553583500097967.0/100000000000000.0)*pow(chi_eff, 2) + (32675902762121.0/2500000000000.0)*chi_eff*pow(nu, 2) - 45375651450677.0/2000000000000.0*chi_eff*nu + (409652051304693.0/100000000000000.0)*chi_eff + (391794409071649.0/500000000000.0)*pow(nu, 3) - 18225891316723.0/100000000000.0*pow(nu, 2) + (120896261815343.0/20000000000000.0)*nu + 10671852044581.0/3125000000000.0;
-}
-// === END symbolic_fit: cphf_l3m2_1_sym ===
 
 
 /* ============================================================
@@ -375,30 +322,17 @@ typedef struct {
   A22_fit2d_t hatA0, hatdA0, hatd2A0, omg0, domg0, cAmp0, cAmp1, cphf0, cphf1;
 } A22_fit_set_t;
 
-/* sym_A22 counterpart of A22_fit_set_t -- SAME role, but every entry
-   takes (nu, chi_eff, chi_a_delta) instead of (x, y): symbolic_fit.py's
-   RFE-polynomial fits are genuinely N-variable, not just a different
-   formula over the same 2 coordinates the rational fits use, so they
-   need their own function-pointer type/struct, not a cast into
-   A22_fit2d_t (incompatible signatures -- would be undefined behavior
-   through a function pointer). See A22_get_fit_set_sym/
-   QNMHybridFitCab_A22_lm's own ringdown_model==RINGDOWN_A22_SYM branch. */
-typedef double (*A22_fit3d_t)(double, double, double);
-
-typedef struct {
-  A22_fit3d_t hatA0, hatdA0, hatd2A0, omg0, domg0, cAmp0, cAmp1, cphf0, cphf1;
-} A22_fit_set_sym_t;
-
-static double A22_fit_placeholder_sym(double nu, double chi_eff, double chi_a_delta) { return 0.0; }
-
 /**
  * Function: A22_get_fit_set
  * --------------------------
- *   Per-mode (nu,spin) global-fit surface lookup: real fits for (2,2),
- *   A22_fit_placeholder (identically 0) for every other supported mode.
- *   Swap in real per-mode functions here (same fit_2d_to_c-generated
- *   shape as the l2m2 ones above) once they exist -- nothing else in
- *   this file needs to change.
+ *   Per-mode (nu,spin) global-fit surface lookup: routes (2,2)/(3,2) to
+ *   their own named functions above (hatA0_l2m2 etc.), everything else to
+ *   A22_fit_placeholder (identically 0). The (2,2)/(3,2) functions
+ *   THEMSELVES are currently ALSO placeholder-zero (see the module-level
+ *   comment at the top of this file) -- this dispatch is unchanged either
+ *   way, on purpose: once real fit bodies are pasted back into
+ *   hatA0_l2m2/hatA0_l3m2/etc., nothing here needs to change to pick them
+ *   up again.
  */
 /**
  * Function: A22_amp_uses_tanhcosh_A1
@@ -454,42 +388,6 @@ static void A22_get_fit_set(int k, A22_fit_set_t *fs)
     fs->omg0  = fs->domg0  = A22_fit_placeholder;
     fs->cAmp0 = fs->cAmp1  = A22_fit_placeholder;
     fs->cphf0 = fs->cphf1  = A22_fit_placeholder;
-  }
-}
-
-/**
- * Function: A22_get_fit_set_sym
- * -------------------------------
- *   ringdown_model="sym_A22" counterpart of A22_get_fit_set: real
- *   symbolic-regression fits (gfits_sym/l2m2.c/l3m2.c) for (2,2) AND
- *   (3,2) (both regenerated -- see the module-level comment above the
- *   fit functions themselves), A22_fit_placeholder_sym (identically 0)
- *   for every other mode -- same "nothing else needs to change to add a
- *   mode" contract as A22_get_fit_set. (3,2) uses the SAME
- *   A22_amp_uses_tanhcosh_A1(k32)==1 shape convention as the rational
- *   fits (cAmp_l3m2_0_sym is c3 alone, no cAmp1_sym exists for this mode
- *   either -- gfits_sym/l3m2.c was never asked to fit one, matching
- *   ext_tanhcosh_A1's single free coefficient).
- */
-static void A22_get_fit_set_sym(int k, A22_fit_set_sym_t *fs)
-{
-  const int k22 = 1;
-  const int k32 = 3;
-  if (k == k22) {
-    fs->hatA0 = hatA0_l2m2_sym;   fs->hatdA0 = hatdA0_l2m2_sym;   fs->hatd2A0 = hatd2A0_l2m2_sym;
-    fs->omg0  = omg0_l2m2_sym;    fs->domg0  = domg0_l2m2_sym;
-    fs->cAmp0 = cAmp_l2m2_0_sym;  fs->cAmp1  = cAmp_l2m2_1_sym;
-    fs->cphf0 = cphf_l2m2_0_sym;  fs->cphf1  = cphf_l2m2_1_sym;
-  } else if (k == k32) {
-    fs->hatA0 = hatA0_l3m2_sym;   fs->hatdA0 = hatdA0_l3m2_sym;   fs->hatd2A0 = hatd2A0_l3m2_sym;
-    fs->omg0  = omg0_l3m2_sym;    fs->domg0  = domg0_l3m2_sym;
-    fs->cAmp0 = cAmp_l3m2_0_sym;  fs->cAmp1  = A22_fit_placeholder_sym;
-    fs->cphf0 = cphf_l3m2_0_sym;  fs->cphf1  = cphf_l3m2_1_sym;
-  } else {
-    fs->hatA0 = fs->hatdA0 = fs->hatd2A0 = A22_fit_placeholder_sym;
-    fs->omg0  = fs->domg0  = A22_fit_placeholder_sym;
-    fs->cAmp0 = fs->cAmp1  = A22_fit_placeholder_sym;
-    fs->cphf0 = fs->cphf1  = A22_fit_placeholder_sym;
   }
 }
 
@@ -719,62 +617,38 @@ void QNMHybridFitCab_A22_lm(int k, double nu, double X1, double X2, double chi1,
     alpha21_k = alpha21[k];
   }
 
-  /* (nu, spin) global-fit surface coordinates -- x=a0, y=1-X12, and Shat
-     for the eq. 63 un-normalization -- same formulas
-     QNMHybridFitCab/compute_spin_variables already use. a0 IS chi_eff
-     (X1*chi1+X2*chi2, the mass-weighted spin average -- same quantity,
-     just this function's own local name for it), and chi_a_delta is
-     py/generic_q/symbolic_fit.py's own (chi1-chi2)/2 * (X1-X2): both
-     individually flip sign under swapping body 1<->2, so their product
-     is swap-INVARIANT -- see symbolic_fit.py's own module docstring. */
+  /* (nu, spin) global-fit surface coordinates -- Shat for the eq. 63
+     un-normalization AND the fit surfaces' own first argument (S_hat,
+     nu), same formula QNMHybridFitCab/compute_spin_variables already
+     use. a0 IS chi_eff (X1*chi1+X2*chi2, the mass-weighted spin average)
+     -- kept as a local only because Shat is built from it. */
   const double a1c  = X1*chi1;
   const double a2c  = X2*chi2;
   const double a0   = a1c + a2c;
   const double a12  = a1c - a2c;
   const double X12  = X1 - X2;
-  const double y    = 1.0 - X12;
   const double Shat = 0.5*(a0 + X12*a12);
-  const double chi_a_delta = 0.5*(chi1 - chi2)*X12;
 
   /* ext_tanhcosh_A1 (A22_amp_uses_tanhcosh_A1): cA2 is FIXED at
      0.5*alpha21_k, not fit -- this mode's fit surface (cAmp0) then holds
      the sole free coefficient c3 directly, and cAmp1 goes unused.
      Every other mode is untouched: both cA2 (cAmp0) and cA3 (cAmp1)
-     read from the fit surface, exactly as before this option existed.
-     SAME convention under RINGDOWN_A22_SYM below -- it's a property of
-     which TEMPLATE SHAPE a mode uses, not of which regression method
-     produced the coefficient values. */
+     read from the fit surface, exactly as before this option existed. */
   const int use_tanhcosh_A1 = A22_amp_uses_tanhcosh_A1(k);
 
   double hatA0, hatdA0, hatd2A0, omg0, domg0, cA2, cA3, d1f, d2f;
-  if (EOBPars->ringdown_model == RINGDOWN_A22_SYM) {
-    /* symbolic_fit.py's RFE-polynomial surfaces -- (nu, chi_eff=a0,
-       chi_a_delta), NOT (x=a0, y=1-X12) like the rational fits below:
-       a genuinely different coordinate SET, not just a different
-       formula over the same two -- see A22_get_fit_set_sym. */
-    A22_fit_set_sym_t fs;
-    A22_get_fit_set_sym(k, &fs);
-    hatA0   = fs.hatA0(nu, a0, chi_a_delta);
-    hatdA0  = fs.hatdA0(nu, a0, chi_a_delta);
-    hatd2A0 = fs.hatd2A0(nu, a0, chi_a_delta);
-    omg0    = fs.omg0(nu, a0, chi_a_delta);
-    domg0   = fs.domg0(nu, a0, chi_a_delta);
-    cA2 = use_tanhcosh_A1 ? 0.5*alpha21_k : fs.cAmp0(nu, a0, chi_a_delta);
-    cA3 = use_tanhcosh_A1 ? fs.cAmp0(nu, a0, chi_a_delta) : fs.cAmp1(nu, a0, chi_a_delta);
-    d1f = fs.cphf0(nu, a0, chi_a_delta);
-    d2f = fs.cphf1(nu, a0, chi_a_delta);
-  } else {
+  {
     A22_fit_set_t fs;
     A22_get_fit_set(k, &fs);
-    hatA0   = fs.hatA0(a0, y);
-    hatdA0  = fs.hatdA0(a0, y);
-    hatd2A0 = fs.hatd2A0(a0, y);
-    omg0    = fs.omg0(a0, y);
-    domg0   = fs.domg0(a0, y);
-    cA2 = use_tanhcosh_A1 ? 0.5*alpha21_k : fs.cAmp0(a0, y);
-    cA3 = use_tanhcosh_A1 ? fs.cAmp0(a0, y) : fs.cAmp1(a0, y);
-    d1f = fs.cphf0(a0, y);
-    d2f = fs.cphf1(a0, y);
+    hatA0   = fs.hatA0(Shat, nu);
+    hatdA0  = fs.hatdA0(Shat, nu);
+    hatd2A0 = fs.hatd2A0(Shat, nu);
+    omg0    = fs.omg0(Shat, nu);
+    domg0   = fs.domg0(Shat, nu);
+    cA2 = use_tanhcosh_A1 ? 0.5*alpha21_k : fs.cAmp0(Shat, nu);
+    cA3 = use_tanhcosh_A1 ? fs.cAmp0(Shat, nu) : fs.cAmp1(Shat, nu);
+    d1f = fs.cphf0(Shat, nu);
+    d2f = fs.cphf1(Shat, nu);
   }
 
   const double norm_factor = 1.0 - Shat*omg0;
