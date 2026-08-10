@@ -481,17 +481,18 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
     } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
-      eobp->use_flm        = USEFLM_HM_4PN22;
+      eobp->use_flm        = USEFLM_HM_6PN3p3;
       eobp->use_a6c_fits   = a6c_fits_P33_impqc;
       eobp->use_cN3LO_fits = cN3LO_fits_P33_impqc;
       eobp->nqc_coefs_flx  = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
       eobp->A_pot          = A_5PNlogP33; 
       eobp->D_pot          = D_5PNP32_newlogs;
-      eobp->Q_pot          = Q_5PNloc; 
+      eobp->Q_pot          = Q_5PN; 
       eobp->use_flm_nc     = USEFLM_NC_IMPQC;
-      eobp->use_Fr         = USE_FR_NEXT;
+      eobp->use_Fr         = USE_FR_FULL;
       eobp->use_hlm_nc     = USEHLM_NC_IMPQC;
       eobp->use_dlm_nc     = USEDELTALM_NC_IMPQC;
+      eobp->use_dlm_nc_pade = 1;
     } else {
       errorexit("Unknown BBH model specified.");
     }
