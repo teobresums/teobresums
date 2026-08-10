@@ -1,0 +1,22 @@
+name: Mirror to Bitbucket
+
+on:
+  push:
+    branches: ['*']
+    tags: ['*']
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Bitbucket Mirror
+        run: |
+          git push --force --prune "https://x-token-auth:${{ secrets.BITBUCKET_TOKEN }}@bitbucket.org/teobresums/teobresums.git" "refs/remotes/origin/*:refs/heads/*" "refs/tags/*:refs/tags/*"
