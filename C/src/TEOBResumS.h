@@ -740,6 +740,8 @@ typedef struct tagEOBParameters
   int project_spins;                                    /**< Flag to project spins during EOB dynamics (yes/no) */
   int ringdown_eulerangles;                             /**< Flag to choose which beyond-merger euler angles extension to employ */
   int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */
+  double cosJL_final;                                   /**< Final value of beta Euler angle */
+  int use_effective_QNMs;                               /**< Use effective QNMs in co-precessing frame (yes/no) */
 
   int backwards;                                        /**< Flag to switch on/off backwards dynamics */ 
 
@@ -921,6 +923,7 @@ void DynamicsSpin_free (DynamicsSpin *dyn);
 void DynamicsSpin_output (DynamicsSpin *dyn);
 void DynamicsSpin_join (DynamicsSpin *dyn, DynamicsSpin *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
+double compute_cosJL(DynamicsSpin *dyn, double tpeak);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
 double time_units_factor(double M);
@@ -1007,6 +1010,8 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
       double *sigmar, double *sigmai);
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
+double post_merger_alpha_dot(double abhf, double cosJL_final);
+void prec_effective_QNMs(double *omega1, double abhf, double cosJL_final);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);
 double get_mrg_timestop(double q, double chi1, double chi2);

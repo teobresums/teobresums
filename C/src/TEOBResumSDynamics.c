@@ -2557,7 +2557,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   gsl_odeiv2_system sys          = {p_eob_spin_dyn_rhs, NULL, EOB_EVOLVE_SPIN_NVARS, dyn};
 #if (USERK45)
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
-  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);
 #else
   const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
   gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
@@ -2640,6 +2640,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       return ERROR_ODEINT;
     }
     if (dyn->y[EOB_EVOLVE_SPIN_Momg] < 0.){
+      iter--; //don't count this iteration
       if (VERBOSE) printf("Stop: Momg < 0.\n");
       break;
     }

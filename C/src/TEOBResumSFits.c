@@ -3456,6 +3456,11 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX];
   QNM_coefs(af, alpha21, alpha1, omega1);
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->use_effective_QNMs == 1) {
+    if (DEBUG) 
+      printf("Using effective QNM frequencies for precessing spins; cos(beta_final) = %.9f\n", EOBPars->cosJL_final);
+    prec_effective_QNMs(omega1, abh, EOBPars->cosJL_final);
+  }
   
   for (int k=0; k<KMAX; k++) {
     if (modeon[k]) {
@@ -3741,6 +3746,70 @@ void QNM_deviations(double *alpha1, double *omega1, double *alpha21)
       omega1[km]  += omega1[km]*EOBPars->delta_omglm0[km];
     }
   }
+}
+
+/** 
+ *  Function: prec_effective_QNMs
+ *  --------------------------------
+ *  Compute effective QNM parameters for precessing systems
+ *  From Eq. (34) of https://arxiv.org/pdf/2301.06558
+ *
+ *   @param[in]  omega1      : standard QNM frequency array
+ *   @param[in]  abhf        : final BH remnant spin
+ *   @param[in]  cosJL_final : merger (cosine of) angle between J and L
+ *   @param[out] omega1      : effective QNM frequencies
+ *
+ */
+void prec_effective_QNMs(double *omega1, double abhf, double cosJL_final)
+{
+  double alpha_dot = post_merger_alpha_dot(abhf, cosJL_final);
+  for (int k = 0; k < KMAX; k++) 
+    omega1[k] -= MINDEX[k]*alpha_dot*(1. - fabs(cosJL_final));
+}
+
+/** 
+ *  Function: post_merger_alpha_dot
+ *  --------------------------------
+ *  Post-merger evolution of Euler angle alpha.
+ *  Using QNM fits from Table VIII of https://arxiv.org/pdf/gr-qc/0512160.
+ *
+ *   @param[in]  abhf        : spin of the final BH
+ *   @param[in]  cosJL_final : cosine of angle between J and L at merger
+ *   @param[out] alphadot    : time derivative of alpha after merger
+ *
+ */
+double post_merger_alpha_dot(double abhf, double cosJL_final)
+{
+  double alphadot;
+  double f10, f20, f30;
+
+  if(cosJL_final>0){
+    /** (l,m,n)=(2,2,0) */
+    f10 = 1.5251; 
+    f20 = -1.1568;
+    f30 = 0.1292;
+    double omega220  = (f10 + f20*pow(1. - abhf, f30));
+    /** (l,m,n)=(2,1,0) */
+    f10 = 0.6; 
+    f20 = -0.2339;
+    f30 = 0.4175;
+    double omega210 = (f10 + f20*pow(1. - abhf, f30));
+    alphadot = omega220-omega210;
+  } else {
+    /** (l,m,n)=(2,-2,0) */
+    f10 = 0.2938; 
+    f20 = 0.0782;
+    f30 = 1.3546;
+    double omega2m20  = (f10 + f20*pow(1. - abhf, f30));  
+    /** (l,m,n)=(2,-1,0) */
+    f10 = 0.3441; 
+    f20 = 0.0293;
+    f30 = 2.0010;
+    double omega2m10 = (f10 + f20*pow(1. - abhf, f30)); 
+    alphadot = omega2m10 - omega2m20;
+  }
+
+  return alphadot;  
 }
 
 /** 
@@ -4430,7 +4499,12 @@ void QNMHybridFitCab_BHNS_HM(double nu, double X1, double X2, double chi1, doubl
   }
 
   double alpha21[KMAX], alpha1[KMAX], omega1[KMAX];
-  QNM_coefs(af, alpha21, alpha1, omega1);  
+  QNM_coefs(af, alpha21, alpha1, omega1);
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->use_effective_QNMs == 1) {
+    if (DEBUG) 
+      printf("Using effective QNM frequencies for precessing spins; cos(beta_final) = %.9f\n", EOBPars->cosJL_final);
+    prec_effective_QNMs(omega1, abh, EOBPars->cosJL_final);
+  }
   
   for (int k=0; k<KMAX; k++) {
     if (modeon[k]) {
