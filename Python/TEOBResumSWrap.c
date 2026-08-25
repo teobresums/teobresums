@@ -348,6 +348,15 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->use_dlm_nc_pade =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_dlm_nc_pade")));
   }
 
+  if ( PyDict_GetItemString(dict, "use_dlm_nc_order") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_dlm_nc_order"));
+    for(EOBPars->use_dlm_nc_order=0; EOBPars->use_dlm_nc_order<=DELTALM_NC_ORDER_NOPT; EOBPars->use_dlm_nc_order++){
+      if (EOBPars->use_dlm_nc_order == DELTALM_NC_ORDER_NOPT) EOBPars->use_dlm_nc_order = DELTALM_NC_ORDER_2PN;
+      if (STREQUAL(val,use_dlm_nc_order_opt[EOBPars->use_dlm_nc_order])) break;
+    }
+  }
+
   /* Metric potentials */
   if ( PyDict_GetItemString(dict, "A_pot") != NULL ) { 
     char* val;

@@ -1401,10 +1401,30 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
 
   const double phi22_15PN = phi22_15pr * inv_sqrt_r + phi22_15pi * prstar * Pi + phi22_15log * inv_sqrt_r * log_r;
 
-  if (EOBPars->use_dlm_nc_pade) 
-    dlm[1] = (phi22_1PN * phi22_1PN * phi22_1PN) / (phi22_1PN * ( phi22_1PN - phi22_15PN - phi22_2PN) + phi22_15PN * phi22_15PN);
-  else
-    dlm[1] = phi22_1PN + phi22_2PN + phi22_15PN;
+  switch (EOBPars->use_dlm_nc_order)
+  {
+    case (DELTALM_NC_ORDER_1PN):
+      dlm[1] = phi22_1PN;
+      break;
+    case (DELTALM_NC_ORDER_15PN):
+      if (EOBPars->use_dlm_nc_pade)
+        dlm[1] = phi22_1PN * phi22_1PN / (phi22_1PN - phi22_15PN);
+      else
+        dlm[1] = phi22_1PN + phi22_15PN;
+      break;
+    case (DELTALM_NC_ORDER_2PN):
+      if (EOBPars->use_dlm_nc_pade)
+        dlm[1] = (phi22_1PN * phi22_1PN * phi22_1PN) / (phi22_1PN * ( phi22_1PN - phi22_15PN - phi22_2PN) + phi22_15PN * phi22_15PN);
+      else
+        dlm[1] = phi22_1PN + phi22_2PN + phi22_15PN;
+      break;
+    case (DELTALM_NC_ORDER_2PN_NOTAIL):
+      if (EOBPars->use_dlm_nc_pade)
+        dlm[1] = (phi22_1PN * phi22_1PN) / ( phi22_1PN - phi22_2PN);
+      else
+        dlm[1] = phi22_1PN + phi22_2PN;
+      break;
+  }
 
   // (2, 1) 
   const double phi21_1PN = ((-0.07142857142857142 - 0.8571428571428571 * nu) * prstar + 

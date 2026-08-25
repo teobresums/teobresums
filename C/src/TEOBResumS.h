@@ -395,6 +395,16 @@ enum{
 };
 static const char* const use_dlm_nc_opt[] = {"no", "impqc"};
 
+/** List of options for deltalm_nc */
+enum{
+  DELTALM_NC_ORDER_1PN,           /**< 1PN */
+  DELTALM_NC_ORDER_15PN,          /**< 1.5PN */
+  DELTALM_NC_ORDER_2PN,           /**< 2PN */
+  DELTALM_NC_ORDER_2PN_NOTAIL,    /**< 2PN, without 1.5PN tail term */
+  DELTALM_NC_ORDER_NOPT           /**< Number of delta lm nc orders */
+};
+static const char* const use_dlm_nc_order_opt[] = {"1PN", "1.5PN", "2PN", "2PN_notail"};
+
 /** List of options for ODE timestepping */
 enum{
   ODE_TSTEP_UNIFORM,                       /**< uniform timestep */
@@ -763,6 +773,7 @@ typedef struct tagEOBParameters
   int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */
+  int use_dlm_nc_order;                                 /**< NEW, Flag for PN order of d22_nc */
   int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
