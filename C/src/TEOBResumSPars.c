@@ -1053,6 +1053,10 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum3;
     eob_metric_Btidal_electric = &eob_metric_Btidal_electric_3PN;
     eob_metric_Qtidal_electric = &eob_metric_Qtidal_electric_3PN;
+  } else if (EOBPars->use_tidal == TIDES_TEOBRESUM3HO) {
+    eob_metric_Atidal_electric = &eob_metric_Atidal_electric_TEOBResum3_HO;
+    eob_metric_Btidal_electric = &zero_tidal_potential;
+    eob_metric_Qtidal_electric = &zero_tidal_potential;
   } else if (EOBPars->use_tidal == TIDES_NNLO_B) {
     eob_metric_Atidal_electric = &eob_metric_Atidal_electric_NNLO;
     eob_metric_Btidal_electric = &eob_metric_Btidal_electric_3PN;

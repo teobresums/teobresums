@@ -2085,6 +2085,288 @@ void eob_metric_Atidal_electric_TEOBResum3(double r, Dynamics *dyn, double *AT, 
 
 
 /**
+ *  Function : eob_metric_Atidal_electric_TEOBResum3
+ *  ---------------
+ *   Tidal potential, TEOBResum3, Akcay+ 1812.02744
+ *   f-mode resonance model from Hinderer&Steinhoff can be added 
+ *
+ *   @param[in]  r     : radial separation
+ *   @param[in]  dyn   : EOB dynamics 
+ *   @param[out] AT    : tidal A potential evaluated at r  
+ *   @param[out] dAT   : tidal dA/du,   with u=1/r  
+ *   @param[out] d2AT  : tidal d2A/du2, with u=1/r 
+ */ 
+void eob_metric_Atidal_electric_TEOBResum3_HO(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT)
+{
+  
+  double A=0., dA_u=0., d2A_u=0., dA=0., d2A=0.;
+
+  const double elsix = 1.833333333333333333333;  // 11/6
+  const double eightthird = 2.6666666666666666667; // 8/3
+
+  const double nu    = EOBPars->nu;
+  const double rLR   = EOBPars->rLR_tidal;
+  const double XA    = EOBPars->X1;
+  const double XB    = EOBPars->X2;
+
+  double kapA2 = EOBPars->kapA2; 
+  double kapA3 = EOBPars->kapA3;
+  double kapA4 = EOBPars->kapA4;
+  
+  double kapB2 = EOBPars->kapB2;  
+  double kapB3 = EOBPars->kapB3;
+  double kapB4 = EOBPars->kapB4;
+  
+  double kapT2 = EOBPars->kapT2;
+  double kapT3 = EOBPars->kapT3;
+  double kapT4 = EOBPars->kapT4;
+  const double kapT5 = EOBPars->kapT5;
+  const double kapT6 = EOBPars->kapT6;
+  const double kapT7 = EOBPars->kapT7;
+  const double kapT8 = EOBPars->kapT8;
+  
+  const double kapA2j = EOBPars->japA2;
+  const double kapB2j = EOBPars->japB2;
+  const double kapT2j = EOBPars->japT2;
+  
+  double dot_kapA2 = EOBPars->dot_kapA2;
+  double dot_kapB2 = EOBPars->dot_kapB2;
+  
+  const double p = EOBPars->pGSF_tidal;
+  
+  /* Definition of the conservative tidal coefficients \bar{\alpha}_n^{(\ell)}, 
+     Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) */
+  double bar_alph2_1 = EOBPars->bar_alph2_1;
+  double bar_alph2_2 = EOBPars->bar_alph2_2;
+  double bar_alph3_1 = EOBPars->bar_alph3_1;
+  double bar_alph3_2 = EOBPars->bar_alph3_2;
+  double bar_alph2j_1 = EOBPars->bar_alph2j_1;
+
+  double kapA2_u = kapA2;
+  double kapA3_u = kapA3;
+  double kapA4_u = kapA4;
+  double kapB2_u = kapB2;
+  double kapB3_u = kapB3;
+  double kapB4_u = kapB4;
+  double kapT2_u=0, kapT3_u=0, kapT4_u=0;
+  double bar_alph2_1_u=0, bar_alph2_2_u=0, bar_alph3_1_u=0, bar_alph3_2_u=0;
+  
+  if (EOBPars->use_tidal_fmode_model) {
+    
+    /* Dress tidal coupling constants for ell=2,3,4, 
+       and recompute coefficients as needed */
+
+     kapA2 *= dyn->dress_tides_fmode_A[2]; 
+     kapA3 *= dyn->dress_tides_fmode_A[3];
+     kapA4 *= dyn->dress_tides_fmode_A[4];
+     
+     kapB2 *= dyn->dress_tides_fmode_B[2];
+     kapB3 *= dyn->dress_tides_fmode_B[3];
+     kapB4 *= dyn->dress_tides_fmode_B[4];
+
+     kapT2 = kapA2 + kapB2;
+     kapT3 = kapA3 + kapB3;
+     kapT4 = kapA4 + kapB4;
+
+     kapA2_u *= dyn->dress_tides_fmode_A_u[2];
+     kapA3_u *= dyn->dress_tides_fmode_A_u[3];
+     kapA4_u *= dyn->dress_tides_fmode_A_u[4];
+
+     kapB2_u *= dyn->dress_tides_fmode_B_u[2];
+     kapB3_u *= dyn->dress_tides_fmode_B_u[3];
+     kapB4_u *= dyn->dress_tides_fmode_B_u[4];
+
+     kapT2_u = kapA2_u + kapB2_u;
+     kapT3_u = kapA3_u + kapB3_u;
+     kapT4_u = kapA4_u + kapB4_u;      
+    
+    /* Tidal coefficients cons dynamics
+       \bar{\alpha}_n^{(\ell)}, Eq.(37) of Damour&Nagar, PRD 81, 084016 (2010) 
+       The structure is always
+       bar_alpha = (cA * kapA + cB * kapB ) / kap
+       hence
+       bar_alpha' =  - bar_alpha kap'/kap + (cA * kapA' + cB * kapB' ) / kap
+    */
+    
+    //const double bar_alph2_1 = (5./2.*XA*kapA2 + 5./2.*XB*kapB2)/kapT2;
+    //const double bar_alph2_2 = ((3.+XA/8.+ 337./28.*XA*XA)*kapA2 + (3.+XB/8.+ 337./28.*XB*XB)*kapB2)/kapT2;
+    //const double bar_alph3_1 = ((-2.+15./2.*XA)*kapA3 + (-2.+15./2.*XB)*kapB3)/kapT3;
+    //const double bar_alph3_2 = ((8./3.-311./24.*XA+110./3.*XA*XA)*kapA3 + (8./3.-311./24.*XB+110./3.*XB*XB)*kapB3)/kapT3;
+
+    const double cA21 = 2.5*XA;
+    const double cB21 = 2.5*XB;
+    const double cA22 = (3.+XA/8.+ 337./28.*XA*XA);
+    const double cB22 = (3.+XB/8.+ 337./28.*XB*XB);
+    const double cA31 = (-2.+15./2.*XA);
+    const double cB31 = (-2.+15./2.*XB);
+    const double cA32 = (8./3.-311./24.*XA+110./3.*XA*XA);
+    const double cB32 = (8./3.-311./24.*XB+110./3.*XB*XB);
+    
+    bar_alph2_1 = bar_alph( cA21, kapA2, cB21, kapB2, kapT2 );
+    bar_alph2_2 = bar_alph( cA22, kapA2, cB22, kapB2, kapT2 );
+    bar_alph3_1 = bar_alph( cA31, kapA3, cB31, kapB3, kapT3 );
+    bar_alph3_2 = bar_alph( cA32, kapA3, cB32, kapB3, kapT3 );
+    
+    bar_alph2_1_u =
+      - bar_alph2_1 * kapT2_u/kapT2
+      + bar_alph( cA21, kapA2_u, cB21, kapB2_u, kapT2 );      
+    bar_alph2_2_u =
+      - bar_alph2_2 * kapT2_u/kapT2
+      + bar_alph( cA22, kapA2_u, cB22, kapB2_u, kapT2 );
+    bar_alph3_1_u =
+      - bar_alph3_1 * kapT3_u/kapT3
+      + bar_alph( cA31, kapA3_u, cB31, kapB3_u, kapT3 );
+    bar_alph3_2_u =
+      - bar_alph3_2 * kapT3_u/kapT3
+      + bar_alph( cA32, kapA3_u, cB32, kapB3_u, kapT3 );    
+  } 
+
+
+  /* shortcuts */
+  double nu2  = nu*nu;
+  double pi2  = Pi*Pi;
+  double pi4  = pi2*pi2;
+  double u    = 1./r;
+  double u2   = u*u;
+  double u3   = u*u2;
+  double u4   = u2*u2;
+  double u5   = u4*u;
+  double u6   = u5*u;
+  double u7   = u6*u;
+  double u10  = u5*u5;
+  double u12  = u6*u6;
+  double u14  = u7*u7;
+  double u16  = u10*u6;
+  double u18  = u12*u6;
+  double u8   = u5*u3;
+  double u9   = u8*u;
+  double u11  = u10*u;
+  double u13  = u12*u;
+  double u15  = u14*u;
+  double u17  = u16*u;
+  double logu = log(u);
+  double oom3u  = 1./(1.-rLR*u);
+
+  const double c1  =  8.533515908;  
+  const double c2  = 3.043093411;
+  const double n1  =  0.8400636422; 
+  const double d2  =  17.7324036;	
+
+  double Acub   = 5./2.* u * (1. -  (c1+c2)*u +   c1*c2*u2);
+  double dAcub  = 5./2.*     (1. -2*(c1+c2)*u + 3*c1*c2*u2);
+  double d2Acub = 5    *     (   -  (c1+c2)   + 3*c1*c2*u);
+  double Den    = 1./(1. + d2*u2);
+  double f23    = (1. + n1*u)*Den;
+  double df23   = (n1 - 2*d2*u - n1*d2*u2)*(Den*Den);
+  double A1SF   = Acub*f23;
+  double dA1SF  = dAcub*f23 + Acub*df23;
+  double A2SF   = 337./28.*u2 + u3 * ((1943967./9800. - 1905.*pi2/256.) - 438./35. * logu);
+  double dA2SF  = 674./28.*u + 3.*u2*((1943967./9800. - 1905.*pi2/256.) - 438./35. * logu) + u3* ((1943967./9800. - 1905.*pi2/256.) - 438./35./u);
+  
+  double f0     = 1 + 3*u2*oom3u;
+  double f1     = A1SF *pow(oom3u,7./2.);
+  double f2     = A2SF *pow(oom3u,p); 
+  
+  double df0    = 3*u*(2.-rLR*u)*(oom3u*oom3u);
+  double df1    = 0.5*(7*rLR*A1SF + 2*(1.-rLR*u)*dA1SF)*pow(oom3u,9./2.);
+  double df2    = (rLR*p*A2SF + (1.-rLR*u)*dA2SF)*pow(oom3u,p+1);
+  double df2A   = (rLR*p*3.*dot_kapA2*u3 + (1.-rLR*u)*6.*dot_kapA2*u2)*pow(oom3u,p+1);
+  double df2B   = (rLR*p*3.*dot_kapB2*u3 + (1.-rLR*u)*6.*dot_kapB2*u2)*pow(oom3u,p+1);
+
+  /** Gravito-electric tides for el = 2, 4; el = 3 added below as a GSF series */
+  double AT2    = - kapA2*u6*( f0 + XA*f1 + XA*XA*(f2 + u3*3.*dot_kapA2*pow(oom3u,p)) ) - kapB2*u6*( f0 + XB*f1 + XB*XB*(f2 + u3*3.*dot_kapB2*pow(oom3u,p)));
+  double AT4    = - kapT4*u10;
+  double AT5    = - kapT5*u12;
+  double AT6    = - kapT6*u14;
+  double AT7    = - kapT7*u16;
+  double AT8    = - kapT8*u18;
+
+  double dAT2  = - kapA2*6.*u5*( f0 + XA*f1 + XA*XA*(f2 + u3*3.*dot_kapA2*pow(oom3u,p)) ) - kapB2*6.*u5*( f0 + XB*f1 + XB*XB*(f2 + u3*3.*dot_kapB2*pow(oom3u,p)) ) - kapA2*u6*( df0 + XA*df1 + XA*XA*(df2+df2A) ) - kapB2*u6*( df0 + XB*df1 + XB*XB*(df2+df2B) );
+  double dAT4  = - kapT4*10.*u9;
+  double dAT5  = - kapT5*12.*u11;
+  double dAT6  = - kapT6*14.*u13;
+  double dAT7  = - kapT7*16.*u15;
+  double dAT8  = - kapT8*18.*u17;
+
+  /** el = 3+, i.e.,  even parity tidal potential **/
+
+  /* 1GSF fitting parameters */
+  const double C1 = -3.6820949997216643;
+  const double C2 = 5.171003322924513;
+  const double C3 = -7.639164165720986;
+  const double C4 = -8.63278143009751;
+  const double C5 = 12.319646912775516;
+  const double C6 = 16.36009385150114;
+
+  /* 0SF -- el = 3+, i.e.,  even parity terms */
+  double A3hat_Sch    = (1.0 - 2.0*u)*( 1.0 + eightthird*u2*oom3u );
+  double dA3hat_Sch   = (1.0 - 2.0*u)*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u ) - 2.0*( 1.0 + eightthird*u2*oom3u );
+  double d2A3hat_Sch  = (1.0 - 2.0*u)*( 2.0*eightthird*rLR*rLR*u2*oom3u*oom3u*oom3u + 4.0*eightthird*rLR*u*oom3u*oom3u + 2.0*eightthird*oom3u ) - 4.0*( eightthird*rLR*u2*oom3u*oom3u + 2.0*eightthird*u*oom3u );
+
+  /* 1SF -- el = 3+, i.e.,  even parity terms */
+  double Denom3    = 1./(1. + C5*u2);
+  double A3tilde   = 7.5*u*( 1 + C1*u + C2*u2 + C3*u3 )*( 1 + C4*u + C6*u2 )*Denom3;
+  double dA3tilde  = 7.5*( 1 + 3*C2*u2 + 3*C6*u2 + 4*C3*u3 + 5*C2*C6*u4 + 6*C3*C6*u5 + C1*u*(2 + 3*C4*u + 4*C6*u2) + C4*u*(2 + 4*C2*u2 + 5*C3*u3) )*Denom3 + ( -15.*C5*u2*(1. + C4*u + C6*u2)*(1. + C1*u + C2*u2 + C3*u3) )*Denom3*Denom3;
+  double d2A3tilde = 15.*( C1*(1 + 3*C4*u - 3*C5*pow(u,2) + 6*C6*pow(u,2) - C4*C5*pow(u,3) + 3*C5*C6*pow(u,4) + pow(C5,2)*C6*pow(u,6)) + C4*(1 - 3*C5*pow(u,2) + 10*C3*pow(u,3) +  9*C3*C5*pow(u,5) + 3*C3*pow(C5,2)*pow(u,7) +  C2*pow(u,2)*(6 + 3*C5*pow(u,2) + pow(C5,2)*pow(u,4))) + u*(3*(C6 + 2*C3*u + 5*C3*C6*pow(u,3)) + C5*(-3 - C6*pow(u,2) + 3*C3*pow(u,3) +17*C3*C6*pow(u,5)) + pow(C5,2)*(pow(u,2) + C3*pow(u,5) + 6*C3*C6*pow(u,7)) + C2*(3 + 10*C6*pow(u,2) + 3*pow(C5,2)*C6*pow(u,6) + C5*pow(u,2)*(-1 + 9*C6*pow(u,2)))) )*Denom3*Denom3*Denom3;
+  double A3hat1GSFfit = A3tilde*pow(oom3u, 3.5);
+  double dA3hat1GSFfit = 3.5*rLR*A3tilde*pow(oom3u, 4.5) + dA3tilde*pow(oom3u, 3.5);
+  double d2A3hat1GSFfit = 15.75*rLR*rLR*A3tilde*pow(oom3u, 5.5) + 7.0*rLR*dA3tilde*pow(oom3u, 4.5) + d2A3tilde*pow(oom3u, 3.5);
+  
+  /* 2SF -- el = 3+, i.e.,  even parity terms */
+  double A3hat2GSF     =  36.666666666666666667*u2*pow(oom3u,p);
+  double dA3hat2GSF    =  36.666666666666666667*u*( 2. + (p - 2.)*rLR*u ) * pow(oom3u, p+1);
+  double d2A3hat2GSF   =  36.666666666666666667*( 2. + 4.*(p - 1.)*rLR*u + (2. - 3.*p + 1.*p*p)*rLR*rLR*u2 ) * pow(oom3u, p+2);
+
+  /* Hatted el = 3+ potential as a GSF series */
+  double A3hatA   = A3hat_Sch + XA*A3hat1GSFfit + XA*XA*A3hat2GSF;
+  double dA3hatA  = dA3hat_Sch + XA*dA3hat1GSFfit + XA*XA*dA3hat2GSF;
+  double A3hatB   = A3hat_Sch + XB*A3hat1GSFfit + XB*XB*A3hat2GSF;
+  double dA3hatB  = dA3hat_Sch + XB*dA3hat1GSFfit + XB*XB*dA3hat2GSF;
+  
+  /* Total el = 3+ tidal potential */
+  double AT3      = - kapA3*u8*A3hatA - kapB3*u8*A3hatB;
+  double dAT3     = - kapA3*u7*( 8.*A3hatA + u*dA3hatA ) - kapB3*u7*( 8.*A3hatB + u*dA3hatB );
+
+  A     = AT2   + AT3   + AT4 + AT5 + AT6 + AT7 + AT8; 
+  dA_u  = dAT2  + dAT3  + dAT4 + dAT5 + dAT6 + dAT7 + dAT8;;
+
+  if (d2AT != NULL) {
+    double d2f23  = 2*d2*(-1 + 3*d2*u2 + n1*u*(-3+d2*u2))*(Den*Den*Den);
+    double d2A1SF = d2Acub*f23 + 2*dAcub*df23 + Acub*d2f23;
+    double d2A2SF = 674./28.;
+    double d2f0   = 6*(oom3u*oom3u*oom3u);
+    double d2f1   = 0.25*(63*(rLR*rLR)*A1SF + 4*(-1+rLR*u)*(-7*rLR*dA1SF + (-1+rLR*u)*d2A1SF))*pow(oom3u,11./2.);
+    double d2f2   = (  rLR*p*(1+p)*rLR*A2SF +(-1+rLR*u)*( -2.*p*rLR*dA2SF +(-1.+rLR*u)*d2A2SF )  )*pow(oom3u,p+2);
+    
+    double d2AT2  = - kapA2*30*u4*( f0 + XA*f1 + XA*XA*f2 ) - kapB2*30*u4*( f0 + XB*f1 + XB*XB*f2 ) - 2*kapA2*6*u5*( df0 + XA*df1 + XA*XA*df2 ) - 2*kapB2*6*u5*( df0 + XB*df1 + XB*XB*df2 ) - kapA2*u6*( d2f0 + XA*d2f1 + XA*XA*d2f2 ) - kapB2*u6*( d2f0 + XB*d2f1 + XB*XB*d2f2 );
+    double d2AT4  = - kapT4*90*u8;
+    double d2AT5  = - kapT5*132.*u10; 
+    double d2AT6  = - kapT6*182.*u12;
+    double d2AT7  = - kapT7*240.*u14;
+    double d2AT8  = - kapT8*306.*u16;
+    
+    double d2A3hatA = d2A3hat_Sch + XA*d2A3hat1GSFfit + XA*XA*d2A3hat2GSF;
+    double d2A3hatB = d2A3hat_Sch + XB*d2A3hat1GSFfit + XB*XB*d2A3hat2GSF;
+    double d2AT3 = -1.*kapA3 * ( 56.*u6*A3hatA + 16.*u7*dA3hatA + 1.*u8*d2A3hatA ) - 1.*kapB3 * ( 56.*u6*A3hatB + 16.*u7*dA3hatB + 1.*u8*d2A3hatB );
+    
+    d2A_u += d2AT2  + d2AT3  + d2AT4 + d2AT5 + d2AT6 + d2AT7 + d2AT8;
+  }
+
+  if (EOBPars->use_tidal_fmode_model) {
+    /* Adding missing derivative terms from ell=4,3,2 */
+    dA_u -= kapT4_u*u10;
+    
+    dA_u -= kapA3_u*u8*A3hatA + kapB3_u*u8*A3hatB;
+    
+    dA_u -= kapA2_u*u6*( f0 + XA*f1 + XA*XA*f2 ) + kapB2_u*u6*( f0 + XB*f1 + XB*XB*f2 );      
+  }
+
+  *AT   = A;
+  *dAT  = dA_u;
+  if (d2AT != NULL) *d2AT = d2A_u;
+}
+
+/**
  *  Function : eob_metric_Atidal
  *  ----------------------------
  *   Tidal A potential, puts together electric and magnetic contributions.
