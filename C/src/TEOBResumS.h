@@ -118,6 +118,9 @@ Note: if a parfile is specified together with other options, the latter are over
 #define PRFORMd(s,x) {printf("%-40s = %.16e\n", s,x);} /* Print double */
 #define PRFORMi(s,x) {printf("%-40s = %d\n", s,x);} /* Print int */
 #define PRWARN(s) {printf("# WARNING: %s\n",s);} 
+#define PRWARNF(fmt, ...) {printf("# WARNING: " fmt "\n", __VA_ARGS__);} /* Print formatted warning */
+#define PRERR(s) {printf("# ERROR: %s\n",s);} /* Print error preceding a failure */
+#define PRERRF(fmt, ...) {printf("# ERROR: " fmt "\n", __VA_ARGS__);} /* Print formatted error */
 #define INT2YESNO(i)((i)?"yes":"no")
 #define YESNO2INT(s)((strcmp(s,"yes")==0)?1:0)
 /* helpers for debug */
@@ -420,7 +423,7 @@ enum{
 };
 static const char* const root_errors[] = {"none","root is not bracketed.","root finder did not converged.","root finder failed."};
 /* #define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} */
-#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { printf("%s\n",root_errors[(i)]); }}
+#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { PRERR(root_errors[(i)]); }}
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */

@@ -7971,7 +7971,7 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
   if (tmrgA22 < 0.0) {
-    if (DEBUG) printf("ERROR: the A22 peak time is negative, dynamics is too short\n");
+    if (DEBUG) PRERR("the A22 peak time is negative, dynamics is too short");
     return 1;
   }
   

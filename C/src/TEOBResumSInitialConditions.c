@@ -962,7 +962,7 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
   /* Check that the pr0 found is truly a solution */
   double check = Hma/Hap;
   if (fabs(Hma/Hap - 1.) > 1e-5){
-    if (DEBUG) printf("Hma/Hap - 1 = %.3e\n", fabs(Hma/Hap - 1.));
+    if (DEBUG) PRERRF("Hma/Hap - 1 = %.3e", fabs(Hma/Hap - 1.));
     return 1;
   }
 
@@ -1120,7 +1120,7 @@ int eob_dyn_ic_hyp_s(double r0, Dynamics *dyn, double y_init[])
   /* Check that the pr0 found is truly a solution */
   double check = fabs(H0*nu/H_ADM -1.);
   if (check > 1e-5){
-    if (DEBUG) printf("|H0/H_ADM - 1| = %.3e > 1e-5\n", check);
+    if (DEBUG) PRERRF("|H0/H_ADM - 1| = %.3e > 1e-5", check);
     return 1;
   }
 
