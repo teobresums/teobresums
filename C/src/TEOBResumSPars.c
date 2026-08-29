@@ -577,8 +577,10 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
   /* Check: if spin variables exceed 1, throw an error */
-  double chitot1 = sqrt(SQ(EOBPars->chi1x)+SQ(EOBPars->chi1y)+SQ(EOBPars->chi1z));
-  double chitot2 = sqrt(SQ(EOBPars->chi2x)+SQ(EOBPars->chi2y)+SQ(EOBPars->chi2z));
+  /* Note: aligned-spin runs may specify only the scalar chi{12}, leaving the
+     Cartesian components at zero, so check both representations */
+  double chitot1 = MAX(sqrt(SQ(EOBPars->chi1x)+SQ(EOBPars->chi1y)+SQ(EOBPars->chi1z)), fabs(EOBPars->chi1));
+  double chitot2 = MAX(sqrt(SQ(EOBPars->chi2x)+SQ(EOBPars->chi2y)+SQ(EOBPars->chi2z)), fabs(EOBPars->chi2));
   if ((chitot1 > 1.0) || (chitot2 > 1.0)){
     PRERR("Spin magnitudes must not exceed 1.");
     return 1;
@@ -760,12 +762,12 @@ int eob_set_params(int default_choice, int firstcall)
     /* Apply deviations from final BH mass, spin */
     EOBPars->Mbhf *= 1. + EOBPars->delta_Mbhf;
     if (EOBPars->Mbhf <= 0.) {
-      PRERR("Final BH mass changed to be zero or negative.");
+      if (DEBUG) PRERR("Final BH mass changed to be zero or negative.");
       return 1;
     }
     EOBPars->abhf *= 1. + EOBPars->delta_abhf;
     if (fabs(EOBPars->abhf) > 1.) {
-      PRERR("Final BH spin magnitude changed to be greater than 1.");
+      if (DEBUG) PRERR("Final BH spin magnitude changed to be greater than 1.");
       return 1;
     }
 
@@ -965,7 +967,7 @@ int eob_set_params(int default_choice, int firstcall)
         temp[idx]         = EOBPars->delta_alphalm0[k];
         temp_size++;
         if (temp[idx] <= -1.) {
-          PRERR("Fractional deviations from QNM damping times must be > -1.");
+          if (DEBUG) PRERR("Fractional deviations from QNM damping times must be > -1.");
           return 1;
         }
       }
@@ -974,7 +976,7 @@ int eob_set_params(int default_choice, int firstcall)
       int idx = EOBPars->delta_taulm0_k[k];
       if (DUNEQUAL(EOBPars->delta_taulm0[k], 0., 1e-9)) {
         if (DUNEQUAL(temp[idx], 0., 1e-9)) {
-          PRERRF("Nonzero deviation from both QNM alpha and tau specified for mode k = %d.", idx);
+          if (DEBUG) PRERRF("Nonzero deviation from both QNM alpha and tau specified for mode k = %d.", idx);
           return 1;
         }
         else {
@@ -983,7 +985,7 @@ int eob_set_params(int default_choice, int firstcall)
           temp_size++;
         }
         if (temp[idx] <= -1.) {
-          PRERR("Fractional deviations from QNM damping times must be > -1.");
+          if (DEBUG) PRERR("Fractional deviations from QNM damping times must be > -1.");
           return 1;
         }
       }
@@ -1023,7 +1025,7 @@ int eob_set_params(int default_choice, int firstcall)
       int idx   = EOBPars->delta_Alm_mrg_k[k];
       temp[idx] = EOBPars->delta_Alm_mrg[k];
       if (EOBPars->delta_Alm_mrg[k] < -1.0) {
-        PRERRF("Peak amplitude for mode %d changed to negative value.", idx);
+        if (DEBUG) PRERRF("Peak amplitude for mode %d changed to negative value.", idx);
         return 1;
       }
       if (DEBUG) {
@@ -1071,7 +1073,7 @@ int eob_set_params(int default_choice, int firstcall)
       int idx   = EOBPars->delta_Alm_nqc_k[k];
       temp[idx] = EOBPars->delta_Alm_nqc[k];
       if (EOBPars->delta_Alm_nqc[k] < -1.0) {
-        PRERRF("NQC amplitude for mode %d changed to negative value.", idx);
+        if (DEBUG) PRERRF("NQC amplitude for mode %d changed to negative value.", idx);
         return 1;
       }
     }
