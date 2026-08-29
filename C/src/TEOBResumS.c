@@ -142,7 +142,7 @@ int main (int argc, char* argv[])
   
   if (output) {
     if (system_mkdir(EOBPars->output_dir)) {
-      if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_MKDIR]);
+      PRERR(eob_error_msg[ERROR_MKDIR]);
       return ERROR_MKDIR;
     }
   }
@@ -155,7 +155,7 @@ int main (int argc, char* argv[])
   int status = OK;
   /* set domain */
   if (eob_set_params(dc, fc)) {
-    if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_SET_PARAMS]);
+    PRERR(eob_error_msg[ERROR_SET_PARAMS]);
     status = ERROR_SET_PARAMS;
     goto EXIT_POINT_MAIN;
   }
@@ -406,7 +406,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       EOBPars->abhf = PrecessingRemnantSpin(dyn);
       EOBPars->abhf *= 1. + EOBPars->delta_abhf;
       if (fabs(EOBPars->abhf) > 1.) {
-        if (DEBUG) printf("ERROR: Final BH spin changed to be greater than 1.\n");
+        PRERR("Final BH spin changed to be greater than 1.");
         status = ERROR_SET_PARAMS;
         goto EXIT_POINT;
       }
@@ -827,7 +827,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /* ... if before the Omega_orb peak, this is an actual error */
     if (GSLSTATUS != GSL_SUCCESS) {
-      if (DEBUG) printf("GSL Error = %d", GSLSTATUS);
+      PRERRF("GSL Error = %d", GSLSTATUS);
       /* errorexit("ODE solver returned error.\n"); */
       status = ERROR_ODEINT;
       goto EXIT_POINT;
@@ -836,9 +836,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Checking whether the dynamics produces NaN values
 	  this can happen if radius r becomes too small */
     if (!(isfinite(dyn->r))) {
-      printf("%.1f\t%.3f\t%.3f\n", q, chi1, chi2);	
+      PRERRF("ODE solver returned NaN radius (q = %.3f, chi1 = %.3f, chi2 = %.3f)", q, chi1, chi2);
       /* errorexit("ODE solver returned NaN radius.\n"); */
-      if (DEBUG) printf("ODE solver returned NaN radius.\n");
       status = ERROR_ODEINT;
       goto EXIT_POINT;
     }
@@ -943,7 +942,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Check: is the dynamics long enough? */
   if (size < 10){
     // CHECKME: 10 points is somewhat arbitrary
-    if (DEBUG) printf("ERROR(TEOBResumS): ODE dynamics size < 10\n");
+    PRERR("ODE dynamics size < 10");
     status = ERROR_ODEINT;
     goto EXIT_POINT;
   }
@@ -1070,7 +1069,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       // Check that the time interval chosen contains the peak of Omega
       if (dyn->tOmg_pk < tmin || dyn->tOmg_pk > tmax) {
-        if (DEBUG) printf("The peak orbital frequency is not contained in the NQC/RD attachment region.");
+        PRERR("The peak orbital frequency is not contained in the NQC/RD attachment region.");
         status = ERROR_RINGDOWN;
         goto EXIT_POINT;
       }
@@ -1206,7 +1205,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       EOBPars->abhf = PrecessingRemnantSpin(dyn);
       EOBPars->abhf*= 1. + EOBPars->delta_abhf;
       if (fabs(EOBPars->abhf) > 1.) {
-        printf("ERROR: Final BH spin changed to be greater than 1.\n");
+        PRERRF("final BH spin |a| = %.6f is greater than 1", fabs(EOBPars->abhf));
         status = ERROR_SET_PARAMS;
         goto EXIT_POINT;
       }
@@ -1235,7 +1234,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Ringdown attachment */
     if (eob_wav_ringdown(dyn, hlm)){
-      if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[ERROR_RINGDOWN]);
+      PRERR(eob_error_msg[ERROR_RINGDOWN]);
       status = ERROR_RINGDOWN;
       goto EXIT_POINT;
     }
