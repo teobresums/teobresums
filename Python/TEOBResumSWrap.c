@@ -1618,11 +1618,19 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args, PyObject *kw)
   double d2Heff_dr2;
   double delta_a6c, delta_cN3LO;
 
+  /* a6c and cN3LO as PyObjects to allow for None values */
+  PyObject *temp_a6c   = NULL;
+  PyObject *temp_cN3LO = NULL;
+
+  /* Initialize deviations to 0 */
+  delta_a6c   = 0.;
+  delta_cN3LO = 0.;
+
   Dynamics *dyn;
 
   /* parse the input */
-  char* kwlist[] = {"r", "q", "pphi", "prstar", "chi1", "chi2", "delta_a6c", "delta_cN3LO", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "dddddd|$dd", kwlist, &r, &q, &pphi, &prstar, &chi1, &chi2, &delta_a6c, &delta_cN3LO))
+  char* kwlist[] = {"r", "q", "pphi", "prstar", "chi1", "chi2", "a6c", "cN3LO", "delta_a6c", "delta_cN3LO", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "dddddd|$OOdd", kwlist, &r, &q, &pphi, &prstar, &chi1, &chi2, &temp_a6c, &temp_cN3LO, &delta_a6c, &delta_cN3LO))
     return NULL;
   
   double nu = q_to_nu(q);
@@ -1633,11 +1641,28 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args, PyObject *kw)
   EOBPars->chi1 = chi1;
   EOBPars->chi2 = chi2;
   EOBPars->q    = q;
-  EOBPars->delta_a6c = delta_a6c;
-  EOBPars->delta_cN3LO = delta_cN3LO;
 
   eob_set_params(BINARY_BBH, 1);
-  /* set firstcall */
+  if (temp_a6c != NULL && temp_a6c != Py_None) {
+    if (!PyFloat_Check(temp_a6c)) {
+      PyErr_SetString(PyExc_TypeError, "a6c must be a float or None");
+      return NULL;
+    }
+    EOBPars->a6c = PyFloat_AsDouble(temp_a6c);
+  }
+  if (temp_cN3LO != NULL && temp_cN3LO != Py_None) {
+    if (!PyFloat_Check(temp_cN3LO)) {
+      PyErr_SetString(PyExc_TypeError, "cN3LO must be a float or None");
+      return NULL;
+    }
+    EOBPars->cN3LO = PyFloat_AsDouble(temp_cN3LO);
+  }
+  /* Add deviations here so they also apply if a6c, cN3LO are provided */
+  if (DUNEQUAL(delta_a6c, 0., 1.e-9))
+    EOBPars->a6c += delta_a6c;
+  if (DUNEQUAL(delta_cN3LO, 0., 1.e-9))
+    EOBPars->cN3LO += delta_cN3LO;
+  
   for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
   }
@@ -1666,11 +1691,17 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args, PyObject *kw)
   double r, q, chi1, chi2, delta_a6c;
   double A, B, pl_hold;
 
+  /* a6c as a PyObject to allow for None values */
+  PyObject *temp_a6c = NULL;
+
+  /* Initialize deviation to 0 */
+  delta_a6c = 0.;
+
   Dynamics *dyn;
 
   /* parse the input */
-  char* kwlist[] = {"r", "q", "chi1", "chi2", "delta_a6c", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "dddd|$d", kwlist, &r, &q, &chi1, &chi2, &delta_a6c))
+  char* kwlist[] = {"r", "q", "chi1", "chi2", "a6c", "delta_a6c", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "dddd|$Od", kwlist, &r, &q, &chi1, &chi2, &temp_a6c, &delta_a6c))
     return NULL;
   
   double nu = q_to_nu(q);
@@ -1681,9 +1712,19 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args, PyObject *kw)
   EOBPars->q    = q;
   EOBPars->chi1 = chi1;
   EOBPars->chi2 = chi2;
-  EOBPars->delta_a6c = delta_a6c;
 
   eob_set_params(BINARY_BBH, 1);
+  if (temp_a6c != NULL && temp_a6c != Py_None) {
+    if (!PyFloat_Check(temp_a6c)) {
+      PyErr_SetString(PyExc_TypeError, "a6c must be a float or None");
+      return NULL;
+    }
+    EOBPars->a6c = PyFloat_AsDouble(temp_a6c);
+  }
+  /* Add deviations here so they also apply if a6c is provided */
+  if (DUNEQUAL(delta_a6c, 0., 1.e-9))
+    EOBPars->a6c += delta_a6c;
+
   /* set firstcall */
   for (int k=0; k < NFIRSTCALL; k++){ 
     EOBPars->firstcall[k] = 1;
