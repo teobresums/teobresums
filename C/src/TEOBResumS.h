@@ -368,6 +368,16 @@ enum{
 };
 static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "undefined"};
 
+/** List of options for deltalm_nc */
+enum{
+  FLUX_NC_ORDER_0PN,           /**< 0PN */
+  FLUX_NC_ORDER_1PN,           /**< 1PN */
+  FLUX_NC_ORDER_15PN,          /**< 1.5PN */
+  FLUX_NC_ORDER_2PN,           /**< 2PN */
+  FLUX_NC_ORDER_NOPT           /**< Number of delta lm nc orders */
+};
+static const char* const flux_nc_order_opt[] = {"0PN", "1PN", "1.5PN", "2PN"};
+
 /** List of options for Fr */
 enum{
   USE_FR_NO,            /**< No radial flux */
@@ -770,6 +780,7 @@ typedef struct tagEOBParameters
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
+  int flux_nc_order;                                    /**< NEW, INDEX FOR  # "0PN", "1PN", "1.5PN", "2PN" */
   int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */

@@ -449,6 +449,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
   /* NC options */
   eobp->use_flm_nc       = USEFLM_NC_22;
+  eobp->flux_nc_order    = FLUX_NC_ORDER_2PN;
   eobp->use_Fr           = USE_FR_NEXT;
   eobp->use_hlm_nc       = USEHLM_NC_NO;
   eobp->use_dlm_nc       = USEDELTALM_NC_NO;
@@ -1459,20 +1460,24 @@ int eob_set_params(int default_choice, int firstcall)
       eob_flx_FlmNewt_nc[1] = &eob_flx_FlmNewt_nc_22;
       break;
     case USEFLM_NC_IMPQC:
-      // Corrections
-      eob_flx_hatflm_nc[0] = &eob_flx_flm_nc_21;
-      eob_flx_hatflm_nc[1] = &eob_flx_flm_nc_22;
-      eob_flx_hatflm_nc[2] = &eob_flx_flm_nc_31;
-      eob_flx_hatflm_nc[4] = &eob_flx_flm_nc_33;
-
       // Newtonian piece
-      eob_flx_FlmNewt_nc[0] = &eob_flx_FlmNewt_nc_21;
       eob_flx_FlmNewt_nc[1] = &eob_flx_FlmNewt_nc_22;
-      eob_flx_FlmNewt_nc[2] = &eob_flx_FlmNewt_nc_31;
-      eob_flx_FlmNewt_nc[3] = &eob_flx_FlmNewt_nc_32;
-      eob_flx_FlmNewt_nc[4] = &eob_flx_FlmNewt_nc_33;
-      eob_flx_FlmNewt_nc[6] = &eob_flx_FlmNewt_nc_42;
-      eob_flx_FlmNewt_nc[8] = &eob_flx_FlmNewt_nc_44;
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN)
+        eob_flx_FlmNewt_nc[0] = &eob_flx_FlmNewt_nc_21;
+        eob_flx_FlmNewt_nc[2] = &eob_flx_FlmNewt_nc_31;
+        eob_flx_FlmNewt_nc[4] = &eob_flx_FlmNewt_nc_33;
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+        eob_flx_FlmNewt_nc[3] = &eob_flx_FlmNewt_nc_32;
+        eob_flx_FlmNewt_nc[6] = &eob_flx_FlmNewt_nc_42;
+        eob_flx_FlmNewt_nc[8] = &eob_flx_FlmNewt_nc_44;
+
+      // Corrections
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN)
+        eob_flx_hatflm_nc[1] = &eob_flx_flm_nc_22;
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+        eob_flx_hatflm_nc[0] = &eob_flx_flm_nc_21;
+        eob_flx_hatflm_nc[2] = &eob_flx_flm_nc_31;
+        eob_flx_hatflm_nc[4] = &eob_flx_flm_nc_33;
       break;
     default:
       if (DEBUG) printf("ERROR: Unknown option for use_flm_nc\n");
@@ -2098,6 +2103,32 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
 	break;
       }
       if (STREQUAL(val, use_flm_opt[eobp->use_flm])) break;
+    }
+  }
+
+  if (STREQUAL(key,"use_flm_nc")) {
+    val = string_trim(val);
+    for (eobp->use_flm_nc=0; eobp->use_flm_nc<=USEFLM_NC_NOPT; eobp->use_flm_nc++) {
+      if (eobp->use_flm_nc == USEFLM_NC_NOPT) {
+	eobp->use_flm_nc = USEFLM_NC_22;
+	if (VERBOSE) printf("use_flm_nc '%s' undefined, set to '%s'\n",
+			    val, use_flm_nc_opt[eobp->use_flm_nc]);
+	break;
+      }
+      if (STREQUAL(val, use_flm_nc_opt[eobp->use_flm_nc])) break;
+    }
+  }
+
+  if (STREQUAL(key,"flux_nc_order")) {
+    val = string_trim(val);
+    for (eobp->flux_nc_order=0; eobp->flux_nc_order<=FLUX_NC_ORDER_NOPT; eobp->flux_nc_order++) {
+      if (eobp->flux_nc_order == FLUX_NC_ORDER_NOPT) {
+	eobp->flux_nc_order = FLUX_NC_ORDER_2PN;
+	if (VERBOSE) printf("flux_nc_order '%s' undefined, set to '%s'\n",
+			    val, flux_nc_order_opt[eobp->flux_nc_order]);
+	break;
+      }
+      if (STREQUAL(val, flux_nc_order_opt[eobp->flux_nc_order])) break;
     }
   }
 
@@ -2772,6 +2803,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "use_flm_nc", use_flm_nc_opt[eobp->use_flm_nc]);
+  fprintf(f,"%s = \"%s\"\n", "flux_nc_order", flux_nc_order_opt[eobp->flux_nc_order]);
   fprintf(f,"%s = \"%s\"\n", "use_Fr", use_Fr_opt[eobp->use_Fr]);
   fprintf(f,"%s = \"%s\"\n", "use_hlm_nc", use_hlm_nc_opt[eobp->use_hlm_nc]);
   fprintf(f,"%s = \"%s\"\n", "use_dlm_nc", use_dlm_nc_opt[eobp->use_dlm_nc]);

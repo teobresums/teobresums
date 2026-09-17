@@ -761,15 +761,17 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   double prsdot4 = prsdot3 * prsdot;
   double prsdot5 = prsdot4 * prsdot;
 
-// Newtonian contribution
+/* Newtonian contribution */
   double f0 = 1.0 + 0.25 * prstar2 * r + 0.0625 * prstar4 * r2 
       + prsdot * (0.55 * r2 + 0.0125 * prstar2 * r3 - 0.028125 * prstar4 * r4) 
       + prsdot2 * (-0.275 * r4 - 0.075 * prstar2 * r5) 
       + prsdot3 * (0.1375 * r6 + 0.071875 * prstar2 * r7) 
       - 0.06875 * prsdot4 * r8 + 0.034375 * prsdot5 * r10;
 
-// 1PN
-  double f1 = (-1.5178571428571428 + 2.288095238095238 * nu) * prstar2 
+  /* 1PN */
+  double f1;
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN)
+    f1 = (-1.5178571428571428 + 2.288095238095238 * nu) * prstar2 
       + (1.1648809523809525 - 1.6214285714285714 * nu) / r 
       + (-1.3454241071428572 + 0.8674107142857143 * nu) * prstar4 * r 
       + prsdot * ((2.9647321428571427 - 1.3625 * nu) * r 
@@ -781,16 +783,24 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
       + (0.9021205357142857 + 0.24010416666666667 * nu) * prstar2 * r6) 
       + (-0.7608258928571429 + 0.5450892857142857 * nu) * prsdot4 * r7 
       + (0.4777064732142857 - 0.37607886904761906 * nu) * prsdot5 * r9;
+  else
+    f1 = 0.0;
 
-  // 1.5PN
-  double f15 = (1.3625 * prstar2 - 1.325 / r + 0.9334375 * prstar4 * r  
+  /* 1.5PN */
+  double f15;
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_15PN)
+    f15 = (1.3625 * prstar2 - 1.325 / r + 0.9334375 * prstar4 * r  
       + prsdot * (-1.59375 * r + 1.3263020833333334 * prstar2 * r2 + 0.46173177083333333 * prstar4 * r3) 
       + prsdot2 * (0.371875 * r3 - 0.4298177083333333 * prstar2 * r4) 
       + prsdot3 * (-0.18359375 * r5 - 0.21380208333333334 * prstar2 * r6)
       + 0.2498046875 * prsdot4 * r7 - 0.35216796875 * prsdot5 * r9) * M_PI / sqrt(r);
+  else
+    f15 = 0.0;
 
-  // 2PN
-  double f2 = (-6.483223497732427 - 4.3551321570294785 * nu + 0.5247236394557823 * nu2) * prstar4 
+  /* 2PN */
+  double f2;
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+    f2 = (-6.483223497732427 - 4.3551321570294785 * nu + 0.5247236394557823 * nu2) * prstar4 
       + (-5.053331483056185 + 2.3483985260770974 * nu + 1.3446428571428573 * nu2) / r2 
       + (-16.105473523321365 + 7.908641581632653 * nu - 6.336968537414966 * nu2) * prstar2 / r 
       + prsdot * (7.97368782871945 - 12.197115929705216 * nu + 7.585480442176871 * nu2 
@@ -802,11 +812,16 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
       + (4.31563323643983 + 0.15075600552721088 * nu - 0.7230513038548753 * nu2) * prstar2 * r5)
       + (-3.9656034954491055 + 5.564095273526077 * nu - 0.370999858276644 * nu2) * prsdot4 * r6 
       + (3.0519113738160195 - 4.683648667800454 * nu + 0.7389247626133787 * nu2) * prsdot5 * r8;
+  else
+    f2 = 0.0;
 
   double a2 = f1/f0;
   double a3 = f15/f0;
   double a4 = f2/f0;
-  double hatf_prstar = f0 / (1.0 - a2 - a3 + (a2 * a2 - a4));
+  double hatf_prstar = (1.0 - a2 - a3);
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+    hatf_prstar += (a2 * a2 - a4);
+  hatf_prstar = f0/hatf_prstar;
   const double Frstar = -5./3.*prstar/pphi*Fphi*hatf_prstar;
   
   /* We need to output Fr, not Fr*; compute the conversion from Fr to Fr* */
@@ -1576,6 +1591,8 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
     const double prsdot5 = prsdot4 * prsdot;
     const double prsdot6 = prsdot5 * prsdot;
 
+    double f22_15PN = 0.0, f22_2PN = 0.0;
+
     const double f22_1PN = (2.6964285714285716 - 0.4642857142857143 * nu) * prstar2 
         + (0.6622023809523809 - 0.5803571428571429 * nu) * prstar4 * r 
         + (0.16555059523809523 - 0.14508928571428573 * nu) * prstar6 * r2 
@@ -1592,7 +1609,8 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
         + prsdot5 * r9 * (-0.03720238095238095 + 0.017857142857142856 * nu) 
         + prsdot6 * r11 * (0.018601190476190476 - 0.008928571428571428 * nu);
 
-    const double f22_2PN = (0.6313303099017384 - 5.15239984882842 * nu + 1.028533635676493 * nu2) * prstar2 / r 
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+      f22_2PN = (0.6313303099017384 - 5.15239984882842 * nu + 1.028533635676493 * nu2) * prstar2 / r 
         + (5.323932350718065 + 0.8621267951625095 * nu + 0.31949168556311414 * nu2) * prstar4 
         + (0.34901738473167043 + 1.2075243291761149 * nu - 0.08792753212396069 * nu2) * prstar6 * r 
         + prsdot * (19.462915721844293 + 6.640495086923658 * nu - 2.512660619803477 * nu2 
@@ -1608,7 +1626,8 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
         + prsdot5 * r8 * (-0.38956502739984883 + 0.41654856386999245 * nu - 0.05430366591080877 * nu2) 
         + prsdot6 * r10 * (0.25988668036659107 - 0.26742606764928195 * nu + 0.040544690098261525 * nu2);
 
-    const double f22_15PN = (-1.875 * prstar2 - 0.609375 * prstar4 * r - 0.24231770833333333 * prstar6 * r2 
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_15PN)
+      f22_15PN = (-1.875 * prstar2 - 0.609375 * prstar4 * r - 0.24231770833333333 * prstar6 * r2
         + prsdot * r * (-1.25 - 0.34375 * prstar2 * r + 0.04296875 * prstar4 * r2) 
         + prsdot2 * r3 * (0.125 + 0.234375 * prstar2 * r + 0.37890625 * prstar4 * r2) 
         + prsdot3 * r5 * (-0.041666666666666667 + 0.13671875 * prstar2 * r) 
@@ -1616,9 +1635,12 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
         - 0.074609375 * prsdot5 * r9 + 0.07254774305555555 * prsdot6 * r11) / sqrt(r) * M_PI;
 
 #if use_pade_22
-      return 1.0/(1.0 - f22_1PN - f22_15PN + (f22_1PN*f22_1PN-f22_2PN));
+    double den = 1.0 - f22_1PN - f22_15PN;
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+      den += (f22_1PN*f22_1PN-f22_2PN);
+    return 1.0/den;
 #else
-      return 1.0 + f22_1PN + f22_15PN + f22_2PN;
+    return 1.0 + f22_1PN + f22_15PN + f22_2PN;
 #endif
 }
 

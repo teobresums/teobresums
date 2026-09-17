@@ -317,6 +317,15 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "flux_nc_order") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "flux_nc_order"));
+    for(EOBPars->flux_nc_order=0; EOBPars->flux_nc_order<=FLUX_NC_ORDER_NOPT; EOBPars->flux_nc_order++){
+      if (EOBPars->flux_nc_order == FLUX_NC_ORDER_NOPT) EOBPars->flux_nc_order = FLUX_NC_ORDER_2PN;
+      if (STREQUAL(val,flux_nc_order_opt[EOBPars->flux_nc_order])) break;
+    }
+  }
+
   if ( PyDict_GetItemString(dict, "use_Fr") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_Fr"));
