@@ -69,6 +69,10 @@
 #define USERFUNCS (0)
 #endif
 
+#ifndef PROFILING
+#define PROFILING (0) /* lightweight section timers + RHS-call counters, off by default */
+#endif
+
 /** Macros */
 #define TEOBResumS_Info "TEOBResumS code (c) 2017-2022"
 #define TEOBResumS_Usage "COMMAND LINE USAGE:\n\
@@ -424,6 +428,18 @@ enum{
 };
 static const char* const ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
 
+/** List of options for the ODE stepper (GSL odeiv2 step type) */
+enum{
+  ODE_STEPPER_RKF45,       /**< explicit embedded Runge-Kutta-Fehlberg 4(5) */
+  ODE_STEPPER_RK8PD,       /**< explicit embedded Runge-Kutta Prince-Dormand 8(9) */
+  ODE_STEPPER_RKCK,        /**< explicit embedded Runge-Kutta Cash-Karp 4(5) */
+  ODE_STEPPER_MSADAMS,     /**< variable-order, variable-step Adams multistep */
+  ODE_STEPPER_RK4,         /**< explicit 4th order (classical) Runge-Kutta */
+  ODE_STEPPER_AUTO,        /**< choose per model, see eob_set_params() */
+  ODE_STEPPER_NOPT         /**< number of ODE stepper options */
+};
+static const char* const ode_stepper_opt[] = {"rkf45","rk8pd","rkck","msadams","rk4","auto","undefined"};
+
 /** List of options for 'usespin' parameter */
 enum{
 MODE_SPINS_NOSPIN,                       /**< no spin, deprecated */     
@@ -647,6 +663,28 @@ typedef struct tagDynamicsSpin
   gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];              /**< accelerators for spin dynamics */
 } DynamicsSpin;
 
+/** eob_metric_s memoization cache sizes (see eob_metric_s and Dynamics.mcache_*). */
+#define EOB_METRIC_CACHE_NSLOTS 2
+#define EOB_METRIC_CACHE_NOUT   15
+
+/** Index list of cached RHS scalar side effects (see Dynamics.wavc), indexed
+    and grown/freed the same way as EOB_DYNAMICS_NVARS/data[] above. */
+enum{
+  WAVC_H,
+  WAVC_HEFF,
+  WAVC_JHAT,
+  WAVC_ROMEGA,
+  WAVC_OMG,
+  WAVC_DDOTR,
+  WAVC_RDOT,
+  WAVC_R2DOT,
+  WAVC_R3DOT,
+  WAVC_OMEGADOT,
+  WAVC_OMEGA2DOT,
+  WAVC_PRSDOT,
+  EOB_WAVC_NVARS
+};
+
 /** Dynamics data type */
 typedef struct tagDynamics
 {
@@ -669,7 +707,14 @@ typedef struct tagDynamics
   double dressed_C_Oct2, dressed_C_Oct2_u, dressed_C_Oct2_uu; /**< dressing factors for spin-induced octupole and drvts   */
   double dressed_C_Hex1, dressed_C_Hex1_u, dressed_C_Hex1_uu; /**< dressing factors for spin-induced hexadecapole and drvts   */
   double dressed_C_Hex2, dressed_C_Hex2_u, dressed_C_Hex2_uu; /**< dressing factors for spin-induced hexadecapole and drvts   */
-  
+
+  /* eob_metric_s (r,prstar)-keyed memoization cache; see eob_metric_s. */
+  int    mcache_next;
+  int    mcache_valid[EOB_METRIC_CACHE_NSLOTS];
+  double mcache_r[EOB_METRIC_CACHE_NSLOTS];
+  double mcache_prstar[EOB_METRIC_CACHE_NSLOTS];
+  double mcache_out[EOB_METRIC_CACHE_NSLOTS][EOB_METRIC_CACHE_NOUT];
+
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_NVARS];   /**< rhs storage */
   double dy[EOB_EVOLVE_NVARS];  /**< rhs storage */
@@ -677,6 +722,15 @@ typedef struct tagDynamics
   double dt, t_stop, ti;        /**< timestep, stopping time, current time */
   int ode_timestep;             /**< ODE timestep type */
   bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;  /**< flag to stop ode, stop after Omgpeak, stop after radius */
+
+  /* Optional per-step cache of RHS scalar side effects, indexed like
+     data[]/EOB_DYNAMICS_NVARS above (see WAVC_* enum). wavc[0] (and every
+     other slot) is NULL unless allocated by the Dali+NQC (non-generic-spin)
+     sigmoid waveform overwrite path in EOBRun, which uses it to avoid a
+     second full RHS evaluation per point. Grown/freed in lockstep with
+     data[] by Dynamics_push/_free (gated on wavc[0] != NULL) when allocated;
+     left NULL (no-op) for every other Dynamics instance. */
+  double *wavc[EOB_WAVC_NVARS];
 
   /* arrays */
   int size;
@@ -811,6 +865,9 @@ typedef struct tagEOBParameters
 
   int size;                                             /**< size of arrays */
   int ode_timestep;                                     /**< ODE timestep type */
+  int ode_stepper;                                      /**< ODE stepper (GSL odeiv2 step type) */
+  double ode_stepper_hmax;                              /**< max ODE step (geom units); <=0 = uncapped. Densifies waveform sampling for high-order steppers */
+  int use_metric_cache;                                 /**< enable the (r,prstar)-keyed eob_metric_s memoization cache; default yes, bit-identical. Set to no for isolated before/after benchmarking */
   double srate;                                         /**< sampling rate */
   double dt;                                            /**< timestep */
   double ode_abstol;                                    /**< ODE solver absolute tolerance */
@@ -1169,7 +1226,7 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double u, double at1, double at2, double *drc_dr, double *d2rc_dr2);
-double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, double rc_in, double drc_dr_in, double A_in, double dA_in);
 double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
@@ -1254,10 +1311,12 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
 extern double (*eob_flx_Fr)(); /* defined in TEOBResumSPars.c*/
 extern double (*eob_flx_hatflm_nc[KMAX])();
 extern double (*eob_flx_FlmNewt_nc[KMAX])();
+extern int eob_flx_nc_active_k[KMAX]; /* modes with non-trivial nc flux correction */
+extern int eob_flx_nc_active_n;
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
-void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn);
-void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC);
+void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn, double rc_in, double drc_dr_in, double d2rc_dr2_in);
+void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC, double rc_in, double drc_dr_in, double d2rc_dr2_in);
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
@@ -1375,4 +1434,42 @@ void openmp_init(const int verbose);
 void openmp_timer_start(char *name);
 void openmp_timer_stop(char *name);
 void openmp_free();
+#endif
+
+/* TEOBResumSProf.c
+ * Lightweight, portable (clock_gettime) section timers and RHS-call counters.
+ * Everything compiles to nothing when PROFILING==0, so the default build is
+ * bit-identical to the un-instrumented code. Timers are indexed (no per-call
+ * strcmp): the hot RHS/flux paths fire ~1e5-1e6 times per waveform. */
+enum {
+  PROF_ODE,        /**< whole ODE evolution loop */
+  PROF_RHS,        /**< dynamics r.h.s. evaluations */
+  PROF_FLUX,       /**< radiation-reaction flux (eob_flx_Flux*) */
+  PROF_FPHI_ECC,   /**< eccentric non-circular flux correction (eob_flx_Fphi_ecc) */
+  PROF_METRICRC,   /**< metric + centrifugal radius inside the r.h.s. */
+  PROF_WAVSTORE,   /**< per-step storage r.h.s. + eob_wav_hlm */
+  PROF_NQC,        /**< post-evolution NQC determination */
+  PROF_INTERP,     /**< spline interpolation to uniform grid */
+  PROF_HPC,        /**< h+/hx polarization assembly */
+  PROF_NTIMERS
+};
+extern long prof_rhs_calls;        /**< all r.h.s. entries (stepper + storage + IC) */
+extern long prof_rhs_store_calls;  /**< per-accepted-step storage r.h.s. calls only */
+void prof_init(void);
+void prof_timer_start(int i);
+void prof_timer_stop(int i);
+void prof_timer_output(void);
+
+#if (PROFILING)
+#define PROF_INIT()   prof_init()
+#define PROF_START(i) prof_timer_start(i)
+#define PROF_STOP(i)  prof_timer_stop(i)
+#define PROF_TIC(c)   ((c)++)
+#define PROF_OUTPUT() prof_timer_output()
+#else
+#define PROF_INIT()
+#define PROF_START(i)
+#define PROF_STOP(i)
+#define PROF_TIC(c)
+#define PROF_OUTPUT()
 #endif
