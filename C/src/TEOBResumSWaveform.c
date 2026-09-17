@@ -1312,7 +1312,13 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
   }
 
   // (2, 2)
-  const double phi22_1PN = ((1.7857142857142858 - 1.8571428571428572 * nu) * prstar + 
+  if (EOBPars->use_h22_nc_complex) {
+    const double h22_complex[2];
+    eob_wav_hath22_nc_complex(r, prstar, prsdot, h22_complex);
+    dlm[1] = -h22_complex[1];
+  }
+  else {
+    const double phi22_1PN = ((1.7857142857142858 - 1.8571428571428572 * nu) * prstar + 
       (0.05952380952380952 + 0.07142857142857142 * nu) * prstar3 * r + 
       (-0.44642857142857145 + 0.4642857142857143 * nu) * prstar5 * r2 + 
       (-0.1441592261904762 + 0.17075892857142858 * nu) * prsdot4 * prstar * r8 + 
@@ -1325,7 +1331,7 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
       prsdot3 * ((0.2976190476190476 - 0.26785714285714285 * nu) * prstar * r6 + 
       (-0.10788690476190477 + 0.3705357142857143 * nu) * prstar3 * r7)) * inv_sqrt_r;
 
-  const double phi22_2PN = ((-1.1910903250188964 + 3.8535525321239605 * nu + 1.3023431594860166 * nu2) * prstar3 + 
+    const double phi22_2PN = ((-1.1910903250188964 + 3.8535525321239605 * nu + 1.3023431594860166 * nu2) * prstar3 + 
       ((2.9534202569916856 - 1.0366591080876795 * nu - 1.073318216175359 * nu2) * prstar) / r + 
       (-0.9126747921390779 + 0.8130196523053665 * nu - 0.5049130763416477 * nu2) * prstar5 * r + 
       (0.7794784580498866 - 1.2631802721088434 * nu + 0.461734693877551 * nu2) * prstar7 * r2 + 
@@ -1368,14 +1374,14 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
       prsdot9 * ((-0.015397190777352607 + 0.02669769079506803 * nu - 0.009267378826530613 * nu2) * prstar * r17 + 
       (0.007854297317885487 - 0.03387243569302721 * nu + 0.031050701530612245 * nu2) * prstar3 * r18)) * inv_sqrt_r;
 
-  const double phi22_15log = (1.5 * prstar2 + 1.5 * prstar4 * r - 0.375 * prstar6 * r2 - 
+    const double phi22_15log = (1.5 * prstar2 + 1.5 * prstar4 * r - 0.375 * prstar6 * r2 - 
       0.3046875 * prsdot5 * r9 + 0.234375 * prsdot6 * r11 + 
       prsdot * (3.0 * r + 2.25 * prstar2 * r2 - 2.25 * prstar4 * r3) + 
       prsdot2 * (-2.8125 * prstar2 * r4 + 0.5625 * prstar4 * r5) + 
       prsdot3 * (-0.375 * r5 + 1.96875 * prstar2 * r6) + 
       prsdot4 * (0.375 * r7 - 0.94921875 * prstar2 * r8));
 
-  const double phi22_15pi = (-0.10416666666666667 * prstar2 - 1.5 / r + 
+    const double phi22_15pi = (-0.10416666666666667 * prstar2 - 1.5 / r + 
       0.3067708333333333 * prstar4 * r + 
       0.028645833333333332 * prsdot4 * r7 - 
       0.05807291666666667 * prsdot5 * r9 + 
@@ -1383,7 +1389,7 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
       prsdot2 * (0.1875 * r3 - 0.5520833333333334 * prstar2 * r4) + 
       prsdot3 * (-0.03125 * r5 + 0.6284722222222222 * prstar2 * r6));
 
-  const double phi22_15pr = ((-3.091526291371757 + 0.051587301587301584 * nu) * prstar2 + 
+    const double phi22_15pr = ((-3.091526291371757 + 0.051587301587301584 * nu) * prstar2 + 
       (-1.5043758872718627 - 0.017857142857142856 * nu) * prstar4 * r + 
       (0.5089174441563955 - 0.016865079365079364 * nu) * prstar6 * r2 + 
       (0.23209034100142212 + 0.5138888888888888 * nu) * prsdot5 * r9 + 
@@ -1399,31 +1405,32 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
       prsdot4 * ((-0.3753766389654487 - 0.31101190476190477 * nu) * r7 + 
       (-0.4540556048232247 + 0.9444134424603174 * nu) * prstar2 * r8));
 
-  const double phi22_15PN = phi22_15pr * inv_sqrt_r + phi22_15pi * prstar * Pi + phi22_15log * inv_sqrt_r * log_r;
+    const double phi22_15PN = phi22_15pr * inv_sqrt_r + phi22_15pi * prstar * Pi + phi22_15log * inv_sqrt_r * log_r;
 
-  switch (EOBPars->use_dlm_nc_order)
-  {
-    case (DELTALM_NC_ORDER_1PN):
-      dlm[1] = phi22_1PN;
-      break;
-    case (DELTALM_NC_ORDER_15PN):
-      if (EOBPars->use_dlm_nc_pade)
-        dlm[1] = phi22_1PN * phi22_1PN / (phi22_1PN - phi22_15PN);
-      else
-        dlm[1] = phi22_1PN + phi22_15PN;
-      break;
-    case (DELTALM_NC_ORDER_2PN):
-      if (EOBPars->use_dlm_nc_pade)
-        dlm[1] = (phi22_1PN * phi22_1PN * phi22_1PN) / (phi22_1PN * ( phi22_1PN - phi22_15PN - phi22_2PN) + phi22_15PN * phi22_15PN);
-      else
-        dlm[1] = phi22_1PN + phi22_2PN + phi22_15PN;
-      break;
-    case (DELTALM_NC_ORDER_2PN_NOTAIL):
-      if (EOBPars->use_dlm_nc_pade)
-        dlm[1] = (phi22_1PN * phi22_1PN) / ( phi22_1PN - phi22_2PN);
-      else
-        dlm[1] = phi22_1PN + phi22_2PN;
-      break;
+    switch (EOBPars->use_dlm_nc_order)
+    {
+      case (DELTALM_NC_ORDER_1PN):
+        dlm[1] = phi22_1PN;
+        break;
+      case (DELTALM_NC_ORDER_15PN):
+        if (EOBPars->use_dlm_nc_pade)
+          dlm[1] = phi22_1PN * phi22_1PN / (phi22_1PN - phi22_15PN);
+        else
+          dlm[1] = phi22_1PN + phi22_15PN;
+        break;
+      case (DELTALM_NC_ORDER_2PN):
+        if (EOBPars->use_dlm_nc_pade)
+          dlm[1] = (phi22_1PN * phi22_1PN * phi22_1PN) / (phi22_1PN * ( phi22_1PN - phi22_15PN - phi22_2PN) + phi22_15PN * phi22_15PN);
+        else
+          dlm[1] = phi22_1PN + phi22_2PN + phi22_15PN;
+        break;
+      case (DELTALM_NC_ORDER_2PN_NOTAIL):
+        if (EOBPars->use_dlm_nc_pade)
+          dlm[1] = (phi22_1PN * phi22_1PN) / ( phi22_1PN - phi22_2PN);
+        else
+          dlm[1] = phi22_1PN + phi22_2PN;
+        break;
+    }
   }
 
   // (2, 1) 
@@ -5479,6 +5486,247 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
   
 }
 
+/**
+ * Function: eob_wav_hath22_nc_complex
+ * -----------------------------------
+ * Computes complex noncircular correcting factor for the 22 mode of the waveform,
+ * splitting into amplitude and phase at the end.
+ * 
+ *  @param[in] r:  The radial separation between the two bodies.
+ *  @param[in] prstar: The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot: The time derivative of the radial momentum.
+ *  @param[out] hathlm_nc: An array to store the computed noncircular correction factors for each mode.
+ *
+ */
+#define use_h22_nc_complex_pade (1)
+void eob_wav_hath22_nc_complex(double r, double prstar, double prsdot, double* hath22_nc)
+{
+  const double nu = EOBPars->nu;
+  const double nu2 = nu * nu;
+  const double nu3 = nu2 * nu;
+  const double logr = log(r);
+  const double inv_sqrt_r = 1.0 / sqrt(r);
+  const double inv_r = 1.0 / r;
+  const double one_minus_2nu = 1.0 - 2.0 * nu;
+  const double one_minus_3nu = 1.0 - 3.0 * nu;
+
+  /* Powers of r */
+  const double r2 = r * r;
+  const double r3 = r2 * r;
+  const double r4 = r3 * r;
+  const double r5 = r4 * r;
+  const double r6 = r5 * r;
+  const double r7 = r6 * r;
+  const double r8 = r7 * r;
+  const double r9 = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
+  const double r12 = r11 * r;
+  const double r13 = r12 * r;
+  const double r14 = r13 * r;
+  const double r15 = r14 * r;
+  const double r16 = r15 * r;
+  const double r17 = r16 * r;
+  const double r18 = r17 * r;
+  const double r19 = r18 * r;
+  const double r20 = r19 * r;
+  const double r21 = r20 * r;
+  const double r22 = r21 * r;
+  const double r23 = r22 * r;
+
+  /* Powers of prstar */
+  const double prstar2 = prstar * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar5 = prstar4 * prstar;
+  const double prstar6 = prstar5 * prstar;
+  const double prstar7 = prstar6 * prstar;
+  const double prstar8 = prstar7 * prstar;
+  const double prstar9 = prstar8 * prstar;
+  const double prstar10 = prstar9 * prstar;
+  const double prstar11 = prstar10 * prstar;
+  const double prstar12 = prstar11 * prstar;
+
+  /* Powers of prsdot */
+  const double prsdot2 = prsdot * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
+  const double prsdot7 = prsdot6 * prsdot;
+  const double prsdot8 = prsdot7 * prsdot;
+  const double prsdot9 = prsdot8 * prsdot;
+  const double prsdot10 = prsdot9 * prsdot;
+  const double prsdot11 = prsdot10 * prsdot;
+  const double prsdot12 = prsdot11 * prsdot;
+
+  const double reh22_nc_1PN = (1.595238095238095 - 0.6190476190476190 * nu) * prsdot * r +
+                              (-0.2083333333333333 + 0.2500000000000000 * nu) * prstar6 * r2 +
+                              (0.2976190476190476 - 0.1428571428571429 * nu) * prsdot2 * r3 +
+                              (-0.1488095238095238 + 0.07142857142857143 * nu) * prsdot3 * r5 +
+                              (0.07440476190476190 - 0.03571428571428571 * nu) * prsdot4 * r7 +
+                              (-0.03720238095238095 + 0.01785714285714286 * nu) * prsdot5 * r9 +
+                              (0.01860119047619048 - 0.008928571428571429 * nu) * prsdot6 * r11 +
+                              prstar4 * ((0.4761904761904762 - 0.4285714285714286 * nu) * r +
+                                  (-0.7440476190476190 + 0.8571428571428571 * nu) * prsdot * r3 +
+                                  (0.1636904761904762 - 0.4285714285714286 * nu) * prsdot2 * r5) +
+                              prstar2 * (0.9761904761904762 + 0.07142857142857143 * nu +
+                                  (0.7738095238095238 - 0.5714285714285714 * nu) * prsdot * r2 +
+                                  (-0.6845238095238095 + 0.6785714285714286 * nu) * prsdot2 * r4 +
+                                  (0.3422619047619048 - 0.4642857142857143 * nu) * prsdot3 * r6 +
+                                  (-0.09672619047619048 + 0.2589285714285714 * nu) * prsdot4 * r8);
+
+  const double reh22_nc_2PN = (10.46981292517007 + 2.837868480725624 * nu - 1.292517006802721 * nu2) * prsdot +
+                              (0.2251984126984127 + 0.01785714285714286 * nu + 0.4404761904761905 * nu2) * prstar6 * r +
+                              (6.683224678760393 + 0.4228080120937264 * nu - 0.6702569916855631 * nu2) * prsdot2 * r2 +
+                              (-0.7256353930461073 + 0.7279856386999244 * nu + 0.04128873771730915 * nu2) * prsdot3 * r4 +
+                              (0.6232343631897203 - 0.6005999622071051 * nu + 0.03292705971277400 * nu2) * prsdot4 * r6 +
+                              (-0.4418255149281935 + 0.4186035525321240 * nu - 0.04324924414210128 * nu2) * prsdot5 * r8 +
+                              (0.2860169241307634 - 0.2684535619803477 * nu + 0.03501747921390779 * nu2) * prsdot6 * r10 +
+                              prstar4 * (0.3933767951625094 + 1.447940287226002 * nu + 0.2589758125472411 * nu2 +
+                                  (-0.3536115835222978 + 0.4442554799697657 * nu + 0.8071617535903250 * nu2) * prsdot * r2 +
+                                  (3.229763085789872 - 5.032761715797430 * nu - 0.2222694633408919 * nu2) * prsdot2 * r4) +
+                              prstar2 * ((-0.7987528344671202 - 0.4098639455782313 * nu - 1.081632653061224 * nu2) * inv_r +
+                                  (-2.051752645502646 + 2.747354497354497 * nu - 0.2711640211640212 * nu2) * prsdot * r +
+                                  (-1.215159674981104 + 1.100812547241119 * nu + 0.2651171579743008 * nu2) * prsdot2 * r3 +
+                                  (2.575591695011338 - 3.156179138321995 * nu + 0.2461734693877551 * nu2) * prsdot3 * r5 +
+                                  (-2.020591222600151 + 3.045256991685563 * nu - 0.5384542705971277 * nu2) * prsdot4 * r7);
+
+  const double reh22_nc_15PN_log = -0.75 * prstar3 - (4.5 * prstar) * inv_r -
+                                    0.75 * prsdot * prstar * r + 1.125 * prstar5 * r +
+                                    3.0 * prsdot * prstar3 * r2 +
+                                    1.875 * prsdot2 * prstar * r3 -
+                                    0.5625 * prsdot * prstar5 * r3 -
+                                    2.4375 * prsdot2 * prstar3 * r4 -
+                                    1.6875 * prsdot3 * prstar * r5 +
+                                    0.75 * prsdot3 * prstar3 * r6 +
+                                    1.21875 * prsdot4 * prstar * r7 -
+                                    0.796875 * prsdot5 * prstar * r9;
+
+  const double reh22_nc_15PN_pi = -0.5 * prstar2 - 1.0 * prsdot * r -
+                                   0.3125 * prstar4 * r -
+                                   0.3125 * prsdot * prstar2 * r2 +
+                                   0.1713541666666667 * prstar6 * r2 +
+                                   0.598958333333333 * prsdot * prstar4 * r3 +
+                                   0.25 * prsdot2 * prstar2 * r4 -
+                                   0.02083333333333333 * prsdot3 * r5 -
+                                   0.6484375 * prsdot2 * prstar4 * r5 -
+                                   0.2630208333333333 * prsdot3 * prstar2 * r6 +
+                                   0.0625 * prsdot4 * r7 +
+                                   0.3346354166666667 * prsdot4 * prstar2 * r8 -
+                                   0.0604166666666667 * prsdot5 * r9 + 0.04861111111111111 * prsdot6 * r11;
+
+  const double reh22_nc_15PN_pr = 8.15402981 * inv_r + (0.987653786 + 0.1031746032 * nu) * prsdot * r + (-2.17328563 -
+                                    0.309523810 * nu) * prsdot2 * r3 + (1.174076005 +
+                                    0.609126984 * nu) * prsdot3 * r5 + (-0.366762733 -
+                                    0.976190476 * nu) * prsdot4 * r7 + (0.01650066816 +
+                                    1.387400794 * nu) * prsdot5 * r9 +
+                                  prstar4 * r * (-1.264473040 + 0.440160261 * prsdot * r2 +
+                                    nu * (0.00793650794 - 0.0674603175 * prsdot * r2)) +
+                                  prstar2 * (0.204970205 - 2.58226435 * prsdot * r2 +
+                                    0.853456578 * prsdot2 * r4 + 0.557917025 * prsdot3 * r6 +
+                                    nu * (0.0515873016 - 0.1388888889 * prsdot * r2 +
+                                       0.221230159 * prsdot2 * r4 - 0.238095238 * prsdot3 * r6));
+
+  const double imh22_nc_1PN = (prstar5 * ((-0.4464285714285714 +
+                                      0.4642857142857143 * nu) * r2 + (0.2678571428571429 -
+                                      0.4285714285714286 * nu) * prsdot * r4) +
+                               prstar3 * ((0.05952380952380952 +
+                                      0.07142857142857143 * nu) * r + (-0.9226190476190476 +
+                                      0.8928571428571429 * nu) * prsdot * r3 + (0.6026785714285714 -
+                                      0.7767857142857143 * nu) * prsdot2 * r5 + (-0.1078869047619048 +
+                                      0.3705357142857143 * nu) * prsdot3 * r7) +
+                               prstar * (1.785714285714286 -
+                                   1.857142857142857 * nu + (0.5952380952380952 -
+                                      0.2857142857142857 * nu) * prsdot * r2 + (-0.5208333333333333 +
+                                      0.375 * nu) * prsdot2 * r4 + (0.2976190476190476 -
+                                      0.2678571428571429 * nu) * prsdot3 * r6 + (-0.1441592261904762 +
+                                      0.1707589285714286 * nu) * prsdot4 * r8 + (0.06045386904761905 -
+                                      0.1071428571428571 * nu) * prsdot5 * r10)) * inv_sqrt_r;
+
+  const double imh22_nc_2PN = (prstar5 * ((-0.004228080120937264 - 0.7626606198034769 * nu +
+                                      0.2961073318216175 * nu2) * r + (1.216116307634165 -
+                                      2.404667422524565 * nu - 0.7676681783824641 * nu2) * prsdot * r3) +
+                               prstar3 * (0.5521069538926682 + 2.168178382464097 * nu +
+                                   1.169690098261527 * nu2 + (0.9445153061224490 -
+                                      1.423044217687075 * nu +
+                                      0.1816893424036281 * nu2) * prsdot * r2 + (2.394197609599395 -
+                                      3.031769652305367 * nu -
+                                      0.3244520030234316 * nu2) * prsdot2 * r4 + (-3.198350694444444 +
+                                      4.858258928571429 * nu - 0.3921130952380952 * nu2) * prsdot3 * r6) +
+                               prstar * ((
+                                   2.953420256991686 - 1.036659108087680 * nu -
+                                    1.073318216175359 * nu2) * inv_r + (1.409344293272865 - 1.317838246409675 * nu +
+                                      2.388133030990174 * nu2) * prsdot * r + (-0.8531864134542706 +
+                                      0.5230536659108088 * nu +
+                                      0.1988851095993953 * nu2) * prsdot2 * r3 + (1.625490126606198 -
+                                      1.578254913076342 * nu +
+                                      0.07067271352985639 * nu2) * prsdot3 * r5 + (-1.449170770738851 +
+                                      1.641525533824641 * nu -
+                                      0.2808130196523054 * nu2) * prsdot4 * r7 + (0.9502060155659486 -
+                                      1.278208852985639 * nu + 0.3338972741874528 * nu2) * prsdot5 * r9)) * inv_sqrt_r;
+
+  const double imh22_nc_15PN_log = (1.5 * prstar2 + 3.0 * prsdot * r +
+                                    1.5 * prstar4 * r +
+                                    2.25 * prsdot * prstar2 * r2 -
+                                    0.375 * prstar6 * r2 -
+                                    2.25 * prsdot * prstar4 * r3 -
+                                    2.8125 * prsdot2 * prstar2 * r4 -
+                                    0.375 * prsdot3 * r5 +
+                                    0.5625 * prsdot2 * prstar4 * r5 +
+                                    1.96875 * prsdot3 * prstar2 * r6 +
+                                    0.375 * prsdot4 * r7 -
+                                    0.94921875 * prsdot4 * prstar2 * r8 -
+                                    0.3046875 * prsdot5 * r9 + 0.234375 * prsdot6 * r11) * inv_sqrt_r;
+
+  const double imh22_nc_15PN_pi = (-1.5 * prstar - 0.1041666666666667 * prstar3 * r -
+                                    0.25 * prsdot * prstar * r2 +
+                                    0.3067708333333333 * prstar5 * r2 +
+                                    0.46875 * prsdot * prstar3 * r3 +
+                                    0.1875 * prsdot2 * prstar * r4 -
+                                    0.43359375 * prsdot * prstar5 * r4 -
+                                    0.552083333333333 * prsdot2 * prstar3 * r5 -
+                                    0.03125 * prsdot3 * prstar * r6 +
+                                    0.628472222222222 * prsdot3 * prstar3 * r7 +
+                                    0.02864583333333333 * prsdot4 * prstar * r8 -
+                                    0.0580729166666667 * prsdot5 * prstar * r10) * inv_sqrt_r;
+
+  const double imh22_nc_15PN_pr = ((0.50891744416 - 0.01686507936507937 * nu) * prstar6 * r2 +
+                                   prsdot * r * (-3.96648134952927 + (-0.3597894129822 -
+                                          0.0515873015873016 * nu) * prsdot * r2 + (0.5741166706226 +
+                                          0.1547619047619048 * nu) * prsdot2 * r4 + (-0.375376638965 -
+                                          0.311011904761905 * nu) * prsdot3 * r6 + (0.232090341002 +
+                                          0.513888888888889 * nu) * prsdot4 * r8 + (-0.149123435403 -
+                                          0.757161458333333 * nu) * prsdot5 * r10) +
+                                   prstar4 * r * (-1.504375887272 + 1.72001787843 * prsdot * r2 +
+                                       0.1728660269 * prsdot2 * r4 +
+                                       nu * (-0.01785714285714286 + 0.01488095238095238 * prsdot * r2 +
+                                          0.0662202380952381 * prsdot2 * r4)) +
+                                   prstar2 * (-3.0915262913718 - 2.431407978125 * prsdot * r2 +
+                                       1.90394367446 * prsdot2 * r4 - 0.24202967846 * prsdot3 * r6 -
+                                       0.4540556048 * prsdot4 * r8 +
+                                       nu * (0.0515873015873016 - 0.2063492063492063 * prsdot * r2 +
+                                          0.432043650793651 * prsdot2 * r4 -
+                                          0.692956349206349 * prsdot3 * r6 +
+                                          0.944413442460317 * prsdot4 * r8))) * inv_sqrt_r;
+
+#if use_h22_nc_complex_pade
+  const double complex h22_nc_complex_1PN = reh22_nc_1PN + I * imh22_nc_1PN;
+  const double complex h22_nc_complex_2PN = reh22_nc_2PN + I * imh22_nc_2PN;
+  const double complex h22_nc_complex_15PN = (reh22_nc_15PN_log * logr + reh22_nc_15PN_pi * Pi * inv_sqrt_r + reh22_nc_15PN_pr * prstar) + 
+                                         I * (imh22_nc_15PN_log * logr + imh22_nc_15PN_pi * Pi * inv_sqrt_r + imh22_nc_15PN_pr);
+  const double complex h22_nc_complex = 1.0 / ( 1.0 - h22_nc_complex_1PN - h22_nc_complex_15PN + ( h22_nc_complex_1PN * h22_nc_complex_1PN - h22_nc_complex_2PN ) );
+  hath22_nc[0] = cabs(h22_nc_complex);
+  hath22_nc[1] = carg(h22_nc_complex);
+#else
+  rehath22_nc = 1. + reh22_nc_1PN + reh22_nc_2PN + reh22_nc_15PN_log * logr + reh22_nc_15PN_pi * Pi * inv_sqrt_r + reh22_nc_15PN_pr;
+  imhath22_nc = imh22_nc_1PN + imh22_nc_2PN + imh22_nc_15PN_log * logr * inv_sqrt_r + imh22_nc_15PN_pi * Pi * inv_r + imh22_nc_15PN_pr * inv_sqrt_r;
+
+  hath22_nc[0] = sqrt(SQ(rehath22_nc) + SQ(imhath22_nc));
+  hath22_nc[1] = atan2(imhath22_nc, rehath22_nc);
+#endif
+}
+
 /** 
  * Function: eob_wav_hathlm_nc_no
  * ---------------------------------
@@ -5574,9 +5822,15 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
   const double prsdot11 = prsdot10 * prsdot;
   const double prsdot12 = prsdot11 * prsdot;
 
-/* ==================================================================== */
+    /* ==================================================================== */
     /* (2,2) MODE                                                           */
     /* ==================================================================== */
+  if (EOBPars->use_h22_nc_complex) {
+    const double h22_complex[2];
+    eob_wav_hath22_nc_complex(r, prstar, prsdot, h22_complex);
+    hathlm_nc[1] = h22_complex[0];
+  }
+  else {
     const double h22_1PN = (0.9761904761904762 + 0.07142857142857142 * nu) * prstar2 
         + (0.47619047619047616 - 0.42857142857142855 * nu) * prstar4 * r 
         + (-0.20833333333333334 + 0.25 * nu) * prstar6 * r2 
@@ -5669,6 +5923,7 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
 #else
       hathlm_nc[1] = 1.0 + h22_1PN + h22_15PN + h22_2PN;
 #endif
+      }
 
     /* ==================================================================== */
     /* (2,1) MODE                                                           */

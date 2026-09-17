@@ -448,13 +448,14 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->rLSO= 0. ; // radius of last stable orbit 
 
   /* NC options */
-  eobp->use_flm_nc       = USEFLM_NC_22;
-  eobp->flux_nc_order    = FLUX_NC_ORDER_2PN;
-  eobp->use_Fr           = USE_FR_NEXT;
-  eobp->use_hlm_nc       = USEHLM_NC_NO;
-  eobp->use_dlm_nc       = USEDELTALM_NC_NO;
-  eobp->use_dlm_nc_pade  = 0;
-  eobp->use_dlm_nc_order = DELTALM_NC_ORDER_2PN;
+  eobp->use_flm_nc         = USEFLM_NC_22;
+  eobp->flux_nc_order      = FLUX_NC_ORDER_2PN;
+  eobp->use_Fr             = USE_FR_NEXT;
+  eobp->use_hlm_nc         = USEHLM_NC_NO;
+  eobp->use_dlm_nc         = USEDELTALM_NC_NO;
+  eobp->use_dlm_nc_pade    = 0;
+  eobp->use_dlm_nc_order   = DELTALM_NC_ORDER_2PN;
+  eobp->use_h22_nc_complex = 0;
   
   /* Choose the default for the binary type */
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
@@ -2171,6 +2172,10 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
 
+  if (STREQUAL(key,"use_h22_nc_complex")) {
+    eobp->use_h22_nc_complex = YESNO2INT(string_trim(val));
+  }
+
   if (STREQUAL(key,"A_pot")) {
     val = string_trim(val);
     for (eobp->A_pot=0; eobp->A_pot<=A_NOPT;  eobp->A_pot++) {
@@ -2807,6 +2812,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "use_Fr", use_Fr_opt[eobp->use_Fr]);
   fprintf(f,"%s = \"%s\"\n", "use_hlm_nc", use_hlm_nc_opt[eobp->use_hlm_nc]);
   fprintf(f,"%s = \"%s\"\n", "use_dlm_nc", use_dlm_nc_opt[eobp->use_dlm_nc]);
+  fprintf(f,"%s = \"%s\"\n", "use_h22_nc_complex", INT2YESNO(eobp->use_h22_nc_complex));
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
   fprintf(f,"%s = %.16f\n"    , "compute_LR_guess", eobp->compute_LR_guess);
   fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));

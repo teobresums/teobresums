@@ -785,6 +785,7 @@ typedef struct tagEOBParameters
   int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */
   int use_dlm_nc_order;                                 /**< NEW, Flag for PN order of d22_nc */
+  int use_h22_nc_complex;                               /**< NEW, Flag for complex resummed h22_nc */
   int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
@@ -1316,6 +1317,7 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
 extern void (*eob_wav_hathlm_nc)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hathlm_nc_no(double r, double prstar, double prstardot, double *hathlm_nc);
 void eob_wav_hathlm_nc_impqc(double r, double prstar, double prstardot, double *hathlm_nc);
+void eob_wav_hath22_nc_complex(double r, double prstar, double prstardot, double *hath22_nc);
 extern void (*eob_wav_hlmNQC_find_a1a2a3)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);

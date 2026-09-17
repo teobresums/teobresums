@@ -366,6 +366,10 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_h22_nc_complex") != NULL ) { 
+    EOBPars->use_h22_nc_complex =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_h22_nc_complex")));
+  }
+
   /* Metric potentials */
   if ( PyDict_GetItemString(dict, "A_pot") != NULL ) { 
     char* val;
