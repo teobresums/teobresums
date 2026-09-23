@@ -95,8 +95,9 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
   
   /* Compute flux and dp_{\phi}/dt */
+  const double Fphi = (dyn->noflx) ? 0. : eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
-  else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
+  else            dy[EOB_EVOLVE_PPHI] = Fphi;
 
   if(dyn->store) {
     /* Store values */
@@ -120,6 +121,8 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
+    dyn->Fphi = Fphi;
+    dyn->Fr = 0.;
   }
   
   return GSL_SUCCESS;
@@ -312,8 +315,9 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double jhat       = pphi/(r_omg*v_phi);
 
   /* Compute flux and dp_{\phi}/dt */
+  const double Fphi = (dyn->noflx) ? 0. : eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
-  else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
+  else            dy[EOB_EVOLVE_PPHI] = Fphi;
 
   if (dyn->store) {
     /* Store values */
@@ -337,6 +341,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
+    dyn->Fphi = Fphi;
+    dyn->Fr = 0.;
   }
     
   return GSL_SUCCESS;
@@ -500,6 +506,8 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
+    dyn->Fphi = Fphi;
+    dyn->Fr = Fr;
   }
     
   return GSL_SUCCESS;

@@ -631,6 +631,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
+    if (store_dynamics) {
+      dyn->data[EOB_FPHI][0] = dyn->Fphi;
+      dyn->data[EOB_FR][0]   = dyn->Fr;
+    }
     eob_wav_hlm(dyn, hlm_t); 
     
     /* Append waveform to arrays */
@@ -869,6 +873,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
       dyn->data[EOB_E0][iter] 	  = dyn->E;
+      dyn->data[EOB_FPHI][iter]   = dyn->Fphi;
+      dyn->data[EOB_FR][iter]     = dyn->Fr;
     }
 
     /* Stop integration if reached max time */    
