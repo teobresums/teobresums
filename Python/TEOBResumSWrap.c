@@ -64,9 +64,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_tidal"));
     for(EOBPars->use_tidal=0; EOBPars->use_tidal<=TIDES_NOPT; EOBPars->use_tidal++){
       if (EOBPars->use_tidal == TIDES_NOPT) {
-        EOBPars->use_tidal = TIDES_OFF;
-        PRWARNF("use_tidal '%s' undefined, set to '%s'", val, tides_opt[EOBPars->use_tidal]);
-        break;
+        PyErr_Format(PyExc_ValueError, "use_tidal '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,tides_opt[EOBPars->use_tidal])) break;
     }
@@ -76,9 +75,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_tidal_gravitomagnetic"));
     for(EOBPars->use_tidal_gravitomagnetic=0; EOBPars->use_tidal_gravitomagnetic<=TIDES_GM_NOPT; EOBPars->use_tidal_gravitomagnetic++){
       if (EOBPars->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
-        EOBPars->use_tidal_gravitomagnetic = TIDES_GM_OFF;
-        PRWARNF("use_tidal_gravitomagnetic '%s' undefined, set to '%s'", val, tides_gravitomagnetic_opt[EOBPars->use_tidal_gravitomagnetic]);
-        break;
+        PyErr_Format(PyExc_ValueError, "use_tidal_gravitomagnetic '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,tides_gravitomagnetic_opt[EOBPars->use_tidal_gravitomagnetic])) break;
     }  
@@ -88,9 +86,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_lambda234_fits"));
     for(EOBPars->use_lambda234_fits=0; EOBPars->use_lambda234_fits<=Lambda234_fits_NOPT; EOBPars->use_lambda234_fits++){
       if (EOBPars->use_lambda234_fits == Lambda234_fits_NOPT) {
-        EOBPars->use_lambda234_fits = Lambda234_fits_YAGI13;
-        PRWARNF("use_lambda234_fits '%s' undefined, set to '%s'", val, use_lambda234_fits_opt[EOBPars->use_lambda234_fits]);
-        break;
+        PyErr_Format(PyExc_ValueError, "use_lambda234_fits '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,use_lambda234_fits_opt[EOBPars->use_lambda234_fits])) break;
     }    
@@ -100,9 +97,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_a6c_fits"));
     for(EOBPars->use_a6c_fits=0; EOBPars->use_a6c_fits<=a6c_fits_NOPT; EOBPars->use_a6c_fits++){
       if (EOBPars->use_a6c_fits == a6c_fits_NOPT) {
-        EOBPars->use_a6c_fits = a6c_fits_HM;
-        PRWARNF("use_a6c_fits '%s' undefined, set to '%s'", val, use_a6c_fits_opt[EOBPars->use_a6c_fits]);
-        break;
+        PyErr_Format(PyExc_ValueError, "use_a6c_fits '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,use_a6c_fits_opt[EOBPars->use_a6c_fits])) break;
     }    
@@ -112,9 +108,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_cN3LO_fits"));
     for(EOBPars->use_cN3LO_fits=0; EOBPars->use_cN3LO_fits<=cN3LO_fits_NOPT; EOBPars->use_cN3LO_fits++){
       if (EOBPars->use_cN3LO_fits == cN3LO_fits_NOPT) {
-        EOBPars->use_cN3LO_fits = cN3LO_fits_HM_2023_432;
-        PRWARNF("use_cN3LO_fits '%s' undefined, set to '%s'", val, use_cN3LO_fits_opt[EOBPars->use_cN3LO_fits]);
-        break;
+        PyErr_Format(PyExc_ValueError, "use_cN3LO_fits '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,use_cN3LO_fits_opt[EOBPars->use_cN3LO_fits])) break;
     }    
@@ -304,9 +299,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "centrifugal_radius"));
     for(EOBPars->centrifugal_radius=0; EOBPars->centrifugal_radius<=CENTRAD_NOPT; EOBPars->centrifugal_radius++){
       if (EOBPars->centrifugal_radius == CENTRAD_NOPT) {
-        EOBPars->centrifugal_radius = CENTRAD_NLO;
-        PRWARNF("centrifugal_radius '%s' undefined, set to '%s'", val, centrifugal_radius_opt[EOBPars->centrifugal_radius]);
-        break;
+        PyErr_Format(PyExc_ValueError, "centrifugal_radius '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,centrifugal_radius_opt[EOBPars->centrifugal_radius])) break;
     }     
@@ -316,9 +310,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm"));
     for(EOBPars->use_flm=0; EOBPars->use_flm<=USEFLM_NOPT; EOBPars->use_flm++){
       if (EOBPars->use_flm == USEFLM_NOPT) {
-        EOBPars->use_flm = USEFLM_HM;
-        PRWARNF("use_flm '%s' undefined, set to '%s'", val, use_flm_opt[EOBPars->use_flm]);
-        break;
+        PyErr_Format(PyExc_ValueError, "use_flm '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,use_flm_opt[EOBPars->use_flm])) break;
     }
@@ -330,9 +323,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "A_pot"));
     for(EOBPars->A_pot=0; EOBPars->A_pot<=A_NOPT; EOBPars->A_pot++){
       if (EOBPars->A_pot == A_NOPT) {
-        EOBPars->A_pot = A_5PNlog;
-        PRWARNF("A_pot '%s' undefined, set to '%s'", val, A_opt[EOBPars->A_pot]);
-        break;
+        PyErr_Format(PyExc_ValueError, "A_pot '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,A_opt[EOBPars->A_pot])) break;
     }    
@@ -342,9 +334,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "D_pot"));
     for(EOBPars->D_pot=0; EOBPars->D_pot<=D_NOPT; EOBPars->D_pot++){
       if (EOBPars->D_pot == D_NOPT) {
-        EOBPars->D_pot = D_3PN;
-        PRWARNF("D_pot '%s' undefined, set to '%s'", val, D_opt[EOBPars->D_pot]);
-        break;
+        PyErr_Format(PyExc_ValueError, "D_pot '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,D_opt[EOBPars->D_pot])) break;
     }    
@@ -354,9 +345,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "Q_pot"));
     for(EOBPars->Q_pot=0; EOBPars->Q_pot<=Q_NOPT; EOBPars->Q_pot++){
       if (EOBPars->Q_pot == Q_NOPT) {
-        EOBPars->Q_pot = Q_3PN;
-        PRWARNF("Q_pot '%s' undefined, set to '%s'", val, Q_opt[EOBPars->Q_pot]);
-        break;
+        PyErr_Format(PyExc_ValueError, "Q_pot '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,Q_opt[EOBPars->Q_pot])) break;
     }    
@@ -368,9 +358,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "nqc"));
     for(EOBPars->nqc=0; EOBPars->nqc<=NQC_NOPT; EOBPars->nqc++){
       if (EOBPars->nqc == NQC_NOPT) {
-        EOBPars->nqc = NQC_AUTO;
-        PRWARNF("nqc '%s' undefined, set to '%s'", val, nqc_opt[EOBPars->nqc]);
-        break;
+        PyErr_Format(PyExc_ValueError, "nqc '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,nqc_opt[EOBPars->nqc])) break;
     }     
@@ -380,9 +369,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "nqc_coefs_flx"));
     for(EOBPars->nqc_coefs_flx=0; EOBPars->nqc_coefs_flx<=NQC_FLX_NOPT; EOBPars->nqc_coefs_flx++){
       if (EOBPars->nqc_coefs_flx == NQC_FLX_NOPT) {
-        EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
-        PRWARNF("nqc_coefs_flx '%s' undefined, set to '%s'", val, nqc_flx_opt[EOBPars->nqc_coefs_flx]);
-        break;
+        PyErr_Format(PyExc_ValueError, "nqc_coefs_flx '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,nqc_flx_opt[EOBPars->nqc_coefs_flx])) break;
     }     
@@ -392,9 +380,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "nqc_coefs_hlm"));
     for(EOBPars->nqc_coefs_hlm=0; EOBPars->nqc_coefs_hlm<=NQC_HLM_NOPT; EOBPars->nqc_coefs_hlm++){
       if (EOBPars->nqc_coefs_hlm == NQC_HLM_NOPT) {
-        EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
-        PRWARNF("nqc_coefs_hlm '%s' undefined, set to '%s'", val, nqc_hlm_opt[EOBPars->nqc_coefs_hlm]);
-        break;
+        PyErr_Format(PyExc_ValueError, "nqc_coefs_hlm '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,nqc_hlm_opt[EOBPars->nqc_coefs_hlm])) break;
     }     
@@ -426,9 +413,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "spin_flx"));
     for(EOBPars->spin_flx=0; EOBPars->spin_flx<=SPIN_FLX_NOPT; EOBPars->spin_flx++){
       if (EOBPars->spin_flx == SPIN_FLX_NOPT) {
-        EOBPars->spin_flx = SPIN_FLX_PN;
-        PRWARNF("spin_flx '%s' undefined, set to '%s'", val, spin_flx_opt[EOBPars->spin_flx]);
-        break;
+        PyErr_Format(PyExc_ValueError, "spin_flx '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,spin_flx_opt[EOBPars->spin_flx])) break;
     }     
@@ -438,9 +424,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ringdown_eulerangles"));
     for(EOBPars->ringdown_eulerangles=0; EOBPars->ringdown_eulerangles<=RD_EULERANGLES_NOPT; EOBPars->ringdown_eulerangles++){
       if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_NOPT) {
-        EOBPars->ringdown_eulerangles = RD_EULERANGLES_QNMs;
-        PRWARNF("ringdown_eulerangles '%s' undefined, set to '%s'", val, ringdown_eulerangles_opt[EOBPars->ringdown_eulerangles]);
-        break;
+        PyErr_Format(PyExc_ValueError, "ringdown_eulerangles '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,ringdown_eulerangles_opt[EOBPars->ringdown_eulerangles])) break;
     }     
@@ -476,9 +461,8 @@ int SetOptionalVariables(PyObject* dict){
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_timestep"));
     for(EOBPars->ode_timestep=0; EOBPars->ode_timestep<=ODE_TSTEP_NOPT; EOBPars->ode_timestep++){
       if (EOBPars->ode_timestep == ODE_TSTEP_NOPT) {
-        EOBPars->ode_timestep = ODE_TSTEP_ADAPTIVE;
-        PRWARNF("ode_timestep '%s' undefined, set to '%s'", val, ode_tstep_opt[EOBPars->ode_timestep]);
-        break;
+        PyErr_Format(PyExc_ValueError, "ode_timestep '%s' undefined", val);
+        return 1;
       }
       if (STREQUAL(val,ode_tstep_opt[EOBPars->ode_timestep])) break;
     }     
@@ -780,9 +764,8 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "model"));
     for(EOBPars->model=0; EOBPars->model<=MODEL_NOPT; EOBPars->model++){
       if (EOBPars->model == MODEL_NOPT) {
-        EOBPars->model = MODEL_DALI;
-        PRWARNF("model '%s' undefined, set to '%s'", val, model_opt[EOBPars->model]);
-        break;
+        PyErr_Format(PyExc_ValueError, "model '%s' undefined", val);
+        return NULL;
       }
       if (STREQUAL(val,model_opt[EOBPars->model])) break;
     }
@@ -842,8 +825,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   /* Optional arguments for the dictionary */
 
   /* Options */
-  SetOptionalVariables(dict);
-
+  if (SetOptionalVariables(dict)) {
+    return NULL;
+  }
   /* output */
   const int output = EOBPars->output_dynamics
     + EOBPars->output_multipoles
