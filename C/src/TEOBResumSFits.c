@@ -3443,7 +3443,7 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
   }
 
   /* Apply deviations from merger amplitude, frequency */
-  if (VERBOSE & (EOBPars->delta_Alm_mrg_size + EOBPars->delta_Omglm_mrg_size > 0))
+  if (VERBOSE && (EOBPars->delta_Alm_mrg_size + EOBPars->delta_Omglm_mrg_size > 0))
     printf("Applying deviations from NR amplitude, frequency at merger.\n");
   if (EOBPars->delta_Alm_mrg_size > 0)
     apply_mode_deviations(Amrg, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
@@ -5496,7 +5496,7 @@ void peak_bhns(double nu, double lambda, double chi1, double X1, double X2, doub
     }
 
   /* Apply deviations from merger amplitude, frequency */
-  if (VERBOSE & (EOBPars->delta_Alm_mrg_size + EOBPars->delta_Omglm_mrg_size > 0))
+  if (VERBOSE && (EOBPars->delta_Alm_mrg_size + EOBPars->delta_Omglm_mrg_size > 0))
     printf("Applying deviations from NR amplitude, frequency at merger.\n");
   if (EOBPars->delta_Alm_mrg_size > 0)
     apply_mode_deviations(Apeak, EOBPars->delta_Alm_mrg, EOBPars->delta_Alm_mrg_k, EOBPars->delta_Alm_mrg_size);
