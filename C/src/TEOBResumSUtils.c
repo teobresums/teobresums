@@ -67,7 +67,7 @@ void set_spin_vars(double X1, double X2, double chi1, double chi2,
 /** Set ST parameters */
 void set_st_vars(double alpha1, double alpha2, double beta1,
                  double beta2, double dbeta1, double dbeta2,
-                 double d2beta1, double d2beta2, double alpha0,
+                 double d2beta1, double d2beta2, double lGB,
                  double *betaA, double *betaB, double *deltaA, double *deltaB,
                  double *chiA, double *chiB, double *kappaA, double *kappaB,
                  double *gammaAB, double *alphaAB, double *deltaP, double *deltaM,
@@ -84,7 +84,7 @@ void set_st_vars(double alpha1, double alpha2, double beta1,
   *kappaA    = 0.125*d2beta1*SQ(SQ(alpha2))/SQ(SQ(den));
   *kappaB    = 0.125*d2beta2*SQ(SQ(alpha1))/SQ(SQ(den));
   *gammaAB   = -(2.*alpha1*alpha2)/(den);
-  *alphaAB   = (den)/(1. + alpha0*alpha0);
+  *alphaAB   = den;
 
   *deltaP   = 0.5*((*deltaA) + (*deltaB));
   *deltaM   = 0.5*((*deltaA) - (*deltaB));

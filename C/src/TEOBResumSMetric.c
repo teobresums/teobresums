@@ -341,10 +341,15 @@ void eob_metric_A5PNlogST(double r, double nu, double *A, double *dA, double *d2
   double nu4 = nu2*nu2;
   double pi2 = Pi*Pi;
   double pi4 = pi2*pi2;
+
+  double M = EOBPars->M;
   
   /* ST parameters */
   const double XAB = sqrt(1.-4.*nu);
+  double lGB      = EOBPars->st_lGB;
   double alphaAB  = EOBPars->st_alphaAB;
+  double alphaA   = EOBPars->st_alpha1;
+  double alphaB   = EOBPars->st_alpha2;
   double betaA    = EOBPars->st_betaA;
   double betaB    = EOBPars->st_betaB;
   double gammaAB  = EOBPars->st_gammaAB;
@@ -396,13 +401,17 @@ void eob_metric_A5PNlogST(double r, double nu, double *A, double *dA, double *d2
   double a3st    = 1./12.*(-20.*gammaAB - 35.*gammaAB2 - 24.*betabar*(1-2.*gammaAB)+4.*(deltabar + 4.*chibar) + nu*(-72*betaP + 4.*gammaAB*(10. + gammaAB) - 32.*chiP + 16.*deltaP - 24.*zeta));
   double a4stc   = 0.;
   if (gammaAB != 0.)
-    a4stc = - 2.*gammaAB - 13./2.*gammaAB2 - 5.*gammaAB3 + (-7./6.*(2. + gammaAB)*(2. + gammaAB) + 9.*gammaAB2)*betabar + 4.*gammaAB*chibar + 2./3.*kappabar + 2./3.*(1.+2.*gammaAB)*deltabar
-    + 6.*(betaP*betaP + betaM*betaM) - 12.*XAB*betaM*betaP + 2./3.*(betaM*(deltaM + XAB*deltaP)-deltabar*betaP) + nu*(11./(4.*alphaAB)*(2.+gammaAB)*gammaAB - deltabar*gammaAB/(alphaAB*(2.+gammaAB))
-    + 32./gammaAB2*betabar*(betaP*betaP-betaM*betaM) + 4./gammaAB*(betaM*(-4*chiM +4.*XAB*chiP + 4./3.*(2.*deltaM-XAB*deltaP)) + betaP*(4./3.*(2.*deltaP - XAB*deltaM) +4.*chibar))+gammaAB*(581./18.
-    - 75./64.*pi2 - 8.*zeta - 32./3.*betabar - 20.*betaP + 1./2.*deltabar + (4./3.+7./32.*pi2)*deltaP - 8.*chiP) + gammaAB2*(239./18. - 5./32.*pi2 - 2./3.*betabar) + gammaAB3*(-3./8. + 7./128.*pi2)
-    + 3.*zeta - 6.*(betaP*betaP + betaM*betaM) - 5./3.*betabar + 3./2.*XAB*betaM - 12.*XAB*betaM*betaP - 8./3.*(deltaP*betabar + betaM*deltaM) - deltaP*(92./9. -7./16.*pi2) + 1./3.*XAB*deltaM
-    - 2./3.*kappabar - 4./3.*kappaP - 4.*chibar) - 4.*nu2*betaM*betaM;
-
+    a4stc = - 2.*gammaAB - 13./2.*gammaAB2 - 5.*gammaAB3 + (-7./6.*(2. + gammaAB)*(2. + gammaAB) + 9.*gammaAB2)*betabar + 4.*gammaAB*chibar
+      + 2./3.*kappabar + 2./3.*(1.+2.*gammaAB)*deltabar + 6.*(betaP*betaP + betaM*betaM) - 12.*XAB*betaM*betaP + 2./3.*(betaM*(deltaM + XAB*deltaP)-deltabar*betaP)
+      + nu*( 32./gammaAB2*betabar*(betaP*betaP-betaM*betaM) + 4./gammaAB*(betaM*(-4*chiM +4.*XAB*chiP + 4./3.*(2.*deltaM-XAB*deltaP))
+      + betaP*(4./3.*(2.*deltaP - XAB*deltaM) + 4.*chibar)) + gammaAB*(581./18.	- 75./64.*pi2 - 8.*zeta - 32./3.*betabar - 20.*betaP + 1./2.*deltabar
+      + (4./3.+7./32.*pi2)*deltaP - 8.*chiP) + gammaAB2*(239./18. - 5./32.*pi2 - 2./3.*betabar) + gammaAB3*(-3./8. + 7./128.*pi2) + 3.*zeta
+      - 6.*(betaP*betaP + betaM*betaM) - 5./3.*betabar + 3./2.*XAB*betaM - 12.*XAB*betaM*betaP - 8./3.*(deltaP*betabar + betaM*deltaM) - deltaP*(92./9. -7./16.*pi2)
+      + 1./3.*XAB*deltaM - 2./3.*kappabar - 4./3.*kappaP - 4.*chibar) - 4.*nu2*betaM*betaM - (nu/(8.*(2.+gammaAB)))*(gammaAB*(2.+gammaAB)*(2.+gammaAB)*(2.+gammaAB)*(11.+4.*nu)
+      - 4.*XAB*(40.+22.*gammaAB+gammaAB*gammaAB)*deltaM + 4.*((2.+gammaAB)*(-20.+40.*nu+gammaAB*(-1.+4.*nu)))*deltaP)
+      + 2.*(-lGB*lGB*2./(M*M)*(3.*(alphaA+alphaB)+XAB*(alphaA-alphaB))/(alphaAB*alphaAB*alphaAB*alphaAB));
+  /*the last term has l^2*2 because of shift symmetric EsGB terms. Is the mass addition correct? TODO*/
+      
   double a4stlog =  8./3.*nu*(2.*deltaP + gammaAB*(2.+gammaAB)/2.);
   double a4sttot = a4stc + a4stlog*logu;
   double a2st2   = a2st*a2st; 

@@ -634,7 +634,7 @@ typedef struct tagEOBParameters
 
   /* scalar-tensor parameters */
   double st_alpha1, st_alpha2, st_beta1, st_beta2, st_dbeta1, st_dbeta2,
-    st_d2beta1, st_d2beta2, st_alpha0, st_betaA, st_betaB, st_deltaA, st_deltaB,
+    st_d2beta1, st_d2beta2, st_lGB, st_betaA, st_betaB, st_deltaA, st_deltaB,
     st_chiA, st_chiB, st_kappaA, st_kappaB, st_gammaAB, st_alphaAB,
     st_deltaP, st_deltaM, st_betaP, st_betaM, st_chiP, st_chiM, st_kappaP, st_kappaM;
   double st_mphi;
@@ -746,7 +746,7 @@ double tidal_kappa_of_Lambda(double q, double XA, double XB, double LamA, double
 void set_spin_vars(double X1, double X2, double chi1, double chi2, double *S1, double *S2, double *a1, double *a2, double *aK, double *aK2, double *S, double *Sstar);
 void set_st_vars(double alpha1, double alpha2, double beta1,
                  double beta2, double dbeta1, double dbeta2,
-                 double d2beta1, double d2beta2, double alpha0,
+                 double d2beta1, double d2beta2, double lGB,
                  double *betaA, double *betaB, double *deltaA, double *deltaB,
                  double *chiA, double *chiB, double *kappaA, double *kappaB,
 		 double *gammaAB, double *alphaAB, double *deltaP, double *deltaM,

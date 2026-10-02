@@ -331,7 +331,7 @@ void EOBParameters_defaults (int choose, EOBParameters *eobp)
   eobp->st_dbeta2 = 0.;
   eobp->st_d2beta1 = 0.;
   eobp->st_d2beta2 = 0.;
-  eobp->st_alpha0 = 0.;
+  eobp->st_lGB = 0.;
   eobp->st_betaA = 0.;
   eobp->st_betaB = 0.;
   eobp->st_deltaA = 0.;
@@ -1081,8 +1081,8 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"st_d2beta2")) {
     eobp->st_d2beta2 = par_get_d(val);
   }
-  if (STREQUAL(key,"st_alpha0")) {
-    eobp->st_alpha0 = par_get_d(val);
+  if (STREQUAL(key,"st_lGB")) {
+    eobp->st_lGB = par_get_d(val);
   }
   if (STREQUAL(key,"st_mphi")) {
     eobp->st_mphi = par_get_d(val);
@@ -1554,7 +1554,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 
   fprintf(f,"%s = %.16f\n","st_alpha1",  eobp->st_alpha1);
   fprintf(f,"%s = %.16f\n","st_alpha2",  eobp->st_alpha2);
-  fprintf(f,"%s = %.16f\n","st_alpha0",  eobp->st_alpha0);
+  fprintf(f,"%s = %.16f\n","st_lGB",  eobp->st_lGB);
   fprintf(f,"%s = %.16f\n","st_beta1",  eobp->st_beta1);
   fprintf(f,"%s = %.16f\n","st_beta2",  eobp->st_beta2);
   fprintf(f,"%s = %.16f\n","st_dbeta1",  eobp->st_dbeta1);
