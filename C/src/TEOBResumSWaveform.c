@@ -3263,7 +3263,9 @@ void eob_wav_hatflm_ST(Dynamics *dyn, Waveform_lm_t *hlm)
   double chibar   = - X12*chiM + chiP;
   double deltabar =  X12*deltaM + deltaP;
 
-  double x   = SQ(rw*Omega);
+  double alphaAB23 = SQ(alphaAB*alphaAB*alphaAB);
+  
+  double x   = alphaAB23*SQ(rw*Omega);
   double x2  = SQ(x);
   double x32 = sqrt(x*x2);
 
