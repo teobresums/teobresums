@@ -5719,8 +5719,8 @@ void eob_wav_hath22_nc_complex(double r, double prstar, double prsdot, double* h
   hath22_nc[0] = cabs(h22_nc_complex);
   hath22_nc[1] = carg(h22_nc_complex);
 #else
-  rehath22_nc = 1. + reh22_nc_1PN + reh22_nc_2PN + reh22_nc_15PN_log * logr + reh22_nc_15PN_pi * Pi * inv_sqrt_r + reh22_nc_15PN_pr;
-  imhath22_nc = imh22_nc_1PN + imh22_nc_2PN + imh22_nc_15PN_log * logr * inv_sqrt_r + imh22_nc_15PN_pi * Pi * inv_r + imh22_nc_15PN_pr * inv_sqrt_r;
+  const double rehath22_nc = 1. + reh22_nc_1PN + reh22_nc_2PN + reh22_nc_15PN_log * logr + reh22_nc_15PN_pi * Pi * inv_sqrt_r + reh22_nc_15PN_pr;
+  const double imhath22_nc = imh22_nc_1PN + imh22_nc_2PN + imh22_nc_15PN_log * logr * inv_sqrt_r + imh22_nc_15PN_pi * Pi * inv_r + imh22_nc_15PN_pr * inv_sqrt_r;
 
   hath22_nc[0] = sqrt(SQ(rehath22_nc) + SQ(imhath22_nc));
   hath22_nc[1] = atan2(imhath22_nc, rehath22_nc);
