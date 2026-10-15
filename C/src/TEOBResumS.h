@@ -374,9 +374,11 @@ enum{
   FLUX_NC_ORDER_1PN,           /**< 1PN */
   FLUX_NC_ORDER_15PN,          /**< 1.5PN */
   FLUX_NC_ORDER_2PN,           /**< 2PN */
+  FLUX_NC_ORDER_25PN,          /**< 2.5PN */
+  FLUX_NC_ORDER_3PN,           /**< 3PN */
   FLUX_NC_ORDER_NOPT           /**< Number of delta lm nc orders */
 };
-static const char* const flux_nc_order_opt[] = {"0PN", "1PN", "1.5PN", "2PN"};
+static const char* const flux_nc_order_opt[] = {"0PN", "1PN", "1.5PN", "2PN", "2.5PN", "3PN"};
 
 /** List of options for Fr */
 enum{
