@@ -1686,7 +1686,7 @@ double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, do
  *  Function: eob_flx_flm_nc_22
  *  ---------------------------
  *  Computes the non-circular correction factor for the (2,2) mode of the gravitational
- *  wave flux in the Effective One Body (EOB) formalismm up to 2PN order.
+ *  wave flux in the Effective One Body (EOB) formalism up to 3PN order.
  *  Depending on `use_pade_22`, it either resums the series using a Padé approximant or returns the Taylor-expanded form.
  * 
  *  @param[in] r The radial separation between the two bodies.
@@ -1900,7 +1900,7 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
  * Function: eob_flx_flm_nc_21
  * ---------------------------
  * Computes the non-circular correction factor for the (2,1) mode of the gravitational
- * wave flux in the Effective One Body (EOB) formalismm up to 1PN order.
+ * wave flux in the Effective One Body (EOB) formalism up to 2PN order.
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
@@ -1908,20 +1908,62 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
  *  @return The non-circular correction factor for the (2,1) mode of the gravitational wave flux.
  */
 double eob_flx_flm_nc_21(double r, double prstar, double prsdot) {
-    const double nu = EOBPars -> nu;
-    const double prstar2 = prstar * prstar;
+  const double nu = EOBPars -> nu;
+  const double nu2 = nu*nu;
 
-    const double f21_1PN = (0.21428571428571427 - 0.42857142857142855 * nu) * prstar2 
-        + prsdot * r * (4.642857142857143 + 0.38095238095238093 * nu);
+  const double r2  = r * r;
+  const double r3  = r2 * r;
+  const double r4  = r3 * r;
+  const double r5  = r4 * r;
+  const double r6  = r5 * r;
+  const double r7  = r6 * r;
+  const double r8  = r7 * r;
+  const double r9  = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
 
-    return 1.0 + f21_1PN;
+  const double logr = log(r);
+  const double sqrt_r = sqrt(r);
+  
+  const double prstar2 = prstar  * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar6 = prstar4 * prstar2;
+
+  const double prsdot2 = prsdot  * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
+  
+  double f21_15PN = 0.0, f21_2PN = 0.0;
+    
+  const double f21_1PN = (0.21428571428571427 - 0.42857142857142855 * nu) * prstar2 
+    + prsdot * r * (4.642857142857143 + 0.38095238095238093 * nu);
+
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+    f21_15PN = (-2.0 * prstar2 + 0.09375 * prstar4 * r - 0.042708333333333334 * prstar6 * r2
+		+ prsdot * (2.0 * r + 1.5 * prstar2 * r2 - 0.421875 * prstar4 * r3)
+		+ prsdot2 * (-1.0 * r3 - 2.0625 * prstar2 * r4 + 0.55078125 * prstar4 * r5)
+		+ prsdot3 * (0.5833333333333334 * r5 + 2.28125 * prstar2 * r6)
+		+ prsdot4 * (-0.28125 * r7 - 1.8151041666666667 * prstar2 * r8)
+		+ 0.1 * prsdot5 * r9 - 0.017795138888888888 * prsdot6 * r11) / sqrt(r) * M_PI;
+
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
+    f21_2PN = (-1.6930272108843538 - 6.061224489795919 * nu + 3.5493197278911564 * nu2) * prstar2 / r
+      + (-0.5612244897959183 + 0.923469387755102 * nu + 0.25510204081632654 * nu2) * prstar4
+      + prsdot * (11.668083900226758 + 0.9348072562358276 * nu - 1.649092970521542 * nu2
+		  + (-2.181122448979592 + 8.545918367346939 * nu + 4.525510204081633 * nu2) * prstar2 * r)
+      + prsdot2 * (15.639172335600907 + 3.2885487528344672 * nu - 3.3520408163265305 * nu2) * r2;
+
+  return 1.0 + f21_1PN + f21_15PN + f21_2PN;
 }
 
 /**
  * Function: eob_flx_flm_nc_33
  * ---------------------------
  * Computes the non-circular correction factor for the (3,3) mode of the gravitational
- * wave flux in the Effective One Body (EOB) formalismm up to 1PN order.
+ * wave flux in the Effective One Body (EOB) formalism up to 1PN order.
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
@@ -1929,48 +1971,141 @@ double eob_flx_flm_nc_21(double r, double prstar, double prsdot) {
  *  @return The non-circular correction factor for the (3,3) mode of the gravitational wave flux.
  */
 double eob_flx_flm_nc_33(double r, double prstar, double prsdot) {
-    const double nu = EOBPars -> nu;
-    const double r2 = r * r;
-    const double r3 = r2 * r;
-    const double r5 = r3 * r2;
-    const double r7 = r5 * r2;
-    const double r9 = r7 * r2;
-    const double r11 = r9 * r2;
+  const double nu = EOBPars -> nu;
+  const double nu2 = nu*nu;
 
-    const double prstar2 = prstar  * prstar;
-    const double prstar4 = prstar2 * prstar2;
-    const double prstar6 = prstar4 * prstar2;
+  const double r2  = r * r;
+  const double r3  = r2 * r;
+  const double r4  = r3 * r;
+  const double r5  = r4 * r;
+  const double r6  = r5 * r;
+  const double r7  = r6 * r;
+  const double r8  = r7 * r;
+  const double r9  = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
 
-    const double prsdot2 = prsdot  * prsdot;
-    const double prsdot3 = prsdot2 * prsdot;
-    const double prsdot4 = prsdot3 * prsdot;
-    const double prsdot5 = prsdot4 * prsdot;
-    const double prsdot6 = prsdot5 * prsdot;
+  const double logr = log(r);
+  const double sqrt_r = sqrt(r);
+  
+  const double prstar2 = prstar  * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar6 = prstar4 * prstar2;
 
-    const double f33_1PN = (4.091449474165524 - 0.7288523090992227 * nu) * prstar2 
-        + (0.38950325624105026 - 0.3167689357802654 * nu) * prstar4 * r 
-        + (0.25195551286395695 - 0.2050987654398423 * nu) * prstar6 * r2 
-        + prsdot * r * (3.9670781893004117 - 1.4650205761316872 * nu 
-        + (0.9247743399549526 - 0.584700841673864 * nu) * prstar2 * r 
-        + (0.5468741277645747 - 0.4043296120045938 * nu) * prstar4 * r2) 
-        + prsdot2 * r3 * (0.3682365493065082 - 0.16491388507849414 * nu 
-        + (0.0666113453798258 - 0.07074350680508279 * nu) * prstar2 * r 
-        + (-0.3150000050720085 + 0.26821867957530765 * nu) * prstar4 * r2) 
-        + prsdot3 * r5 * (-0.12453499071392685 + 0.07311441909826302 * nu 
-        + (-0.16334396294667833 + 0.155088514175098253 * nu) * prstar2 * r) 
-        + prsdot4 * r7 * (0.06405247451948778 - 0.04731203568327539 * nu 
-        + (0.1418970418297452 - 0.14408840072128107 * nu) * prstar2 * r) 
-        + prsdot5 * r9 * (-0.045222577270558346 + 0.036976041295534064 * nu) 
-        + prsdot6 * r11 * (0.03644723802353617 - 0.030758819492607913 * nu);
+  const double prsdot2 = prsdot  * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
 
-    return 1.0 + f33_1PN;
+  double f33_15PN = 0.0, f33_2PN = 0.0;
+
+  const double f33_1PN = (4.091449474165524 - 0.7288523090992227 * nu) * prstar2 
+    + (0.38950325624105026 - 0.3167689357802654 * nu) * prstar4 * r 
+    + (0.25195551286395695 - 0.2050987654398423 * nu) * prstar6 * r2 
+    + prsdot * r * (3.9670781893004117 - 1.4650205761316872 * nu 
+		    + (0.9247743399549526 - 0.584700841673864 * nu) * prstar2 * r 
+		    + (0.5468741277645747 - 0.4043296120045938 * nu) * prstar4 * r2) 
+    + prsdot2 * r3 * (0.3682365493065082 - 0.16491388507849414 * nu 
+		      + (0.0666113453798258 - 0.07074350680508279 * nu) * prstar2 * r 
+		      + (-0.3150000050720085 + 0.26821867957530765 * nu) * prstar4 * r2) 
+    + prsdot3 * r5 * (-0.12453499071392685 + 0.07311441909826302 * nu 
+		      + (-0.16334396294667833 + 0.155088514175098253 * nu) * prstar2 * r) 
+    + prsdot4 * r7 * (0.06405247451948778 - 0.04731203568327539 * nu 
+		      + (0.1418970418297452 - 0.14408840072128107 * nu) * prstar2 * r) 
+    + prsdot5 * r9 * (-0.045222577270558346 + 0.036976041295534064 * nu) 
+    + prsdot6 * r11 * (0.03644723802353617 - 0.030758819492607913 * nu);
+
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+    f33_15PN = (-2.213991769547325 * prstar2 - 0.362759636064963 * prstar4 * r - 0.21523446862102458 * prstar6 * r2
+		+ prsdot * (-1.4814814814814814 * r + 0.11659807956104253 * prstar2 * r2 - 0.2523166278884517 * prstar4 * r3)
+		+ prsdot2 * (0.2661179698216735 * r3 - 0.1989424743292294 * prstar2 * r4 + 0.2744331902226943 * prstar4 * r5)
+		+ prsdot3 * (-0.17822486409592034 * r5 + 0.211287689456068 * prstar2 * r6)
+		+ prsdot4 * (0.12548976509151533 * r7 - 0.14374224599766844 * prstar2 * r8)
+		- 0.08344181045462208 * prsdot5 * r9 + 0.05261403464106992 * prsdot6 * r11) * M_PI / sqrt(r);
+
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
+    f33_2PN = (-4.819730916850259 - 9.884770891355254 * nu + 1.8566127669008328 * nu2) * prstar2 / r
+      + (10.578999287985045 - 0.7595120482315862 * nu + 0.5634994574214544 * nu2) * prstar4
+      + (2.1495147324633015 - 1.403943168980269 * nu + 0.43861466575896324 * nu2) * prstar6 * r
+      + prsdot * (29.59846614291059 + 8.392143658810326 * nu - 3.6552188552188554 * nu2
+		  + (2.5852763010894395 - 11.37096176416402 * nu + 2.995806153800362 * nu2) * prstar2 * r
+		  + (10.279252464274382 - 7.458237066947033 * nu + 1.6861797964715002 * nu2) * prstar4 * r2)
+      + prsdot2 * ((23.968283659641685 - 1.1744606559421373 * nu - 2.468415291460559 * nu2) * r2
+		   + (1.3769836466543157 + 0.012788002218249415 * nu + 1.516262396089884 * nu2) * prstar2 * r3
+		   + (-2.8842236262879175 + 2.4613713466436535 * nu + 0.03404381499953518 * nu2) * prstar4 * r4)
+      + prsdot3 * ((0.34258289340593867 - 0.4159998604138217 * nu + 0.22152418869382748 * nu2) * r4
+		   + (0.2916803981704465 - 1.1282107732398128 * nu - 0.20394961487768068 * nu2) * prstar2 * r5)
+      + prsdot4 * ((0.07581022278307584 + 0.09536602018156885 * nu - 0.004726596312115683 * nu2) * r6
+		   + (0.0530273514399816 + 0.538168704423692 * nu + 0.17558929104025728 * nu2) * prstar2 * r7)
+      + (-0.10057281567076007 - 0.014029913092461899 * nu - 0.05647251604655886 * nu2) * prsdot5 * r8
+      + (0.10619867488357193 - 0.04570652243882066 * nu + 0.08401945368021832 * nu2) * prsdot6 * r10;
+
+  return 1.0 + f33_1PN + f33_15PN + f33_2PN;
+
+}
+
+/**
+ * Function: eob_flx_flm_nc_32
+ * ---------------------------
+ * Computes the non-circular correction factor for the (3,2) mode of the gravitational
+ * wave flux in the Effective One Body (EOB) formalism up to 1PN order.
+ * 
+ *  @param[in] r The radial separation between the two bodies.
+ *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot The time derivative of the radial momentum.
+ *  @return The non-circular correction factor for the (3,1) mode of the gravitational wave flux.
+ */
+double eob_flx_flm_nc_32(double r, double prstar, double prsdot) {
+  const double nu  = EOBPars -> nu;
+  const double nu2 = nu*nu;
+    
+  const double r2  = r * r;
+  const double r3  = r2 * r;
+  const double r4  = r3 * r;
+  const double r5  = r4 * r;
+  const double r6  = r5 * r;
+  const double r7  = r6 * r;
+  const double r8  = r7 * r;
+  const double r9  = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
+
+  const double prstar2 = prstar  * prstar;
+  const double prstar4 = prstar2 * prstar2;
+  const double prstar6 = prstar4 * prstar2;
+
+  const double prsdot2 = prsdot  * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
+
+  const double f32_1PN = ((2.3340277777777776 - 8.17013888888889 * nu + 3.1909722222222223 * nu2) * prstar2
+			  + (0.1208767361111111 - 0.5106336805555556 * nu + 0.2619357638888889 * nu2) * prstar4 * r
+			  + (0.007554796006944444 - 0.031914605034722224 * nu + 0.016370985243055556 * nu2) * prstar6 * r2
+			  + prsdot * ((4.823611111111111 - 13.472222222222221 * nu + 2.388888888888889 * nu2) * r
+				      + (-0.0026041666666666665 + 0.09505208333333333 * nu - 0.24348958333333334 * nu2) * prstar2 * r2
+				      + (-0.1059299045138889 + 0.4527452256944444 * nu - 0.2444118923611111 * nu2) * prstar4 * r3)
+			  + prsdot2 * ((0.0008680555555555555 - 0.2152777777777778 * nu + 0.6006944444444444 * nu2) * r3
+				       + (0.0023328993055555555 - 0.09662543402777778 * nu + 0.2505967881944444 * nu2) * prstar2 * r4
+				       + (0.09283447265625 - 0.402191162109375 * nu + 0.229522705078125 * nu2) * prstar4 * r5)
+			  + prsdot3 * ((-0.0007595486111111111 + 0.18836805555555555 * nu - 0.5256076388888888 * nu2) * r5
+				       + (-0.0020887586805555555 + 0.09632025824652778 * nu - 0.2521226671006944 * nu2) * prstar2 * r6)
+			  + prsdot4 * ((0.0006646050347222222 - 0.1648220486111111 * nu + 0.4599066840277778 * nu2) * r7
+				       + (0.00186920166015625 - 0.09458160400390625 * nu + 0.24935150146484375 * nu2) * prstar2 * r8)
+			  + (-0.0005815294053819445 + 0.1442192925347222 * nu - 0.4024183485243056 * nu2) * prsdot5 * r9
+			  + (0.0005088382297092014 - 0.12619188096788195 * nu + 0.35211605495876735 * nu2) * prsdot6 * r11) / (1.0 - 3.0 * nu);
+
+  return 1.0 + f32_1PN;
 }
 
 /**
  * Function: eob_flx_flm_nc_31
  * ---------------------------
  * Computes the non-circular correction factor for the (3,1) mode of the gravitational
- * wave flux in the Effective One Body (EOB) formalismm up to 1PN order.
+ * wave flux in the Effective One Body (EOB) formalism up to 2PN order.
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
@@ -1978,37 +2113,202 @@ double eob_flx_flm_nc_33(double r, double prstar, double prsdot) {
  *  @return The non-circular correction factor for the (3,1) mode of the gravitational wave flux.
  */
 double eob_flx_flm_nc_31(double r, double prstar, double prsdot) {
-    const double nu = EOBPars -> nu;
-    const double r2 = r * r;
-    const double r3 = r2 * r;
-    const double r5 = r3 * r2;
-    const double r7 = r5 * r2;
-    const double r9 = r7 * r2;
-    const double r11 = r9 * r2;
+  const double nu = EOBPars -> nu;
+  const double nu2 = nu*nu;
 
-    const double prstar2 = prstar  * prstar;
-    const double prstar4 = prstar2 * prstar2;
-    const double prstar6 = prstar4 * prstar2;
+  const double r2  = r * r;
+  const double r3  = r2 * r;
+  const double r4  = r3 * r;
+  const double r5  = r4 * r;
+  const double r6  = r5 * r;
+  const double r7  = r6 * r;
+  const double r8  = r7 * r;
+  const double r9  = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
 
-    const double prsdot2 = prsdot  * prsdot;
-    const double prsdot3 = prsdot2 * prsdot;
-    const double prsdot4 = prsdot3 * prsdot;
-    const double prsdot5 = prsdot4 * prsdot;
-    const double prsdot6 = prsdot5 * prsdot;
+  const double logr = log(r);
+  const double sqrt_r = sqrt(r);
+  
+  const double prstar2 = prstar  * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar6 = prstar4 * prstar2;
 
-    const double f31_1PN = (68.0 + 354.0 * nu) * prstar2 
-        + (-3194.0 - 17240.0 * nu) * prstar4 * r 
-        + (154936.0 + 835960.0 * nu) * prstar6 * r2 
-        + prsdot * r * (-5.333333333333333 - 41.333333333333333 * nu 
-        + (1575.0 + 8370.0 * nu) * prstar2 * r + (-132734.0 - 711080.0 * nu) * prstar4 * r2) 
-        + prsdot2 * r3 * (-89.33333333333333 - 423.3333333333333 * nu 
-        + (27224.0 + 140900.0 * nu) * prstar2 * r + (-3420720.0 - 18075420.0 * nu) * prstar4 * r2) 
-        + prsdot3 * r5 * (-897.6666666666666 - 4226.666666666667 * nu 
-        + (405698.0 + 2063540.0 * nu) * prstar2 * r) 
-        + prsdot4 * r7 * (-9364.333333333334 - 43913.333333333333 * nu 
-        + (5587272.0 + 28066140.0 * nu) * prstar2 * r) 
-        + prsdot5 * r9 * (-99947.66666666667 - 467566.6666666667 * nu) 
-        + prsdot6 * r11 * (-1081064.3333333333 - 5050353.333333333 * nu);
+  const double prsdot2 = prsdot  * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
 
-    return 1.0 + f31_1PN;
+  double f31_15PN = 0.0, f31_2PN = 0.0;
+
+  const double f31_1PN = (68.0 + 354.0 * nu) * prstar2 
+    + (-3194.0 - 17240.0 * nu) * prstar4 * r 
+    + (154936.0 + 835960.0 * nu) * prstar6 * r2 
+    + prsdot * r * (-5.333333333333333 - 41.333333333333333 * nu 
+		    + (1575.0 + 8370.0 * nu) * prstar2 * r + (-132734.0 - 711080.0 * nu) * prstar4 * r2) 
+    + prsdot2 * r3 * (-89.33333333333333 - 423.3333333333333 * nu 
+		      + (27224.0 + 140900.0 * nu) * prstar2 * r + (-3420720.0 - 18075420.0 * nu) * prstar4 * r2) 
+    + prsdot3 * r5 * (-897.6666666666666 - 4226.666666666667 * nu 
+		      + (405698.0 + 2063540.0 * nu) * prstar2 * r) 
+    + prsdot4 * r7 * (-9364.333333333334 - 43913.333333333333 * nu 
+		      + (5587272.0 + 28066140.0 * nu) * prstar2 * r) 
+    + prsdot5 * r9 * (-99947.66666666667 - 467566.6666666667 * nu) 
+    + prsdot6 * r11 * (-1081064.3333333333 - 5050353.333333333 * nu);
+
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+    f31_15PN = (118.0 * prstar2 - 5792.15625 * prstar4 * r + 280827.56979166664 * prstar6 * r2
+		+ prsdot * (-16.0 * r + 2862.0 * prstar2 * r2 - 241440.140625 * prstar4 * r3)
+		+ prsdot2 * (-142.0 * r3 + 48054.1875 * prstar2 * r4 - 6.15235440234375e6 * prstar4 * r5)
+		+ prsdot3 * (-1414.6666666666667 * r5 + 701967.40625 * prstar2 * r6)
+		+ prsdot4 * (-14663.90625 * r7 + 9.525141247395834e6 * prstar2 * r8)
+		- 155920.353125 * prsdot5 * r9 - 1.682827350607639e6 * prsdot6 * r11) * M_PI / sqrt(r);
+
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
+    f31_2PN = (-669.7171717171717 - 3946.7979797979797 * nu + 1293.7373737373737 * nu2) * prstar2 / r
+      + (72593.74242424243 + 408685.0303030303 * nu - 63007.27272727273 * nu2) * prstar4
+      + (-5.459829151515151e6 - 3.0286757393939395e7 * nu + 3.055229212121212e6 * nu2) * prstar6 * r
+      + prsdot * (38.176767676767675 + 173.40404040404042 * nu - 70.74747474747475 * nu2
+		  + (-21023.44191919192 - 118850.898989899 * nu + 24231.535353535353 * nu2) * prstar2 * r
+		  + (3.3890325303030303e6 + 1.880104737878788e7 * nu - 2.134951242424242e6 * nu2) * prstar4 * r2)
+      + prsdot2 * ((473.24242424242425 + 2823.4747474747473 * nu - 207.27272727272728 * nu2) * r2
+		   + (-440433.69444444444 - 2.421480222222222e6 * nu + 294208.22222222225 * nu2) * prstar2 * r3
+		   + (9.655312965151516e7 + 5.280125013939394e8 * nu - 4.230496321212121e7 * nu2) * prstar4 * r4)
+      + prsdot3 * ((7422.209595959596 + 42289.49494949495 * nu + 2947.989898989899 * nu2) * r4
+		   + (-7.7145266161616165e6 - 4.1669833035353534e7 * nu + 2.662916262626263e6 * nu2) * prstar2 * r5)
+      + prsdot4 * ((106330.0101010101 + 585437.7929292929 * nu + 71689.9191919192 * nu2) * r6
+		   + (-1.2227039609595959e8 - 6.520545006161616e8 * nu + 1.4603585434343435e7 * nu2) * prstar2 * r7)
+      + (1.4405676717171718e6 + 7.750835813131313e6 * nu + 1.1104779595959596e6 * nu2) * prsdot5 * r8
+      + (1.884715141919192e7 + 9.9738739489899e7 * nu + 1.512832397979798e7 * nu2) * prsdot6 * r10;
+
+  return 1.0 + f31_1PN + f31_15PN + f31_2PN;
+}
+
+/**
+ * Function: eob_flx_flm_nc_44
+ * ---------------------------
+ * Computes the non-circular correction factor for the (4,4) mode of the gravitational
+ * wave flux in the Effective One Body (EOB) formalism up to 1PN order.
+ * 
+ *  @param[in] r The radial separation between the two bodies.
+ *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot The time derivative of the radial momentum.
+ *  @return The non-circular correction factor for the (4,4) mode of the gravitational wave flux.
+ */
+double eob_flx_flm_nc_44(double r, double prstar, double prsdot) {
+  const double nu = EOBPars -> nu;
+  const double nu2 = nu*nu;
+    
+  const double r2  = r * r;
+  const double r3  = r2 * r;
+  const double r4  = r3 * r;
+  const double r5  = r4 * r;
+  const double r6  = r5 * r;
+  const double r7  = r6 * r;
+  const double r8  = r7 * r;
+  const double r9  = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
+
+  const double prstar2 = prstar  * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar5 = prstar4  * prstar;
+  const double prstar6 = prstar5 * prstar;
+
+  const double prsdot2 = prsdot  * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
+
+  const double f44_05PN = (-0.0003846486409505208 * prstar5 * r2 * nu
+			   + prsdot * (-0.0032552083333333335 * prstar3 * r3 * nu - 0.00016140441099802652 * prstar5 * r4 * nu)
+			   + 0.008767445882161459 * prstar3 * prsdot2 * r5 * nu
+			   + prsdot3 * (0.0032552083333333335 * prstar * r6 * nu - 0.015005220969518026 * prstar3 * r7 * nu)
+			   - 0.010099411010742188 * prstar * prsdot4 * r8 * nu
+			   + 0.020502731204032898 * prstar * prsdot5 * r10 * nu) / (1.0 - 3.0 * nu);
+
+  const double f44_1PN = ((5.320544988458807 - 16.94339266690341 * nu + 2.949862393465909 * nu2) * prstar2
+			  + (0.4426852455870672 - 1.7486476071856238 * nu + 1.0368118204853751 * nu2) * prstar4 * r
+			  + (0.08887828356080883 - 0.3622282655168502 * nu + 0.24510911613370726 * nu2) * prstar6 * r2
+			  + prsdot * ((5.579758522727273 - 18.564157196969695 * nu + 7.848011363636363 * nu2) * r
+				      + (0.9825944683768533 - 3.7197548259388316 * nu + 1.7659336436878552 * nu2) * prstar2 * r2
+				      + (0.026436264529316262 - 0.1254947142231024 * nu + 0.13172710591673173 * nu2) * prstar4 * r3)
+			  + prsdot2 * ((0.41359197443181817 - 1.5239535245028408 * nu + 0.6049471768465909 * nu2) * r3
+				       + (-0.29168079254979434 + 1.0464189099994572 * nu - 0.3327586176720532 * nu2) * prstar2 * r4
+				       + (0.25494609397471985 - 1.0038963109942747 * nu + 0.5866237817750847 * nu2) * prstar4 * r5)
+			  + prsdot3 * ((-0.17587241259488193 + 0.668573336167769 * nu - 0.3253006501631303 * nu2) * r5
+				       + (0.2880284341102445 - 1.044476074060764 * nu + 0.3655703863002021 * nu2) * prstar2 * r6)
+			  + prsdot4 * ((0.12259796525944364 - 0.4670796004885977 * nu + 0.23016621375625784 * nu2) * r7
+				       + (-0.27582050630944027 + 1.0228490833456734 * nu - 0.425100477014067 * nu2) * prstar2 * r8)
+			  + (-0.0962065144976474 + 0.36435767528548074 * nu - 0.17341363395627757 * nu2) * prsdot5 * r9
+			  + (0.07778050782473077 - 0.29261946869116234 * nu + 0.13372472262137142 * nu2) * prsdot6 * r11) / (1.0 - 3.0 * nu);
+
+  return 1.0 + f44_05PN + f44_1PN;
+}
+
+/**
+ * Function: eob_flx_flm_nc_42
+ * ---------------------------
+ * Computes the non-circular correction factor for the (4,2) mode of the gravitational
+ * wave flux in the Effective One Body (EOB) formalism up to 1PN order.
+ * 
+ *  @param[in] r The radial separation between the two bodies.
+ *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] prsdot The time derivative of the radial momentum.
+ *  @return The non-circular correction factor for the (4,2) mode of the gravitational wave flux.
+ */
+double eob_flx_flm_nc_42(double r, double prstar, double prsdot) {
+  const double nu = EOBPars -> nu;
+  const double nu2 = nu*nu;
+   
+  const double r2  = r * r;
+  const double r3  = r2 * r;
+  const double r4  = r3 * r;
+  const double r5  = r4 * r;
+  const double r6  = r5 * r;
+  const double r7  = r6 * r;
+  const double r8  = r7 * r;
+  const double r9  = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
+
+  const double prstar2 = prstar  * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar5 = prstar4  * prstar;
+  const double prstar6 = prstar5 * prstar;
+
+  const double prsdot2 = prsdot  * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
+
+  const double f42_05PN = (0.20989583333333334 * prstar3 * r * nu - 1.6415852864583333 * prstar5 * r2 * nu
+			   + prsdot * (0.10833333333333334 * prstar * r2 * nu - 0.0908203125 * prstar3 * r3 * nu
+				       - 12.837137858072916 * prstar5 * r4 * nu)
+			   + prsdot2 * (-0.1828125 * prstar * r4 * nu - 1.5962320963541667 * prstar3 * r5 * nu)
+			   + prsdot3 * (-0.20423177083333333 * prstar * r6 * nu - 7.675824991861979 * prstar3 * r7 * nu)
+			   - 3.534676106770833 * prstar * prsdot4 * r8 * nu - 15.475729370117188 * prstar * prsdot5 * r10 * nu) / (1.0 - 3.0 * nu);
+
+  const double f42_1PN = ((30.869176136363638 - 12.744318181818182 * nu - 235.4744318181818 * nu2) * prstar2
+			  + (-222.5433904474432 - 10.776455965909092 * nu + 2006.072354403409 * nu2) * prstar4 * r
+			  + (1804.1875875299627 + 94.74953946200284 * nu - 16284.4484835538 * nu2) * prstar6 * r2
+			  + prsdot * ((-0.6693181818181818 - 14.799242424242424 * nu + 52.34090909090909 * nu2) * r
+				      + (261.8738458806818 - 2.133877840909091 * nu - 2312.881747159091 * nu2) * prstar2 * r2
+				      + (-3944.3982488458805 - 28.65231045809659 * nu + 35047.98153409091 * nu2) * prstar4 * r3)
+			  + prsdot2 * ((-25.48465909090909 + 4.376420454545454 * nu + 212.23295454545453 * nu2) * r3
+				       + (1759.1252996271307 - 43.52237215909091 * nu - 15435.80819424716 * nu2) * prstar2 * r4
+				       + (-41441.57654342651 + 146.01255798339844 * nu + 366620.81547546387 * nu2) * prstar4 * r5)
+			  + prsdot3 * ((-97.24080255681818 + 23.64151278409091 * nu + 790.4659090909091 * nu2) * r5
+				       + (10196.961135864258 - 608.6519165039062 * nu - 88406.98077392578 * nu2) * prstar2 * r6)
+			  + prsdot4 * ((-375.0025701349432 + 97.3502530184659 * nu + 3030.991299715909 * nu2) * r7
+				       + (54192.202097355235 - 4669.236581975763 * nu - 465578.93412572687 * nu2) * prstar2 * r8)
+			  + (-1476.3000615900214 + 409.5682400790128 * nu + 11858.565274325285 * nu2) * prsdot5 * r9
+			  + (-5891.746677953547 + 1707.2090138522062 * nu + 47122.44476040927 * nu2) * prsdot6 * r11) / (1.0 - 3.0 * nu);
+
+  return 1.0 + f42_05PN + f42_1PN;
 }

@@ -1275,7 +1275,10 @@ double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, do
 double eob_flx_flm_nc_22(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_21(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_33(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_32(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_31(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_44(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_42(double r, double prstar, double prstardot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
