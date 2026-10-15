@@ -755,6 +755,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   double r10 = r9 * r;
 
   double logr = log(r);
+  double sqrt_r = sqrt(r);
   
   double prstar2 = prstar * prstar;
   double prstar4 = prstar2 * prstar2;
@@ -798,7 +799,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
 	   + prsdot * (-1.59375 * r + 1.3263020833333334 * prstar2 * r2 + 0.46173177083333333 * prstar4 * r3) 
 	   + prsdot2 * (0.371875 * r3 - 0.4298177083333333 * prstar2 * r4) 
 	   + prsdot3 * (-0.18359375 * r5 - 0.21380208333333334 * prstar2 * r6)
-	   + 0.2498046875 * prsdot4 * r7 - 0.35216796875 * prsdot5 * r9) * M_PI / sqrt(r);
+	   + 0.2498046875 * prsdot4 * r7 - 0.35216796875 * prsdot5 * r9) * M_PI / sqrt_r;
   else
     f15 = 0.0;
 
@@ -867,7 +868,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   /* Combine 2.5PN contributions */
   double f25;
   if ((prstar != 0.0) && (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN))
-    f25 = (f25log * logr + f25pr) / prstar + f25pi * M_PI / sqrt(r);
+    f25 = (f25log * logr + f25pr) / prstar + f25pi * M_PI / sqrt_r;
   else
     f25 = 0.0;
   
@@ -933,7 +934,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   /* Combine 3PN contributions */
   double f3;
   if ((prstar != 0.0) && (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN))
-    f3 = f3r + f3log * logr + (f3pi + f3pilog * logr) * M_PI / sqrt(r) / prstar
+    f3 = f3r + f3log * logr + (f3pi + f3pilog * logr) * M_PI / sqrt_r / prstar
       + f3pi2 * M_PI * M_PI + f3log2 * logr * logr;
   else
     f3 = 0.0;
@@ -1696,80 +1697,202 @@ double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, do
 #define use_pade_22 (1)
 double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
 
-    const double nu = EOBPars -> nu;
-    const double nu2 = nu * nu;
-    const double r2  = r * r;
-    const double r3  = r2 * r;
-    const double r4  = r3 * r;
-    const double r5  = r4 * r;
-    const double r6  = r5 * r;
-    const double r7  = r6 * r;
-    const double r8  = r7 * r;
-    const double r9  = r8 * r;
-    const double r10 = r9 * r;
-    const double r11 = r10 * r;
+  const double nu = EOBPars -> nu;
+  const double nu2 = nu * nu;
+  const double nu3 = nu2 * nu;
+  
+  const double r2  = r * r;
+  const double r3  = r2 * r;
+  const double r4  = r3 * r;
+  const double r5  = r4 * r;
+  const double r6  = r5 * r;
+  const double r7  = r6 * r;
+  const double r8  = r7 * r;
+  const double r9  = r8 * r;
+  const double r10 = r9 * r;
+  const double r11 = r10 * r;
 
-    const double prstar2 = prstar  * prstar;
-    const double prstar3 = prstar2 * prstar;
-    const double prstar4 = prstar3 * prstar;
-    const double prstar6 = prstar4 * prstar2;
+  const double logr = log(r);
+  const double sqrt_r = sqrt(r);
+  
+  const double prstar2 = prstar  * prstar;
+  const double prstar3 = prstar2 * prstar;
+  const double prstar4 = prstar3 * prstar;
+  const double prstar6 = prstar4 * prstar2;
 
-    const double prsdot2 = prsdot  * prsdot;
-    const double prsdot3 = prsdot2 * prsdot;
-    const double prsdot4 = prsdot3 * prsdot;
-    const double prsdot5 = prsdot4 * prsdot;
-    const double prsdot6 = prsdot5 * prsdot;
+  const double prsdot2 = prsdot  * prsdot;
+  const double prsdot3 = prsdot2 * prsdot;
+  const double prsdot4 = prsdot3 * prsdot;
+  const double prsdot5 = prsdot4 * prsdot;
+  const double prsdot6 = prsdot5 * prsdot;
 
-    double f22_15PN = 0.0, f22_2PN = 0.0;
+  double f22_15PN = 0.0, f22_2PN = 0.0, f22_25PN = 0.0, f22_3PN = 0.0;
 
-    const double f22_1PN = (2.6964285714285716 - 0.4642857142857143 * nu) * prstar2 
-        + (0.6622023809523809 - 0.5803571428571429 * nu) * prstar4 * r 
-        + (0.16555059523809523 - 0.14508928571428573 * nu) * prstar6 * r2 
-        + prsdot * r * (2.2976190476190474 - 0.30952380952380953 * nu 
-        + (1.1607142857142858 - 0.8571428571428571 * nu) * prstar2 * r 
-        + (-0.04092261904761905 + 0.07589285714285714 * nu) * prstar4 * r2) 
-        + prsdot2 * r3 * (0.2976190476190476 - 0.14285714285714285 * nu 
-        + (-0.5059523809523809 + 0.39285714285714285 * nu) * prstar2 * r 
-        + (-0.10602678571428571 + 0.060267857142857144 * nu) * prstar4 * r2) 
-        + prsdot3 * r5 * (-0.1488095238095238 + 0.07142857142857142 * nu 
-        + (0.21577380952380953 - 0.17857142857142858 * nu) * prstar2 * r) 
-        + prsdot4 * r7 * (0.0744047619047619 - 0.03571428571428571 * nu 
-        + (-0.08928571428571429 + 0.08035714285714286 * nu) * prstar2 * r) 
-        + prsdot5 * r9 * (-0.03720238095238095 + 0.017857142857142856 * nu) 
-        + prsdot6 * r11 * (0.018601190476190476 - 0.008928571428571428 * nu);
+  const double f22_1PN = (2.6964285714285716 - 0.4642857142857143 * nu) * prstar2 
+    + (0.6622023809523809 - 0.5803571428571429 * nu) * prstar4 * r 
+    + (0.16555059523809523 - 0.14508928571428573 * nu) * prstar6 * r2 
+    + prsdot * r * (2.2976190476190474 - 0.30952380952380953 * nu 
+		    + (1.1607142857142858 - 0.8571428571428571 * nu) * prstar2 * r 
+		    + (-0.04092261904761905 + 0.07589285714285714 * nu) * prstar4 * r2) 
+    + prsdot2 * r3 * (0.2976190476190476 - 0.14285714285714285 * nu 
+		      + (-0.5059523809523809 + 0.39285714285714285 * nu) * prstar2 * r 
+		      + (-0.10602678571428571 + 0.060267857142857144 * nu) * prstar4 * r2) 
+    + prsdot3 * r5 * (-0.1488095238095238 + 0.07142857142857142 * nu 
+		      + (0.21577380952380953 - 0.17857142857142858 * nu) * prstar2 * r) 
+    + prsdot4 * r7 * (0.0744047619047619 - 0.03571428571428571 * nu 
+		      + (-0.08928571428571429 + 0.08035714285714286 * nu) * prstar2 * r) 
+    + prsdot5 * r9 * (-0.03720238095238095 + 0.017857142857142856 * nu) 
+    + prsdot6 * r11 * (0.018601190476190476 - 0.008928571428571428 * nu);
 
-    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
-      f22_2PN = (0.6313303099017384 - 5.15239984882842 * nu + 1.028533635676493 * nu2) * prstar2 / r 
-        + (5.323932350718065 + 0.8621267951625095 * nu + 0.31949168556311414 * nu2) * prstar4 
-        + (0.34901738473167043 + 1.2075243291761149 * nu - 0.08792753212396069 * nu2) * prstar6 * r 
-        + prsdot * (19.462915721844293 + 6.640495086923658 * nu - 2.512660619803477 * nu2 
-        + (-1.7667824074074074 - 0.25462962962962965 * nu + 1.460978835978836 * nu2) * prstar2 * r 
-        + (2.817982922335601 - 0.3347328514739229 * nu + 0.061685090702947844 * nu2) * prstar4 * r2) 
-        + prsdot2 * r2 * (14.228670634920634 + 0.8015873015873016 * nu - 2.3333333333333333 * nu2 
-        + (-1.3015518707482994 + 2.5677437641723357 * nu + 0.2128684807256236 * nu2) * prstar2 * r 
-        + (-0.9038362740929705 - 0.37875566893424034 * nu + 0.40072278911564624 * nu2) * prstar4 * r2) 
-        + prsdot3 * r4 * (-0.5165934429327287 + 0.7197656840513983 * nu - 0.002928949357520786 * nu2 
-        + (1.6302585270219199 - 2.389644746787604 * nu + 0.24104780801209372 * nu2) * prstar2 * r) 
-        + prsdot4 * r6 * (0.518713388133031 - 0.596489984882842 * nu + 0.055035903250188964 * nu2 
-        + (-1.1746622260015118 + 1.6294052343159486 * nu - 0.26747921390778534 * nu2) * prstar2 * r) 
-        + prsdot5 * r8 * (-0.38956502739984883 + 0.41654856386999245 * nu - 0.05430366591080877 * nu2) 
-        + prsdot6 * r10 * (0.25988668036659107 - 0.26742606764928195 * nu + 0.040544690098261525 * nu2);
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_15PN)
+    f22_15PN = (-1.875 * prstar2 - 0.609375 * prstar4 * r - 0.24231770833333333 * prstar6 * r2
+		+ prsdot * r * (-1.25 - 0.34375 * prstar2 * r + 0.04296875 * prstar4 * r2) 
+		+ prsdot2 * r3 * (0.125 + 0.234375 * prstar2 * r + 0.37890625 * prstar4 * r2) 
+		+ prsdot3 * r5 * (-0.041666666666666667 + 0.13671875 * prstar2 * r) 
+		+ prsdot4 * r7 * (0.0625 - 0.3323567708333333 * prstar2 * r) 
+		- 0.074609375 * prsdot5 * r9 + 0.07254774305555555 * prsdot6 * r11) / sqrt_r * M_PI;
 
-    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_15PN)
-      f22_15PN = (-1.875 * prstar2 - 0.609375 * prstar4 * r - 0.24231770833333333 * prstar6 * r2
-        + prsdot * r * (-1.25 - 0.34375 * prstar2 * r + 0.04296875 * prstar4 * r2) 
-        + prsdot2 * r3 * (0.125 + 0.234375 * prstar2 * r + 0.37890625 * prstar4 * r2) 
-        + prsdot3 * r5 * (-0.041666666666666667 + 0.13671875 * prstar2 * r) 
-        + prsdot4 * r7 * (0.0625 - 0.3323567708333333 * prstar2 * r) 
-        - 0.074609375 * prsdot5 * r9 + 0.07254774305555555 * prsdot6 * r11) / sqrt(r) * M_PI;
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+    f22_2PN = (0.6313303099017384 - 5.15239984882842 * nu + 1.028533635676493 * nu2) * prstar2 / r 
+      + (5.323932350718065 + 0.8621267951625095 * nu + 0.31949168556311414 * nu2) * prstar4 
+      + (0.34901738473167043 + 1.2075243291761149 * nu - 0.08792753212396069 * nu2) * prstar6 * r 
+      + prsdot * (19.462915721844293 + 6.640495086923658 * nu - 2.512660619803477 * nu2 
+		  + (-1.7667824074074074 - 0.25462962962962965 * nu + 1.460978835978836 * nu2) * prstar2 * r 
+		  + (2.817982922335601 - 0.3347328514739229 * nu + 0.061685090702947844 * nu2) * prstar4 * r2) 
+      + prsdot2 * r2 * (14.228670634920634 + 0.8015873015873016 * nu - 2.3333333333333333 * nu2 
+			+ (-1.3015518707482994 + 2.5677437641723357 * nu + 0.2128684807256236 * nu2) * prstar2 * r 
+			+ (-0.9038362740929705 - 0.37875566893424034 * nu + 0.40072278911564624 * nu2) * prstar4 * r2) 
+      + prsdot3 * r4 * (-0.5165934429327287 + 0.7197656840513983 * nu - 0.002928949357520786 * nu2 
+			+ (1.6302585270219199 - 2.389644746787604 * nu + 0.24104780801209372 * nu2) * prstar2 * r) 
+      + prsdot4 * r6 * (0.518713388133031 - 0.596489984882842 * nu + 0.055035903250188964 * nu2 
+			+ (-1.1746622260015118 + 1.6294052343159486 * nu - 0.26747921390778534 * nu2) * prstar2 * r) 
+      + prsdot5 * r8 * (-0.38956502739984883 + 0.41654856386999245 * nu - 0.05430366591080877 * nu2) 
+      + prsdot6 * r10 * (0.25988668036659107 - 0.26742606764928195 * nu + 0.040544690098261525 * nu2);
 
+  /* 2.5PN: pi-dependent contribution */
+  const double f22_25pi = (-0.4494047619047619 - 0.15178571428571427 * nu) * prstar4
+    + (9.732142857142858 - 5.571428571428571 * nu) * prstar2 / r + (2.202188740079365 - 0.24211309523809524 * nu) * prstar6 * r
+    + (-7.4466362847222225 + 0.4365234375 * nu) * prsdot5 * r8 + (9.099389260912698 - 0.4668526785714286 * nu) * prsdot6 * r10
+    + prsdot * (-5.446428571428571 + 5.339285714285714 * nu + (-3.4174107142857144 - 3.122767857142857 * nu) * prstar2 * r
+		+ (-0.7711123511904762 - 0.6710379464285714 * nu) * prstar4 * r2)
+    + prsdot2 * ((-1.8988095238095237 + 0.6547619047619048 * nu) * r2 + (-11.482142857142858 + 0.7693452380952381 * nu) * prstar2 * r3
+		 + (-14.419642857142858 + 0.9197358630952381 * nu) * prstar4 * r4)
+    + prsdot3 * ((-2.7038690476190474 + 0.05952380952380952 * nu) * r4 + (13.877139136904763 - 0.44131324404761907 * nu) * prstar2 * r5)
+    + prsdot4 * ((5.29265873015873 - 0.30853174603174605 * nu) * r6 + (-10.659365699404763 + 0.36904761904761907 * nu) * prstar2 * r7);
+
+  /* 2.5PN: rational contribution */
+  const double f22_25pr = (37.99357326333484 + 1883.174823500558 * nu + 1.1719635770975056 * nu2) * prstar4
+    + (-91.37281999328036 + 157.01212938094432 * nu) / r2
+    + (9.120427201923917 + 875.6339729375509 * nu + 0.9207057823129252 * nu2) * prstar2 / r
+    + (49.657475269341376 + 3717.314263188837 * nu - 151.835689484127 * nu2) * prsdot4 * r6
+    + (-68.54681856877869 - 4509.771126570733 * nu + 266.64274199263036 * nu2) * prsdot5 * r8
+    + prsdot * (-48.63778403743601 - 194.37156309306687 * nu + 8.080498866213151 * nu2
+		+ (27.841346826311565 - 234.7320469828701 * nu + 6.187322845804989 * nu2) * prstar2 * r
+		+ (-31.541446593764704 + 1416.2744536327664 * nu - 0.4717616213151927 * nu2) * prstar4 * r2)
+    + prsdot2 * ((14.273003592661553 + 1177.5635757053863 * nu - 29.32405045351474 * nu2) * r2
+		 + (-77.8468363773136 + 4033.0575850398454 * nu - 19.536706349206348 * nu2) * prstar2 * r3)
+    + prsdot3 * ((-29.406835329275054 - 1476.0992116718098 * nu + 74.7610189909297 * nu2) * r4
+		 + (127.10547177464468 - 1122.2895707174903 * nu + 42.06435126133787 * nu2) * prstar2 * r5);
+    
+  /* 2.5PN: logarithmic contribution */
+  const double f22_25log = (-13.133928571428571 - 2.4575892857142856 * nu) * prstar4
+    + (53.67857142857143 - 14.785714285714286 * nu) / r2 + (9.107142857142858 + 4.741071428571429 * nu) * prstar2 / r
+    + (-9.207589285714286 - 2.986607142857143 * nu) * prsdot4 * r6 + (10.322544642857142 + 3.0870535714285716 * nu) * prsdot5 * r8
+    + prsdot * (24.696428571428573 - 27.964285714285715 * nu + (-8.620535714285714 - 7.888392857142857 * nu) * prstar2 * r
+		+ (4.675223214285714 + 6.716517857142857 * nu) * prstar4 * r2)
+    + prsdot2 * ((-8.116071428571429 - 8.089285714285714 * nu) * r2 + (9.441964285714286 + 5.564732142857143 * nu) * prstar2 * r3)
+    + prsdot3 * ((8.004464285714286 + 4.205357142857143 * nu) * r4 + (-16.295758928571427 - 5.815848214285714 * nu) * prstar2 * r5);
+
+  /* Combine 2.5PN contributions */
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+    f22_25PN = f22_25pr * prstar + f22_25pi * M_PI / sqrt_r + f22_25log * prstar * logr;
+  else
+    f22_25PN = 0.0;
+
+  /* 3PN: rational contribution */
+  const double f22_3 = (4.86195068131201 + 7.9255356977402585 * nu + 3.6513035378894223 * nu2 - 1.16366773756761 * nu3) * prstar6
+    + (23.98279534644493 - 376.908949620374 * nu + 46.647747314413984 * nu2 + 7.312542946471518 * nu3) * prstar2 / r2
+    + (-40.84569365987045 - 57.82256732262956 * nu + 34.22599987565974 * nu2 - 3.1379291886307192 * nu3) * prstar4 / r
+    + (1.198430168995401 + 7.346149588306773 * nu - 1.6216392213150292 * nu2 - 0.10431066516313114 * nu3) * prsdot5 * r7
+    + (-0.06060499500017613 - 5.5881126443824485 * nu + 1.2855057524753528 * nu2 + 0.021472226005601856 * nu3) * prsdot6 * r9
+    + prsdot * ((83.39078369629715 - 30.770945222107354 * nu - 33.4151099082009 * nu2 + 16.3665120389185 * nu3) * prstar2
+		+ (-49.49757563333576 + 163.0639346166557 * nu - 22.259952026746245 * nu2 - 2.8804850824408645 * nu3) / r
+		+ (39.039045613026246 - 94.6921930189791 * nu + 34.875503962783405 * nu2 - 2.4664518397245865 * nu3) * prstar4 * r)
+    + prsdot2 * ((17.2614688265503 + 31.543513595074028 * nu - 0.8937698576304018 * nu2 - 1.4995425178248307 * nu3) * r
+		 + (64.63727837255283 + 67.80545927955623 * nu - 22.011939834856502 * nu2 + 10.495045408735885 * nu3) * prstar2 * r2
+		 + (8.7628044616431 + 62.244551162052176 * nu - 20.776682387120314 * nu2 + 2.2773965511529286 * nu3) * prstar4 * r3)
+    + prsdot3 * ((32.26528655677794 + 34.104897728401056 * nu - 4.446300805675806 * nu2 - 0.3066528379028379 * nu3) * r3
+		 + (-5.649879188742489 - 59.2944662467264 * nu + 13.435651141619466 * nu2 + 1.8244519263333039 * nu3) * prstar2 * r4)
+    + prsdot4 * ((-1.1651089297229191 - 9.691648393085579 * nu + 1.8869445896444195 * nu2 + 0.25099661377297433 * nu3) * r5
+		 + (-14.785881293937564 + 44.92075609343021 * nu - 9.884160942515534 * nu2 - 0.8082175977052678 * nu3) * prstar2 * r6);
+
+  /* 3PN: pi-dependent contribution */
+  const double f22_3pi = (-5.622593047730334 + 0.11908895502645503 * nu) * prstar4 + 57.205329415187485 / r2
+    + (-33.16618179338275 - 0.12301587301587301 * nu) * prstar2 / r + (-3.948689405893674 - 10.447627314814815 * nu) * prsdot4 * r6
+    + (4.21026488248026 + 21.076554232804234 * nu) * prsdot5 * r8
+    + prsdot * (55.66614779681274 + 0.25396825396825395 * nu + (9.486688022974704 + 1.072089947089947 * nu) * prstar2 * r
+		+ (1.9690664978697896 - 0.1371527777777778 * nu) * prstar4 * r2)
+    + prsdot2 * ((0.47608117216259416 - 1.2797619047619047 * nu) * r2 + (10.831421781564131 - 2.9187334656084656 * nu) * prstar2 * r3)
+    + prsdot3 * ((2.568091360917606 + 4.266534391534392 * nu) * r4 + (-14.013567832065746 + 6.029017857142857 * nu) * prstar2 * r5);
+
+  /* 3PN: pi-squared contribution */
+  const double f22_3pi2 = (0.7419704861111112 - 0.150146484375 * nu) * prstar6 + (4.25 + 12.97265625 * nu) * prstar2 / r2
+    + (2.015625 - 0.6005859375 * nu) * prstar4 / r + (-0.03958333333333333 - 0.06005859375 * nu) * prsdot5 * r7
+    + (0.058203125 + 0.030029296875 * nu) * prsdot6 * r9
+    + prsdot * ((4.5 + 4.083984375 * nu) * prstar2 + (2.4166666666666665 - 6.40625 * nu) / r
+		+ (1.21875 + 1.3212890625 * nu) * prstar4 * r)
+    + prsdot2 * ((1.125 - 2.08203125 * nu) * r + (-0.4375 - 1.921875 * nu) * prstar2 * r2
+		 + (-1.0983072916666667 - 1.14111328125 * nu) * prstar4 * r3)
+    + prsdot3 * ((-0.4166666666666667 - 1.0944010416666667 * nu) * r3 + (-0.890625 + 0.90087890625 * nu) * prstar2 * r4)
+    + prsdot4 * ((0.09895833333333333 + 0.1201171875 * nu) * r5 + (0.580078125 - 0.42041015625 * nu) * prstar2 * r6);
+
+  /* 3PN: squared-logarithmic contribution */
+  const double f22_3log2 = 10.828125 * prstar6 + 33.75 * prstar2 / r2 - 1.6875 * prstar4 / r
+    + 0.421875 * prsdot5 * r7 - 0.2109375 * prsdot6 * r9
+    + prsdot * (1.6875 * prstar2 - 20.25 / r + 23.765625 * prstar4 * r)
+    + prsdot2 * (-3.375 * r + 9.5625 * prstar2 * r2 - 18.2109375 * prstar4 * r3)
+    + prsdot3 * (1.6875 * r3 - 7.734375 * prstar2 * r4) + prsdot4 * (-0.84375 * r5 + 8.71875 * prstar2 * r6);
+
+  /* 3PN: pi-logarithmic contribution */
+  const double f22_3pilog = -1.44140625 * prstar4 - 20.25 / r2 + 7.78125 * prstar2 / r
+    + 3.908203125 * prsdot4 * r6 - 3.928125 * prsdot5 * r8
+    + prsdot * (-18.0 - 7.5 * prstar2 * r + 1.94296875 * prstar4 * r2)
+    + prsdot2 * (-1.125 * r2 - 3.64453125 * prstar2 * r3)
+    + prsdot3 * (-2.34375 * r4 + 4.234375 * prstar2 * r5);
+
+  /* 3PN: logarithmic contribution */
+  const double f22_3log = (-30.493746451684274 + 0.036458333333333336 * nu) * prstar6
+    + (-180.39350437457028 - 0.30952380952380953 * nu) * prstar2 / r2 + (0.34609485849068733 + 0.37797619047619047 * nu) * prstar4 / r
+    + (-2.0988707940123277 - 2.3206845238095237 * nu) * prsdot5 * r7 + (1.1425101077766158 + 3.255580357142857 * nu) * prsdot6 * r9
+    + prsdot * ((-52.91481994667629 + 1.5863095238095237 * nu) * prstar2 + 53.04005759058326 / r
+		+ (-71.99938367959112 - 0.9159226190476191 * nu) * prstar4 * r)
+    + prsdot2 * ((-11.034657040893933 + 0.30952380952380953 * nu) * r + (-16.58582343067974 - 3.462797619047619 * nu) * prstar2 * r2
+		 + (23.02829445619136 + 2.2239583333333335 * nu) * prstar4 * r3)
+    + prsdot3 * ((-13.564812622097634 - 0.8125 * nu) * r3 + (7.687301731901243 + 6.086309523809524 * nu) * prstar2 * r4)
+    + prsdot4 * ((3.173409719231131 + 1.4985119047619047 * nu) * r5 + (1.3151836437173188 - 9.618675595238095 * nu) * prstar2 * r6);
+
+  /* Combine 3PN contributions */
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+    f22_3PN = f22_3 + f22_3pi * M_PI * prstar / sqrt_r + (f22_3log + f22_3pilog * M_PI * prstar / sqrt_r) * logr
+      + f22_3pi2 * M_PI * M_PI + f22_3log2 * logr * logr;
+  else
+    f22_25PN = 0.0;
+
+  double a2 = f22_1PN;
+  double a3 = f22_15PN;
+  double a4 = f22_2PN;
+  double a5 = f22_25PN;
+  double a6 = f22_3PN;
+  
 #if use_pade_22
-    double den = 1.0 - f22_1PN - f22_15PN;
-    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
-      den += (f22_1PN*f22_1PN-f22_2PN);
-    return 1.0/den;
+  double den = 1.0 - a2 - a3;
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+    den += (a2*a2-a4);
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
+    den += (-a2*a2*a2 + 2.*a2*a3 + a3*a3 + 2.*a2*a4 - a5 -a6);
+  return 1.0/den;
 #else
-    return 1.0 + f22_1PN + f22_15PN + f22_2PN;
+  return 1.0 + a2 + a3 + a4;
 #endif
 }
 
