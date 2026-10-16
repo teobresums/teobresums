@@ -1197,7 +1197,11 @@ int eob_set_params(int default_choice, int firstcall)
   }
   // Overwrite some quantities if we are in a BHNS case
   if(EOBPars->binary==BINARY_BHNS || EOBPars->binary == BINARY_BHNS_TD){
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
+    if (EOBPars->model == MODEL_DALI) {
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc;
+    } else {
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
+    }
     eob_wav_ringdown = &eob_wav_ringdown_bhns;
     eob_nqc_timeshift = &eob_nqc_timeshift_bhns;
     eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bhns;
