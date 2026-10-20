@@ -10534,6 +10534,94 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
 }
 
 /**
+ * Function: eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc
+ * --------------------------------------------------
+ *   BHNS NQC on generic orbits (Dali): the BHNS point and basis of eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM, with
+ *   the sigmoid of eob_wav_hlmNQC_find_a1a2a3_mrg_ecc, so the NQC is switched on near merger and does not
+ *   reach back into the eccentric inspiral (from PR #10 on Dali, written on the shared NQC helpers)
+ */
+int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+                                            Dynamics *dyn, Waveform_lm *hlm)
+{
+  if (VERBOSE) PRSECTN("BHNS NQC (generic orbits)");
+
+  const double nu   = EOBPars->nu;
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+
+  double *t       = hlm_mrg->time;
+  double *r       = dyn_mrg->data[EOB_RAD];
+  double *w       = dyn_mrg->data[EOB_MOMG];
+  double *pr_star = dyn_mrg->data[EOB_PRSTAR];
+  double *ddotr   = dyn_mrg->data[EOB_DDOTR];
+
+  double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
+  double ai[KMAX][3] = {0.};
+  double bi[KMAX][3] = {0.};
+
+  const int size = hlm_mrg->size;
+  for (int i = 0; i < size; i++) hnqc->time[i] = t[i];
+
+  NQCbasis *nqcb = NQC->basis;
+  int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 0, 2);
+  if (status != OK) return status;
+
+  const double dt = t[1]-t[0];
+
+  /** NR values at the NQC point */
+  eob_set_nqc_point(dyn, NQC_POINT_BHNS, max_A, max_dA, NULL, max_omg, max_domg, NULL);
+
+  const int n2_22 = (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, n2_22);
+  eob_output_nqc_basis(nqcb, t, 1, 0);
+
+  /** NQC time of each mode */
+  double t_NQC[KMAX];
+  const double tNQC = eob_nqc_times(dyn, NULL, t_NQC);
+  if (VERBOSE) {
+    printf("NQC info:\n");
+    PRFORMd("DeltaT_tNQC",eob_nqc_timeshift(EOBPars->nu, EOBPars->chi1));
+    PRFORMd("tNQC[bare]",tNQC);
+  }
+
+  /** The sigmoid: the NQC is switched on near merger and is 1 at the matching point */
+  double t0 = eob_wav_sigmoid_t0(dyn, tNQC, EOBPars->delta_t0_sigmoid_NQC);
+  double alpha = EOBPars->alpha_sigmoid_NQC;
+  double t_match[KMAX];
+  for (int k=0; k<KMAX; k++) if (hlm_mrg->kmask_nqc[k]) t_match[k] = MAX(MIN(t_NQC[k], t[size-1]), t[0]);
+  eob_nqc_basis_sigmoid(nqcb, hlm_mrg->kmask_nqc, t, t0, alpha, t_match);
+
+  /** Derivatives for the phase */
+  eob_nqc_basis_derivatives(nqcb, hlm_mrg->kmask_nqc, dt, 1);
+  eob_output_nqc_basis(nqcb, t, 1, 1);
+
+  /** Solve the linear systems */
+  status = eob_solve_system_nqc(hlm_mrg, hlm->ampli, hlm_mrg->kmask_nqc, NULL, t_NQC,
+                                max_A, max_dA, NULL,
+                                max_omg, max_domg, NULL, ai, bi);
+  if (status != OK) goto FREE_MEM;
+
+  if ((nu==0.25) && (chi1==0) && (chi2==0)) { /* X12 = 0 spoils the fits of the odd modes */
+    ai[0][0] = ai[1][0];  ai[0][1] = ai[1][1];
+    ai[4][0] = ai[1][0];  ai[4][1] = ai[1][1];
+    ai[13][0] = ai[1][0]; ai[13][1] = ai[1][1];
+  }
+  if (chi1>0.65) { /* the HM fits are unstable at high spin */
+    ai[4][0] = ai[3][0]; ai[4][1] = ai[3][1]; bi[4][0] = bi[3][0]; bi[4][1] = bi[3][1];
+    ai[8][0] = ai[3][0]; ai[8][1] = ai[3][1]; bi[8][0] = bi[3][0]; bi[8][1] = bi[3][1];
+  }
+
+  /** Apply the NQC to the merger waveform, then to the full one with the same sigmoid */
+  eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_GIOTTO, n2_22,
+                              t0, alpha, t_match, ai, bi);
+
+ FREE_MEM:
+  NQCbasis_free(nqcb);
+  return status;
+}
+
+/**
  * Function: eob_wav_ringdown_template_td
  * --------------------------------------
  *   Ringdown waveform template for tidal disruption cases
