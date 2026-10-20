@@ -6667,15 +6667,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){ 
       for (int j=0; j<size; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	//n3[k][j]  = n1[k][j]*pr_star2;
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
-	//n6[k][j]  = n5[k][j]*pr_star2;
+        pr_star2 = SQ(pr_star[j]);
+        r2       = SQ(r[j]);
+        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
+        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
+        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
+        //n3[k][j]  = n1[k][j]*pr_star2;
+        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
+        n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
+        //n6[k][j]  = n5[k][j]*pr_star2;
       }
     }
   }
@@ -6696,7 +6696,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     /* l=3, l=4 & l=5 */
     for (int k=2; k<14; k++) {
       if(hlm_mrg->kmask_nqc[k]){
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
       }
     }
   }
@@ -9972,7 +9972,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   double *omg[KMAX], *domg[KMAX];
   double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
     *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];
-  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
   
   for (int k=0; k<KMAX; k++) {
@@ -9981,7 +9981,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
       domg[k] = (double*) calloc (size,sizeof(double));
       m11[k] = (double*) calloc (size,sizeof(double));
       m12[k] = (double*) calloc (size,sizeof(double));
-      m13[k] = (double*) calloc (size,sizeof(double));
       m21[k] = (double*) calloc (size,sizeof(double));
       m22[k] = (double*) calloc (size,sizeof(double));
       p1tmp[k] = (double*) calloc (size,sizeof(double));
@@ -10082,15 +10081,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){ 
       for (int j=0; j<size; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	//n3[k][j]  = n1[k][j]*pr_star2;
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
-	//n6[k][j]  = n5[k][j]*pr_star2;
+        pr_star2 = SQ(pr_star[j]);
+        r2       = SQ(r[j]);
+        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
+        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
+        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
+        //n3[k][j]  = n1[k][j]*pr_star2;
+        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
+        n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
+        //n6[k][j]  = n5[k][j]*pr_star2;
       }
     }
   }
@@ -10109,7 +10108,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     /* l=3, l=4 & l=5 */
     for (int k=2; k<14; k++) {
       if(hlm_mrg->kmask_nqc[k]){
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
       }
     }
   }
@@ -10371,13 +10370,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){   
       for (int j=0; j<fullsize; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
+        pr_star2 = SQ(pr_star[j]);
+        r2       = SQ(r[j]);
+        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
+        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
+        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
+        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
+        n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
       }
     }
   }
@@ -10391,7 +10390,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     /* l=3 & l=4 */
     for (int k=2; k<14; k++) {   
       if(hlm_mrg->kmask_nqc[k]){   
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
       }
     }
   }
@@ -10433,7 +10432,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
       free(domg[k]);
       free(m11[k]);
       free(m12[k]);
-      free(m13[k]);
       free(m21[k]);
       free(m22[k]);
       free(p1tmp[k]);
@@ -10468,14 +10466,14 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
  *
  */
 void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
-				       Dynamics *dyn, Waveform_lm *hlm)
+                                       Dynamics *dyn, Waveform_lm *hlm)
 {
   if (VERBOSE) PRSECTN("BHNS NQC (generic orbits)");
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
   double alpha1[KMAX], omega1[KMAX];
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
   double c1phi[KMAX], c2phi[KMAX], c3phi[KMAX], c4phi[KMAX];
-	  
+
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
@@ -10509,7 +10507,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
   double *omg[KMAX], *domg[KMAX];
   double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
     *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];
-  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
   
   for (int k=0; k<KMAX; k++) {
@@ -10518,7 +10516,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
       domg[k] = (double*) calloc (size,sizeof(double));
       m11[k] = (double*) calloc (size,sizeof(double));
       m12[k] = (double*) calloc (size,sizeof(double));
-      m13[k] = (double*) calloc (size,sizeof(double));
       m21[k] = (double*) calloc (size,sizeof(double));
       m22[k] = (double*) calloc (size,sizeof(double));
       p1tmp[k] = (double*) calloc (size,sizeof(double));
@@ -10567,8 +10564,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
   double tau_postpeak;
 
   QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-			  c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
-			  alpha1, omega1);
+                          c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
+                          alpha1, omega1);
 
   /* 21, 22, 32, 33 and 44 fitted directly */
   eob_nqc_point_BHNS_HM(dyn, max_A, max_dA, max_omg, max_domg);
@@ -10585,8 +10582,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
     if (modesatpeak22[k]) tau_postpeak = 0.;
     else tau_postpeak = 2./Mbh;
     eob_nqc_point_postpeak(tau_postpeak,Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
-			   c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
-			   &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
+                           c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
+                           &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
     
     max_A[k]    = A_tmp;
     max_dA[k]   = dA_tmp;
@@ -10619,15 +10616,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){ 
       for (int j=0; j<size; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	//n3[k][j]  = n1[k][j]*pr_star2;
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
-	//n6[k][j]  = n5[k][j]*pr_star2;
+        pr_star2 = SQ(pr_star[j]);
+        r2       = SQ(r[j]);
+        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
+        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
+        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
+        //n3[k][j]  = n1[k][j]*pr_star2;
+        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
+        n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
+        //n6[k][j]  = n5[k][j]*pr_star2;
       }
     }
   }
@@ -10646,7 +10643,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
     /* l=3, l=4 & l=5 */
     for (int k=2; k<14; k++) {
       if(hlm_mrg->kmask_nqc[k]){
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
       }
     }
   }
@@ -10702,7 +10699,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
   /** Find jmax: t[jmax] <= tNQC */
   double tmrg[KMAX];
   tmrg[1] = tNQC - 2.;
-	
+
   int jmax = 0;
   for (int j=0; j<size; j++) {
     if(t[j] > tNQC) {
@@ -10726,10 +10723,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
       
       j_NQC[k] = size-1;
       for (int j=size-2; j>=0; j--) {
-	if(t[j] < t_NQC[k]) {
-	  break;
-	}
-	j_NQC[k] = j;
+        if(t[j] < t_NQC[k]) {
+          break;
+        }
+        j_NQC[k] = j;
       } 
     }
   }
@@ -10743,10 +10740,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
     if(hlm_mrg->kmask_nqc[k]){
       double nlm = 1./(sqrt( (LINDEX[k]+2)*(LINDEX[k]+1)*LINDEX[k]*(LINDEX[k]-1) ) );
 
-      if (hlm->ampli[k][0] > 0.) {	
+      if (hlm->ampli[k][0] > 0.) {
         nNegAmp[k] = 0;
-      } else {	
-        nNegAmp[k] = 1;	
+      } else {
+        nNegAmp[k] = 1;
       }
       
       for (int j=0; j<size; j++) {
@@ -10830,26 +10827,27 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
 
   }
 
-   if((nu==0.25)&&(chi1==0)&&(chi2==0)){// TODO: problematic cases where X12=0 and messes up the fits
-     ai[0][0] = ai[1][0];
-     ai[0][1] = ai[1][1];
-     ai[4][0] = ai[1][0];
-     ai[4][1] = ai[1][1];
-     ai[13][0] = ai[1][0];
-     ai[13][1] = ai[1][1];
-   }
-  
- if(chi1>0.65){ //TODO: nqc fits for HMS are unstable for high spin
-  ai[4][0] = ai[3][0];
-  ai[4][1] = ai[3][1];
-  bi[4][0] = bi[3][0];
-  bi[4][1] = bi[3][1];
-  ai[8][0] = ai[3][0];
-  ai[8][1] = ai[3][1];
-  bi[8][0] = bi[3][0];
-  bi[8][1] = bi[3][1];}
-   
-   if (VERBOSE){
+  if((nu==0.25)&&(chi1==0)&&(chi2==0)){// TODO: problematic cases where X12=0 and messes up the fits
+    ai[0][0] = ai[1][0];
+    ai[0][1] = ai[1][1];
+    ai[4][0] = ai[1][0];
+    ai[4][1] = ai[1][1];
+    ai[13][0] = ai[1][0];
+    ai[13][1] = ai[1][1];
+  }
+
+  if(chi1>0.65){ //TODO: nqc fits for HMS are unstable for high spin
+    ai[4][0] = ai[3][0];
+    ai[4][1] = ai[3][1];
+    bi[4][0] = bi[3][0];
+    bi[4][1] = bi[3][1];
+    ai[8][0] = ai[3][0];
+    ai[8][1] = ai[3][1];
+    bi[8][0] = bi[3][0];
+    bi[8][1] = bi[3][1];
+  }
+
+  if (VERBOSE){
     printf("NQC coefficients for 22 mode:\n");
     PRFORMd("a1",ai[1][0]);
     PRFORMd("a2",ai[1][1]);
@@ -10931,17 +10929,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
       n5[k] = (double*) calloc (fullsize,sizeof(double));
     }
   }
-	
+
   for (int k=0; k<KMAX; k++) {   
     if(hlm_mrg->kmask_nqc[k]){   
       for (int j=0; j<fullsize; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
+        pr_star2 = SQ(pr_star[j]);
+        r2       = SQ(r[j]);
+        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
+        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
+        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
+        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
+        n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
       }
     }
   }
@@ -10961,7 +10959,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
     /* l=3 & l=4 */
     for (int k=2; k<14; k++) {   
       if(hlm_mrg->kmask_nqc[k]){   
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
+        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
       }
     }
   }
@@ -11000,13 +10998,13 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
     fp = fopen(fname, "w");
     fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
     fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
-	    EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
-	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
+            EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
+            EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
     for (int k=0; k<KMAX; k++) {
       if(hlm->kmask_nqc[k]){
         fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-		ai[k][0], ai[k][1], 
-		bi[k][0], bi[k][1]);
+                ai[k][0], ai[k][1], 
+                bi[k][0], bi[k][1]);
       }
     }  
     fclose(fp);  
@@ -11019,7 +11017,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm
       free(domg[k]);
       free(m11[k]);
       free(m12[k]);
-      free(m13[k]);
       free(m21[k]);
       free(m22[k]);
       free(p1tmp[k]);
