@@ -1482,10 +1482,12 @@ int eob_set_params(int default_choice, int firstcall)
         eob_flx_hatflm_nc[2] = &eob_flx_flm_nc_31;
         eob_flx_hatflm_nc[4] = &eob_flx_flm_nc_33;
       }
-      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN) {
-        eob_flx_hatflm_nc[3] = &eob_flx_flm_nc_32;
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN) {
         eob_flx_hatflm_nc[6] = &eob_flx_flm_nc_42;
         eob_flx_hatflm_nc[8] = &eob_flx_flm_nc_44;
+      }
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN) {
+        eob_flx_hatflm_nc[3] = &eob_flx_flm_nc_32;
       }
       break;
     default:
