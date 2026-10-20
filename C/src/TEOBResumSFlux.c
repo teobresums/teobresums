@@ -867,7 +867,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
 
   /* Combine 2.5PN contributions */
   double f25;
-  if ((prstar != 0.0) && (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN))
+  if ((prstar != 0.0) && (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN))
     f25 = (f25log * logr + f25pr) / prstar + f25pi * M_PI / sqrt_r;
   else
     f25 = 0.0;
@@ -1872,7 +1872,7 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
     + prsdot4 * ((3.173409719231131 + 1.4985119047619047 * nu) * r5 + (1.3151836437173188 - 9.618675595238095 * nu) * prstar2 * r6);
 
   /* Combine 3PN contributions */
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
     f22_3PN = f22_3 + f22_3pi * M_PI * prstar / sqrt_r + (f22_3log + f22_3pilog * M_PI * prstar / sqrt_r) * logr
       + f22_3pi2 * M_PI * M_PI + f22_3log2 * logr * logr;
   else
