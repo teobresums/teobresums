@@ -59,7 +59,20 @@ params = {
         # Test the periodicity of (ell, emm)-only waveforms with phase shifts such that phi_r = 2 Pi/emm
         'test_phase_shifts_lm'       :  [((40., 20., 0.8, 0.5, 0., 0.),    1e-10, [0, 1, 4, 8, 13]),   #BBH  (21, 22, 33, 44, 55)
                                          ((1.7, 1.,  0.2, 0.1, 400, 1500.), 1e-10, [0, 1, 4, 8, 13]),  #BNS  (21, 22, 33, 44, 55)
-                                         ((6., 1.4,  0.8, 0.1, 0., 1500.),  1e-10, [0, 1, 8, 13])], #BHNS (21, 22, 44, 55)       
+                                         ((6., 1.4,  0.8, 0.1, 0., 1500.),  1e-10, [0, 1, 8, 13])], #BHNS (21, 22, 44, 55)
+
+        # eccentric: waveform is reproducible (flags leaks / nondeterminism on the ODE path)
+        # format: (m1, m2, s1z, s2z, l1, l2, ecc)
+        'test_ecc_reproducible': [ (40., 20., 0.3, -0.1, 0., 0., 0.1),      #ecc BBH
+                                   (1.5, 1.3, 0.05, 0.05, 400., 400., 0.05)], #ecc BNS
+
+        # eccentric: an alternative ODE stepper stays within an accuracy gate vs rkf45.
+        # Locks the model-aware default (auto -> rk8pd for BNS, msadams for BBH).
+        # format: (m1, m2, s1z, s2z, l1, l2, ecc), stepper, mismatch_gate
+        'test_ecc_stepper_gate': [ ((40., 20., 0.3, -0.1, 0., 0., 0.1),      'msadams', 1e-6),  #BBH default
+                                   ((40., 20., 0.3, -0.1, 0., 0., 0.1),      'rk8pd',   1e-4),  #BBH fastest
+                                   ((1.5, 1.3, 0.05, 0.05, 400., 400., 0.05), 'rk8pd',   1e-7),  #BNS default
+                                   ((1.5, 1.3, 0.05, 0.05, 400., 400., 0.05), 'msadams', 1e-7)], #BNS alt
     }
 
 @pytest.mark.parametrize("pars, out", params['test_PA_phasing'])
@@ -311,6 +324,36 @@ def test_phiref_meaning():
     q0 = np.mod(-2.*(phi_r[0]-phi_r[1]),2.*np.pi)
     q1 = np.mod(beta[0][0]-beta[1][0],2.*np.pi)
     assert q0 == q1
+
+@pytest.mark.parametrize("pars", params['test_ecc_reproducible'])
+def test_ecc_reproducible(pars):
+    """
+    Eccentric waveforms must integrate the full ODE (no PA shortcut); generate
+    one a few times and require bitwise-identical output (flags leaks or
+    uninitialized memory on the eccentric path).
+    """
+    m1, m2, s1z, s2z, l1, l2, ecc = pars
+    ap = {'ecc': ecc, 'use_mode_lm': [1]}
+    _, hp0, hc0 = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars=ap, return_zero=False)
+    for _ in range(5):
+        _, hp1, hc1 = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars=ap, return_zero=False)
+        assert np.allclose(hp0, hp1, atol=1e-15, rtol=1e-15)
+        assert np.allclose(hc0, hc1, atol=1e-15, rtol=1e-15)
+
+@pytest.mark.parametrize("pars, stepper, gate", params['test_ecc_stepper_gate'])
+def test_ecc_stepper_gate(pars, stepper, gate):
+    """
+    An alternative ODE stepper must reproduce the rkf45 (historical default)
+    eccentric waveform within a mismatch gate. Guards the model-aware default
+    (rk8pd for tidal/BNS, msadams for eccentric BBH) against accuracy regressions.
+    """
+    m1, m2, s1z, s2z, l1, l2, ecc = pars
+    base = {'ecc': ecc, 'use_mode_lm': [1], 'ode_stepper': 'rkf45'}
+    cand = {'ecc': ecc, 'use_mode_lm': [1], 'ode_stepper': stepper}
+    _, hp0, hc0 = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars=base, return_zero=False)
+    _, hp1, hc1 = utils.gen_wf(m1, m2, s1z, s2z, l1, l2, additional_pars=cand, return_zero=False)
+    mm = utils.mismatch(hp0 - 1j*hc0, hp1 - 1j*hc1)
+    assert mm < gate, f"{stepper} mismatch {mm:.2e} exceeds gate {gate:.0e}"
     
 
     

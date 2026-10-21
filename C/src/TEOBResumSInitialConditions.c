@@ -718,7 +718,7 @@ int eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   jhat       =  pph[idx]/(r_omg*v_phi);  /* Newton-normalized angular momentum */
 
   //Fphi    = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[idx], 0.0, 0.0, dyn);
-  eob_flx_Flux_ecc(x, Omg, r_omg, H0, Heff0, jhat, r[idx], 0.0, pph[idx], 0.0, 0.0, 0.0, &Fphi, &pl_hold, dyn);
+  eob_flx_Flux_ecc(x, Omg, r_omg, H0, Heff0, jhat, r[idx], 0.0, pph[idx], 0.0, 0.0, 0.0, &Fphi, &pl_hold, dyn, rc, drc_dr, d2rc_dr2);
   prstar  = Fphi/(dpph_dr[idx]*C0);
   pr      = prstar/sqrtAbyB; 
   E0      = H0;
