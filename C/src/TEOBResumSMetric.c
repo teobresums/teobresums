@@ -2936,7 +2936,8 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 
   eob_metric_Btidal_electric(r, dyn, &B_elec, &dB_elec, &d2B_elec);
 
-  if (EOBPars->use_tidal_gravitomagnetic) {
+  /* Add magnetic tides only if the electic potential is non-zero, for backward compatibility */
+  if (EOBPars->use_tidal_gravitomagnetic && eob_metric_Btidal_electric != &zero_tidal_potential) {
     eob_metric_Btidal_magnetic_3PN(r, dyn, &B_mag, &dB_mag, &d2B_mag);
   }
 
@@ -3161,14 +3162,13 @@ void eob_metric_Qtidal(double r, Dynamics *dyn, double prstar, double nu, double
   double dQ_dprstar_mag=0., d2Q_dprstar2_mag=0., d3Q_dprstar3_mag=0.;
   double d2Q_drdprstar_mag=0., d3Q_dr2dprstar_mag=0., d3Q_drdprstar2_mag=0.;
 
-  eob_metric_Qtidal_electric(r, dyn, prstar, nu, &Q_elec, &dQ_du_elec, &d2Q_du2_elec,
-                             &dQ_dprstar_elec, &d2Q_dprstar2_elec, &d3Q_dprstar3_elec,
-                             &d2Q_drdprstar_elec, &d3Q_dr2dprstar_elec, &d3Q_drdprstar2_elec);
+  eob_metric_Qtidal_electric(r, dyn, prstar, nu, &Q_elec, &dQ_du_elec, &dQ_dprstar_elec, &d2Q_du2_elec, &d2Q_drdprstar_elec, &d2Q_dprstar2_elec, &d3Q_dr2dprstar_elec, &d3Q_drdprstar2_elec, &d3Q_dprstar3_elec);
   
-  if (EOBPars->use_tidal_gravitomagnetic) {
-    eob_metric_Qtidal_magnetic_3PN(r, dyn, prstar, nu, &Q_mag, &dQ_du_mag, &d2Q_du2_mag,
-                             &dQ_dprstar_mag, &d2Q_dprstar2_mag, &d3Q_dprstar3_mag,
-                             &d2Q_drdprstar_mag, &d3Q_dr2dprstar_mag, &d3Q_drdprstar2_mag);
+  /* Add magnetic tides only if the electic potential is non-zero for backward compatibility */
+  if (EOBPars->use_tidal_gravitomagnetic && eob_metric_Qtidal_electric != &zero_tidal_potential) {
+    eob_metric_Qtidal_magnetic_3PN(r, dyn, prstar, nu, &Q_mag, &dQ_du_mag, &dQ_dprstar_mag, 
+                                    &d2Q_du2_mag, &d2Q_drdprstar_mag, &d2Q_dprstar2_mag, 
+                                    &d3Q_dr2dprstar_mag, &d3Q_drdprstar2_mag, &d3Q_dprstar3_mag);
   }
 
   *QT = Q_elec + Q_mag;
@@ -3267,7 +3267,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
     Bt     += BT;
     dBt_r  += -dBT_u*u2;
     d2Bt_r += 2.*dBT_u*u3 + d2BT_u*u4;
-    eob_metric_Qtidal(r, dyn, prstar, nu, &QT, &dQT_du, &d2QT_du2, &dQT_dprstar, &d2QT_dprstar2, &d3QT_dprstar3, &d2QT_drdprstar, &d3QT_dr2dprstar, &d3QT_drdprstar2);
+    eob_metric_Qtidal(r, dyn, prstar, nu, &QT, &dQT_du, &dQT_dprstar, &d2QT_du2, &d2QT_drdprstar, &d2QT_dprstar2, &d3QT_dr2dprstar, &d3QT_drdprstar2, &d3QT_dprstar3);
     Qt += QT;
     dQt_du += dQT_du;
     d2Qt_du2 += d2QT_du2;
@@ -3390,7 +3390,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
     Bt    += BT;
     dBt_r += -dBT_u*uc2*drc;
     d2Bt_r += (2.*uc3*SQ(drc) - uc2*d2rc)*dBT_u + uc4*SQ(drc)*d2BT_u;
-    eob_metric_Qtidal(rc, dyn, prstar, nu, &QT, &dQT_du, &d2QT_du2, &dQT_dprstar, &d2QT_dprstar2, &d3QT_dprstar3, &d2QT_drdprstar, &d3QT_dr2dprstar, &d3QT_drdprstar2);
+    eob_metric_Qtidal(rc, dyn, prstar, nu, &QT, &dQT_du, &dQT_dprstar, &d2QT_du2, &d2QT_drdprstar, &d2QT_dprstar2, &d3QT_dr2dprstar, &d3QT_drdprstar2, &d3QT_dprstar3);
     Qt += QT;
     dQt_du += dQT_du;
     d2Qt_du2 += d2QT_du2;
