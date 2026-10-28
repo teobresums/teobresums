@@ -2936,7 +2936,7 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 
   eob_metric_Btidal_electric(r, dyn, &B_elec, &dB_elec, &d2B_elec);
 
-  /* Add magnetic tides only if the electic potential is non-zero, for backward compatibility */
+  /* Add magnetic tides only if the electric potential is non-zero, for backward compatibility */
   if (EOBPars->use_tidal_gravitomagnetic && eob_metric_Btidal_electric != &zero_tidal_potential) {
     eob_metric_Btidal_magnetic_3PN(r, dyn, &B_mag, &dB_mag, &d2B_mag);
   }
@@ -3164,7 +3164,7 @@ void eob_metric_Qtidal(double r, Dynamics *dyn, double prstar, double nu, double
 
   eob_metric_Qtidal_electric(r, dyn, prstar, nu, &Q_elec, &dQ_du_elec, &dQ_dprstar_elec, &d2Q_du2_elec, &d2Q_drdprstar_elec, &d2Q_dprstar2_elec, &d3Q_dr2dprstar_elec, &d3Q_drdprstar2_elec, &d3Q_dprstar3_elec);
   
-  /* Add magnetic tides only if the electic potential is non-zero for backward compatibility */
+  /* Add magnetic tides only if the electric potential is non-zero for backward compatibility */
   if (EOBPars->use_tidal_gravitomagnetic && eob_metric_Qtidal_electric != &zero_tidal_potential) {
     eob_metric_Qtidal_magnetic_3PN(r, dyn, prstar, nu, &Q_mag, &dQ_du_mag, &dQ_dprstar_mag, 
                                     &d2Q_du2_mag, &d2Q_drdprstar_mag, &d2Q_dprstar2_mag, 

@@ -375,6 +375,59 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_flm_tidal") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_tidal"));
+    for(EOBPars->use_flm_tidal=0; EOBPars->use_flm_tidal<=USEFLM_TIDAL_NOPT; EOBPars->use_flm_tidal++){
+      if (EOBPars->use_flm_tidal == USEFLM_TIDAL_NOPT) { EOBPars->use_flm_tidal = USEFLM_TIDAL_DNV; break; }
+      if (STREQUAL(val,use_flm_tidal_opt[EOBPars->use_flm_tidal])) break;
+    }
+  }
+
+  if ( PyDict_GetItemString(dict, "use_hlm_nc_tidal") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_hlm_nc_tidal"));
+    for(EOBPars->use_hlm_nc_tidal=0; EOBPars->use_hlm_nc_tidal<=USEHLM_NC_TIDAL_NOPT; EOBPars->use_hlm_nc_tidal++){
+      if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NOPT) { EOBPars->use_hlm_nc_tidal = USEHLM_NC_TIDAL_NO; break; }
+      if (STREQUAL(val,use_hlm_nc_tidal_opt[EOBPars->use_hlm_nc_tidal])) break;
+    }
+  }
+
+  if ( PyDict_GetItemString(dict, "use_dlm_nc_tidal") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_dlm_nc_tidal"));
+    for(EOBPars->use_dlm_nc_tidal=0; EOBPars->use_dlm_nc_tidal<=USEDELTALM_NC_TIDAL_NOPT; EOBPars->use_dlm_nc_tidal++){
+      if (EOBPars->use_dlm_nc_tidal == USEDELTALM_NC_TIDAL_NOPT) { EOBPars->use_dlm_nc_tidal = USEDELTALM_NC_TIDAL_NO; break; }
+      if (STREQUAL(val,use_dlm_nc_tidal_opt[EOBPars->use_dlm_nc_tidal])) break;
+    }
+  }
+
+  if ( PyDict_GetItemString(dict, "use_flm_nc_tidal") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_nc_tidal"));
+    for(EOBPars->use_flm_nc_tidal=0; EOBPars->use_flm_nc_tidal<=USEFLM_NC_TIDAL_NOPT; EOBPars->use_flm_nc_tidal++){
+      if (EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_NOPT) { EOBPars->use_flm_nc_tidal = USEFLM_NC_TIDAL_NO; break; }
+      if (STREQUAL(val,use_flm_nc_tidal_opt[EOBPars->use_flm_nc_tidal])) break;
+    }
+  }
+
+  if ( PyDict_GetItemString(dict, "use_Fr_tidal") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_Fr_tidal"));
+    for(EOBPars->use_Fr_tidal=0; EOBPars->use_Fr_tidal<=USE_FR_TIDAL_NOPT; EOBPars->use_Fr_tidal++){
+      if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NOPT) { EOBPars->use_Fr_tidal = USE_FR_TIDAL_NO; break; }
+      if (STREQUAL(val,use_Fr_tidal_opt[EOBPars->use_Fr_tidal])) break;
+    }
+  }
+
+  if ( PyDict_GetItemString(dict, "use_hlm_mult_tidal") != NULL ) {
+    EOBPars->use_hlm_mult_tidal = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_hlm_mult_tidal")));
+  }
+
+  if ( PyDict_GetItemString(dict, "use_flm_mult_tidal") != NULL ) {
+    EOBPars->use_flm_mult_tidal = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_mult_tidal")));
+  }
+
   if ( PyDict_GetItemString(dict, "use_dlm_nc") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_dlm_nc"));
