@@ -344,7 +344,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->ode_stepper_hmax=0.0; // max ODE step, <= 0 for none
   eobp->use_metric_cache=1; // cache eob_metric_s
   eobp->use_flm_cheb=1; // use the Chebyshev table for the f_lm
-  eobp->use_metric_cheb=0; // use the Chebyshev table for the r-only part of the metric
+  eobp->use_metric_cheb=1; // use the Chebyshev table for the r-only part of the metric
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
   eobp->spin_ode_abstol=1e-11; // Spin dynamics ODE solver absolute accuracy
