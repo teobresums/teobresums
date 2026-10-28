@@ -5,7 +5,7 @@ executable's start-up and file output would dominate. Repeat calls and keep the 
 Prints, per stepper, time, speed-up and mismatch of the (2,2) against rkf45.
 
 Usage:
-  python3 bench_py.py [--reps 200] [--bns]
+  python3 bench_py.py [--reps 200] [--bns] [--prec]
 """
 
 import argparse
@@ -25,7 +25,7 @@ def modes_to_k(modes):
     return [int(x[0] * (x[0] - 1) / 2 + x[1] - 2) for x in modes]
 
 
-def base_pars(bns=False):
+def base_pars(bns=False, prec=False):
     p = dict(
         M=40.0, q=3.0, chi1=0.3, chi2=0.0,
         distance=400.0, inclination=0.5, coalescence_angle=0.0,
@@ -39,6 +39,8 @@ def base_pars(bns=False):
                  initial_frequency=30.0, ecc=0.05,
                  LambdaAl2=400.0, LambdaBl2=400.0,
                  use_lambda234_fits="YAGI13", use_tidal="TEOBRESUM")
+    if prec:
+        p.update(chi1x=-0.4, chi1y=0.3, chi1z=0.4, chi2x=0.2, chi2y=-0.1, chi2z=0.3)
     return p
 
 
@@ -77,10 +79,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--reps", type=int, default=100)
     ap.add_argument("--bns", action="store_true")
+    ap.add_argument("--prec", action="store_true")
     args = ap.parse_args()
 
-    pars = base_pars(bns=args.bns)
-    label = "ecc BNS-like" if args.bns else "ecc BBH"
+    pars = base_pars(bns=args.bns, prec=args.prec)
+    label = ("ecc BNS-like" if args.bns else "ecc BBH") + (", precessing" if args.prec else "")
     print(f"config: {label}  (reps={args.reps}, in-process EOBRunPy)\n")
 
     _, h0 = get_h22(pars, "rkf45")            # accuracy baseline (current default)
