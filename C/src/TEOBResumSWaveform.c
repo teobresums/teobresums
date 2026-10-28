@@ -1313,7 +1313,7 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
 
   // (2, 2)
   if (EOBPars->use_h22_nc_complex) {
-    const double h22_complex[2];
+    double h22_complex[2];
     eob_wav_hath22_nc_complex(r, prstar, prsdot, h22_complex);
     dlm[1] = -h22_complex[1];
   }
@@ -5826,7 +5826,7 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
     /* (2,2) MODE                                                           */
     /* ==================================================================== */
   if (EOBPars->use_h22_nc_complex) {
-    const double h22_complex[2];
+    double h22_complex[2];
     eob_wav_hath22_nc_complex(r, prstar, prsdot, h22_complex);
     hathlm_nc[1] = h22_complex[0];
   }
