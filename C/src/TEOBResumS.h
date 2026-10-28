@@ -372,6 +372,18 @@ enum{
 };
 static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "undefined"};
 
+/** List of options for deltalm_nc */
+enum{
+  FLUX_NC_ORDER_0PN,           /**< 0PN */
+  FLUX_NC_ORDER_1PN,           /**< 1PN */
+  FLUX_NC_ORDER_15PN,          /**< 1.5PN */
+  FLUX_NC_ORDER_2PN,           /**< 2PN */
+  FLUX_NC_ORDER_25PN,          /**< 2.5PN */
+  FLUX_NC_ORDER_3PN,           /**< 3PN */
+  FLUX_NC_ORDER_NOPT           /**< Number of delta lm nc orders */
+};
+static const char* const flux_nc_order_opt[] = {"0PN", "1PN", "1.5PN", "2PN", "2.5PN", "3PN"};
+
 /** List of options for Fr */
 enum{
   USE_FR_NO,            /**< No radial flux */
@@ -398,6 +410,16 @@ enum{
   USEDELTALM_NC_NOPT           /**< number of hlm phase options */
 };
 static const char* const use_dlm_nc_opt[] = {"no", "impqc"};
+
+/** List of options for deltalm_nc */
+enum{
+  DELTALM_NC_ORDER_1PN,           /**< 1PN */
+  DELTALM_NC_ORDER_15PN,          /**< 1.5PN */
+  DELTALM_NC_ORDER_2PN,           /**< 2PN */
+  DELTALM_NC_ORDER_2PN_NOTAIL,    /**< 2PN, without 1.5PN tail term */
+  DELTALM_NC_ORDER_NOPT           /**< Number of delta lm nc orders */
+};
+static const char* const use_dlm_nc_order_opt[] = {"1PN", "1.5PN", "2PN", "2PN_notail"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -834,8 +856,12 @@ typedef struct tagEOBParameters
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
+  int flux_nc_order;                                    /**< NEW, INDEX FOR  # "0PN", "1PN", "1.5PN", "2PN" */
   int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
+  int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */
+  int use_dlm_nc_order;                                 /**< NEW, Flag for PN order of d22_nc */
+  int use_h22_nc_complex;                               /**< NEW, Flag for complex resummed h22_nc */
   int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
@@ -1333,7 +1359,10 @@ double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, do
 double eob_flx_flm_nc_22(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_21(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_33(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_32(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_31(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_44(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_42(double r, double prstar, double prstardot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
@@ -1378,6 +1407,7 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
 extern void (*eob_wav_hathlm_nc)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hathlm_nc_no(double r, double prstar, double prstardot, double *hathlm_nc);
 void eob_wav_hathlm_nc_impqc(double r, double prstar, double prstardot, double *hathlm_nc);
+void eob_wav_hath22_nc_complex(double r, double prstar, double prstardot, double *hath22_nc);
 extern void (*eob_wav_hlmNQC_find_a1a2a3)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);

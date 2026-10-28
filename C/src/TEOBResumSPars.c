@@ -456,10 +456,14 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->rLSO= 0. ; // radius of last stable orbit 
 
   /* NC options */
-  eobp->use_flm_nc     = USEFLM_NC_22;
-  eobp->use_Fr         = USE_FR_NEXT;
-  eobp->use_hlm_nc     = USEHLM_NC_NO;
-  eobp->use_dlm_nc     = USEDELTALM_NC_NO;
+  eobp->use_flm_nc         = USEFLM_NC_22;
+  eobp->flux_nc_order      = FLUX_NC_ORDER_2PN;
+  eobp->use_Fr             = USE_FR_NEXT;
+  eobp->use_hlm_nc         = USEHLM_NC_NO;
+  eobp->use_dlm_nc         = USEDELTALM_NC_NO;
+  eobp->use_dlm_nc_pade    = 0;
+  eobp->use_dlm_nc_order   = DELTALM_NC_ORDER_2PN;
+  eobp->use_h22_nc_complex = 0;
   
   /* Choose the default for the binary type */
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
@@ -488,17 +492,18 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
     } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
-      eobp->use_flm        = USEFLM_HM_4PN22;
+      eobp->use_flm        = USEFLM_HM_6PN3p3;
       eobp->use_a6c_fits   = a6c_fits_P33_impqc;
       eobp->use_cN3LO_fits = cN3LO_fits_P33_impqc;
       eobp->nqc_coefs_flx  = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
       eobp->A_pot          = A_5PNlogP33; 
       eobp->D_pot          = D_5PNP32_newlogs;
-      eobp->Q_pot          = Q_5PNloc; 
+      eobp->Q_pot          = Q_5PN; 
       eobp->use_flm_nc     = USEFLM_NC_IMPQC;
-      eobp->use_Fr         = USE_FR_NEXT;
+      eobp->use_Fr         = USE_FR_FULL;
       eobp->use_hlm_nc     = USEHLM_NC_IMPQC;
       eobp->use_dlm_nc     = USEDELTALM_NC_IMPQC;
+      eobp->use_dlm_nc_pade = 1;
     } else {
       errorexit("Unknown BBH model specified.");
     }
@@ -1472,20 +1477,34 @@ int eob_set_params(int default_choice, int firstcall)
       eob_flx_FlmNewt_nc[1] = &eob_flx_FlmNewt_nc_22;
       break;
     case USEFLM_NC_IMPQC:
-      // Corrections
-      eob_flx_hatflm_nc[0] = &eob_flx_flm_nc_21;
-      eob_flx_hatflm_nc[1] = &eob_flx_flm_nc_22;
-      eob_flx_hatflm_nc[2] = &eob_flx_flm_nc_31;
-      eob_flx_hatflm_nc[4] = &eob_flx_flm_nc_33;
-
       // Newtonian piece
-      eob_flx_FlmNewt_nc[0] = &eob_flx_FlmNewt_nc_21;
       eob_flx_FlmNewt_nc[1] = &eob_flx_FlmNewt_nc_22;
-      eob_flx_FlmNewt_nc[2] = &eob_flx_FlmNewt_nc_31;
-      eob_flx_FlmNewt_nc[3] = &eob_flx_FlmNewt_nc_32;
-      eob_flx_FlmNewt_nc[4] = &eob_flx_FlmNewt_nc_33;
-      eob_flx_FlmNewt_nc[6] = &eob_flx_FlmNewt_nc_42;
-      eob_flx_FlmNewt_nc[8] = &eob_flx_FlmNewt_nc_44;
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN) {
+        eob_flx_FlmNewt_nc[0] = &eob_flx_FlmNewt_nc_21;
+        eob_flx_FlmNewt_nc[2] = &eob_flx_FlmNewt_nc_31;
+        eob_flx_FlmNewt_nc[4] = &eob_flx_FlmNewt_nc_33;
+      }
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN) {
+        eob_flx_FlmNewt_nc[3] = &eob_flx_FlmNewt_nc_32;
+        eob_flx_FlmNewt_nc[6] = &eob_flx_FlmNewt_nc_42;
+        eob_flx_FlmNewt_nc[8] = &eob_flx_FlmNewt_nc_44;
+      }
+
+      // Corrections
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN)
+        eob_flx_hatflm_nc[1] = &eob_flx_flm_nc_22;
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN) {
+        eob_flx_hatflm_nc[0] = &eob_flx_flm_nc_21;
+        eob_flx_hatflm_nc[2] = &eob_flx_flm_nc_31;
+        eob_flx_hatflm_nc[4] = &eob_flx_flm_nc_33;
+      }
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN) {
+        eob_flx_hatflm_nc[6] = &eob_flx_flm_nc_42;
+        eob_flx_hatflm_nc[8] = &eob_flx_flm_nc_44;
+      }
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN) {
+        eob_flx_hatflm_nc[3] = &eob_flx_flm_nc_32;
+      }
       break;
     default:
       if (DEBUG) printf("ERROR: Unknown option for use_flm_nc\n");
@@ -2120,6 +2139,32 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
 
+  if (STREQUAL(key,"use_flm_nc")) {
+    val = string_trim(val);
+    for (eobp->use_flm_nc=0; eobp->use_flm_nc<=USEFLM_NC_NOPT; eobp->use_flm_nc++) {
+      if (eobp->use_flm_nc == USEFLM_NC_NOPT) {
+	eobp->use_flm_nc = USEFLM_NC_22;
+	if (VERBOSE) printf("use_flm_nc '%s' undefined, set to '%s'\n",
+			    val, use_flm_nc_opt[eobp->use_flm_nc]);
+	break;
+      }
+      if (STREQUAL(val, use_flm_nc_opt[eobp->use_flm_nc])) break;
+    }
+  }
+
+  if (STREQUAL(key,"flux_nc_order")) {
+    val = string_trim(val);
+    for (eobp->flux_nc_order=0; eobp->flux_nc_order<=FLUX_NC_ORDER_NOPT; eobp->flux_nc_order++) {
+      if (eobp->flux_nc_order == FLUX_NC_ORDER_NOPT) {
+	eobp->flux_nc_order = FLUX_NC_ORDER_2PN;
+	if (VERBOSE) printf("flux_nc_order '%s' undefined, set to '%s'\n",
+			    val, flux_nc_order_opt[eobp->flux_nc_order]);
+	break;
+      }
+      if (STREQUAL(val, flux_nc_order_opt[eobp->flux_nc_order])) break;
+    }
+  }
+
   if (STREQUAL(key,"use_Fr")) {
     val = string_trim(val);
     for (eobp->use_Fr=0; eobp->use_Fr<=USE_FR_NOPT; eobp->use_Fr++) {
@@ -2157,6 +2202,10 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
       }
       if (STREQUAL(val, use_dlm_nc_opt[eobp->use_dlm_nc])) break;
     }
+  }
+
+  if (STREQUAL(key,"use_h22_nc_complex")) {
+    eobp->use_h22_nc_complex = YESNO2INT(string_trim(val));
   }
 
   if (STREQUAL(key,"A_pot")) {
@@ -2820,9 +2869,11 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "use_flm_nc", use_flm_nc_opt[eobp->use_flm_nc]);
+  fprintf(f,"%s = \"%s\"\n", "flux_nc_order", flux_nc_order_opt[eobp->flux_nc_order]);
   fprintf(f,"%s = \"%s\"\n", "use_Fr", use_Fr_opt[eobp->use_Fr]);
   fprintf(f,"%s = \"%s\"\n", "use_hlm_nc", use_hlm_nc_opt[eobp->use_hlm_nc]);
   fprintf(f,"%s = \"%s\"\n", "use_dlm_nc", use_dlm_nc_opt[eobp->use_dlm_nc]);
+  fprintf(f,"%s = \"%s\"\n", "use_h22_nc_complex", INT2YESNO(eobp->use_h22_nc_complex));
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
   fprintf(f,"%s = %.16f\n"    , "compute_LR_guess", eobp->compute_LR_guess);
   fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));
