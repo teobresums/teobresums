@@ -449,9 +449,12 @@ static const char* const use_dlm_nc_order_opt[] = {"1PN", "1.5PN", "2PN", "2PN_n
 /** List of options for tidal corrections to the waveform (circular part) */
 enum{
   USEFLM_TIDAL_DNV,            /**< Damour-Nagar-Villain 2012 amplitudes */
+  USEFLM_TIDAL_DNV_NOSOURCE,   /**< DNV minus the tidal shift of the source (Heff, jhat) at fixed x */
   USEFLM_TIDAL_NOPT
 };
-static const char* const use_flm_tidal_opt[] = {"DNV", "undefined"};
+static const char* const use_flm_tidal_opt[] = {"DNV", "DNV_nosource", "undefined"};
+/** 2PN terms of the DNV tidal amplitudes ((2,1) NLO, (2,2) NNLO, (4,2) and (4,4) LO), electric only, off unless requested */
+#define use_2PN_amplitude_corrections (0)
 
 /** List of options for noncircular tidal corrections to the waveform; mult with use_hlm_mult_tidal = yes */
 enum{
@@ -853,7 +856,7 @@ typedef struct tagEOBParameters
   int use_dlm_nc_order;                                 /**< NEW, Flag for PN order of d22_nc */
   int use_h22_nc_complex;                               /**< NEW, Flag for complex resummed h22_nc */
   int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
-  int use_flm_tidal;                                    /**< circular tidal amplitudes: "DNV" */
+  int use_flm_tidal;                                    /**< circular tidal amplitudes: "DNV", "DNV_nosource" */
   int use_hlm_nc_tidal;                                 /**< noncircular tidal amplitude: "no", "direct" */
   int use_dlm_nc_tidal;                                 /**< noncircular tidal phase: "no", "direct" */
   int use_flm_nc_tidal;                                 /**< noncircular tidal flux: "no", "direct" */
@@ -1405,6 +1408,7 @@ void eob_wav_hlmNewt_v1(double r, double Omega, double phi, double nu, Waveform_
 void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 extern void (*eob_wav_flm_tidal)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_tidal_DNV(double x, Dynamics *dyn, double *flm_tidal);
+void eob_wav_flm_tidal_DNV_nosource(double x, Dynamics *dyn, double *flm_tidal);
 extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);

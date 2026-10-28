@@ -669,7 +669,7 @@ double eob_flx_Fr_tidal_LO_full(double r, double prstar, double pphi, double prs
   * ---------------------------------
   *   Noncircular tidal part of the (2,2) flux at LO and NLO, Jain & Gamba's flux minus the tidal terms
   *   already in Dali's point-mass (2,2) flux. Added DeltaF = -(32/5) nu j u^(7/2) u^5 (dF10 + u dF12),
-  *   mult F22pp tauF. On circular orbits DeltaF reduces to the circular cross term through NLO
+  *   mult F22pp tauF. On circular orbits DeltaF reduces to the DNV_nosource cross term through NLO
   *
   *   @param[in] r, prstar, pphi: the state
   *   @param[in] F22pp: the point-mass (2,2) flux, which tauF multiplies

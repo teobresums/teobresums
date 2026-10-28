@@ -5728,6 +5728,39 @@ void eob_wav_hath22_nc_complex(double r, double prstar, double prsdot, double* h
 }
 
 /**
+ * Function: eob_wav_flm_tidal_DNV_nosource
+ * ----------------------------------------
+ *  DNV amplitudes minus the tidal shift at fixed x of the source on the point-mass mode, Heff
+ *  (3/2 kappa_T x^6) or jhat (2 kappa_T x^5), to the order DNV has for the mode. Circular PN tidal
+ *  modes at LO (and NLO where DNV has it), the amplitude the NC tidal parts sit on
+ *
+ *  @param[in] x: (r_omega Omega)^2
+ *  @param[in] dyn: dynamics structure
+ *  @param[out] flm_tidal: tidal amplitudes, relative to the Newtonian ones and the tail
+*/
+void eob_wav_flm_tidal_DNV_nosource(double x, Dynamics *dyn, double *flm_tidal)
+{
+  const double kapT = EOBPars->kapT2;
+  const double X12  = EOBPars->X1 - EOBPars->X2;
+  const double x5   = gsl_pow_int(x, 5);
+  const double x6   = gsl_pow_int(x, 6);
+  eob_wav_flm_tidal_DNV(x, dyn, flm_tidal);
+  /* Heff, NLO of (2,2), (3,1), (3,3); times X12 on odd m, since the point-mass part has the X12 and DNV does not */
+  flm_tidal[1] -= 1.5*kapT*x6;
+  flm_tidal[2] -= 1.5*X12*kapT*x6;
+  flm_tidal[4] -= 1.5*X12*kapT*x6;
+  /* jhat, LO of (2,1), (3,2) */
+  flm_tidal[0] -= 2.*X12*kapT*x5;
+  flm_tidal[3] -= 2.*kapT*x5;
+#if (use_2PN_amplitude_corrections)
+  /* with the 2PN corrections DNV also has the NLO of (2,1) and the NNLO of (2,2), remove jhat and Heff there */
+  const double XA = EOBPars->X1, XB = EOBPars->X2;
+  flm_tidal[0] -= X12*(EOBPars->kapA2*(101.*XA*XA + 144.*XA - 30.) + EOBPars->kapB2*(101.*XB*XB + 144.*XB - 30.))/42.*x6;
+  flm_tidal[1] -= (EOBPars->kapA2*(129.*XA*XA + 256.*XA - 27.) + EOBPars->kapB2*(129.*XB*XB + 256.*XB - 27.))/84.*x6*x;
+#endif
+}
+
+/**
  * Function: eob_wav_hathlm_nc_tidal_no
  * ------------------------------------
  *  Use the circular tidal amplitudes only, at the orbit's x, with no tidal phase
@@ -6370,7 +6403,6 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prsdot, double* hat
     Ref. Damour, Nagar & Villain, Phys.Rev. D85 (2012) 123007
     Gamba et al 22 */
 #define use_fmode_22amplitude_correction (1)
-#define use_2PN_amplitude_corrections (0)
 /**
  * Function: eob_wav_flm_tidal_DNV
  * -------------------------------
@@ -6448,12 +6480,12 @@ void eob_wav_flm_tidal_DNV(double x, Dynamics *dyn, double *flm_tidal)
   betaA1[0] = (15. + 203.*XA - 130.*XA*XA - 220.*XA*XA*XA)/(126. - 168.*XA);
   betaB1[0] = (15. + 203.*XB - 130.*XB*XB - 220.*XB*XB*XB)/(126. - 168.*XB);
   betaA2[1] = (1735. - 577.*XA - 15036*XA*XA + 8198.*XA*XA*XA + 2567*XA*XA*XA*XA - 1096*XA*XA*XA*XA*XA)/(504.*(-3.+2*XA));
-  betaB2[1] = (1735. - 577.*XA - 15036*XA*XA + 8198.*XA*XA*XA + 2567*XA*XA*XA*XA - 1096*XA*XA*XA*XA*XA)/(504.*(-3.+2*XA));
-  /** l=4 */
-  hA[6] = 2*3584.*khatA_2*(5 - 9*XA + 6*XA*XA);
-  hB[6] = 2*3584.*khatB_2*(5 - 9*XB + 6*XB*XB);
-  hA[8] = 4*khatA_2*(5 - 9*XA + 6*XA*XA);
-  hB[8] = 4*khatB_2*(5 - 9*XB + 6*XB*XB);
+  betaB2[1] = (1735. - 577.*XB - 15036*XB*XB + 8198.*XB*XB*XB + 2567*XB*XB*XB*XB - 1096*XB*XB*XB*XB*XB)/(504.*(-3.+2*XB));
+  /** l=4, LO, relative to the Newtonian mode with its 1 - 3 nu; same for (4,2) and (4,4) */
+  hA[8] = 4*khatA_2*(5 - 9*XA + 6*XA*XA)/(1. - 3.*nu);
+  hB[8] = 4*khatB_2*(5 - 9*XB + 6*XB*XB)/(1. - 3.*nu);
+  hA[6] = hA[8];
+  hB[6] = hB[8];
 #endif
 
   /** l=2 */
@@ -6476,7 +6508,12 @@ void eob_wav_flm_tidal_DNV(double x, Dynamics *dyn, double *flm_tidal)
   /* (4,4) */
   flm_tidal[8] = ( hA[8] + hB[8] )*x5;
 
-  if ( (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_GSF) || (EOBPars->use_tidal_gravitomagnetic==TIDES_GM_PN) ) {
+#if (use_2PN_amplitude_corrections)
+  /* electric octupole, LO of the (2,2) */
+  flm_tidal[1] += 8./3.*EOBPars->kapT3*x6*x;
+#endif
+
+  if (EOBPars->use_tidal_gravitomagnetic != TIDES_GM_OFF) {
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
     const double fourthird = 1.3333333333333333333; // 32/24 = 4/3
     flm_tidal[0] += 0.5*( -1.*kapA2j/XB + kapB2j/XA )*x5;

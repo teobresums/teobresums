@@ -1471,7 +1471,7 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
 
-  /* the noncircular tidal corrections need Dali with the impqc point mass, use_Fr = full
+  /* the noncircular tidal corrections need Dali with the impqc point mass, use_Fr = full, the DNV_nosource circular amplitudes
      and the tidal B in the dynamics */
   const int tidal_nc_on = (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_NO ||
                            EOBPars->use_dlm_nc_tidal != USEDELTALM_NC_TIDAL_NO ||
@@ -1484,9 +1484,10 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
   if (tidal_nc_on && (EOBPars->use_hlm_nc != USEHLM_NC_IMPQC || EOBPars->use_flm_nc != USEFLM_NC_IMPQC ||
-                      EOBPars->use_Fr != USE_FR_FULL || !tidal_B)) {
+                      EOBPars->use_Fr != USE_FR_FULL ||
+                      EOBPars->use_flm_tidal != USEFLM_TIDAL_DNV_NOSOURCE || !tidal_B)) {
     if (DEBUG) printf("ERROR: the noncircular tidal corrections need use_hlm_nc = impqc, use_flm_nc = impqc, use_Fr = full, "
-                      "tides with the tidal B (TEOBRESUM3_BQ, NNLO_B, NNLO_BQ, N3LO_B, N3LO_BQ)\n");
+                      "use_flm_tidal = DNV_nosource and tides with the tidal B (TEOBRESUM3_BQ, NNLO_B, NNLO_BQ, N3LO_B, N3LO_BQ)\n");
     return 1;
   }
   if ((EOBPars->use_hlm_mult_tidal && EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NO) ||
@@ -1574,6 +1575,8 @@ int eob_set_params(int default_choice, int firstcall)
 
   if (EOBPars->use_flm_tidal == USEFLM_TIDAL_DNV) {
     eob_wav_flm_tidal = &eob_wav_flm_tidal_DNV;
+  } else if (EOBPars->use_flm_tidal == USEFLM_TIDAL_DNV_NOSOURCE) {
+    eob_wav_flm_tidal = &eob_wav_flm_tidal_DNV_nosource;
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_flm_tidal\n");
     return 1;
