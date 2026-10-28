@@ -1469,6 +1469,91 @@ double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid)
 }
 
 /**
+ * Function: cheb_table_eval
+ * -------------------------
+ *   Evaluates the nfunc functions of a ChebTable at v, fitting the interval that contains v on
+ *   first use. Fits as chebft in Numerical Recipes (Press et al.), Sec. 5.8, but sums the series
+ *   from the T_n directly rather than with the Clenshaw recurrence of chebev, since all the
+ *   functions share the T_n
+ *
+ *   @param[in]  tab : the table, with nfunc, dv, imin, imax set
+ *   @param[in]  v   : where to evaluate
+ *   @param[in]  f   : f(v, ctx, out) computes the nfunc functions at v, for the fit
+ *   @param[in]  ctx : passed to f
+ *   @param[out] out : the nfunc functions at v
+ *
+ *   @return 1 if the table gave out, 0 if v is outside it or there is no memory for it
+ */
+int cheb_table_eval(ChebTable *tab, double v, void (*f)(double, void *, double *), void *ctx, double *out)
+{
+  /* find the index i of the interval that contains v, so that i*dv <= v < (i+1)*dv; the cast
+     rounds toward zero, so check v > 0 first (a negative r must not get the first interval) */
+  if (!(v > 0.)) return 0;
+  const int i = (int) (v/tab->dv);
+  if (i < tab->imin || i >= tab->imax) return 0;
+
+  /* on the first call, allocate the table and compute the fit weights */
+  if (tab->c == NULL) {
+    tab->ok = (int *) calloc(tab->imax, sizeof(int));
+    tab->c  = (double *) calloc((size_t)tab->imax*tab->nfunc*CHEB_N, sizeof(double));
+    if (tab->ok == NULL || tab->c == NULL) {
+      free(tab->ok);
+      free(tab->c);
+      tab->ok = NULL;
+      tab->c  = NULL;
+      return 0;
+    }
+    for (int n = 0; n < CHEB_N; n++) {
+      for (int j = 0; j < CHEB_N; j++) {
+        tab->w[n][j] = (n == 0 ? 1.0 : 2.0)*cos(Pi*n*(j + 0.5)/CHEB_N)/CHEB_N;
+      }
+    }
+  }
+
+  /* find the interval [a, b] and its coefficients */
+  const int nfunc = tab->nfunc;
+  const double a = i*tab->dv;
+  const double b = a + tab->dv;
+  double *c = tab->c + (size_t)i*nfunc*CHEB_N;
+
+  if (!tab->ok[i]) {
+
+    /* if the interval is not fitted yet, compute the functions at its Chebyshev nodes */
+    double fv[nfunc][CHEB_N], fj[nfunc];
+    for (int j = 0; j < CHEB_N; j++) {
+      f(0.5*(b - a)*cos(Pi*(j + 0.5)/CHEB_N) + 0.5*(b + a), ctx, fj);
+      for (int k = 0; k < nfunc; k++) fv[k][j] = fj[k];
+    }
+
+    /* get the coefficients, multiplying the functions at the nodes by the fit weights */
+    for (int k = 0; k < nfunc; k++) {
+      for (int n = 0; n < CHEB_N; n++) {
+        double sum = 0.;
+        for (int j = 0; j < CHEB_N; j++) sum += fv[k][j]*tab->w[n][j];
+        c[k*CHEB_N + n] = sum;
+      }
+    }
+    tab->ok[i] = 1;
+  }
+
+  /* evaluate the Chebyshev polynomials at v, mapped to [-1, 1] */
+  const double t  = (2.0*v - (a + b))/(b - a);
+  const double t2 = 2.0*t;
+  double T[CHEB_N];
+  T[0] = 1.0;
+  T[1] = t;
+  for (int n = 2; n < CHEB_N; n++) T[n] = t2*T[n-1] - T[n-2];
+
+  /* sum one series per function, smallest terms first */
+  for (int k = 0; k < nfunc; k++) {
+    double sum = 0.;
+    for (int n = CHEB_N - 1; n >= 0; n--) sum += c[k*CHEB_N + n]*T[n];
+    out[k] = sum;
+  }
+  return 1;
+}
+
+/**
  * Function: D0
  * ------------
  *   4th order centered stencil first derivative, uniform grids
@@ -3386,6 +3471,8 @@ void Dynamics_free (Dynamics *dyn)
     if (dyn->data[v]) free(dyn->data[v]);
   for (int v = 0; v < EOB_WAVC_NVARS; v++)
     if (dyn->wavc[v]) free(dyn->wavc[v]);
+  if (dyn->flmt.ok) free(dyn->flmt.ok);
+  if (dyn->flmt.c)  free(dyn->flmt.c);
   if (dyn->spins) dyn->spins = NULL;
   free(dyn);
 }

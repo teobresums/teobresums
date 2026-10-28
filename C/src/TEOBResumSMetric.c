@@ -1874,7 +1874,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
  *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
  */
 /* called through eob_metric_s, which caches it */
-static void eob_metric_s_raw(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+static void eob_metric_s_uncached(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
@@ -1970,8 +1970,8 @@ static void eob_metric_s_raw(double r, double prstar, Dynamics *dyn, double *A, 
   *d3Q_dprstar3   = d3Qtmp_dprstar3;
 }
 
-/* eob_metric_s_raw cached on (r, prstar), the eccentric r.h.s. repeats calls. Off for f-mode
-   tides and reprojected spins */
+/* eob_metric_s_uncached, stored for the last two (r, prstar), the eccentric r.h.s. repeats calls.
+   No cache with f-mode tides or reprojected spins */
 void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
@@ -1993,9 +1993,9 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
   }
 
   if (!hit) {
-    eob_metric_s_raw(r, prstar, dyn,
-                     &o[0], &o[1], &o[2], &o[3], &o[4], &o[5], &o[6], &o[7],
-                     &o[8], &o[9], &o[10], &o[11], &o[12], &o[13], &o[14]);
+    eob_metric_s_uncached(r, prstar, dyn,
+                          &o[0], &o[1], &o[2], &o[3], &o[4], &o[5], &o[6], &o[7],
+                          &o[8], &o[9], &o[10], &o[11], &o[12], &o[13], &o[14]);
     if (cacheable) {
       const int s = dyn->mcache_next;
       for (int i = 0; i < EOB_METRIC_CACHE_NOUT; i++) dyn->mcache_out[s][i] = o[i];

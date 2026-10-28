@@ -296,7 +296,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
   
   double FNewt22, sum_k=0.; 
-  double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
+  double flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double Modhhatlm[KMAX];  
 
   /** Newtonian flux */
@@ -333,13 +333,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   eob_flx_Tlm(E*Omega, MTlm);
 
   /* Amplitudes */
-  if (usespins) {
-    /* eob_wav_flm_s_old(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm); */
-    eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
-  } else {
-    /* eob_wav_flm_old(x,nu, rholm, flm); */
-    eob_wav_flm(x,nu, rholm, flm);
-  }
+  eob_wav_flm_tab(x, dyn, flm);
   
   FNewt22 = FNewtlm[1];
 
@@ -455,7 +449,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
     jhat, Heff, jhat, Heff, jhat, Heff, jhat, Heff};
   
   double FNewt22, sum_k=0.;
-  double rholm[KMAX], flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
+  double flm[KMAX], FNewtlm[KMAX], MTlm[KMAX], hlmTidal[KMAX], hlmNQC[KMAX];
   double Modhhatlm[KMAX], Flm[KMAX];
 
   /** Newtonian flux */
@@ -492,13 +486,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   eob_flx_Tlm(E*Omega, MTlm);
 
   /* Amplitudes */
-  if (usespins) {
-    /* eob_wav_flm_s_old(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm); */
-    eob_wav_flm_s(x,nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2, usetidal, rholm, flm);
-  } else {
-    /* eob_wav_flm_old(x,nu, rholm, flm); */
-    eob_wav_flm(x,nu, rholm, flm);
-  }
+  eob_wav_flm_tab(x, dyn, flm);
   
   FNewt22 = FNewtlm[1];
 

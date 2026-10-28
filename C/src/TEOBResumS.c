@@ -456,6 +456,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->use_spins = spins_tmp;
     EOBPars->use_tidal_fmode_model = use_fmode_tmp;
     if (VERBOSE) PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
+    /* clear the caches, the light-ring solve filled them with NNLO tides and no spins */
+    for (int i = 0; i < EOB_METRIC_CACHE_NSLOTS; i++) dyn->mcache_valid[i] = 0;
+    if (dyn->flmt.ok)
+      for (int i = 0; i < dyn->flmt.imax; i++) dyn->flmt.ok[i] = 0;
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }

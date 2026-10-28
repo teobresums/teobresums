@@ -647,6 +647,22 @@ typedef struct tagDynamicsSpin
 #define EOB_METRIC_CACHE_NSLOTS 2
 #define EOB_METRIC_CACHE_NOUT   15
 
+/** Chebyshev table of nfunc functions of one variable v. v is split into intervals of width dv,
+    each with its own fit of CHEB_N coefficients, fitted on first use. See cheb_table_eval */
+#define CHEB_N 12
+typedef struct tagChebTable {
+  int    nfunc;                 /**< number of functions, 0 until the owner sets the table up */
+  double dv;                    /**< interval width */
+  int    imin, imax;            /**< intervals in the table, imin <= i < imax */
+  int    *ok;                   /**< fitted intervals, allocated on first use */
+  double *c;                    /**< coefficients [(i*nfunc + k)*CHEB_N + n], allocated on first use */
+  double w[CHEB_N][CHEB_N];     /**< fit weights cos(Pi n (j + 1/2)/N) */
+} ChebTable;
+
+/** f_lm table in x. It skips the first interval, whose edge x = 0 is singular for the log(x) of rho_lm */
+#define EOB_FLM_CHEB_DX        (0.0025)
+#define EOB_FLM_CHEB_NINTERVAL 137 /* the table ends at x = 0.3425, beyond it eob_wav_flm_tab computes f_lm without the table */
+
 /** r.h.s. quantities stored for the wvf, see Dynamics.wavc */
 enum{
   WAVC_H,
@@ -693,6 +709,9 @@ typedef struct tagDynamics
   double mcache_r[EOB_METRIC_CACHE_NSLOTS];
   double mcache_prstar[EOB_METRIC_CACHE_NSLOTS];
   double mcache_out[EOB_METRIC_CACHE_NSLOTS][EOB_METRIC_CACHE_NOUT];
+
+  /* f_lm Chebyshev table (setup by eob_wav_flm_tab at first call) */
+  ChebTable flmt;
 
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_NVARS];   /**< rhs storage */
@@ -837,6 +856,7 @@ typedef struct tagEOBParameters
   int ode_stepper;                                      /**< ODE stepper (GSL odeiv2 step type) */
   double ode_stepper_hmax;                              /**< max ODE step, <= 0 for none */
   int use_metric_cache;                                 /**< cache eob_metric_s */
+  int use_flm_cheb;                                     /**< use the Chebyshev table for the f_lm */
   double srate;                                         /**< sampling rate */
   double dt;                                            /**< timestep */
   double ode_abstol;                                    /**< ODE solver absolute tolerance */
@@ -990,6 +1010,7 @@ double interp1d (const int order, double xx, int nx, double *f, double *x);
 double find_max (const int n, double dx, double x0, double *f, double *fmax);
 double find_max_grid (double *x, double *f);
 double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid);
+int cheb_table_eval(ChebTable *tab, double v, void (*f)(double, void *, double *), void *ctx, double *out);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
@@ -1328,6 +1349,7 @@ void eob_wav_hlmNewt_v1(double r, double Omega, double phi, double nu, Waveform_
 void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
 extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
+void eob_wav_flm_tab(double x, Dynamics *dyn, double *flm);
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);

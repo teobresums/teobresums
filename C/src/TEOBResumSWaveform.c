@@ -5457,6 +5457,53 @@ void eob_wav_flm_s_Kerr(double x, double nu, double X1, double X2, double chi1, 
   
 }
 
+/* f_lm at x from the selected amplitude model; also the function eob_wav_flm_tab fits */
+static void eob_wav_flm_notab(double x, void *ctx, double *flm)
+{
+  (void) ctx;
+  double rholm[KMAX];
+  if (EOBPars->use_spins) {
+    eob_wav_flm_s(x, EOBPars->nu, EOBPars->X1, EOBPars->X2, EOBPars->chi1, EOBPars->chi2,
+                  EOBPars->a1, EOBPars->a2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->use_tidal,
+                  rholm, flm);
+  } else {
+    eob_wav_flm(x, EOBPars->nu, rholm, flm);
+  }
+}
+
+/**
+  * Function: eob_wav_flm_tab
+  * -------------------------
+  *   Computes the residual amplitudes f_lm at x, from the Chebyshev table with use_flm_cheb and x
+  *   inside it, and from eob_wav_flm(_s) otherwise. Skips the table with reprojected spins, where
+  *   f_lm is not a function of x alone
+  *
+  *   @param[in]  x  :  frequency parameter
+  *   @param[in]  dyn:  dynamics, holds the table
+  *   @param[out] flm:  residual amplitudes
+  */
+void eob_wav_flm_tab(double x, Dynamics *dyn, double *flm)
+{
+  /* use the table only if it is on and the spins are fixed */
+  if (dyn != NULL && EOBPars->use_flm_cheb &&
+      !(EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins)) {
+
+    /* setup table at first call */
+    ChebTable *tab = &dyn->flmt;
+    if (tab->nfunc == 0) {
+      tab->nfunc = KMAX;
+      tab->dv   = EOB_FLM_CHEB_DX;
+      tab->imin = 1;
+      tab->imax = EOB_FLM_CHEB_NINTERVAL;
+    }
+    if (cheb_table_eval(tab, x, eob_wav_flm_notab, NULL, flm)) return;
+  }
+
+  /* outside the table, or without memory for it, compute f_lm without the table */
+  eob_wav_flm_notab(x, NULL, flm);
+}
+
+
 /** 
  * Function: eob_wav_hathlm_nc_no
  * ---------------------------------
@@ -10140,15 +10187,9 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
   }
 
   /** Compute corrections */
-  double rholm[KMAX], flm[KMAX];
+  double flm[KMAX];
   double x = SQ(rw*Omega);
-  if (usespins){
-    /* eob_wav_flm_s_old(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); */ 
-    eob_wav_flm_s(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
-  } else {
-    /* eob_wav_flm_old(x, nu, rholm,flm); */
-    eob_wav_flm(x, nu, rholm,flm);
-  }
+  eob_wav_flm_tab(x, dyn, flm);
   
   /** Computing the tail */
 #define RTAIL (1.213061319425267e+00)
@@ -10267,15 +10308,9 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   eob_wav_hlmNewt_ecc(dyn, &hNewt);
 
   /** Compute corrections */
-  double rholm[KMAX], flm[KMAX], hathlm_nc[KMAX];
+  double flm[KMAX], hathlm_nc[KMAX];
   double x = SQ(rw*Omega);
-  if (usespins){
-    /* eob_wav_flm_s_old(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); */ 
-    eob_wav_flm_s(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
-  } else {
-    /* eob_wav_flm_old(x, nu, rholm,flm); */
-    eob_wav_flm(x, nu, rholm, flm);
-  }
+  eob_wav_flm_tab(x, dyn, flm);
   
   /* Non-circ correction piece */
   eob_wav_hathlm_nc(r, prstar, dyn->prsdot, hathlm_nc);
@@ -10400,15 +10435,9 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
   eob_wav_hlmNewt_ecc_sigmoid(dyn, &hNewt);
 
   /** Compute corrections */
-  double rholm[KMAX], flm[KMAX], hathlm_nc[KMAX];
+  double flm[KMAX], hathlm_nc[KMAX];
   double x = SQ(rw*Omega);
-  if (usespins){
-    /* eob_wav_flm_s_old(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); */ 
-    eob_wav_flm_s(x, nu, X1,X2,chi1,chi2,a1,a2,C_Q1,C_Q2,usetidal,rholm,flm); 
-  } else {
-    /* eob_wav_flm_old(x, nu, rholm,flm); */
-    eob_wav_flm(x, nu, rholm,flm);
-  }
+  eob_wav_flm_tab(x, dyn, flm);
   
   /* Non-circ correction piece */
   eob_wav_hathlm_nc(r, prstar, dyn->prsdot, hathlm_nc);
