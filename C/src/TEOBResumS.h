@@ -663,6 +663,13 @@ typedef struct tagChebTable {
 #define EOB_FLM_CHEB_DX        (0.0025)
 #define EOB_FLM_CHEB_NINTERVAL 137 /* the table ends at x = 0.3425, beyond it eob_wav_flm_tab computes f_lm without the table */
 
+/** Metric table in u = 1/r, for the nine r-only outputs of eob_metric_s (A, B, their derivatives,
+    r_c and its derivatives). It fits r_c - r rather than r_c, which is smooth in u */
+#define EOB_METRIC_CHEB_NFUNC       9
+#define EOB_METRIC_CHEB_DU         (0.02)
+#define EOB_METRIC_CHEB_NINTERVAL  10    /* the table ends at u = 0.2, r = 5, inside it the code computes the metric without the table */
+#define EOB_METRIC_CHEB_RMIN_TIDES (9.)  /* with tides only beyond r = 9, else a binary stopping on a join between intervals gets a corrupted peak */
+
 /** r.h.s. quantities stored for the wvf, see Dynamics.wavc */
 enum{
   WAVC_H,
@@ -710,8 +717,9 @@ typedef struct tagDynamics
   double mcache_prstar[EOB_METRIC_CACHE_NSLOTS];
   double mcache_out[EOB_METRIC_CACHE_NSLOTS][EOB_METRIC_CACHE_NOUT];
 
-  /* f_lm Chebyshev table (setup by eob_wav_flm_tab at first call) */
+  /* f_lm and metric Chebyshev tables (setup by eob_wav_flm_tab and eob_metric_s_r_part at first call) */
   ChebTable flmt;
+  ChebTable metrict;
 
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_NVARS];   /**< rhs storage */
@@ -857,6 +865,7 @@ typedef struct tagEOBParameters
   double ode_stepper_hmax;                              /**< max ODE step, <= 0 for none */
   int use_metric_cache;                                 /**< cache eob_metric_s */
   int use_flm_cheb;                                     /**< use the Chebyshev table for the f_lm */
+  int use_metric_cheb;                                  /**< use the Chebyshev table for the r-only part of the metric */
   double srate;                                         /**< sampling rate */
   double dt;                                            /**< timestep */
   double ode_abstol;                                    /**< ODE solver absolute tolerance */
@@ -1293,6 +1302,8 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                 double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                 double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
+void eob_metric_s_r_part(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                       double *rc, double *drc, double *d2rc);
 void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);

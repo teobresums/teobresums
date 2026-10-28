@@ -344,6 +344,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->ode_stepper_hmax=0.0; // max ODE step, <= 0 for none
   eobp->use_metric_cache=1; // cache eob_metric_s
   eobp->use_flm_cheb=1; // use the Chebyshev table for the f_lm
+  eobp->use_metric_cheb=0; // use the Chebyshev table for the r-only part of the metric
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
   eobp->spin_ode_abstol=1e-11; // Spin dynamics ODE solver absolute accuracy
@@ -2372,6 +2373,10 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     eobp->ode_stepper_hmax = par_get_d(val);
   }
 
+  if (STREQUAL(key,"use_metric_cheb")) {
+    eobp->use_metric_cheb = YESNO2INT(string_trim(val));
+  }
+
   if (STREQUAL(key,"use_flm_cheb")) {
     eobp->use_flm_cheb = YESNO2INT(string_trim(val));
   }
@@ -3097,6 +3102,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16e\n" , "ode_stepper_hmax", eobp->ode_stepper_hmax);
   fprintf(f,"%s = \"%s\"\n", "use_metric_cache", INT2YESNO(eobp->use_metric_cache));
   fprintf(f,"%s = \"%s\"\n", "use_flm_cheb", INT2YESNO(eobp->use_flm_cheb));
+  fprintf(f,"%s = \"%s\"\n", "use_metric_cheb", INT2YESNO(eobp->use_metric_cheb));
   fprintf(f,"%s = %E\n"    , "ode_abstol", eobp->ode_abstol);
   fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
   fprintf(f,"%s = %E\n"    , "spin_ode_abstol", eobp->spin_ode_abstol);

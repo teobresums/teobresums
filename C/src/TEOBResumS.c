@@ -460,6 +460,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     for (int i = 0; i < EOB_METRIC_CACHE_NSLOTS; i++) dyn->mcache_valid[i] = 0;
     if (dyn->flmt.ok)
       for (int i = 0; i < dyn->flmt.imax; i++) dyn->flmt.ok[i] = 0;
+    if (dyn->metrict.ok)
+      for (int i = 0; i < dyn->metrict.imax; i++) dyn->metrict.ok[i] = 0;
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }

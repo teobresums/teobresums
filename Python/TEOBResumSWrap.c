@@ -478,6 +478,9 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "ode_stepper_hmax") != NULL ) {
     EOBPars->ode_stepper_hmax = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_stepper_hmax"));
   }
+  if ( PyDict_GetItemString(dict, "use_metric_cheb") != NULL ) {
+    EOBPars->use_metric_cheb = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_metric_cheb")));
+  }
   if ( PyDict_GetItemString(dict, "use_flm_cheb") != NULL ) {
     EOBPars->use_flm_cheb = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_cheb")));
   }

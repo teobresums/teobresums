@@ -3473,6 +3473,8 @@ void Dynamics_free (Dynamics *dyn)
     if (dyn->wavc[v]) free(dyn->wavc[v]);
   if (dyn->flmt.ok) free(dyn->flmt.ok);
   if (dyn->flmt.c)  free(dyn->flmt.c);
+  if (dyn->metrict.ok) free(dyn->metrict.ok);
+  if (dyn->metrict.c)  free(dyn->metrict.c);
   if (dyn->spins) dyn->spins = NULL;
   free(dyn);
 }
