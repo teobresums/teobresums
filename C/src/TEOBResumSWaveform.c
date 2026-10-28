@@ -958,13 +958,15 @@ void eob_wav_hlmNewt_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlmNewt)
 */
 void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm)
 {
+  /* ln Gamma(l+1), index l, explicit vals of gsl_sf_lngamma_complex_e (not exactly log(l!)) */
+  static const double lngamma_l1[9] = {0, 8.8817841970012523e-16, 0.6931471805599454, 1.7917594692280554,
+                                       3.1780538303479471, 4.7874917427820467, 6.5792512120101039,
+                                       8.5251613610654182, 10.604602902745253};
   double k;
   double hhatk;
   
   gsl_sf_result num_rad;
   gsl_sf_result num_phase;
-  gsl_sf_result denom_rad;
-  gsl_sf_result denom_phase;
   
   double ratio_rad;
   double ratio_ang;
@@ -976,9 +978,8 @@ void eob_wav_hhatlmTail(double Omega, double Hreal, double bphys, Waveform_lm_t 
     hhatk = k * Hreal;
     
     gsl_sf_lngamma_complex_e(LINDEX[i] + 1., -2.*hhatk, &num_rad, &num_phase);
-    gsl_sf_lngamma_complex_e(LINDEX[i] + 1., 0., &denom_rad, &denom_phase);
     
-    ratio_rad     = num_rad.val-denom_rad.val;
+    ratio_rad     = num_rad.val-lngamma_l1[LINDEX[i]];
     ratio_ang     = num_phase.val-0.;
     
     if (Omega > 0.) {

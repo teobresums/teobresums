@@ -1970,13 +1970,15 @@ static void eob_metric_s_raw(double r, double prstar, Dynamics *dyn, double *A, 
   *d3Q_dprstar3   = d3Qtmp_dprstar3;
 }
 
-/* eob_metric_s_raw cached on (r, prstar), the eccentric r.h.s. repeats calls. Off for f-mode tides */
+/* eob_metric_s_raw cached on (r, prstar), the eccentric r.h.s. repeats calls. Off for f-mode
+   tides and reprojected spins */
 void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
 {
   const int cacheable = (dyn != NULL) && EOBPars->use_metric_cache &&
-    !(EOBPars->use_tidal && EOBPars->use_tidal_fmode_model);
+    !(EOBPars->use_tidal && EOBPars->use_tidal_fmode_model) &&
+    !(EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins);
   double o[EOB_METRIC_CACHE_NOUT];
   int hit = 0;
 

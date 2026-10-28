@@ -370,9 +370,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* With the cache on (Dali + NQC), store the quantities the waveform needs during the
      dynamics and compute the waveform only afterwards, when the sigmoid is applied.
-     Avoids evaluating the r.h.s. twice. Off for generic spins, where chi1, chi2 evolve */
+     Avoids evaluating the r.h.s. twice. Off when the spins are reprojected, where chi1, chi2 evolve */
   const int use_wav_scalar_cache = (EOBPars->model == MODEL_DALI) &&
-    (EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && (use_spins != MODE_SPINS_GENERIC);
+    (EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && !(use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins);
   if (use_wav_scalar_cache) {
     for (int v = 0; v < EOB_WAVC_NVARS; v++)
       dyn->wavc[v] = malloc(size * sizeof(double));

@@ -917,7 +917,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
     rc = rc_in;
     drc_dr = drc_dr_in;
     d2rc_dr2 = d2rc_dr2_in;
-    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, 0.0, nu, chi1, chi2, X1, X2, c3, 0, ggm);
     G = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
     dG_dr           = ggm[6]*S   + ggm[7]*Sstar;
     dG_dprstar      = ggm[4]  *S + ggm[5]  *Sstar;
