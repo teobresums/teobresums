@@ -368,18 +368,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_alloc (&hlm, size, "hlm", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size);
   Waveform_lm_t_alloc (&hlm_t);
 
-  /* Dali + NQC (non-generic-spin) runs overwrite the whole waveform with a
-     second, sigmoid-corrected pass after evolution (see the "Over-writing
-     waveform" block below), discarding the evolution-time (pass-1) hlm and
-     re-deriving the same RHS scalar side effects via a second full RHS call
-     per point. Cache them here instead: the evolution-time storage RHS call
-     already computes them (dyn->store=1 runs the same code regardless of
-     dyn->noflx, which only gates dy[EOB_EVOLVE_PPHI] - see eob_dyn_rhs_ecc),
-     so this makes pass 1's waveform (and the second RHS call) redundant.
-     Excluded for generic spins: there EOBPars->chi1/chi2 are mutated per
-     step (see the spin-projection block below), so the pre-existing
-     post-loop RHS call uses end-state spins, not per-step ones - replaying
-     per-step-captured values would silently change that behavior. */
+  /* With the cache on (Dali + NQC), store the quantities the waveform needs during the
+     dynamics and compute the waveform only afterwards, when the sigmoid is applied.
+     Avoids evaluating the r.h.s. twice. Off for generic spins, where chi1, chi2 evolve */
   const int use_wav_scalar_cache = (EOBPars->model == MODEL_DALI) &&
     (EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && (use_spins != MODE_SPINS_GENERIC);
   if (use_wav_scalar_cache) {
@@ -656,10 +647,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     dyn->store = dyn->noflx = 0;
     if (use_wav_scalar_cache && store_dynamics) {
-      /* i=0 is handled by this separate initial-conditions block, not by the
-         main loop's per-iter store below - populate its cache slot too,
-         since the sigmoid overwrite pass (i=0..size-1) reads it like any
-         other point. */
+      /* the loop does not store i = 0 */
       dyn->wavc[WAVC_H][0]         = dyn->H;
       dyn->wavc[WAVC_HEFF][0]      = dyn->Heff;
       dyn->wavc[WAVC_JHAT][0]      = dyn->jhat;
@@ -754,9 +742,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
-  /* Multistep methods (msadams) carry internal state and require a driver to be
-     associated with the step for the evolve interface. Only attach it for those
-     steppers so the single-step paths (incl. rkf45) are byte-for-byte unchanged. */
+  /* msadams needs the driver */
   if (ode_stepper_use == ODE_STEPPER_MSADAMS)
     gsl_odeiv2_step_set_driver (s, d);
 
@@ -801,11 +787,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
     }
     
-    /* Cap the proposed next step. High-order steppers (rk8pd) take very large
-       steps for the smooth dynamics, but the waveform is sampled at the accepted
-       steps and then spline-interpolated onto the output grid; too-sparse a grid
-       adds interpolation error near the sharp merger. A moderate hmax densifies
-       the sampling while keeping most of the step-count reduction. */
+    /* cap the step, high-order steppers sample the wvf too sparsely for the spline near merger */
     if (EOBPars->ode_stepper_hmax > 0.0 && dyn->dt > EOBPars->ode_stepper_hmax)
       dyn->dt = EOBPars->ode_stepper_hmax;
 
@@ -823,9 +805,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     dyn->store = dyn->noflx = 0;
     if (use_wav_scalar_cache) {
-      /* This pass-1 waveform gets unconditionally overwritten by the
-         sigmoid pass below; skip computing it. hlm->time[] is set only
-         here though (eob_wav_hlm's job otherwise), so still set that. */
+      /* store t, full wvf after the dynamics */
       hlm_t->time = dyn->t;
     } else {
       eob_wav_hlm(dyn, hlm_t);
@@ -914,9 +894,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Update size and push arrays (if needed) */
     if (iter==size) {
       /* if (DEBUG)  printf("Push memory\n"); */
-      /* Geometric growth: O(log N) reallocs instead of O(N/chunk). The buffers
-         are trimmed back to the exact length (iter+1) after the loop, so this
-         only affects transient capacity, not the output. */
+      /* double the size, trim the arrays after the loop */
       size += (size > chunk) ? size : chunk;
       EOBPars->size = size;
       Waveform_lm_push (&hlm, size);
@@ -1133,22 +1111,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
         dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
         if (use_wav_scalar_cache) {
-          /* Same (t,y) point as the evolution-time storage RHS call for this
-             i: restore its already-computed scalar outputs (verified to be
-             exactly what eob_wav_hlm_ecc_sigmoid/eob_wav_hlmNewt_ecc_sigmoid
-             read) instead of re-deriving them via a second full RHS call. */
+          /* stored r.h.s. quantities */
           dyn->phi    = dyn->data[EOB_PHI][i];
           dyn->r      = dyn->data[EOB_RAD][i];
           dyn->pphi   = dyn->data[EOB_PPHI][i];
           dyn->prstar = dyn->data[EOB_PRSTAR][i];
-          /* Omg/ddotr come from the wavc[] cache, NOT dyn->data[EOB_MOMG/
-             DDOTR][i]: at i=0 those hold the analytic initial-condition
-             values (set before any RHS call), which differ from the
-             RHS-derived Omg/ddotr that this same RHS call also produced
-             (and that wavc[WAVC_H][0] etc. come from) - mixing the two gave
-             a visibly wrong (2,2) amplitude at i=0. For i>=1 the two sources
-             are identical anyway (both set from the same evolution-time
-             storage RHS call), so this is a no-op change there. */
+          /* Omg, ddotr from wavc, not data[], since at i = 0 data[] has the initial-data values, which
+             differ from the r.h.s. ones the rest of wavc comes from */
           dyn->Omg    = dyn->wavc[WAVC_OMG][i];
           dyn->ddotr  = dyn->wavc[WAVC_DDOTR][i];
           dyn->H         = dyn->wavc[WAVC_H][i];

@@ -63,9 +63,7 @@ void (*eob_metric_Qpotential)();
 double (*eob_flx_Fr)();
 double (*eob_flx_hatflm_nc[KMAX])();
 double (*eob_flx_FlmNewt_nc[KMAX])();
-/* Modes with a non-trivial non-circular flux correction (either pointer above
-   != return_one). Built in eob_set_flx_pointers; lets eob_flx_Fphi_ecc skip the
-   ~4/5 of KMAX modes whose correction is identically 1 (see there). */
+/* Modes with a noncircular flux correction, set in eob_set_params */
 int eob_flx_nc_active_k[KMAX];
 int eob_flx_nc_active_n = 0;
 
@@ -342,13 +340,9 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->size=500; // size of the arrays (chunks, dynamically extended)
   eobp->ringdown_extend_array=500; // grid points to extend arrays for ringdown attachment
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
-  /* Default "auto": resolved per model at runtime (EOBRun) -- rk8pd for tidal
-     eccentric systems (BNS/BHNS), msadams for eccentric BBH, rkf45 for
-     quasi-circular (Giotto, bit-identical to the historical default). Set an
-     explicit ode_stepper to override. */
-  eobp->ode_stepper=ODE_STEPPER_AUTO; // "rkf45","rk8pd","rkck","msadams","rk4","auto"
-  eobp->ode_stepper_hmax=0.0; // max ODE step (geom units), <=0 = uncapped
-  eobp->use_metric_cache=1; // enable eob_metric_s memoization cache (bit-identical); set to 0 to isolate its effect in benchmarks
+  eobp->ode_stepper=ODE_STEPPER_AUTO; // "rkf45","rk8pd","rkck","msadams","rk4","auto" (chosen per system in eob_set_params)
+  eobp->ode_stepper_hmax=0.0; // max ODE step, <= 0 for none
+  eobp->use_metric_cache=1; // cache eob_metric_s
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
   eobp->spin_ode_abstol=1e-11; // Spin dynamics ODE solver absolute accuracy
@@ -878,10 +872,7 @@ int eob_set_params(int default_choice, int firstcall)
     }
   }
 
-  /* Runtime-selectable ODE stepper, defaults are chosen based on model/binary type.
-     rk8pd & msadams are 4-6 times faster than rkf45, mismatches within 1e-5-1e-6 or lower.
-     Quasi-circular Giotto keeps old default.
-   */
+  /* "auto" ODE stepper is rk8pd for Dali with tides, msadams for Dali without, rkf45 for Giotto */
   if (EOBPars->ode_stepper == ODE_STEPPER_AUTO) {
     if (EOBPars->model == MODEL_DALI)
       EOBPars->ode_stepper = EOBPars->use_tidal ? ODE_STEPPER_RK8PD : ODE_STEPPER_MSADAMS;
@@ -1499,9 +1490,7 @@ int eob_set_params(int default_choice, int firstcall)
       return 1;
   }
 
-  /* Cache the modes that actually carry a non-circular correction, so
-     eob_flx_Fphi_ecc iterates only over those instead of calling return_one
-     through a function pointer for every KMAX mode (see there). */
+  /* modes with a noncircular flux correction */
   eob_flx_nc_active_n = 0;
   for (int k = 0; k < KMAX; k++)
     if (eob_flx_FlmNewt_nc[k] != &return_one || eob_flx_hatflm_nc[k] != &return_one)

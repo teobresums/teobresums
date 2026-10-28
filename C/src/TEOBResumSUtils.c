@@ -3151,7 +3151,7 @@ void Dynamics_push (Dynamics **dyn, int size)
     if ((*dyn)->data[v] == NULL) errorexit("Out of memory.");
     /* if (dn>0) memset( (*dyn)->data[v] + n, 0, dn * sizeof(double) ); */
   }
-  /* wavc[] cache: only grown if already allocated (opt-in, see TEOBResumS.h) */
+  /* wavc only if allocated, see EOBRun */
   if ((*dyn)->wavc[0]) {
     for (int v = 0; v < EOB_WAVC_NVARS; v++)
       (*dyn)->wavc[v] = realloc((*dyn)->wavc[v], size * sizeof(double));

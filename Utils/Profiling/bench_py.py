@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
 """
-In-process ODE-stepper benchmark for TEOBResumS via EOBRun_module.
-
-For sub-second (BBH) systems the C-executable path is dominated by fork/exec +
-parfile I/O + output-file writing, which swamps the ~0.1 s computation with noisy
-fixed overhead. Calling EOBRunPy in-process instead measures pure computation,
-returns the modes in memory (no disk), and lets us repeat the identical call many
-times and take the min - which is what makes sub-second timing reliable.
+Times the ODE steppers through EOBRunPy, for systems that take well under a second, where the
+executable's start-up and file output would dominate. Repeat calls and keep the minimum.
+Prints, per stepper, time, speed-up and mismatch of the (2,2) against rkf45.
 
 Usage:
-  python3 bench_py.py                 # default eccentric-BBH config
-  python3 bench_py.py --reps 200      # timing repetitions per stepper
-  python3 bench_py.py --bns           # eccentric-BNS-like config (with tides)
-
-Reports, per stepper, the min/median wall time and speedup vs rkf45, plus the
-accuracy of each stepper's (2,2) mode against the rkf45 baseline (time+phase
-maximized mismatch).
+  python3 bench_py.py [--reps 200] [--bns]
 """
 
 import argparse
@@ -24,8 +14,7 @@ import sys
 import time
 import numpy as np
 
-# Prefer the freshly-built in-place module in Python/ over any pip-installed copy
-# in site-packages (which may lag the current C sources / lack new parameters).
+# the module built in Python/, not an installed one
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "Python"))
 import EOBRun_module
 
@@ -55,7 +44,7 @@ def base_pars(bns=False):
 
 def time_stepper(pars, stepper, reps):
     p = dict(pars); p["ode_stepper"] = stepper
-    # warm up (lazy init / first-touch allocation)
+    # warm-up call
     for _ in range(3):
         EOBRun_module.EOBRunPy(p)
     ts = []
@@ -75,12 +64,7 @@ def get_h22(pars, stepper):
 
 
 def flat_mismatch(h0, h):
-    """Time-and-phase-maximized mismatch (flat PSD). The time maximization is the
-    IFFT of the cross-spectrum; the |.| gives the phase maximization. A naive
-    fixed-index phase-at-merger comparison is NOT reliable here: near the steep
-    merger a sub-sample time offset between two steppers' output grids shows up as
-    a large spurious phase difference, which made rk8pd look inaccurate when it is
-    only mis-aligned by a fraction of a sample. Use this maximized match instead."""
+    """Flat-PSD mismatch, maximized over time shift and phase"""
     n = max(len(h0), len(h))
     N = 1 << int(np.ceil(np.log2(2 * n)))
     H0 = np.fft.fft(h0, N); H = np.fft.fft(h, N)

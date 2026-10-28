@@ -61,13 +61,12 @@ params = {
                                          ((1.7, 1.,  0.2, 0.1, 400, 1500.), 1e-10, [0, 1, 4, 8, 13]),  #BNS  (21, 22, 33, 44, 55)
                                          ((6., 1.4,  0.8, 0.1, 0., 1500.),  1e-10, [0, 1, 8, 13])], #BHNS (21, 22, 44, 55)
 
-        # eccentric: waveform is reproducible (flags leaks / nondeterminism on the ODE path)
+        # eccentric, the same call twice gives the same waveform
         # format: (m1, m2, s1z, s2z, l1, l2, ecc)
         'test_ecc_reproducible': [ (40., 20., 0.3, -0.1, 0., 0., 0.1),      #ecc BBH
                                    (1.5, 1.3, 0.05, 0.05, 400., 400., 0.05)], #ecc BNS
 
-        # eccentric: an alternative ODE stepper stays within an accuracy gate vs rkf45.
-        # Locks the model-aware default (auto -> rk8pd for BNS, msadams for BBH).
+        # eccentric, other ODE steppers against rkf45, within a mismatch
         # format: (m1, m2, s1z, s2z, l1, l2, ecc), stepper, mismatch_gate
         'test_ecc_stepper_gate': [ ((40., 20., 0.3, -0.1, 0., 0., 0.1),      'msadams', 1e-6),  #BBH default
                                    ((40., 20., 0.3, -0.1, 0., 0., 0.1),      'rk8pd',   1e-4),  #BBH fastest
@@ -328,9 +327,7 @@ def test_phiref_meaning():
 @pytest.mark.parametrize("pars", params['test_ecc_reproducible'])
 def test_ecc_reproducible(pars):
     """
-    Eccentric waveforms must integrate the full ODE (no PA shortcut); generate
-    one a few times and require bitwise-identical output (flags leaks or
-    uninitialized memory on the eccentric path).
+    Same eccentric wvf over repeated calls (catches uninitialized memory)
     """
     m1, m2, s1z, s2z, l1, l2, ecc = pars
     ap = {'ecc': ecc, 'use_mode_lm': [1]}
@@ -343,9 +340,7 @@ def test_ecc_reproducible(pars):
 @pytest.mark.parametrize("pars, stepper, gate", params['test_ecc_stepper_gate'])
 def test_ecc_stepper_gate(pars, stepper, gate):
     """
-    An alternative ODE stepper must reproduce the rkf45 (historical default)
-    eccentric waveform within a mismatch gate. Guards the model-aware default
-    (rk8pd for tidal/BNS, msadams for eccentric BBH) against accuracy regressions.
+    Eccentric wvf with another ODE stepper vs rkf45, within the gate
     """
     m1, m2, s1z, s2z, l1, l2, ecc = pars
     base = {'ecc': ecc, 'use_mode_lm': [1], 'ode_stepper': 'rkf45'}

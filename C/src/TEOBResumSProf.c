@@ -19,23 +19,12 @@
  */
 
 /** \file TEOBResumSProf.c
- *  \brief Lightweight portable profiling: section timers + RHS-call counters.
+ *  \brief Section timers and r.h.s. call counters, on with -DPROFILING=1 (make prof).
  *
- * Enabled with -DPROFILING=1 (see the `prof` Makefile target). When disabled
- * the PROF_* macros in TEOBResumS.h expand to nothing, so the timed code is
- * bit-identical to the un-instrumented build. Timers are indexed by the PROF_*
- * enum for O(1), strcmp-free start/stop on the hot RHS/flux paths.
- *
- * Note: fine-grained timers around the r.h.s. fire ~1e5-1e6 times per waveform,
- * so their clock_gettime overhead perturbs the very quantity they measure. The
- * RHS-call counters (prof_rhs_calls, prof_rhs_store_calls) are the robust metric
- * for comparing ODE steppers; treat the RHS/flux wall times as indicative only.
+ * Timers around the r.h.s. perturb what they time, compare steppers with the call counters.
  */
 
 #include "TEOBResumS.h"
-
-/* clock_gettime requires _POSIX_C_SOURCE >= 199309L; TEOBResumS.h defines
- * _GNU_SOURCE (which implies it), and the `prof` target passes the flag too. */
 
 long prof_rhs_calls       = 0;
 long prof_rhs_store_calls = 0;
@@ -92,8 +81,7 @@ void prof_timer_output(void)
   strcat(fname, "/prof_timers.txt");
   FILE *fp = fopen(fname, "w");
   if (!fp) {
-    /* output_dir may not exist when no file output was requested; fall back
-     * to stdout only rather than aborting a profiling run. */
+    /* no output_dir without file output */
     fprintf(stderr, "[prof] could not open %s, printing to stdout only\n", fname);
   } else {
     fprintf(fp, "# Index Name Calls Avg-time Tot-time\n");
@@ -108,7 +96,7 @@ void prof_timer_output(void)
     fclose(fp);
   }
 
-  /* Also echo to stdout so Python-driven runs can scrape without a file. */
+  /* also to stdout, for the scripts */
   printf("# PROF Index Name Calls Avg-time Tot-time\n");
   for (int i = 0; i < PROF_NTIMERS; i++)
     printf("# PROF %02d %-14s %10ld %.6e %.6e\n", i, prof_timers[i].name,
@@ -122,8 +110,7 @@ void prof_timer_output(void)
 
 #else
 
-/* Un-instrumented build: symbols exist but are never called (PROF_* macros are
- * empty), so they carry no runtime cost. */
+/* never called without PROFILING */
 void prof_init(void)         {}
 void prof_timer_start(int i) { (void)i; }
 void prof_timer_stop(int i)  { (void)i; }

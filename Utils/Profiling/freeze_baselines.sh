@@ -1,19 +1,14 @@
 #!/usr/bin/env bash
-# Freeze reference waveform/dynamics outputs for all profiling configs using the
-# optimized (-O2) build, plus an md5 manifest. Bit-identical optimizations (e.g.
-# the redundant-recomputation cache, geometric buffer growth) are verified by
-# regenerating outputs and diffing against these references / the manifest.
+# Runs the given parfiles with the opt build and stores their output and an md5 manifest, to check
+# later that a change leaves the output the same.
 #
 # Usage:
-#   Utils/Profiling/freeze_baselines.sh [DEST_DIR]
-# DEST_DIR defaults to Utils/Profiling/baselines/<git-rev>/ .
+#   Utils/Profiling/freeze_baselines.sh DEST_DIR PARFILE [PARFILE ...]
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CDIR="$REPO/C"
-PARDIR="$REPO/Utils/Profiling/parfiles"
-REV="$(git -C "$REPO" rev-parse --short HEAD)"
-DEST="${1:-$REPO/Utils/Profiling/baselines/$REV}"
+DEST="$1"; shift
 
 echo "[baselines] building opt ..."
 make -C "$CDIR" opt >/dev/null
@@ -22,7 +17,8 @@ mkdir -p "$DEST"
 MANIFEST="$DEST/manifest.md5"
 : > "$MANIFEST"
 
-for p in "$PARDIR"/*.par; do
+for p in "$@"; do
+  p="$(cd "$(dirname "$p")" && pwd)/$(basename "$p")"
   name="$(basename "$p" .par)"
   odir="$(grep '^output_dir' "$p" | sed 's/.*"\.\/\(.*\)\/".*/\1/')"
   echo "[baselines] $name"

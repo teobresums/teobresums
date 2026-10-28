@@ -427,10 +427,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   double rc, drc_dr, d2rc_dr2;
   eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal,
        &rc, &drc_dr, &d2rc_dr2);
-  /* Bare (pre f-mode-resonance-adjustment) values: eob_dyn_get_romg and
-     eob_flx_Fphi_ecc call this exact eob_dyn_s_get_rc (same r, so same
-     result) themselves and never apply the f-mode adjustment below, so pass
-     these through to them instead of letting them re-derive it. */
+  /* store also rc', rc'' without the f-mode terms added below, for eob_dyn_get_romg and eob_flx_Fphi_ecc */
   const double drc_dr_bare = drc_dr;
   const double d2rc_dr2_bare = d2rc_dr2;
 
@@ -468,9 +465,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   /* phi evol eqn rhs */
   dy[EOB_EVOLVE_PHI] = Omg;
   
-  /* Compute here the new r_omg radius. A/dA are prstar-independent, so the
-     values just computed above are reused inside (see eob_dyn_get_romg),
-     sparing a redundant metric evaluation at (r,0). */
+  /* Compute here the new r_omg radius */
   double r_omg       = eob_dyn_get_romg(r, prstar, pphi, dyn, rc, drc_dr_bare, A, dA);
   const double v_phi = r_omg*Omg;
   const double x     = v_phi*v_phi;
@@ -1401,20 +1396,8 @@ void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
   *  @param[in]  prstar        : radial momentum
   *  @param[in]  pphi          : orbital angular momentum
   *  @param[in]  dyn           : dynamics structure
-  *  @param[in]  rc_in         : centrifugal radius at r, as already computed by the
-  *                              caller's eob_dyn_s_get_rc call for this same r; reused
-  *                              here (spinning case only) instead of recomputing it,
-  *                              since rc depends only on r. Ignored when !usespins.
-  *  @param[in]  drc_dr_in     : drc/dr at r, companion value to rc_in (same provenance
-  *                              and reuse rationale). Ignored when !usespins.
-  *  @param[in]  A_in          : A metric potential at r, as already computed by the
-  *                              caller's eob_metric_s call for this same r; reused
-  *                              here (spinning case only) instead of recomputing the
-  *                              whole metric, since A depends only on r (not prstar -
-  *                              only Q does), so the caller's value is bit-identical.
-  *                              Ignored when !usespins.
-  *  @param[in]  dA_in         : dA/dr at r, companion value to A_in (same provenance
-  *                              and reuse rationale). Ignored when !usespins.
+  *  @param[in]  rc_in, drc_dr_in : rc and drc/dr at r, from the caller (with spins only)
+  *  @param[in]  A_in, dA_in      : A and dA/dr at r, from the caller (with spins only)
   *
   *  @return r_omg         : r_omega
   *
@@ -1448,12 +1431,7 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, dou
   double A, dA, rc, drc_dr, pl_hold;
 
   if (usespins) {
-    /* A/dA and rc/drc_dr depend only on r (not prstar), and the caller
-       already computed them for this same r (A/dA via eob_metric_s,
-       rc/drc_dr via eob_dyn_s_get_rc) - reuse instead of re-deriving. This
-       is bit-identical (see caller) and, for A/dA, spares an entire extra
-       metric evaluation per r.h.s. call that the (r,prstar)-keyed metric
-       cache cannot serve, since it would be queried here at (r,0). */
+    /* A, dA, rc and drc/dr already computed in the caller */
     A  = A_in;
     dA = dA_in;
     rc = rc_in;
@@ -2720,7 +2698,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
 
     /* Update size and push arrays (if needed) */
     if (iter==size) {
-      /* Geometric growth (see note in EOBRun); trimmed to exact length later. */
+      /* double the size, as in EOBRun */
       size += (size > chunk) ? size : chunk;
       dyn->size = size;
       DynamicsSpin_push (&dyn, size);

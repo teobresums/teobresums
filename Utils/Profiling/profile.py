@@ -1,27 +1,11 @@
 #!/usr/bin/env python3
 """
-Profiling driver for TEOBResumS eccentric/BNS performance work.
-
-Builds the C executable with the `prof` target (-O2 -pg -DPROFILING=1), runs a
-suite of representative eccentric-BBH / eccentric-BNS / quasi-circular configs,
-and collects for each:
-
-  * wall time
-  * the PROF section timers + RHS-call counters (from prof_timers.txt / stdout)
-  * the gprof flat profile (top functions), if gprof is available
-
-Outputs a summary table to stdout and, with --csv, a machine-readable CSV.
+Profiling of TEOBResumS. Builds the `prof` target, runs the given parfiles and prints, for each,
+the wall time, the PROF section timers and r.h.s. call counts, and the top of the gprof profile.
 
 Usage:
-  python3 profile.py                 # build (prof) + run all configs + table
-  python3 profile.py --no-build      # skip rebuild, reuse existing TEOBResumS.x
-  python3 profile.py --csv out.csv   # also write a CSV summary
-  python3 profile.py --config NAME   # run a single config by basename
-
-Note on numbers: the fine-grained RHS/flux section timers are perturbed by their
-own clock_gettime overhead (they fire ~1e5-1e6 times). Trust the RHS-call
-*counts* and the gprof flat profile for the true per-function breakdown; treat
-the section wall-times as indicative of relative section cost only.
+  python3 profile.py ../../C/par/GW150914-Dali.par [more parfiles]
+  python3 profile.py --no-build --no-gprof --csv out.csv PARFILES
 """
 
 import argparse
@@ -36,7 +20,6 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 CDIR = REPO / "C"
 EXE = CDIR / "TEOBResumS.x"
-PARDIR = HERE / "parfiles"
 
 
 def build(target="prof"):
@@ -152,8 +135,8 @@ def write_csv(results, path):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("parfiles", nargs="+")
     ap.add_argument("--no-build", action="store_true")
-    ap.add_argument("--config", help="run only this config (basename, no .par)")
     ap.add_argument("--csv", help="write CSV summary to this path")
     ap.add_argument("--no-gprof", action="store_true")
     args = ap.parse_args()
@@ -163,11 +146,7 @@ def main():
     elif not EXE.exists():
         sys.exit("TEOBResumS.x not found; run without --no-build first")
 
-    pars = sorted(PARDIR.glob("*.par"))
-    if args.config:
-        pars = [p for p in pars if p.stem == args.config]
-        if not pars:
-            sys.exit(f"no config named {args.config}")
+    pars = [Path(p).resolve() for p in args.parfiles]
 
     results = []
     for p in pars:

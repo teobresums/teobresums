@@ -80,21 +80,18 @@ clean:
 new: clean $(EXE)
 	@echo "All done"
 
-# Optimized build (-O2, keeps -g). Use for realistic timing / baselines.
+# Optimized build (-O2, keeps -g), for timings
 opt: CFLAGS += -O2
 opt: new
 	@echo "Optimized build done"
 
-# Optimized build + LTO (cross-TU inlining of small helpers). Opt-in: not the
-# default opt/prof target. Bit-identical to opt; ~5-13% faster on Dali BBH
-# configs with heavy small-helper call volume (see Utils/Profiling/README.md).
+# Optimized build with link-time optimization, same output as opt
 opt-lto: CFLAGS += -O2 -flto
 opt-lto: new
 	@echo "Optimized (+LTO) build done"
 
-# Profiling build: -O2 + gprof (-pg) + PROFILING section timers/RHS counters.
-# _POSIX_C_SOURCE guarantees clock_gettime under -std=c99.
-prof: CFLAGS += -O2 -pg -DPROFILING=1 -D_POSIX_C_SOURCE=199309L
+# Profiling build, -O2 + gprof + PROFILING timers
+prof: CFLAGS += -O2 -pg -DPROFILING=1
 prof: new
 	@echo "Profiling build done"
 

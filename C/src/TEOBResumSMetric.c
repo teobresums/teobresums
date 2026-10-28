@@ -1873,9 +1873,7 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
  *   @param[out] d3Q_drdprstar2 : d3Q/drdprstar2
  *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
  */
-/* Uncached kernel; call only via the eob_metric_s wrapper (below), which
-   memoizes and preserves output-pointer aliasing. Always invoked with distinct,
-   non-aliased locals. */
+/* called through eob_metric_s, which caches it */
 static void eob_metric_s_raw(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
@@ -1972,12 +1970,7 @@ static void eob_metric_s_raw(double r, double prstar, Dynamics *dyn, double *A, 
   *d3Q_dprstar3   = d3Qtmp_dprstar3;
 }
 
-/* Memoizing wrapper around eob_metric_s_raw. The eccentric r.h.s. evaluates the
-   metric several times per step at identical (r,prstar). Cached results are
-   bit-identical (deterministic function of (r,prstar) and run-constant params);
-   disabled for the f-mode dynamical-tides model and when dyn==NULL. Outputs are
-   written through non-aliased locals in the kernel's original order so aliased
-   output pointers are unaffected. */
+/* eob_metric_s_raw cached on (r, prstar), the eccentric r.h.s. repeats calls. Off for f-mode tides */
 void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)

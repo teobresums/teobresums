@@ -1,53 +1,40 @@
-# TEOBResumS profiling & optimization (eccentric BBH/BNS)
+# Profiling TEOBResumS
 
-Tooling and findings for speeding up eccentric/BNS waveform generation, where the
-full EOB dynamics ODE must be integrated (no post-adiabatic shortcut).
+Tools to time the code and see where the time goes, mostly for Dali, where the whole dynamics is
+evolved with the ODE solver.
 
-## Build targets (`C/Makefile`)
+## Builds (`C/Makefile`)
 
-| target | flags | use |
+| target | flags | for |
 |--------|-------|-----|
-| `make` | `-g`, no `-O` | default; **unoptimized** — do not use for timing |
-| `make opt` | `+ -O2` | realistic timing, baselines, regression checks |
-| `make prof` | `+ -O2 -pg -DPROFILING=1` | gprof + PROF section timers / RHS counters |
+| `make` | `-g` | the default, not for timings |
+| `make opt` | `-O2` | timings and output checks |
+| `make opt-lto` | `-O2 -flto` | as `opt`, a few % faster, same output |
+| `make prof` | `-O2 -pg -DPROFILING=1` | gprof, and the timers below |
 
-## Instrumentation
+`-pg` needs gcc, Apple's clang does not support it.
 
-`C/src/TEOBResumSProf.c` (+ macros in `TEOBResumS.h`) adds `clock_gettime` section
-timers and RHS-call counters behind the `PROFILING` macro. When `PROFILING=0` the
-`PROF_*` macros expand to nothing, so the default build is **bit-identical** to the
-un-instrumented code (verified: all data files match a pristine `HEAD` build).
+## Timers
 
-Timed sections: `ODE_loop`, `RHS`, `flux`, `Fphi_ecc`, `metric+rc`, `wav_store`,
-`NQC`, `interp_spline`, `compute_hpc`. Counters: `rhs_calls_total`,
-`rhs_calls_storage` (per-accepted-step), `rhs_calls_stepper` (= total − storage).
-Output goes to `prof_timers.txt` in the run's `output_dir` and is echoed to stdout
-as `# PROF ...` lines.
+With `PROFILING=1`, `C/src/TEOBResumSProf.c` times the sections `ODE_loop`, `RHS`, `flux`,
+`Fphi_ecc`, `metric+rc`, `wav_store`, `NQC`, `interp_spline` and `compute_hpc`, and counts the
+r.h.s. calls (all of them, those that store a step, and those the stepper makes). The results go to
+`prof_timers.txt` in the output directory and to stdout. Without it the macros are empty and the
+output is the same.
 
-> The fine-grained RHS/flux timers fire ~1e5–1e6×; their own `clock_gettime`
-> overhead perturbs those wall-times (and `prof_timer_start` shows up in gprof).
-> Trust the **RHS-call counts** and the **gprof flat profile** for the true
-> per-function breakdown; read the section wall-times as relative indicators.
+The r.h.s. and flux timers run so often that their own cost shows in what they measure, so compare
+the call counts and the gprof profile, and read those times as rough.
 
 ## Scripts
 
-- `profile.py` — builds `prof`, runs every config in `parfiles/`, prints a section-
-  timer + RHS-count table and per-config gprof top functions. `--csv`, `--config`,
-  `--no-build`, `--no-gprof`.
-- `bench_py.py` — in-process (`EOBRunPy`) stepper timing + accuracy for sub-second
-  BBH, where the C-exe fork/exec + I/O overhead swamps the computation. Repeats
-  the identical call and takes the min. `--reps`, `--bns`.
-- `stepper_grid.py` — random parameter-space sweep of stepper mismatch vs rkf45
-  (BBH + BNS), to validate a stepper before promoting it. `--n`, `--nbns`, `--seed`.
-- `compare_revs.py` — before/after regression report across two git revisions
-  (walltime speedup + mismatch of new vs base). Worktree-based; safe cleanup.
-- `freeze_baselines.sh [DEST]` — builds `opt`, regenerates all configs, stores data
-  files + an `md5` manifest for bit-identical regression checks.
+All take parfiles on the command line, e.g. those in `C/par`.
 
-## Benchmark configs (`parfiles/`)
-
-`ecc_bbh_q1_e01` (q1 nonspin e=0.1), `ecc_bbh_q3_e03` (q3 e=0.3, stresses
-non-circular flux), `ecc_bbh_q5_s09s-04_e01` (spinning q5 e=0.1),
-`ecc_bns_e005` (BNS + tides, e=0.05), `ecc_bns_long` (low-freq BNS, output OFF,
-multi-second — the reliable timing benchmark), `qc_bbh_control` (quasi-circular
-Giotto regression control).
+- `profile.py PARFILES`: builds `prof`, runs the parfiles, prints timers, call counts and the top
+  of gprof. `--no-build`, `--no-gprof`, `--csv`.
+- `compare_revs.py --base REV [--new REV] PARFILES`: time of two git revisions, and the mismatch
+  of the new (2,2) against the old one.
+- `freeze_baselines.sh DEST PARFILES`: stores the output of the opt build, with md5 sums.
+- `bench_py.py`: times the ODE steppers through `EOBRunPy`, for systems that take well under a
+  second, and gives their mismatch against rkf45. `--reps`, `--bns`.
+- `stepper_grid.py`: mismatch of the steppers against rkf45 at random points in parameter space.
+  `--n`, `--nbns`, `--seed`.

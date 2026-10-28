@@ -1,28 +1,13 @@
 #!/usr/bin/env python3
 """
-Before/after regression report across two git revisions.
-
-For each benchmark parfile it builds both revisions (opt), measures wall time
-(min of N, file output OFF), and generates the (2,2) mode (file output ON) to
-compute the time-and-phase-maximized mismatch of the NEW output vs the BASE.
-The result is one table:
-
-  config | t_base | t_new | speedup | mismatch(new vs base) | stepper_new
-
-This both documents the speedup and re-proves that the output change stays
-within the accuracy gate. Bit-identical changes show mismatch ~0; the stepper
-default change shows the (small) stepper mismatch vs the old rkf45 output.
+Compares two git revisions on the given parfiles. Builds both (opt) in temporary worktrees, and
+prints the wall time of each (best of --reps, no file output) and the mismatch of the new (2,2)
+against the old one.
 
 Usage:
-  python3 compare_revs.py --base REV --new REV
-  python3 compare_revs.py --reps 4
+  python3 compare_revs.py --base REV [--new REV] [--reps N] PARFILES
 
-Note: base REV must have the `opt` Makefile target (i.e. be at or after the
-profiling-infrastructure commit); otherwise pass an -O2-capable rev.
-
-SAFETY: temporary git worktrees are created under the system temp dir and are
-removed ONLY via `git worktree remove` (which refuses to touch the main
-worktree). This script never calls rm/rmtree on a path itself.
+The base revision needs the `opt` target in C/Makefile.
 """
 
 import argparse
@@ -35,7 +20,6 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
-PARDIR = os.path.join(HERE, "parfiles")
 TMPROOT = tempfile.gettempdir()
 
 
@@ -56,8 +40,7 @@ def build_worktree(rev):
 
 
 def cleanup_worktree(wt):
-    # Git-managed removal only; refuses to remove the main worktree, and we
-    # additionally require the path to live under the temp dir with our prefix.
+    # git worktree remove, only our temp dirs
     if wt and wt.startswith(TMPROOT) and "teob_cmp_" in os.path.basename(wt):
         sh(["git", "-C", REPO, "worktree", "remove", "--force", wt], check=False)
 
@@ -113,6 +96,7 @@ def stepper_of(odir):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("parfiles", nargs="+")
     ap.add_argument("--base", required=True)
     ap.add_argument("--new", default="HEAD")
     ap.add_argument("--reps", type=int, default=3)
@@ -128,11 +112,9 @@ def main():
         wt_n = build_worktree(args.new)
         print(f"\n{'config':<26}{'t_base':>9}{'t_new':>9}{'speedup':>9}{'mismatch':>12}  stepper_new")
         print("-" * 82)
-        for pf in sorted(os.listdir(PARDIR)):
-            if not pf.endswith(".par"):
-                continue
-            parfile = os.path.join(PARDIR, pf)
-            name = pf[:-4]
+        for parfile in args.parfiles:
+            parfile = os.path.abspath(parfile)
+            name = os.path.basename(parfile)[:-4]
             tb = timeit(wt_b, parfile, args.reps)
             tn = timeit(wt_n, parfile, args.reps)
             od_b = run_parfile(wt_b, parfile, on)

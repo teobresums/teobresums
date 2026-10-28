@@ -1,18 +1,10 @@
 #!/usr/bin/env python3
 """
-Broad stepper-accuracy sweep for TEOBResumS (eccentric BBH + BNS).
-
-Randomly samples the (q, chi1, chi2, ecc, anomaly) parameter space and, for each
-point, generates the (2,2) mode with the candidate steppers and the rkf45
-baseline, then reports the time-and-phase-maximized mismatch (flat PSD) of each
-candidate vs rkf45. Purpose: confirm a faster stepper (rk8pd) stays within an
-acceptable mismatch everywhere before promoting it to the default, and surface
-any parameter regions where it degrades or the solver fails.
+Mismatch of the (2,2) with other ODE steppers against rkf45, at random points in (q, chi1, chi2,
+ecc, anomaly), for BBH and BNS, to check a stepper everywhere before making it a default.
 
 Usage:
-  python3 stepper_grid.py --n 60            # 60 random BBH configs
-  python3 stepper_grid.py --n 60 --nbns 15  # add 15 random BNS configs
-  python3 stepper_grid.py --candidates rk8pd,msadams --seed 42
+  python3 stepper_grid.py --n 60 [--nbns 15] [--candidates rk8pd,msadams] [--seed 42]
 """
 
 import argparse

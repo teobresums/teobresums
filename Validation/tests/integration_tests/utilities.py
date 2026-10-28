@@ -102,11 +102,8 @@ def gen_wf(m1, m2, s1z, s2z, lam1, lam2, additional_pars={}, return_zero=True):
 
 def mismatch(h0, h):
     """
-    Time-and-phase-maximized mismatch (1 - overlap) between two complex
-    strains on a common uniform grid, flat PSD. The time maximization is the
-    IFFT of the cross-spectrum; |.| maximizes over an overall phase. Robust to
-    the sub-sample merger misalignment that makes a fixed-index phase-at-merger
-    comparison unreliable.
+    Mismatch between two complex strains on the same uniform grid, flat PSD, maximized over
+    time shift (inverse FFT of the cross-spectrum) and phase (the modulus)
     """
     n = max(len(h0), len(h))
     N = 1 << int(np.ceil(np.log2(2 * n)))
