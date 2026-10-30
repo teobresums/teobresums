@@ -33,7 +33,6 @@ All take parfiles on the command line, e.g. those in `C/par`.
   of gprof. `--no-build`, `--no-gprof`, `--csv`.
 - `compare_revs.py --base REV [--new REV] PARFILES`: time of two git revisions, and the mismatch
   of the new (2,2) against the old one.
-- `freeze_baselines.sh DEST PARFILES`: stores the output of the opt build, with md5 sums.
 - `bench_py.py`: times the ODE steppers through `EOBRunPy`, for systems that take well under a
   second, and gives their mismatch against rkf45. `--reps`, `--bns`.
 - `stepper_grid.py`: mismatch of the steppers against rkf45 at random points in parameter space.
