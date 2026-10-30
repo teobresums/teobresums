@@ -69,6 +69,10 @@
 #define USERFUNCS (0)
 #endif
 
+#ifndef PROFILING
+#define PROFILING (0) /* section timers and r.h.s. call counters */
+#endif
+
 /** Macros */
 #define TEOBResumS_Info "TEOBResumS code (c) 2017-2022"
 #define TEOBResumS_Usage "COMMAND LINE USAGE:\n\
@@ -426,6 +430,18 @@ enum{
 };
 static const char* const ode_tstep_opt[] = {"uniform","adaptive","adaptive+uniform_after_LSO","undefined"};
 
+/** List of options for the ODE stepper (GSL odeiv2 step type) */
+enum{
+  ODE_STEPPER_RKF45,       /**< explicit embedded Runge-Kutta-Fehlberg 4(5) */
+  ODE_STEPPER_RK8PD,       /**< explicit embedded Runge-Kutta Prince-Dormand 8(9) */
+  ODE_STEPPER_RKCK,        /**< explicit embedded Runge-Kutta Cash-Karp 4(5) */
+  ODE_STEPPER_MSADAMS,     /**< variable-order, variable-step Adams multistep */
+  ODE_STEPPER_RK4,         /**< explicit 4th order (classical) Runge-Kutta */
+  ODE_STEPPER_AUTO,        /**< chosen per system in eob_set_params */
+  ODE_STEPPER_NOPT         /**< number of ODE stepper options */
+};
+static const char* const ode_stepper_opt[] = {"rkf45","rk8pd","rkck","msadams","rk4","auto","undefined"};
+
 /** List of options for 'usespin' parameter */
 enum{
 MODE_SPINS_NOSPIN,                       /**< no spin, deprecated */     
@@ -649,6 +665,50 @@ typedef struct tagDynamicsSpin
   gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];              /**< accelerators for spin dynamics */
 } DynamicsSpin;
 
+/** eob_metric_s cache, slots and outputs per slot */
+#define EOB_METRIC_CACHE_NSLOTS 2
+#define EOB_METRIC_CACHE_NOUT   15
+
+/** Chebyshev table of nfunc functions of one variable v. v is split into intervals of width dv,
+    each with its own fit of CHEB_N coefficients, fitted on first use. See cheb_table_eval */
+#define CHEB_N 12
+typedef struct tagChebTable {
+  int    nfunc;                 /**< number of functions, 0 until the owner sets the table up */
+  double dv;                    /**< interval width */
+  int    imin, imax;            /**< intervals in the table, imin <= i < imax */
+  int    *ok;                   /**< fitted intervals, allocated on first use */
+  double *c;                    /**< coefficients [(i*nfunc + k)*CHEB_N + n], allocated on first use */
+  double w[CHEB_N][CHEB_N];     /**< fit weights cos(Pi n (j + 1/2)/N) */
+} ChebTable;
+
+/** f_lm table in x. It skips the first interval, whose edge x = 0 is singular for the log(x) of rho_lm */
+#define EOB_FLM_CHEB_DX        (0.0025)
+#define EOB_FLM_CHEB_NINTERVAL 137 /* the table ends at x = 0.3425, beyond it eob_wav_flm_tab computes f_lm without the table */
+
+/** Metric table in u = 1/r, for the nine r-only outputs of eob_metric_s (A, B, their derivatives,
+    r_c and its derivatives). It fits r_c - r rather than r_c, which is smooth in u */
+#define EOB_METRIC_CHEB_NFUNC       9
+#define EOB_METRIC_CHEB_DU         (0.02)
+#define EOB_METRIC_CHEB_NINTERVAL  10    /* the table ends at u = 0.2, r = 5, inside it the code computes the metric without the table */
+#define EOB_METRIC_CHEB_RMIN_TIDES (9.)  /* with tides only beyond r = 9, else a binary stopping on a join between intervals gets a corrupted peak */
+
+/** r.h.s. quantities stored for the wvf, see Dynamics.wavc */
+enum{
+  WAVC_H,
+  WAVC_HEFF,
+  WAVC_JHAT,
+  WAVC_ROMEGA,
+  WAVC_OMG,
+  WAVC_DDOTR,
+  WAVC_RDOT,
+  WAVC_R2DOT,
+  WAVC_R3DOT,
+  WAVC_OMEGADOT,
+  WAVC_OMEGA2DOT,
+  WAVC_PRSDOT,
+  EOB_WAVC_NVARS
+};
+
 /** Dynamics data type */
 typedef struct tagDynamics
 {
@@ -671,7 +731,18 @@ typedef struct tagDynamics
   double dressed_C_Oct2, dressed_C_Oct2_u, dressed_C_Oct2_uu; /**< dressing factors for spin-induced octupole and drvts   */
   double dressed_C_Hex1, dressed_C_Hex1_u, dressed_C_Hex1_uu; /**< dressing factors for spin-induced hexadecapole and drvts   */
   double dressed_C_Hex2, dressed_C_Hex2_u, dressed_C_Hex2_uu; /**< dressing factors for spin-induced hexadecapole and drvts   */
-  
+
+  /* eob_metric_s values stored for the last two (r, prstar) */
+  int    mcache_next;
+  int    mcache_valid[EOB_METRIC_CACHE_NSLOTS];
+  double mcache_r[EOB_METRIC_CACHE_NSLOTS];
+  double mcache_prstar[EOB_METRIC_CACHE_NSLOTS];
+  double mcache_out[EOB_METRIC_CACHE_NSLOTS][EOB_METRIC_CACHE_NOUT];
+
+  /* f_lm and metric Chebyshev tables (setup by eob_wav_flm_tab and eob_metric_s_r_part at first call) */
+  ChebTable flmt;
+  ChebTable metrict;
+
   /* stuff for ODE solver */
   double y[EOB_EVOLVE_NVARS];   /**< rhs storage */
   double dy[EOB_EVOLVE_NVARS];  /**< rhs storage */
@@ -679,6 +750,9 @@ typedef struct tagDynamics
   double dt, t_stop, ti;        /**< timestep, stopping time, current time */
   int ode_timestep;             /**< ODE timestep type */
   bool ode_stop, ode_stop_MOmgpeak, ode_stop_radius;  /**< flag to stop ode, stop after Omgpeak, stop after radius */
+
+  /* r.h.s. quantities per step for the wvf, allocated only with the cache (Dali + NQC) */
+  double *wavc[EOB_WAVC_NVARS];
 
   /* arrays */
   int size;
@@ -813,6 +887,11 @@ typedef struct tagEOBParameters
 
   int size;                                             /**< size of arrays */
   int ode_timestep;                                     /**< ODE timestep type */
+  int ode_stepper;                                      /**< ODE stepper (GSL odeiv2 step type) */
+  double ode_stepper_hmax;                              /**< max ODE step, <= 0 for none */
+  int use_metric_cache;                                 /**< cache eob_metric_s */
+  int use_flm_cheb;                                     /**< use the Chebyshev table for the f_lm */
+  int use_metric_cheb;                                  /**< use the Chebyshev table for the r-only part of the metric */
   double srate;                                         /**< sampling rate */
   double dt;                                            /**< timestep */
   double ode_abstol;                                    /**< ODE solver absolute tolerance */
@@ -966,6 +1045,7 @@ double interp1d (const int order, double xx, int nx, double *f, double *x);
 double find_max (const int n, double dx, double x0, double *f, double *fmax);
 double find_max_grid (double *x, double *f);
 double find_max_grid_poly_fit (double *x, double *f, int deg, int n_grid);
+int cheb_table_eval(ChebTable *tab, double v, void (*f)(double, void *, double *), void *ctx, double *out);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
@@ -1161,7 +1241,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *params);
 void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double Q, double dQ, double dQ_dprstar, double d2Q, double d2Q_dprstar2,
                double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
-void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, double *ggm);
+void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, int ham_only, double *ggm);
 
 extern void (*eob_dyn_s_get_rc)(); /* defined in TEOBResumSPars.c*/
 void eob_dyn_s_get_rc_LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
@@ -1171,7 +1251,7 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double u, double at1, double at2, double *drc_dr, double *d2rc_dr2);
-double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, double rc_in, double drc_dr_in, double A_in, double dA_in);
 double eob_dyn_fLR(double r, void * params);
 int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
@@ -1248,6 +1328,8 @@ void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double 
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                 double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                 double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
+void eob_metric_s_r_part(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                       double *rc, double *drc, double *d2rc);
 void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                   double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
                   double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3);
@@ -1256,10 +1338,12 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
 extern double (*eob_flx_Fr)(); /* defined in TEOBResumSPars.c*/
 extern double (*eob_flx_hatflm_nc[KMAX])();
 extern double (*eob_flx_FlmNewt_nc[KMAX])();
+extern int eob_flx_nc_active_k[KMAX]; /* modes with a noncircular flux correction */
+extern int eob_flx_nc_active_n;
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
-void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn);
-void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC);
+void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn, double rc_in, double drc_dr_in, double d2rc_dr2_in);
+void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC, double rc_in, double drc_dr_in, double d2rc_dr2_in);
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
@@ -1305,6 +1389,7 @@ void eob_wav_hlmNewt_v1(double r, double Omega, double phi, double nu, Waveform_
 void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm);
 extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
+void eob_wav_flm_tab(double x, Dynamics *dyn, double *flm);
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
@@ -1380,4 +1465,38 @@ void openmp_init(const int verbose);
 void openmp_timer_start(char *name);
 void openmp_timer_stop(char *name);
 void openmp_free();
+#endif
+
+/* TEOBResumSProf.c, timers and r.h.s. counters */
+enum {
+  PROF_ODE,        /**< whole ODE evolution loop */
+  PROF_RHS,        /**< dynamics r.h.s. evaluations */
+  PROF_FLUX,       /**< radiation-reaction flux (eob_flx_Flux*) */
+  PROF_FPHI_ECC,   /**< eccentric non-circular flux correction (eob_flx_Fphi_ecc) */
+  PROF_METRICRC,   /**< metric + centrifugal radius inside the r.h.s. */
+  PROF_WAVSTORE,   /**< per-step storage r.h.s. + eob_wav_hlm */
+  PROF_NQC,        /**< post-evolution NQC determination */
+  PROF_INTERP,     /**< spline interpolation to uniform grid */
+  PROF_HPC,        /**< h+/hx polarization assembly */
+  PROF_NTIMERS
+};
+extern long prof_rhs_calls;        /**< all r.h.s. entries (stepper + storage + IC) */
+extern long prof_rhs_store_calls;  /**< per-accepted-step storage r.h.s. calls only */
+void prof_init(void);
+void prof_timer_start(int i);
+void prof_timer_stop(int i);
+void prof_timer_output(void);
+
+#if (PROFILING)
+#define PROF_INIT()   prof_init()
+#define PROF_START(i) prof_timer_start(i)
+#define PROF_STOP(i)  prof_timer_stop(i)
+#define PROF_TIC(c)   ((c)++)
+#define PROF_OUTPUT() prof_timer_output()
+#else
+#define PROF_INIT()
+#define PROF_START(i)
+#define PROF_STOP(i)
+#define PROF_TIC(c)
+#define PROF_OUTPUT()
 #endif

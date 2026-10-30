@@ -1873,11 +1873,10 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
  *   @param[out] d3Q_drdprstar2 : d3Q/drdprstar2
  *   @param[out] d3Q_dprstar3 : d3Q/dprstar3
  */
- void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
-                  double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
-                  double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+/* compute the r part of the metric without the table (A, B, their derivatives, r_c and its derivatives) */
+static void eob_metric_s_r_part_notab(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                           double *rc_out, double *drc_out, double *d2rc_out)
 {
-
   const double nu    = EOBPars->nu;
   const double a1    = EOBPars->a1;
   const double a2    = EOBPars->a2;
@@ -1953,6 +1952,73 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   *d2B = SQ(*dB)/(*B) + (*B)*(d2fact/fact - SQ(dfact/fact) + d2D/D - SQ(dD/D)
 			 - (*d2A)/(*A) + SQ((*dA)/(*A)));
 
+  *rc_out   = rc;
+  *drc_out  = drc;
+  *d2rc_out = d2rc;
+}
+
+/* compute the same at r = 1/u, with r_c - r in place of r_c, for the Chebyshev table */
+static void eob_metric_s_r_part_of_u(double u, void *dyn, double *o)
+{
+  eob_metric_s_r_part_notab(1./u, (Dynamics *) dyn, &o[0], &o[1], &o[2], &o[3], &o[4], &o[5], &o[6], &o[7], &o[8]);
+  o[6] -= 1./u;
+}
+
+/**
+ * Function: eob_metric_s_r_part
+ * -----------------------------
+ *   Computes the r-only part of the metric, from the Chebyshev table with use_metric_cheb and r
+ *   inside it, and without the table otherwise. Skips the table where the r-only part is not a function of
+ *   r alone (f-mode tides, reprojected spins), and if tides on + r <= EOB_METRIC_CHEB_RMIN_TIDES
+ *
+ *   @param[in]  r   : radial separation
+ *   @param[in]  dyn : dynamics, holds the table
+ *   @param[out] A, B, dA, d2A, dB, d2B : potentials and their r derivatives
+ *   @param[out] rc, drc, d2rc          : centrifugal radius and its r derivatives
+ */
+void eob_metric_s_r_part(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                       double *rc, double *drc, double *d2rc)
+{
+  double o[EOB_METRIC_CHEB_NFUNC];
+
+  /* use the table only if it is on and the r-only part depends on r alone */
+  if (dyn != NULL && EOBPars->use_metric_cheb &&
+      !(EOBPars->use_tidal && EOBPars->use_tidal_fmode_model) &&
+      !(EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) &&
+      !(EOBPars->use_tidal && r <= EOB_METRIC_CHEB_RMIN_TIDES)) {
+
+    /* setup table at first call */
+    ChebTable *tab = &dyn->metrict;
+    if (tab->nfunc == 0) {
+      tab->nfunc = EOB_METRIC_CHEB_NFUNC;
+      tab->dv   = EOB_METRIC_CHEB_DU;
+      tab->imin = 0;
+      tab->imax = EOB_METRIC_CHEB_NINTERVAL;
+    }
+    if (cheb_table_eval(tab, 1./r, eob_metric_s_r_part_of_u, dyn, o)) {
+      *A = o[0]; *B = o[1]; *dA = o[2]; *d2A = o[3]; *dB = o[4]; *d2B = o[5];
+      *rc = o[6] + r; *drc = o[7]; *d2rc = o[8];
+      return;
+    }
+  }
+
+  /* outside the table, or without memory for it, compute the r-only part without the table */
+  eob_metric_s_r_part_notab(r, dyn, A, B, dA, d2A, dB, d2B, rc, drc, d2rc);
+}
+
+/* called through eob_metric_s, which caches it */
+static void eob_metric_s_uncached(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                  double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                  double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+  const double nu = EOBPars->nu;
+
+  /* r-only part, then Q */
+  double rc, drc, d2rc;
+  eob_metric_s_r_part(r, dyn, A, B, dA, d2A, dB, d2B, &rc, &drc, &d2rc);
+  const double uc  = 1./rc;
+  const double uc2 = uc*uc;
+
   /* Q potential and derivatives */
   double Qtmp=0., dQtmp_duc=0., dQtmp_dprstar=0.,  d2Qtmp_duc2=0., ddQtmp_drcdprstar=0., d2Qtmp_dprstar2=0.,
          d3Qtmp_drc2dprstar=0., d3Qtmp_drcdprstar2=0., d3Qtmp_dprstar3=0.;
@@ -1967,4 +2033,45 @@ void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, do
   *d3Q_dr2dprstar = d2rc*ddQtmp_drcdprstar + SQ(drc)*d3Qtmp_drc2dprstar;
   *d3Q_drdprstar2 = drc*d3Qtmp_drcdprstar2;
   *d3Q_dprstar3   = d3Qtmp_dprstar3;
+}
+
+/* eob_metric_s_uncached, stored for the last two (r, prstar), the eccentric r.h.s. repeats calls.
+   No cache with f-mode tides or reprojected spins */
+void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
+                  double *Q, double *dQ, double *dQ_dprstar, double *d2Q, double *ddQ_drdprstar, double *d2Q_dprstar2,
+                  double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+  const int cacheable = (dyn != NULL) && EOBPars->use_metric_cache &&
+    !(EOBPars->use_tidal && EOBPars->use_tidal_fmode_model) &&
+    !(EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins);
+  double o[EOB_METRIC_CACHE_NOUT];
+  int hit = 0;
+
+  if (cacheable) {
+    for (int s = 0; s < EOB_METRIC_CACHE_NSLOTS; s++) {
+      if (dyn->mcache_valid[s] && dyn->mcache_r[s] == r && dyn->mcache_prstar[s] == prstar) {
+        for (int i = 0; i < EOB_METRIC_CACHE_NOUT; i++) o[i] = dyn->mcache_out[s][i];
+        hit = 1;
+        break;
+      }
+    }
+  }
+
+  if (!hit) {
+    eob_metric_s_uncached(r, prstar, dyn,
+                          &o[0], &o[1], &o[2], &o[3], &o[4], &o[5], &o[6], &o[7],
+                          &o[8], &o[9], &o[10], &o[11], &o[12], &o[13], &o[14]);
+    if (cacheable) {
+      const int s = dyn->mcache_next;
+      for (int i = 0; i < EOB_METRIC_CACHE_NOUT; i++) dyn->mcache_out[s][i] = o[i];
+      dyn->mcache_r[s]      = r;
+      dyn->mcache_prstar[s] = prstar;
+      dyn->mcache_valid[s]  = 1;
+      dyn->mcache_next      = (s + 1) % EOB_METRIC_CACHE_NSLOTS;
+    }
+  }
+
+  *A = o[0]; *dA = o[2]; *d2A = o[3]; *B = o[1]; *dB = o[4]; *d2B = o[5];
+  *Q = o[6]; *dQ = o[7]; *dQ_dprstar = o[8]; *d2Q = o[9]; *ddQ_drdprstar = o[10];
+  *d2Q_dprstar2 = o[11]; *d3Q_dr2dprstar = o[12]; *d3Q_drdprstar2 = o[13]; *d3Q_dprstar3 = o[14];
 }

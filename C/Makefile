@@ -80,13 +80,28 @@ clean:
 new: clean $(EXE)
 	@echo "All done"
 
-clearup: clean 
+# Optimized build (-O2, keeps -g), for timings
+opt: CFLAGS += -O2
+opt: new
+	@echo "Optimized build done"
+
+# Optimized build with link-time optimization, same output as opt
+opt-lto: CFLAGS += -O2 -flto
+opt-lto: new
+	@echo "Optimized (+LTO) build done"
+
+# Profiling build, -O2 + gprof + PROFILING timers
+prof: CFLAGS += -O2 -pg -DPROFILING=1
+prof: new
+	@echo "Profiling build done"
+
+clearup: clean
 	@echo "Removing dirs and exe ..."
 	@rm -rvf $(OBJ) 
 	@rm -rvf $(LIB) 
 	@rm -rvf $(EXE) 
 	@echo "All done"
 
-.PHONY: all clean new #help
+.PHONY: all clean new opt opt-lto prof #help
 
 # DO NOT DELETE

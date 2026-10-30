@@ -23,9 +23,11 @@
 */
 int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
 {
-  
+
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
+  PROF_START(PROF_RHS);
+  PROF_TIC(prof_rhs_calls);
 
   const double nu = EOBPars->nu;
   const double z3 = 2.0*nu*(4.0-3.0*nu);
@@ -121,7 +123,8 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
   }
-  
+
+  PROF_STOP(PROF_RHS);
   return GSL_SUCCESS;
 
 }
@@ -188,10 +191,12 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
  */
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 {
-      
+
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
-  
+  PROF_START(PROF_RHS);
+  PROF_TIC(prof_rhs_calls);
+
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
   
@@ -290,7 +295,7 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
      Compute same quantities with prstar=0. This to obtain psi.
      Procedure consistent with the nonspinning case. */
   double ggm0[26];
-  eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
+  eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, 1, ggm0);
   
   const double GS_0       = ggm0[2];
   const double GSs_0      = ggm0[3];
@@ -338,7 +343,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
   }
-    
+
+  PROF_STOP(PROF_RHS);
   return GSL_SUCCESS;
 }
 
@@ -356,10 +362,12 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
 */
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
 {
-  
+
   (void)(t); /* avoid unused parameter warning */
   Dynamics *dyn = d;
-  
+  PROF_START(PROF_RHS);
+  PROF_TIC(prof_rhs_calls);
+
   const int usetidal = EOBPars->use_tidal;
   const int usespins = EOBPars->use_spins;
   
@@ -404,6 +412,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   }
   
   /* Compute Metric */
+  PROF_START(PROF_METRICRC);
   double A, B, dA, d2A, dB, Q, dQ, dQ_dprstar, d2Q_dprstar2, pl_hold;
   eob_metric_s(r, prstar, d, &A, &B, &dA, &d2A, &dB, &pl_hold, &Q, &dQ, &dQ_dprstar, &pl_hold, &pl_hold, &d2Q_dprstar2, &pl_hold, &pl_hold, &pl_hold);
 
@@ -413,17 +422,21 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     B = fabs(B);
     dyn->ode_stop = true;
   }
-  
+
   /* Compute centrifugal radius */
   double rc, drc_dr, d2rc_dr2;
-  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, 
+  eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal,
        &rc, &drc_dr, &d2rc_dr2);
-  
+  /* store also rc', rc'' without the f-mode terms added below, for eob_dyn_get_romg and eob_flx_Fphi_ecc */
+  const double drc_dr_bare = drc_dr;
+  const double d2rc_dr2_bare = d2rc_dr2;
+
   if ((EOBPars->use_tidal)&&(EOBPars->use_tidal_fmode_model)) {
     /* Add derivative terms to rc' and rc'' from f-mode resonances u-dependent terms */
     eob_dyn_s_rc_add_QOH_drvts(dyn, rc, r, a1, a2,
 			       &drc_dr, &d2rc_dr2);
   }
+  PROF_STOP(PROF_METRICRC);
   
   const double uc     = 1./rc;
   const double uc2    = uc*uc;
@@ -453,7 +466,7 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_PHI] = Omg;
   
   /* Compute here the new r_omg radius */
-  double r_omg       = eob_dyn_get_romg(r, prstar, pphi, dyn);
+  double r_omg       = eob_dyn_get_romg(r, prstar, pphi, dyn, rc, drc_dr_bare, A, dA);
   const double v_phi = r_omg*Omg;
   const double x     = v_phi*v_phi;
   const double jhat  = pphi/(r_omg*v_phi);
@@ -462,8 +475,10 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   double Fphi = 0.;
   double Fr   = 0.;
 
-  double prsdot = -sqrtAbyB*dHeff_dr*ooH; 
-  eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, prsdot, &Fphi, &Fr, dyn);
+  double prsdot = -sqrtAbyB*dHeff_dr*ooH;
+  PROF_START(PROF_FLUX);
+  eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, prsdot, &Fphi, &Fr, dyn, rc, drc_dr_bare, d2rc_dr2_bare);
+  PROF_STOP(PROF_FLUX);
   
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = Fphi;
@@ -503,7 +518,8 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
   }
-    
+
+  PROF_STOP(PROF_RHS);
   return GSL_SUCCESS;
 }
 
@@ -590,7 +606,7 @@ void eob_ham_s(double nu,
     
     /* Compute spin-related functions*/
     double ggm[26];
-    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, pphi, nu, chi1, chi2, X1, X2, c3, ggm);
+    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr2, aK2, prstar, pphi, nu, chi1, chi2, X1, X2, c3, 1, ggm);
     const double GS              = ggm[2];
     const double GSs             = ggm[3];
     const double dGS_dprstar     = ggm[4];
@@ -642,11 +658,12 @@ void eob_ham_s(double nu,
  *  @param[in]  X1            : mass fraction of body 1
  *  @param[in]  X2            : mass fraction of body 2
  *  @param[in]  cN3LO         : CN3LO parameter
+ *  @param[in]  ham_only      : 1 for ggm[0..15] only, all the Hamiltonian reads
  *  @param[out] ggm           : gyrp-gravitomagnetic functions, output structure
  *
  */
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
-	  double *ggm)
+	  int ham_only, double *ggm)
 {
   
   static double c10,c20,c30,c02,c12,c04;
@@ -721,51 +738,6 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   double d2hGSs_duc2 = hGSs*hGSs*(2.*hGSs*SQ(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3)
 			       - (2.*cs20 + 6.*cs30*uc + 12.*cs40*uc2));
 
-  /* second derivative of  hat{G} with respect to prstar^2 */
-  double d2hGS_dprstar2  = hGS*hGS*(2.*hGS*SQ(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
-				   - (2.*c02 + 12.*c04*prstar2 + 2.*c12*uc));
-  double d2hGSs_dprstar2 = hGSs*hGSs*(2.*hGSs*SQ(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
-				   - (2.*cs02 + 12.*cs04*prstar2 + 2.*cs12*uc));
-  
-  /* second derivative of  hat{G} with respect to uc/prstar */
-  double d2hGS_duc_dprstar  = hGS*hGS*(-2.*c12*prstar
-			      + 2.*hGS*(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
-			      *(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2));
-  double d2hGSs_duc_dprstar = hGSs*hGSs*(-2.*cs12*prstar
-			      + 2.*hGSs*(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
-			      *(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3));
-
-  /* third derivative of  hat{G} with respect to prstar^3 */
-  double d3hGS_dprstar3  = hGS*hGS*(-24.*c04*prstar + 6.*hGS*(2.*c02 + 12.*c04*prstar2 + 2.*c12*uc)
-				    *(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
-                                      - 6.*hGS*hGS*SQ(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
-				    *(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc));
-  double d3hGSs_dprstar3 = hGSs*hGSs*(-24.*cs04*prstar + 6.*hGSs*(2.*cs02 + 12.*cs04*prstar2 + 2.*cs12*uc)
-				    *(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
-                                      - 6.*hGSs*hGSs*SQ(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
-				    *(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc));
-
-  /* third derivative of  hat{G} with respect to prstar^2/uc */
-  double d3hGS_duc_dprstar2  = hGS*hGS*(-2.*c12 + 2.*hGS*(2.*c02 + 12.*c04*prstar2 + 2.*c12*uc)
-					*(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2)
-					+ hGS*8.*c12*prstar*(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
-					- hGS*hGS*6.*SQ(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
-					*(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2));
-  double d3hGSs_duc_dprstar2 = hGSs*hGSs*(-2.*cs12 + 2.*hGSs*(2.*cs02 + 12.*cs04*prstar2 + 2.*cs12*uc)
-					*(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3)
-					+ hGSs*8.*cs12*prstar*(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
-					- hGSs*hGSs*6.*SQ(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
-					*(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3));
-
-  /* third derivative of  hat{G} with respect to prstar/uc^2 */
-  double d3hGS_duc2_dprstar  = SQ(hGS)*hGS*(-6.*hGS*(2*c02*prstar + 4*c04*prstar3 + 2*c12*prstar*uc)
-					   *SQ(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2)
-					   + 2.*(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)*(2.*c20 + 6.*c30*uc)
-					   + 8.*c12*prstar*(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2));
-  double d3hGSs_duc2_dprstar = SQ(hGSs)*hGSs*(-6.*hGSs*(2*cs02*prstar + 4*cs04*prstar3 + 2*cs12*prstar*uc)
-					   *SQ(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3)
-					   + 2.*(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)*(2.*cs20 + 6.*cs30*uc + 12.*cs40*uc2)
-					   + 8.*cs12*prstar*(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3));
   
   /* derivatives of G with respect to uc */
   double dGS_duc  =  dGS0_duc*hGS  +  GS0*dhGS_duc;
@@ -795,40 +767,104 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   double d2GS_dr2  =  2*uc3*SQ(drc_dr)*dGS_duc - uc2*d2rc_dr2*dGS_duc + uc4*SQ(drc_dr)*d2GS_duc2;
   double d2GSs_dr2 =  2*uc3*SQ(drc_dr)*dGSs_duc - uc2*d2rc_dr2*dGSs_duc + uc4*SQ(drc_dr)*d2GSs_duc2;
 	    
-  /* Second derivatives with respect to prstar^2 */
-  double d2GS_dprstar2  = GS0*d2hGS_dprstar2;
-  double d2GSs_dprstar2 = GSs0*d2hGSs_dprstar2;
-
-  /* Second derivatives with respect to prstar/uc */
-  double d2GS_duc_dprstar  = dGS0_duc*dhGS_dprstar + GS0*d2hGS_duc_dprstar;
-  double d2GSs_duc_dprstar = dGSs0_duc*dhGSs_dprstar + GSs0*d2hGSs_duc_dprstar;
-
-  /* Second derivatives with respect to prstar/r */
-  double d2GS_dr_dprstar  = -uc2*drc_dr*d2GS_duc_dprstar;  
-  double d2GSs_dr_dprstar = -uc2*drc_dr*d2GSs_duc_dprstar;  
   
-  /* Third derivatives with respect to prstar^3 */
-  double d3GS_dprstar3  = GS0*d3hGS_dprstar3;
-  double d3GSs_dprstar3 = GSs0*d3hGSs_dprstar3;
+  /* prstar-mixed and third derivatives, only the noncircular flux reads them (for r3dot);
+     zeroed with ham_only */
+  if (!ham_only) {
+    /* second derivative of  hat{G} with respect to prstar^2 */
+    double d2hGS_dprstar2  = hGS*hGS*(2.*hGS*SQ(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
+  				   - (2.*c02 + 12.*c04*prstar2 + 2.*c12*uc));
+    double d2hGSs_dprstar2 = hGSs*hGSs*(2.*hGSs*SQ(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
+  				   - (2.*cs02 + 12.*cs04*prstar2 + 2.*cs12*uc));
   
-  /* Third derivatives with respect to prstar^2/uc */
-  double d3GS_duc_dprstar2  = dGS0_duc*d2hGS_dprstar2 + GS0*d3hGS_duc_dprstar2;
-  double d3GSs_duc_dprstar2  = dGSs0_duc*d2hGSs_dprstar2 + GSs0*d3hGSs_duc_dprstar2;
+    /* second derivative of  hat{G} with respect to uc/prstar */
+    double d2hGS_duc_dprstar  = hGS*hGS*(-2.*c12*prstar
+  			      + 2.*hGS*(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
+  			      *(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2));
+    double d2hGSs_duc_dprstar = hGSs*hGSs*(-2.*cs12*prstar
+  			      + 2.*hGSs*(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
+  			      *(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3));
 
-  /* Third derivatives with respect to prstar^2/r */
-  double d3GS_dr_dprstar2  = -uc2*drc_dr*d3GS_duc_dprstar2;
-  double d3GSs_dr_dprstar2 = -uc2*drc_dr*d3GSs_duc_dprstar2;
+    /* third derivative of  hat{G} with respect to prstar^3 */
+    double d3hGS_dprstar3  = hGS*hGS*(-24.*c04*prstar + 6.*hGS*(2.*c02 + 12.*c04*prstar2 + 2.*c12*uc)
+  				    *(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
+                                        - 6.*hGS*hGS*SQ(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
+  				    *(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc));
+    double d3hGSs_dprstar3 = hGSs*hGSs*(-24.*cs04*prstar + 6.*hGSs*(2.*cs02 + 12.*cs04*prstar2 + 2.*cs12*uc)
+  				    *(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
+                                        - 6.*hGSs*hGSs*SQ(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
+  				    *(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc));
 
-  /* Third derivatives with respect to prstar/uc^2 */
-  double d3GS_duc2_dprstar  = d2GS0_duc2*dhGS_dprstar + 2.*dGS0_duc*d2hGS_duc_dprstar + GS0*d3hGS_duc2_dprstar;
-  double d3GSs_duc2_dprstar = d2GSs0_duc2*dhGSs_dprstar + 2.*dGSs0_duc*d2hGSs_duc_dprstar + GSs0*d3hGSs_duc2_dprstar;
+    /* third derivative of  hat{G} with respect to prstar^2/uc */
+    double d3hGS_duc_dprstar2  = hGS*hGS*(-2.*c12 + 2.*hGS*(2.*c02 + 12.*c04*prstar2 + 2.*c12*uc)
+  					*(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2)
+  					+ hGS*8.*c12*prstar*(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
+  					- hGS*hGS*6.*SQ(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)
+  					*(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2));
+    double d3hGSs_duc_dprstar2 = hGSs*hGSs*(-2.*cs12 + 2.*hGSs*(2.*cs02 + 12.*cs04*prstar2 + 2.*cs12*uc)
+  					*(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3)
+  					+ hGSs*8.*cs12*prstar*(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
+  					- hGSs*hGSs*6.*SQ(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)
+  					*(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3));
 
-  /* Third derivatives with respect to prstar/r^2 */
-  double d3GS_dr2_dprstar  = 2*uc3*SQ(drc_dr)*d2GS_duc_dprstar - uc2*d2rc_dr2*d2GS_duc_dprstar
-    + uc4*SQ(drc_dr)*d3GS_duc2_dprstar;
-  double d3GSs_dr2_dprstar = 2*uc3*SQ(drc_dr)*d2GSs_duc_dprstar - uc2*d2rc_dr2*d2GSs_duc_dprstar
-    + uc4*SQ(drc_dr)*d3GSs_duc2_dprstar;
+    /* third derivative of  hat{G} with respect to prstar/uc^2 */
+    double d3hGS_duc2_dprstar  = SQ(hGS)*hGS*(-6.*hGS*(2*c02*prstar + 4*c04*prstar3 + 2*c12*prstar*uc)
+  					   *SQ(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2)
+  					   + 2.*(2.*c02*prstar + 4.*c04*prstar3 + 2.*c12*prstar*uc)*(2.*c20 + 6.*c30*uc)
+  					   + 8.*c12*prstar*(c10 + c12*prstar2 + 2.*c20*uc + 3.*c30*uc2));
+    double d3hGSs_duc2_dprstar = SQ(hGSs)*hGSs*(-6.*hGSs*(2*cs02*prstar + 4*cs04*prstar3 + 2*cs12*prstar*uc)
+  					   *SQ(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3)
+  					   + 2.*(2.*cs02*prstar + 4.*cs04*prstar3 + 2.*cs12*prstar*uc)*(2.*cs20 + 6.*cs30*uc + 12.*cs40*uc2)
+  					   + 8.*cs12*prstar*(cs10 + cs12*prstar2 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3));
+
+    /* Second derivatives with respect to prstar^2 */
+    double d2GS_dprstar2  = GS0*d2hGS_dprstar2;
+    double d2GSs_dprstar2 = GSs0*d2hGSs_dprstar2;
+
+    /* Second derivatives with respect to prstar/uc */
+    double d2GS_duc_dprstar  = dGS0_duc*dhGS_dprstar + GS0*d2hGS_duc_dprstar;
+    double d2GSs_duc_dprstar = dGSs0_duc*dhGSs_dprstar + GSs0*d2hGSs_duc_dprstar;
+
+    /* Second derivatives with respect to prstar/r */
+    double d2GS_dr_dprstar  = -uc2*drc_dr*d2GS_duc_dprstar;  
+    double d2GSs_dr_dprstar = -uc2*drc_dr*d2GSs_duc_dprstar;  
   
+    /* Third derivatives with respect to prstar^3 */
+    double d3GS_dprstar3  = GS0*d3hGS_dprstar3;
+    double d3GSs_dprstar3 = GSs0*d3hGSs_dprstar3;
+  
+    /* Third derivatives with respect to prstar^2/uc */
+    double d3GS_duc_dprstar2  = dGS0_duc*d2hGS_dprstar2 + GS0*d3hGS_duc_dprstar2;
+    double d3GSs_duc_dprstar2  = dGSs0_duc*d2hGSs_dprstar2 + GSs0*d3hGSs_duc_dprstar2;
+
+    /* Third derivatives with respect to prstar^2/r */
+    double d3GS_dr_dprstar2  = -uc2*drc_dr*d3GS_duc_dprstar2;
+    double d3GSs_dr_dprstar2 = -uc2*drc_dr*d3GSs_duc_dprstar2;
+
+    /* Third derivatives with respect to prstar/uc^2 */
+    double d3GS_duc2_dprstar  = d2GS0_duc2*dhGS_dprstar + 2.*dGS0_duc*d2hGS_duc_dprstar + GS0*d3hGS_duc2_dprstar;
+    double d3GSs_duc2_dprstar = d2GSs0_duc2*dhGSs_dprstar + 2.*dGSs0_duc*d2hGSs_duc_dprstar + GSs0*d3hGSs_duc2_dprstar;
+
+    /* Third derivatives with respect to prstar/r^2 */
+    double d3GS_dr2_dprstar  = 2*uc3*SQ(drc_dr)*d2GS_duc_dprstar - uc2*d2rc_dr2*d2GS_duc_dprstar
+      + uc4*SQ(drc_dr)*d3GS_duc2_dprstar;
+    double d3GSs_dr2_dprstar = 2*uc3*SQ(drc_dr)*d2GSs_duc_dprstar - uc2*d2rc_dr2*d2GSs_duc_dprstar
+      + uc4*SQ(drc_dr)*d3GSs_duc2_dprstar;
+
+    ggm[16]=d2GS_dprstar2;
+    ggm[17]=d2GSs_dprstar2;
+    ggm[18]=d2GS_dr_dprstar;
+    ggm[19]=d2GSs_dr_dprstar;
+    ggm[20]=d3GS_dprstar3;
+    ggm[21]=d3GSs_dprstar3;
+    ggm[22]=d3GS_dr2_dprstar;
+    ggm[23]=d3GSs_dr2_dprstar;
+    ggm[24]=d3GS_dr_dprstar2;
+    ggm[25]=d3GSs_dr_dprstar2;
+  } else {
+    for (int i = 16; i < 26; i++) ggm[i] = 0.0;
+  }
+
   ggm[0]=hGS;
   ggm[1]=hGSs;
   ggm[2]=GS;
@@ -845,16 +881,6 @@ void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK
   ggm[13]=d2GSs_dprstar20;
   ggm[14]=d2GS_dr2;
   ggm[15]=d2GSs_dr2;
-  ggm[16]=d2GS_dprstar2;
-  ggm[17]=d2GSs_dprstar2;
-  ggm[18]=d2GS_dr_dprstar;
-  ggm[19]=d2GSs_dr_dprstar;
-  ggm[20]=d3GS_dprstar3;
-  ggm[21]=d3GSs_dprstar3;
-  ggm[22]=d3GS_dr2_dprstar;
-  ggm[23]=d3GSs_dr2_dprstar;
-  ggm[24]=d3GS_dr_dprstar2;
-  ggm[25]=d3GSs_dr_dprstar2;
     
 }
 
@@ -1375,16 +1401,18 @@ void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double r,
   * Function: eob_dyn_get_romg
   * ---------------------------
   *   Compute r_omega
-  * 
+  *
   *  @param[in]  r             : radial separation
   *  @param[in]  prstar        : radial momentum
   *  @param[in]  pphi          : orbital angular momentum
   *  @param[in]  dyn           : dynamics structure
-  *  
+  *  @param[in]  rc_in, drc_dr_in : rc and drc/dr at r, from the caller (with spins only)
+  *  @param[in]  A_in, dA_in      : A and dA/dr at r, from the caller (with spins only)
+  *
   *  @return r_omg         : r_omega
   *
 */
-double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
+double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn, double rc_in, double drc_dr_in, double A_in, double dA_in)
 {
   /* Unpack values */
   const double nu = EOBPars -> nu;
@@ -1413,9 +1441,11 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
   double A, dA, rc, drc_dr, pl_hold;
 
   if (usespins) {
-    eob_metric_s(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
-
-    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
+    /* A, dA, rc and drc/dr already computed in the caller */
+    A  = A_in;
+    dA = dA_in;
+    rc = rc_in;
+    drc_dr = drc_dr_in;
   } else {
     eob_metric(r, 0., dyn, &A, &pl_hold, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
 
@@ -1432,7 +1462,7 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
   double psic, r_omg;
   if (usespins) {
     double ggm0[26];
-    eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, ggm0);
+    eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0., pphi, nu, chi1, chi2, X1, X2, c3, 1, ggm0);
   
     const double GS_0       = ggm0[2];
     const double GSs_0      = ggm0[3];
@@ -2355,7 +2385,7 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     double A, B, dA, d2A, dB, pl_hold, rc, drc_dr, d2rc_dr;
     eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr);
-    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr, aK2, 0.0, 0.0, nu, c1, c2, X1, X2, EOBPars->cN3LO, ggm);
+    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr, aK2, 0.0, 0.0, nu, c1, c2, X1, X2, EOBPars->cN3LO, 1, ggm);
 
     double GS     = ggm[2];
     double GSs    = ggm[3];  
@@ -2678,7 +2708,8 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
 
     /* Update size and push arrays (if needed) */
     if (iter==size) {
-      size += chunk;
+      /* double the size, as in EOBRun */
+      size += (size > chunk) ? size : chunk;
       dyn->size = size;
       DynamicsSpin_push (&dyn, size);
     }

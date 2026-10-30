@@ -223,7 +223,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 #ifdef _OPENMP
   openmp_init(VERBOSE);
 #endif
-  
+  PROF_INIT();
+
   /* *****************************************
    * Init 
    * *****************************************
@@ -363,9 +364,19 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   for(int i = 0; i < EOBPars->use_mode_lm_nqc_size; i++) 
     EOBPars->use_mode_lm_nqc[i] = use_nqc_tmp[i];
 
-  Dynamics_push (&dyn, size); 
-  Waveform_lm_alloc (&hlm, size, "hlm", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size); 
-  Waveform_lm_t_alloc (&hlm_t); 
+  Dynamics_push (&dyn, size);
+  Waveform_lm_alloc (&hlm, size, "hlm", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size);
+  Waveform_lm_t_alloc (&hlm_t);
+
+  /* With the cache on (Dali + NQC), store the quantities the waveform needs during the
+     dynamics and compute the waveform only afterwards, when the sigmoid is applied.
+     Avoids evaluating the r.h.s. twice. Off when the spins are reprojected, where chi1, chi2 evolve */
+  const int use_wav_scalar_cache = (EOBPars->model == MODEL_DALI) &&
+    (EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && !(use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins);
+  if (use_wav_scalar_cache) {
+    for (int v = 0; v < EOB_WAVC_NVARS; v++)
+      dyn->wavc[v] = malloc(size * sizeof(double));
+  }
 
   /* Integrate spin dynamics before EOB dyn if projecting */
   if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
@@ -445,6 +456,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->use_spins = spins_tmp;
     EOBPars->use_tidal_fmode_model = use_fmode_tmp;
     if (VERBOSE) PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
+    /* clear the caches, the light-ring solve filled them with NNLO tides and no spins */
+    for (int i = 0; i < EOB_METRIC_CACHE_NSLOTS; i++) dyn->mcache_valid[i] = 0;
+    if (dyn->flmt.ok)
+      for (int i = 0; i < dyn->flmt.imax; i++) dyn->flmt.ok[i] = 0;
+    if (dyn->metrict.ok)
+      for (int i = 0; i < dyn->metrict.imax; i++) dyn->metrict.ok[i] = 0;
     /* Set ODE stop to LR */
     EOBPars->ode_stop_radius = 1.01*EOBPars->rLR_tidal;    
   }
@@ -630,12 +647,27 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 		    &EOBPars->S, &EOBPars->Sstar);
     }    
     
-    /* Waveform computation at t = 0 
+    /* Waveform computation at t = 0
 	Needs a r.h.s. evaluation for some vars (no flux) */
     dyn->store = dyn->noflx = 1;
-    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
+    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t); 
+    if (use_wav_scalar_cache && store_dynamics) {
+      /* the loop does not store i = 0 */
+      dyn->wavc[WAVC_H][0]         = dyn->H;
+      dyn->wavc[WAVC_HEFF][0]      = dyn->Heff;
+      dyn->wavc[WAVC_JHAT][0]      = dyn->jhat;
+      dyn->wavc[WAVC_ROMEGA][0]    = dyn->r_omega;
+      dyn->wavc[WAVC_OMG][0]       = dyn->Omg;
+      dyn->wavc[WAVC_DDOTR][0]     = dyn->ddotr;
+      dyn->wavc[WAVC_RDOT][0]      = dyn->rdot;
+      dyn->wavc[WAVC_R2DOT][0]     = dyn->r2dot;
+      dyn->wavc[WAVC_R3DOT][0]     = dyn->r3dot;
+      dyn->wavc[WAVC_OMEGADOT][0]  = dyn->Omegadot;
+      dyn->wavc[WAVC_OMEGA2DOT][0] = dyn->Omega2dot;
+      dyn->wavc[WAVC_PRSDOT][0]    = dyn->prsdot;
+    }
+    eob_wav_hlm(dyn, hlm_t);
     
     /* Append waveform to arrays */
     hlm->time[0] = 0.;
@@ -702,16 +734,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
   /* GSL integrator memory */
   gsl_odeiv2_system sys          = {p_eob_dyn_rhs, NULL , EOB_EVOLVE_NVARS, dyn};
-#if (USERK45)
-  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
-  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, dyn->dt, ode_abstol, ode_reltol);    
-#else
-  const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rk8pd;
-  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, dyn->dt, ode_abstol, ode_reltol);    
-#endif
+  const int ode_stepper_use = EOBPars->ode_stepper;
+  const gsl_odeiv2_step_type * T;
+  switch (ode_stepper_use) {
+    case ODE_STEPPER_RK8PD:   T = gsl_odeiv2_step_rk8pd;   break;
+    case ODE_STEPPER_RKCK:    T = gsl_odeiv2_step_rkck;    break;
+    case ODE_STEPPER_MSADAMS: T = gsl_odeiv2_step_msadams; break;
+    case ODE_STEPPER_RK4:     T = gsl_odeiv2_step_rk4;     break;
+    case ODE_STEPPER_RKF45:
+    default:                  T = gsl_odeiv2_step_rkf45;   break;
+  }
+  gsl_odeiv2_driver * d          = gsl_odeiv2_driver_alloc_y_new (&sys, T, dyn->dt, ode_abstol, ode_reltol);
   gsl_odeiv2_step * s            = gsl_odeiv2_step_alloc (T, EOB_EVOLVE_NVARS);
   gsl_odeiv2_control * c         = gsl_odeiv2_control_y_new (ode_abstol, ode_reltol);
   gsl_odeiv2_evolve * e          = gsl_odeiv2_evolve_alloc (EOB_EVOLVE_NVARS);
+  /* msadams needs the driver */
+  if (ode_stepper_use == ODE_STEPPER_MSADAMS)
+    gsl_odeiv2_step_set_driver (s, d);
 
   /* Set optimized dt around merger */
   const double dt_tuned_mrg = get_mrg_timestep(q, chi1, chi2);
@@ -720,6 +759,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   /* Solve ODE */
   if (VERBOSE) PRSECTN("ODE Evolution");
   int GSLSTATUS = OK;
+  PROF_START(PROF_ODE);
   while (!(dyn->ode_stop)) {
     if (VERBOSE) printf("iter %09d | t = %.9e h = %.9e | r = %.9e\n", iter, dyn->t, dyn->dt, dyn->r); 
     iter++;
@@ -753,18 +793,30 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
     }
     
+    /* cap the step, high-order steppers sample the wvf too sparsely for the spline near merger */
+    if (EOBPars->ode_stepper_hmax > 0.0 && dyn->dt > EOBPars->ode_stepper_hmax)
+      dyn->dt = EOBPars->ode_stepper_hmax;
+
     /* Unpack data */
     dyn->r      = dyn->y[EOB_EVOLVE_RAD];
     dyn->phi    = dyn->y[EOB_EVOLVE_PHI];
     dyn->prstar = dyn->y[EOB_EVOLVE_PRSTAR];
     dyn->pphi   = dyn->y[EOB_EVOLVE_PPHI];
-    
-    /* Waveform computation 
+
+    /* Waveform computation
 	Needs a r.h.s. evaluation for some vars (but no flux) */
+    PROF_START(PROF_WAVSTORE);
+    PROF_TIC(prof_rhs_store_calls);
     dyn->store = dyn->noflx = 1;
-    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
+    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t); 
+    if (use_wav_scalar_cache) {
+      /* store t, full wvf after the dynamics */
+      hlm_t->time = dyn->t;
+    } else {
+      eob_wav_hlm(dyn, hlm_t);
+    }
+    PROF_STOP(PROF_WAVSTORE);
 
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
@@ -847,8 +899,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Update size and push arrays (if needed) */
     if (iter==size) {
-      /* if (DEBUG)  printf("Push memory\n"); */ 
-      size += chunk;
+      /* if (DEBUG)  printf("Push memory\n"); */
+      /* double the size, trim the arrays after the loop */
+      size += (size > chunk) ? size : chunk;
       EOBPars->size = size;
       Waveform_lm_push (&hlm, size);
       Dynamics_push (&dyn, size);
@@ -873,6 +926,20 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
       dyn->data[EOB_E0][iter] 	  = dyn->E;
+      if (use_wav_scalar_cache) {
+        dyn->wavc[WAVC_H][iter]         = dyn->H;
+        dyn->wavc[WAVC_HEFF][iter]      = dyn->Heff;
+        dyn->wavc[WAVC_JHAT][iter]      = dyn->jhat;
+        dyn->wavc[WAVC_ROMEGA][iter]    = dyn->r_omega;
+        dyn->wavc[WAVC_OMG][iter]       = dyn->Omg;
+        dyn->wavc[WAVC_DDOTR][iter]     = dyn->ddotr;
+        dyn->wavc[WAVC_RDOT][iter]      = dyn->rdot;
+        dyn->wavc[WAVC_R2DOT][iter]     = dyn->r2dot;
+        dyn->wavc[WAVC_R3DOT][iter]     = dyn->r3dot;
+        dyn->wavc[WAVC_OMEGADOT][iter]  = dyn->Omegadot;
+        dyn->wavc[WAVC_OMEGA2DOT][iter] = dyn->Omega2dot;
+        dyn->wavc[WAVC_PRSDOT][iter]    = dyn->prsdot;
+      }
     }
 
     /* Stop integration if max number of iterations reached */
@@ -901,7 +968,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     /* Stop integration if r is unchanged */
     double r_prev = dyn->data[EOB_RAD][iter-1];
-    if (dyn->r == r_prev && !dyn->noflx) {
+    if (dyn->r == r_prev && !dyn->noflx && iter > 10) {
       if (VERBOSE) printf("Stop: radius unchanged.\n");
       dyn->ode_stop = true;
     }
@@ -936,7 +1003,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   
   } /* end time iteration */
-  
+  PROF_STOP(PROF_ODE);
+
   /* Free ODE system solver */
   gsl_odeiv2_evolve_free (e);
   gsl_odeiv2_control_free (c);
@@ -1048,8 +1116,34 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
         dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
         dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
-        eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
-      
+        if (use_wav_scalar_cache) {
+          /* stored r.h.s. quantities */
+          dyn->phi    = dyn->data[EOB_PHI][i];
+          dyn->r      = dyn->data[EOB_RAD][i];
+          dyn->pphi   = dyn->data[EOB_PPHI][i];
+          dyn->prstar = dyn->data[EOB_PRSTAR][i];
+          /* Omg, ddotr from wavc, not data[], since at i = 0 data[] has the initial-data values, which
+             differ from the r.h.s. ones the rest of wavc comes from */
+          dyn->Omg    = dyn->wavc[WAVC_OMG][i];
+          dyn->ddotr  = dyn->wavc[WAVC_DDOTR][i];
+          dyn->H         = dyn->wavc[WAVC_H][i];
+          dyn->Heff      = dyn->wavc[WAVC_HEFF][i];
+          dyn->jhat      = dyn->wavc[WAVC_JHAT][i];
+          dyn->r_omega   = dyn->wavc[WAVC_ROMEGA][i];
+          dyn->rdot      = dyn->wavc[WAVC_RDOT][i];
+          dyn->r2dot     = dyn->wavc[WAVC_R2DOT][i];
+          dyn->r3dot     = dyn->wavc[WAVC_R3DOT][i];
+          dyn->r4dot     = 0.;
+          dyn->r5dot     = 0.;
+          dyn->Omegadot  = dyn->wavc[WAVC_OMEGADOT][i];
+          dyn->Omega2dot = dyn->wavc[WAVC_OMEGA2DOT][i];
+          dyn->Omega3dot = 0.;
+          dyn->Omega4dot = 0.;
+          dyn->prsdot    = dyn->wavc[WAVC_PRSDOT][i];
+        } else {
+          eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
+        }
+
         eob_wav_hlm_ecc_sigmoid(dyn, hlm_t);
         for (int k = 0; k < KMAX; k++) {
           if((hlm->kmask[k])){
@@ -1155,7 +1249,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         Waveform_lm_alloc (&hlm_nqc, hlm_mrg->size, "hlm_nqc", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size); 
         /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
   
+        PROF_START(PROF_NQC);
         eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        PROF_STOP(PROF_NQC);
         
 
         strcat(hlm_mrg->name,"_nqc");
@@ -1175,7 +1271,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 	
         /* Compute NQC and add them to full waveform */
         Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size); 
+        PROF_START(PROF_NQC);
         eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
+        PROF_STOP(PROF_NQC);
       }
       
 #if (DEBUG) 
@@ -1427,8 +1525,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   *dynf = dyn;          /* do not free these! */
 
 #ifdef _OPENMP
-  openmp_free(); 
+  openmp_free();
 #endif
+  PROF_OUTPUT();
   
   /* Free memory */
   /* Dynamics_free (dyn);       */

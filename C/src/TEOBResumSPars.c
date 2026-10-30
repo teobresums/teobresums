@@ -63,6 +63,9 @@ void (*eob_metric_Qpotential)();
 double (*eob_flx_Fr)();
 double (*eob_flx_hatflm_nc[KMAX])();
 double (*eob_flx_FlmNewt_nc[KMAX])();
+/* Modes with a noncircular flux correction, set in eob_set_params */
+int eob_flx_nc_active_k[KMAX];
+int eob_flx_nc_active_n = 0;
 
 /**
  * Function: EOBParameters_alloc
@@ -337,6 +340,11 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->size=500; // size of the arrays (chunks, dynamically extended)
   eobp->ringdown_extend_array=500; // grid points to extend arrays for ringdown attachment
   eobp->ode_timestep=ODE_TSTEP_ADAPTIVE; // specify ODE solver timestep "uniform","adaptive","adaptive+uniform_after_LSO","undefined"
+  eobp->ode_stepper=ODE_STEPPER_AUTO; // "rkf45","rk8pd","rkck","msadams","rk4","auto" (chosen per system in eob_set_params)
+  eobp->ode_stepper_hmax=0.0; // max ODE step, <= 0 for none
+  eobp->use_metric_cache=1; // cache eob_metric_s
+  eobp->use_flm_cheb=1; // use the Chebyshev table for the f_lm
+  eobp->use_metric_cheb=1; // use the Chebyshev table for the r-only part of the metric
   eobp->ode_abstol=1e-13; // ODE solver absolute accuracy
   eobp->ode_reltol=1e-11; //  ODE solver relative accuracy
   eobp->spin_ode_abstol=1e-11; // Spin dynamics ODE solver absolute accuracy
@@ -869,8 +877,16 @@ int eob_set_params(int default_choice, int firstcall)
         EOBPars->nqc_coefs_hlm = NQC_HLM_NRFIT_NOSPIN_201602;
       }
     }
-  } 
-  
+  }
+
+  /* "auto" ODE stepper is rk8pd for Dali with tides, msadams for Dali without, rkf45 for Giotto */
+  if (EOBPars->ode_stepper == ODE_STEPPER_AUTO) {
+    if (EOBPars->model == MODEL_DALI)
+      EOBPars->ode_stepper = EOBPars->use_tidal ? ODE_STEPPER_RK8PD : ODE_STEPPER_MSADAMS;
+    else
+      EOBPars->ode_stepper = ODE_STEPPER_RKF45;
+  }
+
   /** Set more as needed ... */
 
   EOBPars->a6c = 0.;
@@ -1494,6 +1510,12 @@ int eob_set_params(int default_choice, int firstcall)
       if (DEBUG) printf("ERROR: Unknown option for use_flm_nc\n");
       return 1;
   }
+
+  /* modes with a noncircular flux correction */
+  eob_flx_nc_active_n = 0;
+  for (int k = 0; k < KMAX; k++)
+    if (eob_flx_FlmNewt_nc[k] != &return_one || eob_flx_hatflm_nc[k] != &return_one)
+      eob_flx_nc_active_k[eob_flx_nc_active_n++] = k;
 
   /* NC corrections to delta and hath*/
   if (EOBPars->use_dlm_nc == USEDELTALM_NC_NO) {
@@ -2383,6 +2405,35 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
     }
   }
 
+  if (STREQUAL(key,"ode_stepper")) {
+    val = string_trim(val);
+    for (eobp->ode_stepper=0; eobp->ode_stepper<=ODE_STEPPER_NOPT; eobp->ode_stepper++) {
+      if (eobp->ode_stepper==ODE_STEPPER_NOPT) {
+        eobp->ode_stepper = ODE_STEPPER_RKF45;
+        if (VERBOSE) printf("ode_stepper '%s' undefined, set to default %s\n",
+                            val, ode_stepper_opt[eobp->ode_stepper]);
+        break;
+      }
+      if (STREQUAL(val,ode_stepper_opt[eobp->ode_stepper])) break;
+    }
+  }
+
+  if (STREQUAL(key,"ode_stepper_hmax")) {
+    eobp->ode_stepper_hmax = par_get_d(val);
+  }
+
+  if (STREQUAL(key,"use_metric_cheb")) {
+    eobp->use_metric_cheb = YESNO2INT(string_trim(val));
+  }
+
+  if (STREQUAL(key,"use_flm_cheb")) {
+    eobp->use_flm_cheb = YESNO2INT(string_trim(val));
+  }
+
+  if (STREQUAL(key,"use_metric_cache")) {
+    eobp->use_metric_cache = YESNO2INT(string_trim(val));
+  }
+
   if (STREQUAL(key,"ode_abstol")) {
     eobp->ode_abstol = par_get_d(val);
   }
@@ -3098,6 +3149,11 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %d\n"    , "size", eobp->size);
   fprintf(f,"%s = %d\n"    , "ringdown_extend_array", eobp->ringdown_extend_array);
   fprintf(f,"%s = \"%s\"\n", "ode_timestep", ode_tstep_opt[eobp->ode_timestep]);
+  fprintf(f,"%s = \"%s\"\n", "ode_stepper", ode_stepper_opt[eobp->ode_stepper]);
+  fprintf(f,"%s = %.16e\n" , "ode_stepper_hmax", eobp->ode_stepper_hmax);
+  fprintf(f,"%s = \"%s\"\n", "use_metric_cache", INT2YESNO(eobp->use_metric_cache));
+  fprintf(f,"%s = \"%s\"\n", "use_flm_cheb", INT2YESNO(eobp->use_flm_cheb));
+  fprintf(f,"%s = \"%s\"\n", "use_metric_cheb", INT2YESNO(eobp->use_metric_cheb));
   fprintf(f,"%s = %E\n"    , "ode_abstol", eobp->ode_abstol);
   fprintf(f,"%s = %E\n"    , "ode_reltol", eobp->ode_reltol);
   fprintf(f,"%s = %E\n"    , "spin_ode_abstol", eobp->spin_ode_abstol);
