@@ -307,10 +307,10 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->spin_odes_omg_stop   = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
   eobp->spin_odes_t_stop     = -1;
   eobp->spin_odes_dt         = 1;  // timestep for spin dynamics
-  eobp->spin_interp_domain   = 0;  // FD or TD interpolation
+  eobp->spin_interp_domain   = (model == MODEL_GIOTTO) ? 1 : 0;  // FD or TD interpolation
   eobp->chi1x = eobp->chi1y  = eobp->chi1z = 0.;
   eobp->chi2x = eobp->chi2y  = eobp->chi2z = 0.;
-  eobp->spin_flx             = SPIN_FLX_EOB; 
+  eobp->spin_flx             = (model == MODEL_GIOTTO) ? SPIN_FLX_PN : SPIN_FLX_EOB;
   eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
   eobp->cosJL_final          = 1.;
   eobp->use_effective_QNMs   = 1;

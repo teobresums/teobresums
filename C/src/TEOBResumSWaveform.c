@@ -9145,8 +9145,8 @@ void prolong_euler_angles_FD(DynamicsSpin *spin, WaveformFD_lm *hlm)
   /* First, unwrap alpha and gamma */
   spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
   spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
-  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spinsize);
-  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spinsize);
+  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spinsize);
+  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spinsize);
   
   /*prolong up to final hlm frequency (constant angles by default), add just N=2 points*/
 
