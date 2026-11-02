@@ -564,12 +564,28 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->use_spins = MODE_SPINS_ALIGNED;
   }
 
-  /* If precession and eccentricity are both specified, use EOB flux */
-  // if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
-  //  if (VERBOSE){
-  //     printf("Setting spin_flux to EOB\n"); EOBPars->spin_flx = SPIN_FLX_EOB;
-  //     printf("Setting interpolation domain to TD\n"); EOBPars->domain = 0;
-  //  }
+  if ((EOBPars->ecc != 0.) || (EOBPars->r_hyp != 0.))
+    EOBPars->model = MODEL_DALI;
+
+  if (EOBPars->spin_flx == SPIN_FLX_NOPT) {
+    PRERR("spin_flx undefined");
+    return 1;
+  }
+
+  if (EOBPars->model == MODEL_DALI && EOBPars->domain == DOMAIN_FD) {
+    PRERR("SPA with model = Dali is currently not available");
+    return 1;
+  }
+
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->model == MODEL_DALI && EOBPars->spin_flx != SPIN_FLX_EOB) {
+    PRERR("model = Dali requires spin_flx = EOB");
+    return 1;
+  }
+
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins && EOBPars->spin_flx == SPIN_FLX_EOB) {
+    PRERR("project_spins incompatible with spin_flx = EOB");
+    return 1;
+  }
 
   /* Check: if eccentricity is not between 0 and 1, throw an error */
   if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0)){
@@ -775,8 +791,6 @@ int eob_set_params(int default_choice, int firstcall)
   // NOTE: The defaults are different from v0.0 and v1.0
   double ecc   = EOBPars->ecc;
   double r_hyp = EOBPars->r_hyp;
-  if ((ecc != 0.) || (r_hyp != 0.))
-    EOBPars->model = MODEL_DALI;
 
   if (EOBPars->nqc == NQC_AUTO) {
     if (EOBPars->binary == BINARY_BNS) {
@@ -1821,12 +1835,7 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"spin_flx")) {     
     val = string_trim(val);
     for (eobp->spin_flx=0; eobp->spin_flx<=SPIN_FLX_NOPT; eobp->spin_flx++) {
-      if (eobp->spin_flx == SPIN_FLX_NOPT) {
-        eobp->spin_flx = SPIN_FLX_EOB;
-        if (VERBOSE) printf("spin flux '%s' undefined, set to '%s'\n",
-        val,spin_flx_opt[eobp->spin_flx]);
-        break;
-      }
+      if (eobp->spin_flx == SPIN_FLX_NOPT) break;
     if (STREQUAL(val,spin_flx_opt[eobp->spin_flx])) break;
     }
   }    

@@ -2194,7 +2194,8 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
       /* do not explicitly integrate omgdot here*/
       dy[EOB_EVOLVE_SPIN_Momg] = 0.;  
   } else {
-    errorexit("specify an omega dot for the spin-precession evolution");
+    PRERR("specify an omega dot for the spin-precession evolution");
+    return GSL_EBADFUNC;
   }
 
   return GSL_SUCCESS;
@@ -2459,8 +2460,12 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     spindyn_tmp->data[v][0] = spindyn_tmp->y[v];
 
-  eob_spin_dyn_integrate(spindyn_tmp, eobdyn, hlm);
+  const int status = eob_spin_dyn_integrate(spindyn_tmp, eobdyn, hlm);
   EOBPars->spin_odes_dt = spin_odes_dt;
+  if (status) {
+    DynamicsSpin_free(spindyn_tmp);
+    return status;
+  }
 
   int size = spindyn_tmp->size;
 

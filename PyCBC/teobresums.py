@@ -93,6 +93,7 @@ def teobresums_pars_update(par, domain):
     # used.
     default = {
         "domain": domain,  # 0 = TD, 1 = FD
+        "model": "Giotto" if domain == DOMAIN["FD"] else "Dali",  # SPA is not available with Dali
         "M": m1 + m2,
         "q": q,
         "LambdaAl2": lambda1,

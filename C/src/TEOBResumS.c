@@ -487,7 +487,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins){
       if(pow(r0+0.1, -1.5) < spindyn->data[EOB_EVOLVE_SPIN_Momg][0]){
         if (VERBOSE) printf("integrate backwards\n");
-        eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, pow(r0+0.1, -1.5));
+        if (eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, pow(r0+0.1, -1.5))) {
+          status = ERROR_SPIN_DYN;
+          goto EXIT_POINT;
+        }
       }
     }
 
@@ -609,7 +612,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
     if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins && EOBPars->model == MODEL_GIOTTO){
       if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0]){
-        eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, dyn->data[EOB_MOMG][0]);
+        if (eob_spin_dyn_integrate_backwards(spindyn, NULL, NULL, dyn->data[EOB_MOMG][0])) {
+          status = ERROR_SPIN_DYN;
+          goto EXIT_POINT;
+        }
       }
       /* if we are projecting the spins, we also need to update the initial chi1z and chi2z to be consistent*/
       double SA, SB; // projections of the spin parallel to hatL
@@ -1004,8 +1010,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
     spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
     
-    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI)
-      eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
+    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI){
+      if (eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0])) {
+        status = ERROR_SPIN_DYN;
+        goto EXIT_POINT;
+      }
+    }
   }
 
   if (!(EOBPars->binary == BINARY_BNS) && (dyn->data[EOB_RAD][size-1] < 3.)) {
@@ -1122,16 +1132,26 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Precessing BBH + EOB flux: 
     */
    if(use_spins == MODE_SPINS_GENERIC && !(EOBPars->project_spins)){
-    if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0))
-      errorexit("problem during spin dynamics");
+    if (eob_spin_dyn(spindyn, dyn, hlm, Pi*EOBPars->f0)) {
+      Waveform_lm_free(hlm_mrg);
+      Dynamics_free(dyn_mrg);
+      status = ERROR_SPIN_DYN;
+      goto EXIT_POINT;
+    }
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
     spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
 
     const int idx_pk = find_point_bisection(dyn->tOmg_pk, dyn->size, dyn->time, 1);
     EOBPars->cosJL_final = compute_cosJL(spindyn, dyn->tOmg_pk, dyn->data[EOB_MOMG][idx_pk]);
     
-    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI)
-      eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
+    if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI){
+      if (eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0])) {
+        Waveform_lm_free(hlm_mrg);
+        Dynamics_free(dyn_mrg);
+        status = ERROR_SPIN_DYN;
+        goto EXIT_POINT;
+      }
+    }
 
     /* final state */
     EOBPars->abhf = PrecessingRemnantSpin(dyn); 
@@ -1199,8 +1219,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
       spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
       
-      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI)
-        eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
+      if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI){
+        if (eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0])) {
+          status = ERROR_SPIN_DYN;
+          goto EXIT_POINT;
+        }
+      }
 
       /* final state */
       EOBPars->abhf = PrecessingRemnantSpin(dyn);
