@@ -581,6 +581,8 @@ typedef struct tagDynamicsSpin
   double time_backward;                                        /**< time  which divides backward from forward spin evolution */
   gsl_spline *spline[EOB_EVOLVE_SPIN_NVARS];                   /**< splines for spin dynamics */
   gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];              /**< accelerators for spin dynamics */
+  gsl_spline *omg_eob;                                         /**< M Omega(t) of the orbit, for spin_flx = EOB */
+  gsl_interp_accel *omg_eob_acc;                               /**< accelerator of omg_eob */
 } DynamicsSpin;
 
 /** Dynamics data type */
