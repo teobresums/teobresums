@@ -1898,9 +1898,8 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   double omg = y[EOB_EVOLVE_SPIN_Momg]; // M omega
   double domg_eob = 0.;
   if (EOBPars->spin_flx == SPIN_FLX_EOB && sdyn->omg_eob != NULL) {
-    const double tt = MIN(MAX(t, sdyn->omg_eob->interp->xmin), sdyn->omg_eob->interp->xmax);
-    omg      = gsl_spline_eval(sdyn->omg_eob, tt, sdyn->omg_eob_acc);
-    domg_eob = gsl_spline_eval_deriv(sdyn->omg_eob, tt, sdyn->omg_eob_acc);
+    omg      = gsl_spline_eval(sdyn->omg_eob, t, sdyn->omg_eob_acc);
+    domg_eob = gsl_spline_eval_deriv(sdyn->omg_eob, t, sdyn->omg_eob_acc);
   }
 
   const double lnomg = log(omg);
@@ -2257,11 +2256,6 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   }
 
   /* PN/ Exact-EOB flux auxiliary flags/variables */
-  double omg0eob=-1;
-  double omgeobmax=100;
-  double tshift=0;
-  int omg_jmax =0;
-  int dN       =1;
   int spin_flx = SPIN_FLX_PN; //default it to PN
 
   double *omega_eob = NULL;
@@ -2364,26 +2358,14 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       if (VERBOSE) printf("Stop: Forward integration, Momg reached a plateau.\n");
       break;
     }
-    if (EOBPars->spin_flx == SPIN_FLX_EOB && dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] > omgeobmax) ){
-      iter--; //don't count this iteration
-      if (VERBOSE) printf("Stop: Forward integration, EOB flux, Momg > max(Momg_eob).\n");
-      break;
-    }
     /* Update beta angle */
     dyn->y[EOB_EVOLVE_SPIN_bet]  = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
   
 
-    if(EOBPars->spin_flx==SPIN_FLX_EOB && dyn->t-tshift > time_eob[size_eob-1]){
-      iter--;
-      if (VERBOSE) printf("Stop: Forward integration, EOB flux, t_spindyn > max(t_eob).\n");
-      break;
-    }
-
     if(spin_flx==SPIN_FLX_EOB){
       // evaluate spline
-      EOBPars->spin_flx = spin_flx;
       dyn->y[EOB_EVOLVE_SPIN_Momg] = gsl_spline_eval(dyn->omg_eob, dyn->t, dyn->omg_eob_acc); 
     }
 
@@ -2402,7 +2384,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     /* Stop integration */
     if (breakit)
       break;
-    if (spin_flx == SPIN_FLX_EOB && dyn->dt > 0 && dyn->t - tshift >= time_eob[size_eob-1]) {
+    if (spin_flx == SPIN_FLX_EOB && dyn->dt > 0 && dyn->t >= time_eob[size_eob-1]) {
       if (VERBOSE) printf("Stop: Forward integration, EOB flux, reached the last sample of the orbit.\n");
       break;
     }

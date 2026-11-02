@@ -62,9 +62,9 @@ PARKEYS = {
     'compute_LR_guess': ['Initial guess for the light ring (LR)', 'str', 4 ],
     'compute_LSO': ['Compute the last stable orbit (LSO)', 'str',  "no"],
     'compute_LSO_guess': ['Guess for the last stable orbit (LSO)', 'str', 4 ],
-    'project_spins': ['Project the spins along the dynamics', 'str', "yes" ],
-    'spin_interp_domain': ['Evaluate spins(time) or spins(frequency)', 'int',  1],
-    'spin_flx': ['Model for the spin-evolution \dot\omega', 'str', "SPIN_FLX_PN" ],
+    'project_spins': ['Project the spins along the dynamics, needs spin_flx = PN', 'str', "no" ],
+    'spin_interp_domain': ['Evaluate spins(time) or spins(frequency), default set by the model', 'int',  None],
+    'spin_flx': ['Model for the spin-evolution \dot\omega, PN or EOB, default set by the model', 'str', None ],
     'ringdown_eulerangles': ['Option for the extension of the Euler angles beyond merger', 'str', "RD_EULERANGLES_QNMs" ],
     #
     'output_hpc': ['Output the plus and cross polarizations', 'str', "no" ],
