@@ -972,29 +972,6 @@ void vect_rotate3(int axis, double angle, double *v)
 }
 
 /**
- * Function: interp_spline_pt
- * --------------------------
- *   Spline interpolation with GSL routines at single point
- *   
- *   @param[in] t: array of x values
- *   @param[in] y: array of y values
- *   @param[in] n: number of points
- *   @param[in] ti: x value to interpolate
- * 
- *   @return yi: interpolated value
-*/
-double interp_spline_pt(double *t, double *y, int n, double ti)
-{
-  gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-  gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, n);
-  gsl_spline_init (spline, t, y, n);    
-  double yi = gsl_spline_eval (spline, ti, acc);
-  gsl_spline_free (spline);
-  gsl_interp_accel_free (acc);
-  return yi;
-}
-
-/**
   * Function: interp_spline
   * -----------------------
   *   Spline interpolation with GSL routines

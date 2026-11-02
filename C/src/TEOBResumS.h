@@ -407,11 +407,9 @@ static const char* ringdown_eulerangles_opt[] = {"constant", "QNMs", "undefined"
 enum{
   SPIN_FLX_PN,              /**< PN Omegadot */
   SPIN_FLX_EOB,             /**< EOB Omegadot */
-  SPIN_FLX_EOB_HYBRIDv1,    /**< EOB+PN Omegadot, hybrid, v1 */
-  SPIN_FLX_EOB_HYBRIDv2,    /**< EOB+PN Omegadot, hybrid, v2 */
   SPIN_FLX_NOPT,            /**< number of Omegadot options */
 };
-static const char* spin_flx_opt[] = {"PN", "EOB", "HYBv1","HYBv2","undefined"};
+static const char* spin_flx_opt[] = {"PN", "EOB", "undefined"};
 
 /** Error handler for root finders */
 enum{ 
@@ -853,7 +851,6 @@ void vect_cross(double ax, double ay, double az, double bx, double by, double bz
 void vect_cross3(double *a, double *b, double *c);
 void vect_rotate(int axis, double angle, double *vx_p, double *vy_p, double *vz_p);
 void vect_rotate3(int axis, double angle, double *v);
-double interp_spline_pt(double *t, double *y, int n, double ti);
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi);
@@ -1081,7 +1078,6 @@ int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm);
 int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omega_stop);
 int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0);
-void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double time, double *alpha_p, double *beta_p, double *gamma_p, int continue_integration);
 void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 			       double *SApara, double *SBpara, double *Spara,
 			       double *SAperp, double *SBperp, double *Sperp,
