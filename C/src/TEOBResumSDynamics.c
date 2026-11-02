@@ -1805,38 +1805,20 @@ double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz)
 /**
  * Function: alpha_initial_condition
  * ---------------------------------
- *   Compute the alpha initial condition by
- *   evaluating the lim t-->0 of alpha(t) at NLO.
- *   See Eq. A5 of https://arxiv.org/2111.03675
+ *   Compute the alpha initial condition.
  *
- *   @param[in]  eobp         : eob parameters
- * 
- *   @return    alpha0        : initial alpha   
+ *   @param[in]  dyn          : spin dynamics, with the initial data in dyn->y
+ *
+ *   @return    alpha0        : initial alpha
 */
-double alpha_initial_condition(EOBParameters *eobp)
+double alpha_initial_condition(DynamicsSpin *dyn)
 {
-  double q 	   = eobp->q;
-  double nu    = eobp->nu;
-  double f0 	 = eobp->initial_frequency;
-  double chi1x = eobp->chi1x;
-  double chi1y = eobp->chi1y;
-  double chi1z = eobp->chi1z;
-  double chi2x = eobp->chi2x;
-  double chi2y = eobp->chi2y;
-  double chi2z = eobp->chi2z;
-
-  /*Convert f0 to v used here */
-  double v = cbrt(Pi*f0);
-  if (!(eobp->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(eobp->M));
-
-  /* precompute some quantities and coefficients*/
-  double alpha_x_NLO, alpha_y_NLO;
-
-  alpha_x_NLO =  -3.*q*(chi1y + chi2y*q)*(chi1z + chi2z*q)*v + q*(chi1y*(4. + 3.*q) + chi2y*q*(3. + 4.*q));
-  alpha_y_NLO =  +3.*q*(chi1x + chi2x*q)*(chi1z + chi2z*q)*v - q*(chi1x*(4. + 3.*q) + chi2x*q*(3. + 4.*q));
-
-  return atan2(alpha_y_NLO, alpha_x_NLO);
-
+  // Torque from rhs following arXiv:2111.03675
+  double dy0[EOB_EVOLVE_SPIN_NVARS];
+  p_eob_spin_dyn_rhs(dyn->t, dyn->y, dy0, dyn);
+  return eob_spin_dyn_alpha(dy0[EOB_EVOLVE_SPIN_Lx],
+                            dy0[EOB_EVOLVE_SPIN_Ly],
+                            dy0[EOB_EVOLVE_SPIN_Lz]);
 }
 
 /**
@@ -2071,14 +2053,12 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_SPIN_Lz] = LNdotN4LOperp[Iz];
   
   
-  /* dot{gamma} = + dot{alpha} cos{beta}, where cos{beta} = Lh[Iz] */ 
-  const double div = SQ(Lh[Ix]) + SQ(Lh[Iy]);
-  if (div == 0.)
-    /* Lh is along z
-       alpha is undefined, beta = 0 */
-    dy[EOB_EVOLVE_SPIN_gam] = 0.;
-  else
-    dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * (Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] - Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
+  // Integrate y = gamma - alpha_pole_sign*alpha, avoids spikes near alpha poles
+  // alphadot = N/(1 - Lz^2), N = (Lh x dLh/dt)_z, and gammadot = alphadot*Lz, so with s = alpha_pole_sign = +-1
+  // ydot = alphadot*(Lz - s) = -s N/(1 + s Lz). The 1/(1 - Lz^2) pole cancels and 1 + s Lz >= 1 for s = sign(Lz)
+  const int pole_sign = sdyn->alpha_pole_sign;
+  const double LxdL_z = Lh[Ix]*dy[EOB_EVOLVE_SPIN_Ly] - Lh[Iy]*dy[EOB_EVOLVE_SPIN_Lx];
+  dy[EOB_EVOLVE_SPIN_gam] = -pole_sign*LxdL_z/(1. + pole_sign*Lh[Iz]);
 
   /* dot omg (Rad.React.) */
   if(EOBPars->spin_flx == SPIN_FLX_PN) {
@@ -2322,6 +2302,11 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     
   }
 
+  dyn->alpha_pole_sign = (dyn->y[EOB_EVOLVE_SPIN_Lz] >= 0.) ? 1 : -1;
+
+  // Convert gamma to y = gamma - alpha_pole_sign*alpha
+  dyn->y[EOB_EVOLVE_SPIN_gam] -= dyn->alpha_pole_sign*dyn->y[EOB_EVOLVE_SPIN_alp];
+
   while (1) {
     if (VERBOSE) printf("iter %09d | t=%.f | momg= %.17f | alpha=%.6f | beta=%.6f | Lhz=%.20f\n", iter, dyn->t, dyn->y[EOB_EVOLVE_SPIN_Momg], dyn->y[EOB_EVOLVE_SPIN_alp], dyn->y[EOB_EVOLVE_SPIN_bet], dyn->y[EOB_EVOLVE_SPIN_Lz]); 
     iter++;
@@ -2342,6 +2327,33 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       gsl_odeiv2_driver_free(d);
       return ERROR_ODEINT;
     }
+
+    // Unwrap alpha, so y[alp] follows it without 2pi jumps
+    const double alpha_new = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
+                                                dyn->y[EOB_EVOLVE_SPIN_Ly],
+                                                dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
+    double dalpha = remainder(alpha_new - dyn->y[EOB_EVOLVE_SPIN_alp], TwoPi);
+
+    if (fabs(dalpha) > 0.5*Pi) {
+      // Near a pole alpha swings by ~pi, use the sign of dot{alpha} to unwrap
+      double dy1[EOB_EVOLVE_SPIN_NVARS];
+      p_eob_spin_dyn_rhs(dyn->t, dyn->y, dy1, dyn);
+
+      const double LxdL_z = eps*(dyn->y[EOB_EVOLVE_SPIN_Lx]*dy1[EOB_EVOLVE_SPIN_Ly]
+                               - dyn->y[EOB_EVOLVE_SPIN_Ly]*dy1[EOB_EVOLVE_SPIN_Lx]);
+
+      if (LxdL_z*dalpha < 0.) dalpha += (LxdL_z > 0.) ? TwoPi : -TwoPi;
+    }
+    dyn->y[EOB_EVOLVE_SPIN_alp] += dalpha;
+
+    // Lz changed sign, so switch alpha_pole_sign and keep gamma
+    if (dyn->alpha_pole_sign*dyn->y[EOB_EVOLVE_SPIN_Lz] < 0.) {
+      dyn->y[EOB_EVOLVE_SPIN_gam] += 2*dyn->alpha_pole_sign*dyn->y[EOB_EVOLVE_SPIN_alp];
+      dyn->alpha_pole_sign = -dyn->alpha_pole_sign;
+      // Reset the stepper after changing the r.h.s.
+      gsl_odeiv2_evolve_reset(e);
+    }
+
     if (dyn->y[EOB_EVOLVE_SPIN_Momg] < 0.){
       iter--; //don't count this iteration
       if (VERBOSE) printf("Stop: Momg < 0.\n");
@@ -2357,10 +2369,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       if (VERBOSE) printf("Stop: Forward integration, EOB flux, Momg > max(Momg_eob).\n");
       break;
     }
-    /* Update alpha and beta angles */
-    dyn->y[EOB_EVOLVE_SPIN_alp]  = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
-			          dyn->y[EOB_EVOLVE_SPIN_Ly],
-			          dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
+    /* Update beta angle */
     dyn->y[EOB_EVOLVE_SPIN_bet]  = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
@@ -2388,6 +2397,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     dyn->time[iter]  = dyn->t; 
     for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
       dyn->data[v][i0+iter]  = dyn->y[v];   
+    dyn->data[EOB_EVOLVE_SPIN_gam][i0+iter] += dyn->alpha_pole_sign*dyn->y[EOB_EVOLVE_SPIN_alp];
 
     /* Stop integration */
     if (breakit)
@@ -2583,18 +2593,17 @@ int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double o
   dyn->y[EOB_EVOLVE_SPIN_Lx]  = 0; 
   dyn->y[EOB_EVOLVE_SPIN_Ly]  = 0;
   dyn->y[EOB_EVOLVE_SPIN_Lz]  = 1.;
-  dyn->y[EOB_EVOLVE_SPIN_alp] = alpha_initial_condition(EOBPars); 
+  dyn->y[EOB_EVOLVE_SPIN_Momg] = omg0;
+  dyn->y[EOB_EVOLVE_SPIN_alp] = alpha_initial_condition(dyn);
   dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],
 						  dyn->y[EOB_EVOLVE_SPIN_Lz]);
-  dyn->y[EOB_EVOLVE_SPIN_gam] = alpha_initial_condition(EOBPars); 
+  dyn->y[EOB_EVOLVE_SPIN_gam] = dyn->y[EOB_EVOLVE_SPIN_alp];
   
   double time_unit_fact = 1;
   if(!EOBPars->use_geometric_units)
     time_unit_fact = time_units_factor(EOBPars->M);
 
-  dyn->y[EOB_EVOLVE_SPIN_Momg] = omg0;
-  
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     dyn->data[v][0] = dyn->y[v];
   

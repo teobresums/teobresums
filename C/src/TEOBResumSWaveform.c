@@ -8930,10 +8930,6 @@ double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, doub
 */
 void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm){
 
-  /* First, unwrap alpha and gamma */
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
-
   /* Determine the merger as the maximum of the (pure) orbital frequency*/
   double tOmg_pk = dyn->tOmg_pk;
 
@@ -9001,11 +8997,6 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   
   /* choose whether to use MOmega (from the dynamics) or MOmega_22 for the interpolation */
   int map_from_22 = 1;
-  spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1]; //alpha_initial_condition(EOBPars);
-  spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_alp][0];
-  /* First, unwrap alpha and gamma */
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
   double *omega;
   int size_omega;
   if(map_from_22){
@@ -9147,11 +9138,6 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
 void prolong_euler_angles_FD(DynamicsSpin *spin, WaveformFD_lm *hlm)
 {
   int spinsize = spin->size;
-  /* First, unwrap alpha and gamma */
-  spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
-  spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spinsize);
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spinsize);
   
   /*prolong up to final hlm frequency (constant angles by default), add just N=2 points*/
 

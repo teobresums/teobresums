@@ -583,6 +583,7 @@ typedef struct tagDynamicsSpin
   gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];              /**< accelerators for spin dynamics */
   gsl_spline *omg_eob;                                         /**< M Omega(t) of the orbit, for spin_flx = EOB */
   gsl_interp_accel *omg_eob_acc;                               /**< accelerator of omg_eob */
+  int alpha_pole_sign;                                         /**< the spin ODE integrates gamma - alpha_pole_sign*alpha */
 } DynamicsSpin;
 
 /** Dynamics data type */
@@ -873,7 +874,6 @@ double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
 void unwrap(double *p, const int size);
 void unwrap_HM(double *p, const int size);
-void unwrap_euler(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void rmap (double *re, double *im, double *p, double *a, const int mode);
 void rmap_twist (double *re, double *im, double *p, double *a, const int mode);
@@ -1071,7 +1071,7 @@ int eob_dyn_fLSO_s(const gsl_vector *x, void * params, gsl_vector *f);
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
 int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO);
 double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz);
-double alpha_initial_condition(EOBParameters *eobp); 
+double alpha_initial_condition(DynamicsSpin *dyn);
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz);
 extern int (*p_eob_spin_dyn_rhs)(); /* defined in TEOBResumSPars.c */
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d);

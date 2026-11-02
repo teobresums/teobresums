@@ -377,9 +377,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
     EOBPars->nqc_coefs_flx = tmp_nqc;
 
-    spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
-    spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
-
     if (EOBPars->spin_interp_domain == 0){
       if (VERBOSE) printf("Compute splines in t\n");
       for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
@@ -1007,8 +1004,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       status = ERROR_SPIN_DYN;
       goto EXIT_POINT;
     }
-    spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
-    spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
     
     if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI){
       if (eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0])) {
@@ -1138,8 +1133,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       status = ERROR_SPIN_DYN;
       goto EXIT_POINT;
     }
-    spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
-    spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
 
     const int idx_pk = find_point_bisection(dyn->tOmg_pk, dyn->size, dyn->time, 1);
     EOBPars->cosJL_final = compute_cosJL(spindyn, dyn->tOmg_pk, dyn->data[EOB_MOMG][idx_pk]);
@@ -1216,8 +1209,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         status = ERROR_SPIN_DYN;
         goto EXIT_POINT;
       }
-      spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
-      spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
       
       if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI){
         if (eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0])) {
