@@ -2886,7 +2886,15 @@ int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double o
     dyn->data[v][0] = dyn->y[v];
   
   /** Integrate ODEs */
-  return eob_spin_dyn_integrate(dyn, eobdyn, hlm);
+  const int status = eob_spin_dyn_integrate(dyn, eobdyn, hlm);
+  if (status) return status;
+
+  // Splines of the spin dynamics use time with EOB flux and frequency with PN flux
+  double *x = (EOBPars->spin_flx == SPIN_FLX_EOB) ? dyn->time : dyn->data[EOB_EVOLVE_SPIN_Momg];
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    gsl_spline_init (dyn->spline[v], x, dyn->data[v], dyn->size);
+
+  return status;
   
 }
 

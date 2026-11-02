@@ -3421,33 +3421,34 @@ void Dynamics_set_params (Dynamics *dyn)
  *   Compute cosine of angle between total and orbital angular momentum at merger time.
  * 
  *   @param[in] dyn:   pointer to spin dynamics
- *   @param[in] tpeak: merger time
+ *   @param[in] tpeak: merger time, used with EOB flux
+ *   @param[in] omg_peak: merger frequency, used with PN flux
  *   @return           cosine of angle between J and L at merger: 
 */
-double compute_cosJL (DynamicsSpin *dyn, double tpeak)
+double compute_cosJL (DynamicsSpin *dyn, double tpeak, double omg_peak)
 {
   double SAmrg[3], SBmrg[3], Lmrg[3], Jmrg[3];
 
-  const int tmax_dyn_idx = find_point_bisection(tpeak, dyn->size, dyn->time, 1);
+  // PN flux has its own time axis, so we read the spins at the merger frequency
+  double *x  = (EOBPars->spin_flx == SPIN_FLX_EOB) ? dyn->time : dyn->data[EOB_EVOLVE_SPIN_Momg];
+  double xpk = (EOBPars->spin_flx == SPIN_FLX_EOB) ? tpeak : omg_peak;
+  if (xpk > x[dyn->size-1]) xpk = x[dyn->size-1];
 
-  SAmrg[0] = dyn->data[EOB_EVOLVE_SPIN_SxA][tmax_dyn_idx-1];
-  SAmrg[1] = dyn->data[EOB_EVOLVE_SPIN_SyA][tmax_dyn_idx-1];
-  SAmrg[2] = dyn->data[EOB_EVOLVE_SPIN_SzA][tmax_dyn_idx-1];
-
-  SBmrg[0] = dyn->data[EOB_EVOLVE_SPIN_SxB][tmax_dyn_idx-1];
-  SBmrg[1] = dyn->data[EOB_EVOLVE_SPIN_SyB][tmax_dyn_idx-1];
-  SBmrg[2] = dyn->data[EOB_EVOLVE_SPIN_SzB][tmax_dyn_idx-1];
+  for(int i=0; i<3;i++) {
+    SAmrg[i] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxA+i], xpk, dyn->accel[EOB_EVOLVE_SPIN_SxA+i]);
+    SBmrg[i] = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_SxB+i], xpk, dyn->accel[EOB_EVOLVE_SPIN_SxB+i]);
+    Lmrg[i]  = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Lx+i],  xpk, dyn->accel[EOB_EVOLVE_SPIN_Lx+i]);
+  }
 
   // final L
   double nu    = EOBPars->nu;
   double nu2   = nu*nu;
-  double v2mrg = pow(dyn->data[EOB_EVOLVE_SPIN_Momg][tmax_dyn_idx-1], 0.6666666666666);
+  const double Momg_mrg = gsl_spline_eval(dyn->spline[EOB_EVOLVE_SPIN_Momg], xpk, dyn->accel[EOB_EVOLVE_SPIN_Momg]);
+  double v2mrg = pow(Momg_mrg, 0.6666666666666);
   double v4mrg = v2mrg*v2mrg;
   double vmrg  = sqrt(v2mrg);
   const double L2PN = nu/vmrg*(1 + v2mrg*(1.5+0.1666666666666667*nu) + v4mrg*(3.375 - 2.375*nu + 0.04166666666666666*nu2));
-  Lmrg[0]  = L2PN*dyn->data[EOB_EVOLVE_SPIN_Lx][tmax_dyn_idx-1];
-  Lmrg[1]  = L2PN*dyn->data[EOB_EVOLVE_SPIN_Ly][tmax_dyn_idx-1];
-  Lmrg[2]  = L2PN*dyn->data[EOB_EVOLVE_SPIN_Lz][tmax_dyn_idx-1];
+  for(int i=0; i<3;i++) Lmrg[i] *= L2PN;
     
   for(int i=0; i<3;i++)
     Jmrg[i] = SAmrg[i] + SBmrg[i] + Lmrg[i];

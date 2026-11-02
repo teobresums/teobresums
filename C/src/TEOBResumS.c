@@ -1127,7 +1127,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     spindyn->data[EOB_EVOLVE_SPIN_alp][0] = spindyn->data[EOB_EVOLVE_SPIN_alp][1];
     spindyn->data[EOB_EVOLVE_SPIN_gam][0] = spindyn->data[EOB_EVOLVE_SPIN_gam][1];
 
-    EOBPars->cosJL_final = compute_cosJL(spindyn, dyn->tOmg_pk);
+    const int idx_pk = find_point_bisection(dyn->tOmg_pk, dyn->size, dyn->time, 1);
+    EOBPars->cosJL_final = compute_cosJL(spindyn, dyn->tOmg_pk, dyn->data[EOB_MOMG][idx_pk]);
     
     if(dyn->data[EOB_MOMG][0] < spindyn->data[EOB_EVOLVE_SPIN_Momg][0] && EOBPars->spin_flx != SPIN_FLX_EOB && EOBPars->model != MODEL_DALI)
       eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
