@@ -10322,7 +10322,8 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   /** Compute Ringdown waveform for t>=tmatch */
   double t0, tm, psi[2];
   double Deltaphi[KMAX];
-  int n0 = 2./dt*ooMbh; // CHECKME: I think this is to get the t + 2, we need to remove it for the modes in modesatpeak22
+  //int n0 = 2./dt*ooMbh;
+  int n0 = 2./dt; // CHECKME: no ooMbh, I think, because attachment is at t + 2M, not t + 2 M/Mbh
   int index_rng;
 	  
   for (int k = 0; k < KMAX; k++) {
