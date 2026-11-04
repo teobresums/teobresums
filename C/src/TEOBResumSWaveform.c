@@ -6681,24 +6681,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   fclose(fp_dbg);
 #endif    
   
-  /** Derivatives for the phase */
-  for (int k=0; k<KMAX; k++) {
-    if(h->kmask[k]) {
-      D0(n4[k],dt,size,d_n4[k]);
-      D0(n5[k],dt,size,d_n5[k]);
-      D0(d_n4[k],dt,size,d2_n4[k]);
-      D0(d_n5[k],dt,size,d2_n5[k]);
-    }
-  }
-
-#if (DEBUG)
-  fp_dbg = fopen("nqc_dfunc.txt", "w");
-  for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
-  }
-  fclose(fp_dbg);
-#endif    
-
   /** Find max Omg */
   int Omgmax_index = 0;
   double Omg_max   = Omg_orb[0];
@@ -6769,6 +6751,56 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     }
   }
   
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
+  /*
+    Old configuration used for arXiv:2001.11736
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+  */
+  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+  double alpha = EOBPars->alpha_sigmoid_NQC;
+  double *sigmoid;
+  sigmoid = (double*) calloc (size, sizeof(double));
+  double fact[KMAX];
+  for (int k=0; k<KMAX; k++) {
+    if(h->kmask[k]){
+      // Correction needed to have sigmoid = 1 when attaching ringdown
+      fact[k] = 1. + exp(-alpha*(t[j_NQC[k]] - t0));
+    }
+  }   
+
+  for (int j=0; j<size; j++) {
+    sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+    for (int k=0; k<KMAX; k++) {
+      if(h->kmask[k]){
+	n1[k][j] = n1[k][j]*sigmoid[j]*fact[k];
+	n2[k][j] = n2[k][j]*sigmoid[j]*fact[k];
+	n4[k][j] = n4[k][j]*sigmoid[j]*fact[k];
+	n5[k][j] = n5[k][j]*sigmoid[j]*fact[k];
+      }
+    }
+  }
+    
+  free(sigmoid);
+
+  /** Derivatives for the phase */
+  for (int k=0; k<KMAX; k++) {
+    if(h->kmask[k]) {
+      D0(n4[k],dt,size,d_n4[k]);
+      D0(n5[k],dt,size,d_n5[k]);
+      D0(d_n4[k],dt,size,d2_n4[k]);
+      D0(d_n5[k],dt,size,d2_n5[k]);
+    }
+  }
+
+#if (DEBUG)
+  fp_dbg = fopen("nqc_dfunc.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
+  }
+  fclose(fp_dbg);
+#endif    
+
   /** Solve the linear systems */
   
   /* Regge-Wheeler-Zerilli normalized amplitude. 
@@ -6873,37 +6905,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     PRFORMd("b2",bi[1][1]);
   }
 
-  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
-  /*
-    Old configuration used for arXiv:2001.11736
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
-  */
-  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
-  double alpha = EOBPars->alpha_sigmoid_NQC;
-  double *sigmoid;
-  sigmoid = (double*) calloc (size, sizeof(double));
-  double fact[KMAX];
-  for (int k=0; k<KMAX; k++) {
-    if(h->kmask[k]){
-      // Correction needed to have sigmoid = 1 when attaching ringdown
-      fact[k] = 1. + exp(-alpha*(t[j_NQC[k]] - t0));
-    }
-  }   
-
-  for (int j=0; j<size; j++) {
-    sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
-    for (int k=0; k<KMAX; k++) {
-      if(h->kmask[k]){
-	n1[k][j] = n1[k][j]*sigmoid[j]*fact[k];
-	n2[k][j] = n2[k][j]*sigmoid[j]*fact[k];
-	n4[k][j] = n4[k][j]*sigmoid[j]*fact[k];
-	n5[k][j] = n5[k][j]*sigmoid[j]*fact[k];
-      }
-    }
-  }
-    
-  free(sigmoid);
   
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
@@ -7680,24 +7681,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   fclose(fp_dbg);
 #endif    
       
-  /** Derivatives for the phase */
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask_nqc[k]){   
-      D0(n4[k],dt,size, d_n4[k]);
-      D0(n5[k],dt,size, d_n5[k]);
-      D2(n4[k],dt,size, d2_n4[k]);
-      D2(n5[k],dt,size, d2_n5[k]);
-    }
-  }
-    
-#if (DEBUG)
-  fp_dbg = fopen("nqc_dfunc.txt", "w");
-  for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
-  }
-  fclose(fp_dbg);
-#endif    
-
   /** Find max Omg */
   int Omgmax_index = size-1;
   double Omg_max = Omg_orb[Omgmax_index];
@@ -7753,6 +7736,56 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     }
   }
   
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
+  /*
+    Old configuration used for arXiv:2001.11736
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+  */
+  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+  double alpha =EOBPars->alpha_sigmoid_NQC;
+  double *sigmoid;
+  sigmoid = (double*) calloc (size, sizeof(double));
+  double fact[KMAX];
+  for (int k=0; k<KMAX; k++) {
+    if(hlm_mrg->kmask_nqc[k]){
+      // Correction needed to have sigmoid = 1 when attaching ringdown
+      fact[k] = 1. + exp(-alpha*(t[j_NQC[k]] - t0));
+    }
+  }
+    
+  for (int j=0; j<size; j++) {
+    sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+    for (int k=0; k<KMAX; k++) {
+      if(hlm_mrg->kmask_nqc[k]){
+        n1[k][j] = n1[k][j]*sigmoid[j]*fact[k];
+        n2[k][j] = n2[k][j]*sigmoid[j]*fact[k];
+        n4[k][j] = n4[k][j]*sigmoid[j]*fact[k];
+        n5[k][j] = n5[k][j]*sigmoid[j]*fact[k];
+      }
+    }
+  }
+    
+  free(sigmoid);
+
+  /** Derivatives for the phase */
+  for (int k=0; k<KMAX; k++) {
+    if(hlm_mrg->kmask_nqc[k]){   
+      D0(n4[k],dt,size, d_n4[k]);
+      D0(n5[k],dt,size, d_n5[k]);
+      D2(n4[k],dt,size, d2_n4[k]);
+      D2(n5[k],dt,size, d2_n5[k]);
+    }
+  }
+    
+#if (DEBUG)
+  fp_dbg = fopen("nqc_dfunc.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d2_n4[1][j], d2_n5[1][j]);  
+  }
+  fclose(fp_dbg);
+#endif    
+
   /** Solve the linear systems */
   
   /* Regge-Wheeler-Zerilli normalized amplitude. 
@@ -7858,37 +7891,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     PRFORMd("b2",bi[1][1]);
   }
 
-  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
-  /*
-    Old configuration used for arXiv:2001.11736
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
-  */
-  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
-  double alpha =EOBPars->alpha_sigmoid_NQC;
-  double *sigmoid;
-  sigmoid = (double*) calloc (size, sizeof(double));
-  double fact[KMAX];
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask_nqc[k]){
-      // Correction needed to have sigmoid = 1 when attaching ringdown
-      fact[k] = 1. + exp(-alpha*(t[j_NQC[k]] - t0));
-    }
-  }
-    
-  for (int j=0; j<size; j++) {
-    sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
-    for (int k=0; k<KMAX; k++) {
-      if(hlm_mrg->kmask_nqc[k]){
-        n1[k][j] = n1[k][j]*sigmoid[j]*fact[k];
-        n2[k][j] = n2[k][j]*sigmoid[j]*fact[k];
-        n4[k][j] = n4[k][j]*sigmoid[j]*fact[k];
-        n5[k][j] = n5[k][j]*sigmoid[j]*fact[k];
-      }
-    }
-  }
-    
-  free(sigmoid);
   
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
@@ -8307,29 +8309,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   fclose(fp_dbg);
 #endif    
       
-  /** Derivatives for the phase */
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask_nqc[k]){   
-      D0(n4[k],dt,size, d_n4[k]);
-      D0(n5[k],dt,size, d_n5[k]);
-      D0(n6[k],dt,size, d_n6[k]);
-      D0(d_n4[k],dt,size, d2_n4[k]);
-      D0(d_n5[k],dt,size, d2_n5[k]);
-      D0(d_n6[k],dt,size, d2_n6[k]);
-      D0(d2_n4[k],dt,size, d3_n4[k]);
-      D0(d2_n5[k],dt,size, d3_n5[k]);
-      D0(d2_n6[k],dt,size, d3_n6[k]);
-    }
-  }
-    
-#if (DEBUG)
-  fp_dbg = fopen("nqc_dfunc.txt", "w");
-  for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d_n6[1][j], d2_n4[1][j], d2_n5[1][j], d2_n6[1][j]);  
-  }
-  fclose(fp_dbg);
-#endif    
-
   /** Find max Omg */
   int Omgmax_index = size-1;
   double Omg_max = Omg_orb[Omgmax_index];
@@ -8387,6 +8366,63 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
     }
   }
   
+  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
+  /*
+    Old configuration used for arXiv:2001.11736
+    double t0 = tNQC - 30.;
+    double alpha = 0.09;
+  */
+  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+  double alpha =EOBPars->alpha_sigmoid_NQC;
+  double *sigmoid;
+  sigmoid = (double*) calloc (size, sizeof(double));
+  double fact[KMAX];
+  for (int k=0; k<KMAX; k++) {
+    if(hlm_mrg->kmask_nqc[k]){
+      // Correction needed to have sigmoid = 1 when attaching ringdown
+      fact[k] = 1. + exp(-alpha*(t[j_NQC[k]] - t0));
+    }
+  }
+    
+  for (int j=0; j<size; j++) {
+    sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
+    for (int k=0; k<KMAX; k++) {
+      if(hlm_mrg->kmask_nqc[k]){
+        n1[k][j] = n1[k][j]*sigmoid[j]*fact[k];
+        n2[k][j] = n2[k][j]*sigmoid[j]*fact[k];
+        n3[k][j] = n3[k][j]*sigmoid[j]*fact[k];
+        n4[k][j] = n4[k][j]*sigmoid[j]*fact[k];
+        n5[k][j] = n5[k][j]*sigmoid[j]*fact[k];
+        n6[k][j] = n6[k][j]*sigmoid[j]*fact[k];
+      }
+    }
+  }
+    
+  free(sigmoid);
+
+  /** Derivatives for the phase */
+  for (int k=0; k<KMAX; k++) {
+    if(hlm_mrg->kmask_nqc[k]){   
+      D0(n4[k],dt,size, d_n4[k]);
+      D0(n5[k],dt,size, d_n5[k]);
+      D0(n6[k],dt,size, d_n6[k]);
+      D0(d_n4[k],dt,size, d2_n4[k]);
+      D0(d_n5[k],dt,size, d2_n5[k]);
+      D0(d_n6[k],dt,size, d2_n6[k]);
+      D0(d2_n4[k],dt,size, d3_n4[k]);
+      D0(d2_n5[k],dt,size, d3_n5[k]);
+      D0(d2_n6[k],dt,size, d3_n6[k]);
+    }
+  }
+    
+#if (DEBUG)
+  fp_dbg = fopen("nqc_dfunc.txt", "w");
+  for (int j=0; j<size; j++) {
+    fprintf(fp_dbg, "%f\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], d_n4[1][j], d_n5[1][j], d_n6[1][j], d2_n4[1][j], d2_n5[1][j], d2_n6[1][j]);  
+  }
+  fclose(fp_dbg);
+#endif    
+
   /** Solve the linear systems */
   
   /* Regge-Wheeler-Zerilli normalized amplitude. 
@@ -8515,39 +8551,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
     PRFORMd("b3",bi[1][2]);
   }
 
-  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
-  /*
-    Old configuration used for arXiv:2001.11736
-    double t0 = tNQC - 30.;
-    double alpha = 0.09;
-  */
-  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
-  double alpha =EOBPars->alpha_sigmoid_NQC;
-  double *sigmoid;
-  sigmoid = (double*) calloc (size, sizeof(double));
-  double fact[KMAX];
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask_nqc[k]){
-      // Correction needed to have sigmoid = 1 when attaching ringdown
-      fact[k] = 1. + exp(-alpha*(t[j_NQC[k]] - t0));
-    }
-  }
-    
-  for (int j=0; j<size; j++) {
-    sigmoid[j] = 1./(1. + exp(-alpha*(t[j] - t0)));
-    for (int k=0; k<KMAX; k++) {
-      if(hlm_mrg->kmask_nqc[k]){
-        n1[k][j] = n1[k][j]*sigmoid[j]*fact[k];
-        n2[k][j] = n2[k][j]*sigmoid[j]*fact[k];
-        n3[k][j] = n3[k][j]*sigmoid[j]*fact[k];
-        n4[k][j] = n4[k][j]*sigmoid[j]*fact[k];
-        n5[k][j] = n5[k][j]*sigmoid[j]*fact[k];
-        n6[k][j] = n6[k][j]*sigmoid[j]*fact[k];
-      }
-    }
-  }
-    
-  free(sigmoid);
   
   /** Set amplitude and phase */
   for (int k=0; k<KMAX; k++) {
