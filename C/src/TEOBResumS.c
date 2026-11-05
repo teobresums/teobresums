@@ -1061,7 +1061,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
   dyn->tOmg_pk = tOmg_pk;
+  if (EOBPars->sigmoid_time == SIGMOID_TIME_SEPARATRIX)
+    dyn->sep_found = eob_dyn_separatrix_time(dyn, tOmg_pk, &(dyn->t_sep));
   if (DEBUG) printf("Peak OmgOrb time: %.9f\n", dyn->tOmg_pk);
+  if (DEBUG && dyn->sep_found) printf("Separatrix crossing time: %.9f\n", dyn->t_sep);
   
  END_ODE_EVOLUTION:;
  

@@ -298,6 +298,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->delta_t0_sigmoid_NQC  = 100.;
   eobp->alpha_sigmoid_Newt    = 0.15;
   eobp->alpha_sigmoid_NQC     = 0.06;
+  eobp->sigmoid_time        = SIGMOID_TIME_OMGPEAK;
 
   /* Peak amplitude, frequency */
   eobp->Alm_mrg_size = 0;
@@ -2100,6 +2101,19 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
 
+  if (STREQUAL(key,"sigmoid_time")) {
+    val = string_trim(val);
+    for (eobp->sigmoid_time=0; eobp->sigmoid_time<=SIGMOID_TIME_NOPT; eobp->sigmoid_time++) {
+      if (eobp->sigmoid_time == SIGMOID_TIME_NOPT) {
+	eobp->sigmoid_time = SIGMOID_TIME_OMGPEAK;
+	if (VERBOSE) printf("sigmoid_time '%s' undefined, set to '%s'\n",
+			    val, sigmoid_time_opt[eobp->sigmoid_time]);
+	break;
+      }
+      if (STREQUAL(val, sigmoid_time_opt[eobp->sigmoid_time])) break;
+    }
+  }
+
   if (STREQUAL(key,"ecc_freq")) {
     val = string_trim(val);
     for (eobp->ecc_freq=0; eobp->ecc_freq<=ECCFREQ_NOPT; eobp->ecc_freq++) {
@@ -2865,6 +2879,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%d]\n", eobp->knqcpeak22[eobp->knqcpeak22_size-1]);
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
+  fprintf(f,"%s = \"%s\"\n", "sigmoid_time", sigmoid_time_opt[eobp->sigmoid_time]);
   fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);

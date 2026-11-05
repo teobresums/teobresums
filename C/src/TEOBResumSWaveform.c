@@ -465,6 +465,25 @@ void eob_wav_hlmNewt_ecc(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   }
 }
 
+/**
+ * Function: eob_wav_sigmoid_t0
+ * ----------------------------
+ *   Centre of the Newtonian and NQC sigmoids. It is t_ref - delta when they are centred on the
+ *   Omega peak, and t_sep + delta when they are centred on the separatrix crossing and one was found.
+ *   Without a crossing, e.g. over the barrier from the start, it goes back to t_ref - delta
+ *
+ *   @param[in] dyn   : dynamics structure, carries t_sep
+ *   @param[in] t_ref : tOmg_pk for the Newtonian sigmoid, t_NQC for the NQC one
+ *   @param[in] delta : delta_t0_sigmoid_Newt or delta_t0_sigmoid_NQC
+ *
+ *   @return    centre of the sigmoid
+ */
+double eob_wav_sigmoid_t0(Dynamics *dyn, double t_ref, double delta)
+{
+  if (EOBPars->sigmoid_time == SIGMOID_TIME_SEPARATRIX && dyn->sep_found) return dyn->t_sep + delta;
+  return t_ref - delta;
+}
+
 /** Leading-order (Newtonian) prefactor  of the multipolar resummed waveform.
     Eccentric version with sigmoid function. vphi^n factorized in every multipole */
 void eob_wav_hlmNewt_ecc_fact_sigmoid(Dynamics *dyn, Waveform_lm_t *hlmNewt)
@@ -525,7 +544,7 @@ void eob_wav_hlmNewt_ecc_fact_sigmoid(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double vphi9 = vphi*vphi8;
 
   /* Defining sigmoid function to switch off Newtonian factor near the end of the evolution */
-  double t0      = tOmg_pk - EOBPars->delta_t0_sigmoid_Newt;
+  double t0      = eob_wav_sigmoid_t0(dyn, tOmg_pk, EOBPars->delta_t0_sigmoid_Newt);
   double alpha   = EOBPars->alpha_sigmoid_Newt;
   double sigmoid = 1./(1. + exp(alpha*(t - t0)));
     
@@ -774,7 +793,7 @@ void eob_wav_hlmNewt_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlmNewt)
   double vphi9 = vphi*vphi8;
 
   /* Defining sigmoid function to switch off Newtonian factor near the end of the evolution */
-  double t0      = tOmg_pk - EOBPars->delta_t0_sigmoid_Newt;
+  double t0      = eob_wav_sigmoid_t0(dyn, tOmg_pk, EOBPars->delta_t0_sigmoid_Newt);
   double alpha   = EOBPars->alpha_sigmoid_Newt;
   double sigmoid = 1./(1. + exp(alpha*(t - t0)));
     
@@ -6757,7 +6776,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     double t0 = tNQC - 30.;
     double alpha = 0.09;
   */
-  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+  double t0 = eob_wav_sigmoid_t0(dyn, tNQC, EOBPars->delta_t0_sigmoid_NQC);
   double alpha = EOBPars->alpha_sigmoid_NQC;
   double *sigmoid;
   sigmoid = (double*) calloc (size, sizeof(double));
@@ -7742,7 +7761,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     double t0 = tNQC - 30.;
     double alpha = 0.09;
   */
-  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+  double t0 = eob_wav_sigmoid_t0(dyn, tNQC, EOBPars->delta_t0_sigmoid_NQC); /* t_sep lives in the full dynamics */
   double alpha =EOBPars->alpha_sigmoid_NQC;
   double *sigmoid;
   sigmoid = (double*) calloc (size, sizeof(double));
@@ -8372,7 +8391,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
     double t0 = tNQC - 30.;
     double alpha = 0.09;
   */
-  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+  double t0 = eob_wav_sigmoid_t0(dyn, tNQC, EOBPars->delta_t0_sigmoid_NQC); /* t_sep lives in the full dynamics */
   double alpha =EOBPars->alpha_sigmoid_NQC;
   double *sigmoid;
   sigmoid = (double*) calloc (size, sizeof(double));
@@ -9872,7 +9891,7 @@ void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double
  *   @param[in] nqc     : NQC coefficients
  *   @param[out] hlmnqc : NQC part of the waveform
  */
-void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, double tOmg_pk, NQCcoefs *nqc, 
+void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, Dynamics *dyn, NQCcoefs *nqc, 
 		    Waveform_lm_t *hlmnqc)
 {      
   const int maxk = MIN(KMAX, nqc->maxk+1);
@@ -9894,7 +9913,7 @@ void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  O
   /* time shift */
   double chi1 = EOBPars->chi1;
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tNQC = tOmg_pk - DeltaT_nqc;
+  double tNQC = dyn->tOmg_pk - DeltaT_nqc;
 
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   /*
@@ -9902,7 +9921,7 @@ void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  O
     double t0 = tNQC - 30.;
     double alpha = 0.09;
   */
-  double t0 = tNQC - EOBPars->delta_t0_sigmoid_NQC;
+  double t0 = eob_wav_sigmoid_t0(dyn, tNQC, EOBPars->delta_t0_sigmoid_NQC);
   double alpha = EOBPars->alpha_sigmoid_NQC;
   double sigmoid = 1./(1. + exp(-alpha*(t - t0)));
 
@@ -10754,8 +10773,7 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
 
     /* Add NQC correction */
     Waveform_lm_t hNQC;
-    double tOmg_pk = dyn->tOmg_pk;
-    eob_wav_hlmNQC_ecc_sigmoid(nu,r,prstar,Omega,ddotr, t, tOmg_pk, NQC->hlm, &hNQC); 
+    eob_wav_hlmNQC_ecc_sigmoid(nu,r,prstar,Omega,ddotr, t, dyn, NQC->hlm, &hNQC); 
     const int maxk = MIN(KMAX, NQC->hlm->maxk+1);
   
     for (int k = 0; k < maxk; k++) {

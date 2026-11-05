@@ -331,6 +331,14 @@ enum{
 };
 static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS4", "NOSPIN", "NOTIDES"};
 
+/** List of options for the time the Newtonian and NQC sigmoids are centred on */
+enum{
+  SIGMOID_TIME_OMGPEAK,     /**< Newtonian at tOmg_pk - delta, NQC at t_NQC - delta */
+  SIGMOID_TIME_SEPARATRIX,  /**< both at t_sep + delta, the separatrix crossing */
+  SIGMOID_TIME_NOPT         /**< number of sigmoid time options */
+};
+static const char* const sigmoid_time_opt[] = {"Omg_peak", "separatrix", "undefined"};
+
 /** List of options for eccentric initial frequency */
 enum{
   ECCFREQ_PERIASTRON,     /**< Initial frequency specified at periastron */
@@ -720,6 +728,8 @@ typedef struct tagDynamics
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
   double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot, prsdot;
   double tOmg_pk;
+  double t_sep;                                         /**< separatrix crossing time, valid if sep_found */
+  int sep_found;                                        /**< 1 if a separatrix crossing was found */
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;     /**< current Hamiltonian, angular momentum and derived variables */
   double A,dA,d2A, B,dB;                                      /**< current A,B and derived variables */
   double MOmg, MOmg_prev, tMOmgpeak;                          /**< current M Omega and previous value, time of the Omega peak */
@@ -847,6 +857,7 @@ typedef struct tagEOBParameters
   int ecc_freq, ecc_ics;
   double alpha_sigmoid_NQC, delta_t0_sigmoid_NQC;
   double alpha_sigmoid_Newt, delta_t0_sigmoid_Newt;
+  int sigmoid_time;                                   /**< INDEX FOR # {Omg_peak, separatrix} */
   int A_pot, D_pot, Q_pot;
   int compute_ringdown;
   
@@ -1257,6 +1268,10 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR);
 double eob_dyn_fLSO(double r, void * params);
 int eob_dyn_fLSO_s(const gsl_vector *x, void * params, gsl_vector *f);
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
+double eob_dyn_W(double r, double pphi, Dynamics *dyn);
+int eob_dyn_barrier(double pphi, double rmax, double dr, int i0, int i1, int step, Dynamics *dyn, double *Wmax, int *imax);
+int eob_dyn_sep_crossed(Dynamics *dyn, int j);
+int eob_dyn_separatrix_time(Dynamics *dyn, double tOmg_pk, double *t_sep);
 int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO);
 double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz);
 double alpha_initial_condition(EOBParameters *eobp); 
@@ -1381,6 +1396,7 @@ void eob_wav_deltalm_nc_no(double r, double prstar, double prstardot, double *dl
 void eob_wav_deltalm_nc_impqc(double r, double prstar, double prstardot, double *dlm);
 void eob_wav_hlmNewt_ecc(Dynamics *dyn,Waveform_lm_t *hlmNewt);
 void eob_wav_hlmNewt_ecc_sigmoid(Dynamics *dyn,Waveform_lm_t *hlmNewt);
+double eob_wav_sigmoid_t0(Dynamics *dyn, double t_ref, double delta);
 void eob_wav_hlmNewt_ecc_fact_sigmoid(Dynamics *dyn, Waveform_lm_t *hlmNewt);
 void eob_wav_hhatlmTail(double Omega,double Hreal,double bphys, Waveform_lm_t *tlm);
 void eob_wav_speedyTail(double Omega, double Hreal, double bphys, Waveform_lm_t *tlm);
@@ -1421,7 +1437,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
 void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
-void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, double tOmg_pk, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
+void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, Dynamics *dyn, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
 void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
 extern int (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c */

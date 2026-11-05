@@ -290,6 +290,15 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->postadiabatic_dynamics_dr = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_dr"));
   }
   
+  if ( PyDict_GetItemString(dict, "sigmoid_time") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "sigmoid_time"));
+    for(EOBPars->sigmoid_time=0; EOBPars->sigmoid_time<=SIGMOID_TIME_NOPT; EOBPars->sigmoid_time++){
+      if (EOBPars->sigmoid_time == SIGMOID_TIME_NOPT) { EOBPars->sigmoid_time = SIGMOID_TIME_OMGPEAK; break; }
+      if (STREQUAL(val,sigmoid_time_opt[EOBPars->sigmoid_time])) break;
+    }
+  }
+
   /* rc and flm */
   if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 
     char* val;

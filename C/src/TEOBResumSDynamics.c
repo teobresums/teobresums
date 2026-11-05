@@ -1689,6 +1689,137 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
 }
 
 /**
+  * Function: eob_dyn_W
+  * -------------------
+  *   Effective Hamiltonian at pr* = 0, W(r; j) = sqrt(A (1 + j^2/rc^2)) + j G,
+  *   with rc = r and G = 0 for non-spinning binaries
+  *
+  *   @param[in] r    : radius
+  *   @param[in] pphi : angular momentum
+  *   @param[in] dyn  : dynamics structure
+  *
+  *   @return    W, or NAN where A <= 0
+*/
+double eob_dyn_W(double r, double pphi, Dynamics *dyn)
+{
+  double A, rc = r, G = 0., pl_hold, ggm[26];
+  if (EOBPars->use_spins) {
+    eob_metric_s(r, 0., dyn, &A, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_get_rc(r, EOBPars->nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &pl_hold, &pl_hold, &pl_hold);
+    eob_dyn_s_GS(r, rc, 0., 0., EOBPars->aK2, 0., 0., EOBPars->nu, EOBPars->chi1, EOBPars->chi2, EOBPars->X1, EOBPars->X2, EOBPars->cN3LO, 1, ggm);
+    G = ggm[2]*EOBPars->S + ggm[3]*EOBPars->Sstar;
+  } else {
+    eob_metric(r, 0., dyn, &A, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
+  }
+  if (A <= 0.) return NAN;
+  return sqrt(A*(1. + pphi*pphi/(rc*rc))) + pphi*G;
+}
+
+/**
+  * Function: eob_dyn_barrier
+  * -------------------------
+  *   Walks W(r; j) inward on the grid r_i = rmax - i dr, i = i0, i0 + step, ..., i1,
+  *   and takes the first local maximum as the barrier
+  *
+  *   @param[in]  pphi : angular momentum
+  *   @param[in]  rmax : outermost radius of the grid
+  *   @param[in]  dr   : grid spacing
+  *   @param[in]  i0   : first grid index
+  *   @param[in]  i1   : last grid index
+  *   @param[in]  step : stride on the grid
+  *   @param[in]  dyn  : dynamics structure
+  *   @param[out] Wmax : height of the barrier
+  *   @param[out] imax : grid index of the barrier
+  *
+  *   @return 1 barrier found, 0 no barrier and W falls inward (nothing to cross), -1 no barrier and W rises inward (a wall)
+*/
+int eob_dyn_barrier(double pphi, double rmax, double dr, int i0, int i1, int step, Dynamics *dyn, double *Wmax, int *imax)
+{
+  double Wm1 = 0., Wm2 = 0.;
+  for (int i = i0; i <= i1; i += step) {
+    const double W = eob_dyn_W(rmax - dr*i, pphi, dyn);
+    if (isnan(W)) break;
+    if (i >= i0 + 2*step && Wm1 > Wm2 && Wm1 >= W) {
+      *Wmax = Wm1;
+      *imax = i - step;
+      return 1;
+    }
+    Wm2 = Wm1;
+    Wm1 = W;
+  }
+  return (Wm1 > Wm2) ? -1 : 0;
+}
+
+/**
+  * Function: eob_dyn_sep_crossed
+  * -----------------------------
+  *   Whether Heff at sample j is over the barrier of W(r; j) (or there is no barrier left).
+  *   Barrier from a walk every ncoarse points of the grid, then refined on the full grid around it
+  *
+  *   @param[in] dyn : dynamics structure
+  *   @param[in] j   : sample of the dynamics
+  *
+  *   @return    1 crossed, 0 not crossed
+*/
+int eob_dyn_sep_crossed(Dynamics *dyn, int j)
+{
+  const double E    = dyn->data[EOB_E0][j];
+  const double Heff = 1. + (E*E - 1.)/(2.*EOBPars->nu);
+  const double pphi = dyn->data[EOB_PPHI][j];
+
+  /* radial grid from rmax in to rmin, nr points; first walk on every ncoarse-th point */
+  const double rmax = 9., rmin = 1.;
+  const int nr = 1200, ncoarse = 10;
+  const double dr = (rmax - rmin)/(nr - 1.);
+
+  double Wmax = 0.;
+  int imax = 0;
+  int found = eob_dyn_barrier(pphi, rmax, dr, 0, nr - 1, ncoarse, dyn, &Wmax, &imax);
+  if (found == 1) {
+    found = eob_dyn_barrier(pphi, rmax, dr, MAX(imax - 2*ncoarse, 0), MIN(imax + 2*ncoarse, nr - 1), 1, dyn, &Wmax, &imax);
+    if (found != 1) found = eob_dyn_barrier(pphi, rmax, dr, 0, nr - 1, 1, dyn, &Wmax, &imax);
+  }
+  return (found == 1) ? (Heff > Wmax) : (found == 0);
+}
+
+/**
+  * Function: eob_dyn_separatrix_time
+  * ---------------------------------
+  *   Time of the separatrix crossing, the first time Heff exceeds the barrier of W(r; j),
+  *   the orbital Heff at pr* = 0 (Albanesi et al. 2305.19336). Being over the barrier only happens on
+  *   the plunge, so the crossing is bracketed backwards from the Omega peak and bisected
+  *
+  *   @param[in]  dyn     : dynamics structure
+  *   @param[in]  tOmg_pk : time of the Omega peak
+  *   @param[out] t_sep   : crossing time, set only if one is found
+  *
+  *   @return     1 if a crossing was found, 0 if not (over the barrier from the start, or never over it)
+*/
+int eob_dyn_separatrix_time(Dynamics *dyn, double tOmg_pk, double *t_sep)
+{
+  int hi = dyn->size - 1;
+  while (hi > 0 && dyn->time[hi] > tOmg_pk) hi--;
+  if (!eob_dyn_sep_crossed(dyn, hi)) return 0;
+
+  /* go back from the peak in doubling steps until below the barrier, then bisect */
+  int d = 8;
+  int lo = MAX(hi - d, 0);
+  while (eob_dyn_sep_crossed(dyn, lo)) {
+    if (lo == 0) return 0;
+    hi = lo;
+    d *= 2;
+    lo = MAX(hi - d, 0);
+  }
+  while (hi - lo > 1) {
+    const int mid = (lo + hi)/2;
+    if (eob_dyn_sep_crossed(dyn, mid)) hi = mid;
+    else lo = mid;
+  }
+  *t_sep = dyn->time[hi];
+  return 1;
+}
+
+/**
  * Function: eob_dyn_fLSO_s
  * ------------------------
  *  Root function to compute LSO in spinning case
