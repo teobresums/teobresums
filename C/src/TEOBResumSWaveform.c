@@ -38,7 +38,7 @@ static const double ChlmNewt_phase[35] = {4.71238898038469, 3.141592653589793, 4
 */
 
 /* Negative amplitude modes */
-int nNegAmp[35];	
+int nNegAmp[KMAX];
 	/* 	
 	= {0, 0,	
 	   0, 1, 0,	
@@ -6489,13 +6489,12 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG]; /* Omega */
-  double *pph     = dyn->data[EOB_PPHI];
   double *pr_star = dyn->data[EOB_PRSTAR];
   double *Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn->data[EOB_DDOTR];
   
   double P[2], M[4];
-  double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
+  double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
   double ai[KMAX][2] = {0.};
   double bi[KMAX][2] = {0.};
   
@@ -6505,8 +6504,8 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
+    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
 
   for (int k=0; k<KMAX; k++) {
@@ -6514,7 +6513,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     domg[k] = (double*) calloc (size,sizeof(double));
     m11[k] = (double*) calloc (size,sizeof(double));
     m12[k] = (double*) calloc (size,sizeof(double));
-    m13[k] = (double*) calloc (size,sizeof(double));
     m21[k] = (double*) calloc (size,sizeof(double));
     m22[k] = (double*) calloc (size,sizeof(double));
     p1tmp[k] = (double*) calloc (size,sizeof(double));
@@ -6866,7 +6864,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   fclose(fp_dbg);  
 #endif
   
-  double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
     if(h->kmask_nqc[k]) {  
@@ -6972,7 +6969,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     free(domg[k]);
     free(m11[k]);
     free(m12[k]);
-    free(m13[k]);
     free(m21[k]);
     free(m22[k]);
     free(p1tmp[k]);
@@ -7018,13 +7014,12 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
   double *w       = dyn->data[EOB_MOMG]; /* Omega */
-  double *pph     = dyn->data[EOB_PPHI];
   double *pr_star = dyn->data[EOB_PRSTAR];
   double *Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn->data[EOB_DDOTR];
   
   double P[2], M[4];
-  double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
+  double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
   double ai[KMAX][2] = {0.};
   double bi[KMAX][2] = {0.};
   
@@ -7034,8 +7029,8 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
+    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
 
   for (int k=0; k<KMAX; k++) {
@@ -7043,7 +7038,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
     domg[k] = (double*) calloc (size,sizeof(double));
     m11[k] = (double*) calloc (size,sizeof(double));
     m12[k] = (double*) calloc (size,sizeof(double));
-    m13[k] = (double*) calloc (size,sizeof(double));
     m21[k] = (double*) calloc (size,sizeof(double));
     m22[k] = (double*) calloc (size,sizeof(double));
     p1tmp[k] = (double*) calloc (size,sizeof(double));
@@ -7340,7 +7334,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   fclose(fp_dbg);  
 #endif
   
-  double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
     if(h->kmask_nqc[k]) {  
@@ -7444,7 +7437,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
     free(domg[k]);
     free(m11[k]);
     free(m12[k]);
-    free(m13[k]);
     free(m21[k]);
     free(m22[k]);
     free(p1tmp[k]);
@@ -7496,13 +7488,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
-  double *pph     = dyn_mrg->data[EOB_PPHI];
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
   double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double P[2], M[4];   
-  double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
+  double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
   double ai[KMAX][2] = {0.};
   double bi[KMAX][2] = {0.};
   
@@ -7512,9 +7503,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];
-  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
+    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];
+  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
   
   for (int k=0; k<KMAX; k++) {
@@ -7523,7 +7514,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
       domg[k] = (double*) calloc (size,sizeof(double));
       m11[k] = (double*) calloc (size,sizeof(double));
       m12[k] = (double*) calloc (size,sizeof(double));
-      m13[k] = (double*) calloc (size,sizeof(double));
       m21[k] = (double*) calloc (size,sizeof(double));
       m22[k] = (double*) calloc (size,sizeof(double));
       p1tmp[k] = (double*) calloc (size,sizeof(double));
@@ -7853,7 +7843,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   fclose(fp_dbg);  
 #endif
 
-  double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask_nqc[k]){
@@ -7934,7 +7923,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   /** Multiply full waveform to NQC */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
-  pph     = dyn->data[EOB_PPHI];
   pr_star = dyn->data[EOB_PRSTAR];
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
@@ -8068,7 +8056,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
       free(domg[k]);
       free(m11[k]);
       free(m12[k]);
-      free(m13[k]);
       free(m21[k]);
       free(m22[k]);
       free(p1tmp[k]);
@@ -8121,13 +8108,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
-  double *pph     = dyn_mrg->data[EOB_PPHI];
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
   double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double P[3], M[9];   
-  double max_A[KMAX],max_dA[KMAX],max_d2A[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],max_d2omg[KMAX], DeltaT[KMAX];
+  double max_A[KMAX],max_dA[KMAX],max_d2A[KMAX],max_omg[KMAX],max_domg[KMAX],max_d2omg[KMAX];
   double ai[KMAX][3] = {0.};
   double bi[KMAX][3] = {0.};
   
@@ -8497,7 +8483,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   fclose(fp_dbg);  
 #endif
 
-  double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask_nqc[k]){
@@ -8594,7 +8579,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   /** Multiply full waveform to NQC */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
-  pph     = dyn->data[EOB_PPHI];
   pr_star = dyn->data[EOB_PRSTAR];
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
@@ -8803,13 +8787,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
-  double *pph     = dyn_mrg->data[EOB_PPHI];
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
   double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double P[2], M[4];   
-  double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX];
+  double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
   double ai[KMAX][2] = {0.};
   double bi[KMAX][2] = {0.};
   
@@ -8819,9 +8802,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];
-  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
+    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];
+  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
   
   for (int k=0; k<KMAX; k++) {
@@ -8830,7 +8813,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       domg[k] = (double*) calloc (size,sizeof(double));
       m11[k] = (double*) calloc (size,sizeof(double));
       m12[k] = (double*) calloc (size,sizeof(double));
-      m13[k] = (double*) calloc (size,sizeof(double));
       m21[k] = (double*) calloc (size,sizeof(double));
       m22[k] = (double*) calloc (size,sizeof(double));
       p1tmp[k] = (double*) calloc (size,sizeof(double));
@@ -9108,7 +9090,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   fclose(fp_dbg);  
 #endif
 
-  double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask_nqc[k]){
@@ -9187,7 +9168,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   /** Multiply full waveform to NQC */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
-  pph     = dyn->data[EOB_PPHI];
   pr_star = dyn->data[EOB_PRSTAR];
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
@@ -9277,7 +9257,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       free(domg[k]);
       free(m11[k]);
       free(m12[k]);
-      free(m13[k]);
       free(m21[k]);
       free(m22[k]);
       free(p1tmp[k]);
@@ -9313,32 +9292,20 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
 {
-#define KMAX_22 (2) // 0, 1 -> (2,1), (2,2) // k=0 unused.
-
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
-  double alpha1[KMAX_22], omega1[KMAX_22];
-  double c1A[KMAX_22], c2A[KMAX_22], c3A[KMAX_22], c4A[KMAX_22];
-  double c1phi[KMAX_22], c2phi[KMAX_22], c3phi[KMAX_22], c4phi[KMAX_22];
 	  
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
-  const double chi2 = EOBPars->chi2;
-  const double X1   = EOBPars->X1;
-  const double X2   = EOBPars->X2;
-  const double aK   = EOBPars->a1+EOBPars->a2;
-  const double Mbh  = EOBPars->Mbhf;
-  const double abh  = EOBPars->abhf;
     
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
-  double *pph     = dyn_mrg->data[EOB_PPHI];
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
   double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double P[2], M[4];   
-  double max_A[KMAX_22],max_dA[KMAX_22],d2max[KMAX_22],d3max[KMAX_22],max_omg[KMAX_22],max_domg[KMAX_22],maxd2omg[KMAX_22], DeltaT[KMAX_22];
+  double max_A[KMAX_22],max_dA[KMAX_22],max_omg[KMAX_22],max_domg[KMAX_22];
   double ai[KMAX_22][2];
   double bi[KMAX_22][2];
   
@@ -9355,9 +9322,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
   
   double *omg[KMAX_22], *domg[KMAX_22];
-  double *n1[KMAX_22],*n2[KMAX_22],*n3[KMAX_22],*n4[KMAX_22],*n5[KMAX_22],*n6[KMAX_22],
-    *d_n4[KMAX_22],*d_n5[KMAX_22],*d_n6[KMAX_22],*d2_n4[KMAX_22],*d2_n5[KMAX_22],*d2_n6[KMAX_22];
-  double *m11[KMAX_22], *m12[KMAX_22], *m13[KMAX_22], *m21[KMAX_22], *m22[KMAX_22];
+  double *n1[KMAX_22],*n2[KMAX_22],*n4[KMAX_22],*n5[KMAX_22],
+    *d_n4[KMAX_22],*d_n5[KMAX_22],*d2_n4[KMAX_22],*d2_n5[KMAX_22];
+  double *m11[KMAX_22], *m12[KMAX_22], *m21[KMAX_22], *m22[KMAX_22];
   double *p1tmp[KMAX_22], *p2tmp[KMAX_22]; /* RWZ amplitude and derivative */
   
   const int k22 = 1; // (2,2) mode
@@ -9366,7 +9333,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   domg[k22] = (double*) calloc (size,sizeof(double));
   m11[k22] = (double*) calloc (size,sizeof(double));
   m12[k22] = (double*) calloc (size,sizeof(double));
-  m13[k22] = (double*) calloc (size,sizeof(double));
   m21[k22] = (double*) calloc (size,sizeof(double));
   m22[k22] = (double*) calloc (size,sizeof(double));
   p1tmp[k22] = (double*) calloc (size,sizeof(double));
@@ -9512,8 +9478,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
 
   /** Find jmax: t[jmax] <= tNQC */
-  double tmrg[KMAX_22];
-  tmrg[k22] = tNQC - 2.;
 	
   int jmax = 0;
   for (int j=0; j<size; j++) {
@@ -9523,9 +9487,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     }
   }
   
-  double dtmrg[KMAX_22];
-  double t_NQC[KMAX_22];
-  int    j_NQC[KMAX_22];
 
   /** Solve the linear systems */
   
@@ -9563,7 +9524,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   fclose(fp_dbg);  
 #endif
 
-  double detM = 1.;
   double oodetM = 1.;
   ai[k22][0] = ai[k22][1] = 0.;
   bi[k22][0] = bi[k22][1] = 0.;
@@ -9629,7 +9589,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   /** Multiply full waveform to NQC */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
-  pph     = dyn->data[EOB_PPHI];
   pr_star = dyn->data[EOB_PRSTAR];
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
@@ -9683,7 +9642,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   free(domg[k22]);
   free(m11[k22]);
   free(m12[k22]);
-  free(m13[k22]);
   free(m21[k22]);
   free(m22[k22]);
   free(p1tmp[k22]);
@@ -10225,14 +10183,12 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   const double Mbh   = EOBPars->Mbhf;
   const double abh   = EOBPars->abhf;
   const double nu    = EOBPars->nu;
-  const double q    = EOBPars->q;
   const double chi1  = EOBPars->chi1;
   const double chi2  = EOBPars->chi2;
   const double X1    = EOBPars->X1;
   const double X2    = EOBPars->X2;
   const double aK    = EOBPars->a1+EOBPars->a2;
 	
-  const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
   const double dt = EOBPars->dt_merger_interp;
 	  
@@ -12335,20 +12291,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   const double aK   = EOBPars->a1+EOBPars->a2;
   const double Mbh  = EOBPars->Mbhf;
   const double abh  = EOBPars->abhf;
-  const double kt2 = EOBPars->kapT2;
-  const double lambda = EOBPars->LambdaBl2;
 
     
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
-  double *pph     = dyn_mrg->data[EOB_PPHI];
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
   double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double P[2], M[4];   
-  double max_A[KMAX],max_dA[KMAX],d2max[KMAX],d3max[KMAX],max_omg[KMAX],max_domg[KMAX],maxd2omg[KMAX], DeltaT[KMAX], max_d2A[KMAX], max_d2omg[KMAX];
+  double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
   double ai[KMAX][2] = {0.};
   double bi[KMAX][2] = {0.};
   
@@ -12358,9 +12311,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX];
-  double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX];
+  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
+    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];
+  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
   
   for (int k=0; k<KMAX; k++) {
@@ -12369,7 +12322,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
       domg[k] = (double*) calloc (size,sizeof(double));
       m11[k] = (double*) calloc (size,sizeof(double));
       m12[k] = (double*) calloc (size,sizeof(double));
-      m13[k] = (double*) calloc (size,sizeof(double));
       m21[k] = (double*) calloc (size,sizeof(double));
       m22[k] = (double*) calloc (size,sizeof(double));
       p1tmp[k] = (double*) calloc (size,sizeof(double));
@@ -12642,7 +12594,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   fclose(fp_dbg);  
 #endif
 
-  double detM = 1.;
   double oodetM = 1.;
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask_nqc[k]){
@@ -12740,7 +12691,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   /** Multiply full waveform to NQC */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
-  pph     = dyn->data[EOB_PPHI];
   pr_star = dyn->data[EOB_PRSTAR];
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
@@ -12830,7 +12780,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
       free(domg[k]);
       free(m11[k]);
       free(m12[k]);
-      free(m13[k]);
       free(m21[k]);
       free(m22[k]);
       free(p1tmp[k]);
@@ -12897,10 +12846,8 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   const double X1    = EOBPars->X1;
   const double X2    = EOBPars->X2;
   const double aK    = EOBPars->a1+EOBPars->a2;
-  const double M = EOBPars->M;
   const int binary = EOBPars->binary;
 	
-  const double xnu   = (1.-4.*nu);
   const double ooMbh = 1./Mbh;
   const double dt = EOBPars->dt_merger_interp;
 	  
