@@ -592,6 +592,15 @@ enum{
   NQC_BASIS_NOPT    /**< number of NQC basis options */
 };
 
+/** NR values at the NQC point: which fits (eob_set_nqc_point) */
+enum{
+  NQC_POINT_22,     /**< (2,2) only, eob_nqc_point */
+  NQC_POINT_HM,     /**< higher modes, template coefficients at the (2,2) peak for knqcpeak22 */
+  NQC_POINT_HM_D2,  /**< higher modes, also second derivatives (three-condition NQC) */
+  NQC_POINT_BHNS,   /**< higher modes, BHNS fits */
+  NQC_POINT_NOPT    /**< number of NQC point options */
+};
+
 enum { 
   FIRSTCALL_EOBWAVFLMV1,          /**< first call to eob_wav_flm_v1 */
   FIRSTCALL_EOBWAVFLMHM,          /**< first call to eob_wav_flm_HM */
@@ -1455,6 +1464,8 @@ void eob_set_nqc_basis(NQCbasis *b, int *kmask, double *r, double *w, double *pr
                        int nqc_basis, int n2_22);
 void eob_nqc_basis_sigmoid(NQCbasis *b, int *kmask, double *t, double t0, double alpha, double *t_match);
 void eob_nqc_basis_derivatives(NQCbasis *b, int *kmask, double dt, int use_D2);
+void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
+                       double *A, double *dA, double *d2A, double *omg, double *domg, double *d2omg);
 int eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 extern int (*eob_wav_hlmNQC_find_a1a2a3_mrg)(); /* defined in TEOBResumSPars.c */
 int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
