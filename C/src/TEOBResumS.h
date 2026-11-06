@@ -1439,6 +1439,13 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
 void eob_set_nqc_basis(int *kmask, int size, double *r, double *w, double *pr_star, double *ddotr,
                        int nqc_basis, int n2_22,
                        double **n1, double **n2, double **n3, double **n4, double **n5, double **n6);
+void eob_nqc_basis_sigmoid(int *kmask, int size, double *t, double t0, double alpha, double *t_match,
+                           double **n1, double **n2, double **n3, double **n4, double **n5, double **n6);
+void eob_nqc_basis_derivatives(int *kmask, int size, double dt, int use_D2,
+                               double **n4, double **n5, double **n6,
+                               double **d_n4, double **d_n5, double **d_n6,
+                               double **d2_n4, double **d2_n5, double **d2_n6,
+                               double **d3_n4, double **d3_n5, double **d3_n6);
 void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 extern void (*eob_wav_hlmNQC_find_a1a2a3_mrg)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
