@@ -6473,18 +6473,9 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
-  double alpha1[KMAX], omega1[KMAX];
-  double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
-  double c1phi[KMAX], c2phi[KMAX], c3phi[KMAX], c4phi[KMAX];
 	    
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
-  const double chi2 = EOBPars->chi2;
-  const double X1   = EOBPars->X1;
-  const double X2   = EOBPars->X2;
-  const double aK   = EOBPars->a1+EOBPars->a2;
-  const double Mbh  = EOBPars->Mbhf;
-  const double abh  = EOBPars->abhf;
     
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
@@ -6543,62 +6534,14 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     max_domg[k] = 0.;
   }
 
-  int modesatpeak22[KMAX]; 
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-  double tau_postpeak;
   
-  if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    
-    /* Higher modes */
-    /* Choosing modes using kpostpeak array */
-    int kpostpeak_size = EOBPars->kpostpeak_size;  
-    int *kpostpeak     = EOBPars->kpostpeak;
-
-    QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-            c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
-            alpha1, omega1);
-    
-    /* Overwrite with fits at peak of 22 for modes in knqcpeak22 */
-    QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
-            c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
-            alpha1, omega1);
-    
-    /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-    eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
-    /* 21 fitted directly at tpeak_22*/
-    eob_nqc_point_HM_peak22(dyn, max_A, max_dA, max_omg, max_domg);
-    
-    /* Over-writing fits using postpeak quantities for modes in kpostpeak */
-    for (int j=0; j<kpostpeak_size; j++) {
-      int k = kpostpeak[j];
-      
-      /* Normalizing c1A and c4A */
-      int l = LINDEX[k];
-      c1A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
-      c4A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
-      
-      if (modesatpeak22[k]) tau_postpeak = 0.;
-      else tau_postpeak = 2./Mbh;
-      eob_nqc_point_postpeak(tau_postpeak,Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
-            c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
-            &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
-      
-      max_A[k]    = A_tmp;
-      max_dA[k]   = dA_tmp;
-      max_omg[k]  = omg_tmp;
-      max_domg[k] = domg_tmp;
-    }
-  } else {
-    
-    eob_nqc_point(dyn, &A_tmp, &dA_tmp, &omg_tmp, &domg_tmp);
+  eob_nqc_point(dyn, &A_tmp, &dA_tmp, &omg_tmp, &domg_tmp);
 	
-    /** Switch on the 22 values (only) */
-    max_A[1]    = A_tmp;
-    max_dA[1]   = dA_tmp;
-    max_omg[1]  = omg_tmp;
-    max_domg[1] = domg_tmp;
-  
-  }
+  /** Switch on the 22 values (only) */
+  max_A[1]    = A_tmp;
+  max_dA[1]   = dA_tmp;
+  max_omg[1]  = omg_tmp;
+  max_domg[1] = domg_tmp;
 
   /* Overwrite fits/postpeak with user-specified values if any given */
   if (EOBPars->Alm_nqc_size + EOBPars->dAlm_nqc_size + EOBPars->omglm_nqc_size + EOBPars->domglm_nqc_size > 0) {
@@ -6645,50 +6588,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     }
   }
 
-  if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    for (int j=0; j<size; j++) {
-      /* l=2,m=1 */
-      if(h->kmask[0]) {
-        n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-        n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-      }
-      /* l=2,m=2 */
-      if ((EOBPars->use_flm == USEFLM_HM_4PN22) || EOBPars->use_flm == USEFLM_HM_6PN3p3){
-        if(h->kmask[1]) {
-          n2[1][j] = SQ(pr_star[j])*n1[1][j];
-        }
-      }
-      /* l=3, l=4 & l=5 */
-      // FIXME: condition on spins bad for non-spinning limit
-      if ((chi1 <= 0.) || (chi2 <= 0.)) {
-	      for (int k=2; k<14; k++) {
-	        if(h->kmask[k]){
-	        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-	      }
-	    }
-      }
-      /* l=3, m=2 */
-      if(h->kmask[3]){
-        n2[3][j] = cbrt(SQ(w[j]))*n1[3][j];
-        n5[3][j] = cbrt(SQ(w[j]))*n4[3][j];
-      }
-      /* l=4, m=2 */
-      if(h->kmask[6]){
-        n2[6][j] = cbrt(SQ(w[j]))*n1[6][j];
-        n5[6][j] = cbrt(SQ(w[j]))*n4[6][j];
-      }
-      /* l=4, m=3 */
-      if(h->kmask[7]){
-        n2[7][j] = cbrt(SQ(w[j]))*n1[7][j];
-        n5[7][j] = cbrt(SQ(w[j]))*n4[7][j];
-      }
-      /* l=5, m=5 */
-      if(h->kmask[13]){
-        n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
-      }
-    }
-  }  
-
 #if (DEBUG)
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
@@ -6732,8 +6631,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   }
 
   /** Find jmax: t[jmax] <= tNQC */
-  double tmrg[KMAX];
-  tmrg[1] = tNQC - 2.;
 	
   int jmax = 0;
   for (int j=0; j<size; j++) {
@@ -6743,31 +6640,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     }
   }
 	     
-  double dtmrg[KMAX];
-  double t_NQC[KMAX];
-  int    j_NQC[KMAX];
-
-  if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    eob_nqc_deltat_lm(dtmrg);
-
-    for (int k=0; k<KMAX; k++) {   
-
-      if(h->kmask_nqc[k]){
-        tmrg[k]  = tmrg[1] + dtmrg[k];
-        t_NQC[k] = tmrg[k] + 2.;
-        if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
-
-        j_NQC[k] = size-1;
-        for (int j=size-2; j>=0; j--) {
-          if(t[j] < t_NQC[k]) {
-            break;
-          }
-        j_NQC[k] = j;
-        } 
-      }
-    }
-  }
-  
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   /*
     Old configuration used for arXiv:2001.11736
@@ -6782,7 +6654,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   for (int k=0; k<KMAX; k++) {
     if(h->kmask[k]){
       // Correction needed to have sigmoid = 1 when attaching ringdown
-      fact[k] = 1. + exp(-alpha*(t[j_NQC[k]] - t0));
+      fact[k] = 1. + exp(-alpha*(t[jmax] - t0));
     }
   }   
 
@@ -6868,9 +6740,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   for (int k=0; k<KMAX; k++) {
     if(h->kmask_nqc[k]) {  
       
-      if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-	      jmax = j_NQC[k];
-      }
       
       
       /* Computation of ai coefficients at Omega peak */
@@ -6998,18 +6867,9 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
 void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {  
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
-  double alpha1[KMAX], omega1[KMAX];
-  double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
-  double c1phi[KMAX], c2phi[KMAX], c3phi[KMAX], c4phi[KMAX];
 	    
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
-  const double chi2 = EOBPars->chi2;
-  const double X1   = EOBPars->X1;
-  const double X2   = EOBPars->X2;
-  const double aK   = EOBPars->a1+EOBPars->a2;
-  const double Mbh  = EOBPars->Mbhf;
-  const double abh  = EOBPars->abhf;
     
   double *t       = h->time;
   double *r       = dyn->data[EOB_RAD];
@@ -7068,62 +6928,14 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
     max_domg[k] = 0.;
   }
 
-  int modesatpeak22[KMAX]; 
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-  double tau_postpeak;
   
-  if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    /* Higher modes */
-    /* Choosing modes using kpostpeak array */
-    int kpostpeak_size = EOBPars->kpostpeak_size;  
-    int *kpostpeak     = EOBPars->kpostpeak;
-
-    QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK,  Mbh, abh,  
-            c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
-            alpha1, omega1);
-
-    /* Overwrite with fits at peak of 22 for modes in knqcpeak22 */
-    QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
-            c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi,
-            alpha1, omega1);
-    
-    /* 22, 31, 33, 41 and 55 fitted directly + 44 dA */
-    eob_nqc_point_HM(dyn, max_A, max_dA, max_omg, max_domg);
-
-    /* 21 fitted directly at tpeak_22*/
-    eob_nqc_point_HM_peak22(dyn, max_A, max_dA, max_omg, max_domg);
-
-    /* Over-writing fits using postpeak quantities for modes in kpostpeak */
-    for (int j=0; j<kpostpeak_size; j++) {
-      int k = kpostpeak[j];
-      
-      /* Normalizing c1A and c4A */
-      int l = LINDEX[k];
-      c1A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
-      c4A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
-      
-      if (modesatpeak22[k]) tau_postpeak = 0.;
-      else tau_postpeak = 2./Mbh;
-      eob_nqc_point_postpeak(tau_postpeak,Mbh,c1A[k],c2A[k],c3A[k],c4A[k],
-            c1phi[k],c2phi[k],c3phi[k],c4phi[k],alpha1[k],omega1[k],
-            &A_tmp,&dA_tmp,&omg_tmp,&domg_tmp);
-      
-      max_A[k]    = A_tmp;
-      max_dA[k]   = dA_tmp;
-      max_omg[k]  = omg_tmp;
-      max_domg[k] = domg_tmp;
-    }
-  } else {
-    
-    eob_nqc_point(dyn, &A_tmp, &dA_tmp, &omg_tmp, &domg_tmp);
+  eob_nqc_point(dyn, &A_tmp, &dA_tmp, &omg_tmp, &domg_tmp);
 	
-    /** Switch on the 22 values (only) */
-    max_A[1]    = A_tmp;
-    max_dA[1]   = dA_tmp;
-    max_omg[1]  = omg_tmp;
-    max_domg[1] = domg_tmp;
-  
-  }
+  /** Switch on the 22 values (only) */
+  max_A[1]    = A_tmp;
+  max_dA[1]   = dA_tmp;
+  max_omg[1]  = omg_tmp;
+  max_domg[1] = domg_tmp;
 
   /* Overwrite fits/postpeak with user-specified values if any given */
   if (EOBPars->Alm_nqc_size + EOBPars->dAlm_nqc_size + EOBPars->omglm_nqc_size + EOBPars->domglm_nqc_size > 0) {
@@ -7169,29 +6981,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
       }
     }
   }
-
-  if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    for (int j=0; j<size; j++) {
-      /* l=2,m=1 */
-      if(h->kmask_nqc[0]) {
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-      }
-      /* l=2,m=2 */
-      if (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-        if(h->kmask_nqc[1]) {
-          n2[1][j] = SQ(pr_star[j])*n1[1][j];
-        }
-      }
-
-      /* l=3, l=4 & l=5 */
-      for (int k=2; k<14; k++) {   
-	      if(h->kmask_nqc[k]) {
-	        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-	      }
-      }
-    }
-  }  
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -7254,8 +7043,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   }
 
   /** Find jmax: t[jmax] <= tNQC */
-  double tmrg[KMAX];
-  tmrg[1] = tNQC - 2.;
 	
   int jmax = 0;
   for (int j=0; j<size; j++) {
@@ -7265,29 +7052,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
     }
   }
 	     
-  double dtmrg[KMAX];
-  double t_NQC[KMAX];
-  int    j_NQC[KMAX];
-
-  if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-    eob_nqc_deltat_lm(dtmrg);
-    
-    for (int k=0; k<KMAX; k++) {   
-      if(h->kmask_nqc[k]) {
-	      tmrg[k]  = tmrg[1] + dtmrg[k];
-	      t_NQC[k] = tmrg[k] + 2.;
-	      if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
-	      j_NQC[k] = size-1;
-	      for (int j=size-2; j>=0; j--) {
-	        if(t[j] < t_NQC[k]) {
-	          break;
-	        }
-	      j_NQC[k] = j;
-	      }
-      }
-    }
-  }
-  
   /** Solve the linear systems */
   
   /* Regge-Wheeler-Zerilli normalized amplitude. 
@@ -7338,9 +7102,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   for (int k=0; k<KMAX; k++) {
     if(h->kmask_nqc[k]) {  
       
-      if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3) {
-	jmax = j_NQC[k];
-      }
             
       /* Computation of ai coefficients at Omega peak */
       P[0]     = max_A[k]  - p1tmp[k][jmax];
