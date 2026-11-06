@@ -7270,7 +7270,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
-  double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
@@ -7325,18 +7324,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   fclose(fp_dbg);
 #endif    
       
-  /** Find max Omg */
-  int Omgmax_index = size-1;
-  double Omg_max = Omg_orb[Omgmax_index];
-  for (int j = size-2; j-- ; ) {
-    if (Omg_orb[j] < Omg_max) 
-      break;
-    Omgmax_index = j;
-    Omg_max = Omg_orb[j]; 
-  }
-  
-  /** Time */
-  double tOmgOrb_pk = t[Omgmax_index];
+  /** Peak of Omega from dynamics */
+  const double tOmgOrb_pk = dyn->tOmg_pk;
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
@@ -7462,7 +7451,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
-  double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double max_A[KMAX],max_dA[KMAX],max_d2A[KMAX],max_omg[KMAX],max_domg[KMAX],max_d2omg[KMAX];
@@ -7515,18 +7503,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   fclose(fp_dbg);
 #endif    
       
-  /** Find max Omg */
-  int Omgmax_index = size-1;
-  double Omg_max = Omg_orb[Omgmax_index];
-  for (int j = size-2; j >= 0; j--) {
-    if (Omg_orb[j] < Omg_max) 
-      break;
-    Omgmax_index = j;
-    Omg_max = Omg_orb[j]; 
-  }
-  
-  /** Time */
-  double tOmgOrb_pk = t[Omgmax_index];
+  /** Peak of Omega from dynamics */
+  const double tOmgOrb_pk = dyn->tOmg_pk;
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
@@ -7655,7 +7633,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
-  double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
@@ -7721,18 +7698,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   fclose(fp_dbg);
 #endif    
 
-  /** Find max Omg */
-  int Omgmax_index = 0;
-  double Omg_max   = Omg_orb[0];
-  for (int j=0; j<size; j++) {
-    if (Omg_orb[j] > Omg_max) {
-      Omg_max = Omg_orb[j];
-      Omgmax_index = j;
-    }
-  }
-  
-  /** Time */
-  double tOmgOrb_pk = t[Omgmax_index];
+  /** Peak of Omega from dynamics */
+  const double tOmgOrb_pk = dyn->tOmg_pk;
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
@@ -7834,7 +7801,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
-  double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double max_A[KMAX_22],max_dA[KMAX_22],max_omg[KMAX_22],max_domg[KMAX_22];
@@ -7961,18 +7927,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   fclose(fp_dbg);
 #endif    
 
-  /** Find max Omg */
-  int Omgmax_index = 0;
-  double Omg_max   = Omg_orb[0];
-  for (int j=0; j<size; j++) {
-    if (Omg_orb[j] > Omg_max) {
-      Omg_max = Omg_orb[j];
-      Omgmax_index = j;
-    }
-  }
-  
-  /** Time */
-  double tOmgOrb_pk = t[Omgmax_index];
+  /** Peak of Omega from dynamics */
+  const double tOmgOrb_pk = dyn->tOmg_pk;
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
@@ -8564,8 +8520,6 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   const double ooMbh = 1./Mbh;
   const double dt = EOBPars->dt_merger_interp;
 	  
-  /* double *Omega = dyn->data[EOB_MOMG]; */
-  double *Omega = dyn->data[EOB_OMGORB]; /* use this for spin */
 	  
   /* Note:
      dynsize < size , since the wf has been extended 
@@ -8579,29 +8533,13 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     PRFORMi("ringdown_waveform_size",size);
   }
   
-  /** Find peak of Omega */
-  /* Assume a monotonically increasing function, 
-     start from after the peak */
-  int index_pk = dynsize-1;
-  double Omega_pk = Omega[index_pk];
-  for (int j = dynsize-2; j-- ; ) {
-    if (Omega[j] < Omega_pk) 
-      break;
-    index_pk = j;
-    Omega_pk = Omega[j]; 
+  /** Peak of Omega from dynamics */
+  const double tOmg_pk = dyn->tOmg_pk*ooMbh;
+  if (VERBOSE) {
+    PRFORMd("ringdown_tOmg_pk",dyn->tOmg_pk);  /* units of M */
+    PRFORMd("ringdown_tOmg_pk_Mbh",tOmg_pk);   /* units of the final black-hole mass */
   }
-  
-  if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
-  if (index_pk >= dynsize-2) {
-    if (VERBOSE) printf("No omega-maximum found.\n");
-  }
-  
-  double tOmg_pk = dyn->time[index_pk]*ooMbh;
 
-  if (VERBOSE) PRFORMd("ringdown_Omega_pk",Omega_pk);
-  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk/ooMbh);
-  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk);
-	  
   /** Merger time t_max(A22) */
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tmrg[KMAX], tmatch[KMAX], dtmrg[KMAX];
@@ -10660,7 +10598,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
   double *pr_star = dyn_mrg->data[EOB_PRSTAR];
-  double *Omg_orb = dyn_mrg->data[EOB_OMGORB]; /* Omega orbital */
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
@@ -10726,18 +10663,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   fclose(fp_dbg);
 #endif    
 
-  /** Find max Omg */
-  int Omgmax_index = 0;
-  double Omg_max   = Omg_orb[0];
-  for (int j=0; j<size; j++) {
-    if (Omg_orb[j] > Omg_max) {
-      Omg_max = Omg_orb[j];
-      Omgmax_index = j;
-    }
-  }
-  
-  /** Time */
-  double tOmgOrb_pk = t[Omgmax_index];
+  /** Peak of Omega from dynamics */
+  const double tOmgOrb_pk = dyn->tOmg_pk;
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tNQC = tOmgOrb_pk - DeltaT_nqc;
 
@@ -10885,8 +10812,6 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   const double ooMbh = 1./Mbh;
   const double dt = EOBPars->dt_merger_interp;
 	  
-  /* double *Omega = dyn->data[EOB_MOMG]; */
-  double *Omega = dyn->data[EOB_OMGORB]; /* use this for spin */
 	  
   /* Note:
      dynsize < size , since the wf has been extended 
@@ -10900,29 +10825,13 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     PRFORMi("ringdown_waveform_size",size);
   }
   
-  /** Find peak of Omega */
-  /* Assume a monotonically increasing function, 
-     start from after the peak */
-  int index_pk = dynsize-1;
-  double Omega_pk = Omega[index_pk];
-  for (int j = dynsize-2; j-- ; ) {
-    if (Omega[j] < Omega_pk) 
-      break;
-    index_pk = j;
-    Omega_pk = Omega[j]; 
+  /** Peak of Omega from dynamics */
+  const double tOmg_pk = dyn->tOmg_pk*ooMbh;
+  if (VERBOSE) {
+    PRFORMd("ringdown_tOmg_pk",dyn->tOmg_pk);  /* units of M */
+    PRFORMd("ringdown_tOmg_pk_Mbh",tOmg_pk);   /* units of the final black-hole mass */
   }
-  
-  if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
-  if (index_pk >= dynsize-2) {
-    if (VERBOSE) printf("No omega-maximum found.\n");
-  }
-  
-  double tOmg_pk = dyn->time[index_pk]*ooMbh;  
-	
-  if (VERBOSE) PRFORMd("ringdown_Omega_pk",Omega_pk);
-  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk/ooMbh);
-  if (VERBOSE) PRFORMd("ringdown_tOmg_pk",tOmg_pk);
-	  
+
   /** Merger time t_max(A22) */
   double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
   double tmrg[KMAX], tmatch[KMAX], dtmrg[KMAX];
