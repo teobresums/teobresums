@@ -1466,7 +1466,7 @@ void eob_nqc_basis_sigmoid(NQCbasis *b, int *kmask, double *t, double t0, double
 void eob_nqc_basis_derivatives(NQCbasis *b, int *kmask, double dt, int use_D2);
 void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
                        double *A, double *dA, double *d2A, double *omg, double *domg, double *d2omg);
-int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j_NQC,
+int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j_NQC, double *t_NQC,
                          double *A_nr, double *dA_nr, double *d2A_nr,
                          double **omg, double **domg, double **d2omg,
                          double *omg_nr, double *domg_nr, double *d2omg_nr,
