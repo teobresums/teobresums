@@ -6468,19 +6468,24 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
  *   n4 = pr*\/(r Omg), n5 = n4 (r Omg)^2 for the phase,
  *   then the per-mode changes chosen by nqc_basis (NQC_BASIS_*).
  *   With n2_22, the (2,2) gets n2 = pr*^2 n1.
- *   n3 and n6 are filled only if not NULL (three-condition NQC).
+ *   n3 and n6 only if allocated (three-condition NQC).
  *
+ *   @param[in,out] b    : basis, allocated on the time grid (NQCbasis_alloc)
  *   @param[in]  kmask   : modes to fill
- *   @param[in]  size    : number of time samples
  *   @param[in]  r,w,pr_star,ddotr : r, Omega, pr*, ddot{r} on the grid
  *   @param[in]  nqc_basis : per-mode changes, NQC_BASIS_*
  *   @param[in]  n2_22   : use n2 = pr*^2 n1 for the (2,2)
- *   @param[out] n1,n2,n3,n4,n5,n6 : basis functions, per mode
  */
-void eob_set_nqc_basis(int *kmask, int size, double *r, double *w, double *pr_star, double *ddotr,
-                       int nqc_basis, int n2_22,
-                       double **n1, double **n2, double **n3, double **n4, double **n5, double **n6)
+void eob_set_nqc_basis(NQCbasis *b, int *kmask, double *r, double *w, double *pr_star, double *ddotr,
+                       int nqc_basis, int n2_22)
 {
+  const int size = b->size;
+  double **n1 = b->n[0];
+  double **n2 = b->n[1];
+  double **n3 = b->n36 ? b->n[2] : NULL;
+  double **n4 = b->n[3];
+  double **n5 = b->n[4];
+  double **n6 = b->n36 ? b->n[5] : NULL;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
   double pr_star2, r2, w2;
@@ -6539,31 +6544,27 @@ void eob_set_nqc_basis(int *kmask, int size, double *r, double *w, double *pr_st
  * -------------------------------
  *   Multiply the NQC basis by the sigmoid 1/(1 + exp(-alpha (t - t0))),
  *   rescaled per mode so that it is 1 at t_match[k], where the NQC conditions are imposed.
- *   n3 and n6 only if not NULL.
+ *   n3 and n6 only if allocated.
  *
+ *   @param[in,out] b        : basis
  *   @param[in]     kmask    : modes to change
- *   @param[in]     size, t  : time grid
+ *   @param[in]     t        : time grid of the basis
  *   @param[in]     t0, alpha: centre and steepness of the sigmoid
  *   @param[in]     t_match  : per mode, the time where the sigmoid is rescaled to 1
- *   @param[in,out] n1,n2,n3,n4,n5,n6 : basis functions
  */
-void eob_nqc_basis_sigmoid(int *kmask, int size, double *t, double t0, double alpha, double *t_match,
-                           double **n1, double **n2, double **n3, double **n4, double **n5, double **n6)
+void eob_nqc_basis_sigmoid(NQCbasis *b, int *kmask, double *t, double t0, double alpha, double *t_match)
 {
   double fact[KMAX];
   for (int k=0; k<KMAX; k++) {
-    if(kmask[k]) fact[k] = 1. + exp(-alpha*(t_match[k] - t0));
+    if (kmask[k]) fact[k] = 1. + exp(-alpha*(t_match[k] - t0));
   }
-  for (int j=0; j<size; j++) {
+
+  for (int j=0; j<b->size; j++) {
     const double sigmoid = 1./(1. + exp(-alpha*(t[j] - t0)));
     for (int k=0; k<KMAX; k++) {
-      if(kmask[k]){
-        n1[k][j] = n1[k][j]*sigmoid*fact[k];
-        n2[k][j] = n2[k][j]*sigmoid*fact[k];
-        if (n3 != NULL) n3[k][j] = n3[k][j]*sigmoid*fact[k];
-        n4[k][j] = n4[k][j]*sigmoid*fact[k];
-        n5[k][j] = n5[k][j]*sigmoid*fact[k];
-        if (n6 != NULL) n6[k][j] = n6[k][j]*sigmoid*fact[k];
+      if (!kmask[k]) continue;
+      for (int i=0; i<6; i++) {
+        if (b->n[i][k] != NULL) b->n[i][k][j] *= sigmoid*fact[k];
       }
     }
   }
@@ -6572,38 +6573,30 @@ void eob_nqc_basis_sigmoid(int *kmask, int size, double *t, double t0, double al
 /**
  * Function: eob_nqc_basis_derivatives
  * -----------------------------------
- *   Time derivatives of the phase basis n4, n5 (and n6 if not NULL), with D0.
+ *   Time derivatives of the phase basis n4, n5 (and n6 if allocated), with D0.
  *   The second derivative is D2 of n if use_D2, D0 of the first derivative otherwise.
- *   Third derivatives (D0 of the second) only if d3_n4 is not NULL.
+ *   Third derivatives (D0 of the second) only if allocated (nder = 3).
  *
- *   @param[in]  kmask, size, dt : modes and uniform time grid
+ *   @param[in,out] b            : basis, derivatives written in dn, d2n, d3n
+ *   @param[in]  kmask, dt       : modes and uniform time step
  *   @param[in]  use_D2          : second derivative with D2
- *   @param[in]  n4,n5,n6        : phase basis
- *   @param[out] d_*, d2_*, d3_* : first, second and third derivatives
  */
-void eob_nqc_basis_derivatives(int *kmask, int size, double dt, int use_D2,
-                               double **n4, double **n5, double **n6,
-                               double **d_n4, double **d_n5, double **d_n6,
-                               double **d2_n4, double **d2_n5, double **d2_n6,
-                               double **d3_n4, double **d3_n5, double **d3_n6)
+void eob_nqc_basis_derivatives(NQCbasis *b, int *kmask, double dt, int use_D2)
 {
+  const int size = b->size;
   for (int k=0; k<KMAX; k++) {
-    if(!kmask[k]) continue;
-    D0(n4[k], dt, size, d_n4[k]);
-    D0(n5[k], dt, size, d_n5[k]);
-    if (n6 != NULL) D0(n6[k], dt, size, d_n6[k]);
-    if (use_D2) {
-      D2(n4[k], dt, size, d2_n4[k]);
-      D2(n5[k], dt, size, d2_n5[k]);
-    } else {
-      D0(d_n4[k], dt, size, d2_n4[k]);
-      D0(d_n5[k], dt, size, d2_n5[k]);
-      if (n6 != NULL) D0(d_n6[k], dt, size, d2_n6[k]);
-    }
-    if (d3_n4 != NULL) {
-      D0(d2_n4[k], dt, size, d3_n4[k]);
-      D0(d2_n5[k], dt, size, d3_n5[k]);
-      if (n6 != NULL) D0(d2_n6[k], dt, size, d3_n6[k]);
+    if (!kmask[k]) continue;
+
+    /* phase basis n4, n5, n6 (i = 3, 4, 5); n6 only if allocated */
+    for (int i=3; i<6; i++) {
+      if (b->n[i][k] == NULL) continue;
+
+      D0(b->n[i][k], dt, size, b->dn[i][k]);
+
+      if (use_D2) D2(b->n[i][k], dt, size, b->d2n[i][k]);
+      else        D0(b->dn[i][k], dt, size, b->d2n[i][k]);
+
+      if (b->nder >= 3) D0(b->d2n[i][k], dt, size, b->d3n[i][k]);
     }
   }
 }
@@ -6618,7 +6611,7 @@ void eob_nqc_basis_derivatives(int *kmask, int size, double dt, int use_D2,
  *   @param[in]  h   : multipolar waveform (modified by this function)
  *   @param[out] hnqc: NQC part of the waveform
 */
-void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
+int eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
 	    
@@ -6643,8 +6636,18 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
+  NQCbasis *nqcb = NQC->basis;
+  int status = NQCbasis_alloc(nqcb, NULL, size, 0, 2);
+  if (status != OK) return status;
+  double **n1    = nqcb->n[0];
+  double **n2    = nqcb->n[1];
+  double **n4    = nqcb->n[3];
+  double **n5    = nqcb->n[4];
+  double **d_n4  = nqcb->dn[3];
+  double **d_n5  = nqcb->dn[4];
+  double **d2_n4 = nqcb->d2n[3];
+  double **d2_n5 = nqcb->d2n[4];
+  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
 
   for (int k=0; k<KMAX; k++) {
@@ -6656,14 +6659,6 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     m22[k] = (double*) calloc (size,sizeof(double));
     p1tmp[k] = (double*) calloc (size,sizeof(double));
     p2tmp[k] = (double*) calloc (size,sizeof(double));
-    n1[k] = (double*) calloc (size,sizeof(double));
-    n2[k] = (double*) calloc (size,sizeof(double));
-    n4[k] = (double*) calloc (size,sizeof(double));
-    n5[k] = (double*) calloc (size,sizeof(double));
-    d_n4[k] = (double*) calloc (size,sizeof(double));
-    d_n5[k] = (double*) calloc (size,sizeof(double));
-    d2_n4[k] = (double*) calloc (size,sizeof(double));
-    d2_n5[k] = (double*) calloc (size,sizeof(double));
   }
 
   /** omega derivatives */
@@ -6721,7 +6716,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  eob_set_nqc_basis(h->kmask, size, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0, n1, n2, NULL, n4, n5, NULL);
+  eob_set_nqc_basis(nqcb, h->kmask, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0);
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -6785,10 +6780,10 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   double alpha = EOBPars->alpha_sigmoid_NQC;
   double t_match[KMAX];
   for (int k=0; k<KMAX; k++) if (h->kmask[k]) t_match[k] = t[jmax];
-  eob_nqc_basis_sigmoid(h->kmask, size, t, t0, alpha, t_match, n1, n2, NULL, n4, n5, NULL);
+  eob_nqc_basis_sigmoid(nqcb, h->kmask, t, t0, alpha, t_match);
 
   /** Derivatives for the phase */
-  eob_nqc_basis_derivatives(h->kmask, size, dt, 0, n4, n5, NULL, d_n4, d_n5, NULL, d2_n4, d2_n5, NULL, NULL, NULL, NULL);
+  eob_nqc_basis_derivatives(nqcb, h->kmask, dt, 0);
 
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
@@ -6950,16 +6945,10 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
     free(m22[k]);
     free(p1tmp[k]);
     free(p2tmp[k]);
-    free(n1[k]);
-    free(n2[k]);
-    free(n4[k]);
-    free(n5[k]);
-    free(d_n4[k]);
-    free(d_n5[k]);
-    free(d2_n4[k]);
-    free(d2_n5[k]);
   }
   
+  NQCbasis_free(nqcb);
+  return status;
 }
 
 /**
@@ -6972,7 +6961,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
  *   @param[in]  h   : multipolar waveform (modified by this function)
  *   @param[out] hnqc: NQC part of the waveform
 */
-void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
+int eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc)
 {  
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
 	    
@@ -6997,8 +6986,18 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
+  NQCbasis *nqcb = NQC->basis;
+  int status = NQCbasis_alloc(nqcb, NULL, size, 0, 2);
+  if (status != OK) return status;
+  double **n1    = nqcb->n[0];
+  double **n2    = nqcb->n[1];
+  double **n4    = nqcb->n[3];
+  double **n5    = nqcb->n[4];
+  double **d_n4  = nqcb->dn[3];
+  double **d_n5  = nqcb->dn[4];
+  double **d2_n4 = nqcb->d2n[3];
+  double **d2_n5 = nqcb->d2n[4];
+  double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
 
   for (int k=0; k<KMAX; k++) {
@@ -7010,14 +7009,6 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
     m22[k] = (double*) calloc (size,sizeof(double));
     p1tmp[k] = (double*) calloc (size,sizeof(double));
     p2tmp[k] = (double*) calloc (size,sizeof(double));
-    n1[k] = (double*) calloc (size,sizeof(double));
-    n2[k] = (double*) calloc (size,sizeof(double));
-    n4[k] = (double*) calloc (size,sizeof(double));
-    n5[k] = (double*) calloc (size,sizeof(double));
-    d_n4[k] = (double*) calloc (size,sizeof(double));
-    d_n5[k] = (double*) calloc (size,sizeof(double));
-    d2_n4[k] = (double*) calloc (size,sizeof(double));
-    d2_n5[k] = (double*) calloc (size,sizeof(double));
   }
 
   /** omega derivatives */
@@ -7075,7 +7066,7 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  eob_set_nqc_basis(h->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0, n1, n2, NULL, n4, n5, NULL);
+  eob_set_nqc_basis(nqcb, h->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0);
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -7087,7 +7078,7 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
 #endif    
   
   /** Derivatives for the phase */
-  eob_nqc_basis_derivatives(h->kmask_nqc, size, dt, 0, n4, n5, NULL, d_n4, d_n5, NULL, d2_n4, d2_n5, NULL, NULL, NULL, NULL);
+  eob_nqc_basis_derivatives(nqcb, h->kmask_nqc, dt, 0);
 
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
@@ -7290,16 +7281,10 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
     free(m22[k]);
     free(p1tmp[k]);
     free(p2tmp[k]);
-    free(n1[k]);
-    free(n2[k]);
-    free(n4[k]);
-    free(n5[k]);
-    free(d_n4[k]);
-    free(d_n5[k]);
-    free(d2_n4[k]);
-    free(d2_n5[k]);
   }
   
+  NQCbasis_free(nqcb);
+  return status;
 }
 
 /**
@@ -7317,7 +7302,7 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
  *   @param[in] dyn     : full dynamics
  *   @param[in] hlm     : full multipolar waveform (modified by this function)
 */
-void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
 {  
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
@@ -7352,8 +7337,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];
+  NQCbasis *nqcb = NQC->basis;
+  int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 0, 2);
+  if (status != OK) return status;
+  double **n1    = nqcb->n[0];
+  double **n2    = nqcb->n[1];
+  double **n4    = nqcb->n[3];
+  double **n5    = nqcb->n[4];
+  double **d_n4  = nqcb->dn[3];
+  double **d_n5  = nqcb->dn[4];
+  double **d2_n4 = nqcb->d2n[3];
+  double **d2_n5 = nqcb->d2n[4];
   double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
   
@@ -7367,14 +7361,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
       m22[k] = (double*) calloc (size,sizeof(double));
       p1tmp[k] = (double*) calloc (size,sizeof(double));
       p2tmp[k] = (double*) calloc (size,sizeof(double));
-      n1[k] = (double*) calloc (size,sizeof(double));
-      n2[k] = (double*) calloc (size,sizeof(double));
-      n4[k] = (double*) calloc (size,sizeof(double));
-      n5[k] = (double*) calloc (size,sizeof(double));
-      d_n4[k] = (double*) calloc (size,sizeof(double));
-      d_n5[k] = (double*) calloc (size,sizeof(double));
-      d2_n4[k] = (double*) calloc (size,sizeof(double));
-      d2_n5[k] = (double*) calloc (size,sizeof(double));
     }
   }
 
@@ -7471,7 +7457,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  eob_set_nqc_basis(hlm_mrg->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, NULL, n4, n5, NULL);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -7547,10 +7533,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   double alpha =EOBPars->alpha_sigmoid_NQC;
   double t_match[KMAX];
   for (int k=0; k<KMAX; k++) if (hlm_mrg->kmask_nqc[k]) t_match[k] = t[j_NQC[k]];
-  eob_nqc_basis_sigmoid(hlm_mrg->kmask_nqc, size, t, t0, alpha, t_match, n1, n2, NULL, n4, n5, NULL);
+  eob_nqc_basis_sigmoid(nqcb, hlm_mrg->kmask_nqc, t, t0, alpha, t_match);
 
   /** Derivatives for the phase */
-  eob_nqc_basis_derivatives(hlm_mrg->kmask_nqc, size, dt, 1, n4, n5, NULL, d_n4, d_n5, NULL, d2_n4, d2_n5, NULL, NULL, NULL, NULL);
+  eob_nqc_basis_derivatives(nqcb, hlm_mrg->kmask_nqc, dt, 1);
     
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
@@ -7692,30 +7678,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
-      free(n1[k]);
-      free(n2[k]);
-      free(n4[k]);
-      free(n5[k]);
-    }
-  }
-
   const int fullsize = hlm->size;
-  
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
-      n1[k] = (double*) calloc (fullsize,sizeof(double));
-      n2[k] = (double*) calloc (fullsize,sizeof(double));
-      n4[k] = (double*) calloc (fullsize,sizeof(double));
-      n5[k] = (double*) calloc (fullsize,sizeof(double));
-    }
-  }
-	
-  eob_set_nqc_basis(hlm->kmask_nqc, fullsize, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, NULL, n4, n5, NULL);
+  NQCbasis_free(nqcb);
+  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, fullsize, 0, 0);
+  if (status != OK) goto FREE_MEM;
+
+  eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
 
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
-  eob_nqc_basis_sigmoid(hlm->kmask_nqc, fullsize, hlm->time, t0, alpha, t_match, n1, n2, NULL, n4, n5, NULL);
+  eob_nqc_basis_sigmoid(nqcb, hlm->kmask_nqc, hlm->time, t0, alpha, t_match);
   
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask_nqc[k]){
@@ -7747,6 +7718,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     fclose(fp);  
   }
   
+ FREE_MEM:
   /** Free mem */
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask[k]){
@@ -7758,17 +7730,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
       free(m22[k]);
       free(p1tmp[k]);
       free(p2tmp[k]);
-      free(n1[k]);
-      free(n2[k]);
-      free(n4[k]);
-      free(n5[k]);
-      free(d_n4[k]);
-      free(d_n5[k]);
-      free(d2_n4[k]);
-      free(d2_n5[k]);
     }
   }
 
+  NQCbasis_free(nqcb);
+  return status;
 }
 
 /**
@@ -7786,7 +7752,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
  *   @param[in] dyn     : full dynamics
  *   @param[in] hlm     : full multipolar waveform (modified by this function)
 */
-void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
 {  
   double A_tmp, dA_tmp, d2A_tmp, omg_tmp, domg_tmp, d2omg_tmp;
@@ -7821,8 +7787,24 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   }
   
   double *omg[KMAX], *domg[KMAX], *d2omg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n3[KMAX],*n4[KMAX],*n5[KMAX],*n6[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d_n6[KMAX],*d2_n4[KMAX],*d2_n5[KMAX],*d2_n6[KMAX],*d3_n4[KMAX],*d3_n5[KMAX],*d3_n6[KMAX];
+  NQCbasis *nqcb = NQC->basis;
+  int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 1, 3);
+  if (status != OK) return status;
+  double **n1    = nqcb->n[0];
+  double **n2    = nqcb->n[1];
+  double **n3    = nqcb->n[2];
+  double **n4    = nqcb->n[3];
+  double **n5    = nqcb->n[4];
+  double **n6    = nqcb->n[5];
+  double **d_n4  = nqcb->dn[3];
+  double **d_n5  = nqcb->dn[4];
+  double **d_n6  = nqcb->dn[5];
+  double **d2_n4 = nqcb->d2n[3];
+  double **d2_n5 = nqcb->d2n[4];
+  double **d2_n6 = nqcb->d2n[5];
+  double **d3_n4 = nqcb->d3n[3];
+  double **d3_n5 = nqcb->d3n[4];
+  double **d3_n6 = nqcb->d3n[5];
   double *m11[KMAX], *m12[KMAX], *m13[KMAX], *m21[KMAX], *m22[KMAX], *m23[KMAX], *m31[KMAX], *m32[KMAX], *m33[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX], *p3tmp[KMAX]; /* RWZ amplitude and derivative */
   
@@ -7843,21 +7825,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
       p1tmp[k] = (double*) calloc (size,sizeof(double));
       p2tmp[k] = (double*) calloc (size,sizeof(double));
       p3tmp[k] = (double*) calloc (size,sizeof(double));
-      n1[k] = (double*) calloc (size,sizeof(double));
-      n2[k] = (double*) calloc (size,sizeof(double));
-      n3[k] = (double*) calloc (size,sizeof(double));
-      n4[k] = (double*) calloc (size,sizeof(double));
-      n5[k] = (double*) calloc (size,sizeof(double));
-      n6[k] = (double*) calloc (size,sizeof(double));
-      d_n4[k] = (double*) calloc (size,sizeof(double));
-      d_n5[k] = (double*) calloc (size,sizeof(double));
-      d_n6[k] = (double*) calloc (size,sizeof(double));
-      d2_n4[k] = (double*) calloc (size,sizeof(double));
-      d2_n5[k] = (double*) calloc (size,sizeof(double));
-      d2_n6[k] = (double*) calloc (size,sizeof(double));
-      d3_n4[k] = (double*) calloc (size,sizeof(double));
-      d3_n5[k] = (double*) calloc (size,sizeof(double));
-      d3_n6[k] = (double*) calloc (size,sizeof(double));
     }
   }
 
@@ -7943,7 +7910,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
    * NQC basis for (2,2) waveform : AMPLITUDE
    * n3 and n6 for the three-condition system
    */
-  eob_set_nqc_basis(hlm_mrg->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, n3, n4, n5, n6);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -8021,10 +7988,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   double alpha =EOBPars->alpha_sigmoid_NQC;
   double t_match[KMAX];
   for (int k=0; k<KMAX; k++) if (hlm_mrg->kmask_nqc[k]) t_match[k] = t[j_NQC[k]];
-  eob_nqc_basis_sigmoid(hlm_mrg->kmask_nqc, size, t, t0, alpha, t_match, n1, n2, n3, n4, n5, n6);
+  eob_nqc_basis_sigmoid(nqcb, hlm_mrg->kmask_nqc, t, t0, alpha, t_match);
 
   /** Derivatives for the phase */
-  eob_nqc_basis_derivatives(hlm_mrg->kmask_nqc, size, dt, 0, n4, n5, n6, d_n4, d_n5, d_n6, d2_n4, d2_n5, d2_n6, d3_n4, d3_n5, d3_n6);
+  eob_nqc_basis_derivatives(nqcb, hlm_mrg->kmask_nqc, dt, 0);
     
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
@@ -8189,34 +8156,15 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
-      free(n1[k]);
-      free(n2[k]);
-      free(n3[k]);
-      free(n4[k]);
-      free(n5[k]);
-      free(n6[k]);
-    }
-  }
-
   const int fullsize = hlm->size;
-  
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
-      n1[k] = (double*) calloc (fullsize,sizeof(double));
-      n2[k] = (double*) calloc (fullsize,sizeof(double));
-      n3[k] = (double*) calloc (fullsize,sizeof(double));
-      n4[k] = (double*) calloc (fullsize,sizeof(double));
-      n5[k] = (double*) calloc (fullsize,sizeof(double));
-      n6[k] = (double*) calloc (fullsize,sizeof(double));
-    }
-  }
-	
-  eob_set_nqc_basis(hlm->kmask_nqc, fullsize, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, n3, n4, n5, n6);
+  NQCbasis_free(nqcb);
+  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, fullsize, 1, 0);
+  if (status != OK) goto FREE_MEM;
+
+  eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
 
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
-  eob_nqc_basis_sigmoid(hlm->kmask_nqc, fullsize, hlm->time, t0, alpha, t_match, n1, n2, n3, n4, n5, n6);
+  eob_nqc_basis_sigmoid(nqcb, hlm->kmask_nqc, hlm->time, t0, alpha, t_match);
   
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask_nqc[k]){
@@ -8248,6 +8196,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
     fclose(fp);  
   }
   
+ FREE_MEM:
   /** Free mem */
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask[k]){
@@ -8266,24 +8215,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
       free(p1tmp[k]);
       free(p2tmp[k]);
       free(p3tmp[k]);
-      free(n1[k]);
-      free(n2[k]);
-      free(n3[k]);
-      free(n4[k]);
-      free(n5[k]);
-      free(n6[k]);
-      free(d_n4[k]);
-      free(d_n5[k]);
-      free(d_n6[k]);
-      free(d2_n4[k]);
-      free(d2_n5[k]);
-      free(d2_n6[k]);
-      free(d3_n4[k]);
-      free(d3_n5[k]);
-      free(d3_n6[k]);
     }
   }
 
+  NQCbasis_free(nqcb);
+  return status;
 }
 
 /**
@@ -8301,7 +8237,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
  *   @param[in] dyn     : full dynamics
  *   @param[in] hlm     : full multipolar waveform (modified by this function)
 */
-void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
 {
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
@@ -8336,8 +8272,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];
+  NQCbasis *nqcb = NQC->basis;
+  int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 0, 2);
+  if (status != OK) return status;
+  double **n1    = nqcb->n[0];
+  double **n2    = nqcb->n[1];
+  double **n4    = nqcb->n[3];
+  double **n5    = nqcb->n[4];
+  double **d_n4  = nqcb->dn[3];
+  double **d_n5  = nqcb->dn[4];
+  double **d2_n4 = nqcb->d2n[3];
+  double **d2_n5 = nqcb->d2n[4];
   double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
   
@@ -8351,14 +8296,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       m22[k] = (double*) calloc (size,sizeof(double));
       p1tmp[k] = (double*) calloc (size,sizeof(double));
       p2tmp[k] = (double*) calloc (size,sizeof(double));
-      n1[k] = (double*) calloc (size,sizeof(double));
-      n2[k] = (double*) calloc (size,sizeof(double));
-      n4[k] = (double*) calloc (size,sizeof(double));
-      n5[k] = (double*) calloc (size,sizeof(double));
-      d_n4[k] = (double*) calloc (size,sizeof(double));
-      d_n5[k] = (double*) calloc (size,sizeof(double));
-      d2_n4[k] = (double*) calloc (size,sizeof(double));
-      d2_n5[k] = (double*) calloc (size,sizeof(double));
     }
   }
 
@@ -8455,7 +8392,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  eob_set_nqc_basis(hlm_mrg->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, NULL, n4, n5, NULL);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -8467,7 +8404,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 #endif    
       
   /** Derivatives for the phase */
-  eob_nqc_basis_derivatives(hlm_mrg->kmask_nqc, size, dt, 1, n4, n5, NULL, d_n4, d_n5, NULL, d2_n4, d2_n5, NULL, NULL, NULL, NULL);
+  eob_nqc_basis_derivatives(nqcb, hlm_mrg->kmask_nqc, dt, 1);
     
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
@@ -8663,27 +8600,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
-      free(n1[k]);
-      free(n2[k]);
-      free(n4[k]);
-      free(n5[k]);
-    }
-  }
-
   const int fullsize = hlm->size;
-  
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
-      n1[k] = (double*) calloc (fullsize,sizeof(double));
-      n2[k] = (double*) calloc (fullsize,sizeof(double));
-      n4[k] = (double*) calloc (fullsize,sizeof(double));
-      n5[k] = (double*) calloc (fullsize,sizeof(double));
-    }
-  }
-	
-  eob_set_nqc_basis(hlm->kmask_nqc, fullsize, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0, n1, n2, NULL, n4, n5, NULL);
+  NQCbasis_free(nqcb);
+  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, fullsize, 0, 0);
+  if (status != OK) goto FREE_MEM;
+
+  eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0);
 
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask_nqc[k]){
@@ -8715,6 +8637,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     fclose(fp);  
   }
   
+ FREE_MEM:
   /** Free mem */
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask[k]){
@@ -8726,17 +8649,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
       free(m22[k]);
       free(p1tmp[k]);
       free(p2tmp[k]);
-      free(n1[k]);
-      free(n2[k]);
-      free(n4[k]);
-      free(n5[k]);
-      free(d_n4[k]);
-      free(d_n5[k]);
-      free(d2_n4[k]);
-      free(d2_n5[k]);
     }
   }
 
+  NQCbasis_free(nqcb);
+  return status;
 }
 
 /**
@@ -8754,7 +8671,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
  *   @param[in] dyn     : full dynamics
  *   @param[in] hlm     : full multipolar waveform (modified by this function)
 */
-void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
 {
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
@@ -8787,12 +8704,23 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   }
   
   double *omg[KMAX_22], *domg[KMAX_22];
-  double *n1[KMAX_22],*n2[KMAX_22],*n4[KMAX_22],*n5[KMAX_22],
-    *d_n4[KMAX_22],*d_n5[KMAX_22],*d2_n4[KMAX_22],*d2_n5[KMAX_22];
   double *m11[KMAX_22], *m12[KMAX_22], *m21[KMAX_22], *m22[KMAX_22];
   double *p1tmp[KMAX_22], *p2tmp[KMAX_22]; /* RWZ amplitude and derivative */
   
   const int k22 = 1; // (2,2) mode
+  int kmask_22[KMAX] = {0};
+  kmask_22[k22] = 1;
+  NQCbasis *nqcb = NQC->basis;
+  int status = NQCbasis_alloc(nqcb, kmask_22, size, 0, 2);
+  if (status != OK) return status;
+  double **n1    = nqcb->n[0];
+  double **n2    = nqcb->n[1];
+  double **n4    = nqcb->n[3];
+  double **n5    = nqcb->n[4];
+  double **d_n4  = nqcb->dn[3];
+  double **d_n5  = nqcb->dn[4];
+  double **d2_n4 = nqcb->d2n[3];
+  double **d2_n5 = nqcb->d2n[4];
   
   omg[k22]  = (double*) calloc (size,sizeof(double));
   domg[k22] = (double*) calloc (size,sizeof(double));
@@ -8802,14 +8730,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   m22[k22] = (double*) calloc (size,sizeof(double));
   p1tmp[k22] = (double*) calloc (size,sizeof(double));
   p2tmp[k22] = (double*) calloc (size,sizeof(double));
-  n1[k22] = (double*) calloc (size,sizeof(double));
-  n2[k22] = (double*) calloc (size,sizeof(double));
-  n4[k22] = (double*) calloc (size,sizeof(double));
-  n5[k22] = (double*) calloc (size,sizeof(double));
-  d_n4[k22] = (double*) calloc (size,sizeof(double));
-  d_n5[k22] = (double*) calloc (size,sizeof(double));
-  d2_n4[k22] = (double*) calloc (size,sizeof(double));
-  d2_n5[k22] = (double*) calloc (size,sizeof(double));
 
   /** omega derivatives */
   const double dt = t[1]-t[0];
@@ -8885,9 +8805,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  int kmask_22[KMAX] = {0};
-  kmask_22[k22] = 1;
-  eob_set_nqc_basis(kmask_22, size, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0, n1, n2, NULL, n4, n5, NULL);
+  eob_set_nqc_basis(nqcb, kmask_22, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0);
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -8899,7 +8817,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 #endif    
 
   /** Derivatives for the phase */
-  eob_nqc_basis_derivatives(kmask_22, size, dt, 0, n4, n5, NULL, d_n4, d_n5, NULL, d2_n4, d2_n5, NULL, NULL, NULL, NULL);
+  eob_nqc_basis_derivatives(nqcb, kmask_22, dt, 0);
   
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
@@ -9046,19 +8964,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  free(n1[k22]);
-  free(n2[k22]);
-  free(n4[k22]);
-  free(n5[k22]);
-
   const int fullsize = hlm->size;
-  
-  n1[k22] = (double*) calloc (fullsize,sizeof(double));
-  n2[k22] = (double*) calloc (fullsize,sizeof(double));
-  n4[k22] = (double*) calloc (fullsize,sizeof(double));
-  n5[k22] = (double*) calloc (fullsize,sizeof(double));
-	
-  eob_set_nqc_basis(kmask_22, fullsize, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0, n1, n2, NULL, n4, n5, NULL);
+  NQCbasis_free(nqcb);
+  status = NQCbasis_alloc(nqcb, kmask_22, fullsize, 0, 0);
+  if (status != OK) goto FREE_MEM;
+
+  eob_set_nqc_basis(nqcb, kmask_22, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0);
 
   for (int j=0; j<fullsize; j++) {
     hlm->ampli[k22][j] *= (1. + ai[k22][0]*n1[k22][j] + ai[k22][1]*n2[k22][j]);
@@ -9082,6 +8993,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     fclose(fp);  
   }
   
+ FREE_MEM:
   /** Free mem */
   free(omg[k22]);
   free(domg[k22]);
@@ -9091,14 +9003,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   free(m22[k22]);
   free(p1tmp[k22]);
   free(p2tmp[k22]);
-  free(n1[k22]);
-  free(n2[k22]);
-  free(n4[k22]);
-  free(n5[k22]);
-  free(d_n4[k22]);
-  free(d_n5[k22]);
-  free(d2_n4[k22]);
-  free(d2_n5[k22]);
+  NQCbasis_free(nqcb);
+  return status;
 }
 
 /** 
@@ -11719,7 +11625,7 @@ void compute_hpc_FD(WaveformFD_lm *hflm, double nu, double M, double distance, d
  *   @param[in,out]  hlm     : multipolar waveform
  *
  */
-void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
 {
   if (VERBOSE) PRSECTN("BHNS NQC");
@@ -11756,8 +11662,17 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   }
   
   double *omg[KMAX], *domg[KMAX];
-  double *n1[KMAX],*n2[KMAX],*n4[KMAX],*n5[KMAX],
-    *d_n4[KMAX],*d_n5[KMAX],*d2_n4[KMAX],*d2_n5[KMAX];
+  NQCbasis *nqcb = NQC->basis;
+  int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 0, 2);
+  if (status != OK) return status;
+  double **n1    = nqcb->n[0];
+  double **n2    = nqcb->n[1];
+  double **n4    = nqcb->n[3];
+  double **n5    = nqcb->n[4];
+  double **d_n4  = nqcb->dn[3];
+  double **d_n5  = nqcb->dn[4];
+  double **d2_n4 = nqcb->d2n[3];
+  double **d2_n5 = nqcb->d2n[4];
   double *m11[KMAX], *m12[KMAX], *m21[KMAX], *m22[KMAX];
   double *p1tmp[KMAX], *p2tmp[KMAX]; /* RWZ amplitude and derivative */
   
@@ -11771,14 +11686,6 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
       m22[k] = (double*) calloc (size,sizeof(double));
       p1tmp[k] = (double*) calloc (size,sizeof(double));
       p2tmp[k] = (double*) calloc (size,sizeof(double));
-      n1[k] = (double*) calloc (size,sizeof(double));
-      n2[k] = (double*) calloc (size,sizeof(double));
-      n4[k] = (double*) calloc (size,sizeof(double));
-      n5[k] = (double*) calloc (size,sizeof(double));
-      d_n4[k] = (double*) calloc (size,sizeof(double));
-      d_n5[k] = (double*) calloc (size,sizeof(double));
-      d2_n4[k] = (double*) calloc (size,sizeof(double));
-      d2_n5[k] = (double*) calloc (size,sizeof(double));
     }
   }
 
@@ -11872,7 +11779,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  eob_set_nqc_basis(hlm_mrg->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, (EOBPars->use_flm == USEFLM_HM_4PN22), n1, n2, NULL, n4, n5, NULL);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, (EOBPars->use_flm == USEFLM_HM_4PN22));
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -11884,7 +11791,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
 #endif    
       
   /** Derivatives for the phase */
-  eob_nqc_basis_derivatives(hlm_mrg->kmask_nqc, size, dt, 1, n4, n5, NULL, d_n4, d_n5, NULL, d2_n4, d2_n5, NULL, NULL, NULL, NULL);
+  eob_nqc_basis_derivatives(nqcb, hlm_mrg->kmask_nqc, dt, 1);
     
 #if (DEBUG)
   fp_dbg = fopen("nqc_dfunc.txt", "w");
@@ -12099,27 +12006,12 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
   Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
-      free(n1[k]);
-      free(n2[k]);
-      free(n4[k]);
-      free(n5[k]);
-    }
-  }
-
   const int fullsize = hlm->size;
-  
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask[k]){
-      n1[k] = (double*) calloc (fullsize,sizeof(double));
-      n2[k] = (double*) calloc (fullsize,sizeof(double));
-      n4[k] = (double*) calloc (fullsize,sizeof(double));
-      n5[k] = (double*) calloc (fullsize,sizeof(double));
-    }
-  }
-	
-  eob_set_nqc_basis(hlm->kmask_nqc, fullsize, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0, n1, n2, NULL, n4, n5, NULL);
+  NQCbasis_free(nqcb);
+  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, fullsize, 0, 0);
+  if (status != OK) goto FREE_MEM;
+
+  eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0);
 
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask_nqc[k]){
@@ -12151,6 +12043,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     fclose(fp);  
   }
   
+ FREE_MEM:
   /** Free mem */
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask[k]){
@@ -12162,17 +12055,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
       free(m22[k]);
       free(p1tmp[k]);
       free(p2tmp[k]);
-      free(n1[k]);
-      free(n2[k]);
-      free(n4[k]);
-      free(n5[k]);
-      free(d_n4[k]);
-      free(d_n5[k]);
-      free(d2_n4[k]);
-      free(d2_n5[k]);
     }
   }
 
+  NQCbasis_free(nqcb);
+  return status;
 }
 
 /**

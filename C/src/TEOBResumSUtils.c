@@ -3679,18 +3679,21 @@ void Dynamics_set_params (Dynamics *dyn)
  *   Alloc memory for NQCdata
  * 
  *   @param[in,out] nqc: pointer to NQCdata
+ *   @return OK, or ERROR_OUTOFMEM (nothing left allocated, *nqc = NULL)
 */
-void NQCdata_alloc (NQCdata **nqc)
+int NQCdata_alloc (NQCdata **nqc)
 {
   *nqc = (NQCdata *) calloc(1, sizeof(NQCdata));
-  if (nqc == NULL)
-    errorexit("Out of memory");
-  (*nqc)->flx = (NQCcoefs *) calloc(1, sizeof(NQCcoefs));
-  if ((*nqc)->flx == NULL)
-    errorexit("Out of memory");
-  (*nqc)->hlm = (NQCcoefs *) calloc(1, sizeof(NQCcoefs)); 
-  if ((*nqc)->hlm == NULL)
-    errorexit("Out of memory");
+  if (*nqc == NULL) return ERROR_OUTOFMEM;
+  (*nqc)->flx   = (NQCcoefs *) calloc(1, sizeof(NQCcoefs));
+  (*nqc)->hlm   = (NQCcoefs *) calloc(1, sizeof(NQCcoefs));
+  (*nqc)->basis = (NQCbasis *) calloc(1, sizeof(NQCbasis));
+  if ((*nqc)->flx == NULL || (*nqc)->hlm == NULL || (*nqc)->basis == NULL) {
+    NQCdata_free (*nqc);
+    *nqc = NULL;
+    return ERROR_OUTOFMEM;
+  }
+  return OK;
 }
 
 /**
@@ -3705,7 +3708,85 @@ void NQCdata_free (NQCdata *nqc)
   if (!nqc) return;
   if (nqc->flx) free (nqc->flx);
   if (nqc->hlm) free (nqc->hlm);
+  if (nqc->basis) {
+    NQCbasis_free (nqc->basis);
+    free (nqc->basis);
+  }
   if (nqc)      free (nqc);
+}
+
+/**
+ * Function: NQCbasis_alloc
+ * ------------------------
+ *   Allocate the NQC basis on a time grid of size samples, for the modes in kmask (all if NULL):
+ *   n1, n2, n4, n5, plus n3, n6 if n36; and for the phase basis the first and second
+ *   time derivatives if nder >= 2, the third if nder >= 3.
+ *
+ *   @param[in,out] b     : basis, must be empty (NQCbasis_free)
+ *   @param[in]     kmask : modes
+ *   @param[in]     size  : time samples
+ *   @param[in]     n36   : also n3, n6
+ *   @param[in]     nder  : derivatives, 0, 2 or 3
+ *   @return OK, or ERROR_OUTOFMEM (basis left empty)
+*/
+int NQCbasis_alloc (NQCbasis *b, int *kmask, int size, int n36, int nder)
+{
+  b->size = size;
+  b->n36  = n36;
+  b->nder = nder;
+
+  for (int k=0; k<KMAX; k++) {
+    if (kmask != NULL && !kmask[k]) continue;
+
+    for (int i=0; i<6; i++) {
+
+      /* n3 and n6 (i = 2, 5) only for the three-condition NQC */
+      if ((i == 2 || i == 5) && !n36) continue;
+
+      b->n[i][k] = (double*) calloc (size, sizeof(double));
+      if (b->n[i][k] == NULL) goto FAIL;
+
+      /* time derivatives only for the phase basis n4, n5, n6 (i = 3, 4, 5) */
+      if (i < 3) continue;
+
+      if (nder >= 2) {
+        b->dn[i][k]  = (double*) calloc (size, sizeof(double));
+        b->d2n[i][k] = (double*) calloc (size, sizeof(double));
+        if (b->dn[i][k] == NULL || b->d2n[i][k] == NULL) goto FAIL;
+      }
+
+      if (nder >= 3) {
+        b->d3n[i][k] = (double*) calloc (size, sizeof(double));
+        if (b->d3n[i][k] == NULL) goto FAIL;
+      }
+    }
+  }
+
+  return OK;
+
+ FAIL:
+  NQCbasis_free (b);
+  return ERROR_OUTOFMEM;
+}
+
+/**
+ * Function: NQCbasis_free
+ * -----------------------
+ *   Free the NQC basis and leave it empty
+ *
+ *   @param[in,out] b : basis
+*/
+void NQCbasis_free (NQCbasis *b)
+{
+  for (int k=0; k<KMAX; k++) {
+    for (int i=0; i<6; i++) {
+      free (b->n[i][k]);   b->n[i][k]   = NULL;
+      free (b->dn[i][k]);  b->dn[i][k]  = NULL;
+      free (b->d2n[i][k]); b->d2n[i][k] = NULL;
+      free (b->d3n[i][k]); b->d3n[i][k] = NULL;
+    }
+  }
+  b->size = 0;
 }
   
 

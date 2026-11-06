@@ -403,7 +403,11 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   }
 
   /* NQC data */  
-  NQCdata_alloc (&NQC); 
+  status = NQCdata_alloc (&NQC);
+  if (status) {
+    if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
+    goto EXIT_POINT;
+  }
   eob_nqc_setcoefs(NQC);
   
 
@@ -1253,8 +1257,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         /* eob_wav_hlmNQC_find_a1a2a3_mrg_22(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm); */
   
         PROF_START(PROF_NQC);
-        eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
+        status = eob_wav_hlmNQC_find_a1a2a3_mrg(dyn_mrg, hlm_mrg, hlm_nqc, dyn, hlm);
         PROF_STOP(PROF_NQC);
+        if (status) {
+          if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
+          Waveform_lm_free (hlm_nqc);
+          Waveform_lm_free (hlm_mrg);
+          Dynamics_free (dyn_mrg);
+          goto EXIT_POINT;
+        }
         
 
         strcat(hlm_mrg->name,"_nqc");
@@ -1275,8 +1286,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         /* Compute NQC and add them to full waveform */
         Waveform_lm_alloc (&hlm_nqc, size, "hlm_nqc", EOBPars->use_mode_lm,EOBPars->use_mode_lm_size); 
         PROF_START(PROF_NQC);
-        eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
+        status = eob_wav_hlmNQC_find_a1a2a3(dyn, hlm, hlm_nqc);
         PROF_STOP(PROF_NQC);
+        if (status) {
+          if (DEBUG) printf("ERROR(TEOBResumS): %s\n",eob_error_msg[status]);
+          Waveform_lm_free (hlm_nqc);
+          goto EXIT_POINT;
+        }
       }
       
 #if (DEBUG) 
