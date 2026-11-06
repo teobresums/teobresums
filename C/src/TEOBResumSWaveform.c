@@ -8568,14 +8568,9 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
     if(hlm->kmask[k]){
-      int j  = size-1;
-      idx[k] = size-1;
-      for (j = size-1; j>0; j--) {  
-	      if ( (t[j] < tmrg[k]*Mbh) || (fabs(t[j] - tmrg[k]*Mbh)<1.e-8) ) {
-	        break;
-	      }
-      }
-      idx[k]    = j;
+      /* last sample before tmrg, or within 1e-8 of it */
+      const double x = tmrg[k]*Mbh + 1.e-8;
+      idx[k]    = (x > t[size-1]) ? size-1 : find_point_bisection(x, size, t, 1);
       tmatch[k] = (t[idx[k]])*ooMbh;	    
     }
   }
@@ -8630,8 +8625,9 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
       
       Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
       
-      /* Compute and attach ringdown */
-      for (int j = index_rng-1; j < size ; j++ ) {
+      /* Compute and attach ringdown from index_rng, where the phase is matched;
+         starting one sample earlier overwrote an inspiral sample and left a kink */
+      for (int j = index_rng; j < size ; j++ ) {
         tm  = t_lm[k][j] - tmatch[k];
         tm /= fact;
 
@@ -10856,14 +10852,9 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   int idx[KMAX];
   for (int k = 0; k < KMAX; k++) {
     if(hlm->kmask[k]){
-      int j  = size-1;
-      idx[k] = size-1;
-      for (j = size-1; j>0; j--) {  
-	      if ( (t[j] < tmrg[k]*Mbh) || (fabs(t[j] - tmrg[k]*Mbh)<1.e-8) ) {
-	        break;
-	      }
-      }
-      idx[k]    = j;
+      /* last sample before tmrg, or within 1e-8 of it */
+      const double x = tmrg[k]*Mbh + 1.e-8;
+      idx[k]    = (x > t[size-1]) ? size-1 : find_point_bisection(x, size, t, 1);
       tmatch[k] = (t[idx[k]])*ooMbh;	    
     }
   }
@@ -10951,8 +10942,9 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
       }
       Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
      
-      /* Compute and attach ringdown */
-      for (int j = index_rng-1; j < size ; j++ ) {
+      /* Compute and attach ringdown from index_rng, where the phase is matched;
+         starting one sample earlier overwrote an inspiral sample and left a kink */
+      for (int j = index_rng; j < size ; j++ ) {
 	      tm = t_lm[k][j] - tmatch[k];
         tm /= fact;
 	      if(binary == BINARY_BHNS_TD){

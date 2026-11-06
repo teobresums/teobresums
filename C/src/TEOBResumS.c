@@ -1406,7 +1406,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Find the time shift to have merger at 0*/
     if(EOBPars->time_shift_TD)
-      EOBPars->tc = time_shift_mrg_to_0(hlm);
+      EOBPars->tc = time_shift_mrg_to_0(hlm, dyn->tOmg_pk);
 
     if (EOBPars->interp_uniform_grid) {
       /* Interp to uniform grid the multipoles before hpc computation */

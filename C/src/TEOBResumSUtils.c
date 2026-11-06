@@ -3811,53 +3811,49 @@ void lal_tetrad_conventions(Waveform *hpc)
 /**
  * Function: time_shift_mrg_to_0
  * -----------------------------
- *   Find the time shift to move the merger to t=0
- *   Define "merger" as the last peak of
- *   Q = sqrt(A); A = sum_{ell, emm} |A_{ell,emm}|^2
- * 
- *   @param[in,out] hlm: pointer to coprecessing hlm  
+ *   Time of the peak of A = sum_{ell,emm} |h_{ell,emm}|^2, to move the merger to t=0.
+ *   Highest sample within [tOmg_pk - 20, tOmg_pk + 10], which
+ *   ringdown wiggles and the end of the dynamics cannot reach, then refined with find_max
+ *   on that sample and its two neighbours.
+ *
+ *   @param[in] hlm     : coprecessing hlm
+ *   @param[in] tOmg_pk : peak of the orbital frequency (dyn->tOmg_pk)
+ *
+ *   @return time of the peak of A
 */
-double time_shift_mrg_to_0(Waveform_lm *hlm)
+double time_shift_mrg_to_0(Waveform_lm *hlm, double tOmg_pk)
 {
-  int i, imrg;
-  double Q, Qmrg;
-  Qmrg  = 0;
-  imrg  = 0;
+  double *t = hlm->time;
 
-#if(0)
-  /* Scan the entire waveform */
-  for (i=0; i<hlm->size; i++){
-    Q = 0.;
-    for (int k=0; k<KMAX; k++){
-      if (hlm->kmask[k]) 
-        Q += hlm->ampli[k][i]*hlm->ampli[k][i];
+  /* highest sample of A in the window */
+  int imrg = -1;
+  double Amrg = -1.;
+  for (int i=1; i<hlm->size-1; i++) {
+    if (t[i] < tOmg_pk - 20. || t[i] > tOmg_pk + 10.) continue;
 
-    if (Q > Qmrg){
-      Qmrg = Q;
+    double A = 0.;
+    for (int k=0; k<KMAX; k++)
+      if (hlm->kmask[k]) A += hlm->ampli[k][i]*hlm->ampli[k][i];
+
+    if (A > Amrg) {
+      Amrg = A;
       imrg = i;
     }
   }
-#endif
+  if (imrg < 0) return tOmg_pk;
 
-  /* Start looking for the last peak from the end */
-  Qmrg  = 0.;
-  imrg  = hlm->size-1;
-  for (i=hlm->size-1; i>0; i--){
-    Q = 0.;
-    for (int k=0; k<KMAX; k++){
-      if (hlm->kmask[k]) 
-        Q += hlm->ampli[k][i]*hlm->ampli[k][i];
-    }
-    if (Q < Qmrg){
-      imrg = i;
-      Qmrg = Q;
-      break;
-    } else {
-      Qmrg = Q;
-    }
+  /* A at imrg-1, imrg, imrg+1 */
+  double f[3];
+  for (int d=0; d<3; d++) {
+    f[d] = 0.;
+    for (int k=0; k<KMAX; k++)
+      if (hlm->kmask[k]) f[d] += hlm->ampli[k][imrg-1+d]*hlm->ampli[k][imrg-1+d];
   }
-  return hlm->time[imrg];
 
+  /* max on interval edge, return */
+  if (f[1] < f[0] || f[1] < f[2]) return t[imrg];
+
+  return find_max(3, t[imrg+1]-t[imrg], t[imrg], f, NULL);
 }
 
 /**
