@@ -1471,6 +1471,8 @@ int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j
                          double **omg, double **domg, double **d2omg,
                          double *omg_nr, double *domg_nr, double *d2omg_nr,
                          double ai[][3], double bi[][3]);
+void eob_apply_nqc(Waveform_lm *h, int *kmask, double ai[][3], double bi[][3], Waveform_lm *hnqc);
+void eob_output_nqc_coefs(int *kmask, double ai[][3], double bi[][3]);
 int eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 extern int (*eob_wav_hlmNQC_find_a1a2a3_mrg)(); /* defined in TEOBResumSPars.c */
 int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,

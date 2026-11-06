@@ -6859,6 +6859,88 @@ int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j
 }
 
 /**
+ * Function: eob_apply_nqc
+ * -----------------------
+ *   Multiplies the modes in kmask of h by the NQC correction 1 + a1 n1 + a2 n2 (+ a3 n3)
+ *   in amplitude and exp(-i (b1 n4 + b2 n5 (+ b3 n6))) in phase. The basis is the one
+ *   in NQC->basis, which must be on the grid of h. If hnqc is not NULL the correction
+ *   is also stored there.
+ *
+ *   @param[in,out] h      : waveform
+ *   @param[in]     kmask  : modes to correct
+ *   @param[in]     ai, bi : NQC coefficients
+ *   @param[out]    hnqc   : NQC correction, or NULL
+ */
+void eob_apply_nqc(Waveform_lm *h, int *kmask, double ai[][3], double bi[][3], Waveform_lm *hnqc)
+{
+  NQCbasis *b = NQC->basis;
+  double **n1 = b->n[0];
+  double **n2 = b->n[1];
+  double **n3 = b->n[2];
+  double **n4 = b->n[3];
+  double **n5 = b->n[4];
+  double **n6 = b->n[5];
+
+  for (int k=0; k<KMAX; k++) {
+    if (!kmask[k]) continue;
+
+    for (int j=0; j<h->size; j++) {
+
+      double A, phi;
+      if (b->n36) {
+        A   = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j] + ai[k][2]*n3[k][j];
+        phi =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j] + bi[k][2]*n6[k][j];
+      } else {
+        A   = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
+        phi =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
+      }
+
+      if (hnqc != NULL) {
+        hnqc->ampli[k][j] = A;
+        hnqc->phase[k][j] = phi;
+      }
+      h->ampli[k][j] *= A;
+      h->phase[k][j] -= phi;
+    }
+  }
+}
+
+/**
+ * Function: eob_output_nqc_coefs
+ * ------------------------------
+ *   Writes the NQC coefficients of the modes in kmask to output_dir/nqc_coefs.txt,
+ *   if output_nqc_coefs is set. Three per side when the basis has n3 and n6.
+ *
+ *   @param[in] kmask  : modes to write
+ *   @param[in] ai, bi : NQC coefficients
+ */
+void eob_output_nqc_coefs(int *kmask, double ai[][3], double bi[][3])
+{
+  if (!EOBPars->output_nqc_coefs) return;
+
+  char fname[STRLEN];
+  strcpy(fname, EOBPars->output_dir);
+  strcat(fname, "/nqc_coefs.txt");
+  FILE* fp = fopen(fname, "w");
+
+  fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
+  fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
+          EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
+          EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
+
+  for (int k=0; k<KMAX; k++) {
+    if (!kmask[k]) continue;
+    if (NQC->basis->n36)
+      fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k],
+              ai[k][0], ai[k][1], ai[k][2], bi[k][0], bi[k][1], bi[k][2]);
+    else
+      fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k],
+              ai[k][0], ai[k][1], bi[k][0], bi[k][1]);
+  }
+  fclose(fp);
+}
+
+/**
  * Function: eob_wav_hlmNQC_find_a1a2a3
  * ------------------------------------
  *   Computes the factors and the coefficients that build the
@@ -6894,10 +6976,6 @@ int eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *h
   NQCbasis *nqcb = NQC->basis;
   int status = NQCbasis_alloc(nqcb, NULL, size, 0, 2);
   if (status != OK) return status;
-  double **n1    = nqcb->n[0];
-  double **n2    = nqcb->n[1];
-  double **n4    = nqcb->n[3];
-  double **n5    = nqcb->n[4];
 
   for (int k=0; k<KMAX; k++) {
     omg[k]  = (double*) calloc (size,sizeof(double));
@@ -6925,7 +7003,7 @@ int eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *h
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], nqcb->n[0][1][j], nqcb->n[1][1][j], nqcb->n[3][1][j], nqcb->n[4][1][j]);
   }
   fclose(fp_dbg);
 #endif    
@@ -7004,46 +7082,10 @@ int eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *h
                                 max_omg, max_domg, NULL, ai, bi);
   if (status != OK) goto FREE_MEM;
 
-  /** Set amplitude and phase */
-  for (int k=0; k<KMAX; k++) {
-    if(h->kmask_nqc[k]) {  
-      for (int j=0; j<size; j++) {
-	hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
-	hnqc->phase[k][j] =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
-      }
-    }
-  }
-  
-  /** Multiply waveform to NQC */
-  for (int k=0; k<KMAX; k++) {
-    if(h->kmask_nqc[k]){    
-      for (int j=0; j<size; j++) {
-	h->ampli[k][j] *= hnqc->ampli[k][j];
-	h->phase[k][j] -= hnqc->phase[k][j];
-      }
-    }
-  }
-  
-  if (EOBPars->output_nqc_coefs) {
-    /** Output the NQC coefficients */
-    FILE* fp;
-    char fname[STRLEN];
-    strcpy(fname, EOBPars->output_dir);
-    strcat(fname, "/nqc_coefs.txt");
-    fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
-	    EOBPars->LambdaAl2, EOBPars->LambdaAl3,EOBPars->LambdaAl4,
-	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
-    for (int k=0; k<KMAX; k++) {
-      if(h->kmask_nqc[k]){ 
-        fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-	      ai[k][0], ai[k][1], 
-	      bi[k][0], bi[k][1]);
-      }
-    }  
-    fclose(fp);  
-  }
+  /** Apply the NQC to the waveform */
+  eob_apply_nqc(h, h->kmask_nqc, ai, bi, hnqc);
+
+  eob_output_nqc_coefs(h->kmask_nqc, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -7092,10 +7134,6 @@ int eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   NQCbasis *nqcb = NQC->basis;
   int status = NQCbasis_alloc(nqcb, NULL, size, 0, 2);
   if (status != OK) return status;
-  double **n1    = nqcb->n[0];
-  double **n2    = nqcb->n[1];
-  double **n4    = nqcb->n[3];
-  double **n5    = nqcb->n[4];
 
   for (int k=0; k<KMAX; k++) {
     omg[k]  = (double*) calloc (size,sizeof(double));
@@ -7123,7 +7161,7 @@ int eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], nqcb->n[0][1][j], nqcb->n[1][1][j], nqcb->n[3][1][j], nqcb->n[4][1][j]);
   }
   fclose(fp_dbg);
 #endif    
@@ -7190,46 +7228,10 @@ int eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
                                 max_omg, max_domg, NULL, ai, bi);
   if (status != OK) goto FREE_MEM;
 
-  /** Set amplitude and phase */
-  for (int k=0; k<KMAX; k++) {
-    if(h->kmask_nqc[k]) {  
-      for (int j=0; j<size; j++) {
-	hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
-	hnqc->phase[k][j] =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
-      }
-    }
-  }
-  
-  /** Multiply waveform to NQC */
-  for (int k=0; k<KMAX; k++) {
-    if(h->kmask_nqc[k]){    
-      for (int j=0; j<size; j++) {
-	h->ampli[k][j] *= hnqc->ampli[k][j];
-	h->phase[k][j] -= hnqc->phase[k][j];
-      }
-    }
-  }
-  
-  if (EOBPars->output_nqc_coefs) {
-    /** Output the NQC coefficients */
-    FILE* fp;
-    char fname[STRLEN];
-    strcpy(fname, EOBPars->output_dir);
-    strcat(fname, "/nqc_coefs.txt");
-    fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
-	    EOBPars->LambdaAl2, EOBPars->LambdaAl3,EOBPars->LambdaAl4,
-	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
-    for (int k=0; k<KMAX; k++) {
-      if(h->kmask_nqc[k]){
-        fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-          ai[k][0], ai[k][1], 
-          bi[k][0], bi[k][1]);
-      }
-    }  
-    fclose(fp);  
-  }
+  /** Apply the NQC to the waveform */
+  eob_apply_nqc(h, h->kmask_nqc, ai, bi, hnqc);
+
+  eob_output_nqc_coefs(h->kmask_nqc, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -7284,10 +7286,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   NQCbasis *nqcb = NQC->basis;
   int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 0, 2);
   if (status != OK) return status;
-  double **n1    = nqcb->n[0];
-  double **n2    = nqcb->n[1];
-  double **n4    = nqcb->n[3];
-  double **n5    = nqcb->n[4];
   
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask[k]){
@@ -7322,7 +7320,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], nqcb->n[0][1][j], nqcb->n[1][1][j], nqcb->n[3][1][j], nqcb->n[4][1][j]);
   }
   fclose(fp_dbg);
 #endif    
@@ -7403,36 +7401,17 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
                                 max_omg, max_domg, NULL, ai, bi);
   if (status != OK) goto FREE_MEM;
 
-  /** Set amplitude and phase */
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask_nqc[k]){
-      for (int j=0; j<size; j++) {
-        hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
-        hnqc->phase[k][j] = bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
-      }
-    }
-  }
-  
-  /** Multiply merger waveform to NQC */
-  for (int k=0; k<KMAX; k++) {
-    for (int j=0; j<size; j++) {
-      if(hlm_mrg->kmask_nqc[k]){
-        hlm_mrg->ampli[k][j] *= hnqc->ampli[k][j];
-        hlm_mrg->phase[k][j] -= hnqc->phase[k][j];
-      }
-    }
-  }
+  /** Apply the NQC to the merger waveform */
+  eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
-  /** Multiply full waveform to NQC */
+  /** Apply the NQC to the full waveform, with the basis on its grid */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
   pr_star = dyn->data[EOB_PRSTAR];
-  Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  const int fullsize = hlm->size;
   NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, fullsize, 0, 0);
+  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, hlm->size, 0, 0);
   if (status != OK) goto FREE_MEM;
 
   eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
@@ -7440,35 +7419,9 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   eob_nqc_basis_sigmoid(nqcb, hlm->kmask_nqc, hlm->time, t0, alpha, t_match);
   
-  for (int k=0; k<KMAX; k++) {
-    if(hlm->kmask_nqc[k]){
-      for (int j=0; j<fullsize; j++) {
-	      hlm->ampli[k][j] *= (1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j]);
-        hlm->phase[k][j] -= (bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j]);
-      }
-    }
-  }
+  eob_apply_nqc(hlm, hlm->kmask_nqc, ai, bi, NULL);
 
-  if (EOBPars->output_nqc_coefs) {
-    /** Output the NQC coefficients */
-    FILE* fp;
-    char fname[STRLEN];
-    strcpy(fname, EOBPars->output_dir);
-    strcat(fname, "/nqc_coefs.txt");
-    fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
-	    EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
-	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
-    for (int k=0; k<KMAX; k++) {
-      if(hlm->kmask_nqc[k]){
-        fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-		ai[k][0], ai[k][1], 
-		bi[k][0], bi[k][1]);
-      }
-    }  
-    fclose(fp);  
-  }
+  eob_output_nqc_coefs(hlm->kmask_nqc, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -7525,12 +7478,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   NQCbasis *nqcb = NQC->basis;
   int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 1, 3);
   if (status != OK) return status;
-  double **n1    = nqcb->n[0];
-  double **n2    = nqcb->n[1];
-  double **n3    = nqcb->n[2];
-  double **n4    = nqcb->n[3];
-  double **n5    = nqcb->n[4];
-  double **n6    = nqcb->n[5];
   
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask[k]){
@@ -7563,7 +7510,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n3[1][j], n4[1][j], n5[1][j], n6[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], nqcb->n[0][1][j], nqcb->n[1][1][j], nqcb->n[2][1][j], nqcb->n[3][1][j], nqcb->n[4][1][j], nqcb->n[5][1][j]);
   }
   fclose(fp_dbg);
 #endif    
@@ -7646,36 +7593,17 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
                                 max_omg, max_domg, max_d2omg, ai, bi);
   if (status != OK) goto FREE_MEM;
 
-  /** Set amplitude and phase */
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask_nqc[k]){
-      for (int j=0; j<size; j++) {
-        hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j] + ai[k][2]*n3[k][j];
-        hnqc->phase[k][j] = bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j] + bi[k][2]*n6[k][j];
-      }
-    }
-  }
-  
-  /** Multiply merger waveform to NQC */
-  for (int k=0; k<KMAX; k++) {
-    for (int j=0; j<size; j++) {
-      if(hlm_mrg->kmask_nqc[k]){
-        hlm_mrg->ampli[k][j] *= hnqc->ampli[k][j];
-        hlm_mrg->phase[k][j] -= hnqc->phase[k][j];
-      }
-    }
-  }
+  /** Apply the NQC to the merger waveform */
+  eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
-  /** Multiply full waveform to NQC */
+  /** Apply the NQC to the full waveform, with the basis on its grid */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
   pr_star = dyn->data[EOB_PRSTAR];
-  Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  const int fullsize = hlm->size;
   NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, fullsize, 1, 0);
+  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, hlm->size, 1, 0);
   if (status != OK) goto FREE_MEM;
 
   eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
@@ -7683,35 +7611,9 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   eob_nqc_basis_sigmoid(nqcb, hlm->kmask_nqc, hlm->time, t0, alpha, t_match);
   
-  for (int k=0; k<KMAX; k++) {
-    if(hlm->kmask_nqc[k]){
-      for (int j=0; j<fullsize; j++) {
-	      hlm->ampli[k][j] *= (1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j] + ai[k][2]*n3[k][j]);
-        hlm->phase[k][j] -= (bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j] + bi[k][2]*n6[k][j]);
-      }
-    }
-  }
+  eob_apply_nqc(hlm, hlm->kmask_nqc, ai, bi, NULL);
 
-  if (EOBPars->output_nqc_coefs) {
-    /** Output the NQC coefficients */
-    FILE* fp;
-    char fname[STRLEN];
-    strcpy(fname, EOBPars->output_dir);
-    strcat(fname, "/nqc_coefs.txt");
-    fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
-	    EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
-	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
-    for (int k=0; k<KMAX; k++) {
-      if(hlm->kmask_nqc[k]){
-        fprintf(fp, "%d %d %d %e %e %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-		ai[k][0], ai[k][1], ai[k][2],
-		bi[k][0], bi[k][1], bi[k][2]);
-      }
-    }  
-    fclose(fp);  
-  }
+  eob_output_nqc_coefs(hlm->kmask_nqc, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -7769,10 +7671,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   NQCbasis *nqcb = NQC->basis;
   int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 0, 2);
   if (status != OK) return status;
-  double **n1    = nqcb->n[0];
-  double **n2    = nqcb->n[1];
-  double **n4    = nqcb->n[3];
-  double **n5    = nqcb->n[4];
   
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask[k]){
@@ -7807,7 +7705,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], nqcb->n[0][1][j], nqcb->n[1][1][j], nqcb->n[3][1][j], nqcb->n[4][1][j]);
   }
   fclose(fp_dbg);
 #endif    
@@ -7877,69 +7775,24 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
                                 max_omg, max_domg, NULL, ai, bi);
   if (status != OK) goto FREE_MEM;
 
-  /** Set amplitude and phase */
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask_nqc[k]){
-      for (int j=0; j<size; j++) {
-        hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
-        hnqc->phase[k][j] =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
-      }
-    }
-  }
-  
-  /** Multiply merger waveform to NQC */
-  for (int k=0; k<KMAX; k++) {
-    for (int j=0; j<size; j++) {
-      if(hlm_mrg->kmask_nqc[k]){
-        hlm_mrg->ampli[k][j] *= hnqc->ampli[k][j];
-        hlm_mrg->phase[k][j] -= hnqc->phase[k][j];
-      }
-    }
-  }
+  /** Apply the NQC to the merger waveform */
+  eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
-  /** Multiply full waveform to NQC */
+  /** Apply the NQC to the full waveform, with the basis on its grid */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
   pr_star = dyn->data[EOB_PRSTAR];
-  Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  const int fullsize = hlm->size;
   NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, fullsize, 0, 0);
+  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, hlm->size, 0, 0);
   if (status != OK) goto FREE_MEM;
 
   eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0);
 
-  for (int k=0; k<KMAX; k++) {
-    if(hlm->kmask_nqc[k]){
-      for (int j=0; j<fullsize; j++) {
-        hlm->ampli[k][j] *= (1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j]);
-        hlm->phase[k][j] -= (bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j]);
-      }
-    }
-  }
+  eob_apply_nqc(hlm, hlm->kmask_nqc, ai, bi, NULL);
 
-  if (EOBPars->output_nqc_coefs) {
-    /** Output the NQC coefficients */
-    FILE* fp;
-    char fname[STRLEN];
-    strcpy(fname, EOBPars->output_dir);
-    strcat(fname, "/nqc_coefs.txt");
-    fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
-	    EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
-	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
-    for (int k=0; k<KMAX; k++) {
-      if(hlm->kmask_nqc[k]){
-        fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-        ai[k][0], ai[k][1], 
-        bi[k][0], bi[k][1]);
-      }
-    }  
-    fclose(fp);  
-  }
+  eob_output_nqc_coefs(hlm->kmask_nqc, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -8008,10 +7861,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   NQCbasis *nqcb = NQC->basis;
   int status = NQCbasis_alloc(nqcb, kmask_22, size, 0, 2);
   if (status != OK) return status;
-  double **n1    = nqcb->n[0];
-  double **n2    = nqcb->n[1];
-  double **n4    = nqcb->n[3];
-  double **n5    = nqcb->n[4];
   
   omg[k22]  = (double*) calloc (size,sizeof(double));
   domg[k22] = (double*) calloc (size,sizeof(double));
@@ -8096,7 +7945,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[k22][j], n2[k22][j], n4[k22][j], n5[k22][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], nqcb->n[0][k22][j], nqcb->n[1][k22][j], nqcb->n[3][k22][j], nqcb->n[4][k22][j]);
   }
   fclose(fp_dbg);
 #endif    
@@ -8152,53 +8001,24 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
                                 max_omg, max_domg, NULL, ai, bi);
   if (status != OK) goto FREE_MEM;
 
-  /** Set amplitude and phase */
-  for (int j=0; j<size; j++) {
-    hnqc->ampli[k22][j] = 1. + ai[k22][0]*n1[k22][j] + ai[k22][1]*n2[k22][j];
-    hnqc->phase[k22][j] =      bi[k22][0]*n4[k22][j] + bi[k22][1]*n5[k22][j];
-  }
-  
-  /** Multiply merger waveform to NQC */
-  for (int j=0; j<size; j++) {
-    hlm_mrg->ampli[k22][j] *= hnqc->ampli[k22][j];
-    hlm_mrg->phase[k22][j] -= hnqc->phase[k22][j];
-  }
+  /** Apply the NQC to the merger waveform */
+  eob_apply_nqc(hlm_mrg, kmask_22, ai, bi, hnqc);
 
-  /** Multiply full waveform to NQC */
+  /** Apply the NQC to the full waveform, with the basis on its grid */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
   pr_star = dyn->data[EOB_PRSTAR];
-  Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  const int fullsize = hlm->size;
   NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, kmask_22, fullsize, 0, 0);
+  status = NQCbasis_alloc(nqcb, kmask_22, hlm->size, 0, 0);
   if (status != OK) goto FREE_MEM;
 
   eob_set_nqc_basis(nqcb, kmask_22, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0);
 
-  for (int j=0; j<fullsize; j++) {
-    hlm->ampli[k22][j] *= (1. + ai[k22][0]*n1[k22][j] + ai[k22][1]*n2[k22][j]);
-    hlm->phase[k22][j] -= (bi[k22][0]*n4[k22][j] + bi[k22][1]*n5[k22][j]);
-  }
+  eob_apply_nqc(hlm, kmask_22, ai, bi, NULL);
 
-  if (EOBPars->output_nqc_coefs) {
-    /** Output the NQC coefficients */
-    FILE* fp;
-    char fname[STRLEN];
-    strcpy(fname, EOBPars->output_dir);
-    strcat(fname, "/nqc_coefs.txt");
-    fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
-	    EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
-	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
-    fprintf(fp, "%d %d %d %e %e %e %e\n", k22, LINDEX[k22], MINDEX[k22], 
-	    ai[k22][0], ai[k22][1], 
-	    bi[k22][0], bi[k22][1]);
-    fclose(fp);  
-  }
+  eob_output_nqc_coefs(kmask_22, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -10856,10 +10676,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   NQCbasis *nqcb = NQC->basis;
   int status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, size, 0, 2);
   if (status != OK) return status;
-  double **n1    = nqcb->n[0];
-  double **n2    = nqcb->n[1];
-  double **n4    = nqcb->n[3];
-  double **n5    = nqcb->n[4];
   
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask[k]){
@@ -10894,7 +10710,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
   for (int j=0; j<size; j++) {
-    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], n1[1][j], n2[1][j], n4[1][j], n5[1][j]);
+    fprintf(fp_dbg, "%20.12f\t%.16e\t%.16e\t%.16e\t%.16e\n", t[j], nqcb->n[0][1][j], nqcb->n[1][1][j], nqcb->n[3][1][j], nqcb->n[4][1][j]);
   }
   fclose(fp_dbg);
 #endif    
@@ -10983,69 +10799,24 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   bi[8][0] = bi[3][0];
   bi[8][1] = bi[3][1];}
 
-  /** Set amplitude and phase */
-  for (int k=0; k<KMAX; k++) {
-    if(hlm_mrg->kmask_nqc[k]){
-      for (int j=0; j<size; j++) {
-        hnqc->ampli[k][j] = 1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j];
-        hnqc->phase[k][j] =      bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j];
-      }
-    }
-  }
-  
-  /** Multiply merger waveform to NQC */
-  for (int k=0; k<KMAX; k++) {
-    for (int j=0; j<size; j++) {
-      if(hlm_mrg->kmask_nqc[k]){
-        hlm_mrg->ampli[k][j] *= hnqc->ampli[k][j];
-        hlm_mrg->phase[k][j] -= hnqc->phase[k][j];
-      }
-    }
-  }
+  /** Apply the NQC to the merger waveform */
+  eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
-  /** Multiply full waveform to NQC */
+  /** Apply the NQC to the full waveform, with the basis on its grid */
   r       = dyn->data[EOB_RAD];
   w       = dyn->data[EOB_MOMG]; /* Omega */
   pr_star = dyn->data[EOB_PRSTAR];
-  Omg_orb = dyn->data[EOB_OMGORB]; /* Omega orbital */
   ddotr   = dyn->data[EOB_DDOTR];
 
-  const int fullsize = hlm->size;
   NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, fullsize, 0, 0);
+  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, hlm->size, 0, 0);
   if (status != OK) goto FREE_MEM;
 
   eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0);
 
-  for (int k=0; k<KMAX; k++) {
-    if(hlm->kmask_nqc[k]){
-      for (int j=0; j<fullsize; j++) {
-        hlm->ampli[k][j] *= (1. + ai[k][0]*n1[k][j] + ai[k][1]*n2[k][j]);
-        hlm->phase[k][j] -= (bi[k][0]*n4[k][j] + bi[k][1]*n5[k][j]);
-      }
-    }
-  }
+  eob_apply_nqc(hlm, hlm->kmask_nqc, ai, bi, NULL);
 
-  if (EOBPars->output_nqc_coefs) {
-    /** Output the NQC coefficients */
-    FILE* fp;
-    char fname[STRLEN];
-    strcpy(fname, EOBPars->output_dir);
-    strcat(fname, "/nqc_coefs.txt");
-    fp = fopen(fname, "w");
-    fprintf(fp, "# q=%e chizA=%e chizB=%e f0=%e\n",EOBPars->q,EOBPars->chi1,EOBPars->chi2,EOBPars->initial_frequency);
-    fprintf(fp, "# M=%e LambdaA=[%e,%e,%e] LambdaBl2=[%e,%e,%e]\n",EOBPars->M,
-	    EOBPars->LambdaAl2,EOBPars->LambdaAl3,EOBPars->LambdaAl4,
-	    EOBPars->LambdaBl2,EOBPars->LambdaBl3,EOBPars->LambdaBl4);
-    for (int k=0; k<KMAX; k++) {
-      if(hlm->kmask_nqc[k]){
-        fprintf(fp, "%d %d %d %e %e %e %e\n", k, LINDEX[k], MINDEX[k], 
-		ai[k][0], ai[k][1], 
-		bi[k][0], bi[k][1]);
-      }
-    }  
-    fclose(fp);  
-  }
+  eob_output_nqc_coefs(hlm->kmask_nqc, ai, bi);
   
  FREE_MEM:
   /** Free mem */
