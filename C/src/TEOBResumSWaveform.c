@@ -6461,6 +6461,80 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 }
 
 /**
+ * Function: eob_set_nqc_basis
+ * ---------------------------
+ *   NQC basis functions on a time grid, for the modes in kmask:
+ *   n1 = [pr*\/(r Omg)]^2, n2 = ddot{r}/(r Omg^2) for the amplitude,
+ *   n4 = pr*\/(r Omg), n5 = n4 (r Omg)^2 for the phase,
+ *   then the per-mode changes chosen by nqc_basis (NQC_BASIS_*).
+ *   With n2_22, the (2,2) gets n2 = pr*^2 n1.
+ *   n3 and n6 are filled only if not NULL (three-condition NQC).
+ *
+ *   @param[in]  kmask   : modes to fill
+ *   @param[in]  size    : number of time samples
+ *   @param[in]  r,w,pr_star,ddotr : r, Omega, pr*, ddot{r} on the grid
+ *   @param[in]  nqc_basis : per-mode changes, NQC_BASIS_*
+ *   @param[in]  n2_22   : use n2 = pr*^2 n1 for the (2,2)
+ *   @param[out] n1,n2,n3,n4,n5,n6 : basis functions, per mode
+ */
+void eob_set_nqc_basis(int *kmask, int size, double *r, double *w, double *pr_star, double *ddotr,
+                       int nqc_basis, int n2_22,
+                       double **n1, double **n2, double **n3, double **n4, double **n5, double **n6)
+{
+  const double chi1 = EOBPars->chi1;
+  const double chi2 = EOBPars->chi2;
+  double pr_star2, r2, w2;
+  for (int k=0; k<KMAX; k++) {
+    if(kmask[k]){
+      for (int j=0; j<size; j++) {
+        pr_star2 = SQ(pr_star[j]);
+        r2       = SQ(r[j]);
+        w2       = SQ(w[j]);
+        n1[k][j]  = pr_star2/(r2*w2);
+        n2[k][j]  = ddotr[j]/(r[j]*w2);
+        n4[k][j]  = pr_star[j]/(r[j]*w[j]);
+        n5[k][j]  = n4[k][j]*r2*w2;
+        if (n3 != NULL) n3[k][j] = n2[k][j];
+        if (n6 != NULL) n6[k][j] = n5[k][j]*pr_star2;
+      }
+    }
+  }
+
+  for (int j=0; j<size; j++) {
+    if (n2_22 && kmask[1]) n2[1][j] = SQ(pr_star[j])*n1[1][j];
+    if (nqc_basis == NQC_BASIS_PLAIN) continue;
+
+    /* l=2, m=1 */
+    if(kmask[0]){
+      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
+      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
+    }
+    /* l=3, l=4 & l=5. In Dali only if a spin is not positive */
+    // FIXME: condition on spins bad for non-spinning limit
+    if (nqc_basis == NQC_BASIS_GIOTTO || chi1 <= 0. || chi2 <= 0.) {
+      for (int k=2; k<14; k++) {
+        if(kmask[k]) n5[k][j] = cbrt(SQ(w[j]))*n4[k][j];
+      }
+    }
+    if (nqc_basis != NQC_BASIS_DALI) continue;
+
+    /* (3,2), (4,2), (4,3) */
+    const int kk[3] = {3, 6, 7};
+    for (int i=0; i<3; i++) {
+      if(kmask[kk[i]]){
+        n2[kk[i]][j] = cbrt(SQ(w[j]))*n1[kk[i]][j];
+        n5[kk[i]][j] = cbrt(SQ(w[j]))*n4[kk[i]][j];
+      }
+    }
+    /* l=5, m=5. n3 only so that the three-condition matrix is not singular */
+    if(kmask[13]){
+      if (n3 != NULL) n3[13][j] = cbrt(SQ(w[j]))*n1[13][j];
+      n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
+    }
+  }
+}
+
+/**
  * Function: eob_wav_hlmNQC_find_a1a2a3
  * ------------------------------------
  *   Computes the factors and the coefficients that build the
@@ -6573,20 +6647,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  double pr_star2, r2, w2;
-  for (int k=0; k<KMAX; k++) {   
-    if(h->kmask[k]) {
-      for (int j=0; j<size; j++) {
-        pr_star2 = SQ(pr_star[j]);
-        r2       = SQ(r[j]);
-        w2       = SQ(w[j]);                  //CHECKME: Omg or Omg_orbital ?
-        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-        n5[k][j]  = n4[k][j]*r2*w2;           /* (pr*)*(r Omg) */
-      }
-    }
-  }
+  eob_set_nqc_basis(h->kmask, size, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0, n1, n2, NULL, n4, n5, NULL);
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -6967,20 +7028,7 @@ void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm 
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  double pr_star2, r2, w2;
-  for (int k=0; k<KMAX; k++) {   
-    if(h->kmask_nqc[k]) {
-      for (int j=0; j<size; j++) {
-        pr_star2 = SQ(pr_star[j]);
-        r2       = SQ(r[j]);
-        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-        n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
-      }
-    }
-  }
+  eob_set_nqc_basis(h->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0, n1, n2, NULL, n4, n5, NULL);
 
 #if (DEBUG)
   FILE* fp_dbg;
@@ -7383,65 +7431,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  double pr_star2, r2, w2;
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){ 
-      for (int j=0; j<size; j++) {
-        pr_star2 = SQ(pr_star[j]);
-        r2       = SQ(r[j]);
-        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-        //n3[k][j]  = n1[k][j]*pr_star2;
-        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-        n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
-        //n6[k][j]  = n5[k][j]*pr_star2;
-      }
-    }
-  }
+  eob_set_nqc_basis(hlm_mrg->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, NULL, n4, n5, NULL);
 
-  for (int j=0; j<size; j++) {
-    /* l=2,m=1 */
-    if(hlm_mrg->kmask_nqc[0]){
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-    }
-    /* l=2,m=2 */
-    if ((EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3)){
-      if(hlm_mrg->kmask_nqc[1]){
-        n2[1][j] = SQ(pr_star[j])*n1[1][j];
-      }
-    }
-    /* l=3, l=4 & l=5 */
-    // FIXME: condition on spins bad for non-spinning limit
-    if ((chi1 <= 0.) || (chi2 <= 0.)) {
-      for (int k=2; k<14; k++) {
-        if(hlm_mrg->kmask_nqc[k]){
-          n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-        }
-      }
-    }
-    /* l=3, m=2 */
-    if(hlm_mrg->kmask_nqc[3]){
-      n2[3][j] = cbrt(SQ(w[j]))*n1[3][j];
-      n5[3][j] = cbrt(SQ(w[j]))*n4[3][j];
-    }
-    /* l=4, m=2 */
-    if(hlm_mrg->kmask_nqc[6]){
-      n2[6][j] = cbrt(SQ(w[j]))*n1[6][j];
-      n5[6][j] = cbrt(SQ(w[j]))*n4[6][j];
-    }
-    /* l=4, m=3 */
-    if(hlm_mrg->kmask_nqc[7]){
-      n2[7][j] = cbrt(SQ(w[j]))*n1[7][j];
-      n5[7][j] = cbrt(SQ(w[j]))*n4[7][j];
-    }
-    /* l=5, m=5 */
-    if(hlm_mrg->kmask_nqc[13]){
-      n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
-    }      
-  }
-      
 #if (DEBUG)
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
@@ -7708,61 +7699,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     }
   }
 	
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){   
-      for (int j=0; j<fullsize; j++) {
-        pr_star2 = SQ(pr_star[j]);
-        r2       = SQ(r[j]);
-        w2       = SQ(w[j]);                  //CHECKME: Omg or Omg_orbital ?
-        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-        n5[k][j]  = n4[k][j]*r2*w2;           /* (pr*)*(r Omg) */
-      }
-    }
-  }
-
-  for (int j=0; j<fullsize; j++) {
-    /* l=2,m=1 */
-    if(hlm->kmask_nqc[0]){
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-    }
-    /* l=2,m=2 */
-    if (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3){
-      if(hlm->kmask_nqc[1]) {
-        n2[1][j] = SQ(pr_star[j])*n1[1][j];
-      }
-    }
-    /* l=3, l=4 & l=5 */
-    // FIXME: condition on spins bad for non-spinning limit
-    if ((chi1 <= 0.) || (chi2 <= 0.)) {
-      for (int k=2; k<14; k++) {
-	      if(hlm->kmask_nqc[k]){
-	        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-	      }
-      }
-    }
-    /* l=3, m=2 */
-    if(hlm->kmask_nqc[3]){
-      n2[3][j] = cbrt(SQ(w[j]))*n1[3][j];
-      n5[3][j] = cbrt(SQ(w[j]))*n4[3][j];
-    }
-    /* l=4, m=2 */
-    if(hlm->kmask_nqc[6]){
-      n2[6][j] = cbrt(SQ(w[j]))*n1[6][j];
-      n5[6][j] = cbrt(SQ(w[j]))*n4[6][j];
-    }
-    /* l=4, m=3 */
-    if(hlm->kmask_nqc[7]){
-      n2[7][j] = cbrt(SQ(w[j]))*n1[7][j];
-      n5[7][j] = cbrt(SQ(w[j]))*n4[7][j];
-    }
-    /* l=5, m=5 */
-    if(hlm->kmask_nqc[13]){
-      n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
-    }      
-  }
+  eob_set_nqc_basis(hlm->kmask_nqc, fullsize, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, NULL, n4, n5, NULL);
 
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   sigmoid = (double*) calloc (fullsize, sizeof(double));
@@ -8004,68 +7941,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
 
   /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
    * NQC basis for (2,2) waveform : AMPLITUDE
-   * note: n3 and n6 are not used
+   * n3 and n6 for the three-condition system
    */
-  double pr_star2, r2, w2;
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){ 
-      for (int j=0; j<size; j++) {
-        pr_star2 = SQ(pr_star[j]);
-        r2       = SQ(r[j]);
-        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-        n3[k][j]  = n2[k][j];                 /* Same as n2, which will be overwritten for all relevant modes below */
-        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-        n5[k][j]  = n4[k][j]*r2*w2;           /* (pr*)*(r Omg) */
-        n6[k][j]  = n5[k][j]*pr_star2;        /* Same as matlab */
-      }
-    }
-  }
+  eob_set_nqc_basis(hlm_mrg->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, n3, n4, n5, n6);
 
-  for (int j=0; j<size; j++) {
-    /* l=2,m=1 */
-    if(hlm_mrg->kmask_nqc[0]){
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-    }
-    /* l=2,m=2 */
-    if ((EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3)){
-      if(hlm_mrg->kmask_nqc[1]){
-        n2[1][j] = SQ(pr_star[j])*n1[1][j];
-      }
-    }
-    /* l=3, l=4 & l=5 */
-    // FIXME: condition on spins bad for non-spinning limit
-    if ((chi1 <= 0.) || (chi2 <= 0.)) {
-      for (int k=2; k<14; k++) {
-        if(hlm_mrg->kmask_nqc[k]){
-          n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-        }
-      }
-    }
-    /* l=3, m=2 */
-    if(hlm_mrg->kmask_nqc[3]){
-      n2[3][j] = cbrt(SQ(w[j]))*n1[3][j];
-      n5[3][j] = cbrt(SQ(w[j]))*n4[3][j];
-    }
-    /* l=4, m=2 */
-    if(hlm_mrg->kmask_nqc[6]){
-      n2[6][j] = cbrt(SQ(w[j]))*n1[6][j];
-      n5[6][j] = cbrt(SQ(w[j]))*n4[6][j];
-    }
-    /* l=4, m=3 */
-    if(hlm_mrg->kmask_nqc[7]){
-      n2[7][j] = cbrt(SQ(w[j]))*n1[7][j];
-      n5[7][j] = cbrt(SQ(w[j]))*n4[7][j];
-    }
-    /* l=5, m=5 */
-    if(hlm_mrg->kmask_nqc[13]){
-      n3[13][j] = cbrt(SQ(w[j]))*n1[13][j]; /* Random choice for n3 just not to have a singular matrix */
-      n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
-    }      
-  }
-      
 #if (DEBUG)
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
@@ -8368,64 +8247,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_m
     }
   }
 	
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){   
-      for (int j=0; j<fullsize; j++) {
-        pr_star2 = SQ(pr_star[j]);
-        r2       = SQ(r[j]);
-        w2       = SQ(w[j]);                  //CHECKME: Omg or Omg_orbital ?
-        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-        n3[k][j]  = n2[k][j];                 /* Same as n2, which will be overwritten for all relevant modes below */
-        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-        n5[k][j]  = n4[k][j]*r2*w2;           /* (pr*)*(r Omg) */
-        n6[k][j]  = n5[k][j]*pr_star2;        /* Same as matlab */
-      }
-    }
-  }
-
-  for (int j=0; j<fullsize; j++) {
-    /* l=2,m=1 */
-    if(hlm->kmask_nqc[0]){
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-    }
-    /* l=2,m=2 */
-    if (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3){
-      if(hlm->kmask_nqc[1]) {
-        n2[1][j] = SQ(pr_star[j])*n1[1][j];
-      }
-    }
-    /* l=3, l=4 & l=5 */
-    // FIXME: condition on spins bad for non-spinning limit
-    if ((chi1 <= 0.) || (chi2 <= 0.)) {
-      for (int k=2; k<14; k++) {
-	      if(hlm->kmask_nqc[k]){
-	        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-	      }
-      }
-    }
-    /* l=3, m=2 */
-    if(hlm->kmask_nqc[3]){
-      n2[3][j] = cbrt(SQ(w[j]))*n1[3][j];
-      n5[3][j] = cbrt(SQ(w[j]))*n4[3][j];
-    }
-    /* l=4, m=2 */
-    if(hlm->kmask_nqc[6]){
-      n2[6][j] = cbrt(SQ(w[j]))*n1[6][j];
-      n5[6][j] = cbrt(SQ(w[j]))*n4[6][j];
-    }
-    /* l=4, m=3 */
-    if(hlm->kmask_nqc[7]){
-      n2[7][j] = cbrt(SQ(w[j]))*n1[7][j];
-      n5[7][j] = cbrt(SQ(w[j]))*n4[7][j];
-    }
-    /* l=5, m=5 */
-    if(hlm->kmask_nqc[13]){
-      n3[13][j] = cbrt(SQ(w[j]))*n1[13][j]; /* Random choice for n3 just not to have a singular matrix */
-      n5[13][j] = cbrt(SQ(w[j]))*n4[13][j];
-    }      
-  }
+  eob_set_nqc_basis(hlm->kmask_nqc, fullsize, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, n3, n4, n5, n6);
 
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
   sigmoid = (double*) calloc (fullsize, sizeof(double));
@@ -8682,44 +8504,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  double pr_star2, r2, w2;
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){ 
-      for (int j=0; j<size; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	//n3[k][j]  = n1[k][j]*pr_star2;
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
-	//n6[k][j]  = n5[k][j]*pr_star2;
-      }
-    }
-  }
+  eob_set_nqc_basis(hlm_mrg->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3), n1, n2, NULL, n4, n5, NULL);
 
-  for (int j=0; j<size; j++) {
-    /* l=2,m=1 */
-    if(hlm_mrg->kmask_nqc[0]){
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-    }
-    /* l=2,m=2 */
-    // FIXME: add a function specific for this RR!
-    if (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3){
-      if(hlm_mrg->kmask_nqc[1]) {
-        n2[1][j] = SQ(pr_star[j])*n1[1][j];
-      }
-    }
-    /* l=3, l=4 & l=5 */
-    for (int k=2; k<14; k++) {
-      if(hlm_mrg->kmask_nqc[k]){
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-      }
-    }
-  }
-      
 #if (DEBUG)
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
@@ -8953,34 +8739,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
     }
   }
 	
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){   
-      for (int j=0; j<fullsize; j++) {
-        pr_star2 = SQ(pr_star[j]);
-        r2       = SQ(r[j]);
-        w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-        n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-        n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-        n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-        n5[k][j]  = n4[k][j]*r2*w2;           /* (pr*)*(r Omg) */
-      }
-    }
-  }
+  eob_set_nqc_basis(hlm->kmask_nqc, fullsize, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0, n1, n2, NULL, n4, n5, NULL);
 
-  for (int j=0; j<fullsize; j++) {
-    /* l=2,m=1 */
-    if(hlm_mrg->kmask_nqc[0]){
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-    }
-    /* l=3, l=4 & l=5 */
-    for (int k=2; k<14; k++) {   
-      if(hlm_mrg->kmask_nqc[k]){   
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-      }
-    }
-  }
-  
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask_nqc[k]){
       for (int j=0; j<fullsize; j++) {
@@ -9181,19 +8941,10 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  double pr_star2, r2, w2;
-  for (int j=0; j<size; j++) {
-    pr_star2 = SQ(pr_star[j]);
-    r2       = SQ(r[j]);
-    w2       = SQ(w[j]); 
-    n1[k22][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-    n2[k22][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-    //n3[k22][j]  = n1[k22][j]*pr_star2;
-    n4[k22][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-    n5[k22][j]  = n4[k22][j]*r2*w2;         /* (pr*)*(r Omg) */
-    //n6[k22][j]  = n5[k22][j]*pr_star2;
-  }
-  
+  int kmask_22[KMAX] = {0};
+  kmask_22[k22] = 1;
+  eob_set_nqc_basis(kmask_22, size, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0, n1, n2, NULL, n4, n5, NULL);
+
 #if (DEBUG)
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
@@ -9366,16 +9117,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   n4[k22] = (double*) calloc (fullsize,sizeof(double));
   n5[k22] = (double*) calloc (fullsize,sizeof(double));
 	
-  for (int j=0; j<fullsize; j++) {
-    pr_star2 = SQ(pr_star[j]);
-    r2       = SQ(r[j]);
-    w2       = SQ(w[j]); 
-    n1[k22][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-    n2[k22][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-    n4[k22][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-    n5[k22][j]  = n4[k22][j]*r2*w2;              /* (pr*)*(r Omg) */
-  }
-	  	  
+  eob_set_nqc_basis(kmask_22, fullsize, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0, n1, n2, NULL, n4, n5, NULL);
+
   for (int j=0; j<fullsize; j++) {
     hlm->ampli[k22][j] *= (1. + ai[k22][0]*n1[k22][j] + ai[k22][1]*n2[k22][j]);
     hlm->phase[k22][j] -= (bi[k22][0]*n4[k22][j] + bi[k22][1]*n5[k22][j]);
@@ -12188,42 +11931,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  double pr_star2, r2, w2;
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){ 
-      for (int j=0; j<size; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	//n3[k][j]  = n1[k][j]*pr_star2;
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
-	//n6[k][j]  = n5[k][j]*pr_star2;
-      }
-    }
-  }
+  eob_set_nqc_basis(hlm_mrg->kmask_nqc, size, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, (EOBPars->use_flm == USEFLM_HM_4PN22), n1, n2, NULL, n4, n5, NULL);
 
-  for (int j=0; j<size; j++) {
-    /* l=2,m=1 */
-    if(hlm_mrg->kmask_nqc[0]){
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-    }
-    /* l=2,m=2 */
-    // FIXME: add a function specific for this RR!
-    if(hlm_mrg->kmask_nqc[1] && EOBPars->use_flm == USEFLM_HM_4PN22) {
-      n2[1][j] = SQ(pr_star[j])*n1[1][j];
-    }
-    /* l=3, l=4 & l=5 */
-    for (int k=2; k<14; k++) {
-      if(hlm_mrg->kmask_nqc[k]){
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-      }
-    }
-  }
-      
 #if (DEBUG)
   FILE* fp_dbg;
   fp_dbg = fopen("nqc_nfunc.txt", "w");
@@ -12476,34 +12185,8 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_
     }
   }
 	
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){   
-      for (int j=0; j<fullsize; j++) {
-	pr_star2 = SQ(pr_star[j]);
-	r2       = SQ(r[j]);
-	w2       = SQ(w[j]); //CHECKME: Omg or Omg_orbital ?
-	n1[k][j]  = pr_star2/(r2*w2);         /* [pr*\/(r Omg)]^2 */
-	n2[k][j]  = ddotr[j]/(r[j]*w2);       /* [ddot{r}/(r Omg^2)] */
-	n4[k][j]  = pr_star[j]/(r[j]*w[j]);   /* pr*\/(r Omg) */
-	n5[k][j]  = n4[k][j]*r2*w2;              /* (pr*)*(r Omg) */
-      }
-    }
-  }
+  eob_set_nqc_basis(hlm->kmask_nqc, fullsize, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0, n1, n2, NULL, n4, n5, NULL);
 
-  for (int j=0; j<fullsize; j++) {
-    /* l=2,m=1 */
-    if(hlm_mrg->kmask_nqc[0]){
-      n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
-    }
-    /* l=3 & l=4 */
-    for (int k=2; k<14; k++) {   
-      if(hlm_mrg->kmask_nqc[k]){   
-	n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
-      }
-    }
-  }
-  
   for (int k=0; k<KMAX; k++) {
     if(hlm->kmask_nqc[k]){
       for (int j=0; j<fullsize; j++) {

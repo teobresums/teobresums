@@ -571,6 +571,14 @@ enum{
 };
 static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile", "compute"};
 
+/** NQC basis: per-mode changes on top of n1, n2, n4, n5 (eob_set_nqc_basis) */
+enum{
+  NQC_BASIS_PLAIN,  /**< no per-mode change */
+  NQC_BASIS_GIOTTO, /**< (2,1): n2, n5 times Omg^(2/3); l>=3: n5 times Omg^(2/3) */
+  NQC_BASIS_DALI,   /**< as GIOTTO, l>=3 only if a spin is not positive; plus n2 of (3,2), (4,2), (4,3) */
+  NQC_BASIS_NOPT    /**< number of NQC basis options */
+};
+
 enum { 
   FIRSTCALL_EOBWAVFLMV1,          /**< first call to eob_wav_flm_v1 */
   FIRSTCALL_EOBWAVFLMHM,          /**< first call to eob_wav_flm_HM */
@@ -1428,6 +1436,9 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prstardot, double *
 void eob_wav_hath22_nc_complex(double r, double prstar, double prstardot, double *hath22_nc);
 extern void (*eob_wav_hlmNQC_find_a1a2a3)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
+void eob_set_nqc_basis(int *kmask, int size, double *r, double *w, double *pr_star, double *ddotr,
+                       int nqc_basis, int n2_22,
+                       double **n1, double **n2, double **n3, double **n4, double **n5, double **n6);
 void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 extern void (*eob_wav_hlmNQC_find_a1a2a3_mrg)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
