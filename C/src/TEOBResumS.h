@@ -1488,8 +1488,14 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, Dynamics *dyn, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
-void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmar, double sigmai, double *psi);
+void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4,
+                               double sigmar, double sigmai, double alpha2, double Amrg, double *psi);
 extern int (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c */
+extern void (*p_eob_wav_ringdown_template)(); /* defined in TEOBResumSPars.c */
+void eob_wav_ringdown_attach(Dynamics *dyn, Waveform_lm *hlm,
+                             double *a1, double *a2, double *a3, double *a4,
+                             double *b1, double *b2, double *b3, double *b4,
+                             double *sigmar, double *sigmai, double *alpha2, double *Apeak);
 int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, double XB);
@@ -1509,7 +1515,8 @@ void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_
 				       Dynamics *dyn, Waveform_lm *hlm, bool *bhns);
 int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
-void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double alpha2, double Amrg);
+void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4,
+                                  double sigmar_qnm, double sigmai, double alpha2, double Amrg, double *psi);
 int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm);
 
 /* SpecialFuns.c */
