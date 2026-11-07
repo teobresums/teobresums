@@ -740,7 +740,6 @@ typedef struct tagEOBParameters
   int spin_dyn_size;                                    /**< Size of spin dynamics arrays */
   double spin_odes_omg_stop, spin_odes_t_stop;          /**< Stopping frequency and time for spin dynamics */
   double spin_odes_dt;                                  /**< Timestep for spin dynamics */
-  int spin_interp_domain;                               /**< Domain for spin dynamics interpolation (time/frequency) */
   int project_spins;                                    /**< Flag to project spins during EOB dynamics (yes/no) */
   int ringdown_eulerangles;                             /**< Flag to choose which beyond-merger euler angles extension to employ */
   int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */

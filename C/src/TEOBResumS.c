@@ -376,16 +376,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       goto EXIT_POINT;
     }
     EOBPars->nqc_coefs_flx = tmp_nqc;
-
-    if (EOBPars->spin_interp_domain == 0){
-      if (VERBOSE) printf("Compute splines in t\n");
-      for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-        gsl_spline_init (spindyn->spline[v], spindyn->time, spindyn->data[v], spindyn->size); 
-    } else {
-      if (VERBOSE) printf("Compute splines in Momg\n");
-      for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-        gsl_spline_init (spindyn->spline[v], spindyn->data[EOB_EVOLVE_SPIN_Momg], spindyn->data[v], spindyn->size); 
-    }  
   }
 
   /* NQC data */  
@@ -616,10 +606,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
       /* if we are projecting the spins, we also need to update the initial chi1z and chi2z to be consistent*/
       double SA, SB; // projections of the spin parallel to hatL
-      if (EOBPars->spin_interp_domain == 0)
-        eob_spin_dyn_Sproj_interp(spindyn, 0., &SA, &SB, NULL, NULL, NULL, NULL, EOBPars->spin_interp_domain);
-      else 
-        eob_spin_dyn_Sproj_interp(spindyn, dyn->data[EOB_MOMG][0], &SA, &SB, NULL, NULL, NULL, NULL, EOBPars->spin_interp_domain);
+      eob_spin_dyn_Sproj_interp(spindyn, dyn->data[EOB_MOMG][0], &SA, &SB, NULL, NULL, NULL, NULL, 1);
       double XA = EOBPars->X1;
       double XB = EOBPars->X2;
       EOBPars->chi1 = SA /SQ(XA);
@@ -776,15 +763,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* Update spins parallel to L, if required */
     if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) {
       double SA, SB; // projections of the spin parallel to hatL
-      if(EOBPars->spin_interp_domain==0){
-        eob_spin_dyn_Sproj_interp(dyn->spins, dyn->t, &SA, &SB, NULL, 
-				  NULL, NULL, NULL, 
-				  EOBPars->spin_interp_domain);
-      } else {
-        eob_spin_dyn_Sproj_interp(dyn->spins, dyn->Omg, &SA, &SB, NULL, 
-				  NULL, NULL, NULL, 
-				  EOBPars->spin_interp_domain);
-      }
+      eob_spin_dyn_Sproj_interp(dyn->spins, dyn->Omg, &SA, &SB, NULL, NULL, NULL, NULL, 1);
       const double XA = EOBPars->X1;
       const double XB = EOBPars->X2;
       

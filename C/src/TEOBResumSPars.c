@@ -307,7 +307,6 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->spin_odes_omg_stop   = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
   eobp->spin_odes_t_stop     = -1;
   eobp->spin_odes_dt         = 1;  // timestep for spin dynamics
-  eobp->spin_interp_domain   = (model == MODEL_GIOTTO) ? 1 : 0;  // FD or TD interpolation
   eobp->chi1x = eobp->chi1y  = eobp->chi1z = 0.;
   eobp->chi2x = eobp->chi2y  = eobp->chi2z = 0.;
   eobp->spin_flx             = (model == MODEL_GIOTTO) ? SPIN_FLX_PN : SPIN_FLX_EOB;
@@ -1854,9 +1853,6 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   }   
   if (STREQUAL(key,"use_effective_QNMs")) {
     eobp->use_effective_QNMs = YESNO2INT(string_trim(val));
-  }
-  if (STREQUAL(key, "spin_interp_domain")) {
-    eobp->spin_interp_domain = par_get_i(val); 
   }
   if (STREQUAL(key,"spin_dyn_size")) {
     eobp->spin_dyn_size = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING

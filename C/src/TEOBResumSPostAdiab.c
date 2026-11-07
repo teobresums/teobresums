@@ -57,17 +57,13 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
   double *chi1_grid, *chi2_grid;
   double SApara, SBpara;
   if (usespins == MODE_SPINS_GENERIC && EOBPars->project_spins){
-    if(EOBPars->spin_interp_domain==0){
-      errorexit("Spin projection in t + PA is not yet implemented. Retry with spin_interp_domain = 1");
-    } else {
-      chi1_grid = (double*) malloc(size * sizeof(double));
-      chi2_grid = (double*) malloc(size * sizeof(double));
-      for(int i=0; i<size;i++){
-        const double Omg_i = pow(r0 - i*dr, -1.5);
-        eob_spin_dyn_Sproj_interp(spin, Omg_i, &SApara, &SBpara, NULL, NULL, NULL, NULL, 1);
-        chi1_grid[i] = SApara/SQ(X1);
-        chi2_grid[i] = SBpara/SQ(X2);
-      }
+    chi1_grid = (double*) malloc(size * sizeof(double));
+    chi2_grid = (double*) malloc(size * sizeof(double));
+    for(int i=0; i<size;i++){
+      const double Omg_i = pow(r0 - i*dr, -1.5);
+      eob_spin_dyn_Sproj_interp(spin, Omg_i, &SApara, &SBpara, NULL, NULL, NULL, NULL, 1);
+      chi1_grid[i] = SApara/SQ(X1);
+      chi2_grid[i] = SBpara/SQ(X2);
     }
   }
   if (VERBOSE) {

@@ -2519,13 +2519,10 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
       dyn->data[v][i] = spindyn_tmp->data[v][i];
     }
   }
-  if (EOBPars->spin_interp_domain == 0){
-    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-      gsl_spline_init (dyn->spline[v], dyn->time, dyn->data[v], dyn->size);  
-  } else {
-    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-      gsl_spline_init (dyn->spline[v], dyn->data[EOB_EVOLVE_SPIN_Momg], dyn->data[v], dyn->size); 
-  }
+  // Splines of the spin dynamics use time with EOB flux and frequency with PN flux
+  double *x = (EOBPars->spin_flx == SPIN_FLX_EOB) ? dyn->time : dyn->data[EOB_EVOLVE_SPIN_Momg];
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    gsl_spline_init (dyn->spline[v], x, dyn->data[v], dyn->size);
   /*free*/ 
   DynamicsSpin_free(spindyn_tmp);
   return OK;
