@@ -219,7 +219,6 @@ enum{
 static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E"};
 
 #define KMAX (35) /** Multipolar linear index, max value */
-#define KMAX_22 (2) /** Modes (2,1), (2,2) only, for the (2,2)-only NQC; k=0 unused */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
 /** List for binary type */

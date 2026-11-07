@@ -7626,8 +7626,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   double *ddotr   = dyn_mrg->data[EOB_DDOTR];
   
   double max_A[KMAX],max_dA[KMAX],max_omg[KMAX],max_domg[KMAX];
-  double ai[KMAX_22][3] = {0.};
-  double bi[KMAX_22][3] = {0.};
+  double ai[KMAX][3] = {0.};
+  double bi[KMAX][3] = {0.};
 
   const int size = hlm_mrg->size;
   for (int i = 0; i < size; i++) {
@@ -7668,7 +7668,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   }
 
   /** Solve the linear systems */
-  double t_NQC[KMAX_22];
+  double t_NQC[KMAX];
   t_NQC[k22] = tNQC;
   status = eob_solve_system_nqc(hlm_mrg, hlm->ampli, kmask_22, NULL, t_NQC,
                                 max_A, max_dA, NULL,

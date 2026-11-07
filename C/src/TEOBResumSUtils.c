@@ -3812,7 +3812,7 @@ void lal_tetrad_conventions(Waveform *hpc)
  * Function: time_shift_mrg_to_0
  * -----------------------------
  *   Time of the peak of A = sum_{ell,emm} |h_{ell,emm}|^2, to move the merger to t=0.
- *   Highest sample within [tOmg_pk - 20, tOmg_pk + 10], which
+ *   Highest sample within [tOmg_pk - 100, tOmg_pk + 10], which
  *   ringdown wiggles and the end of the dynamics cannot reach, then refined with find_max
  *   on that sample and its two neighbours.
  *
@@ -3832,7 +3832,7 @@ double time_shift_mrg_to_0(Waveform_lm *hlm, double tOmg_pk)
   int imrg = -1;
   double Amrg = -1.;
   for (int i=1; i<hlm->size-1; i++) {
-    if (t[i] < tOmg_pk - 20. || t[i] > tOmg_pk + 10.) continue;
+    if (t[i] < tOmg_pk - 100. || t[i] > tOmg_pk + 10.) continue;
 
     double A = 0.;
     for (int k=0; k<KMAX; k++)
