@@ -6606,7 +6606,7 @@ void eob_nqc_basis_derivatives(NQCbasis *b, int *kmask, double dt, int use_D2)
  * ---------------------------
  *   NR amplitude, frequency and their time derivatives at the NQC point, per mode.
  *   From the fits chosen by nqc_point (NQC_POINT_*), then the user values (Alm_nqc, ...)
- *   and the deviations (delta_*lm_nqc), the latter not for NQC_POINT_HM_D2.
+ *   and the deviations (delta_*lm_nqc).
  *   d2A and d2omg only for NQC_POINT_HM_D2, otherwise NULL.
  *
  *   @param[in]  dyn       : dynamics
@@ -6707,8 +6707,7 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
   }
 
   /* deviations from the NR values, if any */
-  if (nqc_point != NQC_POINT_HM_D2 &&
-      EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0) {
+  if (EOBPars->delta_Alm_nqc_size + EOBPars->delta_dAlm_nqc_size + EOBPars->delta_Omglm_nqc_size + EOBPars->delta_dOmglm_nqc_size > 0) {
     if (VERBOSE) printf("Applying NQC point deviations from NR amplitude, frequency and derivatives.\n");
     if (EOBPars->delta_Alm_nqc_size > 0)    apply_mode_deviations(A,    EOBPars->delta_Alm_nqc,    EOBPars->delta_Alm_nqc_k,    EOBPars->delta_Alm_nqc_size);
     if (EOBPars->delta_dAlm_nqc_size > 0)   apply_mode_deviations(dA,   EOBPars->delta_dAlm_nqc,   EOBPars->delta_dAlm_nqc_k,   EOBPars->delta_dAlm_nqc_size);
@@ -7369,7 +7368,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
+  const int n2_22 = (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, n2_22);
 
   eob_output_nqc_basis(nqcb, t, 1, 0);
       
@@ -7409,7 +7409,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
   /** Apply the NQC to the full waveform */
-  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3),
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_DALI, n2_22,
                               t0, alpha, t_match, ai, bi);
   
  FREE_MEM:
@@ -7465,7 +7465,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
    * NQC basis for (2,2) waveform : AMPLITUDE
    * n3 and n6 for the three-condition system
    */
-  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
+  const int n2_22 = (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, n2_22);
 
   eob_output_nqc_basis(nqcb, t, 1, 0);
       
@@ -7505,7 +7506,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
   /** Apply the NQC to the full waveform */
-  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3),
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_DALI, n2_22,
                               t0, alpha, t_match, ai, bi);
   
  FREE_MEM:
@@ -7561,7 +7562,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
+  const int n2_22 = (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, n2_22);
 
   eob_output_nqc_basis(nqcb, t, 1, 0);
       
@@ -7589,7 +7591,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
   /** Apply the NQC to the full waveform */
-  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_GIOTTO, 0,
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_GIOTTO, n2_22,
                               0., 0., NULL, ai, bi);
   
  FREE_MEM:
@@ -10296,7 +10298,8 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
    */
-  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, (EOBPars->use_flm == USEFLM_HM_4PN22));
+  const int n2_22 = (EOBPars->use_flm == USEFLM_HM_4PN22);
+  eob_set_nqc_basis(nqcb, hlm_mrg->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, n2_22);
 
   eob_output_nqc_basis(nqcb, t, 1, 0);
       
@@ -10343,7 +10346,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
   /** Apply the NQC to the full waveform */
-  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_GIOTTO, 0,
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_GIOTTO, n2_22,
                               0., 0., NULL, ai, bi);
   
  FREE_MEM:
