@@ -1468,7 +1468,6 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
                        double *A, double *dA, double *d2A, double *omg, double *domg, double *d2omg);
 int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j_NQC, double *t_NQC,
                          double *A_nr, double *dA_nr, double *d2A_nr,
-                         double **omg, double **domg, double **d2omg,
                          double *omg_nr, double *domg_nr, double *d2omg_nr,
                          double ai[][3], double bi[][3]);
 double eob_nqc_times(Dynamics *dyn, double *tmrg, double *t_NQC);
