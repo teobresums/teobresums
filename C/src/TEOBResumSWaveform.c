@@ -7639,7 +7639,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   for (int k=0; k<KMAX; k++) {
     if(hlm_mrg->kmask_nqc[k]){
       D0(hlm_mrg->phase[k], dt, size, omg[k]);
-      D2(hlm_mrg->phase[k], dt, size, omg[k]);
+      D2(hlm_mrg->phase[k], dt, size, domg[k]);
     }
   }
   
