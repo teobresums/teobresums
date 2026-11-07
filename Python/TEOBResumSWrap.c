@@ -405,9 +405,6 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "project_spins") != NULL ) { 
     EOBPars->project_spins = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "project_spins")));
   }
-  if ( PyDict_GetItemString(dict, "spin_interp_domain") != NULL ) { 
-    EOBPars->spin_interp_domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_interp_domain"));
-  }
   if ( PyDict_GetItemString(dict, "spin_flx") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "spin_flx"));

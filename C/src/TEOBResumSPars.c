@@ -307,10 +307,9 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->spin_odes_omg_stop   = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
   eobp->spin_odes_t_stop     = -1;
   eobp->spin_odes_dt         = 1;  // timestep for spin dynamics
-  eobp->spin_interp_domain   = 0;  // FD or TD interpolation
   eobp->chi1x = eobp->chi1y  = eobp->chi1z = 0.;
   eobp->chi2x = eobp->chi2y  = eobp->chi2z = 0.;
-  eobp->spin_flx             = SPIN_FLX_EOB; 
+  eobp->spin_flx             = (model == MODEL_GIOTTO) ? SPIN_FLX_PN : SPIN_FLX_EOB;
   eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
   eobp->cosJL_final          = 1.;
   eobp->use_effective_QNMs   = 1;
@@ -564,12 +563,28 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->use_spins = MODE_SPINS_ALIGNED;
   }
 
-  /* If precession and eccentricity are both specified, use EOB flux */
-  // if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
-  //  if (VERBOSE){
-  //     printf("Setting spin_flux to EOB\n"); EOBPars->spin_flx = SPIN_FLX_EOB;
-  //     printf("Setting interpolation domain to TD\n"); EOBPars->domain = 0;
-  //  }
+  if ((EOBPars->ecc != 0.) || (EOBPars->r_hyp != 0.))
+    EOBPars->model = MODEL_DALI;
+
+  if (EOBPars->spin_flx == SPIN_FLX_NOPT) {
+    PRERR("spin_flx undefined");
+    return 1;
+  }
+
+  if (EOBPars->model == MODEL_DALI && EOBPars->domain == DOMAIN_FD) {
+    PRERR("SPA with model = Dali is currently not available");
+    return 1;
+  }
+
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->model == MODEL_DALI && EOBPars->spin_flx != SPIN_FLX_EOB) {
+    PRERR("model = Dali requires spin_flx = EOB");
+    return 1;
+  }
+
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins && EOBPars->spin_flx == SPIN_FLX_EOB) {
+    PRERR("project_spins incompatible with spin_flx = EOB");
+    return 1;
+  }
 
   /* Check: if eccentricity is not between 0 and 1, throw an error */
   if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0)){
@@ -775,8 +790,6 @@ int eob_set_params(int default_choice, int firstcall)
   // NOTE: The defaults are different from v0.0 and v1.0
   double ecc   = EOBPars->ecc;
   double r_hyp = EOBPars->r_hyp;
-  if ((ecc != 0.) || (r_hyp != 0.))
-    EOBPars->model = MODEL_DALI;
 
   if (EOBPars->nqc == NQC_AUTO) {
     if (EOBPars->binary == BINARY_BNS) {
@@ -1821,12 +1834,7 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"spin_flx")) {     
     val = string_trim(val);
     for (eobp->spin_flx=0; eobp->spin_flx<=SPIN_FLX_NOPT; eobp->spin_flx++) {
-      if (eobp->spin_flx == SPIN_FLX_NOPT) {
-        eobp->spin_flx = SPIN_FLX_EOB;
-        if (VERBOSE) printf("spin flux '%s' undefined, set to '%s'\n",
-        val,spin_flx_opt[eobp->spin_flx]);
-        break;
-      }
+      if (eobp->spin_flx == SPIN_FLX_NOPT) break;
     if (STREQUAL(val,spin_flx_opt[eobp->spin_flx])) break;
     }
   }    
@@ -1845,9 +1853,6 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   }   
   if (STREQUAL(key,"use_effective_QNMs")) {
     eobp->use_effective_QNMs = YESNO2INT(string_trim(val));
-  }
-  if (STREQUAL(key, "spin_interp_domain")) {
-    eobp->spin_interp_domain = par_get_i(val); 
   }
   if (STREQUAL(key,"spin_dyn_size")) {
     eobp->spin_dyn_size = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING

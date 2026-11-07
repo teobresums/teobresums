@@ -8930,30 +8930,31 @@ double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, doub
 */
 void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamics *dyn, DynamicsSpin *spin, Waveform_lm *hlm){
 
-  /* First, unwrap alpha and gamma */
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
-
   /* Determine the merger as the maximum of the (pure) orbital frequency*/
   double tOmg_pk = dyn->tOmg_pk;
 
-  /* Find the corresponding time in the spin dynamics */
-  /* Use the peak of OmgOrb as merger time */
-  const int tmax_dyn_idx = find_point_bisection(tOmg_pk, spin->size, spin->time, 1);
-  const int tmax_wav_idx = find_point_bisection(spin->time[tmax_dyn_idx], hlm->size, hlm->time, 1);
+  /* Use the peak of OmgOrb as merger & switch to the ringdown at that time */
+  if (tOmg_pk > spin->time[spin->size-1]) tOmg_pk = spin->time[spin->size-1];
+  const int tmax_wav_idx = find_point_bisection(tOmg_pk, hlm->size, hlm->time, 1) + 1; // +1 idx because we want the first point after
 
   /* Interpolation */
-  interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_alp], spin->size, hlm->time, tmax_wav_idx, alpha);
-  interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_bet], spin->size, hlm->time, tmax_wav_idx, beta);  
-  interp_spline_omp(spin->time, spin->data[EOB_EVOLVE_SPIN_gam], spin->size, hlm->time, tmax_wav_idx, gamma); 
+  double *angle[3] = {alpha, beta, gamma};
+  double angle_mrg[3];
+  for (int i=0; i<3; i++) {
+    gsl_spline *sp = spin->spline[EOB_EVOLVE_SPIN_alp+i];
+    gsl_interp_accel *ac = spin->accel[EOB_EVOLVE_SPIN_alp+i];
+    angle_mrg[i] = gsl_spline_eval(sp, tOmg_pk, ac);
+    for (int j=0; j < tmax_wav_idx; j++)
+      angle[i][j] = gsl_spline_eval(sp, hlm->time[j], ac);
+  }
 
   /* Now, prolong the angles based on user request */
   if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_CONSTANT) {
     /* for t > tM_idx, fix the values to the last  */
     for(int j=tmax_wav_idx; j < hlm->size; j++){
-      alpha[j] = alpha[tmax_wav_idx-1];
-      beta[j]  = beta[tmax_wav_idx-1];
-      gamma[j] = gamma[tmax_wav_idx-1];
+      alpha[j] = angle_mrg[0];
+      beta[j]  = angle_mrg[1];
+      gamma[j] = angle_mrg[2];
     }
   } else if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_QNMs){
     /* use QNM for alpha_dot, and fix beta constant */
@@ -8965,10 +8966,10 @@ void prolong_euler_angles_TD(double *alpha, double *beta, double *gamma, Dynamic
     adot = post_merger_alpha_dot(EOBPars->abhf, cosJL);
 
     for(int j=tmax_wav_idx; j < hlm->size; j++){
-      double dt= hlm->time[j]-hlm->time[tmax_wav_idx-1];
-      beta[j]  = beta[tmax_wav_idx-1];
-      alpha[j] = alpha[tmax_wav_idx-1] + dt*adot;
-      gamma[j] = gamma[tmax_wav_idx-1] + dt*adot*cos(beta[j]);
+      double dt= hlm->time[j]-tOmg_pk;
+      beta[j]  = angle_mrg[1];
+      alpha[j] = angle_mrg[0] + dt*adot;
+      gamma[j] = angle_mrg[2] + dt*adot*cos(beta[j]);
     }
   }
 }
@@ -8996,11 +8997,6 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
   
   /* choose whether to use MOmega (from the dynamics) or MOmega_22 for the interpolation */
   int map_from_22 = 1;
-  spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1]; //alpha_initial_condition(EOBPars);
-  spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_alp][0];
-  /* First, unwrap alpha and gamma */
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_alp], spin->size);
-  unwrap_euler(spin->data[EOB_EVOLVE_SPIN_gam], spin->size);
   double *omega;
   int size_omega;
   if(map_from_22){
@@ -9142,11 +9138,6 @@ void prolong_euler_angles(double *alpha, double *beta, double *gamma, Dynamics *
 void prolong_euler_angles_FD(DynamicsSpin *spin, WaveformFD_lm *hlm)
 {
   int spinsize = spin->size;
-  /* First, unwrap alpha and gamma */
-  spin->data[EOB_EVOLVE_SPIN_alp][0] = spin->data[EOB_EVOLVE_SPIN_alp][1];
-  spin->data[EOB_EVOLVE_SPIN_gam][0] = spin->data[EOB_EVOLVE_SPIN_gam][1];
-  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_alp], spinsize);
-  unwrap_HM(spin->data[EOB_EVOLVE_SPIN_gam], spinsize);
   
   /*prolong up to final hlm frequency (constant angles by default), add just N=2 points*/
 

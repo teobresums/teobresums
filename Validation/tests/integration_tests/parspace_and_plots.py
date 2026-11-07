@@ -271,7 +271,7 @@ def TestParspaceBBH(precessing, eccentric):
     if(eccentric):
         with multiprocessing.Pool() as p:
             for j in tqdm.tqdm(
-                                [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'ecc':pp['ecc'][i], 'use_mode_lm':k, 'anomaly': pp['anomaly'][i]}))]
+                                [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'chi1x':pp['chi1x'][i], 'chi1y':pp['chi1y'][i], 'chi2x':pp['chi2x'][i], 'chi2y':pp['chi2y'][i], 'ecc':pp['ecc'][i], 'use_mode_lm':k, 'anomaly': pp['anomaly'][i]}))]
                                                for i in range(N)]
                                 ):
                 j[1].get()
@@ -282,7 +282,7 @@ def TestParspaceBBH(precessing, eccentric):
     else:
         with multiprocessing.Pool() as p:
             for j in tqdm.tqdm(
-                                [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'use_mode_lm':k}))]
+                                [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'chi1x':pp['chi1x'][i], 'chi1y':pp['chi1y'][i], 'chi2x':pp['chi2x'][i], 'chi2y':pp['chi2y'][i], 'use_mode_lm':k}))]
                                                for i in range(N)]
                                 ):
                 j[1].get()
@@ -318,7 +318,7 @@ def TestParspaceHyp(precessing):
     print("...run")
     with multiprocessing.Pool() as p:
         for j in tqdm.tqdm(
-                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'H_hyp':pp['E0'][i], 'j_hyp':pp['L0'][i], 'r_hyp':r0, 'use_mode_lm':k}))]
+                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., 0.,{'chi1x':pp['chi1x'][i], 'chi1y':pp['chi1y'][i], 'chi2x':pp['chi2x'][i], 'chi2y':pp['chi2y'][i], 'H_hyp':pp['E0'][i], 'j_hyp':pp['L0'][i], 'r_hyp':r0, 'use_mode_lm':k}))]
                                            for i in range(N)]
                             ):
             j[1].get()
@@ -354,7 +354,7 @@ def TestParspaceBNS(precessing):
     print("...run")
     with multiprocessing.Pool() as p:
         for j in tqdm.tqdm(
-                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], pp['LambdaAl2'][i], pp['LambdaBl2'][i],{'ecc':1e-8, 'use_mode_lm':k}, True))]
+                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], pp['LambdaAl2'][i], pp['LambdaBl2'][i],{'chi1x':pp['chi1x'][i], 'chi1y':pp['chi1y'][i], 'chi2x':pp['chi2x'][i], 'chi2y':pp['chi2y'][i], 'ecc':1e-8, 'use_mode_lm':k}, True))]
                                            for i in range(N)]
                             ):
             j[1].get()
@@ -390,7 +390,7 @@ def TestParspaceBHNS(precessing):
     print("...run")
     with multiprocessing.Pool() as p:
         for j in tqdm.tqdm(
-                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., pp['LambdaBl2'][i],{'ecc':1e-8, 'use_mode_lm':k}))]
+                            [[i, p.apply_async(utils.gen_wf, (pp['m1'][i],pp['m2'][i], pp['chi1z'][i],pp['chi2z'][i], 0., pp['LambdaBl2'][i],{'chi1x':pp['chi1x'][i], 'chi1y':pp['chi1y'][i], 'chi2x':pp['chi2x'][i], 'chi2y':pp['chi2y'][i], 'ecc':1e-8, 'use_mode_lm':k}))]
                                            for i in range(N)]
                             ):
             j[1].get()
@@ -463,6 +463,7 @@ def PlotSPAWF():
     # parameter dictionaries
     part     = utils.CreateDict(M, q, chiA, chiB, lambda1=400, lambda2=400, iota=np.pi/2.5, f0=f0, srate=4096., df=0., interp="yes",  domain=0,  modes=[1], coa=np.pi/4, argout="yes")
     parf     = utils.CreateDict(M, q, chiA, chiB, lambda1=400, lambda2=400, iota=np.pi/2.5, f0=f0, srate=4096., df=df, interp="yes" ,  domain=1, modes=[1], coa=np.pi/4, argout="yes")
+    parf['model'] = 'Giotto'
     
     # Gen TD wf
     t,hpt,hct,hlm,_= EOB.EOBRunPy(part)
