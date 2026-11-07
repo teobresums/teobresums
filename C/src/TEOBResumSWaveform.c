@@ -6968,6 +6968,78 @@ void eob_output_nqc_coefs(int *kmask, double ai[][3], double bi[][3])
 }
 
 /**
+ * Function: eob_nqc_times
+ * -----------------------
+ *   Merger time tmrg and NQC time t_NQC of each mode, in M.
+ *   The (2,2) merges at tOmg_pk - DeltaT_nqc - 2, the other modes eob_nqc_deltat_lm later,
+ *   the modes in knqcpeak22 together with the (2,2). The NQC point is 2 M after tmrg, or at
+ *   tmrg for the modes in knqcpeak22. The ringdown template starts at tmrg, attached at t_NQC.
+ *
+ *   @param[in]  dyn   : dynamics, with tOmg_pk
+ *   @param[out] tmrg  : merger time per mode, or NULL
+ *   @param[out] t_NQC : NQC time per mode, or NULL
+ *
+ *   @return tNQC = tOmg_pk - DeltaT_nqc, the NQC time of the (2,2)
+ */
+double eob_nqc_times(Dynamics *dyn, double *tmrg, double *t_NQC)
+{
+  const double DeltaT_nqc = eob_nqc_timeshift(EOBPars->nu, EOBPars->chi1);
+  const double tNQC = dyn->tOmg_pk - DeltaT_nqc;
+
+  int modesatpeak22[KMAX];
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+
+  double dtmrg[KMAX];
+  eob_nqc_deltat_lm(dtmrg);
+
+  const double tmrg22 = tNQC - 2.;
+  for (int k=0; k<KMAX; k++) {
+    const double tk = modesatpeak22[k] ? tmrg22 : tmrg22 + dtmrg[k];
+    if (tmrg != NULL)  tmrg[k]  = tk;
+    if (t_NQC != NULL) t_NQC[k] = modesatpeak22[k] ? tmrg22 : tk + 2.;
+  }
+
+  return tNQC;
+}
+
+/**
+ * Function: eob_apply_nqc_full
+ * ----------------------------
+ *   Apply the NQC with coefficients ai, bi to the full waveform and write the coefficients.
+ *   The basis is rebuilt on the full dynamics, with the same n3, n6 as the merger basis,
+ *   and gets the sigmoid only if t_match is not NULL.
+ *
+ *   @param[in]     dyn       : full dynamics
+ *   @param[in,out] hlm       : full waveform
+ *   @param[in]     kmask     : modes to correct
+ *   @param[in]     nqc_basis : per-mode changes of the basis (NQC_BASIS_*)
+ *   @param[in]     n2_22     : (2,2) with n2 = pr*^2 n1
+ *   @param[in]     t0, alpha, t_match : sigmoid, t_match NULL for none
+ *   @param[in]     ai, bi    : NQC coefficients
+ *
+ *   @return OK, or ERROR_OUTOFMEM
+ */
+int eob_apply_nqc_full(Dynamics *dyn, Waveform_lm *hlm, int *kmask, int nqc_basis, int n2_22,
+                       double t0, double alpha, double *t_match, double ai[][3], double bi[][3])
+{
+  NQCbasis *b = NQC->basis;
+  const int n36 = b->n36;
+
+  NQCbasis_free(b);
+  int status = NQCbasis_alloc(b, kmask, hlm->size, n36, 0);
+  if (status != OK) return status;
+
+  eob_set_nqc_basis(b, kmask, dyn->data[EOB_RAD], dyn->data[EOB_MOMG], dyn->data[EOB_PRSTAR], dyn->data[EOB_DDOTR],
+                    nqc_basis, n2_22);
+  if (t_match != NULL) eob_nqc_basis_sigmoid(b, kmask, hlm->time, t0, alpha, t_match);
+
+  eob_apply_nqc(hlm, kmask, ai, bi, NULL);
+  eob_output_nqc_coefs(kmask, ai, bi);
+
+  return OK;
+}
+
+/**
  * Function: eob_wav_hlmNQC_find_a1a2a3
  * ------------------------------------
  *   Computes the factors and the coefficients that build the
@@ -7288,11 +7360,7 @@ int eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
 */
 int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
-{  
-	  
-  const double nu   = EOBPars->nu;
-  const double chi1 = EOBPars->chi1;
-    
+{
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
@@ -7332,10 +7400,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   /** NR values at the NQC point */
   eob_set_nqc_point(dyn, NQC_POINT_HM, max_A, max_dA, NULL, max_omg, max_domg, NULL);
 
-  /* modes whose NQC point is at the (2,2) peak */
-  int modesatpeak22[KMAX];
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-
   /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
@@ -7351,32 +7415,13 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   fclose(fp_dbg);
 #endif    
       
-  /** Peak of Omega from dynamics */
-  const double tOmgOrb_pk = dyn->tOmg_pk;
-  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tNQC = tOmgOrb_pk - DeltaT_nqc;
-
+  /** NQC time of each mode */
+  double t_NQC[KMAX];
+  const double tNQC = eob_nqc_times(dyn, NULL, t_NQC);
   if (VERBOSE) {
     printf("NQC info:\n");
-    PRFORMd("DeltaT_tNQC",DeltaT_nqc);
+    PRFORMd("DeltaT_tNQC",eob_nqc_timeshift(EOBPars->nu, EOBPars->chi1));
     PRFORMd("tNQC[bare]",tNQC);
-  }
-
-  /** Index of the NQC point, per mode */
-  double tmrg[KMAX];
-  tmrg[1] = tNQC - 2.;
-  
-  double dtmrg[KMAX];
-  double t_NQC[KMAX];
-
-  eob_nqc_deltat_lm(dtmrg);
-  
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){
-      tmrg[k]  = tmrg[1] + dtmrg[k];
-      t_NQC[k] = tmrg[k] + 2.;
-      if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
-    }
   }
   
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
@@ -7411,24 +7456,9 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   /** Apply the NQC to the merger waveform */
   eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
-  /** Apply the NQC to the full waveform, with the basis on its grid */
-  r       = dyn->data[EOB_RAD];
-  w       = dyn->data[EOB_MOMG]; /* Omega */
-  pr_star = dyn->data[EOB_PRSTAR];
-  ddotr   = dyn->data[EOB_DDOTR];
-
-  NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, hlm->size, 0, 0);
-  if (status != OK) goto FREE_MEM;
-
-  eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
-
-  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
-  eob_nqc_basis_sigmoid(nqcb, hlm->kmask_nqc, hlm->time, t0, alpha, t_match);
-  
-  eob_apply_nqc(hlm, hlm->kmask_nqc, ai, bi, NULL);
-
-  eob_output_nqc_coefs(hlm->kmask_nqc, ai, bi);
+  /** Apply the NQC to the full waveform */
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3),
+                              t0, alpha, t_match, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -7460,11 +7490,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
 */
 int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
-{  
-	  
-  const double nu   = EOBPars->nu;
-  const double chi1 = EOBPars->chi1;
-    
+{
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
@@ -7521,34 +7547,13 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   fclose(fp_dbg);
 #endif    
       
-  /** Peak of Omega from dynamics */
-  const double tOmgOrb_pk = dyn->tOmg_pk;
-  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tNQC = tOmgOrb_pk - DeltaT_nqc;
-
+  /** NQC time of each mode */
+  double t_NQC[KMAX];
+  const double tNQC = eob_nqc_times(dyn, NULL, t_NQC);
   if (VERBOSE) {
     printf("NQC info:\n");
-    PRFORMd("DeltaT_tNQC",DeltaT_nqc);
+    PRFORMd("DeltaT_tNQC",eob_nqc_timeshift(EOBPars->nu, EOBPars->chi1));
     PRFORMd("tNQC[bare]",tNQC);
-  }
-
-  /** Index of the NQC point, per mode */
-  double tmrg[KMAX];
-  tmrg[1] = tNQC - 2.;
-  
-  double dtmrg[KMAX];
-  double t_NQC[KMAX];
-
-  int modesatpeak22[KMAX]; 
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);  
-  eob_nqc_deltat_lm(dtmrg);
-  
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){
-      tmrg[k]  = tmrg[1] + dtmrg[k];
-      t_NQC[k] = tmrg[k] + 2.;
-      if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
-    }
   }
   
   /* Defining sigmoid function to switch on NQCs near the end of the evolution */
@@ -7583,24 +7588,9 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   /** Apply the NQC to the merger waveform */
   eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
-  /** Apply the NQC to the full waveform, with the basis on its grid */
-  r       = dyn->data[EOB_RAD];
-  w       = dyn->data[EOB_MOMG]; /* Omega */
-  pr_star = dyn->data[EOB_PRSTAR];
-  ddotr   = dyn->data[EOB_DDOTR];
-
-  NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, hlm->size, 1, 0);
-  if (status != OK) goto FREE_MEM;
-
-  eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3));
-
-  /* Defining sigmoid function to switch on NQCs near the end of the evolution */
-  eob_nqc_basis_sigmoid(nqcb, hlm->kmask_nqc, hlm->time, t0, alpha, t_match);
-  
-  eob_apply_nqc(hlm, hlm->kmask_nqc, ai, bi, NULL);
-
-  eob_output_nqc_coefs(hlm->kmask_nqc, ai, bi);
+  /** Apply the NQC to the full waveform */
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_DALI, (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3),
+                              t0, alpha, t_match, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -7634,10 +7624,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
 int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm)
 {
-	  
-  const double nu   = EOBPars->nu;
-  const double chi1 = EOBPars->chi1;
-    
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
@@ -7677,10 +7663,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   /** NR values at the NQC point */
   eob_set_nqc_point(dyn, NQC_POINT_HM, max_A, max_dA, NULL, max_omg, max_domg, NULL);
 
-  /* modes whose NQC point is at the (2,2) peak */
-  int modesatpeak22[KMAX];
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-
   /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
@@ -7707,33 +7689,13 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   fclose(fp_dbg);
 #endif    
 
-  /** Peak of Omega from dynamics */
-  const double tOmgOrb_pk = dyn->tOmg_pk;
-  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tNQC = tOmgOrb_pk - DeltaT_nqc;
-
+  /** NQC time of each mode */
+  double t_NQC[KMAX];
+  const double tNQC = eob_nqc_times(dyn, NULL, t_NQC);
   if (VERBOSE) {
     printf("NQC info:\n");
-    PRFORMd("DeltaT_tNQC",DeltaT_nqc);
+    PRFORMd("DeltaT_tNQC",eob_nqc_timeshift(EOBPars->nu, EOBPars->chi1));
     PRFORMd("tNQC[bare]",tNQC);
-  }
-
-  /** Index of the NQC point, per mode */
-  double tmrg[KMAX];
-  tmrg[1] = tNQC - 2.;
-  
-  double dtmrg[KMAX];
-  double t_NQC[KMAX];
-
-  eob_nqc_deltat_lm(dtmrg);
-
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){
-      tmrg[k]  = tmrg[1] + dtmrg[k];
-      t_NQC[k] = tmrg[k] + 2.;
-
-      if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
-    }
   }
 
   /** Solve the linear systems */
@@ -7745,21 +7707,9 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   /** Apply the NQC to the merger waveform */
   eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
-  /** Apply the NQC to the full waveform, with the basis on its grid */
-  r       = dyn->data[EOB_RAD];
-  w       = dyn->data[EOB_MOMG]; /* Omega */
-  pr_star = dyn->data[EOB_PRSTAR];
-  ddotr   = dyn->data[EOB_DDOTR];
-
-  NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, hlm->size, 0, 0);
-  if (status != OK) goto FREE_MEM;
-
-  eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0);
-
-  eob_apply_nqc(hlm, hlm->kmask_nqc, ai, bi, NULL);
-
-  eob_output_nqc_coefs(hlm->kmask_nqc, ai, bi);
+  /** Apply the NQC to the full waveform */
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_GIOTTO, 0,
+                              0., 0., NULL, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -7793,10 +7743,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
 				       Dynamics *dyn, Waveform_lm *hlm)
 {
   double A_tmp, dA_tmp, omg_tmp, domg_tmp;
-	  
-  const double nu   = EOBPars->nu;
-  const double chi1 = EOBPars->chi1;
-    
+
   double *t       = hlm_mrg->time;
   double *r       = dyn_mrg->data[EOB_RAD];
   double *w       = dyn_mrg->data[EOB_MOMG]; /* Omega */
@@ -7927,14 +7874,11 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   fclose(fp_dbg);
 #endif    
 
-  /** Peak of Omega from dynamics */
-  const double tOmgOrb_pk = dyn->tOmg_pk;
-  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tNQC = tOmgOrb_pk - DeltaT_nqc;
-
+  /** NQC time of the (2,2) */
+  const double tNQC = eob_nqc_times(dyn, NULL, NULL);
   if (VERBOSE) {
     printf("NQC info:\n");
-    PRFORMd("DeltaT_tNQC",DeltaT_nqc);
+    PRFORMd("DeltaT_tNQC",eob_nqc_timeshift(EOBPars->nu, EOBPars->chi1));
     PRFORMd("tNQC[bare]",tNQC);
   }
 
@@ -7949,21 +7893,9 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_22(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, W
   /** Apply the NQC to the merger waveform */
   eob_apply_nqc(hlm_mrg, kmask_22, ai, bi, hnqc);
 
-  /** Apply the NQC to the full waveform, with the basis on its grid */
-  r       = dyn->data[EOB_RAD];
-  w       = dyn->data[EOB_MOMG]; /* Omega */
-  pr_star = dyn->data[EOB_PRSTAR];
-  ddotr   = dyn->data[EOB_DDOTR];
-
-  NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, kmask_22, hlm->size, 0, 0);
-  if (status != OK) goto FREE_MEM;
-
-  eob_set_nqc_basis(nqcb, kmask_22, r, w, pr_star, ddotr, NQC_BASIS_PLAIN, 0);
-
-  eob_apply_nqc(hlm, kmask_22, ai, bi, NULL);
-
-  eob_output_nqc_coefs(kmask_22, ai, bi);
+  /** Apply the NQC to the full waveform */
+  status = eob_apply_nqc_full(dyn, hlm, kmask_22, NQC_BASIS_PLAIN, 0,
+                              0., 0., NULL, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -8528,32 +8460,22 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     PRFORMd("ringdown_tOmg_pk_Mbh",tOmg_pk);   /* units of the final black-hole mass */
   }
 
-  /** Merger time t_max(A22) */
-  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tmrg[KMAX], tmatch[KMAX], dtmrg[KMAX];
- 
-  /* nonspinning case */
-  double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
+  /** Merger and NQC time of each mode, in M */
+  double tmrg[KMAX], t_NQC[KMAX], tmatch[KMAX];
+  eob_nqc_times(dyn, tmrg, t_NQC);
+
+  const double tmrgA22 = tmrg[1]*ooMbh;
   if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
   if (tmrgA22 < 0.0) {
     if (DEBUG) printf("ERROR: the A22 peak time is negative, dynamics is too short\n");
     return 1;
   }
-  
-  /* The following values are the difference between the time of the peak of
-     the 22 waveform and the other modes. 
-     For modes in knqcpeak22 we impose tmrg[k] = tmrg[1], to attach the ringdown there
-  */
-  int modesatpeak22[KMAX]; 
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-  eob_nqc_deltat_lm(dtmrg);
-  for (int k=0; k<KMAX; k++) {
-    tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
-    if (modesatpeak22[k]) tmrg[k] = tmrgA22;
-  }	  
 
-  /** The ringdown template starts at tmrg, the time also used by the NQC */
-  for (int k = 0; k < KMAX; k++) tmatch[k] = tmrg[k];
+  int modesatpeak22[KMAX];
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+
+  /** The ringdown template starts at tmrg, in units of Mbh */
+  for (int k = 0; k < KMAX; k++) tmatch[k] = tmrg[k]*ooMbh;
   
   /** Compute QNM */
   double sigma[2][KMAX];
@@ -8588,10 +8510,9 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     double fact = 1.; // this is set to 1/Mbh below for the modes attached at the peak of the (2,2)
     if(hlm->kmask[k]){
 
-      /* Ringdown attached at the first sample at or after the NQC point,
-         which is tmrg + 2 M, or tmrg for the modes at the (2,2) peak */
-      const double t_nqc = tmrg[k]*Mbh + (modesatpeak22[k] ? 0. : 2.);
-      index_rng = find_point_bisection(t_nqc - 1.e-8, size, t, 1) + 1;
+      /* Ringdown attached at the first sample at or after the NQC point. Shift by 1e-8 so that
+         a sample equal to t_NQC up to roundoff counts as the NQC point, not as the one before */
+      index_rng = find_point_bisection(t_NQC[k] - 1.e-8, size, t, 1) + 1;
       if (modesatpeak22[k]) fact = ooMbh;
       if (index_rng > dynsize -1) index_rng = dynsize - 1;
       
@@ -10605,10 +10526,6 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   /** NR values at the NQC point */
   eob_set_nqc_point(dyn, NQC_POINT_BHNS, max_A, max_dA, NULL, max_omg, max_domg, NULL);
 
-  /* modes whose NQC point is at the (2,2) peak */
-  int modesatpeak22[KMAX];
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-
   /** NQC corrections to AMPLITUDE (n1,n2,n3) and PHASE (n4,n5,n6)
    * NQC basis for (2,2) waveform : AMPLITUDE
    * note: n3 and n6 are not used
@@ -10635,33 +10552,13 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   fclose(fp_dbg);
 #endif    
 
-  /** Peak of Omega from dynamics */
-  const double tOmgOrb_pk = dyn->tOmg_pk;
-  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tNQC = tOmgOrb_pk - DeltaT_nqc;
-
+  /** NQC time of each mode */
+  double t_NQC[KMAX];
+  const double tNQC = eob_nqc_times(dyn, NULL, t_NQC);
   if (VERBOSE) {
     printf("NQC info:\n");
-    PRFORMd("DeltaT_tNQC",DeltaT_nqc);
+    PRFORMd("DeltaT_tNQC",eob_nqc_timeshift(EOBPars->nu, EOBPars->chi1));
     PRFORMd("tNQC[bare]",tNQC);
-  }
-
-  /** Index of the NQC point, per mode */
-  double tmrg[KMAX];
-  tmrg[1] = tNQC - 2.;
-  
-  double dtmrg[KMAX];
-  double t_NQC[KMAX];
-
-  eob_nqc_deltat_lm(dtmrg);
-  
-  for (int k=0; k<KMAX; k++) {   
-    if(hlm_mrg->kmask_nqc[k]){
-      tmrg[k]  = tmrg[1] + dtmrg[k];
-      t_NQC[k] = tmrg[k] + 2.;
-
-      if(modesatpeak22[k]) t_NQC[k] = tmrg[1];
-    }
   }
   
   /** Solve the linear systems */
@@ -10692,21 +10589,9 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
   /** Apply the NQC to the merger waveform */
   eob_apply_nqc(hlm_mrg, hlm_mrg->kmask_nqc, ai, bi, hnqc);
 
-  /** Apply the NQC to the full waveform, with the basis on its grid */
-  r       = dyn->data[EOB_RAD];
-  w       = dyn->data[EOB_MOMG]; /* Omega */
-  pr_star = dyn->data[EOB_PRSTAR];
-  ddotr   = dyn->data[EOB_DDOTR];
-
-  NQCbasis_free(nqcb);
-  status = NQCbasis_alloc(nqcb, hlm_mrg->kmask, hlm->size, 0, 0);
-  if (status != OK) goto FREE_MEM;
-
-  eob_set_nqc_basis(nqcb, hlm->kmask_nqc, r, w, pr_star, ddotr, NQC_BASIS_GIOTTO, 0);
-
-  eob_apply_nqc(hlm, hlm->kmask_nqc, ai, bi, NULL);
-
-  eob_output_nqc_coefs(hlm->kmask_nqc, ai, bi);
+  /** Apply the NQC to the full waveform */
+  status = eob_apply_nqc_full(dyn, hlm, hlm->kmask_nqc, NQC_BASIS_GIOTTO, 0,
+                              0., 0., NULL, ai, bi);
   
  FREE_MEM:
   /** Free mem */
@@ -10794,28 +10679,18 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     PRFORMd("ringdown_tOmg_pk_Mbh",tOmg_pk);   /* units of the final black-hole mass */
   }
 
-  /** Merger time t_max(A22) */
-  double DeltaT_nqc = eob_nqc_timeshift(nu, chi1);
-  double tmrg[KMAX], tmatch[KMAX], dtmrg[KMAX];
- 
-  /* nonspinning case */
-  double tmrgA22 = tOmg_pk-(DeltaT_nqc + 2.)/Mbh;
-  if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
-  
-  /* The following values are the difference between the time of the peak of
-     the 22 waveform and the other modes. 
-     For modes in knqcpeak22 we impose tmrg[k] = tmrg[1], to attach the ringdown there
-  */
-  int modesatpeak22[KMAX]; 
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-  eob_nqc_deltat_lm(dtmrg);
-  for (int k=0; k<KMAX; k++) {
-    tmrg[k] = tmrgA22 + dtmrg[k]/Mbh;
-    if (modesatpeak22[k]) tmrg[k] = tmrgA22;
-  }	  
+  /** Merger and NQC time of each mode, in M */
+  double tmrg[KMAX], t_NQC[KMAX], tmatch[KMAX];
+  eob_nqc_times(dyn, tmrg, t_NQC);
 
-  /** The ringdown template starts at tmrg, the time also used by the NQC */
-  for (int k = 0; k < KMAX; k++) tmatch[k] = tmrg[k];
+  const double tmrgA22 = tmrg[1]*ooMbh;
+  if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrgA22);
+
+  int modesatpeak22[KMAX];
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+
+  /** The ringdown template starts at tmrg, in units of Mbh */
+  for (int k = 0; k < KMAX; k++) tmatch[k] = tmrg[k]*ooMbh;
   
   /** Compute QNM */
   double sigma[2][KMAX];
@@ -10881,10 +10756,9 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     double fact = 1.; // this is set to 1/Mbh below for the modes attached at the peak of the (2,2)
     if(hlm->kmask[k]){
 
-      /* Ringdown attached at the first sample at or after the NQC point,
-         which is tmrg + 2 M, or tmrg for the modes at the (2,2) peak */
-      const double t_nqc = tmrg[k]*Mbh + (modesatpeak22[k] ? 0. : 2.);
-      index_rng = find_point_bisection(t_nqc - 1.e-8, size, t, 1) + 1;
+      /* Ringdown attached at the first sample at or after the NQC point. Shift by 1e-8 so that
+         a sample equal to t_NQC up to roundoff counts as the NQC point, not as the one before */
+      index_rng = find_point_bisection(t_NQC[k] - 1.e-8, size, t, 1) + 1;
       if (modesatpeak22[k]) fact = ooMbh;
       if (index_rng > dynsize -1) index_rng = dynsize - 1;
       
