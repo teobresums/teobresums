@@ -539,7 +539,7 @@ typedef struct tagNQCbasis
 {
   int size;             /**< number of time samples */
   int n36;              /**< n3, n6 allocated (three-condition NQC) */
-  int nder;             /**< time derivatives allocated: 0, 2 or 3 */
+  int nder;             /**< time derivatives allocated, 0, 2 or 3 */
   double *n[6][KMAX];   /**< n[0..5][k] = n1..n6 of mode k */
   double *dn[6][KMAX];  /**< first time derivatives, phase basis only (dn[3..5]) */
   double *d2n[6][KMAX]; /**< second time derivatives, phase basis only */
@@ -584,15 +584,15 @@ enum{
 };
 static const char* const nqc_hlm_opt[] = {"none", "nrfit_nospin201602", "nrfit_spin202002", "fromfile", "compute"};
 
-/** NQC basis: per-mode changes on top of n1, n2, n4, n5 (eob_set_nqc_basis) */
+/** Per-mode changes to the NQC basis n1, n2, n4, n5 (eob_set_nqc_basis) */
 enum{
   NQC_BASIS_PLAIN,  /**< no per-mode change */
-  NQC_BASIS_GIOTTO, /**< (2,1): n2, n5 times Omg^(2/3); l>=3: n5 times Omg^(2/3) */
+  NQC_BASIS_GIOTTO, /**< n2 and n5 of (2,1), and n5 of l>=3, times Omg^(2/3) */
   NQC_BASIS_DALI,   /**< as GIOTTO, l>=3 only if a spin is not positive; plus n2 of (3,2), (4,2), (4,3) */
   NQC_BASIS_NOPT    /**< number of NQC basis options */
 };
 
-/** NR values at the NQC point: which fits (eob_set_nqc_point) */
+/** Fits for the NR values at the NQC point (eob_set_nqc_point) */
 enum{
   NQC_POINT_22,     /**< (2,2) only, eob_nqc_point */
   NQC_POINT_HM,     /**< higher modes, template coefficients at the (2,2) peak for knqcpeak22 */

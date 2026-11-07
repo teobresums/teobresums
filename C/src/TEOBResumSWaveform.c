@@ -6463,7 +6463,7 @@ void eob_wav_hlmTidal(double x, Dynamics *dyn, double *hTidallm)
 /**
  * Function: eob_set_nqc_basis
  * ---------------------------
- *   NQC basis functions on a time grid, for the modes in kmask:
+ *   NQC basis functions on a time grid, for the modes in kmask.
  *   n1 = [pr*\/(r Omg)]^2, n2 = ddot{r}/(r Omg^2) for the amplitude,
  *   n4 = pr*\/(r Omg), n5 = n4 (r Omg)^2 for the phase,
  *   then the per-mode changes chosen by nqc_basis (NQC_BASIS_*).
@@ -6604,7 +6604,7 @@ void eob_nqc_basis_derivatives(NQCbasis *b, int *kmask, double dt, int use_D2)
 /**
  * Function: eob_set_nqc_point
  * ---------------------------
- *   NR values at the NQC point, per mode: amplitude, frequency and their time derivatives.
+ *   NR amplitude, frequency and their time derivatives at the NQC point, per mode.
  *   From the fits chosen by nqc_point (NQC_POINT_*), then the user values (Alm_nqc, ...)
  *   and the deviations (delta_*lm_nqc), the latter not for NQC_POINT_HM_D2.
  *   d2A and d2omg only for NQC_POINT_HM_D2, otherwise NULL.
@@ -6656,7 +6656,7 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
     } else {
       QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
                          c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi, alpha1, omega1);
-      /* modes in knqcpeak22: template coefficients at the (2,2) peak */
+      /* modes in knqcpeak22 take the template coefficients at the (2,2) peak */
       if (nqc_point == NQC_POINT_HM)
         QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
                                      c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi, alpha1, omega1);
@@ -6664,7 +6664,7 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
       eob_nqc_point_HM_peak22(dyn, A, dA, omg, domg);
     }
 
-    /* modes in kpostpeak: values read off the ringdown template, at its start
+    /* modes in kpostpeak take the values read off the ringdown template, at its start
        (tau = 0) for the modes attached at the (2,2) peak, 2 M later otherwise */
     int modesatpeak22[KMAX];
     set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
@@ -6758,7 +6758,7 @@ int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j
   const int size  = h->size;
   const double dt = h->time[1] - h->time[0];
 
-  /* one mode at a time: p[i] is the i-th derivative of the amplitude,
+  /* one mode at a time, p[i] is the i-th derivative of the amplitude and
      m[i][c] the i-th derivative of the basis function n_(c+1) times the amplitude */
   double *work = (double*) calloc (12*size, sizeof(double));
   if (work == NULL) return ERROR_OUTOFMEM;
@@ -6802,7 +6802,7 @@ int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j
     }
 #endif
 
-    /* NQC point: a sample, or an exact time in between samples */
+    /* the NQC point is a sample, or an exact time in between samples */
     int j = (t_NQC == NULL) ? j_NQC[k] : size-1;
     int i0 = -1;
     double tk = 0., om[6];
@@ -6811,10 +6811,15 @@ int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j
       if (tk > h->time[size-1]) {
         fprintf(stderr, "WARNING: NQC time of mode (%d,%d) is %.2f M after the end of the dynamics; NQC imposed at the last sample\n",
                 LINDEX[k], MINDEX[k], tk - h->time[size-1]);
+      } else if (tk < h->time[0]) {
+        j = 0;
+        fprintf(stderr, "WARNING: NQC time of mode (%d,%d) is %.2f M before the start of the merger grid; NQC imposed at the first sample\n",
+                LINDEX[k], MINDEX[k], h->time[0] - tk);
       } else {
         j = find_point_bisection(tk, size, h->time, 1);
         if (h->time[j+1] - tk < tk - h->time[j]) j++;
-        if (fabs(tk - h->time[j]) > 1e-10*dt) {
+        /* interpolate only off the samples, and only with the 6 points it needs */
+        if (fabs(tk - h->time[j]) > 1e-10*dt && size >= 6) {
           i0 = find_point_bisection(tk, size, h->time, 3);
           baryc_weights(6, &h->time[i0], om);
         }
@@ -7383,7 +7388,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, 
   double t0 = eob_wav_sigmoid_t0(dyn, tNQC, EOBPars->delta_t0_sigmoid_NQC); /* t_sep lives in the full dynamics */
   double alpha =EOBPars->alpha_sigmoid_NQC;
   double t_match[KMAX];
-  for (int k=0; k<KMAX; k++) if (hlm_mrg->kmask_nqc[k]) t_match[k] = MIN(t_NQC[k], t[size-1]);
+  for (int k=0; k<KMAX; k++) if (hlm_mrg->kmask_nqc[k]) t_match[k] = MAX(MIN(t_NQC[k], t[size-1]), t[0]);
   eob_nqc_basis_sigmoid(nqcb, hlm_mrg->kmask_nqc, t, t0, alpha, t_match);
 
   /** Derivatives for the phase */
@@ -7555,7 +7560,7 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
   double t0 = eob_wav_sigmoid_t0(dyn, tNQC, EOBPars->delta_t0_sigmoid_NQC); /* t_sep lives in the full dynamics */
   double alpha =EOBPars->alpha_sigmoid_NQC;
   double t_match[KMAX];
-  for (int k=0; k<KMAX; k++) if (hlm_mrg->kmask_nqc[k]) t_match[k] = MIN(t_NQC[k], t[size-1]);
+  for (int k=0; k<KMAX; k++) if (hlm_mrg->kmask_nqc[k]) t_match[k] = MAX(MIN(t_NQC[k], t[size-1]), t[0]);
   eob_nqc_basis_sigmoid(nqcb, hlm_mrg->kmask_nqc, t, t0, alpha, t_match);
 
   /** Derivatives for the phase */
@@ -8547,7 +8552,7 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     if (modesatpeak22[k]) tmrg[k] = tmrgA22;
   }	  
 
-  /** Postmerger-Ringdown matching time: the template starts at tmrg, as in the NQC */
+  /** The ringdown template starts at tmrg, the time also used by the NQC */
   for (int k = 0; k < KMAX; k++) tmatch[k] = tmrg[k];
   
   /** Compute QNM */
@@ -8583,8 +8588,8 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
     double fact = 1.; // this is set to 1/Mbh below for the modes attached at the peak of the (2,2)
     if(hlm->kmask[k]){
 
-      /* Ringdown attachment: first sample at or after the NQC point,
-         tmrg + 2 M, or tmrg for the modes at the (2,2) peak */
+      /* Ringdown attached at the first sample at or after the NQC point,
+         which is tmrg + 2 M, or tmrg for the modes at the (2,2) peak */
       const double t_nqc = tmrg[k]*Mbh + (modesatpeak22[k] ? 0. : 2.);
       index_rng = find_point_bisection(t_nqc - 1.e-8, size, t, 1) + 1;
       if (modesatpeak22[k]) fact = ooMbh;
@@ -8597,8 +8602,7 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
       
       Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
       
-      /* Compute and attach ringdown from index_rng, where the phase is matched;
-         starting one sample earlier overwrote an inspiral sample and left a kink */
+      /* Compute and attach ringdown from index_rng, where the phase is matched */
       for (int j = index_rng; j < size ; j++ ) {
         tm  = t_lm[k][j] - tmatch[k];
         tm /= fact;
@@ -10810,7 +10814,7 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     if (modesatpeak22[k]) tmrg[k] = tmrgA22;
   }	  
 
-  /** Postmerger-Ringdown matching time: the template starts at tmrg, as in the NQC */
+  /** The ringdown template starts at tmrg, the time also used by the NQC */
   for (int k = 0; k < KMAX; k++) tmatch[k] = tmrg[k];
   
   /** Compute QNM */
@@ -10877,8 +10881,8 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     double fact = 1.; // this is set to 1/Mbh below for the modes attached at the peak of the (2,2)
     if(hlm->kmask[k]){
 
-      /* Ringdown attachment: first sample at or after the NQC point,
-         tmrg + 2 M, or tmrg for the modes at the (2,2) peak */
+      /* Ringdown attached at the first sample at or after the NQC point,
+         which is tmrg + 2 M, or tmrg for the modes at the (2,2) peak */
       const double t_nqc = tmrg[k]*Mbh + (modesatpeak22[k] ? 0. : 2.);
       index_rng = find_point_bisection(t_nqc - 1.e-8, size, t, 1) + 1;
       if (modesatpeak22[k]) fact = ooMbh;
@@ -10894,8 +10898,7 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
       }
       Deltaphi[k] = psi[1] - hlm->phase[k][index_rng];
      
-      /* Compute and attach ringdown from index_rng, where the phase is matched;
-         starting one sample earlier overwrote an inspiral sample and left a kink */
+      /* Compute and attach ringdown from index_rng, where the phase is matched */
       for (int j = index_rng; j < size ; j++ ) {
 	      tm = t_lm[k][j] - tmatch[k];
         tm /= fact;

@@ -3718,8 +3718,8 @@ void NQCdata_free (NQCdata *nqc)
 /**
  * Function: NQCbasis_alloc
  * ------------------------
- *   Allocate the NQC basis on a time grid of size samples, for the modes in kmask (all if NULL):
- *   n1, n2, n4, n5, plus n3, n6 if n36; and for the phase basis the first and second
+ *   Allocate the NQC basis on a time grid of size samples, for the modes in kmask (all if NULL).
+ *   n1, n2, n4, n5, plus n3, n6 if n36, and for the phase basis the first and second
  *   time derivatives if nder >= 2, the third if nder >= 3.
  *
  *   @param[in,out] b     : basis, must be empty (NQCbasis_free)
@@ -3824,6 +3824,9 @@ void lal_tetrad_conventions(Waveform *hpc)
 double time_shift_mrg_to_0(Waveform_lm *hlm, double tOmg_pk)
 {
   double *t = hlm->time;
+
+  /* run stopped before merger, so there is no tOmg_pk and tc is the second-to-last sample */
+  if (tOmg_pk <= t[0] || tOmg_pk > t[hlm->size-1]) return t[hlm->size-2];
 
   /* highest sample of A in the window */
   int imrg = -1;
