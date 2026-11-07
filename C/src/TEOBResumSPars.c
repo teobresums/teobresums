@@ -47,9 +47,10 @@ void (*eob_wav_flm_s)();
 void (*eob_wav_deltalm)();
 void (*eob_wav_deltalm_nc)();
 void (*eob_wav_hathlm_nc)();
-void (*eob_wav_hlmNQC_find_a1a2a3)();
-void (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
+int (*eob_wav_hlmNQC_find_a1a2a3)();
+int (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 int (*eob_wav_ringdown)();
+void (*p_eob_wav_ringdown_template)();
 double (*eob_nqc_timeshift)();
 void (*eob_nqc_deltat_lm)();
 void (*eob_dyn_s_get_rc)();
@@ -1568,6 +1569,10 @@ int eob_set_params(int default_choice, int firstcall)
     eob_nqc_timeshift = &eob_nqc_timeshift_bbh;
     eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bbh;
   }
+  if (EOBPars->binary == BINARY_BHNS_TD)
+    p_eob_wav_ringdown_template = &eob_wav_ringdown_template_td;
+  else
+    p_eob_wav_ringdown_template = &eob_wav_ringdown_template;
 
   /* Set metric potentials function pointers */
   if (EOBPars->A_pot == A_5PNlog) {

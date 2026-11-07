@@ -1096,12 +1096,14 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if (output) {
       if (system_mkdir(EOBPars->output_dir)) {
         PyErr_SetString(PyExc_SystemError, eob_error_msg[ERROR_MKDIR]);
+        EOBParameters_free (EOBPars);
         return NULL;
       }
     }
 
   if(eob_set_params(default_choice, fc)) {
     PyErr_SetString(PyExc_ValueError, eob_error_msg[ERROR_SET_PARAMS]);
+    EOBParameters_free (EOBPars);
     return NULL;
   }
 
@@ -1159,6 +1161,16 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   if (status) {
     PyErr_SetString(PyExc_RuntimeError, eob_error_msg[status]);
+    Waveform_free (hpc);
+    WaveformFD_free (hfpc);
+    Waveform_lm_free (hmodes);
+    Waveform_lm_free (hTmodes);
+    Waveform_lm_free (hTmmodes);
+    Waveform_lm_free (hT0modes);
+    WaveformFD_lm_free (hfmodes);
+    WaveformFD_lm_free (hfTmodes);
+    EOBParameters_free (EOBPars);
+    Dynamics_free (dynf);
     return NULL;
   }
 

@@ -3679,18 +3679,21 @@ void Dynamics_set_params (Dynamics *dyn)
  *   Alloc memory for NQCdata
  * 
  *   @param[in,out] nqc: pointer to NQCdata
+ *   @return OK, or ERROR_OUTOFMEM (nothing left allocated, *nqc = NULL)
 */
-void NQCdata_alloc (NQCdata **nqc)
+int NQCdata_alloc (NQCdata **nqc)
 {
   *nqc = (NQCdata *) calloc(1, sizeof(NQCdata));
-  if (nqc == NULL)
-    errorexit("Out of memory");
-  (*nqc)->flx = (NQCcoefs *) calloc(1, sizeof(NQCcoefs));
-  if ((*nqc)->flx == NULL)
-    errorexit("Out of memory");
-  (*nqc)->hlm = (NQCcoefs *) calloc(1, sizeof(NQCcoefs)); 
-  if ((*nqc)->hlm == NULL)
-    errorexit("Out of memory");
+  if (*nqc == NULL) return ERROR_OUTOFMEM;
+  (*nqc)->flx   = (NQCcoefs *) calloc(1, sizeof(NQCcoefs));
+  (*nqc)->hlm   = (NQCcoefs *) calloc(1, sizeof(NQCcoefs));
+  (*nqc)->basis = (NQCbasis *) calloc(1, sizeof(NQCbasis));
+  if ((*nqc)->flx == NULL || (*nqc)->hlm == NULL || (*nqc)->basis == NULL) {
+    NQCdata_free (*nqc);
+    *nqc = NULL;
+    return ERROR_OUTOFMEM;
+  }
+  return OK;
 }
 
 /**
@@ -3705,7 +3708,85 @@ void NQCdata_free (NQCdata *nqc)
   if (!nqc) return;
   if (nqc->flx) free (nqc->flx);
   if (nqc->hlm) free (nqc->hlm);
+  if (nqc->basis) {
+    NQCbasis_free (nqc->basis);
+    free (nqc->basis);
+  }
   if (nqc)      free (nqc);
+}
+
+/**
+ * Function: NQCbasis_alloc
+ * ------------------------
+ *   Allocate the NQC basis on a time grid of size samples, for the modes in kmask (all if NULL).
+ *   n1, n2, n4, n5, plus n3, n6 if n36, and for the phase basis the first and second
+ *   time derivatives if nder >= 2, the third if nder >= 3.
+ *
+ *   @param[in,out] b     : basis, must be empty (NQCbasis_free)
+ *   @param[in]     kmask : modes
+ *   @param[in]     size  : time samples
+ *   @param[in]     n36   : also n3, n6
+ *   @param[in]     nder  : derivatives, 0, 2 or 3
+ *   @return OK, or ERROR_OUTOFMEM (basis left empty)
+*/
+int NQCbasis_alloc (NQCbasis *b, int *kmask, int size, int n36, int nder)
+{
+  b->size = size;
+  b->n36  = n36;
+  b->nder = nder;
+
+  for (int k=0; k<KMAX; k++) {
+    if (kmask != NULL && !kmask[k]) continue;
+
+    for (int i=0; i<6; i++) {
+
+      /* n3 and n6 (i = 2, 5) only for the three-condition NQC */
+      if ((i == 2 || i == 5) && !n36) continue;
+
+      b->n[i][k] = (double*) calloc (size, sizeof(double));
+      if (b->n[i][k] == NULL) goto FAIL;
+
+      /* time derivatives only for the phase basis n4, n5, n6 (i = 3, 4, 5) */
+      if (i < 3) continue;
+
+      if (nder >= 2) {
+        b->dn[i][k]  = (double*) calloc (size, sizeof(double));
+        b->d2n[i][k] = (double*) calloc (size, sizeof(double));
+        if (b->dn[i][k] == NULL || b->d2n[i][k] == NULL) goto FAIL;
+      }
+
+      if (nder >= 3) {
+        b->d3n[i][k] = (double*) calloc (size, sizeof(double));
+        if (b->d3n[i][k] == NULL) goto FAIL;
+      }
+    }
+  }
+
+  return OK;
+
+ FAIL:
+  NQCbasis_free (b);
+  return ERROR_OUTOFMEM;
+}
+
+/**
+ * Function: NQCbasis_free
+ * -----------------------
+ *   Free the NQC basis and leave it empty
+ *
+ *   @param[in,out] b : basis
+*/
+void NQCbasis_free (NQCbasis *b)
+{
+  for (int k=0; k<KMAX; k++) {
+    for (int i=0; i<6; i++) {
+      free (b->n[i][k]);   b->n[i][k]   = NULL;
+      free (b->dn[i][k]);  b->dn[i][k]  = NULL;
+      free (b->d2n[i][k]); b->d2n[i][k] = NULL;
+      free (b->d3n[i][k]); b->d3n[i][k] = NULL;
+    }
+  }
+  b->size = 0;
 }
   
 
@@ -3730,53 +3811,52 @@ void lal_tetrad_conventions(Waveform *hpc)
 /**
  * Function: time_shift_mrg_to_0
  * -----------------------------
- *   Find the time shift to move the merger to t=0
- *   Define "merger" as the last peak of
- *   Q = sqrt(A); A = sum_{ell, emm} |A_{ell,emm}|^2
- * 
- *   @param[in,out] hlm: pointer to coprecessing hlm  
+ *   Time of the peak of A = sum_{ell,emm} |h_{ell,emm}|^2, to move the merger to t=0.
+ *   Highest sample within [tOmg_pk - 100, tOmg_pk + 10], which
+ *   ringdown wiggles and the end of the dynamics cannot reach, then refined with find_max
+ *   on that sample and its two neighbours.
+ *
+ *   @param[in] hlm     : coprecessing hlm
+ *   @param[in] tOmg_pk : peak of the orbital frequency (dyn->tOmg_pk)
+ *
+ *   @return time of the peak of A
 */
-double time_shift_mrg_to_0(Waveform_lm *hlm)
+double time_shift_mrg_to_0(Waveform_lm *hlm, double tOmg_pk)
 {
-  int i, imrg;
-  double Q, Qmrg;
-  Qmrg  = 0;
-  imrg  = 0;
+  double *t = hlm->time;
 
-#if(0)
-  /* Scan the entire waveform */
-  for (i=0; i<hlm->size; i++){
-    Q = 0.;
-    for (int k=0; k<KMAX; k++){
-      if (hlm->kmask[k]) 
-        Q += hlm->ampli[k][i]*hlm->ampli[k][i];
+  /* run stopped before merger, so there is no tOmg_pk and tc is the second-to-last sample */
+  if (tOmg_pk <= t[0] || tOmg_pk > t[hlm->size-1]) return t[hlm->size-2];
 
-    if (Q > Qmrg){
-      Qmrg = Q;
+  /* highest sample of A in the window */
+  int imrg = -1;
+  double Amrg = -1.;
+  for (int i=1; i<hlm->size-1; i++) {
+    if (t[i] < tOmg_pk - 100. || t[i] > tOmg_pk + 10.) continue;
+
+    double A = 0.;
+    for (int k=0; k<KMAX; k++)
+      if (hlm->kmask[k]) A += hlm->ampli[k][i]*hlm->ampli[k][i];
+
+    if (A > Amrg) {
+      Amrg = A;
       imrg = i;
     }
   }
-#endif
+  if (imrg < 0) return tOmg_pk;
 
-  /* Start looking for the last peak from the end */
-  Qmrg  = 0.;
-  imrg  = hlm->size-1;
-  for (i=hlm->size-1; i>0; i--){
-    Q = 0.;
-    for (int k=0; k<KMAX; k++){
-      if (hlm->kmask[k]) 
-        Q += hlm->ampli[k][i]*hlm->ampli[k][i];
-    }
-    if (Q < Qmrg){
-      imrg = i;
-      Qmrg = Q;
-      break;
-    } else {
-      Qmrg = Q;
-    }
+  /* A at imrg-1, imrg, imrg+1 */
+  double f[3];
+  for (int d=0; d<3; d++) {
+    f[d] = 0.;
+    for (int k=0; k<KMAX; k++)
+      if (hlm->kmask[k]) f[d] += hlm->ampli[k][imrg-1+d]*hlm->ampli[k][imrg-1+d];
   }
-  return hlm->time[imrg];
 
+  /* max on interval edge, return */
+  if (f[1] < f[0] || f[1] < f[2]) return t[imrg];
+
+  return find_max(3, t[imrg+1]-t[imrg], t[imrg], f, NULL);
 }
 
 /**
