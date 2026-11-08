@@ -1209,7 +1209,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       } else {
 	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
       }
+      /* start 8 M before the Omega peak, or earlier, in steps of dt_merger_interp, so that every
+         NQC time is at least 3 M inside the grid */
       double tstart_mrg = dyn->tOmg_pk - 8.;
+      double t_NQC[KMAX];
+      eob_nqc_times(dyn, NULL, t_NQC);
+      for (int i = 0; i < EOBPars->use_mode_lm_nqc_size; i++)
+        while (tstart_mrg > t_NQC[EOBPars->use_mode_lm_nqc[i]] - 3.)
+          tstart_mrg -= dt_merger_interp;
       while (tstart_mrg < hlm_mrg->time[0]) /* Make sure it does not extrapolate */
 	      tstart_mrg += dt_merger_interp;
       const long int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);
