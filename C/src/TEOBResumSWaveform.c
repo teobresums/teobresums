@@ -6487,11 +6487,12 @@ void eob_set_nqc_basis(NQCbasis *b, int *kmask, double *r, double *w, double *pr
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
       n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
-    /* l=3, l=4 & l=5. In Dali only if a spin is not positive */
+    /* l=3, l=4 & l=5. In Dali only if a spin is not positive. A mixed mode keeps the n5 of the (2,2),
+       otherwise its phase drifts away from that of its base mode during the plunge */
     // FIXME: condition on spins bad for non-spinning limit
     if (nqc_basis == NQC_BASIS_GIOTTO || chi1 <= 0. || chi2 <= 0.) {
       for (int k=2; k<14; k++) {
-        if(kmask[k]) n5[k][j] = cbrt(SQ(w[j]))*n4[k][j];
+        if(kmask[k] && RD->kbase[k] < 0) n5[k][j] = cbrt(SQ(w[j]))*n4[k][j];
       }
     }
     if (nqc_basis != NQC_BASIS_DALI) continue;
@@ -6501,7 +6502,7 @@ void eob_set_nqc_basis(NQCbasis *b, int *kmask, double *r, double *w, double *pr
     for (int i=0; i<3; i++) {
       if(kmask[kk[i]]){
         n2[kk[i]][j] = cbrt(SQ(w[j]))*n1[kk[i]][j];
-        n5[kk[i]][j] = cbrt(SQ(w[j]))*n4[kk[i]][j];
+        if (RD->kbase[kk[i]] < 0) n5[kk[i]][j] = cbrt(SQ(w[j]))*n4[kk[i]][j];
       }
     }
     /* l=5, m=5. n3 only so that the three-condition matrix is not singular */
