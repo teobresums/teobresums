@@ -7,6 +7,7 @@ import numpy
 import glob
 import os
 import re
+import sys
 
 # We use env variables to set macros (debug, verbose, user_funcs, etc)
 DEBUG_MODE = os.environ.get("TEOB_DEBUG", "0") == "1"
@@ -82,6 +83,8 @@ pyprofit_ext = Extension(
     include_dirs=incdirs,
     libraries=libs,
     extra_compile_args=extra_compile_args,
+    # direct calls between files (no PLT), GNU ld only
+    extra_link_args=["-Wl,-Bsymbolic-functions"] if sys.platform.startswith("linux") else [],
 )
 
 setup(

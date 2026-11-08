@@ -188,7 +188,7 @@ int eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
     Horbeff0 = sqrt(A[i]*(1. + SQ(pph[i])*uc2));
     
     /* Compute gyro-gravitomagnetic coupling functions */
-    eob_dyn_s_GS(r[i], rc[i], drc_dr[i], 0., aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
+    eob_dyn_s_GS(r[i], rc[i], drc_dr[i], 0., aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, 1, ggm0);
     GS_0                   = ggm0[2];
     GSs_0                  = ggm0[3];
     dGS_dr_0               = ggm0[6];
@@ -256,7 +256,7 @@ int eob_dyn_ic_circ_s(double r0, Dynamics *dyn, double y_init[])
   
   /* Still circular, no pr* dependence here */
   Horbeff  = sqrt(A[i]*(1. + SQ(pph[i])*uc2)); 
-  eob_dyn_s_GS(r[i], rc[i], drc_dr[i], 0., aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, ggm0);
+  eob_dyn_s_GS(r[i], rc[i], drc_dr[i], 0., aK2, 0, pph[i], nu, chi1, chi2, X1, X2, c3, 1, ggm0);
   GS      = ggm0[2];
   GSs     = ggm0[3];
   dGS_dr  = ggm0[6];
@@ -349,13 +349,13 @@ int eob_dyn_ic_ecc(double r0, Dynamics *dyn, double y_init[])
     eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold, &pl_hold);
     
-    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
+    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
     eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
-    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
+    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
     eob_metric(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
@@ -469,13 +469,13 @@ double eob_dyn_ecc_j0(double r0, Dynamics *dyn)
     eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold, &pl_hold);
     
-    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
+    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
     eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
-    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
+    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
     eob_metric(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
@@ -545,7 +545,7 @@ double eob_dyn_circ_j0(double r0, Dynamics *dyn)
   if(usespins) {
     eob_metric_s(r0, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r0, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
-    eob_dyn_s_GS(r0, rc, drc_dr, 0., aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+    eob_dyn_s_GS(r0, rc, drc_dr, 0., aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm);
     G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
     dG_dr = ggm[6]*S + ggm[7]*Sstar;
   } else {
@@ -682,7 +682,7 @@ int eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   /* Orbital effective Hamiltonian */
   Horbeff0 = sqrt(A*(1. + SQ(pph[idx])*uc2));
   /* Compute gyro-gravitomagnetic coupling functions */
-  eob_dyn_s_GS(r[idx], rc, drc_dr, 0.0, aK2, 0, pph[idx], nu, chi1, chi2, X1, X2, c3, ggm0);
+  eob_dyn_s_GS(r[idx], rc, drc_dr, 0.0, aK2, 0, pph[idx], nu, chi1, chi2, X1, X2, c3, 1, ggm0);
   GS_0                   = ggm0[2];
   GSs_0                  = ggm0[3];
   dGS_dr_0               = ggm0[6];
@@ -718,7 +718,7 @@ int eob_dyn_ic_ecc_PA(double r0, Dynamics *dyn, double y_init[])
   jhat       =  pph[idx]/(r_omg*v_phi);  /* Newton-normalized angular momentum */
 
   //Fphi    = eob_flx_Flux_s(x, Omg, r_omg, H0, Heff0, jhat, r[idx], 0.0, 0.0, dyn);
-  eob_flx_Flux_ecc(x, Omg, r_omg, H0, Heff0, jhat, r[idx], 0.0, pph[idx], 0.0, 0.0, 0.0, &Fphi, &pl_hold, dyn);
+  eob_flx_Flux_ecc(x, Omg, r_omg, H0, Heff0, jhat, r[idx], 0.0, pph[idx], 0.0, 0.0, 0.0, &Fphi, &pl_hold, dyn, rc, drc_dr, d2rc_dr2);
   prstar  = Fphi/(dpph_dr[idx]*C0);
   pr      = prstar/sqrtAbyB; 
   E0      = H0;
@@ -1180,7 +1180,7 @@ double eob_dyn_DHeff0(double x, void *params)
   double c3     = p->c3;
 
   double ggm0[26];
-  eob_dyn_s_GS(rorb, rc, drc_dr, 0., ak2, 0., x, nu, chi1, chi2, X1, X2, c3, ggm0);
+  eob_dyn_s_GS(rorb, rc, drc_dr, 0., ak2, 0., x, nu, chi1, chi2, X1, X2, c3, 1, ggm0);
   double dGS_dr  = ggm0[6];
   double dGSs_dr = ggm0[7];
   
@@ -1415,7 +1415,7 @@ double eob_dyn_Omegaorb0(double r, void *params)
   if(usespins) {
     eob_metric_s(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc, &drc_dr, &pl_hold);
-    eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm);
+    eob_dyn_s_GS(r, rc, drc_dr, 0., aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm);
     G     = ggm[2]*S + ggm[3]*Sstar;    // tildeG = GS*S+GSs*Ss
   } else {
     eob_metric(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
@@ -1542,13 +1542,13 @@ double eob_dyn_Omegaecc0(double r, void *params)
     eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold);
     
-    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
+    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
     eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
-    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
+    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;    
   } else {
     eob_metric(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
@@ -1950,13 +1950,13 @@ int eob_dyn_rpr(const gsl_vector *x, void * params, gsl_vector *f)
     eob_metric_s(r1, 0., dyn, &A1, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r1, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc1, &pl_hold, &pl_hold);
     
-    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm1);
+    eob_dyn_s_GS(r1, rc1, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm1);
     G1     = ggm1[2]*S + ggm1[3]*Sstar;    // tildeG = GS*S+GSs*Ss
 
     eob_metric_s(r2, 0., dyn, &A2, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
     eob_dyn_s_get_rc(r2, nu, a1, a2, aK2, C_Q1, C_Q2, C_Oct1, C_Oct2, C_Hex1, C_Hex2, usetidal, &rc2, &pl_hold, &pl_hold);
     
-    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, ggm2);
+    eob_dyn_s_GS(r2, rc2, 0.0, 0.0, aK2, 0.0, 0.0, nu, chi1, chi2, X1, X2, c3, 1, ggm2);
     G2     = ggm2[2]*S + ggm2[3]*Sstar;
 
     eob_metric_s(rma, pr0, dyn, &Ama, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Qma, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);

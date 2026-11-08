@@ -100,6 +100,19 @@ def gen_wf(m1, m2, s1z, s2z, lam1, lam2, additional_pars={}, return_zero=True):
     else:
         return result
 
+def mismatch(h0, h):
+    """
+    Mismatch between two complex strains on the same uniform grid, flat PSD, maximized over
+    time shift (inverse FFT of the cross-spectrum) and phase (the modulus)
+    """
+    n = max(len(h0), len(h))
+    N = 1 << int(np.ceil(np.log2(2 * n)))
+    H0 = np.fft.fft(h0, N)
+    H  = np.fft.fft(h,  N)
+    z  = np.fft.ifft(H0 * np.conj(H))
+    ov = np.max(np.abs(z)) / np.sqrt(np.vdot(h0, h0).real * np.vdot(h, h).real)
+    return 1.0 - ov
+
 def spinsphericalharm(s, l, m, phi, i):
     """
     Compute spin-weighted spherical harmonics

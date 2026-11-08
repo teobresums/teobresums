@@ -321,6 +321,15 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->postadiabatic_dynamics_dr = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_dr"));
   }
   
+  if ( PyDict_GetItemString(dict, "sigmoid_time") != NULL ) { 
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "sigmoid_time"));
+    for(EOBPars->sigmoid_time=0; EOBPars->sigmoid_time<=SIGMOID_TIME_NOPT; EOBPars->sigmoid_time++){
+      if (EOBPars->sigmoid_time == SIGMOID_TIME_NOPT) { EOBPars->sigmoid_time = SIGMOID_TIME_OMGPEAK; break; }
+      if (STREQUAL(val,sigmoid_time_opt[EOBPars->sigmoid_time])) break;
+    }
+  }
+
   /* rc and flm */
   if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 
     char* val;
@@ -569,15 +578,35 @@ int SetOptionalVariables(PyObject* dict){
 
   /* ODE */
 
-  if ( PyDict_GetItemString(dict, "ode_timestep") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "ode_timestep") != NULL ) {
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_timestep"));
     for(EOBPars->ode_timestep=0; EOBPars->ode_timestep<=ODE_TSTEP_NOPT; EOBPars->ode_timestep++){
       if (EOBPars->ode_timestep == ODE_TSTEP_NOPT) EOBPars->ode_timestep = ODE_TSTEP_ADAPTIVE;
       if (STREQUAL(val,ode_tstep_opt[EOBPars->ode_timestep])) break;
-    }     
+    }
   }
-  if ( PyDict_GetItemString(dict, "ode_abstol") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "ode_stepper") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_stepper"));
+    for(EOBPars->ode_stepper=0; EOBPars->ode_stepper<=ODE_STEPPER_NOPT; EOBPars->ode_stepper++){
+      if (EOBPars->ode_stepper == ODE_STEPPER_NOPT) EOBPars->ode_stepper = ODE_STEPPER_RKF45;
+      if (STREQUAL(val,ode_stepper_opt[EOBPars->ode_stepper])) break;
+    }
+  }
+  if ( PyDict_GetItemString(dict, "ode_stepper_hmax") != NULL ) {
+    EOBPars->ode_stepper_hmax = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_stepper_hmax"));
+  }
+  if ( PyDict_GetItemString(dict, "use_metric_cheb") != NULL ) {
+    EOBPars->use_metric_cheb = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_metric_cheb")));
+  }
+  if ( PyDict_GetItemString(dict, "use_flm_cheb") != NULL ) {
+    EOBPars->use_flm_cheb = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_cheb")));
+  }
+  if ( PyDict_GetItemString(dict, "use_metric_cache") != NULL ) {
+    EOBPars->use_metric_cache = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_metric_cache")));
+  }
+  if ( PyDict_GetItemString(dict, "ode_abstol") != NULL ) {
     EOBPars->ode_abstol = PyFloat_AsDouble(PyDict_GetItemString(dict, "ode_abstol"));
   }
   if ( PyDict_GetItemString(dict, "ode_reltol") != NULL ) { 
@@ -1151,12 +1180,14 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if (output) {
       if (system_mkdir(EOBPars->output_dir)) {
         PyErr_SetString(PyExc_SystemError, eob_error_msg[ERROR_MKDIR]);
+        EOBParameters_free (EOBPars);
         return NULL;
       }
     }
 
   if(eob_set_params(default_choice, fc)) {
     PyErr_SetString(PyExc_ValueError, eob_error_msg[ERROR_SET_PARAMS]);
+    EOBParameters_free (EOBPars);
     return NULL;
   }
 
@@ -1214,6 +1245,16 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   if (status) {
     PyErr_SetString(PyExc_RuntimeError, eob_error_msg[status]);
+    Waveform_free (hpc);
+    WaveformFD_free (hfpc);
+    Waveform_lm_free (hmodes);
+    Waveform_lm_free (hTmodes);
+    Waveform_lm_free (hTmmodes);
+    Waveform_lm_free (hT0modes);
+    WaveformFD_lm_free (hfmodes);
+    WaveformFD_lm_free (hfTmodes);
+    EOBParameters_free (EOBPars);
+    Dynamics_free (dynf);
     return NULL;
   }
 
@@ -1655,7 +1696,7 @@ static PyObject* eob_j0_circ_py(PyObject *self, PyObject *args)
   eob_metric_s(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold,
               &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
   eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
-  eob_dyn_s_GS(r, rc, drc_dr, 0.0, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, EOBPars->X1, EOBPars->X2, EOBPars->cN3LO, ggm);
+  eob_dyn_s_GS(r, rc, drc_dr, 0.0, EOBPars->aK2, 0.0, 0.0, nu, chi1, chi2, EOBPars->X1, EOBPars->X2, EOBPars->cN3LO, 1, ggm);
 
   G                  = ggm[2] *S+ggm[3] *Sstar;    // tildeG = GS*S+GSs*Ss
   dG_dr              = ggm[6] *S+ggm[7] *Sstar;
