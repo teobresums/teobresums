@@ -417,9 +417,10 @@ enum{
   USE_FR_BD,            /**< Resummed, 2PN circular Fr */
   USE_FR_NEXT,          /**< Resummed, 2PN, Fphi-factorized Fr */
   USE_FR_FULL,          /**< Resummed, 2PN, Fphi-factorized full noncircular Fr */
+  USE_FR_LO,            /**< Newtonian noncircular Fr, not resummed (unbound orbits) */
   USE_FR_NOPT           /**< number of Fr options */
 };
-static const char* const use_Fr_opt[] = {"no", "ecc", "BD", "next", "full", "undefined"};
+static const char* const use_Fr_opt[] = {"no", "ecc", "BD", "next", "full", "LO", "undefined"};
 
 /** List of options for the tidal part of the radial flux */
 enum{
@@ -1493,6 +1494,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double *Modhhatlm, double *Modhhatlm_tidal, double Fphi_H, double *Fr, Dynamics *dyn, double *Flm_NC, double rc_in, double drc_dr_in, double d2rc_dr2_in);
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
+double eob_flx_Fr_LO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_tidal_LO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);

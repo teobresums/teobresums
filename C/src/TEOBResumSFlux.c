@@ -820,6 +820,23 @@ double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dy
   return nu*32./3.*u4*prstar*if2;
 }
 
+/**
+  * Function: eob_flx_Fr_LO
+  * -----------------------
+  *   Newtonian noncircular radial force, the numerator of eob_flx_Fr_ecc with no PN correction and no
+  *   resummation: regular on unbound orbits, where the factorized forms divide by functions that cross zero
+  *
+  *   @param[in] r, prstar, pphi: the state
+  *   @param[in] prsdot, dyn, Fphi: not used, for the common signature of eob_flx_Fr
+  *
+  *   @return Fr
+*/
+double eob_flx_Fr_LO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
+{
+  const double u = 1./r;
+  return EOBPars->nu*u*u*u*u*prstar*(-8./15. + 56./5.*pphi*pphi*u);
+}
+
 
 /** Radial flux calculation for eccentric systems 
     Eq. 6 of arXiv:2304.09662

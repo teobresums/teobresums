@@ -1502,9 +1502,9 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
   if (tidal_nc_on && (EOBPars->use_hlm_nc != USEHLM_NC_IMPQC || EOBPars->use_flm_nc != USEFLM_NC_IMPQC ||
-                      EOBPars->use_Fr != USE_FR_FULL ||
+                      (EOBPars->use_Fr != USE_FR_FULL && EOBPars->use_Fr != USE_FR_LO) ||
                       EOBPars->use_flm_tidal != USEFLM_TIDAL_DNV_NOSOURCE || !tidal_B)) {
-    if (DEBUG) printf("ERROR: the noncircular tidal corrections need use_hlm_nc = impqc, use_flm_nc = impqc, use_Fr = full, "
+    if (DEBUG) printf("ERROR: the noncircular tidal corrections need use_hlm_nc = impqc, use_flm_nc = impqc, use_Fr = full or LO, "
                       "use_flm_tidal = DNV_nosource and tides with the tidal B (TEOBRESUM3_BQ, NNLO_B, NNLO_BQ, N3LO_B, N3LO_BQ)\n");
     return 1;
   }
@@ -1538,6 +1538,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_flx_Fr = &eob_flx_Fr_ecc_BD;
   } else if (EOBPars->use_Fr == USE_FR_ECC) {
     eob_flx_Fr = &eob_flx_Fr_ecc;
+  } else if (EOBPars->use_Fr == USE_FR_LO) {
+    eob_flx_Fr = &eob_flx_Fr_LO;
   } else if (EOBPars->use_Fr == USE_FR_NO) {
     eob_flx_Fr = &return_zero;
   } else {
@@ -1651,6 +1653,7 @@ int eob_set_params(int default_choice, int firstcall)
         break;
       case USE_FR_ECC:
       case USE_FR_BD:
+      case USE_FR_LO:
         eob_flx_Fr_tidal = &eob_flx_Fr_tidal_LO;
         break;
       default:
