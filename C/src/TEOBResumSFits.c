@@ -1046,8 +1046,38 @@ void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, doubl
         omg_tmp[8]  = 0.042529*chi3 - 0.415864*chisq*nu + 0.155222*chisq + 0.768712*chi*nu2 - 0.592568*chi*nu + 0.244508*chi - 13.651335*nu3 + 5.490329*nu2 + 0.574041;
         domg_tmp[8] = -0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
         break;
+      case(1):
+        /* l=2, m=2, Pompili+ 2303.18039 (C8), (C29) and domg22 */
+        A_tmp[1]    = fabs(71.979698*nu2*nu2 - 13.357614*chi*nu3 - 46.87586*nu3 + 0.619889*chisq*nu2 + 7.194264*chi*nu2 + 12.440405*nu2 + 0.430147*chi3*nu - 1.743135*chi*nu - 0.868289*nu - 0.084939*chi3 - 0.020826*chisq + 0.18694*chi + 1.467097);
+        dA_tmp[1]   = 0.;
+        omg_tmp[1]  = -(5.893523*nu2*nu2 + 3.751456*chi*nu3 - 3.349305*nu3 - 0.971409*chisq*nu2 - 1.697343*chi*nu2 + 0.285392*nu2 + 0.241948*chi3*nu + 0.518014*chisq*nu + 0.250965*chi*nu - 0.317096*nu - 0.015259*chi4 - 0.066927*chi3 - 0.087152*chisq - 0.091339*chi - 0.268541);
+        domg_tmp[1] = -(-0.237126*nu3 + 0.07799*chi*nu2 + 0.092215*nu2 - 0.008393*chisq*nu - 0.028772*chi*nu - 0.03104*nu + 0.000614*chi3 + 0.001948*chisq + 0.001705*chi - 0.005484);
+        break;
+      case(3):
+        /* l=3, m=2 */
+        A_tmp[3]    = fabs(8.917771*nu3 - 2.194506*nu2 + 0.307803*chi*nu - 0.387911*nu + 0.022598*chisq - 0.020771*chi + 0.155446);
+        dA_tmp[3]   = 1.693423*nu3 - 0.14087*chi*nu2 - 0.510999*nu2 - 0.011027*chisq*nu + 0.063211*chi*nu + 0.020607*nu - 0.000806*chi3 + 0.002999*chisq - 0.006783*chi + 0.003674;
+        omg_tmp[3]  = -(-2.346024*nu3 - 2.758635*chi*nu2 + 1.57986*nu2 + 0.811353*chi*nu - 0.317756*nu - 0.045647*chisq - 0.112477*chi - 0.331141);
+        domg_tmp[3] = -(-2.494788*nu3 + 0.09192*chi*nu2 + 0.995116*nu2 - 0.036711*chisq*nu - 0.030713*chi*nu - 0.10163*nu + 0.005532*chisq + 0.005927*chi - 0.010763);
+        break;
+      case(7):
+        /* l=4, m=3 */
+        A_tmp[7]    = fabs((-0.020081 + 0.436576*nu - 1.738079*nu2)*chi_33 + delta*(0.07442 - 0.273364*nu + 0.809615*nu2 + 0.021932*SQ(chi_33) - 0.071554*nu*SQ(chi_33)));
+        dA_tmp[7]   = delta*(-0.001067 + 0.012043*nu) + delta*(-0.004295 + 0.022249*nu)*chi_33 + delta*(0.001773 - 0.012159*nu)*SQ(chi_33) + 0.00082*fabs(delta*(3.880171 - 20.015436*nu) + chi_33);
+        omg_tmp[7]  = -(-55.534105*nu3 - 0.905919*chi*nu2 + 23.913277*nu2 + 0.226903*chisq*nu + 0.291092*chi*nu - 3.487986*nu - 0.037919*chi3 - 0.087288*chisq - 0.1198*chi - 0.34306);
+        domg_tmp[7] = -(-5.160613*nu3 + 0.13296*chi*nu2 + 2.180781*nu2 - 0.009876*chisq*nu - 0.060884*chi*nu - 0.292607*nu + 0.000537*chi3 + 0.003279*chisq + 0.008513*chi - 0.005308);
+        break;
+      case(13):
+        /* l=5, m=5, at 10 M before the (2,2) peak */
+        A_tmp[13]    = fabs(delta*(0.125468 - 0.462142*nu + 1.093812*nu2) + chi_33*(0.062757 - 0.762776*nu + 3.965852*nu2 - 7.402839*nu3));
+        dA_tmp[13]   = delta*(0.002563 - 0.010891*nu) + delta*(-0.001015 + 0.002705*nu)*chi_33 + delta*(-0.00155 + 0.008568*nu)*SQ(chi_33) + 0.000284*fabs(delta*(0.165336 + 32.459725*nu) + chi_33);
+        omg_tmp[13]  = -(13.81386*nu3 - 3.04576*chi*nu2 - 6.61611*nu2 + 0.802759*chisq*nu + 1.43471*chi*nu + 0.472474*nu - 0.091629*chi3 - 0.246646*chisq - 0.329591*chi - 0.589341);
+        domg_tmp[13] = -(0.043963*nu3 + 0.164011*chi*nu2 + 0.048045*nu2 - 0.01547*chisq*nu - 0.056516*chi*nu - 0.045197*nu + 0.001509*chi3 + 0.002802*chisq + 0.002072*chi - 0.008688);
+        break;
       default:
-        errorexit("A,dA,omg,domg fits only implemented for (2,1), (3,3) and (4,4) at the moment.");
+        /* eob_set_params lets only modes with fits into knqcpeak22, so this is never reached */
+        if (VERBOSE) printf("eob_nqc_point_HM_peak22: no fits for mode %d at the (2,2) peak\n", k);
+        continue;
     }
     /* Normalize A and dA */
     int l       = LINDEX[k];
@@ -3648,6 +3678,77 @@ void apply_mode_deviations(double *x_mrg, double *delta_x, int *klm, int Nk)
   }
 }
 
+/**
+ * Function: QNMHybridFitCab_Pompili23_constrained
+ * -----------------------------------------------
+ *   Constrained coefficients of the Pompili+ 2303.18039 ringdown template, from the amplitude,
+ *   its time derivative and the frequency at the start of the template, given the fitted ones.
+ *
+ *   @param[in]  A, dA, omg     : amplitude, its time derivative and frequency at the start
+ *   @param[in]  sigmar, sigmai : QNM frequency, real and imaginary part
+ *   @param[in]  c1f, c2f       : fitted amplitude coefficients
+ *   @param[in]  d1f, d2f       : fitted phase coefficients
+ *   @param[out] ca1, ca4       : constrained amplitude coefficients
+ *   @param[out] cb1            : constrained phase coefficient
+ */
+void QNMHybridFitCab_Pompili23_constrained(double A, double dA, double omg, double sigmar, double sigmai,
+                                           double c1f, double c2f, double d1f, double d2f,
+                                           double *ca1, double *ca4, double *cb1)
+{
+  *ca1 = (dA  + sigmar*A)*cosh(c2f)*cosh(c2f)/c1f;
+  *ca4 =  A   - (dA + sigmar*A)*cosh(c2f)*sinh(c2f)/c1f;
+  *cb1 = -((omg - sigmai)*(1+d2f)/(d1f*d2f));
+}
+
+/**
+ * Function: eob_wav_ringdown_mixing_mu
+ * ------------------------------------
+ *   Spheroidal-spherical mixing coefficient mu*(m,l,l') of the n = 0 QNM, Berti & Klein
+ *   1408.1860 fits, with separate rows for m and -m. Negative af takes the -m row at |af|.
+ *   Only the combinations of the (3,2), (4,3) mixing, 0 for the others.
+ *
+ *   @param[in] m, l, lp : mode indices
+ *   @param[in] af       : remnant spin
+ *
+ *   @return the complex conjugate of mu(m,l,l')
+ */
+double complex eob_wav_ringdown_mixing_mu(int m, int l, int lp, double af)
+{
+  /* columns m, l, l', then p1r p2r p3r p4r p1i p2i p3i p4i, mu = delta(l,l') + p1 spin^p2 + p3 spin^p4 for each part */
+  static const double fits[][11] = {
+    { 2, 2, 2, -7.39789e-03, 2.88933e+00, -6.61369e-03, 1.71287e+01,  1.53046e-02, 1.21928e+00, -9.34293e-03, 2.49915e+01},
+    { 2, 3, 2, -1.03512e-01, 1.22285e+00, -5.74989e-02, 8.70536e+00, -1.60040e-02, 9.53385e-01,  1.00344e-02, 1.47550e+01},
+    { 2, 3, 3, -2.51626e-02, 2.43323e+00, -1.30029e-02, 1.09648e+01, -3.23812e-02, 9.21248e-01,  1.88165e-02, 1.06988e+01},
+    { 3, 3, 3, -1.20858e-02, 2.94266e+00, -1.12402e-02, 1.72866e+01, -1.72988e-02, 8.51080e-01,  1.43925e-02, 5.98677e+00},
+    { 3, 4, 3, -1.32724e-01, 1.24145e+00, -7.34932e-02, 8.51670e+00, -1.15656e-02, 9.01101e-01,  7.32291e-03, 1.17007e+01},
+    { 3, 4, 4, -3.42425e-02, 2.59986e+00, -2.12509e-02, 1.25368e+01, -4.54823e-02, 9.25823e-01,  2.84355e-02, 1.14204e+01},
+    {-2, 2, 2, -1.43708e-02, 2.11765e+00,  1.03499e-02, 2.22856e+00, -7.01457e-02, 1.00458e+00,  6.65951e-04, 3.52711e+00},
+    {-2, 3, 2, -1.34751e-01, 1.08821e+00,  7.96321e-02, 1.27858e+00, -1.74388e-02, 1.01083e+00,  5.15606e-03, 1.82061e+00},
+    {-2, 3, 3, -2.00333e-02, 2.03214e+00,  7.15335e-03, 2.49949e+00, -8.94720e-02, 1.00714e+00,  2.71266e-03, 3.76609e+00},
+    {-3, 3, 3, -1.78203e-01, 2.15584e+00,  1.73530e-01, 2.16591e+00, -7.18064e-02, 1.01171e+00,  2.99296e-04, 5.06507e+00},
+    {-3, 4, 3, -1.55284e-01, 1.08704e+00,  9.09275e-02, 1.31882e+00, -1.63145e-02, 1.04521e+00,  9.11357e-03, 1.65083e+00},
+    {-3, 4, 4, -5.85885e-01, 2.17527e+00,  5.73950e-01, 2.18532e+00, -8.41048e-02, 1.00883e+00,  1.66840e-03, 3.77298e+00},
+  };
+  const int nfits = sizeof(fits)/sizeof(fits[0]);
+
+  const int mm = (af < 0.) ? -m : m;
+  const double spin = fabs(af);
+
+  const double *p = NULL;
+  for (int i = 0; i < nfits; i++)
+    if (fits[i][0] == mm && fits[i][1] == l && fits[i][2] == lp) p = fits[i] + 3;
+  if (p == NULL) return 0.;
+
+  const double re   = ((l == lp) ? 1. : 0.) + p[0]*pow(spin,p[1]) + p[2]*pow(spin,p[3]);
+  const double im   = p[4]*pow(spin,p[5]) + p[6]*pow(spin,p[7]);
+  const double sign = ((l+lp) % 2 == 0) ? 1. : -1.;
+
+  /* (-1)^(l+l') once, and once more for negative af */
+  double complex mu = sign*(re + I*im);
+  if (af < 0.) mu *= sign;
+  return conj(mu);
+}
+
 /** 
  *  Function: QNMHybridFitCab_HM_Pompili23
  *  ----------------------------
@@ -3690,7 +3791,7 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   const double chi_21D   = delta*chi_S/(1-2.*nu)  + chi_A;
 
   double A[KMAX], dA[KMAX], omg[KMAX], domg[KMAX];
-  double c1f, c2f, d1f, d2f, c1c, c2c, d1c;
+  double c1f, c2f, d1f, d2f;
   
   /* Compute A, dA, omg, domg */
   if (EOBPars->binary==BINARY_BBH){eob_nqc_point_HM_peak22(NULL,A, dA, omg, domg);
@@ -3749,8 +3850,38 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
         d1f = -0.020644*chi3 + 0.494221*chisq*nu - 0.127074*chisq + 4.297985*chi*nu2 - 1.284386*chi*nu + 0.062684*chi - 44.280815*nu3 + 11.021482*nu2 - 0.162943*nu + 0.166018;
         d2f = exp(37.735116*chi*nu2 - 12.516669*chi*nu + 1.309868*chi - 528.368915*nu3 + 155.115196*nu2 - 6.612448*nu + 0.787726);
         break;
+      case(1):
+        /* l=2, m=2, Pompili+ 2303.18039 (D1)-(D4) */
+        c1f = -4.238246*nu4 + 1.867978*chi*nu3 + 2.043712*nu3 + 0.013161*chisq*nu2 - 0.702488*chi*nu2 - 0.406992*nu2 + 0.062842*chi3*nu + 0.049388*chisq*nu + 0.033885*chi*nu + 0.053589*nu - 0.001777*chi4 - 0.018908*chi3 - 0.019314*chisq - 0.011612*chi + 0.086254;
+        c2f = -63.286459*nu4 + 2.002947*chi*nu3 + 44.331389*nu3 - 3.556173*chisq*nu2 - 5.585851*chi*nu2 - 9.529573*nu2 + 1.021875*chi3*nu + 1.970082*chisq*nu + 1.837724*chi*nu + 1.155695*nu - 0.20348*chi3 - 0.264297*chisq - 0.27076*chi - 0.528763;
+        d1f = -28.423701*nu4 + 4.113463*chi*nu3 + 20.719874*nu3 + 1.033352*chisq*nu2 - 1.652924*chi*nu2 - 6.075679*nu2 + 0.047305*chi3*nu - 0.254351*chisq*nu + 0.090834*chi*nu + 0.780093*nu - 0.013321*chi4 - 0.024203*chi3 - 0.007847*chisq + 0.135758;
+        d2f = exp(-352.249383*nu4 + 9.057306*chi*nu3 + 275.843499*nu3 + 23.975132*chisq*nu2 - 5.268296*chi*nu2 - 81.483314*nu2 - 3.398858*chi3*nu - 10.064954*chisq*nu + 0.464553*chi*nu + 11.184576*nu - 0.163113*chi4 + 0.728816*chi3 + 1.2115*chisq + 0.56269*chi + 0.03571);
+        break;
+      case(3):
+        /* l=3, m=2, spheroidal mode */
+        c1f = -26.991806*nu3 + 8.987763*chi*nu2 + 13.716801*nu2 + 0.641681*chisq*nu - 1.582259*chi*nu - 1.63083*nu - 0.133035*chi3 - 0.111865*chisq + 0.095604*chi + 0.157543;
+        c2f = -51.469773*nu3 - 25.544931*chi*nu2 + 46.209833*nu2 - 1.590623*chisq*nu + 10.127968*chi*nu - 6.484571*nu + 0.121608*chi3 + 0.167231*chisq - 0.999062*chi - 0.716883;
+        d1f = exp(81.222175*nu3 - 0.518291*chi*nu2 - 18.040529*nu2 - 8.684722*chisq*nu - 1.407934*chi*nu + 2.216406*nu - 0.764015*chi3 + 0.691946*chisq + 0.236427*chi - 1.879455);
+        d2f = exp(-215.372399*nu3 - 39.324579*chi*nu2 + 136.20936*nu2 - 24.501503*chisq*nu + 14.379901*chi*nu - 16.842816*nu - 1.819822*chi3 + 3.287882*chisq + 1.463485);
+        break;
+      case(7):
+        /* l=4, m=3, spheroidal mode */
+        c1f = 44.311948*nu3 + 4.188908*chi*nu2 - 22.114177*nu2 - 1.365732*chi*nu + 3.386082*nu + 0.041585*chi3 + 0.058908*chi - 0.035315;
+        c2f = -57.968821*nu3 - 9.803187*chi*nu2 + 7.820929*nu2 + 0.337235*chisq*nu + 3.995199*chi*nu + 3.364741*nu + 0.125764*chi3 + 0.146202*chisq - 0.240976*chi - 1.121716;
+        d1f = exp(366.645645*nu3 - 14.823391*chi*nu2 - 161.732513*nu2 + 3.97869*chisq*nu + 6.940856*chi*nu + 19.564699*nu - 0.888286*chi3 - 1.047181*chisq - 0.367801*chi - 2.29578);
+        d2f = exp(730.42296*nu3 + 39.21796*chi*nu2 - 312.960598*nu2 - 10.651167*chi*nu + 37.402567*nu - 0.950676*chi3 - 0.31428*chisq + 1.339732*chi - 0.061894);
+        break;
+      case(13):
+        /* l=5, m=5 */
+        c1f = -5.966891*nu3 - 0.206811*chi*nu2 + 1.76928*nu2 + 0.059748*chisq*nu + 0.055078*chi*nu - 0.055272*nu - 0.009957*chi3 - 0.02146*chisq - 0.014528*chi + 0.080368;
+        c2f = -1887.591102*nu4 - 28.499278*chi*nu3 + 794.134711*nu3 + 1.638345*chisq*nu2 + 3.73034*chi*nu2 - 107.010824*nu2 + 1.853723*chi*nu + 6.32117*nu + 0.119703*chi4 - 0.064725*chisq - 0.225283*chi - 1.507483;
+        d1f = 9.018546*nu3 + 0.871799*chi*nu2 - 5.009488*nu2 + 0.168071*chisq*nu - 0.230057*chi*nu + 0.606313*nu - 0.021537*chi3 - 0.050263*chisq + 0.150622;
+        d2f = exp(143.745208*nu3 + 28.839035*chi*nu2 - 64.478227*nu2 - 9.726025*chi*nu + 6.223833*nu + 0.901423*chi + 2.058139);
+        break;
       default:
-        errorexit("Ringdown fits only implemented for (2,1), (3,3) and (4,4) at the moment");
+        /* eob_set_params lets only modes with fits into knqcpeak22, so this is never reached */
+        if (VERBOSE) printf("QNMHybridFitCab_HM_Pompili23: no fits for mode %d at the (2,2) peak\n", k);
+        continue;
     }
 
     if (EOBPars->c3A_lm_size > 0) {
@@ -3778,17 +3909,14 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
       }
     }
 
-    /* Constrained coefficients*/
-    c1c = (dA[k]  + sigmar[k]*A[k])*cosh(c2f)*cosh(c2f)/c1f;
-    c2c =  A[k]   - (dA[k] + sigmar[k]*A[k])*cosh(c2f)*sinh(c2f)/c1f;
-    d1c = (omg[k] - sigmai[k])*(1+d2f)/(d1f*d2f);
+    /* As in pyseobnr, c1f of the (2,2) such that the amplitude cannot grow after the peak (their sigmaR is -sigmar) */
+    if (k == 1 && -sigmar[k] > 2.*c1f*tanh(c2f)) c1f = -sigmar[k]/(2.*tanh(c2f));
 
-    /* Finalize*/
-    ca1[k] = c1c;
+    /* Constrained coefficients, then the fitted ones */
+    QNMHybridFitCab_Pompili23_constrained(A[k], dA[k], omg[k], sigmar[k], sigmai[k], c1f, c2f, d1f, d2f,
+                                          &ca1[k], &ca4[k], &cb1[k]);
     ca2[k] = c1f;
     ca3[k] = c2f;
-    ca4[k] = c2c;
-    cb1[k] = -d1c;
     cb2[k] = d1f;
     cb3[k] = d2f;
     cb4[k] = 0.;

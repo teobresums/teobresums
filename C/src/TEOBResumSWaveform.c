@@ -8170,7 +8170,7 @@ int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 
       /* Calculate Deltaphi */
       t0 = t_lm[k][idx[k]] - tmrg[k]; 
-      RingdownCoefs c = {a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], 0., 0., 1.};
+      RingdownCoefs c = {a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], 0., 0., 1., -1};
       eob_wav_ringdown_template(t0, &c, psi);
       Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
       /* Compute and attach ringdown */
@@ -8228,7 +8228,23 @@ void eob_wav_ringdown_coefs_HM(RingdownCoefs *coef)
 
   for (int k = 0; k < KMAX; k++)
     coef[k] = (RingdownCoefs) {a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigmar[k], sigmai[k], 0., 0.,
-                               modesatpeak22[k] ? 1./Mbh : 1.};
+                               modesatpeak22[k] ? 1./Mbh : 1., modesatpeak22[k] ? RD->kbase[k] : -1};
+}
+
+/**
+ * Function: eob_wav_ringdown_coefs_point_Pompili23
+ * ------------------------------------------------
+ *   Constrained coefficients of a Pompili+ 2303.18039 template from the amplitude, its time
+ *   derivative and the frequency at the attachment, keeping the fitted ones in c.
+ *
+ *   @param[in,out] c       : template coefficients
+ *   @param[in]     A, dA   : amplitude and its time derivative, in M
+ *   @param[in]     omg     : frequency, in M
+ */
+void eob_wav_ringdown_coefs_point_Pompili23(RingdownCoefs *c, double A, double dA, double omg)
+{
+  QNMHybridFitCab_Pompili23_constrained(A, dA, omg, c->sigmar, c->sigmai, c->a2, c->a3, c->b2, c->b3,
+                                        &c->a1, &c->a4, &c->b1);
 }
 
 /**
@@ -8236,6 +8252,10 @@ void eob_wav_ringdown_coefs_HM(RingdownCoefs *coef)
  * ---------------------------------
  *   Attach the ringdown template p_eob_wav_ringdown_template of mode k, starting at tmrg,
  *   from the first sample at or after t_NQC, with the phase matched there.
+ *   With c->kbase >= 0 the template is for the spheroidal mode S_lm, mixed with the base mode
+ *   (l-1,m) already attached, Pompili+ 2303.18039 Sec. II C. Then
+ *   h_lm = mu*(m,l,l-1)/mu*(m,l-1,l-1) h_(l-1)m + mu*(m,l,l) S_lm, and the constrained template
+ *   coefficients come from S_lm at the attachment, through eob_wav_ringdown_coefs_point.
  *
  *   @param[in]     k       : mode
  *   @param[in,out] hlm     : waveform
@@ -8259,15 +8279,62 @@ void eob_wav_ringdown_attach(int k, Waveform_lm *hlm, int dynsize, double tmrg, 
   int index_rng = find_point_bisection(t_NQC - 1.e-8, size, t, 1) + 1;
   if (index_rng > dynsize - 1) index_rng = dynsize - 1;
 
-  /* match the phase at index_rng */
-  double psi[2];
-  p_eob_wav_ringdown_template((t[index_rng]*ooMbh - tmatch)/fact, c, psi);
-  const double Deltaphi = psi[1] - hlm->phase[k][index_rng];
+  const int kb = c->kbase;
+  const int j0 = index_rng;
+  int mix = (kb >= 0 && hlm->kmask[kb] && j0 >= 1 && j0 <= dynsize - 2);
 
-  for (int j = index_rng; j < size; j++) {
-    p_eob_wav_ringdown_template((t[j]*ooMbh - tmatch)/fact, c, psi);
-    hlm->phase[k][j] = psi[1] - Deltaphi;
-    hlm->ampli[k][j] = (nNegAmp[k] == 1) ? -psi[0] : psi[0];
+  /* the base mode and S_lm at j0-1, j0, j0+1, from the modes before the attachment */
+  double complex cmix = 0., mu_lml = 0., S[3];
+  if (mix) {
+    const int l = LINDEX[k], m = MINDEX[k];
+    const double af = EOBPars->abhf;
+    mu_lml = eob_wav_ringdown_mixing_mu(m, l, l, af);
+    cmix   = eob_wav_ringdown_mixing_mu(m, l, l-1, af)/eob_wav_ringdown_mixing_mu(m, l-1, l-1, af);
+    for (int s = 0; s < 3; s++) {
+      const double complex h_s  = hlm->ampli[k][j0-1+s]*cexp(-I*hlm->phase[k][j0-1+s]);
+      const double complex hb_s = hlm->ampli[kb][j0-1+s]*cexp(-I*hlm->phase[kb][j0-1+s]);
+      S[s] = (h_s - cmix*hb_s)/mu_lml;
+    }
+    /* (4,3) vanishes for equal masses and spins, then attach the template to the mode itself */
+    if (cabs(S[1]) < 1e-10) mix = 0;
+  }
+
+  if (!mix) {
+    /* match the phase at index_rng */
+    double psi[2];
+    p_eob_wav_ringdown_template((t[index_rng]*ooMbh - tmatch)/fact, c, psi);
+    const double Deltaphi = psi[1] - hlm->phase[k][index_rng];
+
+    for (int j = index_rng; j < size; j++) {
+      p_eob_wav_ringdown_template((t[j]*ooMbh - tmatch)/fact, c, psi);
+      hlm->phase[k][j] = psi[1] - Deltaphi;
+      hlm->ampli[k][j] = (nNegAmp[k] == 1) ? -psi[0] : psi[0];
+    }
+    return;
+  }
+
+  /* template coefficients of S_lm from its amplitude, derivative and frequency at j0 */
+  RingdownCoefs cs = *c;
+  const double dts = t[j0+1] - t[j0-1];
+  const double AS  = cabs(S[1]);
+  const double dAS = (cabs(S[2]) - cabs(S[0]))/dts;
+  const double omS = -carg(S[2]/S[0])/dts;
+  eob_wav_ringdown_coefs_point(&cs, AS, dAS, omS);
+
+  /* match the phase of S_lm at j0, then mix with the base mode, already attached */
+  double psi[2];
+  p_eob_wav_ringdown_template((t[j0]*ooMbh - tmatch)/fact, &cs, psi);
+  const double Deltaphi = psi[1] + carg(S[1]);
+
+  double complex hprev = hlm->ampli[k][j0-1]*cexp(-I*hlm->phase[k][j0-1]);
+  for (int j = j0; j < size; j++) {
+    p_eob_wav_ringdown_template((t[j]*ooMbh - tmatch)/fact, &cs, psi);
+    const double complex Srd = psi[0]*cexp(-I*(psi[1] - Deltaphi));
+    const double complex hb  = hlm->ampli[kb][j]*cexp(-I*hlm->phase[kb][j]);
+    const double complex h   = cmix*hb + mu_lml*Srd;
+    hlm->ampli[k][j] = (nNegAmp[k] == 1) ? -cabs(h) : cabs(h);
+    hlm->phase[k][j] = hlm->phase[k][j-1] - carg(h/hprev);
+    hprev = h;
   }
 }
 
@@ -10421,5 +10488,5 @@ void eob_wav_ringdown_coefs_bhns(RingdownCoefs *coef)
 
   for (int k = 0; k < KMAX; k++)
     coef[k] = (RingdownCoefs) {a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigmar[k], sigmai[k], alpha2[k], Apeak[k],
-                               modesatpeak22[k] ? 1./Mbh : 1.};
+                               modesatpeak22[k] ? 1./Mbh : 1., -1};
 }

@@ -53,6 +53,7 @@ int (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 int (*eob_wav_ringdown)();
 void (*p_eob_wav_ringdown_template)();
 void (*eob_wav_ringdown_coefs)();
+void (*eob_wav_ringdown_coefs_point)();
 double (*eob_nqc_timeshift)();
 void (*eob_nqc_deltat_lm)();
 void (*eob_dyn_s_get_rc)();
@@ -588,18 +589,20 @@ void RDdata_set(RDdata *rd, int model)
     rd->peak22_ok[k]   = 0;
     rd->postpeak_ok[k] = 0;
     rd->dt_peak22[k]   = 0.;
+    rd->kbase[k]       = -1;
   }
 
   switch (model) {
     case RINGDOWN_NAGAR20:
     case RINGDOWN_GONZALEZ25: {
-      /* Pompili+ 2303.18039 at the (2,2) peak for (2,1), (3,3), (4,4) */
+      /* Pompili+ 2303.18039 at the (2,2) peak for (2,1), (3,3), (4,4), and for the (2,2) on request */
       const int peak22[] = {0, 4, 8}, postpeak[] = {1, 3, 6, 7};
       rd->knqcpeak22_size = 3;
       for (int i = 0; i < rd->knqcpeak22_size; i++) {
         rd->knqcpeak22[i] = peak22[i];
         rd->peak22_ok[peak22[i]] = 1;
       }
+      if (model == RINGDOWN_NAGAR20) rd->peak22_ok[1] = 1;
 
       /* modes with a template in QNMHybridFitCab_HM, always its spinning branch */
       const int tmpl[] = {0, 1, 3, 4, 6, 7, 8, 13};
@@ -609,6 +612,24 @@ void RDdata_set(RDdata *rd, int model)
       rd->kpostpeak_size = 0;
       for (int i = 0; i < 4; i++)
         if (rd->postpeak_ok[postpeak[i]]) rd->kpostpeak[rd->kpostpeak_size++] = postpeak[i];
+      break;
+    }
+    case RINGDOWN_POMPILI23: {
+      /* all its modes at the (2,2) peak, (5,5) 10 M before, (3,2), (4,3) spheroidal and mixed with (2,2), (3,3) */
+      const int modes[] = {0, 1, 3, 4, 7, 8, 13};
+      rd->knqcpeak22_size = 7;
+      for (int i = 0; i < rd->knqcpeak22_size; i++) {
+        rd->knqcpeak22[i] = modes[i];
+        rd->peak22_ok[modes[i]] = 1;
+      }
+      rd->dt_peak22[13] = -10.;
+      rd->kbase[3] = 1;
+      rd->kbase[7] = 4;
+
+      /* the spherical ones can also take the NQC values from their template */
+      for (int i = 0; i < rd->knqcpeak22_size; i++)
+        if (rd->kbase[modes[i]] < 0) rd->postpeak_ok[modes[i]] = 1;
+      rd->kpostpeak_size = 0;
       break;
     }
   }
@@ -1638,11 +1659,18 @@ int eob_set_params(int default_choice, int firstcall)
     memcpy(EOBPars->kpostpeak, RD->kpostpeak, RD->kpostpeak_size*sizeof(int));
   }
 
-  /* the modes in knqcpeak22, kpostpeak have to be ones the model can build there */
+  /* the modes in knqcpeak22, kpostpeak have to be ones the model can build there,
+     and a mixed mode needs its base mode */
+  int inwav[KMAX];
+  set_multipolar_idx_mask (inwav, KMAX, EOBPars->use_mode_lm, EOBPars->use_mode_lm_size, 0);
   for (int i = 0; i < EOBPars->knqcpeak22_size; i++) {
     const int k = EOBPars->knqcpeak22[i];
     if (!RD->peak22_ok[k]) {
       if (DEBUG) printf("ERROR: ringdown_model %s cannot attach mode %d at the (2,2) peak.\n", ringdown_model_opt[EOBPars->ringdown_model], k);
+      return 1;
+    }
+    if (inwav[k] && RD->kbase[k] >= 0 && !inwav[RD->kbase[k]]) {
+      if (DEBUG) printf("ERROR: mode %d is mixed with mode %d, which is not in use_mode_lm.\n", k, RD->kbase[k]);
       return 1;
     }
   }
@@ -1659,10 +1687,12 @@ int eob_set_params(int default_choice, int firstcall)
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
     eob_wav_ringdown = &eob_wav_ringdown_HM;
     eob_wav_ringdown_coefs = &eob_wav_ringdown_coefs_bhns;
+    eob_wav_ringdown_coefs_point = &eob_wav_ringdown_coefs_point_Pompili23;
     eob_nqc_timeshift = &eob_nqc_timeshift_bhns;
     eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bhns;
   }else{ // For BBH
     eob_wav_ringdown_coefs = &eob_wav_ringdown_coefs_HM;
+    eob_wav_ringdown_coefs_point = &eob_wav_ringdown_coefs_point_Pompili23;
     eob_nqc_timeshift = &eob_nqc_timeshift_bbh;
     eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bbh;
   }

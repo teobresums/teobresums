@@ -495,10 +495,11 @@ static const char* ringdown_eulerangles_opt[] = {"constant", "QNMs", "undefined"
 enum{
   RINGDOWN_NAGAR20,        /**< BBH, Nagar+ 2020, arXiv:2001.09082 */
   RINGDOWN_GONZALEZ25,     /**< BHNS, Gonzalez+ 2025, arXiv:2507.00113 */
+  RINGDOWN_POMPILI23,      /**< BBH, Pompili+ 2023, arXiv:2303.18039, all modes at the (2,2) peak, (3,2), (4,3) mixed */
   RINGDOWN_AUTO,           /**< Gonzalez25 for BHNS, Nagar20 otherwise, resolved in eob_set_params */
   RINGDOWN_NOPT,           /**< number of merger-ringdown models */
 };
-static const char* const ringdown_model_opt[] = {"Nagar20", "Gonzalez25", "auto", "undefined"};
+static const char* const ringdown_model_opt[] = {"Nagar20", "Gonzalez25", "Pompili23", "auto", "undefined"};
 
 /** Omegadot for spin dynamics */
 enum{
@@ -570,6 +571,7 @@ typedef struct tagRingdownCoefs
   double sigmar, sigmai;  /**< QNM frequency, real and imaginary part */
   double alpha2, Apeak;   /**< tidal-disruption template only */
   double fact;            /**< template time = time in units of Mbh / fact, 1 or 1/Mbh (time in M) */
+  int kbase;              /**< base mode (l-1,m) of a spheroidal template, -1 for a spherical one */
 } RingdownCoefs;
 
 /** Merger-ringdown model, set in eob_set_params from ringdown_model */
@@ -579,6 +581,7 @@ typedef struct tagRDdata
   int peak22_ok[KMAX];       /**< modes it can attach at the (2,2) peak, allowed in knqcpeak22 */
   int postpeak_ok[KMAX];     /**< modes whose NQC values can be read off the template, allowed in kpostpeak */
   double dt_peak22[KMAX];    /**< template start minus tmrg22, for the modes in knqcpeak22 */
+  int kbase[KMAX];           /**< base mode (l-1,m) of the modes with a spheroidal template at the (2,2) peak, -1 otherwise */
   int knqcpeak22[KMAX], knqcpeak22_size;  /**< default knqcpeak22 of the model */
   int kpostpeak[KMAX], kpostpeak_size;    /**< default kpostpeak of the model */
   RingdownCoefs coef[KMAX];  /**< template coefficients, filled by eob_wav_ringdown_coefs */
@@ -1277,6 +1280,10 @@ void QNMHybridFitCab_HM(double nu, double X1, double X2, double chi1, double chi
 			double Mbh, double abh,  
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4, 
 			double *sigmar, double *sigmai);
+double complex eob_wav_ringdown_mixing_mu(int m, int l, int lp, double af);
+void QNMHybridFitCab_Pompili23_constrained(double A, double dA, double omg, double sigmar, double sigmai,
+                                           double c1f, double c2f, double d1f, double d2f,
+                                           double *ca1, double *ca4, double *cb1);
 void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh, 
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
       double *sigmar, double *sigmai);
@@ -1528,6 +1535,8 @@ void eob_wav_ringdown_template(double x, RingdownCoefs *c, double *psi);
 extern int (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c */
 extern void (*p_eob_wav_ringdown_template)(); /* defined in TEOBResumSPars.c */
 extern void (*eob_wav_ringdown_coefs)(); /* defined in TEOBResumSPars.c */
+extern void (*eob_wav_ringdown_coefs_point)(); /* defined in TEOBResumSPars.c */
+void eob_wav_ringdown_coefs_point_Pompili23(RingdownCoefs *c, double A, double dA, double omg);
 void eob_wav_ringdown_coefs_HM(RingdownCoefs *coef);
 void RDdata_set(RDdata *rd, int model);
 void eob_wav_ringdown_attach(int k, Waveform_lm *hlm, int dynsize, double tmrg, double t_NQC, RingdownCoefs *c);
