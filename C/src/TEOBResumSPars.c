@@ -591,6 +591,9 @@ void RDdata_set(RDdata *rd, int model)
     rd->dt_peak22[k]   = 0.;
     rd->kbase[k]       = -1;
   }
+  /* fits at the (2,2) peak, Pompili+ 2303.18039 */
+  rd->targets_peak22 = &eob_nqc_point_HM_peak22;
+  rd->coefs_peak22   = &QNMHybridFitCab_HM_Pompili23;
 
   switch (model) {
     case RINGDOWN_NAGAR20:

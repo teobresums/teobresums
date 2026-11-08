@@ -575,6 +575,7 @@ typedef struct tagRingdownCoefs
 } RingdownCoefs;
 
 /** Merger-ringdown model, set in eob_set_params from ringdown_model */
+struct tagDynamics;
 typedef struct tagRDdata
 {
   int model;                 /**< RINGDOWN_*, with "auto" resolved from the binary */
@@ -582,6 +583,12 @@ typedef struct tagRDdata
   int postpeak_ok[KMAX];     /**< modes whose NQC values can be read off the template, allowed in kpostpeak */
   double dt_peak22[KMAX];    /**< template start minus tmrg22, for the modes in knqcpeak22 */
   int kbase[KMAX];           /**< base mode (l-1,m) of the modes with a spheroidal template at the (2,2) peak, -1 otherwise */
+  /** NQC targets of the modes in knqcpeak22, at their NQC time */
+  void (*targets_peak22)(struct tagDynamics *dyn, double *A, double *dA, double *omg, double *domg);
+  /** template coefficients of the modes in knqcpeak22 */
+  void (*coefs_peak22)(double nu, double X1, double X2, double chi1, double chi2, double aK, double Mbh, double abh,
+                       double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
+                       double *sigmar, double *sigmai);
   int knqcpeak22[KMAX], knqcpeak22_size;  /**< default knqcpeak22 of the model */
   int kpostpeak[KMAX], kpostpeak_size;    /**< default kpostpeak of the model */
   RingdownCoefs coef[KMAX];  /**< template coefficients, filled by eob_wav_ringdown_coefs */

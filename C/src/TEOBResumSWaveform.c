@@ -6632,10 +6632,10 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
                          c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi, alpha1, omega1);
       /* modes in knqcpeak22 take the template coefficients at the (2,2) peak */
       if (nqc_point == NQC_POINT_HM)
-        QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
-                                     c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi, alpha1, omega1);
+        RD->coefs_peak22(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
+                         c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi, alpha1, omega1);
       eob_nqc_point_HM(dyn, A, dA, omg, domg);
-      eob_nqc_point_HM_peak22(dyn, A, dA, omg, domg);
+      RD->targets_peak22(dyn, A, dA, omg, domg);
     }
 
     /* modes in kpostpeak take the values read off the ringdown template at the NQC point,
@@ -8196,8 +8196,8 @@ int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 /**
  * Function: eob_wav_ringdown_coefs_HM
  * -----------------------------------
- *   Ringdown template coefficients of every mode, from the fits of arXiv:2001.09082, with
- *   the Pompili+ 2303.18039 fits for the modes in knqcpeak22, whose template time is in M.
+ *   Ringdown template coefficients of every mode, from the fits of arXiv:2001.09082, and from
+ *   RD->coefs_peak22 for the modes in knqcpeak22, whose template time is in M.
  *
  *   @param[out] coef : coefficients per mode
  */
@@ -8220,9 +8220,9 @@ void eob_wav_ringdown_coefs_HM(RingdownCoefs *coef)
                      sigmar, sigmai);
 
   /* Overwrite the modes attached at the peak */
-  QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
-                               a1, a2, a3, a4, b1, b2, b3, b4,
-                               sigmar, sigmai);
+  RD->coefs_peak22(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
+                   a1, a2, a3, a4, b1, b2, b3, b4,
+                   sigmar, sigmai);
 
   int modesatpeak22[KMAX];
   set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
@@ -10431,7 +10431,7 @@ void eob_wav_ringdown_template_td(double x, RingdownCoefs *c, double *psi)
  * Function: eob_wav_ringdown_coefs_bhns
  * -------------------------------------
  *   Ringdown template coefficients of every mode for BHNS, with or without tidal
- *   disruption, and the Pompili+ 2303.18039 fits for the modes in knqcpeak22 where valid.
+ *   disruption, and from RD->coefs_peak22 for the modes in knqcpeak22 where valid.
  *
  *   @param[out] coef : coefficients per mode
  */
@@ -10467,10 +10467,10 @@ void eob_wav_ringdown_coefs_bhns(RingdownCoefs *coef)
   if (q>3 && chi1>0.85) {
     if (VERBOSE) PRSECTN("Region outside of Pompili's fits validity");
   } else {
-    /* Overwrite the modes attached at the peak, effectively just for (2,1),(3,3),(4,4) */
-    QNMHybridFitCab_HM_Pompili23(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
-                                 a1, a2, a3, a4, b1, b2, b3, b4,
-                                 sigmar, sigmai);
+    /* Overwrite the modes attached at the peak */
+    RD->coefs_peak22(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
+                     a1, a2, a3, a4, b1, b2, b3, b4,
+                     sigmar, sigmai);
   }
 
   if (VERBOSE) {
