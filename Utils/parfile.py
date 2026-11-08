@@ -44,6 +44,7 @@ PARKEYS = {
     'use_mode_lm': ['List of modes to use', 'int list', "[1]" ],
     'output_lm': ['List of modes to output', 'int list', "[1]" ],
     'kpostpeak': ['List of modes for which NQCs are extracted from the pospeak template', 'int list', "[0,3,6,7,8]"] ,
+    'ringdown_model': ['Merger-ringdown model: Nagar20/Gonzalez25/auto (auto: Gonzalez25 for BHNS, Nagar20 otherwise); it sets kpostpeak, knqcpeak22 unless given', 'str', "auto" ],
     #
     'postadiabatic_dynamics': ['Turn on/off the postadiabatic approximation', 'str', "yes" ],
     'postadiabatic_dynamics_N': ['Use the N-th order PA (default=8)', 'int', 8 ],

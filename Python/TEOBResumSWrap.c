@@ -256,6 +256,7 @@ int SetOptionalVariables(PyObject* dict){
       PyObject *item = PyList_GetItem(tmp, i);
       EOBPars->kpostpeak[i] = (int) PyLong_AsLong(item); 
     }
+    EOBPars->kpostpeak_user = 1;
   }
   
   /* k nqc peak22 */
@@ -268,6 +269,12 @@ int SetOptionalVariables(PyObject* dict){
       PyObject *item = PyList_GetItem(tmp, i);
       EOBPars->knqcpeak22[i] = (int) PyLong_AsLong(item); 
     }
+    EOBPars->knqcpeak22_user = 1;
+  }
+  if ( PyDict_GetItemString(dict, "ringdown_model") != NULL ) {
+    char* val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ringdown_model"));
+    for (EOBPars->ringdown_model=0; EOBPars->ringdown_model<RINGDOWN_NOPT; EOBPars->ringdown_model++)
+      if (STREQUAL(val,ringdown_model_opt[EOBPars->ringdown_model])) break;
   }
 
   /* Post Adiabatic Dynamics */

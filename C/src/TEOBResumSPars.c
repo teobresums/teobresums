@@ -35,6 +35,7 @@
   * (there is an extern in the header) 
   */
 EOBParameters *EOBPars;
+RDdata *RD;
 
 /**
   * Global vars for function pointers
@@ -51,6 +52,7 @@ int (*eob_wav_hlmNQC_find_a1a2a3)();
 int (*eob_wav_hlmNQC_find_a1a2a3_mrg)();
 int (*eob_wav_ringdown)();
 void (*p_eob_wav_ringdown_template)();
+void (*eob_wav_ringdown_coefs)();
 double (*eob_nqc_timeshift)();
 void (*eob_nqc_deltat_lm)();
 void (*eob_dyn_s_get_rc)();
@@ -80,6 +82,7 @@ void EOBParameters_alloc (EOBParameters **eobp)
   *eobp = (EOBParameters *) calloc(1, sizeof(EOBParameters));
   if (eobp == NULL)
     errorexit("Out of memory");
+  RD = (RDdata *) calloc(1, sizeof(RDdata));
 } 
 
 /** 
@@ -92,6 +95,8 @@ void EOBParameters_alloc (EOBParameters **eobp)
 void EOBParameters_free (EOBParameters *eobp)
 {
   if (!eobp) return;
+  free(RD);
+  RD = NULL;
   if (eobp->use_mode_lm) free (eobp->use_mode_lm);
   if (eobp->use_mode_lm_inertial) free (eobp->use_mode_lm_inertial);
   if (eobp->use_mode_lm_nqc) free (eobp->use_mode_lm_nqc);
@@ -242,6 +247,9 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->knqcpeak22_size = 3;
   eobp->knqcpeak22      = malloc (eobp->knqcpeak22_size * sizeof(int) );
   memcpy(eobp->knqcpeak22, knqcpeak22, eobp->knqcpeak22_size * sizeof(int));
+  eobp->kpostpeak_user  = 0;
+  eobp->knqcpeak22_user = 0;
+  eobp->ringdown_model  = RINGDOWN_AUTO;
 
   /* FD options */
   
@@ -562,6 +570,48 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->delta_dAlm_nqc_size   = 0;
   eobp->delta_dOmglm_nqc_size = 0;
 
+}
+
+/**
+ * Function: RDdata_set
+ * --------------------
+ *   Tables of the merger-ringdown model: the modes it can attach at the (2,2) peak or take
+ *   from its template, the offsets at the (2,2) peak and its default knqcpeak22, kpostpeak.
+ *
+ *   @param[out] rd    : merger-ringdown model
+ *   @param[in]  model : RINGDOWN_*, not RINGDOWN_AUTO
+ */
+void RDdata_set(RDdata *rd, int model)
+{
+  rd->model = model;
+  for (int k = 0; k < KMAX; k++) {
+    rd->peak22_ok[k]   = 0;
+    rd->postpeak_ok[k] = 0;
+    rd->dt_peak22[k]   = 0.;
+  }
+
+  switch (model) {
+    case RINGDOWN_NAGAR20:
+    case RINGDOWN_GONZALEZ25: {
+      /* Pompili+ 2303.18039 at the (2,2) peak for (2,1), (3,3), (4,4) */
+      const int peak22[] = {0, 4, 8}, postpeak[] = {1, 3, 6, 7};
+      rd->knqcpeak22_size = 3;
+      for (int i = 0; i < rd->knqcpeak22_size; i++) {
+        rd->knqcpeak22[i] = peak22[i];
+        rd->peak22_ok[peak22[i]] = 1;
+      }
+
+      /* modes with a template in QNMHybridFitCab_HM, always its spinning branch */
+      const int tmpl[] = {0, 1, 3, 4, 6, 7, 8, 13};
+      for (int i = 0; i < 8; i++)
+        rd->postpeak_ok[tmpl[i]] = 1;
+
+      rd->kpostpeak_size = 0;
+      for (int i = 0; i < 4; i++)
+        if (rd->postpeak_ok[postpeak[i]]) rd->kpostpeak[rd->kpostpeak_size++] = postpeak[i];
+      break;
+    }
+  }
 }
 
 /**
@@ -1560,13 +1610,59 @@ int eob_set_params(int default_choice, int firstcall)
       eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_22;
     }
   }
+  /* Merger-ringdown model, "auto" is Gonzalez25 for BHNS and Nagar20 otherwise */
+  const int bhns = (EOBPars->binary == BINARY_BHNS || EOBPars->binary == BINARY_BHNS_TD);
+  if (EOBPars->ringdown_model == RINGDOWN_AUTO)
+    EOBPars->ringdown_model = bhns ? RINGDOWN_GONZALEZ25 : RINGDOWN_NAGAR20;
+  if (EOBPars->ringdown_model >= RINGDOWN_NOPT) {
+    if (DEBUG) printf("ERROR: unknown ringdown_model.\n");
+    return 1;
+  }
+  if (bhns != (EOBPars->ringdown_model == RINGDOWN_GONZALEZ25)) {
+    if (DEBUG) printf("ERROR: ringdown_model %s is not for this binary.\n", ringdown_model_opt[EOBPars->ringdown_model]);
+    return 1;
+  }
+  RDdata_set(RD, EOBPars->ringdown_model);
+
+  /* knqcpeak22, kpostpeak of the model, unless set by the user */
+  if (!EOBPars->knqcpeak22_user) {
+    free(EOBPars->knqcpeak22);
+    EOBPars->knqcpeak22_size = RD->knqcpeak22_size;
+    EOBPars->knqcpeak22 = malloc(KMAX*sizeof(int));
+    memcpy(EOBPars->knqcpeak22, RD->knqcpeak22, RD->knqcpeak22_size*sizeof(int));
+  }
+  if (!EOBPars->kpostpeak_user) {
+    free(EOBPars->kpostpeak);
+    EOBPars->kpostpeak_size = RD->kpostpeak_size;
+    EOBPars->kpostpeak = malloc(KMAX*sizeof(int));
+    memcpy(EOBPars->kpostpeak, RD->kpostpeak, RD->kpostpeak_size*sizeof(int));
+  }
+
+  /* the modes in knqcpeak22, kpostpeak have to be ones the model can build there */
+  for (int i = 0; i < EOBPars->knqcpeak22_size; i++) {
+    const int k = EOBPars->knqcpeak22[i];
+    if (!RD->peak22_ok[k]) {
+      if (DEBUG) printf("ERROR: ringdown_model %s cannot attach mode %d at the (2,2) peak.\n", ringdown_model_opt[EOBPars->ringdown_model], k);
+      return 1;
+    }
+  }
+  for (int i = 0; i < EOBPars->kpostpeak_size; i++) {
+    const int k = EOBPars->kpostpeak[i];
+    if (!RD->postpeak_ok[k]) {
+      if (DEBUG) printf("ERROR: ringdown_model %s cannot take the NQC values of mode %d from its template.\n", ringdown_model_opt[EOBPars->ringdown_model], k);
+      return 1;
+    }
+  }
+
   // Overwrite some quantities if we are in a BHNS case
-  if(EOBPars->binary==BINARY_BHNS || EOBPars->binary == BINARY_BHNS_TD){
+  if (EOBPars->ringdown_model == RINGDOWN_GONZALEZ25) {
     eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
-    eob_wav_ringdown = &eob_wav_ringdown_bhns;
+    eob_wav_ringdown = &eob_wav_ringdown_HM;
+    eob_wav_ringdown_coefs = &eob_wav_ringdown_coefs_bhns;
     eob_nqc_timeshift = &eob_nqc_timeshift_bhns;
     eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bhns;
   }else{ // For BBH
+    eob_wav_ringdown_coefs = &eob_wav_ringdown_coefs_HM;
     eob_nqc_timeshift = &eob_nqc_timeshift_bbh;
     eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bbh;
   }
@@ -2087,11 +2183,19 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"kpostpeak")) {
     free(eobp->kpostpeak);
     eobp->kpostpeak_size = str2iarray(val, &eobp->kpostpeak);
+    eobp->kpostpeak_user = 1;
   }
 
   if (STREQUAL(key,"knqcpeak22")) {
     free(eobp->knqcpeak22);
     eobp->knqcpeak22_size = str2iarray(val, &eobp->knqcpeak22);
+    eobp->knqcpeak22_user = 1;
+  }
+
+  if (STREQUAL(key,"ringdown_model")) {
+    val = string_trim(val);
+    for (eobp->ringdown_model=0; eobp->ringdown_model<RINGDOWN_NOPT; eobp->ringdown_model++)
+      if (STREQUAL(val,ringdown_model_opt[eobp->ringdown_model])) break;
   }
 
   if (STREQUAL(key,"centrifugal_radius")) {
@@ -2875,14 +2979,15 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%d]\n", eobp->use_mode_lm_inertial[eobp->use_mode_lm_inertial_size-1]);
 
   fprintf(f,"%s = [", "kpostpeak");
-  for(int i=0; i<eobp->kpostpeak_size-1;i++)
-    fprintf(f,"%d,", eobp->kpostpeak[i]);
-  fprintf(f,"%d]\n", eobp->kpostpeak[eobp->kpostpeak_size-1]);
+  for(int i=0; i<eobp->kpostpeak_size;i++)
+    fprintf(f,(i < eobp->kpostpeak_size-1) ? "%d," : "%d", eobp->kpostpeak[i]);
+  fprintf(f,"]\n");
   
   fprintf(f,"%s = [", "knqcpeak22");
-  for(int i=0; i<eobp->knqcpeak22_size-1;i++)
-    fprintf(f,"%d,", eobp->knqcpeak22[i]);
-  fprintf(f,"%d]\n", eobp->knqcpeak22[eobp->knqcpeak22_size-1]);
+  for(int i=0; i<eobp->knqcpeak22_size;i++)
+    fprintf(f,(i < eobp->knqcpeak22_size-1) ? "%d," : "%d", eobp->knqcpeak22[i]);
+  fprintf(f,"]\n");
+  fprintf(f,"%s = \"%s\"\n", "ringdown_model", ringdown_model_opt[eobp->ringdown_model]);
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = \"%s\"\n", "sigmoid_time", sigmoid_time_opt[eobp->sigmoid_time]);

@@ -491,6 +491,15 @@ enum{
 };
 static const char* ringdown_eulerangles_opt[] = {"constant", "QNMs", "undefined"};
 
+/** List of merger-ringdown models */
+enum{
+  RINGDOWN_NAGAR20,        /**< BBH, Nagar+ 2020, arXiv:2001.09082 */
+  RINGDOWN_GONZALEZ25,     /**< BHNS, Gonzalez+ 2025, arXiv:2507.00113 */
+  RINGDOWN_AUTO,           /**< Gonzalez25 for BHNS, Nagar20 otherwise, resolved in eob_set_params */
+  RINGDOWN_NOPT,           /**< number of merger-ringdown models */
+};
+static const char* const ringdown_model_opt[] = {"Nagar20", "Gonzalez25", "auto", "undefined"};
+
 /** Omegadot for spin dynamics */
 enum{
   SPIN_FLX_PN,              /**< PN Omegadot */
@@ -552,6 +561,30 @@ typedef struct tagNQCdata
   NQCcoefs *hlm;     /**< NQC coefficients for waveform */
   NQCbasis *basis;   /**< NQC basis on a time grid */
 } NQCdata;
+
+/** Ringdown template coefficients of one mode */
+typedef struct tagRingdownCoefs
+{
+  double a1, a2, a3, a4;  /**< amplitude coefficients */
+  double b1, b2, b3, b4;  /**< phase coefficients */
+  double sigmar, sigmai;  /**< QNM frequency, real and imaginary part */
+  double alpha2, Apeak;   /**< tidal-disruption template only */
+  double fact;            /**< template time = time in units of Mbh / fact, 1 or 1/Mbh (time in M) */
+} RingdownCoefs;
+
+/** Merger-ringdown model, set in eob_set_params from ringdown_model */
+typedef struct tagRDdata
+{
+  int model;                 /**< RINGDOWN_*, with "auto" resolved from the binary */
+  int peak22_ok[KMAX];       /**< modes it can attach at the (2,2) peak, allowed in knqcpeak22 */
+  int postpeak_ok[KMAX];     /**< modes whose NQC values can be read off the template, allowed in kpostpeak */
+  double dt_peak22[KMAX];    /**< template start minus tmrg22, for the modes in knqcpeak22 */
+  int knqcpeak22[KMAX], knqcpeak22_size;  /**< default knqcpeak22 of the model */
+  int kpostpeak[KMAX], kpostpeak_size;    /**< default kpostpeak of the model */
+  RingdownCoefs coef[KMAX];  /**< template coefficients, filled by eob_wav_ringdown_coefs */
+} RDdata;
+
+extern RDdata *RD; /* defined in TEOBResumSPars.c */
 
 extern NQCdata *NQC; /* defined in TEOBResumS.c */
 extern int nNegAmp[KMAX]; /* modes stored with a negative amplitude, defined in TEOBResumSWaveform.c */
@@ -926,6 +959,8 @@ typedef struct tagEOBParameters
   int *use_mode_lm_nqc, use_mode_lm_nqc_size;           /**< multipoles to attach NQCs */
   int *kpostpeak, kpostpeak_size;                       /**< multipoles where NQCs are extracted at t_peak_lm + 2 from the RD template */
   int *knqcpeak22, knqcpeak22_size;                     /**< multipoles where NQCs are extracted at t_peak_22  from global fits */
+  int kpostpeak_user, knqcpeak22_user;                  /**< kpostpeak, knqcpeak22 set by the user, not by the ringdown model */
+  int ringdown_model;                                   /**< merger-ringdown model, RINGDOWN_* */
 
   int size;                                             /**< size of arrays */
   int ode_timestep;                                     /**< ODE timestep type */
@@ -1469,6 +1504,7 @@ int eob_solve_system_nqc(Waveform_lm *h, double **ampli_sign, int *kmask, int *j
                          double *A_nr, double *dA_nr, double *d2A_nr,
                          double *omg_nr, double *domg_nr, double *d2omg_nr,
                          double ai[][3], double bi[][3]);
+void eob_nqc_mode_offsets(double *dt_match, double *dt_nqc);
 double eob_nqc_times(Dynamics *dyn, double *tmrg, double *t_NQC);
 void eob_apply_nqc(Waveform_lm *h, int *kmask, double ai[][3], double bi[][3], Waveform_lm *hnqc);
 int eob_apply_nqc_full(Dynamics *dyn, Waveform_lm *hlm, int *kmask, int nqc_basis, int n2_22,
@@ -1488,14 +1524,13 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_ecc_d2(Dynamics *dyn_mrg, Waveform_lm *hlm_mr
 void eob_wav_hlmNQC(double  nu, double  r, double  prstar, double  Omega, double  ddotr, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  Omega, double  ddotr, double t, Dynamics *dyn, NQCcoefs *nqc, Waveform_lm_t *hlmnqc);
 void eob_wav_hlmNQC_nospin201602(double  nu, double  r, double  prstar, double  Omega, double  ddotr, Waveform_lm_t *hlmnqc);
-void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4,
-                               double sigmar, double sigmai, double alpha2, double Amrg, double *psi);
+void eob_wav_ringdown_template(double x, RingdownCoefs *c, double *psi);
 extern int (*eob_wav_ringdown)(); /* defined in TEOBResumSPars.c */
 extern void (*p_eob_wav_ringdown_template)(); /* defined in TEOBResumSPars.c */
-void eob_wav_ringdown_attach(Dynamics *dyn, Waveform_lm *hlm,
-                             double *a1, double *a2, double *a3, double *a4,
-                             double *b1, double *b2, double *b3, double *b4,
-                             double *sigmar, double *sigmai, double *alpha2, double *Apeak);
+extern void (*eob_wav_ringdown_coefs)(); /* defined in TEOBResumSPars.c */
+void eob_wav_ringdown_coefs_HM(RingdownCoefs *coef);
+void RDdata_set(RDdata *rd, int model);
+void eob_wav_ringdown_attach(int k, Waveform_lm *hlm, int dynsize, double tmrg, double t_NQC, RingdownCoefs *c);
 int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm);
 int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm);
 double eob_wav_hlmTidal_fmode_fact22A(double x, double alpha, double bomgf, double XB);
@@ -1515,9 +1550,8 @@ void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_
 				       Dynamics *dyn, Waveform_lm *hlm, bool *bhns);
 int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
-void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4,
-                                  double sigmar_qnm, double sigmai, double alpha2, double Amrg, double *psi);
-int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_ringdown_template_td(double x, RingdownCoefs *c, double *psi);
+void eob_wav_ringdown_coefs_bhns(RingdownCoefs *coef);
 
 /* SpecialFuns.c */
 double fact(int n);

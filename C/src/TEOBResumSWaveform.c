@@ -6637,10 +6637,10 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
       eob_nqc_point_HM_peak22(dyn, A, dA, omg, domg);
     }
 
-    /* modes in kpostpeak take the values read off the ringdown template, at its start
-       (tau = 0) for the modes attached at the (2,2) peak, 2 M later otherwise */
-    int modesatpeak22[KMAX];
-    set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+    /* modes in kpostpeak take the values read off the ringdown template at the NQC point,
+       dt_nqc after the template start */
+    double dt_match[KMAX], dt_nqc[KMAX];
+    eob_nqc_mode_offsets(dt_match, dt_nqc);
     for (int j=0; j<EOBPars->kpostpeak_size; j++) {
       const int k = EOBPars->kpostpeak[j];
       const int l = LINDEX[k];
@@ -6654,7 +6654,7 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
         d2A[k]   = d2A_tmp;
         d2omg[k] = d2omg_tmp;
       } else {
-        const double tau_postpeak = modesatpeak22[k] ? 0. : 2./Mbh;
+        const double tau_postpeak = dt_nqc[k]/Mbh;
         eob_nqc_point_postpeak(tau_postpeak, Mbh, c1A[k], c2A[k], c3A[k], c4A[k],
                                c1phi[k], c2phi[k], c3phi[k], c4phi[k], alpha1[k], omega1[k],
                                &A_tmp, &dA_tmp, &omg_tmp, &domg_tmp);
@@ -6980,12 +6980,36 @@ void eob_output_nqc_basis(NQCbasis *b, double *t, int k, int derivatives)
 }
 
 /**
+ * Function: eob_nqc_mode_offsets
+ * ------------------------------
+ *   Time offsets of each mode, in M. The ringdown template of mode k starts dt_match[k]
+ *   after the (2,2) merger tmrg22, its NQC point is dt_nqc[k] after the template start.
+ *   Modes in knqcpeak22 start RD->dt_peak22 after tmrg22 with the NQC point there, the
+ *   others start eob_nqc_deltat_lm later with the NQC point 2 M after.
+ *
+ *   @param[out] dt_match : template start minus tmrg22, per mode
+ *   @param[out] dt_nqc   : NQC point minus template start, per mode
+ */
+void eob_nqc_mode_offsets(double *dt_match, double *dt_nqc)
+{
+  int modesatpeak22[KMAX];
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+
+  double dtmrg[KMAX];
+  eob_nqc_deltat_lm(dtmrg);
+
+  for (int k=0; k<KMAX; k++) {
+    dt_match[k] = modesatpeak22[k] ? RD->dt_peak22[k] : dtmrg[k];
+    dt_nqc[k]   = modesatpeak22[k] ? 0. : 2.;
+  }
+}
+
+/**
  * Function: eob_nqc_times
  * -----------------------
  *   Merger time tmrg and NQC time t_NQC of each mode, in M.
- *   The (2,2) merges at tOmg_pk - DeltaT_nqc - 2, the other modes eob_nqc_deltat_lm later,
- *   the modes in knqcpeak22 together with the (2,2). The NQC point is 2 M after tmrg, or at
- *   tmrg for the modes in knqcpeak22. The ringdown template starts at tmrg, attached at t_NQC.
+ *   The (2,2) merges at tmrg22 = tOmg_pk - DeltaT_nqc - 2, the other modes at the offsets
+ *   of eob_nqc_mode_offsets. The ringdown template starts at tmrg, attached at t_NQC.
  *
  *   @param[in]  dyn   : dynamics, with tOmg_pk
  *   @param[out] tmrg  : merger time per mode, or NULL
@@ -6998,17 +7022,14 @@ double eob_nqc_times(Dynamics *dyn, double *tmrg, double *t_NQC)
   const double DeltaT_nqc = eob_nqc_timeshift(EOBPars->nu, EOBPars->chi1);
   const double tNQC = dyn->tOmg_pk - DeltaT_nqc;
 
-  int modesatpeak22[KMAX];
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-
-  double dtmrg[KMAX];
-  eob_nqc_deltat_lm(dtmrg);
+  double dt_match[KMAX], dt_nqc[KMAX];
+  eob_nqc_mode_offsets(dt_match, dt_nqc);
 
   const double tmrg22 = tNQC - 2.;
   for (int k=0; k<KMAX; k++) {
-    const double tk = modesatpeak22[k] ? tmrg22 : tmrg22 + dtmrg[k];
+    const double tk = tmrg22 + dt_match[k];
     if (tmrg != NULL)  tmrg[k]  = tk;
-    if (t_NQC != NULL) t_NQC[k] = modesatpeak22[k] ? tmrg22 : tk + 2.;
+    if (t_NQC != NULL) t_NQC[k] = tk + dt_nqc[k];
   }
 
   return tNQC;
@@ -7925,91 +7946,16 @@ void eob_wav_hlmNQC_ecc_sigmoid(double  nu, double  r, double  prstar, double  O
  * -----------------------------------
  *   Ringdown waveform template
  * 
- *   @param[in] x             : time
- *   @param[in] a1,a2,a3,a4   : amplitude coefficients
- *   @param[in] b1,b2,b3,b4   : phase coefficients
- *   @param[in] sigmar,sigmai : Complex QNM frequency
- *   @param[in] alpha2,Amrg   : not used, same arguments as eob_wav_ringdown_template_td
- *   @param[out] psi          : waveform
+ *   @param[in]  x   : time
+ *   @param[in]  c   : coefficients of the mode, a1 ... sigmai
+ *   @param[out] psi : waveform
  */
-void eob_wav_ringdown_template(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4,
-                               double sigmar, double sigmai, double alpha2, double Amrg, double *psi)
+void eob_wav_ringdown_template(double x, RingdownCoefs *c, double *psi)
 {  
-  double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
-  double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));   
-  psi[0] = amp * exp(-sigmar*x); /* amplitude */
-  psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
-}
-
-/**
- * Function: eob_wav_ringdown_attach
- * ---------------------------------
- *   Attach the ringdown template p_eob_wav_ringdown_template to the modes in hlm->kmask,
- *   from the first sample at or after the NQC time of each mode, with the phase matched there.
- *
- *   @param[in]     dyn           : dynamics
- *   @param[in,out] hlm           : waveform
- *   @param[in]     a1,a2,a3,a4   : amplitude coefficients, per mode
- *   @param[in]     b1,b2,b3,b4   : phase coefficients, per mode
- *   @param[in]     sigmar,sigmai : complex QNM frequency, per mode
- *   @param[in]     alpha2,Apeak  : tidal-disruption template only, per mode, or NULL
- */
-void eob_wav_ringdown_attach(Dynamics *dyn, Waveform_lm *hlm,
-                             double *a1, double *a2, double *a3, double *a4,
-                             double *b1, double *b2, double *b3, double *b4,
-                             double *sigmar, double *sigmai, double *alpha2, double *Apeak)
-{
-  const double ooMbh = 1./EOBPars->Mbhf;
-
-  /* dynsize < size, since the wf has been extended, but the two time arrays agree up to dynsize */
-  const int dynsize = dyn->size;
-  const int size = hlm->size;
-  double *t = hlm->time;
-
-  if (VERBOSE) {
-    PRFORMi("ringdown_dynamics_size",dynsize);
-    PRFORMi("ringdown_waveform_size",size);
-    PRFORMd("ringdown_tOmg_pk",dyn->tOmg_pk);           /* units of M */
-    PRFORMd("ringdown_tOmg_pk_Mbh",dyn->tOmg_pk*ooMbh); /* units of the final black-hole mass */
-  }
-
-  /** Merger and NQC time of each mode, in M */
-  double tmrg[KMAX], t_NQC[KMAX];
-  eob_nqc_times(dyn, tmrg, t_NQC);
-  if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrg[1]*ooMbh);
-
-  int modesatpeak22[KMAX];
-  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
-
-  for (int k = 0; k < KMAX; k++) {
-    if (!hlm->kmask[k]) continue;
-
-    /* template starts at tmrg, in units of Mbh. fact = 1/Mbh for the modes attached at the peak of the (2,2) */
-    const double tmatch = tmrg[k]*ooMbh;
-    const double fact   = modesatpeak22[k] ? ooMbh : 1.;
-    const double alpha2_k = (alpha2 != NULL) ? alpha2[k] : 0.;
-    const double Apeak_k  = (Apeak != NULL) ? Apeak[k] : 0.;
-
-    /* Ringdown attached at the first sample at or after the NQC point. Shift by 1e-8 so that
-       a sample equal to t_NQC up to roundoff counts as the NQC point, not as the one before */
-    int index_rng = find_point_bisection(t_NQC[k] - 1.e-8, size, t, 1) + 1;
-    if (index_rng > dynsize - 1) index_rng = dynsize - 1;
-
-    /* match the phase at index_rng */
-    double psi[2];
-    p_eob_wav_ringdown_template((t[index_rng]*ooMbh - tmatch)/fact,
-                                a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k],
-                                sigmar[k], sigmai[k], alpha2_k, Apeak_k, psi);
-    const double Deltaphi = psi[1] - hlm->phase[k][index_rng];
-
-    for (int j = index_rng; j < size; j++) {
-      p_eob_wav_ringdown_template((t[j]*ooMbh - tmatch)/fact,
-                                  a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k],
-                                  sigmar[k], sigmai[k], alpha2_k, Apeak_k, psi);
-      hlm->phase[k][j] = psi[1] - Deltaphi;
-      hlm->ampli[k][j] = (nNegAmp[k] == 1) ? -psi[0] : psi[0];
-    }
-  }
+  double amp   = ( c->a1 * tanh(c->a2*x + c->a3) + c->a4 ) ;
+  double phase = -c->b1*log((1. + c->b3*exp(-c->b2*x) + c->b4*exp(-2.*c->b2*x))/(1.+c->b3+c->b4));   
+  psi[0] = amp * exp(-c->sigmar*x); /* amplitude */
+  psi[1] = - (phase - c->sigmai*x); /* phase, minus sign in front by convention */
 }
 
 /** 
@@ -8224,12 +8170,13 @@ int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 
       /* Calculate Deltaphi */
       t0 = t_lm[k][idx[k]] - tmrg[k]; 
-      eob_wav_ringdown_template(t0, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], 0., 0., psi);
+      RingdownCoefs c = {a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], 0., 0., 1.};
+      eob_wav_ringdown_template(t0, &c, psi);
       Deltaphi[k] = psi[1] - hlm->phase[k][idx[k]];
       /* Compute and attach ringdown */
       for (int j = idx[k]; j < size ; j++ ) {   
         tm = t_lm[k][j] - tmrg[k];
-        eob_wav_ringdown_template(tm, a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigma[0][k], sigma[1][k], 0., 0., psi);
+        eob_wav_ringdown_template(tm, &c, psi);
         hlm->phase[k][j] = psi[1] - Deltaphi[k];
         hlm->ampli[k][j] = psi[0];
       }
@@ -8245,17 +8192,15 @@ int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
 
 }
 	
-/** 
- * Function: eob_wav_ringdown_HM
- * -----------------------------
- *   Ringdown calculation and match to the dynamics
- *   This refers to the higher modes paper: arXiv:2001.09082
- * 
- *   @param[in]  dyn : dynamics
- *   @param[out] hlm : waveform
- *   @return         : 0 if successful
-*/
-int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
+/**
+ * Function: eob_wav_ringdown_coefs_HM
+ * -----------------------------------
+ *   Ringdown template coefficients of every mode, from the fits of arXiv:2001.09082, with
+ *   the Pompili+ 2303.18039 fits for the modes in knqcpeak22, whose template time is in M.
+ *
+ *   @param[out] coef : coefficients per mode
+ */
+void eob_wav_ringdown_coefs_HM(RingdownCoefs *coef)
 {
   const double Mbh   = EOBPars->Mbhf;
   const double abh   = EOBPars->abhf;
@@ -8266,14 +8211,6 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
   const double X2    = EOBPars->X2;
   const double aK    = EOBPars->a1+EOBPars->a2;
 
-  double tmrg[KMAX];
-  eob_nqc_times(dyn, tmrg, NULL);
-  if (tmrg[1] < 0.0) {
-    if (DEBUG) printf("ERROR: the A22 peak time is negative, dynamics is too short\n");
-    return 1;
-  }
-
-  /** Compute QNM */
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
   double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
   double sigmar[KMAX], sigmai[KMAX];
@@ -8286,7 +8223,92 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
                                a1, a2, a3, a4, b1, b2, b3, b4,
                                sigmar, sigmai);
 
-  eob_wav_ringdown_attach(dyn, hlm, a1, a2, a3, a4, b1, b2, b3, b4, sigmar, sigmai, NULL, NULL);
+  int modesatpeak22[KMAX];
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
+
+  for (int k = 0; k < KMAX; k++)
+    coef[k] = (RingdownCoefs) {a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigmar[k], sigmai[k], 0., 0.,
+                               modesatpeak22[k] ? 1./Mbh : 1.};
+}
+
+/**
+ * Function: eob_wav_ringdown_attach
+ * ---------------------------------
+ *   Attach the ringdown template p_eob_wav_ringdown_template of mode k, starting at tmrg,
+ *   from the first sample at or after t_NQC, with the phase matched there.
+ *
+ *   @param[in]     k       : mode
+ *   @param[in,out] hlm     : waveform
+ *   @param[in]     dynsize : size of the dynamics, the last sample the attachment can use
+ *   @param[in]     tmrg    : start of the template, in M
+ *   @param[in]     t_NQC   : NQC time, in M
+ *   @param[in]     c       : template coefficients of mode k
+ */
+void eob_wav_ringdown_attach(int k, Waveform_lm *hlm, int dynsize, double tmrg, double t_NQC, RingdownCoefs *c)
+{
+  const double ooMbh = 1./EOBPars->Mbhf;
+  const int size = hlm->size;
+  double *t = hlm->time;
+
+  /* template starts at tmrg, in units of Mbh, divided by c->fact for the template time */
+  const double tmatch = tmrg*ooMbh;
+  const double fact   = c->fact;
+
+  /* Ringdown attached at the first sample at or after the NQC point. Shift by 1e-8 so that
+     a sample equal to t_NQC up to roundoff counts as the NQC point, not as the one before */
+  int index_rng = find_point_bisection(t_NQC - 1.e-8, size, t, 1) + 1;
+  if (index_rng > dynsize - 1) index_rng = dynsize - 1;
+
+  /* match the phase at index_rng */
+  double psi[2];
+  p_eob_wav_ringdown_template((t[index_rng]*ooMbh - tmatch)/fact, c, psi);
+  const double Deltaphi = psi[1] - hlm->phase[k][index_rng];
+
+  for (int j = index_rng; j < size; j++) {
+    p_eob_wav_ringdown_template((t[j]*ooMbh - tmatch)/fact, c, psi);
+    hlm->phase[k][j] = psi[1] - Deltaphi;
+    hlm->ampli[k][j] = (nNegAmp[k] == 1) ? -psi[0] : psi[0];
+  }
+}
+
+/** 
+ * Function: eob_wav_ringdown_HM
+ * -----------------------------
+ *   Ringdown of every mode in hlm->kmask, with the coefficients of eob_wav_ringdown_coefs,
+ *   attached by eob_wav_ringdown_attach.
+ * 
+ *   @param[in]  dyn : dynamics
+ *   @param[out] hlm : waveform
+ *   @return         : 0 if successful
+*/
+int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
+{
+  const double ooMbh = 1./EOBPars->Mbhf;
+
+  /* dynsize < size, since the wf has been extended, but the two time arrays agree up to dynsize */
+  const int dynsize = dyn->size;
+  const int size = hlm->size;
+
+  if (VERBOSE) {
+    PRFORMi("ringdown_dynamics_size",dynsize);
+    PRFORMi("ringdown_waveform_size",size);
+    PRFORMd("ringdown_tOmg_pk",dyn->tOmg_pk);           /* units of M */
+    PRFORMd("ringdown_tOmg_pk_Mbh",dyn->tOmg_pk*ooMbh); /* units of the final black-hole mass */
+  }
+
+  /** Merger and NQC time of each mode, in M */
+  double tmrg[KMAX], t_NQC[KMAX];
+  eob_nqc_times(dyn, tmrg, t_NQC);
+  if (VERBOSE) PRFORMd("ringdown_tmrgA22",tmrg[1]*ooMbh);
+  if (tmrg[1] < 0.0) {
+    if (DEBUG) printf("ERROR: the A22 peak time is negative, dynamics is too short\n");
+    return 1;
+  }
+
+  eob_wav_ringdown_coefs(RD->coef);
+
+  for (int k = 0; k < KMAX; k++)
+    if (hlm->kmask[k]) eob_wav_ringdown_attach(k, hlm, dynsize, tmrg[k], t_NQC[k], &RD->coef[k]);
 
   return 0;
 }
@@ -10320,40 +10342,32 @@ int eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_m
  *   Ringdown waveform template for tidal disruption cases
  *   Based on arxiv:2001.0908 and Gonzalez et al. 2022
  * 
- *   @param[in]   x           : time
- *   @param[in]   a1,a2,a3,a4 : amplitude coefficients
- *   @param[in]   b1,b2,b3,b4 : phase coefficients
- *   @param[in]   sigmar_qnm  : not used, same arguments as eob_wav_ringdown_template
- *   @param[in]   sigmai      : imaginary part of the QNM complex frequency
- *   @param[in]   alpha2      : inverse damping time of the first overtone
- *   @param[in]   Amrg        : Amrg
- *   @param[out]  psi         : waveform
- *
+ *   @param[in]  x   : time
+ *   @param[in]  c   : coefficients of the mode, sigmar not used, alpha2 the inverse
+ *                     damping time of the first overtone, Apeak the peak amplitude
+ *   @param[out] psi : waveform
  */
-void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4,
-                                  double sigmar_qnm, double sigmai, double alpha2, double Amrg, double *psi)
+void eob_wav_ringdown_template_td(double x, RingdownCoefs *c, double *psi)
 {  
-  double amp   = ( a1 * tanh(a2*x +a3) + a4 ) ;
-  double phase = -b1*log((1. + b3*exp(-b2*x) + b4*exp(-2.*b2*x))/(1.+b3+b4));
+  double amp   = ( c->a1 * tanh(c->a2*x + c->a3) + c->a4 ) ;
+  double phase = -c->b1*log((1. + c->b3*exp(-c->b2*x) + c->b4*exp(-2.*c->b2*x))/(1.+c->b3+c->b4));
   
-  double sigmar = -(alpha2)*log( (Amrg/exp(1))/amp );
+  double sigmar = -(c->alpha2)*log( (c->Apeak/exp(1))/amp );
 
   psi[0] = amp * exp(-sigmar*x); /* amplitude */
-  psi[1] = - (phase - sigmai*x); /* phase, minus sign in front by convention */
+  psi[1] = - (phase - c->sigmai*x); /* phase, minus sign in front by convention */
   
 }
 
 /**
- * Function: eob_wav_ringdown_bhns
- * -------------------------------
- *   Ringdown calculation and match to the dynamics
- *   for BHNS systems
- * 
- *   @param[in]  dyn : dynamics
- *   @param[out] hlm : waveform
- *   @return         : 0 if successful
+ * Function: eob_wav_ringdown_coefs_bhns
+ * -------------------------------------
+ *   Ringdown template coefficients of every mode for BHNS, with or without tidal
+ *   disruption, and the Pompili+ 2303.18039 fits for the modes in knqcpeak22 where valid.
+ *
+ *   @param[out] coef : coefficients per mode
  */
-int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
+void eob_wav_ringdown_coefs_bhns(RingdownCoefs *coef)
 {
   if (VERBOSE) PRSECTN("entered BHNS ringdown model");
   const double Mbh   = EOBPars->Mbhf;
@@ -10370,7 +10384,7 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   double a1[KMAX], a2[KMAX], a3[KMAX], a4[KMAX];
   double b1[KMAX], b2[KMAX], b3[KMAX], b4[KMAX];
   double sigmar[KMAX], sigmai[KMAX];
-  double alpha2[KMAX], Apeak[KMAX];
+  double alpha2[KMAX] = {0.}, Apeak[KMAX] = {0.};
   if (EOBPars->binary == BINARY_BHNS) {
     if (VERBOSE) PRSECTN("No tidal disruption cases");
     QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
@@ -10402,7 +10416,10 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
     PRFORMd("b4", b4[1]);
   }
 
-  eob_wav_ringdown_attach(dyn, hlm, a1, a2, a3, a4, b1, b2, b3, b4, sigmar, sigmai, alpha2, Apeak);
+  int modesatpeak22[KMAX];
+  set_multipolar_idx_mask (modesatpeak22, KMAX, EOBPars->knqcpeak22, EOBPars->knqcpeak22_size, 0);
 
-  return 0;
+  for (int k = 0; k < KMAX; k++)
+    coef[k] = (RingdownCoefs) {a1[k], a2[k], a3[k], a4[k], b1[k], b2[k], b3[k], b4[k], sigmar[k], sigmai[k], alpha2[k], Apeak[k],
+                               modesatpeak22[k] ? 1./Mbh : 1.};
 }
