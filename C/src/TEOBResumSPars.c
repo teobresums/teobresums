@@ -71,6 +71,7 @@ void (*eob_metric_Btidal_electric)(); /* defined in TEOBResumSPars.c*/
 void (*eob_metric_Qtidal_electric)();
 double (*eob_flx_Fr)();
 double (*eob_flx_hatflm_nc[KMAX])();
+double (*eob_flx_flm_nc_add[KMAX])();
 double (*eob_flx_FlmNewt_nc[KMAX])();
 /* Modes with a noncircular flux correction, set in eob_set_params */
 int eob_flx_nc_active_k[KMAX];
@@ -480,6 +481,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   /* NC options */
   eobp->use_flm_nc         = USEFLM_NC_22;
   eobp->flux_nc_order      = FLUX_NC_ORDER_2PN;
+  eobp->use_flx_horizon    = FLX_HORIZON_AUTO;
   eobp->use_Fr             = USE_FR_NEXT;
   eobp->use_hlm_nc         = USEHLM_NC_NO;
   eobp->use_dlm_nc         = USEDELTALM_NC_NO;
@@ -1501,10 +1503,11 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: the noncircular tidal corrections and use_Fr_tidal need tides and the Dali model\n");
     return 1;
   }
-  if (tidal_nc_on && (EOBPars->use_hlm_nc != USEHLM_NC_IMPQC || EOBPars->use_flm_nc != USEFLM_NC_IMPQC ||
-                      (EOBPars->use_Fr != USE_FR_FULL && EOBPars->use_Fr != USE_FR_LO) ||
+  if (tidal_nc_on && (EOBPars->use_hlm_nc != USEHLM_NC_IMPQC ||
+                      (EOBPars->use_flm_nc != USEFLM_NC_IMPQC && EOBPars->use_flm_nc != USEFLM_NC_IMPQC_UNF) ||
+                      (EOBPars->use_Fr != USE_FR_FULL && EOBPars->use_Fr != USE_FR_LO && EOBPars->use_Fr != USE_FR_NLO) ||
                       EOBPars->use_flm_tidal != USEFLM_TIDAL_DNV_NOSOURCE || !tidal_B)) {
-    if (DEBUG) printf("ERROR: the noncircular tidal corrections need use_hlm_nc = impqc, use_flm_nc = impqc, use_Fr = full or LO, "
+    if (DEBUG) printf("ERROR: the noncircular tidal corrections need use_hlm_nc = impqc, use_flm_nc = impqc or impqc_unf, use_Fr = full, LO or NLO, "
                       "use_flm_tidal = DNV_nosource and tides with the tidal B (TEOBRESUM3_BQ, NNLO_B, NNLO_BQ, N3LO_B, N3LO_BQ)\n");
     return 1;
   }
@@ -1540,6 +1543,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_flx_Fr = &eob_flx_Fr_ecc;
   } else if (EOBPars->use_Fr == USE_FR_LO) {
     eob_flx_Fr = &eob_flx_Fr_LO;
+  } else if (EOBPars->use_Fr == USE_FR_NLO) {
+    eob_flx_Fr = &eob_flx_Fr_NLO;
   } else if (EOBPars->use_Fr == USE_FR_NO) {
     eob_flx_Fr = &return_zero;
   } else {
@@ -1551,6 +1556,7 @@ int eob_set_params(int default_choice, int firstcall)
   for (int k = 0; k < KMAX; k++) {
     eob_flx_hatflm_nc[k] = &return_one;
     eob_flx_FlmNewt_nc[k] = &return_one;
+    eob_flx_flm_nc_add[k] = &return_zero;
   }
   switch (EOBPars->use_flm_nc) {
     case USEFLM_NC_NO:
@@ -1586,6 +1592,20 @@ int eob_set_params(int default_choice, int firstcall)
       }
       if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN) {
         eob_flx_hatflm_nc[3] = &eob_flx_flm_nc_32;
+      }
+      break;
+    case USEFLM_NC_IMPQC_UNF:
+      /* impqc to 1PN at most, the (2,2) 1PN term added to the Newtonian factor (regular on unbound orbits) */
+      if (EOBPars->flux_nc_order > FLUX_NC_ORDER_1PN) {
+        if (DEBUG) printf("ERROR: use_flm_nc = impqc_unf goes to flux_nc_order = 1PN at most\n");
+        return 1;
+      }
+      eob_flx_FlmNewt_nc[1] = &eob_flx_FlmNewt_nc_22;
+      if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN) {
+        eob_flx_FlmNewt_nc[0] = &eob_flx_FlmNewt_nc_21;
+        eob_flx_FlmNewt_nc[2] = &eob_flx_FlmNewt_nc_31;
+        eob_flx_FlmNewt_nc[4] = &eob_flx_FlmNewt_nc_33;
+        eob_flx_flm_nc_add[1] = &eob_flx_flm_nc_22_unf;
       }
       break;
     default:
@@ -1654,6 +1674,7 @@ int eob_set_params(int default_choice, int firstcall)
       case USE_FR_ECC:
       case USE_FR_BD:
       case USE_FR_LO:
+      case USE_FR_NLO:
         eob_flx_Fr_tidal = &eob_flx_Fr_tidal_LO;
         break;
       default:
@@ -1667,7 +1688,7 @@ int eob_set_params(int default_choice, int firstcall)
   /* modes with a noncircular flux correction */
   eob_flx_nc_active_n = 0;
   for (int k = 0; k < KMAX; k++)
-    if (eob_flx_FlmNewt_nc[k] != &return_one || eob_flx_hatflm_nc[k] != &return_one)
+    if (eob_flx_FlmNewt_nc[k] != &return_one || eob_flx_hatflm_nc[k] != &return_one || eob_flx_flm_nc_add[k] != &return_zero)
       eob_flx_nc_active_k[eob_flx_nc_active_n++] = k;
 
   /* NC corrections to delta and hath*/
@@ -2418,6 +2439,17 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
 
+  if (STREQUAL(key,"use_flx_horizon")) {
+    val = string_trim(val);
+    for (eobp->use_flx_horizon=0; eobp->use_flx_horizon<=FLX_HORIZON_NOPT; eobp->use_flx_horizon++) {
+      if (eobp->use_flx_horizon == FLX_HORIZON_NOPT) {
+        eobp->use_flx_horizon = FLX_HORIZON_AUTO;
+        if (VERBOSE) printf("use_flx_horizon '%s' undefined, set to '%s'\n", val, use_flx_horizon_opt[eobp->use_flx_horizon]);
+        break;
+      }
+      if (STREQUAL(val, use_flx_horizon_opt[eobp->use_flx_horizon])) break;
+    }
+  }
   if (STREQUAL(key,"flux_nc_order")) {
     val = string_trim(val);
     for (eobp->flux_nc_order=0; eobp->flux_nc_order<=FLUX_NC_ORDER_NOPT; eobp->flux_nc_order++) {
@@ -3221,6 +3253,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "use_flm_nc", use_flm_nc_opt[eobp->use_flm_nc]);
   fprintf(f,"%s = \"%s\"\n", "flux_nc_order", flux_nc_order_opt[eobp->flux_nc_order]);
+  fprintf(f,"%s = \"%s\"\n", "use_flx_horizon", use_flx_horizon_opt[eobp->use_flx_horizon]);
   fprintf(f,"%s = \"%s\"\n", "use_Fr", use_Fr_opt[eobp->use_Fr]);
   fprintf(f,"%s = \"%s\"\n", "use_hlm_nc", use_hlm_nc_opt[eobp->use_hlm_nc]);
   fprintf(f,"%s = \"%s\"\n", "use_dlm_nc", use_dlm_nc_opt[eobp->use_dlm_nc]);

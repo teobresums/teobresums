@@ -384,7 +384,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   double hatf = sum_k/(FNewt22);
     
   /* Horizon flux */ 
-  if (!(usetidal)) {
+  if (EOBPars->use_flx_horizon == FLX_HORIZON_YES || (EOBPars->use_flx_horizon == FLX_HORIZON_AUTO && !usetidal)) {
     double hatFH;
     if (usespins) {
       hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
@@ -542,7 +542,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   /* Horizon flux */
   double hatFH = 0.;
-  if (!(usetidal)) {
+  if (EOBPars->use_flx_horizon == FLX_HORIZON_YES || (EOBPars->use_flx_horizon == FLX_HORIZON_AUTO && !usetidal)) {
     if (usespins) {
       hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
     } else {
@@ -835,6 +835,29 @@ double eob_flx_Fr_LO(double r, double prstar, double pphi, double prsdot, Dynami
 {
   const double u = 1./r;
   return EOBPars->nu*u*u*u*u*prstar*(-8./15. + 56./5.*pphi*pphi*u);
+}
+
+/**
+  * Function: eob_flx_Fr_NLO
+  * ------------------------
+  *   1PN noncircular radial force, the numerator of eob_flx_Fr_ecc through F1PN, not resummed: nothing is
+  *   divided, so it stays regular on unbound orbits
+  *
+  *   @param[in] r, prstar, pphi: the state
+  *   @param[in] prsdot, dyn, Fphi: not used, for the common signature of eob_flx_Fr
+  *
+  *   @return Fr
+*/
+double eob_flx_Fr_NLO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
+{
+  const double nu = EOBPars->nu;
+  const double u = 1./r, u2 = u*u;
+  const double pphi2 = pphi*pphi, prstar2 = prstar*prstar;
+  const double F0PN = -8./15. + 56./5.*pphi2*u;
+  const double F1PN = prstar2*(-1228./105. + 556./105.*nu) + u*(-1984./105. + 16./21.*nu)
+    + prstar2*pphi2*u*(-124./105. - 436./105.*nu) + pphi2*u2*(-1696./35. - 1268./105.*nu)
+    + pphi2*pphi2*u2*u*(1252./105. - 2588./105.*nu);
+  return nu*u2*u2*prstar*(F0PN + F1PN);
 }
 
 
@@ -1358,12 +1381,17 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
        the point-mass amplitude only, unless not positive (impqc's (3,1) turns negative on eccentric
        orbits, also far from merger) */
     /* only the modes that have NC factors are computed, the others keep both at 1 */
-    double FlmNewt_nc[KMAX], hatflm_nc[KMAX];
-    for (int k = 0; k < KMAX; k++) FlmNewt_nc[k] = hatflm_nc[k] = 1.;
+    /* with impqc_unf the (2,2) 1PN term is added to the Newtonian factor, u N/j^4 = N r/pphi^4, not multiplied */
+    double FlmNewt_nc[KMAX], hatflm_nc[KMAX], add_nc[KMAX];
+    for (int k = 0; k < KMAX; k++) {
+      FlmNewt_nc[k] = hatflm_nc[k] = 1.;
+      add_nc[k] = 0.;
+    }
     for (int j = 0; j < eob_flx_nc_active_n; j++){
       const int k = eob_flx_nc_active_k[j];
       FlmNewt_nc[k] = eob_flx_FlmNewt_nc[k](r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot);
       hatflm_nc[k]  = eob_flx_hatflm_nc[k](r, prstar, prstardot);
+      add_nc[k]     = eob_flx_flm_nc_add[k](r, prstar, prstardot)*r/SQ(pphi2);
     }
     sum_k = 0.;
     const double FlmToFphi = Fphi_lo/FlmNewt[1]; /* Fphi = FlmToFphi sum_k Flm_NC[k] */
@@ -1372,8 +1400,11 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
       if (eob_flx_Flm_nc_tidal[k] != &return_zero) {
         /* tides on, and an NC tidal flux for this mode (the (2,2) with use_flm_nc_tidal), which already
            includes the circular tidal part */
-        Flm_NC[k]  = Fpp * (FlmNewt_nc[k] * hatflm_nc[k]); /* point mass, both NC factors */
+        Flm_NC[k]  = Fpp * (FlmNewt_nc[k] * hatflm_nc[k] + add_nc[k]); /* point mass, both NC factors */
         Flm_NC[k] += eob_flx_Flm_nc_tidal[k](r, prstar, pphi, FlmToFphi*Flm_NC[k])/FlmToFphi; /* tidal part, in Fphi units */
+      } else if (add_nc[k] != 0.) {
+        /* the added 1PN term on the point mass only; the circular tidal amplitude keeps the Newtonian factor */
+        Flm_NC[k] = Flm[k] * FlmNewt_nc[k] + Fpp * add_nc[k];
       } else if (Modhhatlm_tidal[k] == 0. || !(hatflm_nc[k] > 0.)) {
         /* no tidal amplitude for this mode (tides off, or none for it), or hatflm_nc not positive
            (impqc's (3,1)), both NC factors on the whole mode */
@@ -1886,6 +1917,26 @@ double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, do
  *  @return The non-circular correction factor for the (2,2) mode of the gravitational wave flux.
  */
 #define use_pade_22 (1)
+/**
+  * Function: eob_flx_flm_nc_22_unf
+  * -------------------------------
+  *   impqc's 1PN (2,2) term with the Newtonian flux not factored out: N = P0 h1, h1 the 1PN coefficient of
+  *   eob_flx_flm_nc_22 and P0 = (2 + 2 j^2 - p^2)/4 the Newtonian NC (2,2) flux, here as the polynomial it is
+  *   rather than through the series of 1/P0 in h1, which P0 crossing zero on unbound orbits breaks.
+  *   The flux adds u N/j^4 to the Newtonian factor (TidalFlux22.wl, Sec. 3)
+  *
+  *   @param[in] r, prstar, prsdot: the state and d prstar/dt
+  *
+  *   @return N, with p^2 = prstar^2 r and s = r^2 prsdot
+*/
+double eob_flx_flm_nc_22_unf(double r, double prstar, double prsdot)
+{
+  const double nu = EOBPars->nu;
+  const double p2 = prstar*prstar*r, s = r*r*prsdot;
+  return (151. - 26.*nu)/56.*p2 + (193. - 26.*nu)/84.*s - (1. + 39.*nu)/84.*p2*p2
+    + 5.*(65. - 34.*nu)/168.*p2*s + (243. - 50.*nu)/168.*s*s;
+}
+
 double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
 
   const double nu = EOBPars -> nu;

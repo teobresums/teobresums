@@ -357,6 +357,15 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_flx_horizon") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flx_horizon"));
+    for(EOBPars->use_flx_horizon=0; EOBPars->use_flx_horizon<=FLX_HORIZON_NOPT; EOBPars->use_flx_horizon++){
+      if (EOBPars->use_flx_horizon == FLX_HORIZON_NOPT) { EOBPars->use_flx_horizon = FLX_HORIZON_AUTO; break; }
+      if (STREQUAL(val,use_flx_horizon_opt[EOBPars->use_flx_horizon])) break;
+    }
+  }
+
   if ( PyDict_GetItemString(dict, "flux_nc_order") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "flux_nc_order"));

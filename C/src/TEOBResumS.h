@@ -394,9 +394,10 @@ enum{
   USEFLM_NC_NO,            /**< No NC corrections to anything */
   USEFLM_NC_22,            /**< NC corrections to 22 mode only, and only to the Newtonian prefactor */
   USEFLM_NC_IMPQC,         /**< ImpQC NC corrections to flm amplitudes */
+  USEFLM_NC_IMPQC_UNF,     /**< ImpQC to 1PN, the (2,2) 1PN term added to the Newtonian factor instead of multiplying it */
   USEFLM_NC_NOPT           /**< number of flm_nc amplitudes options */
 };
-static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "undefined"};
+static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "impqc_unf", "undefined"};
 
 /** List of options for deltalm_nc */
 enum{
@@ -410,6 +411,15 @@ enum{
 };
 static const char* const flux_nc_order_opt[] = {"0PN", "1PN", "1.5PN", "2PN", "2.5PN", "3PN"};
 
+/* horizon flux: auto = on without tides, off with them (the old behaviour) */
+enum{
+  FLX_HORIZON_AUTO,
+  FLX_HORIZON_YES,
+  FLX_HORIZON_NO,
+  FLX_HORIZON_NOPT
+};
+static const char* const use_flx_horizon_opt[] = {"auto", "yes", "no", "undefined"};
+
 /** List of options for Fr */
 enum{
   USE_FR_NO,            /**< No radial flux */
@@ -418,9 +428,10 @@ enum{
   USE_FR_NEXT,          /**< Resummed, 2PN, Fphi-factorized Fr */
   USE_FR_FULL,          /**< Resummed, 2PN, Fphi-factorized full noncircular Fr */
   USE_FR_LO,            /**< Newtonian noncircular Fr, not resummed (unbound orbits) */
+  USE_FR_NLO,           /**< 1PN noncircular Fr, not resummed (unbound orbits) */
   USE_FR_NOPT           /**< number of Fr options */
 };
-static const char* const use_Fr_opt[] = {"no", "ecc", "BD", "next", "full", "LO", "undefined"};
+static const char* const use_Fr_opt[] = {"no", "ecc", "BD", "next", "full", "LO", "NLO", "undefined"};
 
 /** List of options for the tidal part of the radial flux */
 enum{
@@ -967,6 +978,7 @@ typedef struct tagEOBParameters
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int flux_nc_order;                                    /**< NEW, INDEX FOR  # "0PN", "1PN", "1.5PN", "2PN" */
+  int use_flx_horizon;                                  /**< horizon flux: auto (off with tides), yes, no */
   int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */
@@ -1485,6 +1497,7 @@ extern double (*eob_flx_Fr)(); /* defined in TEOBResumSPars.c*/
 extern double (*eob_flx_Fr_tidal)(); /* defined in TEOBResumSPars.c */
 extern double (*eob_flx_hatflm_nc[KMAX])();
 extern double (*eob_flx_FlmNewt_nc[KMAX])();
+extern double (*eob_flx_flm_nc_add[KMAX])();
 extern double (*eob_flx_Flm_nc_tidal[KMAX])(); /* defined in TEOBResumSPars.c */
 extern int eob_flx_nc_active_k[KMAX]; /* modes with a noncircular flux correction */
 extern int eob_flx_nc_active_n;
@@ -1495,6 +1508,7 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_LO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
+double eob_flx_Fr_NLO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_tidal_LO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
@@ -1509,6 +1523,7 @@ double eob_flx_FlmNewt_nc_31(double r, double Omg, double rdot, double r2dot, do
 double eob_flx_FlmNewt_nc_44(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 double eob_flx_flm_nc_22(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_22_unf(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_21(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_33(double r, double prstar, double prstardot);
 double eob_flx_flm_nc_32(double r, double prstar, double prstardot);
