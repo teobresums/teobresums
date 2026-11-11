@@ -6792,6 +6792,7 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
   double alpha1[KMAX], omega1[KMAX];
   double c1A[KMAX], c2A[KMAX], c3A[KMAX], c4A[KMAX];
   double c1phi[KMAX], c2phi[KMAX], c3phi[KMAX], c4phi[KMAX];
+  double Apeak_td[KMAX], alpha2_td[KMAX]; /* disruption template only */
 
   for (int k=0; k<KMAX; k++) {
     A[k]   = dA[k]   = 0.;
@@ -6813,8 +6814,13 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
 
     /* fits for the modes, then template coefficients for the modes in kpostpeak */
     if (nqc_point == NQC_POINT_BHNS) {
-      QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
-                              c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi, alpha1, omega1);
+      /* the coefficients of the template the ringdown attaches: a disruption gets its own (eob_wav_ringdown_bhns) */
+      if (EOBPars->binary == BINARY_BHNS_TD)
+        postpeak_coef(c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi, alpha1, omega1,
+                      nu, chi1, chi2, X1, X2, aK, Mbh, abh, Apeak_td, alpha2_td);
+      else
+        QNMHybridFitCab_BHNS_HM(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
+                                c1A, c2A, c3A, c4A, c1phi, c2phi, c3phi, c4phi, alpha1, omega1);
       eob_nqc_point_BHNS_HM(dyn, A, dA, omg, domg);
     } else {
       QNMHybridFitCab_HM(nu, X1, X2, chi1, chi2, aK, Mbh, abh,
@@ -6834,8 +6840,9 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
     for (int j=0; j<EOBPars->kpostpeak_size; j++) {
       const int k = EOBPars->kpostpeak[j];
       const int l = LINDEX[k];
-      c1A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
-      c4A[k] /= sqrt((l+2)*(l+1)*l*(l-1));
+      const double nl = sqrt((l+2)*(l+1)*l*(l-1));
+      c1A[k] /= nl;
+      c4A[k] /= nl;
 
       if (nqc_point == NQC_POINT_HM_D2) {
         eob_nqc_point_postpeak_d2(Mbh, c1A[k], c2A[k], c3A[k], c4A[k],
@@ -6848,6 +6855,17 @@ void eob_set_nqc_point(Dynamics *dyn, int nqc_point,
         eob_nqc_point_postpeak(tau_postpeak, Mbh, c1A[k], c2A[k], c3A[k], c4A[k],
                                c1phi[k], c2phi[k], c3phi[k], c4phi[k], alpha1[k], omega1[k],
                                &A_tmp, &dA_tmp, &omg_tmp, &domg_tmp);
+        /* the disruption template has the same phase, so omega and its derivative above hold; its amplitude
+           decays at a rate set by the amplitude itself: A and dA from the template, differentiated numerically */
+        if (nqc_point == NQC_POINT_BHNS && EOBPars->binary == BINARY_BHNS_TD) {
+          const double h = 1.e-4, dtau[3] = {0., h, -h};
+          double p[3][2];
+          for (int i = 0; i < 3; i++)
+            eob_wav_ringdown_template_td(tau_postpeak + dtau[i], c1A[k]*nl, c2A[k], c3A[k], c4A[k]*nl, c1phi[k], c2phi[k], c3phi[k],
+                                         c4phi[k], alpha1[k], omega1[k], alpha2_td[k], Apeak_td[k], p[i]);
+          A_tmp  = p[0][0]/nl;
+          dA_tmp = (p[1][0] - p[2][0])/(2.*h)/nl/Mbh;
+        }
       }
       A[k]    = A_tmp;
       dA[k]   = dA_tmp;

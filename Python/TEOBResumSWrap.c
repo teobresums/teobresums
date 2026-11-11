@@ -357,6 +357,18 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "bhns_type") != NULL ) {
+    char *val = (char *) PyUnicode_AsUTF8(PyDict_GetItemString(dict, "bhns_type"));
+    for (EOBPars->bhns_type=0; EOBPars->bhns_type<=BHNS_TYPE_NOPT; EOBPars->bhns_type++) {
+      if (EOBPars->bhns_type == BHNS_TYPE_NOPT) { EOBPars->bhns_type = BHNS_TYPE_AUTO; break; }
+      if (STREQUAL(val, bhns_type_opt[EOBPars->bhns_type])) break;
+    }
+  }
+
+  if ( PyDict_GetItemString(dict, "bhns_keep_tides") != NULL ) {
+    EOBPars->bhns_keep_tides = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "bhns_keep_tides")));
+  }
+
   if ( PyDict_GetItemString(dict, "use_flx_horizon") != NULL ) {
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flx_horizon"));

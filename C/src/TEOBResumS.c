@@ -1071,6 +1071,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
   }
   dyn->tOmg_pk = tOmg_pk;
+
   if (EOBPars->sigmoid_time == SIGMOID_TIME_SEPARATRIX)
     dyn->sep_found = eob_dyn_separatrix_time(dyn, tOmg_pk, &(dyn->t_sep));
   if (DEBUG) printf("Peak OmgOrb time: %.9f\n", dyn->tOmg_pk);
@@ -1112,7 +1113,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       eob_spin_dyn_integrate_backwards(spindyn, dyn, hlm, dyn->data[EOB_MOMG][0]);  
   }
 
-  if (!(EOBPars->binary == BINARY_BNS) && (dyn->data[EOB_RAD][size-1] < 3.)) {
+  /* a BHNS run with tides stops at the tidal light ring, outside r = 3; with bhns_keep_tides it still gets NQC and ringdown */
+  const int attach_at_tidal_mrg = EOBPars->bhns_keep_tides && use_tidal && (EOBPars->LambdaAl2 == 0.);
+  if (!(EOBPars->binary == BINARY_BNS) && ((dyn->data[EOB_RAD][size-1] < 3.) || attach_at_tidal_mrg)) {
     
     /* ******************************************************
      * Following is for merging BBH and BHNS: NQC & Ringdown
@@ -1210,12 +1213,21 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       /* Build uniform grid of width dt and alloc tmp memory */
       double dt_merger_interp;
-      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3)) {
+      /* at the tidal merger the last ODE steps are tiny, near the tidal light ring: dyn->dt would blow up the grid */
+      if ( (EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3)
+           || attach_at_tidal_mrg) {
 	      dt_merger_interp = EOBPars->dt_merger_interp;
       } else {
 	      dt_merger_interp = MIN(EOBPars->dt_merger_interp, dyn->dt);
       }
+      /* start 8 M before the Omega peak, or earlier, in steps of dt_merger_interp, so that every
+         NQC time is at least 3 M inside the grid */
       double tstart_mrg = dyn->tOmg_pk - 8.;
+      double t_NQC[KMAX];
+      eob_nqc_times(dyn, NULL, t_NQC);
+      for (int i = 0; i < EOBPars->use_mode_lm_nqc_size; i++)
+        while (tstart_mrg > t_NQC[EOBPars->use_mode_lm_nqc[i]] - 3.)
+          tstart_mrg -= dt_merger_interp;
       while (tstart_mrg < hlm_mrg->time[0]) /* Make sure it does not extrapolate */
 	      tstart_mrg += dt_merger_interp;
       const long int size_mrg = get_uniform_size(hlm_mrg->time[hlm_mrg->size-1], tstart_mrg, dt_merger_interp);

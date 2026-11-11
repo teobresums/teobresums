@@ -482,6 +482,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->use_flm_nc         = USEFLM_NC_22;
   eobp->flux_nc_order      = FLUX_NC_ORDER_2PN;
   eobp->use_flx_horizon    = FLX_HORIZON_AUTO;
+  eobp->bhns_keep_tides    = 0;
+  eobp->bhns_type          = BHNS_TYPE_AUTO;
   eobp->use_Fr             = USE_FR_NEXT;
   eobp->use_hlm_nc         = USEHLM_NC_NO;
   eobp->use_dlm_nc         = USEDELTALM_NC_NO;
@@ -870,17 +872,16 @@ int eob_set_params(int default_choice, int firstcall)
     }
     
     if (EOBPars->binary == BINARY_BHNS){
-      bhns_cases(EOBPars->nu, EOBPars->abhf, chi1, EOBPars->LambdaBl2, &(EOBPars->binary), &(EOBPars->use_tidal));
-  
-      if(EOBPars->binary == BINARY_BBH){
-        if (VERBOSE) PRSECTN("BHNS Type II");
-        EOBPars->use_tidal = 0;
-      }else if(EOBPars->binary == BINARY_BHNS){
-        if (VERBOSE) PRSECTN("BHNS Type III");
-        EOBPars->use_tidal = 0;
-      }else if(EOBPars->binary == BINARY_BHNS_TD){
-        if (VERBOSE) PRSECTN("BHNS Type I");
-      }
+      /* the type still picks the remnant, NQC and ringdown; with bhns_keep_tides the tides stay on in every type */
+      int use_tidal_bhns = EOBPars->use_tidal;
+      bhns_cases(EOBPars->nu, EOBPars->abhf, chi1, EOBPars->LambdaBl2, &(EOBPars->binary), &use_tidal_bhns);
+      if (EOBPars->bhns_type == BHNS_TYPE_I)   EOBPars->binary = BINARY_BHNS_TD;
+      if (EOBPars->bhns_type == BHNS_TYPE_II)  EOBPars->binary = BINARY_BBH;
+      if (EOBPars->bhns_type == BHNS_TYPE_III) EOBPars->binary = BINARY_BHNS;
+      if (!EOBPars->bhns_keep_tides) EOBPars->use_tidal = use_tidal_bhns;
+
+      if (VERBOSE) PRSECTN(EOBPars->binary == BINARY_BBH ? "BHNS Type II" : EOBPars->binary == BINARY_BHNS ? "BHNS Type III" : "BHNS Type I");
+      if (!EOBPars->bhns_keep_tides && EOBPars->binary != BINARY_BHNS_TD) EOBPars->use_tidal = 0;
     }
 
     /* Apply deviations from final BH mass, spin */
@@ -2443,6 +2444,23 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
 
+  if (STREQUAL(key,"bhns_type")) {
+    for (eobp->bhns_type=0; eobp->bhns_type<=BHNS_TYPE_NOPT; eobp->bhns_type++) {
+      if (eobp->bhns_type == BHNS_TYPE_NOPT) {
+        eobp->bhns_type = BHNS_TYPE_AUTO;
+        if (VERBOSE) printf("bhns_type '%s' undefined, set to '%s'\n", val, bhns_type_opt[eobp->bhns_type]);
+        break;
+      }
+      if (STREQUAL(val, bhns_type_opt[eobp->bhns_type])) break;
+    }
+    return;
+  }
+
+  if (STREQUAL(key, "bhns_keep_tides")) {
+    eobp->bhns_keep_tides = YESNO2INT(string_trim(val));
+    return;
+  }
+
   if (STREQUAL(key,"use_flx_horizon")) {
     val = string_trim(val);
     for (eobp->use_flx_horizon=0; eobp->use_flx_horizon<=FLX_HORIZON_NOPT; eobp->use_flx_horizon++) {
@@ -3258,6 +3276,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "use_flm_nc", use_flm_nc_opt[eobp->use_flm_nc]);
   fprintf(f,"%s = \"%s\"\n", "flux_nc_order", flux_nc_order_opt[eobp->flux_nc_order]);
   fprintf(f,"%s = \"%s\"\n", "use_flx_horizon", use_flx_horizon_opt[eobp->use_flx_horizon]);
+  fprintf(f,"%s = \"%s\"\n", "bhns_keep_tides", INT2YESNO(eobp->bhns_keep_tides));
+  fprintf(f,"%s = \"%s\"\n", "bhns_type", bhns_type_opt[eobp->bhns_type]);
   fprintf(f,"%s = \"%s\"\n", "use_Fr", use_Fr_opt[eobp->use_Fr]);
   fprintf(f,"%s = \"%s\"\n", "use_hlm_nc", use_hlm_nc_opt[eobp->use_hlm_nc]);
   fprintf(f,"%s = \"%s\"\n", "use_dlm_nc", use_dlm_nc_opt[eobp->use_dlm_nc]);

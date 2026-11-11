@@ -420,6 +420,16 @@ enum{
 };
 static const char* const use_flx_horizon_opt[] = {"auto", "yes", "no", "undefined"};
 
+/* BHNS merger type: auto = from bhns_cases; I = tidal disruption, II = BBH-like, III = no disruption, damped ringdown */
+enum{
+  BHNS_TYPE_AUTO,
+  BHNS_TYPE_I,
+  BHNS_TYPE_II,
+  BHNS_TYPE_III,
+  BHNS_TYPE_NOPT
+};
+static const char* const bhns_type_opt[] = {"auto", "I", "II", "III", "undefined"};
+
 /** List of options for Fr */
 enum{
   USE_FR_NO,            /**< No radial flux */
@@ -979,6 +989,8 @@ typedef struct tagEOBParameters
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int flux_nc_order;                                    /**< NEW, INDEX FOR  # "0PN", "1PN", "1.5PN", "2PN" */
   int use_flx_horizon;                                  /**< horizon flux: auto (off with tides), yes, no */
+  int bhns_keep_tides;                                  /**< BHNS: keep the tides in every type, and attach NQC and ringdown at the tidal merger */
+  int bhns_type;                                        /**< BHNS merger type: auto (bhns_cases), I, II, III */
   int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */
