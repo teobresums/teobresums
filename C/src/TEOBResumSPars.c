@@ -214,6 +214,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
   eobp->use_spins=1; // use spins ?
   eobp->project_spins=0;
+  eobp->use_flx=1;
 
   /* options */
 
@@ -482,6 +483,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->use_flm_nc         = USEFLM_NC_22;
   eobp->flux_nc_order      = FLUX_NC_ORDER_2PN;
   eobp->use_flx_horizon    = FLX_HORIZON_AUTO;
+  eobp->use_Fr_pade        = 1;
   eobp->bhns_keep_tides    = 0;
   eobp->bhns_type          = BHNS_TYPE_AUTO;
   eobp->use_Fr             = USE_FR_NEXT;
@@ -495,8 +497,6 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->use_dlm_nc_tidal   = USEDELTALM_NC_TIDAL_NO;
   eobp->use_flm_nc_tidal   = USEFLM_NC_TIDAL_NO;
   eobp->use_Fr_tidal       = USE_FR_TIDAL_NO;
-  eobp->use_hlm_mult_tidal = 0;
-  eobp->use_flm_mult_tidal = 0;
   
   /* Choose the default for the binary type */
   eobp->use_tidal = TIDES_OFF ; // index for tidal modus
@@ -1512,11 +1512,6 @@ int eob_set_params(int default_choice, int firstcall)
                       "use_flm_tidal = DNV_nosource and tides with the tidal B (TEOBRESUM3_BQ, NNLO_B, NNLO_BQ, N3LO_B, N3LO_BQ)\n");
     return 1;
   }
-  if ((EOBPars->use_hlm_mult_tidal && EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NO) ||
-      (EOBPars->use_flm_mult_tidal && EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_NO)) {
-    if (DEBUG) printf("ERROR: use_hlm_mult_tidal and use_flm_mult_tidal need the noncircular tidal amplitude and flux\n");
-    return 1;
-  }
   if (EOBPars->use_Fr_tidal != USE_FR_TIDAL_NO && EOBPars->use_Fr == USE_FR_NO) {
     if (DEBUG) printf("ERROR: use_Fr_tidal needs a point-mass radial force\n");
     return 1;
@@ -1622,25 +1617,18 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: Unknown option for use_flm_tidal\n");
     return 1;
   }
-  /* mult only for modes with an NC tidal expression, i.e. the (2,2) */
-  for (int k = 0; k < KMAX; k++) {
-    EOBPars->hlm_mult_tidal[k] = 0;
-    EOBPars->flm_mult_tidal[k] = 0;
-  }
-  if (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_NO) EOBPars->hlm_mult_tidal[1] = EOBPars->use_hlm_mult_tidal;
-  if (EOBPars->use_flm_nc_tidal != USEFLM_NC_TIDAL_NO) EOBPars->flm_mult_tidal[1] = EOBPars->use_flm_mult_tidal;
   if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NO) {
     eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_no;
-  } else if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_DIRECT) {
-    eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_direct;
+  } else if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_ADD || EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_MULT) {
+    eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_22;
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_hlm_nc_tidal\n");
     return 1;
   }
   if (EOBPars->use_dlm_nc_tidal == USEDELTALM_NC_TIDAL_NO) {
     eob_wav_deltalm_nc_tidal = &eob_wav_hathlm_nc_tidal_no;
-  } else if (EOBPars->use_dlm_nc_tidal == USEDELTALM_NC_TIDAL_DIRECT) {
-    eob_wav_deltalm_nc_tidal = &eob_wav_hathlm_nc_tidal_direct;
+  } else if (EOBPars->use_dlm_nc_tidal == USEDELTALM_NC_TIDAL_YES) {
+    eob_wav_deltalm_nc_tidal = &eob_wav_hathlm_nc_tidal_22;
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_dlm_nc_tidal\n");
     return 1;
@@ -1649,7 +1637,8 @@ int eob_set_params(int default_choice, int firstcall)
   switch (EOBPars->use_flm_nc_tidal) {
     case USEFLM_NC_TIDAL_NO:
       break;
-    case USEFLM_NC_TIDAL_DIRECT:
+    case USEFLM_NC_TIDAL_ADD:
+    case USEFLM_NC_TIDAL_MULT:
       eob_flx_Flm_nc_tidal[1] = &eob_flx_Flm_nc_tidal_22;
       break;
     default:
@@ -2456,6 +2445,16 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     return;
   }
 
+  if (STREQUAL(key, "use_flx")) {
+    eobp->use_flx = YESNO2INT(string_trim(val));
+    return;
+  }
+
+  if (STREQUAL(key, "use_Fr_pade")) {
+    eobp->use_Fr_pade = YESNO2INT(string_trim(val));
+    return;
+  }
+
   if (STREQUAL(key, "bhns_keep_tides")) {
     eobp->bhns_keep_tides = YESNO2INT(string_trim(val));
     return;
@@ -2527,12 +2526,8 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key, "use_hlm_nc_tidal")) {
     val = string_trim(val);
     for (eobp->use_hlm_nc_tidal=0; eobp->use_hlm_nc_tidal<=USEHLM_NC_TIDAL_NOPT; eobp->use_hlm_nc_tidal++) {
-      if (eobp->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NOPT) {
-        eobp->use_hlm_nc_tidal = USEHLM_NC_TIDAL_NO;
-        if (VERBOSE) printf("use_hlm_nc_tidal '%s' undefined, set to '%s'\n",
-          val, use_hlm_nc_tidal_opt[eobp->use_hlm_nc_tidal]);
-        break;
-      }
+      /* an unknown value stays undefined and eob_set_params refuses it */
+      if (eobp->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NOPT) break;
       if (STREQUAL(val, use_hlm_nc_tidal_opt[eobp->use_hlm_nc_tidal])) break;
     }
   }
@@ -2540,12 +2535,8 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key, "use_dlm_nc_tidal")) {
     val = string_trim(val);
     for (eobp->use_dlm_nc_tidal=0; eobp->use_dlm_nc_tidal<=USEDELTALM_NC_TIDAL_NOPT; eobp->use_dlm_nc_tidal++) {
-      if (eobp->use_dlm_nc_tidal == USEDELTALM_NC_TIDAL_NOPT) {
-        eobp->use_dlm_nc_tidal = USEDELTALM_NC_TIDAL_NO;
-        if (VERBOSE) printf("use_dlm_nc_tidal '%s' undefined, set to '%s'\n",
-          val, use_dlm_nc_tidal_opt[eobp->use_dlm_nc_tidal]);
-        break;
-      }
+      /* an unknown value stays undefined and eob_set_params refuses it */
+      if (eobp->use_dlm_nc_tidal == USEDELTALM_NC_TIDAL_NOPT) break;
       if (STREQUAL(val, use_dlm_nc_tidal_opt[eobp->use_dlm_nc_tidal])) break;
     }
   }
@@ -2553,12 +2544,8 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key, "use_flm_nc_tidal")) {
     val = string_trim(val);
     for (eobp->use_flm_nc_tidal=0; eobp->use_flm_nc_tidal<=USEFLM_NC_TIDAL_NOPT; eobp->use_flm_nc_tidal++) {
-      if (eobp->use_flm_nc_tidal == USEFLM_NC_TIDAL_NOPT) {
-        eobp->use_flm_nc_tidal = USEFLM_NC_TIDAL_NO;
-        if (VERBOSE) printf("use_flm_nc_tidal '%s' undefined, set to '%s'\n",
-          val, use_flm_nc_tidal_opt[eobp->use_flm_nc_tidal]);
-        break;
-      }
+      /* an unknown value stays undefined and eob_set_params refuses it */
+      if (eobp->use_flm_nc_tidal == USEFLM_NC_TIDAL_NOPT) break;
       if (STREQUAL(val, use_flm_nc_tidal_opt[eobp->use_flm_nc_tidal])) break;
     }
   }
@@ -2574,14 +2561,6 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
       }
       if (STREQUAL(val, use_Fr_tidal_opt[eobp->use_Fr_tidal])) break;
     }
-  }
-
-  if (STREQUAL(key, "use_hlm_mult_tidal")) {
-    eobp->use_hlm_mult_tidal = YESNO2INT(string_trim(val));
-  }
-
-  if (STREQUAL(key, "use_flm_mult_tidal")) {
-    eobp->use_flm_mult_tidal = YESNO2INT(string_trim(val));
   }
 
   if (STREQUAL(key, "use_dlm_nc")) {
@@ -3277,6 +3256,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "flux_nc_order", flux_nc_order_opt[eobp->flux_nc_order]);
   fprintf(f,"%s = \"%s\"\n", "use_flx_horizon", use_flx_horizon_opt[eobp->use_flx_horizon]);
   fprintf(f,"%s = \"%s\"\n", "bhns_keep_tides", INT2YESNO(eobp->bhns_keep_tides));
+  fprintf(f,"%s = \"%s\"\n", "use_flx", INT2YESNO(eobp->use_flx));
+  fprintf(f,"%s = \"%s\"\n", "use_Fr_pade", INT2YESNO(eobp->use_Fr_pade));
   fprintf(f,"%s = \"%s\"\n", "bhns_type", bhns_type_opt[eobp->bhns_type]);
   fprintf(f,"%s = \"%s\"\n", "use_Fr", use_Fr_opt[eobp->use_Fr]);
   fprintf(f,"%s = \"%s\"\n", "use_hlm_nc", use_hlm_nc_opt[eobp->use_hlm_nc]);
@@ -3287,8 +3268,6 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "use_dlm_nc_tidal", use_dlm_nc_tidal_opt[eobp->use_dlm_nc_tidal]);
   fprintf(f,"%s = \"%s\"\n", "use_flm_nc_tidal", use_flm_nc_tidal_opt[eobp->use_flm_nc_tidal]);
   fprintf(f,"%s = \"%s\"\n", "use_Fr_tidal", use_Fr_tidal_opt[eobp->use_Fr_tidal]);
-  fprintf(f,"%s = \"%s\"\n", "use_hlm_mult_tidal", INT2YESNO(eobp->use_hlm_mult_tidal));
-  fprintf(f,"%s = \"%s\"\n", "use_flm_mult_tidal", INT2YESNO(eobp->use_flm_mult_tidal));
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
   fprintf(f,"%s = %.16f\n"    , "compute_LR_guess", eobp->compute_LR_guess);
   fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));

@@ -97,8 +97,8 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
   
   /* Compute flux and dp_{\phi}/dt */
-  if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
-  else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
+  if (dyn->noflx || !EOBPars->use_flx) dy[EOB_EVOLVE_PPHI] = 0.;
+  else                                dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
 
   if(dyn->store) {
     /* Store values */
@@ -317,8 +317,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double jhat       = pphi/(r_omg*v_phi);
 
   /* Compute flux and dp_{\phi}/dt */
-  if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
-  else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
+  if (dyn->noflx || !EOBPars->use_flx) dy[EOB_EVOLVE_PPHI] = 0.;
+  else                                dy[EOB_EVOLVE_PPHI] = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
 
   if (dyn->store) {
     /* Store values */
@@ -479,6 +479,8 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
   PROF_START(PROF_FLUX);
   eob_flx_Flux_ecc(x, Omg, r_omg, E, Heff, jhat, r, prstar, pphi, dy[EOB_EVOLVE_RAD], ddotr, prsdot, &Fphi, &Fr, dyn, rc, drc_dr_bare, d2rc_dr2_bare);
   PROF_STOP(PROF_FLUX);
+  /* use_flx = no: conservative dynamics. The call above stays, it also sets the time derivatives the waveform reads */
+  if (!EOBPars->use_flx) Fphi = Fr = 0.;
   
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
   else            dy[EOB_EVOLVE_PPHI] = Fphi;

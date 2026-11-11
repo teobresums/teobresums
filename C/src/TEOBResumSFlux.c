@@ -677,7 +677,7 @@ double eob_flx_Fr_tidal_LO_full(double r, double prstar, double pphi, double prs
   *   @param[in] r, prstar, pphi: the state
   *   @param[in] F22pp: the point-mass (2,2) flux, which tauF multiplies
   *
-  *   @return DeltaF, or F22pp tauF if the (2,2) is in flm_mult_tidal
+  *   @return DeltaF, or F22pp tauF with use_flm_nc_tidal = mult
 */
 double eob_flx_Flm_nc_tidal_22(double r, double prstar, double pphi, double F22pp)
 {
@@ -706,7 +706,7 @@ double eob_flx_Flm_nc_tidal_22(double r, double prstar, double pphi, double F22p
   /* NLO = Jain & Gamba's tam12 minus Dali's dressing dr12x, the LO dressing dr10 times h1, and
      impqc's response -18 mup to the tidal part of r^2 prsdot */
   const double dF12 = tam12 - (dr12x + dr10*h1 - 18.*mup*P0*h1s);
-  if (!EOBPars->flm_mult_tidal[1]) return -(32./5.)*nu*j*sqrt(u)*u*u*u*u*u*u*u*u*(dF10 + u*dF12);
+  if (EOBPars->use_flm_nc_tidal != USEFLM_NC_TIDAL_MULT) return -(32./5.)*nu*j*sqrt(u)*u*u*u*u*u*u*u*u*(dF10 + u*dF12);
   /* mult, point-mass flux at 1PN is -(32/5) nu j u^(7/2) (P0 + u P2), so
      tauF = u^5 (dF10 + u (dF12 - P2 dF10/P0))/P0 */
   const double P2x = (-546 + j2*(-554 - 260*j2) + p2*(168 - 227*j2 + 147*p2))/168. + nu*(196 + j2*(318 + 122*j2) + p2*(-308 - 271*j2 + 105*p2))/168.;
@@ -1125,18 +1125,24 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   else
     f3 = 0.0;
 
-  double a2 = f1/f0;
-  double a3 = f15/f0;
-  double a4 = f2/f0;
-  double a5 = f25/f0;
-  double a6 = f3/f0;
-  
-  double hatf_prstar = (1.0 - a2 - a3);
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
-    hatf_prstar += (a2 * a2 - a4);
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
-    hatf_prstar += (-a2*a2*a2 + 2.*a2*a3 + a3*a3 + 2.*a2*a4 - a5 - a6);
-  hatf_prstar = f0/hatf_prstar;
+  double hatf_prstar;
+  if (EOBPars->use_Fr_pade) {
+    double a2 = f1/f0;
+    double a3 = f15/f0;
+    double a4 = f2/f0;
+    double a5 = f25/f0;
+    double a6 = f3/f0;
+    hatf_prstar = (1.0 - a2 - a3);
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+      hatf_prstar += (a2 * a2 - a4);
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
+      hatf_prstar += (-a2*a2*a2 + 2.*a2*a3 + a3*a3 + 2.*a2*a4 - a5 - a6);
+    hatf_prstar = f0/hatf_prstar;
+  } else {
+    /* Taylor: f0 (1 + a2 + a3 + ...) = f0 + f1 + f15 + ..., the terms above flux_nc_order already zero; no division,
+       so no pole where the Pade denominator crosses zero on unbound orbits */
+    hatf_prstar = f0 + f1 + f15 + f2 + f25 + f3;
+  }
   
   const double Frstar = -5./3.*prstar/pphi*Fphi*hatf_prstar;
   

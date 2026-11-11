@@ -365,6 +365,13 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_flx") != NULL ) {
+    EOBPars->use_flx = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flx")));
+  }
+  if ( PyDict_GetItemString(dict, "use_Fr_pade") != NULL ) {
+    EOBPars->use_Fr_pade = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_Fr_pade")));
+  }
+
   if ( PyDict_GetItemString(dict, "bhns_keep_tides") != NULL ) {
     EOBPars->bhns_keep_tides = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "bhns_keep_tides")));
   }
@@ -418,7 +425,7 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_hlm_nc_tidal"));
     for(EOBPars->use_hlm_nc_tidal=0; EOBPars->use_hlm_nc_tidal<=USEHLM_NC_TIDAL_NOPT; EOBPars->use_hlm_nc_tidal++){
-      if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NOPT) { EOBPars->use_hlm_nc_tidal = USEHLM_NC_TIDAL_NO; break; }
+      if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NOPT) break; /* unknown: eob_set_params refuses it */
       if (STREQUAL(val,use_hlm_nc_tidal_opt[EOBPars->use_hlm_nc_tidal])) break;
     }
   }
@@ -427,7 +434,7 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_dlm_nc_tidal"));
     for(EOBPars->use_dlm_nc_tidal=0; EOBPars->use_dlm_nc_tidal<=USEDELTALM_NC_TIDAL_NOPT; EOBPars->use_dlm_nc_tidal++){
-      if (EOBPars->use_dlm_nc_tidal == USEDELTALM_NC_TIDAL_NOPT) { EOBPars->use_dlm_nc_tidal = USEDELTALM_NC_TIDAL_NO; break; }
+      if (EOBPars->use_dlm_nc_tidal == USEDELTALM_NC_TIDAL_NOPT) break; /* unknown: eob_set_params refuses it */
       if (STREQUAL(val,use_dlm_nc_tidal_opt[EOBPars->use_dlm_nc_tidal])) break;
     }
   }
@@ -436,7 +443,7 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_nc_tidal"));
     for(EOBPars->use_flm_nc_tidal=0; EOBPars->use_flm_nc_tidal<=USEFLM_NC_TIDAL_NOPT; EOBPars->use_flm_nc_tidal++){
-      if (EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_NOPT) { EOBPars->use_flm_nc_tidal = USEFLM_NC_TIDAL_NO; break; }
+      if (EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_NOPT) break; /* unknown: eob_set_params refuses it */
       if (STREQUAL(val,use_flm_nc_tidal_opt[EOBPars->use_flm_nc_tidal])) break;
     }
   }
@@ -448,14 +455,6 @@ int SetOptionalVariables(PyObject* dict){
       if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NOPT) { EOBPars->use_Fr_tidal = USE_FR_TIDAL_NO; break; }
       if (STREQUAL(val,use_Fr_tidal_opt[EOBPars->use_Fr_tidal])) break;
     }
-  }
-
-  if ( PyDict_GetItemString(dict, "use_hlm_mult_tidal") != NULL ) {
-    EOBPars->use_hlm_mult_tidal = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_hlm_mult_tidal")));
-  }
-
-  if ( PyDict_GetItemString(dict, "use_flm_mult_tidal") != NULL ) {
-    EOBPars->use_flm_mult_tidal = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_mult_tidal")));
   }
 
   if ( PyDict_GetItemString(dict, "use_dlm_nc") != NULL ) { 

@@ -490,30 +490,32 @@ static const char* const use_flm_tidal_opt[] = {"DNV", "DNV_nosource", "undefine
 /** 2PN terms of the DNV tidal amplitudes ((2,1) NLO, (2,2) NNLO, (4,2) and (4,4) LO), electric only, off unless requested */
 #define use_2PN_amplitude_corrections (0)
 
-/** List of options for noncircular tidal corrections to the waveform; mult with use_hlm_mult_tidal = yes */
+/** List of options for noncircular tidal corrections to the waveform, (2,2) only */
 enum{
   USEHLM_NC_TIDAL_NO,          /**< circular tidal amplitudes only */
-  USEHLM_NC_TIDAL_DIRECT,      /**< h22 = h22_pp + T C22 e^{-2 i phi} Delta22, Delta22 the whole tidal (2,2); mult h22 = h22_pp [1 + tau22 e^{i d22}] */
+  USEHLM_NC_TIDAL_ADD,         /**< h22 = h22_pp + T C22 e^{-2 i phi} Delta22, Delta22 the whole tidal (2,2) */
+  USEHLM_NC_TIDAL_MULT,        /**< h22 = h22_pp [1 + tau22 e^{i d22}] */
   USEHLM_NC_TIDAL_NOPT
 };
-static const char* const use_hlm_nc_tidal_opt[] = {"no", "direct", "undefined"};
+static const char* const use_hlm_nc_tidal_opt[] = {"no", "add", "mult", "undefined"};
 
 /** List of options for noncircular tidal corrections to the phase. Mixed with use_hlm_nc_tidal, "no" here
-    keeps the NC amplitude only, "direct" here alone the NC phase only */
+    keeps the NC amplitude only, "yes" here alone the NC phase only */
 enum{
   USEDELTALM_NC_TIDAL_NO,      /**< no noncircular tidal phase */
-  USEDELTALM_NC_TIDAL_DIRECT,  /**< phase of the (2,2) tidal mode added as it is */
+  USEDELTALM_NC_TIDAL_YES,     /**< phase of the (2,2) tidal mode */
   USEDELTALM_NC_TIDAL_NOPT
 };
-static const char* const use_dlm_nc_tidal_opt[] = {"no", "direct", "undefined"};
+static const char* const use_dlm_nc_tidal_opt[] = {"no", "yes", "undefined"};
 
-/** List of options for noncircular tidal corrections to the flux; mult with use_flm_mult_tidal = yes */
+/** List of options for noncircular tidal corrections to the flux, (2,2) only */
 enum{
   USEFLM_NC_TIDAL_NO,          /**< circular tidal fluxes only */
-  USEFLM_NC_TIDAL_DIRECT,      /**< F22 = F22_pp + DeltaF22, DeltaF22 the whole tidal (2,2) flux; mult F22 = F22_pp (1 + tauF22) */
+  USEFLM_NC_TIDAL_ADD,         /**< F22 = F22_pp + DeltaF22, DeltaF22 the whole tidal (2,2) flux */
+  USEFLM_NC_TIDAL_MULT,        /**< F22 = F22_pp (1 + tauF22) */
   USEFLM_NC_TIDAL_NOPT
 };
-static const char* const use_flm_nc_tidal_opt[] = {"no", "direct", "undefined"};
+static const char* const use_flm_nc_tidal_opt[] = {"no", "add", "mult", "undefined"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -989,6 +991,8 @@ typedef struct tagEOBParameters
   int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int flux_nc_order;                                    /**< NEW, INDEX FOR  # "0PN", "1PN", "1.5PN", "2PN" */
   int use_flx_horizon;                                  /**< horizon flux: auto (off with tides), yes, no */
+  int use_flx;                                          /**< radiation reaction on (1) or off (0): off gives the conservative dynamics */
+  int use_Fr_pade;                                      /**< use_Fr = full: the PN ratio Fr/Fphi as a Pade (yes) or Taylor (no, no pole on unbound orbits) */
   int bhns_keep_tides;                                  /**< BHNS: keep the tides in every type, and attach NQC and ringdown at the tidal merger */
   int bhns_type;                                        /**< BHNS merger type: auto (bhns_cases), I, II, III */
   int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
@@ -998,13 +1002,10 @@ typedef struct tagEOBParameters
   int use_h22_nc_complex;                               /**< NEW, Flag for complex resummed h22_nc */
   int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
   int use_flm_tidal;                                    /**< circular tidal amplitudes: "DNV", "DNV_nosource" */
-  int use_hlm_nc_tidal;                                 /**< noncircular tidal amplitude: "no", "direct" */
-  int use_dlm_nc_tidal;                                 /**< noncircular tidal phase: "no", "direct" */
-  int use_flm_nc_tidal;                                 /**< noncircular tidal flux: "no", "direct" */
+  int use_hlm_nc_tidal;                                 /**< noncircular tidal amplitude: "no", "add", "mult" */
+  int use_dlm_nc_tidal;                                 /**< noncircular tidal phase: "no", "yes" */
+  int use_flm_nc_tidal;                                 /**< noncircular tidal flux: "no", "add", "mult" */
   int use_Fr_tidal;                                     /**< tidal part of the radial flux: "no", "LO" */
-  int use_hlm_mult_tidal;                               /**< tidal part as a factor on the point-mass mode, not added */
-  int use_flm_mult_tidal;                               /**< tidal part as a factor on the point-mass flux, not added */
-  int hlm_mult_tidal[KMAX], flm_mult_tidal[KMAX];       /**< modes that take the tidal part as a factor, set in eob_set_params from use_hlm/flm_mult_tidal ((2,2) only for now) */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
@@ -1593,7 +1594,7 @@ void eob_wav_hathlm_nc_impqc(double r, double prstar, double prstardot, double *
 void eob_wav_hath22_nc_complex(double r, double prstar, double prstardot, double *hath22_nc);
 extern void (*eob_wav_hathlm_nc_tidal)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hathlm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d);
-void eob_wav_hathlm_nc_tidal_direct(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d);
+void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d);
 extern void (*eob_wav_deltalm_nc_tidal)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Waveform_lm_t *tlm, double *dlm_nc, Waveform_lm_t *hlm);
 extern int (*eob_wav_hlmNQC_find_a1a2a3)(); /* defined in TEOBResumSPars.c */

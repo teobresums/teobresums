@@ -5842,17 +5842,17 @@ void eob_wav_hathlm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, d
 }
 
 /**
- * Function: eob_wav_hathlm_nc_tidal_direct
+ * Function: eob_wav_hathlm_nc_tidal_22
  * ----------------------------------------
  *  Tidal (2,2) of Jain & Gamba at the state, Delta = u^6 (D12 + u D14) relative to
  *  C22 e^{-2 i phi}, or with mult tau = Delta over the point-mass (2,2) at 1PN. Both minus the
  *  tidal terms already in Dali's point-mass (2,2)
  *
  *  @param[in]  dyn, x, hNewt: dynamics, x of the orbit, Newtonian modes
- *  @param[out] A, d: tidal amplitude, relative to hNewt T or, for the modes in hlm_mult_tidal,
+ *  @param[out] A, d: tidal amplitude, relative to hNewt T or, for the (2,2) with use_hlm_nc_tidal = mult,
  *                    to the point-mass mode, and phase, per mode
 */
-void eob_wav_hathlm_nc_tidal_direct(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d)
+void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d)
 {
   const double r      = dyn->r;
   const double prstar = dyn->prstar;
@@ -5898,7 +5898,7 @@ void eob_wav_hathlm_nc_tidal_direct(Dynamics *dyn, double x, Waveform_lm_t *hNew
   const double D14_re = tc14x + tc12*h10 + tn14_re - (d14x_re + d12_re*h1 - 18.*mup*hN2_re*h1s);
   const double D14_im = tn14_im - (d14x_im + d12_im*h1 - 18.*mup*hN2_im*h1s);
   double re, im;
-  if (!EOBPars->hlm_mult_tidal[1]) {
+  if (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_MULT) {
     re = u5*u*(D12_re + u*D14_re);
     im = u5*u*(D12_im + u*D14_im);
   } else {
@@ -5918,7 +5918,7 @@ void eob_wav_hathlm_nc_tidal_direct(Dynamics *dyn, double x, Waveform_lm_t *hNew
   A[1] = sqrt(re*re + im*im);
   d[1] = atan2(im, re);
   /* added, Delta relative to Dali's Newtonian bracket, which hNewt T multiplies */
-  if (!EOBPars->hlm_mult_tidal[1]) {
+  if (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_MULT) {
     A[1] /= hNewt->ampli[1]/ChlmNewt_ampli[1];
     d[1] -= hNewt->phase[1] + MINDEX[1]*dyn->phi - ChlmNewt_phase[1];
   }
@@ -8663,8 +8663,8 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
 /**
  * Function: eob_wav_hlm_ecc_tidal
  * -------------------------------
- *  Put the tidal part on the point-mass modes, hNewt T A e^{i d} added or, for the modes in
- *  hlm_mult_tidal, the point-mass mode times (1 + A e^{i d}). d is relative to the point-mass mode
+ *  Put the tidal part on the point-mass modes, hNewt T A e^{i d} added or, for the (2,2) with
+ *  use_hlm_nc_tidal = mult, the point-mass mode times (1 + A e^{i d}). d is relative to the point-mass mode
  *  without its NC phase dlm_nc, which the tidal pieces leave out
  *
  *  @param[in]     dyn, x, hNewt, tlm, dlm_nc: dynamics, x of the orbit, Newtonian modes, tail, noncircular phase
@@ -8680,7 +8680,7 @@ void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Wavefo
     if (A[k] == 0.) continue; /* no tidal part in this mode */
     const double ang = d[k] - dlm_nc[k];
     double zr, zi;
-    if (EOBPars->hlm_mult_tidal[k]) {
+    if (k == 1 && EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_MULT) {
       zr = hlm->ampli[k] * (1. + A[k]*cos(ang));
       zi = hlm->ampli[k] * A[k]*sin(ang);
     } else {
