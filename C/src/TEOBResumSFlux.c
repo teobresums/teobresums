@@ -556,6 +556,22 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   double Fphi_H   = Fphi_lo * hatFH;
   *Fphi           = Fphi_inf + Fphi_H;
 
+  /* use_flm = LO: the Newtonian (2,2) Fphi at the state, P0 = (2 + 2 j2 - p2)/4. use_flm_tidal = LO adds the LO tidal
+     flux whole, tam10 = dF10 + dr10 of eob_flx_Flm_nc_tidal_22: this point-mass Fphi has no tidal terms to remove.
+     Set here, so the time derivatives that eob_flx_Fphi_ecc stores for the waveform come from it too */
+  double Fphi_LO = 0.;
+  if (EOBPars->use_flm == USEFLM_LO) {
+    const double u_ = 1./r, j2 = pphi*pphi*u_, p2 = pr_star*pr_star*r;
+    const double P0 = (2. + 2.*j2 - p2)/4.;
+    double tam10 = 0.;
+    if (usetidal && EOBPars->use_flm_tidal == USEFLM_TIDAL_LO) {
+      const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
+      const double Sb  = mup + X12*(EOBPars->kapA2 - EOBPars->kapB2)/6.;
+      tam10 = Sb*(-51. + j2*(54. + 45.*j2) + p2*(-117. - 540.*j2 + 360.*p2))/(8.*nu) + 24.*mup*P0 + mup*(6. - 3.*j2 - 21.*p2);
+    }
+    *Fphi = Fphi_LO = -32./5.*nu*pphi*SQ(SQ(u_))*(P0 + SQ(SQ(u_))*u_*tam10);
+  }
+
   /* Compute Fr using the infinity Fphi */
   *Fr = eob_flx_Fr(r, pr_star, pphi, prsdot, dyn, Fphi_inf) + eob_flx_Fr_tidal(r, pr_star, pphi, prsdot, dyn, Fphi_inf);
   
@@ -578,20 +594,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   /* Add horizon Fphi */
   *Fphi += Fphi_H;
 
-  /* use_flm = LO: the Newtonian (2,2) Fphi at the state, P0 = (2 + 2 j2 - p2)/4. use_flm_tidal = LO adds the LO tidal
-     flux whole, tam10 = dF10 + dr10 of eob_flx_Flm_nc_tidal_22: this point-mass Fphi has no
-     tidal terms to remove */
-  if (EOBPars->use_flm == USEFLM_LO) {
-    const double u_ = 1./r, j2 = pphi*pphi*u_, p2 = pr_star*pr_star*r;
-    const double P0 = (2. + 2.*j2 - p2)/4.;
-    double tam10 = 0.;
-    if (usetidal && EOBPars->use_flm_tidal == USEFLM_TIDAL_LO) {
-      const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
-      const double Sb  = mup + X12*(EOBPars->kapA2 - EOBPars->kapB2)/6.;
-      tam10 = Sb*(-51. + j2*(54. + 45.*j2) + p2*(-117. - 540.*j2 + 360.*p2))/(8.*nu) + 24.*mup*P0 + mup*(6. - 3.*j2 - 21.*p2);
-    }
-    *Fphi = -32./5.*nu*pphi*SQ(SQ(u_))*(P0 + SQ(SQ(u_))*u_*tam10);
-  }
+  if (EOBPars->use_flm == USEFLM_LO) *Fphi = Fphi_LO;
 }
 
 /**

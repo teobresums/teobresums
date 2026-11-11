@@ -2465,6 +2465,7 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   }
 
   if (STREQUAL(key,"bhns_type")) {
+    val = string_trim(val);
     for (eobp->bhns_type=0; eobp->bhns_type<=BHNS_TYPE_NOPT; eobp->bhns_type++) {
       if (eobp->bhns_type == BHNS_TYPE_NOPT) {
         eobp->bhns_type = BHNS_TYPE_AUTO;

@@ -1723,14 +1723,14 @@ void eob_wav_flm_LO(double x, double nu, double *rholm, double *flm)
 /**
  * Function: eob_wav_flm_s_LO
  * --------------------------
- *   Leading order with spins, for use_flm = LO: on this path the Newtonian odd-m modes leave X12 to flm,
- *   as X12 rho^l in eob_wav_flm_s_SSNLO, and the spin terms start beyond LO
+ *   Leading order with spins, for use_flm = LO: the eccentric Newtonian odd-m modes leave X12 to flm up to
+ *   l = 5 (p2, p4), from l = 6 they have it (p6, p8). The spin terms start beyond LO
 */
 void eob_wav_flm_s_LO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2,
                       double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm)
 {
   eob_wav_flm_LO(x, nu, rholm, flm);
-  for (int k = 0; k < KMAX; k++) if (MINDEX[k] % 2) flm[k] = X1 - X2;
+  for (int k = 0; k < KMAX; k++) if (MINDEX[k] % 2 && LINDEX[k] <= 5) flm[k] = X1 - X2;
 }
 
 /**
