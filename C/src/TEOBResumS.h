@@ -385,9 +385,10 @@ enum{
   USEFLM_HM_4PN22,        /**< HM amplitudes with 4PN in 22 */
   USEFLM_HM_6PN3p3,       /**< HM amplitudes with 4PN in 22, 3p3 in the other main modes, New Log Res */
   USEFLM_KERR,            /**< Kerr amplitudes */
+  USEFLM_LO,              /**< leading order: flm = 1 in the modes, and in the flux the Newtonian (2,2) Fphi at the state */
   USEFLM_NOPT             /**< number of flm amplitudes options */
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr", "LO"};
 
 /** List of options for flm_nc */
 enum{
@@ -484,9 +485,10 @@ static const char* const use_dlm_nc_order_opt[] = {"1PN", "1.5PN", "2PN", "2PN_n
 enum{
   USEFLM_TIDAL_DNV,            /**< Damour-Nagar-Villain 2012 amplitudes */
   USEFLM_TIDAL_DNV_NOSOURCE,   /**< DNV minus the tidal shift of the source (Heff, jhat) at fixed x */
+  USEFLM_TIDAL_LO,             /**< leading order: DNV without its PN corrections in the modes, and in the flux the LO tidal (2,2) Fphi at the state */
   USEFLM_TIDAL_NOPT
 };
-static const char* const use_flm_tidal_opt[] = {"DNV", "DNV_nosource", "undefined"};
+static const char* const use_flm_tidal_opt[] = {"DNV", "DNV_nosource", "LO", "undefined"};
 /** 2PN terms of the DNV tidal amplitudes ((2,1) NLO, (2,2) NNLO, (4,2) and (4,4) LO), electric only, off unless requested */
 #define use_2PN_amplitude_corrections (0)
 
@@ -1575,6 +1577,7 @@ void eob_wav_flm_tidal_DNV_nosource(double x, Dynamics *dyn, double *flm_tidal);
 extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_tab(double x, Dynamics *dyn, double *flm);
 void eob_wav_flm_v1(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_LO(double x, double nu, double *rholm, double *flm);
 void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM_4PN22(double x,double nu, double *rholm, double *flm);
@@ -1582,6 +1585,7 @@ void eob_wav_flm_HM_6PN3p3(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_Kerr(double x,double nu, double *rholm, double *flm);
 extern void (*eob_wav_flm_s)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
+void eob_wav_flm_s_LO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_SSLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_old(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
 void eob_wav_flm_s_HM(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);

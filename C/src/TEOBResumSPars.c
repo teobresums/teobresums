@@ -1481,6 +1481,13 @@ int eob_set_params(int default_choice, int firstcall)
     eob_wav_flm_s    = &eob_wav_flm_s_SSNLO;
     eob_wav_deltalm  = &eob_wav_deltalm_v1;
     eob_wav_ringdown = &eob_wav_ringdown_v1;
+  } else if (EOBPars->use_flm == USEFLM_LO) {
+    /* the SS (v1) pieces, so LO also takes the SS paths of the merger and the unwrapping, as Dali's SSNLO point mass */
+    eob_wav_hlmNewt  = &eob_wav_hlmNewt_v1;
+    eob_wav_flm      = &eob_wav_flm_LO;
+    eob_wav_flm_s    = &eob_wav_flm_s_LO;
+    eob_wav_deltalm  = &eob_wav_deltalm_v1;
+    eob_wav_ringdown = &eob_wav_ringdown_v1;
     /*
       } else if (EOBPars->use_flm == USEFLM_SSNNLO) {
       eob_wav_hlmNewt = &eob_wav_hlmNewt_v1;
@@ -1506,9 +1513,10 @@ int eob_set_params(int default_choice, int firstcall)
   }
   if (tidal_nc_on && (EOBPars->use_hlm_nc != USEHLM_NC_IMPQC ||
                       (EOBPars->use_flm_nc != USEFLM_NC_IMPQC && EOBPars->use_flm_nc != USEFLM_NC_IMPQC_UNF) ||
-                      (EOBPars->use_Fr != USE_FR_FULL && EOBPars->use_Fr != USE_FR_LO && EOBPars->use_Fr != USE_FR_NLO) ||
+                      (EOBPars->use_Fr != USE_FR_FULL && EOBPars->use_Fr != USE_FR_NEXT &&
+                       EOBPars->use_Fr != USE_FR_LO && EOBPars->use_Fr != USE_FR_NLO) ||
                       EOBPars->use_flm_tidal != USEFLM_TIDAL_DNV_NOSOURCE || !tidal_B)) {
-    if (DEBUG) printf("ERROR: the noncircular tidal corrections need use_hlm_nc = impqc, use_flm_nc = impqc or impqc_unf, use_Fr = full, LO or NLO, "
+    if (DEBUG) printf("ERROR: the noncircular tidal corrections need use_hlm_nc = impqc, use_flm_nc = impqc or impqc_unf, use_Fr = full, next, LO or NLO, "
                       "use_flm_tidal = DNV_nosource and tides with the tidal B (TEOBRESUM3_BQ, NNLO_B, NNLO_BQ, N3LO_B, N3LO_BQ)\n");
     return 1;
   }
@@ -1525,6 +1533,27 @@ int eob_set_params(int default_choice, int firstcall)
   /* the f-mode dressing is a quasi-circular resummation, not consistent with the NC tidal corrections */
   if (tidal_nc_on && EOBPars->use_tidal_fmode_model) {
     if (DEBUG) printf("ERROR: the noncircular tidal corrections do not work with the f-mode model\n");
+    return 1;
+  }
+  /* use_flm = LO is the LO Fphi of the generic-orbit flux, so Dali only. Its point-mass part has no tidal terms, so the
+     tidal part is the whole LO tidal flux of use_flm_tidal = LO, which already has the noncircular terms */
+  if (EOBPars->use_flm == USEFLM_LO) {
+    if (EOBPars->model != MODEL_DALI) {
+      if (DEBUG) printf("ERROR: use_flm = LO needs the Dali model\n");
+      return 1;
+    }
+    /* next and full build Fr from the resummed Fphi, not from the LO one that use_flm = LO puts in dpphi/dt */
+    if (EOBPars->use_Fr == USE_FR_NEXT || EOBPars->use_Fr == USE_FR_FULL) {
+      if (DEBUG) printf("ERROR: use_flm = LO needs a use_Fr not built on Fphi (LO, NLO, ecc, BD or no)\n");
+      return 1;
+    }
+  }
+  if (tides != TIDES_OFF && ((EOBPars->use_flm == USEFLM_LO) != (EOBPars->use_flm_tidal == USEFLM_TIDAL_LO))) {
+    if (DEBUG) printf("ERROR: use_flm = LO and use_flm_tidal = LO go together\n");
+    return 1;
+  }
+  if (EOBPars->use_flm_tidal == USEFLM_TIDAL_LO && tidal_nc_on) {
+    if (DEBUG) printf("ERROR: use_flm_tidal = LO is the whole LO tidal flux, generic orbits included, so the use_*_nc_tidal options must be no\n");
     return 1;
   }
 
@@ -1613,6 +1642,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_wav_flm_tidal = &eob_wav_flm_tidal_DNV;
   } else if (EOBPars->use_flm_tidal == USEFLM_TIDAL_DNV_NOSOURCE) {
     eob_wav_flm_tidal = &eob_wav_flm_tidal_DNV_nosource;
+  } else if (EOBPars->use_flm_tidal == USEFLM_TIDAL_LO) {
+    eob_wav_flm_tidal = &eob_wav_flm_tidal_DNV; /* which drops its PN corrections for LO */
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_flm_tidal\n");
     return 1;

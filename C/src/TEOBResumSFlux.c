@@ -577,6 +577,21 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 
   /* Add horizon Fphi */
   *Fphi += Fphi_H;
+
+  /* use_flm = LO: the Newtonian (2,2) Fphi at the state, P0 = (2 + 2 j2 - p2)/4. use_flm_tidal = LO adds the LO tidal
+     flux whole, tam10 = dF10 + dr10 of eob_flx_Flm_nc_tidal_22: this point-mass Fphi has no
+     tidal terms to remove */
+  if (EOBPars->use_flm == USEFLM_LO) {
+    const double u_ = 1./r, j2 = pphi*pphi*u_, p2 = pr_star*pr_star*r;
+    const double P0 = (2. + 2.*j2 - p2)/4.;
+    double tam10 = 0.;
+    if (usetidal && EOBPars->use_flm_tidal == USEFLM_TIDAL_LO) {
+      const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
+      const double Sb  = mup + X12*(EOBPars->kapA2 - EOBPars->kapB2)/6.;
+      tam10 = Sb*(-51. + j2*(54. + 45.*j2) + p2*(-117. - 540.*j2 + 360.*p2))/(8.*nu) + 24.*mup*P0 + mup*(6. - 3.*j2 - 21.*p2);
+    }
+    *Fphi = -32./5.*nu*pphi*SQ(SQ(u_))*(P0 + SQ(SQ(u_))*u_*tam10);
+  }
 }
 
 /**
@@ -695,22 +710,39 @@ double eob_flx_Flm_nc_tidal_22(double r, double prstar, double pphi, double F22p
   const double s = j2 - 1.;
   const double Sb = mup + (2.*X1 - 1.)*mum;
   const double P0 = (2. + 2.*j2 - p2)/4.;
-  /* impqc's 1PN factor, series in s = j2 - 1 = r^2 prsdot at Newtonian order */
-  const double h1 = p2*((151 - 26*nu)/56. + p2*((445 - 390*nu)/672. + p2*((445 - 390*nu)/2688.))) + s*((193 - 26*nu)/84. + p2*((65 - 48*nu)/56. + p2*((-55 + 102*nu)/1344.)) + s*((25 - 12*nu)/84. + p2*((-85 + 66*nu)/168. + p2*((-95 + 54*nu)/896.)) + s*((-25 + 12*nu)/168. + p2*((145 - 120*nu)/672.) + s*((25 - 12*nu)/336. + p2*((-10 + 9*nu)/112.) + s*((-25 + 12*nu)/672. + s*((25 - 12*nu)/1344.))))));
-  const double h1s = (193 - 26*nu)/84. + p2*((65 - 48*nu)/56. + p2*((-55 + 102*nu)/1344.)) + s*((25 - 12*nu)/42. + p2*((-85 + 66*nu)/84. + p2*((-95 + 54*nu)/448.)) + s*((-25 + 12*nu)/56. + p2*((145 - 120*nu)/224.) + s*((25 - 12*nu)/84. + p2*((-10 + 9*nu)/28.) + s*((-125 + 60*nu)/672. + s*((25 - 12*nu)/224.)))));
-  const double tam12 = Sb*(5049 + j2*(-7776 + j2*(-5123 + 90*j2)) + p2*(17109 + j2*(47007 - 12015*j2) + p2*(-28755 + 43740*j2 - 16920*p2)))/(112.*nu) + Sb*(1380 + j2*(171 + j2*(3638 + 2085*j2)) + p2*(6156 + j2*(-24417 - 53385*j2) + p2*(11745 + 113460*j2 - 32040*p2)))/112. + mup*(-5400 + j2*(453 + j2*(-1120 - 1965*j2)) + p2*(1182 + j2*(5661 + 36840*j2) + p2*(966 - 53040*j2 + 8640*p2)))/28. + mup*nu*(1962 + j2*(1026 - 54*j2) + p2*(-7461 - 6228*j2 + 6066*p2))/28. + sgp*(12 + j2*(660 + j2*(100 - 240*j2)) + p2*(-1374 + j2*(36 + 4740*j2) + p2*(-324 - 7440*j2 + 1440*p2)))/3.;
-  const double dr10 = mup*(6 - 3*j2 - 21*p2);
-  const double dr12x = Sb*(140 - 70*j2 - 595*p2)/16. + mup*(-2604 + j2*(882 + 1200*j2) + p2*(4683 - 2892*j2 + 7476*p2))/28. + mup*nu*(3010 + j2*(-1554 - 1822*j2) + p2*(-3101 + 12176*j2 - 9870*p2))/28. + sgp*(-184 + j2*(92 + 120*j2) + p2*(-118 - 1200*j2 + 1080*p2));
   /* Jain & Gamba's flux is m = +2 alone, in units of M^2, the 2/nu makes it ours */
   const double dF10 = Sb*(-51 + j2*(54 + 45*j2) + p2*(-117 - 540*j2 + 360*p2))/(8.*nu) + mup*24.*P0;
-  /* NLO = Jain & Gamba's tam12 minus Dali's dressing dr12x, the LO dressing dr10 times h1, and
-     impqc's response -18 mup to the tidal part of r^2 prsdot */
-  const double dF12 = tam12 - (dr12x + dr10*h1 - 18.*mup*P0*h1s);
+  /* NLO = Jain & Gamba's tam12 minus the tides Dali's point-mass (2,2) already has.
+     It is relative 1PN, so it follows flux_nc_order: with the point-mass NC flux at 0PN the tides are LO alone.
+     P2N is the point-mass 1PN term that the mult form divides by, beyond P2x */
+  const int nlo = (EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN);
+  double dF12 = 0., P2N = 0.;
+  if (nlo) {
+    const double tam12 = Sb*(5049 + j2*(-7776 + j2*(-5123 + 90*j2)) + p2*(17109 + j2*(47007 - 12015*j2) + p2*(-28755 + 43740*j2 - 16920*p2)))/(112.*nu) + Sb*(1380 + j2*(171 + j2*(3638 + 2085*j2)) + p2*(6156 + j2*(-24417 - 53385*j2) + p2*(11745 + 113460*j2 - 32040*p2)))/112. + mup*(-5400 + j2*(453 + j2*(-1120 - 1965*j2)) + p2*(1182 + j2*(5661 + 36840*j2) + p2*(966 - 53040*j2 + 8640*p2)))/28. + mup*nu*(1962 + j2*(1026 - 54*j2) + p2*(-7461 - 6228*j2 + 6066*p2))/28. + sgp*(12 + j2*(660 + j2*(100 - 240*j2)) + p2*(-1374 + j2*(36 + 4740*j2) + p2*(-324 - 7440*j2 + 1440*p2)))/3.;
+    if (EOBPars->use_flm_nc == USEFLM_NC_IMPQC_UNF) {
+      /* impqc_unf adds its 1PN term N, so its tides are a polynomial */
+      const double dr12U = Sb*(-35.*(-4. + 2.*j2 + 17.*p2)/16.)
+        + mup*((-433. + j2*(-44. + 57.*j2) + p2*(799. - 1048.*j2 + 1871.*p2))/7.
+               + nu*(2858. + j2*(-1446. - 1622.*j2) + p2*(-2959. + 12856.*j2 - 9558.*p2))/28.)
+        + sgp*2.*(-92. + j2*(46. + 60.*j2) + p2*(-59. - 600.*j2 + 540.*p2));
+      dF12 = tam12 - dr12U;
+      P2N  = eob_flx_flm_nc_22_unf(1., p, s);
+    } else {
+      /* impqc: dr12x, the LO dressing dr10 times its 1PN factor h1, and its response -18 mup to the tidal part of
+         r^2 prsdot; h1 is a series in s = j2 - 1 = r^2 prsdot at Newtonian order */
+      const double dr10 = mup*(6 - 3*j2 - 21*p2);
+      const double h1 = p2*((151 - 26*nu)/56. + p2*((445 - 390*nu)/672. + p2*((445 - 390*nu)/2688.))) + s*((193 - 26*nu)/84. + p2*((65 - 48*nu)/56. + p2*((-55 + 102*nu)/1344.)) + s*((25 - 12*nu)/84. + p2*((-85 + 66*nu)/168. + p2*((-95 + 54*nu)/896.)) + s*((-25 + 12*nu)/168. + p2*((145 - 120*nu)/672.) + s*((25 - 12*nu)/336. + p2*((-10 + 9*nu)/112.) + s*((-25 + 12*nu)/672. + s*((25 - 12*nu)/1344.))))));
+      const double h1s = (193 - 26*nu)/84. + p2*((65 - 48*nu)/56. + p2*((-55 + 102*nu)/1344.)) + s*((25 - 12*nu)/42. + p2*((-85 + 66*nu)/84. + p2*((-95 + 54*nu)/448.)) + s*((-25 + 12*nu)/56. + p2*((145 - 120*nu)/224.) + s*((25 - 12*nu)/84. + p2*((-10 + 9*nu)/28.) + s*((-125 + 60*nu)/672. + s*((25 - 12*nu)/224.)))));
+      const double dr12x = Sb*(140 - 70*j2 - 595*p2)/16. + mup*(-2604 + j2*(882 + 1200*j2) + p2*(4683 - 2892*j2 + 7476*p2))/28. + mup*nu*(3010 + j2*(-1554 - 1822*j2) + p2*(-3101 + 12176*j2 - 9870*p2))/28. + sgp*(-184 + j2*(92 + 120*j2) + p2*(-118 - 1200*j2 + 1080*p2));
+      dF12 = tam12 - (dr12x + dr10*h1 - 18.*mup*P0*h1s);
+      P2N  = P0*h1;
+    }
+  }
   if (EOBPars->use_flm_nc_tidal != USEFLM_NC_TIDAL_MULT) return -(32./5.)*nu*j*sqrt(u)*u*u*u*u*u*u*u*u*(dF10 + u*dF12);
   /* mult, point-mass flux at 1PN is -(32/5) nu j u^(7/2) (P0 + u P2), so
      tauF = u^5 (dF10 + u (dF12 - P2 dF10/P0))/P0 */
   const double P2x = (-546 + j2*(-554 - 260*j2) + p2*(168 - 227*j2 + 147*p2))/168. + nu*(196 + j2*(318 + 122*j2) + p2*(-308 - 271*j2 + 105*p2))/168.;
-  const double P2 = P0*h1 + P2x;
+  const double P2 = !nlo ? 0. : P2x + P2N;
   /* 1/P0 as its series in P0 - 1 to fifth power, P0 vanishes on unbound orbits and fifth is the top
      power of prsdot in f0 of the point-mass Fr */
   const double dP0 = P0 - 1.;
@@ -1929,7 +1961,7 @@ double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, do
   *   impqc's 1PN (2,2) term with the Newtonian flux not factored out: N = P0 h1, h1 the 1PN coefficient of
   *   eob_flx_flm_nc_22 and P0 = (2 + 2 j^2 - p^2)/4 the Newtonian NC (2,2) flux, here as the polynomial it is
   *   rather than through the series of 1/P0 in h1, which P0 crossing zero on unbound orbits breaks.
-  *   The flux adds u N/j^4 to the Newtonian factor (TidalFlux22.wl, Sec. 3)
+  *   The flux adds u N/j^4 = N r/pphi^4 to the Newtonian factor, which it does not multiply
   *
   *   @param[in] r, prstar, prsdot: the state and d prstar/dt
   *

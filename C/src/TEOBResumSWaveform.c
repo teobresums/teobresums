@@ -1711,6 +1711,29 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
 }
 
 /**
+ * Function: eob_wav_flm_LO
+ * ------------------------
+ *   Leading order: rholm = flm = 1 in every mode, for use_flm = LO
+*/
+void eob_wav_flm_LO(double x, double nu, double *rholm, double *flm)
+{
+  for (int k = 0; k < KMAX; k++) rholm[k] = flm[k] = 1.;
+}
+
+/**
+ * Function: eob_wav_flm_s_LO
+ * --------------------------
+ *   Leading order with spins, for use_flm = LO: on this path the Newtonian odd-m modes leave X12 to flm,
+ *   as X12 rho^l in eob_wav_flm_s_SSNLO, and the spin terms start beyond LO
+*/
+void eob_wav_flm_s_LO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2,
+                      double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm)
+{
+  eob_wav_flm_LO(x, nu, rholm, flm);
+  for (int k = 0; k < KMAX; k++) if (MINDEX[k] % 2) flm[k] = X1 - X2;
+}
+
+/**
  * Function: eob_wav_hlm_v1
  * ------------------------
  * Resummed amplitudes in the general nu-dependent case.
@@ -6555,19 +6578,23 @@ void eob_wav_flm_tidal_DNV(double x, Dynamics *dyn, double *flm_tidal)
   hB[6] = hB[8];
 #endif
 
+  /* use_flm_tidal = LO: the leading amplitudes alone, so no PN corrections (x_c = 0), octupole or gravitomagnetic part */
+  const int tidal_lo = (EOBPars->use_flm_tidal == USEFLM_TIDAL_LO);
+  const double xc = tidal_lo ? 0. : x;
+
   /** l=2 */
   /* (2,1) */
-  flm_tidal[0] = (-hA[0]*(1. + betaA1[0]*x) + hB[0]*(1. + betaB1[0]*x) )*x5;
+  flm_tidal[0] = (-hA[0]*(1. + betaA1[0]*xc) + hB[0]*(1. + betaB1[0]*xc) )*x5;
   /* (2,2) */
-  flm_tidal[1] = ( hA[1]*(1. + betaA1[1]*x +  betaA2[1]*x*x) + hB[1]*(1. + betaB1[1]*x + betaB2[1]*x*x) )*x5;
+  flm_tidal[1] = ( hA[1]*(1. + betaA1[1]*xc +  betaA2[1]*xc*xc) + hB[1]*(1. + betaB1[1]*xc + betaB2[1]*xc*xc) )*x5;
   
   /** l=3 */
   /* (3,1) */
-  flm_tidal[2] = ( -hA[2]*(1. + betaA1[2]*x) + hB[2]*(1. + betaB1[2]*x) )*x5;
+  flm_tidal[2] = ( -hA[2]*(1. + betaA1[2]*xc) + hB[2]*(1. + betaB1[2]*xc) )*x5;
   /* (3,2) */
   flm_tidal[3] = ( hA[3] + hB[3] )*x5;
   /* (3,3) */
-  flm_tidal[4] = ( -hA[4]*(1. + betaA1[4]*x) + hB[4]*(1. + betaB1[4]*x) )*x5;
+  flm_tidal[4] = ( -hA[4]*(1. + betaA1[4]*xc) + hB[4]*(1. + betaB1[4]*xc) )*x5;
 
   /**l=4 */
   /* (4,2) */
@@ -6577,10 +6604,10 @@ void eob_wav_flm_tidal_DNV(double x, Dynamics *dyn, double *flm_tidal)
 
 #if (use_2PN_amplitude_corrections)
   /* electric octupole, LO of the (2,2) */
-  flm_tidal[1] += 8./3.*EOBPars->kapT3*x6*x;
+  if (!tidal_lo) flm_tidal[1] += 8./3.*EOBPars->kapT3*x6*x;
 #endif
 
-  if (EOBPars->use_tidal_gravitomagnetic != TIDES_GM_OFF) {
+  if (EOBPars->use_tidal_gravitomagnetic != TIDES_GM_OFF && !tidal_lo) {
     const double fourtnine= 1.5555555555555555556;  // 14/9 = 112/(3*24)
     const double fourthird = 1.3333333333333333333; // 32/24 = 4/3
     flm_tidal[0] += 0.5*( -1.*kapA2j/XB + kapB2j/XA )*x5;
@@ -8676,6 +8703,7 @@ void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Wavefo
   eob_wav_hathlm_nc_tidal(dyn, x, hNewt, A, d);
   /* take the phase from use_dlm_nc_tidal, unless the amplitude function already gave it */
   if (eob_wav_deltalm_nc_tidal != eob_wav_hathlm_nc_tidal) eob_wav_deltalm_nc_tidal(dyn, x, hNewt, A_dlm, d);
+  /* with use_dlm_nc_tidal = no, d = 0 and A is the modulus |Delta| (|tau| for mult), so the sign of Re Delta is lost */
   for (int k = 0; k < KMAX; k++) {
     if (A[k] == 0.) continue; /* no tidal part in this mode */
     const double ang = d[k] - dlm_nc[k];
