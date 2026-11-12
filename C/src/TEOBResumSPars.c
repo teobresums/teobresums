@@ -1530,6 +1530,16 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: use_Fr_tidal with use_Fr = next or full needs use_flm_nc_tidal\n");
     return 1;
   }
+  /* the fact flux divides by f22^(N,0)nc, zero on unbound orbits, and adds to impqc's factor, not impqc_unf's sum */
+  if (EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_FACT && (EOBPars->r_hyp != 0. || EOBPars->use_flm_nc != USEFLM_NC_IMPQC)) {
+    if (DEBUG) printf("ERROR: use_flm_nc_tidal = fact is for bound orbits (r_hyp = 0) with use_flm_nc = impqc\n");
+    return 1;
+  }
+  /* fact carries the NC tidal phase in its factor */
+  if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_FACT && EOBPars->use_dlm_nc_tidal != USEDELTALM_NC_TIDAL_NO) {
+    if (DEBUG) printf("ERROR: use_hlm_nc_tidal = fact has its noncircular tidal phase in the factor, use_dlm_nc_tidal must be no\n");
+    return 1;
+  }
   /* the f-mode dressing is a quasi-circular resummation, not consistent with the NC tidal corrections */
   if (tidal_nc_on && EOBPars->use_tidal_fmode_model) {
     if (DEBUG) printf("ERROR: the noncircular tidal corrections do not work with the f-mode model\n");
@@ -1652,6 +1662,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_no;
   } else if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_ADD || EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_MULT) {
     eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_22;
+  } else if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_FACT) {
+    eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_no; /* the (2,2) is set in eob_wav_hlm_ecc_tidal */
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_hlm_nc_tidal\n");
     return 1;
@@ -1672,6 +1684,8 @@ int eob_set_params(int default_choice, int firstcall)
     case USEFLM_NC_TIDAL_MULT:
       eob_flx_Flm_nc_tidal[1] = &eob_flx_Flm_nc_tidal_22;
       break;
+    case USEFLM_NC_TIDAL_FACT:
+      break; /* set in eob_flx_Flux_ecc and eob_flx_Fphi_ecc */
     default:
       if (DEBUG) printf("ERROR: Unknown option for use_flm_nc_tidal\n");
       return 1;
