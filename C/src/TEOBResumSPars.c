@@ -506,6 +506,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->use_hlm_nc     = USEHLM_NC_IMPQC;
       eobp->use_dlm_nc     = USEDELTALM_NC_IMPQC;
       eobp->use_dlm_nc_pade = 1;
+      eobp->use_h22_nc_complex = 1;
     } else {
       errorexit("Unknown BBH model specified.");
     }
