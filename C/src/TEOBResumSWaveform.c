@@ -1335,7 +1335,7 @@ void eob_wav_deltalm_nc_impqc(double r, double prstar, double prsdot, double *dl
   if (EOBPars->use_h22_nc_complex) {
     double h22_complex[2];
     eob_wav_hath22_nc_complex(r, prstar, prsdot, h22_complex);
-    dlm[1] = -h22_complex[1];
+    dlm[1] = h22_complex[1];
   }
   else {
     const double phi22_1PN = ((1.7857142857142858 - 1.8571428571428572 * nu) * prstar + 
@@ -5570,12 +5570,9 @@ void eob_wav_hath22_nc_complex(double r, double prstar, double prsdot, double* h
 {
   const double nu = EOBPars->nu;
   const double nu2 = nu * nu;
-  const double nu3 = nu2 * nu;
   const double logr = log(r);
   const double inv_sqrt_r = 1.0 / sqrt(r);
   const double inv_r = 1.0 / r;
-  const double one_minus_2nu = 1.0 - 2.0 * nu;
-  const double one_minus_3nu = 1.0 - 3.0 * nu;
 
   /* Powers of r */
   const double r2 = r * r;
@@ -5588,18 +5585,6 @@ void eob_wav_hath22_nc_complex(double r, double prstar, double prsdot, double* h
   const double r9 = r8 * r;
   const double r10 = r9 * r;
   const double r11 = r10 * r;
-  const double r12 = r11 * r;
-  const double r13 = r12 * r;
-  const double r14 = r13 * r;
-  const double r15 = r14 * r;
-  const double r16 = r15 * r;
-  const double r17 = r16 * r;
-  const double r18 = r17 * r;
-  const double r19 = r18 * r;
-  const double r20 = r19 * r;
-  const double r21 = r20 * r;
-  const double r22 = r21 * r;
-  const double r23 = r22 * r;
 
   /* Powers of prstar */
   const double prstar2 = prstar * prstar;
@@ -5607,12 +5592,6 @@ void eob_wav_hath22_nc_complex(double r, double prstar, double prsdot, double* h
   const double prstar4 = prstar3 * prstar;
   const double prstar5 = prstar4 * prstar;
   const double prstar6 = prstar5 * prstar;
-  const double prstar7 = prstar6 * prstar;
-  const double prstar8 = prstar7 * prstar;
-  const double prstar9 = prstar8 * prstar;
-  const double prstar10 = prstar9 * prstar;
-  const double prstar11 = prstar10 * prstar;
-  const double prstar12 = prstar11 * prstar;
 
   /* Powers of prsdot */
   const double prsdot2 = prsdot * prsdot;
@@ -5620,12 +5599,6 @@ void eob_wav_hath22_nc_complex(double r, double prstar, double prsdot, double* h
   const double prsdot4 = prsdot3 * prsdot;
   const double prsdot5 = prsdot4 * prsdot;
   const double prsdot6 = prsdot5 * prsdot;
-  const double prsdot7 = prsdot6 * prsdot;
-  const double prsdot8 = prsdot7 * prsdot;
-  const double prsdot9 = prsdot8 * prsdot;
-  const double prsdot10 = prsdot9 * prsdot;
-  const double prsdot11 = prsdot10 * prsdot;
-  const double prsdot12 = prsdot11 * prsdot;
 
   const double reh22_nc_1PN = (1.595238095238095 - 0.6190476190476190 * nu) * prsdot * r +
                               (-0.2083333333333333 + 0.2500000000000000 * nu) * prstar6 * r2 +
