@@ -266,13 +266,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   const double j_hyp  = EOBPars->j_hyp;
   const int use_spins = EOBPars->use_spins;
   int use_tidal = EOBPars->use_tidal;
-  int store_dynamics  = EOBPars->output_dynamics; 
-  if (!(EOBPars->binary == BINARY_BNS)) store_dynamics = 1; /* NQC determination need dynamical variables */
-  if (use_spins == MODE_SPINS_GENERIC) store_dynamics = 1; /* Precession needs dynamical variables */
-  if (ecc != 0.)  store_dynamics = 1; /* Eccentric waveform computation needs dynamical variables (sigmoid) */
   if (EOBPars->model == MODEL_DALI) EOBPars->postadiabatic_dynamics = 0;
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
-  if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
   
   /* *****************************************
@@ -619,17 +614,15 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->y[EOB_EVOLVE_PHI]    = dyn->phi;
     dyn->y[EOB_EVOLVE_PRSTAR] = dyn->prstar; 
     dyn->y[EOB_EVOLVE_PPHI]   = dyn->pphi;
-    if (store_dynamics) {
-      dyn->time[0]             = dyn->t; 
-      dyn->data[EOB_RAD][0]    = dyn->r;
-      dyn->data[EOB_PHI][0]    = dyn->phi;
-      dyn->data[EOB_PPHI][0]   = dyn->pphi;
-      dyn->data[EOB_MOMG][0]   = dyn->Omg;
-      dyn->data[EOB_DDOTR][0]  = dyn->ddotr;
-      dyn->data[EOB_PRSTAR][0] = dyn->prstar;
-      dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
-      dyn->data[EOB_E0][0]     = dyn->E;
-    }
+    dyn->time[0]             = dyn->t; 
+    dyn->data[EOB_RAD][0]    = dyn->r;
+    dyn->data[EOB_PHI][0]    = dyn->phi;
+    dyn->data[EOB_PPHI][0]   = dyn->pphi;
+    dyn->data[EOB_MOMG][0]   = dyn->Omg;
+    dyn->data[EOB_DDOTR][0]  = dyn->ddotr;
+    dyn->data[EOB_PRSTAR][0] = dyn->prstar;
+    dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
+    dyn->data[EOB_E0][0]     = dyn->E;
 
     /* Check: print warning if initial separation < 10 */
     if (dyn->r < 10.) {
@@ -662,7 +655,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
     dyn->store = dyn->noflx = 0;
-    if (use_wav_scalar_cache && store_dynamics) {
+    if (use_wav_scalar_cache) {
       /* the loop does not store i = 0 */
       dyn->wavc[WAVC_H][0]         = dyn->H;
       dyn->wavc[WAVC_HEFF][0]      = dyn->Heff;
@@ -926,30 +919,28 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
     }
     
-    if (store_dynamics) {
-      dyn->time[iter]             = dyn->t; 
-      dyn->data[EOB_RAD][iter]    = dyn->r;
-      dyn->data[EOB_PHI][iter]    = dyn->phi;
-      dyn->data[EOB_PPHI][iter]   = dyn->pphi;
-      dyn->data[EOB_MOMG][iter]   = dyn->Omg;
-      dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
-      dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
-      dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
-      dyn->data[EOB_E0][iter] 	  = dyn->E;
-      if (use_wav_scalar_cache) {
-        dyn->wavc[WAVC_H][iter]         = dyn->H;
-        dyn->wavc[WAVC_HEFF][iter]      = dyn->Heff;
-        dyn->wavc[WAVC_JHAT][iter]      = dyn->jhat;
-        dyn->wavc[WAVC_ROMEGA][iter]    = dyn->r_omega;
-        dyn->wavc[WAVC_OMG][iter]       = dyn->Omg;
-        dyn->wavc[WAVC_DDOTR][iter]     = dyn->ddotr;
-        dyn->wavc[WAVC_RDOT][iter]      = dyn->rdot;
-        dyn->wavc[WAVC_R2DOT][iter]     = dyn->r2dot;
-        dyn->wavc[WAVC_R3DOT][iter]     = dyn->r3dot;
-        dyn->wavc[WAVC_OMEGADOT][iter]  = dyn->Omegadot;
-        dyn->wavc[WAVC_OMEGA2DOT][iter] = dyn->Omega2dot;
-        dyn->wavc[WAVC_PRSDOT][iter]    = dyn->prsdot;
-      }
+    dyn->time[iter]             = dyn->t; 
+    dyn->data[EOB_RAD][iter]    = dyn->r;
+    dyn->data[EOB_PHI][iter]    = dyn->phi;
+    dyn->data[EOB_PPHI][iter]   = dyn->pphi;
+    dyn->data[EOB_MOMG][iter]   = dyn->Omg;
+    dyn->data[EOB_DDOTR][iter]  = dyn->ddotr;
+    dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
+    dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
+    dyn->data[EOB_E0][iter] 	  = dyn->E;
+    if (use_wav_scalar_cache) {
+      dyn->wavc[WAVC_H][iter]         = dyn->H;
+      dyn->wavc[WAVC_HEFF][iter]      = dyn->Heff;
+      dyn->wavc[WAVC_JHAT][iter]      = dyn->jhat;
+      dyn->wavc[WAVC_ROMEGA][iter]    = dyn->r_omega;
+      dyn->wavc[WAVC_OMG][iter]       = dyn->Omg;
+      dyn->wavc[WAVC_DDOTR][iter]     = dyn->ddotr;
+      dyn->wavc[WAVC_RDOT][iter]      = dyn->rdot;
+      dyn->wavc[WAVC_R2DOT][iter]     = dyn->r2dot;
+      dyn->wavc[WAVC_R3DOT][iter]     = dyn->r3dot;
+      dyn->wavc[WAVC_OMEGADOT][iter]  = dyn->Omegadot;
+      dyn->wavc[WAVC_OMEGA2DOT][iter] = dyn->Omega2dot;
+      dyn->wavc[WAVC_PRSDOT][iter]    = dyn->prsdot;
     }
 
     /* Stop integration if max number of iterations reached */
