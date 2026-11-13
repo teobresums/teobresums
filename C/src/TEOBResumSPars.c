@@ -48,6 +48,7 @@ void (*eob_wav_deltalm)();
 void (*eob_wav_deltalm_nc)();
 void (*eob_wav_hathlm_nc)();
 void (*eob_wav_flm_tidal)();
+double (*eob_wav_rho22_tidal)();
 void (*eob_wav_hathlm_nc_tidal)();
 void (*eob_wav_deltalm_nc_tidal)();
 double (*eob_flx_Fr_tidal)();
@@ -1531,14 +1532,26 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: use_Fr_tidal with use_Fr = next or full needs use_flm_nc_tidal\n");
     return 1;
   }
-  /* the fact flux divides by f22^(N,0)nc, zero on unbound orbits, and adds to impqc's factor, not impqc_unf's sum */
-  if (EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_FACT && (EOBPars->r_hyp != 0. || EOBPars->use_flm_nc != USEFLM_NC_IMPQC)) {
-    if (DEBUG) printf("ERROR: use_flm_nc_tidal = fact is for bound orbits (r_hyp = 0) with use_flm_nc = impqc\n");
+  /* fact puts the circular tides of the (2,2) in rho22, for the mode and the flux: the NC tides on top must be fact's or none */
+  const int fact_on = (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_FACT || EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_FACT);
+  /* fact is derived for bound orbits: its flux divides by f22^(N,0)nc, zero on unbound orbits, and its mode by j */
+  if (fact_on && EOBPars->r_hyp != 0.) {
+    if (DEBUG) printf("ERROR: use_hlm_nc_tidal or use_flm_nc_tidal = fact is for bound orbits (r_hyp = 0)\n");
     return 1;
   }
-  /* fact carries the NC tidal phase in its factor */
-  if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_FACT && EOBPars->use_dlm_nc_tidal != USEDELTALM_NC_TIDAL_NO) {
-    if (DEBUG) printf("ERROR: use_hlm_nc_tidal = fact has its noncircular tidal phase in the factor, use_dlm_nc_tidal must be no\n");
+  /* the fact flux adds to impqc's factor, not impqc_unf's sum */
+  if (EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_FACT && EOBPars->use_flm_nc != USEFLM_NC_IMPQC) {
+    if (DEBUG) printf("ERROR: use_flm_nc_tidal = fact needs use_flm_nc = impqc\n");
+    return 1;
+  }
+  if (fact_on && !((EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_FACT || EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NO) &&
+                   (EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_FACT || EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_NO))) {
+    if (DEBUG) printf("ERROR: use_hlm_nc_tidal or use_flm_nc_tidal = fact needs the other to be fact or no\n");
+    return 1;
+  }
+  /* fact carries the NC tidal phase in its factor, and with the mode's fact off there is no (2,2) tidal term to put a phase on */
+  if (fact_on && EOBPars->use_dlm_nc_tidal != USEDELTALM_NC_TIDAL_NO) {
+    if (DEBUG) printf("ERROR: with use_hlm_nc_tidal or use_flm_nc_tidal = fact, use_dlm_nc_tidal must be no\n");
     return 1;
   }
   /* the f-mode dressing is a quasi-circular resummation, not consistent with the NC tidal corrections */
@@ -1659,12 +1672,17 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: Unknown option for use_flm_tidal\n");
     return 1;
   }
+  eob_wav_rho22_tidal = &return_zero;
+  if (fact_on) {
+    eob_wav_rho22_tidal = &eob_wav_rho22_tidal_fact;
+    eob_wav_flm_tidal   = &eob_wav_flm_tidal_fact;
+  }
   if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_NO) {
     eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_no;
   } else if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_ADD || EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_MULT) {
     eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_22;
   } else if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_FACT) {
-    eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_no; /* the (2,2) is set in eob_wav_hlm_ecc_tidal */
+    eob_wav_hathlm_nc_tidal = &eob_wav_hathlm_nc_tidal_fact;
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_hlm_nc_tidal\n");
     return 1;
@@ -1677,6 +1695,8 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: Unknown option for use_dlm_nc_tidal\n");
     return 1;
   }
+  /* fact gives its phase with its amplitude */
+  if (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_FACT) eob_wav_deltalm_nc_tidal = eob_wav_hathlm_nc_tidal;
   for (int k = 0; k < KMAX; k++) eob_flx_Flm_nc_tidal[k] = &return_zero;
   switch (EOBPars->use_flm_nc_tidal) {
     case USEFLM_NC_TIDAL_NO:
@@ -1686,7 +1706,8 @@ int eob_set_params(int default_choice, int firstcall)
       eob_flx_Flm_nc_tidal[1] = &eob_flx_Flm_nc_tidal_22;
       break;
     case USEFLM_NC_TIDAL_FACT:
-      break; /* set in eob_flx_Flux_ecc and eob_flx_Fphi_ecc */
+      eob_flx_hatflm_nc[1] = &eob_flx_flm_nc_22_fact;
+      break;
     default:
       if (DEBUG) printf("ERROR: Unknown option for use_flm_nc_tidal\n");
       return 1;

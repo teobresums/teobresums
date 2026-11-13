@@ -702,6 +702,9 @@ enum {
   FIRSTCALL_EOBDYNSGS,            /**< first call to eob_dyn_s_gs */
   FIRSTCALL_SPINDYN,              /**< first call to spin_dyn */
   FIRSTCALL_PNMOMG,               /**< first call to PN omega in spin dyn rhs */
+  FIRSTCALL_EOBWAVRHO22TIDAL,     /**< first call to eob_wav_rho22_tidal_fact */
+  FIRSTCALL_EOBWAVHLM22TIDALFACT, /**< first call to eob_wav_hathlm_nc_tidal_fact */
+  FIRSTCALL_EOBFLXFLM22TIDALFACT, /**< first call to eob_flx_flm_nc_22_fact */
   NFIRSTCALL                      /**< number of firstcalls */
 };
 
@@ -1539,16 +1542,16 @@ double eob_flx_FlmNewt_nc_32(double r, double Omg, double rdot, double r2dot, do
 double eob_flx_FlmNewt_nc_31(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 double eob_flx_FlmNewt_nc_44(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
-double eob_flx_flm_nc_22(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_22(double r, double prstar, double pphi, double prstardot);
 double eob_flx_flm_nc_22_unf(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_21(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_33(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_32(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_31(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_44(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_42(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_21(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_33(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_32(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_31(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_44(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_42(double r, double prstar, double pphi, double prstardot);
 double eob_flx_Flm_nc_tidal_22(double r, double prstar, double pphi, double F22pp);
-double eob_flx_Flm22_tidal_fact(double r, double prstar, double pphi, double prsdot);
+double eob_flx_flm_nc_22_fact(double r, double prstar, double pphi, double prsdot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
@@ -1575,6 +1578,7 @@ extern void (*eob_wav_hlmNewt)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNewt_v1(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 extern void (*eob_wav_flm_tidal)(); /* defined in TEOBResumSPars.c */
+extern double (*eob_wav_rho22_tidal)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_tidal_DNV(double x, Dynamics *dyn, double *flm_tidal);
 void eob_wav_flm_tidal_DNV_nosource(double x, Dynamics *dyn, double *flm_tidal);
 extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
@@ -1600,12 +1604,13 @@ void eob_wav_hathlm_nc_no(double r, double prstar, double prstardot, double *hat
 void eob_wav_hathlm_nc_impqc(double r, double prstar, double prstardot, double *hathlm_nc);
 void eob_wav_hath22_nc_complex(double r, double prstar, double prstardot, double *hath22_nc);
 extern void (*eob_wav_hathlm_nc_tidal)(); /* defined in TEOBResumSPars.c */
-void eob_wav_hathlm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d);
-void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d);
+void eob_wav_hathlm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A, double *d);
+void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A, double *d);
 extern void (*eob_wav_deltalm_nc_tidal)(); /* defined in TEOBResumSPars.c */
-double eob_wav_rho22_tidal(double x);
-void eob_wav_hlm22_tidal_fact(Dynamics *dyn, double x, double *rhoT, double *hT_re, double *hT_im);
-void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Waveform_lm_t *tlm, double *flm, double *hathlm_nc,
+double eob_wav_rho22_tidal_fact(double x);
+void eob_wav_flm_tidal_fact(double x, Dynamics *dyn, double *flm_tidal);
+void eob_wav_hathlm_nc_tidal_fact(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A, double *d);
+void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Waveform_lm_t *tlm, double *hathlm_nc,
                            double *dlm_nc, Waveform_lm_t *hlm);
 extern int (*eob_wav_hlmNQC_find_a1a2a3)(); /* defined in TEOBResumSPars.c */
 int eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
