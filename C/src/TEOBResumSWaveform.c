@@ -5891,8 +5891,17 @@ void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, d
   const double tn14_im = j*p*(Sb*(57 - 30*j2 + 60*p2)/(2.*nu) + Sb*(129 - 444*j2 + 786*p2)/7. + mup*(-309 + 1308*j2 - 1152*p2)/7. - mup*nu*456./7. + sgp*(-104 + 240*j2 - 320*p2));
   const double d14x_re = Sb*(35 - 70*j2 + 70*p2)/8. + mup*(-525 + j2*(506 + 386*j2) + p2*(-966 - 344*j2 - 42*p2))/14. + mup*nu*(672 + j2*(-741 - 192*j2) + p2*(1260 + 276*j2 - 84*p2))/14. + sgp*(-92 + 64*j2 - 184*p2);
   const double d14x_im = j*p*(-Sb*35./2. + mup*(63 + 386*j2 + 42*p2)/7. + mup*nu*(273 - 192*j2 + 84*p2)/7. - sgp*232.);
-  const double D14_re = tc14x + tc12*h10 + tn14_re - (d14x_re + d12_re*h1 - 18.*mup*hN2_re*h1s);
-  const double D14_im = tn14_im - (d14x_im + d12_im*h1 - 18.*mup*hN2_im*h1s);
+  /* with use_dlm_nc the point-mass mode also has impqc's NC phase, i Phi1 next to h1 at 1PN (phi22_1PN at r = 1), and it
+     moves with the tidal part of r^2 prsdot as h1 does: -(d12 i Phi1 - 18 mup hN2 i Phi1s) more to subtract */
+  double dph_re = 0., dph_im = 0.;
+  if (EOBPars->use_dlm_nc != USEDELTALM_NC_NO) {
+    const double Phi1  = p*((25 - 26*nu)/14. + p2*((5 + 6*nu)/84. + ((-25 + 26*nu)*p2)/56.) + s*((25 - 12*nu)/42. + p2*((5*(-31 + 30*nu))/168. - (3*(-5 + 8*nu)*p2)/56.) + s*((-25 + 18*nu)/48. - (3*(-45 + 58*nu)*p2)/224. + s*((-5*(-10 + 9*nu))/168. + ((-145 + 498*nu)*p2)/1344. + s*((-775 + 918*nu)/5376. + ((325 - 576*nu)*s)/5376.)))));
+    const double Phi1s = p*((25 - 12*nu)/42. + p2*((5*(-31 + 30*nu))/168. - (3*(-5 + 8*nu)*p2)/56.) + s*((-25 + 18*nu)/24. - (3*(-45 + 58*nu)*p2)/112. + s*((-5*(-10 + 9*nu))/56. + ((-145 + 498*nu)*p2)/448. + s*((-775 + 918*nu)/1344. - (5*(-325 + 576*nu)*s)/5376.))));
+    dph_re =  Phi1*d12_im - 18.*mup*Phi1s*hN2_im;
+    dph_im = -Phi1*d12_re + 18.*mup*Phi1s*hN2_re;
+  }
+  const double D14_re = tc14x + tc12*h10 + tn14_re - (d14x_re + d12_re*h1 - 18.*mup*hN2_re*h1s) + dph_re;
+  const double D14_im = tn14_im - (d14x_im + d12_im*h1 - 18.*mup*hN2_im*h1s) + dph_im;
   double re, im;
   if (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_MULT) {
     re = u5*u*(D12_re + u*D14_re);
