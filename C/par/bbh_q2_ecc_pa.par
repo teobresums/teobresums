@@ -1,0 +1,41 @@
+# Parfile for an eccentric BBH (q = 2, e = 0.3) with eccentric post-adiabatic stage on
+
+use_geometric_units = "yes" # use geometric units for I/O ?
+
+#
+# Binary properties
+#
+
+q   = 2.  # mass ratio
+ecc = 0.3 # eccentricity
+use_spins = 1
+chi1 = 0. # dimensionless spin 1 z-component
+chi2 = 0. # dimensionless spin 2 z-component
+initial_frequency = 0.0008 # in units of 1/M
+
+#
+# Eccentric initial conditions and post-adiabatic stage
+#
+
+ecc_ics = "PAeq" # "0PA", "1PA", "MA", "PAeq" (default: post-adiabatic, from equinoctial maps)
+postadiabatic_dynamics_ecc = "yes" # switch on eccentric PA stage
+postadiabatic_dynamics_ecc_level = "NNLOp" # "LO", "NLO", "NNLO", "NNLOp"
+#postadiabatic_dynamics_ecc_map_order = -1 # override map order of level (-1 = from level)
+#postadiabatic_dynamics_ecc_rate_order = -1 # override rate order
+#postadiabatic_dynamics_ecc_phase_order = -1 # override phase order
+#postadiabatic_dynamics_ecc_adiab = 0.02 # hand over to ODE above this adiabaticity
+postadiabatic_dynamics_ecc_rmin = 6. # ... or when periastron gets below this
+postadiabatic_dynamics_ecc_nper = 32 # max reconstructed samples per orbital period
+postadiabatic_dynamics_ecc_stop = "no" # stop at handoff (testing only)
+#postadiabatic_dynamics_ecc_export = "no" # DEBUG builds only: write evolution to output_dir
+#postadiabatic_dynamics_ecc_export_nodes = 0 # DEBUG: modes on this many nodes of each mean orbit
+#postadiabatic_dynamics_ecc_export_window = 0 # DEBUG: reconstruct only this many SPA widths before handoff
+
+#
+# Output
+#
+
+output_dir = "./bbh_q2_ecc_pa/" # output dir
+output_hpc = "yes"
+output_dynamics = "yes"
+output_multipoles = "no"

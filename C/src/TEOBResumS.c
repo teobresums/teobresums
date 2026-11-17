@@ -273,6 +273,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (EOBPars->model == MODEL_DALI) EOBPars->postadiabatic_dynamics = 0;
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
+  int ecc_pa_filled = 0;   /* eccentric stage filled dyn/hlm from index 0 */
+  const int use_ecc_pa = (EOBPars->postadiabatic_dynamics_ecc
+                          && EOBPars->model == MODEL_DALI
+                          && r_hyp == 0.);
   const double dt = EOBPars->dt;
   
   /* *****************************************
@@ -305,6 +309,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   //Dynamics_set_params(dyn); //TODO: REMOVE always use EOBPars
   dyn->store = dyn->noflx = 0; /* Default: do not store vars, flux on */
   dyn->dt = EOBPars->dt;
+  /* convert ode_tmax here, eccentric PA stage reads t_stop before ODE setup */
+  dyn->t_stop = EOBPars->ode_tmax * time_unit_fact;
   dyn->t_stop = EOBPars->ode_tmax;
 
   /* Alloc spin dynamics, if needed */
@@ -625,6 +631,110 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_E0][0]     = dyn->E;
     }
 
+
+    /* *****************************************
+     * Eccentric post-adiabatic dynamics
+     * *****************************************
+     */
+    EOBPars->t_pa_handoff = 0.;
+    EOBPars->pa_tab3_n = 0;
+    if (use_ecc_pa) {
+      double t_adv = 0.;
+      int    n_pa  = 0;
+      if (!p_eob_ecc_pa_advance(&dyn, &t_adv, &n_pa)) {
+        if (n_pa > 1) {
+          /* wf on reconstructed inspiral */
+          if (n_pa + chunk > size) {
+            size = n_pa + chunk;
+            EOBPars->size = size;
+            Waveform_lm_push (&hlm, size);
+            Dynamics_push (&dyn, size);
+          }
+          for (int i = 0; i < n_pa; i++) hlm->time[i] = dyn->time[i];
+          dyn->store = dyn->noflx = 1;
+          /* run ends at handoff when asked to, or when stage has passed ode_tmax
+             (check after this block); sigmoid pass below then never runs. */
+          const int ends_at_handoff = (dyn->time[n_pa-1] >= dyn->t_stop)
+                                      || EOBPars->postadiabatic_dynamics_ecc_stop;
+          PROF_START(PROF_ECCPA_WAV);
+          for (int i = 0; i < n_pa; i++) {
+            dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
+            dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];
+            dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
+            dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
+            p_eob_dyn_rhs(dyn->time[i], dyn->y, dyn->dy, dyn);
+            if (use_wav_scalar_cache && store_dynamics) {
+              /* wf cache for reconstructed samples */
+              dyn->wavc[WAVC_H][i]         = dyn->H;
+              dyn->wavc[WAVC_HEFF][i]      = dyn->Heff;
+              dyn->wavc[WAVC_JHAT][i]      = dyn->jhat;
+              dyn->wavc[WAVC_ROMEGA][i]    = dyn->r_omega;
+              dyn->wavc[WAVC_OMG][i]       = dyn->Omg;
+              dyn->wavc[WAVC_DDOTR][i]     = dyn->ddotr;
+              dyn->wavc[WAVC_RDOT][i]      = dyn->rdot;
+              dyn->wavc[WAVC_R2DOT][i]     = dyn->r2dot;
+              dyn->wavc[WAVC_R3DOT][i]     = dyn->r3dot;
+              dyn->wavc[WAVC_OMEGADOT][i]  = dyn->Omegadot;
+              dyn->wavc[WAVC_OMEGA2DOT][i] = dyn->Omega2dot;
+              dyn->wavc[WAVC_PRSDOT][i]    = dyn->prsdot;
+            }
+            /* With cache, that sigmoid pass recomputes these samples as it does main
+               loop's, so waveform is evaluated here only when run ends at handoff. */
+            if (!(use_wav_scalar_cache && store_dynamics) || ends_at_handoff) {
+              eob_wav_hlm(dyn, hlm_t);
+            }
+            for (int k = 0; k < KMAX; k++) {
+              if (hlm->kmask[k]) {
+                hlm->ampli[k][i] = hlm_t->ampli[k];
+                hlm->phase[k][i] = hlm_t->phase[k];
+              }
+            }
+          }
+          PROF_STOP(PROF_ECCPA_WAV);
+          dyn->store = dyn->noflx = 0;
+          /* Restore handoff state: loop above overwrote dyn->y. */
+          dyn->y[EOB_EVOLVE_RAD]    = dyn->r;
+          dyn->y[EOB_EVOLVE_PHI]    = dyn->phi;
+          dyn->y[EOB_EVOLVE_PRSTAR] = dyn->prstar;
+          dyn->y[EOB_EVOLVE_PPHI]   = dyn->pphi;
+          pasize = n_pa;
+          iter   = n_pa - 1;
+          ecc_pa_filled = 1;
+          dyn->dt = 0.5*(dyn->time[iter] - dyn->time[iter-1]);
+          if (dyn->dt > 10.) dyn->dt = 10.;
+        } else if (store_dynamics) {
+          /* No reconstruction: first stored sample IS handoff. */
+          dyn->time[0]             = dyn->t;
+          dyn->data[EOB_RAD][0]    = dyn->r;
+          dyn->data[EOB_PHI][0]    = dyn->phi;
+          dyn->data[EOB_PPHI][0]   = dyn->pphi;
+          dyn->data[EOB_MOMG][0]   = dyn->Omg;
+          dyn->data[EOB_DDOTR][0]  = dyn->ddotr;
+          dyn->data[EOB_PRSTAR][0] = dyn->prstar;
+          dyn->data[EOB_OMGORB][0] = dyn->Omg_orb;
+          dyn->data[EOB_E0][0]     = dyn->E;
+        }
+        /* ODE takes over here: at last reconstructed sample, or at handoff itself
+           when nothing was reconstructed. */
+        EOBPars->t_pa_handoff = dyn->t;
+      }
+    }
+
+    /* stage reached t_stop or stops at handoff: skip ODE */
+    if (use_ecc_pa && ecc_pa_filled
+        && (dyn->t >= dyn->t_stop || EOBPars->postadiabatic_dynamics_ecc_stop)) {
+      if (VERBOSE)
+        printf("Eccentric post-adiabatic dynamics: %s, skip evolution.\n",
+               EOBPars->postadiabatic_dynamics_ecc_stop ? "stopping at the handoff as asked"
+                                                        : "reached ode_tmax");
+      size = pasize;
+      EOBPars->size = size;
+      Waveform_lm_push (&hlm, size);
+      Dynamics_push (&dyn, size);
+      EOBPars->postadiabatic_dynamics_stop = 1;
+      goto END_ODE_EVOLUTION;
+    }
+
     /* Check: print warning if initial separation < 10 */
     if (dyn->r < 10.) {
       if (VERBOSE) printf("WARNING: Initial separation < 10\n");
@@ -651,39 +761,42 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 		    &EOBPars->S, &EOBPars->Sstar);
     }    
     
-    /* Waveform computation at t = 0
-	Needs a r.h.s. evaluation for some vars (no flux) */
-    dyn->store = dyn->noflx = 1;
-    p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
-    dyn->store = dyn->noflx = 0;
-    if (use_wav_scalar_cache && store_dynamics) {
-      /* the loop does not store i = 0 */
-      dyn->wavc[WAVC_H][0]         = dyn->H;
-      dyn->wavc[WAVC_HEFF][0]      = dyn->Heff;
-      dyn->wavc[WAVC_JHAT][0]      = dyn->jhat;
-      dyn->wavc[WAVC_ROMEGA][0]    = dyn->r_omega;
-      dyn->wavc[WAVC_OMG][0]       = dyn->Omg;
-      dyn->wavc[WAVC_DDOTR][0]     = dyn->ddotr;
-      dyn->wavc[WAVC_RDOT][0]      = dyn->rdot;
-      dyn->wavc[WAVC_R2DOT][0]     = dyn->r2dot;
-      dyn->wavc[WAVC_R3DOT][0]     = dyn->r3dot;
-      dyn->wavc[WAVC_OMEGADOT][0]  = dyn->Omegadot;
-      dyn->wavc[WAVC_OMEGA2DOT][0] = dyn->Omega2dot;
-      dyn->wavc[WAVC_PRSDOT][0]    = dyn->prsdot;
-    }
-    eob_wav_hlm(dyn, hlm_t);
+    /* skip if eccentric PA stage filled arrays (index 0 is then its first sample) */
+    if (!ecc_pa_filled) {
+      /* Waveform computation at t = 0
+  	Needs a r.h.s. evaluation for some vars (no flux) */
+      dyn->store = dyn->noflx = 1;
+      p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
+      dyn->store = dyn->noflx = 0;
+      if (use_wav_scalar_cache && store_dynamics) {
+        /* loop does not store i = 0 */
+        dyn->wavc[WAVC_H][0]         = dyn->H;
+        dyn->wavc[WAVC_HEFF][0]      = dyn->Heff;
+        dyn->wavc[WAVC_JHAT][0]      = dyn->jhat;
+        dyn->wavc[WAVC_ROMEGA][0]    = dyn->r_omega;
+        dyn->wavc[WAVC_OMG][0]       = dyn->Omg;
+        dyn->wavc[WAVC_DDOTR][0]     = dyn->ddotr;
+        dyn->wavc[WAVC_RDOT][0]      = dyn->rdot;
+        dyn->wavc[WAVC_R2DOT][0]     = dyn->r2dot;
+        dyn->wavc[WAVC_R3DOT][0]     = dyn->r3dot;
+        dyn->wavc[WAVC_OMEGADOT][0]  = dyn->Omegadot;
+        dyn->wavc[WAVC_OMEGA2DOT][0] = dyn->Omega2dot;
+        dyn->wavc[WAVC_PRSDOT][0]    = dyn->prsdot;
+      }
+      eob_wav_hlm(dyn, hlm_t);
     
-    /* Append waveform to arrays */
-    hlm->time[0] = 0.;
-    for (int k = 0; k < KMAX; k++) {
-      if(hlm->kmask[k]) hlm->ampli[k][0] = hlm_t->ampli[k];
-    }
-    for (int k = 0; k < KMAX; k++) {
-      if(hlm->kmask[k]) hlm->phase[k][0] = hlm_t->phase[k]; 
-    }
+      /* Append waveform to arrays */
+      hlm->time[0] = dyn->t;
+      for (int k = 0; k < KMAX; k++) {
+        if(hlm->kmask[k]) hlm->ampli[k][0] = hlm_t->ampli[k];
+      }
+      for (int k = 0; k < KMAX; k++) {
+        if(hlm->kmask[k]) hlm->phase[k][0] = hlm_t->phase[k]; 
+      }
 
-    /* Prepare for evolution */
-    dyn->dt = dt;
+      /* Prepare for evolution */
+      dyn->dt = dt;
+    }
     
   }
   
