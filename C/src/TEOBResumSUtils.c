@@ -4405,13 +4405,20 @@ void eob_ecc_series_fit(const double *f, int N, EccSeries *s)
   s->a[0] = sum / N;
   s->b[0] = 0.0;
 
-  /* all sin, cos needed are among 2N values */
-  double ct[2*ECCPA_NODES_DIM], stb[2*ECCPA_NODES_DIM];
+  /* all sin, cos needed are among 2N values; tabulated once per N (cos at [0, 2N), sin at [2N, 4N)) */
+  static double *tab[ECCPA_NODES_DIM+1];
   const int P2 = 2*N;
-  for (int i = 0; i < P2; i++) {
-    ct[i] = cos(Pi*i/N);
-    stb[i] = sin(Pi*i/N);
+  if (N > ECCPA_NODES_DIM) { s->M = 0; return; }
+  if (tab[N] == NULL) {
+    double *t = malloc(2*P2*sizeof(double));
+    if (t == NULL) { s->M = 0; return; }
+    for (int i = 0; i < P2; i++) {
+      t[i]      = cos(Pi*i/N);
+      t[P2 + i] = sin(Pi*i/N);
+    }
+    tab[N] = t;
   }
+  const double *ct = tab[N], *stb = tab[N] + P2;
 
   for (int m = 1; m <= s->M; m++) {
     double ca = 0.0, sa = 0.0;

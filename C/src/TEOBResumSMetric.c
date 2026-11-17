@@ -2040,8 +2040,10 @@ static void eob_metric_s_uncached(double r, double prstar, Dynamics *dyn, double
   /* Q potential and derivatives */
   double Qtmp=0., dQtmp_duc=0., dQtmp_dprstar=0.,  d2Qtmp_duc2=0., ddQtmp_drcdprstar=0., d2Qtmp_dprstar2=0.,
          d3Qtmp_drc2dprstar=0., d3Qtmp_drcdprstar2=0., d3Qtmp_dprstar3=0.;
-  eob_metric_Qpotential(rc, prstar, nu, &Qtmp, &dQtmp_duc, &dQtmp_dprstar, &d2Qtmp_duc2, &ddQtmp_drcdprstar, &d2Qtmp_dprstar2,
-                        &d3Qtmp_drc2dprstar, &d3Qtmp_drcdprstar2, &d3Qtmp_dprstar3);
+  /* every Q is O(prstar^4): all zero at prstar = 0 */
+  if (prstar != 0.)
+    eob_metric_Qpotential(rc, prstar, nu, &Qtmp, &dQtmp_duc, &dQtmp_dprstar, &d2Qtmp_duc2, &ddQtmp_drcdprstar, &d2Qtmp_dprstar2,
+                          &d3Qtmp_drc2dprstar, &d3Qtmp_drcdprstar2, &d3Qtmp_dprstar3);
   *Q              = Qtmp;
   *dQ             = - uc2*drc*dQtmp_duc; // derivative wrt to r
   *dQ_dprstar     = dQtmp_dprstar;
