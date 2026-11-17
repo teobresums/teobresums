@@ -8068,14 +8068,8 @@ int eob_wav_ringdown_v1(Dynamics *dyn, Waveform_lm *hlm)
   /** Find peak of Omega */
   /* Assume a monotonically increasing function, 
      start from after the peak */
-  int index_pk = dynsize-1;
+  int index_pk = find_last_peak_index(Omega, dynsize);
   double Omega_pk = Omega[index_pk];
-  for (int j = dynsize-2; j-- ; ) {
-    if (Omega[j] < Omega_pk) 
-      break;
-    index_pk = j;
-    Omega_pk = Omega[j]; 
-  }
   
   if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);
   if (index_pk >= dynsize-2) {
