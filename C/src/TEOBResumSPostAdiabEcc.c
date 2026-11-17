@@ -311,7 +311,7 @@ static int eccpa_cons_circular(PostAdDynamics *pa, double J, Dynamics *dyn, int 
  * Function: eccpa_cons_rc_newton
  * ------------------------------
  *   r_c by Newton on deltaH(r_c) = 0, Eq. (C1).
- *   Wide orbits restart from previous root in slot (reconstruction only, cons_orbit clears it).
+ *   Wide orbits restart from previous root in slot.
  *
  *   @param[in]     r_a : half-width of radial oscillation
  *   @param[in,out] r_c : seed in, root out
@@ -484,7 +484,10 @@ int eob_eccpa_cons_orbit(PostAdDynamics *pa, double J, double r_a, Dynamics *dyn
 {
   double *orb = pa->cons_orb[oslot];
   if (orb[PO_FULL] == 1.0 && orb[PO_PPHI] == J && orb[PO_R_A] == r_a) return 0; // cache hit
+  /* keep previous r_c: eccpa_cons_rc_newton restarts wide orbits from it */
+  const double rc_prev = orb[PO_R_C];
   memset(orb, 0, sizeof pa->cons_orb[oslot]);
+  orb[PO_R_C] = rc_prev;
   orb[PO_PPHI] = J;
   orb[PO_R_A]  = r_a;
   if (eccpa_cons_circular(pa, J, dyn, oslot, 0.0)) return 1;
@@ -589,7 +592,7 @@ static void eccpa_cons_gap_series(PostAdDynamics *pa, int oslot, Dynamics *dyn)
  *   State at anomaly chi (from periastron), Eqs. (C2)-(C3); written to pa except pa->X.
  *   Uses psi = gap/(dr/dX)^2, finite at turning points and at r_a = 0.
  */
-static void eccpa_cons_state_at_chi(PostAdDynamics *pa, int oslot, double chi, int series,
+static void eccpa_cons_state_at_chi(PostAdDynamics *pa, int oslot, double chi,
                                     int with_flux, Dynamics *dyn)
 {
   const double J = pa->cons_orb[oslot][PO_PPHI], r_a = pa->cons_orb[oslot][PO_R_A];
@@ -608,7 +611,8 @@ static void eccpa_cons_state_at_chi(PostAdDynamics *pa, int oslot, double chi, i
 
   if (r_a > 0.0) {
     double gap;
-    if (!series && pa->cons_orb[oslot][PO_E_GEO] > ECCPA_E_DIRECT) {
+    /* energy conservation above ECCPA_E_DIRECT, gap series below (E - H loses digits there) */
+    if (pa->cons_orb[oslot][PO_E_GEO] > ECCPA_E_DIRECT) {
       gap = pa->cons_orb[oslot][PO_E] - H0;
     } else {
       if (pa->cons_orb[oslot][PO_GAP_OK] != 1.0) eccpa_cons_gap_series(pa, oslot, dyn);
@@ -669,7 +673,8 @@ static void eccpa_cons_state_at_chi(PostAdDynamics *pa, int oslot, double chi, i
   double H, dH_dr, dH_dprstar, dH_dpphi, sqrtAbyB, d2H0, Heff, rc, drc, d2rc, A, dA, Heff_orb;
   eob_ecc_ham(r, pa->prstar, J, dyn, &H, &dH_dr, &dH_dprstar, &dH_dpphi,
               &sqrtAbyB, &d2H0, &Heff, &rc, &drc, &d2rc, &A, &dA, &Heff_orb);
-  pa->H = H;  pa->Heff_orb = Heff_orb;  pa->rc = rc;  pa->A = A;
+  pa->H = H;  pa->Heff = Heff;  pa->Heff_orb = Heff_orb;  pa->Hr = dH_dr;
+  pa->rc = rc;  pa->drc = drc;  pa->d2rc = d2rc;  pa->A = A;  pa->dA = dA;
   /* dH/d(prstar^2) for dt/dX; at prstar = 0 it is half d2H/dprstar2 */
   const double dH_dprs2 = (fabs(pa->prstar) > 0.0) ? dH_dprstar/(2.0*pa->prstar) : 0.5*d2H0;
 
@@ -768,10 +773,42 @@ int eob_eccpa_cons_sample_nodes(PostAdDynamics *pa, int oslot, double alpha, dou
   double c_ra = 0.0, drc_dJ = 0.0, drc_dra = 0.0, dE_dra = 0.0, dE_dJ = 0.0;
   if (rates) eccpa_cons_dE(pa, oslot, r_a, dyn, &c_ra, &drc_dJ, &drc_dra, &dE_dra, &dE_dJ);
 
+  /* H is even in prstar, so node N-1-j (chi -> 2 pi - chi) has the geometry of node j with
+     prstar, dr/dX, rdot flipped; only the flux is evaluated there */
+  const int half = (N % 2 == 0) ? N/2 : N;
+  double mH[ECCPA_NODES_DIM/2], mHeff[ECCPA_NODES_DIM/2], mHr[ECCPA_NODES_DIM/2], mrc[ECCPA_NODES_DIM/2],
+         mdrc[ECCPA_NODES_DIM/2], md2rc[ECCPA_NODES_DIM/2], mA[ECCPA_NODES_DIM/2], mdA[ECCPA_NODES_DIM/2],
+         mrdot[ECCPA_NODES_DIM/2], mddotr[ECCPA_NODES_DIM/2];
   for (int j = 0; j < N; j++) {
     const double chi = 2.0*Pi*(j + 0.5)/N;
-    eccpa_cons_state_at_chi(pa, oslot, chi, 1, with_flux, dyn);
-    pa->X = chi + w;
+    if (j >= half) {
+      const int m = N - 1 - j;
+      pa->X = chi + w;
+      if (out_dt) {
+        out_dt[j]  = out_dt[m];
+        out_Omg[j] = out_Omg[m];
+        continue;
+      }
+      pa->r = pa->node[PA_R][m];  pa->drdX = -pa->node[PA_DRDX][m];  pa->prstar = -pa->node[PA_PRSTAR][m];
+      pa->Wstar = pa->node[PA_WSTAR][m];  pa->dt_dX = pa->node[PA_DTDX][m];  pa->dH_dprs2 = pa->node[PA_DH_DPRS2][m];
+      pa->sqrtAbyB = pa->node[PA_SQRTAB][m];  pa->Omg = pa->node[PA_OMG][m];
+      pa->rdot = -mrdot[m];  pa->ddotr = mddotr[m];  pa->H = mH[m];  pa->rc = mrc[m];  pa->A = mA[m];
+      if (with_flux) {
+        eob_ecc_flux_at(pa->r, pa->prstar, pa->cons_orb[oslot][PO_PPHI], pa->rdot, pa->Omg, pa->ddotr,
+                        mH[m], mHeff[m], pa->sqrtAbyB, mHr[m], dyn, mrc[m], mdrc[m], md2rc[m], mA[m], mdA[m],
+                        &pa->F[C_PPHI], &pa->Fr);
+        pa->FE = pa->rdot*pa->Fr + pa->Omg*pa->F[C_PPHI];
+      } else {
+        pa->Fr = pa->FE = pa->F[C_PPHI] = 0.0;
+      }
+    } else {
+      eccpa_cons_state_at_chi(pa, oslot, chi, with_flux, dyn);
+      pa->X = chi + w;
+      if (half < N) {
+        mH[j] = pa->H;  mHeff[j] = pa->Heff;  mHr[j] = pa->Hr;  mrc[j] = pa->rc;  mdrc[j] = pa->drc;
+        md2rc[j] = pa->d2rc;  mA[j] = pa->A;  mdA[j] = pa->dA;  mrdot[j] = pa->rdot;  mddotr[j] = pa->ddotr;
+      }
+    }
     if (out_dt) {
       /* only dt/dX and Omega are wanted, and pa->node[][] must not be overwritten */
       out_dt[j]  = pa->dt_dX;
@@ -815,7 +852,7 @@ int eob_eccpa_cons_sample_point(PostAdDynamics *pa, int oslot, double alpha, dou
                                 double X, int with_flux, Dynamics *dyn)
 {
   const double w = eccpa_peri_angle(alpha, beta);
-  eccpa_cons_state_at_chi(pa, oslot, X - w, 0, with_flux, dyn);
+  eccpa_cons_state_at_chi(pa, oslot, X - w, with_flux, dyn);
   pa->X = X;
   if (!with_flux) return 0;
   double c_ra, drc_dJ, drc_dra, dE_dra, dE_dJ;

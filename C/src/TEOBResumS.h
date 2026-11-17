@@ -991,7 +991,7 @@ typedef struct tagPostAdDynamics
   /* last point evaluated (eccpa_cons_state_at_chi) */
   double X, r, prstar, rdot, Omg, ddotr;
   double dt_dX;            /**< Jacobian dt/dX at point */
-  double H, Heff_orb, sqrtAbyB, rc, A;
+  double H, Heff, Heff_orb, Hr, sqrtAbyB, rc, drc, d2rc, A, dA;
   double drdX, Wstar, dH_dprs2;                              /**< dr/dX, prstar/(dr/dX), dH/d(prstar^2) */
   /* eob_eccpa_recon: time, phi, pphi of the point */
   double t_at, phi, pphi;
