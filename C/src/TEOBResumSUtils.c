@@ -4373,4 +4373,83 @@ void errorexits(char *file, int line, const char *s, const char *t)
   exit(ERROR);
 }
 
+/**
+ * Function: herm_cubic
+ * --------------------
+ *   Cubic Hermite at fractional position th in [0, 1] of an interval of width h.
+ *
+ *   @param[in] th : (x - xa)/h
+ *   @param[in] h  : interval width
+ *   @param[in] ya, dya : value and derivative at left end
+ *   @param[in] yb, dyb : value and derivative at right end
+ *   @return interpolant
+ */
+double herm_cubic (double th, double h, double ya, double dya, double yb, double dyb)
+{
+  const double t2 = th*th, t3 = t2*th;
+  return ( 2*t3 - 3*t2 + 1)*ya + (t3 - 2*t2 + th)*h*dya
+       + (-2*t3 + 3*t2)    *yb + (t3 - t2)       *h*dyb;
+}
+
+
+/* Real Fourier series on midpoint grid: fit, evaluate, primitive */
+
+/** Fit a real Fourier series on midpoint grid x_j = 2 pi (j + 1/2)/N, harmonics up to N/2 - 1 */
+void eob_ecc_series_fit(const double *f, int N, EccSeries *s)
+{
+  const int M = N/2 - 1;
+  s->M = (M < 0) ? 0 : ((M > ECCPA_HARMONICS_DIM-1) ? ECCPA_HARMONICS_DIM-1 : M);
+
+  double sum = 0.0;
+  for (int j = 0; j < N; j++) sum += f[j];
+  s->a[0] = sum / N;
+  s->b[0] = 0.0;
+
+  /* all sin, cos needed are among 2N values */
+  double ct[2*ECCPA_NODES_DIM], stb[2*ECCPA_NODES_DIM];
+  const int P2 = 2*N;
+  for (int i = 0; i < P2; i++) {
+    ct[i] = cos(Pi*i/N);
+    stb[i] = sin(Pi*i/N);
+  }
+
+  for (int m = 1; m <= s->M; m++) {
+    double ca = 0.0, sa = 0.0;
+    for (int j = 0; j < N; j++) {
+      const int idx = (2*m*j + m) % P2;
+      ca += f[j] * ct[idx];
+      sa += f[j] * stb[idx];
+    }
+    s->a[m] = 2.0 * ca / N;
+    s->b[m] = 2.0 * sa / N;
+  }
+}
+
+/** Evaluate a series at an arbitrary point. */
+double eob_ecc_series_eval(const EccSeries *s, double x)
+{
+  /* angle-addition recurrence */
+  const double c1 = cos(x), s1 = sin(x);
+  double cm = 1.0, sm = 0.0, v = s->a[0];
+  for (int m = 1; m <= s->M; m++) {
+    const double cn = cm*c1 - sm*s1;
+    sm = sm*c1 + cm*s1;
+    cm = cn;
+    v += s->a[m]*cm + s->b[m]*sm;
+  }
+  return v;
+}
+
+/** Periodic primitive of f - <f> (average over x) */
+void eob_ecc_series_prim(const EccSeries *s, EccSeries *out)
+{
+  out->M = s->M;
+  out->a[0] = 0.0;
+  out->b[0] = 0.0;
+  for (int m = 1; m <= s->M; m++) {
+    out->a[m] = -s->b[m] / m;
+    out->b[m] =  s->a[m] / m;
+  }
+}
+
 /* do not write functions beyond this line: errorexit undef/define */
