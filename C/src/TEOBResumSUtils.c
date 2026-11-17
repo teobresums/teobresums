@@ -1284,6 +1284,28 @@ double find_max_grid (double *x, double *f)
 }
 
 /**
+ * Function: find_last_peak_index
+ * ------------------------------
+ *   Safe way to find last peak of f, walking back from end until f decreases ignoring cases < 0.5 * max(f).
+ */
+int find_last_peak_index(const double *f, int n)
+{
+  double gmax = f[0];
+  for (int j = 1; j < n; j++) if (f[j] > gmax) gmax = f[j];
+  int ipk = n-1;
+  double fpk = f[ipk];
+  for (int j = n-2; j > 0; j--) {
+    if (f[j] > fpk) {
+      ipk = j;
+      fpk = f[j];
+    } else if (fpk >= 0.5*gmax) {
+      break;
+    }
+  }
+  return ipk;
+}
+
+/**
  * Function: D0
  * ------------
  *   4th order centered stencil first derivative, uniform grids

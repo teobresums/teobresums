@@ -900,6 +900,7 @@ double baryc_f_weights(double xx, int n, double *f, double *x, double *omega);
 double interp1d (const int order, double xx, int nx, double *f, double *x);
 double find_max (const int n, double dx, double x0, double *f, double *fmax);
 double find_max_grid (double *x, double *f);
+int find_last_peak_index(const double *f, int n);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
