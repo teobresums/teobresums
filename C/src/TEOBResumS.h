@@ -821,6 +821,8 @@ typedef struct tagDynamics
   double mcache_r[EOB_METRIC_CACHE_NSLOTS];
   double mcache_prstar[EOB_METRIC_CACHE_NSLOTS];
   double mcache_out[EOB_METRIC_CACHE_NSLOTS][EOB_METRIC_CACHE_NOUT];
+  int    rcache_valid;                         /**< eob_metric_s_r_part, cached on r alone */
+  double rcache_r, rcache_out[EOB_METRIC_CHEB_NFUNC];
 
   /* f_lm and metric Chebyshev tables (setup by eob_wav_flm_tab and eob_metric_s_r_part at first call) */
   ChebTable flmt;
@@ -874,7 +876,7 @@ enum {
 
 /** PostAdDynamics.cons_orb[slot][]: constants of one conservative orbit */
 enum {
-  PO_E, PO_PPHI, PO_R_MIN, PO_R_MAX, PO_R_C, PO_R_A, PO_E_GEO,
+  PO_E, PO_PPHI, PO_R_C, PO_R_A, PO_E_GEO,
   PO_R_CIRC, PO_C_RA, PO_HRR, PO_HRRR, PO_HRJ,
   PO_HR_M,              /**< H_r at periastron */
   PO_FULL,              /**< slot filled by eob_eccpa_cons_orbit */
@@ -1776,6 +1778,7 @@ double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
 double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
 
 /* TEOBResumSWaveform.c */
+void wavc_store(Dynamics *dyn, int i);
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm);
 void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm);

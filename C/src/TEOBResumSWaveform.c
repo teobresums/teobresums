@@ -10401,6 +10401,23 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   return 0;
 }
 
+/** Copy the twelve wf scalars of sample i into dyn->wavc (initial sample, eccentric PA samples, ODE loop) */
+void wavc_store(Dynamics *dyn, int i)
+{
+  dyn->wavc[WAVC_H][i]         = dyn->H;
+  dyn->wavc[WAVC_HEFF][i]      = dyn->Heff;
+  dyn->wavc[WAVC_JHAT][i]      = dyn->jhat;
+  dyn->wavc[WAVC_ROMEGA][i]    = dyn->r_omega;
+  dyn->wavc[WAVC_OMG][i]       = dyn->Omg;
+  dyn->wavc[WAVC_DDOTR][i]     = dyn->ddotr;
+  dyn->wavc[WAVC_RDOT][i]      = dyn->rdot;
+  dyn->wavc[WAVC_R2DOT][i]     = dyn->r2dot;
+  dyn->wavc[WAVC_R3DOT][i]     = dyn->r3dot;
+  dyn->wavc[WAVC_OMEGADOT][i]  = dyn->Omegadot;
+  dyn->wavc[WAVC_OMEGA2DOT][i] = dyn->Omega2dot;
+  dyn->wavc[WAVC_PRSDOT][i]    = dyn->prsdot;
+}
+
 /**
  * Function: wavc_load
  * -------------------

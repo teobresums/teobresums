@@ -764,7 +764,7 @@ int eob_eccpa_cons_sample_nodes(PostAdDynamics *pa, int oslot, double alpha, dou
   if (N < 1 || N > ECCPA_NODES_DIM) return -1;
   const double r_a = pa->cons_orb[oslot][PO_R_A];
   const double w   = eccpa_peri_angle(alpha, beta);
-  const int rates = with_flux && !out_dt;
+  const int rates = with_flux;
   double c_ra = 0.0, drc_dJ = 0.0, drc_dra = 0.0, dE_dra = 0.0, dE_dJ = 0.0;
   if (rates) eccpa_cons_dE(pa, oslot, r_a, dyn, &c_ra, &drc_dJ, &drc_dra, &dE_dra, &dE_dJ);
 
@@ -948,8 +948,6 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
 
   pa->cons_orb[slot][PO_E]     = E;
   pa->cons_orb[slot][PO_PPHI]  = pphi;
-  pa->cons_orb[slot][PO_R_MAX] = rmax;
-  pa->cons_orb[slot][PO_R_MIN] = rmin;
   pa->cons_orb[slot][PO_R_C]   = 0.5 * (rmax + rmin);
   pa->cons_orb[slot][PO_R_A]   = 0.5 * (rmax - rmin);
   pa->cons_orb[slot][PO_E_GEO] = pa->cons_orb[slot][PO_R_A] / pa->cons_orb[slot][PO_R_C];
@@ -1628,7 +1626,6 @@ int eob_eccpa_phases(PostAdDynamics *pa, int n, int n_sub_per_interval, Dynamics
 
   /* stencil width, max number of samples */
   int n_stencil = ECCPA_PHASE_STENCIL;
-  if (n_stencil < 2) n_stencil = 2;
   if (n_stencil > n) n_stencil = n;
 
   int bad = 0;
