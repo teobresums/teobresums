@@ -159,6 +159,11 @@ enum{Ix, Iy, Iz, IN3};
 #define TEOB_R0_THRESHOLD (14)  /* PA minimum tolerated radius */
 #define POSTADIABATIC_NSTEP_MIN (10) /* Minimum requires PA steps, any less than this, the code switches off PA */
 
+/* Eccentric post-adiabatic stage (TEOBResumSPostAdiabEcc.c) */
+#define ECCPA_NODES_MAX         (64)      /* max nodes of an orbit average (initial data) */
+#define ECCPA_NODES_DIM         (2*ECCPA_NODES_MAX) /* per-node arrays: gap series uses 2N nodes */
+#define ECCPA_HARMONICS_DIM     (ECCPA_NODES_DIM/2) /* max harmonic of a series on N nodes */
+
 /** Simple/generic error handler */
 #define ERROR (1) /** generic error int */
 enum{OK,                       /**< No error */
@@ -805,6 +810,14 @@ typedef struct tagDynamics
   
 } Dynamics;
 
+/** Real Fourier series a[0] + sum_m a[m] cos(m x) + b[m] sin(m x), on midpoint grid */
+typedef struct tagEccSeries
+{
+  int    M;                 /**< highest harmonic actually set */
+  double a[ECCPA_HARMONICS_DIM];     /**< a[0] is mean */
+  double b[ECCPA_HARMONICS_DIM];     /**< b[0] unused */
+} EccSeries;
+
 /** Parameter data type */
 typedef struct tagEOBParameters
 {
@@ -1166,6 +1179,10 @@ char *trim(char *str);
 int getkv(char *line, char **key, char **val);
 int is_string(const char *str);
 char *string_trim(char *str);
+double herm_cubic (double th, double h, double ya, double dya, double yb, double dyb);
+void   eob_ecc_series_fit  (const double *f, int N, EccSeries *s);
+double eob_ecc_series_eval (const EccSeries *s, double x);
+void   eob_ecc_series_prim (const EccSeries *s, EccSeries *out);
 int par_get_i (char *val);
 int par_get_b (char *val);
 double par_get_d (char *val);
@@ -1284,6 +1301,13 @@ void eob_ham(double nu, double r, double pphi, double prstar, double A, double d
 	           double *H, double *Heff, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi);
 int eob_dyn_rhs_s(double t, const double y[], double dy[], void *params);
 int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *params);
+void eob_ecc_ham_rr(double r, double pphi, Dynamics *dyn,
+                    double *dH_dr, double *d2H_dr2);
+void eob_ecc_ham(double r, double prstar, double pphi, Dynamics *dyn,
+                 double *H, double *dH_dr, double *dH_dprstar, double *dH_dpphi,
+                 double *sqrtAbyB, double *d2H_dprstar2_0, double *Heff_out,
+                 double *rc_out, double *drc_dr_out, double *d2rc_dr2_out,
+                 double *A_out, double *dA_out, double *Heff_orb_out);
 void eob_ham_s(double nu, double r, double rc, double drc_dr, double d2rc_dr2, double pphi, double prstar, double S, double Sstar, double chi1, double chi2, double X1, double X2, double aK2, double c3, double A, double dA, double d2A, double Q, double dQ, double dQ_dprstar, double d2Q, double d2Q_dprstar2,
                double *H, double *Heff, double *Heff_orb, double *dHeff_dr, double *dHeff_dprstar, double *dHeff_dpphi, double *d2Heff_dprstar20, double *d2Heff_dr2);
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_rd2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO, int ham_only, double *ggm);
@@ -1392,6 +1416,10 @@ extern int eob_flx_nc_active_n;
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
 void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double pphi, double rdot, double ddotr, double prsdot, double *Fphi, double *Fr, Dynamics *dyn, double rc_in, double drc_dr_in, double d2rc_dr2_in);
+void eob_ecc_flux_at(double r, double prstar, double pphi, double rdot, double Omg,
+                     double ddotr, double H, double Heff, double sqrtAbyB, double dH_dr,
+                     Dynamics *dyn, double rc, double drc_dr, double d2rc_dr2,
+                     double A, double dA, double *Fphi, double *Fr);
 void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double Fphi_H, double *Fr, Dynamics *dyn, double *hatflm_NC, double rc_in, double drc_dr_in, double d2rc_dr2_in);
 double eob_flx_Fr_ecc(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);

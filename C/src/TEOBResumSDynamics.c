@@ -3255,3 +3255,97 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double var,
 }
 
 
+
+/* Hamiltonian at a point, for eccentric PA stage */
+
+/**
+ * Function: eob_ecc_ham
+ * ---------------------
+ *   Hamiltonian and its first derivatives at one phase-space point.
+ *
+ *   @param[in]  r, prstar, pphi : point
+ *   @param[in]  dyn    : Dynamics structure
+ *   @param[out] H, dH_dr, dH_dprstar, dH_dpphi : H/mu and its derivatives
+ *   @param[out] sqrtAbyB, d2H_dprstar2_0, Heff_out : sqrt(A/B), d2H/dprstar2 at prstar = 0, Heff
+ *   @param[out] rc_out, drc_dr_out, d2rc_dr2_out, A_out, dA_out : r_c and A, with derivatives
+ *   @param[out] Heff_orb_out : orbital part of Heff
+ */
+static void ecc_ham_core(double r, double prstar, double pphi, Dynamics *dyn,
+                 double *H, double *dH_dr, double *dH_dprstar, double *dH_dpphi,
+                 double *sqrtAbyB, double *d2H_dprstar2_0, double *Heff_out,
+                 double *rc_out, double *drc_dr_out, double *d2rc_dr2_out,
+                 double *A_out, double *dA_out, double *Heff_orb_out,
+                 double *d2H_dr2)
+{
+  const double nu = EOBPars->nu;
+
+  double A, B, dA, d2A, dB, d2B, Q, dQ, dQ_dprstar, d2Q, ddQ_drdprstar, d2Q_dprstar2,
+         d3Q_dr2dprstar, d3Q_drdprstar2, d3Q_dprstar3;
+  eob_metric_s(r, prstar, dyn, &A, &B, &dA, &d2A, &dB, &d2B, &Q, &dQ, &dQ_dprstar,
+               &d2Q, &ddQ_drdprstar, &d2Q_dprstar2, &d3Q_dr2dprstar, &d3Q_drdprstar2,
+               &d3Q_dprstar3);
+
+  /* r_c from r-only metric (cached by call above) */
+  double rc, drc_dr, d2rc_dr2;
+  {
+    double A_r, B_r, dA_r, d2A_r, dB_r, d2B_r;
+    eob_metric_s_r_part(r, dyn, &A_r, &B_r, &dA_r, &d2A_r, &dB_r, &d2B_r, &rc, &drc_dr, &d2rc_dr2);
+  }
+  /* bare rc derivatives out (flux), adjusted ones into H, as in eob_dyn_rhs_ecc */
+  const double drc_dr_bare = drc_dr, d2rc_dr2_bare = d2rc_dr2;
+  double drc_dr_h = drc_dr, d2rc_dr2_h = d2rc_dr2;
+  if ((EOBPars->use_tidal) && (EOBPars->use_tidal_fmode_model))
+    eob_dyn_s_rc_add_QOH_drvts(dyn, rc, r, EOBPars->a1, EOBPars->a2,
+                               &drc_dr_h, &d2rc_dr2_h);
+
+  double Hh, Heff, Heff_orb, dHeff_dr, dHeff_dprstar, dHeff_dpphi, d2Heff_dprstar20, d2Heff_dr2;
+  eob_ham_s(nu, r, rc, drc_dr_h, d2rc_dr2_h, pphi, prstar,
+            EOBPars->S, EOBPars->Sstar, EOBPars->chi1, EOBPars->chi2,
+            EOBPars->X1, EOBPars->X2, EOBPars->aK2, EOBPars->cN3LO,
+            A, dA, d2A, Q, dQ, dQ_dprstar, d2Q, d2Q_dprstar2,
+            &Hh, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi,
+            &d2Heff_dprstar20, &d2Heff_dr2);
+
+  /* eob_ham_s returns Hh = H/mu and derivatives of Heff; converting,
+     dH/dx = (dHeff/dx) / (nu * Hh) since H = sqrt(1 + 2 nu (Heff - 1)) / ... see below. */
+  const double ooH = 1.0 / (nu * Hh);
+
+  if (H)              *H              = Hh;
+  if (Heff_out)       *Heff_out       = Heff;
+  if (dH_dr)          *dH_dr          = dHeff_dr * ooH;
+  if (dH_dprstar)     *dH_dprstar     = dHeff_dprstar * ooH;
+  if (dH_dpphi)       *dH_dpphi       = dHeff_dpphi * ooH;
+  if (sqrtAbyB)       *sqrtAbyB       = sqrt(A / B);
+  if (d2H_dprstar2_0) *d2H_dprstar2_0 = d2Heff_dprstar20 * ooH;
+  if (rc_out)         *rc_out         = rc;
+  if (drc_dr_out)     *drc_dr_out     = drc_dr_bare;
+  if (d2rc_dr2_out)   *d2rc_dr2_out   = d2rc_dr2_bare;
+  if (A_out)          *A_out          = A;
+  if (dA_out)         *dA_out         = dA;
+  if (Heff_orb_out)   *Heff_orb_out   = Heff_orb;
+  /* H_rr = (Heff_rr - nu H_r^2)/(nu H) */
+  if (d2H_dr2) {
+    const double Hr = dHeff_dr * ooH;
+    *d2H_dr2 = (d2Heff_dr2 - nu*Hr*Hr) * ooH;
+  }
+}
+
+/** Hamiltonian and its first derivatives. */
+void eob_ecc_ham(double r, double prstar, double pphi, Dynamics *dyn,
+                 double *H, double *dH_dr, double *dH_dprstar, double *dH_dpphi,
+                 double *sqrtAbyB, double *d2H_dprstar2_0, double *Heff_out,
+                 double *rc_out, double *drc_dr_out, double *d2rc_dr2_out,
+                 double *A_out, double *dA_out, double *Heff_orb_out)
+{
+  ecc_ham_core(r, prstar, pphi, dyn, H, dH_dr, dH_dprstar, dH_dpphi, sqrtAbyB,
+               d2H_dprstar2_0, Heff_out, rc_out, drc_dr_out, d2rc_dr2_out,
+               A_out, dA_out, Heff_orb_out, NULL);
+}
+
+/** H_r and H_rr at prstar = 0, where Q (quartic in prstar) contributes nothing. Same body as
+ *  eob_ecc_ham -- it only asks for one output that one does not. */
+void eob_ecc_ham_rr(double r, double pphi, Dynamics *dyn, double *dH_dr, double *d2H_dr2)
+{
+  ecc_ham_core(r, 0.0, pphi, dyn, NULL, dH_dr, NULL, NULL, NULL, NULL, NULL,
+               NULL, NULL, NULL, NULL, NULL, NULL, d2H_dr2);
+}
