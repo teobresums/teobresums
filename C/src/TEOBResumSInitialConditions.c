@@ -1000,7 +1000,6 @@ int eob_dyn_ic_ecc_pa_eq(double r0, Dynamics *dyn, double y_init[])
 
   /* map order of level, max 2; LO = conservative */
   int order = EOBPars->postadiabatic_dynamics_ecc_map;
-  if (order < 0) order = 0;
   if (order > 2) order = 2;
 
   /* cos X = (cos zeta + e)/(1 + e cos zeta), with sin X of sign of sin zeta. At e = 0

@@ -311,7 +311,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   dyn->dt = EOBPars->dt;
   /* convert ode_tmax here, eccentric PA stage reads t_stop before ODE setup */
   dyn->t_stop = EOBPars->ode_tmax * time_unit_fact;
-  dyn->t_stop = EOBPars->ode_tmax;
 
   /* Alloc spin dynamics, if needed */
   if (use_spins == MODE_SPINS_GENERIC) {   
@@ -468,6 +467,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (VERBOSE) PRFORMd("rLR_tidal",EOBPars->rLR_tidal);
     /* clear the caches, the light-ring solve filled them with NNLO tides and no spins */
     for (int i = 0; i < EOB_METRIC_CACHE_NSLOTS; i++) dyn->mcache_valid[i] = 0;
+    dyn->rcache_valid = 0;
     if (dyn->flmt.ok)
       for (int i = 0; i < dyn->flmt.imax; i++) dyn->flmt.ok[i] = 0;
     if (dyn->metrict.ok)
@@ -664,19 +664,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
             dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
             p_eob_dyn_rhs(dyn->time[i], dyn->y, dyn->dy, dyn);
             if (use_wav_scalar_cache && store_dynamics) {
-              /* wf cache for reconstructed samples */
-              dyn->wavc[WAVC_H][i]         = dyn->H;
-              dyn->wavc[WAVC_HEFF][i]      = dyn->Heff;
-              dyn->wavc[WAVC_JHAT][i]      = dyn->jhat;
-              dyn->wavc[WAVC_ROMEGA][i]    = dyn->r_omega;
-              dyn->wavc[WAVC_OMG][i]       = dyn->Omg;
-              dyn->wavc[WAVC_DDOTR][i]     = dyn->ddotr;
-              dyn->wavc[WAVC_RDOT][i]      = dyn->rdot;
-              dyn->wavc[WAVC_R2DOT][i]     = dyn->r2dot;
-              dyn->wavc[WAVC_R3DOT][i]     = dyn->r3dot;
-              dyn->wavc[WAVC_OMEGADOT][i]  = dyn->Omegadot;
-              dyn->wavc[WAVC_OMEGA2DOT][i] = dyn->Omega2dot;
-              dyn->wavc[WAVC_PRSDOT][i]    = dyn->prsdot;
+              wavc_store(dyn, i);
             }
             /* With cache, that sigmoid pass recomputes these samples as it does main
                loop's, so waveform is evaluated here only when run ends at handoff. */
@@ -769,19 +757,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn);
       dyn->store = dyn->noflx = 0;
       if (use_wav_scalar_cache && store_dynamics) {
-        /* loop does not store i = 0 */
-        dyn->wavc[WAVC_H][0]         = dyn->H;
-        dyn->wavc[WAVC_HEFF][0]      = dyn->Heff;
-        dyn->wavc[WAVC_JHAT][0]      = dyn->jhat;
-        dyn->wavc[WAVC_ROMEGA][0]    = dyn->r_omega;
-        dyn->wavc[WAVC_OMG][0]       = dyn->Omg;
-        dyn->wavc[WAVC_DDOTR][0]     = dyn->ddotr;
-        dyn->wavc[WAVC_RDOT][0]      = dyn->rdot;
-        dyn->wavc[WAVC_R2DOT][0]     = dyn->r2dot;
-        dyn->wavc[WAVC_R3DOT][0]     = dyn->r3dot;
-        dyn->wavc[WAVC_OMEGADOT][0]  = dyn->Omegadot;
-        dyn->wavc[WAVC_OMEGA2DOT][0] = dyn->Omega2dot;
-        dyn->wavc[WAVC_PRSDOT][0]    = dyn->prsdot;
+        wavc_store(dyn, 0);  /* loop does not store i = 0 */
       }
       eob_wav_hlm(dyn, hlm_t);
     
@@ -1044,18 +1020,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
       dyn->data[EOB_E0][iter] 	  = dyn->E;
       if (use_wav_scalar_cache) {
-        dyn->wavc[WAVC_H][iter]         = dyn->H;
-        dyn->wavc[WAVC_HEFF][iter]      = dyn->Heff;
-        dyn->wavc[WAVC_JHAT][iter]      = dyn->jhat;
-        dyn->wavc[WAVC_ROMEGA][iter]    = dyn->r_omega;
-        dyn->wavc[WAVC_OMG][iter]       = dyn->Omg;
-        dyn->wavc[WAVC_DDOTR][iter]     = dyn->ddotr;
-        dyn->wavc[WAVC_RDOT][iter]      = dyn->rdot;
-        dyn->wavc[WAVC_R2DOT][iter]     = dyn->r2dot;
-        dyn->wavc[WAVC_R3DOT][iter]     = dyn->r3dot;
-        dyn->wavc[WAVC_OMEGADOT][iter]  = dyn->Omegadot;
-        dyn->wavc[WAVC_OMEGA2DOT][iter] = dyn->Omega2dot;
-        dyn->wavc[WAVC_PRSDOT][iter]    = dyn->prsdot;
+        wavc_store(dyn, iter);
       }
     }
 
