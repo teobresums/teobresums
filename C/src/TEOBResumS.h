@@ -378,7 +378,7 @@ enum{
   USEFLM_NC_IMPQC,         /**< ImpQC NC corrections to flm amplitudes */
   USEFLM_NC_NOPT           /**< number of flm_nc amplitudes options */
 };
-static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "undefined"};
+static const char* const use_flm_nc_opt[] = {"no", "l2m2", "impqc", "undefined"};
 
 /** List of options for deltalm_nc */
 enum{
