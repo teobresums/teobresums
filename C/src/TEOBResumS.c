@@ -1032,14 +1032,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Dynamics_push (&dyn, size);
 
   /* Find peak of Omega */
-  int index_pk = dyn->size-1;
-  double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
-  for (int j = dyn->size-2; j>0; j--) {
-    if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
-      break;
-    index_pk = j;
-    Omega_pk = dyn->data[EOB_OMGORB][j]; 
-  }
+  int index_pk = find_last_peak_index(dyn->data[EOB_OMGORB], dyn->size);
 
   double tOmg_pk;
   if (dyn->size-1 - index_pk < 2) {
