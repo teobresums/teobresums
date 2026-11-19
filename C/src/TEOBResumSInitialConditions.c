@@ -983,6 +983,83 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
 }
 
 /**
+ * Function: eob_dyn_ic_ecc_pa_eq
+ * ------------------------------
+ *   Eccentric ICs, post-adiabatic, from equinoctial maps.
+ *   (e, f0, anomaly) label mean orbit; oscillating parts added on top.
+ *
+ *   @param[in]  r0     : unused
+ *   @param[in]  dyn    : Dynamics
+ *   @param[out] y_init : initial data
+ *   @return  0 on success
+ */
+int eob_dyn_ic_ecc_pa_eq(double r0, Dynamics *dyn, double y_init[])
+{
+  const double ecc  = EOBPars->ecc;
+  const double zeta = EOBPars->anomaly;
+
+  /* map order of level, max 2; LO = conservative */
+  int order = EOBPars->postadiabatic_dynamics_ecc_map;
+  if (order > 2) order = 2;
+
+  /* cos X = (cos zeta + e)/(1 + e cos zeta), with sin X of sign of sin zeta. At e = 0
+     two anomalies coincide, and on a circular orbit X doesn't matter anyway. */
+  double cX = cos(zeta);
+  if (ecc > 0.0) {
+    cX = (cX + ecc)/(1.0 + ecc*cX);
+    if (cX >  1.0) cX =  1.0;
+    if (cX < -1.0) cX = -1.0;
+  }
+  double X = acos(cX);
+  if (sin(zeta) < 0.0) X = 2.0*Pi - X;
+
+  EccIcEq s;
+  if (eob_eccpa_ic_state(ecc, Pi*EOBPars->f0, X, order, dyn, &s)) {
+    /* A run that cannot be built as asked -- no bound orbit at this (e, f0) above all -- fails
+       rather than start from a substitute. */
+    static const char *why[] = { "ok", "input out of range", "no mean orbit at a trial (pphi, r_a)",
+                                 "frequency condition not met", "first-order oscillating parts not built",
+                                 "second-order oscillating parts not built", "osculating orbit not located",
+                                 "osculating maps not built", "point off the osculating orbit",
+                                 "anomaly on the wrong branch", "out of memory" };
+    fprintf(stderr, "Eccentric ICs (equinoctial): construction failed at e = %.6g, f0 = %.6g: %s.\n",
+            ecc, EOBPars->f0, why[s.reason]);
+    return 1;
+  }
+
+  /* sanity check */
+  const int sane = isfinite(s.r) && isfinite(s.prstar) && isfinite(s.pphi)
+                && isfinite(s.H) && isfinite(s.Omg)
+                && s.r > 1.0 && s.pphi > 0.0 && s.sqrtAbyB > 0.0 && s.H > 0.0;
+  if (!sane) {
+    fprintf(stderr, "Eccentric ICs (equinoctial): state rejected, "
+            "r = %.6e prstar = %.6e pphi = %.6e H = %.6e\n", s.r, s.prstar, s.pphi, s.H);
+    return 1;
+  }
+
+  y_init[EOB_ID_RAD]    = s.r;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = s.pphi;
+  y_init[EOB_ID_PRSTAR] = s.prstar;
+  y_init[EOB_ID_PR]     = s.prstar/s.sqrtAbyB;
+  y_init[EOB_ID_J]      = s.pphi;
+  y_init[EOB_ID_E0]     = EOBPars->nu*s.H;
+  y_init[EOB_ID_OMGJ]   = s.Omg;
+
+  if (VERBOSE) {
+    PRSECTN("Eccentric initial conditions (equinoctial post-adiabatic)");
+    printf("%-40s = %d\n","map order",s.order);
+    printf("%-40s = %.12e\n","mean pphi",s.J);
+    printf("%-40s = %.12e (e_geo %.6e)\n","mean half-width",s.r_a,s.e_geo);
+    printf("%-40s = %.12e\n","frequency matched",Pi*EOBPars->f0);
+    printf("%-40s = %.6f -> %.6f -> %.6f\n","anomaly (conic, mean, osculating)",
+           zeta,s.X,s.Xp);
+    printf("%-40s = %.12e %.12e %.12e\n","r, prstar, pphi",s.r,s.prstar,s.pphi);
+  }
+  return 0;
+}
+
+/**
  * Function: eob_dyn_ic_hyp
  * ------------------------
  *   Initial conditions calculation for hyperbolic systems, nonspinning

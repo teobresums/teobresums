@@ -1979,13 +1979,23 @@ static void eob_metric_s_r_part_of_u(double u, void *dyn, double *o)
 void eob_metric_s_r_part(double r, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
                        double *rc, double *drc, double *d2rc)
 {
+  const int r_only = (dyn != NULL) &&
+    !(EOBPars->use_tidal && EOBPars->use_tidal_fmode_model) &&
+    !(EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins);
+  const int cacheable = r_only && EOBPars->use_metric_cache;
   double o[EOB_METRIC_CHEB_NFUNC];
 
+  /* last r: eob_metric_s and the eccentric PA Hamiltonian ask again at the same r */
+  if (cacheable && dyn->rcache_valid && dyn->rcache_r == r) {
+    *A = dyn->rcache_out[0]; *B = dyn->rcache_out[1]; *dA = dyn->rcache_out[2];
+    *d2A = dyn->rcache_out[3]; *dB = dyn->rcache_out[4]; *d2B = dyn->rcache_out[5];
+    *rc = dyn->rcache_out[6]; *drc = dyn->rcache_out[7]; *d2rc = dyn->rcache_out[8];
+    return;
+  }
+
   /* use the table only if it is on and the r-only part depends on r alone */
-  if (dyn != NULL && EOBPars->use_metric_cheb &&
-      !(EOBPars->use_tidal && EOBPars->use_tidal_fmode_model) &&
-      !(EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins) &&
-      !(EOBPars->use_tidal && r <= EOB_METRIC_CHEB_RMIN_TIDES)) {
+  int from_table = 0;
+  if (r_only && EOBPars->use_metric_cheb && !(EOBPars->use_tidal && r <= EOB_METRIC_CHEB_RMIN_TIDES)) {
 
     /* setup table at first call */
     ChebTable *tab = &dyn->metrict;
@@ -1998,12 +2008,20 @@ void eob_metric_s_r_part(double r, Dynamics *dyn, double *A, double *B, double *
     if (cheb_table_eval(tab, 1./r, eob_metric_s_r_part_of_u, dyn, o)) {
       *A = o[0]; *B = o[1]; *dA = o[2]; *d2A = o[3]; *dB = o[4]; *d2B = o[5];
       *rc = o[6] + r; *drc = o[7]; *d2rc = o[8];
-      return;
+      from_table = 1;
     }
   }
 
   /* outside the table, or without memory for it, compute the r-only part without the table */
-  eob_metric_s_r_part_notab(r, dyn, A, B, dA, d2A, dB, d2B, rc, drc, d2rc);
+  if (!from_table) eob_metric_s_r_part_notab(r, dyn, A, B, dA, d2A, dB, d2B, rc, drc, d2rc);
+
+  if (cacheable) {
+    dyn->rcache_out[0] = *A;  dyn->rcache_out[1] = *B;  dyn->rcache_out[2] = *dA;
+    dyn->rcache_out[3] = *d2A; dyn->rcache_out[4] = *dB; dyn->rcache_out[5] = *d2B;
+    dyn->rcache_out[6] = *rc;  dyn->rcache_out[7] = *drc; dyn->rcache_out[8] = *d2rc;
+    dyn->rcache_r     = r;
+    dyn->rcache_valid = 1;
+  }
 }
 
 /* called through eob_metric_s, which caches it */
@@ -2022,8 +2040,10 @@ static void eob_metric_s_uncached(double r, double prstar, Dynamics *dyn, double
   /* Q potential and derivatives */
   double Qtmp=0., dQtmp_duc=0., dQtmp_dprstar=0.,  d2Qtmp_duc2=0., ddQtmp_drcdprstar=0., d2Qtmp_dprstar2=0.,
          d3Qtmp_drc2dprstar=0., d3Qtmp_drcdprstar2=0., d3Qtmp_dprstar3=0.;
-  eob_metric_Qpotential(rc, prstar, nu, &Qtmp, &dQtmp_duc, &dQtmp_dprstar, &d2Qtmp_duc2, &ddQtmp_drcdprstar, &d2Qtmp_dprstar2,
-                        &d3Qtmp_drc2dprstar, &d3Qtmp_drcdprstar2, &d3Qtmp_dprstar3);
+  /* every Q is O(prstar^4): all zero at prstar = 0 */
+  if (prstar != 0.)
+    eob_metric_Qpotential(rc, prstar, nu, &Qtmp, &dQtmp_duc, &dQtmp_dprstar, &d2Qtmp_duc2, &ddQtmp_drcdprstar, &d2Qtmp_dprstar2,
+                          &d3Qtmp_drc2dprstar, &d3Qtmp_drcdprstar2, &d3Qtmp_dprstar3);
   *Q              = Qtmp;
   *dQ             = - uc2*drc*dQtmp_duc; // derivative wrt to r
   *dQ_dprstar     = dQtmp_dprstar;

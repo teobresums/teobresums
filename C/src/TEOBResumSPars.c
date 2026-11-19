@@ -57,6 +57,7 @@ void (*eob_dyn_s_get_rc)();
 int (*eob_dyn_ic)();
 double (*eob_dyn_r0_eob)();
 int (*p_eob_dyn_rhs)();
+int (*p_eob_ecc_pa_advance)(Dynamics **dynp, double *t_adv, int *n_pa);
 int (*p_eob_spin_dyn_rhs)();
 void (*eob_metric_Apotential)();
 void (*eob_metric_Dpotential)();
@@ -261,7 +262,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   /* EOB Settings */
 
   eobp->ecc_freq=ECCFREQ_ORBAVGD; // "PERIASTRON", "AVERAGE", "APASTRON", "ORBAVGD"
-  eobp->ecc_ics =ECCICS_MA; // "0PA", "1PA"
+  eobp->ecc_ics =ECCICS_PAEQ; // "0PA", "1PA", "MA", "PAeq"
   
   eobp->postadiabatic_dynamics=1;
   eobp->postadiabatic_dynamics_N=8;      // post-adiabatic order
@@ -269,6 +270,29 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->postadiabatic_dynamics_rmin=14.; // minimum radius (end of PA dynamics)
   eobp->postadiabatic_dynamics_stop=0;   // stop after post-adiabatic dynamics 
   eobp->postadiabatic_dynamics_dr=0.1;            // PA step dr = 0.1 
+  /* Eccentric post-adiabatic stage: off by default, NNLOp when switched on. */
+  eobp->postadiabatic_dynamics_ecc=0;
+  eobp->postadiabatic_dynamics_ecc_level=ECCPA_LEVEL_NNLOP;  // LO, NLO, NNLO, NNLOp: see eob_set_params
+  eobp->postadiabatic_dynamics_ecc_map_order=-1;   // single-order overrides for experiments; -1 = from level
+  eobp->postadiabatic_dynamics_ecc_rate_order=-1;
+  eobp->postadiabatic_dynamics_ecc_phase_order=-1;
+  /* resolved (map, rate, phase), read by stage; NNLOp until eob_set_params */
+  eobp->postadiabatic_dynamics_ecc_map=3;
+  eobp->postadiabatic_dynamics_ecc_rate=3;
+  eobp->postadiabatic_dynamics_ecc_phase=2;
+  eobp->postadiabatic_dynamics_ecc_osc_order=2;
+  /* Reconstructed samples per orbital period: a ceiling on eob_eccpa_nper, which sets them from the
+     eccentricity. They only feed output grid; phase of dynamics is set by secular stage. */
+  eobp->postadiabatic_dynamics_ecc_nper=32;   // ceiling on eob_eccpa_nper; free below e = 0.26, where rule asks for less
+  eobp->postadiabatic_dynamics_ecc_interp_freqs=1;   // debug only: 0 makes phase pass solve orbit at every point of its grid, slow reference
+  eobp->postadiabatic_dynamics_ecc_stop=0;   // 1 = stop at handoff, for testing stage alone
+  eobp->postadiabatic_dynamics_ecc_export=0; // DEBUG builds only: 1 = write evolution and phase grid to output_dir
+  eobp->postadiabatic_dynamics_ecc_export_nodes=0; // DEBUG: > 0 = with it, multipoles on that many nodes of each mean orbit
+  eobp->postadiabatic_dynamics_ecc_export_window=0.0; // DEBUG: > 0 = with it, time-domain inspiral only over that many SPA widths
+  eobp->postadiabatic_dynamics_ecc_adiab=-1.0; // hand over when timescales stop separating;
+                                               // negative is resolved to ECCPA_ADIAB in
+                                               // eob_set_params
+  eobp->postadiabatic_dynamics_ecc_rmin=6.;    // ... or when periapsis gets this small
 
   eobp->A_pot=A_5PNlog; 
   eobp->D_pot=D_3PN;
@@ -1636,7 +1660,8 @@ int eob_set_params(int default_choice, int firstcall)
   /* Set r0 fun pointer */
   if (EOBPars->model == MODEL_DALI) {
     // eccentric case
-    if(EOBPars->ecc_ics == ECCICS_1PA || EOBPars->ecc_ics == ECCICS_MA)
+    if(EOBPars->ecc_ics == ECCICS_1PA || EOBPars->ecc_ics == ECCICS_MA
+       || EOBPars->ecc_ics == ECCICS_PAEQ)
       eob_dyn_r0_eob = &eob_dyn_r0_ecc;
     else if (EOBPars->ecc_ics == ECCICS_0PA){
       if(ecc > 1e-4)
@@ -1658,6 +1683,56 @@ int eob_set_params(int default_choice, int firstcall)
     p_eob_dyn_rhs = &eob_dyn_rhs;
   }
 
+  /* Eccentric PA level -> (map, rate, phase) orders */
+  {
+    int map, rate, phase;
+    switch (EOBPars->postadiabatic_dynamics_ecc_level) {
+      case ECCPA_LEVEL_LO:  map = 0; rate = 1; phase = 0; break;
+      case ECCPA_LEVEL_NLO: map = 1; rate = 2; phase = 1; break;
+      case ECCPA_LEVEL_NNLO: map = 2; rate = 3; phase = 2; break;
+      default:              map = 3; rate = 3; phase = 2; break;
+    }
+    if (EOBPars->postadiabatic_dynamics_ecc_map_order   >= 0) map   = EOBPars->postadiabatic_dynamics_ecc_map_order;
+    if (EOBPars->postadiabatic_dynamics_ecc_rate_order  >= 0) rate  = EOBPars->postadiabatic_dynamics_ecc_rate_order;
+    if (EOBPars->postadiabatic_dynamics_ecc_phase_order >= 0) phase = EOBPars->postadiabatic_dynamics_ecc_phase_order;
+    if (map > 3) map = 3;   /* 3 = third-order map, NNLOp's */
+    if (rate < 1) rate = 1;
+    if (rate > 3) rate = 3;
+    if (phase > 2) phase = 2;
+    if (map < 1 && (rate >= 2 || phase >= 1)) map = 1;
+    if (rate < 2 && (phase >= 2 || map >= 2)) rate = 2;
+    /* warn if an override was changed */
+    if (VERBOSE) {
+      if (EOBPars->postadiabatic_dynamics_ecc_map_order   >= 0 && map   != EOBPars->postadiabatic_dynamics_ecc_map_order)
+        printf("postadiabatic_dynamics_ecc_map_order %d is not consistent with the rest, using %d\n",
+               EOBPars->postadiabatic_dynamics_ecc_map_order, map);
+      if (EOBPars->postadiabatic_dynamics_ecc_rate_order  >= 0 && rate  != EOBPars->postadiabatic_dynamics_ecc_rate_order)
+        printf("postadiabatic_dynamics_ecc_rate_order %d is not consistent with the rest, using %d\n",
+               EOBPars->postadiabatic_dynamics_ecc_rate_order, rate);
+      if (EOBPars->postadiabatic_dynamics_ecc_phase_order >= 0 && phase != EOBPars->postadiabatic_dynamics_ecc_phase_order)
+        printf("postadiabatic_dynamics_ecc_phase_order %d is not consistent with the rest, using %d\n",
+               EOBPars->postadiabatic_dynamics_ecc_phase_order, phase);
+    }
+    EOBPars->postadiabatic_dynamics_ecc_map   = map;
+    EOBPars->postadiabatic_dynamics_ecc_rate  = rate;
+    EOBPars->postadiabatic_dynamics_ecc_phase = phase;
+    int gen = map;
+    if (rate >= 2 && gen < 2) gen = 2;
+    if (phase > gen) gen = phase;
+    EOBPars->postadiabatic_dynamics_ecc_osc_order = gen;
+  }
+
+  /* Set eccentric PA fun pointer */
+  p_eob_ecc_pa_advance = &eob_eccpa_advance;
+
+  /* Negative means stage picks: it is one value that used to depend on which
+     construction ran, so it is resolved here rather than carried unresolved into it. */
+  if (!DEBUG && (EOBPars->postadiabatic_dynamics_ecc_export || EOBPars->postadiabatic_dynamics_ecc_export_nodes
+                 || EOBPars->postadiabatic_dynamics_ecc_export_window > 0.0))
+    fprintf(stderr, "WARNING: the postadiabatic_dynamics_ecc_export options work only in a DEBUG build, ignored\n");
+  if (EOBPars->postadiabatic_dynamics_ecc_adiab < 0.0)
+    EOBPars->postadiabatic_dynamics_ecc_adiab = ECCPA_ADIAB;
+
   /* Set initial conditions fun pointer */
   if (r_hyp != 0.) {
     // hyp case
@@ -1666,6 +1741,8 @@ int eob_set_params(int default_choice, int firstcall)
     // eccentric case
     if(EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_ic = &eob_dyn_ic_ecc_ma_split;   // ICs with anomaly (adiabatic)
+    else if(EOBPars->ecc_ics == ECCICS_PAEQ)
+      eob_dyn_ic = &eob_dyn_ic_ecc_pa_eq;      // ICs with anomaly (post-adiabatic, equinoctial maps)
     else if(EOBPars->ecc_ics == ECCICS_1PA)
       eob_dyn_ic = &eob_dyn_ic_ecc_PA;   // 1PA ICs
     else if (EOBPars->ecc_ics == ECCICS_0PA){
@@ -2393,6 +2470,54 @@ if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
   if (STREQUAL(key,"postadiabatic_dynamics_rmin")) {
     eobp->postadiabatic_dynamics_rmin = par_get_d(val);
   }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc")) {
+    eobp->postadiabatic_dynamics_ecc = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_level")) {
+    val = string_trim(val);
+    for (eobp->postadiabatic_dynamics_ecc_level=0; eobp->postadiabatic_dynamics_ecc_level<=ECCPA_LEVEL_NOPT; eobp->postadiabatic_dynamics_ecc_level++) {
+      if (eobp->postadiabatic_dynamics_ecc_level == ECCPA_LEVEL_NOPT) {
+	eobp->postadiabatic_dynamics_ecc_level = ECCPA_LEVEL_NNLOP;
+	if (VERBOSE) printf("postadiabatic_dynamics_ecc_level '%s' undefined, set to '%s'\n",
+			    val, eccpa_level_opt[eobp->postadiabatic_dynamics_ecc_level]);
+	break;
+      }
+      if (STREQUAL(val, eccpa_level_opt[eobp->postadiabatic_dynamics_ecc_level])) break;
+    }
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_map_order")) {
+    eobp->postadiabatic_dynamics_ecc_map_order = par_get_i(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_rate_order")) {
+    eobp->postadiabatic_dynamics_ecc_rate_order = par_get_i(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_phase_order")) {
+    eobp->postadiabatic_dynamics_ecc_phase_order = par_get_i(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_nper")) {
+    eobp->postadiabatic_dynamics_ecc_nper = par_get_i(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_interp_freqs")) {
+    eobp->postadiabatic_dynamics_ecc_interp_freqs = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_stop")) {
+    eobp->postadiabatic_dynamics_ecc_stop = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_export")) {
+    eobp->postadiabatic_dynamics_ecc_export = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_export_nodes")) {
+    eobp->postadiabatic_dynamics_ecc_export_nodes = par_get_i(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_export_window")) {
+    eobp->postadiabatic_dynamics_ecc_export_window = par_get_d(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_adiab")) {
+    eobp->postadiabatic_dynamics_ecc_adiab = par_get_d(val);
+  }
+  if (STREQUAL(key,"postadiabatic_dynamics_ecc_rmin")) {
+    eobp->postadiabatic_dynamics_ecc_rmin = par_get_d(val);
+  }
   if (STREQUAL(key,"postadiabatic_dynamics_stop")) {
     eobp->postadiabatic_dynamics_stop = YESNO2INT(string_trim(val));
   }
@@ -2915,6 +3040,19 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_N", eobp->postadiabatic_dynamics_N);
   fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_size", eobp->postadiabatic_dynamics_size);
   fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
+  fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_ecc", INT2YESNO(eobp->postadiabatic_dynamics_ecc));
+  fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_ecc_level", eccpa_level_opt[eobp->postadiabatic_dynamics_ecc_level]);
+  fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_ecc_map_order", eobp->postadiabatic_dynamics_ecc_map_order);
+  fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_ecc_rate_order", eobp->postadiabatic_dynamics_ecc_rate_order);
+  fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_ecc_phase_order", eobp->postadiabatic_dynamics_ecc_phase_order);
+  fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_ecc_nper", eobp->postadiabatic_dynamics_ecc_nper);
+  fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_ecc_interp_freqs", INT2YESNO(eobp->postadiabatic_dynamics_ecc_interp_freqs));
+  fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_ecc_stop", INT2YESNO(eobp->postadiabatic_dynamics_ecc_stop));
+  fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_ecc_export", INT2YESNO(eobp->postadiabatic_dynamics_ecc_export));
+  fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_ecc_export_nodes", eobp->postadiabatic_dynamics_ecc_export_nodes);
+  fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_ecc_export_window", eobp->postadiabatic_dynamics_ecc_export_window);
+  fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_ecc_adiab", eobp->postadiabatic_dynamics_ecc_adiab);
+  fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_ecc_rmin", eobp->postadiabatic_dynamics_ecc_rmin);
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_stop", INT2YESNO(eobp->postadiabatic_dynamics_stop));
 
   /* User-input merger quantities */

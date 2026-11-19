@@ -51,7 +51,8 @@ void prof_init(void)
 {
   static const char *names[PROF_NTIMERS] = {
     "ODE_loop", "RHS", "flux", "Fphi_ecc",
-    "metric+rc", "wav_store", "NQC", "interp_spline", "compute_hpc"
+    "metric+rc", "wav_store", "NQC", "interp_spline", "compute_hpc",
+    "eccPA_secular", "eccPA_recon", "eccPA_wav", "eccPA_orbit"
   };
   for (int i = 0; i < PROF_NTIMERS; i++) {
     prof_timers[i].t_start = 0.0;
