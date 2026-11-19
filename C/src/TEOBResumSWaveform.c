@@ -9559,6 +9559,8 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
   const double f0 = tmpf0;
   const double df = tmpdf;
   int nmin[KMAX]; // Fmin > f0 index
+  /* Values at the first TD point, for the low-frequency extrapolation */
+  double Fmin[KMAX], pmin[KMAX], bmin[KMAX], cmin[KMAX];
 
   const double Pio4 = Pi/4.;
   int *activemode = TDlm->kmask;
@@ -9586,22 +9588,22 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1] && n<size) n++;
     /* Prolong the waveform, if necessary  
        - Fill the points between Fmax and half_srate_interp such that 
-         FDlm->F[k][n] > half_srate_interp (strictly larger)
-	 for later interp;
+         FDlm->F[k][n] > half_srate_interp (strictly larger) for later interp;
        - The amplitude behaves as ~ f^{-10/3}
-       - For the phase, we express it as phi(f) = (a + b*f);
+       - For the phase, we express it as phi(f) = (a + b*f + c*f^2);
     */
     if (FDlm->F[k][n] < half_srate_interp) { 
       const int n1 = n-1;
-      double Fn1 = FDlm->F[k][n-1];
-      double An1 = FDlm->ampli[k][n-1];
-      double pn1 =  FDlm->phase[k][n-1];
-      double b = TwoPi * TDlm->time[n-1];
-      double dfk = (half_srate_interp - FDlm->F[k][n1])/(size-n-1); // one point more
+      double Fn1 = FDlm->F[k][n1];
+      double An1 = FDlm->ampli[k][n1];
+      double pn1 =  FDlm->phase[k][n1];
+      double b = TwoPi * TDlm->time[n1];
+      double c = TwoPi / FDlm->Fdot[k][n1] / 2.;
+      double dfk = (half_srate_interp - FDlm->F[k][n1])/(size-n-1); // one point more, so that F[size-1] > half_srate_interp
       for (int i=n; i < size; i++){
         FDlm->F[k][i] = Fn1 + (i-n1)*dfk;
         FDlm->ampli[k][i] = An1/pow((FDlm->F[k][i]),10./3)*pow(Fn1,10./3);
-        FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1));
+        FDlm->phase[k][i] = (pn1 + b*(FDlm->F[k][i] - Fn1) + c*(FDlm->F[k][i] - Fn1)*(FDlm->F[k][i] - Fn1));
       }
     } else{
       /*update values with index >= n to assure F is formally increasing (for interpolation).
@@ -9616,6 +9618,13 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
         FDlm->ampli[k][i] = FDlm->ampli[k][n1];
       }
     }
+
+    /*Store the coefficients of the phase expansion around Fmin,
+      for low end xtrp */
+    Fmin[k] = FDlm->F[k][0];
+    pmin[k] = FDlm->phase[k][0];
+    bmin[k] = TwoPi * TDlm->time[0];
+    cmin[k] = Pi / FDlm->Fdot[k][0];
   }
 
   
@@ -9630,12 +9639,17 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     if (!activemode[k]) continue;
     if (nmin[k]) {
       /* f0 < Fmin , the interpolation returned 0s at those points
-	 -> fill points with linear extrapolation starting from innermost */
+         -> fill points with linear (amp) or quadratic (phase) extrapolation
+         starting from innermost */
+      const int fsize = FDlm->size; // size after interpolation
+      const double *freq = FDlm->freq;
       int i0 = 0;
-      while(FDlm->ampli[k][i0]==0. && i0<size) i0++;
+      while( i0<fsize && FDlm->ampli[k][i0]==0.) i0++;
+      const double dAdf = (FDlm->ampli[k][i0+1] - FDlm->ampli[k][i0])/(freq[i0+1] - freq[i0]);
       for (int i = i0-1; i>=0; i--){
-        FDlm->ampli[k][i] = 2*FDlm->ampli[k][i+1] - FDlm->ampli[k][i+2]; //TODO: check sign!
-        FDlm->phase[k][i] = 2*FDlm->phase[k][i+1] - FDlm->phase[k][i+2]; 
+        const double dF = freq[i] - Fmin[k];
+        FDlm->ampli[k][i] = FDlm->ampli[k][i0] + dAdf*(freq[i] - freq[i0]);
+        FDlm->phase[k][i] = pmin[k] + bmin[k]*dF + cmin[k]*dF*dF;
       }
     }
   }
