@@ -262,7 +262,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   /* EOB Settings */
 
   eobp->ecc_freq=ECCFREQ_ORBAVGD; // "PERIASTRON", "AVERAGE", "APASTRON", "ORBAVGD"
-  eobp->ecc_ics =ECCICS_PAEQ; // "0PA", "1PA", "MA"
+  eobp->ecc_ics =ECCICS_PAEQ; // "0PA", "1PA", "MA", "PAeq"
   
   eobp->postadiabatic_dynamics=1;
   eobp->postadiabatic_dynamics_N=8;      // post-adiabatic order
