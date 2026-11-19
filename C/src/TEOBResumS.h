@@ -407,11 +407,9 @@ static const char* ringdown_eulerangles_opt[] = {"constant", "QNMs", "undefined"
 enum{
   SPIN_FLX_PN,              /**< PN Omegadot */
   SPIN_FLX_EOB,             /**< EOB Omegadot */
-  SPIN_FLX_EOB_HYBRIDv1,    /**< EOB+PN Omegadot, hybrid, v1 */
-  SPIN_FLX_EOB_HYBRIDv2,    /**< EOB+PN Omegadot, hybrid, v2 */
   SPIN_FLX_NOPT,            /**< number of Omegadot options */
 };
-static const char* spin_flx_opt[] = {"PN", "EOB", "HYBv1","HYBv2","undefined"};
+static const char* spin_flx_opt[] = {"PN", "EOB", "undefined"};
 
 /** Error handler for root finders */
 enum{ 
@@ -583,6 +581,9 @@ typedef struct tagDynamicsSpin
   double time_backward;                                        /**< time  which divides backward from forward spin evolution */
   gsl_spline *spline[EOB_EVOLVE_SPIN_NVARS];                   /**< splines for spin dynamics */
   gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];              /**< accelerators for spin dynamics */
+  gsl_spline *omg_eob;                                         /**< M Omega(t) of the orbit, for spin_flx = EOB */
+  gsl_interp_accel *omg_eob_acc;                               /**< accelerator of omg_eob */
+  int alpha_pole_sign;                                         /**< the spin ODE integrates gamma - alpha_pole_sign*alpha */
 } DynamicsSpin;
 
 /** Dynamics data type */
@@ -739,7 +740,6 @@ typedef struct tagEOBParameters
   int spin_dyn_size;                                    /**< Size of spin dynamics arrays */
   double spin_odes_omg_stop, spin_odes_t_stop;          /**< Stopping frequency and time for spin dynamics */
   double spin_odes_dt;                                  /**< Timestep for spin dynamics */
-  int spin_interp_domain;                               /**< Domain for spin dynamics interpolation (time/frequency) */
   int project_spins;                                    /**< Flag to project spins during EOB dynamics (yes/no) */
   int ringdown_eulerangles;                             /**< Flag to choose which beyond-merger euler angles extension to employ */
   int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */
@@ -853,7 +853,6 @@ void vect_cross(double ax, double ay, double az, double bx, double by, double bz
 void vect_cross3(double *a, double *b, double *c);
 void vect_rotate(int axis, double angle, double *vx_p, double *vy_p, double *vz_p);
 void vect_rotate3(int axis, double angle, double *v);
-double interp_spline_pt(double *t, double *y, int n, double ti);
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi);
@@ -874,7 +873,6 @@ double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
 void unwrap(double *p, const int size);
 void unwrap_HM(double *p, const int size);
-void unwrap_euler(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void rmap (double *re, double *im, double *p, double *a, const int mode);
 void rmap_twist (double *re, double *im, double *p, double *a, const int mode);
@@ -926,7 +924,7 @@ void DynamicsSpin_free (DynamicsSpin *dyn);
 void DynamicsSpin_output (DynamicsSpin *dyn);
 void DynamicsSpin_join (DynamicsSpin *dyn, DynamicsSpin *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
-double compute_cosJL(DynamicsSpin *dyn, double tpeak);
+double compute_cosJL(DynamicsSpin *dyn, double tpeak, double omg_peak);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
 double time_units_factor(double M);
@@ -1072,7 +1070,7 @@ int eob_dyn_fLSO_s(const gsl_vector *x, void * params, gsl_vector *f);
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
 int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO);
 double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz);
-double alpha_initial_condition(EOBParameters *eobp); 
+double alpha_initial_condition(DynamicsSpin *dyn);
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz);
 extern int (*p_eob_spin_dyn_rhs)(); /* defined in TEOBResumSPars.c */
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d);
@@ -1081,7 +1079,6 @@ int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm);
 int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omega_stop);
 int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0);
-void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double time, double *alpha_p, double *beta_p, double *gamma_p, int continue_integration);
 void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 			       double *SApara, double *SBpara, double *Spara,
 			       double *SAperp, double *SBperp, double *Sperp,

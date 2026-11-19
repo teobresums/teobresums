@@ -1805,38 +1805,20 @@ double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz)
 /**
  * Function: alpha_initial_condition
  * ---------------------------------
- *   Compute the alpha initial condition by
- *   evaluating the lim t-->0 of alpha(t) at NLO.
- *   See Eq. A5 of https://arxiv.org/2111.03675
+ *   Compute the alpha initial condition.
  *
- *   @param[in]  eobp         : eob parameters
- * 
- *   @return    alpha0        : initial alpha   
+ *   @param[in]  dyn          : spin dynamics, with the initial data in dyn->y
+ *
+ *   @return    alpha0        : initial alpha
 */
-double alpha_initial_condition(EOBParameters *eobp)
+double alpha_initial_condition(DynamicsSpin *dyn)
 {
-  double q 	   = eobp->q;
-  double nu    = eobp->nu;
-  double f0 	 = eobp->initial_frequency;
-  double chi1x = eobp->chi1x;
-  double chi1y = eobp->chi1y;
-  double chi1z = eobp->chi1z;
-  double chi2x = eobp->chi2x;
-  double chi2y = eobp->chi2y;
-  double chi2z = eobp->chi2z;
-
-  /*Convert f0 to v used here */
-  double v = cbrt(Pi*f0);
-  if (!(eobp->use_geometric_units)) v = cbrt(Pi*f0/time_units_factor(eobp->M));
-
-  /* precompute some quantities and coefficients*/
-  double alpha_x_NLO, alpha_y_NLO;
-
-  alpha_x_NLO =  -3.*q*(chi1y + chi2y*q)*(chi1z + chi2z*q)*v + q*(chi1y*(4. + 3.*q) + chi2y*q*(3. + 4.*q));
-  alpha_y_NLO =  +3.*q*(chi1x + chi2x*q)*(chi1z + chi2z*q)*v - q*(chi1x*(4. + 3.*q) + chi2x*q*(3. + 4.*q));
-
-  return atan2(alpha_y_NLO, alpha_x_NLO);
-
+  // Torque from rhs following arXiv:2111.03675
+  double dy0[EOB_EVOLVE_SPIN_NVARS];
+  p_eob_spin_dyn_rhs(dyn->t, dyn->y, dy0, dyn);
+  return eob_spin_dyn_alpha(dy0[EOB_EVOLVE_SPIN_Lx],
+                            dy0[EOB_EVOLVE_SPIN_Ly],
+                            dy0[EOB_EVOLVE_SPIN_Lz]);
 }
 
 /**
@@ -1876,8 +1858,7 @@ double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz)
 */
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
 {
-  (void)(t); /* avoid unused parameter warning */
-  Dynamics *dyn = d;  
+  DynamicsSpin *sdyn = d;
 
   const double q   = EOBPars->q; // Assume q = MA/MB >=1
   const double nu  = EOBPars->nu; 
@@ -1913,7 +1894,14 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   Lh[Iy] = y[EOB_EVOLVE_SPIN_Ly];
   Lh[Iz] = y[EOB_EVOLVE_SPIN_Lz];
 
-  const double omg = y[EOB_EVOLVE_SPIN_Momg]; // M omega
+  // MOmega and dMOmega/dt from orbit spline
+  double omg = y[EOB_EVOLVE_SPIN_Momg]; // M omega
+  double domg_eob = 0.;
+  if (EOBPars->spin_flx == SPIN_FLX_EOB && sdyn->omg_eob != NULL) {
+    omg      = gsl_spline_eval(sdyn->omg_eob, t, sdyn->omg_eob_acc);
+    domg_eob = gsl_spline_eval_deriv(sdyn->omg_eob, t, sdyn->omg_eob_acc);
+  }
+
   const double lnomg = log(omg);
   const double v  = pow(omg, oothree); // division by M !
   const double v2 = v*v;
@@ -1924,7 +1912,6 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   const double v7 = v6*v;
   const double v8 = v7*v;
   const double v9 = v8*v;
-  const double v10= v9*v;
   /* rhs */
 
   /* spins and Lhat */
@@ -2065,14 +2052,12 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
   dy[EOB_EVOLVE_SPIN_Lz] = LNdotN4LOperp[Iz];
   
   
-  /* dot{gamma} = + dot{alpha} cos{beta}, where cos{beta} = Lh[Iz] */ 
-  const double div = SQ(Lh[Ix]) + SQ(Lh[Iy]);
-  if (div == 0.)
-    /* Lh is along z
-       alpha is undefined, beta = 0 */
-    dy[EOB_EVOLVE_SPIN_gam] = 0.;
-  else
-    dy[EOB_EVOLVE_SPIN_gam] = Lh[Iz] * (Lh[Ix] * dy[EOB_EVOLVE_SPIN_Ly] - Lh[Iy] * dy[EOB_EVOLVE_SPIN_Lx] )/( SQ(Lh[Ix]) + SQ(Lh[Iy]) );
+  // Integrate y = gamma - alpha_pole_sign*alpha, avoids spikes near alpha poles
+  // alphadot = N/(1 - Lz^2), N = (Lh x dLh/dt)_z, and gammadot = alphadot*Lz, so with s = alpha_pole_sign = +-1
+  // ydot = alphadot*(Lz - s) = -s N/(1 + s Lz). The 1/(1 - Lz^2) pole cancels and 1 + s Lz >= 1 for s = sign(Lz)
+  const int pole_sign = sdyn->alpha_pole_sign;
+  const double LxdL_z = Lh[Ix]*dy[EOB_EVOLVE_SPIN_Ly] - Lh[Iy]*dy[EOB_EVOLVE_SPIN_Lx];
+  dy[EOB_EVOLVE_SPIN_gam] = -pole_sign*LxdL_z/(1. + pole_sign*Lh[Iz]);
 
   /* dot omg (Rad.React.) */
   if(EOBPars->spin_flx == SPIN_FLX_PN) {
@@ -2191,325 +2176,13 @@ int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d)
     }
     dy[EOB_EVOLVE_SPIN_Momg] *= a[0]*pow(omg, eleven_o_three); // LO
 
-  } else if (EOBPars->spin_flx == SPIN_FLX_EOB_HYBRIDv1){
-
-    /*hybrid v1: PN expressions for j(v), u(j) + EOB flux */
-
-    const double X1    = EOBPars->X1;
-    const double X2    = EOBPars->X2;
-    const double X12   = X1-X2;
-
-    /* spin variables */
-    double SAdotLh, SBdotLh;
-    vect_dot3(SA, Lh, &SAdotLh);
-    vect_dot3(SB, Lh, &SBdotLh);    
-    const double c1    = SAdotLh/SQ(X1);
-    const double c2    = SBdotLh/SQ(X2);
-    const double a1    = X1*c1;
-    const double a2    = X2*c2;
-    const double a0    = a1+a2;
-    const double aK2   = a0*a0;
-    const double aAB   = a1-a2;
-    const double aCq   = EOBPars->C_Q1*a1*a1 + 2*a1*a2+EOBPars->C_Q2*a2*a2; 
-    const double Sl    = X1*a1 + X2*a2;
-    const double Sigmal= X2*c2 - X1*c1;
-    const double S     = SAdotLh + SBdotLh;
-    const double Sstar = X2*a1+X1*a2;
-
-    /* j(v), app G of https://arxiv.org/pdf/2004.06503.pdf */
-    double jhat_orb   = 1.+v2*(nu/6.+1.5)
-                       + v4*(nu2/24.-2.375*nu+3.375)
-                       + v6*(0.005401234567901234*nu3+1.2916666666666667*nu2 + (1.7083333333333333*Pi2-47.84027777777778)*nu + 8.4375)
-                       + v8*(-55./31104.*nu4 -215./1728.*nu3 + (356035./3456. - 2255.*Pi2/576.)*nu2 + nu*(-64./3.*log(16*v2) -6455./1536.*Pi2 - 128./3.*EulerGamma + 98869./5760.) + 2835./128.);
-    double jhat_so    = v3*(-35./6.*Sl - 2.5*X12*Sigmal)
-                       + v5*((-77./8.+427./72.*nu)*Sl+X12*(-21./8.+35./12.*nu)*Sigmal)
-                       + v7*((-405./16. + 1101./16*nu - 29./16.*nu2)*Sl + X12*( -81./6. + 117./4.*nu - 15./16.*nu2)*Sigmal);
-    double jhat_ss    = v4*((0.5+X12*0.5-nu)*c1*c1+2*nu*c1*c2+(0.5+X12*0.5-nu)*c2*c2);
-    double jhat       = jhat_orb + jhat_so + jhat_ss; 
-
-    /* derivative of jhat*/
-    double djhatdx_orb= (nu/6.+1.5)
-                       + 2.*v2*(nu2/24.-2.375*nu+3.375)
-                       + 3.*v4*(0.005401234567901234*nu3+1.2916666666666667*nu2 + (1.7083333333333333*Pi2-47.84027777777778)*nu + 8.4375)
-                       + 4.*v6*(-55./31104.*nu4 -215./1728.*nu3 + (356035./3456. - 2255.*Pi2/576.)*nu2 + nu*(-64./3.*log(16*v2) -6455./1536.*Pi2 - 128./3.*EulerGamma + 98869./5760.-16./3.) + 2835./128.);
-    double djhatdx_so = 1.5*v*(-36./5.*Sl - 2.5*X12*Sigmal)
-                       + 2.5*v3*((-77./8.+427./72.*nu)*Sl+X12*(-21./8.+35./12.*nu)*Sigmal)
-                       + 3.5*v5*((-405./16. + 1101./16*nu - 29./16.*nu2)*Sl + X12*( -81./6. + 117./4.*nu - 15./16.*nu2)*Sigmal);
-    double djhatdx_ss = 2*v2*((0.5+X12*0.5-nu)*c1*c1+2*nu*c1*c2+(0.5+X12*0.5-nu)*c2*c2);
-    
-    double djhatdx    = djhatdx_orb+djhatdx_so+djhatdx_ss;
-    double djhatdomg  = 2./3.*djhatdx/v;
-    double djdomg     = -0.33333333333/v4*jhat+djhatdomg/v;
-
-    /* one over j powers*/
-    double ooj       = v/jhat;
-    double ooj2      = ooj*ooj;   double ooj3      = ooj2*ooj;
-    double ooj4      = ooj2*ooj2; double ooj5      = ooj4*ooj;
-    double ooj6      = ooj3*ooj3; double ooj7      = ooj6*ooj;
-    double ooj8      = ooj4*ooj4; double ooj9      = ooj8*ooj;
-    double ooj10     = ooj5*ooj5;
-
-    /* u(j), https://arxiv.org/pdf/1812.07923.pdf 
-        Eq. (12),(17) and (18)
-    */
-    double delta_a2_nlo  = -33./8.*a0*a0+3*aCq-0.125*(1+4*nu)*aAB*aAB+X12*(0.25*a0*aAB+EOBPars->C_Q1*a1*a1-EOBPars->C_Q2*a2*a2);
-    double delta_a2_nnlo = -(4419./224+1263/224.*nu)*a0*a0+(387/28-207/28*nu)*aCq
-                           + (11./32 -127/32*nu+3./8.*nu2)*aAB*aAB
-                           + X12*(-(29/112+21/8*nu)*a0*aAB + 163/28*(EOBPars->C_Q1*a1*a1-EOBPars->C_Q2*a2*a2));
-
-    double u_orb    = ooj2 + 3.*ooj4 + ooj6*(18. - 3*nu) + ooj8*(135.+(-311./3+41./16.*Pi2)*nu) 
-                    + ooj10*(1134. - (163063./120.+64.*EulerGamma - 31921./1024.*Pi2+128.*Log2+64*log(ooj))*nu 
-                    + (1321./12. - 205./64.*Pi2)*nu2);
-    double u_so     = - 3./4.*(7.*a0+X12*aAB)*ooj5+
-                    + ((-465./8+11./4*nu)*a0-(87./8+nu/4.)*X12*aAB)*ooj7
-                    + ((-1269./2.+1273./8.*nu*25./32.*nu2)*a0 + (-531./4.+103./8.*nu+5./32*nu2)*X12*aAB)*ooj9;
-    double u_ss     = 2*aCq*ooj6+(441./8*a0*a0+22.*aCq+(9./8-9./2*nu)*aAB*aAB+63./4*X12*a0*aAB+5./2*delta_a2_nlo)*ooj8
-                    + ((9009./8.-1155./16*nu)*a0*a0+(234.-45./2.*nu)*aCq+(261./8.-2073./16.*nu-15./4.*nu2)*aAB*aAB
-                    + (1557./4.-15./4.*nu)*X12*a0*aAB+29*delta_a2_nlo+3*delta_a2_nnlo)*ooj10;
-
-    const double u  = u_orb+u_so+u_ss;
-    const double r  = 1./u;
-
-    /* Compute Metric */
-    double A, B, dA, d2A, dB, pl_hold;
-    eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
-  
-    /* Compute centrifugal radius */
-    double rc, drc_dr, d2rc_dr;
-    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr);
-    const double uc     = 1./rc;
-    const double uc2    = uc*uc;
-    const double uc3    = uc2*uc;
-
-    /* Compute Hamiltonian */
-    double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi;
-    eob_ham_s(nu, r, rc, drc_dr, d2rc_dr, 1./ooj, 0., S, Sstar, c1, c2, X1, X2, aK2, EOBPars->cN3LO, A, dA, d2A, 0., 0., 0., 0., 0.,
-	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, NULL);
-
-    /* EOB Flux */
-    //double sqrtW = sqrt(A*(1.+jhat*jhat*SQ(u)));
-    double psi   = 2.*(1.0 + 2.0*nu*(Heff- 1.0))/(SQ(r)*dA);
-    double r_omg = 1./v2;//r*pow(psi, 1./3);
-    double v_phi = r_omg*omg;
-    //double flx   = eob_flx_Flux_s(v_phi*v_phi, omg, r_omg, nu*H, Heff, jhat, r, 0, 0);
-    double flx   = eob_flx_Flux_s(v2, omg, r_omg, nu*H, Heff, jhat, r, 0, 0, dyn);
-
-    if (VERBOSE)
-      printf("F=%.10f, djdomg=%.10f, omg=%.10f\n",flx, djdomg, omg);
-    
-    if(dy[EOB_EVOLVE_SPIN_Momg]<0.)
-       dyn->spins->omg_stop = 1e-10;
-
-    dy[EOB_EVOLVE_SPIN_Momg] = flx/djdomg; //flx is dj/dt. The energy flux is omg*flx (modulo nu terms)
-
-    if (DEBUG){
-      /* print to file omega, 3.5PN nonspinning flux divided by newtonian prefactor and EOB flux */
-      double en_flx_pn_LO = 32./5.*nu2*v10;
-      double hat_en_flx   = 1. + (-1247./336. - 35./12.*nu)*v2 + 4*Pi*v3
-                              + (-44711./9072. + 9271./504*nu+65./18.*nu2)*v4 + (-8191./672.-583./24*nu)*Pi*v5
-                              + (6643739519./69854400. + 16./3.*Pi2 - 1712/105*EulerGamma - 856./105.*log(16*v2) + (-134543./7776. + 41./48.*Pi2)*nu - 94403./3024.*nu2 - 775./3024*nu3)*v6
-                              + (-16285./504. + 214745./1728.*nu + 193385./3024.*nu2)*Pi*v7;
-      double newt         = -32./5.*nu*pow(omg, 7./3.); 
-      double en_flx       = en_flx_pn_LO*hat_en_flx;
-      FILE *f;
-      f = fopen("fluxes.txt", "a");
-      fprintf(f, "%.10f %.10f %.10f\n", omg, en_flx/(nu*omg*newt), flx/newt); 
-      fclose(f);
-    }
-  
-  } else if (EOBPars->spin_flx == SPIN_FLX_EOB_HYBRIDv2){
-
-    /* hybrid v2: use eob_dyn_r0_eob for r(omega), use j_circ for j(r) and EOB flux*/
-
-    const double X1    = EOBPars->X1;
-    const double X2    = EOBPars->X2;
-    const double X12   = X1-X2;
-
-    /* spin variables */
-    double SAdotLh, SBdotLh;
-    vect_dot3(SA, Lh, &SAdotLh);
-    vect_dot3(SB, Lh, &SBdotLh);    
-    const double c1    = SAdotLh/SQ(X1);
-    const double c2    = SBdotLh/SQ(X2);
-    const double a1    = X1*c1;
-    const double a2    = X2*c2;
-    const double a0    = a1+a2;
-    const double aK2   = a0*a0;
-    const double aAB   = a1-a2;
-    const double aCq   = EOBPars->C_Q1*a1*a1 + 2*a1*a2+EOBPars->C_Q2*a2*a2; 
-    const double Sl    = X1*a1 + X2*a2;
-    const double Sigmal= X2*c2 - X1*c1;
-    const double S     = SAdotLh + SBdotLh;
-    const double Sstar = X2*a1+X1*a2;
-
-    /*Compute r(omega) numerically by inverting hamilton Eq.*/
-    double r = 1./v2;//eob_dyn_r0_eob(omg/Pi, NULL);
-    double u = 1./r;
-    double u2= u*u;
-    double u3= u2*u;
-
-    /* Compute j(u) on circular orbits */
-    double ggm[26]; 
-    double A, B, dA, d2A, dB, pl_hold, rc, drc_dr, d2rc_dr;
-    eob_metric_s(r, 0., NULL, &A, &B, &dA, &d2A, &dB, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold);
-    eob_dyn_s_get_rc(r, nu, a1, a2, aK2, EOBPars->C_Q1, EOBPars->C_Q2, EOBPars->C_Oct1, EOBPars->C_Oct2, EOBPars->C_Hex1, EOBPars->C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr);
-    eob_dyn_s_GS(r, rc, drc_dr, d2rc_dr, aK2, 0.0, 0.0, nu, c1, c2, X1, X2, EOBPars->cN3LO, ggm);
-
-    double GS     = ggm[2];
-    double GSs    = ggm[3];  
-    double dGS_dr = ggm[6];
-    double dGSs_dr= ggm[7];
-    double G     = GS*S + GSs*Sstar;    // tildeG = GS*S+GSs*Ss
-    double dG_dr = dGS_dr*S + dGSs_dr*Sstar;
-
-    double uc       = 1./rc;
-    double uc2      = uc*uc;
-    double uc3      = uc2*uc;
-    double uc4      = uc3*uc;
-    double dAuc2_dr = uc2*(dA-2*A*uc*drc_dr);
-    
-    // Quadratic equation a*x^2+b*x+c=0 
-    double a_coeff = SQ(dAuc2_dr)  - 4*A*uc2*SQ(dG_dr);
-    double b_coeff = 2*dA*dAuc2_dr - 4*A*SQ(dG_dr);
-    double c_coeff = SQ(dA);
-      
-    double Delta = SQ(b_coeff) - 4*a_coeff*c_coeff;
-      
-    if (S==0 && Sstar==0)
-  	  Delta=0;             // dG_dr=0 -> Set Delta=0 to avoid num. errors          
-      
-    double sol_p   = (-b_coeff + sqrt(Delta))/(2*a_coeff); 
-    double sol_m   = (-b_coeff - sqrt(Delta))/(2*a_coeff);
-    
-    double j02=0;
-    if (dG_dr > 0)
-	    j02 = sol_p;
-    else
-	    j02 = sol_m;
-    
-    double j = sqrt(j02);
-
-    //Compute hamiltonian and derivatives
-    double Heff_orb, Heff, H, dHeff_dr, dHeff_dprstar, d2Heff_dprstar20, dHeff_dpphi;
-    eob_ham_s(nu, r, rc, drc_dr, d2rc_dr, j, 0., S, Sstar, c1, c2, X1, X2, aK2, EOBPars->cN3LO, A, dA, d2A, 0., 0., 0., 0., 0.,
-	    &H, &Heff, &Heff_orb, &dHeff_dr, &dHeff_dprstar, &dHeff_dpphi, &d2Heff_dprstar20, NULL);
-
-    /* Compute dj_circ/dr */
-    double c10,c20,c30;
-    double cs10,cs20,cs30,cs40;
-    c10 =  5./16.*nu;
-    c20 =  51./8.*nu + 41./256.*nu2;
-    c30 =  nu*EOBPars->cN3LO;
-
-    cs10 = 3./4.   + nu/2.;
-    cs20 = 27./16. + 29./4.*nu + 3./8.*nu2;
-    cs30 = nu*EOBPars->cN3LO + 135./32.;
-    cs40 = 2835./256.;
-
-    // Auxiliary quantities 
-    double duc_dr    = -uc2*drc_dr;
-    double d2uc_dr   = -2*uc*duc_dr*drc_dr - uc2*d2rc_dr;
-    double d2Auc2_dr =  2*duc_dr*dAuc2_dr/uc+uc2*(d2A-2*dA*uc*drc_dr-2*A*duc_dr*drc_dr-2*A*uc*d2rc_dr);
-
-    // LO of Giro-Gravitomagn. coeffs and derivatives
-    double GS0      = 2*u*uc2;
-    double dGS0_dr  = -2*u2*uc2 + 4*u*uc*duc_dr;
-    double d2GS0_dr = 4*(u3*uc2-u2*uc*duc_dr) + 4*(-u2*uc*duc_dr + u*duc_dr*duc_dr+u*uc*d2uc_dr);
-
-    double GSs0     = 1.5*uc3;
-    double dGSs0_dr = 4.5*uc2*duc_dr;
-    double d2GSs0_dr= 9.*uc*duc_dr*duc_dr+4.5*uc2*d2uc_dr;
-
-    //hatGS, hatGSs and derivatives with pr_star=0
-    double hGS      = 1./(1.+c10*uc + c20*uc2 + c30*uc3);  
-    double dhGS_dr  = -hGS*hGS*(c10 + 2.*c20*uc  + 3.*c30*uc2)*duc_dr;
-    double d2hGS_dr = -2*hGS*dhGS_dr*(c10 + 2.*c20*uc  + 3.*c30*uc2)*duc_dr
-                      -hGS*hGS*(2.*c20+6.*c30*uc)*duc_dr*duc_dr +
-                      dhGS_dr/duc_dr*d2uc_dr;
-           dGS_dr   = dGS0_dr*hGS+GS0*dhGS_dr;
-    double d2GS_dr  = d2GS0_dr*hGS+2*dGS0_dr*dhGS_dr+GS0*d2hGS_dr;
-
-    double hGSs     = 1./(1.+ cs10*uc + cs20*uc2  + cs30*uc3 + cs40*uc4); 
-    double dhGSs_dr = -hGSs*hGSs*(cs10 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3)*duc_dr;
-    double d2hGSs_dr= -2.*hGSs*dhGSs_dr*(cs10 + 2.*cs20*uc + 3.*cs30*uc2 + 4.*cs40*uc3)*duc_dr
-                      -hGS*hGS*(2.*cs20+ 6.*cs30*uc + 12.*cs40*uc2)*duc_dr*duc_dr
-                      +dhGSs_dr/duc_dr*d2uc_dr;
-
-           dGSs_dr   = dGSs0_dr*hGSs+GSs0*dhGSs_dr;
-
-    double d2GSs_dr  = d2GSs0_dr*hGSs+2*dGSs0_dr*dhGSs_dr+GSs0*d2hGSs_dr;
-
-    // second derivative of G = GS*S+GSs*Ss
-    double d2G_dr    = d2GS_dr*S + d2GSs_dr*Sstar;    
-    
-    // derivatives of a,b,c coeffs
-    double da_dr = 2.*dAuc2_dr*d2Auc2_dr-4*(dA*uc2+2.*A*uc*duc_dr)*dG_dr*dG_dr - 8.*A*uc2*dG_dr*d2G_dr;
-    double db_dr = 2.*d2A*dAuc2_dr+2*dA*d2Auc2_dr-4.*(dA*dG_dr+2.*A*d2G_dr)*dG_dr;
-    double dc_dr = 2*dA*d2A;
-
-    // dj_dr
-    double djdr_p_num = a_coeff*(-db_dr + 0.5/sqrt(Delta)*(2.*b_coeff*db_dr-4.*(da_dr*c_coeff+a_coeff*dc_dr)) )-da_dr*(-b_coeff + sqrt(Delta));
-    double djdr_p     = djdr_p_num/(4.*SQ(a_coeff)*j);
-
-    double djdr_n_num = a_coeff*(-db_dr - 0.5/sqrt(Delta)*(2.*b_coeff*db_dr-4.*(da_dr*c_coeff+a_coeff*dc_dr)) )-da_dr*(-b_coeff - sqrt(Delta));
-    double djdr_n     = djdr_n_num/(4.*SQ(a_coeff)*j);
-
-    double djdr_zero  = (b_coeff*da_dr - db_dr*a_coeff)/(4.*SQ(a_coeff)*j);
-
-    double djdr=0;
-
-    if (Delta==0)
-      djdr = djdr_zero;
-    else if (dG_dr > 0)
-      djdr    = djdr_p;
-    else 
-      djdr = djdr_n;
-
-    /* Compute domg/dr via Hamilton Eqs. */
-    double E     = nu*H;
-    double ooH   = 1./E; 
-    double dHeff_orb_dr = 0.5/sqrt(Heff_orb)*(dA*(1.+j02*uc2)+A*(2.*j*djdr*uc2+2.*j02*uc*duc_dr));
-    double domg_dr = -1.5*pow(r, -5./2);//-omg/Heff_orb*dHeff_orb_dr + ooH/Heff_orb*(dA*j*uc2+A*djdr*uc2+2*A*j*uc*duc_dr + dHeff_orb_dr*G + Heff_orb*dG_dr);  
-
-    /* Compute flx */
-    const double psic       = fabs((duc_dr + dG_dr*rc*sqrt(A/j02 + A*uc2)/A)/(-0.5*dA));
-    const double r_omg      = pow( ((1./sqrt(rc*rc*rc*psic))+G)/E, -2./3. ); // 1./v2;
-    const double v_phi      = r_omg*omg;
-    const double x          = v_phi*v_phi;
-    double jhat             = j/(r_omg*v_phi);
-    double flx              = eob_flx_Flux_s(v_phi*v_phi, omg, r_omg, nu*H, Heff, jhat, r, 0, 0, dyn);
-    
-    double djdomg= djdr/domg_dr;
-        
-    if (DEBUG)
-      printf("F=%.10f, djdomg=%.10f, omg=%.10f\n",flx, djdomg, omg);
-
-    dy[EOB_EVOLVE_SPIN_Momg] = flx/djdomg; //flx is dj/dt
-
-    if(dy[EOB_EVOLVE_SPIN_Momg]<0.)
-       dyn->spins->omg_stop = 1e-10;
-
-    if (DEBUG){
-      /* print to file omega, 3.5PN nonspinning flux divided by newtonian prefactor and EOB flux */
-      double en_flx_pn_LO = 32./5.*nu2*v10;
-      double hat_en_flx   = 1. + (-1247./336. - 35./12.*nu)*v2 + 4*Pi*v3
-                              + (-44711./9072. + 9271./504*nu+65./18.*nu2)*v4 + (-8191./672.-583./24*nu)*Pi*v5
-                              + (6643739519./69854400. + 16./3.*Pi2 - 1712/105*EulerGamma - 856./105.*log(16*v2) + (-134543./7776. + 41./48.*Pi2)*nu - 94403./3024.*nu2 - 775./3024*nu3)*v6
-                              + (-16285./504. + 214745./1728.*nu + 193385./3024.*nu2)*Pi*v7;
-      double newt         = -32./5.*nu*pow(omg, 7./3.); 
-      double en_flx       = en_flx_pn_LO*hat_en_flx;
-      FILE *f;
-      f = fopen("fluxes.txt", "a");
-      fprintf(f, "%.10f %.10f %.10f\n", omg, en_flx/(nu*omg*newt), flx/newt); 
-      fclose(f);
-    }
-
   } else if (EOBPars->spin_flx == SPIN_FLX_EOB){
       /* use the exact omega22 from the EOB dynamics */
-      /* do not explicitly integrate omgdot here*/
-      dy[EOB_EVOLVE_SPIN_Momg] = 0.;  
+      // dMOmega/dt from orbit spline
+      dy[EOB_EVOLVE_SPIN_Momg] = domg_eob;
   } else {
-    errorexit("specify an omega dot for the spin-precession evolution");
+    PRERR("specify an omega dot for the spin-precession evolution");
+    return GSL_EBADFUNC;
   }
 
   return GSL_SUCCESS;
@@ -2583,14 +2256,7 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   }
 
   /* PN/ Exact-EOB flux auxiliary flags/variables */
-  double omg0eob=-1;
-  double omgeobmax=100;
-  double tshift=0;
-  int omg_jmax =0;
-  int dN       =1;
   int spin_flx = SPIN_FLX_PN; //default it to PN
-  gsl_spline *omg_sp    = NULL; 
-  gsl_interp_accel *acc = NULL;
 
   double *omega_eob = NULL;
   double *time_eob  = NULL;
@@ -2618,14 +2284,22 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     }
 
     /* alloc */
-    omg_sp = gsl_spline_alloc (gsl_interp_cspline, size_eob);
-    acc    = gsl_interp_accel_alloc ();
+    dyn->omg_eob     = gsl_spline_alloc (gsl_interp_cspline, size_eob);
+    dyn->omg_eob_acc = gsl_interp_accel_alloc ();
 
     /* compute spline for Momega_eob, compute Momega(t=0) and find the maximum value */
-    gsl_spline_init (omg_sp, time_eob, omega_eob, size_eob);    
+    gsl_spline_init (dyn->omg_eob, time_eob, omega_eob, size_eob);    
+
+    // Stop the spin ODE at the end of the orbit
+    tstop = MIN(tstop, time_eob[size_eob-1]);
     
     
   }
+
+  dyn->alpha_pole_sign = (dyn->y[EOB_EVOLVE_SPIN_Lz] >= 0.) ? 1 : -1;
+
+  // Convert gamma to y = gamma - alpha_pole_sign*alpha
+  dyn->y[EOB_EVOLVE_SPIN_gam] -= dyn->alpha_pole_sign*dyn->y[EOB_EVOLVE_SPIN_alp];
 
   while (1) {
     if (VERBOSE) printf("iter %09d | t=%.f | momg= %.17f | alpha=%.6f | beta=%.6f | Lhz=%.20f\n", iter, dyn->t, dyn->y[EOB_EVOLVE_SPIN_Momg], dyn->y[EOB_EVOLVE_SPIN_alp], dyn->y[EOB_EVOLVE_SPIN_bet], dyn->y[EOB_EVOLVE_SPIN_Lz]); 
@@ -2637,8 +2311,43 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     /** Check for failures ... */
     if (GSLSTATUS != GSL_SUCCESS) {
       if (DEBUG) PRERRF("GSL Error = %d", GSLSTATUS);
+      gsl_spline_free(dyn->omg_eob);
+      gsl_interp_accel_free(dyn->omg_eob_acc);
+      dyn->omg_eob = NULL;
+      dyn->omg_eob_acc = NULL;
+      gsl_odeiv2_evolve_free(e);
+      gsl_odeiv2_control_free(c);
+      gsl_odeiv2_step_free(s);
+      gsl_odeiv2_driver_free(d);
       return ERROR_ODEINT;
     }
+
+    // Unwrap alpha, so y[alp] follows it without 2pi jumps
+    const double alpha_new = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
+                                                dyn->y[EOB_EVOLVE_SPIN_Ly],
+                                                dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
+    double dalpha = remainder(alpha_new - dyn->y[EOB_EVOLVE_SPIN_alp], TwoPi);
+
+    if (fabs(dalpha) > 0.5*Pi) {
+      // Near a pole alpha swings by ~pi, use the sign of dot{alpha} to unwrap
+      double dy1[EOB_EVOLVE_SPIN_NVARS];
+      p_eob_spin_dyn_rhs(dyn->t, dyn->y, dy1, dyn);
+
+      const double LxdL_z = eps*(dyn->y[EOB_EVOLVE_SPIN_Lx]*dy1[EOB_EVOLVE_SPIN_Ly]
+                               - dyn->y[EOB_EVOLVE_SPIN_Ly]*dy1[EOB_EVOLVE_SPIN_Lx]);
+
+      if (LxdL_z*dalpha < 0.) dalpha += (LxdL_z > 0.) ? TwoPi : -TwoPi;
+    }
+    dyn->y[EOB_EVOLVE_SPIN_alp] += dalpha;
+
+    // Lz changed sign, so switch alpha_pole_sign and keep gamma
+    if (dyn->alpha_pole_sign*dyn->y[EOB_EVOLVE_SPIN_Lz] < 0.) {
+      dyn->y[EOB_EVOLVE_SPIN_gam] += 2*dyn->alpha_pole_sign*dyn->y[EOB_EVOLVE_SPIN_alp];
+      dyn->alpha_pole_sign = -dyn->alpha_pole_sign;
+      // Reset the stepper after changing the r.h.s.
+      gsl_odeiv2_evolve_reset(e);
+    }
+
     if (dyn->y[EOB_EVOLVE_SPIN_Momg] < 0.){
       iter--; //don't count this iteration
       if (VERBOSE) printf("Stop: Momg < 0.\n");
@@ -2649,30 +2358,15 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
       if (VERBOSE) printf("Stop: Forward integration, Momg reached a plateau.\n");
       break;
     }
-    if (EOBPars->spin_flx == SPIN_FLX_EOB && dyn->dt > 0 && (dyn->y[EOB_EVOLVE_SPIN_Momg] > omgeobmax) ){
-      iter--; //don't count this iteration
-      if (VERBOSE) printf("Stop: Forward integration, EOB flux, Momg > max(Momg_eob).\n");
-      break;
-    }
-    /* Update alpha and beta angles */
-    dyn->y[EOB_EVOLVE_SPIN_alp]  = eob_spin_dyn_alpha(dyn->y[EOB_EVOLVE_SPIN_Lx],
-			          dyn->y[EOB_EVOLVE_SPIN_Ly],
-			          dyn->y[EOB_EVOLVE_SPIN_Lz]) + deltap*Pi;
+    /* Update beta angle */
     dyn->y[EOB_EVOLVE_SPIN_bet]  = eps*eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						    dyn->y[EOB_EVOLVE_SPIN_Ly],
 						    dyn->y[EOB_EVOLVE_SPIN_Lz]);
   
 
-    if(EOBPars->spin_flx==SPIN_FLX_EOB && dyn->t-tshift > time_eob[size_eob-1]){
-      iter--;
-      if (VERBOSE) printf("Stop: Forward integration, EOB flux, t_spindyn > max(t_eob).\n");
-      break;
-    }
-
     if(spin_flx==SPIN_FLX_EOB){
       // evaluate spline
-      EOBPars->spin_flx = spin_flx;
-      dyn->y[EOB_EVOLVE_SPIN_Momg] = gsl_spline_eval(omg_sp, dyn->t, acc); 
+      dyn->y[EOB_EVOLVE_SPIN_Momg] = gsl_spline_eval(dyn->omg_eob, dyn->t, dyn->omg_eob_acc); 
     }
 
     /* Update size and push arrays (if needed) */
@@ -2685,10 +2379,15 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
     dyn->time[iter]  = dyn->t; 
     for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
       dyn->data[v][i0+iter]  = dyn->y[v];   
+    dyn->data[EOB_EVOLVE_SPIN_gam][i0+iter] += dyn->alpha_pole_sign*dyn->y[EOB_EVOLVE_SPIN_alp];
 
     /* Stop integration */
     if (breakit)
       break;
+    if (spin_flx == SPIN_FLX_EOB && dyn->dt > 0 && dyn->t >= time_eob[size_eob-1]) {
+      if (VERBOSE) printf("Stop: Forward integration, EOB flux, reached the last sample of the orbit.\n");
+      break;
+    }
     if ((dyn->omg_stop>0.) && (dyn->y[EOB_EVOLVE_SPIN_Momg] > dyn->omg_stop) && dyn->dt > 0.){
       if (VERBOSE) printf("Stop: Forward integration, Momg > Momg_stop.\n");
       break;
@@ -2712,8 +2411,10 @@ int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm
   size = i0 + iter + 1;
   DynamicsSpin_push (&dyn, size);
   
-  gsl_spline_free(omg_sp);
-  gsl_interp_accel_free(acc);
+  gsl_spline_free(dyn->omg_eob);
+  gsl_interp_accel_free(dyn->omg_eob_acc);
+  dyn->omg_eob = NULL;
+  dyn->omg_eob_acc = NULL;
   /* Free ODE system solver */
   gsl_odeiv2_evolve_free (e);
   gsl_odeiv2_control_free (c);
@@ -2746,7 +2447,8 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   // Alloc new dynamics
   DynamicsSpin *spindyn_tmp = NULL;
   DynamicsSpin_alloc(&spindyn_tmp, 10);
-  EOBPars->spin_odes_dt = -EOBPars->spin_odes_dt/10;
+  const double spin_odes_dt = EOBPars->spin_odes_dt;
+  EOBPars->spin_odes_dt = -spin_odes_dt/10;
   spindyn_tmp->omg_stop = 0.99*omg0; // slightly below omg0, to avoid interpolation issues at the edges
   spindyn_tmp->t_stop   = -1e15;
   //eob_spin_dyn(spindyn_tmp, EOBPars->initial_frequency/time_units_factor(EOBPars->M));
@@ -2773,7 +2475,12 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     spindyn_tmp->data[v][0] = spindyn_tmp->y[v];
 
-  eob_spin_dyn_integrate(spindyn_tmp, eobdyn, hlm);
+  const int status = eob_spin_dyn_integrate(spindyn_tmp, eobdyn, hlm);
+  EOBPars->spin_odes_dt = spin_odes_dt;
+  if (status) {
+    DynamicsSpin_free(spindyn_tmp);
+    return status;
+  }
 
   int size = spindyn_tmp->size;
 
@@ -2812,13 +2519,10 @@ int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Wavefo
       dyn->data[v][i] = spindyn_tmp->data[v][i];
     }
   }
-  if (EOBPars->spin_interp_domain == 0){
-    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-      gsl_spline_init (dyn->spline[v], dyn->time, dyn->data[v], dyn->size);  
-  } else {
-    for(int v=0; v < EOB_EVOLVE_SPIN_NVARS; v++)
-      gsl_spline_init (dyn->spline[v], dyn->data[EOB_EVOLVE_SPIN_Momg], dyn->data[v], dyn->size); 
-  }
+  // Splines of the spin dynamics use time with EOB flux and frequency with PN flux
+  double *x = (EOBPars->spin_flx == SPIN_FLX_EOB) ? dyn->time : dyn->data[EOB_EVOLVE_SPIN_Momg];
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    gsl_spline_init (dyn->spline[v], x, dyn->data[v], dyn->size);
   /*free*/ 
   DynamicsSpin_free(spindyn_tmp);
   return OK;
@@ -2868,85 +2572,31 @@ int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double o
   dyn->y[EOB_EVOLVE_SPIN_Lx]  = 0; 
   dyn->y[EOB_EVOLVE_SPIN_Ly]  = 0;
   dyn->y[EOB_EVOLVE_SPIN_Lz]  = 1.;
-  dyn->y[EOB_EVOLVE_SPIN_alp] = alpha_initial_condition(EOBPars); 
+  dyn->y[EOB_EVOLVE_SPIN_Momg] = omg0;
+  dyn->y[EOB_EVOLVE_SPIN_alp] = alpha_initial_condition(dyn);
   dyn->y[EOB_EVOLVE_SPIN_bet] = eob_spin_dyn_beta(dyn->y[EOB_EVOLVE_SPIN_Lx],
 						  dyn->y[EOB_EVOLVE_SPIN_Ly],
 						  dyn->y[EOB_EVOLVE_SPIN_Lz]);
-  dyn->y[EOB_EVOLVE_SPIN_gam] = alpha_initial_condition(EOBPars); 
+  dyn->y[EOB_EVOLVE_SPIN_gam] = dyn->y[EOB_EVOLVE_SPIN_alp];
   
   double time_unit_fact = 1;
   if(!EOBPars->use_geometric_units)
     time_unit_fact = time_units_factor(EOBPars->M);
 
-  dyn->y[EOB_EVOLVE_SPIN_Momg] = omg0;
-  
   for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
     dyn->data[v][0] = dyn->y[v];
   
   /** Integrate ODEs */
-  return eob_spin_dyn_integrate(dyn, eobdyn, hlm);
+  const int status = eob_spin_dyn_integrate(dyn, eobdyn, hlm);
+  if (status) return status;
+
+  // Splines of the spin dynamics use time with EOB flux and frequency with PN flux
+  double *x = (EOBPars->spin_flx == SPIN_FLX_EOB) ? dyn->time : dyn->data[EOB_EVOLVE_SPIN_Momg];
+  for (int v=0; v<EOB_EVOLVE_SPIN_NVARS; v++)
+    gsl_spline_init (dyn->spline[v], x, dyn->data[v], dyn->size);
+
+  return status;
   
-}
-
-/**
-  * Function: eob_spin_dyn_abc_interp
-  * ---------------------------------
-  *   Helper routine to interpolate Euler angles at given time
-  * 
-  *   @param[in]  dyn: the spin-precession dynamics
-  *   @param[in]  eobdyn: the EOB dynamics
-  *   @param[in]  hlm: the waveform
-  *   @param[in]  time: the time at which we want to interpolate
-  *   @param[out] alpha_p: the alpha angle
-  *   @param[out] beta_p: the beta angle
-  *   @param[out] gamma_p: the gamma angle
-  *   @param[in]  continue_integration: flag to continue integration if time > tmax
-  * 
-  *   @return GSL_SUCCESS if all goes well
-*/
-void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double time,
-			     double *alpha_p, double *beta_p, double *gamma_p,
-			     int continue_integration)
-{
-  const int smax = dyn->size-1;
-  double alpha, beta, gamma;
-  int interp = 1;
-  
-  if (time >= dyn->time[smax]) {
-    
-    /* The precessing dynamics is too short ! 
-       We have two options 
-       1. continue the integration to time we need
-       2. return the last angle
-     */
-    if (continue_integration) {      
-
-      dyn->omg_stop = -1; // use the tstop not Momg_stop
-      dyn->t = dyn->time[smax];
-      dyn->t_stop = time + dyn->dt;
-      eob_spin_dyn_integrate(dyn, eobdyn, hlm);      
-
-    } else {
-
-      alpha = dyn->data[EOB_EVOLVE_SPIN_alp][smax];
-      beta = dyn->data[EOB_EVOLVE_SPIN_bet][smax];
-      gamma = dyn->data[EOB_EVOLVE_SPIN_gam][smax];
-
-      interp = 0;// skip interpolation below      
-      if (VERBOSE) errorexit("Spin dynamics too short to interp!\n");
-    }
-  }
-  
-  /* Interp */
-  if (interp) {
-    alpha = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_alp], dyn->size, time);
-    beta  = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_bet], dyn->size, time);
-    gamma = interp_spline_pt(dyn->time, dyn->data[EOB_EVOLVE_SPIN_gam], dyn->size, time);
-  }
-  
-  *alpha_p = alpha;
-  *beta_p = beta;
-  *gamma_p = gamma;
 }
 
 /**
