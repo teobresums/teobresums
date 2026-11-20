@@ -10848,6 +10848,116 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, Waveform_lm *hl0, doubl
 #endif
 }
 
+/* Tail geometry for the SPA -> FFT switch */
+#define SPA_FFT_TAIL_PRE  (50.0)  /* M before the merger cut where the tail window starts */
+#define SPA_MRG_NWIN 20      /* points over which Fdot must stay below Fdot[n] at the merger cut */
+#define SPA_FFT_TAIL_TOL  (1e-3)  /* truncate the tail once |h| falls below TOL*peak */
+#define SPA_FFT_BLEND     (0.12)  /* half-width (in f/f_mrg) of the SPA<->FFT blend band */
+#define SPA_FFT_FALL      (0.15)  /* fraction of the tail cosine-tapered at the far end */
+#define SPA_FFT_FHI       (9.0)   /* DFT the tail only up to SPA_FFT_FHI*f_mrg (|h| negligible above) */
+
+/*
+ * Function: spa_fft_tail
+ * ----------------------
+ *   SPA -> FFT switch for one mode. Above the merger frequency f_mrg the SPA is cut and
+ *   prolonged analytically (amplitude f^-10/3, phase linear in f); there htilde(f) is set instead
+ *   by a discrete Fourier transform of the (tapered) merger-ringdown time-domain tail,
+ *   htilde(f) = sum_j w_j h_j e^{+2 pi i f t_j} dt_j with h_j = A_j e^{-i phase_j}, which
+ *   matches the SPA convention htilde = ampli e^{+i phase}. The transform is evaluated on
+ *   a coarse frequency grid (the tail is short, so htilde is smooth on scale 1/T_tail),
+ *   cubic-splined onto the output grid, and blended into the SPA across a narrow band at
+ *   f_mrg.
+ *
+ *   @param[in]     TDlm  : time-domain multipoles (full IMR)
+ *   @param[in,out] FDlm  : frequency-domain multipoles on the uniform output grid
+ *   @param[in]     k     : mode linear index
+ *   @param[in]     nmrg  : TD index of the merger (SPA Fdot-max cut)
+ *   @param[in]     f_mrg : merger frequency (splice point)
+ */
+static void spa_fft_tail(Waveform_lm *TDlm, WaveformFD_lm *FDlm, int k, int nmrg, double f_mrg)
+{
+  const int size = TDlm->size;
+  const double *t = TDlm->time;
+  if (nmrg < 1 || f_mrg <= 0.) return;
+
+  /* tail window: from ~SPA_FFT_TAIL_PRE before the merger to where |h| has decayed */
+  int i0 = nmrg;
+  while (i0 > 0 && t[nmrg] - t[i0] < SPA_FFT_TAIL_PRE) i0--;
+  /* |ampli| throughout: the stored TD amplitude carries the mode's Newtonian sign,
+     which is negative for some modes (e.g. (4,4)); the sign belongs in the phase. */
+  double peak = 0.;
+  for (int i = i0; i < size; i++) peak = MAX(peak, fabs(TDlm->ampli[k][i]));
+  if (peak <= 0.) return;
+  int iN = size - 1;
+  while (iN > nmrg && fabs(TDlm->ampli[k][iN]) < SPA_FFT_TAIL_TOL*peak) iN--;
+  const int ntail = iN - i0 + 1;
+  if (ntail < 8) return;
+
+  /* tapered complex tail and trapezoidal dt weights (grid may be non-uniform) */
+  double *hr = malloc(ntail*sizeof(double)), *hi = malloc(ntail*sizeof(double));
+  double *tt = malloc(ntail*sizeof(double)), *wt = malloc(ntail*sizeof(double));
+  const int nfall = MAX(2, (int)(SPA_FFT_FALL*ntail));
+  for (int j = 0; j < ntail; j++) {
+    const int i = i0 + j;
+    double w = 1.;
+    if (i < nmrg)              w  = 0.5*(1. - cos(Pi*(double)(i-i0)/(nmrg-i0))); /* rise */
+    if (j > ntail-1-nfall)     w *= 0.5*(1. - cos(Pi*(double)(ntail-1-j)/nfall)); /* fall */
+    const double A = TDlm->ampli[k][i], ph = TDlm->phase[k][i];
+    hr[j] =  w*A*cos(ph); hi[j] = -w*A*sin(ph); tt[j] = t[i];
+  }
+  for (int j = 0; j < ntail; j++)
+    wt[j] = 0.5*((j<ntail-1 ? tt[j+1] : tt[j]) - (j>0 ? tt[j-1] : tt[j]));
+
+  /* coarse DFT over [flo, fhi]; ~4 points per 1/T_tail fringe. The tail spectrum is
+     negligible far above merger, so cap fhi at SPA_FFT_FHI*f_mrg to keep the O(nc*ntail)
+     transform cheap (bins above are left on the small SPA prolongation). */
+  const double flo = f_mrg*(1. - SPA_FFT_BLEND);
+  const double fhi = MIN(FDlm->freq[FDlm->size-1], SPA_FFT_FHI*f_mrg);
+  const double Ttail = tt[ntail-1] - tt[0];
+  int nc = (int)(4.*(fhi-flo)*Ttail) + 8;
+  nc = MIN(MAX(nc, 16), 4000);
+  if (flo >= fhi) { free(hr);free(hi);free(tt);free(wt); return; }
+  double *fc = malloc(nc*sizeof(double)), *ar = malloc(nc*sizeof(double)), *ai = malloc(nc*sizeof(double));
+  /* DFT with time measured from merger: with absolute t (~1e7-1e8 M) the phase winds many times between
+     coarse nodes and the spline aliases; the factor e^{2 pi i f t_mrg} is restored on the output grid. */
+  const double t_ref = t[nmrg];
+  for (int c = 0; c < nc; c++) {
+    const double f = flo + (fhi-flo)*c/(double)(nc-1);
+    double sr = 0., si = 0.;
+    for (int j = 0; j < ntail; j++) {
+      const double ang = TwoPi*f*(tt[j] - t_ref), cs = cos(ang), sn = sin(ang);
+      sr += wt[j]*(hr[j]*cs - hi[j]*sn);
+      si += wt[j]*(hr[j]*sn + hi[j]*cs);
+    }
+    fc[c] = f; ar[c] = sr; ai[c] = si;
+  }
+  fc[0] = flo; fc[nc-1] = fhi;   /* exact endpoints so eval never leaves [fc0,fcN] */
+
+  /* spline Re/Im and blend into the SPA above f_mrg */
+  gsl_interp_accel *acc = gsl_interp_accel_alloc();
+  gsl_spline *sre = gsl_spline_alloc(gsl_interp_cspline, nc);
+  gsl_spline *sim = gsl_spline_alloc(gsl_interp_cspline, nc);
+  gsl_spline_init(sre, fc, ar, nc);
+  gsl_spline_init(sim, fc, ai, nc);
+  for (int i = 0; i < FDlm->size; i++) {
+    double f = FDlm->freq[i];
+    if (f <= flo || f > fhi) continue;
+    f = MIN(MAX(f, fc[0]), fc[nc-1]);   /* guard against fp round-off at the edges */
+    const double Rs = gsl_spline_eval(sre, f, acc), Is = gsl_spline_eval(sim, f, acc);
+    const double ar0 = TwoPi*f*t_ref, c0 = cos(ar0), s0 = sin(ar0);
+    const double Rf = Rs*c0 - Is*s0, If = Rs*s0 + Is*c0;   /* times e^{+2 pi i f t_mrg} */
+    const double As = FDlm->ampli[k][i], ps = FDlm->phase[k][i];
+    double x = (f - flo)/(2.*SPA_FFT_BLEND*f_mrg); x = MIN(MAX(x, 0.), 1.);
+    const double s = x*x*(3. - 2.*x);   /* smoothstep SPA(0) -> FFT(1) */
+    const double Rb = (1.-s)*As*cos(ps) + s*Rf;
+    const double Ib = (1.-s)*As*sin(ps) + s*If;
+    FDlm->ampli[k][i] = hypot(Rb, Ib);
+    FDlm->phase[k][i] = atan2(Ib, Rb);
+  }
+  gsl_spline_free(sre); gsl_spline_free(sim); gsl_interp_accel_free(acc);
+  free(hr); free(hi); free(tt); free(wt); free(fc); free(ar); free(ai);
+}
+
 /**
   * Function: SPA
   * -------------
@@ -10884,6 +10994,8 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
   const double f0 = tmpf0;
   const double df = tmpdf;
   int nmin[KMAX]; // Fmin > f0 index
+  int imrg[KMAX];      // TD merger index (Fdot-max cut), for the SPA -> FFT switch
+  double fmrg[KMAX];   // merger frequency (splice point)
 
   const double Pio4 = Pi/4.;
   int *activemode = TDlm->kmask;
@@ -10908,7 +11020,19 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
 
     /* Get last index until Fdot is monotonically increasing (for attachment) */
     int n = 1;
-    while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1] && n<size) n++;
+    if (EOBPars->binary == BINARY_LMR && EOBPars->spa_fft_tail) {
+      /* LMR fast path: first n where Fdot stays below Fdot[n] for the next SPA_MRG_NWIN points (the first-dip
+         rule below can stop at a short stencil dip before merger) */
+      while (n + SPA_MRG_NWIN < size) {
+        int ok = 1;
+        for (int j = 1; j <= SPA_MRG_NWIN; j++) if (FDlm->Fdot[k][n+j] >= FDlm->Fdot[k][n]) { ok = 0; break; }
+        if (ok) break;
+        n++;
+      }
+    } else {
+      while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1] && n<size) n++;
+    }
+    imrg[k] = n; fmrg[k] = FDlm->F[k][n]; /* merger cut, kept for the SPA -> FFT switch */
     /* Prolong the waveform, if necessary  
        - Fill the points between Fmax and half_srate_interp such that 
          FDlm->F[k][n] > half_srate_interp (strictly larger)
@@ -10964,7 +11088,12 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
       }
     }
   }
-  
+
+  /* SPA -> FFT switch: replace the analytic f^-10/3 prolongation above merger by a DFT of the merger-ringdown tail */
+  if (EOBPars->spa_fft_tail)
+    for (int k = 0; k < KMAX; k++)
+      if (activemode[k]) spa_fft_tail(TDlm, FDlm, k, imrg[k], fmrg[k]);
+
 }
 
 /**

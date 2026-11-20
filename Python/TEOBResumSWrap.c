@@ -301,6 +301,15 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "fold_switch_wiggle_tol") != NULL ) {
     EOBPars->fold_switch_wiggle_tol = PyFloat_AsDouble(PyDict_GetItemString(dict, "fold_switch_wiggle_tol"));
   }
+  if ( PyDict_GetItemString(dict, "interp_hlm") != NULL ) {
+    EOBPars->interp_hlm = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "interp_hlm")));
+  }
+  if ( PyDict_GetItemString(dict, "interp_hlm_dr") != NULL ) {
+    EOBPars->interp_hlm_dr = PyFloat_AsDouble(PyDict_GetItemString(dict, "interp_hlm_dr"));
+  }
+  if ( PyDict_GetItemString(dict, "spa_fft_tail") != NULL ) {
+    EOBPars->spa_fft_tail = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "spa_fft_tail")));
+  }
   
   /* rc and flm */
   if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 

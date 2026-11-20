@@ -759,6 +759,10 @@ typedef struct tagEOBParameters
   int fold_switch;                                      /**< End PA at r_sw = rLSO + sqrt(-x_L/6) Delta_r_P instead of rmin (TEOBResumSPostAdiab.c) */
   double fold_switch_xL;                                /**< Handover depth x_L < 0 in scaled (Painleve) transition time (default -8) */
   double fold_switch_wiggle_tol;                        /**< Warning threshold for the scaled post-switch wiggle metric (default 1e-3) */
+  /* fast frequency-domain path */
+  int interp_hlm;                                       /**< Inspiral multipoles on coarse radial nodes (r > 12) + splines, Dali */
+  double interp_hlm_dr;                                 /**< Coarse-node radial spacing (M) for interp_hlm (default 0.5) */
+  int spa_fft_tail;                                     /**< FD: above merger, DFT of the merger-ringdown tail instead of the analytic f^-10/3 prolongation */
   double postadiabatic_dynamics_rmin;                   /**< Minimum radius to reach for PA (default=14)*/
 
   /* spin dynamics */

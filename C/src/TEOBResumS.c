@@ -194,6 +194,83 @@ EXIT_POINT_MAIN:;
   return status;
 }
 
+/* Radius (M) above which the inspiral multipoles are gridded when interp_hlm is on: just outside the merger
+   window, which is evaluated per sample (NQC, ringdown); independent of nu */
+#define INTERP_HLM_RMIN (12.0)
+
+/*
+ * Function: eob_wav_hlm_interp_inspiral
+ * -------------------------------------
+ *   Inspiral multipoles on coarse radial nodes (interp_hlm). Amplitude and phi-reduced phase
+ *   (phase + m phi) depend on the phase-space point only and vary slowly: they are computed on
+ *   nodes about interp_hlm_dr apart in r (eob_dyn_rhs_ecc + eob_wav_hlm_ecc_sigmoid, as the
+ *   per-sample pass), cubic-splined in time and evaluated on the dense grid, adding back m phi.
+ *   The spacing is radial, so the O(dr^4) error does not depend on nu.
+ *
+ *   @param[in]     dyn  : dynamics (dense grid, must be filled)
+ *   @param[in,out] hlm  : multipoles; ampli/phase of active modes filled on [0, iend)
+ *   @param[in]     iend : one past the last dense index to grid
+ */
+static void eob_wav_hlm_interp_inspiral(Dynamics *dyn, Waveform_lm *hlm, int iend)
+{
+  const double *tarr   = dyn->time;
+  const double *phiarr = dyn->data[EOB_PHI];
+  const double *rarr   = dyn->data[EOB_RAD];
+
+  /* coarse node indices ~interp_hlm_dr apart in radius, endpoints always included */
+  int nn = (int)((rarr[0] - rarr[iend-1]) / EOBPars->interp_hlm_dr) + 1;
+  if (nn < 4)    nn = 4;                 /* cspline needs >= 4 points */
+  if (nn > iend) nn = iend;
+
+  int    *idx   = malloc(nn * sizeof(int));
+  double *tnode = malloc(nn * sizeof(double));
+  double *Anode = malloc(KMAX * nn * sizeof(double));
+  double *Rnode = malloc(KMAX * nn * sizeof(double));
+  for (int j = 0; j < nn; j++)
+    idx[j] = (int) lround((double) j * (iend - 1) / (nn - 1));
+  idx[0] = 0; idx[nn-1] = iend-1;
+
+  /* per-node amplitude and phi-reduced phase for every active mode */
+  Waveform_lm_t hlm_t;
+  for (int j = 0; j < nn; j++) {
+    const int i = idx[j];
+    dyn->store = 1;
+    dyn->t = tarr[i];
+    dyn->y[EOB_EVOLVE_PHI]    = phiarr[i];
+    dyn->y[EOB_EVOLVE_RAD]    = rarr[i];
+    dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
+    dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
+    eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
+    eob_wav_hlm_ecc_sigmoid(dyn, &hlm_t);
+    tnode[j] = tarr[i];
+    for (int k = 0; k < KMAX; k++) {
+      if (!hlm->kmask[k]) continue;
+      Anode[k*nn + j] = hlm_t.ampli[k];
+      Rnode[k*nn + j] = hlm_t.phase[k] - MINDEX[k]*phiarr[i];
+    }
+  }
+
+  /* spline each active mode and reconstruct on the dense grid */
+  gsl_interp_accel *acc = gsl_interp_accel_alloc();
+  gsl_spline *sA = gsl_spline_alloc(gsl_interp_cspline, nn);
+  gsl_spline *sR = gsl_spline_alloc(gsl_interp_cspline, nn);
+  for (int k = 0; k < KMAX; k++) {
+    if (!hlm->kmask[k]) continue;
+    double *Ak = Anode + k*nn, *Rk = Rnode + k*nn;
+    for (int j = 1; j < nn; j++)          /* keep the reduced phase continuous */
+      Rk[j] -= TwoPi * round((Rk[j] - Rk[j-1]) / TwoPi);
+    gsl_spline_init(sA, tnode, Ak, nn);
+    gsl_spline_init(sR, tnode, Rk, nn);
+    gsl_interp_accel_reset(acc);
+    for (int i = 0; i < iend; i++) {
+      hlm->ampli[k][i] = gsl_spline_eval(sA, tarr[i], acc);
+      hlm->phase[k][i] = gsl_spline_eval(sR, tarr[i], acc) + MINDEX[k]*phiarr[i];
+    }
+  }
+  gsl_spline_free(sA); gsl_spline_free(sR); gsl_interp_accel_free(acc);
+  free(idx); free(tnode); free(Anode); free(Rnode);
+}
+
 /* Width of the inner PA zone of the fold switch, in units of Delta_r_P */
 #define FOLD_ZONE_K (8.)
 
@@ -282,6 +359,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
+
+  /* Fast waveform path (interp_hlm): the Dali sigmoid pass below recomputes all inspiral and plunge multipoles,
+     so they are not computed while integrating the dynamics */
+  const int fast_wav = EOBPars->interp_hlm
+    && (EOBPars->model == MODEL_DALI)
+    && (EOBPars->nqc_coefs_hlm != NQC_HLM_NONE)
+    && !(use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins);
   
   /* *****************************************
    * Set Memory & do preliminary computations
@@ -631,11 +715,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
       
       p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
-      eob_wav_hlm(dyn, hlm_t);      
-      for (int k = 0; k < KMAX; k++) {
-        if((hlm->kmask[k])){
-	  hlm->ampli[k][i] = hlm_t->ampli[k];
-	  hlm->phase[k][i] = hlm_t->phase[k]; 
+      if (!fast_wav) {
+        eob_wav_hlm(dyn, hlm_t);
+        for (int k = 0; k < KMAX; k++) {
+          if((hlm->kmask[k])){
+            hlm->ampli[k][i] = hlm_t->ampli[k];
+            hlm->phase[k][i] = hlm_t->phase[k];
+          }
         }
       }
 
@@ -882,7 +968,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t); 
+    if (!fast_wav) eob_wav_hlm(dyn, hlm_t);
 
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
@@ -963,12 +1049,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       Dynamics_push (&dyn, size);
     }
     
-    /* Append waveform and dynamics to arrays */
-    hlm->time[iter] = hlm_t->time;
-    for (int k = 0; k < KMAX; k++) {
-      if(hlm->kmask[k]){
-        hlm->ampli[k][iter] = hlm_t->ampli[k];
-        hlm->phase[k][iter] = hlm_t->phase[k]; 
+    /* Append waveform and dynamics to arrays (fast path: time only, the multipoles come from the sigmoid pass) */
+    hlm->time[iter] = fast_wav ? dyn->t : hlm_t->time;
+    if (!fast_wav) {
+      for (int k = 0; k < KMAX; k++) {
+        if(hlm->kmask[k]){
+          hlm->ampli[k][iter] = hlm_t->ampli[k];
+          hlm->phase[k][iter] = hlm_t->phase[k];
+        }
       }
     }
     
@@ -1151,8 +1239,19 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Over-writing waveform in the eccentric case - adding sigmoid */
     if ((EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && (EOBPars->model == MODEL_DALI)) {
-   
-      for (int i = 0; i < size; i++) {
+
+      /* interp_hlm: inspiral (r > INTERP_HLM_RMIN) on coarse nodes, per-sample only near merger */
+      int istart = 0;
+      if (EOBPars->interp_hlm) {
+        int iend = 0;
+        while (iend < size && dyn->data[EOB_RAD][iend] > INTERP_HLM_RMIN) iend++;
+        if (iend >= 4) {
+          eob_wav_hlm_interp_inspiral(dyn, hlm, iend);
+          istart = iend;
+        }
+      }
+
+      for (int i = istart; i < size; i++) {
         dyn->store = 1;
         dyn->t = dyn->time[i];
         dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];
