@@ -488,7 +488,6 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->binary                    = BINARY_LMR;
     eobp->use_tidal                 = TIDES_OFF;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
-    eobp->centrifugal_radius        = CENTRAD_NLO;
     eobp->nqc                       = NQC_MANUAL;
     eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE;
     eobp->nqc_coefs_flx             = NQC_FLX_NONE;
@@ -506,6 +505,14 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->ode_reltol                = 1e-12;
     eobp->interp_hlm                = 1;      /* fast FD path (on for LMR) */
     eobp->spa_fft_tail              = 1;
+    /* spin sector: DJS-gauge N3LO G_S, G_S* with argument u; N3LO r_c; Kerr spin factors at infinity and per-body
+       horizon; NQC phase basis by chi1 for l = 2, ..., 5; ODE stop at Omega < 0 (quasi-circular only, see eob_set_params) */
+    eobp->GS_DJSu                   = 1;
+    eobp->centrifugal_radius        = CENTRAD_N3LO;
+    eobp->spin_flx_kerr             = 1;
+    eobp->spin_hflx_kerr            = 1;
+    eobp->nqc_hm_basis              = 2;
+    eobp->ode_stop_omg_neg          = 1;
   }
   else errorexit("Unknown default binary parameter choice.");
 
@@ -629,7 +636,9 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
 
-  if (EOBPars->model == MODEL_DALI && EOBPars->domain == DOMAIN_FD) {
+  /* the SPA does not fit Dali's adiabatic ICs; quasi-circular LMR runs start from the quasi-circular PA solution */
+  if (EOBPars->model == MODEL_DALI && EOBPars->domain == DOMAIN_FD &&
+      !(EOBPars->binary == BINARY_LMR && EOBPars->ecc <= 1e-4 && EOBPars->use_spins != MODE_SPINS_GENERIC)) {
     PRERR("SPA with model = Dali is currently not available");
     return 1;
   }
