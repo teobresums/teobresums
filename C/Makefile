@@ -27,7 +27,7 @@ CFLAGS=-std=c99 `gsl-config --cflags` # Debug
 
 CFLAGS +=-g  # Debug
 #CFLAGS +=-pg # Debug & Profile
-#CFLAGS +=-O3  # Optimized
+CFLAGS +=-O2  # Optimized
 
 CFLAGS += -DDEBUG=0 # 1/0 to turn on/off debug mode
 CFLAGS += -DVERBOSE=0 # 1/0 to turn on/off verbose mode
