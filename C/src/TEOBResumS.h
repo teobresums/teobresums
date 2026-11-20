@@ -245,9 +245,10 @@ enum{
   A_GSF,               /**< GSF A, Pade' resummed */
   A_5PNlogP33,         /**< 5PNlog resummed with P33 */
   A_5PNlogP33_newlogs, /**< 5PNlog resummed with P33, separate log resummation */
+  A_6p5PNP16,          /**< LMR: frozen-log P(1,6) of the 6PN series + 1SF 5.5PN, 6.5PN terms outside the Pade */
   A_NOPT               /**< number of options */
 };
-static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "5PNlogP33_newlogs", "undefined"};
+static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "5PNlogP33_newlogs", "6p5PNP16", "undefined"};
 
 /** List of options for orbital D potential */
 enum{
@@ -1147,6 +1148,7 @@ void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32_newlogs_lmr(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_A6p5PNP16(double r, double nu, double *A, double *dA, double *d2A);
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);

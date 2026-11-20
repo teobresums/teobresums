@@ -429,6 +429,109 @@ void eob_metric_A5PNlogP33_newlogs(double r, double nu, double *A, double *dA, d
 }
 
 
+/* Second-order jets in u (value, d/du, d2/du2), used by eob_metric_A6p5PNP16 */
+typedef struct { double v, d, dd; } eob_jet2;
+static inline eob_jet2 jet2(double v, double d, double dd) { eob_jet2 a = {v, d, dd}; return a; }
+static inline eob_jet2 jet2_add(eob_jet2 a, eob_jet2 b) { return jet2(a.v + b.v, a.d + b.d, a.dd + b.dd); }
+static inline eob_jet2 jet2_sub(eob_jet2 a, eob_jet2 b) { return jet2(a.v - b.v, a.d - b.d, a.dd - b.dd); }
+static inline eob_jet2 jet2_scale(double s, eob_jet2 a) { return jet2(s*a.v, s*a.d, s*a.dd); }
+static inline eob_jet2 jet2_mul(eob_jet2 a, eob_jet2 b) { return jet2(a.v*b.v, a.d*b.v + a.v*b.d, a.dd*b.v + 2.*a.d*b.d + a.v*b.dd); }
+static inline eob_jet2 jet2_div(eob_jet2 a, eob_jet2 b)
+{
+  const double q  = a.v/b.v;
+  const double q1 = (a.d - q*b.d)/b.v;
+  const double q2 = (a.dd - 2.*q1*b.d - q*b.dd)/b.v;
+  return jet2(q, q1, q2);
+}
+
+/**
+ *  Function : eob_metric_A6p5PNP16
+ *  -----------------------------
+ *   LMR A potential: frozen-log Pade' (1,6) of the 6PN series, plus the 1SF 5.5PN and 6.5PN terms outside the Pade',
+ *     A = P^1_6[A_T](u; log u frozen) + nu (a65 u^(13/2) + a75 u^(15/2)),
+ *     A_T = 1 - 2u + 2 nu u^3 + nu a4 u^4 + nu (a5c0 + nu a5c1 + a5log L) u^5
+ *           + nu (a6c + nu a6c2SF + (a6log1SF - 144/5 nu) L) u^6 + nu (a7c1SF + a7log1SF L) u^7,   L = log u.
+ *   a6c = EOBPars->a6c is the nu-linear 5PN constant (analytic a6c1SF in the LMR binary); a6c2SF = Porto-Riva local
+ *   + Bini-Damour-Geralico nonlocal; the 6PN and half-integer coefficients are 1SF.
+ *   Evaluated by Pade' duality, [1/6]_A = 1/[6/1]_{1/A}: with g = 1/A_T,
+ *     A = (g6 - g7 u) / sum_{k=0}^{6} (g6 g_k - g7 g_{k-1}) u^k,   g_{-1} = 0,
+ *   finite also where g6 = 0. Derivatives exact, by second-order jets in u (log u carried as a jet).
+ *
+ *    @param[in]  r    : radial separation
+ *    @param[in]  nu   : symmetric mass ratio
+ *    @param[out] A    : A potential evaluated at r
+ *    @param[out] dA   : dA/du,   with u=1/r
+ *    @param[out] d2A  : d2A/du2, with u=1/r
+ */
+void eob_metric_A6p5PNP16(double r, double nu, double *A, double *dA, double *d2A)
+{
+  const double pi2 = Pi*Pi;
+  const double pi4 = pi2*pi2;
+  const double u   = 1./r;
+
+  /* coefficients */
+  const double a4c      = 94./3. - 41./32.*pi2;
+  const double a5c0     = -4237./60. + 2275./512.*pi2 + 256./5.*Log2 + 128./5.*EulerGamma;
+  const double a5c1     = -221./6. + 41./32.*pi2;
+  const double a5log    = 64./5.;
+  const double a6c2SF   = (-1718599./1575. + 25911./256.*pi2) + (64./5. - 288./5.*EulerGamma + 928./35.*Log2 - 972./7.*Log3);
+  const double a6log    = -7004./105. - 144./5.*nu;
+  const double a7c      = 206740./567.*Log2 - 5044./405.*EulerGamma - 1360201207./907200. - 4617./14.*Log3
+                          - 2800873./262144.*pi4 + 608698367./1769472.*pi2;
+  const double a7log    = -2522./405.;
+  const double a6       = EOBPars->a6c + nu*a6c2SF;
+  const double ahalf[2] = { 13696./525.*Pi, -512501./3675.*Pi };   /* a65, a75 (1SF) */
+
+  /* jets: u and L = log u */
+  const eob_jet2 U = jet2(u, 1., 0.);
+  const eob_jet2 L = jet2(log(u), 1./u, -1./(u*u));
+
+  /* Taylor coefficients c_k(L) */
+  eob_jet2 c[8];
+  c[0] = jet2(1., 0., 0.);
+  c[1] = jet2(-2., 0., 0.);
+  c[2] = jet2(0., 0., 0.);
+  c[3] = jet2(2.*nu, 0., 0.);
+  c[4] = jet2(nu*a4c, 0., 0.);
+  c[5] = jet2_add(jet2(nu*(a5c0 + nu*a5c1), 0., 0.), jet2_scale(nu*a5log, L));
+  c[6] = jet2_add(jet2(nu*a6, 0., 0.), jet2_scale(nu*a6log, L));
+  c[7] = jet2_add(jet2(nu*a7c, 0., 0.), jet2_scale(nu*a7log, L));
+
+  /* g = 1/A_T as a series in u (c0 = 1) */
+  eob_jet2 g[8];
+  g[0] = jet2(1., 0., 0.);
+  for (int k = 1; k < 8; k++) {
+    eob_jet2 s = jet2(0., 0., 0.);
+    for (int j = 1; j <= k; j++) s = jet2_add(s, jet2_mul(c[j], g[k-j]));
+    g[k] = jet2_scale(-1., s);
+  }
+
+  /* A = (g6 - g7 u) / sum_k (g6 g_k - g7 g_{k-1}) u^k */
+  const eob_jet2 num = jet2_sub(g[6], jet2_mul(g[7], U));
+  eob_jet2 den = jet2(0., 0., 0.);
+  eob_jet2 Uk  = jet2(1., 0., 0.);
+  for (int k = 0; k <= 6; k++) {
+    eob_jet2 t = jet2_mul(g[6], g[k]);
+    if (k >= 1) t = jet2_sub(t, jet2_mul(g[7], g[k-1]));
+    den = jet2_add(den, jet2_mul(t, Uk));
+    Uk  = jet2_mul(Uk, U);
+  }
+  const eob_jet2 Aj = jet2_div(num, den);
+
+  *A  = Aj.v;
+  *dA = Aj.d;
+  if (d2A != NULL) *d2A = Aj.dd;
+
+  /* half-integer 1SF terms outside the Pade': nu (a65 u^(13/2) + a75 u^(15/2)) */
+  for (int k = 0; k < 2; k++) {
+    const double p  = 6.5 + k;
+    const double up = pow(u, p);
+    *A  += nu*ahalf[k]*up;
+    *dA += nu*ahalf[k]*p*up/u;
+    if (d2A != NULL) *d2A += nu*ahalf[k]*p*(p - 1.)*up/(u*u);
+  }
+}
+
 /** EOB Metric D function at 3PN, resummed */
 
 

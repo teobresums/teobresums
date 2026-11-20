@@ -483,7 +483,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->use_hflx                  = HFLX_LMR;
     eobp->use_a6c_fits              = a6c_fits_NO;
     eobp->use_cN3LO_fits            = cN3LO_fits_NO;
-    eobp->A_pot                     = A_5PNlogP33_newlogs;
+    eobp->A_pot                     = A_6p5PNP16;
+    eobp->a6c                       = -134.07179509567553066; /* a6c1SF = -1066621/1575 + 246367/3072 pi^2 - 31736/105 ln2 - 14008/105 gamma_E + 243/7 ln3 */
     eobp->D_pot                     = D_5PNP32_newlogs_lmr;
     eobp->Q_pot                     = Q_5PNfull;
   }
@@ -1279,6 +1280,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Apotential = &eob_metric_A5PNlogP33;
   } else if (EOBPars->A_pot == A_5PNlogP33_newlogs) {
     eob_metric_Apotential = &eob_metric_A5PNlogP33_newlogs;
+  } else if (EOBPars->A_pot == A_6p5PNP16) {
+    eob_metric_Apotential = &eob_metric_A6p5PNP16;
   } else {
     PRERR("Unknown option for A potential");
     return 1;
