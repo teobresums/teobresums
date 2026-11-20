@@ -292,6 +292,15 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_dr") != NULL ) {
     EOBPars->postadiabatic_dynamics_dr = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_dr"));
   }
+  if ( PyDict_GetItemString(dict, "fold_switch") != NULL ) {
+    EOBPars->fold_switch = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "fold_switch")));
+  }
+  if ( PyDict_GetItemString(dict, "fold_switch_xL") != NULL ) {
+    EOBPars->fold_switch_xL = PyFloat_AsDouble(PyDict_GetItemString(dict, "fold_switch_xL"));
+  }
+  if ( PyDict_GetItemString(dict, "fold_switch_wiggle_tol") != NULL ) {
+    EOBPars->fold_switch_wiggle_tol = PyFloat_AsDouble(PyDict_GetItemString(dict, "fold_switch_wiggle_tol"));
+  }
   
   /* rc and flm */
   if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 

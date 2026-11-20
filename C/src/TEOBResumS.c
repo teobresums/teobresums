@@ -194,6 +194,9 @@ EXIT_POINT_MAIN:;
   return status;
 }
 
+/* Width of the inner PA zone of the fold switch, in units of Delta_r_P */
+#define FOLD_ZONE_K (8.)
+
 /**
  *  Function : EOBRun
  *  ---------------
@@ -340,7 +343,77 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Saving initial radius */
   EOBPars->r0 = r0;
-  
+
+  /* Fold-aware PA->ODE switch (fold_switch): the PA leg ends at r_sw = rLSO + sqrt(-x_L/6) Delta_r_P instead of
+     postadiabatic_dynamics_rmin; rLSO and Delta_r_P ~ nu^(2/5) are the LSO and the transition scale of the nu-dressed
+     dynamics (eob_fold_compute), x_L = fold_switch_xL the handover depth in the scaled transition time. The ODE then
+     covers only the transition and plunge.
+     PA grid: step MIN(postadiabatic_dynamics_dr, 0.12 Delta_r_P^(5/8)) in the bulk, keeping the dr^4 phase error
+     of the leg about constant in nu, and Delta_r_P/8 near the fold. When the two differ, two uniform zones
+     [r_zone, r0] and [r_sw, r_zone], r_zone = rLSO + FOLD_ZONE_K Delta_r_P, are solved separately and joined
+     with continuous time and phase. The user's PA rmin and dr are restored after the PA legs; on any failure
+     the standard PA range is used. */
+  double fold_rLSO = 0., fold_pphiLSO = 0., fold_Delta_rP = 0.;
+  int fold_switch_active = 0;
+  /* zone 1 = outer (bulk) zone, on the leading part of the arrays; zone 2 = inner zone */
+  int fold_zone2_size = 0;  /* > 0: two-zone PA grid */
+  double fold_zone2_dr = 0., fold_zone1_end = 0.;
+  const double fold_pa_rmin_save = EOBPars->postadiabatic_dynamics_rmin;
+  const double fold_pa_dr_save   = EOBPars->postadiabatic_dynamics_dr;
+  if (use_postadiab_dyn && EOBPars->fold_switch) {
+    if (EOBPars->fold_switch_xL >= 0.)
+      errorexit("fold_switch_xL must be negative (recommended range [-12,-6])");
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins)
+      PRWARN("fold_switch: unvalidated with project_spins "
+             "(the fold is computed at the initial spin projection).");
+    if (eob_fold_compute(dyn, &fold_rLSO, &fold_pphiLSO, &fold_Delta_rP) == OK) {
+      const double c_sw     = sqrt(-EOBPars->fold_switch_xL/6.);
+      const double r_sw     = fold_rLSO + c_sw*fold_Delta_rP;
+      const double dr_inner = fold_Delta_rP/8.;
+      const double dr_bulk  = MIN(EOBPars->postadiabatic_dynamics_dr,
+                                  0.12*pow(fold_Delta_rP, 0.625));
+      const double r_zone   = fold_rLSO + FOLD_ZONE_K*fold_Delta_rP;
+      /* the grids end exactly on their end radii; (1 - 1e-12) keeps floor() from dropping the last point */
+      if (dr_inner < 0.5*dr_bulk && r0 > r_zone + POSTADIABATIC_NSTEP_MIN*dr_bulk) {
+        /* two zones: outer at the bulk step down to r_zone, inner at
+           dr_inner down to r_sw */
+        const int sz1  = (int) ceil((r0 - r_zone)/dr_bulk) + 1;
+        const double dr1 = (r0 - r_zone)/(sz1 - 1)*(1. - 1e-12);
+        fold_zone1_end = r0 - (sz1 - 1)*dr1;
+        const int sz2  = (int) ceil((fold_zone1_end - r_sw)/dr_inner) + 1;
+        if (sz2 >= POSTADIABATIC_NSTEP_MIN) {
+          EOBPars->postadiabatic_dynamics_rmin = r_zone;
+          EOBPars->postadiabatic_dynamics_dr   = dr1;
+          fold_zone2_size = sz2;
+          fold_zone2_dr   = (fold_zone1_end - r_sw)/(sz2 - 1)*(1. - 1e-12);
+          fold_switch_active = 1;
+        }
+      }
+      if (!fold_switch_active) {
+        /* single zone at the finer of the two steps */
+        const double dr0 = MIN(dr_bulk, dr_inner);
+        if (r0 > r_sw + POSTADIABATIC_NSTEP_MIN*dr0) {
+          const int sz = (int) ceil((r0 - r_sw)/dr0) + 1;
+          EOBPars->postadiabatic_dynamics_rmin = r_sw;
+          EOBPars->postadiabatic_dynamics_dr   = (r0 - r_sw)/(sz - 1)*(1. - 1e-12);
+          fold_switch_active = 1;
+        } else {
+          PRWARN("fold_switch: initial radius too close to r_sw; keeping default PA range.");
+        }
+      }
+      if (fold_switch_active && VERBOSE) {
+        PRSECTN("Fold-aware PA->ODE switch");
+        PRFORMd("fold_rLSO", fold_rLSO);
+        PRFORMd("fold_pphiLSO", fold_pphiLSO);
+        PRFORMd("fold_Delta_r_P", fold_Delta_rP);
+        PRFORMd("fold_r_switch", r_sw);
+        PRFORMi("fold_zone2_size", fold_zone2_size);
+      }
+    } else {
+      PRWARN("fold_switch: fold computation failed; keeping default PA range.");
+    }
+  }
+
   const int chunk = EOBPars->size;
   int size = chunk; /* note: size can vary */
 
@@ -354,7 +427,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (r0 <= rmin || size - 1 < POSTADIABATIC_NSTEP_MIN) {
       size = chunk;
       use_postadiab_dyn = 0;
+      fold_zone2_size = 0;
+      if (fold_switch_active) { /* undo the fold retune */
+        EOBPars->postadiabatic_dynamics_rmin = fold_pa_rmin_save;
+        EOBPars->postadiabatic_dynamics_dr   = fold_pa_dr_save;
+        fold_switch_active = 0;
+      }
     }
+
+    /* two-zone fold switch: the inner zone adds its points but the first (shared with zone 1) */
+    if (fold_zone2_size > 0) size += fold_zone2_size - 1;
+
     EOBPars->size = size;
   }
 
@@ -488,7 +571,44 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
 
     /* Calculate dynamics */
-    eob_dyn_Npostadiabatic(dyn, r0, spindyn);
+    if (fold_zone2_size > 0) {
+      /* two-zone fold switch: zone 1 on the leading part of the arrays, then zone 2 on a scratch Dynamics,
+         appended with continuous time and phase */
+      const int sz1 = size - fold_zone2_size + 1;
+      dyn->size = sz1;
+      eob_dyn_Npostadiabatic(dyn, r0, spindyn);
+
+      Dynamics *dynz = NULL;
+      Dynamics_alloc(&dynz, fold_zone2_size, "dyn_fold_zone");
+      Dynamics_set_params(dynz);
+      dynz->size  = fold_zone2_size;
+      dynz->spins = spindyn;
+      EOBPars->postadiabatic_dynamics_dr = fold_zone2_dr;
+      const int size_save = EOBPars->size;
+      EOBPars->size = fold_zone2_size; /* PA reads dyn->size; keep EOBPars consistent */
+      eob_dyn_Npostadiabatic(dynz, fold_zone1_end, spindyn);
+      EOBPars->size = size_save;
+
+      const double t_off   = dyn->time[sz1-1];
+      const double phi_off = dyn->data[EOB_PHI][sz1-1];
+      for (int i = 1; i < fold_zone2_size; i++) {
+        dyn->time[sz1-1+i] = t_off + dynz->time[i];
+        for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
+          dyn->data[v][sz1-1+i] = dynz->data[v][i];
+        dyn->data[EOB_PHI][sz1-1+i] += phi_off;
+      }
+      dyn->size = size;
+      dyn->t = dyn->time[size-1];
+      Dynamics_free(dynz);
+    } else {
+      eob_dyn_Npostadiabatic(dyn, r0, spindyn);
+    }
+
+    /* restore the user's PA grid parameters */
+    if (fold_switch_active) {
+      EOBPars->postadiabatic_dynamics_rmin = fold_pa_rmin_save;
+      EOBPars->postadiabatic_dynamics_dr   = fold_pa_dr_save;
+    }
 
     /* Calculate waveform */
     for (int i = 0; i < size; i++) 
@@ -943,6 +1063,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
+
+  /* Fold-switch QA: scaled epicyclic wiggle just after the switch (eob_fold_wiggle_qa). A wiggle comes from the
+     handover data (PA order, x_L, PA grid), not from the ODE tolerances */
+  if (fold_switch_active && pasize > 0) {
+    int nqa = 0;
+    const double wig = eob_fold_wiggle_qa(dyn, fold_rLSO, fold_Delta_rP,
+                                          pasize-1, &nqa);
+    if (VERBOSE) printf("fold_switch: r_sw = %.9f  wiggle = %.3e  (n = %d)\n",
+                        dyn->data[EOB_RAD][pasize-1], wig, nqa);
+    if (wig < 0.) {
+      if (VERBOSE) PRWARN("fold_switch: wiggle QA could not be formed (window undersampled or no LSO crossing).");
+    } else if (wig > EOBPars->fold_switch_wiggle_tol) {
+      PRWARN("fold_switch: post-switch wiggle above threshold; "
+             "improve the handover data (deeper x_L, higher PA order, finer PA grid) "
+             "rather than the ODE tolerances.");
+    }
+  }
 
   /* Find peak of Omega */
   int index_pk = dyn->size-1;

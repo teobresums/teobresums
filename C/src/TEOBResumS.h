@@ -755,6 +755,10 @@ typedef struct tagEOBParameters
   int postadiabatic_dynamics_N;                         /**< Number of PA iterations to take (default=8)*/
   int postadiabatic_dynamics_size;                      /**< Size of PA arrays */
   double postadiabatic_dynamics_dr;                     /**< Radial step for PA */
+  /* fold-aware PA->ODE switch (TEOBResumSPostAdiab.c) */
+  int fold_switch;                                      /**< End PA at r_sw = rLSO + sqrt(-x_L/6) Delta_r_P instead of rmin (TEOBResumSPostAdiab.c) */
+  double fold_switch_xL;                                /**< Handover depth x_L < 0 in scaled (Painleve) transition time (default -8) */
+  double fold_switch_wiggle_tol;                        /**< Warning threshold for the scaled post-switch wiggle metric (default 1e-3) */
   double postadiabatic_dynamics_rmin;                   /**< Minimum radius to reach for PA (default=14)*/
 
   /* spin dynamics */
@@ -1107,6 +1111,28 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 
 /* TEOBResumSPostAdiabatic.c */
 int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0, DynamicsSpin *spin);
+
+/* TEOBResumSPostAdiab.c, fold-aware PA->ODE switch: LSO of the nu-dressed dynamics (fold of the circular
+   sequence) and the transition scale Delta_r_P, from the r.h.s. */
+/** Fold finite-difference steps (4th-order central stencils, on the truncation/roundoff plateau
+    h ~ 1e-4 ... 1e-2) and Newton parameters */
+#define FOLD_STEP_DR      (2e-3)  /* step in r       */
+#define FOLD_STEP_DPRSTAR (2e-3)  /* step in prstar  */
+#define FOLD_STEP_DPPHI   (2e-3)  /* step in pphi    */
+/** FOLD_NEWTON_TOL sits above the roundoff floor of the Newton step, eta_rhs/(FOLD_STEP_DR |d2prstardot/dr2|),
+    with eta_rhs ~ 1e-17 the noise of one r.h.s. evaluation */
+#define FOLD_NEWTON_TOL     (1e-9)  /* relative step tolerance   */
+#define FOLD_NEWTON_ITMAX   (100)   /* max iterations            */
+#define FOLD_NEWTON_MAXSTEP (0.3)   /* per-iteration step clamp  */
+double eob_fold_prstardot(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_fold_Fphi(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_fold_dprstardot_dr(double r, double prstar, double pphi, double hstep, Dynamics *dyn);
+double eob_fold_d2prstardot_dr2(double r, double prstar, double pphi, double hstep, Dynamics *dyn);
+double eob_fold_dprstardot_dpphi(double r, double prstar, double pphi, double hstep, Dynamics *dyn);
+double eob_fold_drdot_dprstar(double r, double prstar, double pphi, double hstep, Dynamics *dyn);
+double eob_fold_omegar2(double r, double pphi, Dynamics *dyn);
+int eob_fold_compute(Dynamics *dyn, double *rLSO, double *pphiLSO, double *Delta_r_P);
+double eob_fold_wiggle_qa(Dynamics *dyn, double rLSO, double Delta_r_P, int i_sw, int *npts_out);
 
 /* TEOBResumSInitialCondition.c */
 extern int (*eob_dyn_ic)(); /* defined in TEOBResumSPars.c*/

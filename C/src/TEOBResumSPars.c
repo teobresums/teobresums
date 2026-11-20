@@ -244,6 +244,9 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->postadiabatic_dynamics_rmin=14.; // minimum radius (end of PA dynamics)
   eobp->postadiabatic_dynamics_stop=0;   // stop after post-adiabatic dynamics 
   eobp->postadiabatic_dynamics_dr=0.1;            // PA step dr = 0.1 
+  eobp->fold_switch=0;               // end PA at r_sw = rLSO + sqrt(-x_L/6)*Delta_r_P instead of rmin (on for LMR)
+  eobp->fold_switch_xL=-8.;          // handover depth in scaled (Painleve) transition time
+  eobp->fold_switch_wiggle_tol=1e-3; // warning threshold for the post-switch wiggle QA
 
   eobp->A_pot=A_5PNlog; 
   eobp->D_pot=D_3PN;
@@ -487,6 +490,10 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->a6c                       = -134.07179509567553066; /* a6c1SF = -1066621/1575 + 246367/3072 pi^2 - 31736/105 ln2 - 14008/105 gamma_E + 243/7 ln3 */
     eobp->D_pot                     = D_5PNP32_newlogs_lmr;
     eobp->Q_pot                     = Q_5PNfull;
+    eobp->fold_switch               = 1;      /* PA down to the fold-aware switch radius (TEOBResumSPostAdiab.c) */
+    eobp->postadiabatic_dynamics_dr = 0.05;   /* PA step, with the fold switch */
+    eobp->ode_abstol                = 1e-14;  /* 1e-13/1e-11 leave rk8pd step-size chatter that re-excites a ~1e-8 eccentricity at q ~ 1e5 */
+    eobp->ode_reltol                = 1e-12;
   }
   else errorexit("Unknown default binary parameter choice.");
 
@@ -2008,6 +2015,15 @@ if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
   if (STREQUAL(key,"postadiabatic_dynamics")) {    
     eobp->postadiabatic_dynamics = YESNO2INT(string_trim(val));
   }
+  if (STREQUAL(key,"fold_switch")) {
+    eobp->fold_switch = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"fold_switch_xL")) {
+    eobp->fold_switch_xL = par_get_d(val);
+  }
+  if (STREQUAL(key,"fold_switch_wiggle_tol")) {
+    eobp->fold_switch_wiggle_tol = par_get_d(val);
+  }
   if (STREQUAL(key,"postadiabatic_dynamics_N")) {      
     eobp->postadiabatic_dynamics_N = par_get_i(val);
   }
@@ -2393,6 +2409,10 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_size", eobp->postadiabatic_dynamics_size);
   fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_stop", INT2YESNO(eobp->postadiabatic_dynamics_stop));
+  fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_dr", eobp->postadiabatic_dynamics_dr);
+  fprintf(f,"%s = \"%s\"\n", "fold_switch", INT2YESNO(eobp->fold_switch));
+  fprintf(f,"%s = %.16f\n" , "fold_switch_xL", eobp->fold_switch_xL);
+  fprintf(f,"%s = %.16e\n" , "fold_switch_wiggle_tol", eobp->fold_switch_wiggle_tol);
 
   /* Deviations */
   fprintf(f,"%s = %f\n", "delta_a6c", eobp->delta_a6c);
