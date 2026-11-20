@@ -6532,6 +6532,9 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
+  const int spin1 = (chi1 > 1e-3); /* chi1 below 1e-3 counts as nonspinning for the NQC phase basis */
+  const int omg_basis = EOBPars->nqc_hm_basis ? !spin1 : ((chi1 <= 0.) || (chi2 <= 0.));  /* Omega^(2/3) n4 basis for l = 3, 4, 5 */
+  const int omg_basis21 = !((EOBPars->nqc_hm_basis == 2) && spin1);                        /* ... and for the (2,1) */
   const double X1   = EOBPars->X1;
   const double X2   = EOBPars->X2;
   const double aK   = EOBPars->a1+EOBPars->a2;
@@ -6695,7 +6698,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
       /* l=2,m=1 */
       if(h->kmask[0]) {
         n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-        n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
+        if (omg_basis21) n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
       }
       /* l=2,m=2 */
       if ((EOBPars->use_flm == USEFLM_HM_4PN22) || EOBPars->use_flm == USEFLM_HM_6PN3p3){
@@ -6705,7 +6708,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
       }
       /* l=3, l=4 & l=5 */
       // FIXME: condition on spins bad for non-spinning limit
-      if ((chi1 <= 0.) || (chi2 <= 0.)) {
+      if (omg_basis) {
 	      for (int k=2; k<14; k++) {
 	        if(h->kmask[k]){
 	        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
@@ -7520,6 +7523,9 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   const double nu   = EOBPars->nu;
   const double chi1 = EOBPars->chi1;
   const double chi2 = EOBPars->chi2;
+  const int spin1 = (chi1 > 1e-3); /* chi1 below 1e-3 counts as nonspinning for the NQC phase basis */
+  const int omg_basis = EOBPars->nqc_hm_basis ? !spin1 : ((chi1 <= 0.) || (chi2 <= 0.));  /* Omega^(2/3) n4 basis for l = 3, 4, 5 */
+  const int omg_basis21 = !((EOBPars->nqc_hm_basis == 2) && spin1);                        /* ... and for the (2,1) */
   const double X1   = EOBPars->X1;
   const double X2   = EOBPars->X2;
   const double aK   = EOBPars->a1+EOBPars->a2;
@@ -7677,7 +7683,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     /* l=2,m=1 */
     if(hlm_mrg->kmask_nqc[0]){
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
+      if (omg_basis21) n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
     /* l=2,m=2 */
     if ((EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3)){
@@ -7687,7 +7693,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     }
     /* l=3, l=4 & l=5 */
     // FIXME: condition on spins bad for non-spinning limit
-    if ((chi1 <= 0.) || (chi2 <= 0.)) {
+    if (omg_basis) {
       for (int k=2; k<14; k++) {
         if(hlm_mrg->kmask_nqc[k]){
           n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
@@ -7750,6 +7756,11 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
       break;
     Omgmax_index = j;
     Omg_max = Omg_orb[j]; 
+  }
+  /* LMR: skip a non-monotone tail at the end of the dynamics (find_last_peak_index, as for dyn->tOmg_pk) */
+  if (EOBPars->binary == BINARY_LMR) {
+    Omgmax_index = find_last_peak_index(Omg_orb, size);
+    Omg_max = Omg_orb[Omgmax_index];
   }
   
   /** Time */
@@ -8000,7 +8011,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     /* l=2,m=1 */
     if(hlm->kmask_nqc[0]){
       n2[0][j] = cbrt(SQ(w[j]))*n1[0][j];
-      n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
+      if (omg_basis21) n5[0][j] = cbrt(SQ(w[j]))*n4[0][j];
     }
     /* l=2,m=2 */
     if (EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3){
@@ -8010,7 +8021,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
     }
     /* l=3, l=4 & l=5 */
     // FIXME: condition on spins bad for non-spinning limit
-    if ((chi1 <= 0.) || (chi2 <= 0.)) {
+    if (omg_basis) {
       for (int k=2; k<14; k++) {
 	      if(hlm->kmask_nqc[k]){
 	        n5[k][j]  = cbrt(SQ(w[j]))*n4[k][j];
@@ -9552,6 +9563,11 @@ int eob_wav_ringdown_HM(Dynamics *dyn, Waveform_lm *hlm)
       break;
     index_pk = j;
     Omega_pk = Omega[j]; 
+  }
+  /* LMR: skip a non-monotone tail at the end of the dynamics (find_last_peak_index, as for dyn->tOmg_pk) */
+  if (EOBPars->binary == BINARY_LMR) {
+    index_pk = find_last_peak_index(Omega, dynsize);
+    Omega_pk = Omega[index_pk];
   }
   
   if (VERBOSE) PRFORMi("ringdown_index_pk",index_pk);

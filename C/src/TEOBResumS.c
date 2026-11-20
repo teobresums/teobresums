@@ -1092,6 +1092,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->ode_stop = true;
     }
 
+    /* Optional (LMR): stop when the orbital frequency turns negative; with the N3LO centrifugal radius the plunge
+       approaches A(r_c) = 0 smoothly and the 'r unchanged' stop below does not fire */
+    if (EOBPars->ode_stop_omg_neg && (dyn->Omg < 0.)) {
+      if (VERBOSE) printf("Stop: Omega < 0.\n");
+      dyn->ode_stop = true;
+    }
+
     /* Stop integration if r is unchanged */
     double r_prev = dyn->data[EOB_RAD][iter-1];
     if (dyn->r == r_prev && !dyn->noflx) {

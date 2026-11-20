@@ -262,6 +262,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->spin_flx_kerr=0;   // 1: Kerr hybrid spin sector of the flux (LMR)
   eobp->spin_hflx_kerr=0;  // 1: per-body Kerr horizon flux on top of use_hflx = lmr (LMR)
   eobp->hflx_kerr_N33=8;   // (3,3) horizon spin factor truncation v^8 (0 = full order 13)
+  eobp->ode_stop_omg_neg=0; // 1: stop the ODE when M Omega < 0 (quasi-circular LMR)
+  eobp->nqc_hm_basis=0;    // NQC phase basis: 0 Dali rule; 1 by chi1 > 1e-3 for l = 3, 4, 5; 2 also for the (2,1) (LMR)
   eobp->hflx_kerr_N44=6;   // (4,4) horizon spin factor truncation v^6 (0 = full order 9)
   
   eobp->compute_LR=0; // calculate LR ?
@@ -593,6 +595,7 @@ int eob_set_params(int default_choice, int firstcall)
     }
     if (EOBPars->chi1z > 0.6 || EOBPars->chi1 > 0.6)
       PRWARN("binary LMR: chi1 > 0.6 is outside the tested range");
+    if (EOBPars->ecc > 1e-4) EOBPars->ode_stop_omg_neg = 0;   /* the Omega < 0 stop is for quasi-circular LMR runs only */
   }
 
   /* Check: if in-plane components of spins are < 1e4, then spin aligned, else spin precessing */
@@ -1833,6 +1836,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"hflx_kerr_N33")) {
     eobp->hflx_kerr_N33 = par_get_i(val);
   }
+  if (STREQUAL(key,"ode_stop_omg_neg")) {
+    eobp->ode_stop_omg_neg = par_get_i(val);
+  }
+  if (STREQUAL(key,"nqc_hm_basis")) {
+    eobp->nqc_hm_basis = par_get_i(val);
+  }
   if (STREQUAL(key,"hflx_kerr_N44")) {
     eobp->hflx_kerr_N44 = par_get_i(val);
   }
@@ -2435,6 +2444,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %d\n", "spin_hflx_kerr", eobp->spin_hflx_kerr);
   fprintf(f,"%s = %d\n", "hflx_kerr_N33", eobp->hflx_kerr_N33);
   fprintf(f,"%s = %d\n", "hflx_kerr_N44", eobp->hflx_kerr_N44);
+  fprintf(f,"%s = %d\n", "nqc_hm_basis", eobp->nqc_hm_basis);
+  fprintf(f,"%s = %d\n", "ode_stop_omg_neg", eobp->ode_stop_omg_neg);
   fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);

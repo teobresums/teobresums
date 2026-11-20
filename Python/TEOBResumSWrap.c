@@ -321,6 +321,12 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "hflx_kerr_N33") != NULL ) {
     EOBPars->hflx_kerr_N33 = (int) PyLong_AsLong(PyDict_GetItemString(dict, "hflx_kerr_N33"));
   }
+  if ( PyDict_GetItemString(dict, "ode_stop_omg_neg") != NULL ) {
+    EOBPars->ode_stop_omg_neg = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ode_stop_omg_neg"));
+  }
+  if ( PyDict_GetItemString(dict, "nqc_hm_basis") != NULL ) {
+    EOBPars->nqc_hm_basis = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc_hm_basis"));
+  }
   if ( PyDict_GetItemString(dict, "hflx_kerr_N44") != NULL ) {
     EOBPars->hflx_kerr_N44 = (int) PyLong_AsLong(PyDict_GetItemString(dict, "hflx_kerr_N44"));
   }
