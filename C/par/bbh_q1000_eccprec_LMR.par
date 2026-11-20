@@ -1,5 +1,5 @@
 # parfile for BBH (1000) with eccentricity and precession
-# Builds on the default large-mass-ratio settings
+# uses the large-mass-ratio binary type (binary = "LMR")
 #
 # Note: the (l,m) = (3,1),(4,1) modes are inspiral only, and do not have a 
 # merger-ringdown completion. See 
@@ -15,6 +15,8 @@ use_geometric_units = "yes"
 #
 # Binary properties
 #
+
+binary = "LMR"
 
 q = 1000. # mass ratio
 

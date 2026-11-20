@@ -481,8 +481,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->nqc_coefs_flx             = NQC_FLX_NONE;
     eobp->use_flm                   = USEFLM_22PN;
     eobp->use_hflx                  = HFLX_LMR;
-    eobp->use_a6c_fits              = a6c_fits_LMR;
-    eobp->use_cN3LO_fits            = cN3LO_fits_LMR;
+    eobp->use_a6c_fits              = a6c_fits_NO;
+    eobp->use_cN3LO_fits            = cN3LO_fits_NO;
     eobp->A_pot                     = A_5PNlogP33_newlogs;
     eobp->D_pot                     = D_5PNP32_newlogs_lmr;
     eobp->Q_pot                     = Q_5PNfull;
@@ -892,18 +892,6 @@ int eob_set_params(int default_choice, int firstcall)
     case(a6c_fits_V0):
       EOBPars->a6c = eob_a6c_fit(EOBPars->nu);
       break;
-    case(a6c_fits_LMR):
-      /* LMR-model a6c NR fit. Consistency guard: this fit was calibrated for the
-         A_5PNlogP33_newlogs potential with D_5PNP32_newlogs + Q_5PNfull and the
-         LMR flux (rule: with potentials X, only use the matching fit X). */
-      if (EOBPars->A_pot != A_5PNlogP33_newlogs || EOBPars->D_pot != D_5PNP32_newlogs_lmr ||
-          EOBPars->Q_pot != Q_5PNfull || EOBPars->use_flm != USEFLM_22PN ||
-          EOBPars->use_hflx != HFLX_LMR){
-        if (DEBUG) printf("a6c_fits_LMR must be used with A_5PNlogP33_newlogs + D_5PNP32_newlogs_lmr + Q_5PNfull and the LMR flux (USEFLM_22PN, HFLX_LMR)\n");
-        return 1;
-      }
-      EOBPars->a6c = eob_a6c_fit_LMR(EOBPars->nu);
-      break;
     case(a6c_fits_NO):
       break;
     default:
@@ -956,18 +944,6 @@ int eob_set_params(int default_choice, int firstcall)
       break;
     case(cN3LO_fits_V0):
       EOBPars->cN3LO = eob_c3_fit_global(EOBPars->nu,EOBPars->a1,EOBPars->a2);
-      break;
-    case(cN3LO_fits_LMR):
-      /* LMR-model cN3LO (c3) NR fit. Consistency guard: only valid with the LMR
-         potential set (A_5PNlogP33_newlogs) and the LMR flux (rule: with
-         potentials X, only use the matching fit X). */
-      if (EOBPars->A_pot != A_5PNlogP33_newlogs || EOBPars->D_pot != D_5PNP32_newlogs_lmr ||
-          EOBPars->Q_pot != Q_5PNfull || EOBPars->use_flm != USEFLM_22PN ||
-          EOBPars->use_hflx != HFLX_LMR){
-        if (DEBUG) printf("cN3LO_fits_LMR must be used with A_5PNlogP33_newlogs + D_5PNP32_newlogs_lmr + Q_5PNfull and the LMR flux (USEFLM_22PN, HFLX_LMR)\n");
-        return 1;
-      }
-      EOBPars->cN3LO = eob_c3_fit_LMR(EOBPars->nu,EOBPars->a1,EOBPars->a2); /* TODO(LMR): placeholder, returns 0 until tuned */
       break;
     case(cN3LO_fits_NO):
       break;
@@ -1303,8 +1279,6 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Apotential = &eob_metric_A5PNlogP33;
   } else if (EOBPars->A_pot == A_5PNlogP33_newlogs) {
     eob_metric_Apotential = &eob_metric_A5PNlogP33_newlogs;
-  } else if (EOBPars->A_pot == A_LMR) {
-    eob_metric_Apotential = &eob_metric_ALMR;
   } else {
     PRERR("Unknown option for A potential");
     return 1;

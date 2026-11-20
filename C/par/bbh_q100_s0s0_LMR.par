@@ -1,5 +1,5 @@
 # parfile for BBH (100, 0., 0.)
-# builds on default options of the large-mass-ratio (LMR) branch
+# uses the large-mass-ratio binary type (binary = "LMR")
 #
 # Note: the (l,m) = (3,1),(4,1) modes are inspiral only, and do not have a 
 # merger-ringdown completion. See 
@@ -15,6 +15,8 @@ use_geometric_units = "yes"
 #
 # Binary properties
 #
+
+binary = "LMR"
 
 q = 100. # mass ratio
 
