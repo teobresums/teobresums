@@ -9360,14 +9360,16 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
   hlm->time = t;
 
   /** Source term */
-  double source[] = {
+  double source[] = { /* Heff for l+m even, jhat for l+m odd; KMAX entries (l <= 10) */
     jhat,Heff,
     Heff,jhat,Heff,
     jhat,Heff,jhat,Heff,
     Heff,jhat,Heff,jhat,Heff,
     jhat,Heff,jhat,Heff,jhat,Heff,
     Heff,jhat,Heff,jhat,Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff
+    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,
+    Heff,jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,
+    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff
   };
   
   /** Newtonian waveform */
@@ -9527,14 +9529,16 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
   hlm->time = t;
 
   /** Source term */
-  double source[] = {
+  double source[] = { /* Heff for l+m even, jhat for l+m odd; KMAX entries (l <= 10) */
     jhat,Heff,
     Heff,jhat,Heff,
     jhat,Heff,jhat,Heff,
     Heff,jhat,Heff,jhat,Heff,
     jhat,Heff,jhat,Heff,jhat,Heff,
     Heff,jhat,Heff,jhat,Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff
+    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,
+    Heff,jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,
+    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff
   };
   
   /** Newtonian waveform */
@@ -9656,14 +9660,16 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
   hlm->time = t;
 
   /** Source term */
-  double source[] = {
+  double source[] = { /* Heff for l+m even, jhat for l+m odd; KMAX entries (l <= 10) */
     jhat,Heff,
     Heff,jhat,Heff,
     jhat,Heff,jhat,Heff,
     Heff,jhat,Heff,jhat,Heff,
     jhat,Heff,jhat,Heff,jhat,Heff,
     Heff,jhat,Heff,jhat,Heff,jhat,Heff,
-    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff
+    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,
+    Heff,jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,
+    jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff,jhat,Heff
   };
   
   /** Newtonian waveform */
