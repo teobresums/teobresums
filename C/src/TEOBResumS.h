@@ -215,6 +215,7 @@ enum{
 static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E","Fphi","Fr"};
 
 #define KMAX (54) /** Multipolar linear index, max value */
+#define KMAXHL (9) /** Number of l = 11,12,13 (m = l, l-1, l-2) flux-only multipoles */
 #define KMAX_L8 (35) /** Number of multipoles with l <= 8: the flux range of every flm except the 22PN ones */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
@@ -358,9 +359,11 @@ enum{
   USEFLM_HM_6PN3p3,       /**< HM amplitudes with 4PN in 22, 3p3 in the other main modes, New Log Res */
   USEFLM_KERR,            /**< Kerr amplitudes */
   USEFLM_22PN,            /**< 22PN test-mass flux (l up to 10) */
+  USEFLM_22PN_NU,         /**< as 22PN, plus the known nu-dependence of rho_lm (2,1) 3PN, l = 4, 5 2PN, (2,2) 4PN */
+  USEFLM_22PN_NU_HL,      /**< as 22PNnu, plus the flux of l = 11, 12, 13 (m = l, l-1, l-2) */
   USEFLM_NOPT             /**< number of flm amplitudes options */
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr", "22PN"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr", "22PN", "22PNnu", "22PNnuHL"};
 
 enum{
   HFLX_STD,            /**< standard resummed horizon flux (l=2) */
@@ -1149,6 +1152,8 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
 void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32_newlogs_lmr(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_A6p5PNP16(double r, double nu, double *A, double *dA, double *d2A);
+void eob_wav_flm_22PN_nu(double x,double nu, double *rholm, double *flm);
+double eob_flx_hatFlux_highl(double x, double w, double Heff, double jhat, double nu);
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);

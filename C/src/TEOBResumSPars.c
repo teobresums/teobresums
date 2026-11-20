@@ -479,7 +479,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->nqc                       = NQC_MANUAL;
     eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE;
     eobp->nqc_coefs_flx             = NQC_FLX_NONE;
-    eobp->use_flm                   = USEFLM_22PN;
+    eobp->use_flm                   = USEFLM_22PN_NU_HL;
     eobp->use_hflx                  = HFLX_LMR;
     eobp->use_a6c_fits              = a6c_fits_NO;
     eobp->use_cN3LO_fits            = cN3LO_fits_NO;
@@ -1195,6 +1195,15 @@ int eob_set_params(int default_choice, int firstcall)
   else if (EOBPars->use_flm == USEFLM_22PN) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
     eob_wav_flm      = &eob_wav_flm_22PN;
+    eob_wav_flm_s    = &eob_wav_flm_s_HM;
+    eob_wav_deltalm  = &eob_wav_deltalm_HM;
+    eob_wav_ringdown = &eob_wav_ringdown_HM;
+    eob_flx_Fr       = &eob_flx_Fr_ecc_next;
+  }
+  else if (EOBPars->use_flm == USEFLM_22PN_NU || EOBPars->use_flm == USEFLM_22PN_NU_HL) {
+    /* 22PNnuHL: same amplitudes, the l = 11, 12, 13 flux is added in eob_flx_Flux_s / _ecc */
+    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
+    eob_wav_flm      = &eob_wav_flm_22PN_nu;
     eob_wav_flm_s    = &eob_wav_flm_s_HM;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
     eob_wav_ringdown = &eob_wav_ringdown_HM;

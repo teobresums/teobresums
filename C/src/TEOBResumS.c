@@ -970,7 +970,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
  
   /* Unwrap phase for higher modes; 22PN also uses the HM waveform, and a 2 pi jump near the NQC point spikes omega_lm */
   if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3) ||
-      (EOBPars->use_flm == USEFLM_22PN) || (ecc != 0.)) {
+      (EOBPars->use_flm == USEFLM_22PN) || (EOBPars->use_flm == USEFLM_22PN_NU) || (EOBPars->use_flm == USEFLM_22PN_NU_HL) || (ecc != 0.)) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
 	      unwrap_HM(hlm->phase[k],size);

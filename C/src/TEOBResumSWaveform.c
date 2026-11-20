@@ -4473,6 +4473,85 @@ void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm)
 
 }
 
+/**
+ * Function: eob_wav_flm_22PN_nu
+ * -----------------------------
+ *   eob_wav_flm_22PN plus the known nu-dependence of the rho_lm: (2,1) at 3PN
+ *   (Henry-Faye-Blanchet 2210.15602), (4,1), (4,3), (5,1), (5,3), (5,5) at 2PN,
+ *   and (2,2) at 4PN (Blanchet et al. 2304.11186, Eq. 6.17), the latter in the
+ *   EOB orbital frame: rho_22|orb = rho_22|x22 + 48/5 nu x^4, the choice for
+ *   which the flux is F_inf + dE_Schott/dt. Every term carries a factor nu, so
+ *   nu -> 0 is eob_wav_flm_22PN bit for bit.
+ *
+ *   @param[in]  x     : frequency
+ *   @param[in]  nu    : symmetric mass ratio
+ *   @param[out] rholm : resummed amplitudes
+ *   @param[out] flm   : rholm^l
+ */
+void eob_wav_flm_22PN_nu(double x, double nu, double *rholm, double *flm)
+{
+  /* 22PN amplitudes, called directly (the eob_wav_flm pointer points here) */
+  eob_wav_flm_22PN(x, nu, rholm, flm);
+
+  const double nu2 = nu*nu;
+  const double nu3 = nu*nu2;
+  const double nu4 = nu*nu3;
+
+  const double v2 = x;              /* v = sqrt(x), so v2 = x */
+  const double v4 = v2*v2;
+  const double v6 = v4*v2;
+  const double v8 = v4*v4;
+  const double logv = 0.5*log(x);   /* same convention as eob_wav_flm_22PN */
+  const double oo1m2nu2 = 1./SQ(1. - 2.*nu);
+
+  /* --- (2,1) at 3PN : clm[0][6], nu-dependent part (Henry-Faye-Blanchet arXiv:2210.15602) --- */
+  rholm[0] += (-0.4679845145207943*nu +0.07159479728038401*nu2 +0.0579309811346376*nu3) * v6;
+  /* --- (4,1) at 2PN : clm[5][4] ----------------------------------------- */
+  {
+    const double c0  = -0.3677899278751551;   /* nu=0 value, already in the baseline */
+    const double cnu = (c0 +1.848513055757374*nu -0.302392009032634*nu2 -4.049087907042453*nu3 +0.3748145793600339*nu4)*oo1m2nu2;
+    rholm[5] += (cnu - c0) * v4;
+  }
+  /* --- (4,3) at 2PN : clm[7][4] ----------------------------------------- */
+  {
+    const double c0  = -0.9783218202252293;   /* nu=0 value, already in the baseline */
+    const double cnu = (c0 +3.151960113749886*nu +0.9401487835081586*nu2 -7.226120470438652*nu3 +1.026647594829413*nu4)*oo1m2nu2;
+    rholm[7] += (cnu - c0) * v4;
+  }
+  /* --- (5,1) at 2PN : clm[9][4] ----------------------------------------- */
+  {
+    const double c0  = -0.1047896120973044;   /* nu=0 value, already in the baseline */
+    const double cnu = (c0 -0.5219395134779751*nu +2.96155161078238*nu2 -2.512741617357002*nu3 -0.9820381328073636*nu4)*oo1m2nu2;
+    rholm[9] += (cnu - c0) * v4;
+  }
+  /* --- (5,3) at 2PN : clm[11][4] ----------------------------------------- */
+  {
+    const double c0  = -0.5788010707241477;   /* nu=0 value, already in the baseline */
+    const double cnu = (c0 +0.7881008734854889*nu +3.486461914154222*nu2 -5.56244951629567*nu3 +0.1274875551798629*nu4)*oo1m2nu2;
+    rholm[11] += (cnu - c0) * v4;
+  }
+  /* --- (5,5) at 2PN : clm[13][4] ----------------------------------------- */
+  {
+    const double c0  = -1.574972762280455;   /* nu=0 value, already in the baseline */
+    const double cnu = (c0 +3.79337184183338*nu +3.477009486240255*nu2 -10.50629473091012*nu3 +1.713932563163332*nu4)*oo1m2nu2;
+    rholm[13] += (cnu - c0) * v4;
+  }
+  /* --- (2,2) at 4PN : clm[1][8], nu-dependent part (Blanchet et al. arXiv:2304.11186, Eq. 6.17) ---
+     In the EOB orbital frame, rho_22|orb = rho_22|x22 + 48/5 nu x^4: the nu^1 constant is -41.10249714211636
+     (x22 value -50.70249714211636), the eulerlog_2 coefficient 4.173242630385488 + 19.99773242630385 nu;
+     the nu = 0 part is in eob_wav_flm_22PN. */
+  rholm[1] += ( -1.836749025375017*nu +10.48174467376330*nu2
+                -0.1792973174305593*nu3 +0.1368191977995206*nu4
+                +19.99773242630385*nu*logv ) * v8;
+
+  /* flm = rholm^l for the corrected modes (eob_wav_flm_s_HM does not recompute it for (5,1), (5,3)) */
+  const int kfix[7] = {0, 1, 5, 7, 9, 11, 13};
+  for (int i = 0; i < 7; i++) {
+    const int k = kfix[i];
+    flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
+  }
+}
+
 /** 
  * Function: eob_wav_flm_s_SSLO
  *   Resummed amplitudes for the spin case. 
@@ -9407,7 +9486,7 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
     hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5 * X12; /* (5,3) */
 
     if (!(EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 ||EOBPars->use_flm == USEFLM_HM_6PN3p3 ||
-          EOBPars->use_flm == USEFLM_22PN)) {
+          EOBPars->use_flm == USEFLM_22PN || EOBPars->use_flm == USEFLM_22PN_NU || EOBPars->use_flm == USEFLM_22PN_NU_HL)) {
       hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /* (3,1) */
       hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /* (3,3) */
       hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5; /* (4,1) */
