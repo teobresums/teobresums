@@ -957,3 +957,29 @@ int main (int argc, char* argv[])
 }
 
 #endif
+
+/* Complex polygamma psi^(n)(z), n = 0..4, Re z > 0: recurrence up to Re z >= 20, then asymptotic series. */
+double complex eob_cpolygamma(int n, double complex z)
+{
+  static const double B2k[] = {1./6., -1./30., 1./42., -1./30., 5./66., -691./2730., 7./6., -3617./510., 43867./798., -174611./330.};
+  double complex acc = 0.;
+  double nfact = 1.; for (int i = 2; i <= n; i++) nfact *= i;
+  const double sgn = (n % 2 == 0) ? -1. : 1.;          /* psi^(n)(z) = psi^(n)(z+1) - (-1)^n n!/z^(n+1) = psi^(n)(z+1) + sgn n!/z^(n+1) */
+  while (creal(z) < 20.) { acc += sgn * nfact / cpow(z, n + 1); z += 1.; }
+  double complex as;
+  if (n == 0) {
+    as = clog(z) - 0.5 / z;
+    for (int k = 1; k <= 10; k++) as -= B2k[k - 1] / (2. * k * cpow(z, 2 * k));
+  } else {
+    /* psi^(n)(z) ~ (-1)^(n+1) [ (n-1)!/z^n + n!/(2 z^(n+1)) + sum_k B_2k (2k+n-1)!/((2k)! z^(2k+n)) ] */
+    double nm1 = nfact / n;
+    as = nm1 / cpow(z, n) + nfact / (2. * cpow(z, n + 1));
+    for (int k = 1; k <= 10; k++) {
+      double r = 1.; for (int i = 2 * k + 1; i <= 2 * k + n - 1; i++) r *= i;   /* (2k+n-1)!/(2k)! */
+      as += B2k[k - 1] * r / cpow(z, 2 * k + n);
+    }
+    as *= (n % 2 == 1) ? 1. : -1.;
+  }
+  return as + acc;
+}
+

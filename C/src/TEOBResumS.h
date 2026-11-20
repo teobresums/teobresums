@@ -215,6 +215,8 @@ enum{
 static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E","Fphi","Fr"};
 
 #define KMAX (54) /** Multipolar linear index, max value */
+#define KS_NV (24)          /** Kerr spin series: powers of v 0..23 */
+#define KS_NL (10)          /** Kerr spin series: powers of log(v) 0..9 */
 #define KMAXHL (9) /** Number of l = 11,12,13 (m = l, l-1, l-2) flux-only multipoles */
 #define KMAX_L8 (35) /** Number of multipoles with l <= 8: the flux range of every flm except the 22PN ones */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
@@ -717,6 +719,10 @@ typedef struct tagEOBParameters
   int GS_DJSu;                                          /**< Gyro-gravitomagnetic functions: 0 eob_dyn_s_GS (default), 1 DJS gauge N3LO with argument u (LMR) */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_hflx;                                         /**< horizon-flux choice: "std"/"lmr" */
+  int spin_flx_kerr;                                    /**< 1: Kerr hybrid spin sector of the flux at infinity (22PN family, BBH) */
+  int spin_hflx_kerr;                                   /**< 1: per-body Kerr factorized horizon flux on top of HFLX_LMR */
+  int hflx_kerr_N33;                                    /**< spin_hflx_kerr: truncation v^N of the (3,3) horizon spin factor (default 8; 0 = full order 13) */
+  int hflx_kerr_N44;                                    /**< spin_hflx_kerr: truncation v^N of the (4,4) horizon spin factor (default 6; 0 = full order 9) */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
@@ -1215,7 +1221,40 @@ void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
 double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu);
 double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
-double eob_flx_HorizonFlux_lmr_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_lmr_kerr(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+void eob_flx_rhoHS_kerr_iR(const double v, const double q, const double X, double *rhoHS, double *LO);
+double eob_flx_highl_rho_kerr(const int k, const double x, const double a0, const double *clmk);
+extern double EOB_RHOH_LMR_LAST[9];
+/* Kerr spin sector of the LMR flux: generated tables (TEOBResumSKerrSpin.c) */
+#define KS_NM (KMAX+KMAXHL)  /* infinity modes */
+#define KS_NH (20)           /* horizon modes l = 2..6 */
+void eob_kerr_psi(const double q, double psiA[5][7], double psiB[5][7], double *kap, double *lkap);
+int eob_kerr_rho8(int k, double C[KS_NV][KS_NL], const double kap, const double lkap,
+                  const double psiA[5][7], const double psiB[5][7], const double q);
+int eob_kerr_rhoH(int k, double C[KS_NV][KS_NL], const double kap, const double lkap,
+                  const double psiA[5][7], const double psiB[5][7], const double q);
+int eob_kerr_etaHLO(int k, const double q, const double kap, double *c0);
+double eob_flx_etaHLO_lin_kerr(int k);
+extern const double EOB_KERR_RHOHL_LOG[KMAXHL][35][6];
+/* Kerr spin sector of the LMR flux: infinity spin factors (TEOBResumSWaveform.c) */
+extern double EOB_RHOLM_ORB_CLM[KMAX][45];
+void eob_wav_rhoS_kerr_iR(const double v, const double q, double *rhoS);
+int eob_wav_rhoS_kerr_series(const double q, const int k, double c[KS_NV][KS_NL]);
+double eob_wav_xtilde_scale(const double a);
+void eob_wav_flm_s_kerr_hyb(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2,
+                            double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
+/* series helpers (TEOBResumSUtils.c) and complex polygamma (SpecialFuns.c) */
+void logser_mul(double A[KS_NV][KS_NL], double B[KS_NV][KS_NL], double R[KS_NV][KS_NL], int N);
+void logser_inv(double A[KS_NV][KS_NL], double R[KS_NV][KS_NL], int N);
+double logser_eval(double A[KS_NV][KS_NL], int N, double v, double logv);
+void logser_zero(double A[KS_NV][KS_NL]);
+void logser_trunc(double A[KS_NV][KS_NL], int N);
+void logser_axpy(double a, double A[KS_NV][KS_NL], double B[KS_NV][KS_NL]);
+void logser_freeze(double A[KS_NV][KS_NL], int N, double logv, double *c);
+void ser_mul(const double *a, const double *b, double *c, int N);
+void ser_div(const double *a, const double *b, double *c, int N);
+double ser_eval(const double *c, int N, double v);
+double complex eob_cpolygamma(int n, double complex z);
 
 /* TEOBResumSWaveform.c */
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */

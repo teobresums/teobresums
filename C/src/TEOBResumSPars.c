@@ -259,6 +259,10 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->GS_DJSu=0; // 0: eob_dyn_s_GS; 1: DJS gauge N3LO with argument u (LMR)
   eobp->use_flm=USEFLM_HM; // "SSLO", "SSNLO", "HM"
   eobp->use_hflx=HFLX_STD; // "std"/"lmr"
+  eobp->spin_flx_kerr=0;   // 1: Kerr hybrid spin sector of the flux (LMR)
+  eobp->spin_hflx_kerr=0;  // 1: per-body Kerr horizon flux on top of use_hflx = lmr (LMR)
+  eobp->hflx_kerr_N33=8;   // (3,3) horizon spin factor truncation v^8 (0 = full order 13)
+  eobp->hflx_kerr_N44=6;   // (4,4) horizon spin factor truncation v^6 (0 = full order 9)
   
   eobp->compute_LR=0; // calculate LR ?
   eobp->compute_LSO=0; // calculate LSO ?
@@ -1337,6 +1341,17 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
   
+  /* Kerr hybrid spin sector of the flux: replaces the spin part of eob_wav_flm_s_HM (BBH, 22PN family only) */
+  if (EOBPars->spin_flx_kerr) {
+    if ((EOBPars->use_flm == USEFLM_22PN || EOBPars->use_flm == USEFLM_22PN_NU || EOBPars->use_flm == USEFLM_22PN_NU_HL)
+        && !EOBPars->use_tidal) {
+      eob_wav_flm_s = &eob_wav_flm_s_kerr_hyb;
+    } else {
+      PRERR("spin_flx_kerr needs use_flm 22PN/22PNnu/22PNnuHL and no tides");
+      return 1;
+    }
+  }
+
   /* Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
@@ -1809,6 +1824,18 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     eobp->knqcpeak22_size = str2iarray(val, &eobp->knqcpeak22);
   }
 
+  if (STREQUAL(key,"spin_flx_kerr")) {
+    eobp->spin_flx_kerr = par_get_i(val);
+  }
+  if (STREQUAL(key,"spin_hflx_kerr")) {
+    eobp->spin_hflx_kerr = par_get_i(val);
+  }
+  if (STREQUAL(key,"hflx_kerr_N33")) {
+    eobp->hflx_kerr_N33 = par_get_i(val);
+  }
+  if (STREQUAL(key,"hflx_kerr_N44")) {
+    eobp->hflx_kerr_N44 = par_get_i(val);
+  }
   if (STREQUAL(key,"GS_DJSu")) {
     eobp->GS_DJSu = par_get_i(val);
   }
@@ -2404,6 +2431,10 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
   fprintf(f,"%s = %d\n", "GS_DJSu", eobp->GS_DJSu);
+  fprintf(f,"%s = %d\n", "spin_flx_kerr", eobp->spin_flx_kerr);
+  fprintf(f,"%s = %d\n", "spin_hflx_kerr", eobp->spin_hflx_kerr);
+  fprintf(f,"%s = %d\n", "hflx_kerr_N33", eobp->hflx_kerr_N33);
+  fprintf(f,"%s = %d\n", "hflx_kerr_N44", eobp->hflx_kerr_N44);
   fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);

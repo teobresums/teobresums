@@ -3969,4 +3969,61 @@ void errorexits(char *file, int line, const char *s, const char *t)
   exit(ERROR);
 }
 
+/* Truncated series in v with log(v)-polynomial coefficients, A[n][j] v^n log(v)^j, n < KS_NV, j < KS_NL
+   (Kerr spin factors of the LMR flux), and plain numeric series c[n] v^n */
+
+void logser_mul(double A[KS_NV][KS_NL], double B[KS_NV][KS_NL], double R[KS_NV][KS_NL], int N)
+{
+  double T[KS_NV][KS_NL]; memset(T, 0, sizeof(T));
+  for (int i = 0; i <= N; i++) for (int k = 0; i + k <= N; k++)
+    for (int a = 0; a < KS_NL; a++) if (A[i][a] != 0.)
+      for (int b = 0; a + b < KS_NL; b++) T[i + k][a + b] += A[i][a] * B[k][b];
+  memcpy(R, T, sizeof(T));
+}
+void logser_inv(double A[KS_NV][KS_NL], double R[KS_NV][KS_NL], int N)
+{
+  /* A[0] = 1 (no logs) required */
+  double T[KS_NV][KS_NL]; memset(T, 0, sizeof(T)); T[0][0] = 1.;
+  for (int n = 1; n <= N; n++)
+    for (int j = 1; j <= n; j++)
+      for (int a = 0; a < KS_NL; a++) if (A[j][a] != 0.)
+        for (int b = 0; a + b < KS_NL; b++) T[n][a + b] -= A[j][a] * T[n - j][b];
+  memcpy(R, T, sizeof(T));
+}
+double logser_eval(double A[KS_NV][KS_NL], int N, double v, double logv)
+{
+  double s = 0., vn = 1.;
+  for (int n = 0; n <= N; n++) {
+    double c = 0., lp = 1.;
+    for (int j = 0; j < KS_NL; j++) { c += A[n][j] * lp; lp *= logv; }
+    s += c * vn; vn *= v;
+  }
+  return s;
+}
+void logser_zero(double A[KS_NV][KS_NL]) { memset(A, 0, sizeof(double) * KS_NV * KS_NL); }
+void logser_trunc(double A[KS_NV][KS_NL], int N) { for (int n = N + 1; n < KS_NV; n++) for (int j = 0; j < KS_NL; j++) A[n][j] = 0.; }
+void logser_axpy(double a, double A[KS_NV][KS_NL], double B[KS_NV][KS_NL]) { for (int n = 0; n < KS_NV; n++) for (int j = 0; j < KS_NL; j++) B[n][j] += a * A[n][j]; }
+
+/* ---- frozen-log numeric series (coefficients of v^n at the current log v), 0..N ---- */
+void logser_freeze(double A[KS_NV][KS_NL], int N, double logv, double *c)
+{
+  for (int n = 0; n <= N; n++) { double s = 0., lp = 1.; for (int j = 0; j < KS_NL; j++) { s += A[n][j] * lp; lp *= logv; } c[n] = s; }
+}
+void ser_mul(const double *a, const double *b, double *c, int N)
+{
+  double t[KS_NV];
+  for (int n = 0; n <= N; n++) { double s = 0.; for (int j = 0; j <= n; j++) s += a[j] * b[n - j]; t[n] = s; }
+  memcpy(c, t, sizeof(double) * (N + 1));
+}
+void ser_div(const double *a, const double *b, double *c, int N)   /* c = T_N[a/b], b[0] = 1 */
+{
+  double t[KS_NV];
+  for (int n = 0; n <= N; n++) { double s = a[n]; for (int j = 1; j <= n; j++) s -= b[j] * t[n - j]; t[n] = s; }
+  memcpy(c, t, sizeof(double) * (N + 1));
+}
+double ser_eval(const double *c, int N, double v)
+{
+  double s = 0.; for (int n = N; n >= 0; n--) s = s * v + c[n]; return s;
+}
+
 /* do not write functions beyond this line: errorexit undef/define */

@@ -312,6 +312,18 @@ int SetOptionalVariables(PyObject* dict){
   }
   
   /* rc and flm */
+  if ( PyDict_GetItemString(dict, "spin_flx_kerr") != NULL ) {
+    EOBPars->spin_flx_kerr = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_flx_kerr"));
+  }
+  if ( PyDict_GetItemString(dict, "spin_hflx_kerr") != NULL ) {
+    EOBPars->spin_hflx_kerr = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_hflx_kerr"));
+  }
+  if ( PyDict_GetItemString(dict, "hflx_kerr_N33") != NULL ) {
+    EOBPars->hflx_kerr_N33 = (int) PyLong_AsLong(PyDict_GetItemString(dict, "hflx_kerr_N33"));
+  }
+  if ( PyDict_GetItemString(dict, "hflx_kerr_N44") != NULL ) {
+    EOBPars->hflx_kerr_N44 = (int) PyLong_AsLong(PyDict_GetItemString(dict, "hflx_kerr_N44"));
+  }
   if ( PyDict_GetItemString(dict, "GS_DJSu") != NULL ) {
     EOBPars->GS_DJSu = (int) PyLong_AsLong(PyDict_GetItemString(dict, "GS_DJSu"));
   }

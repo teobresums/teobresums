@@ -228,6 +228,9 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
   return hatFH;
 }
 
+/* Orbital rho^H_lm (l <= 4) of the last eob_flx_HorizonFlux_lmr call, for the Kerr spin sector */
+double EOB_RHOH_LMR_LAST[9];
+
 /**
  * Function: eob_flx_HorizonFlux_lmr
  * ---------------------------------
@@ -481,57 +484,104 @@ double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu)
     hatFH = hatFH + FlmH[i];
   }
 
+  /* orbital rho^H for the Kerr spin sector (eob_flx_HorizonFlux_lmr_kerr) */
+  for (int i = 0; i < 9; i++) EOB_RHOH_LMR_LAST[i] = rhoHlm[i];
   return hatFH;
 }
 
-/**
- * Function: eob_flx_HorizonFlux_lmr_s
- * -----------------------------------
- *   Horizon flux for SPINNING large-mass-ratio binaries: the nonspinning
- *   high-PN multipolar LMR horizon flux (eob_flx_HorizonFlux_lmr) with the
- *   spin-dependent (2,2) contribution of the Alvi/Dali spinning horizon flux
- *   (eob_flx_HorizonFlux_s) grafted on.
- *
- *   Construction:
- *     hatFH = eob_flx_HorizonFlux_lmr(...)                          [nonspin, l=2,3,4]
- *           + [ eob_flx_HorizonFlux_s(...) - (X1^4 + X2^4) x^4 ]    [spin-only part]
- *   The subtracted term is the chi->0 limit of eob_flx_HorizonFlux_s (its bare
- *   x^4 = v^8 (2,2) piece; note X1^4 + X2^4 = 1 - 4nu + 2nu^2), which the LMR
- *   flux already carries (dressed with Heff^2 and the high-PN rho_22 series).
- *   Hence at chi1=chi2=0 this reduces EXACTLY (bit-for-bit) to
- *   eob_flx_HorizonFlux_lmr, so the nonspinning path -- and the a6c calibrated on
- *   it -- is unchanged.  For nonzero spin it adds the leading v^5 (2.5PN) Alvi
- *   spin term, a LOWER PN order than the nonspinning v^8 horizon term, which
- *   dominates the horizon absorption for large spin.
- *
- *   NOTE(LMR): this is a pragmatic graft of the leading Alvi spin terms, NOT a
- *   first-principles spinning-LMR horizon flux.  Higher-PN spin and spin-orbit
- *   cross terms in the multipolar rho_lm series are NOT included.
- *
- *   @param[in] x    : frequency parameter v_phi^2
- *   @param[in] Heff : effective Hamiltonian
- *   @param[in] jhat : angular momentum
- *   @param[in] nu   : symmetric mass ratio
- *   @param[in] X1   : mass fraction of body 1
- *   @param[in] X2   : mass fraction of body 2
- *   @param[in] chi1 : dimensionless spin 1
- *   @param[in] chi2 : dimensionless spin 2
- *   @return hatFH   : Newton-normalized horizon flux
- */
-double eob_flx_HorizonFlux_lmr_s(double x, double Heff, double jhat, double nu,
-                                 double X1, double X2, double chi1, double chi2)
+/* ---- Kerr spin sector of the LMR flux (spin_flx_kerr, spin_hflx_kerr): l = 11..13 rho_lm, per-body horizon ---- */
+typedef struct { int ok; double q; int n33, n44; int N[KS_NH]; int k0[KS_NH]; double c0[KS_NH]; double c[KS_NH][KS_NV][KS_NL]; } ks_cache_hor_t;
+static ks_cache_hor_t KSH = {0};
+/* horizon spin-factor caps (0 if EOBPars is not allocated) */
+static inline int ks_hcap33(void) { return EOBPars ? EOBPars->hflx_kerr_N33 : 0; }
+static inline int ks_hcap44(void) { return EOBPars ? EOBPars->hflx_kerr_N44 : 0; }
+
+static void ks_build_hor(double q)
 {
-  /* nonspinning high-PN multipolar LMR horizon flux (l = 2,3,4) */
-  double hatFH = eob_flx_HorizonFlux_lmr(x, Heff, jhat, nu);
+  double psiA[5][7], psiB[5][7], kap, lkap, psiA0[5][7], psiB0[5][7], kap0, lkap0;
+  eob_kerr_psi(q, psiA, psiB, &kap, &lkap); eob_kerr_psi(0., psiA0, psiB0, &kap0, &lkap0);
+  for (int k = 0; k < KS_NH; k++) {
+    double Cq[KS_NV][KS_NL], C0[KS_NV][KS_NL], Ci[KS_NV][KS_NL];
+    int nq = eob_kerr_rhoH(k, Cq, kap, lkap, psiA, psiB, q);
+    int n0 = eob_kerr_rhoH(k, C0, kap0, lkap0, psiA0, psiB0, 0.);
+    int N = (nq < n0) ? nq : n0;
+    /* optional truncation of the (3,3) (k = 4) and (4,4) (k = 8) spin factors at v^N (hflx_kerr_N33, hflx_kerr_N44;
+       0 = full order 13, 9, whose denominators vanish at x ~ 0.28-0.36) */
+    if (k == 4 && ks_hcap33() > 0 && N > ks_hcap33()) N = ks_hcap33();
+    if (k == 8 && ks_hcap44() > 0 && N > ks_hcap44()) N = ks_hcap44();
+    if (N > 0) { logser_inv(Cq, Ci, N); logser_mul(C0, Ci, KSH.c[k], N); }
+    else { memset(KSH.c[k], 0, sizeof(KSH.c[k])); KSH.c[k][0][0] = 1.; }
+    KSH.N[k] = N;
+    KSH.k0[k] = eob_kerr_etaHLO(k, q, kap, &KSH.c0[k]);
+  }
+  KSH.q = q; KSH.n33 = ks_hcap33(); KSH.n44 = ks_hcap44(); KSH.ok = 1;
+}
 
-  /* spin-only part of the Alvi/Dali (2,2) horizon flux: the full spinning
-     expression minus its chi->0 limit (X1^4 + X2^4) x^4, which the LMR term
-     already provides.  This difference is exactly 0 at chi1=chi2=0. */
-  const double x4        = x*x*x*x;
-  const double hatFH_s   = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
-  const double hatFH_sns = (X1*X1*X1*X1 + X2*X2*X2*X2) * x4;   /* = (1-4nu+2nu^2) x^4 */
-  hatFH += (hatFH_s - hatFH_sns);
+/** Horizon: for modes l = 2..6 (k = 0..19, l-major, m = 1..l) return
+    rhobar^{H,S}_lm(v; q) and the leading factor (1 - X v^3/Omega_H(q)) etaH_LO(q) v^k0
+    (normalized by 32/5 v^15, as Fujita's etaH). X = mass fraction of the absorbing body (1 = test mass). */
+void eob_flx_rhoHS_kerr_iR(const double v, const double q, const double X, double *rhoHS, double *LO)
+{
+  if (!KSH.ok || KSH.q != q || KSH.n33 != ks_hcap33() || KSH.n44 != ks_hcap44()) ks_build_hor(q);
+  const double logv = log(v), kap = sqrt(1. - q * q), OmH = q / (2. * (1. + kap));
+  const double pref = 1. - X * v * v * v / OmH;   /* Omega/Omega_H,i = 2 (1 + kappa_i) M_i Omega / chi_i, M_i Omega = X_i v^3 */
+  for (int k = 0; k < KS_NH; k++) {
+    rhoHS[k] = 1. / logser_eval(KSH.c[k], KSH.N[k], v, logv);
+    LO[k] = pref * KSH.c0[k] * gsl_pow_int(v, KSH.k0[k]);
+  }
+}
 
+/** rho_lm of the l = 11..13 flux-only modes (KMAXHL order, eob_flx_hatFlux_highl), Kerr spin sector with xt.
+    clmk = that function's orbital coefficients at log v (nu-exact); their log(v)-dependent parts are nu-independent,
+    so the coefficients at log(vt) are clmk + EOB_KERR_RHOHL_LOG (log part at log vt - at log v). a0 = X1 chi1 + X2 chi2. */
+double eob_flx_highl_rho_kerr(const int k, const double x, const double a0, const double *clmk)
+{
+  const double v = sqrt(x), logv = log(v);
+  const int kk = KMAX + k;
+  double cS[KS_NV][KS_NL];
+  const int N = eob_wav_rhoS_kerr_series(a0, kk, cS);
+  const double s = eob_wav_xtilde_scale(a0);
+  double g[KS_NV], r[KS_NV], R[KS_NV], t[KS_NV];
+  logser_freeze(cS, N, logv, g);
+  if (s == 1.) return ser_eval(clmk, 34, v) / ser_eval(g, N, v);
+  const double lvt = logv + 0.5 * log(s), ss = sqrt(s);
+  double Rall[35], sh = 1.;
+  for (int n = 0; n < 35; n++) {
+    double c = clmk[n], pt = 1., px = 1.;
+    for (int j = 1; j < 6; j++) { pt *= lvt; px *= logv; c += EOB_KERR_RHOHL_LOG[k][n][j] * (pt - px); }
+    Rall[n] = c * sh; sh *= ss;
+  }
+  for (int n = 0; n <= N; n++) { r[n] = clmk[n]; R[n] = Rall[n]; }
+  ser_div(R, r, t, N); ser_mul(t, g, t, N);
+  return ser_eval(Rall, 34, v) / ser_eval(t, N, v);
+}
+
+/** Horizon flux (spin_hflx_kerr = 1): nonspinning LMR multipolar flux + sum over bodies of [K_i(chi_i) - K_i(0)],
+    K_i(chi) = X_i^3 v^5 sum_{l<=4,m} (1 - X_i v^3/Omega_H(chi)) etaH_LO(chi) v^k0 S^2 [rho^H_orb rhobar^{H,S}(v; chi)]^(2l),
+    K_i(0)   = X_i^3 v^5 sum (-4 c1 X_i v^3) v^k0 S^2 rho^H_orb^(2l)   (its chi -> 0 limit).
+    At LO (2,2) this is exactly the Alvi term of eob_flx_HorizonFlux_s. Normalized to 32/5 x^5. */
+double eob_flx_HorizonFlux_lmr_kerr(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2)
+{
+  double hatFH = eob_flx_HorizonFlux_lmr(x, Heff, jhat, nu);   /* fills EOB_RHOH_LMR_LAST */
+  const double v = sqrt(x), v3 = v * v * v, v5 = v3 * v * v;
+  const double Xb[2] = {X1, X2}, chib[2] = {chi1, chi2};
+  static const int LH[9] = {2, 2, 3, 3, 3, 4, 4, 4, 4}, MH[9] = {1, 2, 1, 2, 3, 1, 2, 3, 4};
+  for (int b = 0; b < 2; b++) {
+    const double X = Xb[b], chi = chib[b];
+    if (fabs(chi) < 1e-12) continue;
+    double rhoHS[KS_NH], LO[KS_NH];
+    eob_flx_rhoHS_kerr_iR(v, chi, X, rhoHS, LO);
+    double K = 0., K0 = 0.;
+    for (int k = 0; k < 9; k++) {
+      const double S = ((LH[k] + MH[k]) % 2 == 0) ? Heff : jhat;
+      const double ro = EOB_RHOH_LMR_LAST[k];
+      int k0; double c0dummy;
+      k0 = eob_kerr_etaHLO(k, chi, sqrt(1. - chi * chi), &c0dummy);
+      K  += LO[k] * SQ(S) * gsl_pow_int(ro * rhoHS[k], 2 * LH[k]);
+      K0 += -4. * eob_flx_etaHLO_lin_kerr(k) * X * v3 * gsl_pow_int(v, k0) * SQ(S) * gsl_pow_int(ro, 2 * LH[k]);
+    }
+    hatFH += X * X * X * v5 * (K - K0);
+  }
   return hatFH;
 }
 
@@ -803,7 +853,9 @@ double eob_flx_hatFlux_highl(double x, double w, double Heff, double jhat, doubl
 
     /* rho_lm: Taylor series in v; entries above each mode's stored
        order (v^34 or v^32) are zero, so one bound serves all nine */
-    const double rholm = Taylorseries(v, clm[k], 34);
+    const double rholm = (EOBPars->spin_flx_kerr) ?
+      eob_flx_highl_rho_kerr(k, x, EOBPars->a1 + EOBPars->a2, clm[k]) :   /* Kerr spin sector, xt */
+      Taylorseries(v, clm[k], 34);
 
     /* effective source */
     const double Seff = (EHL[k] == 0) ? Heff : jhat;
@@ -983,16 +1035,10 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   if (!(usetidal)) {
     double hatFH;
     if (EOBPars->use_hflx == HFLX_LMR) {
-      /* LMR high-PN multipolar horizon flux.  eob_flx_HorizonFlux_lmr_s grafts
-         the spin-dependent (2,2) Alvi terms (leading v^5, 2.5PN) onto the
-         nonspinning multipolar LMR flux and reduces EXACTLY to
-         eob_flx_HorizonFlux_lmr at chi1=chi2=0, so the nonspinning path (and the
-         a6c calibrated on it) is unchanged, while genuinely spinning runs now
-         retain the dominant spin horizon terms the bare _lmr flux dropped.
-         (History: the LMR term had ended up only on the use_spins==0 branch in
-         the Dali rebranch, but eob_set_params forces use_spins=ALIGNED for chi=0
-         binaries, so it was silently dropped from the nonspinning path.) */
-      hatFH = eob_flx_HorizonFlux_lmr_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+      /* LMR multipolar horizon flux (l = 2, 3, 4); with spin_hflx_kerr, plus the per-body Kerr spin factors */
+      hatFH = (EOBPars->spin_hflx_kerr) ?
+        eob_flx_HorizonFlux_lmr_kerr(x, Heff, jhat, nu, X1, X2, chi1, chi2) :
+        eob_flx_HorizonFlux_lmr(x, Heff, jhat, nu);
     } else if (usespins) {
       hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
     } else {
@@ -1169,16 +1215,10 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   double hatFH = 0.;
   if (!(usetidal)) {
     if (EOBPars->use_hflx == HFLX_LMR) {
-      /* LMR high-PN multipolar horizon flux.  eob_flx_HorizonFlux_lmr_s grafts
-         the spin-dependent (2,2) Alvi terms (leading v^5, 2.5PN) onto the
-         nonspinning multipolar LMR flux and reduces EXACTLY to
-         eob_flx_HorizonFlux_lmr at chi1=chi2=0, so the nonspinning path (and the
-         a6c calibrated on it) is unchanged, while genuinely spinning runs now
-         retain the dominant spin horizon terms the bare _lmr flux dropped.
-         (History: the LMR term had ended up only on the use_spins==0 branch in
-         the Dali rebranch, but eob_set_params forces use_spins=ALIGNED for chi=0
-         binaries, so it was silently dropped from the nonspinning path.) */
-      hatFH = eob_flx_HorizonFlux_lmr_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
+      /* LMR multipolar horizon flux (l = 2, 3, 4); with spin_hflx_kerr, plus the per-body Kerr spin factors */
+      hatFH = (EOBPars->spin_hflx_kerr) ?
+        eob_flx_HorizonFlux_lmr_kerr(x, Heff, jhat, nu, X1, X2, chi1, chi2) :
+        eob_flx_HorizonFlux_lmr(x, Heff, jhat, nu);
     } else if (usespins) {
       hatFH = eob_flx_HorizonFlux_s(x, Heff, jhat, nu, X1, X2, chi1, chi2);
     } else {

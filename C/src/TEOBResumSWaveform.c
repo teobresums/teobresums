@@ -3255,7 +3255,7 @@ void eob_wav_flm_HM_6PN3p3(double x,double nu, double *rholm, double *flm)
     errorexit("Wrong function: not all multipoles are written.\n");
   }
   
-  /** Amplitudes */
+/** Amplitudes */
 #pragma omp simd
   for (int k = 0; k < KMAX; k++) {
       flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
@@ -3263,6 +3263,9 @@ void eob_wav_flm_HM_6PN3p3(double x,double nu, double *rholm, double *flm)
 
 }
 
+
+/* Orbital rho_lm series coefficients (at the current log v) of the last eob_wav_flm_22PN(_nu) call, for the Kerr spin sector */
+double EOB_RHOLM_ORB_CLM[KMAX][45];
 
 void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm)
 {
@@ -4463,6 +4466,7 @@ void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm)
   for (int k=0; k<KMAX; k++) {
     rholm[k] = Taylorseries(v,clm[k],44);
   }
+  memcpy(EOB_RHOLM_ORB_CLM, clm, sizeof(clm));
     
   /** Amplitudes */
 #pragma omp simd 
@@ -4506,35 +4510,41 @@ void eob_wav_flm_22PN_nu(double x, double nu, double *rholm, double *flm)
 
   /* --- (2,1) at 3PN : clm[0][6], nu-dependent part (Henry-Faye-Blanchet arXiv:2210.15602) --- */
   rholm[0] += (-0.4679845145207943*nu +0.07159479728038401*nu2 +0.0579309811346376*nu3) * v6;
+  EOB_RHOLM_ORB_CLM[0][6] += (-0.4679845145207943*nu +0.07159479728038401*nu2 +0.0579309811346376*nu3);
   /* --- (4,1) at 2PN : clm[5][4] ----------------------------------------- */
   {
     const double c0  = -0.3677899278751551;   /* nu=0 value, already in the baseline */
     const double cnu = (c0 +1.848513055757374*nu -0.302392009032634*nu2 -4.049087907042453*nu3 +0.3748145793600339*nu4)*oo1m2nu2;
     rholm[5] += (cnu - c0) * v4;
+    EOB_RHOLM_ORB_CLM[5][4] += (cnu - c0);
   }
   /* --- (4,3) at 2PN : clm[7][4] ----------------------------------------- */
   {
     const double c0  = -0.9783218202252293;   /* nu=0 value, already in the baseline */
     const double cnu = (c0 +3.151960113749886*nu +0.9401487835081586*nu2 -7.226120470438652*nu3 +1.026647594829413*nu4)*oo1m2nu2;
     rholm[7] += (cnu - c0) * v4;
+    EOB_RHOLM_ORB_CLM[7][4] += (cnu - c0);
   }
   /* --- (5,1) at 2PN : clm[9][4] ----------------------------------------- */
   {
     const double c0  = -0.1047896120973044;   /* nu=0 value, already in the baseline */
     const double cnu = (c0 -0.5219395134779751*nu +2.96155161078238*nu2 -2.512741617357002*nu3 -0.9820381328073636*nu4)*oo1m2nu2;
     rholm[9] += (cnu - c0) * v4;
+    EOB_RHOLM_ORB_CLM[9][4] += (cnu - c0);
   }
   /* --- (5,3) at 2PN : clm[11][4] ----------------------------------------- */
   {
     const double c0  = -0.5788010707241477;   /* nu=0 value, already in the baseline */
     const double cnu = (c0 +0.7881008734854889*nu +3.486461914154222*nu2 -5.56244951629567*nu3 +0.1274875551798629*nu4)*oo1m2nu2;
     rholm[11] += (cnu - c0) * v4;
+    EOB_RHOLM_ORB_CLM[11][4] += (cnu - c0);
   }
   /* --- (5,5) at 2PN : clm[13][4] ----------------------------------------- */
   {
     const double c0  = -1.574972762280455;   /* nu=0 value, already in the baseline */
     const double cnu = (c0 +3.79337184183338*nu +3.477009486240255*nu2 -10.50629473091012*nu3 +1.713932563163332*nu4)*oo1m2nu2;
     rholm[13] += (cnu - c0) * v4;
+    EOB_RHOLM_ORB_CLM[13][4] += (cnu - c0);
   }
   /* --- (2,2) at 4PN : clm[1][8], nu-dependent part (Blanchet et al. arXiv:2304.11186, Eq. 6.17) ---
      In the EOB orbital frame, rho_22|orb = rho_22|x22 + 48/5 nu x^4: the nu^1 constant is -41.10249714211636
@@ -4543,6 +4553,9 @@ void eob_wav_flm_22PN_nu(double x, double nu, double *rholm, double *flm)
   rholm[1] += ( -1.836749025375017*nu +10.48174467376330*nu2
                 -0.1792973174305593*nu3 +0.1368191977995206*nu4
                 +19.99773242630385*nu*logv ) * v8;
+  EOB_RHOLM_ORB_CLM[1][8] += ( -1.836749025375017*nu +10.48174467376330*nu2
+                -0.1792973174305593*nu3 +0.1368191977995206*nu4
+                +19.99773242630385*nu*logv );
 
   /* flm = rholm^l for the corrected modes (eob_wav_flm_s_HM does not recompute it for (5,1), (5,3)) */
   const int kfix[7] = {0, 1, 5, 7, 9, 11, 13};
@@ -4551,6 +4564,283 @@ void eob_wav_flm_22PN_nu(double x, double nu, double *rholm, double *flm)
     flm[k] = gsl_pow_int(rholm[k], LINDEX[k]);
   }
 }
+
+/* ======================================================================================================
+ * Kerr hybrid spin sector of the flux at infinity (spin_flx_kerr). Factorized iResum spin factors:
+ * nu-exact PN spin terms as in eob_wav_flm_s_HM / _HM_4PN22, Fujita Kerr test-mass terms beyond, with Kerr
+ * parameter a0 = X1 chi1 + X2 chi2 and the linear-in-spin split a0 (c_a + c_sigma)/2 + a12 X12 (c_a - c_sigma)/2
+ * (c_sigma = c_a where unknown):
+ *    S_hyb(nu) = S_PN(nu; a0, a12, X12) - S_PN(0; a0) + [Kerr(a0) - Kerr(0)],   S_hyb -> Kerr at nu -> 0.
+ * Light-ring rescaled orbital factor, xt = x / (3 x_LR(a0)), for every mode:
+ *    rho_lm = rho_orb(xt) / T_N[ rho_orb(xt) / rho_target ],
+ * rho_target = rho_orb(x) + S_hyb for even m with PN spin, rho_orb(x) rhobar^S_Kerr(a0) otherwise; odd m with
+ * PN spin take xt on the X12 part only. (4,2), (4,4): Kerr spin series capped at v^16, v^18.
+ * ====================================================================================================== */
+
+#define KH_EULERLOG2_C (0.57721566490153286061 + 1.3862943611198906188)   /* EulerGamma + log(4) */
+
+static const int KH_EVEN[4] = {1, 3, 6, 8};          /* (2,2) (3,2) (4,2) (4,4) */
+static const int KH_ODD[6]  = {0, 2, 4, 5, 7, 13};   /* (2,1) (3,1) (3,3) (4,1) (4,3) (5,5) */
+static const int KH_L[KS_NM] = {2,2, 3,3,3, 4,4,4,4, 5,5,5,5,5, 6,6,6,6,6,6, 7,7,7,7,7,7,7, 8,8,8,8,8,8,8,8,
+                                9,9,9,9,9,9,9,9,9, 10,10,10,10,10,10,10,10,10,10, 11,11,11, 12,12,12, 13,13,13};
+
+/* Cache of the infinity iResum coefficients T_N[rho(0)/rho(q)] for the last q used. */
+typedef struct { int ok; double q; int N[KS_NM]; double c[KS_NM][KS_NV][KS_NL]; } ks_cache_inf_t;
+static ks_cache_inf_t KSI = {0};
+/* Truncation caps of the Kerr spin series: (4,2) at v^16, (4,4) at v^18 (k = 6, 8), which removes a
+   denominator zero before the light ring at a0 ~ 0.99 */
+static int ks_Ncap(int k, int N)
+{
+  if (k == 6 && N > 16) return 16;
+  if (k == 8 && N > 18) return 18;
+  return N;
+}
+static void ks_build_inf(double q)
+{
+  double psiA[5][7], psiB[5][7], kap, lkap, psiA0[5][7], psiB0[5][7], kap0, lkap0;
+  eob_kerr_psi(q, psiA, psiB, &kap, &lkap); eob_kerr_psi(0., psiA0, psiB0, &kap0, &lkap0);
+  for (int k = 0; k < KS_NM; k++) {
+    double Cq[KS_NV][KS_NL], C0[KS_NV][KS_NL], Ci[KS_NV][KS_NL];
+    int nq = eob_kerr_rho8(k, Cq, kap, lkap, psiA, psiB, q);
+    int n0 = eob_kerr_rho8(k, C0, kap0, lkap0, psiA0, psiB0, 0.);
+    int N = ks_Ncap(k, (nq < n0) ? nq : n0);
+    logser_inv(Cq, Ci, N); logser_mul(C0, Ci, KSI.c[k], N);
+    KSI.N[k] = N;
+  }
+  KSI.q = q; KSI.ok = 1;
+}
+
+/** rhobar^S_lm(v; q) for all KMAX + KMAXHL modes (k order as in the header). q = Kerr parameter. */
+void eob_wav_rhoS_kerr_iR(const double v, const double q, double *rhoS)
+{
+  if (!KSI.ok || KSI.q != q) ks_build_inf(q);
+  const double logv = log(v);
+  for (int k = 0; k < KS_NM; k++) rhoS[k] = 1. / logser_eval(KSI.c[k], KSI.N[k], v, logv);
+}
+
+
+/** iResum spin-factor series T_N[rho(v;0)/rho(v;q)] of infinity mode k (k < KMAX + KMAXHL), cached per q;
+    copied to c, returns N (used by eob_flx_highl_rho_kerr). */
+int eob_wav_rhoS_kerr_series(const double q, const int k, double c[KS_NV][KS_NL])
+{
+  if (!KSI.ok || KSI.q != q) ks_build_inf(q);
+  memcpy(c, KSI.c[k], sizeof(KSI.c[k]));
+  return KSI.N[k];
+}
+
+/* nu-exact PN spin series S_PN (additive part of rho_lm) for the even-m modes, as in eob_wav_flm_s_HM,
+   with rho_22 completed by the SO NNLO term (nu-exact, coded but unused in _HM) and the v^9, v^11 hybrid
+   SO terms of eob_wav_flm_s_HM_4PN22. Returns the highest power carried. Non-tidal BBH form. */
+static int kh_SPN_even(int k, double nu, double a0, double a12, double X12, double S[KS_NV][KS_NL])
+{
+  logser_zero(S);
+  const double nu2 = nu * nu, a12X12 = a12 * X12;
+  switch (k) {
+  case 1: {  /* (2,2) */
+    S[3][0] = -0.5 * a0 - a12X12 / 6.;
+    S[4][0] = 0.5 * a0 * a0;
+    S[5][0] = (-52. / 63. - 19. / 504. * nu) * a0 - (50. / 63. + 209. / 504. * nu) * a12X12;
+    S[6][0] = 1. / 504. * (2. * (19. - 70. * nu) * a12 * a12 + (-302. + 243. * nu) * a0 * a0 + 442. * X12 * a0 * a12);
+    S[7][0] = (7. / 12. * a0 - 0.25 * X12 * a12) * a0 * a0
+            + (32873. / 21168 + 477563. / 42336. * nu + 147421. / 84672. * nu2) * a0
+            - (23687. / 63504 - 171791. / 127008. * nu + 50803. / 254016. * nu2) * a12X12;
+    /* HM_4PN22: c = c0 + c1 eulerlog_2,  eulerlog_2 = EulerGamma + log 4 + log v */
+    /* c_a at v^11: 6416/6615 eulerlog_2 from Fujita rho8[2,2] (eob_wav_flm_s_HM_4PN22 has 328/6615) */
+    const double ca3_0 = -8494939. / 467775., ca3_1 = 2536. / 315.;
+    const double cs3_0 = -14661629. / 8731800., cs3_1 = 214. / 315.;
+    const double ca4_0 = -890245226581. / 26698351680., ca4_1 = 6416. / 6615.;
+    const double cs4_0 = -90273995723. / 88994505600., cs4_1 = 428. / 6615.;
+    const double p3 = 0.5 * (a0 + a12X12), m3 = 0.5 * (a0 - a12X12);   /* a0 (ca+cs)/2 + a12X12 (ca-cs)/2 = ca p3 + cs m3 */
+    S[9][0]  = (ca3_0 + ca3_1 * KH_EULERLOG2_C) * p3 + (cs3_0 + cs3_1 * KH_EULERLOG2_C) * m3;
+    S[9][1]  = ca3_1 * p3 + cs3_1 * m3;
+    S[11][0] = (ca4_0 + ca4_1 * KH_EULERLOG2_C) * p3 + (cs4_0 + cs4_1 * KH_EULERLOG2_C) * m3;
+    S[11][1] = ca4_1 * p3 + cs4_1 * m3;
+    return 11; }
+  case 3: {  /* (3,2) */
+    S[1][0] = (a0 - a12X12) / (3. * (1. - 3. * nu));
+    S[3][0] = (-(0.884567901234568 - 3.41358024691358 * nu + 2.4598765432098766 * nu2) * a0
+               + (1.10679012345679 - 2.635802469135802 * nu - 1.8734567901234567 * nu2) * X12 * a12) / SQ(1. - 3. * nu);
+    S[5][0] = -1.335993162073409 * a0 - 0.9586570436879079 * a12 * X12;
+    return 5; }
+  case 6: {  /* (4,2); logx = 2 log v */
+    S[3][0] = -1. / 30. * a0 - (19. - 39. * nu) / (30. - 90. * nu) * a12X12;
+    S[5][0] = -219. / 550. * a0 + 92. / 275. * a12 * X12;
+    S[7][0] = -1.245162901492446947 * a0 + 0.6414503261889625526 * a12 * X12;
+    S[9][0] = -2.6105076622404808654 * a0 - 1.3519220653268411505 * X12 * a12;
+    S[9][1] = -2. * 0.16912938912938912939 * a0 + 2. * 0.10290524290524290524 * X12 * a12;
+    return 9; }
+  case 8: {  /* (4,4) */
+    S[3][0] = -19. / 30. * a0 - (1. - 21. * nu) / (30. - 90. * nu) * a12 * X12;
+    S[5][0] = -199. / 550. * a0 - 491. / 550. * a12 * X12;
+    S[7][0] = 1.9942241584173401 * a0 + 0.012143034995307722 * a12 * X12;
+    return 7; }
+  }
+  errorexit("kh_SPN_even: bad mode"); return 0;
+}
+
+/* Inverse X12-part series if0 (f_S = X12 / if0 + a12 part) of eob_wav_flm_s_HM, odd m. For (4,1), (4,3)
+   the code's Taylor f0 = 1 - 5/4 a0 v/(2 nu - 1) is inverted to first order (iResum form). */
+static int kh_if0_odd(int k, double nu, double a0, double a1, double a2, double S[KS_NV][KS_NL])
+{
+  logser_zero(S); S[0][0] = 1.;
+  switch (k) {
+  case 0:  S[3][0] = 13. / 84. * a0; S[4][0] = -1. / 8. * (3. * a1 + a2) * (a1 + 3. * a2);
+           S[5][0] = a0 * (14705. / 7056. - 12743. / 7056. * nu); return 5;
+  case 4:  S[3][0] = 7. / 4. * a0; S[4][0] = -1.5 * a0 * a0; S[5][0] = 1. / 60. * a0 * (211. - 127. * nu); return 5;
+  case 2:  S[3][0] = -0.25 * a0; S[4][0] = -1.5 * a0 * a0; S[5][0] = 1. / 36. * a0 * (13. - 449. * nu); return 5;
+  case 5: case 7: S[1][0] = 1.25 / (2. * nu - 1.) * a0; return 1;
+  case 13: S[3][0] = 10. / 3. * a0; S[4][0] = -2.5 * a0 * a0; return 4;
+  }
+  errorexit("kh_if0_odd: bad mode"); return 0;
+}
+
+/* a12 part of f_S (value), eob_wav_flm_s_HM. */
+static double kh_f1_odd(int k, double v, double nu, double a0, double a12)
+{
+  const double nu2 = nu * nu, v2 = v * v, v3 = v2 * v, v4 = v2 * v2;
+  switch (k) {
+  case 0: { double if211s = 1. - 9. / 4. * a0 * v3 + (349. / 252. + 74. / 63. * nu) * v2
+                          + (65969. / 31752. + 89477. / 31752. * nu + 46967. / 31752. * nu2 - 0.5 * a0 * a0) * v4;
+            return -1.5 * v * a12 / if211s; }
+  case 4: return 0.25 * a12 * v3 * (10. * nu - 1. + (-169. + 671. * nu + 182. * nu2) / 15. * v2);
+  case 2: return 0.25 * a12 * v3 * (26. * nu - 9. - 16. * a0 * v + (9. - 95. * nu + 66. * nu2) / 9. * v2);
+  case 5: case 7: return -1.25 * a12 * v;
+  case 13: return 10. * nu * (1. - 3. * nu) / (3. - 6. * nu) * a12 * v3;
+  }
+  errorexit("kh_f1_odd: bad mode"); return 0.;
+}
+
+/* Same a12 part as a series in v at nu = 0, a12 = a0 = q (for the completion). */
+static void kh_f1_odd_series0(int k, double q, double S[KS_NV][KS_NL], int N)
+{
+  logser_zero(S);
+  switch (k) {
+  case 0: { double Iv[KS_NV][KS_NL], R[KS_NV][KS_NL]; logser_zero(Iv);
+            Iv[0][0] = 1.; Iv[2][0] = 349. / 252.; Iv[3][0] = -9. / 4. * q; Iv[4][0] = 65969. / 31752. - 0.5 * q * q;
+            logser_inv(Iv, R, N); for (int n = 0; n + 1 <= N; n++) for (int j = 0; j < KS_NL; j++) S[n + 1][j] = -1.5 * q * R[n][j];
+            return; }
+  case 4: S[3][0] = -0.25 * q; S[5][0] = 0.25 * q * (-169. / 15.); return;
+  case 2: S[3][0] = 0.25 * q * (-9.); S[4][0] = 0.25 * q * (-16. * q); S[5][0] = 0.25 * q; return;
+  case 5: case 7: S[1][0] = -1.25 * q; return;
+  case 13: return;
+  }
+  errorexit("kh_f1_odd_series0: bad mode");
+}
+
+typedef struct {
+  int ok; double nu, a0, a1, a2, X12;
+  int NE[4]; double H[4][KS_NV][KS_NL];      /* even: S_hyb series */
+  int NO[6]; double I0[6][KS_NV][KS_NL];     /* odd : if0_hyb series */
+} kh_cache_t;
+static kh_cache_t KH = {0};
+
+static void kh_build(double nu, double a0, double a1, double a2, double X12)
+{
+  double psiA[5][7], psiB[5][7], kap, lkap, psiA0[5][7], psiB0[5][7], kap0, lkap0;
+  eob_kerr_psi(a0, psiA, psiB, &kap, &lkap); eob_kerr_psi(0., psiA0, psiB0, &kap0, &lkap0);
+  const double a12 = a1 - a2;
+  for (int i = 0; i < 4; i++) {
+    const int k = KH_EVEN[i];
+    double Cq[KS_NV][KS_NL], C0[KS_NV][KS_NL], P[KS_NV][KS_NL], P0[KS_NV][KS_NL];
+    int nq = eob_kerr_rho8(k, Cq, kap, lkap, psiA, psiB, a0), n0 = eob_kerr_rho8(k, C0, kap0, lkap0, psiA0, psiB0, 0.);
+    int N = ks_Ncap(k, (nq < n0) ? nq : n0);
+    kh_SPN_even(k, nu, a0, a12, X12, P);
+    kh_SPN_even(k, 0., a0, a0, 1., P0);
+    logser_zero(KH.H[i]);
+    logser_axpy(1., Cq, KH.H[i]); logser_axpy(-1., C0, KH.H[i]); logser_axpy(1., P, KH.H[i]); logser_axpy(-1., P0, KH.H[i]);
+    logser_trunc(KH.H[i], N);
+    KH.NE[i] = N;
+  }
+  for (int i = 0; i < 6; i++) {
+    const int k = KH_ODD[i], l = KH_L[k];
+    double Cq[KS_NV][KS_NL], C0[KS_NV][KS_NL], R[KS_NV][KS_NL], F[KS_NV][KS_NL], G[KS_NV][KS_NL], D[KS_NV][KS_NL], P[KS_NV][KS_NL], P0[KS_NV][KS_NL];
+    int nq = eob_kerr_rho8(k, Cq, kap, lkap, psiA, psiB, a0), n0 = eob_kerr_rho8(k, C0, kap0, lkap0, psiA0, psiB0, 0.);
+    int N = (nq < n0) ? nq : n0;
+    logser_inv(C0, R, N); logser_mul(Cq, R, R, N);                  /* rho8(q)/rho8(0) */
+    logser_zero(F); F[0][0] = 1.; for (int p = 0; p < l; p++) logser_mul(F, R, F, N);   /* Kerr f_S */
+    kh_f1_odd_series0(k, a0, G, N);
+    logser_axpy(-1., G, F);                                       /* X12 part at nu = 0 */
+    logser_inv(F, D, N);                                          /* D = T_N[1/(F - g)] */
+    kh_if0_odd(k, nu, a0, a1, a2, P);
+    kh_if0_odd(k, 0., a0, a0, 0., P0);
+    logser_zero(KH.I0[i]); logser_axpy(1., D, KH.I0[i]); logser_axpy(1., P, KH.I0[i]); logser_axpy(-1., P0, KH.I0[i]);
+    logser_trunc(KH.I0[i], N);
+    KH.NO[i] = N;
+  }
+  KH.nu = nu; KH.a0 = a0; KH.a1 = a1; KH.a2 = a2; KH.X12 = X12; KH.ok = 1;
+}
+
+/** Light-ring rescaling: xt = s x, s = 1/(3 x_LR(a)), x_LR = (M Omega)^(2/3) on the Kerr photon orbit
+    r_LR = 2 [1 + cos(2/3 arccos(-a))]; s = 1 at a = 0. */
+double eob_wav_xtilde_scale(const double a)
+{
+  if (a == 0.) return 1.;
+  const double r = 2. * (1. + cos(2. / 3. * acos(-a)));
+  return 1. / (3. * pow(1. / (pow(r, 1.5) + a), 2. / 3.));
+}
+
+/** eob_wav_flm_s for the Kerr hybrid spin sector (spin_flx_kerr = 1), light-ring rescaled orbital factor.
+    Non-tidal BBH only. rholm, flm: in/out as in eob_wav_flm_s_HM (rholm of odd-m PN modes = orbital at x). */
+void eob_wav_flm_s_kerr_hyb(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2,
+                            double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm)
+{
+  if (usetidal) errorexit("spin_flx_kerr: not available with tides");
+  const double a0 = a1 + a2, a12 = a1 - a2, X12 = X1 - X2;
+  const double v = sqrt(x), logv = log(v);
+  static double clmx[KMAX][45], clmt[KMAX][45];
+  double rhot[KMAX], flmt[KMAX];
+  eob_wav_flm(x, nu, rholm, flm);                      /* orbital at x (22PN_nu); fills EOB_RHOLM_ORB_CLM */
+  memcpy(clmx, EOB_RHOLM_ORB_CLM, sizeof(clmx));
+  const double s = eob_wav_xtilde_scale(a0);
+  if (s != 1.) {
+    eob_wav_flm(s * x, nu, rhot, flmt);                /* orbital at xt: coefficients at log(vt) */
+    memcpy(clmt, EOB_RHOLM_ORB_CLM, sizeof(clmt));
+    const double ss = sqrt(s); double sh = 1.;
+    for (int n = 0; n < 45; n++) { for (int k = 0; k < KMAX; k++) clmt[k][n] *= sh; sh *= ss; }   /* -> series in v */
+  } else {
+    memcpy(clmt, clmx, sizeof(clmt));
+    for (int k = 0; k < KMAX; k++) rhot[k] = rholm[k];
+  }
+  if (!KH.ok || KH.nu != nu || KH.a1 != a1 || KH.a2 != a2 || KH.X12 != X12) kh_build(nu, a0, a1, a2, X12);
+  if (!KSI.ok || KSI.q != a0) ks_build_inf(a0);
+
+  int ie[KMAX], io[KMAX];
+  for (int k = 0; k < KMAX; k++) { ie[k] = -1; io[k] = -1; }
+  for (int i = 0; i < 4; i++) ie[KH_EVEN[i]] = i;
+  for (int i = 0; i < 6; i++) io[KH_ODD[i]] = i;
+
+  for (int k = 0; k < KMAX; k++) {
+    const int l = KH_L[k];
+    double r[KS_NV], R[KS_NV], d[KS_NV], t[KS_NV];
+    if (ie[k] >= 0) {                                   /* even m with PN spin: target rho_orb(x) + S_hyb */
+      const int i = ie[k], N = KH.NE[i];
+      logser_freeze(KH.H[i], N, logv, d);
+      for (int n = 0; n <= N; n++) { r[n] = clmx[k][n]; R[n] = clmt[k][n]; d[n] += r[n]; }
+      ser_div(R, d, t, N);
+      rholm[k] = rhot[k] / ser_eval(t, N, v);
+      flm[k] = gsl_pow_int(rholm[k], l);
+    } else if (io[k] >= 0) {                            /* odd m with PN spin: xt on the X12 part */
+      const int i = io[k], N = KH.NO[i];
+      double Pt[KS_NV], Px[KS_NV], I0[KS_NV];
+      for (int n = 0; n <= N; n++) { r[n] = clmx[k][n]; R[n] = clmt[k][n]; }
+      memcpy(Pt, R, sizeof(double) * (N + 1)); memcpy(Px, r, sizeof(double) * (N + 1));
+      for (int p = 1; p < l; p++) { ser_mul(Pt, R, Pt, N); ser_mul(Px, r, Px, N); }
+      logser_freeze(KH.I0[i], N, logv, I0);
+      ser_mul(Pt, I0, t, N); ser_div(t, Px, t, N);
+      const double x12part = X12 * gsl_pow_int(rhot[k], l) / ser_eval(t, N, v);
+      flm[k] = x12part + gsl_pow_int(rholm[k], l) * kh_f1_odd(k, v, nu, a0, a12);
+    } else {                                            /* generic: target rho_orb(x) rhobar^S_Kerr(a0) */
+      const int N = KSI.N[k];
+      double g[KS_NV];
+      logser_freeze(KSI.c[k], N, logv, g);                     /* T_N[rho8(0)/rho8(a0)] */
+      for (int n = 0; n <= N; n++) { r[n] = clmx[k][n]; R[n] = clmt[k][n]; }
+      ser_div(R, r, t, N); ser_mul(t, g, t, N);
+      rholm[k] = rhot[k] / ser_eval(t, N, v);
+      flm[k] = gsl_pow_int(rholm[k], l);
+    }
+  }
+}
+
 
 /** 
  * Function: eob_wav_flm_s_SSLO
