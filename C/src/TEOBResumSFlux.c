@@ -532,6 +532,12 @@ double eob_flx_HorizonFlux_lmr_s(double x, double Heff, double jhat, double nu,
  * 
  *   @return[out] Fphi:  energy flux
  */
+/* Multipoles in the flux sum: l <= 10 only for the 22PN flm, which provide them; the other flm stop at l = 8 */
+static int eob_flx_kmax(void)
+{
+  return (EOBPars->use_flm == USEFLM_22PN) ? KMAX : KMAX_L8;
+}
+
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn)
 {
   return eob_flx_Flux_s(x, Omega, r_omega, E, Heff, jhat, r, pr_star, ddotr,dyn);
@@ -673,6 +679,7 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
   }
 
   /* Total multipolar flux */
+  for (int k = eob_flx_kmax(); k < KMAX; k++) Modhhatlm[k] = 0.;
   for (int k = KMAX; k--;) sum_k += SQ(Modhhatlm[k]) * FNewtlm[k];
   
   /* Normalize to the 22 Newtonian multipole */
@@ -842,6 +849,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   }
 
   /* Total multipolar flux */
+  for (int k = eob_flx_kmax(); k < KMAX; k++) Modhhatlm[k] = 0.;
   for (int k = 0; k < KMAX; k++) {
     Flm[k] = SQ(Modhhatlm[k]) * FNewtlm[k];
     sum_k += Flm[k];    

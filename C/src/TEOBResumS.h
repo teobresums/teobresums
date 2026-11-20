@@ -215,6 +215,7 @@ enum{
 static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E","Fphi","Fr"};
 
 #define KMAX (54) /** Multipolar linear index, max value */
+#define KMAX_L8 (35) /** Number of multipoles with l <= 8: the flux range of every flm except the 22PN ones */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
 /** List for binary type */
