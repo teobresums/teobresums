@@ -60,6 +60,7 @@ pipelines:
                   - apt-get install -y libgsl-dev valgrind
                   - cd C && make
                   - valgrind ./TEOBResumS.x -p par/GW150914.par
+                  - valgrind ./TEOBResumS.x -p par/GW150914-Dali.par
                 
             - step:
                 name: Run Benchmarks

@@ -62,7 +62,6 @@ if __name__ == '__main__':
         
         # Precession settings (do not touch!)
         'spin_flx'           : 'EOB',   # Use the EOB frequency evolution to drive the PN spins dynamics
-        'spin_interp_domain' : 0        # interpolate in time rather than frequency
     }
 
     print("Run the WF generator...")

@@ -118,6 +118,9 @@ Note: if a parfile is specified together with other options, the latter are over
 #define PRFORMd(s,x) {printf("%-40s = %.16e\n", s,x);} /* Print double */
 #define PRFORMi(s,x) {printf("%-40s = %d\n", s,x);} /* Print int */
 #define PRWARN(s) {printf("# WARNING: %s\n",s);} 
+#define PRWARNF(fmt, ...) {printf("# WARNING: " fmt "\n", __VA_ARGS__);} /* Print formatted warning */
+#define PRERR(s) {printf("# ERROR: %s\n",s);} /* Print error preceding a failure */
+#define PRERRF(fmt, ...) {printf("# ERROR: " fmt "\n", __VA_ARGS__);} /* Print formatted error */
 #define INT2YESNO(i)((i)?"yes":"no")
 #define YESNO2INT(s)((strcmp(s,"yes")==0)?1:0)
 /* helpers for debug */
@@ -158,6 +161,7 @@ enum{OK,                       /**< No error */
      ERROR_MKDIR,              /**< Error while making directory */
      ERROR_ROOTFINDER,         /**< Root finder failed */
      ERROR_ODEINT,             /**< ODE solver failed */
+     ERROR_SPIN_DYN,           /**< Spin dynamics failed */
      ERROR_INITIAL_CONDITIONS, /**< Initial conditions failed */
      ERROR_SET_PARAMS,         /**< Error setting parameters */
      ERROR_RINGDOWN,           /**< Ringdown failed */
@@ -166,7 +170,7 @@ enum{OK,                       /**< No error */
 static const char* eob_error_msg[] = {
   "ok",
   "out of memory", "error opening file", "error while making directory",
-  "root finder failed.", "ODE solver failed.", "initial conditions failed.",
+  "root finder failed.", "ODE solver failed.", "Error in spin dynamics.", "initial conditions failed.",
   "error setting parameters.", "ringdown failed."
 };
 
@@ -417,11 +421,9 @@ static const char* ringdown_eulerangles_opt[] = {"constant", "QNMs", "undefined"
 enum{
   SPIN_FLX_PN,              /**< PN Omegadot */
   SPIN_FLX_EOB,             /**< EOB Omegadot */
-  SPIN_FLX_EOB_HYBRIDv1,    /**< EOB+PN Omegadot, hybrid, v1 */
-  SPIN_FLX_EOB_HYBRIDv2,    /**< EOB+PN Omegadot, hybrid, v2 */
   SPIN_FLX_NOPT,            /**< number of Omegadot options */
 };
-static const char* spin_flx_opt[] = {"PN", "EOB", "HYBv1","HYBv2","undefined"};
+static const char* spin_flx_opt[] = {"PN", "EOB", "undefined"};
 
 /** Error handler for root finders */
 enum{ 
@@ -433,7 +435,7 @@ enum{
 };
 static const char* const root_errors[] = {"none","root is not bracketed.","root finder did not converged.","root finder failed."};
 /* #define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { errorexit(root_errors[(i)]); }} */
-#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { printf("%s\n",root_errors[(i)]); }}
+#define ROOTFINDER(i, x) {if ( ((i) = (x)) && ((i)>ROOT_ERRORS_NO) )  { PRERR(root_errors[(i)]); }}
 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */
@@ -593,6 +595,9 @@ typedef struct tagDynamicsSpin
   double time_backward;                                        /**< time  which divides backward from forward spin evolution */
   gsl_spline *spline[EOB_EVOLVE_SPIN_NVARS];                   /**< splines for spin dynamics */
   gsl_interp_accel *accel[EOB_EVOLVE_SPIN_NVARS];              /**< accelerators for spin dynamics */
+  gsl_spline *omg_eob;                                         /**< M Omega(t) of the orbit, for spin_flx = EOB */
+  gsl_interp_accel *omg_eob_acc;                               /**< accelerator of omg_eob */
+  int alpha_pole_sign;                                         /**< the spin ODE integrates gamma - alpha_pole_sign*alpha */
 } DynamicsSpin;
 
 /** Dynamics data type */
@@ -674,6 +679,8 @@ typedef struct tagEOBParameters
   /**@{*/
   /** NR-informed conservative variables */
   double a6c, cN3LO;
+  /** Deviations from NR-fitted parameters */
+  double delta_a6c, delta_cN3LO;
   /**@}*/ 
 
   double r0;                    /**< Initial radial separation */
@@ -749,16 +756,31 @@ typedef struct tagEOBParameters
   int spin_dyn_size;                                    /**< Size of spin dynamics arrays */
   double spin_odes_omg_stop, spin_odes_t_stop;          /**< Stopping frequency and time for spin dynamics */
   double spin_odes_dt;                                  /**< Timestep for spin dynamics */
-  int spin_interp_domain;                               /**< Domain for spin dynamics interpolation (time/frequency) */
   int project_spins;                                    /**< Flag to project spins during EOB dynamics (yes/no) */
   int ringdown_eulerangles;                             /**< Flag to choose which beyond-merger euler angles extension to employ */
   int spin_flx;                                         /**< Flag to choose which Omegadot for spin dynamics */
+  double cosJL_final;                                   /**< Final value of beta Euler angle */
+  int use_effective_QNMs;                               /**< Use effective QNMs in co-precessing frame (yes/no) */
 
   int backwards;                                        /**< Flag to switch on/off backwards dynamics */ 
 
   /* final state */
   double Mbhf; /**< Final BH mass */
   double abhf; /**< Final BH spin */
+
+  /* Deviations from final BH mass, spin */
+  double delta_Mbhf, delta_abhf;
+
+  /* Deviations from fits of QNM frequencies */
+  double *delta_alphalm0, *delta_omglm0, *delta_taulm0;
+  int    *delta_alphalm0_k, delta_alphalm0_size;
+  int    *delta_taulm0_k,   delta_taulm0_size;
+  int    *delta_omglm0_k,   delta_omglm0_size;
+
+  /* Deviations from merger amplitude, frequency */
+  double *delta_Alm_mrg, *delta_Omglm_mrg;
+  int    *delta_Alm_mrg_k, delta_Alm_mrg_size;
+  int    *delta_Omglm_mrg_k, delta_Omglm_mrg_size;
 
   /* waveform */
   int ringdown_extend_array; /**< Extend ringdown array */
@@ -767,7 +789,13 @@ typedef struct tagEOBParameters
   /** NQC variables and options*/
   int nqc, nqc_coefs_flx, nqc_coefs_hlm; // NEW, INDEXES
   char nqc_coefs_flx_file[STRLEN], nqc_coefs_hlm_file[STRLEN];
+  double d_delta_t_nqc;
   /**@}*/
+
+  /* Deviations from NQC point quantities */
+  double *delta_Alm_nqc, *delta_dAlm_nqc, *delta_Omglm_nqc, *delta_dOmglm_nqc;
+  int    *delta_Alm_nqc_k, *delta_dAlm_nqc_k, *delta_Omglm_nqc_k, *delta_dOmglm_nqc_k;
+  int    delta_Alm_nqc_size, delta_dAlm_nqc_size, delta_Omglm_nqc_size, delta_dOmglm_nqc_size;
 
   /**@{*/
   /** output options*/
@@ -841,7 +869,6 @@ void vect_cross(double ax, double ay, double az, double bx, double by, double bz
 void vect_cross3(double *a, double *b, double *c);
 void vect_rotate(int axis, double angle, double *vx_p, double *vy_p, double *vz_p);
 void vect_rotate3(int axis, double angle, double *v);
-double interp_spline_pt(double *t, double *y, int n, double ti);
 void interp_spline(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_checklim(double *t, double *y, int n, double *ti, int ni, double *yi);
 void interp_spline_omp(double *t, double *y, int n, double *ti, int ni, double *yi);
@@ -862,7 +889,6 @@ double cumtrapz(double *f, double *x, const int n, double *sum);
 double cumint3(double *f, double *x, const int n, double *sum);
 void unwrap(double *p, const int size);
 void unwrap_HM(double *p, const int size);
-void unwrap_euler(double *p, const int size);
 void unwrap_proxy(double *p, double *r, const int size, const int shift0);
 void rmap (double *re, double *im, double *p, double *a, const int mode);
 void rmap_twist (double *re, double *im, double *p, double *a, const int mode);
@@ -914,6 +940,7 @@ void DynamicsSpin_free (DynamicsSpin *dyn);
 void DynamicsSpin_output (DynamicsSpin *dyn);
 void DynamicsSpin_join (DynamicsSpin *dyn, DynamicsSpin *dynb, double to);
 void Dynamics_set_params (Dynamics *dyn);
+double compute_cosJL(DynamicsSpin *dyn, double tpeak, double omg_peak);
 void NQCdata_alloc (NQCdata **nqc);
 void NQCdata_free (NQCdata *nqc);
 double time_units_factor(double M);
@@ -960,7 +987,7 @@ double eob_mrg_momg(double nu, double X1, double X2, double chi1, double chi2);
 void eob_nqc_point(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
 void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
-void eob_nqc_point_postpeak(double Mbh, double c1A, double c2A, double c3A, double c4A, 
+void eob_nqc_point_postpeak(double tau, double Mbh, double c1A, double c2A, double c3A, double c4A, 
 			    double c1phi, double c2phi, double c3phi, double c4phi,
 			    double alpha1, double omega1,
 			    double *A_tmp, double *dA_tmp, double *omg_tmp, double *domg_tmp);
@@ -1002,6 +1029,8 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
 			double *ca1, double *ca2, double *ca3, double *ca4, double *cb1, double *cb2, double *cb3, double *cb4,
       double *sigmar, double *sigmai);
 void QNM_coefs(double af, double *alpha21, double *alpha1, double *omega1);
+double post_merger_alpha_dot(double abhf, double cosJL_final);
+void prec_effective_QNMs(double *omega1, double abhf, double cosJL_final);
 double eob_approxLR(const double nu);
 double get_mrg_timestep(double q, double chi1, double chi2);
 double get_mrg_timestop(double q, double chi1, double chi2);
@@ -1029,6 +1058,8 @@ double pph_lso_orbital(const double nu);
 double pph_lso_spin(const double nu, const double a0);
 double eob_nqc_timeshift_bhns(double nu, double chi1);
 void eob_nqc_deltat_lm_bhns(double *Dt_lm);
+void QNM_deviations(double *alpha1, double *omega1, double *alpha21);
+void apply_mode_deviations(double *x_mrg, double *delta_x, int *klm, int Nk);
 
 /* TEOBResumSDynamics.c */
 extern int (*p_eob_dyn_rhs)(); /* defined in TEOBResumSPars.c */
@@ -1057,7 +1088,7 @@ int eob_dyn_fLSO_s(const gsl_vector *x, void * params, gsl_vector *f);
 int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO);
 int eob_dyn_LSO_s(Dynamics *dyn, double *rLSO, double *pphiLSO);
 double eob_spin_dyn_alpha(double Lhx, double Lhy, double Lhz);
-double alpha_initial_condition(EOBParameters *eobp); 
+double alpha_initial_condition(DynamicsSpin *dyn);
 double eob_spin_dyn_beta(double Lhx, double Lhy, double Lhz);
 extern int (*p_eob_spin_dyn_rhs)(); /* defined in TEOBResumSPars.c */
 int eob_spin_dyn_rhs_PN(double t, const double y[], double dy[], void *d);
@@ -1066,7 +1097,6 @@ int eob_spin_dyn_rhs_EOB(double t, const double y[], double dy[], void *d);
 int eob_spin_dyn_integrate(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm);
 int eob_spin_dyn_integrate_backwards(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omega_stop);
 int eob_spin_dyn(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double omg0);
-void eob_spin_dyn_abc_interp(DynamicsSpin *dyn, Dynamics *eobdyn, Waveform_lm *hlm, double time, double *alpha_p, double *beta_p, double *gamma_p, int continue_integration);
 void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 			       double *SApara, double *SBpara, double *Spara,
 			       double *SAperp, double *SBperp, double *Sperp,
@@ -1213,6 +1243,8 @@ void time_shift_FD(WaveformFD *hpc, double tc);
 void eob_wav_hlmNQC_test_bhns(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm, bool *bhns);
 void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
+				       Dynamics *dyn, Waveform_lm *hlm);
+void eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg, Waveform_lm *hnqc,
 				       Dynamics *dyn, Waveform_lm *hlm);
 void eob_wav_ringdown_template_td(double x, double a1, double a2, double a3, double a4, double b1, double b2, double b3, double b4, double sigmai, double *psi, double alpha2, double Amrg);
 int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm);

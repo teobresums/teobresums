@@ -63,15 +63,21 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_tidal"));
     for(EOBPars->use_tidal=0; EOBPars->use_tidal<=TIDES_NOPT; EOBPars->use_tidal++){
-      if (EOBPars->use_tidal == TIDES_NOPT) EOBPars->use_tidal = TIDES_OFF;
+      if (EOBPars->use_tidal == TIDES_NOPT) {
+        PyErr_Format(PyExc_ValueError, "use_tidal '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,tides_opt[EOBPars->use_tidal])) break;
     }
   }
   if ( PyDict_GetItemString(dict, "use_tidal_gravitomagnetic") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_tidal_gravitomagnetic"));
-    for(EOBPars->use_tidal_gravitomagnetic=0; EOBPars->use_tidal_gravitomagnetic<=TIDES_NOPT; EOBPars->use_tidal_gravitomagnetic++){
-      if (EOBPars->use_tidal_gravitomagnetic == TIDES_GM_NOPT) EOBPars->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+    for(EOBPars->use_tidal_gravitomagnetic=0; EOBPars->use_tidal_gravitomagnetic<=TIDES_GM_NOPT; EOBPars->use_tidal_gravitomagnetic++){
+      if (EOBPars->use_tidal_gravitomagnetic == TIDES_GM_NOPT) {
+        PyErr_Format(PyExc_ValueError, "use_tidal_gravitomagnetic '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,tides_gravitomagnetic_opt[EOBPars->use_tidal_gravitomagnetic])) break;
     }  
   }
@@ -79,7 +85,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_lambda234_fits"));
     for(EOBPars->use_lambda234_fits=0; EOBPars->use_lambda234_fits<=Lambda234_fits_NOPT; EOBPars->use_lambda234_fits++){
-      if (EOBPars->use_lambda234_fits == Lambda234_fits_NOPT) EOBPars->use_lambda234_fits = Lambda234_fits_YAGI13;
+      if (EOBPars->use_lambda234_fits == Lambda234_fits_NOPT) {
+        PyErr_Format(PyExc_ValueError, "use_lambda234_fits '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,use_lambda234_fits_opt[EOBPars->use_lambda234_fits])) break;
     }    
   }
@@ -87,7 +96,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_a6c_fits"));
     for(EOBPars->use_a6c_fits=0; EOBPars->use_a6c_fits<=a6c_fits_NOPT; EOBPars->use_a6c_fits++){
-      if (EOBPars->use_a6c_fits == a6c_fits_NOPT) EOBPars->use_a6c_fits = a6c_fits_HM;
+      if (EOBPars->use_a6c_fits == a6c_fits_NOPT) {
+        PyErr_Format(PyExc_ValueError, "use_a6c_fits '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,use_a6c_fits_opt[EOBPars->use_a6c_fits])) break;
     }    
   }
@@ -95,7 +107,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_cN3LO_fits"));
     for(EOBPars->use_cN3LO_fits=0; EOBPars->use_cN3LO_fits<=cN3LO_fits_NOPT; EOBPars->use_cN3LO_fits++){
-      if (EOBPars->use_cN3LO_fits == cN3LO_fits_NOPT) EOBPars->use_cN3LO_fits = cN3LO_fits_HM_2023_432;
+      if (EOBPars->use_cN3LO_fits == cN3LO_fits_NOPT) {
+        PyErr_Format(PyExc_ValueError, "use_cN3LO_fits '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,use_cN3LO_fits_opt[EOBPars->use_cN3LO_fits])) break;
     }    
   }
@@ -283,7 +298,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "centrifugal_radius"));
     for(EOBPars->centrifugal_radius=0; EOBPars->centrifugal_radius<=CENTRAD_NOPT; EOBPars->centrifugal_radius++){
-      if (EOBPars->centrifugal_radius == CENTRAD_NOPT) EOBPars->centrifugal_radius = CENTRAD_NLO;
+      if (EOBPars->centrifugal_radius == CENTRAD_NOPT) {
+        PyErr_Format(PyExc_ValueError, "centrifugal_radius '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,centrifugal_radius_opt[EOBPars->centrifugal_radius])) break;
     }     
   }
@@ -299,7 +317,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm"));
     for(EOBPars->use_flm=0; EOBPars->use_flm<=USEFLM_NOPT; EOBPars->use_flm++){
-      if (EOBPars->use_flm == USEFLM_NOPT) EOBPars->use_flm = USEFLM_HM;
+      if (EOBPars->use_flm == USEFLM_NOPT) {
+        PyErr_Format(PyExc_ValueError, "use_flm '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,use_flm_opt[EOBPars->use_flm])) break;
     }
   }
@@ -309,7 +330,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "A_pot"));
     for(EOBPars->A_pot=0; EOBPars->A_pot<=A_NOPT; EOBPars->A_pot++){
-      if (EOBPars->A_pot == A_NOPT) EOBPars->A_pot = A_5PNlog;
+      if (EOBPars->A_pot == A_NOPT) {
+        PyErr_Format(PyExc_ValueError, "A_pot '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,A_opt[EOBPars->A_pot])) break;
     }    
   }  
@@ -317,7 +341,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "D_pot"));
     for(EOBPars->D_pot=0; EOBPars->D_pot<=D_NOPT; EOBPars->D_pot++){
-      if (EOBPars->D_pot == D_NOPT) EOBPars->D_pot = D_3PN;
+      if (EOBPars->D_pot == D_NOPT) {
+        PyErr_Format(PyExc_ValueError, "D_pot '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,D_opt[EOBPars->D_pot])) break;
     }    
   }
@@ -325,7 +352,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "Q_pot"));
     for(EOBPars->Q_pot=0; EOBPars->Q_pot<=Q_NOPT; EOBPars->Q_pot++){
-      if (EOBPars->Q_pot == Q_NOPT) EOBPars->Q_pot = Q_3PN;
+      if (EOBPars->Q_pot == Q_NOPT) {
+        PyErr_Format(PyExc_ValueError, "Q_pot '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,Q_opt[EOBPars->Q_pot])) break;
     }    
   }
@@ -335,7 +365,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "nqc"));
     for(EOBPars->nqc=0; EOBPars->nqc<=NQC_NOPT; EOBPars->nqc++){
-      if (EOBPars->nqc == NQC_NOPT) EOBPars->nqc = NQC_AUTO;
+      if (EOBPars->nqc == NQC_NOPT) {
+        PyErr_Format(PyExc_ValueError, "nqc '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,nqc_opt[EOBPars->nqc])) break;
     }     
   }
@@ -343,7 +376,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "nqc_coefs_flx"));
     for(EOBPars->nqc_coefs_flx=0; EOBPars->nqc_coefs_flx<=NQC_FLX_NOPT; EOBPars->nqc_coefs_flx++){
-      if (EOBPars->nqc_coefs_flx == NQC_FLX_NOPT) EOBPars->nqc_coefs_flx = NQC_FLX_NONE;
+      if (EOBPars->nqc_coefs_flx == NQC_FLX_NOPT) {
+        PyErr_Format(PyExc_ValueError, "nqc_coefs_flx '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,nqc_flx_opt[EOBPars->nqc_coefs_flx])) break;
     }     
   }
@@ -351,7 +387,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "nqc_coefs_hlm"));
     for(EOBPars->nqc_coefs_hlm=0; EOBPars->nqc_coefs_hlm<=NQC_HLM_NOPT; EOBPars->nqc_coefs_hlm++){
-      if (EOBPars->nqc_coefs_hlm == NQC_HLM_NOPT) EOBPars->nqc_coefs_hlm = NQC_HLM_NONE;
+      if (EOBPars->nqc_coefs_hlm == NQC_HLM_NOPT) {
+        PyErr_Format(PyExc_ValueError, "nqc_coefs_hlm '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,nqc_hlm_opt[EOBPars->nqc_coefs_hlm])) break;
     }     
   }
@@ -374,14 +413,14 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "project_spins") != NULL ) { 
     EOBPars->project_spins = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "project_spins")));
   }
-  if ( PyDict_GetItemString(dict, "spin_interp_domain") != NULL ) { 
-    EOBPars->spin_interp_domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_interp_domain"));
-  }
   if ( PyDict_GetItemString(dict, "spin_flx") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "spin_flx"));
     for(EOBPars->spin_flx=0; EOBPars->spin_flx<=SPIN_FLX_NOPT; EOBPars->spin_flx++){
-      if (EOBPars->spin_flx == SPIN_FLX_NOPT) EOBPars->spin_flx = SPIN_FLX_PN;
+      if (EOBPars->spin_flx == SPIN_FLX_NOPT) {
+        PyErr_Format(PyExc_ValueError, "spin_flx '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,spin_flx_opt[EOBPars->spin_flx])) break;
     }     
   }
@@ -389,7 +428,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ringdown_eulerangles"));
     for(EOBPars->ringdown_eulerangles=0; EOBPars->ringdown_eulerangles<=RD_EULERANGLES_NOPT; EOBPars->ringdown_eulerangles++){
-      if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_NOPT) EOBPars->ringdown_eulerangles = RD_EULERANGLES_QNMs;
+      if (EOBPars->ringdown_eulerangles == RD_EULERANGLES_NOPT) {
+        PyErr_Format(PyExc_ValueError, "ringdown_eulerangles '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,ringdown_eulerangles_opt[EOBPars->ringdown_eulerangles])) break;
     }     
   }
@@ -423,7 +465,10 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "ode_timestep"));
     for(EOBPars->ode_timestep=0; EOBPars->ode_timestep<=ODE_TSTEP_NOPT; EOBPars->ode_timestep++){
-      if (EOBPars->ode_timestep == ODE_TSTEP_NOPT) EOBPars->ode_timestep = ODE_TSTEP_ADAPTIVE;
+      if (EOBPars->ode_timestep == ODE_TSTEP_NOPT) {
+        PyErr_Format(PyExc_ValueError, "ode_timestep '%s' undefined", val);
+        return 1;
+      }
       if (STREQUAL(val,ode_tstep_opt[EOBPars->ode_timestep])) break;
     }     
   }
@@ -455,6 +500,11 @@ int SetOptionalVariables(PyObject* dict){
     EOBPars->backwards = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "backwards")));
   }
 
+  /* Precession */
+  if ( PyDict_GetItemString(dict, "use_effective_QNMs") != NULL ) { 
+    EOBPars->use_effective_QNMs = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_effective_QNMs")));
+  }
+
   /* FD */
   if ( PyDict_GetItemString(dict, "domain") != NULL ) { 
     EOBPars->domain = (int) PyLong_AsLong(PyDict_GetItemString(dict, "domain"));
@@ -476,6 +526,176 @@ int SetOptionalVariables(PyObject* dict){
     for (int i = 0; i < EOBPars->freqs_size; i++){
       PyObject *item = PyList_GetItem(tmp, i);
       EOBPars->freqs[i] = PyFloat_AsDouble(item);
+    }
+  }
+
+  /* Parametrized model */
+  /* Shift in delta_t_nqc */
+  if ( PyDict_GetItemString(dict, "d_delta_t_nqc") != NULL) {
+    EOBPars->d_delta_t_nqc = PyFloat_AsDouble(PyDict_GetItemString(dict, "d_delta_t_nqc"));
+  }
+
+  /* Deviation from final BH mass, spin */
+  if ( PyDict_GetItemString(dict, "delta_Mbhf") != NULL) {
+    EOBPars->delta_Mbhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_Mbhf"));
+  }
+  if ( PyDict_GetItemString(dict, "delta_abhf") != NULL) {
+    EOBPars->delta_abhf = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_abhf"));
+  }
+
+  /* Deviation from QNM frequencies */
+  /* alpha */
+  if ( PyDict_GetItemString(dict, "delta_alphalm0") != NULL ) {
+    if (EOBPars->delta_alphalm0_k) free(EOBPars->delta_alphalm0_k);
+    if (EOBPars->delta_alphalm0)   free(EOBPars->delta_alphalm0);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_alphalm0"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_alphalm0_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_alphalm0_k = malloc ( EOBPars->delta_alphalm0_size * sizeof(int));
+    EOBPars->delta_alphalm0   = malloc ( EOBPars->delta_alphalm0_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_alphalm0_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_alphalm0[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
+  /* tau */
+  if ( PyDict_GetItemString(dict, "delta_taulm0") != NULL ) {
+    if (EOBPars->delta_taulm0_k) free(EOBPars->delta_taulm0_k);
+    if (EOBPars->delta_taulm0)   free(EOBPars->delta_taulm0);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_taulm0"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_taulm0_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_taulm0_k = malloc ( EOBPars->delta_taulm0_size * sizeof(int));
+    EOBPars->delta_taulm0   = malloc ( EOBPars->delta_taulm0_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_taulm0_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_taulm0[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
+  /* omega */
+  if ( PyDict_GetItemString(dict, "delta_omglm0") != NULL ) {
+    if (EOBPars->delta_omglm0_k) free(EOBPars->delta_omglm0_k);
+    if (EOBPars->delta_omglm0)   free(EOBPars->delta_omglm0);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_omglm0"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_omglm0_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_omglm0_k = malloc ( EOBPars->delta_omglm0_size * sizeof(int));
+    EOBPars->delta_omglm0   = malloc ( EOBPars->delta_omglm0_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_omglm0_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_omglm0[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
+  /* Deviation from merger amplitude, frequency */
+  /* Amplitude */
+  if ( PyDict_GetItemString(dict, "delta_Alm_mrg") != NULL ) {
+    if (EOBPars->delta_Alm_mrg_k) free(EOBPars->delta_Alm_mrg_k);
+    if (EOBPars->delta_Alm_mrg)   free(EOBPars->delta_Alm_mrg);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_Alm_mrg"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_Alm_mrg_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_Alm_mrg_k = malloc ( EOBPars->delta_Alm_mrg_size * sizeof(int));
+    EOBPars->delta_Alm_mrg   = malloc ( EOBPars->delta_Alm_mrg_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_Alm_mrg_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_Alm_mrg[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
+  /* Frequency */
+  if ( PyDict_GetItemString(dict, "delta_Omglm_mrg") != NULL ) {
+    if (EOBPars->delta_Omglm_mrg_k) free(EOBPars->delta_Omglm_mrg_k);
+    if (EOBPars->delta_Omglm_mrg)   free(EOBPars->delta_Omglm_mrg);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_Omglm_mrg"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_Omglm_mrg_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_Omglm_mrg_k = malloc ( EOBPars->delta_Omglm_mrg_size * sizeof(int));
+    EOBPars->delta_Omglm_mrg   = malloc ( EOBPars->delta_Omglm_mrg_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_Omglm_mrg_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_Omglm_mrg[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
+  /* Deviation from NQC point quantities */
+  /* Amplitude */
+  if ( PyDict_GetItemString(dict, "delta_Alm_nqc") != NULL ) {
+    if (EOBPars->delta_Alm_nqc_k) free(EOBPars->delta_Alm_nqc_k);
+    if (EOBPars->delta_Alm_nqc)   free(EOBPars->delta_Alm_nqc);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_Alm_nqc"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_Alm_nqc_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_Alm_nqc_k = malloc ( EOBPars->delta_Alm_nqc_size * sizeof(int));
+    EOBPars->delta_Alm_nqc   = malloc ( EOBPars->delta_Alm_nqc_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_Alm_nqc_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_Alm_nqc[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
+  /* Frequency */
+  if ( PyDict_GetItemString(dict, "delta_Omglm_nqc") != NULL ) {
+    if (EOBPars->delta_Omglm_nqc_k) free(EOBPars->delta_Omglm_nqc_k);
+    if (EOBPars->delta_Omglm_nqc)   free(EOBPars->delta_Omglm_nqc);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_Omglm_nqc"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_Omglm_nqc_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_Omglm_nqc_k = malloc ( EOBPars->delta_Omglm_nqc_size * sizeof(int));
+    EOBPars->delta_Omglm_nqc   = malloc ( EOBPars->delta_Omglm_nqc_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_Omglm_nqc_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_Omglm_nqc[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
+  /* Derivative of amplitude */
+  if ( PyDict_GetItemString(dict, "delta_dAlm_nqc") != NULL ) {
+    if (EOBPars->delta_dAlm_nqc_k) free(EOBPars->delta_dAlm_nqc_k);
+    if (EOBPars->delta_dAlm_nqc)   free(EOBPars->delta_dAlm_nqc);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_dAlm_nqc"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_dAlm_nqc_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_dAlm_nqc_k = malloc ( EOBPars->delta_dAlm_nqc_size * sizeof(int));
+    EOBPars->delta_dAlm_nqc   = malloc ( EOBPars->delta_dAlm_nqc_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_dAlm_nqc_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_dAlm_nqc[pos - 1] = PyFloat_AsDouble(val);
+    }
+  }
+
+  /* Derivative of frequency */
+  if ( PyDict_GetItemString(dict, "delta_dOmglm_nqc") != NULL ) {
+    if (EOBPars->delta_dOmglm_nqc_k) free(EOBPars->delta_dOmglm_nqc_k);
+    if (EOBPars->delta_dOmglm_nqc)   free(EOBPars->delta_dOmglm_nqc);
+    PyObject *tmp_dict;
+    PyArg_Parse(PyDict_GetItemString(dict, "delta_dOmglm_nqc"), "O!", &PyDict_Type, &tmp_dict);
+    EOBPars->delta_dOmglm_nqc_size = PyDict_Size(tmp_dict);
+    EOBPars->delta_dOmglm_nqc_k = malloc ( EOBPars->delta_dOmglm_nqc_size * sizeof(int));
+    EOBPars->delta_dOmglm_nqc   = malloc ( EOBPars->delta_dOmglm_nqc_size * sizeof(double));
+    PyObject *key, *val;
+    Py_ssize_t pos = 0;
+    while(PyDict_Next(tmp_dict, &pos, &key, &val)) {
+      EOBPars->delta_dOmglm_nqc_k[pos - 1] = PyLong_AsLong(key);
+      EOBPars->delta_dOmglm_nqc[pos - 1] = PyFloat_AsDouble(val);
     }
   }
 
@@ -548,7 +768,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "model"));
     for(EOBPars->model=0; EOBPars->model<=MODEL_NOPT; EOBPars->model++){
-      if (EOBPars->model == MODEL_NOPT) EOBPars->model = MODEL_DALI;
+      if (EOBPars->model == MODEL_NOPT) {
+        PyErr_Format(PyExc_ValueError, "model '%s' undefined", val);
+        return NULL;
+      }
       if (STREQUAL(val,model_opt[EOBPars->model])) break;
     }
   } else EOBPars->model = MODEL_DALI;
@@ -556,10 +779,12 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   model = EOBPars->model;
 
   /* Add a warning for users */
-  if ( PyDict_GetItemString(dict, "Lambda1") != NULL )
-    errorexit("'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
-  if ( PyDict_GetItemString(dict, "Lambda2") != NULL )
-    errorexit("'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
+  if ( PyDict_GetItemString(dict, "Lambda1") != NULL ||
+       PyDict_GetItemString(dict, "Lambda2") != NULL ) {
+    PyErr_SetString(PyExc_ValueError,
+                    "'Lambda1', 'Lambda2' are deprecated. Use LambdaAl2, LambdaBl2 instead.");
+    return NULL;
+  }
 
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.)  default_choice = BINARY_BNS;
   if(EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BHNS;
@@ -605,8 +830,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   /* Optional arguments for the dictionary */
 
   /* Options */
-  SetOptionalVariables(dict);
-
+  if (SetOptionalVariables(dict)) {
+    return NULL;
+  }
   /* output */
   const int output = EOBPars->output_dynamics
     + EOBPars->output_multipoles
@@ -651,6 +877,17 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if ( PyDict_GetItemString(dict, "cN3LO") != NULL ) {
     EOBPars->cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "cN3LO"));
   }   
+
+  /* Deviations from NR-fitted inspiral parameters */
+  if ( PyDict_GetItemString(dict, "delta_a6c") != NULL ) {
+    EOBPars->delta_a6c = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_a6c"));
+    EOBPars->a6c = EOBPars->a6c + EOBPars->delta_a6c;
+  }
+  if ( PyDict_GetItemString(dict, "delta_cN3LO") != NULL ) {
+    EOBPars->delta_cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "delta_cN3LO"));
+    EOBPars->cN3LO = EOBPars->cN3LO + EOBPars->delta_cN3LO;
+  }
+
 
   if (output){
     char outpar[STRLEN];
@@ -700,6 +937,9 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
     PyDict_SetItemString(dyndict, eob_var[v], (PyObject*) pvo); 
     Py_DECREF(pvo);
   }
+
+  // add also tc (a single fload) to the dictionary
+  PyDict_SetItemString(dyndict, "tc", PyFloat_FromDouble(EOBPars->tc));
 
   if(EOBPars->domain==DOMAIN_TD){
     
@@ -1099,7 +1339,6 @@ static PyObject* eob_j0_circ_py(PyObject *self, PyObject *args)
 
   const double S     = EOBPars->S;
   const double Sstar = EOBPars->Sstar;
-  printf("S = %f, Sstar=%f\n", S, Sstar);
   /** Computing the circular angular momentum by solving eq. (A15) of TEOBResumS paper 
 	(which is equivalent to solve eq.(4)=0 of arXiv:1805.03891). */
   eob_metric_s(r, 0., dyn, &A, &B, &dA, &pl_hold, &pl_hold, &pl_hold,
@@ -1148,7 +1387,7 @@ static PyObject* eob_j0_circ_py(PyObject *self, PyObject *args)
   return ret;
 }
 
-static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
+static PyObject* eob_ham_s_py(PyObject *self, PyObject *args, PyObject *kw)
 {
   double r, q, pphi, prstar, chi1, chi2;
   double rc, drc_dr, d2rc_dr2;
@@ -1163,11 +1402,13 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   double dHeff_dpphi;    /* drvt Heff,pphi */
   double d2Heff_dprstar20;
   double d2Heff_dr2;
+  double delta_a6c, delta_cN3LO;
 
   Dynamics *dyn;
 
   /* parse the input */
-  if (!PyArg_ParseTuple(args, "dddddd", &r, &q, &pphi, &prstar, &chi1, &chi2))
+  char* kwlist[] = {"r", "q", "pphi", "prstar", "chi1", "chi2", "delta_a6c", "delta_cN3LO", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "dddddd|$dd", kwlist, &r, &q, &pphi, &prstar, &chi1, &chi2, &delta_a6c, &delta_cN3LO))
     return NULL;
   
   double nu = q_to_nu(q);
@@ -1178,6 +1419,8 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   EOBPars->chi1 = chi1;
   EOBPars->chi2 = chi2;
   EOBPars->q    = q;
+  EOBPars->delta_a6c = delta_a6c;
+  EOBPars->delta_cN3LO = delta_cN3LO;
 
   eob_set_params(BINARY_BBH, 1);
   /* set firstcall */
@@ -1203,16 +1446,17 @@ static PyObject* eob_ham_s_py(PyObject *self, PyObject *args)
   return ret;
 }
 
-static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
+static PyObject* eob_metricAB_py(PyObject *self, PyObject *args, PyObject *kw)
 {
   /* Compute A and B */
-  double r, q, chi1, chi2;
+  double r, q, chi1, chi2, delta_a6c;
   double A, B, pl_hold;
 
   Dynamics *dyn;
 
   /* parse the input */
-  if (!PyArg_ParseTuple(args, "dddd", &r, &q, &chi1, &chi2))
+  char* kwlist[] = {"r", "q", "chi1", "chi2", "delta_a6c", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "dddd|$d", kwlist, &r, &q, &chi1, &chi2, &delta_a6c))
     return NULL;
   
   double nu = q_to_nu(q);
@@ -1223,6 +1467,7 @@ static PyObject* eob_metricAB_py(PyObject *self, PyObject *args)
   EOBPars->q    = q;
   EOBPars->chi1 = chi1;
   EOBPars->chi2 = chi2;
+  EOBPars->delta_a6c = delta_a6c;
 
   eob_set_params(BINARY_BBH, 1);
   /* set firstcall */
@@ -1291,10 +1536,10 @@ static PyMethodDef EOBRunMethods[] = {
   {"eob_c3_fit_HM_py", eob_c3_fit_HM_py, METH_VARARGS, "Fit to compute the c3 for nonspinning BBH"},
   {"pph_lso_orbital_py", pph_lso_orbital_py, METH_VARARGS, "Fit to compute pphi_lso in the non-spinning case"},
   {"pph_lso_spin_py", pph_lso_spin_py, METH_VARARGS, "Fit to compute pphi_lso in the spinning case (|chi|<0.5)"},
-  {"eob_ham_s_py", eob_ham_s_py, METH_VARARGS, "Compute the spinning EOB hamiltonian for BBH systems"},
+  {"eob_ham_s_py", (PyCFunction) eob_ham_s_py, METH_VARARGS | METH_KEYWORDS, "Compute the spinning EOB hamiltonian for BBH systems"},
   {"eob_j0_circ_py", eob_j0_circ_py, METH_VARARGS, "Compute the (circular) value of j corresponding to an initial separation r"},
   {"eob_dyn_j0_py", eob_dyn_j0_py, METH_VARARGS, "Compute the (generic) value of j corresponding to an initial semilatus rectum r"},
-  {"eob_metricAB_py", eob_metricAB_py, METH_VARARGS, "Compute the metric potentials"},
+  {"eob_metricAB_py", (PyCFunction) eob_metricAB_py, METH_VARARGS | METH_KEYWORDS, "Compute the metric potentials"},
   {"eob_get_rc_py", eob_get_rc_py, METH_VARARGS, "Compute the centrifugal radius"},
   /* SB: Not understood following line, but uncommented version
   prevent a segfault after runtime ... */

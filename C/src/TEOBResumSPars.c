@@ -98,6 +98,24 @@ void EOBParameters_free (EOBParameters *eobp)
   if (eobp->knqcpeak22) free (eobp->knqcpeak22);
   if (eobp->output_lm) free (eobp->output_lm);
   if (eobp->freqs) free(eobp->freqs);
+  if (eobp->delta_alphalm0_k) free(eobp->delta_alphalm0_k);
+  if (eobp->delta_alphalm0) free(eobp->delta_alphalm0);
+  if (eobp->delta_taulm0_k) free(eobp->delta_taulm0_k);
+  if (eobp->delta_taulm0) free(eobp->delta_taulm0);
+  if (eobp->delta_omglm0_k) free(eobp->delta_omglm0_k);
+  if (eobp->delta_omglm0) free(eobp->delta_omglm0);
+  if (eobp->delta_Alm_mrg_k) free(eobp->delta_Alm_mrg_k);
+  if (eobp->delta_Alm_mrg) free(eobp->delta_Alm_mrg);
+  if (eobp->delta_Omglm_mrg_k) free(eobp->delta_Omglm_mrg_k);
+  if (eobp->delta_Omglm_mrg) free(eobp->delta_Omglm_mrg);
+  if (eobp->delta_Alm_nqc_k) free(eobp->delta_Alm_nqc_k);
+  if (eobp->delta_Alm_nqc) free(eobp->delta_Alm_nqc);
+  if (eobp->delta_Omglm_nqc_k) free(eobp->delta_Omglm_nqc_k);
+  if (eobp->delta_Omglm_nqc) free(eobp->delta_Omglm_nqc);
+  if (eobp->delta_dAlm_nqc_k) free(eobp->delta_dAlm_nqc_k);
+  if (eobp->delta_dAlm_nqc) free(eobp->delta_dAlm_nqc);
+  if (eobp->delta_dOmglm_nqc_k) free(eobp->delta_dOmglm_nqc_k);
+  if (eobp->delta_dOmglm_nqc) free(eobp->delta_dOmglm_nqc);
   free(eobp);
 }
 
@@ -290,11 +308,12 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->spin_odes_omg_stop   = -1; // stop ODE integration at this Momega set by NR BBH mrg freq fit 
   eobp->spin_odes_t_stop     = -1;
   eobp->spin_odes_dt         = 1;  // timestep for spin dynamics
-  eobp->spin_interp_domain   = 0;  // FD or TD interpolation
   eobp->chi1x = eobp->chi1y  = eobp->chi1z = 0.;
   eobp->chi2x = eobp->chi2y  = eobp->chi2z = 0.;
-  eobp->spin_flx             = SPIN_FLX_EOB; 
+  eobp->spin_flx             = (model == MODEL_GIOTTO) ? SPIN_FLX_PN : SPIN_FLX_EOB;
   eobp->ringdown_eulerangles = RD_EULERANGLES_QNMs;
+  eobp->cosJL_final          = 1.;
+  eobp->use_effective_QNMs   = 1;
 
   /* OMP settings */
 
@@ -328,6 +347,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->C_Hex2= 0. ; //
   eobp->a6c= 0. ; //
   eobp->cN3LO= 0. ; //
+  eobp->delta_a6c = 0. ; //
+  eobp->delta_cN3LO = 0. ; //
   
   eobp->kapA2= 0. ; // gravitoelectric kappa star A
   eobp->kapA3= 0. ; //
@@ -458,6 +479,25 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   }
   else errorexit("Unknown default binary parameter choice.");
 
+  /* Deviations from final BH mass, spin */
+  eobp->delta_Mbhf = 0.;
+  eobp->delta_abhf = 0.;
+
+  /* Deviations from QNM frequencies */
+  eobp->delta_alphalm0_size = 0;
+  eobp->delta_taulm0_size   = 0;
+  eobp->delta_omglm0_size   = 0;
+
+  /* Deviations from merger quantities */
+  eobp->delta_Alm_mrg_size   = 0;
+  eobp->delta_Omglm_mrg_size = 0;
+
+  /* Deviations from NQC point quantities */
+  eobp->delta_Alm_nqc_size   = 0;
+  eobp->delta_Omglm_nqc_size = 0;
+  eobp->delta_dAlm_nqc_size   = 0;
+  eobp->delta_dOmglm_nqc_size = 0;
+
 }
 
 /**
@@ -532,23 +572,41 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->use_spins = MODE_SPINS_ALIGNED;
   }
 
-  /* If precession and eccentricity are both specified, use EOB flux */
-  // if ((EOBPars->use_spins == MODE_SPINS_GENERIC) && (EOBPars->ecc != 0.0 || EOBPars->r_hyp != 0.0))
-  //  if (VERBOSE){
-  //     printf("Setting spin_flux to EOB\n"); EOBPars->spin_flx = SPIN_FLX_EOB;
-  //     printf("Setting interpolation domain to TD\n"); EOBPars->domain = 0;
-  //  }
+  if ((EOBPars->ecc != 0.) || (EOBPars->r_hyp != 0.))
+    EOBPars->model = MODEL_DALI;
+
+  if (EOBPars->spin_flx == SPIN_FLX_NOPT) {
+    PRERR("spin_flx undefined");
+    return 1;
+  }
+
+  if (EOBPars->model == MODEL_DALI && EOBPars->domain == DOMAIN_FD) {
+    PRERR("SPA with model = Dali is currently not available");
+    return 1;
+  }
+
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->model == MODEL_DALI && EOBPars->spin_flx != SPIN_FLX_EOB) {
+    PRERR("model = Dali requires spin_flx = EOB");
+    return 1;
+  }
+
+  if (EOBPars->use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins && EOBPars->spin_flx == SPIN_FLX_EOB) {
+    PRERR("project_spins incompatible with spin_flx = EOB");
+    return 1;
+  }
 
   /* Check: if eccentricity is not between 0 and 1, throw an error */
   if ((EOBPars->ecc < 0.0) || (EOBPars->ecc >= 1.0)){
-    if (DEBUG) printf("ERROR: Eccentricity must be >= 0 and < 1.\n");
+    PRERR("Eccentricity must be >= 0 and < 1.");
     return 1;
   }
   /* Check: if spin variables exceed 1, throw an error */
-  double chitot1 = sqrt(SQ(EOBPars->chi1x)+SQ(EOBPars->chi1y)+SQ(EOBPars->chi1z));
-  double chitot2 = sqrt(SQ(EOBPars->chi2x)+SQ(EOBPars->chi2y)+SQ(EOBPars->chi2z));
+  /* Note: aligned-spin runs may specify only the scalar chi{12}, leaving the
+     Cartesian components at zero, so check both representations */
+  double chitot1 = MAX(sqrt(SQ(EOBPars->chi1x)+SQ(EOBPars->chi1y)+SQ(EOBPars->chi1z)), fabs(EOBPars->chi1));
+  double chitot2 = MAX(sqrt(SQ(EOBPars->chi2x)+SQ(EOBPars->chi2y)+SQ(EOBPars->chi2z)), fabs(EOBPars->chi2));
   if ((chitot1 > 1.0) || (chitot2 > 1.0)){
-    if (DEBUG) printf("ERROR: Spin magnitudes must not exceed 1.\n");
+    PRERR("Spin magnitudes must not exceed 1.");
     return 1;
   }
   EOBPars->nu = q_to_nu(q);
@@ -632,15 +690,15 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->japT2 = EOBPars->japA2 + EOBPars->japB2;
     
     if (!(EOBPars->kapT2 > 0.)) {
-      if (DEBUG) printf("ERROR: kappaT2 must be >0\n");
+      PRERR("kappaT2 must be >0");
       return 1;
     }
     if (!(EOBPars->kapT3 > 0.)) {
-      if (DEBUG) printf("ERROR: kappaT3 must be >0\n");
+      PRERR("kappaT3 must be >0");
       return 1;
     }
     if (!(EOBPars->kapT4 > 0.)) {
-      if (DEBUG) printf("ERROR: kappaT4 must be >0\n");
+      PRERR("kappaT4 must be >0");
       return 1;
     }
     
@@ -685,7 +743,7 @@ int eob_set_params(int default_choice, int firstcall)
 	      if (LamAl[l] > 0) {
 	        EOBPars->bomgfA[l] = Chang14_fit_omegaf(LamAl[l], l);	 
 	        if (EOBPars->bomgfA[l]<=0.){
-            if (DEBUG) printf("ERROR: f-mode frequency of star A cannot be zero or negative\n");
+            PRERR("f-mode frequency of star A cannot be zero or negative");
             return 1;
           }
 	        EOBPars->bomgfA[l] /= XA;
@@ -693,7 +751,7 @@ int eob_set_params(int default_choice, int firstcall)
 	      if (LamBl[l] > 0) {
 	        EOBPars->bomgfB[l] = Chang14_fit_omegaf(LamBl[l], l);
 	        if (EOBPars->bomgfB[l]<=0.){
-            if (DEBUG) printf("ERROR: f-mode frequency of star B cannot be zero or negative\n");
+            PRERR("f-mode frequency of star B cannot be zero or negative");
             return 1;
           }
 	        EOBPars->bomgfB[l] /= XB;
@@ -725,12 +783,22 @@ int eob_set_params(int default_choice, int firstcall)
       }
     }
 
+    /* Apply deviations from final BH mass, spin */
+    EOBPars->Mbhf *= 1. + EOBPars->delta_Mbhf;
+    if (EOBPars->Mbhf <= 0.) {
+      if (DEBUG) PRERR("Final BH mass changed to be zero or negative.");
+      return 1;
+    }
+    EOBPars->abhf *= 1. + EOBPars->delta_abhf;
+    if (fabs(EOBPars->abhf) > 1.) {
+      if (DEBUG) PRERR("Final BH spin magnitude changed to be greater than 1.");
+      return 1;
+    }
+
   /* Default settings for NQC */
   // NOTE: The defaults are different from v0.0 and v1.0
   double ecc   = EOBPars->ecc;
   double r_hyp = EOBPars->r_hyp;
-  if ((ecc != 0.) || (r_hyp != 0.))
-    EOBPars->model = MODEL_DALI;
 
   if (EOBPars->nqc == NQC_AUTO) {
     if (EOBPars->binary == BINARY_BNS) {
@@ -760,28 +828,28 @@ int eob_set_params(int default_choice, int firstcall)
   {
     case(a6c_fits_P33_newlogs):
       if(EOBPars->A_pot != A_5PNlogP33_newlogs){
-        if (DEBUG) printf("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
+        PRERR("a6c_fits_P33_newlogs should be used with A_5PNlogP33_newlogs");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_ecc_P33_newlogs(EOBPars->nu);
       break;
     case(a6c_fits_P33_HM4PN22):
       if(EOBPars->use_flm != USEFLM_HM_4PN22){
-        if (DEBUG) printf("a6c_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
+        PRERR("a6c_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_ecc_P33_4PNh22(EOBPars->nu);
       break;
     case(a6c_fits_ecc):
       if (EOBPars->model == MODEL_DALI){
-        if (DEBUG) printf("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
+        PRERR("a6c_fits_ecc should be used with ecc != 0 or r_hyp != 0");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_ecc(EOBPars->nu);
       break;
     case(a6c_fits_HM_2023):
       if (EOBPars->use_flm != USEFLM_HM){
-        if (DEBUG) printf("a6c_fits_HM_2023 should be used with USEFLM_HM\n");
+        PRERR("a6c_fits_HM_2023 should be used with USEFLM_HM");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_HM_2023(EOBPars->nu);
@@ -789,7 +857,7 @@ int eob_set_params(int default_choice, int firstcall)
     case(a6c_fits_HM):
       /*
       if (EOBPars->use_flm != USEFLM_HM){
-        if (DEBUG) printf("a6c_fits_HM should be used with USEFLM_HM\n");
+        PRERR("a6c_fits_HM should be used with USEFLM_HM");
         return 1;
       }     */
       printf("Pars warning temporarily altered\n");
@@ -816,6 +884,8 @@ int eob_set_params(int default_choice, int firstcall)
       if (VERBOSE) printf("WARINING: No option specified for a6c.\n");
       break; 
   }
+  /* Add deviation from fitted value */
+  if (EOBPars->delta_a6c != 0.) EOBPars->a6c += EOBPars->delta_a6c;
 
   EOBPars->cN3LO = 0.;
   switch(EOBPars->use_cN3LO_fits)
@@ -823,7 +893,7 @@ int eob_set_params(int default_choice, int firstcall)
     case(cN3LO_fits_P33_newlogs):
     /*
       if(EOBPars->A_pot != A_5PNlogP33_newlogs){
-        if (DEBUG) printf("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs\n");
+        PRERR("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs");
         return 1;
       } */
        printf("Pars c3NLO warning temporarily altered\n");
@@ -831,14 +901,14 @@ int eob_set_params(int default_choice, int firstcall)
       break;
     case(cN3LO_fits_P33_HM4PN22):
       if(EOBPars->use_flm != USEFLM_HM_4PN22){
-        if (DEBUG) printf("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22\n");
+        PRERR("cN3LO_fits_P33_HM4PN22 should be used with USEFLM_HM_4PN22");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_4PNh22(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_ecc):
       if(EOBPars->model == MODEL_DALI){
-        if (DEBUG) printf("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0\n");
+        PRERR("cN3LO_fits_ecc should be used with ecc != 0 or r_hyp != 0");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_ecc(EOBPars->nu,EOBPars->a1,EOBPars->a2);
@@ -848,14 +918,14 @@ int eob_set_params(int default_choice, int firstcall)
     case(cN3LO_fits_HM_2023_430):
     case(cN3LO_fits_HM_2023_420):
       if (EOBPars->use_flm != USEFLM_HM){
-        if (DEBUG) printf("cN3LO_fits_HM_2023 should be used with USEFLM_HM\n");
+        PRERR("cN3LO_fits_HM_2023 should be used with USEFLM_HM");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_HM_2023(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_HM):
       if (EOBPars->use_flm != USEFLM_HM){
-        if (DEBUG) printf("cN3LO_fits_HM should be used with USEFLM_HM\n");
+        PRERR("cN3LO_fits_HM should be used with USEFLM_HM");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_HM(EOBPars->nu,EOBPars->a1,EOBPars->a2);
@@ -881,6 +951,9 @@ int eob_set_params(int default_choice, int firstcall)
       if (VERBOSE) printf("WARINING: No option specified for cN3LO.\n");
       break; 
   }
+  /* Add deviation from fitted value */
+  if (EOBPars->delta_cN3LO != 0.)
+    EOBPars->cN3LO += EOBPars->delta_cN3LO;
 
   double dt = EOBPars->dt;
   if (EOBPars->use_geometric_units) {
@@ -929,13 +1002,191 @@ int eob_set_params(int default_choice, int firstcall)
 	      PRFORMd("dt_interp",EOBPars->dt_interp);
   }
 
+  /* Deviations from standard TEOB */
+
+  /* QNM (inverse) damping time */
+  if (EOBPars->delta_alphalm0_size + EOBPars->delta_taulm0_size > 0) {
+    int     temp_size, *temp_k;
+    double *temp;
+    temp   = malloc ( KMAX * sizeof(double));
+    temp_k = malloc ( (EOBPars->delta_alphalm0_size + EOBPars->delta_taulm0_size) * sizeof(int));
+    temp_size = 0;
+    for (int k = 0; k < KMAX; k++) temp[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_alphalm0_size; k++) {
+      int idx = EOBPars->delta_alphalm0_k[k];
+      if (DUNEQUAL(EOBPars->delta_alphalm0[k], 0., 1e-9)) {
+        temp_k[temp_size] = idx;
+        temp[idx]         = EOBPars->delta_alphalm0[k];
+        temp_size++;
+        if (temp[idx] <= -1.) {
+          if (DEBUG) PRERR("Fractional deviations from QNM damping times must be > -1.");
+          return 1;
+        }
+      }
+    }
+    for (int k = 0; k < EOBPars->delta_taulm0_size; k++) {
+      int idx = EOBPars->delta_taulm0_k[k];
+      if (DUNEQUAL(EOBPars->delta_taulm0[k], 0., 1e-9)) {
+        if (DUNEQUAL(temp[idx], 0., 1e-9)) {
+          if (DEBUG) PRERRF("Nonzero deviation from both QNM alpha and tau specified for mode k = %d.", idx);
+          return 1;
+        }
+        else {
+          temp_k[temp_size] = idx;
+          temp[idx]         = - EOBPars->delta_taulm0[k]/(1. + EOBPars->delta_taulm0[k]);
+          temp_size++;
+        }
+        if (temp[idx] <= -1.) {
+          if (DEBUG) PRERR("Fractional deviations from QNM damping times must be > -1.");
+          return 1;
+        }
+      }
+    }
+    free(EOBPars->delta_alphalm0);
+    free(EOBPars->delta_alphalm0_k);
+    EOBPars->delta_alphalm0_size = temp_size;
+    EOBPars->delta_alphalm0   = malloc ( KMAX * sizeof(double));
+    EOBPars->delta_alphalm0_k = malloc ( EOBPars->delta_alphalm0_size * sizeof(int));
+    memcpy(EOBPars->delta_alphalm0,   temp,   KMAX * sizeof(double));
+    memcpy(EOBPars->delta_alphalm0_k, temp_k, EOBPars->delta_alphalm0_size * sizeof(int));
+    free(temp);
+    free(temp_k);
+  }
+
+  /* QNM frequency */
+  if (EOBPars->delta_omglm0_size > 0) {
+    double *temp;
+    temp = malloc ( KMAX * sizeof(double));
+    for (int k = 0; k < KMAX; k++) temp[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_omglm0_size; k++) {
+      int idx   = EOBPars->delta_omglm0_k[k];
+      temp[idx] = EOBPars->delta_omglm0[k];
+    }
+    free(EOBPars->delta_omglm0);
+    EOBPars->delta_omglm0 = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_omglm0, temp, KMAX * sizeof(double));
+    free(temp);
+  }
+
+  /* Merger amplitude */
+  if (EOBPars->delta_Alm_mrg_size > 0) {
+    double *temp;
+    temp = malloc ( KMAX * sizeof(double));
+    for (int k = 0; k < KMAX; k++) temp[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_Alm_mrg_size; k++) {
+      int idx   = EOBPars->delta_Alm_mrg_k[k];
+      temp[idx] = EOBPars->delta_Alm_mrg[k];
+      if (EOBPars->delta_Alm_mrg[k] < -1.0) {
+        if (DEBUG) PRERRF("Peak amplitude for mode %d changed to negative value.", idx);
+        return 1;
+      }
+      if (DEBUG) {
+        int j;
+        for (j = EOBPars->kpostpeak_size - 1; j >= 0; j--)
+          if (idx == EOBPars->kpostpeak[j]) break;
+        if (j < 0)
+          printf("WARNING: add mode %d to kpostpeak when using merger amplitude deviation to ensure plunge-ringdown match.\n", idx);
+      }
+    }
+    free(EOBPars->delta_Alm_mrg);
+    EOBPars->delta_Alm_mrg = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_Alm_mrg, temp, KMAX * sizeof(double));
+    free(temp);
+  }
+
+  /* Merger frequency */
+  if (EOBPars->delta_Omglm_mrg_size > 0) {
+    double *temp;
+    temp = malloc ( KMAX * sizeof(double));
+    for (int k = 0; k < KMAX; k++) temp[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_Omglm_mrg_size; k++) {
+      int idx   = EOBPars->delta_Omglm_mrg_k[k];
+      temp[idx] = EOBPars->delta_Omglm_mrg[k];
+      if (DEBUG) {
+        int j;
+        for (j = EOBPars->kpostpeak_size - 1; j >= 0; j--)
+          if (idx == EOBPars->kpostpeak[j]) break;
+        if (j < 0)
+          printf("WARNING: add mode %d to kpostpeak when using merger frequency deviation to ensure plunge-ringdown match.\n", idx);
+      }
+    }
+    free(EOBPars->delta_Omglm_mrg);
+    EOBPars->delta_Omglm_mrg = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_Omglm_mrg, temp, KMAX * sizeof(double));
+    free(temp);
+  }
+
+  /* NQC point amplitude */
+  if (EOBPars->delta_Alm_nqc_size > 0) {
+    double *temp;
+    temp = malloc ( KMAX * sizeof(double));
+    for (int k = 0; k < KMAX; k++) temp[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_Alm_nqc_size; k++) {
+      int idx   = EOBPars->delta_Alm_nqc_k[k];
+      temp[idx] = EOBPars->delta_Alm_nqc[k];
+      if (EOBPars->delta_Alm_nqc[k] < -1.0) {
+        if (DEBUG) PRERRF("NQC amplitude for mode %d changed to negative value.", idx);
+        return 1;
+      }
+    }
+    free(EOBPars->delta_Alm_nqc);
+    EOBPars->delta_Alm_nqc = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_Alm_nqc, temp, KMAX * sizeof(double));
+    free(temp);
+  }
+
+  /* NQC point frequency */
+  if (EOBPars->delta_Omglm_nqc_size > 0) {
+    double *temp;
+    temp = malloc ( KMAX * sizeof(double));
+    for (int k = 0; k < KMAX; k++) temp[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_Omglm_nqc_size; k++) {
+      int idx   = EOBPars->delta_Omglm_nqc_k[k];
+      temp[idx] = EOBPars->delta_Omglm_nqc[k];
+    }
+    free(EOBPars->delta_Omglm_nqc);
+    EOBPars->delta_Omglm_nqc = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_Omglm_nqc, temp, KMAX * sizeof(double));
+    free(temp);
+  }
+
+  /* Derivative of amplitude at NQC point */
+  if (EOBPars->delta_dAlm_nqc_size > 0) {
+    double *temp;
+    temp = malloc ( KMAX * sizeof(double));
+    for (int k = 0; k < KMAX; k++) temp[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_dAlm_nqc_size; k++) {
+      int idx   = EOBPars->delta_dAlm_nqc_k[k];
+      temp[idx] = EOBPars->delta_dAlm_nqc[k];
+    }
+    free(EOBPars->delta_dAlm_nqc);
+    EOBPars->delta_dAlm_nqc = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_dAlm_nqc, temp, KMAX * sizeof(double));
+    free(temp);
+  }
+
+  /* Derivative of frequency at NQC point */
+  if (EOBPars->delta_dOmglm_nqc_size > 0) {
+    double *temp;
+    temp = malloc ( KMAX * sizeof(double));
+    for (int k = 0; k < KMAX; k++) temp[k] = 0.;
+    for (int k = 0; k < EOBPars->delta_dOmglm_nqc_size; k++) {
+      int idx   = EOBPars->delta_dOmglm_nqc_k[k];
+      temp[idx] = EOBPars->delta_dOmglm_nqc[k];
+    }
+    free(EOBPars->delta_dOmglm_nqc);
+    EOBPars->delta_dOmglm_nqc = malloc ( KMAX * sizeof(double));
+    memcpy(EOBPars->delta_dOmglm_nqc, temp, KMAX * sizeof(double));
+    free(temp);
+  }
+
   /* Function pointers */
   
   /** Set waveform fun pointers */
   if (EOBPars->use_flm == USEFLM_HM_6PN3p3){
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
     eob_wav_flm      = &eob_wav_flm_HM_6PN3p3;
-    eob_wav_flm_s    = &eob_wav_flm_s_HM_6PN3p3; // oops
+    eob_wav_flm_s    = &eob_wav_flm_s_HM_6PN3p3;
     eob_wav_deltalm  = &eob_wav_deltalm_HM;
     eob_wav_ringdown = &eob_wav_ringdown_HM; 
     eob_flx_Fr       = &eob_flx_Fr_ecc_next;
@@ -986,7 +1237,7 @@ int eob_set_params(int default_choice, int firstcall)
       eob_wav_flm_s   = &eob_wav_flm_s_SSNNLO;
     */
   } else {
-    if (DEBUG) printf("ERROR: Unknown option for use_flm\n");
+    PRERR("Unknown option for use_flm");
     return 1;
   }
 
@@ -1006,7 +1257,11 @@ int eob_set_params(int default_choice, int firstcall)
   }
   // Overwrite some quantities if we are in a BHNS case
   if(EOBPars->binary==BINARY_BHNS || EOBPars->binary == BINARY_BHNS_TD){
-    eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
+    if (EOBPars->model == MODEL_DALI) {
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_ecc;
+    } else {
+      eob_wav_hlmNQC_find_a1a2a3_mrg = &eob_wav_hlmNQC_find_a1a2a3_mrg_BHNS_HM;
+    }
     eob_wav_ringdown = &eob_wav_ringdown_bhns;
     eob_nqc_timeshift = &eob_nqc_timeshift_bhns;
     eob_nqc_deltat_lm = &eob_nqc_deltat_lm_bhns;
@@ -1027,7 +1282,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->A_pot == A_LMR) {
     eob_metric_Apotential = &eob_metric_ALMR;
   } else {
-    if (DEBUG) printf("ERROR: Unknown option for A potential\n");
+    PRERR("Unknown option for A potential");
     return 1;
   }
 
@@ -1040,7 +1295,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->D_pot == D_5PNP32_newlogs) {
     eob_metric_Dpotential = &eob_metric_D5PNP32_newlogs;
   } else {
-    if (DEBUG) printf("ERROR: Unknown option for D potential\n");
+    PRERR("Unknown option for D potential");
     return 1;
   }
 
@@ -1053,7 +1308,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->Q_pot == Q_5PNfull) {
     eob_metric_Qpotential = &eob_metric_Q5PNfull;
   } else {
-    if (DEBUG) printf("ERROR: Unknown option for Q potential\n");
+    PRERR("Unknown option for Q potential");
     return 1;
   }
   
@@ -1071,7 +1326,7 @@ int eob_set_params(int default_choice, int firstcall)
   } else if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
   } else {
-    if (DEBUG) printf("ERROR: Unknown option for centrifugal radius\n");
+    PRERR("Unknown option for centrifugal radius");
     return 1;
   }
 
@@ -1116,7 +1371,7 @@ int eob_set_params(int default_choice, int firstcall)
       else
         eob_dyn_ic = &eob_dyn_ic_circ_s;       // quasi-circular ICs
     } else {
-      if (DEBUG) printf("ERROR: Unrecognized eccentric_ic flag.\n");
+      PRERR("Unrecognized eccentric_ic flag.");
       return 1;
     }
   } else if (usespins) {
@@ -1647,12 +1902,7 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   if (STREQUAL(key,"spin_flx")) {     
     val = string_trim(val);
     for (eobp->spin_flx=0; eobp->spin_flx<=SPIN_FLX_NOPT; eobp->spin_flx++) {
-      if (eobp->spin_flx == SPIN_FLX_NOPT) {
-        eobp->spin_flx = SPIN_FLX_EOB;
-        if (VERBOSE) printf("spin flux '%s' undefined, set to '%s'\n",
-        val,spin_flx_opt[eobp->spin_flx]);
-        break;
-      }
+      if (eobp->spin_flx == SPIN_FLX_NOPT) break;
     if (STREQUAL(val,spin_flx_opt[eobp->spin_flx])) break;
     }
   }    
@@ -1669,8 +1919,8 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     if (STREQUAL(val,ringdown_eulerangles_opt[eobp->ringdown_eulerangles])) break;
     }
   }   
-  if (STREQUAL(key, "spin_interp_domain")) {
-    eobp->spin_interp_domain = par_get_i(val); 
+  if (STREQUAL(key,"use_effective_QNMs")) {
+    eobp->use_effective_QNMs = YESNO2INT(string_trim(val));
   }
   if (STREQUAL(key,"spin_dyn_size")) {
     eobp->spin_dyn_size = par_get_i(val); //FIXME: this was a bool, but could be used as integer to switch between ALIGNED/PRECESSING
@@ -1852,6 +2102,106 @@ if (STREQUAL(val,ode_tstep_opt[eobp->ode_timestep])) break;
   if (STREQUAL(key,"errors_to_warning")) {
     eobp->errors_to_warnings = YESNO2INT(string_trim(val));
   }
+
+  /* Parametrized model: deviations from NR-fitted quantities */
+  /* Inspiral */
+  if (STREQUAL(key, "delta_a6c")) {
+    eobp->delta_a6c = par_get_d(val);
+  }
+  if (STREQUAL(key, "delta_cN3LO")) {
+    eobp->delta_cN3LO = par_get_d(val);
+  }
+
+  /* Delta t NQC */
+  if (STREQUAL(key, "d_delta_t_nqc")) {
+    eobp->d_delta_t_nqc = par_get_d(val);
+  }
+
+  /* Final BH */
+  if (STREQUAL(key, "delta_Mbhf")) {
+    eobp->delta_Mbhf = par_get_d(val);
+  }
+  if (STREQUAL(key, "delta_abhf")) {
+    eobp->delta_abhf = par_get_d(val);
+  }
+
+  /* QNMs */
+  if (STREQUAL(key, "delta_alphalm0_k")) {
+    free(eobp->delta_alphalm0_k);
+    eobp->delta_alphalm0_size = str2iarray(val, &eobp->delta_alphalm0_k);
+  }
+  if (STREQUAL(key, "delta_alphalm0")) {
+    free(eobp->delta_alphalm0);
+    eobp->delta_alphalm0_size = str2darray(val, &eobp->delta_alphalm0);
+  }
+  if (STREQUAL(key, "delta_taulm0_k")) {
+    free(eobp->delta_taulm0_k);
+    eobp->delta_taulm0_size = str2iarray(val, &eobp->delta_taulm0_k);
+  }
+  if (STREQUAL(key, "delta_taulm0")) {
+    free(eobp->delta_taulm0);
+    eobp->delta_taulm0_size = str2darray(val, &eobp->delta_taulm0);
+  }
+  if (STREQUAL(key, "delta_omglm0_k")) {
+    free(eobp->delta_omglm0_k);
+    eobp->delta_omglm0_size = str2iarray(val, &eobp->delta_omglm0_k);
+  }
+  if (STREQUAL(key, "delta_omglm0")) {
+    free(eobp->delta_omglm0);
+    eobp->delta_omglm0_size = str2darray(val, &eobp->delta_omglm0);
+  }
+
+  /* Merger quantities */
+  if (STREQUAL(key, "delta_Alm_mrg_k")) {
+    free(eobp->delta_Alm_mrg_k);
+    eobp->delta_Alm_mrg_size = str2iarray(val, &eobp->delta_Alm_mrg_k);
+  }
+  if (STREQUAL(key, "delta_Alm_mrg")) {
+    free(eobp->delta_Alm_mrg);
+    eobp->delta_Alm_mrg_size = str2darray(val, &eobp->delta_Alm_mrg);
+  }
+  if (STREQUAL(key, "delta_Omglm_mrg_k")) {
+    free(eobp->delta_Omglm_mrg_k);
+    eobp->delta_Omglm_mrg_size = str2iarray(val, &eobp->delta_Omglm_mrg_k);
+  }
+  if (STREQUAL(key, "delta_Omglm_mrg")) {
+    free(eobp->delta_Omglm_mrg);
+    eobp->delta_Omglm_mrg_size = str2darray(val, &eobp->delta_Omglm_mrg);
+  }
+
+  /* NQC point */
+  if (STREQUAL(key, "delta_Alm_nqc_k")) {
+    free(eobp->delta_Alm_nqc_k);
+    eobp->delta_Alm_nqc_size = str2iarray(val, &eobp->delta_Alm_nqc_k);
+  }
+  if (STREQUAL(key, "delta_Alm_nqc")) {
+    free(eobp->delta_Alm_nqc);
+    eobp->delta_Alm_nqc_size = str2darray(val, &eobp->delta_Alm_nqc);
+  }
+  if (STREQUAL(key, "delta_Omglm_nqc_k")) {
+    free(eobp->delta_Alm_nqc_k);
+    eobp->delta_Omglm_nqc_size = str2iarray(val, &eobp->delta_Omglm_nqc_k);
+  }
+  if (STREQUAL(key, "delta_Omglm_nqc")) {
+    free(eobp->delta_Omglm_nqc);
+    eobp->delta_Omglm_nqc_size = str2darray(val, &eobp->delta_Omglm_nqc);
+  }
+  if (STREQUAL(key, "delta_dAlm_nqc_k")) {
+    free(eobp->delta_dAlm_nqc_k);
+    eobp->delta_dAlm_nqc_size = str2iarray(val, &eobp->delta_dAlm_nqc_k);
+  }
+  if (STREQUAL(key, "delta_dAlm_nqc")) {
+    free(eobp->delta_dAlm_nqc);
+    eobp->delta_dAlm_nqc_size = str2darray(val, &eobp->delta_dAlm_nqc);
+  }
+  if (STREQUAL(key, "delta_dOmglm_nqc_k")) {
+    free(eobp->delta_dOmglm_nqc_k);
+    eobp->delta_dOmglm_nqc_size = str2iarray(val, &eobp->delta_dOmglm_nqc_k);
+  }
+  if (STREQUAL(key, "delta_dOmglm_nqc")) {
+    free(eobp->delta_dOmglm_nqc);
+    eobp->delta_dOmglm_nqc_size = str2darray(val, &eobp->delta_dOmglm_nqc);
+  }
 }
 
 /**
@@ -2007,6 +2357,8 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n"    , "compute_LSO_guess", eobp->compute_LSO_guess);
 
   fprintf(f,"%s = %d\n"    , "compute_ringdown", eobp->compute_ringdown);
+
+  fprintf(f,"%s = \"%s\"\n", "use_effective_QNMs", INT2YESNO(eobp->use_effective_QNMs));
   
   /* NQC */
   fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);
@@ -2021,6 +2373,119 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_size", eobp->postadiabatic_dynamics_size);
   fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_stop", INT2YESNO(eobp->postadiabatic_dynamics_stop));
+
+  /* Deviations */
+  fprintf(f,"%s = %f\n", "delta_a6c", eobp->delta_a6c);
+  fprintf(f,"%s = %f\n", "delta_cN3LO", eobp->delta_cN3LO);
+  fprintf(f,"%s = %f\n", "d_delta_t_nqc", eobp->d_delta_t_nqc);
+  fprintf(f,"%s = %f\n", "delta_Mbhf", eobp->delta_Mbhf);
+  fprintf(f,"%s = %f\n", "delta_abhf", eobp->delta_abhf);
+  if (eobp->delta_taulm0_size > 0) {
+    fprintf(f,"%s = [", "delta_taulm0_k");
+    for(int i=0; i<eobp->delta_taulm0_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_taulm0_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_taulm0_k[eobp->delta_taulm0_size-1]);
+    fprintf(f,"%s = [", "delta_taulm0");
+    for(int i=0; i<eobp->delta_taulm0_size-1;i++)
+      fprintf(f,"%f,", eobp->delta_taulm0[i]);
+    fprintf(f,"%f]\n", eobp->delta_taulm0[eobp->delta_taulm0_size-1]);
+  }
+  if (eobp->delta_alphalm0_size > 0) {
+    fprintf(f,"%s = [", "delta_alphalm0_k");
+    for(int i=0; i<eobp->delta_alphalm0_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_alphalm0_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_alphalm0_k[eobp->delta_alphalm0_size-1]);
+    fprintf(f,"%s = [", "delta_alphalm0");
+    for(int i=0; i<eobp->delta_alphalm0_size-1;i++){
+      int idx = eobp->delta_alphalm0_k[i];
+      fprintf(f,"%f,", eobp->delta_alphalm0[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->delta_alphalm0[eobp->delta_alphalm0_k[eobp->delta_alphalm0_size-1]]);
+  }
+  if (eobp->delta_omglm0_size > 0) {
+    fprintf(f,"%s = [", "delta_omglm0_k");
+    for(int i=0; i<eobp->delta_omglm0_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_omglm0_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_omglm0_k[eobp->delta_omglm0_size-1]);
+    fprintf(f,"%s = [", "delta_omglm0");
+    for(int i=0; i<eobp->delta_omglm0_size-1;i++){
+      int idx = eobp->delta_omglm0_k[i];
+      fprintf(f,"%f,", eobp->delta_omglm0[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->delta_omglm0[eobp->delta_omglm0_k[eobp->delta_omglm0_size-1]]);
+  }
+  if (eobp->delta_Alm_mrg_size > 0) {
+    fprintf(f,"%s = [", "delta_Alm_mrg_k");
+    for(int i=0; i<eobp->delta_Alm_mrg_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_Alm_mrg_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_Alm_mrg_k[eobp->delta_Alm_mrg_size-1]);
+    fprintf(f,"%s = [", "delta_Alm_mrg");
+    for(int i=0; i<eobp->delta_Alm_mrg_size-1;i++){
+      int idx = eobp->delta_Alm_mrg_k[i];
+      fprintf(f,"%f,", eobp->delta_Alm_mrg[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->delta_Alm_mrg[eobp->delta_Alm_mrg_k[eobp->delta_Alm_mrg_size-1]]);
+  }
+  if (eobp->delta_Omglm_mrg_size > 0) {
+    fprintf(f,"%s = [", "delta_Omglm_mrg_k");
+    for(int i=0; i<eobp->delta_Omglm_mrg_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_Omglm_mrg_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_Omglm_mrg_k[eobp->delta_Omglm_mrg_size-1]);
+    fprintf(f,"%s = [", "delta_Omglm_mrg");
+    for(int i=0; i<eobp->delta_Omglm_mrg_size-1;i++){
+      int idx = eobp->delta_Omglm_mrg_k[i];
+      fprintf(f,"%f,", eobp->delta_Omglm_mrg[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->delta_Omglm_mrg[eobp->delta_Omglm_mrg_k[eobp->delta_Omglm_mrg_size-1]]);
+  }
+  if (eobp->delta_Alm_nqc_size > 0) {
+    fprintf(f,"%s = [", "delta_Alm_nqc_k");
+    for(int i=0; i<eobp->delta_Alm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_Alm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_Alm_nqc_k[eobp->delta_Alm_nqc_size-1]);
+    fprintf(f,"%s = [", "delta_Alm_nqc");
+    for(int i=0; i<eobp->delta_Alm_nqc_size-1;i++){
+      int idx = eobp->delta_Alm_nqc_k[i];
+      fprintf(f,"%f,", eobp->delta_Alm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->delta_Alm_nqc[eobp->delta_Alm_nqc_k[eobp->delta_Alm_nqc_size-1]]);
+  }
+  if (eobp->delta_dAlm_nqc_size > 0) {
+    fprintf(f,"%s = [", "delta_dAlm_nqc_k");
+    for(int i=0; i<eobp->delta_dAlm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_dAlm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_dAlm_nqc_k[eobp->delta_dAlm_nqc_size-1]);
+    fprintf(f,"%s = [", "delta_dAlm_nqc");
+    for(int i=0; i<eobp->delta_dAlm_nqc_size-1;i++){
+      int idx = eobp->delta_dAlm_nqc_k[i];
+      fprintf(f,"%f,", eobp->delta_dAlm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->delta_dAlm_nqc[eobp->delta_dAlm_nqc_k[eobp->delta_dAlm_nqc_size-1]]);
+  }
+  if (eobp->delta_Omglm_nqc_size > 0) {
+    fprintf(f,"%s = [", "delta_Omglm_nqc_k");
+    for(int i=0; i<eobp->delta_Omglm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_Omglm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_Omglm_nqc_k[eobp->delta_Omglm_nqc_size-1]);
+    fprintf(f,"%s = [", "delta_Omglm_nqc");
+    for(int i=0; i<eobp->delta_Omglm_nqc_size-1;i++){
+      int idx = eobp->delta_Omglm_nqc_k[i];
+      fprintf(f,"%f,", eobp->delta_Omglm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->delta_Omglm_nqc[eobp->delta_Omglm_nqc_k[eobp->delta_Omglm_nqc_size-1]]);
+  }
+  if (eobp->delta_dOmglm_nqc_size > 0) {
+    fprintf(f,"%s = [", "delta_dOmglm_nqc_k");
+    for(int i=0; i<eobp->delta_dOmglm_nqc_size-1;i++)
+      fprintf(f,"%d,", eobp->delta_dOmglm_nqc_k[i]);
+    fprintf(f,"%d]\n", eobp->delta_dOmglm_nqc_k[eobp->delta_dOmglm_nqc_size-1]);
+    fprintf(f,"%s = [", "delta_dOmglm_nqc");
+    for(int i=0; i<eobp->delta_dOmglm_nqc_size-1;i++){
+      int idx = eobp->delta_dOmglm_nqc_k[i];
+      fprintf(f,"%f,", eobp->delta_dOmglm_nqc[idx]);
+    }
+    fprintf(f,"%f]\n", eobp->delta_dOmglm_nqc[eobp->delta_dOmglm_nqc_k[eobp->delta_dOmglm_nqc_size-1]]);
+  }
 
   /* Evolution settings */
   fprintf(f,"%s = %.16f\n" , "srate", eobp->srate);
