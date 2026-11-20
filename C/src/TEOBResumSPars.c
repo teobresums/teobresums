@@ -428,21 +428,13 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
       eobp->Q_pot          = Q_3PN; 
     } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
-      // --- LMR model: A_5PNlogP33_newlogs + D_5PNP32_newlogs + Q_5PNfull ---
-      // a6c is NR-calibrated for this potential set (eob_a6c_fit_LMR), so use it
-      // by default; the a6c_fits_LMR case guards on the exact potential set.
-      eobp->use_a6c_fits   = a6c_fits_LMR;
-      // cN3LO (c3) NR-calibrated for this potential set (eob_c3_fit_LMR), so use
-      // it by default; the cN3LO_fits_LMR case guards on the exact potential set.
-      eobp->use_cN3LO_fits = cN3LO_fits_LMR;
-      eobp->use_flm        = USEFLM_22PN;
-      eobp->use_hflx       = HFLX_LMR;
-      eobp->nqc            = NQC_MANUAL;
-      eobp->nqc_coefs_hlm  = NQC_HLM_COMPUTE;
+      eobp->use_flm        = USEFLM_HM_6PN3p3;
+      eobp->use_a6c_fits   = a6c_fits_P33_newlogs;
+      eobp->use_cN3LO_fits = cN3LO_fits_P33_newlogs;
       eobp->nqc_coefs_flx  = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
-      eobp->A_pot          = A_5PNlogP33_newlogs; // A_LMR;
+      eobp->A_pot          = A_5PNlogP33_newlogs; 
       eobp->D_pot          = D_5PNP32_newlogs;
-      eobp->Q_pot          = Q_5PNfull;
+      eobp->Q_pot          = Q_5PNloc; 
     } else {
       errorexit("Unknown BBH model specified.");
     }
@@ -476,6 +468,24 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->use_tidal                 = TIDES_TEOBRESUM;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;//TIDES_GM_PN;
     eobp->use_lambda234_fits        = Lambda234_fits_YAGI13;
+
+  } else if (binary == BINARY_LMR) {
+
+    /* Large-mass-ratio BBH (q > 10): BBH settings + the LMR model; always Dali (Giotto is an error in eob_set_params) */
+    eobp->binary                    = BINARY_LMR;
+    eobp->use_tidal                 = TIDES_OFF;
+    eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+    eobp->centrifugal_radius        = CENTRAD_NLO;
+    eobp->nqc                       = NQC_MANUAL;
+    eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE;
+    eobp->nqc_coefs_flx             = NQC_FLX_NONE;
+    eobp->use_flm                   = USEFLM_22PN;
+    eobp->use_hflx                  = HFLX_LMR;
+    eobp->use_a6c_fits              = a6c_fits_LMR;
+    eobp->use_cN3LO_fits            = cN3LO_fits_LMR;
+    eobp->A_pot                     = A_5PNlogP33_newlogs;
+    eobp->D_pot                     = D_5PNP32_newlogs_lmr;
+    eobp->Q_pot                     = Q_5PNfull;
   }
   else errorexit("Unknown default binary parameter choice.");
 
@@ -547,6 +557,24 @@ int eob_set_params(int default_choice, int firstcall)
     if(VERBOSE) printf("WARNING: manually fixing q = 1\n");
     q          = 1.;
     EOBPars->q = 1.;
+  }
+
+  /* LMR binary: q > 10, Dali, no tides; reliable for primary spins up to 0.6 */
+  if (EOBPars->binary == BINARY_LMR) {
+    if (q <= 10.) {
+      PRERRF("binary LMR needs q > 10 (q = %g)", q);
+      return 1;
+    }
+    if (EOBPars->model != MODEL_DALI) {
+      PRERR("binary LMR is only available with model Dali");
+      return 1;
+    }
+    if (EOBPars->LambdaAl2 != 0. || EOBPars->LambdaBl2 != 0.) {
+      PRERR("binary LMR is a BBH: LambdaAl2 and LambdaBl2 must be 0");
+      return 1;
+    }
+    if (EOBPars->chi1z > 0.6 || EOBPars->chi1 > 0.6)
+      PRWARN("binary LMR: chi1 > 0.6 is outside the tested range");
   }
 
   /* Check: if in-plane components of spins are < 1e4, then spin aligned, else spin precessing */
@@ -855,12 +883,10 @@ int eob_set_params(int default_choice, int firstcall)
       EOBPars->a6c = eob_a6c_fit_HM_2023(EOBPars->nu);
       break;
     case(a6c_fits_HM):
-      /*
       if (EOBPars->use_flm != USEFLM_HM){
         PRERR("a6c_fits_HM should be used with USEFLM_HM");
         return 1;
-      }     */
-      printf("Pars warning temporarily altered\n");
+      }     
       EOBPars->a6c = eob_a6c_fit_HM(EOBPars->nu);
       break;
     case(a6c_fits_V0):
@@ -870,10 +896,10 @@ int eob_set_params(int default_choice, int firstcall)
       /* LMR-model a6c NR fit. Consistency guard: this fit was calibrated for the
          A_5PNlogP33_newlogs potential with D_5PNP32_newlogs + Q_5PNfull and the
          LMR flux (rule: with potentials X, only use the matching fit X). */
-      if (EOBPars->A_pot != A_5PNlogP33_newlogs || EOBPars->D_pot != D_5PNP32_newlogs ||
+      if (EOBPars->A_pot != A_5PNlogP33_newlogs || EOBPars->D_pot != D_5PNP32_newlogs_lmr ||
           EOBPars->Q_pot != Q_5PNfull || EOBPars->use_flm != USEFLM_22PN ||
           EOBPars->use_hflx != HFLX_LMR){
-        if (DEBUG) printf("a6c_fits_LMR must be used with A_5PNlogP33_newlogs + D_5PNP32_newlogs + Q_5PNfull and the LMR flux (USEFLM_22PN, HFLX_LMR)\n");
+        if (DEBUG) printf("a6c_fits_LMR must be used with A_5PNlogP33_newlogs + D_5PNP32_newlogs_lmr + Q_5PNfull and the LMR flux (USEFLM_22PN, HFLX_LMR)\n");
         return 1;
       }
       EOBPars->a6c = eob_a6c_fit_LMR(EOBPars->nu);
@@ -891,12 +917,10 @@ int eob_set_params(int default_choice, int firstcall)
   switch(EOBPars->use_cN3LO_fits)
   {
     case(cN3LO_fits_P33_newlogs):
-    /*
       if(EOBPars->A_pot != A_5PNlogP33_newlogs){
         PRERR("cN3LO_fits_P33_newlogs should be used with A_5PNlogP33_newlogs");
         return 1;
-      } */
-       printf("Pars c3NLO warning temporarily altered\n");
+      }
       EOBPars->cN3LO = eob_c3_fit_ecc_P33_newlogs(EOBPars->nu,EOBPars->a1,EOBPars->a2);
       break;
     case(cN3LO_fits_P33_HM4PN22):
@@ -937,10 +961,10 @@ int eob_set_params(int default_choice, int firstcall)
       /* LMR-model cN3LO (c3) NR fit. Consistency guard: only valid with the LMR
          potential set (A_5PNlogP33_newlogs) and the LMR flux (rule: with
          potentials X, only use the matching fit X). */
-      if (EOBPars->A_pot != A_5PNlogP33_newlogs || EOBPars->D_pot != D_5PNP32_newlogs ||
+      if (EOBPars->A_pot != A_5PNlogP33_newlogs || EOBPars->D_pot != D_5PNP32_newlogs_lmr ||
           EOBPars->Q_pot != Q_5PNfull || EOBPars->use_flm != USEFLM_22PN ||
           EOBPars->use_hflx != HFLX_LMR){
-        if (DEBUG) printf("cN3LO_fits_LMR must be used with A_5PNlogP33_newlogs + D_5PNP32_newlogs + Q_5PNfull and the LMR flux (USEFLM_22PN, HFLX_LMR)\n");
+        if (DEBUG) printf("cN3LO_fits_LMR must be used with A_5PNlogP33_newlogs + D_5PNP32_newlogs_lmr + Q_5PNfull and the LMR flux (USEFLM_22PN, HFLX_LMR)\n");
         return 1;
       }
       EOBPars->cN3LO = eob_c3_fit_LMR(EOBPars->nu,EOBPars->a1,EOBPars->a2); /* TODO(LMR): placeholder, returns 0 until tuned */
@@ -1294,6 +1318,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Dpotential = &eob_metric_D5PNP32;
   } else if (EOBPars->D_pot == D_5PNP32_newlogs) {
     eob_metric_Dpotential = &eob_metric_D5PNP32_newlogs;
+  } else if (EOBPars->D_pot == D_5PNP32_newlogs_lmr) {
+    eob_metric_Dpotential = &eob_metric_D5PNP32_newlogs_lmr;
   } else {
     PRERR("Unknown option for D potential");
     return 1;
@@ -1330,8 +1356,11 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
 
+  /* Dali uses the eccentric r0, rhs and ICs; LMR only for ecc > 1e-4, quasi-circular LMR runs the circular ones */
+  const int dali_ecc = (EOBPars->model == MODEL_DALI) && (EOBPars->binary != BINARY_LMR || ecc > 1e-4);
+
   /* Set r0 fun pointer */
-  if (EOBPars->model == MODEL_DALI && ecc > 1e-4) {
+  if (dali_ecc) {
     // eccentric MODEL_DALI case
     if (EOBPars->ecc_ics == ECCICS_1PA || EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_r0_eob = &eob_dyn_r0_ecc;
@@ -1342,12 +1371,12 @@ int eob_set_params(int default_choice, int firstcall)
         eob_dyn_r0_eob = &eob_dyn_r0_circ;
     }
   } else {
-    // quasi-circular case (ecc=0 or non-DALI model)
+    // quasi-circular case (non-Dali model, or quasi-circular LMR)
     eob_dyn_r0_eob = &eob_dyn_r0_circ;
   }
   
   /** Set rhs fun pointer */
-  if (EOBPars->model == MODEL_DALI && ecc > 1e-4) {
+  if (dali_ecc) {
     p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
   } else if (usespins) {
     p_eob_dyn_rhs = &eob_dyn_rhs_s;
@@ -1359,7 +1388,7 @@ int eob_set_params(int default_choice, int firstcall)
   if (r_hyp != 0.) {
     // hyp case
     eob_dyn_ic = &eob_dyn_ic_hyp_s;
-  } else if (EOBPars->model == MODEL_DALI && ecc > 1e-4) {
+  } else if (dali_ecc) {
     // eccentric MODEL_DALI case
     if (EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_ic = &eob_dyn_ic_ecc_ma_split;   // ICs with anomaly (adiabatic)
@@ -1375,7 +1404,7 @@ int eob_set_params(int default_choice, int firstcall)
       return 1;
     }
   } else if (usespins) {
-    // quasi-circular ICs with spins (ecc=0, covers MODEL_DALI + ecc=0)
+    // quasi-circular ICs with spins
     eob_dyn_ic = &eob_dyn_ic_circ_s;
   } else {
     // quasi-circular ICs without spins (deprecated)
@@ -1493,6 +1522,8 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         ./TEOBResumS -h\n");
     }
   }
+  if (eobp->binary == BINARY_LMR)
+    return eobp->binary; /* set by the user; Lambdas are checked in eob_set_params */
   if (eobp->LambdaAl2 > 1. && eobp->LambdaBl2 > 1.)
     eobp->binary = BINARY_BNS;
   else if (eobp->LambdaAl2 == 0. && eobp->LambdaBl2 > 1.)
@@ -1545,6 +1576,13 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
 
   if (STREQUAL(key,"use_geometric_units")) {    
     eobp->use_geometric_units = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"binary")) {
+    val = string_trim(val);
+    int b;
+    for (b = 0; b < BINARY_NOPT; b++) if (STREQUAL(val, binary_opt[b])) break;
+    if (b == BINARY_NOPT) errorexit("Unknown binary type (BBH, BNS, BHNS, BHNS_TD, LMR).");
+    eobp->binary = b;
   }
   if (STREQUAL(key,"model")) {
     val = string_trim(val);
@@ -1851,7 +1889,7 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
   }
   if (STREQUAL(key,"D_pot")) {
     val = string_trim(val);
-    for (eobp->D_pot=0; eobp->D_pot<=A_NOPT;  eobp->D_pot++) {
+    for (eobp->D_pot=0; eobp->D_pot<=D_NOPT;  eobp->D_pot++) {
       if (eobp->D_pot == D_NOPT) {
         eobp->D_pot = D_3PN;
         if (VERBOSE) printf("D_pot '%s' undefined, set to '%s'\n",
@@ -2303,6 +2341,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","BH_final_spin",  eobp->abhf); 
 
   /* EOB Settings */
+  fprintf(f,"%s = \"%s\"\n", "binary", binary_opt[eobp->binary]);
   fprintf(f,"%s = \"%s\"\n", "model", model_opt[eobp->model]);
   fprintf(f,"%s = %d\n"    , "use_spins", eobp->use_spins);
   fprintf(f,"%s = \"%s\"\n", "tides", tides_opt[eobp->use_tidal]);

@@ -789,6 +789,17 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.)  default_choice = BINARY_BNS;
   if(EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BHNS;
   if(EOBPars->LambdaAl2 > 0. && EOBPars->LambdaBl2 == 0.) default_choice = BINARY_BHNS;
+
+  /* binary = "LMR" selects the large-mass-ratio model; other binary types are inferred from the Lambdas */
+  if ( PyDict_GetItemString(dict, "binary") != NULL ) {
+    const char* val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "binary"));
+    if (val == NULL) return NULL;
+    if (STREQUAL(val, binary_opt[BINARY_LMR])) default_choice = BINARY_LMR;
+    else if (!STREQUAL(val, binary_opt[default_choice])) {
+      PyErr_Format(PyExc_ValueError, "binary '%s' not supported: use 'LMR', or set the Lambdas for BNS/BHNS", val);
+      return NULL;
+    }
+  }
   if(EOBPars->ecc !=0 || EOBPars->r_hyp !=0) model = MODEL_DALI; 
 
   EOBParameters_defaults (default_choice, model, EOBPars);  

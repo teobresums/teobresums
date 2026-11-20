@@ -223,8 +223,10 @@ enum{
   BINARY_BNS,            /**< binary neutron star */
   BINARY_BHNS,           /**< black hole-neutron star */
   BINARY_BHNS_TD,        /**< black hole-neutron star, tidal disruption */
+  BINARY_LMR,            /**< large-mass-ratio binary black hole (q > 10), LMR model */
   BINARY_NOPT            /**< number of binary types */
 };
+static const char* const binary_opt[] = {"BBH", "BNS", "BHNS", "BHNS_TD", "LMR", "undefined"};
 
 /** List for fits Lambda_ell(Lambda2) */
 enum{
@@ -253,9 +255,10 @@ enum{
   D_GSF,            /**< GSF D, Pade' resummed */
   D_5PNP32,         /**< 5PN, Pade' resummed with P32*/ 
   D_5PNP32_newlogs, /**< 5PN, Pade' resummed with P32, separate log resummation*/
+  D_5PNP32_newlogs_lmr, /**< as D_5PNP32_newlogs, with the analytic 5PN nu^2 coefficient (LMR) */
   D_NOPT            /**< number of options */
 };
-static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "5PNP32_newlogs", "undefined"};
+static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "5PNP32_newlogs", "5PNP32_newlogs_lmr", "undefined"};
 
 /** List of options for orbital Q potential */
 enum{
@@ -705,7 +708,7 @@ typedef struct tagEOBParameters
   int compute_ringdown;
   
   /* options/settings */
-  int binary;                                           /**< binary type (BBH, BNS, BHNS) */
+  int binary;                                           /**< binary type (BBH, BNS, BHNS, LMR) */
   int model;                                            /**< model (Dalì, Giotto) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
@@ -1148,6 +1151,7 @@ void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_D5PNP32_newlogs_lmr(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);

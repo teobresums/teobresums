@@ -275,7 +275,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (!(EOBPars->binary == BINARY_BNS)) store_dynamics = 1; /* NQC determination need dynamical variables */
   if (use_spins == MODE_SPINS_GENERIC) store_dynamics = 1; /* Precession needs dynamical variables */
   if (ecc != 0.)  store_dynamics = 1; /* Eccentric waveform computation needs dynamical variables (sigmoid) */
-  if (EOBPars->model == MODEL_DALI && ecc > 1e-4) EOBPars->postadiabatic_dynamics = 0;
+  if (EOBPars->model == MODEL_DALI && (EOBPars->binary != BINARY_LMR || ecc > 1e-4)) EOBPars->postadiabatic_dynamics = 0; /* PA only for quasi-circular LMR */
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;

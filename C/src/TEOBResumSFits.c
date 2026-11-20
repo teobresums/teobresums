@@ -3616,7 +3616,7 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   double c1f, c2f, d1f, d2f, c1c, c2c, d1c;
   
   /* Compute A, dA, omg, domg */
-  if (EOBPars->binary==BINARY_BBH){eob_nqc_point_HM_peak22(NULL,A, dA, omg, domg);
+  if (EOBPars->binary==BINARY_BBH || EOBPars->binary==BINARY_LMR){eob_nqc_point_HM_peak22(NULL,A, dA, omg, domg);
   }else{eob_nqc_point_BHNS_HM(NULL,A, dA, omg, domg);}
 
   /* Apply deviations from fitted merger quantities here by hand */

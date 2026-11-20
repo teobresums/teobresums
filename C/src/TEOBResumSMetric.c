@@ -936,10 +936,10 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
 }
 
 /**
- *  Function : eob_metric_D5PNP32_newlogs
- *  -------------------------------------
+ *  Function : eob_metric_D5PNP32_newlogs_core
+ *  ------------------------------------------
  *    EOB metric D potential rewritten with (3, 2) Pade 
- *    2407.04762 and refs. therein
+ *    2407.04762 and refs. therein; d5nu2 is the 5PN nu^2 coefficient
  * 
  *    @param[in]  r    : radial separation  
  *    @param[in]  nu   : symmetric mass ratio 
@@ -947,7 +947,8 @@ void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D)
  *    @param[out] dD   : dD/du,   with u=1/r  
  *    @param[out] d2D  : d2D/du2, with u=1/r   
  */
-void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, double *d2D)
+static void eob_metric_D5PNP32_newlogs_core(double r, double nu, const double d5nu2,
+                                          double *D, double *dD, double *d2D)
 {
 
   /* shortcuts */
@@ -965,8 +966,6 @@ void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, doub
   double logu    = log(u);
 
 
-  // 5PN nu^2 coefficient: analytic value (Porto-Riva), = -403259/63 + (306545/512) pi^2 ~ -491.80
-  double d5nu2 = -403259./63. + (306545./512.)*pi2;
   double d2    = -6.*nu;
   double d3    = -52.*nu + 6.*nu2;
 
@@ -1029,6 +1028,27 @@ void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, doub
   *d2D = (d2Num*Den - Num*d2Den)/(Den*Den)\
         -2.*dDen*(dNum*Den - Num*dDen)/(Den*Den*Den) + nu*d2Dlog_du;
 
+}
+
+/**
+ *  Function : eob_metric_D5PNP32_newlogs
+ *  -------------------------------------
+ *    D5PNP32_newlogs with the 5PN nu^2 coefficient set to zero (Dali, 2407.04762)
+ */
+void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, double *d2D)
+{
+  eob_metric_D5PNP32_newlogs_core(r, nu, 0., D, dD, d2D);
+}
+
+/**
+ *  Function : eob_metric_D5PNP32_newlogs_lmr
+ *  ----------------------------------------
+ *    D5PNP32_newlogs with the analytic 5PN nu^2 coefficient,
+ *    d5nu2 = -403259/63 + (306545/512) pi^2 ~ -491.80 (LMR)
+ */
+void eob_metric_D5PNP32_newlogs_lmr(double r, double nu, double *D, double *dD, double *d2D)
+{
+  eob_metric_D5PNP32_newlogs_core(r, nu, -403259./63. + (306545./512.)*(Pi*Pi), D, dD, d2D);
 }
 
 /**
