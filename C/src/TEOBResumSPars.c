@@ -255,7 +255,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->D_pot=D_3PN;
   eobp->Q_pot=Q_3PN; 
 
-  eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES, N3LO}
+  eobp->GS_DJSu=0; // 0: eob_dyn_s_GS; 1: DJS gauge N3LO with argument u (LMR)
   eobp->use_flm=USEFLM_HM; // "SSLO", "SSNLO", "HM"
   eobp->use_hflx=HFLX_STD; // "std"/"lmr"
   
@@ -1349,6 +1350,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOSPIN;
   } else if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
+  } else if (EOBPars->centrifugal_radius == CENTRAD_N3LO) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_N3LO;
   } else {
     PRERR("Unknown option for centrifugal radius");
     return 1;
@@ -1806,6 +1809,9 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     eobp->knqcpeak22_size = str2iarray(val, &eobp->knqcpeak22);
   }
 
+  if (STREQUAL(key,"GS_DJSu")) {
+    eobp->GS_DJSu = par_get_i(val);
+  }
   if (STREQUAL(key,"centrifugal_radius")) {
     val = string_trim(val);
     for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
@@ -2397,6 +2403,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%d]\n", eobp->knqcpeak22[eobp->knqcpeak22_size-1]);
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
+  fprintf(f,"%s = %d\n", "GS_DJSu", eobp->GS_DJSu);
   fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);

@@ -326,9 +326,10 @@ enum{
   CENTRAD_NNLOS4,         /**< NNLO centrifugal radius with spin^4 */
   CENTRAD_NOSPIN,         /**< No spin in centrifugal radius */
   CENTRAD_NOTIDES,        /**< No tides in centrifugal radius */
+  CENTRAD_N3LO,           /**< LMR: NNLO + N3LO spin-squared D3 u^3 (BBH), exact derivatives */
   CENTRAD_NOPT            /**< number of centrifugal radius options */
 };
-static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS4", "NOSPIN", "NOTIDES"};
+static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS4", "NOSPIN", "NOTIDES", "N3LO"};
 
 /** List of options for eccentric initial frequency */
 enum{
@@ -712,7 +713,8 @@ typedef struct tagEOBParameters
   /* options/settings */
   int binary;                                           /**< binary type (BBH, BNS, BHNS, LMR) */
   int model;                                            /**< model (Dalì, Giotto) */
-  int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
+  int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES, N3LO} */
+  int GS_DJSu;                                          /**< Gyro-gravitomagnetic functions: 0 eob_dyn_s_GS (default), 1 DJS gauge N3LO with argument u (LMR) */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
   int use_hflx;                                         /**< horizon-flux choice: "std"/"lmr" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
@@ -1089,6 +1091,7 @@ void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2
 void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_N3LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double u, double at1, double at2, double *drc_dr, double *d2rc_dr2);
 double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn);

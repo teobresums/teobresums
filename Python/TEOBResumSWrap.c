@@ -312,6 +312,9 @@ int SetOptionalVariables(PyObject* dict){
   }
   
   /* rc and flm */
+  if ( PyDict_GetItemString(dict, "GS_DJSu") != NULL ) {
+    EOBPars->GS_DJSu = (int) PyLong_AsLong(PyDict_GetItemString(dict, "GS_DJSu"));
+  }
   if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "centrifugal_radius"));
