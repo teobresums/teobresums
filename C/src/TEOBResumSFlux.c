@@ -603,7 +603,8 @@ double eob_flx_Flux_s(double x, double Omega, double r_omega, double E, double H
     FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
     
     /* Correcting (5,5) for Higher Modes */
-    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3){
+    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3 ||
+        EOBPars->use_flm == USEFLM_22PN){
       FNewtlm[13] = CNlm[13] * sp4x8;
     }
     
@@ -772,7 +773,8 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
     FNewtlm[7]  = CNlm[7] * sp4x8; /* (4,3) */
     
     /* Correcting (5,5) for Higher Modes */
-    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3){
+    if (EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 || EOBPars->use_flm == USEFLM_HM_6PN3p3 ||
+        EOBPars->use_flm == USEFLM_22PN){
       FNewtlm[13] = CNlm[13] * sp4x8;
     }
     

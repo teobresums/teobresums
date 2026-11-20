@@ -9406,7 +9406,8 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
     hNewt.ampli[9]  = ChlmNewt_ampli[9]  * p4_vphi5 * X12; /* (5,1) */
     hNewt.ampli[11] = ChlmNewt_ampli[11] * p4_vphi5 * X12; /* (5,3) */
 
-    if (!(EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 ||EOBPars->use_flm == USEFLM_HM_6PN3p3 )) {
+    if (!(EOBPars->use_flm == USEFLM_HM || EOBPars->use_flm == USEFLM_HM_4PN22 ||EOBPars->use_flm == USEFLM_HM_6PN3p3 ||
+          EOBPars->use_flm == USEFLM_22PN)) {
       hNewt.ampli[2] = ChlmNewt_ampli[2] * vphi3; /* (3,1) */
       hNewt.ampli[4] = ChlmNewt_ampli[4] * vphi3; /* (3,3) */
       hNewt.ampli[5]  = ChlmNewt_ampli[5]  * p4_vphi5; /* (4,1) */
