@@ -1727,9 +1727,9 @@ int eob_set_params(int default_choice, int firstcall)
 
   /* Negative means stage picks: it is one value that used to depend on which
      construction ran, so it is resolved here rather than carried unresolved into it. */
-  if (!DEBUG && (EOBPars->postadiabatic_dynamics_ecc_export || EOBPars->postadiabatic_dynamics_ecc_export_nodes
-                 || EOBPars->postadiabatic_dynamics_ecc_export_window > 0.0))
-    fprintf(stderr, "WARNING: the postadiabatic_dynamics_ecc_export options work only in a DEBUG build, ignored\n");
+  if (VERBOSE && !DEBUG && (EOBPars->postadiabatic_dynamics_ecc_export || EOBPars->postadiabatic_dynamics_ecc_export_nodes
+                            || EOBPars->postadiabatic_dynamics_ecc_export_window > 0.0))
+    printf("WARNING: postadiabatic_dynamics_ecc_export options work only in a DEBUG build, ignored\n");
   if (EOBPars->postadiabatic_dynamics_ecc_adiab < 0.0)
     EOBPars->postadiabatic_dynamics_ecc_adiab = ECCPA_ADIAB;
 

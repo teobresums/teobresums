@@ -849,13 +849,6 @@ typedef struct tagDynamics
   
 } Dynamics;
 
-/** Failure codes of eob_eccpa_cons_turning_points: no outer, no inner turning point */
-enum { ECCPA_UNBOUND = 1, ECCPA_NOTURN };
-
-/** Why eob_eccpa_ic_state failed (EccIcEq.reason) */
-enum { ICEQ_OK = 0, ICEQ_INPUT, ICEQ_ORBIT, ICEQ_FREQ, ICEQ_GEN1, ICEQ_GEN2, ICEQ_OSC_ORBIT,
-       ICEQ_OSC_MAP, ICEQ_OFF_ORBIT, ICEQ_BRANCH, ICEQ_MEMORY };
-
 /** Slow variables c_mu, App. A (E is not evolved) */
 enum { C_PPHI, C_ALPHA, C_BETA, C_N };
 
@@ -967,17 +960,6 @@ typedef struct tagEccOscCoefs
   double b[ECCPA_HARMONICS_MAX+1];
   int    M;
 } EccOscCoefs;
-
-/** What eob_eccpa_ic_state returns: phase-space point, and mean orbit it was built on. */
-typedef struct tagEccIcEq
-{
-  double r, prstar, sqrtAbyB;        /**< point */
-  double pphi, H, Omg;               /**< and its constants */
-  double J, r_a, e_geo;              /**< mean orbit it came from */
-  double X, Xp;                      /**< anomaly asked for, and one it sits at */
-  int    order;                      /**< map order actually applied */
-  int    reason;                     /**< ICEQ_OK, or why construction declined */
-} EccIcEq;
 
 /** Everything one run of the eccentric PA stage computes */
 typedef struct tagPostAdDynamics
@@ -1678,8 +1660,7 @@ int  eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, dou
 int  eob_eccpa_evolve  (PostAdDynamics *pa, double J0, double alpha0, double beta0,
                         int order, Dynamics *dyn);
 int  eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa);
-int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
-                       Dynamics *dyn, EccIcEq *out);
+int  eob_eccpa_ic_state(double e, double omg_tgt, double X, int order, Dynamics *dyn, double y_init[]);
 
 /* TEOBResumSInitialCondition.c */
 extern int (*eob_dyn_ic)(); /* defined in TEOBResumSPars.c*/

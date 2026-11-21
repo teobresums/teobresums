@@ -879,7 +879,7 @@ static double eccpa_tp_f(double r, void *params)
  *   @param[in]     rseed   : a radius between turning points
  *   @param[in]     dyn     : Dynamics structure
  *   @param[in]     slot    : orbit slot
- *   @return  0 on success, ECCPA_UNBOUND or ECCPA_NOTURN otherwise
+ *   @return  0 on success, 1 if no bound orbit
  */
 int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, double rseed,
                                   Dynamics *dyn, int slot)
@@ -893,19 +893,19 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
   /* seed must be strictly between turning points (H < E there). If it sits on a
      turning point, brackets below don't give right roots. */
   double f_seed = eccpa_tp_f(rseed, &par);
-  if (!isfinite(f_seed)) { status = ECCPA_NOTURN; goto done; }
+  if (!isfinite(f_seed)) { status = 1; goto done; }
   if (f_seed >= -1e-12 * fabs(E)) {
     /* seed is not inside, so use r_circ instead: minimum of H(r, 0, pphi), which is
        between turning points if a bound orbit with this E exists. */
     if (eccpa_cons_circular(pa, pphi, dyn, slot, 0.0)) {
-      status = ECCPA_NOTURN;
+      status = 1;
       goto done;
     }
     const double r_circ = pa->cons_orb[slot][PO_R_CIRC];
 
     /* H at circular radius is minimum: above E means no bound orbit here. */
     if (eccpa_tp_f(r_circ, &par) >= 0.0) {
-      status = ECCPA_NOTURN;
+      status = 1;
       goto done;
     }
     rseed = r_circ;
@@ -936,8 +936,7 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
       break;
     }
   }
-  if (!ok_hi) { status = ECCPA_UNBOUND; goto done; }   /* no outer turning point: unbound */
-  if (!ok_lo) { status = ECCPA_NOTURN; goto done; }    /* no inner turning point: plunging */
+  if (!ok_hi || !ok_lo) { status = 1; goto done; }   /* no outer (unbound) or inner (plunging) turning point */
 
   gsl_function F;
   F.function = &eccpa_tp_f;
@@ -950,7 +949,7 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
     double b = (side == 0) ? r_hi  : rseed;
     if (gsl_root_fsolver_set(s, &F, a, b) != GSL_SUCCESS) {
       gsl_root_fsolver_free(s);
-      status = ECCPA_NOTURN;
+      status = 1;
       goto done;
     }
     int gsl_status = GSL_CONTINUE;
@@ -966,7 +965,7 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
   }
   gsl_root_fsolver_free(s);
 
-  if (!(rmax > rmin)) { status = ECCPA_NOTURN; goto done; }
+  if (!(rmax > rmin)) { status = 1; goto done; }
 
   /* 2 Newton steps on H - E: Brent's 1e-13 -> roundoff */
   for (int side = 0; side < 2; side++) {
@@ -981,7 +980,7 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
       if (fabs(step) < 1e-15 * fabs(*root)) break;
     }
   }
-  if (!(rmax > rmin)) { status = ECCPA_NOTURN; goto done; }
+  if (!(rmax > rmin)) { status = 1; goto done; }
 
   pa->cons_orb[slot][PO_E]     = E;
   pa->cons_orb[slot][PO_PPHI]  = pphi;
@@ -3239,7 +3238,7 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
     const int Nw = EOBPars->postadiabatic_dynamics_ecc_export_nodes;
     if (Nw > 0) {
       if (Nw > ECCPA_NODES_DIM) {
-        fprintf(stderr, "postadiabatic_dynamics_ecc_export_nodes is above ECCPA_NODES_DIM, nodes not written\n");
+        if (DEBUG) printf("WARNING: postadiabatic_dynamics_ecc_export_nodes above ECCPA_NODES_DIM, nodes not written\n");
         goto export_done;
       }
       const int nm = EOBPars->use_mode_lm_size, ncol = PAN_NVARS + 2*nm;
@@ -3372,7 +3371,7 @@ fail:
  *   @param[in]     J_seed, ra_seed : first guess
  *   @param[in]     dyn      : Dynamics structure
  *   @param[out]    J_out, ra_out   : solution
- *   @return  ICEQ_OK, or reason it failed
+ *   @return  0 on success, 1 on failure
  */
 static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
                           double J_seed, double ra_seed, Dynamics *dyn,
@@ -3384,7 +3383,10 @@ static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
   int matched = 0;
   for (int it = 0; !matched && it < 48; it++) {
     for (int is = 0; is < 48; is++) {
-      if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, PO_CUR)) return ICEQ_ORBIT;
+      if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, PO_CUR)) {
+        if (DEBUG) printf("ERROR: eccpa_ic_orbit, no mean orbit at trial (pphi, r_a)\n");
+        return 1;
+      }
       const double dra = e*pa->cons_orb[PO_CUR][PO_R_C] - r_a;
       r_a += dra;
       if (fabs(dra) <= 1e-14*(1.0 + r_a)) break;
@@ -3396,8 +3398,10 @@ static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
       const int N = eccpa_nnodes(pa, pa->cons_orb[PO_CUR][PO_E_GEO], 0);
       double n_rad;
       if (eob_eccpa_cons_sample_nodes(pa, PO_CUR, r_a, 0.0, N, 0, dyn, NULL, NULL) < 0
-          || eccpa_mean_freqs(pa->node[PA_DTDX], pa->node[PA_OMG], N, &n_rad, &omg))
-        return ICEQ_ORBIT;
+          || eccpa_mean_freqs(pa->node[PA_DTDX], pa->node[PA_OMG], N, &n_rad, &omg)) {
+        if (DEBUG) printf("ERROR: eccpa_ic_orbit, no mean frequency at trial (pphi, r_a)\n");
+        return 1;
+      }
     } else if (EOBPars->ecc_freq == ECCFREQ_AVERAGE) {
       eob_eccpa_cons_sample_point(pa, PO_CUR, r_a, 0.0, 0.0, 0, dyn);
       const double omg_peri = pa->Omg;
@@ -3421,7 +3425,10 @@ static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
     }
     Jp = J; fp = f;
     J += dJ;
-    if (!(J > 0.0)) return ICEQ_FREQ;
+    if (!(J > 0.0)) {
+      if (DEBUG) printf("ERROR: eccpa_ic_orbit, pphi < 0 while matching frequency\n");
+      return 1;
+    }
     /* stop if there is no progress, and let test below decide */
     if (it > 2 && fabs(dJ) <= 1e-14*J) break;
   }
@@ -3430,15 +3437,22 @@ static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
   if (!matched && fabs(bestf) <= ECCPA_IC_FREQ_TOL_FLOOR*omg_tgt) {
     J = bestJ; r_a = bestra;
     for (int is = 0; is < 48; is++) {
-      if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, PO_CUR)) return ICEQ_ORBIT;
+      if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, PO_CUR)) {
+        if (DEBUG) printf("ERROR: eccpa_ic_orbit, no mean orbit at trial (pphi, r_a)\n");
+        return 1;
+      }
       const double dra = e*pa->cons_orb[PO_CUR][PO_R_C] - r_a;
       r_a += dra;
       if (fabs(dra) <= 1e-14*(1.0 + r_a)) break;
     }
     matched = 1;
   }
+  if (!matched) {
+    if (DEBUG) printf("ERROR: eccpa_ic_orbit, frequency condition not met\n");
+    return 1;
+  }
   *J_out = J; *ra_out = r_a;
-  return matched ? ICEQ_OK : ICEQ_FREQ;
+  return 0;
 }
 
 /**
@@ -3452,30 +3466,26 @@ static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
  *   @param[in]  X       : anomaly from periastron
  *   @param[in]  order   : map order (max 2)
  *   @param[in]  dyn     : Dynamics structure
- *   @param[out] out     : state, and reason on failure
- *   @return  0 on success, 1 on failure
+ *   @param[out] y_init  : initial conditions
+ *   @return  OK, ERROR_OUTOFMEM or ERROR_INITIAL_CONDITIONS
  */
 int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
-                       Dynamics *dyn, EccIcEq *out)
+                       Dynamics *dyn, double y_init[])
 {
-  memset(out, 0, sizeof *out);
-  const int ok = (e < 1.0) && (e >= 0.0);
-  int reason = ok ? ICEQ_OK : ICEQ_INPUT;
-
-  PostAdDynamics *pa = NULL;
-  if (PostAdDynamics_alloc(&pa, 8)) {   /* no evolution here, so 8 samples are plenty */
-    out->reason = ICEQ_MEMORY;
-    return 1;
+  if (!(e < 1.0 && e >= 0.0)) {
+    if (DEBUG) printf("ERROR: eob_eccpa_ic_state, e = %g out of range\n", e);
+    return ERROR_INITIAL_CONDITIONS;
   }
 
-  out->order = order;
-  if (!ok) goto out;
+  PostAdDynamics *pa = NULL;
+  if (PostAdDynamics_alloc(&pa, 8)) return ERROR_OUTOFMEM;   /* no evolution here, so 8 samples are plenty */
+
+  int status = ERROR_INITIAL_CONDITIONS;
 
   /* seeds from Kepler's third law */
   double J = 0.0, r_a = 0.0;
-  reason = eccpa_ic_orbit(pa, e, omg_tgt, eob_dyn_j0(pow(omg_tgt, -2./3.)*(1. - e*e), dyn),
-                          e*pow(omg_tgt, -2./3.), dyn, &J, &r_a);
-  if (reason != ICEQ_OK) goto out;
+  if (eccpa_ic_orbit(pa, e, omg_tgt, eob_dyn_j0(pow(omg_tgt, -2./3.)*(1. - e*e), dyn),
+                     e*pow(omg_tgt, -2./3.), dyn, &J, &r_a)) goto out;
 
   /* Eq. (51), mean periastron along +alpha */
   double g[OSC_N], osc2[OSC_N];
@@ -3485,13 +3495,19 @@ int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
   EccMapCoefs map_coefs_mean;
   memset(&map_coefs_mean, 0, sizeof map_coefs_mean);
   if (order >= 1) {
-    if (eob_eccpa_osc1(pa, J, r_a, 0.0, 0, dyn)) { reason = ICEQ_GEN1; goto out; }
+    if (eob_eccpa_osc1(pa, J, r_a, 0.0, 0, dyn)) {
+      if (DEBUG) printf("ERROR: eob_eccpa_ic_state, first-order oscillating parts not built\n");
+      goto out;
+    }
     map_coefs_mean = pa->map_coefs;
     eccpa_osc1_at(pa, X, g);
   }
   if (order >= 2) {
     /* fail rather than deliver a lower order than asked */
-    if (eob_eccpa_rates_higher(pa, J, r_a, 0.0, 0, dyn)) { reason = ICEQ_GEN2; goto out; }
+    if (eob_eccpa_rates_higher(pa, J, r_a, 0.0, 0, dyn)) {
+      if (DEBUG) printf("ERROR: eob_eccpa_ic_state, second-order oscillating parts not built\n");
+      goto out;
+    }
     /* lambda~(2) is not needed: phi = 0 at start */
     const int Nn = pa->nnodes;
     osc2[OSC_PPHI] = eccpa_osc2_col(pa->mean_node[MEAN_NODE_CTILDE2 + C_PPHI],  Nn, X);
@@ -3519,13 +3535,16 @@ int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
   double Xp = X;
   if (order >= 1) {
     EccMapCoefs map_coefs_osc;
-    if (eob_eccpa_cons_orbit(pa, pphi, ra_o, dyn, PO_CUR)) { reason = ICEQ_OSC_ORBIT; goto out; }
+    if (eob_eccpa_cons_orbit(pa, pphi, ra_o, dyn, PO_CUR)) {
+      if (DEBUG) printf("ERROR: eob_eccpa_ic_state, osculating orbit not found\n");
+      goto out;
+    }
     /* on nodes of oscillating parts, where mean orbit's map came from; another node
        count would leave an error in X' as large as second order */
     const int N = (pa->osc1_nnodes > 0) ? pa->osc1_nnodes
                                         : eccpa_nnodes(pa, pa->cons_orb[PO_CUR][PO_E_GEO], 0);
     if (eccpa_cons_map_coefs_of_orbit(pa, pphi, ra_o, alpha, beta, PO_CUR, N, dyn, &map_coefs_osc)) {
-      reason = ICEQ_OSC_MAP;
+      if (DEBUG) printf("ERROR: eob_eccpa_ic_state, osculating maps not built\n");
       goto out;
     }
     Xp = eccpa_X_of_Lam(&map_coefs_osc, ra_o, w_o, LamP, LamP - T0);
@@ -3533,24 +3552,36 @@ int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
   eob_eccpa_cons_sample_point(pa, PO_CUR, alpha, beta, Xp, 0, dyn);
   /* r between osculating turning points, Xp close to X (else wrong branch) */
   const double rc_o = pa->cons_orb[PO_CUR][PO_R_C], ra_osc = pa->cons_orb[PO_CUR][PO_R_A];
-  if (!(fabs(pa->r - rc_o) <= ra_osc*(1.0 + 1e-6) + 1e-9)) reason = ICEQ_OFF_ORBIT;
-  if (!(fabs(Xp - X) < 0.5)) reason = ICEQ_BRANCH;
-  if (reason != ICEQ_OK) goto out;
+  if (!(fabs(pa->r - rc_o) <= ra_osc*(1.0 + 1e-6) + 1e-9)) {
+    if (DEBUG) printf("ERROR: eob_eccpa_ic_state, point off osculating orbit\n");
+    goto out;
+  }
+  if (!(fabs(Xp - X) < 0.5)) {
+    if (DEBUG) printf("ERROR: eob_eccpa_ic_state, anomaly on wrong branch\n");
+    goto out;
+  }
 
-  out->r        = pa->r;
-  out->prstar   = pa->prstar;
-  out->sqrtAbyB = pa->sqrtAbyB;
-  out->pphi     = pphi;
-  out->H        = pa->H;
-  out->Omg      = pa->Omg;
-  out->J        = J;
-  out->r_a      = r_a;
-  out->e_geo    = (rc_m > 0.0) ? r_a/rc_m : 0.0;
-  out->X        = X;
-  out->Xp       = Xp;
+  y_init[EOB_ID_RAD]    = pa->r;
+  y_init[EOB_ID_PHI]    = 0.;
+  y_init[EOB_ID_PPHI]   = pphi;
+  y_init[EOB_ID_PRSTAR] = pa->prstar;
+  y_init[EOB_ID_PR]     = pa->prstar/pa->sqrtAbyB;
+  y_init[EOB_ID_J]      = pphi;
+  y_init[EOB_ID_E0]     = EOBPars->nu*pa->H;
+  y_init[EOB_ID_OMGJ]   = pa->Omg;
+
+  if (VERBOSE) {
+    PRSECTN("Eccentric initial conditions (equinoctial post-adiabatic)");
+    printf("%-40s = %d\n","map order",order);
+    printf("%-40s = %.12e\n","mean pphi",J);
+    printf("%-40s = %.12e (e_geo %.6e)\n","mean half-width",r_a,(rc_m > 0.0) ? r_a/rc_m : 0.0);
+    printf("%-40s = %.12e\n","frequency matched",omg_tgt);
+    printf("%-40s = %.6f -> %.6f -> %.6f\n","anomaly (conic, mean, osculating)",EOBPars->anomaly,X,Xp);
+    printf("%-40s = %.12e %.12e %.12e\n","r, prstar, pphi",pa->r,pa->prstar,pphi);
+  }
+  status = OK;
 
 out:
-  out->reason = reason;
   PostAdDynamics_free(&pa);
-  return (reason == ICEQ_OK) ? 0 : 1;
+  return status;
 }

@@ -1013,48 +1013,10 @@ int eob_dyn_ic_ecc_pa_eq(double r0, Dynamics *dyn, double y_init[])
   double X = acos(cX);
   if (sin(zeta) < 0.0) X = 2.0*Pi - X;
 
-  EccIcEq s;
-  if (eob_eccpa_ic_state(ecc, Pi*EOBPars->f0, X, order, dyn, &s)) {
-    /* A run that cannot be built as asked -- no bound orbit at this (e, f0) above all -- fails
-       rather than start from a substitute. */
-    static const char *why[] = { "ok", "input out of range", "no mean orbit at a trial (pphi, r_a)",
-                                 "frequency condition not met", "first-order oscillating parts not built",
-                                 "second-order oscillating parts not built", "osculating orbit not located",
-                                 "osculating maps not built", "point off the osculating orbit",
-                                 "anomaly on the wrong branch", "out of memory" };
-    fprintf(stderr, "Eccentric ICs (equinoctial): construction failed at e = %.6g, f0 = %.6g: %s.\n",
-            ecc, EOBPars->f0, why[s.reason]);
+  /* fails rather than start from a substitute */
+  if (eob_eccpa_ic_state(ecc, Pi*EOBPars->f0, X, order, dyn, y_init)) {
+    if (DEBUG) printf("ERROR: eob_dyn_ic_ecc_pa_eq, no ICs at e = %g, f0 = %g\n", ecc, EOBPars->f0);
     return 1;
-  }
-
-  /* sanity check */
-  const int sane = isfinite(s.r) && isfinite(s.prstar) && isfinite(s.pphi)
-                && isfinite(s.H) && isfinite(s.Omg)
-                && s.r > 1.0 && s.pphi > 0.0 && s.sqrtAbyB > 0.0 && s.H > 0.0;
-  if (!sane) {
-    fprintf(stderr, "Eccentric ICs (equinoctial): state rejected, "
-            "r = %.6e prstar = %.6e pphi = %.6e H = %.6e\n", s.r, s.prstar, s.pphi, s.H);
-    return 1;
-  }
-
-  y_init[EOB_ID_RAD]    = s.r;
-  y_init[EOB_ID_PHI]    = 0.;
-  y_init[EOB_ID_PPHI]   = s.pphi;
-  y_init[EOB_ID_PRSTAR] = s.prstar;
-  y_init[EOB_ID_PR]     = s.prstar/s.sqrtAbyB;
-  y_init[EOB_ID_J]      = s.pphi;
-  y_init[EOB_ID_E0]     = EOBPars->nu*s.H;
-  y_init[EOB_ID_OMGJ]   = s.Omg;
-
-  if (VERBOSE) {
-    PRSECTN("Eccentric initial conditions (equinoctial post-adiabatic)");
-    printf("%-40s = %d\n","map order",s.order);
-    printf("%-40s = %.12e\n","mean pphi",s.J);
-    printf("%-40s = %.12e (e_geo %.6e)\n","mean half-width",s.r_a,s.e_geo);
-    printf("%-40s = %.12e\n","frequency matched",Pi*EOBPars->f0);
-    printf("%-40s = %.6f -> %.6f -> %.6f\n","anomaly (conic, mean, osculating)",
-           zeta,s.X,s.Xp);
-    printf("%-40s = %.12e %.12e %.12e\n","r, prstar, pphi",s.r,s.prstar,s.pphi);
   }
   return 0;
 }
