@@ -4394,7 +4394,15 @@ double herm_cubic (double th, double h, double ya, double dya, double yb, double
 
 /* Real Fourier series on midpoint grid: fit, evaluate, primitive */
 
-/** Fit a real Fourier series on midpoint grid x_j = 2 pi (j + 1/2)/N, harmonics up to N/2 - 1 */
+/**
+ * Function: eob_ecc_series_fit
+ * ----------------------------
+ *   Fit a real Fourier series on midpoint grid x_j = 2 pi (j + 1/2)/N, harmonics up to N/2 - 1.
+ *
+ *   @param[in]  f : values on grid
+ *   @param[in]  N : number of points
+ *   @param[out] s : series; s->M = 0 if N is too large
+ */
 void eob_ecc_series_fit(const double *f, int N, EccSeries *s)
 {
   const int M = N/2 - 1;
@@ -4432,7 +4440,15 @@ void eob_ecc_series_fit(const double *f, int N, EccSeries *s)
   }
 }
 
-/** Evaluate a series at an arbitrary point. */
+/**
+ * Function: eob_ecc_series_eval
+ * -----------------------------
+ *   Evaluate a series at x.
+ *
+ *   @param[in] s : series
+ *   @param[in] x : point
+ *   @return  value at x
+ */
 double eob_ecc_series_eval(const EccSeries *s, double x)
 {
   /* angle-addition recurrence */
@@ -4447,7 +4463,14 @@ double eob_ecc_series_eval(const EccSeries *s, double x)
   return v;
 }
 
-/** Periodic primitive of f - <f> (average over x) */
+/**
+ * Function: eob_ecc_series_prim
+ * -----------------------------
+ *   Periodic primitive of f - <f>.
+ *
+ *   @param[in]  s   : series of f
+ *   @param[out] out : series of primitive
+ */
 void eob_ecc_series_prim(const EccSeries *s, EccSeries *out)
 {
   out->M = s->M;

@@ -639,9 +639,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->t_pa_handoff = 0.;
     EOBPars->pa_tab3_n = 0;
     if (use_ecc_pa) {
-      double t_adv = 0.;
       int    n_pa  = 0;
-      if (!p_eob_ecc_pa_advance(&dyn, &t_adv, &n_pa)) {
+      if (!p_eob_ecc_pa_advance(&dyn, &n_pa)) {
         if (n_pa > 1) {
           /* wf on reconstructed inspiral */
           if (n_pa + chunk > size) {
@@ -711,10 +710,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* stage reached t_stop or stops at handoff: skip ODE */
     if (use_ecc_pa && ecc_pa_filled
         && (dyn->t >= dyn->t_stop || EOBPars->postadiabatic_dynamics_ecc_stop)) {
-      if (VERBOSE)
-        printf("Eccentric post-adiabatic dynamics: %s, skip evolution.\n",
-               EOBPars->postadiabatic_dynamics_ecc_stop ? "stopping at the handoff as asked"
-                                                        : "reached ode_tmax");
+      if (VERBOSE) printf("Stop: eccentric PA %s, skip evolution\n",
+                          EOBPars->postadiabatic_dynamics_ecc_stop ? "stops at handoff" : "reached ode_tmax");
       size = pasize;
       EOBPars->size = size;
       Waveform_lm_push (&hlm, size);
@@ -789,7 +786,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
    */
 
   /* Initialize ODE system solver */
-  dyn->t_stop = EOBPars->ode_tmax * time_unit_fact;
   EOBPars->ode_tmax      = dyn->t_stop;
   dyn->ode_stop          = false;
   dyn->ode_stop_MOmgpeak = false;

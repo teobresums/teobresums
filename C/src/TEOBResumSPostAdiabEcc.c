@@ -18,20 +18,26 @@
 #include <stdlib.h>
 #include "TEOBResumS.h"
 
-/* PostAdDynamics: allocation and release */
+/** PostAdDynamics: allocation and release */
 
-/** Free PostAdDynamics and its arrays */
+/**
+ * Function: PostAdDynamics_free
+ * -----------------------------
+ *   Free PostAdDynamics and its arrays.
+ *
+ *   @param[in,out] pa : struct, set to NULL
+ */
 void PostAdDynamics_free(PostAdDynamics **pa)
 {
   PostAdDynamics *p = *pa;
   if (p == NULL) return;
   free(p->time);
-  for (int v = 0; v < EVO_NVARS; v++) free(p->data[v]);
+  for (int v = 0; v < ECCPA_EVO_NVARS; v++) free(p->data[v]);
   free(p->evo_M);
-  for (int a = 0; a < OSC_N; a++)
+  for (int a = 0; a < ECCPA_OSC_N; a++)
     for (int c = 0; c < 2; c++)
       for (int m = 0; m <= ECCPA_HARMONICS_MAX; m++) free(p->evo_osc1_coef[a][c][m]);
-  for (int th = 0; th < TH_N; th++)
+  for (int th = 0; th < ECCPA_TH_N; th++)
     for (int c = 0; c < 2; c++)
       for (int m = 0; m <= ECCPA_HARMONICS_MAX; m++) {
         free(p->evo_kappa[th][c][m]);
@@ -65,19 +71,19 @@ int PostAdDynamics_alloc(PostAdDynamics **pa, int size)
   int ok = 1;
   p->time = (double *) calloc(size, sizeof(double));
   ok = ok && p->time;
-  for (int v = 0; v < EVO_NVARS; v++) {
+  for (int v = 0; v < ECCPA_EVO_NVARS; v++) {
     p->data[v] = (double *) calloc(size, sizeof(double));
     ok = ok && p->data[v];
   }
   p->evo_M = (int *) calloc(size, sizeof(int));
   ok = ok && p->evo_M;
-  for (int a = 0; a < OSC_N; a++)
+  for (int a = 0; a < ECCPA_OSC_N; a++)
     for (int c = 0; c < 2; c++)
       for (int m = 0; m <= ECCPA_HARMONICS_MAX; m++) {
         p->evo_osc1_coef[a][c][m] = (double *) calloc(size, sizeof(double));
         ok = ok && p->evo_osc1_coef[a][c][m];
       }
-  for (int th = 0; th < TH_N; th++)
+  for (int th = 0; th < ECCPA_TH_N; th++)
     for (int c = 0; c < 2; c++)
       for (int m = 0; m <= ECCPA_HARMONICS_MAX; m++) {
         p->evo_kappa[th][c][m]    = (double *) calloc(size, sizeof(double));
@@ -101,7 +107,7 @@ static const double eccpa_gl8_w[8] = {
    0.3626837833783620,  0.3137066458778873,  0.2223810344533745,  0.1012285362903763
 };
 
-/* Helpers wrapping Hamiltonian calls */
+/** Helpers wrapping Hamiltonian calls */
 
 /** dH/dr at (r, prstar = 0, pphi). */
 static double eccpa_cons_Hr(double r, double pphi, Dynamics *dyn)
@@ -160,7 +166,7 @@ static int eccpa_cons_deltaH(double J, double r_c, double r_a, int use_direct, D
   return 0;
 }
 
-/* Conservative orbit, set by (pphi, r_a) */
+/** Conservative orbit, set by (pphi, r_a) */
 
 /** Direction w of periastron, z = r_a exp(i w); 0 at z = 0, where it is undefined and nothing
  *  depends on it. */
@@ -193,7 +199,16 @@ int eob_eccpa_nodecount(double e_geo, int series)
   return N;
 }
 
-/** eob_eccpa_nodecount capped at pa->nmax (stage uses a lower cap than initial data). */
+/**
+ * Function: eccpa_nnodes
+ * ----------------------
+ *   eob_eccpa_nodecount capped at pa->nmax (stage uses a lower cap than initial data).
+ *
+ *   @param[in] pa     : PostAdDynamics, for nmax
+ *   @param[in] e_geo  : r_a/r_c
+ *   @param[in] series : node count for gap series
+ *   @return  number of nodes
+ */
 static int eccpa_nnodes(const PostAdDynamics *pa, double e_geo, int series)
 {
   const int N = eob_eccpa_nodecount(e_geo, series);
@@ -281,7 +296,7 @@ static int eccpa_cons_circular(PostAdDynamics *pa, double J, Dynamics *dyn, int 
       }
     }
     if (!fail) {
-      pa->cons_orb[oslot][PO_R_CIRC] = r;
+      pa->cons_orb[oslot][ECCPA_ORB_R_CIRC] = r;
 
       /* derivatives of H at r_circ, by finite differences of H_r rather than of H, because H
          contains rest mass, which would cancel in differences, and H_r doesn't. */
@@ -292,15 +307,15 @@ static int eccpa_cons_circular(PostAdDynamics *pa, double J, Dynamics *dyn, int 
                   NULL, NULL, NULL, NULL, NULL, NULL);
       const double fp = eccpa_cons_Hr(r + h, J, dyn);
       const double fm = eccpa_cons_Hr(r - h, J, dyn);
-      pa->cons_orb[oslot][PO_HRR]  = (fp - fm)/(2.0*h); // Finite difference for H_rr
-      pa->cons_orb[oslot][PO_HRRR] = (fp - 2.0*f + fm)/(h*h); // Finite difference for H_rrr
+      pa->cons_orb[oslot][ECCPA_ORB_HRR]  = (fp - fm)/(2.0*h); // Finite difference for H_rr
+      pa->cons_orb[oslot][ECCPA_ORB_HRRR] = (fp - 2.0*f + fm)/(h*h); // Finite difference for H_rrr
       /* H_rJ is needed only when r_circ is solved for here */
       if (!(rc_known > 0.0)) {
         const double hJ = ECCPA_DR_REL*fabs(J);
-        pa->cons_orb[oslot][PO_HRJ] =
+        pa->cons_orb[oslot][ECCPA_ORB_HRJ] =
           (eccpa_cons_Hr(r, J + hJ, dyn) - eccpa_cons_Hr(r, J - hJ, dyn))/(2.0*hJ);
       }
-      if (pa->cons_orb[oslot][PO_HRR] > 0.0) return 0;   /* a minimum of radial potential */
+      if (pa->cons_orb[oslot][ECCPA_ORB_HRR] > 0.0) return 0;   /* a minimum of radial potential */
     }
     if (rc_known > 0.0) return 1;   /* nothing to retry with a known radius */
   }
@@ -319,8 +334,8 @@ static int eccpa_cons_circular(PostAdDynamics *pa, double J, Dynamics *dyn, int 
  */
 static int eccpa_cons_rc_newton(PostAdDynamics *pa, double r_a, Dynamics *dyn, int oslot, double *r_c)
 {
-  const double J = pa->cons_orb[oslot][PO_PPHI];
-  const double r_circ = pa->cons_orb[oslot][PO_R_CIRC];
+  const double J = pa->cons_orb[oslot][ECCPA_ORB_PPHI];
+  const double r_circ = pa->cons_orb[oslot][ECCPA_ORB_R_CIRC];
   const double e_seed = r_a/(*r_c);   /* r_c is in/out, with seed in and root out */
   const double e4     = e_seed*e_seed*e_seed*e_seed;
   int bad_fast = 0;
@@ -353,7 +368,7 @@ static int eccpa_cons_rc_newton(PostAdDynamics *pa, double r_a, Dynamics *dyn, i
   }
 
   /* wide orbit: restart from previous root */
-  const double seed = pa->cons_orb[oslot][PO_R_C];
+  const double seed = pa->cons_orb[oslot][ECCPA_ORB_R_C];
   if (!bad_fast && r_a > ECCPA_RC_WIDE*r_circ && isfinite(seed)
       && seed - r_a > 1.0 && seed > r_circ - r_a && seed < r_circ + r_a) {
     double rs = seed, step_prev = 0.0;
@@ -393,8 +408,8 @@ static int eccpa_cons_rc_newton(PostAdDynamics *pa, double r_a, Dynamics *dyn, i
 static int eccpa_cons_rc_bracket(PostAdDynamics *pa, double r_a, Dynamics *dyn, int oslot,
                                  double *r_c)
 {
-  const double J = pa->cons_orb[oslot][PO_PPHI];
-  const double r_circ = pa->cons_orb[oslot][PO_R_CIRC];
+  const double J = pa->cons_orb[oslot][ECCPA_ORB_PPHI];
+  const double r_circ = pa->cons_orb[oslot][ECCPA_ORB_R_CIRC];
   double lo = r_circ - r_a, hi = r_circ + r_a;
   if (lo < r_a + 2.0) lo = r_a + 2.0;
   double deltaH_lo = 0.0, deltaH_hi = 0.0, Hp = 0.0, Hm = 0.0, H_at_lo_out = 0.0;
@@ -439,33 +454,33 @@ static int eccpa_cons_rc_bracket(PostAdDynamics *pa, double r_a, Dynamics *dyn, 
 /**
  * Function: eccpa_cons_rc
  * -----------------------
- *   r_c, e_geo, E and H_r at periastron (PO_HR_M) of orbit (pphi, r_a), Eq. (C1).
+ *   r_c, e_geo, E and H_r at periastron (ECCPA_ORB_HR_M) of orbit (pphi, r_a), Eq. (C1).
  *   Newton from expansion r_c = r_circ - H_rrr r_a^2/(6 H_rr), bracket if Newton fails.
  *
  *   @return  0 on success, 1 if no bound orbit of this width was found
  */
 static int eccpa_cons_rc(PostAdDynamics *pa, double r_a, Dynamics *dyn, int oslot)
 {
-  const double J = pa->cons_orb[oslot][PO_PPHI];
+  const double J = pa->cons_orb[oslot][ECCPA_ORB_PPHI];
 
   /* seed. At r_a = 0 it is r_circ, two turning points coincide and there is nothing
      to solve, so we go straight to quantities below. */
   const double *orb = pa->cons_orb[oslot];
-  double r_c = orb[PO_R_CIRC] - orb[PO_HRRR]*r_a*r_a/(6.0*orb[PO_HRR]);
+  double r_c = orb[ECCPA_ORB_R_CIRC] - orb[ECCPA_ORB_HRRR]*r_a*r_a/(6.0*orb[ECCPA_ORB_HRR]);
 
   if (r_a > 0.0
       && !eccpa_cons_rc_newton(pa, r_a, dyn, oslot, &r_c)
       && eccpa_cons_rc_bracket(pa, r_a, dyn, oslot, &r_c)) return 1;
 
-  pa->cons_orb[oslot][PO_R_C]   = r_c;
-  pa->cons_orb[oslot][PO_E_GEO] = r_a/r_c;
-  pa->cons_orb[oslot][PO_GAP_OK] = 0.0;
+  pa->cons_orb[oslot][ECCPA_ORB_R_C]   = r_c;
+  pa->cons_orb[oslot][ECCPA_ORB_E_GEO] = r_a/r_c;
+  pa->cons_orb[oslot][ECCPA_ORB_GAP_OK] = 0.0;
 
   /* E = H at periastron, and H_r there, from one call */
   double *slot = pa->cons_orb[oslot];
-  eob_ecc_ham(r_c - r_a, 0.0, J, dyn, &slot[PO_E], &slot[PO_HR_M], NULL, NULL, NULL, NULL, NULL,
+  eob_ecc_ham(r_c - r_a, 0.0, J, dyn, &slot[ECCPA_ORB_E], &slot[ECCPA_ORB_HR_M], NULL, NULL, NULL, NULL, NULL,
               NULL, NULL, NULL, NULL, NULL, NULL);
-  if (!isfinite(slot[PO_E])) return 1;
+  if (!isfinite(slot[ECCPA_ORB_E])) return 1;
   return 0;
 }
 
@@ -483,25 +498,25 @@ static int eccpa_cons_rc(PostAdDynamics *pa, double r_a, Dynamics *dyn, int oslo
 int eob_eccpa_cons_orbit(PostAdDynamics *pa, double J, double r_a, Dynamics *dyn, int oslot)
 {
   double *orb = pa->cons_orb[oslot];
-  if (orb[PO_FULL] == 1.0 && orb[PO_PPHI] == J && orb[PO_R_A] == r_a) return 0; // cache hit
+  if (orb[ECCPA_ORB_FULL] == 1.0 && orb[ECCPA_ORB_PPHI] == J && orb[ECCPA_ORB_R_A] == r_a) return 0; // cache hit
   /* keep previous r_c: eccpa_cons_rc_newton restarts wide orbits from it */
-  const double rc_prev = orb[PO_R_C];
+  const double rc_prev = orb[ECCPA_ORB_R_C];
   memset(orb, 0, sizeof pa->cons_orb[oslot]);
-  orb[PO_R_C] = rc_prev;
-  orb[PO_PPHI] = J;
-  orb[PO_R_A]  = r_a;
+  orb[ECCPA_ORB_R_C] = rc_prev;
+  orb[ECCPA_ORB_PPHI] = J;
+  orb[ECCPA_ORB_R_A]  = r_a;
   if (eccpa_cons_circular(pa, J, dyn, oslot, 0.0)) return 1;
   if (eccpa_cons_rc(pa, r_a, dyn, oslot)) return 1;
 
   /* c_ra from differentiating deltaH(r_c) = 0; below ECCPA_E_TAYLOR from seed, -H_rrr/(3 H_rr) */
-  if (orb[PO_E_GEO] > ECCPA_E_TAYLOR) {
-    const double hp = eccpa_cons_Hr(orb[PO_R_C] + r_a, J, dyn), hm = orb[PO_HR_M];
+  if (orb[ECCPA_ORB_E_GEO] > ECCPA_E_TAYLOR) {
+    const double hp = eccpa_cons_Hr(orb[ECCPA_ORB_R_C] + r_a, J, dyn), hm = orb[ECCPA_ORB_HR_M];
     if (hp == hm) return 1;
-    orb[PO_C_RA] = -(hp + hm)/((hp - hm)*r_a);
+    orb[ECCPA_ORB_C_RA] = -(hp + hm)/((hp - hm)*r_a);
   } else {
-    orb[PO_C_RA] = -orb[PO_HRRR]/(3.0*orb[PO_HRR]);
+    orb[ECCPA_ORB_C_RA] = -orb[ECCPA_ORB_HRRR]/(3.0*orb[ECCPA_ORB_HRR]);
   }
-  orb[PO_FULL] = 1.0;
+  orb[ECCPA_ORB_FULL] = 1.0;
   return 0;
 }
 
@@ -515,12 +530,12 @@ int eob_eccpa_cons_orbit(PostAdDynamics *pa, double J, double r_a, Dynamics *dyn
  */
 double eob_eccpa_cons_drc_dJ(PostAdDynamics *pa, int oslot, Dynamics *dyn)
 {
-  if (!(pa->cons_orb[oslot][PO_E_GEO] > ECCPA_E_TAYLOR))
-    return (pa->cons_orb[oslot][PO_HRR] != 0.0)
-         ? -pa->cons_orb[oslot][PO_HRJ]/pa->cons_orb[oslot][PO_HRR] : 0.0;
+  if (!(pa->cons_orb[oslot][ECCPA_ORB_E_GEO] > ECCPA_E_TAYLOR))
+    return (pa->cons_orb[oslot][ECCPA_ORB_HRR] != 0.0)
+         ? -pa->cons_orb[oslot][ECCPA_ORB_HRJ]/pa->cons_orb[oslot][ECCPA_ORB_HRR] : 0.0;
 
-  const double J   = pa->cons_orb[oslot][PO_PPHI];
-  const double r_a = pa->cons_orb[oslot][PO_R_A], r_c = pa->cons_orb[oslot][PO_R_C];
+  const double J   = pa->cons_orb[oslot][ECCPA_ORB_PPHI];
+  const double r_a = pa->cons_orb[oslot][ECCPA_ORB_R_A], r_c = pa->cons_orb[oslot][ECCPA_ORB_R_C];
   double hp, hm, Jp, Jm;
   eob_ecc_ham(r_c + r_a, 0.0, J, dyn, NULL, &hp, NULL, &Jp, NULL, NULL, NULL,
               NULL, NULL, NULL, NULL, NULL, NULL);
@@ -535,12 +550,12 @@ static void eccpa_cons_dE(PostAdDynamics *pa, int oslot, double r_a,
                           Dynamics *dyn, double *c_ra, double *drc_dJ, double *drc_dra,
                           double *dE_dra, double *dE_dJ)
 {
-  *c_ra    = pa->cons_orb[oslot][PO_C_RA];
+  *c_ra    = pa->cons_orb[oslot][ECCPA_ORB_C_RA];
   *drc_dJ  = eob_eccpa_cons_drc_dJ(pa, oslot, dyn);
   *drc_dra = (*c_ra)*r_a;
   const double *orb = pa->cons_orb[oslot];
   double Hr = 0.0, Om = 0.0;
-  eob_ecc_ham(orb[PO_R_C] - r_a, 0.0, orb[PO_PPHI], dyn, NULL, &Hr, NULL, &Om, NULL, NULL,
+  eob_ecc_ham(orb[ECCPA_ORB_R_C] - r_a, 0.0, orb[ECCPA_ORB_PPHI], dyn, NULL, &Hr, NULL, &Om, NULL, NULL,
               NULL, NULL, NULL, NULL, NULL, NULL, NULL);
   *dE_dra = Hr*((*drc_dra) - 1.0);
   *dE_dJ  = Hr*(*drc_dJ) + Om;
@@ -556,8 +571,8 @@ static void eccpa_cons_gap_series(PostAdDynamics *pa, int oslot, Dynamics *dyn)
 {
   double *orb = pa->cons_orb[oslot];
   EccSeries *gs = &pa->cons_gap[oslot];
-  const double r_a = orb[PO_R_A];
-  int Ng = 2*eccpa_nnodes(pa, orb[PO_E_GEO], 0);
+  const double r_a = orb[ECCPA_ORB_R_A];
+  int Ng = 2*eccpa_nnodes(pa, orb[ECCPA_ORB_E_GEO], 0);
   if (Ng < ECCPA_NODES_MIN_GAP) Ng = ECCPA_NODES_MIN_GAP;
   if (Ng > ECCPA_NODES_DIM) Ng = ECCPA_NODES_DIM;
 
@@ -565,7 +580,7 @@ static void eccpa_cons_gap_series(PostAdDynamics *pa, int oslot, Dynamics *dyn)
   double f[ECCPA_NODES_DIM];
   for (int j = 0; j < Ng; j++) {
     const double c = 2.0*Pi*(j + 0.5)/Ng;
-    f[j] = -eccpa_cons_Hr(orb[PO_R_C] - r_a*cos(c), orb[PO_PPHI], dyn)*r_a*sin(c);
+    f[j] = -eccpa_cons_Hr(orb[ECCPA_ORB_R_C] - r_a*cos(c), orb[ECCPA_ORB_PPHI], dyn)*r_a*sin(c);
   }
   
   /* Fourier series, and its primitive */
@@ -582,8 +597,8 @@ static void eccpa_cons_gap_series(PostAdDynamics *pa, int oslot, Dynamics *dyn)
     gs->a[1] += 0.5*g;
     gap0     -= 0.5*g;
   }
-  orb[PO_GAP0]   = gap0;
-  orb[PO_GAP_OK] = 1.0;
+  orb[ECCPA_ORB_GAP0]   = gap0;
+  orb[ECCPA_ORB_GAP_OK] = 1.0;
 }
 
 /**
@@ -595,10 +610,10 @@ static void eccpa_cons_gap_series(PostAdDynamics *pa, int oslot, Dynamics *dyn)
 static void eccpa_cons_state_at_chi(PostAdDynamics *pa, int oslot, double chi,
                                     int with_flux, Dynamics *dyn)
 {
-  const double J = pa->cons_orb[oslot][PO_PPHI], r_a = pa->cons_orb[oslot][PO_R_A];
+  const double J = pa->cons_orb[oslot][ECCPA_ORB_PPHI], r_a = pa->cons_orb[oslot][ECCPA_ORB_R_A];
   const double t1 = 0.5 - 0.5/sqrt(3.0), t2 = 0.5 + 0.5/sqrt(3.0); /* 2-point Gauss on [0,1] */
 
-  pa->r    = pa->cons_orb[oslot][PO_R_C] - r_a*cos(chi);
+  pa->r    = pa->cons_orb[oslot][ECCPA_ORB_R_C] - r_a*cos(chi);
   pa->drdX = r_a*sin(chi); /* dr/dchi = dr/dX since X = w + chi at fixed w */
   const double r = pa->r;
 
@@ -612,11 +627,11 @@ static void eccpa_cons_state_at_chi(PostAdDynamics *pa, int oslot, double chi,
   if (r_a > 0.0) {
     double gap;
     /* energy conservation above ECCPA_E_DIRECT, gap series below (E - H loses digits there) */
-    if (pa->cons_orb[oslot][PO_E_GEO] > ECCPA_E_DIRECT) {
-      gap = pa->cons_orb[oslot][PO_E] - H0;
+    if (pa->cons_orb[oslot][ECCPA_ORB_E_GEO] > ECCPA_E_DIRECT) {
+      gap = pa->cons_orb[oslot][ECCPA_ORB_E] - H0;
     } else {
-      if (pa->cons_orb[oslot][PO_GAP_OK] != 1.0) eccpa_cons_gap_series(pa, oslot, dyn);
-      gap = eob_ecc_series_eval(&pa->cons_gap[oslot], chi) + pa->cons_orb[oslot][PO_GAP0];
+      if (pa->cons_orb[oslot][ECCPA_ORB_GAP_OK] != 1.0) eccpa_cons_gap_series(pa, oslot, dyn);
+      gap = eob_ecc_series_eval(&pa->cons_gap[oslot], chi) + pa->cons_orb[oslot][ECCPA_ORB_GAP0];
     }
     /* Near a turning point both gap and (dr/dX)^2 go to zero, 
     so we switch on sin^2(chi), not on denominator being zero. */
@@ -630,9 +645,9 @@ static void eccpa_cons_state_at_chi(PostAdDynamics *pa, int oslot, double chi,
     }
   } else {
     /* at r_a = 0 (circular orbit) psi = H_rr/2 */
-    psi = 0.5*pa->cons_orb[oslot][PO_HRR];
+    psi = 0.5*pa->cons_orb[oslot][ECCPA_ORB_HRR];
   }
-  if (!(psi > 0.0) || !isfinite(psi)) psi = 0.5*pa->cons_orb[oslot][PO_HRR];
+  if (!(psi > 0.0) || !isfinite(psi)) psi = 0.5*pa->cons_orb[oslot][ECCPA_ORB_HRR];
 
   /* Fixed-point iteration for Wstar (App. C), starting from Phi at prstar = 0, which is
      dH/d(prstar^2) there, half d2H/dprstar2. */
@@ -687,12 +702,12 @@ static void eccpa_cons_state_at_chi(PostAdDynamics *pa, int oslot, double chi,
   if (!isfinite(pa->dt_dX) || pa->dt_dX <= 0.0) pa->dt_dX = 0.0;
 
   if (!with_flux) {
-    pa->Fr = pa->FE = pa->F[C_PPHI] = 0.0;
+    pa->Fr = pa->FE = pa->F[ECCPA_C_PPHI] = 0.0;
     return;
   }
   eob_ecc_flux_at(r, pa->prstar, J, pa->rdot, pa->Omg, pa->ddotr,
-                  H, Heff, sqrtAbyB, dH_dr, dyn, rc, drc, d2rc, A, dA, &pa->F[C_PPHI], &pa->Fr);
-  pa->FE = pa->rdot*pa->Fr + pa->Omg*pa->F[C_PPHI];
+                  H, Heff, sqrtAbyB, dH_dr, dyn, rc, drc, d2rc, A, dA, &pa->F[ECCPA_C_PPHI], &pa->Fr);
+  pa->FE = pa->rdot*pa->Fr + pa->Omg*pa->F[ECCPA_C_PPHI];
 }
 
 /**
@@ -709,19 +724,19 @@ static int eccpa_osculate(PostAdDynamics *pa, int oslot,
                           double dE_dra, double dE_dJ, double *Fa, double *Fb)
 {
   /* node j, or point left in pa when j < 0 */
-  const double nd_Wstar = (j >= 0) ? pa->node[PA_WSTAR][j] : pa->Wstar;
-  const double nd_drdX = (j >= 0) ? pa->node[PA_DRDX][j] : pa->drdX;
-  const double nd_r = (j >= 0) ? pa->node[PA_R][j] : pa->r;
-  const double nd_dH_dprs2 = (j >= 0) ? pa->node[PA_DH_DPRS2][j] : pa->dH_dprs2;
-  const double nd_Omg = (j >= 0) ? pa->node[PA_OMG][j] : pa->Omg;
-  const double nd_X = (j >= 0) ? pa->node[PA_X][j] : pa->X;
-  const double nd_FJ = (j >= 0) ? pa->node[PA_F + C_PPHI][j] : pa->F[C_PPHI];
-  const double nd_sqrtAbyB = (j >= 0) ? pa->node[PA_SQRTAB][j] : pa->sqrtAbyB;
-  const double nd_Fr = (j >= 0) ? pa->node[PA_FR][j] : pa->Fr;
-  const double r_a  = pa->cons_orb[oslot][PO_R_A];
+  const double nd_Wstar = (j >= 0) ? pa->node[ECCPA_NODE_WSTAR][j] : pa->Wstar;
+  const double nd_drdX = (j >= 0) ? pa->node[ECCPA_NODE_DRDX][j] : pa->drdX;
+  const double nd_r = (j >= 0) ? pa->node[ECCPA_NODE_R][j] : pa->r;
+  const double nd_dH_dprs2 = (j >= 0) ? pa->node[ECCPA_NODE_DH_DPRS2][j] : pa->dH_dprs2;
+  const double nd_Omg = (j >= 0) ? pa->node[ECCPA_NODE_OMG][j] : pa->Omg;
+  const double nd_X = (j >= 0) ? pa->node[ECCPA_NODE_X][j] : pa->X;
+  const double nd_FJ = (j >= 0) ? pa->node[ECCPA_NODE_F + ECCPA_C_PPHI][j] : pa->F[ECCPA_C_PPHI];
+  const double nd_sqrtAbyB = (j >= 0) ? pa->node[ECCPA_NODE_SQRTAB][j] : pa->sqrtAbyB;
+  const double nd_Fr = (j >= 0) ? pa->node[ECCPA_NODE_FR][j] : pa->Fr;
+  const double r_a  = pa->cons_orb[oslot][ECCPA_ORB_R_A];
   const double Ws   = nd_Wstar;
   const double u2   = nd_drdX*nd_drdX;
-  const double rcmr = pa->cons_orb[oslot][PO_R_C] - nd_r;
+  const double rcmr = pa->cons_orb[oslot][ECCPA_ORB_R_C] - nd_r;
   double dWs_dJ = 0.0, dWs_dra = 0.0;
   if (Ws > 0.0 && u2 > 0.0 && nd_dH_dprs2 > 0.0) {
     const double du2_dra = 2.0*r_a - 2.0*rcmr*drc_dra;
@@ -767,7 +782,7 @@ int eob_eccpa_cons_sample_nodes(PostAdDynamics *pa, int oslot, double alpha, dou
                                 double *out_dt, double *out_Omg)
 {
   if (N < 1 || N > ECCPA_NODES_DIM) return -1;
-  const double r_a = pa->cons_orb[oslot][PO_R_A];
+  const double r_a = pa->cons_orb[oslot][ECCPA_ORB_R_A];
   const double w   = eccpa_peri_angle(alpha, beta);
   const int rates = with_flux;
   double c_ra = 0.0, drc_dJ = 0.0, drc_dra = 0.0, dE_dra = 0.0, dE_dJ = 0.0;
@@ -789,17 +804,17 @@ int eob_eccpa_cons_sample_nodes(PostAdDynamics *pa, int oslot, double alpha, dou
         out_Omg[j] = out_Omg[m];
         continue;
       }
-      pa->r = pa->node[PA_R][m];  pa->drdX = -pa->node[PA_DRDX][m];  pa->prstar = -pa->node[PA_PRSTAR][m];
-      pa->Wstar = pa->node[PA_WSTAR][m];  pa->dt_dX = pa->node[PA_DTDX][m];  pa->dH_dprs2 = pa->node[PA_DH_DPRS2][m];
-      pa->sqrtAbyB = pa->node[PA_SQRTAB][m];  pa->Omg = pa->node[PA_OMG][m];
+      pa->r = pa->node[ECCPA_NODE_R][m];  pa->drdX = -pa->node[ECCPA_NODE_DRDX][m];  pa->prstar = -pa->node[ECCPA_NODE_PRSTAR][m];
+      pa->Wstar = pa->node[ECCPA_NODE_WSTAR][m];  pa->dt_dX = pa->node[ECCPA_NODE_DTDX][m];  pa->dH_dprs2 = pa->node[ECCPA_NODE_DH_DPRS2][m];
+      pa->sqrtAbyB = pa->node[ECCPA_NODE_SQRTAB][m];  pa->Omg = pa->node[ECCPA_NODE_OMG][m];
       pa->rdot = -mrdot[m];  pa->ddotr = mddotr[m];  pa->H = mH[m];  pa->rc = mrc[m];  pa->A = mA[m];
       if (with_flux) {
-        eob_ecc_flux_at(pa->r, pa->prstar, pa->cons_orb[oslot][PO_PPHI], pa->rdot, pa->Omg, pa->ddotr,
+        eob_ecc_flux_at(pa->r, pa->prstar, pa->cons_orb[oslot][ECCPA_ORB_PPHI], pa->rdot, pa->Omg, pa->ddotr,
                         mH[m], mHeff[m], pa->sqrtAbyB, mHr[m], dyn, mrc[m], mdrc[m], md2rc[m], mA[m], mdA[m],
-                        &pa->F[C_PPHI], &pa->Fr);
-        pa->FE = pa->rdot*pa->Fr + pa->Omg*pa->F[C_PPHI];
+                        &pa->F[ECCPA_C_PPHI], &pa->Fr);
+        pa->FE = pa->rdot*pa->Fr + pa->Omg*pa->F[ECCPA_C_PPHI];
       } else {
-        pa->Fr = pa->FE = pa->F[C_PPHI] = 0.0;
+        pa->Fr = pa->FE = pa->F[ECCPA_C_PPHI] = 0.0;
       }
     } else {
       eccpa_cons_state_at_chi(pa, oslot, chi, with_flux, dyn);
@@ -815,20 +830,20 @@ int eob_eccpa_cons_sample_nodes(PostAdDynamics *pa, int oslot, double alpha, dou
       out_Omg[j] = pa->Omg;
       continue;
     }
-    pa->node[PA_X][j]       = pa->X;
-    pa->node[PA_R][j]       = pa->r;
-    pa->node[PA_DRDX][j]    = pa->drdX;
-    pa->node[PA_PRSTAR][j]  = pa->prstar;
-    pa->node[PA_WSTAR][j]   = pa->Wstar;
-    pa->node[PA_DTDX][j]    = pa->dt_dX;
-    pa->node[PA_DH_DPRS2][j]    = pa->dH_dprs2;
-    pa->node[PA_SQRTAB][j]  = pa->sqrtAbyB;
-    pa->node[PA_OMG][j]     = pa->Omg;
-    pa->node[PA_FR][j]      = pa->Fr;
-    pa->node[PA_FE][j]    = pa->FE;
-    pa->node[PA_F + C_PPHI][j]    = pa->F[C_PPHI];
+    pa->node[ECCPA_NODE_X][j]       = pa->X;
+    pa->node[ECCPA_NODE_R][j]       = pa->r;
+    pa->node[ECCPA_NODE_DRDX][j]    = pa->drdX;
+    pa->node[ECCPA_NODE_PRSTAR][j]  = pa->prstar;
+    pa->node[ECCPA_NODE_WSTAR][j]   = pa->Wstar;
+    pa->node[ECCPA_NODE_DTDX][j]    = pa->dt_dX;
+    pa->node[ECCPA_NODE_DH_DPRS2][j]    = pa->dH_dprs2;
+    pa->node[ECCPA_NODE_SQRTAB][j]  = pa->sqrtAbyB;
+    pa->node[ECCPA_NODE_OMG][j]     = pa->Omg;
+    pa->node[ECCPA_NODE_FR][j]      = pa->Fr;
+    pa->node[ECCPA_NODE_FE][j]    = pa->FE;
+    pa->node[ECCPA_NODE_F + ECCPA_C_PPHI][j]    = pa->F[ECCPA_C_PPHI];
     if (rates && eccpa_osculate(pa, oslot, alpha, beta, j, c_ra, drc_dJ, drc_dra, dE_dra, dE_dJ,
-                                &pa->node[PA_F + C_ALPHA][j], &pa->node[PA_F + C_BETA][j]))
+                                &pa->node[ECCPA_NODE_F + ECCPA_C_ALPHA][j], &pa->node[ECCPA_NODE_F + ECCPA_C_BETA][j]))
       return -1;
   }
   if (!out_dt) pa->nnodes = N;
@@ -856,14 +871,14 @@ int eob_eccpa_cons_sample_point(PostAdDynamics *pa, int oslot, double alpha, dou
   pa->X = X;
   if (!with_flux) return 0;
   double c_ra, drc_dJ, drc_dra, dE_dra, dE_dJ;
-  eccpa_cons_dE(pa, oslot, pa->cons_orb[oslot][PO_R_A], dyn, &c_ra, &drc_dJ, &drc_dra, &dE_dra, &dE_dJ);
+  eccpa_cons_dE(pa, oslot, pa->cons_orb[oslot][ECCPA_ORB_R_A], dyn, &c_ra, &drc_dJ, &drc_dra, &dE_dra, &dE_dJ);
   return eccpa_osculate(pa, oslot, alpha, beta, -1, c_ra, drc_dJ, drc_dra, dE_dra, dE_dJ,
-                        &pa->F[C_ALPHA], &pa->F[C_BETA]);
+                        &pa->F[ECCPA_C_ALPHA], &pa->F[ECCPA_C_BETA]);
 }
 
 static double eccpa_tp_f(double r, void *params)
 {
-  eccpa_tp_par *p = (eccpa_tp_par *) params;
+  EccTpPar *p = (EccTpPar *) params;
   double H;
   eob_ecc_ham(r, 0.0, p->pphi, p->dyn, &H, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
   return H - p->E;
@@ -886,27 +901,27 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
 {
   PROF_START(PROF_ECCPA_ORBIT);
   int status = 0;   /* one exit, so timer is always stopped */
-  pa->cons_orb[slot][PO_FULL] = pa->cons_orb[slot][PO_GAP_OK] = 0.0;
+  pa->cons_orb[slot][ECCPA_ORB_FULL] = pa->cons_orb[slot][ECCPA_ORB_GAP_OK] = 0.0;
 
-  eccpa_tp_par par = { pphi, E, dyn };
+  EccTpPar par = { pphi, E, dyn };
 
   /* seed must be strictly between turning points (H < E there). If it sits on a
      turning point, brackets below don't give right roots. */
   double f_seed = eccpa_tp_f(rseed, &par);
-  if (!isfinite(f_seed)) { status = 1; goto done; }
+  if (!isfinite(f_seed)) { status = 1; goto out; }
   if (f_seed >= -1e-12 * fabs(E)) {
     /* seed is not inside, so use r_circ instead: minimum of H(r, 0, pphi), which is
        between turning points if a bound orbit with this E exists. */
     if (eccpa_cons_circular(pa, pphi, dyn, slot, 0.0)) {
       status = 1;
-      goto done;
+      goto out;
     }
-    const double r_circ = pa->cons_orb[slot][PO_R_CIRC];
+    const double r_circ = pa->cons_orb[slot][ECCPA_ORB_R_CIRC];
 
     /* H at circular radius is minimum: above E means no bound orbit here. */
     if (eccpa_tp_f(r_circ, &par) >= 0.0) {
       status = 1;
-      goto done;
+      goto out;
     }
     rseed = r_circ;
   }
@@ -918,7 +933,6 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
   for (int k = 0; k < 60; k++) {
     r_hi *= 1.6;
     const double f = eccpa_tp_f(r_hi, &par);
-    if (DEBUG) printf("Iter HI %d: r_hi = %g, f = %g\n", k, r_hi, f);
     if (!isfinite(f)) break;
     if (f > 0.0) {
       ok_hi = 1;
@@ -929,14 +943,13 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
     r_lo /= 1.6;
     if (r_lo < 1.0) break;
     const double f = eccpa_tp_f(r_lo, &par);
-    if (DEBUG) printf("Iter LO %d: r_lo = %g, f = %g\n", k, r_lo, f);
     if (!isfinite(f)) break;
     if (f > 0.0) {
       ok_lo = 1;
       break;
     }
   }
-  if (!ok_hi || !ok_lo) { status = 1; goto done; }   /* no outer (unbound) or inner (plunging) turning point */
+  if (!ok_hi || !ok_lo) { status = 1; goto out; }   /* no outer (unbound) or inner (plunging) turning point */
 
   gsl_function F;
   F.function = &eccpa_tp_f;
@@ -950,7 +963,7 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
     if (gsl_root_fsolver_set(s, &F, a, b) != GSL_SUCCESS) {
       gsl_root_fsolver_free(s);
       status = 1;
-      goto done;
+      goto out;
     }
     int gsl_status = GSL_CONTINUE;
     for (int it = 0; it < 100 && gsl_status == GSL_CONTINUE; it++) {
@@ -965,7 +978,7 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
   }
   gsl_root_fsolver_free(s);
 
-  if (!(rmax > rmin)) { status = 1; goto done; }
+  if (!(rmax > rmin)) { status = 1; goto out; }
 
   /* 2 Newton steps on H - E: Brent's 1e-13 -> roundoff */
   for (int side = 0; side < 2; side++) {
@@ -980,20 +993,20 @@ int eob_eccpa_cons_turning_points(PostAdDynamics *pa, double E, double pphi, dou
       if (fabs(step) < 1e-15 * fabs(*root)) break;
     }
   }
-  if (!(rmax > rmin)) { status = 1; goto done; }
+  if (!(rmax > rmin)) { status = 1; goto out; }
 
-  pa->cons_orb[slot][PO_E]     = E;
-  pa->cons_orb[slot][PO_PPHI]  = pphi;
-  pa->cons_orb[slot][PO_R_C]   = 0.5 * (rmax + rmin);
-  pa->cons_orb[slot][PO_R_A]   = 0.5 * (rmax - rmin);
-  pa->cons_orb[slot][PO_E_GEO] = pa->cons_orb[slot][PO_R_A] / pa->cons_orb[slot][PO_R_C];
+  pa->cons_orb[slot][ECCPA_ORB_E]     = E;
+  pa->cons_orb[slot][ECCPA_ORB_PPHI]  = pphi;
+  pa->cons_orb[slot][ECCPA_ORB_R_C]   = 0.5 * (rmax + rmin);
+  pa->cons_orb[slot][ECCPA_ORB_R_A]   = 0.5 * (rmax - rmin);
+  pa->cons_orb[slot][ECCPA_ORB_E_GEO] = pa->cons_orb[slot][ECCPA_ORB_R_A] / pa->cons_orb[slot][ECCPA_ORB_R_C];
 
-done:
+out:
   PROF_STOP(PROF_ECCPA_ORBIT);
   return status;
 }
 
-/* Averaged rates and maps M_theta (T and -V); coefficients stored divided by r_a^m */
+/** Averaged rates and maps M_theta (T and -V); coefficients stored divided by r_a^m */
 
 /**
  * Function: eccpa_kappa
@@ -1006,18 +1019,18 @@ static int eccpa_kappa(PostAdDynamics *pa, int oslot, const double *base,
                        int N, Dynamics *dyn,
                        double *kappa_re, double *kappa_im)
 {
-  const double probe = ECCPA_PROBE_RA*pa->cons_orb[oslot][PO_R_C];
-  const double ra_use = (pa->cons_orb[oslot][PO_R_A] > probe) ? pa->cons_orb[oslot][PO_R_A] : probe;
+  const double probe = ECCPA_PROBE_RA*pa->cons_orb[oslot][ECCPA_ORB_R_C];
+  const double ra_use = (pa->cons_orb[oslot][ECCPA_ORB_R_A] > probe) ? pa->cons_orb[oslot][ECCPA_ORB_R_A] : probe;
 
   const double *src;
   double probe_dtdX[ECCPA_NODES_DIM], probe_Omg[ECCPA_NODES_DIM];
-  if (ra_use == pa->cons_orb[oslot][PO_R_A]) {
+  if (ra_use == pa->cons_orb[oslot][ECCPA_ORB_R_A]) {
     /* dt/dX depends only on chi, so caller's nodes will do, whatever their w */
     src = base;
   } else {
     /* probe orbit, in aux slot; no flux */
-    if (eob_eccpa_cons_orbit(pa, pa->cons_orb[oslot][PO_PPHI], ra_use, dyn, PO_AUX)) return 1;
-    if (eob_eccpa_cons_sample_nodes(pa, PO_AUX, ra_use, 0.0, N, 0, dyn,
+    if (eob_eccpa_cons_orbit(pa, pa->cons_orb[oslot][ECCPA_ORB_PPHI], ra_use, dyn, ECCPA_ORB_AUX)) return 1;
+    if (eob_eccpa_cons_sample_nodes(pa, ECCPA_ORB_AUX, ra_use, 0.0, N, 0, dyn,
                                     probe_dtdX, probe_Omg) < 0) return 1;
     src = probe_dtdX;
   }
@@ -1151,19 +1164,19 @@ static void eccpa_convolve(const double *Fa, const double *Fb, const double *X, 
 int eob_eccpa_rates(PostAdDynamics *pa, double J, double alpha, double beta, int Nmin,
                     Dynamics *dyn)
 {
-  pa->FbarE = pa->Fbar[C_PPHI] = pa->Fbar[C_ALPHA] = pa->Fbar[C_BETA] = 0.0;
-  pa->dc_dpphi[C_ALPHA] = pa->dc_dpphi[C_BETA] = pa->adiab = 0.0;
-  for (int th = 0; th < TH_N; th++) pa->omega[th] = 0.0;
+  pa->FbarE = pa->Fbar[ECCPA_C_PPHI] = pa->Fbar[ECCPA_C_ALPHA] = pa->Fbar[ECCPA_C_BETA] = 0.0;
+  pa->dc_dpphi[ECCPA_C_ALPHA] = pa->dc_dpphi[ECCPA_C_BETA] = pa->adiab = 0.0;
+  for (int th = 0; th < ECCPA_TH_N; th++) pa->omega[th] = 0.0;
   pa->P_r = 0.0;
   const double r_a = sqrt(alpha*alpha + beta*beta);
-  if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, PO_CUR)) return 1;
-  int N = eccpa_nnodes(pa, pa->cons_orb[PO_CUR][PO_E_GEO], 0);
+  if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, ECCPA_ORB_CUR)) return 1;
+  int N = eccpa_nnodes(pa, pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E_GEO], 0);
   if (Nmin > N) N = (Nmin > ECCPA_NODES_DIM) ? ECCPA_NODES_DIM : Nmin;
   pa->nnodes = N;
 
   /* Sample orbit on N nodes, with flux and three F_mu. This is only flux
      evaluation here, and everything below reuses node values. */
-  if (eob_eccpa_cons_sample_nodes(pa, PO_CUR, alpha, beta, N, 1, dyn, NULL, NULL) < 0) {
+  if (eob_eccpa_cons_sample_nodes(pa, ECCPA_ORB_CUR, alpha, beta, N, 1, dyn, NULL, NULL) < 0) {
     return 1;
   }
 
@@ -1172,42 +1185,51 @@ int eob_eccpa_rates(PostAdDynamics *pa, double J, double alpha, double beta, int
   double P_r = 0.0, dphi = 0.0, sum_FE = 0.0, sum_FJ = 0.0;
 
   for (int j = 0; j < N; j++) {
-    const double dt = pa->node[PA_DTDX][j]*node_spacing;
+    const double dt = pa->node[ECCPA_NODE_DTDX][j]*node_spacing;
     P_r  += dt;
     // sum to avg at end
-    dphi += pa->node[PA_OMG][j]*dt;
-    sum_FE += pa->node[PA_FE][j]*dt;
-    sum_FJ += pa->node[PA_F + C_PPHI][j]*dt;
+    dphi += pa->node[ECCPA_NODE_OMG][j]*dt;
+    sum_FE += pa->node[ECCPA_NODE_FE][j]*dt;
+    sum_FJ += pa->node[ECCPA_NODE_F + ECCPA_C_PPHI][j]*dt;
   }
 
   if (!(P_r > 0.0)) {
     return 1;
   }
   pa->P_r  = P_r;
-  pa->omega[TH_LAMBDA_MEAN]    = 2.0*Pi/P_r;
+  pa->omega[ECCPA_TH_LAMBDA_MEAN]    = 2.0*Pi/P_r;
   const double k = dphi/(2.0*Pi) - 1.0;   /* periastron advance */
-  pa->omega[TH_AZIMUTH]  = (1.0 + k)*pa->omega[TH_LAMBDA_MEAN];
+  pa->omega[ECCPA_TH_AZIMUTH]  = (1.0 + k)*pa->omega[ECCPA_TH_LAMBDA_MEAN];
   pa->FbarE = sum_FE/P_r;
-  pa->Fbar[C_PPHI] = sum_FJ/P_r;
+  pa->Fbar[ECCPA_C_PPHI] = sum_FJ/P_r;
 
   /* convolution. C and dt/dX are on same nodes, so both fits give harmonics in chi, and
      exp(i w) is put back once at end. */
   double kappa_re[ECCPA_HARMONICS_MAX+1], kappa_im[ECCPA_HARMONICS_MAX+1];
-  if (eccpa_kappa(pa, PO_CUR, pa->node[PA_DTDX], N, dyn, kappa_re, kappa_im)) {
+  if (eccpa_kappa(pa, ECCPA_ORB_CUR, pa->node[ECCPA_NODE_DTDX], N, dyn, kappa_re, kappa_im)) {
     return 1;
   }
-  eccpa_convolve(pa->node[PA_F + C_ALPHA], pa->node[PA_F + C_BETA], pa->node[PA_X], N, kappa_re, kappa_im,
-                 alpha, beta, pa->omega[TH_LAMBDA_MEAN], &pa->Fbar[C_ALPHA], &pa->Fbar[C_BETA]);
-  pa->dc_dpphi[C_ALPHA] = (pa->Fbar[C_PPHI] != 0.0) ? pa->Fbar[C_ALPHA]/pa->Fbar[C_PPHI] : 0.0;
-  pa->dc_dpphi[C_BETA] = (pa->Fbar[C_PPHI] != 0.0) ? pa->Fbar[C_BETA]/pa->Fbar[C_PPHI] : 0.0;
+  eccpa_convolve(pa->node[ECCPA_NODE_F + ECCPA_C_ALPHA], pa->node[ECCPA_NODE_F + ECCPA_C_BETA], pa->node[ECCPA_NODE_X], N, kappa_re, kappa_im,
+                 alpha, beta, pa->omega[ECCPA_TH_LAMBDA_MEAN], &pa->Fbar[ECCPA_C_ALPHA], &pa->Fbar[ECCPA_C_BETA]);
+  pa->dc_dpphi[ECCPA_C_ALPHA] = (pa->Fbar[ECCPA_C_PPHI] != 0.0) ? pa->Fbar[ECCPA_C_ALPHA]/pa->Fbar[ECCPA_C_PPHI] : 0.0;
+  pa->dc_dpphi[ECCPA_C_BETA] = (pa->Fbar[ECCPA_C_PPHI] != 0.0) ? pa->Fbar[ECCPA_C_BETA]/pa->Fbar[ECCPA_C_PPHI] : 0.0;
 
-  const double Ebind = pa->cons_orb[PO_CUR][PO_E] - 1.0/EOBPars->nu;
+  const double Ebind = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E] - 1.0/EOBPars->nu;
   pa->adiab = fabs(pa->FbarE)*P_r/fabs(Ebind);
   return 0;
 }
 
-/** n = 2 pi/P_r and omega = <Omega> from dt/dX and Omega on N nodes. 2 pi of n cancels
- *  against node spacing 2 pi/N. Returns non-zero if P_r is not positive. */
+/**
+ * Function: eccpa_mean_freqs
+ * --------------------------
+ *   n = 2 pi/P_r and omega = <Omega> from dt/dX and Omega on N nodes
+ *   (2 pi of n cancels against node spacing 2 pi/N).
+ *
+ *   @param[in]  dt, Omg : dt/dX and Omega on nodes
+ *   @param[in]  N       : number of nodes
+ *   @param[out] n, omg  : radial and azimuthal mean frequencies
+ *   @return  0 on success, 1 if P_r is not positive
+ */
 static int eccpa_mean_freqs(const double *dt, const double *Omg, int N,
                             double *n, double *omg)
 {
@@ -1240,20 +1262,20 @@ static int eccpa_cons_map_coefs(PostAdDynamics *pa, int oslot,
 
   /* n and omega always from this orbit, never from probe, which would be off by
      O(ECCPA_PROBE_RA^2) */
-  if (eccpa_mean_freqs(base_dt, base_Omg, N, &map_coefs->omega[TH_LAMBDA_MEAN],
-                       &map_coefs->omega[TH_AZIMUTH])) return 1;
+  if (eccpa_mean_freqs(base_dt, base_Omg, N, &map_coefs->omega[ECCPA_TH_LAMBDA_MEAN],
+                       &map_coefs->omega[ECCPA_TH_AZIMUTH])) return 1;
 
-  const double probe  = ECCPA_PROBE_RA*pa->cons_orb[oslot][PO_R_C];
-  const double ra_use = (pa->cons_orb[oslot][PO_R_A] > probe) ? pa->cons_orb[oslot][PO_R_A] : probe;
+  const double probe  = ECCPA_PROBE_RA*pa->cons_orb[oslot][ECCPA_ORB_R_C];
+  const double ra_use = (pa->cons_orb[oslot][ECCPA_ORB_R_A] > probe) ? pa->cons_orb[oslot][ECCPA_ORB_R_A] : probe;
 
   double f[ECCPA_NODES_DIM], g[ECCPA_NODES_DIM];
   double probe_dtdX[ECCPA_NODES_DIM], probe_Omg[ECCPA_NODES_DIM];
   const double *nd_dt = base_dt, *nd_Omg = base_Omg;
   /* integrands use n and omega of orbit they are sampled on (probe, if used) */
-  double n_h = map_coefs->omega[TH_LAMBDA_MEAN], omg_h = map_coefs->omega[TH_AZIMUTH];
-  if (ra_use != pa->cons_orb[oslot][PO_R_A]) {
-    if (eob_eccpa_cons_orbit(pa, pa->cons_orb[oslot][PO_PPHI], ra_use, dyn, PO_AUX)) return 1;
-    if (eob_eccpa_cons_sample_nodes(pa, PO_AUX, ra_use, 0.0, N, 0, dyn,
+  double n_h = map_coefs->omega[ECCPA_TH_LAMBDA_MEAN], omg_h = map_coefs->omega[ECCPA_TH_AZIMUTH];
+  if (ra_use != pa->cons_orb[oslot][ECCPA_ORB_R_A]) {
+    if (eob_eccpa_cons_orbit(pa, pa->cons_orb[oslot][ECCPA_ORB_PPHI], ra_use, dyn, ECCPA_ORB_AUX)) return 1;
+    if (eob_eccpa_cons_sample_nodes(pa, ECCPA_ORB_AUX, ra_use, 0.0, N, 0, dyn,
                                     probe_dtdX, probe_Omg) < 0) {
       return 1;
     }
@@ -1276,17 +1298,29 @@ static int eccpa_cons_map_coefs(PostAdDynamics *pa, int oslot,
   for (int m = 1; m <= map_coefs->M; m++) {
     p *= ra_use;
     const double d = m*p;
-    map_coefs->kappa[TH_LAMBDA_MEAN][0][m] = -fs.b[m]/d;
-    map_coefs->kappa[TH_LAMBDA_MEAN][1][m] = -fs.a[m]/d;
+    map_coefs->kappa[ECCPA_TH_LAMBDA_MEAN][0][m] = -fs.b[m]/d;
+    map_coefs->kappa[ECCPA_TH_LAMBDA_MEAN][1][m] = -fs.a[m]/d;
     /* M_lambda = -V, so opposite sign */
-    map_coefs->kappa[TH_AZIMUTH][0][m] = gs.b[m]/d;
-    map_coefs->kappa[TH_AZIMUTH][1][m] = gs.a[m]/d;
+    map_coefs->kappa[ECCPA_TH_AZIMUTH][0][m] = gs.b[m]/d;
+    map_coefs->kappa[ECCPA_TH_AZIMUTH][1][m] = gs.a[m]/d;
   }
   return 0;
 }
 
 
-/** eccpa_cons_map_coefs on orbit (pphi, r_a) with periastron along (alpha, beta); 1 on failure */
+/**
+ * Function: eccpa_cons_map_coefs_of_orbit
+ * ---------------------------------------
+ *   eccpa_cons_map_coefs on orbit (pphi, r_a) with periastron along (alpha, beta).
+ *
+ *   @param[in,out] pa          : orbit left in oslot
+ *   @param[in]     J, r_a      : orbit
+ *   @param[in]     alpha, beta : z, for periastron direction
+ *   @param[in]     oslot, N    : orbit slot, number of nodes
+ *   @param[in]     dyn         : Dynamics structure
+ *   @param[out]    map_coefs   : map coefficients
+ *   @return  0 on success, 1 on failure
+ */
 static int eccpa_cons_map_coefs_of_orbit(PostAdDynamics *pa, double J, double r_a, double alpha, double beta,
                                          int oslot, int N, Dynamics *dyn, EccMapCoefs *map_coefs)
 {
@@ -1331,7 +1365,7 @@ static void eccpa_phase_forcing(const EccMapCoefs *map_coefs, const EccMapCoefs 
      Udot = 2 (alpha Fa + beta Fb), or by change of U along c~(1) */
   const double Udot = eccpa_dU(alpha, beta, Fa, Fb);
   const double dU_ct = ctJ ? eccpa_dU(alpha, beta, cta, ctb) : 0.0;
-  double F_th[TH_N] = { 0.0, 0.0 }, M_ct = 0.0;
+  double F_th[ECCPA_TH_N] = { 0.0, 0.0 }, M_ct = 0.0;
   const double cX = cos(X), sX = sin(X);
   double c[ECCPA_HARMONICS_MAX+1], s[ECCPA_HARMONICS_MAX+1];
   eccpa_trig(chi, M, c, s);
@@ -1344,7 +1378,7 @@ static void eccpa_phase_forcing(const EccMapCoefs *map_coefs, const EccMapCoefs 
     /* conj(zdot) = Fa - i Fb, and Re[ (gr + i gi)(qr + i qi)(Fa - i Fb) ] = gr ur - gi ui */
     const double ur = qr*Fa + qi*Fb, ui = qi*Fa - qr*Fb;
 
-    for (int th = 0; th < TH_N; th++) {
+    for (int th = 0; th < ECCPA_TH_N; th++) {
       const double *k0 = map_coefs->kappa[th][0], *k1 = map_coefs->kappa[th][1];
       /* first part: change of kappa_m, by finite differences */
       const double kr = (map_coefs_dJ->kappa[th][0][m] - k0[m])/hJ*FJ
@@ -1358,25 +1392,25 @@ static void eccpa_phase_forcing(const EccMapCoefs *map_coefs, const EccMapCoefs 
     }
 
     if (ctJ) {
-      const double *k0 = map_coefs->kappa[TH_LAMBDA_MEAN][0], *k1 = map_coefs->kappa[TH_LAMBDA_MEAN][1];
-      const double kr = (map_coefs_dJ->kappa[TH_LAMBDA_MEAN][0][m] - k0[m])/hJ*(*ctJ)
-                      + (map_coefs_dU->kappa[TH_LAMBDA_MEAN][0][m] - k0[m])/dU*dU_ct;
-      const double ki = (map_coefs_dJ->kappa[TH_LAMBDA_MEAN][1][m] - k1[m])/hJ*(*ctJ)
-                      + (map_coefs_dU->kappa[TH_LAMBDA_MEAN][1][m] - k1[m])/dU*dU_ct;
+      const double *k0 = map_coefs->kappa[ECCPA_TH_LAMBDA_MEAN][0], *k1 = map_coefs->kappa[ECCPA_TH_LAMBDA_MEAN][1];
+      const double kr = (map_coefs_dJ->kappa[ECCPA_TH_LAMBDA_MEAN][0][m] - k0[m])/hJ*(*ctJ)
+                      + (map_coefs_dU->kappa[ECCPA_TH_LAMBDA_MEAN][0][m] - k0[m])/dU*dU_ct;
+      const double ki = (map_coefs_dJ->kappa[ECCPA_TH_LAMBDA_MEAN][1][m] - k1[m])/hJ*(*ctJ)
+                      + (map_coefs_dU->kappa[ECCPA_TH_LAMBDA_MEAN][1][m] - k1[m])/dU*dU_ct;
       const double gr = k0[m]*m, gi = k1[m]*m;
       const double uYr = qr*cta + qi*ctb;
       const double uYi = qi*cta - qr*ctb;
       M_ct += kr*Pr - ki*Pi_ + gr*uYr - gi*uYi;
     }
   }
-  for (int th = 0; th < TH_N; th++) F_th_out[th] = F_th[th];
+  for (int th = 0; th < ECCPA_TH_N; th++) F_th_out[th] = F_th[th];
   if (M_ct_out) *M_ct_out = M_ct;
 }
 
 /** T and dT/dX at anomaly chi, for an orbit of width r_a. */
 static void eccpa_Tmap(const EccMapCoefs *map_coefs, double r_a, double chi, double *T, double *dT)
 {
-  *T = eccpa_ksum(map_coefs->kappa[TH_LAMBDA_MEAN][0], map_coefs->kappa[TH_LAMBDA_MEAN][1], map_coefs->M,
+  *T = eccpa_ksum(map_coefs->kappa[ECCPA_TH_LAMBDA_MEAN][0], map_coefs->kappa[ECCPA_TH_LAMBDA_MEAN][1], map_coefs->M,
                   r_a, chi, dT);
 }
 
@@ -1469,13 +1503,23 @@ static void eccpa_osc1_at(const PostAdDynamics *pa, double chi, double *g)
 {
   double c[ECCPA_HARMONICS_MAX+1], s[ECCPA_HARMONICS_MAX+1];
   eccpa_trig(chi, ECCPA_HARMONICS_MAX, c, s);
-  for (int a = 0; a < OSC_N; a++) {
+  for (int a = 0; a < ECCPA_OSC_N; a++) {
     g[a] = pa->osc1_coef[a].a[0];
     for (int m = 1; m <= pa->osc1_coef[a].M; m++) g[a] += pa->osc1_coef[a].a[m]*c[m] + pa->osc1_coef[a].b[m]*s[m];
   }
 }
 
-/** Fourier coefficients in chi of one oscillating-part component from its node values; returns harmonics kept */
+/**
+ * Function: eccpa_osc_coefs
+ * -------------------------
+ *   Fourier coefficients in chi of one oscillating-part component from its node values,
+ *   up to ECCPA_HARMONICS_MAX.
+ *
+ *   @param[in]  g    : values on nodes
+ *   @param[in]  N    : number of nodes
+ *   @param[out] a, b : cos and sin coefficients
+ *   @return  harmonics kept
+ */
 static int eccpa_osc_coefs(const double *g, int N, double *a, double *b)
 {
   EccSeries f;
@@ -1529,14 +1573,14 @@ int eob_eccpa_osc1(PostAdDynamics *pa, double J, double alpha, double beta, int 
   memset(pa->M_ctilde1,   0, sizeof pa->M_ctilde1);
   memset(pa->osc1_coef, 0, sizeof pa->osc1_coef);
   memset(&pa->map_coefs, 0, sizeof pa->map_coefs);
-  for (int th = 0; th < TH_N; th++) pa->Fbar_th[th] = 0.0;
+  for (int th = 0; th < ECCPA_TH_N; th++) pa->Fbar_th[th] = 0.0;
   pa->osc1_nnodes = 0;
   const double r_a = sqrt(alpha*alpha + beta*beta);
-  if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, PO_CUR)) return 1;
+  if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, ECCPA_ORB_CUR)) return 1;
 
   /* Nodes for oscillating parts (see eob_eccpa_nodecount). This is only a request, since
      eob_eccpa_rates may raise it; N below is what was used. */
-  const int N_nodes_osc = (N_fix > 0) ? N_fix : eccpa_nnodes(pa, pa->cons_orb[PO_CUR][PO_E_GEO], 1);
+  const int N_nodes_osc = (N_fix > 0) ? N_fix : eccpa_nnodes(pa, pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E_GEO], 1);
   if (eob_eccpa_rates(pa, J, alpha, beta, N_nodes_osc, dyn)) return 1;
   const int N = pa->nnodes;
   pa->osc1_nnodes = N;
@@ -1545,35 +1589,35 @@ int eob_eccpa_osc1(PostAdDynamics *pa, double J, double alpha, double beta, int 
   const double P_r = pa->P_r;
 
   /* c~(1), primitive of F_mu - Fbar_mu */
-  for (int mu = 0; mu < C_N; mu++) {
+  for (int mu = 0; mu < ECCPA_C_N; mu++) {
     double q[ECCPA_NODES_DIM];
-    for (int j = 0; j < N; j++) q[j] = pa->node[PA_F + mu][j] - pa->Fbar[mu];
-    eccpa_osc_primitive(q, pa->node[PA_DTDX], N, P_r, pa->ctilde1[mu]);
+    for (int j = 0; j < N; j++) q[j] = pa->node[ECCPA_NODE_F + mu][j] - pa->Fbar[mu];
+    eccpa_osc_primitive(q, pa->node[ECCPA_NODE_DTDX], N, P_r, pa->ctilde1[mu]);
   }
 
   /* Fourier coefficients, z parts measured from periastron */
   {
     double zr[ECCPA_NODES_DIM], zi[ECCPA_NODES_DIM];
-    eccpa_to_peri(pa->ctilde1[C_ALPHA], pa->ctilde1[C_BETA], N, alpha, beta, zr, zi);
-    const double *src[3] = { pa->ctilde1[C_PPHI], zr, zi };
-    EccOscCoefs *dst[3] = { &pa->osc1_coef[OSC_PPHI], &pa->osc1_coef[OSC_Z_RE], &pa->osc1_coef[OSC_Z_IM] };
+    eccpa_to_peri(pa->ctilde1[ECCPA_C_ALPHA], pa->ctilde1[ECCPA_C_BETA], N, alpha, beta, zr, zi);
+    const double *src[3] = { pa->ctilde1[ECCPA_C_PPHI], zr, zi };
+    EccOscCoefs *dst[3] = { &pa->osc1_coef[ECCPA_OSC_PPHI], &pa->osc1_coef[ECCPA_OSC_Z_RE], &pa->osc1_coef[ECCPA_OSC_Z_IM] };
     for (int a = 0; a < 3; a++) dst[a]->M = eccpa_osc_coefs(src[a], N, dst[a]->a, dst[a]->b);
   }
 
   /* map coefs here and at pphi + hJ, U + dU (one-sided diffs) */
-  if (eccpa_cons_map_coefs(pa, PO_CUR, pa->node[PA_DTDX], pa->node[PA_OMG], N, dyn, &pa->map_coefs)) return 1;
+  if (eccpa_cons_map_coefs(pa, ECCPA_ORB_CUR, pa->node[ECCPA_NODE_DTDX], pa->node[ECCPA_NODE_OMG], N, dyn, &pa->map_coefs)) return 1;
 
   const double hJ    = ECCPA_DPPHI_REL*fabs(J);
   const double U     = r_a*r_a;
-  const double U_nbr = U + SQ(ECCPA_DU_RA*pa->cons_orb[PO_CUR][PO_R_C]);
+  const double U_nbr = U + SQ(ECCPA_DU_RA*pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C]);
   EccMapCoefs  map_coefs_dJ, map_coefs_dU;
-  if (eccpa_cons_map_coefs_of_orbit(pa, J + hJ, r_a, alpha, beta, PO_AUX, N, dyn, &map_coefs_dJ)) return 1;
+  if (eccpa_cons_map_coefs_of_orbit(pa, J + hJ, r_a, alpha, beta, ECCPA_ORB_AUX, N, dyn, &map_coefs_dJ)) return 1;
   /* U neighbour: same pphi and z direction, longer z */
   {
     const double scale = (r_a > 0.0) ? sqrt(U_nbr)/r_a : 0.0;
     const double aA = (r_a > 0.0) ? alpha*scale : sqrt(U_nbr);
     const double bA = (r_a > 0.0) ? beta*scale  : 0.0;
-    if (eccpa_cons_map_coefs_of_orbit(pa, J, sqrt(U_nbr), aA, bA, PO_AUX, N, dyn, &map_coefs_dU)) return 1;
+    if (eccpa_cons_map_coefs_of_orbit(pa, J, sqrt(U_nbr), aA, bA, ECCPA_ORB_AUX, N, dyn, &map_coefs_dU)) return 1;
   }
 
   /* width derivatives in U; dU = exact diff of two U */
@@ -1581,49 +1625,49 @@ int eob_eccpa_osc1(PostAdDynamics *pa, double J, double alpha, double beta, int 
   pa->map_coefs_dU = map_coefs_dU;
   pa->map_coefs_dU_step = dU;
   /* frequencies differentiated in pphi and U; higher-order rates use them too */
-  for (int th = 0; th < TH_N; th++) {
+  for (int th = 0; th < ECCPA_TH_N; th++) {
     pa->domega_dJ[th] = (map_coefs_dJ.omega[th] - pa->map_coefs.omega[th])/hJ;
     pa->domega_dU[th] = (map_coefs_dU.omega[th] - pa->map_coefs.omega[th])/dU;
   }
 
-  double sum_domega1[TH_N] = { 0.0, 0.0 }, sum_F_th[TH_N] = { 0.0, 0.0 };
-  double domega1[TH_N][ECCPA_NODES_DIM];
+  double sum_domega1[ECCPA_TH_N] = { 0.0, 0.0 }, sum_F_th[ECCPA_TH_N] = { 0.0, 0.0 };
+  double domega1[ECCPA_TH_N][ECCPA_NODES_DIM];
   for (int j = 0; j < N; j++) {
     const double chi = 2.0*Pi*(j + 0.5)/N;
-    const double X   = pa->node[PA_X][j];
-    const double dt  = pa->node[PA_DTDX][j]*node_spacing;
+    const double X   = pa->node[ECCPA_NODE_X][j];
+    const double dt  = pa->node[ECCPA_NODE_DTDX][j]*node_spacing;
     /* instantaneous rates at node */
-    const double FJ = pa->node[PA_F + C_PPHI][j], Fa = pa->node[PA_F + C_ALPHA][j], Fb = pa->node[PA_F + C_BETA][j];
+    const double FJ = pa->node[ECCPA_NODE_F + ECCPA_C_PPHI][j], Fa = pa->node[ECCPA_NODE_F + ECCPA_C_ALPHA][j], Fb = pa->node[ECCPA_NODE_F + ECCPA_C_BETA][j];
 
     /* domega^(1) at node, Eq. (B5); angle parts below need it at every node */
-    for (int th = 0; th < TH_N; th++) {
+    for (int th = 0; th < ECCPA_TH_N; th++) {
       domega1[th][j] = eccpa_dfreq(pa->domega_dJ[th], pa->domega_dU[th], alpha, beta,
-                                   pa->ctilde1[C_PPHI][j], pa->ctilde1[C_ALPHA][j], pa->ctilde1[C_BETA][j]);
+                                   pa->ctilde1[ECCPA_C_PPHI][j], pa->ctilde1[ECCPA_C_ALPHA][j], pa->ctilde1[ECCPA_C_BETA][j]);
       sum_domega1[th] += domega1[th][j]*dt;
     }
 
-    double F_th[TH_N], M_ct;
+    double F_th[ECCPA_TH_N], M_ct;
     eccpa_phase_forcing(&pa->map_coefs, &map_coefs_dJ, &map_coefs_dU, hJ, dU, r_a, chi, X, alpha, beta,
-                        FJ, Fa, Fb, &pa->ctilde1[C_PPHI][j], pa->ctilde1[C_ALPHA][j], pa->ctilde1[C_BETA][j],
+                        FJ, Fa, Fb, &pa->ctilde1[ECCPA_C_PPHI][j], pa->ctilde1[ECCPA_C_ALPHA][j], pa->ctilde1[ECCPA_C_BETA][j],
                         F_th, &M_ct);
     pa->M_ctilde1[j] = M_ct;
-    for (int th = 0; th < TH_N; th++) {
+    for (int th = 0; th < ECCPA_TH_N; th++) {
       pa->F_th[th][j] = F_th[th];
       sum_F_th[th] += F_th[th]*dt;
     }
   }
 
-  for (int th = 0; th < TH_N; th++) {
+  for (int th = 0; th < ECCPA_TH_N; th++) {
     const double mean_domega1 = sum_domega1[th]/P_r;   /* zero up to roundoff */
     pa->Fbar_th[th] = mean_domega1 + sum_F_th[th]/P_r;
   }
 
   /* theta~(1), primitive of S^(1) - Fbar^(1), Eq. (B2) */
-  for (int th = 0; th < TH_N; th++) {
+  for (int th = 0; th < ECCPA_TH_N; th++) {
     double q[ECCPA_NODES_DIM];
     for (int j = 0; j < N; j++) q[j] = domega1[th][j] + pa->F_th[th][j] - pa->Fbar_th[th];
-    eccpa_osc_primitive(q, pa->node[PA_DTDX], N, P_r, pa->thtilde1[th]);
-    EccOscCoefs *dst = &pa->osc1_coef[OSC_TH + th];
+    eccpa_osc_primitive(q, pa->node[ECCPA_NODE_DTDX], N, P_r, pa->thtilde1[th]);
+    EccOscCoefs *dst = &pa->osc1_coef[ECCPA_OSC_TH + th];
     dst->M = eccpa_osc_coefs(pa->thtilde1[th], N, dst->a, dst->b);
   }
   return 0;
@@ -1652,8 +1696,8 @@ int eob_eccpa_phases(PostAdDynamics *pa, int n, int n_sub_per_interval, Dynamics
   double *pphi_fine = fine_arrays;
   double *dt_dpphi  = fine_arrays + fine_n;
   double *t_fine    = fine_arrays + 4*fine_n;
-  double *dth_dpphi[TH_N], *th_fine[TH_N];
-  for (int th = 0; th < TH_N; th++) {
+  double *dth_dpphi[ECCPA_TH_N], *th_fine[ECCPA_TH_N];
+  for (int th = 0; th < ECCPA_TH_N; th++) {
     dth_dpphi[th] = fine_arrays + (2 + th)*fine_n;
     th_fine[th]   = fine_arrays + (5 + th)*fine_n;
   }
@@ -1666,7 +1710,7 @@ int eob_eccpa_phases(PostAdDynamics *pa, int n, int n_sub_per_interval, Dynamics
 
   int bad = 0;
   for (int i_interval = 0; i_interval < n - 1 && !bad; i_interval++) {
-    const double Ja = pa->data[EVO_PPHI][i_interval], Jb = pa->data[EVO_PPHI][i_interval+1];
+    const double Ja = pa->data[ECCPA_EVO_PPHI][i_interval], Jb = pa->data[ECCPA_EVO_PPHI][i_interval+1];
     const double dpphi = Jb - Ja;                      /* negative: pphi decreases */
     for (int s = 0; s < n_sub_per_interval; s++) {
       const int    k  = i_interval*n_sub_per_interval + s;
@@ -1674,43 +1718,43 @@ int eob_eccpa_phases(PostAdDynamics *pa, int n, int n_sub_per_interval, Dynamics
       const double J  = Ja + frac_in_interval*dpphi;
       pphi_fine[k] = J;
       /* n, omega interpolated from samples; interp_freqs off (debug): solved on orb */
-      double omega[TH_N] = { 0.0, 0.0 };
+      double omega[ECCPA_TH_N] = { 0.0, 0.0 };
       if (!interp_freqs) {
         /* cubic Hermite in pphi, exact at both ends */
-        const double al = herm_cubic(frac_in_interval, dpphi, pa->data[EVO_ALPHA][i_interval], pa->data[EVO_DADJ][i_interval],
-                                     pa->data[EVO_ALPHA][i_interval+1], pa->data[EVO_DADJ][i_interval+1]);
-        const double be = herm_cubic(frac_in_interval, dpphi, pa->data[EVO_BETA][i_interval], pa->data[EVO_DBDJ][i_interval],
-                                     pa->data[EVO_BETA][i_interval+1], pa->data[EVO_DBDJ][i_interval+1]);
-        if (eob_eccpa_cons_orbit(pa, J, sqrt(al*al + be*be), dyn, PO_CUR)) {
+        const double al = herm_cubic(frac_in_interval, dpphi, pa->data[ECCPA_EVO_ALPHA][i_interval], pa->data[ECCPA_EVO_DADJ][i_interval],
+                                     pa->data[ECCPA_EVO_ALPHA][i_interval+1], pa->data[ECCPA_EVO_DADJ][i_interval+1]);
+        const double be = herm_cubic(frac_in_interval, dpphi, pa->data[ECCPA_EVO_BETA][i_interval], pa->data[ECCPA_EVO_DBDJ][i_interval],
+                                     pa->data[ECCPA_EVO_BETA][i_interval+1], pa->data[ECCPA_EVO_DBDJ][i_interval+1]);
+        if (eob_eccpa_cons_orbit(pa, J, sqrt(al*al + be*be), dyn, ECCPA_ORB_CUR)) {
           bad = 1;
           break;
         }
-        const int N = eccpa_nnodes(pa, pa->cons_orb[PO_CUR][PO_E_GEO], 0);
-        if (eob_eccpa_cons_sample_nodes(pa, PO_CUR, al, be, N, 0, dyn, NULL, NULL) < 0) {
+        const int N = eccpa_nnodes(pa, pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E_GEO], 0);
+        if (eob_eccpa_cons_sample_nodes(pa, ECCPA_ORB_CUR, al, be, N, 0, dyn, NULL, NULL) < 0) {
           bad = 1;
           break;
         }
-        if (eccpa_mean_freqs(pa->node[PA_DTDX], pa->node[PA_OMG], N,
-                             &omega[TH_LAMBDA_MEAN], &omega[TH_AZIMUTH])) {
+        if (eccpa_mean_freqs(pa->node[ECCPA_NODE_DTDX], pa->node[ECCPA_NODE_OMG], N,
+                             &omega[ECCPA_TH_LAMBDA_MEAN], &omega[ECCPA_TH_AZIMUTH])) {
           bad = 1;
           break;
         }
       }
 
-      /* Fbar[C_PPHI] (FbarJ here), Fbar_th (and frequencies) by Lagrange on n_stencil
+      /* Fbar[ECCPA_C_PPHI] (FbarJ here), Fbar_th (and frequencies) by Lagrange on n_stencil
          samples, stencil moved inwards at two ends */
       int i0 = i_interval - (n_stencil/2 - 1);
       if (i0 < 0) i0 = 0;
       if (i0 > n - n_stencil) i0 = n - n_stencil;
-      double FbarJ = 0.0, Fbar_th[TH_N] = { 0.0, 0.0 };
+      double FbarJ = 0.0, Fbar_th[ECCPA_TH_N] = { 0.0, 0.0 };
       double lag_w[ECCPA_PHASE_STENCIL];
-      eccpa_lagrange(pa->data[EVO_PPHI], i0, n_stencil, J, lag_w);
+      eccpa_lagrange(pa->data[ECCPA_EVO_PPHI], i0, n_stencil, J, lag_w);
       for (int a = 0; a < n_stencil; a++) {
         const double L = lag_w[a];
-        FbarJ += L*pa->data[EVO_FBAR_PPHI][i0+a];
-        for (int th = 0; th < TH_N; th++) {
-          Fbar_th[th] += L*pa->data[EVO_FBAR_TH + th][i0+a];
-          if (interp_freqs) omega[th] += L*pa->data[EVO_OMEGA + th][i0+a];
+        FbarJ += L*pa->data[ECCPA_EVO_FBAR_PPHI][i0+a];
+        for (int th = 0; th < ECCPA_TH_N; th++) {
+          Fbar_th[th] += L*pa->data[ECCPA_EVO_FBAR_TH + th][i0+a];
+          if (interp_freqs) omega[th] += L*pa->data[ECCPA_EVO_OMEGA + th][i0+a];
         }
       }
       if (!(FbarJ < 0.0)) {
@@ -1718,31 +1762,31 @@ int eob_eccpa_phases(PostAdDynamics *pa, int n, int n_sub_per_interval, Dynamics
         break;
       }
       dt_dpphi[k] = 1.0/FbarJ;
-      for (int th = 0; th < TH_N; th++) dth_dpphi[th][k] = (omega[th] + Fbar_th[th])/FbarJ;
+      for (int th = 0; th < ECCPA_TH_N; th++) dth_dpphi[th][k] = (omega[th] + Fbar_th[th])/FbarJ;
     }
   }
   if (!bad) {
     /* last point of fine grid is last sample */
     const int k = fine_n - 1;
-    pphi_fine[k] = pa->data[EVO_PPHI][n-1];
-    dt_dpphi[k] = 1.0/pa->data[EVO_FBAR_PPHI][n-1];
-    for (int th = 0; th < TH_N; th++)
-      dth_dpphi[th][k] = (pa->data[EVO_OMEGA + th][n-1] + pa->data[EVO_FBAR_TH + th][n-1])
-                         /pa->data[EVO_FBAR_PPHI][n-1];
+    pphi_fine[k] = pa->data[ECCPA_EVO_PPHI][n-1];
+    dt_dpphi[k] = 1.0/pa->data[ECCPA_EVO_FBAR_PPHI][n-1];
+    for (int th = 0; th < ECCPA_TH_N; th++)
+      dth_dpphi[th][k] = (pa->data[ECCPA_EVO_OMEGA + th][n-1] + pa->data[ECCPA_EVO_FBAR_TH + th][n-1])
+                         /pa->data[ECCPA_EVO_FBAR_PPHI][n-1];
 
     cumint3(dt_dpphi, pphi_fine, fine_n, t_fine);
-    for (int th = 0; th < TH_N; th++) cumint3(dth_dpphi[th], pphi_fine, fine_n, th_fine[th]);
+    for (int th = 0; th < ECCPA_TH_N; th++) cumint3(dth_dpphi[th], pphi_fine, fine_n, th_fine[th]);
     for (int i = 0; i < n; i++) {
       const int k_sample = i*n_sub_per_interval;
       pa->time[i] = t_fine[k_sample];
-      for (int th = 0; th < TH_N; th++) pa->data[EVO_TH + th][i] = th_fine[th][k_sample];
+      for (int th = 0; th < ECCPA_TH_N; th++) pa->data[ECCPA_EVO_TH + th][i] = th_fine[th][k_sample];
     }
     /* Kept for reconstruction, which reads angles on this grid; integrands are the
        derivatives its cubic Hermite needs. */
     free(pa->fine_arrays);
     pa->fine_arrays = fine_arrays;  pa->fine_n = fine_n;
     pa->fine_pphi = pphi_fine;  pa->fine_t = t_fine;  pa->fine_dt_dpphi = dt_dpphi;
-    for (int th = 0; th < TH_N; th++) {
+    for (int th = 0; th < ECCPA_TH_N; th++) {
       pa->fine_th[th] = th_fine[th];
       pa->fine_dth_dpphi[th] = dth_dpphi[th];
     }
@@ -1760,8 +1804,17 @@ static double eccpa_lag(const double *w, int i0, const double *col)
   return v;
 }
 
-/** Cubic Lagrange weights in pphi on checkpoints, and index they start at. With fewer
- *  than four checkpoints, linear between two nearest. */
+/**
+ * Function: eccpa_corr_weights
+ * ----------------------------
+ *   Cubic Lagrange weights in pphi on checkpoints; with fewer than four checkpoints,
+ *   linear between two nearest.
+ *
+ *   @param[in]  corr : PostAdDynamics holding checkpoints
+ *   @param[in]  J    : pphi
+ *   @param[out] wt   : weights
+ *   @return  index of first checkpoint weights apply to
+ */
 static int eccpa_corr_weights(const PostAdDynamics *corr, double J, double *wt)
 {
   int i0 = 0;                        /* ckpt_pphi decreases; find interval holding J */
@@ -1782,7 +1835,7 @@ static int eccpa_corr_weights(const PostAdDynamics *corr, double J, double *wt)
 /** Second- or third-order oscillating parts at (J, chi), interpolated from checkpoints */
 static void eccpa_osc2_at(const PostAdDynamics *corr, int ord, double J, double chi, double *out)
 {
-  for (int sr = 0; sr < OSC_N; sr++) out[sr] = 0.0;
+  for (int sr = 0; sr < ECCPA_OSC_N; sr++) out[sr] = 0.0;
   /* at NLO checkpoints hold only rate corrections */
   if (corr->ckpt_n < 2 || EOBPars->postadiabatic_dynamics_ecc_map < ord
       || (ord >= 3 && corr->corr3_n < 2)) return;
@@ -1793,19 +1846,29 @@ static void eccpa_osc2_at(const PostAdDynamics *corr, int ord, double J, double 
 
   /* m = 0 is not zero, because eccpa_osc_primitive makes time average zero, not average
      in chi */
-  for (int sr = 0; sr < OSC_N; sr++)
+  for (int sr = 0; sr < ECCPA_OSC_N; sr++)
     out[sr] = eccpa_lag(wt, i0, ts[sr][0][0]);
 
   double c[ECCPA_HARMONICS_MAX+1], s[ECCPA_HARMONICS_MAX+1];
   eccpa_trig(chi, ECCPA_HARMONICS_MAX, c, s);
   for (int m = 1; m <= ECCPA_HARMONICS_MAX; m++)
-    for (int sr = 0; sr < OSC_N; sr++) {
+    for (int sr = 0; sr < ECCPA_OSC_N; sr++) {
       const double am = eccpa_lag(wt, i0, ts[sr][0][m]), bm = eccpa_lag(wt, i0, ts[sr][1][m]);
       out[sr] += am*c[m] + bm*s[m];
     }
 }
 
-/** Step (a) of reconstruction: mean pphi and angles at time t, on fine grid; 1 if no grid */
+/**
+ * Function: eccpa_at_time
+ * -----------------------
+ *   Step (a) of reconstruction: mean pphi and angles at time t, on fine grid.
+ *
+ *   @param[in]  pa     : PostAdDynamics with fine grid
+ *   @param[in]  t      : time
+ *   @param[out] J      : mean pphi
+ *   @param[out] th_bar : mean angles
+ *   @return  0 on success, 1 if no grid
+ */
 static int eccpa_at_time(const PostAdDynamics *pa, double t, double *J, double *th_bar)
 {
   if (pa->fine_n < 2) return 1;
@@ -1830,7 +1893,7 @@ static int eccpa_at_time(const PostAdDynamics *pa, double t, double *J, double *
     if (fabs(step) < 1e-14) break;
   }
   *J   = pa->fine_pphi[kf] + frac_in_interval*dpphi;
-  for (int th = 0; th < TH_N; th++)
+  for (int th = 0; th < ECCPA_TH_N; th++)
     th_bar[th] = herm_cubic(frac_in_interval, dpphi, pa->fine_th[th][kf], pa->fine_dth_dpphi[th][kf],
                             pa->fine_th[th][kf+1], pa->fine_dth_dpphi[th][kf+1]);
   return 0;
@@ -1843,13 +1906,13 @@ static void eccpa_osc_map(const PostAdDynamics *pa, int i0, const double *w_osc,
 {
   double rap[ECCPA_HARMONICS_MAX+1];
   eccpa_rapow(rap, M, ra);
-  const double abar = eccpa_lag(w_osc, i0, pa->data[EVO_ALPHA]);
-  const double bbar = eccpa_lag(w_osc, i0, pa->data[EVO_BETA]);
+  const double abar = eccpa_lag(w_osc, i0, pa->data[ECCPA_EVO_ALPHA]);
+  const double bbar = eccpa_lag(w_osc, i0, pa->data[ECCPA_EVO_BETA]);
   const double dU = ra*ra - (abar*abar + bbar*bbar);
   memset(map_coefs_osc, 0, sizeof *map_coefs_osc);
   map_coefs_osc->M = M;
   for (int k = 1; k <= M; k++)
-    for (int th = 0; th < TH_N; th++)
+    for (int th = 0; th < ECCPA_TH_N; th++)
       for (int c = 0; c < 2; c++)
         map_coefs_osc->kappa[th][c][k] = rap[k]*(eccpa_lag(w_osc, i0, pa->evo_kappa[th][c][k])
                                                  + dU*eccpa_lag(w_osc, i0, pa->evo_kappa_dU[th][c][k]));
@@ -1874,30 +1937,30 @@ int eob_eccpa_recon(PostAdDynamics *pa, int n, double t, Dynamics *dyn)
   pa->t_at = t;
 
   /* (a) */
-  double th_bar[TH_N], J;
+  double th_bar[ECCPA_TH_N], J;
   if (eccpa_at_time(pa, t, &J, th_bar)) return 1;
-  const double Lam = th_bar[TH_LAMBDA_MEAN];
+  const double Lam = th_bar[ECCPA_TH_LAMBDA_MEAN];
 
   /* (b) zbar, cubic Hermite in pphi */
   /* first interval whose lower end is at or below J (pphi decreases along samples) */
   int i = 0, i_hi = n - 2;
   while (i < i_hi) {
     const int mid = (i + i_hi)/2;
-    if (pa->data[EVO_PPHI][mid+1] > J) i = mid + 1; else i_hi = mid;
+    if (pa->data[ECCPA_EVO_PPHI][mid+1] > J) i = mid + 1; else i_hi = mid;
   }
-  const double dpphi = pa->data[EVO_PPHI][i+1] - pa->data[EVO_PPHI][i];
-  const double frac_in_interval = (dpphi != 0.0) ? (J - pa->data[EVO_PPHI][i])/dpphi : 0.0;
-  const double abar = herm_cubic(frac_in_interval, dpphi, pa->data[EVO_ALPHA][i], pa->data[EVO_DADJ][i],
-                                 pa->data[EVO_ALPHA][i+1], pa->data[EVO_DADJ][i+1]);
-  const double bbar = herm_cubic(frac_in_interval, dpphi, pa->data[EVO_BETA][i], pa->data[EVO_DBDJ][i],
-                                 pa->data[EVO_BETA][i+1], pa->data[EVO_DBDJ][i+1]);
+  const double dpphi = pa->data[ECCPA_EVO_PPHI][i+1] - pa->data[ECCPA_EVO_PPHI][i];
+  const double frac_in_interval = (dpphi != 0.0) ? (J - pa->data[ECCPA_EVO_PPHI][i])/dpphi : 0.0;
+  const double abar = herm_cubic(frac_in_interval, dpphi, pa->data[ECCPA_EVO_ALPHA][i], pa->data[ECCPA_EVO_DADJ][i],
+                                 pa->data[ECCPA_EVO_ALPHA][i+1], pa->data[ECCPA_EVO_DADJ][i+1]);
+  const double bbar = herm_cubic(frac_in_interval, dpphi, pa->data[ECCPA_EVO_BETA][i], pa->data[ECCPA_EVO_DBDJ][i],
+                                 pa->data[ECCPA_EVO_BETA][i+1], pa->data[ECCPA_EVO_DBDJ][i+1]);
 
   int i0 = i - 1;
   if (i0 < 0) i0 = 0;
   if (i0 > n - 4) i0 = n - 4;
   /* cubic weights at mean pphi */
   double w_mean[4];
-  eccpa_lagrange(pa->data[EVO_PPHI], i0, 4, J, w_mean);
+  eccpa_lagrange(pa->data[ECCPA_EVO_PPHI], i0, 4, J, w_mean);
 
   const double rbar = sqrt(abar*abar + bbar*bbar);
   const double wbar = eccpa_peri_angle(abar, bbar);
@@ -1911,8 +1974,8 @@ int eob_eccpa_recon(PostAdDynamics *pa, int n, double t, Dynamics *dyn)
   memset(&map_coefs_mean, 0, sizeof map_coefs_mean);
   map_coefs_mean.M = M;
   for (int k = 1; k <= M; k++) {
-    map_coefs_mean.kappa[TH_LAMBDA_MEAN][0][k] = eccpa_lag(w_mean, i0, pa->evo_kappa[TH_LAMBDA_MEAN][0][k]);
-    map_coefs_mean.kappa[TH_LAMBDA_MEAN][1][k] = eccpa_lag(w_mean, i0, pa->evo_kappa[TH_LAMBDA_MEAN][1][k]);
+    map_coefs_mean.kappa[ECCPA_TH_LAMBDA_MEAN][0][k] = eccpa_lag(w_mean, i0, pa->evo_kappa[ECCPA_TH_LAMBDA_MEAN][0][k]);
+    map_coefs_mean.kappa[ECCPA_TH_LAMBDA_MEAN][1][k] = eccpa_lag(w_mean, i0, pa->evo_kappa[ECCPA_TH_LAMBDA_MEAN][1][k]);
   }
   /* seed is a linear extrapolation in Lambda from last two points; after a jump of more
      than a radian, Lambda itself */
@@ -1930,62 +1993,62 @@ int eob_eccpa_recon(PostAdDynamics *pa, int n, double t, Dynamics *dyn)
 
   /* first-order oscillating parts at this pphi and chi, then second and third order
      from checkpoints */
-  double sc[OSC_N][2][ECCPA_HARMONICS_MAX+1];
-  for (int sr = 0; sr < OSC_N; sr++)
+  double sc[ECCPA_OSC_N][2][ECCPA_HARMONICS_MAX+1];
+  for (int sr = 0; sr < ECCPA_OSC_N; sr++)
     for (int k = 0; k <= M; k++) {
       sc[sr][0][k] = eccpa_lag(w_mean, i0, pa->evo_osc1_coef[sr][0][k]);
       sc[sr][1][k] = eccpa_lag(w_mean, i0, pa->evo_osc1_coef[sr][1][k]);
     }
-  double acc[OSC_N], ck[ECCPA_HARMONICS_MAX+1], sk[ECCPA_HARMONICS_MAX+1];
+  double acc[ECCPA_OSC_N], ck[ECCPA_HARMONICS_MAX+1], sk[ECCPA_HARMONICS_MAX+1];
   eccpa_trig(chi, M, ck, sk);
-  for (int sr = 0; sr < OSC_N; sr++) acc[sr] = sc[sr][0][0];
+  for (int sr = 0; sr < ECCPA_OSC_N; sr++) acc[sr] = sc[sr][0][0];
   for (int k = 1; k <= M; k++)
-    for (int sr = 0; sr < OSC_N; sr++) acc[sr] += sc[sr][0][k]*ck[k] + sc[sr][1][k]*sk[k];
-  double osc2[OSC_N], osc3[OSC_N];
+    for (int sr = 0; sr < ECCPA_OSC_N; sr++) acc[sr] += sc[sr][0][k]*ck[k] + sc[sr][1][k]*sk[k];
+  double osc2[ECCPA_OSC_N], osc3[ECCPA_OSC_N];
   eccpa_osc2_at(pa, 2, J, chi, osc2);
   eccpa_osc2_at(pa, 3, J, chi, osc3);   /* zero below map order 3 */
 
   /* (d) osculating elements; z parts are rotated back by wbar */
-  const double ct_zr = acc[OSC_Z_RE] + osc2[OSC_Z_RE] + osc3[OSC_Z_RE];
-  const double ct_zi = acc[OSC_Z_IM] + osc2[OSC_Z_IM] + osc3[OSC_Z_IM];
+  const double ct_zr = acc[ECCPA_OSC_Z_RE] + osc2[ECCPA_OSC_Z_RE] + osc3[ECCPA_OSC_Z_RE];
+  const double ct_zi = acc[ECCPA_OSC_Z_IM] + osc2[ECCPA_OSC_Z_IM] + osc3[ECCPA_OSC_Z_IM];
   double ct_za, ct_zb;
   eccpa_from_peri(ct_zr, ct_zi, cos(wbar), sin(wbar), &ct_za, &ct_zb);
   const double alpha = abar + ct_za;
   const double beta  = bbar + ct_zb;
-  const double pphi  = J + acc[OSC_PPHI] + osc2[OSC_PPHI] + osc3[OSC_PPHI];
-  double th_osc[TH_N];
-  for (int th = 0; th < TH_N; th++)
-    th_osc[th] = th_bar[th] + acc[OSC_TH + th] + osc2[OSC_TH + th] + osc3[OSC_TH + th];
-  const double LamP = th_osc[TH_LAMBDA_MEAN];
+  const double pphi  = J + acc[ECCPA_OSC_PPHI] + osc2[ECCPA_OSC_PPHI] + osc3[ECCPA_OSC_PPHI];
+  double th_osc[ECCPA_TH_N];
+  for (int th = 0; th < ECCPA_TH_N; th++)
+    th_osc[th] = th_bar[th] + acc[ECCPA_OSC_TH + th] + osc2[ECCPA_OSC_TH + th] + osc3[ECCPA_OSC_TH + th];
+  const double LamP = th_osc[ECCPA_TH_LAMBDA_MEAN];
   const double ra = sqrt(alpha*alpha + beta*beta);
   const double wo = eccpa_peri_angle(alpha, beta);
   /* X from T of osculating orbit, where point is; T of mean orbit would leave an
      O(epsilon) error in X */
   double w_osc[4];
-  eccpa_lagrange(pa->data[EVO_PPHI], i0, 4, pphi, w_osc);
+  eccpa_lagrange(pa->data[ECCPA_EVO_PPHI], i0, 4, pphi, w_osc);
   EccMapCoefs map_coefs_osc;
   eccpa_osc_map(pa, i0, w_osc, M, ra, &map_coefs_osc);
   const double X = eccpa_X_of_Lam(&map_coefs_osc, 1.0, wo, LamP, Xq + (LamP - Lam));
   pa->X = X;
-  const double M_lam = eccpa_ksum(map_coefs_osc.kappa[TH_AZIMUTH][0], map_coefs_osc.kappa[TH_AZIMUTH][1], M,
+  const double M_lam = eccpa_ksum(map_coefs_osc.kappa[ECCPA_TH_AZIMUTH][0], map_coefs_osc.kappa[ECCPA_TH_AZIMUTH][1], M,
                                   1.0, X - wo, NULL);
   /* r_circ interpolated at osculating pphi, H derivatives recomputed */
   {
-    const double rc_i = eccpa_lag(w_osc, i0, pa->data[EVO_RCIRC]);
+    const double rc_i = eccpa_lag(w_osc, i0, pa->data[ECCPA_EVO_RCIRC]);
     /* previous point's root, a seed for eccpa_cons_rc */
-    const double rc_prev = pa->cons_orb[PO_CUR][PO_R_C];
-    memset(pa->cons_orb[PO_CUR], 0, sizeof pa->cons_orb[PO_CUR]);
-    pa->cons_orb[PO_CUR][PO_R_C]  = rc_prev;
-    pa->cons_orb[PO_CUR][PO_PPHI] = pphi;
-    pa->cons_orb[PO_CUR][PO_R_A]  = ra;
-    if (eccpa_cons_circular(pa, pphi, dyn, PO_CUR, rc_i)) return 1;
-    if (eccpa_cons_rc(pa, pa->cons_orb[PO_CUR][PO_R_A], dyn, PO_CUR)) return 1;
+    const double rc_prev = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C];
+    memset(pa->cons_orb[ECCPA_ORB_CUR], 0, sizeof pa->cons_orb[ECCPA_ORB_CUR]);
+    pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C]  = rc_prev;
+    pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_PPHI] = pphi;
+    pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_A]  = ra;
+    if (eccpa_cons_circular(pa, pphi, dyn, ECCPA_ORB_CUR, rc_i)) return 1;
+    if (eccpa_cons_rc(pa, pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_A], dyn, ECCPA_ORB_CUR)) return 1;
   }
-  eob_eccpa_cons_sample_point(pa, PO_CUR, alpha, beta, X, 0, dyn);
+  eob_eccpa_cons_sample_point(pa, ECCPA_ORB_CUR, alpha, beta, X, 0, dyn);
 
   /* r, prstar, Omg, rdot and ddotr are in pa already, from eob_eccpa_cons_sample_point */
   pa->pphi     = pphi;
-  pa->phi      = th_osc[TH_AZIMUTH] - M_lam;
+  pa->phi      = th_osc[ECCPA_TH_AZIMUTH] - M_lam;
   return 0;
 }
 
@@ -2017,19 +2080,19 @@ static void eccpa_maps_tay(const PostAdDynamics *pa, double J, double Js, double
   double dJ_, dU_;
   const EccMapCoefs *st = pa->map_coefs_fd;
   const double hpphi = pa->map_coefs_fd_h_pphi, hU = pa->map_coefs_fd_h_U;
-  for (int th = 0; th < TH_N; th++) {
-    map_coefs->omega[th] = eccpa_map_tay(st[MAPFD_00].omega[th], st[MAPFD_JP].omega[th], st[MAPFD_JM].omega[th],
-                                         st[MAPFD_UP].omega[th], st[MAPFD_UM].omega[th], st[MAPFD_CR].omega[th],
+  for (int th = 0; th < ECCPA_TH_N; th++) {
+    map_coefs->omega[th] = eccpa_map_tay(st[ECCPA_MAPFD_00].omega[th], st[ECCPA_MAPFD_JP].omega[th], st[ECCPA_MAPFD_JM].omega[th],
+                                         st[ECCPA_MAPFD_UP].omega[th], st[ECCPA_MAPFD_UM].omega[th], st[ECCPA_MAPFD_CR].omega[th],
                                          hpphi, hU, dJs, dUs, &dJ_, &dU_);
     map_coefs_dJ->omega[th] = map_coefs->omega[th] + *hJ*dJ_;  map_coefs_dU->omega[th] = map_coefs->omega[th] + *dU*dU_;
   }
-  map_coefs->M = map_coefs_dJ->M = map_coefs_dU->M = st[MAPFD_00].M;
+  map_coefs->M = map_coefs_dJ->M = map_coefs_dU->M = st[ECCPA_MAPFD_00].M;
   for (int k = 0; k <= map_coefs->M; k++)
-    for (int th = 0; th < TH_N; th++)
+    for (int th = 0; th < ECCPA_TH_N; th++)
       for (int c = 0; c < 2; c++) {
         double *f = &map_coefs->kappa[th][c][k];
-        *f = eccpa_map_tay(st[MAPFD_00].kappa[th][c][k], st[MAPFD_JP].kappa[th][c][k], st[MAPFD_JM].kappa[th][c][k],
-                           st[MAPFD_UP].kappa[th][c][k], st[MAPFD_UM].kappa[th][c][k], st[MAPFD_CR].kappa[th][c][k],
+        *f = eccpa_map_tay(st[ECCPA_MAPFD_00].kappa[th][c][k], st[ECCPA_MAPFD_JP].kappa[th][c][k], st[ECCPA_MAPFD_JM].kappa[th][c][k],
+                           st[ECCPA_MAPFD_UP].kappa[th][c][k], st[ECCPA_MAPFD_UM].kappa[th][c][k], st[ECCPA_MAPFD_CR].kappa[th][c][k],
                            hpphi, hU, dJs, dUs, &dJ_, &dU_);
         map_coefs_dJ->kappa[th][c][k] = *f + *hJ*dJ_;  map_coefs_dU->kappa[th][c][k] = *f + *dU*dU_;
       }
@@ -2051,8 +2114,8 @@ static void eccpa_maps_tay(const PostAdDynamics *pa, double J, double Js, double
 int eob_eccpa_rates_higher(PostAdDynamics *pa, double J, double alpha, double beta, int rates,
                            Dynamics *dyn)
 {
-  for (int mu = 0; mu < C_N; mu++) pa->Fbarcorr[mu] = pa->Fbar2[mu] = 0.0;
-  for (int th = 0; th < TH_N; th++) pa->Fbar2_th[th] = 0.0;
+  for (int mu = 0; mu < ECCPA_C_N; mu++) pa->Fbarcorr[mu] = pa->Fbar2[mu] = 0.0;
+  for (int th = 0; th < ECCPA_TH_N; th++) pa->Fbar2_th[th] = 0.0;
   pa->s3_ok = 0;
   /* What orders ask for */
   const int map = EOBPars->postadiabatic_dynamics_ecc_map, rate = EOBPars->postadiabatic_dynamics_ecc_rate;
@@ -2064,15 +2127,15 @@ int eob_eccpa_rates_higher(PostAdDynamics *pa, double J, double alpha, double be
   if (N < 4) return 0;                       /* nothing to displace against */
 
   const double node_spacing = 2.0*Pi/N;
-  const double P_r = pa->P_r, n = pa->omega[TH_LAMBDA_MEAN];
-  const double omega[TH_N] = { pa->omega[TH_LAMBDA_MEAN], pa->omega[TH_AZIMUTH] };
-  const double Fbar1_th[TH_N] = { pa->Fbar_th[TH_LAMBDA_MEAN], pa->Fbar_th[TH_AZIMUTH] };
-  const double Fbar1[C_N] = { pa->Fbar[C_PPHI], pa->Fbar[C_ALPHA], pa->Fbar[C_BETA] };
-  const double dadJ = pa->dc_dpphi[C_ALPHA], dbdJ = pa->dc_dpphi[C_BETA];
-  const double domega_dJ[TH_N] = { pa->domega_dJ[TH_LAMBDA_MEAN], pa->domega_dJ[TH_AZIMUTH] };
-  const double domega_dU[TH_N] = { pa->domega_dU[TH_LAMBDA_MEAN], pa->domega_dU[TH_AZIMUTH] };
+  const double P_r = pa->P_r, n = pa->omega[ECCPA_TH_LAMBDA_MEAN];
+  const double omega[ECCPA_TH_N] = { pa->omega[ECCPA_TH_LAMBDA_MEAN], pa->omega[ECCPA_TH_AZIMUTH] };
+  const double Fbar1_th[ECCPA_TH_N] = { pa->Fbar_th[ECCPA_TH_LAMBDA_MEAN], pa->Fbar_th[ECCPA_TH_AZIMUTH] };
+  const double Fbar1[ECCPA_C_N] = { pa->Fbar[ECCPA_C_PPHI], pa->Fbar[ECCPA_C_ALPHA], pa->Fbar[ECCPA_C_BETA] };
+  const double dadJ = pa->dc_dpphi[ECCPA_C_ALPHA], dbdJ = pa->dc_dpphi[ECCPA_C_BETA];
+  const double domega_dJ[ECCPA_TH_N] = { pa->domega_dJ[ECCPA_TH_LAMBDA_MEAN], pa->domega_dJ[ECCPA_TH_AZIMUTH] };
+  const double domega_dU[ECCPA_TH_N] = { pa->domega_dU[ECCPA_TH_LAMBDA_MEAN], pa->domega_dU[ECCPA_TH_AZIMUTH] };
   const double r_a = sqrt(alpha*alpha + beta*beta);
-  const double cbar[C_N] = { J, alpha, beta };
+  const double cbar[ECCPA_C_N] = { J, alpha, beta };
 
   /* neighbours and displaced states in pa_nbr, pa keeps mean state */
   PostAdDynamics *pa_nbr = NULL;
@@ -2084,22 +2147,22 @@ int eob_eccpa_rates_higher(PostAdDynamics *pa, double J, double alpha, double be
   for (int j = 0; j < N; j++) {
     double T;
     eccpa_Tmap(&pa->map_coefs, r_a, 2.0*Pi*(j + 0.5)/N, &T, NULL);
-    pa->mean_node[MEAN_NODE_LAM][j] = pa->node[PA_X][j] + T;
+    pa->mean_node[ECCPA_MEAN_NODE_LAM][j] = pa->node[ECCPA_NODE_X][j] + T;
   }
 
   /* mean orbit's r_c and periastron, for third order, and its kappa_m for the
      convolutions of z corrections below */
-  const double rc_m = pa->cons_orb[PO_CUR][PO_R_C], w0_m = eccpa_peri_angle(alpha, beta);
+  const double rc_m = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C], w0_m = eccpa_peri_angle(alpha, beta);
   double kappa_mean_re[ECCPA_HARMONICS_MAX+1], kappa_mean_im[ECCPA_HARMONICS_MAX+1];
-  if (eccpa_kappa(pa, PO_CUR, pa->node[PA_DTDX], N, dyn, kappa_mean_re, kappa_mean_im)) goto out;
+  if (eccpa_kappa(pa, ECCPA_ORB_CUR, pa->node[ECCPA_NODE_DTDX], N, dyn, kappa_mean_re, kappa_mean_im)) goto out;
 
   /* map coefs of displaced states from a 6-orb stencil in (pphi, U) */
   double HJ = 0.0, HU = 0.0;
   pa->map_coefs_fd_U0 = r_a*r_a;
   for (int j = 0; j < N; j++) {
-    const double dU_Y = fabs(pa->ctilde1[C_PPHI][j]);
-    const double az = fabs(pa->ctilde1[C_ALPHA][j])
-                    + fabs(pa->ctilde1[C_BETA][j]);
+    const double dU_Y = fabs(pa->ctilde1[ECCPA_C_PPHI][j]);
+    const double az = fabs(pa->ctilde1[ECCPA_C_ALPHA][j])
+                    + fabs(pa->ctilde1[ECCPA_C_BETA][j]);
     if (dU_Y > HJ) HJ = dU_Y;
     if (az > HU) HU = az;
   }
@@ -2116,57 +2179,57 @@ int eob_eccpa_rates_higher(PostAdDynamics *pa, double J, double alpha, double be
   pa->map_coefs_fd_h_pphi = HJ; pa->map_coefs_fd_h_U = HU;
   /* six orbits in order of MAPFD_*; periastron along alpha, since coefficients
      don't depend on w */
-  const double J_st[MAPFD_N]  = { J, J + HJ, J - HJ, J, J, J + HJ };
-  const double ra_st[MAPFD_N] = { ra_c, ra_c, ra_c, sqrt(pa->map_coefs_fd_U0 + HU),
+  const double J_st[ECCPA_MAPFD_N]  = { J, J + HJ, J - HJ, J, J, J + HJ };
+  const double ra_st[ECCPA_MAPFD_N] = { ra_c, ra_c, ra_c, sqrt(pa->map_coefs_fd_U0 + HU),
                                   sqrt(pa->map_coefs_fd_U0 - HU), sqrt(pa->map_coefs_fd_U0 + HU) };
-  for (int k = 0; k < MAPFD_N; k++)
-    if (eccpa_cons_map_coefs_of_orbit(pa, J_st[k], ra_st[k], ra_st[k], 0.0, PO_AUX, N, dyn, &pa->map_coefs_fd[k]))
+  for (int k = 0; k < ECCPA_MAPFD_N; k++)
+    if (eccpa_cons_map_coefs_of_orbit(pa, J_st[k], ra_st[k], ra_st[k], 0.0, ECCPA_ORB_AUX, N, dyn, &pa->map_coefs_fd[k]))
       goto out;
 
   /* first pass: +-c~(1); half-diff = dF^(2), half-sum = quadratic part */
-  double dF2[C_N][ECCPA_NODES_DIM];
-  double domega2_quad[TH_N][ECCPA_NODES_DIM], dF2_th[TH_N][ECCPA_NODES_DIM];
+  double dF2[ECCPA_C_N][ECCPA_NODES_DIM];
+  double domega2_quad[ECCPA_TH_N][ECCPA_NODES_DIM], dF2_th[ECCPA_TH_N][ECCPA_NODES_DIM];
   double dX1[ECCPA_NODES_DIM];
-  double sum_domega2[TH_N] = { 0.0, 0.0 }, sum_dF_th2[TH_N] = { 0.0, 0.0 };
+  double sum_domega2[ECCPA_TH_N] = { 0.0, 0.0 }, sum_dF_th2[ECCPA_TH_N] = { 0.0, 0.0 };
   /* sum_dF2 = P_r Fbar^(2), time average of dF^(2) not yet divided by P_r */
-  double sum_dF2[C_N] = { 0.0, 0.0, 0.0 };
+  double sum_dF2[ECCPA_C_N] = { 0.0, 0.0, 0.0 };
 
   for (int j = 0; j < N; j++) {
     /* dX^(1), Eq. (B6) [eq:dX_eq] */
-    const double dX = (pa->node[PA_DTDX][j] > 0.0)
-                    ? (pa->thtilde1[TH_LAMBDA_MEAN][j] - pa->M_ctilde1[j])
-                      /(n*pa->node[PA_DTDX][j]) : 0.0;
+    const double dX = (pa->node[ECCPA_NODE_DTDX][j] > 0.0)
+                    ? (pa->thtilde1[ECCPA_TH_LAMBDA_MEAN][j] - pa->M_ctilde1[j])
+                      /(n*pa->node[ECCPA_NODE_DTDX][j]) : 0.0;
     dX1[j] = dX;
-    double F_s[C_N][2], omega_s[TH_N][2], F_th_s[TH_N][2];
+    double F_s[ECCPA_C_N][2], omega_s[ECCPA_TH_N][2], F_th_s[ECCPA_TH_N][2];
     for (int sg = 0; sg < 2; sg++) {
       const double s = sg ? -1.0 : 1.0;
-      double c_P[C_N];
-      for (int mu = 0; mu < C_N; mu++) c_P[mu] = cbar[mu] + s*pa->ctilde1[mu][j];
-      const double X_P = pa->node[PA_X][j] + s*dX;
-      if (eob_eccpa_cons_orbit(pa_nbr, c_P[C_PPHI], sqrt(c_P[C_ALPHA]*c_P[C_ALPHA] + c_P[C_BETA]*c_P[C_BETA]), dyn, PO_CUR)
-          || eob_eccpa_cons_sample_point(pa_nbr, PO_CUR, c_P[C_ALPHA], c_P[C_BETA], X_P, 1, dyn)) goto out;
-      for (int mu = 0; mu < C_N; mu++) F_s[mu][sg] = pa_nbr->F[mu];
+      double c_P[ECCPA_C_N];
+      for (int mu = 0; mu < ECCPA_C_N; mu++) c_P[mu] = cbar[mu] + s*pa->ctilde1[mu][j];
+      const double X_P = pa->node[ECCPA_NODE_X][j] + s*dX;
+      if (eob_eccpa_cons_orbit(pa_nbr, c_P[ECCPA_C_PPHI], sqrt(c_P[ECCPA_C_ALPHA]*c_P[ECCPA_C_ALPHA] + c_P[ECCPA_C_BETA]*c_P[ECCPA_C_BETA]), dyn, ECCPA_ORB_CUR)
+          || eob_eccpa_cons_sample_point(pa_nbr, ECCPA_ORB_CUR, c_P[ECCPA_C_ALPHA], c_P[ECCPA_C_BETA], X_P, 1, dyn)) goto out;
+      for (int mu = 0; mu < ECCPA_C_N; mu++) F_s[mu][sg] = pa_nbr->F[mu];
 
       /* n, omega and F_Lambda, F_lambda at this state, from stencil */
       EccMapCoefs map_coefs_P, map_coefs_P_dJ, map_coefs_P_dU;
-      const double r_a_P = pa_nbr->cons_orb[PO_CUR][PO_R_A], r_c_P = pa_nbr->cons_orb[PO_CUR][PO_R_C];
+      const double r_a_P = pa_nbr->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_A], r_c_P = pa_nbr->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C];
       double hJP, dUP;
-      const double w_P = eccpa_peri_angle(c_P[C_ALPHA], c_P[C_BETA]);
-      eccpa_maps_tay(pa, J, c_P[C_PPHI], r_a_P, r_c_P, &map_coefs_P, &map_coefs_P_dJ, &map_coefs_P_dU, &hJP, &dUP);
-      double F_th[TH_N];
+      const double w_P = eccpa_peri_angle(c_P[ECCPA_C_ALPHA], c_P[ECCPA_C_BETA]);
+      eccpa_maps_tay(pa, J, c_P[ECCPA_C_PPHI], r_a_P, r_c_P, &map_coefs_P, &map_coefs_P_dJ, &map_coefs_P_dU, &hJP, &dUP);
+      double F_th[ECCPA_TH_N];
       eccpa_phase_forcing(&map_coefs_P, &map_coefs_P_dJ, &map_coefs_P_dU, hJP, dUP, r_a_P, X_P - w_P, X_P,
-                          c_P[C_ALPHA], c_P[C_BETA],
-                          F_s[C_PPHI][sg], F_s[C_ALPHA][sg], F_s[C_BETA][sg], NULL, 0.0, 0.0, F_th, NULL);
-      for (int th = 0; th < TH_N; th++) {
+                          c_P[ECCPA_C_ALPHA], c_P[ECCPA_C_BETA],
+                          F_s[ECCPA_C_PPHI][sg], F_s[ECCPA_C_ALPHA][sg], F_s[ECCPA_C_BETA][sg], NULL, 0.0, 0.0, F_th, NULL);
+      for (int th = 0; th < ECCPA_TH_N; th++) {
         omega_s[th][sg] = map_coefs_P.omega[th];
         F_th_s[th][sg]  = F_th[th];
       }
     }
 
-    const double dt = pa->node[PA_DTDX][j]*node_spacing;
-    for (int mu = 0; mu < C_N; mu++) dF2[mu][j] = 0.5*(F_s[mu][0] - F_s[mu][1]);
-    for (int mu = 0; mu < C_N; mu++) sum_dF2[mu] += dF2[mu][j]*pa->node[PA_DTDX][j]*node_spacing;
-    for (int th = 0; th < TH_N; th++) {
+    const double dt = pa->node[ECCPA_NODE_DTDX][j]*node_spacing;
+    for (int mu = 0; mu < ECCPA_C_N; mu++) dF2[mu][j] = 0.5*(F_s[mu][0] - F_s[mu][1]);
+    for (int mu = 0; mu < ECCPA_C_N; mu++) sum_dF2[mu] += dF2[mu][j]*pa->node[ECCPA_NODE_DTDX][j]*node_spacing;
+    for (int th = 0; th < ECCPA_TH_N; th++) {
       domega2_quad[th][j] = 0.5*(omega_s[th][0] + omega_s[th][1]) - omega[th];
       dF2_th[th][j]  = 0.5*(F_th_s[th][0] - F_th_s[th][1]);
       sum_domega2[th] += domega2_quad[th][j]*dt;
@@ -2175,28 +2238,28 @@ int eob_eccpa_rates_higher(PostAdDynamics *pa, double J, double alpha, double be
   }
 
   /* Fbar^(2)_Lambda and Fbar^(2)_lambda, Eq. (B1) */
-  for (int th = 0; th < TH_N; th++) pa->Fbar2_th[th] = (sum_domega2[th] + sum_dF_th2[th])/P_r;
+  for (int th = 0; th < ECCPA_TH_N; th++) pa->Fbar2_th[th] = (sum_domega2[th] + sum_dF_th2[th])/P_r;
 
   /* second order of z rate alone, by same convolution as first order */
   double Fbar2_z[2] = { 0.0, 0.0 };
   if (rates)
-    eccpa_convolve(dF2[C_ALPHA], dF2[C_BETA], pa->node[PA_X], N, kappa_mean_re, kappa_mean_im, alpha, beta, n,
+    eccpa_convolve(dF2[ECCPA_C_ALPHA], dF2[ECCPA_C_BETA], pa->node[ECCPA_NODE_X], N, kappa_mean_re, kappa_mean_im, alpha, beta, n,
                    &Fbar2_z[0], &Fbar2_z[1]);
 
   /* D^(1), D^(2) of first-order parts, Eq. (B3), centred diffs along evolution */
   const double hJ = ECCPA_DPPHI_REL_OSC*fabs(J);
   if (!(hJ > 0.0)) goto out;
-  const double Fbar2[C_N] = { sum_dF2[C_PPHI]/P_r, Fbar2_z[0], Fbar2_z[1] };
+  const double Fbar2[ECCPA_C_N] = { sum_dF2[ECCPA_C_PPHI]/P_r, Fbar2_z[0], Fbar2_z[1] };
   /* D^(2)'s step: largest relative change of three elements is ECCPA_DPPHI_REL_OSC */
-  const double scale[C_N] = { fabs(J), rc_m, rc_m };
-  double rel = fabs(Fbar2[C_PPHI])/scale[C_PPHI];
-  for (int mu = 1; mu < C_N; mu++)
+  const double scale[ECCPA_C_N] = { fabs(J), rc_m, rc_m };
+  double rel = fabs(Fbar2[ECCPA_C_PPHI])/scale[ECCPA_C_PPHI];
+  for (int mu = 1; mu < ECCPA_C_N; mu++)
     if (fabs(Fbar2[mu])/scale[mu] > rel) rel = fabs(Fbar2[mu])/scale[mu];
   const double h2 = (rel > 0.0) ? ECCPA_DPPHI_REL_OSC/rel : 0.0;
-  const double h_d[2] = { hJ, h2 }, fac_d[2] = { Fbar1[C_PPHI], 1.0 };
-  const double v_d[2][C_N] = { { 1.0, dadJ, dbdJ }, { Fbar2[C_PPHI], Fbar2[C_ALPHA], Fbar2[C_BETA] } };
-  double D1ctilde1[C_N][ECCPA_NODES_DIM] = {{0.0}}, D1thtilde1[TH_N][ECCPA_NODES_DIM] = {{0.0}};
-  double D2ctilde1[C_N][ECCPA_NODES_DIM] = {{0.0}}, D2thtilde1[TH_N][ECCPA_NODES_DIM] = {{0.0}};
+  const double h_d[2] = { hJ, h2 }, fac_d[2] = { Fbar1[ECCPA_C_PPHI], 1.0 };
+  const double v_d[2][ECCPA_C_N] = { { 1.0, dadJ, dbdJ }, { Fbar2[ECCPA_C_PPHI], Fbar2[ECCPA_C_ALPHA], Fbar2[ECCPA_C_BETA] } };
+  double D1ctilde1[ECCPA_C_N][ECCPA_NODES_DIM] = {{0.0}}, D1thtilde1[ECCPA_TH_N][ECCPA_NODES_DIM] = {{0.0}};
+  double D2ctilde1[ECCPA_C_N][ECCPA_NODES_DIM] = {{0.0}}, D2thtilde1[ECCPA_TH_N][ECCPA_NODES_DIM] = {{0.0}};
   double (*Dc[2])[ECCPA_NODES_DIM] = { D1ctilde1, D2ctilde1 };
   double (*Dth[2])[ECCPA_NODES_DIM] = { D1thtilde1, D2thtilde1 };
 
@@ -2205,75 +2268,75 @@ int eob_eccpa_rates_higher(PostAdDynamics *pa, double J, double alpha, double be
     for (int sg = 0; sg < 2; sg++) {
       /* 1 */
       const double s = sg ? -1.0 : 1.0;
-      double c_n[C_N];
-      for (int mu = 0; mu < C_N; mu++) c_n[mu] = cbar[mu] + s*h_d[d]*v_d[d][mu];
+      double c_n[ECCPA_C_N];
+      for (int mu = 0; mu < ECCPA_C_N; mu++) c_n[mu] = cbar[mu] + s*h_d[d]*v_d[d][mu];
       /* 2, checked because a wrong derivative gives a plausible higher-order rate, not an error */
-      if (eob_eccpa_osc1(pa_nbr, c_n[C_PPHI], c_n[C_ALPHA], c_n[C_BETA], N, dyn)
+      if (eob_eccpa_osc1(pa_nbr, c_n[ECCPA_C_PPHI], c_n[ECCPA_C_ALPHA], c_n[ECCPA_C_BETA], N, dyn)
           || pa_nbr->osc1_nnodes != N) {
         if (d == 0) goto out;
         want_S3 = 0;
         break;
       }
-      const double ran = sqrt(c_n[C_ALPHA]*c_n[C_ALPHA] + c_n[C_BETA]*c_n[C_BETA]);
-      const double wn  = eccpa_peri_angle(c_n[C_ALPHA], c_n[C_BETA]);
+      const double ran = sqrt(c_n[ECCPA_C_ALPHA]*c_n[ECCPA_C_ALPHA] + c_n[ECCPA_C_BETA]*c_n[ECCPA_C_BETA]);
+      const double wn  = eccpa_peri_angle(c_n[ECCPA_C_ALPHA], c_n[ECCPA_C_BETA]);
       const double cw = cos(wn), sw = sin(wn);
       for (int j = 0; j < N; j++) {
         /* 3 */
-        const double Xn = eccpa_X_of_Lam(&pa_nbr->map_coefs, ran, wn, pa->mean_node[MEAN_NODE_LAM][j],
-                                         pa->node[PA_X][j]);
-        double acc[OSC_N];
+        const double Xn = eccpa_X_of_Lam(&pa_nbr->map_coefs, ran, wn, pa->mean_node[ECCPA_MEAN_NODE_LAM][j],
+                                         pa->node[ECCPA_NODE_X][j]);
+        double acc[ECCPA_OSC_N];
         eccpa_osc1_at(pa_nbr, Xn - wn, acc);
-        double ctilde1_nbr[C_N];
-        ctilde1_nbr[C_PPHI] = acc[OSC_PPHI];
-        eccpa_from_peri(acc[OSC_Z_RE], acc[OSC_Z_IM], cw, sw, &ctilde1_nbr[C_ALPHA], &ctilde1_nbr[C_BETA]);
+        double ctilde1_nbr[ECCPA_C_N];
+        ctilde1_nbr[ECCPA_C_PPHI] = acc[ECCPA_OSC_PPHI];
+        eccpa_from_peri(acc[ECCPA_OSC_Z_RE], acc[ECCPA_OSC_Z_IM], cw, sw, &ctilde1_nbr[ECCPA_C_ALPHA], &ctilde1_nbr[ECCPA_C_BETA]);
         /* 4 */
-        for (int mu = 0; mu < C_N; mu++)
+        for (int mu = 0; mu < ECCPA_C_N; mu++)
           Dc[d][mu][j] += s*fac_d[d]*ctilde1_nbr[mu]/(2.0*h_d[d]);
-        for (int th = 0; th < TH_N; th++)
-          Dth[d][th][j] += s*fac_d[d]*acc[OSC_TH + th]/(2.0*h_d[d]);
+        for (int th = 0; th < ECCPA_TH_N; th++)
+          Dth[d][th][j] += s*fac_d[d]*acc[ECCPA_OSC_TH + th]/(2.0*h_d[d]);
       }
     }
   }
 
   /* Kept for third order are sources S^(2) (derivative of an oscillating part along
      Lambdabar is its source over n) and n_,mu c~(1), n_,mu c~(2), and same for omega. */
-  double S2[C_N][ECCPA_NODES_DIM], S2_th[TH_N][ECCPA_NODES_DIM];
-  double domega1[TH_N][ECCPA_NODES_DIM], domega2_lin[TH_N][ECCPA_NODES_DIM];
+  double S2[ECCPA_C_N][ECCPA_NODES_DIM], S2_th[ECCPA_TH_N][ECCPA_NODES_DIM];
+  double domega1[ECCPA_TH_N][ECCPA_NODES_DIM], domega2_lin[ECCPA_TH_N][ECCPA_NODES_DIM];
   /* -- second-order oscillating parts, from S^(2) of Eq. (B2) --------------------------------
      sources average to zero by construction, so primitive only removes roundoff. */
   if (want_osc2) {
-    for (int mu = 0; mu < C_N; mu++) {
+    for (int mu = 0; mu < ECCPA_C_N; mu++) {
       const double Fbar2_mu = sum_dF2[mu]/P_r;
       for (int j = 0; j < N; j++)
         S2[mu][j] = dF2[mu][j] - Fbar2_mu - D1ctilde1[mu][j]
-                  - (pa->node[PA_F + mu][j] - Fbar1[mu])/n*Fbar1_th[TH_LAMBDA_MEAN];
-      eccpa_osc_primitive(S2[mu], pa->node[PA_DTDX], N, P_r, pa->mean_node[MEAN_NODE_CTILDE2 + mu]);
+                  - (pa->node[ECCPA_NODE_F + mu][j] - Fbar1[mu])/n*Fbar1_th[ECCPA_TH_LAMBDA_MEAN];
+      eccpa_osc_primitive(S2[mu], pa->node[ECCPA_NODE_DTDX], N, P_r, pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + mu]);
     }
     /* theta~(2), Eq. (B5) */
-    for (int th = 0; th < TH_N; th++) {
+    for (int th = 0; th < ECCPA_TH_N; th++) {
       for (int j = 0; j < N; j++) {
         domega1[th][j] = eccpa_dfreq(domega_dJ[th], domega_dU[th], alpha, beta,
-                                     pa->ctilde1[C_PPHI][j],
-                                     pa->ctilde1[C_ALPHA][j],
-                                     pa->ctilde1[C_BETA][j]);
+                                     pa->ctilde1[ECCPA_C_PPHI][j],
+                                     pa->ctilde1[ECCPA_C_ALPHA][j],
+                                     pa->ctilde1[ECCPA_C_BETA][j]);
         domega2_lin[th][j] = eccpa_dfreq(domega_dJ[th], domega_dU[th], alpha, beta,
-                                        pa->mean_node[MEAN_NODE_CTILDE2 + C_PPHI][j],
-                                        pa->mean_node[MEAN_NODE_CTILDE2 + C_ALPHA][j],
-                                        pa->mean_node[MEAN_NODE_CTILDE2 + C_BETA][j]);
+                                        pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_PPHI][j],
+                                        pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_ALPHA][j],
+                                        pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_BETA][j]);
         S2_th[th][j] = domega2_quad[th][j] + domega2_lin[th][j] + dF2_th[th][j] - pa->Fbar2_th[th]
                      - D1thtilde1[th][j]
-                     - (domega1[th][j] + pa->F_th[th][j] - Fbar1_th[th])/n*Fbar1_th[TH_LAMBDA_MEAN];
+                     - (domega1[th][j] + pa->F_th[th][j] - Fbar1_th[th])/n*Fbar1_th[ECCPA_TH_LAMBDA_MEAN];
       }
-      eccpa_osc_primitive(S2_th[th], pa->node[PA_DTDX], N, P_r, pa->mean_node[MEAN_NODE_THTILDE2 + th]);
+      eccpa_osc_primitive(S2_th[th], pa->node[ECCPA_NODE_DTDX], N, P_r, pa->mean_node[ECCPA_MEAN_NODE_THTILDE2 + th]);
     }
   }
 
   if (rates)
-    for (int mu = 0; mu < C_N; mu++) pa->Fbar2[mu] = Fbar2[mu];
+    for (int mu = 0; mu < ECCPA_C_N; mu++) pa->Fbar2[mu] = Fbar2[mu];
   if (want_pass2) {
     /* -- second pass: each node at cbar + c~(1) + c~(2) ----------------------------------------- */
-    double F_P[C_N][ECCPA_NODES_DIM], omega_P[TH_N][ECCPA_NODES_DIM];
-    double F_th_P[TH_N][ECCPA_NODES_DIM], F_th_stencil[TH_N][ECCPA_NODES_DIM];
+    double F_P[ECCPA_C_N][ECCPA_NODES_DIM], omega_P[ECCPA_TH_N][ECCPA_NODES_DIM];
+    double F_th_P[ECCPA_TH_N][ECCPA_NODES_DIM], F_th_stencil[ECCPA_TH_N][ECCPA_NODES_DIM];
     double sum_dF23_pphi = 0.0;
     double dF23_a[ECCPA_NODES_DIM], dF23_b[ECCPA_NODES_DIM];   /* z rates at state minus mean orbit's */
     /* for third order: maps on mean orbit, same at every node */
@@ -2281,100 +2344,100 @@ int eob_eccpa_rates_higher(PostAdDynamics *pa, double J, double alpha, double be
     double hJ_mean = 0.0, dU_mean = 0.0;
     if (want_S3) eccpa_maps_tay(pa, J, J, r_a, rc_m, &mc_mean, &mc_mean_dJ, &mc_mean_dU, &hJ_mean, &dU_mean);
     for (int j = 0; j < N; j++) {
-      double c_P[C_N];
-      for (int mu = 0; mu < C_N; mu++)
-        c_P[mu] = cbar[mu] + pa->ctilde1[mu][j] + pa->mean_node[MEAN_NODE_CTILDE2 + mu][j];
-      const double r_a_P = sqrt(c_P[C_ALPHA]*c_P[C_ALPHA] + c_P[C_BETA]*c_P[C_BETA]);
-      const double w_P = eccpa_peri_angle(c_P[C_ALPHA], c_P[C_BETA]);
-      if (eob_eccpa_cons_orbit(pa_nbr, c_P[C_PPHI], r_a_P, dyn, PO_CUR)) goto out;
+      double c_P[ECCPA_C_N];
+      for (int mu = 0; mu < ECCPA_C_N; mu++)
+        c_P[mu] = cbar[mu] + pa->ctilde1[mu][j] + pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + mu][j];
+      const double r_a_P = sqrt(c_P[ECCPA_C_ALPHA]*c_P[ECCPA_C_ALPHA] + c_P[ECCPA_C_BETA]*c_P[ECCPA_C_BETA]);
+      const double w_P = eccpa_peri_angle(c_P[ECCPA_C_ALPHA], c_P[ECCPA_C_BETA]);
+      if (eob_eccpa_cons_orbit(pa_nbr, c_P[ECCPA_C_PPHI], r_a_P, dyn, ECCPA_ORB_CUR)) goto out;
 
       /* X that carries Lambdabar + Lambda~(1) + Lambda~(2), on displaced orbit's own T, so
          nonlinear terms of map are kept */
-      double X_P = pa->node[PA_X][j] + dX1[j];
+      double X_P = pa->node[ECCPA_NODE_X][j] + dX1[j];
       int map_P_ok = 0;
       EccMapCoefs map_coefs_orbit_P;
-      if (!eccpa_cons_map_coefs_of_orbit(pa_nbr, c_P[C_PPHI], r_a_P, c_P[C_ALPHA], c_P[C_BETA], PO_CUR, N, dyn, &map_coefs_orbit_P)) {
+      if (!eccpa_cons_map_coefs_of_orbit(pa_nbr, c_P[ECCPA_C_PPHI], r_a_P, c_P[ECCPA_C_ALPHA], c_P[ECCPA_C_BETA], ECCPA_ORB_CUR, N, dyn, &map_coefs_orbit_P)) {
         map_P_ok = 1;
         X_P = eccpa_X_of_Lam(&map_coefs_orbit_P, r_a_P, w_P,
-                            pa->mean_node[MEAN_NODE_LAM][j] + pa->thtilde1[TH_LAMBDA_MEAN][j]
-                            + pa->mean_node[MEAN_NODE_THTILDE2 + TH_LAMBDA_MEAN][j], X_P);
+                            pa->mean_node[ECCPA_MEAN_NODE_LAM][j] + pa->thtilde1[ECCPA_TH_LAMBDA_MEAN][j]
+                            + pa->mean_node[ECCPA_MEAN_NODE_THTILDE2 + ECCPA_TH_LAMBDA_MEAN][j], X_P);
       }
-      if (eob_eccpa_cons_sample_point(pa_nbr, PO_CUR, c_P[C_ALPHA], c_P[C_BETA], X_P, 1, dyn)) goto out;
-      const double Fa_P = pa_nbr->F[C_ALPHA], Fb_P = pa_nbr->F[C_BETA];
+      if (eob_eccpa_cons_sample_point(pa_nbr, ECCPA_ORB_CUR, c_P[ECCPA_C_ALPHA], c_P[ECCPA_C_BETA], X_P, 1, dyn)) goto out;
+      const double Fa_P = pa_nbr->F[ECCPA_C_ALPHA], Fb_P = pa_nbr->F[ECCPA_C_BETA];
 
       /* third order: F, n, omega, F_theta at this state */
       if (want_S3) {
-        for (int mu = 0; mu < C_N; mu++) F_P[mu][j] = pa_nbr->F[mu];
+        for (int mu = 0; mu < ECCPA_C_N; mu++) F_P[mu][j] = pa_nbr->F[mu];
         if (!map_P_ok) want_S3 = 0;
         else {
-          for (int th = 0; th < TH_N; th++) omega_P[th][j] = map_coefs_orbit_P.omega[th];
-          double F_th[TH_N], hJs, dUs;
+          for (int th = 0; th < ECCPA_TH_N; th++) omega_P[th][j] = map_coefs_orbit_P.omega[th];
+          double F_th[ECCPA_TH_N], hJs, dUs;
           EccMapCoefs mc, mc_dJ, mc_dU;
           /* displaced state */
-          eccpa_maps_tay(pa, J, c_P[C_PPHI], r_a_P, pa_nbr->cons_orb[PO_CUR][PO_R_C], &mc, &mc_dJ, &mc_dU, &hJs, &dUs);
-          eccpa_phase_forcing(&mc, &mc_dJ, &mc_dU, hJs, dUs, r_a_P, X_P - w_P, X_P, c_P[C_ALPHA], c_P[C_BETA],
-                              pa_nbr->F[C_PPHI], Fa_P, Fb_P, NULL, 0.0, 0.0, F_th, NULL);
-          for (int th = 0; th < TH_N; th++) F_th_P[th][j] = F_th[th];
+          eccpa_maps_tay(pa, J, c_P[ECCPA_C_PPHI], r_a_P, pa_nbr->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C], &mc, &mc_dJ, &mc_dU, &hJs, &dUs);
+          eccpa_phase_forcing(&mc, &mc_dJ, &mc_dU, hJs, dUs, r_a_P, X_P - w_P, X_P, c_P[ECCPA_C_ALPHA], c_P[ECCPA_C_BETA],
+                              pa_nbr->F[ECCPA_C_PPHI], Fa_P, Fb_P, NULL, 0.0, 0.0, F_th, NULL);
+          for (int th = 0; th < ECCPA_TH_N; th++) F_th_P[th][j] = F_th[th];
           /* mean orbit, with maps computed once before loop */
-          const double X0 = pa->node[PA_X][j];
+          const double X0 = pa->node[ECCPA_NODE_X][j];
           eccpa_phase_forcing(&mc_mean, &mc_mean_dJ, &mc_mean_dU, hJ_mean, dU_mean, r_a, X0 - w0_m, X0,
-                              alpha, beta, pa->node[PA_F + C_PPHI][j],
-                              pa->node[PA_F + C_ALPHA][j], pa->node[PA_F + C_BETA][j],
+                              alpha, beta, pa->node[ECCPA_NODE_F + ECCPA_C_PPHI][j],
+                              pa->node[ECCPA_NODE_F + ECCPA_C_ALPHA][j], pa->node[ECCPA_NODE_F + ECCPA_C_BETA][j],
                               NULL, 0.0, 0.0, F_th, NULL);
-          for (int th = 0; th < TH_N; th++) F_th_stencil[th][j] = F_th[th];
+          for (int th = 0; th < ECCPA_TH_N; th++) F_th_stencil[th][j] = F_th[th];
         }
       }
       /* F_E and F_pphi are averaged with mean orbit's dt/dX, Fa and Fb go to convolution */
-      const double dt = pa->node[PA_DTDX][j]*node_spacing;
-      sum_dF23_pphi += (pa_nbr->F[C_PPHI] - pa->node[PA_F + C_PPHI][j])*dt;
-      dF23_a[j] = Fa_P - pa->node[PA_F + C_ALPHA][j];
-      dF23_b[j] = Fb_P - pa->node[PA_F + C_BETA][j];
+      const double dt = pa->node[ECCPA_NODE_DTDX][j]*node_spacing;
+      sum_dF23_pphi += (pa_nbr->F[ECCPA_C_PPHI] - pa->node[ECCPA_NODE_F + ECCPA_C_PPHI][j])*dt;
+      dF23_a[j] = Fa_P - pa->node[ECCPA_NODE_F + ECCPA_C_ALPHA][j];
+      dF23_b[j] = Fb_P - pa->node[ECCPA_NODE_F + ECCPA_C_BETA][j];
     }
 
     /* S^(3), Eq. (B2), without neighbouring-checkpoint terms */
     if (want_S3) {
-      double dF3[C_N][ECCPA_NODES_DIM], domega3[TH_N][ECCPA_NODES_DIM], dF3_th[TH_N][ECCPA_NODES_DIM];
-      double Fbar3[C_N] = { 0.0, 0.0, 0.0 }, Fbar3_th[TH_N] = { 0.0, 0.0 };
+      double dF3[ECCPA_C_N][ECCPA_NODES_DIM], domega3[ECCPA_TH_N][ECCPA_NODES_DIM], dF3_th[ECCPA_TH_N][ECCPA_NODES_DIM];
+      double Fbar3[ECCPA_C_N] = { 0.0, 0.0, 0.0 }, Fbar3_th[ECCPA_TH_N] = { 0.0, 0.0 };
       for (int j = 0; j < N; j++) {
-        const double dt = pa->node[PA_DTDX][j]*node_spacing;
-        for (int mu = 0; mu < C_N; mu++) {
-          dF3[mu][j] = F_P[mu][j] - pa->node[PA_F + mu][j] - dF2[mu][j];
+        const double dt = pa->node[ECCPA_NODE_DTDX][j]*node_spacing;
+        for (int mu = 0; mu < ECCPA_C_N; mu++) {
+          dF3[mu][j] = F_P[mu][j] - pa->node[ECCPA_NODE_F + mu][j] - dF2[mu][j];
           Fbar3[mu] += dF3[mu][j]*dt;
         }
-        for (int th = 0; th < TH_N; th++) {
+        for (int th = 0; th < ECCPA_TH_N; th++) {
           domega3[th][j] = omega_P[th][j] - omega[th] - domega1[th][j] - domega2_lin[th][j] - domega2_quad[th][j];
           dF3_th[th][j]  = (F_th_P[th][j] - F_th_stencil[th][j]) - dF2_th[th][j];
           Fbar3_th[th] += (domega3[th][j] + dF3_th[th][j])*dt;
         }
       }
-      for (int mu = 0; mu < C_N; mu++) Fbar3[mu] /= P_r;
-      for (int th = 0; th < TH_N; th++) Fbar3_th[th] /= P_r;
+      for (int mu = 0; mu < ECCPA_C_N; mu++) Fbar3[mu] /= P_r;
+      for (int th = 0; th < ECCPA_TH_N; th++) Fbar3_th[th] /= P_r;
       for (int j = 0; j < N; j++) {
-        for (int mu = 0; mu < C_N; mu++)
-          pa->mean_node[MEAN_NODE_S3_C + mu][j] = dF3[mu][j] - Fbar3[mu] - D2ctilde1[mu][j]
-                               - (pa->node[PA_F + mu][j] - Fbar1[mu])/n*pa->Fbar2_th[TH_LAMBDA_MEAN] - S2[mu][j]/n*Fbar1_th[TH_LAMBDA_MEAN];
-        for (int th = 0; th < TH_N; th++)
-          pa->mean_node[MEAN_NODE_S3_TH + th][j] = domega3[th][j] + dF3_th[th][j] - Fbar3_th[th] - D2thtilde1[th][j]
-                            - (domega1[th][j] + pa->F_th[th][j] - Fbar1_th[th])/n*pa->Fbar2_th[TH_LAMBDA_MEAN]
-                            - S2_th[th][j]/n*Fbar1_th[TH_LAMBDA_MEAN];
+        for (int mu = 0; mu < ECCPA_C_N; mu++)
+          pa->mean_node[ECCPA_MEAN_NODE_S3_C + mu][j] = dF3[mu][j] - Fbar3[mu] - D2ctilde1[mu][j]
+                               - (pa->node[ECCPA_NODE_F + mu][j] - Fbar1[mu])/n*pa->Fbar2_th[ECCPA_TH_LAMBDA_MEAN] - S2[mu][j]/n*Fbar1_th[ECCPA_TH_LAMBDA_MEAN];
+        for (int th = 0; th < ECCPA_TH_N; th++)
+          pa->mean_node[ECCPA_MEAN_NODE_S3_TH + th][j] = domega3[th][j] + dF3_th[th][j] - Fbar3_th[th] - D2thtilde1[th][j]
+                            - (domega1[th][j] + pa->F_th[th][j] - Fbar1_th[th])/n*pa->Fbar2_th[ECCPA_TH_LAMBDA_MEAN]
+                            - S2_th[th][j]/n*Fbar1_th[ECCPA_TH_LAMBDA_MEAN];
       }
       pa->s3_ok  = 1;
     }
 
     /* second pass gives Fbar^(2) + Fbar^(3); z part by same convolution as the
        first order */
-    pa->Fbarcorr[C_PPHI] = sum_dF23_pphi/P_r;
-    eccpa_convolve(dF23_a, dF23_b, pa->node[PA_X], N, kappa_mean_re, kappa_mean_im, alpha, beta, n,
-                   &pa->Fbarcorr[C_ALPHA], &pa->Fbarcorr[C_BETA]);
+    pa->Fbarcorr[ECCPA_C_PPHI] = sum_dF23_pphi/P_r;
+    eccpa_convolve(dF23_a, dF23_b, pa->node[ECCPA_NODE_X], N, kappa_mean_re, kappa_mean_im, alpha, beta, n,
+                   &pa->Fbarcorr[ECCPA_C_ALPHA], &pa->Fbarcorr[ECCPA_C_BETA]);
   } else {
-    for (int mu = 0; mu < C_N; mu++) pa->Fbarcorr[mu] = pa->Fbar2[mu];
+    for (int mu = 0; mu < ECCPA_C_N; mu++) pa->Fbarcorr[mu] = pa->Fbar2[mu];
   }
   /* add to first-order rates, kept in Fbar1 since pa->Fbar is overwritten here */
-  pa->Fbar[C_PPHI]  = Fbar1[C_PPHI]  + pa->Fbarcorr[C_PPHI];
-  pa->Fbar[C_ALPHA] = Fbar1[C_ALPHA] + pa->Fbarcorr[C_ALPHA];
-  pa->Fbar[C_BETA]  = Fbar1[C_BETA]  + pa->Fbarcorr[C_BETA];
-  pa->dc_dpphi[C_ALPHA] = (pa->Fbar[C_PPHI] != 0.0) ? pa->Fbar[C_ALPHA]/pa->Fbar[C_PPHI] : 0.0;
-  pa->dc_dpphi[C_BETA] = (pa->Fbar[C_PPHI] != 0.0) ? pa->Fbar[C_BETA]/pa->Fbar[C_PPHI] : 0.0;
+  pa->Fbar[ECCPA_C_PPHI]  = Fbar1[ECCPA_C_PPHI]  + pa->Fbarcorr[ECCPA_C_PPHI];
+  pa->Fbar[ECCPA_C_ALPHA] = Fbar1[ECCPA_C_ALPHA] + pa->Fbarcorr[ECCPA_C_ALPHA];
+  pa->Fbar[ECCPA_C_BETA]  = Fbar1[ECCPA_C_BETA]  + pa->Fbarcorr[ECCPA_C_BETA];
+  pa->dc_dpphi[ECCPA_C_ALPHA] = (pa->Fbar[ECCPA_C_PPHI] != 0.0) ? pa->Fbar[ECCPA_C_ALPHA]/pa->Fbar[ECCPA_C_PPHI] : 0.0;
+  pa->dc_dpphi[ECCPA_C_BETA] = (pa->Fbar[ECCPA_C_PPHI] != 0.0) ? pa->Fbar[ECCPA_C_BETA]/pa->Fbar[ECCPA_C_PPHI] : 0.0;
   status = 0;
 out:
   PostAdDynamics_free(&pa_nbr);
@@ -2405,23 +2468,23 @@ int eob_eccpa_corr_build(PostAdDynamics *pa, int n, Dynamics *dyn)
   int n3 = 0;                                /* checkpoints that carry third order */
   for (int k = 0; k < n_ckpt; k++) {
     const int i = (n_ckpt == 1) ? 0 : (int) ((double) k*(n - 1)/(n_ckpt - 1) + 0.5);
-    const double J  = pa->data[EVO_PPHI][i];
-    const double al = pa->data[EVO_ALPHA][i], be = pa->data[EVO_BETA][i];
+    const double J  = pa->data[ECCPA_EVO_PPHI][i];
+    const double al = pa->data[ECCPA_EVO_ALPHA][i], be = pa->data[ECCPA_EVO_BETA][i];
     /* first-order rates = Fbar - Fbarcorr; first failed checkpoint ends list */
     const int bad2 = eob_eccpa_rates_higher(pa, J, al, be, 1, dyn);
     if (bad2) break;   /* rest of evolution uses last checkpoint */
-    const double Fbar1J = pa->Fbar[C_PPHI] - pa->Fbarcorr[C_PPHI];
+    const double Fbar1J = pa->Fbar[ECCPA_C_PPHI] - pa->Fbarcorr[ECCPA_C_PPHI];
     /* Rate order 3 stores whole correction, rate order 2 second order alone */
     const double *corr = (EOBPars->postadiabatic_dynamics_ecc_rate >= 3) ? pa->Fbarcorr : pa->Fbar2;
 
     pa->ckpt_pphi[pa->ckpt_n]    = J;
-    pa->corr2_relJ[pa->ckpt_n] = (Fbar1J != 0.0) ? corr[C_PPHI]/Fbar1J : 0.0;
-    for (int th = 0; th < TH_N; th++)
+    pa->corr2_relJ[pa->ckpt_n] = (Fbar1J != 0.0) ? corr[ECCPA_C_PPHI]/Fbar1J : 0.0;
+    for (int th = 0; th < ECCPA_TH_N; th++)
       pa->corr2_relth[th][pa->ckpt_n] = (pa->omega[th] != 0.0) ? pa->Fbar2_th[th]/pa->omega[th] : 0.0;
     /* z correction divided by z (times conj(z)/|z|^2), so it can be interpolated and is
        proportional to z when multiplied back. */
     {
-      const double dr = corr[C_ALPHA], di = corr[C_BETA];
+      const double dr = corr[ECCPA_C_ALPHA], di = corr[ECCPA_C_BETA];
       const double r2 = al*al + be*be;
       pa->corr2_zr[pa->ckpt_n] = (r2 > 0.0) ? ( dr*al + di*be)/r2 : 0.0;
       pa->corr2_zi[pa->ckpt_n] = (r2 > 0.0) ? (-dr*be + di*al)/r2 : 0.0;
@@ -2431,27 +2494,27 @@ int eob_eccpa_corr_build(PostAdDynamics *pa, int n, Dynamics *dyn)
     if (EOBPars->postadiabatic_dynamics_ecc_map >= 2) {
       const int Nn = pa->nnodes;
       double zr[ECCPA_NODES_DIM], zi[ECCPA_NODES_DIM];
-      eccpa_to_peri(pa->mean_node[MEAN_NODE_CTILDE2 + C_ALPHA], pa->mean_node[MEAN_NODE_CTILDE2 + C_BETA], Nn, al, be,
+      eccpa_to_peri(pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_ALPHA], pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_BETA], Nn, al, be,
                     zr, zi);
-      const double *src[OSC_N] = { pa->mean_node[MEAN_NODE_CTILDE2 + C_PPHI], zr, zi,
-                                   pa->mean_node[MEAN_NODE_THTILDE2 + TH_LAMBDA_MEAN],
-                                   pa->mean_node[MEAN_NODE_THTILDE2 + TH_AZIMUTH] };
-      for (int sr = 0; sr < OSC_N; sr++) eccpa_osc_coefs_to_corr(src[sr], Nn, pa->corr2_osc_coef[sr], pa->ckpt_n);
+      const double *src[ECCPA_OSC_N] = { pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_PPHI], zr, zi,
+                                   pa->mean_node[ECCPA_MEAN_NODE_THTILDE2 + ECCPA_TH_LAMBDA_MEAN],
+                                   pa->mean_node[ECCPA_MEAN_NODE_THTILDE2 + ECCPA_TH_AZIMUTH] };
+      for (int sr = 0; sr < ECCPA_OSC_N; sr++) eccpa_osc_coefs_to_corr(src[sr], Nn, pa->corr2_osc_coef[sr], pa->ckpt_n);
     }
     if (EOBPars->postadiabatic_dynamics_ecc_map >= 3 && pa->s3_ok) {
       const int kk = pa->ckpt_n, Nn = pa->nnodes;
       pa->corr3_N[kk] = Nn;  pa->corr3_i[kk] = i;
       pa->corr3_Fbar1J[kk] = Fbar1J;  pa->corr3_Pr[kk] = pa->P_r;
-      for (int th = 0; th < TH_N; th++) {
+      for (int th = 0; th < ECCPA_TH_N; th++) {
         pa->corr3_domega_dJ[th][kk] = pa->domega_dJ[th];
         pa->corr3_domega_dU[th][kk] = pa->domega_dU[th];
       }
       for (int j = 0; j < Nn; j++) {
-        for (int mu = 0; mu < C_N; mu++) pa->corr3_src_c[mu][kk][j] = pa->mean_node[MEAN_NODE_S3_C + mu][j];
-        for (int th = 0; th < TH_N; th++) pa->corr3_src_th[th][kk][j] = pa->mean_node[MEAN_NODE_S3_TH + th][j];
-        pa->corr3_X[kk][j]    = pa->node[PA_X][j];
-        pa->corr3_dtdX[kk][j] = pa->node[PA_DTDX][j];
-        pa->corr3_Lam[kk][j]  = pa->mean_node[MEAN_NODE_LAM][j];
+        for (int mu = 0; mu < ECCPA_C_N; mu++) pa->corr3_src_c[mu][kk][j] = pa->mean_node[ECCPA_MEAN_NODE_S3_C + mu][j];
+        for (int th = 0; th < ECCPA_TH_N; th++) pa->corr3_src_th[th][kk][j] = pa->mean_node[ECCPA_MEAN_NODE_S3_TH + th][j];
+        pa->corr3_X[kk][j]    = pa->node[ECCPA_NODE_X][j];
+        pa->corr3_dtdX[kk][j] = pa->node[ECCPA_NODE_DTDX][j];
+        pa->corr3_Lam[kk][j]  = pa->mean_node[ECCPA_MEAN_NODE_LAM][j];
       }
       n3++;
     }
@@ -2482,11 +2545,11 @@ int eob_eccpa_corr_build(PostAdDynamics *pa, int n, Dynamics *dyn)
         }
         dw[q] = sum;
       }
-      double src3_c[C_N][ECCPA_NODES_DIM], ctilde3[C_N][ECCPA_NODES_DIM];
-      double src3_th[TH_N][ECCPA_NODES_DIM], thtilde3[TH_N][ECCPA_NODES_DIM];
+      double src3_c[ECCPA_C_N][ECCPA_NODES_DIM], ctilde3[ECCPA_C_N][ECCPA_NODES_DIM];
+      double src3_th[ECCPA_TH_N][ECCPA_NODES_DIM], thtilde3[ECCPA_TH_N][ECCPA_NODES_DIM];
       for (int j = 0; j < Nk; j++) {
         /* d/dpphi of c~(2) and theta~(2) */
-        double dct2[C_N] = { 0.0, 0.0, 0.0 }, dtht2[TH_N] = { 0.0, 0.0 };
+        double dct2[ECCPA_C_N] = { 0.0, 0.0, 0.0 }, dtht2[ECCPA_TH_N] = { 0.0, 0.0 };
         for (int q = 0; q < m; q++) {
           const int kq = k0 + q, iq = pa->corr3_i[kq];
           EccMapCoefs map_coefs_q;
@@ -2494,42 +2557,42 @@ int eob_eccpa_corr_build(PostAdDynamics *pa, int n, Dynamics *dyn)
           map_coefs_q.M = pa->evo_M[iq];
           for (int mm = 1; mm <= map_coefs_q.M; mm++)
             for (int c = 0; c < 2; c++)
-              map_coefs_q.kappa[TH_LAMBDA_MEAN][c][mm] = pa->evo_kappa[TH_LAMBDA_MEAN][c][mm][iq];
-          const double aq = pa->data[EVO_ALPHA][iq], bq = pa->data[EVO_BETA][iq];
+              map_coefs_q.kappa[ECCPA_TH_LAMBDA_MEAN][c][mm] = pa->evo_kappa[ECCPA_TH_LAMBDA_MEAN][c][mm][iq];
+          const double aq = pa->data[ECCPA_EVO_ALPHA][iq], bq = pa->data[ECCPA_EVO_BETA][iq];
           const double raq = sqrt(aq*aq + bq*bq), wq = eccpa_peri_angle(aq, bq);
           const double Xq = eccpa_X_of_Lam(&map_coefs_q, raq, wq, pa->corr3_Lam[k][j], pa->corr3_X[k][j]);
           const double chq = Xq - wq;
-          double v[OSC_N];
-          for (int sr = 0; sr < OSC_N; sr++) {
+          double v[ECCPA_OSC_N];
+          for (int sr = 0; sr < ECCPA_OSC_N; sr++) {
             v[sr] = pa->corr2_osc_coef[sr][0][0][kq];
             for (int mm = 1; mm <= ECCPA_HARMONICS_MAX; mm++)
               v[sr] += pa->corr2_osc_coef[sr][0][mm][kq]*cos(mm*chq) + pa->corr2_osc_coef[sr][1][mm][kq]*sin(mm*chq);
           }
           const double cq = cos(wq), sq = sin(wq);
-          dct2[C_PPHI]  += dw[q]*v[OSC_PPHI];
+          dct2[ECCPA_C_PPHI]  += dw[q]*v[ECCPA_OSC_PPHI];
           double za, zb;
-          eccpa_from_peri(v[OSC_Z_RE], v[OSC_Z_IM], cq, sq, &za, &zb);
-          dct2[C_ALPHA] += dw[q]*za;
-          dct2[C_BETA]  += dw[q]*zb;
-          for (int th = 0; th < TH_N; th++) dtht2[th] += dw[q]*v[OSC_TH + th];
+          eccpa_from_peri(v[ECCPA_OSC_Z_RE], v[ECCPA_OSC_Z_IM], cq, sq, &za, &zb);
+          dct2[ECCPA_C_ALPHA] += dw[q]*za;
+          dct2[ECCPA_C_BETA]  += dw[q]*zb;
+          for (int th = 0; th < ECCPA_TH_N; th++) dtht2[th] += dw[q]*v[ECCPA_OSC_TH + th];
         }
-        for (int mu = 0; mu < C_N; mu++) src3_c[mu][j] = pa->corr3_src_c[mu][k][j] - pa->corr3_Fbar1J[k]*dct2[mu];
-        for (int th = 0; th < TH_N; th++) src3_th[th][j] = pa->corr3_src_th[th][k][j] - pa->corr3_Fbar1J[k]*dtht2[th];
+        for (int mu = 0; mu < ECCPA_C_N; mu++) src3_c[mu][j] = pa->corr3_src_c[mu][k][j] - pa->corr3_Fbar1J[k]*dct2[mu];
+        for (int th = 0; th < ECCPA_TH_N; th++) src3_th[th][j] = pa->corr3_src_th[th][k][j] - pa->corr3_Fbar1J[k]*dtht2[th];
       }
-      for (int mu = 0; mu < C_N; mu++)
+      for (int mu = 0; mu < ECCPA_C_N; mu++)
         eccpa_osc_primitive(src3_c[mu], pa->corr3_dtdX[k], Nk, pa->corr3_Pr[k], ctilde3[mu]);
-      const double ak = pa->data[EVO_ALPHA][ik], bk = pa->data[EVO_BETA][ik];
+      const double ak = pa->data[ECCPA_EVO_ALPHA][ik], bk = pa->data[ECCPA_EVO_BETA][ik];
       for (int j = 0; j < Nk; j++)                       /* omega_,mu c~(3) */
-        for (int th = 0; th < TH_N; th++)
+        for (int th = 0; th < ECCPA_TH_N; th++)
           src3_th[th][j] += eccpa_dfreq(pa->corr3_domega_dJ[th][k], pa->corr3_domega_dU[th][k], ak, bk,
-                                        ctilde3[C_PPHI][j], ctilde3[C_ALPHA][j], ctilde3[C_BETA][j]);
-      for (int th = 0; th < TH_N; th++)
+                                        ctilde3[ECCPA_C_PPHI][j], ctilde3[ECCPA_C_ALPHA][j], ctilde3[ECCPA_C_BETA][j]);
+      for (int th = 0; th < ECCPA_TH_N; th++)
         eccpa_osc_primitive(src3_th[th], pa->corr3_dtdX[k], Nk, pa->corr3_Pr[k], thtilde3[th]);
       /* z parts measured from periastron, stored like c~(2) */
       double zr[ECCPA_NODES_DIM], zi[ECCPA_NODES_DIM];
-      eccpa_to_peri(ctilde3[C_ALPHA], ctilde3[C_BETA], Nk, ak, bk, zr, zi);
-      const double *srcs[OSC_N] = { ctilde3[C_PPHI], zr, zi, thtilde3[TH_LAMBDA_MEAN], thtilde3[TH_AZIMUTH] };
-      for (int sr = 0; sr < OSC_N; sr++) eccpa_osc_coefs_to_corr(srcs[sr], Nk, pa->corr3_osc_coef[sr], k);
+      eccpa_to_peri(ctilde3[ECCPA_C_ALPHA], ctilde3[ECCPA_C_BETA], Nk, ak, bk, zr, zi);
+      const double *srcs[ECCPA_OSC_N] = { ctilde3[ECCPA_C_PPHI], zr, zi, thtilde3[ECCPA_TH_LAMBDA_MEAN], thtilde3[ECCPA_TH_AZIMUTH] };
+      for (int sr = 0; sr < ECCPA_OSC_N; sr++) eccpa_osc_coefs_to_corr(srcs[sr], Nk, pa->corr3_osc_coef[sr], k);
     }
     pa->corr3_n = K;
   }
@@ -2557,14 +2620,14 @@ void eob_eccpa_corr_apply(const PostAdDynamics *corr_pa, PostAdDynamics *pa,
   const double zr   = eccpa_lag(wt, i0, corr_pa->corr2_zr);
   const double zi   = eccpa_lag(wt, i0, corr_pa->corr2_zi);
 
-  pa->Fbar[C_PPHI] *= 1.0 + relJ;
-  pa->Fbar[C_ALPHA] += zr*alpha - zi*beta;                                       /* (zr + i zi) z */
-  pa->Fbar[C_BETA] += zr*beta  + zi*alpha;
-  pa->dc_dpphi[C_ALPHA]  = (pa->Fbar[C_PPHI] != 0.0) ? pa->Fbar[C_ALPHA]/pa->Fbar[C_PPHI] : 0.0;
-  pa->dc_dpphi[C_BETA]  = (pa->Fbar[C_PPHI] != 0.0) ? pa->Fbar[C_BETA]/pa->Fbar[C_PPHI] : 0.0;
+  pa->Fbar[ECCPA_C_PPHI] *= 1.0 + relJ;
+  pa->Fbar[ECCPA_C_ALPHA] += zr*alpha - zi*beta;                                       /* (zr + i zi) z */
+  pa->Fbar[ECCPA_C_BETA] += zr*beta  + zi*alpha;
+  pa->dc_dpphi[ECCPA_C_ALPHA]  = (pa->Fbar[ECCPA_C_PPHI] != 0.0) ? pa->Fbar[ECCPA_C_ALPHA]/pa->Fbar[ECCPA_C_PPHI] : 0.0;
+  pa->dc_dpphi[ECCPA_C_BETA]  = (pa->Fbar[ECCPA_C_PPHI] != 0.0) ? pa->Fbar[ECCPA_C_BETA]/pa->Fbar[ECCPA_C_PPHI] : 0.0;
   /* angle corrections are not part of z equations; eccpa_store_sample adds them to the
      stored angle rates */
-  for (int th = 0; th < TH_N; th++) pa->Fbar2_th[th] = eccpa_lag(wt, i0, corr_pa->corr2_relth[th])*pa->omega[th];
+  for (int th = 0; th < ECCPA_TH_N; th++) pa->Fbar2_th[th] = eccpa_lag(wt, i0, corr_pa->corr2_relth[th])*pa->omega[th];
 }
 
 /**
@@ -2587,7 +2650,7 @@ int eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, doub
                       double *Jm, double *am, double *bm, double *th_m,
                       const PostAdDynamics *corr)
 {
-  *Jm = J0; *am = r_a; *bm = 0.0; th_m[TH_LAMBDA_MEAN] = X0; th_m[TH_AZIMUTH] = phi0;
+  *Jm = J0; *am = r_a; *bm = 0.0; th_m[ECCPA_TH_LAMBDA_MEAN] = X0; th_m[ECCPA_TH_AZIMUTH] = phi0;
 
   /* Lambda = X + T(X), lambda = phi - V(X) on osculating orbit */
   int osc_ok = !eob_eccpa_osc1(pa, J0, r_a, 0.0, 0, dyn);
@@ -2595,23 +2658,23 @@ int eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, doub
   if (osc_ok) {
     map_coefs_osc = pa->map_coefs;
   } else {
-    if (eob_eccpa_cons_orbit(pa, J0, r_a, dyn, PO_CUR)) return 1;
-    const int N0 = eccpa_nnodes(pa, pa->cons_orb[PO_CUR][PO_E_GEO], 0);
-    if (eccpa_cons_map_coefs_of_orbit(pa, J0, r_a, r_a, 0.0, PO_CUR, N0, dyn, &map_coefs_osc)) return 1;
+    if (eob_eccpa_cons_orbit(pa, J0, r_a, dyn, ECCPA_ORB_CUR)) return 1;
+    const int N0 = eccpa_nnodes(pa, pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E_GEO], 0);
+    if (eccpa_cons_map_coefs_of_orbit(pa, J0, r_a, r_a, 0.0, ECCPA_ORB_CUR, N0, dyn, &map_coefs_osc)) return 1;
   }
   double T0;
   eccpa_Tmap(&map_coefs_osc, r_a, X0, &T0, NULL);
-  double th_p[TH_N];
-  th_p[TH_LAMBDA_MEAN] = X0 + T0;
-  th_p[TH_AZIMUTH]     = phi0 + eccpa_ksum(map_coefs_osc.kappa[TH_AZIMUTH][0],
-                                           map_coefs_osc.kappa[TH_AZIMUTH][1],
+  double th_p[ECCPA_TH_N];
+  th_p[ECCPA_TH_LAMBDA_MEAN] = X0 + T0;
+  th_p[ECCPA_TH_AZIMUTH]     = phi0 + eccpa_ksum(map_coefs_osc.kappa[ECCPA_TH_AZIMUTH][0],
+                                           map_coefs_osc.kappa[ECCPA_TH_AZIMUTH][1],
                                            map_coefs_osc.M, r_a, X0, NULL);
-  for (int th = 0; th < TH_N; th++) th_m[th] = th_p[th];
+  for (int th = 0; th < ECCPA_TH_N; th++) th_m[th] = th_p[th];
   if (!osc_ok) return 1;
   /* one pass at first order, a second with higher orders */
   const int use_corr = (corr && order >= 3 && corr->corr3_n >= 2);
-  /* Fourier coefficients of c~(2) (first C_N rows) and theta~(2) (next TH_N), at order 2 */
-  double q2a[C_N + TH_N][ECCPA_HARMONICS_MAX+1], q2b[C_N + TH_N][ECCPA_HARMONICS_MAX+1];
+  /* Fourier coefficients of c~(2) (first ECCPA_C_N rows) and theta~(2) (next ECCPA_TH_N), at order 2 */
+  double q2a[ECCPA_C_N + ECCPA_TH_N][ECCPA_HARMONICS_MAX+1], q2b[ECCPA_C_N + ECCPA_TH_N][ECCPA_HARMONICS_MAX+1];
   double Xq = X0;
   for (int stage = 0; stage < (order < 2 ? 1 : 2); stage++) {
     if (stage && !use_corr) {
@@ -2619,10 +2682,10 @@ int eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, doub
          fail instead */
       if (eob_eccpa_rates_higher(pa, *Jm, *am, *bm, 0, dyn)) return 1;
       /* second-order parts fitted once, where they were built */
-      for (int mu = 0; mu < C_N; mu++)
-        eccpa_osc_coefs(pa->mean_node[MEAN_NODE_CTILDE2 + mu], pa->nnodes, q2a[mu], q2b[mu]);
-      for (int th = 0; th < TH_N; th++)
-        eccpa_osc_coefs(pa->mean_node[MEAN_NODE_THTILDE2 + th], pa->nnodes, q2a[C_N + th], q2b[C_N + th]);
+      for (int mu = 0; mu < ECCPA_C_N; mu++)
+        eccpa_osc_coefs(pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + mu], pa->nnodes, q2a[mu], q2b[mu]);
+      for (int th = 0; th < ECCPA_TH_N; th++)
+        eccpa_osc_coefs(pa->mean_node[ECCPA_MEAN_NODE_THTILDE2 + th], pa->nnodes, q2a[ECCPA_C_N + th], q2b[ECCPA_C_N + th]);
     }
     for (int it = 0; it < 4; it++) {
       /* first-order parts at current mean elements; very first pass reuses build
@@ -2631,27 +2694,27 @@ int eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, doub
       const double rab = sqrt(*am * *am + *bm * *bm);
       const double wb  = eccpa_peri_angle(*am, *bm);
       /* X_m on current mean orbit */
-      Xq = eccpa_X_of_Lam(&pa->map_coefs, rab, wb, th_m[TH_LAMBDA_MEAN], Xq);
+      Xq = eccpa_X_of_Lam(&pa->map_coefs, rab, wb, th_m[ECCPA_TH_LAMBDA_MEAN], Xq);
       const double chi = Xq - wb;
-      double g[OSC_N];
+      double g[ECCPA_OSC_N];
       eccpa_osc1_at(pa, chi, g);
       /* checkpoint z parts are from periastron, mean_node ones in (alpha, beta) */
-      double dJ = J0 - g[OSC_PPHI], zr = g[OSC_Z_RE], zi = g[OSC_Z_IM], qa = 0.0, qb = 0.0;
-      double th_new[TH_N];
-      for (int th = 0; th < TH_N; th++) th_new[th] = th_p[th] - g[OSC_TH + th];
+      double dJ = J0 - g[ECCPA_OSC_PPHI], zr = g[ECCPA_OSC_Z_RE], zi = g[ECCPA_OSC_Z_IM], qa = 0.0, qb = 0.0;
+      double th_new[ECCPA_TH_N];
+      for (int th = 0; th < ECCPA_TH_N; th++) th_new[th] = th_p[th] - g[ECCPA_OSC_TH + th];
       if (stage && use_corr) {
         for (int o = 2; o <= 3; o++) {
-          double osc[OSC_N];
+          double osc[ECCPA_OSC_N];
           eccpa_osc2_at(corr, o, *Jm, chi, osc);
-          dJ -= osc[OSC_PPHI]; zr += osc[OSC_Z_RE]; zi += osc[OSC_Z_IM];
-          for (int th = 0; th < TH_N; th++) th_new[th] -= osc[OSC_TH + th];
+          dJ -= osc[ECCPA_OSC_PPHI]; zr += osc[ECCPA_OSC_Z_RE]; zi += osc[ECCPA_OSC_Z_IM];
+          for (int th = 0; th < ECCPA_TH_N; th++) th_new[th] -= osc[ECCPA_OSC_TH + th];
         }
       } else if (stage) {
-        dJ -= eccpa_csum(q2a[C_PPHI], q2b[C_PPHI], ECCPA_HARMONICS_MAX, chi);
-        qa  = eccpa_csum(q2a[C_ALPHA], q2b[C_ALPHA], ECCPA_HARMONICS_MAX, chi);
-        qb  = eccpa_csum(q2a[C_BETA], q2b[C_BETA], ECCPA_HARMONICS_MAX, chi);
-        for (int th = 0; th < TH_N; th++)
-          th_new[th] -= eccpa_csum(q2a[C_N + th], q2b[C_N + th], ECCPA_HARMONICS_MAX, chi);
+        dJ -= eccpa_csum(q2a[ECCPA_C_PPHI], q2b[ECCPA_C_PPHI], ECCPA_HARMONICS_MAX, chi);
+        qa  = eccpa_csum(q2a[ECCPA_C_ALPHA], q2b[ECCPA_C_ALPHA], ECCPA_HARMONICS_MAX, chi);
+        qb  = eccpa_csum(q2a[ECCPA_C_BETA], q2b[ECCPA_C_BETA], ECCPA_HARMONICS_MAX, chi);
+        for (int th = 0; th < ECCPA_TH_N; th++)
+          th_new[th] -= eccpa_csum(q2a[ECCPA_C_N + th], q2b[ECCPA_C_N + th], ECCPA_HARMONICS_MAX, chi);
       }
       double za, zb;
       eccpa_from_peri(zr, zi, cos(wb), sin(wb), &za, &zb);
@@ -2661,7 +2724,7 @@ int eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, doub
       *Jm += dJ;
       *am += da;
       *bm += db;
-      for (int th = 0; th < TH_N; th++) th_m[th] = th_new[th];
+      for (int th = 0; th < ECCPA_TH_N; th++) th_m[th] = th_new[th];
       /* each pass shrinks step by a factor O(epsilon) */
       if (fabs(dJ) + fabs(da) + fabs(db) < 1e-14*(fabs(J0) + r_a)) break;
     }
@@ -2669,7 +2732,7 @@ int eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, doub
   return 0;
 }
 
-/* evolution */
+/** Evolution */
 
 /**
  * Function: eccpa_z_rhs
@@ -2678,27 +2741,27 @@ int eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, doub
  */
 static int eccpa_z_rhs(double u, const double y[], double dy[], void *params)
 {
-  eccpa_evo_par *P = (eccpa_evo_par *) params;
+  EccEvoPar *P = (EccEvoPar *) params;
   const double J = P->J0 - u;
   PostAdDynamics *pa = P->pa;
   const int status = eob_eccpa_rates(pa, J, y[0], y[1], 0, P->dyn);
   /* in second pass, add higher-order corrections from checkpoints */
   if (!status && P->corr) eob_eccpa_corr_apply(P->corr, pa, J, y[0], y[1]);
   if (J <= 0.0 || status
-      || !(pa->Fbar[C_PPHI] < 0.0) || !isfinite(pa->Fbar[C_ALPHA]) || !isfinite(pa->Fbar[C_BETA])) {
+      || !(pa->Fbar[ECCPA_C_PPHI] < 0.0) || !isfinite(pa->Fbar[ECCPA_C_ALPHA]) || !isfinite(pa->Fbar[ECCPA_C_BETA])) {
     dy[0] = dy[1] = 0.0;
     return GSL_EBADFUNC;
   }
   P->last_FbarE = pa->FbarE;
-  P->last_FbarJ = pa->Fbar[C_PPHI];
-  P->last_dc_dpphi[C_ALPHA] = pa->dc_dpphi[C_ALPHA]; P->last_dc_dpphi[C_BETA] = pa->dc_dpphi[C_BETA];
-  for (int th = 0; th < TH_N; th++) P->last_omega[th] = pa->omega[th];
+  P->last_FbarJ = pa->Fbar[ECCPA_C_PPHI];
+  P->last_dc_dpphi[ECCPA_C_ALPHA] = pa->dc_dpphi[ECCPA_C_ALPHA]; P->last_dc_dpphi[ECCPA_C_BETA] = pa->dc_dpphi[ECCPA_C_BETA];
+  for (int th = 0; th < ECCPA_TH_N; th++) P->last_omega[th] = pa->omega[th];
   P->last_adiab = pa->adiab;
   P->last_N = pa->nnodes;
-  /* d/du = -d/dpphi. pphi must keep decreasing (Fbar[C_PPHI] < 0, checked above, also false for
+  /* d/du = -d/dpphi. pphi must keep decreasing (Fbar[ECCPA_C_PPHI] < 0, checked above, also false for
      NaN), so dz/du has sign of zdot. */
-  dy[0] = -pa->dc_dpphi[C_ALPHA];
-  dy[1] = -pa->dc_dpphi[C_BETA];
+  dy[0] = -pa->dc_dpphi[ECCPA_C_ALPHA];
+  dy[1] = -pa->dc_dpphi[ECCPA_C_BETA];
   return GSL_SUCCESS;
 }
 
@@ -2710,40 +2773,40 @@ static int eccpa_z_rhs(double u, const double y[], double dy[], void *params)
  *
  *   @return  0 on success, 1 if no orbit was found
  */
-static int eccpa_store_sample(const eccpa_evo_par *P, double u, const double y[], int order,
+static int eccpa_store_sample(const EccEvoPar *P, double u, const double y[], int order,
                         int q)
 {
   PostAdDynamics *pa = P->pa;
   const double J   = P->J0 - u;
   const double r_a = sqrt(y[0]*y[0] + y[1]*y[1]);
-  if (eob_eccpa_cons_orbit(pa, J, r_a, P->dyn, PO_CUR)) return 1;
-  /* periastron of this sample, for rmin stop; PO_CUR is overwritten below */
-  pa->rmin_last = pa->cons_orb[PO_CUR][PO_R_C] - pa->cons_orb[PO_CUR][PO_R_A];
+  if (eob_eccpa_cons_orbit(pa, J, r_a, P->dyn, ECCPA_ORB_CUR)) return 1;
+  /* periastron of this sample, for rmin stop; ECCPA_ORB_CUR is overwritten below */
+  pa->rmin_last = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C] - pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_A];
 
-  pa->data[EVO_PPHI][q]  = J;
-  pa->data[EVO_ALPHA][q] = y[0];
-  pa->data[EVO_BETA][q]  = y[1];
-  pa->data[EVO_DADJ][q]  = P->last_dc_dpphi[C_ALPHA];
-  pa->data[EVO_DBDJ][q]  = P->last_dc_dpphi[C_BETA];
-  pa->data[EVO_E][q]     = pa->cons_orb[PO_CUR][PO_E];
-  pa->data[EVO_E_GEO][q] = pa->cons_orb[PO_CUR][PO_E_GEO];
+  pa->data[ECCPA_EVO_PPHI][q]  = J;
+  pa->data[ECCPA_EVO_ALPHA][q] = y[0];
+  pa->data[ECCPA_EVO_BETA][q]  = y[1];
+  pa->data[ECCPA_EVO_DADJ][q]  = P->last_dc_dpphi[ECCPA_C_ALPHA];
+  pa->data[ECCPA_EVO_DBDJ][q]  = P->last_dc_dpphi[ECCPA_C_BETA];
+  pa->data[ECCPA_EVO_E][q]     = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E];
+  pa->data[ECCPA_EVO_E_GEO][q] = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E_GEO];
   /* r_circ depends on pphi only; reconstruction interpolates it */
-  pa->data[EVO_RCIRC][q] = pa->cons_orb[PO_CUR][PO_R_CIRC];
-  pa->data[EVO_FBAR_PPHI][q]  = P->last_FbarJ;
-  for (int th = 0; th < TH_N; th++) pa->data[EVO_OMEGA + th][q] = P->last_omega[th];
-  pa->data[EVO_ADIAB][q] = P->last_adiab;
+  pa->data[ECCPA_EVO_RCIRC][q] = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_CIRC];
+  pa->data[ECCPA_EVO_FBAR_PPHI][q]  = P->last_FbarJ;
+  for (int th = 0; th < ECCPA_TH_N; th++) pa->data[ECCPA_EVO_OMEGA + th][q] = P->last_omega[th];
+  pa->data[ECCPA_EVO_ADIAB][q] = P->last_adiab;
   pa->time[q] = 0.0;
-  for (int th = 0; th < TH_N; th++) pa->data[EVO_TH + th][q] = pa->data[EVO_FBAR_TH + th][q] = 0.0;
-  for (int a = 0; a < OSC_N; a++)
+  for (int th = 0; th < ECCPA_TH_N; th++) pa->data[ECCPA_EVO_TH + th][q] = pa->data[ECCPA_EVO_FBAR_TH + th][q] = 0.0;
+  for (int a = 0; a < ECCPA_OSC_N; a++)
     for (int c = 0; c < 2; c++)
       for (int m = 0; m <= ECCPA_HARMONICS_MAX; m++) pa->evo_osc1_coef[a][c][m][q] = 0.0;
   if (order < 1) {
     /* LO has no oscillating parts, but reconstruction still needs T and V, to get X from
        Lambda and phi from lambda. */
     EccMapCoefs map_coefs;
-    if (eccpa_cons_map_coefs_of_orbit(pa, J, r_a, y[0], y[1], PO_CUR, P->last_N, P->dyn, &map_coefs))
+    if (eccpa_cons_map_coefs_of_orbit(pa, J, r_a, y[0], y[1], ECCPA_ORB_CUR, P->last_N, P->dyn, &map_coefs))
       return 1;   /* without T and V sample can't be stored, as at higher order */
-    for (int th = 0; th < TH_N; th++)
+    for (int th = 0; th < ECCPA_TH_N; th++)
       for (int c = 0; c < 2; c++)
         for (int m = 0; m <= ECCPA_HARMONICS_MAX; m++) {
           pa->evo_kappa[th][c][m][q]    = map_coefs.kappa[th][c][m];
@@ -2758,18 +2821,18 @@ static int eccpa_store_sample(const eccpa_evo_par *P, double u, const double y[]
   /* oscillating parts are built when map or rate needs them. phase order
      only decides whether their averaged phase rates enter phases. */
   if (EOBPars->postadiabatic_dynamics_ecc_phase >= 1)
-    for (int th = 0; th < TH_N; th++) pa->data[EVO_FBAR_TH + th][q] = pa->Fbar_th[th];
+    for (int th = 0; th < ECCPA_TH_N; th++) pa->data[ECCPA_EVO_FBAR_TH + th][q] = pa->Fbar_th[th];
   if (P->corr) {
     /* second-order phase rates come from checkpoint corrections. call also
        corrects z rates in pa, so it is outside phase-order test. */
     eob_eccpa_corr_apply(P->corr, pa, J, y[0], y[1]);
     if (EOBPars->postadiabatic_dynamics_ecc_phase >= 2)
-      for (int th = 0; th < TH_N; th++) pa->data[EVO_FBAR_TH + th][q] += pa->Fbar2_th[th];
+      for (int th = 0; th < ECCPA_TH_N; th++) pa->data[ECCPA_EVO_FBAR_TH + th][q] += pa->Fbar2_th[th];
   }
   /* Map coefficients, and their derivative in U (one-sided difference with neighbour at
      U + dU). reconstruction uses it at osculating U. */
   const double idU = (pa->map_coefs_dU_step != 0.0) ? 1.0/pa->map_coefs_dU_step : 0.0;
-  for (int th = 0; th < TH_N; th++)
+  for (int th = 0; th < ECCPA_TH_N; th++)
     for (int c = 0; c < 2; c++)
       for (int m = 0; m <= ECCPA_HARMONICS_MAX; m++) {
         pa->evo_kappa[th][c][m][q]    = pa->map_coefs.kappa[th][c][m];
@@ -2777,7 +2840,7 @@ static int eccpa_store_sample(const eccpa_evo_par *P, double u, const double y[]
                                          - pa->map_coefs.kappa[th][c][m])*idU;
       }
   pa->evo_M[q] = pa->map_coefs.M;
-  for (int a = 0; a < OSC_N; a++)
+  for (int a = 0; a < ECCPA_OSC_N; a++)
     for (int m = 0; m <= ECCPA_HARMONICS_MAX; m++) {
       pa->evo_osc1_coef[a][0][m][q] = pa->osc1_coef[a].a[m];
       pa->evo_osc1_coef[a][1][m][q] = pa->osc1_coef[a].b[m];
@@ -2811,7 +2874,7 @@ int eob_eccpa_evolve(PostAdDynamics *pa, double J0, double alpha0, double beta0,
 
   const double hmax_rel = ECCPA_EVO_STEP_MAX;
 
-  eccpa_evo_par P;
+  EccEvoPar P;
   P.dyn = dyn; P.pa = pa; P.J0 = J0; P.corr = NULL;
   double y[2] = { alpha0, beta0 };
   double u = 0.0, dy0[2];
@@ -2830,11 +2893,11 @@ int eob_eccpa_evolve(PostAdDynamics *pa, double J0, double alpha0, double beta0,
     /* Redo osculating -> mean map of initial data at third order, now that the
        checkpoint corrections include third-order map. */
     if (EOBPars->postadiabatic_dynamics_ecc_map >= 3 && pa->corr3_n >= 2 && pa->ic_valid == 1) {
-      double Jm, am, bm, th_m[TH_N];
+      double Jm, am, bm, th_m[ECCPA_TH_N];
       if (!eob_eccpa_to_mean(pa, pa->ic_J0, pa->ic_ra, pa->ic_X0, pa->ic_phi0, 3, dyn,
                              &Jm, &am, &bm, th_m, pa)) {
         J0 = Jm;  P.J0 = Jm;  y[0] = am;  y[1] = bm;
-        for (int th = 0; th < TH_N; th++) pa->ic_th_off[th] = th_m[th];
+        for (int th = 0; th < ECCPA_TH_N; th++) pa->ic_th_off[th] = th_m[th];
         pa->ic_valid = 2;
       }
     }
@@ -2845,13 +2908,13 @@ int eob_eccpa_evolve(PostAdDynamics *pa, double J0, double alpha0, double beta0,
 
   /* first step: fraction of pphi change over one RR time */
   double h = ECCPA_EVO_STEP_FIRST*fabs(P.last_FbarJ)
-             *fabs((pa->data[EVO_E][0] - 1.0/EOBPars->nu)/P.last_FbarE);
+             *fabs((pa->data[ECCPA_EVO_E][0] - 1.0/EOBPars->nu)/P.last_FbarE);
   if (!(h > 0.0) || h > hmax_rel*J0) h = hmax_rel*J0;
   const double u_end = J0;    /* pphi = 0 is never reached; a stopping condition comes first */
 
   /* abs tolerance relative to initial r_c */
-  if (eob_eccpa_cons_orbit(pa, J0, sqrt(y[0]*y[0] + y[1]*y[1]), dyn, PO_CUR)) return 1;
-  const double atol = ECCPA_EVO_ATOL*pa->cons_orb[PO_CUR][PO_R_C];
+  if (eob_eccpa_cons_orbit(pa, J0, sqrt(y[0]*y[0] + y[1]*y[1]), dyn, ECCPA_ORB_CUR)) return 1;
+  const double atol = ECCPA_EVO_ATOL*pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C];
 
   gsl_odeiv2_system sys = { eccpa_z_rhs, NULL, 2, &P };
   /* rkf45: few RHS calls, no Jacobian */
@@ -2864,7 +2927,7 @@ int eob_eccpa_evolve(PostAdDynamics *pa, double J0, double alpha0, double beta0,
     double y_prev[2];
     memcpy(y_prev, y, sizeof y_prev);
     const double u_prev = u;
-    const double adiab_prev = pa->data[EVO_ADIAB][pa->n_samples - 1];
+    const double adiab_prev = pa->data[ECCPA_EVO_ADIAB][pa->n_samples - 1];
 
     const int status = gsl_odeiv2_evolve_apply(ev, ct, stepper, &sys, &u, u_end, &h, y);
     if (status == GSL_EBADFUNC) {
@@ -2892,10 +2955,10 @@ int eob_eccpa_evolve(PostAdDynamics *pa, double J0, double alpha0, double beta0,
     const int S = pa->n_samples - 1;
     if (rmin > 0.0 && pa->rmin_last < rmin) break;
 
-    if (pa->data[EVO_ADIAB][S] > amax) {
+    if (pa->data[ECCPA_EVO_ADIAB][S] > amax) {
       /* adiabaticity crossed amax in this step: regula falsi on log(adiab/amax) */
       const double span = u - u_prev;
-      double f_lo = log(adiab_prev/amax), f_hi = log(pa->data[EVO_ADIAB][S]/amax);
+      double f_lo = log(adiab_prev/amax), f_hi = log(pa->data[ECCPA_EVO_ADIAB][S]/amax);
       double lo = 0.0, hi = 1.0;
       for (int it = 0; it < 5; it++) {
         if (f_hi == f_lo) break;
@@ -2956,13 +3019,11 @@ int eob_eccpa_evolve(PostAdDynamics *pa, double J0, double alpha0, double beta0,
  *   Driver hook (Sec. II C): initial point -> mean elements, evolution, reconstruction, handoff.
  *
  *   @param[in,out] dynp  : Dynamics; advanced to handoff on success
- *   @param[out]    t_adv : time advanced (may be NULL)
  *   @param[out]    n_pa  : samples written (may be NULL)
  *   @return  0 if dynamics were advanced, non-zero if stage declined
  */
-int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
+int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
 {
-  if (t_adv) *t_adv = 0.0;
   if (n_pa)  *n_pa  = 0;
   Dynamics *dyn = *dynp;
 
@@ -2973,17 +3034,15 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
 
   /* skip stage if reconstruction needs more than _nper samples (App. C) */
   if (eob_eccpa_nper(EOBPars->ecc) > EOBPars->postadiabatic_dynamics_ecc_nper) {
-    if (VERBOSE)
-      printf("Eccentric PA (equinoctial): eccentricity %.4f needs %d samples per orbital period "
-             "and nper is %d; skipping.\n", EOBPars->ecc, eob_eccpa_nper(EOBPars->ecc),
-             EOBPars->postadiabatic_dynamics_ecc_nper);
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, e = %.4f needs %d samples per period, nper = %d, stage skipped\n",
+                        EOBPars->ecc, eob_eccpa_nper(EOBPars->ecc), EOBPars->postadiabatic_dynamics_ecc_nper);
     return 1;
   }
 
 
   PostAdDynamics *pa = NULL;
   if (PostAdDynamics_alloc(&pa, 1024)) {
-    if (VERBOSE) printf("Eccentric PA (equinoctial): out of memory; skipping.\n");
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, out of memory, stage skipped\n");
     return 1;
   }
   pa->nmax = ECCPA_NODES_MAX_STAGE;   /* for stage; initial data keep ECCPA_NODES_MAX */
@@ -2992,36 +3051,33 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
      anomaly is chi. */
   double E0;
   eob_ecc_ham(r0, prstar0, J0, dyn, &E0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-  if (eob_eccpa_cons_turning_points(pa, E0, J0, r0, dyn, PO_CUR)) {
-    if (VERBOSE)
-      printf("Eccentric PA (equinoctial): no bound orbit through r = %.4f, prstar = %.3e at "
-             "pphi = %.4f; skipping.\n", r0, prstar0, J0);
-    goto fail;
+  if (eob_eccpa_cons_turning_points(pa, E0, J0, r0, dyn, ECCPA_ORB_CUR)) {
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, no bound orbit through r = %.4f, prstar = %.3e, pphi = %.4f, stage skipped\n",
+                        r0, prstar0, J0);
+    goto out;
   }
-  const double r_a = pa->cons_orb[PO_CUR][PO_R_A];
-  double cc = (r_a > 0.0) ? (pa->cons_orb[PO_CUR][PO_R_C] - r0)/r_a : 1.0;
+  const double r_a = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_A];
+  double cc = (r_a > 0.0) ? (pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C] - r0)/r_a : 1.0;
   if (cc >  1.0) cc =  1.0;
   if (cc < -1.0) cc = -1.0;
   /* same orbit from (pphi, r_a). two must agree, and r_c - r_a > 1; otherwise z of a
      wrong orbit would grow without bound. */
-  if (eob_eccpa_cons_orbit(pa, J0, r_a, dyn, PO_AUX)
-      || !(pa->cons_orb[PO_AUX][PO_R_C] - r_a > 1.0)
-      || !(fabs(pa->cons_orb[PO_AUX][PO_R_C] - pa->cons_orb[PO_CUR][PO_R_C]) < 1e-6*fabs(r0))) {
-    if (VERBOSE)
-      printf("Eccentric PA (equinoctial): no bound orbit through r = %.4f at pphi = %.4f "
-             "(half-width %.4g, r_c %.6f against %.6f); skipping.\n", r0, J0, r_a,
-             pa->cons_orb[PO_AUX][PO_R_C], pa->cons_orb[PO_CUR][PO_R_C]);
-    goto fail;
+  if (eob_eccpa_cons_orbit(pa, J0, r_a, dyn, ECCPA_ORB_AUX)
+      || !(pa->cons_orb[ECCPA_ORB_AUX][ECCPA_ORB_R_C] - r_a > 1.0)
+      || !(fabs(pa->cons_orb[ECCPA_ORB_AUX][ECCPA_ORB_R_C] - pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C]) < 1e-6*fabs(r0))) {
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, no bound orbit through r = %.4f, pphi = %.4f (r_a %.4g, r_c %.6f vs %.6f), stage skipped\n",
+                        r0, J0, r_a, pa->cons_orb[ECCPA_ORB_AUX][ECCPA_ORB_R_C], pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C]);
+    goto out;
   }
 
   /* anomaly of initial point by atan2, Eqs. (39)-(40); Wstar depends on X */
-  /* orbit from (pphi, r_a), already solved in PO_AUX above */
-  memcpy(pa->cons_orb[PO_CUR], pa->cons_orb[PO_AUX], sizeof pa->cons_orb[PO_CUR]);
-  pa->cons_gap[PO_CUR] = pa->cons_gap[PO_AUX];
+  /* orbit from (pphi, r_a), already solved in ECCPA_ORB_AUX above */
+  memcpy(pa->cons_orb[ECCPA_ORB_CUR], pa->cons_orb[ECCPA_ORB_AUX], sizeof pa->cons_orb[ECCPA_ORB_CUR]);
+  pa->cons_gap[ECCPA_ORB_CUR] = pa->cons_gap[ECCPA_ORB_AUX];
   double X0 = acos(cc);
   if (prstar0 < 0.0) X0 = 2.0*Pi - X0;
   for (int it = 0; it < 3 && r_a > 0.0; it++) {
-    eob_eccpa_cons_sample_point(pa, PO_CUR, r_a, 0.0, X0, 0, dyn);
+    eob_eccpa_cons_sample_point(pa, ECCPA_ORB_CUR, r_a, 0.0, X0, 0, dyn);
     if (!(pa->Wstar > 0.0)) break;
     const double sX = prstar0/(r_a*pa->Wstar);
     const double Xn = atan2(sX, cc);
@@ -3031,12 +3087,11 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
   }
 
   /* osculating -> mean at map order of level; mean angles are phase offsets */
-  double J0m, alpha0, beta0, th_off[TH_N];
+  double J0m, alpha0, beta0, th_off[ECCPA_TH_N];
   if (eob_eccpa_to_mean(pa, J0, r_a, X0, phi0, EOBPars->postadiabatic_dynamics_ecc_map, dyn,
                         &J0m, &alpha0, &beta0, th_off, NULL)) {
-    if (VERBOSE) printf("Eccentric PA (equinoctial): the osculating -> mean conversion of the "
-                        "initial data failed; skipping.\n");
-    goto fail;
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, osculating -> mean map of initial data failed, stage skipped\n");
+    goto out;
   }
 
   /* osculating initial state, to redo conversion at third order once checkpoint
@@ -3051,23 +3106,23 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
   if (!rc) rc = eob_eccpa_phases(pa, n, 0, dyn);
   PROF_STOP(PROF_ECCPA_SEC);
   if (rc || n < 4) {
-    if (VERBOSE) printf("Eccentric PA (equinoctial): evolution did not run, skipping.\n");
-    goto fail;
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, evolution failed, stage skipped\n");
+    goto out;
   }
 
   if (pa->ic_valid == 2)
-    for (int th = 0; th < TH_N; th++) th_off[th] = pa->ic_th_off[th];
+    for (int th = 0; th < ECCPA_TH_N; th++) th_off[th] = pa->ic_th_off[th];
 
   /* add offsets, initial time and mean angles of initial data */
   {
     const double t_off = dyn->t;
     for (int i = 0; i < n; i++) {
       pa->time[i] += t_off;
-      for (int th = 0; th < TH_N; th++) pa->data[EVO_TH + th][i] += th_off[th];
+      for (int th = 0; th < ECCPA_TH_N; th++) pa->data[ECCPA_EVO_TH + th][i] += th_off[th];
     }
     for (int k = 0; k < pa->fine_n; k++) {     /* and fine grid, which reconstruction reads */
       pa->fine_t[k] += t_off;
-      for (int th = 0; th < TH_N; th++) pa->fine_th[th][k] += th_off[th];
+      for (int th = 0; th < ECCPA_TH_N; th++) pa->fine_th[th][k] += th_off[th];
     }
   }
 
@@ -3077,25 +3132,23 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
   pa->n_samples = n;
   if (pa->time[n-1] > dyn->t_stop) {
     /* skip stage if even first samples are past t_stop */
-    if (VERBOSE) printf("Eccentric PA (equinoctial): ode_tmax is inside the first few secular "
-                        "steps, skipping.\n");
-    goto fail;
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, ode_tmax inside first secular steps, stage skipped\n");
+    goto out;
   }
 
   const double span = pa->time[n-1] - pa->time[0];
-  const double P_r0 = 2.0*Pi/pa->data[EVO_OMEGA + TH_LAMBDA_MEAN][0];
+  const double P_r0 = 2.0*Pi/pa->data[ECCPA_EVO_OMEGA + ECCPA_TH_LAMBDA_MEAN][0];
   if (!(span > 2.0*P_r0)) {
-    if (VERBOSE) printf("Eccentric PA (equinoctial): nothing to gain (%.1f radial periods), "
-                        "skipping.\n", span/P_r0);
-    goto fail;
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, only %.1f radial periods to gain, stage skipped\n", span/P_r0);
+    goto out;
   }
 
   /* DEBUG: reconstruct only last export_window SPA widths before handoff */
   double t_rec0 = pa->time[0];
   if (DEBUG && EOBPars->postadiabatic_dynamics_ecc_export && EOBPars->postadiabatic_dynamics_ecc_export_window > 0.0) {
     const int kf = find_point_bisection(pa->time[n-1], pa->fine_n, pa->fine_t, 1);
-    const double psdd = 2.0*(pa->fine_dth_dpphi[TH_AZIMUTH][kf+1]/pa->fine_dt_dpphi[kf+1]
-                             - pa->fine_dth_dpphi[TH_AZIMUTH][kf]/pa->fine_dt_dpphi[kf])/(pa->fine_t[kf+1] - pa->fine_t[kf]);
+    const double psdd = 2.0*(pa->fine_dth_dpphi[ECCPA_TH_AZIMUTH][kf+1]/pa->fine_dt_dpphi[kf+1]
+                             - pa->fine_dth_dpphi[ECCPA_TH_AZIMUTH][kf]/pa->fine_dt_dpphi[kf])/(pa->fine_t[kf+1] - pa->fine_t[kf]);
     if (psdd > 0.0)
       t_rec0 = pa->time[n-1] - EOBPars->postadiabatic_dynamics_ecc_export_window*sqrt(2.0*Pi/psdd);
     if (t_rec0 < pa->time[0]) t_rec0 = pa->time[0];
@@ -3108,14 +3161,14 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
        most nper. */
     int nper_use = ECCPA_NPER_MIN;
     for (int q = 0; q < n; q++) {
-      const int nq = eob_eccpa_nper(pa->data[EVO_E_GEO][q]);
+      const int nq = eob_eccpa_nper(pa->data[ECCPA_EVO_E_GEO][q]);
       if (nq > nper_use) nper_use = nq;
     }
     if (nper_use > nper) nper_use = nper;
     if (nper_use < 2) nper_use = 2;
 
     /* Omega grows, so step is smallest at handoff, which bounds number of samples */
-    const int want = (int)((pa->time[n-1] - t_rec0)*pa->data[EVO_OMEGA + TH_AZIMUTH][n-1]/(2.0*Pi)*nper_use) + 8;
+    const int want = (int)((pa->time[n-1] - t_rec0)*pa->data[ECCPA_EVO_OMEGA + ECCPA_TH_AZIMUTH][n-1]/(2.0*Pi)*nper_use) + 8;
     if (want > dyn->size) {
       Dynamics_push(dynp, want + 16);
       dyn = *dynp;
@@ -3160,16 +3213,16 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
     PROF_STOP(PROF_ECCPA_RECON);
     if (t < pa->time[n-1]) {
       /* a sample failed: a gap before handoff would be bridged silently, so decline */
-      if (VERBOSE) printf("Eccentric PA (equinoctial): reconstruction failed at t = %g; skipping.\n", t);
-      goto fail;
+      if (VERBOSE) printf("WARNING: eob_eccpa_advance, reconstruction failed at t = %g, stage skipped\n", t);
+      goto out;
     }
     if (nrec < 2) nrec = 0;
   }
 
   /* handoff state. */
   if (eob_eccpa_recon(pa, n, pa->time[n-1], dyn)) {
-    if (VERBOSE) printf("Eccentric PA (equinoctial): handoff reconstruction failed.\n");
-    goto fail;
+    if (VERBOSE) printf("WARNING: eob_eccpa_advance, handoff reconstruction failed, stage skipped\n");
+    goto out;
   }
 
   EOBPars->pa_tab3_n    = pa->corr3_n;
@@ -3207,28 +3260,28 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
     sprintf(fname, "%s/eccpa_secular.txt", EOBPars->output_dir);
     if ((fp = fopen(fname, "w"))) {
       fprintf(fp, "#");
-      for (int v = 0; v <= EVO_NVARS; v++) fprintf(fp, " %s", pa_sec_var[v]);
+      for (int v = 0; v <= ECCPA_EVO_NVARS; v++) fprintf(fp, " %s", eccpa_sec_var[v]);
       fprintf(fp, "\n");
       for (int q = 0; q < n; q++) {
         fprintf(fp, "%.16e", pa->time[q]);
-        for (int v = 0; v < EVO_NVARS; v++) fprintf(fp, " %.16e", pa->data[v][q]);
+        for (int v = 0; v < ECCPA_EVO_NVARS; v++) fprintf(fp, " %.16e", pa->data[v][q]);
         fprintf(fp, "\n");
       }
       fclose(fp);
     }
-    const double *fcol[PAF_NVARS] = {
-      [PAF_PPHI]     = pa->fine_pphi,     [PAF_T]        = pa->fine_t,
-      [PAF_LAM_RAD]  = pa->fine_th[TH_LAMBDA_MEAN], [PAF_LAM_AZI] = pa->fine_th[TH_AZIMUTH],
-      [PAF_DT]       = pa->fine_dt_dpphi,
-      [PAF_DLAM_RAD] = pa->fine_dth_dpphi[TH_LAMBDA_MEAN], [PAF_DLAM_AZI] = pa->fine_dth_dpphi[TH_AZIMUTH],
+    const double *fcol[ECCPA_FINE_NVARS] = {
+      [ECCPA_FINE_PPHI]     = pa->fine_pphi,     [ECCPA_FINE_T]        = pa->fine_t,
+      [ECCPA_FINE_LAM_RAD]  = pa->fine_th[ECCPA_TH_LAMBDA_MEAN], [ECCPA_FINE_LAM_AZI] = pa->fine_th[ECCPA_TH_AZIMUTH],
+      [ECCPA_FINE_DT]       = pa->fine_dt_dpphi,
+      [ECCPA_FINE_DLAM_RAD] = pa->fine_dth_dpphi[ECCPA_TH_LAMBDA_MEAN], [ECCPA_FINE_DLAM_AZI] = pa->fine_dth_dpphi[ECCPA_TH_AZIMUTH],
     };
     sprintf(fname, "%s/eccpa_phase.txt", EOBPars->output_dir);
     if ((fp = fopen(fname, "w"))) {
       fprintf(fp, "#");
-      for (int v = 0; v < PAF_NVARS; v++) fprintf(fp, " %s", pa_fine_var[v]);
+      for (int v = 0; v < ECCPA_FINE_NVARS; v++) fprintf(fp, " %s", eccpa_fine_var[v]);
       fprintf(fp, "\n");
       for (int k = 0; k < pa->fine_n; k++) {
-        for (int v = 0; v < PAF_NVARS; v++) fprintf(fp, "%s%.16e", v ? " " : "", fcol[v][k]);
+        for (int v = 0; v < ECCPA_FINE_NVARS; v++) fprintf(fp, "%s%.16e", v ? " " : "", fcol[v][k]);
         fprintf(fp, "\n");
       }
       fclose(fp);
@@ -3241,7 +3294,7 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
         if (DEBUG) printf("WARNING: postadiabatic_dynamics_ecc_export_nodes above ECCPA_NODES_DIM, nodes not written\n");
         goto export_done;
       }
-      const int nm = EOBPars->use_mode_lm_size, ncol = PAN_NVARS + 2*nm;
+      const int nm = EOBPars->use_mode_lm_size, ncol = ECCPA_EXP_NVARS + 2*nm;
       const long nqi = (long) n*Nw;
       double *out = (double *) malloc(5*ncol*nqi*sizeof(double));
       if (!out) goto export_done;
@@ -3251,50 +3304,50 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
       Waveform_lm_t hn;
       EccMapCoefs map_coefs_n;
       double y[EOB_EVOLVE_NVARS], dy[EOB_EVOLVE_NVARS];
-      const int gcol[5][2] = { {PAN_YJ, OSC_PPHI}, {PAN_YZR, OSC_Z_RE}, {PAN_YZI, OSC_Z_IM},
-                               {PAN_V1, OSC_TH + TH_LAMBDA_MEAN}, {PAN_W1, OSC_TH + TH_AZIMUTH} };
+      const int gcol[5][2] = { {ECCPA_EXP_YJ, ECCPA_OSC_PPHI}, {ECCPA_EXP_YZR, ECCPA_OSC_Z_RE}, {ECCPA_EXP_YZI, ECCPA_OSC_Z_IM},
+                               {ECCPA_EXP_V1, ECCPA_OSC_TH + ECCPA_TH_LAMBDA_MEAN}, {ECCPA_EXP_W1, ECCPA_OSC_TH + ECCPA_TH_AZIMUTH} };
       for (int q = 0; q < n; q++)
         for (int ob = 0; ob < 5; ob++) {
           const double sa = 1.0 + 1e-4*((ob == 1) - (ob == 2));
-          const double J  = pa->data[EVO_PPHI][q]*(1.0 + 1e-4*((ob == 3) - (ob == 4)));
-          const double a  = pa->data[EVO_ALPHA][q]*sa, b = pa->data[EVO_BETA][q]*sa;
+          const double J  = pa->data[ECCPA_EVO_PPHI][q]*(1.0 + 1e-4*((ob == 3) - (ob == 4)));
+          const double a  = pa->data[ECCPA_EVO_ALPHA][q]*sa, b = pa->data[ECCPA_EVO_BETA][q]*sa;
           const double ra = sqrt(a*a + b*b), w = eccpa_peri_angle(a, b);
-          const int bad = eob_eccpa_cons_orbit(pa, J, ra, dn, PO_CUR)
-                       || eob_eccpa_cons_sample_nodes(pa, PO_CUR, a, b, Nw, 0, dn, NULL, NULL) < 0
-                       || eccpa_cons_map_coefs(pa, PO_CUR, pa->node[PA_DTDX], pa->node[PA_OMG], Nw, dn, &map_coefs_n);
+          const int bad = eob_eccpa_cons_orbit(pa, J, ra, dn, ECCPA_ORB_CUR)
+                       || eob_eccpa_cons_sample_nodes(pa, ECCPA_ORB_CUR, a, b, Nw, 0, dn, NULL, NULL) < 0
+                       || eccpa_cons_map_coefs(pa, ECCPA_ORB_CUR, pa->node[ECCPA_NODE_DTDX], pa->node[ECCPA_NODE_OMG], Nw, dn, &map_coefs_n);
           for (int i = 0; i < Nw; i++) {
             double *o = out + ob*ncol*nqi + (long) q*Nw + i;
             if (bad) {
               for (int v = 0; v < ncol; v++) o[v*nqi] = NAN;
               continue;
             }
-            const double X = pa->node[PA_X][i];
-            y[EOB_EVOLVE_RAD]    = pa->node[PA_R][i];
+            const double X = pa->node[ECCPA_NODE_X][i];
+            y[EOB_EVOLVE_RAD]    = pa->node[ECCPA_NODE_R][i];
             y[EOB_EVOLVE_PHI]    = 0.0;
-            y[EOB_EVOLVE_PRSTAR] = pa->node[PA_PRSTAR][i];
+            y[EOB_EVOLVE_PRSTAR] = pa->node[ECCPA_NODE_PRSTAR][i];
             y[EOB_EVOLVE_PPHI]   = J;
             p_eob_dyn_rhs(pa->time[q], y, dy, dn);
             eob_wav_hlm(dn, &hn);
-            o[PAN_X*nqi]       = X;
-            o[PAN_LAM*nqi]     = X + eccpa_ksum(map_coefs_n.kappa[TH_LAMBDA_MEAN][0],
-                                                map_coefs_n.kappa[TH_LAMBDA_MEAN][1],
+            o[ECCPA_EXP_X*nqi]       = X;
+            o[ECCPA_EXP_LAM*nqi]     = X + eccpa_ksum(map_coefs_n.kappa[ECCPA_TH_LAMBDA_MEAN][0],
+                                                map_coefs_n.kappa[ECCPA_TH_LAMBDA_MEAN][1],
                                                 map_coefs_n.M, ra, X - w, NULL);
             /* V = -M_lambda */
-            o[PAN_V*nqi]       = -eccpa_ksum(map_coefs_n.kappa[TH_AZIMUTH][0],
-                                             map_coefs_n.kappa[TH_AZIMUTH][1],
+            o[ECCPA_EXP_V*nqi]       = -eccpa_ksum(map_coefs_n.kappa[ECCPA_TH_AZIMUTH][0],
+                                             map_coefs_n.kappa[ECCPA_TH_AZIMUTH][1],
                                              map_coefs_n.M, ra, X - w, NULL);
-            o[PAN_DTDX*nqi]    = pa->node[PA_DTDX][i];
-            o[PAN_R*nqi]       = pa->node[PA_R][i];
-            o[PAN_PRSTAR*nqi]  = pa->node[PA_PRSTAR][i];
-            o[PAN_OMG*nqi]     = dn->Omg;
-            o[PAN_J*nqi]       = J;
-            o[PAN_RA*nqi]      = ra;
-            o[PAN_RDOT*nqi]    = dn->rdot;
-            o[PAN_R2DOT*nqi]   = dn->r2dot;
-            o[PAN_R3DOT*nqi]   = dn->r3dot;
-            o[PAN_OMGDOT*nqi]  = dn->Omegadot;
-            o[PAN_OMG2DOT*nqi] = dn->Omega2dot;
-            o[PAN_PRSDOT*nqi]  = dn->prsdot;
+            o[ECCPA_EXP_DTDX*nqi]    = pa->node[ECCPA_NODE_DTDX][i];
+            o[ECCPA_EXP_R*nqi]       = pa->node[ECCPA_NODE_R][i];
+            o[ECCPA_EXP_PRSTAR*nqi]  = pa->node[ECCPA_NODE_PRSTAR][i];
+            o[ECCPA_EXP_OMG*nqi]     = dn->Omg;
+            o[ECCPA_EXP_J*nqi]       = J;
+            o[ECCPA_EXP_RA*nqi]      = ra;
+            o[ECCPA_EXP_RDOT*nqi]    = dn->rdot;
+            o[ECCPA_EXP_R2DOT*nqi]   = dn->r2dot;
+            o[ECCPA_EXP_R3DOT*nqi]   = dn->r3dot;
+            o[ECCPA_EXP_OMGDOT*nqi]  = dn->Omegadot;
+            o[ECCPA_EXP_OMG2DOT*nqi] = dn->Omega2dot;
+            o[ECCPA_EXP_PRSDOT*nqi]  = dn->prsdot;
             /* sample's first-order oscillating parts, summed as in reconstruction */
             double ck[ECCPA_HARMONICS_MAX+1], sk[ECCPA_HARMONICS_MAX+1];
             eccpa_trig(X - w, pa->evo_M[q], ck, sk);
@@ -3306,8 +3359,8 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
             }
             for (int j = 0; j < nm; j++) {
               const int k = EOBPars->use_mode_lm[j];
-              o[(PAN_NVARS + 2*j)*nqi]     =  hn.ampli[k]*cos(hn.phase[k]);
-              o[(PAN_NVARS + 2*j + 1)*nqi] = -hn.ampli[k]*sin(hn.phase[k]);
+              o[(ECCPA_EXP_NVARS + 2*j)*nqi]     =  hn.ampli[k]*cos(hn.phase[k]);
+              o[(ECCPA_EXP_NVARS + 2*j + 1)*nqi] = -hn.ampli[k]*sin(hn.phase[k]);
             }
           }
         }
@@ -3317,7 +3370,7 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
       sprintf(fname, "%s/eccpa_nodes.txt", EOBPars->output_dir);
       if ((fp = fopen(fname, "w"))) {
         fprintf(fp, "# orbit sample node");
-        for (int v = 0; v < PAN_NVARS; v++) fprintf(fp, " %s", pa_node_var[v]);
+        for (int v = 0; v < ECCPA_EXP_NVARS; v++) fprintf(fp, " %s", eccpa_node_var[v]);
         for (int j = 0; j < nm; j++) fprintf(fp, " re_hlm_%d im_hlm_%d", EOBPars->use_mode_lm[j], EOBPars->use_mode_lm[j]);
         fprintf(fp, "\n");
         for (int ob = 0; ob < 5; ob++)
@@ -3335,27 +3388,26 @@ int eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa)
 #endif
 
   if (VERBOSE) {
-    PRSECTN("Eccentric post-adiabatic dynamics (equinoctial)");
-    printf("%-40s = %s (map %d, rate %d, phase %d)\n","level",
-           eccpa_level_opt[EOBPars->postadiabatic_dynamics_ecc_level],
-           EOBPars->postadiabatic_dynamics_ecc_map, EOBPars->postadiabatic_dynamics_ecc_rate,
-           EOBPars->postadiabatic_dynamics_ecc_phase);
-    printf("%-40s = %d\n","evolution steps",n);
-    printf("%-40s = %.6e (%.0f radial orbits)\n","time advanced",span,span/P_r0);
-    printf("%-40s = %.6e -> %.6e\n","eccentricity (r_a/r_c)",pa->data[EVO_E_GEO][0],pa->data[EVO_E_GEO][n-1]);
-    printf("%-40s = %.6e\n","adiabaticity at handoff",pa->data[EVO_ADIAB][n-1]);
-    printf("%-40s = %d\n","reconstructed samples",nrec);
-    if (EOBPars->postadiabatic_dynamics_ecc_map >= 3)
-      printf("%-40s = %d checkpoints%s\n","third-order map",pa->corr3_n,
-             (pa->ic_valid == 2) ? ", initial data at third order" : ", NOT built: second order");
+    PRSECTN("Eccentric post-adiabatic dynamics");
+    printf("%-40s = %s\n","level",eccpa_level_opt[EOBPars->postadiabatic_dynamics_ecc_level]);
+    PRFORMi("map order",EOBPars->postadiabatic_dynamics_ecc_map);
+    PRFORMi("rate order",EOBPars->postadiabatic_dynamics_ecc_rate);
+    PRFORMi("phase order",EOBPars->postadiabatic_dynamics_ecc_phase);
+    PRFORMi("evolution steps",n);
+    PRFORMd("time advanced",span);
+    PRFORMd("radial orbits advanced",span/P_r0);
+    PRFORMd("e_geo at start",pa->data[ECCPA_EVO_E_GEO][0]);
+    PRFORMd("e_geo at handoff",pa->data[ECCPA_EVO_E_GEO][n-1]);
+    PRFORMd("adiabaticity at handoff",pa->data[ECCPA_EVO_ADIAB][n-1]);
+    PRFORMi("reconstructed samples",nrec);
+    PRFORMi("third-order map checkpoints",pa->corr3_n);
   }
 
-  if (t_adv) *t_adv = span;
   if (n_pa)  *n_pa  = nrec;
   PostAdDynamics_free(&pa);
   return 0;
 
-fail:
+out:
   PostAdDynamics_free(&pa);
   return 1;
 }
@@ -3365,7 +3417,7 @@ fail:
  * ------------------------
  *   Mean orbit of initial data, Eq. (48): r_a = e r_c and ecc_freq frequency = omg_tgt.
  *
- *   @param[in,out] pa       : orbit left in PO_CUR
+ *   @param[in,out] pa       : orbit left in ECCPA_ORB_CUR
  *   @param[in]     e        : eccentricity r_a/r_c
  *   @param[in]     omg_tgt  : target frequency
  *   @param[in]     J_seed, ra_seed : first guess
@@ -3383,11 +3435,11 @@ static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
   int matched = 0;
   for (int it = 0; !matched && it < 48; it++) {
     for (int is = 0; is < 48; is++) {
-      if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, PO_CUR)) {
+      if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, ECCPA_ORB_CUR)) {
         if (DEBUG) printf("ERROR: eccpa_ic_orbit, no mean orbit at trial (pphi, r_a)\n");
         return 1;
       }
-      const double dra = e*pa->cons_orb[PO_CUR][PO_R_C] - r_a;
+      const double dra = e*pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C] - r_a;
       r_a += dra;
       if (fabs(dra) <= 1e-14*(1.0 + r_a)) break;
     }
@@ -3395,21 +3447,21 @@ static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
     double omg;
     if (EOBPars->ecc_freq == ECCFREQ_ORBAVGD) {
       /* <Omega> on nodes of this orbit, as eccpa_cons_map_coefs computes it */
-      const int N = eccpa_nnodes(pa, pa->cons_orb[PO_CUR][PO_E_GEO], 0);
+      const int N = eccpa_nnodes(pa, pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E_GEO], 0);
       double n_rad;
-      if (eob_eccpa_cons_sample_nodes(pa, PO_CUR, r_a, 0.0, N, 0, dyn, NULL, NULL) < 0
-          || eccpa_mean_freqs(pa->node[PA_DTDX], pa->node[PA_OMG], N, &n_rad, &omg)) {
+      if (eob_eccpa_cons_sample_nodes(pa, ECCPA_ORB_CUR, r_a, 0.0, N, 0, dyn, NULL, NULL) < 0
+          || eccpa_mean_freqs(pa->node[ECCPA_NODE_DTDX], pa->node[ECCPA_NODE_OMG], N, &n_rad, &omg)) {
         if (DEBUG) printf("ERROR: eccpa_ic_orbit, no mean frequency at trial (pphi, r_a)\n");
         return 1;
       }
     } else if (EOBPars->ecc_freq == ECCFREQ_AVERAGE) {
-      eob_eccpa_cons_sample_point(pa, PO_CUR, r_a, 0.0, 0.0, 0, dyn);
+      eob_eccpa_cons_sample_point(pa, ECCPA_ORB_CUR, r_a, 0.0, 0.0, 0, dyn);
       const double omg_peri = pa->Omg;
-      eob_eccpa_cons_sample_point(pa, PO_CUR, r_a, 0.0, Pi, 0, dyn);
+      eob_eccpa_cons_sample_point(pa, ECCPA_ORB_CUR, r_a, 0.0, Pi, 0, dyn);
       omg = 0.5*(omg_peri + pa->Omg);
     } else {
       const double Xt = (EOBPars->ecc_freq == ECCFREQ_PERIASTRON) ? 0.0 : Pi;
-      eob_eccpa_cons_sample_point(pa, PO_CUR, r_a, 0.0, Xt, 0, dyn);
+      eob_eccpa_cons_sample_point(pa, ECCPA_ORB_CUR, r_a, 0.0, Xt, 0, dyn);
       omg = pa->Omg;
     }
     const double f = omg - omg_tgt;
@@ -3437,11 +3489,11 @@ static int eccpa_ic_orbit(PostAdDynamics *pa, double e, double omg_tgt,
   if (!matched && fabs(bestf) <= ECCPA_IC_FREQ_TOL_FLOOR*omg_tgt) {
     J = bestJ; r_a = bestra;
     for (int is = 0; is < 48; is++) {
-      if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, PO_CUR)) {
+      if (eob_eccpa_cons_orbit(pa, J, r_a, dyn, ECCPA_ORB_CUR)) {
         if (DEBUG) printf("ERROR: eccpa_ic_orbit, no mean orbit at trial (pphi, r_a)\n");
         return 1;
       }
-      const double dra = e*pa->cons_orb[PO_CUR][PO_R_C] - r_a;
+      const double dra = e*pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C] - r_a;
       r_a += dra;
       if (fabs(dra) <= 1e-14*(1.0 + r_a)) break;
     }
@@ -3488,10 +3540,10 @@ int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
                      e*pow(omg_tgt, -2./3.), dyn, &J, &r_a)) goto out;
 
   /* Eq. (51), mean periastron along +alpha */
-  double g[OSC_N], osc2[OSC_N];
-  for (int a = 0; a < OSC_N; a++) g[a] = osc2[a] = 0.0;
-  /* mean orbit's r_c, before PO_CUR is overwritten by osculating orbit */
-  const double rc_m = pa->cons_orb[PO_CUR][PO_R_C];
+  double g[ECCPA_OSC_N], osc2[ECCPA_OSC_N];
+  for (int a = 0; a < ECCPA_OSC_N; a++) g[a] = osc2[a] = 0.0;
+  /* mean orbit's r_c, before ECCPA_ORB_CUR is overwritten by osculating orbit */
+  const double rc_m = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C];
   EccMapCoefs map_coefs_mean;
   memset(&map_coefs_mean, 0, sizeof map_coefs_mean);
   if (order >= 1) {
@@ -3510,10 +3562,10 @@ int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
     }
     /* lambda~(2) is not needed: phi = 0 at start */
     const int Nn = pa->nnodes;
-    osc2[OSC_PPHI] = eccpa_osc2_col(pa->mean_node[MEAN_NODE_CTILDE2 + C_PPHI],  Nn, X);
-    osc2[OSC_Z_RE] = eccpa_osc2_col(pa->mean_node[MEAN_NODE_CTILDE2 + C_ALPHA], Nn, X);
-    osc2[OSC_Z_IM] = eccpa_osc2_col(pa->mean_node[MEAN_NODE_CTILDE2 + C_BETA],  Nn, X);
-    osc2[OSC_TH + TH_LAMBDA_MEAN] = eccpa_osc2_col(pa->mean_node[MEAN_NODE_THTILDE2 + TH_LAMBDA_MEAN], Nn, X);
+    osc2[ECCPA_OSC_PPHI] = eccpa_osc2_col(pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_PPHI],  Nn, X);
+    osc2[ECCPA_OSC_Z_RE] = eccpa_osc2_col(pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_ALPHA], Nn, X);
+    osc2[ECCPA_OSC_Z_IM] = eccpa_osc2_col(pa->mean_node[ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_BETA],  Nn, X);
+    osc2[ECCPA_OSC_TH + ECCPA_TH_LAMBDA_MEAN] = eccpa_osc2_col(pa->mean_node[ECCPA_MEAN_NODE_THTILDE2 + ECCPA_TH_LAMBDA_MEAN], Nn, X);
   }
 
   /* at order 0 there is nothing to invert, Lambda = X */
@@ -3521,37 +3573,37 @@ int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
   double LamP = X;
   if (order >= 1) {
     eccpa_Tmap(&map_coefs_mean, r_a, X, &T0, NULL);
-    LamP = X + T0 + g[OSC_TH + TH_LAMBDA_MEAN] + osc2[OSC_TH + TH_LAMBDA_MEAN];
+    LamP = X + T0 + g[ECCPA_OSC_TH + ECCPA_TH_LAMBDA_MEAN] + osc2[ECCPA_OSC_TH + ECCPA_TH_LAMBDA_MEAN];
   }
-  const double pphi  = J   + g[OSC_PPHI] + osc2[OSC_PPHI];
-  const double alpha = r_a + g[OSC_Z_RE] + osc2[OSC_Z_RE];
-  const double beta  =       g[OSC_Z_IM] + osc2[OSC_Z_IM];
+  const double pphi  = J   + g[ECCPA_OSC_PPHI] + osc2[ECCPA_OSC_PPHI];
+  const double alpha = r_a + g[ECCPA_OSC_Z_RE] + osc2[ECCPA_OSC_Z_RE];
+  const double beta  =       g[ECCPA_OSC_Z_IM] + osc2[ECCPA_OSC_Z_IM];
 
   /* X' solves X' + T(X') = Lambda on osculating orbit. phi = 0 at start, so lambda~ is
      not needed. */
   const double ra_o = sqrt(alpha*alpha + beta*beta);
   const double w_o  = eccpa_peri_angle(alpha, beta);
-  /* at order 0 osculating orbit is mean one, already in PO_CUR, and X is unchanged */
+  /* at order 0 osculating orbit is mean one, already in ECCPA_ORB_CUR, and X is unchanged */
   double Xp = X;
   if (order >= 1) {
     EccMapCoefs map_coefs_osc;
-    if (eob_eccpa_cons_orbit(pa, pphi, ra_o, dyn, PO_CUR)) {
+    if (eob_eccpa_cons_orbit(pa, pphi, ra_o, dyn, ECCPA_ORB_CUR)) {
       if (DEBUG) printf("ERROR: eob_eccpa_ic_state, osculating orbit not found\n");
       goto out;
     }
     /* on nodes of oscillating parts, where mean orbit's map came from; another node
        count would leave an error in X' as large as second order */
     const int N = (pa->osc1_nnodes > 0) ? pa->osc1_nnodes
-                                        : eccpa_nnodes(pa, pa->cons_orb[PO_CUR][PO_E_GEO], 0);
-    if (eccpa_cons_map_coefs_of_orbit(pa, pphi, ra_o, alpha, beta, PO_CUR, N, dyn, &map_coefs_osc)) {
+                                        : eccpa_nnodes(pa, pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_E_GEO], 0);
+    if (eccpa_cons_map_coefs_of_orbit(pa, pphi, ra_o, alpha, beta, ECCPA_ORB_CUR, N, dyn, &map_coefs_osc)) {
       if (DEBUG) printf("ERROR: eob_eccpa_ic_state, osculating maps not built\n");
       goto out;
     }
     Xp = eccpa_X_of_Lam(&map_coefs_osc, ra_o, w_o, LamP, LamP - T0);
   }
-  eob_eccpa_cons_sample_point(pa, PO_CUR, alpha, beta, Xp, 0, dyn);
+  eob_eccpa_cons_sample_point(pa, ECCPA_ORB_CUR, alpha, beta, Xp, 0, dyn);
   /* r between osculating turning points, Xp close to X (else wrong branch) */
-  const double rc_o = pa->cons_orb[PO_CUR][PO_R_C], ra_osc = pa->cons_orb[PO_CUR][PO_R_A];
+  const double rc_o = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C], ra_osc = pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_A];
   if (!(fabs(pa->r - rc_o) <= ra_osc*(1.0 + 1e-6) + 1e-9)) {
     if (DEBUG) printf("ERROR: eob_eccpa_ic_state, point off osculating orbit\n");
     goto out;
@@ -3571,13 +3623,18 @@ int eob_eccpa_ic_state(double e, double omg_tgt, double X, int order,
   y_init[EOB_ID_OMGJ]   = pa->Omg;
 
   if (VERBOSE) {
-    PRSECTN("Eccentric initial conditions (equinoctial post-adiabatic)");
-    printf("%-40s = %d\n","map order",order);
-    printf("%-40s = %.12e\n","mean pphi",J);
-    printf("%-40s = %.12e (e_geo %.6e)\n","mean half-width",r_a,(rc_m > 0.0) ? r_a/rc_m : 0.0);
-    printf("%-40s = %.12e\n","frequency matched",omg_tgt);
-    printf("%-40s = %.6f -> %.6f -> %.6f\n","anomaly (conic, mean, osculating)",EOBPars->anomaly,X,Xp);
-    printf("%-40s = %.12e %.12e %.12e\n","r, prstar, pphi",pa->r,pa->prstar,pphi);
+    PRSECTN("Eccentric initial conditions (post-adiabatic)");
+    PRFORMi("map order",order);
+    PRFORMd("mean pphi",J);
+    PRFORMd("mean r_a",r_a);
+    PRFORMd("mean e_geo",(rc_m > 0.0) ? r_a/rc_m : 0.0);
+    PRFORMd("frequency matched",omg_tgt);
+    PRFORMd("anomaly, conic",EOBPars->anomaly);
+    PRFORMd("anomaly, mean",X);
+    PRFORMd("anomaly, osculating",Xp);
+    PRFORMd("r",pa->r);
+    PRFORMd("prstar",pa->prstar);
+    PRFORMd("pphi",pphi);
   }
   status = OK;
 

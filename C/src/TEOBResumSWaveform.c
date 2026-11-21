@@ -10401,7 +10401,14 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
   return 0;
 }
 
-/** Copy the twelve wf scalars of sample i into dyn->wavc (initial sample, eccentric PA samples, ODE loop) */
+/**
+ * Function: wavc_store
+ * --------------------
+ *   Copy the twelve wf scalars of current state into dyn->wavc at sample i.
+ *
+ *   @param[in,out] dyn : Dynamics
+ *   @param[in]     i   : sample index
+ */
 void wavc_store(Dynamics *dyn, int i)
 {
   dyn->wavc[WAVC_H][i]         = dyn->H;

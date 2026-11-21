@@ -850,91 +850,91 @@ typedef struct tagDynamics
 } Dynamics;
 
 /** Slow variables c_mu, App. A (E is not evolved) */
-enum { C_PPHI, C_ALPHA, C_BETA, C_N };
+enum { ECCPA_C_PPHI, ECCPA_C_ALPHA, ECCPA_C_BETA, ECCPA_C_N };
 
 /** Angles, App. A: Lambda = X + T(X), lambda = phi - V(X) */
-enum { TH_LAMBDA_MEAN, TH_AZIMUTH, TH_N };
+enum { ECCPA_TH_LAMBDA_MEAN, ECCPA_TH_AZIMUTH, ECCPA_TH_N };
 
 /** Stored components of an oscillating part; z from periastron */
-enum { OSC_PPHI, OSC_Z_RE, OSC_Z_IM, OSC_TH, OSC_N = OSC_TH + TH_N };
+enum { ECCPA_OSC_PPHI, ECCPA_OSC_Z_RE, ECCPA_OSC_Z_IM, ECCPA_OSC_TH, ECCPA_OSC_N = ECCPA_OSC_TH + ECCPA_TH_N };
 
 /** PostAdDynamics.node[quantity][node] */
 enum {
-  PA_R, PA_PRSTAR, PA_OMG, PA_DTDX, PA_SQRTAB,
-  PA_X, PA_DRDX, PA_WSTAR, PA_DH_DPRS2,
-  PA_FR, PA_FE,
-  PA_F,                 /**< + mu: rates F_mu */
-  PA_NODE_NVARS = PA_F + C_N
+  ECCPA_NODE_R, ECCPA_NODE_PRSTAR, ECCPA_NODE_OMG, ECCPA_NODE_DTDX, ECCPA_NODE_SQRTAB,
+  ECCPA_NODE_X, ECCPA_NODE_DRDX, ECCPA_NODE_WSTAR, ECCPA_NODE_DH_DPRS2,
+  ECCPA_NODE_FR, ECCPA_NODE_FE,
+  ECCPA_NODE_F,                 /**< + mu: rates F_mu */
+  ECCPA_NODE_NVARS = ECCPA_NODE_F + ECCPA_C_N
 };
 
 /** PostAdDynamics.cons_orb[slot][]: constants of one conservative orbit */
 enum {
-  PO_E, PO_PPHI, PO_R_C, PO_R_A, PO_E_GEO,
-  PO_R_CIRC, PO_C_RA, PO_HRR, PO_HRRR, PO_HRJ,
-  PO_HR_M,              /**< H_r at periastron */
-  PO_FULL,              /**< slot filled by eob_eccpa_cons_orbit */
-  PO_GAP_OK,            /**< gap series in cons_gap[slot] */
-  PO_GAP0,              /**< gap series constant, gap(0) = 0 */
-  PO_NVARS
+  ECCPA_ORB_E, ECCPA_ORB_PPHI, ECCPA_ORB_R_C, ECCPA_ORB_R_A, ECCPA_ORB_E_GEO,
+  ECCPA_ORB_R_CIRC, ECCPA_ORB_C_RA, ECCPA_ORB_HRR, ECCPA_ORB_HRRR, ECCPA_ORB_HRJ,
+  ECCPA_ORB_HR_M,              /**< H_r at periastron */
+  ECCPA_ORB_FULL,              /**< slot filled by eob_eccpa_cons_orbit */
+  ECCPA_ORB_GAP_OK,            /**< gap series in cons_gap[slot] */
+  ECCPA_ORB_GAP0,              /**< gap series constant, gap(0) = 0 */
+  ECCPA_ORB_NVARS
 };
 
-/** Orbit slots: PO_CUR in use, PO_AUX scratch */
-enum { PO_CUR, PO_AUX, PO_NSLOT };
+/** Orbit slots: ECCPA_ORB_CUR in use, ECCPA_ORB_AUX scratch */
+enum { ECCPA_ORB_CUR, ECCPA_ORB_AUX, ECCPA_ORB_NSLOT };
 
 /** Orbits of the map stencil PostAdDynamics.map_coefs_fd[] */
-enum { MAPFD_00, MAPFD_JP, MAPFD_JM, MAPFD_UP, MAPFD_UM, MAPFD_CR, MAPFD_N };
+enum { ECCPA_MAPFD_00, ECCPA_MAPFD_JP, ECCPA_MAPFD_JM, ECCPA_MAPFD_UP, ECCPA_MAPFD_UM, ECCPA_MAPFD_CR, ECCPA_MAPFD_N };
 
 /** PostAdDynamics.mean_node[][], from eob_eccpa_rates_higher */
 enum {
-  MEAN_NODE_LAM,                                /**< Lambdabar */
-  MEAN_NODE_CTILDE2,                            /**< + mu: c~(2) */
-  MEAN_NODE_THTILDE2 = MEAN_NODE_CTILDE2 + C_N, /**< + th: theta~(2) */
-  MEAN_NODE_S3_C = MEAN_NODE_THTILDE2 + TH_N,   /**< + mu: S^(3) of c~(3) */
-  MEAN_NODE_S3_TH = MEAN_NODE_S3_C + C_N,       /**< + th: S^(3) of theta~(3) */
-  MEAN_NODE_NVARS = MEAN_NODE_S3_TH + TH_N
+  ECCPA_MEAN_NODE_LAM,                                /**< Lambdabar */
+  ECCPA_MEAN_NODE_CTILDE2,                            /**< + mu: c~(2) */
+  ECCPA_MEAN_NODE_THTILDE2 = ECCPA_MEAN_NODE_CTILDE2 + ECCPA_C_N, /**< + th: theta~(2) */
+  ECCPA_MEAN_NODE_S3_C = ECCPA_MEAN_NODE_THTILDE2 + ECCPA_TH_N,   /**< + mu: S^(3) of c~(3) */
+  ECCPA_MEAN_NODE_S3_TH = ECCPA_MEAN_NODE_S3_C + ECCPA_C_N,       /**< + th: S^(3) of theta~(3) */
+  ECCPA_MEAN_NODE_NVARS = ECCPA_MEAN_NODE_S3_TH + ECCPA_TH_N
 };
 
 /** PostAdDynamics.data[][], evolution samples */
 enum {
-  EVO_E, EVO_PPHI, EVO_TH, EVO_OMEGA = EVO_TH + TH_N,
-  EVO_E_GEO = EVO_OMEGA + TH_N, EVO_ADIAB,
-  EVO_ALPHA, EVO_BETA, EVO_DADJ, EVO_DBDJ,
-  EVO_FBAR_PPHI, EVO_FBAR_TH,
-  EVO_RCIRC = EVO_FBAR_TH + TH_N,
-  EVO_NVARS
+  ECCPA_EVO_E, ECCPA_EVO_PPHI, ECCPA_EVO_TH, ECCPA_EVO_OMEGA = ECCPA_EVO_TH + ECCPA_TH_N,
+  ECCPA_EVO_E_GEO = ECCPA_EVO_OMEGA + ECCPA_TH_N, ECCPA_EVO_ADIAB,
+  ECCPA_EVO_ALPHA, ECCPA_EVO_BETA, ECCPA_EVO_DADJ, ECCPA_EVO_DBDJ,
+  ECCPA_EVO_FBAR_PPHI, ECCPA_EVO_FBAR_TH,
+  ECCPA_EVO_RCIRC = ECCPA_EVO_FBAR_TH + ECCPA_TH_N,
+  ECCPA_EVO_NVARS
 };
 
 /** DEBUG export: columns of eccpa_secular.txt (time, then EVO_*) */
-static const char* const pa_sec_var[] = {
+static const char* const eccpa_sec_var[] = {
   "pa_t",
-  [1+EVO_E]              = "pa_E",             [1+EVO_PPHI]               = "pa_pphi",
-  [1+EVO_TH+TH_LAMBDA_MEAN] = "pa_Lambda",     [1+EVO_TH+TH_AZIMUTH]      = "pa_lambda",
-  [1+EVO_OMEGA+TH_LAMBDA_MEAN] = "pa_n",       [1+EVO_OMEGA+TH_AZIMUTH]   = "pa_omg",
-  [1+EVO_E_GEO]          = "pa_e_geo",         [1+EVO_ADIAB]              = "pa_adiab",
-  [1+EVO_ALPHA]          = "pa_alpha",         [1+EVO_BETA]               = "pa_beta",
-  [1+EVO_DADJ]           = "pa_dalpha_dpphi",  [1+EVO_DBDJ]               = "pa_dbeta_dpphi",
-  [1+EVO_FBAR_PPHI]      = "pa_jdot",          [1+EVO_FBAR_TH+TH_LAMBDA_MEAN] = "pa_gL",
-  [1+EVO_FBAR_TH+TH_AZIMUTH] = "pa_gl",        [1+EVO_RCIRC]              = "pa_rcirc",
+  [1+ECCPA_EVO_E]              = "pa_E",             [1+ECCPA_EVO_PPHI]               = "pa_pphi",
+  [1+ECCPA_EVO_TH+ECCPA_TH_LAMBDA_MEAN] = "pa_Lambda",     [1+ECCPA_EVO_TH+ECCPA_TH_AZIMUTH]      = "pa_lambda",
+  [1+ECCPA_EVO_OMEGA+ECCPA_TH_LAMBDA_MEAN] = "pa_n",       [1+ECCPA_EVO_OMEGA+ECCPA_TH_AZIMUTH]   = "pa_omg",
+  [1+ECCPA_EVO_E_GEO]          = "pa_e_geo",         [1+ECCPA_EVO_ADIAB]              = "pa_adiab",
+  [1+ECCPA_EVO_ALPHA]          = "pa_alpha",         [1+ECCPA_EVO_BETA]               = "pa_beta",
+  [1+ECCPA_EVO_DADJ]           = "pa_dalpha_dpphi",  [1+ECCPA_EVO_DBDJ]               = "pa_dbeta_dpphi",
+  [1+ECCPA_EVO_FBAR_PPHI]      = "pa_jdot",          [1+ECCPA_EVO_FBAR_TH+ECCPA_TH_LAMBDA_MEAN] = "pa_gL",
+  [1+ECCPA_EVO_FBAR_TH+ECCPA_TH_AZIMUTH] = "pa_gl",        [1+ECCPA_EVO_RCIRC]              = "pa_rcirc",
 };
 /** DEBUG export: columns of eccpa_phase.txt */
-enum { PAF_PPHI, PAF_T, PAF_LAM_RAD, PAF_LAM_AZI, PAF_DT, PAF_DLAM_RAD, PAF_DLAM_AZI, PAF_NVARS };
-static const char* const pa_fine_var[] = {
-  [PAF_PPHI] = "pa_fine_pphi", [PAF_T] = "pa_fine_t", [PAF_LAM_RAD] = "pa_fine_Lambda",
-  [PAF_LAM_AZI] = "pa_fine_lambda", [PAF_DT] = "pa_fine_dt_dpphi",
-  [PAF_DLAM_RAD] = "pa_fine_dLambda_dpphi", [PAF_DLAM_AZI] = "pa_fine_dlambda_dpphi",
+enum { ECCPA_FINE_PPHI, ECCPA_FINE_T, ECCPA_FINE_LAM_RAD, ECCPA_FINE_LAM_AZI, ECCPA_FINE_DT, ECCPA_FINE_DLAM_RAD, ECCPA_FINE_DLAM_AZI, ECCPA_FINE_NVARS };
+static const char* const eccpa_fine_var[] = {
+  [ECCPA_FINE_PPHI] = "pa_fine_pphi", [ECCPA_FINE_T] = "pa_fine_t", [ECCPA_FINE_LAM_RAD] = "pa_fine_Lambda",
+  [ECCPA_FINE_LAM_AZI] = "pa_fine_lambda", [ECCPA_FINE_DT] = "pa_fine_dt_dpphi",
+  [ECCPA_FINE_DLAM_RAD] = "pa_fine_dLambda_dpphi", [ECCPA_FINE_DLAM_AZI] = "pa_fine_dlambda_dpphi",
 };
 /** DEBUG export: columns of eccpa_nodes.txt (modes follow as re/im pairs) */
-enum { PAN_X, PAN_LAM, PAN_V, PAN_DTDX, PAN_R, PAN_PRSTAR, PAN_OMG, PAN_J, PAN_RA,
-       PAN_RDOT, PAN_R2DOT, PAN_R3DOT, PAN_OMGDOT, PAN_OMG2DOT, PAN_PRSDOT,
-       PAN_YJ, PAN_YZR, PAN_YZI, PAN_V1, PAN_W1, PAN_NVARS };
-static const char* const pa_node_var[] = {
-  [PAN_X]      = "pa_node_X",      [PAN_LAM]     = "pa_node_Lambda", [PAN_V]       = "pa_node_V",
-  [PAN_DTDX]   = "pa_node_dtdX",   [PAN_R]       = "pa_node_r",      [PAN_PRSTAR]  = "pa_node_prstar",
-  [PAN_OMG]    = "pa_node_Omg",    [PAN_J]       = "pa_node_pphi",   [PAN_RA]      = "pa_node_ra",
-  [PAN_RDOT]   = "pa_node_rdot",   [PAN_R2DOT]   = "pa_node_r2dot",  [PAN_R3DOT]   = "pa_node_r3dot",
-  [PAN_OMGDOT] = "pa_node_Omgdot", [PAN_OMG2DOT] = "pa_node_Omg2dot", [PAN_PRSDOT] = "pa_node_prsdot",
-  [PAN_YJ]     = "pa_node_YJ",     [PAN_YZR]     = "pa_node_Yzr",    [PAN_YZI]     = "pa_node_Yzi",
-  [PAN_V1]     = "pa_node_v1",     [PAN_W1]      = "pa_node_w1",
+enum { ECCPA_EXP_X, ECCPA_EXP_LAM, ECCPA_EXP_V, ECCPA_EXP_DTDX, ECCPA_EXP_R, ECCPA_EXP_PRSTAR, ECCPA_EXP_OMG, ECCPA_EXP_J, ECCPA_EXP_RA,
+       ECCPA_EXP_RDOT, ECCPA_EXP_R2DOT, ECCPA_EXP_R3DOT, ECCPA_EXP_OMGDOT, ECCPA_EXP_OMG2DOT, ECCPA_EXP_PRSDOT,
+       ECCPA_EXP_YJ, ECCPA_EXP_YZR, ECCPA_EXP_YZI, ECCPA_EXP_V1, ECCPA_EXP_W1, ECCPA_EXP_NVARS };
+static const char* const eccpa_node_var[] = {
+  [ECCPA_EXP_X]      = "pa_node_X",      [ECCPA_EXP_LAM]     = "pa_node_Lambda", [ECCPA_EXP_V]       = "pa_node_V",
+  [ECCPA_EXP_DTDX]   = "pa_node_dtdX",   [ECCPA_EXP_R]       = "pa_node_r",      [ECCPA_EXP_PRSTAR]  = "pa_node_prstar",
+  [ECCPA_EXP_OMG]    = "pa_node_Omg",    [ECCPA_EXP_J]       = "pa_node_pphi",   [ECCPA_EXP_RA]      = "pa_node_ra",
+  [ECCPA_EXP_RDOT]   = "pa_node_rdot",   [ECCPA_EXP_R2DOT]   = "pa_node_r2dot",  [ECCPA_EXP_R3DOT]   = "pa_node_r3dot",
+  [ECCPA_EXP_OMGDOT] = "pa_node_Omgdot", [ECCPA_EXP_OMG2DOT] = "pa_node_Omg2dot", [ECCPA_EXP_PRSDOT] = "pa_node_prsdot",
+  [ECCPA_EXP_YJ]     = "pa_node_YJ",     [ECCPA_EXP_YZR]     = "pa_node_Yzr",    [ECCPA_EXP_YZI]     = "pa_node_Yzi",
+  [ECCPA_EXP_V1]     = "pa_node_v1",     [ECCPA_EXP_W1]      = "pa_node_w1",
 };
 
 /** Real Fourier series a[0] + sum_m a[m] cos(m x) + b[m] sin(m x), on midpoint grid */
@@ -948,8 +948,8 @@ typedef struct tagEccSeries
 /** n, omega and kappa_m of maps M_theta (T, -V), Eq. (44) */
 typedef struct tagEccMapCoefs
 {
-  double omega[TH_N];                /**< frequencies of angles: n = 2 pi/P_r, and (1 + k) n */
-  double kappa[TH_N][2][ECCPA_HARMONICS_MAX+1];  /**< kappa_m of M_theta, [th][re/im][m], m = 1 .. M */
+  double omega[ECCPA_TH_N];                /**< frequencies of angles: n = 2 pi/P_r, and (1 + k) n */
+  double kappa[ECCPA_TH_N][2][ECCPA_HARMONICS_MAX+1];  /**< kappa_m of M_theta, [th][re/im][m], m = 1 .. M */
   int    M;                          /**< highest harmonic actually resolved */
 } EccMapCoefs;
 
@@ -966,9 +966,9 @@ typedef struct tagPostAdDynamics
 {
   int    nmax;                       /**< node ceiling: ECCPA_NODES_MAX, lowered to ECCPA_NODES_MAX_STAGE by stage */
 
-  /* conservative orbit: PO_CUR in use, PO_AUX scratch */
-  double cons_orb[PO_NSLOT][PO_NVARS];
-  EccSeries cons_gap[PO_NSLOT];      /**< gap series of each orbit, built when first read */
+  /* conservative orbit: ECCPA_ORB_CUR in use, ECCPA_ORB_AUX scratch */
+  double cons_orb[ECCPA_ORB_NSLOT][ECCPA_ORB_NVARS];
+  EccSeries cons_gap[ECCPA_ORB_NSLOT];      /**< gap series of each orbit, built when first read */
 
   /* last point evaluated (eccpa_cons_state_at_chi) */
   double X, r, prstar, rdot, Omg, ddotr;
@@ -980,33 +980,33 @@ typedef struct tagPostAdDynamics
   /* (Lambda, X) of the last two reconstructed points, seeds of the anomaly solve */
   double rec_L1, rec_X1, rec_L2, rec_X2;
   int    rec_nseed;
-  double Fr;                           /**< radial force; F_phi is F[C_PPHI] */
-  double FE, F[C_N];                   /**< rates F_E, F_mu at this point */
+  double Fr;                           /**< radial force; F_phi is F[ECCPA_C_PPHI] */
+  double FE, F[ECCPA_C_N];                   /**< rates F_E, F_mu at this point */
 
   /* values on nodes, [PA_*][j] */
   int    nnodes;
-  double node[PA_NODE_NVARS][ECCPA_NODES_DIM];
+  double node[ECCPA_NODE_NVARS][ECCPA_NODES_DIM];
 
   /* frequencies of the orbit of the last eob_eccpa_rates */
-  double    omega[TH_N], P_r;       /**< frequencies of angles (omega[TH_LAMBDA_MEAN] = n) */
+  double    omega[ECCPA_TH_N], P_r;       /**< frequencies of angles (omega[ECCPA_TH_LAMBDA_MEAN] = n) */
 
   /* averaged rates (eob_eccpa_rates, eob_eccpa_rates_higher) */
   double FbarE;                        /**< first-order rate of E, for adiabaticity and first step */
-  double Fbar[C_N];                    /**< averaged rates, first order plus Fbarcorr once corrected */
-  double Fbarcorr[C_N];                /**< orders beyond first */
-  double Fbar2[C_N];                   /**< second order alone, for rate order 2 */
-  double dc_dpphi[C_N];                /**< dc/dpphi = Fbar/Fbar[C_PPHI], RHS of the evolution */
-  double Fbar2_th[TH_N];               /**< second-order rates of angles */
+  double Fbar[ECCPA_C_N];                    /**< averaged rates, first order plus Fbarcorr once corrected */
+  double Fbarcorr[ECCPA_C_N];                /**< orders beyond first */
+  double Fbar2[ECCPA_C_N];                   /**< second order alone, for rate order 2 */
+  double dc_dpphi[ECCPA_C_N];                /**< dc/dpphi = Fbar/Fbar[ECCPA_C_PPHI], RHS of the evolution */
+  double Fbar2_th[ECCPA_TH_N];               /**< second-order rates of angles */
   double adiab;
 
   /* first-order oscillating parts on nodes (eob_eccpa_osc1) */
-  double ctilde1[C_N][ECCPA_NODES_DIM]; /**< c~(1) */
-  double thtilde1[TH_N][ECCPA_NODES_DIM]; /**< theta~(1) */
+  double ctilde1[ECCPA_C_N][ECCPA_NODES_DIM]; /**< c~(1) */
+  double thtilde1[ECCPA_TH_N][ECCPA_NODES_DIM]; /**< theta~(1) */
   double M_ctilde1[ECCPA_NODES_DIM];   /**< M_Lambda,mu c~(1)_mu */
-  double F_th[TH_N][ECCPA_NODES_DIM];  /**< F_theta on nodes */
-  double Fbar_th[TH_N];                /**< Fbar^(1) of angles */
-  double domega_dJ[TH_N], domega_dU[TH_N]; /**< frequencies differentiated in pphi and in U */
-  EccOscCoefs osc1_coef[OSC_N];        /**< Fourier coefficients of first-order parts */
+  double F_th[ECCPA_TH_N][ECCPA_NODES_DIM];  /**< F_theta on nodes */
+  double Fbar_th[ECCPA_TH_N];                /**< Fbar^(1) of angles */
+  double domega_dJ[ECCPA_TH_N], domega_dU[ECCPA_TH_N]; /**< frequencies differentiated in pphi and in U */
+  EccOscCoefs osc1_coef[ECCPA_OSC_N];        /**< Fourier coefficients of first-order parts */
   EccMapCoefs map_coefs;               /**< map coefficients of this orbit */
   EccMapCoefs map_coefs_dU;            /**< same at U + map_coefs_dU_step, for their derivative in U */
   double    map_coefs_dU_step;
@@ -1014,65 +1014,65 @@ typedef struct tagPostAdDynamics
 
   /* intermediate results of eob_eccpa_rates_higher */
   /* map stencil, MAPFD_* */
-  EccMapCoefs map_coefs_fd[MAPFD_N];
+  EccMapCoefs map_coefs_fd[ECCPA_MAPFD_N];
   double    map_coefs_fd_h_pphi, map_coefs_fd_h_U, map_coefs_fd_U0;   /**< its two steps, and U it is centred on */
 
   /* values on nodes of mean orbit, [MEAN_NODE_*][j] */
-  double mean_node[MEAN_NODE_NVARS][ECCPA_NODES_DIM];
+  double mean_node[ECCPA_MEAN_NODE_NVARS][ECCPA_NODES_DIM];
 
   /* checkpoints and corrections (eob_eccpa_corr_build) */
   int    ckpt_n;
   double ckpt_pphi[ECCPA_CKPT_MAX], corr2_relJ[ECCPA_CKPT_MAX];
   double corr2_zr[ECCPA_CKPT_MAX], corr2_zi[ECCPA_CKPT_MAX];
-  double corr2_relth[TH_N][ECCPA_CKPT_MAX];   /**< Fbar2_th/omega_th */
+  double corr2_relth[ECCPA_TH_N][ECCPA_CKPT_MAX];   /**< Fbar2_th/omega_th */
   /* second-order oscillating parts, [OSC_*][cos/sin][harmonic][k] */
-  double corr2_osc_coef[OSC_N][2][ECCPA_HARMONICS_MAX+1][ECCPA_CKPT_MAX];
+  double corr2_osc_coef[ECCPA_OSC_N][2][ECCPA_HARMONICS_MAX+1][ECCPA_CKPT_MAX];
   /* third order; corr3_n = 0 if it could not be built */
   int    corr3_n;
-  double corr3_osc_coef[OSC_N][2][ECCPA_HARMONICS_MAX+1][ECCPA_CKPT_MAX];
-  double corr3_src_c[C_N][ECCPA_CKPT_MAX][ECCPA_NODES_DIM], corr3_src_th[TH_N][ECCPA_CKPT_MAX][ECCPA_NODES_DIM];
+  double corr3_osc_coef[ECCPA_OSC_N][2][ECCPA_HARMONICS_MAX+1][ECCPA_CKPT_MAX];
+  double corr3_src_c[ECCPA_C_N][ECCPA_CKPT_MAX][ECCPA_NODES_DIM], corr3_src_th[ECCPA_TH_N][ECCPA_CKPT_MAX][ECCPA_NODES_DIM];
   double corr3_X[ECCPA_CKPT_MAX][ECCPA_NODES_DIM], corr3_dtdX[ECCPA_CKPT_MAX][ECCPA_NODES_DIM];
   double corr3_Lam[ECCPA_CKPT_MAX][ECCPA_NODES_DIM];
   int    corr3_N[ECCPA_CKPT_MAX], corr3_i[ECCPA_CKPT_MAX];
   double corr3_Fbar1J[ECCPA_CKPT_MAX], corr3_Pr[ECCPA_CKPT_MAX];
-  double corr3_domega_dJ[TH_N][ECCPA_CKPT_MAX], corr3_domega_dU[TH_N][ECCPA_CKPT_MAX];
+  double corr3_domega_dJ[ECCPA_TH_N][ECCPA_CKPT_MAX], corr3_domega_dU[ECCPA_TH_N][ECCPA_CKPT_MAX];
   int    s3_ok;                       /**< eob_eccpa_rates_higher computed them */
   /* osculating initial state, to redo map at third order (ic_valid 1, then 2) */
   int    ic_valid;
-  double ic_J0, ic_ra, ic_X0, ic_phi0, ic_th_off[TH_N];
+  double ic_J0, ic_ra, ic_X0, ic_phi0, ic_th_off[ECCPA_TH_N];
 
   /* evolution samples */
   int     size;                                          /**< capacity of arrays below */
   int     n_samples;
   double  rmin_last;                                     /**< r_c - r_a of last sample eccpa_store_sample stored, for rmin stop */
   double *time;
-  double *data[EVO_NVARS];
+  double *data[ECCPA_EVO_NVARS];
   /* first-order oscillating parts at each sample, [OSC_*][cos/sin][harmonic][sample] */
-  double *evo_osc1_coef[OSC_N][2][ECCPA_HARMONICS_MAX+1];
-  double *evo_kappa[TH_N][2][ECCPA_HARMONICS_MAX+1];     /**< kappa_m of M_theta, [th][re/im][m][sample] */
-  double *evo_kappa_dU[TH_N][2][ECCPA_HARMONICS_MAX+1];  /**< their derivatives in U */
+  double *evo_osc1_coef[ECCPA_OSC_N][2][ECCPA_HARMONICS_MAX+1];
+  double *evo_kappa[ECCPA_TH_N][2][ECCPA_HARMONICS_MAX+1];     /**< kappa_m of M_theta, [th][re/im][m][sample] */
+  double *evo_kappa_dU[ECCPA_TH_N][2][ECCPA_HARMONICS_MAX+1];  /**< their derivatives in U */
   int    *evo_M;
   /* fine grid of phases (eob_eccpa_phases) */
   int     fine_n;
   double *fine_arrays;
-  double *fine_pphi, *fine_t, *fine_th[TH_N], *fine_dt_dpphi, *fine_dth_dpphi[TH_N];
+  double *fine_pphi, *fine_t, *fine_th[ECCPA_TH_N], *fine_dt_dpphi, *fine_dth_dpphi[ECCPA_TH_N];
 } PostAdDynamics;
 
 /** Parameters of the turning-point search, H(r, 0, pphi) - E */
-typedef struct { double pphi, E; Dynamics *dyn; } eccpa_tp_par;
+typedef struct tagEccTpPar { double pphi, E; Dynamics *dyn; } EccTpPar;
 
 /** Parameters of the eccentric PA evolution RHS */
-typedef struct
+typedef struct tagEccEvoPar
 {
   Dynamics  *dyn;
   PostAdDynamics *pa;
   double     J0;     /**< evolution variable u = pphi(0) - pphi, which increases */
   const PostAdDynamics *corr; /**< holds checkpoint corrections; NULL in first pass */
   /* rates of the last accepted evaluation */
-  double last_FbarE, last_FbarJ, last_dc_dpphi[C_N];   /* last_dc_dpphi[C_PPHI] is not set */
-  double last_omega[TH_N], last_adiab;
+  double last_FbarE, last_FbarJ, last_dc_dpphi[ECCPA_C_N];   /* last_dc_dpphi[ECCPA_C_PPHI] is not set */
+  double last_omega[ECCPA_TH_N], last_adiab;
   int    last_N;
-} eccpa_evo_par;
+} EccEvoPar;
 
 /** Parameter data type */
 typedef struct tagEOBParameters
@@ -1628,7 +1628,7 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0, DynamicsSpin *spin);
 
 /* TEOBResumSPostAdiabEcc.c */
-extern int (*p_eob_ecc_pa_advance)(Dynamics **dynp, double *t_adv, int *n_pa); /* defined in TEOBResumSPars.c */
+extern int (*p_eob_ecc_pa_advance)(Dynamics **dynp, int *n_pa); /* defined in TEOBResumSPars.c */
 void PostAdDynamics_free (PostAdDynamics **pa);
 int PostAdDynamics_alloc(PostAdDynamics **pa, int size);
 int  eob_eccpa_nodecount(double e_geo, int series);
@@ -1659,7 +1659,7 @@ int  eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, dou
                        const PostAdDynamics *tab);
 int  eob_eccpa_evolve  (PostAdDynamics *pa, double J0, double alpha0, double beta0,
                         int order, Dynamics *dyn);
-int  eob_eccpa_advance(Dynamics **dynp, double *t_adv, int *n_pa);
+int  eob_eccpa_advance(Dynamics **dynp, int *n_pa);
 int  eob_eccpa_ic_state(double e, double omg_tgt, double X, int order, Dynamics *dyn, double y_init[]);
 
 /* TEOBResumSInitialCondition.c */

@@ -57,7 +57,7 @@ void (*eob_dyn_s_get_rc)();
 int (*eob_dyn_ic)();
 double (*eob_dyn_r0_eob)();
 int (*p_eob_dyn_rhs)();
-int (*p_eob_ecc_pa_advance)(Dynamics **dynp, double *t_adv, int *n_pa);
+int (*p_eob_ecc_pa_advance)(Dynamics **dynp, int *n_pa);
 int (*p_eob_spin_dyn_rhs)();
 void (*eob_metric_Apotential)();
 void (*eob_metric_Dpotential)();
@@ -1725,11 +1725,10 @@ int eob_set_params(int default_choice, int firstcall)
   /* Set eccentric PA fun pointer */
   p_eob_ecc_pa_advance = &eob_eccpa_advance;
 
-  /* Negative means stage picks: it is one value that used to depend on which
-     construction ran, so it is resolved here rather than carried unresolved into it. */
   if (VERBOSE && !DEBUG && (EOBPars->postadiabatic_dynamics_ecc_export || EOBPars->postadiabatic_dynamics_ecc_export_nodes
                             || EOBPars->postadiabatic_dynamics_ecc_export_window > 0.0))
     printf("WARNING: postadiabatic_dynamics_ecc_export options work only in a DEBUG build, ignored\n");
+  /* negative adiab: stage default */
   if (EOBPars->postadiabatic_dynamics_ecc_adiab < 0.0)
     EOBPars->postadiabatic_dynamics_ecc_adiab = ECCPA_ADIAB;
 

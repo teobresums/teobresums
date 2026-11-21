@@ -3259,9 +3259,9 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double var,
 /* Hamiltonian at a point, for eccentric PA stage */
 
 /**
- * Function: eob_ecc_ham
- * ---------------------
- *   Hamiltonian and its first derivatives at one phase-space point.
+ * Function: ecc_ham_core
+ * ----------------------
+ *   Hamiltonian and its derivatives at one phase-space point; NULL outputs are skipped.
  *
  *   @param[in]  r, prstar, pphi : point
  *   @param[in]  dyn    : Dynamics structure
@@ -3269,6 +3269,7 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double var,
  *   @param[out] sqrtAbyB, d2H_dprstar2_0, Heff_out : sqrt(A/B), d2H/dprstar2 at prstar = 0, Heff
  *   @param[out] rc_out, drc_dr_out, d2rc_dr2_out, A_out, dA_out : r_c and A, with derivatives
  *   @param[out] Heff_orb_out : orbital part of Heff
+ *   @param[out] d2H_dr2 : H_rr
  */
 static void ecc_ham_core(double r, double prstar, double pphi, Dynamics *dyn,
                  double *H, double *dH_dr, double *dH_dprstar, double *dH_dpphi,
@@ -3330,7 +3331,12 @@ static void ecc_ham_core(double r, double prstar, double pphi, Dynamics *dyn,
   }
 }
 
-/** Hamiltonian and its first derivatives. */
+/**
+ * Function: eob_ecc_ham
+ * ---------------------
+ *   Hamiltonian and its first derivatives at one point (ecc_ham_core without H_rr).
+ *   Outputs as in ecc_ham_core; NULL ones are skipped.
+ */
 void eob_ecc_ham(double r, double prstar, double pphi, Dynamics *dyn,
                  double *H, double *dH_dr, double *dH_dprstar, double *dH_dpphi,
                  double *sqrtAbyB, double *d2H_dprstar2_0, double *Heff_out,
@@ -3342,8 +3348,15 @@ void eob_ecc_ham(double r, double prstar, double pphi, Dynamics *dyn,
                A_out, dA_out, Heff_orb_out, NULL);
 }
 
-/** H_r and H_rr at prstar = 0, where Q (quartic in prstar) contributes nothing. Same body as
- *  eob_ecc_ham -- it only asks for one output that one does not. */
+/**
+ * Function: eob_ecc_ham_rr
+ * ------------------------
+ *   H_r and H_rr at prstar = 0.
+ *
+ *   @param[in]  r, pphi : point
+ *   @param[in]  dyn     : Dynamics structure
+ *   @param[out] dH_dr, d2H_dr2 : H_r, H_rr
+ */
 void eob_ecc_ham_rr(double r, double pphi, Dynamics *dyn, double *dH_dr, double *d2H_dr2)
 {
   ecc_ham_core(r, 0.0, pphi, dyn, NULL, dH_dr, NULL, NULL, NULL, NULL, NULL,
