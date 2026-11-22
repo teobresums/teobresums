@@ -1760,11 +1760,11 @@ double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, doub
 
 /* TEOBResumSWaveform.c */
 void wavc_store(Dynamics *dyn, int i);
+void wavc_load(Dynamics *dyn, int i);
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm);
 void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm);
 void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm);
-void wavc_load(Dynamics *dyn, int i);
 extern void (*eob_wav_deltalm)(); /* defined in TEOBResumSPars.c */
 void eob_wav_deltalm_v1(double Hreal,double Omega,double nu, double *dlm);
 void eob_wav_deltalm_HM(double Hreal,double Omega,double nu, double *dlm);

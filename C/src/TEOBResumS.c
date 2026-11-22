@@ -651,10 +651,6 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
           }
           for (int i = 0; i < n_pa; i++) hlm->time[i] = dyn->time[i];
           dyn->store = dyn->noflx = 1;
-          /* run ends at handoff when asked to, or when stage has passed ode_tmax
-             (check after this block); sigmoid pass below then never runs. */
-          const int ends_at_handoff = (dyn->time[n_pa-1] >= dyn->t_stop)
-                                      || EOBPars->postadiabatic_dynamics_ecc_stop;
           PROF_START(PROF_ECCPA_WAV);
           for (int i = 0; i < n_pa; i++) {
             dyn->y[EOB_EVOLVE_RAD]    = dyn->data[EOB_RAD][i];
@@ -662,18 +658,16 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
             dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
             dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
             p_eob_dyn_rhs(dyn->time[i], dyn->y, dyn->dy, dyn);
+            /* with cache, wf computed after dynamics from wavc, as for ODE samples */
             if (use_wav_scalar_cache && store_dynamics) {
               wavc_store(dyn, i);
-            }
-            /* With cache, that sigmoid pass recomputes these samples as it does main
-               loop's, so waveform is evaluated here only when run ends at handoff. */
-            if (!(use_wav_scalar_cache && store_dynamics) || ends_at_handoff) {
+            } else {
               eob_wav_hlm(dyn, hlm_t);
-            }
-            for (int k = 0; k < KMAX; k++) {
-              if (hlm->kmask[k]) {
-                hlm->ampli[k][i] = hlm_t->ampli[k];
-                hlm->phase[k][i] = hlm_t->phase[k];
+              for (int k = 0; k < KMAX; k++) {
+                if (hlm->kmask[k]) {
+                  hlm->ampli[k][i] = hlm_t->ampli[k];
+                  hlm->phase[k][i] = hlm_t->phase[k];
+                }
               }
             }
           }
