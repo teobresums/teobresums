@@ -161,7 +161,7 @@ double eob_a6c_fit_ecc_P33_newlogs(double nu)
 double eob_a6c_fit_ecc_P33_impqc(double nu)
 {
   double nu2 = nu*nu;
-  return 277.6835807911776*nu2 -437.8200772342428*nu -22.582437062389737;
+  return 269.73447218849526*nu2 -434.6951501323268*nu -22.530836934759876;
 }
 
 /** @} */ // end of a6cfits
@@ -348,28 +348,27 @@ double eob_c3_fit_ecc_P33_impqc(double nu, double a1, double a2)
   const double nu2 = nu*nu;
   const double X12 = sqrt(1.-4.*nu);
   const double a0  = a1+a2;
+  const double a12 = a1-a2;
   const double a02 = a0*a0;
   const double a03 = a02*a0;
-  const double a04 = a03*a0;
 
   /* Equal mass part */
-  const double p0 = 38.316272147907846;
-  const double n1 = 0.28836631381609557;
-  const double n2 = -0.8872832041219025;
-  const double n3 = 0.3314581165198756;
-  const double n4 = -0.07847346417511875;
-  const double d1 = 1.250251693391218;
-  const double c3_eq = p0*(1. + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1.+ d1*a0);
+  const double p0 = 38.994900135580295;
+  const double n1 = -0.7015163535515917;
+  const double n2 = 0.06013365981729153;
+  const double d1 = 0.23958686381170022;
+  const double c3_eq = p0*(1. + n1*a0 + n2*a02)/(1.+ d1*a0);
 
   /* Unequal mass, unequal-spin part */
-  const double c1 =  19.372770269785683;
-  const double c2 =  12.601043854959949;
-  const double c3 = -21.13404034435283;
-  const double c4 = -56.38151796961188;
-  const double c5 =  37.5701494879252;
-  const double c6 = -151.2719758819389;
+  const double c1 =  21.3846344036453;
+  const double c2 =  17.0396980939796;
+  const double c3 = -24.33437699378286;
+  const double c4 = -69.28553710659146;
+  const double c5 = -0.36113965835952705;
+  const double c6 = -11.512622332880278;
+  const double q1 = -0.08029875789375812;
 
-  const double c3_neq = c1*a0*X12 + c2*a02*X12 + c3*a03*X12 + c4*a0*nu*X12 + c5*(a1 - a2)*nu2 + c6*SQ((a1 - a2))*nu2;
+  const double c3_neq = ((c1*a0 + c2*a02 + c3*a03) * X12 + c4*a0*nu*X12 + (c5 + c6*a12*X12)*a12*X12) / (1. + q1*a0);
   return c3_eq + c3_neq;
 }
 
