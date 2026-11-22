@@ -10400,3 +10400,36 @@ int eob_wav_ringdown_bhns(Dynamics *dyn, Waveform_lm *hlm)
 
   return 0;
 }
+
+/**
+ * Function: wavc_load
+ * -------------------
+ *   Set dyn to sample i from dyn->data and the wf scalars stored in dyn->wavc.
+ *   Omg, ddotr from wavc, not data[]: at i = 0 data[] has the initial-data values.
+ *
+ *   @param[in,out] dyn : Dynamics
+ *   @param[in]     i   : sample index
+ */
+void wavc_load(Dynamics *dyn, int i)
+{
+  dyn->phi       = dyn->data[EOB_PHI][i];
+  dyn->r         = dyn->data[EOB_RAD][i];
+  dyn->pphi      = dyn->data[EOB_PPHI][i];
+  dyn->prstar    = dyn->data[EOB_PRSTAR][i];
+  dyn->Omg       = dyn->wavc[WAVC_OMG][i];
+  dyn->ddotr     = dyn->wavc[WAVC_DDOTR][i];
+  dyn->H         = dyn->wavc[WAVC_H][i];
+  dyn->Heff      = dyn->wavc[WAVC_HEFF][i];
+  dyn->jhat      = dyn->wavc[WAVC_JHAT][i];
+  dyn->r_omega   = dyn->wavc[WAVC_ROMEGA][i];
+  dyn->rdot      = dyn->wavc[WAVC_RDOT][i];
+  dyn->r2dot     = dyn->wavc[WAVC_R2DOT][i];
+  dyn->r3dot     = dyn->wavc[WAVC_R3DOT][i];
+  dyn->r4dot     = 0.;
+  dyn->r5dot     = 0.;
+  dyn->Omegadot  = dyn->wavc[WAVC_OMEGADOT][i];
+  dyn->Omega2dot = dyn->wavc[WAVC_OMEGA2DOT][i];
+  dyn->Omega3dot = 0.;
+  dyn->Omega4dot = 0.;
+  dyn->prsdot    = dyn->wavc[WAVC_PRSDOT][i];
+}

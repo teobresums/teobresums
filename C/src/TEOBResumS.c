@@ -1064,6 +1064,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (DEBUG && dyn->sep_found) printf("Separatrix crossing time: %.9f\n", dyn->t_sep);
   
  END_ODE_EVOLUTION:;
+
+  /* cache skipped wf computation; compute here for systems that either (i) did not merge
+     or (ii) do not have NQCs/mrg-rd attachment */
+  if (use_wav_scalar_cache && store_dynamics &&
+      (EOBPars->binary == BINARY_BNS || dyn->data[EOB_RAD][size-1] >= 3.)) {
+    for (int i = 0; i < size; i++) {
+      dyn->t = dyn->time[i];
+      wavc_load(dyn, i);
+      eob_wav_hlm(dyn, hlm_t);
+      for (int k = 0; k < KMAX; k++) {
+        if (hlm->kmask[k]) {
+          hlm->ampli[k][i] = hlm_t->ampli[k];
+          hlm->phase[k][i] = hlm_t->phase[k];
+        }
+      }
+    }
+  }
  
   /* Unwrap phase for higher modes */
   if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3) || (ecc != 0.)) {
@@ -1117,29 +1134,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
         dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
         dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
         if (use_wav_scalar_cache) {
-          /* stored r.h.s. quantities */
-          dyn->phi    = dyn->data[EOB_PHI][i];
-          dyn->r      = dyn->data[EOB_RAD][i];
-          dyn->pphi   = dyn->data[EOB_PPHI][i];
-          dyn->prstar = dyn->data[EOB_PRSTAR][i];
-          /* Omg, ddotr from wavc, not data[], since at i = 0 data[] has the initial-data values, which
-             differ from the r.h.s. ones the rest of wavc comes from */
-          dyn->Omg    = dyn->wavc[WAVC_OMG][i];
-          dyn->ddotr  = dyn->wavc[WAVC_DDOTR][i];
-          dyn->H         = dyn->wavc[WAVC_H][i];
-          dyn->Heff      = dyn->wavc[WAVC_HEFF][i];
-          dyn->jhat      = dyn->wavc[WAVC_JHAT][i];
-          dyn->r_omega   = dyn->wavc[WAVC_ROMEGA][i];
-          dyn->rdot      = dyn->wavc[WAVC_RDOT][i];
-          dyn->r2dot     = dyn->wavc[WAVC_R2DOT][i];
-          dyn->r3dot     = dyn->wavc[WAVC_R3DOT][i];
-          dyn->r4dot     = 0.;
-          dyn->r5dot     = 0.;
-          dyn->Omegadot  = dyn->wavc[WAVC_OMEGADOT][i];
-          dyn->Omega2dot = dyn->wavc[WAVC_OMEGA2DOT][i];
-          dyn->Omega3dot = 0.;
-          dyn->Omega4dot = 0.;
-          dyn->prsdot    = dyn->wavc[WAVC_PRSDOT][i];
+          wavc_load(dyn, i);   /* stored r.h.s. quantities */
         } else {
           eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
         }
