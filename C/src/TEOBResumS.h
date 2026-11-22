@@ -1628,7 +1628,7 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0, DynamicsSpin *spin);
 
 /* TEOBResumSPostAdiabEcc.c */
-extern int (*p_eob_ecc_pa_advance)(Dynamics **dynp, int *n_pa); /* defined in TEOBResumSPars.c */
+extern int (*p_eob_dyn_postadiabatic_ecc)(); /* defined in TEOBResumSPars.c */
 void PostAdDynamics_free (PostAdDynamics **pa);
 int PostAdDynamics_alloc(PostAdDynamics **pa, int size);
 int  eob_eccpa_nodecount(double e_geo, int series);
@@ -1659,7 +1659,7 @@ int  eob_eccpa_to_mean(PostAdDynamics *pa, double J0, double r_a, double X0, dou
                        const PostAdDynamics *tab);
 int  eob_eccpa_evolve  (PostAdDynamics *pa, double J0, double alpha0, double beta0,
                         int order, Dynamics *dyn);
-int  eob_eccpa_advance(Dynamics **dynp, int *n_pa);
+int  eob_dyn_postadiabatic_ecc(Dynamics **dynp, int *n_pa);
 int  eob_eccpa_ic_state(double e, double omg_tgt, double X, int order, Dynamics *dyn, double y_init[]);
 
 /* TEOBResumSInitialCondition.c */

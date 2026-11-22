@@ -3279,6 +3279,13 @@ static void ecc_ham_core(double r, double prstar, double pphi, Dynamics *dyn,
                  double *d2H_dr2)
 {
   const double nu = EOBPars->nu;
+  const int fmode = EOBPars->use_tidal && EOBPars->use_tidal_fmode_model;
+
+  /* f-mode dressing at this r, as in eob_dyn_rhs_ecc: metric reads it from dyn */
+  if (fmode) {
+    fmode_resonance_dressing_factors(r, dyn);
+    fmode_resonance_dress_QOH(dyn);
+  }
 
   double A, B, dA, d2A, dB, d2B, Q, dQ, dQ_dprstar, d2Q, ddQ_drdprstar, d2Q_dprstar2,
          d3Q_dr2dprstar, d3Q_drdprstar2, d3Q_dprstar3;
@@ -3286,16 +3293,20 @@ static void ecc_ham_core(double r, double prstar, double pphi, Dynamics *dyn,
                &d2Q, &ddQ_drdprstar, &d2Q_dprstar2, &d3Q_dr2dprstar, &d3Q_drdprstar2,
                &d3Q_dprstar3);
 
-  /* r_c from r-only metric (cached by call above) */
+  /* r_c from r-only metric (cached by call above); with f-mode from dressed QOH */
   double rc, drc_dr, d2rc_dr2;
-  {
+  if (fmode) {
+    eob_dyn_s_get_rc(r, nu, EOBPars->a1, EOBPars->a2, EOBPars->aK2,
+                     dyn->dressed_C_Q1, dyn->dressed_C_Q2, dyn->dressed_C_Oct1, dyn->dressed_C_Oct2,
+                     dyn->dressed_C_Hex1, dyn->dressed_C_Hex2, EOBPars->use_tidal, &rc, &drc_dr, &d2rc_dr2);
+  } else {
     double A_r, B_r, dA_r, d2A_r, dB_r, d2B_r;
     eob_metric_s_r_part(r, dyn, &A_r, &B_r, &dA_r, &d2A_r, &dB_r, &d2B_r, &rc, &drc_dr, &d2rc_dr2);
   }
   /* bare rc derivatives out (flux), adjusted ones into H, as in eob_dyn_rhs_ecc */
   const double drc_dr_bare = drc_dr, d2rc_dr2_bare = d2rc_dr2;
   double drc_dr_h = drc_dr, d2rc_dr2_h = d2rc_dr2;
-  if ((EOBPars->use_tidal) && (EOBPars->use_tidal_fmode_model))
+  if (fmode)
     eob_dyn_s_rc_add_QOH_drvts(dyn, rc, r, EOBPars->a1, EOBPars->a2,
                                &drc_dr_h, &d2rc_dr2_h);
 

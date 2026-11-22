@@ -57,7 +57,7 @@ void (*eob_dyn_s_get_rc)();
 int (*eob_dyn_ic)();
 double (*eob_dyn_r0_eob)();
 int (*p_eob_dyn_rhs)();
-int (*p_eob_ecc_pa_advance)(Dynamics **dynp, int *n_pa);
+int (*p_eob_dyn_postadiabatic_ecc)();
 int (*p_eob_spin_dyn_rhs)();
 void (*eob_metric_Apotential)();
 void (*eob_metric_Dpotential)();
@@ -1723,7 +1723,7 @@ int eob_set_params(int default_choice, int firstcall)
   }
 
   /* Set eccentric PA fun pointer */
-  p_eob_ecc_pa_advance = &eob_eccpa_advance;
+  p_eob_dyn_postadiabatic_ecc = &eob_dyn_postadiabatic_ecc;
 
   if (VERBOSE && !DEBUG && (EOBPars->postadiabatic_dynamics_ecc_export || EOBPars->postadiabatic_dynamics_ecc_export_nodes
                             || EOBPars->postadiabatic_dynamics_ecc_export_window > 0.0))

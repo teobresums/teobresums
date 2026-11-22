@@ -640,7 +640,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     EOBPars->pa_tab3_n = 0;
     if (use_ecc_pa) {
       int    n_pa  = 0;
-      if (!p_eob_ecc_pa_advance(&dyn, &n_pa)) {
+      if (!p_eob_dyn_postadiabatic_ecc(&dyn, &n_pa)) {
         if (n_pa > 1) {
           /* wf on reconstructed inspiral */
           if (n_pa + chunk > size) {

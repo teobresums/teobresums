@@ -809,6 +809,11 @@ int eob_eccpa_cons_sample_nodes(PostAdDynamics *pa, int oslot, double alpha, dou
       pa->sqrtAbyB = pa->node[ECCPA_NODE_SQRTAB][m];  pa->Omg = pa->node[ECCPA_NODE_OMG][m];
       pa->rdot = -mrdot[m];  pa->ddotr = mddotr[m];  pa->H = mH[m];  pa->rc = mrc[m];  pa->A = mA[m];
       if (with_flux) {
+        /* flux reads f-mode dressing from dyn: set it at this node's r */
+        if (EOBPars->use_tidal && EOBPars->use_tidal_fmode_model) {
+          fmode_resonance_dressing_factors(pa->r, dyn);
+          fmode_resonance_dress_QOH(dyn);
+        }
         eob_ecc_flux_at(pa->r, pa->prstar, pa->cons_orb[oslot][ECCPA_ORB_PPHI], pa->rdot, pa->Omg, pa->ddotr,
                         mH[m], mHeff[m], pa->sqrtAbyB, mHr[m], dyn, mrc[m], mdrc[m], md2rc[m], mA[m], mdA[m],
                         &pa->F[ECCPA_C_PPHI], &pa->Fr);
@@ -3014,15 +3019,15 @@ int eob_eccpa_evolve(PostAdDynamics *pa, double J0, double alpha0, double beta0,
 }
 
 /**
- * Function: eob_eccpa_advance
- * ---------------------------
+ * Function: eob_dyn_postadiabatic_ecc
+ * -----------------------------------
  *   Driver hook (Sec. II C): initial point -> mean elements, evolution, reconstruction, handoff.
  *
  *   @param[in,out] dynp  : Dynamics; advanced to handoff on success
  *   @param[out]    n_pa  : samples written (may be NULL)
  *   @return  0 if dynamics were advanced, non-zero if stage declined
  */
-int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
+int eob_dyn_postadiabatic_ecc(Dynamics **dynp, int *n_pa)
 {
   if (n_pa)  *n_pa  = 0;
   Dynamics *dyn = *dynp;
@@ -3034,7 +3039,7 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
 
   /* skip stage if reconstruction needs more than _nper samples (App. C) */
   if (eob_eccpa_nper(EOBPars->ecc) > EOBPars->postadiabatic_dynamics_ecc_nper) {
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, e = %.4f needs %d samples per period, nper = %d, stage skipped\n",
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, e = %.4f needs %d samples per period, nper = %d, stage skipped\n",
                         EOBPars->ecc, eob_eccpa_nper(EOBPars->ecc), EOBPars->postadiabatic_dynamics_ecc_nper);
     return 1;
   }
@@ -3042,7 +3047,7 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
 
   PostAdDynamics *pa = NULL;
   if (PostAdDynamics_alloc(&pa, 1024)) {
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, out of memory, stage skipped\n");
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, out of memory, stage skipped\n");
     return 1;
   }
   pa->nmax = ECCPA_NODES_MAX_STAGE;   /* for stage; initial data keep ECCPA_NODES_MAX */
@@ -3052,7 +3057,7 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
   double E0;
   eob_ecc_ham(r0, prstar0, J0, dyn, &E0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
   if (eob_eccpa_cons_turning_points(pa, E0, J0, r0, dyn, ECCPA_ORB_CUR)) {
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, no bound orbit through r = %.4f, prstar = %.3e, pphi = %.4f, stage skipped\n",
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, no bound orbit through r = %.4f, prstar = %.3e, pphi = %.4f, stage skipped\n",
                         r0, prstar0, J0);
     goto out;
   }
@@ -3065,7 +3070,7 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
   if (eob_eccpa_cons_orbit(pa, J0, r_a, dyn, ECCPA_ORB_AUX)
       || !(pa->cons_orb[ECCPA_ORB_AUX][ECCPA_ORB_R_C] - r_a > 1.0)
       || !(fabs(pa->cons_orb[ECCPA_ORB_AUX][ECCPA_ORB_R_C] - pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C]) < 1e-6*fabs(r0))) {
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, no bound orbit through r = %.4f, pphi = %.4f (r_a %.4g, r_c %.6f vs %.6f), stage skipped\n",
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, no bound orbit through r = %.4f, pphi = %.4f (r_a %.4g, r_c %.6f vs %.6f), stage skipped\n",
                         r0, J0, r_a, pa->cons_orb[ECCPA_ORB_AUX][ECCPA_ORB_R_C], pa->cons_orb[ECCPA_ORB_CUR][ECCPA_ORB_R_C]);
     goto out;
   }
@@ -3090,7 +3095,7 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
   double J0m, alpha0, beta0, th_off[ECCPA_TH_N];
   if (eob_eccpa_to_mean(pa, J0, r_a, X0, phi0, EOBPars->postadiabatic_dynamics_ecc_map, dyn,
                         &J0m, &alpha0, &beta0, th_off, NULL)) {
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, osculating -> mean map of initial data failed, stage skipped\n");
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, osculating -> mean map of initial data failed, stage skipped\n");
     goto out;
   }
 
@@ -3106,7 +3111,7 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
   if (!rc) rc = eob_eccpa_phases(pa, n, 0, dyn);
   PROF_STOP(PROF_ECCPA_SEC);
   if (rc || n < 4) {
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, evolution failed, stage skipped\n");
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, evolution failed, stage skipped\n");
     goto out;
   }
 
@@ -3132,14 +3137,14 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
   pa->n_samples = n;
   if (pa->time[n-1] > dyn->t_stop) {
     /* skip stage if even first samples are past t_stop */
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, ode_tmax inside first secular steps, stage skipped\n");
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, ode_tmax inside first secular steps, stage skipped\n");
     goto out;
   }
 
   const double span = pa->time[n-1] - pa->time[0];
   const double P_r0 = 2.0*Pi/pa->data[ECCPA_EVO_OMEGA + ECCPA_TH_LAMBDA_MEAN][0];
   if (!(span > 2.0*P_r0)) {
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, only %.1f radial periods to gain, stage skipped\n", span/P_r0);
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, only %.1f radial periods to gain, stage skipped\n", span/P_r0);
     goto out;
   }
 
@@ -3213,7 +3218,7 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
     PROF_STOP(PROF_ECCPA_RECON);
     if (t < pa->time[n-1]) {
       /* a sample failed: a gap before handoff would be bridged silently, so decline */
-      if (VERBOSE) printf("WARNING: eob_eccpa_advance, reconstruction failed at t = %g, stage skipped\n", t);
+      if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, reconstruction failed at t = %g, stage skipped\n", t);
       goto out;
     }
     if (nrec < 2) nrec = 0;
@@ -3221,7 +3226,7 @@ int eob_eccpa_advance(Dynamics **dynp, int *n_pa)
 
   /* handoff state. */
   if (eob_eccpa_recon(pa, n, pa->time[n-1], dyn)) {
-    if (VERBOSE) printf("WARNING: eob_eccpa_advance, handoff reconstruction failed, stage skipped\n");
+    if (VERBOSE) printf("WARNING: eob_dyn_postadiabatic_ecc, handoff reconstruction failed, stage skipped\n");
     goto out;
   }
 
