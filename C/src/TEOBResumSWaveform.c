@@ -5541,6 +5541,9 @@ static void eob_wav_flm_notab(double x, void *ctx, double *flm)
   } else {
     eob_wav_flm(x, EOBPars->nu, rholm, flm);
   }
+  /* fact's circular tides of the (2,2), rho22 + rhoT; zero otherwise */
+  const double rhoT = eob_wav_rho22_tidal(x);
+  if (rhoT != 0.) flm[1] = SQ(sqrt(flm[1]) + rhoT);
 }
 
 /**
@@ -5824,46 +5827,41 @@ void eob_wav_flm_tidal_DNV_nosource(double x, Dynamics *dyn, double *flm_tidal)
 }
 
 /**
- * Function: eob_wav_hathlm_nc_tidal_no
- * ------------------------------------
- *  Use the circular tidal amplitudes only, at the orbit's x, with no tidal phase
+ * Function: eob_wav_hathlm_nc_tidal_no, eob_wav_deltalm_nc_tidal_no
+ * ------------------------------------------------------------------
+ *  The circular tidal amplitudes only, at the orbit's x, and no tidal phase
  *
- *  @param[in]  dyn, x, hNewt: dynamics, x of the orbit, Newtonian modes
- *  @param[out] A, d: tidal amplitude, relative to hNewt T, and phase, per mode
+ *  @param[in]  dyn, x: dynamics, x of the orbit
+ *  @param[in]  hNewt, hathlm_nc, dlm_nc: not used, the common signature of the tidal amplitude and phase pointers
+ *  @param[out] A or d: tidal amplitude relative to hNewt T, or phase, per mode
 */
-void eob_wav_hathlm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d)
+void eob_wav_hathlm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A)
 {
   eob_wav_flm_tidal(x, dyn, A);
+}
+
+void eob_wav_deltalm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *d)
+{
   for (int k = 0; k < KMAX; k++) d[k] = 0.;
 }
 
 /**
- * Function: eob_wav_hathlm_nc_tidal_22
- * ----------------------------------------
- *  Tidal (2,2) of Jain & Gamba at the state, Delta = u^6 (D12 + u D14) relative to
- *  C22 e^{-2 i phi}, or with mult tau = Delta over the point-mass (2,2) at 1PN. Both minus the
- *  tidal terms already in Dali's point-mass (2,2)
+ * Function: eob_wav_hT22_add
+ * --------------------------
+ *  h22^{T+} of the paper: Jain & Gamba's tidal (2,2) at the state minus the tides Dali's point-mass (2,2) already has,
+ *  u^6 (D12 + u D14) relative to C22 e^{-2 i phi}. The mult form starts from it too
  *
- *  @param[in]  dyn, x, hNewt: dynamics, x of the orbit, Newtonian modes
- *  @param[out] A, d: tidal amplitude, relative to hNewt T or, for the (2,2) with use_hlm_nc_tidal = mult,
- *                    to the point-mass mode, and phase, per mode
+ *  @param[in]  dyn: dynamics
+ *  @param[out] D: D12_re, D12_im, D14_re, D14im and the point-mass 1PN factor h1, for mult
+ *  @param[out] re, im: h22^{T+}
 */
-void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d)
+void eob_wav_hT22_add(Dynamics *dyn, double *D, double *re, double *im)
 {
   const double r      = dyn->r;
   const double prstar = dyn->prstar;
   const double pphi   = dyn->pphi;
-  eob_wav_flm_tidal(x, dyn, A);
-  for (int k = 0; k < KMAX; k++) d[k] = 0.;
-
-  /* (2,2) */
-
   const double nu  = EOBPars->nu;
-  const double X1  = EOBPars->X1;
-  /* mu-bar_+- = (kappa_A +- kappa_B)/6, sigma-bar_+ = (j_A + j_B)/48 */
-  const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
-  const double mum = (EOBPars->kapA2 - EOBPars->kapB2)/6.;
-  const double sgp = (EOBPars->use_tidal_gravitomagnetic != TIDES_GM_OFF) ? EOBPars->japT2/48. : 0.;
+  const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb, sgp = EOBPars->tidal_sigmap;
   const double u   = 1./r;
   const double j   = pphi*sqrt(u);       /* angular momentum, 1 on a Newtonian circle */
   const double j2  = j*j;
@@ -5871,11 +5869,8 @@ void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, d
   const double u5  = u*u*u*u*u;
   const double p2 = p*p;
   const double s = j2 - 1.;
-  const double Sb = mup + (2.*X1 - 1.)*mum;
   const double hN2_re = (1. + j2 - p2)/2.;
   const double hN2_im = j*p;
-  const double hN4_re = (-3 + nu)/3. + j2*((nu)/6. + j2*((-3 - nu)/6.)) + p2*((-3 - 5*nu)/6. + j2*((-nu)/3.) + p2*((1 + nu)/2.));
-  const double hN4_im = j*p*((-3 + 2*nu)/3. + j2*((-3 - nu)/3.) + p2*(-1 - nu));
   const double h1 = p2*((41 + 3*nu)/42. + p2*((10 - 9*nu)/21. + p2*((-5 + 6*nu)/24.))) + s*((67 - 26*nu)/42. + p2*((65 - 48*nu)/84. + p2*((-125 + 144*nu)/168.)) + s*((25 - 12*nu)/84. + p2*((-115 + 114*nu)/168. + p2*((55 - 144*nu)/336.)) + s*((-25 + 12*nu)/168. + p2*((115 - 156*nu)/336.) + s*((25 - 12*nu)/336. + p2*((-65 + 174*nu)/672.) + s*((-25 + 12*nu)/672. + s*((25 - 12*nu)/1344.))))));
   const double h10 = s*((67 - 26*nu)/42. + s*((25 - 12*nu)/84. + s*((-25 + 12*nu)/168. + s*((25 - 12*nu)/336. + s*((-25 + 12*nu)/672. + s*((25 - 12*nu)/1344.))))));
   const double h1s = (67 - 26*nu)/42. + p2*((65 - 48*nu)/84. + p2*((-125 + 144*nu)/168.)) + s*((25 - 12*nu)/42. + p2*((-115 + 114*nu)/84. + p2*((55 - 144*nu)/168.)) + s*((-25 + 12*nu)/56. + p2*((115 - 156*nu)/112.) + s*((25 - 12*nu)/84. + p2*((-65 + 174*nu)/168.) + s*((-125 + 60*nu)/672. + s*((25 - 12*nu)/224.)))));
@@ -5902,32 +5897,327 @@ void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, d
   }
   const double D14_re = tc14x + tc12*h10 + tn14_re - (d14x_re + d12_re*h1 - 18.*mup*hN2_re*h1s) + dph_re;
   const double D14_im = tn14_im - (d14x_im + d12_im*h1 - 18.*mup*hN2_im*h1s) + dph_im;
-  double re, im;
-  if (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_MULT) {
-    re = u5*u*(D12_re + u*D14_re);
-    im = u5*u*(D12_im + u*D14_im);
-  } else {
-    const double K = (-86. + 55.*nu)*j2/42. + (j2 + p2 - 2.)/2. + h1;
-    const double h4_re = hN4_re + K*hN2_re;
-    const double h4_im = hN4_im + K*hN2_im;
-    const double hh = hN2_re*hN2_re + hN2_im*hN2_im;
-    const double T10_re = (D12_re*hN2_re + D12_im*hN2_im)/hh;
-    const double T10_im = (D12_im*hN2_re - D12_re*hN2_im)/hh;
-    const double k_re = D14_re - (T10_re*h4_re - T10_im*h4_im);
-    const double k_im = D14_im - (T10_re*h4_im + T10_im*h4_re);
-    const double T12_re = (k_re*hN2_re + k_im*hN2_im)/hh;
-    const double T12_im = (k_im*hN2_re - k_re*hN2_im)/hh;
-    re = u5*(T10_re + u*T12_re);
-    im = u5*(T10_im + u*T12_im);
-  }
-  A[1] = sqrt(re*re + im*im);
-  d[1] = atan2(im, re);
-  /* added, Delta relative to Dali's Newtonian bracket, which hNewt T multiplies */
-  if (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_MULT) {
-    A[1] /= hNewt->ampli[1]/ChlmNewt_ampli[1];
-    d[1] -= hNewt->phase[1] + MINDEX[1]*dyn->phi - ChlmNewt_phase[1];
-  }
+  const double u6 = u5*u;
+  *re = u6*(D12_re + u*D14_re);
+  *im = u6*(D12_im + u*D14_im);
+  D[0] = D12_re; D[1] = D12_im; D[2] = D14_re; D[3] = D14_im; D[4] = h1;
 }
+
+/**
+ * Function: eob_wav_hT22_mult
+ * ---------------------------
+ *  h22^{Tx} - 1 of the paper: h22^{T+} over the point-mass (2,2) at 1PN. use_hlm_nc_tidal = mult multiplies the
+ *  point-mass mode by h22^{Tx}
+ *
+ *  @param[in]  dyn: dynamics
+ *  @param[out] re, im: h22^{Tx} - 1
+*/
+void eob_wav_hT22_mult(Dynamics *dyn, double *re, double *im)
+{
+  double D[5], Dre, Dim;
+  eob_wav_hT22_add(dyn, D, &Dre, &Dim);
+  const double nu  = EOBPars->nu;
+  const double u   = 1./dyn->r;
+  const double j   = dyn->pphi*sqrt(u);
+  const double j2  = j*j;
+  const double p   = dyn->prstar*sqrt(dyn->r);
+  const double p2  = p*p;
+  const double u5  = u*u*u*u*u;
+  const double D12_re = D[0], D12_im = D[1], D14_re = D[2], D14_im = D[3], h1 = D[4];
+  const double hN2_re = (1. + j2 - p2)/2.;
+  const double hN2_im = j*p;
+  const double hN4_re = (-3 + nu)/3. + j2*((nu)/6. + j2*((-3 - nu)/6.)) + p2*((-3 - 5*nu)/6. + j2*((-nu)/3.) + p2*((1 + nu)/2.));
+  const double hN4_im = j*p*((-3 + 2*nu)/3. + j2*((-3 - nu)/3.) + p2*(-1 - nu));
+  const double K = (-86. + 55.*nu)*j2/42. + (j2 + p2 - 2.)/2. + h1;
+  const double h4_re = hN4_re + K*hN2_re;
+  const double h4_im = hN4_im + K*hN2_im;
+  const double hh = hN2_re*hN2_re + hN2_im*hN2_im;
+  const double T10_re = (D12_re*hN2_re + D12_im*hN2_im)/hh;
+  const double T10_im = (D12_im*hN2_re - D12_re*hN2_im)/hh;
+  const double k_re = D14_re - (T10_re*h4_re - T10_im*h4_im);
+  const double k_im = D14_im - (T10_re*h4_im + T10_im*h4_re);
+  const double T12_re = (k_re*hN2_re + k_im*hN2_im)/hh;
+  const double T12_im = (k_im*hN2_re - k_re*hN2_im)/hh;
+  *re = u5*(T10_re + u*T12_re);
+  *im = u5*(T10_im + u*T12_im);
+}
+
+/**
+ * Function: eob_wav_hathlm_nc_tidal_add, _mult; eob_wav_deltalm_nc_tidal_add, _mult
+ * ---------------------------------------------------------------------------------
+ *  The tidal amplitude and phase of each mode: the circular amplitudes, and for the (2,2) Delta relative to hNewt T
+ *  (add) or tau relative to the point-mass mode (mult)
+ *
+ *  @param[in]  dyn, x, hNewt: dynamics, x of the orbit, Newtonian modes
+ *  @param[in]  hathlm_nc, dlm_nc: not used, the common signature of the tidal amplitude and phase pointers
+ *  @param[out] A or d: tidal amplitude or phase, per mode
+*/
+void eob_wav_hathlm_nc_tidal_add(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A)
+{
+  double D[5], re, im;
+  eob_wav_flm_tidal(x, dyn, A);
+  eob_wav_hT22_add(dyn, D, &re, &im);
+  A[1] = sqrt(re*re + im*im);
+  /* Delta is relative to Dali's Newtonian bracket, which hNewt T multiplies */
+  A[1] /= hNewt->ampli[1]/ChlmNewt_ampli[1];
+}
+
+void eob_wav_deltalm_nc_tidal_add(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *d)
+{
+  double D[5], re, im;
+  for (int k = 0; k < KMAX; k++) d[k] = 0.;
+  eob_wav_hT22_add(dyn, D, &re, &im);
+  d[1] = atan2(im, re);
+  d[1] -= hNewt->phase[1] + MINDEX[1]*dyn->phi - ChlmNewt_phase[1];
+}
+
+void eob_wav_hathlm_nc_tidal_mult(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A)
+{
+  double re, im;
+  eob_wav_flm_tidal(x, dyn, A);
+  eob_wav_hT22_mult(dyn, &re, &im);
+  A[1] = sqrt(re*re + im*im);
+}
+
+void eob_wav_deltalm_nc_tidal_mult(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *d)
+{
+  double re, im;
+  for (int k = 0; k < KMAX; k++) d[k] = 0.;
+  eob_wav_hT22_mult(dyn, &re, &im);
+  d[1] = atan2(im, re);
+}
+
+/**
+ * Function: eob_wav_rho22_tidal_fact
+ * ----------------------------------
+ *  Tidal part of rho22 at x, rhoT = x^5 (rT5 + rT6 x), added to rho22 where the flm are computed, so the mode, the
+ *  flux and the initial data all have it. use_hlm_nc_tidal or use_flm_nc_tidal = fact
+ *
+ *  @param[in] x: (r_omega Omega)^2
+ *  @return rhoT
+*/
+double eob_wav_rho22_tidal_fact(double x)
+{
+  const double nu  = EOBPars->nu;
+  const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb, sgp = EOBPars->tidal_sigmap;
+  /* DNV_nosource's (2,2) on circles, with the gravitomagnetic NLO 112/3 sgp of Dones, Henry, Bernard Eq. (78) */
+  const double rT5 = 3./(2.*nu)*Sb + 6.*mup;
+  const double rT6 = (254 + 445*nu)/(56.*nu)*Sb + (-100 - 5*nu)/7.*mup + 112./3.*sgp;
+  return x*x*x*x*x*(rT5 + rT6*x);
+}
+
+/**
+ * Function: eob_wav_flm_tidal_fact
+ * --------------------------------
+ *  DNV_nosource without the (2,2), whose circular tides fact puts in rho22 instead (eob_wav_rho22_tidal_fact)
+ *
+ *  @param[in] x: (r_omega Omega)^2
+ *  @param[in] dyn: dynamics structure
+ *  @param[out] flm_tidal: tidal amplitudes, relative to the Newtonian ones and the tail
+*/
+void eob_wav_flm_tidal_fact(double x, Dynamics *dyn, double *flm_tidal)
+{
+  eob_wav_flm_tidal_DNV_nosource(x, dyn, flm_tidal);
+  flm_tidal[1] = 0.;
+}
+
+/**
+ * Function: eob_wav_hT22_fact
+ * ---------------------------
+ *  hhat22^{T_nc} of the paper, the NC tides added to impqc's NC factor, over that factor. Written in u, p and
+ *  s = r^2 prsdot, so it is exactly zero on every circular orbit (the circular tides are in rho22). Matched to Jain &
+ *  Gamba's (2,2) to NLO. The (2,2) is multiplied by 1 + hT_nc/hpp_nc, hpp_nc = hathlm_nc e^{i dlm_nc}
+ *
+ *  @param[in]  dyn: dynamics
+ *  @param[in]  hathlm_nc, dlm_nc: point-mass NC amplitude and phase
+ *  @param[out] ratio_re, ratio_im: hT_nc/hpp_nc
+*/
+void eob_wav_hT22_fact(Dynamics *dyn, double *hathlm_nc, double *dlm_nc, double *ratio_re, double *ratio_im)
+{
+  const double nu  = EOBPars->nu;
+  const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb, sgp = EOBPars->tidal_sigmap;
+  /* rhoT = x^5 (rT5 + rT6 x), the circular tides the pieces take back out */
+  const double rT5 = 3./(2.*nu)*Sb + 6.*mup;
+  const double rT6 = (254 + 445*nu)/(56.*nu)*Sb + (-100 - 5*nu)/7.*mup + 112./3.*sgp;
+  const double r   = dyn->r;
+  const double u   = 1./r;
+  const double j   = dyn->pphi*sqrt(u);
+  const double j2  = j*j;
+  const double p   = dyn->prstar*sqrt(r);
+  const double p2  = p*p;
+  /* the true r^2 prsdot, zero on any circular orbit like p: the j of the expansion is eliminated in its favour */
+  const double q   = 1. + r*r*dyn->prsdot;
+  const double q2 = q*q, q3 = q2*q, q4 = q3*q, q5 = q4*q, q6 = q5*q, q7 = q6*q, q8 = q7*q, q9 = q8*q, q10 = q9*q, q11 = q10*q, q12 = q11*q, q13 = q12*q, q14 = q13*q;
+  /* Generated by Tidal22Rho.wl (EccTides/mma/tidal22), Sec. 9 */
+  const double A10_re_5 = -3. - 12.*p2
+      + 7.*q
+      + q5*(-2. + 2.*p2)
+      - 2.*q6;
+  const double A10_re_m = 30. + 60.*p2
+      - 30.*q;
+  const double A10_re = rT5*A10_re_5 + mup*A10_re_m;
+  const double A10_im_5 = -16.
+      - 4.*q5;
+  const double A10_im_m = 120.;
+  const double A10_im = rT5*A10_im_5 + mup*A10_im_m;
+  const double A12_re_5 = (-242643 - 143980*nu)/9408. + p2*((4563 - 436900*nu)/9408. + p2*((11352 + 54953*nu)/588. + (-168 - 222*nu)/7.*p2))
+      + q*((-320151 - 308684*nu)/9408. + p2*((-57117 - 266232*nu)/784. + p2*((342 - 79249*nu)/588. + (-168 - 222*nu)/7.*p2)))
+      + q2*((34779 + 1924*nu)/2352. + p2*((-20275 - 134448*nu)/588. + (-1835 - 22367*nu)/98.*p2))
+      + q3*((120307 + 99676*nu)/2352. + (108673 + 143384*nu)/2352.*p2)
+      + q4*((209967 + 51412*nu)/4704. + p2*((-2065 + 2700*nu)/96. + (-40 + 40*nu)*j2 + p2*((-20*nu) + (-20 - 20*nu)*j2 + (5 + 5*nu)*p2)))
+      + q5*((6659 - 8308*nu)/336. + p2*((4199 + 13730*nu)/336. + (100 - 20*nu)*j2 + p2*((-27159 - 14612*nu)/672. + p2*((1993 - 162*nu)/112. + p2*((-605 + 744*nu)/168. + (5 - 6*nu)/12.*p2)))))
+      + q6*((-7699 - 5036*nu)/672. + p2*((-10443 + 16174*nu)/336. + (160 - 40*nu)*j2 + p2*((-58195 - 27484*nu)/672. + (20 + 20*nu)*j2 + p2*((6329 - 4182*nu)/336. + p2*((-95 + 96*nu)/24. + (5 - 6*nu)/12.*p2)))))
+      + q7*((-11527 + 4908*nu)/336. + p2*((-13844 + 3235*nu)/168. + (20 + 20*nu)*j2 + p2*((-10191 - 52244*nu)/672. + p2*((-65 + 286*nu)/56. + (-115 + 72*nu)/168.*p2))))
+      + q8*((-30053 + 14972*nu)/1344. + p2*((-21299 - 26004*nu)/1344. + p2*((6925 - 2652*nu)/672. + p2*((-375 + 502*nu)/56. + (-55 + 144*nu)/168.*p2))))
+      + q9*((-3789 + 860*nu)/1344. + p2*((2575 - 2370*nu)/336. + p2*((-9245 + 12804*nu)/672. + (235 - 894*nu)/336.*p2)))
+      + q10*((25 - 12*nu)/48. + p2*((-1835 + 1074*nu)/336. + p2*((195 - 404*nu)/32. + (65 - 174*nu)/336.*p2)))
+      + p2*((1105 - 186*nu)/336. + (-605 + 2004*nu)/672.*p2)*q11
+      + q12*((-25 + 12*nu)/84. + p2*((-145 + 22*nu)/112. + (-25 + 12*nu)/672.*p2))
+      + q13*((125 - 60*nu)/672. + (25 - 12*nu)/112.*p2)
+      + (-25 + 12*nu)/672.*q14;
+  const double A12_re_m = (361885 + 101108*nu)/1568. + p2*((348687 - 14224*nu)/1568. + p2*((-211236 - 59059*nu)/392. + p2*((15099 + 4674*nu)/56. + p2*((-20 + 123*nu)/14. + (-5 + 6*nu)/2.*p2))))
+      + q*((764691 + 266588*nu)/1568. + p2*((67110 + 95515*nu)/49. + p2*((-99761 + 1041278*nu)/784. + p2*((13399 + 6834*nu)/56. + p2*((185 - 114*nu)/28. + (-5 + 6*nu)/2.*p2)))))
+      + q2*((68883 + 42812*nu)/784. + p2*((326853 + 1305794*nu)/784. + p2*((213663 + 455630*nu)/392. + p2*((555 - 678*nu)/28. + (10 - 18*nu)*p2))))
+      + q3*((-372283 - 138124*nu)/784. + p2*((-234963 - 150290*nu)/392. + p2*((1445 - 2064*nu)/16. + p2*((1125 - 876*nu)/28. + (55 - 144*nu)/28.*p2))))
+      + q4*((-67597 - 20874*nu)/196. + p2*((7075 - 5475*nu)/56. + p2*((-3260 + 10095*nu)/56. + (-625 + 1938*nu)/56.*p2)))
+      + q5*((25 - 12*nu)/4. + p2*((-3435 + 1464*nu)/28. + p2*((-885 - 2910*nu)/112. + (-65 + 174*nu)/56.*p2)))
+      + q6*((325 - 156*nu)/16. + p2*((6505 - 2526*nu)/112. + (415 - 1056*nu)/56.*p2))
+      + q7*((-2075 + 996*nu)/112. + p2*((-565 + 414*nu)/56. + (25 - 12*nu)/112.*p2))
+      + q8*((1325 - 636*nu)/224. + (-125 + 60*nu)/224.*p2)
+      + (-125 + 60*nu)/224.*q9;
+  const double A12_re_6 = 39./7. + p2*(30./7. - 69./7.*p2)
+      + q*(82./7. + p2*(89./7. + 81./7.*p2))
+      + q2*(32./7. + p2*(-16./7. + 150./7.*p2))
+      + q3*(-26./7. - 75./7.*p2)
+      - 15./7.*q4
+      + q6*(-2. + p2*(4. - 2.*p2))
+      + q7*(-6. + p2*(16. - 2.*p2))
+      + q8*(-6. + 12.*p2)
+      - 2.*q9;
+  const double A12_re = j*(rT5*A12_re_5 + mup*A12_re_m + rT6*A12_re_6);
+  const double A12_im_5 = (-14 + 14*nu)*j2 + (-7 - 7*nu)*j2*p2
+      + q*((-41877 - 15028*nu)/672. + (35 - 7*nu)*j2 + p2*((22038 + 25225*nu)/294. + (-1756 - 7894*nu)/49.*p2))
+      + q2*((-224129 - 141812*nu)/1176. + (56 - 14*nu)*j2 + p2*((226 + 9139*nu)/147. + (7 + 7*nu)*j2 + (-1756 - 7894*nu)/49.*p2))
+      + q3*((-48205 - 59163*nu)/294. + (7 + 7*nu)*j2 + (-21586 - 6947*nu)/294.*p2)
+      + q4*((-59257 - 112844*nu)/1176. + (40 - 40*nu)*j2 + p2*((-20 + 60*nu)*j2 + (-20 - 20*nu)*j2*p2))
+      + q5*((625 - 300*nu)/48. + (-56 - 24*nu)*j2 + (122 + 2*nu)*j2*p2)
+      + q6*((3221 - 1004*nu)/42. + (-270 + 62*nu)*j2 + p2*((-6851 + 8912*nu)/168. + (140 - 60*nu)*j2 + p2*((-4909 - 834*nu)/84. + (20 + 20*nu)*j2 + p2*((535 - 660*nu)/42. + (-5 + 6*nu)/3.*p2))))
+      + q7*((9017 - 1872*nu)/42. + (-196 + 24*nu)*j2 + p2*((-9073 + 15844*nu)/168. + (-2 - 2*nu)*j2 + p2*((-2729 - 3762*nu)/84. + p2*((35 - 24*nu)/6. + (-5 + 6*nu)/3.*p2))))
+      + q8*((7603 + 732*nu)/56. + (-22 - 22*nu)*j2 + p2*((-1447 + 6728*nu)/168. + p2*((625 - 678*nu)/42. + (-235 + 348*nu)/42.*p2)))
+      + q9*((8375 + 17932*nu)/672. + p2*((425 - 764*nu)/56. + p2*((-275 + 426*nu)/42. + (55 - 144*nu)/42.*p2)))
+      + p2*((125 - 256*nu)/56. + (15 - 26*nu)/4.*p2)*q10
+      + q11*((25 - 12*nu)/12. + p2*((-65 + 356*nu)/56. + (-65 + 174*nu)/84.*p2))
+      + q12*((-25 + 12*nu)/12. + (-15 - 88*nu)/56.*p2)
+      + q13*((25 - 12*nu)/28. + (25 - 12*nu)/168.*p2)
+      + (-25 + 12*nu)/168.*q14;
+  const double A12_im_m = (60 - 60*nu)*j2 + (30 + 30*nu)*j2*p2
+      + q*((63137 - 16764*nu)/112. + (-150 + 30*nu)*j2 + p2*((-124235 - 410718*nu)/392. + p2*((85139 + 254268*nu)/196. + p2*((115 - 534*nu)/14. + (10 - 12*nu)*p2))))
+      + q2*((212241 + 30100*nu)/98. + (-240 + 60*nu)*j2 + p2*((20953 - 234598*nu)/392. + (-30 - 30*nu)*j2 + p2*((116359 + 192948*nu)/196. + p2*((365 - 654*nu)/14. + (10 - 12*nu)*p2))))
+      + q3*((99717 + 56189*nu)/49. + (-30 - 30*nu)*j2 + p2*((99929 + 78526*nu)/196. + p2*((2405 - 4128*nu)/28. + (10 + 12*nu)*p2)))
+      + q4*((26283 + 31374*nu)/49. + p2*((975 - 1329*nu)/14. + p2*((-2035 + 3984*nu)/28. + (-55 + 144*nu)/7.*p2)))
+      + q5*((-625 + 300*nu)/8. + p2*((-2025 - 3018*nu)/56. + (75 - 498*nu)/14.*p2))
+      + q6*((225 - 108*nu)/2. + p2*((225 + 42*nu)/8. + (65 - 174*nu)/14.*p2))
+      + q7*((-125 + 60*nu)/2. + (-45 + 93*nu)/7.*p2)
+      + q8*((100 - 48*nu)/7. + (-25 + 12*nu)/28.*p2)
+      + (-75 + 36*nu)/112.*q9;
+  const double A12_im_6 = q*(18. + p2*(-30./7. + 120./7.*p2))
+      + q2*(272./7. + p2*(-60./7. + 120./7.*p2))
+      + q3*(206./7. - 30./7.*p2)
+      + 60./7.*q4
+      + q7*(-8. + 8.*p2)
+      + q8*(-16. + 8.*p2)
+      - 8.*q9;
+  const double A12_im = (rT5*A12_im_5 + mup*A12_im_m + rT6*A12_im_6)/j;
+  /* A12 with the phase part when it is on */
+  double A12_re_tot = A12_re, A12_im_tot = A12_im;
+  /* with impqc's NC phase on the point-mass mode, its 1PN tidal part comes out of the NLO */
+  if (EOBPars->use_dlm_nc != USEDELTALM_NC_NO) {
+    const double dA12_re_5 = p2*((150 - 583*nu)/112. + p2*((4100 - 3543*nu)/336. + p2*((-3235 + 3846*nu)/168. + (40 - 50*nu)/7.*p2)))*q6
+        + p2*((2875 - 3348*nu)/96. + p2*((-4735 + 5966*nu)/224. + p2*((-45 - 26*nu)/14. + (25 - 26*nu)/7.*p2)))*q7
+        + p2*((525 - 447*nu)/16. + p2*((-5035 + 5452*nu)/224. + p2*((905 - 1098*nu)/84. + (-15 + 24*nu)/7.*p2)))*q8
+        + p2*((-225 + 376*nu)/32. + p2*((625 - 986*nu)/112. + (-185 + 366*nu)/42.*p2))*q9
+        + p2*((-1000 - 171*nu)/336. + p2*((-865 + 453*nu)/336. + (145 - 498*nu)/168.*p2))*q10
+        + p2*((3475 - 3852*nu)/672. + (1495 - 1230*nu)/672.*p2)*q11
+        + p2*((-125 + 189*nu)/48. + (-325 + 576*nu)/672.*p2)*q12
+        + (325 - 576*nu)/672.*p2*q13;
+    const double dA12_re_m = p2*((-55425 + 51069*nu)/224. + p2*((91765 - 108408*nu)/224. + p2*((-5935 + 10182*nu)/56. + (-15 + 12*nu)*p2)))*q
+        + p2*((-56725 + 19962*nu)/448. + p2*((33465 - 20532*nu)/224. + p2*((-4395 + 4134*nu)/56. + (-15 - 60*nu)/7.*p2)))*q2
+        + p2*((39225 - 49572*nu)/448. + p2*((-4635 + 8760*nu)/56. + p2*((2005 - 5490*nu)/56. + (90 - 144*nu)/7.*p2)))*q3
+        + p2*((-23175 + 38802*nu)/224. + p2*((11205 - 13812*nu)/112. + (25 + 222*nu)/8.*p2))*q4
+        + p2*((-6500 + 5409*nu)/224. + p2*((-16115 + 20184*nu)/224. + (-145 + 498*nu)/28.*p2))*q5
+        + p2*((17975 - 31518*nu)/448. + (1885 - 6180*nu)/224.*p2)*q6
+        + p2*((-1775 + 4968*nu)/448. + (325 - 576*nu)/112.*p2)*q7
+        + (-325 + 576*nu)/112.*p2*q8;
+    const double dA12_re = rT5*dA12_re_5 + mup*dA12_re_m;
+    const double dA12_im_5 = q5*((-150 + 583*nu)/448. + p2*((-1825 + 897*nu)/672. + p2*((1510 - 1605*nu)/192. + p2*((-4195 + 5046*nu)/672. + (20 - 25*nu)/14.*p2))))
+        + q6*((-21025 + 26934*nu)/2688. + p2*((4955 - 8040*nu)/448. + p2*((37295 - 38574*nu)/2688. + p2*((-495 + 526*nu)/56. + (25 - 26*nu)/28.*p2))))
+        + q7*((-6025 + 6030*nu)/384. + p2*((32065 - 33195*nu)/672. + p2*((-5215 + 8652*nu)/384. + p2*((-415 + 174*nu)/336. + (-15 + 24*nu)/28.*p2))))
+        + q8*((-825 + 518*nu)/128. + p2*((8965 + 1056*nu)/1344. + p2*((-5555 + 5486*nu)/448. + (265 - 354*nu)/168.*p2)))
+        + q9*((6725 - 7554*nu)/2688. + p2*((-8555 + 7899*nu)/672. + p2*((9125 - 17799*nu)/1344. + (145 - 498*nu)/672.*p2)))
+        + q10*((-1475 + 4194*nu)/2688. + p2*((12955 - 15912*nu)/1344. + (-1405 + 8730*nu)/2688.*p2))
+        + q11*((-575 + 402*nu)/896. + p2*((-935 + 1349*nu)/224. + (-325 + 576*nu)/2688.*p2))
+        + q12*((475 - 690*nu)/896. + (325 - 576*nu)/448.*p2)
+        + (-325 + 576*nu)/2688.*q13;
+    const double dA12_im_m = (7725 - 6546*nu)/128. + p2*((-79745 + 85053*nu)/448. + p2*((134915 - 172212*nu)/896. + p2*((-6535 + 11310*nu)/224. + (-15 + 12*nu)/4.*p2)))
+        + q*((6700 - 3237*nu)/112. + p2*((-359385 + 337338*nu)/896. + p2*((163385 - 220788*nu)/896. + p2*((-975 + 2190*nu)/224. + (-15 - 60*nu)/28.*p2))))
+        + q2*((-3475 + 6138*nu)/128. + p2*((25645 - 129540*nu)/896. + p2*((6430 - 75*nu)/112. + p2*((2425 - 2802*nu)/224. + (45 - 72*nu)/14.*p2))))
+        + q3*((5325 - 12930*nu)/448. + p2*((15265 - 78*nu)/448. + p2*((-1065 + 5676*nu)/64. + (-3425 + 7314*nu)/224.*p2)))
+        + q4*((32675 - 43698*nu)/896. + p2*((-60400 + 83361*nu)/448. + p2*((-30845 + 6540*nu)/896. + (-145 + 498*nu)/112.*p2)))
+        + q5*((-275 + 576*nu)/32. + p2*((10325 - 17010*nu)/128. + (7685 - 26100*nu)/896.*p2))
+        + q6*((-5475 + 9306*nu)/896. + p2*((-5835 + 17736*nu)/896. + (325 - 576*nu)/448.*p2))
+        + q7*((75 - 198*nu)/64. + (-975 + 1728*nu)/224.*p2)
+        + (325 - 576*nu)/448.*q8;
+    const double dA12_im = rT5*dA12_im_5 + mup*dA12_im_m;
+    A12_re_tot += dA12_re;
+    A12_im_tot += dA12_im;
+  }
+  /* hT_nc = u^5 (A10/H + u A12/(j (1 + j^2) H^2)), H = 2 hN2 = 1 + j^2 - p^2 + 2 i j p, the Newtonian bracket at
+     the true j: with j^2 -> 1 + s it would cross zero in the plunge */
+  const double H_re  = 1. + j2 - p2, H_im = 2.*j*p, H2abs = H_re*H_re + H_im*H_im;
+  const double HH_re = H_re*H_re - H_im*H_im, HH_im = 2.*H_re*H_im;
+  const double a10_re = A10_re, a10_im = j*p*A10_im;
+  const double a12_re = A12_re_tot, a12_im = j*p*A12_im_tot;
+  /* A10/H and A12/(j (1 + j^2) H^2), dividing by multiplying with the conjugates */
+  const double c12 = 1./(j*(1. + j2)*H2abs*H2abs);
+  const double t10_re = (a10_re*H_re + a10_im*H_im)/H2abs;
+  const double t10_im = (a10_im*H_re - a10_re*H_im)/H2abs;
+  const double t12_re = (a12_re*HH_re + a12_im*HH_im)*c12;
+  const double t12_im = (a12_im*HH_re - a12_re*HH_im)*c12;
+  const double u5 = u*u*u*u*u;
+  const double hT_re = u5*(t10_re + u*t12_re);
+  const double hT_im = u5*(t10_im + u*t12_im);
+  /* hT_nc/hpp_nc = (hT_re + i hT_im) e^{-i dlm_nc}/hathlm_nc */
+  const double c = cos(dlm_nc[1]), sn = sin(dlm_nc[1]);
+  *ratio_re = ( hT_re*c + hT_im*sn)/hathlm_nc[1];
+  *ratio_im = (-hT_re*sn + hT_im*c)/hathlm_nc[1];
+}
+
+/**
+ * Function: eob_wav_hathlm_nc_tidal_fact, eob_wav_deltalm_nc_tidal_fact
+ * ----------------------------------------------------------------------
+ *  The tidal amplitude and phase of each mode with fact: the circular amplitudes (the (2,2) one is zero, its circular
+ *  tides are in rho22), and for the (2,2) the modulus and argument of eob_wav_hT22_fact, the phase on top of dlm_nc
+ *
+ *  @param[in]  dyn, x, hNewt: dynamics, x of the orbit, Newtonian modes
+ *  @param[in]  hathlm_nc, dlm_nc: point-mass NC amplitude and phase
+ *  @param[out] A or d: tidal amplitude or phase, per mode
+*/
+void eob_wav_hathlm_nc_tidal_fact(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A)
+{
+  double t_re, t_im;
+  eob_wav_flm_tidal(x, dyn, A);
+  eob_wav_hT22_fact(dyn, hathlm_nc, dlm_nc, &t_re, &t_im);
+  A[1] = sqrt(t_re*t_re + t_im*t_im);
+}
+
+void eob_wav_deltalm_nc_tidal_fact(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *d)
+{
+  double t_re, t_im;
+  for (int k = 0; k < KMAX; k++) d[k] = 0.;
+  eob_wav_hT22_fact(dyn, hathlm_nc, dlm_nc, &t_re, &t_im);
+  d[1] = atan2(t_im, t_re) + dlm_nc[1];
+}
+
 
 /** 
  * Function: eob_wav_hathlm_nc_no
@@ -8670,34 +8960,60 @@ void eob_wav_hlm_circ(Dynamics *dyn, Waveform_lm_t *hlm)
 }
 
 /**
+ * Function: eob_wav_hlm_tidal_comb_add, eob_wav_hlm_tidal_comb_mult
+ * ------------------------------------------------------------------
+ *  The tidal part on a point-mass mode h: hNewt T A e^{i ang} added (add), or h times 1 + A e^{i ang} (mult), as the
+ *  real and imaginary parts along the phase of h
+ *
+ *  @param[in]  h, ht, A, ang: amplitude of the point-mass mode, of hNewt T, tidal amplitude and phase
+ *  @param[out] zr, zi: the mode with its tidal part
+*/
+void eob_wav_hlm_tidal_comb_add(double h, double ht, double A, double ang, double *zr, double *zi)
+{
+  *zr = h + ht*A*cos(ang);
+  *zi =     ht*A*sin(ang);
+}
+
+void eob_wav_hlm_tidal_comb_mult(double h, double ht, double A, double ang, double *zr, double *zi)
+{
+  *zr = h * (1. + A*cos(ang));
+  *zi = h * A*sin(ang);
+}
+
+/**
  * Function: eob_wav_hlm_ecc_tidal
  * -------------------------------
- *  Put the tidal part on the point-mass modes, hNewt T A e^{i d} added or, for the (2,2) with
- *  use_hlm_nc_tidal = mult, the point-mass mode times (1 + A e^{i d}). d is relative to the point-mass mode
- *  without its NC phase dlm_nc, which the tidal pieces leave out
+ *  Put the tidal part on the point-mass modes, with the tidal amplitude (use_hlm_nc_tidal) and phase (use_dlm_nc_tidal)
+ *  combined per mode by eob_wav_hlm_tidal_comb: added for every mode, multiplied for the (2,2) with mult and fact.
+ *  The phase is relative to the point-mass mode without its NC phase dlm_nc, which the tidal pieces leave out
  *
- *  @param[in]     dyn, x, hNewt, tlm, dlm_nc: dynamics, x of the orbit, Newtonian modes, tail, noncircular phase
+ *  @param[in]     dyn, x, hNewt, tlm: dynamics, x of the orbit, Newtonian modes, tail
+ *  @param[in]     hathlm_nc, dlm_nc: point-mass NC amplitude and phase
  *  @param[in,out] hlm: point-mass modes, with the tidal part on return
 */
-void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Waveform_lm_t *tlm, double *dlm_nc, Waveform_lm_t *hlm)
+void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Waveform_lm_t *tlm, double *hathlm_nc,
+                           double *dlm_nc, Waveform_lm_t *hlm)
 {
-  double A[KMAX], d[KMAX], A_dlm[KMAX];
-  eob_wav_hathlm_nc_tidal(dyn, x, hNewt, A, d);
-  /* take the phase from use_dlm_nc_tidal, unless the amplitude function already gave it */
-  if (eob_wav_deltalm_nc_tidal != eob_wav_hathlm_nc_tidal) eob_wav_deltalm_nc_tidal(dyn, x, hNewt, A_dlm, d);
-  /* with use_dlm_nc_tidal = no, d = 0 and A is the modulus |Delta| (|tau| for mult), so the sign of Re Delta is lost */
+  if (!(EOBPars->use_spins)) {
+    /* without spins the point-mass m-odd modes lack the X12 the tidal ones are normalized to */
+    const double X12 = EOBPars->X1 - EOBPars->X2;
+    hlm->ampli[0] *= X12;
+    hlm->ampli[2] *= X12;
+    hlm->ampli[4] *= X12;
+    hlm->ampli[5] *= X12;
+    hlm->ampli[7] *= X12;
+    hlm->ampli[9] *= X12;
+    hlm->ampli[11] *= X12;
+    hlm->ampli[13] *= X12;
+  }
+  double A[KMAX], d[KMAX];
+  eob_wav_hathlm_nc_tidal(dyn, x, hNewt, hathlm_nc, dlm_nc, A);
+  /* with use_dlm_nc_tidal = no, d = 0 and the (2,2) amplitude is the modulus, as the point mass without its NC phase */
+  eob_wav_deltalm_nc_tidal(dyn, x, hNewt, hathlm_nc, dlm_nc, d);
   for (int k = 0; k < KMAX; k++) {
     if (A[k] == 0.) continue; /* no tidal part in this mode */
-    const double ang = d[k] - dlm_nc[k];
     double zr, zi;
-    if (k == 1 && EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_MULT) {
-      zr = hlm->ampli[k] * (1. + A[k]*cos(ang));
-      zi = hlm->ampli[k] * A[k]*sin(ang);
-    } else {
-      const double ht = hNewt->ampli[k] * tlm->ampli[k];
-      zr = hlm->ampli[k] + ht*A[k]*cos(ang);
-      zi =                 ht*A[k]*sin(ang);
-    }
+    eob_wav_hlm_tidal_comb[k](hlm->ampli[k], hNewt->ampli[k] * tlm->ampli[k], A[k], d[k] - dlm_nc[k], &zr, &zi);
     /* store minus the argument as phase, keep the sign of a real result (an odd-m mode at q = 1
        can be negative, as with DNV) */
     if (zi == 0.) {
@@ -8812,21 +9128,7 @@ void eob_wav_hlm_ecc(Dynamics *dyn, Waveform_lm_t *hlm)
     
   }
   
-  if (usetidal) {   
-    /** Tidal contribution */
-    if( !(usespins) ) { 
-      /* Correct normalization of point-mass wave for some of the m=odd modes */
-      hlm->ampli[0] *= X12;
-      hlm->ampli[2] *= X12;
-      hlm->ampli[4] *= X12;
-      hlm->ampli[5] *= X12;
-      hlm->ampli[7] *= X12;
-      hlm->ampli[9] *= X12;
-      hlm->ampli[11] *= X12;
-      hlm->ampli[13] *= X12;
-    }
-    eob_wav_hlm_ecc_tidal(dyn, x, &hNewt, &tlm, dlm_nc, hlm);
-  }
+  if (usetidal) eob_wav_hlm_ecc_tidal(dyn, x, &hNewt, &tlm, hathlm_nc, dlm_nc, hlm);
   
 }
 
@@ -8937,21 +9239,7 @@ void eob_wav_hlm_ecc_sigmoid(Dynamics *dyn, Waveform_lm_t *hlm)
     
   }
   
-  if (usetidal) {   
-    /** Tidal contribution */
-    if( !(usespins) ) { 
-      /* Correct normalization of point-mass wave for some of the m=odd modes */
-      hlm->ampli[0] *= X12;
-      hlm->ampli[2] *= X12;
-      hlm->ampli[4] *= X12;
-      hlm->ampli[5] *= X12;
-      hlm->ampli[7] *= X12;
-      hlm->ampli[9] *= X12;
-      hlm->ampli[11] *= X12;
-      hlm->ampli[13] *= X12;
-    }
-    eob_wav_hlm_ecc_tidal(dyn, x, &hNewt, &tlm, dlm_nc, hlm);
-  }
+  if (usetidal) eob_wav_hlm_ecc_tidal(dyn, x, &hNewt, &tlm, hathlm_nc, dlm_nc, hlm);
   
 }
 

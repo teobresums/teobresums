@@ -514,9 +514,8 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
     Modhhatlm[k] = prefact[k] * MTlm[k] * flm[k] * hlmNQC[k];
   }
   
-  /* circular tidal amplitudes (same f(x) as the wvf), always added, Flm = (|h_pp| + |h_T|)^2, kept apart until
-     eob_flx_Fphi_ecc applies the NC factors. Mult exists only with an NC tidal flux, in eob_flx_Flm_nc_tidal
-     F22 = F22_pp + F22_T (added) or F22_pp (1 + tau), tau = F22_T/F22_pp at 1PN (mult) */
+  /* circular tidal amplitudes (same f(x) as the wvf), added, Flm = (|h_pp| + |h_T|)^2, kept apart for eob_flx_Fphi_ecc;
+     with fact the (2,2) ones are zero, its circular tides are in flm[1] (rhoT) */
   double Modhhatlm_tidal[KMAX];
   for (int k = 0; k < KMAX; k++) Modhhatlm_tidal[k] = 0.;
   if (usetidal) {
@@ -557,7 +556,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
   *Fphi           = Fphi_inf + Fphi_H;
 
   /* use_flm = LO: the Newtonian (2,2) Fphi at the state, P0 = (2 + 2 j2 - p2)/4. use_flm_tidal = LO adds the LO tidal
-     flux whole, tam10 = dF10 + dr10 of eob_flx_Flm_nc_tidal_22: this point-mass Fphi has no tidal terms to remove.
+     flux whole, tam10 = dF10 + dr10 of eob_flx_FT22_add: this point-mass Fphi has no tidal terms to remove.
      Set here, so the time derivatives that eob_flx_Fphi_ecc stores for the waveform come from it too */
   double Fphi_LO = 0.;
   if (EOBPars->use_flm == USEFLM_LO) {
@@ -565,8 +564,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
     const double P0 = (2. + 2.*j2 - p2)/4.;
     double tam10 = 0.;
     if (usetidal && EOBPars->use_flm_tidal == USEFLM_TIDAL_LO) {
-      const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
-      const double Sb  = mup + X12*(EOBPars->kapA2 - EOBPars->kapB2)/6.;
+      const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb;
       tam10 = Sb*(-51. + j2*(54. + 45.*j2) + p2*(-117. - 540.*j2 + 360.*p2))/(8.*nu) + 24.*mup*P0 + mup*(6. - 3.*j2 - 21.*p2);
     }
     *Fphi = Fphi_LO = -32./5.*nu*pphi*SQ(SQ(u_))*(P0 + SQ(SQ(u_))*u_*tam10);
@@ -598,11 +596,74 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 }
 
 /**
+ * Function: eob_flx_Flm_nc_sum_mult, eob_flx_Flm_nc_sum_add
+ * ------------------------------------------------------------------
+ *   The modes' NC fluxes and their sum, from the circular ones and the NC factors of eob_flx_Fphi_ecc. mult, for every
+ *   use_flm_nc but impqc_add, multiplies the NC factors on the circular flux; add (impqc_add) adds their departure from
+ *   1 on the Newtonian circular flux, so that a negative NC factor never flips the resummed flux
+ *
+ *   @param[in]  r, prstar, pphi, FlmToFphi: the state, and Fphi per unit of the summed fluxes (for the tidal NC flux)
+ *   @param[in]  Flm, FlmNewt, Modhhatlm, Modhhatlm_tidal: circular flux, Newtonian circular flux, point-mass and tidal amplitude
+ *   @param[in]  FlmNewt_nc, hatflm_nc, add_nc: Newtonian and PN NC factors, impqc_unf's added 1PN term
+ *   @param[out] Flm_NC: the NC flux of each mode
+ *
+ *   @return the sum of Flm_NC
+*/
+double eob_flx_Flm_nc_sum_mult(double r, double prstar, double pphi, double FlmToFphi, double *Flm, double *FlmNewt,
+                                 double *Modhhatlm, double *Modhhatlm_tidal, double *FlmNewt_nc, double *hatflm_nc,
+                                 double *add_nc, double *Flm_NC)
+{
+  double sum_k = 0.;
+  for (int k = 0; k < KMAX; k++) {
+    const double Fpp = SQ(Modhhatlm[k]) * FlmNewt[k]; /* point mass alone, circular; Flm[k] adds the circular tidal amplitude */
+    if (eob_flx_Flm_nc_tidal[k] != &return_zero) {
+      /* tides on, and an NC tidal flux for this mode (the (2,2) with use_flm_nc_tidal), which already
+         includes the circular tidal part */
+      Flm_NC[k]  = Fpp * (FlmNewt_nc[k] * hatflm_nc[k] + add_nc[k]); /* point mass, both NC factors */
+      Flm_NC[k] += eob_flx_Flm_nc_tidal[k](r, prstar, pphi, FlmToFphi*Flm_NC[k])/FlmToFphi; /* tidal part, in Fphi units */
+    } else if (add_nc[k] != 0.) {
+      /* impqc_unf: the added 1PN term on the point mass only; the circular tidal amplitude keeps the Newtonian factor */
+      Flm_NC[k] = Flm[k] * FlmNewt_nc[k] + Fpp * add_nc[k];
+    } else if (Modhhatlm_tidal[k] == 0. || !(hatflm_nc[k] > 0.)) {
+      /* no tidal amplitude for this mode (tides off, or none for it), or hatflm_nc not positive
+         (impqc's (3,1)), both NC factors on the whole mode */
+      Flm_NC[k] = Flm[k] * (FlmNewt_nc[k] * hatflm_nc[k]);
+    } else {
+      /* tides on, but only the circular tidal amplitude for this mode, point mass with sqrt(hatflm_nc)
+         plus the circular tidal amplitude, FlmNewt_nc on both */
+      Flm_NC[k] = SQ(Modhhatlm[k]*sqrt(hatflm_nc[k]) + Modhhatlm_tidal[k]) * FlmNewt[k] * FlmNewt_nc[k];
+    }
+    sum_k += Flm_NC[k];
+  }
+  return sum_k;
+}
+
+double eob_flx_Flm_nc_sum_add(double r, double prstar, double pphi, double FlmToFphi, double *Flm, double *FlmNewt,
+                                     double *Modhhatlm, double *Modhhatlm_tidal, double *FlmNewt_nc, double *hatflm_nc,
+                                     double *add_nc, double *Flm_NC)
+{
+  /* Modhhatlm_tidal and add_nc not used: impqc_add is 0PN, with no impqc_unf term, and tides only with the NC tidal flux */
+  double sum_k = 0.;
+  for (int k = 0; k < KMAX; k++) {
+    const double dnc = FlmNewt_nc[k] * hatflm_nc[k] - 1.;
+    if (eob_flx_Flm_nc_tidal[k] != &return_zero) {
+      /* the (2,2) with the NC tidal flux, which already includes the circular tidal part */
+      Flm_NC[k]  = SQ(Modhhatlm[k]) * FlmNewt[k] + FlmNewt[k] * dnc;
+      Flm_NC[k] += eob_flx_Flm_nc_tidal[k](r, prstar, pphi, FlmToFphi*Flm_NC[k])/FlmToFphi;
+    } else {
+      Flm_NC[k] = Flm[k] + FlmNewt[k] * dnc;
+    }
+    sum_k += Flm_NC[k];
+  }
+  return sum_k;
+}
+
+/**
   * Function: eob_flx_Fr_tidal_LO
   * -----------------------------
   *   Tidal radial RR force at LO in the Bini-Damour gauge (J_Schott = 0, arXiv:1210.2834), per unit
   *   reduced mass as eob_flx_Fr. Odd in prstar, zero on circular orbits. Use it whole with the
-  *   point-mass forces not built on Fphi ("ecc", "BD")
+  *   point-mass forces not built on Fphi ("ecc", "BD", "LO", "NLO")
   *
   *   @param[in] r, prstar, pphi: the state
   *   @param[in] prsdot, dyn, Fphi: not used, for the common signature of eob_flx_Fr
@@ -612,10 +673,7 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 double eob_flx_Fr_tidal_LO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
 {
   const double nu  = EOBPars->nu;
-  const double X12 = EOBPars->X1 - EOBPars->X2;
-  /* mu-bar_+- = (kappa_A +- kappa_B)/6, Sb = mu-bar_+ + (X1 - X2) mu-bar_- */
-  const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
-  const double Sb  = mup + X12*(EOBPars->kapA2 - EOBPars->kapB2)/6.;
+  const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb;
   const double u   = 1./r;
   const double u3  = u*u*u;
   const double j2  = pphi*pphi*u;          /* 1 on a Newtonian circle */
@@ -628,7 +686,8 @@ double eob_flx_Fr_tidal_LO(double r, double prstar, double pphi, double prsdot, 
   * Function: eob_flx_Fr_tidal_LO_next
   * ----------------------------------
   *   As eob_flx_Fr_tidal_LO, minus what eob_flx_Fr_ecc_next already gets of it through the tidal
-  *   part of Fphi, -(5/3) (prstar/pphi) Fphi^T at LO, with Fphi^T the exact LO tidal flux.
+  *   part of Fphi, -(5/3) (prstar/pphi) Fphi^T at LO, with Fphi^T the exact LO tidal flux (as add, mult and fact
+  *   give it, all matched to the tidal flux through NLO)
   *
   *   @param[in] r, prstar, pphi: the state
   *   @param[in] prsdot, dyn, Fphi: not used, for the common signature of eob_flx_Fr
@@ -638,10 +697,7 @@ double eob_flx_Fr_tidal_LO(double r, double prstar, double pphi, double prsdot, 
 double eob_flx_Fr_tidal_LO_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
 {
   const double nu  = EOBPars->nu;
-  const double X12 = EOBPars->X1 - EOBPars->X2;
-  /* mu-bar_+- = (kappa_A +- kappa_B)/6, Sb = mu-bar_+ + (X1 - X2) mu-bar_- */
-  const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
-  const double Sb  = mup + X12*(EOBPars->kapA2 - EOBPars->kapB2)/6.;
+  const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb;
   const double u   = 1./r;
   const double u3  = u*u*u;
   const double j2  = pphi*pphi*u;          /* 1 on a Newtonian circle */
@@ -666,10 +722,7 @@ double eob_flx_Fr_tidal_LO_next(double r, double prstar, double pphi, double prs
 double eob_flx_Fr_tidal_LO_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi)
 {
   const double nu  = EOBPars->nu;
-  const double X12 = EOBPars->X1 - EOBPars->X2;
-  /* mu-bar_+- = (kappa_A +- kappa_B)/6, Sb = mu-bar_+ + (X1 - X2) mu-bar_- */
-  const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
-  const double Sb  = mup + X12*(EOBPars->kapA2 - EOBPars->kapB2)/6.;
+  const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb;
   const double u   = 1./r;
   const double u3  = u*u*u;
   const double j2  = pphi*pphi*u;          /* 1 on a Newtonian circle */
@@ -686,32 +739,98 @@ double eob_flx_Fr_tidal_LO_full(double r, double prstar, double pphi, double prs
 }
 
 /**
-  * Function: eob_flx_Flm_nc_tidal_22
-  * ---------------------------------
-  *   Noncircular tidal part of the (2,2) flux at LO and NLO, Jain & Gamba's flux minus the tidal terms
-  *   already in Dali's point-mass (2,2) flux. Added DeltaF = -(32/5) nu j u^(7/2) u^5 (dF10 + u dF12),
-  *   mult F22pp tauF. On circular orbits DeltaF reduces to the DNV_nosource cross term through NLO
-  *
-  *   @param[in] r, prstar, pphi: the state
-  *   @param[in] F22pp: the point-mass (2,2) flux, which tauF multiplies
-  *
-  *   @return DeltaF, or F22pp tauF with use_flm_nc_tidal = mult
+ * Function: eob_flx_flm_nc_22_tidal_fact
+ * ---------------------------------
+ *   use_flm_nc_tidal = fact: impqc's (2,2) flux factor plus the NC tidal term fT_nc = u^5 (A10/D + u A12/D^2),
+ *   D = 2 + 2 j^2 - p^2 = 4 f22^(N,0)nc at the true j. A10, A12 are in p and s = r^2 prsdot, both zero on any circular
+ *   orbit, so fT_nc is too. D > 0 on bound orbits only. Jain & Gamba's flux minus Dali's point-mass tides, to NLO
+ *
+ *   The NLO terms, impqc's 1PN and A12, follow flux_nc_order
+ *
+ *   @param[in] r, prstar, pphi, prsdot: the state and d prstar/dt
+ *
+ *   @return impqc's factor + fT_nc
 */
-double eob_flx_Flm_nc_tidal_22(double r, double prstar, double pphi, double F22pp)
+double eob_flx_flm_nc_22_tidal_fact(double r, double prstar, double pphi, double prsdot)
+{
+  const double nu  = EOBPars->nu;
+  const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb, sgp = EOBPars->tidal_sigmap;
+  /* rhoT = x^5 (rT5 + rT6 x), the circular tides the pieces take back out */
+  const double rT5 = 3./(2.*nu)*Sb + 6.*mup;
+  const double rT6 = (254 + 445*nu)/(56.*nu)*Sb + (-100 - 5*nu)/7.*mup + 112./3.*sgp;
+  const double u   = 1./r;
+  const double j2  = pphi*pphi*u;
+  const double p2  = prstar*prstar*r;
+  const double q   = 1. + r*r*prsdot;
+  const double q2 = q*q, q3 = q2*q, q4 = q3*q, q5 = q4*q, q6 = q5*q, q7 = q6*q, q8 = q7*q, q9 = q8*q, q10 = q9*q, q11 = q10*q, q12 = q11*q, q13 = q12*q;
+  /* Generated by TidalFlux22Rho.wl (EccTides/mma/tidalflux22), Sec. 4 */
+  const double A10_5 = -17. + p2*(-39. + 120.*p2)
+      + q*(18. - 180.*p2)
+      + 15.*q2
+      + q5*(-8. + 4.*p2)
+      - 8.*q6;
+  const double A10_m = 150. + p2*(210. - 720.*p2)
+      + q*(-60. + 1080.*p2)
+      - 90.*q2;
+  const double A10 = rT5*A10_5 + mup*A10_m;
+  const double A12_5 = (-40686 - 23237*nu)/294. + p2*((25108 + 17807*nu)/28. + p2*((392478 + 608395*nu)/588. + p2*((-245094 - 418865*nu)/196. + (6780 + 36030*nu)/49.*p2)))
+      + q*((-86686 - 65117*nu)/294. + p2*((-372373 - 88090*nu)/294. + p2*((985646 + 1686805*nu)/196. + (-78060 - 238405*nu)/49.*p2)))
+      + q2*((-5830 - 19143*nu)/294. + p2*((-816016 - 959199*nu)/196. + (803650 + 1711775*nu)/196.*p2))
+      + q3*((42690 + 24879*nu)/98. + (-276575 - 389665*nu)/98.*p2)
+      + q4*((12690 + 4730*nu)/49. + p2*((-40 + 120*nu) + p2*((-20 - 60*nu) + (10 + 10*nu)*p2)))
+      + q5*((2339 - 3076*nu)/28. + p2*((10153 + 11184*nu)/84. + p2*((-35305 - 13848*nu)/336. + p2*((2353 - 234*nu)/168. + p2*((25 + 6*nu)/96. + (-445 + 390*nu)/672.*p2)))))
+      + q6*((-5539 + 2092*nu)/42. + p2*((12885 + 4948*nu)/84. + p2*((659 - 3538*nu)/84. + p2*((-160 + 123*nu)/28. + (55 - 60*nu)/28.*p2))))
+      + q7*((-959 + 452*nu)/6. + p2*((-2841 + 6136*nu)/84. + p2*((1045 - 1308*nu)/336. + p2*((865 - 516*nu)/168. + (95 - 54*nu)/224.*p2))))
+      + q8*((-209 + 4*nu)/6. + p2*((125 - 60*nu)/28. + p2*((-1045 + 930*nu)/84. + (-335 + 249*nu)/84.*p2)))
+      + p2*((-25 - 240*nu)/84. + p2*((815 - 744*nu)/112. + (10 - 9*nu)/28.*p2))*q9
+      + q10*((25 - 12*nu)/6. + p2*((-5 + 204*nu)/84. + (-5 + 6*nu)/6.*p2))
+      + q11*((-25 + 12*nu)/6. + p2*((-55 - 24*nu)/84. + (-25 + 12*nu)/336.*p2))
+      + q12*((25 - 12*nu)/14. + (25 - 12*nu)/84.*p2)
+      + (-25 + 12*nu)/84.*q13;
+  const double A12_m = (247971 + 21224*nu)/196. + p2*((-223937 - 136314*nu)/28. + p2*((-6647185 - 821744*nu)/784. + p2*((11261291 + 8258040*nu)/784. + p2*((-4413095 - 6941802*nu)/1568. + (-445 + 390*nu)/32.*p2))))
+      + q*((1443373 + 430108*nu)/392. + p2*((8428405 - 3063956*nu)/784. + p2*((-23943056 - 17953971*nu)/392. + p2*((38677365 + 46433142*nu)/1568. + (855 - 1872*nu)/112.*p2))))
+      + q2*((372243 + 382340*nu)/392. + p2*((9296727 + 4847836*nu)/196. + p2*((-21544300 - 20781075*nu)/392. + p2*((11110 - 8571*nu)/56. + (285 - 162*nu)/32.*p2))))
+      + q3*((-1594643 - 425236*nu)/392. + p2*((25814865 + 18791220*nu)/784. + p2*((-13585 + 16626*nu)/112. + (-2275 + 1830*nu)/32.*p2)))
+      + q4*((-718665 - 428820*nu)/392. + p2*((-4525 + 1920*nu)/28. + p2*((2055 - 3141*nu)/56. + (30 - 27*nu)/4.*p2)))
+      + q5*((175 - 84*nu)/8. + p2*((10225 - 4404*nu)/112. + (65 + 624*nu)/112.*p2))
+      + q6*((-175 + 84*nu)/8. + p2*((-835 + 426*nu)/28. + (-25 + 12*nu)/16.*p2))
+      + q7*((225 - 108*nu)/56. + (325 - 156*nu)/112.*p2)
+      + (25 - 12*nu)/56.*q8;
+  const double A12_6 = 282./7. + p2*(-93. + p2*(-1527./7. + p2*(1611./7. - 360./7.*p2)))
+      + q*(474./7. + p2*(1212./7. + p2*(-6411./7. + 2580./7.*p2)))
+      + q2*(62./7. + p2*(4253./7. - 4905./7.*p2))
+      + q3*(-250./7. + 2430./7.*p2)
+      - 120./7.*q4
+      + q6*(-16. + p2*(16. - 4.*p2))
+      + q7*(-32. + 16.*p2)
+      - 16.*q8;
+  const double A12 = rT5*A12_5 + mup*A12_m + rT6*A12_6;
+  const double D = 2. + 2.*j2 - p2;
+  if (EOBPars->flux_nc_order < FLUX_NC_ORDER_1PN) return 1. + u*u*u*u*u*A10/D;
+  return eob_flx_flm_nc_22(r, prstar, pphi, prsdot) + u*u*u*u*u*(A10/D + u*A12/(D*D));
+}
+
+/**
+  * Function: eob_flx_FT22_add
+  * --------------------------
+  *   F22^{T+} of the paper at LO and NLO: Jain & Gamba's flux minus the tides Dali's point-mass (2,2) flux already has,
+  *   -(32/5) nu j u^(7/2) u^5 (dF10 + u dF12); on circular orbits the DNV_nosource cross term through NLO. The mult form
+  *   of use_flm_nc_tidal starts from it too
+  *
+  *   @param[in]  r, prstar, pphi: the state
+  *   @param[out] dF10, dF12: LO and NLO coefficients
+  *   @param[out] P2N: the point-mass 1PN NC term, which mult divides by
+*/
+void eob_flx_FT22_add(double r, double prstar, double pphi, double *dF10o, double *dF12o, double *P2No)
 {
   const double nu = EOBPars->nu;
-  const double X1 = EOBPars->X1;
-  /* mu-bar_+- = (kappa_A +- kappa_B)/6, sigma-bar_+ = (j_A + j_B)/48 */
-  const double mup = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
-  const double mum = (EOBPars->kapA2 - EOBPars->kapB2)/6.;
-  const double sgp = (EOBPars->use_tidal_gravitomagnetic != TIDES_GM_OFF) ? EOBPars->japT2/48. : 0.;
+  const double mup = EOBPars->tidal_mup, Sb = EOBPars->tidal_Sb, sgp = EOBPars->tidal_sigmap;
   const double u   = 1./r;
   const double j   = pphi*sqrt(u);       /* angular momentum, 1 on a Newtonian circle */
   const double j2  = j*j;
   const double p   = prstar*sqrt(r);     /* radial momentum, O(1) */
   const double p2 = p*p;
   const double s = j2 - 1.;
-  const double Sb = mup + (2.*X1 - 1.)*mum;
   const double P0 = (2. + 2.*j2 - p2)/4.;
   /* Jain & Gamba's flux is m = +2 alone, in units of M^2, the 2/nu makes it ours */
   const double dF10 = Sb*(-51 + j2*(54 + 45*j2) + p2*(-117 - 540*j2 + 360*p2))/(8.*nu) + mup*24.*P0;
@@ -741,7 +860,42 @@ double eob_flx_Flm_nc_tidal_22(double r, double prstar, double pphi, double F22p
       P2N  = P0*h1;
     }
   }
-  if (EOBPars->use_flm_nc_tidal != USEFLM_NC_TIDAL_MULT) return -(32./5.)*nu*j*sqrt(u)*u*u*u*u*u*u*u*u*(dF10 + u*dF12);
+  *dF10o = dF10; *dF12o = dF12; *P2No = P2N;
+}
+
+/**
+  * Function: eob_flx_Flm_nc_tidal_add, eob_flx_Flm_nc_tidal_mult
+  * --------------------------------------------------------------
+  *   The tidal NC flux added to the point-mass (2,2): F22^{T+} (add), or F22pp (f22^{Tx} - 1), f22^{Tx} - 1 = F22^{T+}
+  *   over the point-mass flux at 1PN (mult)
+  *
+  *   @param[in] r, prstar, pphi: the state
+  *   @param[in] F22pp: the point-mass (2,2) flux, which f22^{Tx} - 1 multiplies (not used by add)
+  *
+  *   @return the tidal part of the (2,2) flux
+*/
+double eob_flx_Flm_nc_tidal_add(double r, double prstar, double pphi, double F22pp)
+{
+  double dF10, dF12, P2N;
+  eob_flx_FT22_add(r, prstar, pphi, &dF10, &dF12, &P2N);
+  const double nu = EOBPars->nu;
+  const double u  = 1./r;
+  const double j  = pphi*sqrt(u);
+  return -(32./5.)*nu*j*sqrt(u)*u*u*u*u*u*u*u*u*(dF10 + u*dF12);
+}
+
+double eob_flx_Flm_nc_tidal_mult(double r, double prstar, double pphi, double F22pp)
+{
+  double dF10, dF12, P2N;
+  eob_flx_FT22_add(r, prstar, pphi, &dF10, &dF12, &P2N);
+  const double nu = EOBPars->nu;
+  const double u  = 1./r;
+  const double j  = pphi*sqrt(u);
+  const double j2 = j*j;
+  const double p  = prstar*sqrt(r);
+  const double p2 = p*p;
+  const double P0 = (2. + 2.*j2 - p2)/4.;
+  const int nlo = (EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN);
   /* mult, point-mass flux at 1PN is -(32/5) nu j u^(7/2) (P0 + u P2), so
      tauF = u^5 (dF10 + u (dF12 - P2 dF10/P0))/P0 */
   const double P2x = (-546 + j2*(-554 - 260*j2) + p2*(168 - 227*j2 + 147*p2))/168. + nu*(196 + j2*(318 + 122*j2) + p2*(-308 - 271*j2 + 105*p2))/168.;
@@ -1201,7 +1355,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   *   and App. A of https://arxiv.org/pdf/2407.04762
   *
   *   @param[in] r        :  radial separation
-  *   @param[in] pr_star  :  (tortoise) radial momentum
+  *   @param[in] prstar   :  (tortoise) radial momentum
   *   @param[in] pphi     :  orbital angular momentum
   *   @param[in] Omg      :  orbital frequency
   *   @param[in] rdot     :  radial velocity
@@ -1212,12 +1366,10 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   *   @param[in] Modhhatlm :  point-mass amplitudes over the Newtonian ones
   *   @param[in] Modhhatlm_tidal :  tidal amplitudes added to them, zero for the modes that have none
   *   @param[in] Fphi_H   :  horizon angular momentum flux
-  *   @param[in] Fr       :  pointer to radial flux
+  *   @param[out] Fr      :  radial flux after the iterations
   *   @param[in] dyn      :  dynamics structure
-  *   @param[out] Flm_NC  :  multipolar flux with the noncircular corrections
+  *   @param[out] Flm_NC  :  multipolar flux with the noncircular corrections, combined by eob_flx_Flm_nc_sum (use_flm_nc)
   *   @param[in] rc_in, drc_dr_in, d2rc_dr2_in : rc and its derivatives at r, from the caller (with spins only)
-  *
-  *   @return[out] Fr     :  radial flux after iterative procedure
 */
 void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double rdot, double Fphi, double Fphi_lo, double *FlmNewt, double *Flm, double *Modhhatlm, double *Modhhatlm_tidal, double Fphi_H, double *Fr, Dynamics *dyn, double *Flm_NC, double rc_in, double drc_dr_in, double d2rc_dr2_in)
 {
@@ -1418,11 +1570,8 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
 
     r3dot = D1 + D2 + D3 + D4; 
     
-    /* NC corrections to the modes, FlmNewt_nc on the whole mode, sqrt(hatflm_nc) (a flux ratio) on
-       the point-mass amplitude only, unless not positive (impqc's (3,1) turns negative on eccentric
-       orbits, also far from merger) */
-    /* only the modes that have NC factors are computed, the others keep both at 1 */
-    /* with impqc_unf the (2,2) 1PN term is added to the Newtonian factor, u N/j^4 = N r/pphi^4, not multiplied */
+    /* the NC factors of the modes that have them, the others keep both at 1; eob_flx_Flm_nc_sum (use_flm_nc) puts them
+       on the circular fluxes. impqc_unf's (2,2) 1PN term, added to the Newtonian factor, is u N/j^4 = N r/pphi^4 */
     double FlmNewt_nc[KMAX], hatflm_nc[KMAX], add_nc[KMAX];
     for (int k = 0; k < KMAX; k++) {
       FlmNewt_nc[k] = hatflm_nc[k] = 1.;
@@ -1431,32 +1580,12 @@ void eob_flx_Fphi_ecc(double r, double prstar, double pphi, double Omg, double r
     for (int j = 0; j < eob_flx_nc_active_n; j++){
       const int k = eob_flx_nc_active_k[j];
       FlmNewt_nc[k] = eob_flx_FlmNewt_nc[k](r, Omg, rdot, r2dot, r3dot, Omgdot, Omg2dot);
-      hatflm_nc[k]  = eob_flx_hatflm_nc[k](r, prstar, prstardot);
+      hatflm_nc[k]  = eob_flx_hatflm_nc[k](r, prstar, pphi, prstardot);
       add_nc[k]     = eob_flx_flm_nc_add[k](r, prstar, prstardot)*r/SQ(pphi2);
     }
-    sum_k = 0.;
     const double FlmToFphi = Fphi_lo/FlmNewt[1]; /* Fphi = FlmToFphi sum_k Flm_NC[k] */
-    for (int k = 0; k < KMAX; k++) {
-      const double Fpp = SQ(Modhhatlm[k]) * FlmNewt[k]; /* point mass alone, circular; Flm[k] adds the circular tidal amplitude */
-      if (eob_flx_Flm_nc_tidal[k] != &return_zero) {
-        /* tides on, and an NC tidal flux for this mode (the (2,2) with use_flm_nc_tidal), which already
-           includes the circular tidal part */
-        Flm_NC[k]  = Fpp * (FlmNewt_nc[k] * hatflm_nc[k] + add_nc[k]); /* point mass, both NC factors */
-        Flm_NC[k] += eob_flx_Flm_nc_tidal[k](r, prstar, pphi, FlmToFphi*Flm_NC[k])/FlmToFphi; /* tidal part, in Fphi units */
-      } else if (add_nc[k] != 0.) {
-        /* the added 1PN term on the point mass only; the circular tidal amplitude keeps the Newtonian factor */
-        Flm_NC[k] = Flm[k] * FlmNewt_nc[k] + Fpp * add_nc[k];
-      } else if (Modhhatlm_tidal[k] == 0. || !(hatflm_nc[k] > 0.)) {
-        /* no tidal amplitude for this mode (tides off, or none for it), or hatflm_nc not positive
-           (impqc's (3,1)), both NC factors on the whole mode */
-        Flm_NC[k] = Flm[k] * (FlmNewt_nc[k] * hatflm_nc[k]);
-      } else {
-        /* tides on, but only the circular tidal amplitude for this mode, point mass with sqrt(hatflm_nc)
-           plus the circular tidal amplitude, FlmNewt_nc on both */
-        Flm_NC[k] = SQ(Modhhatlm[k]*sqrt(hatflm_nc[k]) + Modhhatlm_tidal[k]) * FlmNewt[k] * FlmNewt_nc[k];
-      }
-      sum_k += Flm_NC[k];
-    }
+    sum_k = eob_flx_Flm_nc_sum(r, prstar, pphi, FlmToFphi, Flm, FlmNewt, Modhhatlm, Modhhatlm_tidal, FlmNewt_nc, hatflm_nc,
+                                add_nc, Flm_NC);
     sum_k = sum_k/FlmNewt[1];
 
     Fphi  = Fphi_lo * sum_k;
@@ -1978,7 +2107,7 @@ double eob_flx_flm_nc_22_unf(double r, double prstar, double prsdot)
     + 5.*(65. - 34.*nu)/168.*p2*s + (243. - 50.*nu)/168.*s*s;
 }
 
-double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
+double eob_flx_flm_nc_22(double r, double prstar, double pphi, double prsdot) {
 
   const double nu = EOBPars -> nu;
   const double nu2 = nu * nu;
@@ -2189,10 +2318,11 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] pphi not used, the signature of eob_flx_hatflm_nc
  *  @param[in] prsdot The time derivative of the radial momentum.
  *  @return The non-circular correction factor for the (2,1) mode of the gravitational wave flux.
  */
-double eob_flx_flm_nc_21(double r, double prstar, double prsdot) {
+double eob_flx_flm_nc_21(double r, double prstar, double pphi, double prsdot) {
   const double nu = EOBPars -> nu;
   const double nu2 = nu*nu;
 
@@ -2252,10 +2382,11 @@ double eob_flx_flm_nc_21(double r, double prstar, double prsdot) {
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] pphi not used, the signature of eob_flx_hatflm_nc
  *  @param[in] prsdot The time derivative of the radial momentum.
  *  @return The non-circular correction factor for the (3,3) mode of the gravitational wave flux.
  */
-double eob_flx_flm_nc_33(double r, double prstar, double prsdot) {
+double eob_flx_flm_nc_33(double r, double prstar, double pphi, double prsdot) {
   const double nu = EOBPars -> nu;
   const double nu2 = nu*nu;
 
@@ -2339,10 +2470,11 @@ double eob_flx_flm_nc_33(double r, double prstar, double prsdot) {
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] pphi not used, the signature of eob_flx_hatflm_nc
  *  @param[in] prsdot The time derivative of the radial momentum.
  *  @return The non-circular correction factor for the (3,1) mode of the gravitational wave flux.
  */
-double eob_flx_flm_nc_32(double r, double prstar, double prsdot) {
+double eob_flx_flm_nc_32(double r, double prstar, double pphi, double prsdot) {
   const double nu  = EOBPars -> nu;
   const double nu2 = nu*nu;
     
@@ -2394,10 +2526,11 @@ double eob_flx_flm_nc_32(double r, double prstar, double prsdot) {
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] pphi not used, the signature of eob_flx_hatflm_nc
  *  @param[in] prsdot The time derivative of the radial momentum.
  *  @return The non-circular correction factor for the (3,1) mode of the gravitational wave flux.
  */
-double eob_flx_flm_nc_31(double r, double prstar, double prsdot) {
+double eob_flx_flm_nc_31(double r, double prstar, double pphi, double prsdot) {
   const double nu = EOBPars -> nu;
   const double nu2 = nu*nu;
 
@@ -2478,10 +2611,11 @@ double eob_flx_flm_nc_31(double r, double prstar, double prsdot) {
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] pphi not used, the signature of eob_flx_hatflm_nc
  *  @param[in] prsdot The time derivative of the radial momentum.
  *  @return The non-circular correction factor for the (4,4) mode of the gravitational wave flux.
  */
-double eob_flx_flm_nc_44(double r, double prstar, double prsdot) {
+double eob_flx_flm_nc_44(double r, double prstar, double pphi, double prsdot) {
   const double nu = EOBPars -> nu;
   const double nu2 = nu*nu;
     
@@ -2547,10 +2681,11 @@ double eob_flx_flm_nc_44(double r, double prstar, double prsdot) {
  * 
  *  @param[in] r The radial separation between the two bodies.
  *  @param[in] prstar The radial momentum conjugate to the tortoise coordinate.
+ *  @param[in] pphi not used, the signature of eob_flx_hatflm_nc
  *  @param[in] prsdot The time derivative of the radial momentum.
  *  @return The non-circular correction factor for the (4,2) mode of the gravitational wave flux.
  */
-double eob_flx_flm_nc_42(double r, double prstar, double prsdot) {
+double eob_flx_flm_nc_42(double r, double prstar, double pphi, double prsdot) {
   const double nu = EOBPars -> nu;
   const double nu2 = nu*nu;
    

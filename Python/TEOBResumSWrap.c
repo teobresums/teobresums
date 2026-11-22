@@ -416,7 +416,7 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_flm_tidal"));
     for(EOBPars->use_flm_tidal=0; EOBPars->use_flm_tidal<=USEFLM_TIDAL_NOPT; EOBPars->use_flm_tidal++){
-      if (EOBPars->use_flm_tidal == USEFLM_TIDAL_NOPT) { EOBPars->use_flm_tidal = USEFLM_TIDAL_DNV; break; }
+      if (EOBPars->use_flm_tidal == USEFLM_TIDAL_NOPT) break; /* unknown: eob_set_params refuses it */
       if (STREQUAL(val,use_flm_tidal_opt[EOBPars->use_flm_tidal])) break;
     }
   }
@@ -452,7 +452,7 @@ int SetOptionalVariables(PyObject* dict){
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_Fr_tidal"));
     for(EOBPars->use_Fr_tidal=0; EOBPars->use_Fr_tidal<=USE_FR_TIDAL_NOPT; EOBPars->use_Fr_tidal++){
-      if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NOPT) { EOBPars->use_Fr_tidal = USE_FR_TIDAL_NO; break; }
+      if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NOPT) break; /* unknown: eob_set_params refuses it */
       if (STREQUAL(val,use_Fr_tidal_opt[EOBPars->use_Fr_tidal])) break;
     }
   }

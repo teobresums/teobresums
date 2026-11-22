@@ -396,9 +396,10 @@ enum{
   USEFLM_NC_22,            /**< NC corrections to 22 mode only, and only to the Newtonian prefactor */
   USEFLM_NC_IMPQC,         /**< ImpQC NC corrections to flm amplitudes */
   USEFLM_NC_IMPQC_UNF,     /**< ImpQC to 1PN, the (2,2) 1PN term added to the Newtonian factor instead of multiplying it */
+  USEFLM_NC_IMPQC_ADD,     /**< ImpQC NC factors added to the circular flux, F_lm^circ + F_lm^(N,circ) (f_lm^nc - 1), not multiplied; 0PN only */
   USEFLM_NC_NOPT           /**< number of flm_nc amplitudes options */
 };
-static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "impqc_unf", "undefined"};
+static const char* const use_flm_nc_opt[] = {"no", "22", "impqc", "impqc_unf", "impqc_add", "undefined"};
 
 /** List of options for deltalm_nc */
 enum{
@@ -479,8 +480,9 @@ enum{
 static const char* const use_dlm_nc_order_opt[] = {"1PN", "1.5PN", "2PN", "2PN_notail"};
 
 /* Tides in Dali, one function pointer per piece, set in eob_set_params: use_flm_tidal the circular amplitudes
-   (eob_wav_flm_tidal), use_hlm/dlm_nc_tidal the NC amplitude and phase (eob_wav_hathlm/deltalm_nc_tidal),
-   use_flm_nc_tidal the NC flux per mode (eob_flx_Flm_nc_tidal[k]), use_Fr_tidal the radial force (eob_flx_Fr_tidal) */
+   (eob_wav_flm_tidal), use_hlm/dlm_nc_tidal the NC amplitude and phase (eob_wav_hathlm/deltalm_nc_tidal), joined to the
+   point-mass modes by eob_wav_hlm_tidal_comb[k]; use_flm_nc_tidal the NC flux, add and mult through eob_flx_Flm_nc_tidal[1],
+   fact in the point-mass factor (eob_flx_hatflm_nc[1], with rhoT in rho22); use_Fr_tidal the radial force (eob_flx_Fr_tidal) */
 /** List of options for tidal corrections to the waveform (circular part) */
 enum{
   USEFLM_TIDAL_DNV,            /**< Damour-Nagar-Villain 2012 amplitudes */
@@ -495,14 +497,15 @@ static const char* const use_flm_tidal_opt[] = {"DNV", "DNV_nosource", "LO", "un
 /** List of options for noncircular tidal corrections to the waveform, (2,2) only */
 enum{
   USEHLM_NC_TIDAL_NO,          /**< circular tidal amplitudes only */
-  USEHLM_NC_TIDAL_ADD,         /**< h22 = h22_pp + T C22 e^{-2 i phi} Delta22, Delta22 the whole tidal (2,2) */
-  USEHLM_NC_TIDAL_MULT,        /**< h22 = h22_pp [1 + tau22 e^{i d22}] */
+  USEHLM_NC_TIDAL_ADD,         /**< h22 = h22_pp + h22^{T+} */
+  USEHLM_NC_TIDAL_MULT,        /**< h22 = h22_pp h22^{Tx} */
+  USEHLM_NC_TIDAL_FACT,        /**< tides in rho22, NC tides hhat22^{T_nc} added to impqc's factor */
   USEHLM_NC_TIDAL_NOPT
 };
-static const char* const use_hlm_nc_tidal_opt[] = {"no", "add", "mult", "undefined"};
+static const char* const use_hlm_nc_tidal_opt[] = {"no", "add", "mult", "fact", "undefined"};
 
-/** List of options for noncircular tidal corrections to the phase. Mixed with use_hlm_nc_tidal, "no" here
-    keeps the NC amplitude only, "yes" here alone the NC phase only */
+/** List of options for noncircular tidal corrections to the phase, as use_dlm_nc for the point mass: "yes" takes the
+    phase of the use_hlm_nc_tidal form (h22^{T+}'s with no and add), "no" none, so the (2,2) amplitude is a modulus */
 enum{
   USEDELTALM_NC_TIDAL_NO,      /**< no noncircular tidal phase */
   USEDELTALM_NC_TIDAL_YES,     /**< phase of the (2,2) tidal mode */
@@ -513,11 +516,12 @@ static const char* const use_dlm_nc_tidal_opt[] = {"no", "yes", "undefined"};
 /** List of options for noncircular tidal corrections to the flux, (2,2) only */
 enum{
   USEFLM_NC_TIDAL_NO,          /**< circular tidal fluxes only */
-  USEFLM_NC_TIDAL_ADD,         /**< F22 = F22_pp + DeltaF22, DeltaF22 the whole tidal (2,2) flux */
-  USEFLM_NC_TIDAL_MULT,        /**< F22 = F22_pp (1 + tauF22) */
+  USEFLM_NC_TIDAL_ADD,         /**< F22 = F22_pp + F22^{T+} */
+  USEFLM_NC_TIDAL_MULT,        /**< F22 = F22_pp f22^{Tx} */
+  USEFLM_NC_TIDAL_FACT,        /**< tides in rho22, NC tides fhat22^{T_nc} added to impqc's factor, bound orbits only */
   USEFLM_NC_TIDAL_NOPT
 };
-static const char* const use_flm_nc_tidal_opt[] = {"no", "add", "mult", "undefined"};
+static const char* const use_flm_nc_tidal_opt[] = {"no", "add", "mult", "fact", "undefined"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -923,6 +927,7 @@ typedef struct tagEOBParameters
   double kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8;                             /* EOB Multipolar electric adiabatic tidal parameters (body 2)*/
   double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;                             /* EOB Multipolar electric effective adiabatic tidal parameters */
   double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;               /* EOB Multipolar magnetic adiabatic tidal parameters */
+  double tidal_mup, tidal_mum, tidal_sigmap, tidal_Sb;                          /* (2,2) tidal NC pieces: mu-bar_+-, sigma-bar_+, S-bar = mu-bar_+ + (X1 - X2) mu-bar_- */
   double khatA2,khatB2;                                                         //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
   double bar_alph2_1, bar_alph2_2, bar_alph2_3, bar_alph3_1, bar_alph3_2, bar_alph2j_1;      /* Tidal parameters combinations entering the EOB A potential*/
   double R0_A, R0_B;
@@ -990,7 +995,7 @@ typedef struct tagEOBParameters
   int model;                                            /**< model (Dalì, Giotto) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
-  int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
+  int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "22", "impqc", "impqc_unf", "impqc_add" */
   int flux_nc_order;                                    /**< NEW, INDEX FOR  # "0PN", "1PN", "1.5PN", "2PN" */
   int use_flx_horizon;                                  /**< horizon flux: auto (off with tides), yes, no */
   int use_flx;                                          /**< radiation reaction on (1) or off (0): off gives the conservative dynamics */
@@ -1002,11 +1007,11 @@ typedef struct tagEOBParameters
   int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */
   int use_dlm_nc_order;                                 /**< NEW, Flag for PN order of d22_nc */
   int use_h22_nc_complex;                               /**< NEW, Flag for complex resummed h22_nc */
-  int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
-  int use_flm_tidal;                                    /**< circular tidal amplitudes: "DNV", "DNV_nosource" */
-  int use_hlm_nc_tidal;                                 /**< noncircular tidal amplitude: "no", "add", "mult" */
+  int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full", "LO", "NLO" */
+  int use_flm_tidal;                                    /**< circular tidal amplitudes: "DNV", "DNV_nosource", "LO" (with use_flm = LO) */
+  int use_hlm_nc_tidal;                                 /**< noncircular tidal amplitude: "no", "add", "mult", "fact" */
   int use_dlm_nc_tidal;                                 /**< noncircular tidal phase: "no", "yes" */
-  int use_flm_nc_tidal;                                 /**< noncircular tidal flux: "no", "add", "mult" */
+  int use_flm_nc_tidal;                                 /**< noncircular tidal flux: "no", "add", "mult", "fact" */
   int use_Fr_tidal;                                     /**< tidal part of the radial flux: "no", "LO" */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
@@ -1510,10 +1515,17 @@ void eob_metric_s(double r, double prstar, Dynamics *dyn, double *A, double *B, 
 /* TEOBResumSFlux.c */
 extern double (*eob_flx_Fr)(); /* defined in TEOBResumSPars.c*/
 extern double (*eob_flx_Fr_tidal)(); /* defined in TEOBResumSPars.c */
-extern double (*eob_flx_hatflm_nc[KMAX])();
+extern double (*eob_flx_hatflm_nc[KMAX])(); /* (r, prstar, pphi, prsdot): pphi only for use_flm_nc_tidal = fact */
 extern double (*eob_flx_FlmNewt_nc[KMAX])();
 extern double (*eob_flx_flm_nc_add[KMAX])();
 extern double (*eob_flx_Flm_nc_tidal[KMAX])(); /* defined in TEOBResumSPars.c */
+extern double (*eob_flx_Flm_nc_sum)(); /* defined in TEOBResumSPars.c */
+double eob_flx_Flm_nc_sum_mult(double r, double prstar, double pphi, double FlmToFphi, double *Flm, double *FlmNewt,
+                                 double *Modhhatlm, double *Modhhatlm_tidal, double *FlmNewt_nc, double *hatflm_nc,
+                                 double *add_nc, double *Flm_NC);
+double eob_flx_Flm_nc_sum_add(double r, double prstar, double pphi, double FlmToFphi, double *Flm, double *FlmNewt,
+                                     double *Modhhatlm, double *Modhhatlm_tidal, double *FlmNewt_nc, double *hatflm_nc,
+                                     double *add_nc, double *Flm_NC);
 extern int eob_flx_nc_active_k[KMAX]; /* modes with a noncircular flux correction */
 extern int eob_flx_nc_active_n;
 double eob_flx_Flux(double x, double Omega, double r_omega, double E, double Heff, double jhat, double r, double pr_star, double ddotr, Dynamics *dyn);
@@ -1537,15 +1549,18 @@ double eob_flx_FlmNewt_nc_32(double r, double Omg, double rdot, double r2dot, do
 double eob_flx_FlmNewt_nc_31(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 double eob_flx_FlmNewt_nc_44(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
-double eob_flx_flm_nc_22(double r, double prstar, double prstardot);
+double eob_flx_flm_nc_22(double r, double prstar, double pphi, double prstardot);
 double eob_flx_flm_nc_22_unf(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_21(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_33(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_32(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_31(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_44(double r, double prstar, double prstardot);
-double eob_flx_flm_nc_42(double r, double prstar, double prstardot);
-double eob_flx_Flm_nc_tidal_22(double r, double prstar, double pphi, double F22pp);
+double eob_flx_flm_nc_21(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_33(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_32(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_31(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_44(double r, double prstar, double pphi, double prstardot);
+double eob_flx_flm_nc_42(double r, double prstar, double pphi, double prstardot);
+void eob_flx_FT22_add(double r, double prstar, double pphi, double *dF10, double *dF12, double *P2N);
+double eob_flx_Flm_nc_tidal_add(double r, double prstar, double pphi, double F22pp);
+double eob_flx_Flm_nc_tidal_mult(double r, double prstar, double pphi, double F22pp);
+double eob_flx_flm_nc_22_tidal_fact(double r, double prstar, double pphi, double prsdot);
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
@@ -1572,6 +1587,7 @@ extern void (*eob_wav_hlmNewt)(); /* defined in TEOBResumSPars.c */
 void eob_wav_hlmNewt_v1(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 void eob_wav_hlmNewt_HM(double r, double Omega, double phi, double nu, Waveform_lm_t *hNewt);
 extern void (*eob_wav_flm_tidal)(); /* defined in TEOBResumSPars.c */
+extern double (*eob_wav_rho22_tidal)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_tidal_DNV(double x, Dynamics *dyn, double *flm_tidal);
 void eob_wav_flm_tidal_DNV_nosource(double x, Dynamics *dyn, double *flm_tidal);
 extern void (*eob_wav_flm)(); /* defined in TEOBResumSPars.c */
@@ -1597,10 +1613,25 @@ void eob_wav_hathlm_nc_no(double r, double prstar, double prstardot, double *hat
 void eob_wav_hathlm_nc_impqc(double r, double prstar, double prstardot, double *hathlm_nc);
 void eob_wav_hath22_nc_complex(double r, double prstar, double prstardot, double *hath22_nc);
 extern void (*eob_wav_hathlm_nc_tidal)(); /* defined in TEOBResumSPars.c */
-void eob_wav_hathlm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d);
-void eob_wav_hathlm_nc_tidal_22(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *A, double *d);
 extern void (*eob_wav_deltalm_nc_tidal)(); /* defined in TEOBResumSPars.c */
-void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Waveform_lm_t *tlm, double *dlm_nc, Waveform_lm_t *hlm);
+extern void (*eob_wav_hlm_tidal_comb[KMAX])(); /* defined in TEOBResumSPars.c */
+void eob_wav_hathlm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A);
+void eob_wav_hathlm_nc_tidal_add(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A);
+void eob_wav_hathlm_nc_tidal_mult(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A);
+void eob_wav_hathlm_nc_tidal_fact(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *A);
+void eob_wav_deltalm_nc_tidal_no(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *d);
+void eob_wav_deltalm_nc_tidal_add(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *d);
+void eob_wav_deltalm_nc_tidal_mult(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *d);
+void eob_wav_deltalm_nc_tidal_fact(Dynamics *dyn, double x, Waveform_lm_t *hNewt, double *hathlm_nc, double *dlm_nc, double *d);
+void eob_wav_hT22_add(Dynamics *dyn, double *D, double *re, double *im);
+void eob_wav_hT22_mult(Dynamics *dyn, double *re, double *im);
+void eob_wav_hT22_fact(Dynamics *dyn, double *hathlm_nc, double *dlm_nc, double *ratio_re, double *ratio_im);
+void eob_wav_hlm_tidal_comb_add(double h, double ht, double A, double ang, double *zr, double *zi);
+void eob_wav_hlm_tidal_comb_mult(double h, double ht, double A, double ang, double *zr, double *zi);
+double eob_wav_rho22_tidal_fact(double x);
+void eob_wav_flm_tidal_fact(double x, Dynamics *dyn, double *flm_tidal);
+void eob_wav_hlm_ecc_tidal(Dynamics *dyn, double x, Waveform_lm_t *hNewt, Waveform_lm_t *tlm, double *hathlm_nc,
+                           double *dlm_nc, Waveform_lm_t *hlm);
 extern int (*eob_wav_hlmNQC_find_a1a2a3)(); /* defined in TEOBResumSPars.c */
 int eob_wav_hlmNQC_find_a1a2a3_circ(Dynamics *dyn, Waveform_lm *h, Waveform_lm *hnqc);
 void eob_set_nqc_basis(NQCbasis *b, int *kmask, double *r, double *w, double *pr_star, double *ddotr,
