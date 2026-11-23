@@ -1511,11 +1511,11 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
 
-  /* the noncircular tidal corrections need Dali with the impqc point mass (impqc, impqc_unf or impqc_add), use_Fr = full,
-     next, LO or NLO, the DNV_nosource circular amplitudes and the tidal B in the dynamics */
-  const int tidal_nc_on = (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_NO ||
-                           EOBPars->use_dlm_nc_tidal != USEDELTALM_NC_TIDAL_NO ||
-                           EOBPars->use_flm_nc_tidal != USEFLM_NC_TIDAL_NO);
+  /* NC tidal pieces subtract what impqc pp already has; at NLO this needs the tidal B:
+     wvf always, flx from 1PN, Fr full correction at NLO */
+  const int tidal_wf_on  = (EOBPars->use_hlm_nc_tidal != USEHLM_NC_TIDAL_NO || EOBPars->use_dlm_nc_tidal != USEDELTALM_NC_TIDAL_NO);
+  const int tidal_flx_on = (EOBPars->use_flm_nc_tidal != USEFLM_NC_TIDAL_NO);
+  const int tidal_nc_on  = (tidal_wf_on || tidal_flx_on);
   const int tides = EOBPars->use_tidal;
   const int tidal_B = (tides == TIDES_TEOBRESUM3_BQ || tides == TIDES_NNLO_B || tides == TIDES_NNLO_BQ ||
                        tides == TIDES_N3LO_B || tides == TIDES_N3LO_BQ);
@@ -1523,18 +1523,18 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: the noncircular tidal corrections and use_Fr_tidal need tides and the Dali model\n");
     return 1;
   }
-  if (tidal_nc_on && (EOBPars->use_hlm_nc != USEHLM_NC_IMPQC ||
-                      (EOBPars->use_flm_nc != USEFLM_NC_IMPQC && EOBPars->use_flm_nc != USEFLM_NC_IMPQC_UNF &&
-                       EOBPars->use_flm_nc != USEFLM_NC_IMPQC_ADD) ||
-                      (EOBPars->use_Fr != USE_FR_FULL && EOBPars->use_Fr != USE_FR_NEXT &&
-                       EOBPars->use_Fr != USE_FR_LO && EOBPars->use_Fr != USE_FR_NLO) ||
-                      EOBPars->use_flm_tidal != USEFLM_TIDAL_DNV_NOSOURCE || !tidal_B)) {
-    if (DEBUG) printf("ERROR: the noncircular tidal corrections need use_hlm_nc = impqc, use_flm_nc = impqc, impqc_unf or impqc_add, use_Fr = full, next, LO or NLO, "
-                      "use_flm_tidal = DNV_nosource and tides with the tidal B (TEOBRESUM3_BQ, NNLO_B, NNLO_BQ, N3LO_B, N3LO_BQ)\n");
+  if (tidal_wf_on && EOBPars->use_hlm_nc != USEHLM_NC_IMPQC) {
+    if (DEBUG) printf("ERROR: use_hlm_nc_tidal and use_dlm_nc_tidal need use_hlm_nc = impqc\n");
     return 1;
   }
-  if (EOBPars->use_Fr_tidal != USE_FR_TIDAL_NO && EOBPars->use_Fr == USE_FR_NO) {
-    if (DEBUG) printf("ERROR: use_Fr_tidal needs a point-mass radial force\n");
+  if (tidal_flx_on && EOBPars->use_flm_nc != USEFLM_NC_IMPQC && EOBPars->use_flm_nc != USEFLM_NC_IMPQC_UNF &&
+      EOBPars->use_flm_nc != USEFLM_NC_IMPQC_ADD) {
+    if (DEBUG) printf("ERROR: use_flm_nc_tidal needs use_flm_nc = impqc, impqc_unf or impqc_add\n");
+    return 1;
+  }
+  if ((tidal_wf_on || (tidal_flx_on && EOBPars->flux_nc_order >= FLUX_NC_ORDER_1PN) ||
+       (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NLO && EOBPars->use_Fr == USE_FR_FULL)) && !tidal_B) {
+    if (DEBUG) printf("ERROR: the NC tidal pieces at NLO need tides with the tidal B (TEOBRESUM3_BQ, NNLO_B, NNLO_BQ, N3LO_B, N3LO_BQ)\n");
     return 1;
   }
   /* Fr next and full already get part of the tidal Fr through Fphi, use_Fr_tidal removes it assuming the NC tidal flux */
@@ -1543,10 +1543,11 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: use_Fr_tidal with use_Fr = next or full needs use_flm_nc_tidal\n");
     return 1;
   }
-  /* the NLO is what Fr full misses with the impqc flux and its 1PN factor on, matched to the NLO tidal flux */
-  if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NLO && (EOBPars->use_Fr != USE_FR_FULL || EOBPars->use_flm_nc != USEFLM_NC_IMPQC ||
-                                                    EOBPars->flux_nc_order < FLUX_NC_ORDER_1PN)) {
-    if (DEBUG) printf("ERROR: use_Fr_tidal = NLO needs use_Fr = full, use_flm_nc = impqc and flux_nc_order >= 1PN\n");
+  /* NLO correction to Fr full assumes impqc flx at >= 1PN; not derived for Fr next */
+  if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NLO &&
+      (EOBPars->use_Fr == USE_FR_NEXT ||
+       (EOBPars->use_Fr == USE_FR_FULL && (EOBPars->use_flm_nc != USEFLM_NC_IMPQC || EOBPars->flux_nc_order < FLUX_NC_ORDER_1PN)))) {
+    if (DEBUG) printf("ERROR: use_Fr_tidal = NLO is not there for use_Fr = next, and with use_Fr = full needs use_flm_nc = impqc and flux_nc_order >= 1PN\n");
     return 1;
   }
   /* fact puts the circular tides of the (2,2) in rho22, for the mode and the flux: the NC tides on top must be fact's or none */
@@ -1566,11 +1567,7 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: use_hlm_nc_tidal or use_flm_nc_tidal = fact needs the other to be fact or no\n");
     return 1;
   }
-  /* the f-mode dressing is a quasi-circular resummation, not consistent with the NC tidal corrections */
-  if (tidal_nc_on && EOBPars->use_tidal_fmode_model) {
-    if (DEBUG) printf("ERROR: the noncircular tidal corrections do not work with the f-mode model\n");
-    return 1;
-  }
+  /* allowed but not consistent: f-mode dressing resums the QC adiabatic tides, NC tides are matched to undressed ones */
   /* use_flm = LO is the LO Fphi of the generic-orbit flux, so Dali only. Its point-mass part has no tidal terms, so the
      tidal part is the whole LO tidal flux of use_flm_tidal = LO, which already has the noncircular terms */
   if (EOBPars->use_flm == USEFLM_LO) {
@@ -1766,6 +1763,7 @@ int eob_set_params(int default_choice, int firstcall)
       case USE_FR_BD:
       case USE_FR_LO:
       case USE_FR_NLO:
+      case USE_FR_NO:   /* tidal Fr only, for tests */
         eob_flx_Fr_tidal = &eob_flx_Fr_tidal_LO;
         break;
       default:
@@ -1773,7 +1771,8 @@ int eob_set_params(int default_choice, int firstcall)
         return 1;
     }
   } else if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NLO) {
-    eob_flx_Fr_tidal = &eob_flx_Fr_tidal_NLO_full;
+    /* like LO: entire flx for Fr not prop to Fphi, correction only for Fr full */
+    eob_flx_Fr_tidal = (EOBPars->use_Fr == USE_FR_FULL) ? &eob_flx_Fr_tidal_NLO_full : &eob_flx_Fr_tidal_NLO;
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_Fr_tidal\n");
     return 1;

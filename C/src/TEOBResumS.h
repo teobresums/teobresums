@@ -449,7 +449,7 @@ static const char* const use_Fr_opt[] = {"no", "ecc", "BD", "next", "full", "LO"
 enum{
   USE_FR_TIDAL_NO,
   USE_FR_TIDAL_LO,              /**< tidal radial force at LO, Bini-Damour gauge */
-  USE_FR_TIDAL_NLO,             /**< at LO and NLO, with use_Fr = full */
+  USE_FR_TIDAL_NLO,             /**< LO + NLO, not for Fr next */
   USE_FR_TIDAL_NOPT
 };
 static const char* const use_Fr_tidal_opt[] = {"no", "LO", "NLO", "undefined"};
@@ -1540,6 +1540,7 @@ double eob_flx_Fr_NLO(double r, double prstar, double pphi, double prsdot, Dynam
 double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_tidal_LO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
+double eob_flx_Fr_tidal_NLO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_tidal_LO_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_tidal_LO_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_tidal_NLO_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
