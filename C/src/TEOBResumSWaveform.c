@@ -6534,7 +6534,7 @@ void eob_wav_hlmNQC_find_a1a2a3_ecc(Dynamics *dyn, Waveform_lm *h, Waveform_lm *
   const double chi2 = EOBPars->chi2;
   const int spin1 = (chi1 > 1e-3); /* chi1 below 1e-3 counts as nonspinning for the NQC phase basis */
   const int omg_basis = EOBPars->nqc_hm_basis ? !spin1 : ((chi1 <= 0.) || (chi2 <= 0.));  /* Omega^(2/3) n4 basis for l = 3, 4, 5 */
-  const int omg_basis21 = !((EOBPars->nqc_hm_basis == 2) && spin1);                        /* ... and for the (2,1) */
+  const int omg_basis21 = !(((EOBPars->nqc_hm_basis == 2) && spin1) || (EOBPars->nqc_hm_basis == 3)); /* ... and for the (2,1) */
   const double X1   = EOBPars->X1;
   const double X2   = EOBPars->X2;
   const double aK   = EOBPars->a1+EOBPars->a2;
@@ -7525,7 +7525,7 @@ void eob_wav_hlmNQC_find_a1a2a3_mrg_ecc(Dynamics *dyn_mrg, Waveform_lm *hlm_mrg,
   const double chi2 = EOBPars->chi2;
   const int spin1 = (chi1 > 1e-3); /* chi1 below 1e-3 counts as nonspinning for the NQC phase basis */
   const int omg_basis = EOBPars->nqc_hm_basis ? !spin1 : ((chi1 <= 0.) || (chi2 <= 0.));  /* Omega^(2/3) n4 basis for l = 3, 4, 5 */
-  const int omg_basis21 = !((EOBPars->nqc_hm_basis == 2) && spin1);                        /* ... and for the (2,1) */
+  const int omg_basis21 = !(((EOBPars->nqc_hm_basis == 2) && spin1) || (EOBPars->nqc_hm_basis == 3)); /* ... and for the (2,1) */
   const double X1   = EOBPars->X1;
   const double X2   = EOBPars->X2;
   const double aK   = EOBPars->a1+EOBPars->a2;

@@ -263,7 +263,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->spin_hflx_kerr=0;  // 1: per-body Kerr horizon flux on top of use_hflx = lmr (LMR)
   eobp->hflx_kerr_N33=8;   // (3,3) horizon spin factor truncation v^8 (0 = full order 13)
   eobp->ode_stop_omg_neg=0; // 1: stop the ODE when M Omega < 0 (quasi-circular LMR)
-  eobp->nqc_hm_basis=0;    // NQC phase basis: 0 Dali rule; 1 by chi1 > 1e-3 for l = 3, 4, 5; 2 also for the (2,1) (LMR)
+  eobp->nqc_hm_basis=0;    // NQC phase basis: 0 Dali rule; 1 by chi1 > 1e-3 for l = 3, 4, 5; 2 also for the (2,1); 3 as 1, (2,1) never in the Omega basis (LMR)
   eobp->hflx_kerr_N44=6;   // (4,4) horizon spin factor truncation v^6 (0 = full order 9)
   
   eobp->compute_LR=0; // calculate LR ?
@@ -506,12 +506,13 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->interp_hlm                = 1;      /* fast FD path (on for LMR) */
     eobp->spa_fft_tail              = 1;
     /* spin sector: DJS-gauge N3LO G_S, G_S* with argument u; N3LO r_c; Kerr spin factors at infinity and per-body
-       horizon; NQC phase basis by chi1 for l = 2, ..., 5; ODE stop at Omega < 0 (quasi-circular only, see eob_set_params) */
+       horizon; NQC phase basis by chi1 for l = 3, 4, 5, never the Omega^(2/3) basis for the (2,1);
+       ODE stop at Omega < 0 (quasi-circular only, see eob_set_params) */
     eobp->GS_DJSu                   = 1;
     eobp->centrifugal_radius        = CENTRAD_N3LO;
     eobp->spin_flx_kerr             = 1;
     eobp->spin_hflx_kerr            = 1;
-    eobp->nqc_hm_basis              = 2;
+    eobp->nqc_hm_basis              = 3;
     eobp->ode_stop_omg_neg          = 1;
   }
   else errorexit("Unknown default binary parameter choice.");

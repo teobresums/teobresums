@@ -723,7 +723,7 @@ typedef struct tagEOBParameters
   int spin_hflx_kerr;                                   /**< 1: per-body Kerr factorized horizon flux on top of HFLX_LMR */
   int hflx_kerr_N33;                                    /**< spin_hflx_kerr: truncation v^N of the (3,3) horizon spin factor (default 8; 0 = full order 13) */
   int ode_stop_omg_neg;                                 /**< 1: stop the ODE when M Omega < 0 (quasi-circular LMR) */
-  int nqc_hm_basis;                                     /**< NQC phase basis: 0 Dali (Omega^(2/3) n4 for l = 3, 4, 5 if chi1 <= 0 or chi2 <= 0; always for (2,1)), 1 l = 3, 4, 5 only if chi1 <= 1e-3, 2 as 1 and (2,1) too (LMR) */
+  int nqc_hm_basis;                                     /**< NQC phase basis: 0 Dali (Omega^(2/3) n4 for l = 3, 4, 5 if chi1 <= 0 or chi2 <= 0; always for (2,1)), 1 l = 3, 4, 5 only if chi1 <= 1e-3, 2 as 1 and (2,1) too, 3 as 1 and (2,1) never (LMR) */
   int hflx_kerr_N44;                                    /**< spin_hflx_kerr: truncation v^N of the (4,4) horizon spin factor (default 6; 0 = full order 9) */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
