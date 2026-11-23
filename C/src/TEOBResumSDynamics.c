@@ -1206,7 +1206,7 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
     double a0  = at1 + at2;
     double a12 = at1 - at2;
     
-    double c_ss_nlo = -1.125*a0*a0 -(0.125+0.5+nu)*a12*a12 + 1.25*X12*a0*a12;
+    double c_ss_nlo = -1.125*a0*a0 -(0.125+0.5*nu)*a12*a12 + 1.25*X12*a0*a12;
 
     double c_ss_nnlo = - (189./32. + 417./32.*nu              )    *a0 *a0
                        + ( 11./32. - 127./32.*nu + 0.375*nu*nu)    *a12*a12
@@ -1216,8 +1216,8 @@ void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK
     double rc2   = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo + u2*c_ss_nnlo;
     *rc          = sqrt(rc2);
     double divrc = 1.0/(*rc);
-    *drc_dr      = r*divrc*(1-(aK2 + 0.5*c_ss_nlo)*u3 - 0.5*u4*c_ss_nnlo);	
-    *d2rc_dr2    = 1./r*(*drc_dr) + r*divrc*((3.*aK2+c_ss_nlo)*u4 + 2.*c_ss_nnlo*u5);
+    *drc_dr      = divrc*(r - aK2*u2 - 0.5*c_ss_nlo*u2 - c_ss_nnlo*u3);
+    *d2rc_dr2    = divrc*(1. + 2.*aK2*u3 + c_ss_nlo*u3 + 3.*c_ss_nnlo*u4 - (*drc_dr)*(*drc_dr));
     
   }
   
@@ -1296,7 +1296,7 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
     double a0  = at1 + at2;
     double a12 = at1 - at2;
     
-    double c_ss_nlo = -1.125*a0*a0 -(0.125+0.5+nu)*a12*a12 + 1.25*X12*a0*a12;
+    double c_ss_nlo = -1.125*a0*a0 -(0.125+0.5*nu)*a12*a12 + 1.25*X12*a0*a12;
 
     double c_ss_nnlo = - (189./32. + 417./32.*nu              )    *a0 *a0
                        + ( 11./32. - 127./32.*nu + 0.375*nu*nu)    *a12*a12
@@ -1306,8 +1306,8 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
     double rc2   = r2 + aK2*(1. + 2.*u) + u*c_ss_nlo + u2*c_ss_nnlo;
     *rc          = sqrt(rc2);
     double divrc = 1.0/(*rc);
-    *drc_dr      = r*divrc*(1-(aK2 + 0.5*c_ss_nlo)*u3 - 0.5*u4*c_ss_nnlo);	
-    *d2rc_dr2    = 1./r*(*drc_dr) + r*divrc*((3.*aK2+c_ss_nlo)*u4 + 2.*c_ss_nnlo*u5);
+    *drc_dr      = divrc*(r - aK2*u2 - 0.5*c_ss_nlo*u2 - c_ss_nnlo*u3);
+    *d2rc_dr2    = divrc*(1. + 2.*aK2*u3 + c_ss_nlo*u3 + 3.*c_ss_nnlo*u4 - (*drc_dr)*(*drc_dr));
     
   }
   
