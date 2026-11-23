@@ -879,9 +879,7 @@ int eob_set_params(int default_choice, int firstcall)
   
   /** Set more as needed ... */
 
-  /* a6c defaults to 0 (EOBParameters_defaults) and can be set manually via the
-     parfile/dict; do NOT reset it here, or an explicit a6c would be clobbered.
-     Each fit case below overwrites it as needed. */
+  /* a6c comes from EOBParameters_defaults or the user (not reset here); the fits below overwrite it */
   switch(EOBPars->use_a6c_fits)
   {
     case(a6c_fits_P33_newlogs):

@@ -236,7 +236,7 @@ double EOB_RHOH_LMR_LAST[9];
  * ---------------------------------
  *   Horizon flux for nonspinning large-mass-ratio binaries.
  *   Multipolar (l=2,3,4) Newton-normalized horizon flux with high-PN
- *   rho_lm series. Ported verbatim from branch dev/DALI-LMR.
+ *   rho_lm series; rho^H_22 as a frozen-log Pade' [30/2] of its v^32 series, rho^H_43 a test-mass fit.
  *
  *   @param[in] x    : frequency parameter v_phi^2
  *   @param[in] Heff : effective Hamiltonian

@@ -1340,13 +1340,9 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 /**
  *  Function : eob_metric_Q5PNfull
  *  ------------------------------
- *    LMR Q potential (fit-free, starred gauge): full-nu 5PN (local+nonlocal,
- *    f-route), including the prstar^4, prstar^6 AND prstar^8 sectors. Matches
- *    Qs5PNfullnu[u, prstar, nu] from
- *    teob-lmr/Mathematica/explorationQ/Qpotentials.wl exactly.
- *    P4, P6, P8 are the prstar^4, prstar^6, prstar^8 coefficients as functions
- *    of u and nu (logu = log(u)); the prstar-algebra/derivative conventions
- *    match eob_metric_Q5PNloc exactly, extended to the prstar^8 sector.
+ *    LMR Q potential (starred gauge, no fitted parameter): 5PN local + nonlocal with the full nu dependence,
+ *    prstar^4 and prstar^6 sectors, Q = prstar^4 P4(u,nu) + prstar^6 P6(u,nu) (log u terms included).
+ *    The prstar^8 coefficient P8 is computed but not used. Derivative conventions as eob_metric_Q5PNloc.
  *    @param[in]  r, prstar, nu
  *    @param[out] Q, dQ_du, dQ_dprstar, d2Q_du2, d2Q_drdprstar, d2Q_dprstar2,
  *                d3Q_dr2dprstar, d3Q_drdprstar2, d3Q_dprstar3
@@ -1386,7 +1382,7 @@ void eob_metric_Q5PNfull(double r, double prstar, double nu, double *Q, double *
   double d2P8 = pow(nu,4)*(-12.) + pow(nu,3)*(6.8571428571428571) + pow(nu,2)*(6.6768404676545281) + 762913.29182808763*nu;
 
   /* Q = prstar^4 P4 + prstar^6 P6, and derivatives (same conventions as Q5PNloc) */
-  // Note: prstar^8 P8 COMMENTED OUT - takes ages to plunge
+  // prstar^8 P8 not used: it makes the plunge very slow to integrate
   *Q       = prstar4*P4 + prstar6*P6; // + prstar8*P8;
   *dQ_du   = prstar4*dP4 + prstar6*dP6; // + prstar8*dP8;
   *d2Q_du2 = prstar4*d2P4 + prstar6*d2P6; // + prstar8*d2P8;
