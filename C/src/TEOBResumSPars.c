@@ -449,7 +449,7 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->japB3= 0. ;
   //eobp->japB4= 0. ;
   eobp->japT2= 0. ;
-  eobp->tidal_mup = eobp->tidal_mum = eobp->tidal_sigmap = eobp->tidal_Sb = 0.;
+  eobp->tidal_mup = eobp->tidal_mum = eobp->tidal_sigmap = eobp->tidal_sigmam = eobp->tidal_Sb = 0.;
   eobp->japT3= 0. ;
   //eobp->japT4= 0. ;  
   
@@ -777,10 +777,11 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->japT2 = EOBPars->japA2 + EOBPars->japB2;
     EOBPars->japT3 = EOBPars->japA3 + EOBPars->japB3;
 
-    /* the combinations the (2,2) tidal NC pieces are written in; sigma-bar_+ only with gravitomagnetic tides */
+    /* combinations used in tidal NC flx/wf; sigma-bar_+- only with GM tides */
     EOBPars->tidal_mup    = (EOBPars->kapA2 + EOBPars->kapB2)/6.;
     EOBPars->tidal_mum    = (EOBPars->kapA2 - EOBPars->kapB2)/6.;
     EOBPars->tidal_sigmap = (EOBPars->use_tidal_gravitomagnetic != TIDES_GM_OFF) ? EOBPars->japT2/48. : 0.;
+    EOBPars->tidal_sigmam = (EOBPars->use_tidal_gravitomagnetic != TIDES_GM_OFF) ? (EOBPars->japA2 - EOBPars->japB2)/48. : 0.;
     EOBPars->tidal_Sb     = EOBPars->tidal_mup + (EOBPars->X1 - EOBPars->X2)*EOBPars->tidal_mum;
     
     if (!(EOBPars->kapT2 > 0.)) {
@@ -1542,6 +1543,12 @@ int eob_set_params(int default_choice, int firstcall)
     if (DEBUG) printf("ERROR: use_Fr_tidal with use_Fr = next or full needs use_flm_nc_tidal\n");
     return 1;
   }
+  /* the NLO is what Fr full misses with the impqc flux and its 1PN factor on, matched to the NLO tidal flux */
+  if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NLO && (EOBPars->use_Fr != USE_FR_FULL || EOBPars->use_flm_nc != USEFLM_NC_IMPQC ||
+                                                    EOBPars->flux_nc_order < FLUX_NC_ORDER_1PN)) {
+    if (DEBUG) printf("ERROR: use_Fr_tidal = NLO needs use_Fr = full, use_flm_nc = impqc and flux_nc_order >= 1PN\n");
+    return 1;
+  }
   /* fact puts the circular tides of the (2,2) in rho22, for the mode and the flux: the NC tides on top must be fact's or none */
   const int fact_on = (EOBPars->use_hlm_nc_tidal == USEHLM_NC_TIDAL_FACT || EOBPars->use_flm_nc_tidal == USEFLM_NC_TIDAL_FACT);
   /* fact is derived for bound orbits: its flux divides by f22^(N,0)nc, zero on unbound orbits, and its mode by j */
@@ -1765,6 +1772,8 @@ int eob_set_params(int default_choice, int firstcall)
         if (DEBUG) printf("ERROR: Unknown option for use_Fr\n");
         return 1;
     }
+  } else if (EOBPars->use_Fr_tidal == USE_FR_TIDAL_NLO) {
+    eob_flx_Fr_tidal = &eob_flx_Fr_tidal_NLO_full;
   } else {
     if (DEBUG) printf("ERROR: Unknown option for use_Fr_tidal\n");
     return 1;

@@ -449,9 +449,10 @@ static const char* const use_Fr_opt[] = {"no", "ecc", "BD", "next", "full", "LO"
 enum{
   USE_FR_TIDAL_NO,
   USE_FR_TIDAL_LO,              /**< tidal radial force at LO, Bini-Damour gauge */
+  USE_FR_TIDAL_NLO,             /**< at LO and NLO, with use_Fr = full */
   USE_FR_TIDAL_NOPT
 };
-static const char* const use_Fr_tidal_opt[] = {"no", "LO", "undefined"};
+static const char* const use_Fr_tidal_opt[] = {"no", "LO", "NLO", "undefined"};
 
 /** List of options for hathlm_nc */
 enum{
@@ -927,7 +928,7 @@ typedef struct tagEOBParameters
   double kapB2,kapB3,kapB4,kapB5,kapB6,kapB7,kapB8;                             /* EOB Multipolar electric adiabatic tidal parameters (body 2)*/
   double kapT2,kapT3,kapT4,kapT5,kapT6,kapT7,kapT8;                             /* EOB Multipolar electric effective adiabatic tidal parameters */
   double japA2,japA3,japA4, japB2,japB3,japB4, japT2,japT3,japT4;               /* EOB Multipolar magnetic adiabatic tidal parameters */
-  double tidal_mup, tidal_mum, tidal_sigmap, tidal_Sb;                          /* (2,2) tidal NC pieces: mu-bar_+-, sigma-bar_+, S-bar = mu-bar_+ + (X1 - X2) mu-bar_- */
+  double tidal_mup, tidal_mum, tidal_sigmap, tidal_sigmam, tidal_Sb;            /* tidal NC pieces: mu-bar_+-, sigma-bar_+-, S-bar = mu-bar_+ + (X1 - X2) mu-bar_- */
   double khatA2,khatB2;                                                         //FIXME: redundant, =0.5*kapB2,  should be removed and defined locally
   double bar_alph2_1, bar_alph2_2, bar_alph2_3, bar_alph3_1, bar_alph3_2, bar_alph2j_1;      /* Tidal parameters combinations entering the EOB A potential*/
   double R0_A, R0_B;
@@ -1541,6 +1542,7 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
 double eob_flx_Fr_tidal_LO(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_tidal_LO_next(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_Fr_tidal_LO_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
+double eob_flx_Fr_tidal_NLO_full(double r, double prstar, double pphi, double prsdot, Dynamics *dyn, double Fphi);
 double eob_flx_FlmNewt_nc_22_old(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 double eob_flx_FlmNewt_nc_22(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
 double eob_flx_FlmNewt_nc_21(double r, double Omg, double rdot, double r2dot, double r3dot, double Omgdot, double Omg2dot);
