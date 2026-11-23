@@ -1228,7 +1228,7 @@ double eob_flx_HorizonFlux_lmr_kerr(double x, double Heff, double jhat, double n
 void eob_flx_rhoHS_kerr_iR(const double v, const double q, const double X, double *rhoHS, double *LO);
 double eob_flx_highl_rho_kerr(const int k, const double x, const double a0, const double *clmk);
 extern double EOB_RHOH_LMR_LAST[9];
-/* Kerr spin sector of the LMR flux: generated tables (TEOBResumSKerrSpin.c) */
+/* Kerr spin sector of the LMR flux: generated tables (end of TEOBResumSWaveform.c) */
 #define KS_NM (KMAX+KMAXHL)  /* infinity modes */
 #define KS_NH (20)           /* horizon modes l = 2..6 */
 void eob_kerr_psi(const double q, double psiA[5][7], double psiB[5][7], double *kap, double *lkap);
