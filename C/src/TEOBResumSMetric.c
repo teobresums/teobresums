@@ -1342,7 +1342,7 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
  *  ------------------------------
  *    LMR Q potential (starred gauge, no fitted parameter): 5PN local + nonlocal with the full nu dependence,
  *    prstar^4 and prstar^6 sectors, Q = prstar^4 P4(u,nu) + prstar^6 P6(u,nu) (log u terms included).
- *    The prstar^8 coefficient P8 is computed but not used. Derivative conventions as eob_metric_Q5PNloc.
+ *    Derivative conventions as eob_metric_Q5PNloc.
  *    @param[in]  r, prstar, nu
  *    @param[out] Q, dQ_du, dQ_dprstar, d2Q_du2, d2Q_drdprstar, d2Q_dprstar2,
  *                d3Q_dr2dprstar, d3Q_drdprstar2, d3Q_dprstar3
@@ -1358,7 +1358,6 @@ void eob_metric_Q5PNfull(double r, double prstar, double nu, double *Q, double *
   double prstar2 = prstar*prstar;
   double prstar4 = prstar2*prstar2;
   double prstar6 = prstar4*prstar2;
-  double prstar8 = prstar6*prstar2;
 
   /* prstar^4 sector coefficient P4(u,nu) and its u-derivatives */
   double P4 = pow(nu,3)*(10.*pow(u,3) + 602.31854041656389*pow(u,4)) + pow(nu,2)*(-6.*pow(u,2) - 131.*pow(u,3) - 1796.1366049802413*pow(u,4) - 118.4*logu*pow(u,4)) + nu*(8.*pow(u,2) + 92.71104428495595*pow(u,3) + 452.54216699669657*pow(u,4) + 51.695238095238095*logu*pow(u,4));
@@ -1374,25 +1373,17 @@ void eob_metric_Q5PNfull(double r, double prstar, double nu, double *Q, double *
 
   double d2P6 = pow(nu,4)*(-84.*u) + pow(nu,3)*(12. + 1128.*u) + pow(nu,2)*(-10.8 - 537.17899641756576*u) + nu*(-5.566015273904465 - 203.86927330249368*u);
 
-  /* prstar^8 sector coefficient P8(u,nu) and its u-derivatives */
-  double P8 = pow(nu,4)*(-6.*pow(u,2)) + pow(nu,3)*(3.4285714285714286*pow(u,2)) + pow(nu,2)*(3.338420233827264*pow(u,2)) + nu*(23841.075463402129*u + 381456.64591404382*pow(u,2));
-
-  double dP8 = pow(nu,4)*(-12.*u) + pow(nu,3)*(6.8571428571428571*u) + pow(nu,2)*(6.6768404676545281*u) + nu*(23841.075463402129 + 762913.29182808763*u);
-
-  double d2P8 = pow(nu,4)*(-12.) + pow(nu,3)*(6.8571428571428571) + pow(nu,2)*(6.6768404676545281) + 762913.29182808763*nu;
-
   /* Q = prstar^4 P4 + prstar^6 P6, and derivatives (same conventions as Q5PNloc) */
-  // prstar^8 P8 not used: it makes the plunge very slow to integrate
-  *Q       = prstar4*P4 + prstar6*P6; // + prstar8*P8;
-  *dQ_du   = prstar4*dP4 + prstar6*dP6; // + prstar8*dP8;
-  *d2Q_du2 = prstar4*d2P4 + prstar6*d2P6; // + prstar8*d2P8;
+  *Q       = prstar4*P4 + prstar6*P6;
+  *dQ_du   = prstar4*dP4 + prstar6*dP6;
+  *d2Q_du2 = prstar4*d2P4 + prstar6*d2P6;
 
-  double dQ_dprstar2     = 2.*prstar2*P4  + 3.*prstar4*P6; //  + 4.*prstar6*P8;     /* dQ/d(prstar^2)   */
-  double d2Q_dprstar22   = 2.*P4          + 6.*prstar2*P6; //  + 12.*prstar4*P8;    /* d2Q/d(prstar^2)^2 */
-  double d3Q_dprstar23   = 6.*P6; //          + 24.*prstar2*P8;                     /* d3Q/d(prstar^2)^3 */
-  double d2Q_dudprstar2  = 2.*prstar2*dP4 + 3.*prstar4*dP6; // + 4.*prstar6*dP8;
-  double d3Q_du2dprstar2 = 2.*prstar2*d2P4 + 3.*prstar4*d2P6; // + 4.*prstar6*d2P8;
-  double d3Q_dudprstar22 = 2.*dP4         + 6.*prstar2*dP6; // + 12.*prstar4*dP8;
+  double dQ_dprstar2     = 2.*prstar2*P4  + 3.*prstar4*P6;     /* dQ/d(prstar^2)   */
+  double d2Q_dprstar22   = 2.*P4          + 6.*prstar2*P6;    /* d2Q/d(prstar^2)^2 */
+  double d3Q_dprstar23   = 6.*P6;                     /* d3Q/d(prstar^2)^3 */
+  double d2Q_dudprstar2  = 2.*prstar2*dP4 + 3.*prstar4*dP6;
+  double d3Q_du2dprstar2 = 2.*prstar2*d2P4 + 3.*prstar4*d2P6;
+  double d3Q_dudprstar22 = 2.*dP4         + 6.*prstar2*dP6;
 
   *d2Q_drdprstar  = -2.*prstar*u2*d2Q_dudprstar2;
   *d3Q_dr2dprstar = prstar*( 4.*u3*d2Q_dudprstar2 + 2.*u4*d3Q_du2dprstar2 );
