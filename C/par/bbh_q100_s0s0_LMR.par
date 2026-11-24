@@ -23,19 +23,19 @@ q = 100. # mass ratio
 chi1 = 0. # dimensionless spin 1 z-component 
 chi2 = 0. # dimensionless spin 2 z-component 
 
-# initial GW frequency
-# Memo: f22 = 2*(r0)^(-3/2) / (2*pi)
-initial_frequency = 0.01 # initial radius ~ 10
+# initial frequency (geometric units: Omega/pi = f22 at Kepler)
+# merger ~1 week after the start for M = 1e6 Msun (122790 M); initial radius ~16.6
+initial_frequency = 4.7201982295e-03
 
 #
 # Output dir, output modes 
 #
 
 output_dir = "./bbh_q100_s0s0_LMR/"
-output_hpc = "no" # switch this off to test performances!!!
+output_hpc = "yes"
 output_multipoles = "yes"
-output_lm   = [ 1 ] # only 22
-use_mode_lm = [ 1 ]
+output_lm   = [ 0, 1, 4, 8 ] # (2,1), (2,2), (3,3), (4,4)
+use_mode_lm = [ 0, 1, 4, 8 ]
 output_dynamics = "no"
 
 # postadiabatic_dynamics = "no" # uncomment to solve the full ODEs
@@ -52,7 +52,7 @@ ode_tmax = 1000000000000000000000
 
 
 # interpolate on uniform grid?
-interp_uniform_grid = "yes" # yes, only h+,hx on a grid of dt_interp
+interp_uniform_grid = "yes" # output on a uniform time grid of step dt_interp
 
 dt_interp = 0.5 # M/delta_t = 4096 Hz for M=15*Msun
 

@@ -1,6 +1,8 @@
 # parfile for BBH (1000) with eccentricity and precession
 # uses the large-mass-ratio binary type (binary = "LMR")
 #
+# This configuration (eccentric and precessing) is available for the LMR binary but untested.
+#
 # Note: the (l,m) = (3,1),(4,1) modes are inspiral only, and do not have a 
 # merger-ringdown completion. See 
 # https://bitbucket.org/eob_ihes/teobresums/wiki/Conventions,%20parameters%20and%20output
@@ -20,15 +22,16 @@ binary = "LMR"
 
 q = 1000. # mass ratio
 
-chi1x = 0.3
-chi1y = 0.6
+# |chi1| = |chi2| = 0.3
+chi1x = 0.1
+chi1y = 0.2
 chi1z = 0.2
-chi2x = 0.2
-chi2y = 0.5
-chi2z = 0.4
+chi2x = 0.1
+chi2y = 0.2
+chi2z = 0.2
 # z components
 chi1 = 0.2
-chi2 = 0.4
+chi2 = 0.2
 
 LambdaAl2 = 0.
 LambdaBl2 = 0.
@@ -55,7 +58,7 @@ domain = 0
 output_dir = "./bbh_q1000_eccprec_LMR/"
 output_hpc = "yes" # switch this off to test performances!!!
 output_multipoles = "yes"
-output_lm   = [0, 1, 4, 8] # best modes for ringdown
+output_lm   = [0, 1, 4, 8] # (2,1), (2,2), (3,3), (4,4)
 use_mode_lm = [0, 1, 4, 8]
 output_dynamics = "no"
 
