@@ -3808,9 +3808,9 @@ void eob_wav_flm_s_HM_4PN22(double x, double nu, double X1, double X2, double ch
   /** l=m=2 multipole */
   /* spin-orbit */
   const double c_a_n3lo     = -8494939./467775.   + 2536./315.*el2;
-  const double c_sigma_n3lo = -14661629./8731800. + 214./315.*el2;
+  const double c_sigma_n3lo = -14661629./8731800. + 428./315.*el2;
   const double c_a_n4lo     = -890245226581./26698351680. + 6416./6615.*el2;
-  const double c_sigma_n4lo = -90273995723./88994505600.  + 428./6615.*el2;
+  const double c_sigma_n4lo = -90273995723./88994505600.  + 856./6615.*el2;
 
   const double cSO_lo    = (-0.5*a0 - a12X12/6.);
   const double cSO_nlo   = (-52./63.-19./504.*nu)*a0 - (50./63.+209./504.*nu)*a12X12;
