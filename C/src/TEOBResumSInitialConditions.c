@@ -983,6 +983,45 @@ int eob_dyn_ic_ecc_ma_split(double r0_kepl, Dynamics *dyn, double y_init[])
 }
 
 /**
+ * Function: eob_dyn_ic_ecc_pa_eq
+ * ------------------------------
+ *   Eccentric ICs, post-adiabatic, from equinoctial maps.
+ *   (e, f0, anomaly) label mean orbit; oscillating parts added on top.
+ *
+ *   @param[in]  r0     : unused
+ *   @param[in]  dyn    : Dynamics
+ *   @param[out] y_init : initial data
+ *   @return  0 on success
+ */
+int eob_dyn_ic_ecc_pa_eq(double r0, Dynamics *dyn, double y_init[])
+{
+  const double ecc  = EOBPars->ecc;
+  const double zeta = EOBPars->anomaly;
+
+  /* map order of level, max 2; LO = conservative */
+  int order = EOBPars->postadiabatic_dynamics_ecc_map;
+  if (order > 2) order = 2;
+
+  /* cos X = (cos zeta + e)/(1 + e cos zeta), with sin X of sign of sin zeta. At e = 0
+     two anomalies coincide, and on a circular orbit X doesn't matter anyway. */
+  double cX = cos(zeta);
+  if (ecc > 0.0) {
+    cX = (cX + ecc)/(1.0 + ecc*cX);
+    if (cX >  1.0) cX =  1.0;
+    if (cX < -1.0) cX = -1.0;
+  }
+  double X = acos(cX);
+  if (sin(zeta) < 0.0) X = 2.0*Pi - X;
+
+  /* fails rather than start from a substitute */
+  if (eob_eccpa_ic_state(ecc, Pi*EOBPars->f0, X, order, dyn, y_init)) {
+    if (DEBUG) printf("ERROR: eob_dyn_ic_ecc_pa_eq, no ICs at e = %g, f0 = %g\n", ecc, EOBPars->f0);
+    return 1;
+  }
+  return 0;
+}
+
+/**
  * Function: eob_dyn_ic_hyp
  * ------------------------
  *   Initial conditions calculation for hyperbolic systems, nonspinning

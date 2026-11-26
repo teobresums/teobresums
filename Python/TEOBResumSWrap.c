@@ -286,6 +286,49 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin") != NULL ) {
     EOBPars->postadiabatic_dynamics_rmin = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_rmin"));
   }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc")));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_level") != NULL ) {
+    const char *val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_level"));
+    for (EOBPars->postadiabatic_dynamics_ecc_level=0; EOBPars->postadiabatic_dynamics_ecc_level<ECCPA_LEVEL_NOPT; EOBPars->postadiabatic_dynamics_ecc_level++)
+      if (STREQUAL(val, eccpa_level_opt[EOBPars->postadiabatic_dynamics_ecc_level])) break;
+    if (EOBPars->postadiabatic_dynamics_ecc_level == ECCPA_LEVEL_NOPT) EOBPars->postadiabatic_dynamics_ecc_level = ECCPA_LEVEL_NNLOP;
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_map_order") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_map_order = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_map_order"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_rate_order") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_rate_order = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_rate_order"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_phase_order") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_phase_order = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_phase_order"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_nper") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_nper = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_nper"));
+  }
+  /* debug only: "no" is slow reference of phase pass */
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_interp_freqs") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_interp_freqs =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_interp_freqs")));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_stop") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_stop =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_stop")));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_export") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_export =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_export")));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_export_nodes") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_export_nodes = (int) PyLong_AsLong(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_export_nodes"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_export_window") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_export_window = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_export_window"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_adiab") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_adiab = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_adiab"));
+  }
+  if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_rmin") != NULL ) {
+    EOBPars->postadiabatic_dynamics_ecc_rmin = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_ecc_rmin"));
+  }
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_dr") != NULL ) {
     EOBPars->postadiabatic_dynamics_dr = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_dr"));
   }
@@ -1207,6 +1250,17 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
 
   // add also tc (a single fload) to the dictionary
   PyDict_SetItemString(dyndict, "tc", PyFloat_FromDouble(EOBPars->tc));
+
+  // whether eccentric post-adiabatic stage ran (it hands over at t > 0), and time (as in "t")
+  // ODE took over from it
+  PyObject *pa_ran = PyLong_FromLong(EOBPars->t_pa_handoff > 0.);
+  PyDict_SetItemString(dyndict, "pa_ran", pa_ran);
+  Py_DECREF(pa_ran);
+  PyObject *t_pa_handoff = PyFloat_FromDouble(EOBPars->t_pa_handoff);
+  PyDict_SetItemString(dyndict, "t_pa_handoff", t_pa_handoff);
+  Py_DECREF(t_pa_handoff);
+  PyObject *pa_tab3_n = PyLong_FromLong(EOBPars->pa_tab3_n);
+  PyDict_SetItemString(dyndict, "pa_tab3_n", pa_tab3_n); Py_DECREF(pa_tab3_n);
 
   if(EOBPars->domain==DOMAIN_TD){
     

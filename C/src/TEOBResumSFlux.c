@@ -578,6 +578,36 @@ void eob_flx_Flux_ecc(double x, double Omega, double r_omega, double E, double H
 }
 
 /**
+ * Function: eob_ecc_flux_at
+ * -------------------------
+ *   Flux at one phase-space point, for eccentric PA stage.
+ *
+ *   @param[in]  r, prstar, pphi  : point
+ *   @param[in]  rdot, Omg, ddotr : its rates
+ *   @param[in]  H, Heff, sqrtAbyB, dH_dr, rc, drc_dr, d2rc_dr2, A, dA : from eob_ecc_ham
+ *   @param[in]  dyn              : Dynamics structure
+ *   @param[out] Fphi, Fr         : azimuthal and radial forces
+ */
+void eob_ecc_flux_at(double r, double prstar, double pphi, double rdot, double Omg,
+                     double ddotr, double H, double Heff, double sqrtAbyB, double dH_dr,
+                     Dynamics *dyn, double rc, double drc_dr, double d2rc_dr2,
+                     double A, double dA, double *Fphi, double *Fr)
+{
+  const double Ereal  = EOBPars->nu * H;
+  const double prsdot = -sqrtAbyB * dH_dr;
+  /* rc derivatives without f-mode terms, as in eob_dyn_rhs_ecc */
+  const double r_omg  = eob_dyn_get_romg(r, prstar, pphi, dyn, rc, drc_dr, A, dA);
+  const double v_phi  = r_omg * Omg;
+  const double x      = v_phi * v_phi;
+  const double jhat   = pphi / (r_omg * v_phi);
+
+  *Fphi = 0.0;
+  *Fr   = 0.0;
+  eob_flx_Flux_ecc(x, Omg, r_omg, Ereal, Heff, jhat, r, prstar, pphi,
+                   rdot, ddotr, prsdot, Fphi, Fr, dyn, rc, drc_dr, d2rc_dr2);
+}
+
+/**
   * Function: eob_flx_Fr
   * --------------------
   *   Radial flux calculation for eccentric systems
