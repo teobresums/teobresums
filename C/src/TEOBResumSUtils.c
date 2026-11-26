@@ -972,10 +972,104 @@ void vect_rotate3(int axis, double angle, double *v)
 }
 
 /**
+ * Function: natural_cspline_coefs
+ * -------------------------------
+ *   Natural cubic spline coefficients (Burden & Faires alg. 3.4,
+ *   as used in gsl_interp_cspline) 
+ *
+ *   @param[in]  t: array of (strictly increasing) x values
+ *   @param[in]  y: array of y values
+ *   @param[in]  n: number of points
+ *   @param[out] b: linear coefficients, sized n
+ *   @param[out] c: quadratic coefficients, sized n
+ *   @param[out] d: cubic coefficients, sized n
+ */
+static void natural_cspline_coefs(const double *t, const double *y, int n,
+                                   double *b, double *c, double *d)
+{
+  double *h     = malloc((n-1)*sizeof(double));
+  double *alpha = malloc(n*sizeof(double));
+  double *l     = malloc(n*sizeof(double));
+  double *mu    = malloc(n*sizeof(double));
+  double *z     = malloc(n*sizeof(double));
+
+  for (int i = 0; i < n-1; i++) h[i] = t[i+1] - t[i];
+
+  alpha[0] = 0.;
+  for (int i = 1; i < n-1; i++)
+    alpha[i] = 3.0/h[i]*(y[i+1]-y[i]) - 3.0/h[i-1]*(y[i]-y[i-1]);
+
+  l[0] = 1.; mu[0] = 0.; z[0] = 0.;
+  for (int i = 1; i < n-1; i++) {
+    l[i]  = 2.0*(t[i+1]-t[i-1]) - h[i-1]*mu[i-1];
+    mu[i] = h[i]/l[i];
+    z[i]  = (alpha[i] - h[i-1]*z[i-1])/l[i];
+  }
+  l[n-1] = 1.; z[n-1] = 0.; c[n-1] = 0.;
+
+  for (int j = n-2; j >= 0; j--) {
+    c[j] = z[j] - mu[j]*c[j+1];
+    b[j] = (y[j+1]-y[j])/h[j] - h[j]*(c[j+1] + 2.0*c[j])/3.0;
+    d[j] = (c[j+1]-c[j])/(3.0*h[j]);
+  }
+
+  free(h); free(alpha); free(l); free(mu); free(z);
+}
+
+/**
+ * Function: find_intervals_sorted
+ * --------------------------------
+ * 
+ *   @param[in]  t:   source x values, sorted increasing, size n
+ *   @param[in]  n:   number of source points
+ *   @param[in]  ti:  target x values, sorted increasing, size ni
+ *   @param[in]  ni:  number of target points
+ *   @param[out] idx: interval index for each ti, size ni
+ */
+static void find_intervals_sorted(const double *t, int n, const double *ti, int ni, int *idx)
+{
+  int i = 0;
+  for (int k = 0; k < ni; k++) {
+    while (i < n-2 && t[i+1] <= ti[k]) i++;
+    idx[k] = i;
+  }
+}
+
+/**
+ * Function: interp_cspline_shared_grid
+ * -------------------------------------
+ *   Cubic sline fit on y(t) with index grid already given in input.
+ *   The coefficients b,c,d are pre-allocated, here just filled
+ *   using natural_cspline_coefs()
+ *
+ *   @param[in]  t:   source x values, sorted increasing, size n
+ *   @param[in]  y:   source y values, size n
+ *   @param[in]  n:   number of source points
+ *   @param[in]  ti:  target x values, size ni
+ *   @param[in]  idx: interval index for each ti (see find_intervals_sorted), size ni
+ *   @param[in]  ni:  number of target points
+ *   @param[out] b:   pre-allocated scratch, sized n, filled by natural_cspline_coefs
+ *   @param[out] c:   pre-allocated scratch, sized n, filled by natural_cspline_coefs
+ *   @param[out] d:   pre-allocated scratch, sized n, filled by natural_cspline_coefs
+ *   @param[out] yi:  interpolated y values, size ni
+ */
+static void interp_cspline_shared_grid(const double *t, const double *y, int n,
+                                        const double *ti, const int *idx, int ni,
+                                        double *b, double *c, double *d, double *yi)
+{
+  natural_cspline_coefs(t, y, n, b, c, d);
+  for (int k = 0; k < ni; k++) {
+    const int i = idx[k];
+    const double dx = ti[k] - t[i];
+    yi[k] = y[i] + dx*(b[i] + dx*(c[i] + dx*d[i]));
+  }
+}
+
+/**
   * Function: interp_spline
   * -----------------------
   *   Spline interpolation with GSL routines
-  *   
+  *
   *   @param[in] t: array of x values
   *   @param[in] y: array of y values
   *   @param[in] n: number of points
@@ -2310,7 +2404,7 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
 */
 void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name)
 {
-  /* Alloc and init aux memory */  
+  /* Alloc and init aux memory */
   Waveform_lm *hlm_aux;
   const int oldsize = hlm->size;
   Waveform_lm_alloc(&hlm_aux, oldsize, "", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
@@ -2341,14 +2435,22 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   for (int i = 0; i < size; i++) 
     hlm->time[i] = i*dt + t0;
   
-  /* Interp */
-  for (int k = 0; k < KMAX; k++) 
-    if (hlm->kmask[k])
-      interp_spline(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
-  for (int k = 0; k < KMAX; k++)
-    if (hlm->kmask[k]) 
-      interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
-  
+  // Interpolation on shared grid for every hlm
+  int *idx = malloc(size * sizeof(int));
+  find_intervals_sorted(hlm_aux->time, hlm_aux->size, hlm->time, size, idx);
+  double *b = malloc(hlm_aux->size * sizeof(double));
+  double *c = malloc(hlm_aux->size * sizeof(double));
+  double *d = malloc(hlm_aux->size * sizeof(double));
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->kmask[k]) {
+      interp_cspline_shared_grid(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size,
+                                  hlm->time, idx, size, b, c, d, hlm->ampli[k]);
+      interp_cspline_shared_grid(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size,
+                                  hlm->time, idx, size, b, c, d, hlm->phase[k]);
+    }
+  }
+  free(idx); free(b); free(c); free(d);
+
   /* Free aux memory */
   Waveform_lm_free (hlm_aux);
 }
