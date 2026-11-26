@@ -9583,9 +9583,10 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     /* Track multipoles w\ Fmin > f0 */
     nmin[k] = (FDlm->F[k][0]>f0)?(1):(0);
 
-    /* Get last index until Fdot is monotonically increasing (for attachment) */
+    /* Get last index until Fdot is monotonically increasing (for attachment).
+       Stop at size-2 since prolongation (below) needs two points at the end */
     int n = 1;
-    while(FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1] && n<size) n++;
+    while(n < size-2 && FDlm->Fdot[k][n] > FDlm->Fdot[k][n-1]) n++;
     /* Prolong the waveform, if necessary  
        - Fill the points between Fmax and half_srate_interp such that 
          FDlm->F[k][n] > half_srate_interp (strictly larger) for later interp;
@@ -9645,6 +9646,7 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
       const double *freq = FDlm->freq;
       int i0 = 0;
       while( i0<fsize && FDlm->ampli[k][i0]==0.) i0++;
+      if (i0 >= fsize-1) continue; /* if less than 2 pts, nothing to extrap from */
       const double dAdf = (FDlm->ampli[k][i0+1] - FDlm->ampli[k][i0])/(freq[i0+1] - freq[i0]);
       for (int i = i0-1; i>=0; i--){
         const double dF = freq[i] - Fmin[k];
