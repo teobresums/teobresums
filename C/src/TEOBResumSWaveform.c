@@ -9563,6 +9563,7 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
   double Fmin[KMAX], pmin[KMAX], bmin[KMAX], cmin[KMAX];
 
   const double Pio4 = Pi/4.;
+  const int npre = 5; /* SPA nodes prepended below the first one, see below */
   int *activemode = TDlm->kmask;
   
   /* For each active mode... */
@@ -9626,7 +9627,26 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
     pmin[k] = FDlm->phase[k][0];
     bmin[k] = TwoPi * TDlm->time[0];
     cmin[k] = Pi / FDlm->Fdot[k][0];
+
+    /* Prepend npre nodes below Fmin with the same expansion: a natural spline
+       starting at Fmin would have phase'' = 0 there and ring in band */
+    double dF1 = FDlm->F[k][1] - FDlm->F[k][0];
+    if (Fmin[k] - npre*dF1 <= 0.) dF1 = Fmin[k]/(npre + 1); /* keep the frequencies positive */
+    const double dAdF = (FDlm->ampli[k][1] - FDlm->ampli[k][0])/(FDlm->F[k][1] - FDlm->F[k][0]);
+    double **arr[4] = {FDlm->F, FDlm->phase, FDlm->ampli, FDlm->Fdot};
+    for (int v = 0; v < 4; v++) {
+      arr[v][k] = realloc(arr[v][k], (size + npre)*sizeof(double));
+      memmove(arr[v][k] + npre, arr[v][k], size*sizeof(double));
+    }
+    for (int j = 0; j < npre; j++) {
+      const double dF = -(npre - j)*dF1;
+      FDlm->F[k][j]     = Fmin[k] + dF;
+      FDlm->phase[k][j] = pmin[k] + bmin[k]*dF + cmin[k]*dF*dF;
+      FDlm->ampli[k][j] = FDlm->ampli[k][npre] + dAdF*dF;
+      FDlm->Fdot[k][j]  = FDlm->Fdot[k][npre];
+    }
   }
+  FDlm->size = size + npre;
 
   
   /* Interpolate each mode */
@@ -9639,13 +9659,13 @@ void SPA(Waveform_lm *TDlm, WaveformFD_lm *FDlm)
   for (int k = 0; k < KMAX; k++ ) {
     if (!activemode[k]) continue;
     if (nmin[k]) {
-      /* f0 < Fmin , the interpolation returned 0s at those points
-         -> fill points with linear (amp) or quadratic (phase) extrapolation
-         starting from innermost */
+      /* f0 < Fmin , the interpolation returned 0s below the prepended nodes
+         -> fill all points below Fmin with linear (amp) or quadratic (phase)
+         extrapolation starting from Fmin */
       const int fsize = FDlm->size; // size after interpolation
       const double *freq = FDlm->freq;
       int i0 = 0;
-      while( i0<fsize && FDlm->ampli[k][i0]==0.) i0++;
+      while( i0<fsize && freq[i0] < Fmin[k]) i0++;
       if (i0 >= fsize-1) continue; /* if less than 2 pts, nothing to extrap from */
       const double dAdf = (FDlm->ampli[k][i0+1] - FDlm->ampli[k][i0])/(freq[i0+1] - freq[i0]);
       for (int i = i0-1; i>=0; i--){
