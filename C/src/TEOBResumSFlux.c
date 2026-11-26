@@ -950,8 +950,10 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   double hatf_prstar = (1.0 - a2 - a3);
   if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
     hatf_prstar += (a2 * a2 - a4);
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+    hatf_prstar += (-a5+ 2*a2*a3);
   if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
-    hatf_prstar += (-a2*a2*a2 + 2.*a2*a3 + a3*a3 + 2.*a2*a4 - a5 - a6);
+    hatf_prstar += (-a2*a2*a2 + a3*a3 + 2.*a2*a4 - a6);
   hatf_prstar = f0/hatf_prstar;
   
   const double Frstar = -5./3.*prstar/pphi*Fphi*hatf_prstar;
@@ -1892,8 +1894,10 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
   double den = 1.0 - a2 - a3;
   if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
     den += a2*a2 - a4;
+  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+    den += (-a5 + 2.*a2*a3);
   if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
-    den += (-a2*a2*a2 + 2.*a2*a3 + a3*a3 + 2.*a2*a4 - a5 -a6);
+    den += (-a2*a2*a2 + a3*a3 + 2.*a2*a4 -a6);
   return 1.0/den;
 #else
   return 1.0 + a2 + a3 + a4 + a5 + a6;
