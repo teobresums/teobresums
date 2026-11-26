@@ -456,6 +456,7 @@ static inline eob_jet2 jet2_div(eob_jet2 a, eob_jet2 b)
  *   Evaluated by Pade' duality, [1/6]_A = 1/[6/1]_{1/A}: with g = 1/A_T,
  *     A = (g6 - g7 u) / sum_{k=0}^{6} (g6 g_k - g7 g_{k-1}) u^k,   g_{-1} = 0,
  *   finite also where g6 = 0. Derivatives exact, by second-order jets in u (log u carried as a jet).
+ *   Ref.: Eq. (5) of arXiv:2611.32840.
  *
  *    @param[in]  r    : radial separation
  *    @param[in]  nu   : symmetric mass ratio
@@ -943,6 +944,8 @@ void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, doub
  *    As eob_metric_D5PNP32_newlogs, with the analytic 5PN nu^2 coefficient
  *    d5nu2 = -403259/63 + (306545/512) pi^2 ~ -491.80 (LMR). A separate copy, so that the Dali
  *    function and its optimized code stay unchanged.
+ *    Ref.: arXiv:2611.32840, "The radial potentials" and Table S1 of the Supplemental Material;
+ *    d5nu2 from arXiv:2604.09545.
  *
  *    @param[in]  r    : radial separation
  *    @param[in]  nu   : symmetric mass ratio
@@ -1343,6 +1346,7 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
  *    LMR Q potential (starred gauge, no fitted parameter): 5PN local + nonlocal with the full nu dependence,
  *    prstar^4 and prstar^6 sectors, Q = prstar^4 P4(u,nu) + prstar^6 P6(u,nu) (log u terms included).
  *    Derivative conventions as eob_metric_Q5PNloc.
+ *    Ref.: Eqs. (S1)-(S10) of the Supplemental Material of arXiv:2611.32840.
  *    @param[in]  r, prstar, nu
  *    @param[out] Q, dQ_du, dQ_dprstar, d2Q_du2, d2Q_drdprstar, d2Q_dprstar2,
  *                d3Q_dr2dprstar, d3Q_drdprstar2, d3Q_dprstar3

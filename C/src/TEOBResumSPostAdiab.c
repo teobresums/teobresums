@@ -540,6 +540,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
  *  Compere & Kuchler 2021). x_L is the Painleve time of the handover: the inspiral follows X = -sqrt(-T/6)
  *  until T = O(1). Quasi-circular r.h.s. only (eob_dyn_rhs, eob_dyn_rhs_s), where prstardot with noflx set
  *  is exactly the conservative part.
+ *  Ref.: Eq. (6) and "Fold-aware switch to the ODEs" (End Matter) of arXiv:2611.32840; the default
+ *  fold_switch_xL = -8 gives the handover coefficient c_sw = sqrt(-x_L/6) = sqrt(4/3) of that paper.
  */
 
 
@@ -809,6 +811,7 @@ static void eob_fold_kerr_isco_seed(double a, double *r_seed, double *pphi_seed)
  *
  *   To be called once per configuration (spins, nu), after eob_set_params.
  *   Cost: O(100) r.h.s. evaluations (~0.3 ms).
+ *   Ref.: Delta_r_P is Eq. (6) of arXiv:2611.32840.
  *
  *   @param[in]  dyn       : Dynamics structure
  *   @param[out] rLSO      : fold radius

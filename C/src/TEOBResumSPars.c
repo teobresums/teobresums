@@ -484,7 +484,8 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
   } else if (binary == BINARY_LMR) {
 
-    /* Large-mass-ratio BBH (q > 10): BBH settings + the LMR model; always Dali (Giotto is an error in eob_set_params) */
+    /* Large-mass-ratio BBH (q > 10): BBH settings + the LMR model; always Dali (Giotto is an error in eob_set_params).
+       Model of arXiv:2611.32840; its ingredients against Dali are listed in Table S1 of the Supplemental Material */
     eobp->binary                    = BINARY_LMR;
     eobp->use_tidal                 = TIDES_OFF;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;

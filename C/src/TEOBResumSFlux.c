@@ -237,6 +237,9 @@ double EOB_RHOH_LMR_LAST[9];
  *   Horizon flux for nonspinning large-mass-ratio binaries.
  *   Multipolar (l=2,3,4) Newton-normalized horizon flux with high-PN
  *   rho_lm series; rho^H_22 as a frozen-log Pade' [30/2] of its v^32 series, rho^H_43 a test-mass fit.
+ *   Ref.: arXiv:2208.02055 (Sec. V A) and arXiv:2611.32840 (Pade' rho^H_22, rho^H_43 fit).
+ *   rho^H_42, rho^H_43, rho^H_44 fits: Nagar & Akcay, arXiv:1112.2840, coefficients of
+ *   Bernuzzi, Nagar & Zenginoglu, arXiv:1207.0769, Table I.
  *
  *   @param[in] x    : frequency parameter v_phi^2
  *   @param[in] Heff : effective Hamiltonian
@@ -614,6 +617,7 @@ double eob_flx_HorizonFlux_lmr_kerr(double x, double Heff, double jhat, double n
  *   S_eff = Heff (l+m even) or jhat (l+m odd), |T_lm| the tail factor at w = E Omega, rho_lm the test-mass
  *   22PN series (Fujita) to v^34 or v^32 with the exact 1PN nu-dependence (Damour-Iyer-Nagar).
  *   m = l, l-1, l-2 carry 99.97% of each multipole.
+ *   Ref.: arXiv:2611.32840; 22PN series of R. Fujita, arXiv:1211.5535.
  *
  *   @param[in] x    : frequency parameter v_phi^2
  *   @param[in] w    : E*Omega (the argument eob_flx_Tlm is called with)

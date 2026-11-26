@@ -3267,6 +3267,20 @@ void eob_wav_flm_HM_6PN3p3(double x,double nu, double *rholm, double *flm)
 /* Orbital rho_lm series coefficients (at the current log v) of the last eob_wav_flm_22PN(_nu) call, for the Kerr spin sector */
 double EOB_RHOLM_ORB_CLM[KMAX][45];
 
+/**
+ * Function: eob_wav_flm_22PN
+ * --------------------------
+ *   3+19PN rho_lm through l = 10, Taylor series to v^44 (22PN): nu-dependent PN terms (3PN for (2,2),
+ *   (3,1), (3,3); 2PN for (2,1), (3,2), (4,2), (4,4); 1PN for (4,1), (4,3) and l >= 5) completed with
+ *   test-mass terms up to 22PN. The other known nu-dependent terms are added in eob_wav_flm_22PN_nu.
+ *   Ref.: arXiv:2208.02055 (Sec. II B), arXiv:2310.13578 (Sec. II); test-mass 22PN series of
+ *   R. Fujita, arXiv:1211.5535.
+ *
+ *   @param[in]  x     : frequency
+ *   @param[in]  nu    : symmetric mass ratio
+ *   @param[out] rholm : resummed amplitudes
+ *   @param[out] flm   : rholm^l
+ */
 void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm)
 {
   /** Coefficients */
@@ -4486,6 +4500,8 @@ void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm)
  *   EOB orbital frame: rho_22|orb = rho_22|x22 + 48/5 nu x^4, the choice for
  *   which the flux is F_inf + dE_Schott/dt. Every term carries a factor nu, so
  *   nu -> 0 is eob_wav_flm_22PN bit for bit.
+ *   Ref.: rho_22 as in Eq. (15) of arXiv:2611.32840; 22PN rho_lm as in arXiv:2208.02055 (Sec. II B)
+ *   and arXiv:2310.13578 (Sec. II).
  *
  *   @param[in]  x     : frequency
  *   @param[in]  nu    : symmetric mass ratio
@@ -11167,6 +11183,7 @@ void compute_hpc(Waveform_lm *hlm, Waveform_lm *hlm_neg, Waveform_lm *hl0, doubl
  *   a coarse frequency grid (the tail is short, so htilde is smooth on scale 1/T_tail),
  *   cubic-splined onto the output grid, and blended into the SPA across a narrow band at
  *   f_mrg.
+ *   Ref.: arXiv:2611.32840, "Speed" and "Fast frequency-domain path" of the Supplemental Material.
  *
  *   @param[in]     TDlm  : time-domain multipoles (full IMR)
  *   @param[in,out] FDlm  : frequency-domain multipoles on the uniform output grid

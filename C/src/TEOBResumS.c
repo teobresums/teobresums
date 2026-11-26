@@ -206,6 +206,7 @@ EXIT_POINT_MAIN:;
  *   nodes about interp_hlm_dr apart in r (eob_dyn_rhs_ecc + eob_wav_hlm_ecc_sigmoid, as the
  *   per-sample pass), cubic-splined in time and evaluated on the dense grid, adding back m phi.
  *   The spacing is radial, so the O(dr^4) error does not depend on nu.
+ *   Ref.: "Speed" of arXiv:2611.32840; Table S1 of its Supplemental Material.
  *
  *   @param[in]     dyn  : dynamics (dense grid, must be filled)
  *   @param[in,out] hlm  : multipoles; ampli/phase of active modes filled on [0, iend)
