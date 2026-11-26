@@ -1456,6 +1456,53 @@ double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn)
 }
 
 /**
+ * Function: eob_dyn_bracket_root
+ * ------------------------------
+ *  Make sure that [*x_lo, *x_hi] brackets the root of f, moving the ends
+ *  of the interval if needed.
+ *  The sign of f on the two sides of the root is known for the functions
+ *  this is used with, see eob_dyn_adiabLR() and eob_dyn_adiabLSO():
+ *  - if f(*x_lo) does not have the sign expected inside the root, the root
+ *    lies further in and *x_lo is reduced (by 10% per step, down to x_min);
+ *  - if f(*x_hi) still has the sign expected inside the root, the root lies
+ *    further out and *x_hi is doubled.
+ *  If [*x_lo, *x_hi] already brackets the root, nothing is changed.
+ *
+ *  @param[in]     f       : root function
+ *  @param[in]     params  : parameters of f
+ *  @param[in]     sign_in : sign of f inside the root (+1. or -1.)
+ *  @param[in]     x_min   : smallest value allowed for *x_lo
+ *  @param[in,out] x_lo    : lower end of the interval
+ *  @param[in,out] x_hi    : upper end of the interval
+ *
+ *  @return ROOT_ERRORS_NO if the root is bracketed, ROOT_ERRORS_BRACKET otherwise
+ *          (including the case in which f is not finite at one of the ends)
+*/
+static int eob_dyn_bracket_root(double (*f)(double, void *), void *params,
+                                const double sign_in, const double x_min,
+                                double *x_lo, double *x_hi)
+{
+  const int max_doublings = 20; /* x_hi grows at most by 2^20 */
+
+  /* Inner end */
+  double f_lo = f(*x_lo, params);
+  while (isfinite(f_lo) && sign_in*f_lo < 0. && *x_lo > x_min) {
+    *x_lo = fmax(x_min, 0.9*(*x_lo));
+    f_lo  = f(*x_lo, params);
+  }
+  if (!isfinite(f_lo) || sign_in*f_lo < 0.) return ROOT_ERRORS_BRACKET;
+
+  /* Outer end */
+  for (int i = 0; i <= max_doublings; i++) {
+    const double f_hi = f(*x_hi, params);
+    if (!isfinite(f_hi)) return ROOT_ERRORS_BRACKET;
+    if (sign_in*f_hi <= 0.) return ROOT_ERRORS_NO;
+    *x_hi *= 2.;
+  }
+  return ROOT_ERRORS_BRACKET;
+}
+
+/**
  * Function: eob_dyn_fLR
  * ---------------------
  *  Root function to compute light-ring
@@ -1483,7 +1530,8 @@ double eob_dyn_fLR(double r, void  *params)
   * -------------------------
   *  Root finder for adiabatic light-ring
   *  Look for r in [1.8, 5.6] for BHNS, [2.1, 5.9] for BNS
-  *  and [1.8, 3.1] for BBH
+  *  and [1.8, 3.1] for BBH; the interval is widened if
+  *  fLR (< 0 inside the light ring) does not change sign in it.
   * 
   *  @note This is for the non-spinning case
   * 
@@ -1527,6 +1575,13 @@ int eob_dyn_adiabLR(Dynamics *dyn, double *rLR)
   gsl_function F;
   F.function = &eob_dyn_fLR;
   F.params = dyn;
+
+  /* Widen the interval if it does not bracket the root */
+  if (eob_dyn_bracket_root(&eob_dyn_fLR, dyn, -1., 1., &x_lo, &x_hi)) {
+    *rLR = 0.;
+    return ROOT_ERRORS_BRACKET;
+  }
+
   //T = gsl_root_fsolver_bisection;
   T = gsl_root_fsolver_brent;
   s = gsl_root_fsolver_alloc (T);
@@ -1595,7 +1650,10 @@ double eob_dyn_fLSO(double r, void  *params)
   * --------------------------
   *  Root finder for adiabatic LSO
   *  Look for r in [4.5, 6.2] for BBH, [4.5, 36] for if
-  *  tides are included
+  *  tides are included; the interval is widened if
+  *  fLSO (> 0 inside the LSO) does not change sign in it.
+  *  The search never goes below 1.01 rLR_tidal: the resummed
+  *  tidal potentials are not defined inside the tidal light ring.
   * 
   *  @note This is for the non-spinning case
   * 
@@ -1614,12 +1672,26 @@ int eob_dyn_adiabLSO(Dynamics *dyn, double *rLSO)
   double x;
   double x_lo = 4.5; // 4.532648e+00 nu= 1/4
   double x_hi = 6.2; // 6 nu=0 
-  if (EOBPars->use_tidal) x_hi = 36.; 
+  double x_min = 3.; /* the LSO is outside the light ring, which is at r <= 3 without tides */
+  if (EOBPars->use_tidal) {
+    x_hi = 36.;
+    if (EOBPars->rLR_tidal > 0.) {
+      /* Stay outside the tidal light ring, where the potential is defined */
+      x_min = 1.01*EOBPars->rLR_tidal;
+      if (x_min > x_lo) x_lo = x_min;
+    }
+  }
   
   gsl_root_fsolver *s;
   gsl_function F;
   F.function = &eob_dyn_fLSO;
   F.params = dyn;
+
+  /* Widen the interval if it does not bracket the root */
+  if (eob_dyn_bracket_root(&eob_dyn_fLSO, dyn, 1., x_min, &x_lo, &x_hi)) {
+    *rLSO = 0.;
+    return ROOT_ERRORS_BRACKET;
+  }
   //T = gsl_root_fsolver_bisection;
   T = gsl_root_fsolver_brent;
   s = gsl_root_fsolver_alloc (T);
