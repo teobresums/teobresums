@@ -161,7 +161,7 @@ double eob_a6c_fit_ecc_P33_newlogs(double nu)
 double eob_a6c_fit_ecc_P33_impqc(double nu)
 {
   double nu2 = nu*nu;
-  return 277.6835807911776*nu2 -437.8200772342428*nu -22.582437062389737;
+  return 269.73447218849526*nu2 -434.6951501323268*nu -22.530836934759876;
 }
 
 /** @} */ // end of a6cfits
@@ -348,28 +348,27 @@ double eob_c3_fit_ecc_P33_impqc(double nu, double a1, double a2)
   const double nu2 = nu*nu;
   const double X12 = sqrt(1.-4.*nu);
   const double a0  = a1+a2;
+  const double a12 = a1-a2;
   const double a02 = a0*a0;
   const double a03 = a02*a0;
-  const double a04 = a03*a0;
 
   /* Equal mass part */
-  const double p0 = 38.316272147907846;
-  const double n1 = 0.28836631381609557;
-  const double n2 = -0.8872832041219025;
-  const double n3 = 0.3314581165198756;
-  const double n4 = -0.07847346417511875;
-  const double d1 = 1.250251693391218;
-  const double c3_eq = p0*(1. + n1*a0 + n2*a02 + n3*a03 + n4*a04)/(1.+ d1*a0);
+  const double p0 = 38.994900135580295;
+  const double n1 = -0.7015163535515917;
+  const double n2 = 0.06013365981729153;
+  const double d1 = 0.23958686381170022;
+  const double c3_eq = p0*(1. + n1*a0 + n2*a02)/(1.+ d1*a0);
 
   /* Unequal mass, unequal-spin part */
-  const double c1 =  19.372770269785683;
-  const double c2 =  12.601043854959949;
-  const double c3 = -21.13404034435283;
-  const double c4 = -56.38151796961188;
-  const double c5 =  37.5701494879252;
-  const double c6 = -151.2719758819389;
+  const double c1 =  21.3846344036453;
+  const double c2 =  17.0396980939796;
+  const double c3 = -24.33437699378286;
+  const double c4 = -69.28553710659146;
+  const double c5 = -0.36113965835952705;
+  const double c6 = -11.512622332880278;
+  const double q1 = -0.08029875789375812;
 
-  const double c3_neq = c1*a0*X12 + c2*a02*X12 + c3*a03*X12 + c4*a0*nu*X12 + c5*(a1 - a2)*nu2 + c6*SQ((a1 - a2))*nu2;
+  const double c3_neq = ((c1*a0 + c2*a02 + c3*a03) * X12 + c4*a0*nu*X12 + (c5 + c6*a12*X12)*a12*X12) / (1. + q1*a0);
   return c3_eq + c3_neq;
 }
 
@@ -1031,21 +1030,21 @@ void eob_nqc_point_HM_peak22(Dynamics *dyn, double *A_tmp, double *dA_tmp, doubl
         A_tmp[0]    = fabs(-0.033175*chi_21A3*delta + 0.086356*chi_21A2*delta*nu - 0.049897*chi_21A2*delta + 0.012706*chi_21A*delta + 0.168668*chi_21A*nu - 0.285597*chi_21A + 1.067921*delta*nu2 - 0.189346*delta*nu + 0.431426*delta);
         dA_tmp[0]   = chi_21D*delta*(0.023534*nu - 0.008064) + delta*(0.006743 - 0.0297*nu) + 0.008256*fabs( (chi_21D - delta*(5.471011*nu2 + 1.235589*nu + 0.815482)) );
         omg_tmp[0]  = 0.01009*chi3 - 0.077343*chisq*nu + 0.02411*chisq + 0.168854*chi*nu2 - 0.159382*chi*nu + 0.047635*chi + 1.965157*nu3 - 0.53085*nu2 + 0.237904*nu + 0.176526;
-        domg_tmp[0] = 0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
+        domg_tmp[0] = -0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
         break;
       case(4):
         /* l=3, m=3 */
         A_tmp[4]    = fabs(- 0.088371*SQ(chi_33)*delta*nu + 0.036258*SQ(chi_33)*delta + 1.057731*chi_33*nu2 - 0.466709*chi_33*nu + 0.099543*chi_33 + 1.96267*delta*nu2 + 0.027833*delta*nu + 0.558808*delta);
         dA_tmp[4]   = SQ(chi_33)*delta*(0.004941*nu - 0.002094) + 0.001781*sqrt(fabs( (SQ(chi_33) + chi_33*delta*(39.247538*nu - 2.986889) + SQ(delta)*(85.173306*nu + 4.637906)) ));
         omg_tmp[4]  = 0.045141*chi3 - 0.346675*chisq*nu + 0.119419*chisq + 0.745924*chi*nu2 - 0.478915*chi*nu + 0.17467*chi - 8.887163*nu3 + 4.226831*nu2 + 0.427167;
-        domg_tmp[4] = 0.001697*chi3 + 0.016231*chisq*nu - 0.003985*chisq - 0.154378*chi*nu2 + 0.050618*chi*nu - 0.002721*chi - 0.255402*nu3 + 0.08663*nu2 + 0.027405*nu + 0.009736;
+        domg_tmp[4] = -0.001697*chi3 + 0.016231*chisq*nu - 0.003985*chisq - 0.154378*chi*nu2 + 0.050618*chi*nu - 0.002721*chi - 0.255402*nu3 + 0.08663*nu2 + 0.027405*nu + 0.009736;
         break;
       case(8):
         /* l=4, m=4 */
         A_tmp[8]    = fabs( 0.031483*SQ(chi_44A) - 0.180165*chi_44A*nu + 0.063931*chi_44A + 6.239418*nu3 - 1.947473*nu2 - 0.615307*nu + 0.262533 );
         dA_tmp[8]   = -0.001251*SQ(chi_44D)*chi_44D + 0.006387*SQ(chi_44D)*nu - 0.001223*SQ(chi_44D) - 0.034308*chi_44D*nu2 + 0.014373*chi_44D*nu - 0.000681*chi_44D + 1.134679*nu3 - 0.417056*nu2 + 0.024004*nu + 0.003498;
         omg_tmp[8]  = 0.042529*chi3 - 0.415864*chisq*nu + 0.155222*chisq + 0.768712*chi*nu2 - 0.592568*chi*nu + 0.244508*chi - 13.651335*nu3 + 5.490329*nu2 + 0.574041;
-        domg_tmp[8] = 0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
+        domg_tmp[8] = -0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
         break;
       default:
         errorexit("A,dA,omg,domg fits only implemented for (2,1), (3,3) and (4,4) at the moment.");
@@ -6184,7 +6183,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   A_tmp[0]    = fabs(-0.033175*chi_21A3*delta + 0.086356*chi_21A2*delta*nu - 0.049897*chi_21A2*delta + 0.012706*chi_21A*delta + 0.168668*chi_21A*nu - 0.285597*chi_21A + 1.067921*delta*nu2 - 0.189346*delta*nu + 0.431426*delta);
   dA_tmp[0]   = chi_21D*delta*(0.023534*nu - 0.008064) + delta*(0.006743 - 0.0297*nu) + 0.008256*fabs( (chi_21D - delta*(5.471011*nu2 + 1.235589*nu + 0.815482)) );
   omg_tmp[0]  = 0.01009*chi3 - 0.077343*chisq*nu + 0.02411*chisq + 0.168854*chi*nu2 - 0.159382*chi*nu + 0.047635*chi + 1.965157*nu3 - 0.53085*nu2 + 0.237904*nu + 0.176526;
-  domg_tmp[0] = 0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
+  domg_tmp[0] = -0.00149*chi3 + 0.008965*chisq*nu - 0.002739*chisq - 0.033831*chi*nu2 + 0.005752*chi*nu - 0.002003*chi + 0.204368*nu3 - 0.120705*nu2 + 0.035144*nu + 0.006579;
   
   int l       = LINDEX[0];
   double fact = sqrt((l+2)*(l+1)*l*(l-1));
@@ -6203,7 +6202,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   A_tmp[4]    = fabs(- 0.088371*SQ(chi_33)*delta*nu + 0.036258*SQ(chi_33)*delta + 1.057731*chi_33*nu2 - 0.466709*chi_33*nu + 0.099543*chi_33 + 1.96267*delta*nu2 + 0.027833*delta*nu + 0.558808*delta);
   dA_tmp[4]   = SQ(chi_33)*delta*(0.004941*nu - 0.002094) + 0.001781*sqrt(fabs( (SQ(chi_33) + chi_33*delta*(39.247538*nu - 2.986889) + SQ(delta)*(85.173306*nu + 4.637906)) ));
   omg_tmp[4]  = 0.045141*chi3 - 0.346675*chisq*nu + 0.119419*chisq + 0.745924*chi*nu2 - 0.478915*chi*nu + 0.17467*chi - 8.887163*nu3 + 4.226831*nu2 + 0.427167;
-  domg_tmp[4] = 0.001697*chi3 + 0.016231*chisq*nu - 0.003985*chisq - 0.154378*chi*nu2 + 0.050618*chi*nu - 0.002721*chi - 0.255402*nu3 + 0.08663*nu2 + 0.027405*nu + 0.009736;
+  domg_tmp[4] = -0.001697*chi3 + 0.016231*chisq*nu - 0.003985*chisq - 0.154378*chi*nu2 + 0.050618*chi*nu - 0.002721*chi - 0.255402*nu3 + 0.08663*nu2 + 0.027405*nu + 0.009736;
 
   l       = LINDEX[4];
   fact = sqrt((l+2)*(l+1)*l*(l-1));
@@ -6223,7 +6222,7 @@ void eob_nqc_point_BHNS_HM(Dynamics *dyn, double *A_tmp, double *dA_tmp, double 
   A_tmp[8]    = fabs( 0.031483*SQ(chi_44A) - 0.180165*chi_44A*nu + 0.063931*chi_44A + 6.239418*nu3 - 1.947473*nu2 - 0.615307*nu + 0.262533 );
   dA_tmp[8]   = -0.001251*SQ(chi_44D)*chi_44D + 0.006387*SQ(chi_44D)*nu - 0.001223*SQ(chi_44D) - 0.034308*chi_44D*nu2 + 0.014373*chi_44D*nu - 0.000681*chi_44D + 1.134679*nu3 - 0.417056*nu2 + 0.024004*nu + 0.003498;
   omg_tmp[8]  = 0.042529*chi3 - 0.415864*chisq*nu + 0.155222*chisq + 0.768712*chi*nu2 - 0.592568*chi*nu + 0.244508*chi - 13.651335*nu3 + 5.490329*nu2 + 0.574041;
-  domg_tmp[8] = 0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
+  domg_tmp[8] = -0.001812*chi3 + 0.024687*chisq*nu - 0.00568*chisq  - 0.162693*chi*nu2 + 0.061205*chi*nu - 0.003623*chi - 0.536664*nu3  + 0.094797*nu2 + 0.045406*nu + 0.013038;
 	
   l       = LINDEX[8];
   fact = sqrt((l+2)*(l+1)*l*(l-1));
