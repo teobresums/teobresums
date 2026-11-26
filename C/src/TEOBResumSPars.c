@@ -459,8 +459,10 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
   /* NC options */
   eobp->use_flm_nc         = USEFLM_NC_22;
+  eobp->use_f22_nc_pade    = 1;
   eobp->flux_nc_order      = FLUX_NC_ORDER_2PN;
   eobp->use_Fr             = USE_FR_NEXT;
+  eobp->use_Fr_pade        = 1;
   eobp->use_hlm_nc         = USEHLM_NC_NO;
   eobp->use_dlm_nc         = USEDELTALM_NC_NO;
   eobp->use_dlm_nc_pade    = 0;
@@ -494,17 +496,19 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
 
     } else if (model == MODEL_DALI) {
       // generic-orbit BBH defaults
-      eobp->use_flm        = USEFLM_HM_6PN3p3;
-      eobp->use_a6c_fits   = a6c_fits_P33_impqc;
-      eobp->use_cN3LO_fits = cN3LO_fits_P33_impqc;
-      eobp->nqc_coefs_flx  = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
-      eobp->A_pot          = A_5PNlogP33; 
-      eobp->D_pot          = D_5PNP32_newlogs;
-      eobp->Q_pot          = Q_5PN; 
-      eobp->use_flm_nc     = USEFLM_NC_IMPQC;
-      eobp->use_Fr         = USE_FR_FULL;
-      eobp->use_hlm_nc     = USEHLM_NC_IMPQC;
-      eobp->use_dlm_nc     = USEDELTALM_NC_IMPQC;
+      eobp->use_flm         = USEFLM_HM_6PN3p3;
+      eobp->use_a6c_fits    = a6c_fits_P33_impqc;
+      eobp->use_cN3LO_fits  = cN3LO_fits_P33_impqc;
+      eobp->nqc_coefs_flx   = NQC_FLX_NONE; // {"none", "nrfit_nospin20160209", "nrfit_spin20202","fromfile"}
+      eobp->A_pot           = A_5PNlogP33; 
+      eobp->D_pot           = D_5PNP32_newlogs;
+      eobp->Q_pot           = Q_5PN; 
+      eobp->use_flm_nc      = USEFLM_NC_IMPQC;
+      eobp->use_f22_nc_pade = 1;
+      eobp->use_Fr          = USE_FR_FULL;
+      eobp->use_Fr_pade     = 1;
+      eobp->use_hlm_nc      = USEHLM_NC_IMPQC;
+      eobp->use_dlm_nc      = USEDELTALM_NC_IMPQC;
       eobp->use_dlm_nc_pade = 1;
       eobp->use_h22_nc_complex = 1;
     } else {
@@ -2185,6 +2189,10 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
 
+  if (STREQUAL(key,"use_f22_nc_pade")) {
+    eobp->use_f22_nc_pade = YESNO2INT(string_trim(val));
+  }
+
   if (STREQUAL(key,"use_Fr")) {
     val = string_trim(val);
     for (eobp->use_Fr=0; eobp->use_Fr<=USE_FR_NOPT; eobp->use_Fr++) {
@@ -2196,6 +2204,10 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
       }
       if (STREQUAL(val, use_Fr_opt[eobp->use_Fr])) break;
     }
+  }
+
+  if (STREQUAL(key,"use_Fr_pade")) {
+    eobp->use_Fr_pade = YESNO2INT(string_trim(val));
   }
 
   if (STREQUAL(key, "use_hlm_nc")) {
@@ -2891,7 +2903,9 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
   fprintf(f,"%s = \"%s\"\n", "use_flm_nc", use_flm_nc_opt[eobp->use_flm_nc]);
   fprintf(f,"%s = \"%s\"\n", "flux_nc_order", flux_nc_order_opt[eobp->flux_nc_order]);
+  fprintf(f,"%s = \"%s\"\n", "use_f22_nc_pade", INT2YESNO(eobp->use_f22_nc_pade));
   fprintf(f,"%s = \"%s\"\n", "use_Fr", use_Fr_opt[eobp->use_Fr]);
+  fprintf(f,"%s = \"%s\"\n", "use_Fr_pade", INT2YESNO(eobp->use_Fr_pade));
   fprintf(f,"%s = \"%s\"\n", "use_hlm_nc", use_hlm_nc_opt[eobp->use_hlm_nc]);
   fprintf(f,"%s = \"%s\"\n", "use_dlm_nc", use_dlm_nc_opt[eobp->use_dlm_nc]);
   fprintf(f,"%s = \"%s\"\n", "use_h22_nc_complex", INT2YESNO(eobp->use_h22_nc_complex));

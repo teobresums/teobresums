@@ -897,14 +897,16 @@ typedef struct tagEOBParameters
   int model;                                            /**< model (Dalì, Giotto) */
   int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
-  int use_flm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
-  int flux_nc_order;                                    /**< NEW, INDEX FOR  # "0PN", "1PN", "1.5PN", "2PN" */
+  int use_flm_nc;                                       /**< NEW, INDEX FOR  # "l2m2", "impqc" */
+  int flux_nc_order;                                    /**< NEW, INDEX FOR  # "0PN", "1PN", "1.5PN", "2PN", "2.5PN", "3PN" */
+  int use_f22_nc_pade;                                  /**< NEW, Flag for Padé resummation of f22_nc */
   int use_hlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc;                                       /**< NEW, INDEX FOR  # "no", "impqc" */
   int use_dlm_nc_pade;                                  /**< NEW, Flag for pade approximation of d22_nc */
-  int use_dlm_nc_order;                                 /**< NEW, Flag for PN order of d22_nc */
+  int use_dlm_nc_order;                                 /**< NEW, INDEX FOR  # "1PN", "1.5PN", "2PN", "2PN_notail" */
   int use_h22_nc_complex;                               /**< NEW, Flag for complex resummed h22_nc */
   int use_Fr;                                           /**< NEW, INDEX FOR  # "no", "ecc", "BD", "next", "full" */
+  int use_Fr_pade;                                      /**< NEW, Flag for resummed Fr */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */

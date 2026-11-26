@@ -638,11 +638,17 @@ double eob_flx_Fr_ecc(double r, double prstar, double pphi, double prsdot, Dynam
     + pphi2*u3*(-29438./315. + 9568./315.*nu - 1752./35.*nu2)
     + prstar2*u3*pphi4*(-628./105. - 1052./105.*nu + 194./7.*nu2);
   
-  a1 = F1PN/F0PN;
-  a2 = F2PN/F0PN;
+  double Fr;
+  if (EOBPars->use_Fr_pade) {
+    a1 = F1PN/F0PN;
+    a2 = F2PN/F0PN;
+    Fr = nu*u4*prstar*F0PN/(1 - a1 + (a1*a1 - a2));
+  }
+  else
+    Fr = nu*u4*prstar*(F0PN + F1PN + F2PN);
   
   /* return Fr */
-  return nu*u4*prstar*F0PN/(1 - a1 + (a1*a1 - a2));
+  return Fr;
 }
 
 /**
@@ -673,10 +679,14 @@ double eob_flx_Fr_ecc_BD(double r, double prstar, double pphi, double prsdot, Dy
   double c1 = -573./280. - 118./35.*nu;
   double c2 = (-237433. + 175311.*nu + 70794.*nu2)/15120.;
 
-  double if2 = 1./(1. - c1*u + (c1*c1 - c2)*u2);
+  double hatf_prstar = 1.;
+  if (EOBPars->use_Fr_pade)
+    hatf_prstar = 1./(1. - c1*u + (c1*c1 - c2)*u2);
+  else
+    hatf_prstar = 1. + c1*u + c2*u2;
   
   /* return Fr */
-  return nu*32./3.*u4*prstar*if2;
+  return nu*32./3.*u4*prstar*hatf_prstar;
 }
 
 
@@ -712,8 +722,14 @@ double eob_flx_Fr_ecc_next(double r, double prstar, double pphi, double prsdot, 
   double c1 = 1957./1680 - 227./140*nu;
   double c2 = -25672541./5080320 + 165703./70560.*nu + 753./560.*nu2;
   
-  double a[]  = {1., c1, c2};
-  double hatf_prstar = Pade02(u, a);
+  double hatf_prstar = 1.;
+  if (EOBPars->use_Fr_pade) {
+    double a[]  = {1., c1, c2};
+    hatf_prstar = Pade02(u, a);
+  }
+  else
+    hatf_prstar = 1. + c1*u + c2*u2;
+    
   const double Frstar = -5./3.*prstar/pphi*Fphi*hatf_prstar;
   
   /* Eq. 6 of the paper above gives Fr*. 
@@ -943,21 +959,25 @@ double eob_flx_Fr_ecc_impqc_full(double r, double prstar, double pphi, double pr
   }
   else
     f3 = 0.0;
-
-  double a2 = f1/f0;
-  double a3 = f15/f0;
-  double a4 = f2/f0;
-  double a5 = f25/f0;
-  double a6 = f3/f0;
   
-  double hatf_prstar = (1.0 - a2 - a3);
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
-    hatf_prstar += (a2 * a2 - a4);
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
-    hatf_prstar += (-a5+ 2*a2*a3);
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
-    hatf_prstar += (-a2*a2*a2 + a3*a3 + 2.*a2*a4 - a6);
-  hatf_prstar = f0/hatf_prstar;
+  double hatf_prstar;
+  if (EOBPars->use_Fr_pade) {
+    double a2 = f1/f0;
+    double a3 = f15/f0;
+    double a4 = f2/f0;
+    double a5 = f25/f0;
+    double a6 = f3/f0;
+    hatf_prstar = (1.0 - a2 - a3);
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+      hatf_prstar += (a2*a2 - a4);
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+      hatf_prstar += (-a5+ 2*a2*a3);
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
+      hatf_prstar += (-a2*a2*a2 + a3*a3 + 2.*a2*a4 - a6);
+    hatf_prstar = f0/hatf_prstar;
+  }
+  else
+    hatf_prstar = f0 + f1 + f15 + f2 + f25 + f3;
   
   const double Frstar = -5./3.*prstar/pphi*Fphi*hatf_prstar;
   
@@ -1706,7 +1726,6 @@ double eob_flx_FlmNewt_nc_42(double r, double Omg, double rdot, double r2dot, do
  *  @param[in] prsdot The time derivative of the radial momentum.
  *  @return The non-circular correction factor for the (2,2) mode of the gravitational wave flux.
  */
-#define use_pade_22 (1)
 double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
 
   const double nu = EOBPars -> nu;
@@ -1898,18 +1917,18 @@ double eob_flx_flm_nc_22(double r, double prstar, double prsdot) {
   double a5 = f22_25PN;
   double a6 = f22_3PN;
   
-#if use_pade_22
-  double den = 1.0 - a2 - a3;
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
-    den += a2*a2 - a4;
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
-    den += (-a5 + 2.*a2*a3);
-  if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
-    den += (-a2*a2*a2 + a3*a3 + 2.*a2*a4 -a6);
-  return 1.0/den;
-#else
-  return 1.0 + a2 + a3 + a4 + a5 + a6;
-#endif
+  if (EOBPars->use_f22_nc_pade) {
+    double den = 1.0 - a2 - a3;
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_2PN)
+      den += a2*a2 - a4;
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_25PN)
+      den += (-a5 + 2.*a2*a3);
+    if (EOBPars->flux_nc_order >= FLUX_NC_ORDER_3PN)
+      den += (-a2*a2*a2 + a3*a3 + 2.*a2*a4 -a6);
+    return 1.0/den;
+  }
+  else
+    return 1.0 + a2 + a3 + a4 + a5 + a6;
 }
 
 /**
@@ -1937,9 +1956,6 @@ double eob_flx_flm_nc_21(double r, double prstar, double prsdot) {
   const double r9  = r8 * r;
   const double r10 = r9 * r;
   const double r11 = r10 * r;
-
-  const double logr = log(r);
-  const double sqrt_r = sqrt(r);
   
   const double prstar2 = prstar  * prstar;
   const double prstar3 = prstar2 * prstar;
@@ -2000,9 +2016,6 @@ double eob_flx_flm_nc_33(double r, double prstar, double prsdot) {
   const double r9  = r8 * r;
   const double r10 = r9 * r;
   const double r11 = r10 * r;
-
-  const double logr = log(r);
-  const double sqrt_r = sqrt(r);
   
   const double prstar2 = prstar  * prstar;
   const double prstar3 = prstar2 * prstar;
@@ -2142,9 +2155,6 @@ double eob_flx_flm_nc_31(double r, double prstar, double prsdot) {
   const double r9  = r8 * r;
   const double r10 = r9 * r;
   const double r11 = r10 * r;
-
-  const double logr = log(r);
-  const double sqrt_r = sqrt(r);
   
   const double prstar2 = prstar  * prstar;
   const double prstar3 = prstar2 * prstar;

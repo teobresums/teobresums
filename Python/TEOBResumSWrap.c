@@ -335,6 +335,10 @@ int SetOptionalVariables(PyObject* dict){
     }
   }
 
+  if ( PyDict_GetItemString(dict, "use_f22_nc_pade") != NULL ) { 
+    EOBPars->use_f22_nc_pade =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_f22_nc_pade")));
+  }
+
   if ( PyDict_GetItemString(dict, "use_Fr") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_Fr"));
@@ -342,6 +346,10 @@ int SetOptionalVariables(PyObject* dict){
       if (EOBPars->use_Fr == USE_FR_NOPT) EOBPars->use_Fr = USE_FR_FULL;
       if (STREQUAL(val,use_Fr_opt[EOBPars->use_Fr])) break;
     }
+  }
+
+  if ( PyDict_GetItemString(dict, "use_Fr_pade") != NULL ) { 
+    EOBPars->use_Fr_pade =  YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_Fr_pade")));
   }
 
   if ( PyDict_GetItemString(dict, "use_hlm_nc") != NULL ) { 
