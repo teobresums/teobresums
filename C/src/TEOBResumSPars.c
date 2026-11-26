@@ -244,13 +244,27 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
   eobp->postadiabatic_dynamics_rmin=14.; // minimum radius (end of PA dynamics)
   eobp->postadiabatic_dynamics_stop=0;   // stop after post-adiabatic dynamics 
   eobp->postadiabatic_dynamics_dr=0.1;            // PA step dr = 0.1 
+  eobp->fold_switch=0;               // end PA at r_sw = rLSO + sqrt(-x_L/6)*Delta_r_P instead of rmin (on for LMR)
+  eobp->fold_switch_xL=-8.;          // handover depth in scaled (Painleve) transition time
+  eobp->fold_switch_wiggle_tol=1e-3; // warning threshold for the post-switch wiggle QA
+  eobp->interp_hlm=0;                // 0: per-sample inspiral hlm; 1: coarse radial nodes + splines (on for LMR)
+  eobp->interp_hlm_dr=0.5;           // coarse-node radial spacing (M) for interp_hlm
+  eobp->spa_fft_tail=0;              // 0: analytic prolongation above merger (amplitude f^-10/3, phase linear in f); 1: DFT of the merger-ringdown tail (on for LMR)
 
   eobp->A_pot=A_5PNlog; 
   eobp->D_pot=D_3PN;
   eobp->Q_pot=Q_3PN; 
 
-  eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES}
+  eobp->centrifugal_radius=CENTRAD_NLO; // {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES, N3LO}
+  eobp->GS_DJSu=0; // 0: eob_dyn_s_GS; 1: DJS gauge N3LO with argument u (LMR)
   eobp->use_flm=USEFLM_HM; // "SSLO", "SSNLO", "HM"
+  eobp->use_hflx=HFLX_STD; // "std"/"lmr"
+  eobp->spin_flx_kerr=0;   // 1: Kerr hybrid spin sector of the flux (LMR)
+  eobp->spin_hflx_kerr=0;  // 1: per-body Kerr horizon flux on top of use_hflx = lmr (LMR)
+  eobp->hflx_kerr_N33=8;   // (3,3) horizon spin factor truncation v^8 (0 = full order 13)
+  eobp->ode_stop_omg_neg=0; // 1: stop the ODE when M Omega < 0 (quasi-circular LMR)
+  eobp->nqc_hm_basis=0;    // NQC phase basis: 0 Dali rule; 1 by chi1 > 1e-3 for l = 3, 4, 5; 2 also for the (2,1); 3 as 1, (2,1) never in the Omega basis (LMR)
+  eobp->hflx_kerr_N44=6;   // (4,4) horizon spin factor truncation v^6 (0 = full order 9)
   
   eobp->compute_LR=0; // calculate LR ?
   eobp->compute_LSO=0; // calculate LSO ?
@@ -467,6 +481,40 @@ void EOBParameters_defaults (int binary, int model, EOBParameters *eobp)
     eobp->use_tidal                 = TIDES_TEOBRESUM;
     eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;//TIDES_GM_PN;
     eobp->use_lambda234_fits        = Lambda234_fits_YAGI13;
+
+  } else if (binary == BINARY_LMR) {
+
+    /* Large-mass-ratio BBH (q > 10): BBH settings + the LMR model; always Dali (Giotto is an error in eob_set_params).
+       Model of arXiv:2611.32840; its ingredients against Dali are listed in Table S1 of the Supplemental Material */
+    eobp->binary                    = BINARY_LMR;
+    eobp->use_tidal                 = TIDES_OFF;
+    eobp->use_tidal_gravitomagnetic = TIDES_GM_OFF;
+    eobp->nqc                       = NQC_MANUAL;
+    eobp->nqc_coefs_hlm             = NQC_HLM_COMPUTE;
+    eobp->nqc_coefs_flx             = NQC_FLX_NONE;
+    eobp->use_flm                   = USEFLM_22PN_NU_HL;
+    eobp->use_hflx                  = HFLX_LMR;
+    eobp->use_a6c_fits              = a6c_fits_NO;
+    eobp->use_cN3LO_fits            = cN3LO_fits_NO;
+    eobp->A_pot                     = A_6p5PNP16;
+    eobp->a6c                       = -134.07179509567553066; /* a6c1SF = -1066621/1575 + 246367/3072 pi^2 - 31736/105 ln2 - 14008/105 gamma_E + 243/7 ln3 */
+    eobp->D_pot                     = D_5PNP32_newlogs_lmr;
+    eobp->Q_pot                     = Q_5PNfull;
+    eobp->fold_switch               = 1;      /* PA down to the fold-aware switch radius (TEOBResumSPostAdiab.c) */
+    eobp->postadiabatic_dynamics_dr = 0.05;   /* PA step, with the fold switch */
+    eobp->ode_abstol                = 1e-14;  /* 1e-13/1e-11 leave rk8pd step-size chatter that re-excites a ~1e-8 eccentricity at q ~ 1e5 */
+    eobp->ode_reltol                = 1e-12;
+    eobp->interp_hlm                = 1;      /* fast FD path (on for LMR) */
+    eobp->spa_fft_tail              = 1;
+    /* spin sector: DJS-gauge N3LO G_S, G_S* with argument u; N3LO r_c; Kerr spin factors at infinity and per-body
+       horizon; NQC phase basis by chi1 for l = 3, 4, 5, never the Omega^(2/3) basis for the (2,1);
+       ODE stop at Omega < 0 (quasi-circular only, see eob_set_params) */
+    eobp->GS_DJSu                   = 1;
+    eobp->centrifugal_radius        = CENTRAD_N3LO;
+    eobp->spin_flx_kerr             = 1;
+    eobp->spin_hflx_kerr            = 1;
+    eobp->nqc_hm_basis              = 3;
+    eobp->ode_stop_omg_neg          = 1;
   }
   else errorexit("Unknown default binary parameter choice.");
 
@@ -540,6 +588,25 @@ int eob_set_params(int default_choice, int firstcall)
     EOBPars->q = 1.;
   }
 
+  /* LMR binary: q > 10, Dali, no tides; reliable for primary spins up to 0.6 */
+  if (EOBPars->binary == BINARY_LMR) {
+    if (q <= 10.) {
+      PRERRF("binary LMR needs q > 10 (q = %g)", q);
+      return 1;
+    }
+    if (EOBPars->model != MODEL_DALI) {
+      PRERR("binary LMR is only available with model Dali");
+      return 1;
+    }
+    if (EOBPars->LambdaAl2 != 0. || EOBPars->LambdaBl2 != 0.) {
+      PRERR("binary LMR is a BBH: LambdaAl2 and LambdaBl2 must be 0");
+      return 1;
+    }
+    if (EOBPars->chi1z > 0.6 || EOBPars->chi1 > 0.6)
+      PRWARN("binary LMR: chi1 > 0.6 is outside the tested range");
+    if (EOBPars->ecc > 1e-4) EOBPars->ode_stop_omg_neg = 0;   /* the Omega < 0 stop is for quasi-circular LMR runs only */
+  }
+
   /* Check: if in-plane components of spins are < 1e4, then spin aligned, else spin precessing */
   /* Note: the "NOSPIN" option is deprecated, and currently never used */
   double chip_1 = sqrt(SQ(EOBPars->chi1x) + SQ(EOBPars->chi1y));
@@ -571,7 +638,9 @@ int eob_set_params(int default_choice, int firstcall)
     return 1;
   }
 
-  if (EOBPars->model == MODEL_DALI && EOBPars->domain == DOMAIN_FD) {
+  /* the SPA does not fit Dali's adiabatic ICs; quasi-circular LMR runs start from the quasi-circular PA solution */
+  if (EOBPars->model == MODEL_DALI && EOBPars->domain == DOMAIN_FD &&
+      !(EOBPars->binary == BINARY_LMR && EOBPars->ecc <= 1e-4 && EOBPars->use_spins != MODE_SPINS_GENERIC)) {
     PRERR("SPA with model = Dali is currently not available");
     return 1;
   }
@@ -812,7 +881,7 @@ int eob_set_params(int default_choice, int firstcall)
   
   /** Set more as needed ... */
 
-  EOBPars->a6c = 0.;
+  /* a6c comes from EOBParameters_defaults or the user (not reset here); the fits below overwrite it */
   switch(EOBPars->use_a6c_fits)
   {
     case(a6c_fits_P33_newlogs):
@@ -1152,6 +1221,23 @@ int eob_set_params(int default_choice, int firstcall)
     eob_wav_ringdown = &eob_wav_ringdown_HM; 
     eob_flx_Fr       = &eob_flx_Fr_ecc_next;
   }
+  else if (EOBPars->use_flm == USEFLM_22PN) {
+    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
+    eob_wav_flm      = &eob_wav_flm_22PN;
+    eob_wav_flm_s    = &eob_wav_flm_s_HM;
+    eob_wav_deltalm  = &eob_wav_deltalm_HM;
+    eob_wav_ringdown = &eob_wav_ringdown_HM;
+    eob_flx_Fr       = &eob_flx_Fr_ecc_next;
+  }
+  else if (EOBPars->use_flm == USEFLM_22PN_NU || EOBPars->use_flm == USEFLM_22PN_NU_HL) {
+    /* 22PNnuHL: same amplitudes, the l = 11, 12, 13 flux is added in eob_flx_Flux_s / _ecc */
+    eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
+    eob_wav_flm      = &eob_wav_flm_22PN_nu;
+    eob_wav_flm_s    = &eob_wav_flm_s_HM;
+    eob_wav_deltalm  = &eob_wav_deltalm_HM;
+    eob_wav_ringdown = &eob_wav_ringdown_HM;
+    eob_flx_Fr       = &eob_flx_Fr_ecc_next;
+  }
   else if (EOBPars->use_flm == USEFLM_HM_4PN22) {
     eob_wav_hlmNewt  = &eob_wav_hlmNewt_HM;
     eob_wav_flm      = &eob_wav_flm_HM_4PN22;
@@ -1232,6 +1318,8 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Apotential = &eob_metric_A5PNlogP33;
   } else if (EOBPars->A_pot == A_5PNlogP33_newlogs) {
     eob_metric_Apotential = &eob_metric_A5PNlogP33_newlogs;
+  } else if (EOBPars->A_pot == A_6p5PNP16) {
+    eob_metric_Apotential = &eob_metric_A6p5PNP16;
   } else {
     PRERR("Unknown option for A potential");
     return 1;
@@ -1245,10 +1333,12 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Dpotential = &eob_metric_D5PNP32;
   } else if (EOBPars->D_pot == D_5PNP32_newlogs) {
     eob_metric_Dpotential = &eob_metric_D5PNP32_newlogs;
+  } else if (EOBPars->D_pot == D_5PNP32_newlogs_lmr) {
+    eob_metric_Dpotential = &eob_metric_D5PNP32_newlogs_lmr;
   } else {
     PRERR("Unknown option for D potential");
     return 1;
-  } 
+  }
 
   if (EOBPars->Q_pot == Q_3PN) {
     eob_metric_Qpotential = &eob_metric_Q3PN;
@@ -1256,11 +1346,24 @@ int eob_set_params(int default_choice, int firstcall)
     eob_metric_Qpotential = &eob_metric_QGSF;
   } else if (EOBPars->Q_pot == Q_5PNloc) {
     eob_metric_Qpotential = &eob_metric_Q5PNloc;
+  } else if (EOBPars->Q_pot == Q_5PNfull) {
+    eob_metric_Qpotential = &eob_metric_Q5PNfull;
   } else {
     PRERR("Unknown option for Q potential");
     return 1;
   }
   
+  /* Kerr hybrid spin sector of the flux: replaces the spin part of eob_wav_flm_s_HM (BBH, 22PN family only) */
+  if (EOBPars->spin_flx_kerr) {
+    if ((EOBPars->use_flm == USEFLM_22PN || EOBPars->use_flm == USEFLM_22PN_NU || EOBPars->use_flm == USEFLM_22PN_NU_HL)
+        && !EOBPars->use_tidal) {
+      eob_wav_flm_s = &eob_wav_flm_s_kerr_hyb;
+    } else {
+      PRERR("spin_flx_kerr needs use_flm 22PN/22PNnu/22PNnuHL and no tides");
+      return 1;
+    }
+  }
+
   /* Set rc fun pointer */
   if (EOBPars->centrifugal_radius == CENTRAD_LO) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_LO;
@@ -1274,29 +1377,34 @@ int eob_set_params(int default_choice, int firstcall)
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOSPIN;
   } else if (EOBPars->centrifugal_radius == CENTRAD_NOTIDES) {
     eob_dyn_s_get_rc = &eob_dyn_s_get_rc_NOTIDES;
+  } else if (EOBPars->centrifugal_radius == CENTRAD_N3LO) {
+    eob_dyn_s_get_rc = &eob_dyn_s_get_rc_N3LO;
   } else {
     PRERR("Unknown option for centrifugal radius");
     return 1;
   }
 
+  /* Dali uses the eccentric r0, rhs and ICs; LMR only for ecc > 1e-4, quasi-circular LMR runs the circular ones */
+  const int dali_ecc = (EOBPars->model == MODEL_DALI) && (EOBPars->binary != BINARY_LMR || ecc > 1e-4);
+
   /* Set r0 fun pointer */
-  if (EOBPars->model == MODEL_DALI) {
-    // eccentric case
-    if(EOBPars->ecc_ics == ECCICS_1PA || EOBPars->ecc_ics == ECCICS_MA)
+  if (dali_ecc) {
+    // eccentric MODEL_DALI case
+    if (EOBPars->ecc_ics == ECCICS_1PA || EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_r0_eob = &eob_dyn_r0_ecc;
-    else if (EOBPars->ecc_ics == ECCICS_0PA){
-      if(ecc > 1e-4)
+    else if (EOBPars->ecc_ics == ECCICS_0PA) {
+      if (ecc > 1e-4)
         eob_dyn_r0_eob = &eob_dyn_r0_ecc;
       else
-        eob_dyn_r0_eob = &eob_dyn_r0_circ;  // fall back to quasi-circular radius
+        eob_dyn_r0_eob = &eob_dyn_r0_circ;
     }
   } else {
-    // quasi-circular case
+    // quasi-circular case (non-Dali model, or quasi-circular LMR)
     eob_dyn_r0_eob = &eob_dyn_r0_circ;
   }
   
   /** Set rhs fun pointer */
-  if (EOBPars->model == MODEL_DALI) {
+  if (dali_ecc) {
     p_eob_dyn_rhs = &eob_dyn_rhs_ecc;
   } else if (usespins) {
     p_eob_dyn_rhs = &eob_dyn_rhs_s;
@@ -1308,17 +1416,17 @@ int eob_set_params(int default_choice, int firstcall)
   if (r_hyp != 0.) {
     // hyp case
     eob_dyn_ic = &eob_dyn_ic_hyp_s;
-  } else if (EOBPars->model == MODEL_DALI) {
-    // eccentric case
-    if(EOBPars->ecc_ics == ECCICS_MA)
+  } else if (dali_ecc) {
+    // eccentric MODEL_DALI case
+    if (EOBPars->ecc_ics == ECCICS_MA)
       eob_dyn_ic = &eob_dyn_ic_ecc_ma_split;   // ICs with anomaly (adiabatic)
-    else if(EOBPars->ecc_ics == ECCICS_1PA)
-      eob_dyn_ic = &eob_dyn_ic_ecc_PA;   // 1PA ICs
-    else if (EOBPars->ecc_ics == ECCICS_0PA){
-      if(ecc > 1e-4)
-	      eob_dyn_ic = &eob_dyn_ic_ecc;    // adiabatic ICs
+    else if (EOBPars->ecc_ics == ECCICS_1PA)
+      eob_dyn_ic = &eob_dyn_ic_ecc_PA;         // 1PA ICs
+    else if (EOBPars->ecc_ics == ECCICS_0PA) {
+      if (ecc > 1e-4)
+        eob_dyn_ic = &eob_dyn_ic_ecc;          // adiabatic ICs
       else
-	      eob_dyn_ic = &eob_dyn_ic_circ_s; // Quasi-circular ICs ("nospin" option is deprecated)
+        eob_dyn_ic = &eob_dyn_ic_circ_s;       // quasi-circular ICs
     } else {
       PRERR("Unrecognized eccentric_ic flag.");
       return 1;
@@ -1442,6 +1550,8 @@ int EOBParameters_parse_commandline(EOBParameters *eobp, int argc, char **argv)
         ./TEOBResumS -h\n");
     }
   }
+  if (eobp->binary == BINARY_LMR)
+    return eobp->binary; /* set by the user; Lambdas are checked in eob_set_params */
   if (eobp->LambdaAl2 > 1. && eobp->LambdaBl2 > 1.)
     eobp->binary = BINARY_BNS;
   else if (eobp->LambdaAl2 == 0. && eobp->LambdaBl2 > 1.)
@@ -1473,10 +1583,8 @@ void EOBParameters_parse_file(char *fname, EOBParameters *eobp)
     if (line[0] == '#') continue;
     remove_comments(line, DELIMITERS_FOR_COMMENTS);
     remove_white_spaces(line);
-    if (getkv(line,&key,&val)) continue; 
-
+    if (getkv(line,&key,&val)) continue;
     EOBParameters_set_key_val(eobp, key, val);
-
   } // while/fgets
   fclose(fp);
   
@@ -1496,6 +1604,13 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
 
   if (STREQUAL(key,"use_geometric_units")) {    
     eobp->use_geometric_units = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"binary")) {
+    val = string_trim(val);
+    int b;
+    for (b = 0; b < BINARY_NOPT; b++) if (STREQUAL(val, binary_opt[b])) break;
+    if (b == BINARY_NOPT) errorexit("Unknown binary type (BBH, BNS, BHNS, BHNS_TD, LMR).");
+    eobp->binary = b;
   }
   if (STREQUAL(key,"model")) {
     val = string_trim(val);
@@ -1721,6 +1836,27 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     eobp->knqcpeak22_size = str2iarray(val, &eobp->knqcpeak22);
   }
 
+  if (STREQUAL(key,"spin_flx_kerr")) {
+    eobp->spin_flx_kerr = par_get_i(val);
+  }
+  if (STREQUAL(key,"spin_hflx_kerr")) {
+    eobp->spin_hflx_kerr = par_get_i(val);
+  }
+  if (STREQUAL(key,"hflx_kerr_N33")) {
+    eobp->hflx_kerr_N33 = par_get_i(val);
+  }
+  if (STREQUAL(key,"ode_stop_omg_neg")) {
+    eobp->ode_stop_omg_neg = par_get_i(val);
+  }
+  if (STREQUAL(key,"nqc_hm_basis")) {
+    eobp->nqc_hm_basis = par_get_i(val);
+  }
+  if (STREQUAL(key,"hflx_kerr_N44")) {
+    eobp->hflx_kerr_N44 = par_get_i(val);
+  }
+  if (STREQUAL(key,"GS_DJSu")) {
+    eobp->GS_DJSu = par_get_i(val);
+  }
   if (STREQUAL(key,"centrifugal_radius")) {
     val = string_trim(val);
     for (eobp->centrifugal_radius=0; eobp->centrifugal_radius<=CENTRAD_NOPT; eobp->centrifugal_radius++) {
@@ -1760,6 +1896,17 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
     
+  if (STREQUAL(key,"use_hflx")) {
+    val = string_trim(val);
+    for (eobp->use_hflx=0; eobp->use_hflx<=HFLX_NOPT; eobp->use_hflx++) {
+      if (eobp->use_hflx == HFLX_NOPT) {
+        eobp->use_hflx = HFLX_STD;
+        if (VERBOSE) printf("use_hflx '%s' undefined, set to '%s'\n", val, use_hflx_opt[eobp->use_hflx]);
+        break;
+      }
+      if (STREQUAL(val, use_hflx_opt[eobp->use_hflx])) break;
+    }
+  }
   if (STREQUAL(key,"use_flm")) {
     val = string_trim(val);
     for (eobp->use_flm=0; eobp->use_flm<=USEFLM_NOPT; eobp->use_flm++) {
@@ -1786,9 +1933,12 @@ void EOBParameters_set_key_val(EOBParameters *eobp, char *key, char *val)
     }
   }
 
+  if (STREQUAL(key,"a6c")) {
+    eobp->a6c = par_get_d(val);
+  }
   if (STREQUAL(key,"D_pot")) {
     val = string_trim(val);
-    for (eobp->D_pot=0; eobp->D_pot<=A_NOPT;  eobp->D_pot++) {
+    for (eobp->D_pot=0; eobp->D_pot<=D_NOPT;  eobp->D_pot++) {
       if (eobp->D_pot == D_NOPT) {
         eobp->D_pot = D_3PN;
         if (VERBOSE) printf("D_pot '%s' undefined, set to '%s'\n",
@@ -1920,6 +2070,24 @@ if (STREQUAL(val, nqc_hlm_opt[eobp->nqc_coefs_hlm])) break;
   
   if (STREQUAL(key,"postadiabatic_dynamics")) {    
     eobp->postadiabatic_dynamics = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"fold_switch")) {
+    eobp->fold_switch = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"fold_switch_xL")) {
+    eobp->fold_switch_xL = par_get_d(val);
+  }
+  if (STREQUAL(key,"fold_switch_wiggle_tol")) {
+    eobp->fold_switch_wiggle_tol = par_get_d(val);
+  }
+  if (STREQUAL(key,"interp_hlm")) {
+    eobp->interp_hlm = YESNO2INT(string_trim(val));
+  }
+  if (STREQUAL(key,"interp_hlm_dr")) {
+    eobp->interp_hlm_dr = par_get_d(val);
+  }
+  if (STREQUAL(key,"spa_fft_tail")) {
+    eobp->spa_fft_tail = YESNO2INT(string_trim(val));
   }
   if (STREQUAL(key,"postadiabatic_dynamics_N")) {      
     eobp->postadiabatic_dynamics_N = par_get_i(val);
@@ -2240,6 +2408,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %.16f\n","BH_final_spin",  eobp->abhf); 
 
   /* EOB Settings */
+  fprintf(f,"%s = \"%s\"\n", "binary", binary_opt[eobp->binary]);
   fprintf(f,"%s = \"%s\"\n", "model", model_opt[eobp->model]);
   fprintf(f,"%s = %d\n"    , "use_spins", eobp->use_spins);
   fprintf(f,"%s = \"%s\"\n", "tides", tides_opt[eobp->use_tidal]);
@@ -2279,9 +2448,17 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%d]\n", eobp->knqcpeak22[eobp->knqcpeak22_size-1]);
 
   fprintf(f,"%s = \"%s\"\n", "centrifugal_radius", centrifugal_radius_opt[eobp->centrifugal_radius]);
+  fprintf(f,"%s = %d\n", "GS_DJSu", eobp->GS_DJSu);
+  fprintf(f,"%s = %d\n", "spin_flx_kerr", eobp->spin_flx_kerr);
+  fprintf(f,"%s = %d\n", "spin_hflx_kerr", eobp->spin_hflx_kerr);
+  fprintf(f,"%s = %d\n", "hflx_kerr_N33", eobp->hflx_kerr_N33);
+  fprintf(f,"%s = %d\n", "hflx_kerr_N44", eobp->hflx_kerr_N44);
+  fprintf(f,"%s = %d\n", "nqc_hm_basis", eobp->nqc_hm_basis);
+  fprintf(f,"%s = %d\n", "ode_stop_omg_neg", eobp->ode_stop_omg_neg);
   fprintf(f,"%s = \"%s\"\n", "ecc_freq", ecc_freq_opt[eobp->ecc_freq]);  
   fprintf(f,"%s = \"%s\"\n", "ecc_ics", ecc_ics_opt[eobp->ecc_ics]);  
   fprintf(f,"%s = \"%s\"\n", "use_flm", use_flm_opt[eobp->use_flm]);
+  fprintf(f,"%s = \"%s\"\n", "use_hflx", use_hflx_opt[eobp->use_hflx]);
   fprintf(f,"%s = \"%s\"\n", "compute_LR", INT2YESNO(eobp->compute_LR));
   fprintf(f,"%s = %.16f\n"    , "compute_LR_guess", eobp->compute_LR_guess);
   fprintf(f,"%s = \"%s\"\n", "compute_LSO", INT2YESNO(eobp->compute_LSO));
@@ -2294,7 +2471,7 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   /* NQC */
   fprintf(f,"%s = \"%s\"\n", "nqc", nqc_opt[eobp->nqc]);
   fprintf(f,"%s = \"%s\"\n", "nqc_coefs_flx", nqc_flx_opt[eobp->nqc_coefs_flx]);
-  fprintf(f,"%s = \"%s\"\n", "nqc_coefs_hlm", nqc_hlm_opt[eobp->nqc_coefs_flx]);
+  fprintf(f,"%s = \"%s\"\n", "nqc_coefs_hlm", nqc_hlm_opt[eobp->nqc_coefs_hlm]);
   fprintf(f,"%s = \"%s\"\n", "nqc_coefs_flx_file", eobp->nqc_coefs_flx_file);
   fprintf(f,"%s = \"%s\"\n", "nqc_coefs_hlm_file", eobp->nqc_coefs_hlm_file);
 
@@ -2304,6 +2481,13 @@ void EOBParameters_tofile (EOBParameters *eobp, char *fname)
   fprintf(f,"%s = %d\n"    , "postadiabatic_dynamics_size", eobp->postadiabatic_dynamics_size);
   fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_rmin", eobp->postadiabatic_dynamics_rmin);
   fprintf(f,"%s = \"%s\"\n", "postadiabatic_dynamics_stop", INT2YESNO(eobp->postadiabatic_dynamics_stop));
+  fprintf(f,"%s = %.16f\n" , "postadiabatic_dynamics_dr", eobp->postadiabatic_dynamics_dr);
+  fprintf(f,"%s = \"%s\"\n", "fold_switch", INT2YESNO(eobp->fold_switch));
+  fprintf(f,"%s = %.16f\n" , "fold_switch_xL", eobp->fold_switch_xL);
+  fprintf(f,"%s = %.16e\n" , "fold_switch_wiggle_tol", eobp->fold_switch_wiggle_tol);
+  fprintf(f,"%s = \"%s\"\n", "interp_hlm", INT2YESNO(eobp->interp_hlm));
+  fprintf(f,"%s = %.16f\n" , "interp_hlm_dr", eobp->interp_hlm_dr);
+  fprintf(f,"%s = \"%s\"\n", "spa_fft_tail", INT2YESNO(eobp->spa_fft_tail));
 
   /* Deviations */
   fprintf(f,"%s = %f\n", "delta_a6c", eobp->delta_a6c);

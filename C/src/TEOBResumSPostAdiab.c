@@ -360,6 +360,8 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
           Fphi = eob_flx_Flux(x, dyn->Omg, r_omg, E_vec[i], Heff_vec[i], jhat, dyn->r, dyn->prstar, dyn->ddotr, dyn);
         }
 
+        dyn->data[EOB_FPHI][i] = Fphi; /* Fr = 0 in PA */
+
         /* recomputing Q */
         if(usespins) {
           eob_metric_s(dyn->r, dyn->prstar, dyn, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &pl_hold, &Q_vec[i], &dQ_vec[i], &dQdprstar_vec[i], &pl_hold, &pl_hold, &d2Qdprstar2_vec[i], &pl_hold, &pl_hold, &pl_hold);
@@ -518,4 +520,507 @@ int eob_dyn_Npostadiabatic(Dynamics *dyn, const double r0, DynamicsSpin *spin)
   }
 
   return OK;
+}
+
+/* ===========================================================================
+ *  Fold-aware PA->ODE switch
+ *  The PA inspiral must stop above the last stable orbit (LSO): the odd PA orders divide by dpphi/dr along
+ *  the circular sequence, which vanishes there. With fold_switch the PA leg stops at
+ *      r_sw = rLSO + sqrt(-x_L/6) Delta_r_P,   x_L = fold_switch_xL < 0,
+ *  a fixed depth into the transition region in its own scale. The functions below compute rLSO, pphiLSO
+ *  and Delta_r_P from the quasi-circular r.h.s. itself (finite differences), so every nu-dressed term enters.
+ *
+ *  Circular orbits are the zeros of the conservative prstardot at prstar = 0; at the LSO this sequence folds,
+ *  prstardot = d(prstardot)/dr = 0. Near the fold, with the flux Fphi held at its LSO value,
+ *      d2(delta_r)/dt2 = -A_P delta_r^2 - B_P (t - tLSO),   delta_r = r - rLSO,
+ *      A_P = -(1/2) (drdot/dprstar) (d2 prstardot/dr2) > 0,   B_P = -(drdot/dprstar) (d prstardot/dpphi) Fphi > 0,
+ *  and delta_r = -Delta_r_P X, t - tLSO = t_P T with
+ *      Delta_r_P = 6^(3/5) A_P^(-3/5) B_P^(2/5) ~ nu^(2/5),   t_P = (6/(A_P B_P))^(1/5) ~ nu^(-1/5)
+ *  give the first Painleve transcendent X'' = 6 X^2 + T (Ori & Thorne 2000; Buonanno & Damour 2000;
+ *  Compere & Kuchler 2021). x_L is the Painleve time of the handover: the inspiral follows X = -sqrt(-T/6)
+ *  until T = O(1). Quasi-circular r.h.s. only (eob_dyn_rhs, eob_dyn_rhs_s), where prstardot with noflx set
+ *  is exactly the conservative part.
+ *  Ref.: Eq. (6) and "Fold-aware switch to the ODEs" (End Matter) of arXiv:2611.32840; the default
+ *  fold_switch_xL = -8 gives the handover coefficient c_sw = sqrt(-x_L/6) = sqrt(4/3) of that paper.
+ */
+
+
+/* The finite-difference steps FOLD_STEP_* and the Newton parameters FOLD_NEWTON_* are in TEOBResumS.h */
+
+/** Failure reporting for eob_fold_compute: every failure is recoverable (EOBRun falls back to the standard
+    PA range), so all honor errors_to_warnings. Returns ERROR_ROOTFINDER. */
+static int eob_fold_fail(const char *msg)
+{
+  if (EOBPars->errors_to_warnings) {
+    char buf[STRLEN];
+    snprintf(buf, sizeof(buf), "eob_fold_compute: %s", msg);
+    PRWARN(buf);
+  } else {
+    printf("ERROR(eob_fold_compute): %s\n", msg);
+  }
+  return ERROR_ROOTFINDER;
+}
+
+/**
+ * Function: eob_fold_rhs
+ * ----------------------
+ *   Evaluate the active r.h.s. p_eob_dyn_rhs at a probe point, without
+ *   disturbing the ongoing evolution: dyn->store is forced off and
+ *   dyn->noflx and dyn->ode_stop are saved and restored.
+ *
+ *   @param[in]  r      : radius
+ *   @param[in]  prstar : tortoise radial momentum
+ *   @param[in]  pphi   : angular momentum
+ *   @param[in]  noflx  : if 1, dpphi/dt is zeroed (conservative system)
+ *   @param[in]  dyn    : Dynamics structure (used read-only up to flags)
+ *   @param[out] dy     : r.h.s. values, indexed by EOB_EVOLVE_*
+ */
+static void eob_fold_rhs(double r, double prstar, double pphi, int noflx,
+                         Dynamics *dyn, double dy[EOB_EVOLVE_NVARS])
+{
+  double y[EOB_EVOLVE_NVARS];
+  const int store_save  = dyn->store;
+  const int noflx_save  = dyn->noflx;
+  const bool stop_save  = dyn->ode_stop;
+
+  y[EOB_EVOLVE_RAD]    = r;
+  y[EOB_EVOLVE_PHI]    = 0.; /* the r.h.s. does not depend on phi */
+  y[EOB_EVOLVE_PRSTAR] = prstar;
+  y[EOB_EVOLVE_PPHI]   = pphi;
+
+  dyn->store = 0;
+  dyn->noflx = noflx;
+  p_eob_dyn_rhs(0., y, dy, dyn);
+
+  dyn->store    = store_save;
+  dyn->noflx    = noflx_save;
+  dyn->ode_stop = stop_save;
+}
+
+/**
+ * Function: eob_fold_prstardot
+ * ----------------------------
+ *   Conservative part of dprstar/dt from the r.h.s. (noflx set);
+ *   proportional to -dHeff/dr, so its zeroes at prstar = 0 are the
+ *   circular orbits. Quasi-circular r.h.s. only.
+ *
+ *   @param[in]  r      : radius
+ *   @param[in]  prstar : tortoise radial momentum
+ *   @param[in]  pphi   : angular momentum
+ *   @param[in]  dyn    : Dynamics structure
+ *
+ *   @return conservative dprstar/dt
+ */
+double eob_fold_prstardot(double r, double prstar, double pphi, Dynamics *dyn)
+{
+  double dy[EOB_EVOLVE_NVARS];
+  eob_fold_rhs(r, prstar, pphi, 1, dyn, dy);
+  return dy[EOB_EVOLVE_PRSTAR];
+}
+
+/**
+ * Function: eob_fold_rdot
+ * -----------------------
+ *   dr/dt from the r.h.s.; odd in prstar, vanishes on circular orbits.
+ *
+ *   @param[in]  r      : radius
+ *   @param[in]  prstar : tortoise radial momentum
+ *   @param[in]  pphi   : angular momentum
+ *   @param[in]  dyn    : Dynamics structure
+ *
+ *   @return dr/dt
+ */
+static double eob_fold_rdot(double r, double prstar, double pphi, Dynamics *dyn)
+{
+  double dy[EOB_EVOLVE_NVARS];
+  eob_fold_rhs(r, prstar, pphi, 1, dyn, dy);
+  return dy[EOB_EVOLVE_RAD];
+}
+
+/**
+ * Function: eob_fold_Fphi
+ * -----------------------
+ *   Angular momentum flux Fphi = dpphi/dt at full strength from the
+ *   r.h.s. (< 0).
+ *
+ *   @param[in]  r      : radius
+ *   @param[in]  prstar : tortoise radial momentum
+ *   @param[in]  pphi   : angular momentum
+ *   @param[in]  dyn    : Dynamics structure
+ *
+ *   @return Fphi
+ */
+double eob_fold_Fphi(double r, double prstar, double pphi, Dynamics *dyn)
+{
+  double dy[EOB_EVOLVE_NVARS];
+  eob_fold_rhs(r, prstar, pphi, 0, dyn, dy);
+  return dy[EOB_EVOLVE_PPHI];
+}
+
+/**
+ * Function: eob_fold_dprstardot_dr
+ * --------------------------------
+ *   d(prstardot)/dr at fixed (prstar, pphi); 4th-order central 5-point
+ *   stencil. Proportional to -d2Heff/dr2 at circular points.
+ *
+ *   @param[in]  r      : radius
+ *   @param[in]  prstar : tortoise radial momentum
+ *   @param[in]  pphi   : angular momentum
+ *   @param[in]  hstep  : finite-difference step in r
+ *   @param[in]  dyn    : Dynamics structure
+ *
+ *   @return d(prstardot)/dr
+ */
+double eob_fold_dprstardot_dr(double r, double prstar, double pphi,
+                              double hstep, Dynamics *dyn)
+{
+  const double fm2 = eob_fold_prstardot(r - 2.*hstep, prstar, pphi, dyn);
+  const double fm1 = eob_fold_prstardot(r -    hstep, prstar, pphi, dyn);
+  const double fp1 = eob_fold_prstardot(r +    hstep, prstar, pphi, dyn);
+  const double fp2 = eob_fold_prstardot(r + 2.*hstep, prstar, pphi, dyn);
+  return (fm2 - 8.*fm1 + 8.*fp1 - fp2)/(12.*hstep);
+}
+
+/**
+ * Function: eob_fold_d2prstardot_dr2
+ * ----------------------------------
+ *   d2(prstardot)/dr2 at fixed (prstar, pphi); 4th-order central 5-point
+ *   stencil.
+ *
+ *   @param[in]  r      : radius
+ *   @param[in]  prstar : tortoise radial momentum
+ *   @param[in]  pphi   : angular momentum
+ *   @param[in]  hstep  : finite-difference step in r
+ *   @param[in]  dyn    : Dynamics structure
+ *
+ *   @return d2(prstardot)/dr2
+ */
+double eob_fold_d2prstardot_dr2(double r, double prstar, double pphi,
+                                double hstep, Dynamics *dyn)
+{
+  const double fm2 = eob_fold_prstardot(r - 2.*hstep, prstar, pphi, dyn);
+  const double fm1 = eob_fold_prstardot(r -    hstep, prstar, pphi, dyn);
+  const double f0  = eob_fold_prstardot(r,            prstar, pphi, dyn);
+  const double fp1 = eob_fold_prstardot(r +    hstep, prstar, pphi, dyn);
+  const double fp2 = eob_fold_prstardot(r + 2.*hstep, prstar, pphi, dyn);
+  return (-fm2 + 16.*fm1 - 30.*f0 + 16.*fp1 - fp2)/(12.*hstep*hstep);
+}
+
+/**
+ * Function: eob_fold_dprstardot_dpphi
+ * -----------------------------------
+ *   d(prstardot)/dpphi at fixed (r, prstar); 4th-order central 5-point
+ *   stencil.
+ *
+ *   @param[in]  r      : radius
+ *   @param[in]  prstar : tortoise radial momentum
+ *   @param[in]  pphi   : angular momentum
+ *   @param[in]  hstep  : finite-difference step in pphi
+ *   @param[in]  dyn    : Dynamics structure
+ *
+ *   @return d(prstardot)/dpphi
+ */
+double eob_fold_dprstardot_dpphi(double r, double prstar, double pphi,
+                                 double hstep, Dynamics *dyn)
+{
+  const double fm2 = eob_fold_prstardot(r, prstar, pphi - 2.*hstep, dyn);
+  const double fm1 = eob_fold_prstardot(r, prstar, pphi -    hstep, dyn);
+  const double fp1 = eob_fold_prstardot(r, prstar, pphi +    hstep, dyn);
+  const double fp2 = eob_fold_prstardot(r, prstar, pphi + 2.*hstep, dyn);
+  return (fm2 - 8.*fm1 + 8.*fp1 - fp2)/(12.*hstep);
+}
+
+/**
+ * Function: eob_fold_drdot_dprstar
+ * --------------------------------
+ *   d(rdot)/dprstar at fixed (r, pphi); 4th-order central 5-point
+ *   stencil. At prstar = 0 this is the prstar -> 0 limit of rdot/prstar
+ *   (cf. dr_dtbyprstar in TEOBResumSPostAdiab.c); rdot is odd in prstar,
+ *   so the stencil is free of even-order contamination there.
+ *
+ *   @param[in]  r      : radius
+ *   @param[in]  prstar : tortoise radial momentum
+ *   @param[in]  pphi   : angular momentum
+ *   @param[in]  hstep  : finite-difference step in prstar
+ *   @param[in]  dyn    : Dynamics structure
+ *
+ *   @return d(rdot)/dprstar
+ */
+double eob_fold_drdot_dprstar(double r, double prstar, double pphi,
+                              double hstep, Dynamics *dyn)
+{
+  const double fm2 = eob_fold_rdot(r, prstar - 2.*hstep, pphi, dyn);
+  const double fm1 = eob_fold_rdot(r, prstar -    hstep, pphi, dyn);
+  const double fp1 = eob_fold_rdot(r, prstar +    hstep, pphi, dyn);
+  const double fp2 = eob_fold_rdot(r, prstar + 2.*hstep, pphi, dyn);
+  return (fm2 - 8.*fm1 + 8.*fp1 - fp2)/(12.*hstep);
+}
+
+/**
+ * Function: eob_fold_omegar2
+ * --------------------------
+ *   Radial epicyclic frequency squared at (r, prstar = 0, pphi):
+ *   omega_r^2 = -(drdot/dprstar)(d(prstardot)/dr). Positive on the stable
+ *   circular branch, vanishing at the fold (where it crosses zero with
+ *   slope 2 A_P in r - rLSO).
+ *
+ *   @param[in]  r    : radius
+ *   @param[in]  pphi : angular momentum
+ *   @param[in]  dyn  : Dynamics structure
+ *
+ *   @return omega_r^2
+ */
+double eob_fold_omegar2(double r, double pphi, Dynamics *dyn)
+{
+  const double drdot_dprstar =
+    eob_fold_drdot_dprstar(r, 0., pphi, FOLD_STEP_DPRSTAR, dyn);
+  const double dprstardot_dr =
+    eob_fold_dprstardot_dr(r, 0., pphi, FOLD_STEP_DR, dyn);
+  return -drdot_dprstar*dprstardot_dr;
+}
+
+/**
+ * Function: eob_fold_kerr_isco_seed
+ * ---------------------------------
+ *   Test-mass Kerr ISCO (Bardeen-Press-Teukolsky), seed of the Newton solve for the
+ *   nu-dressed fold; a = aK = a1 + a2, prograde.
+ *
+ *   @param[in]  a         : dimensionless spin
+ *   @param[out] r_seed    : ISCO radius
+ *   @param[out] pphi_seed : ISCO angular momentum
+ */
+static void eob_fold_kerr_isco_seed(double a, double *r_seed, double *pphi_seed)
+{
+  const double Z1 = 1. + cbrt(1. - a*a)*(cbrt(1. + a) + cbrt(1. - a));
+  const double Z2 = sqrt(3.*a*a + Z1*Z1);
+  const double r  = 3. + Z2 - SIGN(1., a)*sqrt((3. - Z1)*(3. + Z1 + 2.*Z2));
+  const double sr = sqrt(r);
+  *r_seed    = r;
+  *pphi_seed = (r*r - 2.*a*sr + a*a)/(pow(r, 0.75)*sqrt(r*sr - 3.*sr + 2.*a));
+}
+
+/**
+ * Function: eob_fold_compute
+ * --------------------------
+ *   Locate the nu-dressed fold (rLSO, pphiLSO) by a damped 2D Newton on
+ *   (prstardot, d(prstardot)/dr) = 0 at prstar = 0, seeded from the
+ *   test-mass Kerr ISCO of aK, and compute the transition scale Delta_r_P
+ *   (see the section header). Fails loudly (nonzero return, zeroed outputs)
+ *   if the Newton does not converge, if A_P or B_P has an unphysical
+ *   sign, or if the fold is not adiabatic for this configuration.
+ *
+ *   To be called once per configuration (spins, nu), after eob_set_params.
+ *   Cost: O(100) r.h.s. evaluations (~0.3 ms).
+ *   Ref.: Delta_r_P is Eq. (6) of arXiv:2611.32840.
+ *
+ *   @param[in]  dyn       : Dynamics structure
+ *   @param[out] rLSO      : fold radius
+ *   @param[out] pphiLSO   : fold angular momentum
+ *   @param[out] Delta_r_P : radial scale of the transition region (> 0)
+ *
+ *   @return OK, or ERROR_ROOTFINDER on failure
+ */
+int eob_fold_compute(Dynamics *dyn, double *rLSO, double *pphiLSO,
+                     double *Delta_r_P)
+{
+  const double hr  = FOLD_STEP_DR;
+  const double hpp = FOLD_STEP_DPPHI;
+
+  *rLSO = 0.;
+  *pphiLSO = 0.;
+  *Delta_r_P = 0.;
+
+  double r, pp;
+  eob_fold_kerr_isco_seed(EOBPars->use_spins ? EOBPars->aK : 0., &r, &pp);
+
+  /* Damped Newton on F = (prstardot, d(prstardot)/dr)(r, 0, pphi) with
+     finite-difference Jacobian; note dF1/dr = F2 exactly at the current
+     point. */
+  int converged = 0;
+  for (int it = 0; it < FOLD_NEWTON_ITMAX; it++) {
+    const double F1 = eob_fold_prstardot(r, 0., pp, dyn);
+    const double F2 = eob_fold_dprstardot_dr(r, 0., pp, hr, dyn);
+
+    const double J11 = F2;
+    const double J12 = eob_fold_dprstardot_dpphi(r, 0., pp, hpp, dyn);
+    const double J21 = eob_fold_d2prstardot_dr2(r, 0., pp, hr, dyn);
+    /* d(d(prstardot)/dr)/dpphi by differencing the dr stencil in pphi */
+    const double J22 = (  eob_fold_dprstardot_dr(r, 0., pp - 2.*hpp, hr, dyn)
+                      - 8.*eob_fold_dprstardot_dr(r, 0., pp -    hpp, hr, dyn)
+                      + 8.*eob_fold_dprstardot_dr(r, 0., pp +    hpp, hr, dyn)
+                      -    eob_fold_dprstardot_dr(r, 0., pp + 2.*hpp, hr, dyn))/(12.*hpp);
+
+    const double det = J11*J22 - J12*J21;
+    if (det == 0. || !isfinite(det)) break;
+
+    double dr  = -( J22*F1 - J12*F2)/det;
+    double dpp = -(-J21*F1 + J11*F2)/det;
+    if (fabs(dr)  > FOLD_NEWTON_MAXSTEP) dr  = SIGN(FOLD_NEWTON_MAXSTEP, dr);
+    if (fabs(dpp) > FOLD_NEWTON_MAXSTEP) dpp = SIGN(FOLD_NEWTON_MAXSTEP, dpp);
+    r  += dr;
+    pp += dpp;
+
+    if (r < 1.5 || !isfinite(r) || !isfinite(pp)) break; /* left the sane region */
+
+    if (fabs(dr) < FOLD_NEWTON_TOL*(1. + fabs(r)) &&
+        fabs(dpp) < FOLD_NEWTON_TOL*(1. + fabs(pp))) {
+      converged = 1;
+      break;
+    }
+  }
+
+  if (!converged)
+    return eob_fold_fail("Newton for the nu-dressed fold did not converge.");
+
+  /* Transition constants at (rLSO, 0, pphiLSO), flux at full strength */
+  const double drdot_dprstar    = eob_fold_drdot_dprstar(r, 0., pp, FOLD_STEP_DPRSTAR, dyn);
+  const double Fphi             = eob_fold_Fphi(r, 0., pp, dyn);
+  const double d2prstardot_dr2  = eob_fold_d2prstardot_dr2(r, 0., pp, hr, dyn);
+  const double dprstardot_dpphi = eob_fold_dprstardot_dpphi(r, 0., pp, hpp, dyn);
+
+  const double A_P = -0.5*drdot_dprstar*d2prstardot_dr2;
+  const double B_P = -drdot_dprstar*dprstardot_dpphi*Fphi;
+
+  if (!(A_P > 0.) || !(B_P > 0.)) {
+    char msg[STRLEN];
+    snprintf(msg, sizeof(msg), "unphysical fold constants "
+             "A_P = %.6e, B_P = %.6e (both must be > 0).", A_P, B_P);
+    return eob_fold_fail(msg);
+  }
+
+  const double t_P = pow(6./(A_P*B_P), 0.2);
+  const double DrP = pow(6., 0.6)*pow(A_P, -0.6)*pow(B_P, 0.4);
+
+  /* Adiabaticity of the fold: eps_P = |Fphi| t_P / pphiLSO (~ nu^(4/5)), the fractional angular-momentum drift
+     over one transition time, measures the first neglected correction of the near-fold expansion; refuse
+     eps_P > 0.1 */
+  const double eps_P = fabs(Fphi)*t_P/pp;
+  if (eps_P > 0.1) {
+    char msg[STRLEN];
+    snprintf(msg, sizeof(msg), "fold is not adiabatic "
+             "(|Fphi| t_P / pphiLSO = %.3e > 0.1); "
+             "the transition scaling does not apply here.", eps_P);
+    return eob_fold_fail(msg);
+  }
+
+  /* Normalization identities (algebraic in the definitions; violations
+     signal an implementation bug, not a model property) */
+  const double id1 = t_P*t_P*t_P*B_P - DrP;
+  const double id2 = A_P*DrP*t_P*t_P - 6.;
+  if (fabs(id1) > 1e-10*DrP || fabs(id2) > 1e-10*6.) {
+    char msg[STRLEN];
+    snprintf(msg, sizeof(msg), "normalization identities violated "
+             "(t_P^3 B_P - Delta_r_P = %.3e, A_P Delta_r_P t_P^2 - 6 = %.3e).",
+             id1, id2);
+    return eob_fold_fail(msg);
+  }
+
+  *rLSO = r;
+  *pphiLSO = pp;
+  *Delta_r_P = DrP;
+  return OK;
+}
+
+/**
+ * Function: eob_fold_wiggle_qa
+ * ----------------------------
+ *   Scaled epicyclic-wiggle amplitude of the stored dynamics just after the PA->ODE switch: r(t) over
+ *   about 3 epicyclic periods 2 pi/omega_r(r_sw) after the switch sample i_sw is fitted with
+ *   {1, t, sqrt(tLSO - t)} (the adiabatic drift r - rLSO = Delta_r_P sqrt(-T/6)), and rms(residual)/Delta_r_P
+ *   is returned. An error of the handover data excites an epicyclic oscillation that the transition window
+ *   amplifies (~e^6) and that no ODE tolerance removes; this metric certifies the handover.
+ *
+ *   @param[in]  dyn       : Dynamics with stored time/data arrays
+ *   @param[in]  rLSO      : fold radius of this configuration
+ *   @param[in]  Delta_r_P : transition scale of this configuration
+ *   @param[in]  i_sw      : index of the switch sample (last PA point)
+ *   @param[out] npts_out  : number of samples used (optional, NULL ok)
+ *
+ *   @return scaled wiggle rms, or -1. if the metric cannot be formed
+ *           (window not sampled, bad omega_r^2, fewer than 12 points, or
+ *           no rLSO crossing beyond the window)
+ */
+double eob_fold_wiggle_qa(Dynamics *dyn, double rLSO, double Delta_r_P,
+                          int i_sw, int *npts_out)
+{
+  if (npts_out) *npts_out = 0;
+  if (i_sw < 0 || i_sw >= dyn->size - 1) return -1.;
+
+  const double t_sw    = dyn->time[i_sw];
+  const double r_sw    = dyn->data[EOB_RAD][i_sw];
+  const double pphi_sw = dyn->data[EOB_PPHI][i_sw];
+
+  const double w2 = eob_fold_omegar2(r_sw, pphi_sw, dyn);
+  if (!(w2 > 0.)) return -1.;
+  const double Twin = 3.*TwoPi/sqrt(w2);
+
+  int n = 0;
+  while (i_sw + n < dyn->size && dyn->time[i_sw + n] <= t_sw + Twin) n++;
+  if (n < 12) return -1.; /* ~4 samples per period, the minimum for the
+                             fit to see an oscillation at all */
+  if (npts_out) *npts_out = n;
+
+  /* the sqrt-drift basis needs tLSO: first crossing of rLSO after the
+     switch, linearly interpolated; it must lie beyond the fit window */
+  double tLSO = 0.;
+  {
+    int j = i_sw;
+    while (j < dyn->size && dyn->data[EOB_RAD][j] > rLSO) j++;
+    if (j >= dyn->size || j == i_sw) return -1.;
+    const double f = (dyn->data[EOB_RAD][j-1] - rLSO)
+                    /(dyn->data[EOB_RAD][j-1] - dyn->data[EOB_RAD][j]);
+    tLSO = dyn->time[j-1] + f*(dyn->time[j] - dyn->time[j-1]);
+    if (tLSO <= t_sw + Twin) return -1.;
+  }
+
+  /* least-squares fit of r(t) on {1, s, sqrt((tLSO - t)/Twin)} in
+     s = 2(t-t_sw)/Twin - 1; normal equations solved by Gauss elimination
+     with partial pivoting (well-conditioned: smooth basis, 3 functions,
+     s in [-1,1]) */
+  const int m = 3;
+  double M[3][3] = {{0.}}, b[3] = {0.};
+  for (int i = 0; i < n; i++) {
+    const double t = dyn->time[i_sw + i];
+    const double s = 2.*(t - t_sw)/Twin - 1.;
+    double pk[3];
+    pk[0] = 1.; pk[1] = s; pk[2] = sqrt((tLSO - t)/Twin);
+    for (int j = 0; j < m; j++) {
+      b[j] += pk[j]*dyn->data[EOB_RAD][i_sw + i];
+      for (int k = 0; k < m; k++) M[j][k] += pk[j]*pk[k];
+    }
+  }
+  for (int col = 0; col < m; col++) {
+    int piv = col;
+    for (int row = col + 1; row < m; row++)
+      if (fabs(M[row][col]) > fabs(M[piv][col])) piv = row;
+    if (M[piv][col] == 0.) return -1.;
+    if (piv != col) {
+      for (int k = 0; k < m; k++) SWAPTRS(M[col][k], M[piv][k]);
+      SWAPTRS(b[col], b[piv]);
+    }
+    for (int row = col + 1; row < m; row++) {
+      const double fac = M[row][col]/M[col][col];
+      for (int k = col; k < m; k++) M[row][k] -= fac*M[col][k];
+      b[row] -= fac*b[col];
+    }
+  }
+  double coef[3] = {0.};
+  for (int row = m - 1; row >= 0; row--) {
+    double s = b[row];
+    for (int k = row + 1; k < m; k++) s -= M[row][k]*coef[k];
+    coef[row] = s/M[row][row];
+  }
+
+  double ss = 0.;
+  for (int i = 0; i < n; i++) {
+    const double t = dyn->time[i_sw + i];
+    const double s = 2.*(t - t_sw)/Twin - 1.;
+    double pk[3];
+    pk[0] = 1.; pk[1] = s; pk[2] = sqrt((tLSO - t)/Twin);
+    double fit = 0.;
+    for (int j = 0; j < m; j++) fit += coef[j]*pk[j];
+    const double res = dyn->data[EOB_RAD][i_sw + i] - fit;
+    ss += res*res;
+  }
+  return sqrt(ss/n)/Delta_r_P;
 }

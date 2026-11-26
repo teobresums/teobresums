@@ -35,7 +35,9 @@ const int LINDEX[KMAX] = {
   5,5,5,5,5,
   6,6,6,6,6,6,
   7,7,7,7,7,7,7,
-  8,8,8,8,8,8,8,8};
+  8,8,8,8,8,8,8,8,
+  9,9,9,9,9,9,9,9,9,
+  10,10,10,10,10,10,10,10,10,10};
 
 /** 
  * MINDEX
@@ -50,7 +52,9 @@ const int MINDEX[KMAX] = {
   1,2,3,4,5,
   1,2,3,4,5,6,
   1,2,3,4,5,6,7,
-  1,2,3,4,5,6,7,8};
+  1,2,3,4,5,6,7,8,
+  1,2,3,4,5,6,7,8,9,
+  1,2,3,4,5,6,7,8,9,10};
 
 /** 
  * KINDEX
@@ -58,16 +62,18 @@ const int MINDEX[KMAX] = {
  * Global array, given \ell \in [2, 8] and emm \in [1, 8] returns 
  * associated k, defined as external in header. 
  */
-const int KINDEX[9][9] = {  // l (m = 1 ...l)
-  {-1,-1,-1,-1,-1,-1,-1,-1},// 0 
-  {-1,-1,-1,-1,-1,-1,-1,-1},// 1 
-  { 0, 1,-1,-1,-1,-1,-1,-1},// 2 (1 2)
-  { 2, 3, 4,-1,-1,-1,-1,-1},// 3 (1 2 3)
-  { 5, 6, 7, 8,-1,-1,-1,-1},// 4 (1 2 3 4)
-  { 9,10,11,12,13,-1,-1,-1},// 5 (1 2 3 4 5)
-  {14,15,16,17,18,19,-1,-1},// 6 (1 ... 6)
-  {20,21,22,23,24,25,26,-1},// 7 (1 ... 7)
-  {27,28,29,30,31,32,33,34},// 8 (1 ... 8)
+const int KINDEX[11][11] = {      // l  (m = 1 ...l)
+  {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},// 0 
+  {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},// 1 
+  { 0, 1,-1,-1,-1,-1,-1,-1,-1,-1},// 2  (1 2)
+  { 2, 3, 4,-1,-1,-1,-1,-1,-1,-1},// 3  (1 2 3)
+  { 5, 6, 7, 8,-1,-1,-1,-1,-1,-1},// 4  (1 2 3 4)
+  { 9,10,11,12,13,-1,-1,-1,-1,-1},// 5  (1 2 3 4 5)
+  {14,15,16,17,18,19,-1,-1,-1,-1},// 6  (1 ... 6)
+  {20,21,22,23,24,25,26,-1,-1,-1},// 7  (1 ... 7)
+  {27,28,29,30,31,32,33,34,-1,-1},// 8  (1 ... 8)
+  {35,36,37,38,39,40,41,42,43,-1},// 9  (1 ... 9)
+  {44,45,46,47,48,49,50,51,52,53},// 10 (1 ... 10)
 };
 
 /** 
@@ -188,6 +194,87 @@ EXIT_POINT_MAIN:;
   return status;
 }
 
+/* Radius (M) above which the inspiral multipoles are gridded when interp_hlm is on: just outside the merger
+   window, which is evaluated per sample (NQC, ringdown); independent of nu */
+#define INTERP_HLM_RMIN (12.0)
+
+/*
+ * Function: eob_wav_hlm_interp_inspiral
+ * -------------------------------------
+ *   Inspiral multipoles on coarse radial nodes (interp_hlm). Amplitude and phi-reduced phase
+ *   (phase + m phi) depend on the phase-space point only and vary slowly: they are computed on
+ *   nodes about interp_hlm_dr apart in r (eob_dyn_rhs_ecc + eob_wav_hlm_ecc_sigmoid, as the
+ *   per-sample pass), cubic-splined in time and evaluated on the dense grid, adding back m phi.
+ *   The spacing is radial, so the O(dr^4) error does not depend on nu.
+ *   Ref.: "Speed" of arXiv:2611.32840; Table S1 of its Supplemental Material.
+ *
+ *   @param[in]     dyn  : dynamics (dense grid, must be filled)
+ *   @param[in,out] hlm  : multipoles; ampli/phase of active modes filled on [0, iend)
+ *   @param[in]     iend : one past the last dense index to grid
+ */
+static void eob_wav_hlm_interp_inspiral(Dynamics *dyn, Waveform_lm *hlm, int iend)
+{
+  const double *tarr   = dyn->time;
+  const double *phiarr = dyn->data[EOB_PHI];
+  const double *rarr   = dyn->data[EOB_RAD];
+
+  /* coarse node indices ~interp_hlm_dr apart in radius, endpoints always included */
+  int nn = (int)((rarr[0] - rarr[iend-1]) / EOBPars->interp_hlm_dr) + 1;
+  if (nn < 4)    nn = 4;                 /* cspline needs >= 4 points */
+  if (nn > iend) nn = iend;
+
+  int    *idx   = malloc(nn * sizeof(int));
+  double *tnode = malloc(nn * sizeof(double));
+  double *Anode = malloc(KMAX * nn * sizeof(double));
+  double *Rnode = malloc(KMAX * nn * sizeof(double));
+  for (int j = 0; j < nn; j++)
+    idx[j] = (int) lround((double) j * (iend - 1) / (nn - 1));
+  idx[0] = 0; idx[nn-1] = iend-1;
+
+  /* per-node amplitude and phi-reduced phase for every active mode */
+  Waveform_lm_t hlm_t;
+  for (int j = 0; j < nn; j++) {
+    const int i = idx[j];
+    dyn->store = 1;
+    dyn->t = tarr[i];
+    dyn->y[EOB_EVOLVE_PHI]    = phiarr[i];
+    dyn->y[EOB_EVOLVE_RAD]    = rarr[i];
+    dyn->y[EOB_EVOLVE_PPHI]   = dyn->data[EOB_PPHI][i];
+    dyn->y[EOB_EVOLVE_PRSTAR] = dyn->data[EOB_PRSTAR][i];
+    eob_dyn_rhs_ecc(dyn->t, dyn->y, dyn->dy, dyn);
+    eob_wav_hlm_ecc_sigmoid(dyn, &hlm_t);
+    tnode[j] = tarr[i];
+    for (int k = 0; k < KMAX; k++) {
+      if (!hlm->kmask[k]) continue;
+      Anode[k*nn + j] = hlm_t.ampli[k];
+      Rnode[k*nn + j] = hlm_t.phase[k] - MINDEX[k]*phiarr[i];
+    }
+  }
+
+  /* spline each active mode and reconstruct on the dense grid */
+  gsl_interp_accel *acc = gsl_interp_accel_alloc();
+  gsl_spline *sA = gsl_spline_alloc(gsl_interp_cspline, nn);
+  gsl_spline *sR = gsl_spline_alloc(gsl_interp_cspline, nn);
+  for (int k = 0; k < KMAX; k++) {
+    if (!hlm->kmask[k]) continue;
+    double *Ak = Anode + k*nn, *Rk = Rnode + k*nn;
+    for (int j = 1; j < nn; j++)          /* keep the reduced phase continuous */
+      Rk[j] -= TwoPi * round((Rk[j] - Rk[j-1]) / TwoPi);
+    gsl_spline_init(sA, tnode, Ak, nn);
+    gsl_spline_init(sR, tnode, Rk, nn);
+    gsl_interp_accel_reset(acc);
+    for (int i = 0; i < iend; i++) {
+      hlm->ampli[k][i] = gsl_spline_eval(sA, tarr[i], acc);
+      hlm->phase[k][i] = gsl_spline_eval(sR, tarr[i], acc) + MINDEX[k]*phiarr[i];
+    }
+  }
+  gsl_spline_free(sA); gsl_spline_free(sR); gsl_interp_accel_free(acc);
+  free(idx); free(tnode); free(Anode); free(Rnode);
+}
+
+/* Width of the inner PA zone of the fold switch, in units of Delta_r_P */
+#define FOLD_ZONE_K (8.)
+
 /**
  *  Function : EOBRun
  *  ---------------
@@ -269,10 +356,17 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (!(EOBPars->binary == BINARY_BNS)) store_dynamics = 1; /* NQC determination need dynamical variables */
   if (use_spins == MODE_SPINS_GENERIC) store_dynamics = 1; /* Precession needs dynamical variables */
   if (ecc != 0.)  store_dynamics = 1; /* Eccentric waveform computation needs dynamical variables (sigmoid) */
-  if (EOBPars->model == MODEL_DALI) EOBPars->postadiabatic_dynamics = 0;
+  if (EOBPars->model == MODEL_DALI && (EOBPars->binary != BINARY_LMR || ecc > 1e-4)) EOBPars->postadiabatic_dynamics = 0; /* PA only for quasi-circular LMR */
   int use_postadiab_dyn = EOBPars->postadiabatic_dynamics;
   if (use_postadiab_dyn) store_dynamics = 1;
   const double dt = EOBPars->dt;
+
+  /* Fast waveform path (interp_hlm): the Dali sigmoid pass below recomputes all inspiral and plunge multipoles,
+     so they are not computed while integrating the dynamics */
+  const int fast_wav = EOBPars->interp_hlm
+    && (EOBPars->model == MODEL_DALI)
+    && (EOBPars->nqc_coefs_hlm != NQC_HLM_NONE)
+    && !(use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins);
   
   /* *****************************************
    * Set Memory & do preliminary computations
@@ -334,7 +428,77 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
 
   /* Saving initial radius */
   EOBPars->r0 = r0;
-  
+
+  /* Fold-aware PA->ODE switch (fold_switch): the PA leg ends at r_sw = rLSO + sqrt(-x_L/6) Delta_r_P instead of
+     postadiabatic_dynamics_rmin; rLSO and Delta_r_P ~ nu^(2/5) are the LSO and the transition scale of the nu-dressed
+     dynamics (eob_fold_compute), x_L = fold_switch_xL the handover depth in the scaled transition time. The ODE then
+     covers only the transition and plunge.
+     PA grid: step MIN(postadiabatic_dynamics_dr, 0.12 Delta_r_P^(5/8)) in the bulk, keeping the dr^4 phase error
+     of the leg about constant in nu, and Delta_r_P/8 near the fold. When the two differ, two uniform zones
+     [r_zone, r0] and [r_sw, r_zone], r_zone = rLSO + FOLD_ZONE_K Delta_r_P, are solved separately and joined
+     with continuous time and phase. The user's PA rmin and dr are restored after the PA legs; on any failure
+     the standard PA range is used. */
+  double fold_rLSO = 0., fold_pphiLSO = 0., fold_Delta_rP = 0.;
+  int fold_switch_active = 0;
+  /* zone 1 = outer (bulk) zone, on the leading part of the arrays; zone 2 = inner zone */
+  int fold_zone2_size = 0;  /* > 0: two-zone PA grid */
+  double fold_zone2_dr = 0., fold_zone1_end = 0.;
+  const double fold_pa_rmin_save = EOBPars->postadiabatic_dynamics_rmin;
+  const double fold_pa_dr_save   = EOBPars->postadiabatic_dynamics_dr;
+  if (use_postadiab_dyn && EOBPars->fold_switch) {
+    if (EOBPars->fold_switch_xL >= 0.)
+      errorexit("fold_switch_xL must be negative (recommended range [-12,-6])");
+    if (use_spins == MODE_SPINS_GENERIC && EOBPars->project_spins)
+      PRWARN("fold_switch: unvalidated with project_spins "
+             "(the fold is computed at the initial spin projection).");
+    if (eob_fold_compute(dyn, &fold_rLSO, &fold_pphiLSO, &fold_Delta_rP) == OK) {
+      const double c_sw     = sqrt(-EOBPars->fold_switch_xL/6.);
+      const double r_sw     = fold_rLSO + c_sw*fold_Delta_rP;
+      const double dr_inner = fold_Delta_rP/8.;
+      const double dr_bulk  = MIN(EOBPars->postadiabatic_dynamics_dr,
+                                  0.12*pow(fold_Delta_rP, 0.625));
+      const double r_zone   = fold_rLSO + FOLD_ZONE_K*fold_Delta_rP;
+      /* the grids end exactly on their end radii; (1 - 1e-12) keeps floor() from dropping the last point */
+      if (dr_inner < 0.5*dr_bulk && r0 > r_zone + POSTADIABATIC_NSTEP_MIN*dr_bulk) {
+        /* two zones: outer at the bulk step down to r_zone, inner at
+           dr_inner down to r_sw */
+        const int sz1  = (int) ceil((r0 - r_zone)/dr_bulk) + 1;
+        const double dr1 = (r0 - r_zone)/(sz1 - 1)*(1. - 1e-12);
+        fold_zone1_end = r0 - (sz1 - 1)*dr1;
+        const int sz2  = (int) ceil((fold_zone1_end - r_sw)/dr_inner) + 1;
+        if (sz2 >= POSTADIABATIC_NSTEP_MIN) {
+          EOBPars->postadiabatic_dynamics_rmin = r_zone;
+          EOBPars->postadiabatic_dynamics_dr   = dr1;
+          fold_zone2_size = sz2;
+          fold_zone2_dr   = (fold_zone1_end - r_sw)/(sz2 - 1)*(1. - 1e-12);
+          fold_switch_active = 1;
+        }
+      }
+      if (!fold_switch_active) {
+        /* single zone at the finer of the two steps */
+        const double dr0 = MIN(dr_bulk, dr_inner);
+        if (r0 > r_sw + POSTADIABATIC_NSTEP_MIN*dr0) {
+          const int sz = (int) ceil((r0 - r_sw)/dr0) + 1;
+          EOBPars->postadiabatic_dynamics_rmin = r_sw;
+          EOBPars->postadiabatic_dynamics_dr   = (r0 - r_sw)/(sz - 1)*(1. - 1e-12);
+          fold_switch_active = 1;
+        } else {
+          PRWARN("fold_switch: initial radius too close to r_sw; keeping default PA range.");
+        }
+      }
+      if (fold_switch_active && VERBOSE) {
+        PRSECTN("Fold-aware PA->ODE switch");
+        PRFORMd("fold_rLSO", fold_rLSO);
+        PRFORMd("fold_pphiLSO", fold_pphiLSO);
+        PRFORMd("fold_Delta_r_P", fold_Delta_rP);
+        PRFORMd("fold_r_switch", r_sw);
+        PRFORMi("fold_zone2_size", fold_zone2_size);
+      }
+    } else {
+      PRWARN("fold_switch: fold computation failed; keeping default PA range.");
+    }
+  }
+
   const int chunk = EOBPars->size;
   int size = chunk; /* note: size can vary */
 
@@ -342,13 +506,23 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   if (use_postadiab_dyn) {
     size = EOBPars->postadiabatic_dynamics_size; 
     double rmin = EOBPars->postadiabatic_dynamics_rmin;
-    size = floor(fabs(r0 - rmin)/EOBPars->postadiabatic_dynamics_dr) + 1;
-    
-    /* If initial radius is too close to PA limit then skip PA and go directly to ODE */
-    if (size - 1 < POSTADIABATIC_NSTEP_MIN) {
+    size = floor((r0 - rmin)/EOBPars->postadiabatic_dynamics_dr) + 1;
+
+    /* If initial radius is below or too close to PA limit then skip PA and go directly to ODE */
+    if (r0 <= rmin || size - 1 < POSTADIABATIC_NSTEP_MIN) {
       size = chunk;
       use_postadiab_dyn = 0;
+      fold_zone2_size = 0;
+      if (fold_switch_active) { /* undo the fold retune */
+        EOBPars->postadiabatic_dynamics_rmin = fold_pa_rmin_save;
+        EOBPars->postadiabatic_dynamics_dr   = fold_pa_dr_save;
+        fold_switch_active = 0;
+      }
     }
+
+    /* two-zone fold switch: the inner zone adds its points but the first (shared with zone 1) */
+    if (fold_zone2_size > 0) size += fold_zone2_size - 1;
+
     EOBPars->size = size;
   }
 
@@ -482,7 +656,44 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     }
 
     /* Calculate dynamics */
-    eob_dyn_Npostadiabatic(dyn, r0, spindyn); 
+    if (fold_zone2_size > 0) {
+      /* two-zone fold switch: zone 1 on the leading part of the arrays, then zone 2 on a scratch Dynamics,
+         appended with continuous time and phase */
+      const int sz1 = size - fold_zone2_size + 1;
+      dyn->size = sz1;
+      eob_dyn_Npostadiabatic(dyn, r0, spindyn);
+
+      Dynamics *dynz = NULL;
+      Dynamics_alloc(&dynz, fold_zone2_size, "dyn_fold_zone");
+      Dynamics_set_params(dynz);
+      dynz->size  = fold_zone2_size;
+      dynz->spins = spindyn;
+      EOBPars->postadiabatic_dynamics_dr = fold_zone2_dr;
+      const int size_save = EOBPars->size;
+      EOBPars->size = fold_zone2_size; /* PA reads dyn->size; keep EOBPars consistent */
+      eob_dyn_Npostadiabatic(dynz, fold_zone1_end, spindyn);
+      EOBPars->size = size_save;
+
+      const double t_off   = dyn->time[sz1-1];
+      const double phi_off = dyn->data[EOB_PHI][sz1-1];
+      for (int i = 1; i < fold_zone2_size; i++) {
+        dyn->time[sz1-1+i] = t_off + dynz->time[i];
+        for (int v = 0; v < EOB_DYNAMICS_NVARS; v++)
+          dyn->data[v][sz1-1+i] = dynz->data[v][i];
+        dyn->data[EOB_PHI][sz1-1+i] += phi_off;
+      }
+      dyn->size = size;
+      dyn->t = dyn->time[size-1];
+      Dynamics_free(dynz);
+    } else {
+      eob_dyn_Npostadiabatic(dyn, r0, spindyn);
+    }
+
+    /* restore the user's PA grid parameters */
+    if (fold_switch_active) {
+      EOBPars->postadiabatic_dynamics_rmin = fold_pa_rmin_save;
+      EOBPars->postadiabatic_dynamics_dr   = fold_pa_dr_save;
+    }
 
     /* Calculate waveform */
     for (int i = 0; i < size; i++) 
@@ -505,11 +716,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       }
       
       p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
-      eob_wav_hlm(dyn, hlm_t);      
-      for (int k = 0; k < KMAX; k++) {
-        if((hlm->kmask[k])){
-	  hlm->ampli[k][i] = hlm_t->ampli[k];
-	  hlm->phase[k][i] = hlm_t->phase[k]; 
+      if (!fast_wav) {
+        eob_wav_hlm(dyn, hlm_t);
+        for (int k = 0; k < KMAX; k++) {
+          if((hlm->kmask[k])){
+            hlm->ampli[k][i] = hlm_t->ampli[k];
+            hlm->phase[k][i] = hlm_t->phase[k];
+          }
         }
       }
 
@@ -623,6 +836,10 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
+    if (store_dynamics) {
+      dyn->data[EOB_FPHI][0] = dyn->Fphi;
+      dyn->data[EOB_FR][0]   = dyn->Fr;
+    }
     eob_wav_hlm(dyn, hlm_t); 
     
     /* Append waveform to arrays */
@@ -752,7 +969,7 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     dyn->store = dyn->noflx = 1;
     p_eob_dyn_rhs(dyn->t, dyn->y, dyn->dy, dyn); 
     dyn->store = dyn->noflx = 0;
-    eob_wav_hlm(dyn, hlm_t); 
+    if (!fast_wav) eob_wav_hlm(dyn, hlm_t);
 
     if (use_spins) {
       dyn->MOmg = dyn->Omg_orb;
@@ -833,12 +1050,14 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       Dynamics_push (&dyn, size);
     }
     
-    /* Append waveform and dynamics to arrays */
-    hlm->time[iter] = hlm_t->time;
-    for (int k = 0; k < KMAX; k++) {
-      if(hlm->kmask[k]){
-        hlm->ampli[k][iter] = hlm_t->ampli[k];
-        hlm->phase[k][iter] = hlm_t->phase[k]; 
+    /* Append waveform and dynamics to arrays (fast path: time only, the multipoles come from the sigmoid pass) */
+    hlm->time[iter] = fast_wav ? dyn->t : hlm_t->time;
+    if (!fast_wav) {
+      for (int k = 0; k < KMAX; k++) {
+        if(hlm->kmask[k]){
+          hlm->ampli[k][iter] = hlm_t->ampli[k];
+          hlm->phase[k][iter] = hlm_t->phase[k];
+        }
       }
     }
     
@@ -852,6 +1071,8 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       dyn->data[EOB_PRSTAR][iter] = dyn->prstar;
       dyn->data[EOB_OMGORB][iter] = dyn->Omg_orb;
       dyn->data[EOB_E0][iter] 	  = dyn->E;
+      dyn->data[EOB_FPHI][iter]   = dyn->Fphi;
+      dyn->data[EOB_FR][iter]     = dyn->Fr;
     }
 
     /* Stop integration if reached max time */    
@@ -869,6 +1090,13 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     /* If it could be a scattering (E > 1.), stop integration at large radii (if rstop >= 0) */
     if ((dyn->ode_stop_radius) && (dyn->r > 5.*r0) && r_hyp != 0. && dyn->E > 1.) {
       if (VERBOSE) printf("Stop: maximum radius reached.\n");
+      dyn->ode_stop = true;
+    }
+
+    /* Optional (LMR): stop when the orbital frequency turns negative; with the N3LO centrifugal radius the plunge
+       approaches A(r_c) = 0 smoothly and the 'r unchanged' stop below does not fire */
+    if (EOBPars->ode_stop_omg_neg && (dyn->Omg < 0.)) {
+      if (VERBOSE) printf("Stop: Omega < 0.\n");
       dyn->ode_stop = true;
     }
 
@@ -932,15 +1160,25 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   Waveform_lm_push (&hlm, size);
   Dynamics_push (&dyn, size);
 
-  /* Find peak of Omega */
-  int index_pk = dyn->size-1;
-  double Omega_pk = dyn->data[EOB_OMGORB][index_pk];
-  for (int j = dyn->size-2; j>0; j--) {
-    if (dyn->data[EOB_OMGORB][j] < Omega_pk) 
-      break;
-    index_pk = j;
-    Omega_pk = dyn->data[EOB_OMGORB][j]; 
+  /* Fold-switch QA: scaled epicyclic wiggle just after the switch (eob_fold_wiggle_qa). A wiggle comes from the
+     handover data (PA order, x_L, PA grid), not from the ODE tolerances */
+  if (fold_switch_active && pasize > 0) {
+    int nqa = 0;
+    const double wig = eob_fold_wiggle_qa(dyn, fold_rLSO, fold_Delta_rP,
+                                          pasize-1, &nqa);
+    if (VERBOSE) printf("fold_switch: r_sw = %.9f  wiggle = %.3e  (n = %d)\n",
+                        dyn->data[EOB_RAD][pasize-1], wig, nqa);
+    if (wig < 0.) {
+      if (VERBOSE) PRWARN("fold_switch: wiggle QA could not be formed (window undersampled or no LSO crossing).");
+    } else if (wig > EOBPars->fold_switch_wiggle_tol) {
+      PRWARN("fold_switch: post-switch wiggle above threshold; "
+             "improve the handover data (deeper x_L, higher PA order, finer PA grid) "
+             "rather than the ODE tolerances.");
+    }
   }
+
+  /* Find peak of Omega */
+  int index_pk = find_last_peak_index(dyn->data[EOB_OMGORB], dyn->size);
 
   double tOmg_pk;
   if (dyn->size-1 - index_pk < 2) {
@@ -956,8 +1194,9 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
   
  END_ODE_EVOLUTION:;
  
-  /* Unwrap phase for higher modes */
-  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3) || (ecc != 0.)) {
+  /* Unwrap phase for higher modes; 22PN also uses the HM waveform, and a 2 pi jump near the NQC point spikes omega_lm */
+  if ((EOBPars->use_flm == USEFLM_HM) || (EOBPars->use_flm == USEFLM_HM_4PN22) || (EOBPars->use_flm == USEFLM_HM_6PN3p3) ||
+      (EOBPars->use_flm == USEFLM_22PN) || (EOBPars->use_flm == USEFLM_22PN_NU) || (EOBPars->use_flm == USEFLM_22PN_NU_HL) || (ecc != 0.)) {
     for (int k = 0; k < KMAX; k++) {
       if(hlm->kmask[k]){
 	      unwrap_HM(hlm->phase[k],size);
@@ -1001,8 +1240,19 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     
     /* Over-writing waveform in the eccentric case - adding sigmoid */
     if ((EOBPars->nqc_coefs_hlm != NQC_HLM_NONE) && (EOBPars->model == MODEL_DALI)) {
-   
-      for (int i = 0; i < size; i++) {
+
+      /* interp_hlm: inspiral (r > INTERP_HLM_RMIN) on coarse nodes, per-sample only near merger */
+      int istart = 0;
+      if (EOBPars->interp_hlm) {
+        int iend = 0;
+        while (iend < size && dyn->data[EOB_RAD][iend] > INTERP_HLM_RMIN) iend++;
+        if (iend >= 4) {
+          eob_wav_hlm_interp_inspiral(dyn, hlm, iend);
+          istart = iend;
+        }
+      }
+
+      for (int i = istart; i < size; i++) {
         dyn->store = 1;
         dyn->t = dyn->time[i];
         dyn->y[EOB_EVOLVE_PHI]    = dyn->data[EOB_PHI][i];

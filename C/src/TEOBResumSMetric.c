@@ -429,6 +429,110 @@ void eob_metric_A5PNlogP33_newlogs(double r, double nu, double *A, double *dA, d
 }
 
 
+/* Second-order jets in u (value, d/du, d2/du2), used by eob_metric_A6p5PNP16 */
+typedef struct { double v, d, dd; } eob_jet2;
+static inline eob_jet2 jet2(double v, double d, double dd) { eob_jet2 a = {v, d, dd}; return a; }
+static inline eob_jet2 jet2_add(eob_jet2 a, eob_jet2 b) { return jet2(a.v + b.v, a.d + b.d, a.dd + b.dd); }
+static inline eob_jet2 jet2_sub(eob_jet2 a, eob_jet2 b) { return jet2(a.v - b.v, a.d - b.d, a.dd - b.dd); }
+static inline eob_jet2 jet2_scale(double s, eob_jet2 a) { return jet2(s*a.v, s*a.d, s*a.dd); }
+static inline eob_jet2 jet2_mul(eob_jet2 a, eob_jet2 b) { return jet2(a.v*b.v, a.d*b.v + a.v*b.d, a.dd*b.v + 2.*a.d*b.d + a.v*b.dd); }
+static inline eob_jet2 jet2_div(eob_jet2 a, eob_jet2 b)
+{
+  const double q  = a.v/b.v;
+  const double q1 = (a.d - q*b.d)/b.v;
+  const double q2 = (a.dd - 2.*q1*b.d - q*b.dd)/b.v;
+  return jet2(q, q1, q2);
+}
+
+/**
+ *  Function : eob_metric_A6p5PNP16
+ *  -----------------------------
+ *   LMR A potential: frozen-log Pade' (1,6) of the 6PN series, plus the 1SF 5.5PN and 6.5PN terms outside the Pade',
+ *     A = P^1_6[A_T](u; log u frozen) + nu (a65 u^(13/2) + a75 u^(15/2)),
+ *     A_T = 1 - 2u + 2 nu u^3 + nu a4 u^4 + nu (a5c0 + nu a5c1 + a5log L) u^5
+ *           + nu (a6c + nu a6c2SF + (a6log1SF - 144/5 nu) L) u^6 + nu (a7c1SF + a7log1SF L) u^7,   L = log u.
+ *   a6c = EOBPars->a6c is the nu-linear 5PN constant (analytic a6c1SF in the LMR binary); a6c2SF = Porto-Riva local
+ *   + Bini-Damour-Geralico nonlocal; the 6PN and half-integer coefficients are 1SF.
+ *   Evaluated by Pade' duality, [1/6]_A = 1/[6/1]_{1/A}: with g = 1/A_T,
+ *     A = (g6 - g7 u) / sum_{k=0}^{6} (g6 g_k - g7 g_{k-1}) u^k,   g_{-1} = 0,
+ *   finite also where g6 = 0. Derivatives exact, by second-order jets in u (log u carried as a jet).
+ *   Ref.: Eq. (5) of arXiv:2611.32840.
+ *
+ *    @param[in]  r    : radial separation
+ *    @param[in]  nu   : symmetric mass ratio
+ *    @param[out] A    : A potential evaluated at r
+ *    @param[out] dA   : dA/du,   with u=1/r
+ *    @param[out] d2A  : d2A/du2, with u=1/r
+ */
+void eob_metric_A6p5PNP16(double r, double nu, double *A, double *dA, double *d2A)
+{
+  const double pi2 = Pi*Pi;
+  const double pi4 = pi2*pi2;
+  const double u   = 1./r;
+
+  /* coefficients */
+  const double a4c      = 94./3. - 41./32.*pi2;
+  const double a5c0     = -4237./60. + 2275./512.*pi2 + 256./5.*Log2 + 128./5.*EulerGamma;
+  const double a5c1     = -221./6. + 41./32.*pi2;
+  const double a5log    = 64./5.;
+  const double a6c2SF   = (-1718599./1575. + 25911./256.*pi2) + (64./5. - 288./5.*EulerGamma + 928./35.*Log2 - 972./7.*Log3);
+  const double a6log    = -7004./105. - 144./5.*nu;
+  const double a7c      = 206740./567.*Log2 - 5044./405.*EulerGamma - 1360201207./907200. - 4617./14.*Log3
+                          - 2800873./262144.*pi4 + 608698367./1769472.*pi2;
+  const double a7log    = -2522./405.;
+  const double a6       = EOBPars->a6c + nu*a6c2SF;
+  const double ahalf[2] = { 13696./525.*Pi, -512501./3675.*Pi };   /* a65, a75 (1SF) */
+
+  /* jets: u and L = log u */
+  const eob_jet2 U = jet2(u, 1., 0.);
+  const eob_jet2 L = jet2(log(u), 1./u, -1./(u*u));
+
+  /* Taylor coefficients c_k(L) */
+  eob_jet2 c[8];
+  c[0] = jet2(1., 0., 0.);
+  c[1] = jet2(-2., 0., 0.);
+  c[2] = jet2(0., 0., 0.);
+  c[3] = jet2(2.*nu, 0., 0.);
+  c[4] = jet2(nu*a4c, 0., 0.);
+  c[5] = jet2_add(jet2(nu*(a5c0 + nu*a5c1), 0., 0.), jet2_scale(nu*a5log, L));
+  c[6] = jet2_add(jet2(nu*a6, 0., 0.), jet2_scale(nu*a6log, L));
+  c[7] = jet2_add(jet2(nu*a7c, 0., 0.), jet2_scale(nu*a7log, L));
+
+  /* g = 1/A_T as a series in u (c0 = 1) */
+  eob_jet2 g[8];
+  g[0] = jet2(1., 0., 0.);
+  for (int k = 1; k < 8; k++) {
+    eob_jet2 s = jet2(0., 0., 0.);
+    for (int j = 1; j <= k; j++) s = jet2_add(s, jet2_mul(c[j], g[k-j]));
+    g[k] = jet2_scale(-1., s);
+  }
+
+  /* A = (g6 - g7 u) / sum_k (g6 g_k - g7 g_{k-1}) u^k */
+  const eob_jet2 num = jet2_sub(g[6], jet2_mul(g[7], U));
+  eob_jet2 den = jet2(0., 0., 0.);
+  eob_jet2 Uk  = jet2(1., 0., 0.);
+  for (int k = 0; k <= 6; k++) {
+    eob_jet2 t = jet2_mul(g[6], g[k]);
+    if (k >= 1) t = jet2_sub(t, jet2_mul(g[7], g[k-1]));
+    den = jet2_add(den, jet2_mul(t, Uk));
+    Uk  = jet2_mul(Uk, U);
+  }
+  const eob_jet2 Aj = jet2_div(num, den);
+
+  *A  = Aj.v;
+  *dA = Aj.d;
+  if (d2A != NULL) *d2A = Aj.dd;
+
+  /* half-integer 1SF terms outside the Pade': nu (a65 u^(13/2) + a75 u^(15/2)) */
+  for (int k = 0; k < 2; k++) {
+    const double p  = 6.5 + k;
+    const double up = pow(u, p);
+    *A  += nu*ahalf[k]*up;
+    *dA += nu*ahalf[k]*p*up/u;
+    if (d2A != NULL) *d2A += nu*ahalf[k]*p*(p - 1.)*up/(u*u);
+  }
+}
+
 /** EOB Metric D function at 3PN, resummed */
 
 
@@ -835,6 +939,105 @@ void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, doub
 }
 
 /**
+ *  Function : eob_metric_D5PNP32_newlogs_lmr
+ *  ----------------------------------------
+ *    As eob_metric_D5PNP32_newlogs, with the analytic 5PN nu^2 coefficient
+ *    d5nu2 = -403259/63 + (306545/512) pi^2 ~ -491.80 (LMR). A separate copy, so that the Dali
+ *    function and its optimized code stay unchanged.
+ *    Ref.: arXiv:2611.32840, "The radial potentials" and Table S1 of the Supplemental Material;
+ *    d5nu2 from arXiv:2604.09545.
+ *
+ *    @param[in]  r    : radial separation
+ *    @param[in]  nu   : symmetric mass ratio
+ *    @param[out] D    : D potential evaluated at r
+ *    @param[out] dD   : dD/du,   with u=1/r
+ *    @param[out] d2D  : d2D/du2, with u=1/r
+ */
+void eob_metric_D5PNP32_newlogs_lmr(double r, double nu, double *D, double *dD, double *d2D)
+{
+
+  /* shortcuts */
+  double nu2 = nu*nu;
+  double pi2 = Pi*Pi;
+  double pi4 = pi2*pi2;
+  double pi6 = pi4*pi2;
+  double ln2  = log(2);
+  double ln3  = log(3);
+
+  double u       = 1./r;
+  double u2      = u*u;
+  double u3      = u*u2;
+  double u4      = u2*u2;
+  double logu    = log(u);
+
+
+  // 5PN nu^2 coefficient: analytic value (Porto-Riva), = -403259/63 + (306545/512) pi^2 ~ -491.80
+  double d5nu2 = -403259./63. + (306545./512.)*pi2;
+  double d2    = -6.*nu;
+  double d3    = -52.*nu + 6.*nu2;
+
+  double c1    = 533./45 - 1184./15*EulerGamma + 23761./1536*pi2  + 6496./15*ln2 - 2916./5*ln3;
+  double c2    = 296. - 123./16*pi2;
+  double d4c   = c1 + nu*c2;
+  double d4log = -592./15;
+  double d4    = nu*d4c;
+
+  double d5c   = (-294464./175) + (2840./7)*EulerGamma + (-120648./35)*ln2 + (19683./7)* \
+                ln3 + ((-2216./105) - d5nu2 + (6784./15)*EulerGamma + (326656./21)* \
+                ln2 + (-58320./7)*ln3)*nu + (63707./512)*pi2 + nu2*((-1285./3) + (205./16) \
+                *pi2);
+  double d5log = (1420./7) + (3392./15)*nu;
+  double d5    = nu*d5c;
+  
+
+  // define powers of coefficients
+  double d2_2 = d2*d2;
+  double d2_3 = d2_2*d2;
+  double d3_2 = d3*d3;
+  double d3_3 = d3_2*d3;
+  double d3_4 = d3_2*d3_2;
+  double d4_2 = d4*d4;
+
+  // we define here this variable to then comfortably 
+  // write powers of it
+  double factor = 1./(d3_2 - d2*d4);
+  double factor2 = factor*factor;
+  double factor3 = factor2*factor;
+
+  double N1   = factor*((-1)*d3*d4 + d2*d5);
+  double N2   = -factor*((-1)*d2*d3_2 + d2_2*d4 + (-1)*d4_2 + d3*d5);
+  double N3   = factor*(d3_3 + (-2)*d2*d3*d4 + d2_2*d5);
+
+  double D1   = factor*((-1)*d3*d4 + d2*d5);
+  double D2   = -factor*((-1)*d4_2 + d3*d5);
+  
+  double Num = 1. + N1*u + N2*u2 + N3*u3;
+  double Den = 1. + D1*u + D2*u2;
+  
+  double dNum =  N1 + 2*N2*u + 3*N3*u2;
+  double dDen =  D1 + 2*D2*u;
+  double d2Num = 2*N2 + 6*N3*u;
+  double d2Den = 2*D2;
+  
+  /* Log part of D */
+  double clog      =  5.139961389961390 + 5.729729729729730*nu;
+  double flog      =  1./(1. + clog*u);
+  double dflog_du  =  -clog*flog*flog;
+  double d2flog_du =  -2.*clog*dflog_du*flog;
+  
+  double Dlog      = -39.46666666666667*flog*u4*logu;
+  double dDlog_du  = -39.46666666666667*(dflog_du*u4*logu + 4*u3*flog*logu +flog*u3);
+  double d2Dlog_du = -39.46666666666667*((d2flog_du*u4 + 8*dflog_du*u3 + 12*u2*flog)*logu + 2*dflog_du*u3 + 7*flog*u2);
+
+  // Output the derivatives in u
+  *D   =  Num/Den + nu*Dlog;
+  *dD  = (dNum*Den - Num*dDen)/(Den*Den) + nu*dDlog_du;
+  *d2D = (d2Num*Den - Num*d2Den)/(Den*Den)\
+        -2.*dDen*(dNum*Den - Num*dDen)/(Den*Den*Den) + nu*d2Dlog_du;
+
+}
+
+/**
   *  Function : eob_metric_Q3PN
   *  --------------------------
   *    EOB Metric Q function @3PN
@@ -1135,6 +1338,63 @@ void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *d
 
     *d3Q_dprstar3 = prstar*( 12.*d2Q_dprstar22 + 8.*prstar2*d3Q_dprstar23 );
 
+}
+
+/**
+ *  Function : eob_metric_Q5PNfull
+ *  ------------------------------
+ *    LMR Q potential (starred gauge, no fitted parameter): 5PN local + nonlocal with the full nu dependence,
+ *    prstar^4 and prstar^6 sectors, Q = prstar^4 P4(u,nu) + prstar^6 P6(u,nu) (log u terms included).
+ *    Derivative conventions as eob_metric_Q5PNloc.
+ *    Ref.: Eqs. (S1)-(S10) of the Supplemental Material of arXiv:2611.32840.
+ *    @param[in]  r, prstar, nu
+ *    @param[out] Q, dQ_du, dQ_dprstar, d2Q_du2, d2Q_drdprstar, d2Q_dprstar2,
+ *                d3Q_dr2dprstar, d3Q_drdprstar2, d3Q_dprstar3
+ */
+void eob_metric_Q5PNfull(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar,
+                     double *d2Q_du2, double *d2Q_drdprstar, double *d2Q_dprstar2,
+                     double *d3Q_dr2dprstar, double *d3Q_drdprstar2, double *d3Q_dprstar3)
+{
+  double u    = 1./r;
+  double logu = log(u);
+  double u2 = u*u, u3 = u2*u, u4 = u3*u;
+
+  double prstar2 = prstar*prstar;
+  double prstar4 = prstar2*prstar2;
+  double prstar6 = prstar4*prstar2;
+
+  /* prstar^4 sector coefficient P4(u,nu) and its u-derivatives */
+  double P4 = pow(nu,3)*(10.*pow(u,3) + 602.31854041656389*pow(u,4)) + pow(nu,2)*(-6.*pow(u,2) - 131.*pow(u,3) - 1796.1366049802413*pow(u,4) - 118.4*logu*pow(u,4)) + nu*(8.*pow(u,2) + 92.71104428495595*pow(u,3) + 452.54216699669657*pow(u,4) + 51.695238095238095*logu*pow(u,4));
+
+  double dP4 = pow(nu,3)*(30.*pow(u,2) + 2409.2741616662556*pow(u,3)) + pow(nu,2)*(-12.*u - 393.*pow(u,2) - 7302.946419920965*pow(u,3) - 473.6*logu*pow(u,3)) + nu*(16.*u + 278.13313285486785*pow(u,2) + 1861.8639060820244*pow(u,3) + 206.78095238095238*logu*pow(u,3));
+
+  double d2P4 = pow(nu,3)*(60.*u + 7227.8224849987667*pow(u,2)) + pow(nu,2)*(-12. - 786.*u - 22382.439259762895*pow(u,2) - 1420.8*logu*pow(u,2)) + nu*(16. + 556.2662657097357*u + 5792.3726706270255*pow(u,2) + 620.34285714285714*logu*pow(u,2));
+
+  /* prstar^6 sector coefficient P6(u,nu) and its u-derivatives */
+  double P6 = pow(nu,4)*(-14.*pow(u,3)) + pow(nu,3)*(6.*pow(u,2) + 188.*pow(u,3)) + pow(nu,2)*(-5.4*pow(u,2) - 89.52983273626096*pow(u,3)) + nu*(-2.7830076369522325*pow(u,2) - 33.97821221708228*pow(u,3));
+
+  double dP6 = pow(nu,4)*(-42.*pow(u,2)) + pow(nu,3)*(12.*u + 564.*pow(u,2)) + pow(nu,2)*(-10.8*u - 268.58949820878288*pow(u,2)) + nu*(-5.566015273904465*u - 101.93463665124684*pow(u,2));
+
+  double d2P6 = pow(nu,4)*(-84.*u) + pow(nu,3)*(12. + 1128.*u) + pow(nu,2)*(-10.8 - 537.17899641756576*u) + nu*(-5.566015273904465 - 203.86927330249368*u);
+
+  /* Q = prstar^4 P4 + prstar^6 P6, and derivatives (same conventions as Q5PNloc) */
+  *Q       = prstar4*P4 + prstar6*P6;
+  *dQ_du   = prstar4*dP4 + prstar6*dP6;
+  *d2Q_du2 = prstar4*d2P4 + prstar6*d2P6;
+
+  double dQ_dprstar2     = 2.*prstar2*P4  + 3.*prstar4*P6;     /* dQ/d(prstar^2)   */
+  double d2Q_dprstar22   = 2.*P4          + 6.*prstar2*P6;    /* d2Q/d(prstar^2)^2 */
+  double d3Q_dprstar23   = 6.*P6;                     /* d3Q/d(prstar^2)^3 */
+  double d2Q_dudprstar2  = 2.*prstar2*dP4 + 3.*prstar4*dP6;
+  double d3Q_du2dprstar2 = 2.*prstar2*d2P4 + 3.*prstar4*d2P6;
+  double d3Q_dudprstar22 = 2.*dP4         + 6.*prstar2*dP6;
+
+  *d2Q_drdprstar  = -2.*prstar*u2*d2Q_dudprstar2;
+  *d3Q_dr2dprstar = prstar*( 4.*u3*d2Q_dudprstar2 + 2.*u4*d3Q_du2dprstar2 );
+  *d3Q_drdprstar2 = -2.*u2*d2Q_dudprstar2 - 4.*prstar2*u2*d3Q_dudprstar22;
+  *dQ_dprstar     = 2.*prstar*dQ_dprstar2;
+  *d2Q_dprstar2   = 2.*dQ_dprstar2 + 4.*prstar2*d2Q_dprstar22;
+  *d3Q_dprstar3   = prstar*( 12.*d2Q_dprstar22 + 8.*prstar2*d3Q_dprstar23 );
 }
 
 /* Macro for the bar_alpha coefs */

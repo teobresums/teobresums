@@ -1,0 +1,43 @@
+# Fast frequency-domain (2,1), (2,2), (3,3), (4,4) and h+, hx for a large-mass-ratio quasicircular BBH (binary = "LMR").
+#
+# Fast path (all on by default in the LMR binary, set here explicitly):
+#   post-adiabatic inspiral + fold_switch PA->ODE handover
+#   + gridded inspiral multipoles (interp_hlm)
+#   + FFT of the merger-ringdown above merger (spa_fft_tail).
+
+use_geometric_units = "yes"
+
+binary = "LMR"
+
+q    = 1000.
+chi1 = 0.
+chi2 = 0.
+
+initial_frequency = 0.005
+
+# frequency domain
+domain = 1
+df           = 1e-5
+srate_interp = 2.0
+
+# dynamics: post-adiabatic inspiral + fold-aware PA->ODE switch
+postadiabatic_dynamics    = "yes"
+fold_switch               = "yes"
+postadiabatic_dynamics_dr = 0.05
+
+# fast waveform path
+interp_hlm    = "yes"   # gridded inspiral multipoles
+interp_hlm_dr = 0.5     # coarse-node radial spacing (M)
+spa_fft_tail  = "yes"   # FFT of the merger-ringdown tail above f_mrg
+
+# output
+output_dir        = "./bbh_q1000_fast_fd/"
+output_hpc        = "yes"
+output_multipoles = "yes"
+output_lm   = [ 0, 1, 4, 8 ]     # (2,1), (2,2), (3,3), (4,4)
+use_mode_lm = [ 0, 1, 4, 8 ]
+output_dynamics = "no"
+
+size = 500
+ode_timestep = "adaptive"
+ode_tmax = 1000000000000000000000

@@ -190,7 +190,7 @@ double eob_c3_fit_global(double nu, double a1, double a2)
   const double ca1_a2 = -104.891;
   
   const double c3_uneq = cnu*a12*nu*X12 + cnu2*a12*nu2*X12 + cnu3*a12*nu3*X12 + ca1_a2*(a1-a2)*nu2;
-  
+
   return c3_eq + c3_uneq;
 }
 
@@ -3553,7 +3553,7 @@ void QNMHybridFitCab_HM_Pompili23(double nu, double X1, double X2, double chi1, 
   double c1f, c2f, d1f, d2f, c1c, c2c, d1c;
   
   /* Compute A, dA, omg, domg */
-  if (EOBPars->binary==BINARY_BBH){eob_nqc_point_HM_peak22(NULL,A, dA, omg, domg);
+  if (EOBPars->binary==BINARY_BBH || EOBPars->binary==BINARY_LMR){eob_nqc_point_HM_peak22(NULL,A, dA, omg, domg);
   }else{eob_nqc_point_BHNS_HM(NULL,A, dA, omg, domg);}
 
   /* Apply deviations from fitted merger quantities here by hand */

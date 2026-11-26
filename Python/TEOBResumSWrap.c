@@ -292,8 +292,47 @@ int SetOptionalVariables(PyObject* dict){
   if ( PyDict_GetItemString(dict, "postadiabatic_dynamics_dr") != NULL ) {
     EOBPars->postadiabatic_dynamics_dr = PyFloat_AsDouble(PyDict_GetItemString(dict, "postadiabatic_dynamics_dr"));
   }
+  if ( PyDict_GetItemString(dict, "fold_switch") != NULL ) {
+    EOBPars->fold_switch = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "fold_switch")));
+  }
+  if ( PyDict_GetItemString(dict, "fold_switch_xL") != NULL ) {
+    EOBPars->fold_switch_xL = PyFloat_AsDouble(PyDict_GetItemString(dict, "fold_switch_xL"));
+  }
+  if ( PyDict_GetItemString(dict, "fold_switch_wiggle_tol") != NULL ) {
+    EOBPars->fold_switch_wiggle_tol = PyFloat_AsDouble(PyDict_GetItemString(dict, "fold_switch_wiggle_tol"));
+  }
+  if ( PyDict_GetItemString(dict, "interp_hlm") != NULL ) {
+    EOBPars->interp_hlm = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "interp_hlm")));
+  }
+  if ( PyDict_GetItemString(dict, "interp_hlm_dr") != NULL ) {
+    EOBPars->interp_hlm_dr = PyFloat_AsDouble(PyDict_GetItemString(dict, "interp_hlm_dr"));
+  }
+  if ( PyDict_GetItemString(dict, "spa_fft_tail") != NULL ) {
+    EOBPars->spa_fft_tail = YESNO2INT(PyUnicode_AsUTF8(PyDict_GetItemString(dict, "spa_fft_tail")));
+  }
   
   /* rc and flm */
+  if ( PyDict_GetItemString(dict, "spin_flx_kerr") != NULL ) {
+    EOBPars->spin_flx_kerr = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_flx_kerr"));
+  }
+  if ( PyDict_GetItemString(dict, "spin_hflx_kerr") != NULL ) {
+    EOBPars->spin_hflx_kerr = (int) PyLong_AsLong(PyDict_GetItemString(dict, "spin_hflx_kerr"));
+  }
+  if ( PyDict_GetItemString(dict, "hflx_kerr_N33") != NULL ) {
+    EOBPars->hflx_kerr_N33 = (int) PyLong_AsLong(PyDict_GetItemString(dict, "hflx_kerr_N33"));
+  }
+  if ( PyDict_GetItemString(dict, "ode_stop_omg_neg") != NULL ) {
+    EOBPars->ode_stop_omg_neg = (int) PyLong_AsLong(PyDict_GetItemString(dict, "ode_stop_omg_neg"));
+  }
+  if ( PyDict_GetItemString(dict, "nqc_hm_basis") != NULL ) {
+    EOBPars->nqc_hm_basis = (int) PyLong_AsLong(PyDict_GetItemString(dict, "nqc_hm_basis"));
+  }
+  if ( PyDict_GetItemString(dict, "hflx_kerr_N44") != NULL ) {
+    EOBPars->hflx_kerr_N44 = (int) PyLong_AsLong(PyDict_GetItemString(dict, "hflx_kerr_N44"));
+  }
+  if ( PyDict_GetItemString(dict, "GS_DJSu") != NULL ) {
+    EOBPars->GS_DJSu = (int) PyLong_AsLong(PyDict_GetItemString(dict, "GS_DJSu"));
+  }
   if ( PyDict_GetItemString(dict, "centrifugal_radius") != NULL ) { 
     char* val;
     val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "centrifugal_radius"));
@@ -304,6 +343,14 @@ int SetOptionalVariables(PyObject* dict){
       }
       if (STREQUAL(val,centrifugal_radius_opt[EOBPars->centrifugal_radius])) break;
     }     
+  }
+  if ( PyDict_GetItemString(dict, "use_hflx") != NULL ) {
+    char* val;
+    val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "use_hflx"));
+    for(EOBPars->use_hflx=0; EOBPars->use_hflx<=HFLX_NOPT; EOBPars->use_hflx++){
+      if (EOBPars->use_hflx == HFLX_NOPT) EOBPars->use_hflx = HFLX_STD;
+      if (STREQUAL(val,use_hflx_opt[EOBPars->use_hflx])) break;
+    }
   }
   if ( PyDict_GetItemString(dict, "use_flm") != NULL ) { 
     char* val;
@@ -781,6 +828,17 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   if(EOBPars->LambdaAl2 > 1. && EOBPars->LambdaBl2 > 1.)  default_choice = BINARY_BNS;
   if(EOBPars->LambdaAl2 == 0. && EOBPars->LambdaBl2 > 1.) default_choice = BINARY_BHNS;
   if(EOBPars->LambdaAl2 > 0. && EOBPars->LambdaBl2 == 0.) default_choice = BINARY_BHNS;
+
+  /* binary = "LMR" selects the large-mass-ratio model; other binary types are inferred from the Lambdas */
+  if ( PyDict_GetItemString(dict, "binary") != NULL ) {
+    const char* val = PyUnicode_AsUTF8(PyDict_GetItemString(dict, "binary"));
+    if (val == NULL) return NULL;
+    if (STREQUAL(val, binary_opt[BINARY_LMR])) default_choice = BINARY_LMR;
+    else if (!STREQUAL(val, binary_opt[default_choice])) {
+      PyErr_Format(PyExc_ValueError, "binary '%s' not supported: use 'LMR', or set the Lambdas for BNS/BHNS", val);
+      return NULL;
+    }
+  }
   if(EOBPars->ecc !=0 || EOBPars->r_hyp !=0) model = MODEL_DALI; 
 
   EOBParameters_defaults (default_choice, model, EOBPars);  
@@ -863,10 +921,10 @@ static PyObject* EOBRunPy(PyObject* self, PyObject* args)
   }
 
   /* Overwrite a6c and cN3LO, if required */
-  if ( PyDict_GetItemString(dict, "a6c") != NULL ) { 
+  if ( PyDict_GetItemString(dict, "a6c") != NULL ) {
     EOBPars->a6c = PyFloat_AsDouble(PyDict_GetItemString(dict, "a6c"));
-  }   
-  if ( PyDict_GetItemString(dict, "cN3LO") != NULL ) { 
+  }
+  if ( PyDict_GetItemString(dict, "cN3LO") != NULL ) {
     EOBPars->cN3LO = PyFloat_AsDouble(PyDict_GetItemString(dict, "cN3LO"));
   }   
 

@@ -208,11 +208,17 @@ enum{
   EOB_PRSTAR,            /**< index of Prstar */
   EOB_OMGORB,            /**< index of pure orbital frequency Omega orb */
   EOB_E0,                /**< index of E0 */
+  EOB_FPHI,              /**< index of radiation reaction Fphi */
+  EOB_FR,                /**< index of radiation reaction Fr */
   EOB_DYNAMICS_NVARS     /**< number of EOB dynamical variables */
 };
-static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E"};
+static const char* eob_var[] = {"r","phi","Pphi","MOmega","ddor","Prstar","MOmega_orb","E","Fphi","Fr"};
 
-#define KMAX (35) /** Multipolar linear index, max value */
+#define KMAX (54) /** Multipolar linear index, max value */
+#define KS_NV (24)          /** Kerr spin series: powers of v 0..23 */
+#define KS_NL (10)          /** Kerr spin series: powers of log(v) 0..9 */
+#define KMAXHL (9) /** Number of l = 11,12,13 (m = l, l-1, l-2) flux-only multipoles */
+#define KMAX_L8 (35) /** Number of multipoles with l <= 8: the flux range of every flm except the 22PN ones */
 #define PMTERMS_eps (1) /** Switch on Fujita-Iyer point-mass terms. This is hard-coded here */
 
 /** List for binary type */
@@ -221,8 +227,10 @@ enum{
   BINARY_BNS,            /**< binary neutron star */
   BINARY_BHNS,           /**< black hole-neutron star */
   BINARY_BHNS_TD,        /**< black hole-neutron star, tidal disruption */
+  BINARY_LMR,            /**< large-mass-ratio binary black hole (q > 10), LMR model */
   BINARY_NOPT            /**< number of binary types */
 };
+static const char* const binary_opt[] = {"BBH", "BNS", "BHNS", "BHNS_TD", "LMR", "undefined"};
 
 /** List for fits Lambda_ell(Lambda2) */
 enum{
@@ -240,28 +248,31 @@ enum{
   A_GSF,               /**< GSF A, Pade' resummed */
   A_5PNlogP33,         /**< 5PNlog resummed with P33 */
   A_5PNlogP33_newlogs, /**< 5PNlog resummed with P33, separate log resummation */
+  A_6p5PNP16,          /**< LMR: frozen-log P(1,6) of the 6PN series + 1SF 5.5PN, 6.5PN terms outside the Pade */
   A_NOPT               /**< number of options */
 };
-static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "5PNlogP33_newlogs", "undefined"};
+static const char* const A_opt[] = {"PN", "GSF", "5PNlogP33", "5PNlogP33_newlogs", "6p5PNP16", "undefined"};
 
 /** List of options for orbital D potential */
 enum{
   D_3PN,            /**< 3PN, Pade' resummed */
   D_GSF,            /**< GSF D, Pade' resummed */
   D_5PNP32,         /**< 5PN, Pade' resummed with P32*/ 
-  D_5PNP32_newlogs, /**< 5PN, Pade' resummed with P32, separate log resummation*/ 
+  D_5PNP32_newlogs, /**< 5PN, Pade' resummed with P32, separate log resummation*/
+  D_5PNP32_newlogs_lmr, /**< as D_5PNP32_newlogs, with the analytic 5PN nu^2 coefficient (LMR) */
   D_NOPT            /**< number of options */
 };
-static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "5PNP32_newlogs", "undefined"};
+static const char* const D_opt[] = {"PN", "GSF", "5PNP32", "5PNP32_newlogs", "5PNP32_newlogs_lmr", "undefined"};
 
 /** List of options for orbital Q potential */
 enum{
   Q_3PN,          /**< 3PN, Taylor exp */
   Q_GSF,          /**< GSF Q, Pade' resummed */
   Q_5PNloc,       /**< 5PN local, Taylor exp */
+  Q_5PNfull,      /**< LMR: full-nu 5PN local+nonlocal, starred, incl. prstar^8 */
   Q_NOPT          /**< number of options */
 };
-static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "undefined"};
+static const char* const Q_opt[] = {"PN", "GSF", "5PNloc", "5PNfull", "undefined"};
 enum{
   a6c_fits_NO,                /**< no fits */
   a6c_fits_V0,                /**< V0 fits, Nagar et al 2018 */
@@ -317,9 +328,10 @@ enum{
   CENTRAD_NNLOS4,         /**< NNLO centrifugal radius with spin^4 */
   CENTRAD_NOSPIN,         /**< No spin in centrifugal radius */
   CENTRAD_NOTIDES,        /**< No tides in centrifugal radius */
+  CENTRAD_N3LO,           /**< LMR: NNLO + N3LO spin-squared D3 u^3 (BBH), exact derivatives */
   CENTRAD_NOPT            /**< number of centrifugal radius options */
 };
-static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS4", "NOSPIN", "NOTIDES"};
+static const char* const centrifugal_radius_opt[] = {"LO", "NLO", "NNLO", "NNLOS4", "NOSPIN", "NOTIDES", "N3LO"};
 
 /** List of options for eccentric initial frequency */
 enum{
@@ -349,9 +361,19 @@ enum{
   USEFLM_HM_4PN22,        /**< HM amplitudes with 4PN in 22 */
   USEFLM_HM_6PN3p3,       /**< HM amplitudes with 4PN in 22, 3p3 in the other main modes, New Log Res */
   USEFLM_KERR,            /**< Kerr amplitudes */
+  USEFLM_22PN,            /**< 22PN test-mass flux (l up to 10) */
+  USEFLM_22PN_NU,         /**< as 22PN, plus the known nu-dependence of rho_lm (2,1) 3PN, l = 4, 5 2PN, (2,2) 4PN */
+  USEFLM_22PN_NU_HL,      /**< as 22PNnu, plus the flux of l = 11, 12, 13 (m = l, l-1, l-2) */
   USEFLM_NOPT             /**< number of flm amplitudes options */
 };
-static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr"};
+static const char* const use_flm_opt[] = {"SSLO", "SSNLO", "SSNNLO", "HM", "HM4PN22", "HM6PN3p3", "Kerr", "22PN", "22PNnu", "22PNnuHL"};
+
+enum{
+  HFLX_STD,            /**< standard resummed horizon flux (l=2) */
+  HFLX_LMR,            /**< LMR horizon flux (l=2,3,4, high-PN) */
+  HFLX_NOPT            /**< number of horizon-flux options */
+};
+static const char* const use_hflx_opt[] = {"std", "lmr"};
 
 /** List of options for ODE timestepping */
 enum{
@@ -426,7 +448,7 @@ static const char* const root_errors[] = {"none","root is not bracketed.","root 
 /** Maps between linear index and the corresponding (l, m) multipole indices */
 extern const int LINDEX[KMAX]; /* defined in TEOBResumS.c */
 extern const int MINDEX[KMAX]; /* defined in TEOBResumS.c */
-extern const int KINDEX[9][9]; /* defined in TEOBResumS.c */ //FIXME: hardcoded for KMAX=35
+extern const int KINDEX[11][11]; /* defined in TEOBResumS.c */
 
 /** Multipolar coefficients for NQC waveform */
 typedef struct tagNQCcoefs
@@ -595,6 +617,7 @@ typedef struct tagDynamics
   int store; /* store following values? */
   int noflx; /* compute rhs without flux */
   double t, r, phi, pphi, prstar, ddotr, Omg, Omg_orb;
+  double Fphi, Fr;                                            /**< radiation reaction components */
   double rdot, r2dot, r3dot, r4dot, r5dot, Omegadot, Omega2dot, Omega3dot, Omega4dot;
   double tOmg_pk;
   double H, Heff, Heff_orb, E, jhat, r_omega, psi, v_phi;     /**< current Hamiltonian, angular momentum and derived variables */
@@ -663,7 +686,7 @@ typedef struct tagEOBParameters
 
   /**@{*/
   /** NR-informed conservative variables */
-  double a6c, cN3LO;         
+  double a6c, cN3LO;
   /** Deviations from NR-fitted parameters */
   double delta_a6c, delta_cN3LO;
   /**@}*/ 
@@ -690,10 +713,18 @@ typedef struct tagEOBParameters
   int compute_ringdown;
   
   /* options/settings */
-  int binary;                                           /**< binary type (BBH, BNS, BHNS) */
+  int binary;                                           /**< binary type (BBH, BNS, BHNS, LMR) */
   int model;                                            /**< model (Dalì, Giotto) */
-  int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES} */
+  int centrifugal_radius;                               /**< NEW, INDEX FOR # {LO, NLO, NNLO, NNLOS4, NOSPIN, NOTIDES, N3LO} */
+  int GS_DJSu;                                          /**< Gyro-gravitomagnetic functions: 0 eob_dyn_s_GS (default), 1 DJS gauge N3LO with argument u (LMR) */
   int use_flm;                                          /**< NEW, INDEX FOR  # "SSLO", "SSNLO", "SSNNLO", "HM" */
+  int use_hflx;                                         /**< horizon-flux choice: "std"/"lmr" */
+  int spin_flx_kerr;                                    /**< 1: Kerr hybrid spin sector of the flux at infinity (22PN family, BBH) */
+  int spin_hflx_kerr;                                   /**< 1: per-body Kerr factorized horizon flux on top of HFLX_LMR */
+  int hflx_kerr_N33;                                    /**< spin_hflx_kerr: truncation v^N of the (3,3) horizon spin factor (default 8; 0 = full order 13) */
+  int ode_stop_omg_neg;                                 /**< 1: stop the ODE when M Omega < 0 (quasi-circular LMR) */
+  int nqc_hm_basis;                                     /**< NQC phase basis: 0 Dali (Omega^(2/3) n4 for l = 3, 4, 5 if chi1 <= 0 or chi2 <= 0; always for (2,1)), 1 l = 3, 4, 5 only if chi1 <= 1e-3, 2 as 1 and (2,1) too, 3 as 1 and (2,1) never (LMR) */
+  int hflx_kerr_N44;                                    /**< spin_hflx_kerr: truncation v^N of the (4,4) horizon spin factor (default 6; 0 = full order 9) */
   int use_tidal, use_spins, use_tidal_gravitomagnetic;  /**< Flag for tides, spins and gravito-magnetic tides */
   int use_geometric_units;                              /**< Flag for geometric vs SI units */
   int use_speedytail;                                   /**< Flag for fast computation of tail (speedytail) */
@@ -734,6 +765,14 @@ typedef struct tagEOBParameters
   int postadiabatic_dynamics_N;                         /**< Number of PA iterations to take (default=8)*/
   int postadiabatic_dynamics_size;                      /**< Size of PA arrays */
   double postadiabatic_dynamics_dr;                     /**< Radial step for PA */
+  /* fold-aware PA->ODE switch (TEOBResumSPostAdiab.c) */
+  int fold_switch;                                      /**< End PA at r_sw = rLSO + sqrt(-x_L/6) Delta_r_P instead of rmin (TEOBResumSPostAdiab.c) */
+  double fold_switch_xL;                                /**< Handover depth x_L < 0 in scaled (Painleve) transition time (default -8) */
+  double fold_switch_wiggle_tol;                        /**< Warning threshold for the scaled post-switch wiggle metric (default 1e-3) */
+  /* fast frequency-domain path */
+  int interp_hlm;                                       /**< Inspiral multipoles on coarse radial nodes (r > 12) + splines, Dali */
+  double interp_hlm_dr;                                 /**< Coarse-node radial spacing (M) for interp_hlm (default 0.5) */
+  int spa_fft_tail;                                     /**< FD: above merger, DFT of the merger-ringdown tail instead of the analytic f^-10/3 prolongation */
   double postadiabatic_dynamics_rmin;                   /**< Minimum radius to reach for PA (default=14)*/
 
   /* spin dynamics */
@@ -863,6 +902,7 @@ double baryc_f_weights(double xx, int n, double *f, double *x, double *omega);
 double interp1d (const int order, double xx, int nx, double *f, double *x);
 double find_max (const int n, double dx, double x0, double *f, double *fmax);
 double find_max_grid (double *x, double *f);
+int find_last_peak_index(const double *f, int n);
 int D0(double *f, double dx, int n, double *df);
 int D2(double *f, double dx, int n, double *d2f);
 int D0_x(double *f, double *x, int n, double *df);
@@ -1060,6 +1100,7 @@ void eob_dyn_s_get_rc_NLO(double r, double nu, double at1,double at2, double aK2
 void eob_dyn_s_get_rc_NNLO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOSPIN(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
+void eob_dyn_s_get_rc_N3LO(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_get_rc_NOTIDES(double r, double nu, double at1,double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2, double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2);
 void eob_dyn_s_rc_add_QOH_drvts(Dynamics *dyn, double rc, double u, double at1, double at2, double *drc_dr, double *d2rc_dr2);
 double eob_dyn_get_romg(double r, double prstar, double pphi, Dynamics *dyn);
@@ -1086,6 +1127,28 @@ void eob_spin_dyn_Sproj_interp(DynamicsSpin *dyn, double time,
 
 /* TEOBResumSPostAdiabatic.c */
 int eob_dyn_Npostadiabatic(Dynamics *dyn, double r0, DynamicsSpin *spin);
+
+/* TEOBResumSPostAdiab.c, fold-aware PA->ODE switch: LSO of the nu-dressed dynamics (fold of the circular
+   sequence) and the transition scale Delta_r_P, from the r.h.s. */
+/** Fold finite-difference steps (4th-order central stencils, on the truncation/roundoff plateau
+    h ~ 1e-4 ... 1e-2) and Newton parameters */
+#define FOLD_STEP_DR      (2e-3)  /* step in r       */
+#define FOLD_STEP_DPRSTAR (2e-3)  /* step in prstar  */
+#define FOLD_STEP_DPPHI   (2e-3)  /* step in pphi    */
+/** FOLD_NEWTON_TOL sits above the roundoff floor of the Newton step, eta_rhs/(FOLD_STEP_DR |d2prstardot/dr2|),
+    with eta_rhs ~ 1e-17 the noise of one r.h.s. evaluation */
+#define FOLD_NEWTON_TOL     (1e-9)  /* relative step tolerance   */
+#define FOLD_NEWTON_ITMAX   (100)   /* max iterations            */
+#define FOLD_NEWTON_MAXSTEP (0.3)   /* per-iteration step clamp  */
+double eob_fold_prstardot(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_fold_Fphi(double r, double prstar, double pphi, Dynamics *dyn);
+double eob_fold_dprstardot_dr(double r, double prstar, double pphi, double hstep, Dynamics *dyn);
+double eob_fold_d2prstardot_dr2(double r, double prstar, double pphi, double hstep, Dynamics *dyn);
+double eob_fold_dprstardot_dpphi(double r, double prstar, double pphi, double hstep, Dynamics *dyn);
+double eob_fold_drdot_dprstar(double r, double prstar, double pphi, double hstep, Dynamics *dyn);
+double eob_fold_omegar2(double r, double pphi, Dynamics *dyn);
+int eob_fold_compute(Dynamics *dyn, double *rLSO, double *pphiLSO, double *Delta_r_P);
+double eob_fold_wiggle_qa(Dynamics *dyn, double rLSO, double Delta_r_P, int i_sw, int *npts_out);
 
 /* TEOBResumSInitialCondition.c */
 extern int (*eob_dyn_ic)(); /* defined in TEOBResumSPars.c*/
@@ -1129,9 +1192,14 @@ void eob_metric_D3PN(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_DGSF(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32(double r, double nu, double *D, double *dD, double *d2D);
 void eob_metric_D5PNP32_newlogs(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_D5PNP32_newlogs_lmr(double r, double nu, double *D, double *dD, double *d2D);
+void eob_metric_A6p5PNP16(double r, double nu, double *A, double *dA, double *d2A);
+void eob_wav_flm_22PN_nu(double x,double nu, double *rholm, double *flm);
+double eob_flx_hatFlux_highl(double x, double w, double Heff, double jhat, double nu);
 void eob_metric_Q3PN(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_QGSF(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Q5PNloc(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
+void eob_metric_Q5PNfull(double r, double prstar, double nu, double *Q, double *dQ_du, double *dQ_dprstar, double *d2Q_du2, double *ddQ_drdprstar, double *d2Q_dprstar2, double *d3Q_du2dprstar, double *d3Q_dudprstar2, double *d3Q_dprstar3);
 void eob_metric_Atidal(double r, Dynamics *dyn, double *AT, double *dAT, double *d2AT);
 void eob_metric_Btidal(double r, Dynamics *dyn, double *BT, double *dBT, double *d2BT);
 void eob_metric(double r, double prstar, Dynamics *dyn, double *A, double *B, double *dA, double *d2A, double *dB, double *d2B,
@@ -1154,7 +1222,42 @@ double Fphi_NewtPref(double r, double Omg, double rdot, double r2dot, double r3d
 void eob_flx_Tlm(double w, double *MTlm);
 void eob_flx_FlmNewt(double x, double nu, double *Nlm);
 double eob_flx_HorizonFlux(double x, double Heff, double jhat, double nu);
+double eob_flx_HorizonFlux_lmr(double x, double Heff, double jhat, double nu);
 double eob_flx_HorizonFlux_s(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+double eob_flx_HorizonFlux_lmr_kerr(double x, double Heff, double jhat, double nu, double X1, double X2, double chi1, double chi2);
+void eob_flx_rhoHS_kerr_iR(const double v, const double q, const double X, double *rhoHS, double *LO);
+double eob_flx_highl_rho_kerr(const int k, const double x, const double a0, const double *clmk);
+extern double EOB_RHOH_LMR_LAST[9];
+/* Kerr spin sector of the LMR flux: generated tables (end of TEOBResumSWaveform.c) */
+#define KS_NM (KMAX+KMAXHL)  /* infinity modes */
+#define KS_NH (20)           /* horizon modes l = 2..6 */
+void eob_kerr_psi(const double q, double psiA[5][7], double psiB[5][7], double *kap, double *lkap);
+int eob_kerr_rho8(int k, double C[KS_NV][KS_NL], const double kap, const double lkap,
+                  const double psiA[5][7], const double psiB[5][7], const double q);
+int eob_kerr_rhoH(int k, double C[KS_NV][KS_NL], const double kap, const double lkap,
+                  const double psiA[5][7], const double psiB[5][7], const double q);
+int eob_kerr_etaHLO(int k, const double q, const double kap, double *c0);
+double eob_flx_etaHLO_lin_kerr(int k);
+extern const double EOB_KERR_RHOHL_LOG[KMAXHL][35][6];
+/* Kerr spin sector of the LMR flux: infinity spin factors (TEOBResumSWaveform.c) */
+extern double EOB_RHOLM_ORB_CLM[KMAX][45];
+void eob_wav_rhoS_kerr_iR(const double v, const double q, double *rhoS);
+int eob_wav_rhoS_kerr_series(const double q, const int k, double c[KS_NV][KS_NL]);
+double eob_wav_xtilde_scale(const double a);
+void eob_wav_flm_s_kerr_hyb(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2,
+                            double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);
+/* series helpers (TEOBResumSUtils.c) and complex polygamma (SpecialFuns.c) */
+void logser_mul(double A[KS_NV][KS_NL], double B[KS_NV][KS_NL], double R[KS_NV][KS_NL], int N);
+void logser_inv(double A[KS_NV][KS_NL], double R[KS_NV][KS_NL], int N);
+double logser_eval(double A[KS_NV][KS_NL], int N, double v, double logv);
+void logser_zero(double A[KS_NV][KS_NL]);
+void logser_trunc(double A[KS_NV][KS_NL], int N);
+void logser_axpy(double a, double A[KS_NV][KS_NL], double B[KS_NV][KS_NL]);
+void logser_freeze(double A[KS_NV][KS_NL], int N, double logv, double *c);
+void ser_mul(const double *a, const double *b, double *c, int N);
+void ser_div(const double *a, const double *b, double *c, int N);
+double ser_eval(const double *c, int N, double v);
+double complex eob_cpolygamma(int n, double complex z);
 
 /* TEOBResumSWaveform.c */
 extern void (*eob_wav_hlm)(); /* defined in TEOBResumSPars.c */
@@ -1178,6 +1281,7 @@ void eob_wav_flm_old(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM_4PN22(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_HM_6PN3p3(double x,double nu, double *rholm, double *flm);
+void eob_wav_flm_22PN(double x,double nu, double *rholm, double *flm);
 void eob_wav_flm_Kerr(double x,double nu, double *rholm, double *flm);
 extern void (*eob_wav_flm_s)(); /* defined in TEOBResumSPars.c */
 void eob_wav_flm_s_SSNLO(double x, double nu, double X1, double X2, double chi1, double chi2, double a1, double a2, double C_Q1, double C_Q2, int usetidal, double *rholm, double *flm);

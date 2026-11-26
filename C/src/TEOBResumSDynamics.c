@@ -95,8 +95,9 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
   const double ddotr = dprstar_dt*ddotr_dprstar + dr_dt*ddotr_dr;
   
   /* Compute flux and dp_{\phi}/dt */
+  const double Fphi = (dyn->noflx) ? 0. : eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
-  else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux(x,Omega,r_omega,E,Heff,jhat,r, prstar,ddotr,dyn);
+  else            dy[EOB_EVOLVE_PPHI] = Fphi;
 
   if(dyn->store) {
     /* Store values */
@@ -120,6 +121,8 @@ int eob_dyn_rhs(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
+    dyn->Fphi = Fphi;
+    dyn->Fr = 0.;
   }
   
   return GSL_SUCCESS;
@@ -312,8 +315,9 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
   const double jhat       = pphi/(r_omg*v_phi);
 
   /* Compute flux and dp_{\phi}/dt */
+  const double Fphi = (dyn->noflx) ? 0. : eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
   if (dyn->noflx) dy[EOB_EVOLVE_PPHI] = 0.;
-  else            dy[EOB_EVOLVE_PPHI] = eob_flx_Flux_s(x,Omg,r_omg,E,Heff,jhat,r,prstar,ddotr,dyn);
+  else            dy[EOB_EVOLVE_PPHI] = Fphi;
 
   if (dyn->store) {
     /* Store values */
@@ -337,6 +341,8 @@ int eob_dyn_rhs_s(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
+    dyn->Fphi = Fphi;
+    dyn->Fr = 0.;
   }
     
   return GSL_SUCCESS;
@@ -500,6 +506,8 @@ int eob_dyn_rhs_ecc(double t, const double y[], double dy[], void *d)
     dyn->v_phi = v_phi;
     dyn->jhat = jhat;
     dyn->ddotr = ddotr;
+    dyn->Fphi = Fphi;
+    dyn->Fr = Fr;
   }
     
   return GSL_SUCCESS;
@@ -623,6 +631,128 @@ void eob_ham_s(double nu,
 
 
 /**
+ * Function: eob_dyn_s_GS_DJSu
+ * ---------------------------
+ *   Gyro-gravitomagnetic functions in DJS gauge with argument u = 1/r, N3LO (Antonelli et al 2020), exact nu
+ *   dependence, p_r -> prstar PN-converted, c40* = 2835/256 (test mass); analytic, no NR-calibrated cN3LO:
+ *     G_S = 2 u u_c^2 hatG_S,   G_S* = (3/2) u^3 hatG_S*,   hatG = 1/Den(u, prstar^2),   Den = 1 + sum_ij c_ij u^i prstar^(2j).
+ *   Same ggm[] layout as eob_dyn_s_GS.
+ */
+static void eob_dyn_s_GS_DJSu(double r, double rc, double drc_dr, double d2rc_dr2, double prstar, double nu, double *ggm)
+{
+  static double cS[5][4], cSs[5][4];      /* [i][j]: u^i prstar^(2j) */
+  static double nu_c = -1.;
+
+  if (nu != nu_c) {
+    nu_c = nu;
+    for (int i = 0; i < 5; i++) for (int j = 0; j < 4; j++) { cS[i][j] = 0.; cSs[i][j] = 0.; }
+    /* G_S: N3LO (exact nu dependence), Den = 1 + sum cS[i][j] u^i p*^(2j) */
+    cS[0][1] = (27.0/16.0)*nu;
+    cS[0][2] = (169.0/256.0)*pow(nu, 2) - 5.0/16.0*nu;
+    cS[0][3] = (83.0/4096.0)*pow(nu, 3) - 9.0/128.0*pow(nu, 2) - 7.0/256.0*nu;
+    cS[1][0] = (5.0/16.0)*nu;
+    cS[1][1] = -49.0/128.0*pow(nu, 2) + 12*nu;
+    cS[1][2] = -2201.0/4096.0*pow(nu, 3) + (1257.0/128.0)*pow(nu, 2) - 1421.0/256.0*nu;
+    cS[2][0] = (41.0/256.0)*pow(nu, 2) + (51.0/8.0)*nu;
+    cS[2][1] = -2999.0/4096.0*pow(nu, 3) - 2273.0/64.0*pow(nu, 2) + (10563.0/128.0)*nu;
+    cS[3][0] = (397.0/4096.0)*pow(nu, 3) - 31.0/16.0*pow(nu, 2) - 241.0/384.0*pow(Pi, 2)*nu + (80399.0/2304.0)*nu;
+    /* G_S*: N3LO (exact nu dependence), Den = 1 + sum cSs[i][j] u^i p*^(2j) */
+    cSs[0][1] = (3.0/2.0)*nu + 5.0/4.0;
+    cSs[0][2] = (3.0/8.0)*pow(nu, 2) + (25.0/12.0)*nu + 5.0/48.0;
+    cSs[0][3] = -1.0/16.0*pow(nu, 3) + (37.0/32.0)*pow(nu, 2) + (5.0/16.0)*nu - 5.0/96.0;
+    cSs[1][0] = (1.0/2.0)*nu + 3.0/4.0;
+    cSs[1][1] = -7.0/8.0*pow(nu, 2) + 11*nu + 4;
+    cSs[1][2] = -9.0/16.0*pow(nu, 3) + (395.0/96.0)*pow(nu, 2) + (115.0/6.0)*nu + 35.0/48.0;
+    cSs[2][0] = (3.0/8.0)*pow(nu, 2) + (29.0/4.0)*nu + 27.0/16.0;
+    cSs[2][1] = -2*pow(nu, 3) - 317.0/8.0*pow(nu, 2) + (2313.0/32.0)*nu + 773.0/64.0;
+    cSs[3][0] = (5.0/16.0)*pow(nu, 3) - 5.0/32.0*pow(nu, 2) - 41.0/48.0*pow(Pi, 2)*nu + (5501.0/144.0)*nu + 135.0/32.0;
+    cSs[4][0] = 2835./256.;   /* c40*: test-mass (nu^0) value, as in the current model */
+  }
+
+  const double u = 1./r;
+  const double x   = u;            /* argument of hatG; xr = dx/dr, xrr = d2x/dr2 */
+  const double xr  = -u*u;
+  const double xrr = 2.*u*u*u;
+  const double P = prstar*prstar;
+  double D[2][9];     /* per function: Den, D_u, D_uu, D_P, D_PP, D_PPP, D_uP, D_uPP, D_uuP (P = prstar^2) */
+  for (int f = 0; f < 2; f++) {
+    double (*c)[4] = (f == 0) ? cS : cSs;
+    double Dn = 1., Du = 0., Duu = 0., DP = 0., DPP = 0., DPPP = 0., DuP = 0., DuPP = 0., DuuP = 0.;
+    for (int i = 0; i < 5; i++) {
+      const double ui = pow(x, i), ui1 = (i >= 1) ? pow(x, i-1) : 0., ui2 = (i >= 2) ? pow(x, i-2) : 0.;
+      for (int j = 0; j < 4; j++) {
+        const double cij = c[i][j];
+        if (cij == 0.) continue;
+        const double Pj = pow(P, j), Pj1 = (j >= 1) ? pow(P, j-1) : 0., Pj2 = (j >= 2) ? pow(P, j-2) : 0.,
+	  Pj3 = (j >= 3) ? pow(P, j-3) : 0.;
+        Dn   += cij*ui*Pj;
+        Du   += cij*i*ui1*Pj;
+        Duu  += cij*i*(i-1)*ui2*Pj;
+        DP   += cij*ui*j*Pj1;
+        DPP  += cij*ui*j*(j-1)*Pj2;
+        DPPP += cij*ui*j*(j-1)*(j-2)*Pj3;
+        DuP  += cij*i*ui1*j*Pj1;
+        DuPP += cij*i*ui1*j*(j-1)*Pj2;
+        DuuP += cij*i*(i-1)*ui2*j*Pj1;
+      }
+    }
+    D[f][0] = Dn; D[f][1] = Du; D[f][2] = Duu; D[f][3] = DP; D[f][4] = DPP; D[f][5] = DPPP;
+    D[f][6] = DuP; D[f][7] = DuPP; D[f][8] = DuuP;
+  }
+
+  /* prefactors and their r-derivatives */
+  const double G0[2]   = { 2./(r*rc*rc), 1.5*x*x*x };
+  const double G0r[2]  = { -2./(r*r*rc*rc) - 4.*drc_dr/(r*rc*rc*rc), 4.5*x*x*xr };
+  const double G0rr[2] = { 4./(r*r*r*rc*rc) + 8.*drc_dr/(r*r*rc*rc*rc) + 12.*drc_dr*drc_dr/(r*rc*rc*rc*rc)
+			   - 4.*d2rc_dr2/(r*rc*rc*rc), 9.*x*xr*xr + 4.5*x*x*xrr };
+  const double ur = xr, urr = xrr;      /* chain rule through the argument x */
+
+  for (int f = 0; f < 2; f++) {
+    const double Dn = D[f][0], Du = D[f][1], Duu = D[f][2], DP = D[f][3], DPP = D[f][4], DPPP = D[f][5];
+    const double DuP = D[f][6], DuPP = D[f][7], DuuP = D[f][8];
+    /* derivatives of Den w.r.t. p = prstar (P = p^2) */
+    const double Dp   = 2.*prstar*DP;
+    const double Dpp  = 2.*DP + 4.*P*DPP;
+    const double Dppp = 12.*prstar*DPP + 8.*prstar*P*DPPP;
+    const double Dup  = 2.*prstar*DuP;
+    const double Dupp = 2.*DuP + 4.*P*DuPP;
+    const double Duup = 2.*prstar*DuuP;
+    /* hatG = 1/Den and derivatives */
+    const double iD = 1./Dn, iD2 = iD*iD, iD3 = iD2*iD, iD4 = iD3*iD;
+    const double h    = iD;
+    const double hu   = -Du*iD2;
+    const double hp   = -Dp*iD2;
+    const double huu  = 2.*Du*Du*iD3 - Duu*iD2;
+    const double hpp  = 2.*Dp*Dp*iD3 - Dpp*iD2;
+    const double hup  = 2.*Du*Dp*iD3 - Dup*iD2;
+    const double hppp = -6.*Dp*Dp*Dp*iD4 + 6.*Dpp*Dp*iD3 - Dppp*iD2;
+    const double hupp = -6.*Du*Dp*Dp*iD4 + 2.*(Dup*Dp + Dup*Dp + Dpp*Du)*iD3 - Dupp*iD2;
+    const double huup = -6.*Du*Du*Dp*iD4 + 2.*(Duu*Dp + Dup*Du + Dup*Du)*iD3 - Duup*iD2;
+    /* r-derivatives of hatG */
+    const double hr   = hu*ur;
+    const double hrr  = huu*ur*ur + hu*urr;
+    const double hrp  = hup*ur;
+    const double hrrp = huup*ur*ur + hup*urr;
+    const double hrpp = hupp*ur;
+    /* G = G0 hatG */
+    const double g0 = G0[f], g0r = G0r[f], g0rr = G0rr[f];
+    ggm[0+f]  = h;
+    ggm[2+f]  = g0*h;
+    ggm[4+f]  = g0*hp;
+    ggm[6+f]  = g0r*h + g0*hr;
+    ggm[8+f]  = 0.;                                  /* no p_phi dependence in DJS gauge */
+    ggm[10+f] = -2.*g0*DP*iD2;                       /* (dG/dprstar)/prstar, finite at prstar = 0 */
+    ggm[12+f] = ggm[10+f];                           /* as in eob_dyn_s_GS (NQC: d2G/dprstar2 at leading order) */
+    ggm[14+f] = g0rr*h + 2.*g0r*hr + g0*hrr;
+    ggm[16+f] = g0*hpp;
+    ggm[18+f] = g0r*hp + g0*hrp;
+    ggm[20+f] = g0*hppp;
+    ggm[22+f] = g0rr*hp + 2.*g0r*hrp + g0*hrrp;
+    ggm[24+f] = g0r*hpp + g0*hrpp;
+  }
+}
+
+/**
  * Function: eob_dyn_s_GS
  * ----------------------
  *   Computes the gyro-gravitomagnetic functions GS and GS*, that are called GS and GSs.
@@ -646,6 +776,10 @@ void eob_ham_s(double nu,
 void eob_dyn_s_GS(double r, double rc, double drc_dr, double d2rc_dr2, double aK2, double prstar, double pph, double nu, double chi1, double chi2, double X1, double X2, double cN3LO,
 	  double *ggm)
 {
+  if (EOBPars->GS_DJSu == 1) {   /* LMR: DJS gauge, N3LO, argument u */
+    eob_dyn_s_GS_DJSu(r, rc, drc_dr, d2rc_dr2, prstar, nu, ggm);
+    return;
+  }
   
   static double c10,c20,c30,c02,c12,c04;
   static double cs10,cs20,cs30,cs40,cs02,cs12,cs04;
@@ -1177,6 +1311,36 @@ void eob_dyn_s_get_rc_NNLO_S4(double r, double nu, double at1,double at2, double
     
   }
   
+}
+
+/**
+ * Function: eob_dyn_s_get_rc_N3LO
+ * -------------------------------
+ *   NNLO centrifugal radius + N3LO spin-squared term (LMR, BBH only),
+ *     rc^2 = r^2 + a0^2 (1 + 2u) + D1 u + D2 u^2 + D3 u^3,
+ *   D1, D2 as eob_dyn_s_get_rc_NNLO (Nagar+ PRD 99 044007 Eqs. 19-20), D3 = alpha a0^2 + beta a12^2 + gamma X12 a0 a12 from the
+ *   Kim-Levi-Yin 5PN binding energy, with C_E2S2 = -4/5 (implied by the 1SF Kerr redshift).
+ *   Exact derivatives.
+ */
+void eob_dyn_s_get_rc_N3LO(double r, double nu, double at1, double at2, double aK2, double C_Q1, double C_Q2, double C_Oct1, double C_Oct2,
+                           double C_Hex1, double C_Hex2, int usetidal, double *rc, double *drc_dr, double *d2rc_dr2)
+{
+  if (usetidal) errorexit("centrifugal_radius N3LO: BBH only");
+  const double u = 1./r, u2 = u*u, u3 = u2*u, u4 = u3*u, u5 = u4*u, r2 = r*r;
+  const double X12 = sqrt(1. - 4.*nu), nu2 = nu*nu, pi2 = SQ(Pi);
+  const double C = -0.8; /* C_E2S2 (Kim-Levi-Yin convention) = -4/5 for black holes */
+  const double a0 = at1 + at2, a12 = at1 - at2;
+  const double c1 = -1.125*a0*a0 - (0.125 + 0.5*nu)*a12*a12 + 1.25*X12*a0*a12;
+  const double c2 = - (189./32. + 417./32.*nu              )    *a0 *a0
+                    + ( 11./32. - 127./32.*nu + 0.375*nu2  )    *a12*a12
+                    + ( 89./16. -  2.625*nu                )*X12*a0 *a12;
+  const double al = -4797./256. + (-102543./640. + 3873./1024.*pi2 - 0.25*C)*nu + 3283./256.*nu2;
+  const double be =  1283./256. + ( -15323./640. -   63./1024.*pi2 - 0.25*C)*nu + 4275./256.*nu2 + 21./64.*nu2*nu;
+  const double ga =  1757./128. + (  -7849./160.                   - 0.5 *C)*nu +   39./128.*nu2;
+  const double c3 = al*a0*a0 + be*a12*a12 + ga*X12*a0*a12;
+  *rc       = sqrt(r2 + aK2*(1. + 2.*u) + c1*u + c2*u2 + c3*u3);
+  *drc_dr   = (r - aK2*u2 - 0.5*c1*u2 - c2*u3 - 1.5*c3*u4)/(*rc);
+  *d2rc_dr2 = (1. + 2.*aK2*u3 + c1*u3 + 3.*c2*u4 + 6.*c3*u5 - (*drc_dr)*(*drc_dr))/(*rc);
 }
 
 /**
