@@ -1094,8 +1094,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
       
       /**  Interpolate mrg on uniform grid */
       
-      /* Interp Waveform */ 
-      Waveform_lm_interp (hlm_mrg, size_mrg, tstart_mrg, dt_merger_interp, "hlm_mrg_interp");
+      /* Interp Waveform */
+      if (Waveform_lm_interp (hlm_mrg, size_mrg, tstart_mrg, dt_merger_interp, "hlm_mrg_interp")) {
+        PRERR(eob_error_msg[ERROR_INTERP]);
+        status = ERROR_INTERP;
+        goto EXIT_POINT;
+      }
       
       /* Interp Dynamics */
       Dynamics_interp (dyn_mrg, size_mrg, tstart_mrg, dt_merger_interp, "dyn_mrg_interp");	       
@@ -1281,8 +1285,12 @@ int EOBRun(Waveform **hpc, WaveformFD **hfpc,
     if (EOBPars->interp_uniform_grid) {
       /* Interp to uniform grid the multipoles before hpc computation */
       const double dt_interp = EOBPars->dt_interp;
-      const long int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp); 
-      Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp");
+      const long int size_interp = get_uniform_size(hlm->time[size-1], hlm->time[0], dt_interp);
+      if (Waveform_lm_interp (hlm, size_interp, hlm->time[0], dt_interp, "hlm_interp")) {
+        PRERR(eob_error_msg[ERROR_INTERP]);
+        status = ERROR_INTERP;
+        goto EXIT_POINT;
+      }
       size = size_interp;
     }
 

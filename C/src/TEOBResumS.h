@@ -165,13 +165,14 @@ enum{OK,                       /**< No error */
      ERROR_INITIAL_CONDITIONS, /**< Initial conditions failed */
      ERROR_SET_PARAMS,         /**< Error setting parameters */
      ERROR_RINGDOWN,           /**< Ringdown failed */
+     ERROR_INTERP,             /**< Waveform/dynamics interpolation failed */
      NERROR                    /**< Number of errors */
 };
 static const char* eob_error_msg[] = {
   "ok",
   "out of memory", "error opening file", "error while making directory",
   "root finder failed.", "ODE solver failed.", "Error in spin dynamics.", "initial conditions failed.",
-  "error setting parameters.", "ringdown failed."
+  "error setting parameters.", "ringdown failed.", "interpolation failed."
 };
 
 /** Index list of EOB evolved variables */
@@ -893,7 +894,7 @@ void Waveform_lm_push (Waveform_lm **wav, int size);
 void Waveform_lm_output (Waveform_lm *wav);
 void Waveform_lm_output_reim (Waveform_lm *wav);
 void Waveform_lm_free (Waveform_lm *wav);
-void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name);
+int Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name);
 /* void Waveform_lm_alloc_interp (Waveform_lm *hlm, Waveform_lm **hlm_new, const int size, const double t0, const double dt, const char *name); */
 void Waveform_lm_extract (Waveform_lm *hlma, const double to, const double tn, Waveform_lm **hlmb, const char *name);
 void Waveform_lm_join (Waveform_lm *hlma, Waveform_lm *hlmb, double to); 

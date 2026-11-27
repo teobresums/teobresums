@@ -972,10 +972,142 @@ void vect_rotate3(int axis, double angle, double *v)
 }
 
 /**
+ * Function: cspline_grid_setup
+ * ------------------------------
+ *   Grid-only part of the natural cubic spline (h/l/mu)
+ *
+ *   @param[in]  t:  array of (strictly increasing) x values
+ *   @param[in]  n:  number of points
+ *   @param[out] h:  knot spacings, sized n-1
+ *   @param[out] l:  forward-elimination pivots, sized n
+ *   @param[out] mu: forward-elimination multipliers, sized n
+ *   @return OK, or ERROR if n<2 or t[] is not strictly increasing
+ */
+static int cspline_grid_setup(const double *t, int n, double *h, double *l, double *mu)
+{
+  if (n < 2) return ERROR;
+  for (int i = 0; i < n-1; i++) {
+    h[i] = t[i+1] - t[i];
+    if (!(h[i] > 0.)) return ERROR;
+  }
+
+  l[0] = 1.; mu[0] = 0.;
+  for (int i = 1; i < n-1; i++) {
+    l[i]  = 2.0*(t[i+1]-t[i-1]) - h[i-1]*mu[i-1];
+    mu[i] = h[i]/l[i];
+  }
+  l[n-1] = 1.;
+  return OK;
+}
+
+/**
+ * Function: natural_cspline_coefs_fast
+ * --------------------------------------
+ *   Natural cubic spline coefficients, given the pre-computed h/l/mu.
+ *   Only the y-dependent part is computed here.
+ *
+ *   @param[in]  y:     array of y values
+ *   @param[in]  n:     number of points
+ *   @param[in]  h:     knot spacings from cspline_grid_setup, sized n-1
+ *   @param[in]  l:     forward-elimination pivots from cspline_grid_setup, sized n
+ *   @param[in]  mu:    forward-elimination multipliers from cspline_grid_setup, sized n
+ *   @param[out] b:     linear    coefficients, sized n
+ *   @param[out] c:     quadratic coefficients, sized n
+ *   @param[out] d:     cubic     coefficients, sized n
+ *   @param[out] alpha: pre-allocated scratch, sized n
+ *   @param[out] z:     pre-allocated scratch, sized n
+ */
+static void natural_cspline_coefs_fast(const double *y, int n,
+                                        const double *h, const double *l, const double *mu,
+                                        double *b, double *c, double *d,
+                                        double *alpha, double *z)
+{
+  alpha[0] = 0.;
+  for (int i = 1; i < n-1; i++)
+    alpha[i] = 3.0/h[i]*(y[i+1]-y[i]) - 3.0/h[i-1]*(y[i]-y[i-1]);
+
+  z[0] = 0.;
+  for (int i = 1; i < n-1; i++)
+    z[i] = (alpha[i] - h[i-1]*z[i-1])/l[i];
+  z[n-1] = 0.; c[n-1] = 0.;
+
+  for (int j = n-2; j >= 0; j--) {
+    c[j] = z[j] - mu[j]*c[j+1];
+    b[j] = (y[j+1]-y[j])/h[j] - h[j]*(c[j+1] + 2.0*c[j])/3.0;
+    d[j] = (c[j+1]-c[j])/(3.0*h[j]);
+  }
+}
+
+/**
+ * Function: find_intervals_sorted
+ * --------------------------------
+ *
+ *   @param[in]  t:   source x values, sorted increasing, size n (n>=2)
+ *   @param[in]  n:   number of source points
+ *   @param[in]  ti:  target x values, sorted increasing, size ni
+ *   @param[in]  ni:  number of target points
+ *   @param[out] idx: interval index for each ti, size ni
+ *   @return OK, or ERROR if n<2, t[] is not strictly increasing, or
+ *           ti[] is not non-decreasing
+ */
+static int find_intervals_sorted(const double *t, int n, const double *ti, int ni, int *idx)
+{
+  if (n < 2) return ERROR;
+  for (int j = 0; j < n-1; j++)
+    if (!(t[j+1] > t[j])) return ERROR;
+
+  int i = 0;
+  for (int k = 0; k < ni; k++) {
+    if (k > 0 && ti[k] < ti[k-1]) return ERROR;
+    while (i < n-2 && t[i+1] <= ti[k]) i++;
+    idx[k] = i;
+  }
+  return OK;
+}
+
+/**
+ * Function: interp_cspline_shared_grid
+ * -------------------------------------
+ *   Cubic sline fit on y(t) with index grid already given in input,
+ *   and the grid-only h/l/mu already given too (see cspline_grid_setup).
+ *   The coefficients b,c,d,alpha,z are pre-allocated,
+ *   here just filled using natural_cspline_coefs_fast()
+ *
+ *   @param[in]  t:     source x values, sorted increasing, size n
+ *   @param[in]  y:     source y values, size n
+ *   @param[in]  n:     number of source points
+ *   @param[in]  ti:    target x values, size ni
+ *   @param[in]  idx:   interval index for each ti (see find_intervals_sorted), size ni
+ *   @param[in]  ni:    number of target points
+ *   @param[in]  h:     knot spacings from cspline_grid_setup, sized n-1
+ *   @param[in]  l:     forward-elimination pivots from cspline_grid_setup, sized n
+ *   @param[in]  mu:    forward-elimination multipliers from cspline_grid_setup, sized n
+ *   @param[out] b:     pre-allocated scratch, sized n, filled by natural_cspline_coefs_fast
+ *   @param[out] c:     pre-allocated scratch, sized n, filled by natural_cspline_coefs_fast
+ *   @param[out] d:     pre-allocated scratch, sized n, filled by natural_cspline_coefs_fast
+ *   @param[out] alpha: pre-allocated scratch, sized n, filled by natural_cspline_coefs_fast
+ *   @param[out] z:     pre-allocated scratch, sized n, filled by natural_cspline_coefs_fast
+ *   @param[out] yi:    interpolated y values, size ni
+ */
+static void interp_cspline_shared_grid(const double *t, const double *y, int n,
+                                        const double *ti, const int *idx, int ni,
+                                        const double *h, const double *l, const double *mu,
+                                        double *b, double *c, double *d,
+                                        double *alpha, double *z, double *yi)
+{
+  natural_cspline_coefs_fast(y, n, h, l, mu, b, c, d, alpha, z);
+  for (int k = 0; k < ni; k++) {
+    const int i = idx[k];
+    const double dx = ti[k] - t[i];
+    yi[k] = y[i] + dx*(b[i] + dx*(c[i] + dx*d[i]));
+  }
+}
+
+/**
   * Function: interp_spline
   * -----------------------
   *   Spline interpolation with GSL routines
-  *   
+  *
   *   @param[in] t: array of x values
   *   @param[in] y: array of y values
   *   @param[in] n: number of points
@@ -2301,16 +2433,17 @@ void Waveform_lm_push (Waveform_lm **wav, int size)
  * Function: Waveform_lm_interp
  * ----------------------------
  *   Interpolate multipolar waveform to new time array
- * 
+ *
  *   @param[in,out] hlm: pointer to Waveform_lm
  *   @param[in] size: new number of points
  *   @param[in] t0: initial time
  *   @param[in] dt: time step
  *   @param[in] name: name of waveform
+ *   @return OK or ERROR
 */
-void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name)
+int Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, const double dt, const char *name)
 {
-  /* Alloc and init aux memory */  
+  /* Alloc and init aux memory */
   Waveform_lm *hlm_aux;
   const int oldsize = hlm->size;
   Waveform_lm_alloc(&hlm_aux, oldsize, "", EOBPars->use_mode_lm, EOBPars->use_mode_lm_size);
@@ -2341,16 +2474,41 @@ void Waveform_lm_interp (Waveform_lm *hlm, const int size, const double t0, cons
   for (int i = 0; i < size; i++) 
     hlm->time[i] = i*dt + t0;
   
-  /* Interp */
-  for (int k = 0; k < KMAX; k++) 
-    if (hlm->kmask[k])
-      interp_spline(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size, hlm->time, size, hlm->ampli[k]);
-  for (int k = 0; k < KMAX; k++)
-    if (hlm->kmask[k]) 
-      interp_spline(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size, hlm->time, size, hlm->phase[k]);
-  
+  // pre-compute time-gird and related weights
+  int *idx = malloc(size * sizeof(int));
+  int status = find_intervals_sorted(hlm_aux->time, hlm_aux->size, hlm->time, size, idx);
+  double *h  = malloc((hlm_aux->size - 1) * sizeof(double));
+  double *l  = malloc(hlm_aux->size * sizeof(double));
+  double *mu = malloc(hlm_aux->size * sizeof(double));
+  if (status == OK)
+    status = cspline_grid_setup(hlm_aux->time, hlm_aux->size, h, l, mu);
+  if (status != OK) {
+    free(idx); free(h); free(l); free(mu);
+    Waveform_lm_free (hlm_aux);
+    return ERROR;
+  }
+
+  // allocate coeffs for spline
+  double *b     = malloc(hlm_aux->size * sizeof(double));
+  double *c     = malloc(hlm_aux->size * sizeof(double));
+  double *d     = malloc(hlm_aux->size * sizeof(double));
+  double *alpha = malloc(hlm_aux->size * sizeof(double));
+  double *z     = malloc(hlm_aux->size * sizeof(double));
+
+  // Interpolation on shared grid for every hlm
+  for (int k = 0; k < KMAX; k++) {
+    if (hlm->kmask[k]) {
+      interp_cspline_shared_grid(hlm_aux->time, hlm_aux->ampli[k], hlm_aux->size,
+                                  hlm->time, idx, size, h, l, mu, b, c, d, alpha, z, hlm->ampli[k]);
+      interp_cspline_shared_grid(hlm_aux->time, hlm_aux->phase[k], hlm_aux->size,
+                                  hlm->time, idx, size, h, l, mu, b, c, d, alpha, z, hlm->phase[k]);
+    }
+  }
+  free(idx); free(h); free(l); free(mu); free(b); free(c); free(d); free(alpha); free(z);
+
   /* Free aux memory */
   Waveform_lm_free (hlm_aux);
+  return OK;
 }
 
 /**
